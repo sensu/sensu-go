@@ -39,6 +39,27 @@ func evaluateEventFilter(ctx context.Context, event *corev2.Event, filter *corev
 		}
 	}
 
+	// Guard against nil metadata labels and annotations to improve the user
+	// experience of querying these them.
+	if event.ObjectMeta.Annotations == nil {
+		event.ObjectMeta.Annotations = make(map[string]string)
+	}
+	if event.ObjectMeta.Labels == nil {
+		event.ObjectMeta.Labels = make(map[string]string)
+	}
+	if event.Check.ObjectMeta.Annotations == nil {
+		event.Check.ObjectMeta.Annotations = make(map[string]string)
+	}
+	if event.Check.ObjectMeta.Labels == nil {
+		event.Check.ObjectMeta.Labels = make(map[string]string)
+	}
+	if event.Entity.ObjectMeta.Annotations == nil {
+		event.Entity.ObjectMeta.Annotations = make(map[string]string)
+	}
+	if event.Entity.ObjectMeta.Labels == nil {
+		event.Entity.ObjectMeta.Labels = make(map[string]string)
+	}
+
 	synth := dynamic.Synthesize(event)
 	funcs := map[string]interface{}{
 		"FetchEvent": eventClient.FetchEvent,

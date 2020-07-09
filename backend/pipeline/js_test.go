@@ -8,7 +8,6 @@ import (
 	"github.com/sensu/sensu-go/backend/api"
 	"github.com/sensu/sensu-go/backend/authorization/rbac"
 	"github.com/sensu/sensu-go/backend/store"
-	"github.com/sensu/sensu-go/testing/mockbus"
 	"github.com/sensu/sensu-go/testing/mockstore"
 	"github.com/sensu/sensu-go/types/dynamic"
 	"github.com/stretchr/testify/mock"
@@ -64,10 +63,8 @@ func TestJavascriptStoreAccess(t *testing.T) {
 	auth := &rbac.Authorizer{
 		Store: st,
 	}
-	bus := new(mockbus.MockBus)
-	bus.On("Publish", "sensu:entity-config:entity", mock.Anything).Return(nil)
 	ctx := store.NamespaceContext(context.Background(), "default")
-	client := api.NewEventClient(st, auth, bus)
+	client := api.NewEventClient(st, auth, nil)
 	synthEvent := dynamic.Synthesize(event)
 	funcs := map[string]interface{}{
 		"FetchEvent": client.FetchEvent,
@@ -86,24 +83,24 @@ func TestJavascriptStoreAccess(t *testing.T) {
 		{
 			Name: "lookup event, match on status 0",
 			Expr: `(function () {
-				var event = sensu.FetchEvent("entity", "check");
-				return event.check.status == 0;
+				var e = sensu.FetchEvent("entity", "check");
+				return e.check.status == 0;
 			})()`,
 			Match: true,
 		},
 		{
 			Name: "lookup event, match on status 1",
 			Expr: `(function () {
-				var event = sensu.FetchEvent("entity", "check");
-				return event.check.status == 1;
+				var e = sensu.FetchEvent("entity", "check");
+				return e.check.status == 1;
 			})()`,
 			Match: false,
 		},
 		{
 			Name: "error - nil event, undefined lookup",
 			Expr: `(function () {
-				var event = sensu.FetchEvent("batman", "robin");
-				return event.check.status == 0;
+				var e = sensu.FetchEvent("batman", "robin");
+				return e.check.status == 0;
 			})()`,
 			ExpErr: "TypeError: Cannot access member 'check' of undefined",
 		},
