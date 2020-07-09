@@ -25,6 +25,8 @@ data access patterns.
 `EntityState` respectively.
 - Improves logging around the agent websocket connection.
 - sensu-agent configuration can now be managed via the HTTP API.
+- ClusterRoleBinding and RoleBinding subjects names can now contain any unicode
+characters.
 
 ## [5.21.0] - 2020-06-10
 
