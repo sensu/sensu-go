@@ -304,6 +304,22 @@ func TestMatchesUser(t *testing.T) {
 			},
 			want: true,
 		},
+		{
+			name: "matching is sensitive to all characters",
+			user: corev2.User{Username: "foo", Groups: []string{"foo bar"}},
+			subjects: []corev2.Subject{
+				{Type: corev2.GroupType, Name: "foo bar"},
+			},
+			want: true,
+		},
+		{
+			name: "matching is sensitive to all characters bis",
+			user: corev2.User{Username: "foo", Groups: []string{"foo bar"}},
+			subjects: []corev2.Subject{
+				{Type: corev2.GroupType, Name: "foobar"},
+			},
+			want: false,
+		},
 	}
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
