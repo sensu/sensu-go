@@ -3,7 +3,6 @@ package agentd
 import (
 	"context"
 	"errors"
-	"fmt"
 
 	"github.com/coreos/etcd/clientv3"
 	"github.com/gogo/protobuf/proto"
@@ -46,7 +45,6 @@ func handleResults(w store.Watcher, bus messaging.MessageBus) {
 
 		// Decode and unwrap the entity config
 		if err := proto.Unmarshal(response.Object, &configWrapper); err != nil {
-			fmt.Println(err)
 			logger.WithField("key", response.Key).WithError(err).
 				Error("unable to unmarshal entity config from key")
 			continue
