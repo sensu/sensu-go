@@ -5,17 +5,17 @@ import (
 	"errors"
 	"testing"
 
+	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/authorization"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/testing/mockstore"
-	"github.com/sensu/sensu-go/types"
 	"github.com/stretchr/testify/mock"
 )
 
 func TestAuthorize(t *testing.T) {
 	type storeFunc func(*mockstore.MockStore)
-	var nilClusterRoleBindings []*types.ClusterRoleBinding
-	var nilRoleBindings []*types.RoleBinding
+	var nilClusterRoleBindings []*corev2.ClusterRoleBinding
+	var nilRoleBindings []*corev2.RoleBinding
 	tests := []struct {
 		name      string
 		attrs     *authorization.Attributes
@@ -46,15 +46,15 @@ func TestAuthorize(t *testing.T) {
 			name: "no matching ClusterRoleBinding",
 			attrs: &authorization.Attributes{
 				Namespace: "acme",
-				User: types.User{
+				User: corev2.User{
 					Username: "foo",
 				},
 			},
 			storeFunc: func(s *mockstore.MockStore) {
 				s.On("ListClusterRoleBindings", mock.AnythingOfType("*context.emptyCtx"), &store.SelectionPredicate{}).
-					Return([]*types.ClusterRoleBinding{&types.ClusterRoleBinding{
-						Subjects: []types.Subject{
-							types.Subject{Type: types.UserType, Name: "bar"},
+					Return([]*corev2.ClusterRoleBinding{{
+						Subjects: []corev2.Subject{
+							{Type: corev2.UserType, Name: "bar"},
 						},
 					}}, nil)
 				s.On("ListRoleBindings", mock.AnythingOfType("*context.emptyCtx"), &store.SelectionPredicate{}).
@@ -65,19 +65,19 @@ func TestAuthorize(t *testing.T) {
 		{
 			name: "GetClusterRole store err",
 			attrs: &authorization.Attributes{
-				User: types.User{
+				User: corev2.User{
 					Username: "foo",
 				},
 			},
 			storeFunc: func(s *mockstore.MockStore) {
 				s.On("ListClusterRoleBindings", mock.AnythingOfType("*context.emptyCtx"), &store.SelectionPredicate{}).
-					Return([]*types.ClusterRoleBinding{&types.ClusterRoleBinding{
-						RoleRef: types.RoleRef{
+					Return([]*corev2.ClusterRoleBinding{{
+						RoleRef: corev2.RoleRef{
 							Type: "ClusterRole",
 							Name: "admin",
 						},
-						Subjects: []types.Subject{
-							types.Subject{Type: types.UserType, Name: "foo"},
+						Subjects: []corev2.Subject{
+							{Type: corev2.UserType, Name: "foo"},
 						},
 					}}, nil)
 				s.On("GetClusterRole", mock.Anything, "admin").
@@ -91,24 +91,24 @@ func TestAuthorize(t *testing.T) {
 				Verb:         "create",
 				Resource:     "checks",
 				ResourceName: "check-cpu",
-				User: types.User{
+				User: corev2.User{
 					Username: "foo",
 				},
 			},
 			storeFunc: func(s *mockstore.MockStore) {
 				s.On("ListClusterRoleBindings", mock.AnythingOfType("*context.emptyCtx"), &store.SelectionPredicate{}).
-					Return([]*types.ClusterRoleBinding{&types.ClusterRoleBinding{
-						RoleRef: types.RoleRef{
+					Return([]*corev2.ClusterRoleBinding{{
+						RoleRef: corev2.RoleRef{
 							Type: "ClusterRole",
 							Name: "admin",
 						},
-						Subjects: []types.Subject{
-							types.Subject{Type: types.UserType, Name: "foo"},
+						Subjects: []corev2.Subject{
+							{Type: corev2.UserType, Name: "foo"},
 						},
 					}}, nil)
 				s.On("GetClusterRole", mock.Anything, "admin").
-					Return(&types.ClusterRole{Rules: []types.Rule{
-						types.Rule{
+					Return(&corev2.ClusterRole{Rules: []corev2.Rule{
+						{
 							Verbs:         []string{"create"},
 							Resources:     []string{"checks"},
 							ResourceNames: []string{"check-cpu"},
@@ -132,7 +132,7 @@ func TestAuthorize(t *testing.T) {
 			name: "no matching RoleBindings",
 			attrs: &authorization.Attributes{
 				Namespace: "acme",
-				User: types.User{
+				User: corev2.User{
 					Username: "foo",
 				},
 			},
@@ -140,13 +140,13 @@ func TestAuthorize(t *testing.T) {
 				s.On("ListClusterRoleBindings", mock.AnythingOfType("*context.emptyCtx"), &store.SelectionPredicate{}).
 					Return(nilClusterRoleBindings, nil)
 				s.On("ListRoleBindings", mock.AnythingOfType("*context.emptyCtx"), &store.SelectionPredicate{}).
-					Return([]*types.RoleBinding{&types.RoleBinding{
-						RoleRef: types.RoleRef{
+					Return([]*corev2.RoleBinding{{
+						RoleRef: corev2.RoleRef{
 							Type: "Role",
 							Name: "admin",
 						},
-						Subjects: []types.Subject{
-							types.Subject{Type: types.UserType, Name: "foo"},
+						Subjects: []corev2.Subject{
+							{Type: corev2.UserType, Name: "foo"},
 						},
 					}}, nil)
 				s.On("GetRole", mock.Anything, "admin").
@@ -159,7 +159,7 @@ func TestAuthorize(t *testing.T) {
 			name: "GetRole store err",
 			attrs: &authorization.Attributes{
 				Namespace: "acme",
-				User: types.User{
+				User: corev2.User{
 					Username: "foo",
 				},
 			},
@@ -167,13 +167,13 @@ func TestAuthorize(t *testing.T) {
 				s.On("ListClusterRoleBindings", mock.AnythingOfType("*context.emptyCtx"), &store.SelectionPredicate{}).
 					Return(nilClusterRoleBindings, nil)
 				s.On("ListRoleBindings", mock.AnythingOfType("*context.emptyCtx"), &store.SelectionPredicate{}).
-					Return([]*types.RoleBinding{&types.RoleBinding{
-						RoleRef: types.RoleRef{
+					Return([]*corev2.RoleBinding{{
+						RoleRef: corev2.RoleRef{
 							Type: "Role",
 							Name: "admin",
 						},
-						Subjects: []types.Subject{
-							types.Subject{Type: types.UserType, Name: "foo"},
+						Subjects: []corev2.Subject{
+							{Type: corev2.UserType, Name: "foo"},
 						},
 					}}, nil)
 				s.On("GetRole", mock.Anything, "admin").
@@ -185,7 +185,7 @@ func TestAuthorize(t *testing.T) {
 			name: "matching RoleBinding",
 			attrs: &authorization.Attributes{
 				Namespace: "acme",
-				User: types.User{
+				User: corev2.User{
 					Username: "foo",
 				},
 				Verb:         "create",
@@ -197,18 +197,18 @@ func TestAuthorize(t *testing.T) {
 					Return(nilClusterRoleBindings, nil)
 
 				s.On("ListRoleBindings", mock.AnythingOfType("*context.emptyCtx"), &store.SelectionPredicate{}).
-					Return([]*types.RoleBinding{&types.RoleBinding{
-						RoleRef: types.RoleRef{
+					Return([]*corev2.RoleBinding{{
+						RoleRef: corev2.RoleRef{
 							Type: "Role",
 							Name: "admin",
 						},
-						Subjects: []types.Subject{
-							types.Subject{Type: types.UserType, Name: "foo"},
+						Subjects: []corev2.Subject{
+							{Type: corev2.UserType, Name: "foo"},
 						},
 					}}, nil)
 				s.On("GetRole", mock.Anything, "admin").
-					Return(&types.Role{Rules: []types.Rule{
-						types.Rule{
+					Return(&corev2.Role{Rules: []corev2.Rule{
+						{
 							Verbs:         []string{"create"},
 							Resources:     []string{"checks"},
 							ResourceNames: []string{"check-cpu"},
@@ -220,7 +220,7 @@ func TestAuthorize(t *testing.T) {
 		{
 			name: "role bindings do not match cluster width resource request",
 			attrs: &authorization.Attributes{
-				User: types.User{
+				User: corev2.User{
 					Username: "foo",
 				},
 				Verb:     "list",
@@ -231,18 +231,18 @@ func TestAuthorize(t *testing.T) {
 					Return(nilClusterRoleBindings, nil)
 
 				s.On("ListRoleBindings", mock.AnythingOfType("*context.emptyCtx"), &store.SelectionPredicate{}).
-					Return([]*types.RoleBinding{&types.RoleBinding{
-						RoleRef: types.RoleRef{
+					Return([]*corev2.RoleBinding{{
+						RoleRef: corev2.RoleRef{
 							Type: "ClusterRole",
 							Name: "cluster-admin",
 						},
-						Subjects: []types.Subject{
-							types.Subject{Type: types.UserType, Name: "foo"},
+						Subjects: []corev2.Subject{
+							{Type: corev2.UserType, Name: "foo"},
 						},
 					}}, nil)
 				s.On("GetClusterRole", mock.Anything, "cluster-admin").
-					Return(&types.ClusterRole{Rules: []types.Rule{
-						types.Rule{
+					Return(&corev2.ClusterRole{Rules: []corev2.Rule{
+						{
 							Verbs:     []string{"*"},
 							Resources: []string{"*"},
 						},
@@ -274,33 +274,33 @@ func TestAuthorize(t *testing.T) {
 func TestMatchesUser(t *testing.T) {
 	tests := []struct {
 		name     string
-		user     types.User
-		subjects []types.Subject
+		user     corev2.User
+		subjects []corev2.Subject
 		want     bool
 	}{
 		{
 			name: "not matching",
-			user: types.User{Username: "foo"},
-			subjects: []types.Subject{
-				types.Subject{Type: types.UserType, Name: "bar"},
-				types.Subject{Type: types.GroupType, Name: "foo"},
+			user: corev2.User{Username: "foo"},
+			subjects: []corev2.Subject{
+				{Type: corev2.UserType, Name: "bar"},
+				{Type: corev2.GroupType, Name: "foo"},
 			},
 			want: false,
 		},
 		{
 			name: "matching via username",
-			user: types.User{Username: "foo"},
-			subjects: []types.Subject{
-				types.Subject{Type: types.UserType, Name: "bar"},
-				types.Subject{Type: types.UserType, Name: "foo"},
+			user: corev2.User{Username: "foo"},
+			subjects: []corev2.Subject{
+				{Type: corev2.UserType, Name: "bar"},
+				{Type: corev2.UserType, Name: "foo"},
 			},
 			want: true,
 		},
 		{
 			name: "matching via group",
-			user: types.User{Username: "foo", Groups: []string{"acme"}},
-			subjects: []types.Subject{
-				types.Subject{Type: types.GroupType, Name: "acme"},
+			user: corev2.User{Username: "foo", Groups: []string{"acme"}},
+			subjects: []corev2.Subject{
+				{Type: corev2.GroupType, Name: "acme"},
 			},
 			want: true,
 		},
@@ -318,7 +318,7 @@ func TestRuleAllows(t *testing.T) {
 	tests := []struct {
 		name  string
 		attrs *authorization.Attributes
-		rule  types.Rule
+		rule  corev2.Rule
 		want  bool
 	}{
 		{
@@ -326,7 +326,7 @@ func TestRuleAllows(t *testing.T) {
 			attrs: &authorization.Attributes{
 				Verb: "create",
 			},
-			rule: types.Rule{
+			rule: corev2.Rule{
 				Verbs: []string{"get"},
 			},
 			want: false,
@@ -337,7 +337,7 @@ func TestRuleAllows(t *testing.T) {
 				Verb:     "create",
 				Resource: "events",
 			},
-			rule: types.Rule{
+			rule: corev2.Rule{
 				Verbs:     []string{"create"},
 				Resources: []string{"checks", "handlers"},
 			},
@@ -350,7 +350,7 @@ func TestRuleAllows(t *testing.T) {
 				Resource:     "checks",
 				ResourceName: "check-cpu",
 			},
-			rule: types.Rule{
+			rule: corev2.Rule{
 				Verbs:         []string{"create"},
 				Resources:     []string{"checks"},
 				ResourceNames: []string{"check-mem"},
@@ -364,7 +364,7 @@ func TestRuleAllows(t *testing.T) {
 				Resource:     "checks",
 				ResourceName: "check-cpu",
 			},
-			rule: types.Rule{
+			rule: corev2.Rule{
 				Verbs:         []string{"create"},
 				Resources:     []string{"checks"},
 				ResourceNames: []string{"check-cpu"},
@@ -384,7 +384,7 @@ func TestRuleAllows(t *testing.T) {
 func TestVisitRulesFor(t *testing.T) {
 	attrs := &authorization.Attributes{
 		Namespace: "acme",
-		User: types.User{
+		User: corev2.User{
 			Username: "foo",
 		},
 		Verb:         "create,delete",
@@ -396,46 +396,46 @@ func TestVisitRulesFor(t *testing.T) {
 		Store: stor,
 	}
 	stor.On("ListClusterRoleBindings", mock.AnythingOfType("*context.emptyCtx"), &store.SelectionPredicate{}).
-		Return([]*types.ClusterRoleBinding{&types.ClusterRoleBinding{
-			RoleRef: types.RoleRef{
+		Return([]*corev2.ClusterRoleBinding{{
+			RoleRef: corev2.RoleRef{
 				Type: "ClusterRole",
 				Name: "admin",
 			},
-			Subjects: []types.Subject{
-				types.Subject{Type: types.UserType, Name: "foo"},
+			Subjects: []corev2.Subject{
+				{Type: corev2.UserType, Name: "foo"},
 			},
 		}}, nil)
 
 	stor.On("ListRoleBindings", mock.AnythingOfType("*context.emptyCtx"), &store.SelectionPredicate{}).
-		Return([]*types.RoleBinding{&types.RoleBinding{
-			RoleRef: types.RoleRef{
+		Return([]*corev2.RoleBinding{{
+			RoleRef: corev2.RoleRef{
 				Type: "Role",
 				Name: "admin",
 			},
-			Subjects: []types.Subject{
-				types.Subject{Type: types.UserType, Name: "foo"},
+			Subjects: []corev2.Subject{
+				{Type: corev2.UserType, Name: "foo"},
 			},
 		}}, nil)
 	stor.On("GetRole", mock.Anything, "admin").
-		Return(&types.Role{Rules: []types.Rule{
-			types.Rule{
+		Return(&corev2.Role{Rules: []corev2.Rule{
+			{
 				Verbs:         []string{"create"},
 				Resources:     []string{"checks"},
 				ResourceNames: []string{"check-cpu"},
 			},
 		}}, nil)
 	stor.On("GetClusterRole", mock.Anything, "admin").
-		Return(&types.ClusterRole{Rules: []types.Rule{
-			types.Rule{
+		Return(&corev2.ClusterRole{Rules: []corev2.Rule{
+			{
 				Verbs:         []string{"delete"},
 				Resources:     []string{"checks"},
 				ResourceNames: []string{"check-cpu"},
 			},
 		}}, nil)
 
-	var rules []types.Rule
+	var rules []corev2.Rule
 
-	a.VisitRulesFor(context.Background(), attrs, func(binding RoleBinding, rule types.Rule, err error) bool {
+	a.VisitRulesFor(context.Background(), attrs, func(binding RoleBinding, rule corev2.Rule, err error) bool {
 		if err != nil {
 			t.Fatal(err)
 			return false
