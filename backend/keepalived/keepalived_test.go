@@ -168,6 +168,7 @@ func TestStartStop(t *testing.T) {
 			k := test.Keepalived
 
 			test.Store.On("GetFailingKeepalives", mock.Anything).Return(tc.records, nil)
+			test.Store.On("GetEntityByName", mock.Anything, mock.Anything).Return(corev2.FixtureEntity("foo"), nil)
 			for _, event := range tc.events {
 				test.Store.On("GetEventByEntityCheck", mock.Anything, event.Entity.Name, "keepalive").Return(event, nil)
 				if event.Check.Status != 0 {
@@ -196,6 +197,7 @@ func TestEventProcessing(t *testing.T) {
 	event := corev2.FixtureEvent("entity", "keepalive")
 	event.Check.Status = 1
 
+	test.Store.On("GetEntityByName", mock.Anything, mock.Anything).Return(event.Entity, nil)
 	test.StoreV2.On("CreateOrUpdate", mock.MatchedBy(func(req storv2.ResourceRequest) bool {
 		return req.StoreName == new(corev3.EntityState).StoreName()
 	}), mock.Anything).Return(nil)

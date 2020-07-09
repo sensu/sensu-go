@@ -612,10 +612,19 @@ func parseKey(key string) (namespace, name string, err error) {
 // handleUpdate sets the entity's last seen time and publishes an OK check event
 // to the message bus.
 func (k *Keepalived) handleUpdate(e *corev2.Event) error {
+	ctx := corev2.SetContextFromResource(context.Background(), e.Entity)
+	fetchedEntity, err := k.store.GetEntityByName(ctx, e.Entity.Name)
+	if err != nil {
+		logger.WithError(err).Error("error getting entity")
+		return err
+	}
+
+	if fetchedEntity != nil {
+		e.Entity = fetchedEntity
+	}
 	entity := e.Entity
 
-	ctx := corev2.SetContextFromResource(context.Background(), entity)
-	if err := k.store.DeleteFailingKeepalive(ctx, e.Entity); err != nil {
+	if err := k.store.DeleteFailingKeepalive(ctx, entity); err != nil {
 		// Warning: do not wrap this error
 		return err
 	}
