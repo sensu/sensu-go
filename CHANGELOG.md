@@ -32,6 +32,7 @@ data access patterns.
 `EntityState` respectively.
 - Improves logging around the agent websocket connection.
 - sensu-agent configuration can now be managed via the HTTP API.
+- Enriches output of `sensuctl asset add` with help usage for how to use the runtime asset.
 
 ## [5.21.0] - 2020-06-10
 
