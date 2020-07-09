@@ -14,6 +14,10 @@ import (
 )
 
 var rename string
+var help string = `
+You have successfully added the Sensu asset resource, but the asset will not get downloaded until
+it's invoked by another Sensu resource (ex. check). To add this runtime asset to the appropriate
+resource, populate the "runtime_assets" field with`
 
 // AddCommand adds command that allows user to add assets from Bonsai.
 func AddCommand(cli *cli.SensuCli) *cobra.Command {
@@ -95,6 +99,7 @@ func addCommandExecute(cli *cli.SensuCli) func(cmd *cobra.Command, args []string
 		}
 
 		fmt.Printf("added asset: %s/%s:%s\n", bAsset.Namespace, bAsset.Name, bonsaiVersion.Original())
+		fmt.Printf("%s [\"%s/%s\"].\n", help, bAsset.Namespace, bAsset.Name)
 		return nil
 	}
 }

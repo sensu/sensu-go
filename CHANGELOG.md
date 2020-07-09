@@ -7,9 +7,16 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
 
+### Breaking Changes
+- The web interface is now a standalone product and no longer distributed
+inside the sensu-backend binary. Refer to https://github.com/sensu/web for
+more.
+
 ### Fixed
 - Clarifies wording around a secret provider error message.
 - Logs and returns an error if a mutator cannot be found.
+- User-Agent header is only set on new client creation rather than on each
+request.
 
 ### Breaking
 - The database schema for entities has changed. After upgrading, users will not
@@ -26,6 +33,7 @@ data access patterns.
 - The `dead()` and `createProxyEntity()` methods in eventd now use
   `corev3.EntityConfig` and `corev3.EntityState`.
 - sensu-agent configuration can now be managed via the HTTP API.
+- Enriches output of `sensuctl asset add` with help usage for how to use the runtime asset.
 
 ## [5.21.0] - 2020-06-10
 

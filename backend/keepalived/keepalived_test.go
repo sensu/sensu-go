@@ -221,29 +221,45 @@ func TestProcessRegistration(t *testing.T) {
 		return entity
 	}
 
+	newEntityConfigWithClass := func(class string) *wrap.Wrapper {
+		entity := corev3.FixtureEntityConfig("agent1")
+		entity.EntityClass = class
+		e, err := wrap.Resource(entity)
+		require.NoError(t, err)
+		return e
+	}
+
 	tt := []struct {
-		name        string
-		entity      *corev2.Entity
-		storeEntity *corev2.Entity
-		expectedLen int
+		name              string
+		entity            *corev2.Entity
+		storeEntity       *wrap.Wrapper
+		expectedEventLen  int
+		storev2Err        error
+		expectedEntityLen int
 	}{
 		{
-			name:        "Registered Entity Without Agent Class",
-			entity:      newEntityWithClass("router"),
-			storeEntity: newEntityWithClass("router"),
-			expectedLen: 0,
+			name:              "Registered Entity Without Agent Class",
+			entity:            newEntityWithClass("router"),
+			storeEntity:       newEntityConfigWithClass("router"),
+			expectedEventLen:  0,
+			storev2Err:        nil,
+			expectedEntityLen: 0,
 		},
 		{
-			name:        "Registered Entity With Agent Class",
-			entity:      newEntityWithClass("agent"),
-			storeEntity: newEntityWithClass("agent"),
-			expectedLen: 0,
+			name:              "Registered Entity With Agent Class",
+			entity:            newEntityWithClass("agent"),
+			storeEntity:       newEntityConfigWithClass("agent"),
+			expectedEventLen:  0,
+			storev2Err:        &stor.ErrAlreadyExists{},
+			expectedEntityLen: 1,
 		},
 		{
-			name:        "Non-Registered Entity With Agent Class",
-			entity:      newEntityWithClass("agent"),
-			storeEntity: nil,
-			expectedLen: 1,
+			name:              "Non-Registered Entity With Agent Class",
+			entity:            newEntityWithClass("agent"),
+			storeEntity:       nil,
+			expectedEventLen:  1,
+			storev2Err:        nil,
+			expectedEntityLen: 1,
 		},
 	}
 
@@ -253,17 +269,22 @@ func TestProcessRegistration(t *testing.T) {
 			require.NoError(t, err)
 			require.NoError(t, messageBus.Start())
 
-			store := &mockstore.MockStore{}
+			storev2 := &storetest.Store{}
 
-			tsub := testSubscriber{
+			tsubEvent := testSubscriber{
 				ch: make(chan interface{}, 1),
 			}
-			subscription, err := messageBus.Subscribe(messaging.TopicEvent, "testSubscriber", tsub)
+			subscriptionEvent, err := messageBus.Subscribe(messaging.TopicEvent, "testSubscriberEvent", tsubEvent)
+			require.NoError(t, err)
+
+			tsubEntity := testSubscriber{
+				ch: make(chan interface{}, 1),
+			}
+			subscriptionEntity, err := messageBus.Subscribe(messaging.EntityConfigTopic(tc.entity.Namespace, tc.entity.Name), "testSubscriberEntity", tsubEntity)
 			require.NoError(t, err)
 
 			keepalived, err := New(Config{
-				Store:           store,
-				EventStore:      store,
+				StoreV2:         storev2,
 				Bus:             messageBus,
 				LivenessFactory: fakeFactory,
 				WorkerCount:     1,
@@ -272,12 +293,15 @@ func TestProcessRegistration(t *testing.T) {
 			})
 			require.NoError(t, err)
 
-			store.On("GetEntityByName", mock.Anything, "agent1").Return(tc.storeEntity, nil)
+			storev2.On("CreateIfNotExists", mock.Anything, mock.Anything).Return(tc.storev2Err)
+			storev2.On("Get", mock.Anything).Return(tc.storeEntity, nil)
 			err = keepalived.handleEntityRegistration(tc.entity)
 			require.NoError(t, err)
 
-			assert.Equal(t, tc.expectedLen, len(tsub.ch))
-			assert.NoError(t, subscription.Cancel())
+			assert.Equal(t, tc.expectedEventLen, len(tsubEvent.ch))
+			assert.Equal(t, tc.expectedEntityLen, len(tsubEntity.ch))
+			assert.NoError(t, subscriptionEvent.Cancel())
+			assert.NoError(t, subscriptionEntity.Cancel())
 		})
 	}
 }
