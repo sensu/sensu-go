@@ -248,6 +248,8 @@ func Initialize(ctx context.Context, config *Config) (*Backend, error) {
 	// Initialize the secrets provider manager
 	b.SecretsProviderManager = secrets.NewProviderManager()
 
+	auth := &rbac.Authorizer{Store: stor}
+
 	// Initialize pipelined
 	pipeline, err := pipelined.New(pipelined.Config{
 		Store:                   stor,
@@ -259,6 +261,7 @@ func Initialize(ctx context.Context, config *Config) (*Backend, error) {
 		StoreTimeout:            2 * time.Minute,
 		SecretsProviderManager:  b.SecretsProviderManager,
 		BackendEntity:           backendEntity,
+		EventClient:             api.NewEventClient(eventStoreProxy, auth, bus),
 	})
 	if err != nil {
 		return nil, fmt.Errorf("error initializing %s: %s", pipeline.Name(), err)
@@ -373,7 +376,6 @@ func Initialize(ctx context.Context, config *Config) (*Backend, error) {
 	b.HealthRouter = routers.NewHealthRouter(actions.NewHealthController(stor, b.Client.Cluster, b.EtcdClientTLSConfig))
 
 	// Initialize GraphQL service
-	auth := &rbac.Authorizer{Store: stor}
 	b.GraphQLService, err = graphql.NewService(graphql.ServiceConfig{
 		AssetClient:       api.NewAssetClient(stor, auth),
 		CheckClient:       api.NewCheckClient(stor, actions.NewCheckController(stor, queueGetter), auth),

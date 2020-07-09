@@ -45,6 +45,7 @@ type Pipelined struct {
 	secretsProviderManager *secrets.ProviderManager
 	backendEntity          *corev2.Entity
 	LicenseGetter          licensing.Getter
+	EventClient            pipeline.EventClient
 }
 
 // Config configures a Pipelined.
@@ -59,6 +60,7 @@ type Config struct {
 	SecretsProviderManager  *secrets.ProviderManager
 	BackendEntity           *corev2.Entity
 	LicenseGetter           licensing.Getter
+	EventClient             pipeline.EventClient
 }
 
 // Option is a functional option used to configure Pipelined.
@@ -158,6 +160,7 @@ func (p *Pipelined) createPipelines(count int, channel chan interface{}) {
 			SecretsProviderManager:  p.secretsProviderManager,
 			BackendEntity:           p.backendEntity,
 			LicenseGetter:           p.LicenseGetter,
+			EventClient:             p.EventClient,
 		})
 		p.wg.Add(1)
 		go func() {

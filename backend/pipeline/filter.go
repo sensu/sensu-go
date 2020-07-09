@@ -12,7 +12,7 @@ import (
 )
 
 // Returns true if the event should be filtered/denied.
-func evaluateEventFilter(event *corev2.Event, filter *corev2.EventFilter, assets asset.RuntimeAssetSet) bool {
+func evaluateEventFilter(ctx context.Context, event *corev2.Event, filter *corev2.EventFilter, assets asset.RuntimeAssetSet, eventClient EventClient) bool {
 	// Redact the entity to avoid leaking sensitive information
 	event.Entity = event.Entity.GetRedactedEntity()
 
@@ -40,13 +40,18 @@ func evaluateEventFilter(event *corev2.Event, filter *corev2.EventFilter, assets
 	}
 
 	synth := dynamic.Synthesize(event)
-	fee := FilterExecutionEnvironment{
+	funcs := map[string]interface{}{
+		"FetchEvent": eventClient.FetchEvent,
+		"ListEvents": eventClient.ListEvents,
+	}
+	env := FilterExecutionEnvironment{
 		Event:  synth,
 		Assets: assets,
+		Funcs:  funcs,
 	}
 
 	for _, expression := range filter.Expressions {
-		match, err := fee.Eval(expression)
+		match, err := env.Eval(ctx, expression)
 		if err != nil {
 			logger.WithError(err).Error("error evaluating javascript event filter")
 			continue
@@ -142,7 +147,7 @@ func (p *Pipeline) filterEvent(handler *corev2.Handler, event *corev2.Event) (st
 						return "", err
 					}
 				}
-				filtered := evaluateEventFilter(event, filter, assets)
+				filtered := evaluateEventFilter(ctx, event, filter, assets, p.eventClient)
 				if filtered {
 					logger.WithFields(fields).Debug("denying event with custom filter")
 					return filterName, nil
