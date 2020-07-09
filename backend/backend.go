@@ -27,7 +27,6 @@ import (
 	"github.com/sensu/sensu-go/backend/authentication/providers/basic"
 	"github.com/sensu/sensu-go/backend/authorization/rbac"
 	"github.com/sensu/sensu-go/backend/daemon"
-	"github.com/sensu/sensu-go/backend/dashboardd"
 	"github.com/sensu/sensu-go/backend/etcd"
 	"github.com/sensu/sensu-go/backend/eventd"
 	"github.com/sensu/sensu-go/backend/keepalived"
@@ -73,6 +72,7 @@ type Backend struct {
 	SecretsProviderManager *secrets.ProviderManager
 	HealthRouter           *routers.HealthRouter
 	EtcdClientTLSConfig    *tls.Config
+	APIDConfig             apid.Config
 
 	ctx       context.Context
 	runCtx    context.Context
@@ -327,6 +327,9 @@ func Initialize(ctx context.Context, config *Config) (*Backend, error) {
 	}
 	b.Daemons = append(b.Daemons, agent)
 
+	// Start the entity config watcher, so agentd sessions are notified of updates
+	agentd.EntityConfigWatcher(b.ctx, b.Client, bus)
+
 	// Initialize keepalived
 	keepalive, err := keepalived.New(keepalived.Config{
 		DeregistrationHandler: config.DeregistrationHandler,
@@ -399,7 +402,7 @@ func Initialize(ctx context.Context, config *Config) (*Backend, error) {
 	}
 
 	// Initialize apid
-	apidConfig := apid.Config{
+	b.APIDConfig = apid.Config{
 		ListenAddress:       config.APIListenAddress,
 		URL:                 config.APIURL,
 		Bus:                 bus,
@@ -414,7 +417,7 @@ func Initialize(ctx context.Context, config *Config) (*Backend, error) {
 		GraphQLService:      b.GraphQLService,
 		HealthRouter:        b.HealthRouter,
 	}
-	api, err := apid.New(apidConfig)
+	api, err := apid.New(b.APIDConfig)
 	if err != nil {
 		return nil, fmt.Errorf("error initializing %s: %s", api.Name(), err)
 	}
@@ -434,33 +437,6 @@ func Initialize(ctx context.Context, config *Config) (*Backend, error) {
 		return nil, fmt.Errorf("error initializing %s: %s", tessen.Name(), err)
 	}
 	b.Daemons = append(b.Daemons, tessen)
-
-	// Initialize dashboardd TLS config
-	var dashboardTLSConfig *corev2.TLSOptions
-
-	// Always use dashboard tls options when they are specified
-	if config.DashboardTLSCertFile != "" && config.DashboardTLSKeyFile != "" {
-		dashboardTLSConfig = &corev2.TLSOptions{
-			CertFile: config.DashboardTLSCertFile,
-			KeyFile:  config.DashboardTLSKeyFile,
-		}
-	} else if config.TLS != nil {
-		// use apid tls config if no dashboard tls options are specified
-		dashboardTLSConfig = &corev2.TLSOptions{
-			CertFile: config.TLS.GetCertFile(),
-			KeyFile:  config.TLS.GetKeyFile(),
-		}
-	}
-	dashboard, err := dashboardd.New(dashboardd.Config{
-		APIDConfig: apidConfig,
-		Host:       config.DashboardHost,
-		Port:       config.DashboardPort,
-		TLS:        dashboardTLSConfig,
-	})
-	if err != nil {
-		return nil, fmt.Errorf("error initializing %s: %s", dashboard.Name(), err)
-	}
-	b.Daemons = append(b.Daemons, dashboard)
 
 	return b, nil
 }
