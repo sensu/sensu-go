@@ -75,6 +75,9 @@ type Session struct {
 	entityConfig *entityConfig
 
 	subscriptions chan messaging.Subscription
+
+	mu               sync.Mutex
+	subscriptionsMap map[string]messaging.Subscription
 }
 
 // entityConfig is used by a session to subscribe to entity config updates
@@ -133,19 +136,20 @@ func NewSession(ctx context.Context, cfg SessionConfig) (*Session, error) {
 	ctx, cancel := context.WithCancel(ctx)
 
 	s := &Session{
-		conn:          cfg.Conn,
-		cfg:           cfg,
-		wg:            &sync.WaitGroup{},
-		checkChannel:  make(chan interface{}, 100),
-		store:         cfg.Store,
-		storev2:       cfg.Storev2,
-		bus:           cfg.Bus,
-		subscriptions: make(chan messaging.Subscription, len(cfg.Subscriptions)),
-		ctx:           ctx,
-		cancel:        cancel,
-		ringPool:      cfg.RingPool,
-		unmarshal:     cfg.Unmarshal,
-		marshal:       cfg.Marshal,
+		conn:             cfg.Conn,
+		cfg:              cfg,
+		wg:               &sync.WaitGroup{},
+		checkChannel:     make(chan interface{}, 100),
+		store:            cfg.Store,
+		storev2:          cfg.Storev2,
+		bus:              cfg.Bus,
+		subscriptions:    make(chan messaging.Subscription),
+		subscriptionsMap: map[string]messaging.Subscription{},
+		ctx:              ctx,
+		cancel:           cancel,
+		ringPool:         cfg.RingPool,
+		unmarshal:        cfg.Unmarshal,
+		marshal:          cfg.Marshal,
 		entityConfig: &entityConfig{
 			subscriptions:  make(chan messaging.Subscription, 1),
 			updatesChannel: make(chan interface{}, 10),
@@ -355,34 +359,24 @@ func (s *Session) Start() (err error) {
 		s.stop()
 	}()
 
-	namespace := s.cfg.Namespace
-	agentName := fmt.Sprintf("%s:%s-%s", namespace, s.cfg.AgentName, uuid.New().String())
-
 	defer func() {
 		if err != nil {
 			s.cancel()
 		}
 	}()
 
-	for _, sub := range s.cfg.Subscriptions {
-		// Ignore empty subscriptions
-		if sub == "" {
-			continue
-		}
-
-		topic := messaging.SubscriptionTopic(namespace, sub)
-		logger.WithField("topic", topic).Debug("subscribing to topic")
-		subscription, err := s.bus.Subscribe(topic, agentName, s)
-		if err != nil {
-			logger.WithError(err).Error("error starting subscription")
-			return err
-		}
-		s.subscriptions <- subscription
+	// Subscribe the session to every configured check subscriptions
+	if err := s.subscribe(s.cfg.Subscriptions); err != nil {
+		return err
 	}
 
 	// Subscribe the agent to its entity_config topic
-	topic := messaging.EntityConfigTopic(namespace, s.cfg.AgentName)
+	topic := messaging.EntityConfigTopic(s.cfg.Namespace, s.cfg.AgentName)
 	logger.WithField("topic", topic).Debug("subscribing to topic")
+	// Get a unique name for the agent, which will be used as the consumer of the
+	// bus, in order to avoid problems with an reconnecting before its session is
+	// ended
+	agentName := agentUUID(s.cfg.Namespace, s.cfg.AgentName)
 	subscription, err := s.bus.Subscribe(topic, agentName, s.entityConfig)
 	if err != nil {
 		logger.WithError(err).Error("error starting subscription")
@@ -390,7 +384,6 @@ func (s *Session) Start() (err error) {
 	}
 	s.entityConfig.subscriptions <- subscription
 
-	close(s.subscriptions)
 	close(s.entityConfig.subscriptions)
 
 	return nil
@@ -415,43 +408,15 @@ func (s *Session) stop() {
 	sessionCounter.WithLabelValues(s.cfg.Namespace).Dec()
 	s.wg.Wait()
 
-	for sub := range s.subscriptions {
-		if err := sub.Cancel(); err != nil {
-			logger.WithError(err).Error("unable to unsubscribe from message bus")
-		}
-	}
+	close(s.entityConfig.updatesChannel)
 	close(s.checkChannel)
 
+	// Remove the entity config subscriptions
 	for sub := range s.entityConfig.subscriptions {
 		if err := sub.Cancel(); err != nil {
 			logger.WithError(err).Error("unable to unsubscribe from message bus")
 		}
 	}
-	close(s.entityConfig.updatesChannel)
-
-	if s.ringPool == nil {
-		// This is a bit of a hack - allow ringPool to be nil for the benefit
-		// of the tests.
-		return
-	}
-	var ringWG sync.WaitGroup
-	ringWG.Add(len(s.cfg.Subscriptions))
-	for _, sub := range s.cfg.Subscriptions {
-		go func(sub string) {
-			defer ringWG.Done()
-			ring := s.ringPool.Get(ringv2.Path(s.cfg.Namespace, sub))
-			logger.WithFields(logrus.Fields{
-				"namespace": s.cfg.Namespace,
-				"agent":     s.cfg.AgentName,
-			}).Info("removing agent from ring")
-			ctx, cancel := context.WithTimeout(context.Background(), time.Second)
-			defer cancel()
-			if err := ring.Remove(ctx, s.cfg.AgentName); err != nil {
-				logger.WithError(err).Error("unable to remove agent from ring")
-			}
-		}(sub)
-	}
-	ringWG.Wait()
 }
 
 // handleKeepalive is the keepalive message handler.
@@ -493,4 +458,92 @@ func (s *Session) handleEvent(ctx context.Context, payload []byte) error {
 	event.Entity.Subscriptions = addEntitySubscription(event.Entity.Name, event.Entity.Subscriptions)
 
 	return s.bus.Publish(messaging.TopicEventRaw, event)
+}
+
+// subscribe adds a subscription to the session for every check subscriptions
+// provided
+func (s *Session) subscribe(subscriptions []string) error {
+	// Prevent any modification to the subscriptions
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	// Get a unique name for the agent, which will be used as the consumer of the
+	// bus, in order to avoid problems with an reconnecting before its session is
+	// ended
+	agent := agentUUID(s.cfg.Namespace, s.cfg.AgentName)
+
+	for _, sub := range s.cfg.Subscriptions {
+		// Ignore empty subscriptions
+		if sub == "" {
+			continue
+		}
+
+		topic := messaging.SubscriptionTopic(s.cfg.Namespace, sub)
+		logger.WithField("topic", topic).Debug("subscribing to topic")
+		subscription, err := s.bus.Subscribe(topic, agent, s)
+		if err != nil {
+			logger.WithError(err).Error("error starting subscription")
+			return err
+		}
+		s.subscriptionsMap[topic] = subscription
+	}
+
+	return nil
+}
+
+// unsubscribe removes a session subscription for every check subscriptions
+// provided
+func (s *Session) unsubscribe(subscriptions []string) {
+	// Prevent any modification to the configured subscriptions and the
+	// subscriptions map
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	for _, subscriptionName := range subscriptions {
+		topic := messaging.SubscriptionTopic(s.cfg.Namespace, subscriptionName)
+		if subscription, ok := s.subscriptionsMap[topic]; ok {
+			if err := subscription.Cancel(); err != nil {
+				logger.WithError(err).Error("unable to unsubscribe from message bus")
+				continue
+			}
+
+			// Once the subscription is successfully canceled, remove it from our
+			// subscriptions map
+			delete(s.subscriptionsMap, topic)
+		} else {
+			logger.Errorf("session was not subscribed to the subscription %q", subscriptionName)
+		}
+	}
+
+	if s.ringPool == nil {
+		// This is a bit of a hack - allow ringPool to be nil for the benefit
+		// of the tests.
+		return
+	}
+
+	// Remove the ring for every subscription
+	var ringWG sync.WaitGroup
+	ringWG.Add(len(subscriptions))
+	for _, sub := range subscriptions {
+		go func(sub string) {
+			defer ringWG.Done()
+			ring := s.ringPool.Get(ringv2.Path(s.cfg.Namespace, sub))
+			logger.WithFields(logrus.Fields{
+				"namespace": s.cfg.Namespace,
+				"agent":     s.cfg.AgentName,
+			}).Info("removing agent from ring")
+			ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+			defer cancel()
+			if err := ring.Remove(ctx, s.cfg.AgentName); err != nil {
+				logger.WithError(err).Error("unable to remove agent from ring")
+			}
+		}(sub)
+	}
+	ringWG.Wait()
+
+	return
+}
+
+func agentUUID(namespace, name string) string {
+	return fmt.Sprintf("%s:%s-%s", namespace, name, uuid.New().String())
 }
