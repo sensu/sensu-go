@@ -92,8 +92,9 @@ func UpgradeCommand() *cobra.Command {
 			prompt := &survey.Confirm{
 				Message: "Do you really want to upgrade your Sensu 5.x database to 6.x? This operation cannot be undone; make sure you back up your database!",
 			}
-			survey.AskOne(prompt, &confirm, nil)
-
+			if err := survey.AskOne(prompt, &confirm, nil); err != nil {
+				return err
+			}
 			if !confirm {
 				return errors.New("upgrade aborted by operator")
 			}
