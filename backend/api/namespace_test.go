@@ -241,7 +241,7 @@ func TestFetchNamespace(t *testing.T) {
 				{
 					Subjects: []corev2.Subject{
 						{
-							Type: "Group",
+							Type: corev2.GroupType,
 							Name: "cluster-admins",
 						},
 					},
@@ -800,7 +800,7 @@ func TestNamespaceCRUDSideEffects(t *testing.T) {
 		{
 			Subjects: []corev2.Subject{
 				{
-					Type: "Group",
+					Type: corev2.GroupType,
 					Name: "cluster-admins",
 				},
 			},
@@ -846,7 +846,7 @@ func TestNamespaceCRUDSideEffects(t *testing.T) {
 	expBinding := &corev2.RoleBinding{
 		Subjects: []corev2.Subject{
 			{
-				Type: "user",
+				Type: corev2.GroupType,
 				Name: pipelineRoleName,
 			},
 		},
