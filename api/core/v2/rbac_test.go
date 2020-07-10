@@ -206,7 +206,7 @@ func TestValidateSubjects(t *testing.T) {
 			Name: "valid",
 			Subjects: []Subject{
 				{
-					Type: "User",
+					Type: UserType,
 					Name: "eric",
 				},
 			},
@@ -224,7 +224,7 @@ func TestValidateSubjects(t *testing.T) {
 			Name: "missing name",
 			Subjects: []Subject{
 				{
-					Type: "User",
+					Type: UserType,
 				},
 			},
 			ExpErr: true,
@@ -243,11 +243,11 @@ func TestValidateSubjects(t *testing.T) {
 			Name: "one valid, one invalid",
 			Subjects: []Subject{
 				{
-					Type: "User",
+					Type: UserType,
 					Name: "eric",
 				},
 				{
-					Type: "User",
+					Type: UserType,
 				},
 			},
 			ExpErr: true,
