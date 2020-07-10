@@ -17,23 +17,6 @@ import (
 	"github.com/spf13/viper"
 )
 
-type confirmOpts struct {
-	Confirm bool `survey:"confirm"`
-}
-
-func (c *confirmOpts) askConfirm() error {
-	qs := []*survey.Question{
-		{
-			Name: "confirm",
-			Prompt: &survey.Input{
-				Message: "Do you really want to upgrade your Sensu 5.x database to 6.x? This operation cannot be undone; make sure you back up your database!",
-			},
-			Validate: survey.Required,
-		},
-	}
-	return survey.Ask(qs, c)
-}
-
 func UpgradeCommand() *cobra.Command {
 	var setupErr error
 	cmd := &cobra.Command{
@@ -105,12 +88,13 @@ func UpgradeCommand() *cobra.Command {
 				return fmt.Errorf("error connecting to cluster: %s", err)
 			}
 
-			var opts confirmOpts
-
-			if err := opts.askConfirm(); err != nil {
-				return err
+			var confirm bool
+			prompt := &survey.Confirm{
+				Message: "Do you really want to upgrade your Sensu 5.x database to 6.x? This operation cannot be undone; make sure you back up your database!",
 			}
-			if !opts.Confirm {
+			survey.AskOne(prompt, &confirm, nil)
+
+			if !confirm {
 				return errors.New("upgrade aborted by operator")
 			}
 
