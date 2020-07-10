@@ -323,3 +323,40 @@ func TestClusterRoleBindingValidateSub(t *testing.T) {
 		t.Fatal(err)
 	}
 }
+
+func TestValidateRoleRef(t *testing.T) {
+	tests := []struct {
+		name    string
+		roleRef RoleRef
+		want    RoleRef
+		wantErr bool
+	}{
+		{
+			name:    "invalid type returns an error",
+			roleRef: RoleRef{Type: "foo"},
+			wantErr: true,
+		},
+		{
+			name:    "types are capitalized",
+			roleRef: RoleRef{Type: "role", Name: "foo"},
+			want:    RoleRef{Type: RoleType, Name: "foo"},
+		},
+		{
+			name:    "role name is required",
+			roleRef: RoleRef{Type: RoleType},
+			wantErr: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			roleRef := tt.roleRef
+			if err := ValidateRoleRef(&roleRef); (err != nil) != tt.wantErr {
+				t.Errorf("ValidateRoleRef() error = %v, wantErr %v", err, tt.wantErr)
+			}
+
+			if !tt.wantErr && !reflect.DeepEqual(roleRef, tt.want) {
+				t.Errorf("ValidateRoleRef() = %v, want %v", roleRef, tt.want)
+			}
+		})
+	}
+}

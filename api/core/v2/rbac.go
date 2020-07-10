@@ -33,6 +33,11 @@ const (
 	// UserType represents a user object in a subject
 	UserType = "User"
 
+	// ClusterRoleType represents a ClusterRole in a RoleRef
+	ClusterRoleType = "ClusterRole"
+	// RoleType represents a Role in a RoleRef
+	RoleType = "Role"
+
 	// LocalSelfUserResource represents a local user trying to view itself
 	// or change its password
 	LocalSelfUserResource = "localselfuser"
@@ -178,12 +183,12 @@ func (b *ClusterRoleBinding) Validate() error {
 		return errors.New("the ClusterRoleBinding name " + err.Error())
 	}
 
-	if b.RoleRef.Name == "" || b.RoleRef.Type == "" {
-		return errors.New("a ClusterRoleBinding needs a roleRef")
-	}
-
 	if b.Namespace != "" {
 		return errors.New("ClusterRoleBinding cannot have a namespace")
+	}
+
+	if err := ValidateRoleRef(&b.RoleRef); err != nil {
+		return err
 	}
 
 	var err error
@@ -256,13 +261,31 @@ func (b *RoleBinding) Validate() error {
 		return errors.New("the RoleBinding namespace must be set")
 	}
 
-	if b.RoleRef.Name == "" || b.RoleRef.Type == "" {
-		return errors.New("a RoleBinding needs a roleRef")
+	if err := ValidateRoleRef(&b.RoleRef); err != nil {
+		return err
 	}
 
 	var err error
 	b.Subjects, err = ValidateSubjects(b.Subjects)
 	return err
+}
+
+// ValidateRoleRef checks that the role reference has a valid reference to
+// either a Role or a ClusterRole
+func ValidateRoleRef(roleRef *RoleRef) error {
+	roleRef.Type = strings.Title(roleRef.Type)
+	if roleRef.Type != ClusterRoleType && roleRef.Type != RoleType {
+		return fmt.Errorf(
+			"roleRef type %q is invalid, expected either %q or %q",
+			roleRef.Type, ClusterRoleType, RoleType,
+		)
+	}
+
+	if len(roleRef.Name) == 0 {
+		return fmt.Errorf("roleRef name for %s is required", roleRef.Type)
+	}
+
+	return nil
 }
 
 // ValidateSubjects checks that there is at least one subject, and all subjects
@@ -424,18 +447,22 @@ func (b *RoleBinding) SetObjectMeta(meta ObjectMeta) {
 	b.ObjectMeta = meta
 }
 
+// RBACName returns the name of the resource for RBAC
 func (*ClusterRoleBinding) RBACName() string {
 	return "clusterrolebindings"
 }
 
+// RBACName returns the name of the resource for RBAC
 func (*RoleBinding) RBACName() string {
 	return "rolebindings"
 }
 
+// RBACName returns the name of the resource for RBAC
 func (*ClusterRole) RBACName() string {
 	return "clusterroles"
 }
 
+// RBACName returns the name of the resource for RBAC
 func (*Role) RBACName() string {
 	return "roles"
 }
