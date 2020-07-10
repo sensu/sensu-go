@@ -106,7 +106,7 @@ func FixtureRoleBinding(name, namespace string) *RoleBinding {
 	return &RoleBinding{
 		ObjectMeta: NewObjectMeta(name, namespace),
 		Subjects:   []Subject{FixtureSubject(UserType, "username")},
-		RoleRef:    FixtureRoleRef("Role", "read-write"),
+		RoleRef:    FixtureRoleRef(RoleType, "read-write"),
 	}
 }
 
@@ -125,7 +125,7 @@ func FixtureClusterRoleBinding(name string) *ClusterRoleBinding {
 	return &ClusterRoleBinding{
 		ObjectMeta: NewObjectMeta(name, ""),
 		Subjects:   []Subject{FixtureSubject(UserType, "username")},
-		RoleRef:    FixtureRoleRef("ClusterRole", "read-write"),
+		RoleRef:    FixtureRoleRef(ClusterRoleType, "read-write"),
 	}
 }
 
