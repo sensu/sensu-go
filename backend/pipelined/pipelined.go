@@ -97,6 +97,7 @@ func New(c Config, options ...Option) (*Pipelined, error) {
 		secretsProviderManager: c.SecretsProviderManager,
 		backendEntity:          c.BackendEntity,
 		LicenseGetter:          c.LicenseGetter,
+		EventClient:            c.EventClient,
 	}
 	for _, o := range options {
 		if err := o(p); err != nil {
