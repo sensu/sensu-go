@@ -74,10 +74,14 @@ type Session struct {
 	unmarshal    UnmarshalFunc
 	entityConfig *entityConfig
 
-	subscriptions chan messaging.Subscription
-
 	mu               sync.Mutex
-	subscriptionsMap map[string]messaging.Subscription
+	subscriptionsMap map[string]subscription
+}
+
+// subscription is used to abstract a message.Subscription and therefore allow
+// easier testing
+type subscription interface {
+	Cancel() error
 }
 
 // entityConfig is used by a session to subscribe to entity config updates
@@ -143,8 +147,7 @@ func NewSession(ctx context.Context, cfg SessionConfig) (*Session, error) {
 		store:            cfg.Store,
 		storev2:          cfg.Storev2,
 		bus:              cfg.Bus,
-		subscriptions:    make(chan messaging.Subscription),
-		subscriptionsMap: map[string]messaging.Subscription{},
+		subscriptionsMap: map[string]subscription{},
 		ctx:              ctx,
 		cancel:           cancel,
 		ringPool:         cfg.RingPool,
@@ -493,7 +496,7 @@ func (s *Session) subscribe(subscriptions []string) error {
 			logger.WithError(err).Error("error starting subscription")
 			return err
 		}
-		s.subscriptionsMap[topic] = subscription
+		s.subscriptionsMap[topic] = &subscription
 	}
 
 	return nil

@@ -396,24 +396,22 @@ func TestSession_subscribe(t *testing.T) {
 		name             string
 		subscriptions    []string
 		busFunc          busFunc
-		subscriptionsMap map[string]messaging.Subscription
-		want             map[string]messaging.Subscription
+		subscriptionsMap map[string]subscription
+		want             map[string]subscription
 		wantErr          bool
 	}{
 		{
-			name:             "empty subscriptions are ignored",
-			subscriptions:    []string{""},
-			subscriptionsMap: map[string]messaging.Subscription{},
-			want:             map[string]messaging.Subscription{},
+			name:          "empty subscriptions are ignored",
+			subscriptions: []string{""},
 		},
 		{
 			name:          "already subscribed subscriptions are ignored",
 			subscriptions: []string{"foo"},
-			subscriptionsMap: map[string]messaging.Subscription{
-				fooTopic: {},
+			subscriptionsMap: map[string]subscription{
+				fooTopic: &messaging.Subscription{},
 			},
-			want: map[string]messaging.Subscription{
-				fooTopic: {},
+			want: map[string]subscription{
+				fooTopic: &messaging.Subscription{},
 			},
 		},
 		{
@@ -423,9 +421,9 @@ func TestSession_subscribe(t *testing.T) {
 				bus.On("Subscribe", "sensu:check:default:foo", mock.Anything, mock.Anything).
 					Return(messaging.Subscription{}, nil)
 			},
-			subscriptionsMap: map[string]messaging.Subscription{},
-			want: map[string]messaging.Subscription{
-				fooTopic: {},
+			subscriptionsMap: map[string]subscription{},
+			want: map[string]subscription{
+				fooTopic: &messaging.Subscription{},
 			},
 		},
 		{
@@ -435,8 +433,8 @@ func TestSession_subscribe(t *testing.T) {
 				bus.On("Subscribe", "sensu:check:default:bar", mock.Anything, mock.Anything).
 					Return(messaging.Subscription{}, errors.New("error"))
 			},
-			subscriptionsMap: map[string]messaging.Subscription{},
-			want:             map[string]messaging.Subscription{},
+			subscriptionsMap: map[string]subscription{},
+			want:             map[string]subscription{},
 			wantErr:          true,
 		},
 	}
@@ -463,6 +461,87 @@ func TestSession_subscribe(t *testing.T) {
 
 			if !tt.wantErr && !reflect.DeepEqual(s.subscriptionsMap, tt.want) {
 				t.Errorf("Session.subscribe() subscriptionsMap = %v, want %v", s.subscriptionsMap, tt.want)
+			}
+		})
+	}
+}
+
+// mockSubscription mocks a messaging.Subscription
+type mockSubscription struct {
+	mock.Mock
+}
+
+// Cancel ...
+func (m *mockSubscription) Cancel() error {
+	args := m.Called()
+	return args.Error(0)
+}
+
+func TestSession_unsubscribe(t *testing.T) {
+	type subscriptionFunc func(*mockSubscription)
+
+	mockedSubscription := &mockSubscription{}
+
+	fooTopic := fmt.Sprintf("%s:%s:%s", messaging.TopicSubscriptions, "default", "foo")
+
+	tests := []struct {
+		name             string
+		subscriptions    []string
+		subscriptionFunc subscriptionFunc
+		subscriptionsMap map[string]subscription
+		want             map[string]subscription
+	}{
+		{
+			name:          "subscriptions can be successfully unsubscribed from",
+			subscriptions: []string{"foo"},
+			subscriptionFunc: func(subscription *mockSubscription) {
+				subscription.On("Cancel").Return(nil)
+			},
+			subscriptionsMap: map[string]subscription{
+				fooTopic: &mockSubscription{},
+			},
+			want: map[string]subscription{},
+		},
+		{
+			name:             "subscriptions the session is not subscribed to already are ignored",
+			subscriptions:    []string{"foo"},
+			subscriptionsMap: map[string]subscription{},
+			want:             map[string]subscription{},
+		},
+		{
+			name:          "errors from subscriptions are handled",
+			subscriptions: []string{"foo"},
+			subscriptionFunc: func(subscription *mockSubscription) {
+				subscription.On("Cancel").Return(errors.New("error"))
+			},
+			subscriptionsMap: map[string]subscription{
+				fooTopic: mockedSubscription,
+			},
+			want: map[string]subscription{
+				fooTopic: mockedSubscription,
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			s := &Session{
+				cfg: SessionConfig{
+					AgentName:     "foo",
+					Namespace:     "default",
+					Subscriptions: tt.subscriptions,
+				},
+				mu:               sync.Mutex{},
+				subscriptionsMap: tt.subscriptionsMap,
+			}
+
+			if tt.subscriptionFunc != nil {
+				tt.subscriptionFunc(s.subscriptionsMap[fooTopic].(*mockSubscription))
+			}
+
+			s.unsubscribe(tt.subscriptions)
+
+			if !reflect.DeepEqual(s.subscriptionsMap, tt.want) {
+				t.Errorf("Session.unsubscribe() subscriptionsMap = %v, want %v", s.subscriptionsMap, tt.want)
 			}
 		})
 	}
