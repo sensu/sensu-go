@@ -25,6 +25,10 @@ import (
 	"golang.org/x/time/rate"
 )
 
+// The DeprecateDashboardFlags is used to mark usage dashboard daemon flags
+// as deprecated.
+var DeprecateDashboardFlags = true
+
 var (
 	annotations map[string]string
 	labels      map[string]string
@@ -425,6 +429,15 @@ func handleConfig(cmd *cobra.Command, server bool) error {
 		_ = cmd.Flags().SetAnnotation(flagEtcdPeerTrustedCAFile, "categories", []string{"store"})
 		cmd.Flags().String(flagEtcdNodeName, viper.GetString(flagEtcdNodeName), "name for this etcd node")
 		_ = cmd.Flags().SetAnnotation(flagEtcdNodeName, "categories", []string{"store"})
+	}
+
+	// Deprecated flags
+	if server && DeprecateDashboardFlags {
+		msg := "as of Sensu v6.0 the dashboard is no longer distributed as part of the sensu-backend binary"
+		_ = cmd.Flags().MarkDeprecated(flagDashboardHost, msg)
+		_ = cmd.Flags().MarkDeprecated(flagDashboardPort, msg)
+		_ = cmd.Flags().MarkDeprecated(flagDashboardCertFile, msg)
+		_ = cmd.Flags().MarkDeprecated(flagDashboardKeyFile, msg)
 	}
 
 	// Etcd client/server flags

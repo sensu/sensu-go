@@ -49,10 +49,11 @@ func New(config config.Config) *RestClient {
 	restyInst.SetHeader("Accept", "application/json")
 	restyInst.SetHeader("Content-Type", "application/json")
 
+	// Set the User-Agent header
+	restyInst.SetHeader("User-Agent", "sensuctl/"+version.Semver())
+
 	// Check that Access-Token has not expired
 	restyInst.OnBeforeRequest(func(c *resty.Client, r *resty.Request) error {
-		c.SetHeader("User-Agent", "sensuctl/"+version.Semver())
-
 		// Guard against requests that are not sending auth details
 		if c.Token == "" || r.UserInfo != nil {
 			return nil
