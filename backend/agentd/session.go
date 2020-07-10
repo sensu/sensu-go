@@ -479,6 +479,14 @@ func (s *Session) subscribe(subscriptions []string) error {
 		}
 
 		topic := messaging.SubscriptionTopic(s.cfg.Namespace, sub)
+
+		// Ignore the subscription if the session is already subscribed to it
+		if _, ok := s.subscriptionsMap[topic]; ok {
+			logger.WithField("topic", topic).
+				Debug("the session is already subscribed to the topic, ignoring it")
+			continue
+		}
+
 		logger.WithField("topic", topic).Debug("subscribing to topic")
 		subscription, err := s.bus.Subscribe(topic, agent, s)
 		if err != nil {

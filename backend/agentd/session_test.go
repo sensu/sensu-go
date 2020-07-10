@@ -3,7 +3,11 @@ package agentd
 import (
 	"context"
 	"encoding/json"
+	"errors"
+	"fmt"
 	"net/http"
+	"reflect"
+	"sync"
 	"testing"
 	"time"
 
@@ -13,6 +17,7 @@ import (
 	"github.com/sensu/sensu-go/backend/messaging"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/backend/store/v2/storetest"
+	"github.com/sensu/sensu-go/testing/mockbus"
 	"github.com/sensu/sensu-go/testing/mockstore"
 	"github.com/sensu/sensu-go/testing/mocktransport"
 	"github.com/sensu/sensu-go/transport"
@@ -379,5 +384,86 @@ func TestSessionInvalidEntityClassUpdate(t *testing.T) {
 		session.Stop()
 	case <-time.After(5 * time.Second):
 		t.Fatal("session never stopped, we probably never received an entity update over the channel")
+	}
+}
+
+func TestSession_subscribe(t *testing.T) {
+	type busFunc func(*mockbus.MockBus)
+
+	fooTopic := fmt.Sprintf("%s:%s:%s", messaging.TopicSubscriptions, "default", "foo")
+
+	tests := []struct {
+		name             string
+		subscriptions    []string
+		busFunc          busFunc
+		subscriptionsMap map[string]messaging.Subscription
+		want             map[string]messaging.Subscription
+		wantErr          bool
+	}{
+		{
+			name:             "empty subscriptions are ignored",
+			subscriptions:    []string{""},
+			subscriptionsMap: map[string]messaging.Subscription{},
+			want:             map[string]messaging.Subscription{},
+		},
+		{
+			name:          "already subscribed subscriptions are ignored",
+			subscriptions: []string{"foo"},
+			subscriptionsMap: map[string]messaging.Subscription{
+				fooTopic: {},
+			},
+			want: map[string]messaging.Subscription{
+				fooTopic: {},
+			},
+		},
+		{
+			name:          "subscriptions are successfully performed",
+			subscriptions: []string{"foo"},
+			busFunc: func(bus *mockbus.MockBus) {
+				bus.On("Subscribe", "sensu:check:default:foo", mock.Anything, mock.Anything).
+					Return(messaging.Subscription{}, nil)
+			},
+			subscriptionsMap: map[string]messaging.Subscription{},
+			want: map[string]messaging.Subscription{
+				fooTopic: {},
+			},
+		},
+		{
+			name:          "bus errors are handled",
+			subscriptions: []string{"bar"},
+			busFunc: func(bus *mockbus.MockBus) {
+				bus.On("Subscribe", "sensu:check:default:bar", mock.Anything, mock.Anything).
+					Return(messaging.Subscription{}, errors.New("error"))
+			},
+			subscriptionsMap: map[string]messaging.Subscription{},
+			want:             map[string]messaging.Subscription{},
+			wantErr:          true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			bus := &mockbus.MockBus{}
+			if tt.busFunc != nil {
+				tt.busFunc(bus)
+			}
+
+			s := &Session{
+				cfg: SessionConfig{
+					AgentName:     "foo",
+					Namespace:     "default",
+					Subscriptions: tt.subscriptions,
+				},
+				bus:              bus,
+				mu:               sync.Mutex{},
+				subscriptionsMap: tt.subscriptionsMap,
+			}
+			if err := s.subscribe(tt.subscriptions); (err != nil) != tt.wantErr {
+				t.Errorf("Session.subscribe() error = %v, wantErr %v", err, tt.wantErr)
+			}
+
+			if !tt.wantErr && !reflect.DeepEqual(s.subscriptionsMap, tt.want) {
+				t.Errorf("Session.subscribe() subscriptionsMap = %v, want %v", s.subscriptionsMap, tt.want)
+			}
+		})
 	}
 }
