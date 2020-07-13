@@ -262,11 +262,12 @@ func (s *Session) sender() {
 				continue
 			}
 
-			logger.WithFields(logrus.Fields{
+			lager := logger.WithFields(logrus.Fields{
 				"action":    watchEvent.Action.String(),
 				"entity":    watchEvent.Entity.Metadata.Name,
 				"namespace": watchEvent.Entity.Metadata.Namespace,
-			}).Debug("entity update received")
+			})
+			lager.Debug("entity update received")
 
 			// Handle the delete and unknown watch events
 			switch watchEvent.Action {
@@ -276,17 +277,14 @@ func (s *Session) sender() {
 				s.cancel()
 				continue
 			case store.WatchUnknown:
-				logger.Error("session received unknown watch event")
+				lager.Error("session received unknown watch event")
 				continue
 			}
 
 			// Enforce the entity class to agent
 			if watchEvent.Entity.EntityClass != corev2.EntityAgentClass {
 				watchEvent.Entity.EntityClass = corev2.EntityAgentClass
-				logger.WithFields(logrus.Fields{
-					"entity":    watchEvent.Entity.Metadata.Name,
-					"namespace": watchEvent.Entity.Metadata.Namespace,
-				}).Warningf(
+				lager.Warningf(
 					"misconfigured entity class %q, updating entity to be a %s",
 					watchEvent.Entity.EntityClass,
 					corev2.EntityAgentClass,
@@ -296,12 +294,12 @@ func (s *Session) sender() {
 				configReq := storev2.NewResourceRequestFromResource(s.ctx, watchEvent.Entity)
 				wrapper, err := wrap.Resource(watchEvent.Entity)
 				if err != nil {
-					logger.WithError(err).Error("could not wrap the entity config")
+					lager.WithError(err).Error("could not wrap the entity config")
 					continue
 				}
 
 				if err := s.storev2.CreateOrUpdate(configReq, wrapper); err != nil {
-					logger.WithError(err).Error("could not update the entity config")
+					lager.WithError(err).Error("could not update the entity config")
 				}
 
 				// We will not immediately send an update to the agent, but rather wait
@@ -311,8 +309,25 @@ func (s *Session) sender() {
 
 			bytes, err := s.marshal(watchEvent.Entity)
 			if err != nil {
-				logger.WithError(err).Error("session failed to serialize entity config")
+				lager.WithError(err).Error("session failed to serialize entity config")
 				continue
+			}
+
+			// Determine if some subscriptions were added and/or removed, by first
+			// sorting the subscriptions and then comparing those
+			s.mu.Lock()
+			oldSubscriptions := sortSubscriptions(s.cfg.Subscriptions)
+			newSubscriptions := sortSubscriptions(watchEvent.Entity.Subscriptions)
+			added, removed := diff(oldSubscriptions, newSubscriptions)
+			s.cfg.Subscriptions = newSubscriptions
+			s.mu.Unlock()
+			if len(added) > 1 {
+				lager.Debugf("found %d new subscription(s): %v", len(added), added)
+				s.subscribe(added)
+			}
+			if len(removed) > 1 {
+				lager.Debugf("found %d subscription(s) to unsubscribe from: %v", len(removed), removed)
+				s.unsubscribe(removed)
 			}
 
 			msg = transport.NewMessage(transport.MessageTypeEntityConfig, bytes)
