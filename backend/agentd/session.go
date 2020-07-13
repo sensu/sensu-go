@@ -480,7 +480,7 @@ func (s *Session) subscribe(subscriptions []string) error {
 	// ended
 	agent := agentUUID(s.cfg.Namespace, s.cfg.AgentName)
 
-	for _, sub := range s.cfg.Subscriptions {
+	for _, sub := range subscriptions {
 		// Ignore empty subscriptions
 		if sub == "" {
 			continue
