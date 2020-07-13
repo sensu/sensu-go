@@ -470,6 +470,11 @@ func (s *Session) subscribe(subscriptions []string) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
+	lager := logger.WithFields(logrus.Fields{
+		"agent":     s.cfg.AgentName,
+		"namespace": s.cfg.Namespace,
+	})
+
 	// Get a unique name for the agent, which will be used as the consumer of the
 	// bus, in order to avoid problems with an reconnecting before its session is
 	// ended
@@ -485,15 +490,14 @@ func (s *Session) subscribe(subscriptions []string) error {
 
 		// Ignore the subscription if the session is already subscribed to it
 		if _, ok := s.subscriptionsMap[topic]; ok {
-			logger.WithField("topic", topic).
-				Debug("the session is already subscribed to the topic, ignoring it")
+			lager.Debugf("ignoring subscription %q because session is already subscribed", sub)
 			continue
 		}
 
-		logger.WithField("topic", topic).Debug("subscribing to topic")
+		lager.Debugf("subscribing to %q", sub)
 		subscription, err := s.bus.Subscribe(topic, agent, s)
 		if err != nil {
-			logger.WithError(err).Error("error starting subscription")
+			lager.WithError(err).Errorf("could not subscribe to %q", sub)
 			return err
 		}
 		s.subscriptionsMap[topic] = &subscription
@@ -510,19 +514,26 @@ func (s *Session) unsubscribe(subscriptions []string) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
+	lager := logger.WithFields(logrus.Fields{
+		"agent":     s.cfg.AgentName,
+		"namespace": s.cfg.Namespace,
+	})
+
 	for _, subscriptionName := range subscriptions {
 		topic := messaging.SubscriptionTopic(s.cfg.Namespace, subscriptionName)
 		if subscription, ok := s.subscriptionsMap[topic]; ok {
 			if err := subscription.Cancel(); err != nil {
-				logger.WithError(err).Error("unable to unsubscribe from message bus")
+				lager.WithError(err).Errorf("unable to unsubscribe from %q", subscriptionName)
 				continue
 			}
+
+			lager.Debugf("successfully unsubscribed from %q", subscriptionName)
 
 			// Once the subscription is successfully canceled, remove it from our
 			// subscriptions map
 			delete(s.subscriptionsMap, topic)
 		} else {
-			logger.Errorf("session was not subscribed to the subscription %q", subscriptionName)
+			lager.Errorf("session was not subscribed to %q", subscriptionName)
 		}
 	}
 
@@ -539,14 +550,11 @@ func (s *Session) unsubscribe(subscriptions []string) {
 		go func(sub string) {
 			defer ringWG.Done()
 			ring := s.ringPool.Get(ringv2.Path(s.cfg.Namespace, sub))
-			logger.WithFields(logrus.Fields{
-				"namespace": s.cfg.Namespace,
-				"agent":     s.cfg.AgentName,
-			}).Info("removing agent from ring")
+			lager.Infof("removing agent from ring for subscription %q", sub)
 			ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 			defer cancel()
 			if err := ring.Remove(ctx, s.cfg.AgentName); err != nil {
-				logger.WithError(err).Error("unable to remove agent from ring")
+				lager.WithError(err).Error("unable to remove agent from ring")
 			}
 		}(sub)
 	}
