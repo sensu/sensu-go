@@ -27,12 +27,13 @@ be able to use their database with older versions of Sensu.
 by modifying the agent's configuration file.
 
 ### Changed
+- Improves logging around the agent websocket connection.
 - Entities are now stored as two separate data structures, in order to optimize
 data access patterns.
-- Improves logging around the agent websocket connection.
 - The `dead` and `handleUpdate` methods in keepalived now use `EntityConfig` and
 `EntityState` respectively.
-- Improves logging around the agent websocket connection.
+- The `dead()` and `createProxyEntity()` methods in eventd now use
+  `corev3.EntityConfig` and `corev3.EntityState`.
 - sensu-agent configuration can now be managed via the HTTP API.
 - ClusterRoleBinding and RoleBinding subjects names can now contain any unicode
 characters.
