@@ -2,12 +2,14 @@ package routers
 
 import (
 	"context"
+	"net/http"
 	"testing"
 
 	"github.com/gorilla/mux"
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/authorization/rbac"
 	"github.com/sensu/sensu-go/backend/store"
+	"github.com/sensu/sensu-go/testing/mockauthorizer"
 	"github.com/sensu/sensu-go/testing/mockstore"
 	"github.com/stretchr/testify/mock"
 )
@@ -15,8 +17,48 @@ import (
 func TestNamespacesRouter(t *testing.T) {
 	// Setup the router
 	s := &mockstore.MockStore{}
-	router := NewNamespacesRouter(s, nil)
+	clusterRole := corev2.ClusterRole{
+		ObjectMeta: corev2.NewObjectMeta("cluster-admin", ""),
+		Rules: []corev2.Rule{
+			{
+				Verbs:     []string{corev2.VerbAll},
+				Resources: []string{corev2.ResourceAll},
+			},
+		},
+	}
+	clusterRoleBinding := corev2.ClusterRoleBinding{
+		Subjects: []corev2.Subject{
+			{
+				Type: "Group",
+				Name: "cluster-admins",
+			},
+		},
+		RoleRef: corev2.RoleRef{
+			Type: "ClusterRole",
+			Name: "cluster-admin",
+		},
+		ObjectMeta: corev2.NewObjectMeta("cluster-admin", ""),
+	}
+
+	s.On("ListClusterRoleBindings", mock.Anything, mock.Anything).Return([]*corev2.ClusterRoleBinding{&clusterRoleBinding}, nil)
+	s.On("GetClusterRole", mock.Anything, mock.Anything).Return(&clusterRole, nil)
+	s.On("ListRoleBindings", mock.Anything, mock.Anything).Return([]*corev2.RoleBinding{}, nil)
+
+	// Mock role & role binding creation, which happens upon namespace creation
+	s.On("CreateOrUpdateResource", mock.Anything, mock.AnythingOfType("*v2.Role")).Return(nil)
+	s.On("CreateOrUpdateResource", mock.Anything, mock.AnythingOfType("*v2.RoleBinding")).Return(nil)
+
+	// Mock role & role binding deletion, which happens upon namespace deletion
+	s.On("DeleteResource", mock.Anything, "rbac/rolebindings", "system:pipeline").Return(nil)
+	s.On("DeleteResource", mock.Anything, "rbac/roles", "system:pipeline").Return(nil)
+
+	// Mock an authorizer since the api client performs authorization on its own
+	authorizer := &mockauthorizer.Authorizer{}
+	authorizer.On("Authorize", mock.Anything, mock.Anything).Return(true, nil)
+
+	router := NewNamespacesRouter(s, authorizer)
 	parentRouter := mux.NewRouter().PathPrefix(corev2.URLPrefix).Subrouter()
+	parentRouter.Use(mockedClaims)
 	router.Mount(parentRouter)
 
 	empty := &corev2.Namespace{}
@@ -87,4 +129,11 @@ func TestNamespaceRouterList(t *testing.T) {
 	if pred.Continue != "sensu-continue" {
 		t.Fatalf("expected a continue token, got %q", pred.Continue)
 	}
+}
+
+func mockedClaims(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		ctx := context.WithValue(r.Context(), corev2.ClaimsKey, corev2.FixtureClaims("foo", []string{"cluster-admins"}))
+		next.ServeHTTP(w, r.WithContext(ctx))
+	})
 }

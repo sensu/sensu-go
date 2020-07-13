@@ -4,12 +4,10 @@ import (
 	"context"
 	"fmt"
 
+	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/authorization"
 	"github.com/sensu/sensu-go/backend/store"
-	"github.com/sensu/sensu-go/types"
 	"github.com/sirupsen/logrus"
-
-	corev2 "github.com/sensu/sensu-go/api/core/v2"
 )
 
 // Store is the storage requirements for the Authorizer. If you find that you
@@ -164,7 +162,7 @@ func (a *Authorizer) Authorize(ctx context.Context, attrs *authorization.Attribu
 	return authorized, visitErr
 }
 
-func (a *Authorizer) getRoleReferencerules(ctx context.Context, roleRef types.RoleRef) ([]types.Rule, error) {
+func (a *Authorizer) getRoleReferencerules(ctx context.Context, roleRef corev2.RoleRef) ([]corev2.Rule, error) {
 	switch roleRef.Type {
 	case "Role":
 		role, err := a.Store.GetRole(ctx, roleRef.Name)
@@ -190,15 +188,15 @@ func (a *Authorizer) getRoleReferencerules(ctx context.Context, roleRef types.Ro
 }
 
 // matchesUser returns whether any of the subjects matches the specified user
-func matchesUser(user types.User, subjects []types.Subject) bool {
+func matchesUser(user corev2.User, subjects []corev2.Subject) bool {
 	for _, subject := range subjects {
 		switch subject.Type {
-		case types.UserType:
+		case corev2.UserType:
 			if user.Username == subject.Name {
 				return true
 			}
 
-		case types.GroupType:
+		case corev2.GroupType:
 			for _, group := range user.Groups {
 				if group == subject.Name {
 					return true
@@ -212,7 +210,7 @@ func matchesUser(user types.User, subjects []types.Subject) bool {
 
 // ruleAllows returns whether the specified rule allows the request based on its
 // attributes and if not, the reason why
-func ruleAllows(attrs *authorization.Attributes, rule types.Rule) (bool, string) {
+func ruleAllows(attrs *authorization.Attributes, rule corev2.Rule) (bool, string) {
 	if matches := rule.VerbMatches(attrs.Verb); !matches {
 		return false, "forbidden verb"
 	}

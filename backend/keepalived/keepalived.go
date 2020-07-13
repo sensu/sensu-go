@@ -22,24 +22,24 @@ import (
 )
 
 const (
-	// DEPRECATED, use core/v2
 	// KeepaliveCheckName is the name of the check that is created when a
 	// keepalive timeout occurs.
+	// DEPRECATED, use core/v2
 	KeepaliveCheckName = "keepalive"
 
-	// DEPRECATED, use core/v2
 	// KeepaliveHandlerName is the name of the handler that is executed when
 	// a keepalive timeout occurs.
+	// DEPRECATED, use core/v2
 	KeepaliveHandlerName = "keepalive"
 
-	// DEPRECATED, use core/v2
 	// RegistrationCheckName is the name of the check that is created when an
 	// entity sends a keepalive and the entity does not yet exist in the store.
+	// DEPRECATED, use core/v2
 	RegistrationCheckName = "registration"
 
-	// DEPRECATED, use core/v2
 	// RegistrationHandlerName is the name of the handler that is executed when
 	// a registration event is passed to pipelined.
+	// DEPRECATED, use core/v2
 	RegistrationHandlerName = "registration"
 )
 
@@ -347,19 +347,49 @@ func (k *Keepalived) handleEntityRegistration(entity *corev2.Entity) error {
 	ctx := corev2.SetContextFromResource(k.ctx, entity)
 	tctx, cancel := context.WithTimeout(ctx, k.storeTimeout)
 	defer cancel()
-	fetchedEntity, err := k.store.GetEntityByName(tctx, entity.Name)
 
+	config, _ := corev3.V2EntityToV3(entity)
+	wrapper, err := wrap.Resource(config)
 	if err != nil {
-		// Warning: do not wrap this error
+		logger.WithError(err).Error("error wrapping entity config")
 		return err
 	}
 
-	if fetchedEntity == nil {
+	req := storev2.NewResourceRequestFromResource(tctx, config)
+	if err := k.storev2.CreateIfNotExists(req, wrapper); err == nil {
 		event := createRegistrationEvent(entity)
 		err = k.bus.Publish(messaging.TopicEvent, event)
+		if err != nil {
+			logger.WithError(err).Error("error publishing registration event")
+			return err
+		}
+		err = k.bus.Publish(messaging.EntityConfigTopic(config.Metadata.Namespace, config.Metadata.Name), config)
+		if err != nil {
+			logger.WithError(err).Error("error publishing entity config")
+			return err
+		}
+	} else if _, ok := err.(*store.ErrAlreadyExists); ok {
+		wrapper, err := k.storev2.Get(req)
+		if err != nil {
+			logger.WithError(err).Error("error getting entity config")
+			return err
+		}
+		var e corev3.EntityConfig
+		err = wrapper.UnwrapInto(&e)
+		if err != nil {
+			logger.WithError(err).Error("error unwrapping entity config")
+			return err
+		}
+		err = k.bus.Publish(messaging.EntityConfigTopic(e.Metadata.Namespace, e.Metadata.Name), e)
+		if err != nil {
+			logger.WithError(err).Error("error publishing entity config")
+			return err
+		}
+	} else {
+		return err
 	}
 
-	return err
+	return nil
 }
 
 func createKeepaliveEvent(rawEvent *corev2.Event) *corev2.Event {
