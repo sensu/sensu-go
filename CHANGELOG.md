@@ -17,6 +17,8 @@ more.
 - Logs and returns an error if a mutator cannot be found.
 - User-Agent header is only set on new client creation rather than on each
 request.
+- Automatically capitalize the roleRef and subject types in ClusterRoleBindings
+and RoleBindings.
 
 ### Breaking
 - The database schema for entities has changed. After upgrading, users will not
@@ -32,6 +34,8 @@ data access patterns.
 `EntityState` respectively.
 - Improves logging around the agent websocket connection.
 - sensu-agent configuration can now be managed via the HTTP API.
+- ClusterRoleBinding and RoleBinding subjects names can now contain any unicode
+characters.
 - Enriches output of `sensuctl asset add` with help usage for how to use the runtime asset.
 
 ## [5.21.0] - 2020-06-10
