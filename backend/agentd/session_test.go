@@ -546,3 +546,78 @@ func TestSession_unsubscribe(t *testing.T) {
 		})
 	}
 }
+
+func Test_diff(t *testing.T) {
+	tests := []struct {
+		name        string
+		old         []string
+		new         []string
+		wantAdded   []string
+		wantRemoved []string
+	}{
+		{
+			name:        "simple removed and added elements",
+			old:         []string{"a", "b", "c"},
+			new:         []string{"b", "c", "d"},
+			wantAdded:   []string{"d"},
+			wantRemoved: []string{"a"},
+		},
+		{
+			name:        "simple removed and added elements but reversed",
+			old:         []string{"b", "c", "d"},
+			new:         []string{"a", "b", "c"},
+			wantAdded:   []string{"a"},
+			wantRemoved: []string{"d"},
+		},
+		{
+			name:      "duplicated elements are detected",
+			old:       []string{"a", "b", "c"},
+			new:       []string{"a", "a", "b", "c"},
+			wantAdded: []string{"a"},
+		},
+		{
+			name:        "completely different slices",
+			old:         []string{"a", "b", "c"},
+			new:         []string{"d", "e", "f"},
+			wantAdded:   []string{"d", "e", "f"},
+			wantRemoved: []string{"a", "b", "c"},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			gotAdded, gotRemoved := diff(tt.old, tt.new)
+			if !reflect.DeepEqual(gotAdded, tt.wantAdded) {
+				t.Errorf("diff() added = %#v, want %#v", gotAdded, tt.wantAdded)
+			}
+			if !reflect.DeepEqual(gotRemoved, tt.wantRemoved) {
+				t.Errorf("diff() removed = %#v, want %#v", gotRemoved, tt.wantRemoved)
+			}
+		})
+	}
+}
+
+func Test_sortSubscriptions(t *testing.T) {
+	tests := []struct {
+		name          string
+		subscriptions []string
+		want          []string
+	}{
+		{
+			name:          "unsorted subscriptions are sorted",
+			subscriptions: []string{"b", "a", "c"},
+			want:          []string{"a", "b", "c"},
+		},
+		{
+			name:          "already sorted subscriptions are immediately returned",
+			subscriptions: []string{"a", "b", "c"},
+			want:          []string{"a", "b", "c"},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := sortSubscriptions(tt.subscriptions); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("sortSubscriptions() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}

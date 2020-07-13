@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"sort"
+	"strings"
 	"sync"
 	"time"
 
@@ -565,4 +567,39 @@ func (s *Session) unsubscribe(subscriptions []string) {
 
 func agentUUID(namespace, name string) string {
 	return fmt.Sprintf("%s:%s-%s", namespace, name, uuid.New().String())
+}
+
+// diff compares the two given slices and returns the elements that were both
+// added and removed in the new slice, in comparison to the old slice. It relies
+// on both slices being sorted to properly work.
+func diff(old, new []string) ([]string, []string) {
+	var added, removed []string
+	i, j := 0, 0
+
+	for i < len(old) && j < len(new) {
+		c := strings.Compare(old[i], new[j])
+		if c == 0 {
+			i++
+			j++
+		} else if c < 0 {
+			removed = append(removed, old[i])
+			i++
+		} else {
+			added = append(added, new[j])
+			j++
+		}
+	}
+
+	removed = append(removed, old[i:]...)
+	added = append(added, new[j:]...)
+	return added, removed
+}
+
+func sortSubscriptions(subscriptions []string) []string {
+	if sort.StringsAreSorted(subscriptions) {
+		return subscriptions
+	}
+	sortedSubscriptions := append(subscriptions[:0:0], subscriptions...)
+	sort.Strings(sortedSubscriptions)
+	return sortedSubscriptions
 }
