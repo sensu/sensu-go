@@ -323,7 +323,9 @@ func (s *Session) sender() {
 			s.mu.Unlock()
 			if len(added) > 0 {
 				lager.Debugf("found %d new subscription(s): %v", len(added), added)
-				s.subscribe(added)
+				// The error will already be logged so we can ignore it, and we still
+				// want to send the entity config update to the agent
+				_ = s.subscribe(added)
 			}
 			if len(removed) > 0 {
 				lager.Debugf("found %d subscription(s) to unsubscribe from: %v", len(removed), removed)
@@ -394,8 +396,8 @@ func (s *Session) Start() (err error) {
 	topic := messaging.EntityConfigTopic(s.cfg.Namespace, s.cfg.AgentName)
 	logger.WithField("topic", topic).Debug("subscribing to topic")
 	// Get a unique name for the agent, which will be used as the consumer of the
-	// bus, in order to avoid problems with an reconnecting before its session is
-	// ended
+	// bus, in order to avoid problems with an agent reconnecting before its
+	// session is ended
 	agentName := agentUUID(s.cfg.Namespace, s.cfg.AgentName)
 	subscription, err := s.bus.Subscribe(topic, agentName, s.entityConfig)
 	if err != nil {
@@ -576,8 +578,6 @@ func (s *Session) unsubscribe(subscriptions []string) {
 		}(sub)
 	}
 	ringWG.Wait()
-
-	return
 }
 
 func agentUUID(namespace, name string) string {
