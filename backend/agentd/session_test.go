@@ -569,3 +569,44 @@ func Test_sortSubscriptions(t *testing.T) {
 		})
 	}
 }
+
+func Test_removeEmptySubscriptions(t *testing.T) {
+	tests := []struct {
+		name          string
+		subscriptions []string
+		want          []string
+	}{
+		{
+			name:          "no empty subscriptions",
+			subscriptions: []string{"foo", "bar"},
+			want:          []string{"foo", "bar"},
+		},
+		{
+			name:          "leading empty subscriptions",
+			subscriptions: []string{"", "foo", "bar"},
+			want:          []string{"foo", "bar"},
+		},
+		{
+			name:          "middle empty subscriptions",
+			subscriptions: []string{"foo", "", "bar"},
+			want:          []string{"foo", "bar"},
+		},
+		{
+			name:          "trailing empty subscriptions",
+			subscriptions: []string{"foo", "bar", ""},
+			want:          []string{"foo", "bar"},
+		},
+		{
+			name:          "multiple empty subscriptions",
+			subscriptions: []string{"", "foo", "bar", ""},
+			want:          []string{"foo", "bar"},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := removeEmptySubscriptions(tt.subscriptions); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("removeEmptySubscriptions() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}

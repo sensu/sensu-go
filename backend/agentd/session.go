@@ -610,10 +610,24 @@ func diff(old, new []string) ([]string, []string) {
 	return added, removed
 }
 
+func removeEmptySubscriptions(subscriptions []string) []string {
+	var s []string
+	for _, subscription := range subscriptions {
+		if subscription != "" {
+			s = append(s, subscription)
+		}
+	}
+	return s
+}
+
 func sortSubscriptions(subscriptions []string) []string {
+	// Remove empty subscriptions
+	subscriptions = removeEmptySubscriptions(subscriptions)
+
 	if sort.StringsAreSorted(subscriptions) {
 		return subscriptions
 	}
+
 	sortedSubscriptions := append(subscriptions[:0:0], subscriptions...)
 	sort.Strings(sortedSubscriptions)
 	return sortedSubscriptions
