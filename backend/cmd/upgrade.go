@@ -17,22 +17,9 @@ import (
 	"github.com/spf13/viper"
 )
 
-type confirmOpts struct {
-	Confirm bool `survey:"confirm"`
-}
-
-func (c *confirmOpts) askConfirm() error {
-	qs := []*survey.Question{
-		{
-			Name: "confirm",
-			Prompt: &survey.Input{
-				Message: "Do you really want to upgrade your Sensu 5.x database to 6.x? This operation cannot be undone; make sure you back up your database!",
-			},
-			Validate: survey.Required,
-		},
-	}
-	return survey.Ask(qs, c)
-}
+const (
+	flagSkipConfirm = "skip-confirm"
+)
 
 func UpgradeCommand() *cobra.Command {
 	var setupErr error
@@ -105,13 +92,18 @@ func UpgradeCommand() *cobra.Command {
 				return fmt.Errorf("error connecting to cluster: %s", err)
 			}
 
-			var opts confirmOpts
-
-			if err := opts.askConfirm(); err != nil {
-				return err
-			}
-			if !opts.Confirm {
-				return errors.New("upgrade aborted by operator")
+			skipConfirm := viper.GetBool(flagSkipConfirm)
+			if !skipConfirm {
+				var confirm bool
+				prompt := &survey.Confirm{
+					Message: "Do you really want to upgrade your Sensu 5.x database to 6.x? This operation cannot be undone; make sure you back up your database!",
+				}
+				if err := survey.AskOne(prompt, &confirm, nil); err != nil {
+					return err
+				}
+				if !confirm {
+					return errors.New("upgrade aborted by operator")
+				}
 			}
 
 			// Make sure at least one of the provided endpoints is reachable. This is
@@ -142,6 +134,7 @@ func UpgradeCommand() *cobra.Command {
 	}
 
 	cmd.Flags().String(flagTimeout, defaultTimeout, "timeout, in seconds, for failing to establish a connection to etcd")
+	cmd.Flags().Bool(flagSkipConfirm, false, "skip interactive confirmation")
 
 	setupErr = handleConfig(cmd, false)
 
