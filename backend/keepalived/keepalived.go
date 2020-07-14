@@ -354,6 +354,12 @@ func (k *Keepalived) handleEntityRegistration(entity *corev2.Entity) error {
 		logger.WithError(err).Error("error wrapping entity config")
 		return err
 	}
+	// The agentd session expects a watch event for the entity config, therefore
+	// we need to mock one
+	watchEvent := &store.WatchEventEntityConfig{
+		Action: store.WatchCreate,
+		Entity: config,
+	}
 
 	req := storev2.NewResourceRequestFromResource(tctx, config)
 	if err := k.storev2.CreateIfNotExists(req, wrapper); err == nil {
@@ -363,7 +369,7 @@ func (k *Keepalived) handleEntityRegistration(entity *corev2.Entity) error {
 			logger.WithError(err).Error("error publishing registration event")
 			return err
 		}
-		err = k.bus.Publish(messaging.EntityConfigTopic(config.Metadata.Namespace, config.Metadata.Name), config)
+		err = k.bus.Publish(messaging.EntityConfigTopic(config.Metadata.Namespace, config.Metadata.Name), watchEvent)
 		if err != nil {
 			logger.WithError(err).Error("error publishing entity config")
 			return err
@@ -380,7 +386,8 @@ func (k *Keepalived) handleEntityRegistration(entity *corev2.Entity) error {
 			logger.WithError(err).Error("error unwrapping entity config")
 			return err
 		}
-		err = k.bus.Publish(messaging.EntityConfigTopic(e.Metadata.Namespace, e.Metadata.Name), e)
+		watchEvent.Entity = &e
+		err = k.bus.Publish(messaging.EntityConfigTopic(e.Metadata.Namespace, e.Metadata.Name), watchEvent)
 		if err != nil {
 			logger.WithError(err).Error("error publishing entity config")
 			return err
