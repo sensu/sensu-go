@@ -321,11 +321,11 @@ func (s *Session) sender() {
 			added, removed := diff(oldSubscriptions, newSubscriptions)
 			s.cfg.Subscriptions = newSubscriptions
 			s.mu.Unlock()
-			if len(added) > 1 {
+			if len(added) > 0 {
 				lager.Debugf("found %d new subscription(s): %v", len(added), added)
 				s.subscribe(added)
 			}
-			if len(removed) > 1 {
+			if len(removed) > 0 {
 				lager.Debugf("found %d subscription(s) to unsubscribe from: %v", len(removed), removed)
 				s.unsubscribe(removed)
 			}
