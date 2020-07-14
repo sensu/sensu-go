@@ -3,20 +3,26 @@ package eventd
 import (
 	"context"
 	"errors"
+	"fmt"
 	"sync"
 	"testing"
 	"time"
 
-	corev2 "github.com/sensu/sensu-go/api/core/v2"
-	"github.com/sensu/sensu-go/backend/liveness"
-	"github.com/sensu/sensu-go/backend/messaging"
-	"github.com/sensu/sensu-go/backend/store"
-	"github.com/sensu/sensu-go/backend/store/cache"
-	"github.com/sensu/sensu-go/testing/mockstore"
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+
+	corev2 "github.com/sensu/sensu-go/api/core/v2"
+	corev3 "github.com/sensu/sensu-go/api/core/v3"
+	"github.com/sensu/sensu-go/backend/liveness"
+	"github.com/sensu/sensu-go/backend/messaging"
+	"github.com/sensu/sensu-go/backend/store"
+	"github.com/sensu/sensu-go/backend/store/cache"
+	storev2 "github.com/sensu/sensu-go/backend/store/v2"
+	"github.com/sensu/sensu-go/backend/store/v2/storetest"
+	"github.com/sensu/sensu-go/backend/store/v2/wrap"
+	"github.com/sensu/sensu-go/testing/mockstore"
 )
 
 type fakeSwitchSet struct{}
@@ -39,13 +45,13 @@ func newFakeFactory(f liveness.Interface) liveness.Factory {
 	}
 }
 
-func newEventd(store store.Store, bus messaging.MessageBus, livenessFactory liveness.Factory) *Eventd {
+func newEventd(store storev2.Interface, eventStore store.Store, bus messaging.MessageBus, livenessFactory liveness.Factory) *Eventd {
 	ctx, cancel := context.WithCancel(context.Background())
 	return &Eventd{
 		ctx:             ctx,
 		cancel:          cancel,
 		store:           store,
-		eventStore:      store,
+		eventStore:      eventStore,
 		bus:             bus,
 		livenessFactory: livenessFactory,
 		errChan:         make(chan error, 1),
@@ -65,11 +71,11 @@ func TestEventHandling(t *testing.T) {
 	require.NoError(t, err)
 	require.NoError(t, bus.Start())
 
+	mockEntityStore := &storetest.Store{}
 	mockStore := &mockstore.MockStore{}
-	e := newEventd(mockStore, bus, newFakeFactory(&fakeSwitchSet{}))
+	e := newEventd(mockEntityStore, mockStore, bus, newFakeFactory(&fakeSwitchSet{}))
 
 	require.NoError(t, e.Start())
-
 	require.NoError(t, bus.Publish(messaging.TopicEventRaw, nil))
 
 	badEvent := &corev2.Event{}
@@ -80,9 +86,7 @@ func TestEventHandling(t *testing.T) {
 	require.NoError(t, bus.Publish(messaging.TopicEventRaw, badEvent))
 
 	event := corev2.FixtureEvent("entity", "check")
-
-	mockStore.On("GetEntityByName", mock.Anything, "entity").
-		Return(event.Entity, nil)
+	addMockEntityV2(t, mockEntityStore, event.Entity)
 
 	var nilEvent *corev2.Event
 	// no previous event.
@@ -126,18 +130,17 @@ func TestEventMonitor(t *testing.T) {
 	require.NoError(t, err)
 	require.NoError(t, bus.Start())
 
+	mockEntityStore := &storetest.Store{}
 	mockStore := &mockstore.MockStore{}
-	e := newEventd(mockStore, bus, newFakeFactory(&fakeSwitchSet{}))
+	e := newEventd(mockEntityStore, mockStore, bus, newFakeFactory(&fakeSwitchSet{}))
 
 	require.NoError(t, e.Start())
-
 	require.NoError(t, bus.Publish(messaging.TopicEventRaw, nil))
 
 	event := corev2.FixtureEvent("entity", "check")
 	event.Check.Ttl = 90
 
-	mockStore.On("GetEntityByName", mock.Anything, "entity").
-		Return(event.Entity, nil)
+	addMockEntityV2(t, mockEntityStore, event.Entity)
 
 	var nilEvent *corev2.Event
 	// no previous event.
@@ -247,37 +250,38 @@ func TestCheckTTL(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			store := &mockstore.MockStore{}
+			store := &storetest.Store{}
+			eventStore := &mockstore.MockStore{}
 			switches := &mockSwitchSet{}
 			if tt.switchesFunc != nil {
 				tt.switchesFunc(switches)
 			}
 
 			mockEvent := corev2.FixtureEvent("entity", "mock")
+			addMockEntityV2(t, store, mockEvent.Entity)
 
 			e := &Eventd{
 				store:           store,
-				eventStore:      store,
+				eventStore:      eventStore,
 				livenessFactory: newFakeFactory(switches),
 				workerCount:     1,
 				wg:              &sync.WaitGroup{},
 				Logger:          &RawLogger{},
 				silencedCache:   &cache.Resource{},
 			}
+
 			var err error
 			e.bus, err = messaging.NewWizardBus(messaging.WizardBusConfig{})
 			require.NoError(t, err)
 			require.NoError(t, e.bus.Start())
 
-			store.On("GetEntityByName", mock.Anything, "entity").
-				Return(mockEvent.Entity, nil)
-			store.On("GetEventByEntityCheck", mock.Anything, "entity", "check").
+			eventStore.On("GetEventByEntityCheck", mock.Anything, "entity", "check").
 				Return(tt.previousEvent, tt.previousEventErr)
-			store.On("GetSilencedEntriesBySubscription", mock.Anything, mock.Anything).
+			eventStore.On("GetSilencedEntriesBySubscription", mock.Anything, mock.Anything).
 				Return([]*corev2.Silenced{}, nil)
-			store.On("GetSilencedEntriesByCheckName", mock.Anything, mock.Anything).
+			eventStore.On("GetSilencedEntriesByCheckName", mock.Anything, mock.Anything).
 				Return([]*corev2.Silenced{}, nil)
-			store.On("UpdateEvent", mock.Anything, mock.Anything).Return(tt.msg, mockEvent, nil)
+			eventStore.On("UpdateEvent", mock.Anything, mock.Anything).Return(tt.msg, mockEvent, nil)
 
 			if err := e.handleMessage(tt.msg); (err != nil) != tt.wantErr {
 				t.Errorf("Eventd.handleMessage() error = %v, wantErr %v", err, tt.wantErr)
@@ -288,10 +292,11 @@ func TestCheckTTL(t *testing.T) {
 
 func TestBuryConditions(t *testing.T) {
 	tests := []struct {
-		name  string
-		key   string
-		store func(*mockstore.MockStore)
-		bury  bool
+		name           string
+		key            string
+		storeFunc      func(*storetest.Store)
+		eventStoreFunc func(*mockstore.MockStore)
+		bury           bool
 	}{
 		{
 			// TODO: this test case should have bury: false when round robin check
@@ -303,8 +308,10 @@ func TestBuryConditions(t *testing.T) {
 		{
 			name: "bury switch on nil entity",
 			key:  "default/foo/bar",
-			store: func(store *mockstore.MockStore) {
-				store.On("GetEntityByName", mock.Anything, "bar").Return((*corev2.Entity)(nil), nil)
+			storeFunc: func(store *storetest.Store) {
+				entityNotFound(store, "default", "bar")
+			},
+			eventStoreFunc: func(store *mockstore.MockStore) {
 				store.On("GetEventByEntityCheck", mock.Anything, "bar", "keepalive").Return(corev2.FixtureEvent("bar", "keepalive"), nil)
 			},
 			bury: true,
@@ -312,8 +319,10 @@ func TestBuryConditions(t *testing.T) {
 		{
 			name: "do not bury switch on entity lookup error",
 			key:  "default/foo/bar",
-			store: func(store *mockstore.MockStore) {
-				store.On("GetEntityByName", mock.Anything, "bar").Return((*corev2.Entity)(nil), errors.New("error"))
+			storeFunc: func(s *storetest.Store) {
+				entityLookupError(s, "default", "bar")
+			},
+			eventStoreFunc: func(store *mockstore.MockStore) {
 				store.On("GetEventByEntityCheck", mock.Anything, "bar", "keepalive").Return(corev2.FixtureEvent("bar", "keepalive"), nil)
 			},
 			bury: false,
@@ -321,8 +330,10 @@ func TestBuryConditions(t *testing.T) {
 		{
 			name: "bury switch on nil event",
 			key:  "default/foo/bar",
-			store: func(store *mockstore.MockStore) {
-				store.On("GetEntityByName", mock.Anything, "bar").Return(corev2.FixtureEntity("bar"), nil)
+			storeFunc: func(s *storetest.Store) {
+				addFixtureEntity(s, "default", "bar")
+			},
+			eventStoreFunc: func(store *mockstore.MockStore) {
 				store.On("GetEventByEntityCheck", mock.Anything, "bar", "foo").Return((*corev2.Event)(nil), nil)
 				store.On("GetEventByEntityCheck", mock.Anything, "bar", "keepalive").Return(corev2.FixtureEvent("bar", "keepalive"), nil)
 			},
@@ -331,8 +342,10 @@ func TestBuryConditions(t *testing.T) {
 		{
 			name: "do not bury switch on event lookup error",
 			key:  "default/foo/bar",
-			store: func(store *mockstore.MockStore) {
-				store.On("GetEntityByName", mock.Anything, "bar").Return(corev2.FixtureEntity("bar"), nil)
+			storeFunc: func(s *storetest.Store) {
+				addFixtureEntity(s, "default", "bar")
+			},
+			eventStoreFunc: func(store *mockstore.MockStore) {
 				store.On("GetEventByEntityCheck", mock.Anything, "bar", "foo").Return((*corev2.Event)(nil), errors.New("!"))
 				store.On("GetEventByEntityCheck", mock.Anything, "bar", "keepalive").Return(corev2.FixtureEvent("bar", "keepalive"), nil)
 			},
@@ -341,8 +354,10 @@ func TestBuryConditions(t *testing.T) {
 		{
 			name: "do not bury switch otherwise",
 			key:  "default/foo/bar",
-			store: func(store *mockstore.MockStore) {
-				store.On("GetEntityByName", mock.Anything, "bar").Return(corev2.FixtureEntity("bar"), nil)
+			storeFunc: func(s *storetest.Store) {
+				addFixtureEntity(s, "default", "bar")
+			},
+			eventStoreFunc: func(store *mockstore.MockStore) {
 				store.On("GetEventByEntityCheck", mock.Anything, "bar", "foo").Return(corev2.FixtureEvent("bar", "foo"), nil)
 				store.On("GetEventByEntityCheck", mock.Anything, "bar", "keepalive").Return(corev2.FixtureEvent("bar", "keepalive"), nil)
 			},
@@ -351,8 +366,10 @@ func TestBuryConditions(t *testing.T) {
 		{
 			name: "bury when failing keepalive exists",
 			key:  "default/foo/bar",
-			store: func(store *mockstore.MockStore) {
-				store.On("GetEntityByName", mock.Anything, "bar").Return(corev2.FixtureEntity("bar"), nil)
+			storeFunc: func(s *storetest.Store) {
+				addFixtureEntity(s, "default", "bar")
+			},
+			eventStoreFunc: func(store *mockstore.MockStore) {
 				store.On("GetEventByEntityCheck", mock.Anything, "bar", "keepalive").Return(&corev2.Event{
 					Check: &corev2.Check{
 						Status: 1,
@@ -364,8 +381,10 @@ func TestBuryConditions(t *testing.T) {
 		{
 			name: "do not bury when passing keepalive exists",
 			key:  "default/foo/bar",
-			store: func(store *mockstore.MockStore) {
-				store.On("GetEntityByName", mock.Anything, "bar").Return(corev2.FixtureEntity("bar"), nil)
+			storeFunc: func(s *storetest.Store) {
+				addFixtureEntity(s, "default", "bar")
+			},
+			eventStoreFunc: func(store *mockstore.MockStore) {
 				store.On("GetEventByEntityCheck", mock.Anything, "bar", "keepalive").Return(&corev2.Event{
 					Check: &corev2.Check{
 						Status: 0,
@@ -378,14 +397,89 @@ func TestBuryConditions(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			store := new(mockstore.MockStore)
-			if test.store != nil {
-				test.store(store)
+			store := new(storetest.Store)
+			if test.storeFunc != nil {
+				test.storeFunc(store)
 			}
-			eventd := &Eventd{store: store, eventStore: store, ctx: context.Background()}
+
+			eventStore := new(mockstore.MockStore)
+			if test.eventStoreFunc != nil {
+				test.eventStoreFunc(eventStore)
+			}
+
+			eventd := &Eventd{store: store, eventStore: eventStore, ctx: context.Background()}
 			if got, want := eventd.dead(test.key, liveness.Alive, false), test.bury; got != want {
 				t.Fatalf("bad bury result: got %v, want %v", got, want)
 			}
 		})
 	}
+}
+
+func addMockEntityV2(t *testing.T, s *storetest.Store, entity *corev2.Entity) {
+	entityConfig, entityState := corev3.V2EntityToV3(entity)
+
+	stateReq := storev2.NewResourceRequestFromResource(context.Background(), entityState)
+	configReq := storev2.NewResourceRequestFromResource(context.Background(), entityConfig)
+
+	wConfig, err := wrap.Resource(entityConfig)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	wState, err := wrap.Resource(entityState)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	s.On("Get", stateReq).Return(wState, nil)
+	s.On("Get", configReq).Return(wConfig, nil)
+}
+
+func addFixtureEntity(store *storetest.Store, namespace, name string) {
+	entityState := corev3.FixtureEntityState(name)
+	entityState.Metadata.Namespace = namespace
+
+	entityConfig := corev3.FixtureEntityConfig(name)
+	entityConfig.Metadata.Namespace = namespace
+
+	stateReq := storev2.NewResourceRequestFromResource(context.Background(), entityState)
+	configReq := storev2.NewResourceRequestFromResource(context.Background(), entityConfig)
+
+	wConfig, err := wrap.Resource(entityConfig)
+	if err != nil {
+		panic(fmt.Sprintf("couldn't wrap fixture resource, that fixture is probably broken in some way (%v)", err))
+	}
+
+	wState, err := wrap.Resource(entityState)
+	if err != nil {
+		panic(fmt.Sprintf("couldn't wrap fixture resource, that fixture is probably broken in some way (%v)", err))
+	}
+
+	store.On("Get", mock.MatchedBy(func(req storev2.ResourceRequest) bool {
+		return req.Name == configReq.Name &&
+			req.Namespace == configReq.Namespace &&
+			req.StoreName == configReq.StoreName
+	})).Return(wConfig, nil)
+
+	store.On("Get", mock.MatchedBy(func(req storev2.ResourceRequest) bool {
+		return req.Name == stateReq.Name &&
+			req.Namespace == stateReq.Namespace &&
+			req.StoreName == stateReq.StoreName
+	})).Return(wState, nil)
+}
+
+func entityError(s *storetest.Store, namespace, name string, err error) {
+	var nilWrapper *wrap.Wrapper = nil
+
+	s.On("Get", mock.MatchedBy(func(req storev2.ResourceRequest) bool {
+		return req.Name == name && req.Namespace == namespace
+	})).Return(nilWrapper, err)
+}
+
+func entityNotFound(s *storetest.Store, namespace, name string) {
+	entityError(s, namespace, name, &store.ErrNotFound{})
+}
+
+func entityLookupError(s *storetest.Store, namespace, name string) {
+	entityError(s, namespace, name, errors.New("some error"))
 }

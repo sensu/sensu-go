@@ -15,8 +15,12 @@ more.
 ### Fixed
 - Clarifies wording around a secret provider error message.
 - Logs and returns an error if a mutator cannot be found.
+- Errors produced in the agent by assets, check validation, token substitution,
+and event unmarshaling are logged once again. 
 - User-Agent header is only set on new client creation rather than on each
 request.
+- Automatically capitalize the roleRef and subject types in ClusterRoleBindings
+and RoleBindings.
 
 ### Breaking
 - The database schema for entities has changed. After upgrading, users will not
@@ -25,13 +29,16 @@ be able to use their database with older versions of Sensu.
 by modifying the agent's configuration file.
 
 ### Changed
+- Improves logging around the agent websocket connection.
 - Entities are now stored as two separate data structures, in order to optimize
 data access patterns.
-- Improves logging around the agent websocket connection.
 - The `dead` and `handleUpdate` methods in keepalived now use `EntityConfig` and
 `EntityState` respectively.
-- Improves logging around the agent websocket connection.
+- The `dead()` and `createProxyEntity()` methods in eventd now use
+  `corev3.EntityConfig` and `corev3.EntityState`.
 - sensu-agent configuration can now be managed via the HTTP API.
+- ClusterRoleBinding and RoleBinding subjects names can now contain any unicode
+characters.
 - Enriches output of `sensuctl asset add` with help usage for how to use the runtime asset.
 
 ## [5.21.0] - 2020-06-10

@@ -11,13 +11,16 @@ import (
 
 	"github.com/coreos/etcd/clientv3"
 	"github.com/prometheus/client_golang/prometheus"
+	"github.com/sirupsen/logrus"
+
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
+	corev3 "github.com/sensu/sensu-go/api/core/v3"
 	"github.com/sensu/sensu-go/backend/keepalived"
 	"github.com/sensu/sensu-go/backend/liveness"
 	"github.com/sensu/sensu-go/backend/messaging"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/backend/store/cache"
-	"github.com/sirupsen/logrus"
+	storev2 "github.com/sensu/sensu-go/backend/store/v2"
 )
 
 const (
@@ -59,7 +62,7 @@ const deletedEventSentinel = -1
 type Eventd struct {
 	ctx             context.Context
 	cancel          context.CancelFunc
-	store           store.Store
+	store           storev2.Interface
 	eventStore      store.EventStore
 	bus             messaging.MessageBus
 	workerCount     int
@@ -80,7 +83,7 @@ type Option func(*Eventd) error
 
 // Config configures Eventd
 type Config struct {
-	Store           store.Store
+	Store           storev2.Interface
 	EventStore      store.EventStore
 	Bus             messaging.MessageBus
 	LivenessFactory liveness.Factory
@@ -350,7 +353,11 @@ func (e *Eventd) dead(key string, prev liveness.State, leader bool) (bury bool) 
 
 	// The entity has been deleted, and so there is no reason to track check
 	// TTL for it anymore.
-	if ent, err := e.store.GetEntityByName(ctx, entity); err == nil && ent == nil {
+	config := corev3.NewEntityConfig(namespace, entity)
+	req := storev2.NewResourceRequestFromResource(ctx, config)
+
+	_, err = e.store.Get(req)
+	if _, ok := err.(*store.ErrNotFound); ok {
 		return true
 	} else if err != nil {
 		lager.WithError(err).Error("check ttl: error retrieving entity")

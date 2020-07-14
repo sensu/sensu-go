@@ -4,13 +4,17 @@ import (
 	"context"
 
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
+	corev3 "github.com/sensu/sensu-go/api/core/v3"
 	"github.com/sensu/sensu-go/backend/store"
+	storev2 "github.com/sensu/sensu-go/backend/store/v2"
+	"github.com/sensu/sensu-go/backend/store/v2/wrap"
 )
 
 // createProxyEntity creates a proxy entity for the given event if the entity
 // does not exist already and returns the entity created
-func createProxyEntity(event *corev2.Event, s store.EntityStore) error {
+func createProxyEntity(event *corev2.Event, s storev2.Interface) error {
 	entityName := event.Entity.Name
+	namespace := event.Entity.Namespace
 
 	// Override the entity name with proxy_entity_name if it was provided
 	if event.HasCheck() && event.Check.ProxyEntityName != "" {
@@ -20,39 +24,86 @@ func createProxyEntity(event *corev2.Event, s store.EntityStore) error {
 	}
 
 	// Determine if the entity exists
-	ctx := context.WithValue(context.Background(), corev2.NamespaceKey, event.Entity.Namespace)
-	entity, err := s.GetEntityByName(ctx, entityName)
-	if err != nil {
-		return err
-	}
+	//NOTE(ccressent): there is no timeout for this operation?
+	entityMeta := corev2.NewObjectMeta(entityName, namespace)
 
-	// If the entity does not exist, create a proxy entity
-	if entity == nil {
-		if event.Check.ProxyEntityName != "" {
-			// Create a brand new entity since we can't rely on the provided entity,
-			// which represents the agent's entity
-			entity = &corev2.Entity{
-				EntityClass:   corev2.EntityProxyClass,
-				Subscriptions: []string{corev2.GetEntitySubscription(entityName)},
-				ObjectMeta: corev2.ObjectMeta{
-					Namespace: event.Entity.Namespace,
-					Name:      entityName,
-				},
-			}
-		} else {
-			// Use on the provided entity
-			entity = event.Entity
-			entity.EntityClass = corev2.EntityProxyClass
-			entity.Subscriptions = append(entity.Subscriptions, corev2.GetEntitySubscription(entityName))
+	state := corev3.NewEntityState(namespace, entityName)
+	config := corev3.NewEntityConfig(namespace, entityName)
+
+	configReq := storev2.NewResourceRequestFromResource(context.Background(), config)
+	stateReq := storev2.NewResourceRequestFromResource(context.Background(), state)
+
+	var wState *wrap.Wrapper
+	var wConfig *wrap.Wrapper
+
+	wConfig, err := s.Get(configReq)
+	if err == nil {
+		if err := wConfig.UnwrapInto(config); err != nil {
+			return err
 		}
 
-		entity.CreatedBy = event.CreatedBy
-		if err := s.UpdateEntity(ctx, entity); err != nil {
+		// Since the entity config exists, we fetch its associated state in
+		// order to create a fully formed corev2.Entity for the event.
+		wState, err = s.Get(stateReq)
+		if err != nil {
+			return err
+		}
+
+		if err := wState.UnwrapInto(state); err != nil {
+			return err
+		}
+	} else if err != nil {
+		switch err.(type) {
+		case *store.ErrNotFound:
+			// If the entity does not exist, create a proxy entity
+			if event.Check.ProxyEntityName != "" {
+				// Create a brand new entity since we can't rely on the provided
+				// entity, which represents the agent's entity
+				state.SetMetadata(&entityMeta)
+				config.SetMetadata(&entityMeta)
+			} else {
+				// Use on the provided entity
+				config, state = corev3.V2EntityToV3(event.Entity)
+			}
+
+			state.Metadata.CreatedBy = event.CreatedBy
+
+			// Wrap and store the new entity's state. We use CreateOrUpdate()
+			// because we want to overwrite any existing EntityState that could
+			// have been left behind due to a failed operation or failure to
+			// clean up old state.
+			wState, err := wrap.Resource(state)
+			if err != nil {
+				return err
+			}
+			if err := s.CreateOrUpdate(stateReq, wState); err != nil {
+				return err
+			}
+
+			config.EntityClass = corev2.EntityProxyClass
+			config.Subscriptions = append(config.Subscriptions, corev2.GetEntitySubscription(entityName))
+
+			// Wrap and store the new entity's configuration. We use
+			// CreateIfNotExists() to assert that this EntityConfig is indeed
+			// brand new.
+			wConfig, err := wrap.Resource(config)
+			if err != nil {
+				return err
+			}
+			if err := s.CreateIfNotExists(configReq, wConfig); err != nil {
+				return err
+			}
+		default:
 			return err
 		}
 	}
 
-	// Replace the event's entity with our entity
+	entity, err := corev3.V3EntityToV2(config, state)
+	if err != nil {
+		return err
+	}
+
+	// Replace the event's entity with the proxy entity
 	event.Entity = entity
 	return nil
 }
