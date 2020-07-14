@@ -6,12 +6,15 @@ import (
 	"reflect"
 	"testing"
 
+	"github.com/stretchr/testify/mock"
+
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/authorization"
 	"github.com/sensu/sensu-go/backend/authorization/rbac"
 	"github.com/sensu/sensu-go/backend/store"
+	storev2 "github.com/sensu/sensu-go/backend/store/v2"
+	"github.com/sensu/sensu-go/backend/store/v2/storetest"
 	"github.com/sensu/sensu-go/testing/mockstore"
-	"github.com/stretchr/testify/mock"
 )
 
 var defaultEntity = corev2.FixtureEntity("default")
@@ -139,9 +142,10 @@ func TestListEntities(t *testing.T) {
 		t.Run(test.Name, func(t *testing.T) {
 			ctx := test.Ctx()
 			store := test.Store()
+			storev2 := &storetest.Store{}
 			eventStore := test.EventStore()
 			auth := test.Auth()
-			client := NewEntityClient(store, eventStore, auth)
+			client := NewEntityClient(store, storev2, eventStore, auth)
 			entities, err := client.ListEntities(ctx)
 			if err != nil && !test.ExpErr {
 				t.Fatal(err)
@@ -282,9 +286,10 @@ func TestGetEntity(t *testing.T) {
 		t.Run(test.Name, func(t *testing.T) {
 			ctx := test.Ctx()
 			store := test.Store()
+			storev2 := &storetest.Store{}
 			eventStore := test.EventStore()
 			auth := test.Auth()
-			client := NewEntityClient(store, eventStore, auth)
+			client := NewEntityClient(store, storev2, eventStore, auth)
 			entities, err := client.FetchEntity(ctx, "default")
 			if err != nil && !test.ExpErr {
 				t.Fatal(err)
@@ -420,9 +425,10 @@ func TestCreateEntity(t *testing.T) {
 		t.Run(test.Name, func(t *testing.T) {
 			ctx := test.Ctx()
 			store := test.Store()
+			storev2 := &storetest.Store{}
 			eventStore := test.EventStore()
 			auth := test.Auth()
-			client := NewEntityClient(store, eventStore, auth)
+			client := NewEntityClient(store, storev2, eventStore, auth)
 			err := client.CreateEntity(ctx, defaultEntity)
 			if err != nil && !test.ExpErr {
 				t.Fatal(err)
@@ -439,6 +445,7 @@ func TestUpdateEntity(t *testing.T) {
 		Name       string
 		Ctx        func() context.Context
 		Store      func() store.Store
+		Storev2    func() storev2.Interface
 		EventStore func() store.EventStore
 		Auth       func() authorization.Authorizer
 		ExpErr     bool
@@ -449,6 +456,9 @@ func TestUpdateEntity(t *testing.T) {
 			Store: func() store.Store {
 				store := new(mockstore.MockStore)
 				return store
+			},
+			Storev2: func() storev2.Interface {
+				return new(storetest.Store)
 			},
 			EventStore: func() store.EventStore {
 				store := new(mockstore.MockStore)
@@ -467,6 +477,9 @@ func TestUpdateEntity(t *testing.T) {
 			Store: func() store.Store {
 				return new(mockstore.MockStore)
 			},
+			Storev2: func() storev2.Interface {
+				return new(storetest.Store)
+			},
 			EventStore: func() store.EventStore {
 				store := new(mockstore.MockStore)
 				return store
@@ -474,7 +487,7 @@ func TestUpdateEntity(t *testing.T) {
 			Auth: func() authorization.Authorizer {
 				auth := &mockAuth{
 					attrs: map[authorization.AttributesKey]bool{
-						authorization.AttributesKey{
+						{
 							APIGroup:     "core",
 							APIVersion:   "v2",
 							Namespace:    "default",
@@ -497,6 +510,9 @@ func TestUpdateEntity(t *testing.T) {
 			Store: func() store.Store {
 				return new(mockstore.MockStore)
 			},
+			Storev2: func() storev2.Interface {
+				return new(storetest.Store)
+			},
 			EventStore: func() store.EventStore {
 				store := new(mockstore.MockStore)
 				return store
@@ -504,7 +520,7 @@ func TestUpdateEntity(t *testing.T) {
 			Auth: func() authorization.Authorizer {
 				auth := &mockAuth{
 					attrs: map[authorization.AttributesKey]bool{
-						authorization.AttributesKey{
+						{
 							APIGroup:     "core",
 							APIVersion:   "v2",
 							Namespace:    "default",
@@ -529,6 +545,11 @@ func TestUpdateEntity(t *testing.T) {
 				store.On("CreateOrUpdateResource", mock.Anything, defaultEntity).Return(nil)
 				return store
 			},
+			Storev2: func() storev2.Interface {
+				s := new(storetest.Store)
+				s.On("CreateOrUpdate", mock.Anything, mock.Anything).Return(nil)
+				return s
+			},
 			EventStore: func() store.EventStore {
 				store := new(mockstore.MockStore)
 				return store
@@ -536,7 +557,7 @@ func TestUpdateEntity(t *testing.T) {
 			Auth: func() authorization.Authorizer {
 				auth := &mockAuth{
 					attrs: map[authorization.AttributesKey]bool{
-						authorization.AttributesKey{
+						{
 							APIGroup:     "core",
 							APIVersion:   "v2",
 							Namespace:    "default",
@@ -552,19 +573,45 @@ func TestUpdateEntity(t *testing.T) {
 		},
 	}
 	for _, test := range tests {
-		t.Run(test.Name, func(t *testing.T) {
+		t.Run("agent entity/"+test.Name, func(t *testing.T) {
 			ctx := test.Ctx()
 			store := test.Store()
+			storev2 := test.Storev2()
 			eventStore := test.EventStore()
 			auth := test.Auth()
-			client := NewEntityClient(store, eventStore, auth)
+			client := NewEntityClient(store, storev2, eventStore, auth)
+
+			defaultEntity.EntityClass = corev2.EntityAgentClass
 			err := client.UpdateEntity(ctx, defaultEntity)
 			if err != nil && !test.ExpErr {
 				t.Fatal(err)
 			}
+
 			if err == nil && test.ExpErr {
 				t.Fatal("expected non-nil error")
 			}
+
+			mock.AssertExpectationsForObjects(t, storev2)
+		})
+		t.Run("proxy entity/"+test.Name, func(t *testing.T) {
+			ctx := test.Ctx()
+			store := test.Store()
+			storev2 := test.Storev2()
+			eventStore := test.EventStore()
+			auth := test.Auth()
+			client := NewEntityClient(store, storev2, eventStore, auth)
+
+			defaultEntity.EntityClass = corev2.EntityProxyClass
+			err := client.UpdateEntity(ctx, defaultEntity)
+			if err != nil && !test.ExpErr {
+				t.Fatal(err)
+			}
+
+			if err == nil && test.ExpErr {
+				t.Fatal("expected non-nil error")
+			}
+
+			mock.AssertExpectationsForObjects(t, store)
 		})
 	}
 }
@@ -792,9 +839,10 @@ func TestDeleteEntity(t *testing.T) {
 		t.Run(test.Name, func(t *testing.T) {
 			ctx := test.Ctx()
 			store := test.Store()
+			storev2 := &storetest.Store{}
 			eventStore := test.EventStore()
 			auth := test.Auth()
-			client := NewEntityClient(store, eventStore, auth)
+			client := NewEntityClient(store, storev2, eventStore, auth)
 			err := client.DeleteEntity(ctx, "default")
 			if err != nil && !test.ExpErr {
 				t.Fatal(err)
