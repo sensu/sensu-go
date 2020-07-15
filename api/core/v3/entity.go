@@ -36,7 +36,10 @@ func V2EntityToV3(e *corev2.Entity) (*EntityConfig, *EntityState) {
 		Redact:            e.Redact,
 	}
 	state := EntityState{
-		Metadata:          &e.ObjectMeta,
+		Metadata: &corev2.ObjectMeta{
+			Name:      e.ObjectMeta.Name,
+			Namespace: e.ObjectMeta.Namespace,
+		},
 		System:            e.System,
 		LastSeen:          e.LastSeen,
 		SensuAgentVersion: e.SensuAgentVersion,
@@ -67,12 +70,6 @@ func V3EntityToV2(cfg *EntityConfig, state *EntityState) (*corev2.Entity, error)
 		Name:        cfg.Metadata.Name,
 		Labels:      make(map[string]string),
 		Annotations: make(map[string]string),
-	}
-	for k, v := range state.Metadata.Labels {
-		meta.Labels[k] = v
-	}
-	for k, v := range state.Metadata.Annotations {
-		meta.Annotations[k] = v
 	}
 	for k, v := range cfg.Metadata.Labels {
 		meta.Labels[k] = v
