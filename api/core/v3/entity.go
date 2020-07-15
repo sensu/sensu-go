@@ -68,12 +68,6 @@ func V3EntityToV2(cfg *EntityConfig, state *EntityState) (*corev2.Entity, error)
 		Labels:      make(map[string]string),
 		Annotations: make(map[string]string),
 	}
-	for k, v := range state.Metadata.Labels {
-		meta.Labels[k] = v
-	}
-	for k, v := range state.Metadata.Annotations {
-		meta.Annotations[k] = v
-	}
 	for k, v := range cfg.Metadata.Labels {
 		meta.Labels[k] = v
 	}
