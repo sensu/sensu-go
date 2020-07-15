@@ -30,6 +30,8 @@ func TestNamespaceStorage(t *testing.T) {
 		err = s.CreateNamespace(ctx, namespace)
 		assert.NoError(t, err)
 
+		ctx = context.WithValue(ctx, corev2.NamespaceKey, namespace.Name)
+
 		result, err := s.GetNamespace(ctx, namespace.Name)
 		assert.NoError(t, err)
 		assert.Equal(t, namespace.Name, result.Name)
@@ -46,17 +48,16 @@ func TestNamespaceStorage(t *testing.T) {
 		assert.Equal(t, 2, len(namespaces))
 
 		// Delete a non-empty namespace
-		entity := types.FixtureEntity("entity")
-		entity.ObjectMeta.Namespace = namespace.Name
-		require.NoError(t, s.UpdateEntity(ctx, entity))
+		check := types.FixtureCheckConfig("entity")
+		check.ObjectMeta.Namespace = namespace.Name
+		require.NoError(t, s.UpdateCheckConfig(ctx, check))
 		err = s.DeleteNamespace(ctx, namespace.Name)
 		assert.Error(t, err)
-		err = s.DeleteEntity(ctx, entity)
+		err = s.DeleteCheckConfigByName(ctx, check.ObjectMeta.Name)
 		assert.NoError(t, err)
 
 		// Delete a non-empty namespace w/ roles
-		require.NoError(t, s.UpdateRole(ctx, types.FixtureRole("1", namespace.Name)))
-		require.NoError(t, s.UpdateRole(ctx, types.FixtureRole("2", "asdf")))
+		require.NoError(t, s.CreateOrUpdateRole(ctx, types.FixtureRole("1", namespace.Name)))
 		err = s.DeleteNamespace(ctx, namespace.Name)
 		assert.Error(t, err)
 
