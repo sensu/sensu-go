@@ -49,7 +49,7 @@ func TestFetchNamespace(t *testing.T) {
 				{
 					Subjects: []corev2.Subject{
 						{
-							Type: "Group",
+							Type: corev2.GroupType,
 							Name: "cluster-admins",
 						},
 					},
@@ -87,7 +87,7 @@ func TestFetchNamespace(t *testing.T) {
 				{
 					Subjects: []corev2.Subject{
 						{
-							Type: "Group",
+							Type: corev2.GroupType,
 							Name: "cluster-admins",
 						},
 					},
@@ -126,7 +126,7 @@ func TestFetchNamespace(t *testing.T) {
 				{
 					Subjects: []corev2.Subject{
 						{
-							Type: "Group",
+							Type: corev2.GroupType,
 							Name: "cluster-admins",
 						},
 					},
@@ -165,7 +165,7 @@ func TestFetchNamespace(t *testing.T) {
 				{
 					Subjects: []corev2.Subject{
 						{
-							Type: "Group",
+							Type: corev2.GroupType,
 							Name: "cluster-admins",
 						},
 					},
@@ -203,7 +203,7 @@ func TestFetchNamespace(t *testing.T) {
 				{
 					Subjects: []corev2.Subject{
 						{
-							Type: "Group",
+							Type: corev2.GroupType,
 							Name: "cluster-admins",
 						},
 					},
@@ -317,7 +317,7 @@ func TestFetchNamespace(t *testing.T) {
 				{
 					Subjects: []corev2.Subject{
 						{
-							Type: "Group",
+							Type: corev2.GroupType,
 							Name: "ops",
 						},
 					},
@@ -355,7 +355,7 @@ func TestFetchNamespace(t *testing.T) {
 				{
 					Subjects: []corev2.Subject{
 						{
-							Type: "Group",
+							Type: corev2.GroupType,
 							Name: "local-admins",
 						},
 					},
@@ -450,7 +450,7 @@ func TestNamespaceList(t *testing.T) {
 				{
 					Subjects: []corev2.Subject{
 						{
-							Type: "Group",
+							Type: corev2.GroupType,
 							Name: "cluster-admins",
 						},
 					},
@@ -493,7 +493,7 @@ func TestNamespaceList(t *testing.T) {
 				{
 					Subjects: []corev2.Subject{
 						{
-							Type: "Group",
+							Type: corev2.GroupType,
 							Name: "cluster-admins",
 						},
 					},
@@ -538,7 +538,7 @@ func TestNamespaceList(t *testing.T) {
 				{
 					Subjects: []corev2.Subject{
 						{
-							Type: "Group",
+							Type: corev2.GroupType,
 							Name: "plebs",
 						},
 					},
@@ -584,7 +584,7 @@ func TestNamespaceList(t *testing.T) {
 				{
 					Subjects: []corev2.Subject{
 						{
-							Type: "Group",
+							Type: corev2.GroupType,
 							Name: "plebs",
 						},
 					},
@@ -630,7 +630,7 @@ func TestNamespaceList(t *testing.T) {
 				{
 					Subjects: []corev2.Subject{
 						{
-							Type: "Group",
+							Type: corev2.GroupType,
 							Name: "plebs",
 						},
 					},
@@ -674,7 +674,7 @@ func TestNamespaceList(t *testing.T) {
 				{
 					Subjects: []corev2.Subject{
 						{
-							Type: "Group",
+							Type: corev2.GroupType,
 							Name: "plebs",
 						},
 					},
@@ -716,7 +716,7 @@ func TestNamespaceList(t *testing.T) {
 				{
 					Subjects: []corev2.Subject{
 						{
-							Type: "Group",
+							Type: corev2.GroupType,
 							Name: "local-admins",
 						},
 					},

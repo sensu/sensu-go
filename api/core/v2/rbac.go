@@ -33,6 +33,11 @@ const (
 	// UserType represents a user object in a subject
 	UserType = "User"
 
+	// ClusterRoleType represents a ClusterRole in a RoleRef
+	ClusterRoleType = "ClusterRole"
+	// RoleType represents a Role in a RoleRef
+	RoleType = "Role"
+
 	// LocalSelfUserResource represents a local user trying to view itself
 	// or change its password
 	LocalSelfUserResource = "localselfuser"
@@ -101,7 +106,7 @@ func FixtureRoleBinding(name, namespace string) *RoleBinding {
 	return &RoleBinding{
 		ObjectMeta: NewObjectMeta(name, namespace),
 		Subjects:   []Subject{FixtureSubject(UserType, "username")},
-		RoleRef:    FixtureRoleRef("Role", "read-write"),
+		RoleRef:    FixtureRoleRef(RoleType, "read-write"),
 	}
 }
 
@@ -120,7 +125,7 @@ func FixtureClusterRoleBinding(name string) *ClusterRoleBinding {
 	return &ClusterRoleBinding{
 		ObjectMeta: NewObjectMeta(name, ""),
 		Subjects:   []Subject{FixtureSubject(UserType, "username")},
-		RoleRef:    FixtureRoleRef("ClusterRole", "read-write"),
+		RoleRef:    FixtureRoleRef(ClusterRoleType, "read-write"),
 	}
 }
 
@@ -178,15 +183,17 @@ func (b *ClusterRoleBinding) Validate() error {
 		return errors.New("the ClusterRoleBinding name " + err.Error())
 	}
 
-	if b.RoleRef.Name == "" || b.RoleRef.Type == "" {
-		return errors.New("a ClusterRoleBinding needs a roleRef")
-	}
-
 	if b.Namespace != "" {
 		return errors.New("ClusterRoleBinding cannot have a namespace")
 	}
 
-	return ValidateSubjects(b.Subjects)
+	if err := ValidateRoleRef(&b.RoleRef); err != nil {
+		return err
+	}
+
+	var err error
+	b.Subjects, err = ValidateSubjects(b.Subjects)
+	return err
 }
 
 // StorePrefix returns the path prefix to this resource in the store
@@ -254,30 +261,56 @@ func (b *RoleBinding) Validate() error {
 		return errors.New("the RoleBinding namespace must be set")
 	}
 
-	if b.RoleRef.Name == "" || b.RoleRef.Type == "" {
-		return errors.New("a RoleBinding needs a roleRef")
+	if err := ValidateRoleRef(&b.RoleRef); err != nil {
+		return err
 	}
 
-	return ValidateSubjects(b.Subjects)
+	var err error
+	b.Subjects, err = ValidateSubjects(b.Subjects)
+	return err
+}
+
+// ValidateRoleRef checks that the role reference has a valid reference to
+// either a Role or a ClusterRole
+func ValidateRoleRef(roleRef *RoleRef) error {
+	roleRef.Type = strings.Title(roleRef.Type)
+	if roleRef.Type != ClusterRoleType && roleRef.Type != RoleType {
+		return fmt.Errorf(
+			"roleRef type %q is invalid, expected either %q or %q",
+			roleRef.Type, ClusterRoleType, RoleType,
+		)
+	}
+
+	if len(roleRef.Name) == 0 {
+		return fmt.Errorf("roleRef name for %s is required", roleRef.Type)
+	}
+
+	return nil
 }
 
 // ValidateSubjects checks that there is at least one subject, and all subjects
 // have non-empty types and names.
-func ValidateSubjects(subjects []Subject) error {
+func ValidateSubjects(subjects []Subject) ([]Subject, error) {
 	if len(subjects) == 0 {
-		return errors.New("a RoleBinding must have at least one subject")
+		return subjects, errors.New("a RoleBinding must have at least one subject")
 	}
 
 	for i, subject := range subjects {
-		if err := ValidateName(subject.Type); err != nil {
-			return fmt.Errorf("subject %d: type not valid: %s", i, err)
+		subjects[i].Type = strings.Title(subject.Type)
+		if subjects[i].Type != GroupType && subjects[i].Type != UserType {
+			return subjects, fmt.Errorf(
+				"subject type %q is invalid, expected either %q or %q",
+				subject.Type, GroupType, UserType,
+			)
 		}
-		if err := ValidateName(subject.Name); err != nil {
-			return fmt.Errorf("subject %d: name not valid: %s", i, err)
+		if len(subject.Name) == 0 {
+			return subjects, fmt.Errorf(
+				"subject name for the %q type is required", subjects[i].Type,
+			)
 		}
 	}
 
-	return nil
+	return subjects, nil
 }
 
 // ResourceMatches returns whether the specified requestedResource matches any
@@ -414,18 +447,22 @@ func (b *RoleBinding) SetObjectMeta(meta ObjectMeta) {
 	b.ObjectMeta = meta
 }
 
+// RBACName returns the name of the resource for RBAC
 func (*ClusterRoleBinding) RBACName() string {
 	return "clusterrolebindings"
 }
 
+// RBACName returns the name of the resource for RBAC
 func (*RoleBinding) RBACName() string {
 	return "rolebindings"
 }
 
+// RBACName returns the name of the resource for RBAC
 func (*ClusterRole) RBACName() string {
 	return "clusterroles"
 }
 
+// RBACName returns the name of the resource for RBAC
 func (*Role) RBACName() string {
 	return "roles"
 }

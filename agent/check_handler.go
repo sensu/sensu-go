@@ -275,6 +275,10 @@ func (a *Agent) executeCheck(ctx context.Context, request *corev2.CheckRequest, 
 }
 
 func (a *Agent) sendFailure(event *corev2.Event, err error) {
+	logger.WithFields(logrus.Fields{
+		"event": event,
+	}).Error(err)
+
 	event.Check.Output = err.Error()
 	event.Check.Status = 3
 	event.Entity = a.getAgentEntity()

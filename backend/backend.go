@@ -271,7 +271,7 @@ func Initialize(ctx context.Context, config *Config) (*Backend, error) {
 	event, err := eventd.New(
 		b.RunContext(),
 		eventd.Config{
-			Store:           stor,
+			Store:           storv2,
 			EventStore:      eventStoreProxy,
 			Bus:             bus,
 			LivenessFactory: liveness.EtcdFactory(b.RunContext(), b.Client),
