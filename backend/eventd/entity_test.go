@@ -238,8 +238,8 @@ func TestCreateProxyEntity(t *testing.T) {
 				Entity: corev2.FixtureEntity("foo"),
 			},
 			storeFunc: func(s *storetest.Store, e *corev2.Event) {
+				e.Entity.ObjectMeta.Name = "bar"
 				_, state := corev3.V2EntityToV3(e.Entity)
-				state.Metadata.Name = "bar"
 				stateReq := storev2.NewResourceRequestFromResource(context.Background(), state)
 
 				config := corev3.FixtureEntityConfig("bar")
