@@ -58,6 +58,7 @@ func (t *TLSOptions) ToServerTLSConfig() (*tls.Config, error) {
 	}
 
 	// useful when we present multiple certificates
+	//lint:ignore SA1019 it's only deprecated, we can continue to use it for now
 	cfg.BuildNameToCertificate()
 
 	// apply hardened TLS settings
