@@ -8,6 +8,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/gogo/protobuf/proto"
 	"github.com/google/uuid"
 	"github.com/sensu/sensu-go/agent"
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
@@ -282,7 +283,7 @@ func (k *Keepalived) processKeepalives(ctx context.Context) {
 				continue
 			}
 
-			if err := k.handleEntityRegistration(entity); err != nil {
+			if err := k.handleEntityRegistration(entity, event); err != nil {
 				logger.WithError(err).Error("error handling entity registration")
 				if _, ok := err.(*store.ErrInternal); ok {
 					// Fatal error
@@ -339,7 +340,7 @@ func (k *Keepalived) HandleError(err error) {
 	logger.WithError(err).Error(err)
 }
 
-func (k *Keepalived) handleEntityRegistration(entity *corev2.Entity) error {
+func (k *Keepalived) handleEntityRegistration(entity *corev2.Entity, event *corev2.Event) error {
 	if entity.EntityClass != corev2.EntityAgentClass {
 		return nil
 	}
@@ -348,7 +349,7 @@ func (k *Keepalived) handleEntityRegistration(entity *corev2.Entity) error {
 	tctx, cancel := context.WithTimeout(ctx, k.storeTimeout)
 	defer cancel()
 
-	config, _ := corev3.V2EntityToV3(entity)
+	config, state := corev3.V2EntityToV3(entity)
 	wrapper, err := wrap.Resource(config)
 	if err != nil {
 		logger.WithError(err).Error("error wrapping entity config")
@@ -386,12 +387,23 @@ func (k *Keepalived) handleEntityRegistration(entity *corev2.Entity) error {
 			logger.WithError(err).Error("error unwrapping entity config")
 			return err
 		}
+		if proto.Equal(&e, config) {
+			// no need to send the entity config back to the agent if they are
+			// equal.
+			return nil
+		}
 		watchEvent.Entity = &e
 		err = k.bus.Publish(messaging.EntityConfigTopic(e.Metadata.Namespace, e.Metadata.Name), watchEvent)
 		if err != nil {
 			logger.WithError(err).Error("error publishing entity config")
 			return err
 		}
+		newEntity, err := corev3.V3EntityToV2(&e, state)
+		if err != nil {
+			logger.WithError(err).Error("error updating entity")
+			return err
+		}
+		event.Entity = newEntity
 	} else {
 		return err
 	}

@@ -295,7 +295,7 @@ func TestProcessRegistration(t *testing.T) {
 
 			storev2.On("CreateIfNotExists", mock.Anything, mock.Anything).Return(tc.storev2Err)
 			storev2.On("Get", mock.Anything).Return(tc.storeEntity, nil)
-			err = keepalived.handleEntityRegistration(tc.entity)
+			err = keepalived.handleEntityRegistration(tc.entity, new(corev2.Event))
 			require.NoError(t, err)
 
 			assert.Equal(t, tc.expectedEventLen, len(tsubEvent.ch))
