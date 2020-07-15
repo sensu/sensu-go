@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"sort"
+	"strings"
 	"sync"
 	"time"
 
@@ -74,7 +76,14 @@ type Session struct {
 	unmarshal    UnmarshalFunc
 	entityConfig *entityConfig
 
-	subscriptions chan messaging.Subscription
+	mu               sync.Mutex
+	subscriptionsMap map[string]subscription
+}
+
+// subscription is used to abstract a message.Subscription and therefore allow
+// easier testing
+type subscription interface {
+	Cancel() error
 }
 
 // entityConfig is used by a session to subscribe to entity config updates
@@ -133,19 +142,19 @@ func NewSession(ctx context.Context, cfg SessionConfig) (*Session, error) {
 	ctx, cancel := context.WithCancel(ctx)
 
 	s := &Session{
-		conn:          cfg.Conn,
-		cfg:           cfg,
-		wg:            &sync.WaitGroup{},
-		checkChannel:  make(chan interface{}, 100),
-		store:         cfg.Store,
-		storev2:       cfg.Storev2,
-		bus:           cfg.Bus,
-		subscriptions: make(chan messaging.Subscription, len(cfg.Subscriptions)),
-		ctx:           ctx,
-		cancel:        cancel,
-		ringPool:      cfg.RingPool,
-		unmarshal:     cfg.Unmarshal,
-		marshal:       cfg.Marshal,
+		conn:             cfg.Conn,
+		cfg:              cfg,
+		wg:               &sync.WaitGroup{},
+		checkChannel:     make(chan interface{}, 100),
+		store:            cfg.Store,
+		storev2:          cfg.Storev2,
+		bus:              cfg.Bus,
+		subscriptionsMap: map[string]subscription{},
+		ctx:              ctx,
+		cancel:           cancel,
+		ringPool:         cfg.RingPool,
+		unmarshal:        cfg.Unmarshal,
+		marshal:          cfg.Marshal,
 		entityConfig: &entityConfig{
 			subscriptions:  make(chan messaging.Subscription, 1),
 			updatesChannel: make(chan interface{}, 10),
@@ -253,11 +262,12 @@ func (s *Session) sender() {
 				continue
 			}
 
-			logger.WithFields(logrus.Fields{
+			lager := logger.WithFields(logrus.Fields{
 				"action":    watchEvent.Action.String(),
 				"entity":    watchEvent.Entity.Metadata.Name,
 				"namespace": watchEvent.Entity.Metadata.Namespace,
-			}).Debug("entity update received")
+			})
+			lager.Debug("entity update received")
 
 			// Handle the delete and unknown watch events
 			switch watchEvent.Action {
@@ -267,17 +277,14 @@ func (s *Session) sender() {
 				s.cancel()
 				continue
 			case store.WatchUnknown:
-				logger.Error("session received unknown watch event")
+				lager.Error("session received unknown watch event")
 				continue
 			}
 
 			// Enforce the entity class to agent
 			if watchEvent.Entity.EntityClass != corev2.EntityAgentClass {
 				watchEvent.Entity.EntityClass = corev2.EntityAgentClass
-				logger.WithFields(logrus.Fields{
-					"entity":    watchEvent.Entity.Metadata.Name,
-					"namespace": watchEvent.Entity.Metadata.Namespace,
-				}).Warningf(
+				lager.Warningf(
 					"misconfigured entity class %q, updating entity to be a %s",
 					watchEvent.Entity.EntityClass,
 					corev2.EntityAgentClass,
@@ -287,12 +294,12 @@ func (s *Session) sender() {
 				configReq := storev2.NewResourceRequestFromResource(s.ctx, watchEvent.Entity)
 				wrapper, err := wrap.Resource(watchEvent.Entity)
 				if err != nil {
-					logger.WithError(err).Error("could not wrap the entity config")
+					lager.WithError(err).Error("could not wrap the entity config")
 					continue
 				}
 
 				if err := s.storev2.CreateOrUpdate(configReq, wrapper); err != nil {
-					logger.WithError(err).Error("could not update the entity config")
+					lager.WithError(err).Error("could not update the entity config")
 				}
 
 				// We will not immediately send an update to the agent, but rather wait
@@ -302,8 +309,27 @@ func (s *Session) sender() {
 
 			bytes, err := s.marshal(watchEvent.Entity)
 			if err != nil {
-				logger.WithError(err).Error("session failed to serialize entity config")
+				lager.WithError(err).Error("session failed to serialize entity config")
 				continue
+			}
+
+			// Determine if some subscriptions were added and/or removed, by first
+			// sorting the subscriptions and then comparing those
+			s.mu.Lock()
+			oldSubscriptions := sortSubscriptions(s.cfg.Subscriptions)
+			newSubscriptions := sortSubscriptions(watchEvent.Entity.Subscriptions)
+			added, removed := diff(oldSubscriptions, newSubscriptions)
+			s.cfg.Subscriptions = newSubscriptions
+			s.mu.Unlock()
+			if len(added) > 0 {
+				lager.Debugf("found %d new subscription(s): %v", len(added), added)
+				// The error will already be logged so we can ignore it, and we still
+				// want to send the entity config update to the agent
+				_ = s.subscribe(added)
+			}
+			if len(removed) > 0 {
+				lager.Debugf("found %d subscription(s) to unsubscribe from: %v", len(removed), removed)
+				s.unsubscribe(removed)
 			}
 
 			msg = transport.NewMessage(transport.MessageTypeEntityConfig, bytes)
@@ -355,34 +381,24 @@ func (s *Session) Start() (err error) {
 		s.stop()
 	}()
 
-	namespace := s.cfg.Namespace
-	agentName := fmt.Sprintf("%s:%s-%s", namespace, s.cfg.AgentName, uuid.New().String())
-
 	defer func() {
 		if err != nil {
 			s.cancel()
 		}
 	}()
 
-	for _, sub := range s.cfg.Subscriptions {
-		// Ignore empty subscriptions
-		if sub == "" {
-			continue
-		}
-
-		topic := messaging.SubscriptionTopic(namespace, sub)
-		logger.WithField("topic", topic).Debug("subscribing to topic")
-		subscription, err := s.bus.Subscribe(topic, agentName, s)
-		if err != nil {
-			logger.WithError(err).Error("error starting subscription")
-			return err
-		}
-		s.subscriptions <- subscription
+	// Subscribe the session to every configured check subscriptions
+	if err := s.subscribe(s.cfg.Subscriptions); err != nil {
+		return err
 	}
 
 	// Subscribe the agent to its entity_config topic
-	topic := messaging.EntityConfigTopic(namespace, s.cfg.AgentName)
+	topic := messaging.EntityConfigTopic(s.cfg.Namespace, s.cfg.AgentName)
 	logger.WithField("topic", topic).Debug("subscribing to topic")
+	// Get a unique name for the agent, which will be used as the consumer of the
+	// bus, in order to avoid problems with an agent reconnecting before its
+	// session is ended
+	agentName := agentUUID(s.cfg.Namespace, s.cfg.AgentName)
 	subscription, err := s.bus.Subscribe(topic, agentName, s.entityConfig)
 	if err != nil {
 		logger.WithError(err).Error("error starting subscription")
@@ -390,7 +406,6 @@ func (s *Session) Start() (err error) {
 	}
 	s.entityConfig.subscriptions <- subscription
 
-	close(s.subscriptions)
 	close(s.entityConfig.subscriptions)
 
 	return nil
@@ -415,43 +430,15 @@ func (s *Session) stop() {
 	sessionCounter.WithLabelValues(s.cfg.Namespace).Dec()
 	s.wg.Wait()
 
-	for sub := range s.subscriptions {
-		if err := sub.Cancel(); err != nil {
-			logger.WithError(err).Error("unable to unsubscribe from message bus")
-		}
-	}
+	close(s.entityConfig.updatesChannel)
 	close(s.checkChannel)
 
+	// Remove the entity config subscriptions
 	for sub := range s.entityConfig.subscriptions {
 		if err := sub.Cancel(); err != nil {
 			logger.WithError(err).Error("unable to unsubscribe from message bus")
 		}
 	}
-	close(s.entityConfig.updatesChannel)
-
-	if s.ringPool == nil {
-		// This is a bit of a hack - allow ringPool to be nil for the benefit
-		// of the tests.
-		return
-	}
-	var ringWG sync.WaitGroup
-	ringWG.Add(len(s.cfg.Subscriptions))
-	for _, sub := range s.cfg.Subscriptions {
-		go func(sub string) {
-			defer ringWG.Done()
-			ring := s.ringPool.Get(ringv2.Path(s.cfg.Namespace, sub))
-			logger.WithFields(logrus.Fields{
-				"namespace": s.cfg.Namespace,
-				"agent":     s.cfg.AgentName,
-			}).Info("removing agent from ring")
-			ctx, cancel := context.WithTimeout(context.Background(), time.Second)
-			defer cancel()
-			if err := ring.Remove(ctx, s.cfg.AgentName); err != nil {
-				logger.WithError(err).Error("unable to remove agent from ring")
-			}
-		}(sub)
-	}
-	ringWG.Wait()
 }
 
 // handleKeepalive is the keepalive message handler.
@@ -493,4 +480,155 @@ func (s *Session) handleEvent(ctx context.Context, payload []byte) error {
 	event.Entity.Subscriptions = addEntitySubscription(event.Entity.Name, event.Entity.Subscriptions)
 
 	return s.bus.Publish(messaging.TopicEventRaw, event)
+}
+
+// subscribe adds a subscription to the session for every check subscriptions
+// provided
+func (s *Session) subscribe(subscriptions []string) error {
+	// Prevent any modification to the subscriptions
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	lager := logger.WithFields(logrus.Fields{
+		"agent":     s.cfg.AgentName,
+		"namespace": s.cfg.Namespace,
+	})
+
+	// Get a unique name for the agent, which will be used as the consumer of the
+	// bus, in order to avoid problems with an reconnecting before its session is
+	// ended
+	agent := agentUUID(s.cfg.Namespace, s.cfg.AgentName)
+
+	for _, sub := range subscriptions {
+		// Ignore empty subscriptions
+		if sub == "" {
+			continue
+		}
+
+		topic := messaging.SubscriptionTopic(s.cfg.Namespace, sub)
+
+		// Ignore the subscription if the session is already subscribed to it
+		if _, ok := s.subscriptionsMap[topic]; ok {
+			lager.Debugf("ignoring subscription %q because session is already subscribed", sub)
+			continue
+		}
+
+		lager.Debugf("subscribing to %q", sub)
+		subscription, err := s.bus.Subscribe(topic, agent, s)
+		if err != nil {
+			lager.WithError(err).Errorf("could not subscribe to %q", sub)
+			return err
+		}
+		s.subscriptionsMap[topic] = &subscription
+	}
+
+	return nil
+}
+
+// unsubscribe removes a session subscription for every check subscriptions
+// provided
+func (s *Session) unsubscribe(subscriptions []string) {
+	// Prevent any modification to the configured subscriptions and the
+	// subscriptions map
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	lager := logger.WithFields(logrus.Fields{
+		"agent":     s.cfg.AgentName,
+		"namespace": s.cfg.Namespace,
+	})
+
+	for _, subscriptionName := range subscriptions {
+		topic := messaging.SubscriptionTopic(s.cfg.Namespace, subscriptionName)
+		if subscription, ok := s.subscriptionsMap[topic]; ok {
+			if err := subscription.Cancel(); err != nil {
+				lager.WithError(err).Errorf("unable to unsubscribe from %q", subscriptionName)
+				continue
+			}
+
+			lager.Debugf("successfully unsubscribed from %q", subscriptionName)
+
+			// Once the subscription is successfully canceled, remove it from our
+			// subscriptions map
+			delete(s.subscriptionsMap, topic)
+		} else {
+			lager.Errorf("session was not subscribed to %q", subscriptionName)
+		}
+	}
+
+	if s.ringPool == nil {
+		// This is a bit of a hack - allow ringPool to be nil for the benefit
+		// of the tests.
+		return
+	}
+
+	// Remove the ring for every subscription
+	var ringWG sync.WaitGroup
+	ringWG.Add(len(subscriptions))
+	for _, sub := range subscriptions {
+		go func(sub string) {
+			defer ringWG.Done()
+			ring := s.ringPool.Get(ringv2.Path(s.cfg.Namespace, sub))
+			lager.Infof("removing agent from ring for subscription %q", sub)
+			ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+			defer cancel()
+			if err := ring.Remove(ctx, s.cfg.AgentName); err != nil {
+				lager.WithError(err).Error("unable to remove agent from ring")
+			}
+		}(sub)
+	}
+	ringWG.Wait()
+}
+
+func agentUUID(namespace, name string) string {
+	return fmt.Sprintf("%s:%s-%s", namespace, name, uuid.New().String())
+}
+
+// diff compares the two given slices and returns the elements that were both
+// added and removed in the new slice, in comparison to the old slice. It relies
+// on both slices being sorted to properly work.
+func diff(old, new []string) ([]string, []string) {
+	var added, removed []string
+	i, j := 0, 0
+
+	for i < len(old) && j < len(new) {
+		c := strings.Compare(old[i], new[j])
+		if c == 0 {
+			i++
+			j++
+		} else if c < 0 {
+			removed = append(removed, old[i])
+			i++
+		} else {
+			added = append(added, new[j])
+			j++
+		}
+	}
+
+	removed = append(removed, old[i:]...)
+	added = append(added, new[j:]...)
+	return added, removed
+}
+
+func removeEmptySubscriptions(subscriptions []string) []string {
+	var s []string
+	for _, subscription := range subscriptions {
+		if subscription != "" {
+			s = append(s, subscription)
+		}
+	}
+	return s
+}
+
+func sortSubscriptions(subscriptions []string) []string {
+	// Remove empty subscriptions
+	subscriptions = removeEmptySubscriptions(subscriptions)
+
+	if sort.StringsAreSorted(subscriptions) {
+		return subscriptions
+	}
+
+	sortedSubscriptions := append(subscriptions[:0:0], subscriptions...)
+	sort.Strings(sortedSubscriptions)
+	return sortedSubscriptions
 }
