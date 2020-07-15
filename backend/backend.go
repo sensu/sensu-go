@@ -261,7 +261,6 @@ func Initialize(ctx context.Context, config *Config) (*Backend, error) {
 		StoreTimeout:            2 * time.Minute,
 		SecretsProviderManager:  b.SecretsProviderManager,
 		BackendEntity:           backendEntity,
-		EventClient:             api.NewEventClient(eventStoreProxy, auth, bus),
 	})
 	if err != nil {
 		return nil, fmt.Errorf("error initializing %s: %s", pipeline.Name(), err)

@@ -12,7 +12,7 @@ import (
 )
 
 // Returns true if the event should be filtered/denied.
-func evaluateEventFilter(ctx context.Context, event *corev2.Event, filter *corev2.EventFilter, assets asset.RuntimeAssetSet, eventClient EventClient) bool {
+func evaluateEventFilter(ctx context.Context, event *corev2.Event, filter *corev2.EventFilter, assets asset.RuntimeAssetSet) bool {
 	// Redact the entity to avoid leaking sensitive information
 	event.Entity = event.Entity.GetRedactedEntity()
 
@@ -61,14 +61,10 @@ func evaluateEventFilter(ctx context.Context, event *corev2.Event, filter *corev
 	}
 
 	synth := dynamic.Synthesize(event)
-	funcs := map[string]interface{}{
-		"FetchEvent": eventClient.FetchEvent,
-		"ListEvents": eventClient.ListEvents,
-	}
 	env := FilterExecutionEnvironment{
 		Event:  synth,
 		Assets: assets,
-		Funcs:  funcs,
+		Funcs:  PipelineFilterFuncs,
 	}
 
 	for _, expression := range filter.Expressions {
@@ -110,10 +106,10 @@ func evaluateEventFilter(ctx context.Context, event *corev2.Event, filter *corev
 	return false
 }
 
-// filterEvent filters a Sensu event, determining if it will continue through
+// FilterEvent filters a Sensu event, determining if it will continue through
 // the Sensu pipeline. Returns the filter's name if the event was filtered and
 // any error encountered
-func (p *Pipeline) filterEvent(handler *corev2.Handler, event *corev2.Event) (string, error) {
+func (p *Pipeline) FilterEvent(handler *corev2.Handler, event *corev2.Event) (string, error) {
 	// Prepare the logging
 	fields := utillogging.EventFields(event, false)
 	fields["handler"] = handler.Name
@@ -168,7 +164,7 @@ func (p *Pipeline) filterEvent(handler *corev2.Handler, event *corev2.Event) (st
 						return "", err
 					}
 				}
-				filtered := evaluateEventFilter(ctx, event, filter, assets, p.eventClient)
+				filtered := evaluateEventFilter(ctx, event, filter, assets)
 				if filtered {
 					logger.WithFields(fields).Debug("denying event with custom filter")
 					return filterName, nil

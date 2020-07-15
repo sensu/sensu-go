@@ -1,13 +1,9 @@
 package pipeline
 
 import (
-	"context"
-	"fmt"
 	"testing"
 	"time"
 
-	corev2 "github.com/sensu/sensu-go/api/core/v2"
-	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/rpc"
 	"github.com/sensu/sensu-go/testing/mockstore"
 	"github.com/sensu/sensu-go/types"
@@ -16,9 +12,7 @@ import (
 )
 
 func TestPipelineFilter(t *testing.T) {
-	p := &Pipeline{
-		eventClient: new(mockEventClient),
-	}
+	p := &Pipeline{}
 	store := &mockstore.MockStore{}
 	p.store = store
 
@@ -215,30 +209,14 @@ func TestPipelineFilter(t *testing.T) {
 				Metrics: tc.metrics,
 			}
 
-			f, _ := p.filterEvent(handler, event)
+			f, _ := p.FilterEvent(handler, event)
 			assert.Equal(t, tc.expectedFilter, f)
 		})
 	}
 }
 
-type mockEventClient struct {
-	mock.Mock
-}
-
-func (m *mockEventClient) FetchEvent(ctx context.Context, namespace, name string) (*corev2.Event, error) {
-	args := m.Called(ctx, namespace, name)
-	return args.Get(0).(*corev2.Event), args.Error(1)
-}
-
-func (m *mockEventClient) ListEvents(ctx context.Context, pred *store.SelectionPredicate) ([]*corev2.Event, error) {
-	args := m.Called(ctx, pred)
-	return args.Get(0).([]*corev2.Event), args.Error(1)
-}
-
 func TestPipelineWhenFilter(t *testing.T) {
-	p := &Pipeline{
-		eventClient: new(mockEventClient),
-	}
+	p := &Pipeline{}
 	store := &mockstore.MockStore{}
 	p.store = store
 
@@ -325,84 +303,8 @@ func TestPipelineWhenFilter(t *testing.T) {
 				Filters: []string{tc.filterName},
 			}
 
-			f, _ := p.filterEvent(handler, event)
+			f, _ := p.FilterEvent(handler, event)
 			assert.Equal(t, tc.expectedFilter, f)
 		})
-	}
-}
-
-func TestPipelineEventClient(t *testing.T) {
-	events := new(mockEventClient)
-	events.On("FetchEvent", mock.Anything, "foo", "bar").Return(corev2.FixtureEvent("foo", "bar"), nil)
-	events.On("FetchEvent", mock.Anything, "foo", "baz").Return((*corev2.Event)(nil), &store.ErrNotFound{Key: "baz"})
-	p := &Pipeline{
-		eventClient: events,
-	}
-	store := &mockstore.MockStore{}
-	p.store = store
-
-	const getEvent = `(function () {
-		var event = sensu.FetchEvent("%s", "%s");
-		return event.Check.Status > 0;
-	})();`
-
-	getEventFromStore := &types.EventFilter{
-		ObjectMeta: types.ObjectMeta{
-			Name: "filter1",
-		},
-		Action:      types.EventFilterActionAllow,
-		Expressions: []string{fmt.Sprintf(getEvent, "foo", "bar")},
-	}
-	getEventFromStoreMissing := &types.EventFilter{
-		ObjectMeta: types.ObjectMeta{
-			Name: "filter2",
-		},
-		Action:      types.EventFilterActionAllow,
-		Expressions: []string{fmt.Sprintf(getEvent, "foo", "baz")},
-	}
-	store.On("GetEventFilterByName", mock.Anything, "filter1").Return(getEventFromStore, nil)
-	store.On("GetEventFilterByName", mock.Anything, "filter2").Return(getEventFromStoreMissing, nil)
-	p.extensionExecutor = func(ext *types.Extension) (rpc.ExtensionExecutor, error) {
-		m := &mockExec{}
-		m.On("FilterEvent", mock.Anything).Return(true, nil)
-		return m, nil
-	}
-
-	handler := &types.Handler{
-		Type:    "pipe",
-		Command: "cat",
-		Filters: []string{"filter1"},
-	}
-	handlerErr := &corev2.Handler{
-		Type:    "pipe",
-		Command: "cat",
-		Filters: []string{"filter2"},
-	}
-
-	event := &types.Event{
-		Check: &types.Check{
-			Output: "foo",
-		},
-		Entity: &types.Entity{
-			ObjectMeta: types.ObjectMeta{
-				Namespace: "default",
-			},
-		},
-	}
-
-	fname, err := p.filterEvent(handler, event)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if got, want := fname, "filter1"; got != want {
-		t.Errorf("bad filter: got %s, want %s", got, want)
-	}
-
-	fname, err = p.filterEvent(handlerErr, event)
-	if err != nil {
-		t.Fatal("expected non-nil error")
-	}
-	if got, want := fname, ""; got != want {
-		t.Error("expected no filter match for broken filter")
 	}
 }

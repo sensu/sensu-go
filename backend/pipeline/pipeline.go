@@ -1,7 +1,6 @@
 package pipeline
 
 import (
-	"context"
 	"time"
 
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
@@ -14,12 +13,6 @@ import (
 	"github.com/sensu/sensu-go/types"
 )
 
-// EventClient specifies the pipeline's requirements for event storage
-type EventClient interface {
-	FetchEvent(ctx context.Context, entity, check string) (*corev2.Event, error)
-	ListEvents(ctx context.Context, pred *store.SelectionPredicate) ([]*corev2.Event, error)
-}
-
 // Pipeline takes events as inputs, and treats them in various ways according
 // to the event's check configuration.
 type Pipeline struct {
@@ -31,7 +24,6 @@ type Pipeline struct {
 	storeTimeout           time.Duration
 	secretsProviderManager *secrets.ProviderManager
 	licenseGetter          licensing.Getter
-	eventClient            EventClient
 }
 
 // Config holds the configuration for a Pipeline.
@@ -43,7 +35,6 @@ type Config struct {
 	StoreTimeout            time.Duration
 	SecretsProviderManager  *secrets.ProviderManager
 	LicenseGetter           licensing.Getter
-	EventClient             EventClient
 }
 
 // Option is a functional option used to configure Pipelines.
@@ -60,7 +51,6 @@ func New(c Config, options ...Option) *Pipeline {
 		storeTimeout:           c.StoreTimeout,
 		secretsProviderManager: c.SecretsProviderManager,
 		licenseGetter:          c.LicenseGetter,
-		eventClient:            c.EventClient,
 	}
 	for _, o := range options {
 		o(pipeline)

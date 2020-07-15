@@ -12,6 +12,9 @@ import (
 
 const pipelineRoleName = "system:pipeline"
 
+// PipelineFilterFuncs gets patched by enterprise sensu-go
+var PipelineFilterFuncs map[string]interface{}
+
 type FilterExecutionEnvironment struct {
 	// Funcs are a list of named functions to be supplied to the JS environment.
 	Funcs map[string]interface{}
