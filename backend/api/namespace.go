@@ -292,7 +292,7 @@ func (a *NamespaceClient) createRoleAndBinding(ctx context.Context, namespace st
 	binding := &corev2.RoleBinding{
 		Subjects: []corev2.Subject{
 			{
-				Type: "user",
+				Type: corev2.GroupType,
 				Name: pipelineRoleName,
 			},
 		},

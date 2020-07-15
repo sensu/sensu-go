@@ -846,7 +846,7 @@ func TestNamespaceCRUDSideEffects(t *testing.T) {
 	expBinding := &corev2.RoleBinding{
 		Subjects: []corev2.Subject{
 			{
-				Type: corev2.UserType,
+				Type: corev2.GroupType,
 				Name: pipelineRoleName,
 			},
 		},

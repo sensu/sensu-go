@@ -7,10 +7,10 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
 
-### Breaking Changes
-- The web interface is now a standalone product and no longer distributed
-inside the sensu-backend binary. Refer to https://github.com/sensu/web for
-more.
+### Added
+- Added sensu.FetchEvent(entity, check) and sensu.ListEvents() to the JS
+filter execution environment. Users can now query the Sensu event store for
+other events within the filter namespace.
 
 ### Fixed
 - Clarifies wording around a secret provider error message.
@@ -19,10 +19,18 @@ more.
 and event unmarshaling are logged once again. 
 - User-Agent header is only set on new client creation rather than on each
 request.
+- Fixed a bug where highly concurrent event filtering could result in a panic.
+- Fixed a bug where nil labels or annotations in an event filtering context
+would result in a bad user experience, with the user having to explicitly
+check if the annotations or labels are undefined. Now, the user is guaranteed
+that labels and annotations are always defined, though they may be empty.
 - Automatically capitalize the roleRef and subject types in ClusterRoleBindings
 and RoleBindings.
 
 ### Breaking
+- The web interface is now a standalone product and no longer distributed
+inside the sensu-backend binary. Refer to https://github.com/sensu/web for
+more.
 - The database schema for entities has changed. After upgrading, users will not
 be able to use their database with older versions of Sensu.
 - After initial creation, sensu-agent entity configuration cannot be changed

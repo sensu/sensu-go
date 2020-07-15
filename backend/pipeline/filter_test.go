@@ -209,7 +209,7 @@ func TestPipelineFilter(t *testing.T) {
 				Metrics: tc.metrics,
 			}
 
-			f, _ := p.filterEvent(handler, event)
+			f, _ := p.FilterEvent(handler, event)
 			assert.Equal(t, tc.expectedFilter, f)
 		})
 	}
@@ -303,7 +303,7 @@ func TestPipelineWhenFilter(t *testing.T) {
 				Filters: []string{tc.filterName},
 			}
 
-			f, _ := p.filterEvent(handler, event)
+			f, _ := p.FilterEvent(handler, event)
 			assert.Equal(t, tc.expectedFilter, f)
 		})
 	}

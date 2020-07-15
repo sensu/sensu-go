@@ -61,7 +61,7 @@ func (p *Pipeline) HandleEvent(ctx context.Context, event *corev2.Event) error {
 		handler := u.Handler
 		fields["handler"] = handler.Name
 
-		filter, err := p.filterEvent(handler, event)
+		filter, err := p.FilterEvent(handler, event)
 		if err != nil {
 			if _, ok := err.(*store.ErrInternal); ok {
 				// Fatal error

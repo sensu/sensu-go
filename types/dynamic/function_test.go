@@ -3,6 +3,7 @@ package dynamic
 import (
 	"context"
 	"errors"
+	"io"
 	"reflect"
 	"testing"
 
@@ -141,5 +142,16 @@ func TestFunction(t *testing.T) {
 				}
 			}
 		})
+	}
+}
+
+func BenchmarkFunction(b *testing.B) {
+	ctx := context.Background()
+	vm := otto.New()
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		if err := vm.Set("Copy", Function(ctx, vm, io.Copy)); err != nil {
+			b.Fatal(err)
+		}
 	}
 }
