@@ -401,7 +401,7 @@ func TestGetSetInterval(t *testing.T) {
 	<-wc
 
 	// >10s should have elapsed
-	if time.Since(start) < (10 * time.Second) {
+	if time.Since(start) < (5 * time.Second) {
 		t.Fatal("ineffectual SetInterval")
 	}
 }
