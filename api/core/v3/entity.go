@@ -36,7 +36,10 @@ func V2EntityToV3(e *corev2.Entity) (*EntityConfig, *EntityState) {
 		Redact:            e.Redact,
 	}
 	state := EntityState{
-		Metadata:          &e.ObjectMeta,
+		Metadata: &corev2.ObjectMeta{
+			Name:      e.ObjectMeta.Name,
+			Namespace: e.ObjectMeta.Namespace,
+		},
 		System:            e.System,
 		LastSeen:          e.LastSeen,
 		SensuAgentVersion: e.SensuAgentVersion,
