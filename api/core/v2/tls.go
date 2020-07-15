@@ -58,6 +58,7 @@ func (t *TLSOptions) ToServerTLSConfig() (*tls.Config, error) {
 	}
 
 	// useful when we present multiple certificates
+	//nolint:staticcheck // ignore SA1019 for old code
 	cfg.BuildNameToCertificate()
 
 	// apply hardened TLS settings

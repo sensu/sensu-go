@@ -252,6 +252,7 @@ func TestKeepaliveLoggingRedaction(t *testing.T) {
 	mockTime.Start()
 	defer mockTime.Stop()
 	err = ta.Run(ctx)
+	assert.NoError(t, err)
 	close(errors)
 	for err := range errors {
 		if err != nil {

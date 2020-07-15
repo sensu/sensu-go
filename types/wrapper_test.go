@@ -1,7 +1,6 @@
 package types
 
 import (
-	"encoding/json"
 	"fmt"
 	"reflect"
 	"testing"
@@ -9,33 +8,6 @@ import (
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	v2 "github.com/sensu/sensu-go/api/core/v2"
 )
-
-var null = json.RawMessage("null")
-
-type generic map[string]*json.RawMessage
-
-func (g generic) URIPath() string {
-	return ""
-}
-
-func (g generic) Validate() error {
-	return nil
-}
-
-func (g generic) SetNamespace(namespace string) {
-	return
-}
-
-func mustMarshal(t *testing.T, value interface{}) []byte {
-	t.Helper()
-
-	b, err := json.Marshal(value)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	return b
-}
 
 func TestWrapper_UnmarshalJSON(t *testing.T) {
 	tests := []struct {

@@ -372,7 +372,7 @@ func TestWatchAfterAdd(t *testing.T) {
 	}
 }
 
-func GetSetInterval(t *testing.T) {
+func TestGetSetInterval(t *testing.T) {
 	t.Parallel()
 
 	e, cleanup := etcd.NewTestEtcd(t)
@@ -401,7 +401,7 @@ func GetSetInterval(t *testing.T) {
 	<-wc
 
 	// >10s should have elapsed
-	if time.Now().Sub(start) < (10 * time.Second) {
+	if time.Since(start) < (5 * time.Second) {
 		t.Fatal("ineffectual SetInterval")
 	}
 }

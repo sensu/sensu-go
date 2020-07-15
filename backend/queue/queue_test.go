@@ -44,12 +44,14 @@ func TestDequeueSingleItem(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, "test single item dequeue", item.Value())
 
-	defer item.Ack(context.Background())
+	defer func() {
+		assert.NoError(t, item.Ack(context.Background()))
+	}()
 
 	ctx, cancel := context.WithTimeout(context.Background(), 100*time.Millisecond)
 	defer cancel()
 
-	item, err = queue.Dequeue(ctx)
+	_, err = queue.Dequeue(ctx)
 	assert.Error(t, err)
 }
 
@@ -127,7 +129,7 @@ func TestAck(t *testing.T) {
 
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 	defer cancel()
-	item, err = queue.Dequeue(ctx)
+	_, err = queue.Dequeue(ctx)
 	require.Error(t, err)
 }
 

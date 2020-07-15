@@ -75,6 +75,7 @@ func (s *Store) DeleteNamespace(ctx context.Context, name string) error {
 			v3.OpGet(eventFilterKeyBuilder.WithNamespace(name).Build(), v3.WithPrefix(), v3.WithCountOnly()),
 			v3.OpGet(hookKeyBuilder.WithNamespace(name).Build(), v3.WithPrefix(), v3.WithCountOnly()),
 			v3.OpGet(silencedKeyBuilder.WithNamespace(name).Build(), v3.WithPrefix(), v3.WithCountOnly()),
+			v3.OpGet(roleKeyBuilder.WithNamespace(name).Build(), v3.WithPrefix(), v3.WithCountOnly()),
 		).Commit()
 		return RetryRequest(n, err)
 	})

@@ -214,7 +214,9 @@ func TestWatchCompactedRevision(t *testing.T) {
 	}
 
 	// Compact to the latest revision
-	client.Compact(ctx, int64(3), clientv3.WithCompactPhysical())
+	if _, err := client.Compact(ctx, int64(3), clientv3.WithCompactPhysical()); err != nil {
+		t.Fatal(err)
+	}
 
 	// Start a watcher with a compacted revision (1)
 	w := &Watcher{

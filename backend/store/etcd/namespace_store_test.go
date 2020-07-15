@@ -15,7 +15,7 @@ import (
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 )
 
-func TestnamespaceStorage(t *testing.T) {
+func TestNamespaceStorage(t *testing.T) {
 	testWithEtcd(t, func(s store.Store) {
 		ctx := context.Background()
 
@@ -29,6 +29,8 @@ func TestnamespaceStorage(t *testing.T) {
 		namespace := types.FixtureNamespace("acme")
 		err = s.CreateNamespace(ctx, namespace)
 		assert.NoError(t, err)
+
+		ctx = context.WithValue(ctx, corev2.NamespaceKey, namespace.Name)
 
 		result, err := s.GetNamespace(ctx, namespace.Name)
 		assert.NoError(t, err)
@@ -46,12 +48,16 @@ func TestnamespaceStorage(t *testing.T) {
 		assert.Equal(t, 2, len(namespaces))
 
 		// Delete a non-empty namespace
+		check := types.FixtureCheckConfig("entity")
+		check.ObjectMeta.Namespace = namespace.Name
+		require.NoError(t, s.UpdateCheckConfig(ctx, check))
 		err = s.DeleteNamespace(ctx, namespace.Name)
 		assert.Error(t, err)
+		err = s.DeleteCheckConfigByName(ctx, check.ObjectMeta.Name)
+		assert.NoError(t, err)
 
 		// Delete a non-empty namespace w/ roles
-		require.NoError(t, s.UpdateRole(ctx, types.FixtureRole("1", namespace.Name)))
-		require.NoError(t, s.UpdateRole(ctx, types.FixtureRole("2", "asdf")))
+		require.NoError(t, s.CreateOrUpdateRole(ctx, types.FixtureRole("1", namespace.Name)))
 		err = s.DeleteNamespace(ctx, namespace.Name)
 		assert.Error(t, err)
 

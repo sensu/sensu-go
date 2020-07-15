@@ -57,7 +57,7 @@ func TestSchedulerd(t *testing.T) {
 
 	require.NoError(t, st.DeleteCheckConfigByName(ctx, check.Name))
 
-	sub.Cancel()
+	assert.NoError(t, sub.Cancel())
 	close(tsub.ch)
 
 	assert.NoError(t, schedulerd.Stop())

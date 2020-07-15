@@ -28,9 +28,10 @@ func TestNewEtcd(t *testing.T) {
 	assert.NoError(t, err)
 	assert.NotNil(t, getResp)
 
-	if getResp == nil {
+	if getResp == nil || getResp.Kvs == nil || getResp.Kvs[0] == nil {
 		assert.FailNow(t, "got nil get response from etcd")
 	}
+
 	assert.Equal(t, 1, len(getResp.Kvs))
 	assert.Equal(t, "key", string(getResp.Kvs[0].Key))
 	assert.Equal(t, "value", string(getResp.Kvs[0].Value))

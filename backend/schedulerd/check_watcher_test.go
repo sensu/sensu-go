@@ -22,7 +22,9 @@ func TestCheckWatcherSmoke(t *testing.T) {
 	bus, err := messaging.NewWizardBus(messaging.WizardBusConfig{})
 	require.NoError(t, err)
 	require.NoError(t, bus.Start())
-	defer bus.Stop()
+	defer func() {
+		require.NoError(t, bus.Stop())
+	}()
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()

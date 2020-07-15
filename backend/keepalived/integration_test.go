@@ -41,7 +41,9 @@ func TestKeepaliveMonitor(t *testing.T) {
 	if err != nil {
 		assert.FailNow(t, "failed to subscribe to message bus topic event raw")
 	}
-	defer subscription.Cancel()
+	defer func() {
+		assert.NoError(t, subscription.Cancel())
+	}()
 
 	entity := corev2.FixtureEntity("entity1")
 	ctx := store.NamespaceContext(context.Background(), entity.Namespace)
