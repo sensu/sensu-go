@@ -14,23 +14,21 @@ func (a *Agent) getAgentEntity() *corev2.Entity {
 	if a.entityConfig == nil {
 		a.entityConfig = a.getLocalEntityConfig()
 	}
-	state := a.getEntityState()
-	entity, err := corev3.V3EntityToV2(a.entityConfig, state)
-	if err == nil {
-		return entity
-	}
-	if err != nil {
-		state.Metadata = a.entityConfig.Metadata
-	}
-	entity, err = corev3.V3EntityToV2(a.entityConfig, state)
-	if err != nil {
-		// unrecoverable error
-		panic(err)
-	}
-	return entity
+
+	return v3EntityToV2(a.entityConfig, a.getEntityState())
+}
+
+func (a *Agent) getLocalEntity() *corev2.Entity {
+	a.entityMu.Lock()
+	defer a.entityMu.Unlock()
+	return v3EntityToV2(a.getLocalEntityConfig(), a.getEntityState())
 }
 
 func (a *Agent) getLocalEntityConfig() *corev3.EntityConfig {
+	if a.localEntityConfig != nil {
+		return a.localEntityConfig
+	}
+
 	meta := corev2.NewObjectMeta(a.config.AgentName, a.config.Namespace)
 	meta.Labels = a.config.Labels
 	meta.Annotations = a.config.Annotations
@@ -49,6 +47,11 @@ func (a *Agent) getLocalEntityConfig() *corev3.EntityConfig {
 			Handler: a.config.DeregistrationHandler,
 		}
 	}
+
+	// Save the local entity configuration, which will be used as the entity for
+	// keepalive events in order to register the agent's entity
+	a.localEntityConfig = e
+
 	return e
 }
 
@@ -89,4 +92,20 @@ func (a *Agent) getEntities(event *corev2.Event) {
 	// From this point we make sure that the agent's entity is used in the event
 	// so we provide details like the namespace to the backend
 	event.Entity = a.getAgentEntity()
+}
+
+func v3EntityToV2(config *corev3.EntityConfig, state *corev3.EntityState) *corev2.Entity {
+	entity, err := corev3.V3EntityToV2(config, state)
+	if err == nil {
+		return entity
+	}
+	if err != nil {
+		state.Metadata = config.Metadata
+	}
+	entity, err = corev3.V3EntityToV2(config, state)
+	if err != nil {
+		// unrecoverable error
+		panic(err)
+	}
+	return entity
 }
