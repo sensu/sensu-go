@@ -226,16 +226,18 @@ var createResourceInvalidMetaTestCase = func(resource corev2.Resource) routerTes
 }
 
 var createResourceAlreadyExistsTestCase = func(resource corev2.Resource) routerTestCase {
-	resource.SetNamespace("default")
-	typ := reflect.TypeOf(resource).String()
+	// Deep copy the given resource so we can modify it without affecting other
+	// test cases
+	r := reflect.New(reflect.ValueOf(resource).Elem().Type()).Interface().(corev2.Resource)
+	r.SetObjectMeta(corev2.ObjectMeta{Name: "createResourceAlreadyExistsTestCase", Namespace: "default"})
 
 	return routerTestCase{
 		name:   "it returns 409 if the resource to create already exists",
 		method: http.MethodPost,
 		path:   resource.URIPath(),
-		body:   marshal(resource),
+		body:   marshal(r),
 		storeFunc: func(s *mockstore.MockStore) {
-			s.On("CreateResource", mock.Anything, mock.AnythingOfType(typ)).
+			s.On("CreateResource", mock.Anything, r).
 				Return(&store.ErrAlreadyExists{}).
 				Once()
 		},
@@ -244,17 +246,19 @@ var createResourceAlreadyExistsTestCase = func(resource corev2.Resource) routerT
 }
 
 var createResourceInvalidTestCase = func(resource corev2.Resource) routerTestCase {
-	resource.SetNamespace("default")
-	typ := reflect.TypeOf(resource).String()
+	// Deep copy the given resource so we can modify it without affecting other
+	// test cases
+	r := reflect.New(reflect.ValueOf(resource).Elem().Type()).Interface().(corev2.Resource)
+	r.SetObjectMeta(corev2.ObjectMeta{Name: "createResourceInvalidTestCase", Namespace: "default"})
 
 	return routerTestCase{
 		name:   "it returns 400 if the resource to create is invalid",
 		method: http.MethodPost,
 		path:   resource.URIPath(),
-		body:   marshal(resource),
+		body:   marshal(r),
 		storeFunc: func(s *mockstore.MockStore) {
-			s.On("CreateResource", mock.Anything, mock.AnythingOfType(typ)).
-				Return(&store.ErrNotValid{Err: errors.New("error")}).
+			s.On("CreateResource", mock.Anything, r).
+				Return(&store.ErrNotValid{Err: errors.New("createResourceInvalidTestCase")}).
 				Once()
 		},
 		wantStatusCode: http.StatusBadRequest,
@@ -262,16 +266,18 @@ var createResourceInvalidTestCase = func(resource corev2.Resource) routerTestCas
 }
 
 var createResourceStoreErrTestCase = func(resource corev2.Resource) routerTestCase {
-	resource.SetNamespace("default")
-	typ := reflect.TypeOf(resource).String()
+	// Deep copy the given resource so we can modify it without affecting other
+	// test cases
+	r := reflect.New(reflect.ValueOf(resource).Elem().Type()).Interface().(corev2.Resource)
+	r.SetObjectMeta(corev2.ObjectMeta{Name: "createResourceStoreErrTestCase", Namespace: "default"})
 
 	return routerTestCase{
 		name:   "it returns 500 if the store returns an error while creating",
 		method: http.MethodPost,
 		path:   resource.URIPath(),
-		body:   []byte(`{"metadata": {"namespace":"default","name":"foo"}}`),
+		body:   marshal(r),
 		storeFunc: func(s *mockstore.MockStore) {
-			s.On("CreateResource", mock.Anything, mock.AnythingOfType(typ)).
+			s.On("CreateResource", mock.Anything, r).
 				Return(&store.ErrInternal{}).
 				Once()
 		},
@@ -280,16 +286,18 @@ var createResourceStoreErrTestCase = func(resource corev2.Resource) routerTestCa
 }
 
 var createResourceSuccessTestCase = func(resource corev2.Resource) routerTestCase {
-	resource.SetNamespace("default")
-	typ := reflect.TypeOf(resource).String()
+	// Deep copy the given resource so we can modify it without affecting other
+	// test cases
+	r := reflect.New(reflect.ValueOf(resource).Elem().Type()).Interface().(corev2.Resource)
+	r.SetObjectMeta(corev2.ObjectMeta{Name: "createResourceSuccessTestCase", Namespace: "default"})
 
 	return routerTestCase{
 		name:   "it returns 201 if the resource was created",
 		method: http.MethodPost,
 		path:   resource.URIPath(),
-		body:   marshal(resource),
+		body:   marshal(r),
 		storeFunc: func(s *mockstore.MockStore) {
-			s.On("CreateResource", mock.Anything, mock.AnythingOfType(typ)).
+			s.On("CreateResource", mock.Anything, r).
 				Return(nil).
 				Once()
 		},
@@ -319,10 +327,7 @@ var updateResourceInvalidPayloadTestCase = func(resource corev2.Resource) router
 }
 
 var updateResourceInvalidMetaTestCase = func(resource corev2.Resource) routerTestCase {
-	// fmt.Println(resource.URIPath())
-	// body := marshal(resource)
 	resource.SetNamespace("acme")
-	// fmt.Println(string(body))
 
 	return routerTestCase{
 		name:           "it returns 400 if the resource metadata to update does not match the request path",

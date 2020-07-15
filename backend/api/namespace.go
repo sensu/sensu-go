@@ -12,14 +12,18 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+const pipelineRoleName = "system:pipeline"
+
 type ruleVisitor interface {
 	VisitRulesFor(ctx context.Context, attrs *authorization.Attributes, fn rbac.RuleVisitFunc)
 }
 
 // NamespaceClient is an API client for namespaces.
 type NamespaceClient struct {
-	client GenericClient
-	auth   authorization.Authorizer
+	client        GenericClient
+	roleClient    GenericClient
+	bindingClient GenericClient
+	auth          authorization.Authorizer
 }
 
 // NewNamespaceClient creates a new NamespaceClient, given a store and authorizer.
@@ -27,6 +31,20 @@ func NewNamespaceClient(store store.ResourceStore, auth authorization.Authorizer
 	return &NamespaceClient{
 		client: GenericClient{
 			Kind:       &corev2.Namespace{},
+			Store:      store,
+			Auth:       auth,
+			APIGroup:   "core",
+			APIVersion: "v2",
+		},
+		roleClient: GenericClient{
+			Kind:       &corev2.Role{},
+			Store:      store,
+			Auth:       auth,
+			APIGroup:   "core",
+			APIVersion: "v2",
+		},
+		bindingClient: GenericClient{
+			Kind:       &corev2.RoleBinding{},
 			Store:      store,
 			Auth:       auth,
 			APIGroup:   "core",
@@ -258,12 +276,47 @@ func (a *NamespaceClient) FetchNamespace(ctx context.Context, name string) (*cor
 	return &namespace, nil
 }
 
+func (a *NamespaceClient) createRoleAndBinding(ctx context.Context, namespace string) error {
+	role := &corev2.Role{
+		ObjectMeta: corev2.ObjectMeta{
+			Namespace: namespace,
+			Name:      pipelineRoleName,
+		},
+		Rules: []corev2.Rule{
+			{
+				Verbs:     []string{"get", "list"},
+				Resources: []string{new(corev2.Event).RBACName()},
+			},
+		},
+	}
+	binding := &corev2.RoleBinding{
+		Subjects: []corev2.Subject{
+			{
+				Type: corev2.GroupType,
+				Name: pipelineRoleName,
+			},
+		},
+		RoleRef: corev2.RoleRef{
+			Name: pipelineRoleName,
+			Type: "Role",
+		},
+		ObjectMeta: corev2.ObjectMeta{
+			Name:      pipelineRoleName,
+			Namespace: namespace,
+		},
+	}
+	if err := a.roleClient.Update(ctx, role); err != nil {
+		return err
+	}
+	return a.bindingClient.Update(ctx, binding)
+}
+
 // CreateNamespace creates a namespace resource, if authorized.
 func (a *NamespaceClient) CreateNamespace(ctx context.Context, namespace *corev2.Namespace) error {
 	if err := a.client.Create(ctx, namespace); err != nil {
 		return err
 	}
-	return nil
+	return a.createRoleAndBinding(ctx, namespace.Name)
 }
 
 // UpdateNamespace updates a namespace resource, if authorized.
@@ -271,5 +324,16 @@ func (a *NamespaceClient) UpdateNamespace(ctx context.Context, namespace *corev2
 	if err := a.client.Update(ctx, namespace); err != nil {
 		return err
 	}
-	return nil
+	return a.createRoleAndBinding(ctx, namespace.Name)
+}
+
+// DeleteNamespace deletes a namespace.
+func (a *NamespaceClient) DeleteNamespace(ctx context.Context, name string) error {
+	if err := a.client.Delete(ctx, name); err != nil {
+		return err
+	}
+	if err := a.bindingClient.Delete(ctx, pipelineRoleName); err != nil {
+		return err
+	}
+	return a.roleClient.Delete(ctx, pipelineRoleName)
 }

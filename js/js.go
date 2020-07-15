@@ -72,6 +72,17 @@ func newOttoVM(assets JavascriptAssets) (*otto.Otto, error) {
 	return ottoCache.Acquire(key), nil
 }
 
+func releaseOttoVM(assets JavascriptAssets) {
+	ottoOnce.Do(func() {
+		panic("releaseOttoVM called before newOttoVM")
+	})
+	key := ""
+	if assets != nil {
+		key = assets.Key()
+	}
+	ottoCache.Dispose(key)
+}
+
 func addAssets(vm *otto.Otto, assets JavascriptAssets) error {
 	scripts, err := assets.Scripts()
 	if err != nil {
@@ -126,6 +137,7 @@ func Evaluate(expr string, parameters interface{}, assets JavascriptAssets) (boo
 	if err != nil {
 		return false, err
 	}
+	defer releaseOttoVM(assets)
 	if params, ok := parameters.(map[string]interface{}); ok {
 		for name, value := range params {
 			if err := jsvm.Set(name, value); err != nil {
@@ -138,6 +150,30 @@ func Evaluate(expr string, parameters interface{}, assets JavascriptAssets) (boo
 		return false, err
 	}
 	return value.ToBoolean()
+}
+
+// EvalPredicateWithVM is like Evaluate, but allows passing a vm explicitly.
+func EvalPredicateWithVM(vm *otto.Otto, parameters map[string]interface{}, expr string) (bool, error) {
+	for name, value := range parameters {
+		if err := vm.Set(name, value); err != nil {
+			return false, err
+		}
+	}
+	value, err := vm.Run(expr)
+	if err != nil {
+		return false, err
+	}
+	return value.ToBoolean()
+}
+
+// WithOttoVM provides a context manager for working with cached VMs.
+func WithOttoVM(assets JavascriptAssets, fn func(vm *otto.Otto) error) error {
+	jsvm, err := newOttoVM(assets)
+	if err != nil {
+		return err
+	}
+	defer releaseOttoVM(assets)
+	return fn(jsvm)
 }
 
 // EntityFilterResult is returned by EvaluateEntityFilters
@@ -163,6 +199,7 @@ func MatchEntities(expressions []string, entities []interface{}) ([]bool, error)
 	if err != nil {
 		return nil, fmt.Errorf("error evaluating entity filters: %s", err)
 	}
+	defer releaseOttoVM(nil)
 	scripts := make([]*otto.Script, 0, len(expressions))
 	for _, expr := range expressions {
 		script, err := jsvm.Compile("", expr)

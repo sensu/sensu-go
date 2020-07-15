@@ -47,8 +47,6 @@ func New(flags *pflag.FlagSet) *SensuCli {
 	}
 
 	tlsConfig.InsecureSkipVerify = conf.InsecureSkipTLSVerify()
-
-	tlsConfig.BuildNameToCertificate()
 	tlsConfig.CipherSuites = corev2.DefaultCipherSuites
 
 	client.SetTLSClientConfig(&tlsConfig)

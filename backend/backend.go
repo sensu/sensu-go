@@ -27,7 +27,6 @@ import (
 	"github.com/sensu/sensu-go/backend/authentication/providers/basic"
 	"github.com/sensu/sensu-go/backend/authorization/rbac"
 	"github.com/sensu/sensu-go/backend/daemon"
-	"github.com/sensu/sensu-go/backend/dashboardd"
 	"github.com/sensu/sensu-go/backend/etcd"
 	"github.com/sensu/sensu-go/backend/eventd"
 	"github.com/sensu/sensu-go/backend/keepalived"
@@ -40,6 +39,8 @@ import (
 	"github.com/sensu/sensu-go/backend/secrets"
 	"github.com/sensu/sensu-go/backend/store"
 	etcdstore "github.com/sensu/sensu-go/backend/store/etcd"
+	storev2 "github.com/sensu/sensu-go/backend/store/v2"
+	etcdstorev2 "github.com/sensu/sensu-go/backend/store/v2/etcdstore"
 	"github.com/sensu/sensu-go/backend/tessend"
 	"github.com/sensu/sensu-go/rpc"
 	"github.com/sensu/sensu-go/system"
@@ -65,11 +66,13 @@ type Backend struct {
 	Daemons                []daemon.Daemon
 	Etcd                   *etcd.Etcd
 	Store                  store.Store
+	StoreV2                storev2.Interface
 	EventStore             EventStoreUpdater
 	GraphQLService         *graphql.Service
 	SecretsProviderManager *secrets.ProviderManager
 	HealthRouter           *routers.HealthRouter
 	EtcdClientTLSConfig    *tls.Config
+	APIDConfig             apid.Config
 
 	ctx       context.Context
 	runCtx    context.Context
@@ -197,6 +200,8 @@ func Initialize(ctx context.Context, config *Config) (*Backend, error) {
 	// Create the store, which lives on top of etcd
 	stor := etcdstore.NewStore(b.Client, config.EtcdName)
 	b.Store = stor
+	storv2 := etcdstorev2.NewStore(b.Client)
+	b.StoreV2 = storv2
 
 	if _, err := stor.GetClusterID(b.RunContext()); err != nil {
 		return nil, err
@@ -243,6 +248,8 @@ func Initialize(ctx context.Context, config *Config) (*Backend, error) {
 	// Initialize the secrets provider manager
 	b.SecretsProviderManager = secrets.NewProviderManager()
 
+	auth := &rbac.Authorizer{Store: stor}
+
 	// Initialize pipelined
 	pipeline, err := pipelined.New(pipelined.Config{
 		Store:                   stor,
@@ -264,7 +271,7 @@ func Initialize(ctx context.Context, config *Config) (*Backend, error) {
 	event, err := eventd.New(
 		b.RunContext(),
 		eventd.Config{
-			Store:           stor,
+			Store:           storv2,
 			EventStore:      eventStoreProxy,
 			Bus:             bus,
 			LivenessFactory: liveness.EtcdFactory(b.RunContext(), b.Client),
@@ -312,17 +319,22 @@ func Initialize(ctx context.Context, config *Config) (*Backend, error) {
 		TLS:          config.AgentTLSOptions,
 		RingPool:     ringPool,
 		WriteTimeout: config.AgentWriteTimeout,
+		Client:       b.Client,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("error initializing %s: %s", agent.Name(), err)
 	}
 	b.Daemons = append(b.Daemons, agent)
 
+	// Start the entity config watcher, so agentd sessions are notified of updates
+	agentd.EntityConfigWatcher(b.ctx, b.Client, bus)
+
 	// Initialize keepalived
 	keepalive, err := keepalived.New(keepalived.Config{
 		DeregistrationHandler: config.DeregistrationHandler,
 		Bus:                   bus,
 		Store:                 stor,
+		StoreV2:               storv2,
 		EventStore:            eventStoreProxy,
 		LivenessFactory:       liveness.EtcdFactory(b.RunContext(), b.Client),
 		RingPool:              ringPool,
@@ -366,7 +378,6 @@ func Initialize(ctx context.Context, config *Config) (*Backend, error) {
 	b.HealthRouter = routers.NewHealthRouter(actions.NewHealthController(stor, b.Client.Cluster, b.EtcdClientTLSConfig))
 
 	// Initialize GraphQL service
-	auth := &rbac.Authorizer{Store: stor}
 	b.GraphQLService, err = graphql.NewService(graphql.ServiceConfig{
 		AssetClient:       api.NewAssetClient(stor, auth),
 		CheckClient:       api.NewCheckClient(stor, actions.NewCheckController(stor, queueGetter), auth),
@@ -390,7 +401,7 @@ func Initialize(ctx context.Context, config *Config) (*Backend, error) {
 	}
 
 	// Initialize apid
-	apidConfig := apid.Config{
+	b.APIDConfig = apid.Config{
 		ListenAddress:       config.APIListenAddress,
 		URL:                 config.APIURL,
 		Bus:                 bus,
@@ -405,7 +416,7 @@ func Initialize(ctx context.Context, config *Config) (*Backend, error) {
 		GraphQLService:      b.GraphQLService,
 		HealthRouter:        b.HealthRouter,
 	}
-	api, err := apid.New(apidConfig)
+	api, err := apid.New(b.APIDConfig)
 	if err != nil {
 		return nil, fmt.Errorf("error initializing %s: %s", api.Name(), err)
 	}
@@ -425,33 +436,6 @@ func Initialize(ctx context.Context, config *Config) (*Backend, error) {
 		return nil, fmt.Errorf("error initializing %s: %s", tessen.Name(), err)
 	}
 	b.Daemons = append(b.Daemons, tessen)
-
-	// Initialize dashboardd TLS config
-	var dashboardTLSConfig *corev2.TLSOptions
-
-	// Always use dashboard tls options when they are specified
-	if config.DashboardTLSCertFile != "" && config.DashboardTLSKeyFile != "" {
-		dashboardTLSConfig = &corev2.TLSOptions{
-			CertFile: config.DashboardTLSCertFile,
-			KeyFile:  config.DashboardTLSKeyFile,
-		}
-	} else if config.TLS != nil {
-		// use apid tls config if no dashboard tls options are specified
-		dashboardTLSConfig = &corev2.TLSOptions{
-			CertFile: config.TLS.GetCertFile(),
-			KeyFile:  config.TLS.GetKeyFile(),
-		}
-	}
-	dashboard, err := dashboardd.New(dashboardd.Config{
-		APIDConfig: apidConfig,
-		Host:       config.DashboardHost,
-		Port:       config.DashboardPort,
-		TLS:        dashboardTLSConfig,
-	})
-	if err != nil {
-		return nil, fmt.Errorf("error initializing %s: %s", dashboard.Name(), err)
-	}
-	b.Daemons = append(b.Daemons, dashboard)
 
 	return b, nil
 }

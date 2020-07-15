@@ -7,8 +7,47 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
 
+### Added
+- Added sensu.FetchEvent(entity, check) and sensu.ListEvents() to the JS
+filter execution environment. Users can now query the Sensu event store for
+other events within the filter namespace.
+
 ### Fixed
 - Clarifies wording around a secret provider error message.
+- Logs and returns an error if a mutator cannot be found.
+- Errors produced in the agent by assets, check validation, token substitution,
+and event unmarshaling are logged once again. 
+- User-Agent header is only set on new client creation rather than on each
+request.
+- Fixed a bug where highly concurrent event filtering could result in a panic.
+- Fixed a bug where nil labels or annotations in an event filtering context
+would result in a bad user experience, with the user having to explicitly
+check if the annotations or labels are undefined. Now, the user is guaranteed
+that labels and annotations are always defined, though they may be empty.
+- Automatically capitalize the roleRef and subject types in ClusterRoleBindings
+and RoleBindings.
+
+### Breaking
+- The web interface is now a standalone product and no longer distributed
+inside the sensu-backend binary. Refer to https://github.com/sensu/web for
+more.
+- The database schema for entities has changed. After upgrading, users will not
+be able to use their database with older versions of Sensu.
+- After initial creation, sensu-agent entity configuration cannot be changed
+by modifying the agent's configuration file.
+
+### Changed
+- Improves logging around the agent websocket connection.
+- Entities are now stored as two separate data structures, in order to optimize
+data access patterns.
+- The `dead` and `handleUpdate` methods in keepalived now use `EntityConfig` and
+`EntityState` respectively.
+- The `dead()` and `createProxyEntity()` methods in eventd now use
+  `corev3.EntityConfig` and `corev3.EntityState`.
+- sensu-agent configuration can now be managed via the HTTP API.
+- ClusterRoleBinding and RoleBinding subjects names can now contain any unicode
+characters.
+- Enriches output of `sensuctl asset add` with help usage for how to use the runtime asset.
 
 ## [5.21.0] - 2020-06-10
 

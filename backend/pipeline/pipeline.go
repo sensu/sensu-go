@@ -9,7 +9,6 @@ import (
 	"github.com/sensu/sensu-go/backend/secrets"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/command"
-	"github.com/sensu/sensu-go/js"
 	"github.com/sensu/sensu-go/rpc"
 	"github.com/sensu/sensu-go/types"
 )
@@ -68,12 +67,3 @@ const (
 // ExtensionExecutorGetterFunc gets an ExtensionExecutor. Used to decouple
 // pipelines from gRPC.
 type ExtensionExecutorGetterFunc func(*types.Extension) (rpc.ExtensionExecutor, error)
-
-func evaluateJSFilter(event interface{}, expr string, assets asset.RuntimeAssetSet) bool {
-	parameters := map[string]interface{}{"event": event}
-	result, err := js.Evaluate(expr, parameters, assets)
-	if err != nil {
-		logger.WithError(err).Error("error executing JS")
-	}
-	return result
-}

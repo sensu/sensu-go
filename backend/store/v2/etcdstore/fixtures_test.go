@@ -1,4 +1,4 @@
-package etcdstore
+package etcdstore_test
 
 import (
 	"errors"
@@ -10,6 +10,7 @@ import (
 	"github.com/sensu/sensu-go/backend/etcd"
 	"github.com/sensu/sensu-go/backend/store"
 	etcdstore "github.com/sensu/sensu-go/backend/store/etcd"
+	etcdstorev2 "github.com/sensu/sensu-go/backend/store/v2/etcdstore"
 	"github.com/sensu/sensu-go/types"
 	"github.com/sirupsen/logrus"
 )
@@ -49,17 +50,6 @@ func (t *testResource) GetTypeMeta() corev2.TypeMeta {
 	}
 }
 
-func fixtureTestResource(name string) *testResource {
-	return &testResource{
-		Metadata: &corev2.ObjectMeta{
-			Name:        name,
-			Namespace:   "default",
-			Labels:      make(map[string]string),
-			Annotations: make(map[string]string),
-		},
-	}
-}
-
 func fixtureResolver(name string) (interface{}, error) {
 	switch name {
 	case "testResource":
@@ -73,14 +63,14 @@ func init() {
 	types.RegisterResolver("store/wrap_test", fixtureResolver)
 }
 
-func testWithEtcdStore(t testing.TB, f func(*Store)) {
+func testWithEtcdStore(t testing.TB, f func(*etcdstorev2.Store)) {
 	capnslog.SetGlobalLogLevel(capnslog.ERROR)
 	logrus.SetOutput(ioutil.Discard)
 	e, cleanup := etcd.NewTestEtcd(t)
 	defer cleanup()
 
 	client := e.NewEmbeddedClient()
-	s := NewStore(client)
+	s := etcdstorev2.NewStore(client)
 	f(s)
 }
 

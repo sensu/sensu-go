@@ -24,6 +24,7 @@ import (
 	"golang.org/x/time/rate"
 
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
+	corev3 "github.com/sensu/sensu-go/api/core/v3"
 	"github.com/sensu/sensu-go/asset"
 	"github.com/sensu/sensu-go/backend/agentd"
 	"github.com/sensu/sensu-go/command"
@@ -48,28 +49,30 @@ func GetDefaultAgentName() string {
 
 // An Agent receives and acts on messages from a Sensu Backend.
 type Agent struct {
-	allowList       []allowList
-	api             *http.Server
-	assetGetter     asset.Getter
-	backendSelector BackendSelector
-	config          *Config
-	connected       bool
-	connectedMu     sync.RWMutex
-	contentType     string
-	entity          *corev2.Entity
-	executor        command.Executor
-	handler         *handler.MessageHandler
-	header          http.Header
-	inProgress      map[string]*corev2.CheckConfig
-	inProgressMu    *sync.Mutex
-	statsdServer    StatsdServer
-	sendq           chan *transport.Message
-	systemInfo      *corev2.System
-	systemInfoMu    sync.RWMutex
-	wg              sync.WaitGroup
-	apiQueue        queue
-	marshal         agentd.MarshalFunc
-	unmarshal       agentd.UnmarshalFunc
+	allowList         []allowList
+	api               *http.Server
+	assetGetter       asset.Getter
+	backendSelector   BackendSelector
+	config            *Config
+	connected         bool
+	connectedMu       sync.RWMutex
+	contentType       string
+	entityConfig      *corev3.EntityConfig
+	entityMu          sync.Mutex
+	executor          command.Executor
+	handler           *handler.MessageHandler
+	header            http.Header
+	inProgress        map[string]*corev2.CheckConfig
+	inProgressMu      *sync.Mutex
+	localEntityConfig *corev3.EntityConfig
+	statsdServer      StatsdServer
+	sendq             chan *transport.Message
+	systemInfo        *corev2.System
+	systemInfoMu      sync.RWMutex
+	wg                sync.WaitGroup
+	apiQueue          queue
+	marshal           agentd.MarshalFunc
+	unmarshal         agentd.UnmarshalFunc
 
 	// ProcessGetter gets information about local agent processes.
 	ProcessGetter process.Getter
@@ -107,6 +110,7 @@ func NewAgentContext(ctx context.Context, config *Config) (*Agent, error) {
 
 	agent.statsdServer = NewStatsdServer(agent)
 	agent.handler.AddHandler(corev2.CheckRequestType, agent.handleCheck)
+	agent.handler.AddHandler(transport.MessageTypeEntityConfig, agent.handleEntityConfig)
 
 	// We don't check for errors here and let the agent get created regardless
 	// of system info status.
@@ -152,16 +156,13 @@ func (a *Agent) RefreshSystemInfo(ctx context.Context) error {
 	}
 
 	proccessInfo, err := a.ProcessGetter.Get(ctx)
-	if err != nil {
-		return err
-	}
 	info.Processes = proccessInfo
 
 	a.systemInfoMu.Lock()
 	a.systemInfo = &info
 	a.systemInfoMu.Unlock()
 
-	return nil
+	return err
 }
 
 func (a *Agent) refreshSystemInfoPeriodically(ctx context.Context) {
@@ -257,11 +258,11 @@ func (a *Agent) Run(ctx context.Context) error {
 
 	if !a.config.DisableAssets {
 		assetManager := asset.NewManager(a.config.CacheDir, a.getAgentEntity(), &a.wg)
-		var err error
 		limit := a.config.AssetsRateLimit
 		if limit == 0 {
 			limit = rate.Limit(asset.DefaultAssetsRateLimit)
 		}
+		var err error
 		a.assetGetter, err = assetManager.StartAssetManager(ctx, rate.NewLimiter(limit, a.config.AssetsBurstLimit))
 		if err != nil {
 			return err
@@ -408,8 +409,10 @@ func (a *Agent) newKeepalive() *transport.Message {
 	msg := &transport.Message{
 		Type: transport.MessageTypeKeepalive,
 	}
-	entity := a.getAgentEntity()
 
+	// We want to send the entity from the local configuration, in case we need to
+	// register this agent, which should use the local entity configuration
+	entity := a.getLocalEntity()
 	uid, _ := uuid.NewRandom()
 
 	keepalive := &corev2.Event{
@@ -423,7 +426,7 @@ func (a *Agent) newKeepalive() *transport.Message {
 		Timeout:    a.config.KeepaliveWarningTimeout,
 		Ttl:        int64(a.config.KeepaliveCriticalTimeout),
 	}
-	keepalive.Entity = a.getAgentEntity()
+	keepalive.Entity = entity
 	keepalive.Timestamp = time.Now().Unix()
 
 	logEvent(keepalive)

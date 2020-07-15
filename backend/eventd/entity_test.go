@@ -1,19 +1,24 @@
 package eventd
 
 import (
+	"context"
 	"errors"
 	"reflect"
 	"testing"
 
-	corev2 "github.com/sensu/sensu-go/api/core/v2"
-	"github.com/sensu/sensu-go/testing/mockstore"
-	"github.com/sensu/sensu-go/types"
 	"github.com/stretchr/testify/mock"
+
+	corev2 "github.com/sensu/sensu-go/api/core/v2"
+	corev3 "github.com/sensu/sensu-go/api/core/v3"
+	"github.com/sensu/sensu-go/backend/store"
+	storev2 "github.com/sensu/sensu-go/backend/store/v2"
+	"github.com/sensu/sensu-go/backend/store/v2/storetest"
+	"github.com/sensu/sensu-go/backend/store/v2/wrap"
 )
 
 func TestCreateProxyEntity(t *testing.T) {
-	type storeFunc func(*mockstore.MockStore)
-	var nilEntity *types.Entity
+	type storeFunc func(*storetest.Store, *corev2.Event)
+	var nilWrapper *wrap.Wrapper = nil
 
 	tests := []struct {
 		name           string
@@ -24,84 +29,41 @@ func TestCreateProxyEntity(t *testing.T) {
 		wantErr        bool
 	}{
 		{
+			// We receive an event from entity "foo", already in the system.
+			//
+			// We expect to retrieve the EntityConfig and EntityState for "foo"
+			// and the event to look like it came from "foo".
 			name:  "entity exists",
 			event: corev2.FixtureEvent("foo", "check-cpu"),
-			storeFunc: func(store *mockstore.MockStore) {
-				store.On("GetEntityByName", mock.Anything, "foo").
-					Return(corev2.FixtureEntity("foo"), nil)
+			storeFunc: func(s *storetest.Store, _ *corev2.Event) {
+				state := corev3.FixtureEntityState("foo")
+				config := corev3.FixtureEntityConfig("foo")
+
+				stateReq := storev2.NewResourceRequestFromResource(context.Background(), state)
+				configReq := storev2.NewResourceRequestFromResource(context.Background(), config)
+
+				wConfig, err := wrap.Resource(config)
+				if err != nil {
+					t.Fatal(err)
+				}
+
+				wState, err := wrap.Resource(state)
+				if err != nil {
+					t.Fatal(err)
+				}
+
+				s.On("Get", stateReq).Return(wState, nil)
+				s.On("Get", configReq).Return(wConfig, nil)
 			},
 			wantEntityName: "foo",
 		},
 		{
-			name:  "entity does not exist",
-			event: corev2.FixtureEvent("foo", "check-cpu"),
-			storeFunc: func(store *mockstore.MockStore) {
-				store.On("GetEntityByName", mock.Anything, "foo").
-					Return(nilEntity, nil)
-				store.On("UpdateEntity", mock.Anything, mock.AnythingOfType("*v2.Entity")).
-					Return(nil)
-			},
-			wantEntityName: "foo",
-		},
-		{
-			name:  "store error while getting an entity",
-			event: corev2.FixtureEvent("foo", "check-cpu"),
-			storeFunc: func(store *mockstore.MockStore) {
-				store.On("GetEntityByName", mock.Anything, "foo").
-					Return(&corev2.Entity{}, errors.New("error"))
-			},
-			wantEntityName: "foo",
-			wantErr:        true,
-		},
-		{
-			name: "proxy entity exists",
-			event: &corev2.Event{
-				Check: &corev2.Check{
-					ProxyEntityName: "bar",
-				},
-				Entity: corev2.FixtureEntity("foo"),
-			},
-			storeFunc: func(store *mockstore.MockStore) {
-				store.On("GetEntityByName", mock.Anything, "bar").
-					Return(corev2.FixtureEntity("bar"), nil)
-			},
-			wantEntityName: "bar",
-		},
-		{
-			name: "proxy entity does not exist",
-			event: &corev2.Event{
-				Check: &corev2.Check{
-					ProxyEntityName: "bar",
-				},
-				Entity: corev2.FixtureEntity("foo"),
-			},
-			storeFunc: func(store *mockstore.MockStore) {
-				store.On("GetEntityByName", mock.Anything, "bar").
-					Return(nilEntity, nil)
-				store.On("UpdateEntity", mock.Anything, mock.AnythingOfType("*v2.Entity")).
-					Return(nil)
-			},
-			wantEntityName: "bar",
-		},
-		{
-			name: "store error while updating entity",
-			event: &corev2.Event{
-				Check: &corev2.Check{
-					ProxyEntityName: "bar",
-				},
-				Entity: corev2.FixtureEntity("foo"),
-			},
-			storeFunc: func(store *mockstore.MockStore) {
-				store.On("GetEntityByName", mock.Anything, "bar").
-					Return(nilEntity, nil)
-				store.On("UpdateEntity", mock.Anything, mock.AnythingOfType("*v2.Entity")).
-					Return(errors.New("error"))
-			},
-			wantEntityName: "foo",
-			wantErr:        true,
-		},
-		{
-			name: "entity gets created as proxy entity with provided definition",
+			// We receive an event from entity "foo", currently unknown in the
+			// system.
+			//
+			// We expect an EntityConfig and an EntityState to be created for
+			// "foo" and the event to be mutated appropriately.
+			name: "entity does not exist",
 			event: &corev2.Event{
 				Check: corev2.FixtureCheck("check-cpu"),
 				Entity: &corev2.Entity{
@@ -112,13 +74,42 @@ func TestCreateProxyEntity(t *testing.T) {
 					Subscriptions: []string{"linux"},
 				},
 			},
-			storeFunc: func(store *mockstore.MockStore) {
-				store.On("GetEntityByName", mock.Anything, "foo").
-					Return(nilEntity, nil)
-				store.On("UpdateEntity", mock.Anything, mock.AnythingOfType("*v2.Entity")).
-					Return(nil)
+			storeFunc: func(s *storetest.Store, e *corev2.Event) {
+				_, state := corev3.V2EntityToV3(e.Entity)
+				stateReq := storev2.NewResourceRequestFromResource(context.Background(), state)
+
+				config := corev3.FixtureEntityConfig("foo")
+				configReq := storev2.NewResourceRequestFromResource(context.Background(), config)
+
+				wState, err := wrap.Resource(state)
+				if err != nil {
+					t.Fatal(err)
+				}
+
+				wConfig, err := wrap.Resource(config)
+				if err != nil {
+					t.Fatal(err)
+				}
+
+				s.On("Get", mock.AnythingOfType("v2.ResourceRequest")).
+					Return(nilWrapper, &store.ErrNotFound{})
+
+				// Assert that CreateOrUpdate() was called with the expected
+				// request and wrapper
+				s.On("CreateOrUpdate", stateReq,
+					mock.MatchedBy(func(w *wrap.Wrapper) bool {
+						return w.String() == wState.String()
+					})).Return(nil)
+
+				// Assert that CreateIfNotExists() was called with the expected
+				// request and wrapper type
+				// TODO(ccressent): can we do something more strict with the
+				// matching?
+				s.On("CreateIfNotExists", configReq,
+					mock.MatchedBy(func(w *wrap.Wrapper) bool {
+						return w.TypeMeta.Equal(wConfig.TypeMeta)
+					})).Return(nil)
 			},
-			wantEntityName: "foo",
 			wantEntity: &corev2.Entity{
 				ObjectMeta: corev2.ObjectMeta{
 					Name:      "foo",
@@ -127,13 +118,148 @@ func TestCreateProxyEntity(t *testing.T) {
 				EntityClass:   "proxy",
 				Subscriptions: []string{"linux", "entity:foo"},
 			},
+			wantEntityName: "foo",
+		},
+		{
+			// We receive an event from entity "foo", but we encounter an error
+			// while trying to find it in the store.
+			//
+			// We expect that error to be returned and the event to be unchanged.
+			name:  "store error while getting the EntityConfig",
+			event: corev2.FixtureEvent("foo", "check-cpu"),
+			storeFunc: func(s *storetest.Store, _ *corev2.Event) {
+				config := corev3.FixtureEntityConfig("foo")
+				configReq := storev2.NewResourceRequestFromResource(context.Background(), config)
+
+				s.On("Get", configReq).Return(nilWrapper, errors.New("error"))
+			},
+			wantEntityName: "foo",
+			wantErr:        true,
+		},
+		{
+			// We receive an event from entity "foo", on behalf of a proxy
+			// entity "bar" that already exists in the system.
+			//
+			// We expect to retrieve the EntityConfig and EntityState for "bar"
+			// and mutate the event to make it look like it came from that proxy
+			// entity.
+			name: "proxy entity already exists",
+			event: &corev2.Event{
+				Check: &corev2.Check{
+					ProxyEntityName: "bar",
+				},
+				Entity: corev2.FixtureEntity("foo"),
+			},
+			storeFunc: func(s *storetest.Store, _ *corev2.Event) {
+				state := corev3.FixtureEntityState("bar")
+				config := corev3.FixtureEntityConfig("bar")
+
+				stateReq := storev2.NewResourceRequestFromResource(context.Background(), state)
+				configReq := storev2.NewResourceRequestFromResource(context.Background(), config)
+
+				wState, err := wrap.Resource(state)
+				if err != nil {
+					t.Fatal(err)
+				}
+
+				wConfig, err := wrap.Resource(config)
+				if err != nil {
+					t.Fatal(err)
+				}
+
+				s.On("Get", stateReq).Return(wState, nil)
+				s.On("Get", configReq).Return(wConfig, nil)
+			},
+			wantEntityName: "bar",
+		},
+		{
+			// We receive an event from entity "foo", on behalf of a proxy
+			// entity "bar" that is currently unknown to the system.
+			//
+			// We expect to create and store a new EntityConfig and a new
+			// EntityState for that new proxy entity "bar" and mutate the event
+			// to make it look like it came from that proxy entity.
+			name: "proxy entity does not exist yet",
+			event: &corev2.Event{
+				Check: &corev2.Check{
+					ProxyEntityName: "bar",
+				},
+				Entity: corev2.FixtureEntity("foo"),
+			},
+			storeFunc: func(s *storetest.Store, _ *corev2.Event) {
+				state := corev3.NewEntityState("default", "bar")
+				config := corev3.FixtureEntityConfig("bar")
+
+				configReq := storev2.NewResourceRequestFromResource(context.Background(), config)
+				stateReq := storev2.NewResourceRequestFromResource(context.Background(), state)
+
+				wState, err := wrap.Resource(state)
+				if err != nil {
+					t.Fatal(err)
+				}
+
+				wConfig, err := wrap.Resource(config)
+				if err != nil {
+					t.Fatal(err)
+				}
+
+				s.On("Get", configReq).Return(nilWrapper, &store.ErrNotFound{})
+
+				// Assert that CreateOrUpdate() was called with the expected
+				// request and wrapper
+				s.On("CreateOrUpdate", stateReq,
+					mock.MatchedBy(func(w *wrap.Wrapper) bool {
+						return w.String() == wState.String()
+					})).Return(nil)
+
+				// Assert that CreateIfNotExists() was called with the expected
+				// request and wrapper type
+				// TODO(ccressent): can we do something more strict with the
+				// matching?
+				s.On("CreateIfNotExists", configReq,
+					mock.MatchedBy(func(w *wrap.Wrapper) bool {
+						return w.TypeMeta.Equal(wConfig.TypeMeta)
+					})).Return(nil)
+			},
+			wantEntityName: "bar",
+		},
+		{
+			// We receive an event from entity "foo", on behalf of a proxy
+			// entity "bar" that is currently unknown to the system and
+			// encounter an error while creating that new proxy entity "bar".
+			//
+			// We expect that error to be returned and the event mutated to make
+			// it look like it came from that proxy entity.
+			name: "store error while creating new proxy entity",
+			event: &corev2.Event{
+				Check: &corev2.Check{
+					ProxyEntityName: "bar",
+				},
+				Entity: corev2.FixtureEntity("foo"),
+			},
+			storeFunc: func(s *storetest.Store, e *corev2.Event) {
+				e.Entity.ObjectMeta.Name = "bar"
+				_, state := corev3.V2EntityToV3(e.Entity)
+				stateReq := storev2.NewResourceRequestFromResource(context.Background(), state)
+
+				config := corev3.FixtureEntityConfig("bar")
+				configReq := storev2.NewResourceRequestFromResource(context.Background(), config)
+
+				s.On("Get", configReq).
+					Return(nilWrapper, &store.ErrNotFound{})
+
+				s.On("CreateOrUpdate", stateReq, mock.AnythingOfType("*wrap.Wrapper")).
+					Return(errors.New("error"))
+			},
+			wantEntityName: "bar",
+			wantErr:        true,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			store := &mockstore.MockStore{}
+			store := &storetest.Store{}
 			if tt.storeFunc != nil {
-				tt.storeFunc(store)
+				tt.storeFunc(store, tt.event)
 			}
 			defer store.AssertExpectations(t)
 
@@ -144,7 +270,7 @@ func TestCreateProxyEntity(t *testing.T) {
 			if !reflect.DeepEqual(tt.event.Entity.Name, tt.wantEntityName) {
 				t.Errorf("createProxyEntity() entity name = %v, want %v", tt.event.Entity.Name, tt.wantEntityName)
 			}
-			if tt.wantEntity != nil && !reflect.DeepEqual(tt.event.Entity, tt.wantEntity) {
+			if tt.wantEntity != nil && !tt.event.Entity.Equal(tt.wantEntity) {
 				t.Errorf("createProxyEntity() entity = %v, want %v", tt.event.Entity, tt.wantEntity)
 			}
 		})

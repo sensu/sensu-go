@@ -8,13 +8,13 @@ import (
 
 // A Getter is responsible for getting the process info of an agent.
 type Getter interface {
-	Get(context.Context) ([]corev2.Process, error)
+	Get(context.Context) ([]*corev2.Process, error)
 }
 
 // A NoopProcessGetter is responsible for refreshing process info of an agent.
 type NoopProcessGetter struct{}
 
 // Get is not yet implemented.
-func (NoopProcessGetter) Get(ctx context.Context) ([]corev2.Process, error) {
-	return ([]corev2.Process)(nil), nil
+func (NoopProcessGetter) Get(ctx context.Context) ([]*corev2.Process, error) {
+	return ([]*corev2.Process)(nil), nil
 }

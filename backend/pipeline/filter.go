@@ -12,7 +12,7 @@ import (
 )
 
 // Returns true if the event should be filtered/denied.
-func evaluateEventFilter(event *corev2.Event, filter *corev2.EventFilter, assets asset.RuntimeAssetSet) bool {
+func evaluateEventFilter(ctx context.Context, event *corev2.Event, filter *corev2.EventFilter, assets asset.RuntimeAssetSet) bool {
 	// Redact the entity to avoid leaking sensitive information
 	event.Entity = event.Entity.GetRedactedEntity()
 
@@ -39,10 +39,40 @@ func evaluateEventFilter(event *corev2.Event, filter *corev2.EventFilter, assets
 		}
 	}
 
+	// Guard against nil metadata labels and annotations to improve the user
+	// experience of querying these them.
+	if event.ObjectMeta.Annotations == nil {
+		event.ObjectMeta.Annotations = make(map[string]string)
+	}
+	if event.ObjectMeta.Labels == nil {
+		event.ObjectMeta.Labels = make(map[string]string)
+	}
+	if event.Check.ObjectMeta.Annotations == nil {
+		event.Check.ObjectMeta.Annotations = make(map[string]string)
+	}
+	if event.Check.ObjectMeta.Labels == nil {
+		event.Check.ObjectMeta.Labels = make(map[string]string)
+	}
+	if event.Entity.ObjectMeta.Annotations == nil {
+		event.Entity.ObjectMeta.Annotations = make(map[string]string)
+	}
+	if event.Entity.ObjectMeta.Labels == nil {
+		event.Entity.ObjectMeta.Labels = make(map[string]string)
+	}
+
 	synth := dynamic.Synthesize(event)
+	env := FilterExecutionEnvironment{
+		Event:  synth,
+		Assets: assets,
+		Funcs:  PipelineFilterFuncs,
+	}
 
 	for _, expression := range filter.Expressions {
-		match := evaluateJSFilter(synth, expression, assets)
+		match, err := env.Eval(ctx, expression)
+		if err != nil {
+			logger.WithError(err).Error("error evaluating javascript event filter")
+			continue
+		}
 
 		// Allow - One of the expressions did not match, filter the event
 		if filter.Action == corev2.EventFilterActionAllow && !match {
@@ -76,10 +106,10 @@ func evaluateEventFilter(event *corev2.Event, filter *corev2.EventFilter, assets
 	return false
 }
 
-// filterEvent filters a Sensu event, determining if it will continue through
+// FilterEvent filters a Sensu event, determining if it will continue through
 // the Sensu pipeline. Returns the filter's name if the event was filtered and
 // any error encountered
-func (p *Pipeline) filterEvent(handler *corev2.Handler, event *corev2.Event) (string, error) {
+func (p *Pipeline) FilterEvent(handler *corev2.Handler, event *corev2.Event) (string, error) {
 	// Prepare the logging
 	fields := utillogging.EventFields(event, false)
 	fields["handler"] = handler.Name
@@ -134,7 +164,7 @@ func (p *Pipeline) filterEvent(handler *corev2.Handler, event *corev2.Event) (st
 						return "", err
 					}
 				}
-				filtered := evaluateEventFilter(event, filter, assets)
+				filtered := evaluateEventFilter(ctx, event, filter, assets)
 				if filtered {
 					logger.WithFields(fields).Debug("denying event with custom filter")
 					return filterName, nil

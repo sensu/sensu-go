@@ -14,6 +14,7 @@ import (
 	"github.com/sensu/sensu-go/backend/seeds"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/backend/store/etcd/testutil"
+	etcdstorev2 "github.com/sensu/sensu-go/backend/store/v2/etcdstore"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -51,6 +52,7 @@ func TestKeepaliveMonitor(t *testing.T) {
 	if err != nil {
 		assert.FailNow(t, err.Error())
 	}
+	storev2 := etcdstorev2.NewStore(store.Client)
 
 	if err := seeds.SeedInitialData(store); err != nil {
 		assert.FailNow(t, err.Error())
@@ -83,6 +85,7 @@ func TestKeepaliveMonitor(t *testing.T) {
 	k, err := New(Config{
 		Store:           store,
 		EventStore:      store,
+		StoreV2:         storev2,
 		Bus:             bus,
 		LivenessFactory: factory,
 		BufferSize:      1,

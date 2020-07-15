@@ -66,7 +66,6 @@ func TestBackendHTTPListener(t *testing.T) {
 			apURL := fmt.Sprintf("%s://127.0.0.1:0", tc.httpScheme)
 			agentPort := 8081
 			apiPort := 8080
-			dashboardPort := 3000
 			initCluster := fmt.Sprintf("default=%s", apURL)
 
 			var tlsInfo etcd.TLSInfo
@@ -83,8 +82,6 @@ func TestBackendHTTPListener(t *testing.T) {
 				AgentHost:                    "127.0.0.1",
 				AgentPort:                    agentPort,
 				APIListenAddress:             fmt.Sprintf("127.0.0.1:%d", apiPort),
-				DashboardHost:                "127.0.0.1",
-				DashboardPort:                dashboardPort,
 				StateDir:                     dataPath,
 				CacheDir:                     cachePath,
 				TLS:                          tc.tls,
@@ -124,7 +121,6 @@ func TestBackendHTTPListener(t *testing.T) {
 
 			retryConnect(t, fmt.Sprintf("127.0.0.1:%d", agentPort))
 			retryConnect(t, fmt.Sprintf("127.0.0.1:%d", apiPort))
-			retryConnect(t, fmt.Sprintf("127.0.0.1:%d", dashboardPort))
 
 			userCredentials := base64.StdEncoding.EncodeToString([]byte("agent:P@ssw0rd!"))
 

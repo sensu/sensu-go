@@ -10,7 +10,7 @@ import (
 	"github.com/sensu/sensu-go/backend/messaging"
 	"github.com/sensu/sensu-go/backend/secrets"
 	"github.com/sensu/sensu-go/backend/store"
-	"github.com/sensu/sensu-go/backend/store/cache"
+	cachev2 "github.com/sensu/sensu-go/backend/store/cache/v2"
 	"github.com/sensu/sensu-go/testing/mockstore"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -41,7 +41,7 @@ func TestCheckWatcherSmoke(t *testing.T) {
 	st.On("GetCheckConfigWatcher", mock.Anything).Return((<-chan store.WatchEventCheckConfig)(watcherChan), nil)
 
 	pm := secrets.NewProviderManager()
-	watcher := NewCheckWatcher(ctx, bus, st, nil, &cache.Resource{}, pm)
+	watcher := NewCheckWatcher(ctx, bus, st, nil, &cachev2.Resource{}, pm)
 	require.NoError(t, watcher.Start())
 
 	checkAA := corev2.FixtureCheckConfig("a")

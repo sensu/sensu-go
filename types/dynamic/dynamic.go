@@ -120,6 +120,17 @@ func Synthesize(v interface{}) interface{} {
 				result[k] = v
 			}
 		}
+		meta, ok := result["metadata"]
+		if ok {
+			meta, ok := meta.(map[string]interface{})
+			if ok {
+				// hack alert! put the metadata fields into the top-level object
+				// to avoid breaking user expectations.
+				for k, v := range meta {
+					result[k] = v
+				}
+			}
+		}
 		return result
 	case reflect.Slice, reflect.Array:
 		return synthesizeSlice(value)
@@ -136,6 +147,23 @@ func Synthesize(v interface{}) interface{} {
 		}
 		return nil
 	}
+}
+
+// SynthesizeMethods returns a map of method names to methods from v.
+func SynthesizeMethods(v interface{}) map[string]interface{} {
+	value := reflect.ValueOf(v)
+	if value.IsZero() {
+		return nil
+	}
+	typ := value.Type()
+	n := value.NumMethod()
+	result := make(map[string]interface{}, n)
+	for i := 0; i < n; i++ {
+		methodValue := value.Method(i)
+		methodType := typ.Method(i)
+		result[methodType.Name] = methodValue.Interface()
+	}
+	return result
 }
 
 func synthesizeSlice(value reflect.Value) interface{} {

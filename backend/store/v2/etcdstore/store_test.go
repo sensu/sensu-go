@@ -1,6 +1,6 @@
 // +build integration,!race
 
-package etcdstore
+package etcdstore_test
 
 import (
 	"context"
@@ -11,11 +11,23 @@ import (
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/store"
 	storev2 "github.com/sensu/sensu-go/backend/store/v2"
+	"github.com/sensu/sensu-go/backend/store/v2/etcdstore"
 	"github.com/sensu/sensu-go/backend/store/v2/wrap"
 )
 
+func fixtureTestResource(name string) *testResource {
+	return &testResource{
+		Metadata: &corev2.ObjectMeta{
+			Namespace:   "default",
+			Name:        name,
+			Labels:      make(map[string]string),
+			Annotations: make(map[string]string),
+		},
+	}
+}
+
 func TestCreateOrUpdate(t *testing.T) {
-	testWithEtcdStore(t, func(s *Store) {
+	testWithEtcdStore(t, func(s *etcdstore.Store) {
 		// Create a namespace to work within
 		ns := &corev2.Namespace{Name: "default"}
 		ctx := context.Background()
@@ -57,7 +69,7 @@ func TestCreateOrUpdate(t *testing.T) {
 }
 
 func TestUpdateIfExists(t *testing.T) {
-	testWithEtcdStore(t, func(s *Store) {
+	testWithEtcdStore(t, func(s *etcdstore.Store) {
 		// Create a namespace to work within
 		ns := &corev2.Namespace{Name: "default"}
 		ctx := context.Background()
@@ -95,7 +107,7 @@ func TestUpdateIfExists(t *testing.T) {
 }
 
 func TestCreateIfNotExists(t *testing.T) {
-	testWithEtcdStore(t, func(s *Store) {
+	testWithEtcdStore(t, func(s *etcdstore.Store) {
 		// Create a namespace to work within
 		ns := &corev2.Namespace{Name: "default"}
 		ctx := context.Background()
@@ -138,7 +150,7 @@ func TestCreateIfNotExists(t *testing.T) {
 }
 
 func TestGet(t *testing.T) {
-	testWithEtcdStore(t, func(s *Store) {
+	testWithEtcdStore(t, func(s *etcdstore.Store) {
 		// Create a namespace to work within
 		ns := &corev2.Namespace{Name: "default"}
 		ctx := context.Background()
@@ -172,7 +184,7 @@ func TestGet(t *testing.T) {
 }
 
 func TestDelete(t *testing.T) {
-	testWithEtcdStore(t, func(s *Store) {
+	testWithEtcdStore(t, func(s *etcdstore.Store) {
 		// Create a namespace to work within
 		ns := &corev2.Namespace{Name: "default"}
 		ctx := context.Background()
@@ -212,7 +224,7 @@ func TestDelete(t *testing.T) {
 }
 
 func TestList(t *testing.T) {
-	testWithEtcdStore(t, func(s *Store) {
+	testWithEtcdStore(t, func(s *etcdstore.Store) {
 		// Create a namespace to work within
 		ns := &corev2.Namespace{Name: "default"}
 		ctx := context.Background()
