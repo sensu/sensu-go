@@ -370,7 +370,7 @@ func buildRequest(check *corev2.CheckConfig, s store.Store, secretsProviderManag
 	// Prepare log entry
 	fields := logrus.Fields{
 		"namespace": check.Namespace,
-		"mutator":   check.Name,
+		"check":     check.Name,
 		"assets":    check.RuntimeAssets,
 	}
 
@@ -381,6 +381,10 @@ func buildRequest(check *corev2.CheckConfig, s store.Store, secretsProviderManag
 			return nil, err
 		}
 		request.Secrets = secrets
+	} else if len(check.Secrets) > 0 {
+		logger.WithFields(fields).Warning(
+			"secrets will not be transmitted to agents without mutual TLS authentication (mTLS)",
+		)
 	}
 
 	assets, err := s.GetAssets(ctx, &store.SelectionPredicate{})
