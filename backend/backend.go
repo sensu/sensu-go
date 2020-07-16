@@ -407,6 +407,7 @@ func Initialize(ctx context.Context, config *Config) (*Backend, error) {
 		URL:                 config.APIURL,
 		Bus:                 bus,
 		Store:               stor,
+		Storev2:             storv2,
 		EventStore:          eventStoreProxy,
 		QueueGetter:         queueGetter,
 		TLS:                 config.TLS,
