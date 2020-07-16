@@ -101,11 +101,11 @@ func addCommandExecute(cli *cli.SensuCli) func(cmd *cobra.Command, args []string
 		}
 
 		fmt.Printf("added asset: %s:%s\n", assetPath, bonsaiVersion.Original())
-		if rename != "" {
-			fmt.Printf("%s [\"%s\"].\n", help, rename)
-		} else {
-			fmt.Printf("%s [\"%s\"].\n", help, assetPath)
+		assetName := rename
+		if assetName == "" {
+			assetName = assetPath
 		}
+		fmt.Printf("%s [\"%s\"].\n", help, assetName)
 		return nil
 	}
 }
