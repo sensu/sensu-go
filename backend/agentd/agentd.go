@@ -3,6 +3,7 @@ package agentd
 import (
 	"context"
 	"fmt"
+	"io"
 	"log"
 	"net"
 	"net/http"
@@ -127,7 +128,12 @@ func New(c Config, opts ...Option) (*Agentd, error) {
 		ErrorLog: log.New(&logrusIOWriter{entry: logger}, "", 0),
 		ConnState: func(c net.Conn, cs http.ConnState) {
 			var msg []byte
+			// fmt.Println(c.Co)
 			if _, err := c.Read(msg); err != nil {
+				if err == io.EOF {
+					fmt.Println("io.EOF!")
+				}
+				fmt.Printf("%#v\n", err)
 				logger.WithError(err).Error("websocket connection error")
 			}
 		},

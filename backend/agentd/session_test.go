@@ -99,7 +99,7 @@ func TestSession(t *testing.T) {
 					// Close our wait channel once we asserted the message
 					wg.Done()
 				}).Return(nil)
-				conn.On("SendCloseMessage").Return(nil)
+				conn.On("Closed").Return(true)
 				conn.On("Close").Return(nil)
 			},
 			busFunc: func(bus *messaging.WizardBus, wg *sync.WaitGroup) {
@@ -114,6 +114,7 @@ func TestSession(t *testing.T) {
 			name: "delete watch event stops the agent session",
 			connFunc: func(conn *mocktransport.MockTransport, wg *sync.WaitGroup) {
 				conn.On("Receive").After(100*time.Millisecond).Return(&transport.Message{}, nil)
+				conn.On("Closed").Return(false)
 				conn.On("SendCloseMessage").Return(nil)
 				conn.On("Close").Return(nil)
 			},
@@ -132,7 +133,7 @@ func TestSession(t *testing.T) {
 				// The Send() method should only be called once, otherwise it means the
 				// unknown event also sent something
 				conn.On("Send", mock.Anything).Once().Return(transport.ClosedError{})
-				conn.On("SendCloseMessage").Return(nil)
+				conn.On("Closed").Return(true)
 				conn.On("Close").Return(nil)
 			},
 			busFunc: func(bus *messaging.WizardBus, wg *sync.WaitGroup) {
@@ -156,7 +157,7 @@ func TestSession(t *testing.T) {
 			name: "invalid class entities are reset to the agent class",
 			connFunc: func(conn *mocktransport.MockTransport, wg *sync.WaitGroup) {
 				conn.On("Receive").After(100*time.Millisecond).Return(&transport.Message{}, nil)
-				conn.On("SendCloseMessage").Return(nil)
+				conn.On("Closed").Return(true)
 				conn.On("Close").Return(nil)
 			},
 			busFunc: func(bus *messaging.WizardBus, wg *sync.WaitGroup) {
@@ -181,7 +182,7 @@ func TestSession(t *testing.T) {
 			connFunc: func(conn *mocktransport.MockTransport, wg *sync.WaitGroup) {
 				conn.On("Receive").After(100*time.Millisecond).Return(&transport.Message{}, nil)
 				conn.On("Send", mock.Anything).Return(transport.ConnectionError{Message: "some horrible network outage"})
-				conn.On("SendCloseMessage").Return(nil)
+				conn.On("Closed").Return(true)
 				conn.On("Close").Return(nil)
 			},
 			busFunc: func(bus *messaging.WizardBus, wg *sync.WaitGroup) {
@@ -208,7 +209,7 @@ func TestSession(t *testing.T) {
 						wg.Done()
 					}
 				}).Return(nil)
-				conn.On("SendCloseMessage").Return(nil)
+				conn.On("Closed").Return(true)
 				conn.On("Close").Return(nil)
 			},
 			busFunc: func(bus *messaging.WizardBus, wg *sync.WaitGroup) {
@@ -246,7 +247,7 @@ func TestSession(t *testing.T) {
 						t.Fatalf("did not expect to receive a message of type %s", corev2.CheckRequestType)
 					}
 				}).Return(nil)
-				conn.On("SendCloseMessage").Return(nil)
+				conn.On("Closed").Return(true)
 				conn.On("Close").Return(nil)
 			},
 			busFunc: func(bus *messaging.WizardBus, wg *sync.WaitGroup) {

@@ -24,7 +24,12 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-const deletedEventSentinel = -1
+const (
+	deletedEventSentinel = -1
+
+	// Time to wait before force close on connection.
+	closeGracePeriod = 10 * time.Second
+)
 
 var (
 	sessionCounter = prometheus.NewGaugeVec(
@@ -425,12 +430,29 @@ func (s *Session) stop() {
 		}
 	}()
 
-	// Send a close message to ensure the agent closes its connection
-	if err := s.conn.SendCloseMessage(); err != nil {
-		logger.WithError(err).Warning("unexpected error while sending a close message to the agent")
-	}
+	// Send a close message to ensure the agent closes its connection if the
+	// connection is not already closed
+	// if !s.conn.Closed() {
+	// 	fmt.Println("!Closed, sending close message")
+	// 	if err := s.conn.SendCloseMessage(); err != nil {
+	// 		logger.WithError(err).Warning("unexpected error while sending a close message to the agent")
+	// 	}
+	// }
 
 	sessionCounter.WithLabelValues(s.cfg.Namespace).Dec()
+
+	// Gracefully wait for the send and receiver to exit, but force the websocket
+	// connection to close itself after the grace period
+	// done := make(chan struct{})
+	// go func() {
+	// 	s.wg.Wait()
+	// 	close(done)
+	// }()
+	// select {
+	// case <-done:
+	// case <-time.After(closeGracePeriod):
+	// }
+
 	s.wg.Wait()
 
 	close(s.entityConfig.updatesChannel)
