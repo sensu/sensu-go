@@ -11,12 +11,14 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 - Added sensu.FetchEvent(entity, check) and sensu.ListEvents() to the JS
 filter execution environment. Users can now query the Sensu event store for
 other events within the filter namespace.
+- Log a warning when secrets cannot be sent to an agent because mTLS is not
+enabled.
 
 ### Fixed
 - Clarifies wording around a secret provider error message.
 - Logs and returns an error if a mutator cannot be found.
 - Errors produced in the agent by assets, check validation, token substitution,
-and event unmarshaling are logged once again. 
+and event unmarshaling are logged once again.
 - User-Agent header is only set on new client creation rather than on each
 request.
 - Fixed a bug where highly concurrent event filtering could result in a panic.
@@ -26,6 +28,9 @@ check if the annotations or labels are undefined. Now, the user is guaranteed
 that labels and annotations are always defined, though they may be empty.
 - Automatically capitalize the roleRef and subject types in ClusterRoleBindings
 and RoleBindings.
+- Log the proper CA certificate path in the error message when it can't be
+properly parsed by the agent.
+- Fix the log entry field for the check's name in schedulerd.
 
 ### Breaking
 - The web interface is now a standalone product and no longer distributed

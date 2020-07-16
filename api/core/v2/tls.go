@@ -116,7 +116,7 @@ func LoadCACerts(path string) (*x509.CertPool, error) {
 	}
 	caCertPool := x509.NewCertPool()
 	if !caCertPool.AppendCertsFromPEM(caCerts) {
-		return nil, fmt.Errorf("No certificates could be parsed out of %s", err)
+		return nil, fmt.Errorf("No certificates could be parsed out of %s", path)
 	}
 
 	return caCertPool, nil
