@@ -632,7 +632,6 @@ func TestSession_receiver(t *testing.T) {
 			connFunc: func(conn *mocktransport.MockTransport, cancel context.CancelFunc) {
 				conn.On("Receive").Once().Return(&transport.Message{}, nil)
 				conn.On("Receive").Once().Run(func(args mock.Arguments) {
-					fmt.Println("cancel!")
 					cancel()
 				}).Return(&transport.Message{}, nil)
 			},
@@ -642,7 +641,6 @@ func TestSession_receiver(t *testing.T) {
 			connFunc: func(conn *mocktransport.MockTransport, cancel context.CancelFunc) {
 				conn.On("Receive").Once().Return(&transport.Message{}, errors.New("error"))
 				conn.On("Receive").Once().Run(func(args mock.Arguments) {
-					fmt.Println("cancel!")
 					cancel()
 				}).Return(&transport.Message{}, nil)
 			},
@@ -652,7 +650,6 @@ func TestSession_receiver(t *testing.T) {
 			connFunc: func(conn *mocktransport.MockTransport, cancel context.CancelFunc) {
 				conn.On("Receive").Once().Return(&transport.Message{}, transport.ConnectionError{})
 				conn.On("Receive").Once().Run(func(args mock.Arguments) {
-					fmt.Println("cancel!")
 					cancel()
 				}).Return(&transport.Message{}, nil)
 			},
