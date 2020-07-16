@@ -24,12 +24,6 @@ func (a *Agent) clearAgentEntity() {
 	a.entityConfig = nil
 }
 
-func (a *Agent) getLocalEntity() *corev2.Entity {
-	a.entityMu.Lock()
-	defer a.entityMu.Unlock()
-	return v3EntityToV2(a.getLocalEntityConfig(), a.getEntityState())
-}
-
 func (a *Agent) getLocalEntityConfig() *corev3.EntityConfig {
 	if a.localEntityConfig != nil {
 		return a.localEntityConfig
