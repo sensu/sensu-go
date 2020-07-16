@@ -313,6 +313,8 @@ func (a *Agent) connectionManager(ctx context.Context, cancel context.CancelFunc
 		a.connected = false
 		a.connectedMu.Unlock()
 
+		a.clearAgentEntity()
+
 		conn, err := a.connectWithBackoff(ctx)
 		if err != nil {
 			if err == ctx.Err() {
@@ -412,7 +414,7 @@ func (a *Agent) newKeepalive() *transport.Message {
 
 	// We want to send the entity from the local configuration, in case we need to
 	// register this agent, which should use the local entity configuration
-	entity := a.getLocalEntity()
+	entity := a.getAgentEntity()
 	uid, _ := uuid.NewRandom()
 
 	keepalive := &corev2.Event{
