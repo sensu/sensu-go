@@ -434,7 +434,7 @@ func (s *Session) stop() {
 	// connection is not already closed
 	if !s.conn.Closed() {
 		if err := s.conn.SendCloseMessage(); err != nil {
-			logger.WithError(err).Warning("unexpected error while sending a close message to the agent")
+			logger.Warning("unexpected error while sending a close message to the agent")
 		}
 	}
 
@@ -451,8 +451,6 @@ func (s *Session) stop() {
 	case <-done:
 	case <-time.After(closeGracePeriod):
 	}
-
-	s.wg.Wait()
 
 	close(s.entityConfig.updatesChannel)
 	close(s.checkChannel)
