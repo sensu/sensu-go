@@ -84,6 +84,7 @@ func addCommandExecute(cli *cli.SensuCli) func(cmd *cobra.Command, args []string
 		if err := resource.Validate(resources, cli.Config.Namespace()); err != nil {
 			return err
 		}
+		var assetName string
 		for i := range resources {
 			meta := resources[i].Value.GetObjectMeta()
 			if rename != "" {
@@ -91,6 +92,7 @@ func addCommandExecute(cli *cli.SensuCli) func(cmd *cobra.Command, args []string
 			} else {
 				meta.Name = fmt.Sprintf("%s/%s", bAsset.Namespace, bAsset.Name)
 			}
+			assetName = meta.Name
 			resources[i].Value.SetObjectMeta(meta)
 		}
 		processor := resource.NewPutter()
@@ -99,11 +101,7 @@ func addCommandExecute(cli *cli.SensuCli) func(cmd *cobra.Command, args []string
 		}
 
 		fmt.Printf("added asset: %s/%s:%s\n", bAsset.Namespace, bAsset.Name, bonsaiVersion.Original())
-		if rename != "" {
-			fmt.Printf("%s [\"%s\"].\n", help, rename)
-		} else {
-			fmt.Printf("%s [\"%s/%s\"].\n", help, bAsset.Namespace, bAsset.Name)
-		}
+		fmt.Printf("%s [\"%s\"].\n", help, assetName)
 		return nil
 	}
 }
