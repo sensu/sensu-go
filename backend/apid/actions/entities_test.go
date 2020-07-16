@@ -5,19 +5,23 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
+
+	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/store"
+	"github.com/sensu/sensu-go/backend/store/v2/storetest"
 	"github.com/sensu/sensu-go/testing/mockstore"
 	"github.com/sensu/sensu-go/testing/testutil"
 	"github.com/sensu/sensu-go/types"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
 )
 
 func TestNewEntityController(t *testing.T) {
 	assert := assert.New(t)
 
 	store := &mockstore.MockStore{}
-	actions := NewEntityController(store)
+	storev2 := &storetest.Store{}
+	actions := NewEntityController(store, storev2)
 
 	assert.NotNil(actions)
 	assert.Equal(store, actions.store)
@@ -63,7 +67,8 @@ func TestEntityFind(t *testing.T) {
 
 	for _, tc := range testCases {
 		store := &mockstore.MockStore{}
-		actions := NewEntityController(store)
+		storev2 := &storetest.Store{}
+		actions := NewEntityController(store, storev2)
 
 		t.Run(tc.name, func(t *testing.T) {
 			assert := assert.New(t)
@@ -131,7 +136,8 @@ func TestEntityList(t *testing.T) {
 
 	for _, tc := range testCases {
 		s := &mockstore.MockStore{}
-		actions := NewEntityController(s)
+		s2 := &storetest.Store{}
+		actions := NewEntityController(s, s2)
 
 		t.Run(tc.name, func(t *testing.T) {
 			assert := assert.New(t)
@@ -208,7 +214,8 @@ func TestEntityCreate(t *testing.T) {
 
 	for _, tc := range testCases {
 		store := &mockstore.MockStore{}
-		actions := NewEntityController(store)
+		storev2 := &storetest.Store{}
+		actions := NewEntityController(store, storev2)
 
 		t.Run(tc.name, func(t *testing.T) {
 			assert := assert.New(t)
@@ -244,33 +251,52 @@ func TestEntityCreateOrReplace(t *testing.T) {
 		testutil.ContextWithNamespace("default"),
 	)
 
-	badEntity := types.FixtureEntity("badentity")
+	agentEntity := corev2.FixtureEntity("agent-entity")
+	agentEntity.EntityClass = corev2.EntityAgentClass
+
+	proxyEntity := corev2.FixtureEntity("proxy-entity")
+	proxyEntity.EntityClass = corev2.EntityProxyClass
+
+	badEntity := corev2.FixtureEntity("badentity")
 	badEntity.Name = ""
 
 	testCases := []struct {
 		name            string
 		ctx             context.Context
 		argument        *types.Entity
-		fetchResult     *types.Entity
-		fetchErr        error
 		createErr       error
 		expectedErr     bool
 		expectedErrCode ErrCode
 	}{
 		{
-			name:        "Created",
+			name:        "agent entity",
 			ctx:         defaultCtx,
-			argument:    types.FixtureEntity("foo"),
-			fetchResult: nil,
-			fetchErr:    nil,
+			argument:    agentEntity,
 			createErr:   nil,
 			expectedErr: false,
 		},
 		{
-			name:        "Already exists",
+			name:            "agent entity, store failure",
+			ctx:             defaultCtx,
+			argument:        agentEntity,
+			createErr:       NewError(InternalErr, errors.New("some error")),
+			expectedErr:     true,
+			expectedErrCode: InternalErr,
+		},
+		{
+			name:        "proxy entity",
 			ctx:         defaultCtx,
-			argument:    types.FixtureEntity("foo"),
-			fetchResult: types.FixtureEntity("foo"),
+			argument:    proxyEntity,
+			createErr:   nil,
+			expectedErr: false,
+		},
+		{
+			name:            "proxy entity, store failure",
+			ctx:             defaultCtx,
+			argument:        proxyEntity,
+			createErr:       NewError(InternalErr, errors.New("some error")),
+			expectedErr:     true,
+			expectedErrCode: InternalErr,
 		},
 		{
 			name:            "Validation error",
@@ -283,17 +309,19 @@ func TestEntityCreateOrReplace(t *testing.T) {
 
 	for _, tc := range testCases {
 		store := &mockstore.MockStore{}
-		actions := NewEntityController(store)
+		storev2 := &storetest.Store{}
+		actions := NewEntityController(store, storev2)
 
 		t.Run(tc.name, func(t *testing.T) {
 			assert := assert.New(t)
 
 			// Mock store methods
 			store.
-				On("GetEntityByName", mock.Anything, mock.Anything).
-				Return(tc.fetchResult, tc.fetchErr)
-			store.
 				On("UpdateEntity", mock.Anything, mock.Anything).
+				Return(tc.createErr)
+
+			storev2.
+				On("CreateOrUpdate", mock.Anything, mock.Anything).
 				Return(tc.createErr)
 
 			// Exec Query

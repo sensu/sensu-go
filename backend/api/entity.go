@@ -4,22 +4,27 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/sirupsen/logrus"
+
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
+	corev3 "github.com/sensu/sensu-go/api/core/v3"
 	"github.com/sensu/sensu-go/backend/authorization"
 	"github.com/sensu/sensu-go/backend/store"
-	"github.com/sirupsen/logrus"
+	storev2 "github.com/sensu/sensu-go/backend/store/v2"
+	"github.com/sensu/sensu-go/backend/store/v2/wrap"
 )
 
 // EntityClient is an API client for entities.
 type EntityClient struct {
 	client     *GenericClient
+	storev2    storev2.Interface
 	eventStore store.EventStore
 	auth       authorization.Authorizer
 }
 
 // NewEntityClient creates a new EntityClient given a store, an event store and
 // an authorizer.
-func NewEntityClient(store store.ResourceStore, eventStore store.EventStore, auth authorization.Authorizer) *EntityClient {
+func NewEntityClient(store store.ResourceStore, storev2 storev2.Interface, eventStore store.EventStore, auth authorization.Authorizer) *EntityClient {
 	return &EntityClient{
 		client: &GenericClient{
 			Auth:       auth,
@@ -28,6 +33,7 @@ func NewEntityClient(store store.ResourceStore, eventStore store.EventStore, aut
 			APIGroup:   "core",
 			APIVersion: "v2",
 		},
+		storev2:    storev2,
 		eventStore: eventStore,
 		auth:       auth,
 	}
@@ -74,9 +80,41 @@ func (e *EntityClient) CreateEntity(ctx context.Context, entity *corev2.Entity) 
 
 // UpdateEntity updates an entity, if authorized.
 func (e *EntityClient) UpdateEntity(ctx context.Context, entity *corev2.Entity) error {
-	if err := e.client.Update(ctx, entity); err != nil {
-		return err
+	// We have 2 code paths here: one for proxy entities and another for all
+	// other types of entities. We had to make that distinction because Entity
+	// is still the public API to interact with entities, even though internally
+	// we use the storev2 EntityConfig/EntityState split.
+	//
+	// The consequence was that updating an Entity could alter its state,
+	// something we don't really want unless that entity is a proxy entity.
+	//
+	// See sensu-go#3896.
+	if entity.EntityClass == corev2.EntityProxyClass {
+		if err := e.client.Update(ctx, entity); err != nil {
+			return err
+		}
+	} else {
+		// The generic client takes care of authorization for us, so if we
+		// bypass it as we're doing here, we must not forget to deal with
+		// authorization ourselves.
+		attrs := entityUpdateAttributes(ctx, entity.Name)
+		if err := authorize(ctx, e.auth, attrs); err != nil {
+			return err
+		}
+
+		config, _ := corev3.V2EntityToV3(entity)
+		req := storev2.NewResourceRequestFromResource(ctx, config)
+
+		wConfig, err := wrap.Resource(config)
+		if err != nil {
+			return err
+		}
+
+		if err := e.storev2.CreateOrUpdate(req, wConfig); err != nil {
+			return err
+		}
 	}
+
 	return nil
 }
 
@@ -100,4 +138,15 @@ func (e *EntityClient) ListEntities(ctx context.Context) ([]*corev2.Entity, erro
 		return nil, err
 	}
 	return slice, nil
+}
+
+func entityUpdateAttributes(ctx context.Context, name string) *authorization.Attributes {
+	return &authorization.Attributes{
+		APIGroup:     "core",
+		APIVersion:   "v2",
+		Namespace:    corev2.ContextNamespace(ctx),
+		Resource:     "entities",
+		Verb:         "update",
+		ResourceName: name,
+	}
 }

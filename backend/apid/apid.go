@@ -14,6 +14,7 @@ import (
 	"github.com/coreos/etcd/clientv3"
 	"github.com/gorilla/mux"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
+
 	"github.com/sensu/sensu-go/backend/apid/actions"
 	"github.com/sensu/sensu-go/backend/apid/graphql"
 	"github.com/sensu/sensu-go/backend/apid/middlewares"
@@ -22,6 +23,7 @@ import (
 	"github.com/sensu/sensu-go/backend/authorization/rbac"
 	"github.com/sensu/sensu-go/backend/messaging"
 	"github.com/sensu/sensu-go/backend/store"
+	storev2 "github.com/sensu/sensu-go/backend/store/v2"
 	"github.com/sensu/sensu-go/types"
 )
 
@@ -39,6 +41,7 @@ type APId struct {
 	errChan             chan error
 	bus                 messaging.MessageBus
 	store               store.Store
+	storev2             storev2.Interface
 	eventStore          store.EventStore
 	queueGetter         types.QueueGetter
 	tls                 *types.TLSOptions
@@ -56,6 +59,7 @@ type Config struct {
 	URL                 string
 	Bus                 messaging.MessageBus
 	Store               store.Store
+	Storev2             storev2.Interface
 	EventStore          store.EventStore
 	QueueGetter         types.QueueGetter
 	TLS                 *types.TLSOptions
@@ -71,6 +75,7 @@ type Config struct {
 func New(c Config, opts ...Option) (*APId, error) {
 	a := &APId{
 		store:               c.Store,
+		storev2:             c.Storev2,
 		eventStore:          c.EventStore,
 		queueGetter:         c.QueueGetter,
 		tls:                 c.TLS,
@@ -199,7 +204,7 @@ func EntityLimitedCoreSubrouter(router *mux.Router, cfg Config) *mux.Router {
 	)
 	mountRouters(
 		subrouter,
-		routers.NewEntitiesRouter(cfg.Store, cfg.EventStore),
+		routers.NewEntitiesRouter(cfg.Store, cfg.Storev2, cfg.EventStore),
 		routers.NewEventsRouter(cfg.EventStore, cfg.Bus),
 	)
 

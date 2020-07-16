@@ -9,6 +9,7 @@ import (
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/apid/actions"
 	"github.com/sensu/sensu-go/backend/store"
+	storev2 "github.com/sensu/sensu-go/backend/store/v2"
 )
 
 // EntitiesRouter handles requests for /entities
@@ -26,9 +27,9 @@ type EntityController interface {
 }
 
 // NewEntitiesRouter instantiates new router for controlling entities resources
-func NewEntitiesRouter(store store.Store, events store.EventStore) *EntitiesRouter {
+func NewEntitiesRouter(store store.Store, storev2 storev2.Interface, events store.EventStore) *EntitiesRouter {
 	return &EntitiesRouter{
-		controller: actions.NewEntityController(store),
+		controller: actions.NewEntityController(store, storev2),
 		store:      store,
 		eventStore: events,
 	}

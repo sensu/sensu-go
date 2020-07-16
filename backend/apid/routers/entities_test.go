@@ -7,6 +7,7 @@ import (
 	"github.com/gorilla/mux"
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/store"
+	"github.com/sensu/sensu-go/backend/store/v2/storetest"
 	"github.com/sensu/sensu-go/testing/mockstore"
 	"github.com/stretchr/testify/mock"
 )
@@ -47,7 +48,8 @@ func TestEntitiesRouter(t *testing.T) {
 	s.On("DeleteEventByEntityCheck", mock.Anything, "foo", "bar").Return(nil)
 	s.On("DeleteEntityByName", mock.Anything, "foo").Return(nil)
 	s.On("GetEntityByName", mock.Anything, "foo").Return(corev2.FixtureEntity("foo"), nil)
-	router := NewEntitiesRouter(s, s)
+	s2 := new(storetest.Store)
+	router := NewEntitiesRouter(s, s2, s)
 	router.controller = controller
 	parentRouter := mux.NewRouter().PathPrefix(corev2.URLPrefix).Subrouter()
 	router.Mount(parentRouter)

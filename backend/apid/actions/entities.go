@@ -4,18 +4,23 @@ import (
 	"context"
 
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
+	corev3 "github.com/sensu/sensu-go/api/core/v3"
 	"github.com/sensu/sensu-go/backend/store"
+	storev2 "github.com/sensu/sensu-go/backend/store/v2"
+	"github.com/sensu/sensu-go/backend/store/v2/wrap"
 )
 
 // EntityController exposes actions in which a viewer can perform.
 type EntityController struct {
-	store store.EntityStore
+	store   store.EntityStore
+	storev2 storev2.Interface
 }
 
 // NewEntityController returns new EntityController
-func NewEntityController(store store.EntityStore) EntityController {
+func NewEntityController(store store.EntityStore, storev2 storev2.Interface) EntityController {
 	return EntityController{
-		store: store,
+		store:   store,
+		storev2: storev2,
 	}
 }
 
@@ -75,14 +80,35 @@ func (c EntityController) Create(ctx context.Context, entity corev2.Entity) erro
 // provided entity is invalid, the user doesn't have permissions to create or
 // update the entity, or if an internal error is returned from the store.
 func (c EntityController) CreateOrReplace(ctx context.Context, entity corev2.Entity) error {
-	// Validate
 	if err := entity.Validate(); err != nil {
 		return NewError(InvalidArgument, err)
 	}
 
-	// Persist Changes
-	if serr := c.store.UpdateEntity(ctx, &entity); serr != nil {
-		return NewError(InternalErr, serr)
+	// We have 2 code paths here: one for proxy entities and another for all
+	// other types of entities. We had to make that distinction because Entity
+	// is still the public API to interact with entities, even though internally
+	// we use the storev2 EntityConfig/EntityState split.
+	//
+	// The consequence was that updating an Entity could alter its state,
+	// something we don't really want unless that entity is a proxy entity.
+	//
+	// See sensu-go#3896.
+	if entity.EntityClass == corev2.EntityProxyClass {
+		if serr := c.store.UpdateEntity(ctx, &entity); serr != nil {
+			return NewError(InternalErr, serr)
+		}
+	} else {
+		config, _ := corev3.V2EntityToV3(&entity)
+		req := storev2.NewResourceRequestFromResource(ctx, config)
+
+		wConfig, err := wrap.Resource(config)
+		if err != nil {
+			return err
+		}
+
+		if err := c.storev2.CreateOrUpdate(req, wConfig); err != nil {
+			return err
+		}
 	}
 
 	return nil
