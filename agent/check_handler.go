@@ -65,7 +65,7 @@ func (a *Agent) handleCheck(ctx context.Context, payload []byte) error {
 
 	logger.Info("scheduling check execution: ", checkConfig.Name)
 
-	entity := a.getAgentEntity()
+	entity := a.getLocalEntity()
 	go a.executeCheck(ctx, request, entity)
 
 	return nil
