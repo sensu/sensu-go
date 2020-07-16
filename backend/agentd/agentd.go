@@ -120,9 +120,11 @@ func New(c Config, opts ...Option) (*Agentd, error) {
 		// Capture the log entries from agentd's HTTP server
 		ErrorLog: log.New(&logrusIOWriter{entry: logger}, "", 0),
 		ConnState: func(c net.Conn, cs http.ConnState) {
-			var msg []byte
-			if _, err := c.Read(msg); err != nil {
-				logger.WithError(err).Error("websocket connection error")
+			if cs != http.StateClosed {
+				var msg []byte
+				if _, err := c.Read(msg); err != nil {
+					logger.WithError(err).Error("websocket connection error")
+				}
 			}
 		},
 	}
