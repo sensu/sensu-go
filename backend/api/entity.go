@@ -80,7 +80,15 @@ func (e *EntityClient) CreateEntity(ctx context.Context, entity *corev2.Entity) 
 
 // UpdateEntity updates an entity, if authorized.
 func (e *EntityClient) UpdateEntity(ctx context.Context, entity *corev2.Entity) error {
-	// TODO(ccressent): add blurb here to explain why we make that exception.
+	// We have 2 code paths here: one for proxy entities and another for all
+	// other types of entities. We had to make that distinction because Entity
+	// is still the public API to interact with entities, even though internally
+	// we use the storev2 EntityConfig/EntityState split.
+	//
+	// The consequence was that updating an Entity could alter its state,
+	// something we don't really want unless that entity is a proxy entity.
+	//
+	// See sensu-go#3896.
 	if entity.EntityClass == corev2.EntityProxyClass {
 		if err := e.client.Update(ctx, entity); err != nil {
 			return err
