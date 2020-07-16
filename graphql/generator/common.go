@@ -135,15 +135,15 @@ func isEnum(tt ast.Type, i info) bool {
 func mustExtractSuffix(obj *ast.ObjectDefinition) string {
 	namedDir := findDirectiveNamed(obj.Directives, "named")
 	if namedDir == nil {
-		logger.Fatal(MissingNamedDirectiveErr)
+		panic(MissingNamedDirectiveErr)
 	}
 	suffixArg := findArgumentNamed(namedDir.Arguments, "suffix")
 	if suffixArg == nil {
-		logger.Fatal(MissingNamedDirectiveErr)
+		panic(MissingNamedDirectiveErr)
 	}
 	suffix, ok := suffixArg.Value.GetValue().(string)
 	if !ok {
-		logger.Fatal(MissingNamedDirectiveErr)
+		panic(MissingNamedDirectiveErr)
 	}
 	return suffix
 }
