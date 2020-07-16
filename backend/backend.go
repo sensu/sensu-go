@@ -14,6 +14,10 @@ import (
 	"github.com/coreos/etcd/clientv3"
 	"github.com/coreos/etcd/pkg/transport"
 	"github.com/prometheus/client_golang/prometheus"
+	"github.com/spf13/viper"
+	"golang.org/x/time/rate"
+	"google.golang.org/grpc"
+
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/asset"
 	"github.com/sensu/sensu-go/backend/agentd"
@@ -45,9 +49,6 @@ import (
 	"github.com/sensu/sensu-go/rpc"
 	"github.com/sensu/sensu-go/system"
 	"github.com/sensu/sensu-go/util/retry"
-	"github.com/spf13/viper"
-	"golang.org/x/time/rate"
-	"google.golang.org/grpc"
 )
 
 type ErrStartup struct {
@@ -381,7 +382,7 @@ func Initialize(ctx context.Context, config *Config) (*Backend, error) {
 	b.GraphQLService, err = graphql.NewService(graphql.ServiceConfig{
 		AssetClient:       api.NewAssetClient(stor, auth),
 		CheckClient:       api.NewCheckClient(stor, actions.NewCheckController(stor, queueGetter), auth),
-		EntityClient:      api.NewEntityClient(stor, eventStoreProxy, auth),
+		EntityClient:      api.NewEntityClient(stor, storv2, eventStoreProxy, auth),
 		EventClient:       api.NewEventClient(eventStoreProxy, auth, bus),
 		EventFilterClient: api.NewEventFilterClient(stor, auth),
 		HandlerClient:     api.NewHandlerClient(stor, auth),
