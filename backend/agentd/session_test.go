@@ -15,6 +15,7 @@ import (
 	"github.com/sensu/sensu-go/backend/messaging"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/backend/store/v2/storetest"
+	"github.com/sensu/sensu-go/handler"
 	"github.com/sensu/sensu-go/testing/mockbus"
 	"github.com/sensu/sensu-go/testing/mockstore"
 	"github.com/sensu/sensu-go/testing/mocktransport"
@@ -98,6 +99,7 @@ func TestSession(t *testing.T) {
 					// Close our wait channel once we asserted the message
 					wg.Done()
 				}).Return(nil)
+				conn.On("SendCloseMessage").Return(nil)
 				conn.On("Close").Return(nil)
 			},
 			busFunc: func(bus *messaging.WizardBus, wg *sync.WaitGroup) {
@@ -112,6 +114,7 @@ func TestSession(t *testing.T) {
 			name: "delete watch event stops the agent session",
 			connFunc: func(conn *mocktransport.MockTransport, wg *sync.WaitGroup) {
 				conn.On("Receive").After(100*time.Millisecond).Return(&transport.Message{}, nil)
+				conn.On("SendCloseMessage").Return(nil)
 				conn.On("Close").Return(nil)
 			},
 			busFunc: func(bus *messaging.WizardBus, wg *sync.WaitGroup) {
@@ -129,6 +132,7 @@ func TestSession(t *testing.T) {
 				// The Send() method should only be called once, otherwise it means the
 				// unknown event also sent something
 				conn.On("Send", mock.Anything).Once().Return(transport.ClosedError{})
+				conn.On("SendCloseMessage").Return(nil)
 				conn.On("Close").Return(nil)
 			},
 			busFunc: func(bus *messaging.WizardBus, wg *sync.WaitGroup) {
@@ -152,6 +156,7 @@ func TestSession(t *testing.T) {
 			name: "invalid class entities are reset to the agent class",
 			connFunc: func(conn *mocktransport.MockTransport, wg *sync.WaitGroup) {
 				conn.On("Receive").After(100*time.Millisecond).Return(&transport.Message{}, nil)
+				conn.On("SendCloseMessage").Return(nil)
 				conn.On("Close").Return(nil)
 			},
 			busFunc: func(bus *messaging.WizardBus, wg *sync.WaitGroup) {
@@ -176,6 +181,7 @@ func TestSession(t *testing.T) {
 			connFunc: func(conn *mocktransport.MockTransport, wg *sync.WaitGroup) {
 				conn.On("Receive").After(100*time.Millisecond).Return(&transport.Message{}, nil)
 				conn.On("Send", mock.Anything).Return(transport.ConnectionError{Message: "some horrible network outage"})
+				conn.On("SendCloseMessage").Return(nil)
 				conn.On("Close").Return(nil)
 			},
 			busFunc: func(bus *messaging.WizardBus, wg *sync.WaitGroup) {
@@ -202,6 +208,7 @@ func TestSession(t *testing.T) {
 						wg.Done()
 					}
 				}).Return(nil)
+				conn.On("SendCloseMessage").Return(nil)
 				conn.On("Close").Return(nil)
 			},
 			busFunc: func(bus *messaging.WizardBus, wg *sync.WaitGroup) {
@@ -239,6 +246,7 @@ func TestSession(t *testing.T) {
 						t.Fatalf("did not expect to receive a message of type %s", corev2.CheckRequestType)
 					}
 				}).Return(nil)
+				conn.On("SendCloseMessage").Return(nil)
 				conn.On("Close").Return(nil)
 			},
 			busFunc: func(bus *messaging.WizardBus, wg *sync.WaitGroup) {
@@ -607,6 +615,70 @@ func Test_removeEmptySubscriptions(t *testing.T) {
 			if got := removeEmptySubscriptions(tt.subscriptions); !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("removeEmptySubscriptions() = %v, want %v", got, tt.want)
 			}
+		})
+	}
+}
+
+func TestSession_receiver(t *testing.T) {
+	type connFunc func(*mocktransport.MockTransport, context.CancelFunc)
+
+	tests := []struct {
+		name     string
+		connFunc connFunc
+	}{
+		{
+			name: "incoming messages are handled",
+			connFunc: func(conn *mocktransport.MockTransport, cancel context.CancelFunc) {
+				conn.On("Receive").Once().Return(&transport.Message{}, nil)
+				conn.On("Receive").Once().Run(func(args mock.Arguments) {
+					fmt.Println("cancel!")
+					cancel()
+				}).Return(&transport.Message{}, nil)
+			},
+		},
+		{
+			name: "random errors are handled",
+			connFunc: func(conn *mocktransport.MockTransport, cancel context.CancelFunc) {
+				conn.On("Receive").Once().Return(&transport.Message{}, errors.New("error"))
+				conn.On("Receive").Once().Run(func(args mock.Arguments) {
+					fmt.Println("cancel!")
+					cancel()
+				}).Return(&transport.Message{}, nil)
+			},
+		},
+		{
+			name: "transport errors are handled",
+			connFunc: func(conn *mocktransport.MockTransport, cancel context.CancelFunc) {
+				conn.On("Receive").Once().Return(&transport.Message{}, transport.ConnectionError{})
+				conn.On("Receive").Once().Run(func(args mock.Arguments) {
+					fmt.Println("cancel!")
+					cancel()
+				}).Return(&transport.Message{}, nil)
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ctx, cancel := context.WithCancel(context.Background())
+			conn := new(mocktransport.MockTransport)
+			if tt.connFunc != nil {
+				tt.connFunc(conn, cancel)
+			}
+
+			s := &Session{
+				cfg: SessionConfig{
+					WriteTimeout: 5,
+				},
+				conn:   conn,
+				ctx:    ctx,
+				cancel: cancel,
+				wg:     &sync.WaitGroup{},
+			}
+			s.wg.Add(1)
+			s.handler = handler.NewMessageHandler()
+			go s.receiver()
+
+			s.wg.Wait()
 		})
 	}
 }

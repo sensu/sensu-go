@@ -121,6 +121,11 @@ type Transport interface {
 	// sent. Send is synchronous, returning nil if the write to the underlying
 	// socket was successful and an error otherwise.
 	Send(*Message) error
+
+	// SendCloseMessage sends a close control message over the transport, and the
+	// peer should echo the message back and that message will be returned as an
+	// error from the websocket connection's read API
+	SendCloseMessage() error
 }
 
 // A WebSocketTransport is a connection between sensu Agents and Backends over
@@ -288,4 +293,9 @@ func (t *WebSocketTransport) Send(m *Message) (err error) {
 	}
 
 	return nil
+}
+
+// SendCloseMessage sends a close control message over the transport
+func (t *WebSocketTransport) SendCloseMessage() (err error) {
+	return t.Connection.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, ""))
 }

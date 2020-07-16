@@ -44,6 +44,13 @@ func (m *MockTransport) Send(message *transport.Message) error {
 	return args.Error(0)
 }
 
+// SendCloseMessage ...
+func (m *MockTransport) SendCloseMessage() error {
+	args := m.Called()
+	return args.Error(0)
+}
+
+// Heartbeat ...
 func (m *MockTransport) Heartbeat(ctx context.Context, interval, timeout int) {
 	_ = m.Called(ctx, interval, timeout)
 }

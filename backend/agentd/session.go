@@ -272,8 +272,6 @@ func (s *Session) sender() {
 			// Handle the delete and unknown watch events
 			switch watchEvent.Action {
 			case store.WatchDelete:
-				// The entity was deleted, we should sever the connection to the agent
-				// so it can register back
 				s.cancel()
 				continue
 			case store.WatchUnknown:
@@ -426,6 +424,11 @@ func (s *Session) stop() {
 			logger.WithError(err).Error("error closing session")
 		}
 	}()
+
+	// Send a close message to ensure the agent closes its connection
+	if err := s.conn.SendCloseMessage(); err != nil {
+		logger.WithError(err).Warning("unexpected error while sending a close message to the agent")
+	}
 
 	sessionCounter.WithLabelValues(s.cfg.Namespace).Dec()
 	s.wg.Wait()
