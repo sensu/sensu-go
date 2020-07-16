@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
+	"path"
 
 	"github.com/sensu/sensu-go/bonsai"
 	"github.com/sensu/sensu-go/cli"
@@ -90,7 +91,7 @@ func addCommandExecute(cli *cli.SensuCli) func(cmd *cobra.Command, args []string
 			if rename != "" {
 				meta.Name = rename
 			} else {
-				meta.Name = fmt.Sprintf("%s/%s", bAsset.Namespace, bAsset.Name)
+				meta.Name = path.Join(bAsset.Namespace, bAsset.Name)
 			}
 			assetName = meta.Name
 			resources[i].Value.SetObjectMeta(meta)
