@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
+	"path"
 
 	"github.com/sensu/sensu-go/bonsai"
 	"github.com/sensu/sensu-go/cli"
@@ -84,12 +85,13 @@ func addCommandExecute(cli *cli.SensuCli) func(cmd *cobra.Command, args []string
 		if err := resource.Validate(resources, cli.Config.Namespace()); err != nil {
 			return err
 		}
+		assetPath := path.Join(bAsset.Namespace, bAsset.Name)
 		for i := range resources {
 			meta := resources[i].Value.GetObjectMeta()
 			if rename != "" {
 				meta.Name = rename
 			} else {
-				meta.Name = fmt.Sprintf("%s/%s", bAsset.Namespace, bAsset.Name)
+				meta.Name = assetPath
 			}
 			resources[i].Value.SetObjectMeta(meta)
 		}
@@ -98,8 +100,12 @@ func addCommandExecute(cli *cli.SensuCli) func(cmd *cobra.Command, args []string
 			return err
 		}
 
-		fmt.Printf("added asset: %s/%s:%s\n", bAsset.Namespace, bAsset.Name, bonsaiVersion.Original())
-		fmt.Printf("%s [\"%s/%s\"].\n", help, bAsset.Namespace, bAsset.Name)
+		fmt.Printf("added asset: %s:%s\n", assetPath, bonsaiVersion.Original())
+		assetName := rename
+		if assetName == "" {
+			assetName = assetPath
+		}
+		fmt.Printf("%s [\"%s\"].\n", help, assetName)
 		return nil
 	}
 }
