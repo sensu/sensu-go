@@ -329,11 +329,17 @@ func (a *NamespaceClient) UpdateNamespace(ctx context.Context, namespace *corev2
 
 // DeleteNamespace deletes a namespace.
 func (a *NamespaceClient) DeleteNamespace(ctx context.Context, name string) error {
-	if err := a.client.Delete(ctx, name); err != nil {
+	// Inject the namespace into the context so we can target the namespaced
+	// resources
+	namespacedCtx := context.WithValue(ctx, corev2.NamespaceKey, name)
+	if err := a.roleClient.Delete(namespacedCtx, pipelineRoleName); err != nil {
 		return err
 	}
-	if err := a.bindingClient.Delete(ctx, pipelineRoleName); err != nil {
+	if err := a.bindingClient.Delete(namespacedCtx, pipelineRoleName); err != nil {
 		return err
 	}
-	return a.roleClient.Delete(ctx, pipelineRoleName)
+
+	// If we were able to successfully delete the role and its binding, then
+	// delete the actual namespace
+	return a.client.Delete(ctx, name)
 }
