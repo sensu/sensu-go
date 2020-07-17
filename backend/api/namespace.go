@@ -332,15 +332,6 @@ func (a *NamespaceClient) DeleteNamespace(ctx context.Context, name string) erro
 	// Inject the namespace into the context so we can target the namespaced
 	// resources
 	namespacedCtx := context.WithValue(ctx, corev2.NamespaceKey, name)
-
-	// Option 1: Check namespace emptiness here to abort deletion early.
-	//
-	// Need to create a bajillion clients for all the resources we want to check
-	// (checks, entities, assets, ...), call List() on them and check that there
-	// are 0 resources for each of them. Bulky and inefficient IMO. Plus the we
-	// need to add new, big tests for this function that check that it aborts
-	// early if the mock store has any of those resources in the namespace.
-
 	if err := a.roleClient.Delete(namespacedCtx, pipelineRoleName); err != nil {
 		return err
 	}
