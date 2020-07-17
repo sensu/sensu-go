@@ -341,6 +341,14 @@ func (a *NamespaceClient) DeleteNamespace(ctx context.Context, name string) erro
 		return err
 	}
 
+	// The generic client takes care of authorization for us, so if we
+	// bypass it as we're doing here, we must not forget to deal with
+	// authorization ourselves.
+	attrs := namespaceDeleteAttributes(ctx, name)
+	if err := authorize(ctx, a.auth, attrs); err != nil {
+		return err
+	}
+
 	// If we were able to successfully delete the role and its binding, then
 	// delete the actual namespace
 	//
@@ -354,4 +362,14 @@ func (a *NamespaceClient) DeleteNamespace(ctx context.Context, name string) erro
 	// the generic client and store yet, we reach straight to the
 	// NamespaceStore, which already has this logic implemented.
 	return a.namespaceStore.DeleteNamespace(ctx, name)
+}
+
+func namespaceDeleteAttributes(ctx context.Context, name string) *authorization.Attributes {
+	return &authorization.Attributes{
+		APIGroup:     "core",
+		APIVersion:   "v2",
+		Resource:     "namespaces",
+		Verb:         "delete",
+		ResourceName: name,
+	}
 }
