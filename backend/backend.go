@@ -693,3 +693,7 @@ func getSystemInfo() corev2.System {
 	}
 	return info
 }
+
+func unusedFunction() {
+	return
+}
