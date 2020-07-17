@@ -56,7 +56,7 @@ func TestNamespacesRouter(t *testing.T) {
 	authorizer := &mockauthorizer.Authorizer{}
 	authorizer.On("Authorize", mock.Anything, mock.Anything).Return(true, nil)
 
-	router := NewNamespacesRouter(s, authorizer)
+	router := NewNamespacesRouter(s, s, authorizer)
 	parentRouter := mux.NewRouter().PathPrefix(corev2.URLPrefix).Subrouter()
 	parentRouter.Use(mockedClaims)
 	router.Mount(parentRouter)
@@ -117,7 +117,7 @@ func TestNamespaceRouterList(t *testing.T) {
 	ctx = context.WithValue(ctx, corev2.ClaimsKey, corev2.FixtureClaims("foo", []string{"cluster-admins"}))
 
 	auth := &rbac.Authorizer{Store: s}
-	router := NewNamespacesRouter(s, auth)
+	router := NewNamespacesRouter(s, s, auth)
 	pred := &store.SelectionPredicate{Limit: 1}
 	got, err := router.list(ctx, pred)
 	if err != nil {

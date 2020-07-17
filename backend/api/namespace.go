@@ -20,14 +20,15 @@ type ruleVisitor interface {
 
 // NamespaceClient is an API client for namespaces.
 type NamespaceClient struct {
-	client        GenericClient
-	roleClient    GenericClient
-	bindingClient GenericClient
-	auth          authorization.Authorizer
+	client         GenericClient
+	namespaceStore store.NamespaceStore
+	roleClient     GenericClient
+	bindingClient  GenericClient
+	auth           authorization.Authorizer
 }
 
 // NewNamespaceClient creates a new NamespaceClient, given a store and authorizer.
-func NewNamespaceClient(store store.ResourceStore, auth authorization.Authorizer) *NamespaceClient {
+func NewNamespaceClient(store store.ResourceStore, namespaceStore store.NamespaceStore, auth authorization.Authorizer) *NamespaceClient {
 	return &NamespaceClient{
 		client: GenericClient{
 			Kind:       &corev2.Namespace{},
@@ -50,7 +51,8 @@ func NewNamespaceClient(store store.ResourceStore, auth authorization.Authorizer
 			APIGroup:   "core",
 			APIVersion: "v2",
 		},
-		auth: auth,
+		auth:           auth,
+		namespaceStore: namespaceStore,
 	}
 }
 
@@ -342,13 +344,14 @@ func (a *NamespaceClient) DeleteNamespace(ctx context.Context, name string) erro
 	// If we were able to successfully delete the role and its binding, then
 	// delete the actual namespace
 	//
-	// Option 2: we could potentially not use the "generic client" here and talk
-	// to the namespace store directly, after authorizing (similar to the recent
-	// entity exception). We then get the behaviour we want, and leverage the
-	// existing tests for it in the namespace store.
+	// We don't use the generic client and store here because there is some
+	// special logic that applies to namespace deletion, namely the fact that we
+	// don't want to delete namespace objects as if they were independent
+	// objects: we want to make sure that a namespace is logically "empty"
+	// before we remove it for good.
 	//
-	// The drawback is that it's yet another move away from the generic client,
-	// yet another "special" code path. But it's informing us about potential
-	// future design changes to the generic store.
-	return a.client.Delete(ctx, name)
+	// Since we don't have a good abstraction for these types of custom logic in
+	// the generic client and store yet, we reach straight to the
+	// NamespaceStore, which already has this logic implemented.
+	return a.namespaceStore.DeleteNamespace(ctx, name)
 }
