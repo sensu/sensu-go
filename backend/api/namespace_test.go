@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"reflect"
 	"sort"
 	"testing"
@@ -818,10 +819,9 @@ func TestNamespaceCRUDSideEffects(t *testing.T) {
 	s.On("ListRoleBindings", mock.Anything, mock.Anything).Return(([]*corev2.RoleBinding)(nil), nil)
 	s.On("CreateResource", mock.Anything, mock.Anything).Return(nil)
 	s.On("CreateOrUpdateResource", mock.Anything, mock.Anything).Return(nil)
-	s.On("DeleteResource", mock.Anything, mock.Anything, mock.Anything).Return(nil)
 	setupGetClusterRoleAndGetRole(s, clusterRoles, nil)
 
-	ctx := contextWithUser(defaultContext(), "cluster-admin", []string{"cluster-admins"})
+	ctx := contextWithUser(context.Background(), "cluster-admin", []string{"cluster-admins"})
 
 	auth := &rbac.Authorizer{Store: s}
 	client := NewNamespaceClient(s, auth)
@@ -863,6 +863,20 @@ func TestNamespaceCRUDSideEffects(t *testing.T) {
 	s.AssertNumberOfCalls(t, "CreateOrUpdateResource", 2)
 	s.AssertCalled(t, "CreateOrUpdateResource", mock.Anything, expRole)
 	s.AssertCalled(t, "CreateOrUpdateResource", mock.Anything, expBinding)
+
+	s.On("DeleteResource", mock.Anything, expBinding.StorePrefix(), pipelineRoleName).Run(func(args mock.Arguments) {
+		ctx := args[0].(context.Context)
+		if ns := corev2.ContextNamespace(ctx); ns != namespace.Name {
+			t.Fatalf("expected namespace %q, got %q", namespace.Name, ns)
+		}
+	}).Return(nil)
+	s.On("DeleteResource", mock.Anything, expRole.StorePrefix(), pipelineRoleName).Run(func(args mock.Arguments) {
+		ctx := args[0].(context.Context)
+		if ns := corev2.ContextNamespace(ctx); ns != namespace.Name {
+			t.Fatalf("expected namespace %q, got %q", namespace.Name, ns)
+		}
+	}).Return(nil)
+	s.On("DeleteResource", mock.Anything, namespace.StorePrefix(), namespace.Name).Return(nil)
 
 	if err := client.DeleteNamespace(ctx, namespace.Name); err != nil {
 		t.Fatal(err)
