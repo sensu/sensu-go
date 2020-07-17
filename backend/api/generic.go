@@ -13,6 +13,14 @@ import (
 )
 
 // GenericClient is a generic API client that uses the ResourceStore.
+// Option 4: figure out a general approach for pre/post operations for the
+// generic store
+//
+// Either as functions (or arrays of them) in the struct or in the methods types
+// (eg: Delete(..., preops[]func(resource), postops []func(resource)))
+//
+// Not enough time for now to implement for 6.0 and make sure that it's a good
+// approach for the foreseable future IMO.
 type GenericClient struct {
 	Kind       corev2.Resource
 	Store      store.ResourceStore
@@ -114,6 +122,10 @@ func (g *GenericClient) Delete(ctx context.Context, name string) error {
 	if err := authorize(ctx, g.Auth, attrs); err != nil {
 		return err
 	}
+
+	// Option 3: add special code here in the "generic" Delete() so that it
+	// checks for emptiness when dealing with namespaces. Yuck.
+
 	return g.Store.DeleteResource(ctx, g.Kind.StorePrefix(), name)
 }
 

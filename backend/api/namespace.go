@@ -332,6 +332,15 @@ func (a *NamespaceClient) DeleteNamespace(ctx context.Context, name string) erro
 	// Inject the namespace into the context so we can target the namespaced
 	// resources
 	namespacedCtx := context.WithValue(ctx, corev2.NamespaceKey, name)
+
+	// Option 1: Check namespace emptiness here to abort deletion early.
+	//
+	// Need to create a bajillion clients for all the resources we want to check
+	// (checks, entities, assets, ...), call List() on them and check that there
+	// are 0 resources for each of them. Bulky and inefficient IMO. Plus the we
+	// need to add new, big tests for this function that check that it aborts
+	// early if the mock store has any of those resources in the namespace.
+
 	if err := a.roleClient.Delete(namespacedCtx, pipelineRoleName); err != nil {
 		return err
 	}
@@ -341,5 +350,14 @@ func (a *NamespaceClient) DeleteNamespace(ctx context.Context, name string) erro
 
 	// If we were able to successfully delete the role and its binding, then
 	// delete the actual namespace
+	//
+	// Option 2: we could potentially not use the "generic client" here and talk
+	// to the namespace store directly, after authorizing (similar to the recent
+	// entity exception). We then get the behaviour we want, and leverage the
+	// existing tests for it in the namespace store.
+	//
+	// The drawback is that it's yet another move away from the generic client,
+	// yet another "special" code path. But it's informing us about potential
+	// future design changes to the generic store.
 	return a.client.Delete(ctx, name)
 }
