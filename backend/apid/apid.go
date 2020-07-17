@@ -178,7 +178,7 @@ func CoreSubrouter(router *mux.Router, cfg Config) *mux.Router {
 		routers.NewHandlersRouter(cfg.Store),
 		routers.NewHooksRouter(cfg.Store),
 		routers.NewMutatorsRouter(cfg.Store),
-		routers.NewNamespacesRouter(cfg.Store, &rbac.Authorizer{Store: cfg.Store}),
+		routers.NewNamespacesRouter(cfg.Store, cfg.Store, &rbac.Authorizer{Store: cfg.Store}),
 		routers.NewRolesRouter(cfg.Store),
 		routers.NewRoleBindingsRouter(cfg.Store),
 		routers.NewSilencedRouter(cfg.Store),
