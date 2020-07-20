@@ -134,7 +134,7 @@ func TestFunction(t *testing.T) {
 				}
 			}()
 			vm := otto.New()
-			callable := Function(context.Background(), vm, test.Func)
+			callable := Function(context.Background(), vm, test.Func).(func(...interface{}) interface{})
 			result := callable(test.Args...)
 			if !test.ExpError {
 				if got, want := result, test.Exp; !reflect.DeepEqual(got, want) {
@@ -142,6 +142,25 @@ func TestFunction(t *testing.T) {
 				}
 			}
 		})
+	}
+}
+
+func TestFunctionJS(t *testing.T) {
+	vm := otto.New()
+	callable := Function(context.Background(), vm, `(function() { return "hello!" })`)
+	if err := vm.Set("hello", callable); err != nil {
+		t.Fatal(err)
+	}
+	result, err := vm.Eval("hello()")
+	if err != nil {
+		t.Fatal(err)
+	}
+	str, err := result.ToString()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got, want := str, "hello!"; got != want {
+		t.Errorf("bad result: got %s, want %s", got, want)
 	}
 }
 

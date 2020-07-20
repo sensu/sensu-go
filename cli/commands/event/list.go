@@ -116,7 +116,7 @@ func printToTable(results interface{}, writer io.Writer) {
 				if !ok {
 					return cli.TypeError
 				}
-				return globals.BooleanStyleP(len(event.Check.Silenced) > 0)
+				return globals.BooleanStyleP(event.Check.IsSilenced)
 			},
 		},
 		{
