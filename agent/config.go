@@ -210,6 +210,7 @@ func FixtureConfig() (*Config, func()) {
 	cacheDir, err := ioutil.TempDir("", "")
 	if err != nil {
 		panic(err)
+		return nil, nil
 	}
 
 	c := &Config{
