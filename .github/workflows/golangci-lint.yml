@@ -16,7 +16,7 @@ jobs:
         with:
           go-version: 1.13.12
       - name: golangci-lint
-        uses: golangci/golangci-lint-action@v1
+        uses: golangci/golangci-lint-action@v2
         with:
           version: v1.28
           args: --timeout=5m
@@ -29,7 +29,7 @@ jobs:
         with:
           go-version: 1.13.12
       - name: golangci-lint
-        uses: golangci/golangci-lint-action@v1
+        uses: golangci/golangci-lint-action@v2
         with:
           version: v1.28
           working-directory: api/core/v2
@@ -43,7 +43,7 @@ jobs:
         with:
           go-version: 1.13.12
       - name: golangci-lint
-        uses: golangci/golangci-lint-action@v1
+        uses: golangci/golangci-lint-action@v2
         with:
           version: v1.28
           working-directory: api/core/v3
@@ -57,7 +57,7 @@ jobs:
         with:
           go-version: 1.13.12
       - name: golangci-lint
-        uses: golangci/golangci-lint-action@v1
+        uses: golangci/golangci-lint-action@v2
         with:
           version: v1.28
           working-directory: backend/store/v2
@@ -71,7 +71,7 @@ jobs:
         with:
           go-version: 1.13.12
       - name: golangci-lint
-        uses: golangci/golangci-lint-action@v1
+        uses: golangci/golangci-lint-action@v2
         with:
           version: v1.28
           working-directory: types
