@@ -68,7 +68,7 @@ func (s *Store) DeleteNamespace(ctx context.Context, name string) error {
 		// Validate whether there are any resources referencing the namespace
 		getresp, err = s.client.Txn(ctx).Then(
 			v3.OpGet(checkKeyBuilder.WithNamespace(name).Build(), v3.WithPrefix(), v3.WithCountOnly()),
-			v3.OpGet(entityKeyBuilder.WithNamespace(name).Build(), v3.WithPrefix(), v3.WithCountOnly()),
+			v3.OpGet(entityConfigKeyBuilder.WithNamespace(name).Build(), v3.WithPrefix(), v3.WithCountOnly()),
 			v3.OpGet(assetKeyBuilder.WithNamespace(name).Build(), v3.WithPrefix(), v3.WithCountOnly()),
 			v3.OpGet(handlerKeyBuilder.WithNamespace(name).Build(), v3.WithPrefix(), v3.WithCountOnly()),
 			v3.OpGet(mutatorKeyBuilder.WithNamespace(name).Build(), v3.WithPrefix(), v3.WithCountOnly()),
