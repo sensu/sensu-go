@@ -74,8 +74,13 @@ type Eventd struct {
 	shutdownChan    chan struct{}
 	wg              *sync.WaitGroup
 	Logger          Logger
-	silencedCache   *cache.Resource
+	silencedCache   Cache
 	storeTimeout    time.Duration
+}
+
+// Cache interfaces the cache.Resource struct for easier testing
+type Cache interface {
+	Get(namespace string) []cache.Value
 }
 
 // Option is a functional option.
@@ -257,6 +262,9 @@ func (e *Eventd) handleMessage(msg interface{}) error {
 
 	// Add any silenced subscriptions to the event
 	getSilenced(ctx, event, e.silencedCache)
+	if len(event.Check.Silenced) > 0 {
+		event.Check.IsSilenced = true
+	}
 
 	// Merge the new event with the stored event if a match is found
 	event, prevEvent, err := e.eventStore.UpdateEvent(ctx, event)
