@@ -85,7 +85,6 @@ func Function(ctx context.Context, vm *otto.Otto, fn interface{}) interface{} {
 		if err != nil {
 			return func(args ...interface{}) (result interface{}) {
 				panic(vm.MakeTypeError(err.Error()))
-				return nil
 			}
 		}
 		return funcVal
