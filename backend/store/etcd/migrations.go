@@ -75,7 +75,7 @@ func MigrateAddPipelineDRoles(ctx context.Context, client *clientv3.Client) erro
 		binding := &corev2.RoleBinding{
 			Subjects: []corev2.Subject{
 				{
-					Type: "user",
+					Type: corev2.GroupType,
 					Name: pipelineRoleName,
 				},
 			},
