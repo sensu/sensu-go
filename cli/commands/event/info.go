@@ -83,12 +83,12 @@ func printToList(v interface{}, writer io.Writer) error {
 			},
 			{
 				Label: "Silenced",
-				Value: strconv.FormatBool(len(event.Check.Silenced) > 0),
+				Value: strconv.FormatBool(event.Check.IsSilenced),
 			},
 		},
 	}
 
-	if len(event.Check.Silenced) > 0 {
+	if event.Check.IsSilenced {
 		silencedBy := &list.Row{
 			Label: "Silenced By",
 			Value: strings.Join(event.Check.Silenced, ", "),

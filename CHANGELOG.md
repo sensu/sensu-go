@@ -13,6 +13,7 @@ filter execution environment. Users can now query the Sensu event store for
 other events within the filter namespace.
 - Log a warning when secrets cannot be sent to an agent because mTLS is not
 enabled.
+- Added the is_silenced boolean key to event.Check object.
 
 ### Fixed
 - Clarifies wording around a secret provider error message.

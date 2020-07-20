@@ -4,7 +4,6 @@ import (
 	"context"
 
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
-	"github.com/sensu/sensu-go/backend/store/cache"
 	stringsutil "github.com/sensu/sensu-go/util/strings"
 )
 
@@ -20,7 +19,7 @@ func addToSilencedBy(id string, ids []string) []string {
 // getSilenced retrieves all silenced entries for a given event, using the
 // entity subscription, the check subscription and the check name while
 // supporting wildcard silenced entries (e.g. subscription:*)
-func getSilenced(ctx context.Context, event *corev2.Event, cache *cache.Resource) {
+func getSilenced(ctx context.Context, event *corev2.Event, cache Cache) {
 	if !event.HasCheck() {
 		return
 	}

@@ -292,6 +292,9 @@ message Check {
   // execution environment.
   repeated Secret secrets = 41 [ (gogoproto.jsontag) = "secrets" ];
 
+   // IsSilenced indicates whether the check is silenced or not
+   bool is_silenced = 42 [(gogoproto.jsontag) = "is_silenced"];
+
   // ExtendedAttributes store serialized arbitrary JSON-encoded data
   bytes ExtendedAttributes = 99 [ (gogoproto.jsontag) = "-" ];
 }
