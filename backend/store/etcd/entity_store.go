@@ -17,7 +17,18 @@ import (
 )
 
 const (
-	entityPathPrefix = "entities"
+	// I think, now the correct entityPathPrefix is "entity_configs". If it's
+	// not changed to that, etcd doesn't find existing entities in a namespace
+	// and we consider the namespace to be empty for deletion...
+	//
+	// Problems:
+	// - This breaks some migration related integration test
+	// - Why when entityPathPrefix = "entities", all unit and integration tests
+	//   pass but we can still delete non-empty namespaces that contain
+	//   entities. Tests should have caught that?
+	// - Are there other things that are subtly broken that we haven't found
+	//   yet?
+	entityPathPrefix = "entity_configs"
 )
 
 var (
