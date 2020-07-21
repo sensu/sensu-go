@@ -60,7 +60,7 @@ var (
 		"check_count":                etcd.GetCheckConfigsPath,
 		"cluster_role_count":         etcd.GetClusterRolesPath,
 		"cluster_role_binding_count": etcd.GetClusterRoleBindingsPath,
-		"entity_count":               etcd.GetEntitiesPath,
+		"entity_count":               etcd.GetEntityConfigsPath,
 		"event_count":                etcd.GetEventsPath,
 		"filter_count":               etcd.GetEventFiltersPath,
 		"handler_count":              etcd.GetHandlersPath,
