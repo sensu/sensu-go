@@ -299,3 +299,48 @@ func TestList(t *testing.T) {
 	})
 
 }
+
+func TestExists(t *testing.T) {
+	testWithEtcdStore(t, func(s *etcdstore.Store) {
+		// Create a namespace to work within
+		ns := &corev2.Namespace{Name: "default"}
+		ctx := context.Background()
+		req := storev2.NewResourceRequestFromV2Resource(ctx, ns)
+		wrapper, err := wrap.V2Resource(ns)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if err := s.CreateOrUpdate(req, wrapper); err != nil {
+			t.Fatal(err)
+		}
+		fixture := fixtureTestResource("foo")
+		req = storev2.NewResourceRequestFromResource(ctx, fixture)
+
+		// Exists should return false
+		got, err := s.Exists(req)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if want := false; got != want {
+			t.Errorf("got true, want false")
+		}
+
+		// Create a resource under the default namespace
+		wrapper, err = wrap.Resource(fixture)
+		if err != nil {
+			t.Fatal(err)
+		}
+		// CreateIfNotExists should succeed
+		if err := s.CreateIfNotExists(req, wrapper); err != nil {
+			t.Fatal(err)
+		}
+		got, err = s.Exists(req)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if want := true; got != want {
+			t.Errorf("got false, want true")
+		}
+	})
+
+}

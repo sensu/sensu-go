@@ -42,3 +42,8 @@ func (s *Store) List(req storev2.ResourceRequest, pred *store.SelectionPredicate
 	args := s.Called(req, pred)
 	return args.Get(0).(wrap.List), args.Error(1)
 }
+
+func (s *Store) Exists(req storev2.ResourceRequest) (bool, error) {
+	args := s.Called(req)
+	return args.Get(0).(bool), args.Error(1)
+}
