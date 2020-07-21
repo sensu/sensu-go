@@ -22,6 +22,9 @@ type Entity implements Node & Namespaced & Silenceable & Resource {
   deregistration: Deregistration!
   user: String!
 
+  "If agent; reflects the version reported by the sensu-agent client."
+  sensuAgentVersion: String!
+
   "Redact contains the fields to redact on the agent."
   redact: [String!]!
 
