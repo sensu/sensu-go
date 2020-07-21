@@ -69,7 +69,6 @@ const (
 	flagBackendHandshakeTimeout  = "backend-handshake-timeout"
 	flagBackendHeartbeatInterval = "backend-heartbeat-interval"
 	flagBackendHeartbeatTimeout  = "backend-heartbeat-timeout"
-	flagDisableSystemInfo        = "disable-system-info"
 
 	// TLS flags
 	flagTrustedCAFile         = "trusted-ca-file"
@@ -170,7 +169,6 @@ func NewAgentConfig(cmd *cobra.Command) (*agent.Config, error) {
 
 	cfg.DisableAPI = viper.GetBool(flagDisableAPI)
 	cfg.DisableSockets = viper.GetBool(flagDisableSockets)
-	cfg.DisableSystemInfo = viper.GetBool(flagDisableSystemInfo)
 
 	return cfg, nil
 }
@@ -325,7 +323,6 @@ func handleConfig(cmd *cobra.Command) error {
 	cmd.Flags().Int(flagBackendHandshakeTimeout, viper.GetInt(flagBackendHandshakeTimeout), "number of seconds the agent should wait when negotiating a new WebSocket connection")
 	cmd.Flags().Int(flagBackendHeartbeatInterval, viper.GetInt(flagBackendHeartbeatInterval), "interval at which the agent should send heartbeats to the backend")
 	cmd.Flags().Int(flagBackendHeartbeatTimeout, viper.GetInt(flagBackendHeartbeatTimeout), "number of seconds the agent should wait for a response to a hearbeat")
-	cmd.Flags().Bool(flagDisableSystemInfo, viper.GetBool(flagDisableSystemInfo), "disable system information collection")
 
 	cmd.Flags().SetNormalizeFunc(aliasNormalizeFunc(logger))
 

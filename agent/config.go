@@ -115,9 +115,6 @@ type Config struct {
 	// in check execution.
 	DisableAssets bool
 
-	// DisableSystemInfo stops the agent from collecting system information
-	DisableSystemInfo bool
-
 	// DisableSockets disables the event sockets
 	DisableSockets bool
 
@@ -190,6 +187,10 @@ type Config struct {
 	// will close the existing connection with the backend and attempt to
 	// reconnect with exponential backoff
 	BackendHeartbeatTimeout int
+
+	// MockSystemInfo determines whether the system info collection should return
+	// mocked system information. This should only be used for testing.
+	MockSystemInfo bool
 }
 
 // StatsdServerConfig contains the statsd server configuration

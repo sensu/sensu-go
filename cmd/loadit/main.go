@@ -45,7 +45,6 @@ func main() {
 		cfg.Deregister = true
 		cfg.DeregistrationHandler = ""
 		cfg.DisableAPI = true
-		cfg.DisableSystemInfo = true
 		cfg.DisableSockets = true
 		cfg.StatsdServer = &agent.StatsdServerConfig{
 			Disable:       true,
@@ -61,6 +60,7 @@ func main() {
 		cfg.Subscriptions = subscriptions
 		cfg.AgentName = name
 		cfg.BackendURLs = backends
+		cfg.MockSystemInfo = true
 
 		agent, err := agent.NewAgent(cfg)
 		if err != nil {
