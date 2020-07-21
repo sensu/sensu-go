@@ -173,6 +173,10 @@ func (a *Agent) RefreshSystemInfo(ctx context.Context) error {
 }
 
 func (a *Agent) refreshSystemInfoPeriodically(ctx context.Context) {
+	if a.config.MockSystemInfo {
+		return
+	}
+
 	defer logger.Info("shutting down system info collector")
 	ticker := time.NewTicker(time.Duration(DefaultSystemInfoRefreshInterval) * time.Second)
 	defer ticker.Stop()
