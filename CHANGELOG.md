@@ -7,6 +7,8 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
 
+## [6.0.0] - 2020-07-23
+
 ### Added
 - Added sensu.FetchEvent(entity, check) and sensu.ListEvents() to the JS
 filter execution environment. Users can now query the Sensu event store for
