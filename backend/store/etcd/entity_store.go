@@ -40,6 +40,11 @@ func GetEntitiesPath(ctx context.Context, name string) string {
 	return entityKeyBuilder.WithContext(ctx).Build(name)
 }
 
+// GetEntityConfigsPath gets the path of entity_configs in the store
+func GetEntityConfigsPath(ctx context.Context, name string) string {
+	return entityConfigKeyBuilder.WithContext(ctx).Build(name)
+}
+
 // DeleteEntity deletes an Entity.
 func (s *Store) DeleteEntity(ctx context.Context, e *corev2.Entity) error {
 	if err := e.Validate(); err != nil {
