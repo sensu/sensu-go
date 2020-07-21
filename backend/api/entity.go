@@ -17,6 +17,7 @@ import (
 // EntityClient is an API client for entities.
 type EntityClient struct {
 	client     *GenericClient
+	storev1    store.Store
 	storev2    storev2.Interface
 	eventStore store.EventStore
 	auth       authorization.Authorizer
@@ -24,7 +25,7 @@ type EntityClient struct {
 
 // NewEntityClient creates a new EntityClient given a store, an event store and
 // an authorizer.
-func NewEntityClient(store store.ResourceStore, storev2 storev2.Interface, eventStore store.EventStore, auth authorization.Authorizer) *EntityClient {
+func NewEntityClient(store store.Store, storev2 storev2.Interface, eventStore store.EventStore, auth authorization.Authorizer) *EntityClient {
 	return &EntityClient{
 		client: &GenericClient{
 			Auth:       auth,
@@ -33,6 +34,7 @@ func NewEntityClient(store store.ResourceStore, storev2 storev2.Interface, event
 			APIGroup:   "core",
 			APIVersion: "v2",
 		},
+		storev1:    store,
 		storev2:    storev2,
 		eventStore: eventStore,
 		auth:       auth,
@@ -97,7 +99,7 @@ func (e *EntityClient) UpdateEntity(ctx context.Context, entity *corev2.Entity) 
 		// The generic client takes care of authorization for us, so if we
 		// bypass it as we're doing here, we must not forget to deal with
 		// authorization ourselves.
-		attrs := entityUpdateAttributes(ctx, entity.Name)
+		attrs := entityAuthAttributes(ctx, "update", entity.Name)
 		if err := authorize(ctx, e.auth, attrs); err != nil {
 			return err
 		}
@@ -120,33 +122,41 @@ func (e *EntityClient) UpdateEntity(ctx context.Context, entity *corev2.Entity) 
 
 // FetchEntity gets an entity, if authorized.
 func (e *EntityClient) FetchEntity(ctx context.Context, name string) (*corev2.Entity, error) {
-	var entity corev2.Entity
-	if err := e.client.Get(ctx, name, &entity); err != nil {
+	attrs := entityAuthAttributes(ctx, "get", name)
+	if err := authorize(ctx, e.client.Auth, attrs); err != nil {
 		return nil, err
 	}
-	return &entity, nil
+	entity, err := e.storev1.GetEntityByName(ctx, name)
+	if err != nil {
+		return nil, err
+	}
+	return entity, nil
 }
 
 // ListEntities lists all entities in a namespace, if authorized.
 func (e *EntityClient) ListEntities(ctx context.Context) ([]*corev2.Entity, error) {
+	attrs := entityAuthAttributes(ctx, "list", "")
+	if err := authorize(ctx, e.client.Auth, attrs); err != nil {
+		return nil, err
+	}
 	pred := &store.SelectionPredicate{
 		Continue: corev2.PageContinueFromContext(ctx),
 		Limit:    int64(corev2.PageSizeFromContext(ctx)),
 	}
-	slice := []*corev2.Entity{}
-	if err := e.client.List(ctx, &slice, pred); err != nil {
+	slice, err := e.storev1.GetEntities(ctx, pred)
+	if err != nil {
 		return nil, err
 	}
 	return slice, nil
 }
 
-func entityUpdateAttributes(ctx context.Context, name string) *authorization.Attributes {
+func entityAuthAttributes(ctx context.Context, verb, name string) *authorization.Attributes {
 	return &authorization.Attributes{
 		APIGroup:     "core",
 		APIVersion:   "v2",
 		Namespace:    corev2.ContextNamespace(ctx),
 		Resource:     "entities",
-		Verb:         "update",
+		Verb:         verb,
 		ResourceName: name,
 	}
 }

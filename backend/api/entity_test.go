@@ -110,10 +110,7 @@ func TestListEntities(t *testing.T) {
 			},
 			Store: func() store.Store {
 				store := new(mockstore.MockStore)
-				store.On("ListResources", mock.Anything, (&corev2.Entity{}).StorePrefix(), mock.Anything, mock.Anything).Run(func(args mock.Arguments) {
-					arg := args.Get(2).(*[]*corev2.Entity)
-					*arg = []*corev2.Entity{defaultEntity}
-				}).Return(nil)
+				store.On("GetEntities", mock.Anything, mock.Anything).Return([]*corev2.Entity{defaultEntity}, nil)
 				return store
 			},
 			EventStore: func() store.EventStore {
@@ -253,10 +250,7 @@ func TestGetEntity(t *testing.T) {
 			},
 			Store: func() store.Store {
 				store := new(mockstore.MockStore)
-				store.On("GetResource", mock.Anything, "default", mock.Anything).Run(func(args mock.Arguments) {
-					arg := args.Get(2).(*corev2.Entity)
-					*arg = *defaultEntity
-				}).Return(nil)
+				store.On("GetEntityByName", mock.Anything, "default").Return(defaultEntity, nil)
 				return store
 			},
 			EventStore: func() store.EventStore {
