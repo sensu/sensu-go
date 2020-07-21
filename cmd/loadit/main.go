@@ -45,6 +45,7 @@ func main() {
 		cfg.Deregister = true
 		cfg.DeregistrationHandler = ""
 		cfg.DisableAPI = true
+		cfg.DisableSystemInfo = true
 		cfg.DisableSockets = true
 		cfg.StatsdServer = &agent.StatsdServerConfig{
 			Disable:       true,
