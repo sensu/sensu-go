@@ -10,9 +10,6 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 ## [6.0.0] - 2020-07-23
 
 ### Added
-- Added sensu.FetchEvent(entity, check) and sensu.ListEvents() to the JS
-filter execution environment. Users can now query the Sensu event store for
-other events within the filter namespace.
 - Log a warning when secrets cannot be sent to an agent because mTLS is not
 enabled.
 - Added the is_silenced boolean key to event.Check object.
