@@ -20,14 +20,15 @@ type ruleVisitor interface {
 
 // NamespaceClient is an API client for namespaces.
 type NamespaceClient struct {
-	client        GenericClient
-	roleClient    GenericClient
-	bindingClient GenericClient
-	auth          authorization.Authorizer
+	client         GenericClient
+	namespaceStore store.NamespaceStore
+	roleClient     GenericClient
+	bindingClient  GenericClient
+	auth           authorization.Authorizer
 }
 
 // NewNamespaceClient creates a new NamespaceClient, given a store and authorizer.
-func NewNamespaceClient(store store.ResourceStore, auth authorization.Authorizer) *NamespaceClient {
+func NewNamespaceClient(store store.ResourceStore, namespaceStore store.NamespaceStore, auth authorization.Authorizer) *NamespaceClient {
 	return &NamespaceClient{
 		client: GenericClient{
 			Kind:       &corev2.Namespace{},
@@ -50,7 +51,8 @@ func NewNamespaceClient(store store.ResourceStore, auth authorization.Authorizer
 			APIGroup:   "core",
 			APIVersion: "v2",
 		},
-		auth: auth,
+		auth:           auth,
+		namespaceStore: namespaceStore,
 	}
 }
 
@@ -332,14 +334,45 @@ func (a *NamespaceClient) DeleteNamespace(ctx context.Context, name string) erro
 	// Inject the namespace into the context so we can target the namespaced
 	// resources
 	namespacedCtx := context.WithValue(ctx, corev2.NamespaceKey, name)
-	if err := a.roleClient.Delete(namespacedCtx, pipelineRoleName); err != nil {
-		return err
-	}
-	if err := a.bindingClient.Delete(namespacedCtx, pipelineRoleName); err != nil {
+
+	// The generic client takes care of authorization for us, so if we
+	// bypass it as we're doing here, we must not forget to deal with
+	// authorization ourselves.
+	attrs := namespaceDeleteAttributes(ctx, name)
+	if err := authorize(ctx, a.auth, attrs); err != nil {
 		return err
 	}
 
-	// If we were able to successfully delete the role and its binding, then
-	// delete the actual namespace
-	return a.client.Delete(ctx, name)
+	// We don't use the generic client and store here because there is some
+	// special logic that applies to namespace deletion, namely the fact that we
+	// don't want to delete namespace objects as if they were independent
+	// objects: we want to make sure that a namespace is logically "empty"
+	// before we remove it for good.
+	//
+	// Since we don't have a good abstraction for these types of custom logic in
+	// the generic client and store yet, we reach straight to the
+	// NamespaceStore, which already has this logic implemented.
+	if err := a.namespaceStore.DeleteNamespace(ctx, name); err != nil {
+		return err
+	}
+
+	if err := a.roleClient.Delete(namespacedCtx, pipelineRoleName); err != nil {
+		logger.Warnf("could not delete implicit %s role in namespace %s: %s", pipelineRoleName, name, err)
+	}
+
+	if err := a.bindingClient.Delete(namespacedCtx, pipelineRoleName); err != nil {
+		logger.Warnf("could not delete implicit %s binding in namespace %s: %s", pipelineRoleName, name, err)
+	}
+
+	return nil
+}
+
+func namespaceDeleteAttributes(ctx context.Context, name string) *authorization.Attributes {
+	return &authorization.Attributes{
+		APIGroup:     "core",
+		APIVersion:   "v2",
+		Resource:     "namespaces",
+		Verb:         "delete",
+		ResourceName: name,
+	}
 }

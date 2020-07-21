@@ -17,11 +17,13 @@ import (
 )
 
 const (
-	entityPathPrefix = "entities"
+	entityPathPrefix       = "entities"
+	entityConfigPathPrefix = "entity_configs"
 )
 
 var (
-	entityKeyBuilder = store.NewKeyBuilder(entityPathPrefix)
+	entityKeyBuilder       = store.NewKeyBuilder(entityPathPrefix)
+	entityConfigKeyBuilder = store.NewKeyBuilder(entityConfigPathPrefix)
 )
 
 type entityContinueToken struct {

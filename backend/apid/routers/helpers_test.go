@@ -418,6 +418,9 @@ var deleteResourceNotFoundTestCase = func(resource corev2.Resource) routerTestCa
 			s.On("DeleteResource", mock.Anything, resource.StorePrefix(), resource.GetObjectMeta().Name).
 				Return(&store.ErrNotFound{}).
 				Once()
+			s.On("DeleteNamespace", mock.Anything, resource.GetObjectMeta().Name).
+				Return(&store.ErrNotFound{}).
+				Once()
 		},
 		wantStatusCode: http.StatusNotFound,
 	}
@@ -433,6 +436,9 @@ var deleteResourceStoreErrTestCase = func(resource corev2.Resource) routerTestCa
 			s.On("DeleteResource", mock.Anything, resource.StorePrefix(), resource.GetObjectMeta().Name).
 				Return(&store.ErrInternal{}).
 				Once()
+			s.On("DeleteNamespace", mock.Anything, resource.GetObjectMeta().Name).
+				Return(&store.ErrInternal{}).
+				Once()
 		},
 		wantStatusCode: http.StatusInternalServerError,
 	}
@@ -446,6 +452,9 @@ var deleteResourceSuccessTestCase = func(resource corev2.Resource) routerTestCas
 		body:   []byte(`{"metadata": {"namespace":"default","name":"foo"}}`),
 		storeFunc: func(s *mockstore.MockStore) {
 			s.On("DeleteResource", mock.Anything, resource.StorePrefix(), resource.GetObjectMeta().Name).
+				Return(nil).
+				Once()
+			s.On("DeleteNamespace", mock.Anything, resource.GetObjectMeta().Name).
 				Return(nil).
 				Once()
 		},

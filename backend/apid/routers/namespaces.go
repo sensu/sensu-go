@@ -18,16 +18,18 @@ import (
 
 // NamespacesRouter handles requests for /namespaces
 type NamespacesRouter struct {
-	handlers handlers.Handlers
-	store    store.ResourceStore
-	auth     authorization.Authorizer
+	handlers       handlers.Handlers
+	store          store.ResourceStore
+	namespaceStore store.NamespaceStore
+	auth           authorization.Authorizer
 }
 
 // NewNamespacesRouter instantiates new router for controlling check resources
-func NewNamespacesRouter(store store.ResourceStore, auth authorization.Authorizer) *NamespacesRouter {
+func NewNamespacesRouter(store store.ResourceStore, namespaceStore store.NamespaceStore, auth authorization.Authorizer) *NamespacesRouter {
 	return &NamespacesRouter{
-		store: store,
-		auth:  auth,
+		store:          store,
+		namespaceStore: namespaceStore,
+		auth:           auth,
 		handlers: handlers.Handlers{
 			Resource: &corev2.Namespace{},
 			Store:    store,
@@ -50,7 +52,7 @@ func (r *NamespacesRouter) Mount(parent *mux.Router) {
 }
 
 func (r *NamespacesRouter) list(ctx context.Context, pred *store.SelectionPredicate) ([]corev2.Resource, error) {
-	client := api.NewNamespaceClient(r.store, r.auth)
+	client := api.NewNamespaceClient(r.store, r.namespaceStore, r.auth)
 	namespaces, err := client.ListNamespaces(ctx, pred)
 	if err != nil {
 		return nil, err
@@ -79,7 +81,7 @@ func (r *NamespacesRouter) create(req *http.Request) (interface{}, error) {
 	if err := ns.Validate(); err != nil {
 		return nil, actions.NewError(actions.InvalidArgument, err)
 	}
-	client := api.NewNamespaceClient(r.store, r.auth)
+	client := api.NewNamespaceClient(r.store, r.namespaceStore, r.auth)
 	if err := client.CreateNamespace(ctx, &ns); err != nil {
 		switch err := err.(type) {
 		case *store.ErrAlreadyExists:
@@ -100,7 +102,7 @@ func (r *NamespacesRouter) delete(req *http.Request) (interface{}, error) {
 		return nil, actions.NewError(actions.InvalidArgument, err)
 	}
 
-	client := api.NewNamespaceClient(r.store, r.auth)
+	client := api.NewNamespaceClient(r.store, r.namespaceStore, r.auth)
 	if err := client.DeleteNamespace(req.Context(), name); err != nil {
 		switch err := err.(type) {
 		case *store.ErrNotFound:

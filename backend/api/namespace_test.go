@@ -388,7 +388,7 @@ func TestFetchNamespace(t *testing.T) {
 			ctx := contextWithUser(defaultContext(), tt.attrs.User.Username, tt.attrs.User.Groups)
 
 			auth := &rbac.Authorizer{Store: store}
-			client := NewNamespaceClient(store, auth)
+			client := NewNamespaceClient(store, store, auth)
 
 			got, err := client.FetchNamespace(ctx, tt.namespace)
 			if (err != nil) != tt.wantErr {
@@ -752,7 +752,7 @@ func TestNamespaceList(t *testing.T) {
 			ctx := contextWithUser(defaultContext(), test.Attrs.User.Username, test.Attrs.User.Groups)
 
 			auth := &rbac.Authorizer{Store: s}
-			client := NewNamespaceClient(s, auth)
+			client := NewNamespaceClient(s, s, auth)
 
 			got, err := client.ListNamespaces(ctx, &store.SelectionPredicate{})
 			if (err != nil) != test.WantErr {
@@ -824,7 +824,7 @@ func TestNamespaceCRUDSideEffects(t *testing.T) {
 	ctx := contextWithUser(context.Background(), "cluster-admin", []string{"cluster-admins"})
 
 	auth := &rbac.Authorizer{Store: s}
-	client := NewNamespaceClient(s, auth)
+	client := NewNamespaceClient(s, s, auth)
 
 	namespace := &corev2.Namespace{Name: "test_namespace"}
 	if err := client.CreateNamespace(ctx, namespace); err != nil {
@@ -876,14 +876,16 @@ func TestNamespaceCRUDSideEffects(t *testing.T) {
 			t.Fatalf("expected namespace %q, got %q", namespace.Name, ns)
 		}
 	}).Return(nil)
-	s.On("DeleteResource", mock.Anything, namespace.StorePrefix(), namespace.Name).Return(nil)
+	s.On("DeleteNamespace", mock.Anything, namespace.Name).Return(nil)
 
 	if err := client.DeleteNamespace(ctx, namespace.Name); err != nil {
 		t.Fatal(err)
 	}
 
-	s.AssertNumberOfCalls(t, "DeleteResource", 3)
-	s.AssertCalled(t, "DeleteResource", mock.Anything, namespace.StorePrefix(), namespace.Name)
+	s.AssertNumberOfCalls(t, "DeleteResource", 2)
 	s.AssertCalled(t, "DeleteResource", mock.Anything, expRole.StorePrefix(), pipelineRoleName)
 	s.AssertCalled(t, "DeleteResource", mock.Anything, expBinding.StorePrefix(), pipelineRoleName)
+
+	s.AssertNumberOfCalls(t, "DeleteNamespace", 1)
+	s.AssertCalled(t, "DeleteNamespace", mock.Anything, namespace.Name)
 }
