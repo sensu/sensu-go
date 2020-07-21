@@ -390,7 +390,7 @@ func TestCreateEntity(t *testing.T) {
 			},
 			Store: func() store.Store {
 				store := new(mockstore.MockStore)
-				store.On("CreateResource", mock.Anything, defaultEntity).Return(nil)
+				store.On("UpdateEntity", mock.Anything, defaultEntity).Return(nil)
 				return store
 			},
 			EventStore: func() store.EventStore {
@@ -536,7 +536,7 @@ func TestUpdateEntity(t *testing.T) {
 			},
 			Store: func() store.Store {
 				store := new(mockstore.MockStore)
-				store.On("CreateOrUpdateResource", mock.Anything, defaultEntity).Return(nil)
+				store.On("UpdateEntity", mock.Anything, defaultEntity).Return(nil)
 				return store
 			},
 			Storev2: func() storev2.Interface {
@@ -702,7 +702,7 @@ func TestDeleteEntity(t *testing.T) {
 			},
 			Store: func() store.Store {
 				store := new(mockstore.MockStore)
-				store.On("DeleteResource", mock.Anything, "entities", "default").Return(nil)
+				store.On("DeleteEntityByName", mock.Anything, "default").Return(nil)
 				return store
 			},
 			EventStore: func() store.EventStore {
@@ -735,7 +735,7 @@ func TestDeleteEntity(t *testing.T) {
 			},
 			Store: func() store.Store {
 				store := new(mockstore.MockStore)
-				store.On("DeleteResource", mock.Anything, "entities", "default").Return(nil)
+				store.On("DeleteEntityByName", mock.Anything, "default").Return(nil)
 				return store
 			},
 			EventStore: func() store.EventStore {
@@ -769,7 +769,7 @@ func TestDeleteEntity(t *testing.T) {
 			},
 			Store: func() store.Store {
 				store := new(mockstore.MockStore)
-				store.On("DeleteResource", mock.Anything, "entities", "default").Return(nil)
+				store.On("DeleteEntityByName", mock.Anything, "default").Return(nil)
 				return store
 			},
 			EventStore: func() store.EventStore {
@@ -803,7 +803,7 @@ func TestDeleteEntity(t *testing.T) {
 			},
 			Store: func() store.Store {
 				store := new(mockstore.MockStore)
-				store.On("DeleteResource", mock.Anything, "entities", "default").Return(nil)
+				store.On("DeleteEntityByName", mock.Anything, "default").Return(nil)
 				return store
 			},
 			EventStore: func() store.EventStore {

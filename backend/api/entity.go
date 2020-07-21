@@ -45,7 +45,11 @@ func NewEntityClient(store store.Store, storev2 storev2.Interface, eventStore st
 // delete all of the events associated with the entity. The operation is not
 // transactional; partial data may remain if it fails.
 func (e *EntityClient) DeleteEntity(ctx context.Context, name string) error {
-	if err := e.client.Delete(ctx, name); err != nil {
+	attrs := entityAuthAttributes(ctx, "delete", name)
+	if err := authorize(ctx, e.client.Auth, attrs); err != nil {
+		return err
+	}
+	if err := e.storev1.DeleteEntityByName(ctx, name); err != nil {
 		return err
 	}
 	// if the client delete succeeded, we have sufficient permissions to also
@@ -74,7 +78,11 @@ func (e *EntityClient) DeleteEntity(ctx context.Context, name string) error {
 
 // CreateEntity creates an entity, if authorized.
 func (e *EntityClient) CreateEntity(ctx context.Context, entity *corev2.Entity) error {
-	if err := e.client.Create(ctx, entity); err != nil {
+	attrs := entityAuthAttributes(ctx, "create", entity.Name)
+	if err := authorize(ctx, e.client.Auth, attrs); err != nil {
+		return err
+	}
+	if err := e.storev1.UpdateEntity(ctx, entity); err != nil {
 		return err
 	}
 	return nil
@@ -82,6 +90,11 @@ func (e *EntityClient) CreateEntity(ctx context.Context, entity *corev2.Entity) 
 
 // UpdateEntity updates an entity, if authorized.
 func (e *EntityClient) UpdateEntity(ctx context.Context, entity *corev2.Entity) error {
+	attrs := entityAuthAttributes(ctx, "update", entity.Name)
+	if err := authorize(ctx, e.auth, attrs); err != nil {
+		return err
+	}
+
 	// We have 2 code paths here: one for proxy entities and another for all
 	// other types of entities. We had to make that distinction because Entity
 	// is still the public API to interact with entities, even though internally
@@ -92,18 +105,10 @@ func (e *EntityClient) UpdateEntity(ctx context.Context, entity *corev2.Entity) 
 	//
 	// See sensu-go#3896.
 	if entity.EntityClass == corev2.EntityProxyClass {
-		if err := e.client.Update(ctx, entity); err != nil {
+		if err := e.storev1.UpdateEntity(ctx, entity); err != nil {
 			return err
 		}
 	} else {
-		// The generic client takes care of authorization for us, so if we
-		// bypass it as we're doing here, we must not forget to deal with
-		// authorization ourselves.
-		attrs := entityAuthAttributes(ctx, "update", entity.Name)
-		if err := authorize(ctx, e.auth, attrs); err != nil {
-			return err
-		}
-
 		config, _ := corev3.V2EntityToV3(entity)
 		req := storev2.NewResourceRequestFromResource(ctx, config)
 
