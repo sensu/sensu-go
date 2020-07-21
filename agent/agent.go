@@ -146,6 +146,10 @@ func (a *Agent) sendMessage(msg *transport.Message) {
 
 // RefreshSystemInfo refreshes system, platform, and process information.
 func (a *Agent) RefreshSystemInfo(ctx context.Context) error {
+	if a.config.DisableSystemInfo {
+		return nil
+	}
+
 	info, err := system.Info()
 	if err != nil {
 		return err

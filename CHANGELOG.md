@@ -14,6 +14,7 @@ other events within the filter namespace.
 - Log a warning when secrets cannot be sent to an agent because mTLS is not
 enabled.
 - Added the is_silenced boolean key to event.Check object.
+- System information collection on the agent can now be disabled.
 
 ### Fixed
 - Clarifies wording around a secret provider error message.
