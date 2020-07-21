@@ -110,10 +110,7 @@ func TestListEntities(t *testing.T) {
 			},
 			Store: func() store.Store {
 				store := new(mockstore.MockStore)
-				store.On("ListResources", mock.Anything, (&corev2.Entity{}).StorePrefix(), mock.Anything, mock.Anything).Run(func(args mock.Arguments) {
-					arg := args.Get(2).(*[]*corev2.Entity)
-					*arg = []*corev2.Entity{defaultEntity}
-				}).Return(nil)
+				store.On("GetEntities", mock.Anything, mock.Anything).Return([]*corev2.Entity{defaultEntity}, nil)
 				return store
 			},
 			EventStore: func() store.EventStore {
@@ -253,10 +250,7 @@ func TestGetEntity(t *testing.T) {
 			},
 			Store: func() store.Store {
 				store := new(mockstore.MockStore)
-				store.On("GetResource", mock.Anything, "default", mock.Anything).Run(func(args mock.Arguments) {
-					arg := args.Get(2).(*corev2.Entity)
-					*arg = *defaultEntity
-				}).Return(nil)
+				store.On("GetEntityByName", mock.Anything, "default").Return(defaultEntity, nil)
 				return store
 			},
 			EventStore: func() store.EventStore {
@@ -396,7 +390,7 @@ func TestCreateEntity(t *testing.T) {
 			},
 			Store: func() store.Store {
 				store := new(mockstore.MockStore)
-				store.On("CreateResource", mock.Anything, defaultEntity).Return(nil)
+				store.On("UpdateEntity", mock.Anything, defaultEntity).Return(nil)
 				return store
 			},
 			EventStore: func() store.EventStore {
@@ -542,7 +536,7 @@ func TestUpdateEntity(t *testing.T) {
 			},
 			Store: func() store.Store {
 				store := new(mockstore.MockStore)
-				store.On("CreateOrUpdateResource", mock.Anything, defaultEntity).Return(nil)
+				store.On("UpdateEntity", mock.Anything, defaultEntity).Return(nil)
 				return store
 			},
 			Storev2: func() storev2.Interface {
@@ -708,7 +702,7 @@ func TestDeleteEntity(t *testing.T) {
 			},
 			Store: func() store.Store {
 				store := new(mockstore.MockStore)
-				store.On("DeleteResource", mock.Anything, "entities", "default").Return(nil)
+				store.On("DeleteEntityByName", mock.Anything, "default").Return(nil)
 				return store
 			},
 			EventStore: func() store.EventStore {
@@ -741,7 +735,7 @@ func TestDeleteEntity(t *testing.T) {
 			},
 			Store: func() store.Store {
 				store := new(mockstore.MockStore)
-				store.On("DeleteResource", mock.Anything, "entities", "default").Return(nil)
+				store.On("DeleteEntityByName", mock.Anything, "default").Return(nil)
 				return store
 			},
 			EventStore: func() store.EventStore {
@@ -775,7 +769,7 @@ func TestDeleteEntity(t *testing.T) {
 			},
 			Store: func() store.Store {
 				store := new(mockstore.MockStore)
-				store.On("DeleteResource", mock.Anything, "entities", "default").Return(nil)
+				store.On("DeleteEntityByName", mock.Anything, "default").Return(nil)
 				return store
 			},
 			EventStore: func() store.EventStore {
@@ -809,7 +803,7 @@ func TestDeleteEntity(t *testing.T) {
 			},
 			Store: func() store.Store {
 				store := new(mockstore.MockStore)
-				store.On("DeleteResource", mock.Anything, "entities", "default").Return(nil)
+				store.On("DeleteEntityByName", mock.Anything, "default").Return(nil)
 				return store
 			},
 			EventStore: func() store.EventStore {
