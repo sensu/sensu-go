@@ -350,3 +350,20 @@ func (s *Store) List(req storev2.ResourceRequest, pred *store.SelectionPredicate
 	}
 	return result, nil
 }
+
+func (s *Store) Exists(req storev2.ResourceRequest) (bool, error) {
+	key := StoreKey(req)
+	if err := req.Validate(); err != nil {
+		return false, &store.ErrNotValid{Err: err}
+	}
+	ctx := req.Context
+	var resp *clientv3.GetResponse
+	err := Backoff(ctx).Retry(func(n int) (done bool, err error) {
+		resp, err = s.client.Get(ctx, key, clientv3.WithLimit(1), clientv3.WithSerializable(), clientv3.WithCountOnly())
+		return RetryRequest(n, err)
+	})
+	if err != nil {
+		return false, err
+	}
+	return resp.Count > 0, nil
+}
