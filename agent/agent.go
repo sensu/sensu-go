@@ -146,9 +146,16 @@ func (a *Agent) sendMessage(msg *transport.Message) {
 
 // RefreshSystemInfo refreshes system, platform, and process information.
 func (a *Agent) RefreshSystemInfo(ctx context.Context) error {
-	info, err := system.Info()
-	if err != nil {
-		return err
+	var info corev2.System
+	var err error
+
+	if a.config.MockSystemInfo {
+		info = system.MockInfo()
+	} else {
+		info, err = system.Info()
+		if err != nil {
+			return err
+		}
 	}
 
 	if a.config.DetectCloudProvider {
@@ -166,6 +173,10 @@ func (a *Agent) RefreshSystemInfo(ctx context.Context) error {
 }
 
 func (a *Agent) refreshSystemInfoPeriodically(ctx context.Context) {
+	if a.config.MockSystemInfo {
+		return
+	}
+
 	defer logger.Info("shutting down system info collector")
 	ticker := time.NewTicker(time.Duration(DefaultSystemInfoRefreshInterval) * time.Second)
 	defer ticker.Stop()

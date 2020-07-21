@@ -76,6 +76,7 @@ const (
 	flagCertFile              = "cert-file"
 	flagKeyFile               = "key-file"
 
+	// Deprecated flags
 	deprecatedFlagAgentID          = "id"
 	deprecatedFlagKeepaliveTimeout = "keepalive-timeout"
 )

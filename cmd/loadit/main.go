@@ -60,6 +60,7 @@ func main() {
 		cfg.Subscriptions = subscriptions
 		cfg.AgentName = name
 		cfg.BackendURLs = backends
+		cfg.MockSystemInfo = true
 
 		agent, err := agent.NewAgent(cfg)
 		if err != nil {
