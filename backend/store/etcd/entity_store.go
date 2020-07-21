@@ -17,9 +17,7 @@ import (
 )
 
 const (
-	entityPathPrefix = "entities"
-
-	// TODO(ccressent): add note here
+	entityPathPrefix       = "entities"
 	entityConfigPathPrefix = "entity_configs"
 )
 
@@ -33,12 +31,10 @@ type entityContinueToken struct {
 	StateContinue  []byte `json:",omitempty"`
 }
 
-// TODO(ccressent): where is that used? Now broken?
 func getEntityPath(entity *corev2.Entity) string {
 	return entityKeyBuilder.WithResource(entity).Build(entity.Name)
 }
 
-// TODO(ccressent): where is that used? Now broken?
 // GetEntitiesPath gets the path of the entity store
 func GetEntitiesPath(ctx context.Context, name string) string {
 	return entityKeyBuilder.WithContext(ctx).Build(name)
