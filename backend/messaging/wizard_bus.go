@@ -35,6 +35,7 @@ func NewWizardBus(cfg WizardBusConfig, opts ...WizardOption) (*WizardBus, error)
 		errchan: make(chan error, 1),
 		topics:  make(map[string]*wizardTopic),
 	}
+	bus.running.Store(false)
 	for _, opt := range opts {
 		if err := opt(bus); err != nil {
 			return nil, err
