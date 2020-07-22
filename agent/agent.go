@@ -332,14 +332,14 @@ func (a *Agent) connectionManager(ctx context.Context, cancel context.CancelFunc
 		a.connectedMu.Unlock()
 
 		// Make sure the entity config chan is empty by discarding whatever is in
-		// there, so we can block on an update from agentd
+		// there, so we can block until we receive an update from agentd
 		select {
 		case <-a.entityConfigCh:
 		default:
 		}
 
-		// Do not handle check request until we recieved the entity config from the
-		// backend
+		// Do not handle check request until we receive the entity config from the
+		// backend, so we don't send a stale config
 		a.handler.RemoveHandler(corev2.CheckRequestType)
 
 		a.clearAgentEntity()
@@ -364,8 +364,7 @@ func (a *Agent) connectionManager(ctx context.Context, cancel context.CancelFunc
 
 		go a.receiveLoop(ctx, cancel, conn)
 
-		// Wait to receive the entity config from the backend before sending any
-		// messages,  but do not block indefinitely on that
+		// Block until we receive an entity config, or the grace period expires
 		select {
 		case <-a.entityConfigCh:
 			logger.Debug("successfully received the initial entity config")
@@ -373,7 +372,7 @@ func (a *Agent) connectionManager(ctx context.Context, cancel context.CancelFunc
 			logger.Warning("the initial entity config was never received, using the local entity")
 		}
 
-		// Handle check config request once we have the proper entity config
+		// Handle check config requests
 		a.handler.AddHandler(corev2.CheckRequestType, a.handleCheck)
 
 		if err := a.sendLoop(ctx, cancel, conn); err != nil && err != ctx.Err() {
