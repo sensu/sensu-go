@@ -257,7 +257,7 @@ func (s *Store) Get(req storev2.ResourceRequest) (*storev2.Wrapper, error) {
 	ctx := req.Context
 	var resp *clientv3.GetResponse
 	err := Backoff(ctx).Retry(func(n int) (done bool, err error) {
-		resp, err = s.client.Get(ctx, key, clientv3.WithLimit(1))
+		resp, err = s.client.Get(ctx, key, clientv3.WithLimit(1), clientv3.WithSerializable())
 		return RetryRequest(n, err)
 	})
 	if err != nil {

@@ -420,6 +420,21 @@ func (s *Session) Start() (err error) {
 			return err
 		}
 		lager.Debug("no entity config found")
+
+		// Indicate to the agent that this entity does not exist
+		meta := corev2.NewObjectMeta(corev3.EntityNotFound, s.cfg.Namespace)
+		watchEvent := &store.WatchEventEntityConfig{
+			Action: store.WatchCreate,
+			Entity: &corev3.EntityConfig{
+				Metadata:    &meta,
+				EntityClass: corev2.EntityAgentClass,
+			},
+		}
+		err = s.bus.Publish(messaging.EntityConfigTopic(s.cfg.Namespace, s.cfg.AgentName), watchEvent)
+		if err != nil {
+			lager.WithError(err).Error("error publishing entity config")
+			return err
+		}
 	} else {
 		// An entity config already exists, therefore we should use the stored
 		// entity subscriptions rather than what the agent provided us for the
