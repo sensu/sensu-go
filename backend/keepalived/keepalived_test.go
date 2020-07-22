@@ -238,20 +238,18 @@ func TestProcessRegistration(t *testing.T) {
 		expectedEntityLen int
 	}{
 		{
-			name:              "Registered Entity",
-			entity:            newEntityWithClass("agent"),
-			storeEntity:       newEntityConfigWithClass("agent"),
-			expectedEventLen:  0,
-			storev2Err:        &stor.ErrAlreadyExists{},
-			expectedEntityLen: 0,
+			name:             "Registered Entity",
+			entity:           newEntityWithClass("agent"),
+			storeEntity:      newEntityConfigWithClass("agent"),
+			expectedEventLen: 0,
+			storev2Err:       &stor.ErrAlreadyExists{},
 		},
 		{
-			name:              "Non-Registered Entity",
-			entity:            newEntityWithClass("agent"),
-			storeEntity:       nil,
-			expectedEventLen:  1,
-			storev2Err:        nil,
-			expectedEntityLen: 1,
+			name:             "Non-Registered Entity",
+			entity:           newEntityWithClass("agent"),
+			storeEntity:      nil,
+			expectedEventLen: 1,
+			storev2Err:       nil,
 		},
 	}
 
@@ -267,12 +265,6 @@ func TestProcessRegistration(t *testing.T) {
 				ch: make(chan interface{}, 1),
 			}
 			subscriptionEvent, err := messageBus.Subscribe(messaging.TopicEvent, "testSubscriberEvent", tsubEvent)
-			require.NoError(t, err)
-
-			tsubEntity := testSubscriber{
-				ch: make(chan interface{}, 1),
-			}
-			subscriptionEntity, err := messageBus.Subscribe(messaging.EntityConfigTopic(tc.entity.Namespace, tc.entity.Name), "testSubscriberEntity", tsubEntity)
 			require.NoError(t, err)
 
 			keepalived, err := New(Config{
@@ -292,9 +284,7 @@ func TestProcessRegistration(t *testing.T) {
 			require.NoError(t, err)
 
 			assert.Equal(t, tc.expectedEventLen, len(tsubEvent.ch))
-			assert.Equal(t, tc.expectedEntityLen, len(tsubEntity.ch))
 			assert.NoError(t, subscriptionEvent.Cancel())
-			assert.NoError(t, subscriptionEntity.Cancel())
 		})
 	}
 }
