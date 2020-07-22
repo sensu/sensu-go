@@ -6,7 +6,7 @@ import (
 	"strings"
 	"text/template"
 
-	"github.com/coreos/etcd/clientv3"
+	"go.etcd.io/etcd/clientv3"
 	"github.com/sensu/sensu-go/cli"
 	"github.com/spf13/cobra"
 )

@@ -8,7 +8,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/coreos/etcd/clientv3"
+	"go.etcd.io/etcd/clientv3"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/stretchr/testify/assert"
 )

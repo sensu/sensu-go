@@ -1,7 +1,7 @@
 package actions
 
 import (
-	etcdVersion "github.com/coreos/etcd/version"
+	etcdVersion "go.etcd.io/etcd/version"
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/version"
 	"golang.org/x/net/context"

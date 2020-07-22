@@ -3,7 +3,7 @@ package schedulerd
 import (
 	"context"
 
-	"github.com/coreos/etcd/clientv3"
+	"go.etcd.io/etcd/clientv3"
 	"github.com/prometheus/client_golang/prometheus"
 	corev3 "github.com/sensu/sensu-go/api/core/v3"
 	"github.com/sensu/sensu-go/backend/messaging"

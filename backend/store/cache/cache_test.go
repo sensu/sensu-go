@@ -8,7 +8,7 @@ import (
 	"github.com/sensu/sensu-go/backend/store/etcd"
 	"github.com/sensu/sensu-go/types"
 
-	"github.com/coreos/etcd/integration"
+	"go.etcd.io/etcd/integration"
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/testing/fixture"
