@@ -366,23 +366,7 @@ func (k *Keepalived) handleEntityRegistration(entity *corev2.Entity, event *core
 	}
 	if err := k.storev2.CreateIfNotExists(req, wrapper); err == nil {
 		event := createRegistrationEvent(entity)
-		err = k.bus.Publish(messaging.TopicEvent, event)
-		if err != nil {
-			logger.WithError(err).Error("error publishing registration event")
-			return err
-		}
-		// The agentd session expects a watch event for the entity config, therefore
-		// we need to mock one
-		watchEvent := &store.WatchEventEntityConfig{
-			Action: store.WatchCreate,
-			Entity: config,
-		}
-		err = k.bus.Publish(messaging.EntityConfigTopic(config.Metadata.Namespace, config.Metadata.Name), watchEvent)
-		if err != nil {
-			logger.WithError(err).Error("error publishing entity config")
-			return err
-		}
-		return nil
+		return k.bus.Publish(messaging.TopicEvent, event)
 	} else if _, ok := err.(*store.ErrAlreadyExists); ok {
 		logger.WithError(err).Warn("received a check event before entity registration")
 		return nil

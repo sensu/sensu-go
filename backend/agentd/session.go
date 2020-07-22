@@ -14,6 +14,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/prometheus/client_golang/prometheus"
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
+	corev3 "github.com/sensu/sensu-go/api/core/v3"
 	"github.com/sensu/sensu-go/backend/messaging"
 	"github.com/sensu/sensu-go/backend/ringv2"
 	"github.com/sensu/sensu-go/backend/store"
@@ -390,24 +391,70 @@ func (s *Session) Start() (err error) {
 		}
 	}()
 
-	// Subscribe the session to every configured check subscriptions
-	if err := s.subscribe(s.cfg.Subscriptions); err != nil {
-		return err
-	}
+	lager := logger.WithFields(logrus.Fields{
+		"agent":     s.cfg.AgentName,
+		"namespace": s.cfg.Namespace,
+	})
 
 	// Subscribe the agent to its entity_config topic
 	topic := messaging.EntityConfigTopic(s.cfg.Namespace, s.cfg.AgentName)
-	logger.WithField("topic", topic).Debug("subscribing to topic")
+	lager.WithField("topic", topic).Debug("subscribing to topic")
 	// Get a unique name for the agent, which will be used as the consumer of the
 	// bus, in order to avoid problems with an agent reconnecting before its
 	// session is ended
 	agentName := agentUUID(s.cfg.Namespace, s.cfg.AgentName)
 	subscription, err := s.bus.Subscribe(topic, agentName, s.entityConfig)
 	if err != nil {
-		logger.WithError(err).Error("error starting subscription")
+		lager.WithError(err).Error("error starting subscription")
 		return err
 	}
 	s.entityConfig.subscriptions <- subscription
+
+	// Determine if the entity already exists
+	req := storev2.NewResourceRequest(s.ctx, s.cfg.Namespace, s.cfg.AgentName, (&corev3.EntityConfig{}).StoreName())
+	wrapper, err := s.storev2.Get(req)
+	if err != nil {
+		// We do not want to send an error if the entity config does not exist
+		if _, ok := err.(*store.ErrNotFound); !ok {
+			lager.WithError(err).Error("error querying the entity config")
+			return err
+		}
+		lager.Debug("no entity config found")
+	} else {
+		// An entity config already exists, therefore we should use the stored
+		// entity subscriptions rather than what the agent provided us for the
+		// subscriptions
+		lager.Debug("an entity config was found")
+
+		var storedEntityConfig corev3.EntityConfig
+		err = wrapper.UnwrapInto(&storedEntityConfig)
+		if err != nil {
+			lager.WithError(err).Error("error unwrapping entity config")
+			return err
+		}
+
+		// Send back this entity config to the agent so it uses that rather than
+		// its local config for its events
+		watchEvent := &store.WatchEventEntityConfig{
+			Action: store.WatchUpdate,
+			Entity: &storedEntityConfig,
+		}
+		err = s.bus.Publish(messaging.EntityConfigTopic(s.cfg.Namespace, s.cfg.AgentName), watchEvent)
+		if err != nil {
+			lager.WithError(err).Error("error publishing entity config")
+			return err
+		}
+
+		// Update the session subscriptions so it uses the stored subscriptions
+		s.mu.Lock()
+		s.cfg.Subscriptions = storedEntityConfig.Subscriptions
+		s.mu.Unlock()
+	}
+
+	// Subscribe the session to every configured check subscriptions
+	if err := s.subscribe(s.cfg.Subscriptions); err != nil {
+		return err
+	}
 
 	close(s.entityConfig.subscriptions)
 
