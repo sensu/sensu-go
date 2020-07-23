@@ -57,9 +57,9 @@ require (
 	github.com/robertkrimen/otto v0.0.0-20191219234010-c382bd3c16ff
 	github.com/robfig/cron/v3 v3.0.1
 	github.com/sensu/lasr v1.2.1
-	github.com/sensu/sensu-go/api/core/v2 v2.2.0
+	github.com/sensu/sensu-go/api/core/v2 v2.2.1
 	github.com/sensu/sensu-go/api/core/v3 v3.0.0
-	github.com/sensu/sensu-go/types v0.1.0
+	github.com/sensu/sensu-go/types v0.3.0
 	github.com/shirou/gopsutil v0.0.0-20190901111213-e4ec7b275ada
 	github.com/sirupsen/logrus v1.6.0
 	github.com/spf13/cobra v0.0.5
