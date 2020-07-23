@@ -58,12 +58,3 @@ func (h *MessageHandler) Handle(ctx context.Context, msgType string, payload []b
 
 	return handleFunc(ctx, payload)
 }
-
-// RemoveHandler is used to deregister a MessageHandlerFunc for a given message
-// type.
-func (h *MessageHandler) RemoveHandler(msgType string) {
-	h.handlerMapLock.Lock()
-	defer h.handlerMapLock.Unlock()
-
-	delete(h.handlerMap, msgType)
-}
