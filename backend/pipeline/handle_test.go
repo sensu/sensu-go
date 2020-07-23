@@ -3,7 +3,6 @@ package pipeline
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io/ioutil"
 	"net"
@@ -14,6 +13,7 @@ import (
 
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/secrets"
+	"github.com/sensu/sensu-go/backend/store/cache"
 	"github.com/sensu/sensu-go/command"
 	"github.com/sensu/sensu-go/rpc"
 	"github.com/sensu/sensu-go/testing/mockstore"
@@ -107,10 +107,19 @@ func TestPipelineHandleEvent(t *testing.T) {
 	m.AssertCalled(t, "HandleEvent", event, mock.Anything)
 }
 
+type mockCache struct {
+	mock.Mock
+}
+
+func (m *mockCache) Get(namespace string) []cache.Value {
+	args := m.Called(namespace)
+	return args.Get(0).([]cache.Value)
+}
+
 func TestPipelineExpandHandlers(t *testing.T) {
+	type cacheFunc func(*mockCache)
 	type storeFunc func(*mockstore.MockStore)
 
-	var nilHandler *corev2.Handler
 	pipeHandler := corev2.FixtureHandler("pipeHandler")
 	setHandler := &corev2.Handler{
 		ObjectMeta: corev2.NewObjectMeta("setHandler", "default"),
@@ -132,6 +141,7 @@ func TestPipelineExpandHandlers(t *testing.T) {
 		name      string
 		handlers  []string
 		storeFunc storeFunc
+		cacheFunc cacheFunc
 		want      map[string]handlerExtensionUnion
 	}{
 		{
@@ -140,17 +150,14 @@ func TestPipelineExpandHandlers(t *testing.T) {
 			storeFunc: func(s *mockstore.MockStore) {
 				s.On("GetHandlerByName", mock.Anything, "pipeHandler").Return(pipeHandler, nil)
 			},
+			cacheFunc: func(c *mockCache) {
+				c.On("Get", "default").Return([]cache.Value{
+					{Resource: pipeHandler},
+				})
+			},
 			want: map[string]handlerExtensionUnion{
-				"pipeHandler": handlerExtensionUnion{Handler: pipeHandler},
+				"pipeHandler": {Handler: pipeHandler},
 			},
-		},
-		{
-			name:     "store error",
-			handlers: []string{"pipeHandler"},
-			storeFunc: func(s *mockstore.MockStore) {
-				s.On("GetHandlerByName", mock.Anything, "pipeHandler").Return(nilHandler, errors.New("error"))
-			},
-			want: map[string]handlerExtensionUnion{},
 		},
 		{
 			name:     "set handler",
@@ -159,8 +166,14 @@ func TestPipelineExpandHandlers(t *testing.T) {
 				s.On("GetHandlerByName", mock.Anything, "setHandler").Return(setHandler, nil)
 				s.On("GetHandlerByName", mock.Anything, "pipeHandler").Return(pipeHandler, nil)
 			},
+			cacheFunc: func(c *mockCache) {
+				c.On("Get", "default").Return([]cache.Value{
+					{Resource: pipeHandler},
+					{Resource: setHandler},
+				})
+			},
 			want: map[string]handlerExtensionUnion{
-				"pipeHandler": handlerExtensionUnion{Handler: pipeHandler},
+				"pipeHandler": {Handler: pipeHandler},
 			},
 		},
 		{
@@ -168,6 +181,11 @@ func TestPipelineExpandHandlers(t *testing.T) {
 			handlers: []string{"recursiveLoopHandler"},
 			storeFunc: func(s *mockstore.MockStore) {
 				s.On("GetHandlerByName", mock.Anything, "recursiveLoopHandler").Return(recursiveLoopHandler, nil)
+			},
+			cacheFunc: func(c *mockCache) {
+				c.On("Get", "default").Return([]cache.Value{
+					{Resource: recursiveLoopHandler},
+				})
 			},
 			want: map[string]handlerExtensionUnion{},
 		},
@@ -180,8 +198,16 @@ func TestPipelineExpandHandlers(t *testing.T) {
 				s.On("GetHandlerByName", mock.Anything, "setHandler").Return(setHandler, nil)
 				s.On("GetHandlerByName", mock.Anything, "pipeHandler").Return(pipeHandler, nil)
 			},
+			cacheFunc: func(c *mockCache) {
+				c.On("Get", "default").Return([]cache.Value{
+					{Resource: recursiveLoopHandler},
+					{Resource: nestedHandler},
+					{Resource: setHandler},
+					{Resource: pipeHandler},
+				})
+			},
 			want: map[string]handlerExtensionUnion{
-				"pipeHandler": handlerExtensionUnion{Handler: pipeHandler},
+				"pipeHandler": {Handler: pipeHandler},
 			},
 		},
 	}
@@ -191,9 +217,15 @@ func TestPipelineExpandHandlers(t *testing.T) {
 			if tt.storeFunc != nil {
 				tt.storeFunc(store)
 			}
+			cache := &mockCache{}
+			if tt.cacheFunc != nil {
+				tt.cacheFunc(cache)
+			}
 
-			p := &Pipeline{store: store}
-			got, _ := p.expandHandlers(context.Background(), tt.handlers, 1)
+			ctx := context.WithValue(context.Background(), corev2.NamespaceKey, "default")
+
+			p := &Pipeline{store: store, handlersCache: cache}
+			got, _ := p.expandHandlers(ctx, tt.handlers, 1)
 			if !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("Pipeline.expandHandlers() = %#v, want %#v", got, tt.want)
 			}

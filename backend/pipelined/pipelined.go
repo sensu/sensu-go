@@ -7,7 +7,6 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/coreos/etcd/clientv3"
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/asset"
 	"github.com/sensu/sensu-go/backend/licensing"
@@ -18,6 +17,7 @@ import (
 	"github.com/sensu/sensu-go/backend/store/cache"
 	"github.com/sensu/sensu-go/command"
 	"github.com/sensu/sensu-go/rpc"
+	"go.etcd.io/etcd/clientv3"
 )
 
 var defaultStoreTimeout = time.Minute
