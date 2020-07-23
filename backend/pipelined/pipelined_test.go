@@ -2,10 +2,14 @@
 package pipelined
 
 import (
+	"context"
 	"encoding/json"
+	"sync"
+	"sync/atomic"
 	"testing"
 
 	"github.com/sensu/sensu-go/backend/messaging"
+	"github.com/sensu/sensu-go/command"
 	"github.com/sensu/sensu-go/testing/mockstore"
 	"github.com/sensu/sensu-go/types"
 	"github.com/stretchr/testify/assert"
@@ -18,8 +22,20 @@ func TestPipelined(t *testing.T) {
 	require.NoError(t, bus.Start())
 	store := &mockstore.MockStore{}
 
-	p, err := New(Config{Bus: bus, Store: store})
-	require.NoError(t, err)
+	ctx, cancel := context.WithCancel(context.Background())
+	p := &Pipelined{
+		ctx:         ctx,
+		cancel:      cancel,
+		store:       store,
+		bus:         bus,
+		stopping:    make(chan struct{}, 1),
+		running:     &atomic.Value{},
+		wg:          &sync.WaitGroup{},
+		errChan:     make(chan error, 1),
+		eventChan:   make(chan interface{}, 1),
+		workerCount: 1,
+		executor:    command.NewExecutor(),
+	}
 	require.NoError(t, p.Start())
 
 	entity := types.FixtureEntity("entity1")

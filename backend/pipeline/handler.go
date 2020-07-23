@@ -132,6 +132,9 @@ func (p *Pipeline) expandHandlers(ctx context.Context, handlers []string, level 
 		"namespace": namespace,
 	}
 
+	v := p.handlersCache.Get(namespace)
+
+	fmt.Printf("cached handlers = %#v\n", v)
 	for _, handlerName := range handlers {
 		tctx, cancel := context.WithTimeout(ctx, p.storeTimeout)
 		handler, err := p.store.GetHandlerByName(tctx, handlerName)
