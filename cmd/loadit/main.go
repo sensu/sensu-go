@@ -63,6 +63,8 @@ func main() {
 		cfg.AgentName = name
 		cfg.BackendURLs = backends
 		cfg.MockSystemInfo = true
+		cfg.BackendHeartbeatInterval = int(float64(*flagKeepaliveInterval) * float64(0.8))
+		cfg.BackendHeartbeatTimeout = int(float64(*flagKeepaliveInterval) * float64(0.9))
 
 		agent, err := agent.NewAgent(cfg)
 		if err != nil {
