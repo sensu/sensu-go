@@ -340,6 +340,7 @@ func (a *Agent) connectionManager(ctx context.Context, cancel context.CancelFunc
 
 		// Do not handle check request until we receive the entity config from the
 		// backend, so we don't send a stale config
+
 		a.handler.AddHandler(corev2.CheckRequestType, a.handleCheckNoop)
 
 		a.clearAgentEntity()
