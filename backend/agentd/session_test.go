@@ -14,7 +14,6 @@ import (
 	corev3 "github.com/sensu/sensu-go/api/core/v3"
 	"github.com/sensu/sensu-go/backend/messaging"
 	"github.com/sensu/sensu-go/backend/store"
-	"github.com/sensu/sensu-go/backend/store/cache"
 	"github.com/sensu/sensu-go/backend/store/v2/storetest"
 	"github.com/sensu/sensu-go/backend/store/v2/wrap"
 	"github.com/sensu/sensu-go/handler"
@@ -323,15 +322,6 @@ func TestSession_sender(t *testing.T) {
 	}
 }
 
-type mockCache struct {
-	mock.Mock
-}
-
-func (m *mockCache) GetAll() []cache.Value {
-	args := m.Called()
-	return args.Get(0).([]cache.Value)
-}
-
 func TestSession_Start(t *testing.T) {
 	type connFunc func(*mocktransport.MockTransport, *sync.WaitGroup)
 	type storeFunc func(*storetest.Store, *sync.WaitGroup)
@@ -428,22 +418,15 @@ func TestSession_Start(t *testing.T) {
 				t.Fatal(err)
 			}
 
-			// Mock our namespace cache
-			namespaceCache := &mockCache{}
-			namespaceCache.On("GetAll").Return(
-				[]cache.Value{{Resource: corev2.FixtureNamespace("default")}},
-			)
-
 			cfg := SessionConfig{
-				AgentName:      "testing",
-				Namespace:      "default",
-				Conn:           conn,
-				Bus:            bus,
-				Store:          st,
-				Storev2:        storev2,
-				Unmarshal:      UnmarshalJSON,
-				Marshal:        MarshalJSON,
-				NamespaceCache: namespaceCache,
+				AgentName: "testing",
+				Namespace: "default",
+				Conn:      conn,
+				Bus:       bus,
+				Store:     st,
+				Storev2:   storev2,
+				Unmarshal: UnmarshalJSON,
+				Marshal:   MarshalJSON,
 			}
 			session, err := NewSession(context.Background(), cfg)
 			if err != nil {

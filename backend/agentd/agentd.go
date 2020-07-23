@@ -28,6 +28,7 @@ import (
 	storev2 "github.com/sensu/sensu-go/backend/store/v2"
 	"github.com/sensu/sensu-go/backend/store/v2/etcdstore"
 	"github.com/sensu/sensu-go/transport"
+	"github.com/sirupsen/logrus"
 )
 
 var (
@@ -216,55 +217,77 @@ func (a *Agentd) webSocketHandler(w http.ResponseWriter, r *http.Request) {
 	var marshal MarshalFunc
 	var unmarshal UnmarshalFunc
 	var contentType string
+
+	lager := logger.WithFields(logrus.Fields{
+		"address":   r.RemoteAddr,
+		"agent":     r.Header.Get(transport.HeaderKeyAgentName),
+		"namespace": r.Header.Get(transport.HeaderKeyNamespace),
+	})
+
 	responseHeader := make(http.Header)
 	responseHeader.Add("Accept", ProtobufSerializationHeader)
-	logger.WithField("header", fmt.Sprintf("Accept: %s", ProtobufSerializationHeader)).Debug("setting header")
+	lager.WithField("header", fmt.Sprintf("Accept: %s", ProtobufSerializationHeader)).Debug("setting header")
 	responseHeader.Add("Accept", JSONSerializationHeader)
-	logger.WithField("header", fmt.Sprintf("Accept: %s", JSONSerializationHeader)).Debug("setting header")
+	lager.WithField("header", fmt.Sprintf("Accept: %s", JSONSerializationHeader)).Debug("setting header")
 	if r.Header.Get("Accept") == ProtobufSerializationHeader {
 		marshal = proto.Marshal
 		unmarshal = proto.Unmarshal
 		contentType = ProtobufSerializationHeader
-		logger.WithField("format", "protobuf").Debug("setting serialization/deserialization")
+		lager.WithField("format", "protobuf").Debug("setting serialization/deserialization")
 	} else {
 		marshal = MarshalJSON
 		unmarshal = UnmarshalJSON
 		contentType = JSONSerializationHeader
-		logger.WithField("format", "JSON").Debug("setting serialization/deserialization")
+		lager.WithField("format", "JSON").Debug("setting serialization/deserialization")
 	}
 	responseHeader.Set("Content-Type", contentType)
-	logger.WithField("header", fmt.Sprintf("Content-Type: %s", contentType)).Debug("setting header")
+	lager.WithField("header", fmt.Sprintf("Content-Type: %s", contentType)).Debug("setting header")
+
+	// Validate the agent namespace
+	namespace := r.Header.Get(transport.HeaderKeyNamespace)
+	var found bool
+	values := a.namespaceCache.GetAll()
+	for _, value := range values {
+		if namespace == value.Resource.GetObjectMeta().Name {
+			found = true
+			break
+		}
+	}
+	if namespace == "" || !found {
+		lager.Warningf("namespace %q not found", namespace)
+		http.Error(w, fmt.Sprintf("namespace %q not found", namespace), http.StatusNotFound)
+		return
+	}
 
 	conn, err := upgrader.Upgrade(w, r, responseHeader)
 	if err != nil {
-		logger.WithField("addr", r.RemoteAddr).WithError(err).Error("transport error on websocket upgrade")
+		lager.WithError(err).Error("transport error on websocket upgrade")
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
 	cfg := SessionConfig{
-		AgentAddr:      r.RemoteAddr,
-		AgentName:      r.Header.Get(transport.HeaderKeyAgentName),
-		Namespace:      r.Header.Get(transport.HeaderKeyNamespace),
-		User:           r.Header.Get(transport.HeaderKeyUser),
-		Subscriptions:  strings.Split(r.Header.Get(transport.HeaderKeySubscriptions), ","),
-		RingPool:       a.ringPool,
-		ContentType:    contentType,
-		WriteTimeout:   a.writeTimeout,
-		Bus:            a.bus,
-		Conn:           transport.NewTransport(conn),
-		Store:          a.store,
-		Storev2:        a.storev2,
-		Marshal:        marshal,
-		Unmarshal:      unmarshal,
-		NamespaceCache: a.namespaceCache,
+		AgentAddr:     r.RemoteAddr,
+		AgentName:     r.Header.Get(transport.HeaderKeyAgentName),
+		Namespace:     r.Header.Get(transport.HeaderKeyNamespace),
+		User:          r.Header.Get(transport.HeaderKeyUser),
+		Subscriptions: strings.Split(r.Header.Get(transport.HeaderKeySubscriptions), ","),
+		RingPool:      a.ringPool,
+		ContentType:   contentType,
+		WriteTimeout:  a.writeTimeout,
+		Bus:           a.bus,
+		Conn:          transport.NewTransport(conn),
+		Store:         a.store,
+		Storev2:       a.storev2,
+		Marshal:       marshal,
+		Unmarshal:     unmarshal,
 	}
 
 	cfg.Subscriptions = addEntitySubscription(cfg.AgentName, cfg.Subscriptions)
 
 	session, err := NewSession(a.ctx, cfg)
 	if err != nil {
-		logger.WithError(err).Error("failed to create session")
+		lager.WithError(err).Error("failed to create session")
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		// There was an error retrieving the namespace from
 		// etcd, indicating that this backend has a potentially
@@ -279,7 +302,7 @@ func (a *Agentd) webSocketHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := session.Start(); err != nil {
-		logger.WithError(err).Error("failed to start session")
+		lager.WithError(err).Error("failed to start session")
 		if _, ok := err.(*store.ErrInternal); ok {
 			select {
 			case a.errChan <- err:

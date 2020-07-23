@@ -18,7 +18,6 @@ import (
 	"github.com/sensu/sensu-go/backend/messaging"
 	"github.com/sensu/sensu-go/backend/ringv2"
 	"github.com/sensu/sensu-go/backend/store"
-	"github.com/sensu/sensu-go/backend/store/cache"
 	storev2 "github.com/sensu/sensu-go/backend/store/v2"
 	"github.com/sensu/sensu-go/backend/store/v2/wrap"
 	"github.com/sensu/sensu-go/handler"
@@ -67,30 +66,23 @@ func MarshalJSON(msg proto.Message) ([]byte, error) { return json.Marshal(msg) }
 // bus to the agent from other daemons. It handles transport handshaking and
 // transport channel multiplexing/demultiplexing.
 type Session struct {
-	cfg            SessionConfig
-	conn           transport.Transport
-	store          store.EntityStore
-	storev2        storev2.Interface
-	handler        *handler.MessageHandler
-	wg             *sync.WaitGroup
-	stopWG         sync.WaitGroup
-	checkChannel   chan interface{}
-	bus            messaging.MessageBus
-	ringPool       *ringv2.Pool
-	ctx            context.Context
-	cancel         context.CancelFunc
-	marshal        MarshalFunc
-	unmarshal      UnmarshalFunc
-	entityConfig   *entityConfig
-	namespaceCache resourceCache
-
+	cfg              SessionConfig
+	conn             transport.Transport
+	store            store.EntityStore
+	storev2          storev2.Interface
+	handler          *handler.MessageHandler
+	wg               *sync.WaitGroup
+	stopWG           sync.WaitGroup
+	checkChannel     chan interface{}
+	bus              messaging.MessageBus
+	ringPool         *ringv2.Pool
+	ctx              context.Context
+	cancel           context.CancelFunc
+	marshal          MarshalFunc
+	unmarshal        UnmarshalFunc
+	entityConfig     *entityConfig
 	mu               sync.Mutex
 	subscriptionsMap map[string]subscription
-}
-
-// resourceCache interfaces the cache.Resource struct for easier testing
-type resourceCache interface {
-	GetAll() []cache.Value
 }
 
 // subscription is used to abstract a message.Subscription and therefore allow
@@ -130,12 +122,11 @@ type SessionConfig struct {
 	Subscriptions []string
 	WriteTimeout  int
 
-	Bus            messaging.MessageBus
-	Conn           transport.Transport
-	RingPool       *ringv2.Pool
-	Store          store.Store
-	Storev2        storev2.Interface
-	NamespaceCache resourceCache
+	Bus      messaging.MessageBus
+	Conn     transport.Transport
+	RingPool *ringv2.Pool
+	Store    store.Store
+	Storev2  storev2.Interface
 
 	Marshal   MarshalFunc
 	Unmarshal UnmarshalFunc
@@ -173,7 +164,6 @@ func NewSession(ctx context.Context, cfg SessionConfig) (*Session, error) {
 			subscriptions:  make(chan messaging.Subscription, 1),
 			updatesChannel: make(chan interface{}, 10),
 		},
-		namespaceCache: cfg.NamespaceCache,
 	}
 	if err := s.bus.Publish(messaging.TopicKeepalive, makeEntitySwitchBurialEvent(cfg)); err != nil {
 		return nil, err
@@ -404,20 +394,6 @@ func (s *Session) Start() (err error) {
 		"agent":     s.cfg.AgentName,
 		"namespace": s.cfg.Namespace,
 	})
-
-	// Validate the agent namespace
-	// Validate the agent namespace
-	var found bool
-	values := s.namespaceCache.GetAll()
-	for _, value := range values {
-		if s.cfg.Namespace == value.Resource.GetObjectMeta().Name {
-			found = true
-			break
-		}
-	}
-	if !found {
-		return fmt.Errorf("the namespace %q does not exist", s.cfg.Namespace)
-	}
 
 	// Subscribe the agent to its entity_config topic
 	topic := messaging.EntityConfigTopic(s.cfg.Namespace, s.cfg.AgentName)
