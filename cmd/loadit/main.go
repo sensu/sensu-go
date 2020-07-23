@@ -3,11 +3,13 @@ package main
 import (
 	"context"
 	"flag"
+	"fmt"
 	"log"
 	"os"
 	"os/signal"
 	"strings"
 	"syscall"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/sensu/sensu-go/agent"
@@ -61,17 +63,21 @@ func main() {
 		cfg.AgentName = name
 		cfg.BackendURLs = backends
 		cfg.MockSystemInfo = true
+		cfg.BackendHeartbeatInterval = int(float64(*flagKeepaliveInterval) * float64(0.8))
+		cfg.BackendHeartbeatTimeout = int(float64(*flagKeepaliveInterval) * float64(0.9))
 
 		agent, err := agent.NewAgent(cfg)
 		if err != nil {
 			log.Fatal(err)
 		}
+		time.Sleep(20 * time.Millisecond)
 		go func() {
 			if err := agent.Run(ctx); err != nil {
 				log.Fatal(err)
 			}
 		}()
 	}
+	fmt.Println("all agents are now connected")
 
 	sigs := make(chan os.Signal, 1)
 	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
