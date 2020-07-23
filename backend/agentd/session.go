@@ -82,10 +82,15 @@ type Session struct {
 	marshal        MarshalFunc
 	unmarshal      UnmarshalFunc
 	entityConfig   *entityConfig
-	namespaceCache *cache.Resource
+	namespaceCache resourceCache
 
 	mu               sync.Mutex
 	subscriptionsMap map[string]subscription
+}
+
+// resourceCache interfaces the cache.Resource struct for easier testing
+type resourceCache interface {
+	GetAll() []cache.Value
 }
 
 // subscription is used to abstract a message.Subscription and therefore allow
@@ -130,7 +135,7 @@ type SessionConfig struct {
 	RingPool       *ringv2.Pool
 	Store          store.Store
 	Storev2        storev2.Interface
-	NamespaceCache *cache.Resource
+	NamespaceCache resourceCache
 
 	Marshal   MarshalFunc
 	Unmarshal UnmarshalFunc
