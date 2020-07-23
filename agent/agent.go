@@ -372,9 +372,7 @@ func (a *Agent) connectionManager(ctx context.Context, cancel context.CancelFunc
 			logger.Warning("the initial entity config was never received, using the local entity")
 		case <-ctx.Done():
 			// The connection was closed before we received an entity config or we
-			// reached the grace period. We should wait before reconnecting in order
-			// to avoid flooding the backend
-			time.Sleep(time.Second * 1)
+			// reached the grace period
 			continue
 		}
 
