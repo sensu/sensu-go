@@ -411,8 +411,7 @@ func (s *Session) Start() (err error) {
 		}
 	}
 	if !found {
-		lager.Warningf("the namespace %q does not exist", s.cfg.Namespace)
-		return errors.New("invalid namespace")
+		return fmt.Errorf("the namespace %q does not exist", s.cfg.Namespace)
 	}
 
 	// Subscribe the agent to its entity_config topic
