@@ -141,12 +141,6 @@ func New(ctx context.Context, client *clientv3.Client, resource corev2.Resource,
 		return nil, err
 	}
 
-	resp, err := client.Get(ctx, "/", clientv3.WithPrefix())
-	fmt.Printf("err = %s\n", err)
-	for _, value := range resp.Kvs {
-		fmt.Println(value.String())
-	}
-
 	cache := buildCache(resources, synthesize)
 
 	cacher := &Resource{

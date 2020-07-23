@@ -247,7 +247,6 @@ func (a *Agentd) webSocketHandler(w http.ResponseWriter, r *http.Request) {
 	namespace := r.Header.Get(transport.HeaderKeyNamespace)
 	var found bool
 	values := a.namespaceCache.GetAll()
-	fmt.Printf("values = %#v\n", values)
 	for _, value := range values {
 		if namespace == value.Resource.GetObjectMeta().Name {
 			found = true
