@@ -24,6 +24,7 @@ import (
 	"github.com/sensu/sensu-go/backend/messaging"
 	"github.com/sensu/sensu-go/backend/ringv2"
 	"github.com/sensu/sensu-go/backend/store"
+	"github.com/sensu/sensu-go/backend/store/cache"
 	storev2 "github.com/sensu/sensu-go/backend/store/v2"
 	"github.com/sensu/sensu-go/backend/store/v2/etcdstore"
 	"github.com/sensu/sensu-go/transport"
@@ -46,19 +47,20 @@ type Agentd struct {
 	// Port is the port Agentd is running on.
 	Port int
 
-	stopping     chan struct{}
-	running      *atomic.Value
-	wg           *sync.WaitGroup
-	errChan      chan error
-	httpServer   *http.Server
-	store        store.Store
-	storev2      storev2.Interface
-	bus          messaging.MessageBus
-	tls          *corev2.TLSOptions
-	ringPool     *ringv2.Pool
-	ctx          context.Context
-	cancel       context.CancelFunc
-	writeTimeout int
+	stopping       chan struct{}
+	running        *atomic.Value
+	wg             *sync.WaitGroup
+	errChan        chan error
+	httpServer     *http.Server
+	store          store.Store
+	storev2        storev2.Interface
+	bus            messaging.MessageBus
+	tls            *corev2.TLSOptions
+	ringPool       *ringv2.Pool
+	ctx            context.Context
+	cancel         context.CancelFunc
+	writeTimeout   int
+	namespaceCache *cache.Resource
 }
 
 // Config configures an Agentd.
@@ -139,6 +141,12 @@ func New(c Config, opts ...Option) (*Agentd, error) {
 			return nil, err
 		}
 	}
+
+	a.namespaceCache, err = cache.New(ctx, c.Client, &corev2.Namespace{}, false)
+	if err != nil {
+		return nil, err
+	}
+
 	return a, nil
 }
 
@@ -235,29 +243,21 @@ func (a *Agentd) webSocketHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	cfg := SessionConfig{
-		AgentAddr:     r.RemoteAddr,
-		AgentName:     r.Header.Get(transport.HeaderKeyAgentName),
-		Namespace:     r.Header.Get(transport.HeaderKeyNamespace),
-		User:          r.Header.Get(transport.HeaderKeyUser),
-		Subscriptions: strings.Split(r.Header.Get(transport.HeaderKeySubscriptions), ","),
-		RingPool:      a.ringPool,
-		ContentType:   contentType,
-		WriteTimeout:  a.writeTimeout,
-		Bus:           a.bus,
-		Conn:          transport.NewTransport(conn),
-		Store:         a.store,
-		Storev2:       a.storev2,
-		Marshal:       marshal,
-		Unmarshal:     unmarshal,
-	}
-
-	// Validate the agent namespace
-	if namespace, err := a.store.GetNamespace(a.ctx, cfg.Namespace); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	} else if namespace == nil {
-		http.Error(w, fmt.Sprintf("namespace not found: %s", cfg.Namespace), http.StatusNotFound)
-		return
+		AgentAddr:      r.RemoteAddr,
+		AgentName:      r.Header.Get(transport.HeaderKeyAgentName),
+		Namespace:      r.Header.Get(transport.HeaderKeyNamespace),
+		User:           r.Header.Get(transport.HeaderKeyUser),
+		Subscriptions:  strings.Split(r.Header.Get(transport.HeaderKeySubscriptions), ","),
+		RingPool:       a.ringPool,
+		ContentType:    contentType,
+		WriteTimeout:   a.writeTimeout,
+		Bus:            a.bus,
+		Conn:           transport.NewTransport(conn),
+		Store:          a.store,
+		Storev2:        a.storev2,
+		Marshal:        marshal,
+		Unmarshal:      unmarshal,
+		NamespaceCache: a.namespaceCache,
 	}
 
 	cfg.Subscriptions = addEntitySubscription(cfg.AgentName, cfg.Subscriptions)
@@ -280,7 +280,6 @@ func (a *Agentd) webSocketHandler(w http.ResponseWriter, r *http.Request) {
 
 	if err := session.Start(); err != nil {
 		logger.WithError(err).Error("failed to start session")
-		http.Error(w, err.Error(), http.StatusInternalServerError)
 		if _, ok := err.(*store.ErrInternal); ok {
 			select {
 			case a.errChan <- err:
