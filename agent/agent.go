@@ -340,7 +340,8 @@ func (a *Agent) connectionManager(ctx context.Context, cancel context.CancelFunc
 
 		// Do not handle check request until we receive the entity config from the
 		// backend, so we don't send a stale config
-		a.handler.RemoveHandler(corev2.CheckRequestType)
+
+		a.handler.AddHandler(corev2.CheckRequestType, a.handleCheckNoop)
 
 		a.clearAgentEntity()
 
@@ -370,6 +371,10 @@ func (a *Agent) connectionManager(ctx context.Context, cancel context.CancelFunc
 			logger.Debug("successfully received the initial entity config")
 		case <-time.After(entityConfigGracePeriod):
 			logger.Warning("the initial entity config was never received, using the local entity")
+		case <-ctx.Done():
+			// The connection was closed before we received an entity config or we
+			// reached the grace period
+			continue
 		}
 
 		// Handle check config requests

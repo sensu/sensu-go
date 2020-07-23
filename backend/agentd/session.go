@@ -66,22 +66,21 @@ func MarshalJSON(msg proto.Message) ([]byte, error) { return json.Marshal(msg) }
 // bus to the agent from other daemons. It handles transport handshaking and
 // transport channel multiplexing/demultiplexing.
 type Session struct {
-	cfg          SessionConfig
-	conn         transport.Transport
-	store        store.EntityStore
-	storev2      storev2.Interface
-	handler      *handler.MessageHandler
-	wg           *sync.WaitGroup
-	stopWG       sync.WaitGroup
-	checkChannel chan interface{}
-	bus          messaging.MessageBus
-	ringPool     *ringv2.Pool
-	ctx          context.Context
-	cancel       context.CancelFunc
-	marshal      MarshalFunc
-	unmarshal    UnmarshalFunc
-	entityConfig *entityConfig
-
+	cfg              SessionConfig
+	conn             transport.Transport
+	store            store.EntityStore
+	storev2          storev2.Interface
+	handler          *handler.MessageHandler
+	wg               *sync.WaitGroup
+	stopWG           sync.WaitGroup
+	checkChannel     chan interface{}
+	bus              messaging.MessageBus
+	ringPool         *ringv2.Pool
+	ctx              context.Context
+	cancel           context.CancelFunc
+	marshal          MarshalFunc
+	unmarshal        UnmarshalFunc
+	entityConfig     *entityConfig
 	mu               sync.Mutex
 	subscriptionsMap map[string]subscription
 }
