@@ -9,7 +9,6 @@ import (
 	"os/signal"
 	"strings"
 	"syscall"
-	"time"
 
 	"github.com/google/uuid"
 	"github.com/sensu/sensu-go/agent"
@@ -70,7 +69,6 @@ func main() {
 		if err != nil {
 			log.Fatal(err)
 		}
-		time.Sleep(20 * time.Millisecond)
 		go func() {
 			if err := agent.Run(ctx); err != nil {
 				log.Fatal(err)
