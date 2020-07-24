@@ -235,7 +235,7 @@ func (a *Agentd) Name() string {
 func (a *Agentd) webSocketHandler(w http.ResponseWriter, r *http.Request) {
 	then := time.Now()
 	defer func() {
-		duration := then.Sub(time.Now())
+		duration := time.Now().Sub(then)
 		websocketUpgradeDuration.WithLabelValues().Observe(float64(duration) / float64(time.Millisecond))
 	}()
 	var marshal MarshalFunc
