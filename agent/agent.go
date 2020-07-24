@@ -156,13 +156,9 @@ func (a *Agent) RefreshSystemInfo(ctx context.Context) error {
 	var info corev2.System
 	var err error
 
-	if a.config.MockSystemInfo {
-		info = system.MockInfo()
-	} else {
-		info, err = system.Info()
-		if err != nil {
-			return err
-		}
+	info, err = system.Info()
+	if err != nil {
+		return err
 	}
 
 	if a.config.DetectCloudProvider {
