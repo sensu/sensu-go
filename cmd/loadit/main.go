@@ -9,6 +9,7 @@ import (
 	"os/signal"
 	"strings"
 	"syscall"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/sensu/sensu-go/agent"
@@ -35,6 +36,7 @@ func main() {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
+	start := time.Now()
 	for i := 0; i < *flagCount; i++ {
 		name := uuid.New().String()
 
@@ -75,7 +77,9 @@ func main() {
 			}
 		}()
 	}
-	fmt.Println("all agents are now connected")
+
+	elapsed := time.Since(start)
+	fmt.Printf("all agents have been connected in %s\n", elapsed)
 
 	sigs := make(chan os.Signal, 1)
 	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
