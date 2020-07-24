@@ -13,7 +13,6 @@ replace (
 require (
 	github.com/AlecAivazis/survey v1.4.1
 	github.com/Azure/go-ansiterm v0.0.0-20170929234023-d6e3b3328b78 // indirect
-	github.com/NYTimes/gziphandler v0.0.0-20180227021810-5032c8878b9d
 	github.com/StackExchange/wmi v0.0.0-20180725035823-b12b22c5341f // indirect
 	github.com/ash2k/stager v0.0.0-20170622123058-6e9c7b0eacd4 // indirect
 	github.com/atlassian/gostatsd v0.0.0-20180514010436-af796620006e
@@ -48,7 +47,6 @@ require (
 	github.com/libp2p/go-reuseport v0.0.0-20180416043609-15a1cd37f050 // indirect
 	github.com/libp2p/go-sockaddr v0.1.0 // indirect
 	github.com/mattn/go-colorable v0.1.4 // indirect
-	github.com/mattn/go-runewidth v0.0.2 // indirect
 	github.com/mgutz/ansi v0.0.0-20170206155736-9520e82c474b
 	github.com/mholt/archiver/v3 v3.3.1-0.20191129193105-44285f7ed244
 	github.com/mitchellh/go-homedir v1.1.0
