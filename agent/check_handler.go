@@ -325,6 +325,8 @@ func extractMetrics(event *corev2.Event) []*corev2.MetricPoint {
 		transformer = transformers.ParseNagios(event)
 	case corev2.OpenTSDBOutputMetricFormat:
 		transformer = transformers.ParseOpenTSDB(event)
+	case corev2.PrometheusOutputMetricFormat:
+		transformer = transformers.ParseProm(event)
 	}
 
 	if transformer == nil {
