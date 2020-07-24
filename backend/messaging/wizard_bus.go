@@ -165,9 +165,8 @@ func findGenericTopic(topic string) string {
 func (b *WizardBus) Publish(topic string, msg interface{}) error {
 	genericTopic := findGenericTopic(topic)
 	then := time.Now()
-	var duration time.Duration
 	defer func() {
-		duration = time.Now().Sub(then)
+		duration := time.Since(then)
 		messagePublishedDurations.WithLabelValues(genericTopic).Observe(float64(duration) / float64(time.Millisecond))
 	}()
 	if !b.running.Load().(bool) {

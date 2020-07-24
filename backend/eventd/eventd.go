@@ -250,7 +250,7 @@ func logEvent(e *corev2.Event) {
 func (e *Eventd) handleMessage(msg interface{}) error {
 	then := time.Now()
 	defer func() {
-		duration := time.Now().Sub(then)
+		duration := time.Since(then)
 		eventHandlerDuration.WithLabelValues().Observe(float64(duration) / float64(time.Millisecond))
 	}()
 	event, ok := msg.(*corev2.Event)
