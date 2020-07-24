@@ -451,6 +451,8 @@ func TestSession_Start(t *testing.T) {
 			}
 
 			// Make sure the check subscriptions were all cancelled
+			session.mu.Lock()
+			defer session.mu.Unlock()
 			if len(session.subscriptionsMap) > 0 {
 				t.Fatalf("expected all check subsriptions to be cancelled, found %#v\n", session.subscriptionsMap)
 			}
