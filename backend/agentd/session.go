@@ -522,6 +522,9 @@ func (s *Session) stop() {
 			logger.WithError(err).Error("unable to unsubscribe from message bus")
 		}
 	}
+
+	// Unsubscribe the session from every configured check subscriptions
+	s.unsubscribe(s.cfg.Subscriptions)
 }
 
 // handleKeepalive is the keepalive message handler.

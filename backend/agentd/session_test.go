@@ -449,6 +449,11 @@ func TestSession_Start(t *testing.T) {
 			case <-time.After(5 * time.Second):
 				t.Fatal("session never stopped, we probably never received an entity update over the channel")
 			}
+
+			// Make sure the check subscriptions were all cancelled
+			if len(session.subscriptionsMap) > 0 {
+				t.Fatalf("expected all check subsriptions to be cancelled, found %#v\n", session.subscriptionsMap)
+			}
 		})
 	}
 }
