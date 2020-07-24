@@ -9,9 +9,9 @@ import (
 	"sync"
 	"time"
 
-	"go.etcd.io/etcd/clientv3"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/sirupsen/logrus"
+	"go.etcd.io/etcd/clientv3"
 
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	corev3 "github.com/sensu/sensu-go/api/core/v3"
@@ -39,6 +39,8 @@ const (
 
 	// defaultStoreTimeout is the store timeout used if the backend did not configure one
 	defaultStoreTimeout = time.Minute
+
+	EventHandlerDuration = "sensu_go_event_handler_duration"
 )
 
 var (
@@ -54,7 +56,20 @@ var (
 		},
 		[]string{EventsProcessedLabelName},
 	)
+
+	eventHandlerDuration = prometheus.NewSummaryVec(
+		prometheus.SummaryOpts{
+			Name:       EventHandlerDuration,
+			Help:       "event handler latency distribution",
+			Objectives: map[float64]float64{0.5: 0.05, 0.9: 0.01, 0.99: 0.001},
+		},
+		[]string{},
+	)
 )
+
+func init() {
+	_ = prometheus.Register(eventHandlerDuration)
+}
 
 const deletedEventSentinel = -1
 
@@ -233,6 +248,11 @@ func logEvent(e *corev2.Event) {
 }
 
 func (e *Eventd) handleMessage(msg interface{}) error {
+	then := time.Now()
+	defer func() {
+		duration := time.Since(then)
+		eventHandlerDuration.WithLabelValues().Observe(float64(duration) / float64(time.Millisecond))
+	}()
 	event, ok := msg.(*corev2.Event)
 	if !ok {
 		return errors.New("received non-Event on event channel")

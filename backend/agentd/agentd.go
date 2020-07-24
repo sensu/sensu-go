@@ -11,7 +11,6 @@ import (
 	"sync/atomic"
 	"time"
 
-	"go.etcd.io/etcd/clientv3"
 	"github.com/gogo/protobuf/proto"
 	"github.com/gorilla/mux"
 	"github.com/gorilla/websocket"
@@ -29,6 +28,7 @@ import (
 	"github.com/sensu/sensu-go/backend/store/v2/etcdstore"
 	"github.com/sensu/sensu-go/transport"
 	"github.com/sirupsen/logrus"
+	"go.etcd.io/etcd/clientv3"
 )
 
 var (
@@ -39,6 +39,25 @@ var (
 	// used for registering prometheus session counter
 	sessionCounterOnce sync.Once
 )
+
+const (
+	WebsocketUpgradeDuration = "sensu_go_websocket_upgrade_duration"
+)
+
+var (
+	websocketUpgradeDuration = prometheus.NewSummaryVec(
+		prometheus.SummaryOpts{
+			Name:       WebsocketUpgradeDuration,
+			Help:       "websocket upgrade latency distribution",
+			Objectives: map[float64]float64{0.5: 0.05, 0.9: 0.01, 0.99: 0.001},
+		},
+		[]string{},
+	)
+)
+
+func init() {
+	_ = prometheus.Register(websocketUpgradeDuration)
+}
 
 // Agentd is the backend HTTP API.
 type Agentd struct {
@@ -214,6 +233,11 @@ func (a *Agentd) Name() string {
 }
 
 func (a *Agentd) webSocketHandler(w http.ResponseWriter, r *http.Request) {
+	then := time.Now()
+	defer func() {
+		duration := time.Since(then)
+		websocketUpgradeDuration.WithLabelValues().Observe(float64(duration) / float64(time.Millisecond))
+	}()
 	var marshal MarshalFunc
 	var unmarshal UnmarshalFunc
 	var contentType string
