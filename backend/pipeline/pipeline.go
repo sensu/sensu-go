@@ -8,6 +8,7 @@ import (
 	"github.com/sensu/sensu-go/backend/licensing"
 	"github.com/sensu/sensu-go/backend/secrets"
 	"github.com/sensu/sensu-go/backend/store"
+	"github.com/sensu/sensu-go/backend/store/cache"
 	"github.com/sensu/sensu-go/command"
 	"github.com/sensu/sensu-go/rpc"
 	"github.com/sensu/sensu-go/types"
@@ -24,6 +25,7 @@ type Pipeline struct {
 	storeTimeout           time.Duration
 	secretsProviderManager *secrets.ProviderManager
 	licenseGetter          licensing.Getter
+	handlersCache          resourceCache
 }
 
 // Config holds the configuration for a Pipeline.
@@ -35,10 +37,16 @@ type Config struct {
 	StoreTimeout            time.Duration
 	SecretsProviderManager  *secrets.ProviderManager
 	LicenseGetter           licensing.Getter
+	HandlersCache           resourceCache
 }
 
 // Option is a functional option used to configure Pipelines.
 type Option func(*Pipeline)
+
+// resourceCache abstracts the cache.Resource struct for easier testing
+type resourceCache interface {
+	Get(namespace string) []cache.Value
+}
 
 // New creates a new Pipeline from the provided configuration.
 func New(c Config, options ...Option) *Pipeline {
@@ -51,6 +59,7 @@ func New(c Config, options ...Option) *Pipeline {
 		storeTimeout:           c.StoreTimeout,
 		secretsProviderManager: c.SecretsProviderManager,
 		licenseGetter:          c.LicenseGetter,
+		handlersCache:          c.HandlersCache,
 	}
 	for _, o := range options {
 		o(pipeline)

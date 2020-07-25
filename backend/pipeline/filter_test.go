@@ -159,8 +159,8 @@ func TestPipelineFilter(t *testing.T) {
 			name:   "Not Transitioned From Incident To Healthy",
 			status: 0,
 			history: []types.CheckHistory{
-				types.CheckHistory{Status: 0},
-				types.CheckHistory{Status: 0},
+				{Status: 0},
+				{Status: 0},
 			},
 			metrics:        nil,
 			silenced:       []string{},
@@ -171,8 +171,8 @@ func TestPipelineFilter(t *testing.T) {
 			name:   "Transitioned From Incident To Healthy",
 			status: 0,
 			history: []types.CheckHistory{
-				types.CheckHistory{Status: 1},
-				types.CheckHistory{Status: 0},
+				{Status: 1},
+				{Status: 0},
 			},
 			metrics:        nil,
 			silenced:       []string{},

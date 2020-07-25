@@ -14,8 +14,10 @@ import (
 	"github.com/sensu/sensu-go/backend/pipeline"
 	"github.com/sensu/sensu-go/backend/secrets"
 	"github.com/sensu/sensu-go/backend/store"
+	"github.com/sensu/sensu-go/backend/store/cache"
 	"github.com/sensu/sensu-go/command"
 	"github.com/sensu/sensu-go/rpc"
+	"go.etcd.io/etcd/clientv3"
 )
 
 var defaultStoreTimeout = time.Minute
@@ -29,6 +31,8 @@ type ExtensionExecutorGetterFunc func(*corev2.Extension) (rpc.ExtensionExecutor,
 // handler configuration determines which Sensu filters and mutator
 // are used.
 type Pipelined struct {
+	ctx                    context.Context
+	cancel                 context.CancelFunc
 	assetGetter            asset.Getter
 	stopping               chan struct{}
 	running                *atomic.Value
@@ -37,6 +41,7 @@ type Pipelined struct {
 	eventChan              chan interface{}
 	subscription           messaging.Subscription
 	store                  store.Store
+	handlersCache          *cache.Resource
 	bus                    messaging.MessageBus
 	extensionExecutor      pipeline.ExtensionExecutorGetterFunc
 	executor               command.Executor
@@ -59,6 +64,7 @@ type Config struct {
 	SecretsProviderManager  *secrets.ProviderManager
 	BackendEntity           *corev2.Entity
 	LicenseGetter           licensing.Getter
+	Client                  *clientv3.Client
 }
 
 // Option is a functional option used to configure Pipelined.
@@ -79,7 +85,11 @@ func New(c Config, options ...Option) (*Pipelined, error) {
 		c.StoreTimeout = defaultStoreTimeout
 	}
 
+	ctx, cancel := context.WithCancel(context.Background())
+
 	p := &Pipelined{
+		ctx:                    ctx,
+		cancel:                 cancel,
 		store:                  c.Store,
 		bus:                    c.Bus,
 		extensionExecutor:      c.ExtensionExecutorGetter,
@@ -96,6 +106,14 @@ func New(c Config, options ...Option) (*Pipelined, error) {
 		backendEntity:          c.BackendEntity,
 		LicenseGetter:          c.LicenseGetter,
 	}
+
+	// Start a cache for the handlers
+	handlersCache, err := cache.New(p.ctx, c.Client, &corev2.Handler{}, false)
+	if err != nil {
+		return nil, err
+	}
+	p.handlersCache = handlersCache
+
 	for _, o := range options {
 		if err := o(p); err != nil {
 			return nil, err
@@ -127,6 +145,7 @@ func (p *Pipelined) Start() error {
 func (p *Pipelined) Stop() error {
 	p.running.Store(false)
 	close(p.stopping)
+	p.cancel()
 	p.wg.Wait()
 	close(p.errChan)
 	err := p.subscription.Cancel()
@@ -158,6 +177,7 @@ func (p *Pipelined) createPipelines(count int, channel chan interface{}) {
 			SecretsProviderManager:  p.secretsProviderManager,
 			BackendEntity:           p.backendEntity,
 			LicenseGetter:           p.LicenseGetter,
+			HandlersCache:           p.handlersCache,
 		})
 		p.wg.Add(1)
 		go func() {

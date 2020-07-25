@@ -132,52 +132,24 @@ func (p *Pipeline) expandHandlers(ctx context.Context, handlers []string, level 
 		"namespace": namespace,
 	}
 
-	for _, handlerName := range handlers {
-		tctx, cancel := context.WithTimeout(ctx, p.storeTimeout)
-		handler, err := p.store.GetHandlerByName(tctx, handlerName)
-		cancel()
-		var extension *corev2.Extension
+	// Build a map of handlers from the cache
+	values := p.handlersCache.Get(namespace)
+	cachedHandlers := map[string]corev2.Resource{}
+	for _, value := range values {
+		cachedHandlers[value.Resource.GetObjectMeta().Name] = value.Resource
+	}
 
+	for _, handlerName := range handlers {
 		// Add handler name to log entry
 		fields["handler"] = handlerName
 
-		if handler == nil {
-			if err != nil {
-				(logger.
-					WithFields(fields).
-					WithError(err).
-					Error("failed to retrieve a handler"))
-				if _, ok := err.(*store.ErrInternal); ok {
-					// Fatal error
-					return nil, err
-				}
-				continue
-			}
-
+		r, ok := cachedHandlers[handlerName]
+		if !ok {
 			logger.WithFields(fields).Info("handler does not exist, will be ignored")
-			continue // remove this line if you enable the stuff below
-
-			// TODO: this code enables extension handler lookups, but for now,
-			// extensions are not enabled. Re-enable this code when extensions
-			// are re-enabled.
-			// extension, err = p.store.GetExtension(ctx, handlerName)
-			// if err == store.ErrNoExtension {
-			// 	continue
-			// }
-			// if err != nil {
-			// 	(logger.
-			// 		WithFields(fields).
-			// 		WithError(err).
-			// 		Error("failed to retrieve an extension"))
-			// 	continue
-			// }
-			// handler = &corev2.Handler{
-			// 	ObjectMeta: corev2.ObjectMeta{
-			// 		Name: extension.URL,
-			// 	},
-			// 	Type: "grpc",
-			// }
+			continue
 		}
+
+		handler := r.(*corev2.Handler)
 
 		if handler.Type == "set" {
 			setHandlers, err := p.expandHandlers(ctx, handler.Handlers, level+1)
@@ -199,7 +171,7 @@ func (p *Pipeline) expandHandlers(ctx context.Context, handlers []string, level 
 			}
 		} else {
 			if _, ok := expanded[handler.Name]; !ok {
-				expanded[handler.Name] = handlerExtensionUnion{Handler: handler, Extension: extension}
+				expanded[handler.Name] = handlerExtensionUnion{Handler: handler}
 			}
 		}
 	}
