@@ -2,7 +2,6 @@ package etcdstore
 
 import (
 	"context"
-	"fmt"
 	"path"
 	"strings"
 	"time"
@@ -354,7 +353,6 @@ func (s *Store) List(req storev2.ResourceRequest, pred *store.SelectionPredicate
 
 func (s *Store) Exists(req storev2.ResourceRequest) (bool, error) {
 	key := StoreKey(req)
-	fmt.Println(key)
 	if err := req.Validate(); err != nil {
 		return false, &store.ErrNotValid{Err: err}
 	}
