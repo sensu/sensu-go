@@ -18,7 +18,7 @@ type PromList model.Vector
 func (p PromList) Transform() []*types.MetricPoint {
 	var points []*types.MetricPoint
 	for _, prom := range p {
-                tags := []*types.MetricTag{}
+		tags := []*types.MetricTag{}
 		for ln, lv := range prom.Metric {
 			if ln != "__name__" {
 				mt := &types.MetricTag{
