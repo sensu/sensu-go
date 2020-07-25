@@ -1,10 +1,8 @@
 package transformers
 
 import (
-	"strconv"
 	"strings"
 	"time"
-	"fmt"
 
 	"github.com/prometheus/common/expfmt"
 	"github.com/prometheus/common/model"
@@ -12,7 +10,7 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-// PromList contains Prometheus vectors/samples
+// PromList contains Prometheus vector (samples)
 type PromList model.Vector
 
 // Transform transforms metrics in the Prometheus Exporter Format to
@@ -24,18 +22,17 @@ func (p PromList) Transform() []*types.MetricPoint {
 		for ln, lv := range prom.Metric {
 			if ln != "__name__" {
 				mt := &types.MetricTag{
-					Name:  fmt.Sprintf("%s", ln),
-					Value: fmt.Sprintf("%s", lv),
+					Name:  string(ln),
+					Value: string(lv),
 				}
 				tags = append(tags, mt)
 			}
 		}
-		n := fmt.Sprintf("%s", prom.Metric["__name__"])
+		n := string(prom.Metric["__name__"])
 		n = strings.Replace(n, "\n", "", -1)
-		v, _ := strconv.ParseFloat(fmt.Sprintf("%f", prom.Value), 32)
 		mp := &types.MetricPoint{
 			Name:      n,
-			Value:     v,
+			Value:     float64(prom.Value),
 			Timestamp: prom.Timestamp.Unix(),
 			Tags:      tags,
 		}
@@ -62,7 +59,7 @@ func ParseProm(event *types.Event) PromList {
 	p := PromList{}
 
 	decodeOptions := &expfmt.DecodeOptions{
-		Timestamp: model.Time(time.Now().Unix()),
+		Timestamp: model.TimeFromUnix(time.Now().Unix()),
 	}
 
 	for _, family := range metricFamilies {
