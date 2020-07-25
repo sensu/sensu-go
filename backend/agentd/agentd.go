@@ -162,10 +162,10 @@ func New(c Config, opts ...Option) (*Agentd, error) {
 		}
 	}
 
-	a.namespaceCache, err = cache.New(ctx, c.Client, &corev2.Namespace{}, false)
-	if err != nil {
-		return nil, err
-	}
+	// a.namespaceCache, err = cache.New(ctx, c.Client, &corev2.Namespace{}, false)
+	// if err != nil {
+	// 	return nil, err
+	// }
 
 	return a, nil
 }
@@ -268,20 +268,20 @@ func (a *Agentd) webSocketHandler(w http.ResponseWriter, r *http.Request) {
 	lager.WithField("header", fmt.Sprintf("Content-Type: %s", contentType)).Debug("setting header")
 
 	// Validate the agent namespace
-	namespace := r.Header.Get(transport.HeaderKeyNamespace)
-	var found bool
-	values := a.namespaceCache.GetAll()
-	for _, value := range values {
-		if namespace == value.Resource.GetObjectMeta().Name {
-			found = true
-			break
-		}
-	}
-	if namespace == "" || !found {
-		lager.Warningf("namespace %q not found", namespace)
-		http.Error(w, fmt.Sprintf("namespace %q not found", namespace), http.StatusNotFound)
-		return
-	}
+	// namespace := r.Header.Get(transport.HeaderKeyNamespace)
+	// var found bool
+	// values := a.namespaceCache.GetAll()
+	// for _, value := range values {
+	// 	if namespace == value.Resource.GetObjectMeta().Name {
+	// 		found = true
+	// 		break
+	// 	}
+	// }
+	// if namespace == "" || !found {
+	// 	lager.Warningf("namespace %q not found", namespace)
+	// 	http.Error(w, fmt.Sprintf("namespace %q not found", namespace), http.StatusNotFound)
+	// 	return
+	// }
 
 	conn, err := upgrader.Upgrade(w, r, responseHeader)
 	if err != nil {

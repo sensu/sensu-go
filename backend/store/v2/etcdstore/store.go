@@ -2,11 +2,11 @@ package etcdstore
 
 import (
 	"context"
+	"fmt"
 	"path"
 	"strings"
 	"time"
 
-	"go.etcd.io/etcd/clientv3"
 	"github.com/gogo/protobuf/proto"
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	corev3 "github.com/sensu/sensu-go/api/core/v3"
@@ -14,6 +14,7 @@ import (
 	storev2 "github.com/sensu/sensu-go/backend/store/v2"
 	"github.com/sensu/sensu-go/backend/store/v2/wrap"
 	"github.com/sensu/sensu-go/util/retry"
+	"go.etcd.io/etcd/clientv3"
 )
 
 const (
@@ -353,6 +354,7 @@ func (s *Store) List(req storev2.ResourceRequest, pred *store.SelectionPredicate
 
 func (s *Store) Exists(req storev2.ResourceRequest) (bool, error) {
 	key := StoreKey(req)
+	fmt.Println(key)
 	if err := req.Validate(); err != nil {
 		return false, &store.ErrNotValid{Err: err}
 	}
