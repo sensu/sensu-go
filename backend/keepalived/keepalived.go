@@ -8,6 +8,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/gogo/protobuf/proto"
 	"github.com/google/uuid"
 	"github.com/sensu/sensu-go/agent"
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
@@ -348,7 +349,7 @@ func (k *Keepalived) handleEntityRegistration(entity *corev2.Entity, event *core
 	tctx, cancel := context.WithTimeout(ctx, k.storeTimeout)
 	defer cancel()
 
-	config, _ := corev3.V2EntityToV3(entity)
+	config, state := corev3.V2EntityToV3(entity)
 	wrapper, err := wrap.Resource(config)
 	if err != nil {
 		logger.WithError(err).Error("error wrapping entity config")
@@ -356,23 +357,43 @@ func (k *Keepalived) handleEntityRegistration(entity *corev2.Entity, event *core
 	}
 
 	req := storev2.NewResourceRequestFromResource(tctx, config)
-	exists, err := k.storev2.Exists(req)
-	if err != nil {
-		logger.WithError(err).Error("error checking if entity exists")
-		return err
-	}
-	if exists {
-		return nil
-	}
 	if err := k.storev2.CreateIfNotExists(req, wrapper); err == nil {
 		event := createRegistrationEvent(entity)
-		return k.bus.Publish(messaging.TopicEvent, event)
+		err = k.bus.Publish(messaging.TopicEvent, event)
+		if err != nil {
+			logger.WithError(err).Error("error publishing registration event")
+			return err
+		}
+
 	} else if _, ok := err.(*store.ErrAlreadyExists); ok {
-		logger.WithError(err).Warn("received a check event before entity registration")
-		return nil
+		wrapper, err := k.storev2.Get(req)
+		if err != nil {
+			logger.WithError(err).Error("error getting entity config")
+			return err
+		}
+		var e corev3.EntityConfig
+		err = wrapper.UnwrapInto(&e)
+		if err != nil {
+			logger.WithError(err).Error("error unwrapping entity config")
+			return err
+		}
+		if proto.Equal(&e, config) {
+			// no need to send the entity config back to the agent if they are
+			// equal.
+			return nil
+		}
+
+		newEntity, err := corev3.V3EntityToV2(&e, state)
+		if err != nil {
+			logger.WithError(err).Error("error updating entity")
+			return err
+		}
+		event.Entity = newEntity
 	} else {
 		return err
 	}
+
+	return nil
 }
 
 func createKeepaliveEvent(rawEvent *corev2.Event) *corev2.Event {
