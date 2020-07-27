@@ -91,6 +91,46 @@ func TestParseProm(t *testing.T) {
 	}
 }
 
+func TestParsePromTags(t *testing.T) {
+	assert := assert.New(t)
+	ts := time.Now().Unix()
+
+	testCases := []struct {
+		metric           string
+		expectedFormat   PromList
+		timeInconclusive bool
+	}{
+		{
+			metric: "go_gc_duration_seconds{quantile=\"0\"} 3.3722e-05\n",
+			expectedFormat: PromList{
+				&model.Sample{
+					Metric: model.Metric{
+						model.MetricNameLabel: "go_gc_duration_seconds",
+						"quantile":            "0",
+						"instance":            "hostname",
+					},
+					Value:     3.3722e-05,
+					Timestamp: model.TimeFromUnix(ts),
+				},
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.metric, func(t *testing.T) {
+			event := types.FixtureEvent("test", "test")
+			event.Check.Output = tc.metric
+			event.Check.OutputMetricTags = map[string]string{
+				"instance": "hostname",
+			}
+			prom := ParseProm(event)
+			if !tc.timeInconclusive {
+				assert.Equal(tc.expectedFormat, prom)
+			}
+		})
+	}
+}
+
 func TestTransformProm(t *testing.T) {
 	assert := assert.New(t)
 	ts := time.Now().Unix()

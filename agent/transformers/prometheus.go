@@ -73,5 +73,13 @@ func ParseProm(event *types.Event) PromList {
 		p = append(p, familySamples...)
 	}
 
+	if len(event.Check.OutputMetricTags) > 0 {
+		for _, prom := range p {
+			for tn, tv := range event.Check.OutputMetricTags {
+				prom.Metric[model.LabelName(tn)] = model.LabelValue(tv)
+			}
+		}
+	}
+
 	return p
 }
