@@ -1,3 +1,5 @@
+
+
 package transformers
 
 import (
@@ -63,6 +65,18 @@ func TestParseProm(t *testing.T) {
  					Timestamp: model.TimeFromUnix(ts),
  				},
  			},
+ 		},
+ 		{
+ 			metric: "foo 1",
+ 			expectedFormat: PromList{},
+ 		},
+ 		{
+ 			metric: "foo{bar=\"2\"}\n",
+ 			expectedFormat: PromList{},
+ 		},
+ 		{
+ 			metric: "",
+ 			expectedFormat: PromList{},
  		},
 	}
 
