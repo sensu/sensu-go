@@ -13,8 +13,8 @@ import (
 // PromList contains Prometheus vector (samples)
 type PromList model.Vector
 
-// Transform transforms metrics in the Prometheus Exporter Format to
-// the Sensu Metric Format.
+// Transform transforms metrics in the Prometheus Exposition Text
+// Format to the Sensu Metric Format.
 func (p PromList) Transform() []*types.MetricPoint {
 	var points []*types.MetricPoint
 	for _, prom := range p {
@@ -41,7 +41,8 @@ func (p PromList) Transform() []*types.MetricPoint {
 	return points
 }
 
-// ParseProm parses a Prometheus Exporter Format string into an Prometheus Vector (sample).
+// ParseProm parses a Prometheus Exposition Text Formated string into
+// an Prometheus Vector (sample).
 func ParseProm(event *types.Event) PromList {
 	fields := logrus.Fields{
 		"namespace": event.Check.Namespace,

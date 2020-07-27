@@ -39,8 +39,8 @@ const (
 	InfluxDBOutputMetricFormat = "influxdb_line"
 
 	// PrometheusOutputMetricFormat is the accepted string to represent the output metric format of
-	// Prometheus Exporter Format
-	PrometheusOutputMetricFormat = "prometheus_exporter"
+	// Prometheus Exposition Text Format
+	PrometheusOutputMetricFormat = "prometheus_text"
 
 	// KeepaliveCheckName is the name of the check that is created when a
 	// keepalive timeout occurs.
