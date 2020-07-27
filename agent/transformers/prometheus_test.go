@@ -1,5 +1,3 @@
-
-
 package transformers
 
 import (
@@ -122,6 +120,25 @@ func TestTransformProm(t *testing.T) {
 							Value: "0",
 						},
 					},
+				},
+			},
+		},
+		{
+			metric: PromList{
+				&model.Sample{
+					Metric: model.Metric{
+						model.MetricNameLabel: "go_memstats_alloc_bytes_total",
+					},
+					Value:     4.095146016e+09,
+					Timestamp: model.TimeFromUnix(ts),
+				},
+			},
+			expectedFormat: []*types.MetricPoint{
+				{
+					Name:      "go_memstats_alloc_bytes_total",
+					Value:     4.095146016e+09,
+					Timestamp: ts,
+					Tags: []*types.MetricTag{},
 				},
 			},
 		},
