@@ -28,7 +28,7 @@ func (n NagiosList) Transform() []*types.MetricPoint {
 			Name:      nagios.Label,
 			Value:     nagios.Value,
 			Timestamp: nagios.Timestamp,
-			Tags:      []*types.MetricTag{},
+			Tags:      nagios.Tags,
 		}
 		points = append(points, mp)
 	}
