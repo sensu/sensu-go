@@ -120,8 +120,11 @@ func TestParsePromTags(t *testing.T) {
 		t.Run(tc.metric, func(t *testing.T) {
 			event := types.FixtureEvent("test", "test")
 			event.Check.Output = tc.metric
-			event.Check.OutputMetricTags = map[string]string{
-				"instance": "hostname",
+			event.Check.OutputMetricTags = []*types.MetricTag{
+				{
+					Name:  "instance",
+					Value: "hostname",
+				},
 			}
 			prom := ParseProm(event)
 			if !tc.timeInconclusive {

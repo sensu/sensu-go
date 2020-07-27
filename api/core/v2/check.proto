@@ -6,6 +6,7 @@ import "github.com/sensu/sensu-go/api/core/v2/hook.proto";
 import "github.com/sensu/sensu-go/api/core/v2/meta.proto";
 import "github.com/sensu/sensu-go/api/core/v2/time_window.proto";
 import "github.com/sensu/sensu-go/api/core/v2/secret.proto";
+import "github.com/sensu/sensu-go/api/core/v2/metrics.proto";
 
 package sensu.core.v2;
 
@@ -154,8 +155,8 @@ message CheckConfig {
   // execution environment.
   repeated Secret secrets = 29 [ (gogoproto.jsontag) = "secrets" ];
 
-  // OutputMetricTags is a key value map of tags to apply to metrics extracted from check output.
-  map<string, string> output_metric_tags = 30 [ (gogoproto.jsontag) = "output_metric_tags,omitempty", (gogoproto.moretags) = "yaml: \"annotations,omitempty\"" ];
+  // OutputMetricTags is list of metric tags to apply to metrics extracted from check output.
+  repeated MetricTag output_metric_tags = 30 [ (gogoproto.jsontag) = "output_metric_tags,omitempty", (gogoproto.moretags) = "yaml: \"output_metric_tags,omitempty\"" ];
 }
 
 // A Check is a check specification and optionally the results of the check's
@@ -298,8 +299,8 @@ message Check {
   // IsSilenced indicates whether the check is silenced or not
   bool is_silenced = 42 [(gogoproto.jsontag) = "is_silenced"];
 
-  // OutputMetricTags is a key value map of tags to apply to metrics extracted from check output.
-  map<string, string> output_metric_tags = 43 [ (gogoproto.jsontag) = "output_metric_tags,omitempty", (gogoproto.moretags) = "yaml: \"annotations,omitempty\"" ];
+  // OutputMetricTags is list of metric tags to apply to metrics extracted from check output.
+  repeated MetricTag output_metric_tags = 43 [ (gogoproto.jsontag) = "output_metric_tags,omitempty", (gogoproto.moretags) = "yaml: \"output_metric_tags,omitempty\"" ];
 
   // ExtendedAttributes store serialized arbitrary JSON-encoded data
   bytes ExtendedAttributes = 99 [ (gogoproto.jsontag) = "-" ];
