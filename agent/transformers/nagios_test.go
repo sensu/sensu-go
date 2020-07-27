@@ -77,6 +77,45 @@ func TestParseNagios(t *testing.T) {
 			},
 		},
 		{
+			name: "multiple perfdata metrics with output_metric_tags",
+			event: &types.Event{
+				Check: &types.Check{
+					Executed: 12345,
+					Output:   "PING ok - Packet loss = 0%, RTA = 0.80 ms | percent_packet_loss=0, rta=0.80",
+					OutputMetricTags: []*types.MetricTag{
+						{
+							Name:  "foo",
+							Value: "bar",
+						},
+					},
+				},
+			},
+			want: NagiosList{
+				Nagios{
+					Label:     "percent_packet_loss",
+					Value:     0.0,
+					Timestamp: 12345,
+					Tags: []*types.MetricTag{
+						{
+							Name:  "foo",
+							Value: "bar",
+						},
+					},
+				},
+				Nagios{
+					Label:     "rta",
+					Value:     0.8,
+					Timestamp: 12345,
+					Tags: []*types.MetricTag{
+						{
+							Name:  "foo",
+							Value: "bar",
+						},
+					},
+				},
+			},
+		},
+		{
 			name: "GH_2511",
 			event: &types.Event{
 				Check: &types.Check{
