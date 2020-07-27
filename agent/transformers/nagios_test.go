@@ -206,7 +206,34 @@ func TestTransformNagios(t *testing.T) {
 					Name:      "percent_packet_loss",
 					Value:     0,
 					Timestamp: 123456789,
-					Tags:      []*types.MetricTag{},
+				},
+			},
+		},
+		{
+			metrics: NagiosList{
+				{
+					Label:     "percent_packet_loss",
+					Value:     0,
+					Timestamp: 123456789,
+					Tags:      []*types.MetricTag{
+						{
+							Name: "foo",
+							Value: "bar",
+						},
+					},
+				},
+			},
+			want: []*types.MetricPoint{
+				{
+					Name:      "percent_packet_loss",
+					Value:     0,
+					Timestamp: 123456789,
+					Tags:      []*types.MetricTag{
+						{
+							Name: "foo",
+							Value: "bar",
+						},
+					},
 				},
 			},
 		},
@@ -239,7 +266,6 @@ func TestParseAndTransformNagios(t *testing.T) {
 					Name:      "percent_packet_loss",
 					Value:     0,
 					Timestamp: 123456789,
-					Tags:      []*types.MetricTag{},
 				},
 			},
 		},
@@ -256,7 +282,6 @@ func TestParseAndTransformNagios(t *testing.T) {
 					Name:      "percent_packet_loss",
 					Value:     0,
 					Timestamp: 123456789,
-					Tags:      []*types.MetricTag{},
 				},
 			},
 		},
