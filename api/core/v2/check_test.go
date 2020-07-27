@@ -122,6 +122,7 @@ func TestOutputMetricFormatValidate(t *testing.T) {
 	assert.NoError(t, ValidateOutputMetricFormat(GraphiteOutputMetricFormat))
 	assert.NoError(t, ValidateOutputMetricFormat(InfluxDBOutputMetricFormat))
 	assert.NoError(t, ValidateOutputMetricFormat(OpenTSDBOutputMetricFormat))
+	assert.NoError(t, ValidateOutputMetricFormat(PrometheusOutputMetricFormat))
 	assert.Error(t, ValidateOutputMetricFormat("anything_else"))
 	assert.Error(t, ValidateOutputMetricFormat("NAGIOS_PERFDATA"))
 }
