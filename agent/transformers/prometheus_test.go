@@ -31,6 +31,39 @@ func TestParseProm(t *testing.T) {
 				},
 			},
 		},
+		{
+			metric: "go_gc_duration_seconds{quantile=\"0\"} 3.3722e-05\ngo_gc_duration_seconds{quantile=\"0.25\"} 5.0129e-05\n",
+			expectedFormat: PromList{
+				&model.Sample{
+					Metric: model.Metric{
+						model.MetricNameLabel: "go_gc_duration_seconds",
+						"quantile":            "0",
+					},
+					Value:     3.3722e-05,
+					Timestamp: model.TimeFromUnix(ts),
+				},
+				&model.Sample{
+					Metric: model.Metric{
+						model.MetricNameLabel: "go_gc_duration_seconds",
+						"quantile":            "0.25",
+					},
+					Value:     5.0129e-05,
+					Timestamp: model.TimeFromUnix(ts),
+				},
+			},
+		},
+ 		{
+ 			metric: "# HELP go_memstats_alloc_bytes_total Total number of bytes allocated, even if freed.\n# TYPE go_memstats_alloc_bytes_total counter\ngo_memstats_alloc_bytes_total 4.095146016e+09\n",
+ 			expectedFormat: PromList{
+ 				&model.Sample{
+ 					Metric: model.Metric{
+ 						model.MetricNameLabel: "go_memstats_alloc_bytes_total",
+ 					},
+ 					Value:     4.095146016e+09,
+ 					Timestamp: model.TimeFromUnix(ts),
+ 				},
+ 			},
+ 		},
 	}
 
 	for _, tc := range testCases {
