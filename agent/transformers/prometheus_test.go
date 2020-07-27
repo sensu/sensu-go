@@ -1,6 +1,7 @@
 package transformers
 
 import (
+	"math"
 	"testing"
 	"time"
 
@@ -52,30 +53,30 @@ func TestParseProm(t *testing.T) {
 				},
 			},
 		},
- 		{
- 			metric: "# HELP go_memstats_alloc_bytes_total Total number of bytes allocated, even if freed.\n# TYPE go_memstats_alloc_bytes_total counter\ngo_memstats_alloc_bytes_total 4.095146016e+09\n",
- 			expectedFormat: PromList{
- 				&model.Sample{
- 					Metric: model.Metric{
- 						model.MetricNameLabel: "go_memstats_alloc_bytes_total",
- 					},
- 					Value:     4.095146016e+09,
- 					Timestamp: model.TimeFromUnix(ts),
- 				},
- 			},
- 		},
- 		{
- 			metric: "foo 1",
- 			expectedFormat: PromList{},
- 		},
- 		{
- 			metric: "foo{bar=\"2\"}\n",
- 			expectedFormat: PromList{},
- 		},
- 		{
- 			metric: "",
- 			expectedFormat: PromList{},
- 		},
+		{
+			metric: "# HELP go_memstats_alloc_bytes_total Total number of bytes allocated, even if freed.\n# TYPE go_memstats_alloc_bytes_total counter\ngo_memstats_alloc_bytes_total 4.095146016e+09\n",
+			expectedFormat: PromList{
+				&model.Sample{
+					Metric: model.Metric{
+						model.MetricNameLabel: "go_memstats_alloc_bytes_total",
+					},
+					Value:     4.095146016e+09,
+					Timestamp: model.TimeFromUnix(ts),
+				},
+			},
+		},
+		{
+			metric:         "foo 1",
+			expectedFormat: PromList{},
+		},
+		{
+			metric:         "foo{bar=\"2\"}\n",
+			expectedFormat: PromList{},
+		},
+		{
+			metric:         "",
+			expectedFormat: PromList{},
+		},
 	}
 
 	for _, tc := range testCases {
@@ -138,9 +139,21 @@ func TestTransformProm(t *testing.T) {
 					Name:      "go_memstats_alloc_bytes_total",
 					Value:     4.095146016e+09,
 					Timestamp: ts,
-					Tags: []*types.MetricTag{},
+					Tags:      []*types.MetricTag{},
 				},
 			},
+		},
+		{
+			metric: PromList{
+				&model.Sample{
+					Metric: model.Metric{
+						model.MetricNameLabel: "go_memstats_alloc_bytes_total",
+					},
+					Value:     model.SampleValue(math.NaN()),
+					Timestamp: model.TimeFromUnix(ts),
+				},
+			},
+			expectedFormat: nil,
 		},
 	}
 

@@ -1,6 +1,7 @@
 package transformers
 
 import (
+	"math"
 	"strings"
 	"time"
 
@@ -18,6 +19,10 @@ type PromList model.Vector
 func (p PromList) Transform() []*types.MetricPoint {
 	var points []*types.MetricPoint
 	for _, prom := range p {
+		v := float64(prom.Value)
+		if math.IsNaN(v) {
+			continue
+		}
 		tags := []*types.MetricTag{}
 		for ln, lv := range prom.Metric {
 			if ln != "__name__" {
@@ -32,7 +37,7 @@ func (p PromList) Transform() []*types.MetricPoint {
 		n = strings.Replace(n, "\n", "", -1)
 		mp := &types.MetricPoint{
 			Name:      n,
-			Value:     float64(prom.Value),
+			Value:     v,
 			Timestamp: prom.Timestamp.Unix(),
 			Tags:      tags,
 		}
