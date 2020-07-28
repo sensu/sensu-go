@@ -87,6 +87,47 @@ func TestParseGraphite(t *testing.T) {
 	}
 }
 
+func TestParseGraphiteTags(t *testing.T) {
+	assert := assert.New(t)
+
+	testCases := []struct {
+		metric         string
+		expectedFormat GraphiteList
+	}{
+		{
+			metric: "metric.value 1 123456789",
+			expectedFormat: GraphiteList{
+				{
+					Path:      "metric.value",
+					Value:     1,
+					Timestamp: 123456789,
+					Tags: []*types.MetricTag{
+						&types.MetricTag{
+							Name:  "instance",
+							Value: "hostname",
+						},
+					},
+				},
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.metric, func(t *testing.T) {
+			event := types.FixtureEvent("test", "test")
+			event.Check.Output = tc.metric
+			event.Check.OutputMetricTags = []*types.MetricTag{
+				{
+					Name:  "instance",
+					Value: "hostname",
+				},
+			}
+			graphite := ParseGraphite(event)
+			assert.Equal(tc.expectedFormat, graphite)
+		})
+	}
+}
+
 func TestTransformGraphite(t *testing.T) {
 	assert := assert.New(t)
 
