@@ -155,9 +155,70 @@ func TestParseInflux(t *testing.T) {
 		t.Run(tc.metric, func(t *testing.T) {
 			event := types.FixtureEvent("test", "test")
 			event.Check.Output = tc.metric
-			graphite := ParseInflux(event)
+			influx := ParseInflux(event)
 			if !tc.timeInconclusive {
-				assert.Equal(tc.expectedFormat, graphite)
+				assert.Equal(tc.expectedFormat, influx)
+			}
+		})
+	}
+}
+
+func TestParseInfluxTags(t *testing.T) {
+	assert := assert.New(t)
+
+	testCases := []struct {
+		metric           string
+		expectedFormat   InfluxList
+		timeInconclusive bool
+	}{
+		{
+			metric: "weather,location=us-midwest,season=summer temperature=82,humidity=30 1465839830100400200",
+			expectedFormat: InfluxList{
+				{
+					Measurement: "weather",
+					TagSet: []*types.MetricTag{
+						{
+							Name:  "location",
+							Value: "us-midwest",
+						},
+						{
+							Name:  "season",
+							Value: "summer",
+						},
+						{
+							Name:  "instance",
+							Value: "hostname",
+						},
+					},
+					FieldSet: []*Field{
+						{
+							Key:   "temperature",
+							Value: 82,
+						},
+						{
+							Key:   "humidity",
+							Value: 30,
+						},
+					},
+					Timestamp: 1465839830,
+				},
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.metric, func(t *testing.T) {
+			event := types.FixtureEvent("test", "test")
+			event.Check.Output = tc.metric
+			event.Check.OutputMetricTags = []*types.MetricTag{
+				{
+					Name:  "instance",
+					Value: "hostname",
+				},
+			}
+			influx := ParseInflux(event)
+			if !tc.timeInconclusive {
+				assert.Equal(tc.expectedFormat, influx)
 			}
 		})
 	}
