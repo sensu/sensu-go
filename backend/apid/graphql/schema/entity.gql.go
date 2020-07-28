@@ -76,6 +76,12 @@ type EntityUserFieldResolver interface {
 	User(p graphql.ResolveParams) (string, error)
 }
 
+// EntitySensuAgentVersionFieldResolver implement to resolve requests for the Entity's sensuAgentVersion field.
+type EntitySensuAgentVersionFieldResolver interface {
+	// SensuAgentVersion implements response to request for sensuAgentVersion field.
+	SensuAgentVersion(p graphql.ResolveParams) (string, error)
+}
+
 // EntityRedactFieldResolver implement to resolve requests for the Entity's redact field.
 type EntityRedactFieldResolver interface {
 	// Redact implements response to request for redact field.
@@ -227,6 +233,7 @@ type EntityFieldResolvers interface {
 	EntityDeregisterFieldResolver
 	EntityDeregistrationFieldResolver
 	EntityUserFieldResolver
+	EntitySensuAgentVersionFieldResolver
 	EntityRedactFieldResolver
 	EntityStatusFieldResolver
 	EntityRelatedFieldResolver
@@ -405,6 +412,19 @@ func (_ EntityAliases) User(p graphql.ResolveParams) (string, error) {
 	return ret, err
 }
 
+// SensuAgentVersion implements response to request for 'sensuAgentVersion' field.
+func (_ EntityAliases) SensuAgentVersion(p graphql.ResolveParams) (string, error) {
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	ret, ok := val.(string)
+	if err != nil {
+		return ret, err
+	}
+	if !ok {
+		return ret, errors.New("unable to coerce value for field 'sensuAgentVersion'")
+	}
+	return ret, err
+}
+
 // Redact implements response to request for 'redact' field.
 func (_ EntityAliases) Redact(p graphql.ResolveParams) ([]string, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
@@ -545,6 +565,13 @@ func _ObjTypeEntityUserHandler(impl interface{}) graphql1.FieldResolveFn {
 	resolver := impl.(EntityUserFieldResolver)
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.User(frp)
+	}
+}
+
+func _ObjTypeEntitySensuAgentVersionHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(EntitySensuAgentVersionFieldResolver)
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.SensuAgentVersion(frp)
 	}
 }
 
@@ -712,6 +739,13 @@ func _ObjectTypeEntityConfigFn() graphql1.ObjectConfig {
 				Name:              "related",
 				Type:              graphql1.NewNonNull(graphql1.NewList(graphql.OutputType("Entity"))),
 			},
+			"sensuAgentVersion": &graphql1.Field{
+				Args:              graphql1.FieldConfigArgument{},
+				DeprecationReason: "",
+				Description:       "If agent; reflects the version reported by the sensu-agent client.",
+				Name:              "sensuAgentVersion",
+				Type:              graphql1.NewNonNull(graphql1.String),
+			},
 			"silences": &graphql1.Field{
 				Args:              graphql1.FieldConfigArgument{},
 				DeprecationReason: "",
@@ -776,24 +810,25 @@ func _ObjectTypeEntityConfigFn() graphql1.ObjectConfig {
 var _ObjectTypeEntityDesc = graphql.ObjectDesc{
 	Config: _ObjectTypeEntityConfigFn,
 	FieldHandlers: map[string]graphql.FieldHandler{
-		"deregister":     _ObjTypeEntityDeregisterHandler,
-		"deregistration": _ObjTypeEntityDeregistrationHandler,
-		"entityClass":    _ObjTypeEntityEntityClassHandler,
-		"events":         _ObjTypeEntityEventsHandler,
-		"id":             _ObjTypeEntityIDHandler,
-		"isSilenced":     _ObjTypeEntityIsSilencedHandler,
-		"lastSeen":       _ObjTypeEntityLastSeenHandler,
-		"metadata":       _ObjTypeEntityMetadataHandler,
-		"name":           _ObjTypeEntityNameHandler,
-		"namespace":      _ObjTypeEntityNamespaceHandler,
-		"redact":         _ObjTypeEntityRedactHandler,
-		"related":        _ObjTypeEntityRelatedHandler,
-		"silences":       _ObjTypeEntitySilencesHandler,
-		"status":         _ObjTypeEntityStatusHandler,
-		"subscriptions":  _ObjTypeEntitySubscriptionsHandler,
-		"system":         _ObjTypeEntitySystemHandler,
-		"toJSON":         _ObjTypeEntityToJSONHandler,
-		"user":           _ObjTypeEntityUserHandler,
+		"deregister":        _ObjTypeEntityDeregisterHandler,
+		"deregistration":    _ObjTypeEntityDeregistrationHandler,
+		"entityClass":       _ObjTypeEntityEntityClassHandler,
+		"events":            _ObjTypeEntityEventsHandler,
+		"id":                _ObjTypeEntityIDHandler,
+		"isSilenced":        _ObjTypeEntityIsSilencedHandler,
+		"lastSeen":          _ObjTypeEntityLastSeenHandler,
+		"metadata":          _ObjTypeEntityMetadataHandler,
+		"name":              _ObjTypeEntityNameHandler,
+		"namespace":         _ObjTypeEntityNamespaceHandler,
+		"redact":            _ObjTypeEntityRedactHandler,
+		"related":           _ObjTypeEntityRelatedHandler,
+		"sensuAgentVersion": _ObjTypeEntitySensuAgentVersionHandler,
+		"silences":          _ObjTypeEntitySilencesHandler,
+		"status":            _ObjTypeEntityStatusHandler,
+		"subscriptions":     _ObjTypeEntitySubscriptionsHandler,
+		"system":            _ObjTypeEntitySystemHandler,
+		"toJSON":            _ObjTypeEntityToJSONHandler,
+		"user":              _ObjTypeEntityUserHandler,
 	},
 }
 
