@@ -145,6 +145,53 @@ func TestParseOpenTSDB(t *testing.T) {
 	}
 }
 
+func TestParseOpenTSDBTags(t *testing.T) {
+	testCases := []struct {
+		name   string
+		output string
+		want   OpenTSDBList
+	}{
+		{
+			name:   "standard opentsdb metric",
+			output: "sys.cpu.user 1356998400 42.5 host=webserver01",
+			want: OpenTSDBList{
+				OpenTSDB{
+					Name: "sys.cpu.user",
+					TagSet: []*types.MetricTag{
+						&types.MetricTag{
+							Name:  "host",
+							Value: "webserver01",
+						},
+						&types.MetricTag{
+							Name:  "instance",
+							Value: "hostname",
+						},
+					},
+					Timestamp: 1356998400,
+					Value:     42.5,
+				},
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			event := types.FixtureEvent("test", "test")
+			event.Check.Output = tc.output
+			event.Check.OutputMetricTags = []*types.MetricTag{
+				{
+					Name:  "instance",
+					Value: "hostname",
+				},
+			}
+			got := ParseOpenTSDB(event)
+			if !assert.Equal(t, got, tc.want) {
+				t.Errorf("ParseOpenTSDBTags() = %v, want %v", got, tc.want)
+			}
+		})
+	}
+}
+
 func TestTransformOpenTSDB(t *testing.T) {
 	testCases := []struct {
 		name    string
