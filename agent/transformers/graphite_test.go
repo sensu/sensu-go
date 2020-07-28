@@ -214,6 +214,34 @@ func TestTransformGraphite(t *testing.T) {
 				},
 			},
 		},
+		{
+			metric: GraphiteList{
+				{
+					Path:      "metric.value",
+					Value:     1,
+					Timestamp: 123456789,
+					Tags:      []*types.MetricTag{
+						&types.MetricTag{
+							Name:  "instance",
+							Value: "hostname",
+						},
+					},
+				},
+			},
+			expectedFormat: []*types.MetricPoint{
+				{
+					Name:      "metric.value",
+					Value:     1,
+					Timestamp: 123456789,
+					Tags:      []*types.MetricTag{
+						&types.MetricTag{
+							Name:  "instance",
+							Value: "hostname",
+						},
+					},
+				},
+			},
+		},
 	}
 
 	for _, tc := range testCases {

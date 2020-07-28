@@ -29,7 +29,7 @@ func (g GraphiteList) Transform() []*types.MetricPoint {
 			Name:      graphite.Path,
 			Value:     graphite.Value,
 			Timestamp: graphite.Timestamp,
-			Tags:      []*types.MetricTag{},
+			Tags:      graphite.Tags,
 		}
 
 		if mp.Tags == nil {
