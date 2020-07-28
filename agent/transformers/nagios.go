@@ -30,6 +30,11 @@ func (n NagiosList) Transform() []*types.MetricPoint {
 			Timestamp: nagios.Timestamp,
 			Tags:      nagios.Tags,
 		}
+
+		if mp.Tags == nil {
+			mp.Tags = []*types.MetricTag{}
+		}
+
 		points = append(points, mp)
 	}
 	return points
