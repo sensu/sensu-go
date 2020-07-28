@@ -86,6 +86,10 @@ OUTER:
 			i.TagSet = tagList
 		}
 
+		if event.Check.OutputMetricTags != nil {
+			i.TagSet = append(i.TagSet, event.Check.OutputMetricTags...)
+		}
+
 		fieldSets := strings.Split(args[1], ",")
 		fieldList := []*Field{}
 		for _, fieldSet := range fieldSets {
