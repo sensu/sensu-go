@@ -7,6 +7,14 @@ import (
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 )
 
+const (
+	// EntityNotFound is used to indicate that an entity was not found between
+	// agentd and the agent
+	// TODO(palourde): figure out a better way to express that than relying on a
+	// special entity name
+	EntityNotFound = "not found"
+)
+
 // interface assertions guarantee that EntityConfig and EntityState are valid
 // Resources.
 var (

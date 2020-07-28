@@ -37,6 +37,12 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+const (
+	// Time to wait for the entity config from agentd before sending the first
+	// keepalive
+	entityConfigGracePeriod = 10 * time.Second
+)
+
 // GetDefaultAgentName returns the default agent name
 func GetDefaultAgentName() string {
 	defaultAgentName, err := os.Hostname()
@@ -58,6 +64,7 @@ type Agent struct {
 	connectedMu       sync.RWMutex
 	contentType       string
 	entityConfig      *corev3.EntityConfig
+	entityConfigCh    chan struct{}
 	entityMu          sync.Mutex
 	executor          command.Executor
 	handler           *handler.MessageHandler
@@ -99,6 +106,7 @@ func NewAgentContext(ctx context.Context, config *Config) (*Agent, error) {
 		config:          config,
 		executor:        command.NewExecutor(),
 		handler:         handler.NewMessageHandler(),
+		entityConfigCh:  make(chan struct{}),
 		inProgress:      make(map[string]*corev2.CheckConfig),
 		inProgressMu:    &sync.Mutex{},
 		sendq:           make(chan *transport.Message, 10),
@@ -109,7 +117,6 @@ func NewAgentContext(ctx context.Context, config *Config) (*Agent, error) {
 	}
 
 	agent.statsdServer = NewStatsdServer(agent)
-	agent.handler.AddHandler(corev2.CheckRequestType, agent.handleCheck)
 	agent.handler.AddHandler(transport.MessageTypeEntityConfig, agent.handleEntityConfig)
 
 	// We don't check for errors here and let the agent get created regardless
@@ -146,9 +153,16 @@ func (a *Agent) sendMessage(msg *transport.Message) {
 
 // RefreshSystemInfo refreshes system, platform, and process information.
 func (a *Agent) RefreshSystemInfo(ctx context.Context) error {
-	info, err := system.Info()
-	if err != nil {
-		return err
+	var info corev2.System
+	var err error
+
+	if a.config.MockSystemInfo {
+		info = system.MockInfo()
+	} else {
+		info, err = system.Info()
+		if err != nil {
+			return err
+		}
 	}
 
 	if a.config.DetectCloudProvider {
@@ -166,6 +180,10 @@ func (a *Agent) RefreshSystemInfo(ctx context.Context) error {
 }
 
 func (a *Agent) refreshSystemInfoPeriodically(ctx context.Context) {
+	if a.config.MockSystemInfo {
+		return
+	}
+
 	defer logger.Info("shutting down system info collector")
 	ticker := time.NewTicker(time.Duration(DefaultSystemInfoRefreshInterval) * time.Second)
 	defer ticker.Stop()
@@ -313,6 +331,18 @@ func (a *Agent) connectionManager(ctx context.Context, cancel context.CancelFunc
 		a.connected = false
 		a.connectedMu.Unlock()
 
+		// Make sure the entity config chan is empty by discarding whatever is in
+		// there, so we can block until we receive an update from agentd
+		select {
+		case <-a.entityConfigCh:
+		default:
+		}
+
+		// Do not handle check request until we receive the entity config from the
+		// backend, so we don't send a stale config
+
+		a.handler.AddHandler(corev2.CheckRequestType, a.handleCheckNoop)
+
 		a.clearAgentEntity()
 
 		conn, err := a.connectWithBackoff(ctx)
@@ -334,6 +364,22 @@ func (a *Agent) connectionManager(ctx context.Context, cancel context.CancelFunc
 		a.connectedMu.Unlock()
 
 		go a.receiveLoop(ctx, cancel, conn)
+
+		// Block until we receive an entity config, or the grace period expires
+		select {
+		case <-a.entityConfigCh:
+			logger.Debug("successfully received the initial entity config")
+		case <-time.After(entityConfigGracePeriod):
+			logger.Warning("the initial entity config was never received, using the local entity")
+		case <-ctx.Done():
+			// The connection was closed before we received an entity config or we
+			// reached the grace period
+			continue
+		}
+
+		// Handle check config requests
+		a.handler.AddHandler(corev2.CheckRequestType, a.handleCheck)
+
 		if err := a.sendLoop(ctx, cancel, conn); err != nil && err != ctx.Err() {
 			logger.WithError(err).Error("error sending messages")
 		}

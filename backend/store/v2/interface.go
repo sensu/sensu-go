@@ -30,4 +30,7 @@ type Interface interface {
 	// List lists all resources specified by the resource request, and the
 	// selection predicate.
 	List(ResourceRequest, *store.SelectionPredicate) (wrap.List, error)
+
+	// Exists returns true if the resource indicated by the request exists
+	Exists(ResourceRequest) (bool, error)
 }

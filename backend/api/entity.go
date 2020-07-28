@@ -16,26 +16,20 @@ import (
 
 // EntityClient is an API client for entities.
 type EntityClient struct {
-	client     *GenericClient
-	storev2    storev2.Interface
-	eventStore store.EventStore
-	auth       authorization.Authorizer
+	storev2     storev2.Interface
+	entityStore store.EntityStore
+	eventStore  store.EventStore
+	auth        authorization.Authorizer
 }
 
 // NewEntityClient creates a new EntityClient given a store, an event store and
 // an authorizer.
-func NewEntityClient(store store.ResourceStore, storev2 storev2.Interface, eventStore store.EventStore, auth authorization.Authorizer) *EntityClient {
+func NewEntityClient(store store.EntityStore, storev2 storev2.Interface, eventStore store.EventStore, auth authorization.Authorizer) *EntityClient {
 	return &EntityClient{
-		client: &GenericClient{
-			Auth:       auth,
-			Store:      store,
-			Kind:       &corev2.Entity{},
-			APIGroup:   "core",
-			APIVersion: "v2",
-		},
-		storev2:    storev2,
-		eventStore: eventStore,
-		auth:       auth,
+		storev2:     storev2,
+		entityStore: store,
+		eventStore:  eventStore,
+		auth:        auth,
 	}
 }
 
@@ -43,7 +37,11 @@ func NewEntityClient(store store.ResourceStore, storev2 storev2.Interface, event
 // delete all of the events associated with the entity. The operation is not
 // transactional; partial data may remain if it fails.
 func (e *EntityClient) DeleteEntity(ctx context.Context, name string) error {
-	if err := e.client.Delete(ctx, name); err != nil {
+	attrs := entityAuthAttributes(ctx, "delete", name)
+	if err := authorize(ctx, e.auth, attrs); err != nil {
+		return err
+	}
+	if err := e.entityStore.DeleteEntityByName(ctx, name); err != nil {
 		return err
 	}
 	// if the client delete succeeded, we have sufficient permissions to also
@@ -72,7 +70,11 @@ func (e *EntityClient) DeleteEntity(ctx context.Context, name string) error {
 
 // CreateEntity creates an entity, if authorized.
 func (e *EntityClient) CreateEntity(ctx context.Context, entity *corev2.Entity) error {
-	if err := e.client.Create(ctx, entity); err != nil {
+	attrs := entityAuthAttributes(ctx, "create", entity.Name)
+	if err := authorize(ctx, e.auth, attrs); err != nil {
+		return err
+	}
+	if err := e.entityStore.UpdateEntity(ctx, entity); err != nil {
 		return err
 	}
 	return nil
@@ -80,6 +82,11 @@ func (e *EntityClient) CreateEntity(ctx context.Context, entity *corev2.Entity) 
 
 // UpdateEntity updates an entity, if authorized.
 func (e *EntityClient) UpdateEntity(ctx context.Context, entity *corev2.Entity) error {
+	attrs := entityAuthAttributes(ctx, "update", entity.Name)
+	if err := authorize(ctx, e.auth, attrs); err != nil {
+		return err
+	}
+
 	// We have 2 code paths here: one for proxy entities and another for all
 	// other types of entities. We had to make that distinction because Entity
 	// is still the public API to interact with entities, even though internally
@@ -90,18 +97,10 @@ func (e *EntityClient) UpdateEntity(ctx context.Context, entity *corev2.Entity) 
 	//
 	// See sensu-go#3896.
 	if entity.EntityClass == corev2.EntityProxyClass {
-		if err := e.client.Update(ctx, entity); err != nil {
+		if err := e.entityStore.UpdateEntity(ctx, entity); err != nil {
 			return err
 		}
 	} else {
-		// The generic client takes care of authorization for us, so if we
-		// bypass it as we're doing here, we must not forget to deal with
-		// authorization ourselves.
-		attrs := entityUpdateAttributes(ctx, entity.Name)
-		if err := authorize(ctx, e.auth, attrs); err != nil {
-			return err
-		}
-
 		config, _ := corev3.V2EntityToV3(entity)
 		req := storev2.NewResourceRequestFromResource(ctx, config)
 
@@ -120,33 +119,41 @@ func (e *EntityClient) UpdateEntity(ctx context.Context, entity *corev2.Entity) 
 
 // FetchEntity gets an entity, if authorized.
 func (e *EntityClient) FetchEntity(ctx context.Context, name string) (*corev2.Entity, error) {
-	var entity corev2.Entity
-	if err := e.client.Get(ctx, name, &entity); err != nil {
+	attrs := entityAuthAttributes(ctx, "get", name)
+	if err := authorize(ctx, e.auth, attrs); err != nil {
 		return nil, err
 	}
-	return &entity, nil
+	entity, err := e.entityStore.GetEntityByName(ctx, name)
+	if err != nil {
+		return nil, err
+	}
+	return entity, nil
 }
 
 // ListEntities lists all entities in a namespace, if authorized.
 func (e *EntityClient) ListEntities(ctx context.Context) ([]*corev2.Entity, error) {
+	attrs := entityAuthAttributes(ctx, "list", "")
+	if err := authorize(ctx, e.auth, attrs); err != nil {
+		return nil, err
+	}
 	pred := &store.SelectionPredicate{
 		Continue: corev2.PageContinueFromContext(ctx),
 		Limit:    int64(corev2.PageSizeFromContext(ctx)),
 	}
-	slice := []*corev2.Entity{}
-	if err := e.client.List(ctx, &slice, pred); err != nil {
+	slice, err := e.entityStore.GetEntities(ctx, pred)
+	if err != nil {
 		return nil, err
 	}
 	return slice, nil
 }
 
-func entityUpdateAttributes(ctx context.Context, name string) *authorization.Attributes {
+func entityAuthAttributes(ctx context.Context, verb, name string) *authorization.Attributes {
 	return &authorization.Attributes{
 		APIGroup:     "core",
 		APIVersion:   "v2",
 		Namespace:    corev2.ContextNamespace(ctx),
 		Resource:     "entities",
-		Verb:         "update",
+		Verb:         verb,
 		ResourceName: name,
 	}
 }

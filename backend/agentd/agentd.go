@@ -11,7 +11,7 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/coreos/etcd/clientv3"
+	"go.etcd.io/etcd/clientv3"
 	"github.com/gogo/protobuf/proto"
 	"github.com/gorilla/mux"
 	"github.com/gorilla/websocket"
@@ -24,9 +24,11 @@ import (
 	"github.com/sensu/sensu-go/backend/messaging"
 	"github.com/sensu/sensu-go/backend/ringv2"
 	"github.com/sensu/sensu-go/backend/store"
+	"github.com/sensu/sensu-go/backend/store/cache"
 	storev2 "github.com/sensu/sensu-go/backend/store/v2"
 	"github.com/sensu/sensu-go/backend/store/v2/etcdstore"
 	"github.com/sensu/sensu-go/transport"
+	"github.com/sirupsen/logrus"
 )
 
 var (
@@ -46,19 +48,20 @@ type Agentd struct {
 	// Port is the port Agentd is running on.
 	Port int
 
-	stopping     chan struct{}
-	running      *atomic.Value
-	wg           *sync.WaitGroup
-	errChan      chan error
-	httpServer   *http.Server
-	store        store.Store
-	storev2      storev2.Interface
-	bus          messaging.MessageBus
-	tls          *corev2.TLSOptions
-	ringPool     *ringv2.Pool
-	ctx          context.Context
-	cancel       context.CancelFunc
-	writeTimeout int
+	stopping       chan struct{}
+	running        *atomic.Value
+	wg             *sync.WaitGroup
+	errChan        chan error
+	httpServer     *http.Server
+	store          store.Store
+	storev2        storev2.Interface
+	bus            messaging.MessageBus
+	tls            *corev2.TLSOptions
+	ringPool       *ringv2.Pool
+	ctx            context.Context
+	cancel         context.CancelFunc
+	writeTimeout   int
+	namespaceCache *cache.Resource
 }
 
 // Config configures an Agentd.
@@ -139,6 +142,12 @@ func New(c Config, opts ...Option) (*Agentd, error) {
 			return nil, err
 		}
 	}
+
+	a.namespaceCache, err = cache.New(ctx, c.Client, &corev2.Namespace{}, false)
+	if err != nil {
+		return nil, err
+	}
+
 	return a, nil
 }
 
@@ -208,28 +217,51 @@ func (a *Agentd) webSocketHandler(w http.ResponseWriter, r *http.Request) {
 	var marshal MarshalFunc
 	var unmarshal UnmarshalFunc
 	var contentType string
+
+	lager := logger.WithFields(logrus.Fields{
+		"address":   r.RemoteAddr,
+		"agent":     r.Header.Get(transport.HeaderKeyAgentName),
+		"namespace": r.Header.Get(transport.HeaderKeyNamespace),
+	})
+
 	responseHeader := make(http.Header)
 	responseHeader.Add("Accept", ProtobufSerializationHeader)
-	logger.WithField("header", fmt.Sprintf("Accept: %s", ProtobufSerializationHeader)).Debug("setting header")
+	lager.WithField("header", fmt.Sprintf("Accept: %s", ProtobufSerializationHeader)).Debug("setting header")
 	responseHeader.Add("Accept", JSONSerializationHeader)
-	logger.WithField("header", fmt.Sprintf("Accept: %s", JSONSerializationHeader)).Debug("setting header")
+	lager.WithField("header", fmt.Sprintf("Accept: %s", JSONSerializationHeader)).Debug("setting header")
 	if r.Header.Get("Accept") == ProtobufSerializationHeader {
 		marshal = proto.Marshal
 		unmarshal = proto.Unmarshal
 		contentType = ProtobufSerializationHeader
-		logger.WithField("format", "protobuf").Debug("setting serialization/deserialization")
+		lager.WithField("format", "protobuf").Debug("setting serialization/deserialization")
 	} else {
 		marshal = MarshalJSON
 		unmarshal = UnmarshalJSON
 		contentType = JSONSerializationHeader
-		logger.WithField("format", "JSON").Debug("setting serialization/deserialization")
+		lager.WithField("format", "JSON").Debug("setting serialization/deserialization")
 	}
 	responseHeader.Set("Content-Type", contentType)
-	logger.WithField("header", fmt.Sprintf("Content-Type: %s", contentType)).Debug("setting header")
+	lager.WithField("header", fmt.Sprintf("Content-Type: %s", contentType)).Debug("setting header")
+
+	// Validate the agent namespace
+	namespace := r.Header.Get(transport.HeaderKeyNamespace)
+	var found bool
+	values := a.namespaceCache.GetAll()
+	for _, value := range values {
+		if namespace == value.Resource.GetObjectMeta().Name {
+			found = true
+			break
+		}
+	}
+	if namespace == "" || !found {
+		lager.Warningf("namespace %q not found", namespace)
+		http.Error(w, fmt.Sprintf("namespace %q not found", namespace), http.StatusNotFound)
+		return
+	}
 
 	conn, err := upgrader.Upgrade(w, r, responseHeader)
 	if err != nil {
-		logger.WithField("addr", r.RemoteAddr).WithError(err).Error("transport error on websocket upgrade")
+		lager.WithError(err).Error("transport error on websocket upgrade")
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -251,20 +283,11 @@ func (a *Agentd) webSocketHandler(w http.ResponseWriter, r *http.Request) {
 		Unmarshal:     unmarshal,
 	}
 
-	// Validate the agent namespace
-	if namespace, err := a.store.GetNamespace(a.ctx, cfg.Namespace); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	} else if namespace == nil {
-		http.Error(w, fmt.Sprintf("namespace not found: %s", cfg.Namespace), http.StatusNotFound)
-		return
-	}
-
 	cfg.Subscriptions = addEntitySubscription(cfg.AgentName, cfg.Subscriptions)
 
 	session, err := NewSession(a.ctx, cfg)
 	if err != nil {
-		logger.WithError(err).Error("failed to create session")
+		lager.WithError(err).Error("failed to create session")
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		// There was an error retrieving the namespace from
 		// etcd, indicating that this backend has a potentially
@@ -279,8 +302,7 @@ func (a *Agentd) webSocketHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := session.Start(); err != nil {
-		logger.WithError(err).Error("failed to start session")
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		lager.WithError(err).Error("failed to start session")
 		if _, ok := err.(*store.ErrInternal); ok {
 			select {
 			case a.errChan <- err:

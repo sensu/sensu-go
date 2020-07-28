@@ -15,6 +15,7 @@ import (
 	"github.com/sensu/sensu-go/backend/messaging"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/backend/store/v2/storetest"
+	"github.com/sensu/sensu-go/backend/store/v2/wrap"
 	"github.com/sensu/sensu-go/handler"
 	"github.com/sensu/sensu-go/testing/mockbus"
 	"github.com/sensu/sensu-go/testing/mockstore"
@@ -72,7 +73,7 @@ func TestMakeEntitySwitchBurialEvent(t *testing.T) {
 	}
 }
 
-func TestSession(t *testing.T) {
+func TestSession_sender(t *testing.T) {
 	type busFunc func(*messaging.WizardBus, *sync.WaitGroup)
 	type connFunc func(*mocktransport.MockTransport, *sync.WaitGroup)
 	type storeFunc func(*storetest.Store, *sync.WaitGroup)
@@ -88,7 +89,6 @@ func TestSession(t *testing.T) {
 			name: "watch events are propagated to the agents",
 			connFunc: func(conn *mocktransport.MockTransport, wg *sync.WaitGroup) {
 				wg.Add(1)
-				conn.On("Receive").After(100*time.Millisecond).Return(&transport.Message{}, nil)
 				conn.On("Send", mock.Anything).Run(func(args mock.Arguments) {
 					// Assert the message type to make sure it's an entity update
 					msg := args[0].(*transport.Message)
@@ -99,8 +99,6 @@ func TestSession(t *testing.T) {
 					// Close our wait channel once we asserted the message
 					wg.Done()
 				}).Return(nil)
-				conn.On("Closed").Return(true)
-				conn.On("Close").Return(nil)
 			},
 			busFunc: func(bus *messaging.WizardBus, wg *sync.WaitGroup) {
 				e := store.WatchEventEntityConfig{
@@ -113,8 +111,6 @@ func TestSession(t *testing.T) {
 		{
 			name: "delete watch event stops the agent session",
 			connFunc: func(conn *mocktransport.MockTransport, wg *sync.WaitGroup) {
-				conn.On("Receive").After(100*time.Millisecond).Return(&transport.Message{}, nil)
-				conn.On("Closed").Return(false)
 				conn.On("SendCloseMessage").Return(nil)
 				conn.On("Close").Return(nil)
 			},
@@ -129,12 +125,9 @@ func TestSession(t *testing.T) {
 		{
 			name: "unknown watch event are ignored",
 			connFunc: func(conn *mocktransport.MockTransport, wg *sync.WaitGroup) {
-				conn.On("Receive").After(100*time.Millisecond).Return(&transport.Message{}, nil)
 				// The Send() method should only be called once, otherwise it means the
 				// unknown event also sent something
 				conn.On("Send", mock.Anything).Once().Return(transport.ClosedError{})
-				conn.On("Closed").Return(true)
-				conn.On("Close").Return(nil)
 			},
 			busFunc: func(bus *messaging.WizardBus, wg *sync.WaitGroup) {
 				e := store.WatchEventEntityConfig{
@@ -155,11 +148,6 @@ func TestSession(t *testing.T) {
 		},
 		{
 			name: "invalid class entities are reset to the agent class",
-			connFunc: func(conn *mocktransport.MockTransport, wg *sync.WaitGroup) {
-				conn.On("Receive").After(100*time.Millisecond).Return(&transport.Message{}, nil)
-				conn.On("Closed").Return(true)
-				conn.On("Close").Return(nil)
-			},
 			busFunc: func(bus *messaging.WizardBus, wg *sync.WaitGroup) {
 				entity := corev3.FixtureEntityConfig("testing")
 				entity.EntityClass = corev2.EntityProxyClass
@@ -180,7 +168,6 @@ func TestSession(t *testing.T) {
 		{
 			name: "the session terminates on send error",
 			connFunc: func(conn *mocktransport.MockTransport, wg *sync.WaitGroup) {
-				conn.On("Receive").After(100*time.Millisecond).Return(&transport.Message{}, nil)
 				conn.On("Send", mock.Anything).Return(transport.ConnectionError{Message: "some horrible network outage"})
 				conn.On("Closed").Return(true)
 				conn.On("Close").Return(nil)
@@ -196,7 +183,6 @@ func TestSession(t *testing.T) {
 			name: "subscriptions are added and check requests are received",
 			connFunc: func(conn *mocktransport.MockTransport, wg *sync.WaitGroup) {
 				wg.Add(1)
-				conn.On("Receive").After(100*time.Millisecond).Return(&transport.Message{}, nil)
 				conn.On("Send", mock.Anything).Run(func(args mock.Arguments) {
 					msg := args[0].(*transport.Message)
 					// We expect to receive a message type of both these types
@@ -209,8 +195,6 @@ func TestSession(t *testing.T) {
 						wg.Done()
 					}
 				}).Return(nil)
-				conn.On("Closed").Return(true)
-				conn.On("Close").Return(nil)
 			},
 			busFunc: func(bus *messaging.WizardBus, wg *sync.WaitGroup) {
 				e := store.WatchEventEntityConfig{
@@ -233,7 +217,6 @@ func TestSession(t *testing.T) {
 			name: "subscriptions are removed and check requests are no longer received",
 			connFunc: func(conn *mocktransport.MockTransport, wg *sync.WaitGroup) {
 				wg.Add(1)
-				conn.On("Receive").After(100*time.Millisecond).Return(&transport.Message{}, nil)
 				conn.On("Send", mock.Anything).Run(func(args mock.Arguments) {
 					msg := args[0].(*transport.Message)
 					// We only expect to receive an entity config message
@@ -247,8 +230,6 @@ func TestSession(t *testing.T) {
 						t.Fatalf("did not expect to receive a message of type %s", corev2.CheckRequestType)
 					}
 				}).Return(nil)
-				conn.On("Closed").Return(true)
-				conn.On("Close").Return(nil)
 			},
 			busFunc: func(bus *messaging.WizardBus, wg *sync.WaitGroup) {
 				e := store.WatchEventEntityConfig{
@@ -308,13 +289,151 @@ func TestSession(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			if err := session.Start(); err != nil {
+			session.wg = &sync.WaitGroup{}
+			session.wg.Add(1)
+
+			topic := messaging.EntityConfigTopic(session.cfg.Namespace, session.cfg.AgentName)
+			_, err = session.bus.Subscribe(topic, session.cfg.AgentName, session.entityConfig)
+			if err != nil {
 				t.Fatal(err)
 			}
+
+			go session.sender()
 
 			// Send our watch events over the wizard bus
 			if tt.busFunc != nil {
 				tt.busFunc(bus, wg)
+			}
+
+			done := make(chan struct{})
+			go func() {
+				wg.Wait()
+				close(done)
+			}()
+
+			select {
+			case <-session.ctx.Done():
+			case <-done:
+				session.Stop()
+			case <-time.After(5 * time.Second):
+				t.Fatal("session never stopped, we probably never received an entity update over the channel")
+			}
+		})
+	}
+}
+
+func TestSession_Start(t *testing.T) {
+	type connFunc func(*mocktransport.MockTransport, *sync.WaitGroup)
+	type storeFunc func(*storetest.Store, *sync.WaitGroup)
+
+	tests := []struct {
+		name      string
+		connFunc  connFunc
+		storeFunc storeFunc
+		wantErr   bool
+	}{
+		{
+			name: "a new entity receives an entity config with EntityNotFound",
+			connFunc: func(conn *mocktransport.MockTransport, wg *sync.WaitGroup) {
+				conn.On("Receive").After(100*time.Millisecond).Return(&transport.Message{}, nil)
+				conn.On("Closed").Return(true)
+				conn.On("Send", mock.Anything).Run(func(args mock.Arguments) {
+					msg := args[0].(*transport.Message)
+					var entity corev3.EntityConfig
+					if err := UnmarshalJSON(msg.Payload, &entity); err != nil {
+						t.Fatal(err)
+					}
+					if entity.Metadata.Name != corev3.EntityNotFound {
+						t.Fatalf("expected entity name %s, got %s", corev3.EntityNotFound, entity.Metadata.Name)
+					}
+				}).Return(nil)
+				conn.On("Close").Return(nil)
+			},
+			storeFunc: func(s *storetest.Store, wg *sync.WaitGroup) {
+				s.On("Get", mock.Anything).Return(&wrap.Wrapper{}, &store.ErrNotFound{})
+			},
+		},
+		{
+			name: "an existing entity receives its stored entity config",
+			connFunc: func(conn *mocktransport.MockTransport, wg *sync.WaitGroup) {
+				conn.On("Receive").After(100*time.Millisecond).Return(&transport.Message{}, nil)
+				conn.On("Closed").Return(true)
+				conn.On("Send", mock.Anything).Run(func(args mock.Arguments) {
+					msg := args[0].(*transport.Message)
+					var entity corev3.EntityConfig
+					if err := UnmarshalJSON(msg.Payload, &entity); err != nil {
+						t.Fatal(err)
+					}
+					if entity.Metadata.Name != "testing" {
+						t.Fatalf("expected entity name %s, got %s", "testing", entity.Metadata.Name)
+					}
+				}).Return(nil)
+				conn.On("Close").Return(nil)
+			},
+			storeFunc: func(s *storetest.Store, wg *sync.WaitGroup) {
+				cfg := corev3.FixtureEntityConfig("testing")
+				wrappedConfig, err := wrap.Resource(cfg)
+				if err != nil {
+					t.Fatal(err)
+				}
+				s.On("Get", mock.Anything).Return(wrappedConfig, nil)
+			},
+		},
+		{
+			name: "store err is handled",
+			connFunc: func(conn *mocktransport.MockTransport, wg *sync.WaitGroup) {
+				conn.On("Receive").After(100*time.Millisecond).Return(&transport.Message{}, nil)
+				conn.On("Closed").Return(true)
+				conn.On("Close").Return(nil)
+			},
+			storeFunc: func(s *storetest.Store, wg *sync.WaitGroup) {
+				s.On("Get", mock.Anything).Return(&wrap.Wrapper{}, errors.New("fatal error"))
+			},
+			wantErr: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			wg := &sync.WaitGroup{}
+
+			// Mock our transport
+			conn := new(mocktransport.MockTransport)
+			if tt.connFunc != nil {
+				tt.connFunc(conn, wg)
+			}
+
+			// Mock our store
+			st := &mockstore.MockStore{}
+			storev2 := &storetest.Store{}
+			if tt.storeFunc != nil {
+				tt.storeFunc(storev2, wg)
+			}
+
+			// Mock our bus
+			bus, err := messaging.NewWizardBus(messaging.WizardBusConfig{})
+			if err != nil {
+				t.Fatal(err)
+			}
+			if err := bus.Start(); err != nil {
+				t.Fatal(err)
+			}
+
+			cfg := SessionConfig{
+				AgentName: "testing",
+				Namespace: "default",
+				Conn:      conn,
+				Bus:       bus,
+				Store:     st,
+				Storev2:   storev2,
+				Unmarshal: UnmarshalJSON,
+				Marshal:   MarshalJSON,
+			}
+			session, err := NewSession(context.Background(), cfg)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if err := session.Start(); (err != nil) != tt.wantErr {
+				t.Errorf("Session.Start() error = %v, wantErr %v", err, tt.wantErr)
 			}
 
 			done := make(chan struct{})

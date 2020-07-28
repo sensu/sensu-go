@@ -17,6 +17,7 @@ import (
 
 	_ "unsafe"
 
+	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/types"
 	"github.com/shirou/gopsutil/host"
 	shirounet "github.com/shirou/gopsutil/net"
@@ -77,6 +78,27 @@ func Info() (types.System, error) {
 	}
 
 	return system, nil
+}
+
+func MockInfo() corev2.System {
+	return corev2.System{
+		Hostname:        "localhost.localdomain",
+		OS:              "linux",
+		Platform:        "centos",
+		PlatformFamily:  "rhel",
+		PlatformVersion: "7.8.2003",
+		Network: corev2.Network{
+			Interfaces: []corev2.NetworkInterface{
+				{Name: "lo", MAC: "", Addresses: []string{"127.0.0.1/8", "::1/128"}},
+				{Name: "eth0", MAC: "52:54:00:8a:fe:e6", Addresses: []string{"10.0.2.15/24", "fe80::5054:ff:fe8a:fee6/64"}},
+				{Name: "eth1", MAC: "08:00:27:2b:88:65", Addresses: []string{"192.168.1.17/24", "fe80::a00:27ff:fe2b:8865/64"}},
+			},
+		},
+		Arch:     "amd64",
+		LibCType: "glibc",
+		VMSystem: "vbox",
+		VMRole:   "guest",
+	}
 }
 
 func getLibCType() (string, error) {
