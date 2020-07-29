@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"time"
 
-	"go.etcd.io/etcd/clientv3"
+	"github.com/coreos/etcd/clientv3"
 	"github.com/sensu/sensu-go/backend/store"
 	utilbytes "github.com/sensu/sensu-go/util/bytes"
 )
