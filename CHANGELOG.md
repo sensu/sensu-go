@@ -8,7 +8,9 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 ## [5.21.1] - 2020-07-30
 
 ### Fixed
-- Fixed potential Web UI crash when fetching events in namespace with > 1000 events
+- Fixed potential Web UI crash when fetching events in namespace with > 1000 events.
+- Errors produced in the agent by assets, check validation, token substitution,
+and event unmarshaling are logged once again.
 
 ## [5.21.0] - 2020-06-10
 
