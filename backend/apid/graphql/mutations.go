@@ -49,20 +49,30 @@ func (r *mutationsImpl) PutWrapped(p schema.MutationPutWrappedFieldResolverParam
 		}, nil
 	}
 
-	client := r.svc.GenericClient
-	if err := client.SetTypeMeta(ret.TypeMeta); err != nil {
-		return nil, err
-	}
-
 	ctx := store.NamespaceContext(p.Context, ret.Value.GetObjectMeta().Namespace)
 
-	if upsert {
-		err = client.Update(ctx, ret.Value)
+	// NOTE(james): Provide compatibility for core/v2.Entity resources.
+	if entity, ok := ret.Value.(*corev2.Entity); ok {
+		client := r.svc.EntityClient
+		if upsert {
+			err = client.CreateEntity(ctx, entity)
+		} else {
+			err = client.UpdateEntity(ctx, entity)
+		}
 	} else {
-		// If the `upsert` parameter on this mutation is `false`, we want to
-		// return an error if the resource already exists, instead of
-		// updating the existing resource.
-		err = client.Create(ctx, ret.Value)
+		client := r.svc.GenericClient
+		if err := client.SetTypeMeta(ret.TypeMeta); err != nil {
+			return nil, err
+		}
+
+		if upsert {
+			err = client.Update(ctx, ret.Value)
+		} else {
+			// If the `upsert` parameter on this mutation is `false`, we want to
+			// return an error if the resource already exists, instead of
+			// updating the existing resource.
+			err = client.Create(ctx, ret.Value)
+		}
 	}
 	if err != nil {
 		return map[string]interface{}{

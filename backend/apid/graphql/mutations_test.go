@@ -94,6 +94,47 @@ func TestMutationTypePutWrappedUpsertFalse(t *testing.T) {
 	assert.NotEmpty(t, body)
 }
 
+func TestMutationTypePutWrappedEntityBackwardCompat(t *testing.T) {
+	params := schema.MutationPutWrappedFieldResolverParams{}
+	params.Args.Raw = `
+		{
+			"api_version": "core/v2",
+			"type": "Entity",
+			"metadata": {
+				"namespace":"sensu-devel",
+				"name": "test:fred"
+			},
+			"spec": {
+				"subscriptions": ["unix"]
+			}
+		}
+	`
+
+	client := new(MockEntityClient)
+	client.On("CreateEntity", mock.Anything, mock.Anything).Return(nil).Once()
+	client.On("UpdateEntity", mock.Anything, mock.Anything).Return(nil).Once()
+	cfg := ServiceConfig{EntityClient: client}
+	impl := mutationsImpl{svc: cfg}
+
+	// Update
+	params.Args.Upsert = true
+	body, err := impl.PutWrapped(params)
+	assert.NoError(t, err)
+	assert.NotEmpty(t, body)
+
+	// Create
+	params.Args.Upsert = false
+	body, err = impl.PutWrapped(params)
+	assert.NoError(t, err)
+	assert.NotEmpty(t, body)
+
+	// Failure
+	client.On("UpdateEntity", mock.Anything, mock.Anything).Return(errors.New("test")).Once()
+	body, err = impl.PutWrapped(params)
+	assert.NoError(t, err)
+	assert.NotEmpty(t, body)
+}
+
 func TestMutationTypeExecuteCheck(t *testing.T) {
 	inputs := schema.ExecuteCheckInput{}
 	params := schema.MutationExecuteCheckFieldResolverParams{}
