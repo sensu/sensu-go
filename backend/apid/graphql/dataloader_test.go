@@ -7,6 +7,7 @@ import (
 
 	"github.com/graph-gophers/dataloader"
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
+	"github.com/sensu/sensu-go/backend/store"
 	"github.com/stretchr/testify/mock"
 )
 
@@ -40,7 +41,10 @@ func Test_listAllEvents(t *testing.T) {
 		{
 			name: "many pages",
 			setup: func(c *MockEventClient) {
-				c.On("ListEvents", mock.Anything, mock.Anything).Return(mkEvents(2000), nil).Once()
+				c.On("ListEvents", mock.Anything, mock.Anything).Return(mkEvents(2000), nil).Run(func(args mock.Arguments) {
+					arg := args.Get(1).(*store.SelectionPredicate)
+					arg.Continue = "test"
+				}).Once()
 				c.On("ListEvents", mock.Anything, mock.Anything).Return(mkEvents(20), nil).Once()
 			},
 			wantLen: 2020,
