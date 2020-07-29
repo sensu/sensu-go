@@ -5,6 +5,10 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic
 Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [5.21.1] - 2020-07-30
+
+### Fixed
+- Fixed potential Web UI crash when fetching events in namespace with > 1000 events
 
 ## [5.21.0] - 2020-06-10
 
