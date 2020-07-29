@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"go.etcd.io/etcd/etcdserver/etcdserverpb"
+	"github.com/coreos/etcd/etcdserver/etcdserverpb"
 )
 
 // ClusterHealth holds cluster member status info.

@@ -3,7 +3,7 @@ package graphql
 import (
 	"strconv"
 
-	"go.etcd.io/etcd/etcdserver/etcdserverpb"
+	"github.com/coreos/etcd/etcdserver/etcdserverpb"
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/apid/graphql/schema"
 	"github.com/sensu/sensu-go/graphql"

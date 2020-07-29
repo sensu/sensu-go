@@ -9,13 +9,13 @@ import (
 	"github.com/sensu/sensu-go/backend/store/etcd"
 	"github.com/sensu/sensu-go/types"
 
+	"github.com/coreos/etcd/integration"
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/testing/fixture"
 	"github.com/sensu/sensu-go/types/dynamic"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"go.etcd.io/etcd/integration"
 )
 
 func fixtureEntity(namespace, name string) *corev2.Entity {

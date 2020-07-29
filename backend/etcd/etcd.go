@@ -14,11 +14,11 @@ import (
 	"path/filepath"
 	"time"
 
-	"go.etcd.io/etcd/clientv3"
-	"go.etcd.io/etcd/embed"
-	"go.etcd.io/etcd/etcdserver/api/v3client"
-	"go.etcd.io/etcd/pkg/transport"
-	etcdTypes "go.etcd.io/etcd/pkg/types"
+	"github.com/coreos/etcd/clientv3"
+	"github.com/coreos/etcd/embed"
+	"github.com/coreos/etcd/etcdserver/api/v3client"
+	"github.com/coreos/etcd/pkg/transport"
+	etcdTypes "github.com/coreos/etcd/pkg/types"
 	"github.com/coreos/pkg/capnslog"
 	"github.com/sensu/sensu-go/util/path"
 	"google.golang.org/grpc"
@@ -125,7 +125,7 @@ func ensureDir(path string) error {
 	return nil
 }
 
-// Etcd is a wrapper around go.etcd.io/etcd/embed.Etcd
+// Etcd is a wrapper around github.com/coreos/etcd/embed.Etcd
 type Etcd struct {
 	cfg  *Config
 	etcd *embed.Etcd
