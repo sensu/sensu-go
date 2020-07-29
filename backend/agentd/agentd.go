@@ -270,7 +270,7 @@ func (a *Agentd) webSocketHandler(w http.ResponseWriter, r *http.Request) {
 	// Validate the agent namespace
 	namespace := r.Header.Get(transport.HeaderKeyNamespace)
 	var found bool
-	values := a.namespaceCache.GetAll()
+	values := a.namespaceCache.Get("")
 	for _, value := range values {
 		if namespace == value.Resource.GetObjectMeta().Name {
 			found = true
