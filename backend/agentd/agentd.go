@@ -81,6 +81,7 @@ type Agentd struct {
 	cancel         context.CancelFunc
 	writeTimeout   int
 	namespaceCache *cache.Resource
+	watcher        <-chan store.WatchEventEntityConfig
 }
 
 // Config configures an Agentd.
@@ -93,6 +94,7 @@ type Config struct {
 	RingPool     *ringv2.Pool
 	WriteTimeout int
 	Client       *clientv3.Client
+	Watcher      <-chan store.WatchEventEntityConfig
 }
 
 // Option is a functional option.
@@ -116,6 +118,7 @@ func New(c Config, opts ...Option) (*Agentd, error) {
 		cancel:       cancel,
 		writeTimeout: c.WriteTimeout,
 		storev2:      etcdstore.NewStore(c.Client),
+		watcher:      c.Watcher,
 	}
 
 	// prepare server TLS config
@@ -194,6 +197,8 @@ func (a *Agentd) Start() error {
 		}
 	}()
 
+	go a.runWatcher()
+
 	sessionCounterOnce.Do(func() {
 		if err := prometheus.Register(sessionCounter); err != nil {
 			logger.WithError(err).Error("error registering session counter")
@@ -201,6 +206,38 @@ func (a *Agentd) Start() error {
 		}
 	})
 
+	return nil
+}
+
+func (a *Agentd) runWatcher() {
+	defer func() {
+		logger.Warn("shutting down entity config watcher")
+	}()
+	for {
+		select {
+		case <-a.ctx.Done():
+			return
+		case event, ok := <-a.watcher:
+			if !ok {
+				return
+			}
+			if err := a.handleEvent(event); err != nil {
+				logger.WithError(err).Error("error handling entity config watch event")
+			}
+		}
+	}
+}
+
+func (a *Agentd) handleEvent(event store.WatchEventEntityConfig) error {
+	topic := messaging.EntityConfigTopic(event.Entity.Metadata.Namespace, event.Entity.Metadata.Name)
+	if err := a.bus.Publish(topic, &event); err != nil {
+		logger.WithField("topic", topic).WithError(err).
+			Error("unable to publish an entity config update to the bus")
+		return err
+	}
+
+	logger.WithField("topic", topic).
+		Debug("successfully published an entity config update to the bus")
 	return nil
 }
 
