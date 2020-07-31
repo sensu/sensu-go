@@ -71,7 +71,7 @@ func ParseProm(event *types.Event) PromList {
 	for _, family := range metricFamilies {
 		familySamples, _ := expfmt.ExtractSamples(decodeOptions, family)
 		for _, prom := range familySamples {
-			prom.Metric[model.LabelName("prometheus_type")] = model.LabelValue(family.Type.String())
+			prom.Metric[model.LabelName("prom_type")] = model.LabelValue(family.Type.String())
 
 			if len(event.Check.OutputMetricTags) > 0 {
 				for _, tag := range event.Check.OutputMetricTags {
