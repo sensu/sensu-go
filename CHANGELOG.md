@@ -7,7 +7,7 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
 
-## [6.0.0] - 2020-07-23
+## [6.0.0] - 2020-08-04
 
 ### Added
 - Log a warning when secrets cannot be sent to an agent because mTLS is not
