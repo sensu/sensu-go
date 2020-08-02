@@ -21,8 +21,9 @@ var (
 	flagCount             = flag.Int("count", 1000, "number of concurrent simulated agents")
 	flagBackends          = flag.String("backends", "ws://localhost:8081", "comma separated list of backend URLs")
 	flagSubscriptions     = flag.String("subscriptions", "default", "comma separated list of subscriptions")
-	flagKeepaliveInterval = flag.Int("keepalive-interval", agent.DefaultKeepaliveInterval, "Keepalive interval")
-	flagKeepaliveTimeout  = flag.Int("keepalive-timeout", types.DefaultKeepaliveTimeout, "Keepalive timeout")
+	flagKeepaliveInterval = flag.Int("keepalive-interval", agent.DefaultKeepaliveInterval, "Keepalive interval (s)")
+	flagKeepaliveTimeout  = flag.Int("keepalive-timeout", types.DefaultKeepaliveTimeout, "Keepalive timeout (s)")
+	flagHandshakeTimeout  = flag.Int("handshake-timeout", 15, "Websocket handshake timeout (s)")
 )
 
 func main() {
@@ -66,6 +67,7 @@ func main() {
 		cfg.MockSystemInfo = true
 		cfg.BackendHeartbeatInterval = int(float64(*flagKeepaliveInterval) * float64(0.8))
 		cfg.BackendHeartbeatTimeout = int(float64(*flagKeepaliveInterval) * float64(0.9))
+		cfg.BackendHandshakeTimeout = *flagHandshakeTimeout
 
 		agent, err := agent.NewAgent(cfg)
 		if err != nil {
