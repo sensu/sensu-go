@@ -26,6 +26,7 @@ func TestParseProm(t *testing.T) {
 					Metric: model.Metric{
 						model.MetricNameLabel: "go_gc_duration_seconds",
 						"quantile":            "0",
+						"prom_type":           "untyped",
 					},
 					Value:     3.3722e-05,
 					Timestamp: model.TimeFromUnix(ts),
@@ -33,12 +34,13 @@ func TestParseProm(t *testing.T) {
 			},
 		},
 		{
-			metric: "go_gc_duration_seconds{quantile=\"0\"} 3.3722e-05\ngo_gc_duration_seconds{quantile=\"0.25\"} 5.0129e-05\n",
+			metric: "# TYPE go_gc_duration_seconds summary\ngo_gc_duration_seconds{quantile=\"0\"} 3.3722e-05\ngo_gc_duration_seconds{quantile=\"0.25\"} 5.0129e-05\n",
 			expectedFormat: PromList{
 				&model.Sample{
 					Metric: model.Metric{
 						model.MetricNameLabel: "go_gc_duration_seconds",
 						"quantile":            "0",
+						"prom_type":           "summary",
 					},
 					Value:     3.3722e-05,
 					Timestamp: model.TimeFromUnix(ts),
@@ -47,8 +49,25 @@ func TestParseProm(t *testing.T) {
 					Metric: model.Metric{
 						model.MetricNameLabel: "go_gc_duration_seconds",
 						"quantile":            "0.25",
+						"prom_type":           "summary",
 					},
 					Value:     5.0129e-05,
+					Timestamp: model.TimeFromUnix(ts),
+				},
+				&model.Sample{
+					Metric: model.Metric{
+						model.MetricNameLabel: "go_gc_duration_seconds_sum",
+						"prom_type":           "summary",
+					},
+					Value:     0,
+					Timestamp: model.TimeFromUnix(ts),
+				},
+				&model.Sample{
+					Metric: model.Metric{
+						model.MetricNameLabel: "go_gc_duration_seconds_count",
+						"prom_type":           "summary",
+					},
+					Value:     0,
 					Timestamp: model.TimeFromUnix(ts),
 				},
 			},
@@ -59,6 +78,7 @@ func TestParseProm(t *testing.T) {
 				&model.Sample{
 					Metric: model.Metric{
 						model.MetricNameLabel: "go_memstats_alloc_bytes_total",
+						"prom_type":           "counter",
 					},
 					Value:     4.095146016e+09,
 					Timestamp: model.TimeFromUnix(ts),
