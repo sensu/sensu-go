@@ -15,6 +15,9 @@ import (
 	"github.com/sensu/sensu-go/agent"
 	"github.com/sensu/sensu-go/types"
 	"github.com/sirupsen/logrus"
+
+	"net/http"
+	_ "net/http/pprof"
 )
 
 var (
@@ -23,10 +26,15 @@ var (
 	flagSubscriptions     = flag.String("subscriptions", "default", "comma separated list of subscriptions")
 	flagKeepaliveInterval = flag.Int("keepalive-interval", agent.DefaultKeepaliveInterval, "Keepalive interval")
 	flagKeepaliveTimeout  = flag.Int("keepalive-timeout", types.DefaultKeepaliveTimeout, "Keepalive timeout")
+	flagProfilingPort     = flag.Int("pprof-port", 6060, "pprof port to bind to")
 )
 
 func main() {
 	flag.Parse()
+
+	go func() {
+		log.Println(http.ListenAndServe(fmt.Sprintf("localhost:%d", *flagProfilingPort), nil))
+	}()
 
 	logrus.SetLevel(logrus.WarnLevel)
 
