@@ -32,6 +32,7 @@ and RoleBindings.
 properly parsed by the agent.
 - Fix the log entry field for the check's name in schedulerd.
 - Store fewer keys in etcd for agents.
+- Keepalive and round robin scheduling leases are now dealt with more efficiently.
 
 ### Breaking
 - The web interface is now a standalone product and no longer distributed
