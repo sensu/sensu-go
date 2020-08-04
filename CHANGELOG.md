@@ -31,6 +31,7 @@ and RoleBindings.
 - Log the proper CA certificate path in the error message when it can't be
 properly parsed by the agent.
 - Fix the log entry field for the check's name in schedulerd.
+- Store fewer keys in etcd for agents.
 
 ### Breaking
 - The web interface is now a standalone product and no longer distributed
