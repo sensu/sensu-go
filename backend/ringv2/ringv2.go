@@ -267,6 +267,24 @@ func (r *Ring) notifyWatchers() {
 // Remove removes a value from the list. If the value does not exist, nothing
 // happens.
 func (r *Ring) Remove(ctx context.Context, value string) error {
+	// Try to get the item and revoke its lease if found
+	var getresp *clientv3.GetResponse
+	key := path.Join(r.itemPrefix, value)
+	err := etcd.Backoff(ctx).Retry(func(n int) (done bool, err error) {
+		getresp, err = r.client.Get(ctx, key)
+		return etcd.RetryRequest(n, err)
+	})
+	if err != nil {
+		return err
+	}
+
+	if len(getresp.Kvs) > 0 && getresp.Kvs[0].Version > 0 {
+		leaseID := clientv3.LeaseID(getresp.Kvs[0].Lease)
+		if leaseID != 0 {
+			// Item already exists
+			_, _ = r.client.Revoke(ctx, leaseID)
+		}
+	}
 	return etcd.Backoff(ctx).Retry(func(n int) (done bool, err error) {
 		_, err = r.client.Delete(ctx, path.Join(r.itemPrefix, value))
 		return etcd.RetryRequest(n, err)
