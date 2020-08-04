@@ -100,7 +100,6 @@ func EtcdFactory(ctx context.Context, client *clientv3.Client) Factory {
 type SwitchSet struct {
 	client      *clientv3.Client
 	prefix      string
-	leasePrefix string
 	notifyDead  EventFunc
 	notifyAlive EventFunc
 	logger      logrus.FieldLogger
@@ -130,7 +129,6 @@ func NewSwitchSet(client *clientv3.Client, name string, dead, alive EventFunc, l
 	return &SwitchSet{
 		client:      client,
 		prefix:      path.Join(SwitchPrefix, name),
-		leasePrefix: path.Join(SwitchPrefix, "lease", name),
 		notifyDead:  dead,
 		notifyAlive: alive,
 		logger:      logger,
@@ -219,41 +217,50 @@ func (t *SwitchSet) ping(ctx context.Context, id string, ttl int64, alive bool) 
 	key := path.Join(t.prefix, id)
 	val := fmt.Sprintf("%d", putVal)
 
-	leaseID, ops, err := t.getLeaseID(ctx, ttl, id)
+	leaseID, err := t.getLeaseID(ctx, ttl, id)
 	if err != nil {
 		return err
 	}
 
-	ops = append(ops, clientv3.OpPut(key, val, clientv3.WithLease(leaseID), clientv3.WithPrevKV()))
-	_, err = t.client.Txn(ctx).Then(ops...).Commit()
-
-	return err
+	return etcd.Backoff(ctx).Retry(func(n int) (done bool, err error) {
+		_, err = t.client.Put(ctx, key, val, clientv3.WithLease(leaseID), clientv3.WithPrevKV())
+		return etcd.RetryRequest(n, err)
+	})
 }
 
-func (t *SwitchSet) getLeaseID(ctx context.Context, ttl int64, switchID string) (clientv3.LeaseID, []clientv3.Op, error) {
-	leaseKey := path.Join(t.leasePrefix, switchID)
-	resp, err := t.client.Get(ctx, leaseKey)
-	if err != nil {
-		return 0, nil, err
+func (t *SwitchSet) getLeaseIDFromKV(ctx context.Context, kv *mvccpb.KeyValue, ttl int64, switchID string) (clientv3.LeaseID, error) {
+	leaseID := clientv3.LeaseID(kv.Lease)
+	if leaseID == 0 {
+		return t.getLeaseID(ctx, ttl, switchID)
 	}
+	if _, err := t.client.KeepAliveOnce(ctx, leaseID); err != nil {
+		return t.newLease(ctx, ttl)
+	}
+	return leaseID, nil
+}
 
-	var leaseID clientv3.LeaseID
-	var ops []clientv3.Op
-	if len(resp.Kvs) > 0 {
-		_, err = fmt.Sscanf(string(resp.Kvs[0].Value), "%x", &leaseID)
-		if err == nil {
-			_, err = t.client.KeepAliveOnce(ctx, leaseID)
-		}
+func (t *SwitchSet) newLease(ctx context.Context, ttl int64) (clientv3.LeaseID, error) {
+	lease, err := t.client.Grant(ctx, ttl)
+	if err != nil {
+		return 0, err
 	}
-	if len(resp.Kvs) == 0 || err != nil {
-		lease, err := t.client.Grant(ctx, ttl)
-		if err != nil {
-			return 0, nil, err
-		}
-		leaseID = lease.ID
-		ops = append(ops, clientv3.OpPut(leaseKey, fmt.Sprintf("%x", lease.ID)))
+	return lease.ID, nil
+}
+
+func (t *SwitchSet) getLeaseID(ctx context.Context, ttl int64, switchID string) (clientv3.LeaseID, error) {
+	key := path.Join(t.prefix, switchID)
+	var resp *clientv3.GetResponse
+	err := etcd.Backoff(ctx).Retry(func(n int) (done bool, err error) {
+		resp, err = t.client.Get(ctx, key, clientv3.WithSerializable(), clientv3.WithKeysOnly())
+		return etcd.RetryRequest(n, err)
+	})
+	if err != nil {
+		return 0, err
 	}
-	return leaseID, ops, nil
+	if len(resp.Kvs) == 0 {
+		return t.newLease(ctx, ttl)
+	}
+	return t.getLeaseIDFromKV(ctx, resp.Kvs[0], ttl, switchID)
 }
 
 func (t *SwitchSet) getTTLFromEvent(event *clientv3.Event) (int64, State) {
@@ -367,7 +374,7 @@ func (t *SwitchSet) handleEvent(ctx context.Context, event *clientv3.Event) {
 		}
 
 		t.logger.Debugf("creating a lease for %s with TTL %d", key, leaseTTL)
-		leaseID, leaseOps, err := t.getLeaseID(ctx, leaseTTL, strings.TrimPrefix(key, t.prefix))
+		leaseID, err := t.getLeaseIDFromKV(ctx, event.Kv, leaseTTL, strings.TrimPrefix(key, t.prefix))
 		if err != nil {
 			t.logger.WithError(err).Errorf("error while granting lease for %s", key)
 			return
@@ -376,7 +383,7 @@ func (t *SwitchSet) handleEvent(ctx context.Context, event *clientv3.Event) {
 		// Store a negative value for the TTL to indicate that the
 		// entity is not alive.
 		put := clientv3.OpPut(key, fmt.Sprintf("%d", ttl), clientv3.WithLease(leaseID))
-		resp, err := t.client.Txn(ctx).If(cmp).Then(append(leaseOps, put)...).Commit()
+		resp, err := t.client.Txn(ctx).If(cmp).Then(put).Commit()
 		if err != nil {
 			t.logger.WithError(err).Errorf("error commiting keepalive tx for %s", key)
 			return
