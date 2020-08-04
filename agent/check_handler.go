@@ -21,8 +21,11 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-const allowListOnDenyStatus = "allow_list_on_deny_status"
-const allowListOnDenyOutput = "check command denied by the agent allow list"
+const (
+	allowListOnDenyStatus        = "allow_list_on_deny_status"
+	allowListOnDenyOutput        = "check command denied by the agent allow list"
+	undocumentedTestCheckCommand = "!sensu_test_check!"
+)
 
 // handleCheck is the check message handler.
 // TODO(greg): At some point, we're going to need max parallelism.
@@ -129,10 +132,14 @@ func (a *Agent) executeCheck(ctx context.Context, request *corev2.CheckRequest, 
 		return event
 	}
 
-	// Perform token substitution on the check configuration
-	if err := token.SubstituteCheck(checkConfig, entity); err != nil {
-		a.sendFailure(createEvent(), fmt.Errorf("error while substituting check tokens: %s", err))
-		return
+	if origCommand != undocumentedTestCheckCommand {
+		// Perform token substitution on the check configuration, but only if
+		// we aren't doing load testing with the undocumented test check
+		// command.
+		if err := token.SubstituteCheck(checkConfig, entity); err != nil {
+			a.sendFailure(createEvent(), fmt.Errorf("error while substituting check tokens: %s", err))
+			return
+		}
 	}
 
 	// Instantiate event
