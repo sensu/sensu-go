@@ -70,6 +70,10 @@ func ParseProm(event *types.Event) PromList {
 
 	for _, family := range metricFamilies {
 		familySamples, _ := expfmt.ExtractSamples(decodeOptions, family)
+		for _, prom := range familySamples {
+			lv := model.LabelValue(strings.ToLower(family.Type.String()))
+			prom.Metric[model.LabelName("prom_type")] = lv
+		}
 		p = append(p, familySamples...)
 	}
 
