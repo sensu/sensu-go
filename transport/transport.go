@@ -33,6 +33,9 @@ const (
 	// MessageTypeEntityConfig is the message type sent for entity config updates
 	MessageTypeEntityConfig = "entity_config"
 
+	// MessageTypeClose is used to close the connection.
+	MessageTypeClose = "close"
+
 	// HeaderKeyAgentName is the HTTP request header specifying the Agent name
 	HeaderKeyAgentName = "Sensu-AgentName"
 
@@ -121,11 +124,6 @@ type Transport interface {
 	// sent. Send is synchronous, returning nil if the write to the underlying
 	// socket was successful and an error otherwise.
 	Send(*Message) error
-
-	// SendCloseMessage sends a close control message over the transport, and the
-	// peer should echo the message back and that message will be returned as an
-	// error from the websocket connection's read API
-	SendCloseMessage() error
 }
 
 // A WebSocketTransport is a connection between sensu Agents and Backends over
@@ -277,6 +275,14 @@ func (t *WebSocketTransport) Send(m *Message) (err error) {
 	}
 	t.mutex.RUnlock()
 
+	if m.Type == MessageTypeClose {
+		err := t.Connection.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, ""))
+		if websocket.IsCloseError(err, websocket.CloseGoingAway) {
+			return nil
+		}
+		return err
+	}
+
 	msg := Encode(m.Type, m.Payload)
 	if err := t.Connection.WriteMessage(websocket.BinaryMessage, msg); err != nil {
 		// If we get _any_ error, let's just considered the connection closed,
@@ -293,9 +299,4 @@ func (t *WebSocketTransport) Send(m *Message) (err error) {
 	}
 
 	return nil
-}
-
-// SendCloseMessage sends a close control message over the transport
-func (t *WebSocketTransport) SendCloseMessage() (err error) {
-	return t.Connection.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, ""))
 }

@@ -97,6 +97,7 @@ type Session struct {
 	entityConfig     *entityConfig
 	mu               sync.Mutex
 	subscriptionsMap map[string]subscription
+	closeMessages    chan *transport.Message
 }
 
 // subscription is used to abstract a message.Subscription and therefore allow
@@ -178,6 +179,7 @@ func NewSession(ctx context.Context, cfg SessionConfig) (*Session, error) {
 			subscriptions:  make(chan messaging.Subscription, 1),
 			updatesChannel: make(chan interface{}, 10),
 		},
+		closeMessages: make(chan *transport.Message),
 	}
 	if err := s.bus.Publish(messaging.TopicKeepalive, makeEntitySwitchBurialEvent(cfg)); err != nil {
 		return nil, err
@@ -375,6 +377,7 @@ func (s *Session) sender() {
 			}
 
 			msg = transport.NewMessage(corev2.CheckRequestType, configBytes)
+		case msg = <-s.closeMessages:
 		case <-s.ctx.Done():
 			return
 		}
@@ -525,10 +528,8 @@ func (s *Session) stop() {
 	// Send a close message to ensure the agent closes its connection if the
 	// connection is not already closed
 	if !s.conn.Closed() {
-		if err := s.conn.SendCloseMessage(); err != nil {
-			websocketErrorCounter.WithLabelValues("send", "SendCloseMessage").Inc()
-			logger.Warning("unexpected error while sending a close message to the agent")
-		}
+		msg := &transport.Message{Type: transport.MessageTypeClose}
+		s.closeMessages <- msg
 	}
 
 	sessionCounter.WithLabelValues(s.cfg.Namespace).Dec()
