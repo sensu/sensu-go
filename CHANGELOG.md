@@ -17,8 +17,6 @@ enabled.
 ### Fixed
 - Clarifies wording around a secret provider error message.
 - Logs and returns an error if a mutator cannot be found.
-- Errors produced in the agent by assets, check validation, token substitution,
-and event unmarshaling are logged once again.
 - User-Agent header is only set on new client creation rather than on each
 request.
 - Fixed a bug where highly concurrent event filtering could result in a panic.
@@ -56,6 +54,7 @@ characters.
 - Unless the entity is a proxy entity, updates to entities now ignore state
   related fields.
 - Upgraded embedded etcd to 3.4.10
+
 ## [5.21.1] - 2020-08-05
 
 ### Changed
