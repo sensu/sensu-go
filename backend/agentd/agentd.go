@@ -57,6 +57,8 @@ var (
 
 func init() {
 	_ = prometheus.Register(websocketUpgradeDuration)
+	_ = prometheus.Register(websocketErrorCounter)
+	_ = prometheus.Register(sessionErrorCounter)
 }
 
 // Agentd is the backend HTTP API.
