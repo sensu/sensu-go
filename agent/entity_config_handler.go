@@ -23,13 +23,7 @@ func (a *Agent) handleEntityConfig(ctx context.Context, payload []byte) error {
 		a.entityConfig = &entity
 	}
 
-	// Indicate to the connection manager that an entity config was receive, but
-	// do not block if the non-buffered channel is already full which will happen
-	// after the second entity config is received and not consumed
-	select {
-	case a.entityConfigCh <- struct{}{}:
-	default:
-	}
+	a.entityConfigCh <- struct{}
 
 	return nil
 }
