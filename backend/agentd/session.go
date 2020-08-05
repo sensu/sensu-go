@@ -40,6 +40,20 @@ var (
 		},
 		[]string{"namespace"},
 	)
+	websocketErrorCounter = prometheus.NewCounterVec(
+		prometheus.CounterOpts{
+			Name: "sensu_go_websocket_errors",
+			Help: "The total number of websocket errors",
+		},
+		[]string{"op", "error"},
+	)
+	sessionErrorCounter = prometheus.NewCounterVec(
+		prometheus.CounterOpts{
+			Name: "sensu_go_session_errors",
+			Help: "The total number of session errors",
+		},
+		[]string{"error"},
+	)
 )
 
 // ProtobufSerializationHeader is the Content-Type header which indicates protobuf serialization.
@@ -215,17 +229,26 @@ func (s *Session) receiver() {
 
 	for {
 		if err := s.ctx.Err(); err != nil {
+			sessionErrorCounter.WithLabelValues(err.Error()).Inc()
 			return
 		}
 		msg, err := s.conn.Receive()
 		if err != nil {
 			switch err := err.(type) {
-			case transport.ConnectionError, transport.ClosedError:
+			case transport.ConnectionError:
+				websocketErrorCounter.WithLabelValues("recv", "ConnectionError").Inc()
+				logger.WithFields(logrus.Fields{
+					"addr":  s.cfg.AgentAddr,
+					"agent": s.cfg.AgentName,
+				}).WithError(err).Warn("stopping session")
+			case transport.ClosedError:
+				websocketErrorCounter.WithLabelValues("recv", "ClosedError").Inc()
 				logger.WithFields(logrus.Fields{
 					"addr":  s.cfg.AgentAddr,
 					"agent": s.cfg.AgentName,
 				}).WithError(err).Warn("stopping session")
 			default:
+				websocketErrorCounter.WithLabelValues("recv", "UnknownError").Inc()
 				logger.WithError(err).Error("recv error")
 			}
 			return
@@ -237,6 +260,7 @@ func (s *Session) receiver() {
 				"payload": string(msg.Payload)}).Error("error handling message")
 			if _, ok := err.(*store.ErrInternal); ok {
 				// Fatal error - boot the agent out of the session
+				sessionErrorCounter.WithLabelValues("store.ErrInternal").Inc()
 				logger.Error("internal error - stopping session")
 				go s.Stop()
 			}
@@ -262,6 +286,16 @@ func (s *Session) sender() {
 				continue
 			}
 
+			// Handle the delete and unknown watch events
+			switch watchEvent.Action {
+			case store.WatchDelete:
+				// stop session
+				return
+			case store.WatchUnknown:
+				logger.Error("session received unknown watch event")
+				continue
+			}
+
 			if watchEvent.Entity == nil {
 				logger.Error("session received nil entity in watch event")
 				continue
@@ -273,16 +307,6 @@ func (s *Session) sender() {
 				"namespace": watchEvent.Entity.Metadata.Namespace,
 			})
 			lager.Debug("entity update received")
-
-			// Handle the delete and unknown watch events
-			switch watchEvent.Action {
-			case store.WatchDelete:
-				s.cancel()
-				continue
-			case store.WatchUnknown:
-				lager.Error("session received unknown watch event")
-				continue
-			}
 
 			// Enforce the entity class to agent
 			if watchEvent.Entity.EntityClass != corev2.EntityAgentClass {
@@ -302,6 +326,7 @@ func (s *Session) sender() {
 				}
 
 				if err := s.storev2.CreateOrUpdate(configReq, wrapper); err != nil {
+					sessionErrorCounter.WithLabelValues(err.Error()).Inc()
 					lager.WithError(err).Error("could not update the entity config")
 				}
 
@@ -359,8 +384,12 @@ func (s *Session) sender() {
 		}).Debug("session - sending message")
 		if err := s.conn.Send(msg); err != nil {
 			switch err := err.(type) {
-			case transport.ConnectionError, transport.ClosedError:
+			case transport.ConnectionError:
+				websocketErrorCounter.WithLabelValues("send", "ConnectionError").Inc()
+			case transport.ClosedError:
+				websocketErrorCounter.WithLabelValues("send", "ClosedError").Inc()
 			default:
+				websocketErrorCounter.WithLabelValues("send", "UnknownError").Inc()
 				logger.WithError(err).Error("send error")
 			}
 			return
@@ -386,6 +415,7 @@ func (s *Session) Start() (err error) {
 
 	defer func() {
 		if err != nil {
+			sessionErrorCounter.WithLabelValues("ErrStart").Inc()
 			s.cancel()
 		}
 	}()
@@ -487,6 +517,7 @@ func (s *Session) stop() {
 	defer s.stopWG.Done()
 	defer func() {
 		if err := s.conn.Close(); err != nil {
+			websocketErrorCounter.WithLabelValues("close", "CloseSession").Inc()
 			logger.WithError(err).Error("error closing session")
 		}
 	}()
@@ -495,6 +526,7 @@ func (s *Session) stop() {
 	// connection is not already closed
 	if !s.conn.Closed() {
 		if err := s.conn.SendCloseMessage(); err != nil {
+			websocketErrorCounter.WithLabelValues("send", "SendCloseMessage").Inc()
 			logger.Warning("unexpected error while sending a close message to the agent")
 		}
 	}
@@ -511,6 +543,7 @@ func (s *Session) stop() {
 	select {
 	case <-done:
 	case <-time.After(closeGracePeriod):
+		sessionErrorCounter.WithLabelValues("GracePeriodExpired").Inc()
 	}
 
 	close(s.entityConfig.updatesChannel)
@@ -657,6 +690,7 @@ func (s *Session) unsubscribe(subscriptions []string) {
 			ring := s.ringPool.Get(ringv2.Path(s.cfg.Namespace, sub))
 			lager.Infof("removing agent from ring for subscription %q", sub)
 			if err := ring.Remove(context.Background(), s.cfg.AgentName); err != nil {
+				sessionErrorCounter.WithLabelValues("ring.Remove").Inc()
 				lager.WithError(err).Error("unable to remove agent from ring")
 			}
 		}(sub)
