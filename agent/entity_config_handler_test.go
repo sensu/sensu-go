@@ -26,12 +26,18 @@ func TestHandleEntityConfig(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	go func() {
+		<-a.entityConfigCh
+	}()
 	if err := a.handleEntityConfig(context.Background(), b); err != nil {
 		t.Fatal(err)
 	}
 	if got, want := a.getAgentEntity(), exp; !proto.Equal(got, want) {
 		t.Errorf("bad entity; got %v, want %v", got, want)
 	}
+	go func() {
+		<-a.entityConfigCh
+	}()
 	// this will cause an error, the state name will not match the cfg name
 	ecfg.Metadata.Name = "foo"
 	b, err = a.marshal(ecfg)
