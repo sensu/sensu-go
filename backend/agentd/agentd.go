@@ -119,6 +119,12 @@ func New(c Config, opts ...Option) (*Agentd, error) {
 		TLSConfig:    tlsServerConfig,
 		// Capture the log entries from agentd's HTTP server
 		ErrorLog: log.New(&logrusIOWriter{entry: logger}, "", 0),
+		ConnState: func(c net.Conn, cs http.ConnState) {
+			var msg []byte
+			if _, err := c.Read(msg); err != nil {
+				logger.WithError(err).Error("websocket connection error")
+			}
+		},
 	}
 	for _, o := range opts {
 		if err := o(a); err != nil {
