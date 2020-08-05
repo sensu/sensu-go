@@ -56,6 +56,15 @@ characters.
 - Unless the entity is a proxy entity, updates to entities now ignore state
   related fields.
 - Upgraded embedded etcd to 3.4.10
+## [5.21.1] - 2020-08-05
+
+### Changed
+- Improved agent websocket connection logging.
+
+### Fixed
+- Fixed potential Web UI crash when fetching events in namespace with > 1000 events.
+- Errors produced in the agent by assets, check validation, token substitution,
+and event unmarshaling are logged once again.
 
 ## [5.21.0] - 2020-06-10
 
