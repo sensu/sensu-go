@@ -236,19 +236,19 @@ func (s *Session) receiver() {
 		if err != nil {
 			switch err := err.(type) {
 			case transport.ConnectionError:
-				websocketErrorCounter.WithLabelValues("recv", "ConnectionError").Inc()
+				websocketErrorCounter.WithLabelValues("recv", err.Error()).Inc()
 				logger.WithFields(logrus.Fields{
 					"addr":  s.cfg.AgentAddr,
 					"agent": s.cfg.AgentName,
 				}).WithError(err).Warn("stopping session")
 			case transport.ClosedError:
-				websocketErrorCounter.WithLabelValues("recv", "ClosedError").Inc()
+				websocketErrorCounter.WithLabelValues("recv", err.Error()).Inc()
 				logger.WithFields(logrus.Fields{
 					"addr":  s.cfg.AgentAddr,
 					"agent": s.cfg.AgentName,
 				}).WithError(err).Warn("stopping session")
 			default:
-				websocketErrorCounter.WithLabelValues("recv", "UnknownError").Inc()
+				websocketErrorCounter.WithLabelValues("recv", err.Error()).Inc()
 				logger.WithError(err).Error("recv error")
 			}
 			return
@@ -385,11 +385,11 @@ func (s *Session) sender() {
 		if err := s.conn.Send(msg); err != nil {
 			switch err := err.(type) {
 			case transport.ConnectionError:
-				websocketErrorCounter.WithLabelValues("send", "ConnectionError").Inc()
+				websocketErrorCounter.WithLabelValues("send", err.Error()).Inc()
 			case transport.ClosedError:
-				websocketErrorCounter.WithLabelValues("send", "ClosedError").Inc()
+				websocketErrorCounter.WithLabelValues("send", err.Error()).Inc()
 			default:
-				websocketErrorCounter.WithLabelValues("send", "UnknownError").Inc()
+				websocketErrorCounter.WithLabelValues("send", err.Error()).Inc()
 				logger.WithError(err).Error("send error")
 			}
 			return
