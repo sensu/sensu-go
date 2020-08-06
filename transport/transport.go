@@ -129,9 +129,10 @@ type Transport interface {
 // A WebSocketTransport is a connection between sensu Agents and Backends over
 // WebSocket.
 type WebSocketTransport struct {
-	Connection *websocket.Conn
-	closed     bool
-	mutex      *sync.RWMutex
+	Connection  *websocket.Conn
+	closed      bool
+	mutex       *sync.RWMutex
+	readTimeout time.Duration
 }
 
 // NewTransport creates an initialized Transport and return its pointer.
@@ -193,10 +194,10 @@ func (t *WebSocketTransport) Heartbeat(ctx context.Context, interval, timeout in
 		logger.Warningf("the heartbeat timeout (%d) must be bigger than the heartbeat interval (%d), increasing the timeout", timeout, interval)
 		timeout = (interval * 10) / 6
 	}
+	t.readTimeout = time.Duration(timeout) * time.Second
 
 	pingTicker := time.NewTicker(time.Duration(interval) * time.Second)
-	pongWait := time.Duration(timeout) * time.Second
-	pingWait := pongWait / 2
+	pingWait := t.readTimeout / 2
 
 	go func() {
 		defer pingTicker.Stop()
@@ -215,10 +216,10 @@ func (t *WebSocketTransport) Heartbeat(ctx context.Context, interval, timeout in
 		}
 	}()
 
-	_ = t.Connection.SetReadDeadline(time.Now().Add(pongWait))
+	_ = t.Connection.SetReadDeadline(time.Now().Add(t.readTimeout))
 	t.Connection.SetPongHandler(func(string) error {
-		logger.Debugf("pong received from the backend, setting the read deadline to %d", time.Now().Add(pongWait).Unix())
-		return t.Connection.SetReadDeadline(time.Now().Add(pongWait))
+		logger.Debugf("pong received from the backend, setting the read deadline to %d", time.Now().Add(t.readTimeout).Unix())
+		return t.Connection.SetReadDeadline(time.Now().Add(t.readTimeout))
 	})
 }
 
@@ -246,6 +247,7 @@ func (t *WebSocketTransport) Receive() (*Message, error) {
 		}
 		return nil, ConnectionError{err.Error()}
 	}
+	t.Connection.SetReadDeadline(time.Now().Add(t.readTimeout))
 
 	msgType, payload, err := Decode(p)
 	if err != nil {
