@@ -216,11 +216,11 @@ func (t *WebSocketTransport) Heartbeat(ctx context.Context, interval, timeout in
 		}
 	}()
 
-	_ = t.Connection.SetReadDeadline(time.Now().Add(t.readTimeout))
-	t.Connection.SetPongHandler(func(string) error {
-		logger.Debugf("pong received from the backend, setting the read deadline to %d", time.Now().Add(t.readTimeout).Unix())
-		return t.Connection.SetReadDeadline(time.Now().Add(t.readTimeout))
-	})
+	//_ = t.Connection.SetReadDeadline(time.Now().Add(t.readTimeout))
+	//t.Connection.SetPongHandler(func(string) error {
+	//	logger.Debugf("pong received from the backend, setting the read deadline to %d", time.Now().Add(t.readTimeout).Unix())
+	//	return t.Connection.SetReadDeadline(time.Now().Add(t.readTimeout))
+	//})
 }
 
 // Receive a message over the websocket connection. Like Send, returns either
@@ -247,7 +247,6 @@ func (t *WebSocketTransport) Receive() (*Message, error) {
 		}
 		return nil, ConnectionError{err.Error()}
 	}
-	t.Connection.SetReadDeadline(time.Now().Add(t.readTimeout))
 
 	msgType, payload, err := Decode(p)
 	if err != nil {
