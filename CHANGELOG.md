@@ -7,6 +7,10 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
 
+### Added
+- Added Prometheus transformer for extracting metrics from check output
+using the Prometheus Exposition Text Format.
+
 ## [6.0.0] - 2020-08-04
 
 ### Added
