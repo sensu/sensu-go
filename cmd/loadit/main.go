@@ -15,6 +15,9 @@ import (
 	"github.com/sensu/sensu-go/agent"
 	"github.com/sensu/sensu-go/types"
 	"github.com/sirupsen/logrus"
+
+	"net/http"
+	_ "net/http/pprof"
 )
 
 var (
@@ -23,10 +26,15 @@ var (
 	flagSubscriptions     = flag.String("subscriptions", "default", "comma separated list of subscriptions")
 	flagKeepaliveInterval = flag.Int("keepalive-interval", agent.DefaultKeepaliveInterval, "Keepalive interval")
 	flagKeepaliveTimeout  = flag.Int("keepalive-timeout", types.DefaultKeepaliveTimeout, "Keepalive timeout")
+	flagProfilingPort     = flag.Int("pprof-port", 6060, "pprof port to bind to")
 )
 
 func main() {
 	flag.Parse()
+
+	go func() {
+		log.Println(http.ListenAndServe(fmt.Sprintf("localhost:%d", *flagProfilingPort), nil))
+	}()
 
 	logrus.SetLevel(logrus.WarnLevel)
 
@@ -36,6 +44,7 @@ func main() {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
+	start := time.Now()
 	for i := 0; i < *flagCount; i++ {
 		name := uuid.New().String()
 
@@ -70,14 +79,15 @@ func main() {
 		if err != nil {
 			log.Fatal(err)
 		}
-		time.Sleep(20 * time.Millisecond)
 		go func() {
 			if err := agent.Run(ctx); err != nil {
 				log.Fatal(err)
 			}
 		}()
 	}
-	fmt.Println("all agents are now connected")
+
+	elapsed := time.Since(start)
+	fmt.Printf("all agents have been connected in %s\n", elapsed)
 
 	sigs := make(chan os.Signal, 1)
 	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)

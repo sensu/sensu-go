@@ -9,7 +9,7 @@ import (
 	"sync/atomic"
 	"time"
 
-	"go.etcd.io/etcd/clientv3"
+	"github.com/coreos/etcd/clientv3"
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/backend/store/etcd"
@@ -93,7 +93,7 @@ type cacheWatcher struct {
 type Resource struct {
 	count      int64
 	cache      cache
-	cacheMu    sync.Mutex
+	cacheMu    sync.RWMutex
 	watchers   []cacheWatcher
 	watchersMu sync.Mutex
 	synthesize bool
@@ -161,23 +161,23 @@ func New(ctx context.Context, client *clientv3.Client, resource corev2.Resource,
 // inject resources directly into the cache without an actual store
 func NewFromResources(resources []corev2.Resource, synthesize bool) *Resource {
 	return &Resource{
-		cacheMu: sync.Mutex{},
+		cacheMu: sync.RWMutex{},
 		cache:   buildCache(resources, synthesize),
 	}
 }
 
 // Get returns all cached resources in a namespace.
 func (r *Resource) Get(namespace string) []Value {
-	r.cacheMu.Lock()
-	defer r.cacheMu.Unlock()
+	r.cacheMu.RLock()
+	defer r.cacheMu.RUnlock()
 	return r.cache[namespace]
 }
 
 // GetAll returns all cached resources across all namespaces.
 func (r *Resource) GetAll() []Value {
 	values := []Value{}
-	r.cacheMu.Lock()
-	defer r.cacheMu.Unlock()
+	r.cacheMu.RLock()
+	defer r.cacheMu.RUnlock()
 	for _, n := range r.cache {
 		values = append(values, n...)
 	}

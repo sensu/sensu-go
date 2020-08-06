@@ -11,7 +11,7 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 - Added Prometheus transformer for extracting metrics from check output
 using the Prometheus Exposition Text Format.
 
-## [6.0.0] - 2020-07-23
+## [6.0.0] - 2020-08-04
 
 ### Added
 - Log a warning when secrets cannot be sent to an agent because mTLS is not
@@ -33,6 +33,8 @@ and RoleBindings.
 - Log the proper CA certificate path in the error message when it can't be
 properly parsed by the agent.
 - Fix the log entry field for the check's name in schedulerd.
+- Store fewer keys in etcd for agents.
+- Keepalive and round robin scheduling leases are now dealt with more efficiently.
 
 ### Breaking
 - The web interface is now a standalone product and no longer distributed
@@ -57,7 +59,6 @@ characters.
 - Enriches output of `sensuctl asset add` with help usage for how to use the runtime asset.
 - Unless the entity is a proxy entity, updates to entities now ignore state
   related fields.
-- Upgraded embedded etcd to 3.4.10
 
 ## [5.21.1] - 2020-08-05
 

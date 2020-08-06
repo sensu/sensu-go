@@ -11,7 +11,7 @@ import (
 	"sync/atomic"
 	"time"
 
-	"go.etcd.io/etcd/clientv3"
+	"github.com/coreos/etcd/clientv3"
 	"github.com/gogo/protobuf/proto"
 	"github.com/gorilla/mux"
 	"github.com/gorilla/websocket"
@@ -40,6 +40,25 @@ var (
 	sessionCounterOnce sync.Once
 )
 
+const (
+	WebsocketUpgradeDuration = "sensu_go_websocket_upgrade_duration"
+)
+
+var (
+	websocketUpgradeDuration = prometheus.NewSummaryVec(
+		prometheus.SummaryOpts{
+			Name:       WebsocketUpgradeDuration,
+			Help:       "websocket upgrade latency distribution",
+			Objectives: map[float64]float64{0.5: 0.05, 0.9: 0.01, 0.99: 0.001},
+		},
+		[]string{},
+	)
+)
+
+func init() {
+	_ = prometheus.Register(websocketUpgradeDuration)
+}
+
 // Agentd is the backend HTTP API.
 type Agentd struct {
 	// Host is the hostname Agentd is running on.
@@ -62,6 +81,7 @@ type Agentd struct {
 	cancel         context.CancelFunc
 	writeTimeout   int
 	namespaceCache *cache.Resource
+	watcher        <-chan store.WatchEventEntityConfig
 }
 
 // Config configures an Agentd.
@@ -74,6 +94,7 @@ type Config struct {
 	RingPool     *ringv2.Pool
 	WriteTimeout int
 	Client       *clientv3.Client
+	Watcher      <-chan store.WatchEventEntityConfig
 }
 
 // Option is a functional option.
@@ -97,6 +118,7 @@ func New(c Config, opts ...Option) (*Agentd, error) {
 		cancel:       cancel,
 		writeTimeout: c.WriteTimeout,
 		storev2:      etcdstore.NewStore(c.Client),
+		watcher:      c.Watcher,
 	}
 
 	// prepare server TLS config
@@ -175,6 +197,8 @@ func (a *Agentd) Start() error {
 		}
 	}()
 
+	go a.runWatcher()
+
 	sessionCounterOnce.Do(func() {
 		if err := prometheus.Register(sessionCounter); err != nil {
 			logger.WithError(err).Error("error registering session counter")
@@ -182,6 +206,38 @@ func (a *Agentd) Start() error {
 		}
 	})
 
+	return nil
+}
+
+func (a *Agentd) runWatcher() {
+	defer func() {
+		logger.Warn("shutting down entity config watcher")
+	}()
+	for {
+		select {
+		case <-a.ctx.Done():
+			return
+		case event, ok := <-a.watcher:
+			if !ok {
+				return
+			}
+			if err := a.handleEvent(event); err != nil {
+				logger.WithError(err).Error("error handling entity config watch event")
+			}
+		}
+	}
+}
+
+func (a *Agentd) handleEvent(event store.WatchEventEntityConfig) error {
+	topic := messaging.EntityConfigTopic(event.Entity.Metadata.Namespace, event.Entity.Metadata.Name)
+	if err := a.bus.Publish(topic, &event); err != nil {
+		logger.WithField("topic", topic).WithError(err).
+			Error("unable to publish an entity config update to the bus")
+		return err
+	}
+
+	logger.WithField("topic", topic).
+		Debug("successfully published an entity config update to the bus")
 	return nil
 }
 
@@ -214,6 +270,11 @@ func (a *Agentd) Name() string {
 }
 
 func (a *Agentd) webSocketHandler(w http.ResponseWriter, r *http.Request) {
+	then := time.Now()
+	defer func() {
+		duration := time.Since(then)
+		websocketUpgradeDuration.WithLabelValues().Observe(float64(duration) / float64(time.Millisecond))
+	}()
 	var marshal MarshalFunc
 	var unmarshal UnmarshalFunc
 	var contentType string
@@ -246,7 +307,7 @@ func (a *Agentd) webSocketHandler(w http.ResponseWriter, r *http.Request) {
 	// Validate the agent namespace
 	namespace := r.Header.Get(transport.HeaderKeyNamespace)
 	var found bool
-	values := a.namespaceCache.GetAll()
+	values := a.namespaceCache.Get("")
 	for _, value := range values {
 		if namespace == value.Resource.GetObjectMeta().Name {
 			found = true

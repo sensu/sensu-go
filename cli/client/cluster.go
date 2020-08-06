@@ -6,7 +6,7 @@ import (
 	"net/url"
 	"strings"
 
-	"go.etcd.io/etcd/clientv3"
+	"github.com/coreos/etcd/clientv3"
 )
 
 var clusterMembersPath = CreateBasePath(coreAPIGroup, coreAPIVersion, "cluster", "members")

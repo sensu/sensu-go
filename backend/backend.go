@@ -11,8 +11,8 @@ import (
 	"syscall"
 	"time"
 
-	"go.etcd.io/etcd/clientv3"
-	"go.etcd.io/etcd/pkg/transport"
+	"github.com/coreos/etcd/clientv3"
+	"github.com/coreos/etcd/pkg/transport"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/spf13/viper"
 	"golang.org/x/time/rate"
@@ -311,6 +311,9 @@ func Initialize(ctx context.Context, config *Config) (*Backend, error) {
 		config.AgentTLSOptions = config.TLS
 	}
 
+	// Start the entity config watcher, so agentd sessions are notified of updates
+	entityConfigWatcher := agentd.GetEntityConfigWatcher(b.ctx, b.Client)
+
 	// Initialize agentd
 	agent, err := agentd.New(agentd.Config{
 		Host:         config.AgentHost,
@@ -321,14 +324,12 @@ func Initialize(ctx context.Context, config *Config) (*Backend, error) {
 		RingPool:     ringPool,
 		WriteTimeout: config.AgentWriteTimeout,
 		Client:       b.Client,
+		Watcher:      entityConfigWatcher,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("error initializing %s: %s", agent.Name(), err)
 	}
 	b.Daemons = append(b.Daemons, agent)
-
-	// Start the entity config watcher, so agentd sessions are notified of updates
-	agentd.EntityConfigWatcher(b.ctx, b.Client, bus)
 
 	// Initialize keepalived
 	keepalive, err := keepalived.New(keepalived.Config{

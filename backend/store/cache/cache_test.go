@@ -2,13 +2,14 @@ package cache
 
 import (
 	"context"
+	"fmt"
 	"reflect"
 	"testing"
 
 	"github.com/sensu/sensu-go/backend/store/etcd"
 	"github.com/sensu/sensu-go/types"
 
-	"go.etcd.io/etcd/integration"
+	"github.com/coreos/etcd/integration"
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/testing/fixture"
@@ -172,4 +173,32 @@ func TestResourceRebuild(t *testing.T) {
 	}
 	assert.Len(t, cacher.cache["default"], 1)
 	assert.Equal(t, int64(1), cacher.Count())
+}
+
+func nonNamespacedCache(count int) Resource {
+	resources := []corev2.Resource{}
+	for i := 0; i < count; i++ {
+		resources = append(resources, &fixture.Resource{ObjectMeta: corev2.ObjectMeta{Name: fmt.Sprintf("namespace-%d", i)}})
+	}
+	return Resource{
+		cache: buildCache(resources, false),
+	}
+}
+
+func BenchmarkGetEmpty(b *testing.B) {
+	cache := nonNamespacedCache(20)
+	for n := 0; n < b.N; n++ {
+		values := cache.Get("")
+		for range values {
+		}
+	}
+}
+
+func BenchmarkGetAll(b *testing.B) {
+	cache := nonNamespacedCache(20)
+	for n := 0; n < b.N; n++ {
+		values := cache.GetAll()
+		for range values {
+		}
+	}
 }
