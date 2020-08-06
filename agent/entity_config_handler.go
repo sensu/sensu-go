@@ -3,6 +3,7 @@ package agent
 import (
 	"context"
 
+	time "github.com/echlebek/timeproxy"
 	corev3 "github.com/sensu/sensu-go/api/core/v3"
 )
 
@@ -23,7 +24,12 @@ func (a *Agent) handleEntityConfig(ctx context.Context, payload []byte) error {
 		a.entityConfig = &entity
 	}
 
-	a.entityConfigCh <- struct{}
+	go func() {
+		select {
+		case a.entityConfigCh <- struct{}{}:
+		case <-time.After(10 * time.Second):
+		}
+	}()
 
 	return nil
 }
