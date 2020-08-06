@@ -128,6 +128,7 @@ func TestParsePromTags(t *testing.T) {
 						model.MetricNameLabel: "go_gc_duration_seconds",
 						"quantile":            "0",
 						"instance":            "hostname",
+						"prom_type":           "untyped",
 					},
 					Value:     3.3722e-05,
 					Timestamp: model.TimeFromUnix(ts),
