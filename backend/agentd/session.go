@@ -495,8 +495,13 @@ func (s *Session) Start() (err error) {
 		s.mu.Unlock()
 	}
 
+	s.mu.Lock()
+	subs := make([]string, len(s.cfg.Subscriptions))
+	copy(subs, s.cfg.Subscriptions)
+	s.mu.Unlock()
+
 	// Subscribe the session to every configured check subscriptions
-	if err := s.subscribe(s.cfg.Subscriptions); err != nil {
+	if err := s.subscribe(subs); err != nil {
 		return err
 	}
 
