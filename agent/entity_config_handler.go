@@ -23,7 +23,9 @@ func (a *Agent) handleEntityConfig(ctx context.Context, payload []byte) error {
 		a.entityConfig = &entity
 	}
 
-	a.entityConfigCh <- struct{}{}
+	go func() {
+		a.entityConfigCh <- struct{}{}
+	}()
 
 	return nil
 }
