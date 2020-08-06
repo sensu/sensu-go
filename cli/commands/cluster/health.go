@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"io"
 
-	"go.etcd.io/etcd/etcdserver/etcdserverpb"
+	"github.com/coreos/etcd/etcdserver/etcdserverpb"
 	"github.com/sensu/sensu-go/cli"
 	"github.com/sensu/sensu-go/cli/commands/helpers"
 	"github.com/sensu/sensu-go/cli/elements/table"

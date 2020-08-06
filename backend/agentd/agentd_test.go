@@ -2,13 +2,17 @@ package agentd
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
+	corev3 "github.com/sensu/sensu-go/api/core/v3"
+	"github.com/sensu/sensu-go/backend/etcd"
 	"github.com/sensu/sensu-go/backend/store"
+	"github.com/sensu/sensu-go/testing/mockbus"
 	"github.com/sensu/sensu-go/testing/mockstore"
 	"github.com/sensu/sensu-go/transport"
 	"github.com/stretchr/testify/assert"
@@ -56,26 +60,26 @@ func TestAgentdMiddlewares(t *testing.T) {
 		stor.On("GetUser", mock.Anything, tc.username).Return(user, tc.storeErr)
 		stor.On("AuthenticateUser", mock.Anything, tc.username, "password").Return(user, tc.storeErr)
 		stor.On("ListClusterRoleBindings", mock.Anything, &store.SelectionPredicate{}).
-			Return([]*corev2.ClusterRoleBinding{&corev2.ClusterRoleBinding{
+			Return([]*corev2.ClusterRoleBinding{{
 				RoleRef: corev2.RoleRef{
 					Type: "ClusterRole",
 					Name: "cluster-admin",
 				},
 				Subjects: []corev2.Subject{
-					corev2.Subject{Type: corev2.GroupType, Name: "cluster-admins"},
+					{Type: corev2.GroupType, Name: "cluster-admins"},
 				},
 				ObjectMeta: corev2.ObjectMeta{
 					Name: "cluster-admin",
 				},
 			}}, nil)
 		stor.On("ListRoleBindings", mock.Anything, &store.SelectionPredicate{}).
-			Return([]*corev2.RoleBinding{&corev2.RoleBinding{
+			Return([]*corev2.RoleBinding{{
 				RoleRef: corev2.RoleRef{
 					Type: "ClusterRole",
 					Name: "admin",
 				},
 				Subjects: []corev2.Subject{
-					corev2.Subject{Type: corev2.GroupType, Name: "group-test-rbac"},
+					{Type: corev2.GroupType, Name: "group-test-rbac"},
 				},
 				ObjectMeta: corev2.ObjectMeta{
 					Name:      "role-test-rbac-admin",
@@ -84,7 +88,7 @@ func TestAgentdMiddlewares(t *testing.T) {
 			}}, nil)
 		stor.On("GetClusterRole", mock.Anything, "admin", mock.Anything).
 			Return(&corev2.ClusterRole{Rules: []corev2.Rule{
-				corev2.Rule{
+				{
 					Verbs:     []string{"create"},
 					Resources: []string{"events"},
 				},
@@ -100,5 +104,63 @@ func TestAgentdMiddlewares(t *testing.T) {
 		res, err := http.DefaultClient.Do(req)
 		assert.NoError(err)
 		assert.Equal(tc.expectedCode, res.StatusCode, tc.description)
+	}
+}
+
+func TestRunWatcher(t *testing.T) {
+	type busFunc func(*mockbus.MockBus)
+
+	tests := []struct {
+		name       string
+		busFunc    busFunc
+		watchEvent store.WatchEventEntityConfig
+	}{
+		{
+			name: "bus error",
+			watchEvent: store.WatchEventEntityConfig{
+				Action: store.WatchCreate,
+				Entity: corev3.FixtureEntityConfig("foo"),
+			},
+			busFunc: func(bus *mockbus.MockBus) {
+				bus.On("Publish", mock.Anything, mock.Anything).Once().Return(errors.New("error"))
+			},
+		},
+		{
+			name: "watch events are successfully published to the bus",
+			watchEvent: store.WatchEventEntityConfig{
+				Action: store.WatchCreate,
+				Entity: corev3.FixtureEntityConfig("foo"),
+			},
+			busFunc: func(bus *mockbus.MockBus) {
+				bus.On("Publish", mock.Anything, mock.Anything).Once().Return(nil)
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			watcher := make(chan store.WatchEventEntityConfig)
+
+			// Mock the bus
+			bus := &mockbus.MockBus{}
+			if tt.busFunc != nil {
+				tt.busFunc(bus)
+			}
+
+			e, cleanup := etcd.NewTestEtcd(t)
+			defer cleanup()
+			client := e.NewEmbeddedClient()
+			defer client.Close()
+
+			agent, err := New(Config{
+				Bus:     bus,
+				Watcher: watcher,
+				Client:  client,
+			})
+			assert.NoError(t, err)
+
+			go agent.runWatcher()
+
+			watcher <- tt.watchEvent
+		})
 	}
 }

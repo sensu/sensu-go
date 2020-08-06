@@ -7,16 +7,15 @@ replace (
 	github.com/sensu/sensu-go/api/core/v3 => ./api/core/v3
 	github.com/sensu/sensu-go/backend/store/v2 => ./backend/store/v2
 	github.com/sensu/sensu-go/types => ./types
-	go.etcd.io/etcd => go.etcd.io/etcd v0.0.0-20200716221620-18dfb9cca345
 )
 
 require (
 	github.com/AlecAivazis/survey v1.4.1
 	github.com/Azure/go-ansiterm v0.0.0-20170929234023-d6e3b3328b78 // indirect
-	github.com/NYTimes/gziphandler v0.0.0-20180227021810-5032c8878b9d
 	github.com/StackExchange/wmi v0.0.0-20180725035823-b12b22c5341f // indirect
 	github.com/ash2k/stager v0.0.0-20170622123058-6e9c7b0eacd4 // indirect
 	github.com/atlassian/gostatsd v0.0.0-20180514010436-af796620006e
+	github.com/coreos/etcd v3.3.17+incompatible
 	github.com/coreos/pkg v0.0.0-20180928190104-399ea9e2e55f
 	github.com/dave/jennifer v0.0.0-20171207062344-d8bdbdbee4e1
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
@@ -48,7 +47,7 @@ require (
 	github.com/libp2p/go-reuseport v0.0.0-20180416043609-15a1cd37f050 // indirect
 	github.com/libp2p/go-sockaddr v0.1.0 // indirect
 	github.com/mattn/go-colorable v0.1.4 // indirect
-	github.com/mattn/go-runewidth v0.0.2 // indirect
+	github.com/mattn/go-runewidth v0.0.9 // indirect
 	github.com/mgutz/ansi v0.0.0-20170206155736-9520e82c474b
 	github.com/mholt/archiver/v3 v3.3.1-0.20191129193105-44285f7ed244
 	github.com/mitchellh/go-homedir v1.1.0
@@ -59,7 +58,7 @@ require (
 	github.com/robertkrimen/otto v0.0.0-20191219234010-c382bd3c16ff
 	github.com/robfig/cron/v3 v3.0.1
 	github.com/sensu/lasr v1.2.1
-	github.com/sensu/sensu-go/api/core/v2 v2.2.1
+	github.com/sensu/sensu-go/api/core/v2 v2.2.0
 	github.com/sensu/sensu-go/api/core/v3 v3.0.0
 	github.com/sensu/sensu-go/types v0.3.0
 	github.com/shirou/gopsutil v0.0.0-20190901111213-e4ec7b275ada
@@ -71,7 +70,6 @@ require (
 	github.com/stretchr/testify v1.6.0
 	github.com/willf/pad v0.0.0-20160331131008-b3d780601022
 	go.etcd.io/bbolt v1.3.4
-	go.etcd.io/etcd v3.4.10+incompatible
 	golang.org/x/crypto v0.0.0-20191011191535-87dc89f01550
 	golang.org/x/net v0.0.0-20200202094626-16171245cfb2
 	golang.org/x/sys v0.0.0-20200602225109-6fdc65e7d980

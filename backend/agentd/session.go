@@ -522,6 +522,9 @@ func (s *Session) stop() {
 			logger.WithError(err).Error("unable to unsubscribe from message bus")
 		}
 	}
+
+	// Unsubscribe the session from every configured check subscriptions
+	s.unsubscribe(s.cfg.Subscriptions)
 }
 
 // handleKeepalive is the keepalive message handler.
@@ -653,9 +656,7 @@ func (s *Session) unsubscribe(subscriptions []string) {
 			defer ringWG.Done()
 			ring := s.ringPool.Get(ringv2.Path(s.cfg.Namespace, sub))
 			lager.Infof("removing agent from ring for subscription %q", sub)
-			ctx, cancel := context.WithTimeout(context.Background(), time.Second)
-			defer cancel()
-			if err := ring.Remove(ctx, s.cfg.AgentName); err != nil {
+			if err := ring.Remove(context.Background(), s.cfg.AgentName); err != nil {
 				lager.WithError(err).Error("unable to remove agent from ring")
 			}
 		}(sub)

@@ -6,7 +6,7 @@ import (
 	"context"
 	"testing"
 
-	"go.etcd.io/etcd/clientv3"
+	"github.com/coreos/etcd/clientv3"
 	"github.com/sensu/sensu-go/backend/store"
 )
 

@@ -54,7 +54,7 @@
 		]
 	},
 	{
-		"project": "go.etcd.io/etcd",
+		"project": "github.com/coreos/etcd",
 		"licenses": [
 			{
 				"type": "Apache License 2.0",

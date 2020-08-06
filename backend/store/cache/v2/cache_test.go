@@ -5,7 +5,7 @@ import (
 	"reflect"
 	"testing"
 
-	"go.etcd.io/etcd/integration"
+	"github.com/coreos/etcd/integration"
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	corev3 "github.com/sensu/sensu-go/api/core/v3"
 	"github.com/sensu/sensu-go/backend/store"
