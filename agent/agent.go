@@ -353,7 +353,7 @@ func (a *Agent) connectionManager(ctx context.Context, cancel context.CancelFunc
 		ctx, cancel := context.WithCancel(ctx)
 
 		// Start sending hearbeats to the backend
-		conn.Heartbeat(ctx, a.config.BackendHeartbeatInterval, a.config.BackendHeartbeatTimeout)
+		// conn.Heartbeat(ctx, a.config.BackendHeartbeatInterval, a.config.BackendHeartbeatTimeout)
 
 		a.connectedMu.Lock()
 		a.connected = true
