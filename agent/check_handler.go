@@ -71,6 +71,11 @@ func (a *Agent) handleCheck(ctx context.Context, payload []byte) error {
 	return nil
 }
 
+// handleCheckNoop is used to discard incoming check requests
+func (a *Agent) handleCheckNoop(ctx context.Context, payload []byte) error {
+	return nil
+}
+
 func (a *Agent) checkInProgress(req *corev2.CheckRequest) bool {
 	a.inProgressMu.Lock()
 	defer a.inProgressMu.Unlock()
@@ -320,6 +325,8 @@ func extractMetrics(event *corev2.Event) []*corev2.MetricPoint {
 		transformer = transformers.ParseNagios(event)
 	case corev2.OpenTSDBOutputMetricFormat:
 		transformer = transformers.ParseOpenTSDB(event)
+	case corev2.PrometheusOutputMetricFormat:
+		transformer = transformers.ParseProm(event)
 	}
 
 	if transformer == nil {

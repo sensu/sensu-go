@@ -13,6 +13,23 @@ func (a *Agent) handleEntityConfig(ctx context.Context, payload []byte) error {
 	}
 	a.entityMu.Lock()
 	defer a.entityMu.Unlock()
-	a.entityConfig = &entity
+
+	logger.Debug("received an entity config from the backend")
+
+	// We rely on the special EntityNotFound entity name to determine whether
+	// agentd found an entity, therefore only update the entity config if an
+	// entity was found
+	if entity.Metadata.Name != corev3.EntityNotFound {
+		a.entityConfig = &entity
+	}
+
+	// Indicate to the connection manager that an entity config was receive, but
+	// do not block if the non-buffered channel is already full which will happen
+	// after the second entity config is received and not consumed
+	select {
+	case a.entityConfigCh <- struct{}{}:
+	default:
+	}
+
 	return nil
 }

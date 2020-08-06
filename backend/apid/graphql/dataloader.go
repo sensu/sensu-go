@@ -9,7 +9,6 @@ import (
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/authorization"
 	"github.com/sensu/sensu-go/backend/store"
-	"github.com/sensu/sensu-go/backend/store/etcd"
 )
 
 type key int
@@ -128,18 +127,17 @@ func loadEntities(ctx context.Context, ns string) ([]*corev2.Entity, error) {
 // events
 
 func listAllEvents(ctx context.Context, c EventClient) ([]*corev2.Event, error) {
-	cont := ""
+	pred := &store.SelectionPredicate{Continue: "", Limit: int64(loaderPageSize)}
 	results := []*corev2.Event{}
 	for {
-		r, err := c.ListEvents(ctx, &store.SelectionPredicate{Continue: cont, Limit: int64(loaderPageSize)})
+		r, err := c.ListEvents(ctx, pred)
 		if err != nil {
 			return results, err
 		}
 		results = append(results, r...)
-		if len(r) < loaderPageSize {
+		if pred.Continue == "" || len(r) < loaderPageSize {
 			break
 		}
-		cont = etcd.ComputeContinueToken(ctx, r[len(r)-1])
 	}
 	return results, nil
 }

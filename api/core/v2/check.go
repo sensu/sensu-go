@@ -38,6 +38,10 @@ const (
 	// InfluxDB Line
 	InfluxDBOutputMetricFormat = "influxdb_line"
 
+	// PrometheusOutputMetricFormat is the accepted string to represent the output metric format of
+	// Prometheus Exposition Text Format
+	PrometheusOutputMetricFormat = "prometheus_text"
+
 	// KeepaliveCheckName is the name of the check that is created when a
 	// keepalive timeout occurs.
 	KeepaliveCheckName = "keepalive"
@@ -48,7 +52,7 @@ const (
 )
 
 // OutputMetricFormats represents all the accepted output_metric_format's a check can have
-var OutputMetricFormats = []string{NagiosOutputMetricFormat, GraphiteOutputMetricFormat, OpenTSDBOutputMetricFormat, InfluxDBOutputMetricFormat}
+var OutputMetricFormats = []string{NagiosOutputMetricFormat, GraphiteOutputMetricFormat, OpenTSDBOutputMetricFormat, InfluxDBOutputMetricFormat, PrometheusOutputMetricFormat}
 
 // FixtureCheck returns a fixture for a Check object.
 func FixtureCheck(id string) *Check {

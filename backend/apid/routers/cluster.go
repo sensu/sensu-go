@@ -10,7 +10,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/coreos/etcd/clientv3"
+	"go.etcd.io/etcd/clientv3"
 	"github.com/gorilla/mux"
 )
 

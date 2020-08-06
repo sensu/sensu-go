@@ -3,7 +3,7 @@ package testutil
 import (
 	"context"
 
-	"github.com/coreos/etcd/store"
+	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/types"
 )
 
