@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"math"
 	"net/http"
+	"os"
 	"time"
 
 	"github.com/gorilla/mux"
@@ -85,6 +86,9 @@ func versionShow() http.HandlerFunc {
 }
 
 func (a *Agent) handleAPIQueue(ctx context.Context) {
+	if a.config.CacheDir == os.DevNull {
+		return
+	}
 	ch := make(chan *lasr.Message, 1)
 	go func() {
 		limit := a.config.EventsAPIRateLimit

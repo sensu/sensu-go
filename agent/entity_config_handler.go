@@ -3,6 +3,7 @@ package agent
 import (
 	"context"
 
+	time "github.com/echlebek/timeproxy"
 	corev3 "github.com/sensu/sensu-go/api/core/v3"
 )
 
@@ -23,13 +24,12 @@ func (a *Agent) handleEntityConfig(ctx context.Context, payload []byte) error {
 		a.entityConfig = &entity
 	}
 
-	// Indicate to the connection manager that an entity config was receive, but
-	// do not block if the non-buffered channel is already full which will happen
-	// after the second entity config is received and not consumed
-	select {
-	case a.entityConfigCh <- struct{}{}:
-	default:
-	}
+	go func() {
+		select {
+		case a.entityConfigCh <- struct{}{}:
+		case <-time.After(10 * time.Second):
+		}
+	}()
 
 	return nil
 }
