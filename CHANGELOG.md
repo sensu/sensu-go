@@ -57,6 +57,7 @@ characters.
 - Enriches output of `sensuctl asset add` with help usage for how to use the runtime asset.
 - Unless the entity is a proxy entity, updates to entities now ignore state
   related fields.
+  - Updated Go version from 1.13.7 to 1.13.15.
 
 ## [5.21.0] - 2020-06-10
 
