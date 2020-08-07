@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 
-	"github.com/coreos/etcd/clientv3"
+	"go.etcd.io/etcd/clientv3"
 	"github.com/google/uuid"
 	"github.com/sensu/sensu-go/backend/store"
 )

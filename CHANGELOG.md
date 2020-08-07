@@ -57,6 +57,8 @@ characters.
 - Enriches output of `sensuctl asset add` with help usage for how to use the runtime asset.
 - Unless the entity is a proxy entity, updates to entities now ignore state
   related fields.
+- Upgraded embedded etcd to 3.4.10
+- Now built with Go 1.14.6.
 
 ## [5.21.0] - 2020-06-10
 
