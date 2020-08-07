@@ -58,7 +58,7 @@ characters.
 - Unless the entity is a proxy entity, updates to entities now ignore state
   related fields.
 - Updated Go version from 1.13.7 to 1.13.15.
-- Upgraded etcd to 3.3.22.
+- Upgraded etcd version from 3.3.17 to 3.3.22.
 
 ## [5.21.0] - 2020-06-10
 
