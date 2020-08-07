@@ -129,7 +129,8 @@ func TestBug1407(t *testing.T) {
 	require.NoError(t, subscription.Cancel())
 	subscription, err = bus.Subscribe("topic", "a", subscriber)
 	require.NoError(t, err)
-	closed := bus.topics["topic"].IsClosed()
-	assert.False(t, closed)
+	value, _ := bus.topics.Load("topic")
+	topic := value.(*wizardTopic)
+	assert.False(t, topic.IsClosed())
 
 }
