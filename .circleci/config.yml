@@ -16,25 +16,37 @@ jobs:
   unit:
     executor: go
     parallelism: 4
+    environment:
+      GOTESTSUM_JUNITFILE: /tmp/results/unit-tests.xml
     steps:
       - checkout
       - go/mod-download-cached
       - run: |
-          mkdir -pv /tmp/results
+          mkdir -pv $(dirname $GOTESTSUM_JUNITFILE)
           PACKAGES="$(go list ./... | circleci tests split --split-by=timings --timings-type=classname)"
-          gotestsum --junitfile /tmp/results/unit-tests.xml -- -timeout=60s -race $PACKAGES
+          gotestsum -- -timeout=60s -race $PACKAGES
+          RC=$?
+          echo "export TESTRC=${RC}" >> $BASH_ENV
       - store_test_results:
           path: /tmp/results
+      - run: exit $TESTRC
   integration:
     executor: go
     parallelism: 4
+    environment:
+      GOTESTSUM_JUNITFILE: /tmp/results/integration-tests.xml
     steps:
       - checkout
       - go/mod-download-cached
       - run: |
-          mkdir -pv /tmp/results
+          mkdir -pv $(dirname $GOTESTSUM_JUNITFILE)
           PACKAGES="$(go list ./... | circleci tests split --split-by=timings --timings-type=classname)"
-          gotestsum --junitfile /tmp/results/integration-tests.xml -- -timeout=180s -tags=integration
+          gotestsum -- -timeout=180s -tags=integration
+          RC=$?
+          echo "export TESTRC=${RC}" >> $BASH_ENV
+      - store_test_results:
+          path: /tmp/results
+      - run: exit $TESTRC
 
 workflows:
   version: 2
