@@ -25,11 +25,8 @@ jobs:
           mkdir -pv $(dirname $GOTESTSUM_JUNITFILE)
           PACKAGES="$(go list ./... | circleci tests split --split-by=timings --timings-type=classname)"
           gotestsum -- -timeout=60s -race $PACKAGES
-          RC=$?
-          echo "export TESTRC=${RC}" >> $BASH_ENV
       - store_test_results:
           path: /tmp/results
-      - run: exit $TESTRC
   integration:
     executor: go
     parallelism: 4
@@ -42,8 +39,6 @@ jobs:
           mkdir -pv $(dirname $GOTESTSUM_JUNITFILE)
           PACKAGES="$(go list ./... | circleci tests split --split-by=timings --timings-type=classname)"
           gotestsum -- -timeout=180s -tags=integration
-          RC=$?
-          echo "export TESTRC=${RC}" >> $BASH_ENV
       - store_test_results:
           path: /tmp/results
       - run: exit $TESTRC

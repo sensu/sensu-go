@@ -1,6 +1,7 @@
 package testing
 
 import (
+	"fmt"
 	"io/ioutil"
 	"log"
 	"os"
@@ -76,6 +77,17 @@ func RunCmd(cmd *cobra.Command, args []string) (string, error) {
 
 	// Store the contents of the reader as a string
 	bytes, _ := ioutil.ReadFile(tmpFile.Name())
+
+	// Print a newline after running the command as a workaround for a bug in
+	// test2json. See https://github.com/golang/go/issues/38063 for more
+	// information.
+	bytesLen := len(bytes)
+	if bytesLen > 0 {
+		fmt.Fprintf(os.Stdout, "\n")
+	}
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "\n")
+	}
 
 	return string(bytes), err
 }
