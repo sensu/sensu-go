@@ -33,7 +33,7 @@ jobs:
       - go/mod-download-cached
       - run: |
           mkdir -pv /tmp/results
-          PACKAGES=$(go list ./... | circleci tests split --split-by=timings --timings-type=classname)"
+          PACKAGES="$(go list ./... | circleci tests split --split-by=timings --timings-type=classname)"
           gotestsum --junitfile /tmp/results/integration-tests.xml -- -timeout=180s -tags=integration
 
 workflows:
