@@ -3,31 +3,42 @@ version: 2.1
 orbs:
   go: circleci/go@1.1.2
 
-sensu_go_build_env: &sensu_go_build_env
-  docker:
-    - image: cimg/go:1.13.15
+executors:
+  go:
+    resource_class: large
+    docker:
+      - image: cimg/go:1.13.15
+    environment:
+      GO111MODULE: "on"
+      GOPROXY: "https://proxy.golang.org"
 
 jobs:
-  test:
-    <<: *sensu_go_build_env
-    environment:
-      GO111MODULE: 'on'
-      GOPROXY: 'https://proxy.golang.org'
-    resource_class: large
-    parallelism: 2
+  unit:
+    executor: go
+    parallelism: 4
     steps:
       - checkout
       - go/mod-download-cached
-
-      # Run tests
-      - run: ./build.sh unit
-      - run: ./build.sh integration
+      - run: |
+          mkdir -pv /tmp/results
+          PACKAGES="$(go list ./... | circleci tests split --split-by=timings --timings-type=classname)"
+          gotestsum --junitfile /tmp/results/unit-tests.xml -- -timeout=60s -race $PACKAGES
+      - store_test_results:
+          path: /tmp/results
+  integration:
+    executor: go
+    parallelism: 4
+    steps:
+      - checkout
+      - go/mod-download-cached
+      - run: |
+          mkdir -pv /tmp/results
+          PACKAGES=$(go list ./... | circleci tests split --split-by=timings --timings-type=classname)"
+          gotestsum --junitfile /tmp/results/integration-tests.xml -- -timeout=180s -tags=integration
 
 workflows:
   version: 2
-  run_the_tests:
+  test:
     jobs:
-      - test:
-          filters:
-            tags:
-              ignore: /.*/
+      - unit
+      - integration
