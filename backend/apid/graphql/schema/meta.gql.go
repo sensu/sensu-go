@@ -248,6 +248,12 @@ type ObjectMetaAnnotationsFieldResolver interface {
 	Annotations(p graphql.ResolveParams) (interface{}, error)
 }
 
+// ObjectMetaCreatedByFieldResolver implement to resolve requests for the ObjectMeta's createdBy field.
+type ObjectMetaCreatedByFieldResolver interface {
+	// CreatedBy implements response to request for createdBy field.
+	CreatedBy(p graphql.ResolveParams) (string, error)
+}
+
 //
 // ObjectMetaFieldResolvers represents a collection of methods whose products represent the
 // response values of the 'ObjectMeta' type.
@@ -314,6 +320,7 @@ type ObjectMetaFieldResolvers interface {
 	ObjectMetaNamespaceFieldResolver
 	ObjectMetaLabelsFieldResolver
 	ObjectMetaAnnotationsFieldResolver
+	ObjectMetaCreatedByFieldResolver
 }
 
 // ObjectMetaAliases implements all methods on ObjectMetaFieldResolvers interface by using reflection to
@@ -401,6 +408,19 @@ func (_ ObjectMetaAliases) Annotations(p graphql.ResolveParams) (interface{}, er
 	return val, err
 }
 
+// CreatedBy implements response to request for 'createdBy' field.
+func (_ ObjectMetaAliases) CreatedBy(p graphql.ResolveParams) (string, error) {
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	ret, ok := val.(string)
+	if err != nil {
+		return ret, err
+	}
+	if !ok {
+		return ret, errors.New("unable to coerce value for field 'createdBy'")
+	}
+	return ret, err
+}
+
 // ObjectMetaType ObjectMeta is metadata all persisted objects have.
 var ObjectMetaType = graphql.NewType("ObjectMeta", graphql.ObjectKind)
 
@@ -436,6 +456,13 @@ func _ObjTypeObjectMetaAnnotationsHandler(impl interface{}) graphql1.FieldResolv
 	}
 }
 
+func _ObjTypeObjectMetaCreatedByHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(ObjectMetaCreatedByFieldResolver)
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.CreatedBy(frp)
+	}
+}
+
 func _ObjectTypeObjectMetaConfigFn() graphql1.ObjectConfig {
 	return graphql1.ObjectConfig{
 		Description: "ObjectMeta is metadata all persisted objects have.",
@@ -443,28 +470,35 @@ func _ObjectTypeObjectMetaConfigFn() graphql1.ObjectConfig {
 			"annotations": &graphql1.Field{
 				Args:              graphql1.FieldConfigArgument{},
 				DeprecationReason: "",
-				Description:       "self descriptive",
+				Description:       "Annotations is an unstructured key value map stored with a resource that\nmay be set by external tools to store and retrieve arbitrary metadata. They\nare not queryable and should be preserved when modifying objects.",
 				Name:              "annotations",
 				Type:              graphql1.NewList(graphql1.NewNonNull(graphql.OutputType("KVPairString"))),
+			},
+			"createdBy": &graphql1.Field{
+				Args:              graphql1.FieldConfigArgument{},
+				DeprecationReason: "",
+				Description:       "CreatedBy field indicates which user created the resource",
+				Name:              "createdBy",
+				Type:              graphql1.NewNonNull(graphql1.String),
 			},
 			"labels": &graphql1.Field{
 				Args:              graphql1.FieldConfigArgument{},
 				DeprecationReason: "",
-				Description:       "self descriptive",
+				Description:       "Map of string keys and values that can be used to organize and categorize\n(scope and select) objects. May also be used in filters and token\nsubstitution.",
 				Name:              "labels",
 				Type:              graphql1.NewList(graphql1.NewNonNull(graphql.OutputType("KVPairString"))),
 			},
 			"name": &graphql1.Field{
 				Args:              graphql1.FieldConfigArgument{},
 				DeprecationReason: "",
-				Description:       "self descriptive",
+				Description:       "Name must be unique within a namespace. Name is primarily intended for\ncreation idempotence and configuration definition.",
 				Name:              "name",
 				Type:              graphql1.NewNonNull(graphql1.String),
 			},
 			"namespace": &graphql1.Field{
 				Args:              graphql1.FieldConfigArgument{},
 				DeprecationReason: "",
-				Description:       "self descriptive",
+				Description:       "Namespace defines a logical grouping of objects within which each object\nname must be unique.",
 				Name:              "namespace",
 				Type:              graphql1.NewNonNull(graphql1.String),
 			},
@@ -487,6 +521,7 @@ var _ObjectTypeObjectMetaDesc = graphql.ObjectDesc{
 	Config: _ObjectTypeObjectMetaConfigFn,
 	FieldHandlers: map[string]graphql.FieldHandler{
 		"annotations": _ObjTypeObjectMetaAnnotationsHandler,
+		"createdBy":   _ObjTypeObjectMetaCreatedByHandler,
 		"labels":      _ObjTypeObjectMetaLabelsHandler,
 		"name":        _ObjTypeObjectMetaNameHandler,
 		"namespace":   _ObjTypeObjectMetaNamespaceHandler,
