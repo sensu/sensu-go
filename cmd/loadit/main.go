@@ -13,6 +13,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/sensu/sensu-go/agent"
+	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/types"
 	"github.com/sirupsen/logrus"
 
@@ -79,6 +80,12 @@ func main() {
 		if err != nil {
 			log.Fatal(err)
 		}
+
+		agent.ProcessGetter = &procGetter{}
+		if err := agent.RefreshSystemInfo(ctx); err != nil {
+			log.Fatal(err)
+		}
+
 		go func() {
 			if err := agent.Run(ctx); err != nil {
 				log.Fatal(err)
@@ -93,4 +100,11 @@ func main() {
 	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
 
 	<-sigs
+}
+
+type procGetter struct{}
+
+func (p *procGetter) Get(ctx context.Context) ([]*corev2.Process, error) {
+	processList := []*corev2.Process{{Name: "systemd"}, {Name: "kthreadd"}, {Name: "ksoftirqd/0"}, {Name: "kworker/0:0H"}, {Name: "kworker/u12:0"}, {Name: "migration/0"}, {Name: "rcu_bh"}, {Name: "rcu_sched"}, {Name: "lru-add-drain"}, {Name: "watchdog/0"}, {Name: "watchdog/1"}, {Name: "migration/1"}, {Name: "ksoftirqd/1"}, {Name: "kworker/1:0H"}, {Name: "watchdog/2"}, {Name: "migration/2"}, {Name: "ksoftirqd/2"}, {Name: "kworker/2:0H"}, {Name: "watchdog/3"}, {Name: "migration/3"}, {Name: "ksoftirqd/3"}, {Name: "kworker/3:0"}, {Name: "kworker/3:0H"}, {Name: "watchdog/4"}, {Name: "migration/4"}, {Name: "ksoftirqd/4"}, {Name: "kworker/4:0"}, {Name: "kworker/4:0H"}, {Name: "watchdog/5"}, {Name: "migration/5"}, {Name: "ksoftirqd/5"}, {Name: "kworker/5:0"}, {Name: "kworker/5:0H"}, {Name: "kdevtmpfs"}, {Name: "netns"}, {Name: "khungtaskd"}, {Name: "writeback"}, {Name: "kintegrityd"}, {Name: "bioset"}, {Name: "bioset"}, {Name: "bioset"}, {Name: "kblockd"}, {Name: "md"}, {Name: "edac-poller"}, {Name: "watchdogd"}, {Name: "kworker/u12:1"}, {Name: "kswapd0"}, {Name: "ksmd"}, {Name: "khugepaged"}, {Name: "crypto"}, {Name: "kthrotld"}, {Name: "kmpath_rdacd"}, {Name: "kaluad"}, {Name: "kworker/1:1"}, {Name: "kpsmoused"}, {Name: "ipv6_addrconf"}, {Name: "deferwq"}, {Name: "kworker/4:1"}, {Name: "kauditd"}, {Name: "kworker/2:1"}, {Name: "ata_sff"}, {Name: "scsi_eh_0"}, {Name: "scsi_tmf_0"}, {Name: "scsi_eh_1"}, {Name: "scsi_tmf_1"}, {Name: "bioset"}, {Name: "xfsalloc"}, {Name: "xfs_mru_cache"}, {Name: "xfs-buf/sda1"}, {Name: "xfs-data/sda1"}, {Name: "xfs-conv/sda1"}, {Name: "xfs-cil/sda1"}, {Name: "xfs-reclaim/sda"}, {Name: "xfs-log/sda1"}, {Name: "xfs-eofblocks/s"}, {Name: "xfsaild/sda1"}, {Name: "kworker/0:1H"}, {Name: "kworker/5:1H"}, {Name: "kworker/2:2"}, {Name: "kworker/1:2"}, {Name: "systemd-journald"}, {Name: "kworker/1:1H"}, {Name: "systemd-udevd"}, {Name: "kworker/3:1H"}, {Name: "rpciod"}, {Name: "xprtiod"}, {Name: "auditd"}, {Name: "kworker/5:2"}, {Name: "dbus-daemon"}, {Name: "rpcbind"}, {Name: "polkitd"}, {Name: "irqbalance"}, {Name: "systemd-logind"}, {Name: "chronyd"}, {Name: "gssproxy"}, {Name: "kworker/2:1H"}, {Name: "agetty"}, {Name: "tuned"}, {Name: "sshd"}, {Name: "rsyslogd"}, {Name: "kworker/3:2"}, {Name: "master"}, {Name: "pickup"}, {Name: "qmgr"}, {Name: "kworker/4:1H"}, {Name: "crond"}, {Name: "kworker/0:3"}, {Name: "ttm_swap"}, {Name: "iprt-VBoxWQueue"}, {Name: "VBoxService"}, {Name: "NetworkManager"}, {Name: "dhclient"}, {Name: "dhclient"}, {Name: "sshd"}, {Name: "sshd"}, {Name: "bash"}, {Name: "sudo"}, {Name: "su"}, {Name: "bash"}, {Name: "kworker/0:1"}, {Name: "kworker/0:0"}, {Name: "sensu-agent"}}
+	return processList, nil
 }
