@@ -11,8 +11,34 @@ type KVPairString {
 ObjectMeta is metadata all persisted objects have.
 """
 type ObjectMeta {
+  """
+  Name must be unique within a namespace. Name is primarily intended for
+  creation idempotence and configuration definition.
+  """
   name: String!
+
+  """
+  Namespace defines a logical grouping of objects within which each object
+  name must be unique.
+  """
   namespace: String!
+
+  """
+  Map of string keys and values that can be used to organize and categorize
+  (scope and select) objects. May also be used in filters and token
+  substitution.
+  """
   labels: [KVPairString!]
+
+  """
+  Annotations is an unstructured key value map stored with a resource that
+  may be set by external tools to store and retrieve arbitrary metadata. They
+  are not queryable and should be preserved when modifying objects.
+  """
   annotations: [KVPairString!]
+
+  """
+  CreatedBy field indicates which user created the resource
+  """
+  createdBy: String!
 }

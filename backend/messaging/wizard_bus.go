@@ -49,10 +49,9 @@ func init() {
 // message types over a single topic, however, as we do not want to introduce
 // a dependency on reflection to determine the type of the received interface{}.
 type WizardBus struct {
-	running  atomic.Value
-	topicsMu sync.RWMutex
-	topics   map[string]*wizardTopic
-	errchan  chan error
+	running atomic.Value
+	topics  sync.Map
+	errchan chan error
 }
 
 // WizardBusConfig configures a WizardBus
@@ -65,7 +64,6 @@ type WizardOption func(*WizardBus) error
 func NewWizardBus(cfg WizardBusConfig, opts ...WizardOption) (*WizardBus, error) {
 	bus := &WizardBus{
 		errchan: make(chan error, 1),
-		topics:  make(map[string]*wizardTopic),
 	}
 	for _, opt := range opts {
 		if err := opt(bus); err != nil {
@@ -87,11 +85,10 @@ func (b *WizardBus) Start() error {
 func (b *WizardBus) Stop() error {
 	b.running.Store(false)
 	close(b.errchan)
-	b.topicsMu.Lock()
-	for _, wTopic := range b.topics {
-		wTopic.Close()
-	}
-	b.topicsMu.Unlock()
+	b.topics.Range(func(_, value interface{}) bool {
+		value.(*wizardTopic).Close()
+		return true
+	})
 	return nil
 }
 
@@ -139,13 +136,13 @@ func (b *WizardBus) Subscribe(topic string, consumer string, sub Subscriber) (Su
 		return Subscription{}, errors.New("bus no longer running")
 	}
 
-	b.topicsMu.Lock()
-	defer b.topicsMu.Unlock()
-
-	t, ok := b.topics[topic]
-	if !ok || t.IsClosed() {
+	var t *wizardTopic
+	value, ok := b.topics.Load(topic)
+	if !ok || value.(*wizardTopic).IsClosed() {
 		t = b.createTopic(topic)
-		b.topics[topic] = t
+		b.topics.Store(topic, t)
+	} else {
+		t = value.(*wizardTopic)
 	}
 
 	subscription, err := t.Subscribe(consumer, sub)
@@ -173,11 +170,9 @@ func (b *WizardBus) Publish(topic string, msg interface{}) error {
 		return errors.New("bus no longer running")
 	}
 
-	b.topicsMu.RLock()
-	wTopic, ok := b.topics[topic]
-	b.topicsMu.RUnlock()
-
+	value, ok := b.topics.Load(topic)
 	if ok {
+		wTopic := value.(*wizardTopic)
 		defer messagePublishedCounter.WithLabelValues(genericTopic).Inc()
 		wTopic.Send(msg)
 	}
