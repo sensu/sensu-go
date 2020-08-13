@@ -106,7 +106,7 @@ func main() {
 var processes = []*corev2.Process{}
 
 func init() {
-	processes = mockProcesses(50)
+	processes = mockProcesses(25)
 }
 
 func mockProcesses(length int) []*corev2.Process {
