@@ -9,6 +9,15 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ### Changed
 - Improved agent websocket connection logging.
+### Fixed
+- Failed check events now get written to the event log file.
+
+## [6.0.0] - 2020-08-04
+
+### Added
+- Log a warning when secrets cannot be sent to an agent because mTLS is not
+enabled.
+- Added the is_silenced boolean key to event.Check object.
 
 ### Fixed
 - Fixed potential Web UI crash when fetching events in namespace with > 1000 events.
