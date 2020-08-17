@@ -7,6 +7,9 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
 
+### Fixed
+- Failed check events now get written to the event log file.
+
 ## [6.0.0] - 2020-08-04
 
 ### Added
