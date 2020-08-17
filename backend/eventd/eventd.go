@@ -477,6 +477,7 @@ func (e *Eventd) handleFailure(ctx context.Context, event *corev2.Event) error {
 		return err
 	}
 
+	e.Logger.Println(updatedEvent)
 	return e.bus.Publish(messaging.TopicEvent, updatedEvent)
 }
 
