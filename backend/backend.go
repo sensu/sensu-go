@@ -236,7 +236,7 @@ func Initialize(ctx context.Context, config *Config) (*Backend, error) {
 	// Initialize asset manager
 	backendEntity := b.getBackendEntity(config)
 	logger.WithField("entity", backendEntity).Info("backend entity information")
-	assetManager := asset.NewManager(config.CacheDir, backendEntity, &sync.WaitGroup{})
+	assetManager := asset.NewManager(config.CacheDir, "", backendEntity, &sync.WaitGroup{})
 	limit := b.cfg.AssetsRateLimit
 	if limit == 0 {
 		limit = rate.Limit(asset.DefaultAssetsRateLimit)

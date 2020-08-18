@@ -81,6 +81,7 @@ func TestBoltDBManager(t *testing.T) {
 	getter := asset.NewBoltDBGetter(
 		db,
 		tmpAssetDir,
+		"",
 		&localFetcher{},
 		nil,
 		nil,

@@ -271,7 +271,11 @@ func (a *Agent) Run(ctx context.Context) error {
 	logger.Info("configuration successfully validated")
 
 	if !a.config.DisableAssets {
-		assetManager := asset.NewManager(a.config.CacheDir, a.getAgentEntity(), &a.wg)
+		var trustedCAFile string
+		if a.config.TLS != nil {
+			trustedCAFile = a.config.TLS.TrustedCAFile
+		}
+		assetManager := asset.NewManager(a.config.CacheDir, trustedCAFile, a.getAgentEntity(), &a.wg)
 		limit := a.config.AssetsRateLimit
 		if limit == 0 {
 			limit = rate.Limit(asset.DefaultAssetsRateLimit)

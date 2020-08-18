@@ -3,6 +3,8 @@ package asset
 import (
 	"bufio"
 	"context"
+	"crypto/tls"
+	"crypto/x509"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -30,10 +32,39 @@ type Fetcher interface {
 }
 
 // URLGetter gets all content at the specified URL.
-type urlGetter func(context.Context, string, map[string]string) (io.ReadCloser, error)
+type urlGetter func(context.Context, string, string, map[string]string) (io.ReadCloser, error)
 
 // Get the target URL and return an io.ReadCloser
-func httpGet(ctx context.Context, path string, headers map[string]string) (io.ReadCloser, error) {
+func httpGet(ctx context.Context, path, trustedCAFile string, headers map[string]string) (io.ReadCloser, error) {
+	client := &http.Client{}
+
+	if trustedCAFile != "" {
+		rootCAs, err := x509.SystemCertPool()
+		if err != nil {
+			logger.WithError(err).Error("failed to retrieve system cert pool")
+		}
+		if rootCAs == nil {
+			rootCAs = x509.NewCertPool()
+		}
+
+		certs, err := ioutil.ReadFile(trustedCAFile)
+		if err != nil {
+			logger.WithError(err).Errorf("failed to read trusted CA file: %s", trustedCAFile)
+		}
+
+		if ok := rootCAs.AppendCertsFromPEM(certs); !ok {
+			logger.Errorf("failed to append %s to RootCAs, using system certs only", trustedCAFile)
+		}
+
+		client = &http.Client{
+			Transport: &http.Transport{
+				TLSClientConfig: &tls.Config{
+					RootCAs: rootCAs,
+				},
+			},
+		}
+	}
+
 	req, err := http.NewRequest(http.MethodGet, path, nil)
 	if err != nil {
 		return nil, fmt.Errorf("error fetching asset: %s", err)
@@ -47,7 +78,6 @@ func httpGet(ctx context.Context, path string, headers map[string]string) (io.Re
 		}
 	}
 
-	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("error fetching asset: %s", err)
@@ -61,8 +91,9 @@ func httpGet(ctx context.Context, path string, headers map[string]string) (io.Re
 
 // An HTTPFetcher fetches the contents of files at a given URL.
 type httpFetcher struct {
-	URLGetter urlGetter
-	Limiter   *rate.Limiter
+	URLGetter     urlGetter
+	Limiter       *rate.Limiter
+	trustedCAFile string
 }
 
 // Fetch the file found at the specified url, and return the file or an
@@ -78,7 +109,7 @@ func (h *httpFetcher) Fetch(ctx context.Context, url string, headers map[string]
 		}
 	}
 
-	resp, err := h.URLGetter(ctx, url, headers)
+	resp, err := h.URLGetter(ctx, url, h.trustedCAFile, headers)
 	if err != nil {
 		return nil, err
 	}
