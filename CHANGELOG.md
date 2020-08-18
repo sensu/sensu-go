@@ -11,6 +11,9 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 - Added Prometheus transformer for extracting metrics from check output
 using the Prometheus Exposition Text Format.
 
+### Changed
+- The trusted CA file is now used for agent-side asset retrieval.
+
 ## [6.0.0] - 2020-08-04
 
 ### Added

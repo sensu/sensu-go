@@ -19,6 +19,7 @@ var (
 // expander are nil, the getter will use the built-in components.
 func NewBoltDBGetter(db *bolt.DB,
 	localStorage string,
+	trustedCAFile string,
 	fetcher Fetcher,
 	verifier Verifier,
 	expander Expander,
@@ -26,7 +27,8 @@ func NewBoltDBGetter(db *bolt.DB,
 
 	if fetcher == nil {
 		fetcher = &httpFetcher{
-			Limiter: limiter,
+			Limiter:       limiter,
+			trustedCAFile: trustedCAFile,
 		}
 	}
 

@@ -605,7 +605,7 @@ func TestCommandManager_ExecCommand(t *testing.T) {
 	}
 
 	callbackFn := func(m *CommandManager, cacheDir string) {
-		m.assetManager = asset.NewManager(cacheDir, entity, &wg)
+		m.assetManager = asset.NewManager(cacheDir, "", entity, &wg)
 		m.assetGetter = &mockassetgetter.MockAssetGetter{}
 	}
 
