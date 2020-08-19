@@ -122,7 +122,7 @@ func GetUser(ctx context.Context, attrs *authorization.Attributes) error {
 	// Get the claims from the request context
 	claims := jwt.GetClaimsFromContext(ctx)
 	if claims == nil {
-		return authorization.ErrNoCliams
+		return authorization.ErrNoClaims
 	}
 
 	// Add the user to our request info

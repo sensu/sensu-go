@@ -22,7 +22,7 @@ func newStdErr(input string, err error) stdErr {
 		input:   input,
 		message: err.Error(),
 	}
-	if err == authorization.ErrUnauthorized || err == authorization.ErrNoCliams {
+	if err == authorization.ErrUnauthorized || err == authorization.ErrNoClaims {
 		out.code = schema.ErrCodes.ERR_PERMISSION_DENIED
 	}
 	switch err.(type) {
