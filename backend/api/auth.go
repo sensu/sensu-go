@@ -2,7 +2,6 @@ package api
 
 import (
 	"context"
-	"errors"
 
 	"github.com/sensu/sensu-go/backend/authentication/jwt"
 	"github.com/sensu/sensu-go/backend/authorization"
@@ -15,7 +14,7 @@ func addAuthUser(ctx context.Context, attrs *authorization.Attributes) error {
 	// Get the claims from the request context
 	claims := jwt.GetClaimsFromContext(ctx)
 	if claims == nil {
-		return errors.New("no claims found in the request context")
+		return authorization.ErrNoCliams
 	}
 
 	// Add the user to our request info
