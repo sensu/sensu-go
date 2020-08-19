@@ -1,6 +1,7 @@
 package strings
 
 import (
+	"reflect"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -80,5 +81,40 @@ func TestIntersect(t *testing.T) {
 func BenchmarkFoundInArray(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		FoundInArray("foo!BAR   baz", []string{"foo", "foobar", "FOO BAR", "foo bar baz", "foobarbaz"})
+	}
+}
+
+func TestDiff(t *testing.T) {
+	tests := []struct {
+		name string
+		a    []string
+		b    []string
+		want []string
+	}{
+		{
+			name: "two equivalent slices return nothing",
+			a:    []string{"red", "blue"},
+			b:    []string{"red", "blue"},
+			want: []string{},
+		},
+		{
+			name: "elements not matched in b are not returned",
+			a:    []string{"red", "blue"},
+			b:    []string{"red", "blue", "green"},
+			want: []string{},
+		},
+		{
+			name: "elements not matched in a are returned",
+			a:    []string{"red", "blue", "yellow"},
+			b:    []string{"red", "blue"},
+			want: []string{"yellow"},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := Diff(tt.a, tt.b); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("Diff() = %v, want %v", got, tt.want)
+			}
+		})
 	}
 }
