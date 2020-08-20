@@ -1,6 +1,7 @@
 package v2
 
 import (
+	"reflect"
 	"sort"
 	"testing"
 
@@ -157,6 +158,46 @@ func TestSilencedMatches(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			assert.Equal(t, tc.expected, tc.silenced.Matches(tc.check, tc.subscription))
+		})
+	}
+}
+
+func TestSilencedFields(t *testing.T) {
+	tests := []struct {
+		name    string
+		args    Resource
+		wantKey string
+		want    string
+	}{
+		{
+			name:    "exposes name",
+			args:    FixtureSilenced("a:b"),
+			wantKey: "silenced.name",
+			want:    "a:b",
+		},
+		{
+			name:    "exposes expire_on_resolve",
+			args:    FixtureSilenced("a:b"),
+			wantKey: "silenced.expire_on_resolve",
+			want:    "false",
+		},
+		{
+			name: "exposes labels",
+			args: &Silenced{
+				ObjectMeta: ObjectMeta{
+					Labels: map[string]string{"region": "philadelphia"},
+				},
+			},
+			wantKey: "silenced.labels.region",
+			want:    "philadelphia",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := SilencedFields(tt.args)
+			if !reflect.DeepEqual(got[tt.wantKey], tt.want) {
+				t.Errorf("SilencedFields() = got[%s] %v, want[%s] %v", tt.wantKey, got[tt.wantKey], tt.wantKey, tt.want)
+			}
 		})
 	}
 }

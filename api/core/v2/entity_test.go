@@ -2,6 +2,7 @@ package v2
 
 import (
 	"encoding/json"
+	"reflect"
 	"sort"
 	"testing"
 
@@ -115,6 +116,46 @@ func TestSortEntitiesByLastSeen(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			sort.Sort(SortEntitiesByLastSeen(tc.inRecords))
 			assert.EqualValues(t, tc.expected, tc.inRecords)
+		})
+	}
+}
+
+func TestEntityFields(t *testing.T) {
+	tests := []struct {
+		name    string
+		args    Resource
+		wantKey string
+		want    string
+	}{
+		{
+			name:    "exposes name",
+			args:    FixtureEntity("ap-007"),
+			wantKey: "entity.name",
+			want:    "ap-007",
+		},
+		{
+			name:    "exposes deregister",
+			args:    &Entity{Deregister: true},
+			wantKey: "entity.deregister",
+			want:    "true",
+		},
+		{
+			name: "exposes labels",
+			args: &Entity{
+				ObjectMeta: ObjectMeta{
+					Labels: map[string]string{"region": "philadelphia"},
+				},
+			},
+			wantKey: "entity.labels.region",
+			want:    "philadelphia",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := EntityFields(tt.args)
+			if !reflect.DeepEqual(got[tt.wantKey], tt.want) {
+				t.Errorf("EntityFields() = got[%s] %v, want[%s] %v", tt.wantKey, got[tt.wantKey], tt.wantKey, tt.want)
+			}
 		})
 	}
 }

@@ -423,7 +423,7 @@ func (e *Event) IsSilencedBy(entry *Silenced) bool {
 // EventFields returns a set of fields that represent that resource
 func EventFields(r Resource) map[string]string {
 	resource := r.(*Event)
-	return map[string]string{
+	fields := map[string]string{
 		"event.name":                 resource.ObjectMeta.Name,
 		"event.namespace":            resource.ObjectMeta.Namespace,
 		"event.is_silenced":          isSilenced(resource),
@@ -440,6 +440,10 @@ func EventFields(r Resource) map[string]string {
 		"event.entity.entity_class":  resource.Entity.EntityClass,
 		"event.entity.subscriptions": strings.Join(resource.Entity.Subscriptions, ","),
 	}
+	stringsutil.MergeMapWithPrefix(fields, resource.ObjectMeta.Labels, "event.labels.")
+	stringsutil.MergeMapWithPrefix(fields, resource.Entity.ObjectMeta.Labels, "event.labels.")
+	stringsutil.MergeMapWithPrefix(fields, resource.Check.ObjectMeta.Labels, "event.labels.")
+	return fields
 }
 
 func isSilenced(e *Event) string {

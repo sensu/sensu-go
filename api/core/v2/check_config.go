@@ -12,6 +12,7 @@ import (
 
 	jsoniter "github.com/json-iterator/go"
 	cron "github.com/robfig/cron/v3"
+	stringsutil "github.com/sensu/sensu-go/api/core/v2/internal/stringutil"
 )
 
 // FixtureCheckConfig returns a fixture for a CheckConfig object.
@@ -215,7 +216,7 @@ func (s *checkSorter) Less(i, j int) bool {
 // CheckConfigFields returns a set of fields that represent that resource
 func CheckConfigFields(r Resource) map[string]string {
 	resource := r.(*CheckConfig)
-	return map[string]string{
+	fields := map[string]string{
 		"check.name":           resource.ObjectMeta.Name,
 		"check.namespace":      resource.ObjectMeta.Namespace,
 		"check.handlers":       strings.Join(resource.Handlers, ","),
@@ -224,4 +225,6 @@ func CheckConfigFields(r Resource) map[string]string {
 		"check.runtime_assets": strings.Join(resource.RuntimeAssets, ","),
 		"check.subscriptions":  strings.Join(resource.Subscriptions, ","),
 	}
+	stringsutil.MergeMapWithPrefix(fields, resource.ObjectMeta.Labels, "check.labels.")
+	return fields
 }

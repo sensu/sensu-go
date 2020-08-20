@@ -10,6 +10,7 @@ import (
 	"strconv"
 	"strings"
 
+	stringsutil "github.com/sensu/sensu-go/api/core/v2/internal/stringutil"
 	utilstrings "github.com/sensu/sensu-go/api/core/v2/internal/stringutil"
 )
 
@@ -217,13 +218,15 @@ func (s *entitySorter) Less(i, j int) bool {
 // EntityFields returns a set of fields that represent that resource
 func EntityFields(r Resource) map[string]string {
 	resource := r.(*Entity)
-	return map[string]string{
+	fields := map[string]string{
 		"entity.name":          resource.ObjectMeta.Name,
 		"entity.namespace":     resource.ObjectMeta.Namespace,
 		"entity.deregister":    strconv.FormatBool(resource.Deregister),
 		"entity.entity_class":  resource.EntityClass,
 		"entity.subscriptions": strings.Join(resource.Subscriptions, ","),
 	}
+	stringsutil.MergeMapWithPrefix(fields, resource.ObjectMeta.Labels, "entity.labels.")
+	return fields
 }
 
 // SetNamespace sets the namespace of the resource.

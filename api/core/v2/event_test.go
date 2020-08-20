@@ -3,9 +3,10 @@ package v2
 import (
 	"encoding/json"
 	"fmt"
+	"reflect"
 	"sort"
 	"testing"
-	time "time"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
@@ -878,6 +879,63 @@ func TestUnmarshalID(t *testing.T) {
 			}
 			if err != nil {
 				t.Fatal(err)
+			}
+		})
+	}
+}
+
+func TestEventFields(t *testing.T) {
+	tests := []struct {
+		name    string
+		args    Resource
+		wantKey string
+		want    string
+	}{
+		{
+			name:    "exposes entity.name",
+			args:    FixtureEvent("frank", "reynolds"),
+			wantKey: "event.entity.name",
+			want:    "frank",
+		},
+		{
+			name:    "exposes check.name",
+			args:    FixtureEvent("frank", "reynolds"),
+			wantKey: "event.check.name",
+			want:    "reynolds",
+		},
+		{
+			name: "exposes check labels",
+			args: &Event{
+				Check:  &Check{ObjectMeta: ObjectMeta{Labels: map[string]string{"src": "bonsai"}}},
+				Entity: &Entity{},
+			},
+			wantKey: "event.labels.src",
+			want:    "bonsai",
+		},
+		{
+			name: "exposes entity labels",
+			args: &Event{
+				Check:  &Check{},
+				Entity: &Entity{ObjectMeta: ObjectMeta{Labels: map[string]string{"region": "philadelphia"}}},
+			},
+			wantKey: "event.labels.region",
+			want:    "philadelphia",
+		},
+		{
+			name: "check labels take precendence",
+			args: &Event{
+				Check:  &Check{ObjectMeta: ObjectMeta{Labels: map[string]string{"dupe": "check"}}},
+				Entity: &Entity{ObjectMeta: ObjectMeta{Labels: map[string]string{"dupe": "entity"}}},
+			},
+			wantKey: "event.labels.dupe",
+			want:    "check",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := EventFields(tt.args)
+			if !reflect.DeepEqual(got[tt.wantKey], tt.want) {
+				t.Errorf("EventFields() = got[%s] %v, want[%s] %v", tt.wantKey, got[tt.wantKey], tt.wantKey, tt.want)
 			}
 		})
 	}

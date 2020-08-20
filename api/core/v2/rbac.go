@@ -374,39 +374,47 @@ func NewRoleBinding(meta ObjectMeta) *RoleBinding {
 // ClusterRoleFields returns a set of fields that represent that resource
 func ClusterRoleFields(r Resource) map[string]string {
 	resource := r.(*ClusterRole)
-	return map[string]string{
+	fields := map[string]string{
 		"clusterrole.name": resource.ObjectMeta.Name,
 	}
+	stringsutil.MergeMapWithPrefix(fields, resource.ObjectMeta.Labels, "clusterrole.labels.")
+	return fields
 }
 
 // ClusterRoleBindingFields returns a set of fields that represent that resource
 func ClusterRoleBindingFields(r Resource) map[string]string {
 	resource := r.(*ClusterRoleBinding)
-	return map[string]string{
+	fields := map[string]string{
 		"clusterrolebinding.name":          resource.ObjectMeta.Name,
 		"clusterrolebinding.role_ref.name": resource.RoleRef.Name,
 		"clusterrolebinding.role_ref.type": resource.RoleRef.Type,
 	}
+	stringsutil.MergeMapWithPrefix(fields, resource.ObjectMeta.Labels, "clusterrolebinding.labels.")
+	return fields
 }
 
 // RoleFields returns a set of fields that represent that resource
 func RoleFields(r Resource) map[string]string {
 	resource := r.(*Role)
-	return map[string]string{
+	fields := map[string]string{
 		"role.name":      resource.ObjectMeta.Name,
 		"role.namespace": resource.ObjectMeta.Namespace,
 	}
+	stringsutil.MergeMapWithPrefix(fields, resource.ObjectMeta.Labels, "role.labels.")
+	return fields
 }
 
 // RoleBindingFields returns a set of fields that represent that resource
 func RoleBindingFields(r Resource) map[string]string {
 	resource := r.(*RoleBinding)
-	return map[string]string{
+	fields := map[string]string{
 		"rolebinding.name":          resource.ObjectMeta.Name,
 		"rolebinding.namespace":     resource.ObjectMeta.Namespace,
 		"rolebinding.role_ref.name": resource.RoleRef.Name,
 		"rolebinding.role_ref.type": resource.RoleRef.Type,
 	}
+	stringsutil.MergeMapWithPrefix(fields, resource.ObjectMeta.Labels, "rolebinding.labels.")
+	return fields
 }
 
 // SetNamespace sets the namespace of the resource.

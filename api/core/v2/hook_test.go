@@ -2,6 +2,7 @@ package v2
 
 import (
 	"encoding/json"
+	"reflect"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -105,5 +106,39 @@ func TestHookUnmarshal_GH1520(t *testing.T) {
 	}
 	if err := hc.Validate(); err != nil {
 		t.Fatal(err)
+	}
+}
+
+func TestHookConfigFields(t *testing.T) {
+	tests := []struct {
+		name    string
+		args    Resource
+		wantKey string
+		want    string
+	}{
+		{
+			name:    "exposes name",
+			args:    FixtureHookConfig("captn"),
+			wantKey: "hook.name",
+			want:    "captn",
+		},
+		{
+			name: "exposes labels",
+			args: &HookConfig{
+				ObjectMeta: ObjectMeta{
+					Labels: map[string]string{"region": "philadelphia"},
+				},
+			},
+			wantKey: "hook.labels.region",
+			want:    "philadelphia",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := HookConfigFields(tt.args)
+			if !reflect.DeepEqual(got[tt.wantKey], tt.want) {
+				t.Errorf("HookConfigFields() = got[%s] %v, want[%s] %v", tt.wantKey, got[tt.wantKey], tt.wantKey, tt.want)
+			}
+		})
 	}
 }
