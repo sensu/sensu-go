@@ -14,6 +14,7 @@ import (
 	"github.com/sensu/sensu-go/backend/store"
 	cachev2 "github.com/sensu/sensu-go/backend/store/cache/v2"
 	"github.com/sensu/sensu-go/types"
+	stringsutil "github.com/sensu/sensu-go/util/strings"
 	"github.com/sirupsen/logrus"
 )
 
@@ -394,12 +395,20 @@ func buildRequest(check *corev2.CheckConfig, s store.Store, secretsProviderManag
 
 	// Guard against iterating over assets if there are no assets associated with
 	// the check in the first place.
+	var found []string
 	if len(check.RuntimeAssets) != 0 {
 		// Filter out assets that are irrelevant
 		for _, asset := range assets {
 			if assetIsRelevant(asset, check.RuntimeAssets) {
+				found = append(found, check.Name)
 				request.Assets = append(request.Assets, *asset)
 			}
+		}
+	}
+	if len(found) < len(check.RuntimeAssets) {
+		notfound := stringsutil.Diff(check.RuntimeAssets, found)
+		for _, s := range notfound {
+			logger.WithFields(fields).Warnf("asset %q was requested but does not exist", s)
 		}
 	}
 
