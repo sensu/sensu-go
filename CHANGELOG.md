@@ -6,6 +6,7 @@ and this project adheres to [Semantic
 Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
+### Added
 - A warning is now logged when a runtime asset was requested but does not exist.
 
 ### Fixed
