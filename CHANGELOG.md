@@ -8,16 +8,14 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 ## Unreleased
 ### Added
 - A warning is now logged when a runtime asset was requested but does not exist.
-
-### Fixed
-- Failed check events now get written to the event log file.
-
-### Added
 - Added Prometheus transformer for extracting metrics from check output
 using the Prometheus Exposition Text Format.
 
 ### Changed
 - The trusted CA file is now used for agent-side asset retrieval.
+
+### Fixed
+- Failed check events now get written to the event log file.
 
 ## [6.0.0] - 2020-08-04
 
