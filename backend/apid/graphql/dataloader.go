@@ -353,7 +353,7 @@ func getLoader(ctx context.Context, loaderKey key) (*dataloader.Loader, error) {
 // When resolving a field, GraphQL does not consider the absence of a value an
 // error; as such we omit the error if the API client returns Permission denied.
 func handleListErr(err error) error {
-	if err == authorization.ErrUnauthorized {
+	if err == authorization.ErrUnauthorized || err == authorization.ErrNoClaims {
 		logger.WithError(err).Warn("couldn't access resource")
 		return nil
 	}
@@ -364,7 +364,7 @@ func handleListErr(err error) error {
 // error; as such we omit the error when the API client returns NotFound or
 // Permission denied.
 func handleFetchResult(resource interface{}, err error) (interface{}, error) {
-	if err == authorization.ErrUnauthorized {
+	if err == authorization.ErrUnauthorized || err == authorization.ErrNoClaims {
 		logger.WithError(err).Warn("couldn't access resource")
 		return nil, nil
 	}
