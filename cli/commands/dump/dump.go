@@ -6,6 +6,7 @@ import (
 	"io"
 	"os"
 	"reflect"
+	"strings"
 
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/apid/actions"
@@ -16,6 +17,7 @@ import (
 	"github.com/sensu/sensu-go/cli/commands/helpers"
 	"github.com/sensu/sensu-go/cli/resource"
 	"github.com/sensu/sensu-go/types"
+	utilstrings "github.com/sensu/sensu-go/util/strings"
 	"github.com/spf13/cobra"
 )
 
@@ -113,6 +115,13 @@ func execute(cli *cli.SensuCli) func(*cobra.Command, []string) error {
 			format = config.FormatYAML
 		}
 
+		resourceTypes := getAcceptedResourceTypes()
+
+		// validate all arguments received against the list of acceptable resource types
+		if err := checkArgs(args[0], resourceTypes); err != nil {
+			return err
+		}
+
 		// parse the comma separated resource types and match against the defined actions
 		requests, err := resource.GetResourceRequests(args[0], resource.All)
 		if err != nil {
@@ -121,6 +130,11 @@ func execute(cli *cli.SensuCli) func(*cobra.Command, []string) error {
 
 		omitSpec, err := cmd.Flags().GetString("omit")
 		if err != nil {
+			return err
+		}
+
+		// validate all omit arguments received against the list of acceptable resource types
+		if err := checkArgs(omitSpec, resourceTypes); err != nil {
 			return err
 		}
 
@@ -209,4 +223,33 @@ func execute(cli *cli.SensuCli) func(*cobra.Command, []string) error {
 
 		return nil
 	}
+}
+
+// getAcceptedResourceTypes retrieves all accepted resource type arguments (full and short names).
+func getAcceptedResourceTypes() []string {
+	resourceTypes := []string{"all"}
+	for _, resource := range resource.All {
+		wrapped := types.WrapResource(resource)
+		resourceTypes = append(resourceTypes, fmt.Sprintf("%s.%s", wrapped.APIVersion, wrapped.Type))
+		if wrapped.APIVersion == "core/v2" {
+			resourceTypes = append(resourceTypes, resource.RBACName())
+		}
+	}
+	return resourceTypes
+}
+
+// checkArgs checks that all arguments are acceptable resource types, returns an error otherwise.
+func checkArgs(args string, accepted []string) error {
+	if args == "" {
+		return nil
+	}
+
+	argTypes := strings.Split(args, ",")
+	for _, at := range argTypes {
+		if !utilstrings.InArray(at, accepted) {
+			return fmt.Errorf("invalid resource type: %s", at)
+		}
+	}
+
+	return nil
 }

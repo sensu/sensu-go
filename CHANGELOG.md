@@ -6,11 +6,13 @@ and this project adheres to [Semantic
 Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
+
 ### Added
 - A warning is now logged when a runtime asset was requested but does not exist.
 
 ### Fixed
 - Failed check events now get written to the event log file.
+- Added more validation around acceptable resource types in `sensuctl dump`.
 
 ## [6.0.0] - 2020-08-04
 

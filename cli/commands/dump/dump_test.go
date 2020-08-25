@@ -1,6 +1,7 @@
 package dump
 
 import (
+	"errors"
 	"testing"
 
 	test "github.com/sensu/sensu-go/cli/commands/testing"
@@ -48,4 +49,65 @@ func TestListFlags(t *testing.T) {
 
 	flag = cmd.Flag("file")
 	assert.NotNil(flag)
+}
+
+func TestGetAcceptedResourceTypes(t *testing.T) {
+	assert := assert.New(t)
+	accepted := getAcceptedResourceTypes()
+	assert.NotEmpty(accepted)
+	assert.Contains(accepted, "all")
+	assert.Contains(accepted, "checks")
+	assert.Contains(accepted, "core/v2.CheckConfig")
+	assert.NotContains(accepted, "foo")
+}
+
+func TestCheckArgs(t *testing.T) {
+	assert := assert.New(t)
+	accepted := getAcceptedResourceTypes()
+	tests := []struct {
+		name string
+		args string
+		err  error
+	}{
+		{
+			name: "valid all keyword",
+			args: "all",
+			err:  nil,
+		},
+		{
+			name: "valid short name",
+			args: "checks",
+			err:  nil,
+		},
+		{
+			name: "valid full name",
+			args: "core/v2.CheckConfig",
+			err:  nil,
+		},
+		{
+			name: "empty args",
+			args: "",
+			err:  nil,
+		},
+		{
+			name: "invalid name",
+			args: "foo",
+			err:  errors.New("invalid resource type: foo"),
+		},
+		{
+			name: "valid multiple args",
+			args: "all,checks,core/v2.CheckConfig",
+			err:  nil,
+		},
+		{
+			name: "invalid multiple args",
+			args: "checks,foo",
+			err:  errors.New("invalid resource type: foo"),
+		},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			assert.Equal(tc.err, checkArgs(tc.args, accepted))
+		})
+	}
 }
