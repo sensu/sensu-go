@@ -52,7 +52,6 @@ be able to use their database with older versions of Sensu.
 by modifying the agent's configuration file.
 
 ### Changed
-- Improves logging around the agent websocket connection.
 - Entities are now stored as two separate data structures, in order to optimize
 data access patterns.
 - The `dead` and `handleUpdate` methods in keepalived now use `EntityConfig` and
@@ -71,7 +70,7 @@ characters.
 ## [5.21.1] - 2020-08-05
 
 ### Changed
-- Improved agent websocket connection logging.
+- Improves logging around the agent websocket connection.
 
 ### Fixed
 - Fixed potential Web UI crash when fetching events in namespace with > 1000 events.
