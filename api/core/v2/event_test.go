@@ -904,6 +904,12 @@ func TestEventFields(t *testing.T) {
 			want:    "reynolds",
 		},
 		{
+			name:    "exposes check.state",
+			args:    FixtureEvent("frank", "reynolds"),
+			wantKey: "event.check.state",
+			want:    "passing",
+		},
+		{
 			name: "exposes check labels",
 			args: &Event{
 				Check:  &Check{ObjectMeta: ObjectMeta{Labels: map[string]string{"src": "bonsai"}}},
