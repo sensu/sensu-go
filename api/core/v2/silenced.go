@@ -190,7 +190,7 @@ func (s *silenceSorter) Less(i, j int) bool {
 // SilencedFields returns a set of fields that represent that resource
 func SilencedFields(r Resource) map[string]string {
 	resource := r.(*Silenced)
-	return map[string]string{
+	fields := map[string]string{
 		"silenced.name":              resource.ObjectMeta.Name,
 		"silenced.namespace":         resource.ObjectMeta.Namespace,
 		"silenced.check":             resource.Check,
@@ -198,6 +198,8 @@ func SilencedFields(r Resource) map[string]string {
 		"silenced.expire_on_resolve": strconv.FormatBool(resource.ExpireOnResolve),
 		"silenced.subscription":      resource.Subscription,
 	}
+	stringsutil.MergeMapWithPrefix(fields, resource.ObjectMeta.Labels, "silenced.labels.")
+	return fields
 }
 
 // SetNamespace sets the namespace of the resource.

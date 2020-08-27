@@ -2,6 +2,7 @@ package v2
 
 import (
 	"encoding/json"
+	"reflect"
 	"sort"
 	"testing"
 
@@ -76,7 +77,7 @@ func TestCheckConfigErrMsgIfHasEmptyStringsInSub(t *testing.T) {
 	c.Subscriptions = append(c.Subscriptions, "")
 
 	err := c.Validate()
-	assert.EqualError(t, err,  "subscriptions cannot be empty strings")
+	assert.EqualError(t, err, "subscriptions cannot be empty strings")
 }
 
 func TestCheckConfigFlapThresholdValidation(t *testing.T) {
@@ -128,6 +129,52 @@ func TestSortCheckConfigsByName(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			sort.Sort(SortCheckConfigsByName(tc.inChecks, tc.inDir))
 			assert.EqualValues(t, tc.expected, tc.inChecks)
+		})
+	}
+}
+
+func TestCheckConfigFields(t *testing.T) {
+	tests := []struct {
+		name    string
+		args    Resource
+		wantKey string
+		want    string
+	}{
+		{
+			name:    "exposes name",
+			args:    FixtureCheckConfig("check-disk"),
+			wantKey: "check.name",
+			want:    "check-disk",
+		},
+		{
+			name:    "exposes publish",
+			args:    &CheckConfig{Publish: true},
+			wantKey: "check.publish",
+			want:    "true",
+		},
+		{
+			name:    "exposes round robin",
+			args:    &CheckConfig{RoundRobin: true},
+			wantKey: "check.round_robin",
+			want:    "true",
+		},
+		{
+			name: "exposes labels",
+			args: &CheckConfig{
+				ObjectMeta: ObjectMeta{
+					Labels: map[string]string{"region": "philadelphia"},
+				},
+			},
+			wantKey: "check.labels.region",
+			want:    "philadelphia",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := CheckConfigFields(tt.args)
+			if !reflect.DeepEqual(got[tt.wantKey], tt.want) {
+				t.Errorf("CheckConfigFields() = got[%s] %v, want[%s] %v", tt.wantKey, got[tt.wantKey], tt.wantKey, tt.want)
+			}
 		})
 	}
 }

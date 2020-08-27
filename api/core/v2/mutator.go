@@ -7,6 +7,8 @@ import (
 	"path"
 	"sort"
 	"strings"
+
+	stringsutil "github.com/sensu/sensu-go/api/core/v2/internal/stringutil"
 )
 
 const (
@@ -122,11 +124,13 @@ func FixtureMutator(name string) *Mutator {
 // MutatorFields returns a set of fields that represent that resource
 func MutatorFields(r Resource) map[string]string {
 	resource := r.(*Mutator)
-	return map[string]string{
+	fields := map[string]string{
 		"mutator.name":           resource.ObjectMeta.Name,
 		"mutator.namespace":      resource.ObjectMeta.Namespace,
 		"mutator.runtime_assets": strings.Join(resource.RuntimeAssets, ","),
 	}
+	stringsutil.MergeMapWithPrefix(fields, resource.ObjectMeta.Labels, "mutator.labels.")
+	return fields
 }
 
 // SetNamespace sets the namespace of the resource.

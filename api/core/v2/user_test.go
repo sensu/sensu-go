@@ -1,6 +1,7 @@
 package v2
 
 import (
+	"reflect"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -37,4 +38,34 @@ func TestUserValidatePassword(t *testing.T) {
 
 	u.Password = "P@ssw0rd!"
 	assert.NoError(t, u.ValidatePassword())
+}
+
+func TestUserFields(t *testing.T) {
+	tests := []struct {
+		name    string
+		args    Resource
+		wantKey string
+		want    string
+	}{
+		{
+			name:    "exposes username",
+			args:    FixtureUser("frank"),
+			wantKey: "user.username",
+			want:    "frank",
+		},
+		{
+			name:    "exposes disabled",
+			args:    FixtureUser("frank"),
+			wantKey: "user.disabled",
+			want:    "false",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := UserFields(tt.args)
+			if !reflect.DeepEqual(got[tt.wantKey], tt.want) {
+				t.Errorf("UserFields() = got[%s] %v, want[%s] %v", tt.wantKey, got[tt.wantKey], tt.wantKey, tt.want)
+			}
+		})
+	}
 }

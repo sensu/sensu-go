@@ -1,6 +1,7 @@
 package v2
 
 import (
+	"reflect"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -58,4 +59,44 @@ func TestValidateName_GH3344(t *testing.T) {
 	assert := assert.New(t)
 	asset := FixtureAsset("my-asset:1.0.2")
 	assert.NoError(asset.Validate())
+}
+
+func TestAssetFields(t *testing.T) {
+	tests := []struct {
+		name    string
+		args    Resource
+		wantKey string
+		want    string
+	}{
+		{
+			name:    "exposes name",
+			args:    FixtureAsset("curl"),
+			wantKey: "asset.name",
+			want:    "curl",
+		},
+		{
+			name:    "exposes filters",
+			args:    &Asset{Filters: []string{"test"}},
+			wantKey: "asset.filters",
+			want:    "test",
+		},
+		{
+			name: "exposes labels",
+			args: &Asset{
+				ObjectMeta: ObjectMeta{
+					Labels: map[string]string{"region": "philadelphia"},
+				},
+			},
+			wantKey: "asset.labels.region",
+			want:    "philadelphia",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := AssetFields(tt.args)
+			if !reflect.DeepEqual(got[tt.wantKey], tt.want) {
+				t.Errorf("AssetFields() = got[%s] %v, want[%s] %v", tt.wantKey, got[tt.wantKey], tt.wantKey, tt.want)
+			}
+		})
+	}
 }

@@ -7,6 +7,8 @@ import (
 	"path"
 	"sort"
 	"strings"
+
+	stringsutil "github.com/sensu/sensu-go/api/core/v2/internal/stringutil"
 )
 
 const (
@@ -184,7 +186,7 @@ func FixtureSetHandler(name string, handlers ...string) *Handler {
 // HandlerFields returns a set of fields that represent that resource
 func HandlerFields(r Resource) map[string]string {
 	resource := r.(*Handler)
-	return map[string]string{
+	fields := map[string]string{
 		"handler.name":      resource.ObjectMeta.Name,
 		"handler.namespace": resource.ObjectMeta.Namespace,
 		"handler.filters":   strings.Join(resource.Filters, ","),
@@ -192,6 +194,8 @@ func HandlerFields(r Resource) map[string]string {
 		"handler.mutator":   resource.Mutator,
 		"handler.type":      resource.Type,
 	}
+	stringsutil.MergeMapWithPrefix(fields, resource.ObjectMeta.Labels, "handler.labels.")
+	return fields
 }
 
 // SetNamespace sets the namespace of the resource.

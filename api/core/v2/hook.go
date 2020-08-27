@@ -9,6 +9,7 @@ import (
 	"time"
 
 	jsoniter "github.com/json-iterator/go"
+	stringsutil "github.com/sensu/sensu-go/api/core/v2/internal/stringutil"
 )
 
 const (
@@ -168,10 +169,12 @@ func (h *Hook) URIPath() string {
 // HookConfigFields returns a set of fields that represent that resource
 func HookConfigFields(r Resource) map[string]string {
 	resource := r.(*HookConfig)
-	return map[string]string{
+	fields := map[string]string{
 		"hook.name":      resource.ObjectMeta.Name,
 		"hook.namespace": resource.ObjectMeta.Namespace,
 	}
+	stringsutil.MergeMapWithPrefix(fields, resource.ObjectMeta.Labels, "hook.labels.")
+	return fields
 }
 
 // SetNamespace sets the namespace of the resource.
