@@ -13,6 +13,7 @@ using the Prometheus Exposition Text Format.
 
 ### Changed
 - The trusted CA file is now used for agent-side asset retrieval.
+## [5.21.2] - 2020-08-31
 
 ### Fixed
 - Failed check events now get written to the event log file.
