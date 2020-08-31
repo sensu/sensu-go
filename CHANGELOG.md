@@ -20,13 +20,6 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 - Errors produced in the agent by assets, check validation, token substitution,
 and event unmarshaling are logged once again.
 
-## [6.0.0] - 2020-08-04
-
-### Added
-- Log a warning when secrets cannot be sent to an agent because mTLS is not
-enabled.
-- Added the is_silenced boolean key to event.Check object.
-
 ## [5.21.0] - 2020-06-10
 
 ### Added
