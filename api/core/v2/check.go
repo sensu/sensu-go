@@ -71,6 +71,7 @@ func FixtureCheck(id string) *Check {
 	c.Executed = t + 1
 	c.Duration = 1.0
 	c.History = history
+	c.State = EventPassingState
 
 	return c
 }

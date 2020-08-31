@@ -433,6 +433,7 @@ func EventFields(r Resource) map[string]string {
 		"event.check.publish":        strconv.FormatBool(resource.Check.Publish),
 		"event.check.round_robin":    strconv.FormatBool(resource.Check.RoundRobin),
 		"event.check.runtime_assets": strings.Join(resource.Check.RuntimeAssets, ","),
+		"event.check.state":          resource.Check.State,
 		"event.check.status":         strconv.Itoa(int(resource.Check.Status)),
 		"event.check.subscriptions":  strings.Join(resource.Check.Subscriptions, ","),
 		"event.entity.deregister":    strconv.FormatBool(resource.Entity.Deregister),
