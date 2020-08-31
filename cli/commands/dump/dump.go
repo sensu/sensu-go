@@ -161,7 +161,8 @@ func execute(cli *cli.SensuCli) func(*cobra.Command, []string) error {
 
 			val := reflect.New(reflect.SliceOf(reflect.TypeOf(req)))
 			err = cli.Client.List(
-				req.URIPath(), val.Interface(), &client.ListOptions{
+				fmt.Sprintf("%s?types=%s", req.URIPath(), types.WrapResource(req).Type),
+				val.Interface(), &client.ListOptions{
 					ChunkSize: ChunkSize,
 				}, nil)
 			if err != nil {
