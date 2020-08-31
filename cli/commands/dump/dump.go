@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"net/url"
 	"os"
 	"reflect"
 
@@ -161,7 +162,7 @@ func execute(cli *cli.SensuCli) func(*cobra.Command, []string) error {
 
 			val := reflect.New(reflect.SliceOf(reflect.TypeOf(req)))
 			err = cli.Client.List(
-				fmt.Sprintf("%s?types=%s", req.URIPath(), types.WrapResource(req).Type),
+				fmt.Sprintf("%s?types=%s", req.URIPath(), url.QueryEscape(types.WrapResource(req).Type)),
 				val.Interface(), &client.ListOptions{
 					ChunkSize: ChunkSize,
 				}, nil)
