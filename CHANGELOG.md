@@ -5,6 +5,11 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic
 Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [5.21.2] - 2020-08-31
+
+### Fixed
+- Failed check events now get written to the event log file.
+
 ## [5.21.1] - 2020-08-05
 
 ### Changed
