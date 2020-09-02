@@ -6,13 +6,17 @@ and this project adheres to [Semantic
 Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
+
 ### Added
 - A warning is now logged when a runtime asset was requested but does not exist.
 - Added Prometheus transformer for extracting metrics from check output
 using the Prometheus Exposition Text Format.
+- The backend flag `--api-request-limit` is now available to configure the
+maximum API request body size, in bytes.
 
 ### Changed
 - The trusted CA file is now used for agent-side asset retrieval.
+
 ## [5.21.2] - 2020-08-31
 
 ### Fixed

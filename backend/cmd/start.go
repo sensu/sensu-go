@@ -12,6 +12,8 @@ import (
 	"strings"
 	"syscall"
 
+	"github.com/sensu/sensu-go/backend/apid/middlewares"
+
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/asset"
 	"github.com/sensu/sensu-go/backend"
@@ -40,6 +42,7 @@ const (
 	flagAgentHost             = "agent-host"
 	flagAgentPort             = "agent-port"
 	flagAPIListenAddress      = "api-listen-address"
+	flagAPIRequestLimit       = "api-request-limit"
 	flagAPIURL                = "api-url"
 	flagAssetsRateLimit       = "assets-rate-limit"
 	flagAssetsBurstLimit      = "assets-burst-limit"
@@ -181,6 +184,7 @@ func StartCommand(initialize InitializeFunc) *cobra.Command {
 				AgentPort:             viper.GetInt(flagAgentPort),
 				AgentWriteTimeout:     viper.GetInt(backend.FlagAgentWriteTimeout),
 				APIListenAddress:      viper.GetString(flagAPIListenAddress),
+				APIRequestLimit:       viper.GetInt64(flagAPIRequestLimit),
 				APIURL:                viper.GetString(flagAPIURL),
 				AssetsRateLimit:       rate.Limit(viper.GetFloat64(flagAssetsRateLimit)),
 				AssetsBurstLimit:      viper.GetInt(flagAssetsBurstLimit),
@@ -312,6 +316,7 @@ func handleConfig(cmd *cobra.Command, server bool) error {
 		viper.SetDefault(flagAgentHost, "[::]")
 		viper.SetDefault(flagAgentPort, 8081)
 		viper.SetDefault(flagAPIListenAddress, "[::]:8080")
+		viper.SetDefault(flagAPIRequestLimit, middlewares.MaxBytesLimit)
 		viper.SetDefault(flagAPIURL, "http://localhost:8080")
 		viper.SetDefault(flagAssetsRateLimit, asset.DefaultAssetsRateLimit)
 		viper.SetDefault(flagAssetsBurstLimit, asset.DefaultAssetsBurstLimit)
@@ -364,6 +369,7 @@ func handleConfig(cmd *cobra.Command, server bool) error {
 		cmd.Flags().String(flagAgentHost, viper.GetString(flagAgentHost), "agent listener host")
 		cmd.Flags().Int(flagAgentPort, viper.GetInt(flagAgentPort), "agent listener port")
 		cmd.Flags().String(flagAPIListenAddress, viper.GetString(flagAPIListenAddress), "address to listen on for api traffic")
+		cmd.Flags().Int64(flagAPIRequestLimit, viper.GetInt64(flagAPIRequestLimit), "maximum API request body size, in bytes")
 		cmd.Flags().String(flagAPIURL, viper.GetString(flagAPIURL), "url of the api to connect to")
 		cmd.Flags().Float64(flagAssetsRateLimit, viper.GetFloat64(flagAssetsRateLimit), "maximum number of assets fetched per second")
 		cmd.Flags().Int(flagAssetsBurstLimit, viper.GetInt(flagAssetsBurstLimit), "asset fetch burst limit")
