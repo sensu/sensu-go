@@ -17,6 +17,7 @@ using the Prometheus Exposition Text Format.
 
 ### Fixed
 - Failed check events now get written to the event log file.
+- Include the agent entity in data passed to the command process' STDIN.
 
 ## [6.0.0] - 2020-08-04
 
