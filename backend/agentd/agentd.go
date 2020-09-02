@@ -346,7 +346,7 @@ func (a *Agentd) webSocketHandler(w http.ResponseWriter, r *http.Request) {
 		Unmarshal:     unmarshal,
 	}
 
-	cfg.Subscriptions = addEntitySubscription(cfg.AgentName, cfg.Subscriptions)
+	cfg.Subscriptions = corev2.AddEntitySubscription(cfg.AgentName, cfg.Subscriptions)
 
 	session, err := NewSession(a.ctx, cfg)
 	if err != nil {
