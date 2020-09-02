@@ -241,6 +241,13 @@ func StartCommand(initialize InitializeFunc) *cobra.Command {
 					flagCertFile, flagKeyFile)
 			}
 
+			if cf, kf := len(cfg.DashboardTLSCertFile) == 0, len(cfg.DashboardTLSKeyFile) == 0; cf != kf {
+				return fmt.Errorf(
+					"dashboard tls configuration error, both flags --%s and --%s are required",
+					flagDashboardCertFile, flagDashboardKeyFile,
+				)
+			}
+
 			// Etcd TLS config
 			cfg.EtcdClientTLSInfo = etcd.TLSInfo{
 				CertFile:       viper.GetString(flagEtcdCertFile),

@@ -14,6 +14,11 @@ using the Prometheus Exposition Text Format.
 
 ### Changed
 - The trusted CA file is now used for agent-side asset retrieval.
+
+### Fixed
+- The backend will no longer start when the dashboard TLS configuration is not
+fully specified.
+
 ## [5.21.2] - 2020-08-31
 
 ### Fixed
