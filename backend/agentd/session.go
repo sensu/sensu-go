@@ -582,7 +582,7 @@ func (s *Session) handleKeepalive(ctx context.Context, payload []byte) error {
 		return errors.New("keepalive contains invalid timestamp")
 	}
 
-	keepalive.Entity.Subscriptions = addEntitySubscription(keepalive.Entity.Name, keepalive.Entity.Subscriptions)
+	keepalive.Entity.Subscriptions = corev2.AddEntitySubscription(keepalive.Entity.Name, keepalive.Entity.Subscriptions)
 
 	return s.bus.Publish(messaging.TopicKeepalive, keepalive)
 }
@@ -601,7 +601,7 @@ func (s *Session) handleEvent(ctx context.Context, payload []byte) error {
 	}
 
 	// Add the entity subscription to the subscriptions of this entity
-	event.Entity.Subscriptions = addEntitySubscription(event.Entity.Name, event.Entity.Subscriptions)
+	event.Entity.Subscriptions = corev2.AddEntitySubscription(event.Entity.Name, event.Entity.Subscriptions)
 
 	return s.bus.Publish(messaging.TopicEventRaw, event)
 }

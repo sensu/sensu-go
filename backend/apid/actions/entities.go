@@ -99,6 +99,8 @@ func (c EntityController) CreateOrReplace(ctx context.Context, entity corev2.Ent
 		}
 	} else {
 		config, _ := corev3.V2EntityToV3(&entity)
+		// Ensure per-entity subscription does not get removed
+		config.Subscriptions = corev2.AddEntitySubscription(config.Metadata.Name, config.Subscriptions)
 		req := storev2.NewResourceRequestFromResource(ctx, config)
 
 		wConfig, err := wrap.Resource(config)
