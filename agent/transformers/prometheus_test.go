@@ -119,6 +119,7 @@ func TestParsePromTags(t *testing.T) {
 		metric           string
 		expectedFormat   PromList
 		timeInconclusive bool
+		outputMetricTags []*types.MetricTag
 	}{
 		{
 			metric: "go_gc_duration_seconds{quantile=\"0\"} 3.3722e-05\n",
@@ -134,6 +135,67 @@ func TestParsePromTags(t *testing.T) {
 					Timestamp: model.TimeFromUnix(ts),
 				},
 			},
+			outputMetricTags: []*types.MetricTag{
+				{
+					Name:  "instance",
+					Value: "hostname",
+				},
+			},
+		},
+		{
+			metric: "go_gc_duration_seconds{quantile=\"0\"} 3.3722e-05\n",
+			expectedFormat: PromList{
+				&model.Sample{
+					Metric: model.Metric{
+						model.MetricNameLabel: "go_gc_duration_seconds",
+						"quantile":            "0",
+						"prom_type":           "untyped",
+					},
+					Value:     3.3722e-05,
+					Timestamp: model.TimeFromUnix(ts),
+				},
+			},
+		},
+		{
+			metric: "go_gc_duration_seconds{quantile=\"0\"} 3.3722e-05\n",
+			expectedFormat: PromList{
+				&model.Sample{
+					Metric: model.Metric{
+						model.MetricNameLabel: "go_gc_duration_seconds",
+						"quantile":            "0",
+						"prom_type":           "untyped",
+					},
+					Value:     3.3722e-05,
+					Timestamp: model.TimeFromUnix(ts),
+				},
+			},
+			outputMetricTags: []*types.MetricTag{},
+		},
+		{
+			metric: "go_gc_duration_seconds{quantile=\"0\"} 3.3722e-05\n",
+			expectedFormat: PromList{
+				&model.Sample{
+					Metric: model.Metric{
+						model.MetricNameLabel: "go_gc_duration_seconds",
+						"quantile":            "0",
+						"foo":                 "bar",
+						"boo":                 "baz",
+						"prom_type":           "untyped",
+					},
+					Value:     3.3722e-05,
+					Timestamp: model.TimeFromUnix(ts),
+				},
+			},
+			outputMetricTags: []*types.MetricTag{
+				{
+					Name:  "foo",
+					Value: "bar",
+				},
+				{
+					Name:  "boo",
+					Value: "baz",
+				},
+			},
 		},
 	}
 
@@ -141,12 +203,7 @@ func TestParsePromTags(t *testing.T) {
 		t.Run(tc.metric, func(t *testing.T) {
 			event := types.FixtureEvent("test", "test")
 			event.Check.Output = tc.metric
-			event.Check.OutputMetricTags = []*types.MetricTag{
-				{
-					Name:  "instance",
-					Value: "hostname",
-				},
-			}
+			event.Check.OutputMetricTags = tc.outputMetricTags
 			prom := ParseProm(event)
 			if !tc.timeInconclusive {
 				assert.Equal(tc.expectedFormat, prom)

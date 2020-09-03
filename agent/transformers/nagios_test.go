@@ -116,6 +116,81 @@ func TestParseNagios(t *testing.T) {
 			},
 		},
 		{
+			name: "multiple perfdata metrics with empty output_metric_tags",
+			event: &types.Event{
+				Check: &types.Check{
+					Executed:         12345,
+					Output:           "PING ok - Packet loss = 0%, RTA = 0.80 ms | percent_packet_loss=0, rta=0.80",
+					OutputMetricTags: []*types.MetricTag{},
+				},
+			},
+			want: NagiosList{
+				Nagios{
+					Label:     "percent_packet_loss",
+					Value:     0.0,
+					Timestamp: 12345,
+					Tags:      []*types.MetricTag{},
+				},
+				Nagios{
+					Label:     "rta",
+					Value:     0.8,
+					Timestamp: 12345,
+					Tags:      []*types.MetricTag{},
+				},
+			},
+		},
+		{
+			name: "multiple perfdata metrics with multiple output_metric_tags",
+			event: &types.Event{
+				Check: &types.Check{
+					Executed: 12345,
+					Output:   "PING ok - Packet loss = 0%, RTA = 0.80 ms | percent_packet_loss=0, rta=0.80",
+					OutputMetricTags: []*types.MetricTag{
+						{
+							Name:  "foo",
+							Value: "bar",
+						},
+						{
+							Name:  "boo",
+							Value: "baz",
+						},
+					},
+				},
+			},
+			want: NagiosList{
+				Nagios{
+					Label:     "percent_packet_loss",
+					Value:     0.0,
+					Timestamp: 12345,
+					Tags: []*types.MetricTag{
+						{
+							Name:  "foo",
+							Value: "bar",
+						},
+						{
+							Name:  "boo",
+							Value: "baz",
+						},
+					},
+				},
+				Nagios{
+					Label:     "rta",
+					Value:     0.8,
+					Timestamp: 12345,
+					Tags: []*types.MetricTag{
+						{
+							Name:  "foo",
+							Value: "bar",
+						},
+						{
+							Name:  "boo",
+							Value: "baz",
+						},
+					},
+				},
+			},
+		},
+		{
 			name: "GH_2511",
 			event: &types.Event{
 				Check: &types.Check{
@@ -216,9 +291,9 @@ func TestTransformNagios(t *testing.T) {
 					Label:     "percent_packet_loss",
 					Value:     0,
 					Timestamp: 123456789,
-					Tags:      []*types.MetricTag{
+					Tags: []*types.MetricTag{
 						{
-							Name: "foo",
+							Name:  "foo",
 							Value: "bar",
 						},
 					},
@@ -229,9 +304,9 @@ func TestTransformNagios(t *testing.T) {
 					Name:      "percent_packet_loss",
 					Value:     0,
 					Timestamp: 123456789,
-					Tags:      []*types.MetricTag{
+					Tags: []*types.MetricTag{
 						{
-							Name: "foo",
+							Name:  "foo",
 							Value: "bar",
 						},
 					},
