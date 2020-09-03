@@ -1,7 +1,6 @@
 package middlewares
 
 import (
-	"fmt"
 	"io"
 	"net/http"
 )
@@ -19,7 +18,6 @@ type LimitRequest struct {
 // Then middleware
 func (l LimitRequest) Then(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		fmt.Println(l.Limit)
 		r.Body = http.MaxBytesReader(w, r.Body, l.Limit)
 		r.Header.Add("Content-Type", "application/x-www-form-urlencoded")
 		err := r.ParseForm()
