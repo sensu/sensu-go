@@ -17,6 +17,7 @@ type Graphite struct {
 	Path      string
 	Value     float64
 	Timestamp int64
+	Tags      []*types.MetricTag
 }
 
 // Transform transforms a metric in graphite plain text format to Sensu Metric
@@ -28,8 +29,13 @@ func (g GraphiteList) Transform() []*types.MetricPoint {
 			Name:      graphite.Path,
 			Value:     graphite.Value,
 			Timestamp: graphite.Timestamp,
-			Tags:      []*types.MetricTag{},
+			Tags:      graphite.Tags,
 		}
+
+		if mp.Tags == nil {
+			mp.Tags = []*types.MetricTag{}
+		}
+
 		points = append(points, mp)
 	}
 	return points
@@ -73,6 +79,7 @@ func ParseGraphite(event *types.Event) GraphiteList {
 			continue
 		}
 		g.Timestamp = i
+		g.Tags = event.Check.OutputMetricTags
 		graphiteList = append(graphiteList, g)
 	}
 	if err := s.Err(); err != nil {

@@ -109,6 +109,7 @@ func NewCheck(c *CheckConfig) *Check {
 		RoundRobin:           c.RoundRobin,
 		OutputMetricFormat:   c.OutputMetricFormat,
 		OutputMetricHandlers: c.OutputMetricHandlers,
+		OutputMetricTags:     c.OutputMetricTags,
 		EnvVars:              c.EnvVars,
 		DiscardOutput:        c.DiscardOutput,
 		MaxOutputSize:        c.MaxOutputSize,
