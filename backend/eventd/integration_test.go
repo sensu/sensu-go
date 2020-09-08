@@ -61,7 +61,7 @@ func TestEventdMonitor(t *testing.T) {
 		assert.FailNow(t, err.Error())
 	}
 
-	e := newEventd(storev2, store, bus, livenessFactory)
+	e := newEventd(storev2, store, store, bus, livenessFactory)
 
 	if err := e.Start(); err != nil {
 		assert.FailNow(t, err.Error())
@@ -72,6 +72,10 @@ func TestEventdMonitor(t *testing.T) {
 	event.Check.Ttl = 5
 
 	ctx := otherTestutil.ContextWithNamespace("default")(context.Background())
+
+	if err := store.UpdateCheckConfig(ctx, corev2.FixtureCheckConfig("check1")); err != nil {
+		t.Fatal(err)
+	}
 
 	if err := store.UpdateEntity(ctx, event.Entity); err != nil {
 		t.Fatal(err)

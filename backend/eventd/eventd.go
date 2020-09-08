@@ -19,6 +19,7 @@ import (
 	"github.com/sensu/sensu-go/backend/liveness"
 	"github.com/sensu/sensu-go/backend/messaging"
 	"github.com/sensu/sensu-go/backend/store"
+	storev1 "github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/backend/store/cache"
 	storev2 "github.com/sensu/sensu-go/backend/store/v2"
 )
@@ -41,6 +42,8 @@ const (
 	defaultStoreTimeout = time.Minute
 
 	EventHandlerDuration = "sensu_go_event_handler_duration"
+
+	undocumentedTestCheckCommand = "!sensu_test_check!"
 )
 
 var (
@@ -79,6 +82,7 @@ type Eventd struct {
 	cancel          context.CancelFunc
 	store           storev2.Interface
 	eventStore      store.EventStore
+	storev1         storev1.Store
 	bus             messaging.MessageBus
 	workerCount     int
 	livenessFactory liveness.Factory
@@ -105,6 +109,7 @@ type Option func(*Eventd) error
 type Config struct {
 	Store           storev2.Interface
 	EventStore      store.EventStore
+	Storev1         storev1.Store
 	Bus             messaging.MessageBus
 	LivenessFactory liveness.Factory
 	Client          *clientv3.Client
@@ -131,6 +136,7 @@ func New(ctx context.Context, c Config, opts ...Option) (*Eventd, error) {
 	e := &Eventd{
 		store:           c.Store,
 		eventStore:      c.EventStore,
+		storev1:         c.Storev1,
 		bus:             c.Bus,
 		workerCount:     c.WorkerCount,
 		livenessFactory: c.LivenessFactory,
@@ -273,6 +279,24 @@ func (e *Eventd) handleMessage(msg interface{}) error {
 	}
 
 	ctx := context.WithValue(context.Background(), corev2.NamespaceKey, event.Entity.Namespace)
+
+	// If the check/hook is not a keepalive, revert the command in the event to
+	// what is stored. This protects sensitive/redacted client attribute values.
+	if event.Check.Name != corev2.KeepaliveCheckName && event.Check.Command != undocumentedTestCheckCommand {
+		storedCheck, err := e.storev1.GetCheckConfigByName(ctx, event.Check.Name)
+		if err != nil {
+			return err
+		}
+		event.Check.Command = storedCheck.Command
+
+		for i, hook := range event.Check.Hooks {
+			storedHook, err := e.storev1.GetHookConfigByName(ctx, hook.Name)
+			if err != nil {
+				return err
+			}
+			event.Check.Hooks[i].Command = storedHook.Command
+		}
+	}
 
 	// Create a proxy entity if required and update the event's entity with it,
 	// but only if the event's entity is not an agent.

@@ -31,7 +31,6 @@ func (a *Agent) ExecuteHooks(ctx context.Context, request *corev2.CheckRequest, 
 				if hookConfig == nil {
 					hookConfig = errorHookConfig(a.config.Namespace, hookName, errors.New("missing hook config"))
 				}
-				origCommand := hookConfig.Command
 				if err := a.prepareHook(hookConfig); err != nil {
 					hookConfig = errorHookConfig(hookConfig.Namespace, hookConfig.Name, err)
 				}
@@ -40,9 +39,6 @@ func (a *Agent) ExecuteHooks(ctx context.Context, request *corev2.CheckRequest, 
 				in := hookInList(hookConfig.Name, executedHooks)
 				if !in {
 					hook := a.executeHook(ctx, hookConfig, event, assets)
-					// To guard against publishing sensitive/redacted client attribute values
-					// the original command value is reinstated.
-					hook.Command = origCommand
 					executedHooks = append(executedHooks, hook)
 				}
 			}

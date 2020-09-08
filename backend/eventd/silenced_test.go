@@ -283,6 +283,7 @@ func TestEventd_handleMessage(t *testing.T) {
 			if tt.eventStoreFunc != nil {
 				tt.eventStoreFunc(eventStore)
 			}
+			eventStore.On("GetCheckConfigByName", mock.Anything, mock.Anything).Return(corev2.FixtureCheckConfig("check"), nil)
 			store := &storetest.Store{}
 			if tt.storeFunc != nil {
 				tt.storeFunc(store)
@@ -293,6 +294,7 @@ func TestEventd_handleMessage(t *testing.T) {
 				bus:             bus,
 				store:           store,
 				eventStore:      eventStore,
+				storev1:         eventStore,
 				livenessFactory: newFakeFactory(switches),
 				workerCount:     1,
 				wg:              &sync.WaitGroup{},

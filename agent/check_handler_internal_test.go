@@ -345,7 +345,7 @@ func TestHandleTokenSubstitution(t *testing.T) {
 	assert.NotZero(event.Timestamp)
 	assert.EqualValues(int32(0), event.Check.Status)
 	assert.Contains(event.Check.Output, "TestTokenSubstitution defaultValue")
-	assert.Contains(event.Check.Command, checkConfig.Command) // command should not include substitutions
+	assert.NotContains(event.Check.Command, checkConfig.Command) // command should not include substitutions
 }
 
 func TestHandleTokenSubstitutionNoKey(t *testing.T) {

@@ -18,6 +18,7 @@ import (
 	"github.com/sensu/sensu-go/backend/liveness"
 	"github.com/sensu/sensu-go/backend/messaging"
 	"github.com/sensu/sensu-go/backend/store"
+	storev1 "github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/backend/store/cache"
 	storev2 "github.com/sensu/sensu-go/backend/store/v2"
 	"github.com/sensu/sensu-go/backend/store/v2/storetest"
@@ -45,13 +46,14 @@ func newFakeFactory(f liveness.Interface) liveness.Factory {
 	}
 }
 
-func newEventd(store storev2.Interface, eventStore store.Store, bus messaging.MessageBus, livenessFactory liveness.Factory) *Eventd {
+func newEventd(store storev2.Interface, eventStore store.Store, storev1 storev1.Store, bus messaging.MessageBus, livenessFactory liveness.Factory) *Eventd {
 	ctx, cancel := context.WithCancel(context.Background())
 	return &Eventd{
 		ctx:             ctx,
 		cancel:          cancel,
 		store:           store,
 		eventStore:      eventStore,
+		storev1:         storev1,
 		bus:             bus,
 		livenessFactory: livenessFactory,
 		errChan:         make(chan error, 1),
@@ -73,7 +75,7 @@ func TestEventHandling(t *testing.T) {
 
 	mockEntityStore := &storetest.Store{}
 	mockStore := &mockstore.MockStore{}
-	e := newEventd(mockEntityStore, mockStore, bus, newFakeFactory(&fakeSwitchSet{}))
+	e := newEventd(mockEntityStore, mockStore, mockStore, bus, newFakeFactory(&fakeSwitchSet{}))
 
 	require.NoError(t, e.Start())
 	require.NoError(t, bus.Publish(messaging.TopicEventRaw, nil))
@@ -100,6 +102,7 @@ func TestEventHandling(t *testing.T) {
 	event.Check.State = corev2.EventPassingState
 	event.Check.LastOK = event.Timestamp
 	mockStore.On("UpdateEvent", mock.Anything).Return(event, nilEvent, nil)
+	mockStore.On("GetCheckConfigByName", mock.Anything, mock.Anything).Return(corev2.FixtureCheckConfig("check"), nil)
 
 	// No silenced entries
 	mockStore.On(
@@ -132,7 +135,7 @@ func TestEventMonitor(t *testing.T) {
 
 	mockEntityStore := &storetest.Store{}
 	mockStore := &mockstore.MockStore{}
-	e := newEventd(mockEntityStore, mockStore, bus, newFakeFactory(&fakeSwitchSet{}))
+	e := newEventd(mockEntityStore, mockStore, mockStore, bus, newFakeFactory(&fakeSwitchSet{}))
 
 	require.NoError(t, e.Start())
 	require.NoError(t, bus.Publish(messaging.TopicEventRaw, nil))
@@ -152,6 +155,7 @@ func TestEventMonitor(t *testing.T) {
 	).Return(nilEvent, nil)
 	event.Check.State = corev2.EventPassingState
 	mockStore.On("UpdateEvent", mock.Anything).Return(event, nilEvent, nil)
+	mockStore.On("GetCheckConfigByName", mock.Anything, mock.Anything).Return(corev2.FixtureCheckConfig("check"), nil)
 
 	// No silenced entries
 	mockStore.On(
@@ -263,6 +267,7 @@ func TestCheckTTL(t *testing.T) {
 			e := &Eventd{
 				store:           store,
 				eventStore:      eventStore,
+				storev1:         eventStore,
 				livenessFactory: newFakeFactory(switches),
 				workerCount:     1,
 				wg:              &sync.WaitGroup{},
@@ -282,6 +287,7 @@ func TestCheckTTL(t *testing.T) {
 			eventStore.On("GetSilencedEntriesByCheckName", mock.Anything, mock.Anything).
 				Return([]*corev2.Silenced{}, nil)
 			eventStore.On("UpdateEvent", mock.Anything, mock.Anything).Return(tt.msg, mockEvent, nil)
+			eventStore.On("GetCheckConfigByName", mock.Anything, mock.Anything).Return(corev2.FixtureCheckConfig("check"), nil)
 
 			if err := e.handleMessage(tt.msg); (err != nil) != tt.wantErr {
 				t.Errorf("Eventd.handleMessage() error = %v, wantErr %v", err, tt.wantErr)
@@ -407,7 +413,7 @@ func TestBuryConditions(t *testing.T) {
 				test.eventStoreFunc(eventStore)
 			}
 
-			eventd := &Eventd{store: store, eventStore: eventStore, ctx: context.Background()}
+			eventd := &Eventd{store: store, eventStore: eventStore, storev1: eventStore, ctx: context.Background()}
 			if got, want := eventd.dead(test.key, liveness.Alive, false), test.bury; got != want {
 				t.Fatalf("bad bury result: got %v, want %v", got, want)
 			}

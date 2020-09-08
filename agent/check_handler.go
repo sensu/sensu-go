@@ -116,8 +116,6 @@ func (a *Agent) executeCheck(ctx context.Context, request *corev2.CheckRequest, 
 	hookAssets := request.HookAssets
 	secrets := request.Secrets
 
-	// Before token subsitution we retain copy of the command
-	origCommand := checkConfig.Command
 	createEvent := func() *corev2.Event {
 		event := &corev2.Event{}
 		event.Namespace = checkConfig.Namespace
@@ -125,14 +123,10 @@ func (a *Agent) executeCheck(ctx context.Context, request *corev2.CheckRequest, 
 		event.Check.Executed = time.Now().Unix()
 		event.Check.Issued = request.Issued
 
-		// To guard against publishing sensitive/redacted client attribute values
-		// the original command value is reinstated.
-		event.Check.Command = origCommand
-
 		return event
 	}
 
-	if origCommand != undocumentedTestCheckCommand {
+	if checkConfig.Command != undocumentedTestCheckCommand {
 		// Perform token substitution on the check configuration, but only if
 		// we aren't doing load testing with the undocumented test check
 		// command.
