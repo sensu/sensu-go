@@ -34,6 +34,7 @@ type APId struct {
 	CoreSubrouter              *mux.Router
 	EntityLimitedCoreSubrouter *mux.Router
 	GraphQLSubrouter           *mux.Router
+	RequestLimit               int64
 
 	stopping            chan struct{}
 	running             *atomic.Value
@@ -56,6 +57,7 @@ type Option func(*APId) error
 // Config configures APId.
 type Config struct {
 	ListenAddress       string
+	RequestLimit        int64
 	URL                 string
 	Bus                 messaging.MessageBus
 	Store               store.Store
@@ -88,6 +90,7 @@ func New(c Config, opts ...Option) (*APId, error) {
 		etcdClientTLSConfig: c.EtcdClientTLSConfig,
 		Authenticator:       c.Authenticator,
 		clusterVersion:      c.ClusterVersion,
+		RequestLimit:        c.RequestLimit,
 	}
 
 	// prepare TLS config
@@ -142,7 +145,7 @@ func AuthenticationSubrouter(router *mux.Router, cfg Config) *mux.Router {
 		router.NewRoute(),
 		middlewares.SimpleLogger{},
 		middlewares.RefreshToken{},
-		middlewares.LimitRequest{},
+		middlewares.LimitRequest{Limit: cfg.RequestLimit},
 	)
 
 	mountRouters(subrouter,
@@ -162,7 +165,7 @@ func CoreSubrouter(router *mux.Router, cfg Config) *mux.Router {
 		middlewares.SimpleLogger{},
 		middlewares.AuthorizationAttributes{},
 		middlewares.Authorization{Authorizer: &rbac.Authorizer{Store: cfg.Store}},
-		middlewares.LimitRequest{},
+		middlewares.LimitRequest{Limit: cfg.RequestLimit},
 		middlewares.Pagination{},
 	)
 	mountRouters(
@@ -199,7 +202,7 @@ func EntityLimitedCoreSubrouter(router *mux.Router, cfg Config) *mux.Router {
 		middlewares.SimpleLogger{},
 		middlewares.AuthorizationAttributes{},
 		middlewares.Authorization{Authorizer: &rbac.Authorizer{Store: cfg.Store}},
-		middlewares.LimitRequest{},
+		middlewares.LimitRequest{Limit: cfg.RequestLimit},
 		middlewares.Pagination{},
 	)
 	mountRouters(
@@ -216,7 +219,7 @@ func EntityLimitedCoreSubrouter(router *mux.Router, cfg Config) *mux.Router {
 func GraphQLSubrouter(router *mux.Router, cfg Config) *mux.Router {
 	subrouter := NewSubrouter(
 		router.NewRoute(),
-		middlewares.LimitRequest{},
+		middlewares.LimitRequest{Limit: cfg.RequestLimit},
 		// We permit requests that do not include an access token or API key,
 		// this allows unauthenticated clients to run introspecton queries or
 		// query resources that do not require authorization, such as health
@@ -242,7 +245,7 @@ func PublicSubrouter(router *mux.Router, cfg Config) *mux.Router {
 	subrouter := NewSubrouter(
 		router.NewRoute(),
 		middlewares.SimpleLogger{},
-		middlewares.LimitRequest{},
+		middlewares.LimitRequest{Limit: cfg.RequestLimit},
 	)
 
 	mountRouters(subrouter,
