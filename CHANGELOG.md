@@ -14,6 +14,7 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 - Failed check events now get written to the event log file.
 - Per-entity subscriptions (ex. `entity:entityName`) are always available on agent entities,
 even if removed via the `/entities` API.
+- Fixed a crash in the backend and agent related to Javascript execution.
 
 ## [6.0.0] - 2020-08-04
 
