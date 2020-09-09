@@ -34,8 +34,8 @@ func TestMerge_Patch(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			m := &Merge{}
-			got, err := m.Patch(tt.original, tt.patch)
+			m := &Merge{JSONPatch: tt.patch}
+			got, err := m.Patch(tt.original)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("Merge.Patch() error = %v, wantErr %v", err, tt.wantErr)
 				return

@@ -155,7 +155,6 @@ func CreateOrUpdate(ctx context.Context, client *clientv3.Client, key, namespace
 		}
 	}
 	return nil
-
 }
 
 // Delete the given key
@@ -176,6 +175,12 @@ func Delete(ctx context.Context, client *clientv3.Client, key string) error {
 
 // Get retrieves an object with the given key
 func Get(ctx context.Context, client *clientv3.Client, key string, object interface{}) error {
+	_, err := GetResponse(ctx, client, key, object)
+	return err
+}
+
+// Get retrieves an object with the given key and returns the etcd response
+func GetResponse(ctx context.Context, client *clientv3.Client, key string, object interface{}) (*clientv3.GetResponse, error) {
 	// Fetch the key from the store
 	var resp *clientv3.GetResponse
 	err := Backoff(ctx).Retry(func(n int) (done bool, err error) {
@@ -183,19 +188,20 @@ func Get(ctx context.Context, client *clientv3.Client, key string, object interf
 		return RetryRequest(n, err)
 	})
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	// Ensure we only received a single item
 	if len(resp.Kvs) == 0 {
-		return &store.ErrNotFound{Key: key}
+		return resp, &store.ErrNotFound{Key: key}
 	}
 
 	// Deserialize the object to the given object
 	if err := unmarshal(resp.Kvs[0].Value, object); err != nil {
-		return &store.ErrDecode{Key: key, Err: err}
+		return nil, &store.ErrDecode{Key: key, Err: err}
 	}
-	return nil
+
+	return resp, nil
 }
 
 // KeyBuilderFn represents a generic key builder function
@@ -320,6 +326,49 @@ func Update(ctx context.Context, client *clientv3.Client, key, namespace string,
 		// Check if the key was missing
 		if len(resp.Responses[1].GetResponseRange().Kvs) == 0 {
 			return &store.ErrNotFound{Key: key}
+		}
+
+		// Unknown error
+		return &store.ErrNotValid{
+			Err: fmt.Errorf("could not update the key %s", key),
+		}
+	}
+
+	return nil
+}
+
+// UpdateWithVersion updates the given resource if and only if the given version matches the current key version
+func UpdateWithVersion(ctx context.Context, client *clientv3.Client, key string, object interface{}, version int64) error {
+	bytes, err := marshal(object)
+	if err != nil {
+		return &store.ErrEncode{Key: key, Err: err}
+	}
+
+	comparisons := []clientv3.Cmp{
+		clientv3.Compare(clientv3.Version(key), "=", version),
+	}
+
+	var resp *clientv3.TxnResponse
+	err = Backoff(ctx).Retry(func(n int) (done bool, err error) {
+		resp, err = client.Txn(ctx).If(
+			comparisons...,
+		).Then(
+			clientv3.OpPut(key, string(bytes)),
+		).Else(
+			clientv3.OpGet(key),
+		).Commit()
+		return RetryRequest(n, err)
+	})
+	if err != nil {
+		return err
+	}
+	if !resp.Succeeded {
+		if len(resp.Responses[0].GetResponseRange().Kvs) == 0 {
+			return &store.ErrNotFound{Key: key}
+		}
+
+		if resp.Responses[0].GetResponseRange().Kvs[0].Version != version {
+			return &store.ErrModified{Key: key}
 		}
 
 		// Unknown error

@@ -2,11 +2,15 @@ package etcd
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"reflect"
 
 	"github.com/gogo/protobuf/proto"
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
+	"github.com/sensu/sensu-go/backend/apid/actions"
 	"github.com/sensu/sensu-go/backend/store"
+	"github.com/sensu/sensu-go/backend/store/patch"
 )
 
 // CreateResource creates the given resource only if it does not already exist
@@ -59,4 +63,48 @@ func (s *Store) ListResources(ctx context.Context, resourcePrefix string, resour
 	}
 
 	return List(ctx, s.client, keyBuilderFunc, resources, pred)
+}
+
+func (s *Store) PatchResource(ctx context.Context, resource corev2.Resource, key string, patcher patch.Patcher, etag []byte) ([]byte, error) {
+	// Use reflection to initialize a new concrete resource that will be used to
+	// retrieve the stored resource
+	v := reflect.New(reflect.TypeOf(resource).Elem())
+	storedResource, ok := v.Interface().(corev2.Resource)
+	if !ok {
+		return nil, actions.NewErrorf(actions.InternalErr)
+	}
+
+	// Get the stored resource along with the etcd response so we can use the
+	// revision later to ensure the resource wasn't modified in the mean time
+	resp, err := GetResponse(ctx, s.client, key, storedResource)
+	if err != nil {
+		return nil, err
+	}
+	version := resp.Kvs[0].Version
+
+	// TODO(palourde): We should verify the etag here
+
+	// Encode the stored resource
+	original, err := json.Marshal(storedResource)
+	if err != nil {
+		return nil, err
+	}
+
+	// Apply the patch to our original document (stored resource)
+	patchedResource, err := patcher.Patch(original)
+	if err != nil {
+		return nil, err
+	}
+
+	// Decode the resulting document into provided resource
+	if err := json.Unmarshal(patchedResource, &resource); err != nil {
+		return nil, err
+	}
+
+	if err := UpdateWithVersion(ctx, s.client, key, resource, version); err != nil {
+		return nil, err
+	}
+
+	// TODO(palourde): Calculate the new etag and return it here
+	return nil, nil
 }

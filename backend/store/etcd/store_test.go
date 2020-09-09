@@ -394,6 +394,25 @@ func TestUpdate(t *testing.T) {
 	})
 }
 
+func TestUpdateWithVersion(t *testing.T) {
+	testWithEtcdStore(t, func(store *Store) {
+		// Updating a non-existent object should fail
+		obj := &GenericObject{Revision: 1}
+		ctx := context.WithValue(context.Background(), corev2.NamespaceKey, "default")
+		require.Error(t, UpdateWithVersion(ctx, store.client, "/default/foo", obj, 1))
+
+		// Create it first
+		require.NoError(t, Create(ctx, store.client, "/default/foo", "default", obj))
+
+		// Now try to update it with a wrong version
+		require.Error(t, UpdateWithVersion(ctx, store.client, "/default/foo", obj, 42))
+
+		// Updating with the right version should work
+		obj.Revision = 2
+		require.NoError(t, UpdateWithVersion(ctx, store.client, "/default/foo", obj, 1))
+	})
+}
+
 func TestCount(t *testing.T) {
 	testWithEtcdStore(t, func(s *Store) {
 		// Create a second namespace

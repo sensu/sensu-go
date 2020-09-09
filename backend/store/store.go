@@ -9,6 +9,7 @@ import (
 	"github.com/coreos/etcd/clientv3"
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	corev3 "github.com/sensu/sensu-go/api/core/v3"
+	"github.com/sensu/sensu-go/backend/store/patch"
 	"github.com/sensu/sensu-go/types"
 )
 
@@ -69,7 +70,17 @@ func (e *ErrNotValid) Error() string {
 	return fmt.Sprintf("resource is invalid: %s", e.Err.Error())
 }
 
-// ErrInternal is returned when something generally bad happened while
+// ErrModified is returned when the stored resource does not match the expected
+// resource
+type ErrModified struct {
+	Key string
+}
+
+func (e *ErrModified) Error() string {
+	return fmt.Sprintf("key %s was modified", e.Key)
+}
+
+// ErrModified is returned when something generally bad happened while
 // interacting with the store. Other, more specific errors should be
 // returned when appropriate.
 //
@@ -488,6 +499,8 @@ type ResourceStore interface {
 	GetResource(ctx context.Context, name string, resource corev2.Resource) error
 
 	ListResources(ctx context.Context, kind string, resources interface{}, pred *SelectionPredicate) error
+
+	PatchResource(ctx context.Context, resource corev2.Resource, key string, patcher patch.Patcher, etag []byte) ([]byte, error)
 }
 
 // RoleBindingStore provides methods for managing RBAC role bindings
