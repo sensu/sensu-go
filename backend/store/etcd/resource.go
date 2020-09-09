@@ -70,7 +70,7 @@ func (s *Store) PatchResource(ctx context.Context, resource corev2.Resource, key
 	if err != nil {
 		return nil, err
 	}
-	version := resp.Kvs[0].Version
+	value := resp.Kvs[0].Value
 
 	// TODO(palourde): We should verify the etag here
 
@@ -91,7 +91,7 @@ func (s *Store) PatchResource(ctx context.Context, resource corev2.Resource, key
 		return nil, err
 	}
 
-	if err := UpdateWithVersion(ctx, s.client, key, resource, version); err != nil {
+	if err := UpdateWithValue(ctx, s.client, key, resource, value); err != nil {
 		return nil, err
 	}
 

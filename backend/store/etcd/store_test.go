@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	"github.com/coreos/etcd/clientv3"
+	"github.com/gogo/protobuf/proto"
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/etcd"
 	"github.com/sensu/sensu-go/backend/store"
@@ -394,22 +395,32 @@ func TestUpdate(t *testing.T) {
 	})
 }
 
-func TestUpdateWithVersion(t *testing.T) {
+func TestUpdateWithValue(t *testing.T) {
 	testWithEtcdStore(t, func(store *Store) {
-		// Updating a non-existent object should fail
 		obj := &GenericObject{Revision: 1}
+		b, err := proto.Marshal(obj)
+		if err != nil {
+			t.Fatalf("could not marshal the generic object: %s", err)
+		}
+
+		// Updating a non-existent object should fail
 		ctx := context.WithValue(context.Background(), corev2.NamespaceKey, "default")
-		require.Error(t, UpdateWithVersion(ctx, store.client, "/default/foo", obj, 1))
+		require.Error(t, UpdateWithValue(ctx, store.client, "/default/foo", obj, b))
 
 		// Create it first
 		require.NoError(t, Create(ctx, store.client, "/default/foo", "default", obj))
 
-		// Now try to update it with a wrong version
-		require.Error(t, UpdateWithVersion(ctx, store.client, "/default/foo", obj, 42))
+		obj2 := &GenericObject{Revision: 2}
+		b2, err := proto.Marshal(obj2)
+		if err != nil {
+			t.Fatalf("could not marshal the generic object: %s", err)
+		}
+
+		// Now try to update it while simulating an update in the mean time
+		require.Error(t, UpdateWithValue(ctx, store.client, "/default/foo", obj, b2))
 
 		// Updating with the right version should work
-		obj.Revision = 2
-		require.NoError(t, UpdateWithVersion(ctx, store.client, "/default/foo", obj, 1))
+		require.NoError(t, UpdateWithValue(ctx, store.client, "/default/foo", obj2, b))
 	})
 }
 

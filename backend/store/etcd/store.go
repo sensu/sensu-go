@@ -1,6 +1,7 @@
 package etcd
 
 import (
+	bytes "bytes"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -337,15 +338,15 @@ func Update(ctx context.Context, client *clientv3.Client, key, namespace string,
 	return nil
 }
 
-// UpdateWithVersion updates the given resource if and only if the given version matches the current key version
-func UpdateWithVersion(ctx context.Context, client *clientv3.Client, key string, object interface{}, version int64) error {
-	bytes, err := marshal(object)
+// UpdateWithValue updates the given resource if and only if the given value matches the stored key value
+func UpdateWithValue(ctx context.Context, client *clientv3.Client, key string, object interface{}, value []byte) error {
+	b, err := marshal(object)
 	if err != nil {
 		return &store.ErrEncode{Key: key, Err: err}
 	}
 
 	comparisons := []clientv3.Cmp{
-		clientv3.Compare(clientv3.Version(key), "=", version),
+		clientv3.Compare(clientv3.Value(key), "=", string(value)),
 	}
 
 	var resp *clientv3.TxnResponse
@@ -353,7 +354,7 @@ func UpdateWithVersion(ctx context.Context, client *clientv3.Client, key string,
 		resp, err = client.Txn(ctx).If(
 			comparisons...,
 		).Then(
-			clientv3.OpPut(key, string(bytes)),
+			clientv3.OpPut(key, string(b)),
 		).Else(
 			clientv3.OpGet(key),
 		).Commit()
@@ -362,12 +363,12 @@ func UpdateWithVersion(ctx context.Context, client *clientv3.Client, key string,
 	if err != nil {
 		return err
 	}
+
 	if !resp.Succeeded {
 		if len(resp.Responses[0].GetResponseRange().Kvs) == 0 {
 			return &store.ErrNotFound{Key: key}
 		}
-
-		if resp.Responses[0].GetResponseRange().Kvs[0].Version != version {
+		if !bytes.Equal(resp.Responses[0].GetResponseRange().Kvs[0].Value, value) {
 			return &store.ErrModified{Key: key}
 		}
 
