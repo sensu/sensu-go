@@ -2,12 +2,16 @@ package routers
 
 import (
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
 	"path"
 
 	"github.com/gorilla/mux"
+	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/apid/actions"
+	"github.com/sensu/sensu-go/backend/store/etcd"
+	"github.com/sensu/sensu-go/types"
 )
 
 type errorBody struct {
@@ -19,6 +23,18 @@ type errorBody struct {
 func RespondWith(w http.ResponseWriter, r *http.Request, resources interface{}) {
 	// Set content-type to JSON
 	w.Header().Set("Content-Type", "application/json")
+
+	_, isCoreV2Resource := resources.(corev2.Resource)
+	_, isWrapper := resources.(types.Wrapper)
+	if isCoreV2Resource || isWrapper {
+		bytes, err := etcd.ETag(resources)
+		if err != nil {
+			logger.WithError(err).Error("failed to generate etag")
+			WriteError(w, err)
+		}
+		etag := fmt.Sprintf("%x", bytes)
+		w.Header().Set("ETag", etag)
+	}
 
 	// If no resource(s) are present return a 204 response code
 	if resources == nil {
