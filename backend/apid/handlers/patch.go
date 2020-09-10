@@ -25,6 +25,7 @@ func (h Handlers) PatchResource(r *http.Request) (interface{}, error) {
 			fmt.Errorf("could not read the request body: %s", err),
 		)
 	}
+
 	// TODO(palourde): Retrieve the etag header here
 
 	// Initialize our patcher with the body
@@ -53,35 +54,21 @@ func (h Handlers) PatchResource(r *http.Request) (interface{}, error) {
 		return nil, err
 	}
 
-	objectMeta := corev2.ObjectMeta{}
-
 	// Add the namespace & namespace in the patch if they are not defined, so we
 	// pass the metadata validation
-	if resource.GetObjectMeta().Name == "" {
+	objectMeta := resource.GetObjectMeta()
+	if objectMeta.Name == "" {
 		objectMeta.Name = name
 	}
-	if resource.GetObjectMeta().Namespace == "" {
+	if objectMeta.Namespace == "" {
 		objectMeta.Namespace = namespace
 	}
 	resource.SetObjectMeta(objectMeta)
 
-	if err := CheckMeta(payload.Interface(), mux.Vars(r), "id"); err != nil {
+	// Validate the metadata
+	if err := CheckMeta(resource, mux.Vars(r), "id"); err != nil {
 		return nil, actions.NewError(actions.InvalidArgument, err)
 	}
-
-	// resource, ok := payload.Interface().(corev2.Resource)
-	// if !ok {
-	// 	fmt.Println("3")
-	// 	return nil, actions.NewErrorf(actions.InvalidArgument)
-	// }
-
-	// Retrieve the name of the resource via the route variables
-	// params := mux.Vars(r)
-	// name, err := url.PathUnescape(params["id"])
-	// if err != nil {
-	// 	fmt.Println("4")
-	// 	return nil, err
-	// }
 
 	// TODO(palourde): Deal with the new etag here
 	_, err = h.Store.PatchResource(r.Context(), resource, name, patcher, []byte{})
