@@ -25,8 +25,7 @@ require (
 	github.com/echlebek/crock v1.0.1
 	github.com/echlebek/timeproxy v1.0.0
 	github.com/emicklei/proto v1.1.0
-	github.com/evanphx/json-patch v4.9.0+incompatible
-	github.com/evanphx/json-patch/v5 v5.1.0 // indirect
+	github.com/evanphx/json-patch/v5 v5.1.0
 	github.com/frankban/quicktest v1.7.2 // indirect
 	github.com/ghodss/yaml v1.0.0
 	github.com/go-resty/resty/v2 v2.1.0

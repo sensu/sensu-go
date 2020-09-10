@@ -63,7 +63,9 @@ func (s *Store) ListResources(ctx context.Context, resourcePrefix string, resour
 	return List(ctx, s.client, keyBuilderFunc, resources, pred)
 }
 
-func (s *Store) PatchResource(ctx context.Context, resource corev2.Resource, key string, patcher patch.Patcher, etag []byte) ([]byte, error) {
+func (s *Store) PatchResource(ctx context.Context, resource corev2.Resource, name string, patcher patch.Patcher, etag []byte) ([]byte, error) {
+	key := store.KeyFromArgs(ctx, resource.StorePrefix(), name)
+
 	// Get the stored resource along with the etcd response so we can use the
 	// revision later to ensure the resource wasn't modified in the mean time
 	resp, err := GetResponse(ctx, s.client, key, resource)

@@ -1,7 +1,7 @@
 package patch
 
 import (
-	jsonpatch "github.com/evanphx/json-patch"
+	jsonpatch "github.com/evanphx/json-patch/v5"
 )
 
 // Patcher abstracts the patching mechanism and allows easier testing

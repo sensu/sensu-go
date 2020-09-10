@@ -500,7 +500,7 @@ type ResourceStore interface {
 
 	ListResources(ctx context.Context, kind string, resources interface{}, pred *SelectionPredicate) error
 
-	PatchResource(ctx context.Context, resource corev2.Resource, key string, patcher patch.Patcher, etag []byte) ([]byte, error)
+	PatchResource(ctx context.Context, resource corev2.Resource, name string, patcher patch.Patcher, etag []byte) ([]byte, error)
 }
 
 // RoleBindingStore provides methods for managing RBAC role bindings

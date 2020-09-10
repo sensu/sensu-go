@@ -99,6 +99,8 @@ func HTTPStatusFromCode(code actions.ErrCode) int {
 		return http.StatusNotFound
 	case actions.Unauthenticated:
 		return http.StatusUnauthorized
+	case actions.PreconditionFailed:
+		return http.StatusPreconditionFailed
 	}
 
 	logger.WithField("code", code).Error("unknown error code")
@@ -184,6 +186,11 @@ func (r *ResourceRoute) List(fn ListControllerFunc, fields FieldsFunc) *mux.Rout
 // ListAllNamespaces return all resources across all namespaces
 func (r *ResourceRoute) ListAllNamespaces(fn ListControllerFunc, path string, fields FieldsFunc) *mux.Route {
 	return r.Router.HandleFunc(path, listerHandler(fn, fields)).Methods(http.MethodGet)
+}
+
+// Patch patches a resource
+func (r *ResourceRoute) Patch(fn actionHandlerFunc) *mux.Route {
+	return r.Path("{id}", fn).Methods(http.MethodPatch)
 }
 
 // Post creates

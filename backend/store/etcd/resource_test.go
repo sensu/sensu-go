@@ -16,23 +16,23 @@ import (
 func TestStore_PatchResource(t *testing.T) {
 	testWithEtcdClient(t, func(s store.Store, client *clientv3.Client) {
 		// Create a resource
-		obj := &GenericObject{Revision: 42}
+		obj := &GenericObject{Revision: 42, ObjectMeta: corev2.ObjectMeta{Name: "foo", Namespace: "default"}}
 		ctx := context.WithValue(context.Background(), corev2.NamespaceKey, "default")
-		if err := Create(ctx, client, "/default/foo", "default", obj); err != nil {
+		if err := s.CreateOrUpdateResource(ctx, obj); err != nil {
 			t.Fatalf("could not create a resource: %s", err)
 		}
 
 		// Patch the resource
 		patchedObj := GenericObject{}
-		patcher := &patch.Merge{JSONPatch: []byte(`{"metadata":{"name":"answer to life"}}`)}
-		_, err := s.PatchResource(ctx, &patchedObj, "/default/foo", patcher, []byte{})
+		patcher := &patch.Merge{JSONPatch: []byte(`{"metadata":{"labels":{"42":"answer to life"}}}`)}
+		_, err := s.PatchResource(ctx, &patchedObj, "foo", patcher, []byte{})
 		if err != nil {
 			t.Fatalf("could not apply the patch: %s", err)
 		}
 
 		// Make sure the stored and patched resources are the same
 		storedObj := GenericObject{}
-		if err := Get(ctx, client, "/default/foo", &storedObj); err != nil {
+		if err := s.GetResource(ctx, "foo", &storedObj); err != nil {
 			t.Fatalf("could not retrieve the stored resource: %s", err)
 		}
 		if !reflect.DeepEqual(patchedObj, storedObj) {
