@@ -1,6 +1,7 @@
 package etcd
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -63,40 +64,57 @@ func (s *Store) ListResources(ctx context.Context, resourcePrefix string, resour
 	return List(ctx, s.client, keyBuilderFunc, resources, pred)
 }
 
-func (s *Store) PatchResource(ctx context.Context, resource corev2.Resource, name string, patcher patch.Patcher, etag []byte) ([]byte, error) {
+func (s *Store) PatchResource(ctx context.Context, resource corev2.Resource, name string, patcher patch.Patcher, condition *store.ETagCondition) error {
 	key := store.KeyFromArgs(ctx, resource.StorePrefix(), name)
 
 	// Get the stored resource along with the etcd response so we can use the
 	// revision later to ensure the resource wasn't modified in the mean time
 	resp, err := GetResponse(ctx, s.client, key, resource)
 	if err != nil {
-		return nil, err
+		return err
 	}
 	value := resp.Kvs[0].Value
 
-	// TODO(palourde): We should verify the etag here
+	// Determine the etag for the stored value
+	etag, err := ETagFromBytes(value)
+	if err != nil {
+		return err
+	}
+
+	if condition != nil {
+		// Determine if we have an If-Match conditional request
+		if len(condition.IfMatch) != 0 {
+			if !bytes.Equal(etag, condition.IfMatch) {
+				// The etag from the stored resource did not match the requested etag
+				return &store.ErrModified{Key: key}
+			}
+		}
+
+		// Determine if we have an If-Not-Match conditional request
+		if len(condition.IfNoneMatch) != 0 {
+			if bytes.Equal(etag, condition.IfNoneMatch) {
+				// The etag from the stored resource did match the requested etag
+				return &store.ErrModified{Key: key}
+			}
+		}
+	}
 
 	// Encode the stored resource
 	original, err := json.Marshal(resource)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	// Apply the patch to our original document (stored resource)
 	patchedResource, err := patcher.Patch(original)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	// Decode the resulting document into provided resource
 	if err := json.Unmarshal(patchedResource, &resource); err != nil {
-		return nil, err
+		return err
 	}
 
-	if err := UpdateWithValue(ctx, s.client, key, resource, value); err != nil {
-		return nil, err
-	}
-
-	// TODO(palourde): Calculate the new etag and return it here
-	return nil, nil
+	return UpdateWithValue(ctx, s.client, key, resource, value)
 }

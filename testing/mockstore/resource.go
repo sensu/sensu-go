@@ -39,7 +39,7 @@ func (s *MockStore) ListResources(ctx context.Context, kind string, list interfa
 }
 
 // PatchResource ...
-func (s *MockStore) PatchResource(ctx context.Context, resource corev2.Resource, name string, patcher patch.Patcher, etag []byte) ([]byte, error) {
-	args := s.Called(ctx, resource, name, patcher, etag)
-	return args.Get(0).([]byte), args.Error(1)
+func (s *MockStore) PatchResource(ctx context.Context, resource corev2.Resource, name string, patcher patch.Patcher, condition *store.ETagCondition) error {
+	args := s.Called(ctx, resource, name, patcher, condition)
+	return args.Error(0)
 }

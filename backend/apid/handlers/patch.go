@@ -19,6 +19,9 @@ import (
 const (
 	mergePatchContentType = "application/merge-patch+json"
 	jsonPatchContentType  = "application/json-patch+json"
+
+	ifMatchHeader     = "If-Match"
+	ifNoneMatchHeader = "If-None-Match"
 )
 
 // PatchResource patches a given resource, using the request body as the patch
@@ -44,8 +47,6 @@ func (h Handlers) PatchResource(r *http.Request) (interface{}, error) {
 	default:
 		return nil, actions.NewError(actions.InvalidArgument, fmt.Errorf("invalid Content-Type header: %q", contentType))
 	}
-
-	// TODO(palourde): Retrieve the etag header here
 
 	// We also need to decode the request body into a concrete type so we can
 	// guard against namespace & name alterations
@@ -86,8 +87,16 @@ func (h Handlers) PatchResource(r *http.Request) (interface{}, error) {
 		return nil, actions.NewError(actions.InvalidArgument, err)
 	}
 
+	// Determine if we have a conditional request
+	var condition *store.ETagCondition
+	if ifMatch := r.Header.Get(ifMatchHeader); ifMatch != "" {
+		condition = &store.ETagCondition{IfMatch: []byte(ifMatch)}
+	} else if ifNone := r.Header.Get(ifNoneMatchHeader); ifNone != "" {
+		condition = &store.ETagCondition{IfNoneMatch: []byte(ifNone)}
+	}
+
 	// TODO(palourde): Deal with the new etag here
-	_, err = h.Store.PatchResource(r.Context(), resource, name, patcher, []byte{})
+	err = h.Store.PatchResource(r.Context(), resource, name, patcher, condition)
 	if err != nil {
 		switch err := err.(type) {
 		case *store.ErrNotFound:
@@ -101,7 +110,5 @@ func (h Handlers) PatchResource(r *http.Request) (interface{}, error) {
 		}
 	}
 
-	// TODO(palourde): We could compare the etag and return a 200 OK when we had a
-	// modification and a 204 No Content when they are the same
 	return resource, nil
 }

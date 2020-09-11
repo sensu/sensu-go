@@ -24,8 +24,8 @@ func TestStore_PatchResource(t *testing.T) {
 
 		// Patch the resource
 		patchedObj := GenericObject{}
-		patcher := &patch.Merge{JSONPatch: []byte(`{"metadata":{"labels":{"42":"answer to life"}}}`)}
-		_, err := s.PatchResource(ctx, &patchedObj, "foo", patcher, []byte{})
+		patcher := &patch.Merge{MergePatch: []byte(`{"metadata":{"labels":{"42":"answer to life"}}}`)}
+		err := s.PatchResource(ctx, &patchedObj, "foo", patcher, nil)
 		if err != nil {
 			t.Fatalf("could not apply the patch: %s", err)
 		}
