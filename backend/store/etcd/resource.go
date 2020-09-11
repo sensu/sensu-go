@@ -1,10 +1,11 @@
 package etcd
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
+	"net/textproto"
+	"strings"
 
 	"github.com/gogo/protobuf/proto"
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
@@ -64,7 +65,7 @@ func (s *Store) ListResources(ctx context.Context, resourcePrefix string, resour
 	return List(ctx, s.client, keyBuilderFunc, resources, pred)
 }
 
-func (s *Store) PatchResource(ctx context.Context, resource corev2.Resource, name string, patcher patch.Patcher, condition *store.ETagCondition) error {
+func (s *Store) PatchResource(ctx context.Context, resource corev2.Resource, name string, patcher patch.Patcher, conditions *store.ETagCondition) error {
 	key := store.KeyFromArgs(ctx, resource.StorePrefix(), name)
 
 	// Get the stored resource along with the etcd response so we can use the
@@ -76,26 +77,17 @@ func (s *Store) PatchResource(ctx context.Context, resource corev2.Resource, nam
 	value := resp.Kvs[0].Value
 
 	// Determine the etag for the stored value
-	etag, err := ETagFromBytes(value)
+	etag, err := ETag(resource)
 	if err != nil {
 		return err
 	}
 
-	if condition != nil {
-		// Determine if we have an If-Match conditional request
-		if len(condition.IfMatch) != 0 {
-			if !bytes.Equal(etag, condition.IfMatch) {
-				// The etag from the stored resource did not match the requested etag
-				return &store.ErrModified{Key: key}
-			}
+	if conditions != nil {
+		if !checkIfMatch(conditions.IfMatch, etag) {
+			return &store.ErrModified{Key: key}
 		}
-
-		// Determine if we have an If-Not-Match conditional request
-		if len(condition.IfNoneMatch) != 0 {
-			if bytes.Equal(etag, condition.IfNoneMatch) {
-				// The etag from the stored resource did match the requested etag
-				return &store.ErrModified{Key: key}
-			}
+		if !checkIfNoneMatch(conditions.IfNoneMatch, etag) {
+			return &store.ErrModified{Key: key}
 		}
 	}
 
@@ -117,4 +109,94 @@ func (s *Store) PatchResource(ctx context.Context, resource corev2.Resource, nam
 	}
 
 	return UpdateWithValue(ctx, s.client, key, resource, value)
+}
+
+// checkIfMatch determines if any of the etag provided in the If-Match header
+// match the stored etag. This function was largely inspired by the net/http
+// package
+func checkIfMatch(header string, etag string) bool {
+	if header == "" {
+		return true
+	}
+
+	for {
+		header = textproto.TrimString(header)
+		if len(header) == 0 {
+			break
+		}
+		if header[0] == ',' {
+			header = header[1:]
+			continue
+		}
+		if header[0] == '*' {
+			return true
+		}
+		scannedEtag, remainingHeader := scanETag(header)
+		if scannedEtag == etag && scannedEtag != "" && scannedEtag[0] == '"' {
+			return true
+		}
+		header = remainingHeader
+	}
+
+	return false
+}
+
+// checkIfNoneMatch determines if none of the etag provided in the If-Match
+// header match the stored etag. This function was largely inspired by the
+// net/http package
+func checkIfNoneMatch(header string, etag string) bool {
+	if header == "" {
+		return true
+	}
+
+	for {
+		header = textproto.TrimString(header)
+		if len(header) == 0 {
+			break
+		}
+		if header[0] == ',' {
+			header = header[1:]
+			continue
+		}
+		if header[0] == '*' {
+			return false
+		}
+		scannedEtag, remainingHeader := scanETag(header)
+		if strings.TrimPrefix(scannedEtag, "W/") == strings.TrimPrefix(etag, "W/") {
+			return false
+		}
+		header = remainingHeader
+	}
+
+	return true
+}
+
+func scanETag(header string) (string, string) {
+	fmt.Printf("scanETag header = %s\n", header)
+	header = textproto.TrimString(header)
+	start := 0
+	if strings.HasPrefix(header, "W/") {
+		start = 2
+	}
+
+	if len(header[start:]) < 2 || header[start] != '"' {
+		return "", ""
+	}
+
+	// ETag is either W/"text" or "text".
+	// See RFC 7232 2.3.
+	for i := start + 1; i < len(header); i++ {
+		c := header[i]
+		switch {
+		// Character values allowed in ETags.
+		case c == 0x21 || c >= 0x23 && c <= 0x7E || c >= 0x80:
+		case c == '"':
+			fmt.Printf("1: %s\n2: %s\n", string(header[:i+1]), header[i+1:])
+			return string(header[:i+1]), header[i+1:]
+		default:
+			break
+		}
+	}
+
+	return "", ""
 }

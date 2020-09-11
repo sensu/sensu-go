@@ -88,15 +88,12 @@ func (h Handlers) PatchResource(r *http.Request) (interface{}, error) {
 	}
 
 	// Determine if we have a conditional request
-	var condition *store.ETagCondition
-	if ifMatch := r.Header.Get(ifMatchHeader); ifMatch != "" {
-		condition = &store.ETagCondition{IfMatch: []byte(ifMatch)}
-	} else if ifNone := r.Header.Get(ifNoneMatchHeader); ifNone != "" {
-		condition = &store.ETagCondition{IfNoneMatch: []byte(ifNone)}
+	conditions := &store.ETagCondition{
+		IfMatch:     r.Header.Get(ifMatchHeader),
+		IfNoneMatch: r.Header.Get(ifNoneMatchHeader),
 	}
 
-	// TODO(palourde): Deal with the new etag here
-	err = h.Store.PatchResource(r.Context(), resource, name, patcher, condition)
+	err = h.Store.PatchResource(r.Context(), resource, name, patcher, conditions)
 	if err != nil {
 		switch err := err.(type) {
 		case *store.ErrNotFound:

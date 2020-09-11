@@ -2,7 +2,6 @@ package routers
 
 import (
 	"encoding/json"
-	"fmt"
 	"io"
 	"net/http"
 	"path"
@@ -27,12 +26,11 @@ func RespondWith(w http.ResponseWriter, r *http.Request, resources interface{}) 
 	_, isCoreV2Resource := resources.(corev2.Resource)
 	_, isWrapper := resources.(types.Wrapper)
 	if isCoreV2Resource || isWrapper {
-		bytes, err := etcd.ETag(resources)
+		etag, err := etcd.ETag(resources)
 		if err != nil {
 			logger.WithError(err).Error("failed to generate etag")
 			WriteError(w, err)
 		}
-		etag := fmt.Sprintf("%x", bytes)
 		w.Header().Set("ETag", etag)
 	}
 
