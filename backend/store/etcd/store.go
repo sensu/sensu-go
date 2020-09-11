@@ -369,7 +369,7 @@ func UpdateWithValue(ctx context.Context, client *clientv3.Client, key string, o
 			return &store.ErrNotFound{Key: key}
 		}
 		if !bytes.Equal(resp.Responses[0].GetResponseRange().Kvs[0].Value, value) {
-			return &store.ErrModified{Key: key}
+			return &store.ErrPreconditionFailed{Key: key}
 		}
 
 		// Unknown error

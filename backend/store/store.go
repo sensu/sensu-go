@@ -70,17 +70,16 @@ func (e *ErrNotValid) Error() string {
 	return fmt.Sprintf("resource is invalid: %s", e.Err.Error())
 }
 
-// ErrModified is returned when the stored resource does not match the expected
-// resource
-type ErrModified struct {
+// ErrPreconditionFailed is returned when a condition was not fulilled
+type ErrPreconditionFailed struct {
 	Key string
 }
 
-func (e *ErrModified) Error() string {
-	return fmt.Sprintf("key %s was modified", e.Key)
+func (e *ErrPreconditionFailed) Error() string {
+	return fmt.Sprintf("at least one condition failed for the key %s", e.Key)
 }
 
-// ErrModified is returned when something generally bad happened while
+// ErrInternal is returned when something generally bad happened while
 // interacting with the store. Other, more specific errors should be
 // returned when appropriate.
 //

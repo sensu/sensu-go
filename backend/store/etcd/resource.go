@@ -77,17 +77,17 @@ func (s *Store) PatchResource(ctx context.Context, resource corev2.Resource, nam
 	value := resp.Kvs[0].Value
 
 	// Determine the etag for the stored value
-	etag, err := ETag(resource)
+	etag, err := store.ETag(resource)
 	if err != nil {
 		return err
 	}
 
 	if conditions != nil {
 		if !checkIfMatch(conditions.IfMatch, etag) {
-			return &store.ErrModified{Key: key}
+			return &store.ErrPreconditionFailed{Key: key}
 		}
 		if !checkIfNoneMatch(conditions.IfNoneMatch, etag) {
-			return &store.ErrModified{Key: key}
+			return &store.ErrPreconditionFailed{Key: key}
 		}
 	}
 
@@ -172,7 +172,6 @@ func checkIfNoneMatch(header string, etag string) bool {
 }
 
 func scanETag(header string) (string, string) {
-	fmt.Printf("scanETag header = %s\n", header)
 	header = textproto.TrimString(header)
 	start := 0
 	if strings.HasPrefix(header, "W/") {
@@ -191,7 +190,6 @@ func scanETag(header string) (string, string) {
 		// Character values allowed in ETags.
 		case c == 0x21 || c >= 0x23 && c <= 0x7E || c >= 0x80:
 		case c == '"':
-			fmt.Printf("1: %s\n2: %s\n", string(header[:i+1]), header[i+1:])
 			return string(header[:i+1]), header[i+1:]
 		default:
 			break

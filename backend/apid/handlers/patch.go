@@ -100,7 +100,7 @@ func (h Handlers) PatchResource(r *http.Request) (interface{}, error) {
 			return nil, actions.NewError(actions.NotFound, err)
 		case *store.ErrNotValid:
 			return nil, actions.NewError(actions.InvalidArgument, err)
-		case *store.ErrModified:
+		case *store.ErrPreconditionFailed:
 			return nil, actions.NewError(actions.PreconditionFailed, err)
 		default:
 			return nil, actions.NewError(actions.InternalErr, err)
