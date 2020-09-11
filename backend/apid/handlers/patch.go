@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -15,9 +16,14 @@ import (
 	"github.com/sensu/sensu-go/backend/store/patch"
 )
 
+const (
+	mergePatchContentType = "application/merge-patch+json"
+	jsonPatchContentType  = "application/json-patch+json"
+)
+
 // PatchResource patches a given resource, using the request body as the patch
 func (h Handlers) PatchResource(r *http.Request) (interface{}, error) {
-	// First read the request body
+	// Read the request body
 	body, err := ioutil.ReadAll(r.Body)
 	if err != nil {
 		return nil, actions.NewError(
@@ -26,10 +32,20 @@ func (h Handlers) PatchResource(r *http.Request) (interface{}, error) {
 		)
 	}
 
-	// TODO(palourde): Retrieve the etag header here
+	var patcher patch.Patcher
 
-	// Initialize our patcher with the body
-	patcher := &patch.Merge{JSONPatch: body}
+	// Determine the requested PATCH operation based on the Content-Type header
+	// and initialize a patcher
+	switch contentType := r.Header.Get("Content-Type"); contentType {
+	case mergePatchContentType, "": // Use merge patch as fallback value
+		patcher = &patch.Merge{MergePatch: body}
+	case jsonPatchContentType:
+		return nil, actions.NewError(actions.InvalidArgument, errors.New("JSON Patch is not supported yet"))
+	default:
+		return nil, actions.NewError(actions.InvalidArgument, fmt.Errorf("invalid Content-Type header: %q", contentType))
+	}
+
+	// TODO(palourde): Retrieve the etag header here
 
 	// We also need to decode the request body into a concrete type so we can
 	// guard against namespace & name alterations

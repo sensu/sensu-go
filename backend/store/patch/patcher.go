@@ -11,10 +11,10 @@ type Patcher interface {
 
 // Merge is a patcher for Merge Patchs as defined in RFC7396
 type Merge struct {
-	JSONPatch []byte
+	MergePatch []byte
 }
 
 // Patch merges the patch into the original document
 func (m *Merge) Patch(document []byte) ([]byte, error) {
-	return jsonpatch.MergePatch(document, m.JSONPatch)
+	return jsonpatch.MergePatch(document, m.MergePatch)
 }
