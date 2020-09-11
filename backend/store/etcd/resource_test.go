@@ -40,3 +40,25 @@ func TestStore_PatchResource(t *testing.T) {
 		}
 	})
 }
+
+func Test_checkIfMatch(t *testing.T) {
+	tests := []struct {
+		name   string
+		header string
+		etag   string
+		want   bool
+	}{
+		{
+			name: "empty header should pass",
+			etag: `"12345"`,
+			want: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := checkIfMatch(tt.args.header, tt.args.etag); got != tt.want {
+				t.Errorf("checkIfMatch() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
