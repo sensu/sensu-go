@@ -25,8 +25,7 @@ func TestStore_PatchResource(t *testing.T) {
 		// Patch the resource
 		patchedObj := GenericObject{}
 		patcher := &patch.Merge{MergePatch: []byte(`{"metadata":{"labels":{"42":"answer to life"}}}`)}
-		err := s.PatchResource(ctx, &patchedObj, "foo", patcher, nil)
-		if err != nil {
+		if err := s.PatchResource(ctx, &patchedObj, "foo", patcher, nil); err != nil {
 			t.Fatalf("could not apply the patch: %s", err)
 		}
 
@@ -37,6 +36,42 @@ func TestStore_PatchResource(t *testing.T) {
 		}
 		if !reflect.DeepEqual(patchedObj, storedObj) {
 			t.Errorf("Store.PatchResource() = %#v, want %#v", patchedObj, storedObj)
+		}
+
+		// Determine the etag for the stored resource
+		etag, err := store.ETag(storedObj)
+		if err != nil {
+			t.Fatalf("could not determine the etag: %s", err)
+		}
+
+		// An etag in a If-Match that does not match should return a precondition
+		// error
+		condition := &store.ETagCondition{
+			IfMatch: `"12345"`,
+		}
+		err = s.PatchResource(ctx, &patchedObj, "foo", patcher, condition)
+		if _, ok := err.(*store.ErrPreconditionFailed); !ok {
+			t.Fatal("expected an error of type *store.ErrPreconditionFailed")
+		}
+
+		// A matching etag in a If-Match should proceed
+		condition.IfMatch = etag
+		if err = s.PatchResource(ctx, &patchedObj, "foo", patcher, condition); err != nil {
+			t.Fatalf("unexpected error: %s", err)
+		}
+
+		// A matching etag in a If-None-Match should return a precondition error
+		condition.IfMatch = ""
+		condition.IfNoneMatch = etag
+		err = s.PatchResource(ctx, &patchedObj, "foo", patcher, condition)
+		if _, ok := err.(*store.ErrPreconditionFailed); !ok {
+			t.Fatal("expected an error of type *store.ErrPreconditionFailed")
+		}
+
+		// An etag in a If-None-Match that does not match should proceed
+		condition.IfNoneMatch = `"12345"`
+		if err = s.PatchResource(ctx, &patchedObj, "foo", patcher, condition); err != nil {
+			t.Fatalf("unexpected error: %s", err)
 		}
 	})
 }
