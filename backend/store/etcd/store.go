@@ -463,6 +463,11 @@ func ComputeContinueToken(ctx context.Context, r corev2.Resource) string {
 	}
 }
 
+// unmarshal takes a slice of bytes and an interface and will attempt to
+// unmarshal the bytes into the provided interface. If the length of the data
+// is greather than 0 and the first character is '{' it will assume the data
+// is in JSON format, otherwise it will be assumed the data is in Protobuf
+// format.
 func unmarshal(data []byte, v interface{}) error {
 	if len(data) > 0 && data[0] == '{' {
 		if err := json.Unmarshal(data, v); err != nil {
@@ -481,6 +486,9 @@ func unmarshal(data []byte, v interface{}) error {
 	return nil
 }
 
+// marshal takes an interface and will attempt to marshal it. If the interface
+// can be asserted as types.Wrapper it will be marshaled with JSON, otherwise it
+// will be marshaled with Protobuf.
 func marshal(v interface{}) (bytes []byte, err error) {
 	switch v.(type) {
 	case types.Wrapper:
