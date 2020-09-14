@@ -1,7 +1,6 @@
 package etcd
 
 import (
-	bytes "bytes"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -83,42 +82,13 @@ func Create(ctx context.Context, client *clientv3.Client, key, namespace string,
 		return &store.ErrEncode{Key: key, Err: err}
 	}
 
-	comparisons := []clientv3.Cmp{}
-	// If we had a namespace provided, make sure it exists
-	if namespace != "" {
-		comparisons = append(comparisons, namespaceFound(namespace))
-	}
-	// Make sure the key does not exists
-	comparisons = append(comparisons, keyNotFound(key))
-
 	req := clientv3.OpPut(key, string(bytes))
-	var resp *clientv3.TxnResponse
-	err = Backoff(ctx).Retry(func(n int) (done bool, err error) {
-		resp, err = client.Txn(ctx).If(comparisons...).Then(req).Else(
-			getNamespace(namespace), getKey(key),
-		).Commit()
-		return RetryRequest(n, err)
-	})
-	if err != nil {
-		return err
-	}
-	if !resp.Succeeded {
-		// Check if the namespace was missing
-		if namespace != "" && len(resp.Responses[0].GetResponseRange().Kvs) == 0 {
-			return &store.ErrNamespaceMissing{Namespace: namespace}
-		}
+	comparator := Comparisons(
+		NamespaceExists(namespace),
+		KeyIsNotFound(key),
+	)
 
-		// Check if the key already exists
-		if len(resp.Responses[1].GetResponseRange().Kvs) != 0 {
-			return &store.ErrAlreadyExists{Key: key}
-		}
-
-		// Unknown error
-		return &store.ErrNotValid{
-			Err: fmt.Errorf("could not create the key %s", key),
-		}
-	}
-	return nil
+	return Txn(ctx, client, comparator, req)
 }
 
 // CreateOrUpdate writes the given key with the serialized object, regarless of
@@ -129,33 +99,12 @@ func CreateOrUpdate(ctx context.Context, client *clientv3.Client, key, namespace
 		return &store.ErrEncode{Key: key, Err: err}
 	}
 
-	comparisons := []clientv3.Cmp{}
-	// If we had a namespace provided, make sure it exists
-	if namespace != "" {
-		comparisons = append(comparisons, namespaceFound(namespace))
-	}
-
 	req := clientv3.OpPut(key, string(bytes))
-	var resp *clientv3.TxnResponse
-	err = Backoff(ctx).Retry(func(n int) (done bool, err error) {
-		resp, err = client.Txn(ctx).If(comparisons...).Then(req).Commit()
-		return RetryRequest(n, err)
-	})
-	if err != nil {
-		return err
-	}
-	if !resp.Succeeded {
-		// Check if the namespace was missing
-		if namespace != "" && (len(resp.Responses) == 0 || len(resp.Responses[0].GetResponseRange().Kvs) == 0) {
-			return &store.ErrNamespaceMissing{Namespace: namespace}
-		}
+	comparator := Comparisons(
+		NamespaceExists(namespace),
+	)
 
-		// Unknown error
-		return &store.ErrNotValid{
-			Err: fmt.Errorf("could not update the key %s", key),
-		}
-	}
-	return nil
+	return Txn(ctx, client, comparator, req)
 }
 
 // Delete the given key
@@ -299,86 +248,30 @@ func Update(ctx context.Context, client *clientv3.Client, key, namespace string,
 		return &store.ErrEncode{Key: key, Err: err}
 	}
 
-	comparisons := []clientv3.Cmp{}
-	// If we had a namespace provided, make sure it exists
-	if namespace != "" {
-		comparisons = append(comparisons, namespaceFound(namespace))
-	}
-	// Make sure the key already exists
-	comparisons = append(comparisons, keyFound(key))
-
 	req := clientv3.OpPut(key, string(bytes))
-	var resp *clientv3.TxnResponse
-	err = Backoff(ctx).Retry(func(n int) (done bool, err error) {
-		resp, err = client.Txn(ctx).If(comparisons...).Then(req).Else(
-			getNamespace(namespace), getKey(key),
-		).Commit()
-		return RetryRequest(n, err)
-	})
-	if err != nil {
-		return err
-	}
-	if !resp.Succeeded {
-		// Check if the namespace was missing
-		if namespace != "" && len(resp.Responses[0].GetResponseRange().Kvs) == 0 {
-			return &store.ErrNamespaceMissing{Namespace: namespace}
-		}
+	comparator := Comparisons(
+		NamespaceExists(namespace),
+		KeyIsFound(key),
+	)
 
-		// Check if the key was missing
-		if len(resp.Responses[1].GetResponseRange().Kvs) == 0 {
-			return &store.ErrNotFound{Key: key}
-		}
-
-		// Unknown error
-		return &store.ErrNotValid{
-			Err: fmt.Errorf("could not update the key %s", key),
-		}
-	}
-
-	return nil
+	return Txn(ctx, client, comparator, req)
 }
 
-// UpdateWithValue updates the given resource if and only if the given value matches the stored key value
+// UpdateWithValue updates the given resource if and only if the given value
+// matches the stored key value
 func UpdateWithValue(ctx context.Context, client *clientv3.Client, key string, object interface{}, value []byte) error {
-	b, err := marshal(object)
+	bytes, err := marshal(object)
 	if err != nil {
 		return &store.ErrEncode{Key: key, Err: err}
 	}
 
-	comparisons := []clientv3.Cmp{
-		clientv3.Compare(clientv3.Value(key), "=", string(value)),
-	}
+	req := clientv3.OpPut(key, string(bytes))
+	comparator := Comparisons(
+		KeyIsFound(key),
+		KeyHasValue(key, value),
+	)
 
-	var resp *clientv3.TxnResponse
-	err = Backoff(ctx).Retry(func(n int) (done bool, err error) {
-		resp, err = client.Txn(ctx).If(
-			comparisons...,
-		).Then(
-			clientv3.OpPut(key, string(b)),
-		).Else(
-			clientv3.OpGet(key),
-		).Commit()
-		return RetryRequest(n, err)
-	})
-	if err != nil {
-		return err
-	}
-
-	if !resp.Succeeded {
-		if len(resp.Responses[0].GetResponseRange().Kvs) == 0 {
-			return &store.ErrNotFound{Key: key}
-		}
-		if !bytes.Equal(resp.Responses[0].GetResponseRange().Kvs[0].Value, value) {
-			return &store.ErrPreconditionFailed{Key: key}
-		}
-
-		// Unknown error
-		return &store.ErrNotValid{
-			Err: fmt.Errorf("could not update the key %s", key),
-		}
-	}
-
-	return nil
+	return Txn(ctx, client, comparator, req)
 }
 
 // Count retrieves the count of all keys from storage under the
@@ -401,23 +294,35 @@ func Count(ctx context.Context, client *clientv3.Client, key string) (int64, err
 	return resp.Count, nil
 }
 
-func getKey(key string) clientv3.Op {
-	return clientv3.OpGet(key)
-}
+func Txn(ctx context.Context, client *clientv3.Client, comparator *Comparator, ops ...clientv3.Op) error {
+	var resp *clientv3.TxnResponse
+	err := Backoff(ctx).Retry(func(n int) (done bool, err error) {
+		resp, err = client.Txn(ctx).If(
+			comparator.Cmp()...,
+		).Then(
+			ops...,
+		).Else(
+			comparator.Failure()...,
+		).Commit()
+		return RetryRequest(n, err)
+	})
+	if err != nil {
+		return err
+	}
 
-func getNamespace(namespace string) clientv3.Op {
-	return getKey(getNamespacePath(namespace))
+	// Determine whether our comparisons in the If block evaluated to true or
+	// false. resp contains a list of responses from applying the If
+	// block if Succeeded is true or the Else block if Succeeded is false
+	if !resp.Succeeded {
+		return comparator.Error(resp)
+	}
+
+	return nil
 }
 
 func keyFound(key string) clientv3.Cmp {
 	return clientv3.Compare(
 		clientv3.CreateRevision(key), ">", 0,
-	)
-}
-
-func keyNotFound(key string) clientv3.Cmp {
-	return clientv3.Compare(
-		clientv3.CreateRevision(key), "=", 0,
 	)
 }
 
