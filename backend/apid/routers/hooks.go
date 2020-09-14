@@ -33,6 +33,7 @@ func (r *HooksRouter) Mount(parent *mux.Router) {
 	routes.Get(r.handlers.GetResource)
 	routes.List(r.handlers.ListResources, corev2.HookConfigFields)
 	routes.ListAllNamespaces(r.handlers.ListResources, "/{resource:hooks}", corev2.HookConfigFields)
+	routes.Patch(r.handlers.PatchResource)
 	routes.Post(r.handlers.CreateResource)
 	routes.Put(r.handlers.CreateOrUpdateResource)
 }

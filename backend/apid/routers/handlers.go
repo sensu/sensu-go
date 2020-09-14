@@ -32,6 +32,7 @@ func (r *HandlersRouter) Mount(parent *mux.Router) {
 	routes.Get(r.handlers.GetResource)
 	routes.List(r.handlers.ListResources, corev2.HandlerFields)
 	routes.ListAllNamespaces(r.handlers.ListResources, "/{resource:handlers}", corev2.HandlerFields)
+	routes.Patch(r.handlers.PatchResource)
 	routes.Post(r.handlers.CreateResource)
 	routes.Put(r.handlers.CreateOrUpdateResource)
 }
