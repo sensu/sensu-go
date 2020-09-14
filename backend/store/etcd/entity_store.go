@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"fmt"
 
 	"github.com/coreos/etcd/clientv3"
 	"github.com/gogo/protobuf/proto"
@@ -60,22 +59,14 @@ func (s *Store) DeleteEntity(ctx context.Context, e *corev2.Entity) error {
 	configReq := storev2.NewResourceRequestFromResource(ctx, config)
 	stateKey := etcdstore.StoreKey(stateReq)
 	configKey := etcdstore.StoreKey(configReq)
+
+	comparator := Comparisons()
 	ops := []clientv3.Op{
 		clientv3.OpDelete(stateKey),
 		clientv3.OpDelete(configKey),
 	}
-	var resp *clientv3.TxnResponse
-	err := Backoff(ctx).Retry(func(n int) (done bool, err error) {
-		resp, err = s.client.Txn(ctx).Then(ops...).Commit()
-		return RetryRequest(n, err)
-	})
-	if err != nil {
-		return err
-	}
-	if !resp.Succeeded {
-		return &store.ErrNotFound{Key: fmt.Sprintf("%s, %s", configKey, stateKey)}
-	}
-	return nil
+
+	return Txn(ctx, s.client, comparator, ops...)
 }
 
 // DeleteEntityByName deletes an Entity by its name.
@@ -100,26 +91,17 @@ func (s *Store) DeleteEntityByName(ctx context.Context, name string) error {
 	configReq := storev2.NewResourceRequestFromResource(ctx, config)
 	stateKey := etcdstore.StoreKey(stateReq)
 	configKey := etcdstore.StoreKey(configReq)
-	cmps := []clientv3.Cmp{
-		keyFound(stateKey),
-		keyFound(configKey),
-	}
+
+	comparator := Comparisons(
+		KeyIsFound(stateKey),
+		KeyIsFound(configKey),
+	)
 	ops := []clientv3.Op{
 		clientv3.OpDelete(stateKey),
 		clientv3.OpDelete(configKey),
 	}
-	var resp *clientv3.TxnResponse
-	err := Backoff(ctx).Retry(func(n int) (done bool, err error) {
-		resp, err = s.client.Txn(ctx).If(cmps...).Then(ops...).Commit()
-		return RetryRequest(n, err)
-	})
-	if err != nil {
-		return err
-	}
-	if !resp.Succeeded {
-		return &store.ErrNotFound{Key: fmt.Sprintf("%s, %s", configKey, stateKey)}
-	}
-	return nil
+
+	return Txn(ctx, s.client, comparator, ops...)
 }
 
 // GetEntityByName gets an Entity by its name.
@@ -299,28 +281,14 @@ func (s *Store) UpdateEntity(ctx context.Context, e *corev2.Entity) error {
 	if err != nil {
 		return &store.ErrEncode{Err: err}
 	}
-	cmp := namespaceFound(namespace)
+
+	comparator := Comparisons(
+		NamespaceExists(namespace),
+	)
 	ops := []clientv3.Op{
 		clientv3.OpPut(configKey, string(configMsg)),
 		clientv3.OpPut(stateKey, string(stateMsg)),
 	}
-	var resp *clientv3.TxnResponse
-	err = Backoff(ctx).Retry(func(n int) (done bool, err error) {
-		resp, err = s.client.Txn(ctx).If(cmp).Then(ops...).Commit()
-		return RetryRequest(n, err)
-	})
-	if err != nil {
-		return err
-	}
-	if !resp.Succeeded {
-		if namespace != "" {
-			return &store.ErrNamespaceMissing{Namespace: namespace}
-		}
 
-		// should never happen, developer error!
-		return &store.ErrInternal{
-			Message: "developer error: no namespace specified, but transaction failed",
-		}
-	}
-	return nil
+	return Txn(ctx, s.client, comparator, ops...)
 }

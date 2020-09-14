@@ -82,13 +82,13 @@ func Create(ctx context.Context, client *clientv3.Client, key, namespace string,
 		return &store.ErrEncode{Key: key, Err: err}
 	}
 
-	req := clientv3.OpPut(key, string(bytes))
 	comparator := Comparisons(
 		NamespaceExists(namespace),
 		KeyIsNotFound(key),
 	)
+	op := clientv3.OpPut(key, string(bytes))
 
-	return Txn(ctx, client, comparator, req)
+	return Txn(ctx, client, comparator, op)
 }
 
 // CreateOrUpdate writes the given key with the serialized object, regarless of
@@ -99,12 +99,12 @@ func CreateOrUpdate(ctx context.Context, client *clientv3.Client, key, namespace
 		return &store.ErrEncode{Key: key, Err: err}
 	}
 
-	req := clientv3.OpPut(key, string(bytes))
 	comparator := Comparisons(
 		NamespaceExists(namespace),
 	)
+	op := clientv3.OpPut(key, string(bytes))
 
-	return Txn(ctx, client, comparator, req)
+	return Txn(ctx, client, comparator, op)
 }
 
 // Delete the given key
@@ -248,13 +248,13 @@ func Update(ctx context.Context, client *clientv3.Client, key, namespace string,
 		return &store.ErrEncode{Key: key, Err: err}
 	}
 
-	req := clientv3.OpPut(key, string(bytes))
 	comparator := Comparisons(
 		NamespaceExists(namespace),
 		KeyIsFound(key),
 	)
+	op := clientv3.OpPut(key, string(bytes))
 
-	return Txn(ctx, client, comparator, req)
+	return Txn(ctx, client, comparator, op)
 }
 
 // UpdateWithValue updates the given resource if and only if the given value
@@ -318,16 +318,6 @@ func Txn(ctx context.Context, client *clientv3.Client, comparator *Comparator, o
 	}
 
 	return nil
-}
-
-func keyFound(key string) clientv3.Cmp {
-	return clientv3.Compare(
-		clientv3.CreateRevision(key), ">", 0,
-	)
-}
-
-func namespaceFound(namespace string) clientv3.Cmp {
-	return keyFound(getNamespacePath(namespace))
 }
 
 // ComputeContinueToken calculates a continue token based on the given resource
