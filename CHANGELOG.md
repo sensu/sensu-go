@@ -28,6 +28,7 @@ fully specified.
 - Include the agent entity in data passed to the command process' STDIN.
 - Per-entity subscriptions (ex. `entity:entityName`) are always available on agent entities,
 even if removed via the `/entities` API.
+- Proxy entities that are used in round-robin check requests are no longer stale.
 
 ## [6.0.0] - 2020-08-04
 
