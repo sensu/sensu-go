@@ -367,14 +367,3 @@ func (s *Store) Exists(req storev2.ResourceRequest) (bool, error) {
 	}
 	return resp.Count > 0, nil
 }
-
-// Patch patches a wrapped resource
-// func (s *Store) Patch(req storev2.ResourceRequest) (*storev2.Wrapper, error) {
-// 	key := StoreKey(req)
-// 	if err := req.Validate(); err != nil {
-// 		return nil, &store.ErrNotValid{Err: err}
-// 	}
-// 	fmt.Println(key)
-
-// 	return nil, nil
-// }

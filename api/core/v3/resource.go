@@ -1,6 +1,8 @@
 package v3
 
-import corev2 "github.com/sensu/sensu-go/api/core/v2"
+import (
+	corev2 "github.com/sensu/sensu-go/api/core/v2"
+)
 
 var _ corev2.Resource = &V2ResourceProxy{}
 

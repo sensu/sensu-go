@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -48,16 +49,10 @@ func (h Handlers) PatchResource(r *http.Request) (interface{}, error) {
 		return nil, actions.NewError(actions.InvalidArgument, fmt.Errorf("invalid Content-Type header: %q", contentType))
 	}
 
-	// We also need to decode the request body into a concrete type so we can
-	// guard against namespace & name alterations
-	payload := reflect.New(reflect.TypeOf(h.Resource).Elem())
-	if err := json.Unmarshal(body, payload.Interface()); err != nil {
-		return nil, actions.NewError(actions.InvalidArgument, err)
-	}
-
-	resource, ok := payload.Interface().(corev2.Resource)
-	if !ok {
-		return nil, actions.NewErrorf(actions.InvalidArgument)
+	// Determine if we have a conditional request
+	conditions := &store.ETagCondition{
+		IfMatch:     r.Header.Get(ifMatchHeader),
+		IfNoneMatch: r.Header.Get(ifNoneMatchHeader),
 	}
 
 	// Retrieve the name & namespace of the resource via the route variables
@@ -66,35 +61,32 @@ func (h Handlers) PatchResource(r *http.Request) (interface{}, error) {
 	if err != nil {
 		return nil, err
 	}
-	namespace, err := url.PathUnescape(params["namespace"])
-	if err != nil {
-		return nil, err
-	}
 
-	// Add the namespace & namespace in the patch if they are not defined, so we
-	// pass the metadata validation
-	objectMeta := resource.GetObjectMeta()
-	if objectMeta.Name == "" {
-		objectMeta.Name = name
-	}
-	if objectMeta.Namespace == "" {
-		objectMeta.Namespace = namespace
-	}
-	resource.SetObjectMeta(objectMeta)
-
-	// Validate the metadata
-	if err := CheckMeta(resource, mux.Vars(r), "id"); err != nil {
+	// Validate that the patch does not alter the namespace nor the name
+	if err := validatePatch(body, params); err != nil {
 		return nil, actions.NewError(actions.InvalidArgument, err)
 	}
 
-	// Determine if we have a conditional request
-	conditions := &store.ETagCondition{
-		IfMatch:     r.Header.Get(ifMatchHeader),
-		IfNoneMatch: r.Header.Get(ifNoneMatchHeader),
+	if h.Resource != nil {
+		return h.patchV2Resource(r.Context(), body, name, patcher, conditions)
+	} else if h.V3Resource != nil {
+		// TODO(palourde): Implement v3 resources support
 	}
 
-	err = h.Store.PatchResource(r.Context(), resource, name, patcher, conditions)
-	if err != nil {
+	return nil, actions.NewError(actions.InvalidArgument, errors.New("no resource available"))
+}
+
+func (h Handlers) patchV2Resource(ctx context.Context, body []byte, name string, patcher patch.Patcher, conditions *store.ETagCondition) (interface{}, error) {
+	payload := reflect.New(reflect.TypeOf(h.Resource).Elem())
+	if err := json.Unmarshal(body, payload.Interface()); err != nil {
+		return nil, actions.NewError(actions.InvalidArgument, err)
+	}
+	resource, ok := payload.Interface().(corev2.Resource)
+	if !ok {
+		return nil, actions.NewErrorf(actions.InvalidArgument)
+	}
+
+	if err := h.Store.PatchResource(ctx, resource, name, patcher, conditions); err != nil {
 		switch err := err.(type) {
 		case *store.ErrNotFound:
 			return nil, actions.NewError(actions.NotFound, err)
@@ -108,4 +100,42 @@ func (h Handlers) PatchResource(r *http.Request) (interface{}, error) {
 	}
 
 	return resource, nil
+}
+
+func validatePatch(data []byte, vars map[string]string) error {
+	type body struct {
+		Metadata *corev2.ObjectMeta `json:"metadata"`
+	}
+
+	b := &body{}
+
+	if err := json.Unmarshal(data, b); err != nil {
+		return err
+	}
+
+	namespace, err := url.PathUnescape(vars["namespace"])
+	if err != nil {
+		return err
+	}
+	if b.Metadata.Namespace != "" && b.Metadata.Namespace != namespace {
+		return fmt.Errorf(
+			"the namespace of the resource (%s) does not match the namespace in the URI (%s)",
+			b.Metadata.Namespace,
+			namespace,
+		)
+	}
+
+	name, err := url.PathUnescape(vars["id"])
+	if err != nil {
+		return err
+	}
+	if b.Metadata.Name != "" && b.Metadata.Name != name {
+		return fmt.Errorf(
+			"the name of the resource (%s) does not match the name in the URI (%s)",
+			b.Metadata.Name,
+			name,
+		)
+	}
+
+	return nil
 }

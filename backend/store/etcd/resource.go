@@ -108,6 +108,10 @@ func (s *Store) PatchResource(ctx context.Context, resource corev2.Resource, nam
 		return err
 	}
 
+	if err := resource.Validate(); err != nil {
+		return err
+	}
+
 	return UpdateWithValue(ctx, s.client, key, resource, value)
 }
 
