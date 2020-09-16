@@ -77,7 +77,7 @@ func newQueue(path string) (queue, error) {
 	// compacted below by the queue.Compact method
 	db, err := bolt.Open(queuePath, 0600, &bolt.Options{Timeout: 60 * time.Second})
 	if err != nil {
-		return nil, fmt.Errorf("could not open api queue (%s): %s", queuePath, err)
+		return nil, fmt.Errorf("could not open api queue (%s): %s (is sensu-agent already running?)", queuePath, err)
 	}
 	queue, err := lasr.NewQ(db, "api-buffer")
 	if err != nil {
