@@ -65,7 +65,7 @@ func (r *EntitiesRouter) Mount(parent *mux.Router) {
 	routes.Get(r.find)
 	routes.List(r.controller.List, corev2.EntityFields)
 	routes.ListAllNamespaces(r.controller.List, "/{resource:entities}", corev2.EntityFields)
-	routes.Patch(r.configSubrouter.handlers.PatchResource)
+	routes.Patch(r.patch)
 	routes.Post(r.create)
 	routes.Put(r.createOrReplace)
 }
@@ -76,8 +76,7 @@ func (r *EntitiesRouter) find(req *http.Request) (interface{}, error) {
 	if err != nil {
 		return nil, err
 	}
-	record, err := r.controller.Find(req.Context(), id)
-	return record, err
+	return r.controller.Find(req.Context(), id)
 }
 
 func (r *EntitiesRouter) create(req *http.Request) (interface{}, error) {
@@ -96,4 +95,18 @@ func (r *EntitiesRouter) createOrReplace(req *http.Request) (interface{}, error)
 	}
 
 	return entity, r.controller.CreateOrReplace(req.Context(), entity)
+}
+
+func (r *EntitiesRouter) patch(req *http.Request) (interface{}, error) {
+	if _, err := r.configSubrouter.handlers.PatchResource(req); err != nil {
+		return nil, err
+	}
+
+	// Get the full entity if patching was successfull
+	params := mux.Vars(req)
+	id, err := url.PathUnescape(params["id"])
+	if err != nil {
+		return nil, err
+	}
+	return r.controller.Find(req.Context(), id)
 }
