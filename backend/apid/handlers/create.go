@@ -29,6 +29,11 @@ func (h Handlers) CreateResource(r *http.Request) (interface{}, error) {
 		return nil, actions.NewErrorf(actions.InvalidArgument)
 	}
 
+	// Prepare the resource for storage if required
+	if unprepared, ok := resource.(preparation); ok {
+		unprepared.Prepare(r.Context())
+	}
+
 	meta := resource.GetObjectMeta()
 	if claims := jwt.GetClaimsFromContext(r.Context()); claims != nil {
 		meta.CreatedBy = claims.StandardClaims.Subject
