@@ -7,6 +7,7 @@ import (
 	"github.com/coreos/etcd/clientv3"
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/store"
+	"github.com/sensu/sensu-go/backend/store/etcd/kvc"
 )
 
 const (
@@ -29,9 +30,9 @@ func (s *Store) DeleteFailingKeepalive(ctx context.Context, entity *corev2.Entit
 // GetFailingKeepalives gets all of the failing KeepaliveRecords.
 func (s *Store) GetFailingKeepalives(ctx context.Context) ([]*corev2.KeepaliveRecord, error) {
 	var resp *clientv3.GetResponse
-	err := Backoff(ctx).Retry(func(n int) (done bool, err error) {
+	err := kvc.Backoff(ctx).Retry(func(n int) (done bool, err error) {
 		resp, err = s.client.Get(ctx, s.keepalivesPath, clientv3.WithPrefix())
-		return RetryRequest(n, err)
+		return kvc.RetryRequest(n, err)
 	})
 
 	if err != nil {

@@ -11,6 +11,7 @@ import (
 	"github.com/coreos/etcd/clientv3"
 	"github.com/gogo/protobuf/proto"
 	"github.com/sensu/sensu-go/backend/store"
+	"github.com/sensu/sensu-go/backend/store/etcd/kvc"
 	"github.com/sensu/sensu-go/backend/store/provider"
 
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
@@ -93,9 +94,9 @@ func (s *Store) GetEvents(ctx context.Context, pred *store.SelectionPredicate) (
 	}
 
 	var resp *clientv3.GetResponse
-	err := Backoff(ctx).Retry(func(n int) (done bool, err error) {
+	err := kvc.Backoff(ctx).Retry(func(n int) (done bool, err error) {
 		resp, err = s.client.Get(ctx, key, opts...)
-		return RetryRequest(n, err)
+		return kvc.RetryRequest(n, err)
 	})
 	if err != nil {
 		return nil, err
@@ -146,9 +147,9 @@ func (s *Store) GetEventsByEntity(ctx context.Context, entityName string, pred *
 	opts = append(opts, clientv3.WithRange(rangeEnd))
 
 	var resp *clientv3.GetResponse
-	err := Backoff(ctx).Retry(func(n int) (done bool, err error) {
+	err := kvc.Backoff(ctx).Retry(func(n int) (done bool, err error) {
 		resp, err = s.client.Get(ctx, fmt.Sprintf("%s/", path.Join(keyPrefix, pred.Continue)), opts...)
-		return RetryRequest(n, err)
+		return kvc.RetryRequest(n, err)
 	})
 	if err != nil {
 		return nil, err
@@ -197,9 +198,9 @@ func (s *Store) GetEventByEntityCheck(ctx context.Context, entityName, checkName
 	}
 
 	var resp *clientv3.GetResponse
-	err = Backoff(ctx).Retry(func(n int) (done bool, err error) {
+	err = kvc.Backoff(ctx).Retry(func(n int) (done bool, err error) {
 		resp, err = s.client.Get(ctx, path, clientv3.WithPrefix(), clientv3.WithSerializable())
-		return RetryRequest(n, err)
+		return kvc.RetryRequest(n, err)
 	})
 	if err != nil {
 		return nil, err
@@ -307,9 +308,9 @@ func (s *Store) UpdateEvent(ctx context.Context, event *corev2.Event) (*corev2.E
 	cmp := namespaceExistsForResource(event.Entity)
 	req := clientv3.OpPut(getEventPath(event), string(eventBytes))
 	var res *clientv3.TxnResponse
-	err = Backoff(ctx).Retry(func(n int) (done bool, err error) {
+	err = kvc.Backoff(ctx).Retry(func(n int) (done bool, err error) {
 		res, err = s.client.Txn(ctx).If(cmp).Then(req).Commit()
-		return RetryRequest(n, err)
+		return kvc.RetryRequest(n, err)
 	})
 	if err != nil {
 		return nil, nil, err

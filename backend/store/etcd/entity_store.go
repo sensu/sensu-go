@@ -10,6 +10,7 @@ import (
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	corev3 "github.com/sensu/sensu-go/api/core/v3"
 	"github.com/sensu/sensu-go/backend/store"
+	"github.com/sensu/sensu-go/backend/store/etcd/kvc"
 	storev2 "github.com/sensu/sensu-go/backend/store/v2"
 	"github.com/sensu/sensu-go/backend/store/v2/etcdstore"
 	"github.com/sensu/sensu-go/backend/store/v2/wrap"
@@ -60,13 +61,13 @@ func (s *Store) DeleteEntity(ctx context.Context, e *corev2.Entity) error {
 	stateKey := etcdstore.StoreKey(stateReq)
 	configKey := etcdstore.StoreKey(configReq)
 
-	comparator := Comparisons()
+	comparator := kvc.Comparisons()
 	ops := []clientv3.Op{
 		clientv3.OpDelete(stateKey),
 		clientv3.OpDelete(configKey),
 	}
 
-	return Txn(ctx, s.client, comparator, ops...)
+	return kvc.Txn(ctx, s.client, comparator, ops...)
 }
 
 // DeleteEntityByName deletes an Entity by its name.
@@ -92,16 +93,16 @@ func (s *Store) DeleteEntityByName(ctx context.Context, name string) error {
 	stateKey := etcdstore.StoreKey(stateReq)
 	configKey := etcdstore.StoreKey(configReq)
 
-	comparator := Comparisons(
-		KeyIsFound(stateKey),
-		KeyIsFound(configKey),
+	comparator := kvc.Comparisons(
+		kvc.KeyIsFound(stateKey),
+		kvc.KeyIsFound(configKey),
 	)
 	ops := []clientv3.Op{
 		clientv3.OpDelete(stateKey),
 		clientv3.OpDelete(configKey),
 	}
 
-	return Txn(ctx, s.client, comparator, ops...)
+	return kvc.Txn(ctx, s.client, comparator, ops...)
 }
 
 // GetEntityByName gets an Entity by its name.
@@ -130,9 +131,9 @@ func (s *Store) GetEntityByName(ctx context.Context, name string) (*corev2.Entit
 		clientv3.OpGet(configKey, clientv3.WithLimit(1)),
 	}
 	var resp *clientv3.TxnResponse
-	err := Backoff(ctx).Retry(func(n int) (done bool, err error) {
+	err := kvc.Backoff(ctx).Retry(func(n int) (done bool, err error) {
 		resp, err = s.client.Txn(ctx).Then(ops...).Commit()
-		return RetryRequest(n, err)
+		return kvc.RetryRequest(n, err)
 	})
 	if err != nil {
 		return nil, err
@@ -282,13 +283,13 @@ func (s *Store) UpdateEntity(ctx context.Context, e *corev2.Entity) error {
 		return &store.ErrEncode{Err: err}
 	}
 
-	comparator := Comparisons(
-		NamespaceExists(namespace),
+	comparator := kvc.Comparisons(
+		kvc.NamespaceExists(namespace),
 	)
 	ops := []clientv3.Op{
 		clientv3.OpPut(configKey, string(configMsg)),
 		clientv3.OpPut(stateKey, string(stateMsg)),
 	}
 
-	return Txn(ctx, s.client, comparator, ops...)
+	return kvc.Txn(ctx, s.client, comparator, ops...)
 }

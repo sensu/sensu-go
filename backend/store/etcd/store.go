@@ -7,13 +7,12 @@ import (
 	"path"
 	"reflect"
 	"strings"
-	"time"
 
 	"github.com/coreos/etcd/clientv3"
 	"github.com/gogo/protobuf/proto"
 	"github.com/sensu/sensu-go/backend/store"
+	"github.com/sensu/sensu-go/backend/store/etcd/kvc"
 	"github.com/sensu/sensu-go/types"
-	"github.com/sensu/sensu-go/util/retry"
 
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 )
@@ -39,42 +38,6 @@ func NewStore(client *clientv3.Client, name string) *Store {
 	return store
 }
 
-// EtcdInitialDelay is 100 ms.
-const EtcdInitialDelay = time.Millisecond * 100
-
-// Backoff delivers a pre-configured backoff object, suitable for use in making
-// etcd requests.
-func Backoff(ctx context.Context) *retry.ExponentialBackoff {
-	return &retry.ExponentialBackoff{
-		Ctx:                  ctx,
-		InitialDelayInterval: EtcdInitialDelay,
-	}
-}
-
-// RetryRequest will return whether or not to try a request again based on the
-// error given to it, and the number of times the request has been tried.
-//
-// If RetryRequest gets "etcdserver: too many requests", then it will return
-// (false, nil). Otherwise, it will return (true, err).
-func RetryRequest(n int, err error) (bool, error) {
-	if err == nil {
-		return true, nil
-	}
-	if err == context.Canceled {
-		return true, err
-	}
-	if err == context.DeadlineExceeded {
-		return true, err
-	}
-	// using string comparison here because it's too difficult to tell
-	// what kind of error the client is actually delivering
-	if strings.Contains(err.Error(), "etcdserver: too many requests") {
-		logger.WithError(err).WithField("retry", n).Error("retrying")
-		return false, nil
-	}
-	return true, &store.ErrInternal{Message: err.Error()}
-}
-
 // Create the given key with the serialized object.
 func Create(ctx context.Context, client *clientv3.Client, key, namespace string, object interface{}) error {
 	bytes, err := marshal(object)
@@ -82,13 +45,13 @@ func Create(ctx context.Context, client *clientv3.Client, key, namespace string,
 		return &store.ErrEncode{Key: key, Err: err}
 	}
 
-	comparator := Comparisons(
-		NamespaceExists(namespace),
-		KeyIsNotFound(key),
+	comparator := kvc.Comparisons(
+		kvc.NamespaceExists(namespace),
+		kvc.KeyIsNotFound(key),
 	)
 	op := clientv3.OpPut(key, string(bytes))
 
-	return Txn(ctx, client, comparator, op)
+	return kvc.Txn(ctx, client, comparator, op)
 }
 
 // CreateOrUpdate writes the given key with the serialized object, regarless of
@@ -99,20 +62,20 @@ func CreateOrUpdate(ctx context.Context, client *clientv3.Client, key, namespace
 		return &store.ErrEncode{Key: key, Err: err}
 	}
 
-	comparator := Comparisons(
-		NamespaceExists(namespace),
+	comparator := kvc.Comparisons(
+		kvc.NamespaceExists(namespace),
 	)
 	op := clientv3.OpPut(key, string(bytes))
 
-	return Txn(ctx, client, comparator, op)
+	return kvc.Txn(ctx, client, comparator, op)
 }
 
 // Delete the given key
 func Delete(ctx context.Context, client *clientv3.Client, key string) error {
 	var resp *clientv3.DeleteResponse
-	err := Backoff(ctx).Retry(func(n int) (done bool, err error) {
+	err := kvc.Backoff(ctx).Retry(func(n int) (done bool, err error) {
 		resp, err = client.Delete(ctx, key)
-		return RetryRequest(n, err)
+		return kvc.RetryRequest(n, err)
 	})
 	if err != nil {
 		return err
@@ -125,17 +88,18 @@ func Delete(ctx context.Context, client *clientv3.Client, key string) error {
 
 // Get retrieves an object with the given key
 func Get(ctx context.Context, client *clientv3.Client, key string, object interface{}) error {
-	_, err := GetResponse(ctx, client, key, object)
+	_, err := GetWithResponse(ctx, client, key, object)
 	return err
 }
 
-// Get retrieves an object with the given key and returns the etcd response
-func GetResponse(ctx context.Context, client *clientv3.Client, key string, object interface{}) (*clientv3.GetResponse, error) {
+// GetWithResponse retrieves an object with the given key and returns the etcd
+// response
+func GetWithResponse(ctx context.Context, client *clientv3.Client, key string, object interface{}) (*clientv3.GetResponse, error) {
 	// Fetch the key from the store
 	var resp *clientv3.GetResponse
-	err := Backoff(ctx).Retry(func(n int) (done bool, err error) {
+	err := kvc.Backoff(ctx).Retry(func(n int) (done bool, err error) {
 		resp, err = client.Get(ctx, key, clientv3.WithLimit(1))
-		return RetryRequest(n, err)
+		return kvc.RetryRequest(n, err)
 	})
 	if err != nil {
 		return nil, err
@@ -190,9 +154,9 @@ func List(ctx context.Context, client *clientv3.Client, keyBuilder KeyBuilderFn,
 	}
 
 	var resp *clientv3.GetResponse
-	err := Backoff(ctx).Retry(func(n int) (done bool, err error) {
+	err := kvc.Backoff(ctx).Retry(func(n int) (done bool, err error) {
 		resp, err = client.Get(ctx, key, opts...)
-		return RetryRequest(n, err)
+		return kvc.RetryRequest(n, err)
 	})
 
 	if err != nil {
@@ -248,13 +212,13 @@ func Update(ctx context.Context, client *clientv3.Client, key, namespace string,
 		return &store.ErrEncode{Key: key, Err: err}
 	}
 
-	comparator := Comparisons(
-		NamespaceExists(namespace),
-		KeyIsFound(key),
+	comparator := kvc.Comparisons(
+		kvc.NamespaceExists(namespace),
+		kvc.KeyIsFound(key),
 	)
 	op := clientv3.OpPut(key, string(bytes))
 
-	return Txn(ctx, client, comparator, op)
+	return kvc.Txn(ctx, client, comparator, op)
 }
 
 // UpdateWithValue updates the given resource if and only if the given value
@@ -266,12 +230,12 @@ func UpdateWithValue(ctx context.Context, client *clientv3.Client, key string, o
 	}
 
 	req := clientv3.OpPut(key, string(bytes))
-	comparator := Comparisons(
-		KeyIsFound(key),
-		KeyHasValue(key, value),
+	comparator := kvc.Comparisons(
+		kvc.KeyIsFound(key),
+		kvc.KeyHasValue(key, value),
 	)
 
-	return Txn(ctx, client, comparator, req)
+	return kvc.Txn(ctx, client, comparator, req)
 }
 
 // Count retrieves the count of all keys from storage under the
@@ -283,41 +247,15 @@ func Count(ctx context.Context, client *clientv3.Client, key string) (int64, err
 	}
 
 	var resp *clientv3.GetResponse
-	err := Backoff(ctx).Retry(func(n int) (done bool, err error) {
+	err := kvc.Backoff(ctx).Retry(func(n int) (done bool, err error) {
 		resp, err = client.Get(ctx, key, opts...)
-		return RetryRequest(n, err)
+		return kvc.RetryRequest(n, err)
 	})
 	if err != nil {
 		return 0, err
 	}
 
 	return resp.Count, nil
-}
-
-func Txn(ctx context.Context, client *clientv3.Client, comparator *Comparator, ops ...clientv3.Op) error {
-	var resp *clientv3.TxnResponse
-	err := Backoff(ctx).Retry(func(n int) (done bool, err error) {
-		resp, err = client.Txn(ctx).If(
-			comparator.Cmp()...,
-		).Then(
-			ops...,
-		).Else(
-			comparator.Failure()...,
-		).Commit()
-		return RetryRequest(n, err)
-	})
-	if err != nil {
-		return err
-	}
-
-	// Determine whether our comparisons in the If block evaluated to true or
-	// false. resp contains a list of responses from applying the If
-	// block if Succeeded is true or the Else block if Succeeded is false
-	if !resp.Succeeded {
-		return comparator.Error(resp)
-	}
-
-	return nil
 }
 
 // ComputeContinueToken calculates a continue token based on the given resource

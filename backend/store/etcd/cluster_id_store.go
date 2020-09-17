@@ -7,6 +7,7 @@ import (
 	"github.com/coreos/etcd/clientv3"
 	"github.com/google/uuid"
 	"github.com/sensu/sensu-go/backend/store"
+	"github.com/sensu/sensu-go/backend/store/etcd/kvc"
 )
 
 const (
@@ -32,9 +33,9 @@ func (s *Store) GetClusterID(ctx context.Context) (string, error) {
 	cmp := clientv3.Compare(clientv3.Version(key), "=", 0)
 
 	var resp *clientv3.TxnResponse
-	err := Backoff(ctx).Retry(func(n int) (done bool, err error) {
+	err := kvc.Backoff(ctx).Retry(func(n int) (done bool, err error) {
 		resp, err = s.client.Txn(ctx).If(cmp).Then(putOp).Else(getOp).Commit()
-		return RetryRequest(n, err)
+		return kvc.RetryRequest(n, err)
 	})
 	if err != nil {
 		return "", err

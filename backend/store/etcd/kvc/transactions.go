@@ -1,13 +1,41 @@
-package etcd
+package kvc
 
 import (
-	bytes "bytes"
+	"bytes"
+	"context"
 	"path"
 
 	"github.com/coreos/etcd/clientv3"
 	"github.com/coreos/etcd/etcdserver/etcdserverpb"
 	"github.com/sensu/sensu-go/backend/store"
 )
+
+// Txn performs an etcd transaction using the given comparator and operations
+func Txn(ctx context.Context, client *clientv3.Client, comparator *Comparator, ops ...clientv3.Op) error {
+	var resp *clientv3.TxnResponse
+	err := Backoff(ctx).Retry(func(n int) (done bool, err error) {
+		resp, err = client.Txn(ctx).If(
+			comparator.Cmp()...,
+		).Then(
+			ops...,
+		).Else(
+			comparator.Failure()...,
+		).Commit()
+		return RetryRequest(n, err)
+	})
+	if err != nil {
+		return err
+	}
+
+	// Determine whether our comparisons in the If block evaluated to true or
+	// false. resp contains a list of responses from applying the If
+	// block if Succeeded is true or the Else block if Succeeded is false
+	if !resp.Succeeded {
+		return comparator.Error(resp)
+	}
+
+	return nil
+}
 
 type Comparator struct {
 	predicates []predicate
@@ -80,14 +108,14 @@ func NamespaceExists(namespace string) *namespaceExists {
 }
 
 func (n *namespaceExists) Cmp() clientv3.Cmp {
-	key := path.Join(EtcdRoot, namespacesPathPrefix, n.namespace)
+	key := path.Join(EtcdRoot, NamespacesPathPrefix, n.namespace)
 	return clientv3.Compare(
 		clientv3.CreateRevision(key), ">", 0,
 	)
 }
 
 func (n *namespaceExists) Failure() clientv3.Op {
-	key := path.Join(EtcdRoot, namespacesPathPrefix, n.namespace)
+	key := path.Join(EtcdRoot, NamespacesPathPrefix, n.namespace)
 	return clientv3.OpGet(key)
 }
 

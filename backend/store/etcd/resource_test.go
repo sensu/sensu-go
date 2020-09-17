@@ -2,6 +2,8 @@ package etcd
 
 import (
 	"testing"
+
+	"github.com/sensu/sensu-go/backend/store"
 )
 
 func Test_checkIfMatch(t *testing.T) {
@@ -43,7 +45,7 @@ func Test_checkIfMatch(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := checkIfMatch(tt.header, tt.etag); got != tt.want {
+			if got := store.CheckIfMatch(tt.header, tt.etag); got != tt.want {
 				t.Errorf("checkIfMatch() = %v, want %v", got, tt.want)
 			}
 		})
@@ -95,7 +97,7 @@ func Test_checkIfNoneMatch(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := checkIfNoneMatch(tt.header, tt.etag); got != tt.want {
+			if got := store.CheckIfNoneMatch(tt.header, tt.etag); got != tt.want {
 				t.Errorf("checkIfNoneMatch() = %v, want %v", got, tt.want)
 			}
 		})

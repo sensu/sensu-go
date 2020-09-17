@@ -10,6 +10,7 @@ import (
 	"github.com/gogo/protobuf/proto"
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/store"
+	"github.com/sensu/sensu-go/backend/store/etcd/kvc"
 )
 
 const (
@@ -39,18 +40,18 @@ func (s *Store) DeleteSilencedEntryByName(ctx context.Context, silencedNames ...
 		ops = append(ops, clientv3.OpDelete(GetSilencedPath(ctx, silenced)))
 	}
 
-	return Backoff(ctx).Retry(func(n int) (done bool, err error) {
+	return kvc.Backoff(ctx).Retry(func(n int) (done bool, err error) {
 		_, err = s.client.Txn(ctx).Then(ops...).Commit()
-		return RetryRequest(n, err)
+		return kvc.RetryRequest(n, err)
 	})
 }
 
 // GetSilencedEntries gets all silenced entries.
 func (s *Store) GetSilencedEntries(ctx context.Context) ([]*corev2.Silenced, error) {
 	var resp *clientv3.GetResponse
-	err := Backoff(ctx).Retry(func(n int) (done bool, err error) {
+	err := kvc.Backoff(ctx).Retry(func(n int) (done bool, err error) {
 		resp, err = s.client.Get(ctx, GetSilencedPath(ctx, ""), clientv3.WithPrefix())
-		return RetryRequest(n, err)
+		return kvc.RetryRequest(n, err)
 	})
 	if err != nil {
 		return nil, err
@@ -73,9 +74,9 @@ func (s *Store) GetSilencedEntriesBySubscription(ctx context.Context, subscripti
 	}
 
 	var resp *clientv3.TxnResponse
-	err := Backoff(ctx).Retry(func(n int) (done bool, err error) {
+	err := kvc.Backoff(ctx).Retry(func(n int) (done bool, err error) {
 		resp, err = s.client.Txn(ctx).Then(ops...).Commit()
-		return RetryRequest(n, err)
+		return kvc.RetryRequest(n, err)
 	})
 	if err != nil {
 		return nil, err
@@ -90,9 +91,9 @@ func (s *Store) GetSilencedEntriesByCheckName(ctx context.Context, checkName str
 		return nil, &store.ErrNotValid{Err: errors.New("must specify check name")}
 	}
 	var resp *clientv3.GetResponse
-	err := Backoff(ctx).Retry(func(n int) (done bool, err error) {
+	err := kvc.Backoff(ctx).Retry(func(n int) (done bool, err error) {
 		resp, err = s.client.Get(ctx, GetSilencedPath(ctx, ""), clientv3.WithPrefix())
-		return RetryRequest(n, err)
+		return kvc.RetryRequest(n, err)
 	})
 	if err != nil {
 		return nil, err
@@ -122,9 +123,9 @@ func (s *Store) GetSilencedEntryByName(ctx context.Context, name string) (*corev
 	}
 
 	var resp *clientv3.GetResponse
-	err := Backoff(ctx).Retry(func(n int) (done bool, err error) {
+	err := kvc.Backoff(ctx).Retry(func(n int) (done bool, err error) {
 		resp, err = s.client.Get(ctx, GetSilencedPath(ctx, name))
-		return RetryRequest(n, err)
+		return kvc.RetryRequest(n, err)
 	})
 	if err != nil {
 		return nil, err
@@ -150,9 +151,9 @@ func (s *Store) GetSilencedEntriesByName(ctx context.Context, names ...string) (
 		ops = append(ops, clientv3.OpGet(GetSilencedPath(ctx, name)))
 	}
 	var resp *clientv3.TxnResponse
-	err := Backoff(ctx).Retry(func(n int) (done bool, err error) {
+	err := kvc.Backoff(ctx).Retry(func(n int) (done bool, err error) {
 		resp, err = s.client.Txn(ctx).Then(ops...).Commit()
-		return RetryRequest(n, err)
+		return kvc.RetryRequest(n, err)
 	})
 	if err != nil {
 		return nil, err
@@ -187,9 +188,9 @@ func (s *Store) UpdateSilencedEntry(ctx context.Context, silenced *corev2.Silenc
 		}
 
 		var lease *clientv3.LeaseGrantResponse
-		err := Backoff(ctx).Retry(func(n int) (done bool, err error) {
+		err := kvc.Backoff(ctx).Retry(func(n int) (done bool, err error) {
 			lease, err = s.client.Grant(ctx, expireTime)
-			return RetryRequest(n, err)
+			return kvc.RetryRequest(n, err)
 		})
 		if err != nil {
 			return err
@@ -200,9 +201,9 @@ func (s *Store) UpdateSilencedEntry(ctx context.Context, silenced *corev2.Silenc
 		req = clientv3.OpPut(GetSilencedPath(ctx, silenced.Name), string(silencedBytes))
 	}
 	var res *clientv3.TxnResponse
-	err = Backoff(ctx).Retry(func(n int) (done bool, err error) {
+	err = kvc.Backoff(ctx).Retry(func(n int) (done bool, err error) {
 		res, err = s.client.Txn(ctx).If(cmp).Then(req).Commit()
-		return RetryRequest(n, err)
+		return kvc.RetryRequest(n, err)
 	})
 	if err != nil {
 		return err

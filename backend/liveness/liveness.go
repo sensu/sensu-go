@@ -11,7 +11,7 @@ import (
 
 	"github.com/coreos/etcd/clientv3"
 	"github.com/coreos/etcd/mvcc/mvccpb"
-	"github.com/sensu/sensu-go/backend/store/etcd"
+	"github.com/sensu/sensu-go/backend/store/etcd/kvc"
 	"github.com/sirupsen/logrus"
 	"golang.org/x/time/rate"
 )
@@ -146,8 +146,8 @@ func NewSwitchSet(client *clientv3.Client, name string, dead, alive EventFunc, l
 // TTL value is 5. If a smaller value is passed, then an error will be returned
 // and no registration will occur.
 func (t *SwitchSet) Alive(ctx context.Context, id string, ttl int64) error {
-	return etcd.Backoff(ctx).Retry(func(n int) (done bool, err error) {
-		return etcd.RetryRequest(n, t.ping(ctx, id, ttl, true))
+	return kvc.Backoff(ctx).Retry(func(n int) (done bool, err error) {
+		return kvc.RetryRequest(n, t.ping(ctx, id, ttl, true))
 	})
 }
 
@@ -158,17 +158,17 @@ func (t *SwitchSet) Bury(ctx context.Context, id string) error {
 
 	t.logger.WithFields(logrus.Fields{"key": key}).Debug("burying key")
 
-	err := etcd.Backoff(ctx).Retry(func(n int) (done bool, err error) {
+	err := kvc.Backoff(ctx).Retry(func(n int) (done bool, err error) {
 		_, err = t.client.Put(ctx, key, buried)
-		return etcd.RetryRequest(n, err)
+		return kvc.RetryRequest(n, err)
 	})
 	if err != nil {
 		return fmt.Errorf("error burying switch: %s", err)
 	}
 
-	err = etcd.Backoff(ctx).Retry(func(n int) (done bool, err error) {
+	err = kvc.Backoff(ctx).Retry(func(n int) (done bool, err error) {
 		_, err = t.client.Delete(ctx, key)
-		return etcd.RetryRequest(n, err)
+		return kvc.RetryRequest(n, err)
 	})
 	if err != nil {
 		return fmt.Errorf("error burying switch: %s", err)
@@ -189,8 +189,8 @@ func (t *SwitchSet) Bury(ctx context.Context, id string) error {
 // TTL value is 5. If a smaller value is passed, then an error will be returned
 // and no registration will occur.
 func (t *SwitchSet) Dead(ctx context.Context, id string, ttl int64) error {
-	return etcd.Backoff(ctx).Retry(func(n int) (done bool, err error) {
-		return etcd.RetryRequest(n, t.ping(ctx, id, ttl, false))
+	return kvc.Backoff(ctx).Retry(func(n int) (done bool, err error) {
+		return kvc.RetryRequest(n, t.ping(ctx, id, ttl, false))
 	})
 }
 
@@ -222,9 +222,9 @@ func (t *SwitchSet) ping(ctx context.Context, id string, ttl int64, alive bool) 
 		return err
 	}
 
-	return etcd.Backoff(ctx).Retry(func(n int) (done bool, err error) {
+	return kvc.Backoff(ctx).Retry(func(n int) (done bool, err error) {
 		_, err = t.client.Put(ctx, key, val, clientv3.WithLease(leaseID), clientv3.WithPrevKV())
-		return etcd.RetryRequest(n, err)
+		return kvc.RetryRequest(n, err)
 	})
 }
 
@@ -250,9 +250,9 @@ func (t *SwitchSet) newLease(ctx context.Context, ttl int64) (clientv3.LeaseID, 
 func (t *SwitchSet) getLeaseID(ctx context.Context, ttl int64, switchID string) (clientv3.LeaseID, error) {
 	key := path.Join(t.prefix, switchID)
 	var resp *clientv3.GetResponse
-	err := etcd.Backoff(ctx).Retry(func(n int) (done bool, err error) {
+	err := kvc.Backoff(ctx).Retry(func(n int) (done bool, err error) {
 		resp, err = t.client.Get(ctx, key, clientv3.WithSerializable(), clientv3.WithKeysOnly())
-		return etcd.RetryRequest(n, err)
+		return kvc.RetryRequest(n, err)
 	})
 	if err != nil {
 		return 0, err

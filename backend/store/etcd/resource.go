@@ -4,8 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"net/textproto"
-	"strings"
 
 	"github.com/gogo/protobuf/proto"
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
@@ -70,7 +68,7 @@ func (s *Store) PatchResource(ctx context.Context, resource corev2.Resource, nam
 
 	// Get the stored resource along with the etcd response so we can use the
 	// revision later to ensure the resource wasn't modified in the mean time
-	resp, err := GetResponse(ctx, s.client, key, resource)
+	resp, err := GetWithResponse(ctx, s.client, key, resource)
 	if err != nil {
 		return err
 	}
@@ -83,15 +81,15 @@ func (s *Store) PatchResource(ctx context.Context, resource corev2.Resource, nam
 	}
 
 	if conditions != nil {
-		if !checkIfMatch(conditions.IfMatch, etag) {
+		if !store.CheckIfMatch(conditions.IfMatch, etag) {
 			return &store.ErrPreconditionFailed{Key: key}
 		}
-		if !checkIfNoneMatch(conditions.IfNoneMatch, etag) {
+		if !store.CheckIfNoneMatch(conditions.IfNoneMatch, etag) {
 			return &store.ErrPreconditionFailed{Key: key}
 		}
 	}
 
-	// Encode the stored resource
+	// Encode the stored resource to the JSON format
 	original, err := json.Marshal(resource)
 	if err != nil {
 		return err
@@ -103,102 +101,15 @@ func (s *Store) PatchResource(ctx context.Context, resource corev2.Resource, nam
 		return err
 	}
 
-	// Decode the resulting document into provided resource
+	// Decode the resulting JSON document back into our resource
 	if err := json.Unmarshal(patchedResource, &resource); err != nil {
 		return err
 	}
 
+	// Validate the resource
 	if err := resource.Validate(); err != nil {
 		return err
 	}
 
 	return UpdateWithValue(ctx, s.client, key, resource, value)
-}
-
-// checkIfMatch determines if any of the etag provided in the If-Match header
-// match the stored etag. This function was largely inspired by the net/http
-// package
-func checkIfMatch(header string, etag string) bool {
-	if header == "" {
-		return true
-	}
-
-	for {
-		header = textproto.TrimString(header)
-		if len(header) == 0 {
-			break
-		}
-		if header[0] == ',' {
-			header = header[1:]
-			continue
-		}
-		if header[0] == '*' {
-			return true
-		}
-		scannedEtag, remainingHeader := scanETag(header)
-		if scannedEtag == etag && scannedEtag != "" && scannedEtag[0] == '"' {
-			return true
-		}
-		header = remainingHeader
-	}
-
-	return false
-}
-
-// checkIfNoneMatch determines if none of the etag provided in the If-Match
-// header match the stored etag. This function was largely inspired by the
-// net/http package
-func checkIfNoneMatch(header string, etag string) bool {
-	if header == "" {
-		return true
-	}
-
-	for {
-		header = textproto.TrimString(header)
-		if len(header) == 0 {
-			break
-		}
-		if header[0] == ',' {
-			header = header[1:]
-			continue
-		}
-		if header[0] == '*' {
-			return false
-		}
-		scannedEtag, remainingHeader := scanETag(header)
-		if strings.TrimPrefix(scannedEtag, "W/") == strings.TrimPrefix(etag, "W/") {
-			return false
-		}
-		header = remainingHeader
-	}
-
-	return true
-}
-
-func scanETag(header string) (string, string) {
-	header = textproto.TrimString(header)
-	start := 0
-	if strings.HasPrefix(header, "W/") {
-		start = 2
-	}
-
-	if len(header[start:]) < 2 || header[start] != '"' {
-		return "", ""
-	}
-
-	// ETag is either W/"text" or "text".
-	// See RFC 7232 2.3.
-	for i := start + 1; i < len(header); i++ {
-		c := header[i]
-		switch {
-		// Character values allowed in ETags.
-		case c == 0x21 || c >= 0x23 && c <= 0x7E || c >= 0x80:
-		case c == '"':
-			return string(header[:i+1]), header[i+1:]
-		default:
-			break
-		}
-	}
-
-	return "", ""
 }
