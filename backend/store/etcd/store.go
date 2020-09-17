@@ -223,17 +223,16 @@ func Update(ctx context.Context, client *clientv3.Client, key, namespace string,
 
 // UpdateWithValue updates the given resource if and only if the given value
 // matches the stored key value
-func UpdateWithValue(ctx context.Context, client *clientv3.Client, key string, object interface{}, value []byte) error {
+func UpdateWithComparisons(ctx context.Context, client *clientv3.Client, key string, object interface{}, comparisons ...kvc.Predicate) error {
 	bytes, err := marshal(object)
 	if err != nil {
 		return &store.ErrEncode{Key: key, Err: err}
 	}
 
 	req := clientv3.OpPut(key, string(bytes))
-	comparator := kvc.Comparisons(
-		kvc.KeyIsFound(key),
-		kvc.KeyHasValue(key, value),
-	)
+	// Prepend the KeyIsFound key predicate
+	comparisons = append([]kvc.Predicate{kvc.KeyIsFound(key)}, comparisons...)
+	comparator := kvc.Comparisons(comparisons...)
 
 	return kvc.Txn(ctx, client, comparator, req)
 }

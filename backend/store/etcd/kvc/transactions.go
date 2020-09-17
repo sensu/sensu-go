@@ -38,10 +38,10 @@ func Txn(ctx context.Context, client *clientv3.Client, comparator *Comparator, o
 }
 
 type Comparator struct {
-	predicates []predicate
+	predicates []Predicate
 }
 
-func Comparisons(comparisons ...predicate) *Comparator {
+func Comparisons(comparisons ...Predicate) *Comparator {
 	comparator := &Comparator{}
 	for _, predicate := range comparisons {
 		if !predicate.IsNil() {
@@ -86,7 +86,7 @@ func (c *Comparator) Error(resp *clientv3.TxnResponse) error {
 	}
 }
 
-type predicate interface {
+type Predicate interface {
 	Cmp() clientv3.Cmp
 	Failure() clientv3.Op
 	Error(resp *etcdserverpb.ResponseOp) error

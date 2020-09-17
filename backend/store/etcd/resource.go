@@ -8,6 +8,7 @@ import (
 	"github.com/gogo/protobuf/proto"
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/store"
+	"github.com/sensu/sensu-go/backend/store/etcd/kvc"
 	"github.com/sensu/sensu-go/backend/store/patch"
 )
 
@@ -111,5 +112,6 @@ func (s *Store) PatchResource(ctx context.Context, resource corev2.Resource, nam
 		return err
 	}
 
-	return UpdateWithValue(ctx, s.client, key, resource, value)
+	valueComparison := kvc.KeyHasValue(key, value)
+	return UpdateWithComparisons(ctx, s.client, key, resource, valueComparison)
 }

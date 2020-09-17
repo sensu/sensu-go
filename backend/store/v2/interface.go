@@ -2,6 +2,7 @@ package v2
 
 import (
 	"github.com/sensu/sensu-go/backend/store"
+	"github.com/sensu/sensu-go/backend/store/patch"
 	"github.com/sensu/sensu-go/backend/store/v2/wrap"
 )
 
@@ -33,4 +34,7 @@ type Interface interface {
 
 	// Exists returns true if the resource indicated by the request exists
 	Exists(ResourceRequest) (bool, error)
+
+	// Patch patches the resource given in the request
+	Patch(ResourceRequest, *Wrapper, patch.Patcher, *store.ETagCondition) error
 }

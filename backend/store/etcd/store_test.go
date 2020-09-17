@@ -13,6 +13,7 @@ import (
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/etcd"
 	"github.com/sensu/sensu-go/backend/store"
+	"github.com/sensu/sensu-go/backend/store/etcd/kvc"
 	"github.com/sensu/sensu-go/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -405,7 +406,8 @@ func TestUpdateWithValue(t *testing.T) {
 
 		// Updating a non-existent object should fail
 		ctx := context.WithValue(context.Background(), corev2.NamespaceKey, "default")
-		require.Error(t, UpdateWithValue(ctx, store.client, "/default/foo", obj, b))
+		valueComparison := kvc.KeyHasValue("/default/foo", b)
+		require.Error(t, UpdateWithComparisons(ctx, store.client, "/default/foo", obj, valueComparison))
 
 		// Create it first
 		require.NoError(t, Create(ctx, store.client, "/default/foo", "default", obj))
@@ -417,10 +419,12 @@ func TestUpdateWithValue(t *testing.T) {
 		}
 
 		// Now try to update it while simulating an update in the mean time
-		require.Error(t, UpdateWithValue(ctx, store.client, "/default/foo", obj, b2))
+		valueComparison = kvc.KeyHasValue("/default/foo", b2)
+		require.Error(t, UpdateWithComparisons(ctx, store.client, "/default/foo", obj, valueComparison))
 
 		// Updating with the right version should work
-		require.NoError(t, UpdateWithValue(ctx, store.client, "/default/foo", obj2, b))
+		valueComparison = kvc.KeyHasValue("/default/foo", b)
+		require.NoError(t, UpdateWithComparisons(ctx, store.client, "/default/foo", obj2, valueComparison))
 	})
 }
 

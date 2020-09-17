@@ -12,9 +12,12 @@ import (
 
 	"github.com/gorilla/mux"
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
+	corev3 "github.com/sensu/sensu-go/api/core/v3"
 	"github.com/sensu/sensu-go/backend/apid/actions"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/backend/store/patch"
+	storev2 "github.com/sensu/sensu-go/backend/store/v2"
+	"github.com/sensu/sensu-go/backend/store/v2/wrap"
 )
 
 const (
@@ -61,6 +64,10 @@ func (h Handlers) PatchResource(r *http.Request) (interface{}, error) {
 	if err != nil {
 		return nil, err
 	}
+	namespace, err := url.PathUnescape(params["namespace"])
+	if err != nil {
+		return nil, err
+	}
 
 	// Validate that the patch does not alter the namespace nor the name
 	if err := validatePatch(body, params); err != nil {
@@ -70,7 +77,7 @@ func (h Handlers) PatchResource(r *http.Request) (interface{}, error) {
 	if h.Resource != nil {
 		return h.patchV2Resource(r.Context(), body, name, patcher, conditions)
 	} else if h.V3Resource != nil {
-		// TODO(palourde): Implement v3 resources support
+		return h.patchV3Resource(r.Context(), body, name, namespace, patcher, conditions)
 	}
 
 	return nil, actions.NewError(actions.InvalidArgument, errors.New("no resource available"))
@@ -87,6 +94,38 @@ func (h Handlers) patchV2Resource(ctx context.Context, body []byte, name string,
 	}
 
 	if err := h.Store.PatchResource(ctx, resource, name, patcher, conditions); err != nil {
+		switch err := err.(type) {
+		case *store.ErrNotFound:
+			return nil, actions.NewError(actions.NotFound, err)
+		case *store.ErrNotValid:
+			return nil, actions.NewError(actions.InvalidArgument, err)
+		case *store.ErrPreconditionFailed:
+			return nil, actions.NewError(actions.PreconditionFailed, err)
+		default:
+			return nil, actions.NewError(actions.InternalErr, err)
+		}
+	}
+
+	return resource, nil
+}
+
+func (h Handlers) patchV3Resource(ctx context.Context, body []byte, name, namespace string, patcher patch.Patcher, conditions *store.ETagCondition) (interface{}, error) {
+	payload := reflect.New(reflect.TypeOf(h.V3Resource).Elem())
+	if err := json.Unmarshal(body, payload.Interface()); err != nil {
+		return nil, actions.NewError(actions.InvalidArgument, err)
+	}
+	resource, ok := payload.Interface().(corev3.Resource)
+	if !ok {
+		return nil, actions.NewErrorf(actions.InvalidArgument)
+	}
+
+	req := storev2.NewResourceRequest(ctx, namespace, name, resource.StoreName())
+	w, err := wrap.Resource(resource)
+	if err != nil {
+		return nil, actions.NewError(actions.InvalidArgument, err)
+	}
+
+	if err := h.StoreV2.Patch(req, w, patcher, conditions); err != nil {
 		switch err := err.(type) {
 		case *store.ErrNotFound:
 			return nil, actions.NewError(actions.NotFound, err)

@@ -43,6 +43,7 @@ func NewEntitiesRouter(store store.Store, storev2 storev2.Interface, events stor
 			handlers: handlers.Handlers{
 				V3Resource: &corev3.EntityConfig{},
 				Store:      store,
+				StoreV2:    storev2,
 			},
 		},
 	}
@@ -64,7 +65,7 @@ func (r *EntitiesRouter) Mount(parent *mux.Router) {
 	routes.Get(r.find)
 	routes.List(r.controller.List, corev2.EntityFields)
 	routes.ListAllNamespaces(r.controller.List, "/{resource:entities}", corev2.EntityFields)
-	// routes.Patch(r.configSubrouter.handlers.PatchResource)
+	routes.Patch(r.configSubrouter.handlers.PatchResource)
 	routes.Post(r.create)
 	routes.Put(r.createOrReplace)
 }
