@@ -44,25 +44,38 @@ func TestMiddlewareLimits(t *testing.T) {
 		url          string
 		body         *types.CheckConfig
 		expectedCode int
+		limit        int64
 	}{
 		{
 			description:  "Request within threshold",
 			url:          "/checks",
 			body:         goodCheck,
 			expectedCode: http.StatusOK,
+			limit:        MaxBytesLimit,
 		}, {
 			description:  "Request over threshold",
 			url:          "/checks",
 			body:         badCheck,
 			expectedCode: http.StatusInternalServerError,
+			limit:        MaxBytesLimit,
+		}, {
+			description:  "Configurable limit within threshold",
+			url:          "/checks",
+			body:         goodCheck,
+			expectedCode: http.StatusOK,
+			limit:        1024000,
+		}, {
+			description:  "Configurable limit over threshold",
+			url:          "/checks",
+			body:         goodCheck,
+			expectedCode: http.StatusInternalServerError,
 		},
 	}
 
-	mware := LimitRequest{}
-	server := httptest.NewServer(mware.Then(testHandler()))
-	defer server.Close()
-
 	for _, tc := range tests {
+		mware := LimitRequest{Limit: tc.limit}
+		server := httptest.NewServer(mware.Then(testHandler()))
+		defer server.Close()
 		payload, _ := json.Marshal(tc.body)
 		req, _ := http.NewRequest(http.MethodPost, server.URL+tc.url, bytes.NewBuffer(payload))
 		res, err := http.DefaultClient.Do(req)

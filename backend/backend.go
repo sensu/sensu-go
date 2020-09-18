@@ -405,6 +405,7 @@ func Initialize(ctx context.Context, config *Config) (*Backend, error) {
 	// Initialize apid
 	b.APIDConfig = apid.Config{
 		ListenAddress:       config.APIListenAddress,
+		RequestLimit:        config.APIRequestLimit,
 		URL:                 config.APIURL,
 		Bus:                 bus,
 		Store:               stor,
