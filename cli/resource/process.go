@@ -28,22 +28,49 @@ type httpDirectory struct {
 }
 
 // Process processes the input.
-func Process(cli *cli.SensuCli, client *http.Client, input string, recurse bool, processor Processor) error {
-	urly, err := url.Parse(input)
-	if err != nil {
+func Process(cli *cli.SensuCli, client *http.Client, inputs []string, recurse bool, processor Processor) error {
+	var resources []*types.Wrapper
+	for _, input := range inputs {
+		res, err := process(client, input, recurse)
+		if err != nil {
+			return err
+		}
+		resources = append(resources, res...)
+	}
+	if err := Validate(resources, cli.Config.Namespace()); err != nil {
 		return err
 	}
+	return processor.Process(cli.Client, resources)
+}
+
+func process(client *http.Client, input string, recurse bool) ([]*types.Wrapper, error) {
+	var resources []*types.Wrapper
+	urly, err := url.Parse(input)
+	if err != nil {
+		return resources, err
+	}
+	var res []*types.Wrapper
 	if urly.Scheme == "" || len(urly.Scheme) == 1 {
 		// We are dealing with a file path
-		return ProcessFile(cli, input, recurse, processor)
+		res, err = ProcessFile(input, recurse)
+		if err != nil {
+			return resources, err
+		}
+	} else {
+		res, err = ProcessURL(client, urly, input, recurse)
+		if err != nil {
+			return resources, err
+		}
 	}
-	return ProcessURL(cli, client, urly, input, recurse, processor)
+	resources = append(resources, res...)
+	return resources, nil
 }
 
 // ProcessFile processes a file.
-func ProcessFile(cli *cli.SensuCli, input string, recurse bool, processor Processor) error {
+func ProcessFile(input string, recurse bool) ([]*types.Wrapper, error) {
+	var resources []*types.Wrapper
 	var tld = true
-	return filepath.Walk(input, func(path string, info os.FileInfo, err error) error {
+	err := filepath.Walk(input, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
 			return err
 		}
@@ -57,59 +84,58 @@ func ProcessFile(cli *cli.SensuCli, input string, recurse bool, processor Proces
 		if err != nil {
 			return err
 		}
-		resources, err := Parse(f)
+		resources, err = Parse(f)
 		if err != nil {
 			return fmt.Errorf("in %s: %s", input, err)
 		}
-		if err := Validate(resources, cli.Config.Namespace()); err != nil {
-			return err
-		}
-		return processor.Process(cli.Client, resources)
+		return nil
 	})
+	return resources, err
 }
 
 // ProcessURL processes a url.
-func ProcessURL(cli *cli.SensuCli, client *http.Client, urly *url.URL, input string, recurse bool, processor Processor) error {
+func ProcessURL(client *http.Client, urly *url.URL, input string, recurse bool) ([]*types.Wrapper, error) {
+	var resources []*types.Wrapper
 	req, err := http.NewRequest("GET", urly.String(), nil)
 	if err != nil {
-		return err
+		return resources, err
 	}
 	resp, err := client.Do(req)
 	if err != nil {
-		return err
+		return resources, err
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode >= 400 {
 		buf := new(bytes.Buffer)
 		_, _ = io.Copy(buf, resp.Body)
-		return errors.New(buf.String())
+		return resources, errors.New(buf.String())
 	}
 
 	if strings.HasPrefix(resp.Header.Get("Content-Type"), "text/html") {
 		// The server returned us a directory listing
 		if !recurse {
-			return errors.New("use -r to enable directory recursion")
+			return resources, errors.New("use -r to enable directory recursion")
 		}
 		dec := xml.NewDecoder(resp.Body)
 		var dir httpDirectory
 		if err := dec.Decode(&dir); err != nil {
-			return err
+			return resources, err
 		}
 		for _, file := range dir.Files {
-			if err := Process(cli, client, filepath.Join(input, file), recurse, processor); err != nil {
-				return err
+			res, err := process(client, filepath.Join(input, file), recurse)
+			if err != nil {
+				return resources, err
 			}
+			resources = append(resources, res...)
 		}
+	} else {
+		res, err := Parse(resp.Body)
+		if err != nil {
+			return resources, fmt.Errorf("in %s: %s", input, err)
+		}
+		resources = append(resources, res...)
 	}
-
-	resources, err := Parse(resp.Body)
-	if err != nil {
-		return fmt.Errorf("in %s: %s", input, err)
-	}
-	if err := Validate(resources, cli.Config.Namespace()); err != nil {
-		return err
-	}
-	return processor.Process(cli.Client, resources)
+	return resources, nil
 }
 
 // ProcessStdin processes standard in.
