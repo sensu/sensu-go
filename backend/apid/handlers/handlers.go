@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"context"
 	"fmt"
 	"net/url"
 
@@ -98,10 +97,4 @@ func MetaPathValues(resource Resource, muxVars map[string]string, nameVar string
 	}
 
 	return nil
-}
-
-// preparation is useful for resources that want to call a Prepare method before
-// being stored
-type preparation interface {
-	Prepare(ctx context.Context)
 }

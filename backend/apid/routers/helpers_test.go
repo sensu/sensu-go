@@ -2,7 +2,6 @@ package routers
 
 import (
 	"bytes"
-	"context"
 	"encoding/json"
 	"errors"
 	"io/ioutil"
@@ -19,12 +18,6 @@ import (
 	"github.com/sensu/sensu-go/testing/mockstore"
 	"github.com/stretchr/testify/mock"
 )
-
-// preparation is useful for resources that want to call a Prepare method before
-// being stored
-type preparation interface {
-	Prepare(ctx context.Context)
-}
 
 type storeFunc func(*mockstore.MockStore)
 
@@ -240,11 +233,6 @@ var createResourceAlreadyExistsTestCase = func(resource corev2.Resource) routerT
 
 	body := marshal(r)
 
-	// Prepare the resource if required
-	if unprepared, ok := r.(preparation); ok {
-		unprepared.Prepare(context.Background())
-	}
-
 	return routerTestCase{
 		name:   "it returns 409 if the resource to create already exists",
 		method: http.MethodPost,
@@ -266,11 +254,6 @@ var createResourceInvalidTestCase = func(resource corev2.Resource) routerTestCas
 	r.SetObjectMeta(corev2.ObjectMeta{Name: "createResourceInvalidTestCase", Namespace: "default"})
 
 	body := marshal(r)
-
-	// Prepare the resource if required
-	if unprepared, ok := r.(preparation); ok {
-		unprepared.Prepare(context.Background())
-	}
 
 	return routerTestCase{
 		name:   "it returns 400 if the resource to create is invalid",
@@ -294,11 +277,6 @@ var createResourceStoreErrTestCase = func(resource corev2.Resource) routerTestCa
 
 	body := marshal(r)
 
-	// Prepare the resource if required
-	if unprepared, ok := r.(preparation); ok {
-		unprepared.Prepare(context.Background())
-	}
-
 	return routerTestCase{
 		name:   "it returns 500 if the store returns an error while creating",
 		method: http.MethodPost,
@@ -320,11 +298,6 @@ var createResourceSuccessTestCase = func(resource corev2.Resource) routerTestCas
 	r.SetObjectMeta(corev2.ObjectMeta{Name: "createResourceSuccessTestCase", Namespace: "default"})
 
 	body := marshal(r)
-
-	// Prepare the resource if required
-	if unprepared, ok := r.(preparation); ok {
-		unprepared.Prepare(context.Background())
-	}
 
 	return routerTestCase{
 		name:   "it returns 201 if the resource was created",

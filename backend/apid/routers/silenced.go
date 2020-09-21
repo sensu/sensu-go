@@ -19,6 +19,8 @@ type SilencedRouter struct {
 
 // silencedController represents the controller needs of the SilencedRouter.
 type silencedController interface {
+	Create(ctx context.Context, entry *corev2.Silenced) error
+	CreateOrReplace(ctx context.Context, entry *corev2.Silenced) error
 	List(ctx context.Context, sub, check string) ([]*corev2.Silenced, error)
 }
 
@@ -42,9 +44,8 @@ func (r *SilencedRouter) Mount(parent *mux.Router) {
 
 	routes.Del(r.handlers.DeleteResource)
 	routes.Get(r.handlers.GetResource)
-	routes.Patch(r.handlers.PatchResource)
-	routes.Post(r.handlers.CreateResource)
-	routes.Put(r.handlers.CreateOrUpdateResource)
+	routes.Post(r.create)
+	routes.Put(r.createOrReplace)
 	routes.List(r.handlers.ListResources, corev2.SilencedFields)
 	routes.ListAllNamespaces(r.handlers.ListResources, "/{resource:silenced}", corev2.SilencedFields)
 
@@ -53,6 +54,34 @@ func (r *SilencedRouter) Mount(parent *mux.Router) {
 	routes.Router.HandleFunc("/{resource:silenced}/checks/{check}", listHandler(r.list)).Methods(http.MethodGet)
 	routes.Router.HandleFunc(routes.PathPrefix+"/subscriptions/{subscription}", listHandler(r.list)).Methods(http.MethodGet)
 	routes.Router.HandleFunc(routes.PathPrefix+"/checks/{check}", listHandler(r.list)).Methods(http.MethodGet)
+}
+
+func (r *SilencedRouter) create(req *http.Request) (interface{}, error) {
+	entry := &corev2.Silenced{}
+	if err := UnmarshalBody(req, entry); err != nil {
+		return nil, actions.NewError(actions.InvalidArgument, err)
+	}
+
+	if err := handlers.CheckMeta(entry, mux.Vars(req), "id"); err != nil {
+		return nil, actions.NewError(actions.InvalidArgument, err)
+	}
+
+	err := r.controller.Create(req.Context(), entry)
+	return nil, err
+}
+
+func (r *SilencedRouter) createOrReplace(req *http.Request) (interface{}, error) {
+	entry := &corev2.Silenced{}
+	if err := UnmarshalBody(req, entry); err != nil {
+		return nil, actions.NewError(actions.InvalidArgument, err)
+	}
+
+	if err := handlers.CheckMeta(entry, mux.Vars(req), "id"); err != nil {
+		return nil, actions.NewError(actions.InvalidArgument, err)
+	}
+
+	err := r.controller.CreateOrReplace(req.Context(), entry)
+	return nil, err
 }
 
 func (r *SilencedRouter) list(w http.ResponseWriter, req *http.Request) (interface{}, error) {
