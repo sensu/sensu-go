@@ -6,6 +6,7 @@ import (
 	"context"
 	"testing"
 
+	corev3 "github.com/sensu/sensu-go/api/core/v3"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/types"
 	"github.com/stretchr/testify/assert"
@@ -54,4 +55,31 @@ func TestEntityStorage(t *testing.T) {
 		err = s.UpdateEntity(ctx, entity)
 		assert.Error(t, err)
 	})
+}
+
+func TestEntityIteration(t *testing.T) {
+	configs := []corev3.EntityConfig{
+		*corev3.FixtureEntityConfig("a"),
+		*corev3.FixtureEntityConfig("b"),
+		*corev3.FixtureEntityConfig("c"),
+		*corev3.FixtureEntityConfig("d"),
+		*corev3.FixtureEntityConfig("e"),
+	}
+	states := []corev3.EntityState{
+		*corev3.FixtureEntityState("b"),
+		*corev3.FixtureEntityState("c"),
+		*corev3.FixtureEntityState("d"),
+	}
+	entities, err := entitiesFromConfigAndState(configs, states)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got, want := len(entities), len(configs); got != want {
+		t.Fatalf("bad entity count: got %d, want %d", got, want)
+	}
+	for i := range configs {
+		if got, want := configs[i].Metadata.Name, entities[i].Name; got != want {
+			t.Errorf("bad entity name: got %q, want %q", got, want)
+		}
+	}
 }

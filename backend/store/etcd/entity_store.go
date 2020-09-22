@@ -247,15 +247,20 @@ func (s *Store) GetEntities(ctx context.Context, pred *store.SelectionPredicate)
 	if err := configList.UnwrapInto(&configs); err != nil {
 		return nil, &store.ErrDecode{Err: err, Key: etcdstore.StoreKey(configReq)}
 	}
+	return entitiesFromConfigAndState(configs, states)
+}
+
+func entitiesFromConfigAndState(configs []corev3.EntityConfig, states []corev3.EntityState) ([]*corev2.Entity, error) {
 	result := make([]*corev2.Entity, 0, len(states))
 	var i, j int
 	for i < len(states) && j < len(configs) {
 		switch states[i].Metadata.Cmp(configs[i].Metadata) {
 		case corev2.MetaLess:
+			// there is a state without a corresponding config
 			i++
 		case corev2.MetaEqual:
 			state := &states[i]
-			config := &configs[i]
+			config := &configs[j]
 			entity, err := corev3.V3EntityToV2(config, state)
 			if err != nil {
 				return nil, &store.ErrNotValid{Err: err}
@@ -264,10 +269,22 @@ func (s *Store) GetEntities(ctx context.Context, pred *store.SelectionPredicate)
 			i++
 			j++
 		case corev2.MetaGreater:
+			// there is a config without a corresponding state, create anyway
+			result = append(result, entityFromConfigOnly(&configs[j]))
 			j++
 		}
 	}
+	for j < len(configs) {
+		result = append(result, entityFromConfigOnly(&configs[j]))
+		j++
+	}
 	return result, nil
+}
+
+func entityFromConfigOnly(config *corev3.EntityConfig) *corev2.Entity {
+	state := corev3.NewEntityState(config.Metadata.Namespace, config.Metadata.Name)
+	entity, _ := corev3.V3EntityToV2(config, state)
+	return entity
 }
 
 // UpdateEntity updates an Entity.

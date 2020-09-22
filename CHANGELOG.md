@@ -15,6 +15,8 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 - Per-entity subscriptions (ex. `entity:entityName`) are always available on agent entities,
 even if removed via the `/entities` API.
 - Proxy entities that are used in round-robin check requests are no longer stale.
+- Fixed a bug where entity listing would be incorrect if agent entities were
+created via the API instead of with sensu-agent.
 
 ## [6.0.0] - 2020-08-04
 
