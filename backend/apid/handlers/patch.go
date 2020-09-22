@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"net/url"
 	"reflect"
+	"strings"
 
 	"github.com/gorilla/mux"
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
@@ -27,6 +28,9 @@ const (
 	ifMatchHeader     = "If-Match"
 	ifNoneMatchHeader = "If-None-Match"
 )
+
+// acceptedContentTypes contains the list of content types we accept
+var acceptedContentTypes = []string{mergePatchContentType}
 
 // PatchResource patches a given resource, using the request body as the patch
 func (h Handlers) PatchResource(r *http.Request) (interface{}, error) {
@@ -47,9 +51,15 @@ func (h Handlers) PatchResource(r *http.Request) (interface{}, error) {
 	case mergePatchContentType, "": // Use merge patch as fallback value
 		patcher = &patch.Merge{MergePatch: body}
 	case jsonPatchContentType:
-		return nil, actions.NewError(actions.InvalidArgument, errors.New("JSON Patch is not supported yet"))
+		return nil, actions.NewError(
+			actions.InvalidArgument,
+			fmt.Errorf("JSON Patch is not supported yet. Allowed values: %s", strings.Join(acceptedContentTypes, ", ")),
+		)
 	default:
-		return nil, actions.NewError(actions.InvalidArgument, fmt.Errorf("invalid Content-Type header: %q", contentType))
+		return nil, actions.NewError(
+			actions.InvalidArgument,
+			fmt.Errorf("invalid Content-Type header: %s.  Allowed values: %s", contentType, strings.Join(acceptedContentTypes, ", ")),
+		)
 	}
 
 	// Determine if we have a conditional request
