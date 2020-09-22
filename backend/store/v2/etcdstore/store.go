@@ -123,8 +123,14 @@ func (s *Store) Patch(req storev2.ResourceRequest, w *storev2.Wrapper, patcher p
 		return &store.ErrDecode{Key: key, Err: err}
 	}
 
-	// Determine the etag for the stored value
-	etag, err := store.ETag(w)
+	// Unwrap the stored resource
+	resource, err := w.Unwrap()
+	if err != nil {
+		return &store.ErrDecode{Key: key, Err: err}
+	}
+
+	// Now determine the etag for the stored resource
+	etag, err := store.ETag(resource)
 	if err != nil {
 		return err
 	}
@@ -136,12 +142,6 @@ func (s *Store) Patch(req storev2.ResourceRequest, w *storev2.Wrapper, patcher p
 		if !store.CheckIfNoneMatch(conditions.IfNoneMatch, etag) {
 			return &store.ErrPreconditionFailed{Key: key}
 		}
-	}
-
-	// Unwrap the stored resource
-	resource, err := w.Unwrap()
-	if err != nil {
-		return &store.ErrDecode{Key: key, Err: err}
 	}
 
 	// Encode the stored resource to the JSON format

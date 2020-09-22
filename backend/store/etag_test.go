@@ -1,4 +1,4 @@
-package etcd
+package store
 
 import (
 	"testing"
@@ -28,7 +28,7 @@ func TestETag(t *testing.T) {
 		{
 			name: "valid resource",
 			v:    &GoodStruct{Name: "foo"},
-			want: `"13487218765270944197"`,
+			want: `"bb2c3a0237f509c5"`,
 		},
 	}
 	for _, tt := range tests {

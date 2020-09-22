@@ -148,6 +148,12 @@ func (h Handlers) patchV3Resource(ctx context.Context, body []byte, name, namesp
 		}
 	}
 
+	// Unwrap the updated resource
+	resource, err = w.Unwrap()
+	if err != nil {
+		return nil, actions.NewError(actions.InternalErr, err)
+	}
+
 	return resource, nil
 }
 

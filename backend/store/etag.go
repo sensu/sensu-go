@@ -3,7 +3,6 @@ package store
 import (
 	"fmt"
 	"net/textproto"
-	"strconv"
 	"strings"
 
 	"github.com/mitchellh/hashstructure"
@@ -15,7 +14,8 @@ func ETag(v interface{}) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	return fmt.Sprintf("%q", strconv.FormatUint(hash, 10)), nil
+	hex := fmt.Sprintf("%x", hash)
+	return fmt.Sprintf("%q", hex), nil
 }
 
 // ETagCondition represents a conditional request
