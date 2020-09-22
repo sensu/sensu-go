@@ -23,10 +23,6 @@ const (
 	// DefaultAssetsBurstLimit defines the burst ceiling for a rate limited asset fetch.
 	// If 0, then the setting has no effect.
 	DefaultAssetsBurstLimit int = 100
-
-	// CRYPT_E_NOT_FOUND is an error code specific to windows cert pool.
-	// See https://github.com/golang/go/issues/16736#issuecomment-540373689.
-	CRYPT_E_NOT_FOUND = 0x80092004
 )
 
 // A Fetcher fetches a file from the specified source and returns an *os.File
