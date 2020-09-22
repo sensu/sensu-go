@@ -15,7 +15,7 @@ using the Prometheus Exposition Text Format.
 maximum API request body size, in bytes.
 
 ### Changed
-- The trusted CA file is now used for agent-side asset retrieval.
+- The trusted CA file is now used for agent and backend asset retrieval.
 
 ### Fixed
 - The backend will no longer start when the dashboard TLS configuration is not
