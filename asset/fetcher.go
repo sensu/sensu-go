@@ -56,6 +56,8 @@ func httpGet(ctx context.Context, path, trustedCAFile string, headers map[string
 			logger.Errorf("failed to append %s to RootCAs, using system certs only", trustedCAFile)
 		}
 
+		appendCerts(rootCAs)
+
 		client = &http.Client{
 			Transport: &http.Transport{
 				TLSClientConfig: &tls.Config{
