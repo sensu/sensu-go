@@ -84,10 +84,11 @@ func ProcessFile(input string, recurse bool) ([]*types.Wrapper, error) {
 		if err != nil {
 			return err
 		}
-		resources, err = Parse(f)
+		res, err := Parse(f)
 		if err != nil {
 			return fmt.Errorf("in %s: %s", input, err)
 		}
+		resources = append(resources, res...)
 		return nil
 	})
 	return resources, err
@@ -129,11 +130,10 @@ func ProcessURL(client *http.Client, urly *url.URL, input string, recurse bool) 
 			resources = append(resources, res...)
 		}
 	} else {
-		res, err := Parse(resp.Body)
+		resources, err := Parse(resp.Body)
 		if err != nil {
 			return resources, fmt.Errorf("in %s: %s", input, err)
 		}
-		resources = append(resources, res...)
 	}
 	return resources, nil
 }
