@@ -236,7 +236,11 @@ func Initialize(ctx context.Context, config *Config) (*Backend, error) {
 	// Initialize asset manager
 	backendEntity := b.getBackendEntity(config)
 	logger.WithField("entity", backendEntity).Info("backend entity information")
-	assetManager := asset.NewManager(config.CacheDir, "", backendEntity, &sync.WaitGroup{})
+	var trustedCAFile string
+	if config.TLS != nil {
+		trustedCAFile = config.TLS.TrustedCAFile
+	}
+	assetManager := asset.NewManager(config.CacheDir, trustedCAFile, backendEntity, &sync.WaitGroup{})
 	limit := b.cfg.AssetsRateLimit
 	if limit == 0 {
 		limit = rate.Limit(asset.DefaultAssetsRateLimit)

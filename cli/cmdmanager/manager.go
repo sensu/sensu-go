@@ -108,7 +108,11 @@ func NewCommandManager(cli *cli.SensuCli) (*CommandManager, error) {
 	// start the asset manager
 	ctx := context.TODO()
 	wg := sync.WaitGroup{}
-	m.assetManager = asset.NewManager(cacheDir, "", entity, &wg)
+	var trustedCAFile string
+	if !cli.Config.InsecureSkipTLSVerify() {
+		trustedCAFile = cli.Config.TrustedCAFile()
+	}
+	m.assetManager = asset.NewManager(cacheDir, trustedCAFile, entity, &wg)
 	m.assetGetter, err = m.assetManager.StartAssetManager(ctx, nil)
 	if err != nil {
 		return nil, err
