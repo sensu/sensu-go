@@ -130,7 +130,7 @@ func ProcessURL(client *http.Client, urly *url.URL, input string, recurse bool) 
 			resources = append(resources, res...)
 		}
 	} else {
-		resources, err := Parse(resp.Body)
+		resources, err = Parse(resp.Body)
 		if err != nil {
 			return resources, fmt.Errorf("in %s: %s", input, err)
 		}
