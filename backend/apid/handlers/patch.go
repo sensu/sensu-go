@@ -168,6 +168,10 @@ func validatePatch(data []byte, vars map[string]string) error {
 		return err
 	}
 
+	if b.Metadata == nil {
+		return nil
+	}
+
 	namespace, err := url.PathUnescape(vars["namespace"])
 	if err != nil {
 		return err
