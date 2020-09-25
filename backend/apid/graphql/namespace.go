@@ -292,7 +292,7 @@ func (r *namespaceImpl) Events(p schema.NamespaceEventsFieldResolverParams) (int
 	nsp := p.Source.(*corev2.Namespace)
 
 	// fetch
-	results, err := loadEvents(p.Context, nsp.Name)
+	results, err := loadEvents(p.Context, nsp.Name, "")
 	if err != nil {
 		return res, err
 	}
