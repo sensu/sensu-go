@@ -15,7 +15,12 @@ orbs:
               curl.exe -fsSLo $HOME/go.msi
               https://golang.org/dl/go<< parameters.version >>.windows-amd64.msi
           - run: >
+              ls -l $HOME/
+          - run: >
+              cat $HOME/go.msi
+          - run: >
               msiexec.exe /i $HOME/go.msi /quiet
+          - run: exit 1
 
 executors:
   linux:
