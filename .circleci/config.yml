@@ -12,19 +12,14 @@ orbs:
             default: 1.15.2
         steps:
           - run:
-              working_directory: "$HOME"
+              working_directory: 'C:\Users\circleci'
               command: >
                 curl.exe -fsSLo go.msi
                 https://golang.org/dl/go<<parameters.version>>.windows-amd64.msi
           - run:
-              working_directory: "$HOME"
-              command: >
-                dir
-          - run:
-              working_directory: "$HOME"
+              working_directory: 'C:\Users\circleci'
               command: >
                 msiexec.exe /i go.msi /quiet
-          - run: exit 1
 
 executors:
   linux:
