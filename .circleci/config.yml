@@ -11,11 +11,13 @@ orbs:
             type: string
             default: 1.15.2
         steps:
+          - run: Get-Command go.exe
           - run:
               working_directory: 'C:\Users\circleci'
               command: >
                 curl.exe -fsSLo go.msi
                 https://golang.org/dl/go<<parameters.version>>.windows-amd64.msi
+          - run: Get-Command go.exe
           - run:
               working_directory: 'C:\Users\circleci'
               command: >
