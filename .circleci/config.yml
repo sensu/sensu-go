@@ -32,6 +32,9 @@ jobs:
     parameters:
       executor:
         type: executor
+      files:
+        type: string
+        default: "./..."
       extra_args:
         type: string
         default: ""
@@ -43,7 +46,11 @@ jobs:
     steps:
       - checkout
       - go/mod-download-cached
-      - run: go test << parameters.extra_args >> ./...
+      - run:
+          shell: bash -eo pipefail
+          command: >
+            go test << parameters.extra_args >>
+            << parameters.files >>
 
 workflows:
   version: 2
@@ -56,6 +63,7 @@ workflows:
       - test:
           name: unit-tests-windows
           executor: windows/default
+          files: "$(go list ./... | grep -v github.com/sensu/sensu-go/backend)"
           extra_args: -timeout=60s
           pre-steps:
             - go-windows/install:
@@ -67,6 +75,7 @@ workflows:
       - test:
           name: integration-tests-windows
           executor: windows/default
+          files: "$(go list ./... | grep -v github.com/sensu/sensu-go/backend)"
           extra_args: -timeout=180s -tags=integration
           pre-steps:
             - go-windows/install:
