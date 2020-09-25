@@ -12,16 +12,21 @@ orbs:
             default: 1.15.2
         steps:
           - run: Get-Command go.exe
+          - run: go version
+          - run: Remove-Item -Recurse -Force 'C:\Go'
+          - run: New-Item -Path 'C:\' -Name Go -ItemType directory
+          - run: Get-Command go.exe
           - run:
               working_directory: 'C:\Users\circleci'
               command: >
                 curl.exe -fsSLo go.msi
                 https://golang.org/dl/go<<parameters.version>>.windows-amd64.msi
-          - run: Get-Command go.exe
           - run:
               working_directory: 'C:\Users\circleci'
               command: >
                 msiexec.exe /i go.msi /quiet
+          - run: Get-Command go.exe
+          - run: go version
 
 executors:
   linux:
