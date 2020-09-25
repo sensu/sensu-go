@@ -15,7 +15,6 @@ orbs:
           - run: go version
           - run: Remove-Item -Recurse -Force 'C:\Go'
           - run: New-Item -Path 'C:\' -Name Go -ItemType directory
-          - run: Get-Command go.exe
           - run:
               working_directory: 'C:\Users\circleci'
               command: >
