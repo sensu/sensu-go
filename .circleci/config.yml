@@ -6,6 +6,7 @@ orbs:
 
 executors:
   linux:
+    resource_class: large
     docker:
       - image: cimg/go:1.13.15
 
