@@ -151,6 +151,11 @@ func (service *Service) Regenerate() error {
 	return err
 }
 
+// Middleware returns all middleware registered with the service.
+func (service *Service) Middleware() []Middleware {
+	return service.mware
+}
+
 // QueryParams describe parameters of a GraphQL query.
 type QueryParams struct {
 	OperationName  string
