@@ -51,7 +51,7 @@ func (r *entityImpl) Events(p schema.EntityEventsFieldResolverParams) (interface
 	src := p.Source.(*corev2.Entity)
 
 	// fetch
-	results, err := loadEvents(p.Context, src.Namespace)
+	results, err := loadEvents(p.Context, src.Namespace, src.Name)
 	if err != nil {
 		return []interface{}{}, err
 	}
@@ -108,7 +108,7 @@ func (r *entityImpl) Status(p graphql.ResolveParams) (interface{}, error) {
 	src := p.Source.(*corev2.Entity)
 
 	// fetch
-	results, err := loadEvents(p.Context, src.Namespace)
+	results, err := loadEvents(p.Context, src.Namespace, src.Name)
 	if err != nil {
 		return 0, err
 	}

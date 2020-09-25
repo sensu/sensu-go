@@ -52,7 +52,7 @@ func TestEntityTypeStatusField(t *testing.T) {
 	entity.Namespace = "sensu"
 
 	client := new(MockEventClient)
-	client.On("ListEvents", mock.Anything, mock.Anything).Return([]*corev2.Event{
+	client.On("ListEventsByEntity", mock.Anything, entity.Name, mock.Anything).Return([]*corev2.Event{
 		corev2.FixtureEvent(entity.Name, "a"),
 		corev2.FixtureEvent(entity.Name, "b"),
 		corev2.FixtureEvent(entity.Name, "c"),
@@ -73,7 +73,7 @@ func TestEntityTypeStatusField(t *testing.T) {
 	// Add failing event
 	failingEv := corev2.FixtureEvent(entity.Name, "bad")
 	failingEv.Check.Status = 2
-	client.On("ListEvents", mock.Anything, mock.Anything).Return([]*corev2.Event{
+	client.On("ListEventsByEntity", mock.Anything, entity.Name, mock.Anything).Return([]*corev2.Event{
 		corev2.FixtureEvent(entity.Name, "a"),
 		failingEv,
 	}, nil).Once()
@@ -104,7 +104,7 @@ func TestEntityTypeEventsField(t *testing.T) {
 	entity := corev2.FixtureEntity("en")
 
 	client := new(MockEventClient)
-	client.On("ListEvents", mock.Anything, mock.Anything).Return([]*corev2.Event{
+	client.On("ListEventsByEntity", mock.Anything, entity.Name, mock.Anything).Return([]*corev2.Event{
 		corev2.FixtureEvent(entity.Name, "a"),
 		corev2.FixtureEvent(entity.Name, "b"),
 		corev2.FixtureEvent("no-entity", "c"),

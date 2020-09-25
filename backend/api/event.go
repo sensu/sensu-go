@@ -80,6 +80,20 @@ func (e *EventClient) ListEvents(ctx context.Context, pred *store.SelectionPredi
 	return events, nil
 }
 
+// ListEventsByEntity lists all events in a namespace, according to the
+// selection predicate, if authorized.
+func (e *EventClient) ListEventsByEntity(ctx context.Context, entity string, pred *store.SelectionPredicate) ([]*corev2.Event, error) {
+	attrs := eventListAttributes(ctx)
+	if err := authorize(ctx, e.auth, attrs); err != nil {
+		return nil, err
+	}
+	events, err := e.store.GetEventsByEntity(ctx, entity, pred)
+	if err != nil {
+		return nil, fmt.Errorf("couldn't list events by entity: %s", err)
+	}
+	return events, nil
+}
+
 func eventUpdateAttributes(ctx context.Context) *authorization.Attributes {
 	return &authorization.Attributes{
 		APIGroup:   "core",

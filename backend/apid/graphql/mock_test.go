@@ -162,6 +162,11 @@ func (c *MockEventClient) ListEvents(ctx context.Context, pred *store.SelectionP
 	return args.Get(0).([]*corev2.Event), args.Error(1)
 }
 
+func (c *MockEventClient) ListEventsByEntity(ctx context.Context, entity string, pred *store.SelectionPredicate) ([]*corev2.Event, error) {
+	args := c.Called(ctx, entity, pred)
+	return args.Get(0).([]*corev2.Event), args.Error(1)
+}
+
 type MockMutatorClient struct {
 	mock.Mock
 }
