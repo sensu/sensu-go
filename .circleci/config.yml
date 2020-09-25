@@ -18,7 +18,6 @@ jobs:
         type: string
         default: ""
     executor: << parameters.executor >>
-    resource_class: large
     parallelism: 1
     environment:
       GO111MODULE: "on"
