@@ -13,7 +13,7 @@ import (
 	"github.com/coreos/etcd/clientv3"
 	"github.com/coreos/etcd/mvcc/mvccpb"
 	"github.com/sensu/sensu-go/backend/store"
-	"github.com/sensu/sensu-go/backend/store/etcd"
+	"github.com/sensu/sensu-go/backend/store/etcd/kvc"
 	"github.com/sensu/sensu-go/types"
 )
 
@@ -103,9 +103,9 @@ func (i *Item) Value() string {
 // Ack acknowledges the Item has been received and processed, and deletes it
 // from the in flight lane.
 func (i *Item) Ack(ctx context.Context) error {
-	return etcd.Backoff(ctx).Retry(func(n int) (done bool, err error) {
+	return kvc.Backoff(ctx).Retry(func(n int) (done bool, err error) {
 		_, err = i.queue.kv.Delete(ctx, i.key)
-		return etcd.RetryRequest(n, err)
+		return kvc.RetryRequest(n, err)
 	})
 }
 
@@ -130,9 +130,9 @@ func (q *Queue) swapLane(ctx context.Context, currentKey, value string, lane str
 		delReq := clientv3.OpDelete(currentKey)
 
 		var response *clientv3.TxnResponse
-		err = etcd.Backoff(ctx).Retry(func(n int) (done bool, err error) {
+		err = kvc.Backoff(ctx).Retry(func(n int) (done bool, err error) {
 			response, err = q.kv.Txn(ctx).If(putCmp).Then(putReq, delReq).Commit()
-			return etcd.RetryRequest(n, err)
+			return kvc.RetryRequest(n, err)
 		})
 		if err != nil {
 			return err
@@ -173,9 +173,9 @@ func (q *Queue) Enqueue(ctx context.Context, value string) error {
 			return fmt.Errorf("queue: couldn't enqueue item: %s", ctx.Err())
 		}
 		var response *clientv3.TxnResponse
-		err = etcd.Backoff(ctx).Retry(func(n int) (done bool, err error) {
+		err = kvc.Backoff(ctx).Retry(func(n int) (done bool, err error) {
 			response, err = q.kv.Txn(ctx).If(cmps...).Then(ops...).Commit()
-			return etcd.RetryRequest(n, err)
+			return kvc.RetryRequest(n, err)
 		})
 		if err == nil && response.Succeeded {
 			return nil
@@ -213,9 +213,9 @@ func (q *Queue) enqueueOps(backendIDs []string, value string) ([]clientv3.Cmp, [
 // is cancelled, the deadline exceeded, or if the client encounters an error.
 func (q *Queue) Dequeue(ctx context.Context) (types.QueueItem, error) {
 	var response *clientv3.GetResponse
-	err := etcd.Backoff(ctx).Retry(func(n int) (done bool, err error) {
+	err := kvc.Backoff(ctx).Retry(func(n int) (done bool, err error) {
 		response, err = q.kv.Get(ctx, q.workPrefix(), clientv3.WithFirstKey()...)
-		return etcd.RetryRequest(n, err)
+		return kvc.RetryRequest(n, err)
 	})
 	if err != nil {
 		return nil, err
@@ -267,9 +267,9 @@ func (q *Queue) tryDelete(ctx context.Context, kv *mvccpb.KeyValue) (types.Queue
 	delReq := clientv3.OpDelete(key)
 
 	var response *clientv3.TxnResponse
-	err = etcd.Backoff(ctx).Retry(func(n int) (done bool, err error) {
+	err = kvc.Backoff(ctx).Retry(func(n int) (done bool, err error) {
 		response, err = q.kv.Txn(ctx).If(putCmp, delCmp).Then(putReq, delReq).Commit()
-		return etcd.RetryRequest(n, err)
+		return kvc.RetryRequest(n, err)
 	})
 	if err != nil {
 		return nil, err

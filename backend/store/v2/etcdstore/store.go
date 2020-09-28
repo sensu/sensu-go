@@ -1,32 +1,23 @@
 package etcdstore
 
 import (
-	"context"
+	"encoding/json"
 	"path"
 	"strings"
-	"time"
 
 	"github.com/coreos/etcd/clientv3"
 	"github.com/gogo/protobuf/proto"
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	corev3 "github.com/sensu/sensu-go/api/core/v3"
 	"github.com/sensu/sensu-go/backend/store"
+	"github.com/sensu/sensu-go/backend/store/etcd/kvc"
+	"github.com/sensu/sensu-go/backend/store/patch"
 	storev2 "github.com/sensu/sensu-go/backend/store/v2"
 	"github.com/sensu/sensu-go/backend/store/v2/wrap"
-	"github.com/sensu/sensu-go/util/retry"
-)
-
-const (
-	// EtcdRoot is the root of all sensu storage.
-	EtcdRoot = "/sensu.io"
-
-	// EtcdInitialDelay is 100 ms.
-	EtcdInitialDelay = time.Millisecond * 100
 )
 
 var (
-	namespaceStoreName                   = new(corev2.Namespace).StorePrefix()
-	_                  storev2.Interface = new(Store)
+	_ storev2.Interface = new(Store)
 )
 
 // ComputeContinueToken calculates a continue token based on the given resource.
@@ -75,26 +66,6 @@ func ComputeContinueToken(namespace string, r interface{}) string {
 	}
 }
 
-func keyFound(key string) clientv3.Cmp {
-	return clientv3.Compare(
-		clientv3.CreateRevision(key), ">", 0,
-	)
-}
-
-func getNamespacePath(name string) string {
-	return path.Join(EtcdRoot, namespaceStoreName, name)
-}
-
-func keyNotFound(key string) clientv3.Cmp {
-	return clientv3.Compare(
-		clientv3.CreateRevision(key), "=", 0,
-	)
-}
-
-func namespaceFound(namespace string) clientv3.Cmp {
-	return keyFound(getNamespacePath(namespace))
-}
-
 // StoreKey converts a ResourceRequest into a key that uniquely identifies a
 // singular resource, or collection of resources, in a namespace.
 func StoreKey(req storev2.ResourceRequest) string {
@@ -115,100 +86,125 @@ func NewStore(client *clientv3.Client) *Store {
 	return store
 }
 
-// Backoff delivers a pre-configured backoff object, suitable for use in making
-// etcd requests.
-func Backoff(ctx context.Context) *retry.ExponentialBackoff {
-	return &retry.ExponentialBackoff{
-		Ctx:                  ctx,
-		InitialDelayInterval: EtcdInitialDelay,
-	}
-}
-
-// RetryRequest will return whether or not to try a request again based on the
-// error given to it, and the number of times the request has been tried.
-//
-// If RetryRequest gets "etcdserver: too many requests", then it will return
-// (false, nil). Otherwise, it will return (true, err).
-func RetryRequest(n int, err error) (bool, error) {
-	if err == nil {
-		return true, nil
-	}
-	if err == context.Canceled {
-		return true, err
-	}
-	if err == context.DeadlineExceeded {
-		return true, err
-	}
-	// using string comparison here because it's too difficult to tell
-	// what kind of error the client is actually delivering
-	if strings.Contains(err.Error(), "etcdserver: too many requests") {
-		logger.WithError(err).WithField("retry", n).Error("retrying")
-		return false, nil
-	}
-	return true, &store.ErrInternal{Message: err.Error()}
-}
-
 func (s *Store) CreateOrUpdate(req storev2.ResourceRequest, w *storev2.Wrapper) error {
 	key := StoreKey(req)
 	if err := req.Validate(); err != nil {
 		return &store.ErrNotValid{Err: err}
 	}
-	ctx := req.Context
+
 	msg, err := proto.Marshal(w)
 	if err != nil {
 		return &store.ErrEncode{Key: key, Err: err}
 	}
-	comparisons := []clientv3.Cmp{}
-	// If we had a namespace provided, make sure it exists
-	if req.Namespace != "" {
-		comparisons = append(comparisons, namespaceFound(req.Namespace))
+
+	comparator := kvc.Comparisons(
+		kvc.NamespaceExists(req.Namespace),
+	)
+	op := clientv3.OpPut(key, string(msg))
+
+	return kvc.Txn(req.Context, s.client, comparator, op)
+}
+
+func (s *Store) Patch(req storev2.ResourceRequest, w *storev2.Wrapper, patcher patch.Patcher, conditions *store.ETagCondition) error {
+	if err := req.Validate(); err != nil {
+		return &store.ErrNotValid{Err: err}
 	}
-	op := clientv3.OpPut(StoreKey(req), string(msg))
-	var resp *clientv3.TxnResponse
-	err = Backoff(ctx).Retry(func(n int) (done bool, err error) {
-		resp, err = s.client.Txn(ctx).If(comparisons...).Then(op).Commit()
-		return RetryRequest(n, err)
-	})
+
+	key := StoreKey(req)
+
+	// Get the stored resource along with the etcd response so we can use the
+	// revision later to ensure the resource wasn't modified in the mean time
+	resp, err := s.GetWithResponse(req)
 	if err != nil {
 		return err
 	}
-	if !resp.Succeeded {
-		if req.Namespace != "" {
-			return &store.ErrNamespaceMissing{Namespace: req.Namespace}
-		}
+	value := resp.Kvs[0].Value
+	if err := proto.UnmarshalMerge(value, w); err != nil {
+		return &store.ErrDecode{Key: key, Err: err}
+	}
 
-		// should never happen, developer error!
-		return &store.ErrInternal{
-			Message: "developer error: no namespace specified, but transaction failed",
+	// Unwrap the stored resource
+	resource, err := w.Unwrap()
+	if err != nil {
+		return &store.ErrDecode{Key: key, Err: err}
+	}
+
+	// Now determine the etag for the stored resource
+	etag, err := store.ETag(resource)
+	if err != nil {
+		return err
+	}
+
+	if conditions != nil {
+		if !store.CheckIfMatch(conditions.IfMatch, etag) {
+			return &store.ErrPreconditionFailed{Key: key}
+		}
+		if !store.CheckIfNoneMatch(conditions.IfNoneMatch, etag) {
+			return &store.ErrPreconditionFailed{Key: key}
 		}
 	}
-	return nil
+
+	// Encode the stored resource to the JSON format
+	original, err := json.Marshal(resource)
+	if err != nil {
+		return err
+	}
+
+	// Apply the patch to our original document (stored resource)
+	patchedResource, err := patcher.Patch(original)
+	if err != nil {
+		return err
+	}
+
+	// Decode the resulting JSON document back into our resource
+	if err := json.Unmarshal(patchedResource, &resource); err != nil {
+		return err
+	}
+
+	// Validate the resource
+	if err := resource.Validate(); err != nil {
+		return err
+	}
+
+	// Re-wrap the resource
+	w, err = wrap.Resource(resource)
+	if err != nil {
+		return &store.ErrEncode{Key: key, Err: err}
+	}
+
+	comparisons := []kvc.Predicate{
+		kvc.KeyIsFound(key),
+		kvc.KeyHasValue(key, value),
+	}
+
+	return s.Update(req, w, comparisons...)
 }
 
 func (s *Store) UpdateIfExists(req storev2.ResourceRequest, w *storev2.Wrapper) error {
 	key := StoreKey(req)
+	comparisons := []kvc.Predicate{
+		kvc.NamespaceExists(req.Namespace),
+		kvc.KeyIsFound(key),
+	}
+
+	return s.Update(req, w, comparisons...)
+}
+
+func (s *Store) Update(req storev2.ResourceRequest, w *storev2.Wrapper, comparisons ...kvc.Predicate) error {
+	key := StoreKey(req)
 	if err := req.Validate(); err != nil {
 		return &store.ErrNotValid{Err: err}
 	}
-	ctx := req.Context
+
 	msg, err := proto.Marshal(w)
 	if err != nil {
 		return &store.ErrEncode{Key: key, Err: err}
 	}
-	comparisons := []clientv3.Cmp{keyFound(key)}
-	op := clientv3.OpPut(StoreKey(req), string(msg))
-	var resp *clientv3.TxnResponse
-	err = Backoff(ctx).Retry(func(n int) (done bool, err error) {
-		resp, err = s.client.Txn(ctx).If(comparisons...).Then(op).Commit()
-		return RetryRequest(n, err)
-	})
-	if err != nil {
-		return err
-	}
-	if !resp.Succeeded {
-		return &store.ErrNotFound{Key: key}
-	}
-	return nil
+
+	comparator := kvc.Comparisons(comparisons...)
+	op := clientv3.OpPut(key, string(msg))
+
+	return kvc.Txn(req.Context, s.client, comparator, op)
 }
 
 func (s *Store) CreateIfNotExists(req storev2.ResourceRequest, w *storev2.Wrapper) error {
@@ -216,56 +212,28 @@ func (s *Store) CreateIfNotExists(req storev2.ResourceRequest, w *storev2.Wrappe
 	if err := req.Validate(); err != nil {
 		return &store.ErrNotValid{Err: err}
 	}
-	ctx := req.Context
+
 	msg, err := proto.Marshal(w)
 	if err != nil {
 		return &store.ErrEncode{Key: key, Err: err}
 	}
-	comparisons := []clientv3.Cmp{}
-	if req.Namespace != "" {
-		comparisons = append(comparisons, namespaceFound(req.Namespace))
-	}
-	comparisons = append(comparisons, keyNotFound(key))
-	op := clientv3.OpPut(StoreKey(req), string(msg))
-	elseOps := []clientv3.Op{}
-	if req.Namespace != "" {
-		op := clientv3.OpGet(getNamespacePath(req.Namespace), clientv3.WithCountOnly(), clientv3.WithLimit(1))
-		elseOps = append(elseOps, op)
-	}
-	var resp *clientv3.TxnResponse
-	err = Backoff(ctx).Retry(func(n int) (done bool, err error) {
-		resp, err = s.client.Txn(ctx).If(comparisons...).Then(op).Else(elseOps...).Commit()
-		return RetryRequest(n, err)
-	})
-	if err != nil {
-		return err
-	}
-	if !resp.Succeeded {
-		if len(resp.Responses) > 0 && resp.Responses[0].GetResponseRange().Count == 0 {
-			return &store.ErrNamespaceMissing{Namespace: req.Namespace}
-		}
-		return &store.ErrAlreadyExists{Key: key}
-	}
-	return nil
+
+	comparator := kvc.Comparisons(
+		kvc.NamespaceExists(req.Namespace),
+		kvc.KeyIsNotFound(key),
+	)
+	op := clientv3.OpPut(key, string(msg))
+
+	return kvc.Txn(req.Context, s.client, comparator, op)
 }
 
 func (s *Store) Get(req storev2.ResourceRequest) (*storev2.Wrapper, error) {
 	key := StoreKey(req)
-	if err := req.Validate(); err != nil {
-		return nil, &store.ErrNotValid{Err: err}
-	}
-	ctx := req.Context
-	var resp *clientv3.GetResponse
-	err := Backoff(ctx).Retry(func(n int) (done bool, err error) {
-		resp, err = s.client.Get(ctx, key, clientv3.WithLimit(1), clientv3.WithSerializable())
-		return RetryRequest(n, err)
-	})
+	resp, err := s.GetWithResponse(req)
 	if err != nil {
 		return nil, err
 	}
-	if len(resp.Kvs) == 0 {
-		return nil, &store.ErrNotFound{Key: key}
-	}
+
 	var wrapper storev2.Wrapper
 	if err := proto.UnmarshalMerge(resp.Kvs[0].Value, &wrapper); err != nil {
 		return nil, &store.ErrDecode{Key: key, Err: err}
@@ -273,26 +241,39 @@ func (s *Store) Get(req storev2.ResourceRequest) (*storev2.Wrapper, error) {
 	return &wrapper, nil
 }
 
+func (s *Store) GetWithResponse(req storev2.ResourceRequest) (*clientv3.GetResponse, error) {
+	key := StoreKey(req)
+	if err := req.Validate(); err != nil {
+		return nil, &store.ErrNotValid{Err: err}
+	}
+	ctx := req.Context
+	var resp *clientv3.GetResponse
+	err := kvc.Backoff(ctx).Retry(func(n int) (done bool, err error) {
+		resp, err = s.client.Get(ctx, key, clientv3.WithLimit(1), clientv3.WithSerializable())
+		return kvc.RetryRequest(n, err)
+	})
+	if err != nil {
+		return nil, err
+	}
+	if len(resp.Kvs) == 0 {
+		return nil, &store.ErrNotFound{Key: key}
+	}
+
+	return resp, nil
+}
+
 func (s *Store) Delete(req storev2.ResourceRequest) error {
 	key := StoreKey(req)
 	if err := req.Validate(); err != nil {
 		return &store.ErrNotValid{Err: err}
 	}
-	ctx := req.Context
-	cmp := keyFound(key)
+
+	comparator := kvc.Comparisons(
+		kvc.KeyIsFound(key),
+	)
 	op := clientv3.OpDelete(key)
-	var resp *clientv3.TxnResponse
-	err := Backoff(ctx).Retry(func(n int) (done bool, err error) {
-		resp, err = s.client.Txn(ctx).If(cmp).Then(op).Commit()
-		return RetryRequest(n, err)
-	})
-	if err != nil {
-		return err
-	}
-	if !resp.Succeeded {
-		return &store.ErrNotFound{Key: key}
-	}
-	return nil
+
+	return kvc.Txn(req.Context, s.client, comparator, op)
 }
 
 func (s *Store) List(req storev2.ResourceRequest, pred *store.SelectionPredicate) (wrap.List, error) {
@@ -323,9 +304,9 @@ func (s *Store) List(req storev2.ResourceRequest, pred *store.SelectionPredicate
 	}
 
 	var resp *clientv3.GetResponse
-	err := Backoff(ctx).Retry(func(n int) (done bool, err error) {
+	err := kvc.Backoff(ctx).Retry(func(n int) (done bool, err error) {
 		resp, err = s.client.Get(ctx, key, opts...)
-		return RetryRequest(n, err)
+		return kvc.RetryRequest(n, err)
 	})
 	if err != nil {
 		return nil, err
@@ -358,9 +339,9 @@ func (s *Store) Exists(req storev2.ResourceRequest) (bool, error) {
 	}
 	ctx := req.Context
 	var resp *clientv3.GetResponse
-	err := Backoff(ctx).Retry(func(n int) (done bool, err error) {
+	err := kvc.Backoff(ctx).Retry(func(n int) (done bool, err error) {
 		resp, err = s.client.Get(ctx, key, clientv3.WithLimit(1), clientv3.WithSerializable(), clientv3.WithCountOnly())
-		return RetryRequest(n, err)
+		return kvc.RetryRequest(n, err)
 	})
 	if err != nil {
 		return false, err

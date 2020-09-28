@@ -88,10 +88,12 @@ func (s *Store) GetClusterHealth(ctx context.Context, cluster clientv3.Cluster, 
 	mList, err := cluster.MemberList(tctx)
 	if err != nil {
 		logger.WithError(err).Error("could not get the cluster member list")
-		healthResponse.ClusterHealth = []*corev2.ClusterHealth{&corev2.ClusterHealth{
-			Name: "etcd client",
-			Err:  fmt.Sprintf("error getting cluster member list: %s", err.Error()),
-		}}
+		healthResponse.ClusterHealth = []*corev2.ClusterHealth{
+			{
+				Name: "etcd client",
+				Err:  fmt.Sprintf("error getting cluster member list: %s", err.Error()),
+			},
+		}
 		return healthResponse
 	}
 	logger.WithField("members", mList.Members).Info("retrieved cluster members")

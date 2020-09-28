@@ -44,6 +44,7 @@ func (r *APIKeysRouter) Mount(parent *mux.Router) {
 	routes.Get(r.handlers.GetResource)
 	routes.List(r.handlers.ListResources, corev2.APIKeyFields)
 	parent.HandleFunc(routes.PathPrefix, r.create).Methods(http.MethodPost)
+	routes.Patch(r.handlers.PatchResource)
 }
 
 func (r *APIKeysRouter) create(w http.ResponseWriter, req *http.Request) {

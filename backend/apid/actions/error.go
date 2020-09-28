@@ -42,17 +42,22 @@ const (
 	// PaymentRequired is used when the user tries to use a feature that's gated
 	// behind a license.
 	PaymentRequired
+
+	// PreconditionFailed is used to indicate that a precondition header (e.g.
+	// If-Match) is not matching the server side state
+	PreconditionFailed
 )
 
 // Default error messages if not message is provided.
 var standardErrorMessages = map[ErrCode]string{
-	InternalErr:      "internal error occurred",
-	InvalidArgument:  "invalid argument(s) received",
-	NotFound:         "not found",
-	AlreadyExistsErr: "resource already exists",
-	PermissionDenied: "unauthorized to perform action",
-	Unauthenticated:  "unauthenticated",
-	PaymentRequired:  "license required",
+	InternalErr:        "internal error occurred",
+	InvalidArgument:    "invalid argument(s) received",
+	NotFound:           "not found",
+	AlreadyExistsErr:   "resource already exists",
+	PermissionDenied:   "unauthorized to perform action",
+	Unauthenticated:    "unauthenticated",
+	PaymentRequired:    "license required",
+	PreconditionFailed: "precondition failed",
 }
 
 // Error describes an issue that ocurred while performing the action.

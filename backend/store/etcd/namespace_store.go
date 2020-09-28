@@ -10,6 +10,7 @@ import (
 	"github.com/gogo/protobuf/proto"
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/store"
+	"github.com/sensu/sensu-go/backend/store/etcd/kvc"
 )
 
 const (
@@ -64,7 +65,7 @@ func (s *Store) DeleteNamespace(ctx context.Context, name string) error {
 	}
 
 	var getresp *clientv3.TxnResponse
-	err := Backoff(ctx).Retry(func(n int) (done bool, err error) {
+	err := kvc.Backoff(ctx).Retry(func(n int) (done bool, err error) {
 		// Validate whether there are any resources referencing the namespace
 		getresp, err = s.client.Txn(ctx).Then(
 			v3.OpGet(checkKeyBuilder.WithNamespace(name).Build(), v3.WithPrefix(), v3.WithCountOnly()),
@@ -76,7 +77,7 @@ func (s *Store) DeleteNamespace(ctx context.Context, name string) error {
 			v3.OpGet(hookKeyBuilder.WithNamespace(name).Build(), v3.WithPrefix(), v3.WithCountOnly()),
 			v3.OpGet(silencedKeyBuilder.WithNamespace(name).Build(), v3.WithPrefix(), v3.WithCountOnly()),
 		).Commit()
-		return RetryRequest(n, err)
+		return kvc.RetryRequest(n, err)
 	})
 	if err != nil {
 		return err
@@ -121,8 +122,8 @@ func (s *Store) UpdateNamespace(ctx context.Context, namespace *corev2.Namespace
 		return &store.ErrEncode{Err: err}
 	}
 
-	return Backoff(ctx).Retry(func(n int) (done bool, err error) {
+	return kvc.Backoff(ctx).Retry(func(n int) (done bool, err error) {
 		_, err = s.client.Put(ctx, getNamespacePath(namespace.Name), string(bytes))
-		return RetryRequest(n, err)
+		return kvc.RetryRequest(n, err)
 	})
 }

@@ -18,7 +18,6 @@ func namespaceGetAttrs(attrs *authorization.Attributes) bool {
 		attrs.APIVersion == "v2" &&
 		attrs.Resource == (&corev2.Namespace{}).RBACName() &&
 		(attrs.Verb == "get" || attrs.Verb == "list"))
-
 }
 
 // Then middleware

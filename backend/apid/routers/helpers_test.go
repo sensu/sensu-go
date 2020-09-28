@@ -231,11 +231,13 @@ var createResourceAlreadyExistsTestCase = func(resource corev2.Resource) routerT
 	r := reflect.New(reflect.ValueOf(resource).Elem().Type()).Interface().(corev2.Resource)
 	r.SetObjectMeta(corev2.ObjectMeta{Name: "createResourceAlreadyExistsTestCase", Namespace: "default"})
 
+	body := marshal(r)
+
 	return routerTestCase{
 		name:   "it returns 409 if the resource to create already exists",
 		method: http.MethodPost,
 		path:   resource.URIPath(),
-		body:   marshal(r),
+		body:   body,
 		storeFunc: func(s *mockstore.MockStore) {
 			s.On("CreateResource", mock.Anything, r).
 				Return(&store.ErrAlreadyExists{}).
@@ -251,11 +253,13 @@ var createResourceInvalidTestCase = func(resource corev2.Resource) routerTestCas
 	r := reflect.New(reflect.ValueOf(resource).Elem().Type()).Interface().(corev2.Resource)
 	r.SetObjectMeta(corev2.ObjectMeta{Name: "createResourceInvalidTestCase", Namespace: "default"})
 
+	body := marshal(r)
+
 	return routerTestCase{
 		name:   "it returns 400 if the resource to create is invalid",
 		method: http.MethodPost,
 		path:   resource.URIPath(),
-		body:   marshal(r),
+		body:   body,
 		storeFunc: func(s *mockstore.MockStore) {
 			s.On("CreateResource", mock.Anything, r).
 				Return(&store.ErrNotValid{Err: errors.New("createResourceInvalidTestCase")}).
@@ -271,11 +275,13 @@ var createResourceStoreErrTestCase = func(resource corev2.Resource) routerTestCa
 	r := reflect.New(reflect.ValueOf(resource).Elem().Type()).Interface().(corev2.Resource)
 	r.SetObjectMeta(corev2.ObjectMeta{Name: "createResourceStoreErrTestCase", Namespace: "default"})
 
+	body := marshal(r)
+
 	return routerTestCase{
 		name:   "it returns 500 if the store returns an error while creating",
 		method: http.MethodPost,
 		path:   resource.URIPath(),
-		body:   marshal(r),
+		body:   body,
 		storeFunc: func(s *mockstore.MockStore) {
 			s.On("CreateResource", mock.Anything, r).
 				Return(&store.ErrInternal{}).
@@ -291,11 +297,13 @@ var createResourceSuccessTestCase = func(resource corev2.Resource) routerTestCas
 	r := reflect.New(reflect.ValueOf(resource).Elem().Type()).Interface().(corev2.Resource)
 	r.SetObjectMeta(corev2.ObjectMeta{Name: "createResourceSuccessTestCase", Namespace: "default"})
 
+	body := marshal(r)
+
 	return routerTestCase{
 		name:   "it returns 201 if the resource was created",
 		method: http.MethodPost,
 		path:   resource.URIPath(),
-		body:   marshal(r),
+		body:   body,
 		storeFunc: func(s *mockstore.MockStore) {
 			s.On("CreateResource", mock.Anything, r).
 				Return(nil).

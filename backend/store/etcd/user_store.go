@@ -10,6 +10,7 @@ import (
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/authentication/bcrypt"
 	"github.com/sensu/sensu-go/backend/store"
+	"github.com/sensu/sensu-go/backend/store/etcd/kvc"
 )
 
 const usersPathPrefix = "users"
@@ -64,9 +65,9 @@ func (s *Store) CreateUser(u *corev2.User) error {
 	cmp := clientv3.Compare(clientv3.Version(getUserPath(u.Username)), "=", 0)
 	req := clientv3.OpPut(getUserPath(u.Username), string(userBytes))
 	var res *clientv3.TxnResponse
-	err = Backoff(context.TODO()).Retry(func(n int) (done bool, err error) {
+	err = kvc.Backoff(context.TODO()).Retry(func(n int) (done bool, err error) {
 		res, err = s.client.Txn(context.TODO()).If(cmp).Then(req).Commit()
-		return RetryRequest(n, err)
+		return kvc.RetryRequest(n, err)
 	})
 	if err != nil {
 		return err
@@ -123,8 +124,8 @@ func (s *Store) UpdateUser(u *corev2.User) error {
 		return &store.ErrEncode{Err: err}
 	}
 
-	return Backoff(context.TODO()).Retry(func(n int) (done bool, err error) {
+	return kvc.Backoff(context.TODO()).Retry(func(n int) (done bool, err error) {
 		_, err = s.client.Put(context.TODO(), getUserPath(u.Username), string(bytes))
-		return RetryRequest(n, err)
+		return kvc.RetryRequest(n, err)
 	})
 }

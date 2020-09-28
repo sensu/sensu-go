@@ -32,6 +32,7 @@ func (r *ClusterRoleBindingsRouter) Mount(parent *mux.Router) {
 	routes.Del(r.handlers.DeleteResource)
 	routes.Get(r.handlers.GetResource)
 	routes.List(r.handlers.ListResources, corev2.ClusterRoleBindingFields)
+	routes.Patch(r.handlers.PatchResource)
 	routes.Post(r.handlers.CreateResource)
 	routes.Put(r.handlers.CreateOrUpdateResource)
 }

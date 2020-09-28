@@ -13,6 +13,8 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 using the Prometheus Exposition Text Format.
 - The backend flag `--api-request-limit` is now available to configure the
 maximum API request body size, in bytes.
+- Add support for the PATCH method on the REST API for most configuration
+resources.
 
 ### Changed
 - The trusted CA file is now used for agent, backend and sensuctl asset retrieval.

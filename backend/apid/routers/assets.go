@@ -32,6 +32,7 @@ func (r *AssetsRouter) Mount(parent *mux.Router) {
 	routes.Get(r.handlers.GetResource)
 	routes.List(r.handlers.ListResources, corev2.AssetFields)
 	routes.ListAllNamespaces(r.handlers.ListResources, "/{resource:assets}", corev2.AssetFields)
+	routes.Patch(r.handlers.PatchResource)
 	routes.Post(r.handlers.CreateResource)
 	routes.Put(r.handlers.CreateOrUpdateResource)
 	routes.Del(r.handlers.DeleteResource)

@@ -5,6 +5,7 @@ import (
 
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/store"
+	"github.com/sensu/sensu-go/backend/store/patch"
 )
 
 // CreateResource ...
@@ -34,5 +35,11 @@ func (s *MockStore) GetResource(ctx context.Context, name string, resource corev
 // ListResources ...
 func (s *MockStore) ListResources(ctx context.Context, kind string, list interface{}, pred *store.SelectionPredicate) error {
 	args := s.Called(ctx, kind, list, pred)
+	return args.Error(0)
+}
+
+// PatchResource ...
+func (s *MockStore) PatchResource(ctx context.Context, resource corev2.Resource, name string, patcher patch.Patcher, condition *store.ETagCondition) error {
+	args := s.Called(ctx, resource, name, patcher, condition)
 	return args.Error(0)
 }

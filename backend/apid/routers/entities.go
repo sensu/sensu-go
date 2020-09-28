@@ -7,16 +7,23 @@ import (
 
 	"github.com/gorilla/mux"
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
+	corev3 "github.com/sensu/sensu-go/api/core/v3"
 	"github.com/sensu/sensu-go/backend/apid/actions"
+	"github.com/sensu/sensu-go/backend/apid/handlers"
 	"github.com/sensu/sensu-go/backend/store"
 	storev2 "github.com/sensu/sensu-go/backend/store/v2"
 )
 
 // EntitiesRouter handles requests for /entities
 type EntitiesRouter struct {
-	controller EntityController
-	store      store.Store
-	eventStore store.EventStore
+	controller      EntityController
+	store           store.Store
+	eventStore      store.EventStore
+	configSubrouter EntityConfigRouter
+}
+
+type EntityConfigRouter struct {
+	handlers handlers.Handlers
 }
 
 type EntityController interface {
@@ -32,6 +39,13 @@ func NewEntitiesRouter(store store.Store, storev2 storev2.Interface, events stor
 		controller: actions.NewEntityController(store, storev2),
 		store:      store,
 		eventStore: events,
+		configSubrouter: EntityConfigRouter{
+			handlers: handlers.Handlers{
+				V3Resource: &corev3.EntityConfig{},
+				Store:      store,
+				StoreV2:    storev2,
+			},
+		},
 	}
 }
 
@@ -51,6 +65,7 @@ func (r *EntitiesRouter) Mount(parent *mux.Router) {
 	routes.Get(r.find)
 	routes.List(r.controller.List, corev2.EntityFields)
 	routes.ListAllNamespaces(r.controller.List, "/{resource:entities}", corev2.EntityFields)
+	routes.Patch(r.configSubrouter.handlers.PatchResource)
 	routes.Post(r.create)
 	routes.Put(r.createOrReplace)
 }
@@ -61,8 +76,7 @@ func (r *EntitiesRouter) find(req *http.Request) (interface{}, error) {
 	if err != nil {
 		return nil, err
 	}
-	record, err := r.controller.Find(req.Context(), id)
-	return record, err
+	return r.controller.Find(req.Context(), id)
 }
 
 func (r *EntitiesRouter) create(req *http.Request) (interface{}, error) {

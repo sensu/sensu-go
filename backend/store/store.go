@@ -9,6 +9,7 @@ import (
 	"github.com/coreos/etcd/clientv3"
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	corev3 "github.com/sensu/sensu-go/api/core/v3"
+	"github.com/sensu/sensu-go/backend/store/patch"
 	"github.com/sensu/sensu-go/types"
 )
 
@@ -67,6 +68,15 @@ type ErrNotValid struct {
 
 func (e *ErrNotValid) Error() string {
 	return fmt.Sprintf("resource is invalid: %s", e.Err.Error())
+}
+
+// ErrPreconditionFailed is returned when a condition was not fulfilled
+type ErrPreconditionFailed struct {
+	Key string
+}
+
+func (e *ErrPreconditionFailed) Error() string {
+	return fmt.Sprintf("at least one condition failed for the key %s", e.Key)
 }
 
 // ErrInternal is returned when something generally bad happened while
@@ -488,6 +498,8 @@ type ResourceStore interface {
 	GetResource(ctx context.Context, name string, resource corev2.Resource) error
 
 	ListResources(ctx context.Context, kind string, resources interface{}, pred *SelectionPredicate) error
+
+	PatchResource(ctx context.Context, resource corev2.Resource, name string, patcher patch.Patcher, condition *ETagCondition) error
 }
 
 // RoleBindingStore provides methods for managing RBAC role bindings

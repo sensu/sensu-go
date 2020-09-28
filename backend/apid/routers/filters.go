@@ -33,6 +33,7 @@ func (r *EventFiltersRouter) Mount(parent *mux.Router) {
 	routes.Get(r.handlers.GetResource)
 	routes.List(r.handlers.ListResources, corev2.EventFilterFields)
 	routes.ListAllNamespaces(r.handlers.ListResources, "/{resource:filters}", corev2.EventFilterFields)
+	routes.Patch(r.handlers.PatchResource)
 	routes.Post(r.handlers.CreateResource)
 	routes.Put(r.handlers.CreateOrUpdateResource)
 }

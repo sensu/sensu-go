@@ -7,13 +7,12 @@ import (
 	"path"
 	"reflect"
 	"strings"
-	"time"
 
 	"github.com/coreos/etcd/clientv3"
 	"github.com/gogo/protobuf/proto"
 	"github.com/sensu/sensu-go/backend/store"
+	"github.com/sensu/sensu-go/backend/store/etcd/kvc"
 	"github.com/sensu/sensu-go/types"
-	"github.com/sensu/sensu-go/util/retry"
 
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 )
@@ -39,42 +38,6 @@ func NewStore(client *clientv3.Client, name string) *Store {
 	return store
 }
 
-// EtcdInitialDelay is 100 ms.
-const EtcdInitialDelay = time.Millisecond * 100
-
-// Backoff delivers a pre-configured backoff object, suitable for use in making
-// etcd requests.
-func Backoff(ctx context.Context) *retry.ExponentialBackoff {
-	return &retry.ExponentialBackoff{
-		Ctx:                  ctx,
-		InitialDelayInterval: EtcdInitialDelay,
-	}
-}
-
-// RetryRequest will return whether or not to try a request again based on the
-// error given to it, and the number of times the request has been tried.
-//
-// If RetryRequest gets "etcdserver: too many requests", then it will return
-// (false, nil). Otherwise, it will return (true, err).
-func RetryRequest(n int, err error) (bool, error) {
-	if err == nil {
-		return true, nil
-	}
-	if err == context.Canceled {
-		return true, err
-	}
-	if err == context.DeadlineExceeded {
-		return true, err
-	}
-	// using string comparison here because it's too difficult to tell
-	// what kind of error the client is actually delivering
-	if strings.Contains(err.Error(), "etcdserver: too many requests") {
-		logger.WithError(err).WithField("retry", n).Error("retrying")
-		return false, nil
-	}
-	return true, &store.ErrInternal{Message: err.Error()}
-}
-
 // Create the given key with the serialized object.
 func Create(ctx context.Context, client *clientv3.Client, key, namespace string, object interface{}) error {
 	bytes, err := marshal(object)
@@ -82,42 +45,13 @@ func Create(ctx context.Context, client *clientv3.Client, key, namespace string,
 		return &store.ErrEncode{Key: key, Err: err}
 	}
 
-	comparisons := []clientv3.Cmp{}
-	// If we had a namespace provided, make sure it exists
-	if namespace != "" {
-		comparisons = append(comparisons, namespaceFound(namespace))
-	}
-	// Make sure the key does not exists
-	comparisons = append(comparisons, keyNotFound(key))
+	comparator := kvc.Comparisons(
+		kvc.NamespaceExists(namespace),
+		kvc.KeyIsNotFound(key),
+	)
+	op := clientv3.OpPut(key, string(bytes))
 
-	req := clientv3.OpPut(key, string(bytes))
-	var resp *clientv3.TxnResponse
-	err = Backoff(ctx).Retry(func(n int) (done bool, err error) {
-		resp, err = client.Txn(ctx).If(comparisons...).Then(req).Else(
-			getNamespace(namespace), getKey(key),
-		).Commit()
-		return RetryRequest(n, err)
-	})
-	if err != nil {
-		return err
-	}
-	if !resp.Succeeded {
-		// Check if the namespace was missing
-		if namespace != "" && len(resp.Responses[0].GetResponseRange().Kvs) == 0 {
-			return &store.ErrNamespaceMissing{Namespace: namespace}
-		}
-
-		// Check if the key already exists
-		if len(resp.Responses[1].GetResponseRange().Kvs) != 0 {
-			return &store.ErrAlreadyExists{Key: key}
-		}
-
-		// Unknown error
-		return &store.ErrNotValid{
-			Err: fmt.Errorf("could not create the key %s", key),
-		}
-	}
-	return nil
+	return kvc.Txn(ctx, client, comparator, op)
 }
 
 // CreateOrUpdate writes the given key with the serialized object, regarless of
@@ -128,42 +62,20 @@ func CreateOrUpdate(ctx context.Context, client *clientv3.Client, key, namespace
 		return &store.ErrEncode{Key: key, Err: err}
 	}
 
-	comparisons := []clientv3.Cmp{}
-	// If we had a namespace provided, make sure it exists
-	if namespace != "" {
-		comparisons = append(comparisons, namespaceFound(namespace))
-	}
+	comparator := kvc.Comparisons(
+		kvc.NamespaceExists(namespace),
+	)
+	op := clientv3.OpPut(key, string(bytes))
 
-	req := clientv3.OpPut(key, string(bytes))
-	var resp *clientv3.TxnResponse
-	err = Backoff(ctx).Retry(func(n int) (done bool, err error) {
-		resp, err = client.Txn(ctx).If(comparisons...).Then(req).Commit()
-		return RetryRequest(n, err)
-	})
-	if err != nil {
-		return err
-	}
-	if !resp.Succeeded {
-		// Check if the namespace was missing
-		if namespace != "" && (len(resp.Responses) == 0 || len(resp.Responses[0].GetResponseRange().Kvs) == 0) {
-			return &store.ErrNamespaceMissing{Namespace: namespace}
-		}
-
-		// Unknown error
-		return &store.ErrNotValid{
-			Err: fmt.Errorf("could not update the key %s", key),
-		}
-	}
-	return nil
-
+	return kvc.Txn(ctx, client, comparator, op)
 }
 
 // Delete the given key
 func Delete(ctx context.Context, client *clientv3.Client, key string) error {
 	var resp *clientv3.DeleteResponse
-	err := Backoff(ctx).Retry(func(n int) (done bool, err error) {
+	err := kvc.Backoff(ctx).Retry(func(n int) (done bool, err error) {
 		resp, err = client.Delete(ctx, key)
-		return RetryRequest(n, err)
+		return kvc.RetryRequest(n, err)
 	})
 	if err != nil {
 		return err
@@ -176,26 +88,34 @@ func Delete(ctx context.Context, client *clientv3.Client, key string) error {
 
 // Get retrieves an object with the given key
 func Get(ctx context.Context, client *clientv3.Client, key string, object interface{}) error {
+	_, err := GetWithResponse(ctx, client, key, object)
+	return err
+}
+
+// GetWithResponse retrieves an object with the given key and returns the etcd
+// response
+func GetWithResponse(ctx context.Context, client *clientv3.Client, key string, object interface{}) (*clientv3.GetResponse, error) {
 	// Fetch the key from the store
 	var resp *clientv3.GetResponse
-	err := Backoff(ctx).Retry(func(n int) (done bool, err error) {
+	err := kvc.Backoff(ctx).Retry(func(n int) (done bool, err error) {
 		resp, err = client.Get(ctx, key, clientv3.WithLimit(1))
-		return RetryRequest(n, err)
+		return kvc.RetryRequest(n, err)
 	})
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	// Ensure we only received a single item
 	if len(resp.Kvs) == 0 {
-		return &store.ErrNotFound{Key: key}
+		return resp, &store.ErrNotFound{Key: key}
 	}
 
 	// Deserialize the object to the given object
 	if err := unmarshal(resp.Kvs[0].Value, object); err != nil {
-		return &store.ErrDecode{Key: key, Err: err}
+		return nil, &store.ErrDecode{Key: key, Err: err}
 	}
-	return nil
+
+	return resp, nil
 }
 
 // KeyBuilderFn represents a generic key builder function
@@ -234,9 +154,9 @@ func List(ctx context.Context, client *clientv3.Client, keyBuilder KeyBuilderFn,
 	}
 
 	var resp *clientv3.GetResponse
-	err := Backoff(ctx).Retry(func(n int) (done bool, err error) {
+	err := kvc.Backoff(ctx).Retry(func(n int) (done bool, err error) {
 		resp, err = client.Get(ctx, key, opts...)
-		return RetryRequest(n, err)
+		return kvc.RetryRequest(n, err)
 	})
 
 	if err != nil {
@@ -292,43 +212,29 @@ func Update(ctx context.Context, client *clientv3.Client, key, namespace string,
 		return &store.ErrEncode{Key: key, Err: err}
 	}
 
-	comparisons := []clientv3.Cmp{}
-	// If we had a namespace provided, make sure it exists
-	if namespace != "" {
-		comparisons = append(comparisons, namespaceFound(namespace))
+	comparator := kvc.Comparisons(
+		kvc.NamespaceExists(namespace),
+		kvc.KeyIsFound(key),
+	)
+	op := clientv3.OpPut(key, string(bytes))
+
+	return kvc.Txn(ctx, client, comparator, op)
+}
+
+// UpdateWithValue updates the given resource if and only if the given value
+// matches the stored key value
+func UpdateWithComparisons(ctx context.Context, client *clientv3.Client, key string, object interface{}, comparisons ...kvc.Predicate) error {
+	bytes, err := marshal(object)
+	if err != nil {
+		return &store.ErrEncode{Key: key, Err: err}
 	}
-	// Make sure the key already exists
-	comparisons = append(comparisons, keyFound(key))
 
 	req := clientv3.OpPut(key, string(bytes))
-	var resp *clientv3.TxnResponse
-	err = Backoff(ctx).Retry(func(n int) (done bool, err error) {
-		resp, err = client.Txn(ctx).If(comparisons...).Then(req).Else(
-			getNamespace(namespace), getKey(key),
-		).Commit()
-		return RetryRequest(n, err)
-	})
-	if err != nil {
-		return err
-	}
-	if !resp.Succeeded {
-		// Check if the namespace was missing
-		if namespace != "" && len(resp.Responses[0].GetResponseRange().Kvs) == 0 {
-			return &store.ErrNamespaceMissing{Namespace: namespace}
-		}
+	// Prepend the KeyIsFound key predicate
+	comparisons = append([]kvc.Predicate{kvc.KeyIsFound(key)}, comparisons...)
+	comparator := kvc.Comparisons(comparisons...)
 
-		// Check if the key was missing
-		if len(resp.Responses[1].GetResponseRange().Kvs) == 0 {
-			return &store.ErrNotFound{Key: key}
-		}
-
-		// Unknown error
-		return &store.ErrNotValid{
-			Err: fmt.Errorf("could not update the key %s", key),
-		}
-	}
-
-	return nil
+	return kvc.Txn(ctx, client, comparator, req)
 }
 
 // Count retrieves the count of all keys from storage under the
@@ -340,39 +246,15 @@ func Count(ctx context.Context, client *clientv3.Client, key string) (int64, err
 	}
 
 	var resp *clientv3.GetResponse
-	err := Backoff(ctx).Retry(func(n int) (done bool, err error) {
+	err := kvc.Backoff(ctx).Retry(func(n int) (done bool, err error) {
 		resp, err = client.Get(ctx, key, opts...)
-		return RetryRequest(n, err)
+		return kvc.RetryRequest(n, err)
 	})
 	if err != nil {
 		return 0, err
 	}
 
 	return resp.Count, nil
-}
-
-func getKey(key string) clientv3.Op {
-	return clientv3.OpGet(key)
-}
-
-func getNamespace(namespace string) clientv3.Op {
-	return getKey(getNamespacePath(namespace))
-}
-
-func keyFound(key string) clientv3.Cmp {
-	return clientv3.Compare(
-		clientv3.CreateRevision(key), ">", 0,
-	)
-}
-
-func keyNotFound(key string) clientv3.Cmp {
-	return clientv3.Compare(
-		clientv3.CreateRevision(key), "=", 0,
-	)
-}
-
-func namespaceFound(namespace string) clientv3.Cmp {
-	return keyFound(getNamespacePath(namespace))
 }
 
 // ComputeContinueToken calculates a continue token based on the given resource
@@ -413,6 +295,11 @@ func ComputeContinueToken(ctx context.Context, r corev2.Resource) string {
 	}
 }
 
+// unmarshal takes a slice of bytes and an interface and will attempt to
+// unmarshal the bytes into the provided interface. If the length of the data
+// is greather than 0 and the first character is '{' it will assume the data
+// is in JSON format, otherwise it will be assumed the data is in Protobuf
+// format.
 func unmarshal(data []byte, v interface{}) error {
 	if len(data) > 0 && data[0] == '{' {
 		if err := json.Unmarshal(data, v); err != nil {
@@ -431,6 +318,9 @@ func unmarshal(data []byte, v interface{}) error {
 	return nil
 }
 
+// marshal takes an interface and will attempt to marshal it. If the interface
+// can be asserted as types.Wrapper it will be marshaled with JSON, otherwise it
+// will be marshaled with Protobuf.
 func marshal(v interface{}) (bytes []byte, err error) {
 	switch v.(type) {
 	case types.Wrapper:
