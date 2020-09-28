@@ -70,7 +70,7 @@ func (e *ErrNotValid) Error() string {
 	return fmt.Sprintf("resource is invalid: %s", e.Err.Error())
 }
 
-// ErrPreconditionFailed is returned when a condition was not fulilled
+// ErrPreconditionFailed is returned when a condition was not fulfilled
 type ErrPreconditionFailed struct {
 	Key string
 }

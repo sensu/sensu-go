@@ -8,7 +8,7 @@ import (
 
 	"github.com/gorilla/mux"
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
-	v3 "github.com/sensu/sensu-go/api/core/v3"
+	corev3 "github.com/sensu/sensu-go/api/core/v3"
 	"github.com/sensu/sensu-go/backend/apid/actions"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/types"
@@ -26,7 +26,7 @@ func RespondWith(w http.ResponseWriter, r *http.Request, resources interface{}) 
 
 	_, isCoreV2Resource := resources.(corev2.Resource)
 	_, isWrapper := resources.(types.Wrapper)
-	_, isV3Resource := resources.(v3.Resource)
+	_, isV3Resource := resources.(corev3.Resource)
 	if isCoreV2Resource || isWrapper || isV3Resource {
 		etag, err := store.ETag(resources)
 		if err != nil {
