@@ -1,6 +1,7 @@
 package js
 
 import (
+	"fmt"
 	"sync"
 
 	time "github.com/echlebek/timeproxy"
@@ -62,7 +63,7 @@ func (c *vmCache) reap() {
 		obj.mu.Lock()
 		defer obj.mu.Unlock()
 		valueTime := time.Unix(obj.lastRead, 0)
-		if valueTime.Before(time.Now().Add(-cacheMaxAge)) {
+		if time.Since(valueTime) > cacheMaxAge {
 			c.vms.Delete(key)
 		}
 		return true
@@ -87,7 +88,7 @@ func (c *vmCache) Acquire(key string) *otto.Otto {
 func (c *vmCache) Dispose(key string) {
 	val, ok := c.vms.Load(key)
 	if !ok {
-		return
+		panic(fmt.Sprintf("dispose called on %q, but not found", key))
 	}
 	obj := val.(*cacheValue)
 	obj.mu.Unlock()

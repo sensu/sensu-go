@@ -47,14 +47,10 @@ func ParseExpressions(expressions []string) error {
 	return nil
 }
 
-func newOttoVM(assets JavascriptAssets) (*otto.Otto, error) {
+func newOttoVM(assets JavascriptAssets, key string) (*otto.Otto, error) {
 	ottoOnce.Do(func() {
 		ottoCache = newVMCache()
 	})
-	key := ""
-	if assets != nil {
-		key = assets.Key()
-	}
 	vm := ottoCache.Acquire(key)
 	if vm != nil {
 		return vm, nil
@@ -72,14 +68,10 @@ func newOttoVM(assets JavascriptAssets) (*otto.Otto, error) {
 	return ottoCache.Acquire(key), nil
 }
 
-func releaseOttoVM(assets JavascriptAssets) {
+func releaseOttoVM(key string) {
 	ottoOnce.Do(func() {
 		panic("releaseOttoVM called before newOttoVM")
 	})
-	key := ""
-	if assets != nil {
-		key = assets.Key()
-	}
 	ottoCache.Dispose(key)
 }
 
@@ -133,11 +125,15 @@ func addTimeFuncs(vm *otto.Otto) error {
 // If scripts is non-nil, then the scripts will be evaluated in the
 // expression's runtime context before the expression is evaluated.
 func Evaluate(expr string, parameters interface{}, assets JavascriptAssets) (bool, error) {
-	jsvm, err := newOttoVM(assets)
+	key := ""
+	if assets != nil {
+		key = assets.Key()
+	}
+	jsvm, err := newOttoVM(assets, key)
 	if err != nil {
 		return false, err
 	}
-	defer releaseOttoVM(assets)
+	defer releaseOttoVM(key)
 	if params, ok := parameters.(map[string]interface{}); ok {
 		for name, value := range params {
 			if err := jsvm.Set(name, value); err != nil {
@@ -168,11 +164,15 @@ func EvalPredicateWithVM(vm *otto.Otto, parameters map[string]interface{}, expr 
 
 // WithOttoVM provides a context manager for working with cached VMs.
 func WithOttoVM(assets JavascriptAssets, fn func(vm *otto.Otto) error) error {
-	jsvm, err := newOttoVM(assets)
+	key := ""
+	if assets != nil {
+		key = assets.Key()
+	}
+	jsvm, err := newOttoVM(assets, key)
 	if err != nil {
 		return err
 	}
-	defer releaseOttoVM(assets)
+	defer releaseOttoVM(key)
 	return fn(jsvm)
 }
 
@@ -195,11 +195,11 @@ type EntityFilterResult struct {
 // If the function cannot set up a javascript VM, or has issues setting vars,
 // then the function returns a nil slice and a non-nil error.
 func MatchEntities(expressions []string, entities []interface{}) ([]bool, error) {
-	jsvm, err := newOttoVM(nil)
+	jsvm, err := newOttoVM(nil, "")
 	if err != nil {
 		return nil, fmt.Errorf("error evaluating entity filters: %s", err)
 	}
-	defer releaseOttoVM(nil)
+	defer releaseOttoVM("")
 	scripts := make([]*otto.Script, 0, len(expressions))
 	for _, expr := range expressions {
 		script, err := jsvm.Compile("", expr)
