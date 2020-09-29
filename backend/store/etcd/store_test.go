@@ -9,9 +9,11 @@ import (
 	"testing"
 
 	"github.com/coreos/etcd/clientv3"
+	"github.com/gogo/protobuf/proto"
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/etcd"
 	"github.com/sensu/sensu-go/backend/store"
+	"github.com/sensu/sensu-go/backend/store/etcd/kvc"
 	"github.com/sensu/sensu-go/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -391,6 +393,38 @@ func TestUpdate(t *testing.T) {
 		result := &GenericObject{}
 		require.NoError(t, Get(ctx, store.client, "/default/foo", result))
 		assert.Equal(t, uint32(2), obj.Revision)
+	})
+}
+
+func TestUpdateWithValue(t *testing.T) {
+	testWithEtcdStore(t, func(store *Store) {
+		obj := &GenericObject{Revision: 1}
+		b, err := proto.Marshal(obj)
+		if err != nil {
+			t.Fatalf("could not marshal the generic object: %s", err)
+		}
+
+		// Updating a non-existent object should fail
+		ctx := context.WithValue(context.Background(), corev2.NamespaceKey, "default")
+		valueComparison := kvc.KeyHasValue("/default/foo", b)
+		require.Error(t, UpdateWithComparisons(ctx, store.client, "/default/foo", obj, valueComparison))
+
+		// Create it first
+		require.NoError(t, Create(ctx, store.client, "/default/foo", "default", obj))
+
+		obj2 := &GenericObject{Revision: 2}
+		b2, err := proto.Marshal(obj2)
+		if err != nil {
+			t.Fatalf("could not marshal the generic object: %s", err)
+		}
+
+		// Now try to update it while simulating an update in the mean time
+		valueComparison = kvc.KeyHasValue("/default/foo", b2)
+		require.Error(t, UpdateWithComparisons(ctx, store.client, "/default/foo", obj, valueComparison))
+
+		// Updating with the right version should work
+		valueComparison = kvc.KeyHasValue("/default/foo", b)
+		require.NoError(t, UpdateWithComparisons(ctx, store.client, "/default/foo", obj2, valueComparison))
 	})
 }
 

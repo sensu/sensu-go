@@ -145,6 +145,7 @@ func (a *Agent) executeCheck(ctx context.Context, request *corev2.CheckRequest, 
 	// Instantiate event
 	event := createEvent()
 	check := event.Check
+	event.Entity = a.getAgentEntity()
 
 	// Prepare log entry
 	fields := logrus.Fields{
@@ -168,11 +169,17 @@ func (a *Agent) executeCheck(ctx context.Context, request *corev2.CheckRequest, 
 	}
 
 	// Fetch and install all assets required for check execution.
-	logger.WithFields(fields).Debug("fetching assets for check")
-	assets, err := asset.GetAll(ctx, a.assetGetter, checkAssets)
-	if err != nil {
-		a.sendFailure(event, fmt.Errorf("error getting assets for event: %s", err))
-		return
+	var assets = asset.RuntimeAssetSet{}
+	if len(checkAssets) == 0 {
+		logger.WithFields(fields).Debug("no assets defined for this check")
+	} else {
+		logger.WithFields(fields).Debug("fetching assets for check")
+		var err error
+		assets, err = asset.GetAll(ctx, a.assetGetter, checkAssets)
+		if err != nil {
+			a.sendFailure(event, fmt.Errorf("error getting assets for event: %s", err))
+			return
+		}
 	}
 
 	// Prepare environment variables
@@ -239,7 +246,6 @@ func (a *Agent) executeCheck(ctx context.Context, request *corev2.CheckRequest, 
 	event.Check.Duration = checkExec.Duration
 	event.Check.Status = uint32(checkExec.Status)
 
-	event.Entity = a.getAgentEntity()
 	event.Timestamp = time.Now().Unix()
 	id, err := uuid.NewRandom()
 	if err == nil {

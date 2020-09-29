@@ -25,6 +25,7 @@ require (
 	github.com/echlebek/crock v1.0.1
 	github.com/echlebek/timeproxy v1.0.0
 	github.com/emicklei/proto v1.1.0
+	github.com/evanphx/json-patch/v5 v5.1.0
 	github.com/frankban/quicktest v1.7.2 // indirect
 	github.com/ghodss/yaml v1.0.0
 	github.com/go-resty/resty/v2 v2.1.0
@@ -53,8 +54,10 @@ require (
 	github.com/mgutz/ansi v0.0.0-20170206155736-9520e82c474b
 	github.com/mholt/archiver/v3 v3.3.1-0.20191129193105-44285f7ed244
 	github.com/mitchellh/go-homedir v1.1.0
+	github.com/mitchellh/hashstructure v1.0.0
 	github.com/mitchellh/mapstructure v1.1.2
 	github.com/olekukonko/tablewriter v0.0.0-20180506121414-d4647c9c7a84
+	github.com/pkg/errors v0.9.1 // indirect
 	github.com/prometheus/client_golang v1.2.0
 	github.com/prometheus/client_model v0.0.0-20190812154241-14fe0d1b01d4
 	github.com/prometheus/common v0.7.0

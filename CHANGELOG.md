@@ -8,8 +8,32 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 ## Unreleased
 
 ### Added
+- A warning is now logged when a runtime asset was requested but does not exist.
 - Added Prometheus transformer for extracting metrics from check output
 using the Prometheus Exposition Text Format.
+- The backend flag `--api-request-limit` is now available to configure the
+maximum API request body size, in bytes.
+- Add support for the PATCH method on the REST API for most configuration
+resources.
+
+### Changed
+- The trusted CA file is now used for agent, backend and sensuctl asset retrieval.
+
+### Fixed
+- The backend will no longer start when the dashboard TLS configuration is not
+fully specified.
+- Include the agent entity in data passed to the command process' STDIN.
+- Per-entity subscriptions (ex. `entity:entityName`) are always available on agent entities,
+even if removed via the `/entities` API.
+- Fixed a crash in the backend and agent related to Javascript execution.
+- Proxy entities that are used in round-robin check requests are no longer stale.
+- Fixed a bug where entity listing would be incorrect if agent entities were
+created via the API instead of with sensu-agent.
+
+## [5.21.2] - 2020-08-31
+
+### Fixed
+- Failed check events now get written to the event log file.
 
 ## [6.0.0] - 2020-08-04
 
@@ -46,7 +70,6 @@ be able to use their database with older versions of Sensu.
 by modifying the agent's configuration file.
 
 ### Changed
-- Improves logging around the agent websocket connection.
 - Entities are now stored as two separate data structures, in order to optimize
 data access patterns.
 - The `dead` and `handleUpdate` methods in keepalived now use `EntityConfig` and
@@ -65,7 +88,7 @@ characters.
 ## [5.21.1] - 2020-08-05
 
 ### Changed
-- Improved agent websocket connection logging.
+- Improves logging around the agent websocket connection.
 
 ### Fixed
 - Fixed potential Web UI crash when fetching events in namespace with > 1000 events.

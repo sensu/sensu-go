@@ -107,6 +107,10 @@ OUTER:
 			o.TagSet = append(o.TagSet, tag)
 		}
 
+		if event.Check.OutputMetricTags != nil {
+			o.TagSet = append(o.TagSet, event.Check.OutputMetricTags...)
+		}
+
 		// Add this metric to our list
 		openTSDBList = append(openTSDBList, o)
 	}

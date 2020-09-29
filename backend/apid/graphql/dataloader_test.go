@@ -16,7 +16,7 @@ func contextWithLoadersNoCache(ctx context.Context, cfg ServiceConfig, opts ...d
 	return contextWithLoaders(ctx, cfg, opts...)
 }
 
-func Test_listAllEvents(t *testing.T) {
+func Test_listEvents(t *testing.T) {
 	mkEvents := func(num int) []*corev2.Event {
 		result := make([]*corev2.Event, num)
 		for i := 0; i < num; i++ {
@@ -26,6 +26,7 @@ func Test_listAllEvents(t *testing.T) {
 	}
 	tests := []struct {
 		name    string
+		entity  string
 		setup   func(*MockEventClient)
 		wantLen int
 		wantErr bool
@@ -51,6 +52,16 @@ func Test_listAllEvents(t *testing.T) {
 			wantErr: false,
 		},
 		{
+			name:   "single page",
+			entity: "wiggum",
+			setup: func(c *MockEventClient) {
+				c.On("ListEvents", mock.Anything, mock.Anything).Panic("called wrong method")
+				c.On("ListEventsByEntity", mock.Anything, "wiggum", mock.Anything).Return(mkEvents(500), nil).Once()
+			},
+			wantLen: 500,
+			wantErr: false,
+		},
+		{
 			name: "fetch err",
 			setup: func(c *MockEventClient) {
 				c.On("ListEvents", mock.Anything, mock.Anything).Return(mkEvents(2), errors.New("err")).Once()
@@ -63,7 +74,7 @@ func Test_listAllEvents(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			client := new(MockEventClient)
 			tt.setup(client)
-			got, err := listAllEvents(context.Background(), client)
+			got, err := listEvents(context.Background(), client, tt.entity)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("listAllEvents() error = %v, wantErr %v", err, tt.wantErr)
 				return

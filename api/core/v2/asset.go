@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	"github.com/sensu/sensu-go/api/core/v2/internal/js"
+	stringsutil "github.com/sensu/sensu-go/api/core/v2/internal/stringutil"
 )
 
 const (
@@ -137,11 +138,13 @@ func NewAsset(meta ObjectMeta) *Asset {
 // AssetFields returns a set of fields that represent that resource
 func AssetFields(r Resource) map[string]string {
 	resource := r.(*Asset)
-	return map[string]string{
+	fields := map[string]string{
 		"asset.name":      resource.ObjectMeta.Name,
 		"asset.namespace": resource.ObjectMeta.Namespace,
 		"asset.filters":   strings.Join(resource.Filters, ","),
 	}
+	stringsutil.MergeMapWithPrefix(fields, resource.ObjectMeta.Labels, "asset.labels.")
+	return fields
 }
 
 // SetNamespace sets the namespace of the resource.

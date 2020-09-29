@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/sensu/sensu-go/api/core/v2/internal/js"
+	stringsutil "github.com/sensu/sensu-go/api/core/v2/internal/stringutil"
 	utilstrings "github.com/sensu/sensu-go/api/core/v2/internal/stringutil"
 )
 
@@ -166,12 +167,14 @@ func (s *eventFilterSorter) Less(i, j int) bool {
 // EventFilterFields returns a set of fields that represent that resource
 func EventFilterFields(r Resource) map[string]string {
 	resource := r.(*EventFilter)
-	return map[string]string{
+	fields := map[string]string{
 		"filter.name":           resource.ObjectMeta.Name,
 		"filter.namespace":      resource.ObjectMeta.Namespace,
 		"filter.action":         resource.Action,
 		"filter.runtime_assets": strings.Join(resource.RuntimeAssets, ","),
 	}
+	stringsutil.MergeMapWithPrefix(fields, resource.ObjectMeta.Labels, "filter.labels.")
+	return fields
 }
 
 // SetNamespace sets the namespace of the resource.

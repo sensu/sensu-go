@@ -37,6 +37,7 @@ type EventClient interface {
 	FetchEvent(ctx context.Context, entity, check string) (*corev2.Event, error)
 	DeleteEvent(ctx context.Context, entity, check string) error
 	ListEvents(ctx context.Context, pred *store.SelectionPredicate) ([]*corev2.Event, error)
+	ListEventsByEntity(ctx context.Context, entity string, pred *store.SelectionPredicate) ([]*corev2.Event, error)
 }
 
 type EventFilterClient interface {

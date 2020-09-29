@@ -10,7 +10,7 @@ import (
 	"strconv"
 	"strings"
 
-	utilstrings "github.com/sensu/sensu-go/api/core/v2/internal/stringutil"
+	"github.com/sensu/sensu-go/api/core/v2/internal/stringutil"
 )
 
 const (
@@ -75,7 +75,7 @@ func redactMap(m map[string]string, redact []string) map[string]string {
 	}
 	result := make(map[string]string, len(m))
 	for k, v := range m {
-		if utilstrings.FoundInArray(k, redact) {
+		if stringutil.FoundInArray(k, redact) {
 			result[k] = Redacted
 		} else {
 			result[k] = v
@@ -217,13 +217,15 @@ func (s *entitySorter) Less(i, j int) bool {
 // EntityFields returns a set of fields that represent that resource
 func EntityFields(r Resource) map[string]string {
 	resource := r.(*Entity)
-	return map[string]string{
+	fields := map[string]string{
 		"entity.name":          resource.ObjectMeta.Name,
 		"entity.namespace":     resource.ObjectMeta.Namespace,
 		"entity.deregister":    strconv.FormatBool(resource.Deregister),
 		"entity.entity_class":  resource.EntityClass,
 		"entity.subscriptions": strings.Join(resource.Subscriptions, ","),
 	}
+	stringutil.MergeMapWithPrefix(fields, resource.ObjectMeta.Labels, "entity.labels.")
+	return fields
 }
 
 // SetNamespace sets the namespace of the resource.
@@ -236,6 +238,7 @@ func (e *Entity) SetObjectMeta(meta ObjectMeta) {
 	e.ObjectMeta = meta
 }
 
+// RBACName is the rbac name of the resource.
 func (e *Entity) RBACName() string {
 	return "entities"
 }
@@ -243,4 +246,17 @@ func (e *Entity) RBACName() string {
 // SetName sets the name of the resource.
 func (e *Entity) SetName(name string) {
 	e.Name = name
+}
+
+// AddEntitySubscription appends the entity subscription (using the format
+// "entity:entityName") to the subscriptions of an entity
+func AddEntitySubscription(entityName string, subscriptions []string) []string {
+	entitySubscription := GetEntitySubscription(entityName)
+
+	// Do not add the entity subscription if it already exists
+	if stringutil.InArray(entitySubscription, subscriptions) {
+		return subscriptions
+	}
+
+	return append(subscriptions, entitySubscription)
 }

@@ -2,6 +2,7 @@ package v2
 
 import (
 	"fmt"
+	"reflect"
 	"sort"
 	"testing"
 
@@ -248,6 +249,46 @@ func TestSortHandlersByName(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			sort.Sort(SortHandlersByName(tc.inChecks, tc.inDir))
 			assert.EqualValues(t, tc.expected, tc.inChecks)
+		})
+	}
+}
+
+func TestHandlerFields(t *testing.T) {
+	tests := []struct {
+		name    string
+		args    Resource
+		wantKey string
+		want    string
+	}{
+		{
+			name:    "exposes name",
+			args:    FixtureHandler("slack"),
+			wantKey: "handler.name",
+			want:    "slack",
+		},
+		{
+			name:    "exposes type",
+			args:    &Handler{Type: "pipe"},
+			wantKey: "handler.type",
+			want:    "pipe",
+		},
+		{
+			name: "exposes labels",
+			args: &Handler{
+				ObjectMeta: ObjectMeta{
+					Labels: map[string]string{"region": "philadelphia"},
+				},
+			},
+			wantKey: "handler.labels.region",
+			want:    "philadelphia",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := HandlerFields(tt.args)
+			if !reflect.DeepEqual(got[tt.wantKey], tt.want) {
+				t.Errorf("HandlerFields() = got[%s] %v, want[%s] %v", tt.wantKey, got[tt.wantKey], tt.wantKey, tt.want)
+			}
 		})
 	}
 }

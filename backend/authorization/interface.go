@@ -8,6 +8,7 @@ import (
 )
 
 var ErrUnauthorized = errors.New("request unauthorized")
+var ErrNoClaims = errors.New("no claims found in the request context")
 
 // Authorizer determines whether a request is authorized using the Attributes
 // passed. It returns true if the request should be authorized, along with any

@@ -44,10 +44,8 @@ func execute(cli *cli.SensuCli) func(*cobra.Command, []string) error {
 		if err != nil {
 			return err
 		}
-		for _, input := range inputs {
-			if err := resource.Process(cli, client, input, recurse, processor); err != nil {
-				return err
-			}
+		if err := resource.Process(cli, client, inputs, recurse, processor); err != nil {
+			return err
 		}
 		return nil
 	}

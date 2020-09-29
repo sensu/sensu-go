@@ -7,6 +7,7 @@ import (
 
 	"github.com/coreos/etcd/clientv3"
 	"github.com/sensu/sensu-go/backend/store"
+	"github.com/sensu/sensu-go/backend/store/etcd/kvc"
 )
 
 const DatabaseVersionKey = "sensu_database_version"
@@ -15,9 +16,9 @@ const DatabaseVersionKey = "sensu_database_version"
 func GetDatabaseVersion(ctx context.Context, client *clientv3.Client) (int, error) {
 	versionPath := path.Join(EtcdRoot, DatabaseVersionKey)
 	var resp *clientv3.GetResponse
-	err := Backoff(ctx).Retry(func(n int) (done bool, err error) {
+	err := kvc.Backoff(ctx).Retry(func(n int) (done bool, err error) {
 		resp, err = client.Get(ctx, versionPath)
-		return RetryRequest(n, err)
+		return kvc.RetryRequest(n, err)
 	})
 	if err != nil {
 		return 0, err
@@ -34,8 +35,8 @@ func GetDatabaseVersion(ctx context.Context, client *clientv3.Client) (int, erro
 
 func SetDatabaseVersion(ctx context.Context, client *clientv3.Client, version int) error {
 	versionPath := path.Join(EtcdRoot, DatabaseVersionKey)
-	return Backoff(ctx).Retry(func(n int) (done bool, err error) {
+	return kvc.Backoff(ctx).Retry(func(n int) (done bool, err error) {
 		_, err = client.Put(ctx, versionPath, fmt.Sprintf("%d", version))
-		return RetryRequest(n, err)
+		return kvc.RetryRequest(n, err)
 	})
 }

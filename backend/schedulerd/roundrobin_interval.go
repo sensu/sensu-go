@@ -3,6 +3,7 @@ package schedulerd
 import (
 	"context"
 	"reflect"
+	"sync"
 
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	corev3 "github.com/sensu/sensu-go/api/core/v3"
@@ -35,6 +36,8 @@ type RoundRobinIntervalScheduler struct {
 	executor               *CheckExecutor
 	cancels                map[string]ringCancel
 	entityCache            *cachev2.Resource
+	mu                     sync.Mutex
+	proxyEntities          []*corev3.EntityConfig
 }
 
 // NewRoundRobinIntervalScheduler initializes a RoundRobinIntervalScheduler
@@ -62,11 +65,12 @@ func NewRoundRobinIntervalScheduler(ctx context.Context, store store.Store, bus 
 
 func (s *RoundRobinIntervalScheduler) updateRings() {
 	agentEntitiesRequest := 1
-	var proxyEntities []*corev3.EntityConfig
 	if s.check.ProxyRequests != nil {
 		entities := s.entityCache.Get(s.check.Namespace)
-		proxyEntities = matchEntities(entities, s.check.ProxyRequests)
-		agentEntitiesRequest = len(proxyEntities)
+		s.mu.Lock()
+		s.proxyEntities = matchEntities(entities, s.check.ProxyRequests)
+		agentEntitiesRequest = len(s.proxyEntities)
+		s.mu.Unlock()
 		if agentEntitiesRequest == 0 {
 			s.logger.Error("check not published, no matching entities for proxy request")
 			return
@@ -90,7 +94,7 @@ func (s *RoundRobinIntervalScheduler) updateRings() {
 		ring := s.ringPool.Get(key)
 		wc := ring.Watch(ctx, s.check.Name, agentEntitiesRequest, int(s.check.Interval), s.check.Cron)
 		val := ringCancel{Cancel: cancel, AgentEntitiesRequest: agentEntitiesRequest}
-		go s.handleEvents(s.executor, wc, proxyEntities)
+		go s.handleEvents(s.executor, wc)
 		newCancels[key] = val
 	}
 	// clean up any remaining watchers that are no longer valid
@@ -108,9 +112,9 @@ func (s *RoundRobinIntervalScheduler) Start() {
 	go s.start()
 }
 
-func (s *RoundRobinIntervalScheduler) handleEvents(executor *CheckExecutor, ch <-chan ringv2.Event, proxyEntities []*corev3.EntityConfig) {
+func (s *RoundRobinIntervalScheduler) handleEvents(executor *CheckExecutor, ch <-chan ringv2.Event) {
 	for event := range ch {
-		s.handleEvent(executor, event, proxyEntities)
+		s.handleEvent(executor, event)
 	}
 }
 
@@ -122,7 +126,7 @@ func getAgentEntity(event ringv2.Event) string {
 	return entity
 }
 
-func (s *RoundRobinIntervalScheduler) handleEvent(executor *CheckExecutor, event ringv2.Event, proxyEntities []*corev3.EntityConfig) {
+func (s *RoundRobinIntervalScheduler) handleEvent(executor *CheckExecutor, event ringv2.Event) {
 	switch event.Type {
 	case ringv2.EventError:
 		s.logger.WithError(event.Err).Error("error scheduling check")
@@ -141,7 +145,9 @@ func (s *RoundRobinIntervalScheduler) handleEvent(executor *CheckExecutor, event
 		// The ring has produced a trigger for the entity, and a check should
 		// be executed.
 		s.logger.WithFields(logrus.Fields{"agents": event.Values}).Info("executing round robin check on agents")
-		s.schedule(executor, proxyEntities, event.Values)
+		s.mu.Lock()
+		s.schedule(executor, s.proxyEntities, event.Values)
+		s.mu.Unlock()
 
 	case ringv2.EventClosing:
 		s.logger.Warn("shutting down scheduler")

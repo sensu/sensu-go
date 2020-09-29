@@ -18,17 +18,19 @@ const (
 
 // Manager ...
 type Manager struct {
-	cacheDir string
-	entity   *types.Entity
-	wg       *sync.WaitGroup
+	cacheDir      string
+	entity        *types.Entity
+	wg            *sync.WaitGroup
+	trustedCAFile string
 }
 
 // NewManager ...
-func NewManager(cacheDir string, entity *types.Entity, wg *sync.WaitGroup) *Manager {
+func NewManager(cacheDir, trustedCAFile string, entity *types.Entity, wg *sync.WaitGroup) *Manager {
 	return &Manager{
-		cacheDir: cacheDir,
-		entity:   entity,
-		wg:       wg,
+		cacheDir:      cacheDir,
+		entity:        entity,
+		wg:            wg,
+		trustedCAFile: trustedCAFile,
 	}
 }
 
@@ -55,7 +57,7 @@ func (m *Manager) StartAssetManager(ctx context.Context, limiter *rate.Limiter) 
 		}
 	}()
 	boltDBGetter := NewBoltDBGetter(
-		db, m.cacheDir, nil, nil, nil, limiter)
+		db, m.cacheDir, m.trustedCAFile, nil, nil, nil, limiter)
 
 	return NewFilteredManager(boltDBGetter, m.entity), nil
 }

@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 
 	"github.com/graph-gophers/dataloader"
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
@@ -126,11 +127,35 @@ func loadEntities(ctx context.Context, ns string) ([]*corev2.Entity, error) {
 
 // events
 
-func listAllEvents(ctx context.Context, c EventClient) ([]*corev2.Event, error) {
+type eventCacheKey struct {
+	namespace string
+	entity    string
+}
+
+func newEventCacheKey(key string) *eventCacheKey {
+	els := strings.SplitN(key, "\n", 2)
+	return &eventCacheKey{namespace: els[0], entity: els[1]}
+}
+
+func (k *eventCacheKey) String() string {
+	return strings.Join([]string{k.namespace, k.entity}, "\n")
+}
+
+func (k *eventCacheKey) Raw() interface{} {
+	return k
+}
+
+func listEvents(ctx context.Context, c EventClient, entity string) ([]*corev2.Event, error) {
 	pred := &store.SelectionPredicate{Continue: "", Limit: int64(loaderPageSize)}
+	list := func(ctx context.Context, entity string, pred *store.SelectionPredicate) ([]*corev2.Event, error) {
+		if entity == "" {
+			return c.ListEvents(ctx, pred)
+		}
+		return c.ListEventsByEntity(ctx, entity, pred)
+	}
 	results := []*corev2.Event{}
 	for {
-		r, err := c.ListEvents(ctx, pred)
+		r, err := list(ctx, entity, pred)
 		if err != nil {
 			return results, err
 		}
@@ -146,8 +171,9 @@ func loadEventsBatchFn(c EventClient) dataloader.BatchFunc {
 	return func(ctx context.Context, keys dataloader.Keys) []*dataloader.Result {
 		results := make([]*dataloader.Result, 0, len(keys))
 		for _, key := range keys {
-			ctx := store.NamespaceContext(ctx, key.String())
-			records, err := listAllEvents(ctx, c)
+			key := newEventCacheKey(key.String())
+			ctx := store.NamespaceContext(ctx, key.namespace)
+			records, err := listEvents(ctx, c, key.entity)
 			result := &dataloader.Result{Data: records, Error: handleListErr(err)}
 			results = append(results, result)
 		}
@@ -155,14 +181,15 @@ func loadEventsBatchFn(c EventClient) dataloader.BatchFunc {
 	}
 }
 
-func loadEvents(ctx context.Context, ns string) ([]*corev2.Event, error) {
+func loadEvents(ctx context.Context, ns, entity string) ([]*corev2.Event, error) {
 	var records []*corev2.Event
 	loader, err := getLoader(ctx, eventsLoaderKey)
 	if err != nil {
 		return records, err
 	}
 
-	results, err := loader.Load(ctx, dataloader.StringKey(ns))()
+	key := &eventCacheKey{namespace: ns, entity: entity}
+	results, err := loader.Load(ctx, key)()
 	records, ok := results.([]*corev2.Event)
 	if err == nil && !ok {
 		err = fmt.Errorf("event loader: %s", errUnexpectedLoaderResult)
@@ -353,7 +380,7 @@ func getLoader(ctx context.Context, loaderKey key) (*dataloader.Loader, error) {
 // When resolving a field, GraphQL does not consider the absence of a value an
 // error; as such we omit the error if the API client returns Permission denied.
 func handleListErr(err error) error {
-	if err == authorization.ErrUnauthorized {
+	if err == authorization.ErrUnauthorized || err == authorization.ErrNoClaims {
 		logger.WithError(err).Warn("couldn't access resource")
 		return nil
 	}
@@ -364,7 +391,7 @@ func handleListErr(err error) error {
 // error; as such we omit the error when the API client returns NotFound or
 // Permission denied.
 func handleFetchResult(resource interface{}, err error) (interface{}, error) {
-	if err == authorization.ErrUnauthorized {
+	if err == authorization.ErrUnauthorized || err == authorization.ErrNoClaims {
 		logger.WithError(err).Warn("couldn't access resource")
 		return nil, nil
 	}

@@ -2,7 +2,6 @@ package middlewares
 
 import (
 	"context"
-	"errors"
 	"net/http"
 	"path"
 	"strings"
@@ -123,7 +122,7 @@ func GetUser(ctx context.Context, attrs *authorization.Attributes) error {
 	// Get the claims from the request context
 	claims := jwt.GetClaimsFromContext(ctx)
 	if claims == nil {
-		return errors.New("no claims found in the request context")
+		return authorization.ErrNoClaims
 	}
 
 	// Add the user to our request info

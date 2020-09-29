@@ -17,6 +17,7 @@ type Nagios struct {
 	Label     string
 	Value     float64
 	Timestamp int64
+	Tags      []*types.MetricTag
 }
 
 // Transform transforms a metric in Nagio perfdata format to Sensu Metric Format
@@ -27,8 +28,13 @@ func (n NagiosList) Transform() []*types.MetricPoint {
 			Name:      nagios.Label,
 			Value:     nagios.Value,
 			Timestamp: nagios.Timestamp,
-			Tags:      []*types.MetricTag{},
+			Tags:      nagios.Tags,
 		}
+
+		if mp.Tags == nil {
+			mp.Tags = []*types.MetricTag{}
+		}
+
 		points = append(points, mp)
 	}
 	return points
@@ -89,6 +95,7 @@ func ParseNagios(event *types.Event) NagiosList {
 			Label:     label,
 			Value:     value,
 			Timestamp: event.Check.Executed,
+			Tags:      event.Check.OutputMetricTags,
 		}
 		nagiosList = append(nagiosList, n)
 	}

@@ -6,6 +6,7 @@ import "github.com/sensu/sensu-go/api/core/v2/hook.proto";
 import "github.com/sensu/sensu-go/api/core/v2/meta.proto";
 import "github.com/sensu/sensu-go/api/core/v2/time_window.proto";
 import "github.com/sensu/sensu-go/api/core/v2/secret.proto";
+import "github.com/sensu/sensu-go/api/core/v2/metrics.proto";
 
 package sensu.core.v2;
 
@@ -153,6 +154,9 @@ message CheckConfig {
   // Secrets is the list of Sensu secrets to set for the check's
   // execution environment.
   repeated Secret secrets = 29 [ (gogoproto.jsontag) = "secrets" ];
+
+  // OutputMetricTags is list of metric tags to apply to metrics extracted from check output.
+  repeated MetricTag output_metric_tags = 30 [ (gogoproto.jsontag) = "output_metric_tags,omitempty", (gogoproto.moretags) = "yaml: \"output_metric_tags,omitempty\"" ];
 }
 
 // A Check is a check specification and optionally the results of the check's
@@ -262,11 +266,11 @@ message Check {
   // hook execution.
   repeated Hook hooks = 34 [ (gogoproto.nullable) = true ];
 
-  // OutputOutputMetricFormat is the metric protocol that the check's output
+  // OutputMetricFormat is the metric protocol that the check's output
   // will be expected to follow in order to be extracted.
   string output_metric_format = 35 [ (gogoproto.jsontag) = "output_metric_format" ];
 
-  // OutputOutputMetricHandlers is the list of event handlers that will
+  // OutputMetricHandlers is the list of event handlers that will
   // respond to metrics that have been extracted from the check.
   repeated string output_metric_handlers = 36 [ (gogoproto.jsontag) = "output_metric_handlers" ];
 
@@ -292,8 +296,11 @@ message Check {
   // execution environment.
   repeated Secret secrets = 41 [ (gogoproto.jsontag) = "secrets" ];
 
-   // IsSilenced indicates whether the check is silenced or not
-   bool is_silenced = 42 [(gogoproto.jsontag) = "is_silenced"];
+  // IsSilenced indicates whether the check is silenced or not
+  bool is_silenced = 42 [(gogoproto.jsontag) = "is_silenced"];
+
+  // OutputMetricTags is list of metric tags to apply to metrics extracted from check output.
+  repeated MetricTag output_metric_tags = 43 [ (gogoproto.jsontag) = "output_metric_tags,omitempty", (gogoproto.moretags) = "yaml: \"output_metric_tags,omitempty\"" ];
 
   // ExtendedAttributes store serialized arbitrary JSON-encoded data
   bytes ExtendedAttributes = 99 [ (gogoproto.jsontag) = "-" ];

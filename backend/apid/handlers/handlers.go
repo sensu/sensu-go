@@ -5,13 +5,17 @@ import (
 	"net/url"
 
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
+	corev3 "github.com/sensu/sensu-go/api/core/v3"
 	"github.com/sensu/sensu-go/backend/store"
+	storev2 "github.com/sensu/sensu-go/backend/store/v2"
 )
 
 // Handlers represents the HTTP handlers for CRUD operations on resources
 type Handlers struct {
-	Resource corev2.Resource
-	Store    store.ResourceStore
+	Resource   corev2.Resource
+	V3Resource corev3.Resource
+	Store      store.ResourceStore
+	StoreV2    storev2.Interface
 }
 
 // CheckMeta inspects the resource metadata and ensures it matches what was

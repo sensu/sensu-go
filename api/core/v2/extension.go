@@ -4,6 +4,8 @@ import (
 	"errors"
 	"net/url"
 	"path"
+
+	stringsutil "github.com/sensu/sensu-go/api/core/v2/internal/stringutil"
 )
 
 const (
@@ -51,10 +53,12 @@ func NewExtension(meta ObjectMeta) *Extension {
 // ExtensionFields returns a set of fields that represent that resource
 func ExtensionFields(r Resource) map[string]string {
 	resource := r.(*Extension)
-	return map[string]string{
+	fields := map[string]string{
 		"extension.name":      resource.ObjectMeta.Name,
 		"extension.namespace": resource.ObjectMeta.Namespace,
 	}
+	stringsutil.MergeMapWithPrefix(fields, resource.ObjectMeta.Labels, "extension.labels.")
+	return fields
 }
 
 // SetNamespace sets the namespace of the resource.

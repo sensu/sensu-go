@@ -7,7 +7,11 @@ import (
 	"path"
 
 	"github.com/gorilla/mux"
+	corev2 "github.com/sensu/sensu-go/api/core/v2"
+	corev3 "github.com/sensu/sensu-go/api/core/v3"
 	"github.com/sensu/sensu-go/backend/apid/actions"
+	"github.com/sensu/sensu-go/backend/store"
+	"github.com/sensu/sensu-go/types"
 )
 
 type errorBody struct {
@@ -19,6 +23,18 @@ type errorBody struct {
 func RespondWith(w http.ResponseWriter, r *http.Request, resources interface{}) {
 	// Set content-type to JSON
 	w.Header().Set("Content-Type", "application/json")
+
+	_, isCoreV2Resource := resources.(corev2.Resource)
+	_, isWrapper := resources.(types.Wrapper)
+	_, isV3Resource := resources.(corev3.Resource)
+	if isCoreV2Resource || isWrapper || isV3Resource {
+		etag, err := store.ETag(resources)
+		if err != nil {
+			logger.WithError(err).Error("failed to generate etag")
+			WriteError(w, err)
+		}
+		w.Header().Set("ETag", etag)
+	}
 
 	// If no resource(s) are present return a 204 response code
 	if resources == nil {
@@ -99,6 +115,8 @@ func HTTPStatusFromCode(code actions.ErrCode) int {
 		return http.StatusNotFound
 	case actions.Unauthenticated:
 		return http.StatusUnauthorized
+	case actions.PreconditionFailed:
+		return http.StatusPreconditionFailed
 	}
 
 	logger.WithField("code", code).Error("unknown error code")
@@ -184,6 +202,11 @@ func (r *ResourceRoute) List(fn ListControllerFunc, fields FieldsFunc) *mux.Rout
 // ListAllNamespaces return all resources across all namespaces
 func (r *ResourceRoute) ListAllNamespaces(fn ListControllerFunc, path string, fields FieldsFunc) *mux.Route {
 	return r.Router.HandleFunc(path, listerHandler(fn, fields)).Methods(http.MethodGet)
+}
+
+// Patch patches a resource
+func (r *ResourceRoute) Patch(fn actionHandlerFunc) *mux.Route {
+	return r.Path("{id}", fn).Methods(http.MethodPatch)
 }
 
 // Post creates

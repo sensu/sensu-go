@@ -51,6 +51,7 @@ func (r *ChecksRouter) Mount(parent *mux.Router) {
 	routes.Get(r.handlers.GetResource)
 	routes.List(r.handlers.ListResources, corev2.CheckConfigFields)
 	routes.ListAllNamespaces(r.handlers.ListResources, "/{resource:checks}", corev2.CheckConfigFields)
+	routes.Patch(r.handlers.PatchResource)
 	routes.Post(r.handlers.CreateResource)
 	routes.Put(r.handlers.CreateOrUpdateResource)
 

@@ -87,6 +87,123 @@ func TestParseGraphite(t *testing.T) {
 	}
 }
 
+func TestParseGraphiteTags(t *testing.T) {
+	assert := assert.New(t)
+
+	testCases := []struct {
+		metric           string
+		expectedFormat   GraphiteList
+		outputMetricTags []*types.MetricTag
+	}{
+		{
+			metric: "metric.value 1 123456789",
+			expectedFormat: GraphiteList{
+				{
+					Path:      "metric.value",
+					Value:     1,
+					Timestamp: 123456789,
+					Tags: []*types.MetricTag{
+						&types.MetricTag{
+							Name:  "instance",
+							Value: "hostname",
+						},
+					},
+				},
+			},
+			outputMetricTags: []*types.MetricTag{
+				{
+					Name:  "instance",
+					Value: "hostname",
+				},
+			},
+		},
+		{
+			metric: "metric.value 1 123456789",
+			expectedFormat: GraphiteList{
+				{
+					Path:      "metric.value",
+					Value:     1,
+					Timestamp: 123456789,
+				},
+			},
+		},
+		{
+			metric: "metric.value 1 123456789",
+			expectedFormat: GraphiteList{
+				{
+					Path:      "metric.value",
+					Value:     1,
+					Timestamp: 123456789,
+					Tags:      []*types.MetricTag{},
+				},
+			},
+			outputMetricTags: []*types.MetricTag{},
+		},
+		{
+			metric: "metric.value 1 123456789",
+			expectedFormat: GraphiteList{
+				{
+					Path:      "metric.value",
+					Value:     1,
+					Timestamp: 123456789,
+					Tags: []*types.MetricTag{
+						&types.MetricTag{
+							Name:  "foo",
+							Value: "bar",
+						},
+						&types.MetricTag{
+							Name:  "boo",
+							Value: "baz",
+						},
+					},
+				},
+			},
+			outputMetricTags: []*types.MetricTag{
+				{
+					Name:  "foo",
+					Value: "bar",
+				},
+				{
+					Name:  "boo",
+					Value: "baz",
+				},
+			},
+		},
+		{
+			metric: "metric.value 1 123456789",
+			expectedFormat: GraphiteList{
+				{
+					Path:      "metric.value",
+					Value:     1,
+					Timestamp: 123456789,
+					Tags: []*types.MetricTag{
+						&types.MetricTag{
+							Name:  "",
+							Value: "",
+						},
+					},
+				},
+			},
+			outputMetricTags: []*types.MetricTag{
+				{
+					Name:  "",
+					Value: "",
+				},
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.metric, func(t *testing.T) {
+			event := types.FixtureEvent("test", "test")
+			event.Check.Output = tc.metric
+			event.Check.OutputMetricTags = tc.outputMetricTags
+			graphite := ParseGraphite(event)
+			assert.Equal(tc.expectedFormat, graphite)
+		})
+	}
+}
+
 func TestTransformGraphite(t *testing.T) {
 	assert := assert.New(t)
 
@@ -170,6 +287,34 @@ func TestTransformGraphite(t *testing.T) {
 					Value:     0,
 					Timestamp: 0,
 					Tags:      []*types.MetricTag{},
+				},
+			},
+		},
+		{
+			metric: GraphiteList{
+				{
+					Path:      "metric.value",
+					Value:     1,
+					Timestamp: 123456789,
+					Tags: []*types.MetricTag{
+						&types.MetricTag{
+							Name:  "instance",
+							Value: "hostname",
+						},
+					},
+				},
+			},
+			expectedFormat: []*types.MetricPoint{
+				{
+					Name:      "metric.value",
+					Value:     1,
+					Timestamp: 123456789,
+					Tags: []*types.MetricTag{
+						&types.MetricTag{
+							Name:  "instance",
+							Value: "hostname",
+						},
+					},
 				},
 			},
 		},

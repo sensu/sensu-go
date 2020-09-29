@@ -33,6 +33,7 @@ func (r *RoleBindingsRouter) Mount(parent *mux.Router) {
 	routes.Get(r.handlers.GetResource)
 	routes.List(r.handlers.ListResources, corev2.RoleBindingFields)
 	routes.ListAllNamespaces(r.handlers.ListResources, "/{resource:rolebindings}", corev2.RoleBindingFields)
+	routes.Patch(r.handlers.PatchResource)
 	routes.Post(r.handlers.CreateResource)
 	routes.Put(r.handlers.CreateOrUpdateResource)
 }

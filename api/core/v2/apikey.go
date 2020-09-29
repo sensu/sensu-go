@@ -6,6 +6,7 @@ import (
 	"path"
 
 	"github.com/google/uuid"
+	stringsutil "github.com/sensu/sensu-go/api/core/v2/internal/stringutil"
 )
 
 const (
@@ -52,10 +53,12 @@ func FixtureAPIKey(name string, username string) *APIKey {
 // APIKeyFields returns a set of fields that represent that resource.
 func APIKeyFields(r Resource) map[string]string {
 	resource := r.(*APIKey)
-	return map[string]string{
+	fields := map[string]string{
 		"api_key.name":     resource.ObjectMeta.Name,
 		"api_key.username": resource.Username,
 	}
+	stringsutil.MergeMapWithPrefix(fields, resource.ObjectMeta.Labels, "api_key.labels.")
+	return fields
 }
 
 // SetNamespace sets the namespace of the resource.

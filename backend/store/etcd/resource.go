@@ -2,11 +2,14 @@ package etcd
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 
 	"github.com/gogo/protobuf/proto"
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/store"
+	"github.com/sensu/sensu-go/backend/store/etcd/kvc"
+	"github.com/sensu/sensu-go/backend/store/patch"
 )
 
 // CreateResource creates the given resource only if it does not already exist
@@ -59,4 +62,56 @@ func (s *Store) ListResources(ctx context.Context, resourcePrefix string, resour
 	}
 
 	return List(ctx, s.client, keyBuilderFunc, resources, pred)
+}
+
+func (s *Store) PatchResource(ctx context.Context, resource corev2.Resource, name string, patcher patch.Patcher, conditions *store.ETagCondition) error {
+	key := store.KeyFromArgs(ctx, resource.StorePrefix(), name)
+
+	// Get the stored resource along with the etcd response so we can use the
+	// revision later to ensure the resource wasn't modified in the mean time
+	resp, err := GetWithResponse(ctx, s.client, key, resource)
+	if err != nil {
+		return err
+	}
+	value := resp.Kvs[0].Value
+
+	// Determine the etag for the stored value
+	etag, err := store.ETag(resource)
+	if err != nil {
+		return err
+	}
+
+	if conditions != nil {
+		if !store.CheckIfMatch(conditions.IfMatch, etag) {
+			return &store.ErrPreconditionFailed{Key: key}
+		}
+		if !store.CheckIfNoneMatch(conditions.IfNoneMatch, etag) {
+			return &store.ErrPreconditionFailed{Key: key}
+		}
+	}
+
+	// Encode the stored resource to the JSON format
+	original, err := json.Marshal(resource)
+	if err != nil {
+		return err
+	}
+
+	// Apply the patch to our original document (stored resource)
+	patchedResource, err := patcher.Patch(original)
+	if err != nil {
+		return err
+	}
+
+	// Decode the resulting JSON document back into our resource
+	if err := json.Unmarshal(patchedResource, &resource); err != nil {
+		return err
+	}
+
+	// Validate the resource
+	if err := resource.Validate(); err != nil {
+		return err
+	}
+
+	valueComparison := kvc.KeyHasValue(key, value)
+	return UpdateWithComparisons(ctx, s.client, key, resource, valueComparison)
 }

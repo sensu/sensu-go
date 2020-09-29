@@ -55,6 +55,7 @@ type Config struct {
 
 	// Apid Configuration
 	APIListenAddress string
+	APIRequestLimit  int64
 	APIURL           string
 
 	// AssetsRateLimit is the maximum number of assets per second that will be fetched.
