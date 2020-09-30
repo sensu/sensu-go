@@ -30,6 +30,7 @@ even if removed via the `/entities` API.
 - Fixed a bug where entity listing would be incorrect if agent entities were
 created via the API instead of with sensu-agent.
 - Close the response body when done reading from it while downloading assets.
+- `sensuctl user hash-password` command no longer requires a config to run.
 
 ## [5.21.2] - 2020-08-31
 
