@@ -5,6 +5,33 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic
 Versioning](http://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+
+### Added
+- A warning is now logged when a runtime asset was requested but does not exist.
+- Added Prometheus transformer for extracting metrics from check output
+using the Prometheus Exposition Text Format.
+- The backend flag `--api-request-limit` is now available to configure the
+maximum API request body size, in bytes.
+- Add support for the PATCH method on the REST API for most configuration
+resources.
+
+### Changed
+- The trusted CA file is now used for agent, backend and sensuctl asset retrieval.
+
+### Fixed
+- The backend will no longer start when the dashboard TLS configuration is not
+fully specified.
+- Include the agent entity in data passed to the command process' STDIN.
+- Per-entity subscriptions (ex. `entity:entityName`) are always available on agent entities,
+even if removed via the `/entities` API.
+- Fixed a crash in the backend and agent related to Javascript execution.
+- Proxy entities that are used in round-robin check requests are no longer stale.
+- Fixed a bug where entity listing would be incorrect if agent entities were
+created via the API instead of with sensu-agent.
+- Close the response body when done reading from it while downloading assets.
+- `sensuctl user hash-password` command no longer requires a config to run.
+
 ## [5.21.2] - 2020-08-31
 
 ### Fixed
