@@ -167,10 +167,11 @@ func (s *Store) Patch(req storev2.ResourceRequest, w *storev2.Wrapper, patcher p
 	}
 
 	// Re-wrap the resource
-	w, err = wrap.Resource(resource)
+	wrappedPatch, err := wrap.Resource(resource)
 	if err != nil {
 		return &store.ErrEncode{Key: key, Err: err}
 	}
+	*w = *wrappedPatch
 
 	comparisons := []kvc.Predicate{
 		kvc.KeyIsFound(key),
