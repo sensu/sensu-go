@@ -33,9 +33,9 @@ func TestSilencedStorage(t *testing.T) {
 
 		// Get all silenced entries
 		entries, err := store.GetSilencedEntries(ctx)
-		assert.NoError(t, err)
-		assert.NotNil(t, entries)
-		assert.Equal(t, 1, len(entries))
+		require.NoError(t, err)
+		require.NotNil(t, entries)
+		require.Equal(t, 1, len(entries))
 
 		// Get silenced entry by name
 		entry, err := store.GetSilencedEntryByName(ctx, silenced.Name)
@@ -132,7 +132,7 @@ func TestSilencedStorageWithBegin(t *testing.T) {
 		// Get silenced entry and check that it is not yet ready to start
 		// silencing
 		entry, err := store.GetSilencedEntryByName(ctx, silenced.Name)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		require.NotNil(t, entry)
 		assert.False(t, entry.StartSilence(currentTime))
 

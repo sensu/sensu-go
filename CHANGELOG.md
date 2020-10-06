@@ -11,6 +11,11 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 - Build info is now exposed as a prometheus metric via the /metrics endpoint.
 
 ## [6.1.0] - 2020-10-05
+### Fixed
+- Fixed a bug where silences could take longer to expire than they should, if
+the cluster goes through a restart, or an etcd election.
+
+## [6.1] - 2020-10-05
 
 ### Added
 - A warning is now logged when a runtime asset was requested but does not exist.
