@@ -5,6 +5,12 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic
 Versioning](http://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+
+### Fixed
+- Fixed a bug where silences could take longer to expire than they should, if
+the cluster goes through a restart, or an etcd election.
+
 ## [6.1] - 2020-10-05
 
 ### Added
