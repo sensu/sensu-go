@@ -41,8 +41,8 @@ var (
 			Name: "sensu_go_build_info",
 			Help: "Sensu Go build information",
 		},
-		[]string{"version", "builddate", "buildsha", "goversion"},
-	).WithLabelValues(Version, BuildDate, BuildSHA, GoVersion)
+		[]string{"version", "buildsha", "goversion"},
+	).WithLabelValues(Version, BuildSHA, GoVersion)
 )
 
 func init() {
