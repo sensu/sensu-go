@@ -5,7 +5,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic
 Versioning](http://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## [6.1] - 2020-10-05
 
 ### Added
 - A warning is now logged when a runtime asset was requested but does not exist.
@@ -29,6 +29,8 @@ even if removed via the `/entities` API.
 - Proxy entities that are used in round-robin check requests are no longer stale.
 - Fixed a bug where entity listing would be incorrect if agent entities were
 created via the API instead of with sensu-agent.
+- Close the response body when done reading from it while downloading assets.
+- `sensuctl user hash-password` command no longer requires a config to run.
 
 ## [5.21.2] - 2020-08-31
 
