@@ -48,8 +48,6 @@ var (
 func init() {
 	prometheus.MustRegister(promBuildInfo)
 	promBuildInfo.Set(1)
-	// promBuildInfo.Set(1)
-	// fmt.Printf("%#v\n", promBuildInfo)
 }
 
 // Semver returns full semantic versioning compatible identifier.
