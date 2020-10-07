@@ -8,10 +8,10 @@ import (
 )
 
 // Fills given resource's created-by field using given authorization details.
-func setCreatedBy(ctx context.Context, res corev2.Resource) {
-	meta := res.GetObjectMeta()
+func setCreatedBy(ctx context.Context, resource corev2.Resource) {
+	meta := resource.GetObjectMeta()
 	if claims := jwt.GetClaimsFromContext(ctx); claims != nil {
 		meta.CreatedBy = claims.StandardClaims.Subject
-		res.SetObjectMeta(meta)
+		resource.SetObjectMeta(meta)
 	}
 }
