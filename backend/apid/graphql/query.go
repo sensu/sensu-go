@@ -116,7 +116,15 @@ func (r *queryImpl) Suggest(p schema.QuerySuggestFieldResolverParams) (interface
 
 	ctx := store.NamespaceContext(p.Context, p.Args.Namespace)
 
-	err = client.List(ctx, objs.Interface(), &store.SelectionPredicate{})
+	// CRUFT: entities can no longer be retrieved through the generic API
+	// interface, to work around this we use the entity client.
+	var entities []*corev2.Entity
+	if res.Group == "core/v2" && res.Name == "entity" {
+		entities, err = r.svc.EntityClient.ListEntities(ctx)
+		objs.Elem().Set(reflect.ValueOf(entities))
+	} else {
+		err = client.List(ctx, objs.Interface(), &store.SelectionPredicate{})
+	}
 	if handleListErr(err) != nil {
 		return results, err
 	}
