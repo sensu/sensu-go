@@ -74,6 +74,7 @@ func (e *EntityClient) CreateEntity(ctx context.Context, entity *corev2.Entity) 
 	if err := authorize(ctx, e.auth, attrs); err != nil {
 		return err
 	}
+	setCreatedBy(ctx, entity)
 	if err := e.entityStore.UpdateEntity(ctx, entity); err != nil {
 		return err
 	}
@@ -86,6 +87,7 @@ func (e *EntityClient) UpdateEntity(ctx context.Context, entity *corev2.Entity) 
 	if err := authorize(ctx, e.auth, attrs); err != nil {
 		return err
 	}
+	setCreatedBy(ctx, entity)
 
 	// We have 2 code paths here: one for proxy entities and another for all
 	// other types of entities. We had to make that distinction because Entity

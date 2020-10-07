@@ -56,6 +56,7 @@ func (g *GenericClient) Create(ctx context.Context, value corev2.Resource) error
 	if err := authorize(ctx, g.Auth, attrs); err != nil {
 		return err
 	}
+	setCreatedBy(ctx, value)
 	return g.Store.CreateResource(ctx, value)
 }
 
@@ -95,6 +96,7 @@ func (g *GenericClient) Update(ctx context.Context, value corev2.Resource) error
 	if err := authorize(ctx, g.Auth, attrs); err != nil {
 		return err
 	}
+	setCreatedBy(ctx, value)
 	return g.Store.CreateOrUpdateResource(ctx, value)
 }
 
