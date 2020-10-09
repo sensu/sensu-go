@@ -14,6 +14,8 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 ### Fixed
 - Fixed a bug where silences could take longer to expire than they should, if
 the cluster goes through a restart, or an etcd election.
+### Fixed
+- Fixed a bug where sensu-agent would not shut down correctly.
 
 ## [6.1] - 2020-10-05
 
