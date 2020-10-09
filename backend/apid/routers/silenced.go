@@ -3,6 +3,7 @@ package routers
 import (
 	"context"
 	"net/http"
+	"time"
 
 	"github.com/gorilla/mux"
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
@@ -46,14 +47,36 @@ func (r *SilencedRouter) Mount(parent *mux.Router) {
 	routes.Get(r.handlers.GetResource)
 	routes.Post(r.create)
 	routes.Put(r.createOrReplace)
-	routes.List(r.handlers.ListResources, corev2.SilencedFields)
-	routes.ListAllNamespaces(r.handlers.ListResources, "/{resource:silenced}", corev2.SilencedFields)
+	routes.List(trimExpiredSilences(r.handlers.ListResources), corev2.SilencedFields)
+	routes.ListAllNamespaces(trimExpiredSilences(r.handlers.ListResources), "/{resource:silenced}", corev2.SilencedFields)
 
 	// Custom routes for listing by subscription and checks for a specific
 	// namespace, in addition to all namespaces for checks.
 	routes.Router.HandleFunc("/{resource:silenced}/checks/{check}", listHandler(r.list)).Methods(http.MethodGet)
 	routes.Router.HandleFunc(routes.PathPrefix+"/subscriptions/{subscription}", listHandler(r.list)).Methods(http.MethodGet)
 	routes.Router.HandleFunc(routes.PathPrefix+"/checks/{check}", listHandler(r.list)).Methods(http.MethodGet)
+}
+
+func trimExpiredSilences(lister ListControllerFunc) func(context.Context, *store.SelectionPredicate) ([]corev2.Resource, error) {
+	return func(ctx context.Context, pred *store.SelectionPredicate) ([]corev2.Resource, error) {
+		resources, err := lister(ctx, pred)
+		if err != nil {
+			return resources, err
+		}
+		trimmed := make([]corev2.Resource, 0, len(resources))
+		for _, resource := range resources {
+			silenced := resource.(*corev2.Silenced)
+			if silenced.ExpireAt > 0 {
+				silenced.Expire = int64(time.Until(time.Unix(silenced.ExpireAt, 0)) / time.Second)
+				if silenced.Expire > 0 {
+					trimmed = append(trimmed, silenced)
+				}
+			} else {
+				trimmed = append(trimmed, silenced)
+			}
+		}
+		return trimmed, nil
+	}
 }
 
 func (r *SilencedRouter) create(req *http.Request) (interface{}, error) {

@@ -108,8 +108,8 @@ func TestSilencedStorageWithExpire(t *testing.T) {
 
 		// Get silenced entry and check that expire time is not zero
 		entry, err := store.GetSilencedEntryByName(ctx, silenced.Name)
-		assert.NoError(t, err)
-		assert.NotNil(t, entry)
+		require.NoError(t, err)
+		require.NotNil(t, entry)
 		assert.NotZero(t, entry.Expire)
 	})
 }

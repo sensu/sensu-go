@@ -167,12 +167,12 @@ func (s *Store) UpdateSilencedEntry(ctx context.Context, silenced *corev2.Silenc
 		return &store.ErrNotValid{Err: err}
 	}
 
-	if silenced.Begin == 0 {
-		silenced.Begin = time.Now().Unix()
-	}
-
-	if silenced.ExpireAt == 0 && silenced.Expire != 0 {
-		silenced.ExpireAt = time.Unix(silenced.Begin, 0).Add(time.Duration(silenced.Expire) * time.Second).Unix()
+	if silenced.ExpireAt == 0 && silenced.Expire > 0 {
+		start := time.Now()
+		if silenced.Begin > 0 {
+			start = time.Unix(silenced.Begin, 0)
+		}
+		silenced.ExpireAt = start.Add(time.Duration(silenced.Expire) * time.Second).Unix()
 	}
 
 	silencedBytes, err := proto.Marshal(silenced)
@@ -196,6 +196,34 @@ func (s *Store) UpdateSilencedEntry(ctx context.Context, silenced *corev2.Silenc
 	return nil
 }
 
+type overrideContext struct {
+	deadlineCtx context.Context
+	valueCtx    context.Context
+}
+
+func (o overrideContext) Deadline() (time.Time, bool) {
+	return o.deadlineCtx.Deadline()
+}
+
+func (o overrideContext) Done() <-chan struct{} {
+	return o.deadlineCtx.Done()
+}
+
+func (o overrideContext) Err() error {
+	return o.deadlineCtx.Err()
+}
+
+func (o overrideContext) Value(key interface{}) interface{} {
+	return o.valueCtx.Value(key)
+}
+
+func withNoDeadline(ctx context.Context) context.Context {
+	return overrideContext{
+		deadlineCtx: context.Background(),
+		valueCtx:    ctx,
+	}
+}
+
 // arraySilencedEntries is a helper function to unmarshal serialized entries and
 // return them as an array
 //
@@ -211,7 +239,9 @@ func (s *Store) arraySilencedEntries(ctx context.Context, resp *clientv3.GetResp
 		if err := unmarshal(kv.Value, silenced); err != nil {
 			return nil, &store.ErrDecode{Err: err}
 		}
-		if silenced.ExpireAt == 0 {
+		leaseID := clientv3.LeaseID(kv.Lease)
+		if leaseID > 0 {
+			// legacy expiry mechanism
 			leaseID := clientv3.LeaseID(kv.Lease)
 			ttl, err := s.client.TimeToLive(ctx, leaseID)
 			if err != nil {
@@ -219,19 +249,27 @@ func (s *Store) arraySilencedEntries(ctx context.Context, resp *clientv3.GetResp
 				continue
 			}
 			silenced.Expire = ttl.TTL
-		} else {
-			silenced.Expire = int64(time.Until(time.Unix(silenced.ExpireAt, 0)) / time.Second)
-		}
-		if silenced.Expire > 0 || (silenced.Begin > 0 && silenced.ExpireAt == 0) {
 			result = append(result, silenced)
+		} else if silenced.ExpireAt > 0 {
+			// new expiry mechanism
+			silenced.Expire = int64(time.Until(time.Unix(silenced.ExpireAt, 0)) / time.Second)
+			if silenced.Expire > 0 {
+				result = append(result, silenced)
+			} else {
+				rejects = append(rejects, silenced.Name)
+			}
 		} else {
-			rejects = append(rejects, silenced.Name)
+			// no expiry
+			silenced.Expire = -1
+			result = append(result, silenced)
 		}
 	}
 	if len(rejects) > 0 {
 		go func() {
+			logger.Infof("deleting %d expired silenced entries", len(rejects))
+			ctx := withNoDeadline(ctx)
 			if err := s.DeleteSilencedEntryByName(ctx, rejects...); err != nil {
-				logger.WithError(err).Error("error deleted expired silenced entries")
+				logger.WithError(err).Error("error deleting expired silenced entries")
 			}
 		}()
 	}
@@ -247,28 +285,37 @@ func (s *Store) arrayTxnSilencedEntries(ctx context.Context, resp *clientv3.TxnR
 			if err := unmarshal(kv.Value, &silenced); err != nil {
 				return nil, &store.ErrDecode{Err: fmt.Errorf("couldn't get silenced entries: %s", err)}
 			}
-			if silenced.ExpireAt == 0 {
-				leaseID := clientv3.LeaseID(kv.Lease)
+			leaseID := clientv3.LeaseID(kv.Lease)
+			if leaseID > 0 {
+				// legacy expiry mechanism
 				ttl, err := s.client.TimeToLive(ctx, leaseID)
 				if err != nil {
 					logger.WithError(err).Error("error setting TTL on silenced")
 					continue
 				}
 				silenced.Expire = ttl.TTL
-			} else {
-				silenced.Expire = int64(time.Until(time.Unix(silenced.ExpireAt, 0)) / time.Second)
-			}
-			if silenced.Expire > 0 || (silenced.Begin > 0 && silenced.ExpireAt == 0) {
 				results = append(results, &silenced)
+			} else if silenced.ExpireAt > 0 {
+				// new expiry mechanism
+				silenced.Expire = int64(time.Until(time.Unix(silenced.ExpireAt, 0)) / time.Second)
+				if silenced.Expire > 0 {
+					results = append(results, &silenced)
+				} else {
+					rejects = append(rejects, silenced.Name)
+				}
 			} else {
-				rejects = append(rejects, silenced.Name)
+				// no expiry
+				silenced.Expire = -1
+				results = append(results, &silenced)
 			}
 		}
 	}
 	if len(rejects) > 0 {
 		go func() {
+			ctx := withNoDeadline(ctx)
+			logger.Infof("deleting %d expired silenced entries", len(rejects))
 			if err := s.DeleteSilencedEntryByName(ctx, rejects...); err != nil {
-				logger.WithError(err).Error("error deleted expired silenced entries")
+				logger.WithError(err).Error("error deleting expired silenced entries")
 			}
 		}()
 	}
