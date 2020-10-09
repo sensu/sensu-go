@@ -196,34 +196,6 @@ func (s *Store) UpdateSilencedEntry(ctx context.Context, silenced *corev2.Silenc
 	return nil
 }
 
-type overrideContext struct {
-	deadlineCtx context.Context
-	valueCtx    context.Context
-}
-
-func (o overrideContext) Deadline() (time.Time, bool) {
-	return o.deadlineCtx.Deadline()
-}
-
-func (o overrideContext) Done() <-chan struct{} {
-	return o.deadlineCtx.Done()
-}
-
-func (o overrideContext) Err() error {
-	return o.deadlineCtx.Err()
-}
-
-func (o overrideContext) Value(key interface{}) interface{} {
-	return o.valueCtx.Value(key)
-}
-
-func withNoDeadline(ctx context.Context) context.Context {
-	return overrideContext{
-		deadlineCtx: context.Background(),
-		valueCtx:    ctx,
-	}
-}
-
 // arraySilencedEntries is a helper function to unmarshal serialized entries and
 // return them as an array
 //
@@ -265,13 +237,10 @@ func (s *Store) arraySilencedEntries(ctx context.Context, resp *clientv3.GetResp
 		}
 	}
 	if len(rejects) > 0 {
-		go func() {
-			logger.Infof("deleting %d expired silenced entries", len(rejects))
-			ctx := withNoDeadline(ctx)
-			if err := s.DeleteSilencedEntryByName(ctx, rejects...); err != nil {
-				logger.WithError(err).Error("error deleting expired silenced entries")
-			}
-		}()
+		logger.Infof("deleting %d expired silenced entries", len(rejects))
+		if err := s.DeleteSilencedEntryByName(ctx, rejects...); err != nil {
+			logger.WithError(err).Error("error deleting expired silenced entries")
+		}
 	}
 	return result, nil
 }
@@ -311,13 +280,10 @@ func (s *Store) arrayTxnSilencedEntries(ctx context.Context, resp *clientv3.TxnR
 		}
 	}
 	if len(rejects) > 0 {
-		go func() {
-			ctx := withNoDeadline(ctx)
-			logger.Infof("deleting %d expired silenced entries", len(rejects))
-			if err := s.DeleteSilencedEntryByName(ctx, rejects...); err != nil {
-				logger.WithError(err).Error("error deleting expired silenced entries")
-			}
-		}()
+		logger.Infof("deleting %d expired silenced entries", len(rejects))
+		if err := s.DeleteSilencedEntryByName(ctx, rejects...); err != nil {
+			logger.WithError(err).Error("error deleting expired silenced entries")
+		}
 	}
 	return results, nil
 }
