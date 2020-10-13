@@ -16,6 +16,9 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 the cluster goes through a restart, or an etcd election.
 ### Fixed
 - Fixed a bug where sensu-agent would not shut down correctly.
+### Fixed
+- Fixed a bug where sensu-agent would not shut down correctly.
+- The per-entity subscription now persists with PATCH requests.
 
 ## [6.1] - 2020-10-05
 

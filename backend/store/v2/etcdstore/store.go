@@ -166,6 +166,12 @@ func (s *Store) Patch(req storev2.ResourceRequest, w *storev2.Wrapper, patcher p
 		return err
 	}
 
+	// Special case for entities; we need to make sure we keep the per-entity
+	// subscription
+	if e, ok := resource.(*corev3.EntityConfig); ok {
+		e.Subscriptions = corev2.AddEntitySubscription(e.Metadata.Name, e.Subscriptions)
+	}
+
 	// Re-wrap the resource
 	wrappedPatch, err := wrap.Resource(resource)
 	if err != nil {
