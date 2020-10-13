@@ -22,6 +22,22 @@ if [ -f $(brew --prefix)/etc/bash_completion ]; then
 fi
 ```
 
+On Ubuntu, install with:
+
+```sh
+apt update && apt install bash-completion
+```
+
+Then add the following to your `~/.bash_profile`:
+
+```bash
+if [ -f /usr/share/bash-completion/bash_completion ]; then
+. /usr/share/bash-completion/bash_completion
+elif [ -f /etc/bash_completion ]; then
+. /etc/bash_completion
+fi
+```
+
 When bash-completion is available we can add the following to your `~/.bash_profile`:
 
 ```bash
