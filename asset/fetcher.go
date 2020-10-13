@@ -87,6 +87,7 @@ func (h *httpFetcher) Fetch(ctx context.Context, url string, headers map[string]
 	if err != nil {
 		return nil, err
 	}
+	defer resp.Close()
 
 	// Write response to tmp
 	tmpFile, err := ioutil.TempFile(os.TempDir(), "sensu-asset")
