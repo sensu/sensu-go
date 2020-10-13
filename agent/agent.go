@@ -319,8 +319,17 @@ func (a *Agent) Run(ctx context.Context) error {
 		cancel()
 	}
 
-	// Wait for all goroutines to gracefully shutdown
-	a.wg.Wait()
+	// Wait for all goroutines to gracefully shutdown, but not too long
+	done := make(chan struct{})
+	go func() {
+		a.wg.Wait()
+		close(done)
+	}()
+	select {
+	case <-done:
+	case <-time.After(time.Second):
+		logger.Warn("agent did not shut down gracefully")
+	}
 	return nil
 }
 
