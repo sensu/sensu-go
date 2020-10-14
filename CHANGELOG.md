@@ -9,6 +9,7 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ### Fixed
 - Close the response body when done reading from it while downloading assets.
+- Fixed a bug where event filter or asset filter execution could cause a crash.
 
 ## [5.21.2] - 2020-08-31
 
