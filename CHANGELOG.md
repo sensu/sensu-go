@@ -5,7 +5,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic
 Versioning](http://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## [5.21.3] - 2020-10-14
 
 ### Fixed
 - Close the response body when done reading from it while downloading assets.
