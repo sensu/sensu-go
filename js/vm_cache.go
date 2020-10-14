@@ -1,6 +1,7 @@
 package js
 
 import (
+	"fmt"
 	"sync"
 
 	time "github.com/echlebek/timeproxy"
@@ -17,22 +18,21 @@ const (
 )
 
 // vmCache provides an internal mechanism for caching javascript contexts
-// according to which assets are loaded into them. Javascrip contexts which
+// according to which assets are loaded into them. Javascript contexts which
 // are not used for cacheMaxAge are disposed of.
 type vmCache struct {
-	vms  map[string]*cacheValue
+	vms  sync.Map
 	done chan struct{}
-	sync.Mutex
 }
 
 type cacheValue struct {
 	lastRead int64
+	mu       sync.Mutex
 	vm       *otto.Otto
 }
 
 func newVMCache() *vmCache {
 	cache := &vmCache{
-		vms:  make(map[string]*cacheValue),
 		done: make(chan struct{}),
 	}
 	go cache.reapLoop()
@@ -58,34 +58,44 @@ func (c *vmCache) reapLoop() {
 }
 
 func (c *vmCache) reap() {
-	c.Lock()
-	for k, v := range c.vms {
-		valueTime := time.Unix(v.lastRead, 0)
-		if valueTime.Before(time.Now().Add(-cacheMaxAge)) {
-			delete(c.vms, k)
+	c.vms.Range(func(key, value interface{}) bool {
+		obj := value.(*cacheValue)
+		obj.mu.Lock()
+		defer obj.mu.Unlock()
+		valueTime := time.Unix(obj.lastRead, 0)
+		if time.Since(valueTime) > cacheMaxAge {
+			c.vms.Delete(key)
 		}
-	}
-	defer c.Unlock()
+		return true
+	})
 }
 
 // Acquire gets a VM from the cache. It is a copy of the cached value.
+// The cache item is locked while in use.
+// Users must call Dispose with the key after Acquire.
 func (c *vmCache) Acquire(key string) *otto.Otto {
-	c.Lock()
-	defer c.Unlock()
-	val, ok := c.vms[key]
+	val, ok := c.vms.Load(key)
 	if !ok {
 		return nil
 	}
-	if val.vm == nil {
-		return nil
+	obj := val.(*cacheValue)
+	obj.mu.Lock()
+	obj.lastRead = time.Now().Unix()
+	return obj.vm.Copy()
+}
+
+// Dispose releases the lock on the cache item.
+func (c *vmCache) Dispose(key string) {
+	val, ok := c.vms.Load(key)
+	if !ok {
+		panic(fmt.Sprintf("dispose called on %q, but not found", key))
 	}
-	return val.vm.Copy()
+	obj := val.(*cacheValue)
+	obj.mu.Unlock()
 }
 
 // Init initializes the value in the cache.
 func (c *vmCache) Init(key string, vm *otto.Otto) {
-	c.Lock()
-	defer c.Unlock()
 	val := &cacheValue{lastRead: time.Now().Unix(), vm: vm}
-	c.vms[key] = val
+	c.vms.Store(key, val)
 }
