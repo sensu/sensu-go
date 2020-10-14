@@ -10,17 +10,13 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 ### Added
 - Build info is now exposed as a prometheus metric via the /metrics endpoint.
 
-## [6.1.0] - 2020-10-05
 ### Fixed
 - Fixed a bug where silences could take longer to expire than they should, if
 the cluster goes through a restart, or an etcd election.
-### Fixed
-- Fixed a bug where sensu-agent would not shut down correctly.
-### Fixed
 - Fixed a bug where sensu-agent would not shut down correctly.
 - The per-entity subscription now persists with PATCH requests.
 
-## [6.1] - 2020-10-05
+## [6.1.0] - 2020-10-05
 
 ### Added
 - A warning is now logged when a runtime asset was requested but does not exist.
