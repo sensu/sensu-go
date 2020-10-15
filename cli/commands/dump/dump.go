@@ -169,14 +169,13 @@ func execute(cli *cli.SensuCli) func(*cobra.Command, []string) error {
 			if err != nil {
 				// We want to ignore non-nil errors that are a result of
 				// resources not existing, or features being licensed.
-				err, ok := err.(client.APIError)
-				if !ok {
-					return fmt.Errorf("API error: %s", err)
+				if err, ok := err.(client.APIError); ok {
+					switch actions.ErrCode(err.Code) {
+					case actions.PaymentRequired, actions.NotFound, actions.PermissionDenied:
+						continue
+					}
 				}
-				switch actions.ErrCode(err.Code) {
-				case actions.PaymentRequired, actions.NotFound, actions.PermissionDenied:
-					continue
-				}
+
 				return fmt.Errorf("API error: %s", err)
 			}
 
