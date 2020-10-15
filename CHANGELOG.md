@@ -10,6 +10,7 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 ### Fixed
 - Fixed a bug where sensu-agent would not shut down correctly.
 - The per-entity subscription now persists with PATCH requests.
+- sensuctl now resolves symbolic links.
 
 ## [6.1] - 2020-10-05
 
