@@ -15,6 +15,8 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 the cluster goes through a restart, or an etcd election.
 - Fixed a bug where sensu-agent would not shut down correctly.
 - The per-entity subscription now persists with PATCH requests.
+- Allow HookConfig to be exported via `sensuctl dump`.
+- Properly log any API error in `sensuctl dump`.
 
 ## [6.1.0] - 2020-10-05
 
