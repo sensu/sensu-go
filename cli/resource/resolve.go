@@ -25,7 +25,7 @@ var (
 		&corev2.Event{},
 		&corev2.EventFilter{},
 		&corev2.Handler{},
-		&corev2.Hook{},
+		&corev2.HookConfig{},
 		&corev2.Mutator{},
 		&corev2.Role{},
 		&corev2.RoleBinding{},
