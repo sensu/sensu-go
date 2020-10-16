@@ -33,6 +33,7 @@ func (r *handlerImpl) Mutator(p graphql.ResolveParams) (interface{}, error) {
 		return nil, nil
 	}
 
+	// p.Context is nil here
 	ctx := corev2.SetContextFromResource(p.Context, src)
 	res, err := r.client.FetchMutator(ctx, src.Mutator)
 

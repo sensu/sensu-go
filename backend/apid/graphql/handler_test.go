@@ -45,6 +45,9 @@ func TestHandlerTypeMutatorField(t *testing.T) {
 
 	// Success
 	client.On("FetchMutator", mock.Anything, mutator.Name).Return(mutator, nil).Once()
+	// We could add a Context: context.Background() to ResolveParams, but there
+	// might be other places in the code that instantiate a
+	// graphql.ResolveParams{} without a Context field?
 	res, err := impl.Mutator(graphql.ResolveParams{Source: handler})
 	require.NoError(t, err)
 	assert.NotEmpty(t, res)
