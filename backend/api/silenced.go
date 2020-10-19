@@ -33,6 +33,7 @@ func (s *SilencedClient) UpdateSilenced(ctx context.Context, silenced *corev2.Si
 	if err := authorize(ctx, s.auth, attrs); err != nil {
 		return err
 	}
+	setCreatedBy(ctx, silenced)
 	if err := s.store.UpdateSilencedEntry(ctx, silenced); err != nil {
 		return fmt.Errorf("couldn't update silenced entry: %s", err)
 	}

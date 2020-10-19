@@ -1,6 +1,6 @@
 # Sensu Go
 
-CircleCI: [![CircleCI Build Status](https://circleci.com/gh/sensu/sensu-go/tree/master.svg?style=svg)](https://circleci.com/gh/sensu/sensu-go/tree/master)
+CircleCI: [![CircleCI Build Status](https://circleci.com/gh/sensu/sensu-go/tree/main.svg?style=svg)](https://circleci.com/gh/sensu/sensu-go/tree/main)
 
 Sensu is an open source monitoring tool for ephemeral infrastructure
 and distributed applications. It is an agent based monitoring system

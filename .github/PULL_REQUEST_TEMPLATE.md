@@ -10,7 +10,7 @@
 ## Does your change need a Changelog entry?
 
 <!--
-Spoiler alert, it probably does. Generally speaking, your change needs a changelog. For more information, see [CONTRIBUTING.md](https://github.com/sensu/sensu-go/blob/master/CONTRIBUTING.md#changelog).
+Spoiler alert, it probably does. Generally speaking, your change needs a changelog. For more information, see [CONTRIBUTING.md](https://github.com/sensu/sensu-go/blob/main/CONTRIBUTING.md#changelog).
 -->
 
 ## Do you need clarification on anything?
@@ -50,7 +50,7 @@ The corresponding sensu-go-qa-crucible PR or issue should be linked here.
 ## Is this change a patch?
 
 <!--
-If so, you should be submitting this against the current release branch. Remember to merge the release branch back into master after merging this patch!
+If so, you should be submitting this against the current release branch. Remember to merge the release branch back into main after merging this patch!
 
-If not, this feature work can go directly into the master branch.
+If not, this feature work can go directly into the main branch.
 -->

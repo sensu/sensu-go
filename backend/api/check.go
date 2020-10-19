@@ -34,6 +34,7 @@ func (c *CheckClient) CreateCheck(ctx context.Context, check *corev2.CheckConfig
 	if err := authorize(ctx, c.auth, attrs); err != nil {
 		return err
 	}
+	setCreatedBy(ctx, check)
 	return c.store.UpdateCheckConfig(ctx, check)
 }
 
@@ -43,6 +44,7 @@ func (c *CheckClient) UpdateCheck(ctx context.Context, check *corev2.CheckConfig
 	if err := authorize(ctx, c.auth, attrs); err != nil {
 		return err
 	}
+	setCreatedBy(ctx, check)
 	return c.store.UpdateCheckConfig(ctx, check)
 }
 

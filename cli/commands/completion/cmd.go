@@ -75,7 +75,7 @@ func (e *completionExecutor) runHelp(cmd *cobra.Command, args []string) {
 	stdErr := cmd.OutOrStderr()
 
 	if shell, err := extractShell(args, 1); err != nil {
-		fmt.Fprintf(stdErr, "%s\n\n%s", err, longUsage)
+		fmt.Fprintf(stdErr, "%s\n\n%s\n", err, longUsage)
 	} else if shell == zshShell {
 		fmt.Fprintln(stdErr, zshUsage)
 	} else if shell == bashShell {

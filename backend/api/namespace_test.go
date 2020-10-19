@@ -835,6 +835,7 @@ func TestNamespaceCRUDSideEffects(t *testing.T) {
 		ObjectMeta: corev2.ObjectMeta{
 			Namespace: "test_namespace",
 			Name:      pipelineRoleName,
+			CreatedBy: "cluster-admin",
 		},
 		Rules: []corev2.Rule{
 			{
@@ -857,6 +858,7 @@ func TestNamespaceCRUDSideEffects(t *testing.T) {
 		ObjectMeta: corev2.ObjectMeta{
 			Name:      pipelineRoleName,
 			Namespace: "test_namespace",
+			CreatedBy: "cluster-admin",
 		},
 	}
 	s.AssertNumberOfCalls(t, "CreateResource", 1)

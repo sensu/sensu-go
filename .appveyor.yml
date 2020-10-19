@@ -2,7 +2,7 @@ clone_folder: c:\gopath\src\github.com\sensu\sensu-go
 
 branches:
   only:
-    - master
+    - main
 
 image:
   - Visual Studio 2015

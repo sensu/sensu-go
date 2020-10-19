@@ -43,4 +43,7 @@ message Silenced {
 
   // Begin is a timestamp at which the silenced entry takes effect.
   int64 begin = 10 [ (gogoproto.jsontag) = "begin" ];
+
+  // ExpireAt is a timestamp at which the silenced entry will expire.
+  int64 expire_at = 11 [ (gogoproto.jsontag) = "expire_at" ];
 }
