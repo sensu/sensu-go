@@ -23,7 +23,7 @@ func seedStore(t *testing.T, store store.Store) {
 	t.Helper()
 
 	if err := seeds.SeedInitialData(store); err != nil {
-		t.Fatal("Could not seed the backend: ", err)
+		t.Fatalf("Could not seed the backend: %s", err)
 	}
 
 	// Add custom resources for the tests
@@ -36,14 +36,14 @@ func seedStore(t *testing.T, store store.Store) {
 			Name: "admin",
 		},
 		Subjects: []corev2.Subject{
-			corev2.Subject{
+			{
 				Type: "Group",
 				Name: "local-admins",
 			},
 		},
 	}
 	if err := store.CreateClusterRoleBinding(context.Background(), localAdmins); err != nil {
-		t.Fatal("Could not add the admin ClusterRoleBinding")
+		t.Fatalf("Could not add the admin ClusterRoleBinding: %s", err)
 	}
 
 	admins := &corev2.RoleBinding{
@@ -53,14 +53,14 @@ func seedStore(t *testing.T, store store.Store) {
 			Name: "admin",
 		},
 		Subjects: []corev2.Subject{
-			corev2.Subject{
+			{
 				Type: "Group",
 				Name: "admins",
 			},
 		},
 	}
 	if err := store.CreateRoleBinding(context.Background(), admins); err != nil {
-		t.Fatal("Could not add the admin RoleBinding")
+		t.Fatalf("Could not add the admin RoleBinding: %s", err)
 	}
 
 	editors := &corev2.RoleBinding{
@@ -70,14 +70,14 @@ func seedStore(t *testing.T, store store.Store) {
 			Name: "edit",
 		},
 		Subjects: []corev2.Subject{
-			corev2.Subject{
+			{
 				Type: "Group",
 				Name: "editors",
 			},
 		},
 	}
 	if err := store.CreateRoleBinding(context.Background(), editors); err != nil {
-		t.Fatal("Could not add the edit RoleBinding")
+		t.Fatalf("Could not add the edit RoleBinding: %s", err)
 	}
 
 	viewers := &corev2.RoleBinding{
@@ -87,20 +87,20 @@ func seedStore(t *testing.T, store store.Store) {
 			Name: "view",
 		},
 		Subjects: []corev2.Subject{
-			corev2.Subject{
+			{
 				Type: "Group",
 				Name: "viewers",
 			},
 		},
 	}
 	if err := store.CreateRoleBinding(context.Background(), viewers); err != nil {
-		t.Fatal("Could not add the view RoleBinding")
+		t.Fatalf("Could not add the view RoleBinding: %s", err)
 	}
 
 	fooViewerRole := &corev2.Role{
 		ObjectMeta: corev2.NewObjectMeta("foo-viewer", "default"),
 		Rules: []corev2.Rule{
-			corev2.Rule{
+			{
 				Verbs:         []string{"get"},
 				Resources:     []string{"checks"},
 				ResourceNames: []string{"foo"},
@@ -108,7 +108,7 @@ func seedStore(t *testing.T, store store.Store) {
 		},
 	}
 	if err := store.CreateRole(context.Background(), fooViewerRole); err != nil {
-		t.Fatal("Could not add the foo-viewer RoleBinding")
+		t.Fatalf("Could not add the foo-viewer Role: %s", err)
 	}
 
 	fooViewerRoleBinding := &corev2.RoleBinding{
@@ -118,14 +118,44 @@ func seedStore(t *testing.T, store store.Store) {
 			Name: "foo-viewer",
 		},
 		Subjects: []corev2.Subject{
-			corev2.Subject{
+			{
 				Type: "Group",
 				Name: "foo-viewers",
 			},
 		},
 	}
 	if err := store.CreateRoleBinding(context.Background(), fooViewerRoleBinding); err != nil {
-		t.Fatal("Could not add the foo-viewer RoleBinding")
+		t.Fatalf("Could not add the foo-viewer RoleBinding: %s", err)
+	}
+
+	rwRoleBinding := &corev2.RoleBinding{
+		ObjectMeta: corev2.NewObjectMeta("rw", "default"),
+		RoleRef: corev2.RoleRef{
+			Type: "Role",
+			Name: "rw",
+		},
+		Subjects: []corev2.Subject{
+			{
+				Type: "Group",
+				Name: "rw",
+			},
+		},
+	}
+	if err := store.CreateRoleBinding(context.Background(), rwRoleBinding); err != nil {
+		t.Fatalf("Could not add the rw RoleBinding: %s", err)
+	}
+
+	rwRole := &corev2.Role{
+		ObjectMeta: corev2.NewObjectMeta("rw", "default"),
+		Rules: []corev2.Rule{
+			{
+				Verbs:     []string{"get", "list", "create", "update", "delete"},
+				Resources: []string{"*"},
+			},
+		},
+	}
+	if err := store.CreateRole(context.Background(), rwRole); err != nil {
+		t.Fatalf("Could not add the rw Role: %s", err)
 	}
 }
 
@@ -526,6 +556,17 @@ func TestAuthorization(t *testing.T) {
 			method:              "PUT",
 			url:                 "/api/core/v2/users/foo/password",
 			group:               "system:users",
+			attibutesMiddleware: AuthorizationAttributes{},
+			expectedCode:        200,
+		},
+		//
+		// A user with explicit permission on all verbs is able to PATCH resources
+		//
+		{
+			description:         "the update verb grants permission to PATCH",
+			method:              "PATCH",
+			url:                 "/api/core/v2/namespaces/default/checks/foo",
+			group:               "rw",
 			attibutesMiddleware: AuthorizationAttributes{},
 			expectedCode:        200,
 		},

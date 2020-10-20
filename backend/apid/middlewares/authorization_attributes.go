@@ -37,13 +37,13 @@ func (a AuthorizationAttributes) Then(next http.Handler) http.Handler {
 		defer next.ServeHTTP(w, r.WithContext(ctx))
 
 		switch r.Method {
-		case "POST":
+		case http.MethodPost:
 			attrs.Verb = "create"
-		case "GET", "HEAD":
+		case http.MethodGet, http.MethodHead:
 			attrs.Verb = "get"
-		case "PUT":
+		case http.MethodPatch, http.MethodPut:
 			attrs.Verb = "update"
-		case "DELETE":
+		case http.MethodDelete:
 			attrs.Verb = "delete"
 		default:
 			attrs.Verb = ""
