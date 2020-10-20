@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
@@ -33,8 +34,9 @@ type seedConfig struct {
 }
 
 type initOpts struct {
-	AdminUsername string `survey:"cluster-admin-username"`
-	AdminPassword string `survey:"cluster-admin-password"`
+	AdminUsername             string `survey:"cluster-admin-username"`
+	AdminPassword             string `survey:"cluster-admin-password"`
+	AdminPasswordConfirmation string `survey:"cluster-admin-password-confirmation"`
 }
 
 func (i *initOpts) administerQuestionnaire() error {
@@ -50,6 +52,13 @@ func (i *initOpts) administerQuestionnaire() error {
 			Name: "cluster-admin-password",
 			Prompt: &survey.Password{
 				Message: "Cluster Admin Password:",
+			},
+			Validate: survey.Required,
+		},
+		{
+			Name: "cluster-admin-password-confirmation",
+			Prompt: &survey.Password{
+				Message: "Retype Cluster Admin Password:",
 			},
 			Validate: survey.Required,
 		},
@@ -137,6 +146,9 @@ func InitCommand() *cobra.Command {
 				var opts initOpts
 				if err := opts.administerQuestionnaire(); err != nil {
 					return err
+				}
+				if opts.AdminPassword != opts.AdminPasswordConfirmation {
+					return errors.New("Password confirmation doesn't match the password")
 				}
 				uname = opts.AdminUsername
 				pword = opts.AdminPassword

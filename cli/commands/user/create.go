@@ -14,9 +14,10 @@ import (
 )
 
 type createOpts struct {
-	Username string `survey:"username"`
-	Password string `survey:"password"`
-	Groups   string `survey:"group"`
+	Username             string `survey:"username"`
+	Password             string `survey:"password"`
+	PasswordConfirmation string `survey:"passwordConfirmation"`
+	Groups               string `survey:"group"`
 }
 
 // CreateCommand adds command that allows user to create new users
@@ -53,6 +54,9 @@ func CreateCommand(cli *cli.SensuCli) *cobra.Command {
 				opts.withFlags(cmd.Flags())
 			}
 
+			if isInteractive && opts.Password != opts.PasswordConfirmation {
+				return errors.New("Password confirmation doesn't match the password")
+			}
 			user := opts.toUser()
 			if err := user.Validate(); err != nil {
 				if !isInteractive {
@@ -97,6 +101,13 @@ func (opts *createOpts) administerQuestionnaire() error {
 			Name: "password",
 			Prompt: &survey.Password{
 				Message: "Password:",
+			},
+			Validate: survey.Required,
+		},
+		{
+			Name: "passwordConfirmation",
+			Prompt: &survey.Password{
+				Message: "Retype password:",
 			},
 			Validate: survey.Required,
 		},
