@@ -12,6 +12,8 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 - The per-entity subscription now persists with PATCH requests.
 - Allow HookConfig to be exported via `sensuctl dump`.
 - Properly log any API error in `sensuctl dump`.
+- An RBAC rule with the `update` permission now properly authorizes PATCH
+requests.
 
 ## [6.1] - 2020-10-05
 
