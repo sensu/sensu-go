@@ -20,6 +20,9 @@ the cluster goes through a restart, or an etcd election.
 - sensuctl now resolves symbolic links.
 - Allow HookConfig to be exported via `sensuctl dump`.
 - Properly log any API error in `sensuctl dump`.
+- An RBAC rule with the `update` permission now properly authorizes PATCH
+requests.
+- eventd errors now include additional context for debugging.
 
 ## [6.1.0] - 2020-10-05
 
