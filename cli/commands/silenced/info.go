@@ -49,13 +49,20 @@ func InfoCommand(cli *cli.SensuCli) *cobra.Command {
 
 }
 
-func expireTime(beginTS, expireSeconds int64) time.Duration {
-	begin := time.Unix(beginTS, 0)
-	expire := time.Duration(expireSeconds) * time.Second
-	if time.Now().Before(begin) {
-		return (expire - time.Until(begin)).Truncate(time.Second)
+func expireTime(beginTS, expireSeconds int64) string {
+	if expireSeconds == -1 {
+		return "-1"
 	}
-	return time.Duration(expireSeconds) * time.Second
+
+	begin := time.Unix(beginTS, 0)
+	if time.Now().Before(begin) {
+		fmt.Println(expireSeconds)
+		expire := begin.Add(time.Duration(expireSeconds) * time.Second)
+		fmt.Println(expire.String())
+		return expire.Format(timeFormat)
+	}
+
+	return (time.Duration(expireSeconds) * time.Second).String()
 }
 
 func printToList(v interface{}, writer io.Writer) error {
@@ -68,7 +75,7 @@ func printToList(v interface{}, writer io.Writer) error {
 		Rows: []*list.Row{
 			{
 				Label: "Expire",
-				Value: expireTime(r.Begin, r.Expire).String(),
+				Value: expireTime(r.Begin, r.Expire),
 			},
 			{
 				Label: "ExpireOnResolve",
@@ -99,7 +106,7 @@ func printToList(v interface{}, writer io.Writer) error {
 	if time.Now().Before(time.Unix(r.Begin, 0)) {
 		extraRows := []*list.Row{{
 			Label: "Begin",
-			Value: time.Unix(r.Begin, 0).Format(time.RFC822),
+			Value: time.Unix(r.Begin, 0).Format(timeFormat),
 		}}
 		cfg.Rows = append(extraRows, cfg.Rows...)
 	}

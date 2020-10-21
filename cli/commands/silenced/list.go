@@ -125,7 +125,7 @@ func printToTable(results interface{}, writer io.Writer) {
 				if !ok {
 					return cli.TypeError
 				}
-				return time.Unix(silenced.Begin, 0).Format(time.RFC822)
+				return time.Unix(silenced.Begin, 0).Format(timeFormat)
 			},
 		},
 		{
@@ -135,7 +135,7 @@ func printToTable(results interface{}, writer io.Writer) {
 				if !ok {
 					return cli.TypeError
 				}
-				return expireTime(silenced.Begin, silenced.Expire).String()
+				return expireTime(silenced.Begin, silenced.Expire)
 			},
 		},
 		{
