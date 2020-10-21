@@ -264,6 +264,7 @@ func TestEntityCreateOrReplace(t *testing.T) {
 		name            string
 		ctx             context.Context
 		argument        *types.Entity
+		exists          bool
 		createErr       error
 		expectedErr     bool
 		expectedErrCode ErrCode
@@ -272,6 +273,7 @@ func TestEntityCreateOrReplace(t *testing.T) {
 			name:        "agent entity",
 			ctx:         defaultCtx,
 			argument:    agentEntity,
+			exists:      true,
 			createErr:   nil,
 			expectedErr: false,
 		},
@@ -279,6 +281,7 @@ func TestEntityCreateOrReplace(t *testing.T) {
 			name:            "agent entity, store failure",
 			ctx:             defaultCtx,
 			argument:        agentEntity,
+			exists:          true,
 			createErr:       NewError(InternalErr, errors.New("some error")),
 			expectedErr:     true,
 			expectedErrCode: InternalErr,
@@ -305,6 +308,13 @@ func TestEntityCreateOrReplace(t *testing.T) {
 			expectedErr:     true,
 			expectedErrCode: InvalidArgument,
 		},
+		{
+			name:        "entity that does not exist gets properly created",
+			ctx:         defaultCtx,
+			argument:    agentEntity,
+			exists:      false,
+			expectedErr: false,
+		},
 	}
 
 	for _, tc := range testCases {
@@ -323,6 +333,17 @@ func TestEntityCreateOrReplace(t *testing.T) {
 			storev2.
 				On("CreateOrUpdate", mock.Anything, mock.Anything).
 				Return(tc.createErr)
+
+			if tc.exists {
+				store.
+					On("GetEntityByName", mock.Anything, mock.Anything).
+					Return(tc.argument, nil)
+			} else {
+				var nilEntity *corev2.Entity
+				store.
+					On("GetEntityByName", mock.Anything, mock.Anything).
+					Return(nilEntity, nil)
+			}
 
 			// Exec Query
 			err := actions.CreateOrReplace(tc.ctx, *tc.argument)
