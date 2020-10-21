@@ -23,6 +23,7 @@ the cluster goes through a restart, or an etcd election.
 - An RBAC rule with the `update` permission now properly authorizes PATCH
 requests.
 - eventd errors now include additional context for debugging.
+- Entities are now properly created using `sensuctl create`.
 
 ## [6.1.0] - 2020-10-05
 
