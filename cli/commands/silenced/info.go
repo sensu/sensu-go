@@ -50,18 +50,20 @@ func InfoCommand(cli *cli.SensuCli) *cobra.Command {
 }
 
 func expireTime(beginTS, expireSeconds int64) string {
+	// If we have no expiration, return -1
 	if expireSeconds == -1 {
 		return "-1"
 	}
 
 	begin := time.Unix(beginTS, 0)
 	if time.Now().Before(begin) {
-		fmt.Println(expireSeconds)
+		// If the silenced entry is not yet in effect, because the being timestamp
+		// is in the future, display the full expiration date as RFC3339
 		expire := begin.Add(time.Duration(expireSeconds) * time.Second)
-		fmt.Println(expire.String())
 		return expire.Format(timeFormat)
 	}
 
+	// If the silenced entry is in effect, display its configured duration
 	return (time.Duration(expireSeconds) * time.Second).String()
 }
 
