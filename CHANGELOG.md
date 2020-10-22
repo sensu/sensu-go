@@ -7,6 +7,8 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
 
+## [6.1.1] - 2020-10-22
+
 ### Fixed
 - Fixed a bug where sensu-agent would not shut down correctly.
 - The per-entity subscription now persists with PATCH requests.
@@ -17,7 +19,7 @@ requests.
 - eventd errors now include additional context for debugging.
 - Entities are now properly created using `sensuctl create`.
 
-## [6.1] - 2020-10-05
+## [6.1.0] - 2020-10-05
 
 ### Added
 - A warning is now logged when a runtime asset was requested but does not exist.
