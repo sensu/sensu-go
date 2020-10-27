@@ -2,6 +2,7 @@ package agentd
 
 import (
 	"context"
+	"crypto/tls"
 	"fmt"
 	"log"
 	"net"
@@ -17,7 +18,9 @@ import (
 	"github.com/gorilla/websocket"
 	"github.com/prometheus/client_golang/prometheus"
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
+	"github.com/sensu/sensu-go/backend/apid/actions"
 	"github.com/sensu/sensu-go/backend/apid/middlewares"
+	"github.com/sensu/sensu-go/backend/apid/routers"
 	"github.com/sensu/sensu-go/backend/authentication/jwt"
 	"github.com/sensu/sensu-go/backend/authorization"
 	"github.com/sensu/sensu-go/backend/authorization/rbac"
@@ -69,34 +72,37 @@ type Agentd struct {
 	// Port is the port Agentd is running on.
 	Port int
 
-	stopping       chan struct{}
-	running        *atomic.Value
-	wg             *sync.WaitGroup
-	errChan        chan error
-	httpServer     *http.Server
-	store          store.Store
-	storev2        storev2.Interface
-	bus            messaging.MessageBus
-	tls            *corev2.TLSOptions
-	ringPool       *ringv2.Pool
-	ctx            context.Context
-	cancel         context.CancelFunc
-	writeTimeout   int
-	namespaceCache *cache.Resource
-	watcher        <-chan store.WatchEventEntityConfig
+	stopping            chan struct{}
+	running             *atomic.Value
+	wg                  *sync.WaitGroup
+	errChan             chan error
+	httpServer          *http.Server
+	store               store.Store
+	storev2             storev2.Interface
+	bus                 messaging.MessageBus
+	tls                 *corev2.TLSOptions
+	ringPool            *ringv2.Pool
+	ctx                 context.Context
+	cancel              context.CancelFunc
+	writeTimeout        int
+	namespaceCache      *cache.Resource
+	watcher             <-chan store.WatchEventEntityConfig
+	client              *clientv3.Client
+	etcdClientTLSConfig *tls.Config
 }
 
 // Config configures an Agentd.
 type Config struct {
-	Host         string
-	Port         int
-	Bus          messaging.MessageBus
-	Store        store.Store
-	TLS          *corev2.TLSOptions
-	RingPool     *ringv2.Pool
-	WriteTimeout int
-	Client       *clientv3.Client
-	Watcher      <-chan store.WatchEventEntityConfig
+	Host                string
+	Port                int
+	Bus                 messaging.MessageBus
+	Store               store.Store
+	TLS                 *corev2.TLSOptions
+	RingPool            *ringv2.Pool
+	WriteTimeout        int
+	Client              *clientv3.Client
+	EtcdClientTLSConfig *tls.Config
+	Watcher             <-chan store.WatchEventEntityConfig
 }
 
 // Option is a functional option.
@@ -106,21 +112,23 @@ type Option func(*Agentd) error
 func New(c Config, opts ...Option) (*Agentd, error) {
 	ctx, cancel := context.WithCancel(context.Background())
 	a := &Agentd{
-		Host:         c.Host,
-		Port:         c.Port,
-		bus:          c.Bus,
-		store:        c.Store,
-		tls:          c.TLS,
-		stopping:     make(chan struct{}, 1),
-		running:      &atomic.Value{},
-		wg:           &sync.WaitGroup{},
-		errChan:      make(chan error, 1),
-		ringPool:     c.RingPool,
-		ctx:          ctx,
-		cancel:       cancel,
-		writeTimeout: c.WriteTimeout,
-		storev2:      etcdstore.NewStore(c.Client),
-		watcher:      c.Watcher,
+		Host:                c.Host,
+		Port:                c.Port,
+		bus:                 c.Bus,
+		store:               c.Store,
+		tls:                 c.TLS,
+		stopping:            make(chan struct{}, 1),
+		running:             &atomic.Value{},
+		wg:                  &sync.WaitGroup{},
+		errChan:             make(chan error, 1),
+		ringPool:            c.RingPool,
+		ctx:                 ctx,
+		cancel:              cancel,
+		writeTimeout:        c.WriteTimeout,
+		storev2:             etcdstore.NewStore(c.Client),
+		watcher:             c.Watcher,
+		client:              c.Client,
+		etcdClientTLSConfig: c.EtcdClientTLSConfig,
 	}
 
 	// prepare server TLS config
@@ -141,8 +149,15 @@ func New(c Config, opts ...Option) (*Agentd, error) {
 	// functions, which prevent us from modifying the actual middleware logic at
 	// runtime, so we need this workaround
 	router := mux.NewRouter()
-	router.HandleFunc("/", a.webSocketHandler)
-	router.Use(authenticate, authorize, entityLimit, agentLimit)
+
+	healthRouter := routers.NewHealthRouter(
+		actions.NewHealthController(a.store, a.client.Cluster, a.etcdClientTLSConfig),
+	)
+	healthRouter.Mount(router)
+
+	route := router.NewRoute().Subrouter()
+	route.HandleFunc("/", a.webSocketHandler)
+	route.Use(authenticate, authorize, entityLimit, agentLimit)
 
 	a.httpServer = &http.Server{
 		Addr:         fmt.Sprintf("%s:%d", a.Host, a.Port),

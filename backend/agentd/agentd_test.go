@@ -12,6 +12,7 @@ import (
 	corev3 "github.com/sensu/sensu-go/api/core/v3"
 	"github.com/sensu/sensu-go/backend/etcd"
 	"github.com/sensu/sensu-go/backend/store"
+	etcdstore "github.com/sensu/sensu-go/backend/store/etcd"
 	"github.com/sensu/sensu-go/testing/mockbus"
 	"github.com/sensu/sensu-go/testing/mockstore"
 	"github.com/sensu/sensu-go/transport"
@@ -163,4 +164,24 @@ func TestRunWatcher(t *testing.T) {
 			watcher <- tt.watchEvent
 		})
 	}
+}
+
+func TestHealthHandler(t *testing.T) {
+	e, cleanup := etcd.NewTestEtcd(t)
+	defer cleanup()
+	client := e.NewEmbeddedClient()
+	defer client.Close()
+
+	stor := etcdstore.NewStore(client, "test")
+	agent, err := New(Config{
+		Store:  stor,
+		Client: client,
+	})
+	assert.NoError(t, err)
+
+	srv := httptest.NewServer(agent.httpServer.Handler)
+	req, _ := http.NewRequest(http.MethodGet, fmt.Sprintf("%s/health", srv.URL), bytes.NewBuffer([]byte{}))
+	res, err := http.DefaultClient.Do(req)
+	assert.NoError(t, err)
+	assert.Equal(t, 200, res.StatusCode)
 }
