@@ -7,6 +7,8 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
 
+### [6.1.2] - 2020-10-28
+
 ### Fixed
 - Fixed a crash in the backend and agent related to Javascript execution.
 
