@@ -11,6 +11,7 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 - Sensuctl and sensu-backend ask for password retype when a new password is
 created when in interactive mode.
 - Build info is now exposed as a prometheus metric via the /metrics endpoint.
+### [6.1.2] - 2020-10-28
 
 ### Fixed
 - Fixed a crash in the backend and agent related to Javascript execution.
