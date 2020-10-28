@@ -25,7 +25,7 @@ type RoundRobinCronScheduler struct {
 	ctx           context.Context
 	cancel        context.CancelFunc
 	interrupt     chan *corev2.CheckConfig
-	ringPool      *ringv2.Pool
+	ringPool      *ringv2.RingPool
 	cancels       map[string]ringCancel
 	executor      *CheckExecutor
 	entityCache   *cachev2.Resource
@@ -34,7 +34,7 @@ type RoundRobinCronScheduler struct {
 }
 
 // NewRoundRobinCronScheduler creates a new RoundRobinCronScheduler.
-func NewRoundRobinCronScheduler(ctx context.Context, store store.Store, bus messaging.MessageBus, pool *ringv2.Pool, check *corev2.CheckConfig, cache *cachev2.Resource, secretsProviderManager *secrets.ProviderManager) *RoundRobinCronScheduler {
+func NewRoundRobinCronScheduler(ctx context.Context, store store.Store, bus messaging.MessageBus, pool *ringv2.RingPool, check *corev2.CheckConfig, cache *cachev2.Resource, secretsProviderManager *secrets.ProviderManager) *RoundRobinCronScheduler {
 	sched := &RoundRobinCronScheduler{
 		store:         store,
 		bus:           bus,
@@ -149,7 +149,17 @@ func (s *RoundRobinCronScheduler) updateRings() {
 
 		// Create a new watcher
 		ctx, cancel := context.WithCancel(s.ctx)
-		wc := s.ringPool.Get(key).Watch(ctx, s.check.Name, agentEntitiesRequest, int(s.check.Interval), s.check.Cron)
+		sub := ringv2.Subscription{
+			Name:             s.check.Name,
+			Items:            agentEntitiesRequest,
+			IntervalSchedule: int(s.check.Interval),
+			CronSchedule:     s.check.Cron,
+		}
+		if err := sub.Validate(); err != nil {
+			logger.WithField("check", s.check.Name).WithError(err).Error("error scheduling round-robin check")
+			continue
+		}
+		wc := s.ringPool.Get(key).Subscribe(ctx, sub)
 		val := ringCancel{Cancel: cancel, AgentEntitiesRequest: agentEntitiesRequest}
 		go s.handleEvents(s.executor, wc)
 		newCancels[key] = val

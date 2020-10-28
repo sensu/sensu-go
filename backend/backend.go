@@ -69,6 +69,7 @@ type Backend struct {
 	Store                  store.Store
 	StoreV2                storev2.Interface
 	EventStore             EventStoreUpdater
+	RingPool               *ringv2.RingPool
 	GraphQLService         *graphql.Service
 	SecretsProviderManager *secrets.ProviderManager
 	HealthRouter           *routers.HealthRouter
@@ -204,6 +205,11 @@ func Initialize(ctx context.Context, config *Config) (*Backend, error) {
 	storv2 := etcdstorev2.NewStore(b.Client)
 	b.StoreV2 = storv2
 
+	// Create the ring pool for round-robin functionality
+	b.RingPool = ringv2.NewRingPool(func(path string) ringv2.Interface {
+		return ringv2.New(b.Client, path)
+	})
+
 	if _, err := stor.GetClusterID(b.RunContext()); err != nil {
 		return nil, err
 	}
@@ -291,8 +297,6 @@ func Initialize(ctx context.Context, config *Config) (*Backend, error) {
 	}
 	b.Daemons = append(b.Daemons, event)
 
-	ringPool := ringv2.NewPool(b.Client)
-
 	// Initialize schedulerd
 	scheduler, err := schedulerd.New(
 		b.RunContext(),
@@ -300,7 +304,7 @@ func Initialize(ctx context.Context, config *Config) (*Backend, error) {
 			Store:                  stor,
 			Bus:                    bus,
 			QueueGetter:            queueGetter,
-			RingPool:               ringPool,
+			RingPool:               b.RingPool,
 			Client:                 b.Client,
 			SecretsProviderManager: b.SecretsProviderManager,
 		})
@@ -325,7 +329,7 @@ func Initialize(ctx context.Context, config *Config) (*Backend, error) {
 		Bus:          bus,
 		Store:        stor,
 		TLS:          config.AgentTLSOptions,
-		RingPool:     ringPool,
+		RingPool:     b.RingPool,
 		WriteTimeout: config.AgentWriteTimeout,
 		Client:       b.Client,
 		Watcher:      entityConfigWatcher,
@@ -343,7 +347,7 @@ func Initialize(ctx context.Context, config *Config) (*Backend, error) {
 		StoreV2:               storv2,
 		EventStore:            eventStoreProxy,
 		LivenessFactory:       liveness.EtcdFactory(b.RunContext(), b.Client),
-		RingPool:              ringPool,
+		RingPool:              b.RingPool,
 		BufferSize:            viper.GetInt(FlagKeepalivedBufferSize),
 		WorkerCount:           viper.GetInt(FlagKeepalivedWorkers),
 		StoreTimeout:          2 * time.Minute,
@@ -436,7 +440,7 @@ func Initialize(ctx context.Context, config *Config) (*Backend, error) {
 		tessend.Config{
 			Store:      stor,
 			EventStore: eventStoreProxy,
-			RingPool:   ringPool,
+			RingPool:   b.RingPool,
 			Client:     b.Client,
 			Bus:        bus,
 		})
@@ -698,4 +702,7 @@ func getSystemInfo() corev2.System {
 		logger.WithError(err).Error("error getting system info")
 	}
 	return info
+}
+
+type RingPoolProvider struct {
 }

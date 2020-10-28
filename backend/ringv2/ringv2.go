@@ -328,6 +328,13 @@ func (r *Ring) Watch(ctx context.Context, name string, values, interval int, cro
 	return c
 }
 
+func (r *Ring) Subscribe(ctx context.Context, sub Subscription) <-chan Event {
+	if err := sub.Validate(); err != nil {
+		panic(err)
+	}
+	return r.Watch(ctx, sub.Name, sub.Items, sub.IntervalSchedule, sub.CronSchedule)
+}
+
 func (w *watcher) getInterval() int {
 	if w.cron != nil {
 		now := time.Now()

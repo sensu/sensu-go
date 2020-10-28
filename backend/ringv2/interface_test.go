@@ -2,6 +2,9 @@ package ringv2
 
 import "testing"
 
+// interface assertion
+var _ Interface = (*Ring)(nil)
+
 func TestSubscriptionValidate(t *testing.T) {
 	tests := []struct {
 		Name         string

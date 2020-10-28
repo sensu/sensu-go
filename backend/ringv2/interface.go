@@ -11,7 +11,7 @@ import (
 type Interface interface {
 	// Subscribe receives one or more items from the ring, on a schedule described
 	// by the Subscription. If the Subscription is not valid, Subscribe panics.
-	Subscribe(ctx context.Context, req Subscription) <-chan Event
+	Subscribe(ctx context.Context, sub Subscription) <-chan Event
 
 	// Remove removes an item from the ring.
 	Remove(ctx context.Context, value string) error
@@ -45,7 +45,7 @@ type Subscription struct {
 	CronSchedule string
 }
 
-// Validate returns an error if the request is improperly configured.
+// Validate returns an error if the subscription is improperly configured.
 //
 // A well-configured Subscription has a non-empty Name, a
 // non-zero Items, and one of IntervalSchedule or CronSchedule defined.
@@ -54,7 +54,7 @@ func (r Subscription) Validate() error {
 		return errors.New("ring: check subscription not defined")
 	}
 	if r.Items <= 0 {
-		return errors.New("ring: number of items in request <= 0")
+		return errors.New("ring: number of items in subscription <= 0")
 	}
 	if r.IntervalSchedule == 0 && r.CronSchedule == "" {
 		return errors.New("ring: no schedule defined")
