@@ -13,6 +13,11 @@ created when in interactive mode.
 - Build info is now exposed as a prometheus metric via the /metrics endpoint.
 - Added `/health` endpoint to agentd.
 
+### [6.1.2] - 2020-10-28
+
+### Fixed
+- Fixed a crash in the backend and agent related to Javascript execution.
+
 ## [6.1.1] - 2020-10-22
 
 ### Fixed
