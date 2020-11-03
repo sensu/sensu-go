@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"path"
+	"strings"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -62,6 +63,15 @@ const MinInterval = 5
 // Path returns the canonical path to a ring.
 func Path(namespace, subscription string) string {
 	return store.NewKeyBuilder("rings").WithNamespace(namespace).Build(subscription)
+}
+
+// UnPatch parses a path created by Path.
+func UnPath(key string) (namespace, subscription string, err error) {
+	parts := strings.Split(key, "/")
+	if len(parts) < 4 {
+		return "", "", errors.New("invalid ring key")
+	}
+	return parts[2], parts[3], nil
 }
 
 // Event represents an event that occurred in a ring. The event can originate
