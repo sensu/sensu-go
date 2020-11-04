@@ -322,17 +322,26 @@ func Initialize(ctx context.Context, config *Config) (*Backend, error) {
 	// Start the entity config watcher, so agentd sessions are notified of updates
 	entityConfigWatcher := agentd.GetEntityConfigWatcher(b.ctx, b.Client)
 
+	// Prepare the etcd client TLS config
+	etcdClientTLSInfo := (transport.TLSInfo)(config.EtcdClientTLSInfo)
+	etcdClientTLSConfig, err := etcdClientTLSInfo.ClientConfig()
+	if err != nil {
+		return nil, err
+	}
+	b.EtcdClientTLSConfig = etcdClientTLSConfig
+
 	// Initialize agentd
 	agent, err := agentd.New(agentd.Config{
-		Host:         config.AgentHost,
-		Port:         config.AgentPort,
-		Bus:          bus,
-		Store:        stor,
-		TLS:          config.AgentTLSOptions,
-		RingPool:     b.RingPool,
-		WriteTimeout: config.AgentWriteTimeout,
-		Client:       b.Client,
-		Watcher:      entityConfigWatcher,
+		Host:                config.AgentHost,
+		Port:                config.AgentPort,
+		Bus:                 bus,
+		Store:               stor,
+		TLS:                 config.AgentTLSOptions,
+		RingPool:            ringPool,
+		WriteTimeout:        config.AgentWriteTimeout,
+		Client:              b.Client,
+		Watcher:             entityConfigWatcher,
+		EtcdClientTLSConfig: b.EtcdClientTLSConfig,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("error initializing %s: %s", agent.Name(), err)
@@ -356,14 +365,6 @@ func Initialize(ctx context.Context, config *Config) (*Backend, error) {
 		return nil, fmt.Errorf("error initializing %s: %s", keepalive.Name(), err)
 	}
 	b.Daemons = append(b.Daemons, keepalive)
-
-	// Prepare the etcd client TLS config
-	etcdClientTLSInfo := (transport.TLSInfo)(config.EtcdClientTLSInfo)
-	etcdClientTLSConfig, err := etcdClientTLSInfo.ClientConfig()
-	if err != nil {
-		return nil, err
-	}
-	b.EtcdClientTLSConfig = etcdClientTLSConfig
 
 	// Prepare the authentication providers
 	authenticator := &authentication.Authenticator{}

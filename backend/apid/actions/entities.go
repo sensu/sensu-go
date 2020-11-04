@@ -98,6 +98,19 @@ func (c EntityController) CreateOrReplace(ctx context.Context, entity corev2.Ent
 			return NewError(InternalErr, serr)
 		}
 	} else {
+		// Attempt to create the entity in case it doesn't exist.
+		err := c.Create(ctx, entity)
+		if err == nil {
+			// The entity did not exist and we successfully created it
+			return nil
+		}
+		code, ok := StatusFromError(err)
+		// If the error is anything but AlreadyExistsErr, return the error
+		if !ok || code != AlreadyExistsErr {
+			return err
+		}
+
+		// The entity already exists, so we only update its config
 		config, _ := corev3.V2EntityToV3(&entity)
 		// Ensure per-entity subscription does not get removed
 		config.Subscriptions = corev2.AddEntitySubscription(config.Metadata.Name, config.Subscriptions)

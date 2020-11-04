@@ -3,7 +3,6 @@ package agent
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"testing"
 	"time"
 
@@ -305,7 +304,6 @@ func TestExecuteCheckDiscardOutput(t *testing.T) {
 	}
 
 	if got, want := event.Check.Output, ""; got != want {
-		fmt.Println(got)
 		t.Fatal("check output not discarded")
 	}
 }

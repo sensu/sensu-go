@@ -2,6 +2,7 @@ package actions
 
 import (
 	"context"
+	"errors"
 
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/authentication/jwt"
@@ -88,4 +89,15 @@ func (c SilencedController) CreateOrReplace(ctx context.Context, entry *corev2.S
 	}
 
 	return nil
+}
+
+func (c SilencedController) Get(ctx context.Context, name string) (*corev2.Silenced, error) {
+	entry, err := c.Store.GetSilencedEntryByName(ctx, name)
+	if err != nil {
+		return nil, NewError(InternalErr, err)
+	}
+	if entry == nil {
+		return nil, NewError(NotFound, errors.New("silenced entry not found"))
+	}
+	return entry, nil
 }

@@ -181,6 +181,18 @@ func (e *Eventd) Start() error {
 	return nil
 }
 
+func withEventFields(e interface{}, logger *logrus.Entry) *logrus.Entry {
+	event, _ := e.(*corev2.Event)
+	if event != nil {
+		logger = logger.WithField("entity", event.Entity.Name)
+		logger = logger.WithField("event_id", event.ID)
+		if event.Check != nil {
+			logger = logger.WithField("check", event.Check.Name)
+		}
+	}
+	return logger
+}
+
 func (e *Eventd) startHandlers() {
 	for i := 0; i < e.workerCount; i++ {
 		go func() {
@@ -192,7 +204,8 @@ func (e *Eventd) startHandlers() {
 					// drain the event channel.
 					for msg := range e.eventChan {
 						if err := e.handleMessage(msg); err != nil {
-							logger.WithError(err).Error("eventd - error handling event")
+							logger := withEventFields(msg, logger)
+							logger.WithError(err).Error("error handling event")
 						}
 					}
 					return
@@ -214,7 +227,8 @@ func (e *Eventd) startHandlers() {
 					}
 
 					if err := e.handleMessage(msg); err != nil {
-						logger.WithError(err).Error("eventd - error handling event")
+						logger := withEventFields(msg, logger)
+						logger.WithError(err).Error("error handling event")
 					}
 				}
 			}
