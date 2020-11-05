@@ -51,7 +51,7 @@ type Subscription struct {
 // non-zero Items, and one of IntervalSchedule or CronSchedule defined.
 func (r Subscription) Validate() error {
 	if r.Name == "" {
-		return errors.New("ring: check subscription not defined")
+		return errors.New("ring: check subscription is empty")
 	}
 	if r.Items <= 0 {
 		return errors.New("ring: number of items in subscription <= 0")

@@ -65,7 +65,7 @@ func Path(namespace, subscription string) string {
 	return store.NewKeyBuilder("rings").WithNamespace(namespace).Build(subscription)
 }
 
-// UnPatch parses a path created by Path.
+// UnPath parses a path created by Path.
 func UnPath(key string) (namespace, subscription string, err error) {
 	parts := strings.Split(key, "/")
 	if len(parts) < 4 {

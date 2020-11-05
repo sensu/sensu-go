@@ -77,9 +77,10 @@ func (r *RingPool) Del(path string) {
 }
 
 // SetNewFunc sets the newer function for the ring pool. It results in the
-// ring cache being cleared.
+// pool being cleared.
 func (r *RingPool) SetNewFunc(fn NewFunc) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 	r.newf = fn
+	r.rings = make(map[string]Interface, len(r.rings))
 }

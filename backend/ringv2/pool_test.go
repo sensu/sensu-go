@@ -30,3 +30,20 @@ func TestPool(t *testing.T) {
 		t.Fatal("rings should not be equal")
 	}
 }
+
+func TestPoolSetNewFunc(t *testing.T) {
+	pool := NewRingPool(func(path string) Interface {
+		return new(Ring)
+	})
+	fooRing := pool.Get("foo")
+
+	pool.SetNewFunc(func(path string) Interface {
+		return nil
+	})
+
+	fooRing2 := pool.Get("foo")
+
+	if fooRing == fooRing2 {
+		t.Fatal("rings should differ")
+	}
+}
