@@ -121,6 +121,7 @@ func (s *RoundRobinCronScheduler) handleEvents(executor *CheckExecutor, ch <-cha
 	}
 }
 
+//nolint
 func (s *RoundRobinCronScheduler) updateRings() {
 	agentEntitiesRequest := 1
 	if s.check.ProxyRequests != nil {

@@ -63,6 +63,7 @@ func NewRoundRobinIntervalScheduler(ctx context.Context, store store.Store, bus 
 	return sched
 }
 
+//nolint
 func (s *RoundRobinIntervalScheduler) updateRings() {
 	agentEntitiesRequest := 1
 	if s.check.ProxyRequests != nil {
