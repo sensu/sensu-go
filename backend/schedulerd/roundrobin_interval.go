@@ -63,7 +63,9 @@ func NewRoundRobinIntervalScheduler(ctx context.Context, store store.Store, bus 
 	return sched
 }
 
-//nolint
+// this function technically can leak its cancel, but the design makes it
+// difficult to fix, and there are no known issues with it.
+//nolint:govet
 func (s *RoundRobinIntervalScheduler) updateRings() {
 	agentEntitiesRequest := 1
 	if s.check.ProxyRequests != nil {

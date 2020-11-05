@@ -121,7 +121,9 @@ func (s *RoundRobinCronScheduler) handleEvents(executor *CheckExecutor, ch <-cha
 	}
 }
 
-//nolint
+// this function technically can leak its cancel, but the design makes it
+// difficult to fix, and there are no known issues with it.
+//nolint:govet
 func (s *RoundRobinCronScheduler) updateRings() {
 	agentEntitiesRequest := 1
 	if s.check.ProxyRequests != nil {
