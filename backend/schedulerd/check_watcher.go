@@ -20,13 +20,13 @@ type CheckWatcher struct {
 	bus                    messaging.MessageBus
 	mu                     sync.Mutex
 	ctx                    context.Context
-	ringPool               *ringv2.Pool
+	ringPool               *ringv2.RingPool
 	entityCache            *cachev2.Resource
 	secretsProviderManager *secrets.ProviderManager
 }
 
 // NewCheckWatcher creates a new ScheduleManager.
-func NewCheckWatcher(ctx context.Context, msgBus messaging.MessageBus, store store.Store, pool *ringv2.Pool, cache *cachev2.Resource, secretsProviderManager *secrets.ProviderManager) *CheckWatcher {
+func NewCheckWatcher(ctx context.Context, msgBus messaging.MessageBus, store store.Store, pool *ringv2.RingPool, cache *cachev2.Resource, secretsProviderManager *secrets.ProviderManager) *CheckWatcher {
 	watcher := &CheckWatcher{
 		store:                  store,
 		items:                  make(map[string]Scheduler),

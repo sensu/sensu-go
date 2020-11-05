@@ -55,7 +55,7 @@ type Schedulerd struct {
 	ctx                    context.Context
 	cancel                 context.CancelFunc
 	errChan                chan error
-	ringPool               *ringv2.Pool
+	ringPool               *ringv2.RingPool
 	entityCache            *cachev2.Resource
 	secretsProviderManager *secrets.ProviderManager
 }
@@ -67,7 +67,7 @@ type Option func(*Schedulerd) error
 type Config struct {
 	Store                  store.Store
 	QueueGetter            types.QueueGetter
-	RingPool               *ringv2.Pool
+	RingPool               *ringv2.RingPool
 	Bus                    messaging.MessageBus
 	Client                 *clientv3.Client
 	SecretsProviderManager *secrets.ProviderManager

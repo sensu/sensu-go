@@ -89,7 +89,7 @@ type Session struct {
 	stopWG           sync.WaitGroup
 	checkChannel     chan interface{}
 	bus              messaging.MessageBus
-	ringPool         *ringv2.Pool
+	ringPool         *ringv2.RingPool
 	ctx              context.Context
 	cancel           context.CancelFunc
 	marshal          MarshalFunc
@@ -138,7 +138,7 @@ type SessionConfig struct {
 
 	Bus      messaging.MessageBus
 	Conn     transport.Transport
-	RingPool *ringv2.Pool
+	RingPool *ringv2.RingPool
 	Store    store.Store
 	Storev2  storev2.Interface
 

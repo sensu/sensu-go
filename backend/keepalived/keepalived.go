@@ -60,7 +60,7 @@ type Keepalived struct {
 	subscription          messaging.Subscription
 	errChan               chan error
 	livenessFactory       liveness.Factory
-	ringPool              *ringv2.Pool
+	ringPool              *ringv2.RingPool
 	ctx                   context.Context
 	cancel                context.CancelFunc
 	storeTimeout          time.Duration
@@ -77,7 +77,7 @@ type Config struct {
 	Bus                   messaging.MessageBus
 	LivenessFactory       liveness.Factory
 	DeregistrationHandler string
-	RingPool              *ringv2.Pool
+	RingPool              *ringv2.RingPool
 	BufferSize            int
 	WorkerCount           int
 	StoreTimeout          time.Duration
