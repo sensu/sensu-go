@@ -81,7 +81,7 @@ type Agentd struct {
 	storev2             storev2.Interface
 	bus                 messaging.MessageBus
 	tls                 *corev2.TLSOptions
-	ringPool            *ringv2.Pool
+	ringPool            *ringv2.RingPool
 	ctx                 context.Context
 	cancel              context.CancelFunc
 	writeTimeout        int
@@ -98,7 +98,7 @@ type Config struct {
 	Bus                 messaging.MessageBus
 	Store               store.Store
 	TLS                 *corev2.TLSOptions
-	RingPool            *ringv2.Pool
+	RingPool            *ringv2.RingPool
 	WriteTimeout        int
 	Client              *clientv3.Client
 	EtcdClientTLSConfig *tls.Config
