@@ -76,6 +76,13 @@ func (r *RingPool) Del(path string) {
 	delete(r.rings, path)
 }
 
+// GetNewFunc safely gets the ring's newfunc.
+func (r *RingPool) GetNewFunc() NewFunc {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	return r.newf
+}
+
 // SetNewFunc sets the newer function for the ring pool. It results in the
 // pool being cleared.
 func (r *RingPool) SetNewFunc(fn NewFunc) {
