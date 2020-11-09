@@ -87,6 +87,9 @@ func TestInfoCommandRunEClosureWithErr(t *testing.T) {
 }
 
 func Test_expireTime(t *testing.T) {
+	unixToInternal := int64((1969*365 + 1969/4 - 1969/100 + 1969/400) * 24 * 60 * 60)
+	future := time.Unix(1<<63-1-unixToInternal, 999999999)
+
 	tests := []struct {
 		name          string
 		beginTS       int64
@@ -101,9 +104,9 @@ func Test_expireTime(t *testing.T) {
 		},
 		{
 			name:          "an entry that is not yet in effect return a RFC3339 date",
-			beginTS:       time.Now().Add(time.Duration(1) * time.Minute).Unix(),
+			beginTS:       future.Unix(),
 			expireSeconds: 300,
-			want:          "2020-10-",
+			want:          "292277024627-12",
 		},
 		{
 			name:          "an entry that is in effect return the configured duration",
