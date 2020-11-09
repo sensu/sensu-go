@@ -3,6 +3,7 @@ package routers
 import (
 	"bytes"
 	"context"
+	"errors"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
@@ -22,13 +23,10 @@ func TestSilencedRouter(t *testing.T) {
 	parentRouter := mux.NewRouter().PathPrefix(corev2.URLPrefix).Subrouter()
 	router.Mount(parentRouter)
 
-	empty := &corev2.Silenced{}
 	fixture := corev2.FixtureSilenced("*:bar")
 
 	tests := []routerTestCase{}
-	tests = append(tests, getTestCases(fixture)...)
 	tests = append(tests, deleteTestCases(fixture)...)
-	tests = append(tests, listTestCases(empty)...)
 	for _, tt := range tests {
 		run(t, tt, parentRouter, s)
 	}
@@ -49,6 +47,11 @@ func (m *mockSilencedController) CreateOrReplace(ctx context.Context, entry *cor
 func (m *mockSilencedController) List(ctx context.Context, sub, check string) ([]*corev2.Silenced, error) {
 	args := m.Called(ctx, sub, check)
 	return args.Get(0).([]*corev2.Silenced), args.Error(1)
+}
+
+func (m *mockSilencedController) Get(ctx context.Context, name string) (*corev2.Silenced, error) {
+	args := m.Called(ctx, name)
+	return args.Get(0).(*corev2.Silenced), args.Error(1)
 }
 
 func TestSilencedRouterCustomRoutes(t *testing.T) {
@@ -147,6 +150,66 @@ func TestSilencedRouterCustomRoutes(t *testing.T) {
 					Once()
 			},
 			wantStatusCode: http.StatusCreated,
+		},
+		{
+			name:   "it returns 200 on successful get",
+			method: http.MethodGet,
+			path:   corev2.FixtureSilenced("*:foo").URIPath(),
+			body:   nil,
+			controllerFunc: func(c *mockSilencedController) {
+				c.On("Get", mock.Anything, "*:foo").
+					Return(corev2.FixtureSilenced(":foo"), nil).
+					Once()
+			},
+			wantStatusCode: http.StatusOK,
+		},
+		{
+			name:   "it returns 404 on unsuccessful get",
+			method: http.MethodGet,
+			path:   corev2.FixtureSilenced("not:exists").URIPath(),
+			body:   nil,
+			controllerFunc: func(c *mockSilencedController) {
+				c.On("Get", mock.Anything, mock.Anything).
+					Return((*corev2.Silenced)(nil), actions.NewError(actions.NotFound, errors.New("not found"))).
+					Once()
+			},
+			wantStatusCode: http.StatusNotFound,
+		},
+		{
+			name:   "it returns 500 on get error",
+			method: http.MethodGet,
+			path:   corev2.FixtureSilenced("not:exists").URIPath(),
+			body:   nil,
+			controllerFunc: func(c *mockSilencedController) {
+				c.On("Get", mock.Anything, mock.Anything).
+					Return((*corev2.Silenced)(nil), errors.New("hi")).
+					Once()
+			},
+			wantStatusCode: http.StatusInternalServerError,
+		},
+		{
+			name:   "it returns 200 on successful list",
+			method: http.MethodGet,
+			path:   new(corev2.Silenced).URIPath(),
+			body:   nil,
+			controllerFunc: func(c *mockSilencedController) {
+				c.On("List", mock.Anything, "", "").
+					Return([]*corev2.Silenced{}, nil).
+					Once()
+			},
+			wantStatusCode: http.StatusOK,
+		},
+		{
+			name:   "it returns 500 on error list",
+			method: http.MethodGet,
+			path:   new(corev2.Silenced).URIPath(),
+			body:   nil,
+			controllerFunc: func(c *mockSilencedController) {
+				c.On("List", mock.Anything, "", "").
+					Return(([]*corev2.Silenced)(nil), errors.New("hi")).
+					Once()
+			},
+			wantStatusCode: http.StatusInternalServerError,
 		},
 	}
 	for _, tt := range tests {

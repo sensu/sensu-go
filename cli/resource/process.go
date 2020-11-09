@@ -74,6 +74,19 @@ func ProcessFile(input string, recurse bool) ([]*types.Wrapper, error) {
 		if err != nil {
 			return err
 		}
+
+		// Resolve symbolic link
+		if info.Mode() & os.ModeSymlink != 0 {
+			path, err = filepath.EvalSymlinks(path)
+			if err != nil {
+				return err
+			}
+			info, err = os.Lstat(path)
+			if err != nil {
+				return err
+			}
+		}
+
 		if !recurse && info.IsDir() && !tld {
 			return filepath.SkipDir
 		} else if info.IsDir() && tld || info.IsDir() && recurse {

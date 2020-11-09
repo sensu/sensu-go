@@ -83,7 +83,7 @@ type Tessend struct {
 	ctx               context.Context
 	cancel            context.CancelFunc
 	errChan           chan error
-	ring              *ringv2.Ring
+	ringPool          *ringv2.RingPool
 	interrupt         chan *corev2.TessenConfig
 	client            *clientv3.Client
 	url               string
@@ -104,7 +104,7 @@ type Option func(*Tessend) error
 type Config struct {
 	Store      store.Store
 	EventStore store.EventStore
-	RingPool   *ringv2.Pool
+	RingPool   *ringv2.RingPool
 	Client     *clientv3.Client
 	Bus        messaging.MessageBus
 }
@@ -126,8 +126,7 @@ func New(ctx context.Context, c Config, opts ...Option) (*Tessend, error) {
 	}
 	t.ctx, t.cancel = context.WithCancel(ctx)
 	t.interrupt = make(chan *corev2.TessenConfig, 1)
-	key := ringv2.Path("global", "backends")
-	t.ring = c.RingPool.Get(key)
+	t.ringPool = c.RingPool
 	t.EntityClassCounts = func() map[string]int {
 		return make(map[string]int)
 	}
@@ -192,7 +191,9 @@ func (t *Tessend) Stop() error {
 	defer func() {
 		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer cancel()
-		if err := t.ring.Remove(ctx, t.backendID); err != nil {
+		key := ringv2.Path("global", "backends")
+		ring := t.ringPool.Get(key)
+		if err := ring.Remove(ctx, t.backendID); err != nil {
 			logger.WithField("key", t.backendID).WithError(err).Error("error removing key from the ring")
 		} else {
 			logger.WithField("key", t.backendID).Debug("removed a key from the ring")
@@ -348,7 +349,9 @@ func (t *Tessend) startRingUpdates() {
 
 // updateRing adds/updates the ring with a given key.
 func (t *Tessend) updateRing() {
-	if err := t.ring.Add(t.ctx, t.backendID, ringBackendKeepalive); err != nil {
+	key := ringv2.Path("global", "backends")
+	ring := t.ringPool.Get(key)
+	if err := ring.Add(t.ctx, t.backendID, ringBackendKeepalive); err != nil {
 		logger.WithField("key", t.backendID).WithError(err).Error("error adding key to the ring")
 	} else {
 		logger.WithField("key", t.backendID).Debug("added a key to the ring")
@@ -358,7 +361,14 @@ func (t *Tessend) updateRing() {
 // watchRing watches the ring and handles ring events. It recreates watchers
 // when they terminate due to error.
 func (t *Tessend) watchRing(ctx context.Context, tessen *corev2.TessenConfig, wg *sync.WaitGroup) {
-	wc := t.ring.Watch(ctx, "tessen", 1, int(t.interval), "")
+	key := ringv2.Path("global", "backends")
+	ring := t.ringPool.Get(key)
+	sub := ringv2.Subscription{
+		Name:             "tessen",
+		Items:            1,
+		IntervalSchedule: int(t.interval),
+	}
+	wc := ring.Subscribe(ctx, sub)
 	go func() {
 		t.handleEvents(ctx, tessen, wc)
 		defer wg.Done()

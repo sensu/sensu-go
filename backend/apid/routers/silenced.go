@@ -3,6 +3,7 @@ package routers
 import (
 	"context"
 	"net/http"
+	"net/url"
 
 	"github.com/gorilla/mux"
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
@@ -22,6 +23,7 @@ type silencedController interface {
 	Create(ctx context.Context, entry *corev2.Silenced) error
 	CreateOrReplace(ctx context.Context, entry *corev2.Silenced) error
 	List(ctx context.Context, sub, check string) ([]*corev2.Silenced, error)
+	Get(ctx context.Context, name string) (*corev2.Silenced, error)
 }
 
 // NewSilencedRouter instantiates new router for controlling user resources
@@ -43,17 +45,25 @@ func (r *SilencedRouter) Mount(parent *mux.Router) {
 	}
 
 	routes.Del(r.handlers.DeleteResource)
-	routes.Get(r.handlers.GetResource)
+	routes.Get(r.get)
 	routes.Post(r.create)
 	routes.Put(r.createOrReplace)
-	routes.List(r.handlers.ListResources, corev2.SilencedFields)
-	routes.ListAllNamespaces(r.handlers.ListResources, "/{resource:silenced}", corev2.SilencedFields)
+	routes.List(r.listr, corev2.SilencedFields)
+	routes.ListAllNamespaces(r.listr, "/{resource:silenced}", corev2.SilencedFields)
 
 	// Custom routes for listing by subscription and checks for a specific
 	// namespace, in addition to all namespaces for checks.
 	routes.Router.HandleFunc("/{resource:silenced}/checks/{check}", listHandler(r.list)).Methods(http.MethodGet)
 	routes.Router.HandleFunc(routes.PathPrefix+"/subscriptions/{subscription}", listHandler(r.list)).Methods(http.MethodGet)
 	routes.Router.HandleFunc(routes.PathPrefix+"/checks/{check}", listHandler(r.list)).Methods(http.MethodGet)
+}
+
+func (r *SilencedRouter) get(req *http.Request) (interface{}, error) {
+	id, err := url.PathUnescape(mux.Vars(req)["id"])
+	if err != nil {
+		return nil, actions.NewError(actions.InvalidArgument, err)
+	}
+	return r.controller.Get(req.Context(), id)
 }
 
 func (r *SilencedRouter) create(req *http.Request) (interface{}, error) {
@@ -82,6 +92,18 @@ func (r *SilencedRouter) createOrReplace(req *http.Request) (interface{}, error)
 
 	err := r.controller.CreateOrReplace(req.Context(), entry)
 	return nil, err
+}
+
+func (r *SilencedRouter) listr(ctx context.Context, pred *store.SelectionPredicate) ([]corev2.Resource, error) {
+	entries, err := r.controller.List(ctx, "", "")
+	if err != nil {
+		return nil, err
+	}
+	result := make([]corev2.Resource, 0, len(entries))
+	for _, e := range entries {
+		result = append(result, e)
+	}
+	return result, nil
 }
 
 func (r *SilencedRouter) list(w http.ResponseWriter, req *http.Request) (interface{}, error) {

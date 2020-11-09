@@ -2,6 +2,7 @@ package eventd
 
 import (
 	"context"
+	"time"
 
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	stringsutil "github.com/sensu/sensu-go/util/strings"
@@ -25,9 +26,14 @@ func getSilenced(ctx context.Context, event *corev2.Event, cache Cache) {
 	}
 
 	resources := cache.Get(event.Check.Namespace)
-	entries := make([]*corev2.Silenced, len(resources))
-	for i, resource := range resources {
-		entries[i] = resource.Resource.(*corev2.Silenced)
+	entries := make([]*corev2.Silenced, 0, len(resources))
+	for _, resource := range resources {
+		silenced := resource.Resource.(*corev2.Silenced)
+		if silenced.ExpireAt > 0 && time.Unix(silenced.ExpireAt, 0).Before(time.Now()) {
+			// the entry has expired, and is just a stale cache member
+			continue
+		}
+		entries = append(entries, silenced)
 	}
 
 	// Determine which entries silence this event

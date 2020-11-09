@@ -32,7 +32,7 @@ type RoundRobinIntervalScheduler struct {
 	ctx                    context.Context
 	cancel                 context.CancelFunc
 	interrupt              chan *corev2.CheckConfig
-	ringPool               *ringv2.Pool
+	ringPool               *ringv2.RingPool
 	executor               *CheckExecutor
 	cancels                map[string]ringCancel
 	entityCache            *cachev2.Resource
@@ -41,7 +41,7 @@ type RoundRobinIntervalScheduler struct {
 }
 
 // NewRoundRobinIntervalScheduler initializes a RoundRobinIntervalScheduler
-func NewRoundRobinIntervalScheduler(ctx context.Context, store store.Store, bus messaging.MessageBus, pool *ringv2.Pool, check *corev2.CheckConfig, cache *cachev2.Resource, secretsProviderManager *secrets.ProviderManager) *RoundRobinIntervalScheduler {
+func NewRoundRobinIntervalScheduler(ctx context.Context, store store.Store, bus messaging.MessageBus, pool *ringv2.RingPool, check *corev2.CheckConfig, cache *cachev2.Resource, secretsProviderManager *secrets.ProviderManager) *RoundRobinIntervalScheduler {
 	sched := &RoundRobinIntervalScheduler{
 		store:             store,
 		bus:               bus,
@@ -63,6 +63,9 @@ func NewRoundRobinIntervalScheduler(ctx context.Context, store store.Store, bus 
 	return sched
 }
 
+// this function technically can leak its cancel, but the design makes it
+// difficult to fix, and there are no known issues with it.
+//nolint:govet
 func (s *RoundRobinIntervalScheduler) updateRings() {
 	agentEntitiesRequest := 1
 	if s.check.ProxyRequests != nil {
@@ -92,7 +95,17 @@ func (s *RoundRobinIntervalScheduler) updateRings() {
 		// Create a new watcher
 		ctx, cancel := context.WithCancel(s.ctx)
 		ring := s.ringPool.Get(key)
-		wc := ring.Watch(ctx, s.check.Name, agentEntitiesRequest, int(s.check.Interval), s.check.Cron)
+		sub := ringv2.Subscription{
+			Name:             s.check.Name,
+			Items:            agentEntitiesRequest,
+			IntervalSchedule: int(s.check.Interval),
+			CronSchedule:     s.check.Cron,
+		}
+		if err := sub.Validate(); err != nil {
+			logger.WithField("check", s.check.Name).WithError(err).Error("error scheduling round-robin check")
+			continue
+		}
+		wc := ring.Subscribe(ctx, sub)
 		val := ringCancel{Cancel: cancel, AgentEntitiesRequest: agentEntitiesRequest}
 		go s.handleEvents(s.executor, wc)
 		newCancels[key] = val

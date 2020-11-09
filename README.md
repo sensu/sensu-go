@@ -1,6 +1,6 @@
 # Sensu Go
 
-CircleCI: [![CircleCI Build Status](https://circleci.com/gh/sensu/sensu-go/tree/master.svg?style=svg)](https://circleci.com/gh/sensu/sensu-go/tree/master)
+CircleCI: [![CircleCI Build Status](https://circleci.com/gh/sensu/sensu-go/tree/main.svg?style=svg)](https://circleci.com/gh/sensu/sensu-go/tree/main)
 
 Sensu is an open source monitoring tool for ephemeral infrastructure
 and distributed applications. It is an agent based monitoring system
@@ -38,6 +38,8 @@ platforms (e.g. Debian/Ubuntu, RHEL/Centos, etc), but the easiest way
 to get started is with the official Docker image, sensu/sensu.
 
 See the [installation documentation](https://docs.sensu.io/sensu-go/latest/installation/install-sensu/) to get started.
+
+**NOTE**: Starting with Sensu Go version 6.0, for instances built from source, the web UI is now a [standalone product](https://github.com/sensu/web) — it is no longer included with the Sensu backend. To build the web UI from source, use the [installation instructions](https://github.com/sensu/web/blob/master/INSTALL.md) in the Sensu Go Web repository.
 
 ### Building from source
 

@@ -167,39 +167,20 @@ func (s *Store) UpdateSilencedEntry(ctx context.Context, silenced *corev2.Silenc
 		return &store.ErrNotValid{Err: err}
 	}
 
+	if silenced.ExpireAt == 0 && silenced.Expire > 0 {
+		start := time.Now()
+		if silenced.Begin > 0 {
+			start = time.Unix(silenced.Begin, 0)
+		}
+		silenced.ExpireAt = start.Add(time.Duration(silenced.Expire) * time.Second).Unix()
+	}
+
 	silencedBytes, err := proto.Marshal(silenced)
 	if err != nil {
 		return &store.ErrEncode{Err: err}
 	}
-	var req clientv3.Op
 	cmp := clientv3.Compare(clientv3.Version(getNamespacePath(silenced.Namespace)), ">", 0)
-	if silenced.Expire > 0 {
-		// add expire time to begin time, that is the ttl for the lease
-		var expireTime int64
-		// Check begin time against current time to get an offset for the ttl
-		currentTime := time.Now().Unix()
-		timeDelta := silenced.Begin - currentTime
-		// Add the delta to the expire time unless it is negative (begin time is
-		// in the past)
-		if timeDelta > 0 {
-			expireTime = silenced.Expire + timeDelta
-		} else {
-			expireTime = silenced.Expire
-		}
-
-		var lease *clientv3.LeaseGrantResponse
-		err := kvc.Backoff(ctx).Retry(func(n int) (done bool, err error) {
-			lease, err = s.client.Grant(ctx, expireTime)
-			return kvc.RetryRequest(n, err)
-		})
-		if err != nil {
-			return err
-		}
-
-		req = clientv3.OpPut(GetSilencedPath(ctx, silenced.Name), string(silencedBytes), clientv3.WithLease(lease.ID))
-	} else {
-		req = clientv3.OpPut(GetSilencedPath(ctx, silenced.Name), string(silencedBytes))
-	}
+	req := clientv3.OpPut(GetSilencedPath(ctx, silenced.Name), string(silencedBytes))
 	var res *clientv3.TxnResponse
 	err = kvc.Backoff(ctx).Retry(func(n int) (done bool, err error) {
 		res, err = s.client.Txn(ctx).If(cmp).Then(req).Commit()
@@ -217,45 +198,91 @@ func (s *Store) UpdateSilencedEntry(ctx context.Context, silenced *corev2.Silenc
 
 // arraySilencedEntries is a helper function to unmarshal serialized entries and
 // return them as an array
+//
+// if all is true, then arraySilencedEntries will also return expired entries
 func (s *Store) arraySilencedEntries(ctx context.Context, resp *clientv3.GetResponse) ([]*corev2.Silenced, error) {
 	if len(resp.Kvs) == 0 {
 		return []*corev2.Silenced{}, nil
 	}
-	silencedArray := make([]*corev2.Silenced, len(resp.Kvs))
-	for i, kv := range resp.Kvs {
-		leaseID := clientv3.LeaseID(kv.Lease)
-		ttl, err := s.client.TimeToLive(ctx, leaseID)
-		if err != nil {
-			logger.WithError(err).Error("error setting TTL on silenced")
-			continue
-		}
-		silencedEntry := &corev2.Silenced{}
-		err = unmarshal(kv.Value, silencedEntry)
-		if err != nil {
+	result := make([]*corev2.Silenced, 0, len(resp.Kvs))
+	rejects := []string{}
+	for _, kv := range resp.Kvs {
+		silenced := &corev2.Silenced{}
+		if err := unmarshal(kv.Value, silenced); err != nil {
 			return nil, &store.ErrDecode{Err: err}
 		}
-		silencedEntry.Expire = ttl.TTL
-		silencedArray[i] = silencedEntry
-	}
-	return silencedArray, nil
-}
-
-func (s *Store) arrayTxnSilencedEntries(ctx context.Context, resp *clientv3.TxnResponse) ([]*corev2.Silenced, error) {
-	results := []*corev2.Silenced{}
-	for _, resp := range resp.Responses {
-		for _, kv := range resp.GetResponseRange().Kvs {
+		leaseID := clientv3.LeaseID(kv.Lease)
+		if leaseID > 0 {
+			// legacy expiry mechanism
 			leaseID := clientv3.LeaseID(kv.Lease)
 			ttl, err := s.client.TimeToLive(ctx, leaseID)
 			if err != nil {
 				logger.WithError(err).Error("error setting TTL on silenced")
 				continue
 			}
+			silenced.Expire = ttl.TTL
+			result = append(result, silenced)
+		} else if silenced.ExpireAt > 0 {
+			// new expiry mechanism
+			silenced.Expire = int64(time.Until(time.Unix(silenced.ExpireAt, 0)) / time.Second)
+			if silenced.Expire > 0 {
+				result = append(result, silenced)
+			} else {
+				rejects = append(rejects, silenced.Name)
+			}
+		} else {
+			// no expiry
+			silenced.Expire = -1
+			result = append(result, silenced)
+		}
+	}
+	if len(rejects) > 0 {
+		logger.Infof("deleting %d expired silenced entries", len(rejects))
+		if err := s.DeleteSilencedEntryByName(ctx, rejects...); err != nil {
+			logger.WithError(err).Error("error deleting expired silenced entries")
+		}
+	}
+	return result, nil
+}
+
+func (s *Store) arrayTxnSilencedEntries(ctx context.Context, resp *clientv3.TxnResponse) ([]*corev2.Silenced, error) {
+	results := []*corev2.Silenced{}
+	rejects := []string{}
+	for _, resp := range resp.Responses {
+		for _, kv := range resp.GetResponseRange().Kvs {
 			var silenced corev2.Silenced
 			if err := unmarshal(kv.Value, &silenced); err != nil {
 				return nil, &store.ErrDecode{Err: fmt.Errorf("couldn't get silenced entries: %s", err)}
 			}
-			silenced.Expire = ttl.TTL
-			results = append(results, &silenced)
+			leaseID := clientv3.LeaseID(kv.Lease)
+			if leaseID > 0 {
+				// legacy expiry mechanism
+				ttl, err := s.client.TimeToLive(ctx, leaseID)
+				if err != nil {
+					logger.WithError(err).Error("error setting TTL on silenced")
+					continue
+				}
+				silenced.Expire = ttl.TTL
+				results = append(results, &silenced)
+			} else if silenced.ExpireAt > 0 {
+				// new expiry mechanism
+				silenced.Expire = int64(time.Until(time.Unix(silenced.ExpireAt, 0)) / time.Second)
+				if silenced.Expire > 0 {
+					results = append(results, &silenced)
+				} else {
+					rejects = append(rejects, silenced.Name)
+				}
+			} else {
+				// no expiry
+				silenced.Expire = -1
+				results = append(results, &silenced)
+			}
+		}
+	}
+	if len(rejects) > 0 {
+		logger.Infof("deleting %d expired silenced entries", len(rejects))
+		if err := s.DeleteSilencedEntryByName(ctx, rejects...); err != nil {
+			logger.WithError(err).Error("error deleting expired silenced entries")
 		}
 	}
 	return results, nil

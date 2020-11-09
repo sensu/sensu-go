@@ -23,6 +23,7 @@ import (
 )
 
 func newTessendTest(t *testing.T) *Tessend {
+	t.Helper()
 	bus, err := messaging.NewWizardBus(messaging.WizardBusConfig{})
 	require.NoError(t, err)
 	require.NoError(t, bus.Start())
@@ -43,10 +44,12 @@ func newTessendTest(t *testing.T) *Tessend {
 	tessend, err := New(
 		context.Background(),
 		Config{
-			Store:    s,
-			Client:   client,
-			RingPool: ringv2.NewPool(client),
-			Bus:      bus,
+			Store:  s,
+			Client: client,
+			RingPool: ringv2.NewRingPool(func(path string) ringv2.Interface {
+				return ringv2.New(client, path)
+			}),
+			Bus: bus,
 		})
 	tessend.duration = 5 * time.Millisecond
 	tessend.config = corev2.DefaultTessenConfig()
@@ -55,6 +58,7 @@ func newTessendTest(t *testing.T) *Tessend {
 }
 
 func TestTessendBus(t *testing.T) {
+	t.Parallel()
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		assert.NotEmpty(t, r.Body)
 		w.WriteHeader(http.StatusOK)
@@ -71,6 +75,7 @@ func TestTessendBus(t *testing.T) {
 }
 
 func TestTessendBusMetrics(t *testing.T) {
+	t.Parallel()
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		assert.NotEmpty(t, r.Body)
 		w.WriteHeader(http.StatusOK)
@@ -92,6 +97,7 @@ func TestTessendBusMetrics(t *testing.T) {
 }
 
 func TestTessend200(t *testing.T) {
+	t.Parallel()
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("tessen-reporting-interval", "1800")
 		assert.NotEmpty(t, r.Body)
@@ -109,6 +115,7 @@ func TestTessend200(t *testing.T) {
 }
 
 func TestTessend200InvalidHeaderKey(t *testing.T) {
+	t.Parallel()
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("foo", "1800")
 		assert.NotEmpty(t, r.Body)
@@ -126,6 +133,7 @@ func TestTessend200InvalidHeaderKey(t *testing.T) {
 }
 
 func TestTessend200InvalidHeaderValue(t *testing.T) {
+	t.Parallel()
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("tessen-reporting-interval", "216000")
 		assert.NotEmpty(t, r.Body)
@@ -143,6 +151,7 @@ func TestTessend200InvalidHeaderValue(t *testing.T) {
 }
 
 func TestTessend500(t *testing.T) {
+	t.Parallel()
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		assert.NotEmpty(t, r.Body)
 		w.WriteHeader(http.StatusInternalServerError)
@@ -158,6 +167,7 @@ func TestTessend500(t *testing.T) {
 }
 
 func TestTessendEnabled(t *testing.T) {
+	t.Parallel()
 	tessen := corev2.DefaultTessenConfig()
 	tessend := newTessendTest(t)
 	require.True(t, tessend.enabled())
@@ -167,6 +177,7 @@ func TestTessendEnabled(t *testing.T) {
 }
 
 func TestInternalTag(t *testing.T) {
+	t.Parallel()
 	mp := &corev2.MetricPoint{
 		Name:  "test_metric",
 		Value: 5,
@@ -182,6 +193,7 @@ func TestInternalTag(t *testing.T) {
 }
 
 func TestGetEntityClassCounts(t *testing.T) {
+	t.Parallel()
 	tessend := newTessendTest(t)
 	now := time.Now().Unix()
 
