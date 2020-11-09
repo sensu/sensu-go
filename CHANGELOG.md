@@ -13,6 +13,10 @@ created when in interactive mode.
 - Build info is now exposed as a prometheus metric via the /metrics endpoint.
 - Added `/health` endpoint to agentd.
 
+### Changed
+- Adjust the date and duration formats used when listing and displaying silenced
+entries in sensuctl.
+
 ### [6.1.2] - 2020-10-28
 
 ### Fixed

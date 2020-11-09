@@ -1,8 +1,14 @@
 package silenced
 
 import (
+	"time"
+
 	"github.com/sensu/sensu-go/cli"
 	"github.com/spf13/cobra"
+)
+
+const (
+	timeFormat = time.RFC3339
 )
 
 // HelpCommand displays help

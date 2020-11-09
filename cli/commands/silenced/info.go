@@ -49,13 +49,22 @@ func InfoCommand(cli *cli.SensuCli) *cobra.Command {
 
 }
 
-func expireTime(beginTS, expireSeconds int64) time.Duration {
-	begin := time.Unix(beginTS, 0)
-	expire := time.Duration(expireSeconds) * time.Second
-	if time.Now().Before(begin) {
-		return (expire - time.Until(begin)).Truncate(time.Second)
+func expireTime(beginTS, expireSeconds int64) string {
+	// If we have no expiration, return -1
+	if expireSeconds == -1 {
+		return "-1"
 	}
-	return time.Duration(expireSeconds) * time.Second
+
+	begin := time.Unix(beginTS, 0)
+	if time.Now().Before(begin) {
+		// If the silenced entry is not yet in effect, because the being timestamp
+		// is in the future, display the full expiration date as RFC3339
+		expire := begin.Add(time.Duration(expireSeconds) * time.Second)
+		return expire.Format(timeFormat)
+	}
+
+	// If the silenced entry is in effect, display its configured duration
+	return (time.Duration(expireSeconds) * time.Second).String()
 }
 
 func printToList(v interface{}, writer io.Writer) error {
@@ -68,7 +77,7 @@ func printToList(v interface{}, writer io.Writer) error {
 		Rows: []*list.Row{
 			{
 				Label: "Expire",
-				Value: expireTime(r.Begin, r.Expire).String(),
+				Value: expireTime(r.Begin, r.Expire),
 			},
 			{
 				Label: "ExpireOnResolve",
@@ -99,7 +108,7 @@ func printToList(v interface{}, writer io.Writer) error {
 	if time.Now().Before(time.Unix(r.Begin, 0)) {
 		extraRows := []*list.Row{{
 			Label: "Begin",
-			Value: time.Unix(r.Begin, 0).Format(time.RFC822),
+			Value: time.Unix(r.Begin, 0).Format(timeFormat),
 		}}
 		cfg.Rows = append(extraRows, cfg.Rows...)
 	}
