@@ -12,6 +12,8 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 created when in interactive mode.
 - Build info is now exposed as a prometheus metric via the /metrics endpoint.
 - Added `/health` endpoint to agentd.
+- Add support for environment variables to define configuration file paths of
+sensu-backend (`SENSU_BACKEND_CONFIG_FILE`) & sensu-agent (`SENSU_CONFIG_FILE`).
 
 ### Changed
 - Adjust the date and duration formats used when listing and displaying silenced
