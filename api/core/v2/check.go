@@ -124,6 +124,7 @@ func NewCheck(c *CheckConfig) *Check {
 		EnvVars:              c.EnvVars,
 		DiscardOutput:        c.DiscardOutput,
 		MaxOutputSize:        c.MaxOutputSize,
+		Scheduler:            c.Scheduler,
 	}
 	if check.Labels == nil {
 		check.Labels = make(map[string]string)

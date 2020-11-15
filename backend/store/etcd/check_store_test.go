@@ -50,3 +50,52 @@ func TestCheckConfigStorage(t *testing.T) {
 		assert.Error(t, err)
 	})
 }
+
+func TestCheckConfigSchedulerProperty(t *testing.T) {
+	testWithEtcd(t, func(s store.Store) {
+		check := corev2.FixtureCheckConfig("interval")
+		rrCheck := corev2.FixtureCheckConfig("roundrobin-interval")
+		rrCheck.RoundRobin = true
+
+		ctx := context.WithValue(context.Background(), corev2.NamespaceKey, check.Namespace)
+		pred := &store.SelectionPredicate{}
+
+		if err := s.UpdateCheckConfig(ctx, check); err != nil {
+			t.Fatal(err)
+		}
+
+		if err := s.UpdateCheckConfig(ctx, rrCheck); err != nil {
+			t.Fatal(err)
+		}
+
+		checks, err := s.GetCheckConfigs(ctx, pred)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		for _, check := range checks {
+			if check.Scheduler == "" {
+				t.Errorf("expected non-zero scheduler for %q", check.Name)
+			}
+		}
+
+		chk, err := s.GetCheckConfigByName(ctx, "interval")
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		if got, want := chk.Scheduler, corev2.MemoryScheduler; got != want {
+			t.Errorf("bad scheduler: got %q, want %q", got, want)
+		}
+
+		chk, err = s.GetCheckConfigByName(ctx, "roundrobin-interval")
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		if got, want := chk.Scheduler, corev2.EtcdScheduler; got != want {
+			t.Errorf("bad scheduler: got %q, want %q", got, want)
+		}
+
+	})
+}
