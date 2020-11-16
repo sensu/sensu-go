@@ -18,6 +18,7 @@ import (
 // on a single entity at a time.
 type RoundRobinCronScheduler struct {
 	lastCronState string
+	lastScheduler string
 	check         *corev2.CheckConfig
 	store         store.Store
 	bus           messaging.MessageBus
@@ -102,13 +103,13 @@ func (s *RoundRobinCronScheduler) start() {
 		case check := <-s.interrupt:
 			s.check = check
 			if s.toggleSchedule() {
-				s.logger.Info("cron schedule updated")
+				s.logger.Debug("cron schedule updated")
 				s.updateRings()
 			}
 		case <-entityWatcher:
 			if s.check.ProxyRequests != nil {
 				// The set of proxy entities to consider may have changed
-				s.logger.Info("proxy entities updated")
+				s.logger.Debug("proxy entities updated")
 				s.updateRings()
 			}
 		}
@@ -194,16 +195,21 @@ func (s *RoundRobinCronScheduler) toggleSchedule() (stateChanged bool) {
 	defer s.setLastState()
 
 	if s.lastCronState != s.check.Cron {
-		s.logger.Info("cron schedule has changed")
+		s.logger.Debug("cron schedule has changed")
 		return true
 	}
-	s.logger.Info("cron schedule has not changed")
+	if s.lastScheduler != s.check.Scheduler {
+		s.logger.Debug("cron schedule has changed")
+		return true
+	}
+	s.logger.Debug("cron schedule has not changed")
 	return false
 }
 
 // Update the CronScheduler with the last schedule states
 func (s *RoundRobinCronScheduler) setLastState() {
 	s.lastCronState = s.check.Cron
+	s.lastScheduler = s.check.Scheduler
 }
 
 // Interrupt refreshes the scheduler with a revised check config.

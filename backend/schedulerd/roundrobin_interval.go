@@ -25,6 +25,7 @@ type ringCancel struct {
 type RoundRobinIntervalScheduler struct {
 	lastIntervalState      uint32
 	lastSubscriptionsState []string
+	lastScheduler          string
 	check                  *corev2.CheckConfig
 	store                  store.Store
 	bus                    messaging.MessageBus
@@ -217,6 +218,10 @@ func (s *RoundRobinIntervalScheduler) toggleSchedule() (stateChanged bool) {
 		s.logger.Debug("subscriptions have changed")
 		return true
 	}
+	if s.lastScheduler != s.check.Scheduler {
+		s.logger.Debug("scheduler backend has changed")
+		return true
+	}
 	s.logger.Debug("check schedule has not changed")
 	return false
 }
@@ -225,6 +230,7 @@ func (s *RoundRobinIntervalScheduler) toggleSchedule() (stateChanged bool) {
 func (s *RoundRobinIntervalScheduler) setLastState() {
 	s.lastIntervalState = s.check.Interval
 	s.lastSubscriptionsState = s.check.Subscriptions
+	s.lastScheduler = s.check.Scheduler
 }
 
 // Interrupt refreshes the scheduler with a revised check config.
