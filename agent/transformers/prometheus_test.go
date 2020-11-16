@@ -3,7 +3,8 @@ package transformers
 import (
 	"math"
 	"testing"
-	"time"
+
+	time "github.com/echlebek/timeproxy"
 
 	"github.com/prometheus/common/model"
 	"github.com/sensu/sensu-go/types"
