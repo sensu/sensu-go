@@ -12,6 +12,7 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 created when in interactive mode.
 - Build info is now exposed as a prometheus metric via the /metrics endpoint.
 - Added `/health` endpoint to agentd.
+- Added the Scheduler field to Check and CheckConfig.
 
 ### Changed
 - Adjust the date and duration formats used when listing and displaying silenced
