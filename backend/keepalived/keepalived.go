@@ -637,17 +637,19 @@ func (k *Keepalived) handleUpdate(e *corev2.Event) error {
 			}
 			tctx, cancel := context.WithTimeout(ctx, k.storeTimeout)
 			defer cancel()
+			lager := logger.WithFields(logrus.Fields{
+				"entity":       entity.Name,
+				"namespace":    entity.Namespace,
+				"subscription": sub,
+				"timeout":      time.Duration(e.Check.Timeout) * time.Second,
+			})
 			if err := ring.Add(tctx, entity.Name, int64(e.Check.Timeout)); err != nil {
-				lager := logger.WithFields(logrus.Fields{
-					"entity":       entity.Name,
-					"namespace":    entity.Namespace,
-					"subscription": sub,
-					"timeout":      time.Duration(e.Check.Timeout) * time.Second,
-				})
 				lager.WithError(err).Error("error adding entity to ring")
 				if _, ok := err.(*store.ErrInternal); ok {
 					return err
 				}
+			} else {
+				lager.Info("added entity to ring")
 			}
 		}
 	}
