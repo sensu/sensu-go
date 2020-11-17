@@ -642,6 +642,7 @@ func (k *Keepalived) handleUpdate(e *corev2.Event) error {
 					"entity":       entity.Name,
 					"namespace":    entity.Namespace,
 					"subscription": sub,
+					"timeout":      time.Duration(e.Check.Timeout) * time.Second,
 				})
 				lager.WithError(err).Error("error adding entity to ring")
 				if _, ok := err.(*store.ErrInternal); ok {
