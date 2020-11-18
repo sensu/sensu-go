@@ -13,7 +13,7 @@ import (
 	"github.com/spf13/pflag"
 )
 
-type configureAnswers struct {
+type Answers struct {
 	URL                   string `survey:"url"`
 	Username              string `survey:"username"`
 	Password              string
@@ -52,102 +52,27 @@ func Command(cli *cli.SensuCli) *cobra.Command {
 				return err
 			}
 
-			answers := &configureAnswers{}
-
+			answers := &Answers{}
 			if nonInteractive {
-				answers.withFlags(flags)
+				answers.WithFlags(flags)
 			} else {
-				if err = answers.administerQuestionnaire(cli.Config); err != nil {
+				if err = answers.AdministerQuestionnaire(cli.Config); err != nil {
 					return err
 				}
 			}
 
-			// Write new API URL to disk
-			if err = cli.Config.SaveAPIUrl(answers.URL); err != nil {
+			// First save the API URL
+			if err := SaveAPIURL(cli, cmd, answers); err != nil {
 				fmt.Fprintln(cmd.OutOrStderr())
-				return fmt.Errorf(
-					"unable to write new configuration file with error: %s",
-					err,
-				)
+				return err
 			}
 
-			// Authenticate
-			tokens, err := cli.Client.CreateAccessToken(
-				answers.URL, answers.Username, answers.Password,
-			)
-			if err != nil {
+			if err := Authenticate(cli, answers); err != nil {
 				fmt.Fprintln(cmd.OutOrStderr())
-				return fmt.Errorf("unable to authenticate with error: %s", err)
-			} else if tokens == nil {
-				fmt.Fprintln(cmd.OutOrStderr())
-				return fmt.Errorf("bad username or password")
+				return err
 			}
 
-			// Write new credentials to disk
-			if err = cli.Config.SaveTokens(tokens); err != nil {
-				fmt.Fprintln(cmd.OutOrStderr())
-				return fmt.Errorf(
-					"unable to write new configuration file with error: %s",
-					err,
-				)
-			}
-
-			// Write CLI preferences to disk
-			if err = cli.Config.SaveFormat(answers.Format); err != nil {
-				fmt.Fprintln(cmd.OutOrStderr())
-				return fmt.Errorf(
-					"unable to write new configuration file with error: %s",
-					err,
-				)
-			}
-
-			if err = cli.Config.SaveNamespace(answers.Namespace); err != nil {
-				fmt.Fprintln(cmd.OutOrStderr())
-				return fmt.Errorf(
-					"unable to write new configuration file with error: %s",
-					err,
-				)
-			}
-
-			// Write the TLS preferences to disk
-			if value, err := flags.GetBool("insecure-skip-tls-verify"); err == nil {
-				if err = cli.Config.SaveInsecureSkipTLSVerify(value); err != nil {
-					fmt.Fprintln(cmd.OutOrStderr())
-					return fmt.Errorf(
-						"unable to write new configuration file with error: %s",
-						err,
-					)
-				}
-			}
-			if value, err := flags.GetString("trusted-ca-file"); err == nil {
-				if err = cli.Config.SaveTrustedCAFile(value); err != nil {
-					fmt.Fprintln(cmd.OutOrStderr())
-					return fmt.Errorf(
-						"unable to write new configuration file with error: %s",
-						err,
-					)
-				}
-			}
-
-			if value, err := flags.GetString("timeout"); err == nil {
-				duration, err := time.ParseDuration(value)
-				if err != nil {
-					fmt.Fprintln(cmd.OutOrStderr())
-					return fmt.Errorf(
-						"unable to parse timeout with error: %s",
-						err,
-					)
-				}
-				if err = cli.Config.SaveTimeout(duration); err != nil {
-					fmt.Fprintln(cmd.OutOrStderr())
-					return fmt.Errorf(
-						"unable to write new configuration file with error: %s",
-						err,
-					)
-				}
-			}
-
-			return nil
+			return SaveConfig(cli, cmd, answers, flags)
 		},
 		Annotations: map[string]string{
 			// We want to be able to run this command regardless of whether the CLI
@@ -156,6 +81,12 @@ func Command(cli *cli.SensuCli) *cobra.Command {
 		},
 	}
 
+	AddFlags(cli, cmd)
+
+	return cmd
+}
+
+func AddFlags(cli *cli.SensuCli, cmd *cobra.Command) {
 	_ = cmd.Flags().BoolP("non-interactive", "n", false, "do not administer interactive questionnaire")
 	_ = cmd.Flags().StringP("url", "", cli.Config.APIUrl(), "the sensu backend url")
 	_ = cmd.Flags().StringP("username", "", "", "username")
@@ -163,23 +94,21 @@ func Command(cli *cli.SensuCli) *cobra.Command {
 	_ = cmd.Flags().StringP("format", "", cli.Config.Format(), "preferred output format")
 	_ = cmd.Flags().StringP("namespace", "", cli.Config.Namespace(), "namespace")
 	_ = cmd.Flags().DurationP("timeout", "", cli.Config.Timeout(), "timeout when communicating with backend url")
-
-	return cmd
 }
 
-func (answers *configureAnswers) administerQuestionnaire(c config.Config) error {
+func (answers *Answers) AdministerQuestionnaire(c config.Config) error {
 	qs := []*survey.Question{
-		askForURL(c),
-		askForUsername(),
-		askForPassword(),
-		askForNamespace(c),
-		askForDefaultFormat(c),
+		AskForURL(c),
+		AskForUsername(),
+		AskForPassword(),
+		AskForNamespace(c),
+		AskForDefaultFormat(c),
 	}
 
 	return survey.Ask(qs, answers)
 }
 
-func (answers *configureAnswers) withFlags(flags *pflag.FlagSet) {
+func (answers *Answers) WithFlags(flags *pflag.FlagSet) {
 	answers.URL, _ = flags.GetString("url")
 	answers.Username, _ = flags.GetString("username")
 	answers.Password, _ = flags.GetString("password")
@@ -188,7 +117,7 @@ func (answers *configureAnswers) withFlags(flags *pflag.FlagSet) {
 	answers.Timeout, _ = flags.GetDuration("timeout")
 }
 
-func askForURL(c config.Config) *survey.Question {
+func AskForURL(c config.Config) *survey.Question {
 	url := c.APIUrl()
 
 	return &survey.Question{
@@ -200,7 +129,7 @@ func askForURL(c config.Config) *survey.Question {
 	}
 }
 
-func askForUsername() *survey.Question {
+func AskForUsername() *survey.Question {
 	return &survey.Question{
 		Name: "username",
 		Prompt: &survey.Input{
@@ -210,14 +139,14 @@ func askForUsername() *survey.Question {
 	}
 }
 
-func askForPassword() *survey.Question {
+func AskForPassword() *survey.Question {
 	return &survey.Question{
 		Name:   "password",
 		Prompt: &survey.Password{Message: "Password:"},
 	}
 }
 
-func askForDefaultFormat(c config.Config) *survey.Question {
+func AskForDefaultFormat(c config.Config) *survey.Question {
 	format := c.Format()
 
 	return &survey.Question{
@@ -235,7 +164,7 @@ func askForDefaultFormat(c config.Config) *survey.Question {
 	}
 }
 
-func askForNamespace(c config.Config) *survey.Question {
+func AskForNamespace(c config.Config) *survey.Question {
 	namespace := c.Namespace()
 
 	return &survey.Question{
@@ -245,4 +174,92 @@ func askForNamespace(c config.Config) *survey.Question {
 			Default: namespace,
 		},
 	}
+}
+
+func Authenticate(cli *cli.SensuCli, answers *Answers) error {
+	// Authenticate
+	tokens, err := cli.Client.CreateAccessToken(
+		answers.URL, answers.Username, answers.Password,
+	)
+	if err != nil {
+		return fmt.Errorf("unable to authenticate with error: %s", err)
+	} else if tokens == nil {
+		return fmt.Errorf("bad username or password")
+	}
+
+	// Write new credentials to disk
+	if err = cli.Config.SaveTokens(tokens); err != nil {
+		return fmt.Errorf(
+			"unable to write new configuration file with error: %s",
+			err,
+		)
+	}
+
+	return nil
+}
+
+// SaveAPIURL saves the backend API URL
+func SaveAPIURL(cli *cli.SensuCli, cmd *cobra.Command, answers *Answers) error {
+	// Write new API URL to disk
+	if err := cli.Config.SaveAPIUrl(answers.URL); err != nil {
+		return fmt.Errorf(
+			"unable to write new configuration file with error: %s",
+			err,
+		)
+	}
+	return nil
+}
+
+// SaveConfig writes to disk the user preferences
+func SaveConfig(cli *cli.SensuCli, cmd *cobra.Command, answers *Answers, flags *pflag.FlagSet) error {
+	// Write CLI preferences to disk
+	if err := cli.Config.SaveFormat(answers.Format); err != nil {
+		return fmt.Errorf(
+			"unable to write new configuration file with error: %s",
+			err,
+		)
+	}
+
+	if err := cli.Config.SaveNamespace(answers.Namespace); err != nil {
+		return fmt.Errorf(
+			"unable to write new configuration file with error: %s",
+			err,
+		)
+	}
+
+	// Write the TLS preferences to disk
+	if value, err := flags.GetBool("insecure-skip-tls-verify"); err == nil {
+		if err = cli.Config.SaveInsecureSkipTLSVerify(value); err != nil {
+			return fmt.Errorf(
+				"unable to write new configuration file with error: %s",
+				err,
+			)
+		}
+	}
+	if value, err := flags.GetString("trusted-ca-file"); err == nil {
+		if err = cli.Config.SaveTrustedCAFile(value); err != nil {
+			return fmt.Errorf(
+				"unable to write new configuration file with error: %s",
+				err,
+			)
+		}
+	}
+
+	if value, err := flags.GetString("timeout"); err == nil {
+		duration, err := time.ParseDuration(value)
+		if err != nil {
+			return fmt.Errorf(
+				"unable to parse timeout with error: %s",
+				err,
+			)
+		}
+		if err = cli.Config.SaveTimeout(duration); err != nil {
+			return fmt.Errorf(
+				"unable to write new configuration file with error: %s",
+				err,
+			)
+		}
+	}
+
+	return nil
 }
