@@ -219,10 +219,10 @@ func (s *RoundRobinIntervalScheduler) toggleSchedule() (stateChanged bool) {
 		return true
 	}
 	if s.lastScheduler != s.check.Scheduler {
-		s.logger.Debug("scheduler backend has changed")
+		s.logger.WithField("previous_scheduler", s.lastScheduler).WithField("new scheduler", s.check.Scheduler).Info("scheduler backend has changed")
 		return true
 	}
-	s.logger.Debug("check schedule has not changed")
+	s.logger.Debug("interval schedule has not changed")
 	return false
 }
 

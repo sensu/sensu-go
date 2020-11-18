@@ -199,7 +199,7 @@ func (s *RoundRobinCronScheduler) toggleSchedule() (stateChanged bool) {
 		return true
 	}
 	if s.lastScheduler != s.check.Scheduler {
-		s.logger.Debug("cron schedule has changed")
+		s.logger.WithField("previous_scheduler", s.lastScheduler).WithField("new scheduler", s.check.Scheduler).Info("scheduler backend has changed")
 		return true
 	}
 	s.logger.Debug("cron schedule has not changed")
