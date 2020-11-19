@@ -9,6 +9,7 @@ import (
 	"os"
 	"os/signal"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"syscall"
 
@@ -284,6 +285,7 @@ func StartCommand(initialize InitializeFunc) *cobra.Command {
 
 			if viper.GetBool(flagDebug) {
 				go func() {
+					runtime.SetBlockProfileRate(1)
 					log.Println(http.ListenAndServe("127.0.0.1:6060", nil))
 				}()
 			}
