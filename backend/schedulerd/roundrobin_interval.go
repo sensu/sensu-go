@@ -17,7 +17,13 @@ import (
 
 type ringCancel struct {
 	AgentEntitiesRequest int
-	Cancel               context.CancelFunc
+	cancel               context.CancelFunc
+	wg                   *sync.WaitGroup
+}
+
+func (r ringCancel) Cancel() {
+	r.cancel()
+	r.wg.Wait()
 }
 
 // RoundRobinIntervalScheduler schedules checks with a determined interval on a
@@ -81,6 +87,11 @@ func (s *RoundRobinIntervalScheduler) updateRings() {
 			return
 		}
 	}
+	// clean up old watchers synchronously
+	for key, watcher := range s.cancels {
+		s.logger.WithField("ring", key).Debug("cancelling old ring watcher")
+		watcher.Cancel()
+	}
 	newCancels := make(map[string]ringCancel)
 	for _, sub := range s.check.Subscriptions {
 		key := ringv2.Path(s.check.Namespace, sub)
@@ -100,14 +111,11 @@ func (s *RoundRobinIntervalScheduler) updateRings() {
 			continue
 		}
 		wc := ring.Subscribe(ctx, sub)
-		val := ringCancel{Cancel: cancel, AgentEntitiesRequest: agentEntitiesRequest}
-		go s.handleEvents(s.executor, wc)
+		wg := new(sync.WaitGroup)
+		wg.Add(1)
+		val := ringCancel{cancel: cancel, AgentEntitiesRequest: agentEntitiesRequest, wg: wg}
+		go s.handleEvents(s.executor, wc, wg)
 		newCancels[key] = val
-	}
-	// clean up any remaining watchers that are no longer valid
-	for key, watcher := range s.cancels {
-		s.logger.WithField("ring", key).Debug("cancelling old ring watcher")
-		watcher.Cancel()
 	}
 	s.cancels = newCancels
 }
@@ -118,7 +126,8 @@ func (s *RoundRobinIntervalScheduler) Start() {
 	go s.start()
 }
 
-func (s *RoundRobinIntervalScheduler) handleEvents(executor *CheckExecutor, ch <-chan ringv2.Event) {
+func (s *RoundRobinIntervalScheduler) handleEvents(executor *CheckExecutor, ch <-chan ringv2.Event, wg *sync.WaitGroup) {
+	defer wg.Done()
 	for event := range ch {
 		s.handleEvent(executor, event)
 	}
