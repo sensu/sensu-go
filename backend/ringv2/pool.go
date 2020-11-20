@@ -76,10 +76,6 @@ func (r *RingPool) Del(path string) {
 	delete(r.rings, path)
 }
 
-type closer interface {
-	Close() error
-}
-
 // SetNewFunc sets the newer function for the ring pool. It results in the
 // pool being cleared.
 func (r *RingPool) SetNewFunc(fn NewFunc) {
