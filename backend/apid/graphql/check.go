@@ -217,12 +217,8 @@ func (r *checkImpl) ToJSON(p graphql.ResolveParams) (interface{}, error) {
 // Implement CheckHistoryFieldResolvers
 //
 
-type checkHistoryImpl struct{}
-
-// Status implements response to request for 'status' field.
-func (r *checkHistoryImpl) Status(p graphql.ResolveParams) (interface{}, error) {
-	h := p.Source.(corev2.CheckHistory)
-	return h.Status, nil
+type checkHistoryImpl struct {
+	schema.CheckHistoryAliases
 }
 
 // Executed implements response to request for 'executed' field.
