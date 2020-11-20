@@ -2501,6 +2501,12 @@ type CheckHistoryExecutedFieldResolver interface {
 	Executed(p graphql.ResolveParams) (time.Time, error)
 }
 
+// CheckHistoryFlappingFieldResolver implement to resolve requests for the CheckHistory's flapping field.
+type CheckHistoryFlappingFieldResolver interface {
+	// Flapping implements response to request for flapping field.
+	Flapping(p graphql.ResolveParams) (bool, error)
+}
+
 //
 // CheckHistoryFieldResolvers represents a collection of methods whose products represent the
 // response values of the 'CheckHistory' type.
@@ -2565,6 +2571,7 @@ type CheckHistoryExecutedFieldResolver interface {
 type CheckHistoryFieldResolvers interface {
 	CheckHistoryStatusFieldResolver
 	CheckHistoryExecutedFieldResolver
+	CheckHistoryFlappingFieldResolver
 }
 
 // CheckHistoryAliases implements all methods on CheckHistoryFieldResolvers interface by using reflection to
@@ -2633,6 +2640,19 @@ func (_ CheckHistoryAliases) Executed(p graphql.ResolveParams) (time.Time, error
 	return ret, err
 }
 
+// Flapping implements response to request for 'flapping' field.
+func (_ CheckHistoryAliases) Flapping(p graphql.ResolveParams) (bool, error) {
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	ret, ok := val.(bool)
+	if err != nil {
+		return ret, err
+	}
+	if !ok {
+		return ret, errors.New("unable to coerce value for field 'flapping'")
+	}
+	return ret, err
+}
+
 // CheckHistoryType CheckHistory is a record of a check execution and its status
 var CheckHistoryType = graphql.NewType("CheckHistory", graphql.ObjectKind)
 
@@ -2654,6 +2674,13 @@ func _ObjTypeCheckHistoryExecutedHandler(impl interface{}) graphql1.FieldResolve
 	}
 }
 
+func _ObjTypeCheckHistoryFlappingHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(CheckHistoryFlappingFieldResolver)
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Flapping(frp)
+	}
+}
+
 func _ObjectTypeCheckHistoryConfigFn() graphql1.ObjectConfig {
 	return graphql1.ObjectConfig{
 		Description: "CheckHistory is a record of a check execution and its status",
@@ -2664,6 +2691,13 @@ func _ObjectTypeCheckHistoryConfigFn() graphql1.ObjectConfig {
 				Description:       "Executed describes the time in which the check request was executed",
 				Name:              "executed",
 				Type:              graphql1.NewNonNull(graphql1.DateTime),
+			},
+			"flapping": &graphql1.Field{
+				Args:              graphql1.FieldConfigArgument{},
+				DeprecationReason: "",
+				Description:       "Flapping describes whether the check was flapping at this particular\npoint in time. Comparing this value to the current flapping status allows\nfilters to trigger only on start and end of flapping.",
+				Name:              "flapping",
+				Type:              graphql1.NewNonNull(graphql1.Boolean),
 			},
 			"status": &graphql1.Field{
 				Args:              graphql1.FieldConfigArgument{},
@@ -2691,6 +2725,7 @@ var _ObjectTypeCheckHistoryDesc = graphql.ObjectDesc{
 	Config: _ObjectTypeCheckHistoryConfigFn,
 	FieldHandlers: map[string]graphql.FieldHandler{
 		"executed": _ObjTypeCheckHistoryExecutedHandler,
+		"flapping": _ObjTypeCheckHistoryFlappingHandler,
 		"status":   _ObjTypeCheckHistoryStatusHandler,
 	},
 }

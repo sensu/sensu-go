@@ -280,6 +280,13 @@ type CheckHistory {
 
   "Executed describes the time in which the check request was executed"
   executed: DateTime!
+
+  """
+  Flapping describes whether the check was flapping at this particular
+  point in time. Comparing this value to the current flapping status allows
+  filters to trigger only on start and end of flapping.
+  """
+  flapping: Boolean!
 }
 
 """
