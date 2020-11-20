@@ -86,13 +86,5 @@ func (r *RingPool) SetNewFunc(fn NewFunc) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 	r.newf = fn
-	for _, ring := range r.rings {
-		// if the ring is an implementation that can be closed, close it
-		if closer, ok := ring.(closer); ok {
-			if err := closer.Close(); err != nil {
-				logger.WithError(err).Error("error closing ring")
-			}
-		}
-	}
 	r.rings = make(map[string]Interface, len(r.rings))
 }
