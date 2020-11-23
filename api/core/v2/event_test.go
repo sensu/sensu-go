@@ -539,6 +539,40 @@ func TestEventsByTimestamp(t *testing.T) {
 	}
 }
 
+func TestEventsByEntity(t *testing.T) {
+	a1 := FixtureEvent("a", "a")
+	a2 := FixtureEvent("a", "b")
+	b1 := FixtureEvent("b", "a")
+	b2 := FixtureEvent("b", "b")
+
+	testCases := []struct {
+		name     string
+		inEvents []*Event
+		inDir    bool
+		expected []*Event
+	}{
+		{
+			name:     "Sorts ascending",
+			inDir:    true,
+			inEvents: []*Event{b1, a2, a1, b2},
+			expected: []*Event{a1, a2, b1, b2},
+		},
+		{
+			name:     "Sorts descending",
+			inDir:    false,
+			inEvents: []*Event{b1, a2, a1, b2},
+			expected: []*Event{b2, b1, a2, a1},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			sort.Sort(EventsByEntity(tc.inEvents, tc.inDir))
+			assert.EqualValues(t, tc.expected, tc.inEvents)
+		})
+	}
+}
+
 func TestSilencedBy(t *testing.T) {
 	testCases := []struct {
 		name            string
