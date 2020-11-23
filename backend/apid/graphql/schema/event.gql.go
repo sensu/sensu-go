@@ -843,10 +843,12 @@ type EventsListOrder string
 
 // EventsListOrders holds enum values
 var EventsListOrders = _EnumTypeEventsListOrderValues{
-	LASTOK:   "LASTOK",
-	NEWEST:   "NEWEST",
-	OLDEST:   "OLDEST",
-	SEVERITY: "SEVERITY",
+	ENTITY:      "ENTITY",
+	ENTITY_DESC: "ENTITY_DESC",
+	LASTOK:      "LASTOK",
+	NEWEST:      "NEWEST",
+	OLDEST:      "OLDEST",
+	SEVERITY:    "SEVERITY",
 }
 
 // EventsListOrderType Describes ways in which a list of events can be ordered.
@@ -861,6 +863,16 @@ func _EnumTypeEventsListOrderConfigFn() graphql1.EnumConfig {
 		Description: "Describes ways in which a list of events can be ordered.",
 		Name:        "EventsListOrder",
 		Values: graphql1.EnumValueConfigMap{
+			"ENTITY": &graphql1.EnumValueConfig{
+				DeprecationReason: "",
+				Description:       "self descriptive",
+				Value:             "ENTITY",
+			},
+			"ENTITY_DESC": &graphql1.EnumValueConfig{
+				DeprecationReason: "",
+				Description:       "self descriptive",
+				Value:             "ENTITY_DESC",
+			},
 			"LASTOK": &graphql1.EnumValueConfig{
 				DeprecationReason: "",
 				Description:       "self descriptive",
@@ -897,4 +909,8 @@ type _EnumTypeEventsListOrderValues struct {
 	OLDEST EventsListOrder
 	// SEVERITY - self descriptive
 	SEVERITY EventsListOrder
+	// ENTITY - self descriptive
+	ENTITY EventsListOrder
+	// ENTITY_DESC - self descriptive
+	ENTITY_DESC EventsListOrder
 }

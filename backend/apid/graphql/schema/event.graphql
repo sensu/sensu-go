@@ -74,4 +74,6 @@ enum EventsListOrder {
   NEWEST
   OLDEST
   SEVERITY
+  ENTITY
+  ENTITY_DESC
 }
