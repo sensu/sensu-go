@@ -213,7 +213,7 @@ func EventsByTimestamp(es []*Event, asc bool) sort.Interface {
 // last received an OK status.
 func EventsByLastOk(es []*Event) sort.Interface {
 	return &eventSorter{es, createCmpEvents(
-		cmpByIncident,
+		cmpByState,
 		cmpByLastOk,
 		cmpByUniqueComponents,
 	)}
@@ -254,10 +254,16 @@ func cmpBySeverity(a, b *Event) int {
 	return -1
 }
 
-func cmpByIncident(a, b *Event) int {
-	av, bv := a.IsIncident(), b.IsIncident()
+func cmpByState(a, b *Event) int {
+	var av, bv bool
+	if a.Check != nil {
+		av = a.Check.State != EventPassingState
+	}
+	if b.Check != nil {
+		bv = b.Check.State != EventPassingState
+	}
 
-	// Rank higher if incident
+	// Rank higher if failing/flapping
 	if av == bv {
 		return 0
 	} else if av {
