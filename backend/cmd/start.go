@@ -38,6 +38,8 @@ var (
 )
 
 const (
+	environmentPrefix = "sensu_backend"
+
 	// Flag constants
 	flagConfigFile            = "config-file"
 	flagAgentHost             = "agent-host"
@@ -307,12 +309,20 @@ func handleConfig(cmd *cobra.Command, server bool) error {
 	configFlagSet.SetOutput(ioutil.Discard)
 	_ = configFlagSet.Parse(os.Args[1:])
 
-	// Get the given config file path
-	configFile, _ := configFlagSet.GetString(flagConfigFile)
-	configFilePath := configFile
+	// Get the given config file path via flag
+	configFilePath, _ := configFlagSet.GetString(flagConfigFile)
 
-	// use the default config path if flagConfigFile was used
-	if configFile == "" {
+	// Get the environment variable value if no config file was provided via the flag
+	if configFilePath == "" {
+		environmentConfigFile := fmt.Sprintf("%s_%s", environmentPrefix, flagConfigFile)
+		environmentConfigFile = strings.ToUpper(environmentConfigFile)
+		environmentConfigFile = strings.Replace(environmentConfigFile, "-", "_", -1)
+		configFilePath = os.Getenv(environmentConfigFile)
+	}
+
+	// Use the default config path as a fallback if no config file was provided
+	// via the flag or the environment variable
+	if configFilePath == "" {
 		configFilePath = configFileDefaultLocation
 	}
 
@@ -480,11 +490,11 @@ func handleConfig(cmd *cobra.Command, server bool) error {
 	_ = cmd.Flags().SetAnnotation(flagEtcdClientURLs, "categories", []string{"store"})
 
 	// Load the configuration file but only error out if flagConfigFile is used
-	if err := viper.ReadInConfig(); err != nil && configFile != "" {
+	if err := viper.ReadInConfig(); err != nil && configFilePath != "" {
 		return err
 	}
 
-	viper.SetEnvPrefix("sensu_backend")
+	viper.SetEnvPrefix(environmentPrefix)
 	viper.SetEnvKeyReplacer(strings.NewReplacer("-", "_"))
 	viper.AutomaticEnv()
 
