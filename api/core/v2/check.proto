@@ -157,6 +157,11 @@ message CheckConfig {
 
   // OutputMetricTags is list of metric tags to apply to metrics extracted from check output.
   repeated MetricTag output_metric_tags = 30 [ (gogoproto.jsontag) = "output_metric_tags,omitempty", (gogoproto.moretags) = "yaml: \"output_metric_tags,omitempty\"" ];
+
+  // Scheduler is the type of scheduler the check is scheduled by. The scheduler
+  // can be "memory", "etcd", or "postgres". Scheduler is set by Sensu - any
+  // setting by the user will be overridden.
+  string scheduler = 31 [ (gogoproto.jsontag) = "-", (gogoproto.moretags) = "yaml: \"-\"" ];
 }
 
 // A Check is a check specification and optionally the results of the check's
@@ -297,10 +302,15 @@ message Check {
   repeated Secret secrets = 41 [ (gogoproto.jsontag) = "secrets" ];
 
   // IsSilenced indicates whether the check is silenced or not
-  bool is_silenced = 42 [(gogoproto.jsontag) = "is_silenced"];
+  bool is_silenced = 42 [ (gogoproto.jsontag) = "is_silenced" ];
 
   // OutputMetricTags is list of metric tags to apply to metrics extracted from check output.
   repeated MetricTag output_metric_tags = 43 [ (gogoproto.jsontag) = "output_metric_tags,omitempty", (gogoproto.moretags) = "yaml: \"output_metric_tags,omitempty\"" ];
+
+  // Scheduler is the type of scheduler the check is scheduled by. The scheduler
+  // can be "memory", "etcd", or "postgres". Scheduler is set by Sensu - any
+  // setting by the user will be overridden.
+  string scheduler = 44 [ (gogoproto.jsontag) = "scheduler" ];
 
   // ExtendedAttributes store serialized arbitrary JSON-encoded data
   bytes ExtendedAttributes = 99 [ (gogoproto.jsontag) = "-" ];

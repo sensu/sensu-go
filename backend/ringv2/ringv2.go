@@ -463,25 +463,39 @@ func (r *Ring) startWatchers(ctx context.Context, ch chan Event, name string, va
 				notifyClosing(ctx, ch)
 				return
 			case response, ok := <-itemsC:
-				if err := response.Err(); err != nil {
+				err := response.Err()
+				if err != nil {
 					notifyError(ctx, ch, err)
 				}
-				if response.Canceled || !ok {
+				if !ok || response.Canceled {
 					// The watcher needs to be reinstated
-					r.startWatchers(ctx, ch, name, values, interval, cron)
-					return
+					if ctx.Err() == nil {
+						r.startWatchers(ctx, ch, name, values, interval, cron)
+						return
+					} else {
+						continue
+					}
 				}
-				notifyAddRemove(ch, response)
+				if err == nil {
+					notifyAddRemove(ch, response)
+				}
 			case response, ok := <-nextC:
-				if err := response.Err(); err != nil {
+				err := response.Err()
+				if err != nil {
 					notifyError(ctx, ch, err)
 				}
-				if response.Canceled || !ok {
+				if !ok || response.Canceled {
 					// The watcher needs to be reinstated
-					r.startWatchers(ctx, ch, name, values, interval, cron)
-					return
+					if ctx.Err() == nil {
+						r.startWatchers(ctx, ch, name, values, interval, cron)
+						return
+					} else {
+						continue
+					}
 				}
-				watcher.handleRingTrigger(ctx, ch, response)
+				if err == nil {
+					watcher.handleRingTrigger(ctx, ch, response)
+				}
 			case <-watcher.notifier:
 				if err := watcher.ensureActiveTrigger(ctx); err != nil {
 					notifyError(ctx, ch, err)

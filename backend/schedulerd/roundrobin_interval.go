@@ -17,7 +17,13 @@ import (
 
 type ringCancel struct {
 	AgentEntitiesRequest int
-	Cancel               context.CancelFunc
+	cancel               context.CancelFunc
+	wg                   *sync.WaitGroup
+}
+
+func (r ringCancel) Cancel() {
+	r.cancel()
+	r.wg.Wait()
 }
 
 // RoundRobinIntervalScheduler schedules checks with a determined interval on a
@@ -25,6 +31,7 @@ type ringCancel struct {
 type RoundRobinIntervalScheduler struct {
 	lastIntervalState      uint32
 	lastSubscriptionsState []string
+	lastScheduler          string
 	check                  *corev2.CheckConfig
 	store                  store.Store
 	bus                    messaging.MessageBus
@@ -52,6 +59,7 @@ func NewRoundRobinIntervalScheduler(ctx context.Context, store store.Store, bus 
 			"name":           check.Name,
 			"namespace":      check.Namespace,
 			"scheduler_type": RoundRobinIntervalType.String(),
+			"interval":       check.Interval,
 		}),
 		ringPool:    pool,
 		cancels:     make(map[string]ringCancel),
@@ -79,19 +87,16 @@ func (s *RoundRobinIntervalScheduler) updateRings() {
 			return
 		}
 	}
+	// clean up old watchers synchronously
+	for key, watcher := range s.cancels {
+		s.logger.WithField("ring", key).Debug("cancelling old ring watcher")
+		watcher.Cancel()
+	}
 	newCancels := make(map[string]ringCancel)
 	for _, sub := range s.check.Subscriptions {
 		key := ringv2.Path(s.check.Namespace, sub)
-		watcher, ok := s.cancels[key]
-		if ok {
-			if watcher.AgentEntitiesRequest == agentEntitiesRequest {
-				// don't need to recreate the watcher
-				newCancels[key] = watcher
-				continue
-			}
-			watcher.Cancel()
-		}
 
+		s.logger.WithField("ring", key).Debug("creating new ring watcher")
 		// Create a new watcher
 		ctx, cancel := context.WithCancel(s.ctx)
 		ring := s.ringPool.Get(key)
@@ -102,19 +107,15 @@ func (s *RoundRobinIntervalScheduler) updateRings() {
 			CronSchedule:     s.check.Cron,
 		}
 		if err := sub.Validate(); err != nil {
-			logger.WithField("check", s.check.Name).WithError(err).Error("error scheduling round-robin check")
+			s.logger.WithError(err).Error("error scheduling round-robin check")
 			continue
 		}
 		wc := ring.Subscribe(ctx, sub)
-		val := ringCancel{Cancel: cancel, AgentEntitiesRequest: agentEntitiesRequest}
-		go s.handleEvents(s.executor, wc)
+		wg := new(sync.WaitGroup)
+		wg.Add(1)
+		val := ringCancel{cancel: cancel, AgentEntitiesRequest: agentEntitiesRequest, wg: wg}
+		go s.handleEvents(s.executor, wc, wg)
 		newCancels[key] = val
-	}
-	// clean up any remaining watchers that are no longer valid
-	for key, watcher := range s.cancels {
-		if _, ok := newCancels[key]; !ok {
-			watcher.Cancel()
-		}
 	}
 	s.cancels = newCancels
 }
@@ -125,7 +126,8 @@ func (s *RoundRobinIntervalScheduler) Start() {
 	go s.start()
 }
 
-func (s *RoundRobinIntervalScheduler) handleEvents(executor *CheckExecutor, ch <-chan ringv2.Event) {
+func (s *RoundRobinIntervalScheduler) handleEvents(executor *CheckExecutor, ch <-chan ringv2.Event, wg *sync.WaitGroup) {
+	defer wg.Done()
 	for event := range ch {
 		s.handleEvent(executor, event)
 	}
@@ -217,7 +219,11 @@ func (s *RoundRobinIntervalScheduler) toggleSchedule() (stateChanged bool) {
 		s.logger.Debug("subscriptions have changed")
 		return true
 	}
-	s.logger.Debug("check schedule has not changed")
+	if s.lastScheduler != s.check.Scheduler {
+		s.logger.WithField("previous_scheduler", s.lastScheduler).WithField("new scheduler", s.check.Scheduler).Info("scheduler backend has changed")
+		return true
+	}
+	s.logger.Debug("interval schedule has not changed")
 	return false
 }
 
@@ -225,6 +231,7 @@ func (s *RoundRobinIntervalScheduler) toggleSchedule() (stateChanged bool) {
 func (s *RoundRobinIntervalScheduler) setLastState() {
 	s.lastIntervalState = s.check.Interval
 	s.lastSubscriptionsState = s.check.Subscriptions
+	s.lastScheduler = s.check.Scheduler
 }
 
 // Interrupt refreshes the scheduler with a revised check config.

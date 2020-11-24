@@ -6,7 +6,6 @@ import (
 
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/store"
-	"github.com/sensu/sensu-go/types"
 )
 
 const (
@@ -17,13 +16,24 @@ var (
 	checkKeyBuilder = store.NewKeyBuilder(checksPathPrefix)
 )
 
-func getCheckConfigPath(check *types.CheckConfig) string {
+func getCheckConfigPath(check *corev2.CheckConfig) string {
 	return checkKeyBuilder.WithResource(check).Build(check.Name)
 }
 
 // GetCheckConfigsPath gets the path of the check config store.
 func GetCheckConfigsPath(ctx context.Context, name string) string {
 	return checkKeyBuilder.WithContext(ctx).Build(name)
+}
+
+func schedulerFor(c *corev2.CheckConfig) string {
+	if c.Scheduler == "" {
+		if c.RoundRobin {
+			return "etcd"
+		} else {
+			return "memory"
+		}
+	}
+	return c.Scheduler
 }
 
 // DeleteCheckConfigByName deletes a CheckConfig by name.
@@ -40,14 +50,20 @@ func (s *Store) DeleteCheckConfigByName(ctx context.Context, name string) error 
 }
 
 // GetCheckConfigs returns check configurations for an (optional) namespace.
-func (s *Store) GetCheckConfigs(ctx context.Context, pred *store.SelectionPredicate) ([]*types.CheckConfig, error) {
-	checks := []*types.CheckConfig{}
+func (s *Store) GetCheckConfigs(ctx context.Context, pred *store.SelectionPredicate) ([]*corev2.CheckConfig, error) {
+	checks := []*corev2.CheckConfig{}
 	err := List(ctx, s.client, GetCheckConfigsPath, &checks, pred)
+	if err != nil {
+		return nil, err
+	}
+	for _, check := range checks {
+		check.Scheduler = schedulerFor(check)
+	}
 	return checks, err
 }
 
 // GetCheckConfigByName gets a CheckConfig by name.
-func (s *Store) GetCheckConfigByName(ctx context.Context, name string) (*types.CheckConfig, error) {
+func (s *Store) GetCheckConfigByName(ctx context.Context, name string) (*corev2.CheckConfig, error) {
 	if name == "" {
 		return nil, &store.ErrNotValid{Err: errors.New("must specify name")}
 	}
@@ -59,6 +75,7 @@ func (s *Store) GetCheckConfigByName(ctx context.Context, name string) (*types.C
 		}
 		return nil, err
 	}
+	check.Scheduler = schedulerFor(&check)
 	if check.Labels == nil {
 		check.Labels = make(map[string]string)
 	}
@@ -70,7 +87,7 @@ func (s *Store) GetCheckConfigByName(ctx context.Context, name string) (*types.C
 }
 
 // UpdateCheckConfig updates a CheckConfig.
-func (s *Store) UpdateCheckConfig(ctx context.Context, check *types.CheckConfig) error {
+func (s *Store) UpdateCheckConfig(ctx context.Context, check *corev2.CheckConfig) error {
 	if err := check.Validate(); err != nil {
 		return &store.ErrNotValid{Err: err}
 	}

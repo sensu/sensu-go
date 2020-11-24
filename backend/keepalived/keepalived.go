@@ -396,12 +396,13 @@ func createKeepaliveEvent(rawEvent *corev2.Event) *corev2.Event {
 			Name:      corev2.KeepaliveCheckName,
 			Namespace: rawEvent.Entity.Namespace,
 		},
-		Interval: check.Interval,
-		Timeout:  check.Timeout,
-		Ttl:      check.Ttl,
-		Handlers: handlers,
-		Executed: time.Now().Unix(),
-		Issued:   time.Now().Unix(),
+		Interval:  check.Interval,
+		Timeout:   check.Timeout,
+		Ttl:       check.Ttl,
+		Handlers:  handlers,
+		Executed:  time.Now().Unix(),
+		Issued:    time.Now().Unix(),
+		Scheduler: corev2.EtcdScheduler,
 	}
 	keepaliveEvent := &corev2.Event{
 		ObjectMeta: rawEvent.ObjectMeta,
@@ -636,16 +637,19 @@ func (k *Keepalived) handleUpdate(e *corev2.Event) error {
 			}
 			tctx, cancel := context.WithTimeout(ctx, k.storeTimeout)
 			defer cancel()
+			lager := logger.WithFields(logrus.Fields{
+				"entity":       entity.Name,
+				"namespace":    entity.Namespace,
+				"subscription": sub,
+				"timeout":      time.Duration(e.Check.Timeout) * time.Second,
+			})
 			if err := ring.Add(tctx, entity.Name, int64(e.Check.Timeout)); err != nil {
-				lager := logger.WithFields(logrus.Fields{
-					"entity":       entity.Name,
-					"namespace":    entity.Namespace,
-					"subscription": sub,
-				})
 				lager.WithError(err).Error("error adding entity to ring")
 				if _, ok := err.(*store.ErrInternal); ok {
 					return err
 				}
+			} else {
+				lager.Info("added entity to ring")
 			}
 		}
 	}

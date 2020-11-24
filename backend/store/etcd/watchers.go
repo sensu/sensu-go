@@ -33,6 +33,14 @@ func (s *Store) GetCheckConfigWatcher(ctx context.Context) <-chan store.WatchEve
 				continue
 			}
 
+			if checkConfig.Scheduler == "" {
+				if checkConfig.RoundRobin {
+					checkConfig.Scheduler = corev2.EtcdScheduler
+				} else {
+					checkConfig.Scheduler = corev2.MemoryScheduler
+				}
+			}
+
 			ch <- store.WatchEventCheckConfig{
 				Action:      response.Type,
 				CheckConfig: &checkConfig,
