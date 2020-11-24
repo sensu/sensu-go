@@ -21,6 +21,10 @@ sensu-backend (`SENSU_BACKEND_CONFIG_FILE`) & sensu-agent (`SENSU_CONFIG_FILE`).
 entries in sensuctl.
 
 ### [6.1.2] - 2020-10-28
+### Fixed
+- Fixed a bug where the entity API could panic.
+
+### [6.1.2, 6.1.3] - 2020-10-28
 
 ### Fixed
 - Fixed a crash in the backend and agent related to Javascript execution.
