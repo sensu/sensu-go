@@ -83,3 +83,18 @@ func TestEntityIteration(t *testing.T) {
 		}
 	}
 }
+
+func TestEntityIterationNoPanicMismatched(t *testing.T) {
+	configs := []corev3.EntityConfig{
+		*corev3.FixtureEntityConfig("b"),
+		*corev3.FixtureEntityConfig("c"),
+	}
+	states := []corev3.EntityState{
+		*corev3.FixtureEntityState("a"),
+		*corev3.FixtureEntityState("b"),
+		*corev3.FixtureEntityState("c"),
+	}
+	if _, err := entitiesFromConfigAndState(configs, states); err != nil {
+		t.Fatal(err)
+	}
+}
