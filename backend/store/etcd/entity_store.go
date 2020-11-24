@@ -237,7 +237,7 @@ func entitiesFromConfigAndState(configs []corev3.EntityConfig, states []corev3.E
 	result := make([]*corev2.Entity, 0, len(states))
 	var i, j int
 	for i < len(states) && j < len(configs) {
-		switch states[i].Metadata.Cmp(configs[i].Metadata) {
+		switch states[i].Metadata.Cmp(configs[j].Metadata) {
 		case corev2.MetaLess:
 			// there is a state without a corresponding config
 			i++
