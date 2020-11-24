@@ -28,9 +28,9 @@ func GetCheckConfigsPath(ctx context.Context, name string) string {
 func schedulerFor(c *corev2.CheckConfig) string {
 	if c.Scheduler == "" {
 		if c.RoundRobin {
-			return "etcd"
+			return corev2.EtcdScheduler
 		} else {
-			return "memory"
+			return corev2.MemoryScheduler
 		}
 	}
 	return c.Scheduler
