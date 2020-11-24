@@ -24,6 +24,7 @@ entries in sensuctl.
 
 ### Fixed
 - Fixed a crash in the backend and agent related to Javascript execution.
+- `sensuctl edit` no longer automatically adds the `sensu.io/managed_by` label.
 
 ## [6.1.1] - 2020-10-22
 

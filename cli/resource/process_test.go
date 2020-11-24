@@ -8,6 +8,7 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
+	"reflect"
 	"testing"
 
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
@@ -43,4 +44,66 @@ func TestProcessFile(t *testing.T) {
 
 	_, err = ProcessFile(fp, false)
 	assert.NoError(t, err)
+}
+
+func TestManagedByLabelPutter_label(t *testing.T) {
+	tests := []struct {
+		name     string
+		resource types.Wrapper
+		want     map[string]string
+	}{
+		{
+			name: "the label is set on both the inner and outer labels",
+			resource: types.WrapResource(&corev2.CheckConfig{
+				ObjectMeta: corev2.ObjectMeta{
+					Name: "foo",
+				},
+			}),
+			want: map[string]string{
+				corev2.ManagedByLabel: "sensuctl",
+			},
+		},
+		{
+			name: "the label is appended to an existing list of labels",
+			resource: types.WrapResource(&corev2.CheckConfig{
+				ObjectMeta: corev2.ObjectMeta{
+					Labels: map[string]string{
+						"region": "us-west-2",
+					},
+				},
+			}),
+			want: map[string]string{
+				"region":              "us-west-2",
+				corev2.ManagedByLabel: "sensuctl",
+			},
+		},
+		{
+			name: "the label overwrites any existing value",
+			resource: types.WrapResource(&corev2.CheckConfig{
+				ObjectMeta: corev2.ObjectMeta{
+					Labels: map[string]string{
+						corev2.ManagedByLabel: "web-ui",
+					},
+				},
+			}),
+			want: map[string]string{
+				corev2.ManagedByLabel: "sensuctl",
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := tt.resource
+			processor := NewManagedByLabelPutter("sensuctl")
+			processor.label(&got)
+
+			if !reflect.DeepEqual(got.ObjectMeta.Labels, tt.want) {
+				t.Errorf("inner labels = %v, want %v", got.ObjectMeta.Labels, tt.want)
+			}
+			if !reflect.DeepEqual(got.Value.GetObjectMeta().Labels, tt.want) {
+				t.Errorf("outer labels = %v, want %v", got.Value.GetObjectMeta().Labels, tt.want)
+			}
+		})
+	}
 }
