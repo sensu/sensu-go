@@ -33,8 +33,9 @@ import (
 var DeprecateDashboardFlags = true
 
 var (
-	annotations map[string]string
-	labels      map[string]string
+	annotations               map[string]string
+	labels                    map[string]string
+	configFileDefaultLocation = filepath.Join(path.SystemConfigDir(), "backend.yml")
 )
 
 const (
@@ -301,16 +302,11 @@ func StartCommand(initialize InitializeFunc) *cobra.Command {
 }
 
 func handleConfig(cmd *cobra.Command, server bool) error {
-	// Set up distinct flagset for handling config file
-	configFlagSet := pflag.NewFlagSet("sensu", pflag.ContinueOnError)
-	configFileDefaultLocation := filepath.Join(path.SystemConfigDir(), "backend.yml")
-	configFileDefault := fmt.Sprintf("path to sensu-backend config file (default %q)", configFileDefaultLocation)
-	configFlagSet.StringP(flagConfigFile, "c", "", configFileDefault)
-	configFlagSet.SetOutput(ioutil.Discard)
-	_ = configFlagSet.Parse(os.Args[1:])
+	flagSet := flagSet(server)
+	_ = flagSet.Parse(os.Args[1:])
 
 	// Get the given config file path via flag
-	configFilePath, _ := configFlagSet.GetString(flagConfigFile)
+	configFilePath, _ := flagSet.GetString(flagConfigFile)
 
 	// Get the environment variable value if no config file was provided via the flag
 	if configFilePath == "" {
@@ -382,114 +378,8 @@ func handleConfig(cmd *cobra.Command, server bool) error {
 		viper.SetDefault(flagNoEmbedEtcd, false)
 	}
 
-	// Merge in config flag set so that it appears in command usage
-	cmd.Flags().AddFlagSet(configFlagSet)
-
-	if server {
-		// Main Flags
-		cmd.Flags().String(flagAgentHost, viper.GetString(flagAgentHost), "agent listener host")
-		cmd.Flags().Int(flagAgentPort, viper.GetInt(flagAgentPort), "agent listener port")
-		cmd.Flags().String(flagAPIListenAddress, viper.GetString(flagAPIListenAddress), "address to listen on for api traffic")
-		cmd.Flags().Int64(flagAPIRequestLimit, viper.GetInt64(flagAPIRequestLimit), "maximum API request body size, in bytes")
-		cmd.Flags().String(flagAPIURL, viper.GetString(flagAPIURL), "url of the api to connect to")
-		cmd.Flags().Float64(flagAssetsRateLimit, viper.GetFloat64(flagAssetsRateLimit), "maximum number of assets fetched per second")
-		cmd.Flags().Int(flagAssetsBurstLimit, viper.GetInt(flagAssetsBurstLimit), "asset fetch burst limit")
-		cmd.Flags().String(flagDashboardHost, viper.GetString(flagDashboardHost), "dashboard listener host")
-		cmd.Flags().Int(flagDashboardPort, viper.GetInt(flagDashboardPort), "dashboard listener port")
-		cmd.Flags().String(flagDashboardCertFile, viper.GetString(flagDashboardCertFile), "dashboard TLS certificate in PEM format")
-		cmd.Flags().String(flagDashboardKeyFile, viper.GetString(flagDashboardKeyFile), "dashboard TLS certificate key in PEM format")
-		cmd.Flags().String(flagDeregistrationHandler, viper.GetString(flagDeregistrationHandler), "default deregistration handler")
-		cmd.Flags().String(flagCacheDir, viper.GetString(flagCacheDir), "path to store cached data")
-		cmd.Flags().StringP(flagStateDir, "d", viper.GetString(flagStateDir), "path to sensu state storage")
-		cmd.Flags().String(flagCertFile, viper.GetString(flagCertFile), "TLS certificate in PEM format")
-		cmd.Flags().String(flagKeyFile, viper.GetString(flagKeyFile), "TLS certificate key in PEM format")
-		cmd.Flags().String(flagTrustedCAFile, viper.GetString(flagTrustedCAFile), "TLS CA certificate bundle in PEM format")
-		cmd.Flags().Bool(flagInsecureSkipTLSVerify, viper.GetBool(flagInsecureSkipTLSVerify), "skip TLS verification (not recommended!)")
-		cmd.Flags().Bool(flagDebug, false, "enable debugging and profiling features")
-		cmd.Flags().String(flagLogLevel, viper.GetString(flagLogLevel), "logging level [panic, fatal, error, warn, info, debug]")
-		cmd.Flags().Int(backend.FlagEventdWorkers, viper.GetInt(backend.FlagEventdWorkers), "number of workers spawned for processing incoming events")
-		cmd.Flags().Int(backend.FlagEventdBufferSize, viper.GetInt(backend.FlagEventdBufferSize), "number of incoming events that can be buffered")
-		cmd.Flags().Int(backend.FlagKeepalivedWorkers, viper.GetInt(backend.FlagKeepalivedWorkers), "number of workers spawned for processing incoming keepalives")
-		cmd.Flags().Int(backend.FlagKeepalivedBufferSize, viper.GetInt(backend.FlagKeepalivedBufferSize), "number of incoming keepalives that can be buffered")
-		cmd.Flags().Int(backend.FlagPipelinedWorkers, viper.GetInt(backend.FlagPipelinedWorkers), "number of workers spawned for handling events through the event pipeline")
-		cmd.Flags().Int(backend.FlagPipelinedBufferSize, viper.GetInt(backend.FlagPipelinedBufferSize), "number of events to handle that can be buffered")
-		cmd.Flags().Int(backend.FlagAgentWriteTimeout, viper.GetInt(backend.FlagAgentWriteTimeout), "timeout in seconds for agent writes")
-		cmd.Flags().String(backend.FlagJWTPrivateKeyFile, viper.GetString(backend.FlagJWTPrivateKeyFile), "path to the PEM-encoded private key to use to sign JWTs")
-		cmd.Flags().String(backend.FlagJWTPublicKeyFile, viper.GetString(backend.FlagJWTPublicKeyFile), "path to the PEM-encoded public key to use to verify JWT signatures")
-		cmd.Flags().StringToStringVar(&labels, flagLabels, nil, "entity labels map")
-		cmd.Flags().StringToStringVar(&annotations, flagAnnotations, nil, "entity annotations map")
-
-		// Etcd server flags
-		cmd.Flags().StringSlice(flagEtcdPeerURLs, viper.GetStringSlice(flagEtcdPeerURLs), "list of URLs to listen on for peer traffic")
-		_ = cmd.Flags().SetAnnotation(flagEtcdPeerURLs, "categories", []string{"store"})
-		cmd.Flags().String(flagEtcdInitialCluster, viper.GetString(flagEtcdInitialCluster), "initial cluster configuration for bootstrapping")
-		_ = cmd.Flags().SetAnnotation(flagEtcdInitialCluster, "categories", []string{"store"})
-		cmd.Flags().StringSlice(flagEtcdInitialAdvertisePeerURLs, viper.GetStringSlice(flagEtcdInitialAdvertisePeerURLs), "list of this member's peer URLs to advertise to the rest of the cluster")
-		_ = cmd.Flags().SetAnnotation(flagEtcdInitialAdvertisePeerURLs, "categories", []string{"store"})
-		cmd.Flags().String(flagEtcdInitialClusterState, viper.GetString(flagEtcdInitialClusterState), "initial cluster state (\"new\" or \"existing\")")
-		_ = cmd.Flags().SetAnnotation(flagEtcdInitialClusterState, "categories", []string{"store"})
-		cmd.Flags().String(flagEtcdDiscovery, viper.GetString(flagEtcdDiscovery), "discovery URL used to bootstrap the cluster")
-		_ = cmd.Flags().SetAnnotation(flagEtcdDiscovery, "categories", []string{"store"})
-		cmd.Flags().String(flagEtcdDiscoverySrv, viper.GetString(flagEtcdDiscoverySrv), "DNS SRV record used to bootstrap the cluster")
-		_ = cmd.Flags().SetAnnotation(flagEtcdDiscoverySrv, "categories", []string{"store"})
-		cmd.Flags().String(flagEtcdInitialClusterToken, viper.GetString(flagEtcdInitialClusterToken), "initial cluster token for the etcd cluster during bootstrap")
-		_ = cmd.Flags().SetAnnotation(flagEtcdInitialClusterToken, "categories", []string{"store"})
-		cmd.Flags().StringSlice(flagEtcdListenClientURLs, viper.GetStringSlice(flagEtcdListenClientURLs), "list of etcd client URLs to listen on")
-		_ = cmd.Flags().SetAnnotation(flagEtcdListenClientURLs, "categories", []string{"store"})
-		cmd.Flags().Bool(flagNoEmbedEtcd, viper.GetBool(flagNoEmbedEtcd), "don't embed etcd, use external etcd instead")
-		_ = cmd.Flags().SetAnnotation(flagNoEmbedEtcd, "categories", []string{"store"})
-		cmd.Flags().Int64(flagEtcdQuotaBackendBytes, viper.GetInt64(flagEtcdQuotaBackendBytes), "maximum etcd database size in bytes (use with caution)")
-		_ = cmd.Flags().SetAnnotation(flagEtcdQuotaBackendBytes, "categories", []string{"store"})
-		cmd.Flags().Uint(flagEtcdHeartbeatInterval, viper.GetUint(flagEtcdHeartbeatInterval), "interval in ms with which the etcd leader will notify followers that it is still the leader")
-		_ = cmd.Flags().SetAnnotation(flagEtcdHeartbeatInterval, "categories", []string{"store"})
-		cmd.Flags().Uint(flagEtcdElectionTimeout, viper.GetUint(flagEtcdElectionTimeout), "time in ms a follower node will go without hearing a heartbeat before attempting to become leader itself")
-		_ = cmd.Flags().SetAnnotation(flagEtcdElectionTimeout, "categories", []string{"store"})
-
-		// Etcd server TLS flags
-		cmd.Flags().String(flagEtcdPeerCertFile, viper.GetString(flagEtcdPeerCertFile), "path to the peer server TLS cert file")
-		_ = cmd.Flags().SetAnnotation(flagEtcdPeerCertFile, "categories", []string{"store"})
-		cmd.Flags().String(flagEtcdPeerKeyFile, viper.GetString(flagEtcdPeerKeyFile), "path to the peer server TLS key file")
-		_ = cmd.Flags().SetAnnotation(flagEtcdPeerKeyFile, "categories", []string{"store"})
-		cmd.Flags().Bool(flagEtcdPeerClientCertAuth, viper.GetBool(flagEtcdPeerClientCertAuth), "enable peer client cert authentication")
-		_ = cmd.Flags().SetAnnotation(flagEtcdPeerClientCertAuth, "categories", []string{"store"})
-		cmd.Flags().String(flagEtcdPeerTrustedCAFile, viper.GetString(flagEtcdPeerTrustedCAFile), "path to the peer server TLS trusted CA file")
-		_ = cmd.Flags().SetAnnotation(flagEtcdPeerTrustedCAFile, "categories", []string{"store"})
-		cmd.Flags().String(flagEtcdNodeName, viper.GetString(flagEtcdNodeName), "name for this etcd node")
-		_ = cmd.Flags().SetAnnotation(flagEtcdNodeName, "categories", []string{"store"})
-	}
-
-	// Deprecated flags
-	if server && DeprecateDashboardFlags {
-		msg := "as of Sensu v6.0 the dashboard is no longer distributed as part of the sensu-backend binary"
-		_ = cmd.Flags().MarkDeprecated(flagDashboardHost, msg)
-		_ = cmd.Flags().MarkDeprecated(flagDashboardPort, msg)
-		_ = cmd.Flags().MarkDeprecated(flagDashboardCertFile, msg)
-		_ = cmd.Flags().MarkDeprecated(flagDashboardKeyFile, msg)
-	}
-
-	// Etcd client/server flags
-	cmd.Flags().StringSlice(flagEtcdCipherSuites, nil, "list of ciphers to use for etcd TLS configuration")
-	_ = cmd.Flags().SetAnnotation(flagEtcdCipherSuites, "categories", []string{"store"})
-
-	// This one is really only a server flag, but because we lacked
-	// --etcd-client-urls until recently, it's used as a fallback.
-	cmd.Flags().StringSlice(flagEtcdAdvertiseClientURLs, viper.GetStringSlice(flagEtcdAdvertiseClientURLs), "list of this member's client URLs to advertise to clients")
-	_ = cmd.Flags().SetAnnotation(flagEtcdAdvertiseClientURLs, "categories", []string{"store"})
-
-	cmd.Flags().Uint(flagEtcdMaxRequestBytes, viper.GetUint(flagEtcdMaxRequestBytes), "maximum etcd request size in bytes (use with caution)")
-	_ = cmd.Flags().SetAnnotation(flagEtcdMaxRequestBytes, "categories", []string{"store"})
-
-	// Etcd client/server TLS flags
-	cmd.Flags().String(flagEtcdCertFile, viper.GetString(flagEtcdCertFile), "path to the client server TLS cert file")
-	_ = cmd.Flags().SetAnnotation(flagEtcdCertFile, "categories", []string{"store"})
-	cmd.Flags().String(flagEtcdKeyFile, viper.GetString(flagEtcdKeyFile), "path to the client server TLS key file")
-	_ = cmd.Flags().SetAnnotation(flagEtcdKeyFile, "categories", []string{"store"})
-	cmd.Flags().Bool(flagEtcdClientCertAuth, viper.GetBool(flagEtcdClientCertAuth), "enable client cert authentication")
-	_ = cmd.Flags().SetAnnotation(flagEtcdClientCertAuth, "categories", []string{"store"})
-	cmd.Flags().String(flagEtcdTrustedCAFile, viper.GetString(flagEtcdTrustedCAFile), "path to the client server TLS trusted CA cert file")
-	_ = cmd.Flags().SetAnnotation(flagEtcdTrustedCAFile, "categories", []string{"store"})
-	cmd.Flags().String(flagEtcdClientURLs, viper.GetString(flagEtcdClientURLs), "client URLs to use when operating as an etcd client")
-	_ = cmd.Flags().SetAnnotation(flagEtcdClientURLs, "categories", []string{"store"})
+	// Merge in flag set so that it appears in command usage
+	cmd.Flags().AddFlagSet(flagSet)
 
 	// Load the configuration file but only error out if flagConfigFile is used
 	if err := viper.ReadInConfig(); err != nil && configFilePathIsDefined {
@@ -520,6 +410,115 @@ func categoryFlags(category string, flags *pflag.FlagSet) *pflag.FlagSet {
 			flagSet.AddFlag(flag)
 		}
 	})
+
+	return flagSet
+}
+
+func flagSet(server bool) *pflag.FlagSet {
+	flagSet := pflag.NewFlagSet("start", pflag.ContinueOnError)
+
+	// Config flag
+	configFileDescription := fmt.Sprintf("path to sensu-backend config file (default %q)", configFileDefaultLocation)
+	flagSet.StringP(flagConfigFile, "c", "", configFileDescription)
+
+	// Etcd client/server flags
+	flagSet.StringSlice(flagEtcdCipherSuites, nil, "list of ciphers to use for etcd TLS configuration")
+	_ = flagSet.SetAnnotation(flagEtcdCipherSuites, "categories", []string{"store"})
+
+	// This one is really only a server flag, but because we lacked
+	// --etcd-client-urls until recently, it's used as a fallback.
+	flagSet.StringSlice(flagEtcdAdvertiseClientURLs, viper.GetStringSlice(flagEtcdAdvertiseClientURLs), "list of this member's client URLs to advertise to clients")
+	_ = flagSet.SetAnnotation(flagEtcdAdvertiseClientURLs, "categories", []string{"store"})
+
+	flagSet.Uint(flagEtcdMaxRequestBytes, viper.GetUint(flagEtcdMaxRequestBytes), "maximum etcd request size in bytes (use with caution)")
+	_ = flagSet.SetAnnotation(flagEtcdMaxRequestBytes, "categories", []string{"store"})
+
+	// Etcd client/server TLS flags
+	flagSet.String(flagEtcdCertFile, viper.GetString(flagEtcdCertFile), "path to the client server TLS cert file")
+	_ = flagSet.SetAnnotation(flagEtcdCertFile, "categories", []string{"store"})
+	flagSet.String(flagEtcdKeyFile, viper.GetString(flagEtcdKeyFile), "path to the client server TLS key file")
+	_ = flagSet.SetAnnotation(flagEtcdKeyFile, "categories", []string{"store"})
+	flagSet.Bool(flagEtcdClientCertAuth, viper.GetBool(flagEtcdClientCertAuth), "enable client cert authentication")
+	_ = flagSet.SetAnnotation(flagEtcdClientCertAuth, "categories", []string{"store"})
+	flagSet.String(flagEtcdTrustedCAFile, viper.GetString(flagEtcdTrustedCAFile), "path to the client server TLS trusted CA cert file")
+	_ = flagSet.SetAnnotation(flagEtcdTrustedCAFile, "categories", []string{"store"})
+	flagSet.String(flagEtcdClientURLs, viper.GetString(flagEtcdClientURLs), "client URLs to use when operating as an etcd client")
+	_ = flagSet.SetAnnotation(flagEtcdClientURLs, "categories", []string{"store"})
+
+	if server {
+		// Main Flags
+		flagSet.String(flagAgentHost, viper.GetString(flagAgentHost), "agent listener host")
+		flagSet.Int(flagAgentPort, viper.GetInt(flagAgentPort), "agent listener port")
+		flagSet.String(flagAPIListenAddress, viper.GetString(flagAPIListenAddress), "address to listen on for api traffic")
+		flagSet.Int64(flagAPIRequestLimit, viper.GetInt64(flagAPIRequestLimit), "maximum API request body size, in bytes")
+		flagSet.String(flagAPIURL, viper.GetString(flagAPIURL), "url of the api to connect to")
+		flagSet.Float64(flagAssetsRateLimit, viper.GetFloat64(flagAssetsRateLimit), "maximum number of assets fetched per second")
+		flagSet.Int(flagAssetsBurstLimit, viper.GetInt(flagAssetsBurstLimit), "asset fetch burst limit")
+		flagSet.String(flagDashboardHost, viper.GetString(flagDashboardHost), "dashboard listener host")
+		flagSet.Int(flagDashboardPort, viper.GetInt(flagDashboardPort), "dashboard listener port")
+		flagSet.String(flagDashboardCertFile, viper.GetString(flagDashboardCertFile), "dashboard TLS certificate in PEM format")
+		flagSet.String(flagDashboardKeyFile, viper.GetString(flagDashboardKeyFile), "dashboard TLS certificate key in PEM format")
+		flagSet.String(flagDeregistrationHandler, viper.GetString(flagDeregistrationHandler), "default deregistration handler")
+		flagSet.String(flagCacheDir, viper.GetString(flagCacheDir), "path to store cached data")
+		flagSet.StringP(flagStateDir, "d", viper.GetString(flagStateDir), "path to sensu state storage")
+		flagSet.String(flagCertFile, viper.GetString(flagCertFile), "TLS certificate in PEM format")
+		flagSet.String(flagKeyFile, viper.GetString(flagKeyFile), "TLS certificate key in PEM format")
+		flagSet.String(flagTrustedCAFile, viper.GetString(flagTrustedCAFile), "TLS CA certificate bundle in PEM format")
+		flagSet.Bool(flagInsecureSkipTLSVerify, viper.GetBool(flagInsecureSkipTLSVerify), "skip TLS verification (not recommended!)")
+		flagSet.Bool(flagDebug, false, "enable debugging and profiling features")
+		flagSet.String(flagLogLevel, viper.GetString(flagLogLevel), "logging level [panic, fatal, error, warn, info, debug]")
+		flagSet.Int(backend.FlagEventdWorkers, viper.GetInt(backend.FlagEventdWorkers), "number of workers spawned for processing incoming events")
+		flagSet.Int(backend.FlagEventdBufferSize, viper.GetInt(backend.FlagEventdBufferSize), "number of incoming events that can be buffered")
+		flagSet.Int(backend.FlagKeepalivedWorkers, viper.GetInt(backend.FlagKeepalivedWorkers), "number of workers spawned for processing incoming keepalives")
+		flagSet.Int(backend.FlagKeepalivedBufferSize, viper.GetInt(backend.FlagKeepalivedBufferSize), "number of incoming keepalives that can be buffered")
+		flagSet.Int(backend.FlagPipelinedWorkers, viper.GetInt(backend.FlagPipelinedWorkers), "number of workers spawned for handling events through the event pipeline")
+		flagSet.Int(backend.FlagPipelinedBufferSize, viper.GetInt(backend.FlagPipelinedBufferSize), "number of events to handle that can be buffered")
+		flagSet.Int(backend.FlagAgentWriteTimeout, viper.GetInt(backend.FlagAgentWriteTimeout), "timeout in seconds for agent writes")
+		flagSet.String(backend.FlagJWTPrivateKeyFile, viper.GetString(backend.FlagJWTPrivateKeyFile), "path to the PEM-encoded private key to use to sign JWTs")
+		flagSet.String(backend.FlagJWTPublicKeyFile, viper.GetString(backend.FlagJWTPublicKeyFile), "path to the PEM-encoded public key to use to verify JWT signatures")
+		flagSet.StringToStringVar(&labels, flagLabels, nil, "entity labels map")
+		flagSet.StringToStringVar(&annotations, flagAnnotations, nil, "entity annotations map")
+
+		// Etcd server flags
+		flagSet.StringSlice(flagEtcdPeerURLs, viper.GetStringSlice(flagEtcdPeerURLs), "list of URLs to listen on for peer traffic")
+		_ = flagSet.SetAnnotation(flagEtcdPeerURLs, "categories", []string{"store"})
+		flagSet.String(flagEtcdInitialCluster, viper.GetString(flagEtcdInitialCluster), "initial cluster configuration for bootstrapping")
+		_ = flagSet.SetAnnotation(flagEtcdInitialCluster, "categories", []string{"store"})
+		flagSet.StringSlice(flagEtcdInitialAdvertisePeerURLs, viper.GetStringSlice(flagEtcdInitialAdvertisePeerURLs), "list of this member's peer URLs to advertise to the rest of the cluster")
+		_ = flagSet.SetAnnotation(flagEtcdInitialAdvertisePeerURLs, "categories", []string{"store"})
+		flagSet.String(flagEtcdInitialClusterState, viper.GetString(flagEtcdInitialClusterState), "initial cluster state (\"new\" or \"existing\")")
+		_ = flagSet.SetAnnotation(flagEtcdInitialClusterState, "categories", []string{"store"})
+		flagSet.String(flagEtcdDiscovery, viper.GetString(flagEtcdDiscovery), "discovery URL used to bootstrap the cluster")
+		_ = flagSet.SetAnnotation(flagEtcdDiscovery, "categories", []string{"store"})
+		flagSet.String(flagEtcdDiscoverySrv, viper.GetString(flagEtcdDiscoverySrv), "DNS SRV record used to bootstrap the cluster")
+		_ = flagSet.SetAnnotation(flagEtcdDiscoverySrv, "categories", []string{"store"})
+		flagSet.String(flagEtcdInitialClusterToken, viper.GetString(flagEtcdInitialClusterToken), "initial cluster token for the etcd cluster during bootstrap")
+		_ = flagSet.SetAnnotation(flagEtcdInitialClusterToken, "categories", []string{"store"})
+		flagSet.StringSlice(flagEtcdListenClientURLs, viper.GetStringSlice(flagEtcdListenClientURLs), "list of etcd client URLs to listen on")
+		_ = flagSet.SetAnnotation(flagEtcdListenClientURLs, "categories", []string{"store"})
+		flagSet.Bool(flagNoEmbedEtcd, viper.GetBool(flagNoEmbedEtcd), "don't embed etcd, use external etcd instead")
+		_ = flagSet.SetAnnotation(flagNoEmbedEtcd, "categories", []string{"store"})
+		flagSet.Int64(flagEtcdQuotaBackendBytes, viper.GetInt64(flagEtcdQuotaBackendBytes), "maximum etcd database size in bytes (use with caution)")
+		_ = flagSet.SetAnnotation(flagEtcdQuotaBackendBytes, "categories", []string{"store"})
+		flagSet.Uint(flagEtcdHeartbeatInterval, viper.GetUint(flagEtcdHeartbeatInterval), "interval in ms with which the etcd leader will notify followers that it is still the leader")
+		_ = flagSet.SetAnnotation(flagEtcdHeartbeatInterval, "categories", []string{"store"})
+		flagSet.Uint(flagEtcdElectionTimeout, viper.GetUint(flagEtcdElectionTimeout), "time in ms a follower node will go without hearing a heartbeat before attempting to become leader itself")
+		_ = flagSet.SetAnnotation(flagEtcdElectionTimeout, "categories", []string{"store"})
+
+		// Etcd server TLS flags
+		flagSet.String(flagEtcdPeerCertFile, viper.GetString(flagEtcdPeerCertFile), "path to the peer server TLS cert file")
+		_ = flagSet.SetAnnotation(flagEtcdPeerCertFile, "categories", []string{"store"})
+		flagSet.String(flagEtcdPeerKeyFile, viper.GetString(flagEtcdPeerKeyFile), "path to the peer server TLS key file")
+		_ = flagSet.SetAnnotation(flagEtcdPeerKeyFile, "categories", []string{"store"})
+		flagSet.Bool(flagEtcdPeerClientCertAuth, viper.GetBool(flagEtcdPeerClientCertAuth), "enable peer client cert authentication")
+		_ = flagSet.SetAnnotation(flagEtcdPeerClientCertAuth, "categories", []string{"store"})
+		flagSet.String(flagEtcdPeerTrustedCAFile, viper.GetString(flagEtcdPeerTrustedCAFile), "path to the peer server TLS trusted CA file")
+		_ = flagSet.SetAnnotation(flagEtcdPeerTrustedCAFile, "categories", []string{"store"})
+		flagSet.String(flagEtcdNodeName, viper.GetString(flagEtcdNodeName), "name for this etcd node")
+		_ = flagSet.SetAnnotation(flagEtcdNodeName, "categories", []string{"store"})
+	}
+
+	flagSet.SetOutput(ioutil.Discard)
 
 	return flagSet
 }
