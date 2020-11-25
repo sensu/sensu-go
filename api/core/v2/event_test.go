@@ -461,19 +461,19 @@ func TestEventsBySeverity(t *testing.T) {
 
 func TestEventsByLastOk(t *testing.T) {
 	incident := FixtureEvent("zeta", "check")
-	incident.Check.Status = 2 // crit
+	incident.Check.State = EventFailingState
 	incidentNewer := FixtureEvent("zeta", "check")
-	incidentNewer.Check.Status = 2 // crit
+	incidentNewer.Check.State = EventFlappingState
 	incidentNewer.Check.LastOK = 1
 	ok := FixtureEvent("zeta", "check")
-	ok.Check.Status = 0 // ok
+	ok.Check.State = EventPassingState
 	okNewer := FixtureEvent("zeta", "check")
-	okNewer.Check.Status = 0 // ok
+	okNewer.Check.State = EventPassingState
 	okNewer.Check.LastOK = 1
 	okDiffEntity := FixtureEvent("abba", "check")
-	okDiffEntity.Check.Status = 0 // ok
+	okDiffEntity.Check.State = EventPassingState
 	okDiffCheck := FixtureEvent("abba", "0bba")
-	okDiffCheck.Check.Status = 0 // ok
+	okDiffCheck.Check.State = EventPassingState
 
 	testCases := []struct {
 		name     string
@@ -481,17 +481,17 @@ func TestEventsByLastOk(t *testing.T) {
 		expected []*Event
 	}{
 		{
-			name:     "Sorts by lastOK",
+			name:     "sort by lastOK",
 			input:    []*Event{ok, okNewer, incidentNewer, incident},
 			expected: []*Event{incidentNewer, incident, okNewer, ok},
 		},
 		{
-			name:     "incidents are sorted to the top",
+			name:     "non-passing are sorted to the top",
 			input:    []*Event{okNewer, incidentNewer, ok, incident},
 			expected: []*Event{incidentNewer, incident, okNewer, ok},
 		},
 		{
-			name:     "Fallback to entity & check name when severity is same",
+			name:     "fallback to entity & check name when severity is same",
 			input:    []*Event{ok, okNewer, okDiffCheck, okDiffEntity},
 			expected: []*Event{okNewer, okDiffCheck, okDiffEntity, ok},
 		},
