@@ -322,7 +322,9 @@ func handleConfig(cmd *cobra.Command, server bool) error {
 
 	// Use the default config path as a fallback if no config file was provided
 	// via the flag or the environment variable
+	configFilePathIsDefined := true
 	if configFilePath == "" {
+		configFilePathIsDefined = false
 		configFilePath = configFileDefaultLocation
 	}
 
@@ -490,7 +492,7 @@ func handleConfig(cmd *cobra.Command, server bool) error {
 	_ = cmd.Flags().SetAnnotation(flagEtcdClientURLs, "categories", []string{"store"})
 
 	// Load the configuration file but only error out if flagConfigFile is used
-	if err := viper.ReadInConfig(); err != nil && configFilePath != "" {
+	if err := viper.ReadInConfig(); err != nil && configFilePathIsDefined {
 		return err
 	}
 
