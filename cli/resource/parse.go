@@ -11,6 +11,7 @@ import (
 	"regexp"
 
 	"github.com/ghodss/yaml"
+
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/types"
 )
@@ -64,20 +65,6 @@ func Parse(in io.Reader) ([]*types.Wrapper, error) {
 				errCount++
 				continue
 			}
-
-			// Mark the resource as managed by sensuctl in the outer labels
-			if len(w.ObjectMeta.Labels) == 0 {
-				w.ObjectMeta.Labels = map[string]string{}
-			}
-			w.ObjectMeta.Labels[corev2.ManagedByLabel] = "sensuctl"
-
-			// Mark the resource as managed by sensuctl in the inner labels
-			innerMeta := w.Value.GetObjectMeta()
-			if len(innerMeta.Labels) == 0 {
-				innerMeta.Labels = map[string]string{}
-			}
-			innerMeta.Labels[corev2.ManagedByLabel] = "sensuctl"
-			w.Value.SetObjectMeta(innerMeta)
 
 			resources = append(resources, &w)
 			count++
