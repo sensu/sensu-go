@@ -20,6 +20,9 @@ sensu-backend (`SENSU_BACKEND_CONFIG_FILE`) & sensu-agent (`SENSU_CONFIG_FILE`).
 - Adjust the date and duration formats used when listing and displaying silenced
 entries in sensuctl.
 
+### Fixed
+- The config-file flag is no longer order dependant.
+
 ### [6.1.2] - 2020-10-28
 ### Fixed
 - Fixed a bug where the entity API could panic.
