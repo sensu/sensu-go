@@ -189,7 +189,7 @@ func EventsBySeverity(es []*Event) sort.Interface {
 	return &eventSorter{es, createCmpEvents(
 		cmpBySeverity,
 		cmpByLastOk,
-		cmpByUniqueComponents,
+		cmpByEntity(true),
 	)}
 }
 
@@ -215,31 +215,39 @@ func EventsByLastOk(es []*Event) sort.Interface {
 	return &eventSorter{es, createCmpEvents(
 		cmpByState,
 		cmpByLastOk,
-		cmpByUniqueComponents,
+		cmpByEntity(true),
 	)}
 }
 
-func cmpByUniqueComponents(a, b *Event) int {
-	ai, bi := "", ""
-	if a.Entity != nil {
-		ai += a.Entity.Name
-	}
-	if a.Check != nil {
-		ai += a.Check.Name
-	}
-	if b.Entity != nil {
-		bi = b.Entity.Name
-	}
-	if b.Check != nil {
-		bi += b.Check.Name
-	}
+// EventsByEntityName can be used to sort a given collection of events by
+// entity name (and secondarily by check name.)
+func EventsByEntityName(es []*Event, asc bool) sort.Interface {
+	return &eventSorter{es, createCmpEvents(cmpByEntity(asc))}
+}
 
-	if ai == bi {
-		return 0
-	} else if ai < bi {
-		return 1
+func cmpByEntity(asc bool) func(a, b *Event) int {
+	return func(a, b *Event) int {
+		ai, bi := "", ""
+		if a.Entity != nil {
+			ai += a.Entity.Name
+		}
+		if a.Check != nil {
+			ai += a.Check.Name
+		}
+		if b.Entity != nil {
+			bi = b.Entity.Name
+		}
+		if b.Check != nil {
+			bi += b.Check.Name
+		}
+
+		if ai == bi {
+			return 0
+		} else if (asc && ai < bi) || (!asc && ai > bi) {
+			return 1
+		}
+		return -1
 	}
-	return -1
 }
 
 func cmpBySeverity(a, b *Event) int {
