@@ -219,9 +219,9 @@ func EventsByLastOk(es []*Event) sort.Interface {
 	)}
 }
 
-// EventsByEntity can be used to sort a given collection of event by the name
-// of it's referenced entity.
-func EventsByEntity(es []*Event, asc bool) sort.Interface {
+// EventsByEntityName can be used to sort a given collection of events by
+// entity name (and secondarily by check name.)
+func EventsByEntityName(es []*Event, asc bool) sort.Interface {
 	return &eventSorter{es, createCmpEvents(cmpByEntity(asc))}
 }
 

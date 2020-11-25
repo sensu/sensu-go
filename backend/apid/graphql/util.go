@@ -49,7 +49,7 @@ func sortEvents(evs []*corev2.Event, order schema.EventsListOrder) {
 	} else if order == schema.EventsListOrders.LASTOK {
 		sort.Sort(corev2.EventsByLastOk(evs))
 	} else if order == schema.EventsListOrders.ENTITY || order == schema.EventsListOrders.ENTITY_DESC {
-		sort.Sort(corev2.EventsByEntity(evs, order == schema.EventsListOrders.ENTITY))
+		sort.Sort(corev2.EventsByEntityName(evs, order == schema.EventsListOrders.ENTITY))
 	} else {
 		sort.Sort(corev2.EventsByTimestamp(
 			evs,
