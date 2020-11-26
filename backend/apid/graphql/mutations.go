@@ -8,10 +8,10 @@ import (
 
 	"github.com/mitchellh/mapstructure"
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
-	corev3 "github.com/sensu/sensu-go/api/core/v3"
 	"github.com/sensu/sensu-go/backend/apid/graphql/globalid"
 	"github.com/sensu/sensu-go/backend/apid/graphql/schema"
 	"github.com/sensu/sensu-go/backend/store"
+	"github.com/sensu/sensu-go/cli/compat"
 	"github.com/sensu/sensu-go/types"
 )
 
@@ -55,17 +55,8 @@ func (r *mutationsImpl) PutWrapped(p schema.MutationPutWrappedFieldResolverParam
 		return nil, err
 	}
 
-	var namespace string
-	var resource corev2.Resource
-
-	switch value := ret.Value.(type) {
-	case corev2.Resource:
-		namespace = value.GetObjectMeta().Namespace
-		resource = value
-	case corev3.Resource:
-		namespace = value.GetMetadata().Namespace
-		resource = corev3.V3ToV2Resource(value)
-	}
+	resource := compat.V2Resource(ret.Value)
+	namespace := resource.GetObjectMeta().Namespace
 
 	ctx := store.NamespaceContext(p.Context, namespace)
 
