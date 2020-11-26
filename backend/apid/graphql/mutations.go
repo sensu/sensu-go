@@ -8,6 +8,7 @@ import (
 
 	"github.com/mitchellh/mapstructure"
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
+	corev3 "github.com/sensu/sensu-go/api/core/v3"
 	"github.com/sensu/sensu-go/backend/apid/graphql/globalid"
 	"github.com/sensu/sensu-go/backend/apid/graphql/schema"
 	"github.com/sensu/sensu-go/backend/store"
@@ -54,15 +55,27 @@ func (r *mutationsImpl) PutWrapped(p schema.MutationPutWrappedFieldResolverParam
 		return nil, err
 	}
 
-	ctx := store.NamespaceContext(p.Context, ret.Value.GetObjectMeta().Namespace)
+	var namespace string
+	var resource corev2.Resource
+
+	switch value := ret.Value.(type) {
+	case corev2.Resource:
+		namespace = value.GetObjectMeta().Namespace
+		resource = value
+	case corev3.Resource:
+		namespace = value.GetMetadata().Namespace
+		resource = corev3.V3ToV2Resource(value)
+	}
+
+	ctx := store.NamespaceContext(p.Context, namespace)
 
 	if upsert {
-		err = client.Update(ctx, ret.Value)
+		err = client.Update(ctx, resource)
 	} else {
 		// If the `upsert` parameter on this mutation is `false`, we want to
 		// return an error if the resource already exists, instead of
 		// updating the existing resource.
-		err = client.Create(ctx, ret.Value)
+		err = client.Create(ctx, resource)
 	}
 	if err != nil {
 		return map[string]interface{}{

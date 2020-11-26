@@ -14,6 +14,7 @@ import (
 
 	"github.com/sensu/sensu-go/cli"
 	"github.com/sensu/sensu-go/cli/client"
+	"github.com/sensu/sensu-go/cli/compat"
 	"github.com/sensu/sensu-go/types"
 )
 
@@ -76,7 +77,7 @@ func ProcessFile(input string, recurse bool) ([]*types.Wrapper, error) {
 		}
 
 		// Resolve symbolic link
-		if info.Mode() & os.ModeSymlink != 0 {
+		if info.Mode()&os.ModeSymlink != 0 {
 			path, err = filepath.EvalSymlinks(path)
 			if err != nil {
 				return err
@@ -177,7 +178,7 @@ func (p *Putter) Process(client client.GenericClient, resources []*types.Wrapper
 		if err := client.PutResource(*resource); err != nil {
 			return fmt.Errorf(
 				"error putting resource #%d with name %q and namespace %q (%s): %s",
-				i, resource.ObjectMeta.Name, resource.ObjectMeta.Namespace, resource.Value.URIPath(), err,
+				i, resource.ObjectMeta.Name, resource.ObjectMeta.Namespace, compat.URIPath(resource.Value), err,
 			)
 		}
 	}

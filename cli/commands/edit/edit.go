@@ -18,6 +18,7 @@ import (
 	"github.com/sensu/sensu-go/cli"
 	"github.com/sensu/sensu-go/cli/client/config"
 	"github.com/sensu/sensu-go/cli/commands/helpers"
+	"github.com/sensu/sensu-go/cli/compat"
 	"github.com/sensu/sensu-go/cli/resource"
 	"github.com/sensu/sensu-go/types"
 	"github.com/spf13/cobra"
@@ -121,7 +122,7 @@ func dumpResource(client client, cfg namespaceFormat, typeName string, key []str
 	case corev2.Resource:
 		resource = r
 	case *types.Wrapper:
-		resource = r.Value
+		resource = compat.V2Resource(r.Value)
 	default:
 		return fmt.Errorf("unexpected response type %T. Make sure the resource type is valid", response)
 	}
@@ -246,7 +247,7 @@ func Command(cli *cli.SensuCli) *cobra.Command {
 			if err := processor.Process(cli.Client, resources); err != nil {
 				return err
 			}
-			fmt.Fprintf(cmd.OutOrStdout(), "Updated %s\n", resources[0].Value.URIPath())
+			fmt.Fprintf(cmd.OutOrStdout(), "Updated %s\n", compat.URIPath(resources[0].Value))
 			return nil
 		},
 	}

@@ -12,6 +12,7 @@ import (
 
 	"github.com/ghodss/yaml"
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
+	"github.com/sensu/sensu-go/cli/compat"
 	"github.com/sensu/sensu-go/types"
 )
 
@@ -72,12 +73,12 @@ func Parse(in io.Reader) ([]*types.Wrapper, error) {
 			w.ObjectMeta.Labels[corev2.ManagedByLabel] = "sensuctl"
 
 			// Mark the resource as managed by sensuctl in the inner labels
-			innerMeta := w.Value.GetObjectMeta()
+			innerMeta := compat.GetObjectMeta(w.Value)
 			if len(innerMeta.Labels) == 0 {
 				innerMeta.Labels = map[string]string{}
 			}
 			innerMeta.Labels[corev2.ManagedByLabel] = "sensuctl"
-			w.Value.SetObjectMeta(innerMeta)
+			compat.SetObjectMeta(w.Value, innerMeta)
 
 			resources = append(resources, &w)
 			count++
@@ -120,13 +121,13 @@ func Validate(resources []*types.Wrapper, namespace string) error {
 			)
 			continue
 		}
-		if resource.GetObjectMeta().Namespace == "" {
-			resource.SetNamespace(namespace)
+		if compat.GetObjectMeta(resource).Namespace == "" {
+			compat.SetNamespace(resource, namespace)
 			// We just set the namespace within the underlying wrapped value. We also
 			// need to set it to the outer ObjectMeta for consistency, but only if the
 			// resource has a namespace; some resources are cluster-wide and should
 			// not be namespaced
-			if ns := resource.GetObjectMeta().Namespace; ns != "" {
+			if ns := compat.GetObjectMeta(resource).Namespace; ns != "" {
 				r.ObjectMeta.Namespace = ns
 			}
 		}
