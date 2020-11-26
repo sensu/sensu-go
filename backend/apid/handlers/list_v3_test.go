@@ -2,7 +2,6 @@ package handlers
 
 import (
 	"context"
-	"fmt"
 	"reflect"
 	"testing"
 
@@ -62,8 +61,6 @@ func TestHandlers_ListV3Resources(t *testing.T) {
 			}
 
 			if !reflect.DeepEqual(got, tt.want) {
-				fmt.Printf("%#v\n", got[0].GetMetadata())
-				fmt.Printf("%#v\n", tt.want[0].GetMetadata())
 				t.Errorf("Handlers.ListResources() = %#v, want %#v", got, tt.want)
 			}
 		})

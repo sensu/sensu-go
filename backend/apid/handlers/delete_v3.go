@@ -11,7 +11,6 @@ import (
 	storev2 "github.com/sensu/sensu-go/backend/store/v2"
 )
 
-// DeleteResource deletes the resources identified in the request path
 func (h Handlers) DeleteV3Resource(r *http.Request) (interface{}, error) {
 	params := mux.Vars(r)
 	name, err := url.PathUnescape(params["id"])
@@ -34,6 +33,5 @@ func (h Handlers) DeleteV3Resource(r *http.Request) (interface{}, error) {
 			return nil, actions.NewError(actions.InternalErr, err)
 		}
 	}
-
 	return nil, nil
 }
