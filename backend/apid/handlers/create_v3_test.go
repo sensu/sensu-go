@@ -18,7 +18,6 @@ import (
 )
 
 func TestHandlers_CreateV3Resource(t *testing.T) {
-	type storeFunc func(*mockstore.MockStore)
 	tests := []struct {
 		name      string
 		body      []byte
