@@ -12,6 +12,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/cli"
 	"github.com/sensu/sensu-go/cli/client"
 	"github.com/sensu/sensu-go/cli/compat"
@@ -183,4 +184,46 @@ func (p *Putter) Process(client client.GenericClient, resources []*types.Wrapper
 		}
 	}
 	return nil
+}
+
+// ManagedByLabelPutter is a Processor that applies a corev2.ManagedByLabel
+// label with the chosen value to resources before passing them to a Putter.
+type ManagedByLabelPutter struct {
+	putter *Putter
+	Label  string
+}
+
+func NewManagedByLabelPutter(label string) *ManagedByLabelPutter {
+	return &ManagedByLabelPutter{
+		Label:  label,
+		putter: NewPutter(),
+	}
+}
+
+func (p *ManagedByLabelPutter) Process(client client.GenericClient, resources []*types.Wrapper) error {
+	for _, resource := range resources {
+		p.label(resource)
+	}
+	return p.putter.Process(client, resources)
+}
+
+func (p *ManagedByLabelPutter) label(resource *types.Wrapper) {
+	innerMeta := compat.GetObjectMeta(resource.Value)
+
+	if resource.ObjectMeta.Labels == nil {
+		resource.ObjectMeta.Labels = map[string]string{}
+	}
+	outerLabels := resource.ObjectMeta.Labels
+
+	if innerMeta.Labels == nil {
+		innerMeta.Labels = map[string]string{}
+	}
+	innerLabels := innerMeta.Labels
+
+	// Mark the resource as managed by `label` in the outer labels
+	outerLabels[corev2.ManagedByLabel] = p.Label
+
+	// Mark the resource as managed by `label` in the inner labels
+	innerLabels[corev2.ManagedByLabel] = p.Label
+	compat.SetObjectMeta(resource.Value, innerMeta)
 }

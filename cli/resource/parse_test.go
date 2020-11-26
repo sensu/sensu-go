@@ -2,10 +2,8 @@ package resource
 
 import (
 	"bytes"
-	"encoding/json"
 	"io"
 	"os"
-	"reflect"
 	"strings"
 	"testing"
 
@@ -96,71 +94,5 @@ func TestValidateStderr(t *testing.T) {
 	wantErr := `error validating resource #0 with name "check-cpu" and namespace "default": resource is nil`
 	if errMsg != wantErr {
 		t.Errorf("Validate() err = %s, want %s", errMsg, wantErr)
-	}
-}
-
-func TestCreatedByLabel(t *testing.T) {
-	tests := []struct {
-		name     string
-		resource types.Wrapper
-		want     map[string]string
-	}{
-		{
-			name: "the label is set on both the inner and outer labels",
-			resource: types.WrapResource(&corev2.CheckConfig{
-				ObjectMeta: corev2.ObjectMeta{
-					Name: "foo",
-				},
-			}),
-			want: map[string]string{
-				corev2.ManagedByLabel: "sensuctl",
-			},
-		},
-		{
-			name: "the label is appended to an existing list of labels",
-			resource: types.WrapResource(&corev2.CheckConfig{
-				ObjectMeta: corev2.ObjectMeta{
-					Labels: map[string]string{
-						"region": "us-west-2",
-					},
-				},
-			}),
-			want: map[string]string{
-				"region":              "us-west-2",
-				corev2.ManagedByLabel: "sensuctl",
-			},
-		},
-		{
-			name: "the label overwrites any existing value",
-			resource: types.WrapResource(&corev2.CheckConfig{
-				ObjectMeta: corev2.ObjectMeta{
-					Labels: map[string]string{
-						corev2.ManagedByLabel: "web-ui",
-					},
-				},
-			}),
-			want: map[string]string{
-				corev2.ManagedByLabel: "sensuctl",
-			},
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			var stdin bytes.Buffer
-			bytes, _ := json.Marshal(&tt.resource)
-			stdin.Write(bytes)
-
-			got, err := Parse(&stdin)
-			if err != nil {
-				t.Errorf("Parse() error = %v", err)
-				return
-			}
-			if !reflect.DeepEqual(got[0].ObjectMeta.Labels, tt.want) {
-				t.Errorf("Parse() inner labels = %v, want %v", got[0].ObjectMeta.Labels, tt.want)
-			}
-			if !reflect.DeepEqual(got[0].Value.GetObjectMeta().Labels, tt.want) {
-				t.Errorf("Parse() outer labels = %v, want %v", got[0].Value.GetObjectMeta().Labels, tt.want)
-			}
-		})
 	}
 }

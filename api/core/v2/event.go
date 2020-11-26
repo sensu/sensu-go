@@ -189,7 +189,7 @@ func EventsBySeverity(es []*Event) sort.Interface {
 	return &eventSorter{es, createCmpEvents(
 		cmpBySeverity,
 		cmpByLastOk,
-		cmpByUniqueComponents,
+		cmpByEntity(true),
 	)}
 }
 
@@ -213,33 +213,41 @@ func EventsByTimestamp(es []*Event, asc bool) sort.Interface {
 // last received an OK status.
 func EventsByLastOk(es []*Event) sort.Interface {
 	return &eventSorter{es, createCmpEvents(
-		cmpByIncident,
+		cmpByState,
 		cmpByLastOk,
-		cmpByUniqueComponents,
+		cmpByEntity(true),
 	)}
 }
 
-func cmpByUniqueComponents(a, b *Event) int {
-	ai, bi := "", ""
-	if a.Entity != nil {
-		ai += a.Entity.Name
-	}
-	if a.Check != nil {
-		ai += a.Check.Name
-	}
-	if b.Entity != nil {
-		bi = b.Entity.Name
-	}
-	if b.Check != nil {
-		bi += b.Check.Name
-	}
+// EventsByEntityName can be used to sort a given collection of events by
+// entity name (and secondarily by check name.)
+func EventsByEntityName(es []*Event, asc bool) sort.Interface {
+	return &eventSorter{es, createCmpEvents(cmpByEntity(asc))}
+}
 
-	if ai == bi {
-		return 0
-	} else if ai < bi {
-		return 1
+func cmpByEntity(asc bool) func(a, b *Event) int {
+	return func(a, b *Event) int {
+		ai, bi := "", ""
+		if a.Entity != nil {
+			ai += a.Entity.Name
+		}
+		if a.Check != nil {
+			ai += a.Check.Name
+		}
+		if b.Entity != nil {
+			bi = b.Entity.Name
+		}
+		if b.Check != nil {
+			bi += b.Check.Name
+		}
+
+		if ai == bi {
+			return 0
+		} else if (asc && ai < bi) || (!asc && ai > bi) {
+			return 1
+		}
+		return -1
 	}
-	return -1
 }
 
 func cmpBySeverity(a, b *Event) int {
@@ -254,10 +262,16 @@ func cmpBySeverity(a, b *Event) int {
 	return -1
 }
 
-func cmpByIncident(a, b *Event) int {
-	av, bv := a.IsIncident(), b.IsIncident()
+func cmpByState(a, b *Event) int {
+	var av, bv bool
+	if a.Check != nil {
+		av = a.Check.State != EventPassingState
+	}
+	if b.Check != nil {
+		bv = b.Check.State != EventPassingState
+	}
 
-	// Rank higher if incident
+	// Rank higher if failing/flapping
 	if av == bv {
 		return 0
 	} else if av {

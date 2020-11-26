@@ -36,7 +36,7 @@ func execute(cli *cli.SensuCli) func(*cobra.Command, []string) error {
 		if err != nil {
 			return err
 		}
-		processor := resource.NewPutter()
+		processor := resource.NewManagedByLabelPutter("sensuctl")
 		if len(inputs) == 0 {
 			return resource.ProcessStdin(cli, client, processor)
 		}
