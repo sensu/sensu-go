@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
+	"github.com/sensu/sensu-go/cli/compat"
 	"github.com/sensu/sensu-go/types"
 )
 
@@ -60,8 +61,8 @@ func TestValidate(t *testing.T) {
 			if tt.resource.ObjectMeta.Namespace != tt.wantNamespace {
 				t.Errorf("Validate() wrapper namespace = %q, want namespace %q", tt.resource.ObjectMeta.Namespace, tt.wantNamespace)
 			}
-			if tt.resource.Value != nil && tt.resource.Value.GetObjectMeta().Namespace != tt.wantNamespace {
-				t.Errorf("Validate() wrapper's resource namespace = %q, want namespace %q", tt.resource.Value.GetObjectMeta().Namespace, tt.wantNamespace)
+			if tt.resource.Value != nil && compat.GetObjectMeta(tt.resource.Value).Namespace != tt.wantNamespace {
+				t.Errorf("Validate() wrapper's resource namespace = %q, want namespace %q", compat.GetObjectMeta(tt.resource.Value).Namespace, tt.wantNamespace)
 			}
 		})
 	}

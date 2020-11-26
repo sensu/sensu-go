@@ -40,9 +40,10 @@ func SetNamespace(value interface{}, namespace string) {
 		value.SetNamespace(namespace)
 	case corev3.Resource:
 		value.GetMetadata().Namespace = namespace
+	default:
+		// impossible unless the type resolver is broken. fatal error.
+		panic("got neither corev2 resource nor corev3 resource")
 	}
-	// impossible unless the type resolver is broken. fatal error.
-	panic("got neither corev2 resource nor corev3 resource")
 }
 
 // SetObjectMeta sets the object metadata.

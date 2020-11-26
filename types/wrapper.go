@@ -224,7 +224,7 @@ V3RESOURCE:
 		w.Value = resource
 		return nil
 	}
-	val.FieldByName("ObjectMeta").Set(reflect.ValueOf(innerMeta))
+	val.FieldByName("ObjectMeta").Set(reflect.Indirect(reflect.ValueOf(innerMeta)))
 
 	// Determine if the resource implements the Lifter interface, which has a Lift
 	// method. This is useful when a resource can be polymorphic, such as
