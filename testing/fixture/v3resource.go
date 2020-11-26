@@ -4,7 +4,19 @@ import (
 	"fmt"
 
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
+	"github.com/sensu/sensu-go/types"
 )
+
+func init() {
+	types.RegisterResolver("testing/fixture", func(name string) (interface{}, error) {
+		switch name {
+		case "V3Resource", "v3_resource":
+			return new(V3Resource), nil
+		default:
+			return nil, fmt.Errorf("invalid resource: %s", name)
+		}
+	})
+}
 
 type V3Resource struct {
 	Metadata *corev2.ObjectMeta
