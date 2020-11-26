@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"errors"
 	"fmt"
 	"net/url"
 
@@ -18,15 +19,7 @@ type Handlers struct {
 	StoreV2    storev2.Interface
 }
 
-// CheckMeta inspects the resource metadata and ensures it matches what was
-// specified in the request URL
-func CheckMeta(resource interface{}, vars map[string]string, idVar string) error {
-	v, ok := resource.(interface{ GetObjectMeta() corev2.ObjectMeta })
-	if !ok {
-		// We are not dealing with a corev2.Resource interface
-		return nil
-	}
-	meta := v.GetObjectMeta()
+func checkMeta(meta corev2.ObjectMeta, vars map[string]string, idVar string) error {
 	namespace, err := url.PathUnescape(vars["namespace"])
 	if err != nil {
 		return err
@@ -60,6 +53,33 @@ func CheckMeta(resource interface{}, vars map[string]string, idVar string) error
 	}
 
 	return nil
+}
+
+// V3CheckMeta inspects the resource metadata and ensures it matches what was
+// specified in the request URL. Unlike CheckMeta it operates on v3 resources.
+func CheckV3Meta(resource interface{}, vars map[string]string, idVar string) error {
+	v, ok := resource.(interface{ GetMetadata() *corev2.ObjectMeta })
+	if !ok {
+		// We are not dealing with a corev3.Resource interface
+		return nil
+	}
+	meta := v.GetMetadata()
+	if meta == nil {
+		return errors.New("nil metadata")
+	}
+	return checkMeta(*meta, vars, idVar)
+}
+
+// CheckMeta inspects the resource metadata and ensures it matches what was
+// specified in the request URL
+func CheckMeta(resource interface{}, vars map[string]string, idVar string) error {
+	v, ok := resource.(interface{ GetObjectMeta() corev2.ObjectMeta })
+	if !ok {
+		// We are not dealing with a corev2.Resource interface
+		return nil
+	}
+	meta := v.GetObjectMeta()
+	return checkMeta(meta, vars, idVar)
 }
 
 // Resource is used to set metadata values, e.g. in MetaPathValues()
