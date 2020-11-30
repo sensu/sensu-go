@@ -9,12 +9,14 @@ import (
 	"reflect"
 
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
+	corev3 "github.com/sensu/sensu-go/api/core/v3"
 	"github.com/sensu/sensu-go/backend/apid/actions"
 	"github.com/sensu/sensu-go/cli"
 	"github.com/sensu/sensu-go/cli/client"
 	"github.com/sensu/sensu-go/cli/client/config"
 	"github.com/sensu/sensu-go/cli/commands/flags"
 	"github.com/sensu/sensu-go/cli/commands/helpers"
+	"github.com/sensu/sensu-go/cli/compat"
 	"github.com/sensu/sensu-go/cli/resource"
 	"github.com/sensu/sensu-go/types"
 	"github.com/spf13/cobra"
@@ -160,7 +162,13 @@ func execute(cli *cli.SensuCli) func(*cobra.Command, []string) error {
 				req.SetNamespace(cli.Config.Namespace())
 			}
 
-			val := reflect.New(reflect.SliceOf(reflect.TypeOf(req)))
+			var val reflect.Value
+			if proxy, ok := req.(*corev3.V2ResourceProxy); ok {
+				val = reflect.New(reflect.SliceOf(reflect.TypeOf(proxy.Resource)))
+			} else {
+				val = reflect.New(reflect.SliceOf(reflect.TypeOf(req)))
+			}
+
 			err = cli.Client.List(
 				fmt.Sprintf("%s?types=%s", req.URIPath(), url.QueryEscape(types.WrapResource(req).Type)),
 				val.Interface(), &client.ListOptions{
@@ -186,7 +194,7 @@ func execute(cli *cli.SensuCli) func(*cobra.Command, []string) error {
 
 			resources := make([]corev2.Resource, val.Len())
 			for i := range resources {
-				resources[i] = val.Index(i).Interface().(corev2.Resource)
+				resources[i] = compat.V2Resource(val.Index(i).Interface())
 			}
 
 			switch format {

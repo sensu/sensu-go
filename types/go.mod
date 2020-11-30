@@ -3,7 +3,7 @@ module github.com/sensu/sensu-go/types
 go 1.13
 
 replace (
-	github.com/sensu/sensu-go => ../sensu-go
+	github.com/sensu/sensu-go => ../
 	github.com/sensu/sensu-go/api/core/v2 => ../api/core/v2
 )
 

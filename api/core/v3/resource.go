@@ -1,7 +1,11 @@
 package v3
 
 import (
+	"encoding/json"
+	"reflect"
+
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
+	types "github.com/sensu/sensu-go/types"
 )
 
 var _ corev2.Resource = &V2ResourceProxy{}
@@ -71,4 +75,32 @@ func (v *V2ResourceProxy) SetNamespace(ns string) {
 
 func (v *V2ResourceProxy) StorePrefix() string {
 	return v.StoreName()
+}
+
+func (v V2ResourceProxy) MarshalJSON() ([]byte, error) {
+	return json.Marshal(v.Resource)
+}
+
+func (v *V2ResourceProxy) UnmarshalJSON(b []byte) error {
+	return json.Unmarshal(b, &v.Resource)
+}
+
+// tmGetter is useful for types that want to explicitly provide their
+// TypeMeta - this is useful for lifters.
+type tmGetter interface {
+	GetTypeMeta() corev2.TypeMeta
+}
+
+func (v V2ResourceProxy) GetTypeMeta() corev2.TypeMeta {
+	var tm corev2.TypeMeta
+	if getter, ok := v.Resource.(tmGetter); ok {
+		tm = getter.GetTypeMeta()
+	} else {
+		typ := reflect.Indirect(reflect.ValueOf(v.Resource)).Type()
+		tm = corev2.TypeMeta{
+			Type:       typ.Name(),
+			APIVersion: types.ApiVersion(typ.PkgPath()),
+		}
+	}
+	return tm
 }
