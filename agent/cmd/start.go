@@ -21,8 +21,9 @@ import (
 )
 
 var (
-	annotations map[string]string
-	labels      map[string]string
+	annotations               map[string]string
+	labels                    map[string]string
+	configFileDefaultLocation = filepath.Join(path.SystemConfigDir(), "agent.yml")
 )
 
 const (
@@ -219,16 +220,11 @@ func StartCommandWithError(initialize InitializeFunc) (*cobra.Command, error) {
 }
 
 func handleConfig(cmd *cobra.Command) error {
-	// Set up distinct flagset for handling config file
-	configFlagSet := pflag.NewFlagSet("sensu", pflag.ContinueOnError)
-	configFileDefaultLocation := filepath.Join(path.SystemConfigDir(), "agent.yml")
-	configFileDefault := fmt.Sprintf("path to sensu-agent config file (default %q)", configFileDefaultLocation)
-	_ = configFlagSet.StringP(flagConfigFile, "c", "", configFileDefault)
-	configFlagSet.SetOutput(ioutil.Discard)
-	_ = configFlagSet.Parse(os.Args[1:])
+	flagSet := flagSet()
+	_ = flagSet.Parse(os.Args[1:])
 
 	// Get the given config file path via flag
-	configFilePath, _ := configFlagSet.GetString(flagConfigFile)
+	configFilePath, _ := flagSet.GetString(flagConfigFile)
 
 	// Get the environment variable value if no config file was provided via the flag
 	if configFilePath == "" {
@@ -240,7 +236,9 @@ func handleConfig(cmd *cobra.Command) error {
 
 	// Use the default config path as a fallback if no config file was provided
 	// via the flag or the environment variable
+	configFilePathIsDefined := true
 	if configFilePath == "" {
+		configFilePathIsDefined = false
 		configFilePath = filepath.Join(path.SystemConfigDir(), "agent.yml")
 	}
 
@@ -286,57 +284,12 @@ func handleConfig(cmd *cobra.Command) error {
 	viper.SetDefault(flagBackendHeartbeatInterval, 30)
 	viper.SetDefault(flagBackendHeartbeatTimeout, 45)
 
-	// Merge in config flag set so that it appears in command usage
-	cmd.Flags().AddFlagSet(configFlagSet)
-
-	// Flags
-	// Load the configuration file but only error out if flagConfigFile is used
-	cmd.Flags().Bool(flagDeregister, viper.GetBool(flagDeregister), "ephemeral agent")
-	cmd.Flags().Int(flagAPIPort, viper.GetInt(flagAPIPort), "port the Sensu client HTTP API listens on")
-	cmd.Flags().Int(flagSocketPort, viper.GetInt(flagSocketPort), "port the Sensu client socket listens on")
-	cmd.Flags().String(flagAgentName, viper.GetString(flagAgentName), "agent name (defaults to hostname)")
-	cmd.Flags().String(flagAPIHost, viper.GetString(flagAPIHost), "address to bind the Sensu client HTTP API to")
-	cmd.Flags().String(flagCacheDir, viper.GetString(flagCacheDir), "path to store cached data")
-	cmd.Flags().String(flagDeregistrationHandler, viper.GetString(flagDeregistrationHandler), "deregistration handler that should process the entity deregistration event")
-	cmd.Flags().Bool(flagDetectCloudProvider, viper.GetBool(flagDetectCloudProvider), "enable cloud provider detection")
-	cmd.Flags().Float64(flagAssetsRateLimit, viper.GetFloat64(flagAssetsRateLimit), "maximum number of assets fetched per second")
-	cmd.Flags().Int(flagAssetsBurstLimit, viper.GetInt(flagAssetsBurstLimit), "asset fetch burst limit")
-	cmd.Flags().Float64(flagEventsRateLimit, viper.GetFloat64(flagEventsRateLimit), "maximum number of events transmitted to the backend through the /events api")
-	cmd.Flags().Int(flagEventsBurstLimit, viper.GetInt(flagEventsBurstLimit), "/events api burst limit")
-	cmd.Flags().String(flagNamespace, viper.GetString(flagNamespace), "agent namespace")
-	cmd.Flags().String(flagPassword, viper.GetString(flagPassword), "agent password")
-	cmd.Flags().StringSlice(flagRedact, viper.GetStringSlice(flagRedact), "comma-delimited list of fields to redact, overwrites the default fields. This flag can also be invoked multiple times")
-	cmd.Flags().String(flagSocketHost, viper.GetString(flagSocketHost), "address to bind the Sensu client socket to")
-	cmd.Flags().Bool(flagStatsdDisable, viper.GetBool(flagStatsdDisable), "disables the statsd listener and metrics server")
-	cmd.Flags().StringSlice(flagStatsdEventHandlers, viper.GetStringSlice(flagStatsdEventHandlers), "comma-delimited list of event handlers for statsd metrics. This flag can also be invoked multiple times")
-	cmd.Flags().Int(flagStatsdFlushInterval, viper.GetInt(flagStatsdFlushInterval), "number of seconds between statsd flush")
-	cmd.Flags().String(flagStatsdMetricsHost, viper.GetString(flagStatsdMetricsHost), "address used for the statsd metrics server")
-	cmd.Flags().Int(flagStatsdMetricsPort, viper.GetInt(flagStatsdMetricsPort), "port used for the statsd metrics server")
-	cmd.Flags().StringSlice(flagSubscriptions, viper.GetStringSlice(flagSubscriptions), "comma-delimited list of agent subscriptions. This flag can also be invoked multiple times")
-	cmd.Flags().String(flagUser, viper.GetString(flagUser), "agent user")
-	cmd.Flags().StringSlice(flagBackendURL, viper.GetStringSlice(flagBackendURL), "comma-delimited list of ws/wss URLs of Sensu backend servers. This flag can also be invoked multiple times")
-	cmd.Flags().StringSlice(flagKeepaliveHandlers, viper.GetStringSlice(flagKeepaliveHandlers), "comma-delimited list of keepalive handlers for this entity. This flag can also be invoked multiple times")
-	cmd.Flags().Int(flagKeepaliveInterval, viper.GetInt(flagKeepaliveInterval), "number of seconds to send between keepalive events")
-	cmd.Flags().Uint32(flagKeepaliveWarningTimeout, uint32(viper.GetInt(flagKeepaliveWarningTimeout)), "number of seconds until agent is considered dead by backend to create a warning event")
-	cmd.Flags().Uint32(flagKeepaliveCriticalTimeout, uint32(viper.GetInt(flagKeepaliveCriticalTimeout)), "number of seconds until agent is considered dead by backend to create a critical event")
-	cmd.Flags().Bool(flagDisableAPI, viper.GetBool(flagDisableAPI), "disable the Agent HTTP API")
-	cmd.Flags().Bool(flagDisableAssets, viper.GetBool(flagDisableAssets), "disable check assets on this agent")
-	cmd.Flags().Bool(flagDisableSockets, viper.GetBool(flagDisableSockets), "disable the Agent TCP and UDP event sockets")
-	cmd.Flags().String(flagTrustedCAFile, viper.GetString(flagTrustedCAFile), "TLS CA certificate bundle in PEM format")
-	cmd.Flags().Bool(flagInsecureSkipTLSVerify, viper.GetBool(flagInsecureSkipTLSVerify), "skip TLS verification (not recommended!)")
-	cmd.Flags().String(flagCertFile, viper.GetString(flagCertFile), "certificate for TLS authentication")
-	cmd.Flags().String(flagKeyFile, viper.GetString(flagKeyFile), "key for TLS authentication")
-	cmd.Flags().String(flagLogLevel, viper.GetString(flagLogLevel), "logging level [panic, fatal, error, warn, info, debug]")
-	cmd.Flags().StringToStringVar(&labels, flagLabels, nil, "entity labels map")
-	cmd.Flags().StringToStringVar(&annotations, flagAnnotations, nil, "entity annotations map")
-	cmd.Flags().String(flagAllowList, viper.GetString(flagAllowList), "path to agent execution allow list configuration file")
-	cmd.Flags().Int(flagBackendHandshakeTimeout, viper.GetInt(flagBackendHandshakeTimeout), "number of seconds the agent should wait when negotiating a new WebSocket connection")
-	cmd.Flags().Int(flagBackendHeartbeatInterval, viper.GetInt(flagBackendHeartbeatInterval), "interval at which the agent should send heartbeats to the backend")
-	cmd.Flags().Int(flagBackendHeartbeatTimeout, viper.GetInt(flagBackendHeartbeatTimeout), "number of seconds the agent should wait for a response to a hearbeat")
+	// Merge in flag set so that it appears in command usage
+	cmd.Flags().AddFlagSet(flagSet)
 
 	cmd.Flags().SetNormalizeFunc(aliasNormalizeFunc(logger))
 
-	if err := viper.ReadInConfig(); err != nil && configFilePath != "" {
+	if err := viper.ReadInConfig(); err != nil && configFilePathIsDefined {
 		return err
 	}
 
@@ -391,4 +344,60 @@ func deprecatedConfigAttributes(logger *logrus.Entry) {
 func deprecatedFlagMessage(oldFlag, newFlag string, logger *logrus.Entry) {
 	logger.Warningf("flag --%s has been deprecated, please use --%s instead",
 		oldFlag, newFlag)
+}
+
+func flagSet() *pflag.FlagSet {
+	flagSet := pflag.NewFlagSet("sensu-agent", pflag.ContinueOnError)
+
+	// Config file flag
+	configFileDescription := fmt.Sprintf("path to sensu-agent config file (default %q)", configFileDefaultLocation)
+	_ = flagSet.StringP(flagConfigFile, "c", "", configFileDescription)
+
+	// Common flags
+	flagSet.Bool(flagDeregister, viper.GetBool(flagDeregister), "ephemeral agent")
+	flagSet.Int(flagAPIPort, viper.GetInt(flagAPIPort), "port the Sensu client HTTP API listens on")
+	flagSet.Int(flagSocketPort, viper.GetInt(flagSocketPort), "port the Sensu client socket listens on")
+	flagSet.String(flagAgentName, viper.GetString(flagAgentName), "agent name (defaults to hostname)")
+	flagSet.String(flagAPIHost, viper.GetString(flagAPIHost), "address to bind the Sensu client HTTP API to")
+	flagSet.String(flagCacheDir, viper.GetString(flagCacheDir), "path to store cached data")
+	flagSet.String(flagDeregistrationHandler, viper.GetString(flagDeregistrationHandler), "deregistration handler that should process the entity deregistration event")
+	flagSet.Bool(flagDetectCloudProvider, viper.GetBool(flagDetectCloudProvider), "enable cloud provider detection")
+	flagSet.Float64(flagAssetsRateLimit, viper.GetFloat64(flagAssetsRateLimit), "maximum number of assets fetched per second")
+	flagSet.Int(flagAssetsBurstLimit, viper.GetInt(flagAssetsBurstLimit), "asset fetch burst limit")
+	flagSet.Float64(flagEventsRateLimit, viper.GetFloat64(flagEventsRateLimit), "maximum number of events transmitted to the backend through the /events api")
+	flagSet.Int(flagEventsBurstLimit, viper.GetInt(flagEventsBurstLimit), "/events api burst limit")
+	flagSet.String(flagNamespace, viper.GetString(flagNamespace), "agent namespace")
+	flagSet.String(flagPassword, viper.GetString(flagPassword), "agent password")
+	flagSet.StringSlice(flagRedact, viper.GetStringSlice(flagRedact), "comma-delimited list of fields to redact, overwrites the default fields. This flag can also be invoked multiple times")
+	flagSet.String(flagSocketHost, viper.GetString(flagSocketHost), "address to bind the Sensu client socket to")
+	flagSet.Bool(flagStatsdDisable, viper.GetBool(flagStatsdDisable), "disables the statsd listener and metrics server")
+	flagSet.StringSlice(flagStatsdEventHandlers, viper.GetStringSlice(flagStatsdEventHandlers), "comma-delimited list of event handlers for statsd metrics. This flag can also be invoked multiple times")
+	flagSet.Int(flagStatsdFlushInterval, viper.GetInt(flagStatsdFlushInterval), "number of seconds between statsd flush")
+	flagSet.String(flagStatsdMetricsHost, viper.GetString(flagStatsdMetricsHost), "address used for the statsd metrics server")
+	flagSet.Int(flagStatsdMetricsPort, viper.GetInt(flagStatsdMetricsPort), "port used for the statsd metrics server")
+	flagSet.StringSlice(flagSubscriptions, viper.GetStringSlice(flagSubscriptions), "comma-delimited list of agent subscriptions. This flag can also be invoked multiple times")
+	flagSet.String(flagUser, viper.GetString(flagUser), "agent user")
+	flagSet.StringSlice(flagBackendURL, viper.GetStringSlice(flagBackendURL), "comma-delimited list of ws/wss URLs of Sensu backend servers. This flag can also be invoked multiple times")
+	flagSet.StringSlice(flagKeepaliveHandlers, viper.GetStringSlice(flagKeepaliveHandlers), "comma-delimited list of keepalive handlers for this entity. This flag can also be invoked multiple times")
+	flagSet.Int(flagKeepaliveInterval, viper.GetInt(flagKeepaliveInterval), "number of seconds to send between keepalive events")
+	flagSet.Uint32(flagKeepaliveWarningTimeout, uint32(viper.GetInt(flagKeepaliveWarningTimeout)), "number of seconds until agent is considered dead by backend to create a warning event")
+	flagSet.Uint32(flagKeepaliveCriticalTimeout, uint32(viper.GetInt(flagKeepaliveCriticalTimeout)), "number of seconds until agent is considered dead by backend to create a critical event")
+	flagSet.Bool(flagDisableAPI, viper.GetBool(flagDisableAPI), "disable the Agent HTTP API")
+	flagSet.Bool(flagDisableAssets, viper.GetBool(flagDisableAssets), "disable check assets on this agent")
+	flagSet.Bool(flagDisableSockets, viper.GetBool(flagDisableSockets), "disable the Agent TCP and UDP event sockets")
+	flagSet.String(flagTrustedCAFile, viper.GetString(flagTrustedCAFile), "TLS CA certificate bundle in PEM format")
+	flagSet.Bool(flagInsecureSkipTLSVerify, viper.GetBool(flagInsecureSkipTLSVerify), "skip TLS verification (not recommended!)")
+	flagSet.String(flagCertFile, viper.GetString(flagCertFile), "certificate for TLS authentication")
+	flagSet.String(flagKeyFile, viper.GetString(flagKeyFile), "key for TLS authentication")
+	flagSet.String(flagLogLevel, viper.GetString(flagLogLevel), "logging level [panic, fatal, error, warn, info, debug]")
+	flagSet.StringToStringVar(&labels, flagLabels, nil, "entity labels map")
+	flagSet.StringToStringVar(&annotations, flagAnnotations, nil, "entity annotations map")
+	flagSet.String(flagAllowList, viper.GetString(flagAllowList), "path to agent execution allow list configuration file")
+	flagSet.Int(flagBackendHandshakeTimeout, viper.GetInt(flagBackendHandshakeTimeout), "number of seconds the agent should wait when negotiating a new WebSocket connection")
+	flagSet.Int(flagBackendHeartbeatInterval, viper.GetInt(flagBackendHeartbeatInterval), "interval at which the agent should send heartbeats to the backend")
+	flagSet.Int(flagBackendHeartbeatTimeout, viper.GetInt(flagBackendHeartbeatTimeout), "number of seconds the agent should wait for a response to a hearbeat")
+
+	flagSet.SetOutput(ioutil.Discard)
+
+	return flagSet
 }
