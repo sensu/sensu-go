@@ -25,6 +25,12 @@ func NewObjectMeta(name, namespace string) ObjectMeta {
 	}
 }
 
+// NewObjectMetaP is the pointer-returning version of NewObjectMeta.
+func NewObjectMetaP(name, namespace string) *ObjectMeta {
+	meta := NewObjectMeta(name, namespace)
+	return &meta
+}
+
 // Cmp compares this ObjectMeta with another ObjectMeta.
 func (o *ObjectMeta) Cmp(other *ObjectMeta) Comparison {
 	if o == nil {

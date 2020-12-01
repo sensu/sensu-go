@@ -8,6 +8,7 @@ import (
 	"github.com/sensu/sensu-go/cli"
 	"github.com/sensu/sensu-go/cli/client"
 	"github.com/sensu/sensu-go/cli/commands/helpers"
+	"github.com/sensu/sensu-go/cli/compat"
 	"github.com/sensu/sensu-go/cli/resource"
 	"github.com/sensu/sensu-go/types"
 	"github.com/spf13/cobra"
@@ -58,7 +59,7 @@ func execute(cli *cli.SensuCli) func(*cobra.Command, []string) error {
 // DeleteResources deletes all of the parsed resources.
 func DeleteResources(client client.GenericClient, resources []*types.Wrapper) error {
 	for i, resource := range resources {
-		path := resource.Value.URIPath()
+		path := compat.URIPath(resource.Value)
 		if err := client.Delete(path); err != nil {
 			return fmt.Errorf("error deleting resource %d (%s): %s", i, path, err)
 		}

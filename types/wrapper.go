@@ -12,6 +12,38 @@ import (
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 )
 
+// compatibility shim - can't import core/v3
+type corev3Resource interface {
+	GetMetadata() *corev2.ObjectMeta
+	SetMetadata(*corev2.ObjectMeta)
+}
+
+// getObjectMeta gets the object metadata from either a corev2 or corev3 resource.
+// It panics if the value passed is not a corev2 or corev3 resource.
+func getObjectMeta(value interface{}) *corev2.ObjectMeta {
+	switch value := value.(type) {
+	case corev2.Resource:
+		meta := value.GetObjectMeta()
+		return &meta
+	case corev3Resource:
+		return value.GetMetadata()
+	}
+	// impossible unless the type resolver is broken. fatal error.
+	panic("got neither corev2 resource nor corev3 resource")
+}
+
+func setObjectMeta(value interface{}, meta *corev2.ObjectMeta) {
+	switch value := value.(type) {
+	case corev2.Resource:
+		value.SetObjectMeta(*meta)
+	case corev3Resource:
+		value.SetMetadata(meta)
+	default:
+		// impossible unless the type resolver is broken. fatal error.
+		panic("got neither corev2 resource nor corev3 resource")
+	}
+}
+
 // Wrapper is a generic wrapper, with a type field for distinguishing its
 // contents.
 type Wrapper struct {
@@ -20,7 +52,7 @@ type Wrapper struct {
 	ObjectMeta ObjectMeta `json:"metadata,omitempty" yaml:"metadata,omitempty"`
 
 	// Value is a valid Resource of concrete type Type.
-	Value Resource `json:"spec" yaml:"spec"`
+	Value interface{} `json:"spec" yaml:"spec"`
 }
 
 type rawWrapper struct {
@@ -124,7 +156,7 @@ func (w *Wrapper) UnmarshalJSON(b []byte) error {
 
 	// Use the TypeMeta to resolve the type of the resource contained in the Value
 	// field as a *json.RawMessage
-	resource, err := ResolveType(w.TypeMeta.APIVersion, w.TypeMeta.Type)
+	resource, err := ResolveRaw(w.TypeMeta.APIVersion, w.TypeMeta.Type)
 	if err != nil {
 		return fmt.Errorf("error parsing spec: %s", err)
 	}
@@ -146,7 +178,14 @@ func (w *Wrapper) UnmarshalJSON(b []byte) error {
 	// Use the outer ObjectMeta to fill the inner ObjectMeta that's part of the
 	// resource if it's empty
 	outerMeta := wrapper.ObjectMeta
-	innerMeta := resource.GetObjectMeta()
+	innerMeta := getObjectMeta(resource)
+	if innerMeta == nil {
+		innerMeta = &outerMeta
+		setObjectMeta(resource, innerMeta)
+		goto V3RESOURCE
+	}
+
+	// Start hacks to equalize ObjectMetas
 	if outerMeta.Namespace != "" {
 		innerMeta.Namespace = outerMeta.Namespace
 	}
@@ -168,9 +207,12 @@ func (w *Wrapper) UnmarshalJSON(b []byte) error {
 		}
 		innerMeta.Annotations[k] = v
 	}
+	// End hacks to equalize ObjectMetas
+
+V3RESOURCE:
 
 	// Set the outer ObjectMeta of the wrapper
-	w.ObjectMeta = innerMeta
+	w.ObjectMeta = *innerMeta
 
 	// Set the inner ObjectMeta
 	val := reflect.Indirect(reflect.ValueOf(resource))
@@ -182,7 +224,7 @@ func (w *Wrapper) UnmarshalJSON(b []byte) error {
 		w.Value = resource
 		return nil
 	}
-	val.FieldByName("ObjectMeta").Set(reflect.ValueOf(innerMeta))
+	val.FieldByName("ObjectMeta").Set(reflect.Indirect(reflect.ValueOf(innerMeta)))
 
 	// Determine if the resource implements the Lifter interface, which has a Lift
 	// method. This is useful when a resource can be polymorphic, such as
@@ -217,7 +259,7 @@ func WrapResource(r Resource) Wrapper {
 	}
 	return Wrapper{
 		TypeMeta:   tm,
-		ObjectMeta: r.GetObjectMeta(),
+		ObjectMeta: *getObjectMeta(r),
 		Value:      r,
 	}
 }

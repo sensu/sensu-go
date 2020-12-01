@@ -8,6 +8,7 @@ import (
 
 	"github.com/go-resty/resty/v2"
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
+	corev3 "github.com/sensu/sensu-go/api/core/v3"
 	"github.com/sensu/sensu-go/types"
 )
 
@@ -165,7 +166,13 @@ func (client *RestClient) Put(path string, obj interface{}) error {
 
 // PutResource ...
 func (client *RestClient) PutResource(r types.Wrapper) error {
-	path := r.Value.URIPath()
+	var path string
+	switch value := r.Value.(type) {
+	case corev2.Resource:
+		path = value.URIPath()
+	case corev3.Resource:
+		path = value.URIPath()
+	}
 
 	// Determine if we should send the wrapped resource or only the resource
 	// itself

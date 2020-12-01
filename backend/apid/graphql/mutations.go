@@ -11,6 +11,7 @@ import (
 	"github.com/sensu/sensu-go/backend/apid/graphql/globalid"
 	"github.com/sensu/sensu-go/backend/apid/graphql/schema"
 	"github.com/sensu/sensu-go/backend/store"
+	"github.com/sensu/sensu-go/cli/compat"
 	"github.com/sensu/sensu-go/types"
 )
 
@@ -54,15 +55,18 @@ func (r *mutationsImpl) PutWrapped(p schema.MutationPutWrappedFieldResolverParam
 		return nil, err
 	}
 
-	ctx := store.NamespaceContext(p.Context, ret.Value.GetObjectMeta().Namespace)
+	resource := compat.V2Resource(ret.Value)
+	namespace := resource.GetObjectMeta().Namespace
+
+	ctx := store.NamespaceContext(p.Context, namespace)
 
 	if upsert {
-		err = client.Update(ctx, ret.Value)
+		err = client.Update(ctx, resource)
 	} else {
 		// If the `upsert` parameter on this mutation is `false`, we want to
 		// return an error if the resource already exists, instead of
 		// updating the existing resource.
-		err = client.Create(ctx, ret.Value)
+		err = client.Create(ctx, resource)
 	}
 	if err != nil {
 		return map[string]interface{}{

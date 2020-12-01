@@ -15,6 +15,7 @@ import (
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/cli"
 	"github.com/sensu/sensu-go/cli/client"
+	"github.com/sensu/sensu-go/cli/compat"
 	"github.com/sensu/sensu-go/types"
 )
 
@@ -178,7 +179,7 @@ func (p *Putter) Process(client client.GenericClient, resources []*types.Wrapper
 		if err := client.PutResource(*resource); err != nil {
 			return fmt.Errorf(
 				"error putting resource #%d with name %q and namespace %q (%s): %s",
-				i, resource.ObjectMeta.Name, resource.ObjectMeta.Namespace, resource.Value.URIPath(), err,
+				i, resource.ObjectMeta.Name, resource.ObjectMeta.Namespace, compat.URIPath(resource.Value), err,
 			)
 		}
 	}
@@ -207,7 +208,7 @@ func (p *ManagedByLabelPutter) Process(client client.GenericClient, resources []
 }
 
 func (p *ManagedByLabelPutter) label(resource *types.Wrapper) {
-	innerMeta := resource.Value.GetObjectMeta()
+	innerMeta := compat.GetObjectMeta(resource.Value)
 
 	if resource.ObjectMeta.Labels == nil {
 		resource.ObjectMeta.Labels = map[string]string{}
@@ -224,5 +225,5 @@ func (p *ManagedByLabelPutter) label(resource *types.Wrapper) {
 
 	// Mark the resource as managed by `label` in the inner labels
 	innerLabels[corev2.ManagedByLabel] = p.Label
-	resource.Value.SetObjectMeta(innerMeta)
+	compat.SetObjectMeta(resource.Value, innerMeta)
 }

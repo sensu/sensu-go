@@ -11,6 +11,7 @@ import (
 	"github.com/spf13/cobra"
 
 	goversion "github.com/hashicorp/go-version"
+	"github.com/sensu/sensu-go/cli/compat"
 	"github.com/sensu/sensu-go/cli/resource"
 )
 
@@ -87,13 +88,13 @@ func addCommandExecute(cli *cli.SensuCli) func(cmd *cobra.Command, args []string
 		}
 		assetPath := path.Join(bAsset.Namespace, bAsset.Name)
 		for i := range resources {
-			meta := resources[i].Value.GetObjectMeta()
+			meta := compat.GetObjectMeta(resources[i].Value)
 			if rename != "" {
 				meta.Name = rename
 			} else {
 				meta.Name = assetPath
 			}
-			resources[i].Value.SetObjectMeta(meta)
+			compat.SetObjectMeta(resources[i].Value, meta)
 		}
 		processor := resource.NewPutter()
 		if err := processor.Process(cli.Client, resources); err != nil {

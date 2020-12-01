@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
+	"github.com/sensu/sensu-go/cli/compat"
 	"github.com/sensu/sensu-go/types"
 )
 
@@ -63,7 +64,11 @@ func Resolve(resource string) (corev2.Resource, error) {
 	if apiVersion == "" {
 		apiVersion = "core/v2"
 	}
-	return types.ResolveType(apiVersion, typeName)
+	value, err := types.ResolveRaw(apiVersion, typeName)
+	if err != nil {
+		return nil, err
+	}
+	return compat.V2Resource(value), nil
 }
 
 func dedupTypes(arg string) []string {
