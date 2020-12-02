@@ -212,17 +212,9 @@ func (p *Pipeline) expandHandlers(ctx context.Context, handlers []string, level 
 func (p *Pipeline) pipeHandler(handler *corev2.Handler, event *corev2.Event, eventData []byte) (*command.ExecutionResponse, error) {
 	ctx := corev2.SetContextFromResource(context.Background(), handler)
 	// Prepare log entry
-	fields := logrus.Fields{
-		"namespace":  handler.Namespace,
-		"handler":    handler.Name,
-		"assets":     handler.RuntimeAssets,
-		"event_uuid": event.GetUUID().String(),
-		"entity":     event.Entity.Name,
-	}
-
-	if event.HasCheck() {
-		fields["check"] = event.Check.Name
-	}
+	fields := utillogging.EventFields(event, false)
+	fields["handler_name"] = handler.Name
+	fields["handler_namespace"] = handler.Namespace
 
 	if p.licenseGetter != nil {
 		if license := p.licenseGetter.Get(); license != "" {
@@ -316,17 +308,10 @@ func (p *Pipeline) socketHandler(handler *corev2.Handler, event *corev2.Event, e
 	timeout := handler.Timeout
 
 	// Prepare log entry
-	fields := logrus.Fields{
-		"namespace":  handler.Namespace,
-		"handler":    handler.Name,
-		"protocol":   protocol,
-		"event_uuid": event.GetUUID().String(),
-		"entity":     event.Entity.Name,
-	}
-
-	if event.HasCheck() {
-		fields["check"] = event.Check.Name
-	}
+	fields := utillogging.EventFields(event, false)
+	fields["handler_name"] = handler.Name
+	fields["handler_namespace"] = handler.Namespace
+	fields["handler_protocol"] = protocol
 
 	// If Timeout is not specified, use the default.
 	if timeout == 0 {
