@@ -3,7 +3,8 @@ package transformers
 import (
 	"math"
 	"strings"
-	"time"
+
+	time "github.com/echlebek/timeproxy"
 
 	"github.com/prometheus/common/expfmt"
 	"github.com/prometheus/common/model"
