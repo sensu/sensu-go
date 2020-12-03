@@ -375,15 +375,17 @@ func (a *Agent) connectionManager(ctx context.Context, cancel context.CancelFunc
 		go a.receiveLoop(ctx, cancel, conn)
 
 		// Block until we receive an entity config, or the grace period expires
-		select {
-		case <-a.entityConfigCh:
-			logger.Debug("successfully received the initial entity config")
-		case <-time.After(entityConfigGracePeriod):
-			logger.Warning("the initial entity config was never received, using the local entity")
-		case <-ctx.Done():
-			// The connection was closed before we received an entity config or we
-			// reached the grace period
-			continue
+		if !a.config.AgentManagedEntity {
+			select {
+			case <-a.entityConfigCh:
+				logger.Debug("successfully received the initial entity config")
+			case <-time.After(entityConfigGracePeriod):
+				logger.Warning("the initial entity config was never received, using the local entity")
+			case <-ctx.Done():
+				// The connection was closed before we received an entity config or we
+				// reached the grace period
+				continue
+			}
 		}
 
 		// Handle check config requests
@@ -436,7 +438,7 @@ func (a *Agent) sendLoop(ctx context.Context, cancel context.CancelFunc, conn tr
 	defer cancel()
 	keepalive := time.NewTicker(time.Duration(a.config.KeepaliveInterval) * time.Second)
 	defer keepalive.Stop()
-	if err := conn.Send(a.newKeepalive()); err != nil {
+	if err := conn.Send(a.newKeepalive(true)); err != nil {
 		logger.WithError(err).Error("error sending message over websocket")
 		return err
 	}
@@ -454,7 +456,7 @@ func (a *Agent) sendLoop(ctx context.Context, cancel context.CancelFunc, conn tr
 				return err
 			}
 		case <-keepalive.C:
-			if err := conn.Send(a.newKeepalive()); err != nil {
+			if err := conn.Send(a.newKeepalive(false)); err != nil {
 				logger.WithError(err).Error("error sending message over websocket")
 				return err
 			}
@@ -462,7 +464,7 @@ func (a *Agent) sendLoop(ctx context.Context, cancel context.CancelFunc, conn tr
 	}
 }
 
-func (a *Agent) newKeepalive() *transport.Message {
+func (a *Agent) newKeepalive(isFirst bool) *transport.Message {
 	msg := &transport.Message{
 		Type: transport.MessageTypeKeepalive,
 	}
@@ -485,6 +487,10 @@ func (a *Agent) newKeepalive() *transport.Message {
 	}
 	keepalive.Entity = entity
 	keepalive.Timestamp = time.Now().Unix()
+
+	if isFirst {
+		keepalive.Check.ObjectMeta.Labels["sensu.io/keepalive"] = "first"
+	}
 
 	logEvent(keepalive)
 

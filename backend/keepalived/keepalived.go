@@ -356,6 +356,14 @@ func (k *Keepalived) handleEntityRegistration(entity *corev2.Entity, event *core
 	}
 
 	req := storev2.NewResourceRequestFromResource(tctx, config)
+
+	if entity.ObjectMeta.Labels[corev2.ManagedByLabel] == "sensu-agent" {
+		if v, ok := event.Check.Labels["sensu.io/keepalive"]; ok && v == "first" {
+			logger.Info("updating entity config for entity managed by its agent")
+			return k.storev2.CreateOrUpdate(req, wrapper)
+		}
+	}
+
 	exists, err := k.storev2.Exists(req)
 	if err != nil {
 		logger.WithError(err).Error("error checking if entity exists")

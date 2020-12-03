@@ -360,6 +360,10 @@ func (s *Session) sender() {
 				s.unsubscribe(removed)
 			}
 
+			if watchEvent.Entity.Metadata.Labels[corev2.ManagedByLabel] == "sensu-agent" {
+				lager.Info("not sending entity update because entity is managed by its agent")
+			}
+
 			msg = transport.NewMessage(transport.MessageTypeEntityConfig, bytes)
 		case c := <-s.checkChannel:
 			request, ok := c.(*corev2.CheckRequest)
