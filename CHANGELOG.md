@@ -22,6 +22,8 @@ entries in sensuctl.
 
 ### Fixed
 - The config-file flag is no longer order dependant.
+- The agent now respects the HTTP proxy environment variables when using mTLS
+authentication.
 
 ### [6.1.2] - 2020-10-28
 ### Fixed
