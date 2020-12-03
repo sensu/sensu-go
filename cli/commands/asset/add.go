@@ -11,8 +11,8 @@ import (
 	"github.com/spf13/cobra"
 
 	goversion "github.com/hashicorp/go-version"
-	"github.com/sensu/sensu-go/cli/compat"
 	"github.com/sensu/sensu-go/cli/resource"
+	"github.com/sensu/sensu-go/types/compat"
 )
 
 var rename string

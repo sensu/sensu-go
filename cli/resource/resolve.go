@@ -7,8 +7,8 @@ import (
 	"strings"
 
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
-	"github.com/sensu/sensu-go/cli/compat"
 	"github.com/sensu/sensu-go/types"
+	"github.com/sensu/sensu-go/types/compat"
 )
 
 var (
