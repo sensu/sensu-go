@@ -9,6 +9,8 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ### Fixed
 - Fixed a bug where the entity API could panic.
+- The agent now respects the HTTP proxy environment variables when using mTLS
+authentication.
 
 ### [6.1.2, 6.1.3] - 2020-10-28
 

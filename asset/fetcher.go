@@ -60,6 +60,7 @@ func httpGet(ctx context.Context, path, trustedCAFile string, headers map[string
 
 		client = &http.Client{
 			Transport: &http.Transport{
+				Proxy: http.ProxyFromEnvironment,
 				TLSClientConfig: &tls.Config{
 					RootCAs: rootCAs,
 				},
