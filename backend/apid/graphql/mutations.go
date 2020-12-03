@@ -11,8 +11,8 @@ import (
 	"github.com/sensu/sensu-go/backend/apid/graphql/globalid"
 	"github.com/sensu/sensu-go/backend/apid/graphql/schema"
 	"github.com/sensu/sensu-go/backend/store"
-	"github.com/sensu/sensu-go/cli/compat"
 	"github.com/sensu/sensu-go/types"
+	"github.com/sensu/sensu-go/types/compat"
 )
 
 var _ schema.MutationFieldResolvers = (*mutationsImpl)(nil)
