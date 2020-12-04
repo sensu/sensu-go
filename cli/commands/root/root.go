@@ -6,6 +6,7 @@ import (
 	"github.com/sensu/sensu-go/cli"
 	"github.com/sensu/sensu-go/cli/client/config"
 	"github.com/sensu/sensu-go/cli/commands/version"
+	"github.com/sensu/sensu-go/command"
 	"github.com/sensu/sensu-go/util/path"
 	"github.com/spf13/cobra"
 )
@@ -16,8 +17,9 @@ func Command() *cobra.Command {
 		Use:          cli.SensuCmdName,
 		Short:        cli.SensuCmdName + " controls Sensu instances",
 		SilenceUsage: true,
-		Run: func(cmd *cobra.Command, args []string) {
+		RunE: func(cmd *cobra.Command, args []string) error {
 			_ = cmd.Help()
+			return &command.UsageError{Message: ""}
 		},
 	}
 

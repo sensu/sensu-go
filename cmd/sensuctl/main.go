@@ -7,6 +7,7 @@ import (
 	"github.com/sensu/sensu-go/cli/commands"
 	hooks "github.com/sensu/sensu-go/cli/commands/hooks"
 	"github.com/sensu/sensu-go/cli/commands/root"
+	"github.com/sensu/sensu-go/command"
 	"github.com/spf13/cobra"
 )
 
@@ -21,6 +22,9 @@ func main() {
 	commands.AddCommands(rootCmd, sensuCli)
 
 	if err := rootCmd.Execute(); err != nil {
+		if commandErr, ok := err.(*command.UsageError); ok {
+			os.Exit(commandErr.ExitStatus())
+		}
 		os.Exit(1)
 	}
 }

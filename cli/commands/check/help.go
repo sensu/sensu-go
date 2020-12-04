@@ -12,7 +12,7 @@ func HelpCommand(cli *cli.SensuCli) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "check",
 		Short: "Manage checks",
-		RunE:  helpers.RunSubCommandE,
+		RunE:  helpers.DefaultSubCommandRunE,
 	}
 
 	// Add sub-commands
