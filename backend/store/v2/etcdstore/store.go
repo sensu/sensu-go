@@ -72,15 +72,28 @@ func StoreKey(req storev2.ResourceRequest) string {
 	return store.NewKeyBuilder(req.StoreName).WithNamespace(req.Namespace).Build(req.Name)
 }
 
+func DefaultEncoder(w *wrap.Wrapper) ([]byte, error) {
+	return proto.Marshal(w)
+}
+
+func DefaultDecoder(b []byte, w *wrap.Wrapper) error {
+	return proto.UnmarshalMerge(b, w)
+}
+
 // Store is an implementation of the sensu-go/backend/store.Store iface.
 type Store struct {
+	Encoder func(*wrap.Wrapper) ([]byte, error)
+	Decoder func([]byte, *wrap.Wrapper) error
+
 	client *clientv3.Client
 }
 
 // NewStore creates a new Store.
 func NewStore(client *clientv3.Client) *Store {
 	store := &Store{
-		client: client,
+		client:  client,
+		Decoder: DefaultDecoder,
+		Encoder: DefaultEncoder,
 	}
 
 	return store
@@ -92,7 +105,7 @@ func (s *Store) CreateOrUpdate(req storev2.ResourceRequest, w *storev2.Wrapper) 
 		return &store.ErrNotValid{Err: err}
 	}
 
-	msg, err := proto.Marshal(w)
+	msg, err := s.Encoder(w)
 	if err != nil {
 		return &store.ErrEncode{Key: key, Err: err}
 	}
@@ -119,7 +132,7 @@ func (s *Store) Patch(req storev2.ResourceRequest, w *storev2.Wrapper, patcher p
 		return err
 	}
 	value := resp.Kvs[0].Value
-	if err := proto.UnmarshalMerge(value, w); err != nil {
+	if err := s.Decoder(value, w); err != nil {
 		return &store.ErrDecode{Key: key, Err: err}
 	}
 
@@ -203,7 +216,7 @@ func (s *Store) Update(req storev2.ResourceRequest, w *storev2.Wrapper, comparis
 		return &store.ErrNotValid{Err: err}
 	}
 
-	msg, err := proto.Marshal(w)
+	msg, err := s.Encoder(w)
 	if err != nil {
 		return &store.ErrEncode{Key: key, Err: err}
 	}
@@ -220,7 +233,7 @@ func (s *Store) CreateIfNotExists(req storev2.ResourceRequest, w *storev2.Wrappe
 		return &store.ErrNotValid{Err: err}
 	}
 
-	msg, err := proto.Marshal(w)
+	msg, err := s.Encoder(w)
 	if err != nil {
 		return &store.ErrEncode{Key: key, Err: err}
 	}
@@ -242,7 +255,7 @@ func (s *Store) Get(req storev2.ResourceRequest) (*storev2.Wrapper, error) {
 	}
 
 	var wrapper storev2.Wrapper
-	if err := proto.UnmarshalMerge(resp.Kvs[0].Value, &wrapper); err != nil {
+	if err := s.Decoder(resp.Kvs[0].Value, &wrapper); err != nil {
 		return nil, &store.ErrDecode{Key: key, Err: err}
 	}
 	return &wrapper, nil
@@ -322,7 +335,7 @@ func (s *Store) List(req storev2.ResourceRequest, pred *store.SelectionPredicate
 	result := make([]*storev2.Wrapper, 0, len(resp.Kvs))
 	for _, kv := range resp.Kvs {
 		var wrapper storev2.Wrapper
-		if err := proto.Unmarshal(kv.Value, &wrapper); err != nil {
+		if err := s.Decoder(kv.Value, &wrapper); err != nil {
 			return nil, &store.ErrDecode{Key: string(kv.Key), Err: err}
 		}
 		result = append(result, &wrapper)
