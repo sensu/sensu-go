@@ -177,7 +177,7 @@ func (a *Agent) executeCheck(ctx context.Context, request *corev2.CheckRequest, 
 		var err error
 		assets, err = asset.GetAll(ctx, a.assetGetter, checkAssets)
 		if err != nil {
-			a.sendFailure(event, fmt.Errorf("error getting assets for event: %s", err))
+			a.sendFailure(event, fmt.Errorf("error getting assets for check: %s", err))
 			return
 		}
 	}

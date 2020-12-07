@@ -3,6 +3,7 @@ package asset
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"os"
 	"path/filepath"
 
@@ -133,7 +134,16 @@ func (b *boltDBAssetManager) Get(ctx context.Context, asset *corev2.Asset) (*Run
 
 		// verify
 		if err := b.verifier.Verify(tmpFile, asset.Sha512); err != nil {
-			return err
+			// Attempt to retrieve the size of the downloaded asset
+			var size int64
+			if fileInfo, err := tmpFile.Stat(); err == nil {
+				size = fileInfo.Size() / 1000 // kilobytes
+			}
+
+			return fmt.Errorf(
+				"could not validate downloaded asset %q (%d kilobytes): %s",
+				asset.Name, size, err,
+			)
 		}
 
 		// expand
