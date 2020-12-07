@@ -5,6 +5,7 @@ import (
 	"encoding/hex"
 	"fmt"
 	"io"
+	"strings"
 )
 
 var (
@@ -32,7 +33,7 @@ func (v *Sha512Verifier) Verify(rs io.ReadSeeker, desiredSHA string) error {
 		return err
 	}
 
-	if foundSHA := hex.EncodeToString(h.Sum(nil)); foundSHA != desiredSHA {
+	if foundSHA := hex.EncodeToString(h.Sum(nil)); !strings.EqualFold(foundSHA, desiredSHA) {
 		return fmt.Errorf("sha512 of downloaded asset (%s) does not match specified sha512 in asset definition (%s)", foundSHA, desiredSHA)
 	}
 

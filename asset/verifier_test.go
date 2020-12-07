@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"strings"
 	"testing"
 )
 
@@ -26,6 +27,10 @@ func TestSuccessfulVerify(t *testing.T) {
 	if err := verifier.Verify(f, string(assetSHA)); err != nil {
 		t.Logf("expected no error, got %v", err)
 		t.Fail()
+	}
+
+	if err := verifier.Verify(f, strings.ToUpper(string(assetSHA))); err != nil {
+		t.Fatalf("expected no error, got %v", err)
 	}
 }
 
