@@ -197,6 +197,7 @@ func TestExecuteCheck(t *testing.T) {
 	assert.NotZero(event.Timestamp)
 	assert.Equal(uint32(0), event.Check.Status)
 	assert.False(event.HasMetrics())
+	assert.Equal(event.Sequence, int64(1))
 
 	execution.Status = 1
 	agent.executeCheck(context.TODO(), request, entity)
@@ -207,6 +208,7 @@ func TestExecuteCheck(t *testing.T) {
 	assert.NotZero(event.Timestamp)
 	assert.Equal(uint32(1), event.Check.Status)
 	assert.NotZero(event.Check.Issued)
+	assert.Equal(event.Sequence, int64(2))
 
 	execution.Status = 127
 	execution.Output = "command not found"
@@ -219,6 +221,7 @@ func TestExecuteCheck(t *testing.T) {
 	assert.Equal(uint32(127), event.Check.Status)
 	assert.Equal("command not found", event.Check.Output)
 	assert.NotZero(event.Check.Issued)
+	assert.Equal(event.Sequence, int64(3))
 
 	execution.Status = 2
 	execution.Output = ""
@@ -229,6 +232,7 @@ func TestExecuteCheck(t *testing.T) {
 	assert.NoError(json.Unmarshal(msg.Payload, event))
 	assert.NotZero(event.Timestamp)
 	assert.Equal(uint32(2), event.Check.Status)
+	assert.Equal(event.Sequence, int64(4))
 
 	checkConfig.OutputMetricHandlers = nil
 	checkConfig.OutputMetricFormat = ""
@@ -242,6 +246,7 @@ func TestExecuteCheck(t *testing.T) {
 	assert.NoError(json.Unmarshal(msg.Payload, event))
 	assert.NotZero(event.Timestamp)
 	assert.False(event.HasMetrics())
+	assert.Equal(event.Sequence, int64(5))
 
 	checkConfig.OutputMetricFormat = corev2.GraphiteOutputMetricFormat
 	ex.Return(execution, nil)
@@ -261,6 +266,7 @@ func TestExecuteCheck(t *testing.T) {
 	assert.Equal(float64(2), metric1.Value)
 	assert.Equal("metric.bar", metric1.Name)
 	assert.Equal(int64(987654321), metric1.Timestamp)
+	assert.Equal(event.Sequence, int64(6))
 }
 
 func TestExecuteCheckDiscardOutput(t *testing.T) {
@@ -379,6 +385,7 @@ func TestHandleTokenSubstitutionNoKey(t *testing.T) {
 	event := &corev2.Event{}
 	assert.NoError(json.Unmarshal(msg.Payload, event))
 	assert.NotZero(event.Timestamp)
+	assert.NotZero(event.Sequence)
 	assert.Contains(event.Check.Output, "has no entry for key")
 	assert.Contains(event.Check.Command, checkConfig.Command)
 }

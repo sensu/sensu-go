@@ -80,6 +80,8 @@ type Agent struct {
 	apiQueue          queue
 	marshal           agentd.MarshalFunc
 	unmarshal         agentd.UnmarshalFunc
+	sequencesMu       sync.Mutex
+	sequences         map[string]int64
 
 	// ProcessGetter gets information about local agent processes.
 	ProcessGetter process.Getter
@@ -114,6 +116,7 @@ func NewAgentContext(ctx context.Context, config *Config) (*Agent, error) {
 		unmarshal:       agentd.UnmarshalJSON,
 		marshal:         agentd.MarshalJSON,
 		ProcessGetter:   &process.NoopProcessGetter{},
+		sequences:       make(map[string]int64),
 	}
 
 	agent.statsdServer = NewStatsdServer(agent)
@@ -340,6 +343,10 @@ func (a *Agent) connectionManager(ctx context.Context, cancel context.CancelFunc
 		a.connected = false
 		a.connectedMu.Unlock()
 
+		a.sequencesMu.Lock()
+		a.sequences = make(map[string]int64, len(a.sequences))
+		a.sequencesMu.Unlock()
+
 		// Make sure the entity config chan is empty by discarding whatever is in
 		// there, so we can block until we receive an update from agentd
 		select {
@@ -462,6 +469,15 @@ func (a *Agent) sendLoop(ctx context.Context, cancel context.CancelFunc, conn tr
 	}
 }
 
+func (a *Agent) nextSequence(check string) int64 {
+	a.sequencesMu.Lock()
+	defer a.sequencesMu.Unlock()
+	seq := a.sequences[check]
+	seq++
+	a.sequences[check] = seq
+	return seq
+}
+
 func (a *Agent) newKeepalive() *transport.Message {
 	msg := &transport.Message{
 		Type: transport.MessageTypeKeepalive,
@@ -475,6 +491,7 @@ func (a *Agent) newKeepalive() *transport.Message {
 	keepalive := &corev2.Event{
 		ObjectMeta: corev2.NewObjectMeta("", entity.Namespace),
 		ID:         uid[:],
+		Sequence:   a.nextSequence("keepalive"),
 	}
 
 	keepalive.Check = &corev2.Check{
