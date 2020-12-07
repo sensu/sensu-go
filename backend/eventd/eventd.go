@@ -185,11 +185,8 @@ func (e *Eventd) Start() error {
 func withEventFields(e interface{}, logger *logrus.Entry) *logrus.Entry {
 	event, _ := e.(*corev2.Event)
 	if event != nil {
-		logger = logger.WithField("entity", event.Entity.Name)
-		logger = logger.WithField("event_id", event.ID)
-		if event.Check != nil {
-			logger = logger.WithField("check", event.Check.Name)
-		}
+		fields := utillogging.EventFields(event, false)
+		logger = logger.WithFields(fields)
 	}
 	return logger
 }
