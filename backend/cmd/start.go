@@ -302,11 +302,11 @@ func StartCommand(initialize InitializeFunc) *cobra.Command {
 }
 
 func handleConfig(cmd *cobra.Command, server bool) error {
-	flagSet := flagSet(server)
-	_ = flagSet.Parse(os.Args[1:])
+	configFlags := flagSet(server)
+	_ = configFlags.Parse(os.Args[1:])
 
 	// Get the given config file path via flag
-	configFilePath, _ := flagSet.GetString(flagConfigFile)
+	configFilePath, _ := configFlags.GetString(flagConfigFile)
 
 	// Get the environment variable value if no config file was provided via the flag
 	if configFilePath == "" {
@@ -379,7 +379,8 @@ func handleConfig(cmd *cobra.Command, server bool) error {
 	}
 
 	// Merge in flag set so that it appears in command usage
-	cmd.Flags().AddFlagSet(flagSet)
+	flags := flagSet(server)
+	cmd.Flags().AddFlagSet(flags)
 
 	// Load the configuration file but only error out if flagConfigFile is used
 	if err := viper.ReadInConfig(); err != nil && configFilePathIsDefined {
