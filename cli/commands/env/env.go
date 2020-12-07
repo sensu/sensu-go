@@ -31,7 +31,7 @@ const (
 func Command(cli *cli.SensuCli) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:    "env",
-		Short:  "display the commands to set up the environment used by sensuctl",
+		Short:  "Display the commands to set up the environment used by sensuctl",
 		PreRun: refreshAccessToken(cli),
 		RunE:   execute(cli),
 	}

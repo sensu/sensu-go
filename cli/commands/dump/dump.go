@@ -43,9 +43,10 @@ $ sensuctl dump all
 // Command dumps generic Sensu resources to a file or STDOUT.
 func Command(cli *cli.SensuCli) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:  "dump [RESOURCE TYPE],[RESOURCE TYPE]... [-f FILE]",
-		Long: description,
-		RunE: execute(cli),
+		Use:   "dump [RESOURCE TYPE],[RESOURCE TYPE]... [-f FILE]",
+		Short: "Dump resource definitions to JSON or YAML",
+		Long:  description,
+		RunE:  execute(cli),
 	}
 
 	helpers.AddAllNamespace(cmd.Flags())

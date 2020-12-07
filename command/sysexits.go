@@ -5,7 +5,7 @@ package command
 
 var (
 	// The command executed successfully.
-	ExitOk = 0
+	ExitOK = 0
 
 	// The command was used incorrectly, e.g., with the wrong number of
 	// arguments, a bad flag, a bad syntax in a parameter, or whatever.
@@ -72,8 +72,8 @@ var (
 )
 
 type CommandErrorer interface {
-	ExitStatus()
-	Error()
+	error
+	ExitStatus() int
 }
 
 type UsageError struct{ Message string }

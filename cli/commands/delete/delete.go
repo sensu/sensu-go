@@ -18,7 +18,7 @@ import (
 func DeleteCommand(cli *cli.SensuCli) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "delete [-f FILE]",
-		Short: "delete resources from file or STDIN",
+		Short: "Delete resources from file or STDIN",
 		RunE:  execute(cli),
 	}
 

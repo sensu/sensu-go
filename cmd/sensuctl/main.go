@@ -22,7 +22,7 @@ func main() {
 	commands.AddCommands(rootCmd, sensuCli)
 
 	if err := rootCmd.Execute(); err != nil {
-		if commandErr, ok := err.(*command.UsageError); ok {
+		if commandErr, ok := err.(command.CommandErrorer); ok {
 			os.Exit(commandErr.ExitStatus())
 		}
 		os.Exit(1)
