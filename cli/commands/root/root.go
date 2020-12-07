@@ -6,7 +6,6 @@ import (
 	"github.com/sensu/sensu-go/cli"
 	"github.com/sensu/sensu-go/cli/client/config"
 	"github.com/sensu/sensu-go/cli/commands/version"
-	"github.com/sensu/sensu-go/command"
 	"github.com/sensu/sensu-go/util/path"
 	"github.com/spf13/cobra"
 )
@@ -17,9 +16,14 @@ func Command() *cobra.Command {
 		Use:          cli.SensuCmdName,
 		Short:        cli.SensuCmdName + " controls Sensu instances",
 		SilenceUsage: true,
-		RunE: func(cmd *cobra.Command, args []string) error {
+		Run: func(cmd *cobra.Command, args []string) {
 			_ = cmd.Help()
-			return &command.UsageError{Message: ""}
+			// JK: Ideally we could return command.UsageError here but we cannot
+			// silence errors in the root command like we do with subcommands.
+			// When SilenceErrors is set to true in the root command it will
+			// set SilenceErrors = true for all subcommands. As a result, this
+			// is the only command containing subcommands that will exit 0 when
+			// no arguments are given.
 		},
 	}
 

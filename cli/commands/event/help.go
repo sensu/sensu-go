@@ -2,6 +2,7 @@ package event
 
 import (
 	"github.com/sensu/sensu-go/cli"
+	"github.com/sensu/sensu-go/cli/commands/helpers"
 	"github.com/spf13/cobra"
 )
 
@@ -10,6 +11,7 @@ func HelpCommand(cli *cli.SensuCli) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "event",
 		Short: "Manage events",
+		RunE:  helpers.DefaultSubCommandRunE,
 	}
 
 	// Add sub-commands

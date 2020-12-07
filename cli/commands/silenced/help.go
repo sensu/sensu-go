@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/sensu/sensu-go/cli"
+	"github.com/sensu/sensu-go/cli/commands/helpers"
 	"github.com/spf13/cobra"
 )
 
@@ -16,6 +17,7 @@ func HelpCommand(cli *cli.SensuCli) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "silenced",
 		Short: "Manage silenced subscriptions and checks",
+		RunE:  helpers.DefaultSubCommandRunE,
 	}
 
 	// Add sub-commands
