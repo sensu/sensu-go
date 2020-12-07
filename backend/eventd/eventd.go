@@ -21,6 +21,7 @@ import (
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/backend/store/cache"
 	storev2 "github.com/sensu/sensu-go/backend/store/v2"
+	utillogging "github.com/sensu/sensu-go/util/logging"
 )
 
 const (
@@ -184,11 +185,8 @@ func (e *Eventd) Start() error {
 func withEventFields(e interface{}, logger *logrus.Entry) *logrus.Entry {
 	event, _ := e.(*corev2.Event)
 	if event != nil {
-		logger = logger.WithField("entity", event.Entity.Name)
-		logger = logger.WithField("event_id", event.ID)
-		if event.Check != nil {
-			logger = logger.WithField("check", event.Check.Name)
-		}
+		fields := utillogging.EventFields(event, false)
+		logger = logger.WithFields(fields)
 	}
 	return logger
 }
@@ -247,20 +245,6 @@ func eventKey(event *corev2.Event) string {
 	return path.Join(event.Entity.Namespace, event.Check.Name, event.Entity.Name)
 }
 
-func logEvent(e *corev2.Event) {
-	fields := logrus.Fields{
-		"event_uuid": e.GetUUID().String(),
-		"entity":     e.Entity.Name,
-	}
-	if e.HasCheck() {
-		fields["check"] = e.Check.Name
-	}
-	if e.HasMetrics() {
-		fields["metrics"] = true
-	}
-	logger.WithFields(fields).Info("eventd received event")
-}
-
 func (e *Eventd) handleMessage(msg interface{}) error {
 	then := time.Now()
 	defer func() {
@@ -272,7 +256,8 @@ func (e *Eventd) handleMessage(msg interface{}) error {
 		return errors.New("received non-Event on event channel")
 	}
 
-	logEvent(event)
+	fields := utillogging.EventFields(event, false)
+	logger.WithFields(fields).Info("eventd received event")
 
 	// Validate the received event
 	if err := event.Validate(); err != nil {
