@@ -19,7 +19,7 @@ sensu-backend (`SENSU_BACKEND_CONFIG_FILE`) & sensu-agent (`SENSU_CONFIG_FILE`).
 ### Changed
 - Adjust the date and duration formats used when listing and displaying silenced
 entries in sensuctl.
-- Use event ID in logging instead of UUID.
+- Make `event_id` usage in logging consistent.
 
 ### Fixed
 - The config-file flag is no longer order dependant.
