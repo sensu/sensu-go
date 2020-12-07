@@ -46,7 +46,6 @@ Management Commands:
 
 Run '{{.CommandPath}} COMMAND --help' for more information on a command.
 {{- end}}
-
 `
 
 func init() {

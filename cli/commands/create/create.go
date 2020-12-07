@@ -13,7 +13,7 @@ import (
 func CreateCommand(cli *cli.SensuCli) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "create [-r] [[-f URL] ... ]",
-		Short: "create or replace resources from file or URL (path, file://, http[s]://), or STDIN otherwise.",
+		Short: "Create or replace resources from file or URL (path, file://, http[s]://), or STDIN otherwise.",
 		RunE:  execute(cli),
 	}
 
