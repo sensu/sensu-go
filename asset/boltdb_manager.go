@@ -3,9 +3,11 @@ package asset
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"os"
 	"path/filepath"
 
+	"github.com/dustin/go-humanize"
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	bolt "go.etcd.io/bbolt"
 	"golang.org/x/time/rate"
@@ -133,7 +135,16 @@ func (b *boltDBAssetManager) Get(ctx context.Context, asset *corev2.Asset) (*Run
 
 		// verify
 		if err := b.verifier.Verify(tmpFile, asset.Sha512); err != nil {
-			return err
+			// Attempt to retrieve the size of the downloaded asset
+			var size uint64
+			if fileInfo, err := tmpFile.Stat(); err == nil {
+				size = uint64(fileInfo.Size())
+			}
+
+			return fmt.Errorf(
+				"could not validate downloaded asset %q (%s): %s",
+				asset.Name, humanize.Bytes(size), err,
+			)
 		}
 
 		// expand

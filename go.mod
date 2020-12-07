@@ -21,7 +21,7 @@ require (
 	github.com/dave/jennifer v0.0.0-20171207062344-d8bdbdbee4e1
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/docker/docker v0.0.0-20180409082103-cbde00b44273
-	github.com/dustin/go-humanize v1.0.0 // indirect
+	github.com/dustin/go-humanize v1.0.0
 	github.com/echlebek/crock v1.0.1
 	github.com/echlebek/timeproxy v1.0.0
 	github.com/emicklei/proto v1.1.0
