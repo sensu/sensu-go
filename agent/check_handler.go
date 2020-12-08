@@ -129,6 +129,8 @@ func (a *Agent) executeCheck(ctx context.Context, request *corev2.CheckRequest, 
 		// the original command value is reinstated.
 		event.Check.Command = origCommand
 
+		event.Sequence = a.nextSequence(checkConfig.Name)
+
 		return event
 	}
 

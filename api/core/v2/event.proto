@@ -39,4 +39,9 @@ message Event {
 
   // ID is the unique identifier of the event.
   bytes ID = 6 [ (gogoproto.jsontag) = "id" ];
+
+  // Sequence is the event sequence number. The agent increments the sequence
+  // number by one for every successive event. When the agent restarts or
+  // reconnects to another backend, the sequence number is reset to 1.
+  int64 Sequence = 7 [ (gogoproto.jsontag) = "sequence" ];
 }

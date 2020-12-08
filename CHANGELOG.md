@@ -15,6 +15,7 @@ created when in interactive mode.
 - Added the Scheduler field to Check and CheckConfig.
 - Add support for environment variables to define configuration file paths of
 sensu-backend (`SENSU_BACKEND_CONFIG_FILE`) & sensu-agent (`SENSU_CONFIG_FILE`).
+- Added event sequence numbers.
 
 ### Changed
 - Adjust the date and duration formats used when listing and displaying silenced

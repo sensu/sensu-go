@@ -50,6 +50,7 @@ func TestTLSAuth(t *testing.T) {
 			assert.NotNil(t, event.Entity)
 			assert.Equal(t, "agent", event.Entity.EntityClass)
 			assert.NotEmpty(t, event.Entity.System)
+			assert.NotZero(t, event.Sequence)
 
 			if auth := r.Header.Get("Authorization"); len(auth) > 0 {
 				t.Fatal("authorization header set")
@@ -115,6 +116,7 @@ func TestSendLoop(t *testing.T) {
 			assert.NotNil(t, event.Entity)
 			assert.Equal(t, "agent", event.Entity.EntityClass)
 			assert.NotEmpty(t, event.Entity.System)
+			assert.NotZero(t, event.Sequence)
 			cancel()
 		})
 	}))
@@ -217,6 +219,7 @@ func TestKeepaliveLoggingRedaction(t *testing.T) {
 			assert.NotNil(t, event.Entity)
 			assert.Equal(t, "agent", event.Entity.EntityClass)
 			assert.NotEmpty(t, event.Entity.System)
+			assert.NotZero(t, event.Sequence)
 
 			// Make sure the ec2_access_key attribute is redacted, which indicates it was
 			// received as such in keepalives

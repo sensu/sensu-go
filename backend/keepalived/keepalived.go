@@ -413,6 +413,7 @@ func createKeepaliveEvent(rawEvent *corev2.Event) *corev2.Event {
 
 	uid, _ := uuid.NewRandom()
 	keepaliveEvent.ID = uid[:]
+	keepaliveEvent.Sequence = rawEvent.Sequence
 
 	return keepaliveEvent
 }
