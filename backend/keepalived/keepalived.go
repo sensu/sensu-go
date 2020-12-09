@@ -354,14 +354,30 @@ func (k *Keepalived) handleEntityRegistration(entity *corev2.Entity, event *core
 		logger.WithError(err).Error("error wrapping entity config")
 		return err
 	}
-
 	req := storev2.NewResourceRequestFromResource(tctx, config)
+
+	var isFirstSequenceForAgentManagedEntity bool
+	// Determine whether this keepalive is the first one sent by an entity managed
+	// by its agent, in which case we want to create or update the entity config
+	if event.Sequence == 1 && entity.ObjectMeta.Labels[corev2.ManagedByLabel] == "sensu-agent" {
+		isFirstSequenceForAgentManagedEntity = true
+	}
+
 	exists, err := k.storev2.Exists(req)
 	if err != nil {
 		logger.WithError(err).Error("error checking if entity exists")
 		return err
 	}
 	if exists {
+		// Update the entity config if the agent reconnected
+		if isFirstSequenceForAgentManagedEntity {
+			fmt.Println("updating...!")
+			if err := k.storev2.UpdateIfExists(req, wrapper); err != nil {
+				logger.WithError(err).Error("could not update entity")
+				return err
+			}
+		}
+
 		return nil
 	}
 	if err := k.storev2.CreateIfNotExists(req, wrapper); err == nil {

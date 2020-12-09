@@ -221,6 +221,15 @@ func TestProcessRegistration(t *testing.T) {
 		return entity
 	}
 
+	newAgentManagedEntity := func(class string) *corev2.Entity {
+		entity := corev2.FixtureEntity("agent1")
+		entity.EntityClass = corev2.EntityAgentClass
+		entity.Labels = map[string]string{
+			corev2.ManagedByLabel: "sensu-agent",
+		}
+		return entity
+	}
+
 	newEntityConfigWithClass := func(class string) *wrap.Wrapper {
 		entity := corev3.FixtureEntityConfig("agent1")
 		entity.EntityClass = class
@@ -229,9 +238,12 @@ func TestProcessRegistration(t *testing.T) {
 		return e
 	}
 
+	firstSequenceEvent := &corev2.Event{Sequence: 1}
+
 	tt := []struct {
 		name              string
 		entity            *corev2.Entity
+		event             *corev2.Event
 		storeEntity       *wrap.Wrapper
 		expectedEventLen  int
 		storev2Err        error
@@ -241,6 +253,7 @@ func TestProcessRegistration(t *testing.T) {
 			name:             "Registered Entity",
 			entity:           newEntityWithClass("agent"),
 			storeEntity:      newEntityConfigWithClass("agent"),
+			event:            new(corev2.Event),
 			expectedEventLen: 0,
 			storev2Err:       &stor.ErrAlreadyExists{},
 		},
@@ -248,7 +261,24 @@ func TestProcessRegistration(t *testing.T) {
 			name:             "Non-Registered Entity",
 			entity:           newEntityWithClass("agent"),
 			storeEntity:      nil,
+			event:            new(corev2.Event),
 			expectedEventLen: 1,
+			storev2Err:       nil,
+		},
+		{
+			name:             "agent-managed entity is registered",
+			entity:           newAgentManagedEntity("agent"),
+			storeEntity:      nil,
+			event:            firstSequenceEvent,
+			expectedEventLen: 1,
+			storev2Err:       nil,
+		},
+		{
+			name:             "agent-managed entity config is updated on reconnect",
+			entity:           newAgentManagedEntity("agent"),
+			storeEntity:      newEntityConfigWithClass("agent"),
+			event:            firstSequenceEvent,
+			expectedEventLen: 0,
 			storev2Err:       nil,
 		},
 	}
@@ -279,8 +309,9 @@ func TestProcessRegistration(t *testing.T) {
 
 			storev2.On("Exists", mock.Anything).Return(tc.storeEntity != nil, nil)
 			storev2.On("CreateIfNotExists", mock.Anything, mock.Anything).Return(tc.storev2Err)
+			storev2.On("UpdateIfExists", mock.Anything, mock.Anything).Return(tc.storev2Err)
 			storev2.On("Get", mock.Anything).Return(tc.storeEntity, nil)
-			err = keepalived.handleEntityRegistration(tc.entity, new(corev2.Event))
+			err = keepalived.handleEntityRegistration(tc.entity, tc.event)
 			require.NoError(t, err)
 
 			assert.Equal(t, tc.expectedEventLen, len(tsubEvent.ch))
