@@ -216,15 +216,20 @@ func StartCommandWithError(initialize InitializeFunc) (*cobra.Command, error) {
 	}
 
 	cmd.RunE = NewAgentRunE(initialize, cmd)
-	return cmd, handleConfig(cmd)
+	return cmd, handleConfig(cmd, os.Args[1:])
 }
 
-func handleConfig(cmd *cobra.Command) error {
+func handleConfig(cmd *cobra.Command, arguments []string) error {
 	configFlags := flagSet()
-	_ = configFlags.Parse(os.Args[1:])
+	if err := configFlags.Parse(arguments); err != nil {
+		return err
+	}
 
 	// Get the given config file path via flag
-	configFilePath, _ := configFlags.GetString(flagConfigFile)
+	configFilePath, err := configFlags.GetString(flagConfigFile)
+	if err != nil {
+		return err
+	}
 
 	// Get the environment variable value if no config file was provided via the flag
 	if configFilePath == "" {
