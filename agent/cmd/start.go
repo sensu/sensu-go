@@ -216,15 +216,20 @@ func StartCommandWithError(initialize InitializeFunc) (*cobra.Command, error) {
 	}
 
 	cmd.RunE = NewAgentRunE(initialize, cmd)
-	return cmd, handleConfig(cmd)
+	return cmd, handleConfig(cmd, os.Args[1:])
 }
 
-func handleConfig(cmd *cobra.Command) error {
-	flagSet := flagSet()
-	_ = flagSet.Parse(os.Args[1:])
+func handleConfig(cmd *cobra.Command, arguments []string) error {
+	configFlags := flagSet()
+	if err := configFlags.Parse(arguments); err != nil {
+		return err
+	}
 
 	// Get the given config file path via flag
-	configFilePath, _ := flagSet.GetString(flagConfigFile)
+	configFilePath, err := configFlags.GetString(flagConfigFile)
+	if err != nil {
+		return err
+	}
 
 	// Get the environment variable value if no config file was provided via the flag
 	if configFilePath == "" {
@@ -285,7 +290,8 @@ func handleConfig(cmd *cobra.Command) error {
 	viper.SetDefault(flagBackendHeartbeatTimeout, 45)
 
 	// Merge in flag set so that it appears in command usage
-	cmd.Flags().AddFlagSet(flagSet)
+	flags := flagSet()
+	cmd.Flags().AddFlagSet(flags)
 
 	cmd.Flags().SetNormalizeFunc(aliasNormalizeFunc(logger))
 

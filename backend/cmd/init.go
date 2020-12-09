@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"os"
 	"time"
 
 	"github.com/AlecAivazis/survey"
@@ -196,7 +197,7 @@ func InitCommand() *cobra.Command {
 	cmd.Flags().Bool(flagInteractive, false, "interactive mode")
 	cmd.Flags().String(flagTimeout, defaultTimeout, "timeout, in seconds, for failing to establish a connection to etcd")
 
-	setupErr = handleConfig(cmd, false)
+	setupErr = handleConfig(cmd, os.Args[1:], false)
 
 	return cmd
 }

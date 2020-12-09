@@ -296,17 +296,22 @@ func StartCommand(initialize InitializeFunc) *cobra.Command {
 		},
 	}
 
-	setupErr = handleConfig(cmd, true)
+	setupErr = handleConfig(cmd, os.Args[1:], true)
 
 	return cmd
 }
 
-func handleConfig(cmd *cobra.Command, server bool) error {
-	flagSet := flagSet(server)
-	_ = flagSet.Parse(os.Args[1:])
+func handleConfig(cmd *cobra.Command, arguments []string, server bool) error {
+	configFlags := flagSet(server)
+	if err := configFlags.Parse(arguments); err != nil {
+		return err
+	}
 
 	// Get the given config file path via flag
-	configFilePath, _ := flagSet.GetString(flagConfigFile)
+	configFilePath, err := configFlags.GetString(flagConfigFile)
+	if err != nil {
+		return err
+	}
 
 	// Get the environment variable value if no config file was provided via the flag
 	if configFilePath == "" {
@@ -379,7 +384,8 @@ func handleConfig(cmd *cobra.Command, server bool) error {
 	}
 
 	// Merge in flag set so that it appears in command usage
-	cmd.Flags().AddFlagSet(flagSet)
+	flags := flagSet(server)
+	cmd.Flags().AddFlagSet(flags)
 
 	// Load the configuration file but only error out if flagConfigFile is used
 	if err := viper.ReadInConfig(); err != nil && configFilePathIsDefined {
