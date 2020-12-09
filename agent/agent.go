@@ -381,16 +381,19 @@ func (a *Agent) connectionManager(ctx context.Context, cancel context.CancelFunc
 
 		go a.receiveLoop(ctx, cancel, conn)
 
-		// Block until we receive an entity config, or the grace period expires
-		select {
-		case <-a.entityConfigCh:
-			logger.Debug("successfully received the initial entity config")
-		case <-time.After(entityConfigGracePeriod):
-			logger.Warning("the initial entity config was never received, using the local entity")
-		case <-ctx.Done():
-			// The connection was closed before we received an entity config or we
-			// reached the grace period
-			continue
+		// Block until we receive an entity config, or the grace period expires,
+		// unless the agent manages its entity
+		if !a.config.AgentManagedEntity {
+			select {
+			case <-a.entityConfigCh:
+				logger.Debug("successfully received the initial entity config")
+			case <-time.After(entityConfigGracePeriod):
+				logger.Warning("the initial entity config was never received, using the local entity")
+			case <-ctx.Done():
+				// The connection was closed before we received an entity config or we
+				// reached the grace period
+				continue
+			}
 		}
 
 		// Handle check config requests
