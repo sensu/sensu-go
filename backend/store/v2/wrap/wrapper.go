@@ -131,6 +131,9 @@ func V2Resource(r corev2.Resource, opts ...Option) (*Wrapper, error) {
 }
 
 func wrap(r interface{}, opts ...Option) (*Wrapper, error) {
+	if proxy, ok := r.(*corev3.V2ResourceProxy); ok {
+		r = proxy.Resource
+	}
 	var tm corev2.TypeMeta
 	if getter, ok := r.(tmGetter); ok {
 		tm = getter.GetTypeMeta()
@@ -206,12 +209,24 @@ func (w *Wrapper) UnwrapRaw() (interface{}, error) {
 // UnwrapInto unwraps a wrapper into a user-defined data structure. Most users
 // should use Unwrap.
 func (w *Wrapper) UnwrapInto(p interface{}) error {
+	if proxy, ok := p.(*corev3.V2ResourceProxy); ok {
+		p = proxy.Resource
+	}
 	message, err := w.Compression.Decompress(w.Value)
 	if err != nil {
 		return fmt.Errorf("error unwrapping %T: %s", p, err)
 	}
 	if err := w.Encoding.Decode(message, p); err != nil {
 		return err
+	}
+	if resource, ok := p.(corev3.Resource); ok {
+		meta := resource.GetMetadata()
+		if meta.Labels == nil {
+			meta.Labels = make(map[string]string)
+		}
+		if meta.Annotations == nil {
+			meta.Annotations = make(map[string]string)
+		}
 	}
 	return nil
 }
@@ -252,7 +267,7 @@ func (l List) UnwrapInto(ptr interface{}) error {
 	}
 	v = v.Elem()
 	if v.Cap() < len(l) {
-		v.Set(reflect.MakeSlice(v.Type().Elem(), len(l), len(l)))
+		v.Set(reflect.MakeSlice(v.Type(), len(l), len(l)))
 	}
 	if v.Len() < v.Cap() {
 		v.SetLen(v.Cap())
