@@ -88,7 +88,7 @@ func NewWindowsInstallServiceCommand() *cobra.Command {
 	cmd.Flags().Int64(flagLogRetentionFiles, viper.GetInt64(flagLogRetentionFiles), "maximum number of archived files to retain")
 	cmd.Flags().String(flagReaperInterval, viper.GetString(flagReaperInterval), "frequency that the archive reaper will run at")
 
-	if err := handleConfig(cmd); err != nil {
+	if err := handleConfig(cmd, os.Args[1:]); err != nil {
 		// can only happen if there is developer error, so don't make any mistakes
 		panic(err)
 	}
@@ -198,7 +198,7 @@ func NewWindowsRunServiceCommand() *cobra.Command {
 	cmd.Flags().Int64(flagLogRetentionFiles, viper.GetInt64(flagLogRetentionFiles), "maximum number of archived files to retain")
 	cmd.Flags().String(flagReaperInterval, viper.GetString(flagReaperInterval), "frequency that the archive reaper will run at")
 
-	if err := handleConfig(cmd); err != nil {
+	if err := handleConfig(cmd, os.Args[1:]); err != nil {
 		// can only happen if there is developer error, so don't make any mistakes
 		panic(err)
 	}
