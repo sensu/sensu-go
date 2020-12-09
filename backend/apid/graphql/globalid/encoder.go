@@ -5,7 +5,11 @@ import "context"
 type EncodeFn func(context.Context, interface{}) *StandardComponents
 
 // DefaultEncoder is the default implementation of Encode.
-func DefaultEncoder(_ context.Context, res interface{}) *StandardComponents {
+func DefaultEncoder(ctx context.Context, res interface{}) *StandardComponents {
+	if res, ok := res.(interface{ GetMetadata() string }); ok {
+		return DefaultEncoder(ctx, res.GetMetadata())
+	}
+
 	cmp := StandardComponents{}
 	if res, ok := res.(interface{ GetName() string }); ok {
 		cmp.uniqueComponent = res.GetName()
