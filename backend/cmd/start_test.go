@@ -4,32 +4,11 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
-	"reflect"
 	"testing"
 
-	"github.com/sensu/sensu-go/agent"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
-
-func TestNewAgentConfig(t *testing.T) {
-	cmd := &cobra.Command{
-		Use: "test",
-	}
-	if err := handleConfig(cmd, []string{}); err != nil {
-		t.Fatal("unexpected error while calling handleConfig: ", err)
-	}
-	_ = cmd.Flags().Set(flagSubscriptions, "dev,ops")
-
-	cfg, err := NewAgentConfig(cmd)
-	if err != nil {
-		t.Fatal("unexpected error while calling handleConfig: ", err)
-	}
-
-	if !reflect.DeepEqual(cfg.Subscriptions, []string{"dev", "ops"}) {
-		t.Fatalf("TestNewAgentConfig() subscriptions = %v, want %v", cfg.Subscriptions, `"dev", "ops"`)
-	}
-}
 
 func tempConfig(t *testing.T, content string) *os.File {
 	t.Helper()
@@ -54,15 +33,15 @@ func Test_handleConfig(t *testing.T) {
 
 	// The default config file should be used as a fallback if no config file was
 	// defined
-	if err := handleConfig(cmd, []string{}); err != nil {
+	if err := handleConfig(cmd, []string{}, true); err != nil {
 		t.Fatal("unexpected error while calling handleConfig: ", err)
 	}
-	if namespace := viper.GetString(flagNamespace); namespace != "default" {
-		t.Fatalf("handleConfig() namespace = %s, want %s", namespace, "default")
+	if host := viper.GetString(flagAgentHost); host != "[::]" {
+		t.Fatalf("handleConfig() host = %s, want %s", host, "[::]")
 	}
 
 	// Create a temporary configuration file to be specified via the flag
-	configFileForFlag := tempConfig(t, "namespace: ops")
+	configFileForFlag := tempConfig(t, "agent-host: localhost")
 	defer func() {
 		_ = configFileForFlag.Close()
 		_ = os.Remove(configFileForFlag.Name())
@@ -71,18 +50,18 @@ func Test_handleConfig(t *testing.T) {
 	// The configuration file specified via the flag should be used, regardless of
 	// its order of appearance
 	if err := handleConfig(cmd, []string{
-		fmt.Sprintf("--%s=%s", flagUser, agent.DefaultUser),
+		fmt.Sprintf("--%s=%s", flagLogLevel, "warn"),
 		fmt.Sprintf("--%s=%s", flagConfigFile, configFileForFlag.Name()),
-	}); err != nil {
+	}, true); err != nil {
 		t.Fatal("unexpected error while calling handleConfig: ", err)
 	}
-	if namespace := viper.GetString(flagNamespace); namespace != "ops" {
-		t.Fatalf("handleConfig() namespace = %s, want %s", namespace, "ops")
+	if host := viper.GetString(flagAgentHost); host != "localhost" {
+		t.Fatalf("handleConfig() host = %s, want %s", host, "localhost")
 	}
 
 	// Create a temporary configuration file to be specified via the environment
 	// variable
-	configFileForEnv := tempConfig(t, "namespace: dev")
+	configFileForEnv := tempConfig(t, "agent-host: 127.0.0.1")
 	defer func() {
 		_ = configFileForEnv.Close()
 		_ = os.Remove(configFileForEnv.Name())
@@ -90,19 +69,19 @@ func Test_handleConfig(t *testing.T) {
 
 	// The configuration file specified via the environment variable should be
 	// used
-	os.Setenv("SENSU_CONFIG_FILE", configFileForEnv.Name())
-	if err := handleConfig(cmd, []string{}); err != nil {
+	os.Setenv("SENSU_BACKEND_CONFIG_FILE", configFileForEnv.Name())
+	if err := handleConfig(cmd, []string{}, true); err != nil {
 		t.Fatal("unexpected error while calling handleConfig: ", err)
 	}
-	if namespace := viper.GetString(flagNamespace); namespace != "dev" {
-		t.Fatalf("handleConfig() namespace = %s, want %s", namespace, "dev")
+	if host := viper.GetString(flagAgentHost); host != "127.0.0.1" {
+		t.Fatalf("handleConfig() host = %s, want %s", host, "127.0.0.1")
 	}
 
 	// The flag should have precedence over the environment variable
-	if err := handleConfig(cmd, []string{fmt.Sprintf("--%s=%s", flagConfigFile, configFileForFlag.Name())}); err != nil {
+	if err := handleConfig(cmd, []string{fmt.Sprintf("--%s=%s", flagConfigFile, configFileForFlag.Name())}, true); err != nil {
 		t.Fatal("unexpected error while calling handleConfig: ", err)
 	}
-	if namespace := viper.GetString(flagNamespace); namespace != "ops" {
-		t.Fatalf("handleConfig() namespace = %s, want %s", namespace, "ops")
+	if host := viper.GetString(flagAgentHost); host != "localhost" {
+		t.Fatalf("handleConfig() host = %s, want %s", host, "localhost")
 	}
 }

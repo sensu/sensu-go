@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"os"
 	"time"
 
 	"github.com/AlecAivazis/survey"
@@ -136,7 +137,7 @@ func UpgradeCommand() *cobra.Command {
 	cmd.Flags().String(flagTimeout, defaultTimeout, "timeout, in seconds, for failing to establish a connection to etcd")
 	cmd.Flags().Bool(flagSkipConfirm, false, "skip interactive confirmation")
 
-	setupErr = handleConfig(cmd, false)
+	setupErr = handleConfig(cmd, os.Args[1:], false)
 
 	return cmd
 }

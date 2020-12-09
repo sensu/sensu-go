@@ -296,17 +296,22 @@ func StartCommand(initialize InitializeFunc) *cobra.Command {
 		},
 	}
 
-	setupErr = handleConfig(cmd, true)
+	setupErr = handleConfig(cmd, os.Args[1:], true)
 
 	return cmd
 }
 
-func handleConfig(cmd *cobra.Command, server bool) error {
+func handleConfig(cmd *cobra.Command, arguments []string, server bool) error {
 	configFlags := flagSet(server)
-	_ = configFlags.Parse(os.Args[1:])
+	if err := configFlags.Parse(arguments); err != nil {
+		return err
+	}
 
 	// Get the given config file path via flag
-	configFilePath, _ := configFlags.GetString(flagConfigFile)
+	configFilePath, err := configFlags.GetString(flagConfigFile)
+	if err != nil {
+		return err
+	}
 
 	// Get the environment variable value if no config file was provided via the flag
 	if configFilePath == "" {
