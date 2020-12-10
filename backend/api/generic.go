@@ -92,10 +92,12 @@ func (g *GenericClient) SetTypeMeta(meta corev2.TypeMeta) error {
 	if err != nil {
 		return fmt.Errorf("error (SetTypeMeta): %s", err)
 	}
-	if kind, ok := kind.(corev2.Resource); ok {
-		g.Kind = kind
-	} else if kind, ok := kind.(corev3.Resource); ok {
-		g.Kind = corev3.V3ToV2Resource(kind)
+	if k, ok := kind.(corev2.Resource); ok {
+		g.Kind = k
+	} else if k, ok := kind.(corev3.Resource); ok {
+		g.Kind = corev3.V3ToV2Resource(k)
+	} else {
+		return fmt.Errorf("error (SetTypeMeta): unknown type %T", kind)
 	}
 	return nil
 }
