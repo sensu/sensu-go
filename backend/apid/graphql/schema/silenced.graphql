@@ -6,10 +6,10 @@ type Silenced implements Node & Namespaced & Resource {
   id: ID!
 
   "The namespace the object belongs to."
-  namespace: String! @deprecated(deprecationReason: "use metadata")
+  namespace: String! @deprecated(reason: "use metadata")
 
   "Name is the combination of subscription and check name (subscription:checkname)"
-  name: String! @deprecated(deprecationReason: "use metadata")
+  name: String! @deprecated(reason: "use metadata")
 
   "metadata contains name, namespace, labels and annotations of the record"
   metadata: ObjectMeta

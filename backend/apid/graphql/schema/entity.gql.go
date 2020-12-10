@@ -709,14 +709,14 @@ func _ObjectTypeEntityConfigFn() graphql1.ObjectConfig {
 			},
 			"name": &graphql1.Field{
 				Args:              graphql1.FieldConfigArgument{},
-				DeprecationReason: "No longer supported",
+				DeprecationReason: "use metadata",
 				Description:       "unique identifier for the entity",
 				Name:              "name",
 				Type:              graphql1.NewNonNull(graphql1.String),
 			},
 			"namespace": &graphql1.Field{
 				Args:              graphql1.FieldConfigArgument{},
-				DeprecationReason: "No longer supported",
+				DeprecationReason: "use metadata",
 				Description:       "Namespace in which this record resides",
 				Name:              "namespace",
 				Type:              graphql1.NewNonNull(graphql1.String),

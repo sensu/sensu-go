@@ -6,10 +6,10 @@ type EventFilter implements Node & Namespaced & Resource {
   id: ID!
 
   "Namespace in which this record resides"
-  namespace: String! @deprecated(deprecationReason: "use metadata")
+  namespace: String! @deprecated(reason: "use metadata")
 
   "Name is the unique identifier for an event filter."
-  name: String! @deprecated(deprecationReason: "use metadata")
+  name: String! @deprecated(reason: "use metadata")
 
   "metadata contains name, namespace, labels and annotations of the record"
   metadata: ObjectMeta

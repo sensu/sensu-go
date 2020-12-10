@@ -6,10 +6,10 @@ type CheckConfig implements Node & Namespaced & Silenceable & Resource {
   id: ID!
 
   "namespace in which this check resides"
-  namespace: String! @deprecated(deprecationReason: "use metadata")
+  namespace: String! @deprecated(reason: "use metadata")
 
   "name is the unique identifier for a check"
-  name: String! @deprecated(deprecationReason: "use metadata")
+  name: String! @deprecated(reason: "use metadata")
 
   "metadata contains name, namespace, labels and annotations of the record"
   metadata: ObjectMeta
@@ -118,7 +118,7 @@ type Check implements Silenceable & Resource {
   nodeId: ID!
 
   "name is the unique identifier for a check"
-  name: String! @deprecated(deprecationReason: "use metadata")
+  name: String! @deprecated(reason: "use metadata")
 
   "metadata contains name, namespace, labels and annotations of the record"
   metadata: ObjectMeta

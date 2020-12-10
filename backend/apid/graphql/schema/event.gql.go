@@ -559,7 +559,7 @@ func _ObjectTypeEventConfigFn() graphql1.ObjectConfig {
 			},
 			"namespace": &graphql1.Field{
 				Args:              graphql1.FieldConfigArgument{},
-				DeprecationReason: "No longer supported",
+				DeprecationReason: "use metadata",
 				Description:       "namespace in which this record resides",
 				Name:              "namespace",
 				Type:              graphql1.NewNonNull(graphql1.String),

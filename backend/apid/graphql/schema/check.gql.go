@@ -877,14 +877,14 @@ func _ObjectTypeCheckConfigConfigFn() graphql1.ObjectConfig {
 			},
 			"name": &graphql1.Field{
 				Args:              graphql1.FieldConfigArgument{},
-				DeprecationReason: "No longer supported",
+				DeprecationReason: "use metadata",
 				Description:       "name is the unique identifier for a check",
 				Name:              "name",
 				Type:              graphql1.NewNonNull(graphql1.String),
 			},
 			"namespace": &graphql1.Field{
 				Args:              graphql1.FieldConfigArgument{},
-				DeprecationReason: "No longer supported",
+				DeprecationReason: "use metadata",
 				Description:       "namespace in which this check resides",
 				Name:              "namespace",
 				Type:              graphql1.NewNonNull(graphql1.String),
@@ -2268,7 +2268,7 @@ func _ObjectTypeCheckConfigFn() graphql1.ObjectConfig {
 			},
 			"name": &graphql1.Field{
 				Args:              graphql1.FieldConfigArgument{},
-				DeprecationReason: "No longer supported",
+				DeprecationReason: "use metadata",
 				Description:       "name is the unique identifier for a check",
 				Name:              "name",
 				Type:              graphql1.NewNonNull(graphql1.String),

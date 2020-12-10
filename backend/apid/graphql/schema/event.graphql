@@ -6,7 +6,7 @@ type Event implements Node & Namespaced & Silenceable & Resource {
   id: ID!
 
   "namespace in which this record resides"
-  namespace: String! @deprecated(deprecationReason: "use metadata")
+  namespace: String! @deprecated(reason: "use metadata")
 
   "metadata contains name, namespace, labels and annotations of the record"
   metadata: ObjectMeta

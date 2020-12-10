@@ -362,14 +362,14 @@ func _ObjectTypeMutatorConfigFn() graphql1.ObjectConfig {
 			},
 			"name": &graphql1.Field{
 				Args:              graphql1.FieldConfigArgument{},
-				DeprecationReason: "No longer supported",
+				DeprecationReason: "use metadata",
 				Description:       "Name is the unique identifier for a mutator.",
 				Name:              "name",
 				Type:              graphql1.NewNonNull(graphql1.String),
 			},
 			"namespace": &graphql1.Field{
 				Args:              graphql1.FieldConfigArgument{},
-				DeprecationReason: "No longer supported",
+				DeprecationReason: "use metadata",
 				Description:       "Namespace in which this record resides",
 				Name:              "namespace",
 				Type:              graphql1.NewNonNull(graphql1.String),

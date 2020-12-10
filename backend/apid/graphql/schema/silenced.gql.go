@@ -519,14 +519,14 @@ func _ObjectTypeSilencedConfigFn() graphql1.ObjectConfig {
 			},
 			"name": &graphql1.Field{
 				Args:              graphql1.FieldConfigArgument{},
-				DeprecationReason: "No longer supported",
+				DeprecationReason: "use metadata",
 				Description:       "Name is the combination of subscription and check name (subscription:checkname)",
 				Name:              "name",
 				Type:              graphql1.NewNonNull(graphql1.String),
 			},
 			"namespace": &graphql1.Field{
 				Args:              graphql1.FieldConfigArgument{},
-				DeprecationReason: "No longer supported",
+				DeprecationReason: "use metadata",
 				Description:       "The namespace the object belongs to.",
 				Name:              "namespace",
 				Type:              graphql1.NewNonNull(graphql1.String),
