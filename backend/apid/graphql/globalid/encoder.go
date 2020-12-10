@@ -1,12 +1,16 @@
 package globalid
 
-import "context"
+import (
+	"context"
+
+	corev2 "github.com/sensu/sensu-go/api/core/v2"
+)
 
 type EncodeFn func(context.Context, interface{}) *StandardComponents
 
 // DefaultEncoder is the default implementation of Encode.
 func DefaultEncoder(ctx context.Context, res interface{}) *StandardComponents {
-	if res, ok := res.(interface{ GetMetadata() string }); ok {
+	if res, ok := res.(interface{ GetMetadata() *corev2.ObjectMeta }); ok {
 		return DefaultEncoder(ctx, res.GetMetadata())
 	}
 
