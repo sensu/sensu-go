@@ -6,13 +6,13 @@ type CheckConfig implements Node & Namespaced & Silenceable & Resource {
   id: ID!
 
   "namespace in which this check resides"
-  namespace: String!
+  namespace: String! @deprecated(reason: "use metadata")
 
   "name is the unique identifier for a check"
-  name: String!
+  name: String! @deprecated(reason: "use metadata")
 
   "metadata contains name, namespace, labels and annotations of the record"
-  metadata: ObjectMeta!
+  metadata: ObjectMeta
 
   "command is the command to be executed."
   command: String!
@@ -118,10 +118,10 @@ type Check implements Silenceable & Resource {
   nodeId: ID!
 
   "name is the unique identifier for a check"
-  name: String!
+  name: String! @deprecated(reason: "use metadata")
 
   "metadata contains name, namespace, labels and annotations of the record"
-  metadata: ObjectMeta!
+  metadata: ObjectMeta
 
   "command is the command to be executed."
   command: String!

@@ -486,7 +486,7 @@ func _ObjectTypeHandlerConfigFn() graphql1.ObjectConfig {
 				DeprecationReason: "",
 				Description:       "metadata contains name, namespace, labels and annotations of the record",
 				Name:              "metadata",
-				Type:              graphql1.NewNonNull(graphql.OutputType("ObjectMeta")),
+				Type:              graphql.OutputType("ObjectMeta"),
 			},
 			"mutator": &graphql1.Field{
 				Args:              graphql1.FieldConfigArgument{},
@@ -497,14 +497,14 @@ func _ObjectTypeHandlerConfigFn() graphql1.ObjectConfig {
 			},
 			"name": &graphql1.Field{
 				Args:              graphql1.FieldConfigArgument{},
-				DeprecationReason: "",
+				DeprecationReason: "use metadata",
 				Description:       "Name is the unique identifier for a handler.",
 				Name:              "name",
 				Type:              graphql1.NewNonNull(graphql1.String),
 			},
 			"namespace": &graphql1.Field{
 				Args:              graphql1.FieldConfigArgument{},
-				DeprecationReason: "",
+				DeprecationReason: "use metadata",
 				Description:       "namespace in which this record resides",
 				Name:              "namespace",
 				Type:              graphql1.NewNonNull(graphql1.String),

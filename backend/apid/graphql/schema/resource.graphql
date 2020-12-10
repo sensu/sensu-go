@@ -1,6 +1,8 @@
 interface Resource {
-  "Metadata contains the name, namespace, labels and annotations of the resource."
-  metadata: ObjectMeta!
+  """
+  Metadata contains the name, namespace, labels and annotations of the resource.
+  """
+  metadata: ObjectMeta
 
   """
   toJSON returns a REST API compatible representation of the resource. Handy for
