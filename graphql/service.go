@@ -346,6 +346,6 @@ func mergeObjectConfig(a, b graphql.ObjectConfig) {
 		af[n] = f
 	}
 	ai := a.Interfaces.([]*graphql.Interface)
-	bi := a.Interfaces.([]*graphql.Interface)
+	bi := b.Interfaces.([]*graphql.Interface)
 	a.Interfaces = append(ai, bi...)
 }
