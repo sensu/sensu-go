@@ -6,13 +6,13 @@ type Handler implements Node & Namespaced & Resource {
   id: ID!
 
   "namespace in which this record resides"
-  namespace: String!
+  namespace: String! @deprecated(deprecationReason: "use metadata")
 
   "Name is the unique identifier for a handler."
-  name: String!
+  name: String! @deprecated(deprecationReason: "use metadata")
 
   "metadata contains name, namespace, labels and annotations of the record"
-  metadata: ObjectMeta!
+  metadata: ObjectMeta
 
   "Type is the handler type, i.e. pipe."
   type: String!

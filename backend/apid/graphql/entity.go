@@ -37,7 +37,8 @@ func (*entityImpl) ID(p graphql.ResolveParams) (string, error) {
 func (*entityImpl) Metadata(p graphql.ResolveParams) (interface{}, error) {
 	entity := p.Source.(*corev2.Entity)
 	entity = entity.GetRedactedEntity()
-	return entity.GetObjectMeta(), nil
+	meta := entity.GetObjectMeta()
+	return &meta, nil
 }
 
 // LastSeen implements response to request for 'executed' field.

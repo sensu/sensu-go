@@ -6,13 +6,13 @@ type Silenced implements Node & Namespaced & Resource {
   id: ID!
 
   "The namespace the object belongs to."
-  namespace: String!
+  namespace: String! @deprecated(deprecationReason: "use metadata")
 
   "Name is the combination of subscription and check name (subscription:checkname)"
-  name: String!
+  name: String! @deprecated(deprecationReason: "use metadata")
 
   "metadata contains name, namespace, labels and annotations of the record"
-  metadata: ObjectMeta!
+  metadata: ObjectMeta
 
   "Expire is the number of seconds the entry will live"
   expire: Int!

@@ -7,13 +7,13 @@ type Entity implements Node & Namespaced & Silenceable & Resource {
   id: ID!
 
   "Namespace in which this record resides"
-  namespace: String!
+  namespace: String! @deprecated(deprecationReason: "use metadata")
 
   "metadata contains name, namespace, labels and annotations of the record"
-  metadata: ObjectMeta!
+  metadata: ObjectMeta
 
   "unique identifier for the entity"
-  name: String!
+  name: String! @deprecated(deprecationReason: "use metadata")
   entityClass: String!
   system: System!
   subscriptions: [String!]

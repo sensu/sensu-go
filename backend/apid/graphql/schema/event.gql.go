@@ -555,11 +555,11 @@ func _ObjectTypeEventConfigFn() graphql1.ObjectConfig {
 				DeprecationReason: "",
 				Description:       "metadata contains name, namespace, labels and annotations of the record",
 				Name:              "metadata",
-				Type:              graphql1.NewNonNull(graphql.OutputType("ObjectMeta")),
+				Type:              graphql.OutputType("ObjectMeta"),
 			},
 			"namespace": &graphql1.Field{
 				Args:              graphql1.FieldConfigArgument{},
-				DeprecationReason: "",
+				DeprecationReason: "No longer supported",
 				Description:       "namespace in which this record resides",
 				Name:              "namespace",
 				Type:              graphql1.NewNonNull(graphql1.String),

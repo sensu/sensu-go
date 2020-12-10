@@ -6,10 +6,10 @@ type Event implements Node & Namespaced & Silenceable & Resource {
   id: ID!
 
   "namespace in which this record resides"
-  namespace: String!
+  namespace: String! @deprecated(deprecationReason: "use metadata")
 
   "metadata contains name, namespace, labels and annotations of the record"
-  metadata: ObjectMeta!
+  metadata: ObjectMeta
 
   "Timestamp is the time in seconds since the Epoch."
   timestamp: DateTime!
