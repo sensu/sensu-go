@@ -88,11 +88,15 @@ func (g *GenericClient) SetTypeMeta(meta corev2.TypeMeta) error {
 	}
 	g.APIGroup = path.Dir(meta.APIVersion)
 	g.APIVersion = path.Base(meta.APIVersion)
-	kind, err := types.ResolveType(meta.APIVersion, meta.Type)
+	kind, err := types.ResolveRaw(meta.APIVersion, meta.Type)
 	if err != nil {
 		return fmt.Errorf("error (SetTypeMeta): %s", err)
 	}
-	g.Kind = kind
+	if kind, ok := kind.(corev2.Resource); ok {
+		g.Kind = kind
+	} else if kind, ok := kind.(corev3.Resource); ok {
+		g.Kind = corev3.V3ToV2Resource(kind)
+	}
 	return nil
 }
 
