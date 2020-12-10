@@ -21,7 +21,7 @@ func TestEntityTypeMetadataField(t *testing.T) {
 	res, err := impl.Metadata(graphql.ResolveParams{Source: src})
 	require.NoError(t, err)
 	assert.NotEmpty(t, res)
-	assert.IsType(t, v2.ObjectMeta{}, res)
+	assert.IsType(t, &v2.ObjectMeta{}, res)
 }
 
 func TestEntityTypeRelatedField(t *testing.T) {
