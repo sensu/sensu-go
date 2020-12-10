@@ -8,6 +8,7 @@ import (
 	"github.com/graphql-go/graphql/gqlerrors"
 	"github.com/graphql-go/graphql/language/parser"
 	"github.com/graphql-go/graphql/language/source"
+	"github.com/sirupsen/logrus"
 )
 
 // Service describes the whole of a GraphQL schema, validation, and execution.
@@ -348,4 +349,5 @@ func mergeObjectConfig(a, b graphql.ObjectConfig) {
 	ai := a.Interfaces.([]*graphql.Interface)
 	bi := b.Interfaces.([]*graphql.Interface)
 	a.Interfaces = append(ai, bi...)
+	logrus.Warnf("%s: [\n%v,\n%v,\n%v,\n]\n", a.Name, ai, bi, a.Interfaces)
 }
