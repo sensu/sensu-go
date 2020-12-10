@@ -547,3 +547,17 @@ func TestGenericClientStoreV2(t *testing.T) {
 		})
 	}
 }
+
+func TestSetTypeMetaV3Resource(t *testing.T) {
+	client := &GenericClient{}
+	err := client.SetTypeMeta(corev2.TypeMeta{
+		APIVersion: "core/v3",
+		Type:       "EntityConfig",
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, ok := client.Kind.(*corev3.V2ResourceProxy); !ok {
+		t.Errorf("expected a v2 resource proxy")
+	}
+}

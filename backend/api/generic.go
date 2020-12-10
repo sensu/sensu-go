@@ -88,11 +88,18 @@ func (g *GenericClient) SetTypeMeta(meta corev2.TypeMeta) error {
 	}
 	g.APIGroup = path.Dir(meta.APIVersion)
 	g.APIVersion = path.Base(meta.APIVersion)
-	kind, err := types.ResolveType(meta.APIVersion, meta.Type)
+	kind, err := types.ResolveRaw(meta.APIVersion, meta.Type)
 	if err != nil {
 		return fmt.Errorf("error (SetTypeMeta): %s", err)
 	}
-	g.Kind = kind
+	switch kind := kind.(type) {
+	case corev2.Resource:
+		g.Kind = kind
+	case corev3.Resource:
+		g.Kind = corev3.V3ToV2Resource(kind)
+	default:
+		return fmt.Errorf("%T is not a sensu resource", kind)
+	}
 	return nil
 }
 
