@@ -303,15 +303,10 @@ func StartCommand(initialize InitializeFunc) *cobra.Command {
 
 func handleConfig(cmd *cobra.Command, arguments []string, server bool) error {
 	configFlags := flagSet(server)
-	if err := configFlags.Parse(arguments); err != nil {
-		return err
-	}
+	_ = configFlags.Parse(arguments)
 
 	// Get the given config file path via flag
-	configFilePath, err := configFlags.GetString(flagConfigFile)
-	if err != nil {
-		return err
-	}
+	configFilePath, _ := configFlags.GetString(flagConfigFile)
 
 	// Get the environment variable value if no config file was provided via the flag
 	if configFilePath == "" {
