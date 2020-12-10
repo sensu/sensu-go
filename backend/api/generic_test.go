@@ -3,12 +3,17 @@ package api
 import (
 	"context"
 	"errors"
+	"fmt"
 	"reflect"
 	"testing"
 
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
+	corev3 "github.com/sensu/sensu-go/api/core/v3"
 	"github.com/sensu/sensu-go/backend/authorization"
 	"github.com/sensu/sensu-go/backend/store"
+	storev2 "github.com/sensu/sensu-go/backend/store/v2"
+	"github.com/sensu/sensu-go/backend/store/v2/storetest"
+	"github.com/sensu/sensu-go/backend/store/v2/wrap"
 	"github.com/sensu/sensu-go/testing/mockstore"
 	"github.com/stretchr/testify/mock"
 )
@@ -21,6 +26,34 @@ func defaultTestClient(store store.ResourceStore, auth authorization.Authorizer)
 		APIGroup:   "core",
 		APIVersion: "v2",
 	}
+}
+
+func defaultV2TestClient(store storev2.Interface, auth authorization.Authorizer) *GenericClient {
+	return &GenericClient{
+		Kind:       defaultV3Resource(),
+		StoreV2:    store,
+		Auth:       auth,
+		APIGroup:   "core",
+		APIVersion: "v3",
+	}
+}
+
+func defaultV2ResourceStore() storev2.Interface {
+	store := new(storetest.Store)
+	wrappedResource, err := wrap.Resource(corev3.FixtureEntityConfig("default"))
+	if err != nil {
+		panic(err)
+	}
+	store.On("Get", mock.Anything).Return(wrappedResource, nil)
+	store.On("List", mock.Anything, mock.Anything).Return(wrap.List{wrappedResource}, nil)
+	store.On("CreateIfNotExists", mock.Anything, mock.Anything).Return(nil)
+	store.On("CreateOrUpdate", mock.Anything, mock.Anything).Return(nil)
+	store.On("Delete", mock.Anything).Return(nil)
+	return store
+}
+
+func defaultV3Resource() corev2.Resource {
+	return corev3.V3ToV2Resource(corev3.FixtureEntityConfig("default"))
 }
 
 type mockAuth struct {
@@ -40,7 +73,7 @@ func (m *mockAuth) Authorize(ctx context.Context, attrs *authorization.Attribute
 	}
 	b, ok := m.attrs[attrs.Key()]
 	if !ok {
-		return false, errors.New("no information")
+		return false, fmt.Errorf("auth missing for %v", attrs.Key())
 	}
 	return b, nil
 }
@@ -323,5 +356,208 @@ func TestGenericClient_SetTypeMeta(t *testing.T) {
 				t.Errorf("GenericClient.SetTypeMeta() version = %v, expected version = %v", g.APIVersion, tt.outVersion)
 			}
 		})
+	}
+}
+
+func TestGenericClientStoreV2(t *testing.T) {
+	tests := []struct {
+		Name      string
+		Client    *GenericClient
+		CreateVal corev2.Resource
+		CreateErr bool
+		UpdateVal corev2.Resource
+		UpdateErr bool
+		GetName   string
+		GetVal    corev2.Resource
+		GetErr    bool
+		ListVal   []corev2.Resource
+		ListPred  *store.SelectionPredicate
+		ListErr   bool
+		DelName   string
+		DelErr    bool
+		Ctx       context.Context
+	}{
+		{
+			Name:      "authorizer rejects all",
+			Client:    defaultV2TestClient(defaultV2ResourceStore(), badAuth()),
+			CreateVal: defaultV3Resource(),
+			CreateErr: true,
+			UpdateVal: defaultV3Resource(),
+			UpdateErr: true,
+			GetName:   "toget",
+			GetVal:    defaultV3Resource(),
+			GetErr:    true,
+			DelName:   "todelete",
+			DelErr:    true,
+			ListErr:   true,
+			Ctx:       contextWithUser(defaultContext(), "tom", nil),
+		},
+		{
+			Name: "readonly access",
+			Client: defaultV2TestClient(defaultV2ResourceStore(), &mockAuth{
+				attrs: map[authorization.AttributesKey]bool{
+					authorization.AttributesKey{
+						APIGroup:     "core",
+						APIVersion:   "v3",
+						Namespace:    "default",
+						Resource:     "entity_configs",
+						ResourceName: "default",
+						UserName:     "tom",
+						Verb:         "get",
+					}: true,
+					authorization.AttributesKey{
+						APIGroup:   "core",
+						APIVersion: "v3",
+						Namespace:  "default",
+						Resource:   "entity_configs",
+						UserName:   "tom",
+						Verb:       "list",
+					}: true,
+				},
+			}),
+			CreateVal: defaultV3Resource(),
+			CreateErr: true,
+			UpdateVal: defaultV3Resource(),
+			UpdateErr: true,
+			GetName:   "default",
+			GetVal:    defaultV3Resource(),
+			GetErr:    false,
+			DelName:   "default",
+			DelErr:    true,
+			ListErr:   false,
+			Ctx:       contextWithUser(defaultContext(), "tom", nil),
+		},
+		{
+			Name: "all access",
+			Client: defaultV2TestClient(defaultV2ResourceStore(), &mockAuth{
+				attrs: map[authorization.AttributesKey]bool{
+					authorization.AttributesKey{
+						APIGroup:     "core",
+						APIVersion:   "v3",
+						Namespace:    "default",
+						Resource:     "entity_configs",
+						ResourceName: "default",
+						UserName:     "tom",
+						Verb:         "get",
+					}: true,
+					authorization.AttributesKey{
+						APIGroup:     "core",
+						APIVersion:   "v3",
+						Namespace:    "default",
+						Resource:     "entity_configs",
+						ResourceName: "default",
+						UserName:     "tom",
+						Verb:         "create",
+					}: true,
+					authorization.AttributesKey{
+						APIGroup:     "core",
+						APIVersion:   "v3",
+						Namespace:    "default",
+						Resource:     "entity_configs",
+						ResourceName: "default",
+						UserName:     "tom",
+						Verb:         "delete",
+					}: true,
+					authorization.AttributesKey{
+						APIGroup:     "core",
+						APIVersion:   "v3",
+						Namespace:    "default",
+						Resource:     "entity_configs",
+						ResourceName: "default",
+						UserName:     "tom",
+						Verb:         "update",
+					}: true,
+					authorization.AttributesKey{
+						APIGroup:   "core",
+						APIVersion: "v3",
+						Namespace:  "default",
+						Resource:   "entity_configs",
+						UserName:   "tom",
+						Verb:       "list",
+					}: true,
+				},
+			}),
+			CreateVal: defaultV3Resource(),
+			CreateErr: false,
+			UpdateVal: defaultV3Resource(),
+			UpdateErr: false,
+			GetName:   "default",
+			GetVal:    defaultV3Resource(),
+			GetErr:    false,
+			DelName:   "default",
+			DelErr:    false,
+			ListErr:   false,
+			Ctx:       contextWithUser(defaultContext(), "tom", nil),
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.Name+"_create", func(t *testing.T) {
+			err := test.Client.Create(test.Ctx, test.CreateVal)
+			if err != nil && !test.CreateErr {
+				t.Fatal(err)
+			}
+			if err == nil && test.CreateErr {
+				t.Fatal("expected non-nil error")
+			}
+		})
+		t.Run(test.Name+"_update", func(t *testing.T) {
+			err := test.Client.Update(test.Ctx, test.UpdateVal)
+			if err != nil && !test.UpdateErr {
+				t.Fatal(err)
+			}
+			if err == nil && test.UpdateErr {
+				t.Fatal(err)
+			}
+		})
+		t.Run(test.Name+"_get", func(t *testing.T) {
+			err := test.Client.Get(test.Ctx, test.GetName, test.GetVal)
+			if err != nil && !test.GetErr {
+				t.Fatal(err)
+			}
+			if err == nil && test.GetErr {
+				t.Fatal(err)
+			}
+			if err == nil && test.GetVal.Validate() != nil {
+				t.Fatal(test.GetVal.Validate())
+			}
+		})
+		t.Run(test.Name+"_del", func(t *testing.T) {
+			err := test.Client.Delete(test.Ctx, test.DelName)
+			if err != nil && !test.DelErr {
+				t.Fatal(err)
+			}
+			if err == nil && test.DelErr {
+				t.Fatal(err)
+			}
+		})
+		t.Run(test.Name+"_list", func(t *testing.T) {
+			err := test.Client.List(test.Ctx, &test.ListVal, test.ListPred)
+			if err != nil && !test.ListErr {
+				t.Fatal(err)
+			}
+			if err == nil && test.ListErr {
+				t.Fatal(err)
+			}
+			for _, val := range test.ListVal {
+				if err == nil && val.Validate() != nil {
+					t.Fatal(val.Validate())
+				}
+			}
+		})
+	}
+}
+
+func TestSetTypeMetaV3Resource(t *testing.T) {
+	client := &GenericClient{}
+	err := client.SetTypeMeta(corev2.TypeMeta{
+		APIVersion: "core/v3",
+		Type:       "EntityConfig",
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, ok := client.Kind.(*corev3.V2ResourceProxy); !ok {
+		t.Errorf("expected a v2 resource proxy")
 	}
 }
