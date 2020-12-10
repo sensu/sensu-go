@@ -91,7 +91,7 @@ func (service *Service) RegisterObject(t ObjectDesc, impl interface{}) {
 
 		for _, ext := range service.types.extensionsForType(cfg.Name) {
 			extObjCfg := ext.(graphql.ObjectConfig)
-			mergeObjectConfig(cfg, extObjCfg)
+			mergeObjectConfig(&cfg, &extObjCfg)
 		}
 
 		cfg.Fields = fieldsThunk(m, fields)
@@ -339,13 +339,13 @@ func findType(m graphql.TypeMap, name string) graphql.Type {
 	)
 }
 
-func mergeObjectConfig(a, b graphql.ObjectConfig) {
+func mergeObjectConfig(a, b *graphql.ObjectConfig) {
 	af := a.Fields.(graphql.Fields)
 	bf := b.Fields.(graphql.Fields)
 	for n, f := range bf {
 		af[n] = f
 	}
 	ai := a.Interfaces.([]*graphql.Interface)
-	bi := a.Interfaces.([]*graphql.Interface)
+	bi := b.Interfaces.([]*graphql.Interface)
 	a.Interfaces = append(ai, bi...)
 }
