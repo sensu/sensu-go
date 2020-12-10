@@ -8,7 +8,6 @@ import (
 	"github.com/graphql-go/graphql/gqlerrors"
 	"github.com/graphql-go/graphql/language/parser"
 	"github.com/graphql-go/graphql/language/source"
-	"github.com/sirupsen/logrus"
 )
 
 // Service describes the whole of a GraphQL schema, validation, and execution.
@@ -92,7 +91,7 @@ func (service *Service) RegisterObject(t ObjectDesc, impl interface{}) {
 
 		for _, ext := range service.types.extensionsForType(cfg.Name) {
 			extObjCfg := ext.(graphql.ObjectConfig)
-			mergeObjectConfig(cfg, extObjCfg)
+			mergeObjectConfig(&cfg, &extObjCfg)
 		}
 
 		cfg.Fields = fieldsThunk(m, fields)
@@ -340,7 +339,7 @@ func findType(m graphql.TypeMap, name string) graphql.Type {
 	)
 }
 
-func mergeObjectConfig(a, b graphql.ObjectConfig) {
+func mergeObjectConfig(a, b *graphql.ObjectConfig) {
 	af := a.Fields.(graphql.Fields)
 	bf := b.Fields.(graphql.Fields)
 	for n, f := range bf {
@@ -349,5 +348,4 @@ func mergeObjectConfig(a, b graphql.ObjectConfig) {
 	ai := a.Interfaces.([]*graphql.Interface)
 	bi := b.Interfaces.([]*graphql.Interface)
 	a.Interfaces = append(ai, bi...)
-	logrus.Warnf("%s: [\n%v,\n%v,\n%v,\n]\n", a.Name, ai, bi, a.Interfaces)
 }
