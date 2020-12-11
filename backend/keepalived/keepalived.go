@@ -371,7 +371,6 @@ func (k *Keepalived) handleEntityRegistration(entity *corev2.Entity, event *core
 	if exists {
 		// Update the entity config if the agent reconnected
 		if isFirstSequenceForAgentManagedEntity {
-			fmt.Println("updating...!")
 			if err := k.storev2.UpdateIfExists(req, wrapper); err != nil {
 				logger.WithError(err).Error("could not update entity")
 				return err

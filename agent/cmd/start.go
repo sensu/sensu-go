@@ -101,9 +101,11 @@ func NewAgentConfig(cmd *cobra.Command) (*agent.Config, error) {
 	logrus.SetLevel(level)
 
 	labels := viper.GetStringMapString(flagLabels)
+	fmt.Println(viper.GetBool(flagAgentManagedEntity))
 	if viper.GetBool(flagAgentManagedEntity) {
 		labels[corev2.ManagedByLabel] = "sensu-agent"
 	}
+	fmt.Printf("labels = %#v\n", labels)
 
 	cfg := agent.NewConfig()
 	cfg.AgentManagedEntity = viper.GetBool(flagAgentManagedEntity)
@@ -409,7 +411,7 @@ func flagSet() *pflag.FlagSet {
 	flagSet.Int(flagBackendHandshakeTimeout, viper.GetInt(flagBackendHandshakeTimeout), "number of seconds the agent should wait when negotiating a new WebSocket connection")
 	flagSet.Int(flagBackendHeartbeatInterval, viper.GetInt(flagBackendHeartbeatInterval), "interval at which the agent should send heartbeats to the backend")
 	flagSet.Int(flagBackendHeartbeatTimeout, viper.GetInt(flagBackendHeartbeatTimeout), "number of seconds the agent should wait for a response to a hearbeat")
-	flagSet.Bool(flagAgentManagedEntity, viper.GetBool(flagBackendHeartbeatTimeout), "manage this entity via the agent")
+	flagSet.Bool(flagAgentManagedEntity, viper.GetBool(flagAgentManagedEntity), "manage this entity via the agent")
 
 	flagSet.SetOutput(ioutil.Discard)
 

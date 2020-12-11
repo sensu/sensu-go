@@ -224,15 +224,15 @@ func (p *ManagedByLabelPutter) label(resource *types.Wrapper) {
 	managedBy := p.Label
 
 	// Mark the resource as managed by `label` in the outer labels if none is
-	// alreadt set
-	if outerLabels[corev2.ManagedByLabel] == "" {
+	// already set
+	if outerLabels[corev2.ManagedByLabel] != "sensu-agent" {
 		outerLabels[corev2.ManagedByLabel] = managedBy
 	} else {
 		managedBy = outerLabels[corev2.ManagedByLabel]
 	}
 
 	// Mark the resource as managed by `label` in the inner labels
-	if innerLabels[corev2.ManagedByLabel] == "" || innerLabels[corev2.ManagedByLabel] != outerLabels[corev2.ManagedByLabel] {
+	if innerLabels[corev2.ManagedByLabel] != "sensu-agent" || innerLabels[corev2.ManagedByLabel] != outerLabels[corev2.ManagedByLabel] {
 		innerLabels[corev2.ManagedByLabel] = managedBy
 	}
 
