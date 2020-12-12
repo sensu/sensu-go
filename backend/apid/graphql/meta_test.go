@@ -28,7 +28,7 @@ func TestObjectMetaTypeLabelsField(t *testing.T) {
 }
 
 func TestObjectMetaTypeAnnotationsField(t *testing.T) {
-	meta := v2.ObjectMeta{
+	meta := &v2.ObjectMeta{
 		Annotations: map[string]string{
 			"jeff": "gertsman",
 			"brad": "shoemaker",

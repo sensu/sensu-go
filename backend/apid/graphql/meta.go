@@ -3,7 +3,7 @@ package graphql
 import (
 	"sort"
 
-	v2 "github.com/sensu/sensu-go/api/core/v2"
+	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/apid/graphql/schema"
 	"github.com/sensu/sensu-go/graphql"
 )
@@ -26,14 +26,22 @@ type KVPairString struct {
 
 // Labels implements response to request for 'labels' field.
 func (r *objectMetaImpl) Labels(p graphql.ResolveParams) (interface{}, error) {
-	src := p.Source.(v2.ObjectMeta)
-	return makeKVPairString(src.Labels), nil
+	return makeKVPairString(toObjMeta(p.Source).Labels), nil
 }
 
 // Annotations implements response to request for 'annotations' field.
 func (r *objectMetaImpl) Annotations(p graphql.ResolveParams) (interface{}, error) {
-	src := p.Source.(v2.ObjectMeta)
-	return makeKVPairString(src.Annotations), nil
+	return makeKVPairString(toObjMeta(p.Source).Annotations), nil
+}
+
+func toObjMeta(m interface{}) corev2.ObjectMeta {
+	switch m := m.(type) {
+	case corev2.ObjectMeta:
+		return m
+	case *corev2.ObjectMeta:
+		return *m
+	}
+	return corev2.ObjectMeta{}
 }
 
 func makeKVPairString(m map[string]string) []KVPairString {
