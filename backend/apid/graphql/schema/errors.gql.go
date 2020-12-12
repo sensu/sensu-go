@@ -122,14 +122,18 @@ func RegisterStandardError(svc *graphql.Service, impl StandardErrorFieldResolver
 	svc.RegisterObject(_ObjectTypeStandardErrorDesc, impl)
 }
 func _ObjTypeStandardErrorInputHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(StandardErrorInputFieldResolver)
+	resolver := impl.(interface {
+		Input(p graphql.ResolveParams) (string, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.Input(frp)
 	}
 }
 
 func _ObjTypeStandardErrorCodeHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(StandardErrorCodeFieldResolver)
+	resolver := impl.(interface {
+		Code(p graphql.ResolveParams) (ErrCode, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 
 		val, err := resolver.Code(frp)
@@ -138,7 +142,9 @@ func _ObjTypeStandardErrorCodeHandler(impl interface{}) graphql1.FieldResolveFn 
 }
 
 func _ObjTypeStandardErrorMessageHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(StandardErrorMessageFieldResolver)
+	resolver := impl.(interface {
+		Message(p graphql.ResolveParams) (string, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.Message(frp)
 	}

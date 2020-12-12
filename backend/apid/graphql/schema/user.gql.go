@@ -91,28 +91,36 @@ func RegisterUser(svc *graphql.Service, impl UserFieldResolvers) {
 	svc.RegisterObject(_ObjectTypeUserDesc, impl)
 }
 func _ObjTypeUserUsernameHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(UserUsernameFieldResolver)
+	resolver := impl.(interface {
+		Username(p graphql.ResolveParams) (string, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.Username(frp)
 	}
 }
 
 func _ObjTypeUserGroupsHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(UserGroupsFieldResolver)
+	resolver := impl.(interface {
+		Groups(p graphql.ResolveParams) ([]string, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.Groups(frp)
 	}
 }
 
 func _ObjTypeUserDisabledHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(UserDisabledFieldResolver)
+	resolver := impl.(interface {
+		Disabled(p graphql.ResolveParams) (bool, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.Disabled(frp)
 	}
 }
 
 func _ObjTypeUserHasPasswordHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(UserHasPasswordFieldResolver)
+	resolver := impl.(interface {
+		HasPassword(p graphql.ResolveParams) (bool, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.HasPassword(frp)
 	}

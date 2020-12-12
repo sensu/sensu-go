@@ -107,35 +107,45 @@ func RegisterOffsetPageInfo(svc *graphql.Service, impl OffsetPageInfoFieldResolv
 	svc.RegisterObject(_ObjectTypeOffsetPageInfoDesc, impl)
 }
 func _ObjTypeOffsetPageInfoHasNextPageHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(OffsetPageInfoHasNextPageFieldResolver)
+	resolver := impl.(interface {
+		HasNextPage(p graphql.ResolveParams) (bool, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.HasNextPage(frp)
 	}
 }
 
 func _ObjTypeOffsetPageInfoHasPreviousPageHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(OffsetPageInfoHasPreviousPageFieldResolver)
+	resolver := impl.(interface {
+		HasPreviousPage(p graphql.ResolveParams) (bool, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.HasPreviousPage(frp)
 	}
 }
 
 func _ObjTypeOffsetPageInfoNextOffsetHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(OffsetPageInfoNextOffsetFieldResolver)
+	resolver := impl.(interface {
+		NextOffset(p graphql.ResolveParams) (int, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.NextOffset(frp)
 	}
 }
 
 func _ObjTypeOffsetPageInfoPreviousOffsetHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(OffsetPageInfoPreviousOffsetFieldResolver)
+	resolver := impl.(interface {
+		PreviousOffset(p graphql.ResolveParams) (int, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.PreviousOffset(frp)
 	}
 }
 
 func _ObjTypeOffsetPageInfoTotalCountHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(OffsetPageInfoTotalCountFieldResolver)
+	resolver := impl.(interface {
+		TotalCount(p graphql.ResolveParams) (int, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.TotalCount(frp)
 	}

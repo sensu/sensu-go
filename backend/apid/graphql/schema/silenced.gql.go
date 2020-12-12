@@ -215,91 +215,117 @@ func RegisterSilenced(svc *graphql.Service, impl SilencedFieldResolvers) {
 	svc.RegisterObject(_ObjectTypeSilencedDesc, impl)
 }
 func _ObjTypeSilencedIDHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(SilencedIDFieldResolver)
+	resolver := impl.(interface {
+		ID(p graphql.ResolveParams) (string, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.ID(frp)
 	}
 }
 
 func _ObjTypeSilencedNamespaceHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(SilencedNamespaceFieldResolver)
+	resolver := impl.(interface {
+		Namespace(p graphql.ResolveParams) (string, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.Namespace(frp)
 	}
 }
 
 func _ObjTypeSilencedNameHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(SilencedNameFieldResolver)
+	resolver := impl.(interface {
+		Name(p graphql.ResolveParams) (string, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.Name(frp)
 	}
 }
 
 func _ObjTypeSilencedMetadataHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(SilencedMetadataFieldResolver)
+	resolver := impl.(interface {
+		Metadata(p graphql.ResolveParams) (interface{}, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.Metadata(frp)
 	}
 }
 
 func _ObjTypeSilencedExpireHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(SilencedExpireFieldResolver)
+	resolver := impl.(interface {
+		Expire(p graphql.ResolveParams) (int, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.Expire(frp)
 	}
 }
 
 func _ObjTypeSilencedExpiresHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(SilencedExpiresFieldResolver)
+	resolver := impl.(interface {
+		Expires(p graphql.ResolveParams) (*time.Time, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.Expires(frp)
 	}
 }
 
 func _ObjTypeSilencedExpireOnResolveHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(SilencedExpireOnResolveFieldResolver)
+	resolver := impl.(interface {
+		ExpireOnResolve(p graphql.ResolveParams) (bool, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.ExpireOnResolve(frp)
 	}
 }
 
 func _ObjTypeSilencedCreatorHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(SilencedCreatorFieldResolver)
+	resolver := impl.(interface {
+		Creator(p graphql.ResolveParams) (string, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.Creator(frp)
 	}
 }
 
 func _ObjTypeSilencedCheckHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(SilencedCheckFieldResolver)
+	resolver := impl.(interface {
+		Check(p graphql.ResolveParams) (interface{}, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.Check(frp)
 	}
 }
 
 func _ObjTypeSilencedReasonHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(SilencedReasonFieldResolver)
+	resolver := impl.(interface {
+		Reason(p graphql.ResolveParams) (string, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.Reason(frp)
 	}
 }
 
 func _ObjTypeSilencedSubscriptionHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(SilencedSubscriptionFieldResolver)
+	resolver := impl.(interface {
+		Subscription(p graphql.ResolveParams) (string, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.Subscription(frp)
 	}
 }
 
 func _ObjTypeSilencedBeginHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(SilencedBeginFieldResolver)
+	resolver := impl.(interface {
+		Begin(p graphql.ResolveParams) (*time.Time, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.Begin(frp)
 	}
 }
 
 func _ObjTypeSilencedToJSONHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(SilencedToJSONFieldResolver)
+	resolver := impl.(interface {
+		ToJSON(p graphql.ResolveParams) (interface{}, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.ToJSON(frp)
 	}
@@ -515,14 +541,18 @@ func RegisterSilencedConnection(svc *graphql.Service, impl SilencedConnectionFie
 	svc.RegisterObject(_ObjectTypeSilencedConnectionDesc, impl)
 }
 func _ObjTypeSilencedConnectionNodesHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(SilencedConnectionNodesFieldResolver)
+	resolver := impl.(interface {
+		Nodes(p graphql.ResolveParams) (interface{}, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.Nodes(frp)
 	}
 }
 
 func _ObjTypeSilencedConnectionPageInfoHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(SilencedConnectionPageInfoFieldResolver)
+	resolver := impl.(interface {
+		PageInfo(p graphql.ResolveParams) (interface{}, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.PageInfo(frp)
 	}

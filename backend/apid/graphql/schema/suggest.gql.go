@@ -43,7 +43,9 @@ func RegisterSuggestionResultSet(svc *graphql.Service, impl SuggestionResultSetF
 	svc.RegisterObject(_ObjectTypeSuggestionResultSetDesc, impl)
 }
 func _ObjTypeSuggestionResultSetValuesHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(SuggestionResultSetValuesFieldResolver)
+	resolver := impl.(interface {
+		Values(p graphql.ResolveParams) ([]string, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.Values(frp)
 	}

@@ -91,28 +91,36 @@ func RegisterEtcdClusterMemberHealth(svc *graphql.Service, impl EtcdClusterMembe
 	svc.RegisterObject(_ObjectTypeEtcdClusterMemberHealthDesc, impl)
 }
 func _ObjTypeEtcdClusterMemberHealthMemberIDHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(EtcdClusterMemberHealthMemberIDFieldResolver)
+	resolver := impl.(interface {
+		MemberID(p graphql.ResolveParams) (string, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.MemberID(frp)
 	}
 }
 
 func _ObjTypeEtcdClusterMemberHealthNameHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(EtcdClusterMemberHealthNameFieldResolver)
+	resolver := impl.(interface {
+		Name(p graphql.ResolveParams) (string, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.Name(frp)
 	}
 }
 
 func _ObjTypeEtcdClusterMemberHealthErrHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(EtcdClusterMemberHealthErrFieldResolver)
+	resolver := impl.(interface {
+		Err(p graphql.ResolveParams) (string, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.Err(frp)
 	}
 }
 
 func _ObjTypeEtcdClusterMemberHealthHealthyHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(EtcdClusterMemberHealthHealthyFieldResolver)
+	resolver := impl.(interface {
+		Healthy(p graphql.ResolveParams) (bool, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.Healthy(frp)
 	}
@@ -212,14 +220,18 @@ func RegisterEtcdClusterHealth(svc *graphql.Service, impl EtcdClusterHealthField
 	svc.RegisterObject(_ObjectTypeEtcdClusterHealthDesc, impl)
 }
 func _ObjTypeEtcdClusterHealthAlarmsHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(EtcdClusterHealthAlarmsFieldResolver)
+	resolver := impl.(interface {
+		Alarms(p graphql.ResolveParams) (interface{}, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.Alarms(frp)
 	}
 }
 
 func _ObjTypeEtcdClusterHealthMembersHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(EtcdClusterHealthMembersFieldResolver)
+	resolver := impl.(interface {
+		Members(p graphql.ResolveParams) (interface{}, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.Members(frp)
 	}
@@ -317,14 +329,18 @@ func RegisterEtcdAlarmMember(svc *graphql.Service, impl EtcdAlarmMemberFieldReso
 	svc.RegisterObject(_ObjectTypeEtcdAlarmMemberDesc, impl)
 }
 func _ObjTypeEtcdAlarmMemberMemberIDHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(EtcdAlarmMemberMemberIDFieldResolver)
+	resolver := impl.(interface {
+		MemberID(p graphql.ResolveParams) (string, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.MemberID(frp)
 	}
 }
 
 func _ObjTypeEtcdAlarmMemberAlarmHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(EtcdAlarmMemberAlarmFieldResolver)
+	resolver := impl.(interface {
+		Alarm(p graphql.ResolveParams) (EtcdAlarmType, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 
 		val, err := resolver.Alarm(frp)
@@ -454,7 +470,9 @@ func RegisterClusterHealth(svc *graphql.Service, impl ClusterHealthFieldResolver
 	svc.RegisterObject(_ObjectTypeClusterHealthDesc, impl)
 }
 func _ObjTypeClusterHealthEtcdHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(ClusterHealthEtcdFieldResolver)
+	resolver := impl.(interface {
+		Etcd(p graphql.ResolveParams) (interface{}, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.Etcd(frp)
 	}

@@ -62,14 +62,18 @@ func RegisterKVPairString(svc *graphql.Service, impl KVPairStringFieldResolvers)
 	svc.RegisterObject(_ObjectTypeKVPairStringDesc, impl)
 }
 func _ObjTypeKVPairStringKeyHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(KVPairStringKeyFieldResolver)
+	resolver := impl.(interface {
+		Key(p graphql.ResolveParams) (string, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.Key(frp)
 	}
 }
 
 func _ObjTypeKVPairStringValHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(KVPairStringValFieldResolver)
+	resolver := impl.(interface {
+		Val(p graphql.ResolveParams) (string, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.Val(frp)
 	}
@@ -201,35 +205,45 @@ func RegisterObjectMeta(svc *graphql.Service, impl ObjectMetaFieldResolvers) {
 	svc.RegisterObject(_ObjectTypeObjectMetaDesc, impl)
 }
 func _ObjTypeObjectMetaNameHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(ObjectMetaNameFieldResolver)
+	resolver := impl.(interface {
+		Name(p graphql.ResolveParams) (string, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.Name(frp)
 	}
 }
 
 func _ObjTypeObjectMetaNamespaceHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(ObjectMetaNamespaceFieldResolver)
+	resolver := impl.(interface {
+		Namespace(p graphql.ResolveParams) (string, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.Namespace(frp)
 	}
 }
 
 func _ObjTypeObjectMetaLabelsHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(ObjectMetaLabelsFieldResolver)
+	resolver := impl.(interface {
+		Labels(p graphql.ResolveParams) (interface{}, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.Labels(frp)
 	}
 }
 
 func _ObjTypeObjectMetaAnnotationsHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(ObjectMetaAnnotationsFieldResolver)
+	resolver := impl.(interface {
+		Annotations(p graphql.ResolveParams) (interface{}, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.Annotations(frp)
 	}
 }
 
 func _ObjTypeObjectMetaCreatedByHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(ObjectMetaCreatedByFieldResolver)
+	resolver := impl.(interface {
+		CreatedBy(p graphql.ResolveParams) (string, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.CreatedBy(frp)
 	}

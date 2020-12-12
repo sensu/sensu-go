@@ -44,14 +44,18 @@ func RegisterViewer(svc *graphql.Service, impl ViewerFieldResolvers) {
 	svc.RegisterObject(_ObjectTypeViewerDesc, impl)
 }
 func _ObjTypeViewerNamespacesHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(ViewerNamespacesFieldResolver)
+	resolver := impl.(interface {
+		Namespaces(p graphql.ResolveParams) (interface{}, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.Namespaces(frp)
 	}
 }
 
 func _ObjTypeViewerUserHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(ViewerUserFieldResolver)
+	resolver := impl.(interface {
+		User(p graphql.ResolveParams) (interface{}, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.User(frp)
 	}

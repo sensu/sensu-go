@@ -371,21 +371,27 @@ func RegisterNamespace(svc *graphql.Service, impl NamespaceFieldResolvers) {
 	svc.RegisterObject(_ObjectTypeNamespaceDesc, impl)
 }
 func _ObjTypeNamespaceIDHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(NamespaceIDFieldResolver)
+	resolver := impl.(interface {
+		ID(p graphql.ResolveParams) (string, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.ID(frp)
 	}
 }
 
 func _ObjTypeNamespaceNameHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(NamespaceNameFieldResolver)
+	resolver := impl.(interface {
+		Name(p graphql.ResolveParams) (string, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.Name(frp)
 	}
 }
 
 func _ObjTypeNamespaceChecksHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(NamespaceChecksFieldResolver)
+	resolver := impl.(interface {
+		Checks(p NamespaceChecksFieldResolverParams) (interface{}, error)
+	})
 	return func(p graphql1.ResolveParams) (interface{}, error) {
 		frp := NamespaceChecksFieldResolverParams{ResolveParams: p}
 		err := mapstructure.Decode(p.Args, &frp.Args)
@@ -398,7 +404,9 @@ func _ObjTypeNamespaceChecksHandler(impl interface{}) graphql1.FieldResolveFn {
 }
 
 func _ObjTypeNamespaceEntitiesHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(NamespaceEntitiesFieldResolver)
+	resolver := impl.(interface {
+		Entities(p NamespaceEntitiesFieldResolverParams) (interface{}, error)
+	})
 	return func(p graphql1.ResolveParams) (interface{}, error) {
 		frp := NamespaceEntitiesFieldResolverParams{ResolveParams: p}
 		err := mapstructure.Decode(p.Args, &frp.Args)
@@ -411,7 +419,9 @@ func _ObjTypeNamespaceEntitiesHandler(impl interface{}) graphql1.FieldResolveFn 
 }
 
 func _ObjTypeNamespaceEventsHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(NamespaceEventsFieldResolver)
+	resolver := impl.(interface {
+		Events(p NamespaceEventsFieldResolverParams) (interface{}, error)
+	})
 	return func(p graphql1.ResolveParams) (interface{}, error) {
 		frp := NamespaceEventsFieldResolverParams{ResolveParams: p}
 		err := mapstructure.Decode(p.Args, &frp.Args)
@@ -424,7 +434,9 @@ func _ObjTypeNamespaceEventsHandler(impl interface{}) graphql1.FieldResolveFn {
 }
 
 func _ObjTypeNamespaceEventFiltersHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(NamespaceEventFiltersFieldResolver)
+	resolver := impl.(interface {
+		EventFilters(p NamespaceEventFiltersFieldResolverParams) (interface{}, error)
+	})
 	return func(p graphql1.ResolveParams) (interface{}, error) {
 		frp := NamespaceEventFiltersFieldResolverParams{ResolveParams: p}
 		err := mapstructure.Decode(p.Args, &frp.Args)
@@ -437,7 +449,9 @@ func _ObjTypeNamespaceEventFiltersHandler(impl interface{}) graphql1.FieldResolv
 }
 
 func _ObjTypeNamespaceHandlersHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(NamespaceHandlersFieldResolver)
+	resolver := impl.(interface {
+		Handlers(p NamespaceHandlersFieldResolverParams) (interface{}, error)
+	})
 	return func(p graphql1.ResolveParams) (interface{}, error) {
 		frp := NamespaceHandlersFieldResolverParams{ResolveParams: p}
 		err := mapstructure.Decode(p.Args, &frp.Args)
@@ -450,7 +464,9 @@ func _ObjTypeNamespaceHandlersHandler(impl interface{}) graphql1.FieldResolveFn 
 }
 
 func _ObjTypeNamespaceMutatorsHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(NamespaceMutatorsFieldResolver)
+	resolver := impl.(interface {
+		Mutators(p NamespaceMutatorsFieldResolverParams) (interface{}, error)
+	})
 	return func(p graphql1.ResolveParams) (interface{}, error) {
 		frp := NamespaceMutatorsFieldResolverParams{ResolveParams: p}
 		err := mapstructure.Decode(p.Args, &frp.Args)
@@ -463,7 +479,9 @@ func _ObjTypeNamespaceMutatorsHandler(impl interface{}) graphql1.FieldResolveFn 
 }
 
 func _ObjTypeNamespaceSilencesHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(NamespaceSilencesFieldResolver)
+	resolver := impl.(interface {
+		Silences(p NamespaceSilencesFieldResolverParams) (interface{}, error)
+	})
 	return func(p graphql1.ResolveParams) (interface{}, error) {
 		frp := NamespaceSilencesFieldResolverParams{ResolveParams: p}
 		err := mapstructure.Decode(p.Args, &frp.Args)
@@ -476,7 +494,9 @@ func _ObjTypeNamespaceSilencesHandler(impl interface{}) graphql1.FieldResolveFn 
 }
 
 func _ObjTypeNamespaceSubscriptionsHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(NamespaceSubscriptionsFieldResolver)
+	resolver := impl.(interface {
+		Subscriptions(p NamespaceSubscriptionsFieldResolverParams) (interface{}, error)
+	})
 	return func(p graphql1.ResolveParams) (interface{}, error) {
 		frp := NamespaceSubscriptionsFieldResolverParams{ResolveParams: p}
 		err := mapstructure.Decode(p.Args, &frp.Args)
@@ -489,7 +509,9 @@ func _ObjTypeNamespaceSubscriptionsHandler(impl interface{}) graphql1.FieldResol
 }
 
 func _ObjTypeNamespaceIconIDHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(NamespaceIconIDFieldResolver)
+	resolver := impl.(interface {
+		IconID(p graphql.ResolveParams) (Icon, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 
 		val, err := resolver.IconID(frp)
@@ -498,7 +520,9 @@ func _ObjTypeNamespaceIconIDHandler(impl interface{}) graphql1.FieldResolveFn {
 }
 
 func _ObjTypeNamespaceColourIDHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(NamespaceColourIDFieldResolver)
+	resolver := impl.(interface {
+		ColourID(p graphql.ResolveParams) (MutedColour, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 
 		val, err := resolver.ColourID(frp)

@@ -310,14 +310,18 @@ func RegisterQuery(svc *graphql.Service, impl QueryFieldResolvers) {
 	svc.RegisterObject(_ObjectTypeQueryDesc, impl)
 }
 func _ObjTypeQueryViewerHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(QueryViewerFieldResolver)
+	resolver := impl.(interface {
+		Viewer(p graphql.ResolveParams) (interface{}, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.Viewer(frp)
 	}
 }
 
 func _ObjTypeQueryNamespaceHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(QueryNamespaceFieldResolver)
+	resolver := impl.(interface {
+		Namespace(p QueryNamespaceFieldResolverParams) (interface{}, error)
+	})
 	return func(p graphql1.ResolveParams) (interface{}, error) {
 		frp := QueryNamespaceFieldResolverParams{ResolveParams: p}
 		err := mapstructure.Decode(p.Args, &frp.Args)
@@ -330,7 +334,9 @@ func _ObjTypeQueryNamespaceHandler(impl interface{}) graphql1.FieldResolveFn {
 }
 
 func _ObjTypeQueryEventHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(QueryEventFieldResolver)
+	resolver := impl.(interface {
+		Event(p QueryEventFieldResolverParams) (interface{}, error)
+	})
 	return func(p graphql1.ResolveParams) (interface{}, error) {
 		frp := QueryEventFieldResolverParams{ResolveParams: p}
 		err := mapstructure.Decode(p.Args, &frp.Args)
@@ -343,7 +349,9 @@ func _ObjTypeQueryEventHandler(impl interface{}) graphql1.FieldResolveFn {
 }
 
 func _ObjTypeQueryEntityHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(QueryEntityFieldResolver)
+	resolver := impl.(interface {
+		Entity(p QueryEntityFieldResolverParams) (interface{}, error)
+	})
 	return func(p graphql1.ResolveParams) (interface{}, error) {
 		frp := QueryEntityFieldResolverParams{ResolveParams: p}
 		err := mapstructure.Decode(p.Args, &frp.Args)
@@ -356,7 +364,9 @@ func _ObjTypeQueryEntityHandler(impl interface{}) graphql1.FieldResolveFn {
 }
 
 func _ObjTypeQueryMutatorHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(QueryMutatorFieldResolver)
+	resolver := impl.(interface {
+		Mutator(p QueryMutatorFieldResolverParams) (interface{}, error)
+	})
 	return func(p graphql1.ResolveParams) (interface{}, error) {
 		frp := QueryMutatorFieldResolverParams{ResolveParams: p}
 		err := mapstructure.Decode(p.Args, &frp.Args)
@@ -369,7 +379,9 @@ func _ObjTypeQueryMutatorHandler(impl interface{}) graphql1.FieldResolveFn {
 }
 
 func _ObjTypeQueryCheckHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(QueryCheckFieldResolver)
+	resolver := impl.(interface {
+		Check(p QueryCheckFieldResolverParams) (interface{}, error)
+	})
 	return func(p graphql1.ResolveParams) (interface{}, error) {
 		frp := QueryCheckFieldResolverParams{ResolveParams: p}
 		err := mapstructure.Decode(p.Args, &frp.Args)
@@ -382,7 +394,9 @@ func _ObjTypeQueryCheckHandler(impl interface{}) graphql1.FieldResolveFn {
 }
 
 func _ObjTypeQueryEventFilterHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(QueryEventFilterFieldResolver)
+	resolver := impl.(interface {
+		EventFilter(p QueryEventFilterFieldResolverParams) (interface{}, error)
+	})
 	return func(p graphql1.ResolveParams) (interface{}, error) {
 		frp := QueryEventFilterFieldResolverParams{ResolveParams: p}
 		err := mapstructure.Decode(p.Args, &frp.Args)
@@ -395,7 +409,9 @@ func _ObjTypeQueryEventFilterHandler(impl interface{}) graphql1.FieldResolveFn {
 }
 
 func _ObjTypeQueryHandlerHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(QueryHandlerFieldResolver)
+	resolver := impl.(interface {
+		Handler(p QueryHandlerFieldResolverParams) (interface{}, error)
+	})
 	return func(p graphql1.ResolveParams) (interface{}, error) {
 		frp := QueryHandlerFieldResolverParams{ResolveParams: p}
 		err := mapstructure.Decode(p.Args, &frp.Args)
@@ -408,7 +424,9 @@ func _ObjTypeQueryHandlerHandler(impl interface{}) graphql1.FieldResolveFn {
 }
 
 func _ObjTypeQuerySuggestHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(QuerySuggestFieldResolver)
+	resolver := impl.(interface {
+		Suggest(p QuerySuggestFieldResolverParams) (interface{}, error)
+	})
 	return func(p graphql1.ResolveParams) (interface{}, error) {
 		frp := QuerySuggestFieldResolverParams{ResolveParams: p}
 		err := mapstructure.Decode(p.Args, &frp.Args)
@@ -421,21 +439,27 @@ func _ObjTypeQuerySuggestHandler(impl interface{}) graphql1.FieldResolveFn {
 }
 
 func _ObjTypeQueryHealthHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(QueryHealthFieldResolver)
+	resolver := impl.(interface {
+		Health(p graphql.ResolveParams) (interface{}, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.Health(frp)
 	}
 }
 
 func _ObjTypeQueryVersionsHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(QueryVersionsFieldResolver)
+	resolver := impl.(interface {
+		Versions(p graphql.ResolveParams) (interface{}, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.Versions(frp)
 	}
 }
 
 func _ObjTypeQueryMetricsHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(QueryMetricsFieldResolver)
+	resolver := impl.(interface {
+		Metrics(p QueryMetricsFieldResolverParams) (interface{}, error)
+	})
 	return func(p graphql1.ResolveParams) (interface{}, error) {
 		frp := QueryMetricsFieldResolverParams{ResolveParams: p}
 		err := mapstructure.Decode(p.Args, &frp.Args)
@@ -448,7 +472,9 @@ func _ObjTypeQueryMetricsHandler(impl interface{}) graphql1.FieldResolveFn {
 }
 
 func _ObjTypeQueryNodeHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(QueryNodeFieldResolver)
+	resolver := impl.(interface {
+		Node(p QueryNodeFieldResolverParams) (interface{}, error)
+	})
 	return func(p graphql1.ResolveParams) (interface{}, error) {
 		frp := QueryNodeFieldResolverParams{ResolveParams: p}
 		err := mapstructure.Decode(p.Args, &frp.Args)
@@ -461,7 +487,9 @@ func _ObjTypeQueryNodeHandler(impl interface{}) graphql1.FieldResolveFn {
 }
 
 func _ObjTypeQueryWrappedNodeHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(QueryWrappedNodeFieldResolver)
+	resolver := impl.(interface {
+		WrappedNode(p QueryWrappedNodeFieldResolverParams) (interface{}, error)
+	})
 	return func(p graphql1.ResolveParams) (interface{}, error) {
 		frp := QueryWrappedNodeFieldResolverParams{ResolveParams: p}
 		err := mapstructure.Decode(p.Args, &frp.Args)

@@ -93,7 +93,9 @@ func RegisterSubscriptionSet(svc *graphql.Service, impl SubscriptionSetFieldReso
 	svc.RegisterObject(_ObjectTypeSubscriptionSetDesc, impl)
 }
 func _ObjTypeSubscriptionSetEntriesHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(SubscriptionSetEntriesFieldResolver)
+	resolver := impl.(interface {
+		Entries(p SubscriptionSetEntriesFieldResolverParams) (interface{}, error)
+	})
 	return func(p graphql1.ResolveParams) (interface{}, error) {
 		frp := SubscriptionSetEntriesFieldResolverParams{ResolveParams: p}
 		err := mapstructure.Decode(p.Args, &frp.Args)
@@ -106,7 +108,9 @@ func _ObjTypeSubscriptionSetEntriesHandler(impl interface{}) graphql1.FieldResol
 }
 
 func _ObjTypeSubscriptionSetValuesHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(SubscriptionSetValuesFieldResolver)
+	resolver := impl.(interface {
+		Values(p SubscriptionSetValuesFieldResolverParams) ([]string, error)
+	})
 	return func(p graphql1.ResolveParams) (interface{}, error) {
 		frp := SubscriptionSetValuesFieldResolverParams{ResolveParams: p}
 		err := mapstructure.Decode(p.Args, &frp.Args)
@@ -119,7 +123,9 @@ func _ObjTypeSubscriptionSetValuesHandler(impl interface{}) graphql1.FieldResolv
 }
 
 func _ObjTypeSubscriptionSetSizeHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(SubscriptionSetSizeFieldResolver)
+	resolver := impl.(interface {
+		Size(p graphql.ResolveParams) (int, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.Size(frp)
 	}
@@ -247,14 +253,18 @@ func RegisterSubscriptionOccurences(svc *graphql.Service, impl SubscriptionOccur
 	svc.RegisterObject(_ObjectTypeSubscriptionOccurencesDesc, impl)
 }
 func _ObjTypeSubscriptionOccurencesSubscriptionHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(SubscriptionOccurencesSubscriptionFieldResolver)
+	resolver := impl.(interface {
+		Subscription(p graphql.ResolveParams) (string, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.Subscription(frp)
 	}
 }
 
 func _ObjTypeSubscriptionOccurencesOccurrencesHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(SubscriptionOccurencesOccurrencesFieldResolver)
+	resolver := impl.(interface {
+		Occurrences(p graphql.ResolveParams) (int, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.Occurrences(frp)
 	}

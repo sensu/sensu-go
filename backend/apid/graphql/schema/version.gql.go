@@ -46,14 +46,18 @@ func RegisterVersions(svc *graphql.Service, impl VersionsFieldResolvers) {
 	svc.RegisterObject(_ObjectTypeVersionsDesc, impl)
 }
 func _ObjTypeVersionsEtcdHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(VersionsEtcdFieldResolver)
+	resolver := impl.(interface {
+		Etcd(p graphql.ResolveParams) (interface{}, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.Etcd(frp)
 	}
 }
 
 func _ObjTypeVersionsBackendHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(VersionsBackendFieldResolver)
+	resolver := impl.(interface {
+		Backend(p graphql.ResolveParams) (interface{}, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.Backend(frp)
 	}
@@ -151,14 +155,18 @@ func RegisterEtcdVersions(svc *graphql.Service, impl EtcdVersionsFieldResolvers)
 	svc.RegisterObject(_ObjectTypeEtcdVersionsDesc, impl)
 }
 func _ObjTypeEtcdVersionsServerHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(EtcdVersionsServerFieldResolver)
+	resolver := impl.(interface {
+		Server(p graphql.ResolveParams) (string, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.Server(frp)
 	}
 }
 
 func _ObjTypeEtcdVersionsClusterHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(EtcdVersionsClusterFieldResolver)
+	resolver := impl.(interface {
+		Cluster(p graphql.ResolveParams) (string, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.Cluster(frp)
 	}
@@ -272,21 +280,27 @@ func RegisterSensuBackendVersion(svc *graphql.Service, impl SensuBackendVersionF
 	svc.RegisterObject(_ObjectTypeSensuBackendVersionDesc, impl)
 }
 func _ObjTypeSensuBackendVersionVersionHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(SensuBackendVersionVersionFieldResolver)
+	resolver := impl.(interface {
+		Version(p graphql.ResolveParams) (string, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.Version(frp)
 	}
 }
 
 func _ObjTypeSensuBackendVersionBuildSHAHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(SensuBackendVersionBuildSHAFieldResolver)
+	resolver := impl.(interface {
+		BuildSHA(p graphql.ResolveParams) (string, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.BuildSHA(frp)
 	}
 }
 
 func _ObjTypeSensuBackendVersionBuildDateHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(SensuBackendVersionBuildDateFieldResolver)
+	resolver := impl.(interface {
+		BuildDate(p graphql.ResolveParams) (*time.Time, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.BuildDate(frp)
 	}

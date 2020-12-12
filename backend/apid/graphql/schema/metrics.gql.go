@@ -170,14 +170,18 @@ func RegisterQuantileMetric(svc *graphql.Service, impl QuantileMetricFieldResolv
 	svc.RegisterObject(_ObjectTypeQuantileMetricDesc, impl)
 }
 func _ObjTypeQuantileMetricQuantileHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(QuantileMetricQuantileFieldResolver)
+	resolver := impl.(interface {
+		Quantile(p graphql.ResolveParams) (float64, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.Quantile(frp)
 	}
 }
 
 func _ObjTypeQuantileMetricValueHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(QuantileMetricValueFieldResolver)
+	resolver := impl.(interface {
+		Value(p graphql.ResolveParams) (float64, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.Value(frp)
 	}
@@ -275,14 +279,18 @@ func RegisterBucketMetric(svc *graphql.Service, impl BucketMetricFieldResolvers)
 	svc.RegisterObject(_ObjectTypeBucketMetricDesc, impl)
 }
 func _ObjTypeBucketMetricCumulativeCountHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(BucketMetricCumulativeCountFieldResolver)
+	resolver := impl.(interface {
+		CumulativeCount(p graphql.ResolveParams) (int, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.CumulativeCount(frp)
 	}
 }
 
 func _ObjTypeBucketMetricUpperBoundHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(BucketMetricUpperBoundFieldResolver)
+	resolver := impl.(interface {
+		UpperBound(p graphql.ResolveParams) (float64, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.UpperBound(frp)
 	}
@@ -389,21 +397,27 @@ func RegisterCounterMetric(svc *graphql.Service, impl CounterMetricFieldResolver
 	svc.RegisterObject(_ObjectTypeCounterMetricDesc, impl)
 }
 func _ObjTypeCounterMetricLabelsHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(CounterMetricLabelsFieldResolver)
+	resolver := impl.(interface {
+		Labels(p graphql.ResolveParams) (interface{}, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.Labels(frp)
 	}
 }
 
 func _ObjTypeCounterMetricTimestampHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(CounterMetricTimestampFieldResolver)
+	resolver := impl.(interface {
+		Timestamp(p graphql.ResolveParams) (*time.Time, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.Timestamp(frp)
 	}
 }
 
 func _ObjTypeCounterMetricValueHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(CounterMetricValueFieldResolver)
+	resolver := impl.(interface {
+		Value(p graphql.ResolveParams) (float64, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.Value(frp)
 	}
@@ -519,21 +533,27 @@ func RegisterGaugeMetric(svc *graphql.Service, impl GaugeMetricFieldResolvers) {
 	svc.RegisterObject(_ObjectTypeGaugeMetricDesc, impl)
 }
 func _ObjTypeGaugeMetricLabelsHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(GaugeMetricLabelsFieldResolver)
+	resolver := impl.(interface {
+		Labels(p graphql.ResolveParams) (interface{}, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.Labels(frp)
 	}
 }
 
 func _ObjTypeGaugeMetricTimestampHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(GaugeMetricTimestampFieldResolver)
+	resolver := impl.(interface {
+		Timestamp(p graphql.ResolveParams) (*time.Time, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.Timestamp(frp)
 	}
 }
 
 func _ObjTypeGaugeMetricValueHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(GaugeMetricValueFieldResolver)
+	resolver := impl.(interface {
+		Value(p graphql.ResolveParams) (float64, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.Value(frp)
 	}
@@ -674,35 +694,45 @@ func RegisterSummaryMetric(svc *graphql.Service, impl SummaryMetricFieldResolver
 	svc.RegisterObject(_ObjectTypeSummaryMetricDesc, impl)
 }
 func _ObjTypeSummaryMetricLabelsHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(SummaryMetricLabelsFieldResolver)
+	resolver := impl.(interface {
+		Labels(p graphql.ResolveParams) (interface{}, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.Labels(frp)
 	}
 }
 
 func _ObjTypeSummaryMetricTimestampHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(SummaryMetricTimestampFieldResolver)
+	resolver := impl.(interface {
+		Timestamp(p graphql.ResolveParams) (*time.Time, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.Timestamp(frp)
 	}
 }
 
 func _ObjTypeSummaryMetricSampleCountHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(SummaryMetricSampleCountFieldResolver)
+	resolver := impl.(interface {
+		SampleCount(p graphql.ResolveParams) (int, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.SampleCount(frp)
 	}
 }
 
 func _ObjTypeSummaryMetricSampleSumHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(SummaryMetricSampleSumFieldResolver)
+	resolver := impl.(interface {
+		SampleSum(p graphql.ResolveParams) (float64, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.SampleSum(frp)
 	}
 }
 
 func _ObjTypeSummaryMetricQuantileHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(SummaryMetricQuantileFieldResolver)
+	resolver := impl.(interface {
+		Quantile(p graphql.ResolveParams) (interface{}, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.Quantile(frp)
 	}
@@ -834,21 +864,27 @@ func RegisterUntypedMetric(svc *graphql.Service, impl UntypedMetricFieldResolver
 	svc.RegisterObject(_ObjectTypeUntypedMetricDesc, impl)
 }
 func _ObjTypeUntypedMetricLabelsHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(UntypedMetricLabelsFieldResolver)
+	resolver := impl.(interface {
+		Labels(p graphql.ResolveParams) (interface{}, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.Labels(frp)
 	}
 }
 
 func _ObjTypeUntypedMetricTimestampHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(UntypedMetricTimestampFieldResolver)
+	resolver := impl.(interface {
+		Timestamp(p graphql.ResolveParams) (*time.Time, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.Timestamp(frp)
 	}
 }
 
 func _ObjTypeUntypedMetricValueHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(UntypedMetricValueFieldResolver)
+	resolver := impl.(interface {
+		Value(p graphql.ResolveParams) (float64, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.Value(frp)
 	}
@@ -989,35 +1025,45 @@ func RegisterHistogramMetric(svc *graphql.Service, impl HistogramMetricFieldReso
 	svc.RegisterObject(_ObjectTypeHistogramMetricDesc, impl)
 }
 func _ObjTypeHistogramMetricLabelsHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(HistogramMetricLabelsFieldResolver)
+	resolver := impl.(interface {
+		Labels(p graphql.ResolveParams) (interface{}, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.Labels(frp)
 	}
 }
 
 func _ObjTypeHistogramMetricTimestampHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(HistogramMetricTimestampFieldResolver)
+	resolver := impl.(interface {
+		Timestamp(p graphql.ResolveParams) (*time.Time, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.Timestamp(frp)
 	}
 }
 
 func _ObjTypeHistogramMetricSampleCountHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(HistogramMetricSampleCountFieldResolver)
+	resolver := impl.(interface {
+		SampleCount(p graphql.ResolveParams) (int, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.SampleCount(frp)
 	}
 }
 
 func _ObjTypeHistogramMetricSampleSumHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(HistogramMetricSampleSumFieldResolver)
+	resolver := impl.(interface {
+		SampleSum(p graphql.ResolveParams) (float64, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.SampleSum(frp)
 	}
 }
 
 func _ObjTypeHistogramMetricBucketHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(HistogramMetricBucketFieldResolver)
+	resolver := impl.(interface {
+		Bucket(p graphql.ResolveParams) (interface{}, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.Bucket(frp)
 	}
@@ -1165,21 +1211,27 @@ func RegisterMetricFamily(svc *graphql.Service, impl MetricFamilyFieldResolvers)
 	svc.RegisterObject(_ObjectTypeMetricFamilyDesc, impl)
 }
 func _ObjTypeMetricFamilyNameHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(MetricFamilyNameFieldResolver)
+	resolver := impl.(interface {
+		Name(p graphql.ResolveParams) (string, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.Name(frp)
 	}
 }
 
 func _ObjTypeMetricFamilyHelpHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(MetricFamilyHelpFieldResolver)
+	resolver := impl.(interface {
+		Help(p graphql.ResolveParams) (string, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.Help(frp)
 	}
 }
 
 func _ObjTypeMetricFamilyTypeHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(MetricFamilyTypeFieldResolver)
+	resolver := impl.(interface {
+		Type(p graphql.ResolveParams) (MetricKind, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 
 		val, err := resolver.Type(frp)
@@ -1188,7 +1240,9 @@ func _ObjTypeMetricFamilyTypeHandler(impl interface{}) graphql1.FieldResolveFn {
 }
 
 func _ObjTypeMetricFamilyMetricHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(MetricFamilyMetricFieldResolver)
+	resolver := impl.(interface {
+		Metric(p graphql.ResolveParams) (interface{}, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.Metric(frp)
 	}

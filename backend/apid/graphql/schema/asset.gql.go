@@ -141,56 +141,72 @@ func RegisterAsset(svc *graphql.Service, impl AssetFieldResolvers) {
 	svc.RegisterObject(_ObjectTypeAssetDesc, impl)
 }
 func _ObjTypeAssetIDHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(AssetIDFieldResolver)
+	resolver := impl.(interface {
+		ID(p graphql.ResolveParams) (string, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.ID(frp)
 	}
 }
 
 func _ObjTypeAssetNamespaceHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(AssetNamespaceFieldResolver)
+	resolver := impl.(interface {
+		Namespace(p graphql.ResolveParams) (string, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.Namespace(frp)
 	}
 }
 
 func _ObjTypeAssetNameHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(AssetNameFieldResolver)
+	resolver := impl.(interface {
+		Name(p graphql.ResolveParams) (string, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.Name(frp)
 	}
 }
 
 func _ObjTypeAssetMetadataHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(AssetMetadataFieldResolver)
+	resolver := impl.(interface {
+		Metadata(p graphql.ResolveParams) (interface{}, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.Metadata(frp)
 	}
 }
 
 func _ObjTypeAssetUrlHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(AssetUrlFieldResolver)
+	resolver := impl.(interface {
+		Url(p graphql.ResolveParams) (string, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.Url(frp)
 	}
 }
 
 func _ObjTypeAssetSha512Handler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(AssetSha512FieldResolver)
+	resolver := impl.(interface {
+		Sha512(p graphql.ResolveParams) (string, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.Sha512(frp)
 	}
 }
 
 func _ObjTypeAssetFiltersHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(AssetFiltersFieldResolver)
+	resolver := impl.(interface {
+		Filters(p graphql.ResolveParams) ([]string, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.Filters(frp)
 	}
 }
 
 func _ObjTypeAssetToJSONHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(AssetToJSONFieldResolver)
+	resolver := impl.(interface {
+		ToJSON(p graphql.ResolveParams) (interface{}, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.ToJSON(frp)
 	}

@@ -141,56 +141,72 @@ func RegisterMutator(svc *graphql.Service, impl MutatorFieldResolvers) {
 	svc.RegisterObject(_ObjectTypeMutatorDesc, impl)
 }
 func _ObjTypeMutatorIDHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(MutatorIDFieldResolver)
+	resolver := impl.(interface {
+		ID(p graphql.ResolveParams) (string, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.ID(frp)
 	}
 }
 
 func _ObjTypeMutatorNamespaceHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(MutatorNamespaceFieldResolver)
+	resolver := impl.(interface {
+		Namespace(p graphql.ResolveParams) (string, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.Namespace(frp)
 	}
 }
 
 func _ObjTypeMutatorNameHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(MutatorNameFieldResolver)
+	resolver := impl.(interface {
+		Name(p graphql.ResolveParams) (string, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.Name(frp)
 	}
 }
 
 func _ObjTypeMutatorMetadataHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(MutatorMetadataFieldResolver)
+	resolver := impl.(interface {
+		Metadata(p graphql.ResolveParams) (interface{}, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.Metadata(frp)
 	}
 }
 
 func _ObjTypeMutatorCommandHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(MutatorCommandFieldResolver)
+	resolver := impl.(interface {
+		Command(p graphql.ResolveParams) (string, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.Command(frp)
 	}
 }
 
 func _ObjTypeMutatorTimeoutHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(MutatorTimeoutFieldResolver)
+	resolver := impl.(interface {
+		Timeout(p graphql.ResolveParams) (int, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.Timeout(frp)
 	}
 }
 
 func _ObjTypeMutatorEnvVarsHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(MutatorEnvVarsFieldResolver)
+	resolver := impl.(interface {
+		EnvVars(p graphql.ResolveParams) ([]string, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.EnvVars(frp)
 	}
 }
 
 func _ObjTypeMutatorToJSONHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(MutatorToJSONFieldResolver)
+	resolver := impl.(interface {
+		ToJSON(p graphql.ResolveParams) (interface{}, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.ToJSON(frp)
 	}
@@ -325,14 +341,18 @@ func RegisterMutatorConnection(svc *graphql.Service, impl MutatorConnectionField
 	svc.RegisterObject(_ObjectTypeMutatorConnectionDesc, impl)
 }
 func _ObjTypeMutatorConnectionNodesHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(MutatorConnectionNodesFieldResolver)
+	resolver := impl.(interface {
+		Nodes(p graphql.ResolveParams) (interface{}, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.Nodes(frp)
 	}
 }
 
 func _ObjTypeMutatorConnectionPageInfoHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(MutatorConnectionPageInfoFieldResolver)
+	resolver := impl.(interface {
+		PageInfo(p graphql.ResolveParams) (interface{}, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.PageInfo(frp)
 	}
@@ -423,14 +443,18 @@ func RegisterMutatorEdge(svc *graphql.Service, impl MutatorEdgeFieldResolvers) {
 	svc.RegisterObject(_ObjectTypeMutatorEdgeDesc, impl)
 }
 func _ObjTypeMutatorEdgeNodeHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(MutatorEdgeNodeFieldResolver)
+	resolver := impl.(interface {
+		Node(p graphql.ResolveParams) (interface{}, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.Node(frp)
 	}
 }
 
 func _ObjTypeMutatorEdgeCursorHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(MutatorEdgeCursorFieldResolver)
+	resolver := impl.(interface {
+		Cursor(p graphql.ResolveParams) (string, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.Cursor(frp)
 	}

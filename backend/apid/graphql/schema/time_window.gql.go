@@ -36,7 +36,9 @@ func RegisterTimeWindowWhen(svc *graphql.Service, impl TimeWindowWhenFieldResolv
 	svc.RegisterObject(_ObjectTypeTimeWindowWhenDesc, impl)
 }
 func _ObjTypeTimeWindowWhenDaysHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(TimeWindowWhenDaysFieldResolver)
+	resolver := impl.(interface {
+		Days(p graphql.ResolveParams) (interface{}, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.Days(frp)
 	}
@@ -162,56 +164,72 @@ func RegisterTimeWindowDays(svc *graphql.Service, impl TimeWindowDaysFieldResolv
 	svc.RegisterObject(_ObjectTypeTimeWindowDaysDesc, impl)
 }
 func _ObjTypeTimeWindowDaysAllHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(TimeWindowDaysAllFieldResolver)
+	resolver := impl.(interface {
+		All(p graphql.ResolveParams) (interface{}, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.All(frp)
 	}
 }
 
 func _ObjTypeTimeWindowDaysSundayHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(TimeWindowDaysSundayFieldResolver)
+	resolver := impl.(interface {
+		Sunday(p graphql.ResolveParams) (interface{}, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.Sunday(frp)
 	}
 }
 
 func _ObjTypeTimeWindowDaysMondayHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(TimeWindowDaysMondayFieldResolver)
+	resolver := impl.(interface {
+		Monday(p graphql.ResolveParams) (interface{}, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.Monday(frp)
 	}
 }
 
 func _ObjTypeTimeWindowDaysTuesdayHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(TimeWindowDaysTuesdayFieldResolver)
+	resolver := impl.(interface {
+		Tuesday(p graphql.ResolveParams) (interface{}, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.Tuesday(frp)
 	}
 }
 
 func _ObjTypeTimeWindowDaysWednesdayHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(TimeWindowDaysWednesdayFieldResolver)
+	resolver := impl.(interface {
+		Wednesday(p graphql.ResolveParams) (interface{}, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.Wednesday(frp)
 	}
 }
 
 func _ObjTypeTimeWindowDaysThursdayHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(TimeWindowDaysThursdayFieldResolver)
+	resolver := impl.(interface {
+		Thursday(p graphql.ResolveParams) (interface{}, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.Thursday(frp)
 	}
 }
 
 func _ObjTypeTimeWindowDaysFridayHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(TimeWindowDaysFridayFieldResolver)
+	resolver := impl.(interface {
+		Friday(p graphql.ResolveParams) (interface{}, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.Friday(frp)
 	}
 }
 
 func _ObjTypeTimeWindowDaysSaturdayHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(TimeWindowDaysSaturdayFieldResolver)
+	resolver := impl.(interface {
+		Saturday(p graphql.ResolveParams) (interface{}, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.Saturday(frp)
 	}
@@ -357,14 +375,18 @@ func RegisterTimeWindowTimeRange(svc *graphql.Service, impl TimeWindowTimeRangeF
 	svc.RegisterObject(_ObjectTypeTimeWindowTimeRangeDesc, impl)
 }
 func _ObjTypeTimeWindowTimeRangeBeginHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(TimeWindowTimeRangeBeginFieldResolver)
+	resolver := impl.(interface {
+		Begin(p graphql.ResolveParams) (string, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.Begin(frp)
 	}
 }
 
 func _ObjTypeTimeWindowTimeRangeEndHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(TimeWindowTimeRangeEndFieldResolver)
+	resolver := impl.(interface {
+		End(p graphql.ResolveParams) (string, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.End(frp)
 	}

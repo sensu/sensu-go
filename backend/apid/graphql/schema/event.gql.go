@@ -226,105 +226,135 @@ func RegisterEvent(svc *graphql.Service, impl EventFieldResolvers) {
 	svc.RegisterObject(_ObjectTypeEventDesc, impl)
 }
 func _ObjTypeEventIDHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(EventIDFieldResolver)
+	resolver := impl.(interface {
+		ID(p graphql.ResolveParams) (string, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.ID(frp)
 	}
 }
 
 func _ObjTypeEventNamespaceHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(EventNamespaceFieldResolver)
+	resolver := impl.(interface {
+		Namespace(p graphql.ResolveParams) (string, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.Namespace(frp)
 	}
 }
 
 func _ObjTypeEventMetadataHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(EventMetadataFieldResolver)
+	resolver := impl.(interface {
+		Metadata(p graphql.ResolveParams) (interface{}, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.Metadata(frp)
 	}
 }
 
 func _ObjTypeEventTimestampHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(EventTimestampFieldResolver)
+	resolver := impl.(interface {
+		Timestamp(p graphql.ResolveParams) (time.Time, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.Timestamp(frp)
 	}
 }
 
 func _ObjTypeEventEntityHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(EventEntityFieldResolver)
+	resolver := impl.(interface {
+		Entity(p graphql.ResolveParams) (interface{}, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.Entity(frp)
 	}
 }
 
 func _ObjTypeEventCheckHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(EventCheckFieldResolver)
+	resolver := impl.(interface {
+		Check(p graphql.ResolveParams) (interface{}, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.Check(frp)
 	}
 }
 
 func _ObjTypeEventHooksHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(EventHooksFieldResolver)
+	resolver := impl.(interface {
+		Hooks(p graphql.ResolveParams) (interface{}, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.Hooks(frp)
 	}
 }
 
 func _ObjTypeEventIsIncidentHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(EventIsIncidentFieldResolver)
+	resolver := impl.(interface {
+		IsIncident(p graphql.ResolveParams) (bool, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.IsIncident(frp)
 	}
 }
 
 func _ObjTypeEventIsNewIncidentHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(EventIsNewIncidentFieldResolver)
+	resolver := impl.(interface {
+		IsNewIncident(p graphql.ResolveParams) (bool, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.IsNewIncident(frp)
 	}
 }
 
 func _ObjTypeEventIsResolutionHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(EventIsResolutionFieldResolver)
+	resolver := impl.(interface {
+		IsResolution(p graphql.ResolveParams) (bool, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.IsResolution(frp)
 	}
 }
 
 func _ObjTypeEventWasSilencedHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(EventWasSilencedFieldResolver)
+	resolver := impl.(interface {
+		WasSilenced(p graphql.ResolveParams) (bool, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.WasSilenced(frp)
 	}
 }
 
 func _ObjTypeEventIsSilencedHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(EventIsSilencedFieldResolver)
+	resolver := impl.(interface {
+		IsSilenced(p graphql.ResolveParams) (bool, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.IsSilenced(frp)
 	}
 }
 
 func _ObjTypeEventSilencesHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(EventSilencesFieldResolver)
+	resolver := impl.(interface {
+		Silences(p graphql.ResolveParams) (interface{}, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.Silences(frp)
 	}
 }
 
 func _ObjTypeEventSilencedHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(EventSilencedFieldResolver)
+	resolver := impl.(interface {
+		Silenced(p graphql.ResolveParams) ([]string, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.Silenced(frp)
 	}
 }
 
 func _ObjTypeEventToJSONHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(EventToJSONFieldResolver)
+	resolver := impl.(interface {
+		ToJSON(p graphql.ResolveParams) (interface{}, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.ToJSON(frp)
 	}
@@ -516,14 +546,18 @@ func RegisterEventConnection(svc *graphql.Service, impl EventConnectionFieldReso
 	svc.RegisterObject(_ObjectTypeEventConnectionDesc, impl)
 }
 func _ObjTypeEventConnectionNodesHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(EventConnectionNodesFieldResolver)
+	resolver := impl.(interface {
+		Nodes(p graphql.ResolveParams) (interface{}, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.Nodes(frp)
 	}
 }
 
 func _ObjTypeEventConnectionPageInfoHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(EventConnectionPageInfoFieldResolver)
+	resolver := impl.(interface {
+		PageInfo(p graphql.ResolveParams) (interface{}, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.PageInfo(frp)
 	}

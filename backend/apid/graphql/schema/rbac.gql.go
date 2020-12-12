@@ -75,21 +75,27 @@ func RegisterRule(svc *graphql.Service, impl RuleFieldResolvers) {
 	svc.RegisterObject(_ObjectTypeRuleDesc, impl)
 }
 func _ObjTypeRuleVerbsHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(RuleVerbsFieldResolver)
+	resolver := impl.(interface {
+		Verbs(p graphql.ResolveParams) ([]string, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.Verbs(frp)
 	}
 }
 
 func _ObjTypeRuleResourcesHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(RuleResourcesFieldResolver)
+	resolver := impl.(interface {
+		Resources(p graphql.ResolveParams) ([]string, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.Resources(frp)
 	}
 }
 
 func _ObjTypeRuleResourceNamesHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(RuleResourceNamesFieldResolver)
+	resolver := impl.(interface {
+		ResourceNames(p graphql.ResolveParams) ([]string, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.ResourceNames(frp)
 	}
@@ -188,14 +194,18 @@ func RegisterClusterRole(svc *graphql.Service, impl ClusterRoleFieldResolvers) {
 	svc.RegisterObject(_ObjectTypeClusterRoleDesc, impl)
 }
 func _ObjTypeClusterRoleRulesHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(ClusterRoleRulesFieldResolver)
+	resolver := impl.(interface {
+		Rules(p graphql.ResolveParams) (interface{}, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.Rules(frp)
 	}
 }
 
 func _ObjTypeClusterRoleNameHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(ClusterRoleNameFieldResolver)
+	resolver := impl.(interface {
+		Name(p graphql.ResolveParams) (string, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.Name(frp)
 	}
@@ -302,21 +312,27 @@ func RegisterRole(svc *graphql.Service, impl RoleFieldResolvers) {
 	svc.RegisterObject(_ObjectTypeRoleDesc, impl)
 }
 func _ObjTypeRoleRulesHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(RoleRulesFieldResolver)
+	resolver := impl.(interface {
+		Rules(p graphql.ResolveParams) (interface{}, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.Rules(frp)
 	}
 }
 
 func _ObjTypeRoleNamespaceHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(RoleNamespaceFieldResolver)
+	resolver := impl.(interface {
+		Namespace(p graphql.ResolveParams) (string, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.Namespace(frp)
 	}
 }
 
 func _ObjTypeRoleNameHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(RoleNameFieldResolver)
+	resolver := impl.(interface {
+		Name(p graphql.ResolveParams) (string, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.Name(frp)
 	}
@@ -422,14 +438,18 @@ func RegisterRoleRef(svc *graphql.Service, impl RoleRefFieldResolvers) {
 	svc.RegisterObject(_ObjectTypeRoleRefDesc, impl)
 }
 func _ObjTypeRoleRefTypeHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(RoleRefTypeFieldResolver)
+	resolver := impl.(interface {
+		Type(p graphql.ResolveParams) (string, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.Type(frp)
 	}
 }
 
 func _ObjTypeRoleRefNameHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(RoleRefNameFieldResolver)
+	resolver := impl.(interface {
+		Name(p graphql.ResolveParams) (string, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.Name(frp)
 	}
@@ -527,14 +547,18 @@ func RegisterSubject(svc *graphql.Service, impl SubjectFieldResolvers) {
 	svc.RegisterObject(_ObjectTypeSubjectDesc, impl)
 }
 func _ObjTypeSubjectKindHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(SubjectKindFieldResolver)
+	resolver := impl.(interface {
+		Kind(p graphql.ResolveParams) (string, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.Kind(frp)
 	}
 }
 
 func _ObjTypeSubjectNameHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(SubjectNameFieldResolver)
+	resolver := impl.(interface {
+		Name(p graphql.ResolveParams) (string, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.Name(frp)
 	}
@@ -637,21 +661,27 @@ func RegisterClusterRoleBinding(svc *graphql.Service, impl ClusterRoleBindingFie
 	svc.RegisterObject(_ObjectTypeClusterRoleBindingDesc, impl)
 }
 func _ObjTypeClusterRoleBindingSubjectsHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(ClusterRoleBindingSubjectsFieldResolver)
+	resolver := impl.(interface {
+		Subjects(p graphql.ResolveParams) (interface{}, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.Subjects(frp)
 	}
 }
 
 func _ObjTypeClusterRoleBindingRoleRefHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(ClusterRoleBindingRoleRefFieldResolver)
+	resolver := impl.(interface {
+		RoleRef(p graphql.ResolveParams) (interface{}, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.RoleRef(frp)
 	}
 }
 
 func _ObjTypeClusterRoleBindingNameHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(ClusterRoleBindingNameFieldResolver)
+	resolver := impl.(interface {
+		Name(p graphql.ResolveParams) (string, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.Name(frp)
 	}
@@ -778,28 +808,36 @@ func RegisterRoleBinding(svc *graphql.Service, impl RoleBindingFieldResolvers) {
 	svc.RegisterObject(_ObjectTypeRoleBindingDesc, impl)
 }
 func _ObjTypeRoleBindingSubjectsHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(RoleBindingSubjectsFieldResolver)
+	resolver := impl.(interface {
+		Subjects(p graphql.ResolveParams) (interface{}, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.Subjects(frp)
 	}
 }
 
 func _ObjTypeRoleBindingRoleRefHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(RoleBindingRoleRefFieldResolver)
+	resolver := impl.(interface {
+		RoleRef(p graphql.ResolveParams) (interface{}, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.RoleRef(frp)
 	}
 }
 
 func _ObjTypeRoleBindingNamespaceHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(RoleBindingNamespaceFieldResolver)
+	resolver := impl.(interface {
+		Namespace(p graphql.ResolveParams) (string, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.Namespace(frp)
 	}
 }
 
 func _ObjTypeRoleBindingNameHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(RoleBindingNameFieldResolver)
+	resolver := impl.(interface {
+		Name(p graphql.ResolveParams) (string, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.Name(frp)
 	}
