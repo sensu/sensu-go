@@ -7,7 +7,9 @@ type Query {
   """
   viewer: Viewer
 
-  "Namespace fetches the namespace object associated with the given name."
+  """
+  Namespace fetches the namespace object associated with the given name.
+  """
   namespace(name: String!): Namespace
 
   """

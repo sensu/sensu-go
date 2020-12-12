@@ -204,18 +204,6 @@ type NamespaceSilencesFieldResolverParams struct {
 	Args NamespaceSilencesFieldResolverArgs
 }
 
-// NamespaceSubscriptionsFieldResolverArgs contains arguments provided to subscriptions when selected
-type NamespaceSubscriptionsFieldResolverArgs struct {
-	OmitEntity bool                 // OmitEntity - Omit entity subscriptions from set.
-	OrderBy    SubscriptionSetOrder // OrderBy adds optional order to the records retrieved.
-}
-
-// NamespaceSubscriptionsFieldResolverParams contains contextual info to resolve subscriptions field
-type NamespaceSubscriptionsFieldResolverParams struct {
-	graphql.ResolveParams
-	Args NamespaceSubscriptionsFieldResolverArgs
-}
-
 //
 // NamespaceFieldResolvers represents a collection of methods whose products represent the
 // response values of the 'Namespace' type.
@@ -246,15 +234,6 @@ type NamespaceFieldResolvers interface {
 
 	// Silences implements response to request for 'silences' field.
 	Silences(p NamespaceSilencesFieldResolverParams) (interface{}, error)
-
-	// Subscriptions implements response to request for 'subscriptions' field.
-	Subscriptions(p NamespaceSubscriptionsFieldResolverParams) (interface{}, error)
-
-	// IconID implements response to request for 'iconId' field.
-	IconID(p graphql.ResolveParams) (Icon, error)
-
-	// ColourID implements response to request for 'colourId' field.
-	ColourID(p graphql.ResolveParams) (MutedColour, error)
 }
 
 // NamespaceAliases implements all methods on NamespaceFieldResolvers interface by using reflection to
@@ -329,38 +308,6 @@ func (_ NamespaceAliases) Mutators(p NamespaceMutatorsFieldResolverParams) (inte
 func (_ NamespaceAliases) Silences(p NamespaceSilencesFieldResolverParams) (interface{}, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
 	return val, err
-}
-
-// Subscriptions implements response to request for 'subscriptions' field.
-func (_ NamespaceAliases) Subscriptions(p NamespaceSubscriptionsFieldResolverParams) (interface{}, error) {
-	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	return val, err
-}
-
-// IconID implements response to request for 'iconId' field.
-func (_ NamespaceAliases) IconID(p graphql.ResolveParams) (Icon, error) {
-	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret, ok := Icon(val.(string)), true
-	if err != nil {
-		return ret, err
-	}
-	if !ok {
-		return ret, errors.New("unable to coerce value for field 'iconId'")
-	}
-	return ret, err
-}
-
-// ColourID implements response to request for 'colourId' field.
-func (_ NamespaceAliases) ColourID(p graphql.ResolveParams) (MutedColour, error) {
-	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret, ok := MutedColour(val.(string)), true
-	if err != nil {
-		return ret, err
-	}
-	if !ok {
-		return ret, errors.New("unable to coerce value for field 'colourId'")
-	}
-	return ret, err
 }
 
 // NamespaceType Represents a virtual cluster
@@ -493,43 +440,6 @@ func _ObjTypeNamespaceSilencesHandler(impl interface{}) graphql1.FieldResolveFn 
 	}
 }
 
-func _ObjTypeNamespaceSubscriptionsHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(interface {
-		Subscriptions(p NamespaceSubscriptionsFieldResolverParams) (interface{}, error)
-	})
-	return func(p graphql1.ResolveParams) (interface{}, error) {
-		frp := NamespaceSubscriptionsFieldResolverParams{ResolveParams: p}
-		err := mapstructure.Decode(p.Args, &frp.Args)
-		if err != nil {
-			return nil, err
-		}
-
-		return resolver.Subscriptions(frp)
-	}
-}
-
-func _ObjTypeNamespaceIconIDHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(interface {
-		IconID(p graphql.ResolveParams) (Icon, error)
-	})
-	return func(frp graphql1.ResolveParams) (interface{}, error) {
-
-		val, err := resolver.IconID(frp)
-		return string(val), err
-	}
-}
-
-func _ObjTypeNamespaceColourIDHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(interface {
-		ColourID(p graphql.ResolveParams) (MutedColour, error)
-	})
-	return func(frp graphql1.ResolveParams) (interface{}, error) {
-
-		val, err := resolver.ColourID(frp)
-		return string(val), err
-	}
-}
-
 func _ObjectTypeNamespaceConfigFn() graphql1.ObjectConfig {
 	return graphql1.ObjectConfig{
 		Description: "Represents a virtual cluster",
@@ -566,13 +476,6 @@ func _ObjectTypeNamespaceConfigFn() graphql1.ObjectConfig {
 				Description:       "All check configurations associated with the namespace.",
 				Name:              "checks",
 				Type:              graphql1.NewNonNull(graphql.OutputType("CheckConfigConnection")),
-			},
-			"colourId": &graphql1.Field{
-				Args:              graphql1.FieldConfigArgument{},
-				DeprecationReason: "",
-				Description:       "ColourId. Experimental. Use graphical interfaces as symbolic reference to namespace",
-				Name:              "colourId",
-				Type:              graphql1.NewNonNull(graphql.OutputType("MutedColour")),
 			},
 			"entities": &graphql1.Field{
 				Args: graphql1.FieldConfigArgument{
@@ -701,13 +604,6 @@ func _ObjectTypeNamespaceConfigFn() graphql1.ObjectConfig {
 				Name:              "handlers",
 				Type:              graphql1.NewNonNull(graphql.OutputType("HandlerConnection")),
 			},
-			"iconId": &graphql1.Field{
-				Args:              graphql1.FieldConfigArgument{},
-				DeprecationReason: "",
-				Description:       "IconId. Experimental. Use graphical interfaces as symbolic reference to organization",
-				Name:              "iconId",
-				Type:              graphql1.NewNonNull(graphql.OutputType("Icon")),
-			},
 			"id": &graphql1.Field{
 				Args:              graphql1.FieldConfigArgument{},
 				DeprecationReason: "",
@@ -783,24 +679,6 @@ func _ObjectTypeNamespaceConfigFn() graphql1.ObjectConfig {
 				Name:              "silences",
 				Type:              graphql1.NewNonNull(graphql.OutputType("SilencedConnection")),
 			},
-			"subscriptions": &graphql1.Field{
-				Args: graphql1.FieldConfigArgument{
-					"omitEntity": &graphql1.ArgumentConfig{
-						DefaultValue: false,
-						Description:  "Omit entity subscriptions from set.",
-						Type:         graphql1.Boolean,
-					},
-					"orderBy": &graphql1.ArgumentConfig{
-						DefaultValue: "OCCURRENCES",
-						Description:  "OrderBy adds optional order to the records retrieved.",
-						Type:         graphql.InputType("SubscriptionSetOrder"),
-					},
-				},
-				DeprecationReason: "",
-				Description:       "All subscriptions in use in the namespace.",
-				Name:              "subscriptions",
-				Type:              graphql1.NewNonNull(graphql.OutputType("SubscriptionSet")),
-			},
 		},
 		Interfaces: []*graphql1.Interface{
 			graphql.Interface("Node")},
@@ -820,278 +698,14 @@ func _ObjectTypeNamespaceConfigFn() graphql1.ObjectConfig {
 var _ObjectTypeNamespaceDesc = graphql.ObjectDesc{
 	Config: _ObjectTypeNamespaceConfigFn,
 	FieldHandlers: map[string]graphql.FieldHandler{
-		"checks":        _ObjTypeNamespaceChecksHandler,
-		"colourId":      _ObjTypeNamespaceColourIDHandler,
-		"entities":      _ObjTypeNamespaceEntitiesHandler,
-		"eventFilters":  _ObjTypeNamespaceEventFiltersHandler,
-		"events":        _ObjTypeNamespaceEventsHandler,
-		"handlers":      _ObjTypeNamespaceHandlersHandler,
-		"iconId":        _ObjTypeNamespaceIconIDHandler,
-		"id":            _ObjTypeNamespaceIDHandler,
-		"mutators":      _ObjTypeNamespaceMutatorsHandler,
-		"name":          _ObjTypeNamespaceNameHandler,
-		"silences":      _ObjTypeNamespaceSilencesHandler,
-		"subscriptions": _ObjTypeNamespaceSubscriptionsHandler,
+		"checks":       _ObjTypeNamespaceChecksHandler,
+		"entities":     _ObjTypeNamespaceEntitiesHandler,
+		"eventFilters": _ObjTypeNamespaceEventFiltersHandler,
+		"events":       _ObjTypeNamespaceEventsHandler,
+		"handlers":     _ObjTypeNamespaceHandlersHandler,
+		"id":           _ObjTypeNamespaceIDHandler,
+		"mutators":     _ObjTypeNamespaceMutatorsHandler,
+		"name":         _ObjTypeNamespaceNameHandler,
+		"silences":     _ObjTypeNamespaceSilencesHandler,
 	},
-}
-
-// SubscriptionSetOrder Describes ways in which a set of subscriptions can be ordered.
-type SubscriptionSetOrder string
-
-// SubscriptionSetOrders holds enum values
-var SubscriptionSetOrders = _EnumTypeSubscriptionSetOrderValues{
-	ALPHA_ASC:   "ALPHA_ASC",
-	ALPHA_DESC:  "ALPHA_DESC",
-	OCCURRENCES: "OCCURRENCES",
-}
-
-// SubscriptionSetOrderType Describes ways in which a set of subscriptions can be ordered.
-var SubscriptionSetOrderType = graphql.NewType("SubscriptionSetOrder", graphql.EnumKind)
-
-// RegisterSubscriptionSetOrder registers SubscriptionSetOrder object type with given service.
-func RegisterSubscriptionSetOrder(svc *graphql.Service) {
-	svc.RegisterEnum(_EnumTypeSubscriptionSetOrderDesc)
-}
-func _EnumTypeSubscriptionSetOrderConfigFn() graphql1.EnumConfig {
-	return graphql1.EnumConfig{
-		Description: "Describes ways in which a set of subscriptions can be ordered.",
-		Name:        "SubscriptionSetOrder",
-		Values: graphql1.EnumValueConfigMap{
-			"ALPHA_ASC": &graphql1.EnumValueConfig{
-				DeprecationReason: "",
-				Description:       "self descriptive",
-				Value:             "ALPHA_ASC",
-			},
-			"ALPHA_DESC": &graphql1.EnumValueConfig{
-				DeprecationReason: "",
-				Description:       "self descriptive",
-				Value:             "ALPHA_DESC",
-			},
-			"OCCURRENCES": &graphql1.EnumValueConfig{
-				DeprecationReason: "",
-				Description:       "self descriptive",
-				Value:             "OCCURRENCES",
-			},
-		},
-	}
-}
-
-// describe SubscriptionSetOrder's configuration; kept private to avoid unintentional tampering of configuration at runtime.
-var _EnumTypeSubscriptionSetOrderDesc = graphql.EnumDesc{Config: _EnumTypeSubscriptionSetOrderConfigFn}
-
-type _EnumTypeSubscriptionSetOrderValues struct {
-	// ALPHA_ASC - self descriptive
-	ALPHA_ASC SubscriptionSetOrder
-	// ALPHA_DESC - self descriptive
-	ALPHA_DESC SubscriptionSetOrder
-	// OCCURRENCES - self descriptive
-	OCCURRENCES SubscriptionSetOrder
-}
-
-// Icon Describes a graphical element that can be used to distinguish a resource.
-type Icon string
-
-// Icons holds enum values
-var Icons = _EnumTypeIconValues{
-	BRIEFCASE:  "BRIEFCASE",
-	DONUT:      "DONUT",
-	EMOTICON:   "EMOTICON",
-	ESPRESSO:   "ESPRESSO",
-	EXPLORE:    "EXPLORE",
-	FIRE:       "FIRE",
-	HALFHEART:  "HALFHEART",
-	HEART:      "HEART",
-	MUG:        "MUG",
-	POLYGON:    "POLYGON",
-	VISIBILITY: "VISIBILITY",
-}
-
-// IconType Describes a graphical element that can be used to distinguish a resource.
-var IconType = graphql.NewType("Icon", graphql.EnumKind)
-
-// RegisterIcon registers Icon object type with given service.
-func RegisterIcon(svc *graphql.Service) {
-	svc.RegisterEnum(_EnumTypeIconDesc)
-}
-func _EnumTypeIconConfigFn() graphql1.EnumConfig {
-	return graphql1.EnumConfig{
-		Description: "Describes a graphical element that can be used to distinguish a resource.",
-		Name:        "Icon",
-		Values: graphql1.EnumValueConfigMap{
-			"BRIEFCASE": &graphql1.EnumValueConfig{
-				DeprecationReason: "",
-				Description:       "self descriptive",
-				Value:             "BRIEFCASE",
-			},
-			"DONUT": &graphql1.EnumValueConfig{
-				DeprecationReason: "",
-				Description:       "self descriptive",
-				Value:             "DONUT",
-			},
-			"EMOTICON": &graphql1.EnumValueConfig{
-				DeprecationReason: "",
-				Description:       "self descriptive",
-				Value:             "EMOTICON",
-			},
-			"ESPRESSO": &graphql1.EnumValueConfig{
-				DeprecationReason: "",
-				Description:       "self descriptive",
-				Value:             "ESPRESSO",
-			},
-			"EXPLORE": &graphql1.EnumValueConfig{
-				DeprecationReason: "",
-				Description:       "self descriptive",
-				Value:             "EXPLORE",
-			},
-			"FIRE": &graphql1.EnumValueConfig{
-				DeprecationReason: "",
-				Description:       "self descriptive",
-				Value:             "FIRE",
-			},
-			"HALFHEART": &graphql1.EnumValueConfig{
-				DeprecationReason: "",
-				Description:       "self descriptive",
-				Value:             "HALFHEART",
-			},
-			"HEART": &graphql1.EnumValueConfig{
-				DeprecationReason: "",
-				Description:       "self descriptive",
-				Value:             "HEART",
-			},
-			"MUG": &graphql1.EnumValueConfig{
-				DeprecationReason: "",
-				Description:       "self descriptive",
-				Value:             "MUG",
-			},
-			"POLYGON": &graphql1.EnumValueConfig{
-				DeprecationReason: "",
-				Description:       "self descriptive",
-				Value:             "POLYGON",
-			},
-			"VISIBILITY": &graphql1.EnumValueConfig{
-				DeprecationReason: "",
-				Description:       "self descriptive",
-				Value:             "VISIBILITY",
-			},
-		},
-	}
-}
-
-// describe Icon's configuration; kept private to avoid unintentional tampering of configuration at runtime.
-var _EnumTypeIconDesc = graphql.EnumDesc{Config: _EnumTypeIconConfigFn}
-
-type _EnumTypeIconValues struct {
-	// BRIEFCASE - self descriptive
-	BRIEFCASE Icon
-	// DONUT - self descriptive
-	DONUT Icon
-	// EMOTICON - self descriptive
-	EMOTICON Icon
-	// ESPRESSO - self descriptive
-	ESPRESSO Icon
-	// EXPLORE - self descriptive
-	EXPLORE Icon
-	// FIRE - self descriptive
-	FIRE Icon
-	// HALFHEART - self descriptive
-	HALFHEART Icon
-	// HEART - self descriptive
-	HEART Icon
-	// MUG - self descriptive
-	MUG Icon
-	// POLYGON - self descriptive
-	POLYGON Icon
-	// VISIBILITY - self descriptive
-	VISIBILITY Icon
-}
-
-/*
-MutedColour Describes a color from a muted palette that can be used to distinguish a
-resource.
-*/
-type MutedColour string
-
-// MutedColours holds enum values
-var MutedColours = _EnumTypeMutedColourValues{
-	BLUE:   "BLUE",
-	GRAY:   "GRAY",
-	GREEN:  "GREEN",
-	ORANGE: "ORANGE",
-	PINK:   "PINK",
-	PURPLE: "PURPLE",
-	YELLOW: "YELLOW",
-}
-
-/*
-MutedColourType Describes a color from a muted palette that can be used to distinguish a
-resource.
-*/
-var MutedColourType = graphql.NewType("MutedColour", graphql.EnumKind)
-
-// RegisterMutedColour registers MutedColour object type with given service.
-func RegisterMutedColour(svc *graphql.Service) {
-	svc.RegisterEnum(_EnumTypeMutedColourDesc)
-}
-func _EnumTypeMutedColourConfigFn() graphql1.EnumConfig {
-	return graphql1.EnumConfig{
-		Description: "Describes a color from a muted palette that can be used to distinguish a\nresource.",
-		Name:        "MutedColour",
-		Values: graphql1.EnumValueConfigMap{
-			"BLUE": &graphql1.EnumValueConfig{
-				DeprecationReason: "",
-				Description:       "self descriptive",
-				Value:             "BLUE",
-			},
-			"GRAY": &graphql1.EnumValueConfig{
-				DeprecationReason: "",
-				Description:       "self descriptive",
-				Value:             "GRAY",
-			},
-			"GREEN": &graphql1.EnumValueConfig{
-				DeprecationReason: "",
-				Description:       "self descriptive",
-				Value:             "GREEN",
-			},
-			"ORANGE": &graphql1.EnumValueConfig{
-				DeprecationReason: "",
-				Description:       "self descriptive",
-				Value:             "ORANGE",
-			},
-			"PINK": &graphql1.EnumValueConfig{
-				DeprecationReason: "",
-				Description:       "self descriptive",
-				Value:             "PINK",
-			},
-			"PURPLE": &graphql1.EnumValueConfig{
-				DeprecationReason: "",
-				Description:       "self descriptive",
-				Value:             "PURPLE",
-			},
-			"YELLOW": &graphql1.EnumValueConfig{
-				DeprecationReason: "",
-				Description:       "self descriptive",
-				Value:             "YELLOW",
-			},
-		},
-	}
-}
-
-// describe MutedColour's configuration; kept private to avoid unintentional tampering of configuration at runtime.
-var _EnumTypeMutedColourDesc = graphql.EnumDesc{Config: _EnumTypeMutedColourConfigFn}
-
-type _EnumTypeMutedColourValues struct {
-	// BLUE - self descriptive
-	BLUE MutedColour
-	// GRAY - self descriptive
-	GRAY MutedColour
-	// GREEN - self descriptive
-	GREEN MutedColour
-	// ORANGE - self descriptive
-	ORANGE MutedColour
-	// PINK - self descriptive
-	PINK MutedColour
-	// PURPLE - self descriptive
-	PURPLE MutedColour
-	// YELLOW - self descriptive
-	YELLOW MutedColour
 }
