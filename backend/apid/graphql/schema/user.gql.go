@@ -8,38 +8,21 @@ import (
 	graphql "github.com/sensu/sensu-go/graphql"
 )
 
-// UserUsernameFieldResolver implement to resolve requests for the User's username field.
-type UserUsernameFieldResolver interface {
-	// Username implements response to request for username field.
-	Username(p graphql.ResolveParams) (string, error)
-}
-
-// UserGroupsFieldResolver implement to resolve requests for the User's groups field.
-type UserGroupsFieldResolver interface {
-	// Groups implements response to request for groups field.
-	Groups(p graphql.ResolveParams) ([]string, error)
-}
-
-// UserDisabledFieldResolver implement to resolve requests for the User's disabled field.
-type UserDisabledFieldResolver interface {
-	// Disabled implements response to request for disabled field.
-	Disabled(p graphql.ResolveParams) (bool, error)
-}
-
-// UserHasPasswordFieldResolver implement to resolve requests for the User's hasPassword field.
-type UserHasPasswordFieldResolver interface {
-	// HasPassword implements response to request for hasPassword field.
-	HasPassword(p graphql.ResolveParams) (bool, error)
-}
-
 //
 // UserFieldResolvers represents a collection of methods whose products represent the
 // response values of the 'User' type.
 type UserFieldResolvers interface {
-	UserUsernameFieldResolver
-	UserGroupsFieldResolver
-	UserDisabledFieldResolver
-	UserHasPasswordFieldResolver
+	// Username implements response to request for 'username' field.
+	Username(p graphql.ResolveParams) (string, error)
+
+	// Groups implements response to request for 'groups' field.
+	Groups(p graphql.ResolveParams) ([]string, error)
+
+	// Disabled implements response to request for 'disabled' field.
+	Disabled(p graphql.ResolveParams) (bool, error)
+
+	// HasPassword implements response to request for 'hasPassword' field.
+	HasPassword(p graphql.ResolveParams) (bool, error)
 }
 
 // UserAliases implements all methods on UserFieldResolvers interface by using reflection to

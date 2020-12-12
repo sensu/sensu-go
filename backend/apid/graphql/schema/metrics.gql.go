@@ -119,24 +119,15 @@ type _EnumTypeMetricKindValues struct {
 	HISTOGRAM MetricKind
 }
 
-// QuantileMetricQuantileFieldResolver implement to resolve requests for the QuantileMetric's quantile field.
-type QuantileMetricQuantileFieldResolver interface {
-	// Quantile implements response to request for quantile field.
-	Quantile(p graphql.ResolveParams) (float64, error)
-}
-
-// QuantileMetricValueFieldResolver implement to resolve requests for the QuantileMetric's value field.
-type QuantileMetricValueFieldResolver interface {
-	// Value implements response to request for value field.
-	Value(p graphql.ResolveParams) (float64, error)
-}
-
 //
 // QuantileMetricFieldResolvers represents a collection of methods whose products represent the
 // response values of the 'QuantileMetric' type.
 type QuantileMetricFieldResolvers interface {
-	QuantileMetricQuantileFieldResolver
-	QuantileMetricValueFieldResolver
+	// Quantile implements response to request for 'quantile' field.
+	Quantile(p graphql.ResolveParams) (float64, error)
+
+	// Value implements response to request for 'value' field.
+	Value(p graphql.ResolveParams) (float64, error)
 }
 
 // QuantileMetricAliases implements all methods on QuantileMetricFieldResolvers interface by using reflection to
@@ -233,24 +224,15 @@ var _ObjectTypeQuantileMetricDesc = graphql.ObjectDesc{
 	},
 }
 
-// BucketMetricCumulativeCountFieldResolver implement to resolve requests for the BucketMetric's cumulativeCount field.
-type BucketMetricCumulativeCountFieldResolver interface {
-	// CumulativeCount implements response to request for cumulativeCount field.
-	CumulativeCount(p graphql.ResolveParams) (int, error)
-}
-
-// BucketMetricUpperBoundFieldResolver implement to resolve requests for the BucketMetric's upperBound field.
-type BucketMetricUpperBoundFieldResolver interface {
-	// UpperBound implements response to request for upperBound field.
-	UpperBound(p graphql.ResolveParams) (float64, error)
-}
-
 //
 // BucketMetricFieldResolvers represents a collection of methods whose products represent the
 // response values of the 'BucketMetric' type.
 type BucketMetricFieldResolvers interface {
-	BucketMetricCumulativeCountFieldResolver
-	BucketMetricUpperBoundFieldResolver
+	// CumulativeCount implements response to request for 'cumulativeCount' field.
+	CumulativeCount(p graphql.ResolveParams) (int, error)
+
+	// UpperBound implements response to request for 'upperBound' field.
+	UpperBound(p graphql.ResolveParams) (float64, error)
 }
 
 // BucketMetricAliases implements all methods on BucketMetricFieldResolvers interface by using reflection to
@@ -347,31 +329,18 @@ var _ObjectTypeBucketMetricDesc = graphql.ObjectDesc{
 	},
 }
 
-// CounterMetricLabelsFieldResolver implement to resolve requests for the CounterMetric's labels field.
-type CounterMetricLabelsFieldResolver interface {
-	// Labels implements response to request for labels field.
-	Labels(p graphql.ResolveParams) (interface{}, error)
-}
-
-// CounterMetricTimestampFieldResolver implement to resolve requests for the CounterMetric's timestamp field.
-type CounterMetricTimestampFieldResolver interface {
-	// Timestamp implements response to request for timestamp field.
-	Timestamp(p graphql.ResolveParams) (*time.Time, error)
-}
-
-// CounterMetricValueFieldResolver implement to resolve requests for the CounterMetric's value field.
-type CounterMetricValueFieldResolver interface {
-	// Value implements response to request for value field.
-	Value(p graphql.ResolveParams) (float64, error)
-}
-
 //
 // CounterMetricFieldResolvers represents a collection of methods whose products represent the
 // response values of the 'CounterMetric' type.
 type CounterMetricFieldResolvers interface {
-	CounterMetricLabelsFieldResolver
-	CounterMetricTimestampFieldResolver
-	CounterMetricValueFieldResolver
+	// Labels implements response to request for 'labels' field.
+	Labels(p graphql.ResolveParams) (interface{}, error)
+
+	// Timestamp implements response to request for 'timestamp' field.
+	Timestamp(p graphql.ResolveParams) (*time.Time, error)
+
+	// Value implements response to request for 'value' field.
+	Value(p graphql.ResolveParams) (float64, error)
 }
 
 // CounterMetricAliases implements all methods on CounterMetricFieldResolvers interface by using reflection to
@@ -490,31 +459,18 @@ var _ObjectTypeCounterMetricDesc = graphql.ObjectDesc{
 	},
 }
 
-// GaugeMetricLabelsFieldResolver implement to resolve requests for the GaugeMetric's labels field.
-type GaugeMetricLabelsFieldResolver interface {
-	// Labels implements response to request for labels field.
-	Labels(p graphql.ResolveParams) (interface{}, error)
-}
-
-// GaugeMetricTimestampFieldResolver implement to resolve requests for the GaugeMetric's timestamp field.
-type GaugeMetricTimestampFieldResolver interface {
-	// Timestamp implements response to request for timestamp field.
-	Timestamp(p graphql.ResolveParams) (*time.Time, error)
-}
-
-// GaugeMetricValueFieldResolver implement to resolve requests for the GaugeMetric's value field.
-type GaugeMetricValueFieldResolver interface {
-	// Value implements response to request for value field.
-	Value(p graphql.ResolveParams) (float64, error)
-}
-
 //
 // GaugeMetricFieldResolvers represents a collection of methods whose products represent the
 // response values of the 'GaugeMetric' type.
 type GaugeMetricFieldResolvers interface {
-	GaugeMetricLabelsFieldResolver
-	GaugeMetricTimestampFieldResolver
-	GaugeMetricValueFieldResolver
+	// Labels implements response to request for 'labels' field.
+	Labels(p graphql.ResolveParams) (interface{}, error)
+
+	// Timestamp implements response to request for 'timestamp' field.
+	Timestamp(p graphql.ResolveParams) (*time.Time, error)
+
+	// Value implements response to request for 'value' field.
+	Value(p graphql.ResolveParams) (float64, error)
 }
 
 // GaugeMetricAliases implements all methods on GaugeMetricFieldResolvers interface by using reflection to
@@ -633,45 +589,24 @@ var _ObjectTypeGaugeMetricDesc = graphql.ObjectDesc{
 	},
 }
 
-// SummaryMetricLabelsFieldResolver implement to resolve requests for the SummaryMetric's labels field.
-type SummaryMetricLabelsFieldResolver interface {
-	// Labels implements response to request for labels field.
-	Labels(p graphql.ResolveParams) (interface{}, error)
-}
-
-// SummaryMetricTimestampFieldResolver implement to resolve requests for the SummaryMetric's timestamp field.
-type SummaryMetricTimestampFieldResolver interface {
-	// Timestamp implements response to request for timestamp field.
-	Timestamp(p graphql.ResolveParams) (*time.Time, error)
-}
-
-// SummaryMetricSampleCountFieldResolver implement to resolve requests for the SummaryMetric's sampleCount field.
-type SummaryMetricSampleCountFieldResolver interface {
-	// SampleCount implements response to request for sampleCount field.
-	SampleCount(p graphql.ResolveParams) (int, error)
-}
-
-// SummaryMetricSampleSumFieldResolver implement to resolve requests for the SummaryMetric's sampleSum field.
-type SummaryMetricSampleSumFieldResolver interface {
-	// SampleSum implements response to request for sampleSum field.
-	SampleSum(p graphql.ResolveParams) (float64, error)
-}
-
-// SummaryMetricQuantileFieldResolver implement to resolve requests for the SummaryMetric's quantile field.
-type SummaryMetricQuantileFieldResolver interface {
-	// Quantile implements response to request for quantile field.
-	Quantile(p graphql.ResolveParams) (interface{}, error)
-}
-
 //
 // SummaryMetricFieldResolvers represents a collection of methods whose products represent the
 // response values of the 'SummaryMetric' type.
 type SummaryMetricFieldResolvers interface {
-	SummaryMetricLabelsFieldResolver
-	SummaryMetricTimestampFieldResolver
-	SummaryMetricSampleCountFieldResolver
-	SummaryMetricSampleSumFieldResolver
-	SummaryMetricQuantileFieldResolver
+	// Labels implements response to request for 'labels' field.
+	Labels(p graphql.ResolveParams) (interface{}, error)
+
+	// Timestamp implements response to request for 'timestamp' field.
+	Timestamp(p graphql.ResolveParams) (*time.Time, error)
+
+	// SampleCount implements response to request for 'sampleCount' field.
+	SampleCount(p graphql.ResolveParams) (int, error)
+
+	// SampleSum implements response to request for 'sampleSum' field.
+	SampleSum(p graphql.ResolveParams) (float64, error)
+
+	// Quantile implements response to request for 'quantile' field.
+	Quantile(p graphql.ResolveParams) (interface{}, error)
 }
 
 // SummaryMetricAliases implements all methods on SummaryMetricFieldResolvers interface by using reflection to
@@ -839,31 +774,18 @@ var _ObjectTypeSummaryMetricDesc = graphql.ObjectDesc{
 	},
 }
 
-// UntypedMetricLabelsFieldResolver implement to resolve requests for the UntypedMetric's labels field.
-type UntypedMetricLabelsFieldResolver interface {
-	// Labels implements response to request for labels field.
-	Labels(p graphql.ResolveParams) (interface{}, error)
-}
-
-// UntypedMetricTimestampFieldResolver implement to resolve requests for the UntypedMetric's timestamp field.
-type UntypedMetricTimestampFieldResolver interface {
-	// Timestamp implements response to request for timestamp field.
-	Timestamp(p graphql.ResolveParams) (*time.Time, error)
-}
-
-// UntypedMetricValueFieldResolver implement to resolve requests for the UntypedMetric's value field.
-type UntypedMetricValueFieldResolver interface {
-	// Value implements response to request for value field.
-	Value(p graphql.ResolveParams) (float64, error)
-}
-
 //
 // UntypedMetricFieldResolvers represents a collection of methods whose products represent the
 // response values of the 'UntypedMetric' type.
 type UntypedMetricFieldResolvers interface {
-	UntypedMetricLabelsFieldResolver
-	UntypedMetricTimestampFieldResolver
-	UntypedMetricValueFieldResolver
+	// Labels implements response to request for 'labels' field.
+	Labels(p graphql.ResolveParams) (interface{}, error)
+
+	// Timestamp implements response to request for 'timestamp' field.
+	Timestamp(p graphql.ResolveParams) (*time.Time, error)
+
+	// Value implements response to request for 'value' field.
+	Value(p graphql.ResolveParams) (float64, error)
 }
 
 // UntypedMetricAliases implements all methods on UntypedMetricFieldResolvers interface by using reflection to
@@ -982,45 +904,24 @@ var _ObjectTypeUntypedMetricDesc = graphql.ObjectDesc{
 	},
 }
 
-// HistogramMetricLabelsFieldResolver implement to resolve requests for the HistogramMetric's labels field.
-type HistogramMetricLabelsFieldResolver interface {
-	// Labels implements response to request for labels field.
-	Labels(p graphql.ResolveParams) (interface{}, error)
-}
-
-// HistogramMetricTimestampFieldResolver implement to resolve requests for the HistogramMetric's timestamp field.
-type HistogramMetricTimestampFieldResolver interface {
-	// Timestamp implements response to request for timestamp field.
-	Timestamp(p graphql.ResolveParams) (*time.Time, error)
-}
-
-// HistogramMetricSampleCountFieldResolver implement to resolve requests for the HistogramMetric's sampleCount field.
-type HistogramMetricSampleCountFieldResolver interface {
-	// SampleCount implements response to request for sampleCount field.
-	SampleCount(p graphql.ResolveParams) (int, error)
-}
-
-// HistogramMetricSampleSumFieldResolver implement to resolve requests for the HistogramMetric's sampleSum field.
-type HistogramMetricSampleSumFieldResolver interface {
-	// SampleSum implements response to request for sampleSum field.
-	SampleSum(p graphql.ResolveParams) (float64, error)
-}
-
-// HistogramMetricBucketFieldResolver implement to resolve requests for the HistogramMetric's bucket field.
-type HistogramMetricBucketFieldResolver interface {
-	// Bucket implements response to request for bucket field.
-	Bucket(p graphql.ResolveParams) (interface{}, error)
-}
-
 //
 // HistogramMetricFieldResolvers represents a collection of methods whose products represent the
 // response values of the 'HistogramMetric' type.
 type HistogramMetricFieldResolvers interface {
-	HistogramMetricLabelsFieldResolver
-	HistogramMetricTimestampFieldResolver
-	HistogramMetricSampleCountFieldResolver
-	HistogramMetricSampleSumFieldResolver
-	HistogramMetricBucketFieldResolver
+	// Labels implements response to request for 'labels' field.
+	Labels(p graphql.ResolveParams) (interface{}, error)
+
+	// Timestamp implements response to request for 'timestamp' field.
+	Timestamp(p graphql.ResolveParams) (*time.Time, error)
+
+	// SampleCount implements response to request for 'sampleCount' field.
+	SampleCount(p graphql.ResolveParams) (int, error)
+
+	// SampleSum implements response to request for 'sampleSum' field.
+	SampleSum(p graphql.ResolveParams) (float64, error)
+
+	// Bucket implements response to request for 'bucket' field.
+	Bucket(p graphql.ResolveParams) (interface{}, error)
 }
 
 // HistogramMetricAliases implements all methods on HistogramMetricFieldResolvers interface by using reflection to
@@ -1188,38 +1089,21 @@ var _ObjectTypeHistogramMetricDesc = graphql.ObjectDesc{
 	},
 }
 
-// MetricFamilyNameFieldResolver implement to resolve requests for the MetricFamily's name field.
-type MetricFamilyNameFieldResolver interface {
-	// Name implements response to request for name field.
-	Name(p graphql.ResolveParams) (string, error)
-}
-
-// MetricFamilyHelpFieldResolver implement to resolve requests for the MetricFamily's help field.
-type MetricFamilyHelpFieldResolver interface {
-	// Help implements response to request for help field.
-	Help(p graphql.ResolveParams) (string, error)
-}
-
-// MetricFamilyTypeFieldResolver implement to resolve requests for the MetricFamily's type field.
-type MetricFamilyTypeFieldResolver interface {
-	// Type implements response to request for type field.
-	Type(p graphql.ResolveParams) (MetricKind, error)
-}
-
-// MetricFamilyMetricFieldResolver implement to resolve requests for the MetricFamily's metric field.
-type MetricFamilyMetricFieldResolver interface {
-	// Metric implements response to request for metric field.
-	Metric(p graphql.ResolveParams) (interface{}, error)
-}
-
 //
 // MetricFamilyFieldResolvers represents a collection of methods whose products represent the
 // response values of the 'MetricFamily' type.
 type MetricFamilyFieldResolvers interface {
-	MetricFamilyNameFieldResolver
-	MetricFamilyHelpFieldResolver
-	MetricFamilyTypeFieldResolver
-	MetricFamilyMetricFieldResolver
+	// Name implements response to request for 'name' field.
+	Name(p graphql.ResolveParams) (string, error)
+
+	// Help implements response to request for 'help' field.
+	Help(p graphql.ResolveParams) (string, error)
+
+	// Type implements response to request for 'type' field.
+	Type(p graphql.ResolveParams) (MetricKind, error)
+
+	// Metric implements response to request for 'metric' field.
+	Metric(p graphql.ResolveParams) (interface{}, error)
 }
 
 // MetricFamilyAliases implements all methods on MetricFamilyFieldResolvers interface by using reflection to

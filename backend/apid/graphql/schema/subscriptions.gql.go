@@ -21,12 +21,6 @@ type SubscriptionSetEntriesFieldResolverParams struct {
 	Args SubscriptionSetEntriesFieldResolverArgs
 }
 
-// SubscriptionSetEntriesFieldResolver implement to resolve requests for the SubscriptionSet's entries field.
-type SubscriptionSetEntriesFieldResolver interface {
-	// Entries implements response to request for entries field.
-	Entries(p SubscriptionSetEntriesFieldResolverParams) (interface{}, error)
-}
-
 // SubscriptionSetValuesFieldResolverArgs contains arguments provided to values when selected
 type SubscriptionSetValuesFieldResolverArgs struct {
 	Limit  int // Limit - self descriptive
@@ -39,25 +33,18 @@ type SubscriptionSetValuesFieldResolverParams struct {
 	Args SubscriptionSetValuesFieldResolverArgs
 }
 
-// SubscriptionSetValuesFieldResolver implement to resolve requests for the SubscriptionSet's values field.
-type SubscriptionSetValuesFieldResolver interface {
-	// Values implements response to request for values field.
-	Values(p SubscriptionSetValuesFieldResolverParams) ([]string, error)
-}
-
-// SubscriptionSetSizeFieldResolver implement to resolve requests for the SubscriptionSet's size field.
-type SubscriptionSetSizeFieldResolver interface {
-	// Size implements response to request for size field.
-	Size(p graphql.ResolveParams) (int, error)
-}
-
 //
 // SubscriptionSetFieldResolvers represents a collection of methods whose products represent the
 // response values of the 'SubscriptionSet' type.
 type SubscriptionSetFieldResolvers interface {
-	SubscriptionSetEntriesFieldResolver
-	SubscriptionSetValuesFieldResolver
-	SubscriptionSetSizeFieldResolver
+	// Entries implements response to request for 'entries' field.
+	Entries(p SubscriptionSetEntriesFieldResolverParams) (interface{}, error)
+
+	// Values implements response to request for 'values' field.
+	Values(p SubscriptionSetValuesFieldResolverParams) ([]string, error)
+
+	// Size implements response to request for 'size' field.
+	Size(p graphql.ResolveParams) (int, error)
 }
 
 // SubscriptionSetAliases implements all methods on SubscriptionSetFieldResolvers interface by using reflection to
@@ -209,24 +196,15 @@ var _ObjectTypeSubscriptionSetDesc = graphql.ObjectDesc{
 	},
 }
 
-// SubscriptionOccurencesSubscriptionFieldResolver implement to resolve requests for the SubscriptionOccurences's subscription field.
-type SubscriptionOccurencesSubscriptionFieldResolver interface {
-	// Subscription implements response to request for subscription field.
-	Subscription(p graphql.ResolveParams) (string, error)
-}
-
-// SubscriptionOccurencesOccurrencesFieldResolver implement to resolve requests for the SubscriptionOccurences's occurrences field.
-type SubscriptionOccurencesOccurrencesFieldResolver interface {
-	// Occurrences implements response to request for occurrences field.
-	Occurrences(p graphql.ResolveParams) (int, error)
-}
-
 //
 // SubscriptionOccurencesFieldResolvers represents a collection of methods whose products represent the
 // response values of the 'SubscriptionOccurences' type.
 type SubscriptionOccurencesFieldResolvers interface {
-	SubscriptionOccurencesSubscriptionFieldResolver
-	SubscriptionOccurencesOccurrencesFieldResolver
+	// Subscription implements response to request for 'subscription' field.
+	Subscription(p graphql.ResolveParams) (string, error)
+
+	// Occurrences implements response to request for 'occurrences' field.
+	Occurrences(p graphql.ResolveParams) (int, error)
 }
 
 // SubscriptionOccurencesAliases implements all methods on SubscriptionOccurencesFieldResolvers interface by using reflection to

@@ -10,90 +10,6 @@ import (
 	time "time"
 )
 
-// EntityIDFieldResolver implement to resolve requests for the Entity's id field.
-type EntityIDFieldResolver interface {
-	// ID implements response to request for id field.
-	ID(p graphql.ResolveParams) (string, error)
-}
-
-// EntityNamespaceFieldResolver implement to resolve requests for the Entity's namespace field.
-type EntityNamespaceFieldResolver interface {
-	// Namespace implements response to request for namespace field.
-	Namespace(p graphql.ResolveParams) (string, error)
-}
-
-// EntityMetadataFieldResolver implement to resolve requests for the Entity's metadata field.
-type EntityMetadataFieldResolver interface {
-	// Metadata implements response to request for metadata field.
-	Metadata(p graphql.ResolveParams) (interface{}, error)
-}
-
-// EntityNameFieldResolver implement to resolve requests for the Entity's name field.
-type EntityNameFieldResolver interface {
-	// Name implements response to request for name field.
-	Name(p graphql.ResolveParams) (string, error)
-}
-
-// EntityEntityClassFieldResolver implement to resolve requests for the Entity's entityClass field.
-type EntityEntityClassFieldResolver interface {
-	// EntityClass implements response to request for entityClass field.
-	EntityClass(p graphql.ResolveParams) (string, error)
-}
-
-// EntitySystemFieldResolver implement to resolve requests for the Entity's system field.
-type EntitySystemFieldResolver interface {
-	// System implements response to request for system field.
-	System(p graphql.ResolveParams) (interface{}, error)
-}
-
-// EntitySubscriptionsFieldResolver implement to resolve requests for the Entity's subscriptions field.
-type EntitySubscriptionsFieldResolver interface {
-	// Subscriptions implements response to request for subscriptions field.
-	Subscriptions(p graphql.ResolveParams) ([]string, error)
-}
-
-// EntityLastSeenFieldResolver implement to resolve requests for the Entity's lastSeen field.
-type EntityLastSeenFieldResolver interface {
-	// LastSeen implements response to request for lastSeen field.
-	LastSeen(p graphql.ResolveParams) (*time.Time, error)
-}
-
-// EntityDeregisterFieldResolver implement to resolve requests for the Entity's deregister field.
-type EntityDeregisterFieldResolver interface {
-	// Deregister implements response to request for deregister field.
-	Deregister(p graphql.ResolveParams) (bool, error)
-}
-
-// EntityDeregistrationFieldResolver implement to resolve requests for the Entity's deregistration field.
-type EntityDeregistrationFieldResolver interface {
-	// Deregistration implements response to request for deregistration field.
-	Deregistration(p graphql.ResolveParams) (interface{}, error)
-}
-
-// EntityUserFieldResolver implement to resolve requests for the Entity's user field.
-type EntityUserFieldResolver interface {
-	// User implements response to request for user field.
-	User(p graphql.ResolveParams) (string, error)
-}
-
-// EntitySensuAgentVersionFieldResolver implement to resolve requests for the Entity's sensuAgentVersion field.
-type EntitySensuAgentVersionFieldResolver interface {
-	// SensuAgentVersion implements response to request for sensuAgentVersion field.
-	SensuAgentVersion(p graphql.ResolveParams) (string, error)
-}
-
-// EntityRedactFieldResolver implement to resolve requests for the Entity's redact field.
-type EntityRedactFieldResolver interface {
-	// Redact implements response to request for redact field.
-	Redact(p graphql.ResolveParams) ([]string, error)
-}
-
-// EntityStatusFieldResolver implement to resolve requests for the Entity's status field.
-type EntityStatusFieldResolver interface {
-	// Status implements response to request for status field.
-	Status(p graphql.ResolveParams) (interface{}, error)
-}
-
 // EntityRelatedFieldResolverArgs contains arguments provided to related when selected
 type EntityRelatedFieldResolverArgs struct {
 	Limit int // Limit - self descriptive
@@ -103,12 +19,6 @@ type EntityRelatedFieldResolverArgs struct {
 type EntityRelatedFieldResolverParams struct {
 	graphql.ResolveParams
 	Args EntityRelatedFieldResolverArgs
-}
-
-// EntityRelatedFieldResolver implement to resolve requests for the Entity's related field.
-type EntityRelatedFieldResolver interface {
-	// Related implements response to request for related field.
-	Related(p EntityRelatedFieldResolverParams) (interface{}, error)
 }
 
 // EntityEventsFieldResolverArgs contains arguments provided to events when selected
@@ -136,53 +46,66 @@ type EntityEventsFieldResolverParams struct {
 	Args EntityEventsFieldResolverArgs
 }
 
-// EntityEventsFieldResolver implement to resolve requests for the Entity's events field.
-type EntityEventsFieldResolver interface {
-	// Events implements response to request for events field.
-	Events(p EntityEventsFieldResolverParams) (interface{}, error)
-}
-
-// EntityIsSilencedFieldResolver implement to resolve requests for the Entity's isSilenced field.
-type EntityIsSilencedFieldResolver interface {
-	// IsSilenced implements response to request for isSilenced field.
-	IsSilenced(p graphql.ResolveParams) (bool, error)
-}
-
-// EntitySilencesFieldResolver implement to resolve requests for the Entity's silences field.
-type EntitySilencesFieldResolver interface {
-	// Silences implements response to request for silences field.
-	Silences(p graphql.ResolveParams) (interface{}, error)
-}
-
-// EntityToJSONFieldResolver implement to resolve requests for the Entity's toJSON field.
-type EntityToJSONFieldResolver interface {
-	// ToJSON implements response to request for toJSON field.
-	ToJSON(p graphql.ResolveParams) (interface{}, error)
-}
-
 //
 // EntityFieldResolvers represents a collection of methods whose products represent the
 // response values of the 'Entity' type.
 type EntityFieldResolvers interface {
-	EntityIDFieldResolver
-	EntityNamespaceFieldResolver
-	EntityMetadataFieldResolver
-	EntityNameFieldResolver
-	EntityEntityClassFieldResolver
-	EntitySystemFieldResolver
-	EntitySubscriptionsFieldResolver
-	EntityLastSeenFieldResolver
-	EntityDeregisterFieldResolver
-	EntityDeregistrationFieldResolver
-	EntityUserFieldResolver
-	EntitySensuAgentVersionFieldResolver
-	EntityRedactFieldResolver
-	EntityStatusFieldResolver
-	EntityRelatedFieldResolver
-	EntityEventsFieldResolver
-	EntityIsSilencedFieldResolver
-	EntitySilencesFieldResolver
-	EntityToJSONFieldResolver
+	// ID implements response to request for 'id' field.
+	ID(p graphql.ResolveParams) (string, error)
+
+	// Namespace implements response to request for 'namespace' field.
+	Namespace(p graphql.ResolveParams) (string, error)
+
+	// Metadata implements response to request for 'metadata' field.
+	Metadata(p graphql.ResolveParams) (interface{}, error)
+
+	// Name implements response to request for 'name' field.
+	Name(p graphql.ResolveParams) (string, error)
+
+	// EntityClass implements response to request for 'entityClass' field.
+	EntityClass(p graphql.ResolveParams) (string, error)
+
+	// System implements response to request for 'system' field.
+	System(p graphql.ResolveParams) (interface{}, error)
+
+	// Subscriptions implements response to request for 'subscriptions' field.
+	Subscriptions(p graphql.ResolveParams) ([]string, error)
+
+	// LastSeen implements response to request for 'lastSeen' field.
+	LastSeen(p graphql.ResolveParams) (*time.Time, error)
+
+	// Deregister implements response to request for 'deregister' field.
+	Deregister(p graphql.ResolveParams) (bool, error)
+
+	// Deregistration implements response to request for 'deregistration' field.
+	Deregistration(p graphql.ResolveParams) (interface{}, error)
+
+	// User implements response to request for 'user' field.
+	User(p graphql.ResolveParams) (string, error)
+
+	// SensuAgentVersion implements response to request for 'sensuAgentVersion' field.
+	SensuAgentVersion(p graphql.ResolveParams) (string, error)
+
+	// Redact implements response to request for 'redact' field.
+	Redact(p graphql.ResolveParams) ([]string, error)
+
+	// Status implements response to request for 'status' field.
+	Status(p graphql.ResolveParams) (interface{}, error)
+
+	// Related implements response to request for 'related' field.
+	Related(p EntityRelatedFieldResolverParams) (interface{}, error)
+
+	// Events implements response to request for 'events' field.
+	Events(p EntityEventsFieldResolverParams) (interface{}, error)
+
+	// IsSilenced implements response to request for 'isSilenced' field.
+	IsSilenced(p graphql.ResolveParams) (bool, error)
+
+	// Silences implements response to request for 'silences' field.
+	Silences(p graphql.ResolveParams) (interface{}, error)
+
+	// ToJSON implements response to request for 'toJSON' field.
+	ToJSON(p graphql.ResolveParams) (interface{}, error)
 }
 
 // EntityAliases implements all methods on EntityFieldResolvers interface by using reflection to
@@ -733,108 +656,51 @@ var _ObjectTypeEntityDesc = graphql.ObjectDesc{
 	},
 }
 
-// SystemHostnameFieldResolver implement to resolve requests for the System's hostname field.
-type SystemHostnameFieldResolver interface {
-	// Hostname implements response to request for hostname field.
-	Hostname(p graphql.ResolveParams) (string, error)
-}
-
-// SystemNetworkFieldResolver implement to resolve requests for the System's network field.
-type SystemNetworkFieldResolver interface {
-	// Network implements response to request for network field.
-	Network(p graphql.ResolveParams) (interface{}, error)
-}
-
-// SystemOsFieldResolver implement to resolve requests for the System's os field.
-type SystemOsFieldResolver interface {
-	// Os implements response to request for os field.
-	Os(p graphql.ResolveParams) (string, error)
-}
-
-// SystemPlatformFieldResolver implement to resolve requests for the System's platform field.
-type SystemPlatformFieldResolver interface {
-	// Platform implements response to request for platform field.
-	Platform(p graphql.ResolveParams) (string, error)
-}
-
-// SystemPlatformFamilyFieldResolver implement to resolve requests for the System's platformFamily field.
-type SystemPlatformFamilyFieldResolver interface {
-	// PlatformFamily implements response to request for platformFamily field.
-	PlatformFamily(p graphql.ResolveParams) (string, error)
-}
-
-// SystemPlatformVersionFieldResolver implement to resolve requests for the System's platformVersion field.
-type SystemPlatformVersionFieldResolver interface {
-	// PlatformVersion implements response to request for platformVersion field.
-	PlatformVersion(p graphql.ResolveParams) (string, error)
-}
-
-// SystemArchFieldResolver implement to resolve requests for the System's arch field.
-type SystemArchFieldResolver interface {
-	// Arch implements response to request for arch field.
-	Arch(p graphql.ResolveParams) (string, error)
-}
-
-// SystemARMVersionFieldResolver implement to resolve requests for the System's ARMVersion field.
-type SystemARMVersionFieldResolver interface {
-	// ARMVersion implements response to request for ARMVersion field.
-	ARMVersion(p graphql.ResolveParams) (int, error)
-}
-
-// SystemLibCTypeFieldResolver implement to resolve requests for the System's libCType field.
-type SystemLibCTypeFieldResolver interface {
-	// LibCType implements response to request for libCType field.
-	LibCType(p graphql.ResolveParams) (string, error)
-}
-
-// SystemVMSystemFieldResolver implement to resolve requests for the System's VMSystem field.
-type SystemVMSystemFieldResolver interface {
-	// VMSystem implements response to request for VMSystem field.
-	VMSystem(p graphql.ResolveParams) (string, error)
-}
-
-// SystemVMRoleFieldResolver implement to resolve requests for the System's VMRole field.
-type SystemVMRoleFieldResolver interface {
-	// VMRole implements response to request for VMRole field.
-	VMRole(p graphql.ResolveParams) (string, error)
-}
-
-// SystemCloudProviderFieldResolver implement to resolve requests for the System's cloudProvider field.
-type SystemCloudProviderFieldResolver interface {
-	// CloudProvider implements response to request for cloudProvider field.
-	CloudProvider(p graphql.ResolveParams) (string, error)
-}
-
-// SystemFloatTypeFieldResolver implement to resolve requests for the System's floatType field.
-type SystemFloatTypeFieldResolver interface {
-	// FloatType implements response to request for floatType field.
-	FloatType(p graphql.ResolveParams) (string, error)
-}
-
-// SystemProcessesFieldResolver implement to resolve requests for the System's processes field.
-type SystemProcessesFieldResolver interface {
-	// Processes implements response to request for processes field.
-	Processes(p graphql.ResolveParams) (interface{}, error)
-}
-
 //
 // SystemFieldResolvers represents a collection of methods whose products represent the
 // response values of the 'System' type.
 type SystemFieldResolvers interface {
-	SystemHostnameFieldResolver
-	SystemNetworkFieldResolver
-	SystemOsFieldResolver
-	SystemPlatformFieldResolver
-	SystemPlatformFamilyFieldResolver
-	SystemPlatformVersionFieldResolver
-	SystemArchFieldResolver
-	SystemARMVersionFieldResolver
-	SystemLibCTypeFieldResolver
-	SystemVMSystemFieldResolver
-	SystemVMRoleFieldResolver
-	SystemCloudProviderFieldResolver
-	SystemFloatTypeFieldResolver
-	SystemProcessesFieldResolver
+	// Hostname implements response to request for 'hostname' field.
+	Hostname(p graphql.ResolveParams) (string, error)
+
+	// Network implements response to request for 'network' field.
+	Network(p graphql.ResolveParams) (interface{}, error)
+
+	// Os implements response to request for 'os' field.
+	Os(p graphql.ResolveParams) (string, error)
+
+	// Platform implements response to request for 'platform' field.
+	Platform(p graphql.ResolveParams) (string, error)
+
+	// PlatformFamily implements response to request for 'platformFamily' field.
+	PlatformFamily(p graphql.ResolveParams) (string, error)
+
+	// PlatformVersion implements response to request for 'platformVersion' field.
+	PlatformVersion(p graphql.ResolveParams) (string, error)
+
+	// Arch implements response to request for 'arch' field.
+	Arch(p graphql.ResolveParams) (string, error)
+
+	// ARMVersion implements response to request for 'ARMVersion' field.
+	ARMVersion(p graphql.ResolveParams) (int, error)
+
+	// LibCType implements response to request for 'libCType' field.
+	LibCType(p graphql.ResolveParams) (string, error)
+
+	// VMSystem implements response to request for 'VMSystem' field.
+	VMSystem(p graphql.ResolveParams) (string, error)
+
+	// VMRole implements response to request for 'VMRole' field.
+	VMRole(p graphql.ResolveParams) (string, error)
+
+	// CloudProvider implements response to request for 'cloudProvider' field.
+	CloudProvider(p graphql.ResolveParams) (string, error)
+
+	// FloatType implements response to request for 'floatType' field.
+	FloatType(p graphql.ResolveParams) (string, error)
+
+	// Processes implements response to request for 'processes' field.
+	Processes(p graphql.ResolveParams) (interface{}, error)
 }
 
 // SystemAliases implements all methods on SystemFieldResolvers interface by using reflection to
@@ -1256,73 +1122,36 @@ var _ObjectTypeSystemDesc = graphql.ObjectDesc{
 	},
 }
 
-// ProcessNameFieldResolver implement to resolve requests for the Process's name field.
-type ProcessNameFieldResolver interface {
-	// Name implements response to request for name field.
-	Name(p graphql.ResolveParams) (string, error)
-}
-
-// ProcessPidFieldResolver implement to resolve requests for the Process's pid field.
-type ProcessPidFieldResolver interface {
-	// Pid implements response to request for pid field.
-	Pid(p graphql.ResolveParams) (int, error)
-}
-
-// ProcessPpidFieldResolver implement to resolve requests for the Process's ppid field.
-type ProcessPpidFieldResolver interface {
-	// Ppid implements response to request for ppid field.
-	Ppid(p graphql.ResolveParams) (int, error)
-}
-
-// ProcessStatusFieldResolver implement to resolve requests for the Process's status field.
-type ProcessStatusFieldResolver interface {
-	// Status implements response to request for status field.
-	Status(p graphql.ResolveParams) (string, error)
-}
-
-// ProcessCreatedFieldResolver implement to resolve requests for the Process's created field.
-type ProcessCreatedFieldResolver interface {
-	// Created implements response to request for created field.
-	Created(p graphql.ResolveParams) (time.Time, error)
-}
-
-// ProcessRunningFieldResolver implement to resolve requests for the Process's running field.
-type ProcessRunningFieldResolver interface {
-	// Running implements response to request for running field.
-	Running(p graphql.ResolveParams) (bool, error)
-}
-
-// ProcessBackgroundFieldResolver implement to resolve requests for the Process's background field.
-type ProcessBackgroundFieldResolver interface {
-	// Background implements response to request for background field.
-	Background(p graphql.ResolveParams) (bool, error)
-}
-
-// ProcessCpuPercentFieldResolver implement to resolve requests for the Process's cpuPercent field.
-type ProcessCpuPercentFieldResolver interface {
-	// CpuPercent implements response to request for cpuPercent field.
-	CpuPercent(p graphql.ResolveParams) (float64, error)
-}
-
-// ProcessMemoryPercentFieldResolver implement to resolve requests for the Process's memoryPercent field.
-type ProcessMemoryPercentFieldResolver interface {
-	// MemoryPercent implements response to request for memoryPercent field.
-	MemoryPercent(p graphql.ResolveParams) (float64, error)
-}
-
 //
 // ProcessFieldResolvers represents a collection of methods whose products represent the
 // response values of the 'Process' type.
 type ProcessFieldResolvers interface {
-	ProcessNameFieldResolver
-	ProcessPidFieldResolver
-	ProcessPpidFieldResolver
-	ProcessStatusFieldResolver
-	ProcessCreatedFieldResolver
-	ProcessRunningFieldResolver
-	ProcessBackgroundFieldResolver
-	ProcessCpuPercentFieldResolver
-	ProcessMemoryPercentFieldResolver
+	// Name implements response to request for 'name' field.
+	Name(p graphql.ResolveParams) (string, error)
+
+	// Pid implements response to request for 'pid' field.
+	Pid(p graphql.ResolveParams) (int, error)
+
+	// Ppid implements response to request for 'ppid' field.
+	Ppid(p graphql.ResolveParams) (int, error)
+
+	// Status implements response to request for 'status' field.
+	Status(p graphql.ResolveParams) (string, error)
+
+	// Created implements response to request for 'created' field.
+	Created(p graphql.ResolveParams) (time.Time, error)
+
+	// Running implements response to request for 'running' field.
+	Running(p graphql.ResolveParams) (bool, error)
+
+	// Background implements response to request for 'background' field.
+	Background(p graphql.ResolveParams) (bool, error)
+
+	// CpuPercent implements response to request for 'cpuPercent' field.
+	CpuPercent(p graphql.ResolveParams) (float64, error)
+
+	// MemoryPercent implements response to request for 'memoryPercent' field.
+	MemoryPercent(p graphql.ResolveParams) (float64, error)
 }
 
 // ProcessAliases implements all methods on ProcessFieldResolvers interface by using reflection to
@@ -1615,17 +1444,12 @@ var _ObjectTypeProcessDesc = graphql.ObjectDesc{
 	},
 }
 
-// NetworkInterfacesFieldResolver implement to resolve requests for the Network's interfaces field.
-type NetworkInterfacesFieldResolver interface {
-	// Interfaces implements response to request for interfaces field.
-	Interfaces(p graphql.ResolveParams) (interface{}, error)
-}
-
 //
 // NetworkFieldResolvers represents a collection of methods whose products represent the
 // response values of the 'Network' type.
 type NetworkFieldResolvers interface {
-	NetworkInterfacesFieldResolver
+	// Interfaces implements response to request for 'interfaces' field.
+	Interfaces(p graphql.ResolveParams) (interface{}, error)
 }
 
 // NetworkAliases implements all methods on NetworkFieldResolvers interface by using reflection to
@@ -1687,31 +1511,18 @@ var _ObjectTypeNetworkDesc = graphql.ObjectDesc{
 	FieldHandlers: map[string]graphql.FieldHandler{"interfaces": _ObjTypeNetworkInterfacesHandler},
 }
 
-// NetworkInterfaceNameFieldResolver implement to resolve requests for the NetworkInterface's name field.
-type NetworkInterfaceNameFieldResolver interface {
-	// Name implements response to request for name field.
-	Name(p graphql.ResolveParams) (string, error)
-}
-
-// NetworkInterfaceMacFieldResolver implement to resolve requests for the NetworkInterface's mac field.
-type NetworkInterfaceMacFieldResolver interface {
-	// Mac implements response to request for mac field.
-	Mac(p graphql.ResolveParams) (string, error)
-}
-
-// NetworkInterfaceAddressesFieldResolver implement to resolve requests for the NetworkInterface's addresses field.
-type NetworkInterfaceAddressesFieldResolver interface {
-	// Addresses implements response to request for addresses field.
-	Addresses(p graphql.ResolveParams) ([]string, error)
-}
-
 //
 // NetworkInterfaceFieldResolvers represents a collection of methods whose products represent the
 // response values of the 'NetworkInterface' type.
 type NetworkInterfaceFieldResolvers interface {
-	NetworkInterfaceNameFieldResolver
-	NetworkInterfaceMacFieldResolver
-	NetworkInterfaceAddressesFieldResolver
+	// Name implements response to request for 'name' field.
+	Name(p graphql.ResolveParams) (string, error)
+
+	// Mac implements response to request for 'mac' field.
+	Mac(p graphql.ResolveParams) (string, error)
+
+	// Addresses implements response to request for 'addresses' field.
+	Addresses(p graphql.ResolveParams) ([]string, error)
 }
 
 // NetworkInterfaceAliases implements all methods on NetworkInterfaceFieldResolvers interface by using reflection to
@@ -1839,17 +1650,12 @@ var _ObjectTypeNetworkInterfaceDesc = graphql.ObjectDesc{
 	},
 }
 
-// DeregistrationHandlerFieldResolver implement to resolve requests for the Deregistration's handler field.
-type DeregistrationHandlerFieldResolver interface {
-	// Handler implements response to request for handler field.
-	Handler(p graphql.ResolveParams) (string, error)
-}
-
 //
 // DeregistrationFieldResolvers represents a collection of methods whose products represent the
 // response values of the 'Deregistration' type.
 type DeregistrationFieldResolvers interface {
-	DeregistrationHandlerFieldResolver
+	// Handler implements response to request for 'handler' field.
+	Handler(p graphql.ResolveParams) (string, error)
 }
 
 // DeregistrationAliases implements all methods on DeregistrationFieldResolvers interface by using reflection to
@@ -1914,24 +1720,15 @@ var _ObjectTypeDeregistrationDesc = graphql.ObjectDesc{
 	FieldHandlers: map[string]graphql.FieldHandler{"handler": _ObjTypeDeregistrationHandlerHandler},
 }
 
-// EntityConnectionNodesFieldResolver implement to resolve requests for the EntityConnection's nodes field.
-type EntityConnectionNodesFieldResolver interface {
-	// Nodes implements response to request for nodes field.
-	Nodes(p graphql.ResolveParams) (interface{}, error)
-}
-
-// EntityConnectionPageInfoFieldResolver implement to resolve requests for the EntityConnection's pageInfo field.
-type EntityConnectionPageInfoFieldResolver interface {
-	// PageInfo implements response to request for pageInfo field.
-	PageInfo(p graphql.ResolveParams) (interface{}, error)
-}
-
 //
 // EntityConnectionFieldResolvers represents a collection of methods whose products represent the
 // response values of the 'EntityConnection' type.
 type EntityConnectionFieldResolvers interface {
-	EntityConnectionNodesFieldResolver
-	EntityConnectionPageInfoFieldResolver
+	// Nodes implements response to request for 'nodes' field.
+	Nodes(p graphql.ResolveParams) (interface{}, error)
+
+	// PageInfo implements response to request for 'pageInfo' field.
+	PageInfo(p graphql.ResolveParams) (interface{}, error)
 }
 
 // EntityConnectionAliases implements all methods on EntityConnectionFieldResolvers interface by using reflection to

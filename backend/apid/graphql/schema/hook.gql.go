@@ -8,66 +8,33 @@ import (
 	graphql "github.com/sensu/sensu-go/graphql"
 )
 
-// HookConfigIDFieldResolver implement to resolve requests for the HookConfig's id field.
-type HookConfigIDFieldResolver interface {
-	// ID implements response to request for id field.
-	ID(p graphql.ResolveParams) (string, error)
-}
-
-// HookConfigNamespaceFieldResolver implement to resolve requests for the HookConfig's namespace field.
-type HookConfigNamespaceFieldResolver interface {
-	// Namespace implements response to request for namespace field.
-	Namespace(p graphql.ResolveParams) (string, error)
-}
-
-// HookConfigNameFieldResolver implement to resolve requests for the HookConfig's name field.
-type HookConfigNameFieldResolver interface {
-	// Name implements response to request for name field.
-	Name(p graphql.ResolveParams) (string, error)
-}
-
-// HookConfigMetadataFieldResolver implement to resolve requests for the HookConfig's metadata field.
-type HookConfigMetadataFieldResolver interface {
-	// Metadata implements response to request for metadata field.
-	Metadata(p graphql.ResolveParams) (interface{}, error)
-}
-
-// HookConfigCommandFieldResolver implement to resolve requests for the HookConfig's command field.
-type HookConfigCommandFieldResolver interface {
-	// Command implements response to request for command field.
-	Command(p graphql.ResolveParams) (string, error)
-}
-
-// HookConfigTimeoutFieldResolver implement to resolve requests for the HookConfig's timeout field.
-type HookConfigTimeoutFieldResolver interface {
-	// Timeout implements response to request for timeout field.
-	Timeout(p graphql.ResolveParams) (int, error)
-}
-
-// HookConfigStdinFieldResolver implement to resolve requests for the HookConfig's stdin field.
-type HookConfigStdinFieldResolver interface {
-	// Stdin implements response to request for stdin field.
-	Stdin(p graphql.ResolveParams) (bool, error)
-}
-
-// HookConfigToJSONFieldResolver implement to resolve requests for the HookConfig's toJSON field.
-type HookConfigToJSONFieldResolver interface {
-	// ToJSON implements response to request for toJSON field.
-	ToJSON(p graphql.ResolveParams) (interface{}, error)
-}
-
 //
 // HookConfigFieldResolvers represents a collection of methods whose products represent the
 // response values of the 'HookConfig' type.
 type HookConfigFieldResolvers interface {
-	HookConfigIDFieldResolver
-	HookConfigNamespaceFieldResolver
-	HookConfigNameFieldResolver
-	HookConfigMetadataFieldResolver
-	HookConfigCommandFieldResolver
-	HookConfigTimeoutFieldResolver
-	HookConfigStdinFieldResolver
-	HookConfigToJSONFieldResolver
+	// ID implements response to request for 'id' field.
+	ID(p graphql.ResolveParams) (string, error)
+
+	// Namespace implements response to request for 'namespace' field.
+	Namespace(p graphql.ResolveParams) (string, error)
+
+	// Name implements response to request for 'name' field.
+	Name(p graphql.ResolveParams) (string, error)
+
+	// Metadata implements response to request for 'metadata' field.
+	Metadata(p graphql.ResolveParams) (interface{}, error)
+
+	// Command implements response to request for 'command' field.
+	Command(p graphql.ResolveParams) (string, error)
+
+	// Timeout implements response to request for 'timeout' field.
+	Timeout(p graphql.ResolveParams) (int, error)
+
+	// Stdin implements response to request for 'stdin' field.
+	Stdin(p graphql.ResolveParams) (bool, error)
+
+	// ToJSON implements response to request for 'toJSON' field.
+	ToJSON(p graphql.ResolveParams) (interface{}, error)
 }
 
 // HookConfigAliases implements all methods on HookConfigFieldResolvers interface by using reflection to
@@ -321,52 +288,27 @@ var _ObjectTypeHookConfigDesc = graphql.ObjectDesc{
 	},
 }
 
-// HookConfigFieldResolver implement to resolve requests for the Hook's config field.
-type HookConfigFieldResolver interface {
-	// Config implements response to request for config field.
-	Config(p graphql.ResolveParams) (interface{}, error)
-}
-
-// HookDurationFieldResolver implement to resolve requests for the Hook's duration field.
-type HookDurationFieldResolver interface {
-	// Duration implements response to request for duration field.
-	Duration(p graphql.ResolveParams) (int, error)
-}
-
-// HookExecutedFieldResolver implement to resolve requests for the Hook's executed field.
-type HookExecutedFieldResolver interface {
-	// Executed implements response to request for executed field.
-	Executed(p graphql.ResolveParams) (int, error)
-}
-
-// HookIssuedFieldResolver implement to resolve requests for the Hook's issued field.
-type HookIssuedFieldResolver interface {
-	// Issued implements response to request for issued field.
-	Issued(p graphql.ResolveParams) (int, error)
-}
-
-// HookOutputFieldResolver implement to resolve requests for the Hook's output field.
-type HookOutputFieldResolver interface {
-	// Output implements response to request for output field.
-	Output(p graphql.ResolveParams) (string, error)
-}
-
-// HookStatusFieldResolver implement to resolve requests for the Hook's status field.
-type HookStatusFieldResolver interface {
-	// Status implements response to request for status field.
-	Status(p graphql.ResolveParams) (int, error)
-}
-
 //
 // HookFieldResolvers represents a collection of methods whose products represent the
 // response values of the 'Hook' type.
 type HookFieldResolvers interface {
-	HookConfigFieldResolver
-	HookDurationFieldResolver
-	HookExecutedFieldResolver
-	HookIssuedFieldResolver
-	HookOutputFieldResolver
-	HookStatusFieldResolver
+	// Config implements response to request for 'config' field.
+	Config(p graphql.ResolveParams) (interface{}, error)
+
+	// Duration implements response to request for 'duration' field.
+	Duration(p graphql.ResolveParams) (int, error)
+
+	// Executed implements response to request for 'executed' field.
+	Executed(p graphql.ResolveParams) (int, error)
+
+	// Issued implements response to request for 'issued' field.
+	Issued(p graphql.ResolveParams) (int, error)
+
+	// Output implements response to request for 'output' field.
+	Output(p graphql.ResolveParams) (string, error)
+
+	// Status implements response to request for 'status' field.
+	Status(p graphql.ResolveParams) (int, error)
 }
 
 // HookAliases implements all methods on HookFieldResolvers interface by using reflection to
@@ -571,24 +513,15 @@ var _ObjectTypeHookDesc = graphql.ObjectDesc{
 	},
 }
 
-// HookListHooksFieldResolver implement to resolve requests for the HookList's hooks field.
-type HookListHooksFieldResolver interface {
-	// Hooks implements response to request for hooks field.
-	Hooks(p graphql.ResolveParams) ([]string, error)
-}
-
-// HookListTypeFieldResolver implement to resolve requests for the HookList's type field.
-type HookListTypeFieldResolver interface {
-	// Type implements response to request for type field.
-	Type(p graphql.ResolveParams) (string, error)
-}
-
 //
 // HookListFieldResolvers represents a collection of methods whose products represent the
 // response values of the 'HookList' type.
 type HookListFieldResolvers interface {
-	HookListHooksFieldResolver
-	HookListTypeFieldResolver
+	// Hooks implements response to request for 'hooks' field.
+	Hooks(p graphql.ResolveParams) ([]string, error)
+
+	// Type implements response to request for 'type' field.
+	Type(p graphql.ResolveParams) (string, error)
 }
 
 // HookListAliases implements all methods on HookListFieldResolvers interface by using reflection to

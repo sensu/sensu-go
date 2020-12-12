@@ -8,12 +8,6 @@ import (
 	graphql "github.com/sensu/sensu-go/graphql"
 )
 
-// QueryViewerFieldResolver implement to resolve requests for the Query's viewer field.
-type QueryViewerFieldResolver interface {
-	// Viewer implements response to request for viewer field.
-	Viewer(p graphql.ResolveParams) (interface{}, error)
-}
-
 // QueryNamespaceFieldResolverArgs contains arguments provided to namespace when selected
 type QueryNamespaceFieldResolverArgs struct {
 	Name string // Name - self descriptive
@@ -23,12 +17,6 @@ type QueryNamespaceFieldResolverArgs struct {
 type QueryNamespaceFieldResolverParams struct {
 	graphql.ResolveParams
 	Args QueryNamespaceFieldResolverArgs
-}
-
-// QueryNamespaceFieldResolver implement to resolve requests for the Query's namespace field.
-type QueryNamespaceFieldResolver interface {
-	// Namespace implements response to request for namespace field.
-	Namespace(p QueryNamespaceFieldResolverParams) (interface{}, error)
 }
 
 // QueryEventFieldResolverArgs contains arguments provided to event when selected
@@ -44,12 +32,6 @@ type QueryEventFieldResolverParams struct {
 	Args QueryEventFieldResolverArgs
 }
 
-// QueryEventFieldResolver implement to resolve requests for the Query's event field.
-type QueryEventFieldResolver interface {
-	// Event implements response to request for event field.
-	Event(p QueryEventFieldResolverParams) (interface{}, error)
-}
-
 // QueryEntityFieldResolverArgs contains arguments provided to entity when selected
 type QueryEntityFieldResolverArgs struct {
 	Namespace string // Namespace - self descriptive
@@ -60,12 +42,6 @@ type QueryEntityFieldResolverArgs struct {
 type QueryEntityFieldResolverParams struct {
 	graphql.ResolveParams
 	Args QueryEntityFieldResolverArgs
-}
-
-// QueryEntityFieldResolver implement to resolve requests for the Query's entity field.
-type QueryEntityFieldResolver interface {
-	// Entity implements response to request for entity field.
-	Entity(p QueryEntityFieldResolverParams) (interface{}, error)
 }
 
 // QueryMutatorFieldResolverArgs contains arguments provided to mutator when selected
@@ -80,12 +56,6 @@ type QueryMutatorFieldResolverParams struct {
 	Args QueryMutatorFieldResolverArgs
 }
 
-// QueryMutatorFieldResolver implement to resolve requests for the Query's mutator field.
-type QueryMutatorFieldResolver interface {
-	// Mutator implements response to request for mutator field.
-	Mutator(p QueryMutatorFieldResolverParams) (interface{}, error)
-}
-
 // QueryCheckFieldResolverArgs contains arguments provided to check when selected
 type QueryCheckFieldResolverArgs struct {
 	Namespace string // Namespace - self descriptive
@@ -96,12 +66,6 @@ type QueryCheckFieldResolverArgs struct {
 type QueryCheckFieldResolverParams struct {
 	graphql.ResolveParams
 	Args QueryCheckFieldResolverArgs
-}
-
-// QueryCheckFieldResolver implement to resolve requests for the Query's check field.
-type QueryCheckFieldResolver interface {
-	// Check implements response to request for check field.
-	Check(p QueryCheckFieldResolverParams) (interface{}, error)
 }
 
 // QueryEventFilterFieldResolverArgs contains arguments provided to eventFilter when selected
@@ -116,12 +80,6 @@ type QueryEventFilterFieldResolverParams struct {
 	Args QueryEventFilterFieldResolverArgs
 }
 
-// QueryEventFilterFieldResolver implement to resolve requests for the Query's eventFilter field.
-type QueryEventFilterFieldResolver interface {
-	// EventFilter implements response to request for eventFilter field.
-	EventFilter(p QueryEventFilterFieldResolverParams) (interface{}, error)
-}
-
 // QueryHandlerFieldResolverArgs contains arguments provided to handler when selected
 type QueryHandlerFieldResolverArgs struct {
 	Namespace string // Namespace - self descriptive
@@ -132,12 +90,6 @@ type QueryHandlerFieldResolverArgs struct {
 type QueryHandlerFieldResolverParams struct {
 	graphql.ResolveParams
 	Args QueryHandlerFieldResolverArgs
-}
-
-// QueryHandlerFieldResolver implement to resolve requests for the Query's handler field.
-type QueryHandlerFieldResolver interface {
-	// Handler implements response to request for handler field.
-	Handler(p QueryHandlerFieldResolverParams) (interface{}, error)
 }
 
 // QuerySuggestFieldResolverArgs contains arguments provided to suggest when selected
@@ -180,24 +132,6 @@ type QuerySuggestFieldResolverParams struct {
 	Args QuerySuggestFieldResolverArgs
 }
 
-// QuerySuggestFieldResolver implement to resolve requests for the Query's suggest field.
-type QuerySuggestFieldResolver interface {
-	// Suggest implements response to request for suggest field.
-	Suggest(p QuerySuggestFieldResolverParams) (interface{}, error)
-}
-
-// QueryHealthFieldResolver implement to resolve requests for the Query's health field.
-type QueryHealthFieldResolver interface {
-	// Health implements response to request for health field.
-	Health(p graphql.ResolveParams) (interface{}, error)
-}
-
-// QueryVersionsFieldResolver implement to resolve requests for the Query's versions field.
-type QueryVersionsFieldResolver interface {
-	// Versions implements response to request for versions field.
-	Versions(p graphql.ResolveParams) (interface{}, error)
-}
-
 // QueryMetricsFieldResolverArgs contains arguments provided to metrics when selected
 type QueryMetricsFieldResolverArgs struct {
 	Name []string // Name - Use to only return metrics with the given name(s).
@@ -207,12 +141,6 @@ type QueryMetricsFieldResolverArgs struct {
 type QueryMetricsFieldResolverParams struct {
 	graphql.ResolveParams
 	Args QueryMetricsFieldResolverArgs
-}
-
-// QueryMetricsFieldResolver implement to resolve requests for the Query's metrics field.
-type QueryMetricsFieldResolver interface {
-	// Metrics implements response to request for metrics field.
-	Metrics(p QueryMetricsFieldResolverParams) (interface{}, error)
 }
 
 // QueryNodeFieldResolverArgs contains arguments provided to node when selected
@@ -226,12 +154,6 @@ type QueryNodeFieldResolverParams struct {
 	Args QueryNodeFieldResolverArgs
 }
 
-// QueryNodeFieldResolver implement to resolve requests for the Query's node field.
-type QueryNodeFieldResolver interface {
-	// Node implements response to request for node field.
-	Node(p QueryNodeFieldResolverParams) (interface{}, error)
-}
-
 // QueryWrappedNodeFieldResolverArgs contains arguments provided to wrappedNode when selected
 type QueryWrappedNodeFieldResolverArgs struct {
 	ID string // ID - The ID of an object.
@@ -243,30 +165,51 @@ type QueryWrappedNodeFieldResolverParams struct {
 	Args QueryWrappedNodeFieldResolverArgs
 }
 
-// QueryWrappedNodeFieldResolver implement to resolve requests for the Query's wrappedNode field.
-type QueryWrappedNodeFieldResolver interface {
-	// WrappedNode implements response to request for wrappedNode field.
-	WrappedNode(p QueryWrappedNodeFieldResolverParams) (interface{}, error)
-}
-
 //
 // QueryFieldResolvers represents a collection of methods whose products represent the
 // response values of the 'Query' type.
 type QueryFieldResolvers interface {
-	QueryViewerFieldResolver
-	QueryNamespaceFieldResolver
-	QueryEventFieldResolver
-	QueryEntityFieldResolver
-	QueryMutatorFieldResolver
-	QueryCheckFieldResolver
-	QueryEventFilterFieldResolver
-	QueryHandlerFieldResolver
-	QuerySuggestFieldResolver
-	QueryHealthFieldResolver
-	QueryVersionsFieldResolver
-	QueryMetricsFieldResolver
-	QueryNodeFieldResolver
-	QueryWrappedNodeFieldResolver
+	// Viewer implements response to request for 'viewer' field.
+	Viewer(p graphql.ResolveParams) (interface{}, error)
+
+	// Namespace implements response to request for 'namespace' field.
+	Namespace(p QueryNamespaceFieldResolverParams) (interface{}, error)
+
+	// Event implements response to request for 'event' field.
+	Event(p QueryEventFieldResolverParams) (interface{}, error)
+
+	// Entity implements response to request for 'entity' field.
+	Entity(p QueryEntityFieldResolverParams) (interface{}, error)
+
+	// Mutator implements response to request for 'mutator' field.
+	Mutator(p QueryMutatorFieldResolverParams) (interface{}, error)
+
+	// Check implements response to request for 'check' field.
+	Check(p QueryCheckFieldResolverParams) (interface{}, error)
+
+	// EventFilter implements response to request for 'eventFilter' field.
+	EventFilter(p QueryEventFilterFieldResolverParams) (interface{}, error)
+
+	// Handler implements response to request for 'handler' field.
+	Handler(p QueryHandlerFieldResolverParams) (interface{}, error)
+
+	// Suggest implements response to request for 'suggest' field.
+	Suggest(p QuerySuggestFieldResolverParams) (interface{}, error)
+
+	// Health implements response to request for 'health' field.
+	Health(p graphql.ResolveParams) (interface{}, error)
+
+	// Versions implements response to request for 'versions' field.
+	Versions(p graphql.ResolveParams) (interface{}, error)
+
+	// Metrics implements response to request for 'metrics' field.
+	Metrics(p QueryMetricsFieldResolverParams) (interface{}, error)
+
+	// Node implements response to request for 'node' field.
+	Node(p QueryNodeFieldResolverParams) (interface{}, error)
+
+	// WrappedNode implements response to request for 'wrappedNode' field.
+	WrappedNode(p QueryWrappedNodeFieldResolverParams) (interface{}, error)
 }
 
 // QueryAliases implements all methods on QueryFieldResolvers interface by using reflection to

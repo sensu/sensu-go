@@ -8,31 +8,18 @@ import (
 	graphql "github.com/sensu/sensu-go/graphql"
 )
 
-// RuleVerbsFieldResolver implement to resolve requests for the Rule's verbs field.
-type RuleVerbsFieldResolver interface {
-	// Verbs implements response to request for verbs field.
-	Verbs(p graphql.ResolveParams) ([]string, error)
-}
-
-// RuleResourcesFieldResolver implement to resolve requests for the Rule's resources field.
-type RuleResourcesFieldResolver interface {
-	// Resources implements response to request for resources field.
-	Resources(p graphql.ResolveParams) ([]string, error)
-}
-
-// RuleResourceNamesFieldResolver implement to resolve requests for the Rule's resourceNames field.
-type RuleResourceNamesFieldResolver interface {
-	// ResourceNames implements response to request for resourceNames field.
-	ResourceNames(p graphql.ResolveParams) ([]string, error)
-}
-
 //
 // RuleFieldResolvers represents a collection of methods whose products represent the
 // response values of the 'Rule' type.
 type RuleFieldResolvers interface {
-	RuleVerbsFieldResolver
-	RuleResourcesFieldResolver
-	RuleResourceNamesFieldResolver
+	// Verbs implements response to request for 'verbs' field.
+	Verbs(p graphql.ResolveParams) ([]string, error)
+
+	// Resources implements response to request for 'resources' field.
+	Resources(p graphql.ResolveParams) ([]string, error)
+
+	// ResourceNames implements response to request for 'resourceNames' field.
+	ResourceNames(p graphql.ResolveParams) ([]string, error)
 }
 
 // RuleAliases implements all methods on RuleFieldResolvers interface by using reflection to
@@ -157,24 +144,15 @@ var _ObjectTypeRuleDesc = graphql.ObjectDesc{
 	},
 }
 
-// ClusterRoleRulesFieldResolver implement to resolve requests for the ClusterRole's rules field.
-type ClusterRoleRulesFieldResolver interface {
-	// Rules implements response to request for rules field.
-	Rules(p graphql.ResolveParams) (interface{}, error)
-}
-
-// ClusterRoleNameFieldResolver implement to resolve requests for the ClusterRole's name field.
-type ClusterRoleNameFieldResolver interface {
-	// Name implements response to request for name field.
-	Name(p graphql.ResolveParams) (string, error)
-}
-
 //
 // ClusterRoleFieldResolvers represents a collection of methods whose products represent the
 // response values of the 'ClusterRole' type.
 type ClusterRoleFieldResolvers interface {
-	ClusterRoleRulesFieldResolver
-	ClusterRoleNameFieldResolver
+	// Rules implements response to request for 'rules' field.
+	Rules(p graphql.ResolveParams) (interface{}, error)
+
+	// Name implements response to request for 'name' field.
+	Name(p graphql.ResolveParams) (string, error)
 }
 
 // ClusterRoleAliases implements all methods on ClusterRoleFieldResolvers interface by using reflection to
@@ -264,31 +242,18 @@ var _ObjectTypeClusterRoleDesc = graphql.ObjectDesc{
 	},
 }
 
-// RoleRulesFieldResolver implement to resolve requests for the Role's rules field.
-type RoleRulesFieldResolver interface {
-	// Rules implements response to request for rules field.
-	Rules(p graphql.ResolveParams) (interface{}, error)
-}
-
-// RoleNamespaceFieldResolver implement to resolve requests for the Role's namespace field.
-type RoleNamespaceFieldResolver interface {
-	// Namespace implements response to request for namespace field.
-	Namespace(p graphql.ResolveParams) (string, error)
-}
-
-// RoleNameFieldResolver implement to resolve requests for the Role's name field.
-type RoleNameFieldResolver interface {
-	// Name implements response to request for name field.
-	Name(p graphql.ResolveParams) (string, error)
-}
-
 //
 // RoleFieldResolvers represents a collection of methods whose products represent the
 // response values of the 'Role' type.
 type RoleFieldResolvers interface {
-	RoleRulesFieldResolver
-	RoleNamespaceFieldResolver
-	RoleNameFieldResolver
+	// Rules implements response to request for 'rules' field.
+	Rules(p graphql.ResolveParams) (interface{}, error)
+
+	// Namespace implements response to request for 'namespace' field.
+	Namespace(p graphql.ResolveParams) (string, error)
+
+	// Name implements response to request for 'name' field.
+	Name(p graphql.ResolveParams) (string, error)
 }
 
 // RoleAliases implements all methods on RoleFieldResolvers interface by using reflection to
@@ -406,24 +371,15 @@ var _ObjectTypeRoleDesc = graphql.ObjectDesc{
 	},
 }
 
-// RoleRefTypeFieldResolver implement to resolve requests for the RoleRef's type field.
-type RoleRefTypeFieldResolver interface {
-	// Type implements response to request for type field.
-	Type(p graphql.ResolveParams) (string, error)
-}
-
-// RoleRefNameFieldResolver implement to resolve requests for the RoleRef's name field.
-type RoleRefNameFieldResolver interface {
-	// Name implements response to request for name field.
-	Name(p graphql.ResolveParams) (string, error)
-}
-
 //
 // RoleRefFieldResolvers represents a collection of methods whose products represent the
 // response values of the 'RoleRef' type.
 type RoleRefFieldResolvers interface {
-	RoleRefTypeFieldResolver
-	RoleRefNameFieldResolver
+	// Type implements response to request for 'type' field.
+	Type(p graphql.ResolveParams) (string, error)
+
+	// Name implements response to request for 'name' field.
+	Name(p graphql.ResolveParams) (string, error)
 }
 
 // RoleRefAliases implements all methods on RoleRefFieldResolvers interface by using reflection to
@@ -520,24 +476,15 @@ var _ObjectTypeRoleRefDesc = graphql.ObjectDesc{
 	},
 }
 
-// SubjectKindFieldResolver implement to resolve requests for the Subject's kind field.
-type SubjectKindFieldResolver interface {
-	// Kind implements response to request for kind field.
-	Kind(p graphql.ResolveParams) (string, error)
-}
-
-// SubjectNameFieldResolver implement to resolve requests for the Subject's name field.
-type SubjectNameFieldResolver interface {
-	// Name implements response to request for name field.
-	Name(p graphql.ResolveParams) (string, error)
-}
-
 //
 // SubjectFieldResolvers represents a collection of methods whose products represent the
 // response values of the 'Subject' type.
 type SubjectFieldResolvers interface {
-	SubjectKindFieldResolver
-	SubjectNameFieldResolver
+	// Kind implements response to request for 'kind' field.
+	Kind(p graphql.ResolveParams) (string, error)
+
+	// Name implements response to request for 'name' field.
+	Name(p graphql.ResolveParams) (string, error)
 }
 
 // SubjectAliases implements all methods on SubjectFieldResolvers interface by using reflection to
@@ -634,31 +581,18 @@ var _ObjectTypeSubjectDesc = graphql.ObjectDesc{
 	},
 }
 
-// ClusterRoleBindingSubjectsFieldResolver implement to resolve requests for the ClusterRoleBinding's subjects field.
-type ClusterRoleBindingSubjectsFieldResolver interface {
-	// Subjects implements response to request for subjects field.
-	Subjects(p graphql.ResolveParams) (interface{}, error)
-}
-
-// ClusterRoleBindingRoleRefFieldResolver implement to resolve requests for the ClusterRoleBinding's roleRef field.
-type ClusterRoleBindingRoleRefFieldResolver interface {
-	// RoleRef implements response to request for roleRef field.
-	RoleRef(p graphql.ResolveParams) (interface{}, error)
-}
-
-// ClusterRoleBindingNameFieldResolver implement to resolve requests for the ClusterRoleBinding's name field.
-type ClusterRoleBindingNameFieldResolver interface {
-	// Name implements response to request for name field.
-	Name(p graphql.ResolveParams) (string, error)
-}
-
 //
 // ClusterRoleBindingFieldResolvers represents a collection of methods whose products represent the
 // response values of the 'ClusterRoleBinding' type.
 type ClusterRoleBindingFieldResolvers interface {
-	ClusterRoleBindingSubjectsFieldResolver
-	ClusterRoleBindingRoleRefFieldResolver
-	ClusterRoleBindingNameFieldResolver
+	// Subjects implements response to request for 'subjects' field.
+	Subjects(p graphql.ResolveParams) (interface{}, error)
+
+	// RoleRef implements response to request for 'roleRef' field.
+	RoleRef(p graphql.ResolveParams) (interface{}, error)
+
+	// Name implements response to request for 'name' field.
+	Name(p graphql.ResolveParams) (string, error)
 }
 
 // ClusterRoleBindingAliases implements all methods on ClusterRoleBindingFieldResolvers interface by using reflection to
@@ -772,38 +706,21 @@ var _ObjectTypeClusterRoleBindingDesc = graphql.ObjectDesc{
 	},
 }
 
-// RoleBindingSubjectsFieldResolver implement to resolve requests for the RoleBinding's subjects field.
-type RoleBindingSubjectsFieldResolver interface {
-	// Subjects implements response to request for subjects field.
-	Subjects(p graphql.ResolveParams) (interface{}, error)
-}
-
-// RoleBindingRoleRefFieldResolver implement to resolve requests for the RoleBinding's roleRef field.
-type RoleBindingRoleRefFieldResolver interface {
-	// RoleRef implements response to request for roleRef field.
-	RoleRef(p graphql.ResolveParams) (interface{}, error)
-}
-
-// RoleBindingNamespaceFieldResolver implement to resolve requests for the RoleBinding's namespace field.
-type RoleBindingNamespaceFieldResolver interface {
-	// Namespace implements response to request for namespace field.
-	Namespace(p graphql.ResolveParams) (string, error)
-}
-
-// RoleBindingNameFieldResolver implement to resolve requests for the RoleBinding's name field.
-type RoleBindingNameFieldResolver interface {
-	// Name implements response to request for name field.
-	Name(p graphql.ResolveParams) (string, error)
-}
-
 //
 // RoleBindingFieldResolvers represents a collection of methods whose products represent the
 // response values of the 'RoleBinding' type.
 type RoleBindingFieldResolvers interface {
-	RoleBindingSubjectsFieldResolver
-	RoleBindingRoleRefFieldResolver
-	RoleBindingNamespaceFieldResolver
-	RoleBindingNameFieldResolver
+	// Subjects implements response to request for 'subjects' field.
+	Subjects(p graphql.ResolveParams) (interface{}, error)
+
+	// RoleRef implements response to request for 'roleRef' field.
+	RoleRef(p graphql.ResolveParams) (interface{}, error)
+
+	// Namespace implements response to request for 'namespace' field.
+	Namespace(p graphql.ResolveParams) (string, error)
+
+	// Name implements response to request for 'name' field.
+	Name(p graphql.ResolveParams) (string, error)
 }
 
 // RoleBindingAliases implements all methods on RoleBindingFieldResolvers interface by using reflection to

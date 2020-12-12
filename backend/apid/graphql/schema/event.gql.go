@@ -9,115 +9,54 @@ import (
 	time "time"
 )
 
-// EventIDFieldResolver implement to resolve requests for the Event's id field.
-type EventIDFieldResolver interface {
-	// ID implements response to request for id field.
-	ID(p graphql.ResolveParams) (string, error)
-}
-
-// EventNamespaceFieldResolver implement to resolve requests for the Event's namespace field.
-type EventNamespaceFieldResolver interface {
-	// Namespace implements response to request for namespace field.
-	Namespace(p graphql.ResolveParams) (string, error)
-}
-
-// EventMetadataFieldResolver implement to resolve requests for the Event's metadata field.
-type EventMetadataFieldResolver interface {
-	// Metadata implements response to request for metadata field.
-	Metadata(p graphql.ResolveParams) (interface{}, error)
-}
-
-// EventTimestampFieldResolver implement to resolve requests for the Event's timestamp field.
-type EventTimestampFieldResolver interface {
-	// Timestamp implements response to request for timestamp field.
-	Timestamp(p graphql.ResolveParams) (time.Time, error)
-}
-
-// EventEntityFieldResolver implement to resolve requests for the Event's entity field.
-type EventEntityFieldResolver interface {
-	// Entity implements response to request for entity field.
-	Entity(p graphql.ResolveParams) (interface{}, error)
-}
-
-// EventCheckFieldResolver implement to resolve requests for the Event's check field.
-type EventCheckFieldResolver interface {
-	// Check implements response to request for check field.
-	Check(p graphql.ResolveParams) (interface{}, error)
-}
-
-// EventHooksFieldResolver implement to resolve requests for the Event's hooks field.
-type EventHooksFieldResolver interface {
-	// Hooks implements response to request for hooks field.
-	Hooks(p graphql.ResolveParams) (interface{}, error)
-}
-
-// EventIsIncidentFieldResolver implement to resolve requests for the Event's isIncident field.
-type EventIsIncidentFieldResolver interface {
-	// IsIncident implements response to request for isIncident field.
-	IsIncident(p graphql.ResolveParams) (bool, error)
-}
-
-// EventIsNewIncidentFieldResolver implement to resolve requests for the Event's isNewIncident field.
-type EventIsNewIncidentFieldResolver interface {
-	// IsNewIncident implements response to request for isNewIncident field.
-	IsNewIncident(p graphql.ResolveParams) (bool, error)
-}
-
-// EventIsResolutionFieldResolver implement to resolve requests for the Event's isResolution field.
-type EventIsResolutionFieldResolver interface {
-	// IsResolution implements response to request for isResolution field.
-	IsResolution(p graphql.ResolveParams) (bool, error)
-}
-
-// EventWasSilencedFieldResolver implement to resolve requests for the Event's wasSilenced field.
-type EventWasSilencedFieldResolver interface {
-	// WasSilenced implements response to request for wasSilenced field.
-	WasSilenced(p graphql.ResolveParams) (bool, error)
-}
-
-// EventIsSilencedFieldResolver implement to resolve requests for the Event's isSilenced field.
-type EventIsSilencedFieldResolver interface {
-	// IsSilenced implements response to request for isSilenced field.
-	IsSilenced(p graphql.ResolveParams) (bool, error)
-}
-
-// EventSilencesFieldResolver implement to resolve requests for the Event's silences field.
-type EventSilencesFieldResolver interface {
-	// Silences implements response to request for silences field.
-	Silences(p graphql.ResolveParams) (interface{}, error)
-}
-
-// EventSilencedFieldResolver implement to resolve requests for the Event's silenced field.
-type EventSilencedFieldResolver interface {
-	// Silenced implements response to request for silenced field.
-	Silenced(p graphql.ResolveParams) ([]string, error)
-}
-
-// EventToJSONFieldResolver implement to resolve requests for the Event's toJSON field.
-type EventToJSONFieldResolver interface {
-	// ToJSON implements response to request for toJSON field.
-	ToJSON(p graphql.ResolveParams) (interface{}, error)
-}
-
 //
 // EventFieldResolvers represents a collection of methods whose products represent the
 // response values of the 'Event' type.
 type EventFieldResolvers interface {
-	EventIDFieldResolver
-	EventNamespaceFieldResolver
-	EventMetadataFieldResolver
-	EventTimestampFieldResolver
-	EventEntityFieldResolver
-	EventCheckFieldResolver
-	EventHooksFieldResolver
-	EventIsIncidentFieldResolver
-	EventIsNewIncidentFieldResolver
-	EventIsResolutionFieldResolver
-	EventWasSilencedFieldResolver
-	EventIsSilencedFieldResolver
-	EventSilencesFieldResolver
-	EventSilencedFieldResolver
-	EventToJSONFieldResolver
+	// ID implements response to request for 'id' field.
+	ID(p graphql.ResolveParams) (string, error)
+
+	// Namespace implements response to request for 'namespace' field.
+	Namespace(p graphql.ResolveParams) (string, error)
+
+	// Metadata implements response to request for 'metadata' field.
+	Metadata(p graphql.ResolveParams) (interface{}, error)
+
+	// Timestamp implements response to request for 'timestamp' field.
+	Timestamp(p graphql.ResolveParams) (time.Time, error)
+
+	// Entity implements response to request for 'entity' field.
+	Entity(p graphql.ResolveParams) (interface{}, error)
+
+	// Check implements response to request for 'check' field.
+	Check(p graphql.ResolveParams) (interface{}, error)
+
+	// Hooks implements response to request for 'hooks' field.
+	Hooks(p graphql.ResolveParams) (interface{}, error)
+
+	// IsIncident implements response to request for 'isIncident' field.
+	IsIncident(p graphql.ResolveParams) (bool, error)
+
+	// IsNewIncident implements response to request for 'isNewIncident' field.
+	IsNewIncident(p graphql.ResolveParams) (bool, error)
+
+	// IsResolution implements response to request for 'isResolution' field.
+	IsResolution(p graphql.ResolveParams) (bool, error)
+
+	// WasSilenced implements response to request for 'wasSilenced' field.
+	WasSilenced(p graphql.ResolveParams) (bool, error)
+
+	// IsSilenced implements response to request for 'isSilenced' field.
+	IsSilenced(p graphql.ResolveParams) (bool, error)
+
+	// Silences implements response to request for 'silences' field.
+	Silences(p graphql.ResolveParams) (interface{}, error)
+
+	// Silenced implements response to request for 'silenced' field.
+	Silenced(p graphql.ResolveParams) ([]string, error)
+
+	// ToJSON implements response to request for 'toJSON' field.
+	ToJSON(p graphql.ResolveParams) (interface{}, error)
 }
 
 // EventAliases implements all methods on EventFieldResolvers interface by using reflection to
@@ -540,24 +479,15 @@ var _ObjectTypeEventDesc = graphql.ObjectDesc{
 	},
 }
 
-// EventConnectionNodesFieldResolver implement to resolve requests for the EventConnection's nodes field.
-type EventConnectionNodesFieldResolver interface {
-	// Nodes implements response to request for nodes field.
-	Nodes(p graphql.ResolveParams) (interface{}, error)
-}
-
-// EventConnectionPageInfoFieldResolver implement to resolve requests for the EventConnection's pageInfo field.
-type EventConnectionPageInfoFieldResolver interface {
-	// PageInfo implements response to request for pageInfo field.
-	PageInfo(p graphql.ResolveParams) (interface{}, error)
-}
-
 //
 // EventConnectionFieldResolvers represents a collection of methods whose products represent the
 // response values of the 'EventConnection' type.
 type EventConnectionFieldResolvers interface {
-	EventConnectionNodesFieldResolver
-	EventConnectionPageInfoFieldResolver
+	// Nodes implements response to request for 'nodes' field.
+	Nodes(p graphql.ResolveParams) (interface{}, error)
+
+	// PageInfo implements response to request for 'pageInfo' field.
+	PageInfo(p graphql.ResolveParams) (interface{}, error)
 }
 
 // EventConnectionAliases implements all methods on EventConnectionFieldResolvers interface by using reflection to

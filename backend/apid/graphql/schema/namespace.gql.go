@@ -41,18 +41,6 @@ func _InterfaceTypeNamespacedConfigFn() graphql1.InterfaceConfig {
 // describe Namespaced's configuration; kept private to avoid unintentional tampering of configuration at runtime.
 var _InterfaceTypeNamespacedDesc = graphql.InterfaceDesc{Config: _InterfaceTypeNamespacedConfigFn}
 
-// NamespaceIDFieldResolver implement to resolve requests for the Namespace's id field.
-type NamespaceIDFieldResolver interface {
-	// ID implements response to request for id field.
-	ID(p graphql.ResolveParams) (string, error)
-}
-
-// NamespaceNameFieldResolver implement to resolve requests for the Namespace's name field.
-type NamespaceNameFieldResolver interface {
-	// Name implements response to request for name field.
-	Name(p graphql.ResolveParams) (string, error)
-}
-
 // NamespaceChecksFieldResolverArgs contains arguments provided to checks when selected
 type NamespaceChecksFieldResolverArgs struct {
 	Offset  int            // Offset - self descriptive
@@ -77,12 +65,6 @@ type NamespaceChecksFieldResolverParams struct {
 	Args NamespaceChecksFieldResolverArgs
 }
 
-// NamespaceChecksFieldResolver implement to resolve requests for the Namespace's checks field.
-type NamespaceChecksFieldResolver interface {
-	// Checks implements response to request for checks field.
-	Checks(p NamespaceChecksFieldResolverParams) (interface{}, error)
-}
-
 // NamespaceEntitiesFieldResolverArgs contains arguments provided to entities when selected
 type NamespaceEntitiesFieldResolverArgs struct {
 	Offset  int             // Offset - self descriptive
@@ -105,12 +87,6 @@ type NamespaceEntitiesFieldResolverArgs struct {
 type NamespaceEntitiesFieldResolverParams struct {
 	graphql.ResolveParams
 	Args NamespaceEntitiesFieldResolverArgs
-}
-
-// NamespaceEntitiesFieldResolver implement to resolve requests for the Namespace's entities field.
-type NamespaceEntitiesFieldResolver interface {
-	// Entities implements response to request for entities field.
-	Entities(p NamespaceEntitiesFieldResolverParams) (interface{}, error)
 }
 
 // NamespaceEventsFieldResolverArgs contains arguments provided to events when selected
@@ -141,12 +117,6 @@ type NamespaceEventsFieldResolverParams struct {
 	Args NamespaceEventsFieldResolverArgs
 }
 
-// NamespaceEventsFieldResolver implement to resolve requests for the Namespace's events field.
-type NamespaceEventsFieldResolver interface {
-	// Events implements response to request for events field.
-	Events(p NamespaceEventsFieldResolverParams) (interface{}, error)
-}
-
 // NamespaceEventFiltersFieldResolverArgs contains arguments provided to eventFilters when selected
 type NamespaceEventFiltersFieldResolverArgs struct {
 	Offset  int                  // Offset - self descriptive
@@ -167,12 +137,6 @@ type NamespaceEventFiltersFieldResolverArgs struct {
 type NamespaceEventFiltersFieldResolverParams struct {
 	graphql.ResolveParams
 	Args NamespaceEventFiltersFieldResolverArgs
-}
-
-// NamespaceEventFiltersFieldResolver implement to resolve requests for the Namespace's eventFilters field.
-type NamespaceEventFiltersFieldResolver interface {
-	// EventFilters implements response to request for eventFilters field.
-	EventFilters(p NamespaceEventFiltersFieldResolverParams) (interface{}, error)
 }
 
 // NamespaceHandlersFieldResolverArgs contains arguments provided to handlers when selected
@@ -200,12 +164,6 @@ type NamespaceHandlersFieldResolverParams struct {
 	Args NamespaceHandlersFieldResolverArgs
 }
 
-// NamespaceHandlersFieldResolver implement to resolve requests for the Namespace's handlers field.
-type NamespaceHandlersFieldResolver interface {
-	// Handlers implements response to request for handlers field.
-	Handlers(p NamespaceHandlersFieldResolverParams) (interface{}, error)
-}
-
 // NamespaceMutatorsFieldResolverArgs contains arguments provided to mutators when selected
 type NamespaceMutatorsFieldResolverArgs struct {
 	Offset  int              // Offset - self descriptive
@@ -221,12 +179,6 @@ type NamespaceMutatorsFieldResolverArgs struct {
 type NamespaceMutatorsFieldResolverParams struct {
 	graphql.ResolveParams
 	Args NamespaceMutatorsFieldResolverArgs
-}
-
-// NamespaceMutatorsFieldResolver implement to resolve requests for the Namespace's mutators field.
-type NamespaceMutatorsFieldResolver interface {
-	// Mutators implements response to request for mutators field.
-	Mutators(p NamespaceMutatorsFieldResolverParams) (interface{}, error)
 }
 
 // NamespaceSilencesFieldResolverArgs contains arguments provided to silences when selected
@@ -252,12 +204,6 @@ type NamespaceSilencesFieldResolverParams struct {
 	Args NamespaceSilencesFieldResolverArgs
 }
 
-// NamespaceSilencesFieldResolver implement to resolve requests for the Namespace's silences field.
-type NamespaceSilencesFieldResolver interface {
-	// Silences implements response to request for silences field.
-	Silences(p NamespaceSilencesFieldResolverParams) (interface{}, error)
-}
-
 // NamespaceSubscriptionsFieldResolverArgs contains arguments provided to subscriptions when selected
 type NamespaceSubscriptionsFieldResolverArgs struct {
 	OmitEntity bool                 // OmitEntity - Omit entity subscriptions from set.
@@ -270,40 +216,45 @@ type NamespaceSubscriptionsFieldResolverParams struct {
 	Args NamespaceSubscriptionsFieldResolverArgs
 }
 
-// NamespaceSubscriptionsFieldResolver implement to resolve requests for the Namespace's subscriptions field.
-type NamespaceSubscriptionsFieldResolver interface {
-	// Subscriptions implements response to request for subscriptions field.
-	Subscriptions(p NamespaceSubscriptionsFieldResolverParams) (interface{}, error)
-}
-
-// NamespaceIconIDFieldResolver implement to resolve requests for the Namespace's iconId field.
-type NamespaceIconIDFieldResolver interface {
-	// IconID implements response to request for iconId field.
-	IconID(p graphql.ResolveParams) (Icon, error)
-}
-
-// NamespaceColourIDFieldResolver implement to resolve requests for the Namespace's colourId field.
-type NamespaceColourIDFieldResolver interface {
-	// ColourID implements response to request for colourId field.
-	ColourID(p graphql.ResolveParams) (MutedColour, error)
-}
-
 //
 // NamespaceFieldResolvers represents a collection of methods whose products represent the
 // response values of the 'Namespace' type.
 type NamespaceFieldResolvers interface {
-	NamespaceIDFieldResolver
-	NamespaceNameFieldResolver
-	NamespaceChecksFieldResolver
-	NamespaceEntitiesFieldResolver
-	NamespaceEventsFieldResolver
-	NamespaceEventFiltersFieldResolver
-	NamespaceHandlersFieldResolver
-	NamespaceMutatorsFieldResolver
-	NamespaceSilencesFieldResolver
-	NamespaceSubscriptionsFieldResolver
-	NamespaceIconIDFieldResolver
-	NamespaceColourIDFieldResolver
+	// ID implements response to request for 'id' field.
+	ID(p graphql.ResolveParams) (string, error)
+
+	// Name implements response to request for 'name' field.
+	Name(p graphql.ResolveParams) (string, error)
+
+	// Checks implements response to request for 'checks' field.
+	Checks(p NamespaceChecksFieldResolverParams) (interface{}, error)
+
+	// Entities implements response to request for 'entities' field.
+	Entities(p NamespaceEntitiesFieldResolverParams) (interface{}, error)
+
+	// Events implements response to request for 'events' field.
+	Events(p NamespaceEventsFieldResolverParams) (interface{}, error)
+
+	// EventFilters implements response to request for 'eventFilters' field.
+	EventFilters(p NamespaceEventFiltersFieldResolverParams) (interface{}, error)
+
+	// Handlers implements response to request for 'handlers' field.
+	Handlers(p NamespaceHandlersFieldResolverParams) (interface{}, error)
+
+	// Mutators implements response to request for 'mutators' field.
+	Mutators(p NamespaceMutatorsFieldResolverParams) (interface{}, error)
+
+	// Silences implements response to request for 'silences' field.
+	Silences(p NamespaceSilencesFieldResolverParams) (interface{}, error)
+
+	// Subscriptions implements response to request for 'subscriptions' field.
+	Subscriptions(p NamespaceSubscriptionsFieldResolverParams) (interface{}, error)
+
+	// IconID implements response to request for 'iconId' field.
+	IconID(p graphql.ResolveParams) (Icon, error)
+
+	// ColourID implements response to request for 'colourId' field.
+	ColourID(p graphql.ResolveParams) (MutedColour, error)
 }
 
 // NamespaceAliases implements all methods on NamespaceFieldResolvers interface by using reflection to

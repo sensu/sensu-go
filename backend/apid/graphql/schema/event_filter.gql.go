@@ -8,66 +8,33 @@ import (
 	graphql "github.com/sensu/sensu-go/graphql"
 )
 
-// EventFilterIDFieldResolver implement to resolve requests for the EventFilter's id field.
-type EventFilterIDFieldResolver interface {
-	// ID implements response to request for id field.
-	ID(p graphql.ResolveParams) (string, error)
-}
-
-// EventFilterNamespaceFieldResolver implement to resolve requests for the EventFilter's namespace field.
-type EventFilterNamespaceFieldResolver interface {
-	// Namespace implements response to request for namespace field.
-	Namespace(p graphql.ResolveParams) (string, error)
-}
-
-// EventFilterNameFieldResolver implement to resolve requests for the EventFilter's name field.
-type EventFilterNameFieldResolver interface {
-	// Name implements response to request for name field.
-	Name(p graphql.ResolveParams) (string, error)
-}
-
-// EventFilterMetadataFieldResolver implement to resolve requests for the EventFilter's metadata field.
-type EventFilterMetadataFieldResolver interface {
-	// Metadata implements response to request for metadata field.
-	Metadata(p graphql.ResolveParams) (interface{}, error)
-}
-
-// EventFilterActionFieldResolver implement to resolve requests for the EventFilter's action field.
-type EventFilterActionFieldResolver interface {
-	// Action implements response to request for action field.
-	Action(p graphql.ResolveParams) (EventFilterAction, error)
-}
-
-// EventFilterExpressionsFieldResolver implement to resolve requests for the EventFilter's expressions field.
-type EventFilterExpressionsFieldResolver interface {
-	// Expressions implements response to request for expressions field.
-	Expressions(p graphql.ResolveParams) ([]string, error)
-}
-
-// EventFilterRuntimeAssetsFieldResolver implement to resolve requests for the EventFilter's runtimeAssets field.
-type EventFilterRuntimeAssetsFieldResolver interface {
-	// RuntimeAssets implements response to request for runtimeAssets field.
-	RuntimeAssets(p graphql.ResolveParams) (interface{}, error)
-}
-
-// EventFilterToJSONFieldResolver implement to resolve requests for the EventFilter's toJSON field.
-type EventFilterToJSONFieldResolver interface {
-	// ToJSON implements response to request for toJSON field.
-	ToJSON(p graphql.ResolveParams) (interface{}, error)
-}
-
 //
 // EventFilterFieldResolvers represents a collection of methods whose products represent the
 // response values of the 'EventFilter' type.
 type EventFilterFieldResolvers interface {
-	EventFilterIDFieldResolver
-	EventFilterNamespaceFieldResolver
-	EventFilterNameFieldResolver
-	EventFilterMetadataFieldResolver
-	EventFilterActionFieldResolver
-	EventFilterExpressionsFieldResolver
-	EventFilterRuntimeAssetsFieldResolver
-	EventFilterToJSONFieldResolver
+	// ID implements response to request for 'id' field.
+	ID(p graphql.ResolveParams) (string, error)
+
+	// Namespace implements response to request for 'namespace' field.
+	Namespace(p graphql.ResolveParams) (string, error)
+
+	// Name implements response to request for 'name' field.
+	Name(p graphql.ResolveParams) (string, error)
+
+	// Metadata implements response to request for 'metadata' field.
+	Metadata(p graphql.ResolveParams) (interface{}, error)
+
+	// Action implements response to request for 'action' field.
+	Action(p graphql.ResolveParams) (EventFilterAction, error)
+
+	// Expressions implements response to request for 'expressions' field.
+	Expressions(p graphql.ResolveParams) ([]string, error)
+
+	// RuntimeAssets implements response to request for 'runtimeAssets' field.
+	RuntimeAssets(p graphql.ResolveParams) (interface{}, error)
+
+	// ToJSON implements response to request for 'toJSON' field.
+	ToJSON(p graphql.ResolveParams) (interface{}, error)
 }
 
 // EventFilterAliases implements all methods on EventFilterFieldResolvers interface by using reflection to
@@ -361,24 +328,15 @@ type _EnumTypeEventFilterActionValues struct {
 	DENY EventFilterAction
 }
 
-// EventFilterConnectionNodesFieldResolver implement to resolve requests for the EventFilterConnection's nodes field.
-type EventFilterConnectionNodesFieldResolver interface {
-	// Nodes implements response to request for nodes field.
-	Nodes(p graphql.ResolveParams) (interface{}, error)
-}
-
-// EventFilterConnectionPageInfoFieldResolver implement to resolve requests for the EventFilterConnection's pageInfo field.
-type EventFilterConnectionPageInfoFieldResolver interface {
-	// PageInfo implements response to request for pageInfo field.
-	PageInfo(p graphql.ResolveParams) (interface{}, error)
-}
-
 //
 // EventFilterConnectionFieldResolvers represents a collection of methods whose products represent the
 // response values of the 'EventFilterConnection' type.
 type EventFilterConnectionFieldResolvers interface {
-	EventFilterConnectionNodesFieldResolver
-	EventFilterConnectionPageInfoFieldResolver
+	// Nodes implements response to request for 'nodes' field.
+	Nodes(p graphql.ResolveParams) (interface{}, error)
+
+	// PageInfo implements response to request for 'pageInfo' field.
+	PageInfo(p graphql.ResolveParams) (interface{}, error)
 }
 
 // EventFilterConnectionAliases implements all methods on EventFilterConnectionFieldResolvers interface by using reflection to
@@ -461,24 +419,15 @@ var _ObjectTypeEventFilterConnectionDesc = graphql.ObjectDesc{
 	},
 }
 
-// EventFilterEdgeNodeFieldResolver implement to resolve requests for the EventFilterEdge's node field.
-type EventFilterEdgeNodeFieldResolver interface {
-	// Node implements response to request for node field.
-	Node(p graphql.ResolveParams) (interface{}, error)
-}
-
-// EventFilterEdgeCursorFieldResolver implement to resolve requests for the EventFilterEdge's cursor field.
-type EventFilterEdgeCursorFieldResolver interface {
-	// Cursor implements response to request for cursor field.
-	Cursor(p graphql.ResolveParams) (string, error)
-}
-
 //
 // EventFilterEdgeFieldResolvers represents a collection of methods whose products represent the
 // response values of the 'EventFilterEdge' type.
 type EventFilterEdgeFieldResolvers interface {
-	EventFilterEdgeNodeFieldResolver
-	EventFilterEdgeCursorFieldResolver
+	// Node implements response to request for 'node' field.
+	Node(p graphql.ResolveParams) (interface{}, error)
+
+	// Cursor implements response to request for 'cursor' field.
+	Cursor(p graphql.ResolveParams) (string, error)
 }
 
 // EventFilterEdgeAliases implements all methods on EventFilterEdgeFieldResolvers interface by using reflection to

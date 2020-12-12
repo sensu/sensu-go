@@ -8,101 +8,48 @@ import (
 	graphql "github.com/sensu/sensu-go/graphql"
 )
 
-// HandlerIDFieldResolver implement to resolve requests for the Handler's id field.
-type HandlerIDFieldResolver interface {
-	// ID implements response to request for id field.
-	ID(p graphql.ResolveParams) (string, error)
-}
-
-// HandlerNamespaceFieldResolver implement to resolve requests for the Handler's namespace field.
-type HandlerNamespaceFieldResolver interface {
-	// Namespace implements response to request for namespace field.
-	Namespace(p graphql.ResolveParams) (string, error)
-}
-
-// HandlerNameFieldResolver implement to resolve requests for the Handler's name field.
-type HandlerNameFieldResolver interface {
-	// Name implements response to request for name field.
-	Name(p graphql.ResolveParams) (string, error)
-}
-
-// HandlerMetadataFieldResolver implement to resolve requests for the Handler's metadata field.
-type HandlerMetadataFieldResolver interface {
-	// Metadata implements response to request for metadata field.
-	Metadata(p graphql.ResolveParams) (interface{}, error)
-}
-
-// HandlerTypeFieldResolver implement to resolve requests for the Handler's type field.
-type HandlerTypeFieldResolver interface {
-	// Type implements response to request for type field.
-	Type(p graphql.ResolveParams) (string, error)
-}
-
-// HandlerCommandFieldResolver implement to resolve requests for the Handler's command field.
-type HandlerCommandFieldResolver interface {
-	// Command implements response to request for command field.
-	Command(p graphql.ResolveParams) (string, error)
-}
-
-// HandlerTimeoutFieldResolver implement to resolve requests for the Handler's timeout field.
-type HandlerTimeoutFieldResolver interface {
-	// Timeout implements response to request for timeout field.
-	Timeout(p graphql.ResolveParams) (int, error)
-}
-
-// HandlerSocketFieldResolver implement to resolve requests for the Handler's socket field.
-type HandlerSocketFieldResolver interface {
-	// Socket implements response to request for socket field.
-	Socket(p graphql.ResolveParams) (interface{}, error)
-}
-
-// HandlerMutatorFieldResolver implement to resolve requests for the Handler's mutator field.
-type HandlerMutatorFieldResolver interface {
-	// Mutator implements response to request for mutator field.
-	Mutator(p graphql.ResolveParams) (interface{}, error)
-}
-
-// HandlerHandlersFieldResolver implement to resolve requests for the Handler's handlers field.
-type HandlerHandlersFieldResolver interface {
-	// Handlers implements response to request for handlers field.
-	Handlers(p graphql.ResolveParams) (interface{}, error)
-}
-
-// HandlerFiltersFieldResolver implement to resolve requests for the Handler's filters field.
-type HandlerFiltersFieldResolver interface {
-	// Filters implements response to request for filters field.
-	Filters(p graphql.ResolveParams) ([]string, error)
-}
-
-// HandlerEnvVarsFieldResolver implement to resolve requests for the Handler's envVars field.
-type HandlerEnvVarsFieldResolver interface {
-	// EnvVars implements response to request for envVars field.
-	EnvVars(p graphql.ResolveParams) ([]string, error)
-}
-
-// HandlerToJSONFieldResolver implement to resolve requests for the Handler's toJSON field.
-type HandlerToJSONFieldResolver interface {
-	// ToJSON implements response to request for toJSON field.
-	ToJSON(p graphql.ResolveParams) (interface{}, error)
-}
-
 //
 // HandlerFieldResolvers represents a collection of methods whose products represent the
 // response values of the 'Handler' type.
 type HandlerFieldResolvers interface {
-	HandlerIDFieldResolver
-	HandlerNamespaceFieldResolver
-	HandlerNameFieldResolver
-	HandlerMetadataFieldResolver
-	HandlerTypeFieldResolver
-	HandlerCommandFieldResolver
-	HandlerTimeoutFieldResolver
-	HandlerSocketFieldResolver
-	HandlerMutatorFieldResolver
-	HandlerHandlersFieldResolver
-	HandlerFiltersFieldResolver
-	HandlerEnvVarsFieldResolver
-	HandlerToJSONFieldResolver
+	// ID implements response to request for 'id' field.
+	ID(p graphql.ResolveParams) (string, error)
+
+	// Namespace implements response to request for 'namespace' field.
+	Namespace(p graphql.ResolveParams) (string, error)
+
+	// Name implements response to request for 'name' field.
+	Name(p graphql.ResolveParams) (string, error)
+
+	// Metadata implements response to request for 'metadata' field.
+	Metadata(p graphql.ResolveParams) (interface{}, error)
+
+	// Type implements response to request for 'type' field.
+	Type(p graphql.ResolveParams) (string, error)
+
+	// Command implements response to request for 'command' field.
+	Command(p graphql.ResolveParams) (string, error)
+
+	// Timeout implements response to request for 'timeout' field.
+	Timeout(p graphql.ResolveParams) (int, error)
+
+	// Socket implements response to request for 'socket' field.
+	Socket(p graphql.ResolveParams) (interface{}, error)
+
+	// Mutator implements response to request for 'mutator' field.
+	Mutator(p graphql.ResolveParams) (interface{}, error)
+
+	// Handlers implements response to request for 'handlers' field.
+	Handlers(p graphql.ResolveParams) (interface{}, error)
+
+	// Filters implements response to request for 'filters' field.
+	Filters(p graphql.ResolveParams) ([]string, error)
+
+	// EnvVars implements response to request for 'envVars' field.
+	EnvVars(p graphql.ResolveParams) ([]string, error)
+
+	// ToJSON implements response to request for 'toJSON' field.
+	ToJSON(p graphql.ResolveParams) (interface{}, error)
 }
 
 // HandlerAliases implements all methods on HandlerFieldResolvers interface by using reflection to
@@ -475,24 +422,15 @@ var _ObjectTypeHandlerDesc = graphql.ObjectDesc{
 	},
 }
 
-// HandlerSocketHostFieldResolver implement to resolve requests for the HandlerSocket's host field.
-type HandlerSocketHostFieldResolver interface {
-	// Host implements response to request for host field.
-	Host(p graphql.ResolveParams) (string, error)
-}
-
-// HandlerSocketPortFieldResolver implement to resolve requests for the HandlerSocket's port field.
-type HandlerSocketPortFieldResolver interface {
-	// Port implements response to request for port field.
-	Port(p graphql.ResolveParams) (int, error)
-}
-
 //
 // HandlerSocketFieldResolvers represents a collection of methods whose products represent the
 // response values of the 'HandlerSocket' type.
 type HandlerSocketFieldResolvers interface {
-	HandlerSocketHostFieldResolver
-	HandlerSocketPortFieldResolver
+	// Host implements response to request for 'host' field.
+	Host(p graphql.ResolveParams) (string, error)
+
+	// Port implements response to request for 'port' field.
+	Port(p graphql.ResolveParams) (int, error)
 }
 
 // HandlerSocketAliases implements all methods on HandlerSocketFieldResolvers interface by using reflection to
@@ -589,24 +527,15 @@ var _ObjectTypeHandlerSocketDesc = graphql.ObjectDesc{
 	},
 }
 
-// HandlerConnectionNodesFieldResolver implement to resolve requests for the HandlerConnection's nodes field.
-type HandlerConnectionNodesFieldResolver interface {
-	// Nodes implements response to request for nodes field.
-	Nodes(p graphql.ResolveParams) (interface{}, error)
-}
-
-// HandlerConnectionPageInfoFieldResolver implement to resolve requests for the HandlerConnection's pageInfo field.
-type HandlerConnectionPageInfoFieldResolver interface {
-	// PageInfo implements response to request for pageInfo field.
-	PageInfo(p graphql.ResolveParams) (interface{}, error)
-}
-
 //
 // HandlerConnectionFieldResolvers represents a collection of methods whose products represent the
 // response values of the 'HandlerConnection' type.
 type HandlerConnectionFieldResolvers interface {
-	HandlerConnectionNodesFieldResolver
-	HandlerConnectionPageInfoFieldResolver
+	// Nodes implements response to request for 'nodes' field.
+	Nodes(p graphql.ResolveParams) (interface{}, error)
+
+	// PageInfo implements response to request for 'pageInfo' field.
+	PageInfo(p graphql.ResolveParams) (interface{}, error)
 }
 
 // HandlerConnectionAliases implements all methods on HandlerConnectionFieldResolvers interface by using reflection to
@@ -689,24 +618,15 @@ var _ObjectTypeHandlerConnectionDesc = graphql.ObjectDesc{
 	},
 }
 
-// HandlerEdgeNodeFieldResolver implement to resolve requests for the HandlerEdge's node field.
-type HandlerEdgeNodeFieldResolver interface {
-	// Node implements response to request for node field.
-	Node(p graphql.ResolveParams) (interface{}, error)
-}
-
-// HandlerEdgeCursorFieldResolver implement to resolve requests for the HandlerEdge's cursor field.
-type HandlerEdgeCursorFieldResolver interface {
-	// Cursor implements response to request for cursor field.
-	Cursor(p graphql.ResolveParams) (string, error)
-}
-
 //
 // HandlerEdgeFieldResolvers represents a collection of methods whose products represent the
 // response values of the 'HandlerEdge' type.
 type HandlerEdgeFieldResolvers interface {
-	HandlerEdgeNodeFieldResolver
-	HandlerEdgeCursorFieldResolver
+	// Node implements response to request for 'node' field.
+	Node(p graphql.ResolveParams) (interface{}, error)
+
+	// Cursor implements response to request for 'cursor' field.
+	Cursor(p graphql.ResolveParams) (string, error)
 }
 
 // HandlerEdgeAliases implements all methods on HandlerEdgeFieldResolvers interface by using reflection to

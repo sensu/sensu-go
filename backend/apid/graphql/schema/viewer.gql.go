@@ -7,24 +7,15 @@ import (
 	graphql "github.com/sensu/sensu-go/graphql"
 )
 
-// ViewerNamespacesFieldResolver implement to resolve requests for the Viewer's namespaces field.
-type ViewerNamespacesFieldResolver interface {
-	// Namespaces implements response to request for namespaces field.
-	Namespaces(p graphql.ResolveParams) (interface{}, error)
-}
-
-// ViewerUserFieldResolver implement to resolve requests for the Viewer's user field.
-type ViewerUserFieldResolver interface {
-	// User implements response to request for user field.
-	User(p graphql.ResolveParams) (interface{}, error)
-}
-
 //
 // ViewerFieldResolvers represents a collection of methods whose products represent the
 // response values of the 'Viewer' type.
 type ViewerFieldResolvers interface {
-	ViewerNamespacesFieldResolver
-	ViewerUserFieldResolver
+	// Namespaces implements response to request for 'namespaces' field.
+	Namespaces(p graphql.ResolveParams) (interface{}, error)
+
+	// User implements response to request for 'user' field.
+	User(p graphql.ResolveParams) (interface{}, error)
 }
 
 // ViewerAliases implements all methods on ViewerFieldResolvers interface by using reflection to

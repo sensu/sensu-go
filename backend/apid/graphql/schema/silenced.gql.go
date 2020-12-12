@@ -9,101 +9,48 @@ import (
 	time "time"
 )
 
-// SilencedIDFieldResolver implement to resolve requests for the Silenced's id field.
-type SilencedIDFieldResolver interface {
-	// ID implements response to request for id field.
-	ID(p graphql.ResolveParams) (string, error)
-}
-
-// SilencedNamespaceFieldResolver implement to resolve requests for the Silenced's namespace field.
-type SilencedNamespaceFieldResolver interface {
-	// Namespace implements response to request for namespace field.
-	Namespace(p graphql.ResolveParams) (string, error)
-}
-
-// SilencedNameFieldResolver implement to resolve requests for the Silenced's name field.
-type SilencedNameFieldResolver interface {
-	// Name implements response to request for name field.
-	Name(p graphql.ResolveParams) (string, error)
-}
-
-// SilencedMetadataFieldResolver implement to resolve requests for the Silenced's metadata field.
-type SilencedMetadataFieldResolver interface {
-	// Metadata implements response to request for metadata field.
-	Metadata(p graphql.ResolveParams) (interface{}, error)
-}
-
-// SilencedExpireFieldResolver implement to resolve requests for the Silenced's expire field.
-type SilencedExpireFieldResolver interface {
-	// Expire implements response to request for expire field.
-	Expire(p graphql.ResolveParams) (int, error)
-}
-
-// SilencedExpiresFieldResolver implement to resolve requests for the Silenced's expires field.
-type SilencedExpiresFieldResolver interface {
-	// Expires implements response to request for expires field.
-	Expires(p graphql.ResolveParams) (*time.Time, error)
-}
-
-// SilencedExpireOnResolveFieldResolver implement to resolve requests for the Silenced's expireOnResolve field.
-type SilencedExpireOnResolveFieldResolver interface {
-	// ExpireOnResolve implements response to request for expireOnResolve field.
-	ExpireOnResolve(p graphql.ResolveParams) (bool, error)
-}
-
-// SilencedCreatorFieldResolver implement to resolve requests for the Silenced's creator field.
-type SilencedCreatorFieldResolver interface {
-	// Creator implements response to request for creator field.
-	Creator(p graphql.ResolveParams) (string, error)
-}
-
-// SilencedCheckFieldResolver implement to resolve requests for the Silenced's check field.
-type SilencedCheckFieldResolver interface {
-	// Check implements response to request for check field.
-	Check(p graphql.ResolveParams) (interface{}, error)
-}
-
-// SilencedReasonFieldResolver implement to resolve requests for the Silenced's reason field.
-type SilencedReasonFieldResolver interface {
-	// Reason implements response to request for reason field.
-	Reason(p graphql.ResolveParams) (string, error)
-}
-
-// SilencedSubscriptionFieldResolver implement to resolve requests for the Silenced's subscription field.
-type SilencedSubscriptionFieldResolver interface {
-	// Subscription implements response to request for subscription field.
-	Subscription(p graphql.ResolveParams) (string, error)
-}
-
-// SilencedBeginFieldResolver implement to resolve requests for the Silenced's begin field.
-type SilencedBeginFieldResolver interface {
-	// Begin implements response to request for begin field.
-	Begin(p graphql.ResolveParams) (*time.Time, error)
-}
-
-// SilencedToJSONFieldResolver implement to resolve requests for the Silenced's toJSON field.
-type SilencedToJSONFieldResolver interface {
-	// ToJSON implements response to request for toJSON field.
-	ToJSON(p graphql.ResolveParams) (interface{}, error)
-}
-
 //
 // SilencedFieldResolvers represents a collection of methods whose products represent the
 // response values of the 'Silenced' type.
 type SilencedFieldResolvers interface {
-	SilencedIDFieldResolver
-	SilencedNamespaceFieldResolver
-	SilencedNameFieldResolver
-	SilencedMetadataFieldResolver
-	SilencedExpireFieldResolver
-	SilencedExpiresFieldResolver
-	SilencedExpireOnResolveFieldResolver
-	SilencedCreatorFieldResolver
-	SilencedCheckFieldResolver
-	SilencedReasonFieldResolver
-	SilencedSubscriptionFieldResolver
-	SilencedBeginFieldResolver
-	SilencedToJSONFieldResolver
+	// ID implements response to request for 'id' field.
+	ID(p graphql.ResolveParams) (string, error)
+
+	// Namespace implements response to request for 'namespace' field.
+	Namespace(p graphql.ResolveParams) (string, error)
+
+	// Name implements response to request for 'name' field.
+	Name(p graphql.ResolveParams) (string, error)
+
+	// Metadata implements response to request for 'metadata' field.
+	Metadata(p graphql.ResolveParams) (interface{}, error)
+
+	// Expire implements response to request for 'expire' field.
+	Expire(p graphql.ResolveParams) (int, error)
+
+	// Expires implements response to request for 'expires' field.
+	Expires(p graphql.ResolveParams) (*time.Time, error)
+
+	// ExpireOnResolve implements response to request for 'expireOnResolve' field.
+	ExpireOnResolve(p graphql.ResolveParams) (bool, error)
+
+	// Creator implements response to request for 'creator' field.
+	Creator(p graphql.ResolveParams) (string, error)
+
+	// Check implements response to request for 'check' field.
+	Check(p graphql.ResolveParams) (interface{}, error)
+
+	// Reason implements response to request for 'reason' field.
+	Reason(p graphql.ResolveParams) (string, error)
+
+	// Subscription implements response to request for 'subscription' field.
+	Subscription(p graphql.ResolveParams) (string, error)
+
+	// Begin implements response to request for 'begin' field.
+	Begin(p graphql.ResolveParams) (*time.Time, error)
+
+	// ToJSON implements response to request for 'toJSON' field.
+	ToJSON(p graphql.ResolveParams) (interface{}, error)
 }
 
 // SilencedAliases implements all methods on SilencedFieldResolvers interface by using reflection to
@@ -531,24 +478,15 @@ func _InterfaceTypeSilenceableConfigFn() graphql1.InterfaceConfig {
 // describe Silenceable's configuration; kept private to avoid unintentional tampering of configuration at runtime.
 var _InterfaceTypeSilenceableDesc = graphql.InterfaceDesc{Config: _InterfaceTypeSilenceableConfigFn}
 
-// SilencedConnectionNodesFieldResolver implement to resolve requests for the SilencedConnection's nodes field.
-type SilencedConnectionNodesFieldResolver interface {
-	// Nodes implements response to request for nodes field.
-	Nodes(p graphql.ResolveParams) (interface{}, error)
-}
-
-// SilencedConnectionPageInfoFieldResolver implement to resolve requests for the SilencedConnection's pageInfo field.
-type SilencedConnectionPageInfoFieldResolver interface {
-	// PageInfo implements response to request for pageInfo field.
-	PageInfo(p graphql.ResolveParams) (interface{}, error)
-}
-
 //
 // SilencedConnectionFieldResolvers represents a collection of methods whose products represent the
 // response values of the 'SilencedConnection' type.
 type SilencedConnectionFieldResolvers interface {
-	SilencedConnectionNodesFieldResolver
-	SilencedConnectionPageInfoFieldResolver
+	// Nodes implements response to request for 'nodes' field.
+	Nodes(p graphql.ResolveParams) (interface{}, error)
+
+	// PageInfo implements response to request for 'pageInfo' field.
+	PageInfo(p graphql.ResolveParams) (interface{}, error)
 }
 
 // SilencedConnectionAliases implements all methods on SilencedConnectionFieldResolvers interface by using reflection to

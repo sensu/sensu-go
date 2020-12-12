@@ -9,24 +9,15 @@ import (
 	time "time"
 )
 
-// VersionsEtcdFieldResolver implement to resolve requests for the Versions's etcd field.
-type VersionsEtcdFieldResolver interface {
-	// Etcd implements response to request for etcd field.
-	Etcd(p graphql.ResolveParams) (interface{}, error)
-}
-
-// VersionsBackendFieldResolver implement to resolve requests for the Versions's backend field.
-type VersionsBackendFieldResolver interface {
-	// Backend implements response to request for backend field.
-	Backend(p graphql.ResolveParams) (interface{}, error)
-}
-
 //
 // VersionsFieldResolvers represents a collection of methods whose products represent the
 // response values of the 'Versions' type.
 type VersionsFieldResolvers interface {
-	VersionsEtcdFieldResolver
-	VersionsBackendFieldResolver
+	// Etcd implements response to request for 'etcd' field.
+	Etcd(p graphql.ResolveParams) (interface{}, error)
+
+	// Backend implements response to request for 'backend' field.
+	Backend(p graphql.ResolveParams) (interface{}, error)
 }
 
 // VersionsAliases implements all methods on VersionsFieldResolvers interface by using reflection to
@@ -109,24 +100,15 @@ var _ObjectTypeVersionsDesc = graphql.ObjectDesc{
 	},
 }
 
-// EtcdVersionsServerFieldResolver implement to resolve requests for the EtcdVersions's server field.
-type EtcdVersionsServerFieldResolver interface {
-	// Server implements response to request for server field.
-	Server(p graphql.ResolveParams) (string, error)
-}
-
-// EtcdVersionsClusterFieldResolver implement to resolve requests for the EtcdVersions's cluster field.
-type EtcdVersionsClusterFieldResolver interface {
-	// Cluster implements response to request for cluster field.
-	Cluster(p graphql.ResolveParams) (string, error)
-}
-
 //
 // EtcdVersionsFieldResolvers represents a collection of methods whose products represent the
 // response values of the 'EtcdVersions' type.
 type EtcdVersionsFieldResolvers interface {
-	EtcdVersionsServerFieldResolver
-	EtcdVersionsClusterFieldResolver
+	// Server implements response to request for 'server' field.
+	Server(p graphql.ResolveParams) (string, error)
+
+	// Cluster implements response to request for 'cluster' field.
+	Cluster(p graphql.ResolveParams) (string, error)
 }
 
 // EtcdVersionsAliases implements all methods on EtcdVersionsFieldResolvers interface by using reflection to
@@ -223,31 +205,18 @@ var _ObjectTypeEtcdVersionsDesc = graphql.ObjectDesc{
 	},
 }
 
-// SensuBackendVersionVersionFieldResolver implement to resolve requests for the SensuBackendVersion's version field.
-type SensuBackendVersionVersionFieldResolver interface {
-	// Version implements response to request for version field.
-	Version(p graphql.ResolveParams) (string, error)
-}
-
-// SensuBackendVersionBuildSHAFieldResolver implement to resolve requests for the SensuBackendVersion's buildSHA field.
-type SensuBackendVersionBuildSHAFieldResolver interface {
-	// BuildSHA implements response to request for buildSHA field.
-	BuildSHA(p graphql.ResolveParams) (string, error)
-}
-
-// SensuBackendVersionBuildDateFieldResolver implement to resolve requests for the SensuBackendVersion's buildDate field.
-type SensuBackendVersionBuildDateFieldResolver interface {
-	// BuildDate implements response to request for buildDate field.
-	BuildDate(p graphql.ResolveParams) (*time.Time, error)
-}
-
 //
 // SensuBackendVersionFieldResolvers represents a collection of methods whose products represent the
 // response values of the 'SensuBackendVersion' type.
 type SensuBackendVersionFieldResolvers interface {
-	SensuBackendVersionVersionFieldResolver
-	SensuBackendVersionBuildSHAFieldResolver
-	SensuBackendVersionBuildDateFieldResolver
+	// Version implements response to request for 'version' field.
+	Version(p graphql.ResolveParams) (string, error)
+
+	// BuildSHA implements response to request for 'buildSHA' field.
+	BuildSHA(p graphql.ResolveParams) (string, error)
+
+	// BuildDate implements response to request for 'buildDate' field.
+	BuildDate(p graphql.ResolveParams) (*time.Time, error)
 }
 
 // SensuBackendVersionAliases implements all methods on SensuBackendVersionFieldResolvers interface by using reflection to

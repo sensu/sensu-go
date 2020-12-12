@@ -8,24 +8,15 @@ import (
 	graphql "github.com/sensu/sensu-go/graphql"
 )
 
-// KVPairStringKeyFieldResolver implement to resolve requests for the KVPairString's key field.
-type KVPairStringKeyFieldResolver interface {
-	// Key implements response to request for key field.
-	Key(p graphql.ResolveParams) (string, error)
-}
-
-// KVPairStringValFieldResolver implement to resolve requests for the KVPairString's val field.
-type KVPairStringValFieldResolver interface {
-	// Val implements response to request for val field.
-	Val(p graphql.ResolveParams) (string, error)
-}
-
 //
 // KVPairStringFieldResolvers represents a collection of methods whose products represent the
 // response values of the 'KVPairString' type.
 type KVPairStringFieldResolvers interface {
-	KVPairStringKeyFieldResolver
-	KVPairStringValFieldResolver
+	// Key implements response to request for 'key' field.
+	Key(p graphql.ResolveParams) (string, error)
+
+	// Val implements response to request for 'val' field.
+	Val(p graphql.ResolveParams) (string, error)
 }
 
 // KVPairStringAliases implements all methods on KVPairStringFieldResolvers interface by using reflection to
@@ -125,45 +116,24 @@ var _ObjectTypeKVPairStringDesc = graphql.ObjectDesc{
 	},
 }
 
-// ObjectMetaNameFieldResolver implement to resolve requests for the ObjectMeta's name field.
-type ObjectMetaNameFieldResolver interface {
-	// Name implements response to request for name field.
-	Name(p graphql.ResolveParams) (string, error)
-}
-
-// ObjectMetaNamespaceFieldResolver implement to resolve requests for the ObjectMeta's namespace field.
-type ObjectMetaNamespaceFieldResolver interface {
-	// Namespace implements response to request for namespace field.
-	Namespace(p graphql.ResolveParams) (string, error)
-}
-
-// ObjectMetaLabelsFieldResolver implement to resolve requests for the ObjectMeta's labels field.
-type ObjectMetaLabelsFieldResolver interface {
-	// Labels implements response to request for labels field.
-	Labels(p graphql.ResolveParams) (interface{}, error)
-}
-
-// ObjectMetaAnnotationsFieldResolver implement to resolve requests for the ObjectMeta's annotations field.
-type ObjectMetaAnnotationsFieldResolver interface {
-	// Annotations implements response to request for annotations field.
-	Annotations(p graphql.ResolveParams) (interface{}, error)
-}
-
-// ObjectMetaCreatedByFieldResolver implement to resolve requests for the ObjectMeta's createdBy field.
-type ObjectMetaCreatedByFieldResolver interface {
-	// CreatedBy implements response to request for createdBy field.
-	CreatedBy(p graphql.ResolveParams) (string, error)
-}
-
 //
 // ObjectMetaFieldResolvers represents a collection of methods whose products represent the
 // response values of the 'ObjectMeta' type.
 type ObjectMetaFieldResolvers interface {
-	ObjectMetaNameFieldResolver
-	ObjectMetaNamespaceFieldResolver
-	ObjectMetaLabelsFieldResolver
-	ObjectMetaAnnotationsFieldResolver
-	ObjectMetaCreatedByFieldResolver
+	// Name implements response to request for 'name' field.
+	Name(p graphql.ResolveParams) (string, error)
+
+	// Namespace implements response to request for 'namespace' field.
+	Namespace(p graphql.ResolveParams) (string, error)
+
+	// Labels implements response to request for 'labels' field.
+	Labels(p graphql.ResolveParams) (interface{}, error)
+
+	// Annotations implements response to request for 'annotations' field.
+	Annotations(p graphql.ResolveParams) (interface{}, error)
+
+	// CreatedBy implements response to request for 'createdBy' field.
+	CreatedBy(p graphql.ResolveParams) (string, error)
 }
 
 // ObjectMetaAliases implements all methods on ObjectMetaFieldResolvers interface by using reflection to

@@ -26,12 +26,6 @@ type MutationPutWrappedFieldResolverParams struct {
 	Args MutationPutWrappedFieldResolverArgs
 }
 
-// MutationPutWrappedFieldResolver implement to resolve requests for the Mutation's putWrapped field.
-type MutationPutWrappedFieldResolver interface {
-	// PutWrapped implements response to request for putWrapped field.
-	PutWrapped(p MutationPutWrappedFieldResolverParams) (interface{}, error)
-}
-
 // MutationCreateCheckFieldResolverArgs contains arguments provided to createCheck when selected
 type MutationCreateCheckFieldResolverArgs struct {
 	Input *CreateCheckInput // Input - self descriptive
@@ -41,12 +35,6 @@ type MutationCreateCheckFieldResolverArgs struct {
 type MutationCreateCheckFieldResolverParams struct {
 	graphql.ResolveParams
 	Args MutationCreateCheckFieldResolverArgs
-}
-
-// MutationCreateCheckFieldResolver implement to resolve requests for the Mutation's createCheck field.
-type MutationCreateCheckFieldResolver interface {
-	// CreateCheck implements response to request for createCheck field.
-	CreateCheck(p MutationCreateCheckFieldResolverParams) (interface{}, error)
 }
 
 // MutationUpdateCheckFieldResolverArgs contains arguments provided to updateCheck when selected
@@ -60,12 +48,6 @@ type MutationUpdateCheckFieldResolverParams struct {
 	Args MutationUpdateCheckFieldResolverArgs
 }
 
-// MutationUpdateCheckFieldResolver implement to resolve requests for the Mutation's updateCheck field.
-type MutationUpdateCheckFieldResolver interface {
-	// UpdateCheck implements response to request for updateCheck field.
-	UpdateCheck(p MutationUpdateCheckFieldResolverParams) (interface{}, error)
-}
-
 // MutationExecuteCheckFieldResolverArgs contains arguments provided to executeCheck when selected
 type MutationExecuteCheckFieldResolverArgs struct {
 	Input *ExecuteCheckInput // Input - self descriptive
@@ -75,12 +57,6 @@ type MutationExecuteCheckFieldResolverArgs struct {
 type MutationExecuteCheckFieldResolverParams struct {
 	graphql.ResolveParams
 	Args MutationExecuteCheckFieldResolverArgs
-}
-
-// MutationExecuteCheckFieldResolver implement to resolve requests for the Mutation's executeCheck field.
-type MutationExecuteCheckFieldResolver interface {
-	// ExecuteCheck implements response to request for executeCheck field.
-	ExecuteCheck(p MutationExecuteCheckFieldResolverParams) (interface{}, error)
 }
 
 // MutationDeleteCheckFieldResolverArgs contains arguments provided to deleteCheck when selected
@@ -94,12 +70,6 @@ type MutationDeleteCheckFieldResolverParams struct {
 	Args MutationDeleteCheckFieldResolverArgs
 }
 
-// MutationDeleteCheckFieldResolver implement to resolve requests for the Mutation's deleteCheck field.
-type MutationDeleteCheckFieldResolver interface {
-	// DeleteCheck implements response to request for deleteCheck field.
-	DeleteCheck(p MutationDeleteCheckFieldResolverParams) (interface{}, error)
-}
-
 // MutationDeleteEntityFieldResolverArgs contains arguments provided to deleteEntity when selected
 type MutationDeleteEntityFieldResolverArgs struct {
 	Input *DeleteRecordInput // Input - self descriptive
@@ -109,12 +79,6 @@ type MutationDeleteEntityFieldResolverArgs struct {
 type MutationDeleteEntityFieldResolverParams struct {
 	graphql.ResolveParams
 	Args MutationDeleteEntityFieldResolverArgs
-}
-
-// MutationDeleteEntityFieldResolver implement to resolve requests for the Mutation's deleteEntity field.
-type MutationDeleteEntityFieldResolver interface {
-	// DeleteEntity implements response to request for deleteEntity field.
-	DeleteEntity(p MutationDeleteEntityFieldResolverParams) (interface{}, error)
 }
 
 // MutationResolveEventFieldResolverArgs contains arguments provided to resolveEvent when selected
@@ -128,12 +92,6 @@ type MutationResolveEventFieldResolverParams struct {
 	Args MutationResolveEventFieldResolverArgs
 }
 
-// MutationResolveEventFieldResolver implement to resolve requests for the Mutation's resolveEvent field.
-type MutationResolveEventFieldResolver interface {
-	// ResolveEvent implements response to request for resolveEvent field.
-	ResolveEvent(p MutationResolveEventFieldResolverParams) (interface{}, error)
-}
-
 // MutationDeleteEventFieldResolverArgs contains arguments provided to deleteEvent when selected
 type MutationDeleteEventFieldResolverArgs struct {
 	Input *DeleteRecordInput // Input - self descriptive
@@ -143,12 +101,6 @@ type MutationDeleteEventFieldResolverArgs struct {
 type MutationDeleteEventFieldResolverParams struct {
 	graphql.ResolveParams
 	Args MutationDeleteEventFieldResolverArgs
-}
-
-// MutationDeleteEventFieldResolver implement to resolve requests for the Mutation's deleteEvent field.
-type MutationDeleteEventFieldResolver interface {
-	// DeleteEvent implements response to request for deleteEvent field.
-	DeleteEvent(p MutationDeleteEventFieldResolverParams) (interface{}, error)
 }
 
 // MutationDeleteEventFilterFieldResolverArgs contains arguments provided to deleteEventFilter when selected
@@ -162,12 +114,6 @@ type MutationDeleteEventFilterFieldResolverParams struct {
 	Args MutationDeleteEventFilterFieldResolverArgs
 }
 
-// MutationDeleteEventFilterFieldResolver implement to resolve requests for the Mutation's deleteEventFilter field.
-type MutationDeleteEventFilterFieldResolver interface {
-	// DeleteEventFilter implements response to request for deleteEventFilter field.
-	DeleteEventFilter(p MutationDeleteEventFilterFieldResolverParams) (interface{}, error)
-}
-
 // MutationDeleteHandlerFieldResolverArgs contains arguments provided to deleteHandler when selected
 type MutationDeleteHandlerFieldResolverArgs struct {
 	Input *DeleteRecordInput // Input - self descriptive
@@ -177,12 +123,6 @@ type MutationDeleteHandlerFieldResolverArgs struct {
 type MutationDeleteHandlerFieldResolverParams struct {
 	graphql.ResolveParams
 	Args MutationDeleteHandlerFieldResolverArgs
-}
-
-// MutationDeleteHandlerFieldResolver implement to resolve requests for the Mutation's deleteHandler field.
-type MutationDeleteHandlerFieldResolver interface {
-	// DeleteHandler implements response to request for deleteHandler field.
-	DeleteHandler(p MutationDeleteHandlerFieldResolverParams) (interface{}, error)
 }
 
 // MutationDeleteMutatorFieldResolverArgs contains arguments provided to deleteMutator when selected
@@ -196,12 +136,6 @@ type MutationDeleteMutatorFieldResolverParams struct {
 	Args MutationDeleteMutatorFieldResolverArgs
 }
 
-// MutationDeleteMutatorFieldResolver implement to resolve requests for the Mutation's deleteMutator field.
-type MutationDeleteMutatorFieldResolver interface {
-	// DeleteMutator implements response to request for deleteMutator field.
-	DeleteMutator(p MutationDeleteMutatorFieldResolverParams) (interface{}, error)
-}
-
 // MutationCreateSilenceFieldResolverArgs contains arguments provided to createSilence when selected
 type MutationCreateSilenceFieldResolverArgs struct {
 	Input *CreateSilenceInput // Input - self descriptive
@@ -211,12 +145,6 @@ type MutationCreateSilenceFieldResolverArgs struct {
 type MutationCreateSilenceFieldResolverParams struct {
 	graphql.ResolveParams
 	Args MutationCreateSilenceFieldResolverArgs
-}
-
-// MutationCreateSilenceFieldResolver implement to resolve requests for the Mutation's createSilence field.
-type MutationCreateSilenceFieldResolver interface {
-	// CreateSilence implements response to request for createSilence field.
-	CreateSilence(p MutationCreateSilenceFieldResolverParams) (interface{}, error)
 }
 
 // MutationDeleteSilenceFieldResolverArgs contains arguments provided to deleteSilence when selected
@@ -230,29 +158,48 @@ type MutationDeleteSilenceFieldResolverParams struct {
 	Args MutationDeleteSilenceFieldResolverArgs
 }
 
-// MutationDeleteSilenceFieldResolver implement to resolve requests for the Mutation's deleteSilence field.
-type MutationDeleteSilenceFieldResolver interface {
-	// DeleteSilence implements response to request for deleteSilence field.
-	DeleteSilence(p MutationDeleteSilenceFieldResolverParams) (interface{}, error)
-}
-
 //
 // MutationFieldResolvers represents a collection of methods whose products represent the
 // response values of the 'Mutation' type.
 type MutationFieldResolvers interface {
-	MutationPutWrappedFieldResolver
-	MutationCreateCheckFieldResolver
-	MutationUpdateCheckFieldResolver
-	MutationExecuteCheckFieldResolver
-	MutationDeleteCheckFieldResolver
-	MutationDeleteEntityFieldResolver
-	MutationResolveEventFieldResolver
-	MutationDeleteEventFieldResolver
-	MutationDeleteEventFilterFieldResolver
-	MutationDeleteHandlerFieldResolver
-	MutationDeleteMutatorFieldResolver
-	MutationCreateSilenceFieldResolver
-	MutationDeleteSilenceFieldResolver
+	// PutWrapped implements response to request for 'putWrapped' field.
+	PutWrapped(p MutationPutWrappedFieldResolverParams) (interface{}, error)
+
+	// CreateCheck implements response to request for 'createCheck' field.
+	CreateCheck(p MutationCreateCheckFieldResolverParams) (interface{}, error)
+
+	// UpdateCheck implements response to request for 'updateCheck' field.
+	UpdateCheck(p MutationUpdateCheckFieldResolverParams) (interface{}, error)
+
+	// ExecuteCheck implements response to request for 'executeCheck' field.
+	ExecuteCheck(p MutationExecuteCheckFieldResolverParams) (interface{}, error)
+
+	// DeleteCheck implements response to request for 'deleteCheck' field.
+	DeleteCheck(p MutationDeleteCheckFieldResolverParams) (interface{}, error)
+
+	// DeleteEntity implements response to request for 'deleteEntity' field.
+	DeleteEntity(p MutationDeleteEntityFieldResolverParams) (interface{}, error)
+
+	// ResolveEvent implements response to request for 'resolveEvent' field.
+	ResolveEvent(p MutationResolveEventFieldResolverParams) (interface{}, error)
+
+	// DeleteEvent implements response to request for 'deleteEvent' field.
+	DeleteEvent(p MutationDeleteEventFieldResolverParams) (interface{}, error)
+
+	// DeleteEventFilter implements response to request for 'deleteEventFilter' field.
+	DeleteEventFilter(p MutationDeleteEventFilterFieldResolverParams) (interface{}, error)
+
+	// DeleteHandler implements response to request for 'deleteHandler' field.
+	DeleteHandler(p MutationDeleteHandlerFieldResolverParams) (interface{}, error)
+
+	// DeleteMutator implements response to request for 'deleteMutator' field.
+	DeleteMutator(p MutationDeleteMutatorFieldResolverParams) (interface{}, error)
+
+	// CreateSilence implements response to request for 'createSilence' field.
+	CreateSilence(p MutationCreateSilenceFieldResolverParams) (interface{}, error)
+
+	// DeleteSilence implements response to request for 'deleteSilence' field.
+	DeleteSilence(p MutationDeleteSilenceFieldResolverParams) (interface{}, error)
 }
 
 // MutationAliases implements all methods on MutationFieldResolvers interface by using reflection to
@@ -690,24 +637,15 @@ var _ObjectTypeMutationDesc = graphql.ObjectDesc{
 	},
 }
 
-// PutWrappedPayloadNodeFieldResolver implement to resolve requests for the PutWrappedPayload's node field.
-type PutWrappedPayloadNodeFieldResolver interface {
-	// Node implements response to request for node field.
-	Node(p graphql.ResolveParams) (interface{}, error)
-}
-
-// PutWrappedPayloadErrorsFieldResolver implement to resolve requests for the PutWrappedPayload's errors field.
-type PutWrappedPayloadErrorsFieldResolver interface {
-	// Errors implements response to request for errors field.
-	Errors(p graphql.ResolveParams) (interface{}, error)
-}
-
 //
 // PutWrappedPayloadFieldResolvers represents a collection of methods whose products represent the
 // response values of the 'PutWrappedPayload' type.
 type PutWrappedPayloadFieldResolvers interface {
-	PutWrappedPayloadNodeFieldResolver
-	PutWrappedPayloadErrorsFieldResolver
+	// Node implements response to request for 'node' field.
+	Node(p graphql.ResolveParams) (interface{}, error)
+
+	// Errors implements response to request for 'errors' field.
+	Errors(p graphql.ResolveParams) (interface{}, error)
 }
 
 // PutWrappedPayloadAliases implements all methods on PutWrappedPayloadFieldResolvers interface by using reflection to
@@ -790,24 +728,15 @@ var _ObjectTypePutWrappedPayloadDesc = graphql.ObjectDesc{
 	},
 }
 
-// DeleteRecordPayloadClientMutationIDFieldResolver implement to resolve requests for the DeleteRecordPayload's clientMutationId field.
-type DeleteRecordPayloadClientMutationIDFieldResolver interface {
-	// ClientMutationID implements response to request for clientMutationId field.
-	ClientMutationID(p graphql.ResolveParams) (string, error)
-}
-
-// DeleteRecordPayloadDeletedIDFieldResolver implement to resolve requests for the DeleteRecordPayload's deletedId field.
-type DeleteRecordPayloadDeletedIDFieldResolver interface {
-	// DeletedID implements response to request for deletedId field.
-	DeletedID(p graphql.ResolveParams) (string, error)
-}
-
 //
 // DeleteRecordPayloadFieldResolvers represents a collection of methods whose products represent the
 // response values of the 'DeleteRecordPayload' type.
 type DeleteRecordPayloadFieldResolvers interface {
-	DeleteRecordPayloadClientMutationIDFieldResolver
-	DeleteRecordPayloadDeletedIDFieldResolver
+	// ClientMutationID implements response to request for 'clientMutationId' field.
+	ClientMutationID(p graphql.ResolveParams) (string, error)
+
+	// DeletedID implements response to request for 'deletedId' field.
+	DeletedID(p graphql.ResolveParams) (string, error)
 }
 
 // DeleteRecordPayloadAliases implements all methods on DeleteRecordPayloadFieldResolvers interface by using reflection to
@@ -1064,24 +993,15 @@ func _InputTypeCreateCheckInputConfigFn() graphql1.InputObjectConfig {
 // describe CreateCheckInput's configuration; kept private to avoid unintentional tampering of configuration at runtime.
 var _InputTypeCreateCheckInputDesc = graphql.InputDesc{Config: _InputTypeCreateCheckInputConfigFn}
 
-// CreateCheckPayloadClientMutationIDFieldResolver implement to resolve requests for the CreateCheckPayload's clientMutationId field.
-type CreateCheckPayloadClientMutationIDFieldResolver interface {
-	// ClientMutationID implements response to request for clientMutationId field.
-	ClientMutationID(p graphql.ResolveParams) (string, error)
-}
-
-// CreateCheckPayloadCheckFieldResolver implement to resolve requests for the CreateCheckPayload's check field.
-type CreateCheckPayloadCheckFieldResolver interface {
-	// Check implements response to request for check field.
-	Check(p graphql.ResolveParams) (interface{}, error)
-}
-
 //
 // CreateCheckPayloadFieldResolvers represents a collection of methods whose products represent the
 // response values of the 'CreateCheckPayload' type.
 type CreateCheckPayloadFieldResolvers interface {
-	CreateCheckPayloadClientMutationIDFieldResolver
-	CreateCheckPayloadCheckFieldResolver
+	// ClientMutationID implements response to request for 'clientMutationId' field.
+	ClientMutationID(p graphql.ResolveParams) (string, error)
+
+	// Check implements response to request for 'check' field.
+	Check(p graphql.ResolveParams) (interface{}, error)
 }
 
 // CreateCheckPayloadAliases implements all methods on CreateCheckPayloadFieldResolvers interface by using reflection to
@@ -1212,24 +1132,15 @@ func _InputTypeUpdateCheckInputConfigFn() graphql1.InputObjectConfig {
 // describe UpdateCheckInput's configuration; kept private to avoid unintentional tampering of configuration at runtime.
 var _InputTypeUpdateCheckInputDesc = graphql.InputDesc{Config: _InputTypeUpdateCheckInputConfigFn}
 
-// UpdateCheckPayloadClientMutationIDFieldResolver implement to resolve requests for the UpdateCheckPayload's clientMutationId field.
-type UpdateCheckPayloadClientMutationIDFieldResolver interface {
-	// ClientMutationID implements response to request for clientMutationId field.
-	ClientMutationID(p graphql.ResolveParams) (string, error)
-}
-
-// UpdateCheckPayloadCheckFieldResolver implement to resolve requests for the UpdateCheckPayload's check field.
-type UpdateCheckPayloadCheckFieldResolver interface {
-	// Check implements response to request for check field.
-	Check(p graphql.ResolveParams) (interface{}, error)
-}
-
 //
 // UpdateCheckPayloadFieldResolvers represents a collection of methods whose products represent the
 // response values of the 'UpdateCheckPayload' type.
 type UpdateCheckPayloadFieldResolvers interface {
-	UpdateCheckPayloadClientMutationIDFieldResolver
-	UpdateCheckPayloadCheckFieldResolver
+	// ClientMutationID implements response to request for 'clientMutationId' field.
+	ClientMutationID(p graphql.ResolveParams) (string, error)
+
+	// Check implements response to request for 'check' field.
+	Check(p graphql.ResolveParams) (interface{}, error)
 }
 
 // UpdateCheckPayloadAliases implements all methods on UpdateCheckPayloadFieldResolvers interface by using reflection to
@@ -1368,24 +1279,15 @@ func _InputTypeExecuteCheckInputConfigFn() graphql1.InputObjectConfig {
 // describe ExecuteCheckInput's configuration; kept private to avoid unintentional tampering of configuration at runtime.
 var _InputTypeExecuteCheckInputDesc = graphql.InputDesc{Config: _InputTypeExecuteCheckInputConfigFn}
 
-// ExecuteCheckPayloadClientMutationIDFieldResolver implement to resolve requests for the ExecuteCheckPayload's clientMutationId field.
-type ExecuteCheckPayloadClientMutationIDFieldResolver interface {
-	// ClientMutationID implements response to request for clientMutationId field.
-	ClientMutationID(p graphql.ResolveParams) (string, error)
-}
-
-// ExecuteCheckPayloadErrorsFieldResolver implement to resolve requests for the ExecuteCheckPayload's errors field.
-type ExecuteCheckPayloadErrorsFieldResolver interface {
-	// Errors implements response to request for errors field.
-	Errors(p graphql.ResolveParams) (interface{}, error)
-}
-
 //
 // ExecuteCheckPayloadFieldResolvers represents a collection of methods whose products represent the
 // response values of the 'ExecuteCheckPayload' type.
 type ExecuteCheckPayloadFieldResolvers interface {
-	ExecuteCheckPayloadClientMutationIDFieldResolver
-	ExecuteCheckPayloadErrorsFieldResolver
+	// ClientMutationID implements response to request for 'clientMutationId' field.
+	ClientMutationID(p graphql.ResolveParams) (string, error)
+
+	// Errors implements response to request for 'errors' field.
+	Errors(p graphql.ResolveParams) (interface{}, error)
 }
 
 // ExecuteCheckPayloadAliases implements all methods on ExecuteCheckPayloadFieldResolvers interface by using reflection to
@@ -1517,24 +1419,15 @@ func _InputTypeResolveEventInputConfigFn() graphql1.InputObjectConfig {
 // describe ResolveEventInput's configuration; kept private to avoid unintentional tampering of configuration at runtime.
 var _InputTypeResolveEventInputDesc = graphql.InputDesc{Config: _InputTypeResolveEventInputConfigFn}
 
-// ResolveEventPayloadClientMutationIDFieldResolver implement to resolve requests for the ResolveEventPayload's clientMutationId field.
-type ResolveEventPayloadClientMutationIDFieldResolver interface {
-	// ClientMutationID implements response to request for clientMutationId field.
-	ClientMutationID(p graphql.ResolveParams) (string, error)
-}
-
-// ResolveEventPayloadEventFieldResolver implement to resolve requests for the ResolveEventPayload's event field.
-type ResolveEventPayloadEventFieldResolver interface {
-	// Event implements response to request for event field.
-	Event(p graphql.ResolveParams) (interface{}, error)
-}
-
 //
 // ResolveEventPayloadFieldResolvers represents a collection of methods whose products represent the
 // response values of the 'ResolveEventPayload' type.
 type ResolveEventPayloadFieldResolvers interface {
-	ResolveEventPayloadClientMutationIDFieldResolver
-	ResolveEventPayloadEventFieldResolver
+	// ClientMutationID implements response to request for 'clientMutationId' field.
+	ClientMutationID(p graphql.ResolveParams) (string, error)
+
+	// Event implements response to request for 'event' field.
+	Event(p graphql.ResolveParams) (interface{}, error)
 }
 
 // ResolveEventPayloadAliases implements all methods on ResolveEventPayloadFieldResolvers interface by using reflection to
@@ -1730,24 +1623,15 @@ func _InputTypeSilenceInputsConfigFn() graphql1.InputObjectConfig {
 // describe SilenceInputs's configuration; kept private to avoid unintentional tampering of configuration at runtime.
 var _InputTypeSilenceInputsDesc = graphql.InputDesc{Config: _InputTypeSilenceInputsConfigFn}
 
-// CreateSilencePayloadClientMutationIDFieldResolver implement to resolve requests for the CreateSilencePayload's clientMutationId field.
-type CreateSilencePayloadClientMutationIDFieldResolver interface {
-	// ClientMutationID implements response to request for clientMutationId field.
-	ClientMutationID(p graphql.ResolveParams) (string, error)
-}
-
-// CreateSilencePayloadSilenceFieldResolver implement to resolve requests for the CreateSilencePayload's silence field.
-type CreateSilencePayloadSilenceFieldResolver interface {
-	// Silence implements response to request for silence field.
-	Silence(p graphql.ResolveParams) (interface{}, error)
-}
-
 //
 // CreateSilencePayloadFieldResolvers represents a collection of methods whose products represent the
 // response values of the 'CreateSilencePayload' type.
 type CreateSilencePayloadFieldResolvers interface {
-	CreateSilencePayloadClientMutationIDFieldResolver
-	CreateSilencePayloadSilenceFieldResolver
+	// ClientMutationID implements response to request for 'clientMutationId' field.
+	ClientMutationID(p graphql.ResolveParams) (string, error)
+
+	// Silence implements response to request for 'silence' field.
+	Silence(p graphql.ResolveParams) (interface{}, error)
 }
 
 // CreateSilencePayloadAliases implements all methods on CreateSilencePayloadFieldResolvers interface by using reflection to

@@ -8,66 +8,33 @@ import (
 	graphql "github.com/sensu/sensu-go/graphql"
 )
 
-// AssetIDFieldResolver implement to resolve requests for the Asset's id field.
-type AssetIDFieldResolver interface {
-	// ID implements response to request for id field.
-	ID(p graphql.ResolveParams) (string, error)
-}
-
-// AssetNamespaceFieldResolver implement to resolve requests for the Asset's namespace field.
-type AssetNamespaceFieldResolver interface {
-	// Namespace implements response to request for namespace field.
-	Namespace(p graphql.ResolveParams) (string, error)
-}
-
-// AssetNameFieldResolver implement to resolve requests for the Asset's name field.
-type AssetNameFieldResolver interface {
-	// Name implements response to request for name field.
-	Name(p graphql.ResolveParams) (string, error)
-}
-
-// AssetMetadataFieldResolver implement to resolve requests for the Asset's metadata field.
-type AssetMetadataFieldResolver interface {
-	// Metadata implements response to request for metadata field.
-	Metadata(p graphql.ResolveParams) (interface{}, error)
-}
-
-// AssetUrlFieldResolver implement to resolve requests for the Asset's url field.
-type AssetUrlFieldResolver interface {
-	// Url implements response to request for url field.
-	Url(p graphql.ResolveParams) (string, error)
-}
-
-// AssetSha512FieldResolver implement to resolve requests for the Asset's sha512 field.
-type AssetSha512FieldResolver interface {
-	// Sha512 implements response to request for sha512 field.
-	Sha512(p graphql.ResolveParams) (string, error)
-}
-
-// AssetFiltersFieldResolver implement to resolve requests for the Asset's filters field.
-type AssetFiltersFieldResolver interface {
-	// Filters implements response to request for filters field.
-	Filters(p graphql.ResolveParams) ([]string, error)
-}
-
-// AssetToJSONFieldResolver implement to resolve requests for the Asset's toJSON field.
-type AssetToJSONFieldResolver interface {
-	// ToJSON implements response to request for toJSON field.
-	ToJSON(p graphql.ResolveParams) (interface{}, error)
-}
-
 //
 // AssetFieldResolvers represents a collection of methods whose products represent the
 // response values of the 'Asset' type.
 type AssetFieldResolvers interface {
-	AssetIDFieldResolver
-	AssetNamespaceFieldResolver
-	AssetNameFieldResolver
-	AssetMetadataFieldResolver
-	AssetUrlFieldResolver
-	AssetSha512FieldResolver
-	AssetFiltersFieldResolver
-	AssetToJSONFieldResolver
+	// ID implements response to request for 'id' field.
+	ID(p graphql.ResolveParams) (string, error)
+
+	// Namespace implements response to request for 'namespace' field.
+	Namespace(p graphql.ResolveParams) (string, error)
+
+	// Name implements response to request for 'name' field.
+	Name(p graphql.ResolveParams) (string, error)
+
+	// Metadata implements response to request for 'metadata' field.
+	Metadata(p graphql.ResolveParams) (interface{}, error)
+
+	// Url implements response to request for 'url' field.
+	Url(p graphql.ResolveParams) (string, error)
+
+	// Sha512 implements response to request for 'sha512' field.
+	Sha512(p graphql.ResolveParams) (string, error)
+
+	// Filters implements response to request for 'filters' field.
+	Filters(p graphql.ResolveParams) ([]string, error)
+
+	// ToJSON implements response to request for 'toJSON' field.
+	ToJSON(p graphql.ResolveParams) (interface{}, error)
 }
 
 // AssetAliases implements all methods on AssetFieldResolvers interface by using reflection to

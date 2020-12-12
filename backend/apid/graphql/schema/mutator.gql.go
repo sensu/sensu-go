@@ -8,66 +8,33 @@ import (
 	graphql "github.com/sensu/sensu-go/graphql"
 )
 
-// MutatorIDFieldResolver implement to resolve requests for the Mutator's id field.
-type MutatorIDFieldResolver interface {
-	// ID implements response to request for id field.
-	ID(p graphql.ResolveParams) (string, error)
-}
-
-// MutatorNamespaceFieldResolver implement to resolve requests for the Mutator's namespace field.
-type MutatorNamespaceFieldResolver interface {
-	// Namespace implements response to request for namespace field.
-	Namespace(p graphql.ResolveParams) (string, error)
-}
-
-// MutatorNameFieldResolver implement to resolve requests for the Mutator's name field.
-type MutatorNameFieldResolver interface {
-	// Name implements response to request for name field.
-	Name(p graphql.ResolveParams) (string, error)
-}
-
-// MutatorMetadataFieldResolver implement to resolve requests for the Mutator's metadata field.
-type MutatorMetadataFieldResolver interface {
-	// Metadata implements response to request for metadata field.
-	Metadata(p graphql.ResolveParams) (interface{}, error)
-}
-
-// MutatorCommandFieldResolver implement to resolve requests for the Mutator's command field.
-type MutatorCommandFieldResolver interface {
-	// Command implements response to request for command field.
-	Command(p graphql.ResolveParams) (string, error)
-}
-
-// MutatorTimeoutFieldResolver implement to resolve requests for the Mutator's timeout field.
-type MutatorTimeoutFieldResolver interface {
-	// Timeout implements response to request for timeout field.
-	Timeout(p graphql.ResolveParams) (int, error)
-}
-
-// MutatorEnvVarsFieldResolver implement to resolve requests for the Mutator's envVars field.
-type MutatorEnvVarsFieldResolver interface {
-	// EnvVars implements response to request for envVars field.
-	EnvVars(p graphql.ResolveParams) ([]string, error)
-}
-
-// MutatorToJSONFieldResolver implement to resolve requests for the Mutator's toJSON field.
-type MutatorToJSONFieldResolver interface {
-	// ToJSON implements response to request for toJSON field.
-	ToJSON(p graphql.ResolveParams) (interface{}, error)
-}
-
 //
 // MutatorFieldResolvers represents a collection of methods whose products represent the
 // response values of the 'Mutator' type.
 type MutatorFieldResolvers interface {
-	MutatorIDFieldResolver
-	MutatorNamespaceFieldResolver
-	MutatorNameFieldResolver
-	MutatorMetadataFieldResolver
-	MutatorCommandFieldResolver
-	MutatorTimeoutFieldResolver
-	MutatorEnvVarsFieldResolver
-	MutatorToJSONFieldResolver
+	// ID implements response to request for 'id' field.
+	ID(p graphql.ResolveParams) (string, error)
+
+	// Namespace implements response to request for 'namespace' field.
+	Namespace(p graphql.ResolveParams) (string, error)
+
+	// Name implements response to request for 'name' field.
+	Name(p graphql.ResolveParams) (string, error)
+
+	// Metadata implements response to request for 'metadata' field.
+	Metadata(p graphql.ResolveParams) (interface{}, error)
+
+	// Command implements response to request for 'command' field.
+	Command(p graphql.ResolveParams) (string, error)
+
+	// Timeout implements response to request for 'timeout' field.
+	Timeout(p graphql.ResolveParams) (int, error)
+
+	// EnvVars implements response to request for 'envVars' field.
+	EnvVars(p graphql.ResolveParams) ([]string, error)
+
+	// ToJSON implements response to request for 'toJSON' field.
+	ToJSON(p graphql.ResolveParams) (interface{}, error)
 }
 
 // MutatorAliases implements all methods on MutatorFieldResolvers interface by using reflection to
@@ -321,24 +288,15 @@ var _ObjectTypeMutatorDesc = graphql.ObjectDesc{
 	},
 }
 
-// MutatorConnectionNodesFieldResolver implement to resolve requests for the MutatorConnection's nodes field.
-type MutatorConnectionNodesFieldResolver interface {
-	// Nodes implements response to request for nodes field.
-	Nodes(p graphql.ResolveParams) (interface{}, error)
-}
-
-// MutatorConnectionPageInfoFieldResolver implement to resolve requests for the MutatorConnection's pageInfo field.
-type MutatorConnectionPageInfoFieldResolver interface {
-	// PageInfo implements response to request for pageInfo field.
-	PageInfo(p graphql.ResolveParams) (interface{}, error)
-}
-
 //
 // MutatorConnectionFieldResolvers represents a collection of methods whose products represent the
 // response values of the 'MutatorConnection' type.
 type MutatorConnectionFieldResolvers interface {
-	MutatorConnectionNodesFieldResolver
-	MutatorConnectionPageInfoFieldResolver
+	// Nodes implements response to request for 'nodes' field.
+	Nodes(p graphql.ResolveParams) (interface{}, error)
+
+	// PageInfo implements response to request for 'pageInfo' field.
+	PageInfo(p graphql.ResolveParams) (interface{}, error)
 }
 
 // MutatorConnectionAliases implements all methods on MutatorConnectionFieldResolvers interface by using reflection to
@@ -421,24 +379,15 @@ var _ObjectTypeMutatorConnectionDesc = graphql.ObjectDesc{
 	},
 }
 
-// MutatorEdgeNodeFieldResolver implement to resolve requests for the MutatorEdge's node field.
-type MutatorEdgeNodeFieldResolver interface {
-	// Node implements response to request for node field.
-	Node(p graphql.ResolveParams) (interface{}, error)
-}
-
-// MutatorEdgeCursorFieldResolver implement to resolve requests for the MutatorEdge's cursor field.
-type MutatorEdgeCursorFieldResolver interface {
-	// Cursor implements response to request for cursor field.
-	Cursor(p graphql.ResolveParams) (string, error)
-}
-
 //
 // MutatorEdgeFieldResolvers represents a collection of methods whose products represent the
 // response values of the 'MutatorEdge' type.
 type MutatorEdgeFieldResolvers interface {
-	MutatorEdgeNodeFieldResolver
-	MutatorEdgeCursorFieldResolver
+	// Node implements response to request for 'node' field.
+	Node(p graphql.ResolveParams) (interface{}, error)
+
+	// Cursor implements response to request for 'cursor' field.
+	Cursor(p graphql.ResolveParams) (string, error)
 }
 
 // MutatorEdgeAliases implements all methods on MutatorEdgeFieldResolvers interface by using reflection to

@@ -8,45 +8,24 @@ import (
 	graphql "github.com/sensu/sensu-go/graphql"
 )
 
-// OffsetPageInfoHasNextPageFieldResolver implement to resolve requests for the OffsetPageInfo's hasNextPage field.
-type OffsetPageInfoHasNextPageFieldResolver interface {
-	// HasNextPage implements response to request for hasNextPage field.
-	HasNextPage(p graphql.ResolveParams) (bool, error)
-}
-
-// OffsetPageInfoHasPreviousPageFieldResolver implement to resolve requests for the OffsetPageInfo's hasPreviousPage field.
-type OffsetPageInfoHasPreviousPageFieldResolver interface {
-	// HasPreviousPage implements response to request for hasPreviousPage field.
-	HasPreviousPage(p graphql.ResolveParams) (bool, error)
-}
-
-// OffsetPageInfoNextOffsetFieldResolver implement to resolve requests for the OffsetPageInfo's nextOffset field.
-type OffsetPageInfoNextOffsetFieldResolver interface {
-	// NextOffset implements response to request for nextOffset field.
-	NextOffset(p graphql.ResolveParams) (int, error)
-}
-
-// OffsetPageInfoPreviousOffsetFieldResolver implement to resolve requests for the OffsetPageInfo's previousOffset field.
-type OffsetPageInfoPreviousOffsetFieldResolver interface {
-	// PreviousOffset implements response to request for previousOffset field.
-	PreviousOffset(p graphql.ResolveParams) (int, error)
-}
-
-// OffsetPageInfoTotalCountFieldResolver implement to resolve requests for the OffsetPageInfo's totalCount field.
-type OffsetPageInfoTotalCountFieldResolver interface {
-	// TotalCount implements response to request for totalCount field.
-	TotalCount(p graphql.ResolveParams) (int, error)
-}
-
 //
 // OffsetPageInfoFieldResolvers represents a collection of methods whose products represent the
 // response values of the 'OffsetPageInfo' type.
 type OffsetPageInfoFieldResolvers interface {
-	OffsetPageInfoHasNextPageFieldResolver
-	OffsetPageInfoHasPreviousPageFieldResolver
-	OffsetPageInfoNextOffsetFieldResolver
-	OffsetPageInfoPreviousOffsetFieldResolver
-	OffsetPageInfoTotalCountFieldResolver
+	// HasNextPage implements response to request for 'hasNextPage' field.
+	HasNextPage(p graphql.ResolveParams) (bool, error)
+
+	// HasPreviousPage implements response to request for 'hasPreviousPage' field.
+	HasPreviousPage(p graphql.ResolveParams) (bool, error)
+
+	// NextOffset implements response to request for 'nextOffset' field.
+	NextOffset(p graphql.ResolveParams) (int, error)
+
+	// PreviousOffset implements response to request for 'previousOffset' field.
+	PreviousOffset(p graphql.ResolveParams) (int, error)
+
+	// TotalCount implements response to request for 'totalCount' field.
+	TotalCount(p graphql.ResolveParams) (int, error)
 }
 
 // OffsetPageInfoAliases implements all methods on OffsetPageInfoFieldResolvers interface by using reflection to

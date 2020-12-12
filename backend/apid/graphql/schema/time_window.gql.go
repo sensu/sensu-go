@@ -8,17 +8,12 @@ import (
 	graphql "github.com/sensu/sensu-go/graphql"
 )
 
-// TimeWindowWhenDaysFieldResolver implement to resolve requests for the TimeWindowWhen's days field.
-type TimeWindowWhenDaysFieldResolver interface {
-	// Days implements response to request for days field.
-	Days(p graphql.ResolveParams) (interface{}, error)
-}
-
 //
 // TimeWindowWhenFieldResolvers represents a collection of methods whose products represent the
 // response values of the 'TimeWindowWhen' type.
 type TimeWindowWhenFieldResolvers interface {
-	TimeWindowWhenDaysFieldResolver
+	// Days implements response to request for 'days' field.
+	Days(p graphql.ResolveParams) (interface{}, error)
 }
 
 // TimeWindowWhenAliases implements all methods on TimeWindowWhenFieldResolvers interface by using reflection to
@@ -76,66 +71,33 @@ var _ObjectTypeTimeWindowWhenDesc = graphql.ObjectDesc{
 	FieldHandlers: map[string]graphql.FieldHandler{"days": _ObjTypeTimeWindowWhenDaysHandler},
 }
 
-// TimeWindowDaysAllFieldResolver implement to resolve requests for the TimeWindowDays's all field.
-type TimeWindowDaysAllFieldResolver interface {
-	// All implements response to request for all field.
-	All(p graphql.ResolveParams) (interface{}, error)
-}
-
-// TimeWindowDaysSundayFieldResolver implement to resolve requests for the TimeWindowDays's sunday field.
-type TimeWindowDaysSundayFieldResolver interface {
-	// Sunday implements response to request for sunday field.
-	Sunday(p graphql.ResolveParams) (interface{}, error)
-}
-
-// TimeWindowDaysMondayFieldResolver implement to resolve requests for the TimeWindowDays's monday field.
-type TimeWindowDaysMondayFieldResolver interface {
-	// Monday implements response to request for monday field.
-	Monday(p graphql.ResolveParams) (interface{}, error)
-}
-
-// TimeWindowDaysTuesdayFieldResolver implement to resolve requests for the TimeWindowDays's tuesday field.
-type TimeWindowDaysTuesdayFieldResolver interface {
-	// Tuesday implements response to request for tuesday field.
-	Tuesday(p graphql.ResolveParams) (interface{}, error)
-}
-
-// TimeWindowDaysWednesdayFieldResolver implement to resolve requests for the TimeWindowDays's wednesday field.
-type TimeWindowDaysWednesdayFieldResolver interface {
-	// Wednesday implements response to request for wednesday field.
-	Wednesday(p graphql.ResolveParams) (interface{}, error)
-}
-
-// TimeWindowDaysThursdayFieldResolver implement to resolve requests for the TimeWindowDays's thursday field.
-type TimeWindowDaysThursdayFieldResolver interface {
-	// Thursday implements response to request for thursday field.
-	Thursday(p graphql.ResolveParams) (interface{}, error)
-}
-
-// TimeWindowDaysFridayFieldResolver implement to resolve requests for the TimeWindowDays's friday field.
-type TimeWindowDaysFridayFieldResolver interface {
-	// Friday implements response to request for friday field.
-	Friday(p graphql.ResolveParams) (interface{}, error)
-}
-
-// TimeWindowDaysSaturdayFieldResolver implement to resolve requests for the TimeWindowDays's saturday field.
-type TimeWindowDaysSaturdayFieldResolver interface {
-	// Saturday implements response to request for saturday field.
-	Saturday(p graphql.ResolveParams) (interface{}, error)
-}
-
 //
 // TimeWindowDaysFieldResolvers represents a collection of methods whose products represent the
 // response values of the 'TimeWindowDays' type.
 type TimeWindowDaysFieldResolvers interface {
-	TimeWindowDaysAllFieldResolver
-	TimeWindowDaysSundayFieldResolver
-	TimeWindowDaysMondayFieldResolver
-	TimeWindowDaysTuesdayFieldResolver
-	TimeWindowDaysWednesdayFieldResolver
-	TimeWindowDaysThursdayFieldResolver
-	TimeWindowDaysFridayFieldResolver
-	TimeWindowDaysSaturdayFieldResolver
+	// All implements response to request for 'all' field.
+	All(p graphql.ResolveParams) (interface{}, error)
+
+	// Sunday implements response to request for 'sunday' field.
+	Sunday(p graphql.ResolveParams) (interface{}, error)
+
+	// Monday implements response to request for 'monday' field.
+	Monday(p graphql.ResolveParams) (interface{}, error)
+
+	// Tuesday implements response to request for 'tuesday' field.
+	Tuesday(p graphql.ResolveParams) (interface{}, error)
+
+	// Wednesday implements response to request for 'wednesday' field.
+	Wednesday(p graphql.ResolveParams) (interface{}, error)
+
+	// Thursday implements response to request for 'thursday' field.
+	Thursday(p graphql.ResolveParams) (interface{}, error)
+
+	// Friday implements response to request for 'friday' field.
+	Friday(p graphql.ResolveParams) (interface{}, error)
+
+	// Saturday implements response to request for 'saturday' field.
+	Saturday(p graphql.ResolveParams) (interface{}, error)
 }
 
 // TimeWindowDaysAliases implements all methods on TimeWindowDaysFieldResolvers interface by using reflection to
@@ -344,24 +306,15 @@ var _ObjectTypeTimeWindowDaysDesc = graphql.ObjectDesc{
 	},
 }
 
-// TimeWindowTimeRangeBeginFieldResolver implement to resolve requests for the TimeWindowTimeRange's begin field.
-type TimeWindowTimeRangeBeginFieldResolver interface {
-	// Begin implements response to request for begin field.
-	Begin(p graphql.ResolveParams) (string, error)
-}
-
-// TimeWindowTimeRangeEndFieldResolver implement to resolve requests for the TimeWindowTimeRange's end field.
-type TimeWindowTimeRangeEndFieldResolver interface {
-	// End implements response to request for end field.
-	End(p graphql.ResolveParams) (string, error)
-}
-
 //
 // TimeWindowTimeRangeFieldResolvers represents a collection of methods whose products represent the
 // response values of the 'TimeWindowTimeRange' type.
 type TimeWindowTimeRangeFieldResolvers interface {
-	TimeWindowTimeRangeBeginFieldResolver
-	TimeWindowTimeRangeEndFieldResolver
+	// Begin implements response to request for 'begin' field.
+	Begin(p graphql.ResolveParams) (string, error)
+
+	// End implements response to request for 'end' field.
+	End(p graphql.ResolveParams) (string, error)
 }
 
 // TimeWindowTimeRangeAliases implements all methods on TimeWindowTimeRangeFieldResolvers interface by using reflection to

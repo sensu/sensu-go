@@ -52,31 +52,18 @@ func _InterfaceTypeErrorConfigFn() graphql1.InterfaceConfig {
 // describe Error's configuration; kept private to avoid unintentional tampering of configuration at runtime.
 var _InterfaceTypeErrorDesc = graphql.InterfaceDesc{Config: _InterfaceTypeErrorConfigFn}
 
-// StandardErrorInputFieldResolver implement to resolve requests for the StandardError's input field.
-type StandardErrorInputFieldResolver interface {
-	// Input implements response to request for input field.
-	Input(p graphql.ResolveParams) (string, error)
-}
-
-// StandardErrorCodeFieldResolver implement to resolve requests for the StandardError's code field.
-type StandardErrorCodeFieldResolver interface {
-	// Code implements response to request for code field.
-	Code(p graphql.ResolveParams) (ErrCode, error)
-}
-
-// StandardErrorMessageFieldResolver implement to resolve requests for the StandardError's message field.
-type StandardErrorMessageFieldResolver interface {
-	// Message implements response to request for message field.
-	Message(p graphql.ResolveParams) (string, error)
-}
-
 //
 // StandardErrorFieldResolvers represents a collection of methods whose products represent the
 // response values of the 'StandardError' type.
 type StandardErrorFieldResolvers interface {
-	StandardErrorInputFieldResolver
-	StandardErrorCodeFieldResolver
-	StandardErrorMessageFieldResolver
+	// Input implements response to request for 'input' field.
+	Input(p graphql.ResolveParams) (string, error)
+
+	// Code implements response to request for 'code' field.
+	Code(p graphql.ResolveParams) (ErrCode, error)
+
+	// Message implements response to request for 'message' field.
+	Message(p graphql.ResolveParams) (string, error)
 }
 
 // StandardErrorAliases implements all methods on StandardErrorFieldResolvers interface by using reflection to

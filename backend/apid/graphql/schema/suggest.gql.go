@@ -8,17 +8,12 @@ import (
 	graphql "github.com/sensu/sensu-go/graphql"
 )
 
-// SuggestionResultSetValuesFieldResolver implement to resolve requests for the SuggestionResultSet's values field.
-type SuggestionResultSetValuesFieldResolver interface {
-	// Values implements response to request for values field.
-	Values(p graphql.ResolveParams) ([]string, error)
-}
-
 //
 // SuggestionResultSetFieldResolvers represents a collection of methods whose products represent the
 // response values of the 'SuggestionResultSet' type.
 type SuggestionResultSetFieldResolvers interface {
-	SuggestionResultSetValuesFieldResolver
+	// Values implements response to request for 'values' field.
+	Values(p graphql.ResolveParams) ([]string, error)
 }
 
 // SuggestionResultSetAliases implements all methods on SuggestionResultSetFieldResolvers interface by using reflection to
