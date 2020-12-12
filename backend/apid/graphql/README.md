@@ -62,7 +62,7 @@ made to the target file.
     From the project root, run:
 
     ```shell
-    go run ./scripts/gengraphql/gengraphql.go ./backend/apid/graphql/schema
+    go generate ./backend/apid/graphql/schema
     ```
 
 3.  Next we need to tell our service how the types themselves are implemented.
@@ -127,33 +127,33 @@ made to the target file.
 
 Mutations are how the client modifies the server-side data.
 
--  [Reference](http://graphql.org/learn/queries/#mutations)
--   Sensu follow's Relay's [mutation conventions](https://facebook.github.io/relay/docs/en/graphql-server-specification.html#mutations). Each mutation should consist of three
-    elements. An input object type that describes the parameters to the mutation,
-    an object type that describes the return values, and finally a field on the
-    `Mutation` to be used as the entry point.
+- [Reference](http://graphql.org/learn/queries/#mutations)
+- Sensu follow's Relay's [mutation conventions](https://facebook.github.io/relay/docs/en/graphql-server-specification.html#mutations). Each mutation should consist of three
+  elements. An input object type that describes the parameters to the mutation,
+  an object type that describes the return values, and finally a field on the
+  `Mutation` to be used as the entry point.
 
-    ```graphql
-    # mutations.graphql
-    type Mutation {
-      # ...
-      addRole(inputs: AddRoleInput) AddRolePayload
-      # ...
-    }
+  ```graphql
+  # mutations.graphql
+  type Mutation {
+    # ...
+    addRole(inputs: AddRoleInput) AddRolePayload
+    # ...
+  }
 
-    input AddRoleInput {
-      # Used by a client to keep track of in-flight mutations
-      clientMutationId: String!
-      userId: ID!
-      roleId: ID!
-    }
+  input AddRoleInput {
+    # Used by a client to keep track of in-flight mutations
+    clientMutationId: String!
+    userId: ID!
+    roleId: ID!
+  }
 
-    type AddRolePayload {
-      clientMutationId: String!
-      user: User!
-      role: Role!
-    }
-    ```
+  type AddRolePayload {
+    clientMutationId: String!
+    user: User!
+    role: Role!
+  }
+  ```
 
 ## Deprecation
 
@@ -161,21 +161,21 @@ Mutations are how the client modifies the server-side data.
   using the field.
 - GraphQL supports @deprecated directive for marking a field as deprecated.
 
-    ```graphql
-    type MyType {
-      one: String! @deprecated
-      two: String! @deprecated(reason: "Two is bad number.")
-      three: String!
-    }
-    ```
+  ```graphql
+  type MyType {
+    one: String! @deprecated
+    two: String! @deprecated(reason: "Two is bad number.")
+    three: String!
+  }
+  ```
 
 ## File Conventions
 
 - **Type Definitions** live in the `schema` package, and use the file extension
   `.graphql`.
   - When the type(s) they match an internal type defined in the
-  `types` package the filenames should ideally match. (Eg. `entity.go`
-  `entity.graphql`.)
+    `types` package the filenames should ideally match. (Eg. `entity.go`
+    `entity.graphql`.)
   - Ideally all types and fields are
 - **FieldResolvers** live in the `graphql` package.
   - Filenames should match the same name of the graphql file it is implementing.
