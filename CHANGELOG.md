@@ -16,6 +16,8 @@ created when in interactive mode.
 - Add support for environment variables to define configuration file paths of
 sensu-backend (`SENSU_BACKEND_CONFIG_FILE`) & sensu-agent (`SENSU_CONFIG_FILE`).
 - Added event sequence numbers.
+- Entities may now be managed exclusively by their agents when sensu-agent is
+started with the new `agent-managed-entity` configuration attribute.
 
 ### Changed
 - Adjust the date and duration formats used when listing and displaying silenced
