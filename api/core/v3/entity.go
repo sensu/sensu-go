@@ -119,6 +119,7 @@ func FixtureEntityConfig(name string) *EntityConfig {
 			Name:        name,
 			Labels:      make(map[string]string),
 			Annotations: make(map[string]string),
+			CreatedBy:   "user123",
 		},
 		EntityClass:   corev2.EntityAgentClass,
 		User:          "agent1",
