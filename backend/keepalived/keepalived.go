@@ -356,29 +356,57 @@ func (k *Keepalived) handleEntityRegistration(entity *corev2.Entity, event *core
 	}
 	req := storev2.NewResourceRequestFromResource(tctx, config)
 
-	var isFirstSequenceForAgentManagedEntity bool
-	// Determine whether this keepalive is the first one sent by an entity managed
-	// by its agent, in which case we want to create or update the entity config
-	if event.Sequence == 1 && entity.ObjectMeta.Labels[corev2.ManagedByLabel] == "sensu-agent" {
-		isFirstSequenceForAgentManagedEntity = true
+	exists := true
+	wrappedEntityConfig, err := k.storev2.Get(req)
+	if err != nil {
+		if _, ok := err.(*store.ErrNotFound); !ok {
+			logger.WithError(err).Error("error while checking if entity exists")
+			return err
+		}
+		exists = false
 	}
 
-	exists, err := k.storev2.Exists(req)
-	if err != nil {
-		logger.WithError(err).Error("error checking if entity exists")
-		return err
-	}
 	if exists {
-		// Update the entity config if the agent reconnected
-		if isFirstSequenceForAgentManagedEntity {
+		// Determine if the entity is managed by its agent
+		if entity.ObjectMeta.Labels[corev2.ManagedByLabel] == "sensu-agent" {
+			// If this keepalive is the first one sent by an agent, we want to update
+			// the stored entity config to reflect the sent one
+			if event.Sequence == 1 {
+				if err := k.storev2.UpdateIfExists(req, wrapper); err != nil {
+					logger.WithError(err).Error("could not update entity")
+					return err
+				}
+			}
+			return nil
+		}
+
+		// Determine if this entity was previously managed by its agent but it's no
+		// longer the case, in which case we need to reflect that in the stored
+		// entity config
+		var storedEntityConfig corev3.EntityConfig
+		err = wrappedEntityConfig.UnwrapInto(&storedEntityConfig)
+		if err != nil {
+			logger.WithError(err).Error("error unwrapping entity config")
+			return err
+		}
+		if storedEntityConfig.Metadata.Labels[corev2.ManagedByLabel] == "sensu-agent" {
+			// Remove the managed_by label and update the stored entity config
+			delete(storedEntityConfig.Metadata.Labels, corev2.ManagedByLabel)
+			wrapper, err = wrap.Resource(config)
+			if err != nil {
+				logger.WithError(err).Error("error wrapping entity config")
+				return err
+			}
 			if err := k.storev2.UpdateIfExists(req, wrapper); err != nil {
 				logger.WithError(err).Error("could not update entity")
 				return err
 			}
 		}
-
 		return nil
 	}
+
+	// The entity config does not exist so create it and publish a registration
+	// event
 	if err := k.storev2.CreateIfNotExists(req, wrapper); err == nil {
 		event := createRegistrationEvent(entity)
 		return k.bus.Publish(messaging.TopicEvent, event)

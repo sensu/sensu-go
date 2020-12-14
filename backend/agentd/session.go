@@ -481,6 +481,12 @@ func (s *Session) Start() (err error) {
 			return err
 		}
 
+		// Remove the managed_by label if the value is sensu-agent, in case the
+		// entity is no longer managed by its agent
+		if storedEntityConfig.Metadata.Labels[corev2.ManagedByLabel] == "sensu-agent" {
+			delete(storedEntityConfig.Metadata.Labels, corev2.ManagedByLabel)
+		}
+
 		// Send back this entity config to the agent so it uses that rather than
 		// its local config for its events
 		watchEvent := &store.WatchEventEntityConfig{

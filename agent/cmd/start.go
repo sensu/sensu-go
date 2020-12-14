@@ -101,11 +101,9 @@ func NewAgentConfig(cmd *cobra.Command) (*agent.Config, error) {
 	logrus.SetLevel(level)
 
 	labels := viper.GetStringMapString(flagLabels)
-	fmt.Println(viper.GetBool(flagAgentManagedEntity))
 	if viper.GetBool(flagAgentManagedEntity) {
 		labels[corev2.ManagedByLabel] = "sensu-agent"
 	}
-	fmt.Printf("labels = %#v\n", labels)
 
 	cfg := agent.NewConfig()
 	cfg.AgentManagedEntity = viper.GetBool(flagAgentManagedEntity)

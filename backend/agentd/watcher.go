@@ -6,6 +6,7 @@ import (
 
 	"github.com/coreos/etcd/clientv3"
 	"github.com/gogo/protobuf/proto"
+	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	corev3 "github.com/sensu/sensu-go/api/core/v3"
 	"github.com/sensu/sensu-go/backend/store"
 	etcdstore "github.com/sensu/sensu-go/backend/store/etcd"
@@ -52,6 +53,12 @@ func GetEntityConfigWatcher(ctx context.Context, client *clientv3.Client) <-chan
 				logger.WithField("key", response.Key).WithError(err).
 					Error("unable to unwrap entity config from key")
 				continue
+			}
+
+			// Remove the managed_by label if the value is sensu-agent, in case the
+			// entity is no longer managed by its agent
+			if entityConfig.Metadata.Labels[corev2.ManagedByLabel] == "sensu-agent" {
+				delete(entityConfig.Metadata.Labels, corev2.ManagedByLabel)
 			}
 
 			ch <- store.WatchEventEntityConfig{
