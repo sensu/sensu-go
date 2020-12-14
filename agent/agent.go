@@ -491,6 +491,10 @@ func (a *Agent) newKeepalive() *transport.Message {
 	entity := a.getAgentEntity()
 	uid, _ := uuid.NewRandom()
 
+	if a.config.AgentManagedEntity {
+		entity.CreatedBy = a.config.User
+	}
+
 	keepalive := &corev2.Event{
 		ObjectMeta: corev2.NewObjectMeta("", entity.Namespace),
 		ID:         uid[:],
