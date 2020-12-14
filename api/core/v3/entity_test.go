@@ -57,7 +57,6 @@ func TestV3EntityToV2(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	// This is not correct if we merge labels/annotations between cfg and state
 	if want, got := cfg.Metadata, entity.ObjectMeta; !proto.Equal(&got, want) {
 		t.Errorf("bad objectmeta: got %v, want %v", got, want)
 	}
@@ -81,10 +80,6 @@ func TestV3EntityToV2(t *testing.T) {
 	}
 	if want, got := cfg.Redact, entity.Redact; !reflect.DeepEqual(got, want) {
 		t.Errorf("bad Redact: got %v, want %v", got, want)
-	}
-	// This is not correct if we merge labels/annotations between cfg and state
-	if want, got := state.Metadata, entity.ObjectMeta; !proto.Equal(&got, want) {
-		t.Errorf("bad objectmeta: got %v, want %v", got, want)
 	}
 	if want, got := state.System, entity.System; !proto.Equal(&got, &want) {
 		t.Errorf("bad System: got %v, want %v", got, want)

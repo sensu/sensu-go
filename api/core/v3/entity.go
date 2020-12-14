@@ -93,8 +93,8 @@ func V3EntityToV2(cfg *EntityConfig, state *EntityState) (*corev2.Entity, error)
 		meta.Annotations[k] = v
 	}
 
-	// CreatedBy is also a metadata field that needs to be carried over, ie:
-	// meta.CreatedBy = cfg.Metadata.CreatedBy
+	// Carry over the CreatedBy field from the config
+	meta.CreatedBy = cfg.Metadata.CreatedBy
 
 	entity := &corev2.Entity{
 		ObjectMeta:        meta,
