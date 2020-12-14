@@ -43,9 +43,6 @@ func V2EntityToV3(e *corev2.Entity) (*EntityConfig, *EntityState) {
 		KeepaliveHandlers: e.KeepaliveHandlers,
 		Redact:            e.Redact,
 	}
-	// We don't carry over CreatedBy, Labels and Annotations? I want to make
-	// sure this is intentional in light of the V3EntityToV2 docstring
-	// mentioning that config and state labels/annotation would be merged.
 	state := EntityState{
 		Metadata: &corev2.ObjectMeta{
 			Name:      e.ObjectMeta.Name,
@@ -60,13 +57,8 @@ func V2EntityToV3(e *corev2.Entity) (*EntityConfig, *EntityState) {
 
 // V3EntityToV2 converts an EntityConfig and an EntityState to a corev2.Entity.
 // Errors are returned if cfg and state's Metadata are nil or not equal in terms
-// of their namespace and name. Labels and annotations will be merged, with the
-// labels of cfg taking precedence. The resulting object will contain pointers
-// to cfg's and state's memory.
-// Labels and annotations are NOT merged? They are simply taken from cfg.
-// Whatever state might have is ignored. If this is intended, I suggest changing
-// to simply say something like "metadata from the EntityConfig is carried over
-// to the corev2.Entity".
+// of their namespace and name. The resulting object will contain pointers to
+// cfg's and state's memory, and its metadata is carried over from the config.
 func V3EntityToV2(cfg *EntityConfig, state *EntityState) (*corev2.Entity, error) {
 	if cfg.Metadata == nil {
 		return nil, errors.New("nil EntityConfig metadata")
@@ -92,8 +84,6 @@ func V3EntityToV2(cfg *EntityConfig, state *EntityState) (*corev2.Entity, error)
 	for k, v := range cfg.Metadata.Annotations {
 		meta.Annotations[k] = v
 	}
-
-	// Carry over the CreatedBy field from the config
 	meta.CreatedBy = cfg.Metadata.CreatedBy
 
 	entity := &corev2.Entity{
