@@ -32,6 +32,8 @@ code 46 when no arguments or incorrect arguments are given.
 authentication.
 - Added description to sensuctl dump command.
 - The sensuctl command descriptions now have consistent capitalization.
+- The `v3.V3EntityToV2()` API function now properly carries over the metadata's
+  `CreatedBy` field.
 
 ### [6.1.2] - 2020-10-28
 ### Fixed
