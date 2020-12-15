@@ -298,6 +298,7 @@ func (s *Store) List(req storev2.ResourceRequest, pred *store.SelectionPredicate
 	opts := []clientv3.OpOption{
 		clientv3.WithLimit(pred.Limit),
 		clientv3.WithSerializable(),
+		clientv3.WithSort(clientv3.SortByKey, getSortOrder(req.SortOrder)),
 	}
 	rangeEnd := clientv3.GetPrefixRangeEnd(key)
 	opts = append(opts, clientv3.WithRange(rangeEnd))
@@ -354,4 +355,14 @@ func (s *Store) Exists(req storev2.ResourceRequest) (bool, error) {
 		return false, err
 	}
 	return resp.Count > 0, nil
+}
+
+func getSortOrder(order storev2.SortOrder) clientv3.SortOrder {
+	switch order {
+	case storev2.SortAscend:
+		return clientv3.SortAscend
+	case storev2.SortDescend:
+		return clientv3.SortDescend
+	}
+	return clientv3.SortNone
 }
