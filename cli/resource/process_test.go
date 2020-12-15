@@ -79,7 +79,20 @@ func TestManagedByLabelPutter_label(t *testing.T) {
 			},
 		},
 		{
-			name: "the label overwrites any existing value",
+			name: "the label does not overwrites the sensu-agent value",
+			resource: types.WrapResource(&corev2.CheckConfig{
+				ObjectMeta: corev2.ObjectMeta{
+					Labels: map[string]string{
+						corev2.ManagedByLabel: "sensu-agent",
+					},
+				},
+			}),
+			want: map[string]string{
+				corev2.ManagedByLabel: "sensu-agent",
+			},
+		},
+		{
+			name: "the label overwrites any other existing value",
 			resource: types.WrapResource(&corev2.CheckConfig{
 				ObjectMeta: corev2.ObjectMeta{
 					Labels: map[string]string{

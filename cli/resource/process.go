@@ -220,10 +220,21 @@ func (p *ManagedByLabelPutter) label(resource *types.Wrapper) {
 	}
 	innerLabels := innerMeta.Labels
 
-	// Mark the resource as managed by `label` in the outer labels
-	outerLabels[corev2.ManagedByLabel] = p.Label
+	// By default the resource should be managed by sensuctl
+	managedBy := p.Label
+
+	// Mark the resource as managed by `label` in the outer labels if none is
+	// already set
+	if outerLabels[corev2.ManagedByLabel] != "sensu-agent" {
+		outerLabels[corev2.ManagedByLabel] = managedBy
+	} else {
+		managedBy = outerLabels[corev2.ManagedByLabel]
+	}
 
 	// Mark the resource as managed by `label` in the inner labels
-	innerLabels[corev2.ManagedByLabel] = p.Label
+	if innerLabels[corev2.ManagedByLabel] != "sensu-agent" || innerLabels[corev2.ManagedByLabel] != outerLabels[corev2.ManagedByLabel] {
+		innerLabels[corev2.ManagedByLabel] = managedBy
+	}
+
 	compat.SetObjectMeta(resource.Value, innerMeta)
 }

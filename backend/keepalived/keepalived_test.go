@@ -215,6 +215,8 @@ func (t testSubscriber) Receiver() chan<- interface{} {
 }
 
 func TestProcessRegistration(t *testing.T) {
+	type assertionFunc func(*storetest.Store)
+
 	newEntityWithClass := func(class string) *corev2.Entity {
 		entity := corev2.FixtureEntity("agent1")
 		entity.EntityClass = class
@@ -229,27 +231,77 @@ func TestProcessRegistration(t *testing.T) {
 		return e
 	}
 
+	newAgentManagedEntity := func(class string) *corev2.Entity {
+		entity := corev2.FixtureEntity("agent1")
+		entity.EntityClass = corev2.EntityAgentClass
+		entity.Labels = map[string]string{
+			corev2.ManagedByLabel: "sensu-agent",
+		}
+		return entity
+	}
+
+	newAgentManagedEntityConfig := func(class string) *wrap.Wrapper {
+		entity := corev3.FixtureEntityConfig("agent1")
+		entity.EntityClass = class
+		entity.Metadata.Labels = map[string]string{
+			corev2.ManagedByLabel: "sensu-agent",
+		}
+		e, err := wrap.Resource(entity)
+		require.NoError(t, err)
+		return e
+	}
+
+	firstSequenceEvent := &corev2.Event{Sequence: 1}
+
 	tt := []struct {
-		name              string
-		entity            *corev2.Entity
-		storeEntity       *wrap.Wrapper
-		expectedEventLen  int
-		storev2Err        error
-		expectedEntityLen int
+		name                   string
+		entity                 *corev2.Entity
+		event                  *corev2.Event
+		storeEntity            *wrap.Wrapper
+		expectedEventLen       int
+		storeGetErr            error
+		storeCreateOrUpdateErr error
+		expectedEntityLen      int
+		assertionFunc          assertionFunc
 	}{
 		{
-			name:             "Registered Entity",
-			entity:           newEntityWithClass("agent"),
-			storeEntity:      newEntityConfigWithClass("agent"),
-			expectedEventLen: 0,
-			storev2Err:       &stor.ErrAlreadyExists{},
+			name:                   "Registered Entity",
+			entity:                 newEntityWithClass("agent"),
+			storeEntity:            newEntityConfigWithClass("agent"),
+			event:                  new(corev2.Event),
+			expectedEventLen:       0,
+			storeCreateOrUpdateErr: &stor.ErrAlreadyExists{},
 		},
 		{
 			name:             "Non-Registered Entity",
 			entity:           newEntityWithClass("agent"),
-			storeEntity:      nil,
+			storeGetErr:      &stor.ErrNotFound{},
+			event:            new(corev2.Event),
 			expectedEventLen: 1,
-			storev2Err:       nil,
+		},
+		{
+			name:             "agent-managed entity is registered",
+			entity:           newAgentManagedEntity("agent"),
+			storeGetErr:      &stor.ErrNotFound{},
+			event:            firstSequenceEvent,
+			expectedEventLen: 1,
+		},
+		{
+			name:             "agent-managed entity config is updated on reconnect",
+			entity:           newAgentManagedEntity("agent"),
+			storeEntity:      newEntityConfigWithClass("agent"),
+			event:            firstSequenceEvent,
+			expectedEventLen: 0,
+		},
+		{
+			name:             "backend-managed entity config no longer has the managed_by label with sensu-agent",
+			entity:           newEntityWithClass("agent"),
+			storeEntity:      newAgentManagedEntityConfig("agent"),
+			event:            new(corev2.Event),
+			expectedEventLen: 0,
+			assertionFunc: func(store *storetest.Store) {
+				store.AssertCalled(t, "UpdateIfExists", mock.Anything, mock.Anything)
+			},
 		},
 	}
 
@@ -277,14 +329,18 @@ func TestProcessRegistration(t *testing.T) {
 			})
 			require.NoError(t, err)
 
-			storev2.On("Exists", mock.Anything).Return(tc.storeEntity != nil, nil)
-			storev2.On("CreateIfNotExists", mock.Anything, mock.Anything).Return(tc.storev2Err)
-			storev2.On("Get", mock.Anything).Return(tc.storeEntity, nil)
-			err = keepalived.handleEntityRegistration(tc.entity, new(corev2.Event))
+			storev2.On("CreateIfNotExists", mock.Anything, mock.Anything).Return(tc.storeCreateOrUpdateErr)
+			storev2.On("UpdateIfExists", mock.Anything, mock.Anything).Return(tc.storeCreateOrUpdateErr)
+			storev2.On("Get", mock.Anything).Return(tc.storeEntity, tc.storeGetErr)
+			err = keepalived.handleEntityRegistration(tc.entity, tc.event)
 			require.NoError(t, err)
 
 			assert.Equal(t, tc.expectedEventLen, len(tsubEvent.ch))
 			assert.NoError(t, subscriptionEvent.Cancel())
+
+			if tc.assertionFunc != nil {
+				tc.assertionFunc(storev2)
+			}
 		})
 	}
 }

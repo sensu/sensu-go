@@ -9,6 +9,12 @@ import (
 
 func (a *Agent) handleEntityConfig(ctx context.Context, payload []byte) error {
 	var entity corev3.EntityConfig
+
+	// Ignore entity updates if this agent manages its entity
+	if a.config.AgentManagedEntity {
+		return nil
+	}
+
 	if err := a.unmarshal(payload, &entity); err != nil {
 		return err
 	}

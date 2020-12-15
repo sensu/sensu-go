@@ -2,6 +2,7 @@ package actions
 
 import (
 	"context"
+	"errors"
 
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	corev3 "github.com/sensu/sensu-go/api/core/v3"
@@ -98,19 +99,26 @@ func (c EntityController) CreateOrReplace(ctx context.Context, entity corev2.Ent
 			return NewError(InternalErr, serr)
 		}
 	} else {
-		// Attempt to create the entity in case it doesn't exist.
-		err := c.Create(ctx, entity)
-		if err == nil {
-			// The entity did not exist and we successfully created it
-			return nil
-		}
-		code, ok := StatusFromError(err)
-		// If the error is anything but AlreadyExistsErr, return the error
-		if !ok || code != AlreadyExistsErr {
-			return err
+		// Determine if the entity already exists
+		e, err := c.store.GetEntityByName(ctx, entity.Name)
+		if err != nil {
+			return NewError(InternalErr, err)
 		}
 
-		// The entity already exists, so we only update its config
+		// If the entity does not exist, we should just create it with the v1 store
+		if e == nil {
+			if err := c.store.UpdateEntity(ctx, &entity); err != nil {
+				return NewError(InternalErr, err)
+			}
+			return nil
+		}
+
+		// The entity already exists, so we only need to update its config, however
+		// we must first make sure that it's not already managed by its agent
+		if e.Labels[corev2.ManagedByLabel] == "sensu-agent" {
+			return NewError(AlreadyExistsErr, errors.New("entity is managed by its agent"))
+		}
+
 		config, _ := corev3.V2EntityToV3(&entity)
 		// Ensure per-entity subscription does not get removed
 		config.Subscriptions = corev2.AddEntitySubscription(config.Metadata.Name, config.Subscriptions)

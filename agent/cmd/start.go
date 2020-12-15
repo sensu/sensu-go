@@ -72,6 +72,7 @@ const (
 	flagBackendHandshakeTimeout  = "backend-handshake-timeout"
 	flagBackendHeartbeatInterval = "backend-heartbeat-interval"
 	flagBackendHeartbeatTimeout  = "backend-heartbeat-timeout"
+	flagAgentManagedEntity       = "agent-managed-entity"
 
 	// TLS flags
 	flagTrustedCAFile         = "trusted-ca-file"
@@ -99,7 +100,13 @@ func NewAgentConfig(cmd *cobra.Command) (*agent.Config, error) {
 	}
 	logrus.SetLevel(level)
 
+	labels := viper.GetStringMapString(flagLabels)
+	if viper.GetBool(flagAgentManagedEntity) {
+		labels[corev2.ManagedByLabel] = "sensu-agent"
+	}
+
 	cfg := agent.NewConfig()
+	cfg.AgentManagedEntity = viper.GetBool(flagAgentManagedEntity)
 	cfg.API.Host = viper.GetString(flagAPIHost)
 	cfg.API.Port = viper.GetInt(flagAPIPort)
 	cfg.AssetsRateLimit = rate.Limit(viper.GetFloat64(flagAssetsRateLimit))
@@ -124,7 +131,7 @@ func NewAgentConfig(cmd *cobra.Command) (*agent.Config, error) {
 	cfg.StatsdServer.Host = viper.GetString(flagStatsdMetricsHost)
 	cfg.StatsdServer.Port = viper.GetInt(flagStatsdMetricsPort)
 	cfg.StatsdServer.Handlers = viper.GetStringSlice(flagStatsdEventHandlers)
-	cfg.Labels = viper.GetStringMapString(flagLabels)
+	cfg.Labels = labels
 	cfg.Annotations = viper.GetStringMapString(flagAnnotations)
 	cfg.User = viper.GetString(flagUser)
 	cfg.AllowList = viper.GetString(flagAllowList)
@@ -398,6 +405,7 @@ func flagSet() *pflag.FlagSet {
 	flagSet.Int(flagBackendHandshakeTimeout, viper.GetInt(flagBackendHandshakeTimeout), "number of seconds the agent should wait when negotiating a new WebSocket connection")
 	flagSet.Int(flagBackendHeartbeatInterval, viper.GetInt(flagBackendHeartbeatInterval), "interval at which the agent should send heartbeats to the backend")
 	flagSet.Int(flagBackendHeartbeatTimeout, viper.GetInt(flagBackendHeartbeatTimeout), "number of seconds the agent should wait for a response to a hearbeat")
+	flagSet.Bool(flagAgentManagedEntity, viper.GetBool(flagAgentManagedEntity), "manage this entity via the agent")
 
 	flagSet.SetOutput(ioutil.Discard)
 

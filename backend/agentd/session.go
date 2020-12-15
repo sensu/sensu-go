@@ -360,6 +360,10 @@ func (s *Session) sender() {
 				s.unsubscribe(removed)
 			}
 
+			if watchEvent.Entity.Metadata.Labels[corev2.ManagedByLabel] == "sensu-agent" {
+				lager.Debug("not sending entity update because entity is managed by its agent")
+			}
+
 			msg = transport.NewMessage(transport.MessageTypeEntityConfig, bytes)
 		case c := <-s.checkChannel:
 			request, ok := c.(*corev2.CheckRequest)
@@ -475,6 +479,12 @@ func (s *Session) Start() (err error) {
 		if err != nil {
 			lager.WithError(err).Error("error unwrapping entity config")
 			return err
+		}
+
+		// Remove the managed_by label if the value is sensu-agent, in case the
+		// entity is no longer managed by its agent
+		if storedEntityConfig.Metadata.Labels[corev2.ManagedByLabel] == "sensu-agent" {
+			delete(storedEntityConfig.Metadata.Labels, corev2.ManagedByLabel)
 		}
 
 		// Send back this entity config to the agent so it uses that rather than
