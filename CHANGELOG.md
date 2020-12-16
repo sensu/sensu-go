@@ -28,8 +28,6 @@ code 46 when no arguments or incorrect arguments are given.
 
 ### Fixed
 - The config-file flag is no longer order dependant.
-- The agent now respects the HTTP proxy environment variables when using mTLS
-authentication.
 - Added description to sensuctl dump command.
 - The sensuctl command descriptions now have consistent capitalization.
 - The `v3.V3EntityToV2()` API function now properly carries over the metadata's
