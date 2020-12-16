@@ -1,6 +1,8 @@
 package backend
 
 import (
+	"net"
+
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/etcd"
 	"golang.org/x/time/rate"
@@ -104,4 +106,6 @@ type Config struct {
 	EtcdQuotaBackendBytes int64
 
 	TLS *corev2.TLSOptions
+
+	AgentdListener net.Listener
 }

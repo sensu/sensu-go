@@ -89,6 +89,7 @@ type Agentd struct {
 	watcher             <-chan store.WatchEventEntityConfig
 	client              *clientv3.Client
 	etcdClientTLSConfig *tls.Config
+	listener            net.Listener
 }
 
 // Config configures an Agentd.
@@ -103,6 +104,7 @@ type Config struct {
 	Client              *clientv3.Client
 	EtcdClientTLSConfig *tls.Config
 	Watcher             <-chan store.WatchEventEntityConfig
+	Listener            net.Listener
 }
 
 // Option is a functional option.
@@ -129,6 +131,7 @@ func New(c Config, opts ...Option) (*Agentd, error) {
 		watcher:             c.Watcher,
 		client:              c.Client,
 		etcdClientTLSConfig: c.EtcdClientTLSConfig,
+		listener:            c.Listener,
 	}
 
 	// prepare server TLS config
@@ -193,9 +196,16 @@ func New(c Config, opts ...Option) (*Agentd, error) {
 // Start Agentd.
 func (a *Agentd) Start() error {
 	logger.Info("starting agentd on address: ", a.httpServer.Addr)
-	ln, err := net.Listen("tcp", a.httpServer.Addr)
-	if err != nil {
-		return fmt.Errorf("failed to start agentd: %s", err)
+	ln := a.listener
+	if ln == nil {
+		logger.Info("starting default net listener")
+		var err error
+		ln, err = net.Listen("tcp", a.httpServer.Addr)
+		if err != nil {
+			return fmt.Errorf("failed to start agentd: %s", err)
+		}
+	} else {
+		logger.Info("using enterprise net listener")
 	}
 
 	a.wg.Add(1)
