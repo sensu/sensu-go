@@ -5,7 +5,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic
 Versioning](http://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## [6.1.4] - 2020-12-16
 
 ### Fixed
 - Fixed a bug where the entity API could panic.
@@ -13,7 +13,7 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 authentication.
 - Improve error message around asset checksum mismatch.
 
-### [6.1.2, 6.1.3] - 2020-10-28
+## [6.1.2, 6.1.3] - 2020-10-28
 
 ### Fixed
 - Fixed a crash in the backend and agent related to Javascript execution.
