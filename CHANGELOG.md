@@ -35,12 +35,14 @@ authentication.
 - The `v3.V3EntityToV2()` API function now properly carries over the metadata's
   `CreatedBy` field.
 
-### [6.1.2] - 2020-10-28
+## [6.1.4] - 2020-12-16
+
 ### Fixed
 - Fixed a bug where the entity API could panic.
+- The agent asset fetcher now respects the HTTP proxy environment variables when trusted-ca-file is configured.
 - Improve error message around asset checksum mismatch.
 
-### [6.1.2, 6.1.3] - 2020-10-28
+## [6.1.2, 6.1.3] - 2020-10-28
 
 ### Fixed
 - Fixed a crash in the backend and agent related to Javascript execution.
