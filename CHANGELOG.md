@@ -5,7 +5,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic
 Versioning](http://semver.org/spec/v2.0.0.html).
 
-## [6.1.4] - 2020-12-17
+## [6.2.0] - 2020-12-17
 
 ### Added
 - Sensuctl and sensu-backend ask for password retype when a new password is
