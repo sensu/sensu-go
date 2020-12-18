@@ -191,6 +191,10 @@ type Config struct {
 	// MockSystemInfo determines whether the system info collection should return
 	// mocked system information. This should only be used for testing.
 	MockSystemInfo bool
+
+	// AgentManagedEntity indicates whether the agent's entity is solely managed
+	// by the agent, rather than the backend API
+	AgentManagedEntity bool
 }
 
 // StatsdServerConfig contains the statsd server configuration

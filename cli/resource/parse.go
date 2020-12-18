@@ -67,20 +67,6 @@ func Parse(in io.Reader) ([]*types.Wrapper, error) {
 				continue
 			}
 
-			// Mark the resource as managed by sensuctl in the outer labels
-			if len(w.ObjectMeta.Labels) == 0 {
-				w.ObjectMeta.Labels = map[string]string{}
-			}
-			w.ObjectMeta.Labels[corev2.ManagedByLabel] = "sensuctl"
-
-			// Mark the resource as managed by sensuctl in the inner labels
-			innerMeta := compat.GetObjectMeta(w.Value)
-			if len(innerMeta.Labels) == 0 {
-				innerMeta.Labels = map[string]string{}
-			}
-			innerMeta.Labels[corev2.ManagedByLabel] = "sensuctl"
-			compat.SetObjectMeta(w.Value, innerMeta)
-
 			resources = append(resources, &w)
 			count++
 		}

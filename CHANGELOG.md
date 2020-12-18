@@ -5,7 +5,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic
 Versioning](http://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## [6.2.0] - 2020-12-17
 
 ### Added
 - Sensuctl and sensu-backend ask for password retype when a new password is
@@ -16,6 +16,8 @@ created when in interactive mode.
 - Add support for environment variables to define configuration file paths of
 sensu-backend (`SENSU_BACKEND_CONFIG_FILE`) & sensu-agent (`SENSU_CONFIG_FILE`).
 - Added event sequence numbers.
+- Entities may now be managed exclusively by their agents when sensu-agent is
+started with the new `agent-managed-entity` configuration attribute.
 
 ### Changed
 - Adjust the date and duration formats used when listing and displaying silenced
@@ -26,16 +28,19 @@ code 46 when no arguments or incorrect arguments are given.
 
 ### Fixed
 - The config-file flag is no longer order dependant.
-- The agent now respects the HTTP proxy environment variables when using mTLS
-authentication.
 - Added description to sensuctl dump command.
 - The sensuctl command descriptions now have consistent capitalization.
+- The `v3.V3EntityToV2()` API function now properly carries over the metadata's
+  `CreatedBy` field.
 
-### [6.1.2] - 2020-10-28
+## [6.1.4] - 2020-12-16
+
 ### Fixed
 - Fixed a bug where the entity API could panic.
+- The agent asset fetcher now respects the HTTP proxy environment variables when trusted-ca-file is configured.
+- Improve error message around asset checksum mismatch.
 
-### [6.1.2, 6.1.3] - 2020-10-28
+## [6.1.2, 6.1.3] - 2020-10-28
 
 ### Fixed
 - Fixed a crash in the backend and agent related to Javascript execution.

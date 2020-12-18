@@ -57,9 +57,8 @@ func V2EntityToV3(e *corev2.Entity) (*EntityConfig, *EntityState) {
 
 // V3EntityToV2 converts an EntityConfig and an EntityState to a corev2.Entity.
 // Errors are returned if cfg and state's Metadata are nil or not equal in terms
-// of their namespace and name. Labels and annotations will be merged, with the
-// labels of cfg taking precedence. The resulting object will contain pointers
-// to cfg's and state's memory.
+// of their namespace and name. The resulting object will contain pointers to
+// cfg's and state's memory, and its metadata is carried over from the config.
 func V3EntityToV2(cfg *EntityConfig, state *EntityState) (*corev2.Entity, error) {
 	if cfg.Metadata == nil {
 		return nil, errors.New("nil EntityConfig metadata")
@@ -85,6 +84,8 @@ func V3EntityToV2(cfg *EntityConfig, state *EntityState) (*corev2.Entity, error)
 	for k, v := range cfg.Metadata.Annotations {
 		meta.Annotations[k] = v
 	}
+	meta.CreatedBy = cfg.Metadata.CreatedBy
+
 	entity := &corev2.Entity{
 		ObjectMeta:        meta,
 		EntityClass:       cfg.EntityClass,
@@ -108,6 +109,7 @@ func FixtureEntityConfig(name string) *EntityConfig {
 			Name:        name,
 			Labels:      make(map[string]string),
 			Annotations: make(map[string]string),
+			CreatedBy:   "user123",
 		},
 		EntityClass:   corev2.EntityAgentClass,
 		User:          "agent1",

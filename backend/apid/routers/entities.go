@@ -2,6 +2,7 @@ package routers
 
 import (
 	"context"
+	"errors"
 	"net/http"
 	"net/url"
 
@@ -92,6 +93,10 @@ func (r *EntitiesRouter) createOrReplace(req *http.Request) (interface{}, error)
 	entity := corev2.Entity{}
 	if err := UnmarshalBody(req, &entity); err != nil {
 		return nil, err
+	}
+
+	if entity.Labels[corev2.ManagedByLabel] == "sensu-agent" {
+		return nil, actions.NewError(actions.AlreadyExistsErr, errors.New("entity is managed by its agent"))
 	}
 
 	return entity, r.controller.CreateOrReplace(req.Context(), entity)
