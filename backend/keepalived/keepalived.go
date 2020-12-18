@@ -619,11 +619,17 @@ func (k *Keepalived) dead(key string, prev liveness.State, leader bool) bool {
 	}
 
 	for _, sub := range event.Entity.Subscriptions {
+		lager := lager.WithFields(logrus.Fields{"subscription": sub})
+		if strings.HasPrefix(sub, "entity:") {
+			// Entity subscriptions don't get rings
+			continue
+		}
 		ring := k.ringPool.Get(ringv2.Path(namespace, sub))
 		if err := ring.Remove(ctx, name); err != nil {
-			lager := lager.WithFields(logrus.Fields{"subscription": sub})
 			lager.WithError(err).Error("error removing entity from ring")
+			continue
 		}
+		lager.Trace("removing entity from ring")
 	}
 
 	return false
