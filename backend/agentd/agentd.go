@@ -157,7 +157,7 @@ func New(c Config, opts ...Option) (*Agentd, error) {
 
 	route := router.NewRoute().Subrouter()
 	route.HandleFunc("/", a.webSocketHandler)
-	route.Use(authenticate, authorize, entityLimit, agentLimit)
+	route.Use(agentLimit, authenticate, authorize)
 
 	a.httpServer = &http.Server{
 		Addr:         fmt.Sprintf("%s:%d", a.Host, a.Port),
