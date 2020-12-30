@@ -40,12 +40,6 @@ func agentLimit(next http.Handler) http.Handler {
 	return AgentLimiterMiddleware(next)
 }
 
-// entityLimit is the abstraction layer required to be able to change at
-// runtime the actual function assigned to EntityLimiterMiddleware above.
-func entityLimit(next http.Handler) http.Handler {
-	return EntityLimiterMiddleware(next)
-}
-
 // AuthStore specifies the storage requirements for authentication and
 // authorization.
 type AuthStore interface {
