@@ -9,6 +9,8 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ### Fixed
 - Allow agents labels & annotations to be configured via configuration flags.
+- Fixed a bug where a small amount of extra etcd or postgres traffic was
+generated on keepalive failure.
 
 ## [6.2.0] - 2020-12-17
 
