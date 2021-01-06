@@ -100,11 +100,6 @@ func NewAgentConfig(cmd *cobra.Command) (*agent.Config, error) {
 	}
 	logrus.SetLevel(level)
 
-	labels := viper.GetStringMapString(flagLabels)
-	if viper.GetBool(flagAgentManagedEntity) {
-		labels[corev2.ManagedByLabel] = "sensu-agent"
-	}
-
 	cfg := agent.NewConfig()
 	cfg.AgentManagedEntity = viper.GetBool(flagAgentManagedEntity)
 	cfg.API.Host = viper.GetString(flagAPIHost)
@@ -131,13 +126,15 @@ func NewAgentConfig(cmd *cobra.Command) (*agent.Config, error) {
 	cfg.StatsdServer.Host = viper.GetString(flagStatsdMetricsHost)
 	cfg.StatsdServer.Port = viper.GetInt(flagStatsdMetricsPort)
 	cfg.StatsdServer.Handlers = viper.GetStringSlice(flagStatsdEventHandlers)
-	cfg.Labels = labels
-	cfg.Annotations = viper.GetStringMapString(flagAnnotations)
 	cfg.User = viper.GetString(flagUser)
 	cfg.AllowList = viper.GetString(flagAllowList)
 	cfg.BackendHandshakeTimeout = viper.GetInt(flagBackendHandshakeTimeout)
 	cfg.BackendHeartbeatInterval = viper.GetInt(flagBackendHeartbeatInterval)
 	cfg.BackendHeartbeatTimeout = viper.GetInt(flagBackendHeartbeatTimeout)
+	// Set the labels & annotations using values defined configuration files
+	// and/or environment variables for now
+	cfg.Labels = viper.GetStringMapString(flagLabels)
+	cfg.Annotations = viper.GetStringMapString(flagAnnotations)
 
 	// TLS configuration
 	cfg.TLS = &corev2.TLSOptions{}
@@ -169,7 +166,7 @@ func NewAgentConfig(cmd *cobra.Command) (*agent.Config, error) {
 
 	// Workaround for https://github.com/sensu/sensu-go/issues/2357. Detect if
 	// the flags for labels and annotations were changed. If so, use their
-	// values since flags take precedence over config
+	// values since flags take precedence over config & environment
 	if flag := cmd.Flags().Lookup(flagLabels); flag != nil && flag.Changed {
 		cfg.Labels = labels
 	}
@@ -179,6 +176,14 @@ func NewAgentConfig(cmd *cobra.Command) (*agent.Config, error) {
 
 	cfg.DisableAPI = viper.GetBool(flagDisableAPI)
 	cfg.DisableSockets = viper.GetBool(flagDisableSockets)
+
+	// Add the ManagedByLabel label value if the agent is managed by its entity
+	if viper.GetBool(flagAgentManagedEntity) {
+		labels[corev2.ManagedByLabel] = "sensu-agent"
+	}
+
+	fmt.Printf("labels = %#v\n", cfg.Labels)
+	fmt.Printf("annotations = %#v\n", cfg.Annotations)
 
 	return cfg, nil
 }
