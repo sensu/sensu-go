@@ -182,9 +182,6 @@ func NewAgentConfig(cmd *cobra.Command) (*agent.Config, error) {
 		labels[corev2.ManagedByLabel] = "sensu-agent"
 	}
 
-	fmt.Printf("labels = %#v\n", cfg.Labels)
-	fmt.Printf("annotations = %#v\n", cfg.Annotations)
-
 	return cfg, nil
 }
 
