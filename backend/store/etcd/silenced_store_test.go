@@ -165,8 +165,5 @@ func TestSilencedStorageWithBeginAndExpire(t *testing.T) {
 		// Check that the ttl includes the expire time and delta between current
 		// and begin time
 		assert.Equal(t, entry.Expire, int64(15))
-		// assert.Condition(t, func() bool {
-		// 	return entry.Expire > 3600
-		// })
 	})
 }
