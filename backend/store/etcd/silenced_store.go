@@ -227,6 +227,7 @@ func (s *Store) arraySilencedEntries(ctx context.Context, resp *clientv3.GetResp
 			}
 		} else {
 			// the silenced entry has no expiration
+			silenced.Expire = -1
 			result = append(result, silenced)
 		}
 	}
