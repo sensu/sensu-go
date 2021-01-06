@@ -167,11 +167,6 @@ func NewAgentConfig(cmd *cobra.Command) (*agent.Config, error) {
 	cfg.Redact = viper.GetStringSlice(flagRedact)
 	cfg.Subscriptions = viper.GetStringSlice(flagSubscriptions)
 
-	fmt.Println("viper labels:")
-	for key, value := range cfg.Labels {
-		fmt.Printf("%s: %s\n", key, value)
-	}
-
 	// Workaround for https://github.com/sensu/sensu-go/issues/2357. Detect if
 	// the flags for labels and annotations were changed. If so, use their
 	// values since flags take precedence over config
