@@ -211,28 +211,21 @@ func (s *Store) arraySilencedEntries(ctx context.Context, resp *clientv3.GetResp
 		if err := unmarshal(kv.Value, silenced); err != nil {
 			return nil, &store.ErrDecode{Err: err}
 		}
+
+		var expire int64
 		leaseID := clientv3.LeaseID(kv.Lease)
 		if leaseID > 0 {
-			// legacy expiry mechanism
-			leaseID := clientv3.LeaseID(kv.Lease)
-			ttl, err := s.client.TimeToLive(ctx, leaseID)
-			if err != nil {
-				logger.WithError(err).Error("error setting TTL on silenced")
-				continue
-			}
-			silenced.Expire = ttl.TTL
 			result = append(result, silenced)
 		} else if silenced.ExpireAt > 0 {
 			// new expiry mechanism
-			silenced.Expire = int64(time.Until(time.Unix(silenced.ExpireAt, 0)) / time.Second)
-			if silenced.Expire > 0 {
+			expire = int64(time.Until(time.Unix(silenced.ExpireAt, 0)) / time.Second)
+			if expire > 0 {
 				result = append(result, silenced)
 			} else {
 				rejects = append(rejects, silenced.Name)
 			}
 		} else {
-			// no expiry
-			silenced.Expire = -1
+			// the silenced entry has not expiry
 			result = append(result, silenced)
 		}
 	}
