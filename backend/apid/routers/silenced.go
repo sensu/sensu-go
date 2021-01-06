@@ -99,7 +99,6 @@ func (r *SilencedRouter) listr(ctx context.Context, pred *store.SelectionPredica
 	if err != nil {
 		return nil, err
 	}
-
 	result := make([]corev2.Resource, 0, len(entries))
 	for _, e := range entries {
 		result = append(result, e)

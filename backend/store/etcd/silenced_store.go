@@ -215,6 +215,7 @@ func (s *Store) arraySilencedEntries(ctx context.Context, resp *clientv3.GetResp
 		var expire int64
 		leaseID := clientv3.LeaseID(kv.Lease)
 		if leaseID > 0 {
+			// legacy expiry mechanism
 			result = append(result, silenced)
 		} else if silenced.ExpireAt > 0 {
 			// new expiry mechanism
@@ -225,7 +226,7 @@ func (s *Store) arraySilencedEntries(ctx context.Context, resp *clientv3.GetResp
 				rejects = append(rejects, silenced.Name)
 			}
 		} else {
-			// the silenced entry has not expiry
+			// the silenced entry has no expiration
 			result = append(result, silenced)
 		}
 	}
