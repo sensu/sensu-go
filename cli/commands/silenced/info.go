@@ -49,6 +49,16 @@ func InfoCommand(cli *cli.SensuCli) *cobra.Command {
 
 }
 
+func expireAt(timestamp int64) string {
+	// If we have no expiration, return -1
+	if timestamp < 1 {
+		return "no expiration"
+	}
+
+	begin := time.Unix(timestamp, 0)
+	return begin.Format(timeFormat)
+}
+
 func expireTime(beginTS, expireSeconds int64) string {
 	// If we have no expiration, return -1
 	if expireSeconds == -1 {
@@ -76,8 +86,8 @@ func printToList(v interface{}, writer io.Writer) error {
 		Title: r.Name,
 		Rows: []*list.Row{
 			{
-				Label: "Expire",
-				Value: expireTime(r.Begin, r.Expire),
+				Label: "Expiration",
+				Value: expireAt(r.ExpireAt),
 			},
 			{
 				Label: "ExpireOnResolve",
