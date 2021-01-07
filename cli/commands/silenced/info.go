@@ -49,22 +49,14 @@ func InfoCommand(cli *cli.SensuCli) *cobra.Command {
 
 }
 
-func expireTime(beginTS, expireSeconds int64) string {
+func expireAt(timestamp int64) string {
 	// If we have no expiration, return -1
-	if expireSeconds == -1 {
-		return "-1"
+	if timestamp < 1 {
+		return "no expiration"
 	}
 
-	begin := time.Unix(beginTS, 0)
-	if time.Now().Before(begin) {
-		// If the silenced entry is not yet in effect, because the being timestamp
-		// is in the future, display the full expiration date as RFC3339
-		expire := begin.Add(time.Duration(expireSeconds) * time.Second)
-		return expire.Format(timeFormat)
-	}
-
-	// If the silenced entry is in effect, display its configured duration
-	return (time.Duration(expireSeconds) * time.Second).String()
+	begin := time.Unix(timestamp, 0)
+	return begin.Format(timeFormat)
 }
 
 func printToList(v interface{}, writer io.Writer) error {
@@ -76,8 +68,8 @@ func printToList(v interface{}, writer io.Writer) error {
 		Title: r.Name,
 		Rows: []*list.Row{
 			{
-				Label: "Expire",
-				Value: expireTime(r.Begin, r.Expire),
+				Label: "Expiration",
+				Value: expireAt(r.ExpireAt),
 			},
 			{
 				Label: "ExpireOnResolve",

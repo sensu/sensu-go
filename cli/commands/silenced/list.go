@@ -129,13 +129,13 @@ func printToTable(results interface{}, writer io.Writer) {
 			},
 		},
 		{
-			Title: "Expire",
+			Title: "Expiration",
 			CellTransformer: func(data interface{}) string {
 				silenced, ok := data.(corev2.Silenced)
 				if !ok {
 					return cli.TypeError
 				}
-				return expireTime(silenced.Begin, silenced.Expire)
+				return expireAt(silenced.ExpireAt)
 			},
 		},
 		{
