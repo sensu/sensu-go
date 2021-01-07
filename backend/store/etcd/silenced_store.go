@@ -216,6 +216,13 @@ func (s *Store) arraySilencedEntries(ctx context.Context, resp *clientv3.GetResp
 		leaseID := clientv3.LeaseID(kv.Lease)
 		if leaseID > 0 {
 			// legacy expiry mechanism
+			ttl, err := s.client.TimeToLive(ctx, leaseID)
+			if err != nil {
+				logger.WithError(err).Error("error setting TTL on silenced")
+				continue
+			}
+			silenced.ExpireAt = time.Now().Unix() + ttl.TTL
+
 			result = append(result, silenced)
 		} else if silenced.ExpireAt > 0 {
 			// new expiry mechanism
@@ -249,6 +256,8 @@ func (s *Store) arrayTxnSilencedEntries(ctx context.Context, resp *clientv3.TxnR
 			if err := unmarshal(kv.Value, &silenced); err != nil {
 				return nil, &store.ErrDecode{Err: fmt.Errorf("couldn't get silenced entries: %s", err)}
 			}
+
+			var expire int64
 			leaseID := clientv3.LeaseID(kv.Lease)
 			if leaseID > 0 {
 				// legacy expiry mechanism
@@ -257,18 +266,19 @@ func (s *Store) arrayTxnSilencedEntries(ctx context.Context, resp *clientv3.TxnR
 					logger.WithError(err).Error("error setting TTL on silenced")
 					continue
 				}
-				silenced.Expire = ttl.TTL
+				silenced.ExpireAt = time.Now().Unix() + ttl.TTL
+
 				results = append(results, &silenced)
 			} else if silenced.ExpireAt > 0 {
 				// new expiry mechanism
-				silenced.Expire = int64(time.Until(time.Unix(silenced.ExpireAt, 0)) / time.Second)
-				if silenced.Expire > 0 {
+				expire = int64(time.Until(time.Unix(silenced.ExpireAt, 0)) / time.Second)
+				if expire > 0 {
 					results = append(results, &silenced)
 				} else {
 					rejects = append(rejects, silenced.Name)
 				}
 			} else {
-				// no expiry
+				// the silenced entry has no expiration
 				silenced.Expire = -1
 				results = append(results, &silenced)
 			}
