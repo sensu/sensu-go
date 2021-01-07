@@ -10,6 +10,7 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 ### Fixed
 - The expire field of silenced entries represents the configured expiration, in
 seconds, not the remaining duration.
+- Allow agents labels & annotations to be configured via configuration flags.
 
 ## [6.2.0] - 2020-12-17
 

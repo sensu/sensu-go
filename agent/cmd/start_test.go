@@ -31,6 +31,25 @@ func TestNewAgentConfig(t *testing.T) {
 	}
 }
 
+func TestNewAgentConfigFlags(t *testing.T) {
+	cmd := &cobra.Command{
+		Use: "test",
+	}
+	if err := handleConfig(cmd, []string{}); err != nil {
+		t.Fatal("unexpected error while calling handleConfig: ", err)
+	}
+	_ = cmd.Flags().Set(flagLabels, "foo=bar")
+
+	cfg, err := NewAgentConfig(cmd)
+	if err != nil {
+		t.Fatal("unexpected error while calling handleConfig: ", err)
+	}
+
+	if !reflect.DeepEqual(cfg.Labels, map[string]string{"foo": "bar"}) {
+		t.Fatalf("TestNewAgentConfigFlags() labels = %v, want %v", cfg.Labels, `{"foo":"bar"}`)
+	}
+}
+
 func tempConfig(t *testing.T, content string) *os.File {
 	t.Helper()
 
