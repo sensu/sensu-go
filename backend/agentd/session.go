@@ -700,6 +700,10 @@ func (s *Session) unsubscribe(subscriptions []string) {
 	var ringWG sync.WaitGroup
 	ringWG.Add(len(subscriptions))
 	for _, sub := range subscriptions {
+		if strings.HasPrefix(sub, "entity:") {
+			// Entity subscriptions don't get rings
+			continue
+		}
 		go func(sub string) {
 			defer ringWG.Done()
 			ring := s.ringPool.Get(ringv2.Path(s.cfg.Namespace, sub))
