@@ -248,20 +248,8 @@ func (s *Store) UpdateEvent(ctx context.Context, event *corev2.Event) (*corev2.E
 		return nil, nil, err
 	}
 
-	// Maintain check history.
-	if prevEvent != nil {
-		if !prevEvent.HasCheck() {
-			return nil, nil, &store.ErrNotValid{Err: errors.New("invalid previous event")}
-		}
-
-		event.Check.MergeWith(prevEvent.Check)
-	} else {
-		// If there was no previous check, we still need to set State and LastOK
-		event.Check.State = corev2.EventFailingState
-		if event.Check.Status == 0 {
-			event.Check.LastOK = event.Check.Executed
-			event.Check.State = corev2.EventPassingState
-		}
+	if err := updateEventHistory(event, prevEvent); err != nil {
+		return nil, nil, &store.ErrNotValid{Err: err}
 	}
 
 	updateOccurrences(event.Check)
@@ -333,6 +321,26 @@ func (s *Store) GetProviderInfo() *provider.Info {
 			Name: Type,
 		},
 	}
+}
+
+// updateCheckHistory takes two events and merges the check result history of
+// the second event into the first event.
+func updateEventHistory(event *corev2.Event, prevEvent *corev2.Event) error {
+	if prevEvent != nil {
+		if !prevEvent.HasCheck() {
+			return errors.New("invalid previous event")
+		}
+		event.Check.MergeWith(prevEvent.Check)
+	} else {
+		// If there was no previous check, we still need to set State and LastOK.
+		event.Check.State = corev2.EventFailingState
+		if event.Check.Status == 0 {
+			event.Check.LastOK = event.Check.Executed
+			event.Check.State = corev2.EventPassingState
+		}
+		event.Check.MergeWith(event.Check)
+	}
+	return nil
 }
 
 func updateOccurrences(check *corev2.Check) {
