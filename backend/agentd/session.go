@@ -698,8 +698,12 @@ func (s *Session) unsubscribe(subscriptions []string) {
 
 	// Remove the ring for every subscription
 	var ringWG sync.WaitGroup
-	ringWG.Add(len(subscriptions))
 	for _, sub := range subscriptions {
+		if strings.HasPrefix(sub, "entity:") {
+			// Entity subscriptions don't get rings
+			continue
+		}
+		ringWG.Add(1)
 		go func(sub string) {
 			defer ringWG.Done()
 			ring := s.ringPool.Get(ringv2.Path(s.cfg.Namespace, sub))

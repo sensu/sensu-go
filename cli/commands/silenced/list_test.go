@@ -86,7 +86,7 @@ func TestListCommandRunEClosureWithTable(t *testing.T) {
 
 	assert.NotEmpty(out)
 	assert.Contains(out, "Name")            // heading
-	assert.Contains(out, "Expire")          // heading
+	assert.Contains(out, "Expiration")      // heading
 	assert.Contains(out, "ExpireOnResolve") // heading
 	assert.Contains(out, "Creator")         // heading
 	assert.Contains(out, "Check")           // heading
@@ -98,7 +98,7 @@ func TestListCommandRunEClosureWithTable(t *testing.T) {
 	assert.Contains(out, "eric")
 	assert.Contains(out, "defaultnamespace")
 	assert.Contains(out, "false")
-	assert.Contains(out, "0s")
+	assert.Contains(out, "no expiration")
 }
 
 // Test to ensure silenced command list output does not escape alphanumeric chars

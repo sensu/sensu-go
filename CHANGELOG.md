@@ -7,7 +7,11 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
 
+## [6.2.1] - 2021-01-07
+
 ### Fixed
+- The expire field of silenced entries represents the configured expiration, in
+seconds, not the remaining duration.
 - Allow agents labels & annotations to be configured via configuration flags.
 - Fixed a bug where a small amount of extra etcd or postgres traffic was
 generated on keepalive failure.
