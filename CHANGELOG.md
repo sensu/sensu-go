@@ -15,6 +15,7 @@ seconds, not the remaining duration.
 - Allow agents labels & annotations to be configured via configuration flags.
 - Fixed a bug where a small amount of extra etcd or postgres traffic was
 generated on keepalive failure.
+- Event check history now contains an entry for the first received event.
 
 ## [6.2.0] - 2020-12-17
 
