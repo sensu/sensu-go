@@ -8,12 +8,21 @@ import (
 	corev3 "github.com/sensu/sensu-go/api/core/v3"
 )
 
+type SortOrder int
+
+const (
+	SortNone SortOrder = iota
+	SortAscend
+	SortDescend
+)
+
 // ResourceRequest contains all the information necessary to query a store.
 type ResourceRequest struct {
 	Namespace string
 	Name      string
 	StoreName string
 	Context   context.Context
+	SortOrder SortOrder
 }
 
 // NewResourceRequestFromResource creates a ResourceRequest from a resource.
