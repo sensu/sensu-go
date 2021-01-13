@@ -980,3 +980,45 @@ func TestEventFields(t *testing.T) {
 		})
 	}
 }
+
+func TestSetNamespace(t *testing.T) {
+	event := new(Event)
+	event.SetNamespace("foobar")
+	if event.Entity == nil {
+		t.Fatal("nil entity")
+	}
+	if got, want := event.Namespace, "foobar"; got != want {
+		t.Errorf("bad namespace: got %q, want %q", got, want)
+	}
+	if got, want := event.Entity.Namespace, "foobar"; got != want {
+		t.Errorf("bad namespace: got %q, want %q", got, want)
+	}
+	if event.Check != nil {
+		t.Fatal("check should have been nil")
+	}
+	event.Check = new(Check)
+	event.SetNamespace("foobar")
+	if got, want := event.Check.Namespace, "foobar"; got != want {
+		t.Errorf("bad namespace: got %q, want %q", got, want)
+	}
+}
+
+func TestEventURIPath(t *testing.T) {
+	e := new(Event)
+	if got, want := e.URIPath(), "/api/core/v2/events"; got != want {
+		t.Errorf("bad URIPath; got %q, want %q", got, want)
+	}
+	e.SetNamespace("foobar")
+	if got, want := e.URIPath(), "/api/core/v2/namespaces/foobar/events"; got != want {
+		t.Errorf("bad URIPath; got %q, want %q", got, want)
+	}
+	e.Entity.Name = "baz"
+	if got, want := e.URIPath(), "/api/core/v2/namespaces/foobar/events/baz"; got != want {
+		t.Errorf("bad URIPath; got %q, want %q", got, want)
+	}
+	e.Check = new(Check)
+	e.Check.Name = "bep"
+	if got, want := e.URIPath(), "/api/core/v2/namespaces/foobar/events/baz/bep"; got != want {
+		t.Errorf("bad URIPath; got %q, want %q", got, want)
+	}
+}
