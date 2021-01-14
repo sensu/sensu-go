@@ -7,6 +7,11 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
 
+### Fixed
+- Fixed a bug where events from namespaces other than the one requested could
+appear in sensuctl dump output. The bug only applied to users who had access to
+the other namespaces.
+
 ## [6.2.1] - 2021-01-08
 
 ### Fixed

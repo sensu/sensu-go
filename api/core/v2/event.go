@@ -40,7 +40,7 @@ func (e *Event) URIPath() string {
 		return path.Join(URLPrefix, EventsResource)
 	}
 	if !e.HasCheck() {
-		return path.Join(URLPrefix, EventsResource, url.PathEscape(e.Entity.Name))
+		return path.Join(URLPrefix, "namespaces", url.PathEscape(e.Entity.Namespace), EventsResource, url.PathEscape(e.Entity.Name))
 	}
 	return path.Join(URLPrefix, "namespaces", url.PathEscape(e.Entity.Namespace), EventsResource, url.PathEscape(e.Entity.Name), url.PathEscape(e.Check.Name))
 }
@@ -471,6 +471,13 @@ func isSilenced(e *Event) string {
 // SetNamespace sets the namespace of the resource.
 func (e *Event) SetNamespace(namespace string) {
 	e.Namespace = namespace
+	if e.Entity == nil {
+		e.Entity = new(Entity)
+	}
+	e.Entity.Namespace = namespace
+	if e.Check != nil {
+		e.Check.Namespace = namespace
+	}
 }
 
 // SetObjectMeta sets the meta of the resource.
