@@ -7,6 +7,10 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
 
+### Fixed
+- Fixed the `agent-managed-entity` agent config attribute when no labels are
+defined.
+
 ## [6.2.2] - 2021-01-14
 
 ### Fixed
