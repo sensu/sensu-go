@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/sensu/sensu-go/agent"
+	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -47,6 +48,25 @@ func TestNewAgentConfigFlags(t *testing.T) {
 
 	if !reflect.DeepEqual(cfg.Labels, map[string]string{"foo": "bar"}) {
 		t.Fatalf("TestNewAgentConfigFlags() labels = %v, want %v", cfg.Labels, `{"foo":"bar"}`)
+	}
+}
+
+func TestNewAgentConfig_AgentManagedEntityFlag(t *testing.T) {
+	cmd := &cobra.Command{
+		Use: "test",
+	}
+	if err := handleConfig(cmd, []string{}); err != nil {
+		t.Fatal("unexpected error while calling handleConfig: ", err)
+	}
+	_ = cmd.Flags().Set(flagAgentManagedEntity, "true")
+
+	_, err := NewAgentConfig(cmd)
+	if err != nil {
+		t.Fatal("unexpected error while calling handleConfig: ", err)
+	}
+
+	if !reflect.DeepEqual(labels, map[string]string{corev2.ManagedByLabel: "sensu-agent"}) {
+		t.Fatalf("TestNewAgentConfigFlags() labels = %v, want %v", labels, map[string]string{corev2.ManagedByLabel: "sensu-agent"})
 	}
 }
 
