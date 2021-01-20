@@ -18,6 +18,10 @@ defined.
 appear in sensuctl dump output. The bug only applied to users who had access to
 the other namespaces.
 
+### Added
+- Added wait flag to the sensu-backend init command which toggles waiting
+indefinitely for etcd to become available.
+
 ## [6.2.1] - 2021-01-08
 
 ### Fixed
