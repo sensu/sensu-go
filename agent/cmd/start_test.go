@@ -60,13 +60,13 @@ func TestNewAgentConfig_AgentManagedEntityFlag(t *testing.T) {
 	}
 	_ = cmd.Flags().Set(flagAgentManagedEntity, "true")
 
-	_, err := NewAgentConfig(cmd)
+	cfg, err := NewAgentConfig(cmd)
 	if err != nil {
 		t.Fatal("unexpected error while calling handleConfig: ", err)
 	}
 
-	if !reflect.DeepEqual(labels, map[string]string{corev2.ManagedByLabel: "sensu-agent"}) {
-		t.Fatalf("TestNewAgentConfigFlags() labels = %v, want %v", labels, map[string]string{corev2.ManagedByLabel: "sensu-agent"})
+	if !reflect.DeepEqual(cfg.Labels, map[string]string{corev2.ManagedByLabel: "sensu-agent"}) {
+		t.Fatalf("TestNewAgentConfigFlags() labels = %v, want %v", cfg.Labels, map[string]string{corev2.ManagedByLabel: "sensu-agent"})
 	}
 }
 
