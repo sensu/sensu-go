@@ -179,10 +179,10 @@ func NewAgentConfig(cmd *cobra.Command) (*agent.Config, error) {
 
 	// Add the ManagedByLabel label value if the agent is managed by its entity
 	if viper.GetBool(flagAgentManagedEntity) {
-		if len(labels) == 0 {
-			labels = make(map[string]string)
+		if len(cfg.Labels) == 0 {
+			cfg.Labels = make(map[string]string)
 		}
-		labels[corev2.ManagedByLabel] = "sensu-agent"
+		cfg.Labels[corev2.ManagedByLabel] = "sensu-agent"
 	}
 
 	return cfg, nil
