@@ -65,7 +65,7 @@ require (
 	github.com/robfig/cron v1.2.0
 	github.com/robfig/cron/v3 v3.0.1
 	github.com/sensu/lasr v1.2.1
-	github.com/sensu/sensu-go/api/core/v2 v2.4.0
+	github.com/sensu/sensu-go/api/core/v2 v2.6.0
 	github.com/sensu/sensu-go/api/core/v3 v3.0.1
 	github.com/sensu/sensu-go/types v0.3.0
 	github.com/shirou/gopsutil v0.0.0-20190901111213-e4ec7b275ada
