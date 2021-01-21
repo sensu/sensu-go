@@ -7,22 +7,20 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
 
-### Fixed
-- Fixed the `agent-managed-entity` agent config attribute when no labels are
-defined.
-
-## [6.2.2] - 2021-01-14
-
-### Fixed
-- Fixed a bug where events from namespaces other than the one requested could
-appear in sensuctl dump output. The bug only applied to users who had access to
-the other namespaces.
-
 ### Added
 - Added wait flag to the sensu-backend init command which toggles waiting
 indefinitely for etcd to become available.
 
-## [6.2.1] - 2021-01-08
+## [6.2.3] - 2021-01-21
+
+### Fixed
+- Fixed the `agent-managed-entity` agent config attribute when no labels are
+defined.
+- Fixed a bug where events from namespaces other than the one requested could
+appear in sensuctl dump output. The bug only applied to users who had access to
+the other namespaces.
+
+## [6.2.1, 6.2.2] - 2021-01-08
 
 ### Fixed
 - The expire field of silenced entries represents the configured expiration, in
