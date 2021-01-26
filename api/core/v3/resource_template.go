@@ -37,7 +37,8 @@ func (r *ResourceTemplate) Execute(meta *corev2.ObjectMeta) (Resource, error) {
 	}
 	t, err := types.ResolveRaw(r.APIVersion, r.Type)
 	if err != nil {
-		return nil, fmt.Errorf("error expanding resource template: unknown type: %s", err)
+		// do not wrap this error
+		return nil, err
 	}
 	resource, ok := t.(Resource)
 	if !ok {

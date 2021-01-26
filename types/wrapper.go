@@ -3,6 +3,7 @@ package types
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"path"
 	"reflect"
@@ -11,6 +12,8 @@ import (
 
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 )
+
+var ErrAPINotFound = errors.New("api not found")
 
 // compatibility shim - can't import core/v3
 type corev3Resource interface {
@@ -313,7 +316,7 @@ func ResolveRaw(apiVersion string, typename string) (interface{}, error) {
 	defer packageMapMu.RUnlock()
 	resolver, ok := packageMap[apiVersion]
 	if !ok {
-		return nil, fmt.Errorf("invalid API version: %s", apiVersion)
+		return nil, ErrAPINotFound
 	}
 	switch resolver := resolver.(type) {
 	case func(string) (Resource, error):
