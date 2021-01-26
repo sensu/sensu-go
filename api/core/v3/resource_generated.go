@@ -255,3 +255,109 @@ func (e *EntityState) GetTypeMeta() corev2.TypeMeta {
 		Type:       "EntityState",
 	}
 }
+
+// SetMetadata sets the provided metadata on the type. If the type does not
+// have any metadata, nothing will happen.
+func (r *ResourceTemplate) SetMetadata(meta *corev2.ObjectMeta) {
+	// The function has to use reflection, since not all of the generated types
+	// will have metadata.
+	value := reflect.Indirect(reflect.ValueOf(r))
+	field := value.FieldByName("Metadata")
+	if !field.CanSet() {
+		return
+	}
+	field.Set(reflect.ValueOf(meta))
+}
+
+// StoreName returns the store name for ResourceTemplate. It will be
+// overridden if there is a method for ResourceTemplate called "storeName".
+func (r *ResourceTemplate) StoreName() string {
+	var iface interface{} = r
+	if prefixer, ok := iface.(storeNamer); ok {
+		return prefixer.storeName()
+	}
+	return "resource_templates"
+}
+
+// RBACName returns the RBAC name for ResourceTemplate. It will be overridden if
+// there is a method for ResourceTemplate called "rbacName".
+func (r *ResourceTemplate) RBACName() string {
+	var iface interface{} = r
+	if namer, ok := iface.(rbacNamer); ok {
+		return namer.rbacName()
+	}
+	return "resource_templates"
+}
+
+// URIPath returns the URI path for ResourceTemplate. It will be overridden if
+// there is a method for ResourceTemplate called uriPath.
+func (r *ResourceTemplate) URIPath() string {
+	var iface interface{} = r
+	if pather, ok := iface.(uriPather); ok {
+		return pather.uriPath()
+	}
+	metaer, ok := iface.(getMetadataer)
+	if !ok {
+		return ""
+	}
+	meta := metaer.GetMetadata()
+	if meta == nil {
+		return uriPath("resource-templates", "", "")
+	}
+	return uriPath("resource-templates", meta.Namespace, meta.Name)
+}
+
+// Validate validates the ResourceTemplate. If the ResourceTemplate has metadata,
+// it will be validated via ValidateMetadata. If there is a method for
+// ResourceTemplate called validate, then it will be used to cooperatively
+// validate the ResourceTemplate.
+func (r *ResourceTemplate) Validate() error {
+	if r == nil {
+		return errors.New("nil ResourceTemplate")
+	}
+	var iface interface{} = r
+	if resource, ok := iface.(Resource); ok {
+		if err := ValidateMetadata(resource.GetMetadata()); err != nil {
+			return fmt.Errorf("invalid ResourceTemplate: %s", err)
+		}
+	}
+	if validator, ok := iface.(validator); ok {
+		if err := validator.validate(); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// UnmarshalJSON is provided in order to ensure that metadata labels and
+// annotations are never nil.
+func (r *ResourceTemplate) UnmarshalJSON(msg []byte) error {
+	type Clone ResourceTemplate
+	var clone Clone
+	if err := json.Unmarshal(msg, &clone); err != nil {
+		return err
+	}
+	*r = *(*ResourceTemplate)(&clone)
+	var iface interface{} = r
+	var meta *corev2.ObjectMeta
+	if metaer, ok := iface.(getMetadataer); ok {
+		meta = metaer.GetMetadata()
+	}
+	if meta != nil {
+		if meta.Labels == nil {
+			meta.Labels = make(map[string]string)
+		}
+		if meta.Annotations == nil {
+			meta.Annotations = make(map[string]string)
+		}
+	}
+	return nil
+}
+
+// GetTypeMeta gets the type metadata for a ResourceTemplate.
+func (r *ResourceTemplate) GetTypeMeta() corev2.TypeMeta {
+	return corev2.TypeMeta{
+		APIVersion: "core/v3",
+		Type:       "ResourceTemplate",
+	}
+}
