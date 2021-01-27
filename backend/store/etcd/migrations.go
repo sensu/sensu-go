@@ -22,6 +22,10 @@ var Migrations = []Migration{
 	MigrateAddPipelineDRoles,
 }
 
+// EnterpriseMigrations is like Migrations, but is appended to by enterprise
+// Sensu.
+var EnterpriseMigrations = []Migration{}
+
 // Base is the base version of the database. It is never executed.
 func Base(ctx context.Context, client *clientv3.Client) error {
 	return nil
@@ -157,6 +161,29 @@ func MigrateDB(ctx context.Context, client *clientv3.Client, migrations []Migrat
 	return nil
 }
 
+func MigrateEnterpriseDB(ctx context.Context, client *clientv3.Client, migrations []Migration) error {
+	ver, err := GetEnterpriseDatabaseVersion(ctx, client)
+	if err != nil {
+		return fmt.Errorf("can't migrate database: %s", err)
+	}
+	if len(migrations) == ver+1 {
+		logger.WithField("database_version", ver).Info("database already up to date")
+		return nil
+	}
+	logger.Warn("migrating enterprise etcd database to a new version")
+	ctx, cancel := context.WithCancel(ctx)
+	defer cancel()
+	go notifyUpgradeLoop(ctx)
+	for i := ver + 1; i < len(migrations); i++ {
+		if err := doEnterpriseMigration(ctx, client, i, migrations[i]); err != nil {
+			logger.WithField("database_version", i).Error("error upgrading database")
+			return err
+		}
+		logger.WithField("database_version", i).Info("successfully upgraded database")
+	}
+	return nil
+}
+
 func notifyUpgradeLoop(ctx context.Context) {
 	ticker := time.NewTicker(5 * time.Second)
 	defer ticker.Stop()
@@ -176,4 +203,12 @@ func doMigration(ctx context.Context, client *clientv3.Client, version int, do f
 	}
 
 	return SetDatabaseVersion(ctx, client, version)
+}
+
+func doEnterpriseMigration(ctx context.Context, client *clientv3.Client, version int, do func(context.Context, *clientv3.Client) error) error {
+	if err := do(ctx, client); err != nil {
+		return err
+	}
+
+	return SetEnterpriseDatabaseVersion(ctx, client, version)
 }

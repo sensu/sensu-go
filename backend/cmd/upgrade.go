@@ -130,6 +130,11 @@ func UpgradeCommand() *cobra.Command {
 			if err := etcdstore.MigrateDB(context.Background(), client, etcdstore.Migrations); err != nil {
 				return err
 			}
+			if len(etcdstore.EnterpriseMigrations) > 0 {
+				if err := etcdstore.MigrateEnterpriseDB(context.Background(), client, etcdstore.EnterpriseMigrations); err != nil {
+					return err
+				}
+			}
 			return nil
 		},
 	}
