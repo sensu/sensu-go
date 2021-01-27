@@ -443,7 +443,7 @@ func flagSet(server bool) *pflag.FlagSet {
 	_ = flagSet.SetAnnotation(flagEtcdClientCertAuth, "categories", []string{"store"})
 	flagSet.String(flagEtcdTrustedCAFile, viper.GetString(flagEtcdTrustedCAFile), "path to the client server TLS trusted CA cert file")
 	_ = flagSet.SetAnnotation(flagEtcdTrustedCAFile, "categories", []string{"store"})
-	flagSet.String(flagEtcdClientURLs, viper.GetString(flagEtcdClientURLs), "client URLs to use when operating as an etcd client")
+	flagSet.StringSlice(flagEtcdClientURLs, viper.GetStringSlice(flagEtcdClientURLs), "client URLs to use when operating as an etcd client")
 	_ = flagSet.SetAnnotation(flagEtcdClientURLs, "categories", []string{"store"})
 
 	if server {
