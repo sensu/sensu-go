@@ -101,6 +101,12 @@ func SeedCluster(ctx context.Context, store store.Store, client *clientv3.Client
 				logger.WithError(err).Error("error bringing the database to the latest version")
 				return
 			}
+			if len(etcd.EnterpriseMigrations) > 0 {
+				if err = etcd.MigrateEnterpriseDB(ctx, client, etcd.EnterpriseMigrations); err != nil {
+					logger.WithError(err).Error("error bringing the enterprise database to the latest version")
+					return
+				}
+			}
 		}
 
 		// Set initialized flag
