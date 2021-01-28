@@ -52,136 +52,24 @@ func _InterfaceTypeErrorConfigFn() graphql1.InterfaceConfig {
 // describe Error's configuration; kept private to avoid unintentional tampering of configuration at runtime.
 var _InterfaceTypeErrorDesc = graphql.InterfaceDesc{Config: _InterfaceTypeErrorConfigFn}
 
-// StandardErrorInputFieldResolver implement to resolve requests for the StandardError's input field.
-type StandardErrorInputFieldResolver interface {
-	// Input implements response to request for input field.
-	Input(p graphql.ResolveParams) (string, error)
-}
-
-// StandardErrorCodeFieldResolver implement to resolve requests for the StandardError's code field.
-type StandardErrorCodeFieldResolver interface {
-	// Code implements response to request for code field.
-	Code(p graphql.ResolveParams) (ErrCode, error)
-}
-
-// StandardErrorMessageFieldResolver implement to resolve requests for the StandardError's message field.
-type StandardErrorMessageFieldResolver interface {
-	// Message implements response to request for message field.
-	Message(p graphql.ResolveParams) (string, error)
-}
-
 //
 // StandardErrorFieldResolvers represents a collection of methods whose products represent the
 // response values of the 'StandardError' type.
-//
-// == Example SDL
-//
-//   """
-//   Dog's are not hooman.
-//   """
-//   type Dog implements Pet {
-//     "name of this fine beast."
-//     name:  String!
-//
-//     "breed of this silly animal; probably shibe."
-//     breed: [Breed]
-//   }
-//
-// == Example generated interface
-//
-//   // DogResolver ...
-//   type DogFieldResolvers interface {
-//     DogNameFieldResolver
-//     DogBreedFieldResolver
-//
-//     // IsTypeOf is used to determine if a given value is associated with the Dog type
-//     IsTypeOf(interface{}, graphql.IsTypeOfParams) bool
-//   }
-//
-// == Example implementation ...
-//
-//   // DogResolver implements DogFieldResolvers interface
-//   type DogResolver struct {
-//     logger logrus.LogEntry
-//     store interface{
-//       store.BreedStore
-//       store.DogStore
-//     }
-//   }
-//
-//   // Name implements response to request for name field.
-//   func (r *DogResolver) Name(p graphql.ResolveParams) (interface{}, error) {
-//     // ... implementation details ...
-//     dog := p.Source.(DogGetter)
-//     return dog.GetName()
-//   }
-//
-//   // Breed implements response to request for breed field.
-//   func (r *DogResolver) Breed(p graphql.ResolveParams) (interface{}, error) {
-//     // ... implementation details ...
-//     dog := p.Source.(DogGetter)
-//     breed := r.store.GetBreed(dog.GetBreedName())
-//     return breed
-//   }
-//
-//   // IsTypeOf is used to determine if a given value is associated with the Dog type
-//   func (r *DogResolver) IsTypeOf(p graphql.IsTypeOfParams) bool {
-//     // ... implementation details ...
-//     _, ok := p.Value.(DogGetter)
-//     return ok
-//   }
-//
 type StandardErrorFieldResolvers interface {
-	StandardErrorInputFieldResolver
-	StandardErrorCodeFieldResolver
-	StandardErrorMessageFieldResolver
+	// Input implements response to request for 'input' field.
+	Input(p graphql.ResolveParams) (string, error)
+
+	// Code implements response to request for 'code' field.
+	Code(p graphql.ResolveParams) (ErrCode, error)
+
+	// Message implements response to request for 'message' field.
+	Message(p graphql.ResolveParams) (string, error)
 }
 
 // StandardErrorAliases implements all methods on StandardErrorFieldResolvers interface by using reflection to
 // match name of field to a field on the given value. Intent is reduce friction
 // of writing new resolvers by removing all the instances where you would simply
 // have the resolvers method return a field.
-//
-// == Example SDL
-//
-//    type Dog {
-//      name:   String!
-//      weight: Float!
-//      dob:    DateTime
-//      breed:  [Breed]
-//    }
-//
-// == Example generated aliases
-//
-//   type DogAliases struct {}
-//   func (_ DogAliases) Name(p graphql.ResolveParams) (interface{}, error) {
-//     // reflect...
-//   }
-//   func (_ DogAliases) Weight(p graphql.ResolveParams) (interface{}, error) {
-//     // reflect...
-//   }
-//   func (_ DogAliases) Dob(p graphql.ResolveParams) (interface{}, error) {
-//     // reflect...
-//   }
-//   func (_ DogAliases) Breed(p graphql.ResolveParams) (interface{}, error) {
-//     // reflect...
-//   }
-//
-// == Example Implementation
-//
-//   type DogResolver struct { // Implements DogResolver
-//     DogAliases
-//     store store.BreedStore
-//   }
-//
-//   // NOTE:
-//   // All other fields are satisified by DogAliases but since this one
-//   // requires hitting the store we implement it in our resolver.
-//   func (r *DogResolver) Breed(p graphql.ResolveParams) interface{} {
-//     dog := v.(*Dog)
-//     return r.BreedsById(dog.BreedIDs)
-//   }
-//
 type StandardErrorAliases struct{}
 
 // Input implements response to request for 'input' field.
@@ -234,14 +122,18 @@ func RegisterStandardError(svc *graphql.Service, impl StandardErrorFieldResolver
 	svc.RegisterObject(_ObjectTypeStandardErrorDesc, impl)
 }
 func _ObjTypeStandardErrorInputHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(StandardErrorInputFieldResolver)
+	resolver := impl.(interface {
+		Input(p graphql.ResolveParams) (string, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.Input(frp)
 	}
 }
 
 func _ObjTypeStandardErrorCodeHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(StandardErrorCodeFieldResolver)
+	resolver := impl.(interface {
+		Code(p graphql.ResolveParams) (ErrCode, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 
 		val, err := resolver.Code(frp)
@@ -250,7 +142,9 @@ func _ObjTypeStandardErrorCodeHandler(impl interface{}) graphql1.FieldResolveFn 
 }
 
 func _ObjTypeStandardErrorMessageHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(StandardErrorMessageFieldResolver)
+	resolver := impl.(interface {
+		Message(p graphql.ResolveParams) (string, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.Message(frp)
 	}

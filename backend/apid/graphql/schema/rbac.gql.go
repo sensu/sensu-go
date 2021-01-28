@@ -8,136 +8,24 @@ import (
 	graphql "github.com/sensu/sensu-go/graphql"
 )
 
-// RuleVerbsFieldResolver implement to resolve requests for the Rule's verbs field.
-type RuleVerbsFieldResolver interface {
-	// Verbs implements response to request for verbs field.
-	Verbs(p graphql.ResolveParams) ([]string, error)
-}
-
-// RuleResourcesFieldResolver implement to resolve requests for the Rule's resources field.
-type RuleResourcesFieldResolver interface {
-	// Resources implements response to request for resources field.
-	Resources(p graphql.ResolveParams) ([]string, error)
-}
-
-// RuleResourceNamesFieldResolver implement to resolve requests for the Rule's resourceNames field.
-type RuleResourceNamesFieldResolver interface {
-	// ResourceNames implements response to request for resourceNames field.
-	ResourceNames(p graphql.ResolveParams) ([]string, error)
-}
-
 //
 // RuleFieldResolvers represents a collection of methods whose products represent the
 // response values of the 'Rule' type.
-//
-// == Example SDL
-//
-//   """
-//   Dog's are not hooman.
-//   """
-//   type Dog implements Pet {
-//     "name of this fine beast."
-//     name:  String!
-//
-//     "breed of this silly animal; probably shibe."
-//     breed: [Breed]
-//   }
-//
-// == Example generated interface
-//
-//   // DogResolver ...
-//   type DogFieldResolvers interface {
-//     DogNameFieldResolver
-//     DogBreedFieldResolver
-//
-//     // IsTypeOf is used to determine if a given value is associated with the Dog type
-//     IsTypeOf(interface{}, graphql.IsTypeOfParams) bool
-//   }
-//
-// == Example implementation ...
-//
-//   // DogResolver implements DogFieldResolvers interface
-//   type DogResolver struct {
-//     logger logrus.LogEntry
-//     store interface{
-//       store.BreedStore
-//       store.DogStore
-//     }
-//   }
-//
-//   // Name implements response to request for name field.
-//   func (r *DogResolver) Name(p graphql.ResolveParams) (interface{}, error) {
-//     // ... implementation details ...
-//     dog := p.Source.(DogGetter)
-//     return dog.GetName()
-//   }
-//
-//   // Breed implements response to request for breed field.
-//   func (r *DogResolver) Breed(p graphql.ResolveParams) (interface{}, error) {
-//     // ... implementation details ...
-//     dog := p.Source.(DogGetter)
-//     breed := r.store.GetBreed(dog.GetBreedName())
-//     return breed
-//   }
-//
-//   // IsTypeOf is used to determine if a given value is associated with the Dog type
-//   func (r *DogResolver) IsTypeOf(p graphql.IsTypeOfParams) bool {
-//     // ... implementation details ...
-//     _, ok := p.Value.(DogGetter)
-//     return ok
-//   }
-//
 type RuleFieldResolvers interface {
-	RuleVerbsFieldResolver
-	RuleResourcesFieldResolver
-	RuleResourceNamesFieldResolver
+	// Verbs implements response to request for 'verbs' field.
+	Verbs(p graphql.ResolveParams) ([]string, error)
+
+	// Resources implements response to request for 'resources' field.
+	Resources(p graphql.ResolveParams) ([]string, error)
+
+	// ResourceNames implements response to request for 'resourceNames' field.
+	ResourceNames(p graphql.ResolveParams) ([]string, error)
 }
 
 // RuleAliases implements all methods on RuleFieldResolvers interface by using reflection to
 // match name of field to a field on the given value. Intent is reduce friction
 // of writing new resolvers by removing all the instances where you would simply
 // have the resolvers method return a field.
-//
-// == Example SDL
-//
-//    type Dog {
-//      name:   String!
-//      weight: Float!
-//      dob:    DateTime
-//      breed:  [Breed]
-//    }
-//
-// == Example generated aliases
-//
-//   type DogAliases struct {}
-//   func (_ DogAliases) Name(p graphql.ResolveParams) (interface{}, error) {
-//     // reflect...
-//   }
-//   func (_ DogAliases) Weight(p graphql.ResolveParams) (interface{}, error) {
-//     // reflect...
-//   }
-//   func (_ DogAliases) Dob(p graphql.ResolveParams) (interface{}, error) {
-//     // reflect...
-//   }
-//   func (_ DogAliases) Breed(p graphql.ResolveParams) (interface{}, error) {
-//     // reflect...
-//   }
-//
-// == Example Implementation
-//
-//   type DogResolver struct { // Implements DogResolver
-//     DogAliases
-//     store store.BreedStore
-//   }
-//
-//   // NOTE:
-//   // All other fields are satisified by DogAliases but since this one
-//   // requires hitting the store we implement it in our resolver.
-//   func (r *DogResolver) Breed(p graphql.ResolveParams) interface{} {
-//     dog := v.(*Dog)
-//     return r.BreedsById(dog.BreedIDs)
-//   }
-//
 type RuleAliases struct{}
 
 // Verbs implements response to request for 'verbs' field.
@@ -187,21 +75,27 @@ func RegisterRule(svc *graphql.Service, impl RuleFieldResolvers) {
 	svc.RegisterObject(_ObjectTypeRuleDesc, impl)
 }
 func _ObjTypeRuleVerbsHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(RuleVerbsFieldResolver)
+	resolver := impl.(interface {
+		Verbs(p graphql.ResolveParams) ([]string, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.Verbs(frp)
 	}
 }
 
 func _ObjTypeRuleResourcesHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(RuleResourcesFieldResolver)
+	resolver := impl.(interface {
+		Resources(p graphql.ResolveParams) ([]string, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.Resources(frp)
 	}
 }
 
 func _ObjTypeRuleResourceNamesHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(RuleResourceNamesFieldResolver)
+	resolver := impl.(interface {
+		ResourceNames(p graphql.ResolveParams) ([]string, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.ResourceNames(frp)
 	}
@@ -256,129 +150,21 @@ var _ObjectTypeRuleDesc = graphql.ObjectDesc{
 	},
 }
 
-// ClusterRoleRulesFieldResolver implement to resolve requests for the ClusterRole's rules field.
-type ClusterRoleRulesFieldResolver interface {
-	// Rules implements response to request for rules field.
-	Rules(p graphql.ResolveParams) (interface{}, error)
-}
-
-// ClusterRoleNameFieldResolver implement to resolve requests for the ClusterRole's name field.
-type ClusterRoleNameFieldResolver interface {
-	// Name implements response to request for name field.
-	Name(p graphql.ResolveParams) (string, error)
-}
-
 //
 // ClusterRoleFieldResolvers represents a collection of methods whose products represent the
 // response values of the 'ClusterRole' type.
-//
-// == Example SDL
-//
-//   """
-//   Dog's are not hooman.
-//   """
-//   type Dog implements Pet {
-//     "name of this fine beast."
-//     name:  String!
-//
-//     "breed of this silly animal; probably shibe."
-//     breed: [Breed]
-//   }
-//
-// == Example generated interface
-//
-//   // DogResolver ...
-//   type DogFieldResolvers interface {
-//     DogNameFieldResolver
-//     DogBreedFieldResolver
-//
-//     // IsTypeOf is used to determine if a given value is associated with the Dog type
-//     IsTypeOf(interface{}, graphql.IsTypeOfParams) bool
-//   }
-//
-// == Example implementation ...
-//
-//   // DogResolver implements DogFieldResolvers interface
-//   type DogResolver struct {
-//     logger logrus.LogEntry
-//     store interface{
-//       store.BreedStore
-//       store.DogStore
-//     }
-//   }
-//
-//   // Name implements response to request for name field.
-//   func (r *DogResolver) Name(p graphql.ResolveParams) (interface{}, error) {
-//     // ... implementation details ...
-//     dog := p.Source.(DogGetter)
-//     return dog.GetName()
-//   }
-//
-//   // Breed implements response to request for breed field.
-//   func (r *DogResolver) Breed(p graphql.ResolveParams) (interface{}, error) {
-//     // ... implementation details ...
-//     dog := p.Source.(DogGetter)
-//     breed := r.store.GetBreed(dog.GetBreedName())
-//     return breed
-//   }
-//
-//   // IsTypeOf is used to determine if a given value is associated with the Dog type
-//   func (r *DogResolver) IsTypeOf(p graphql.IsTypeOfParams) bool {
-//     // ... implementation details ...
-//     _, ok := p.Value.(DogGetter)
-//     return ok
-//   }
-//
 type ClusterRoleFieldResolvers interface {
-	ClusterRoleRulesFieldResolver
-	ClusterRoleNameFieldResolver
+	// Rules implements response to request for 'rules' field.
+	Rules(p graphql.ResolveParams) (interface{}, error)
+
+	// Name implements response to request for 'name' field.
+	Name(p graphql.ResolveParams) (string, error)
 }
 
 // ClusterRoleAliases implements all methods on ClusterRoleFieldResolvers interface by using reflection to
 // match name of field to a field on the given value. Intent is reduce friction
 // of writing new resolvers by removing all the instances where you would simply
 // have the resolvers method return a field.
-//
-// == Example SDL
-//
-//    type Dog {
-//      name:   String!
-//      weight: Float!
-//      dob:    DateTime
-//      breed:  [Breed]
-//    }
-//
-// == Example generated aliases
-//
-//   type DogAliases struct {}
-//   func (_ DogAliases) Name(p graphql.ResolveParams) (interface{}, error) {
-//     // reflect...
-//   }
-//   func (_ DogAliases) Weight(p graphql.ResolveParams) (interface{}, error) {
-//     // reflect...
-//   }
-//   func (_ DogAliases) Dob(p graphql.ResolveParams) (interface{}, error) {
-//     // reflect...
-//   }
-//   func (_ DogAliases) Breed(p graphql.ResolveParams) (interface{}, error) {
-//     // reflect...
-//   }
-//
-// == Example Implementation
-//
-//   type DogResolver struct { // Implements DogResolver
-//     DogAliases
-//     store store.BreedStore
-//   }
-//
-//   // NOTE:
-//   // All other fields are satisified by DogAliases but since this one
-//   // requires hitting the store we implement it in our resolver.
-//   func (r *DogResolver) Breed(p graphql.ResolveParams) interface{} {
-//     dog := v.(*Dog)
-//     return r.BreedsById(dog.BreedIDs)
-//   }
-//
 type ClusterRoleAliases struct{}
 
 // Rules implements response to request for 'rules' field.
@@ -408,14 +194,18 @@ func RegisterClusterRole(svc *graphql.Service, impl ClusterRoleFieldResolvers) {
 	svc.RegisterObject(_ObjectTypeClusterRoleDesc, impl)
 }
 func _ObjTypeClusterRoleRulesHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(ClusterRoleRulesFieldResolver)
+	resolver := impl.(interface {
+		Rules(p graphql.ResolveParams) (interface{}, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.Rules(frp)
 	}
 }
 
 func _ObjTypeClusterRoleNameHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(ClusterRoleNameFieldResolver)
+	resolver := impl.(interface {
+		Name(p graphql.ResolveParams) (string, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.Name(frp)
 	}
@@ -462,136 +252,24 @@ var _ObjectTypeClusterRoleDesc = graphql.ObjectDesc{
 	},
 }
 
-// RoleRulesFieldResolver implement to resolve requests for the Role's rules field.
-type RoleRulesFieldResolver interface {
-	// Rules implements response to request for rules field.
-	Rules(p graphql.ResolveParams) (interface{}, error)
-}
-
-// RoleNamespaceFieldResolver implement to resolve requests for the Role's namespace field.
-type RoleNamespaceFieldResolver interface {
-	// Namespace implements response to request for namespace field.
-	Namespace(p graphql.ResolveParams) (string, error)
-}
-
-// RoleNameFieldResolver implement to resolve requests for the Role's name field.
-type RoleNameFieldResolver interface {
-	// Name implements response to request for name field.
-	Name(p graphql.ResolveParams) (string, error)
-}
-
 //
 // RoleFieldResolvers represents a collection of methods whose products represent the
 // response values of the 'Role' type.
-//
-// == Example SDL
-//
-//   """
-//   Dog's are not hooman.
-//   """
-//   type Dog implements Pet {
-//     "name of this fine beast."
-//     name:  String!
-//
-//     "breed of this silly animal; probably shibe."
-//     breed: [Breed]
-//   }
-//
-// == Example generated interface
-//
-//   // DogResolver ...
-//   type DogFieldResolvers interface {
-//     DogNameFieldResolver
-//     DogBreedFieldResolver
-//
-//     // IsTypeOf is used to determine if a given value is associated with the Dog type
-//     IsTypeOf(interface{}, graphql.IsTypeOfParams) bool
-//   }
-//
-// == Example implementation ...
-//
-//   // DogResolver implements DogFieldResolvers interface
-//   type DogResolver struct {
-//     logger logrus.LogEntry
-//     store interface{
-//       store.BreedStore
-//       store.DogStore
-//     }
-//   }
-//
-//   // Name implements response to request for name field.
-//   func (r *DogResolver) Name(p graphql.ResolveParams) (interface{}, error) {
-//     // ... implementation details ...
-//     dog := p.Source.(DogGetter)
-//     return dog.GetName()
-//   }
-//
-//   // Breed implements response to request for breed field.
-//   func (r *DogResolver) Breed(p graphql.ResolveParams) (interface{}, error) {
-//     // ... implementation details ...
-//     dog := p.Source.(DogGetter)
-//     breed := r.store.GetBreed(dog.GetBreedName())
-//     return breed
-//   }
-//
-//   // IsTypeOf is used to determine if a given value is associated with the Dog type
-//   func (r *DogResolver) IsTypeOf(p graphql.IsTypeOfParams) bool {
-//     // ... implementation details ...
-//     _, ok := p.Value.(DogGetter)
-//     return ok
-//   }
-//
 type RoleFieldResolvers interface {
-	RoleRulesFieldResolver
-	RoleNamespaceFieldResolver
-	RoleNameFieldResolver
+	// Rules implements response to request for 'rules' field.
+	Rules(p graphql.ResolveParams) (interface{}, error)
+
+	// Namespace implements response to request for 'namespace' field.
+	Namespace(p graphql.ResolveParams) (string, error)
+
+	// Name implements response to request for 'name' field.
+	Name(p graphql.ResolveParams) (string, error)
 }
 
 // RoleAliases implements all methods on RoleFieldResolvers interface by using reflection to
 // match name of field to a field on the given value. Intent is reduce friction
 // of writing new resolvers by removing all the instances where you would simply
 // have the resolvers method return a field.
-//
-// == Example SDL
-//
-//    type Dog {
-//      name:   String!
-//      weight: Float!
-//      dob:    DateTime
-//      breed:  [Breed]
-//    }
-//
-// == Example generated aliases
-//
-//   type DogAliases struct {}
-//   func (_ DogAliases) Name(p graphql.ResolveParams) (interface{}, error) {
-//     // reflect...
-//   }
-//   func (_ DogAliases) Weight(p graphql.ResolveParams) (interface{}, error) {
-//     // reflect...
-//   }
-//   func (_ DogAliases) Dob(p graphql.ResolveParams) (interface{}, error) {
-//     // reflect...
-//   }
-//   func (_ DogAliases) Breed(p graphql.ResolveParams) (interface{}, error) {
-//     // reflect...
-//   }
-//
-// == Example Implementation
-//
-//   type DogResolver struct { // Implements DogResolver
-//     DogAliases
-//     store store.BreedStore
-//   }
-//
-//   // NOTE:
-//   // All other fields are satisified by DogAliases but since this one
-//   // requires hitting the store we implement it in our resolver.
-//   func (r *DogResolver) Breed(p graphql.ResolveParams) interface{} {
-//     dog := v.(*Dog)
-//     return r.BreedsById(dog.BreedIDs)
-//   }
-//
 type RoleAliases struct{}
 
 // Rules implements response to request for 'rules' field.
@@ -634,21 +312,27 @@ func RegisterRole(svc *graphql.Service, impl RoleFieldResolvers) {
 	svc.RegisterObject(_ObjectTypeRoleDesc, impl)
 }
 func _ObjTypeRoleRulesHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(RoleRulesFieldResolver)
+	resolver := impl.(interface {
+		Rules(p graphql.ResolveParams) (interface{}, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.Rules(frp)
 	}
 }
 
 func _ObjTypeRoleNamespaceHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(RoleNamespaceFieldResolver)
+	resolver := impl.(interface {
+		Namespace(p graphql.ResolveParams) (string, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.Namespace(frp)
 	}
 }
 
 func _ObjTypeRoleNameHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(RoleNameFieldResolver)
+	resolver := impl.(interface {
+		Name(p graphql.ResolveParams) (string, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.Name(frp)
 	}
@@ -703,129 +387,21 @@ var _ObjectTypeRoleDesc = graphql.ObjectDesc{
 	},
 }
 
-// RoleRefTypeFieldResolver implement to resolve requests for the RoleRef's type field.
-type RoleRefTypeFieldResolver interface {
-	// Type implements response to request for type field.
-	Type(p graphql.ResolveParams) (string, error)
-}
-
-// RoleRefNameFieldResolver implement to resolve requests for the RoleRef's name field.
-type RoleRefNameFieldResolver interface {
-	// Name implements response to request for name field.
-	Name(p graphql.ResolveParams) (string, error)
-}
-
 //
 // RoleRefFieldResolvers represents a collection of methods whose products represent the
 // response values of the 'RoleRef' type.
-//
-// == Example SDL
-//
-//   """
-//   Dog's are not hooman.
-//   """
-//   type Dog implements Pet {
-//     "name of this fine beast."
-//     name:  String!
-//
-//     "breed of this silly animal; probably shibe."
-//     breed: [Breed]
-//   }
-//
-// == Example generated interface
-//
-//   // DogResolver ...
-//   type DogFieldResolvers interface {
-//     DogNameFieldResolver
-//     DogBreedFieldResolver
-//
-//     // IsTypeOf is used to determine if a given value is associated with the Dog type
-//     IsTypeOf(interface{}, graphql.IsTypeOfParams) bool
-//   }
-//
-// == Example implementation ...
-//
-//   // DogResolver implements DogFieldResolvers interface
-//   type DogResolver struct {
-//     logger logrus.LogEntry
-//     store interface{
-//       store.BreedStore
-//       store.DogStore
-//     }
-//   }
-//
-//   // Name implements response to request for name field.
-//   func (r *DogResolver) Name(p graphql.ResolveParams) (interface{}, error) {
-//     // ... implementation details ...
-//     dog := p.Source.(DogGetter)
-//     return dog.GetName()
-//   }
-//
-//   // Breed implements response to request for breed field.
-//   func (r *DogResolver) Breed(p graphql.ResolveParams) (interface{}, error) {
-//     // ... implementation details ...
-//     dog := p.Source.(DogGetter)
-//     breed := r.store.GetBreed(dog.GetBreedName())
-//     return breed
-//   }
-//
-//   // IsTypeOf is used to determine if a given value is associated with the Dog type
-//   func (r *DogResolver) IsTypeOf(p graphql.IsTypeOfParams) bool {
-//     // ... implementation details ...
-//     _, ok := p.Value.(DogGetter)
-//     return ok
-//   }
-//
 type RoleRefFieldResolvers interface {
-	RoleRefTypeFieldResolver
-	RoleRefNameFieldResolver
+	// Type implements response to request for 'type' field.
+	Type(p graphql.ResolveParams) (string, error)
+
+	// Name implements response to request for 'name' field.
+	Name(p graphql.ResolveParams) (string, error)
 }
 
 // RoleRefAliases implements all methods on RoleRefFieldResolvers interface by using reflection to
 // match name of field to a field on the given value. Intent is reduce friction
 // of writing new resolvers by removing all the instances where you would simply
 // have the resolvers method return a field.
-//
-// == Example SDL
-//
-//    type Dog {
-//      name:   String!
-//      weight: Float!
-//      dob:    DateTime
-//      breed:  [Breed]
-//    }
-//
-// == Example generated aliases
-//
-//   type DogAliases struct {}
-//   func (_ DogAliases) Name(p graphql.ResolveParams) (interface{}, error) {
-//     // reflect...
-//   }
-//   func (_ DogAliases) Weight(p graphql.ResolveParams) (interface{}, error) {
-//     // reflect...
-//   }
-//   func (_ DogAliases) Dob(p graphql.ResolveParams) (interface{}, error) {
-//     // reflect...
-//   }
-//   func (_ DogAliases) Breed(p graphql.ResolveParams) (interface{}, error) {
-//     // reflect...
-//   }
-//
-// == Example Implementation
-//
-//   type DogResolver struct { // Implements DogResolver
-//     DogAliases
-//     store store.BreedStore
-//   }
-//
-//   // NOTE:
-//   // All other fields are satisified by DogAliases but since this one
-//   // requires hitting the store we implement it in our resolver.
-//   func (r *DogResolver) Breed(p graphql.ResolveParams) interface{} {
-//     dog := v.(*Dog)
-//     return r.BreedsById(dog.BreedIDs)
-//   }
-//
 type RoleRefAliases struct{}
 
 // Type implements response to request for 'type' field.
@@ -862,14 +438,18 @@ func RegisterRoleRef(svc *graphql.Service, impl RoleRefFieldResolvers) {
 	svc.RegisterObject(_ObjectTypeRoleRefDesc, impl)
 }
 func _ObjTypeRoleRefTypeHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(RoleRefTypeFieldResolver)
+	resolver := impl.(interface {
+		Type(p graphql.ResolveParams) (string, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.Type(frp)
 	}
 }
 
 func _ObjTypeRoleRefNameHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(RoleRefNameFieldResolver)
+	resolver := impl.(interface {
+		Name(p graphql.ResolveParams) (string, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.Name(frp)
 	}
@@ -916,129 +496,21 @@ var _ObjectTypeRoleRefDesc = graphql.ObjectDesc{
 	},
 }
 
-// SubjectKindFieldResolver implement to resolve requests for the Subject's kind field.
-type SubjectKindFieldResolver interface {
-	// Kind implements response to request for kind field.
-	Kind(p graphql.ResolveParams) (string, error)
-}
-
-// SubjectNameFieldResolver implement to resolve requests for the Subject's name field.
-type SubjectNameFieldResolver interface {
-	// Name implements response to request for name field.
-	Name(p graphql.ResolveParams) (string, error)
-}
-
 //
 // SubjectFieldResolvers represents a collection of methods whose products represent the
 // response values of the 'Subject' type.
-//
-// == Example SDL
-//
-//   """
-//   Dog's are not hooman.
-//   """
-//   type Dog implements Pet {
-//     "name of this fine beast."
-//     name:  String!
-//
-//     "breed of this silly animal; probably shibe."
-//     breed: [Breed]
-//   }
-//
-// == Example generated interface
-//
-//   // DogResolver ...
-//   type DogFieldResolvers interface {
-//     DogNameFieldResolver
-//     DogBreedFieldResolver
-//
-//     // IsTypeOf is used to determine if a given value is associated with the Dog type
-//     IsTypeOf(interface{}, graphql.IsTypeOfParams) bool
-//   }
-//
-// == Example implementation ...
-//
-//   // DogResolver implements DogFieldResolvers interface
-//   type DogResolver struct {
-//     logger logrus.LogEntry
-//     store interface{
-//       store.BreedStore
-//       store.DogStore
-//     }
-//   }
-//
-//   // Name implements response to request for name field.
-//   func (r *DogResolver) Name(p graphql.ResolveParams) (interface{}, error) {
-//     // ... implementation details ...
-//     dog := p.Source.(DogGetter)
-//     return dog.GetName()
-//   }
-//
-//   // Breed implements response to request for breed field.
-//   func (r *DogResolver) Breed(p graphql.ResolveParams) (interface{}, error) {
-//     // ... implementation details ...
-//     dog := p.Source.(DogGetter)
-//     breed := r.store.GetBreed(dog.GetBreedName())
-//     return breed
-//   }
-//
-//   // IsTypeOf is used to determine if a given value is associated with the Dog type
-//   func (r *DogResolver) IsTypeOf(p graphql.IsTypeOfParams) bool {
-//     // ... implementation details ...
-//     _, ok := p.Value.(DogGetter)
-//     return ok
-//   }
-//
 type SubjectFieldResolvers interface {
-	SubjectKindFieldResolver
-	SubjectNameFieldResolver
+	// Kind implements response to request for 'kind' field.
+	Kind(p graphql.ResolveParams) (string, error)
+
+	// Name implements response to request for 'name' field.
+	Name(p graphql.ResolveParams) (string, error)
 }
 
 // SubjectAliases implements all methods on SubjectFieldResolvers interface by using reflection to
 // match name of field to a field on the given value. Intent is reduce friction
 // of writing new resolvers by removing all the instances where you would simply
 // have the resolvers method return a field.
-//
-// == Example SDL
-//
-//    type Dog {
-//      name:   String!
-//      weight: Float!
-//      dob:    DateTime
-//      breed:  [Breed]
-//    }
-//
-// == Example generated aliases
-//
-//   type DogAliases struct {}
-//   func (_ DogAliases) Name(p graphql.ResolveParams) (interface{}, error) {
-//     // reflect...
-//   }
-//   func (_ DogAliases) Weight(p graphql.ResolveParams) (interface{}, error) {
-//     // reflect...
-//   }
-//   func (_ DogAliases) Dob(p graphql.ResolveParams) (interface{}, error) {
-//     // reflect...
-//   }
-//   func (_ DogAliases) Breed(p graphql.ResolveParams) (interface{}, error) {
-//     // reflect...
-//   }
-//
-// == Example Implementation
-//
-//   type DogResolver struct { // Implements DogResolver
-//     DogAliases
-//     store store.BreedStore
-//   }
-//
-//   // NOTE:
-//   // All other fields are satisified by DogAliases but since this one
-//   // requires hitting the store we implement it in our resolver.
-//   func (r *DogResolver) Breed(p graphql.ResolveParams) interface{} {
-//     dog := v.(*Dog)
-//     return r.BreedsById(dog.BreedIDs)
-//   }
-//
 type SubjectAliases struct{}
 
 // Kind implements response to request for 'kind' field.
@@ -1075,14 +547,18 @@ func RegisterSubject(svc *graphql.Service, impl SubjectFieldResolvers) {
 	svc.RegisterObject(_ObjectTypeSubjectDesc, impl)
 }
 func _ObjTypeSubjectKindHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(SubjectKindFieldResolver)
+	resolver := impl.(interface {
+		Kind(p graphql.ResolveParams) (string, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.Kind(frp)
 	}
 }
 
 func _ObjTypeSubjectNameHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(SubjectNameFieldResolver)
+	resolver := impl.(interface {
+		Name(p graphql.ResolveParams) (string, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.Name(frp)
 	}
@@ -1129,136 +605,24 @@ var _ObjectTypeSubjectDesc = graphql.ObjectDesc{
 	},
 }
 
-// ClusterRoleBindingSubjectsFieldResolver implement to resolve requests for the ClusterRoleBinding's subjects field.
-type ClusterRoleBindingSubjectsFieldResolver interface {
-	// Subjects implements response to request for subjects field.
-	Subjects(p graphql.ResolveParams) (interface{}, error)
-}
-
-// ClusterRoleBindingRoleRefFieldResolver implement to resolve requests for the ClusterRoleBinding's roleRef field.
-type ClusterRoleBindingRoleRefFieldResolver interface {
-	// RoleRef implements response to request for roleRef field.
-	RoleRef(p graphql.ResolveParams) (interface{}, error)
-}
-
-// ClusterRoleBindingNameFieldResolver implement to resolve requests for the ClusterRoleBinding's name field.
-type ClusterRoleBindingNameFieldResolver interface {
-	// Name implements response to request for name field.
-	Name(p graphql.ResolveParams) (string, error)
-}
-
 //
 // ClusterRoleBindingFieldResolvers represents a collection of methods whose products represent the
 // response values of the 'ClusterRoleBinding' type.
-//
-// == Example SDL
-//
-//   """
-//   Dog's are not hooman.
-//   """
-//   type Dog implements Pet {
-//     "name of this fine beast."
-//     name:  String!
-//
-//     "breed of this silly animal; probably shibe."
-//     breed: [Breed]
-//   }
-//
-// == Example generated interface
-//
-//   // DogResolver ...
-//   type DogFieldResolvers interface {
-//     DogNameFieldResolver
-//     DogBreedFieldResolver
-//
-//     // IsTypeOf is used to determine if a given value is associated with the Dog type
-//     IsTypeOf(interface{}, graphql.IsTypeOfParams) bool
-//   }
-//
-// == Example implementation ...
-//
-//   // DogResolver implements DogFieldResolvers interface
-//   type DogResolver struct {
-//     logger logrus.LogEntry
-//     store interface{
-//       store.BreedStore
-//       store.DogStore
-//     }
-//   }
-//
-//   // Name implements response to request for name field.
-//   func (r *DogResolver) Name(p graphql.ResolveParams) (interface{}, error) {
-//     // ... implementation details ...
-//     dog := p.Source.(DogGetter)
-//     return dog.GetName()
-//   }
-//
-//   // Breed implements response to request for breed field.
-//   func (r *DogResolver) Breed(p graphql.ResolveParams) (interface{}, error) {
-//     // ... implementation details ...
-//     dog := p.Source.(DogGetter)
-//     breed := r.store.GetBreed(dog.GetBreedName())
-//     return breed
-//   }
-//
-//   // IsTypeOf is used to determine if a given value is associated with the Dog type
-//   func (r *DogResolver) IsTypeOf(p graphql.IsTypeOfParams) bool {
-//     // ... implementation details ...
-//     _, ok := p.Value.(DogGetter)
-//     return ok
-//   }
-//
 type ClusterRoleBindingFieldResolvers interface {
-	ClusterRoleBindingSubjectsFieldResolver
-	ClusterRoleBindingRoleRefFieldResolver
-	ClusterRoleBindingNameFieldResolver
+	// Subjects implements response to request for 'subjects' field.
+	Subjects(p graphql.ResolveParams) (interface{}, error)
+
+	// RoleRef implements response to request for 'roleRef' field.
+	RoleRef(p graphql.ResolveParams) (interface{}, error)
+
+	// Name implements response to request for 'name' field.
+	Name(p graphql.ResolveParams) (string, error)
 }
 
 // ClusterRoleBindingAliases implements all methods on ClusterRoleBindingFieldResolvers interface by using reflection to
 // match name of field to a field on the given value. Intent is reduce friction
 // of writing new resolvers by removing all the instances where you would simply
 // have the resolvers method return a field.
-//
-// == Example SDL
-//
-//    type Dog {
-//      name:   String!
-//      weight: Float!
-//      dob:    DateTime
-//      breed:  [Breed]
-//    }
-//
-// == Example generated aliases
-//
-//   type DogAliases struct {}
-//   func (_ DogAliases) Name(p graphql.ResolveParams) (interface{}, error) {
-//     // reflect...
-//   }
-//   func (_ DogAliases) Weight(p graphql.ResolveParams) (interface{}, error) {
-//     // reflect...
-//   }
-//   func (_ DogAliases) Dob(p graphql.ResolveParams) (interface{}, error) {
-//     // reflect...
-//   }
-//   func (_ DogAliases) Breed(p graphql.ResolveParams) (interface{}, error) {
-//     // reflect...
-//   }
-//
-// == Example Implementation
-//
-//   type DogResolver struct { // Implements DogResolver
-//     DogAliases
-//     store store.BreedStore
-//   }
-//
-//   // NOTE:
-//   // All other fields are satisified by DogAliases but since this one
-//   // requires hitting the store we implement it in our resolver.
-//   func (r *DogResolver) Breed(p graphql.ResolveParams) interface{} {
-//     dog := v.(*Dog)
-//     return r.BreedsById(dog.BreedIDs)
-//   }
-//
 type ClusterRoleBindingAliases struct{}
 
 // Subjects implements response to request for 'subjects' field.
@@ -1297,21 +661,27 @@ func RegisterClusterRoleBinding(svc *graphql.Service, impl ClusterRoleBindingFie
 	svc.RegisterObject(_ObjectTypeClusterRoleBindingDesc, impl)
 }
 func _ObjTypeClusterRoleBindingSubjectsHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(ClusterRoleBindingSubjectsFieldResolver)
+	resolver := impl.(interface {
+		Subjects(p graphql.ResolveParams) (interface{}, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.Subjects(frp)
 	}
 }
 
 func _ObjTypeClusterRoleBindingRoleRefHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(ClusterRoleBindingRoleRefFieldResolver)
+	resolver := impl.(interface {
+		RoleRef(p graphql.ResolveParams) (interface{}, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.RoleRef(frp)
 	}
 }
 
 func _ObjTypeClusterRoleBindingNameHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(ClusterRoleBindingNameFieldResolver)
+	resolver := impl.(interface {
+		Name(p graphql.ResolveParams) (string, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.Name(frp)
 	}
@@ -1366,143 +736,27 @@ var _ObjectTypeClusterRoleBindingDesc = graphql.ObjectDesc{
 	},
 }
 
-// RoleBindingSubjectsFieldResolver implement to resolve requests for the RoleBinding's subjects field.
-type RoleBindingSubjectsFieldResolver interface {
-	// Subjects implements response to request for subjects field.
-	Subjects(p graphql.ResolveParams) (interface{}, error)
-}
-
-// RoleBindingRoleRefFieldResolver implement to resolve requests for the RoleBinding's roleRef field.
-type RoleBindingRoleRefFieldResolver interface {
-	// RoleRef implements response to request for roleRef field.
-	RoleRef(p graphql.ResolveParams) (interface{}, error)
-}
-
-// RoleBindingNamespaceFieldResolver implement to resolve requests for the RoleBinding's namespace field.
-type RoleBindingNamespaceFieldResolver interface {
-	// Namespace implements response to request for namespace field.
-	Namespace(p graphql.ResolveParams) (string, error)
-}
-
-// RoleBindingNameFieldResolver implement to resolve requests for the RoleBinding's name field.
-type RoleBindingNameFieldResolver interface {
-	// Name implements response to request for name field.
-	Name(p graphql.ResolveParams) (string, error)
-}
-
 //
 // RoleBindingFieldResolvers represents a collection of methods whose products represent the
 // response values of the 'RoleBinding' type.
-//
-// == Example SDL
-//
-//   """
-//   Dog's are not hooman.
-//   """
-//   type Dog implements Pet {
-//     "name of this fine beast."
-//     name:  String!
-//
-//     "breed of this silly animal; probably shibe."
-//     breed: [Breed]
-//   }
-//
-// == Example generated interface
-//
-//   // DogResolver ...
-//   type DogFieldResolvers interface {
-//     DogNameFieldResolver
-//     DogBreedFieldResolver
-//
-//     // IsTypeOf is used to determine if a given value is associated with the Dog type
-//     IsTypeOf(interface{}, graphql.IsTypeOfParams) bool
-//   }
-//
-// == Example implementation ...
-//
-//   // DogResolver implements DogFieldResolvers interface
-//   type DogResolver struct {
-//     logger logrus.LogEntry
-//     store interface{
-//       store.BreedStore
-//       store.DogStore
-//     }
-//   }
-//
-//   // Name implements response to request for name field.
-//   func (r *DogResolver) Name(p graphql.ResolveParams) (interface{}, error) {
-//     // ... implementation details ...
-//     dog := p.Source.(DogGetter)
-//     return dog.GetName()
-//   }
-//
-//   // Breed implements response to request for breed field.
-//   func (r *DogResolver) Breed(p graphql.ResolveParams) (interface{}, error) {
-//     // ... implementation details ...
-//     dog := p.Source.(DogGetter)
-//     breed := r.store.GetBreed(dog.GetBreedName())
-//     return breed
-//   }
-//
-//   // IsTypeOf is used to determine if a given value is associated with the Dog type
-//   func (r *DogResolver) IsTypeOf(p graphql.IsTypeOfParams) bool {
-//     // ... implementation details ...
-//     _, ok := p.Value.(DogGetter)
-//     return ok
-//   }
-//
 type RoleBindingFieldResolvers interface {
-	RoleBindingSubjectsFieldResolver
-	RoleBindingRoleRefFieldResolver
-	RoleBindingNamespaceFieldResolver
-	RoleBindingNameFieldResolver
+	// Subjects implements response to request for 'subjects' field.
+	Subjects(p graphql.ResolveParams) (interface{}, error)
+
+	// RoleRef implements response to request for 'roleRef' field.
+	RoleRef(p graphql.ResolveParams) (interface{}, error)
+
+	// Namespace implements response to request for 'namespace' field.
+	Namespace(p graphql.ResolveParams) (string, error)
+
+	// Name implements response to request for 'name' field.
+	Name(p graphql.ResolveParams) (string, error)
 }
 
 // RoleBindingAliases implements all methods on RoleBindingFieldResolvers interface by using reflection to
 // match name of field to a field on the given value. Intent is reduce friction
 // of writing new resolvers by removing all the instances where you would simply
 // have the resolvers method return a field.
-//
-// == Example SDL
-//
-//    type Dog {
-//      name:   String!
-//      weight: Float!
-//      dob:    DateTime
-//      breed:  [Breed]
-//    }
-//
-// == Example generated aliases
-//
-//   type DogAliases struct {}
-//   func (_ DogAliases) Name(p graphql.ResolveParams) (interface{}, error) {
-//     // reflect...
-//   }
-//   func (_ DogAliases) Weight(p graphql.ResolveParams) (interface{}, error) {
-//     // reflect...
-//   }
-//   func (_ DogAliases) Dob(p graphql.ResolveParams) (interface{}, error) {
-//     // reflect...
-//   }
-//   func (_ DogAliases) Breed(p graphql.ResolveParams) (interface{}, error) {
-//     // reflect...
-//   }
-//
-// == Example Implementation
-//
-//   type DogResolver struct { // Implements DogResolver
-//     DogAliases
-//     store store.BreedStore
-//   }
-//
-//   // NOTE:
-//   // All other fields are satisified by DogAliases but since this one
-//   // requires hitting the store we implement it in our resolver.
-//   func (r *DogResolver) Breed(p graphql.ResolveParams) interface{} {
-//     dog := v.(*Dog)
-//     return r.BreedsById(dog.BreedIDs)
-//   }
-//
 type RoleBindingAliases struct{}
 
 // Subjects implements response to request for 'subjects' field.
@@ -1554,28 +808,36 @@ func RegisterRoleBinding(svc *graphql.Service, impl RoleBindingFieldResolvers) {
 	svc.RegisterObject(_ObjectTypeRoleBindingDesc, impl)
 }
 func _ObjTypeRoleBindingSubjectsHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(RoleBindingSubjectsFieldResolver)
+	resolver := impl.(interface {
+		Subjects(p graphql.ResolveParams) (interface{}, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.Subjects(frp)
 	}
 }
 
 func _ObjTypeRoleBindingRoleRefHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(RoleBindingRoleRefFieldResolver)
+	resolver := impl.(interface {
+		RoleRef(p graphql.ResolveParams) (interface{}, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.RoleRef(frp)
 	}
 }
 
 func _ObjTypeRoleBindingNamespaceHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(RoleBindingNamespaceFieldResolver)
+	resolver := impl.(interface {
+		Namespace(p graphql.ResolveParams) (string, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.Namespace(frp)
 	}
 }
 
 func _ObjTypeRoleBindingNameHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(RoleBindingNameFieldResolver)
+	resolver := impl.(interface {
+		Name(p graphql.ResolveParams) (string, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.Name(frp)
 	}

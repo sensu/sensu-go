@@ -10,304 +10,96 @@ import (
 	time "time"
 )
 
-// CheckConfigIDFieldResolver implement to resolve requests for the CheckConfig's id field.
-type CheckConfigIDFieldResolver interface {
-	// ID implements response to request for id field.
-	ID(p graphql.ResolveParams) (string, error)
-}
-
-// CheckConfigNamespaceFieldResolver implement to resolve requests for the CheckConfig's namespace field.
-type CheckConfigNamespaceFieldResolver interface {
-	// Namespace implements response to request for namespace field.
-	Namespace(p graphql.ResolveParams) (string, error)
-}
-
-// CheckConfigNameFieldResolver implement to resolve requests for the CheckConfig's name field.
-type CheckConfigNameFieldResolver interface {
-	// Name implements response to request for name field.
-	Name(p graphql.ResolveParams) (string, error)
-}
-
-// CheckConfigMetadataFieldResolver implement to resolve requests for the CheckConfig's metadata field.
-type CheckConfigMetadataFieldResolver interface {
-	// Metadata implements response to request for metadata field.
-	Metadata(p graphql.ResolveParams) (interface{}, error)
-}
-
-// CheckConfigCommandFieldResolver implement to resolve requests for the CheckConfig's command field.
-type CheckConfigCommandFieldResolver interface {
-	// Command implements response to request for command field.
-	Command(p graphql.ResolveParams) (string, error)
-}
-
-// CheckConfigCheckHooksFieldResolver implement to resolve requests for the CheckConfig's checkHooks field.
-type CheckConfigCheckHooksFieldResolver interface {
-	// CheckHooks implements response to request for checkHooks field.
-	CheckHooks(p graphql.ResolveParams) (interface{}, error)
-}
-
-// CheckConfigCronFieldResolver implement to resolve requests for the CheckConfig's cron field.
-type CheckConfigCronFieldResolver interface {
-	// Cron implements response to request for cron field.
-	Cron(p graphql.ResolveParams) (string, error)
-}
-
-// CheckConfigEnvVarsFieldResolver implement to resolve requests for the CheckConfig's envVars field.
-type CheckConfigEnvVarsFieldResolver interface {
-	// EnvVars implements response to request for envVars field.
-	EnvVars(p graphql.ResolveParams) ([]string, error)
-}
-
-// CheckConfigHandlersFieldResolver implement to resolve requests for the CheckConfig's handlers field.
-type CheckConfigHandlersFieldResolver interface {
-	// Handlers implements response to request for handlers field.
-	Handlers(p graphql.ResolveParams) (interface{}, error)
-}
-
-// CheckConfigHighFlapThresholdFieldResolver implement to resolve requests for the CheckConfig's highFlapThreshold field.
-type CheckConfigHighFlapThresholdFieldResolver interface {
-	// HighFlapThreshold implements response to request for highFlapThreshold field.
-	HighFlapThreshold(p graphql.ResolveParams) (int, error)
-}
-
-// CheckConfigIntervalFieldResolver implement to resolve requests for the CheckConfig's interval field.
-type CheckConfigIntervalFieldResolver interface {
-	// Interval implements response to request for interval field.
-	Interval(p graphql.ResolveParams) (int, error)
-}
-
-// CheckConfigLowFlapThresholdFieldResolver implement to resolve requests for the CheckConfig's lowFlapThreshold field.
-type CheckConfigLowFlapThresholdFieldResolver interface {
-	// LowFlapThreshold implements response to request for lowFlapThreshold field.
-	LowFlapThreshold(p graphql.ResolveParams) (int, error)
-}
-
-// CheckConfigOutputMetricFormatFieldResolver implement to resolve requests for the CheckConfig's outputMetricFormat field.
-type CheckConfigOutputMetricFormatFieldResolver interface {
-	// OutputMetricFormat implements response to request for outputMetricFormat field.
-	OutputMetricFormat(p graphql.ResolveParams) (string, error)
-}
-
-// CheckConfigOutputMetricHandlersFieldResolver implement to resolve requests for the CheckConfig's outputMetricHandlers field.
-type CheckConfigOutputMetricHandlersFieldResolver interface {
-	// OutputMetricHandlers implements response to request for outputMetricHandlers field.
-	OutputMetricHandlers(p graphql.ResolveParams) (interface{}, error)
-}
-
-// CheckConfigProxyEntityNameFieldResolver implement to resolve requests for the CheckConfig's proxyEntityName field.
-type CheckConfigProxyEntityNameFieldResolver interface {
-	// ProxyEntityName implements response to request for proxyEntityName field.
-	ProxyEntityName(p graphql.ResolveParams) (string, error)
-}
-
-// CheckConfigProxyRequestsFieldResolver implement to resolve requests for the CheckConfig's proxyRequests field.
-type CheckConfigProxyRequestsFieldResolver interface {
-	// ProxyRequests implements response to request for proxyRequests field.
-	ProxyRequests(p graphql.ResolveParams) (interface{}, error)
-}
-
-// CheckConfigPublishFieldResolver implement to resolve requests for the CheckConfig's publish field.
-type CheckConfigPublishFieldResolver interface {
-	// Publish implements response to request for publish field.
-	Publish(p graphql.ResolveParams) (bool, error)
-}
-
-// CheckConfigRuntimeAssetsFieldResolver implement to resolve requests for the CheckConfig's runtimeAssets field.
-type CheckConfigRuntimeAssetsFieldResolver interface {
-	// RuntimeAssets implements response to request for runtimeAssets field.
-	RuntimeAssets(p graphql.ResolveParams) (interface{}, error)
-}
-
-// CheckConfigRoundRobinFieldResolver implement to resolve requests for the CheckConfig's roundRobin field.
-type CheckConfigRoundRobinFieldResolver interface {
-	// RoundRobin implements response to request for roundRobin field.
-	RoundRobin(p graphql.ResolveParams) (bool, error)
-}
-
-// CheckConfigIsSilencedFieldResolver implement to resolve requests for the CheckConfig's isSilenced field.
-type CheckConfigIsSilencedFieldResolver interface {
-	// IsSilenced implements response to request for isSilenced field.
-	IsSilenced(p graphql.ResolveParams) (bool, error)
-}
-
-// CheckConfigSilencesFieldResolver implement to resolve requests for the CheckConfig's silences field.
-type CheckConfigSilencesFieldResolver interface {
-	// Silences implements response to request for silences field.
-	Silences(p graphql.ResolveParams) (interface{}, error)
-}
-
-// CheckConfigStdinFieldResolver implement to resolve requests for the CheckConfig's stdin field.
-type CheckConfigStdinFieldResolver interface {
-	// Stdin implements response to request for stdin field.
-	Stdin(p graphql.ResolveParams) (bool, error)
-}
-
-// CheckConfigSubdueFieldResolver implement to resolve requests for the CheckConfig's subdue field.
-type CheckConfigSubdueFieldResolver interface {
-	// Subdue implements response to request for subdue field.
-	Subdue(p graphql.ResolveParams) (interface{}, error)
-}
-
-// CheckConfigSubscriptionsFieldResolver implement to resolve requests for the CheckConfig's subscriptions field.
-type CheckConfigSubscriptionsFieldResolver interface {
-	// Subscriptions implements response to request for subscriptions field.
-	Subscriptions(p graphql.ResolveParams) ([]string, error)
-}
-
-// CheckConfigTimeoutFieldResolver implement to resolve requests for the CheckConfig's timeout field.
-type CheckConfigTimeoutFieldResolver interface {
-	// Timeout implements response to request for timeout field.
-	Timeout(p graphql.ResolveParams) (int, error)
-}
-
-// CheckConfigTtlFieldResolver implement to resolve requests for the CheckConfig's ttl field.
-type CheckConfigTtlFieldResolver interface {
-	// Ttl implements response to request for ttl field.
-	Ttl(p graphql.ResolveParams) (int, error)
-}
-
-// CheckConfigToJSONFieldResolver implement to resolve requests for the CheckConfig's toJSON field.
-type CheckConfigToJSONFieldResolver interface {
-	// ToJSON implements response to request for toJSON field.
-	ToJSON(p graphql.ResolveParams) (interface{}, error)
-}
-
 //
 // CheckConfigFieldResolvers represents a collection of methods whose products represent the
 // response values of the 'CheckConfig' type.
-//
-// == Example SDL
-//
-//   """
-//   Dog's are not hooman.
-//   """
-//   type Dog implements Pet {
-//     "name of this fine beast."
-//     name:  String!
-//
-//     "breed of this silly animal; probably shibe."
-//     breed: [Breed]
-//   }
-//
-// == Example generated interface
-//
-//   // DogResolver ...
-//   type DogFieldResolvers interface {
-//     DogNameFieldResolver
-//     DogBreedFieldResolver
-//
-//     // IsTypeOf is used to determine if a given value is associated with the Dog type
-//     IsTypeOf(interface{}, graphql.IsTypeOfParams) bool
-//   }
-//
-// == Example implementation ...
-//
-//   // DogResolver implements DogFieldResolvers interface
-//   type DogResolver struct {
-//     logger logrus.LogEntry
-//     store interface{
-//       store.BreedStore
-//       store.DogStore
-//     }
-//   }
-//
-//   // Name implements response to request for name field.
-//   func (r *DogResolver) Name(p graphql.ResolveParams) (interface{}, error) {
-//     // ... implementation details ...
-//     dog := p.Source.(DogGetter)
-//     return dog.GetName()
-//   }
-//
-//   // Breed implements response to request for breed field.
-//   func (r *DogResolver) Breed(p graphql.ResolveParams) (interface{}, error) {
-//     // ... implementation details ...
-//     dog := p.Source.(DogGetter)
-//     breed := r.store.GetBreed(dog.GetBreedName())
-//     return breed
-//   }
-//
-//   // IsTypeOf is used to determine if a given value is associated with the Dog type
-//   func (r *DogResolver) IsTypeOf(p graphql.IsTypeOfParams) bool {
-//     // ... implementation details ...
-//     _, ok := p.Value.(DogGetter)
-//     return ok
-//   }
-//
 type CheckConfigFieldResolvers interface {
-	CheckConfigIDFieldResolver
-	CheckConfigNamespaceFieldResolver
-	CheckConfigNameFieldResolver
-	CheckConfigMetadataFieldResolver
-	CheckConfigCommandFieldResolver
-	CheckConfigCheckHooksFieldResolver
-	CheckConfigCronFieldResolver
-	CheckConfigEnvVarsFieldResolver
-	CheckConfigHandlersFieldResolver
-	CheckConfigHighFlapThresholdFieldResolver
-	CheckConfigIntervalFieldResolver
-	CheckConfigLowFlapThresholdFieldResolver
-	CheckConfigOutputMetricFormatFieldResolver
-	CheckConfigOutputMetricHandlersFieldResolver
-	CheckConfigProxyEntityNameFieldResolver
-	CheckConfigProxyRequestsFieldResolver
-	CheckConfigPublishFieldResolver
-	CheckConfigRuntimeAssetsFieldResolver
-	CheckConfigRoundRobinFieldResolver
-	CheckConfigIsSilencedFieldResolver
-	CheckConfigSilencesFieldResolver
-	CheckConfigStdinFieldResolver
-	CheckConfigSubdueFieldResolver
-	CheckConfigSubscriptionsFieldResolver
-	CheckConfigTimeoutFieldResolver
-	CheckConfigTtlFieldResolver
-	CheckConfigToJSONFieldResolver
+	// ID implements response to request for 'id' field.
+	ID(p graphql.ResolveParams) (string, error)
+
+	// Namespace implements response to request for 'namespace' field.
+	Namespace(p graphql.ResolveParams) (string, error)
+
+	// Name implements response to request for 'name' field.
+	Name(p graphql.ResolveParams) (string, error)
+
+	// Metadata implements response to request for 'metadata' field.
+	Metadata(p graphql.ResolveParams) (interface{}, error)
+
+	// Command implements response to request for 'command' field.
+	Command(p graphql.ResolveParams) (string, error)
+
+	// CheckHooks implements response to request for 'checkHooks' field.
+	CheckHooks(p graphql.ResolveParams) (interface{}, error)
+
+	// Cron implements response to request for 'cron' field.
+	Cron(p graphql.ResolveParams) (string, error)
+
+	// EnvVars implements response to request for 'envVars' field.
+	EnvVars(p graphql.ResolveParams) ([]string, error)
+
+	// Handlers implements response to request for 'handlers' field.
+	Handlers(p graphql.ResolveParams) (interface{}, error)
+
+	// HighFlapThreshold implements response to request for 'highFlapThreshold' field.
+	HighFlapThreshold(p graphql.ResolveParams) (int, error)
+
+	// Interval implements response to request for 'interval' field.
+	Interval(p graphql.ResolveParams) (int, error)
+
+	// LowFlapThreshold implements response to request for 'lowFlapThreshold' field.
+	LowFlapThreshold(p graphql.ResolveParams) (int, error)
+
+	// OutputMetricFormat implements response to request for 'outputMetricFormat' field.
+	OutputMetricFormat(p graphql.ResolveParams) (string, error)
+
+	// OutputMetricHandlers implements response to request for 'outputMetricHandlers' field.
+	OutputMetricHandlers(p graphql.ResolveParams) (interface{}, error)
+
+	// ProxyEntityName implements response to request for 'proxyEntityName' field.
+	ProxyEntityName(p graphql.ResolveParams) (string, error)
+
+	// ProxyRequests implements response to request for 'proxyRequests' field.
+	ProxyRequests(p graphql.ResolveParams) (interface{}, error)
+
+	// Publish implements response to request for 'publish' field.
+	Publish(p graphql.ResolveParams) (bool, error)
+
+	// RuntimeAssets implements response to request for 'runtimeAssets' field.
+	RuntimeAssets(p graphql.ResolveParams) (interface{}, error)
+
+	// RoundRobin implements response to request for 'roundRobin' field.
+	RoundRobin(p graphql.ResolveParams) (bool, error)
+
+	// IsSilenced implements response to request for 'isSilenced' field.
+	IsSilenced(p graphql.ResolveParams) (bool, error)
+
+	// Silences implements response to request for 'silences' field.
+	Silences(p graphql.ResolveParams) (interface{}, error)
+
+	// Stdin implements response to request for 'stdin' field.
+	Stdin(p graphql.ResolveParams) (bool, error)
+
+	// Subdue implements response to request for 'subdue' field.
+	Subdue(p graphql.ResolveParams) (interface{}, error)
+
+	// Subscriptions implements response to request for 'subscriptions' field.
+	Subscriptions(p graphql.ResolveParams) ([]string, error)
+
+	// Timeout implements response to request for 'timeout' field.
+	Timeout(p graphql.ResolveParams) (int, error)
+
+	// Ttl implements response to request for 'ttl' field.
+	Ttl(p graphql.ResolveParams) (int, error)
+
+	// ToJSON implements response to request for 'toJSON' field.
+	ToJSON(p graphql.ResolveParams) (interface{}, error)
 }
 
 // CheckConfigAliases implements all methods on CheckConfigFieldResolvers interface by using reflection to
 // match name of field to a field on the given value. Intent is reduce friction
 // of writing new resolvers by removing all the instances where you would simply
 // have the resolvers method return a field.
-//
-// == Example SDL
-//
-//    type Dog {
-//      name:   String!
-//      weight: Float!
-//      dob:    DateTime
-//      breed:  [Breed]
-//    }
-//
-// == Example generated aliases
-//
-//   type DogAliases struct {}
-//   func (_ DogAliases) Name(p graphql.ResolveParams) (interface{}, error) {
-//     // reflect...
-//   }
-//   func (_ DogAliases) Weight(p graphql.ResolveParams) (interface{}, error) {
-//     // reflect...
-//   }
-//   func (_ DogAliases) Dob(p graphql.ResolveParams) (interface{}, error) {
-//     // reflect...
-//   }
-//   func (_ DogAliases) Breed(p graphql.ResolveParams) (interface{}, error) {
-//     // reflect...
-//   }
-//
-// == Example Implementation
-//
-//   type DogResolver struct { // Implements DogResolver
-//     DogAliases
-//     store store.BreedStore
-//   }
-//
-//   // NOTE:
-//   // All other fields are satisified by DogAliases but since this one
-//   // requires hitting the store we implement it in our resolver.
-//   func (r *DogResolver) Breed(p graphql.ResolveParams) interface{} {
-//     dog := v.(*Dog)
-//     return r.BreedsById(dog.BreedIDs)
-//   }
-//
 type CheckConfigAliases struct{}
 
 // ID implements response to request for 'id' field.
@@ -606,189 +398,243 @@ func RegisterCheckConfig(svc *graphql.Service, impl CheckConfigFieldResolvers) {
 	svc.RegisterObject(_ObjectTypeCheckConfigDesc, impl)
 }
 func _ObjTypeCheckConfigIDHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(CheckConfigIDFieldResolver)
+	resolver := impl.(interface {
+		ID(p graphql.ResolveParams) (string, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.ID(frp)
 	}
 }
 
 func _ObjTypeCheckConfigNamespaceHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(CheckConfigNamespaceFieldResolver)
+	resolver := impl.(interface {
+		Namespace(p graphql.ResolveParams) (string, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.Namespace(frp)
 	}
 }
 
 func _ObjTypeCheckConfigNameHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(CheckConfigNameFieldResolver)
+	resolver := impl.(interface {
+		Name(p graphql.ResolveParams) (string, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.Name(frp)
 	}
 }
 
 func _ObjTypeCheckConfigMetadataHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(CheckConfigMetadataFieldResolver)
+	resolver := impl.(interface {
+		Metadata(p graphql.ResolveParams) (interface{}, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.Metadata(frp)
 	}
 }
 
 func _ObjTypeCheckConfigCommandHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(CheckConfigCommandFieldResolver)
+	resolver := impl.(interface {
+		Command(p graphql.ResolveParams) (string, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.Command(frp)
 	}
 }
 
 func _ObjTypeCheckConfigCheckHooksHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(CheckConfigCheckHooksFieldResolver)
+	resolver := impl.(interface {
+		CheckHooks(p graphql.ResolveParams) (interface{}, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.CheckHooks(frp)
 	}
 }
 
 func _ObjTypeCheckConfigCronHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(CheckConfigCronFieldResolver)
+	resolver := impl.(interface {
+		Cron(p graphql.ResolveParams) (string, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.Cron(frp)
 	}
 }
 
 func _ObjTypeCheckConfigEnvVarsHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(CheckConfigEnvVarsFieldResolver)
+	resolver := impl.(interface {
+		EnvVars(p graphql.ResolveParams) ([]string, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.EnvVars(frp)
 	}
 }
 
 func _ObjTypeCheckConfigHandlersHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(CheckConfigHandlersFieldResolver)
+	resolver := impl.(interface {
+		Handlers(p graphql.ResolveParams) (interface{}, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.Handlers(frp)
 	}
 }
 
 func _ObjTypeCheckConfigHighFlapThresholdHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(CheckConfigHighFlapThresholdFieldResolver)
+	resolver := impl.(interface {
+		HighFlapThreshold(p graphql.ResolveParams) (int, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.HighFlapThreshold(frp)
 	}
 }
 
 func _ObjTypeCheckConfigIntervalHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(CheckConfigIntervalFieldResolver)
+	resolver := impl.(interface {
+		Interval(p graphql.ResolveParams) (int, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.Interval(frp)
 	}
 }
 
 func _ObjTypeCheckConfigLowFlapThresholdHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(CheckConfigLowFlapThresholdFieldResolver)
+	resolver := impl.(interface {
+		LowFlapThreshold(p graphql.ResolveParams) (int, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.LowFlapThreshold(frp)
 	}
 }
 
 func _ObjTypeCheckConfigOutputMetricFormatHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(CheckConfigOutputMetricFormatFieldResolver)
+	resolver := impl.(interface {
+		OutputMetricFormat(p graphql.ResolveParams) (string, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.OutputMetricFormat(frp)
 	}
 }
 
 func _ObjTypeCheckConfigOutputMetricHandlersHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(CheckConfigOutputMetricHandlersFieldResolver)
+	resolver := impl.(interface {
+		OutputMetricHandlers(p graphql.ResolveParams) (interface{}, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.OutputMetricHandlers(frp)
 	}
 }
 
 func _ObjTypeCheckConfigProxyEntityNameHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(CheckConfigProxyEntityNameFieldResolver)
+	resolver := impl.(interface {
+		ProxyEntityName(p graphql.ResolveParams) (string, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.ProxyEntityName(frp)
 	}
 }
 
 func _ObjTypeCheckConfigProxyRequestsHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(CheckConfigProxyRequestsFieldResolver)
+	resolver := impl.(interface {
+		ProxyRequests(p graphql.ResolveParams) (interface{}, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.ProxyRequests(frp)
 	}
 }
 
 func _ObjTypeCheckConfigPublishHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(CheckConfigPublishFieldResolver)
+	resolver := impl.(interface {
+		Publish(p graphql.ResolveParams) (bool, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.Publish(frp)
 	}
 }
 
 func _ObjTypeCheckConfigRuntimeAssetsHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(CheckConfigRuntimeAssetsFieldResolver)
+	resolver := impl.(interface {
+		RuntimeAssets(p graphql.ResolveParams) (interface{}, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.RuntimeAssets(frp)
 	}
 }
 
 func _ObjTypeCheckConfigRoundRobinHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(CheckConfigRoundRobinFieldResolver)
+	resolver := impl.(interface {
+		RoundRobin(p graphql.ResolveParams) (bool, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.RoundRobin(frp)
 	}
 }
 
 func _ObjTypeCheckConfigIsSilencedHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(CheckConfigIsSilencedFieldResolver)
+	resolver := impl.(interface {
+		IsSilenced(p graphql.ResolveParams) (bool, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.IsSilenced(frp)
 	}
 }
 
 func _ObjTypeCheckConfigSilencesHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(CheckConfigSilencesFieldResolver)
+	resolver := impl.(interface {
+		Silences(p graphql.ResolveParams) (interface{}, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.Silences(frp)
 	}
 }
 
 func _ObjTypeCheckConfigStdinHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(CheckConfigStdinFieldResolver)
+	resolver := impl.(interface {
+		Stdin(p graphql.ResolveParams) (bool, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.Stdin(frp)
 	}
 }
 
 func _ObjTypeCheckConfigSubdueHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(CheckConfigSubdueFieldResolver)
+	resolver := impl.(interface {
+		Subdue(p graphql.ResolveParams) (interface{}, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.Subdue(frp)
 	}
 }
 
 func _ObjTypeCheckConfigSubscriptionsHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(CheckConfigSubscriptionsFieldResolver)
+	resolver := impl.(interface {
+		Subscriptions(p graphql.ResolveParams) ([]string, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.Subscriptions(frp)
 	}
 }
 
 func _ObjTypeCheckConfigTimeoutHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(CheckConfigTimeoutFieldResolver)
+	resolver := impl.(interface {
+		Timeout(p graphql.ResolveParams) (int, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.Timeout(frp)
 	}
 }
 
 func _ObjTypeCheckConfigTtlHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(CheckConfigTtlFieldResolver)
+	resolver := impl.(interface {
+		Ttl(p graphql.ResolveParams) (int, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.Ttl(frp)
 	}
 }
 
 func _ObjTypeCheckConfigToJSONHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(CheckConfigToJSONFieldResolver)
+	resolver := impl.(interface {
+		ToJSON(p graphql.ResolveParams) (interface{}, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.ToJSON(frp)
 	}
@@ -1039,144 +885,6 @@ var _ObjectTypeCheckConfigDesc = graphql.ObjectDesc{
 	},
 }
 
-// CheckNodeIDFieldResolver implement to resolve requests for the Check's nodeId field.
-type CheckNodeIDFieldResolver interface {
-	// NodeID implements response to request for nodeId field.
-	NodeID(p graphql.ResolveParams) (string, error)
-}
-
-// CheckNameFieldResolver implement to resolve requests for the Check's name field.
-type CheckNameFieldResolver interface {
-	// Name implements response to request for name field.
-	Name(p graphql.ResolveParams) (string, error)
-}
-
-// CheckMetadataFieldResolver implement to resolve requests for the Check's metadata field.
-type CheckMetadataFieldResolver interface {
-	// Metadata implements response to request for metadata field.
-	Metadata(p graphql.ResolveParams) (interface{}, error)
-}
-
-// CheckCommandFieldResolver implement to resolve requests for the Check's command field.
-type CheckCommandFieldResolver interface {
-	// Command implements response to request for command field.
-	Command(p graphql.ResolveParams) (string, error)
-}
-
-// CheckCheckHooksFieldResolver implement to resolve requests for the Check's checkHooks field.
-type CheckCheckHooksFieldResolver interface {
-	// CheckHooks implements response to request for checkHooks field.
-	CheckHooks(p graphql.ResolveParams) (interface{}, error)
-}
-
-// CheckEnvVarsFieldResolver implement to resolve requests for the Check's envVars field.
-type CheckEnvVarsFieldResolver interface {
-	// EnvVars implements response to request for envVars field.
-	EnvVars(p graphql.ResolveParams) ([]string, error)
-}
-
-// CheckHandlersFieldResolver implement to resolve requests for the Check's handlers field.
-type CheckHandlersFieldResolver interface {
-	// Handlers implements response to request for handlers field.
-	Handlers(p graphql.ResolveParams) (interface{}, error)
-}
-
-// CheckHighFlapThresholdFieldResolver implement to resolve requests for the Check's highFlapThreshold field.
-type CheckHighFlapThresholdFieldResolver interface {
-	// HighFlapThreshold implements response to request for highFlapThreshold field.
-	HighFlapThreshold(p graphql.ResolveParams) (int, error)
-}
-
-// CheckIntervalFieldResolver implement to resolve requests for the Check's interval field.
-type CheckIntervalFieldResolver interface {
-	// Interval implements response to request for interval field.
-	Interval(p graphql.ResolveParams) (int, error)
-}
-
-// CheckCronFieldResolver implement to resolve requests for the Check's cron field.
-type CheckCronFieldResolver interface {
-	// Cron implements response to request for cron field.
-	Cron(p graphql.ResolveParams) (string, error)
-}
-
-// CheckLowFlapThresholdFieldResolver implement to resolve requests for the Check's lowFlapThreshold field.
-type CheckLowFlapThresholdFieldResolver interface {
-	// LowFlapThreshold implements response to request for lowFlapThreshold field.
-	LowFlapThreshold(p graphql.ResolveParams) (int, error)
-}
-
-// CheckOutputMetricFormatFieldResolver implement to resolve requests for the Check's outputMetricFormat field.
-type CheckOutputMetricFormatFieldResolver interface {
-	// OutputMetricFormat implements response to request for outputMetricFormat field.
-	OutputMetricFormat(p graphql.ResolveParams) (string, error)
-}
-
-// CheckOutputMetricHandlersFieldResolver implement to resolve requests for the Check's outputMetricHandlers field.
-type CheckOutputMetricHandlersFieldResolver interface {
-	// OutputMetricHandlers implements response to request for outputMetricHandlers field.
-	OutputMetricHandlers(p graphql.ResolveParams) (interface{}, error)
-}
-
-// CheckProxyEntityNameFieldResolver implement to resolve requests for the Check's proxyEntityName field.
-type CheckProxyEntityNameFieldResolver interface {
-	// ProxyEntityName implements response to request for proxyEntityName field.
-	ProxyEntityName(p graphql.ResolveParams) (string, error)
-}
-
-// CheckProxyRequestsFieldResolver implement to resolve requests for the Check's proxyRequests field.
-type CheckProxyRequestsFieldResolver interface {
-	// ProxyRequests implements response to request for proxyRequests field.
-	ProxyRequests(p graphql.ResolveParams) (interface{}, error)
-}
-
-// CheckPublishFieldResolver implement to resolve requests for the Check's publish field.
-type CheckPublishFieldResolver interface {
-	// Publish implements response to request for publish field.
-	Publish(p graphql.ResolveParams) (bool, error)
-}
-
-// CheckRuntimeAssetsFieldResolver implement to resolve requests for the Check's runtimeAssets field.
-type CheckRuntimeAssetsFieldResolver interface {
-	// RuntimeAssets implements response to request for runtimeAssets field.
-	RuntimeAssets(p graphql.ResolveParams) (interface{}, error)
-}
-
-// CheckRoundRobinFieldResolver implement to resolve requests for the Check's roundRobin field.
-type CheckRoundRobinFieldResolver interface {
-	// RoundRobin implements response to request for roundRobin field.
-	RoundRobin(p graphql.ResolveParams) (bool, error)
-}
-
-// CheckSubscriptionsFieldResolver implement to resolve requests for the Check's subscriptions field.
-type CheckSubscriptionsFieldResolver interface {
-	// Subscriptions implements response to request for subscriptions field.
-	Subscriptions(p graphql.ResolveParams) ([]string, error)
-}
-
-// CheckStdinFieldResolver implement to resolve requests for the Check's stdin field.
-type CheckStdinFieldResolver interface {
-	// Stdin implements response to request for stdin field.
-	Stdin(p graphql.ResolveParams) (bool, error)
-}
-
-// CheckSubdueFieldResolver implement to resolve requests for the Check's subdue field.
-type CheckSubdueFieldResolver interface {
-	// Subdue implements response to request for subdue field.
-	Subdue(p graphql.ResolveParams) (interface{}, error)
-}
-
-// CheckDurationFieldResolver implement to resolve requests for the Check's duration field.
-type CheckDurationFieldResolver interface {
-	// Duration implements response to request for duration field.
-	Duration(p graphql.ResolveParams) (float64, error)
-}
-
-// CheckExecutedFieldResolver implement to resolve requests for the Check's executed field.
-type CheckExecutedFieldResolver interface {
-	// Executed implements response to request for executed field.
-	Executed(p graphql.ResolveParams) (time.Time, error)
-}
-
 // CheckHistoryFieldResolverArgs contains arguments provided to history when selected
 type CheckHistoryFieldResolverArgs struct {
 	First int // First - self descriptive
@@ -1188,250 +896,132 @@ type CheckHistoryFieldResolverParams struct {
 	Args CheckHistoryFieldResolverArgs
 }
 
-// CheckHistoryFieldResolver implement to resolve requests for the Check's history field.
-type CheckHistoryFieldResolver interface {
-	// History implements response to request for history field.
-	History(p CheckHistoryFieldResolverParams) (interface{}, error)
-}
-
-// CheckIssuedFieldResolver implement to resolve requests for the Check's issued field.
-type CheckIssuedFieldResolver interface {
-	// Issued implements response to request for issued field.
-	Issued(p graphql.ResolveParams) (time.Time, error)
-}
-
-// CheckOutputFieldResolver implement to resolve requests for the Check's output field.
-type CheckOutputFieldResolver interface {
-	// Output implements response to request for output field.
-	Output(p graphql.ResolveParams) (string, error)
-}
-
-// CheckStateFieldResolver implement to resolve requests for the Check's state field.
-type CheckStateFieldResolver interface {
-	// State implements response to request for state field.
-	State(p graphql.ResolveParams) (string, error)
-}
-
-// CheckStatusFieldResolver implement to resolve requests for the Check's status field.
-type CheckStatusFieldResolver interface {
-	// Status implements response to request for status field.
-	Status(p graphql.ResolveParams) (interface{}, error)
-}
-
-// CheckTotalStateChangeFieldResolver implement to resolve requests for the Check's totalStateChange field.
-type CheckTotalStateChangeFieldResolver interface {
-	// TotalStateChange implements response to request for totalStateChange field.
-	TotalStateChange(p graphql.ResolveParams) (int, error)
-}
-
-// CheckHooksFieldResolver implement to resolve requests for the Check's hooks field.
-type CheckHooksFieldResolver interface {
-	// Hooks implements response to request for hooks field.
-	Hooks(p graphql.ResolveParams) (interface{}, error)
-}
-
-// CheckSilencedFieldResolver implement to resolve requests for the Check's silenced field.
-type CheckSilencedFieldResolver interface {
-	// Silenced implements response to request for silenced field.
-	Silenced(p graphql.ResolveParams) ([]string, error)
-}
-
-// CheckIsSilencedFieldResolver implement to resolve requests for the Check's isSilenced field.
-type CheckIsSilencedFieldResolver interface {
-	// IsSilenced implements response to request for isSilenced field.
-	IsSilenced(p graphql.ResolveParams) (bool, error)
-}
-
-// CheckSilencesFieldResolver implement to resolve requests for the Check's silences field.
-type CheckSilencesFieldResolver interface {
-	// Silences implements response to request for silences field.
-	Silences(p graphql.ResolveParams) (interface{}, error)
-}
-
-// CheckLastOKFieldResolver implement to resolve requests for the Check's lastOK field.
-type CheckLastOKFieldResolver interface {
-	// LastOK implements response to request for lastOK field.
-	LastOK(p graphql.ResolveParams) (*time.Time, error)
-}
-
-// CheckOccurrencesFieldResolver implement to resolve requests for the Check's occurrences field.
-type CheckOccurrencesFieldResolver interface {
-	// Occurrences implements response to request for occurrences field.
-	Occurrences(p graphql.ResolveParams) (int, error)
-}
-
-// CheckOccurrencesWatermarkFieldResolver implement to resolve requests for the Check's occurrencesWatermark field.
-type CheckOccurrencesWatermarkFieldResolver interface {
-	// OccurrencesWatermark implements response to request for occurrencesWatermark field.
-	OccurrencesWatermark(p graphql.ResolveParams) (int, error)
-}
-
-// CheckTimeoutFieldResolver implement to resolve requests for the Check's timeout field.
-type CheckTimeoutFieldResolver interface {
-	// Timeout implements response to request for timeout field.
-	Timeout(p graphql.ResolveParams) (int, error)
-}
-
-// CheckTtlFieldResolver implement to resolve requests for the Check's ttl field.
-type CheckTtlFieldResolver interface {
-	// Ttl implements response to request for ttl field.
-	Ttl(p graphql.ResolveParams) (int, error)
-}
-
-// CheckToJSONFieldResolver implement to resolve requests for the Check's toJSON field.
-type CheckToJSONFieldResolver interface {
-	// ToJSON implements response to request for toJSON field.
-	ToJSON(p graphql.ResolveParams) (interface{}, error)
-}
-
 //
 // CheckFieldResolvers represents a collection of methods whose products represent the
 // response values of the 'Check' type.
-//
-// == Example SDL
-//
-//   """
-//   Dog's are not hooman.
-//   """
-//   type Dog implements Pet {
-//     "name of this fine beast."
-//     name:  String!
-//
-//     "breed of this silly animal; probably shibe."
-//     breed: [Breed]
-//   }
-//
-// == Example generated interface
-//
-//   // DogResolver ...
-//   type DogFieldResolvers interface {
-//     DogNameFieldResolver
-//     DogBreedFieldResolver
-//
-//     // IsTypeOf is used to determine if a given value is associated with the Dog type
-//     IsTypeOf(interface{}, graphql.IsTypeOfParams) bool
-//   }
-//
-// == Example implementation ...
-//
-//   // DogResolver implements DogFieldResolvers interface
-//   type DogResolver struct {
-//     logger logrus.LogEntry
-//     store interface{
-//       store.BreedStore
-//       store.DogStore
-//     }
-//   }
-//
-//   // Name implements response to request for name field.
-//   func (r *DogResolver) Name(p graphql.ResolveParams) (interface{}, error) {
-//     // ... implementation details ...
-//     dog := p.Source.(DogGetter)
-//     return dog.GetName()
-//   }
-//
-//   // Breed implements response to request for breed field.
-//   func (r *DogResolver) Breed(p graphql.ResolveParams) (interface{}, error) {
-//     // ... implementation details ...
-//     dog := p.Source.(DogGetter)
-//     breed := r.store.GetBreed(dog.GetBreedName())
-//     return breed
-//   }
-//
-//   // IsTypeOf is used to determine if a given value is associated with the Dog type
-//   func (r *DogResolver) IsTypeOf(p graphql.IsTypeOfParams) bool {
-//     // ... implementation details ...
-//     _, ok := p.Value.(DogGetter)
-//     return ok
-//   }
-//
 type CheckFieldResolvers interface {
-	CheckNodeIDFieldResolver
-	CheckNameFieldResolver
-	CheckMetadataFieldResolver
-	CheckCommandFieldResolver
-	CheckCheckHooksFieldResolver
-	CheckEnvVarsFieldResolver
-	CheckHandlersFieldResolver
-	CheckHighFlapThresholdFieldResolver
-	CheckIntervalFieldResolver
-	CheckCronFieldResolver
-	CheckLowFlapThresholdFieldResolver
-	CheckOutputMetricFormatFieldResolver
-	CheckOutputMetricHandlersFieldResolver
-	CheckProxyEntityNameFieldResolver
-	CheckProxyRequestsFieldResolver
-	CheckPublishFieldResolver
-	CheckRuntimeAssetsFieldResolver
-	CheckRoundRobinFieldResolver
-	CheckSubscriptionsFieldResolver
-	CheckStdinFieldResolver
-	CheckSubdueFieldResolver
-	CheckDurationFieldResolver
-	CheckExecutedFieldResolver
-	CheckHistoryFieldResolver
-	CheckIssuedFieldResolver
-	CheckOutputFieldResolver
-	CheckStateFieldResolver
-	CheckStatusFieldResolver
-	CheckTotalStateChangeFieldResolver
-	CheckHooksFieldResolver
-	CheckSilencedFieldResolver
-	CheckIsSilencedFieldResolver
-	CheckSilencesFieldResolver
-	CheckLastOKFieldResolver
-	CheckOccurrencesFieldResolver
-	CheckOccurrencesWatermarkFieldResolver
-	CheckTimeoutFieldResolver
-	CheckTtlFieldResolver
-	CheckToJSONFieldResolver
+	// NodeID implements response to request for 'nodeId' field.
+	NodeID(p graphql.ResolveParams) (string, error)
+
+	// Name implements response to request for 'name' field.
+	Name(p graphql.ResolveParams) (string, error)
+
+	// Metadata implements response to request for 'metadata' field.
+	Metadata(p graphql.ResolveParams) (interface{}, error)
+
+	// Command implements response to request for 'command' field.
+	Command(p graphql.ResolveParams) (string, error)
+
+	// CheckHooks implements response to request for 'checkHooks' field.
+	CheckHooks(p graphql.ResolveParams) (interface{}, error)
+
+	// EnvVars implements response to request for 'envVars' field.
+	EnvVars(p graphql.ResolveParams) ([]string, error)
+
+	// Handlers implements response to request for 'handlers' field.
+	Handlers(p graphql.ResolveParams) (interface{}, error)
+
+	// HighFlapThreshold implements response to request for 'highFlapThreshold' field.
+	HighFlapThreshold(p graphql.ResolveParams) (int, error)
+
+	// Interval implements response to request for 'interval' field.
+	Interval(p graphql.ResolveParams) (int, error)
+
+	// Cron implements response to request for 'cron' field.
+	Cron(p graphql.ResolveParams) (string, error)
+
+	// LowFlapThreshold implements response to request for 'lowFlapThreshold' field.
+	LowFlapThreshold(p graphql.ResolveParams) (int, error)
+
+	// OutputMetricFormat implements response to request for 'outputMetricFormat' field.
+	OutputMetricFormat(p graphql.ResolveParams) (string, error)
+
+	// OutputMetricHandlers implements response to request for 'outputMetricHandlers' field.
+	OutputMetricHandlers(p graphql.ResolveParams) (interface{}, error)
+
+	// ProxyEntityName implements response to request for 'proxyEntityName' field.
+	ProxyEntityName(p graphql.ResolveParams) (string, error)
+
+	// ProxyRequests implements response to request for 'proxyRequests' field.
+	ProxyRequests(p graphql.ResolveParams) (interface{}, error)
+
+	// Publish implements response to request for 'publish' field.
+	Publish(p graphql.ResolveParams) (bool, error)
+
+	// RuntimeAssets implements response to request for 'runtimeAssets' field.
+	RuntimeAssets(p graphql.ResolveParams) (interface{}, error)
+
+	// RoundRobin implements response to request for 'roundRobin' field.
+	RoundRobin(p graphql.ResolveParams) (bool, error)
+
+	// Subscriptions implements response to request for 'subscriptions' field.
+	Subscriptions(p graphql.ResolveParams) ([]string, error)
+
+	// Stdin implements response to request for 'stdin' field.
+	Stdin(p graphql.ResolveParams) (bool, error)
+
+	// Subdue implements response to request for 'subdue' field.
+	Subdue(p graphql.ResolveParams) (interface{}, error)
+
+	// Duration implements response to request for 'duration' field.
+	Duration(p graphql.ResolveParams) (float64, error)
+
+	// Executed implements response to request for 'executed' field.
+	Executed(p graphql.ResolveParams) (time.Time, error)
+
+	// History implements response to request for 'history' field.
+	History(p CheckHistoryFieldResolverParams) (interface{}, error)
+
+	// Issued implements response to request for 'issued' field.
+	Issued(p graphql.ResolveParams) (time.Time, error)
+
+	// Output implements response to request for 'output' field.
+	Output(p graphql.ResolveParams) (string, error)
+
+	// State implements response to request for 'state' field.
+	State(p graphql.ResolveParams) (string, error)
+
+	// Status implements response to request for 'status' field.
+	Status(p graphql.ResolveParams) (interface{}, error)
+
+	// TotalStateChange implements response to request for 'totalStateChange' field.
+	TotalStateChange(p graphql.ResolveParams) (int, error)
+
+	// Hooks implements response to request for 'hooks' field.
+	Hooks(p graphql.ResolveParams) (interface{}, error)
+
+	// Silenced implements response to request for 'silenced' field.
+	Silenced(p graphql.ResolveParams) ([]string, error)
+
+	// IsSilenced implements response to request for 'isSilenced' field.
+	IsSilenced(p graphql.ResolveParams) (bool, error)
+
+	// Silences implements response to request for 'silences' field.
+	Silences(p graphql.ResolveParams) (interface{}, error)
+
+	// LastOK implements response to request for 'lastOK' field.
+	LastOK(p graphql.ResolveParams) (*time.Time, error)
+
+	// Occurrences implements response to request for 'occurrences' field.
+	Occurrences(p graphql.ResolveParams) (int, error)
+
+	// OccurrencesWatermark implements response to request for 'occurrencesWatermark' field.
+	OccurrencesWatermark(p graphql.ResolveParams) (int, error)
+
+	// Timeout implements response to request for 'timeout' field.
+	Timeout(p graphql.ResolveParams) (int, error)
+
+	// Ttl implements response to request for 'ttl' field.
+	Ttl(p graphql.ResolveParams) (int, error)
+
+	// ToJSON implements response to request for 'toJSON' field.
+	ToJSON(p graphql.ResolveParams) (interface{}, error)
 }
 
 // CheckAliases implements all methods on CheckFieldResolvers interface by using reflection to
 // match name of field to a field on the given value. Intent is reduce friction
 // of writing new resolvers by removing all the instances where you would simply
 // have the resolvers method return a field.
-//
-// == Example SDL
-//
-//    type Dog {
-//      name:   String!
-//      weight: Float!
-//      dob:    DateTime
-//      breed:  [Breed]
-//    }
-//
-// == Example generated aliases
-//
-//   type DogAliases struct {}
-//   func (_ DogAliases) Name(p graphql.ResolveParams) (interface{}, error) {
-//     // reflect...
-//   }
-//   func (_ DogAliases) Weight(p graphql.ResolveParams) (interface{}, error) {
-//     // reflect...
-//   }
-//   func (_ DogAliases) Dob(p graphql.ResolveParams) (interface{}, error) {
-//     // reflect...
-//   }
-//   func (_ DogAliases) Breed(p graphql.ResolveParams) (interface{}, error) {
-//     // reflect...
-//   }
-//
-// == Example Implementation
-//
-//   type DogResolver struct { // Implements DogResolver
-//     DogAliases
-//     store store.BreedStore
-//   }
-//
-//   // NOTE:
-//   // All other fields are satisified by DogAliases but since this one
-//   // requires hitting the store we implement it in our resolver.
-//   func (r *DogResolver) Breed(p graphql.ResolveParams) interface{} {
-//     dog := v.(*Dog)
-//     return r.BreedsById(dog.BreedIDs)
-//   }
-//
 type CheckAliases struct{}
 
 // NodeID implements response to request for 'nodeId' field.
@@ -1868,168 +1458,216 @@ func RegisterCheck(svc *graphql.Service, impl CheckFieldResolvers) {
 	svc.RegisterObject(_ObjectTypeCheckDesc, impl)
 }
 func _ObjTypeCheckNodeIDHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(CheckNodeIDFieldResolver)
+	resolver := impl.(interface {
+		NodeID(p graphql.ResolveParams) (string, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.NodeID(frp)
 	}
 }
 
 func _ObjTypeCheckNameHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(CheckNameFieldResolver)
+	resolver := impl.(interface {
+		Name(p graphql.ResolveParams) (string, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.Name(frp)
 	}
 }
 
 func _ObjTypeCheckMetadataHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(CheckMetadataFieldResolver)
+	resolver := impl.(interface {
+		Metadata(p graphql.ResolveParams) (interface{}, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.Metadata(frp)
 	}
 }
 
 func _ObjTypeCheckCommandHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(CheckCommandFieldResolver)
+	resolver := impl.(interface {
+		Command(p graphql.ResolveParams) (string, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.Command(frp)
 	}
 }
 
 func _ObjTypeCheckCheckHooksHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(CheckCheckHooksFieldResolver)
+	resolver := impl.(interface {
+		CheckHooks(p graphql.ResolveParams) (interface{}, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.CheckHooks(frp)
 	}
 }
 
 func _ObjTypeCheckEnvVarsHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(CheckEnvVarsFieldResolver)
+	resolver := impl.(interface {
+		EnvVars(p graphql.ResolveParams) ([]string, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.EnvVars(frp)
 	}
 }
 
 func _ObjTypeCheckHandlersHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(CheckHandlersFieldResolver)
+	resolver := impl.(interface {
+		Handlers(p graphql.ResolveParams) (interface{}, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.Handlers(frp)
 	}
 }
 
 func _ObjTypeCheckHighFlapThresholdHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(CheckHighFlapThresholdFieldResolver)
+	resolver := impl.(interface {
+		HighFlapThreshold(p graphql.ResolveParams) (int, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.HighFlapThreshold(frp)
 	}
 }
 
 func _ObjTypeCheckIntervalHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(CheckIntervalFieldResolver)
+	resolver := impl.(interface {
+		Interval(p graphql.ResolveParams) (int, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.Interval(frp)
 	}
 }
 
 func _ObjTypeCheckCronHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(CheckCronFieldResolver)
+	resolver := impl.(interface {
+		Cron(p graphql.ResolveParams) (string, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.Cron(frp)
 	}
 }
 
 func _ObjTypeCheckLowFlapThresholdHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(CheckLowFlapThresholdFieldResolver)
+	resolver := impl.(interface {
+		LowFlapThreshold(p graphql.ResolveParams) (int, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.LowFlapThreshold(frp)
 	}
 }
 
 func _ObjTypeCheckOutputMetricFormatHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(CheckOutputMetricFormatFieldResolver)
+	resolver := impl.(interface {
+		OutputMetricFormat(p graphql.ResolveParams) (string, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.OutputMetricFormat(frp)
 	}
 }
 
 func _ObjTypeCheckOutputMetricHandlersHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(CheckOutputMetricHandlersFieldResolver)
+	resolver := impl.(interface {
+		OutputMetricHandlers(p graphql.ResolveParams) (interface{}, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.OutputMetricHandlers(frp)
 	}
 }
 
 func _ObjTypeCheckProxyEntityNameHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(CheckProxyEntityNameFieldResolver)
+	resolver := impl.(interface {
+		ProxyEntityName(p graphql.ResolveParams) (string, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.ProxyEntityName(frp)
 	}
 }
 
 func _ObjTypeCheckProxyRequestsHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(CheckProxyRequestsFieldResolver)
+	resolver := impl.(interface {
+		ProxyRequests(p graphql.ResolveParams) (interface{}, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.ProxyRequests(frp)
 	}
 }
 
 func _ObjTypeCheckPublishHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(CheckPublishFieldResolver)
+	resolver := impl.(interface {
+		Publish(p graphql.ResolveParams) (bool, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.Publish(frp)
 	}
 }
 
 func _ObjTypeCheckRuntimeAssetsHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(CheckRuntimeAssetsFieldResolver)
+	resolver := impl.(interface {
+		RuntimeAssets(p graphql.ResolveParams) (interface{}, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.RuntimeAssets(frp)
 	}
 }
 
 func _ObjTypeCheckRoundRobinHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(CheckRoundRobinFieldResolver)
+	resolver := impl.(interface {
+		RoundRobin(p graphql.ResolveParams) (bool, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.RoundRobin(frp)
 	}
 }
 
 func _ObjTypeCheckSubscriptionsHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(CheckSubscriptionsFieldResolver)
+	resolver := impl.(interface {
+		Subscriptions(p graphql.ResolveParams) ([]string, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.Subscriptions(frp)
 	}
 }
 
 func _ObjTypeCheckStdinHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(CheckStdinFieldResolver)
+	resolver := impl.(interface {
+		Stdin(p graphql.ResolveParams) (bool, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.Stdin(frp)
 	}
 }
 
 func _ObjTypeCheckSubdueHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(CheckSubdueFieldResolver)
+	resolver := impl.(interface {
+		Subdue(p graphql.ResolveParams) (interface{}, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.Subdue(frp)
 	}
 }
 
 func _ObjTypeCheckDurationHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(CheckDurationFieldResolver)
+	resolver := impl.(interface {
+		Duration(p graphql.ResolveParams) (float64, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.Duration(frp)
 	}
 }
 
 func _ObjTypeCheckExecutedHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(CheckExecutedFieldResolver)
+	resolver := impl.(interface {
+		Executed(p graphql.ResolveParams) (time.Time, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.Executed(frp)
 	}
 }
 
 func _ObjTypeCheckHistoryHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(CheckHistoryFieldResolver)
+	resolver := impl.(interface {
+		History(p CheckHistoryFieldResolverParams) (interface{}, error)
+	})
 	return func(p graphql1.ResolveParams) (interface{}, error) {
 		frp := CheckHistoryFieldResolverParams{ResolveParams: p}
 		err := mapstructure.Decode(p.Args, &frp.Args)
@@ -2042,105 +1680,135 @@ func _ObjTypeCheckHistoryHandler(impl interface{}) graphql1.FieldResolveFn {
 }
 
 func _ObjTypeCheckIssuedHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(CheckIssuedFieldResolver)
+	resolver := impl.(interface {
+		Issued(p graphql.ResolveParams) (time.Time, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.Issued(frp)
 	}
 }
 
 func _ObjTypeCheckOutputHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(CheckOutputFieldResolver)
+	resolver := impl.(interface {
+		Output(p graphql.ResolveParams) (string, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.Output(frp)
 	}
 }
 
 func _ObjTypeCheckStateHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(CheckStateFieldResolver)
+	resolver := impl.(interface {
+		State(p graphql.ResolveParams) (string, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.State(frp)
 	}
 }
 
 func _ObjTypeCheckStatusHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(CheckStatusFieldResolver)
+	resolver := impl.(interface {
+		Status(p graphql.ResolveParams) (interface{}, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.Status(frp)
 	}
 }
 
 func _ObjTypeCheckTotalStateChangeHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(CheckTotalStateChangeFieldResolver)
+	resolver := impl.(interface {
+		TotalStateChange(p graphql.ResolveParams) (int, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.TotalStateChange(frp)
 	}
 }
 
 func _ObjTypeCheckHooksHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(CheckHooksFieldResolver)
+	resolver := impl.(interface {
+		Hooks(p graphql.ResolveParams) (interface{}, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.Hooks(frp)
 	}
 }
 
 func _ObjTypeCheckSilencedHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(CheckSilencedFieldResolver)
+	resolver := impl.(interface {
+		Silenced(p graphql.ResolveParams) ([]string, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.Silenced(frp)
 	}
 }
 
 func _ObjTypeCheckIsSilencedHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(CheckIsSilencedFieldResolver)
+	resolver := impl.(interface {
+		IsSilenced(p graphql.ResolveParams) (bool, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.IsSilenced(frp)
 	}
 }
 
 func _ObjTypeCheckSilencesHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(CheckSilencesFieldResolver)
+	resolver := impl.(interface {
+		Silences(p graphql.ResolveParams) (interface{}, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.Silences(frp)
 	}
 }
 
 func _ObjTypeCheckLastOKHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(CheckLastOKFieldResolver)
+	resolver := impl.(interface {
+		LastOK(p graphql.ResolveParams) (*time.Time, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.LastOK(frp)
 	}
 }
 
 func _ObjTypeCheckOccurrencesHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(CheckOccurrencesFieldResolver)
+	resolver := impl.(interface {
+		Occurrences(p graphql.ResolveParams) (int, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.Occurrences(frp)
 	}
 }
 
 func _ObjTypeCheckOccurrencesWatermarkHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(CheckOccurrencesWatermarkFieldResolver)
+	resolver := impl.(interface {
+		OccurrencesWatermark(p graphql.ResolveParams) (int, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.OccurrencesWatermark(frp)
 	}
 }
 
 func _ObjTypeCheckTimeoutHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(CheckTimeoutFieldResolver)
+	resolver := impl.(interface {
+		Timeout(p graphql.ResolveParams) (int, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.Timeout(frp)
 	}
 }
 
 func _ObjTypeCheckTtlHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(CheckTtlFieldResolver)
+	resolver := impl.(interface {
+		Ttl(p graphql.ResolveParams) (int, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.Ttl(frp)
 	}
 }
 
 func _ObjTypeCheckToJSONHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(CheckToJSONFieldResolver)
+	resolver := impl.(interface {
+		ToJSON(p graphql.ResolveParams) (interface{}, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.ToJSON(frp)
 	}
@@ -2489,129 +2157,21 @@ var _ObjectTypeCheckDesc = graphql.ObjectDesc{
 	},
 }
 
-// CheckHistoryStatusFieldResolver implement to resolve requests for the CheckHistory's status field.
-type CheckHistoryStatusFieldResolver interface {
-	// Status implements response to request for status field.
-	Status(p graphql.ResolveParams) (interface{}, error)
-}
-
-// CheckHistoryExecutedFieldResolver implement to resolve requests for the CheckHistory's executed field.
-type CheckHistoryExecutedFieldResolver interface {
-	// Executed implements response to request for executed field.
-	Executed(p graphql.ResolveParams) (time.Time, error)
-}
-
 //
 // CheckHistoryFieldResolvers represents a collection of methods whose products represent the
 // response values of the 'CheckHistory' type.
-//
-// == Example SDL
-//
-//   """
-//   Dog's are not hooman.
-//   """
-//   type Dog implements Pet {
-//     "name of this fine beast."
-//     name:  String!
-//
-//     "breed of this silly animal; probably shibe."
-//     breed: [Breed]
-//   }
-//
-// == Example generated interface
-//
-//   // DogResolver ...
-//   type DogFieldResolvers interface {
-//     DogNameFieldResolver
-//     DogBreedFieldResolver
-//
-//     // IsTypeOf is used to determine if a given value is associated with the Dog type
-//     IsTypeOf(interface{}, graphql.IsTypeOfParams) bool
-//   }
-//
-// == Example implementation ...
-//
-//   // DogResolver implements DogFieldResolvers interface
-//   type DogResolver struct {
-//     logger logrus.LogEntry
-//     store interface{
-//       store.BreedStore
-//       store.DogStore
-//     }
-//   }
-//
-//   // Name implements response to request for name field.
-//   func (r *DogResolver) Name(p graphql.ResolveParams) (interface{}, error) {
-//     // ... implementation details ...
-//     dog := p.Source.(DogGetter)
-//     return dog.GetName()
-//   }
-//
-//   // Breed implements response to request for breed field.
-//   func (r *DogResolver) Breed(p graphql.ResolveParams) (interface{}, error) {
-//     // ... implementation details ...
-//     dog := p.Source.(DogGetter)
-//     breed := r.store.GetBreed(dog.GetBreedName())
-//     return breed
-//   }
-//
-//   // IsTypeOf is used to determine if a given value is associated with the Dog type
-//   func (r *DogResolver) IsTypeOf(p graphql.IsTypeOfParams) bool {
-//     // ... implementation details ...
-//     _, ok := p.Value.(DogGetter)
-//     return ok
-//   }
-//
 type CheckHistoryFieldResolvers interface {
-	CheckHistoryStatusFieldResolver
-	CheckHistoryExecutedFieldResolver
+	// Status implements response to request for 'status' field.
+	Status(p graphql.ResolveParams) (interface{}, error)
+
+	// Executed implements response to request for 'executed' field.
+	Executed(p graphql.ResolveParams) (time.Time, error)
 }
 
 // CheckHistoryAliases implements all methods on CheckHistoryFieldResolvers interface by using reflection to
 // match name of field to a field on the given value. Intent is reduce friction
 // of writing new resolvers by removing all the instances where you would simply
 // have the resolvers method return a field.
-//
-// == Example SDL
-//
-//    type Dog {
-//      name:   String!
-//      weight: Float!
-//      dob:    DateTime
-//      breed:  [Breed]
-//    }
-//
-// == Example generated aliases
-//
-//   type DogAliases struct {}
-//   func (_ DogAliases) Name(p graphql.ResolveParams) (interface{}, error) {
-//     // reflect...
-//   }
-//   func (_ DogAliases) Weight(p graphql.ResolveParams) (interface{}, error) {
-//     // reflect...
-//   }
-//   func (_ DogAliases) Dob(p graphql.ResolveParams) (interface{}, error) {
-//     // reflect...
-//   }
-//   func (_ DogAliases) Breed(p graphql.ResolveParams) (interface{}, error) {
-//     // reflect...
-//   }
-//
-// == Example Implementation
-//
-//   type DogResolver struct { // Implements DogResolver
-//     DogAliases
-//     store store.BreedStore
-//   }
-//
-//   // NOTE:
-//   // All other fields are satisified by DogAliases but since this one
-//   // requires hitting the store we implement it in our resolver.
-//   func (r *DogResolver) Breed(p graphql.ResolveParams) interface{} {
-//     dog := v.(*Dog)
-//     return r.BreedsById(dog.BreedIDs)
-//   }
-//
 type CheckHistoryAliases struct{}
 
 // Status implements response to request for 'status' field.
@@ -2641,14 +2201,18 @@ func RegisterCheckHistory(svc *graphql.Service, impl CheckHistoryFieldResolvers)
 	svc.RegisterObject(_ObjectTypeCheckHistoryDesc, impl)
 }
 func _ObjTypeCheckHistoryStatusHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(CheckHistoryStatusFieldResolver)
+	resolver := impl.(interface {
+		Status(p graphql.ResolveParams) (interface{}, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.Status(frp)
 	}
 }
 
 func _ObjTypeCheckHistoryExecutedHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(CheckHistoryExecutedFieldResolver)
+	resolver := impl.(interface {
+		Executed(p graphql.ResolveParams) (time.Time, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.Executed(frp)
 	}
@@ -2695,136 +2259,24 @@ var _ObjectTypeCheckHistoryDesc = graphql.ObjectDesc{
 	},
 }
 
-// ProxyRequestsEntityAttributesFieldResolver implement to resolve requests for the ProxyRequests's entityAttributes field.
-type ProxyRequestsEntityAttributesFieldResolver interface {
-	// EntityAttributes implements response to request for entityAttributes field.
-	EntityAttributes(p graphql.ResolveParams) (interface{}, error)
-}
-
-// ProxyRequestsSplayFieldResolver implement to resolve requests for the ProxyRequests's splay field.
-type ProxyRequestsSplayFieldResolver interface {
-	// Splay implements response to request for splay field.
-	Splay(p graphql.ResolveParams) (bool, error)
-}
-
-// ProxyRequestsSplayCoverageFieldResolver implement to resolve requests for the ProxyRequests's splayCoverage field.
-type ProxyRequestsSplayCoverageFieldResolver interface {
-	// SplayCoverage implements response to request for splayCoverage field.
-	SplayCoverage(p graphql.ResolveParams) (int, error)
-}
-
 //
 // ProxyRequestsFieldResolvers represents a collection of methods whose products represent the
 // response values of the 'ProxyRequests' type.
-//
-// == Example SDL
-//
-//   """
-//   Dog's are not hooman.
-//   """
-//   type Dog implements Pet {
-//     "name of this fine beast."
-//     name:  String!
-//
-//     "breed of this silly animal; probably shibe."
-//     breed: [Breed]
-//   }
-//
-// == Example generated interface
-//
-//   // DogResolver ...
-//   type DogFieldResolvers interface {
-//     DogNameFieldResolver
-//     DogBreedFieldResolver
-//
-//     // IsTypeOf is used to determine if a given value is associated with the Dog type
-//     IsTypeOf(interface{}, graphql.IsTypeOfParams) bool
-//   }
-//
-// == Example implementation ...
-//
-//   // DogResolver implements DogFieldResolvers interface
-//   type DogResolver struct {
-//     logger logrus.LogEntry
-//     store interface{
-//       store.BreedStore
-//       store.DogStore
-//     }
-//   }
-//
-//   // Name implements response to request for name field.
-//   func (r *DogResolver) Name(p graphql.ResolveParams) (interface{}, error) {
-//     // ... implementation details ...
-//     dog := p.Source.(DogGetter)
-//     return dog.GetName()
-//   }
-//
-//   // Breed implements response to request for breed field.
-//   func (r *DogResolver) Breed(p graphql.ResolveParams) (interface{}, error) {
-//     // ... implementation details ...
-//     dog := p.Source.(DogGetter)
-//     breed := r.store.GetBreed(dog.GetBreedName())
-//     return breed
-//   }
-//
-//   // IsTypeOf is used to determine if a given value is associated with the Dog type
-//   func (r *DogResolver) IsTypeOf(p graphql.IsTypeOfParams) bool {
-//     // ... implementation details ...
-//     _, ok := p.Value.(DogGetter)
-//     return ok
-//   }
-//
 type ProxyRequestsFieldResolvers interface {
-	ProxyRequestsEntityAttributesFieldResolver
-	ProxyRequestsSplayFieldResolver
-	ProxyRequestsSplayCoverageFieldResolver
+	// EntityAttributes implements response to request for 'entityAttributes' field.
+	EntityAttributes(p graphql.ResolveParams) (interface{}, error)
+
+	// Splay implements response to request for 'splay' field.
+	Splay(p graphql.ResolveParams) (bool, error)
+
+	// SplayCoverage implements response to request for 'splayCoverage' field.
+	SplayCoverage(p graphql.ResolveParams) (int, error)
 }
 
 // ProxyRequestsAliases implements all methods on ProxyRequestsFieldResolvers interface by using reflection to
 // match name of field to a field on the given value. Intent is reduce friction
 // of writing new resolvers by removing all the instances where you would simply
 // have the resolvers method return a field.
-//
-// == Example SDL
-//
-//    type Dog {
-//      name:   String!
-//      weight: Float!
-//      dob:    DateTime
-//      breed:  [Breed]
-//    }
-//
-// == Example generated aliases
-//
-//   type DogAliases struct {}
-//   func (_ DogAliases) Name(p graphql.ResolveParams) (interface{}, error) {
-//     // reflect...
-//   }
-//   func (_ DogAliases) Weight(p graphql.ResolveParams) (interface{}, error) {
-//     // reflect...
-//   }
-//   func (_ DogAliases) Dob(p graphql.ResolveParams) (interface{}, error) {
-//     // reflect...
-//   }
-//   func (_ DogAliases) Breed(p graphql.ResolveParams) (interface{}, error) {
-//     // reflect...
-//   }
-//
-// == Example Implementation
-//
-//   type DogResolver struct { // Implements DogResolver
-//     DogAliases
-//     store store.BreedStore
-//   }
-//
-//   // NOTE:
-//   // All other fields are satisified by DogAliases but since this one
-//   // requires hitting the store we implement it in our resolver.
-//   func (r *DogResolver) Breed(p graphql.ResolveParams) interface{} {
-//     dog := v.(*Dog)
-//     return r.BreedsById(dog.BreedIDs)
-//   }
-//
 type ProxyRequestsAliases struct{}
 
 // EntityAttributes implements response to request for 'entityAttributes' field.
@@ -2867,21 +2319,27 @@ func RegisterProxyRequests(svc *graphql.Service, impl ProxyRequestsFieldResolver
 	svc.RegisterObject(_ObjectTypeProxyRequestsDesc, impl)
 }
 func _ObjTypeProxyRequestsEntityAttributesHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(ProxyRequestsEntityAttributesFieldResolver)
+	resolver := impl.(interface {
+		EntityAttributes(p graphql.ResolveParams) (interface{}, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.EntityAttributes(frp)
 	}
 }
 
 func _ObjTypeProxyRequestsSplayHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(ProxyRequestsSplayFieldResolver)
+	resolver := impl.(interface {
+		Splay(p graphql.ResolveParams) (bool, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.Splay(frp)
 	}
 }
 
 func _ObjTypeProxyRequestsSplayCoverageHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(ProxyRequestsSplayCoverageFieldResolver)
+	resolver := impl.(interface {
+		SplayCoverage(p graphql.ResolveParams) (int, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.SplayCoverage(frp)
 	}
@@ -2936,129 +2394,21 @@ var _ObjectTypeProxyRequestsDesc = graphql.ObjectDesc{
 	},
 }
 
-// CheckConfigConnectionNodesFieldResolver implement to resolve requests for the CheckConfigConnection's nodes field.
-type CheckConfigConnectionNodesFieldResolver interface {
-	// Nodes implements response to request for nodes field.
-	Nodes(p graphql.ResolveParams) (interface{}, error)
-}
-
-// CheckConfigConnectionPageInfoFieldResolver implement to resolve requests for the CheckConfigConnection's pageInfo field.
-type CheckConfigConnectionPageInfoFieldResolver interface {
-	// PageInfo implements response to request for pageInfo field.
-	PageInfo(p graphql.ResolveParams) (interface{}, error)
-}
-
 //
 // CheckConfigConnectionFieldResolvers represents a collection of methods whose products represent the
 // response values of the 'CheckConfigConnection' type.
-//
-// == Example SDL
-//
-//   """
-//   Dog's are not hooman.
-//   """
-//   type Dog implements Pet {
-//     "name of this fine beast."
-//     name:  String!
-//
-//     "breed of this silly animal; probably shibe."
-//     breed: [Breed]
-//   }
-//
-// == Example generated interface
-//
-//   // DogResolver ...
-//   type DogFieldResolvers interface {
-//     DogNameFieldResolver
-//     DogBreedFieldResolver
-//
-//     // IsTypeOf is used to determine if a given value is associated with the Dog type
-//     IsTypeOf(interface{}, graphql.IsTypeOfParams) bool
-//   }
-//
-// == Example implementation ...
-//
-//   // DogResolver implements DogFieldResolvers interface
-//   type DogResolver struct {
-//     logger logrus.LogEntry
-//     store interface{
-//       store.BreedStore
-//       store.DogStore
-//     }
-//   }
-//
-//   // Name implements response to request for name field.
-//   func (r *DogResolver) Name(p graphql.ResolveParams) (interface{}, error) {
-//     // ... implementation details ...
-//     dog := p.Source.(DogGetter)
-//     return dog.GetName()
-//   }
-//
-//   // Breed implements response to request for breed field.
-//   func (r *DogResolver) Breed(p graphql.ResolveParams) (interface{}, error) {
-//     // ... implementation details ...
-//     dog := p.Source.(DogGetter)
-//     breed := r.store.GetBreed(dog.GetBreedName())
-//     return breed
-//   }
-//
-//   // IsTypeOf is used to determine if a given value is associated with the Dog type
-//   func (r *DogResolver) IsTypeOf(p graphql.IsTypeOfParams) bool {
-//     // ... implementation details ...
-//     _, ok := p.Value.(DogGetter)
-//     return ok
-//   }
-//
 type CheckConfigConnectionFieldResolvers interface {
-	CheckConfigConnectionNodesFieldResolver
-	CheckConfigConnectionPageInfoFieldResolver
+	// Nodes implements response to request for 'nodes' field.
+	Nodes(p graphql.ResolveParams) (interface{}, error)
+
+	// PageInfo implements response to request for 'pageInfo' field.
+	PageInfo(p graphql.ResolveParams) (interface{}, error)
 }
 
 // CheckConfigConnectionAliases implements all methods on CheckConfigConnectionFieldResolvers interface by using reflection to
 // match name of field to a field on the given value. Intent is reduce friction
 // of writing new resolvers by removing all the instances where you would simply
 // have the resolvers method return a field.
-//
-// == Example SDL
-//
-//    type Dog {
-//      name:   String!
-//      weight: Float!
-//      dob:    DateTime
-//      breed:  [Breed]
-//    }
-//
-// == Example generated aliases
-//
-//   type DogAliases struct {}
-//   func (_ DogAliases) Name(p graphql.ResolveParams) (interface{}, error) {
-//     // reflect...
-//   }
-//   func (_ DogAliases) Weight(p graphql.ResolveParams) (interface{}, error) {
-//     // reflect...
-//   }
-//   func (_ DogAliases) Dob(p graphql.ResolveParams) (interface{}, error) {
-//     // reflect...
-//   }
-//   func (_ DogAliases) Breed(p graphql.ResolveParams) (interface{}, error) {
-//     // reflect...
-//   }
-//
-// == Example Implementation
-//
-//   type DogResolver struct { // Implements DogResolver
-//     DogAliases
-//     store store.BreedStore
-//   }
-//
-//   // NOTE:
-//   // All other fields are satisified by DogAliases but since this one
-//   // requires hitting the store we implement it in our resolver.
-//   func (r *DogResolver) Breed(p graphql.ResolveParams) interface{} {
-//     dog := v.(*Dog)
-//     return r.BreedsById(dog.BreedIDs)
-//   }
-//
 type CheckConfigConnectionAliases struct{}
 
 // Nodes implements response to request for 'nodes' field.
@@ -3081,14 +2431,18 @@ func RegisterCheckConfigConnection(svc *graphql.Service, impl CheckConfigConnect
 	svc.RegisterObject(_ObjectTypeCheckConfigConnectionDesc, impl)
 }
 func _ObjTypeCheckConfigConnectionNodesHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(CheckConfigConnectionNodesFieldResolver)
+	resolver := impl.(interface {
+		Nodes(p graphql.ResolveParams) (interface{}, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.Nodes(frp)
 	}
 }
 
 func _ObjTypeCheckConfigConnectionPageInfoHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(CheckConfigConnectionPageInfoFieldResolver)
+	resolver := impl.(interface {
+		PageInfo(p graphql.ResolveParams) (interface{}, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.PageInfo(frp)
 	}

@@ -41,18 +41,6 @@ func _InterfaceTypeNamespacedConfigFn() graphql1.InterfaceConfig {
 // describe Namespaced's configuration; kept private to avoid unintentional tampering of configuration at runtime.
 var _InterfaceTypeNamespacedDesc = graphql.InterfaceDesc{Config: _InterfaceTypeNamespacedConfigFn}
 
-// NamespaceIDFieldResolver implement to resolve requests for the Namespace's id field.
-type NamespaceIDFieldResolver interface {
-	// ID implements response to request for id field.
-	ID(p graphql.ResolveParams) (string, error)
-}
-
-// NamespaceNameFieldResolver implement to resolve requests for the Namespace's name field.
-type NamespaceNameFieldResolver interface {
-	// Name implements response to request for name field.
-	Name(p graphql.ResolveParams) (string, error)
-}
-
 // NamespaceChecksFieldResolverArgs contains arguments provided to checks when selected
 type NamespaceChecksFieldResolverArgs struct {
 	Offset  int            // Offset - self descriptive
@@ -77,12 +65,6 @@ type NamespaceChecksFieldResolverParams struct {
 	Args NamespaceChecksFieldResolverArgs
 }
 
-// NamespaceChecksFieldResolver implement to resolve requests for the Namespace's checks field.
-type NamespaceChecksFieldResolver interface {
-	// Checks implements response to request for checks field.
-	Checks(p NamespaceChecksFieldResolverParams) (interface{}, error)
-}
-
 // NamespaceEntitiesFieldResolverArgs contains arguments provided to entities when selected
 type NamespaceEntitiesFieldResolverArgs struct {
 	Offset  int             // Offset - self descriptive
@@ -105,12 +87,6 @@ type NamespaceEntitiesFieldResolverArgs struct {
 type NamespaceEntitiesFieldResolverParams struct {
 	graphql.ResolveParams
 	Args NamespaceEntitiesFieldResolverArgs
-}
-
-// NamespaceEntitiesFieldResolver implement to resolve requests for the Namespace's entities field.
-type NamespaceEntitiesFieldResolver interface {
-	// Entities implements response to request for entities field.
-	Entities(p NamespaceEntitiesFieldResolverParams) (interface{}, error)
 }
 
 // NamespaceEventsFieldResolverArgs contains arguments provided to events when selected
@@ -141,12 +117,6 @@ type NamespaceEventsFieldResolverParams struct {
 	Args NamespaceEventsFieldResolverArgs
 }
 
-// NamespaceEventsFieldResolver implement to resolve requests for the Namespace's events field.
-type NamespaceEventsFieldResolver interface {
-	// Events implements response to request for events field.
-	Events(p NamespaceEventsFieldResolverParams) (interface{}, error)
-}
-
 // NamespaceEventFiltersFieldResolverArgs contains arguments provided to eventFilters when selected
 type NamespaceEventFiltersFieldResolverArgs struct {
 	Offset  int                  // Offset - self descriptive
@@ -167,12 +137,6 @@ type NamespaceEventFiltersFieldResolverArgs struct {
 type NamespaceEventFiltersFieldResolverParams struct {
 	graphql.ResolveParams
 	Args NamespaceEventFiltersFieldResolverArgs
-}
-
-// NamespaceEventFiltersFieldResolver implement to resolve requests for the Namespace's eventFilters field.
-type NamespaceEventFiltersFieldResolver interface {
-	// EventFilters implements response to request for eventFilters field.
-	EventFilters(p NamespaceEventFiltersFieldResolverParams) (interface{}, error)
 }
 
 // NamespaceHandlersFieldResolverArgs contains arguments provided to handlers when selected
@@ -200,12 +164,6 @@ type NamespaceHandlersFieldResolverParams struct {
 	Args NamespaceHandlersFieldResolverArgs
 }
 
-// NamespaceHandlersFieldResolver implement to resolve requests for the Namespace's handlers field.
-type NamespaceHandlersFieldResolver interface {
-	// Handlers implements response to request for handlers field.
-	Handlers(p NamespaceHandlersFieldResolverParams) (interface{}, error)
-}
-
 // NamespaceMutatorsFieldResolverArgs contains arguments provided to mutators when selected
 type NamespaceMutatorsFieldResolverArgs struct {
 	Offset  int              // Offset - self descriptive
@@ -221,12 +179,6 @@ type NamespaceMutatorsFieldResolverArgs struct {
 type NamespaceMutatorsFieldResolverParams struct {
 	graphql.ResolveParams
 	Args NamespaceMutatorsFieldResolverArgs
-}
-
-// NamespaceMutatorsFieldResolver implement to resolve requests for the Namespace's mutators field.
-type NamespaceMutatorsFieldResolver interface {
-	// Mutators implements response to request for mutators field.
-	Mutators(p NamespaceMutatorsFieldResolverParams) (interface{}, error)
 }
 
 // NamespaceSilencesFieldResolverArgs contains arguments provided to silences when selected
@@ -252,163 +204,42 @@ type NamespaceSilencesFieldResolverParams struct {
 	Args NamespaceSilencesFieldResolverArgs
 }
 
-// NamespaceSilencesFieldResolver implement to resolve requests for the Namespace's silences field.
-type NamespaceSilencesFieldResolver interface {
-	// Silences implements response to request for silences field.
-	Silences(p NamespaceSilencesFieldResolverParams) (interface{}, error)
-}
-
-// NamespaceSubscriptionsFieldResolverArgs contains arguments provided to subscriptions when selected
-type NamespaceSubscriptionsFieldResolverArgs struct {
-	OmitEntity bool                 // OmitEntity - Omit entity subscriptions from set.
-	OrderBy    SubscriptionSetOrder // OrderBy adds optional order to the records retrieved.
-}
-
-// NamespaceSubscriptionsFieldResolverParams contains contextual info to resolve subscriptions field
-type NamespaceSubscriptionsFieldResolverParams struct {
-	graphql.ResolveParams
-	Args NamespaceSubscriptionsFieldResolverArgs
-}
-
-// NamespaceSubscriptionsFieldResolver implement to resolve requests for the Namespace's subscriptions field.
-type NamespaceSubscriptionsFieldResolver interface {
-	// Subscriptions implements response to request for subscriptions field.
-	Subscriptions(p NamespaceSubscriptionsFieldResolverParams) (interface{}, error)
-}
-
-// NamespaceIconIDFieldResolver implement to resolve requests for the Namespace's iconId field.
-type NamespaceIconIDFieldResolver interface {
-	// IconID implements response to request for iconId field.
-	IconID(p graphql.ResolveParams) (Icon, error)
-}
-
-// NamespaceColourIDFieldResolver implement to resolve requests for the Namespace's colourId field.
-type NamespaceColourIDFieldResolver interface {
-	// ColourID implements response to request for colourId field.
-	ColourID(p graphql.ResolveParams) (MutedColour, error)
-}
-
 //
 // NamespaceFieldResolvers represents a collection of methods whose products represent the
 // response values of the 'Namespace' type.
-//
-// == Example SDL
-//
-//   """
-//   Dog's are not hooman.
-//   """
-//   type Dog implements Pet {
-//     "name of this fine beast."
-//     name:  String!
-//
-//     "breed of this silly animal; probably shibe."
-//     breed: [Breed]
-//   }
-//
-// == Example generated interface
-//
-//   // DogResolver ...
-//   type DogFieldResolvers interface {
-//     DogNameFieldResolver
-//     DogBreedFieldResolver
-//
-//     // IsTypeOf is used to determine if a given value is associated with the Dog type
-//     IsTypeOf(interface{}, graphql.IsTypeOfParams) bool
-//   }
-//
-// == Example implementation ...
-//
-//   // DogResolver implements DogFieldResolvers interface
-//   type DogResolver struct {
-//     logger logrus.LogEntry
-//     store interface{
-//       store.BreedStore
-//       store.DogStore
-//     }
-//   }
-//
-//   // Name implements response to request for name field.
-//   func (r *DogResolver) Name(p graphql.ResolveParams) (interface{}, error) {
-//     // ... implementation details ...
-//     dog := p.Source.(DogGetter)
-//     return dog.GetName()
-//   }
-//
-//   // Breed implements response to request for breed field.
-//   func (r *DogResolver) Breed(p graphql.ResolveParams) (interface{}, error) {
-//     // ... implementation details ...
-//     dog := p.Source.(DogGetter)
-//     breed := r.store.GetBreed(dog.GetBreedName())
-//     return breed
-//   }
-//
-//   // IsTypeOf is used to determine if a given value is associated with the Dog type
-//   func (r *DogResolver) IsTypeOf(p graphql.IsTypeOfParams) bool {
-//     // ... implementation details ...
-//     _, ok := p.Value.(DogGetter)
-//     return ok
-//   }
-//
 type NamespaceFieldResolvers interface {
-	NamespaceIDFieldResolver
-	NamespaceNameFieldResolver
-	NamespaceChecksFieldResolver
-	NamespaceEntitiesFieldResolver
-	NamespaceEventsFieldResolver
-	NamespaceEventFiltersFieldResolver
-	NamespaceHandlersFieldResolver
-	NamespaceMutatorsFieldResolver
-	NamespaceSilencesFieldResolver
-	NamespaceSubscriptionsFieldResolver
-	NamespaceIconIDFieldResolver
-	NamespaceColourIDFieldResolver
+	// ID implements response to request for 'id' field.
+	ID(p graphql.ResolveParams) (string, error)
+
+	// Name implements response to request for 'name' field.
+	Name(p graphql.ResolveParams) (string, error)
+
+	// Checks implements response to request for 'checks' field.
+	Checks(p NamespaceChecksFieldResolverParams) (interface{}, error)
+
+	// Entities implements response to request for 'entities' field.
+	Entities(p NamespaceEntitiesFieldResolverParams) (interface{}, error)
+
+	// Events implements response to request for 'events' field.
+	Events(p NamespaceEventsFieldResolverParams) (interface{}, error)
+
+	// EventFilters implements response to request for 'eventFilters' field.
+	EventFilters(p NamespaceEventFiltersFieldResolverParams) (interface{}, error)
+
+	// Handlers implements response to request for 'handlers' field.
+	Handlers(p NamespaceHandlersFieldResolverParams) (interface{}, error)
+
+	// Mutators implements response to request for 'mutators' field.
+	Mutators(p NamespaceMutatorsFieldResolverParams) (interface{}, error)
+
+	// Silences implements response to request for 'silences' field.
+	Silences(p NamespaceSilencesFieldResolverParams) (interface{}, error)
 }
 
 // NamespaceAliases implements all methods on NamespaceFieldResolvers interface by using reflection to
 // match name of field to a field on the given value. Intent is reduce friction
 // of writing new resolvers by removing all the instances where you would simply
 // have the resolvers method return a field.
-//
-// == Example SDL
-//
-//    type Dog {
-//      name:   String!
-//      weight: Float!
-//      dob:    DateTime
-//      breed:  [Breed]
-//    }
-//
-// == Example generated aliases
-//
-//   type DogAliases struct {}
-//   func (_ DogAliases) Name(p graphql.ResolveParams) (interface{}, error) {
-//     // reflect...
-//   }
-//   func (_ DogAliases) Weight(p graphql.ResolveParams) (interface{}, error) {
-//     // reflect...
-//   }
-//   func (_ DogAliases) Dob(p graphql.ResolveParams) (interface{}, error) {
-//     // reflect...
-//   }
-//   func (_ DogAliases) Breed(p graphql.ResolveParams) (interface{}, error) {
-//     // reflect...
-//   }
-//
-// == Example Implementation
-//
-//   type DogResolver struct { // Implements DogResolver
-//     DogAliases
-//     store store.BreedStore
-//   }
-//
-//   // NOTE:
-//   // All other fields are satisified by DogAliases but since this one
-//   // requires hitting the store we implement it in our resolver.
-//   func (r *DogResolver) Breed(p graphql.ResolveParams) interface{} {
-//     dog := v.(*Dog)
-//     return r.BreedsById(dog.BreedIDs)
-//   }
-//
 type NamespaceAliases struct{}
 
 // ID implements response to request for 'id' field.
@@ -479,38 +310,6 @@ func (_ NamespaceAliases) Silences(p NamespaceSilencesFieldResolverParams) (inte
 	return val, err
 }
 
-// Subscriptions implements response to request for 'subscriptions' field.
-func (_ NamespaceAliases) Subscriptions(p NamespaceSubscriptionsFieldResolverParams) (interface{}, error) {
-	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	return val, err
-}
-
-// IconID implements response to request for 'iconId' field.
-func (_ NamespaceAliases) IconID(p graphql.ResolveParams) (Icon, error) {
-	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret, ok := Icon(val.(string)), true
-	if err != nil {
-		return ret, err
-	}
-	if !ok {
-		return ret, errors.New("unable to coerce value for field 'iconId'")
-	}
-	return ret, err
-}
-
-// ColourID implements response to request for 'colourId' field.
-func (_ NamespaceAliases) ColourID(p graphql.ResolveParams) (MutedColour, error) {
-	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret, ok := MutedColour(val.(string)), true
-	if err != nil {
-		return ret, err
-	}
-	if !ok {
-		return ret, errors.New("unable to coerce value for field 'colourId'")
-	}
-	return ret, err
-}
-
 // NamespaceType Represents a virtual cluster
 var NamespaceType = graphql.NewType("Namespace", graphql.ObjectKind)
 
@@ -519,21 +318,27 @@ func RegisterNamespace(svc *graphql.Service, impl NamespaceFieldResolvers) {
 	svc.RegisterObject(_ObjectTypeNamespaceDesc, impl)
 }
 func _ObjTypeNamespaceIDHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(NamespaceIDFieldResolver)
+	resolver := impl.(interface {
+		ID(p graphql.ResolveParams) (string, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.ID(frp)
 	}
 }
 
 func _ObjTypeNamespaceNameHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(NamespaceNameFieldResolver)
+	resolver := impl.(interface {
+		Name(p graphql.ResolveParams) (string, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.Name(frp)
 	}
 }
 
 func _ObjTypeNamespaceChecksHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(NamespaceChecksFieldResolver)
+	resolver := impl.(interface {
+		Checks(p NamespaceChecksFieldResolverParams) (interface{}, error)
+	})
 	return func(p graphql1.ResolveParams) (interface{}, error) {
 		frp := NamespaceChecksFieldResolverParams{ResolveParams: p}
 		err := mapstructure.Decode(p.Args, &frp.Args)
@@ -546,7 +351,9 @@ func _ObjTypeNamespaceChecksHandler(impl interface{}) graphql1.FieldResolveFn {
 }
 
 func _ObjTypeNamespaceEntitiesHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(NamespaceEntitiesFieldResolver)
+	resolver := impl.(interface {
+		Entities(p NamespaceEntitiesFieldResolverParams) (interface{}, error)
+	})
 	return func(p graphql1.ResolveParams) (interface{}, error) {
 		frp := NamespaceEntitiesFieldResolverParams{ResolveParams: p}
 		err := mapstructure.Decode(p.Args, &frp.Args)
@@ -559,7 +366,9 @@ func _ObjTypeNamespaceEntitiesHandler(impl interface{}) graphql1.FieldResolveFn 
 }
 
 func _ObjTypeNamespaceEventsHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(NamespaceEventsFieldResolver)
+	resolver := impl.(interface {
+		Events(p NamespaceEventsFieldResolverParams) (interface{}, error)
+	})
 	return func(p graphql1.ResolveParams) (interface{}, error) {
 		frp := NamespaceEventsFieldResolverParams{ResolveParams: p}
 		err := mapstructure.Decode(p.Args, &frp.Args)
@@ -572,7 +381,9 @@ func _ObjTypeNamespaceEventsHandler(impl interface{}) graphql1.FieldResolveFn {
 }
 
 func _ObjTypeNamespaceEventFiltersHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(NamespaceEventFiltersFieldResolver)
+	resolver := impl.(interface {
+		EventFilters(p NamespaceEventFiltersFieldResolverParams) (interface{}, error)
+	})
 	return func(p graphql1.ResolveParams) (interface{}, error) {
 		frp := NamespaceEventFiltersFieldResolverParams{ResolveParams: p}
 		err := mapstructure.Decode(p.Args, &frp.Args)
@@ -585,7 +396,9 @@ func _ObjTypeNamespaceEventFiltersHandler(impl interface{}) graphql1.FieldResolv
 }
 
 func _ObjTypeNamespaceHandlersHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(NamespaceHandlersFieldResolver)
+	resolver := impl.(interface {
+		Handlers(p NamespaceHandlersFieldResolverParams) (interface{}, error)
+	})
 	return func(p graphql1.ResolveParams) (interface{}, error) {
 		frp := NamespaceHandlersFieldResolverParams{ResolveParams: p}
 		err := mapstructure.Decode(p.Args, &frp.Args)
@@ -598,7 +411,9 @@ func _ObjTypeNamespaceHandlersHandler(impl interface{}) graphql1.FieldResolveFn 
 }
 
 func _ObjTypeNamespaceMutatorsHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(NamespaceMutatorsFieldResolver)
+	resolver := impl.(interface {
+		Mutators(p NamespaceMutatorsFieldResolverParams) (interface{}, error)
+	})
 	return func(p graphql1.ResolveParams) (interface{}, error) {
 		frp := NamespaceMutatorsFieldResolverParams{ResolveParams: p}
 		err := mapstructure.Decode(p.Args, &frp.Args)
@@ -611,7 +426,9 @@ func _ObjTypeNamespaceMutatorsHandler(impl interface{}) graphql1.FieldResolveFn 
 }
 
 func _ObjTypeNamespaceSilencesHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(NamespaceSilencesFieldResolver)
+	resolver := impl.(interface {
+		Silences(p NamespaceSilencesFieldResolverParams) (interface{}, error)
+	})
 	return func(p graphql1.ResolveParams) (interface{}, error) {
 		frp := NamespaceSilencesFieldResolverParams{ResolveParams: p}
 		err := mapstructure.Decode(p.Args, &frp.Args)
@@ -620,37 +437,6 @@ func _ObjTypeNamespaceSilencesHandler(impl interface{}) graphql1.FieldResolveFn 
 		}
 
 		return resolver.Silences(frp)
-	}
-}
-
-func _ObjTypeNamespaceSubscriptionsHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(NamespaceSubscriptionsFieldResolver)
-	return func(p graphql1.ResolveParams) (interface{}, error) {
-		frp := NamespaceSubscriptionsFieldResolverParams{ResolveParams: p}
-		err := mapstructure.Decode(p.Args, &frp.Args)
-		if err != nil {
-			return nil, err
-		}
-
-		return resolver.Subscriptions(frp)
-	}
-}
-
-func _ObjTypeNamespaceIconIDHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(NamespaceIconIDFieldResolver)
-	return func(frp graphql1.ResolveParams) (interface{}, error) {
-
-		val, err := resolver.IconID(frp)
-		return string(val), err
-	}
-}
-
-func _ObjTypeNamespaceColourIDHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(NamespaceColourIDFieldResolver)
-	return func(frp graphql1.ResolveParams) (interface{}, error) {
-
-		val, err := resolver.ColourID(frp)
-		return string(val), err
 	}
 }
 
@@ -690,13 +476,6 @@ func _ObjectTypeNamespaceConfigFn() graphql1.ObjectConfig {
 				Description:       "All check configurations associated with the namespace.",
 				Name:              "checks",
 				Type:              graphql1.NewNonNull(graphql.OutputType("CheckConfigConnection")),
-			},
-			"colourId": &graphql1.Field{
-				Args:              graphql1.FieldConfigArgument{},
-				DeprecationReason: "",
-				Description:       "ColourId. Experimental. Use graphical interfaces as symbolic reference to namespace",
-				Name:              "colourId",
-				Type:              graphql1.NewNonNull(graphql.OutputType("MutedColour")),
 			},
 			"entities": &graphql1.Field{
 				Args: graphql1.FieldConfigArgument{
@@ -825,13 +604,6 @@ func _ObjectTypeNamespaceConfigFn() graphql1.ObjectConfig {
 				Name:              "handlers",
 				Type:              graphql1.NewNonNull(graphql.OutputType("HandlerConnection")),
 			},
-			"iconId": &graphql1.Field{
-				Args:              graphql1.FieldConfigArgument{},
-				DeprecationReason: "",
-				Description:       "IconId. Experimental. Use graphical interfaces as symbolic reference to organization",
-				Name:              "iconId",
-				Type:              graphql1.NewNonNull(graphql.OutputType("Icon")),
-			},
 			"id": &graphql1.Field{
 				Args:              graphql1.FieldConfigArgument{},
 				DeprecationReason: "",
@@ -907,24 +679,6 @@ func _ObjectTypeNamespaceConfigFn() graphql1.ObjectConfig {
 				Name:              "silences",
 				Type:              graphql1.NewNonNull(graphql.OutputType("SilencedConnection")),
 			},
-			"subscriptions": &graphql1.Field{
-				Args: graphql1.FieldConfigArgument{
-					"omitEntity": &graphql1.ArgumentConfig{
-						DefaultValue: false,
-						Description:  "Omit entity subscriptions from set.",
-						Type:         graphql1.Boolean,
-					},
-					"orderBy": &graphql1.ArgumentConfig{
-						DefaultValue: "OCCURRENCES",
-						Description:  "OrderBy adds optional order to the records retrieved.",
-						Type:         graphql.InputType("SubscriptionSetOrder"),
-					},
-				},
-				DeprecationReason: "",
-				Description:       "All subscriptions in use in the namespace.",
-				Name:              "subscriptions",
-				Type:              graphql1.NewNonNull(graphql.OutputType("SubscriptionSet")),
-			},
 		},
 		Interfaces: []*graphql1.Interface{
 			graphql.Interface("Node")},
@@ -944,278 +698,14 @@ func _ObjectTypeNamespaceConfigFn() graphql1.ObjectConfig {
 var _ObjectTypeNamespaceDesc = graphql.ObjectDesc{
 	Config: _ObjectTypeNamespaceConfigFn,
 	FieldHandlers: map[string]graphql.FieldHandler{
-		"checks":        _ObjTypeNamespaceChecksHandler,
-		"colourId":      _ObjTypeNamespaceColourIDHandler,
-		"entities":      _ObjTypeNamespaceEntitiesHandler,
-		"eventFilters":  _ObjTypeNamespaceEventFiltersHandler,
-		"events":        _ObjTypeNamespaceEventsHandler,
-		"handlers":      _ObjTypeNamespaceHandlersHandler,
-		"iconId":        _ObjTypeNamespaceIconIDHandler,
-		"id":            _ObjTypeNamespaceIDHandler,
-		"mutators":      _ObjTypeNamespaceMutatorsHandler,
-		"name":          _ObjTypeNamespaceNameHandler,
-		"silences":      _ObjTypeNamespaceSilencesHandler,
-		"subscriptions": _ObjTypeNamespaceSubscriptionsHandler,
+		"checks":       _ObjTypeNamespaceChecksHandler,
+		"entities":     _ObjTypeNamespaceEntitiesHandler,
+		"eventFilters": _ObjTypeNamespaceEventFiltersHandler,
+		"events":       _ObjTypeNamespaceEventsHandler,
+		"handlers":     _ObjTypeNamespaceHandlersHandler,
+		"id":           _ObjTypeNamespaceIDHandler,
+		"mutators":     _ObjTypeNamespaceMutatorsHandler,
+		"name":         _ObjTypeNamespaceNameHandler,
+		"silences":     _ObjTypeNamespaceSilencesHandler,
 	},
-}
-
-// SubscriptionSetOrder Describes ways in which a set of subscriptions can be ordered.
-type SubscriptionSetOrder string
-
-// SubscriptionSetOrders holds enum values
-var SubscriptionSetOrders = _EnumTypeSubscriptionSetOrderValues{
-	ALPHA_ASC:   "ALPHA_ASC",
-	ALPHA_DESC:  "ALPHA_DESC",
-	OCCURRENCES: "OCCURRENCES",
-}
-
-// SubscriptionSetOrderType Describes ways in which a set of subscriptions can be ordered.
-var SubscriptionSetOrderType = graphql.NewType("SubscriptionSetOrder", graphql.EnumKind)
-
-// RegisterSubscriptionSetOrder registers SubscriptionSetOrder object type with given service.
-func RegisterSubscriptionSetOrder(svc *graphql.Service) {
-	svc.RegisterEnum(_EnumTypeSubscriptionSetOrderDesc)
-}
-func _EnumTypeSubscriptionSetOrderConfigFn() graphql1.EnumConfig {
-	return graphql1.EnumConfig{
-		Description: "Describes ways in which a set of subscriptions can be ordered.",
-		Name:        "SubscriptionSetOrder",
-		Values: graphql1.EnumValueConfigMap{
-			"ALPHA_ASC": &graphql1.EnumValueConfig{
-				DeprecationReason: "",
-				Description:       "self descriptive",
-				Value:             "ALPHA_ASC",
-			},
-			"ALPHA_DESC": &graphql1.EnumValueConfig{
-				DeprecationReason: "",
-				Description:       "self descriptive",
-				Value:             "ALPHA_DESC",
-			},
-			"OCCURRENCES": &graphql1.EnumValueConfig{
-				DeprecationReason: "",
-				Description:       "self descriptive",
-				Value:             "OCCURRENCES",
-			},
-		},
-	}
-}
-
-// describe SubscriptionSetOrder's configuration; kept private to avoid unintentional tampering of configuration at runtime.
-var _EnumTypeSubscriptionSetOrderDesc = graphql.EnumDesc{Config: _EnumTypeSubscriptionSetOrderConfigFn}
-
-type _EnumTypeSubscriptionSetOrderValues struct {
-	// ALPHA_ASC - self descriptive
-	ALPHA_ASC SubscriptionSetOrder
-	// ALPHA_DESC - self descriptive
-	ALPHA_DESC SubscriptionSetOrder
-	// OCCURRENCES - self descriptive
-	OCCURRENCES SubscriptionSetOrder
-}
-
-// Icon Describes a graphical element that can be used to distinguish a resource.
-type Icon string
-
-// Icons holds enum values
-var Icons = _EnumTypeIconValues{
-	BRIEFCASE:  "BRIEFCASE",
-	DONUT:      "DONUT",
-	EMOTICON:   "EMOTICON",
-	ESPRESSO:   "ESPRESSO",
-	EXPLORE:    "EXPLORE",
-	FIRE:       "FIRE",
-	HALFHEART:  "HALFHEART",
-	HEART:      "HEART",
-	MUG:        "MUG",
-	POLYGON:    "POLYGON",
-	VISIBILITY: "VISIBILITY",
-}
-
-// IconType Describes a graphical element that can be used to distinguish a resource.
-var IconType = graphql.NewType("Icon", graphql.EnumKind)
-
-// RegisterIcon registers Icon object type with given service.
-func RegisterIcon(svc *graphql.Service) {
-	svc.RegisterEnum(_EnumTypeIconDesc)
-}
-func _EnumTypeIconConfigFn() graphql1.EnumConfig {
-	return graphql1.EnumConfig{
-		Description: "Describes a graphical element that can be used to distinguish a resource.",
-		Name:        "Icon",
-		Values: graphql1.EnumValueConfigMap{
-			"BRIEFCASE": &graphql1.EnumValueConfig{
-				DeprecationReason: "",
-				Description:       "self descriptive",
-				Value:             "BRIEFCASE",
-			},
-			"DONUT": &graphql1.EnumValueConfig{
-				DeprecationReason: "",
-				Description:       "self descriptive",
-				Value:             "DONUT",
-			},
-			"EMOTICON": &graphql1.EnumValueConfig{
-				DeprecationReason: "",
-				Description:       "self descriptive",
-				Value:             "EMOTICON",
-			},
-			"ESPRESSO": &graphql1.EnumValueConfig{
-				DeprecationReason: "",
-				Description:       "self descriptive",
-				Value:             "ESPRESSO",
-			},
-			"EXPLORE": &graphql1.EnumValueConfig{
-				DeprecationReason: "",
-				Description:       "self descriptive",
-				Value:             "EXPLORE",
-			},
-			"FIRE": &graphql1.EnumValueConfig{
-				DeprecationReason: "",
-				Description:       "self descriptive",
-				Value:             "FIRE",
-			},
-			"HALFHEART": &graphql1.EnumValueConfig{
-				DeprecationReason: "",
-				Description:       "self descriptive",
-				Value:             "HALFHEART",
-			},
-			"HEART": &graphql1.EnumValueConfig{
-				DeprecationReason: "",
-				Description:       "self descriptive",
-				Value:             "HEART",
-			},
-			"MUG": &graphql1.EnumValueConfig{
-				DeprecationReason: "",
-				Description:       "self descriptive",
-				Value:             "MUG",
-			},
-			"POLYGON": &graphql1.EnumValueConfig{
-				DeprecationReason: "",
-				Description:       "self descriptive",
-				Value:             "POLYGON",
-			},
-			"VISIBILITY": &graphql1.EnumValueConfig{
-				DeprecationReason: "",
-				Description:       "self descriptive",
-				Value:             "VISIBILITY",
-			},
-		},
-	}
-}
-
-// describe Icon's configuration; kept private to avoid unintentional tampering of configuration at runtime.
-var _EnumTypeIconDesc = graphql.EnumDesc{Config: _EnumTypeIconConfigFn}
-
-type _EnumTypeIconValues struct {
-	// BRIEFCASE - self descriptive
-	BRIEFCASE Icon
-	// DONUT - self descriptive
-	DONUT Icon
-	// EMOTICON - self descriptive
-	EMOTICON Icon
-	// ESPRESSO - self descriptive
-	ESPRESSO Icon
-	// EXPLORE - self descriptive
-	EXPLORE Icon
-	// FIRE - self descriptive
-	FIRE Icon
-	// HALFHEART - self descriptive
-	HALFHEART Icon
-	// HEART - self descriptive
-	HEART Icon
-	// MUG - self descriptive
-	MUG Icon
-	// POLYGON - self descriptive
-	POLYGON Icon
-	// VISIBILITY - self descriptive
-	VISIBILITY Icon
-}
-
-/*
-MutedColour Describes a color from a muted palette that can be used to distinguish a
-resource.
-*/
-type MutedColour string
-
-// MutedColours holds enum values
-var MutedColours = _EnumTypeMutedColourValues{
-	BLUE:   "BLUE",
-	GRAY:   "GRAY",
-	GREEN:  "GREEN",
-	ORANGE: "ORANGE",
-	PINK:   "PINK",
-	PURPLE: "PURPLE",
-	YELLOW: "YELLOW",
-}
-
-/*
-MutedColourType Describes a color from a muted palette that can be used to distinguish a
-resource.
-*/
-var MutedColourType = graphql.NewType("MutedColour", graphql.EnumKind)
-
-// RegisterMutedColour registers MutedColour object type with given service.
-func RegisterMutedColour(svc *graphql.Service) {
-	svc.RegisterEnum(_EnumTypeMutedColourDesc)
-}
-func _EnumTypeMutedColourConfigFn() graphql1.EnumConfig {
-	return graphql1.EnumConfig{
-		Description: "Describes a color from a muted palette that can be used to distinguish a\nresource.",
-		Name:        "MutedColour",
-		Values: graphql1.EnumValueConfigMap{
-			"BLUE": &graphql1.EnumValueConfig{
-				DeprecationReason: "",
-				Description:       "self descriptive",
-				Value:             "BLUE",
-			},
-			"GRAY": &graphql1.EnumValueConfig{
-				DeprecationReason: "",
-				Description:       "self descriptive",
-				Value:             "GRAY",
-			},
-			"GREEN": &graphql1.EnumValueConfig{
-				DeprecationReason: "",
-				Description:       "self descriptive",
-				Value:             "GREEN",
-			},
-			"ORANGE": &graphql1.EnumValueConfig{
-				DeprecationReason: "",
-				Description:       "self descriptive",
-				Value:             "ORANGE",
-			},
-			"PINK": &graphql1.EnumValueConfig{
-				DeprecationReason: "",
-				Description:       "self descriptive",
-				Value:             "PINK",
-			},
-			"PURPLE": &graphql1.EnumValueConfig{
-				DeprecationReason: "",
-				Description:       "self descriptive",
-				Value:             "PURPLE",
-			},
-			"YELLOW": &graphql1.EnumValueConfig{
-				DeprecationReason: "",
-				Description:       "self descriptive",
-				Value:             "YELLOW",
-			},
-		},
-	}
-}
-
-// describe MutedColour's configuration; kept private to avoid unintentional tampering of configuration at runtime.
-var _EnumTypeMutedColourDesc = graphql.EnumDesc{Config: _EnumTypeMutedColourConfigFn}
-
-type _EnumTypeMutedColourValues struct {
-	// BLUE - self descriptive
-	BLUE MutedColour
-	// GRAY - self descriptive
-	GRAY MutedColour
-	// GREEN - self descriptive
-	GREEN MutedColour
-	// ORANGE - self descriptive
-	ORANGE MutedColour
-	// PINK - self descriptive
-	PINK MutedColour
-	// PURPLE - self descriptive
-	PURPLE MutedColour
-	// YELLOW - self descriptive
-	YELLOW MutedColour
 }

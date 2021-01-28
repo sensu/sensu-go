@@ -8,150 +8,30 @@ import (
 	graphql "github.com/sensu/sensu-go/graphql"
 )
 
-// OffsetPageInfoHasNextPageFieldResolver implement to resolve requests for the OffsetPageInfo's hasNextPage field.
-type OffsetPageInfoHasNextPageFieldResolver interface {
-	// HasNextPage implements response to request for hasNextPage field.
-	HasNextPage(p graphql.ResolveParams) (bool, error)
-}
-
-// OffsetPageInfoHasPreviousPageFieldResolver implement to resolve requests for the OffsetPageInfo's hasPreviousPage field.
-type OffsetPageInfoHasPreviousPageFieldResolver interface {
-	// HasPreviousPage implements response to request for hasPreviousPage field.
-	HasPreviousPage(p graphql.ResolveParams) (bool, error)
-}
-
-// OffsetPageInfoNextOffsetFieldResolver implement to resolve requests for the OffsetPageInfo's nextOffset field.
-type OffsetPageInfoNextOffsetFieldResolver interface {
-	// NextOffset implements response to request for nextOffset field.
-	NextOffset(p graphql.ResolveParams) (int, error)
-}
-
-// OffsetPageInfoPreviousOffsetFieldResolver implement to resolve requests for the OffsetPageInfo's previousOffset field.
-type OffsetPageInfoPreviousOffsetFieldResolver interface {
-	// PreviousOffset implements response to request for previousOffset field.
-	PreviousOffset(p graphql.ResolveParams) (int, error)
-}
-
-// OffsetPageInfoTotalCountFieldResolver implement to resolve requests for the OffsetPageInfo's totalCount field.
-type OffsetPageInfoTotalCountFieldResolver interface {
-	// TotalCount implements response to request for totalCount field.
-	TotalCount(p graphql.ResolveParams) (int, error)
-}
-
 //
 // OffsetPageInfoFieldResolvers represents a collection of methods whose products represent the
 // response values of the 'OffsetPageInfo' type.
-//
-// == Example SDL
-//
-//   """
-//   Dog's are not hooman.
-//   """
-//   type Dog implements Pet {
-//     "name of this fine beast."
-//     name:  String!
-//
-//     "breed of this silly animal; probably shibe."
-//     breed: [Breed]
-//   }
-//
-// == Example generated interface
-//
-//   // DogResolver ...
-//   type DogFieldResolvers interface {
-//     DogNameFieldResolver
-//     DogBreedFieldResolver
-//
-//     // IsTypeOf is used to determine if a given value is associated with the Dog type
-//     IsTypeOf(interface{}, graphql.IsTypeOfParams) bool
-//   }
-//
-// == Example implementation ...
-//
-//   // DogResolver implements DogFieldResolvers interface
-//   type DogResolver struct {
-//     logger logrus.LogEntry
-//     store interface{
-//       store.BreedStore
-//       store.DogStore
-//     }
-//   }
-//
-//   // Name implements response to request for name field.
-//   func (r *DogResolver) Name(p graphql.ResolveParams) (interface{}, error) {
-//     // ... implementation details ...
-//     dog := p.Source.(DogGetter)
-//     return dog.GetName()
-//   }
-//
-//   // Breed implements response to request for breed field.
-//   func (r *DogResolver) Breed(p graphql.ResolveParams) (interface{}, error) {
-//     // ... implementation details ...
-//     dog := p.Source.(DogGetter)
-//     breed := r.store.GetBreed(dog.GetBreedName())
-//     return breed
-//   }
-//
-//   // IsTypeOf is used to determine if a given value is associated with the Dog type
-//   func (r *DogResolver) IsTypeOf(p graphql.IsTypeOfParams) bool {
-//     // ... implementation details ...
-//     _, ok := p.Value.(DogGetter)
-//     return ok
-//   }
-//
 type OffsetPageInfoFieldResolvers interface {
-	OffsetPageInfoHasNextPageFieldResolver
-	OffsetPageInfoHasPreviousPageFieldResolver
-	OffsetPageInfoNextOffsetFieldResolver
-	OffsetPageInfoPreviousOffsetFieldResolver
-	OffsetPageInfoTotalCountFieldResolver
+	// HasNextPage implements response to request for 'hasNextPage' field.
+	HasNextPage(p graphql.ResolveParams) (bool, error)
+
+	// HasPreviousPage implements response to request for 'hasPreviousPage' field.
+	HasPreviousPage(p graphql.ResolveParams) (bool, error)
+
+	// NextOffset implements response to request for 'nextOffset' field.
+	NextOffset(p graphql.ResolveParams) (int, error)
+
+	// PreviousOffset implements response to request for 'previousOffset' field.
+	PreviousOffset(p graphql.ResolveParams) (int, error)
+
+	// TotalCount implements response to request for 'totalCount' field.
+	TotalCount(p graphql.ResolveParams) (int, error)
 }
 
 // OffsetPageInfoAliases implements all methods on OffsetPageInfoFieldResolvers interface by using reflection to
 // match name of field to a field on the given value. Intent is reduce friction
 // of writing new resolvers by removing all the instances where you would simply
 // have the resolvers method return a field.
-//
-// == Example SDL
-//
-//    type Dog {
-//      name:   String!
-//      weight: Float!
-//      dob:    DateTime
-//      breed:  [Breed]
-//    }
-//
-// == Example generated aliases
-//
-//   type DogAliases struct {}
-//   func (_ DogAliases) Name(p graphql.ResolveParams) (interface{}, error) {
-//     // reflect...
-//   }
-//   func (_ DogAliases) Weight(p graphql.ResolveParams) (interface{}, error) {
-//     // reflect...
-//   }
-//   func (_ DogAliases) Dob(p graphql.ResolveParams) (interface{}, error) {
-//     // reflect...
-//   }
-//   func (_ DogAliases) Breed(p graphql.ResolveParams) (interface{}, error) {
-//     // reflect...
-//   }
-//
-// == Example Implementation
-//
-//   type DogResolver struct { // Implements DogResolver
-//     DogAliases
-//     store store.BreedStore
-//   }
-//
-//   // NOTE:
-//   // All other fields are satisified by DogAliases but since this one
-//   // requires hitting the store we implement it in our resolver.
-//   func (r *DogResolver) Breed(p graphql.ResolveParams) interface{} {
-//     dog := v.(*Dog)
-//     return r.BreedsById(dog.BreedIDs)
-//   }
-//
 type OffsetPageInfoAliases struct{}
 
 // HasNextPage implements response to request for 'hasNextPage' field.
@@ -227,35 +107,45 @@ func RegisterOffsetPageInfo(svc *graphql.Service, impl OffsetPageInfoFieldResolv
 	svc.RegisterObject(_ObjectTypeOffsetPageInfoDesc, impl)
 }
 func _ObjTypeOffsetPageInfoHasNextPageHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(OffsetPageInfoHasNextPageFieldResolver)
+	resolver := impl.(interface {
+		HasNextPage(p graphql.ResolveParams) (bool, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.HasNextPage(frp)
 	}
 }
 
 func _ObjTypeOffsetPageInfoHasPreviousPageHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(OffsetPageInfoHasPreviousPageFieldResolver)
+	resolver := impl.(interface {
+		HasPreviousPage(p graphql.ResolveParams) (bool, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.HasPreviousPage(frp)
 	}
 }
 
 func _ObjTypeOffsetPageInfoNextOffsetHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(OffsetPageInfoNextOffsetFieldResolver)
+	resolver := impl.(interface {
+		NextOffset(p graphql.ResolveParams) (int, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.NextOffset(frp)
 	}
 }
 
 func _ObjTypeOffsetPageInfoPreviousOffsetHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(OffsetPageInfoPreviousOffsetFieldResolver)
+	resolver := impl.(interface {
+		PreviousOffset(p graphql.ResolveParams) (int, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.PreviousOffset(frp)
 	}
 }
 
 func _ObjTypeOffsetPageInfoTotalCountHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(OffsetPageInfoTotalCountFieldResolver)
+	resolver := impl.(interface {
+		TotalCount(p graphql.ResolveParams) (int, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.TotalCount(frp)
 	}

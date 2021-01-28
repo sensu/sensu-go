@@ -8,143 +8,27 @@ import (
 	graphql "github.com/sensu/sensu-go/graphql"
 )
 
-// EtcdClusterMemberHealthMemberIDFieldResolver implement to resolve requests for the EtcdClusterMemberHealth's memberID field.
-type EtcdClusterMemberHealthMemberIDFieldResolver interface {
-	// MemberID implements response to request for memberID field.
-	MemberID(p graphql.ResolveParams) (string, error)
-}
-
-// EtcdClusterMemberHealthNameFieldResolver implement to resolve requests for the EtcdClusterMemberHealth's name field.
-type EtcdClusterMemberHealthNameFieldResolver interface {
-	// Name implements response to request for name field.
-	Name(p graphql.ResolveParams) (string, error)
-}
-
-// EtcdClusterMemberHealthErrFieldResolver implement to resolve requests for the EtcdClusterMemberHealth's err field.
-type EtcdClusterMemberHealthErrFieldResolver interface {
-	// Err implements response to request for err field.
-	Err(p graphql.ResolveParams) (string, error)
-}
-
-// EtcdClusterMemberHealthHealthyFieldResolver implement to resolve requests for the EtcdClusterMemberHealth's healthy field.
-type EtcdClusterMemberHealthHealthyFieldResolver interface {
-	// Healthy implements response to request for healthy field.
-	Healthy(p graphql.ResolveParams) (bool, error)
-}
-
 //
 // EtcdClusterMemberHealthFieldResolvers represents a collection of methods whose products represent the
 // response values of the 'EtcdClusterMemberHealth' type.
-//
-// == Example SDL
-//
-//   """
-//   Dog's are not hooman.
-//   """
-//   type Dog implements Pet {
-//     "name of this fine beast."
-//     name:  String!
-//
-//     "breed of this silly animal; probably shibe."
-//     breed: [Breed]
-//   }
-//
-// == Example generated interface
-//
-//   // DogResolver ...
-//   type DogFieldResolvers interface {
-//     DogNameFieldResolver
-//     DogBreedFieldResolver
-//
-//     // IsTypeOf is used to determine if a given value is associated with the Dog type
-//     IsTypeOf(interface{}, graphql.IsTypeOfParams) bool
-//   }
-//
-// == Example implementation ...
-//
-//   // DogResolver implements DogFieldResolvers interface
-//   type DogResolver struct {
-//     logger logrus.LogEntry
-//     store interface{
-//       store.BreedStore
-//       store.DogStore
-//     }
-//   }
-//
-//   // Name implements response to request for name field.
-//   func (r *DogResolver) Name(p graphql.ResolveParams) (interface{}, error) {
-//     // ... implementation details ...
-//     dog := p.Source.(DogGetter)
-//     return dog.GetName()
-//   }
-//
-//   // Breed implements response to request for breed field.
-//   func (r *DogResolver) Breed(p graphql.ResolveParams) (interface{}, error) {
-//     // ... implementation details ...
-//     dog := p.Source.(DogGetter)
-//     breed := r.store.GetBreed(dog.GetBreedName())
-//     return breed
-//   }
-//
-//   // IsTypeOf is used to determine if a given value is associated with the Dog type
-//   func (r *DogResolver) IsTypeOf(p graphql.IsTypeOfParams) bool {
-//     // ... implementation details ...
-//     _, ok := p.Value.(DogGetter)
-//     return ok
-//   }
-//
 type EtcdClusterMemberHealthFieldResolvers interface {
-	EtcdClusterMemberHealthMemberIDFieldResolver
-	EtcdClusterMemberHealthNameFieldResolver
-	EtcdClusterMemberHealthErrFieldResolver
-	EtcdClusterMemberHealthHealthyFieldResolver
+	// MemberID implements response to request for 'memberID' field.
+	MemberID(p graphql.ResolveParams) (string, error)
+
+	// Name implements response to request for 'name' field.
+	Name(p graphql.ResolveParams) (string, error)
+
+	// Err implements response to request for 'err' field.
+	Err(p graphql.ResolveParams) (string, error)
+
+	// Healthy implements response to request for 'healthy' field.
+	Healthy(p graphql.ResolveParams) (bool, error)
 }
 
 // EtcdClusterMemberHealthAliases implements all methods on EtcdClusterMemberHealthFieldResolvers interface by using reflection to
 // match name of field to a field on the given value. Intent is reduce friction
 // of writing new resolvers by removing all the instances where you would simply
 // have the resolvers method return a field.
-//
-// == Example SDL
-//
-//    type Dog {
-//      name:   String!
-//      weight: Float!
-//      dob:    DateTime
-//      breed:  [Breed]
-//    }
-//
-// == Example generated aliases
-//
-//   type DogAliases struct {}
-//   func (_ DogAliases) Name(p graphql.ResolveParams) (interface{}, error) {
-//     // reflect...
-//   }
-//   func (_ DogAliases) Weight(p graphql.ResolveParams) (interface{}, error) {
-//     // reflect...
-//   }
-//   func (_ DogAliases) Dob(p graphql.ResolveParams) (interface{}, error) {
-//     // reflect...
-//   }
-//   func (_ DogAliases) Breed(p graphql.ResolveParams) (interface{}, error) {
-//     // reflect...
-//   }
-//
-// == Example Implementation
-//
-//   type DogResolver struct { // Implements DogResolver
-//     DogAliases
-//     store store.BreedStore
-//   }
-//
-//   // NOTE:
-//   // All other fields are satisified by DogAliases but since this one
-//   // requires hitting the store we implement it in our resolver.
-//   func (r *DogResolver) Breed(p graphql.ResolveParams) interface{} {
-//     dog := v.(*Dog)
-//     return r.BreedsById(dog.BreedIDs)
-//   }
-//
 type EtcdClusterMemberHealthAliases struct{}
 
 // MemberID implements response to request for 'memberID' field.
@@ -207,28 +91,36 @@ func RegisterEtcdClusterMemberHealth(svc *graphql.Service, impl EtcdClusterMembe
 	svc.RegisterObject(_ObjectTypeEtcdClusterMemberHealthDesc, impl)
 }
 func _ObjTypeEtcdClusterMemberHealthMemberIDHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(EtcdClusterMemberHealthMemberIDFieldResolver)
+	resolver := impl.(interface {
+		MemberID(p graphql.ResolveParams) (string, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.MemberID(frp)
 	}
 }
 
 func _ObjTypeEtcdClusterMemberHealthNameHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(EtcdClusterMemberHealthNameFieldResolver)
+	resolver := impl.(interface {
+		Name(p graphql.ResolveParams) (string, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.Name(frp)
 	}
 }
 
 func _ObjTypeEtcdClusterMemberHealthErrHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(EtcdClusterMemberHealthErrFieldResolver)
+	resolver := impl.(interface {
+		Err(p graphql.ResolveParams) (string, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.Err(frp)
 	}
 }
 
 func _ObjTypeEtcdClusterMemberHealthHealthyHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(EtcdClusterMemberHealthHealthyFieldResolver)
+	resolver := impl.(interface {
+		Healthy(p graphql.ResolveParams) (bool, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.Healthy(frp)
 	}
@@ -291,129 +183,21 @@ var _ObjectTypeEtcdClusterMemberHealthDesc = graphql.ObjectDesc{
 	},
 }
 
-// EtcdClusterHealthAlarmsFieldResolver implement to resolve requests for the EtcdClusterHealth's alarms field.
-type EtcdClusterHealthAlarmsFieldResolver interface {
-	// Alarms implements response to request for alarms field.
-	Alarms(p graphql.ResolveParams) (interface{}, error)
-}
-
-// EtcdClusterHealthMembersFieldResolver implement to resolve requests for the EtcdClusterHealth's members field.
-type EtcdClusterHealthMembersFieldResolver interface {
-	// Members implements response to request for members field.
-	Members(p graphql.ResolveParams) (interface{}, error)
-}
-
 //
 // EtcdClusterHealthFieldResolvers represents a collection of methods whose products represent the
 // response values of the 'EtcdClusterHealth' type.
-//
-// == Example SDL
-//
-//   """
-//   Dog's are not hooman.
-//   """
-//   type Dog implements Pet {
-//     "name of this fine beast."
-//     name:  String!
-//
-//     "breed of this silly animal; probably shibe."
-//     breed: [Breed]
-//   }
-//
-// == Example generated interface
-//
-//   // DogResolver ...
-//   type DogFieldResolvers interface {
-//     DogNameFieldResolver
-//     DogBreedFieldResolver
-//
-//     // IsTypeOf is used to determine if a given value is associated with the Dog type
-//     IsTypeOf(interface{}, graphql.IsTypeOfParams) bool
-//   }
-//
-// == Example implementation ...
-//
-//   // DogResolver implements DogFieldResolvers interface
-//   type DogResolver struct {
-//     logger logrus.LogEntry
-//     store interface{
-//       store.BreedStore
-//       store.DogStore
-//     }
-//   }
-//
-//   // Name implements response to request for name field.
-//   func (r *DogResolver) Name(p graphql.ResolveParams) (interface{}, error) {
-//     // ... implementation details ...
-//     dog := p.Source.(DogGetter)
-//     return dog.GetName()
-//   }
-//
-//   // Breed implements response to request for breed field.
-//   func (r *DogResolver) Breed(p graphql.ResolveParams) (interface{}, error) {
-//     // ... implementation details ...
-//     dog := p.Source.(DogGetter)
-//     breed := r.store.GetBreed(dog.GetBreedName())
-//     return breed
-//   }
-//
-//   // IsTypeOf is used to determine if a given value is associated with the Dog type
-//   func (r *DogResolver) IsTypeOf(p graphql.IsTypeOfParams) bool {
-//     // ... implementation details ...
-//     _, ok := p.Value.(DogGetter)
-//     return ok
-//   }
-//
 type EtcdClusterHealthFieldResolvers interface {
-	EtcdClusterHealthAlarmsFieldResolver
-	EtcdClusterHealthMembersFieldResolver
+	// Alarms implements response to request for 'alarms' field.
+	Alarms(p graphql.ResolveParams) (interface{}, error)
+
+	// Members implements response to request for 'members' field.
+	Members(p graphql.ResolveParams) (interface{}, error)
 }
 
 // EtcdClusterHealthAliases implements all methods on EtcdClusterHealthFieldResolvers interface by using reflection to
 // match name of field to a field on the given value. Intent is reduce friction
 // of writing new resolvers by removing all the instances where you would simply
 // have the resolvers method return a field.
-//
-// == Example SDL
-//
-//    type Dog {
-//      name:   String!
-//      weight: Float!
-//      dob:    DateTime
-//      breed:  [Breed]
-//    }
-//
-// == Example generated aliases
-//
-//   type DogAliases struct {}
-//   func (_ DogAliases) Name(p graphql.ResolveParams) (interface{}, error) {
-//     // reflect...
-//   }
-//   func (_ DogAliases) Weight(p graphql.ResolveParams) (interface{}, error) {
-//     // reflect...
-//   }
-//   func (_ DogAliases) Dob(p graphql.ResolveParams) (interface{}, error) {
-//     // reflect...
-//   }
-//   func (_ DogAliases) Breed(p graphql.ResolveParams) (interface{}, error) {
-//     // reflect...
-//   }
-//
-// == Example Implementation
-//
-//   type DogResolver struct { // Implements DogResolver
-//     DogAliases
-//     store store.BreedStore
-//   }
-//
-//   // NOTE:
-//   // All other fields are satisified by DogAliases but since this one
-//   // requires hitting the store we implement it in our resolver.
-//   func (r *DogResolver) Breed(p graphql.ResolveParams) interface{} {
-//     dog := v.(*Dog)
-//     return r.BreedsById(dog.BreedIDs)
-//   }
-//
 type EtcdClusterHealthAliases struct{}
 
 // Alarms implements response to request for 'alarms' field.
@@ -436,14 +220,18 @@ func RegisterEtcdClusterHealth(svc *graphql.Service, impl EtcdClusterHealthField
 	svc.RegisterObject(_ObjectTypeEtcdClusterHealthDesc, impl)
 }
 func _ObjTypeEtcdClusterHealthAlarmsHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(EtcdClusterHealthAlarmsFieldResolver)
+	resolver := impl.(interface {
+		Alarms(p graphql.ResolveParams) (interface{}, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.Alarms(frp)
 	}
 }
 
 func _ObjTypeEtcdClusterHealthMembersHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(EtcdClusterHealthMembersFieldResolver)
+	resolver := impl.(interface {
+		Members(p graphql.ResolveParams) (interface{}, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.Members(frp)
 	}
@@ -490,129 +278,21 @@ var _ObjectTypeEtcdClusterHealthDesc = graphql.ObjectDesc{
 	},
 }
 
-// EtcdAlarmMemberMemberIDFieldResolver implement to resolve requests for the EtcdAlarmMember's memberID field.
-type EtcdAlarmMemberMemberIDFieldResolver interface {
-	// MemberID implements response to request for memberID field.
-	MemberID(p graphql.ResolveParams) (string, error)
-}
-
-// EtcdAlarmMemberAlarmFieldResolver implement to resolve requests for the EtcdAlarmMember's alarm field.
-type EtcdAlarmMemberAlarmFieldResolver interface {
-	// Alarm implements response to request for alarm field.
-	Alarm(p graphql.ResolveParams) (EtcdAlarmType, error)
-}
-
 //
 // EtcdAlarmMemberFieldResolvers represents a collection of methods whose products represent the
 // response values of the 'EtcdAlarmMember' type.
-//
-// == Example SDL
-//
-//   """
-//   Dog's are not hooman.
-//   """
-//   type Dog implements Pet {
-//     "name of this fine beast."
-//     name:  String!
-//
-//     "breed of this silly animal; probably shibe."
-//     breed: [Breed]
-//   }
-//
-// == Example generated interface
-//
-//   // DogResolver ...
-//   type DogFieldResolvers interface {
-//     DogNameFieldResolver
-//     DogBreedFieldResolver
-//
-//     // IsTypeOf is used to determine if a given value is associated with the Dog type
-//     IsTypeOf(interface{}, graphql.IsTypeOfParams) bool
-//   }
-//
-// == Example implementation ...
-//
-//   // DogResolver implements DogFieldResolvers interface
-//   type DogResolver struct {
-//     logger logrus.LogEntry
-//     store interface{
-//       store.BreedStore
-//       store.DogStore
-//     }
-//   }
-//
-//   // Name implements response to request for name field.
-//   func (r *DogResolver) Name(p graphql.ResolveParams) (interface{}, error) {
-//     // ... implementation details ...
-//     dog := p.Source.(DogGetter)
-//     return dog.GetName()
-//   }
-//
-//   // Breed implements response to request for breed field.
-//   func (r *DogResolver) Breed(p graphql.ResolveParams) (interface{}, error) {
-//     // ... implementation details ...
-//     dog := p.Source.(DogGetter)
-//     breed := r.store.GetBreed(dog.GetBreedName())
-//     return breed
-//   }
-//
-//   // IsTypeOf is used to determine if a given value is associated with the Dog type
-//   func (r *DogResolver) IsTypeOf(p graphql.IsTypeOfParams) bool {
-//     // ... implementation details ...
-//     _, ok := p.Value.(DogGetter)
-//     return ok
-//   }
-//
 type EtcdAlarmMemberFieldResolvers interface {
-	EtcdAlarmMemberMemberIDFieldResolver
-	EtcdAlarmMemberAlarmFieldResolver
+	// MemberID implements response to request for 'memberID' field.
+	MemberID(p graphql.ResolveParams) (string, error)
+
+	// Alarm implements response to request for 'alarm' field.
+	Alarm(p graphql.ResolveParams) (EtcdAlarmType, error)
 }
 
 // EtcdAlarmMemberAliases implements all methods on EtcdAlarmMemberFieldResolvers interface by using reflection to
 // match name of field to a field on the given value. Intent is reduce friction
 // of writing new resolvers by removing all the instances where you would simply
 // have the resolvers method return a field.
-//
-// == Example SDL
-//
-//    type Dog {
-//      name:   String!
-//      weight: Float!
-//      dob:    DateTime
-//      breed:  [Breed]
-//    }
-//
-// == Example generated aliases
-//
-//   type DogAliases struct {}
-//   func (_ DogAliases) Name(p graphql.ResolveParams) (interface{}, error) {
-//     // reflect...
-//   }
-//   func (_ DogAliases) Weight(p graphql.ResolveParams) (interface{}, error) {
-//     // reflect...
-//   }
-//   func (_ DogAliases) Dob(p graphql.ResolveParams) (interface{}, error) {
-//     // reflect...
-//   }
-//   func (_ DogAliases) Breed(p graphql.ResolveParams) (interface{}, error) {
-//     // reflect...
-//   }
-//
-// == Example Implementation
-//
-//   type DogResolver struct { // Implements DogResolver
-//     DogAliases
-//     store store.BreedStore
-//   }
-//
-//   // NOTE:
-//   // All other fields are satisified by DogAliases but since this one
-//   // requires hitting the store we implement it in our resolver.
-//   func (r *DogResolver) Breed(p graphql.ResolveParams) interface{} {
-//     dog := v.(*Dog)
-//     return r.BreedsById(dog.BreedIDs)
-//   }
-//
 type EtcdAlarmMemberAliases struct{}
 
 // MemberID implements response to request for 'memberID' field.
@@ -649,14 +329,18 @@ func RegisterEtcdAlarmMember(svc *graphql.Service, impl EtcdAlarmMemberFieldReso
 	svc.RegisterObject(_ObjectTypeEtcdAlarmMemberDesc, impl)
 }
 func _ObjTypeEtcdAlarmMemberMemberIDHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(EtcdAlarmMemberMemberIDFieldResolver)
+	resolver := impl.(interface {
+		MemberID(p graphql.ResolveParams) (string, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.MemberID(frp)
 	}
 }
 
 func _ObjTypeEtcdAlarmMemberAlarmHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(EtcdAlarmMemberAlarmFieldResolver)
+	resolver := impl.(interface {
+		Alarm(p graphql.ResolveParams) (EtcdAlarmType, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 
 		val, err := resolver.Alarm(frp)
@@ -758,122 +442,18 @@ type _EnumTypeEtcdAlarmTypeValues struct {
 	CORRUPT EtcdAlarmType
 }
 
-// ClusterHealthEtcdFieldResolver implement to resolve requests for the ClusterHealth's etcd field.
-type ClusterHealthEtcdFieldResolver interface {
-	// Etcd implements response to request for etcd field.
-	Etcd(p graphql.ResolveParams) (interface{}, error)
-}
-
 //
 // ClusterHealthFieldResolvers represents a collection of methods whose products represent the
 // response values of the 'ClusterHealth' type.
-//
-// == Example SDL
-//
-//   """
-//   Dog's are not hooman.
-//   """
-//   type Dog implements Pet {
-//     "name of this fine beast."
-//     name:  String!
-//
-//     "breed of this silly animal; probably shibe."
-//     breed: [Breed]
-//   }
-//
-// == Example generated interface
-//
-//   // DogResolver ...
-//   type DogFieldResolvers interface {
-//     DogNameFieldResolver
-//     DogBreedFieldResolver
-//
-//     // IsTypeOf is used to determine if a given value is associated with the Dog type
-//     IsTypeOf(interface{}, graphql.IsTypeOfParams) bool
-//   }
-//
-// == Example implementation ...
-//
-//   // DogResolver implements DogFieldResolvers interface
-//   type DogResolver struct {
-//     logger logrus.LogEntry
-//     store interface{
-//       store.BreedStore
-//       store.DogStore
-//     }
-//   }
-//
-//   // Name implements response to request for name field.
-//   func (r *DogResolver) Name(p graphql.ResolveParams) (interface{}, error) {
-//     // ... implementation details ...
-//     dog := p.Source.(DogGetter)
-//     return dog.GetName()
-//   }
-//
-//   // Breed implements response to request for breed field.
-//   func (r *DogResolver) Breed(p graphql.ResolveParams) (interface{}, error) {
-//     // ... implementation details ...
-//     dog := p.Source.(DogGetter)
-//     breed := r.store.GetBreed(dog.GetBreedName())
-//     return breed
-//   }
-//
-//   // IsTypeOf is used to determine if a given value is associated with the Dog type
-//   func (r *DogResolver) IsTypeOf(p graphql.IsTypeOfParams) bool {
-//     // ... implementation details ...
-//     _, ok := p.Value.(DogGetter)
-//     return ok
-//   }
-//
 type ClusterHealthFieldResolvers interface {
-	ClusterHealthEtcdFieldResolver
+	// Etcd implements response to request for 'etcd' field.
+	Etcd(p graphql.ResolveParams) (interface{}, error)
 }
 
 // ClusterHealthAliases implements all methods on ClusterHealthFieldResolvers interface by using reflection to
 // match name of field to a field on the given value. Intent is reduce friction
 // of writing new resolvers by removing all the instances where you would simply
 // have the resolvers method return a field.
-//
-// == Example SDL
-//
-//    type Dog {
-//      name:   String!
-//      weight: Float!
-//      dob:    DateTime
-//      breed:  [Breed]
-//    }
-//
-// == Example generated aliases
-//
-//   type DogAliases struct {}
-//   func (_ DogAliases) Name(p graphql.ResolveParams) (interface{}, error) {
-//     // reflect...
-//   }
-//   func (_ DogAliases) Weight(p graphql.ResolveParams) (interface{}, error) {
-//     // reflect...
-//   }
-//   func (_ DogAliases) Dob(p graphql.ResolveParams) (interface{}, error) {
-//     // reflect...
-//   }
-//   func (_ DogAliases) Breed(p graphql.ResolveParams) (interface{}, error) {
-//     // reflect...
-//   }
-//
-// == Example Implementation
-//
-//   type DogResolver struct { // Implements DogResolver
-//     DogAliases
-//     store store.BreedStore
-//   }
-//
-//   // NOTE:
-//   // All other fields are satisified by DogAliases but since this one
-//   // requires hitting the store we implement it in our resolver.
-//   func (r *DogResolver) Breed(p graphql.ResolveParams) interface{} {
-//     dog := v.(*Dog)
-//     return r.BreedsById(dog.BreedIDs)
-//   }
-//
 type ClusterHealthAliases struct{}
 
 // Etcd implements response to request for 'etcd' field.
@@ -890,7 +470,9 @@ func RegisterClusterHealth(svc *graphql.Service, impl ClusterHealthFieldResolver
 	svc.RegisterObject(_ObjectTypeClusterHealthDesc, impl)
 }
 func _ObjTypeClusterHealthEtcdHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(ClusterHealthEtcdFieldResolver)
+	resolver := impl.(interface {
+		Etcd(p graphql.ResolveParams) (interface{}, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.Etcd(frp)
 	}

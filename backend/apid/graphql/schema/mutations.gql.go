@@ -26,12 +26,6 @@ type MutationPutWrappedFieldResolverParams struct {
 	Args MutationPutWrappedFieldResolverArgs
 }
 
-// MutationPutWrappedFieldResolver implement to resolve requests for the Mutation's putWrapped field.
-type MutationPutWrappedFieldResolver interface {
-	// PutWrapped implements response to request for putWrapped field.
-	PutWrapped(p MutationPutWrappedFieldResolverParams) (interface{}, error)
-}
-
 // MutationCreateCheckFieldResolverArgs contains arguments provided to createCheck when selected
 type MutationCreateCheckFieldResolverArgs struct {
 	Input *CreateCheckInput // Input - self descriptive
@@ -41,12 +35,6 @@ type MutationCreateCheckFieldResolverArgs struct {
 type MutationCreateCheckFieldResolverParams struct {
 	graphql.ResolveParams
 	Args MutationCreateCheckFieldResolverArgs
-}
-
-// MutationCreateCheckFieldResolver implement to resolve requests for the Mutation's createCheck field.
-type MutationCreateCheckFieldResolver interface {
-	// CreateCheck implements response to request for createCheck field.
-	CreateCheck(p MutationCreateCheckFieldResolverParams) (interface{}, error)
 }
 
 // MutationUpdateCheckFieldResolverArgs contains arguments provided to updateCheck when selected
@@ -60,12 +48,6 @@ type MutationUpdateCheckFieldResolverParams struct {
 	Args MutationUpdateCheckFieldResolverArgs
 }
 
-// MutationUpdateCheckFieldResolver implement to resolve requests for the Mutation's updateCheck field.
-type MutationUpdateCheckFieldResolver interface {
-	// UpdateCheck implements response to request for updateCheck field.
-	UpdateCheck(p MutationUpdateCheckFieldResolverParams) (interface{}, error)
-}
-
 // MutationExecuteCheckFieldResolverArgs contains arguments provided to executeCheck when selected
 type MutationExecuteCheckFieldResolverArgs struct {
 	Input *ExecuteCheckInput // Input - self descriptive
@@ -75,12 +57,6 @@ type MutationExecuteCheckFieldResolverArgs struct {
 type MutationExecuteCheckFieldResolverParams struct {
 	graphql.ResolveParams
 	Args MutationExecuteCheckFieldResolverArgs
-}
-
-// MutationExecuteCheckFieldResolver implement to resolve requests for the Mutation's executeCheck field.
-type MutationExecuteCheckFieldResolver interface {
-	// ExecuteCheck implements response to request for executeCheck field.
-	ExecuteCheck(p MutationExecuteCheckFieldResolverParams) (interface{}, error)
 }
 
 // MutationDeleteCheckFieldResolverArgs contains arguments provided to deleteCheck when selected
@@ -94,12 +70,6 @@ type MutationDeleteCheckFieldResolverParams struct {
 	Args MutationDeleteCheckFieldResolverArgs
 }
 
-// MutationDeleteCheckFieldResolver implement to resolve requests for the Mutation's deleteCheck field.
-type MutationDeleteCheckFieldResolver interface {
-	// DeleteCheck implements response to request for deleteCheck field.
-	DeleteCheck(p MutationDeleteCheckFieldResolverParams) (interface{}, error)
-}
-
 // MutationDeleteEntityFieldResolverArgs contains arguments provided to deleteEntity when selected
 type MutationDeleteEntityFieldResolverArgs struct {
 	Input *DeleteRecordInput // Input - self descriptive
@@ -109,12 +79,6 @@ type MutationDeleteEntityFieldResolverArgs struct {
 type MutationDeleteEntityFieldResolverParams struct {
 	graphql.ResolveParams
 	Args MutationDeleteEntityFieldResolverArgs
-}
-
-// MutationDeleteEntityFieldResolver implement to resolve requests for the Mutation's deleteEntity field.
-type MutationDeleteEntityFieldResolver interface {
-	// DeleteEntity implements response to request for deleteEntity field.
-	DeleteEntity(p MutationDeleteEntityFieldResolverParams) (interface{}, error)
 }
 
 // MutationResolveEventFieldResolverArgs contains arguments provided to resolveEvent when selected
@@ -128,12 +92,6 @@ type MutationResolveEventFieldResolverParams struct {
 	Args MutationResolveEventFieldResolverArgs
 }
 
-// MutationResolveEventFieldResolver implement to resolve requests for the Mutation's resolveEvent field.
-type MutationResolveEventFieldResolver interface {
-	// ResolveEvent implements response to request for resolveEvent field.
-	ResolveEvent(p MutationResolveEventFieldResolverParams) (interface{}, error)
-}
-
 // MutationDeleteEventFieldResolverArgs contains arguments provided to deleteEvent when selected
 type MutationDeleteEventFieldResolverArgs struct {
 	Input *DeleteRecordInput // Input - self descriptive
@@ -143,12 +101,6 @@ type MutationDeleteEventFieldResolverArgs struct {
 type MutationDeleteEventFieldResolverParams struct {
 	graphql.ResolveParams
 	Args MutationDeleteEventFieldResolverArgs
-}
-
-// MutationDeleteEventFieldResolver implement to resolve requests for the Mutation's deleteEvent field.
-type MutationDeleteEventFieldResolver interface {
-	// DeleteEvent implements response to request for deleteEvent field.
-	DeleteEvent(p MutationDeleteEventFieldResolverParams) (interface{}, error)
 }
 
 // MutationDeleteEventFilterFieldResolverArgs contains arguments provided to deleteEventFilter when selected
@@ -162,12 +114,6 @@ type MutationDeleteEventFilterFieldResolverParams struct {
 	Args MutationDeleteEventFilterFieldResolverArgs
 }
 
-// MutationDeleteEventFilterFieldResolver implement to resolve requests for the Mutation's deleteEventFilter field.
-type MutationDeleteEventFilterFieldResolver interface {
-	// DeleteEventFilter implements response to request for deleteEventFilter field.
-	DeleteEventFilter(p MutationDeleteEventFilterFieldResolverParams) (interface{}, error)
-}
-
 // MutationDeleteHandlerFieldResolverArgs contains arguments provided to deleteHandler when selected
 type MutationDeleteHandlerFieldResolverArgs struct {
 	Input *DeleteRecordInput // Input - self descriptive
@@ -177,12 +123,6 @@ type MutationDeleteHandlerFieldResolverArgs struct {
 type MutationDeleteHandlerFieldResolverParams struct {
 	graphql.ResolveParams
 	Args MutationDeleteHandlerFieldResolverArgs
-}
-
-// MutationDeleteHandlerFieldResolver implement to resolve requests for the Mutation's deleteHandler field.
-type MutationDeleteHandlerFieldResolver interface {
-	// DeleteHandler implements response to request for deleteHandler field.
-	DeleteHandler(p MutationDeleteHandlerFieldResolverParams) (interface{}, error)
 }
 
 // MutationDeleteMutatorFieldResolverArgs contains arguments provided to deleteMutator when selected
@@ -196,12 +136,6 @@ type MutationDeleteMutatorFieldResolverParams struct {
 	Args MutationDeleteMutatorFieldResolverArgs
 }
 
-// MutationDeleteMutatorFieldResolver implement to resolve requests for the Mutation's deleteMutator field.
-type MutationDeleteMutatorFieldResolver interface {
-	// DeleteMutator implements response to request for deleteMutator field.
-	DeleteMutator(p MutationDeleteMutatorFieldResolverParams) (interface{}, error)
-}
-
 // MutationCreateSilenceFieldResolverArgs contains arguments provided to createSilence when selected
 type MutationCreateSilenceFieldResolverArgs struct {
 	Input *CreateSilenceInput // Input - self descriptive
@@ -211,12 +145,6 @@ type MutationCreateSilenceFieldResolverArgs struct {
 type MutationCreateSilenceFieldResolverParams struct {
 	graphql.ResolveParams
 	Args MutationCreateSilenceFieldResolverArgs
-}
-
-// MutationCreateSilenceFieldResolver implement to resolve requests for the Mutation's createSilence field.
-type MutationCreateSilenceFieldResolver interface {
-	// CreateSilence implements response to request for createSilence field.
-	CreateSilence(p MutationCreateSilenceFieldResolverParams) (interface{}, error)
 }
 
 // MutationDeleteSilenceFieldResolverArgs contains arguments provided to deleteSilence when selected
@@ -230,134 +158,54 @@ type MutationDeleteSilenceFieldResolverParams struct {
 	Args MutationDeleteSilenceFieldResolverArgs
 }
 
-// MutationDeleteSilenceFieldResolver implement to resolve requests for the Mutation's deleteSilence field.
-type MutationDeleteSilenceFieldResolver interface {
-	// DeleteSilence implements response to request for deleteSilence field.
-	DeleteSilence(p MutationDeleteSilenceFieldResolverParams) (interface{}, error)
-}
-
 //
 // MutationFieldResolvers represents a collection of methods whose products represent the
 // response values of the 'Mutation' type.
-//
-// == Example SDL
-//
-//   """
-//   Dog's are not hooman.
-//   """
-//   type Dog implements Pet {
-//     "name of this fine beast."
-//     name:  String!
-//
-//     "breed of this silly animal; probably shibe."
-//     breed: [Breed]
-//   }
-//
-// == Example generated interface
-//
-//   // DogResolver ...
-//   type DogFieldResolvers interface {
-//     DogNameFieldResolver
-//     DogBreedFieldResolver
-//
-//     // IsTypeOf is used to determine if a given value is associated with the Dog type
-//     IsTypeOf(interface{}, graphql.IsTypeOfParams) bool
-//   }
-//
-// == Example implementation ...
-//
-//   // DogResolver implements DogFieldResolvers interface
-//   type DogResolver struct {
-//     logger logrus.LogEntry
-//     store interface{
-//       store.BreedStore
-//       store.DogStore
-//     }
-//   }
-//
-//   // Name implements response to request for name field.
-//   func (r *DogResolver) Name(p graphql.ResolveParams) (interface{}, error) {
-//     // ... implementation details ...
-//     dog := p.Source.(DogGetter)
-//     return dog.GetName()
-//   }
-//
-//   // Breed implements response to request for breed field.
-//   func (r *DogResolver) Breed(p graphql.ResolveParams) (interface{}, error) {
-//     // ... implementation details ...
-//     dog := p.Source.(DogGetter)
-//     breed := r.store.GetBreed(dog.GetBreedName())
-//     return breed
-//   }
-//
-//   // IsTypeOf is used to determine if a given value is associated with the Dog type
-//   func (r *DogResolver) IsTypeOf(p graphql.IsTypeOfParams) bool {
-//     // ... implementation details ...
-//     _, ok := p.Value.(DogGetter)
-//     return ok
-//   }
-//
 type MutationFieldResolvers interface {
-	MutationPutWrappedFieldResolver
-	MutationCreateCheckFieldResolver
-	MutationUpdateCheckFieldResolver
-	MutationExecuteCheckFieldResolver
-	MutationDeleteCheckFieldResolver
-	MutationDeleteEntityFieldResolver
-	MutationResolveEventFieldResolver
-	MutationDeleteEventFieldResolver
-	MutationDeleteEventFilterFieldResolver
-	MutationDeleteHandlerFieldResolver
-	MutationDeleteMutatorFieldResolver
-	MutationCreateSilenceFieldResolver
-	MutationDeleteSilenceFieldResolver
+	// PutWrapped implements response to request for 'putWrapped' field.
+	PutWrapped(p MutationPutWrappedFieldResolverParams) (interface{}, error)
+
+	// CreateCheck implements response to request for 'createCheck' field.
+	CreateCheck(p MutationCreateCheckFieldResolverParams) (interface{}, error)
+
+	// UpdateCheck implements response to request for 'updateCheck' field.
+	UpdateCheck(p MutationUpdateCheckFieldResolverParams) (interface{}, error)
+
+	// ExecuteCheck implements response to request for 'executeCheck' field.
+	ExecuteCheck(p MutationExecuteCheckFieldResolverParams) (interface{}, error)
+
+	// DeleteCheck implements response to request for 'deleteCheck' field.
+	DeleteCheck(p MutationDeleteCheckFieldResolverParams) (interface{}, error)
+
+	// DeleteEntity implements response to request for 'deleteEntity' field.
+	DeleteEntity(p MutationDeleteEntityFieldResolverParams) (interface{}, error)
+
+	// ResolveEvent implements response to request for 'resolveEvent' field.
+	ResolveEvent(p MutationResolveEventFieldResolverParams) (interface{}, error)
+
+	// DeleteEvent implements response to request for 'deleteEvent' field.
+	DeleteEvent(p MutationDeleteEventFieldResolverParams) (interface{}, error)
+
+	// DeleteEventFilter implements response to request for 'deleteEventFilter' field.
+	DeleteEventFilter(p MutationDeleteEventFilterFieldResolverParams) (interface{}, error)
+
+	// DeleteHandler implements response to request for 'deleteHandler' field.
+	DeleteHandler(p MutationDeleteHandlerFieldResolverParams) (interface{}, error)
+
+	// DeleteMutator implements response to request for 'deleteMutator' field.
+	DeleteMutator(p MutationDeleteMutatorFieldResolverParams) (interface{}, error)
+
+	// CreateSilence implements response to request for 'createSilence' field.
+	CreateSilence(p MutationCreateSilenceFieldResolverParams) (interface{}, error)
+
+	// DeleteSilence implements response to request for 'deleteSilence' field.
+	DeleteSilence(p MutationDeleteSilenceFieldResolverParams) (interface{}, error)
 }
 
 // MutationAliases implements all methods on MutationFieldResolvers interface by using reflection to
 // match name of field to a field on the given value. Intent is reduce friction
 // of writing new resolvers by removing all the instances where you would simply
 // have the resolvers method return a field.
-//
-// == Example SDL
-//
-//    type Dog {
-//      name:   String!
-//      weight: Float!
-//      dob:    DateTime
-//      breed:  [Breed]
-//    }
-//
-// == Example generated aliases
-//
-//   type DogAliases struct {}
-//   func (_ DogAliases) Name(p graphql.ResolveParams) (interface{}, error) {
-//     // reflect...
-//   }
-//   func (_ DogAliases) Weight(p graphql.ResolveParams) (interface{}, error) {
-//     // reflect...
-//   }
-//   func (_ DogAliases) Dob(p graphql.ResolveParams) (interface{}, error) {
-//     // reflect...
-//   }
-//   func (_ DogAliases) Breed(p graphql.ResolveParams) (interface{}, error) {
-//     // reflect...
-//   }
-//
-// == Example Implementation
-//
-//   type DogResolver struct { // Implements DogResolver
-//     DogAliases
-//     store store.BreedStore
-//   }
-//
-//   // NOTE:
-//   // All other fields are satisified by DogAliases but since this one
-//   // requires hitting the store we implement it in our resolver.
-//   func (r *DogResolver) Breed(p graphql.ResolveParams) interface{} {
-//     dog := v.(*Dog)
-//     return r.BreedsById(dog.BreedIDs)
-//   }
-//
 type MutationAliases struct{}
 
 // PutWrapped implements response to request for 'putWrapped' field.
@@ -446,7 +294,9 @@ func RegisterMutation(svc *graphql.Service, impl MutationFieldResolvers) {
 	svc.RegisterObject(_ObjectTypeMutationDesc, impl)
 }
 func _ObjTypeMutationPutWrappedHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(MutationPutWrappedFieldResolver)
+	resolver := impl.(interface {
+		PutWrapped(p MutationPutWrappedFieldResolverParams) (interface{}, error)
+	})
 	return func(p graphql1.ResolveParams) (interface{}, error) {
 		frp := MutationPutWrappedFieldResolverParams{ResolveParams: p}
 		err := mapstructure.Decode(p.Args, &frp.Args)
@@ -459,7 +309,9 @@ func _ObjTypeMutationPutWrappedHandler(impl interface{}) graphql1.FieldResolveFn
 }
 
 func _ObjTypeMutationCreateCheckHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(MutationCreateCheckFieldResolver)
+	resolver := impl.(interface {
+		CreateCheck(p MutationCreateCheckFieldResolverParams) (interface{}, error)
+	})
 	return func(p graphql1.ResolveParams) (interface{}, error) {
 		frp := MutationCreateCheckFieldResolverParams{ResolveParams: p}
 		err := mapstructure.Decode(p.Args, &frp.Args)
@@ -472,7 +324,9 @@ func _ObjTypeMutationCreateCheckHandler(impl interface{}) graphql1.FieldResolveF
 }
 
 func _ObjTypeMutationUpdateCheckHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(MutationUpdateCheckFieldResolver)
+	resolver := impl.(interface {
+		UpdateCheck(p MutationUpdateCheckFieldResolverParams) (interface{}, error)
+	})
 	return func(p graphql1.ResolveParams) (interface{}, error) {
 		frp := MutationUpdateCheckFieldResolverParams{ResolveParams: p}
 		err := mapstructure.Decode(p.Args, &frp.Args)
@@ -485,7 +339,9 @@ func _ObjTypeMutationUpdateCheckHandler(impl interface{}) graphql1.FieldResolveF
 }
 
 func _ObjTypeMutationExecuteCheckHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(MutationExecuteCheckFieldResolver)
+	resolver := impl.(interface {
+		ExecuteCheck(p MutationExecuteCheckFieldResolverParams) (interface{}, error)
+	})
 	return func(p graphql1.ResolveParams) (interface{}, error) {
 		frp := MutationExecuteCheckFieldResolverParams{ResolveParams: p}
 		err := mapstructure.Decode(p.Args, &frp.Args)
@@ -498,7 +354,9 @@ func _ObjTypeMutationExecuteCheckHandler(impl interface{}) graphql1.FieldResolve
 }
 
 func _ObjTypeMutationDeleteCheckHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(MutationDeleteCheckFieldResolver)
+	resolver := impl.(interface {
+		DeleteCheck(p MutationDeleteCheckFieldResolverParams) (interface{}, error)
+	})
 	return func(p graphql1.ResolveParams) (interface{}, error) {
 		frp := MutationDeleteCheckFieldResolverParams{ResolveParams: p}
 		err := mapstructure.Decode(p.Args, &frp.Args)
@@ -511,7 +369,9 @@ func _ObjTypeMutationDeleteCheckHandler(impl interface{}) graphql1.FieldResolveF
 }
 
 func _ObjTypeMutationDeleteEntityHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(MutationDeleteEntityFieldResolver)
+	resolver := impl.(interface {
+		DeleteEntity(p MutationDeleteEntityFieldResolverParams) (interface{}, error)
+	})
 	return func(p graphql1.ResolveParams) (interface{}, error) {
 		frp := MutationDeleteEntityFieldResolverParams{ResolveParams: p}
 		err := mapstructure.Decode(p.Args, &frp.Args)
@@ -524,7 +384,9 @@ func _ObjTypeMutationDeleteEntityHandler(impl interface{}) graphql1.FieldResolve
 }
 
 func _ObjTypeMutationResolveEventHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(MutationResolveEventFieldResolver)
+	resolver := impl.(interface {
+		ResolveEvent(p MutationResolveEventFieldResolverParams) (interface{}, error)
+	})
 	return func(p graphql1.ResolveParams) (interface{}, error) {
 		frp := MutationResolveEventFieldResolverParams{ResolveParams: p}
 		err := mapstructure.Decode(p.Args, &frp.Args)
@@ -537,7 +399,9 @@ func _ObjTypeMutationResolveEventHandler(impl interface{}) graphql1.FieldResolve
 }
 
 func _ObjTypeMutationDeleteEventHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(MutationDeleteEventFieldResolver)
+	resolver := impl.(interface {
+		DeleteEvent(p MutationDeleteEventFieldResolverParams) (interface{}, error)
+	})
 	return func(p graphql1.ResolveParams) (interface{}, error) {
 		frp := MutationDeleteEventFieldResolverParams{ResolveParams: p}
 		err := mapstructure.Decode(p.Args, &frp.Args)
@@ -550,7 +414,9 @@ func _ObjTypeMutationDeleteEventHandler(impl interface{}) graphql1.FieldResolveF
 }
 
 func _ObjTypeMutationDeleteEventFilterHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(MutationDeleteEventFilterFieldResolver)
+	resolver := impl.(interface {
+		DeleteEventFilter(p MutationDeleteEventFilterFieldResolverParams) (interface{}, error)
+	})
 	return func(p graphql1.ResolveParams) (interface{}, error) {
 		frp := MutationDeleteEventFilterFieldResolverParams{ResolveParams: p}
 		err := mapstructure.Decode(p.Args, &frp.Args)
@@ -563,7 +429,9 @@ func _ObjTypeMutationDeleteEventFilterHandler(impl interface{}) graphql1.FieldRe
 }
 
 func _ObjTypeMutationDeleteHandlerHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(MutationDeleteHandlerFieldResolver)
+	resolver := impl.(interface {
+		DeleteHandler(p MutationDeleteHandlerFieldResolverParams) (interface{}, error)
+	})
 	return func(p graphql1.ResolveParams) (interface{}, error) {
 		frp := MutationDeleteHandlerFieldResolverParams{ResolveParams: p}
 		err := mapstructure.Decode(p.Args, &frp.Args)
@@ -576,7 +444,9 @@ func _ObjTypeMutationDeleteHandlerHandler(impl interface{}) graphql1.FieldResolv
 }
 
 func _ObjTypeMutationDeleteMutatorHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(MutationDeleteMutatorFieldResolver)
+	resolver := impl.(interface {
+		DeleteMutator(p MutationDeleteMutatorFieldResolverParams) (interface{}, error)
+	})
 	return func(p graphql1.ResolveParams) (interface{}, error) {
 		frp := MutationDeleteMutatorFieldResolverParams{ResolveParams: p}
 		err := mapstructure.Decode(p.Args, &frp.Args)
@@ -589,7 +459,9 @@ func _ObjTypeMutationDeleteMutatorHandler(impl interface{}) graphql1.FieldResolv
 }
 
 func _ObjTypeMutationCreateSilenceHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(MutationCreateSilenceFieldResolver)
+	resolver := impl.(interface {
+		CreateSilence(p MutationCreateSilenceFieldResolverParams) (interface{}, error)
+	})
 	return func(p graphql1.ResolveParams) (interface{}, error) {
 		frp := MutationCreateSilenceFieldResolverParams{ResolveParams: p}
 		err := mapstructure.Decode(p.Args, &frp.Args)
@@ -602,7 +474,9 @@ func _ObjTypeMutationCreateSilenceHandler(impl interface{}) graphql1.FieldResolv
 }
 
 func _ObjTypeMutationDeleteSilenceHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(MutationDeleteSilenceFieldResolver)
+	resolver := impl.(interface {
+		DeleteSilence(p MutationDeleteSilenceFieldResolverParams) (interface{}, error)
+	})
 	return func(p graphql1.ResolveParams) (interface{}, error) {
 		frp := MutationDeleteSilenceFieldResolverParams{ResolveParams: p}
 		err := mapstructure.Decode(p.Args, &frp.Args)
@@ -789,129 +663,21 @@ var _ObjectTypeMutationDesc = graphql.ObjectDesc{
 	},
 }
 
-// PutWrappedPayloadNodeFieldResolver implement to resolve requests for the PutWrappedPayload's node field.
-type PutWrappedPayloadNodeFieldResolver interface {
-	// Node implements response to request for node field.
-	Node(p graphql.ResolveParams) (interface{}, error)
-}
-
-// PutWrappedPayloadErrorsFieldResolver implement to resolve requests for the PutWrappedPayload's errors field.
-type PutWrappedPayloadErrorsFieldResolver interface {
-	// Errors implements response to request for errors field.
-	Errors(p graphql.ResolveParams) (interface{}, error)
-}
-
 //
 // PutWrappedPayloadFieldResolvers represents a collection of methods whose products represent the
 // response values of the 'PutWrappedPayload' type.
-//
-// == Example SDL
-//
-//   """
-//   Dog's are not hooman.
-//   """
-//   type Dog implements Pet {
-//     "name of this fine beast."
-//     name:  String!
-//
-//     "breed of this silly animal; probably shibe."
-//     breed: [Breed]
-//   }
-//
-// == Example generated interface
-//
-//   // DogResolver ...
-//   type DogFieldResolvers interface {
-//     DogNameFieldResolver
-//     DogBreedFieldResolver
-//
-//     // IsTypeOf is used to determine if a given value is associated with the Dog type
-//     IsTypeOf(interface{}, graphql.IsTypeOfParams) bool
-//   }
-//
-// == Example implementation ...
-//
-//   // DogResolver implements DogFieldResolvers interface
-//   type DogResolver struct {
-//     logger logrus.LogEntry
-//     store interface{
-//       store.BreedStore
-//       store.DogStore
-//     }
-//   }
-//
-//   // Name implements response to request for name field.
-//   func (r *DogResolver) Name(p graphql.ResolveParams) (interface{}, error) {
-//     // ... implementation details ...
-//     dog := p.Source.(DogGetter)
-//     return dog.GetName()
-//   }
-//
-//   // Breed implements response to request for breed field.
-//   func (r *DogResolver) Breed(p graphql.ResolveParams) (interface{}, error) {
-//     // ... implementation details ...
-//     dog := p.Source.(DogGetter)
-//     breed := r.store.GetBreed(dog.GetBreedName())
-//     return breed
-//   }
-//
-//   // IsTypeOf is used to determine if a given value is associated with the Dog type
-//   func (r *DogResolver) IsTypeOf(p graphql.IsTypeOfParams) bool {
-//     // ... implementation details ...
-//     _, ok := p.Value.(DogGetter)
-//     return ok
-//   }
-//
 type PutWrappedPayloadFieldResolvers interface {
-	PutWrappedPayloadNodeFieldResolver
-	PutWrappedPayloadErrorsFieldResolver
+	// Node implements response to request for 'node' field.
+	Node(p graphql.ResolveParams) (interface{}, error)
+
+	// Errors implements response to request for 'errors' field.
+	Errors(p graphql.ResolveParams) (interface{}, error)
 }
 
 // PutWrappedPayloadAliases implements all methods on PutWrappedPayloadFieldResolvers interface by using reflection to
 // match name of field to a field on the given value. Intent is reduce friction
 // of writing new resolvers by removing all the instances where you would simply
 // have the resolvers method return a field.
-//
-// == Example SDL
-//
-//    type Dog {
-//      name:   String!
-//      weight: Float!
-//      dob:    DateTime
-//      breed:  [Breed]
-//    }
-//
-// == Example generated aliases
-//
-//   type DogAliases struct {}
-//   func (_ DogAliases) Name(p graphql.ResolveParams) (interface{}, error) {
-//     // reflect...
-//   }
-//   func (_ DogAliases) Weight(p graphql.ResolveParams) (interface{}, error) {
-//     // reflect...
-//   }
-//   func (_ DogAliases) Dob(p graphql.ResolveParams) (interface{}, error) {
-//     // reflect...
-//   }
-//   func (_ DogAliases) Breed(p graphql.ResolveParams) (interface{}, error) {
-//     // reflect...
-//   }
-//
-// == Example Implementation
-//
-//   type DogResolver struct { // Implements DogResolver
-//     DogAliases
-//     store store.BreedStore
-//   }
-//
-//   // NOTE:
-//   // All other fields are satisified by DogAliases but since this one
-//   // requires hitting the store we implement it in our resolver.
-//   func (r *DogResolver) Breed(p graphql.ResolveParams) interface{} {
-//     dog := v.(*Dog)
-//     return r.BreedsById(dog.BreedIDs)
-//   }
-//
 type PutWrappedPayloadAliases struct{}
 
 // Node implements response to request for 'node' field.
@@ -934,14 +700,18 @@ func RegisterPutWrappedPayload(svc *graphql.Service, impl PutWrappedPayloadField
 	svc.RegisterObject(_ObjectTypePutWrappedPayloadDesc, impl)
 }
 func _ObjTypePutWrappedPayloadNodeHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(PutWrappedPayloadNodeFieldResolver)
+	resolver := impl.(interface {
+		Node(p graphql.ResolveParams) (interface{}, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.Node(frp)
 	}
 }
 
 func _ObjTypePutWrappedPayloadErrorsHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(PutWrappedPayloadErrorsFieldResolver)
+	resolver := impl.(interface {
+		Errors(p graphql.ResolveParams) (interface{}, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.Errors(frp)
 	}
@@ -988,129 +758,21 @@ var _ObjectTypePutWrappedPayloadDesc = graphql.ObjectDesc{
 	},
 }
 
-// DeleteRecordPayloadClientMutationIDFieldResolver implement to resolve requests for the DeleteRecordPayload's clientMutationId field.
-type DeleteRecordPayloadClientMutationIDFieldResolver interface {
-	// ClientMutationID implements response to request for clientMutationId field.
-	ClientMutationID(p graphql.ResolveParams) (string, error)
-}
-
-// DeleteRecordPayloadDeletedIDFieldResolver implement to resolve requests for the DeleteRecordPayload's deletedId field.
-type DeleteRecordPayloadDeletedIDFieldResolver interface {
-	// DeletedID implements response to request for deletedId field.
-	DeletedID(p graphql.ResolveParams) (string, error)
-}
-
 //
 // DeleteRecordPayloadFieldResolvers represents a collection of methods whose products represent the
 // response values of the 'DeleteRecordPayload' type.
-//
-// == Example SDL
-//
-//   """
-//   Dog's are not hooman.
-//   """
-//   type Dog implements Pet {
-//     "name of this fine beast."
-//     name:  String!
-//
-//     "breed of this silly animal; probably shibe."
-//     breed: [Breed]
-//   }
-//
-// == Example generated interface
-//
-//   // DogResolver ...
-//   type DogFieldResolvers interface {
-//     DogNameFieldResolver
-//     DogBreedFieldResolver
-//
-//     // IsTypeOf is used to determine if a given value is associated with the Dog type
-//     IsTypeOf(interface{}, graphql.IsTypeOfParams) bool
-//   }
-//
-// == Example implementation ...
-//
-//   // DogResolver implements DogFieldResolvers interface
-//   type DogResolver struct {
-//     logger logrus.LogEntry
-//     store interface{
-//       store.BreedStore
-//       store.DogStore
-//     }
-//   }
-//
-//   // Name implements response to request for name field.
-//   func (r *DogResolver) Name(p graphql.ResolveParams) (interface{}, error) {
-//     // ... implementation details ...
-//     dog := p.Source.(DogGetter)
-//     return dog.GetName()
-//   }
-//
-//   // Breed implements response to request for breed field.
-//   func (r *DogResolver) Breed(p graphql.ResolveParams) (interface{}, error) {
-//     // ... implementation details ...
-//     dog := p.Source.(DogGetter)
-//     breed := r.store.GetBreed(dog.GetBreedName())
-//     return breed
-//   }
-//
-//   // IsTypeOf is used to determine if a given value is associated with the Dog type
-//   func (r *DogResolver) IsTypeOf(p graphql.IsTypeOfParams) bool {
-//     // ... implementation details ...
-//     _, ok := p.Value.(DogGetter)
-//     return ok
-//   }
-//
 type DeleteRecordPayloadFieldResolvers interface {
-	DeleteRecordPayloadClientMutationIDFieldResolver
-	DeleteRecordPayloadDeletedIDFieldResolver
+	// ClientMutationID implements response to request for 'clientMutationId' field.
+	ClientMutationID(p graphql.ResolveParams) (string, error)
+
+	// DeletedID implements response to request for 'deletedId' field.
+	DeletedID(p graphql.ResolveParams) (string, error)
 }
 
 // DeleteRecordPayloadAliases implements all methods on DeleteRecordPayloadFieldResolvers interface by using reflection to
 // match name of field to a field on the given value. Intent is reduce friction
 // of writing new resolvers by removing all the instances where you would simply
 // have the resolvers method return a field.
-//
-// == Example SDL
-//
-//    type Dog {
-//      name:   String!
-//      weight: Float!
-//      dob:    DateTime
-//      breed:  [Breed]
-//    }
-//
-// == Example generated aliases
-//
-//   type DogAliases struct {}
-//   func (_ DogAliases) Name(p graphql.ResolveParams) (interface{}, error) {
-//     // reflect...
-//   }
-//   func (_ DogAliases) Weight(p graphql.ResolveParams) (interface{}, error) {
-//     // reflect...
-//   }
-//   func (_ DogAliases) Dob(p graphql.ResolveParams) (interface{}, error) {
-//     // reflect...
-//   }
-//   func (_ DogAliases) Breed(p graphql.ResolveParams) (interface{}, error) {
-//     // reflect...
-//   }
-//
-// == Example Implementation
-//
-//   type DogResolver struct { // Implements DogResolver
-//     DogAliases
-//     store store.BreedStore
-//   }
-//
-//   // NOTE:
-//   // All other fields are satisified by DogAliases but since this one
-//   // requires hitting the store we implement it in our resolver.
-//   func (r *DogResolver) Breed(p graphql.ResolveParams) interface{} {
-//     dog := v.(*Dog)
-//     return r.BreedsById(dog.BreedIDs)
-//   }
-//
 type DeleteRecordPayloadAliases struct{}
 
 // ClientMutationID implements response to request for 'clientMutationId' field.
@@ -1147,14 +809,18 @@ func RegisterDeleteRecordPayload(svc *graphql.Service, impl DeleteRecordPayloadF
 	svc.RegisterObject(_ObjectTypeDeleteRecordPayloadDesc, impl)
 }
 func _ObjTypeDeleteRecordPayloadClientMutationIDHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(DeleteRecordPayloadClientMutationIDFieldResolver)
+	resolver := impl.(interface {
+		ClientMutationID(p graphql.ResolveParams) (string, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.ClientMutationID(frp)
 	}
 }
 
 func _ObjTypeDeleteRecordPayloadDeletedIDHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(DeleteRecordPayloadDeletedIDFieldResolver)
+	resolver := impl.(interface {
+		DeletedID(p graphql.ResolveParams) (string, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.DeletedID(frp)
 	}
@@ -1361,129 +1027,21 @@ func _InputTypeCreateCheckInputConfigFn() graphql1.InputObjectConfig {
 // describe CreateCheckInput's configuration; kept private to avoid unintentional tampering of configuration at runtime.
 var _InputTypeCreateCheckInputDesc = graphql.InputDesc{Config: _InputTypeCreateCheckInputConfigFn}
 
-// CreateCheckPayloadClientMutationIDFieldResolver implement to resolve requests for the CreateCheckPayload's clientMutationId field.
-type CreateCheckPayloadClientMutationIDFieldResolver interface {
-	// ClientMutationID implements response to request for clientMutationId field.
-	ClientMutationID(p graphql.ResolveParams) (string, error)
-}
-
-// CreateCheckPayloadCheckFieldResolver implement to resolve requests for the CreateCheckPayload's check field.
-type CreateCheckPayloadCheckFieldResolver interface {
-	// Check implements response to request for check field.
-	Check(p graphql.ResolveParams) (interface{}, error)
-}
-
 //
 // CreateCheckPayloadFieldResolvers represents a collection of methods whose products represent the
 // response values of the 'CreateCheckPayload' type.
-//
-// == Example SDL
-//
-//   """
-//   Dog's are not hooman.
-//   """
-//   type Dog implements Pet {
-//     "name of this fine beast."
-//     name:  String!
-//
-//     "breed of this silly animal; probably shibe."
-//     breed: [Breed]
-//   }
-//
-// == Example generated interface
-//
-//   // DogResolver ...
-//   type DogFieldResolvers interface {
-//     DogNameFieldResolver
-//     DogBreedFieldResolver
-//
-//     // IsTypeOf is used to determine if a given value is associated with the Dog type
-//     IsTypeOf(interface{}, graphql.IsTypeOfParams) bool
-//   }
-//
-// == Example implementation ...
-//
-//   // DogResolver implements DogFieldResolvers interface
-//   type DogResolver struct {
-//     logger logrus.LogEntry
-//     store interface{
-//       store.BreedStore
-//       store.DogStore
-//     }
-//   }
-//
-//   // Name implements response to request for name field.
-//   func (r *DogResolver) Name(p graphql.ResolveParams) (interface{}, error) {
-//     // ... implementation details ...
-//     dog := p.Source.(DogGetter)
-//     return dog.GetName()
-//   }
-//
-//   // Breed implements response to request for breed field.
-//   func (r *DogResolver) Breed(p graphql.ResolveParams) (interface{}, error) {
-//     // ... implementation details ...
-//     dog := p.Source.(DogGetter)
-//     breed := r.store.GetBreed(dog.GetBreedName())
-//     return breed
-//   }
-//
-//   // IsTypeOf is used to determine if a given value is associated with the Dog type
-//   func (r *DogResolver) IsTypeOf(p graphql.IsTypeOfParams) bool {
-//     // ... implementation details ...
-//     _, ok := p.Value.(DogGetter)
-//     return ok
-//   }
-//
 type CreateCheckPayloadFieldResolvers interface {
-	CreateCheckPayloadClientMutationIDFieldResolver
-	CreateCheckPayloadCheckFieldResolver
+	// ClientMutationID implements response to request for 'clientMutationId' field.
+	ClientMutationID(p graphql.ResolveParams) (string, error)
+
+	// Check implements response to request for 'check' field.
+	Check(p graphql.ResolveParams) (interface{}, error)
 }
 
 // CreateCheckPayloadAliases implements all methods on CreateCheckPayloadFieldResolvers interface by using reflection to
 // match name of field to a field on the given value. Intent is reduce friction
 // of writing new resolvers by removing all the instances where you would simply
 // have the resolvers method return a field.
-//
-// == Example SDL
-//
-//    type Dog {
-//      name:   String!
-//      weight: Float!
-//      dob:    DateTime
-//      breed:  [Breed]
-//    }
-//
-// == Example generated aliases
-//
-//   type DogAliases struct {}
-//   func (_ DogAliases) Name(p graphql.ResolveParams) (interface{}, error) {
-//     // reflect...
-//   }
-//   func (_ DogAliases) Weight(p graphql.ResolveParams) (interface{}, error) {
-//     // reflect...
-//   }
-//   func (_ DogAliases) Dob(p graphql.ResolveParams) (interface{}, error) {
-//     // reflect...
-//   }
-//   func (_ DogAliases) Breed(p graphql.ResolveParams) (interface{}, error) {
-//     // reflect...
-//   }
-//
-// == Example Implementation
-//
-//   type DogResolver struct { // Implements DogResolver
-//     DogAliases
-//     store store.BreedStore
-//   }
-//
-//   // NOTE:
-//   // All other fields are satisified by DogAliases but since this one
-//   // requires hitting the store we implement it in our resolver.
-//   func (r *DogResolver) Breed(p graphql.ResolveParams) interface{} {
-//     dog := v.(*Dog)
-//     return r.BreedsById(dog.BreedIDs)
-//   }
-//
 type CreateCheckPayloadAliases struct{}
 
 // ClientMutationID implements response to request for 'clientMutationId' field.
@@ -1513,14 +1071,18 @@ func RegisterCreateCheckPayload(svc *graphql.Service, impl CreateCheckPayloadFie
 	svc.RegisterObject(_ObjectTypeCreateCheckPayloadDesc, impl)
 }
 func _ObjTypeCreateCheckPayloadClientMutationIDHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(CreateCheckPayloadClientMutationIDFieldResolver)
+	resolver := impl.(interface {
+		ClientMutationID(p graphql.ResolveParams) (string, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.ClientMutationID(frp)
 	}
 }
 
 func _ObjTypeCreateCheckPayloadCheckHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(CreateCheckPayloadCheckFieldResolver)
+	resolver := impl.(interface {
+		Check(p graphql.ResolveParams) (interface{}, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.Check(frp)
 	}
@@ -1608,129 +1170,21 @@ func _InputTypeUpdateCheckInputConfigFn() graphql1.InputObjectConfig {
 // describe UpdateCheckInput's configuration; kept private to avoid unintentional tampering of configuration at runtime.
 var _InputTypeUpdateCheckInputDesc = graphql.InputDesc{Config: _InputTypeUpdateCheckInputConfigFn}
 
-// UpdateCheckPayloadClientMutationIDFieldResolver implement to resolve requests for the UpdateCheckPayload's clientMutationId field.
-type UpdateCheckPayloadClientMutationIDFieldResolver interface {
-	// ClientMutationID implements response to request for clientMutationId field.
-	ClientMutationID(p graphql.ResolveParams) (string, error)
-}
-
-// UpdateCheckPayloadCheckFieldResolver implement to resolve requests for the UpdateCheckPayload's check field.
-type UpdateCheckPayloadCheckFieldResolver interface {
-	// Check implements response to request for check field.
-	Check(p graphql.ResolveParams) (interface{}, error)
-}
-
 //
 // UpdateCheckPayloadFieldResolvers represents a collection of methods whose products represent the
 // response values of the 'UpdateCheckPayload' type.
-//
-// == Example SDL
-//
-//   """
-//   Dog's are not hooman.
-//   """
-//   type Dog implements Pet {
-//     "name of this fine beast."
-//     name:  String!
-//
-//     "breed of this silly animal; probably shibe."
-//     breed: [Breed]
-//   }
-//
-// == Example generated interface
-//
-//   // DogResolver ...
-//   type DogFieldResolvers interface {
-//     DogNameFieldResolver
-//     DogBreedFieldResolver
-//
-//     // IsTypeOf is used to determine if a given value is associated with the Dog type
-//     IsTypeOf(interface{}, graphql.IsTypeOfParams) bool
-//   }
-//
-// == Example implementation ...
-//
-//   // DogResolver implements DogFieldResolvers interface
-//   type DogResolver struct {
-//     logger logrus.LogEntry
-//     store interface{
-//       store.BreedStore
-//       store.DogStore
-//     }
-//   }
-//
-//   // Name implements response to request for name field.
-//   func (r *DogResolver) Name(p graphql.ResolveParams) (interface{}, error) {
-//     // ... implementation details ...
-//     dog := p.Source.(DogGetter)
-//     return dog.GetName()
-//   }
-//
-//   // Breed implements response to request for breed field.
-//   func (r *DogResolver) Breed(p graphql.ResolveParams) (interface{}, error) {
-//     // ... implementation details ...
-//     dog := p.Source.(DogGetter)
-//     breed := r.store.GetBreed(dog.GetBreedName())
-//     return breed
-//   }
-//
-//   // IsTypeOf is used to determine if a given value is associated with the Dog type
-//   func (r *DogResolver) IsTypeOf(p graphql.IsTypeOfParams) bool {
-//     // ... implementation details ...
-//     _, ok := p.Value.(DogGetter)
-//     return ok
-//   }
-//
 type UpdateCheckPayloadFieldResolvers interface {
-	UpdateCheckPayloadClientMutationIDFieldResolver
-	UpdateCheckPayloadCheckFieldResolver
+	// ClientMutationID implements response to request for 'clientMutationId' field.
+	ClientMutationID(p graphql.ResolveParams) (string, error)
+
+	// Check implements response to request for 'check' field.
+	Check(p graphql.ResolveParams) (interface{}, error)
 }
 
 // UpdateCheckPayloadAliases implements all methods on UpdateCheckPayloadFieldResolvers interface by using reflection to
 // match name of field to a field on the given value. Intent is reduce friction
 // of writing new resolvers by removing all the instances where you would simply
 // have the resolvers method return a field.
-//
-// == Example SDL
-//
-//    type Dog {
-//      name:   String!
-//      weight: Float!
-//      dob:    DateTime
-//      breed:  [Breed]
-//    }
-//
-// == Example generated aliases
-//
-//   type DogAliases struct {}
-//   func (_ DogAliases) Name(p graphql.ResolveParams) (interface{}, error) {
-//     // reflect...
-//   }
-//   func (_ DogAliases) Weight(p graphql.ResolveParams) (interface{}, error) {
-//     // reflect...
-//   }
-//   func (_ DogAliases) Dob(p graphql.ResolveParams) (interface{}, error) {
-//     // reflect...
-//   }
-//   func (_ DogAliases) Breed(p graphql.ResolveParams) (interface{}, error) {
-//     // reflect...
-//   }
-//
-// == Example Implementation
-//
-//   type DogResolver struct { // Implements DogResolver
-//     DogAliases
-//     store store.BreedStore
-//   }
-//
-//   // NOTE:
-//   // All other fields are satisified by DogAliases but since this one
-//   // requires hitting the store we implement it in our resolver.
-//   func (r *DogResolver) Breed(p graphql.ResolveParams) interface{} {
-//     dog := v.(*Dog)
-//     return r.BreedsById(dog.BreedIDs)
-//   }
-//
 type UpdateCheckPayloadAliases struct{}
 
 // ClientMutationID implements response to request for 'clientMutationId' field.
@@ -1760,14 +1214,18 @@ func RegisterUpdateCheckPayload(svc *graphql.Service, impl UpdateCheckPayloadFie
 	svc.RegisterObject(_ObjectTypeUpdateCheckPayloadDesc, impl)
 }
 func _ObjTypeUpdateCheckPayloadClientMutationIDHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(UpdateCheckPayloadClientMutationIDFieldResolver)
+	resolver := impl.(interface {
+		ClientMutationID(p graphql.ResolveParams) (string, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.ClientMutationID(frp)
 	}
 }
 
 func _ObjTypeUpdateCheckPayloadCheckHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(UpdateCheckPayloadCheckFieldResolver)
+	resolver := impl.(interface {
+		Check(p graphql.ResolveParams) (interface{}, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.Check(frp)
 	}
@@ -1863,129 +1321,21 @@ func _InputTypeExecuteCheckInputConfigFn() graphql1.InputObjectConfig {
 // describe ExecuteCheckInput's configuration; kept private to avoid unintentional tampering of configuration at runtime.
 var _InputTypeExecuteCheckInputDesc = graphql.InputDesc{Config: _InputTypeExecuteCheckInputConfigFn}
 
-// ExecuteCheckPayloadClientMutationIDFieldResolver implement to resolve requests for the ExecuteCheckPayload's clientMutationId field.
-type ExecuteCheckPayloadClientMutationIDFieldResolver interface {
-	// ClientMutationID implements response to request for clientMutationId field.
-	ClientMutationID(p graphql.ResolveParams) (string, error)
-}
-
-// ExecuteCheckPayloadErrorsFieldResolver implement to resolve requests for the ExecuteCheckPayload's errors field.
-type ExecuteCheckPayloadErrorsFieldResolver interface {
-	// Errors implements response to request for errors field.
-	Errors(p graphql.ResolveParams) (interface{}, error)
-}
-
 //
 // ExecuteCheckPayloadFieldResolvers represents a collection of methods whose products represent the
 // response values of the 'ExecuteCheckPayload' type.
-//
-// == Example SDL
-//
-//   """
-//   Dog's are not hooman.
-//   """
-//   type Dog implements Pet {
-//     "name of this fine beast."
-//     name:  String!
-//
-//     "breed of this silly animal; probably shibe."
-//     breed: [Breed]
-//   }
-//
-// == Example generated interface
-//
-//   // DogResolver ...
-//   type DogFieldResolvers interface {
-//     DogNameFieldResolver
-//     DogBreedFieldResolver
-//
-//     // IsTypeOf is used to determine if a given value is associated with the Dog type
-//     IsTypeOf(interface{}, graphql.IsTypeOfParams) bool
-//   }
-//
-// == Example implementation ...
-//
-//   // DogResolver implements DogFieldResolvers interface
-//   type DogResolver struct {
-//     logger logrus.LogEntry
-//     store interface{
-//       store.BreedStore
-//       store.DogStore
-//     }
-//   }
-//
-//   // Name implements response to request for name field.
-//   func (r *DogResolver) Name(p graphql.ResolveParams) (interface{}, error) {
-//     // ... implementation details ...
-//     dog := p.Source.(DogGetter)
-//     return dog.GetName()
-//   }
-//
-//   // Breed implements response to request for breed field.
-//   func (r *DogResolver) Breed(p graphql.ResolveParams) (interface{}, error) {
-//     // ... implementation details ...
-//     dog := p.Source.(DogGetter)
-//     breed := r.store.GetBreed(dog.GetBreedName())
-//     return breed
-//   }
-//
-//   // IsTypeOf is used to determine if a given value is associated with the Dog type
-//   func (r *DogResolver) IsTypeOf(p graphql.IsTypeOfParams) bool {
-//     // ... implementation details ...
-//     _, ok := p.Value.(DogGetter)
-//     return ok
-//   }
-//
 type ExecuteCheckPayloadFieldResolvers interface {
-	ExecuteCheckPayloadClientMutationIDFieldResolver
-	ExecuteCheckPayloadErrorsFieldResolver
+	// ClientMutationID implements response to request for 'clientMutationId' field.
+	ClientMutationID(p graphql.ResolveParams) (string, error)
+
+	// Errors implements response to request for 'errors' field.
+	Errors(p graphql.ResolveParams) (interface{}, error)
 }
 
 // ExecuteCheckPayloadAliases implements all methods on ExecuteCheckPayloadFieldResolvers interface by using reflection to
 // match name of field to a field on the given value. Intent is reduce friction
 // of writing new resolvers by removing all the instances where you would simply
 // have the resolvers method return a field.
-//
-// == Example SDL
-//
-//    type Dog {
-//      name:   String!
-//      weight: Float!
-//      dob:    DateTime
-//      breed:  [Breed]
-//    }
-//
-// == Example generated aliases
-//
-//   type DogAliases struct {}
-//   func (_ DogAliases) Name(p graphql.ResolveParams) (interface{}, error) {
-//     // reflect...
-//   }
-//   func (_ DogAliases) Weight(p graphql.ResolveParams) (interface{}, error) {
-//     // reflect...
-//   }
-//   func (_ DogAliases) Dob(p graphql.ResolveParams) (interface{}, error) {
-//     // reflect...
-//   }
-//   func (_ DogAliases) Breed(p graphql.ResolveParams) (interface{}, error) {
-//     // reflect...
-//   }
-//
-// == Example Implementation
-//
-//   type DogResolver struct { // Implements DogResolver
-//     DogAliases
-//     store store.BreedStore
-//   }
-//
-//   // NOTE:
-//   // All other fields are satisified by DogAliases but since this one
-//   // requires hitting the store we implement it in our resolver.
-//   func (r *DogResolver) Breed(p graphql.ResolveParams) interface{} {
-//     dog := v.(*Dog)
-//     return r.BreedsById(dog.BreedIDs)
-//   }
-//
 type ExecuteCheckPayloadAliases struct{}
 
 // ClientMutationID implements response to request for 'clientMutationId' field.
@@ -2015,14 +1365,18 @@ func RegisterExecuteCheckPayload(svc *graphql.Service, impl ExecuteCheckPayloadF
 	svc.RegisterObject(_ObjectTypeExecuteCheckPayloadDesc, impl)
 }
 func _ObjTypeExecuteCheckPayloadClientMutationIDHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(ExecuteCheckPayloadClientMutationIDFieldResolver)
+	resolver := impl.(interface {
+		ClientMutationID(p graphql.ResolveParams) (string, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.ClientMutationID(frp)
 	}
 }
 
 func _ObjTypeExecuteCheckPayloadErrorsHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(ExecuteCheckPayloadErrorsFieldResolver)
+	resolver := impl.(interface {
+		Errors(p graphql.ResolveParams) (interface{}, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.Errors(frp)
 	}
@@ -2111,129 +1465,21 @@ func _InputTypeResolveEventInputConfigFn() graphql1.InputObjectConfig {
 // describe ResolveEventInput's configuration; kept private to avoid unintentional tampering of configuration at runtime.
 var _InputTypeResolveEventInputDesc = graphql.InputDesc{Config: _InputTypeResolveEventInputConfigFn}
 
-// ResolveEventPayloadClientMutationIDFieldResolver implement to resolve requests for the ResolveEventPayload's clientMutationId field.
-type ResolveEventPayloadClientMutationIDFieldResolver interface {
-	// ClientMutationID implements response to request for clientMutationId field.
-	ClientMutationID(p graphql.ResolveParams) (string, error)
-}
-
-// ResolveEventPayloadEventFieldResolver implement to resolve requests for the ResolveEventPayload's event field.
-type ResolveEventPayloadEventFieldResolver interface {
-	// Event implements response to request for event field.
-	Event(p graphql.ResolveParams) (interface{}, error)
-}
-
 //
 // ResolveEventPayloadFieldResolvers represents a collection of methods whose products represent the
 // response values of the 'ResolveEventPayload' type.
-//
-// == Example SDL
-//
-//   """
-//   Dog's are not hooman.
-//   """
-//   type Dog implements Pet {
-//     "name of this fine beast."
-//     name:  String!
-//
-//     "breed of this silly animal; probably shibe."
-//     breed: [Breed]
-//   }
-//
-// == Example generated interface
-//
-//   // DogResolver ...
-//   type DogFieldResolvers interface {
-//     DogNameFieldResolver
-//     DogBreedFieldResolver
-//
-//     // IsTypeOf is used to determine if a given value is associated with the Dog type
-//     IsTypeOf(interface{}, graphql.IsTypeOfParams) bool
-//   }
-//
-// == Example implementation ...
-//
-//   // DogResolver implements DogFieldResolvers interface
-//   type DogResolver struct {
-//     logger logrus.LogEntry
-//     store interface{
-//       store.BreedStore
-//       store.DogStore
-//     }
-//   }
-//
-//   // Name implements response to request for name field.
-//   func (r *DogResolver) Name(p graphql.ResolveParams) (interface{}, error) {
-//     // ... implementation details ...
-//     dog := p.Source.(DogGetter)
-//     return dog.GetName()
-//   }
-//
-//   // Breed implements response to request for breed field.
-//   func (r *DogResolver) Breed(p graphql.ResolveParams) (interface{}, error) {
-//     // ... implementation details ...
-//     dog := p.Source.(DogGetter)
-//     breed := r.store.GetBreed(dog.GetBreedName())
-//     return breed
-//   }
-//
-//   // IsTypeOf is used to determine if a given value is associated with the Dog type
-//   func (r *DogResolver) IsTypeOf(p graphql.IsTypeOfParams) bool {
-//     // ... implementation details ...
-//     _, ok := p.Value.(DogGetter)
-//     return ok
-//   }
-//
 type ResolveEventPayloadFieldResolvers interface {
-	ResolveEventPayloadClientMutationIDFieldResolver
-	ResolveEventPayloadEventFieldResolver
+	// ClientMutationID implements response to request for 'clientMutationId' field.
+	ClientMutationID(p graphql.ResolveParams) (string, error)
+
+	// Event implements response to request for 'event' field.
+	Event(p graphql.ResolveParams) (interface{}, error)
 }
 
 // ResolveEventPayloadAliases implements all methods on ResolveEventPayloadFieldResolvers interface by using reflection to
 // match name of field to a field on the given value. Intent is reduce friction
 // of writing new resolvers by removing all the instances where you would simply
 // have the resolvers method return a field.
-//
-// == Example SDL
-//
-//    type Dog {
-//      name:   String!
-//      weight: Float!
-//      dob:    DateTime
-//      breed:  [Breed]
-//    }
-//
-// == Example generated aliases
-//
-//   type DogAliases struct {}
-//   func (_ DogAliases) Name(p graphql.ResolveParams) (interface{}, error) {
-//     // reflect...
-//   }
-//   func (_ DogAliases) Weight(p graphql.ResolveParams) (interface{}, error) {
-//     // reflect...
-//   }
-//   func (_ DogAliases) Dob(p graphql.ResolveParams) (interface{}, error) {
-//     // reflect...
-//   }
-//   func (_ DogAliases) Breed(p graphql.ResolveParams) (interface{}, error) {
-//     // reflect...
-//   }
-//
-// == Example Implementation
-//
-//   type DogResolver struct { // Implements DogResolver
-//     DogAliases
-//     store store.BreedStore
-//   }
-//
-//   // NOTE:
-//   // All other fields are satisified by DogAliases but since this one
-//   // requires hitting the store we implement it in our resolver.
-//   func (r *DogResolver) Breed(p graphql.ResolveParams) interface{} {
-//     dog := v.(*Dog)
-//     return r.BreedsById(dog.BreedIDs)
-//   }
-//
 type ResolveEventPayloadAliases struct{}
 
 // ClientMutationID implements response to request for 'clientMutationId' field.
@@ -2263,14 +1509,18 @@ func RegisterResolveEventPayload(svc *graphql.Service, impl ResolveEventPayloadF
 	svc.RegisterObject(_ObjectTypeResolveEventPayloadDesc, impl)
 }
 func _ObjTypeResolveEventPayloadClientMutationIDHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(ResolveEventPayloadClientMutationIDFieldResolver)
+	resolver := impl.(interface {
+		ClientMutationID(p graphql.ResolveParams) (string, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.ClientMutationID(frp)
 	}
 }
 
 func _ObjTypeResolveEventPayloadEventHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(ResolveEventPayloadEventFieldResolver)
+	resolver := impl.(interface {
+		Event(p graphql.ResolveParams) (interface{}, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.Event(frp)
 	}
@@ -2423,129 +1673,21 @@ func _InputTypeSilenceInputsConfigFn() graphql1.InputObjectConfig {
 // describe SilenceInputs's configuration; kept private to avoid unintentional tampering of configuration at runtime.
 var _InputTypeSilenceInputsDesc = graphql.InputDesc{Config: _InputTypeSilenceInputsConfigFn}
 
-// CreateSilencePayloadClientMutationIDFieldResolver implement to resolve requests for the CreateSilencePayload's clientMutationId field.
-type CreateSilencePayloadClientMutationIDFieldResolver interface {
-	// ClientMutationID implements response to request for clientMutationId field.
-	ClientMutationID(p graphql.ResolveParams) (string, error)
-}
-
-// CreateSilencePayloadSilenceFieldResolver implement to resolve requests for the CreateSilencePayload's silence field.
-type CreateSilencePayloadSilenceFieldResolver interface {
-	// Silence implements response to request for silence field.
-	Silence(p graphql.ResolveParams) (interface{}, error)
-}
-
 //
 // CreateSilencePayloadFieldResolvers represents a collection of methods whose products represent the
 // response values of the 'CreateSilencePayload' type.
-//
-// == Example SDL
-//
-//   """
-//   Dog's are not hooman.
-//   """
-//   type Dog implements Pet {
-//     "name of this fine beast."
-//     name:  String!
-//
-//     "breed of this silly animal; probably shibe."
-//     breed: [Breed]
-//   }
-//
-// == Example generated interface
-//
-//   // DogResolver ...
-//   type DogFieldResolvers interface {
-//     DogNameFieldResolver
-//     DogBreedFieldResolver
-//
-//     // IsTypeOf is used to determine if a given value is associated with the Dog type
-//     IsTypeOf(interface{}, graphql.IsTypeOfParams) bool
-//   }
-//
-// == Example implementation ...
-//
-//   // DogResolver implements DogFieldResolvers interface
-//   type DogResolver struct {
-//     logger logrus.LogEntry
-//     store interface{
-//       store.BreedStore
-//       store.DogStore
-//     }
-//   }
-//
-//   // Name implements response to request for name field.
-//   func (r *DogResolver) Name(p graphql.ResolveParams) (interface{}, error) {
-//     // ... implementation details ...
-//     dog := p.Source.(DogGetter)
-//     return dog.GetName()
-//   }
-//
-//   // Breed implements response to request for breed field.
-//   func (r *DogResolver) Breed(p graphql.ResolveParams) (interface{}, error) {
-//     // ... implementation details ...
-//     dog := p.Source.(DogGetter)
-//     breed := r.store.GetBreed(dog.GetBreedName())
-//     return breed
-//   }
-//
-//   // IsTypeOf is used to determine if a given value is associated with the Dog type
-//   func (r *DogResolver) IsTypeOf(p graphql.IsTypeOfParams) bool {
-//     // ... implementation details ...
-//     _, ok := p.Value.(DogGetter)
-//     return ok
-//   }
-//
 type CreateSilencePayloadFieldResolvers interface {
-	CreateSilencePayloadClientMutationIDFieldResolver
-	CreateSilencePayloadSilenceFieldResolver
+	// ClientMutationID implements response to request for 'clientMutationId' field.
+	ClientMutationID(p graphql.ResolveParams) (string, error)
+
+	// Silence implements response to request for 'silence' field.
+	Silence(p graphql.ResolveParams) (interface{}, error)
 }
 
 // CreateSilencePayloadAliases implements all methods on CreateSilencePayloadFieldResolvers interface by using reflection to
 // match name of field to a field on the given value. Intent is reduce friction
 // of writing new resolvers by removing all the instances where you would simply
 // have the resolvers method return a field.
-//
-// == Example SDL
-//
-//    type Dog {
-//      name:   String!
-//      weight: Float!
-//      dob:    DateTime
-//      breed:  [Breed]
-//    }
-//
-// == Example generated aliases
-//
-//   type DogAliases struct {}
-//   func (_ DogAliases) Name(p graphql.ResolveParams) (interface{}, error) {
-//     // reflect...
-//   }
-//   func (_ DogAliases) Weight(p graphql.ResolveParams) (interface{}, error) {
-//     // reflect...
-//   }
-//   func (_ DogAliases) Dob(p graphql.ResolveParams) (interface{}, error) {
-//     // reflect...
-//   }
-//   func (_ DogAliases) Breed(p graphql.ResolveParams) (interface{}, error) {
-//     // reflect...
-//   }
-//
-// == Example Implementation
-//
-//   type DogResolver struct { // Implements DogResolver
-//     DogAliases
-//     store store.BreedStore
-//   }
-//
-//   // NOTE:
-//   // All other fields are satisified by DogAliases but since this one
-//   // requires hitting the store we implement it in our resolver.
-//   func (r *DogResolver) Breed(p graphql.ResolveParams) interface{} {
-//     dog := v.(*Dog)
-//     return r.BreedsById(dog.BreedIDs)
-//   }
-//
 type CreateSilencePayloadAliases struct{}
 
 // ClientMutationID implements response to request for 'clientMutationId' field.
@@ -2575,14 +1717,18 @@ func RegisterCreateSilencePayload(svc *graphql.Service, impl CreateSilencePayloa
 	svc.RegisterObject(_ObjectTypeCreateSilencePayloadDesc, impl)
 }
 func _ObjTypeCreateSilencePayloadClientMutationIDHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(CreateSilencePayloadClientMutationIDFieldResolver)
+	resolver := impl.(interface {
+		ClientMutationID(p graphql.ResolveParams) (string, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.ClientMutationID(frp)
 	}
 }
 
 func _ObjTypeCreateSilencePayloadSilenceHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(CreateSilencePayloadSilenceFieldResolver)
+	resolver := impl.(interface {
+		Silence(p graphql.ResolveParams) (interface{}, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.Silence(frp)
 	}

@@ -9,220 +9,60 @@ import (
 	time "time"
 )
 
-// EventIDFieldResolver implement to resolve requests for the Event's id field.
-type EventIDFieldResolver interface {
-	// ID implements response to request for id field.
-	ID(p graphql.ResolveParams) (string, error)
-}
-
-// EventNamespaceFieldResolver implement to resolve requests for the Event's namespace field.
-type EventNamespaceFieldResolver interface {
-	// Namespace implements response to request for namespace field.
-	Namespace(p graphql.ResolveParams) (string, error)
-}
-
-// EventMetadataFieldResolver implement to resolve requests for the Event's metadata field.
-type EventMetadataFieldResolver interface {
-	// Metadata implements response to request for metadata field.
-	Metadata(p graphql.ResolveParams) (interface{}, error)
-}
-
-// EventTimestampFieldResolver implement to resolve requests for the Event's timestamp field.
-type EventTimestampFieldResolver interface {
-	// Timestamp implements response to request for timestamp field.
-	Timestamp(p graphql.ResolveParams) (time.Time, error)
-}
-
-// EventEntityFieldResolver implement to resolve requests for the Event's entity field.
-type EventEntityFieldResolver interface {
-	// Entity implements response to request for entity field.
-	Entity(p graphql.ResolveParams) (interface{}, error)
-}
-
-// EventCheckFieldResolver implement to resolve requests for the Event's check field.
-type EventCheckFieldResolver interface {
-	// Check implements response to request for check field.
-	Check(p graphql.ResolveParams) (interface{}, error)
-}
-
-// EventHooksFieldResolver implement to resolve requests for the Event's hooks field.
-type EventHooksFieldResolver interface {
-	// Hooks implements response to request for hooks field.
-	Hooks(p graphql.ResolveParams) (interface{}, error)
-}
-
-// EventIsIncidentFieldResolver implement to resolve requests for the Event's isIncident field.
-type EventIsIncidentFieldResolver interface {
-	// IsIncident implements response to request for isIncident field.
-	IsIncident(p graphql.ResolveParams) (bool, error)
-}
-
-// EventIsNewIncidentFieldResolver implement to resolve requests for the Event's isNewIncident field.
-type EventIsNewIncidentFieldResolver interface {
-	// IsNewIncident implements response to request for isNewIncident field.
-	IsNewIncident(p graphql.ResolveParams) (bool, error)
-}
-
-// EventIsResolutionFieldResolver implement to resolve requests for the Event's isResolution field.
-type EventIsResolutionFieldResolver interface {
-	// IsResolution implements response to request for isResolution field.
-	IsResolution(p graphql.ResolveParams) (bool, error)
-}
-
-// EventWasSilencedFieldResolver implement to resolve requests for the Event's wasSilenced field.
-type EventWasSilencedFieldResolver interface {
-	// WasSilenced implements response to request for wasSilenced field.
-	WasSilenced(p graphql.ResolveParams) (bool, error)
-}
-
-// EventIsSilencedFieldResolver implement to resolve requests for the Event's isSilenced field.
-type EventIsSilencedFieldResolver interface {
-	// IsSilenced implements response to request for isSilenced field.
-	IsSilenced(p graphql.ResolveParams) (bool, error)
-}
-
-// EventSilencesFieldResolver implement to resolve requests for the Event's silences field.
-type EventSilencesFieldResolver interface {
-	// Silences implements response to request for silences field.
-	Silences(p graphql.ResolveParams) (interface{}, error)
-}
-
-// EventSilencedFieldResolver implement to resolve requests for the Event's silenced field.
-type EventSilencedFieldResolver interface {
-	// Silenced implements response to request for silenced field.
-	Silenced(p graphql.ResolveParams) ([]string, error)
-}
-
-// EventToJSONFieldResolver implement to resolve requests for the Event's toJSON field.
-type EventToJSONFieldResolver interface {
-	// ToJSON implements response to request for toJSON field.
-	ToJSON(p graphql.ResolveParams) (interface{}, error)
-}
-
 //
 // EventFieldResolvers represents a collection of methods whose products represent the
 // response values of the 'Event' type.
-//
-// == Example SDL
-//
-//   """
-//   Dog's are not hooman.
-//   """
-//   type Dog implements Pet {
-//     "name of this fine beast."
-//     name:  String!
-//
-//     "breed of this silly animal; probably shibe."
-//     breed: [Breed]
-//   }
-//
-// == Example generated interface
-//
-//   // DogResolver ...
-//   type DogFieldResolvers interface {
-//     DogNameFieldResolver
-//     DogBreedFieldResolver
-//
-//     // IsTypeOf is used to determine if a given value is associated with the Dog type
-//     IsTypeOf(interface{}, graphql.IsTypeOfParams) bool
-//   }
-//
-// == Example implementation ...
-//
-//   // DogResolver implements DogFieldResolvers interface
-//   type DogResolver struct {
-//     logger logrus.LogEntry
-//     store interface{
-//       store.BreedStore
-//       store.DogStore
-//     }
-//   }
-//
-//   // Name implements response to request for name field.
-//   func (r *DogResolver) Name(p graphql.ResolveParams) (interface{}, error) {
-//     // ... implementation details ...
-//     dog := p.Source.(DogGetter)
-//     return dog.GetName()
-//   }
-//
-//   // Breed implements response to request for breed field.
-//   func (r *DogResolver) Breed(p graphql.ResolveParams) (interface{}, error) {
-//     // ... implementation details ...
-//     dog := p.Source.(DogGetter)
-//     breed := r.store.GetBreed(dog.GetBreedName())
-//     return breed
-//   }
-//
-//   // IsTypeOf is used to determine if a given value is associated with the Dog type
-//   func (r *DogResolver) IsTypeOf(p graphql.IsTypeOfParams) bool {
-//     // ... implementation details ...
-//     _, ok := p.Value.(DogGetter)
-//     return ok
-//   }
-//
 type EventFieldResolvers interface {
-	EventIDFieldResolver
-	EventNamespaceFieldResolver
-	EventMetadataFieldResolver
-	EventTimestampFieldResolver
-	EventEntityFieldResolver
-	EventCheckFieldResolver
-	EventHooksFieldResolver
-	EventIsIncidentFieldResolver
-	EventIsNewIncidentFieldResolver
-	EventIsResolutionFieldResolver
-	EventWasSilencedFieldResolver
-	EventIsSilencedFieldResolver
-	EventSilencesFieldResolver
-	EventSilencedFieldResolver
-	EventToJSONFieldResolver
+	// ID implements response to request for 'id' field.
+	ID(p graphql.ResolveParams) (string, error)
+
+	// Namespace implements response to request for 'namespace' field.
+	Namespace(p graphql.ResolveParams) (string, error)
+
+	// Metadata implements response to request for 'metadata' field.
+	Metadata(p graphql.ResolveParams) (interface{}, error)
+
+	// Timestamp implements response to request for 'timestamp' field.
+	Timestamp(p graphql.ResolveParams) (time.Time, error)
+
+	// Entity implements response to request for 'entity' field.
+	Entity(p graphql.ResolveParams) (interface{}, error)
+
+	// Check implements response to request for 'check' field.
+	Check(p graphql.ResolveParams) (interface{}, error)
+
+	// Hooks implements response to request for 'hooks' field.
+	Hooks(p graphql.ResolveParams) (interface{}, error)
+
+	// IsIncident implements response to request for 'isIncident' field.
+	IsIncident(p graphql.ResolveParams) (bool, error)
+
+	// IsNewIncident implements response to request for 'isNewIncident' field.
+	IsNewIncident(p graphql.ResolveParams) (bool, error)
+
+	// IsResolution implements response to request for 'isResolution' field.
+	IsResolution(p graphql.ResolveParams) (bool, error)
+
+	// WasSilenced implements response to request for 'wasSilenced' field.
+	WasSilenced(p graphql.ResolveParams) (bool, error)
+
+	// IsSilenced implements response to request for 'isSilenced' field.
+	IsSilenced(p graphql.ResolveParams) (bool, error)
+
+	// Silences implements response to request for 'silences' field.
+	Silences(p graphql.ResolveParams) (interface{}, error)
+
+	// Silenced implements response to request for 'silenced' field.
+	Silenced(p graphql.ResolveParams) ([]string, error)
+
+	// ToJSON implements response to request for 'toJSON' field.
+	ToJSON(p graphql.ResolveParams) (interface{}, error)
 }
 
 // EventAliases implements all methods on EventFieldResolvers interface by using reflection to
 // match name of field to a field on the given value. Intent is reduce friction
 // of writing new resolvers by removing all the instances where you would simply
 // have the resolvers method return a field.
-//
-// == Example SDL
-//
-//    type Dog {
-//      name:   String!
-//      weight: Float!
-//      dob:    DateTime
-//      breed:  [Breed]
-//    }
-//
-// == Example generated aliases
-//
-//   type DogAliases struct {}
-//   func (_ DogAliases) Name(p graphql.ResolveParams) (interface{}, error) {
-//     // reflect...
-//   }
-//   func (_ DogAliases) Weight(p graphql.ResolveParams) (interface{}, error) {
-//     // reflect...
-//   }
-//   func (_ DogAliases) Dob(p graphql.ResolveParams) (interface{}, error) {
-//     // reflect...
-//   }
-//   func (_ DogAliases) Breed(p graphql.ResolveParams) (interface{}, error) {
-//     // reflect...
-//   }
-//
-// == Example Implementation
-//
-//   type DogResolver struct { // Implements DogResolver
-//     DogAliases
-//     store store.BreedStore
-//   }
-//
-//   // NOTE:
-//   // All other fields are satisified by DogAliases but since this one
-//   // requires hitting the store we implement it in our resolver.
-//   func (r *DogResolver) Breed(p graphql.ResolveParams) interface{} {
-//     dog := v.(*Dog)
-//     return r.BreedsById(dog.BreedIDs)
-//   }
-//
 type EventAliases struct{}
 
 // ID implements response to request for 'id' field.
@@ -386,105 +226,135 @@ func RegisterEvent(svc *graphql.Service, impl EventFieldResolvers) {
 	svc.RegisterObject(_ObjectTypeEventDesc, impl)
 }
 func _ObjTypeEventIDHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(EventIDFieldResolver)
+	resolver := impl.(interface {
+		ID(p graphql.ResolveParams) (string, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.ID(frp)
 	}
 }
 
 func _ObjTypeEventNamespaceHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(EventNamespaceFieldResolver)
+	resolver := impl.(interface {
+		Namespace(p graphql.ResolveParams) (string, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.Namespace(frp)
 	}
 }
 
 func _ObjTypeEventMetadataHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(EventMetadataFieldResolver)
+	resolver := impl.(interface {
+		Metadata(p graphql.ResolveParams) (interface{}, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.Metadata(frp)
 	}
 }
 
 func _ObjTypeEventTimestampHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(EventTimestampFieldResolver)
+	resolver := impl.(interface {
+		Timestamp(p graphql.ResolveParams) (time.Time, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.Timestamp(frp)
 	}
 }
 
 func _ObjTypeEventEntityHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(EventEntityFieldResolver)
+	resolver := impl.(interface {
+		Entity(p graphql.ResolveParams) (interface{}, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.Entity(frp)
 	}
 }
 
 func _ObjTypeEventCheckHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(EventCheckFieldResolver)
+	resolver := impl.(interface {
+		Check(p graphql.ResolveParams) (interface{}, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.Check(frp)
 	}
 }
 
 func _ObjTypeEventHooksHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(EventHooksFieldResolver)
+	resolver := impl.(interface {
+		Hooks(p graphql.ResolveParams) (interface{}, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.Hooks(frp)
 	}
 }
 
 func _ObjTypeEventIsIncidentHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(EventIsIncidentFieldResolver)
+	resolver := impl.(interface {
+		IsIncident(p graphql.ResolveParams) (bool, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.IsIncident(frp)
 	}
 }
 
 func _ObjTypeEventIsNewIncidentHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(EventIsNewIncidentFieldResolver)
+	resolver := impl.(interface {
+		IsNewIncident(p graphql.ResolveParams) (bool, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.IsNewIncident(frp)
 	}
 }
 
 func _ObjTypeEventIsResolutionHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(EventIsResolutionFieldResolver)
+	resolver := impl.(interface {
+		IsResolution(p graphql.ResolveParams) (bool, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.IsResolution(frp)
 	}
 }
 
 func _ObjTypeEventWasSilencedHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(EventWasSilencedFieldResolver)
+	resolver := impl.(interface {
+		WasSilenced(p graphql.ResolveParams) (bool, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.WasSilenced(frp)
 	}
 }
 
 func _ObjTypeEventIsSilencedHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(EventIsSilencedFieldResolver)
+	resolver := impl.(interface {
+		IsSilenced(p graphql.ResolveParams) (bool, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.IsSilenced(frp)
 	}
 }
 
 func _ObjTypeEventSilencesHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(EventSilencesFieldResolver)
+	resolver := impl.(interface {
+		Silences(p graphql.ResolveParams) (interface{}, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.Silences(frp)
 	}
 }
 
 func _ObjTypeEventSilencedHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(EventSilencedFieldResolver)
+	resolver := impl.(interface {
+		Silenced(p graphql.ResolveParams) ([]string, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.Silenced(frp)
 	}
 }
 
 func _ObjTypeEventToJSONHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(EventToJSONFieldResolver)
+	resolver := impl.(interface {
+		ToJSON(p graphql.ResolveParams) (interface{}, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.ToJSON(frp)
 	}
@@ -639,129 +509,21 @@ var _ObjectTypeEventDesc = graphql.ObjectDesc{
 	},
 }
 
-// EventConnectionNodesFieldResolver implement to resolve requests for the EventConnection's nodes field.
-type EventConnectionNodesFieldResolver interface {
-	// Nodes implements response to request for nodes field.
-	Nodes(p graphql.ResolveParams) (interface{}, error)
-}
-
-// EventConnectionPageInfoFieldResolver implement to resolve requests for the EventConnection's pageInfo field.
-type EventConnectionPageInfoFieldResolver interface {
-	// PageInfo implements response to request for pageInfo field.
-	PageInfo(p graphql.ResolveParams) (interface{}, error)
-}
-
 //
 // EventConnectionFieldResolvers represents a collection of methods whose products represent the
 // response values of the 'EventConnection' type.
-//
-// == Example SDL
-//
-//   """
-//   Dog's are not hooman.
-//   """
-//   type Dog implements Pet {
-//     "name of this fine beast."
-//     name:  String!
-//
-//     "breed of this silly animal; probably shibe."
-//     breed: [Breed]
-//   }
-//
-// == Example generated interface
-//
-//   // DogResolver ...
-//   type DogFieldResolvers interface {
-//     DogNameFieldResolver
-//     DogBreedFieldResolver
-//
-//     // IsTypeOf is used to determine if a given value is associated with the Dog type
-//     IsTypeOf(interface{}, graphql.IsTypeOfParams) bool
-//   }
-//
-// == Example implementation ...
-//
-//   // DogResolver implements DogFieldResolvers interface
-//   type DogResolver struct {
-//     logger logrus.LogEntry
-//     store interface{
-//       store.BreedStore
-//       store.DogStore
-//     }
-//   }
-//
-//   // Name implements response to request for name field.
-//   func (r *DogResolver) Name(p graphql.ResolveParams) (interface{}, error) {
-//     // ... implementation details ...
-//     dog := p.Source.(DogGetter)
-//     return dog.GetName()
-//   }
-//
-//   // Breed implements response to request for breed field.
-//   func (r *DogResolver) Breed(p graphql.ResolveParams) (interface{}, error) {
-//     // ... implementation details ...
-//     dog := p.Source.(DogGetter)
-//     breed := r.store.GetBreed(dog.GetBreedName())
-//     return breed
-//   }
-//
-//   // IsTypeOf is used to determine if a given value is associated with the Dog type
-//   func (r *DogResolver) IsTypeOf(p graphql.IsTypeOfParams) bool {
-//     // ... implementation details ...
-//     _, ok := p.Value.(DogGetter)
-//     return ok
-//   }
-//
 type EventConnectionFieldResolvers interface {
-	EventConnectionNodesFieldResolver
-	EventConnectionPageInfoFieldResolver
+	// Nodes implements response to request for 'nodes' field.
+	Nodes(p graphql.ResolveParams) (interface{}, error)
+
+	// PageInfo implements response to request for 'pageInfo' field.
+	PageInfo(p graphql.ResolveParams) (interface{}, error)
 }
 
 // EventConnectionAliases implements all methods on EventConnectionFieldResolvers interface by using reflection to
 // match name of field to a field on the given value. Intent is reduce friction
 // of writing new resolvers by removing all the instances where you would simply
 // have the resolvers method return a field.
-//
-// == Example SDL
-//
-//    type Dog {
-//      name:   String!
-//      weight: Float!
-//      dob:    DateTime
-//      breed:  [Breed]
-//    }
-//
-// == Example generated aliases
-//
-//   type DogAliases struct {}
-//   func (_ DogAliases) Name(p graphql.ResolveParams) (interface{}, error) {
-//     // reflect...
-//   }
-//   func (_ DogAliases) Weight(p graphql.ResolveParams) (interface{}, error) {
-//     // reflect...
-//   }
-//   func (_ DogAliases) Dob(p graphql.ResolveParams) (interface{}, error) {
-//     // reflect...
-//   }
-//   func (_ DogAliases) Breed(p graphql.ResolveParams) (interface{}, error) {
-//     // reflect...
-//   }
-//
-// == Example Implementation
-//
-//   type DogResolver struct { // Implements DogResolver
-//     DogAliases
-//     store store.BreedStore
-//   }
-//
-//   // NOTE:
-//   // All other fields are satisified by DogAliases but since this one
-//   // requires hitting the store we implement it in our resolver.
-//   func (r *DogResolver) Breed(p graphql.ResolveParams) interface{} {
-//     dog := v.(*Dog)
-//     return r.BreedsById(dog.BreedIDs)
-//   }
-//
 type EventConnectionAliases struct{}
 
 // Nodes implements response to request for 'nodes' field.
@@ -784,14 +546,18 @@ func RegisterEventConnection(svc *graphql.Service, impl EventConnectionFieldReso
 	svc.RegisterObject(_ObjectTypeEventConnectionDesc, impl)
 }
 func _ObjTypeEventConnectionNodesHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(EventConnectionNodesFieldResolver)
+	resolver := impl.(interface {
+		Nodes(p graphql.ResolveParams) (interface{}, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.Nodes(frp)
 	}
 }
 
 func _ObjTypeEventConnectionPageInfoHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(EventConnectionPageInfoFieldResolver)
+	resolver := impl.(interface {
+		PageInfo(p graphql.ResolveParams) (interface{}, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.PageInfo(frp)
 	}

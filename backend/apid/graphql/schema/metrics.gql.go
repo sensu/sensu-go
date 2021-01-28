@@ -119,129 +119,21 @@ type _EnumTypeMetricKindValues struct {
 	HISTOGRAM MetricKind
 }
 
-// QuantileMetricQuantileFieldResolver implement to resolve requests for the QuantileMetric's quantile field.
-type QuantileMetricQuantileFieldResolver interface {
-	// Quantile implements response to request for quantile field.
-	Quantile(p graphql.ResolveParams) (float64, error)
-}
-
-// QuantileMetricValueFieldResolver implement to resolve requests for the QuantileMetric's value field.
-type QuantileMetricValueFieldResolver interface {
-	// Value implements response to request for value field.
-	Value(p graphql.ResolveParams) (float64, error)
-}
-
 //
 // QuantileMetricFieldResolvers represents a collection of methods whose products represent the
 // response values of the 'QuantileMetric' type.
-//
-// == Example SDL
-//
-//   """
-//   Dog's are not hooman.
-//   """
-//   type Dog implements Pet {
-//     "name of this fine beast."
-//     name:  String!
-//
-//     "breed of this silly animal; probably shibe."
-//     breed: [Breed]
-//   }
-//
-// == Example generated interface
-//
-//   // DogResolver ...
-//   type DogFieldResolvers interface {
-//     DogNameFieldResolver
-//     DogBreedFieldResolver
-//
-//     // IsTypeOf is used to determine if a given value is associated with the Dog type
-//     IsTypeOf(interface{}, graphql.IsTypeOfParams) bool
-//   }
-//
-// == Example implementation ...
-//
-//   // DogResolver implements DogFieldResolvers interface
-//   type DogResolver struct {
-//     logger logrus.LogEntry
-//     store interface{
-//       store.BreedStore
-//       store.DogStore
-//     }
-//   }
-//
-//   // Name implements response to request for name field.
-//   func (r *DogResolver) Name(p graphql.ResolveParams) (interface{}, error) {
-//     // ... implementation details ...
-//     dog := p.Source.(DogGetter)
-//     return dog.GetName()
-//   }
-//
-//   // Breed implements response to request for breed field.
-//   func (r *DogResolver) Breed(p graphql.ResolveParams) (interface{}, error) {
-//     // ... implementation details ...
-//     dog := p.Source.(DogGetter)
-//     breed := r.store.GetBreed(dog.GetBreedName())
-//     return breed
-//   }
-//
-//   // IsTypeOf is used to determine if a given value is associated with the Dog type
-//   func (r *DogResolver) IsTypeOf(p graphql.IsTypeOfParams) bool {
-//     // ... implementation details ...
-//     _, ok := p.Value.(DogGetter)
-//     return ok
-//   }
-//
 type QuantileMetricFieldResolvers interface {
-	QuantileMetricQuantileFieldResolver
-	QuantileMetricValueFieldResolver
+	// Quantile implements response to request for 'quantile' field.
+	Quantile(p graphql.ResolveParams) (float64, error)
+
+	// Value implements response to request for 'value' field.
+	Value(p graphql.ResolveParams) (float64, error)
 }
 
 // QuantileMetricAliases implements all methods on QuantileMetricFieldResolvers interface by using reflection to
 // match name of field to a field on the given value. Intent is reduce friction
 // of writing new resolvers by removing all the instances where you would simply
 // have the resolvers method return a field.
-//
-// == Example SDL
-//
-//    type Dog {
-//      name:   String!
-//      weight: Float!
-//      dob:    DateTime
-//      breed:  [Breed]
-//    }
-//
-// == Example generated aliases
-//
-//   type DogAliases struct {}
-//   func (_ DogAliases) Name(p graphql.ResolveParams) (interface{}, error) {
-//     // reflect...
-//   }
-//   func (_ DogAliases) Weight(p graphql.ResolveParams) (interface{}, error) {
-//     // reflect...
-//   }
-//   func (_ DogAliases) Dob(p graphql.ResolveParams) (interface{}, error) {
-//     // reflect...
-//   }
-//   func (_ DogAliases) Breed(p graphql.ResolveParams) (interface{}, error) {
-//     // reflect...
-//   }
-//
-// == Example Implementation
-//
-//   type DogResolver struct { // Implements DogResolver
-//     DogAliases
-//     store store.BreedStore
-//   }
-//
-//   // NOTE:
-//   // All other fields are satisified by DogAliases but since this one
-//   // requires hitting the store we implement it in our resolver.
-//   func (r *DogResolver) Breed(p graphql.ResolveParams) interface{} {
-//     dog := v.(*Dog)
-//     return r.BreedsById(dog.BreedIDs)
-//   }
-//
 type QuantileMetricAliases struct{}
 
 // Quantile implements response to request for 'quantile' field.
@@ -278,14 +170,18 @@ func RegisterQuantileMetric(svc *graphql.Service, impl QuantileMetricFieldResolv
 	svc.RegisterObject(_ObjectTypeQuantileMetricDesc, impl)
 }
 func _ObjTypeQuantileMetricQuantileHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(QuantileMetricQuantileFieldResolver)
+	resolver := impl.(interface {
+		Quantile(p graphql.ResolveParams) (float64, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.Quantile(frp)
 	}
 }
 
 func _ObjTypeQuantileMetricValueHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(QuantileMetricValueFieldResolver)
+	resolver := impl.(interface {
+		Value(p graphql.ResolveParams) (float64, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.Value(frp)
 	}
@@ -332,129 +228,21 @@ var _ObjectTypeQuantileMetricDesc = graphql.ObjectDesc{
 	},
 }
 
-// BucketMetricCumulativeCountFieldResolver implement to resolve requests for the BucketMetric's cumulativeCount field.
-type BucketMetricCumulativeCountFieldResolver interface {
-	// CumulativeCount implements response to request for cumulativeCount field.
-	CumulativeCount(p graphql.ResolveParams) (int, error)
-}
-
-// BucketMetricUpperBoundFieldResolver implement to resolve requests for the BucketMetric's upperBound field.
-type BucketMetricUpperBoundFieldResolver interface {
-	// UpperBound implements response to request for upperBound field.
-	UpperBound(p graphql.ResolveParams) (float64, error)
-}
-
 //
 // BucketMetricFieldResolvers represents a collection of methods whose products represent the
 // response values of the 'BucketMetric' type.
-//
-// == Example SDL
-//
-//   """
-//   Dog's are not hooman.
-//   """
-//   type Dog implements Pet {
-//     "name of this fine beast."
-//     name:  String!
-//
-//     "breed of this silly animal; probably shibe."
-//     breed: [Breed]
-//   }
-//
-// == Example generated interface
-//
-//   // DogResolver ...
-//   type DogFieldResolvers interface {
-//     DogNameFieldResolver
-//     DogBreedFieldResolver
-//
-//     // IsTypeOf is used to determine if a given value is associated with the Dog type
-//     IsTypeOf(interface{}, graphql.IsTypeOfParams) bool
-//   }
-//
-// == Example implementation ...
-//
-//   // DogResolver implements DogFieldResolvers interface
-//   type DogResolver struct {
-//     logger logrus.LogEntry
-//     store interface{
-//       store.BreedStore
-//       store.DogStore
-//     }
-//   }
-//
-//   // Name implements response to request for name field.
-//   func (r *DogResolver) Name(p graphql.ResolveParams) (interface{}, error) {
-//     // ... implementation details ...
-//     dog := p.Source.(DogGetter)
-//     return dog.GetName()
-//   }
-//
-//   // Breed implements response to request for breed field.
-//   func (r *DogResolver) Breed(p graphql.ResolveParams) (interface{}, error) {
-//     // ... implementation details ...
-//     dog := p.Source.(DogGetter)
-//     breed := r.store.GetBreed(dog.GetBreedName())
-//     return breed
-//   }
-//
-//   // IsTypeOf is used to determine if a given value is associated with the Dog type
-//   func (r *DogResolver) IsTypeOf(p graphql.IsTypeOfParams) bool {
-//     // ... implementation details ...
-//     _, ok := p.Value.(DogGetter)
-//     return ok
-//   }
-//
 type BucketMetricFieldResolvers interface {
-	BucketMetricCumulativeCountFieldResolver
-	BucketMetricUpperBoundFieldResolver
+	// CumulativeCount implements response to request for 'cumulativeCount' field.
+	CumulativeCount(p graphql.ResolveParams) (int, error)
+
+	// UpperBound implements response to request for 'upperBound' field.
+	UpperBound(p graphql.ResolveParams) (float64, error)
 }
 
 // BucketMetricAliases implements all methods on BucketMetricFieldResolvers interface by using reflection to
 // match name of field to a field on the given value. Intent is reduce friction
 // of writing new resolvers by removing all the instances where you would simply
 // have the resolvers method return a field.
-//
-// == Example SDL
-//
-//    type Dog {
-//      name:   String!
-//      weight: Float!
-//      dob:    DateTime
-//      breed:  [Breed]
-//    }
-//
-// == Example generated aliases
-//
-//   type DogAliases struct {}
-//   func (_ DogAliases) Name(p graphql.ResolveParams) (interface{}, error) {
-//     // reflect...
-//   }
-//   func (_ DogAliases) Weight(p graphql.ResolveParams) (interface{}, error) {
-//     // reflect...
-//   }
-//   func (_ DogAliases) Dob(p graphql.ResolveParams) (interface{}, error) {
-//     // reflect...
-//   }
-//   func (_ DogAliases) Breed(p graphql.ResolveParams) (interface{}, error) {
-//     // reflect...
-//   }
-//
-// == Example Implementation
-//
-//   type DogResolver struct { // Implements DogResolver
-//     DogAliases
-//     store store.BreedStore
-//   }
-//
-//   // NOTE:
-//   // All other fields are satisified by DogAliases but since this one
-//   // requires hitting the store we implement it in our resolver.
-//   func (r *DogResolver) Breed(p graphql.ResolveParams) interface{} {
-//     dog := v.(*Dog)
-//     return r.BreedsById(dog.BreedIDs)
-//   }
-//
 type BucketMetricAliases struct{}
 
 // CumulativeCount implements response to request for 'cumulativeCount' field.
@@ -491,14 +279,18 @@ func RegisterBucketMetric(svc *graphql.Service, impl BucketMetricFieldResolvers)
 	svc.RegisterObject(_ObjectTypeBucketMetricDesc, impl)
 }
 func _ObjTypeBucketMetricCumulativeCountHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(BucketMetricCumulativeCountFieldResolver)
+	resolver := impl.(interface {
+		CumulativeCount(p graphql.ResolveParams) (int, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.CumulativeCount(frp)
 	}
 }
 
 func _ObjTypeBucketMetricUpperBoundHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(BucketMetricUpperBoundFieldResolver)
+	resolver := impl.(interface {
+		UpperBound(p graphql.ResolveParams) (float64, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.UpperBound(frp)
 	}
@@ -545,136 +337,24 @@ var _ObjectTypeBucketMetricDesc = graphql.ObjectDesc{
 	},
 }
 
-// CounterMetricLabelsFieldResolver implement to resolve requests for the CounterMetric's labels field.
-type CounterMetricLabelsFieldResolver interface {
-	// Labels implements response to request for labels field.
-	Labels(p graphql.ResolveParams) (interface{}, error)
-}
-
-// CounterMetricTimestampFieldResolver implement to resolve requests for the CounterMetric's timestamp field.
-type CounterMetricTimestampFieldResolver interface {
-	// Timestamp implements response to request for timestamp field.
-	Timestamp(p graphql.ResolveParams) (*time.Time, error)
-}
-
-// CounterMetricValueFieldResolver implement to resolve requests for the CounterMetric's value field.
-type CounterMetricValueFieldResolver interface {
-	// Value implements response to request for value field.
-	Value(p graphql.ResolveParams) (float64, error)
-}
-
 //
 // CounterMetricFieldResolvers represents a collection of methods whose products represent the
 // response values of the 'CounterMetric' type.
-//
-// == Example SDL
-//
-//   """
-//   Dog's are not hooman.
-//   """
-//   type Dog implements Pet {
-//     "name of this fine beast."
-//     name:  String!
-//
-//     "breed of this silly animal; probably shibe."
-//     breed: [Breed]
-//   }
-//
-// == Example generated interface
-//
-//   // DogResolver ...
-//   type DogFieldResolvers interface {
-//     DogNameFieldResolver
-//     DogBreedFieldResolver
-//
-//     // IsTypeOf is used to determine if a given value is associated with the Dog type
-//     IsTypeOf(interface{}, graphql.IsTypeOfParams) bool
-//   }
-//
-// == Example implementation ...
-//
-//   // DogResolver implements DogFieldResolvers interface
-//   type DogResolver struct {
-//     logger logrus.LogEntry
-//     store interface{
-//       store.BreedStore
-//       store.DogStore
-//     }
-//   }
-//
-//   // Name implements response to request for name field.
-//   func (r *DogResolver) Name(p graphql.ResolveParams) (interface{}, error) {
-//     // ... implementation details ...
-//     dog := p.Source.(DogGetter)
-//     return dog.GetName()
-//   }
-//
-//   // Breed implements response to request for breed field.
-//   func (r *DogResolver) Breed(p graphql.ResolveParams) (interface{}, error) {
-//     // ... implementation details ...
-//     dog := p.Source.(DogGetter)
-//     breed := r.store.GetBreed(dog.GetBreedName())
-//     return breed
-//   }
-//
-//   // IsTypeOf is used to determine if a given value is associated with the Dog type
-//   func (r *DogResolver) IsTypeOf(p graphql.IsTypeOfParams) bool {
-//     // ... implementation details ...
-//     _, ok := p.Value.(DogGetter)
-//     return ok
-//   }
-//
 type CounterMetricFieldResolvers interface {
-	CounterMetricLabelsFieldResolver
-	CounterMetricTimestampFieldResolver
-	CounterMetricValueFieldResolver
+	// Labels implements response to request for 'labels' field.
+	Labels(p graphql.ResolveParams) (interface{}, error)
+
+	// Timestamp implements response to request for 'timestamp' field.
+	Timestamp(p graphql.ResolveParams) (*time.Time, error)
+
+	// Value implements response to request for 'value' field.
+	Value(p graphql.ResolveParams) (float64, error)
 }
 
 // CounterMetricAliases implements all methods on CounterMetricFieldResolvers interface by using reflection to
 // match name of field to a field on the given value. Intent is reduce friction
 // of writing new resolvers by removing all the instances where you would simply
 // have the resolvers method return a field.
-//
-// == Example SDL
-//
-//    type Dog {
-//      name:   String!
-//      weight: Float!
-//      dob:    DateTime
-//      breed:  [Breed]
-//    }
-//
-// == Example generated aliases
-//
-//   type DogAliases struct {}
-//   func (_ DogAliases) Name(p graphql.ResolveParams) (interface{}, error) {
-//     // reflect...
-//   }
-//   func (_ DogAliases) Weight(p graphql.ResolveParams) (interface{}, error) {
-//     // reflect...
-//   }
-//   func (_ DogAliases) Dob(p graphql.ResolveParams) (interface{}, error) {
-//     // reflect...
-//   }
-//   func (_ DogAliases) Breed(p graphql.ResolveParams) (interface{}, error) {
-//     // reflect...
-//   }
-//
-// == Example Implementation
-//
-//   type DogResolver struct { // Implements DogResolver
-//     DogAliases
-//     store store.BreedStore
-//   }
-//
-//   // NOTE:
-//   // All other fields are satisified by DogAliases but since this one
-//   // requires hitting the store we implement it in our resolver.
-//   func (r *DogResolver) Breed(p graphql.ResolveParams) interface{} {
-//     dog := v.(*Dog)
-//     return r.BreedsById(dog.BreedIDs)
-//   }
-//
 type CounterMetricAliases struct{}
 
 // Labels implements response to request for 'labels' field.
@@ -717,21 +397,27 @@ func RegisterCounterMetric(svc *graphql.Service, impl CounterMetricFieldResolver
 	svc.RegisterObject(_ObjectTypeCounterMetricDesc, impl)
 }
 func _ObjTypeCounterMetricLabelsHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(CounterMetricLabelsFieldResolver)
+	resolver := impl.(interface {
+		Labels(p graphql.ResolveParams) (interface{}, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.Labels(frp)
 	}
 }
 
 func _ObjTypeCounterMetricTimestampHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(CounterMetricTimestampFieldResolver)
+	resolver := impl.(interface {
+		Timestamp(p graphql.ResolveParams) (*time.Time, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.Timestamp(frp)
 	}
 }
 
 func _ObjTypeCounterMetricValueHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(CounterMetricValueFieldResolver)
+	resolver := impl.(interface {
+		Value(p graphql.ResolveParams) (float64, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.Value(frp)
 	}
@@ -787,136 +473,24 @@ var _ObjectTypeCounterMetricDesc = graphql.ObjectDesc{
 	},
 }
 
-// GaugeMetricLabelsFieldResolver implement to resolve requests for the GaugeMetric's labels field.
-type GaugeMetricLabelsFieldResolver interface {
-	// Labels implements response to request for labels field.
-	Labels(p graphql.ResolveParams) (interface{}, error)
-}
-
-// GaugeMetricTimestampFieldResolver implement to resolve requests for the GaugeMetric's timestamp field.
-type GaugeMetricTimestampFieldResolver interface {
-	// Timestamp implements response to request for timestamp field.
-	Timestamp(p graphql.ResolveParams) (*time.Time, error)
-}
-
-// GaugeMetricValueFieldResolver implement to resolve requests for the GaugeMetric's value field.
-type GaugeMetricValueFieldResolver interface {
-	// Value implements response to request for value field.
-	Value(p graphql.ResolveParams) (float64, error)
-}
-
 //
 // GaugeMetricFieldResolvers represents a collection of methods whose products represent the
 // response values of the 'GaugeMetric' type.
-//
-// == Example SDL
-//
-//   """
-//   Dog's are not hooman.
-//   """
-//   type Dog implements Pet {
-//     "name of this fine beast."
-//     name:  String!
-//
-//     "breed of this silly animal; probably shibe."
-//     breed: [Breed]
-//   }
-//
-// == Example generated interface
-//
-//   // DogResolver ...
-//   type DogFieldResolvers interface {
-//     DogNameFieldResolver
-//     DogBreedFieldResolver
-//
-//     // IsTypeOf is used to determine if a given value is associated with the Dog type
-//     IsTypeOf(interface{}, graphql.IsTypeOfParams) bool
-//   }
-//
-// == Example implementation ...
-//
-//   // DogResolver implements DogFieldResolvers interface
-//   type DogResolver struct {
-//     logger logrus.LogEntry
-//     store interface{
-//       store.BreedStore
-//       store.DogStore
-//     }
-//   }
-//
-//   // Name implements response to request for name field.
-//   func (r *DogResolver) Name(p graphql.ResolveParams) (interface{}, error) {
-//     // ... implementation details ...
-//     dog := p.Source.(DogGetter)
-//     return dog.GetName()
-//   }
-//
-//   // Breed implements response to request for breed field.
-//   func (r *DogResolver) Breed(p graphql.ResolveParams) (interface{}, error) {
-//     // ... implementation details ...
-//     dog := p.Source.(DogGetter)
-//     breed := r.store.GetBreed(dog.GetBreedName())
-//     return breed
-//   }
-//
-//   // IsTypeOf is used to determine if a given value is associated with the Dog type
-//   func (r *DogResolver) IsTypeOf(p graphql.IsTypeOfParams) bool {
-//     // ... implementation details ...
-//     _, ok := p.Value.(DogGetter)
-//     return ok
-//   }
-//
 type GaugeMetricFieldResolvers interface {
-	GaugeMetricLabelsFieldResolver
-	GaugeMetricTimestampFieldResolver
-	GaugeMetricValueFieldResolver
+	// Labels implements response to request for 'labels' field.
+	Labels(p graphql.ResolveParams) (interface{}, error)
+
+	// Timestamp implements response to request for 'timestamp' field.
+	Timestamp(p graphql.ResolveParams) (*time.Time, error)
+
+	// Value implements response to request for 'value' field.
+	Value(p graphql.ResolveParams) (float64, error)
 }
 
 // GaugeMetricAliases implements all methods on GaugeMetricFieldResolvers interface by using reflection to
 // match name of field to a field on the given value. Intent is reduce friction
 // of writing new resolvers by removing all the instances where you would simply
 // have the resolvers method return a field.
-//
-// == Example SDL
-//
-//    type Dog {
-//      name:   String!
-//      weight: Float!
-//      dob:    DateTime
-//      breed:  [Breed]
-//    }
-//
-// == Example generated aliases
-//
-//   type DogAliases struct {}
-//   func (_ DogAliases) Name(p graphql.ResolveParams) (interface{}, error) {
-//     // reflect...
-//   }
-//   func (_ DogAliases) Weight(p graphql.ResolveParams) (interface{}, error) {
-//     // reflect...
-//   }
-//   func (_ DogAliases) Dob(p graphql.ResolveParams) (interface{}, error) {
-//     // reflect...
-//   }
-//   func (_ DogAliases) Breed(p graphql.ResolveParams) (interface{}, error) {
-//     // reflect...
-//   }
-//
-// == Example Implementation
-//
-//   type DogResolver struct { // Implements DogResolver
-//     DogAliases
-//     store store.BreedStore
-//   }
-//
-//   // NOTE:
-//   // All other fields are satisified by DogAliases but since this one
-//   // requires hitting the store we implement it in our resolver.
-//   func (r *DogResolver) Breed(p graphql.ResolveParams) interface{} {
-//     dog := v.(*Dog)
-//     return r.BreedsById(dog.BreedIDs)
-//   }
-//
 type GaugeMetricAliases struct{}
 
 // Labels implements response to request for 'labels' field.
@@ -959,21 +533,27 @@ func RegisterGaugeMetric(svc *graphql.Service, impl GaugeMetricFieldResolvers) {
 	svc.RegisterObject(_ObjectTypeGaugeMetricDesc, impl)
 }
 func _ObjTypeGaugeMetricLabelsHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(GaugeMetricLabelsFieldResolver)
+	resolver := impl.(interface {
+		Labels(p graphql.ResolveParams) (interface{}, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.Labels(frp)
 	}
 }
 
 func _ObjTypeGaugeMetricTimestampHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(GaugeMetricTimestampFieldResolver)
+	resolver := impl.(interface {
+		Timestamp(p graphql.ResolveParams) (*time.Time, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.Timestamp(frp)
 	}
 }
 
 func _ObjTypeGaugeMetricValueHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(GaugeMetricValueFieldResolver)
+	resolver := impl.(interface {
+		Value(p graphql.ResolveParams) (float64, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.Value(frp)
 	}
@@ -1029,150 +609,30 @@ var _ObjectTypeGaugeMetricDesc = graphql.ObjectDesc{
 	},
 }
 
-// SummaryMetricLabelsFieldResolver implement to resolve requests for the SummaryMetric's labels field.
-type SummaryMetricLabelsFieldResolver interface {
-	// Labels implements response to request for labels field.
-	Labels(p graphql.ResolveParams) (interface{}, error)
-}
-
-// SummaryMetricTimestampFieldResolver implement to resolve requests for the SummaryMetric's timestamp field.
-type SummaryMetricTimestampFieldResolver interface {
-	// Timestamp implements response to request for timestamp field.
-	Timestamp(p graphql.ResolveParams) (*time.Time, error)
-}
-
-// SummaryMetricSampleCountFieldResolver implement to resolve requests for the SummaryMetric's sampleCount field.
-type SummaryMetricSampleCountFieldResolver interface {
-	// SampleCount implements response to request for sampleCount field.
-	SampleCount(p graphql.ResolveParams) (int, error)
-}
-
-// SummaryMetricSampleSumFieldResolver implement to resolve requests for the SummaryMetric's sampleSum field.
-type SummaryMetricSampleSumFieldResolver interface {
-	// SampleSum implements response to request for sampleSum field.
-	SampleSum(p graphql.ResolveParams) (float64, error)
-}
-
-// SummaryMetricQuantileFieldResolver implement to resolve requests for the SummaryMetric's quantile field.
-type SummaryMetricQuantileFieldResolver interface {
-	// Quantile implements response to request for quantile field.
-	Quantile(p graphql.ResolveParams) (interface{}, error)
-}
-
 //
 // SummaryMetricFieldResolvers represents a collection of methods whose products represent the
 // response values of the 'SummaryMetric' type.
-//
-// == Example SDL
-//
-//   """
-//   Dog's are not hooman.
-//   """
-//   type Dog implements Pet {
-//     "name of this fine beast."
-//     name:  String!
-//
-//     "breed of this silly animal; probably shibe."
-//     breed: [Breed]
-//   }
-//
-// == Example generated interface
-//
-//   // DogResolver ...
-//   type DogFieldResolvers interface {
-//     DogNameFieldResolver
-//     DogBreedFieldResolver
-//
-//     // IsTypeOf is used to determine if a given value is associated with the Dog type
-//     IsTypeOf(interface{}, graphql.IsTypeOfParams) bool
-//   }
-//
-// == Example implementation ...
-//
-//   // DogResolver implements DogFieldResolvers interface
-//   type DogResolver struct {
-//     logger logrus.LogEntry
-//     store interface{
-//       store.BreedStore
-//       store.DogStore
-//     }
-//   }
-//
-//   // Name implements response to request for name field.
-//   func (r *DogResolver) Name(p graphql.ResolveParams) (interface{}, error) {
-//     // ... implementation details ...
-//     dog := p.Source.(DogGetter)
-//     return dog.GetName()
-//   }
-//
-//   // Breed implements response to request for breed field.
-//   func (r *DogResolver) Breed(p graphql.ResolveParams) (interface{}, error) {
-//     // ... implementation details ...
-//     dog := p.Source.(DogGetter)
-//     breed := r.store.GetBreed(dog.GetBreedName())
-//     return breed
-//   }
-//
-//   // IsTypeOf is used to determine if a given value is associated with the Dog type
-//   func (r *DogResolver) IsTypeOf(p graphql.IsTypeOfParams) bool {
-//     // ... implementation details ...
-//     _, ok := p.Value.(DogGetter)
-//     return ok
-//   }
-//
 type SummaryMetricFieldResolvers interface {
-	SummaryMetricLabelsFieldResolver
-	SummaryMetricTimestampFieldResolver
-	SummaryMetricSampleCountFieldResolver
-	SummaryMetricSampleSumFieldResolver
-	SummaryMetricQuantileFieldResolver
+	// Labels implements response to request for 'labels' field.
+	Labels(p graphql.ResolveParams) (interface{}, error)
+
+	// Timestamp implements response to request for 'timestamp' field.
+	Timestamp(p graphql.ResolveParams) (*time.Time, error)
+
+	// SampleCount implements response to request for 'sampleCount' field.
+	SampleCount(p graphql.ResolveParams) (int, error)
+
+	// SampleSum implements response to request for 'sampleSum' field.
+	SampleSum(p graphql.ResolveParams) (float64, error)
+
+	// Quantile implements response to request for 'quantile' field.
+	Quantile(p graphql.ResolveParams) (interface{}, error)
 }
 
 // SummaryMetricAliases implements all methods on SummaryMetricFieldResolvers interface by using reflection to
 // match name of field to a field on the given value. Intent is reduce friction
 // of writing new resolvers by removing all the instances where you would simply
 // have the resolvers method return a field.
-//
-// == Example SDL
-//
-//    type Dog {
-//      name:   String!
-//      weight: Float!
-//      dob:    DateTime
-//      breed:  [Breed]
-//    }
-//
-// == Example generated aliases
-//
-//   type DogAliases struct {}
-//   func (_ DogAliases) Name(p graphql.ResolveParams) (interface{}, error) {
-//     // reflect...
-//   }
-//   func (_ DogAliases) Weight(p graphql.ResolveParams) (interface{}, error) {
-//     // reflect...
-//   }
-//   func (_ DogAliases) Dob(p graphql.ResolveParams) (interface{}, error) {
-//     // reflect...
-//   }
-//   func (_ DogAliases) Breed(p graphql.ResolveParams) (interface{}, error) {
-//     // reflect...
-//   }
-//
-// == Example Implementation
-//
-//   type DogResolver struct { // Implements DogResolver
-//     DogAliases
-//     store store.BreedStore
-//   }
-//
-//   // NOTE:
-//   // All other fields are satisified by DogAliases but since this one
-//   // requires hitting the store we implement it in our resolver.
-//   func (r *DogResolver) Breed(p graphql.ResolveParams) interface{} {
-//     dog := v.(*Dog)
-//     return r.BreedsById(dog.BreedIDs)
-//   }
-//
 type SummaryMetricAliases struct{}
 
 // Labels implements response to request for 'labels' field.
@@ -1234,35 +694,45 @@ func RegisterSummaryMetric(svc *graphql.Service, impl SummaryMetricFieldResolver
 	svc.RegisterObject(_ObjectTypeSummaryMetricDesc, impl)
 }
 func _ObjTypeSummaryMetricLabelsHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(SummaryMetricLabelsFieldResolver)
+	resolver := impl.(interface {
+		Labels(p graphql.ResolveParams) (interface{}, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.Labels(frp)
 	}
 }
 
 func _ObjTypeSummaryMetricTimestampHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(SummaryMetricTimestampFieldResolver)
+	resolver := impl.(interface {
+		Timestamp(p graphql.ResolveParams) (*time.Time, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.Timestamp(frp)
 	}
 }
 
 func _ObjTypeSummaryMetricSampleCountHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(SummaryMetricSampleCountFieldResolver)
+	resolver := impl.(interface {
+		SampleCount(p graphql.ResolveParams) (int, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.SampleCount(frp)
 	}
 }
 
 func _ObjTypeSummaryMetricSampleSumHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(SummaryMetricSampleSumFieldResolver)
+	resolver := impl.(interface {
+		SampleSum(p graphql.ResolveParams) (float64, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.SampleSum(frp)
 	}
 }
 
 func _ObjTypeSummaryMetricQuantileHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(SummaryMetricQuantileFieldResolver)
+	resolver := impl.(interface {
+		Quantile(p graphql.ResolveParams) (interface{}, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.Quantile(frp)
 	}
@@ -1334,136 +804,24 @@ var _ObjectTypeSummaryMetricDesc = graphql.ObjectDesc{
 	},
 }
 
-// UntypedMetricLabelsFieldResolver implement to resolve requests for the UntypedMetric's labels field.
-type UntypedMetricLabelsFieldResolver interface {
-	// Labels implements response to request for labels field.
-	Labels(p graphql.ResolveParams) (interface{}, error)
-}
-
-// UntypedMetricTimestampFieldResolver implement to resolve requests for the UntypedMetric's timestamp field.
-type UntypedMetricTimestampFieldResolver interface {
-	// Timestamp implements response to request for timestamp field.
-	Timestamp(p graphql.ResolveParams) (*time.Time, error)
-}
-
-// UntypedMetricValueFieldResolver implement to resolve requests for the UntypedMetric's value field.
-type UntypedMetricValueFieldResolver interface {
-	// Value implements response to request for value field.
-	Value(p graphql.ResolveParams) (float64, error)
-}
-
 //
 // UntypedMetricFieldResolvers represents a collection of methods whose products represent the
 // response values of the 'UntypedMetric' type.
-//
-// == Example SDL
-//
-//   """
-//   Dog's are not hooman.
-//   """
-//   type Dog implements Pet {
-//     "name of this fine beast."
-//     name:  String!
-//
-//     "breed of this silly animal; probably shibe."
-//     breed: [Breed]
-//   }
-//
-// == Example generated interface
-//
-//   // DogResolver ...
-//   type DogFieldResolvers interface {
-//     DogNameFieldResolver
-//     DogBreedFieldResolver
-//
-//     // IsTypeOf is used to determine if a given value is associated with the Dog type
-//     IsTypeOf(interface{}, graphql.IsTypeOfParams) bool
-//   }
-//
-// == Example implementation ...
-//
-//   // DogResolver implements DogFieldResolvers interface
-//   type DogResolver struct {
-//     logger logrus.LogEntry
-//     store interface{
-//       store.BreedStore
-//       store.DogStore
-//     }
-//   }
-//
-//   // Name implements response to request for name field.
-//   func (r *DogResolver) Name(p graphql.ResolveParams) (interface{}, error) {
-//     // ... implementation details ...
-//     dog := p.Source.(DogGetter)
-//     return dog.GetName()
-//   }
-//
-//   // Breed implements response to request for breed field.
-//   func (r *DogResolver) Breed(p graphql.ResolveParams) (interface{}, error) {
-//     // ... implementation details ...
-//     dog := p.Source.(DogGetter)
-//     breed := r.store.GetBreed(dog.GetBreedName())
-//     return breed
-//   }
-//
-//   // IsTypeOf is used to determine if a given value is associated with the Dog type
-//   func (r *DogResolver) IsTypeOf(p graphql.IsTypeOfParams) bool {
-//     // ... implementation details ...
-//     _, ok := p.Value.(DogGetter)
-//     return ok
-//   }
-//
 type UntypedMetricFieldResolvers interface {
-	UntypedMetricLabelsFieldResolver
-	UntypedMetricTimestampFieldResolver
-	UntypedMetricValueFieldResolver
+	// Labels implements response to request for 'labels' field.
+	Labels(p graphql.ResolveParams) (interface{}, error)
+
+	// Timestamp implements response to request for 'timestamp' field.
+	Timestamp(p graphql.ResolveParams) (*time.Time, error)
+
+	// Value implements response to request for 'value' field.
+	Value(p graphql.ResolveParams) (float64, error)
 }
 
 // UntypedMetricAliases implements all methods on UntypedMetricFieldResolvers interface by using reflection to
 // match name of field to a field on the given value. Intent is reduce friction
 // of writing new resolvers by removing all the instances where you would simply
 // have the resolvers method return a field.
-//
-// == Example SDL
-//
-//    type Dog {
-//      name:   String!
-//      weight: Float!
-//      dob:    DateTime
-//      breed:  [Breed]
-//    }
-//
-// == Example generated aliases
-//
-//   type DogAliases struct {}
-//   func (_ DogAliases) Name(p graphql.ResolveParams) (interface{}, error) {
-//     // reflect...
-//   }
-//   func (_ DogAliases) Weight(p graphql.ResolveParams) (interface{}, error) {
-//     // reflect...
-//   }
-//   func (_ DogAliases) Dob(p graphql.ResolveParams) (interface{}, error) {
-//     // reflect...
-//   }
-//   func (_ DogAliases) Breed(p graphql.ResolveParams) (interface{}, error) {
-//     // reflect...
-//   }
-//
-// == Example Implementation
-//
-//   type DogResolver struct { // Implements DogResolver
-//     DogAliases
-//     store store.BreedStore
-//   }
-//
-//   // NOTE:
-//   // All other fields are satisified by DogAliases but since this one
-//   // requires hitting the store we implement it in our resolver.
-//   func (r *DogResolver) Breed(p graphql.ResolveParams) interface{} {
-//     dog := v.(*Dog)
-//     return r.BreedsById(dog.BreedIDs)
-//   }
-//
 type UntypedMetricAliases struct{}
 
 // Labels implements response to request for 'labels' field.
@@ -1506,21 +864,27 @@ func RegisterUntypedMetric(svc *graphql.Service, impl UntypedMetricFieldResolver
 	svc.RegisterObject(_ObjectTypeUntypedMetricDesc, impl)
 }
 func _ObjTypeUntypedMetricLabelsHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(UntypedMetricLabelsFieldResolver)
+	resolver := impl.(interface {
+		Labels(p graphql.ResolveParams) (interface{}, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.Labels(frp)
 	}
 }
 
 func _ObjTypeUntypedMetricTimestampHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(UntypedMetricTimestampFieldResolver)
+	resolver := impl.(interface {
+		Timestamp(p graphql.ResolveParams) (*time.Time, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.Timestamp(frp)
 	}
 }
 
 func _ObjTypeUntypedMetricValueHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(UntypedMetricValueFieldResolver)
+	resolver := impl.(interface {
+		Value(p graphql.ResolveParams) (float64, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.Value(frp)
 	}
@@ -1576,150 +940,30 @@ var _ObjectTypeUntypedMetricDesc = graphql.ObjectDesc{
 	},
 }
 
-// HistogramMetricLabelsFieldResolver implement to resolve requests for the HistogramMetric's labels field.
-type HistogramMetricLabelsFieldResolver interface {
-	// Labels implements response to request for labels field.
-	Labels(p graphql.ResolveParams) (interface{}, error)
-}
-
-// HistogramMetricTimestampFieldResolver implement to resolve requests for the HistogramMetric's timestamp field.
-type HistogramMetricTimestampFieldResolver interface {
-	// Timestamp implements response to request for timestamp field.
-	Timestamp(p graphql.ResolveParams) (*time.Time, error)
-}
-
-// HistogramMetricSampleCountFieldResolver implement to resolve requests for the HistogramMetric's sampleCount field.
-type HistogramMetricSampleCountFieldResolver interface {
-	// SampleCount implements response to request for sampleCount field.
-	SampleCount(p graphql.ResolveParams) (int, error)
-}
-
-// HistogramMetricSampleSumFieldResolver implement to resolve requests for the HistogramMetric's sampleSum field.
-type HistogramMetricSampleSumFieldResolver interface {
-	// SampleSum implements response to request for sampleSum field.
-	SampleSum(p graphql.ResolveParams) (float64, error)
-}
-
-// HistogramMetricBucketFieldResolver implement to resolve requests for the HistogramMetric's bucket field.
-type HistogramMetricBucketFieldResolver interface {
-	// Bucket implements response to request for bucket field.
-	Bucket(p graphql.ResolveParams) (interface{}, error)
-}
-
 //
 // HistogramMetricFieldResolvers represents a collection of methods whose products represent the
 // response values of the 'HistogramMetric' type.
-//
-// == Example SDL
-//
-//   """
-//   Dog's are not hooman.
-//   """
-//   type Dog implements Pet {
-//     "name of this fine beast."
-//     name:  String!
-//
-//     "breed of this silly animal; probably shibe."
-//     breed: [Breed]
-//   }
-//
-// == Example generated interface
-//
-//   // DogResolver ...
-//   type DogFieldResolvers interface {
-//     DogNameFieldResolver
-//     DogBreedFieldResolver
-//
-//     // IsTypeOf is used to determine if a given value is associated with the Dog type
-//     IsTypeOf(interface{}, graphql.IsTypeOfParams) bool
-//   }
-//
-// == Example implementation ...
-//
-//   // DogResolver implements DogFieldResolvers interface
-//   type DogResolver struct {
-//     logger logrus.LogEntry
-//     store interface{
-//       store.BreedStore
-//       store.DogStore
-//     }
-//   }
-//
-//   // Name implements response to request for name field.
-//   func (r *DogResolver) Name(p graphql.ResolveParams) (interface{}, error) {
-//     // ... implementation details ...
-//     dog := p.Source.(DogGetter)
-//     return dog.GetName()
-//   }
-//
-//   // Breed implements response to request for breed field.
-//   func (r *DogResolver) Breed(p graphql.ResolveParams) (interface{}, error) {
-//     // ... implementation details ...
-//     dog := p.Source.(DogGetter)
-//     breed := r.store.GetBreed(dog.GetBreedName())
-//     return breed
-//   }
-//
-//   // IsTypeOf is used to determine if a given value is associated with the Dog type
-//   func (r *DogResolver) IsTypeOf(p graphql.IsTypeOfParams) bool {
-//     // ... implementation details ...
-//     _, ok := p.Value.(DogGetter)
-//     return ok
-//   }
-//
 type HistogramMetricFieldResolvers interface {
-	HistogramMetricLabelsFieldResolver
-	HistogramMetricTimestampFieldResolver
-	HistogramMetricSampleCountFieldResolver
-	HistogramMetricSampleSumFieldResolver
-	HistogramMetricBucketFieldResolver
+	// Labels implements response to request for 'labels' field.
+	Labels(p graphql.ResolveParams) (interface{}, error)
+
+	// Timestamp implements response to request for 'timestamp' field.
+	Timestamp(p graphql.ResolveParams) (*time.Time, error)
+
+	// SampleCount implements response to request for 'sampleCount' field.
+	SampleCount(p graphql.ResolveParams) (int, error)
+
+	// SampleSum implements response to request for 'sampleSum' field.
+	SampleSum(p graphql.ResolveParams) (float64, error)
+
+	// Bucket implements response to request for 'bucket' field.
+	Bucket(p graphql.ResolveParams) (interface{}, error)
 }
 
 // HistogramMetricAliases implements all methods on HistogramMetricFieldResolvers interface by using reflection to
 // match name of field to a field on the given value. Intent is reduce friction
 // of writing new resolvers by removing all the instances where you would simply
 // have the resolvers method return a field.
-//
-// == Example SDL
-//
-//    type Dog {
-//      name:   String!
-//      weight: Float!
-//      dob:    DateTime
-//      breed:  [Breed]
-//    }
-//
-// == Example generated aliases
-//
-//   type DogAliases struct {}
-//   func (_ DogAliases) Name(p graphql.ResolveParams) (interface{}, error) {
-//     // reflect...
-//   }
-//   func (_ DogAliases) Weight(p graphql.ResolveParams) (interface{}, error) {
-//     // reflect...
-//   }
-//   func (_ DogAliases) Dob(p graphql.ResolveParams) (interface{}, error) {
-//     // reflect...
-//   }
-//   func (_ DogAliases) Breed(p graphql.ResolveParams) (interface{}, error) {
-//     // reflect...
-//   }
-//
-// == Example Implementation
-//
-//   type DogResolver struct { // Implements DogResolver
-//     DogAliases
-//     store store.BreedStore
-//   }
-//
-//   // NOTE:
-//   // All other fields are satisified by DogAliases but since this one
-//   // requires hitting the store we implement it in our resolver.
-//   func (r *DogResolver) Breed(p graphql.ResolveParams) interface{} {
-//     dog := v.(*Dog)
-//     return r.BreedsById(dog.BreedIDs)
-//   }
-//
 type HistogramMetricAliases struct{}
 
 // Labels implements response to request for 'labels' field.
@@ -1781,35 +1025,45 @@ func RegisterHistogramMetric(svc *graphql.Service, impl HistogramMetricFieldReso
 	svc.RegisterObject(_ObjectTypeHistogramMetricDesc, impl)
 }
 func _ObjTypeHistogramMetricLabelsHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(HistogramMetricLabelsFieldResolver)
+	resolver := impl.(interface {
+		Labels(p graphql.ResolveParams) (interface{}, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.Labels(frp)
 	}
 }
 
 func _ObjTypeHistogramMetricTimestampHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(HistogramMetricTimestampFieldResolver)
+	resolver := impl.(interface {
+		Timestamp(p graphql.ResolveParams) (*time.Time, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.Timestamp(frp)
 	}
 }
 
 func _ObjTypeHistogramMetricSampleCountHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(HistogramMetricSampleCountFieldResolver)
+	resolver := impl.(interface {
+		SampleCount(p graphql.ResolveParams) (int, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.SampleCount(frp)
 	}
 }
 
 func _ObjTypeHistogramMetricSampleSumHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(HistogramMetricSampleSumFieldResolver)
+	resolver := impl.(interface {
+		SampleSum(p graphql.ResolveParams) (float64, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.SampleSum(frp)
 	}
 }
 
 func _ObjTypeHistogramMetricBucketHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(HistogramMetricBucketFieldResolver)
+	resolver := impl.(interface {
+		Bucket(p graphql.ResolveParams) (interface{}, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.Bucket(frp)
 	}
@@ -1881,143 +1135,27 @@ var _ObjectTypeHistogramMetricDesc = graphql.ObjectDesc{
 	},
 }
 
-// MetricFamilyNameFieldResolver implement to resolve requests for the MetricFamily's name field.
-type MetricFamilyNameFieldResolver interface {
-	// Name implements response to request for name field.
-	Name(p graphql.ResolveParams) (string, error)
-}
-
-// MetricFamilyHelpFieldResolver implement to resolve requests for the MetricFamily's help field.
-type MetricFamilyHelpFieldResolver interface {
-	// Help implements response to request for help field.
-	Help(p graphql.ResolveParams) (string, error)
-}
-
-// MetricFamilyTypeFieldResolver implement to resolve requests for the MetricFamily's type field.
-type MetricFamilyTypeFieldResolver interface {
-	// Type implements response to request for type field.
-	Type(p graphql.ResolveParams) (MetricKind, error)
-}
-
-// MetricFamilyMetricFieldResolver implement to resolve requests for the MetricFamily's metric field.
-type MetricFamilyMetricFieldResolver interface {
-	// Metric implements response to request for metric field.
-	Metric(p graphql.ResolveParams) (interface{}, error)
-}
-
 //
 // MetricFamilyFieldResolvers represents a collection of methods whose products represent the
 // response values of the 'MetricFamily' type.
-//
-// == Example SDL
-//
-//   """
-//   Dog's are not hooman.
-//   """
-//   type Dog implements Pet {
-//     "name of this fine beast."
-//     name:  String!
-//
-//     "breed of this silly animal; probably shibe."
-//     breed: [Breed]
-//   }
-//
-// == Example generated interface
-//
-//   // DogResolver ...
-//   type DogFieldResolvers interface {
-//     DogNameFieldResolver
-//     DogBreedFieldResolver
-//
-//     // IsTypeOf is used to determine if a given value is associated with the Dog type
-//     IsTypeOf(interface{}, graphql.IsTypeOfParams) bool
-//   }
-//
-// == Example implementation ...
-//
-//   // DogResolver implements DogFieldResolvers interface
-//   type DogResolver struct {
-//     logger logrus.LogEntry
-//     store interface{
-//       store.BreedStore
-//       store.DogStore
-//     }
-//   }
-//
-//   // Name implements response to request for name field.
-//   func (r *DogResolver) Name(p graphql.ResolveParams) (interface{}, error) {
-//     // ... implementation details ...
-//     dog := p.Source.(DogGetter)
-//     return dog.GetName()
-//   }
-//
-//   // Breed implements response to request for breed field.
-//   func (r *DogResolver) Breed(p graphql.ResolveParams) (interface{}, error) {
-//     // ... implementation details ...
-//     dog := p.Source.(DogGetter)
-//     breed := r.store.GetBreed(dog.GetBreedName())
-//     return breed
-//   }
-//
-//   // IsTypeOf is used to determine if a given value is associated with the Dog type
-//   func (r *DogResolver) IsTypeOf(p graphql.IsTypeOfParams) bool {
-//     // ... implementation details ...
-//     _, ok := p.Value.(DogGetter)
-//     return ok
-//   }
-//
 type MetricFamilyFieldResolvers interface {
-	MetricFamilyNameFieldResolver
-	MetricFamilyHelpFieldResolver
-	MetricFamilyTypeFieldResolver
-	MetricFamilyMetricFieldResolver
+	// Name implements response to request for 'name' field.
+	Name(p graphql.ResolveParams) (string, error)
+
+	// Help implements response to request for 'help' field.
+	Help(p graphql.ResolveParams) (string, error)
+
+	// Type implements response to request for 'type' field.
+	Type(p graphql.ResolveParams) (MetricKind, error)
+
+	// Metric implements response to request for 'metric' field.
+	Metric(p graphql.ResolveParams) (interface{}, error)
 }
 
 // MetricFamilyAliases implements all methods on MetricFamilyFieldResolvers interface by using reflection to
 // match name of field to a field on the given value. Intent is reduce friction
 // of writing new resolvers by removing all the instances where you would simply
 // have the resolvers method return a field.
-//
-// == Example SDL
-//
-//    type Dog {
-//      name:   String!
-//      weight: Float!
-//      dob:    DateTime
-//      breed:  [Breed]
-//    }
-//
-// == Example generated aliases
-//
-//   type DogAliases struct {}
-//   func (_ DogAliases) Name(p graphql.ResolveParams) (interface{}, error) {
-//     // reflect...
-//   }
-//   func (_ DogAliases) Weight(p graphql.ResolveParams) (interface{}, error) {
-//     // reflect...
-//   }
-//   func (_ DogAliases) Dob(p graphql.ResolveParams) (interface{}, error) {
-//     // reflect...
-//   }
-//   func (_ DogAliases) Breed(p graphql.ResolveParams) (interface{}, error) {
-//     // reflect...
-//   }
-//
-// == Example Implementation
-//
-//   type DogResolver struct { // Implements DogResolver
-//     DogAliases
-//     store store.BreedStore
-//   }
-//
-//   // NOTE:
-//   // All other fields are satisified by DogAliases but since this one
-//   // requires hitting the store we implement it in our resolver.
-//   func (r *DogResolver) Breed(p graphql.ResolveParams) interface{} {
-//     dog := v.(*Dog)
-//     return r.BreedsById(dog.BreedIDs)
-//   }
-//
 type MetricFamilyAliases struct{}
 
 // Name implements response to request for 'name' field.
@@ -2073,21 +1211,27 @@ func RegisterMetricFamily(svc *graphql.Service, impl MetricFamilyFieldResolvers)
 	svc.RegisterObject(_ObjectTypeMetricFamilyDesc, impl)
 }
 func _ObjTypeMetricFamilyNameHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(MetricFamilyNameFieldResolver)
+	resolver := impl.(interface {
+		Name(p graphql.ResolveParams) (string, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.Name(frp)
 	}
 }
 
 func _ObjTypeMetricFamilyHelpHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(MetricFamilyHelpFieldResolver)
+	resolver := impl.(interface {
+		Help(p graphql.ResolveParams) (string, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.Help(frp)
 	}
 }
 
 func _ObjTypeMetricFamilyTypeHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(MetricFamilyTypeFieldResolver)
+	resolver := impl.(interface {
+		Type(p graphql.ResolveParams) (MetricKind, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 
 		val, err := resolver.Type(frp)
@@ -2096,7 +1240,9 @@ func _ObjTypeMetricFamilyTypeHandler(impl interface{}) graphql1.FieldResolveFn {
 }
 
 func _ObjTypeMetricFamilyMetricHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(MetricFamilyMetricFieldResolver)
+	resolver := impl.(interface {
+		Metric(p graphql.ResolveParams) (interface{}, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.Metric(frp)
 	}

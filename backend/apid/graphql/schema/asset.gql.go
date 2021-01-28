@@ -8,171 +8,39 @@ import (
 	graphql "github.com/sensu/sensu-go/graphql"
 )
 
-// AssetIDFieldResolver implement to resolve requests for the Asset's id field.
-type AssetIDFieldResolver interface {
-	// ID implements response to request for id field.
-	ID(p graphql.ResolveParams) (string, error)
-}
-
-// AssetNamespaceFieldResolver implement to resolve requests for the Asset's namespace field.
-type AssetNamespaceFieldResolver interface {
-	// Namespace implements response to request for namespace field.
-	Namespace(p graphql.ResolveParams) (string, error)
-}
-
-// AssetNameFieldResolver implement to resolve requests for the Asset's name field.
-type AssetNameFieldResolver interface {
-	// Name implements response to request for name field.
-	Name(p graphql.ResolveParams) (string, error)
-}
-
-// AssetMetadataFieldResolver implement to resolve requests for the Asset's metadata field.
-type AssetMetadataFieldResolver interface {
-	// Metadata implements response to request for metadata field.
-	Metadata(p graphql.ResolveParams) (interface{}, error)
-}
-
-// AssetUrlFieldResolver implement to resolve requests for the Asset's url field.
-type AssetUrlFieldResolver interface {
-	// Url implements response to request for url field.
-	Url(p graphql.ResolveParams) (string, error)
-}
-
-// AssetSha512FieldResolver implement to resolve requests for the Asset's sha512 field.
-type AssetSha512FieldResolver interface {
-	// Sha512 implements response to request for sha512 field.
-	Sha512(p graphql.ResolveParams) (string, error)
-}
-
-// AssetFiltersFieldResolver implement to resolve requests for the Asset's filters field.
-type AssetFiltersFieldResolver interface {
-	// Filters implements response to request for filters field.
-	Filters(p graphql.ResolveParams) ([]string, error)
-}
-
-// AssetToJSONFieldResolver implement to resolve requests for the Asset's toJSON field.
-type AssetToJSONFieldResolver interface {
-	// ToJSON implements response to request for toJSON field.
-	ToJSON(p graphql.ResolveParams) (interface{}, error)
-}
-
 //
 // AssetFieldResolvers represents a collection of methods whose products represent the
 // response values of the 'Asset' type.
-//
-// == Example SDL
-//
-//   """
-//   Dog's are not hooman.
-//   """
-//   type Dog implements Pet {
-//     "name of this fine beast."
-//     name:  String!
-//
-//     "breed of this silly animal; probably shibe."
-//     breed: [Breed]
-//   }
-//
-// == Example generated interface
-//
-//   // DogResolver ...
-//   type DogFieldResolvers interface {
-//     DogNameFieldResolver
-//     DogBreedFieldResolver
-//
-//     // IsTypeOf is used to determine if a given value is associated with the Dog type
-//     IsTypeOf(interface{}, graphql.IsTypeOfParams) bool
-//   }
-//
-// == Example implementation ...
-//
-//   // DogResolver implements DogFieldResolvers interface
-//   type DogResolver struct {
-//     logger logrus.LogEntry
-//     store interface{
-//       store.BreedStore
-//       store.DogStore
-//     }
-//   }
-//
-//   // Name implements response to request for name field.
-//   func (r *DogResolver) Name(p graphql.ResolveParams) (interface{}, error) {
-//     // ... implementation details ...
-//     dog := p.Source.(DogGetter)
-//     return dog.GetName()
-//   }
-//
-//   // Breed implements response to request for breed field.
-//   func (r *DogResolver) Breed(p graphql.ResolveParams) (interface{}, error) {
-//     // ... implementation details ...
-//     dog := p.Source.(DogGetter)
-//     breed := r.store.GetBreed(dog.GetBreedName())
-//     return breed
-//   }
-//
-//   // IsTypeOf is used to determine if a given value is associated with the Dog type
-//   func (r *DogResolver) IsTypeOf(p graphql.IsTypeOfParams) bool {
-//     // ... implementation details ...
-//     _, ok := p.Value.(DogGetter)
-//     return ok
-//   }
-//
 type AssetFieldResolvers interface {
-	AssetIDFieldResolver
-	AssetNamespaceFieldResolver
-	AssetNameFieldResolver
-	AssetMetadataFieldResolver
-	AssetUrlFieldResolver
-	AssetSha512FieldResolver
-	AssetFiltersFieldResolver
-	AssetToJSONFieldResolver
+	// ID implements response to request for 'id' field.
+	ID(p graphql.ResolveParams) (string, error)
+
+	// Namespace implements response to request for 'namespace' field.
+	Namespace(p graphql.ResolveParams) (string, error)
+
+	// Name implements response to request for 'name' field.
+	Name(p graphql.ResolveParams) (string, error)
+
+	// Metadata implements response to request for 'metadata' field.
+	Metadata(p graphql.ResolveParams) (interface{}, error)
+
+	// Url implements response to request for 'url' field.
+	Url(p graphql.ResolveParams) (string, error)
+
+	// Sha512 implements response to request for 'sha512' field.
+	Sha512(p graphql.ResolveParams) (string, error)
+
+	// Filters implements response to request for 'filters' field.
+	Filters(p graphql.ResolveParams) ([]string, error)
+
+	// ToJSON implements response to request for 'toJSON' field.
+	ToJSON(p graphql.ResolveParams) (interface{}, error)
 }
 
 // AssetAliases implements all methods on AssetFieldResolvers interface by using reflection to
 // match name of field to a field on the given value. Intent is reduce friction
 // of writing new resolvers by removing all the instances where you would simply
 // have the resolvers method return a field.
-//
-// == Example SDL
-//
-//    type Dog {
-//      name:   String!
-//      weight: Float!
-//      dob:    DateTime
-//      breed:  [Breed]
-//    }
-//
-// == Example generated aliases
-//
-//   type DogAliases struct {}
-//   func (_ DogAliases) Name(p graphql.ResolveParams) (interface{}, error) {
-//     // reflect...
-//   }
-//   func (_ DogAliases) Weight(p graphql.ResolveParams) (interface{}, error) {
-//     // reflect...
-//   }
-//   func (_ DogAliases) Dob(p graphql.ResolveParams) (interface{}, error) {
-//     // reflect...
-//   }
-//   func (_ DogAliases) Breed(p graphql.ResolveParams) (interface{}, error) {
-//     // reflect...
-//   }
-//
-// == Example Implementation
-//
-//   type DogResolver struct { // Implements DogResolver
-//     DogAliases
-//     store store.BreedStore
-//   }
-//
-//   // NOTE:
-//   // All other fields are satisified by DogAliases but since this one
-//   // requires hitting the store we implement it in our resolver.
-//   func (r *DogResolver) Breed(p graphql.ResolveParams) interface{} {
-//     dog := v.(*Dog)
-//     return r.BreedsById(dog.BreedIDs)
-//   }
-//
 type AssetAliases struct{}
 
 // ID implements response to request for 'id' field.
@@ -273,56 +141,72 @@ func RegisterAsset(svc *graphql.Service, impl AssetFieldResolvers) {
 	svc.RegisterObject(_ObjectTypeAssetDesc, impl)
 }
 func _ObjTypeAssetIDHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(AssetIDFieldResolver)
+	resolver := impl.(interface {
+		ID(p graphql.ResolveParams) (string, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.ID(frp)
 	}
 }
 
 func _ObjTypeAssetNamespaceHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(AssetNamespaceFieldResolver)
+	resolver := impl.(interface {
+		Namespace(p graphql.ResolveParams) (string, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.Namespace(frp)
 	}
 }
 
 func _ObjTypeAssetNameHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(AssetNameFieldResolver)
+	resolver := impl.(interface {
+		Name(p graphql.ResolveParams) (string, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.Name(frp)
 	}
 }
 
 func _ObjTypeAssetMetadataHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(AssetMetadataFieldResolver)
+	resolver := impl.(interface {
+		Metadata(p graphql.ResolveParams) (interface{}, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.Metadata(frp)
 	}
 }
 
 func _ObjTypeAssetUrlHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(AssetUrlFieldResolver)
+	resolver := impl.(interface {
+		Url(p graphql.ResolveParams) (string, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.Url(frp)
 	}
 }
 
 func _ObjTypeAssetSha512Handler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(AssetSha512FieldResolver)
+	resolver := impl.(interface {
+		Sha512(p graphql.ResolveParams) (string, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.Sha512(frp)
 	}
 }
 
 func _ObjTypeAssetFiltersHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(AssetFiltersFieldResolver)
+	resolver := impl.(interface {
+		Filters(p graphql.ResolveParams) ([]string, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.Filters(frp)
 	}
 }
 
 func _ObjTypeAssetToJSONHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(AssetToJSONFieldResolver)
+	resolver := impl.(interface {
+		ToJSON(p graphql.ResolveParams) (interface{}, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.ToJSON(frp)
 	}

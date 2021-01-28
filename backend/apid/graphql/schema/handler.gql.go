@@ -8,206 +8,54 @@ import (
 	graphql "github.com/sensu/sensu-go/graphql"
 )
 
-// HandlerIDFieldResolver implement to resolve requests for the Handler's id field.
-type HandlerIDFieldResolver interface {
-	// ID implements response to request for id field.
-	ID(p graphql.ResolveParams) (string, error)
-}
-
-// HandlerNamespaceFieldResolver implement to resolve requests for the Handler's namespace field.
-type HandlerNamespaceFieldResolver interface {
-	// Namespace implements response to request for namespace field.
-	Namespace(p graphql.ResolveParams) (string, error)
-}
-
-// HandlerNameFieldResolver implement to resolve requests for the Handler's name field.
-type HandlerNameFieldResolver interface {
-	// Name implements response to request for name field.
-	Name(p graphql.ResolveParams) (string, error)
-}
-
-// HandlerMetadataFieldResolver implement to resolve requests for the Handler's metadata field.
-type HandlerMetadataFieldResolver interface {
-	// Metadata implements response to request for metadata field.
-	Metadata(p graphql.ResolveParams) (interface{}, error)
-}
-
-// HandlerTypeFieldResolver implement to resolve requests for the Handler's type field.
-type HandlerTypeFieldResolver interface {
-	// Type implements response to request for type field.
-	Type(p graphql.ResolveParams) (string, error)
-}
-
-// HandlerCommandFieldResolver implement to resolve requests for the Handler's command field.
-type HandlerCommandFieldResolver interface {
-	// Command implements response to request for command field.
-	Command(p graphql.ResolveParams) (string, error)
-}
-
-// HandlerTimeoutFieldResolver implement to resolve requests for the Handler's timeout field.
-type HandlerTimeoutFieldResolver interface {
-	// Timeout implements response to request for timeout field.
-	Timeout(p graphql.ResolveParams) (int, error)
-}
-
-// HandlerSocketFieldResolver implement to resolve requests for the Handler's socket field.
-type HandlerSocketFieldResolver interface {
-	// Socket implements response to request for socket field.
-	Socket(p graphql.ResolveParams) (interface{}, error)
-}
-
-// HandlerMutatorFieldResolver implement to resolve requests for the Handler's mutator field.
-type HandlerMutatorFieldResolver interface {
-	// Mutator implements response to request for mutator field.
-	Mutator(p graphql.ResolveParams) (interface{}, error)
-}
-
-// HandlerHandlersFieldResolver implement to resolve requests for the Handler's handlers field.
-type HandlerHandlersFieldResolver interface {
-	// Handlers implements response to request for handlers field.
-	Handlers(p graphql.ResolveParams) (interface{}, error)
-}
-
-// HandlerFiltersFieldResolver implement to resolve requests for the Handler's filters field.
-type HandlerFiltersFieldResolver interface {
-	// Filters implements response to request for filters field.
-	Filters(p graphql.ResolveParams) ([]string, error)
-}
-
-// HandlerEnvVarsFieldResolver implement to resolve requests for the Handler's envVars field.
-type HandlerEnvVarsFieldResolver interface {
-	// EnvVars implements response to request for envVars field.
-	EnvVars(p graphql.ResolveParams) ([]string, error)
-}
-
-// HandlerToJSONFieldResolver implement to resolve requests for the Handler's toJSON field.
-type HandlerToJSONFieldResolver interface {
-	// ToJSON implements response to request for toJSON field.
-	ToJSON(p graphql.ResolveParams) (interface{}, error)
-}
-
 //
 // HandlerFieldResolvers represents a collection of methods whose products represent the
 // response values of the 'Handler' type.
-//
-// == Example SDL
-//
-//   """
-//   Dog's are not hooman.
-//   """
-//   type Dog implements Pet {
-//     "name of this fine beast."
-//     name:  String!
-//
-//     "breed of this silly animal; probably shibe."
-//     breed: [Breed]
-//   }
-//
-// == Example generated interface
-//
-//   // DogResolver ...
-//   type DogFieldResolvers interface {
-//     DogNameFieldResolver
-//     DogBreedFieldResolver
-//
-//     // IsTypeOf is used to determine if a given value is associated with the Dog type
-//     IsTypeOf(interface{}, graphql.IsTypeOfParams) bool
-//   }
-//
-// == Example implementation ...
-//
-//   // DogResolver implements DogFieldResolvers interface
-//   type DogResolver struct {
-//     logger logrus.LogEntry
-//     store interface{
-//       store.BreedStore
-//       store.DogStore
-//     }
-//   }
-//
-//   // Name implements response to request for name field.
-//   func (r *DogResolver) Name(p graphql.ResolveParams) (interface{}, error) {
-//     // ... implementation details ...
-//     dog := p.Source.(DogGetter)
-//     return dog.GetName()
-//   }
-//
-//   // Breed implements response to request for breed field.
-//   func (r *DogResolver) Breed(p graphql.ResolveParams) (interface{}, error) {
-//     // ... implementation details ...
-//     dog := p.Source.(DogGetter)
-//     breed := r.store.GetBreed(dog.GetBreedName())
-//     return breed
-//   }
-//
-//   // IsTypeOf is used to determine if a given value is associated with the Dog type
-//   func (r *DogResolver) IsTypeOf(p graphql.IsTypeOfParams) bool {
-//     // ... implementation details ...
-//     _, ok := p.Value.(DogGetter)
-//     return ok
-//   }
-//
 type HandlerFieldResolvers interface {
-	HandlerIDFieldResolver
-	HandlerNamespaceFieldResolver
-	HandlerNameFieldResolver
-	HandlerMetadataFieldResolver
-	HandlerTypeFieldResolver
-	HandlerCommandFieldResolver
-	HandlerTimeoutFieldResolver
-	HandlerSocketFieldResolver
-	HandlerMutatorFieldResolver
-	HandlerHandlersFieldResolver
-	HandlerFiltersFieldResolver
-	HandlerEnvVarsFieldResolver
-	HandlerToJSONFieldResolver
+	// ID implements response to request for 'id' field.
+	ID(p graphql.ResolveParams) (string, error)
+
+	// Namespace implements response to request for 'namespace' field.
+	Namespace(p graphql.ResolveParams) (string, error)
+
+	// Name implements response to request for 'name' field.
+	Name(p graphql.ResolveParams) (string, error)
+
+	// Metadata implements response to request for 'metadata' field.
+	Metadata(p graphql.ResolveParams) (interface{}, error)
+
+	// Type implements response to request for 'type' field.
+	Type(p graphql.ResolveParams) (string, error)
+
+	// Command implements response to request for 'command' field.
+	Command(p graphql.ResolveParams) (string, error)
+
+	// Timeout implements response to request for 'timeout' field.
+	Timeout(p graphql.ResolveParams) (int, error)
+
+	// Socket implements response to request for 'socket' field.
+	Socket(p graphql.ResolveParams) (interface{}, error)
+
+	// Mutator implements response to request for 'mutator' field.
+	Mutator(p graphql.ResolveParams) (interface{}, error)
+
+	// Handlers implements response to request for 'handlers' field.
+	Handlers(p graphql.ResolveParams) (interface{}, error)
+
+	// Filters implements response to request for 'filters' field.
+	Filters(p graphql.ResolveParams) ([]string, error)
+
+	// EnvVars implements response to request for 'envVars' field.
+	EnvVars(p graphql.ResolveParams) ([]string, error)
+
+	// ToJSON implements response to request for 'toJSON' field.
+	ToJSON(p graphql.ResolveParams) (interface{}, error)
 }
 
 // HandlerAliases implements all methods on HandlerFieldResolvers interface by using reflection to
 // match name of field to a field on the given value. Intent is reduce friction
 // of writing new resolvers by removing all the instances where you would simply
 // have the resolvers method return a field.
-//
-// == Example SDL
-//
-//    type Dog {
-//      name:   String!
-//      weight: Float!
-//      dob:    DateTime
-//      breed:  [Breed]
-//    }
-//
-// == Example generated aliases
-//
-//   type DogAliases struct {}
-//   func (_ DogAliases) Name(p graphql.ResolveParams) (interface{}, error) {
-//     // reflect...
-//   }
-//   func (_ DogAliases) Weight(p graphql.ResolveParams) (interface{}, error) {
-//     // reflect...
-//   }
-//   func (_ DogAliases) Dob(p graphql.ResolveParams) (interface{}, error) {
-//     // reflect...
-//   }
-//   func (_ DogAliases) Breed(p graphql.ResolveParams) (interface{}, error) {
-//     // reflect...
-//   }
-//
-// == Example Implementation
-//
-//   type DogResolver struct { // Implements DogResolver
-//     DogAliases
-//     store store.BreedStore
-//   }
-//
-//   // NOTE:
-//   // All other fields are satisified by DogAliases but since this one
-//   // requires hitting the store we implement it in our resolver.
-//   func (r *DogResolver) Breed(p graphql.ResolveParams) interface{} {
-//     dog := v.(*Dog)
-//     return r.BreedsById(dog.BreedIDs)
-//   }
-//
 type HandlerAliases struct{}
 
 // ID implements response to request for 'id' field.
@@ -352,91 +200,117 @@ func RegisterHandler(svc *graphql.Service, impl HandlerFieldResolvers) {
 	svc.RegisterObject(_ObjectTypeHandlerDesc, impl)
 }
 func _ObjTypeHandlerIDHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(HandlerIDFieldResolver)
+	resolver := impl.(interface {
+		ID(p graphql.ResolveParams) (string, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.ID(frp)
 	}
 }
 
 func _ObjTypeHandlerNamespaceHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(HandlerNamespaceFieldResolver)
+	resolver := impl.(interface {
+		Namespace(p graphql.ResolveParams) (string, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.Namespace(frp)
 	}
 }
 
 func _ObjTypeHandlerNameHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(HandlerNameFieldResolver)
+	resolver := impl.(interface {
+		Name(p graphql.ResolveParams) (string, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.Name(frp)
 	}
 }
 
 func _ObjTypeHandlerMetadataHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(HandlerMetadataFieldResolver)
+	resolver := impl.(interface {
+		Metadata(p graphql.ResolveParams) (interface{}, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.Metadata(frp)
 	}
 }
 
 func _ObjTypeHandlerTypeHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(HandlerTypeFieldResolver)
+	resolver := impl.(interface {
+		Type(p graphql.ResolveParams) (string, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.Type(frp)
 	}
 }
 
 func _ObjTypeHandlerCommandHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(HandlerCommandFieldResolver)
+	resolver := impl.(interface {
+		Command(p graphql.ResolveParams) (string, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.Command(frp)
 	}
 }
 
 func _ObjTypeHandlerTimeoutHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(HandlerTimeoutFieldResolver)
+	resolver := impl.(interface {
+		Timeout(p graphql.ResolveParams) (int, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.Timeout(frp)
 	}
 }
 
 func _ObjTypeHandlerSocketHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(HandlerSocketFieldResolver)
+	resolver := impl.(interface {
+		Socket(p graphql.ResolveParams) (interface{}, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.Socket(frp)
 	}
 }
 
 func _ObjTypeHandlerMutatorHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(HandlerMutatorFieldResolver)
+	resolver := impl.(interface {
+		Mutator(p graphql.ResolveParams) (interface{}, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.Mutator(frp)
 	}
 }
 
 func _ObjTypeHandlerHandlersHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(HandlerHandlersFieldResolver)
+	resolver := impl.(interface {
+		Handlers(p graphql.ResolveParams) (interface{}, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.Handlers(frp)
 	}
 }
 
 func _ObjTypeHandlerFiltersHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(HandlerFiltersFieldResolver)
+	resolver := impl.(interface {
+		Filters(p graphql.ResolveParams) ([]string, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.Filters(frp)
 	}
 }
 
 func _ObjTypeHandlerEnvVarsHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(HandlerEnvVarsFieldResolver)
+	resolver := impl.(interface {
+		EnvVars(p graphql.ResolveParams) ([]string, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.EnvVars(frp)
 	}
 }
 
 func _ObjTypeHandlerToJSONHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(HandlerToJSONFieldResolver)
+	resolver := impl.(interface {
+		ToJSON(p graphql.ResolveParams) (interface{}, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.ToJSON(frp)
 	}
@@ -574,129 +448,21 @@ var _ObjectTypeHandlerDesc = graphql.ObjectDesc{
 	},
 }
 
-// HandlerSocketHostFieldResolver implement to resolve requests for the HandlerSocket's host field.
-type HandlerSocketHostFieldResolver interface {
-	// Host implements response to request for host field.
-	Host(p graphql.ResolveParams) (string, error)
-}
-
-// HandlerSocketPortFieldResolver implement to resolve requests for the HandlerSocket's port field.
-type HandlerSocketPortFieldResolver interface {
-	// Port implements response to request for port field.
-	Port(p graphql.ResolveParams) (int, error)
-}
-
 //
 // HandlerSocketFieldResolvers represents a collection of methods whose products represent the
 // response values of the 'HandlerSocket' type.
-//
-// == Example SDL
-//
-//   """
-//   Dog's are not hooman.
-//   """
-//   type Dog implements Pet {
-//     "name of this fine beast."
-//     name:  String!
-//
-//     "breed of this silly animal; probably shibe."
-//     breed: [Breed]
-//   }
-//
-// == Example generated interface
-//
-//   // DogResolver ...
-//   type DogFieldResolvers interface {
-//     DogNameFieldResolver
-//     DogBreedFieldResolver
-//
-//     // IsTypeOf is used to determine if a given value is associated with the Dog type
-//     IsTypeOf(interface{}, graphql.IsTypeOfParams) bool
-//   }
-//
-// == Example implementation ...
-//
-//   // DogResolver implements DogFieldResolvers interface
-//   type DogResolver struct {
-//     logger logrus.LogEntry
-//     store interface{
-//       store.BreedStore
-//       store.DogStore
-//     }
-//   }
-//
-//   // Name implements response to request for name field.
-//   func (r *DogResolver) Name(p graphql.ResolveParams) (interface{}, error) {
-//     // ... implementation details ...
-//     dog := p.Source.(DogGetter)
-//     return dog.GetName()
-//   }
-//
-//   // Breed implements response to request for breed field.
-//   func (r *DogResolver) Breed(p graphql.ResolveParams) (interface{}, error) {
-//     // ... implementation details ...
-//     dog := p.Source.(DogGetter)
-//     breed := r.store.GetBreed(dog.GetBreedName())
-//     return breed
-//   }
-//
-//   // IsTypeOf is used to determine if a given value is associated with the Dog type
-//   func (r *DogResolver) IsTypeOf(p graphql.IsTypeOfParams) bool {
-//     // ... implementation details ...
-//     _, ok := p.Value.(DogGetter)
-//     return ok
-//   }
-//
 type HandlerSocketFieldResolvers interface {
-	HandlerSocketHostFieldResolver
-	HandlerSocketPortFieldResolver
+	// Host implements response to request for 'host' field.
+	Host(p graphql.ResolveParams) (string, error)
+
+	// Port implements response to request for 'port' field.
+	Port(p graphql.ResolveParams) (int, error)
 }
 
 // HandlerSocketAliases implements all methods on HandlerSocketFieldResolvers interface by using reflection to
 // match name of field to a field on the given value. Intent is reduce friction
 // of writing new resolvers by removing all the instances where you would simply
 // have the resolvers method return a field.
-//
-// == Example SDL
-//
-//    type Dog {
-//      name:   String!
-//      weight: Float!
-//      dob:    DateTime
-//      breed:  [Breed]
-//    }
-//
-// == Example generated aliases
-//
-//   type DogAliases struct {}
-//   func (_ DogAliases) Name(p graphql.ResolveParams) (interface{}, error) {
-//     // reflect...
-//   }
-//   func (_ DogAliases) Weight(p graphql.ResolveParams) (interface{}, error) {
-//     // reflect...
-//   }
-//   func (_ DogAliases) Dob(p graphql.ResolveParams) (interface{}, error) {
-//     // reflect...
-//   }
-//   func (_ DogAliases) Breed(p graphql.ResolveParams) (interface{}, error) {
-//     // reflect...
-//   }
-//
-// == Example Implementation
-//
-//   type DogResolver struct { // Implements DogResolver
-//     DogAliases
-//     store store.BreedStore
-//   }
-//
-//   // NOTE:
-//   // All other fields are satisified by DogAliases but since this one
-//   // requires hitting the store we implement it in our resolver.
-//   func (r *DogResolver) Breed(p graphql.ResolveParams) interface{} {
-//     dog := v.(*Dog)
-//     return r.BreedsById(dog.BreedIDs)
-//   }
-//
 type HandlerSocketAliases struct{}
 
 // Host implements response to request for 'host' field.
@@ -733,14 +499,18 @@ func RegisterHandlerSocket(svc *graphql.Service, impl HandlerSocketFieldResolver
 	svc.RegisterObject(_ObjectTypeHandlerSocketDesc, impl)
 }
 func _ObjTypeHandlerSocketHostHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(HandlerSocketHostFieldResolver)
+	resolver := impl.(interface {
+		Host(p graphql.ResolveParams) (string, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.Host(frp)
 	}
 }
 
 func _ObjTypeHandlerSocketPortHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(HandlerSocketPortFieldResolver)
+	resolver := impl.(interface {
+		Port(p graphql.ResolveParams) (int, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.Port(frp)
 	}
@@ -787,129 +557,21 @@ var _ObjectTypeHandlerSocketDesc = graphql.ObjectDesc{
 	},
 }
 
-// HandlerConnectionNodesFieldResolver implement to resolve requests for the HandlerConnection's nodes field.
-type HandlerConnectionNodesFieldResolver interface {
-	// Nodes implements response to request for nodes field.
-	Nodes(p graphql.ResolveParams) (interface{}, error)
-}
-
-// HandlerConnectionPageInfoFieldResolver implement to resolve requests for the HandlerConnection's pageInfo field.
-type HandlerConnectionPageInfoFieldResolver interface {
-	// PageInfo implements response to request for pageInfo field.
-	PageInfo(p graphql.ResolveParams) (interface{}, error)
-}
-
 //
 // HandlerConnectionFieldResolvers represents a collection of methods whose products represent the
 // response values of the 'HandlerConnection' type.
-//
-// == Example SDL
-//
-//   """
-//   Dog's are not hooman.
-//   """
-//   type Dog implements Pet {
-//     "name of this fine beast."
-//     name:  String!
-//
-//     "breed of this silly animal; probably shibe."
-//     breed: [Breed]
-//   }
-//
-// == Example generated interface
-//
-//   // DogResolver ...
-//   type DogFieldResolvers interface {
-//     DogNameFieldResolver
-//     DogBreedFieldResolver
-//
-//     // IsTypeOf is used to determine if a given value is associated with the Dog type
-//     IsTypeOf(interface{}, graphql.IsTypeOfParams) bool
-//   }
-//
-// == Example implementation ...
-//
-//   // DogResolver implements DogFieldResolvers interface
-//   type DogResolver struct {
-//     logger logrus.LogEntry
-//     store interface{
-//       store.BreedStore
-//       store.DogStore
-//     }
-//   }
-//
-//   // Name implements response to request for name field.
-//   func (r *DogResolver) Name(p graphql.ResolveParams) (interface{}, error) {
-//     // ... implementation details ...
-//     dog := p.Source.(DogGetter)
-//     return dog.GetName()
-//   }
-//
-//   // Breed implements response to request for breed field.
-//   func (r *DogResolver) Breed(p graphql.ResolveParams) (interface{}, error) {
-//     // ... implementation details ...
-//     dog := p.Source.(DogGetter)
-//     breed := r.store.GetBreed(dog.GetBreedName())
-//     return breed
-//   }
-//
-//   // IsTypeOf is used to determine if a given value is associated with the Dog type
-//   func (r *DogResolver) IsTypeOf(p graphql.IsTypeOfParams) bool {
-//     // ... implementation details ...
-//     _, ok := p.Value.(DogGetter)
-//     return ok
-//   }
-//
 type HandlerConnectionFieldResolvers interface {
-	HandlerConnectionNodesFieldResolver
-	HandlerConnectionPageInfoFieldResolver
+	// Nodes implements response to request for 'nodes' field.
+	Nodes(p graphql.ResolveParams) (interface{}, error)
+
+	// PageInfo implements response to request for 'pageInfo' field.
+	PageInfo(p graphql.ResolveParams) (interface{}, error)
 }
 
 // HandlerConnectionAliases implements all methods on HandlerConnectionFieldResolvers interface by using reflection to
 // match name of field to a field on the given value. Intent is reduce friction
 // of writing new resolvers by removing all the instances where you would simply
 // have the resolvers method return a field.
-//
-// == Example SDL
-//
-//    type Dog {
-//      name:   String!
-//      weight: Float!
-//      dob:    DateTime
-//      breed:  [Breed]
-//    }
-//
-// == Example generated aliases
-//
-//   type DogAliases struct {}
-//   func (_ DogAliases) Name(p graphql.ResolveParams) (interface{}, error) {
-//     // reflect...
-//   }
-//   func (_ DogAliases) Weight(p graphql.ResolveParams) (interface{}, error) {
-//     // reflect...
-//   }
-//   func (_ DogAliases) Dob(p graphql.ResolveParams) (interface{}, error) {
-//     // reflect...
-//   }
-//   func (_ DogAliases) Breed(p graphql.ResolveParams) (interface{}, error) {
-//     // reflect...
-//   }
-//
-// == Example Implementation
-//
-//   type DogResolver struct { // Implements DogResolver
-//     DogAliases
-//     store store.BreedStore
-//   }
-//
-//   // NOTE:
-//   // All other fields are satisified by DogAliases but since this one
-//   // requires hitting the store we implement it in our resolver.
-//   func (r *DogResolver) Breed(p graphql.ResolveParams) interface{} {
-//     dog := v.(*Dog)
-//     return r.BreedsById(dog.BreedIDs)
-//   }
-//
 type HandlerConnectionAliases struct{}
 
 // Nodes implements response to request for 'nodes' field.
@@ -932,14 +594,18 @@ func RegisterHandlerConnection(svc *graphql.Service, impl HandlerConnectionField
 	svc.RegisterObject(_ObjectTypeHandlerConnectionDesc, impl)
 }
 func _ObjTypeHandlerConnectionNodesHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(HandlerConnectionNodesFieldResolver)
+	resolver := impl.(interface {
+		Nodes(p graphql.ResolveParams) (interface{}, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.Nodes(frp)
 	}
 }
 
 func _ObjTypeHandlerConnectionPageInfoHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(HandlerConnectionPageInfoFieldResolver)
+	resolver := impl.(interface {
+		PageInfo(p graphql.ResolveParams) (interface{}, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.PageInfo(frp)
 	}
@@ -983,212 +649,6 @@ var _ObjectTypeHandlerConnectionDesc = graphql.ObjectDesc{
 	FieldHandlers: map[string]graphql.FieldHandler{
 		"nodes":    _ObjTypeHandlerConnectionNodesHandler,
 		"pageInfo": _ObjTypeHandlerConnectionPageInfoHandler,
-	},
-}
-
-// HandlerEdgeNodeFieldResolver implement to resolve requests for the HandlerEdge's node field.
-type HandlerEdgeNodeFieldResolver interface {
-	// Node implements response to request for node field.
-	Node(p graphql.ResolveParams) (interface{}, error)
-}
-
-// HandlerEdgeCursorFieldResolver implement to resolve requests for the HandlerEdge's cursor field.
-type HandlerEdgeCursorFieldResolver interface {
-	// Cursor implements response to request for cursor field.
-	Cursor(p graphql.ResolveParams) (string, error)
-}
-
-//
-// HandlerEdgeFieldResolvers represents a collection of methods whose products represent the
-// response values of the 'HandlerEdge' type.
-//
-// == Example SDL
-//
-//   """
-//   Dog's are not hooman.
-//   """
-//   type Dog implements Pet {
-//     "name of this fine beast."
-//     name:  String!
-//
-//     "breed of this silly animal; probably shibe."
-//     breed: [Breed]
-//   }
-//
-// == Example generated interface
-//
-//   // DogResolver ...
-//   type DogFieldResolvers interface {
-//     DogNameFieldResolver
-//     DogBreedFieldResolver
-//
-//     // IsTypeOf is used to determine if a given value is associated with the Dog type
-//     IsTypeOf(interface{}, graphql.IsTypeOfParams) bool
-//   }
-//
-// == Example implementation ...
-//
-//   // DogResolver implements DogFieldResolvers interface
-//   type DogResolver struct {
-//     logger logrus.LogEntry
-//     store interface{
-//       store.BreedStore
-//       store.DogStore
-//     }
-//   }
-//
-//   // Name implements response to request for name field.
-//   func (r *DogResolver) Name(p graphql.ResolveParams) (interface{}, error) {
-//     // ... implementation details ...
-//     dog := p.Source.(DogGetter)
-//     return dog.GetName()
-//   }
-//
-//   // Breed implements response to request for breed field.
-//   func (r *DogResolver) Breed(p graphql.ResolveParams) (interface{}, error) {
-//     // ... implementation details ...
-//     dog := p.Source.(DogGetter)
-//     breed := r.store.GetBreed(dog.GetBreedName())
-//     return breed
-//   }
-//
-//   // IsTypeOf is used to determine if a given value is associated with the Dog type
-//   func (r *DogResolver) IsTypeOf(p graphql.IsTypeOfParams) bool {
-//     // ... implementation details ...
-//     _, ok := p.Value.(DogGetter)
-//     return ok
-//   }
-//
-type HandlerEdgeFieldResolvers interface {
-	HandlerEdgeNodeFieldResolver
-	HandlerEdgeCursorFieldResolver
-}
-
-// HandlerEdgeAliases implements all methods on HandlerEdgeFieldResolvers interface by using reflection to
-// match name of field to a field on the given value. Intent is reduce friction
-// of writing new resolvers by removing all the instances where you would simply
-// have the resolvers method return a field.
-//
-// == Example SDL
-//
-//    type Dog {
-//      name:   String!
-//      weight: Float!
-//      dob:    DateTime
-//      breed:  [Breed]
-//    }
-//
-// == Example generated aliases
-//
-//   type DogAliases struct {}
-//   func (_ DogAliases) Name(p graphql.ResolveParams) (interface{}, error) {
-//     // reflect...
-//   }
-//   func (_ DogAliases) Weight(p graphql.ResolveParams) (interface{}, error) {
-//     // reflect...
-//   }
-//   func (_ DogAliases) Dob(p graphql.ResolveParams) (interface{}, error) {
-//     // reflect...
-//   }
-//   func (_ DogAliases) Breed(p graphql.ResolveParams) (interface{}, error) {
-//     // reflect...
-//   }
-//
-// == Example Implementation
-//
-//   type DogResolver struct { // Implements DogResolver
-//     DogAliases
-//     store store.BreedStore
-//   }
-//
-//   // NOTE:
-//   // All other fields are satisified by DogAliases but since this one
-//   // requires hitting the store we implement it in our resolver.
-//   func (r *DogResolver) Breed(p graphql.ResolveParams) interface{} {
-//     dog := v.(*Dog)
-//     return r.BreedsById(dog.BreedIDs)
-//   }
-//
-type HandlerEdgeAliases struct{}
-
-// Node implements response to request for 'node' field.
-func (_ HandlerEdgeAliases) Node(p graphql.ResolveParams) (interface{}, error) {
-	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	return val, err
-}
-
-// Cursor implements response to request for 'cursor' field.
-func (_ HandlerEdgeAliases) Cursor(p graphql.ResolveParams) (string, error) {
-	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret, ok := val.(string)
-	if err != nil {
-		return ret, err
-	}
-	if !ok {
-		return ret, errors.New("unable to coerce value for field 'cursor'")
-	}
-	return ret, err
-}
-
-// HandlerEdgeType An edge in a connection.
-var HandlerEdgeType = graphql.NewType("HandlerEdge", graphql.ObjectKind)
-
-// RegisterHandlerEdge registers HandlerEdge object type with given service.
-func RegisterHandlerEdge(svc *graphql.Service, impl HandlerEdgeFieldResolvers) {
-	svc.RegisterObject(_ObjectTypeHandlerEdgeDesc, impl)
-}
-func _ObjTypeHandlerEdgeNodeHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(HandlerEdgeNodeFieldResolver)
-	return func(frp graphql1.ResolveParams) (interface{}, error) {
-		return resolver.Node(frp)
-	}
-}
-
-func _ObjTypeHandlerEdgeCursorHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(HandlerEdgeCursorFieldResolver)
-	return func(frp graphql1.ResolveParams) (interface{}, error) {
-		return resolver.Cursor(frp)
-	}
-}
-
-func _ObjectTypeHandlerEdgeConfigFn() graphql1.ObjectConfig {
-	return graphql1.ObjectConfig{
-		Description: "An edge in a connection.",
-		Fields: graphql1.Fields{
-			"cursor": &graphql1.Field{
-				Args:              graphql1.FieldConfigArgument{},
-				DeprecationReason: "",
-				Description:       "self descriptive",
-				Name:              "cursor",
-				Type:              graphql1.NewNonNull(graphql1.String),
-			},
-			"node": &graphql1.Field{
-				Args:              graphql1.FieldConfigArgument{},
-				DeprecationReason: "",
-				Description:       "self descriptive",
-				Name:              "node",
-				Type:              graphql.OutputType("Handler"),
-			},
-		},
-		Interfaces: []*graphql1.Interface{},
-		IsTypeOf: func(_ graphql1.IsTypeOfParams) bool {
-			// NOTE:
-			// Panic by default. Intent is that when Service is invoked, values of
-			// these fields are updated with instantiated resolvers. If these
-			// defaults are called it is most certainly programmer err.
-			// If you're see this comment then: 'Whoops! Sorry, my bad.'
-			panic("Unimplemented; see HandlerEdgeFieldResolvers.")
-		},
-		Name: "HandlerEdge",
-	}
-}
-
-// describe HandlerEdge's configuration; kept private to avoid unintentional tampering of configuration at runtime.
-var _ObjectTypeHandlerEdgeDesc = graphql.ObjectDesc{
-	Config: _ObjectTypeHandlerEdgeConfigFn,
-	FieldHandlers: map[string]graphql.FieldHandler{
-		"cursor": _ObjTypeHandlerEdgeCursorHandler,
-		"node":   _ObjTypeHandlerEdgeNodeHandler,
 	},
 }
 

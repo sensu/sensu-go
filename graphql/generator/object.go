@@ -289,11 +289,7 @@ func genObjectType(node *ast.ObjectDefinition, i info) jen.Code {
 //
 // == Example output
 //
-//   // DogFieldResolvers ...
-//   type DogNameFieldResolvers interface {
-//     // Name implements response to request for name field.
-//     Name(graphql.ResolveParams) (string, error)
-//   }
+//    [no output]
 //
 // == Example input SDL
 //
@@ -307,11 +303,7 @@ func genObjectType(node *ast.ObjectDefinition, i info) jen.Code {
 //
 // == Example output
 //
-//   // DogNameFieldResolver ...
-//   type DogNameFieldResolver interface {
-//     // Name implements response to request for name field.
-//     Name(graphql.ResolveParams) (interface{}, error)
-//   }
+//    [no output]
 //
 // == Example input SDL
 //
@@ -337,12 +329,6 @@ func genObjectType(node *ast.ObjectDefinition, i info) jen.Code {
 //     Args DogNameFieldArgs
 //   }
 //
-//   // DogNameFieldResolver ...
-//   type DogNameFieldResolver interface {
-//     // Name implements response to request for name field.
-//     Name(DogNameFieldParams) (interface{}, error)
-//   }
-//
 // == Example input SDL
 //
 //   type Mutation {
@@ -363,17 +349,10 @@ func genObjectType(node *ast.ObjectDefinition, i info) jen.Code {
 //     Args MutationUpdateAvatarFieldArgs
 //   }
 //
-//   // MutationUpdateAvatarFieldResolver ...
-//   type MutationUpdateAvatarFieldResolver interface {
-//     // Name implements response to request for name field.
-//     UpdateAvatar(MutationUpdateAvatarFieldParams) (interface{}, error)
-//   }
-//
 func genFieldResolverInterface(field *ast.FieldDefinition, i info) jen.Code {
 	code := newGroup()
 
 	// names
-	typeName := i.currentNode
 	fieldName := field.Name.Value
 
 	//
@@ -406,35 +385,6 @@ func genFieldResolverInterface(field *ast.FieldDefinition, i info) jen.Code {
 			jen.Id("Args").Id(argsName),
 		)
 	}
-
-	//
-	// Generate field resolver interface
-	//
-	// == Example output
-	//
-	//   // DogNameFieldResolver ...
-	//   type DogNameFieldResolver interface {
-	//     // Name implements response to request for name field.
-	//     Name(DogNameFieldParams) (interface{}, error)
-	//   }
-	//
-	resolverName := genFieldResolverName(field, i)
-	resolverFnName := toFieldName(fieldName)
-	resolverFnSignature := genFieldResolverSignature(field, i)
-	code.Commentf(
-		"%s implement to resolve requests for the %s's %s field.",
-		resolverName,
-		typeName,
-		fieldName,
-	)
-	code.Type().Id(resolverName).Interface(
-		jen.Commentf(
-			"%s implements response to request for %s field.",
-			resolverFnName,
-			fieldName,
-		),
-		resolverFnSignature,
-	)
 
 	return code
 }
@@ -687,8 +637,8 @@ func genFieldHandlerFn(field *ast.FieldDefinition, i info) jen.Code {
 		Qual(defsPkg, "FieldResolveFn").
 		BlockFunc(func(g *jen.Group) {
 			// eg. resolver := impl.(DogNameFieldResolver)
-			fieldResolverName := genFieldResolverName(field, i)
-			g.Id("resolver").Op(":=").Id("impl").Assert(jen.Id(fieldResolverName))
+			genFieldResolverSignature := genFieldResolverSignature(field, i)
+			g.Id("resolver").Op(":=").Id("impl").Assert(jen.Interface(genFieldResolverSignature))
 
 			var callResolver jen.Code
 			if isNonNullableEnum(field.Type, i) {

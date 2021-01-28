@@ -8,129 +8,21 @@ import (
 	graphql "github.com/sensu/sensu-go/graphql"
 )
 
-// KVPairStringKeyFieldResolver implement to resolve requests for the KVPairString's key field.
-type KVPairStringKeyFieldResolver interface {
-	// Key implements response to request for key field.
-	Key(p graphql.ResolveParams) (string, error)
-}
-
-// KVPairStringValFieldResolver implement to resolve requests for the KVPairString's val field.
-type KVPairStringValFieldResolver interface {
-	// Val implements response to request for val field.
-	Val(p graphql.ResolveParams) (string, error)
-}
-
 //
 // KVPairStringFieldResolvers represents a collection of methods whose products represent the
 // response values of the 'KVPairString' type.
-//
-// == Example SDL
-//
-//   """
-//   Dog's are not hooman.
-//   """
-//   type Dog implements Pet {
-//     "name of this fine beast."
-//     name:  String!
-//
-//     "breed of this silly animal; probably shibe."
-//     breed: [Breed]
-//   }
-//
-// == Example generated interface
-//
-//   // DogResolver ...
-//   type DogFieldResolvers interface {
-//     DogNameFieldResolver
-//     DogBreedFieldResolver
-//
-//     // IsTypeOf is used to determine if a given value is associated with the Dog type
-//     IsTypeOf(interface{}, graphql.IsTypeOfParams) bool
-//   }
-//
-// == Example implementation ...
-//
-//   // DogResolver implements DogFieldResolvers interface
-//   type DogResolver struct {
-//     logger logrus.LogEntry
-//     store interface{
-//       store.BreedStore
-//       store.DogStore
-//     }
-//   }
-//
-//   // Name implements response to request for name field.
-//   func (r *DogResolver) Name(p graphql.ResolveParams) (interface{}, error) {
-//     // ... implementation details ...
-//     dog := p.Source.(DogGetter)
-//     return dog.GetName()
-//   }
-//
-//   // Breed implements response to request for breed field.
-//   func (r *DogResolver) Breed(p graphql.ResolveParams) (interface{}, error) {
-//     // ... implementation details ...
-//     dog := p.Source.(DogGetter)
-//     breed := r.store.GetBreed(dog.GetBreedName())
-//     return breed
-//   }
-//
-//   // IsTypeOf is used to determine if a given value is associated with the Dog type
-//   func (r *DogResolver) IsTypeOf(p graphql.IsTypeOfParams) bool {
-//     // ... implementation details ...
-//     _, ok := p.Value.(DogGetter)
-//     return ok
-//   }
-//
 type KVPairStringFieldResolvers interface {
-	KVPairStringKeyFieldResolver
-	KVPairStringValFieldResolver
+	// Key implements response to request for 'key' field.
+	Key(p graphql.ResolveParams) (string, error)
+
+	// Val implements response to request for 'val' field.
+	Val(p graphql.ResolveParams) (string, error)
 }
 
 // KVPairStringAliases implements all methods on KVPairStringFieldResolvers interface by using reflection to
 // match name of field to a field on the given value. Intent is reduce friction
 // of writing new resolvers by removing all the instances where you would simply
 // have the resolvers method return a field.
-//
-// == Example SDL
-//
-//    type Dog {
-//      name:   String!
-//      weight: Float!
-//      dob:    DateTime
-//      breed:  [Breed]
-//    }
-//
-// == Example generated aliases
-//
-//   type DogAliases struct {}
-//   func (_ DogAliases) Name(p graphql.ResolveParams) (interface{}, error) {
-//     // reflect...
-//   }
-//   func (_ DogAliases) Weight(p graphql.ResolveParams) (interface{}, error) {
-//     // reflect...
-//   }
-//   func (_ DogAliases) Dob(p graphql.ResolveParams) (interface{}, error) {
-//     // reflect...
-//   }
-//   func (_ DogAliases) Breed(p graphql.ResolveParams) (interface{}, error) {
-//     // reflect...
-//   }
-//
-// == Example Implementation
-//
-//   type DogResolver struct { // Implements DogResolver
-//     DogAliases
-//     store store.BreedStore
-//   }
-//
-//   // NOTE:
-//   // All other fields are satisified by DogAliases but since this one
-//   // requires hitting the store we implement it in our resolver.
-//   func (r *DogResolver) Breed(p graphql.ResolveParams) interface{} {
-//     dog := v.(*Dog)
-//     return r.BreedsById(dog.BreedIDs)
-//   }
-//
 type KVPairStringAliases struct{}
 
 // Key implements response to request for 'key' field.
@@ -170,14 +62,18 @@ func RegisterKVPairString(svc *graphql.Service, impl KVPairStringFieldResolvers)
 	svc.RegisterObject(_ObjectTypeKVPairStringDesc, impl)
 }
 func _ObjTypeKVPairStringKeyHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(KVPairStringKeyFieldResolver)
+	resolver := impl.(interface {
+		Key(p graphql.ResolveParams) (string, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.Key(frp)
 	}
 }
 
 func _ObjTypeKVPairStringValHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(KVPairStringValFieldResolver)
+	resolver := impl.(interface {
+		Val(p graphql.ResolveParams) (string, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.Val(frp)
 	}
@@ -224,150 +120,30 @@ var _ObjectTypeKVPairStringDesc = graphql.ObjectDesc{
 	},
 }
 
-// ObjectMetaNameFieldResolver implement to resolve requests for the ObjectMeta's name field.
-type ObjectMetaNameFieldResolver interface {
-	// Name implements response to request for name field.
-	Name(p graphql.ResolveParams) (string, error)
-}
-
-// ObjectMetaNamespaceFieldResolver implement to resolve requests for the ObjectMeta's namespace field.
-type ObjectMetaNamespaceFieldResolver interface {
-	// Namespace implements response to request for namespace field.
-	Namespace(p graphql.ResolveParams) (string, error)
-}
-
-// ObjectMetaLabelsFieldResolver implement to resolve requests for the ObjectMeta's labels field.
-type ObjectMetaLabelsFieldResolver interface {
-	// Labels implements response to request for labels field.
-	Labels(p graphql.ResolveParams) (interface{}, error)
-}
-
-// ObjectMetaAnnotationsFieldResolver implement to resolve requests for the ObjectMeta's annotations field.
-type ObjectMetaAnnotationsFieldResolver interface {
-	// Annotations implements response to request for annotations field.
-	Annotations(p graphql.ResolveParams) (interface{}, error)
-}
-
-// ObjectMetaCreatedByFieldResolver implement to resolve requests for the ObjectMeta's createdBy field.
-type ObjectMetaCreatedByFieldResolver interface {
-	// CreatedBy implements response to request for createdBy field.
-	CreatedBy(p graphql.ResolveParams) (string, error)
-}
-
 //
 // ObjectMetaFieldResolvers represents a collection of methods whose products represent the
 // response values of the 'ObjectMeta' type.
-//
-// == Example SDL
-//
-//   """
-//   Dog's are not hooman.
-//   """
-//   type Dog implements Pet {
-//     "name of this fine beast."
-//     name:  String!
-//
-//     "breed of this silly animal; probably shibe."
-//     breed: [Breed]
-//   }
-//
-// == Example generated interface
-//
-//   // DogResolver ...
-//   type DogFieldResolvers interface {
-//     DogNameFieldResolver
-//     DogBreedFieldResolver
-//
-//     // IsTypeOf is used to determine if a given value is associated with the Dog type
-//     IsTypeOf(interface{}, graphql.IsTypeOfParams) bool
-//   }
-//
-// == Example implementation ...
-//
-//   // DogResolver implements DogFieldResolvers interface
-//   type DogResolver struct {
-//     logger logrus.LogEntry
-//     store interface{
-//       store.BreedStore
-//       store.DogStore
-//     }
-//   }
-//
-//   // Name implements response to request for name field.
-//   func (r *DogResolver) Name(p graphql.ResolveParams) (interface{}, error) {
-//     // ... implementation details ...
-//     dog := p.Source.(DogGetter)
-//     return dog.GetName()
-//   }
-//
-//   // Breed implements response to request for breed field.
-//   func (r *DogResolver) Breed(p graphql.ResolveParams) (interface{}, error) {
-//     // ... implementation details ...
-//     dog := p.Source.(DogGetter)
-//     breed := r.store.GetBreed(dog.GetBreedName())
-//     return breed
-//   }
-//
-//   // IsTypeOf is used to determine if a given value is associated with the Dog type
-//   func (r *DogResolver) IsTypeOf(p graphql.IsTypeOfParams) bool {
-//     // ... implementation details ...
-//     _, ok := p.Value.(DogGetter)
-//     return ok
-//   }
-//
 type ObjectMetaFieldResolvers interface {
-	ObjectMetaNameFieldResolver
-	ObjectMetaNamespaceFieldResolver
-	ObjectMetaLabelsFieldResolver
-	ObjectMetaAnnotationsFieldResolver
-	ObjectMetaCreatedByFieldResolver
+	// Name implements response to request for 'name' field.
+	Name(p graphql.ResolveParams) (string, error)
+
+	// Namespace implements response to request for 'namespace' field.
+	Namespace(p graphql.ResolveParams) (string, error)
+
+	// Labels implements response to request for 'labels' field.
+	Labels(p graphql.ResolveParams) (interface{}, error)
+
+	// Annotations implements response to request for 'annotations' field.
+	Annotations(p graphql.ResolveParams) (interface{}, error)
+
+	// CreatedBy implements response to request for 'createdBy' field.
+	CreatedBy(p graphql.ResolveParams) (string, error)
 }
 
 // ObjectMetaAliases implements all methods on ObjectMetaFieldResolvers interface by using reflection to
 // match name of field to a field on the given value. Intent is reduce friction
 // of writing new resolvers by removing all the instances where you would simply
 // have the resolvers method return a field.
-//
-// == Example SDL
-//
-//    type Dog {
-//      name:   String!
-//      weight: Float!
-//      dob:    DateTime
-//      breed:  [Breed]
-//    }
-//
-// == Example generated aliases
-//
-//   type DogAliases struct {}
-//   func (_ DogAliases) Name(p graphql.ResolveParams) (interface{}, error) {
-//     // reflect...
-//   }
-//   func (_ DogAliases) Weight(p graphql.ResolveParams) (interface{}, error) {
-//     // reflect...
-//   }
-//   func (_ DogAliases) Dob(p graphql.ResolveParams) (interface{}, error) {
-//     // reflect...
-//   }
-//   func (_ DogAliases) Breed(p graphql.ResolveParams) (interface{}, error) {
-//     // reflect...
-//   }
-//
-// == Example Implementation
-//
-//   type DogResolver struct { // Implements DogResolver
-//     DogAliases
-//     store store.BreedStore
-//   }
-//
-//   // NOTE:
-//   // All other fields are satisified by DogAliases but since this one
-//   // requires hitting the store we implement it in our resolver.
-//   func (r *DogResolver) Breed(p graphql.ResolveParams) interface{} {
-//     dog := v.(*Dog)
-//     return r.BreedsById(dog.BreedIDs)
-//   }
-//
 type ObjectMetaAliases struct{}
 
 // Name implements response to request for 'name' field.
@@ -429,35 +205,45 @@ func RegisterObjectMeta(svc *graphql.Service, impl ObjectMetaFieldResolvers) {
 	svc.RegisterObject(_ObjectTypeObjectMetaDesc, impl)
 }
 func _ObjTypeObjectMetaNameHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(ObjectMetaNameFieldResolver)
+	resolver := impl.(interface {
+		Name(p graphql.ResolveParams) (string, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.Name(frp)
 	}
 }
 
 func _ObjTypeObjectMetaNamespaceHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(ObjectMetaNamespaceFieldResolver)
+	resolver := impl.(interface {
+		Namespace(p graphql.ResolveParams) (string, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.Namespace(frp)
 	}
 }
 
 func _ObjTypeObjectMetaLabelsHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(ObjectMetaLabelsFieldResolver)
+	resolver := impl.(interface {
+		Labels(p graphql.ResolveParams) (interface{}, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.Labels(frp)
 	}
 }
 
 func _ObjTypeObjectMetaAnnotationsHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(ObjectMetaAnnotationsFieldResolver)
+	resolver := impl.(interface {
+		Annotations(p graphql.ResolveParams) (interface{}, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.Annotations(frp)
 	}
 }
 
 func _ObjTypeObjectMetaCreatedByHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(ObjectMetaCreatedByFieldResolver)
+	resolver := impl.(interface {
+		CreatedBy(p graphql.ResolveParams) (string, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.CreatedBy(frp)
 	}

@@ -8,143 +8,27 @@ import (
 	graphql "github.com/sensu/sensu-go/graphql"
 )
 
-// UserUsernameFieldResolver implement to resolve requests for the User's username field.
-type UserUsernameFieldResolver interface {
-	// Username implements response to request for username field.
-	Username(p graphql.ResolveParams) (string, error)
-}
-
-// UserGroupsFieldResolver implement to resolve requests for the User's groups field.
-type UserGroupsFieldResolver interface {
-	// Groups implements response to request for groups field.
-	Groups(p graphql.ResolveParams) ([]string, error)
-}
-
-// UserDisabledFieldResolver implement to resolve requests for the User's disabled field.
-type UserDisabledFieldResolver interface {
-	// Disabled implements response to request for disabled field.
-	Disabled(p graphql.ResolveParams) (bool, error)
-}
-
-// UserHasPasswordFieldResolver implement to resolve requests for the User's hasPassword field.
-type UserHasPasswordFieldResolver interface {
-	// HasPassword implements response to request for hasPassword field.
-	HasPassword(p graphql.ResolveParams) (bool, error)
-}
-
 //
 // UserFieldResolvers represents a collection of methods whose products represent the
 // response values of the 'User' type.
-//
-// == Example SDL
-//
-//   """
-//   Dog's are not hooman.
-//   """
-//   type Dog implements Pet {
-//     "name of this fine beast."
-//     name:  String!
-//
-//     "breed of this silly animal; probably shibe."
-//     breed: [Breed]
-//   }
-//
-// == Example generated interface
-//
-//   // DogResolver ...
-//   type DogFieldResolvers interface {
-//     DogNameFieldResolver
-//     DogBreedFieldResolver
-//
-//     // IsTypeOf is used to determine if a given value is associated with the Dog type
-//     IsTypeOf(interface{}, graphql.IsTypeOfParams) bool
-//   }
-//
-// == Example implementation ...
-//
-//   // DogResolver implements DogFieldResolvers interface
-//   type DogResolver struct {
-//     logger logrus.LogEntry
-//     store interface{
-//       store.BreedStore
-//       store.DogStore
-//     }
-//   }
-//
-//   // Name implements response to request for name field.
-//   func (r *DogResolver) Name(p graphql.ResolveParams) (interface{}, error) {
-//     // ... implementation details ...
-//     dog := p.Source.(DogGetter)
-//     return dog.GetName()
-//   }
-//
-//   // Breed implements response to request for breed field.
-//   func (r *DogResolver) Breed(p graphql.ResolveParams) (interface{}, error) {
-//     // ... implementation details ...
-//     dog := p.Source.(DogGetter)
-//     breed := r.store.GetBreed(dog.GetBreedName())
-//     return breed
-//   }
-//
-//   // IsTypeOf is used to determine if a given value is associated with the Dog type
-//   func (r *DogResolver) IsTypeOf(p graphql.IsTypeOfParams) bool {
-//     // ... implementation details ...
-//     _, ok := p.Value.(DogGetter)
-//     return ok
-//   }
-//
 type UserFieldResolvers interface {
-	UserUsernameFieldResolver
-	UserGroupsFieldResolver
-	UserDisabledFieldResolver
-	UserHasPasswordFieldResolver
+	// Username implements response to request for 'username' field.
+	Username(p graphql.ResolveParams) (string, error)
+
+	// Groups implements response to request for 'groups' field.
+	Groups(p graphql.ResolveParams) ([]string, error)
+
+	// Disabled implements response to request for 'disabled' field.
+	Disabled(p graphql.ResolveParams) (bool, error)
+
+	// HasPassword implements response to request for 'hasPassword' field.
+	HasPassword(p graphql.ResolveParams) (bool, error)
 }
 
 // UserAliases implements all methods on UserFieldResolvers interface by using reflection to
 // match name of field to a field on the given value. Intent is reduce friction
 // of writing new resolvers by removing all the instances where you would simply
 // have the resolvers method return a field.
-//
-// == Example SDL
-//
-//    type Dog {
-//      name:   String!
-//      weight: Float!
-//      dob:    DateTime
-//      breed:  [Breed]
-//    }
-//
-// == Example generated aliases
-//
-//   type DogAliases struct {}
-//   func (_ DogAliases) Name(p graphql.ResolveParams) (interface{}, error) {
-//     // reflect...
-//   }
-//   func (_ DogAliases) Weight(p graphql.ResolveParams) (interface{}, error) {
-//     // reflect...
-//   }
-//   func (_ DogAliases) Dob(p graphql.ResolveParams) (interface{}, error) {
-//     // reflect...
-//   }
-//   func (_ DogAliases) Breed(p graphql.ResolveParams) (interface{}, error) {
-//     // reflect...
-//   }
-//
-// == Example Implementation
-//
-//   type DogResolver struct { // Implements DogResolver
-//     DogAliases
-//     store store.BreedStore
-//   }
-//
-//   // NOTE:
-//   // All other fields are satisified by DogAliases but since this one
-//   // requires hitting the store we implement it in our resolver.
-//   func (r *DogResolver) Breed(p graphql.ResolveParams) interface{} {
-//     dog := v.(*Dog)
-//     return r.BreedsById(dog.BreedIDs)
-//   }
-//
 type UserAliases struct{}
 
 // Username implements response to request for 'username' field.
@@ -207,28 +91,36 @@ func RegisterUser(svc *graphql.Service, impl UserFieldResolvers) {
 	svc.RegisterObject(_ObjectTypeUserDesc, impl)
 }
 func _ObjTypeUserUsernameHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(UserUsernameFieldResolver)
+	resolver := impl.(interface {
+		Username(p graphql.ResolveParams) (string, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.Username(frp)
 	}
 }
 
 func _ObjTypeUserGroupsHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(UserGroupsFieldResolver)
+	resolver := impl.(interface {
+		Groups(p graphql.ResolveParams) ([]string, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.Groups(frp)
 	}
 }
 
 func _ObjTypeUserDisabledHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(UserDisabledFieldResolver)
+	resolver := impl.(interface {
+		Disabled(p graphql.ResolveParams) (bool, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.Disabled(frp)
 	}
 }
 
 func _ObjTypeUserHasPasswordHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(UserHasPasswordFieldResolver)
+	resolver := impl.(interface {
+		HasPassword(p graphql.ResolveParams) (bool, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.HasPassword(frp)
 	}

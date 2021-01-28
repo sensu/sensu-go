@@ -8,122 +8,18 @@ import (
 	graphql "github.com/sensu/sensu-go/graphql"
 )
 
-// TimeWindowWhenDaysFieldResolver implement to resolve requests for the TimeWindowWhen's days field.
-type TimeWindowWhenDaysFieldResolver interface {
-	// Days implements response to request for days field.
-	Days(p graphql.ResolveParams) (interface{}, error)
-}
-
 //
 // TimeWindowWhenFieldResolvers represents a collection of methods whose products represent the
 // response values of the 'TimeWindowWhen' type.
-//
-// == Example SDL
-//
-//   """
-//   Dog's are not hooman.
-//   """
-//   type Dog implements Pet {
-//     "name of this fine beast."
-//     name:  String!
-//
-//     "breed of this silly animal; probably shibe."
-//     breed: [Breed]
-//   }
-//
-// == Example generated interface
-//
-//   // DogResolver ...
-//   type DogFieldResolvers interface {
-//     DogNameFieldResolver
-//     DogBreedFieldResolver
-//
-//     // IsTypeOf is used to determine if a given value is associated with the Dog type
-//     IsTypeOf(interface{}, graphql.IsTypeOfParams) bool
-//   }
-//
-// == Example implementation ...
-//
-//   // DogResolver implements DogFieldResolvers interface
-//   type DogResolver struct {
-//     logger logrus.LogEntry
-//     store interface{
-//       store.BreedStore
-//       store.DogStore
-//     }
-//   }
-//
-//   // Name implements response to request for name field.
-//   func (r *DogResolver) Name(p graphql.ResolveParams) (interface{}, error) {
-//     // ... implementation details ...
-//     dog := p.Source.(DogGetter)
-//     return dog.GetName()
-//   }
-//
-//   // Breed implements response to request for breed field.
-//   func (r *DogResolver) Breed(p graphql.ResolveParams) (interface{}, error) {
-//     // ... implementation details ...
-//     dog := p.Source.(DogGetter)
-//     breed := r.store.GetBreed(dog.GetBreedName())
-//     return breed
-//   }
-//
-//   // IsTypeOf is used to determine if a given value is associated with the Dog type
-//   func (r *DogResolver) IsTypeOf(p graphql.IsTypeOfParams) bool {
-//     // ... implementation details ...
-//     _, ok := p.Value.(DogGetter)
-//     return ok
-//   }
-//
 type TimeWindowWhenFieldResolvers interface {
-	TimeWindowWhenDaysFieldResolver
+	// Days implements response to request for 'days' field.
+	Days(p graphql.ResolveParams) (interface{}, error)
 }
 
 // TimeWindowWhenAliases implements all methods on TimeWindowWhenFieldResolvers interface by using reflection to
 // match name of field to a field on the given value. Intent is reduce friction
 // of writing new resolvers by removing all the instances where you would simply
 // have the resolvers method return a field.
-//
-// == Example SDL
-//
-//    type Dog {
-//      name:   String!
-//      weight: Float!
-//      dob:    DateTime
-//      breed:  [Breed]
-//    }
-//
-// == Example generated aliases
-//
-//   type DogAliases struct {}
-//   func (_ DogAliases) Name(p graphql.ResolveParams) (interface{}, error) {
-//     // reflect...
-//   }
-//   func (_ DogAliases) Weight(p graphql.ResolveParams) (interface{}, error) {
-//     // reflect...
-//   }
-//   func (_ DogAliases) Dob(p graphql.ResolveParams) (interface{}, error) {
-//     // reflect...
-//   }
-//   func (_ DogAliases) Breed(p graphql.ResolveParams) (interface{}, error) {
-//     // reflect...
-//   }
-//
-// == Example Implementation
-//
-//   type DogResolver struct { // Implements DogResolver
-//     DogAliases
-//     store store.BreedStore
-//   }
-//
-//   // NOTE:
-//   // All other fields are satisified by DogAliases but since this one
-//   // requires hitting the store we implement it in our resolver.
-//   func (r *DogResolver) Breed(p graphql.ResolveParams) interface{} {
-//     dog := v.(*Dog)
-//     return r.BreedsById(dog.BreedIDs)
-//   }
-//
 type TimeWindowWhenAliases struct{}
 
 // Days implements response to request for 'days' field.
@@ -140,7 +36,9 @@ func RegisterTimeWindowWhen(svc *graphql.Service, impl TimeWindowWhenFieldResolv
 	svc.RegisterObject(_ObjectTypeTimeWindowWhenDesc, impl)
 }
 func _ObjTypeTimeWindowWhenDaysHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(TimeWindowWhenDaysFieldResolver)
+	resolver := impl.(interface {
+		Days(p graphql.ResolveParams) (interface{}, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.Days(frp)
 	}
@@ -175,171 +73,39 @@ var _ObjectTypeTimeWindowWhenDesc = graphql.ObjectDesc{
 	FieldHandlers: map[string]graphql.FieldHandler{"days": _ObjTypeTimeWindowWhenDaysHandler},
 }
 
-// TimeWindowDaysAllFieldResolver implement to resolve requests for the TimeWindowDays's all field.
-type TimeWindowDaysAllFieldResolver interface {
-	// All implements response to request for all field.
-	All(p graphql.ResolveParams) (interface{}, error)
-}
-
-// TimeWindowDaysSundayFieldResolver implement to resolve requests for the TimeWindowDays's sunday field.
-type TimeWindowDaysSundayFieldResolver interface {
-	// Sunday implements response to request for sunday field.
-	Sunday(p graphql.ResolveParams) (interface{}, error)
-}
-
-// TimeWindowDaysMondayFieldResolver implement to resolve requests for the TimeWindowDays's monday field.
-type TimeWindowDaysMondayFieldResolver interface {
-	// Monday implements response to request for monday field.
-	Monday(p graphql.ResolveParams) (interface{}, error)
-}
-
-// TimeWindowDaysTuesdayFieldResolver implement to resolve requests for the TimeWindowDays's tuesday field.
-type TimeWindowDaysTuesdayFieldResolver interface {
-	// Tuesday implements response to request for tuesday field.
-	Tuesday(p graphql.ResolveParams) (interface{}, error)
-}
-
-// TimeWindowDaysWednesdayFieldResolver implement to resolve requests for the TimeWindowDays's wednesday field.
-type TimeWindowDaysWednesdayFieldResolver interface {
-	// Wednesday implements response to request for wednesday field.
-	Wednesday(p graphql.ResolveParams) (interface{}, error)
-}
-
-// TimeWindowDaysThursdayFieldResolver implement to resolve requests for the TimeWindowDays's thursday field.
-type TimeWindowDaysThursdayFieldResolver interface {
-	// Thursday implements response to request for thursday field.
-	Thursday(p graphql.ResolveParams) (interface{}, error)
-}
-
-// TimeWindowDaysFridayFieldResolver implement to resolve requests for the TimeWindowDays's friday field.
-type TimeWindowDaysFridayFieldResolver interface {
-	// Friday implements response to request for friday field.
-	Friday(p graphql.ResolveParams) (interface{}, error)
-}
-
-// TimeWindowDaysSaturdayFieldResolver implement to resolve requests for the TimeWindowDays's saturday field.
-type TimeWindowDaysSaturdayFieldResolver interface {
-	// Saturday implements response to request for saturday field.
-	Saturday(p graphql.ResolveParams) (interface{}, error)
-}
-
 //
 // TimeWindowDaysFieldResolvers represents a collection of methods whose products represent the
 // response values of the 'TimeWindowDays' type.
-//
-// == Example SDL
-//
-//   """
-//   Dog's are not hooman.
-//   """
-//   type Dog implements Pet {
-//     "name of this fine beast."
-//     name:  String!
-//
-//     "breed of this silly animal; probably shibe."
-//     breed: [Breed]
-//   }
-//
-// == Example generated interface
-//
-//   // DogResolver ...
-//   type DogFieldResolvers interface {
-//     DogNameFieldResolver
-//     DogBreedFieldResolver
-//
-//     // IsTypeOf is used to determine if a given value is associated with the Dog type
-//     IsTypeOf(interface{}, graphql.IsTypeOfParams) bool
-//   }
-//
-// == Example implementation ...
-//
-//   // DogResolver implements DogFieldResolvers interface
-//   type DogResolver struct {
-//     logger logrus.LogEntry
-//     store interface{
-//       store.BreedStore
-//       store.DogStore
-//     }
-//   }
-//
-//   // Name implements response to request for name field.
-//   func (r *DogResolver) Name(p graphql.ResolveParams) (interface{}, error) {
-//     // ... implementation details ...
-//     dog := p.Source.(DogGetter)
-//     return dog.GetName()
-//   }
-//
-//   // Breed implements response to request for breed field.
-//   func (r *DogResolver) Breed(p graphql.ResolveParams) (interface{}, error) {
-//     // ... implementation details ...
-//     dog := p.Source.(DogGetter)
-//     breed := r.store.GetBreed(dog.GetBreedName())
-//     return breed
-//   }
-//
-//   // IsTypeOf is used to determine if a given value is associated with the Dog type
-//   func (r *DogResolver) IsTypeOf(p graphql.IsTypeOfParams) bool {
-//     // ... implementation details ...
-//     _, ok := p.Value.(DogGetter)
-//     return ok
-//   }
-//
 type TimeWindowDaysFieldResolvers interface {
-	TimeWindowDaysAllFieldResolver
-	TimeWindowDaysSundayFieldResolver
-	TimeWindowDaysMondayFieldResolver
-	TimeWindowDaysTuesdayFieldResolver
-	TimeWindowDaysWednesdayFieldResolver
-	TimeWindowDaysThursdayFieldResolver
-	TimeWindowDaysFridayFieldResolver
-	TimeWindowDaysSaturdayFieldResolver
+	// All implements response to request for 'all' field.
+	All(p graphql.ResolveParams) (interface{}, error)
+
+	// Sunday implements response to request for 'sunday' field.
+	Sunday(p graphql.ResolveParams) (interface{}, error)
+
+	// Monday implements response to request for 'monday' field.
+	Monday(p graphql.ResolveParams) (interface{}, error)
+
+	// Tuesday implements response to request for 'tuesday' field.
+	Tuesday(p graphql.ResolveParams) (interface{}, error)
+
+	// Wednesday implements response to request for 'wednesday' field.
+	Wednesday(p graphql.ResolveParams) (interface{}, error)
+
+	// Thursday implements response to request for 'thursday' field.
+	Thursday(p graphql.ResolveParams) (interface{}, error)
+
+	// Friday implements response to request for 'friday' field.
+	Friday(p graphql.ResolveParams) (interface{}, error)
+
+	// Saturday implements response to request for 'saturday' field.
+	Saturday(p graphql.ResolveParams) (interface{}, error)
 }
 
 // TimeWindowDaysAliases implements all methods on TimeWindowDaysFieldResolvers interface by using reflection to
 // match name of field to a field on the given value. Intent is reduce friction
 // of writing new resolvers by removing all the instances where you would simply
 // have the resolvers method return a field.
-//
-// == Example SDL
-//
-//    type Dog {
-//      name:   String!
-//      weight: Float!
-//      dob:    DateTime
-//      breed:  [Breed]
-//    }
-//
-// == Example generated aliases
-//
-//   type DogAliases struct {}
-//   func (_ DogAliases) Name(p graphql.ResolveParams) (interface{}, error) {
-//     // reflect...
-//   }
-//   func (_ DogAliases) Weight(p graphql.ResolveParams) (interface{}, error) {
-//     // reflect...
-//   }
-//   func (_ DogAliases) Dob(p graphql.ResolveParams) (interface{}, error) {
-//     // reflect...
-//   }
-//   func (_ DogAliases) Breed(p graphql.ResolveParams) (interface{}, error) {
-//     // reflect...
-//   }
-//
-// == Example Implementation
-//
-//   type DogResolver struct { // Implements DogResolver
-//     DogAliases
-//     store store.BreedStore
-//   }
-//
-//   // NOTE:
-//   // All other fields are satisified by DogAliases but since this one
-//   // requires hitting the store we implement it in our resolver.
-//   func (r *DogResolver) Breed(p graphql.ResolveParams) interface{} {
-//     dog := v.(*Dog)
-//     return r.BreedsById(dog.BreedIDs)
-//   }
-//
 type TimeWindowDaysAliases struct{}
 
 // All implements response to request for 'all' field.
@@ -398,56 +164,72 @@ func RegisterTimeWindowDays(svc *graphql.Service, impl TimeWindowDaysFieldResolv
 	svc.RegisterObject(_ObjectTypeTimeWindowDaysDesc, impl)
 }
 func _ObjTypeTimeWindowDaysAllHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(TimeWindowDaysAllFieldResolver)
+	resolver := impl.(interface {
+		All(p graphql.ResolveParams) (interface{}, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.All(frp)
 	}
 }
 
 func _ObjTypeTimeWindowDaysSundayHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(TimeWindowDaysSundayFieldResolver)
+	resolver := impl.(interface {
+		Sunday(p graphql.ResolveParams) (interface{}, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.Sunday(frp)
 	}
 }
 
 func _ObjTypeTimeWindowDaysMondayHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(TimeWindowDaysMondayFieldResolver)
+	resolver := impl.(interface {
+		Monday(p graphql.ResolveParams) (interface{}, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.Monday(frp)
 	}
 }
 
 func _ObjTypeTimeWindowDaysTuesdayHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(TimeWindowDaysTuesdayFieldResolver)
+	resolver := impl.(interface {
+		Tuesday(p graphql.ResolveParams) (interface{}, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.Tuesday(frp)
 	}
 }
 
 func _ObjTypeTimeWindowDaysWednesdayHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(TimeWindowDaysWednesdayFieldResolver)
+	resolver := impl.(interface {
+		Wednesday(p graphql.ResolveParams) (interface{}, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.Wednesday(frp)
 	}
 }
 
 func _ObjTypeTimeWindowDaysThursdayHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(TimeWindowDaysThursdayFieldResolver)
+	resolver := impl.(interface {
+		Thursday(p graphql.ResolveParams) (interface{}, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.Thursday(frp)
 	}
 }
 
 func _ObjTypeTimeWindowDaysFridayHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(TimeWindowDaysFridayFieldResolver)
+	resolver := impl.(interface {
+		Friday(p graphql.ResolveParams) (interface{}, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.Friday(frp)
 	}
 }
 
 func _ObjTypeTimeWindowDaysSaturdayHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(TimeWindowDaysSaturdayFieldResolver)
+	resolver := impl.(interface {
+		Saturday(p graphql.ResolveParams) (interface{}, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.Saturday(frp)
 	}
@@ -542,129 +324,21 @@ var _ObjectTypeTimeWindowDaysDesc = graphql.ObjectDesc{
 	},
 }
 
-// TimeWindowTimeRangeBeginFieldResolver implement to resolve requests for the TimeWindowTimeRange's begin field.
-type TimeWindowTimeRangeBeginFieldResolver interface {
-	// Begin implements response to request for begin field.
-	Begin(p graphql.ResolveParams) (string, error)
-}
-
-// TimeWindowTimeRangeEndFieldResolver implement to resolve requests for the TimeWindowTimeRange's end field.
-type TimeWindowTimeRangeEndFieldResolver interface {
-	// End implements response to request for end field.
-	End(p graphql.ResolveParams) (string, error)
-}
-
 //
 // TimeWindowTimeRangeFieldResolvers represents a collection of methods whose products represent the
 // response values of the 'TimeWindowTimeRange' type.
-//
-// == Example SDL
-//
-//   """
-//   Dog's are not hooman.
-//   """
-//   type Dog implements Pet {
-//     "name of this fine beast."
-//     name:  String!
-//
-//     "breed of this silly animal; probably shibe."
-//     breed: [Breed]
-//   }
-//
-// == Example generated interface
-//
-//   // DogResolver ...
-//   type DogFieldResolvers interface {
-//     DogNameFieldResolver
-//     DogBreedFieldResolver
-//
-//     // IsTypeOf is used to determine if a given value is associated with the Dog type
-//     IsTypeOf(interface{}, graphql.IsTypeOfParams) bool
-//   }
-//
-// == Example implementation ...
-//
-//   // DogResolver implements DogFieldResolvers interface
-//   type DogResolver struct {
-//     logger logrus.LogEntry
-//     store interface{
-//       store.BreedStore
-//       store.DogStore
-//     }
-//   }
-//
-//   // Name implements response to request for name field.
-//   func (r *DogResolver) Name(p graphql.ResolveParams) (interface{}, error) {
-//     // ... implementation details ...
-//     dog := p.Source.(DogGetter)
-//     return dog.GetName()
-//   }
-//
-//   // Breed implements response to request for breed field.
-//   func (r *DogResolver) Breed(p graphql.ResolveParams) (interface{}, error) {
-//     // ... implementation details ...
-//     dog := p.Source.(DogGetter)
-//     breed := r.store.GetBreed(dog.GetBreedName())
-//     return breed
-//   }
-//
-//   // IsTypeOf is used to determine if a given value is associated with the Dog type
-//   func (r *DogResolver) IsTypeOf(p graphql.IsTypeOfParams) bool {
-//     // ... implementation details ...
-//     _, ok := p.Value.(DogGetter)
-//     return ok
-//   }
-//
 type TimeWindowTimeRangeFieldResolvers interface {
-	TimeWindowTimeRangeBeginFieldResolver
-	TimeWindowTimeRangeEndFieldResolver
+	// Begin implements response to request for 'begin' field.
+	Begin(p graphql.ResolveParams) (string, error)
+
+	// End implements response to request for 'end' field.
+	End(p graphql.ResolveParams) (string, error)
 }
 
 // TimeWindowTimeRangeAliases implements all methods on TimeWindowTimeRangeFieldResolvers interface by using reflection to
 // match name of field to a field on the given value. Intent is reduce friction
 // of writing new resolvers by removing all the instances where you would simply
 // have the resolvers method return a field.
-//
-// == Example SDL
-//
-//    type Dog {
-//      name:   String!
-//      weight: Float!
-//      dob:    DateTime
-//      breed:  [Breed]
-//    }
-//
-// == Example generated aliases
-//
-//   type DogAliases struct {}
-//   func (_ DogAliases) Name(p graphql.ResolveParams) (interface{}, error) {
-//     // reflect...
-//   }
-//   func (_ DogAliases) Weight(p graphql.ResolveParams) (interface{}, error) {
-//     // reflect...
-//   }
-//   func (_ DogAliases) Dob(p graphql.ResolveParams) (interface{}, error) {
-//     // reflect...
-//   }
-//   func (_ DogAliases) Breed(p graphql.ResolveParams) (interface{}, error) {
-//     // reflect...
-//   }
-//
-// == Example Implementation
-//
-//   type DogResolver struct { // Implements DogResolver
-//     DogAliases
-//     store store.BreedStore
-//   }
-//
-//   // NOTE:
-//   // All other fields are satisified by DogAliases but since this one
-//   // requires hitting the store we implement it in our resolver.
-//   func (r *DogResolver) Breed(p graphql.ResolveParams) interface{} {
-//     dog := v.(*Dog)
-//     return r.BreedsById(dog.BreedIDs)
-//   }
-//
 type TimeWindowTimeRangeAliases struct{}
 
 // Begin implements response to request for 'begin' field.
@@ -701,14 +375,18 @@ func RegisterTimeWindowTimeRange(svc *graphql.Service, impl TimeWindowTimeRangeF
 	svc.RegisterObject(_ObjectTypeTimeWindowTimeRangeDesc, impl)
 }
 func _ObjTypeTimeWindowTimeRangeBeginHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(TimeWindowTimeRangeBeginFieldResolver)
+	resolver := impl.(interface {
+		Begin(p graphql.ResolveParams) (string, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.Begin(frp)
 	}
 }
 
 func _ObjTypeTimeWindowTimeRangeEndHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(TimeWindowTimeRangeEndFieldResolver)
+	resolver := impl.(interface {
+		End(p graphql.ResolveParams) (string, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.End(frp)
 	}

@@ -9,129 +9,21 @@ import (
 	time "time"
 )
 
-// VersionsEtcdFieldResolver implement to resolve requests for the Versions's etcd field.
-type VersionsEtcdFieldResolver interface {
-	// Etcd implements response to request for etcd field.
-	Etcd(p graphql.ResolveParams) (interface{}, error)
-}
-
-// VersionsBackendFieldResolver implement to resolve requests for the Versions's backend field.
-type VersionsBackendFieldResolver interface {
-	// Backend implements response to request for backend field.
-	Backend(p graphql.ResolveParams) (interface{}, error)
-}
-
 //
 // VersionsFieldResolvers represents a collection of methods whose products represent the
 // response values of the 'Versions' type.
-//
-// == Example SDL
-//
-//   """
-//   Dog's are not hooman.
-//   """
-//   type Dog implements Pet {
-//     "name of this fine beast."
-//     name:  String!
-//
-//     "breed of this silly animal; probably shibe."
-//     breed: [Breed]
-//   }
-//
-// == Example generated interface
-//
-//   // DogResolver ...
-//   type DogFieldResolvers interface {
-//     DogNameFieldResolver
-//     DogBreedFieldResolver
-//
-//     // IsTypeOf is used to determine if a given value is associated with the Dog type
-//     IsTypeOf(interface{}, graphql.IsTypeOfParams) bool
-//   }
-//
-// == Example implementation ...
-//
-//   // DogResolver implements DogFieldResolvers interface
-//   type DogResolver struct {
-//     logger logrus.LogEntry
-//     store interface{
-//       store.BreedStore
-//       store.DogStore
-//     }
-//   }
-//
-//   // Name implements response to request for name field.
-//   func (r *DogResolver) Name(p graphql.ResolveParams) (interface{}, error) {
-//     // ... implementation details ...
-//     dog := p.Source.(DogGetter)
-//     return dog.GetName()
-//   }
-//
-//   // Breed implements response to request for breed field.
-//   func (r *DogResolver) Breed(p graphql.ResolveParams) (interface{}, error) {
-//     // ... implementation details ...
-//     dog := p.Source.(DogGetter)
-//     breed := r.store.GetBreed(dog.GetBreedName())
-//     return breed
-//   }
-//
-//   // IsTypeOf is used to determine if a given value is associated with the Dog type
-//   func (r *DogResolver) IsTypeOf(p graphql.IsTypeOfParams) bool {
-//     // ... implementation details ...
-//     _, ok := p.Value.(DogGetter)
-//     return ok
-//   }
-//
 type VersionsFieldResolvers interface {
-	VersionsEtcdFieldResolver
-	VersionsBackendFieldResolver
+	// Etcd implements response to request for 'etcd' field.
+	Etcd(p graphql.ResolveParams) (interface{}, error)
+
+	// Backend implements response to request for 'backend' field.
+	Backend(p graphql.ResolveParams) (interface{}, error)
 }
 
 // VersionsAliases implements all methods on VersionsFieldResolvers interface by using reflection to
 // match name of field to a field on the given value. Intent is reduce friction
 // of writing new resolvers by removing all the instances where you would simply
 // have the resolvers method return a field.
-//
-// == Example SDL
-//
-//    type Dog {
-//      name:   String!
-//      weight: Float!
-//      dob:    DateTime
-//      breed:  [Breed]
-//    }
-//
-// == Example generated aliases
-//
-//   type DogAliases struct {}
-//   func (_ DogAliases) Name(p graphql.ResolveParams) (interface{}, error) {
-//     // reflect...
-//   }
-//   func (_ DogAliases) Weight(p graphql.ResolveParams) (interface{}, error) {
-//     // reflect...
-//   }
-//   func (_ DogAliases) Dob(p graphql.ResolveParams) (interface{}, error) {
-//     // reflect...
-//   }
-//   func (_ DogAliases) Breed(p graphql.ResolveParams) (interface{}, error) {
-//     // reflect...
-//   }
-//
-// == Example Implementation
-//
-//   type DogResolver struct { // Implements DogResolver
-//     DogAliases
-//     store store.BreedStore
-//   }
-//
-//   // NOTE:
-//   // All other fields are satisified by DogAliases but since this one
-//   // requires hitting the store we implement it in our resolver.
-//   func (r *DogResolver) Breed(p graphql.ResolveParams) interface{} {
-//     dog := v.(*Dog)
-//     return r.BreedsById(dog.BreedIDs)
-//   }
-//
 type VersionsAliases struct{}
 
 // Etcd implements response to request for 'etcd' field.
@@ -154,14 +46,18 @@ func RegisterVersions(svc *graphql.Service, impl VersionsFieldResolvers) {
 	svc.RegisterObject(_ObjectTypeVersionsDesc, impl)
 }
 func _ObjTypeVersionsEtcdHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(VersionsEtcdFieldResolver)
+	resolver := impl.(interface {
+		Etcd(p graphql.ResolveParams) (interface{}, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.Etcd(frp)
 	}
 }
 
 func _ObjTypeVersionsBackendHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(VersionsBackendFieldResolver)
+	resolver := impl.(interface {
+		Backend(p graphql.ResolveParams) (interface{}, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.Backend(frp)
 	}
@@ -208,129 +104,21 @@ var _ObjectTypeVersionsDesc = graphql.ObjectDesc{
 	},
 }
 
-// EtcdVersionsServerFieldResolver implement to resolve requests for the EtcdVersions's server field.
-type EtcdVersionsServerFieldResolver interface {
-	// Server implements response to request for server field.
-	Server(p graphql.ResolveParams) (string, error)
-}
-
-// EtcdVersionsClusterFieldResolver implement to resolve requests for the EtcdVersions's cluster field.
-type EtcdVersionsClusterFieldResolver interface {
-	// Cluster implements response to request for cluster field.
-	Cluster(p graphql.ResolveParams) (string, error)
-}
-
 //
 // EtcdVersionsFieldResolvers represents a collection of methods whose products represent the
 // response values of the 'EtcdVersions' type.
-//
-// == Example SDL
-//
-//   """
-//   Dog's are not hooman.
-//   """
-//   type Dog implements Pet {
-//     "name of this fine beast."
-//     name:  String!
-//
-//     "breed of this silly animal; probably shibe."
-//     breed: [Breed]
-//   }
-//
-// == Example generated interface
-//
-//   // DogResolver ...
-//   type DogFieldResolvers interface {
-//     DogNameFieldResolver
-//     DogBreedFieldResolver
-//
-//     // IsTypeOf is used to determine if a given value is associated with the Dog type
-//     IsTypeOf(interface{}, graphql.IsTypeOfParams) bool
-//   }
-//
-// == Example implementation ...
-//
-//   // DogResolver implements DogFieldResolvers interface
-//   type DogResolver struct {
-//     logger logrus.LogEntry
-//     store interface{
-//       store.BreedStore
-//       store.DogStore
-//     }
-//   }
-//
-//   // Name implements response to request for name field.
-//   func (r *DogResolver) Name(p graphql.ResolveParams) (interface{}, error) {
-//     // ... implementation details ...
-//     dog := p.Source.(DogGetter)
-//     return dog.GetName()
-//   }
-//
-//   // Breed implements response to request for breed field.
-//   func (r *DogResolver) Breed(p graphql.ResolveParams) (interface{}, error) {
-//     // ... implementation details ...
-//     dog := p.Source.(DogGetter)
-//     breed := r.store.GetBreed(dog.GetBreedName())
-//     return breed
-//   }
-//
-//   // IsTypeOf is used to determine if a given value is associated with the Dog type
-//   func (r *DogResolver) IsTypeOf(p graphql.IsTypeOfParams) bool {
-//     // ... implementation details ...
-//     _, ok := p.Value.(DogGetter)
-//     return ok
-//   }
-//
 type EtcdVersionsFieldResolvers interface {
-	EtcdVersionsServerFieldResolver
-	EtcdVersionsClusterFieldResolver
+	// Server implements response to request for 'server' field.
+	Server(p graphql.ResolveParams) (string, error)
+
+	// Cluster implements response to request for 'cluster' field.
+	Cluster(p graphql.ResolveParams) (string, error)
 }
 
 // EtcdVersionsAliases implements all methods on EtcdVersionsFieldResolvers interface by using reflection to
 // match name of field to a field on the given value. Intent is reduce friction
 // of writing new resolvers by removing all the instances where you would simply
 // have the resolvers method return a field.
-//
-// == Example SDL
-//
-//    type Dog {
-//      name:   String!
-//      weight: Float!
-//      dob:    DateTime
-//      breed:  [Breed]
-//    }
-//
-// == Example generated aliases
-//
-//   type DogAliases struct {}
-//   func (_ DogAliases) Name(p graphql.ResolveParams) (interface{}, error) {
-//     // reflect...
-//   }
-//   func (_ DogAliases) Weight(p graphql.ResolveParams) (interface{}, error) {
-//     // reflect...
-//   }
-//   func (_ DogAliases) Dob(p graphql.ResolveParams) (interface{}, error) {
-//     // reflect...
-//   }
-//   func (_ DogAliases) Breed(p graphql.ResolveParams) (interface{}, error) {
-//     // reflect...
-//   }
-//
-// == Example Implementation
-//
-//   type DogResolver struct { // Implements DogResolver
-//     DogAliases
-//     store store.BreedStore
-//   }
-//
-//   // NOTE:
-//   // All other fields are satisified by DogAliases but since this one
-//   // requires hitting the store we implement it in our resolver.
-//   func (r *DogResolver) Breed(p graphql.ResolveParams) interface{} {
-//     dog := v.(*Dog)
-//     return r.BreedsById(dog.BreedIDs)
-//   }
-//
 type EtcdVersionsAliases struct{}
 
 // Server implements response to request for 'server' field.
@@ -367,14 +155,18 @@ func RegisterEtcdVersions(svc *graphql.Service, impl EtcdVersionsFieldResolvers)
 	svc.RegisterObject(_ObjectTypeEtcdVersionsDesc, impl)
 }
 func _ObjTypeEtcdVersionsServerHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(EtcdVersionsServerFieldResolver)
+	resolver := impl.(interface {
+		Server(p graphql.ResolveParams) (string, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.Server(frp)
 	}
 }
 
 func _ObjTypeEtcdVersionsClusterHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(EtcdVersionsClusterFieldResolver)
+	resolver := impl.(interface {
+		Cluster(p graphql.ResolveParams) (string, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.Cluster(frp)
 	}
@@ -421,136 +213,24 @@ var _ObjectTypeEtcdVersionsDesc = graphql.ObjectDesc{
 	},
 }
 
-// SensuBackendVersionVersionFieldResolver implement to resolve requests for the SensuBackendVersion's version field.
-type SensuBackendVersionVersionFieldResolver interface {
-	// Version implements response to request for version field.
-	Version(p graphql.ResolveParams) (string, error)
-}
-
-// SensuBackendVersionBuildSHAFieldResolver implement to resolve requests for the SensuBackendVersion's buildSHA field.
-type SensuBackendVersionBuildSHAFieldResolver interface {
-	// BuildSHA implements response to request for buildSHA field.
-	BuildSHA(p graphql.ResolveParams) (string, error)
-}
-
-// SensuBackendVersionBuildDateFieldResolver implement to resolve requests for the SensuBackendVersion's buildDate field.
-type SensuBackendVersionBuildDateFieldResolver interface {
-	// BuildDate implements response to request for buildDate field.
-	BuildDate(p graphql.ResolveParams) (*time.Time, error)
-}
-
 //
 // SensuBackendVersionFieldResolvers represents a collection of methods whose products represent the
 // response values of the 'SensuBackendVersion' type.
-//
-// == Example SDL
-//
-//   """
-//   Dog's are not hooman.
-//   """
-//   type Dog implements Pet {
-//     "name of this fine beast."
-//     name:  String!
-//
-//     "breed of this silly animal; probably shibe."
-//     breed: [Breed]
-//   }
-//
-// == Example generated interface
-//
-//   // DogResolver ...
-//   type DogFieldResolvers interface {
-//     DogNameFieldResolver
-//     DogBreedFieldResolver
-//
-//     // IsTypeOf is used to determine if a given value is associated with the Dog type
-//     IsTypeOf(interface{}, graphql.IsTypeOfParams) bool
-//   }
-//
-// == Example implementation ...
-//
-//   // DogResolver implements DogFieldResolvers interface
-//   type DogResolver struct {
-//     logger logrus.LogEntry
-//     store interface{
-//       store.BreedStore
-//       store.DogStore
-//     }
-//   }
-//
-//   // Name implements response to request for name field.
-//   func (r *DogResolver) Name(p graphql.ResolveParams) (interface{}, error) {
-//     // ... implementation details ...
-//     dog := p.Source.(DogGetter)
-//     return dog.GetName()
-//   }
-//
-//   // Breed implements response to request for breed field.
-//   func (r *DogResolver) Breed(p graphql.ResolveParams) (interface{}, error) {
-//     // ... implementation details ...
-//     dog := p.Source.(DogGetter)
-//     breed := r.store.GetBreed(dog.GetBreedName())
-//     return breed
-//   }
-//
-//   // IsTypeOf is used to determine if a given value is associated with the Dog type
-//   func (r *DogResolver) IsTypeOf(p graphql.IsTypeOfParams) bool {
-//     // ... implementation details ...
-//     _, ok := p.Value.(DogGetter)
-//     return ok
-//   }
-//
 type SensuBackendVersionFieldResolvers interface {
-	SensuBackendVersionVersionFieldResolver
-	SensuBackendVersionBuildSHAFieldResolver
-	SensuBackendVersionBuildDateFieldResolver
+	// Version implements response to request for 'version' field.
+	Version(p graphql.ResolveParams) (string, error)
+
+	// BuildSHA implements response to request for 'buildSHA' field.
+	BuildSHA(p graphql.ResolveParams) (string, error)
+
+	// BuildDate implements response to request for 'buildDate' field.
+	BuildDate(p graphql.ResolveParams) (*time.Time, error)
 }
 
 // SensuBackendVersionAliases implements all methods on SensuBackendVersionFieldResolvers interface by using reflection to
 // match name of field to a field on the given value. Intent is reduce friction
 // of writing new resolvers by removing all the instances where you would simply
 // have the resolvers method return a field.
-//
-// == Example SDL
-//
-//    type Dog {
-//      name:   String!
-//      weight: Float!
-//      dob:    DateTime
-//      breed:  [Breed]
-//    }
-//
-// == Example generated aliases
-//
-//   type DogAliases struct {}
-//   func (_ DogAliases) Name(p graphql.ResolveParams) (interface{}, error) {
-//     // reflect...
-//   }
-//   func (_ DogAliases) Weight(p graphql.ResolveParams) (interface{}, error) {
-//     // reflect...
-//   }
-//   func (_ DogAliases) Dob(p graphql.ResolveParams) (interface{}, error) {
-//     // reflect...
-//   }
-//   func (_ DogAliases) Breed(p graphql.ResolveParams) (interface{}, error) {
-//     // reflect...
-//   }
-//
-// == Example Implementation
-//
-//   type DogResolver struct { // Implements DogResolver
-//     DogAliases
-//     store store.BreedStore
-//   }
-//
-//   // NOTE:
-//   // All other fields are satisified by DogAliases but since this one
-//   // requires hitting the store we implement it in our resolver.
-//   func (r *DogResolver) Breed(p graphql.ResolveParams) interface{} {
-//     dog := v.(*Dog)
-//     return r.BreedsById(dog.BreedIDs)
-//   }
-//
 type SensuBackendVersionAliases struct{}
 
 // Version implements response to request for 'version' field.
@@ -600,21 +280,27 @@ func RegisterSensuBackendVersion(svc *graphql.Service, impl SensuBackendVersionF
 	svc.RegisterObject(_ObjectTypeSensuBackendVersionDesc, impl)
 }
 func _ObjTypeSensuBackendVersionVersionHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(SensuBackendVersionVersionFieldResolver)
+	resolver := impl.(interface {
+		Version(p graphql.ResolveParams) (string, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.Version(frp)
 	}
 }
 
 func _ObjTypeSensuBackendVersionBuildSHAHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(SensuBackendVersionBuildSHAFieldResolver)
+	resolver := impl.(interface {
+		BuildSHA(p graphql.ResolveParams) (string, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.BuildSHA(frp)
 	}
 }
 
 func _ObjTypeSensuBackendVersionBuildDateHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(SensuBackendVersionBuildDateFieldResolver)
+	resolver := impl.(interface {
+		BuildDate(p graphql.ResolveParams) (*time.Time, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.BuildDate(frp)
 	}

@@ -44,14 +44,6 @@ type EventFilterConnection {
 }
 
 """
-An edge in a connection.
-"""
-type EventFilterEdge {
-  node: EventFilter
-  cursor: String!
-}
-
-"""
 Describes ways in which a list of mutators can be ordered.
 """
 enum EventFilterListOrder {
