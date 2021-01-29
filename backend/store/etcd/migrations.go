@@ -24,7 +24,7 @@ var Migrations = []Migration{
 
 // EnterpriseMigrations is like Migrations, but is appended to by enterprise
 // Sensu.
-var EnterpriseMigrations = []Migration{}
+var EnterpriseMigrations = []Migration{Base}
 
 // Base is the base version of the database. It is never executed.
 func Base(ctx context.Context, client *clientv3.Client) error {
