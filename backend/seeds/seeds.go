@@ -3,6 +3,7 @@ package seeds
 import (
 	"context"
 	"errors"
+	"fmt"
 	"time"
 
 	"github.com/coreos/etcd/clientv3"
@@ -24,94 +25,79 @@ type Config struct {
 var ErrAlreadyInitialized = errors.New("sensu-backend already initialized")
 
 // SeedCluster seeds the cluster according to the provided config.
-func SeedCluster(ctx context.Context, store store.Store, client *clientv3.Client, config Config) error {
-	errs := make(chan error, 1)
-	go func() {
-		var err error
-		defer func() {
-			if err != nil {
-				errs <- err
-			}
-			close(errs)
-		}()
-		initializer, err := store.NewInitializer()
-		if err != nil {
-			return
-		}
-		logger := logger.WithField("component", "backend.seeds")
+func SeedCluster(ctx context.Context, store store.Store, client *clientv3.Client, config Config) (fErr error) {
+	logger := logger.WithField("component", "backend.seeds")
 
-		// Lock initialization key to avoid competing installations
-		if err = initializer.Lock(); err != nil {
-			return
-		}
-		defer func() {
-			e := initializer.Close()
-			if err == nil {
-				err = e
-			}
-		}()
-
-		// Check that the store hasn't already been seeded
-		var initialized bool
-		initialized, err = initializer.IsInitialized()
-		if err != nil {
-			return
-		}
-		if initialized {
-			logger.Info("store already initialized")
-			err = ErrAlreadyInitialized
-			return
-		}
-
-		logger.Info("seeding etcd store with intial data")
-
-		// Create the default namespace
-		if err = setupDefaultNamespace(store); err != nil {
-			logger.WithError(err).Error("unable to setup 'default' namespace")
-			return
-		}
-
-		// Create the admin user
-		if err = setupAdminUser(store, config.AdminUsername, config.AdminPassword); err != nil {
-			logger.WithError(err).Error("could not initialize the admin user")
-			return
-		}
-
-		// Create the agent user
-		if err = setupAgentUser(store, "agent", "P@ssw0rd!"); err != nil {
-			logger.WithError(err).Error("could not initialize the agent user")
-			return
-		}
-
-		// Create the default ClusterRoles
-		if err = setupClusterRoles(store); err != nil {
-			logger.WithError(err).Error("could not initialize the default ClusterRoles and Roles")
-			return
-		}
-
-		// Create the default ClusterRoleBindings
-		if err = setupClusterRoleBindings(store); err != nil {
-			logger.WithError(err).Error("could not initialize the default ClusterRoles and Roles")
-			return
-		}
-
-		if client != nil {
-			// Migrate the cluster to the latest version
-			if err = etcd.MigrateDB(ctx, client, etcd.Migrations); err != nil {
-				logger.WithError(err).Error("error bringing the database to the latest version")
-				return
-			}
-		}
-
-		// Set initialized flag
-		err = initializer.FlagAsInitialized()
-	}()
-	select {
-	case err := <-errs:
-		return err
-	case <-ctx.Done():
-		return ctx.Err()
+	initializer, err := store.NewInitializer()
+	if err != nil {
+		return fmt.Errorf("failed to create seed initializer: %w", err)
 	}
+
+	defer func() {
+		if err := initializer.Close(); err != nil {
+			iErr := fmt.Errorf("failed to close initializer: %w", err)
+			if fErr != nil {
+				err = fmt.Errorf("%w: %w", iErr, fErr)
+			} else {
+				err = iErr
+			}
+		}
+		return
+	}()
+
+	// Check that the store hasn't already been seeded
+	initialized, err := initializer.IsInitialized()
+	if err != nil {
+		return fmt.Errorf("failed to check if cluster has been initialized: %w", err)
+	}
+
+	if initialized {
+		logger.Info("store already initialized")
+		return ErrAlreadyInitialized
+	}
+
+	logger.Info("seeding etcd store with intial data")
+
+	// Create the default namespace
+	if err := setupDefaultNamespace(store); err != nil {
+		logger.WithError(err).Error("unable to setup 'default' namespace")
+		return fmt.Errorf("unable to setup 'default' namespace: %w", err)
+	}
+
+	// Create the admin user
+	if err := setupAdminUser(store, config.AdminUsername, config.AdminPassword); err != nil {
+		logger.WithError(err).Error("could not initialize the admin user")
+		return fmt.Errorf("could not initialize the admin user: %w", err)
+	}
+
+	// Create the agent user
+	if err := setupAgentUser(store, "agent", "P@ssw0rd!"); err != nil {
+		logger.WithError(err).Error("could not initialize the agent user")
+		return fmt.Errorf("could not initialize the agent user: %w", err)
+	}
+
+	// Create the default ClusterRoles
+	if err := setupClusterRoles(store); err != nil {
+		logger.WithError(err).Error("could not initialize the default ClusterRoles and Roles")
+		return fmt.Errorf("could not initialize the default ClusterRoles and Roles: %w", err)
+	}
+
+	// Create the default ClusterRoleBindings
+	if err := setupClusterRoleBindings(store); err != nil {
+		logger.WithError(err).Error("could not initialize the default ClusterRoleBindings")
+		return fmt.Errorf("could not initialize the default ClusterRoleBindings: %w", err)
+	}
+
+	if client != nil {
+		// Migrate the cluster to the latest version
+		if err := etcd.MigrateDB(ctx, client, etcd.Migrations); err != nil {
+			logger.WithError(err).Error("error bringing the database to the latest version")
+			return fmt.Errorf("error bringing the database to the latest version: %w", err)
+		}
+	}
+
+	// Set initialized flag
+	return initializer.FlagAsInitialized()
 }
 
 // SeedInitialData will seed a store with initial data. This method is

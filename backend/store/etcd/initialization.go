@@ -2,6 +2,7 @@ package etcd
 
 import (
 	"context"
+	"fmt"
 	"path"
 
 	"github.com/coreos/etcd/clientv3"
@@ -35,7 +36,7 @@ func (store *Store) NewInitializer() (store.Initializer, error) {
 		mutex:   concurrency.NewMutex(session, initializationLockKey),
 		session: session,
 		client:  client,
-		ctx:     context.TODO(),
+		ctx:     client.Ctx(),
 	}, nil
 }
 
@@ -48,14 +49,14 @@ func (s *StoreInitializer) Lock() error {
 func (s *StoreInitializer) IsInitialized() (bool, error) {
 	r, err := s.client.Get(s.ctx, path.Join(EtcdRoot, initializationKey))
 	if err != nil {
-		return false, err
+		return false, fmt.Errorf("failed to fetch initialization key: %w", err)
 	}
 
 	// if there is no result, test the fallback and return using same logic
 	if len(r.Kvs) == 0 {
 		fallback, err := s.client.Get(s.ctx, initializationKey)
 		if err != nil {
-			return false, err
+			return false, fmt.Errorf("failed to fetch fallback initialization key: %w", err)
 		} else {
 			return fallback.Count > 0, nil
 		}
@@ -67,17 +68,17 @@ func (s *StoreInitializer) IsInitialized() (bool, error) {
 // FlagAsInitialized - set .initialized key
 func (s *StoreInitializer) FlagAsInitialized() error {
 	_, err := s.client.Put(s.ctx, path.Join(EtcdRoot, initializationKey), "1")
-	return err
+	return fmt.Errorf("failed to flag database as initialized: %w", err)
 }
 
 // Close session & unlock
 func (s *StoreInitializer) Close() error {
 	if err := s.mutex.Unlock(s.ctx); err != nil {
-		return err
+		return fmt.Errorf("failed to unlock initializer mutex: %w", err)
 	}
 
 	if err := s.session.Close(); err != nil {
-		return err
+		return fmt.Errorf("failed to close initializer session: %w", err)
 	}
 	<-s.session.Done()
 

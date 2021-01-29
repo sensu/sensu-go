@@ -29,10 +29,17 @@ const (
 	flagWait              = "wait"
 )
 
-type seedConfig struct {
+type initConfig struct {
 	backend.Config
 	SeedConfig seeds.Config
 	Timeout    time.Duration
+}
+
+func (c *initConfig) Validate() error {
+	if c.SeedConfig.AdminUsername == "" || c.SeedConfig.AdminPassword == "" {
+		return fmt.Errorf("both %s and %s are required to be set", flagInitAdminUsername, flagInitAdminPassword)
+	}
+	return nil
 }
 
 type initOpts struct {
@@ -129,20 +136,16 @@ func InitCommand() *cobra.Command {
 				clientURLs = viper.GetStringSlice(flagEtcdAdvertiseClientURLs)
 			}
 
-			timeout := viper.GetDuration(flagTimeout)
-
-			client, err := clientv3.New(clientv3.Config{
-				Endpoints:   clientURLs,
-				DialTimeout: timeout * time.Second,
-				TLS:         tlsConfig,
-			})
-
-			if err != nil {
-				return fmt.Errorf("error connecting to cluster: %s", err)
+			initConfig := initConfig{
+				Config: *cfg,
+				SeedConfig: seeds.Config{
+					AdminUsername: viper.GetString(flagInitAdminUsername),
+					AdminPassword: viper.GetString(flagInitAdminPassword),
+				},
+				Timeout: viper.GetDuration(flagTimeout),
 			}
 
-			uname := viper.GetString(flagInitAdminUsername)
-			pword := viper.GetString(flagInitAdminPassword)
+			wait := viper.GetBool(flagWait)
 
 			if viper.GetBool(flagInteractive) {
 				var opts initOpts
@@ -152,53 +155,44 @@ func InitCommand() *cobra.Command {
 				if opts.AdminPassword != opts.AdminPasswordConfirmation {
 					return errors.New("Password confirmation doesn't match the password")
 				}
-				uname = opts.AdminUsername
-				pword = opts.AdminPassword
+				initConfig.SeedConfig.AdminUsername = opts.AdminUsername
+				initConfig.SeedConfig.AdminPassword = opts.AdminPassword
 			}
 
-			if uname == "" || pword == "" {
-				return fmt.Errorf("both %s and %s are required to be set", flagInitAdminUsername, flagInitAdminPassword)
-			}
-
-			seedConfig := seedConfig{
-				Config: *cfg,
-				SeedConfig: seeds.Config{
-					AdminUsername: uname,
-					AdminPassword: pword,
-				},
-				Timeout: timeout,
+			if err := initConfig.Validate(); err != nil {
+				return err
 			}
 
 			// Make sure at least one of the provided endpoints is reachable. This is
 			// required to debug TLS errors because the seeding below will not print
 			// the latest connection error (see
 			// https://github.com/sensu/sensu-go/issues/3663)
-			wait := viper.GetBool(flagWait)
-			connected := false
-			for !connected {
+			for {
 				for _, url := range clientURLs {
-					logger.Infof("attempting to connect to etcd server: %s", url)
+					logger.Infof("connecting to etcd endpoint: %s", url)
 
-					tctx, cancel := context.WithTimeout(context.Background(), timeout*time.Second)
-					defer cancel()
-
-					_, err = client.Status(tctx, url)
+					config := clientv3.Config{
+						Endpoints: []string{url},
+						TLS:       tlsConfig,
+					}
+					ok, err := initializeStore(config, initConfig, url)
 					if err != nil {
-						// We do not need to log the error, etcd's client interceptor will log
-						// the actual underlying error
+						if errors.Is(err, seeds.ErrAlreadyInitialized) {
+							return nil
+						}
+						logger.Error(err.Error())
 						continue
 					}
-					// The endpoint did not return any error, therefore we can proceed
-					connected = true
-					break
+					if ok {
+						return nil
+					}
 				}
 				if !wait {
-					// All endpoints returned an error, return the latest one
-					return err
+					return errors.New("no etcd endpoints are available or cluster is unhealthy")
 				}
 			}
 
-			return seedCluster(client, seedConfig)
+			return nil
 		},
 	}
 
@@ -213,12 +207,32 @@ func InitCommand() *cobra.Command {
 	return cmd
 }
 
-func seedCluster(client *clientv3.Client, config seedConfig) error {
-	store := etcdstore.NewStore(client, "")
-	ctx, cancel := context.WithTimeout(context.Background(), config.Timeout*time.Second)
+// initializeStore returns a bool representing whether or not initialization was
+// successful and an error containing any errors.
+func initializeStore(cfg clientv3.Config, initCfg initConfig, endpoint string) (bool, error) {
+	ctx, cancel := context.WithTimeout(
+		clientv3.WithRequireLeader(context.Background()), initCfg.Timeout*time.Second)
 	defer cancel()
-	if err := seeds.SeedCluster(ctx, store, client, config.SeedConfig); err != nil {
-		return err
+	cfg.Context = ctx
+
+	client, err := clientv3.New(cfg)
+	if err != nil {
+		return false, fmt.Errorf("error connecting to etcd endpoint: %w", err)
 	}
-	return nil
+	defer client.Close()
+
+	// Check if etcd endpoint is reachable
+	if _, err := client.Status(ctx, endpoint); err != nil {
+		// Return false & nil for the error. Etcd's client interceptor will log
+		// the actual underlying error.
+		return false, nil
+	}
+
+	// The endpoint did not return any error, therefore we can proceed
+	store := etcdstore.NewStore(client, "")
+	if err := seeds.SeedCluster(ctx, store, client, initCfg.SeedConfig); err != nil {
+		return false, fmt.Errorf("error seeding cluster, is cluster healthy? %w", err)
+	}
+
+	return true, nil
 }
