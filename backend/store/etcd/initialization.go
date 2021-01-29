@@ -68,7 +68,10 @@ func (s *StoreInitializer) IsInitialized() (bool, error) {
 // FlagAsInitialized - set .initialized key
 func (s *StoreInitializer) FlagAsInitialized() error {
 	_, err := s.client.Put(s.ctx, path.Join(EtcdRoot, initializationKey), "1")
-	return fmt.Errorf("failed to flag database as initialized: %w", err)
+	if err != nil {
+		return fmt.Errorf("failed to flag database as initialized: %w", err)
+	}
+	return nil
 }
 
 // Close session & unlock
