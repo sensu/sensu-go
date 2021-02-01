@@ -21,6 +21,7 @@ appear in sensuctl dump output. The bug only applied to users who had access to
 the other namespaces.
 
 ## [6.2.1, 6.2.2] - 2021-01-08
+## [6.2.1] - 2021-01-08
 
 ### Fixed
 - The expire field of silenced entries represents the configured expiration, in
