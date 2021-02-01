@@ -7,10 +7,6 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
 
-### Added
-- Added wait flag to the sensu-backend init command which toggles waiting
-indefinitely for etcd to become available.
-
 ## [6.2.3] - 2021-01-21
 
 ### Fixed
