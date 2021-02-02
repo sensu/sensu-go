@@ -33,6 +33,12 @@ type (
 // V2EntityToV3 converts a corev2.Entity to an EntityConfig and EntityState.
 // The resulting values will contain pointers to e's memory.
 func V2EntityToV3(e *corev2.Entity) (*EntityConfig, *EntityState) {
+	if e.ObjectMeta.Labels == nil {
+		e.ObjectMeta.Labels = make(map[string]string)
+	}
+	if e.ObjectMeta.Annotations == nil {
+		e.ObjectMeta.Annotations = make(map[string]string)
+	}
 	cfg := EntityConfig{
 		Metadata:          &e.ObjectMeta,
 		EntityClass:       e.EntityClass,
@@ -45,8 +51,10 @@ func V2EntityToV3(e *corev2.Entity) (*EntityConfig, *EntityState) {
 	}
 	state := EntityState{
 		Metadata: &corev2.ObjectMeta{
-			Name:      e.ObjectMeta.Name,
-			Namespace: e.ObjectMeta.Namespace,
+			Name:        e.ObjectMeta.Name,
+			Namespace:   e.ObjectMeta.Namespace,
+			Labels:      e.ObjectMeta.Labels,
+			Annotations: e.ObjectMeta.Annotations,
 		},
 		System:            e.System,
 		LastSeen:          e.LastSeen,
