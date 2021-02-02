@@ -2,6 +2,7 @@ package wrap
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"reflect"
 
@@ -22,6 +23,10 @@ import (
 // TypeMeta - this is useful for lifters.
 type tmGetter interface {
 	GetTypeMeta() corev2.TypeMeta
+}
+
+type validatable interface {
+	Validate() error
 }
 
 func (e Encoding) Encode(v interface{}) ([]byte, error) {
@@ -131,6 +136,13 @@ func V2Resource(r corev2.Resource, opts ...Option) (*Wrapper, error) {
 }
 
 func wrap(r interface{}, opts ...Option) (*Wrapper, error) {
+	if v, ok := r.(validatable); ok {
+		if err := v.Validate(); err != nil {
+			return nil, err
+		}
+	} else {
+		return nil, errors.New("resource is missing a Validate() method")
+	}
 	if proxy, ok := r.(*corev3.V2ResourceProxy); ok {
 		r = proxy.Resource
 	}

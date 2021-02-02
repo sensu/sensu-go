@@ -14,10 +14,10 @@ func ValidateMetadata(meta *corev2.ObjectMeta) error {
 		return err
 	}
 	if meta.Labels == nil {
-		return errors.New("nil labels")
+		meta.Labels = make(map[string]string)
 	}
 	if meta.Annotations == nil {
-		return errors.New("nil annotations")
+		meta.Annotations = make(map[string]string)
 	}
 	return nil
 }
