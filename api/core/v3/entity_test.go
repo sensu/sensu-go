@@ -14,6 +14,12 @@ func TestV2EntityToV3(t *testing.T) {
 	if got, want := cfg.Metadata, entity.ObjectMeta; !proto.Equal(got, &want) {
 		t.Errorf("bad objectmeta: got %v, want %v", got, want)
 	}
+	if got, want := cfg.Metadata.Labels, make(map[string]string); !reflect.DeepEqual(got, want) {
+		t.Errorf("bad objectmeta labels: got %v, want %v", got, want)
+	}
+	if got, want := cfg.Metadata.Annotations, make(map[string]string); !reflect.DeepEqual(got, want) {
+		t.Errorf("bad objectmeta annotations: got %v, want %v", got, want)
+	}
 	if got, want := cfg.EntityClass, entity.EntityClass; got != want {
 		t.Errorf("bad EntityClass: got %v, want %v", got, want)
 	}
@@ -37,6 +43,12 @@ func TestV2EntityToV3(t *testing.T) {
 	}
 	if got, want := state.Metadata, entity.ObjectMeta; !proto.Equal(got, &want) {
 		t.Errorf("bad objectmeta: got %v, want %v", got, want)
+	}
+	if got, want := state.Metadata.Labels, make(map[string]string); !reflect.DeepEqual(got, want) {
+		t.Errorf("bad objectmeta labels: got %v, want %v", got, want)
+	}
+	if got, want := state.Metadata.Annotations, make(map[string]string); !reflect.DeepEqual(got, want) {
+		t.Errorf("bad objectmeta annotations: got %v, want %v", got, want)
 	}
 	if got, want := state.System, entity.System; !proto.Equal(&got, &want) {
 		t.Errorf("bad System: got %v, want %v", got, want)

@@ -29,6 +29,8 @@ type validatable interface {
 	Validate() error
 }
 
+var ErrValidateMethodMissing = errors.New("resource is missing required Validate() method")
+
 func (e Encoding) Encode(v interface{}) ([]byte, error) {
 	switch e {
 	case Encoding_json:
@@ -141,7 +143,7 @@ func wrap(r interface{}, opts ...Option) (*Wrapper, error) {
 			return nil, err
 		}
 	} else {
-		return nil, errors.New("resource is missing a Validate() method")
+		return nil, ErrValidateMethodMissing
 	}
 	if proxy, ok := r.(*corev3.V2ResourceProxy); ok {
 		r = proxy.Resource
