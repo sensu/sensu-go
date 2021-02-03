@@ -1,4 +1,4 @@
-package types
+package types_test
 
 import (
 	"fmt"
@@ -6,7 +6,8 @@ import (
 	"testing"
 
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
-	v2 "github.com/sensu/sensu-go/api/core/v2"
+	corev3 "github.com/sensu/sensu-go/api/core/v3"
+	types "github.com/sensu/sensu-go/types"
 )
 
 func TestWrapper_UnmarshalJSON(t *testing.T) {
@@ -14,7 +15,7 @@ func TestWrapper_UnmarshalJSON(t *testing.T) {
 		name    string
 		bytes   []byte
 		wantErr bool
-		want    Wrapper
+		want    types.Wrapper
 	}{
 		{
 			name:    "not a wrapped-json struct",
@@ -39,7 +40,7 @@ func TestWrapper_UnmarshalJSON(t *testing.T) {
 		{
 			name:  "namespace resource",
 			bytes: []byte(`{"type": "Namespace", "spec": {"name": "foo"}}`),
-			want: Wrapper{
+			want: types.Wrapper{
 				TypeMeta: corev2.TypeMeta{Type: "Namespace", APIVersion: "core/v2"},
 				Value:    &corev2.Namespace{Name: "foo"},
 			},
@@ -47,16 +48,16 @@ func TestWrapper_UnmarshalJSON(t *testing.T) {
 		{
 			name:  "inner and outer ObjectMeta are filled",
 			bytes: []byte(`{"type": "CheckConfig", "metadata": {"name": "foo", "namespace": "dev", "labels": {"region": "us-west-2"}, "annotations": {"managed-by": "ops"}}, "spec": {"command": "echo"}}`),
-			want: Wrapper{
+			want: types.Wrapper{
 				TypeMeta: corev2.TypeMeta{Type: "CheckConfig", APIVersion: "core/v2"},
-				ObjectMeta: v2.ObjectMeta{
+				ObjectMeta: corev2.ObjectMeta{
 					Name:        "foo",
 					Namespace:   "dev",
 					Labels:      map[string]string{"region": "us-west-2"},
 					Annotations: map[string]string{"managed-by": "ops"},
 				},
 				Value: &corev2.CheckConfig{
-					ObjectMeta: v2.ObjectMeta{
+					ObjectMeta: corev2.ObjectMeta{
 						Name:        "foo",
 						Namespace:   "dev",
 						Labels:      map[string]string{"region": "us-west-2"},
@@ -66,27 +67,50 @@ func TestWrapper_UnmarshalJSON(t *testing.T) {
 				},
 			},
 		},
+		{
+			name:  "inner & outer ObjectMeta are filled for core/v3 resource",
+			bytes: []byte(`{"type": "EntityConfig", "api_version": "core/v3", "metadata": {"name": "foo", "namespace": "dev"}, "spec": {"entity_class": "agent", "subscriptions": ["testsub"]}}`),
+			want: types.Wrapper{
+				TypeMeta: corev2.TypeMeta{Type: "EntityConfig", APIVersion: "core/v3"},
+				ObjectMeta: corev2.ObjectMeta{
+					Name:      "foo",
+					Namespace: "dev",
+				},
+				Value: &corev3.EntityConfig{
+					Metadata: &corev2.ObjectMeta{
+						Name:        "foo",
+						Namespace:   "dev",
+						Labels:      map[string]string{},
+						Annotations: map[string]string{},
+					},
+					EntityClass: "agent",
+					Subscriptions: []string{
+						"testsub",
+					},
+				},
+			},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			w := &Wrapper{}
+			w := &types.Wrapper{}
 			err := w.UnmarshalJSON(tt.bytes)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("Wrapper.UnmarshalJSON() error = %v, wantErr %v", err, tt.wantErr)
 			}
 
 			if err == nil && !reflect.DeepEqual(w, &tt.want) {
-				t.Errorf("Wrapper.UnmarshalJSON() = %#v, want %#v", *w, tt.want)
+				t.Errorf("Wrapper.UnmarshalJSON() = %#v, \nwant %#v", *w, tt.want)
 			}
 		})
 	}
 }
 
 func TestWrapResourceObjectMeta(t *testing.T) {
-	check := FixtureCheck("foo")
+	check := corev2.FixtureCheck("foo")
 	check.Labels["asdf"] = "asdf"
 
-	wrapped := WrapResource(check)
+	wrapped := types.WrapResource(check)
 	if !reflect.DeepEqual(wrapped.ObjectMeta, check.ObjectMeta) {
 		t.Fatal("objectmeta not equal")
 	}
@@ -102,7 +126,7 @@ func TestResolveType(t *testing.T) {
 		{
 			ApiVersion: "core/v2",
 			Type:       "asset",
-			ExpRet:     &v2.Asset{},
+			ExpRet:     &corev2.Asset{},
 			ExpErr:     false,
 		},
 		{
@@ -115,7 +139,7 @@ func TestResolveType(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(fmt.Sprintf("%s/%s", tc.ApiVersion, tc.Type), func(t *testing.T) {
-			r, err := ResolveType(tc.ApiVersion, tc.Type)
+			r, err := types.ResolveType(tc.ApiVersion, tc.Type)
 			if !reflect.DeepEqual(r, tc.ExpRet) {
 				t.Fatal("unexpected type")
 			}

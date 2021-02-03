@@ -9,6 +9,7 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ### Fixed
 - Both V2 & V3 resources are now validated when used with storev2.
+- Initialize labels & annotations for v3 resources when fields are nil.
 
 ## [6.2.3] - 2021-01-21
 
