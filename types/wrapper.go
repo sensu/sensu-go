@@ -215,16 +215,26 @@ V3RESOURCE:
 	w.ObjectMeta = *innerMeta
 
 	// Set the inner ObjectMeta
-	val := reflect.Indirect(reflect.ValueOf(resource))
-	objectMeta := val.FieldByName("ObjectMeta")
-	if objectMeta.Kind() == reflect.Invalid {
-		// The resource doesn't have an ObjectMeta field - this is expected
-		// for Namespace, or other types that have no ObjectMeta field but
-		// do implement a GetObjectMeta method.
-		w.Value = resource
-		return nil
+	if r, ok := resource.(corev3Resource); ok {
+		if innerMeta.Labels == nil {
+			innerMeta.Labels = make(map[string]string)
+		}
+		if innerMeta.Annotations == nil {
+			innerMeta.Annotations = make(map[string]string)
+		}
+		r.SetMetadata(innerMeta)
+	} else {
+		val := reflect.Indirect(reflect.ValueOf(resource))
+		objectMeta := val.FieldByName("ObjectMeta")
+		if objectMeta.Kind() == reflect.Invalid {
+			// The resource doesn't have an ObjectMeta field - this is expected
+			// for Namespace, or other types that have no ObjectMeta field but
+			// do implement a GetObjectMeta method.
+			w.Value = resource
+			return nil
+		}
+		val.FieldByName("ObjectMeta").Set(reflect.Indirect(reflect.ValueOf(innerMeta)))
 	}
-	val.FieldByName("ObjectMeta").Set(reflect.Indirect(reflect.ValueOf(innerMeta)))
 
 	// Determine if the resource implements the Lifter interface, which has a Lift
 	// method. This is useful when a resource can be polymorphic, such as
