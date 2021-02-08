@@ -52,3 +52,13 @@ func (r *ResourceTemplate) Execute(meta *corev2.ObjectMeta) (Resource, error) {
 	}
 	return resource, nil
 }
+
+func (r *ResourceTemplate) validate() error {
+	if _, err := template.New("validate").Parse(r.Template); err != nil {
+		return err
+	}
+	if _, err := types.ResolveRaw(r.APIVersion, r.Type); err != nil {
+		return err
+	}
+	return nil
+}

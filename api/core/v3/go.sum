@@ -122,6 +122,7 @@ github.com/robfig/cron/v3 v3.0.1 h1:WdRxkvbJztn8LMz/QEvLN5sBU+xKpSqwwUO1Pjr4qDs=
 github.com/robfig/cron/v3 v3.0.1/go.mod h1:eQICP3HwyT7UooqI/z+Ov+PtYAWygg1TEWWzGIFLtro=
 github.com/rogpeppe/fastuuid v0.0.0-20150106093220-6724a57986af/go.mod h1:XWv6SoW27p1b0cqNHllgS5HIMJraePCO15w5zCzIWYg=
 github.com/sensu/sensu-go/api/core/v3 v3.0.1/go.mod h1:ILvOXnuBvwssCXEFOgolETLrJnoEHOuGbFWwMluGl6g=
+github.com/sensu/sensu-go/api/core/v3 v3.1.0/go.mod h1:OWGb7stbn1Eo4j6HGkz3CPb3jpdeiOCTGmSVnDe8mNA=
 github.com/sensu/sensu-go/types v0.1.0 h1:1xB7nsPM6H0j+sDV6MTJTRrUqCZK1DN4zsn8tQNVhIA=
 github.com/sensu/sensu-go/types v0.1.0/go.mod h1:o3tBPy2BUWb3jPvMQ+pBs0CgCyN1vC1/loN4anURxvs=
 github.com/sirupsen/logrus v1.2.0/go.mod h1:LxeOpSwHxABJmUn/MG1IvRgCAasNZTLOkJPxbbu5VWo=
