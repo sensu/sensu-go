@@ -7,6 +7,10 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
 
+## Added
+- Added ResourceTemplate resource. ResourceTemplate will be used to populate
+namespaces with initial resources.
+
 ### Fixed
 - Both V2 & V3 resources are now validated when used with storev2.
 - Initialize labels & annotations for v3 resources when fields are nil.

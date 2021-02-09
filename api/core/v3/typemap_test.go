@@ -191,6 +191,98 @@ func TestResolveV2ResourceEntityState(t *testing.T) {
 	}
 }
 
+func TestResolveResourceTemplate(t *testing.T) {
+	var value interface{} = new(ResourceTemplate)
+	if _, ok := value.(Resource); ok {
+		resource, err := ResolveResource("ResourceTemplate")
+		if err != nil {
+			t.Fatal(err)
+		}
+		meta := resource.GetMetadata()
+		if meta == nil {
+			t.Fatal("nil metadata")
+		}
+		if meta.Labels == nil {
+			t.Error("nil metadata")
+		}
+		if meta.Annotations == nil {
+			t.Error("nil annotations")
+		}
+		return
+	}
+	_, err := ResolveResource("ResourceTemplate")
+	if err == nil {
+		t.Fatal("expected non-nil error")
+	}
+	if got, want := err.Error(), `"ResourceTemplate" is not a Resource`; got != want {
+		t.Fatalf("unexpected error: %s", err)
+	}
+}
+
+func TestResolveResourceTemplateByRBACName(t *testing.T) {
+	value := new(ResourceTemplate)
+	var iface interface{} = value
+	resource, err := ResolveResourceByRBACName(value.RBACName())
+	if _, ok := iface.(Resource); ok {
+		if err != nil {
+			t.Fatal(err)
+		}
+		meta := resource.GetMetadata()
+		if meta == nil {
+			t.Fatal("nil metadata")
+		}
+		if meta.Labels == nil {
+			t.Error("nil labels")
+		}
+		if meta.Annotations == nil {
+			t.Errorf("nil annotations")
+		}
+	} else {
+		if err == nil {
+			t.Fatal("expected non-nil error")
+		}
+	}
+}
+
+func TestResolveResourceTemplateByStoreName(t *testing.T) {
+	value := new(ResourceTemplate)
+	var iface interface{} = value
+	resource, err := ResolveResourceByStoreName(value.StoreName())
+	if _, ok := iface.(Resource); ok {
+		if err != nil {
+			t.Fatal(err)
+		}
+		meta := resource.GetMetadata()
+		if meta == nil {
+			t.Fatal("nil metadata")
+		}
+		if meta.Labels == nil {
+			t.Error("nil labels")
+		}
+		if meta.Annotations == nil {
+			t.Errorf("nil annotations")
+		}
+	} else {
+		if err == nil {
+			t.Fatal("expected non-nil error")
+		}
+	}
+}
+
+func TestResolveV2ResourceResourceTemplate(t *testing.T) {
+	v2Resource, err := ResolveV2Resource("ResourceTemplate")
+	if err != nil {
+		t.Fatal(err)
+	}
+	v3Resource, err := ResolveResource("ResourceTemplate")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got, want := v2Resource.(*V2ResourceProxy).Resource, v3Resource; !reflect.DeepEqual(got, want) {
+		t.Fatalf("bad resource: got %v, want %v", got, want)
+	}
+}
+
 func TestResolveNotExists(t *testing.T) {
 	_, err := ResolveResource("!#$@$%@#$")
 	if err == nil {

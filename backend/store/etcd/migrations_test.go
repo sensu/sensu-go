@@ -179,3 +179,119 @@ func equalEntities(got, want []*corev2.Entity) bool {
 	}
 	return true
 }
+
+func TestMigrateEnterpriseDBBaseEnterprise(t *testing.T) {
+	migrations := []Migration{Base}
+	testWithEtcdClient(t, func(_ store.Store, client *clientv3.Client) {
+		ctx := context.Background()
+		err := MigrateEnterpriseDB(ctx, client, migrations)
+		if err != nil {
+			t.Fatal(err)
+		}
+		version, err := GetDatabaseVersion(ctx, client)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if got, want := version, 0; got != want {
+			t.Errorf("bad database version: got %d, want %d", got, want)
+		}
+	})
+}
+
+func TestMigrationDBBrokenEnterprise(t *testing.T) {
+	migrations := []Migration{
+		Base,
+		testFailingMigration,
+		testMigration,
+	}
+	testWithEtcdClient(t, func(_ store.Store, client *clientv3.Client) {
+		ctx := context.Background()
+		err := MigrateEnterpriseDB(ctx, client, migrations)
+		if err == nil {
+			t.Fatal("expected non-nil error")
+		}
+		version, err := GetDatabaseVersion(ctx, client)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if got, want := version, 0; got != want {
+			t.Errorf("bad database version: got %d, want %d", got, want)
+		}
+	})
+}
+
+func TestMigrationDBLastBrokenEnterprise(t *testing.T) {
+	migrations := []Migration{
+		Base,
+		testMigration,
+		testFailingMigration,
+	}
+	testWithEtcdClient(t, func(_ store.Store, client *clientv3.Client) {
+		ctx := context.Background()
+		err := MigrateEnterpriseDB(ctx, client, migrations)
+		if err == nil {
+			t.Fatal("expected non-nil error")
+		}
+		version, err := GetEnterpriseDatabaseVersion(ctx, client)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if got, want := version, 1; got != want {
+			t.Errorf("bad database version: got %d, want %d", got, want)
+		}
+	})
+}
+
+func TestMigrationDBGoodEnterprise(t *testing.T) {
+	migrations := []Migration{
+		Base,
+		testMigration,
+		testMigration,
+	}
+	testWithEtcdClient(t, func(_ store.Store, client *clientv3.Client) {
+		ctx := context.Background()
+		err := MigrateEnterpriseDB(ctx, client, migrations)
+		if err != nil {
+			t.Fatal(err)
+		}
+		version, err := GetEnterpriseDatabaseVersion(ctx, client)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if got, want := version, 2; got != want {
+			t.Errorf("bad database version: got %d, want %d", got, want)
+		}
+	})
+}
+
+func TestReapplyMigrationEnterprise(t *testing.T) {
+	migrations := []Migration{
+		Base,
+		testMigration,
+		testMigration,
+	}
+	testWithEtcdClient(t, func(_ store.Store, client *clientv3.Client) {
+		ctx := context.Background()
+		err := MigrateEnterpriseDB(ctx, client, migrations)
+		if err != nil {
+			t.Fatal(err)
+		}
+		version, err := GetEnterpriseDatabaseVersion(ctx, client)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if got, want := version, 2; got != want {
+			t.Errorf("bad database version: got %d, want %d", got, want)
+		}
+		if err := MigrateEnterpriseDB(ctx, client, migrations); err != nil {
+			t.Fatal(err)
+		}
+		version, err = GetEnterpriseDatabaseVersion(ctx, client)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if got, want := version, 2; got != want {
+			t.Errorf("bad database version: got %d, want %d", got, want)
+		}
+	})
+}
