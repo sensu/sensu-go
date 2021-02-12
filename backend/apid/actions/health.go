@@ -3,9 +3,9 @@ package actions
 import (
 	"crypto/tls"
 
-	"github.com/coreos/etcd/clientv3"
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/store"
+	"go.etcd.io/etcd/clientv3"
 	"golang.org/x/net/context"
 )
 

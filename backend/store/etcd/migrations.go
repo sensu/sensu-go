@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/coreos/etcd/clientv3"
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/store"
+	"go.etcd.io/etcd/clientv3"
 )
 
 // A migration is a function that receives a context and an etcd client, and

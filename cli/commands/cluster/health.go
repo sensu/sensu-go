@@ -4,12 +4,12 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/coreos/etcd/etcdserver/etcdserverpb"
 	"github.com/sensu/sensu-go/cli"
 	"github.com/sensu/sensu-go/cli/commands/helpers"
 	"github.com/sensu/sensu-go/cli/elements/table"
 	"github.com/sensu/sensu-go/types"
 	"github.com/spf13/cobra"
+	"go.etcd.io/etcd/etcdserver/etcdserverpb"
 )
 
 // HealthCommand gets the Sensu health status of a cluster
