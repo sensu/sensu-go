@@ -4,10 +4,10 @@ import (
 	"io/ioutil"
 	"os"
 
-	"github.com/coreos/etcd/clientv3"
 	"github.com/sensu/sensu-go/backend/etcd"
 	"github.com/sensu/sensu-go/backend/store"
 	etcdstore "github.com/sensu/sensu-go/backend/store/etcd"
+	"go.etcd.io/etcd/clientv3"
 )
 
 // IntegrationTestStore wrapper for etcd & store

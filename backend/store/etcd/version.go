@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"path"
 
-	"github.com/coreos/etcd/clientv3"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/backend/store/etcd/kvc"
+	"go.etcd.io/etcd/clientv3"
 )
 
 const (

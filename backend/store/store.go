@@ -6,11 +6,11 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/coreos/etcd/clientv3"
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	corev3 "github.com/sensu/sensu-go/api/core/v3"
 	"github.com/sensu/sensu-go/backend/store/patch"
 	"github.com/sensu/sensu-go/types"
+	"go.etcd.io/etcd/clientv3"
 )
 
 // ErrAlreadyExists is returned when an object already exists

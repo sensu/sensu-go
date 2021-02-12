@@ -6,9 +6,9 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/coreos/etcd/clientv3"
 	"github.com/sensu/sensu-go/backend/store"
 	utilbytes "github.com/sensu/sensu-go/util/bytes"
+	"go.etcd.io/etcd/clientv3"
 )
 
 func getAuthenticationPath(id string) string {

@@ -8,11 +8,11 @@ import (
 	"strings"
 	"time"
 
-	"github.com/coreos/etcd/clientv3"
 	"github.com/gogo/protobuf/proto"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/backend/store/etcd/kvc"
 	"github.com/sensu/sensu-go/backend/store/provider"
+	"go.etcd.io/etcd/clientv3"
 
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 )

@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/coreos/etcd/clientv3"
 	"github.com/gogo/protobuf/proto"
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/etcd"
@@ -17,6 +16,7 @@ import (
 	"github.com/sensu/sensu-go/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.etcd.io/etcd/clientv3"
 )
 
 func testWithEtcd(t *testing.T, f func(store.Store)) {
