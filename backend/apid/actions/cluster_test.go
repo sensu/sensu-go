@@ -30,7 +30,14 @@ func (mockCluster) MemberRemove(context.Context, uint64) (*clientv3.MemberRemove
 
 func (mockCluster) MemberUpdate(context.Context, uint64, []string) (*clientv3.MemberUpdateResponse, error) {
 	return new(clientv3.MemberUpdateResponse), nil
+}
 
+func (mockCluster) MemberPromote(context.Context, uint64) (*clientv3.MemberPromoteResponse, error) {
+	return new(clientv3.MemberPromoteResponse), nil
+}
+
+func (mockCluster) MemberAddAsLearner(context.Context, []string) (*clientv3.MemberAddResponse, error) {
+	return new(clientv3.MemberAddResponse), nil
 }
 
 var _ clientv3.Cluster = mockCluster{}
