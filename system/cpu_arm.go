@@ -2,6 +2,8 @@
 
 package system
 
+import _ "unsafe"
+
 //go:linkname goarm runtime.goarm
 var goarm int32
 
