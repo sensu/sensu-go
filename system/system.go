@@ -15,8 +15,6 @@ import (
 	"strings"
 	"sync"
 
-	_ "unsafe"
-
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/types"
 	"github.com/shirou/gopsutil/host"
