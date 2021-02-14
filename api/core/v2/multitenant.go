@@ -10,6 +10,9 @@ type MultitenantResource interface {
 // SetContextFromResource takes a context and a multi-tenant resource, adds the
 // namespace to the context, and returns the udpated context
 func SetContextFromResource(ctx context.Context, r MultitenantResource) context.Context {
+	if ctx == nil {
+		ctx = context.Background()
+	}
 	ctx = context.WithValue(ctx, NamespaceKey, r.GetNamespace())
 	return ctx
 }
