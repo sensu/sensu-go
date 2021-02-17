@@ -238,10 +238,6 @@ func (a *Agentd) runWatcher() {
 			if !ok {
 				return
 			}
-			if event.Entity == nil {
-				logger.Error("nil entity received from entity config watcher")
-				return
-			}
 			if err := a.handleEvent(event); err != nil {
 				logger.WithError(err).Error("error handling entity config watch event")
 			}
