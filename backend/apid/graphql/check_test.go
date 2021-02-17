@@ -325,3 +325,61 @@ func TestCheckConfigTypeToJSONField(t *testing.T) {
 	require.NoError(t, err)
 	assert.NotEmpty(t, res)
 }
+
+func TestCheckTypeOutputFieldImpl(t *testing.T) {
+	testCases := []struct {
+		name     string
+		result   string
+		firstArg int
+		lastArg  int
+	}{
+		{
+			name:   "no args",
+			result: "123456789012345678901234567890",
+		},
+		{
+			name:     "first 10",
+			result:   "1234567890",
+			firstArg: 10,
+		},
+		{
+			name:    "last 5",
+			result:  "67890",
+			lastArg: 5,
+		},
+		{
+			name:     "first 25 & last 10",
+			result:   "6789012345",
+			firstArg: 25,
+			lastArg:  10,
+		},
+		{
+			name:     "first out of bounds",
+			result:   "123456789012345678901234567890",
+			firstArg: 55,
+		},
+		{
+			name:     "last out of bounds",
+			result:   "12345",
+			firstArg: 5,
+			lastArg:  55,
+		},
+	}
+
+	check := corev2.FixtureCheck("test")
+	check.Output = "123456789012345678901234567890"
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			params := schema.CheckOutputFieldResolverParams{}
+			params.Context = context.Background()
+			params.Source = check
+			params.Args.First = tc.firstArg
+			params.Args.Last = tc.lastArg
+
+			impl := checkImpl{}
+			res, err := impl.Output(params)
+			require.NoError(t, err)
+			assert.Equal(t, tc.result, res)
+		})
+	}
+}
