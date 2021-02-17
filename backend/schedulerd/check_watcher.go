@@ -111,8 +111,8 @@ func (c *CheckWatcher) startWatcher() {
 	for {
 		select {
 		case watchEvent, ok := <-watchChan:
-			if watchEvent == nil {
-				logger.Error("nil watch event received from check config watcher")
+			if watchEvent.CheckConfig == nil {
+				logger.Error("nil check config received from check config watcher")
 				return
 			}
 			if ok {
