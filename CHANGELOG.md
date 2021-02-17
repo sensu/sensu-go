@@ -10,6 +10,8 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 ### Fixed
 - Fixed the `agent-managed-entity` agent config attribute when no labels are
 defined.
+- Fixed a bug where the scheduler could crash in rare circumstances, when using
+round robin checks.
 
 ## [6.2.2] - 2021-01-14
 

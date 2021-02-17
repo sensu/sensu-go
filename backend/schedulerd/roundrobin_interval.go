@@ -157,6 +157,10 @@ func (s *RoundRobinIntervalScheduler) handleEvent(executor *CheckExecutor, event
 		}).Info("removing entity from round-robin")
 
 	case ringv2.EventTrigger:
+		if len(event.Values) == 0 {
+			s.logger.Error("round robin check scheduled, but no available entities")
+			return
+		}
 		// The ring has produced a trigger for the entity, and a check should
 		// be executed.
 		s.logger.WithFields(logrus.Fields{"agents": event.Values}).Info("executing round robin check on agents")
