@@ -896,6 +896,18 @@ type CheckHistoryFieldResolverParams struct {
 	Args CheckHistoryFieldResolverArgs
 }
 
+// CheckOutputFieldResolverArgs contains arguments provided to output when selected
+type CheckOutputFieldResolverArgs struct {
+	First int // First - self descriptive
+	Last  int // Last - self descriptive
+}
+
+// CheckOutputFieldResolverParams contains contextual info to resolve output field
+type CheckOutputFieldResolverParams struct {
+	graphql.ResolveParams
+	Args CheckOutputFieldResolverArgs
+}
+
 //
 // CheckFieldResolvers represents a collection of methods whose products represent the
 // response values of the 'Check' type.
@@ -976,7 +988,7 @@ type CheckFieldResolvers interface {
 	Issued(p graphql.ResolveParams) (time.Time, error)
 
 	// Output implements response to request for 'output' field.
-	Output(p graphql.ResolveParams) (string, error)
+	Output(p CheckOutputFieldResolverParams) (string, error)
 
 	// State implements response to request for 'state' field.
 	State(p graphql.ResolveParams) (string, error)
@@ -1294,7 +1306,7 @@ func (_ CheckAliases) Issued(p graphql.ResolveParams) (time.Time, error) {
 }
 
 // Output implements response to request for 'output' field.
-func (_ CheckAliases) Output(p graphql.ResolveParams) (string, error) {
+func (_ CheckAliases) Output(p CheckOutputFieldResolverParams) (string, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
 	ret, ok := val.(string)
 	if err != nil {
@@ -1690,9 +1702,15 @@ func _ObjTypeCheckIssuedHandler(impl interface{}) graphql1.FieldResolveFn {
 
 func _ObjTypeCheckOutputHandler(impl interface{}) graphql1.FieldResolveFn {
 	resolver := impl.(interface {
-		Output(p graphql.ResolveParams) (string, error)
+		Output(p CheckOutputFieldResolverParams) (string, error)
 	})
-	return func(frp graphql1.ResolveParams) (interface{}, error) {
+	return func(p graphql1.ResolveParams) (interface{}, error) {
+		frp := CheckOutputFieldResolverParams{ResolveParams: p}
+		err := mapstructure.Decode(p.Args, &frp.Args)
+		if err != nil {
+			return nil, err
+		}
+
 		return resolver.Output(frp)
 	}
 }
@@ -1963,7 +1981,16 @@ func _ObjectTypeCheckConfigFn() graphql1.ObjectConfig {
 				Type:              graphql1.NewNonNull(graphql1.Int),
 			},
 			"output": &graphql1.Field{
-				Args:              graphql1.FieldConfigArgument{},
+				Args: graphql1.FieldConfigArgument{
+					"first": &graphql1.ArgumentConfig{
+						Description: "self descriptive",
+						Type:        graphql1.Int,
+					},
+					"last": &graphql1.ArgumentConfig{
+						Description: "self descriptive",
+						Type:        graphql1.Int,
+					},
+				},
 				DeprecationReason: "",
 				Description:       "Output from the execution of Command",
 				Name:              "output",

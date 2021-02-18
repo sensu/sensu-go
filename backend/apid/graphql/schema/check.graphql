@@ -205,7 +205,7 @@ type Check implements Silenceable & Resource {
   issued: DateTime!
 
   "Output from the execution of Command"
-  output: String!
+  output(first: Int, last: Int): String!
 
   "State provides handlers with more information about the state change"
   state: String!

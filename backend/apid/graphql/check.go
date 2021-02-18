@@ -188,6 +188,21 @@ func (r *checkImpl) Silences(p graphql.ResolveParams) (interface{}, error) {
 	return records, err
 }
 
+// Output implements response to request for 'output' field.
+func (r *checkImpl) Output(p schema.CheckOutputFieldResolverParams) (string, error) {
+	src := p.Source.(*corev2.Check)
+	out := src.Output
+	if p.Args.First > 0 {
+		num := clampInt(p.Args.First, 0, len(out))
+		out = out[:num]
+	}
+	if p.Args.Last > 0 {
+		num := clampInt(p.Args.Last, 0, len(out))
+		out = out[len(out)-num:]
+	}
+	return out, nil
+}
+
 // OutputMetricHandlers implements response to request for 'outputMetricHandlers' field.
 func (r *checkImpl) OutputMetricHandlers(p graphql.ResolveParams) (interface{}, error) {
 	src := p.Source.(*corev2.Check)
