@@ -1,6 +1,7 @@
 package graphql
 
 import (
+	"github.com/sensu/sensu-go/backend/apid/actions"
 	"github.com/sensu/sensu-go/backend/apid/graphql/schema"
 	"github.com/sensu/sensu-go/backend/authorization"
 	"github.com/sensu/sensu-go/backend/store"
@@ -25,11 +26,18 @@ func newStdErr(input string, err error) stdErr {
 	if err == authorization.ErrUnauthorized || err == authorization.ErrNoClaims {
 		out.code = schema.ErrCodes.ERR_PERMISSION_DENIED
 	}
-	switch err.(type) {
+	switch e := err.(type) {
 	case (*store.ErrAlreadyExists):
 		out.code = schema.ErrCodes.ERR_ALREADY_EXISTS
 	case (*store.ErrNotFound):
 		out.code = schema.ErrCodes.ERR_NOT_FOUND
+	// NOTE: Some APIs return errs from the controller package
+	case (*actions.Error):
+		if e.Code == actions.NotFound {
+			out.code = schema.ErrCodes.ERR_NOT_FOUND
+		} else if e.Code == actions.AlreadyExistsErr {
+			out.code = schema.ErrCodes.ERR_ALREADY_EXISTS
+		}
 	}
 	return out
 }
