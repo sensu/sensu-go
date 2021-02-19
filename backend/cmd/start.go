@@ -81,6 +81,7 @@ const (
 	flagEtcdAdvertiseClientURLs      = "etcd-advertise-client-urls"
 	flagEtcdHeartbeatInterval        = "etcd-heartbeat-interval"
 	flagEtcdElectionTimeout          = "etcd-election-timeout"
+	flagEtcdLogLevel                 = "etcd-log-level"
 
 	// Etcd TLS flag constants
 	flagEtcdCertFile           = "etcd-cert-file"
@@ -216,6 +217,7 @@ func StartCommand(initialize InitializeFunc) *cobra.Command {
 				EtcdMaxRequestBytes:          viper.GetUint(flagEtcdMaxRequestBytes),
 				EtcdHeartbeatInterval:        viper.GetUint(flagEtcdHeartbeatInterval),
 				EtcdElectionTimeout:          viper.GetUint(flagEtcdElectionTimeout),
+				EtcdLogLevel:                 viper.GetString(flagEtcdLogLevel),
 				NoEmbedEtcd:                  viper.GetBool(flagNoEmbedEtcd),
 				Labels:                       viper.GetStringMapString(flagLabels),
 				Annotations:                  viper.GetStringMapString(flagAnnotations),
@@ -373,6 +375,7 @@ func handleConfig(cmd *cobra.Command, arguments []string, server bool) error {
 	viper.SetDefault(flagEtcdMaxRequestBytes, etcd.DefaultMaxRequestBytes)
 	viper.SetDefault(flagEtcdHeartbeatInterval, etcd.DefaultTickMs)
 	viper.SetDefault(flagEtcdElectionTimeout, etcd.DefaultElectionMs)
+	viper.SetDefault(flagEtcdLogLevel, "info")
 
 	if server {
 		viper.SetDefault(flagNoEmbedEtcd, false)
@@ -467,7 +470,8 @@ func flagSet(server bool) *pflag.FlagSet {
 		flagSet.String(flagTrustedCAFile, viper.GetString(flagTrustedCAFile), "TLS CA certificate bundle in PEM format")
 		flagSet.Bool(flagInsecureSkipTLSVerify, viper.GetBool(flagInsecureSkipTLSVerify), "skip TLS verification (not recommended!)")
 		flagSet.Bool(flagDebug, false, "enable debugging and profiling features")
-		flagSet.String(flagLogLevel, viper.GetString(flagLogLevel), "logging level [panic, fatal, error, warn, info, debug]")
+		flagSet.String(flagLogLevel, viper.GetString(flagLogLevel), "logging level [panic, fatal, error, warn, info, debug, trace]")
+		flagSet.String(flagEtcdLogLevel, viper.GetString(flagEtcdLogLevel), "etcd logging level [panic, fatal, error, warn, info, debug]")
 		flagSet.Int(backend.FlagEventdWorkers, viper.GetInt(backend.FlagEventdWorkers), "number of workers spawned for processing incoming events")
 		flagSet.Int(backend.FlagEventdBufferSize, viper.GetInt(backend.FlagEventdBufferSize), "number of incoming events that can be buffered")
 		flagSet.Int(backend.FlagKeepalivedWorkers, viper.GetInt(backend.FlagKeepalivedWorkers), "number of workers spawned for processing incoming keepalives")

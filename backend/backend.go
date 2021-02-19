@@ -134,6 +134,7 @@ func newClient(ctx context.Context, config *Config, backend *Backend) (*clientv3
 	cfg.Discovery = config.EtcdDiscovery
 	cfg.DiscoverySrv = config.EtcdDiscoverySrv
 	cfg.Name = config.EtcdName
+	cfg.LogLevel = config.EtcdLogLevel
 
 	// Heartbeat interval
 	if config.EtcdHeartbeatInterval > 0 {
