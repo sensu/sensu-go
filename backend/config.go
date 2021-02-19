@@ -104,4 +104,7 @@ type Config struct {
 	EtcdQuotaBackendBytes int64
 
 	TLS *corev2.TLSOptions
+
+	LogLevel     string
+	EtcdLogLevel string
 }

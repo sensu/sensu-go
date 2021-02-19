@@ -49,6 +49,8 @@ func NewStoreInstance() (*IntegrationTestStore, error) {
 	cfg.InitialCluster = "default=http://127.0.0.1:0"
 	cfg.AdvertiseClientURLs = cfg.ListenClientURLs
 	cfg.InitialAdvertisePeerURLs = cfg.ListenPeerURLs
+	cfg.LogLevel = "info"
+
 	e, err := etcd.NewEtcd(cfg)
 	if err != nil {
 		removeTmp()
