@@ -539,6 +539,6 @@ func sensuLevelEncoder(l zapcore.Level, enc zapcore.PrimitiveArrayEncoder) {
 		// convert warn to warning to match logrus
 		enc.AppendString("warning")
 	} else {
-		enc.AppendString(l.CapitalString())
+		enc.AppendString(l.String())
 	}
 }
