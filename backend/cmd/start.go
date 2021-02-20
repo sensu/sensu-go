@@ -375,7 +375,7 @@ func handleConfig(cmd *cobra.Command, arguments []string, server bool) error {
 	viper.SetDefault(flagEtcdMaxRequestBytes, etcd.DefaultMaxRequestBytes)
 	viper.SetDefault(flagEtcdHeartbeatInterval, etcd.DefaultTickMs)
 	viper.SetDefault(flagEtcdElectionTimeout, etcd.DefaultElectionMs)
-	viper.SetDefault(flagEtcdLogLevel, "info")
+	viper.SetDefault(flagEtcdLogLevel, "warn")
 
 	if server {
 		viper.SetDefault(flagNoEmbedEtcd, false)
