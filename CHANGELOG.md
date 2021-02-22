@@ -14,6 +14,10 @@ namespaces with initial resources.
 ### Fixed
 - Both V2 & V3 resources are now validated when used with storev2.
 - Initialize labels & annotations for v3 resources when fields are nil.
+- Fixed the `agent-managed-entity` agent config attribute when no labels are
+defined.
+- Fixed a bug where the scheduler could crash in rare circumstances, when using
+round robin checks.
 
 ## [6.2.3] - 2021-01-21
 
