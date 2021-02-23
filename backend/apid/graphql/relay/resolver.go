@@ -15,6 +15,7 @@ type Resolver struct {
 	Register *NodeRegister
 }
 
+// FindType finds the GraphQL type for the given resource.
 func (r *Resolver) FindType(ctx context.Context, i interface{}) *graphql.Type {
 	translator, err := globalid.ReverseLookup(i)
 	if err != nil {
@@ -31,6 +32,7 @@ func (r *Resolver) FindType(ctx context.Context, i interface{}) *graphql.Type {
 	return &resolver.ObjectType
 }
 
+// Find lookups and retrieves the resource associated with the given GlobalID.
 func (r *Resolver) Find(ctx context.Context, id string, info graphql.ResolveInfo) (interface{}, error) {
 	// Decode given ID
 	idComponents, err := globalid.Decode(id)
