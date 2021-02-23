@@ -1,0 +1,15 @@
+name: Semgrep
+on: [pull_request]
+jobs:
+  semgrep:
+    runs-on: ubuntu-latest
+    name: Check
+    steps:
+      - uses: actions/checkout@v1
+      - name: Semgrep
+        id: semgrep
+        uses: returntocorp/semgrep-action@v1
+        with:
+          config: p/dgryski.semgrep-go
+env:
+  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
