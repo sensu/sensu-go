@@ -5,8 +5,10 @@ import (
 	"reflect"
 
 	"github.com/coreos/etcd/clientv3"
+
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/store"
+	"github.com/sensu/sensu-go/backend/store/v2/wrap"
 )
 
 // GetCheckConfigWatcher returns a channel that emits WatchEventCheckConfig structs notifying
@@ -122,4 +124,53 @@ func GetResourceWatcher(ctx context.Context, client *clientv3.Client, key string
 	}()
 
 	return ch
+}
+
+// GetResourceV3Watcher returns a channel that emits WatchEventResourceV3
+// structs notifying that a corev3.Resource has been created, deleted or
+// updated.
+func GetResourceV3Watcher(ctx context.Context, client *clientv3.Client, key string) <-chan store.WatchEventResourceV3 {
+	w := Watch(ctx, client, key, true)
+	c := make(chan store.WatchEventResourceV3, 1)
+
+	go func() {
+		defer close(c)
+
+		for {
+			select {
+			case <-ctx.Done():
+				return
+
+			case event := <-w.Result():
+				logger := logger.WithField("key", event.Key)
+
+				switch action := event.Type; {
+				case action == store.WatchCreate, action == store.WatchDelete, action == store.WatchUpdate:
+					wrapper := &wrap.Wrapper{}
+					if err := wrapper.Unmarshal(event.Object); err != nil {
+						logger.WithError(err).Error("unable to unmarshal resource from key")
+						continue
+					}
+
+					component, err := wrapper.Unwrap()
+					if err != nil {
+						logger.WithError(err).Error("unable to unwrap wrapper")
+						continue
+					}
+
+					c <- store.WatchEventResourceV3{
+						Action:   action,
+						Resource: component,
+					}
+
+				case action == store.WatchError, action == store.WatchUnknown:
+					c <- store.WatchEventResourceV3{
+						Action: action,
+					}
+				}
+			}
+		}
+	}()
+
+	return c
 }
