@@ -2,70 +2,28 @@ package graphql
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"testing"
 
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/apid/graphql/globalid"
-	"github.com/sensu/sensu-go/backend/store"
+	"github.com/sensu/sensu-go/backend/apid/graphql/relay"
 	"github.com/sensu/sensu-go/graphql"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
 
 func setupNodeResolver(cfg ServiceConfig) func(string) (interface{}, error) {
-	resolver := newNodeResolver(cfg)
+	register := relay.NodeRegister{}
+	resolver := relay.Resolver{Register: &register}
+	registerNodeResolvers(register, cfg)
+
 	ctx := context.Background()
 	info := graphql.ResolveInfo{}
 
 	return func(gid string) (interface{}, error) {
 		return resolver.Find(ctx, gid, info)
 	}
-}
-
-func TestNodeResolverFindType(t *testing.T) {
-	cfg := ServiceConfig{}
-	resolver := newNodeResolver(cfg)
-
-	check := corev2.FixtureCheckConfig("http-check")
-	typeID := resolver.FindType(context.Background(), check)
-	assert.NotNil(t, typeID)
-}
-
-func TestNodeResolverFind(t *testing.T) {
-	client := new(MockCheckClient)
-	cfg := ServiceConfig{CheckClient: client}
-	resolver := newNodeResolver(cfg)
-
-	ctx := context.Background()
-	info := graphql.ResolveInfo{}
-
-	check := corev2.FixtureCheckConfig("http-check")
-	gid := globalid.CheckTranslator.EncodeToString(context.Background(), check)
-
-	// Success
-	client.On("FetchCheck", mock.Anything, check.Name).Return(check, nil).Once()
-	res, err := resolver.Find(ctx, gid, info)
-	assert.NotEmpty(t, res)
-	assert.NoError(t, err)
-
-	// Missing
-	client.On("FetchCheck", mock.Anything, check.Name).Return(check, &store.ErrNotFound{}).Once()
-	res, err = resolver.Find(ctx, gid, info)
-	assert.Empty(t, res)
-	assert.NoError(t, err)
-
-	// Error
-	client.On("FetchCheck", mock.Anything, check.Name).Return(check, errors.New("an error")).Once()
-	res, err = resolver.Find(ctx, gid, info)
-	assert.Empty(t, res)
-	assert.Error(t, err)
-
-	// Bad ID
-	res, err = resolver.Find(ctx, "sadfasdfasdf", info)
-	assert.Empty(t, res)
-	assert.Error(t, err)
 }
 
 type onner interface {

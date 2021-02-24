@@ -51,12 +51,17 @@ type Service struct {
 // NewService instantiates new GraphQL service
 func NewService(cfg ServiceConfig) (*Service, error) {
 	svc := graphql.NewService()
-	nodeResolver := newNodeResolver(cfg)
+
+	nodeRegister := relay.NodeRegister{}
+	nodeResolver := relay.Resolver{Register: &nodeRegister}
 	wrapper := Service{
 		Target:       svc,
 		Config:       cfg,
-		NodeRegister: nodeResolver.register,
+		NodeRegister: &nodeRegister,
 	}
+
+	// Register types w/ generic node resolver
+	registerNodeResolvers(nodeRegister, cfg)
 
 	// Register types
 	schema.RegisterAsset(svc, &assetImpl{})
@@ -66,11 +71,11 @@ func NewService(cfg ServiceConfig) (*Service, error) {
 	schema.RegisterEventsListOrder(svc)
 	schema.RegisterJSON(svc, jsonImpl{})
 	schema.RegisterKVPairString(svc, &schema.KVPairStringAliases{})
-	schema.RegisterQuery(svc, &queryImpl{nodeResolver: nodeResolver, svc: cfg})
+	schema.RegisterQuery(svc, &queryImpl{nodeResolver: &nodeResolver, svc: cfg})
 	schema.RegisterMutator(svc, &mutatorImpl{})
 	schema.RegisterMutatorConnection(svc, &schema.MutatorConnectionAliases{})
 	schema.RegisterMutatorListOrder(svc)
-	schema.RegisterNode(svc, &nodeImpl{nodeResolver})
+	schema.RegisterNode(svc, &nodeImpl{&nodeResolver})
 	schema.RegisterNamespaced(svc, nil)
 	schema.RegisterObjectMeta(svc, &objectMetaImpl{})
 	schema.RegisterOffsetPageInfo(svc, &offsetPageInfoImpl{})
