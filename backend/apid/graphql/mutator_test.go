@@ -1,6 +1,7 @@
 package graphql
 
 import (
+	"context"
 	"testing"
 
 	v2 "github.com/sensu/sensu-go/api/core/v2"
@@ -13,7 +14,7 @@ func TestMutatorTypeToJSONField(t *testing.T) {
 	src := v2.FixtureMutator("name")
 	imp := &mutatorImpl{}
 
-	res, err := imp.ToJSON(graphql.ResolveParams{Source: src})
+	res, err := imp.ToJSON(graphql.ResolveParams{Source: src, Context: context.Background()})
 	require.NoError(t, err)
 	assert.NotEmpty(t, res)
 }

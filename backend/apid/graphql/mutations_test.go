@@ -8,12 +8,13 @@ import (
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/apid/graphql/globalid"
 	"github.com/sensu/sensu-go/backend/apid/graphql/schema"
+	"github.com/sensu/sensu-go/graphql"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
 
 func TestMutationTypePutWrappedUpsertTrue(t *testing.T) {
-	params := schema.MutationPutWrappedFieldResolverParams{}
+	params := schema.MutationPutWrappedFieldResolverParams{ResolveParams: graphql.ResolveParams{Context: context.Background()}}
 	params.Args.Raw = `
 		{
 			"type": "Silenced",
@@ -54,7 +55,7 @@ func TestMutationTypePutWrappedUpsertTrue(t *testing.T) {
 }
 
 func TestMutationTypePutWrappedUpsertFalse(t *testing.T) {
-	params := schema.MutationPutWrappedFieldResolverParams{}
+	params := schema.MutationPutWrappedFieldResolverParams{ResolveParams: graphql.ResolveParams{Context: context.Background()}}
 	params.Args.Raw = `
 		{
 			"type": "Silenced",
@@ -96,7 +97,7 @@ func TestMutationTypePutWrappedUpsertFalse(t *testing.T) {
 
 func TestMutationTypeExecuteCheck(t *testing.T) {
 	inputs := schema.ExecuteCheckInput{}
-	params := schema.MutationExecuteCheckFieldResolverParams{}
+	params := schema.MutationExecuteCheckFieldResolverParams{ResolveParams: graphql.ResolveParams{Context: context.Background()}}
 	params.Args.Input = &inputs
 
 	client := new(MockCheckClient)
@@ -118,7 +119,7 @@ func TestMutationTypeExecuteCheck(t *testing.T) {
 
 func TestMutationTypeUpdateCheck(t *testing.T) {
 	inputs := schema.UpdateCheckInput{}
-	params := schema.MutationUpdateCheckFieldResolverParams{}
+	params := schema.MutationUpdateCheckFieldResolverParams{ResolveParams: graphql.ResolveParams{Context: context.Background()}}
 	params.Args.Input = &inputs
 	params.ResolveParams.Args = map[string]interface{}{
 		"input": map[string]interface{}{
@@ -156,7 +157,7 @@ func TestMutationTypeUpdateCheck(t *testing.T) {
 
 func TestMutationTypeDeleteEntityField(t *testing.T) {
 	inputs := schema.DeleteRecordInput{}
-	params := schema.MutationDeleteEntityFieldResolverParams{}
+	params := schema.MutationDeleteEntityFieldResolverParams{ResolveParams: graphql.ResolveParams{Context: context.Background()}}
 	params.Args.Input = &inputs
 
 	entity := corev2.FixtureEntity("abc")
@@ -183,7 +184,7 @@ func TestMutationTypeDeleteEventField(t *testing.T) {
 	gid := globalid.EventTranslator.EncodeToString(context.Background(), evt)
 
 	inputs := schema.DeleteRecordInput{ID: gid}
-	params := schema.MutationDeleteEventFieldResolverParams{}
+	params := schema.MutationDeleteEventFieldResolverParams{ResolveParams: graphql.ResolveParams{Context: context.Background()}}
 	params.Args.Input = &inputs
 
 	client := new(MockEventClient)
@@ -214,7 +215,7 @@ func TestMutationTypeDeleteHandlerField(t *testing.T) {
 	gid := globalid.HandlerTranslator.EncodeToString(context.Background(), hd)
 
 	inputs := schema.DeleteRecordInput{ID: gid}
-	params := schema.MutationDeleteHandlerFieldResolverParams{}
+	params := schema.MutationDeleteHandlerFieldResolverParams{ResolveParams: graphql.ResolveParams{Context: context.Background()}}
 	params.Args.Input = &inputs
 
 	client := new(MockHandlerClient)
@@ -239,7 +240,7 @@ func TestMutationTypeDeleteMutatorField(t *testing.T) {
 	gid := globalid.MutatorTranslator.EncodeToString(context.Background(), mut)
 
 	inputs := schema.DeleteRecordInput{ID: gid}
-	params := schema.MutationDeleteMutatorFieldResolverParams{}
+	params := schema.MutationDeleteMutatorFieldResolverParams{ResolveParams: graphql.ResolveParams{Context: context.Background()}}
 	params.Args.Input = &inputs
 
 	client := new(MockMutatorClient)
@@ -264,7 +265,7 @@ func TestMutationTypeDeleteEventFilterField(t *testing.T) {
 	gid := globalid.EventFilterTranslator.EncodeToString(context.Background(), flr)
 
 	inputs := schema.DeleteRecordInput{ID: gid}
-	params := schema.MutationDeleteEventFilterFieldResolverParams{}
+	params := schema.MutationDeleteEventFilterFieldResolverParams{ResolveParams: graphql.ResolveParams{Context: context.Background()}}
 	params.Args.Input = &inputs
 
 	client := new(MockEventFilterClient)
@@ -289,7 +290,7 @@ func TestMutationTypeCreateSilenceField(t *testing.T) {
 		Namespace: "a",
 		Props:     &schema.SilenceInputs{},
 	}
-	params := schema.MutationCreateSilenceFieldResolverParams{}
+	params := schema.MutationCreateSilenceFieldResolverParams{ResolveParams: graphql.ResolveParams{Context: context.Background()}}
 	params.Args.Input = &inputs
 
 	client := new(MockSilencedClient)
@@ -311,7 +312,7 @@ func TestMutationTypeCreateSilenceField(t *testing.T) {
 
 func TestMutationTypeDeleteSilenceField(t *testing.T) {
 	inputs := schema.DeleteRecordInput{}
-	params := schema.MutationDeleteSilenceFieldResolverParams{}
+	params := schema.MutationDeleteSilenceFieldResolverParams{ResolveParams: graphql.ResolveParams{Context: context.Background()}}
 	params.Args.Input = &inputs
 
 	client := new(MockSilencedClient)

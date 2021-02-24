@@ -1,6 +1,7 @@
 package graphql
 
 import (
+	"context"
 	"reflect"
 	"testing"
 	"time"
@@ -107,7 +108,7 @@ func Test_commonMetricImpl_Labels(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			c := &commonMetricImpl{}
-			got, err := c.Labels(graphql.ResolveParams{Source: tt.val})
+			got, err := c.Labels(graphql.ResolveParams{Source: tt.val, Context: context.Background()})
 			if (err != nil) != tt.wantErr {
 				t.Errorf("commonMetricImpl.Labels() error = %v, wantErr %v", err, tt.wantErr)
 				return
@@ -144,7 +145,7 @@ func Test_commonMetricImpl_Timestamp(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			c := &commonMetricImpl{}
-			got, err := c.Timestamp(graphql.ResolveParams{Source: tt.val})
+			got, err := c.Timestamp(graphql.ResolveParams{Source: tt.val, Context: context.Background()})
 			if (err != nil) != tt.wantErr {
 				t.Errorf("commonMetricImpl.Timestamp() error = %v, wantErr %v", err, tt.wantErr)
 				return
@@ -175,7 +176,7 @@ func Test_metricFamilyImpl_Type(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			m := &metricFamilyImpl{}
-			got, err := m.Type(graphql.ResolveParams{Source: tt.val})
+			got, err := m.Type(graphql.ResolveParams{Source: tt.val, Context: context.Background()})
 			if (err != nil) != tt.wantErr {
 				t.Errorf("metricFamilyImpl.Type() error = %v, wantErr %v", err, tt.wantErr)
 				return
@@ -211,7 +212,7 @@ func Test_histogramMetricImpl_Bucket(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			h := &histogramMetricImpl{}
-			got, err := h.Bucket(graphql.ResolveParams{Source: tt.source})
+			got, err := h.Bucket(graphql.ResolveParams{Source: tt.source, Context: context.Background()})
 			if (err != nil) != tt.wantErr {
 				t.Errorf("histogramMetricImpl.Bucket() error = %v, wantErr %v", err, tt.wantErr)
 				return
@@ -244,7 +245,7 @@ func Test_summaryMetricImpl_SampleSum(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			s := &summaryMetricImpl{}
-			got, err := s.SampleSum(graphql.ResolveParams{Source: tt.source})
+			got, err := s.SampleSum(graphql.ResolveParams{Source: tt.source, Context: context.Background()})
 			if (err != nil) != tt.wantErr {
 				t.Errorf("summaryMetricImpl.SampleSum() error = %v, wantErr %v", err, tt.wantErr)
 				return
@@ -284,7 +285,7 @@ func Test_histogramMetricImpl_SampleSum(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			h := &histogramMetricImpl{}
-			got, err := h.SampleSum(graphql.ResolveParams{Source: tt.source})
+			got, err := h.SampleSum(graphql.ResolveParams{Source: tt.source, Context: context.Background()})
 			if (err != nil) != tt.wantErr {
 				t.Errorf("histogramMetricImpl.SampleSum() error = %v, wantErr %v", err, tt.wantErr)
 				return
@@ -324,7 +325,7 @@ func Test_summaryMetricImpl_SampleCount(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			s := &summaryMetricImpl{}
-			got, err := s.SampleCount(graphql.ResolveParams{Source: tt.source})
+			got, err := s.SampleCount(graphql.ResolveParams{Source: tt.source, Context: context.Background()})
 			if (err != nil) != tt.wantErr {
 				t.Errorf("summaryMetricImpl.SampleCount() error = %v, wantErr %v", err, tt.wantErr)
 				return
@@ -364,7 +365,7 @@ func Test_histogramMetricImpl_SampleCount(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			h := &histogramMetricImpl{}
-			got, err := h.SampleCount(graphql.ResolveParams{Source: tt.source})
+			got, err := h.SampleCount(graphql.ResolveParams{Source: tt.source, Context: context.Background()})
 			if (err != nil) != tt.wantErr {
 				t.Errorf("histogramMetricImpl.SampleCount() error = %v, wantErr %v", err, tt.wantErr)
 				return

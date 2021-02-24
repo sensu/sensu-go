@@ -1,6 +1,7 @@
 package graphql
 
 import (
+	"context"
 	"reflect"
 	"strconv"
 	"testing"
@@ -28,7 +29,7 @@ func Test_clusterHealthImpl_Etcd(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			r := &clusterHealthImpl{}
-			got, err := r.Etcd(graphql.ResolveParams{Source: tt.source})
+			got, err := r.Etcd(graphql.ResolveParams{Source: tt.source, Context: context.Background()})
 			if (err != nil) != tt.wantErr {
 				t.Errorf("clusterHealthImpl.Etcd() error = %v, wantErr %v", err, tt.wantErr)
 				return
@@ -58,7 +59,7 @@ func Test_etcdClusterHealthImpl_Alarms(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			r := &etcdClusterHealthImpl{}
-			got, err := r.Alarms(graphql.ResolveParams{Source: tt.source})
+			got, err := r.Alarms(graphql.ResolveParams{Source: tt.source, Context: context.Background()})
 			if (err != nil) != tt.wantErr {
 				t.Errorf("etcdClusterHealthImpl.Alarms() error = %v, wantErr %v", err, tt.wantErr)
 				return
@@ -88,7 +89,7 @@ func Test_etcdClusterHealthImpl_Members(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			r := &etcdClusterHealthImpl{}
-			got, err := r.Members(graphql.ResolveParams{Source: tt.source})
+			got, err := r.Members(graphql.ResolveParams{Source: tt.source, Context: context.Background()})
 			if (err != nil) != tt.wantErr {
 				t.Errorf("etcdClusterHealthImpl.Members() error = %v, wantErr %v", err, tt.wantErr)
 				return
@@ -118,7 +119,7 @@ func Test_etcdAlarmMemberImpl_MemberID(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			r := &etcdAlarmMemberImpl{}
-			got, err := r.MemberID(graphql.ResolveParams{Source: tt.source})
+			got, err := r.MemberID(graphql.ResolveParams{Source: tt.source, Context: context.Background()})
 			if (err != nil) != tt.wantErr {
 				t.Errorf("etcdAlarmMemberImpl.MemberID() error = %v, wantErr %v", err, tt.wantErr)
 				return
@@ -148,7 +149,7 @@ func Test_etcdAlarmMemberImpl_Alarm(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			r := &etcdAlarmMemberImpl{}
-			got, err := r.Alarm(graphql.ResolveParams{Source: tt.source})
+			got, err := r.Alarm(graphql.ResolveParams{Source: tt.source, Context: context.Background()})
 			if (err != nil) != tt.wantErr {
 				t.Errorf("etcdAlarmMemberImpl.Alarm() error = %v, wantErr %v", err, tt.wantErr)
 				return
@@ -178,7 +179,7 @@ func Test_etcdClusterMemberHealthImpl_MemberID(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			r := &etcdClusterMemberHealthImpl{}
-			got, err := r.MemberID(graphql.ResolveParams{Source: tt.source})
+			got, err := r.MemberID(graphql.ResolveParams{Source: tt.source, Context: context.Background()})
 			if (err != nil) != tt.wantErr {
 				t.Errorf("etcdClusterMemberHealthImpl.MemberID() error = %v, wantErr %v", err, tt.wantErr)
 				return

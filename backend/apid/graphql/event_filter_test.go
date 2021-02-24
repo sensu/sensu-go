@@ -35,7 +35,7 @@ func TestEventFilterTypeToJSONField(t *testing.T) {
 	src := corev2.FixtureEventFilter("my-filter")
 	imp := &eventFilterImpl{}
 
-	res, err := imp.ToJSON(graphql.ResolveParams{Source: src})
+	res, err := imp.ToJSON(graphql.ResolveParams{Source: src, Context: context.Background()})
 	require.NoError(t, err)
 	assert.NotEmpty(t, res)
 }

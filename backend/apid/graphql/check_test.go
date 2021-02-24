@@ -40,7 +40,7 @@ func TestCheckTypeHistoryFieldImpl(t *testing.T) {
 	check := corev2.FixtureCheck("test")
 	for _, tc := range testCases {
 		t.Run(fmt.Sprintf("w/ argument of %d", tc.expectedLen), func(t *testing.T) {
-			params := schema.CheckHistoryFieldResolverParams{}
+			params := schema.CheckHistoryFieldResolverParams{ResolveParams: graphql.ResolveParams{Context: context.Background()}}
 			params.Source = check
 			params.Args.First = tc.firstArg
 
@@ -94,7 +94,7 @@ func TestCheckTypeIsSilencedField(t *testing.T) {
 
 	// return associated silence
 	impl := &checkImpl{}
-	res, err := impl.IsSilenced(graphql.ResolveParams{Source: check})
+	res, err := impl.IsSilenced(graphql.ResolveParams{Source: check, Context: context.Background()})
 	require.NoError(t, err)
 	assert.True(t, res)
 }
@@ -312,7 +312,7 @@ func TestCheckTypeToJSONField(t *testing.T) {
 	src := corev2.FixtureCheck("name")
 	imp := &checkImpl{}
 
-	res, err := imp.ToJSON(graphql.ResolveParams{Source: src})
+	res, err := imp.ToJSON(graphql.ResolveParams{Source: src, Context: context.Background()})
 	require.NoError(t, err)
 	assert.NotEmpty(t, res)
 }
@@ -321,7 +321,7 @@ func TestCheckConfigTypeToJSONField(t *testing.T) {
 	src := corev2.FixtureCheckConfig("name")
 	imp := &checkCfgImpl{}
 
-	res, err := imp.ToJSON(graphql.ResolveParams{Source: src})
+	res, err := imp.ToJSON(graphql.ResolveParams{Source: src, Context: context.Background()})
 	require.NoError(t, err)
 	assert.NotEmpty(t, res)
 }
@@ -370,7 +370,7 @@ func TestCheckTypeOutputFieldImpl(t *testing.T) {
 	check.Output = "123456789012345678901234567890"
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			params := schema.CheckOutputFieldResolverParams{}
+			params := schema.CheckOutputFieldResolverParams{ResolveParams: graphql.ResolveParams{Context: context.Background()}}
 			params.Context = context.Background()
 			params.Source = check
 			params.Args.First = tc.firstArg
