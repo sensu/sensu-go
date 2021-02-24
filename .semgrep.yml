@@ -1,0 +1,94 @@
+rules:
+  - id: resolveparams-passed-nil-context
+    patterns:
+      - pattern: |
+          $FUNC(..., graphql.ResolveParams{...}, ...)
+      - pattern-not-inside: |
+          $FUNC(..., graphql.ResolveParams{..., Context: $X, ...,}, ...)
+    message: graphql.ResolveParams literal with nil context passed to function
+    languages: [go]
+    severity: ERROR
+  - id: resolveparams-nil-context-var
+    patterns:
+      - pattern: var $X graphql.ResolveParams
+      - pattern-not-inside: |
+            var $X graphql.ResolveParams
+            ...
+            $X.Context = $Y
+    message: graphql.ResolveParams created with nil context
+    languages: [go]
+    severity: ERROR
+  - id: resolveparams-nil-context-var-2
+    patterns:
+      - pattern: $X := graphql.ResolveParams{}
+      - pattern-not-inside: |
+            $X := graphql.ResolveParams{}
+            ...
+            $X.Context = $Y
+    message: graphql.ResolveParams created with nil context
+    languages: [go]
+    severity: ERROR
+  - id: params-passed-nil-context
+    patterns:
+      - pattern: |
+          $FUNC(..., graphql.Params{...}, ...)
+      - pattern-not-inside: |
+          $FUNC(..., graphql.Params{..., Context: $X, ...,}, ...)
+    message: graphql.Params literal with nil context passed to function
+    languages: [go]
+    severity: ERROR
+  - id: params-nil-context-var
+    patterns:
+      - pattern: var $X graphql.Params
+      - pattern-not-inside: |
+            var $X graphql.Params
+            ...
+            $X.Context = $Y
+    message: graphql.Params created with nil context
+    languages: [go]
+    severity: ERROR
+  - id: params-nil-context-var-2
+    patterns:
+      - pattern: $X := graphql.Params{}
+      - pattern-not-inside: |
+            $X := graphql.Params{}
+            ...
+            $X.Context = $Y
+    message: graphql.Params created with nil context
+    languages: [go]
+    severity: ERROR
+  - id: relay-params-passed-nil-context
+    patterns:
+      - pattern: |
+          $FUNC(..., NodeResolverParams{...}, ...)
+      - pattern-not-inside: |
+          $FUNC(..., NodeResolverParams{..., Context: $X, ...,}, ...)
+    message: NodeResolverParams literal with nil context passed to function
+    languages: [go]
+    severity: ERROR
+  - id: relay-params-nil-context-var
+    patterns:
+      - pattern: var $X NodeResolverParams
+      - pattern-not-inside: |
+            var $X NodeResolverParams
+            ...
+            $X.Context = $Y
+    message: NodeResolverParams created with nil context
+    languages: [go]
+    severity: ERROR
+  - id: relay-params-nil-context-var-2
+    patterns:
+      - pattern: $X := NodeResolverParams{}
+      - pattern-not-inside: |
+            $X := NodeResolverParams{}
+            ...
+            $X.Context = $Y
+    message: NodeResolverParams created with nil context
+    languages: [go]
+    severity: ERROR
+  - id: generic-resolver-params-nil-context
+    patterns:
+      - pattern-regex: .*ResolverParams\{\}
+    message: ResolverParams created with nil context
+    languages: [go]
+    severity: ERROR
