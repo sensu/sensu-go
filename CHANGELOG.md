@@ -10,6 +10,7 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 ## Added
 - Added ResourceTemplate resource. ResourceTemplate will be used to populate
 namespaces with initial resources.
+- Added `GetResourceV3Watcher()` to the `store/etcd` package.
 
 ### Fixed
 - Both V2 & V3 resources are now validated when used with storev2.
