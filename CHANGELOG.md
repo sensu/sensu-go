@@ -10,6 +10,7 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 ## Added
 - Added ResourceTemplate resource. ResourceTemplate will be used to populate
 namespaces with initial resources.
+- Add `EntityServiceClass` constant to the `corev2` package, representing BSM Services.
 
 ### Fixed
 - Both V2 & V3 resources are now validated when used with storev2.
