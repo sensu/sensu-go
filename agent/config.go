@@ -17,7 +17,7 @@ const (
 
 	// TCPSocketReadDeadline specifies the maximum time the TCP socket will wait
 	// to receive data.
-	TCPSocketReadDeadline = 500 * time.Millisecond
+	TCPSocketReadDeadline = 5000 * time.Millisecond
 
 	// DefaultAPIHost specifies the default API Host
 	DefaultAPIHost = "127.0.0.1"
