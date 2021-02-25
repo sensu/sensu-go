@@ -26,6 +26,9 @@ const (
 	// EntityBackendClass is the name of the class given to backend entities.
 	EntityBackendClass = "backend"
 
+	// EntityServiceClass is the name of the class given to BSM service entities.
+	EntityServiceClass = "service"
+
 	// Redacted is filled in for fields that contain sensitive information
 	Redacted = "REDACTED"
 )
