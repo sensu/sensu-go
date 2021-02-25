@@ -74,6 +74,7 @@ func main() {
 		cfg.MockSystemInfo = true
 		cfg.BackendHeartbeatInterval = 30
 		cfg.BackendHeartbeatTimeout = 300
+		cfg.PrometheusPort = ":8080"
 
 		agent, err := agent.NewAgent(cfg)
 		if err != nil {

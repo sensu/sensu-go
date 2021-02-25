@@ -195,6 +195,9 @@ type Config struct {
 	// AgentManagedEntity indicates whether the agent's entity is solely managed
 	// by the agent, rather than the backend API
 	AgentManagedEntity bool
+
+	// PrometheusPort, if set, serves prometheus metrics on this port
+	PrometheusPort string
 }
 
 // StatsdServerConfig contains the statsd server configuration

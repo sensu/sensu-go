@@ -21,6 +21,7 @@ import (
 	time "github.com/echlebek/timeproxy"
 	"github.com/gogo/protobuf/proto"
 	"github.com/google/uuid"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"golang.org/x/time/rate"
 
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
@@ -141,6 +142,12 @@ func NewAgentContext(ctx context.Context, config *Config) (*Agent, error) {
 		return nil, err
 	}
 	agent.allowList = allowList
+
+	if config.PrometheusPort != "" {
+		go func() {
+			http.ListenAndServe(config.PrometheusPort, promhttp.Handler())
+		}()
+	}
 
 	return agent, nil
 }
