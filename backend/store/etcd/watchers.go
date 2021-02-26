@@ -134,6 +134,7 @@ func GetResourceV3Watcher(ctx context.Context, client *clientv3.Client, key stri
 	c := make(chan store.WatchEventResourceV3, 1)
 
 	go func() {
+		defer logger.Info("closed ResourceV3 watcher")
 		defer close(c)
 
 		for {
@@ -163,7 +164,14 @@ func GetResourceV3Watcher(ctx context.Context, client *clientv3.Client, key stri
 						Resource: component,
 					}
 
-				case action == store.WatchError, action == store.WatchUnknown:
+				case action == store.WatchError:
+					logger.Error("error from underlying etcd watcher")
+					c <- store.WatchEventResourceV3{
+						Action: action,
+					}
+
+				case action == store.WatchUnknown:
+					logger.Warn("unknown message from underlying etcd watcher")
 					c <- store.WatchEventResourceV3{
 						Action: action,
 					}
