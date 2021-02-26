@@ -10,7 +10,7 @@ import (
 )
 
 // A NodeResolver describes an object that contains a globally unique ID.
-type NodeResolver struct {
+type NodeResolver struct { // TODO: rename NodeInfo?
 	ObjectType graphql.Type
 	Translator globalid.Translator
 

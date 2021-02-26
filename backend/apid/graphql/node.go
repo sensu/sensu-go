@@ -1,27 +1,14 @@
 package graphql
 
 import (
-	"context"
 	"errors"
-	"fmt"
 
 	"github.com/sensu/sensu-go/backend/apid/graphql/globalid"
 	"github.com/sensu/sensu-go/backend/apid/graphql/relay"
 	"github.com/sensu/sensu-go/backend/apid/graphql/schema"
-	"github.com/sensu/sensu-go/graphql"
 )
 
-//
-// Node Resolver
-//
-
-type nodeResolver struct {
-	register *relay.NodeRegister
-}
-
-func newNodeResolver(cfg ServiceConfig) *nodeResolver {
-	register := relay.NodeRegister{}
-
+func registerNodeResolvers(register relay.NodeRegister, cfg ServiceConfig) {
 	registerAssetNodeResolver(register, cfg.AssetClient)
 	registerCheckNodeResolver(register, cfg.CheckClient)
 	registerEntityNodeResolver(register, cfg.EntityClient)
@@ -37,49 +24,6 @@ func newNodeResolver(cfg ServiceConfig) *nodeResolver {
 	registerEventNodeResolver(register, cfg.EventClient)
 	registerNamespaceNodeResolver(register, cfg.NamespaceClient)
 	registerSilencedNodeResolver(register, cfg.SilencedClient)
-
-	return &nodeResolver{&register}
-}
-
-func (r *nodeResolver) FindType(ctx context.Context, i interface{}) *graphql.Type {
-	translator, err := globalid.ReverseLookup(i)
-	if err != nil {
-		return nil
-	}
-
-	components := translator.Encode(ctx, i)
-	resolver := r.register.Lookup(components)
-	if resolver == nil {
-		logger := logger.WithField("translator", fmt.Sprintf("%#v", translator))
-		logger.Error("unable to find node resolver for type")
-		return nil
-	}
-	return &resolver.ObjectType
-}
-
-func (r *nodeResolver) Find(ctx context.Context, id string, info graphql.ResolveInfo) (interface{}, error) {
-	// Decode given ID
-	idComponents, err := globalid.Decode(id)
-	if err != nil {
-		return nil, err
-	}
-
-	// Lookup resolver using components of a global ID
-	resolver := r.register.Lookup(idComponents)
-	if resolver == nil {
-		return nil, errors.New("unable to find type associated with this ID")
-	}
-
-	// Lift org & env into context
-	ctx = setContextFromComponents(ctx, idComponents)
-
-	// Fetch resource from using resolver
-	params := relay.NodeResolverParams{
-		Context:      ctx,
-		IDComponents: idComponents,
-		Info:         info,
-	}
-	return resolver.Resolve(params)
 }
 
 // assets

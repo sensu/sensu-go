@@ -8,6 +8,7 @@ import (
 
 	dto "github.com/prometheus/client_model/go"
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
+	"github.com/sensu/sensu-go/backend/apid/graphql/relay"
 	"github.com/sensu/sensu-go/backend/apid/graphql/schema"
 	"github.com/sensu/sensu-go/backend/apid/graphql/suggest"
 	"github.com/sensu/sensu-go/backend/store"
@@ -23,7 +24,7 @@ var _ schema.QueryFieldResolvers = (*queryImpl)(nil)
 //
 
 type queryImpl struct {
-	nodeResolver *nodeResolver
+	nodeResolver *relay.Resolver
 	svc          ServiceConfig
 }
 
@@ -218,7 +219,7 @@ func (r *queryImpl) WrappedNode(p schema.QueryWrappedNodeFieldResolverParams) (i
 //
 
 type nodeImpl struct {
-	nodeResolver *nodeResolver
+	nodeResolver *relay.Resolver
 }
 
 func (impl *nodeImpl) ResolveType(i interface{}, p graphql.ResolveTypeParams) *graphql.Type {
