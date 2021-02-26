@@ -8,7 +8,6 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/prometheus/client_golang/prometheus"
 	"github.com/sensu/sensu-go/agent"
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/asset"
@@ -26,64 +25,6 @@ var (
 	labels                    map[string]string
 	configFileDefaultLocation = filepath.Join(path.SystemConfigDir(), "agent.yml")
 )
-
-const (
-	MessagesReceived = "sensu_go_agent_messages_received"
-	MessagesSent     = "sensu_go_agent_messages_sent"
-	MessagesDropped  = "sensu_go_agent_messages_dropped"
-	NewConnections   = "sensu_go_agent_new_connections"
-	WebsocketErrors  = "sensu_go_agent_websocket_errors"
-)
-
-var (
-	messagesReceived = prometheus.NewCounterVec(
-		prometheus.CounterOpts{
-			Name: MessagesReceived,
-			Help: "The total number of messages received from sensu-backend",
-		},
-		[]string{},
-	)
-
-	messagesSent = prometheus.NewCounterVec(
-		prometheus.CounterOpts{
-			Name: MessagesSent,
-			Help: "The total number of messages sent to sensu-backend",
-		},
-		[]string{},
-	)
-
-	messagesDropped = prometheus.NewCounterVec(
-		prometheus.CounterOpts{
-			Name: MessagesDropped,
-			Help: "The total number of messages that failed to send to sensu-backend",
-		},
-		[]string{},
-	)
-
-	newConnections = prometheus.NewCounterVec(
-		prometheus.CounterOpts{
-			Name: NewConnections,
-			Help: "The total number of new connections made to sensu-backend",
-		},
-		[]string{},
-	)
-
-	websocketErrors = prometheus.NewCounterVec(
-		prometheus.CounterOpts{
-			Name: WebsocketErrors,
-			Help: "The total number of websocket errors encountered",
-		},
-		[]string{},
-	)
-)
-
-func init() {
-	_ = prometheus.Register(messagesReceived)
-	_ = prometheus.Register(messagesSent)
-	_ = prometheus.Register(messagesDropped)
-	_ = prometheus.Register(newConnections)
-	_ = prometheus.Register(websocketErrors)
-}
 
 const (
 	// DefaultBackendPort specifies the default port to use when a port is not
