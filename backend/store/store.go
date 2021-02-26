@@ -133,6 +133,17 @@ type WatchEventResource struct {
 	Action   WatchActionType
 }
 
+// WatchEventResourceV3 is a notification that a corev3.Resource has been
+// created, deleted or updated.
+type WatchEventResourceV3 struct {
+	// Resource is the resource associated with the event. It is nil when Action
+	// is WatchError or WatchUnknown.
+	Resource corev3.Resource
+
+	// Action is the type of action that affected the resource.
+	Action WatchActionType
+}
+
 // WatchEventEntityConfig contains an updated entity config and the action that
 // occurred during this modification.
 type WatchEventEntityConfig struct {
