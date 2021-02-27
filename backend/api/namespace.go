@@ -5,9 +5,12 @@ import (
 	"fmt"
 
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
+	corev3 "github.com/sensu/sensu-go/api/core/v3"
 	"github.com/sensu/sensu-go/backend/authorization"
 	"github.com/sensu/sensu-go/backend/authorization/rbac"
 	"github.com/sensu/sensu-go/backend/store"
+	storev2 "github.com/sensu/sensu-go/backend/store/v2"
+	"github.com/sensu/sensu-go/backend/store/v2/wrap"
 	stringsutil "github.com/sensu/sensu-go/util/strings"
 	"github.com/sirupsen/logrus"
 )
@@ -24,11 +27,12 @@ type NamespaceClient struct {
 	namespaceStore store.NamespaceStore
 	roleClient     GenericClient
 	bindingClient  GenericClient
+	storev2        storev2.Interface
 	auth           authorization.Authorizer
 }
 
 // NewNamespaceClient creates a new NamespaceClient, given a store and authorizer.
-func NewNamespaceClient(store store.ResourceStore, namespaceStore store.NamespaceStore, auth authorization.Authorizer) *NamespaceClient {
+func NewNamespaceClient(store store.ResourceStore, namespaceStore store.NamespaceStore, auth authorization.Authorizer, storev2 storev2.Interface) *NamespaceClient {
 	return &NamespaceClient{
 		client: GenericClient{
 			Kind:       &corev2.Namespace{},
@@ -53,6 +57,7 @@ func NewNamespaceClient(store store.ResourceStore, namespaceStore store.Namespac
 		},
 		auth:           auth,
 		namespaceStore: namespaceStore,
+		storev2:        storev2,
 	}
 }
 
@@ -318,7 +323,40 @@ func (a *NamespaceClient) CreateNamespace(ctx context.Context, namespace *corev2
 	if err := a.client.Create(ctx, namespace); err != nil {
 		return err
 	}
+	if err := a.createResourceTemplates(ctx, namespace.Name); err != nil {
+		return err
+	}
 	return a.createRoleAndBinding(ctx, namespace.Name)
+}
+
+func (a *NamespaceClient) createResourceTemplates(ctx context.Context, namespace string) error {
+	req := storev2.NewResourceRequestFromResource(ctx, new(corev3.ResourceTemplate))
+	list, err := a.storev2.List(req, nil)
+	if err != nil {
+		return err
+	}
+	var templates []corev3.ResourceTemplate
+	if err := list.UnwrapInto(&templates); err != nil {
+		return err
+	}
+	for _, template := range templates {
+		meta := &corev2.ObjectMeta{
+			Namespace: namespace,
+		}
+		resource, err := template.Execute(meta)
+		if err != nil {
+			return err
+		}
+		req := storev2.NewResourceRequestFromResource(ctx, resource)
+		wrapper, err := wrap.Resource(resource)
+		if err != nil {
+			return err
+		}
+		if err := a.storev2.CreateOrUpdate(req, wrapper); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 // UpdateNamespace updates a namespace resource, if authorized.

@@ -2,6 +2,7 @@ package api
 
 import (
 	"context"
+	"encoding/json"
 	"reflect"
 	"sort"
 	"testing"
@@ -9,10 +10,12 @@ import (
 	"github.com/sensu/sensu-go/backend/authorization"
 	"github.com/sensu/sensu-go/backend/authorization/rbac"
 	"github.com/sensu/sensu-go/backend/store"
+	"github.com/sensu/sensu-go/backend/store/v2/wrap"
 	"github.com/sensu/sensu-go/testing/mockstore"
 	"github.com/stretchr/testify/mock"
 
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
+	corev3 "github.com/sensu/sensu-go/api/core/v3"
 )
 
 func TestFetchNamespace(t *testing.T) {
@@ -387,8 +390,33 @@ func TestFetchNamespace(t *testing.T) {
 
 			ctx := contextWithUser(defaultContext(), tt.attrs.User.Username, tt.attrs.User.Groups)
 
+			entityCfg := corev3.FixtureEntityConfig("foobar")
+			// set templated namespace
+			entityCfg.Metadata.Namespace = "{{ .Namespace }}"
+			tmplEntityConfig, _ := json.Marshal(entityCfg)
+
+			resourceTemplate := &corev3.ResourceTemplate{
+				Metadata: &corev2.ObjectMeta{
+					Namespace:   "default",
+					Name:        "tmpl-entity-config",
+					Labels:      make(map[string]string),
+					Annotations: make(map[string]string),
+				},
+				APIVersion: "core/v3",
+				Type:       "EntityConfig",
+				Template:   string(tmplEntityConfig),
+			}
+			wrappedResourceTemplate, err := wrap.Resource(resourceTemplate)
+			if err != nil {
+				t.Fatal(err)
+			}
+			wrapList := wrap.List{wrappedResourceTemplate}
+			s2 := new(mockstore.V2MockStore)
+			s2.On("CreateOrUpdate", mock.Anything, mock.Anything).Return(nil)
+			s2.On("List", mock.Anything, mock.Anything).Return(wrapList, nil)
+
 			auth := &rbac.Authorizer{Store: store}
-			client := NewNamespaceClient(store, store, auth)
+			client := NewNamespaceClient(store, store, auth, s2)
 
 			got, err := client.FetchNamespace(ctx, tt.namespace)
 			if (err != nil) != tt.wantErr {
@@ -749,10 +777,34 @@ func TestNamespaceList(t *testing.T) {
 			}).Return(nil)
 			setupGetClusterRoleAndGetRole(s, test.ClusterRoles, test.Roles)
 
+			entityCfg := corev3.FixtureEntityConfig("foobar")
+			entityCfg.Metadata.Namespace = "{{ .Namespace }}" // templated namespace
+			tmplEntityConfig, _ := json.Marshal(entityCfg)
+
+			resourceTemplate := &corev3.ResourceTemplate{
+				Metadata: &corev2.ObjectMeta{
+					Namespace:   "default",
+					Name:        "tmpl-entity-config",
+					Labels:      make(map[string]string),
+					Annotations: make(map[string]string),
+				},
+				APIVersion: "core/v3",
+				Type:       "EntityConfig",
+				Template:   string(tmplEntityConfig),
+			}
+			wrappedResourceTemplate, err := wrap.Resource(resourceTemplate)
+			if err != nil {
+				t.Fatal(err)
+			}
+			wrapList := wrap.List{wrappedResourceTemplate}
+			s2 := new(mockstore.V2MockStore)
+			s2.On("CreateOrUpdate", mock.Anything, mock.Anything).Return(nil)
+			s2.On("List", mock.Anything, mock.Anything).Return(wrapList, nil)
+
 			ctx := contextWithUser(defaultContext(), test.Attrs.User.Username, test.Attrs.User.Groups)
 
 			auth := &rbac.Authorizer{Store: s}
-			client := NewNamespaceClient(s, s, auth)
+			client := NewNamespaceClient(s, s, auth, s2)
 
 			got, err := client.ListNamespaces(ctx, &store.SelectionPredicate{})
 			if (err != nil) != test.WantErr {
@@ -821,10 +873,34 @@ func TestNamespaceCRUDSideEffects(t *testing.T) {
 	s.On("CreateOrUpdateResource", mock.Anything, mock.Anything).Return(nil)
 	setupGetClusterRoleAndGetRole(s, clusterRoles, nil)
 
+	entityCfg := corev3.FixtureEntityConfig("bar")
+	entityCfg.Metadata.Namespace = "{{ .Namespace }}"
+	tmplEntityConfig, _ := json.Marshal(entityCfg)
+
+	resourceTemplate := &corev3.ResourceTemplate{
+		Metadata: &corev2.ObjectMeta{
+			Namespace:   "default",
+			Name:        "tmpl-entity-config",
+			Labels:      make(map[string]string),
+			Annotations: make(map[string]string),
+		},
+		APIVersion: "core/v3",
+		Type:       "EntityConfig",
+		Template:   string(tmplEntityConfig),
+	}
+	wrappedResourceTemplate, err := wrap.Resource(resourceTemplate)
+	if err != nil {
+		t.Fatal(err)
+	}
+	wrapList := wrap.List{wrappedResourceTemplate}
+	s2 := new(mockstore.V2MockStore)
+	s2.On("CreateOrUpdate", mock.Anything, mock.Anything).Return(nil)
+	s2.On("List", mock.Anything, mock.Anything).Return(wrapList, nil)
+
 	ctx := contextWithUser(context.Background(), "cluster-admin", []string{"cluster-admins"})
 
 	auth := &rbac.Authorizer{Store: s}
-	client := NewNamespaceClient(s, s, auth)
+	client := NewNamespaceClient(s, s, auth, s2)
 
 	namespace := &corev2.Namespace{Name: "test_namespace"}
 	if err := client.CreateNamespace(ctx, namespace); err != nil {
@@ -890,4 +966,7 @@ func TestNamespaceCRUDSideEffects(t *testing.T) {
 
 	s.AssertNumberOfCalls(t, "DeleteNamespace", 1)
 	s.AssertCalled(t, "DeleteNamespace", mock.Anything, namespace.Name)
+
+	s2.AssertCalled(t, "List", mock.Anything, mock.Anything)
+	s2.AssertCalled(t, "CreateOrUpdate", mock.Anything, mock.Anything)
 }

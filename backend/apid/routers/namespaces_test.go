@@ -9,6 +9,7 @@ import (
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/authorization/rbac"
 	"github.com/sensu/sensu-go/backend/store"
+	"github.com/sensu/sensu-go/backend/store/v2/wrap"
 	"github.com/sensu/sensu-go/testing/mockauthorizer"
 	"github.com/sensu/sensu-go/testing/mockstore"
 	"github.com/stretchr/testify/mock"
@@ -56,7 +57,10 @@ func TestNamespacesRouter(t *testing.T) {
 	authorizer := &mockauthorizer.Authorizer{}
 	authorizer.On("Authorize", mock.Anything, mock.Anything).Return(true, nil)
 
-	router := NewNamespacesRouter(s, s, authorizer)
+	s2 := new(mockstore.V2MockStore)
+	s2.On("List", mock.Anything, mock.Anything).Return(wrap.List{}, nil)
+
+	router := NewNamespacesRouter(s, s, authorizer, s2)
 	parentRouter := mux.NewRouter().PathPrefix(corev2.URLPrefix).Subrouter()
 	parentRouter.Use(mockedClaims)
 	router.Mount(parentRouter)
@@ -117,7 +121,9 @@ func TestNamespaceRouterList(t *testing.T) {
 	ctx = context.WithValue(ctx, corev2.ClaimsKey, corev2.FixtureClaims("foo", []string{"cluster-admins"}))
 
 	auth := &rbac.Authorizer{Store: s}
-	router := NewNamespacesRouter(s, s, auth)
+	s2 := new(mockstore.V2MockStore)
+	s2.On("List", mock.Anything, mock.Anything).Return(wrap.List{}, nil)
+	router := NewNamespacesRouter(s, s, auth, s2)
 	pred := &store.SelectionPredicate{Limit: 1}
 	got, err := router.list(ctx, pred)
 	if err != nil {
