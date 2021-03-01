@@ -196,8 +196,8 @@ type Config struct {
 	// by the agent, rather than the backend API
 	AgentManagedEntity bool
 
-	// PrometheusPort, if set, serves prometheus metrics on this port
-	PrometheusPort string
+	// PrometheusBinding, if set, serves prometheus metrics on this address. (e.g. localhost:8888)
+	PrometheusBinding string
 }
 
 // StatsdServerConfig contains the statsd server configuration

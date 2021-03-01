@@ -202,9 +202,9 @@ func NewAgentContext(ctx context.Context, config *Config) (*Agent, error) {
 	}
 	agent.allowList = allowList
 
-	if config.PrometheusPort != "" {
+	if config.PrometheusBinding != "" {
 		go func() {
-			logger.WithError(http.ListenAndServe(config.PrometheusPort, promhttp.Handler())).Error("couldn't serve prometheus metrics")
+			logger.WithError(http.ListenAndServe(config.PrometheusBinding, promhttp.Handler())).Error("couldn't serve prometheus metrics")
 		}()
 	}
 
