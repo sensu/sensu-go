@@ -12,6 +12,8 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 defined.
 - Fixed a bug where the scheduler could crash in rare circumstances, when using
 round robin checks.
+- Fixed a bug where build information would get calculated for every keepalive
+in OSS builds.
 
 ## [6.2.2] - 2021-01-14
 

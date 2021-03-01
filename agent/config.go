@@ -17,7 +17,7 @@ const (
 
 	// TCPSocketReadDeadline specifies the maximum time the TCP socket will wait
 	// to receive data.
-	TCPSocketReadDeadline = 500 * time.Millisecond
+	TCPSocketReadDeadline = 5000 * time.Millisecond
 
 	// DefaultAPIHost specifies the default API Host
 	DefaultAPIHost = "127.0.0.1"
@@ -195,6 +195,9 @@ type Config struct {
 	// AgentManagedEntity indicates whether the agent's entity is solely managed
 	// by the agent, rather than the backend API
 	AgentManagedEntity bool
+
+	// PrometheusBinding, if set, serves prometheus metrics on this address. (e.g. localhost:8888)
+	PrometheusBinding string
 }
 
 // StatsdServerConfig contains the statsd server configuration

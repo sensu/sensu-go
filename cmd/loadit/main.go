@@ -27,6 +27,7 @@ var (
 	flagKeepaliveInterval = flag.Int("keepalive-interval", agent.DefaultKeepaliveInterval, "Keepalive interval")
 	flagKeepaliveTimeout  = flag.Int("keepalive-timeout", types.DefaultKeepaliveTimeout, "Keepalive timeout")
 	flagProfilingPort     = flag.Int("pprof-port", 6060, "pprof port to bind to")
+	flagPromBinding       = flag.String("prom", ":8080", "binding for prometheus server")
 )
 
 func main() {
@@ -74,6 +75,7 @@ func main() {
 		cfg.MockSystemInfo = true
 		cfg.BackendHeartbeatInterval = 30
 		cfg.BackendHeartbeatTimeout = 300
+		cfg.PrometheusBinding = *flagPromBinding
 
 		agent, err := agent.NewAgent(cfg)
 		if err != nil {

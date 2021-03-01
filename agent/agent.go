@@ -21,6 +21,8 @@ import (
 	time "github.com/echlebek/timeproxy"
 	"github.com/gogo/protobuf/proto"
 	"github.com/google/uuid"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"golang.org/x/time/rate"
 
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
@@ -42,6 +44,64 @@ const (
 	// keepalive
 	entityConfigGracePeriod = 10 * time.Second
 )
+
+const (
+	MessagesReceived = "sensu_go_agent_messages_received"
+	MessagesSent     = "sensu_go_agent_messages_sent"
+	MessagesDropped  = "sensu_go_agent_messages_dropped"
+	NewConnections   = "sensu_go_agent_new_connections"
+	WebsocketErrors  = "sensu_go_agent_websocket_errors"
+)
+
+var (
+	messagesReceived = prometheus.NewCounterVec(
+		prometheus.CounterOpts{
+			Name: MessagesReceived,
+			Help: "The total number of messages received from sensu-backend",
+		},
+		[]string{},
+	)
+
+	messagesSent = prometheus.NewCounterVec(
+		prometheus.CounterOpts{
+			Name: MessagesSent,
+			Help: "The total number of messages sent to sensu-backend",
+		},
+		[]string{},
+	)
+
+	messagesDropped = prometheus.NewCounterVec(
+		prometheus.CounterOpts{
+			Name: MessagesDropped,
+			Help: "The total number of messages that failed to send to sensu-backend",
+		},
+		[]string{},
+	)
+
+	newConnections = prometheus.NewCounterVec(
+		prometheus.CounterOpts{
+			Name: NewConnections,
+			Help: "The total number of new connections made to sensu-backend",
+		},
+		[]string{},
+	)
+
+	websocketErrors = prometheus.NewCounterVec(
+		prometheus.CounterOpts{
+			Name: WebsocketErrors,
+			Help: "The total number of websocket errors encountered",
+		},
+		[]string{},
+	)
+)
+
+func init() {
+	_ = prometheus.Register(messagesReceived)
+	_ = prometheus.Register(messagesSent)
+	_ = prometheus.Register(messagesDropped)
+	_ = prometheus.Register(newConnections)
+	_ = prometheus.Register(websocketErrors)
+}
 
 // GetDefaultAgentName returns the default agent name
 func GetDefaultAgentName() string {
@@ -141,6 +201,12 @@ func NewAgentContext(ctx context.Context, config *Config) (*Agent, error) {
 		return nil, err
 	}
 	agent.allowList = allowList
+
+	if config.PrometheusBinding != "" {
+		go func() {
+			logger.WithError(http.ListenAndServe(config.PrometheusBinding, promhttp.Handler())).Error("couldn't serve prometheus metrics")
+		}()
+	}
 
 	return agent, nil
 }
@@ -379,6 +445,8 @@ func (a *Agent) connectionManager(ctx context.Context, cancel context.CancelFunc
 		a.connected = true
 		a.connectedMu.Unlock()
 
+		newConnections.WithLabelValues().Inc()
+
 		go a.receiveLoop(ctx, cancel, conn)
 
 		// Block until we receive an entity config, or the grace period expires,
@@ -413,6 +481,7 @@ func (a *Agent) receiveLoop(ctx context.Context, cancel context.CancelFunc, conn
 			logger.WithError(err).Error("transport receive error")
 			return
 		}
+		messagesReceived.WithLabelValues().Inc()
 
 		go func(msg *transport.Message) {
 			logger.WithFields(logrus.Fields{
@@ -460,14 +529,18 @@ func (a *Agent) sendLoop(ctx context.Context, cancel context.CancelFunc, conn tr
 			return nil
 		case msg := <-a.sendq:
 			if err := conn.Send(msg); err != nil {
+				messagesDropped.WithLabelValues().Inc()
 				logger.WithError(err).Error("error sending message over websocket")
 				return err
 			}
+			messagesSent.WithLabelValues().Inc()
 		case <-keepalive.C:
 			if err := conn.Send(a.newKeepalive()); err != nil {
+				messagesDropped.WithLabelValues().Inc()
 				logger.WithError(err).Error("error sending message over websocket")
 				return err
 			}
+			messagesSent.WithLabelValues().Inc()
 		}
 	}
 }
@@ -606,6 +679,7 @@ func (a *Agent) connectWithBackoff(ctx context.Context) (transport.Transport, er
 		logger.WithField("header", fmt.Sprintf("Accept: %s", agentd.ProtobufSerializationHeader)).Debug("setting header")
 		c, respHeader, err := transport.Connect(backendURL, a.config.TLS, a.header, a.config.BackendHandshakeTimeout)
 		if err != nil {
+			websocketErrors.WithLabelValues().Inc()
 			logger.WithError(err).Error("reconnection attempt failed")
 			return false, nil
 		}
