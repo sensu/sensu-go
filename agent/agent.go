@@ -204,7 +204,7 @@ func NewAgentContext(ctx context.Context, config *Config) (*Agent, error) {
 
 	if config.PrometheusPort != "" {
 		go func() {
-			http.ListenAndServe(config.PrometheusPort, promhttp.Handler())
+			logger.WithError(http.ListenAndServe(config.PrometheusPort, promhttp.Handler())).Error("couldn't serve prometheus metrics")
 		}()
 	}
 
