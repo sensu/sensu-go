@@ -20,6 +20,8 @@ namespaces with initial resources.
 defined.
 - Fixed a bug where the scheduler could crash in rare circumstances, when using
 round robin checks.
+- Fixed a bug where build information would get calculated for every keepalive
+in OSS builds.
 
 ## [6.2.3] - 2021-01-21
 
