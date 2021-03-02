@@ -41,7 +41,7 @@ func TestEventTypeIsNewIncidentFieldImpl(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(fmt.Sprintf("event %s", tc.assertion), func(t *testing.T) {
-			params := graphql.ResolveParams{}
+			params := graphql.ResolveParams{Context: context.Background()}
 			params.Source = tc.event
 
 			impl := eventImpl{}

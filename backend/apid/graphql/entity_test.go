@@ -18,7 +18,7 @@ func TestEntityTypeMetadataField(t *testing.T) {
 	src := corev2.FixtureEntity("bug")
 	impl := entityImpl{}
 
-	res, err := impl.Metadata(graphql.ResolveParams{Source: src})
+	res, err := impl.Metadata(graphql.ResolveParams{Source: src, Context: context.Background()})
 	require.NoError(t, err)
 	assert.NotEmpty(t, res)
 	assert.IsType(t, v2.ObjectMeta{}, res)
@@ -35,7 +35,7 @@ func TestEntityTypeRelatedField(t *testing.T) {
 	}, nil).Once()
 
 	cfg := ServiceConfig{EntityClient: client}
-	params := schema.EntityRelatedFieldResolverParams{}
+	params := schema.EntityRelatedFieldResolverParams{ResolveParams: graphql.ResolveParams{Context: context.Background()}}
 	params.Context = contextWithLoaders(context.Background(), cfg)
 	params.Source = source
 	params.Args.Limit = 10
@@ -90,7 +90,7 @@ func TestEntityTypeLastSeenField(t *testing.T) {
 
 	entity := corev2.FixtureEntity("id")
 	entity.LastSeen = now.Unix()
-	params := graphql.ResolveParams{}
+	params := graphql.ResolveParams{Context: context.Background()}
 	params.Source = entity
 
 	impl := entityImpl{}
@@ -111,7 +111,7 @@ func TestEntityTypeEventsField(t *testing.T) {
 	}, nil).Once()
 
 	// params
-	params := schema.EntityEventsFieldResolverParams{}
+	params := schema.EntityEventsFieldResolverParams{ResolveParams: graphql.ResolveParams{Context: context.Background()}}
 	cfg := ServiceConfig{EventClient: client}
 	params.Context = contextWithLoadersNoCache(context.Background(), cfg)
 	params.Args.Filters = []string{}
@@ -175,7 +175,7 @@ func TestEntityTypeToJSONField(t *testing.T) {
 	src := corev2.FixtureEntity("name")
 	imp := &entityImpl{}
 
-	res, err := imp.ToJSON(graphql.ResolveParams{Source: src})
+	res, err := imp.ToJSON(graphql.ResolveParams{Source: src, Context: context.Background()})
 	require.NoError(t, err)
 	assert.NotEmpty(t, res)
 }

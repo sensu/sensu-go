@@ -1,6 +1,7 @@
 package graphql
 
 import (
+	"context"
 	"errors"
 	"reflect"
 	"testing"
@@ -8,6 +9,7 @@ import (
 	dto "github.com/prometheus/client_model/go"
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/apid/graphql/schema"
+	"github.com/sensu/sensu-go/graphql"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -20,7 +22,7 @@ func TestQueryTypeEventField(t *testing.T) {
 
 	event := corev2.FixtureEvent("a", "b")
 	args := schema.QueryEventFieldResolverArgs{Namespace: "ns", Entity: "a", Check: "b"}
-	params := schema.QueryEventFieldResolverParams{Args: args}
+	params := schema.QueryEventFieldResolverParams{Args: args, ResolveParams: graphql.ResolveParams{Context: context.Background()}}
 
 	// Success
 	client.On("FetchEvent", mock.Anything, event.Entity.Name, event.Check.Name).Return(event, nil).Once()
@@ -36,7 +38,7 @@ func TestQueryTypeEventFilterField(t *testing.T) {
 
 	filter := corev2.FixtureEventFilter("a")
 	args := schema.QueryEventFilterFieldResolverArgs{Namespace: "ns", Name: "a"}
-	params := schema.QueryEventFilterFieldResolverParams{Args: args}
+	params := schema.QueryEventFilterFieldResolverParams{Args: args, ResolveParams: graphql.ResolveParams{Context: context.Background()}}
 
 	// Success
 	client.On("FetchEventFilter", mock.Anything, filter.Name).Return(filter, nil).Once()
@@ -51,7 +53,7 @@ func TestQueryTypeNamespaceField(t *testing.T) {
 	impl := queryImpl{svc: cfg}
 
 	nsp := corev2.FixtureNamespace("sensu")
-	params := schema.QueryNamespaceFieldResolverParams{}
+	params := schema.QueryNamespaceFieldResolverParams{ResolveParams: graphql.ResolveParams{Context: context.Background()}}
 	params.Args.Name = nsp.Name
 
 	// Success
@@ -67,7 +69,7 @@ func TestQueryTypeEntityField(t *testing.T) {
 	impl := queryImpl{svc: cfg}
 
 	entity := corev2.FixtureEntity("a")
-	params := schema.QueryEntityFieldResolverParams{}
+	params := schema.QueryEntityFieldResolverParams{ResolveParams: graphql.ResolveParams{Context: context.Background()}}
 	params.Args.Namespace = entity.Namespace
 	params.Args.Name = entity.Name
 
@@ -84,7 +86,7 @@ func TestQueryTypeCheckField(t *testing.T) {
 	impl := queryImpl{svc: cfg}
 
 	check := corev2.FixtureCheckConfig("a")
-	params := schema.QueryCheckFieldResolverParams{}
+	params := schema.QueryCheckFieldResolverParams{ResolveParams: graphql.ResolveParams{Context: context.Background()}}
 	params.Args.Namespace = check.Namespace
 	params.Args.Name = check.Name
 
@@ -101,7 +103,7 @@ func TestQueryTypeHandlerField(t *testing.T) {
 	impl := queryImpl{svc: cfg}
 
 	handler := corev2.FixtureHandler("a")
-	params := schema.QueryHandlerFieldResolverParams{}
+	params := schema.QueryHandlerFieldResolverParams{ResolveParams: graphql.ResolveParams{Context: context.Background()}}
 	params.Args.Namespace = handler.Namespace
 	params.Args.Name = handler.Name
 
@@ -118,7 +120,7 @@ func TestQueryTypeMuatorField(t *testing.T) {
 	impl := queryImpl{svc: cfg}
 
 	mutator := corev2.FixtureMutator("a")
-	params := schema.QueryMutatorFieldResolverParams{}
+	params := schema.QueryMutatorFieldResolverParams{ResolveParams: graphql.ResolveParams{Context: context.Background()}}
 	params.Args.Namespace = mutator.Namespace
 	params.Args.Name = mutator.Name
 
@@ -134,7 +136,7 @@ func TestQueryTypeSuggestField(t *testing.T) {
 	cfg := ServiceConfig{GenericClient: client}
 	impl := queryImpl{svc: cfg}
 
-	params := schema.QuerySuggestFieldResolverParams{}
+	params := schema.QuerySuggestFieldResolverParams{ResolveParams: graphql.ResolveParams{Context: context.Background()}}
 	params.Args.Namespace = "default"
 	params.Args.Ref = "core/v2/check_config/subscriptions"
 

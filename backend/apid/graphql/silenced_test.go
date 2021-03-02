@@ -1,6 +1,7 @@
 package graphql
 
 import (
+	"context"
 	"testing"
 
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
@@ -19,7 +20,7 @@ func TestSilencedTypeCheckField(t *testing.T) {
 
 	// Success
 	client.On("FetchCheck", mock.Anything, check.Name).Return(check, nil).Once()
-	res, err := impl.Check(graphql.ResolveParams{Source: silenced})
+	res, err := impl.Check(graphql.ResolveParams{Source: silenced, Context: context.Background()})
 	require.NoError(t, err)
 	assert.NotEmpty(t, res)
 }
@@ -29,13 +30,13 @@ func TestSilencedTypeExpiresField(t *testing.T) {
 	impl := &silencedImpl{}
 
 	// with expiry unset
-	res, err := impl.Expires(graphql.ResolveParams{Source: silenced})
+	res, err := impl.Expires(graphql.ResolveParams{Source: silenced, Context: context.Background()})
 	require.NoError(t, err)
 	assert.Nil(t, res)
 
 	// with expiry set
 	silenced.Expire = 1234
-	res, err = impl.Expires(graphql.ResolveParams{Source: silenced})
+	res, err = impl.Expires(graphql.ResolveParams{Source: silenced, Context: context.Background()})
 	require.NoError(t, err)
 	assert.NotNil(t, res)
 }
@@ -44,7 +45,7 @@ func TestSilencedTypeBeginField(t *testing.T) {
 	silenced := corev2.FixtureSilenced("unix:http-check")
 	impl := &silencedImpl{}
 
-	res, err := impl.Begin(graphql.ResolveParams{Source: silenced})
+	res, err := impl.Begin(graphql.ResolveParams{Source: silenced, Context: context.Background()})
 	require.NoError(t, err)
 	assert.Nil(t, res)
 }
@@ -53,7 +54,7 @@ func TestSilencedTypeToJSONField(t *testing.T) {
 	src := corev2.FixtureSilenced("check:subscription")
 	imp := &silencedImpl{}
 
-	res, err := imp.ToJSON(graphql.ResolveParams{Source: src})
+	res, err := imp.ToJSON(graphql.ResolveParams{Source: src, Context: context.Background()})
 	require.NoError(t, err)
 	assert.NotEmpty(t, res)
 }

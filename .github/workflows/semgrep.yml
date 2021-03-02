@@ -1,0 +1,23 @@
+name: Semgrep
+on: [pull_request]
+jobs:
+  semgrep:
+    runs-on: ubuntu-latest
+    name: Check
+    steps:
+      - uses: actions/checkout@v1
+      - name: Semgrep
+        id: semgrep
+        uses: returntocorp/semgrep-action@v1
+        with:
+          config: p/dgryski.semgrep-go
+  semgrep-sensu: # looks for .semgrep.yml due to missing config section
+    runs-on: ubuntu-latest
+    name: Check
+    steps:
+      - uses: actions/checkout@v1
+      - name: SemgrepSensu
+        id: semgrep-sensu
+        uses: returntocorp/semgrep-action@v1
+env:
+  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

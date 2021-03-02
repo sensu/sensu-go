@@ -1,6 +1,7 @@
 package graphql
 
 import (
+	"context"
 	"testing"
 
 	v2 "github.com/sensu/sensu-go/api/core/v2"
@@ -13,7 +14,7 @@ func TestHookConfigTypeToJSONField(t *testing.T) {
 	src := v2.FixtureHookConfig("name")
 	imp := &hookCfgImpl{}
 
-	res, err := imp.ToJSON(graphql.ResolveParams{Source: src})
+	res, err := imp.ToJSON(graphql.ResolveParams{Source: src, Context: context.Background()})
 	require.NoError(t, err)
 	assert.NotEmpty(t, res)
 }

@@ -45,13 +45,13 @@ func TestHandlerTypeMutatorField(t *testing.T) {
 
 	// Success
 	client.On("FetchMutator", mock.Anything, mutator.Name).Return(mutator, nil).Once()
-	res, err := impl.Mutator(graphql.ResolveParams{Source: handler})
+	res, err := impl.Mutator(graphql.ResolveParams{Source: handler, Context: context.Background()})
 	require.NoError(t, err)
 	assert.NotEmpty(t, res)
 
 	// No mutator
 	handler.Mutator = ""
-	res, err = impl.Mutator(graphql.ResolveParams{Source: handler})
+	res, err = impl.Mutator(graphql.ResolveParams{Source: handler, Context: context.Background()})
 	require.NoError(t, err)
 	assert.Nil(t, res)
 }
@@ -60,7 +60,7 @@ func TestHandlerTypeToJSONField(t *testing.T) {
 	src := corev2.FixtureHandler("name")
 	imp := &handlerImpl{}
 
-	res, err := imp.ToJSON(graphql.ResolveParams{Source: src})
+	res, err := imp.ToJSON(graphql.ResolveParams{Source: src, Context: context.Background()})
 	require.NoError(t, err)
 	assert.NotEmpty(t, res)
 }

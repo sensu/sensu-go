@@ -1,6 +1,7 @@
 package graphql
 
 import (
+	"context"
 	"reflect"
 	"testing"
 	"time"
@@ -24,7 +25,7 @@ func Test_versionsImpl_Backend(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			r := &versionsImpl{}
-			got, err := r.Backend(graphql.ResolveParams{})
+			got, err := r.Backend(graphql.ResolveParams{Context: context.Background()})
 			if (err != nil) != tt.wantErr {
 				t.Errorf("versionsImpl.Backend() error = %v, wantErr %v", err, tt.wantErr)
 				return
@@ -51,7 +52,7 @@ func Test_sensuBackendVersionImpl_Version(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			r := &sensuBackendVersionImpl{}
-			got, err := r.Version(graphql.ResolveParams{})
+			got, err := r.Version(graphql.ResolveParams{Context: context.Background()})
 			if (err != nil) != tt.wantErr {
 				t.Errorf("sensuBackendVersionImpl.Version() error = %v, wantErr %v", err, tt.wantErr)
 				return
@@ -78,7 +79,7 @@ func Test_sensuBackendVersionImpl_BuildSHA(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			r := &sensuBackendVersionImpl{}
-			got, err := r.BuildSHA(graphql.ResolveParams{})
+			got, err := r.BuildSHA(graphql.ResolveParams{Context: context.Background()})
 			if (err != nil) != tt.wantErr {
 				t.Errorf("sensuBackendVersionImpl.BuildSHA() error = %v, wantErr %v", err, tt.wantErr)
 				return
@@ -123,7 +124,7 @@ func Test_sensuBackendVersionImpl_BuildDate(t *testing.T) {
 			tt.setup()
 
 			r := &sensuBackendVersionImpl{}
-			got, err := r.BuildDate(graphql.ResolveParams{})
+			got, err := r.BuildDate(graphql.ResolveParams{Context: context.Background()})
 			if (err != nil) != tt.wantErr {
 				t.Errorf("sensuBackendVersionImpl.BuildDate() error = %v, wantErr %v", err, tt.wantErr)
 				return

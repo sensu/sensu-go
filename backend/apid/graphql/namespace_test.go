@@ -7,6 +7,7 @@ import (
 
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/apid/graphql/schema"
+	"github.com/sensu/sensu-go/graphql"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -21,7 +22,7 @@ func TestNamespaceTypeCheckConfigsField(t *testing.T) {
 	}, nil).Once()
 
 	impl := &namespaceImpl{}
-	params := schema.NamespaceChecksFieldResolverParams{}
+	params := schema.NamespaceChecksFieldResolverParams{ResolveParams: graphql.ResolveParams{Context: context.Background()}}
 	cfg := ServiceConfig{CheckClient: checkClient}
 	params.Context = contextWithLoadersNoCache(context.Background(), cfg)
 	params.Source = corev2.FixtureNamespace("default")
@@ -48,7 +49,7 @@ func TestNamespaceTypeEntitiesField(t *testing.T) {
 	}, nil).Once()
 
 	impl := &namespaceImpl{}
-	params := schema.NamespaceEntitiesFieldResolverParams{}
+	params := schema.NamespaceEntitiesFieldResolverParams{ResolveParams: graphql.ResolveParams{Context: context.Background()}}
 	cfg := ServiceConfig{EntityClient: client}
 	params.Context = contextWithLoadersNoCache(context.Background(), cfg)
 	params.Source = corev2.FixtureNamespace("default")
@@ -75,7 +76,7 @@ func TestNamespaceTypeEventsField(t *testing.T) {
 	}, nil).Once()
 
 	impl := &namespaceImpl{}
-	params := schema.NamespaceEventsFieldResolverParams{}
+	params := schema.NamespaceEventsFieldResolverParams{ResolveParams: graphql.ResolveParams{Context: context.Background()}}
 	cfg := ServiceConfig{EventClient: client}
 	params.Context = contextWithLoadersNoCache(context.Background(), cfg)
 	params.Source = corev2.FixtureNamespace("default")
@@ -102,7 +103,7 @@ func TestNamespaceTypeEventFiltersField(t *testing.T) {
 	}, nil).Once()
 
 	impl := &namespaceImpl{}
-	params := schema.NamespaceEventFiltersFieldResolverParams{}
+	params := schema.NamespaceEventFiltersFieldResolverParams{ResolveParams: graphql.ResolveParams{Context: context.Background()}}
 	cfg := ServiceConfig{EventFilterClient: client}
 	params.Context = contextWithLoadersNoCache(context.Background(), cfg)
 	params.Source = corev2.FixtureNamespace("default")
@@ -130,7 +131,7 @@ func TestNamespaceTypeHandlersField(t *testing.T) {
 	}, nil).Once()
 
 	impl := &namespaceImpl{}
-	params := schema.NamespaceHandlersFieldResolverParams{}
+	params := schema.NamespaceHandlersFieldResolverParams{ResolveParams: graphql.ResolveParams{Context: context.Background()}}
 	cfg := ServiceConfig{HandlerClient: client}
 	params.Context = contextWithLoadersNoCache(context.Background(), cfg)
 	params.Source = corev2.FixtureNamespace("default")
@@ -162,7 +163,7 @@ func TestNamespaceTypeMutatorsField(t *testing.T) {
 	}, nil).Once()
 
 	impl := &namespaceImpl{}
-	params := schema.NamespaceMutatorsFieldResolverParams{}
+	params := schema.NamespaceMutatorsFieldResolverParams{ResolveParams: graphql.ResolveParams{Context: context.Background()}}
 	cfg := ServiceConfig{MutatorClient: client}
 	params.Context = contextWithLoadersNoCache(context.Background(), cfg)
 	params.Source = corev2.FixtureNamespace("default")
@@ -194,7 +195,7 @@ func TestNamespaceTypeSilencesField(t *testing.T) {
 
 	impl := &namespaceImpl{}
 	cfg := ServiceConfig{SilencedClient: client}
-	params := schema.NamespaceSilencesFieldResolverParams{}
+	params := schema.NamespaceSilencesFieldResolverParams{ResolveParams: graphql.ResolveParams{Context: context.Background()}}
 	params.Context = contextWithLoadersNoCache(context.Background(), cfg)
 	params.Source = corev2.FixtureNamespace("xxx")
 
