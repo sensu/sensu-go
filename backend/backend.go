@@ -399,7 +399,7 @@ func Initialize(ctx context.Context, config *Config) (*Backend, error) {
 		HealthController:  actions.NewHealthController(stor, b.Client.Cluster, etcdClientTLSConfig),
 		MutatorClient:     api.NewMutatorClient(stor, auth),
 		SilencedClient:    api.NewSilencedClient(stor, auth),
-		NamespaceClient:   api.NewNamespaceClient(stor, stor, auth),
+		NamespaceClient:   api.NewNamespaceClient(stor, stor, auth, storv2),
 		HookClient:        api.NewHookConfigClient(stor, auth),
 		UserClient:        api.NewUserClient(stor, auth),
 		RBACClient:        api.NewRBACClient(stor, auth),

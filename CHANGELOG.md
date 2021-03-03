@@ -12,6 +12,7 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 namespaces with initial resources.
 - Added `GetResourceV3Watcher()` to the `store/etcd` package.
 - Add `EntityServiceClass` constant to the `corev2` package, representing BSM Services.
+- Added ResourceTemplate instantiation on namespace creation.
 
 ### Fixed
 - Both V2 & V3 resources are now validated when used with storev2.

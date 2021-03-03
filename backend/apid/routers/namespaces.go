@@ -14,18 +14,20 @@ import (
 	"github.com/sensu/sensu-go/backend/authentication/jwt"
 	"github.com/sensu/sensu-go/backend/authorization"
 	"github.com/sensu/sensu-go/backend/store"
+	storev2 "github.com/sensu/sensu-go/backend/store/v2"
 )
 
 // NamespacesRouter handles requests for /namespaces
 type NamespacesRouter struct {
 	handlers       handlers.Handlers
 	store          store.ResourceStore
+	storev2        storev2.Interface
 	namespaceStore store.NamespaceStore
 	auth           authorization.Authorizer
 }
 
 // NewNamespacesRouter instantiates new router for controlling check resources
-func NewNamespacesRouter(store store.ResourceStore, namespaceStore store.NamespaceStore, auth authorization.Authorizer) *NamespacesRouter {
+func NewNamespacesRouter(store store.ResourceStore, namespaceStore store.NamespaceStore, auth authorization.Authorizer, storev2 storev2.Interface) *NamespacesRouter {
 	return &NamespacesRouter{
 		store:          store,
 		namespaceStore: namespaceStore,
@@ -34,6 +36,7 @@ func NewNamespacesRouter(store store.ResourceStore, namespaceStore store.Namespa
 			Resource: &corev2.Namespace{},
 			Store:    store,
 		},
+		storev2: storev2,
 	}
 }
 
@@ -53,7 +56,7 @@ func (r *NamespacesRouter) Mount(parent *mux.Router) {
 }
 
 func (r *NamespacesRouter) list(ctx context.Context, pred *store.SelectionPredicate) ([]corev2.Resource, error) {
-	client := api.NewNamespaceClient(r.store, r.namespaceStore, r.auth)
+	client := api.NewNamespaceClient(r.store, r.namespaceStore, r.auth, r.storev2)
 	namespaces, err := client.ListNamespaces(ctx, pred)
 	if err != nil {
 		return nil, err
@@ -82,7 +85,7 @@ func (r *NamespacesRouter) create(req *http.Request) (interface{}, error) {
 	if err := ns.Validate(); err != nil {
 		return nil, actions.NewError(actions.InvalidArgument, err)
 	}
-	client := api.NewNamespaceClient(r.store, r.namespaceStore, r.auth)
+	client := api.NewNamespaceClient(r.store, r.namespaceStore, r.auth, r.storev2)
 	if err := client.CreateNamespace(ctx, &ns); err != nil {
 		switch err := err.(type) {
 		case *store.ErrAlreadyExists:
@@ -103,7 +106,7 @@ func (r *NamespacesRouter) delete(req *http.Request) (interface{}, error) {
 		return nil, actions.NewError(actions.InvalidArgument, err)
 	}
 
-	client := api.NewNamespaceClient(r.store, r.namespaceStore, r.auth)
+	client := api.NewNamespaceClient(r.store, r.namespaceStore, r.auth, r.storev2)
 	if err := client.DeleteNamespace(req.Context(), name); err != nil {
 		switch err := err.(type) {
 		case *store.ErrNotFound:
