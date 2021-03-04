@@ -453,7 +453,7 @@ func Initialize(ctx context.Context, config *Config) (*Backend, error) {
 	return b, nil
 }
 
-func (b *Backend) runOnce(sighup <-chan os.Signal) error {
+func (b *Backend) runOnce() error {
 	eCloser := b.EventStore.(closer)
 	defer eCloser.Close()
 
@@ -517,8 +517,6 @@ func (b *Backend) runOnce(sighup <-chan os.Signal) error {
 		logger.WithError(err).Error("backend stopped working and is restarting")
 	case <-b.RunContext().Done():
 		logger.Info("backend shutting down")
-	case <-sighup:
-		logger.Warn("got SIGHUP, restarting")
 	}
 	if err := sg.Stop(); err != nil {
 		if derr == nil {
@@ -557,7 +555,7 @@ func (b *Backend) RunWithInitializer(initialize func(context.Context, *Config) (
 	signal.Notify(sighup, syscall.SIGHUP)
 
 	err := backoff.Retry(func(int) (bool, error) {
-		err := b.runOnce(sighup)
+		err := b.runOnce()
 		b.Stop()
 		if err != nil {
 			if b.ctx.Err() != nil {
