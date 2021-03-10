@@ -70,7 +70,7 @@ func evaluateEventFilter(ctx context.Context, event *corev2.Event, filter *corev
 	for _, expression := range filter.Expressions {
 		match, err := env.Eval(ctx, expression)
 		if err != nil {
-			logger.WithError(err).Error("error evaluating javascript event filter")
+			logger.WithFields(fields).WithError(err).Error("error evaluating javascript event filter")
 			continue
 		}
 

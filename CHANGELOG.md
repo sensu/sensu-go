@@ -13,6 +13,7 @@ namespaces with initial resources.
 - Added `GetResourceV3Watcher()` to the `store/etcd` package.
 - Add `EntityServiceClass` constant to the `corev2` package, representing BSM Services.
 - Added ResourceTemplate instantiation on namespace creation.
+- Added more context when logging JavaScript filter evaluation errors.
 
 ### Fixed
 - Both V2 & V3 resources are now validated when used with storev2.
