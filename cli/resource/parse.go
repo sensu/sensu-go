@@ -1,16 +1,15 @@
 package resource
 
 import (
+	"bufio"
 	"bytes"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/ghodss/yaml"
 	"io"
-	"io/ioutil"
 	"os"
 	"regexp"
-
-	"github.com/ghodss/yaml"
 
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/types"
@@ -29,14 +28,15 @@ import (
 // 4. Unmarshal the JSON one resource at a time.
 func Parse(in io.Reader) ([]*types.Wrapper, error) {
 	var resources []*types.Wrapper
-	b, err := ioutil.ReadAll(in)
+
+	resourceStrs, err := splitResources(in)
 	if err != nil {
 		return nil, fmt.Errorf("error parsing resources: %s", err)
 	}
-	// Support concatenated yaml documents separated by '---'
-	array := bytes.Split(b, []byte("\n---\n"))
+
 	count := 0
-	for _, b := range array {
+	for _, resourceStr := range resourceStrs {
+		b := []byte(resourceStr)
 		var jsonBytes []byte
 		if jsonRe.Match(b) {
 			// We are dealing with JSON data
@@ -76,6 +76,31 @@ func Parse(in io.Reader) ([]*types.Wrapper, error) {
 	filterCheckSubdue(resources)
 
 	return resources, err
+}
+
+// splitResources scans the content of the reader and splits the resources.
+// The resources should be separated by a line containing only "---".
+// An error will be returned if the
+func splitResources(in io.Reader) ([]string, error) {
+	var resources []string
+	inScanner := bufio.NewScanner(in)
+	currentResource := ""
+	for inScanner.Scan() {
+		line := inScanner.Text()
+		if line == "---" {
+			resources = append(resources, currentResource)
+			currentResource = ""
+		} else {
+			currentResource += line + "\n"
+		}
+	}
+	if err := inScanner.Err(); err != nil {
+		return nil, err
+	}
+	if len(currentResource) > 0 {
+		resources = append(resources, currentResource)
+	}
+	return resources, nil
 }
 
 // filterCheckSubdue nils out any check subdue fields that are supplied.

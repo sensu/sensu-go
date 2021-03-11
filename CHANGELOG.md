@@ -25,6 +25,7 @@ round robin checks.
 - Fixed a bug where build information would get calculated for every keepalive
 in OSS builds.
 - Don't trigger internal restart on SIGHUP.
+- Concatenated YAML files now support CRLF.
 
 ## [6.2.3] - 2021-01-21
 
