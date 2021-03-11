@@ -6,11 +6,12 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/ghodss/yaml"
 	"io"
 	"os"
 	"regexp"
+	"strings"
 
+	"github.com/ghodss/yaml"
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/types"
 	"github.com/sensu/sensu-go/types/compat"
@@ -80,14 +81,14 @@ func Parse(in io.Reader) ([]*types.Wrapper, error) {
 
 // splitResources scans the content of the reader and splits the resources.
 // The resources should be separated by a line containing only "---".
-// An error will be returned if the
+// An error will be returned if the data from the reader cannot be read.
 func splitResources(in io.Reader) ([]string, error) {
 	var resources []string
 	inScanner := bufio.NewScanner(in)
 	currentResource := ""
 	for inScanner.Scan() {
 		line := inScanner.Text()
-		if line == "---" {
+		if strings.HasPrefix(line, "---") {
 			resources = append(resources, currentResource)
 			currentResource = ""
 		} else {
