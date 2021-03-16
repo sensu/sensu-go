@@ -57,6 +57,11 @@ const (
 
 func init() {
 	clientv3.SetLogger(grpclog.NewLoggerV2(ioutil.Discard, ioutil.Discard, ioutil.Discard))
+
+	logutil.DefaultZapLoggerConfig.Encoding = "sensu-json"
+	logutil.DefaultZapLoggerConfig.EncoderConfig.TimeKey = "time"
+	logutil.DefaultZapLoggerConfig.EncoderConfig.EncodeTime = zapcore.TimeEncoderOfLayout(time.RFC3339)
+	logutil.DefaultZapLoggerConfig.EncoderConfig.EncodeLevel = sensuLevelEncoder
 }
 
 // Config is a configuration for the embedded etcd
@@ -224,10 +229,6 @@ func NewEtcd(config *Config) (*Etcd, error) {
 
 	cfg.Logger = "zap"
 	cfg.LogLevel = config.LogLevel
-	logutil.DefaultZapLoggerConfig.Encoding = "sensu-json"
-	logutil.DefaultZapLoggerConfig.EncoderConfig.TimeKey = "time"
-	logutil.DefaultZapLoggerConfig.EncoderConfig.EncodeTime = zapcore.TimeEncoderOfLayout(time.RFC3339)
-	logutil.DefaultZapLoggerConfig.EncoderConfig.EncodeLevel = sensuLevelEncoder
 
 	e, err := embed.StartEtcd(cfg)
 	if err != nil {
