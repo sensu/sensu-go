@@ -10,17 +10,11 @@ import (
 // setContextFromComponents takes a context and global id components, adds the
 // namespace to the context, and returns the updated context.
 func setContextFromComponents(ctx context.Context, c globalid.Components) context.Context {
-	if ctx == nil {
-		ctx = context.Background()
-	}
 	return contextWithNamespace(ctx, c.Namespace())
 }
 
 // contextWithNamespace takes a context and a name adds it to the context, and
 // returns the updated context.
 func contextWithNamespace(ctx context.Context, name string) context.Context {
-	if ctx == nil {
-		ctx = context.Background()
-	}
 	return context.WithValue(ctx, corev2.NamespaceKey, name)
 }

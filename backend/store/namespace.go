@@ -16,9 +16,6 @@ const (
 
 // NewNamespaceFromContext creates a new Namespace from a context.
 func NewNamespaceFromContext(ctx context.Context) string {
-	if ctx == nil {
-		ctx = context.Background()
-	}
 	if value := ctx.Value(types.NamespaceKey); value != nil {
 		return value.(string)
 	}
@@ -27,9 +24,6 @@ func NewNamespaceFromContext(ctx context.Context) string {
 
 // NamespaceContext returns a context populated with the provided namespace.
 func NamespaceContext(ctx context.Context, namespace string) context.Context {
-	if ctx == nil {
-		ctx = context.Background()
-	}
 	return context.WithValue(ctx, types.NamespaceKey, namespace)
 }
 
