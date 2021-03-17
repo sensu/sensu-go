@@ -17,8 +17,8 @@ import (
 
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/types"
-	"github.com/shirou/gopsutil/host"
-	shirounet "github.com/shirou/gopsutil/net"
+	"github.com/shirou/gopsutil/v3/host"
+	shirounet "github.com/shirou/gopsutil/v3/net"
 )
 
 const defaultHostname = "unidentified-hostname"
