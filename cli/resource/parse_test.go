@@ -102,14 +102,18 @@ func TestValidateStderr(t *testing.T) {
 
 func TestParse(t *testing.T) {
 	const (
-		jsonUnix          = "{\n  \"type\": \"EventFilter\",\n  \"api_version\": \"core/v2\",\n  \"metadata\": {\n    \"name\": \"filter_minimum\",\n    \"namespace\": \"default\"\n  },\n  \"spec\": {\n    \"action\": \"allow\",\n    \"expressions\": [\n      \"event.check.occurrences == 1\"\n    ]\n  }\n}"
-		jsonWindows       = "{\r\n  \"type\": \"EventFilter\",\r\n  \"api_version\": \"core/v2\",\r\n  \"metadata\": {\r\n    \"name\": \"filter_minimum\",\r\n    \"namespace\": \"default\"\r\n  },\r\n  \"spec\": {\r\n    \"action\": \"allow\",\r\n    \"expressions\": [\r\n      \"event.check.occurrences == 1\"\r\n    ]\r\n  }\r\n}"
-		jsonError         = "{\n  {\"type\": \"EventFilter\",\n  \"api_version\": \"core/v2\",\n  \"metadata\": {\n    \"name\": \"filter_minimum\",\n    \"namespace\": \"default\"\n  },\n  \"spec\": {\n    \"action\": \"allow\",\n    \"expressions\": [\n      \"event.check.occurrences == 1\"\n    ]\n  }\n}"
-		yamlUnixSingle    = "api_version: core/v2\ntype: Handler\nmetadata:\n  namespace: default\n  name: email\nspec:\n  type: pipe\n  command: sensu-email-handler \n    -u USERNAME -p PASSWORD\n  timeout: 10\n  filters:\n  - is_incident\n  - not_silenced\n  - state_change_only\n  runtime_assets:\n  - email-handler\n"
-		yamlWindowsSingle = "api_version: core/v2\r\ntype: Handler\r\nmetadata:\r\n  namespace: default\r\n  name: email\r\nspec:\r\n  type: pipe\r\n  command: sensu-email-handler \r\n    -u USERNAME -p PASSWORD\r\n  timeout: 10\r\n  filters:\r\n  - is_incident\r\n  - not_silenced\r\n  - state_change_only\r\n  runtime_assets:\r\n  - email-handler\r\n"
-		yamlUnixMulti     = "type: CheckConfig\napi_version: core/v2\nmetadata:\n  name: foo\nspec:\n  command: echo foo\n  interval: 100\n--- # comment\napi_version: core/v2\ntype: Handler\nmetadata:\n  namespace: default\n  name: email\nspec:\n  type: pipe\n  command: sensu-email-handler \n    -u USERNAME -p PASSWORD\n  timeout: 10\n  filters:\n  - is_incident\n  - not_silenced\n  - state_change_only\n  runtime_assets:\n  - email-handler\n"
-		yamlWindowsMulti  = "type: CheckConfig\r\napi_version: core/v2\r\nmetadata:\r\n  name: foo\r\nspec:\r\n  command: echo foo\r\n  interval: 100\r\n--- # comment\r\napi_version: core/v2\r\ntype: Handler\r\nmetadata:\r\n  namespace: default\r\n  name: email\r\nspec:\r\n  type: pipe\r\n  command: sensu-email-handler \r\n    -u USERNAME -p PASSWORD\r\n  timeout: 10\r\n  filters:\r\n  - is_incident\r\n  - not_silenced\r\n  - state_change_only\r\n  runtime_assets:\r\n  - email-handler\r\n"
-		yamlError         = "%$^apiVersion: core/v2\ntype: Handler\nmetadata:\n  namespace: default\n  name: email\nspec:\n  type: pipe\n  command: sensu-email-handler \n    -u USERNAME -p PASSWORD\n  timeout: 10\n  filters:\n  - is_incident\n  - not_silenced\n  - state_change_only\n  runtime_assets:\n  - email-handler\n"
+		jsonUnix                  = "{\n  \"type\": \"EventFilter\",\n  \"api_version\": \"core/v2\",\n  \"metadata\": {\n    \"name\": \"filter_minimum\",\n    \"namespace\": \"default\"\n  },\n  \"spec\": {\n    \"action\": \"allow\",\n    \"expressions\": [\n      \"event.check.occurrences == 1\"\n    ]\n  }\n}"
+		jsonWindows               = "{\r\n  \"type\": \"EventFilter\",\r\n  \"api_version\": \"core/v2\",\r\n  \"metadata\": {\r\n    \"name\": \"filter_minimum\",\r\n    \"namespace\": \"default\"\r\n  },\r\n  \"spec\": {\r\n    \"action\": \"allow\",\r\n    \"expressions\": [\r\n      \"event.check.occurrences == 1\"\r\n    ]\r\n  }\r\n}"
+		jsonError                 = "{\n  {\"type\": \"EventFilter\",\n  \"api_version\": \"core/v2\",\n  \"metadata\": {\n    \"name\": \"filter_minimum\",\n    \"namespace\": \"default\"\n  },\n  \"spec\": {\n    \"action\": \"allow\",\n    \"expressions\": [\n      \"event.check.occurrences == 1\"\n    ]\n  }\n}"
+		yamlUnixSingle            = "api_version: core/v2\ntype: Handler\nmetadata:\n  namespace: default\n  name: email\nspec:\n  type: pipe\n  command: sensu-email-handler \n    -u USERNAME -p PASSWORD\n  timeout: 10\n  filters:\n  - is_incident\n  - not_silenced\n  - state_change_only\n  runtime_assets:\n  - email-handler\n"
+		yamlWindowsSingle         = "api_version: core/v2\r\ntype: Handler\r\nmetadata:\r\n  namespace: default\r\n  name: email\r\nspec:\r\n  type: pipe\r\n  command: sensu-email-handler \r\n    -u USERNAME -p PASSWORD\r\n  timeout: 10\r\n  filters:\r\n  - is_incident\r\n  - not_silenced\r\n  - state_change_only\r\n  runtime_assets:\r\n  - email-handler\r\n"
+		yamlUnixSinglePrefixed    = "---\napi_version: core/v2\ntype: Handler\nmetadata:\n  namespace: default\n  name: email\nspec:\n  type: pipe\n  command: sensu-email-handler \n    -u USERNAME -p PASSWORD\n  timeout: 10\n  filters:\n  - is_incident\n  - not_silenced\n  - state_change_only\n  runtime_assets:\n  - email-handler\n"
+		yamlWindowsSinglePrefixed = "---\r\napi_version: core/v2\r\ntype: Handler\r\nmetadata:\r\n  namespace: default\r\n  name: email\r\nspec:\r\n  type: pipe\r\n  command: sensu-email-handler \r\n    -u USERNAME -p PASSWORD\r\n  timeout: 10\r\n  filters:\r\n  - is_incident\r\n  - not_silenced\r\n  - state_change_only\r\n  runtime_assets:\r\n  - email-handler\r\n"
+		yamlUnixMulti             = "type: CheckConfig\napi_version: core/v2\nmetadata:\n  name: foo\nspec:\n  command: echo foo\n  interval: 100\n--- # comment\napi_version: core/v2\ntype: Handler\nmetadata:\n  namespace: default\n  name: email\nspec:\n  type: pipe\n  command: sensu-email-handler \n    -u USERNAME -p PASSWORD\n  timeout: 10\n  filters:\n  - is_incident\n  - not_silenced\n  - state_change_only\n  runtime_assets:\n  - email-handler\n"
+		yamlWindowsMulti          = "type: CheckConfig\r\napi_version: core/v2\r\nmetadata:\r\n  name: foo\r\nspec:\r\n  command: echo foo\r\n  interval: 100\r\n--- # comment\r\napi_version: core/v2\r\ntype: Handler\r\nmetadata:\r\n  namespace: default\r\n  name: email\r\nspec:\r\n  type: pipe\r\n  command: sensu-email-handler \r\n    -u USERNAME -p PASSWORD\r\n  timeout: 10\r\n  filters:\r\n  - is_incident\r\n  - not_silenced\r\n  - state_change_only\r\n  runtime_assets:\r\n  - email-handler\r\n"
+		yamlUnixMultiPrefixed     = "---\ntype: CheckConfig\napi_version: core/v2\nmetadata:\n  name: foo\nspec:\n  command: echo foo\n  interval: 100\n--- # comment\napi_version: core/v2\ntype: Handler\nmetadata:\n  namespace: default\n  name: email\nspec:\n  type: pipe\n  command: sensu-email-handler \n    -u USERNAME -p PASSWORD\n  timeout: 10\n  filters:\n  - is_incident\n  - not_silenced\n  - state_change_only\n  runtime_assets:\n  - email-handler\n"
+		yamlWindowsMultiPrefixed  = "---\ntype: CheckConfig\r\napi_version: core/v2\r\nmetadata:\r\n  name: foo\r\nspec:\r\n  command: echo foo\r\n  interval: 100\r\n--- # comment\r\napi_version: core/v2\r\ntype: Handler\r\nmetadata:\r\n  namespace: default\r\n  name: email\r\nspec:\r\n  type: pipe\r\n  command: sensu-email-handler \r\n    -u USERNAME -p PASSWORD\r\n  timeout: 10\r\n  filters:\r\n  - is_incident\r\n  - not_silenced\r\n  - state_change_only\r\n  runtime_assets:\r\n  - email-handler\r\n"
+		yamlError                 = "%$^apiVersion: core/v2\ntype: Handler\nmetadata:\n  namespace: default\n  name: email\nspec:\n  type: pipe\n  command: sensu-email-handler \n    -u USERNAME -p PASSWORD\n  timeout: 10\n  filters:\n  - is_incident\n  - not_silenced\n  - state_change_only\n  runtime_assets:\n  - email-handler\n"
 	)
 
 	var (
@@ -186,6 +190,18 @@ func TestParse(t *testing.T) {
 				expectedError:    nil,
 			},
 			{
+				name:             "should parse a single unix formatted yaml resource prefixed with ---",
+				fileContent:      yamlUnixSinglePrefixed,
+				expectedWrappers: []*types.Wrapper{handlerWrapper},
+				expectedError:    nil,
+			},
+			{
+				name:             "should parse a single windows formatted yaml resource prefixed with ---",
+				fileContent:      yamlWindowsSinglePrefixed,
+				expectedWrappers: []*types.Wrapper{handlerWrapper},
+				expectedError:    nil,
+			},
+			{
 				name:             "should parse multiple unix formatted yaml resources",
 				fileContent:      yamlUnixMulti,
 				expectedWrappers: []*types.Wrapper{checkConfigWrapper, handlerWrapper},
@@ -194,6 +210,18 @@ func TestParse(t *testing.T) {
 			{
 				name:             "should parse multiple windows formatted yaml resources",
 				fileContent:      yamlWindowsMulti,
+				expectedWrappers: []*types.Wrapper{checkConfigWrapper, handlerWrapper},
+				expectedError:    nil,
+			},
+			{
+				name:             "should parse multiple unix formatted yaml resources prefixed with ---",
+				fileContent:      yamlUnixMultiPrefixed,
+				expectedWrappers: []*types.Wrapper{checkConfigWrapper, handlerWrapper},
+				expectedError:    nil,
+			},
+			{
+				name:             "should parse multiple windows formatted yaml resources prefixed with ---",
+				fileContent:      yamlWindowsMultiPrefixed,
 				expectedWrappers: []*types.Wrapper{checkConfigWrapper, handlerWrapper},
 				expectedError:    nil,
 			},
