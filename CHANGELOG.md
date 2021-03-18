@@ -26,6 +26,7 @@ round robin checks.
 in OSS builds.
 - Don't trigger internal restart on SIGHUP.
 - Concatenated YAML files now support CRLF.
+- Remove extraneous auto-completion suggestions.
 
 ## [6.2.3] - 2021-01-21
 
