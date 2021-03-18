@@ -89,7 +89,9 @@ func splitResources(in io.Reader) ([]string, error) {
 	for inScanner.Scan() {
 		line := inScanner.Text()
 		if strings.HasPrefix(line, "---") {
-			resources = append(resources, currentResource)
+			if currentResource != "" {
+				resources = append(resources, currentResource)
+			}
 			currentResource = ""
 		} else {
 			currentResource += line + "\n"
