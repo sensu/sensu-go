@@ -364,6 +364,9 @@ func (a *NamespaceClient) UpdateNamespace(ctx context.Context, namespace *corev2
 	if err := a.client.Update(ctx, namespace); err != nil {
 		return err
 	}
+	if err := a.createResourceTemplates(ctx, namespace.Name); err != nil {
+		return err
+	}
 	return a.createRoleAndBinding(ctx, namespace.Name)
 }
 

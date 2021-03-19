@@ -52,7 +52,7 @@ func (r *NamespacesRouter) Mount(parent *mux.Router) {
 	routes.List(r.list, corev2.NamespaceFields)
 	routes.Post(r.create)
 	routes.Patch(r.handlers.PatchResource)
-	routes.Put(r.handlers.CreateOrUpdateResource)
+	routes.Put(r.update)
 }
 
 func (r *NamespacesRouter) list(ctx context.Context, pred *store.SelectionPredicate) ([]corev2.Resource, error) {
@@ -90,6 +90,35 @@ func (r *NamespacesRouter) create(req *http.Request) (interface{}, error) {
 		switch err := err.(type) {
 		case *store.ErrAlreadyExists:
 			return nil, actions.NewErrorf(actions.AlreadyExistsErr)
+		case *store.ErrNotValid:
+			return nil, actions.NewError(actions.InvalidArgument, err)
+		default:
+			return nil, actions.NewError(actions.InternalErr, err)
+		}
+	}
+	return nil, nil
+}
+
+func (r *NamespacesRouter) update(req *http.Request) (interface{}, error) {
+	ctx := req.Context()
+	var ns corev2.Namespace
+	if err := json.NewDecoder(req.Body).Decode(&ns); err != nil {
+		return nil, actions.NewError(actions.InvalidArgument, err)
+	}
+	meta := ns.GetObjectMeta()
+	if claims := jwt.GetClaimsFromContext(ctx); claims != nil {
+		meta.CreatedBy = claims.StandardClaims.Subject
+		ns.SetObjectMeta(meta)
+	}
+	if err := handlers.CheckMeta(&ns, mux.Vars(req), "id"); err != nil {
+		return nil, actions.NewError(actions.InvalidArgument, err)
+	}
+	if err := ns.Validate(); err != nil {
+		return nil, actions.NewError(actions.InvalidArgument, err)
+	}
+	client := api.NewNamespaceClient(r.store, r.namespaceStore, r.auth, r.storev2)
+	if err := client.UpdateNamespace(ctx, &ns); err != nil {
+		switch err := err.(type) {
 		case *store.ErrNotValid:
 			return nil, actions.NewError(actions.InvalidArgument, err)
 		default:
