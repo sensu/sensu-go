@@ -323,6 +323,8 @@ func TestSession_sender(t *testing.T) {
 }
 
 func TestSession_Start(t *testing.T) {
+	t.Skip("Disable test since it was occasionally hanging. See #4222")
+
 	type connFunc func(*mocktransport.MockTransport, *sync.WaitGroup)
 	type storeFunc func(*storetest.Store, *sync.WaitGroup)
 
