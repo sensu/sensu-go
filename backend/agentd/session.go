@@ -406,6 +406,7 @@ func (s *Session) sender() {
 // 2. Start receiver
 // 3. Start goroutine that waits for context cancellation, and shuts down service.
 func (s *Session) Start() (err error) {
+	defer close(s.entityConfig.subscriptions)
 	sessionCounter.WithLabelValues(s.cfg.Namespace).Inc()
 	s.wg = &sync.WaitGroup{}
 	s.wg.Add(2)
@@ -515,8 +516,6 @@ func (s *Session) Start() (err error) {
 		return err
 	}
 
-	close(s.entityConfig.subscriptions)
-
 	return nil
 }
 
@@ -576,7 +575,7 @@ func (s *Session) stop() {
 }
 
 // handleKeepalive is the keepalive message handler.
-func (s *Session) handleKeepalive(ctx context.Context, payload []byte) error {
+func (s *Session) handleKeepalive(_ context.Context, payload []byte) error {
 	keepalive := &corev2.Event{}
 	err := s.unmarshal(payload, keepalive)
 	if err != nil {
@@ -598,7 +597,7 @@ func (s *Session) handleKeepalive(ctx context.Context, payload []byte) error {
 }
 
 // handleEvent is the event message handler.
-func (s *Session) handleEvent(ctx context.Context, payload []byte) error {
+func (s *Session) handleEvent(_ context.Context, payload []byte) error {
 	// Decode the payload to an event
 	event := &corev2.Event{}
 	if err := s.unmarshal(payload, event); err != nil {
