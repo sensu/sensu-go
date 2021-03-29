@@ -150,10 +150,10 @@ func New(c Config, opts ...Option) (*Agentd, error) {
 	// runtime, so we need this workaround
 	router := mux.NewRouter()
 
-	healthRouter := routers.NewHealthRouter(
+	HealthRouter = routers.NewHealthRouter(
 		actions.NewHealthController(a.store, a.client.Cluster, a.etcdClientTLSConfig),
 	)
-	healthRouter.Mount(router)
+	HealthRouter.Mount(router)
 
 	route := router.NewRoute().Subrouter()
 	route.HandleFunc("/", a.webSocketHandler)
