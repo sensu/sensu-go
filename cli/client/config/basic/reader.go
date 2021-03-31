@@ -46,6 +46,10 @@ func (c *Config) Tokens() *types.Tokens {
 	return c.Cluster.Tokens
 }
 
+func (c *Config) APIKey() string {
+	return c.Cluster.APIKey
+}
+
 // TrustedCAFile returns the trusted CA file
 func (c *Config) TrustedCAFile() string {
 	return c.Cluster.TrustedCAFile

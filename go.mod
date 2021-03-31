@@ -26,7 +26,7 @@ require (
 	github.com/evanphx/json-patch/v5 v5.1.0
 	github.com/frankban/quicktest v1.7.2 // indirect
 	github.com/ghodss/yaml v1.0.0
-	github.com/go-resty/resty/v2 v2.1.0
+	github.com/go-resty/resty/v2 v2.5.0
 	github.com/gogo/protobuf v1.3.1
 	github.com/golang/groupcache v0.0.0-20191002201903-404acd9df4cc // indirect
 	github.com/golang/protobuf v1.3.3
@@ -78,8 +78,8 @@ require (
 	go.etcd.io/etcd v3.4.15+incompatible
 	go.uber.org/zap v1.16.0
 	golang.org/x/crypto v0.0.0-20191011191535-87dc89f01550
-	golang.org/x/net v0.0.0-20200202094626-16171245cfb2
-	golang.org/x/sys v0.0.0-20200602225109-6fdc65e7d980
+	golang.org/x/net v0.0.0-20201224014010-6772e930b67b
+	golang.org/x/sys v0.0.0-20201119102817-f84b799fce68
 	golang.org/x/time v0.0.0-20191024005414-555d28b269f0
 	golang.org/x/tools v0.0.0-20200207224406-61798d64f025 // indirect
 	google.golang.org/genproto v0.0.0-20191009194640-548a555dbc03 // indirect

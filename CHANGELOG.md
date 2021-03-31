@@ -7,6 +7,7 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
 - There are currently no unreleased changes.
+- Added API key authentication support to sensuctl
 
 ## [6.3.0] - 2021-04-07
 
