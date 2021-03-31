@@ -74,7 +74,7 @@ func TestHandlers_PatchResource(t *testing.T) {
 		wantErr   bool
 	}{
 		{
-			name: "succeeds & ignores invalid field for a V2 resource",
+			name: "succeeds & ignores non-existent field for a V2 resource",
 			fields: fields{
 				Resource: &corev2.CheckConfig{},
 			},
@@ -91,6 +91,23 @@ func TestHandlers_PatchResource(t *testing.T) {
 			want: func() interface{} {
 				return corev2.FixtureCheckConfig("testcheck")
 			}(),
+		},
+		{
+			name: "errors when field has invalid type for a V2 resource",
+			fields: fields{
+				Resource: &corev2.CheckConfig{},
+			},
+			args: args{
+				r: patchRequest("/", "default", "testcheck", `{"subscriptions": 3}`),
+			},
+			storeInit: func(t *testing.T, s1 *etcdstore.Store, s2 *etcdstorev2.Store) {
+				ctx := store.NamespaceContext(context.Background(), "default")
+				check := corev2.FixtureCheckConfig("testcheck")
+				if err := s1.UpdateCheckConfig(ctx, check); err != nil {
+					t.Fatal(err)
+				}
+			},
+			wantErr: true,
 		},
 		{
 			name: "succeeds when body has valid field for a V2 resource",
@@ -114,7 +131,7 @@ func TestHandlers_PatchResource(t *testing.T) {
 			}(),
 		},
 		{
-			name: "succeeds & ignores invalid field for a V3 resource",
+			name: "succeeds & ignores non-existent field for a V3 resource",
 			fields: fields{
 				V3Resource: &corev3.EntityConfig{},
 			},
@@ -136,6 +153,28 @@ func TestHandlers_PatchResource(t *testing.T) {
 			want: func() interface{} {
 				return corev3.FixtureEntityConfig("testentity")
 			}(),
+		},
+		{
+			name: "errors when field has invalid type for a V3 resource",
+			fields: fields{
+				V3Resource: &corev3.EntityConfig{},
+			},
+			args: args{
+				r: patchRequest("/", "default", "testentity", `{"subscriptions":3}`),
+			},
+			storeInit: func(t *testing.T, s1 *etcdstore.Store, s2 *etcdstorev2.Store) {
+				ctx := store.NamespaceContext(context.Background(), "default")
+				entity := corev3.FixtureEntityConfig("testentity")
+				req := storev2.NewResourceRequestFromResource(ctx, entity)
+				wrapper, err := wrap.Resource(entity)
+				if err != nil {
+					t.Fatal(err)
+				}
+				if err := s2.CreateOrUpdate(req, wrapper); err != nil {
+					t.Fatal(err)
+				}
+			},
+			wantErr: true,
 		},
 		{
 			name: "succeeds when body has valid field for a V3 resource",
@@ -181,12 +220,14 @@ func TestHandlers_PatchResource(t *testing.T) {
 					t.Errorf("Handlers.PatchResource() error = %v, wantErr %v", err, tt.wantErr)
 					return
 				}
-				wantComparable, ok := tt.want.(comparable)
-				if !ok {
-					t.Fatal("want cannot be type asserted as comparable")
-				}
-				if !wantComparable.Equal(got) {
-					t.Errorf("Handlers.PatchResource() = %v, want %v", got, tt.want)
+				if tt.want != nil {
+					wantComparable, ok := tt.want.(comparable)
+					if !ok {
+						t.Fatal("want cannot be type asserted as comparable")
+					}
+					if !wantComparable.Equal(got) {
+						t.Errorf("Handlers.PatchResource() = %v, want %v", got, tt.want)
+					}
 				}
 			})
 		})
