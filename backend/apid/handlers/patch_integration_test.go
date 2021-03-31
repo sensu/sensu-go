@@ -74,7 +74,26 @@ func TestHandlers_PatchResource(t *testing.T) {
 		wantErr   bool
 	}{
 		{
-			name: "V2 resources can be patched",
+			name: "succeeds & ignores invalid field for a V2 resource",
+			fields: fields{
+				Resource: &corev2.CheckConfig{},
+			},
+			args: args{
+				r: patchRequest("/", "default", "testcheck", `{"invalid": ["windows"]}`),
+			},
+			storeInit: func(t *testing.T, s1 *etcdstore.Store, s2 *etcdstorev2.Store) {
+				ctx := store.NamespaceContext(context.Background(), "default")
+				check := corev2.FixtureCheckConfig("testcheck")
+				if err := s1.UpdateCheckConfig(ctx, check); err != nil {
+					t.Fatal(err)
+				}
+			},
+			want: func() interface{} {
+				return corev2.FixtureCheckConfig("testcheck")
+			}(),
+		},
+		{
+			name: "succeeds when body has valid field for a V2 resource",
 			fields: fields{
 				Resource: &corev2.CheckConfig{},
 			},
@@ -95,7 +114,31 @@ func TestHandlers_PatchResource(t *testing.T) {
 			}(),
 		},
 		{
-			name: "V3 resources can be patched",
+			name: "succeeds & ignores invalid field for a V3 resource",
+			fields: fields{
+				V3Resource: &corev3.EntityConfig{},
+			},
+			args: args{
+				r: patchRequest("/", "default", "testentity", `{"invalid":["windows"]}`),
+			},
+			storeInit: func(t *testing.T, s1 *etcdstore.Store, s2 *etcdstorev2.Store) {
+				ctx := store.NamespaceContext(context.Background(), "default")
+				entity := corev3.FixtureEntityConfig("testentity")
+				req := storev2.NewResourceRequestFromResource(ctx, entity)
+				wrapper, err := wrap.Resource(entity)
+				if err != nil {
+					t.Fatal(err)
+				}
+				if err := s2.CreateOrUpdate(req, wrapper); err != nil {
+					t.Fatal(err)
+				}
+			},
+			want: func() interface{} {
+				return corev3.FixtureEntityConfig("testentity")
+			}(),
+		},
+		{
+			name: "succeeds when body has valid field for a V3 resource",
 			fields: fields{
 				V3Resource: &corev3.EntityConfig{},
 			},
