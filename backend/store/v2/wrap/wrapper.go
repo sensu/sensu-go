@@ -132,19 +132,20 @@ func Resource(r corev3.Resource, opts ...Option) (*Wrapper, error) {
 	return wrap(r, opts...)
 }
 
+func ResourceWithoutValidation(r corev3.Resource, opts ...Option) (*Wrapper, error) {
+	return wrapWithoutValidation(r, opts...)
+}
+
 // V2Resource is like Resource, but works on older core v2 resources.
 func V2Resource(r corev2.Resource, opts ...Option) (*Wrapper, error) {
 	return wrap(r, opts...)
 }
 
-func wrap(r interface{}, opts ...Option) (*Wrapper, error) {
-	if v, ok := r.(validatable); ok {
-		if err := v.Validate(); err != nil {
-			return nil, err
-		}
-	} else {
-		return nil, ErrValidateMethodMissing
-	}
+func V2ResourceWithoutValidation(r corev2.Resource, opts ...Option) (*Wrapper, error) {
+	return wrapWithoutValidation(r, opts...)
+}
+
+func wrapWithoutValidation(r interface{}, opts ...Option) (*Wrapper, error) {
 	if proxy, ok := r.(*corev3.V2ResourceProxy); ok {
 		r = proxy.Resource
 	}
@@ -176,6 +177,17 @@ func wrap(r interface{}, opts ...Option) (*Wrapper, error) {
 	w.Value = w.Compression.Compress(message)
 
 	return &w, nil
+}
+
+func wrap(r interface{}, opts ...Option) (*Wrapper, error) {
+	if v, ok := r.(validatable); ok {
+		if err := v.Validate(); err != nil {
+			return nil, err
+		}
+	} else {
+		return nil, ErrValidateMethodMissing
+	}
+	return wrapWithoutValidation(r, opts...)
 }
 
 // Unwrap unmarshals the wrapper's value into a resource, according to the

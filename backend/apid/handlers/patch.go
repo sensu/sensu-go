@@ -130,7 +130,7 @@ func (h Handlers) patchV3Resource(ctx context.Context, body []byte, name, namesp
 	}
 
 	req := storev2.NewResourceRequest(ctx, namespace, name, resource.StoreName())
-	w, err := wrap.Resource(resource)
+	w, err := wrap.ResourceWithoutValidation(resource)
 	if err != nil {
 		return nil, actions.NewError(actions.InvalidArgument, err)
 	}
