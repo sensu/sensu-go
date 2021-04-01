@@ -16,6 +16,8 @@ round robin checks.
 in OSS builds.
 - Fixed a potential crash in tessend.
 - Fixed a potential deadlock in agentd.
+- Fixed a bug where some Etcd watchers could try to process watch events holding
+invalid pointers.
 
 ## [6.2.2] - 2021-01-14
 
