@@ -3,6 +3,7 @@ package agentd
 import (
 	"context"
 	"crypto/tls"
+	"errors"
 	"fmt"
 	"log"
 	"net"
@@ -238,10 +239,6 @@ func (a *Agentd) runWatcher() {
 			if !ok {
 				return
 			}
-			if event.Entity == nil {
-				logger.Error("nil entity received from entity config watcher")
-				return
-			}
 			if err := a.handleEvent(event); err != nil {
 				logger.WithError(err).Error("error handling entity config watch event")
 			}
@@ -250,6 +247,10 @@ func (a *Agentd) runWatcher() {
 }
 
 func (a *Agentd) handleEvent(event store.WatchEventEntityConfig) error {
+	if event.Entity == nil {
+		return errors.New("nil entity received from entity config watcher")
+	}
+
 	topic := messaging.EntityConfigTopic(event.Entity.Metadata.Namespace, event.Entity.Metadata.Name)
 	if err := a.bus.Publish(topic, &event); err != nil {
 		logger.WithField("topic", topic).WithError(err).
