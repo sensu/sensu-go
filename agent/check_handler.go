@@ -149,6 +149,13 @@ func (a *Agent) executeCheck(ctx context.Context, request *corev2.CheckRequest, 
 	check := event.Check
 	event.Entity = a.getAgentEntity()
 
+	if origCommand == undocumentedTestCheckCommand {
+		// If we are doing load testing, then add additional labels to the check
+		// so that we can more accurately simulate real-world conditions.
+		addCannedLabels(event.Check.Labels)
+		addCannedLabels(event.Entity.Labels)
+	}
+
 	// Prepare log entry
 	fields := logrus.Fields{
 		"namespace": check.Namespace,
@@ -350,4 +357,25 @@ func extractMetrics(event *corev2.Event) []*corev2.MetricPoint {
 	}
 
 	return transformer.Transform()
+}
+
+// addCannedLabels adds a bunch of labels for the purpose of load testing
+func addCannedLabels(l map[string]string) {
+	l["tom"] = "morello"
+	l["bradley"] = "nowell"
+	l["chris"] = "cornell"
+	l["dave"] = "grohl"
+	l["trent"] = "reznor"
+	l["dolores"] = "o'riordon"
+	l["gwen"] = "stefani"
+	l["kelli"] = "dayton"
+	l["kim"] = "deal"
+	l["beth"] = "gibbons"
+	l["biggie"] = "smalls"
+	l["missy"] = "elliott"
+	l["tupac"] = "shakur"
+	l["lauryn"] = "hill"
+	l["lil'"] = "kim"
+	l["snoop"] = "dogg"
+	l["karen"] = "o"
 }
