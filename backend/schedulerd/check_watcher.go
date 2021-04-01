@@ -111,14 +111,9 @@ func (c *CheckWatcher) startWatcher() {
 	for {
 		select {
 		case watchEvent, ok := <-watchChan:
-			if !ok {
-				return
+			if ok {
+				c.handleWatchEvent(watchEvent)
 			}
-			if watchEvent.CheckConfig == nil {
-				logger.Error("nil check config received from check config watcher")
-				return
-			}
-			c.handleWatchEvent(watchEvent)
 		case <-c.ctx.Done():
 			c.mu.Lock()
 			defer c.mu.Unlock()
@@ -134,6 +129,12 @@ func (c *CheckWatcher) startWatcher() {
 
 func (c *CheckWatcher) handleWatchEvent(watchEvent store.WatchEventCheckConfig) {
 	check := watchEvent.CheckConfig
+
+	if check == nil {
+		logger.Error("nil check config received from check config watcher")
+		return
+	}
+
 	key := concatUniqueKey(check.Name, check.Namespace)
 
 	c.mu.Lock()
