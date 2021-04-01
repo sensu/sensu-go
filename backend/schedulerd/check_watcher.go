@@ -129,6 +129,12 @@ func (c *CheckWatcher) startWatcher() {
 
 func (c *CheckWatcher) handleWatchEvent(watchEvent store.WatchEventCheckConfig) {
 	check := watchEvent.CheckConfig
+
+	if check == nil {
+		logger.Error("nil check config received from check config watcher")
+		return
+	}
+
 	key := concatUniqueKey(check.Name, check.Namespace)
 
 	c.mu.Lock()
