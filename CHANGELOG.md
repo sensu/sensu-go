@@ -14,7 +14,8 @@ defined.
 round robin checks.
 - Fixed a bug where build information would get calculated for every keepalive
 in OSS builds.
-- Fix a potential crash in tessend.
+- Fixed a potential crash in tessend.
+- Fixed a potential deadlock in agentd.
 
 ## [6.2.2] - 2021-01-14
 
