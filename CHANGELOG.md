@@ -18,7 +18,8 @@ namespaces with initial resources.
 defined.
 - Fixed a bug where the scheduler could crash in rare circumstances, when using
 round robin checks.
-- Fixed a bug where Etcd watchers can return a nil watch event.
+- Fixed a bug where some Etcd watchers could try to process watch events holding
+invalid pointers.
 
 ## [6.2.3] - 2021-01-21
 
