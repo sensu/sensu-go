@@ -5,7 +5,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic
 Versioning](http://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## [6.2.7] - 2021-04-01
 
 ### Fixed
 - Fixed the `agent-managed-entity` agent config attribute when no labels are
@@ -14,7 +14,7 @@ defined.
 round robin checks.
 - Fixed a bug where build information would get calculated for every keepalive
 in OSS builds.
-- Fix a potential crash in tessend
+- Fix a potential crash in tessend.
 
 ## [6.2.2] - 2021-01-14
 
