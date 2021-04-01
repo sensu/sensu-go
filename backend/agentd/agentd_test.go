@@ -2,8 +2,11 @@ package agentd
 
 import (
 	"bytes"
+	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
+	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -150,7 +153,7 @@ func TestRunWatcher(t *testing.T) {
 			e, cleanup := etcd.NewTestEtcd(t)
 			defer cleanup()
 			client := e.NewEmbeddedClient()
-			defer client.Close()
+			defer func() { _ = client.Close() }()
 
 			agent, err := New(Config{
 				Bus:     bus,
@@ -170,7 +173,7 @@ func TestHealthHandler(t *testing.T) {
 	e, cleanup := etcd.NewTestEtcd(t)
 	defer cleanup()
 	client := e.NewEmbeddedClient()
-	defer client.Close()
+	defer func() { _ = client.Close() }()
 
 	stor := etcdstore.NewStore(client, "test")
 	agent, err := New(Config{
@@ -180,8 +183,62 @@ func TestHealthHandler(t *testing.T) {
 	assert.NoError(t, err)
 
 	srv := httptest.NewServer(agent.httpServer.Handler)
+	defer srv.Close()
+
 	req, _ := http.NewRequest(http.MethodGet, fmt.Sprintf("%s/health", srv.URL), bytes.NewBuffer([]byte{}))
 	res, err := http.DefaultClient.Do(req)
 	assert.NoError(t, err)
 	assert.Equal(t, 200, res.StatusCode)
+}
+
+func TestReplaceHealthController(t *testing.T) {
+	mockHealth := &corev2.HealthResponse{
+		PostgresHealth: []*corev2.PostgresHealth{
+			{
+				Name:    "MockPostgres",
+				Active:  true,
+				Healthy: true,
+			},
+		},
+	}
+
+	e, cleanup := etcd.NewTestEtcd(t)
+	defer cleanup()
+	client := e.NewEmbeddedClient()
+	defer func() { _ = client.Close() }()
+
+	stor := etcdstore.NewStore(client, "test")
+	agent, err := New(Config{
+		Store:  stor,
+		Client: client,
+	})
+	assert.NoError(t, err)
+	agent.ReplaceHealthController(&mockHealthController{
+		mockResponse: mockHealth,
+	})
+
+	srv := httptest.NewServer(agent.httpServer.Handler)
+	defer srv.Close()
+
+	req, _ := http.NewRequest(http.MethodGet, fmt.Sprintf("%s/health", srv.URL), bytes.NewBuffer([]byte{}))
+	res, err := http.DefaultClient.Do(req)
+	assert.NoError(t, err)
+	assert.Equal(t, 200, res.StatusCode)
+
+	assert.NotNil(t, res.Body)
+	body, err := ioutil.ReadAll(res.Body)
+	assert.NoError(t, err)
+
+	receivedHealth := &corev2.HealthResponse{}
+	err = json.Unmarshal(body, receivedHealth)
+	assert.NoError(t, err)
+	assert.Equal(t, mockHealth, receivedHealth)
+}
+
+type mockHealthController struct {
+	mockResponse *corev2.HealthResponse
+}
+
+func (mhc mockHealthController) GetClusterHealth(_ context.Context) *corev2.HealthResponse {
+	return mhc.mockResponse
 }
