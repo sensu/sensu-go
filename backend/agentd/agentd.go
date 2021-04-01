@@ -89,6 +89,7 @@ type Agentd struct {
 	watcher             <-chan store.WatchEventEntityConfig
 	client              *clientv3.Client
 	etcdClientTLSConfig *tls.Config
+	healthRouter        *routers.HealthRouter
 }
 
 // Config configures an Agentd.
@@ -150,10 +151,10 @@ func New(c Config, opts ...Option) (*Agentd, error) {
 	// runtime, so we need this workaround
 	router := mux.NewRouter()
 
-	HealthRouter = routers.NewHealthRouter(
+	a.healthRouter = routers.NewHealthRouter(
 		actions.NewHealthController(a.store, a.client.Cluster, a.etcdClientTLSConfig),
 	)
-	HealthRouter.Mount(router)
+	a.healthRouter.Mount(router)
 
 	route := router.NewRoute().Subrouter()
 	route.HandleFunc("/", a.webSocketHandler)
@@ -504,4 +505,10 @@ func (a *Agentd) EntityLimiterMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		next.ServeHTTP(w, r)
 	})
+}
+
+// ReplaceHealthController replaces the default health controller. It
+// can be replaced by an enterprise controller to include more information.
+func (a *Agentd) ReplaceHealthController(controller routers.HealthController) {
+	a.healthRouter.Swap(controller)
 }
