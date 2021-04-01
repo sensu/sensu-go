@@ -319,6 +319,11 @@ func (t *Tessend) startWatcher() {
 func (t *Tessend) handleWatchEvent(watchEvent store.WatchEventTessenConfig) {
 	tessen := watchEvent.TessenConfig
 
+	if tessen == nil {
+		logger.Error("nil config received from tessen config watcher")
+		return
+	}
+
 	switch watchEvent.Action {
 	case store.WatchCreate:
 		logger.WithField("opt-out", tessen.OptOut).Debug("tessen configuration created")
