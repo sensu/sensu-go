@@ -5,7 +5,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic
 Versioning](http://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## [6.2.7] - 2021-04-01
 
 ## Added
 - Added ResourceTemplate resource. ResourceTemplate will be used to populate
@@ -27,6 +27,10 @@ in OSS builds.
 - Don't trigger internal restart on SIGHUP.
 - Concatenated YAML files now support CRLF.
 - Remove extraneous auto-completion suggestions.
+- Fixed a potential crash in tessend.
+- Fixed a potential deadlock in agentd.
+- Fixed a bug where some Etcd watchers could try to process watch events holding
+invalid pointers.
 
 ## [6.2.3] - 2021-01-21
 

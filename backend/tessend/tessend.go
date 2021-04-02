@@ -319,6 +319,11 @@ func (t *Tessend) startWatcher() {
 func (t *Tessend) handleWatchEvent(watchEvent store.WatchEventTessenConfig) {
 	tessen := watchEvent.TessenConfig
 
+	if tessen == nil {
+		logger.Error("nil config received from tessen config watcher")
+		return
+	}
+
 	switch watchEvent.Action {
 	case store.WatchCreate:
 		logger.WithField("opt-out", tessen.OptOut).Debug("tessen configuration created")
@@ -393,7 +398,7 @@ func (t *Tessend) handleEvents(ctx context.Context, tessen *corev2.TessenConfig,
 			case ringv2.EventTrigger:
 				logger.WithField("values", event.Values).Debug("tessen ring trigger")
 				// only trigger tessen if the next backend in the ring is this backend
-				if event.Values[0] == t.backendID {
+				if len(event.Values) > 0 && event.Values[0] == t.backendID {
 					if t.enabled() {
 						go t.collectAndSend()
 					}
