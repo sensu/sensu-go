@@ -5,12 +5,12 @@ import (
 	"fmt"
 	"path"
 
-	"github.com/coreos/etcd/clientv3"
 	"github.com/gogo/protobuf/proto"
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/authentication/bcrypt"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/backend/store/etcd/kvc"
+	"go.etcd.io/etcd/clientv3"
 )
 
 const usersPathPrefix = "users"

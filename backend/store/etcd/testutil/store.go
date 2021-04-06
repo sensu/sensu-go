@@ -4,10 +4,10 @@ import (
 	"io/ioutil"
 	"os"
 
-	"github.com/coreos/etcd/clientv3"
 	"github.com/sensu/sensu-go/backend/etcd"
 	"github.com/sensu/sensu-go/backend/store"
 	etcdstore "github.com/sensu/sensu-go/backend/store/etcd"
+	"go.etcd.io/etcd/clientv3"
 )
 
 // IntegrationTestStore wrapper for etcd & store
@@ -49,6 +49,8 @@ func NewStoreInstance() (*IntegrationTestStore, error) {
 	cfg.InitialCluster = "default=http://127.0.0.1:0"
 	cfg.AdvertiseClientURLs = cfg.ListenClientURLs
 	cfg.InitialAdvertisePeerURLs = cfg.ListenPeerURLs
+	cfg.LogLevel = "info"
+
 	e, err := etcd.NewEtcd(cfg)
 	if err != nil {
 		removeTmp()

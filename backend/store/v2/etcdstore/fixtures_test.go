@@ -5,7 +5,6 @@ import (
 	"io/ioutil"
 	"testing"
 
-	"github.com/coreos/pkg/capnslog"
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/etcd"
 	"github.com/sensu/sensu-go/backend/store"
@@ -64,7 +63,6 @@ func init() {
 }
 
 func testWithEtcdStore(t testing.TB, f func(*etcdstorev2.Store)) {
-	capnslog.SetGlobalLogLevel(capnslog.ERROR)
 	logrus.SetOutput(ioutil.Discard)
 	e, cleanup := etcd.NewTestEtcd(t)
 	defer cleanup()

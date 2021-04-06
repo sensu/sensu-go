@@ -6,8 +6,8 @@ import (
 	"context"
 	"testing"
 
-	"github.com/coreos/etcd/clientv3"
 	"github.com/sensu/sensu-go/backend/store"
+	"go.etcd.io/etcd/clientv3"
 )
 
 func TestGetSetDatabaseVersion(t *testing.T) {

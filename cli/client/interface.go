@@ -3,10 +3,10 @@ package client
 import (
 	"net/http"
 
-	"github.com/coreos/etcd/clientv3"
 	"github.com/go-resty/resty/v2"
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/types"
+	"go.etcd.io/etcd/clientv3"
 )
 
 // ListOptions represents the various options that can be used when listing

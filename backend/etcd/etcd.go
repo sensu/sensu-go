@@ -14,13 +14,14 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/coreos/etcd/clientv3"
-	"github.com/coreos/etcd/embed"
-	"github.com/coreos/etcd/etcdserver/api/v3client"
-	"github.com/coreos/etcd/pkg/transport"
-	etcdTypes "github.com/coreos/etcd/pkg/types"
-	"github.com/coreos/pkg/capnslog"
 	"github.com/sensu/sensu-go/util/path"
+	"go.etcd.io/etcd/clientv3"
+	"go.etcd.io/etcd/embed"
+	"go.etcd.io/etcd/etcdserver/api/v3client"
+	"go.etcd.io/etcd/pkg/logutil"
+	"go.etcd.io/etcd/pkg/transport"
+	etcdTypes "go.etcd.io/etcd/pkg/types"
+	zapcore "go.uber.org/zap/zapcore"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/grpclog"
 )
@@ -56,6 +57,11 @@ const (
 
 func init() {
 	clientv3.SetLogger(grpclog.NewLoggerV2(ioutil.Discard, ioutil.Discard, ioutil.Discard))
+
+	logutil.DefaultZapLoggerConfig.Encoding = "sensu-json"
+	logutil.DefaultZapLoggerConfig.EncoderConfig.TimeKey = "time"
+	logutil.DefaultZapLoggerConfig.EncoderConfig.EncodeTime = zapcore.TimeEncoderOfLayout(time.RFC3339)
+	logutil.DefaultZapLoggerConfig.EncoderConfig.EncodeLevel = sensuLevelEncoder
 }
 
 // Config is a configuration for the embedded etcd
@@ -88,6 +94,8 @@ type Config struct {
 
 	MaxRequestBytes   uint
 	QuotaBackendBytes int64
+
+	LogLevel string
 }
 
 // TLSInfo wraps etcd transport TLSInfo
@@ -125,7 +133,7 @@ func ensureDir(path string) error {
 	return nil
 }
 
-// Etcd is a wrapper around github.com/coreos/etcd/embed.Etcd
+// Etcd is a wrapper around go.etcd.io/etcd/embed.Etcd
 type Etcd struct {
 	cfg  *Config
 	etcd *embed.Etcd
@@ -219,7 +227,8 @@ func NewEtcd(config *Config) (*Etcd, error) {
 	cfg.QuotaBackendBytes = config.QuotaBackendBytes
 	cfg.MaxRequestBytes = config.MaxRequestBytes
 
-	capnslog.SetFormatter(NewLogrusFormatter())
+	cfg.Logger = "zap"
+	cfg.LogLevel = config.LogLevel
 
 	e, err := embed.StartEtcd(cfg)
 	if err != nil {

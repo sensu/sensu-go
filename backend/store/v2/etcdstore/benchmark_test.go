@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/coreos/pkg/capnslog"
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	corev3 "github.com/sensu/sensu-go/api/core/v3"
 	"github.com/sensu/sensu-go/backend/store"
@@ -113,7 +112,6 @@ var fixtureV3EntityState = &corev3.EntityState{
 }
 
 func BenchmarkCreateOrUpdateV2Entity(b *testing.B) {
-	capnslog.SetGlobalLogLevel(capnslog.ERROR)
 	logrus.SetLevel(logrus.ErrorLevel)
 	testWithEtcdStore(b, func(s *etcdstore.Store) {
 		ns := &corev2.Namespace{Name: "default"}
@@ -144,7 +142,6 @@ func BenchmarkCreateOrUpdateV2Entity(b *testing.B) {
 }
 
 func BenchmarkCreateOrUpdateV3EntityState(b *testing.B) {
-	capnslog.SetGlobalLogLevel(capnslog.ERROR)
 	logrus.SetLevel(logrus.ErrorLevel)
 	testWithEtcdStore(b, func(s *etcdstore.Store) {
 		ns := &corev2.Namespace{Name: "default"}
@@ -175,7 +172,6 @@ func BenchmarkCreateOrUpdateV3EntityState(b *testing.B) {
 }
 
 func BenchmarkCreateOrUpdateV3EntityConfig(b *testing.B) {
-	capnslog.SetGlobalLogLevel(capnslog.ERROR)
 	logrus.SetLevel(logrus.ErrorLevel)
 	testWithEtcdStore(b, func(s *etcdstore.Store) {
 		ns := &corev2.Namespace{Name: "default"}
@@ -206,7 +202,6 @@ func BenchmarkCreateOrUpdateV3EntityConfig(b *testing.B) {
 }
 
 func BenchmarkUpdateEntityV2(b *testing.B) {
-	capnslog.SetGlobalLogLevel(capnslog.ERROR)
 	logrus.SetLevel(logrus.ErrorLevel)
 	testWithV1Store(b, func(s store.Store) {
 		ns := &corev2.Namespace{Name: "default"}
@@ -228,7 +223,6 @@ func BenchmarkUpdateEntityV2(b *testing.B) {
 }
 
 func BenchmarkGetEntity(b *testing.B) {
-	capnslog.SetGlobalLogLevel(capnslog.ERROR)
 	logrus.SetLevel(logrus.ErrorLevel)
 	testWithV1Store(b, func(s store.Store) {
 		ns := &corev2.Namespace{Name: "default"}
@@ -253,7 +247,6 @@ func BenchmarkGetEntity(b *testing.B) {
 }
 
 func BenchmarkGetV3EntityState(b *testing.B) {
-	capnslog.SetGlobalLogLevel(capnslog.ERROR)
 	logrus.SetLevel(logrus.ErrorLevel)
 	testWithEtcdStore(b, func(s *etcdstore.Store) {
 		ns := &corev2.Namespace{Name: "default"}
@@ -291,7 +284,6 @@ func BenchmarkGetV3EntityState(b *testing.B) {
 }
 
 func BenchmarkGetV3EntityConfig(b *testing.B) {
-	capnslog.SetGlobalLogLevel(capnslog.ERROR)
 	logrus.SetLevel(logrus.ErrorLevel)
 	testWithEtcdStore(b, func(s *etcdstore.Store) {
 		ns := &corev2.Namespace{Name: "default"}
@@ -329,7 +321,6 @@ func BenchmarkGetV3EntityConfig(b *testing.B) {
 }
 
 func BenchmarkListEntities(b *testing.B) {
-	capnslog.SetGlobalLogLevel(capnslog.ERROR)
 	logrus.SetLevel(logrus.ErrorLevel)
 	testWithV1Store(b, func(s store.Store) {
 		ns := &corev2.Namespace{Name: "default"}
@@ -362,7 +353,6 @@ func BenchmarkListEntities(b *testing.B) {
 }
 
 func BenchmarkListV3EntityState(b *testing.B) {
-	capnslog.SetGlobalLogLevel(capnslog.ERROR)
 	logrus.SetLevel(logrus.ErrorLevel)
 	testWithEtcdStore(b, func(s *etcdstore.Store) {
 		ns := &corev2.Namespace{Name: "default"}
@@ -408,8 +398,6 @@ func BenchmarkListV3EntityState(b *testing.B) {
 }
 
 func BenchmarkListV3EntityStateNoUnwrap(b *testing.B) {
-
-	capnslog.SetGlobalLogLevel(capnslog.ERROR)
 	logrus.SetLevel(logrus.ErrorLevel)
 	testWithEtcdStore(b, func(s *etcdstore.Store) {
 		ns := &corev2.Namespace{Name: "default"}

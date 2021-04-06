@@ -11,10 +11,10 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/coreos/etcd/clientv3"
-	"github.com/coreos/etcd/pkg/transport"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/spf13/viper"
+	"go.etcd.io/etcd/clientv3"
+	"go.etcd.io/etcd/pkg/transport"
 	"golang.org/x/time/rate"
 	"google.golang.org/grpc"
 
@@ -134,6 +134,7 @@ func newClient(ctx context.Context, config *Config, backend *Backend) (*clientv3
 	cfg.Discovery = config.EtcdDiscovery
 	cfg.DiscoverySrv = config.EtcdDiscoverySrv
 	cfg.Name = config.EtcdName
+	cfg.LogLevel = config.EtcdLogLevel
 
 	// Heartbeat interval
 	if config.EtcdHeartbeatInterval > 0 {
