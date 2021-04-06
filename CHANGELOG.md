@@ -5,9 +5,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic
 Versioning](http://semver.org/spec/v2.0.0.html).
 
-## [6.2.7] - 2021-04-01
+## Unreleased
 
-## Added
+### Added
 - Added ResourceTemplate resource. ResourceTemplate will be used to populate
 namespaces with initial resources.
 - Added `GetResourceV3Watcher()` to the `store/etcd` package.
@@ -27,6 +27,10 @@ in OSS builds.
 - Don't trigger internal restart on SIGHUP.
 - Concatenated YAML files now support CRLF.
 - Remove extraneous auto-completion suggestions.
+
+## [6.2.7] - 2021-04-01
+
+### Fixed
 - Fixed a potential crash in tessend.
 - Fixed a potential deadlock in agentd.
 - Fixed a bug where some Etcd watchers could try to process watch events holding
