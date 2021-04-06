@@ -7,6 +7,7 @@ replace (
 	github.com/sensu/sensu-go/api/core/v3 => ./api/core/v3
 	github.com/sensu/sensu-go/backend/store/v2 => ./backend/store/v2
 	github.com/sensu/sensu-go/types => ./types
+	go.etcd.io/etcd => go.etcd.io/etcd v0.0.0-20210226220824-aa7126864d82
 )
 
 require (
@@ -15,9 +16,6 @@ require (
 	github.com/StackExchange/wmi v0.0.0-20180725035823-b12b22c5341f // indirect
 	github.com/ash2k/stager v0.0.0-20170622123058-6e9c7b0eacd4 // indirect
 	github.com/atlassian/gostatsd v0.0.0-20180514010436-af796620006e
-	github.com/coreos/bbolt v1.3.3 // indirect
-	github.com/coreos/etcd v3.3.22+incompatible
-	github.com/coreos/pkg v0.0.0-20180928190104-399ea9e2e55f
 	github.com/dave/jennifer v0.0.0-20171207062344-d8bdbdbee4e1
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/docker/docker v0.0.0-20180409082103-cbde00b44273
@@ -36,7 +34,7 @@ require (
 	github.com/google/go-cmp v0.4.0 // indirect
 	github.com/google/uuid v1.1.1
 	github.com/gorilla/mux v1.7.3
-	github.com/gorilla/websocket v1.4.1
+	github.com/gorilla/websocket v1.4.2
 	github.com/gotestyourself/gotestyourself v2.2.0+incompatible // indirect
 	github.com/graph-gophers/dataloader v0.0.0-20180104184831-78139374585c
 	github.com/graphql-go/graphql v0.7.9-0.20191125031726-2e2b648ecbe4
@@ -77,10 +75,11 @@ require (
 	github.com/stretchr/testify v1.6.0
 	github.com/willf/pad v0.0.0-20160331131008-b3d780601022
 	go.etcd.io/bbolt v1.3.4
+	go.etcd.io/etcd v3.4.15+incompatible
+	go.uber.org/zap v1.16.0
 	golang.org/x/crypto v0.0.0-20191011191535-87dc89f01550
 	golang.org/x/net v0.0.0-20200202094626-16171245cfb2
 	golang.org/x/sys v0.0.0-20200602225109-6fdc65e7d980
-	golang.org/x/text v0.3.2 // indirect
 	golang.org/x/time v0.0.0-20191024005414-555d28b269f0
 	golang.org/x/tools v0.0.0-20200207224406-61798d64f025 // indirect
 	google.golang.org/genproto v0.0.0-20191009194640-548a555dbc03 // indirect

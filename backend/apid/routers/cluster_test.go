@@ -8,10 +8,10 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/coreos/etcd/clientv3"
 	"github.com/google/uuid"
 	"github.com/gorilla/mux"
 	"github.com/stretchr/testify/mock"
+	"go.etcd.io/etcd/clientv3"
 )
 
 type mockClusterController struct {

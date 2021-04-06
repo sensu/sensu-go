@@ -5,7 +5,6 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/coreos/etcd/integration"
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	corev3 "github.com/sensu/sensu-go/api/core/v3"
 	"github.com/sensu/sensu-go/backend/store"
@@ -14,6 +13,7 @@ import (
 	"github.com/sensu/sensu-go/backend/store/v2/wrap"
 	"github.com/sensu/sensu-go/types/dynamic"
 	"github.com/stretchr/testify/assert"
+	"go.etcd.io/etcd/integration"
 )
 
 func fixtureEntity(namespace, name string) *corev3.EntityConfig {

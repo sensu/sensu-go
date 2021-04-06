@@ -4,12 +4,12 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/coreos/etcd/clientv3"
 	"github.com/google/uuid"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/testing/mockstore"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+	"go.etcd.io/etcd/clientv3"
 	"golang.org/x/net/context"
 )
 
@@ -30,7 +30,14 @@ func (mockCluster) MemberRemove(context.Context, uint64) (*clientv3.MemberRemove
 
 func (mockCluster) MemberUpdate(context.Context, uint64, []string) (*clientv3.MemberUpdateResponse, error) {
 	return new(clientv3.MemberUpdateResponse), nil
+}
 
+func (mockCluster) MemberPromote(context.Context, uint64) (*clientv3.MemberPromoteResponse, error) {
+	return new(clientv3.MemberPromoteResponse), nil
+}
+
+func (mockCluster) MemberAddAsLearner(context.Context, []string) (*clientv3.MemberAddResponse, error) {
+	return new(clientv3.MemberAddResponse), nil
 }
 
 var _ clientv3.Cluster = mockCluster{}

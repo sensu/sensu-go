@@ -15,8 +15,6 @@ import (
 	"strings"
 	"sync"
 
-	_ "unsafe"
-
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/types"
 	"github.com/shirou/gopsutil/host"
@@ -25,8 +23,6 @@ import (
 
 const defaultHostname = "unidentified-hostname"
 
-//go:linkname goarm runtime.goarm
-var goarm int32
 var gomips string
 
 type azureMetadata struct {
@@ -38,14 +34,13 @@ type azureMetadata struct {
 // family, platform version, and network interfaces.
 func Info() (types.System, error) {
 	info, err := host.Info()
-
 	if err != nil {
 		return types.System{}, err
 	}
 
 	system := types.System{
 		Arch:            runtime.GOARCH,
-		ARMVersion:      goarm,
+		ARMVersion:      getARMVersion(),
 		FloatType:       gomips,
 		Hostname:        info.Hostname,
 		OS:              info.OS,
@@ -59,7 +54,6 @@ func Info() (types.System, error) {
 	}
 
 	network, err := NetworkInfo()
-
 	if err == nil {
 		system.Network = network
 	}

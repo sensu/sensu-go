@@ -5,7 +5,6 @@ import (
 	"path"
 	"strings"
 
-	"github.com/coreos/etcd/clientv3"
 	"github.com/gogo/protobuf/proto"
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	corev3 "github.com/sensu/sensu-go/api/core/v3"
@@ -14,6 +13,7 @@ import (
 	"github.com/sensu/sensu-go/backend/store/patch"
 	storev2 "github.com/sensu/sensu-go/backend/store/v2"
 	"github.com/sensu/sensu-go/backend/store/v2/wrap"
+	"go.etcd.io/etcd/clientv3"
 )
 
 var (

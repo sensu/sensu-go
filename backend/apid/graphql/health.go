@@ -3,10 +3,10 @@ package graphql
 import (
 	"strconv"
 
-	"github.com/coreos/etcd/etcdserver/etcdserverpb"
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/apid/graphql/schema"
 	"github.com/sensu/sensu-go/graphql"
+	"go.etcd.io/etcd/etcdserver/etcdserverpb"
 )
 
 var _ schema.ClusterHealthFieldResolvers = (*clusterHealthImpl)(nil)

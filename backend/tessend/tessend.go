@@ -13,7 +13,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/coreos/etcd/clientv3"
 	"github.com/google/uuid"
 	dto "github.com/prometheus/client_model/go"
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
@@ -25,6 +24,7 @@ import (
 	"github.com/sensu/sensu-go/backend/store/provider"
 	"github.com/sensu/sensu-go/version"
 	"github.com/sirupsen/logrus"
+	"go.etcd.io/etcd/clientv3"
 )
 
 const (
