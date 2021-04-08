@@ -26,6 +26,8 @@ func main() {
 	}
 	rootCmd.AddCommand(startCmd)
 
+	cmd.RegisterConfigAliases()
+
 	if err := rootCmd.Execute(); err != nil {
 		logger.WithError(err).Fatal("error executing sensu-agent")
 	}

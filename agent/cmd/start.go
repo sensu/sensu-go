@@ -312,10 +312,13 @@ func handleConfig(cmd *cobra.Command, arguments []string) error {
 	viper.AutomaticEnv()
 
 	deprecatedConfigAttributes(logger)
-	viper.RegisterAlias(deprecatedFlagAgentID, flagAgentName)
-	viper.RegisterAlias(deprecatedFlagKeepaliveTimeout, flagKeepaliveWarningTimeout)
 
 	return nil
+}
+
+func RegisterConfigAliases() {
+	viper.RegisterAlias(deprecatedFlagAgentID, flagAgentName)
+	viper.RegisterAlias(deprecatedFlagKeepaliveTimeout, flagKeepaliveWarningTimeout)
 }
 
 func aliasNormalizeFunc(logger *logrus.Entry) func(*pflag.FlagSet, string) pflag.NormalizedName {
