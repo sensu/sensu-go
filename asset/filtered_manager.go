@@ -46,12 +46,13 @@ func (f *filteredManager) Get(ctx context.Context, asset *corev2.Asset) (*Runtim
 		logger.WithFields(fields).Info("asset includes builds, using builds instead of asset")
 		for _, build := range asset.Builds {
 			assetBuild := &corev2.Asset{
-				URL:        build.URL,
-				Sha512:     build.Sha512,
-				Filters:    build.Filters,
-				Headers:    build.Headers,
-				Proxy:      build.Proxy,
-				ObjectMeta: asset.ObjectMeta,
+				URL:           build.URL,
+				Sha512:        build.Sha512,
+				Filters:       build.Filters,
+				Headers:       build.Headers,
+				Proxy:         build.Proxy,
+				ProxyDisabled: build.ProxyDisabled,
+				ObjectMeta:    asset.ObjectMeta,
 			}
 
 			buildFields := logrus.Fields{

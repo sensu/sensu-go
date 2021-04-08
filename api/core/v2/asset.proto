@@ -43,6 +43,9 @@ message Asset {
 
   // proxy is the proxy server url string
   string proxy = 10 [ (gogoproto.jsontag) = "proxy" ];
+
+  // proxy_disabled, if true no proxy is used, not even the environment proxy.
+  bool proxy_disabled = 11 [ (gogoproto.jsontag) = "proxy_disabled" ];
 };
 
 // AssetBuild defines an individual asset that an asset can install as a
@@ -68,5 +71,8 @@ message AssetBuild {
 
   // proxy is the proxy server url string
   string proxy = 10 [ (gogoproto.jsontag) = "proxy" ];
+
+  // proxy_disabled, if true no proxy is used, not even the environment proxy.
+  bool proxy_disabled = 11 [ (gogoproto.jsontag) = "proxy_disabled" ];
 
 };

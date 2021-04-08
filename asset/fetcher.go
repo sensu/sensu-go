@@ -29,14 +29,14 @@ const (
 // A Fetcher fetches a file from the specified source and returns an *os.File
 // with the contents of the file found at source.
 type Fetcher interface {
-	Fetch(ctx context.Context, source string, headers map[string]string, proxy string) (*os.File, error)
+	Fetch(ctx context.Context, source string, headers map[string]string, proxy string, proxy_disabled bool) (*os.File, error)
 }
 
 // URLGetter gets all content at the specified URL.
-type urlGetter func(context.Context, string, string, map[string]string, string) (io.ReadCloser, error)
+type urlGetter func(context.Context, string, string, map[string]string, string, bool) (io.ReadCloser, error)
 
 // Get the target URL and return an io.ReadCloser
-func httpGet(ctx context.Context, path, trustedCAFile string, headers map[string]string, proxy string) (io.ReadCloser, error) {
+func httpGet(ctx context.Context, path, trustedCAFile string, headers map[string]string, proxy string, proxy_disabled bool) (io.ReadCloser, error) {
 	client := &http.Client{}
 
 	if trustedCAFile != "" {
@@ -56,16 +56,20 @@ func httpGet(ctx context.Context, path, trustedCAFile string, headers map[string
 		if ok := rootCAs.AppendCertsFromPEM(certs); !ok {
 			logger.Errorf("failed to append %s to RootCAs, using system certs only", trustedCAFile)
 		}
+		appendCerts(rootCAs)
 		transport := &http.Transport{
-			Proxy: http.ProxyFromEnvironment,
+			Proxy: nil,
 			TLSClientConfig: &tls.Config{
 				RootCAs: rootCAs,
 			},
 		}
-		appendCerts(rootCAs)
-		if len(proxy) > 0 {
-			transport.Proxy = func(*http.Request) (*url.URL, error) {
-				return url.Parse(proxy)
+		if !proxy_disabled {
+			if len(proxy) > 0 {
+				transport.Proxy = func(*http.Request) (*url.URL, error) {
+					return url.Parse(proxy)
+				}
+			} else {
+				transport.Proxy = http.ProxyFromEnvironment
 			}
 		}
 		client = &http.Client{
@@ -106,7 +110,7 @@ type httpFetcher struct {
 
 // Fetch the file found at the specified url, and return the file or an
 // error indicating why the fetch failed.
-func (h *httpFetcher) Fetch(ctx context.Context, url string, headers map[string]string, proxy string) (*os.File, error) {
+func (h *httpFetcher) Fetch(ctx context.Context, url string, headers map[string]string, proxy string, proxy_disabled bool) (*os.File, error) {
 	if h.URLGetter == nil {
 		h.URLGetter = httpGet
 	}
@@ -117,7 +121,7 @@ func (h *httpFetcher) Fetch(ctx context.Context, url string, headers map[string]
 		}
 	}
 
-	resp, err := h.URLGetter(ctx, url, h.trustedCAFile, headers, proxy)
+	resp, err := h.URLGetter(ctx, url, h.trustedCAFile, headers, proxy, proxy_disabled)
 	if err != nil {
 		return nil, err
 	}
