@@ -40,6 +40,9 @@ message Asset {
   // Headers is a collection of key/value string pairs used as HTTP headers
   // for asset retrieval.
   map<string, string> headers = 9 [ (gogoproto.jsontag) = "headers" ];
+
+  // proxy is the proxy server url string
+  string proxy = 10 [ (gogoproto.jsontag) = "proxy" ];
 };
 
 // AssetBuild defines an individual asset that an asset can install as a
@@ -62,4 +65,8 @@ message AssetBuild {
   // Headers is a collection of key/value string pairs used as HTTP headers
   // for asset retrieval.
   map<string, string> headers = 9 [ (gogoproto.jsontag) = "headers" ];
+
+  // proxy is the proxy server url string
+  string proxy = 10 [ (gogoproto.jsontag) = "proxy" ];
+
 };

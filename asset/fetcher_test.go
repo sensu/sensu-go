@@ -38,11 +38,11 @@ func TestFetchExistingAsset(t *testing.T) {
 	var headers map[string]string
 
 	fetcher := &httpFetcher{
-		URLGetter: func(ctx context.Context, path, trustedCAFile string, header map[string]string) (io.ReadCloser, error) {
+		URLGetter: func(ctx context.Context, path, trustedCAFile string, header map[string]string, proxy string) (io.ReadCloser, error) {
 			return os.Open(path)
 		},
 	}
-	f, err := fetcher.Fetch(context.TODO(), localAssetPath, headers)
+	f, err := fetcher.Fetch(context.TODO(), localAssetPath, headers, "")
 	if err != nil {
 		t.Logf("expected no error, got: %v", err)
 		t.FailNow()
@@ -67,7 +67,7 @@ func TestHTTPGet(t *testing.T) {
 	defer ts.Close()
 
 	headers := map[string]string{"foo": "bar", "hi": "hello, sup"}
-	closer, err := httpGet(context.Background(), ts.URL, "", headers)
+	closer, err := httpGet(context.Background(), ts.URL, "", headers, "")
 	assert.NotNil(t, closer)
 	assert.NoError(t, err)
 }
@@ -81,7 +81,7 @@ func TestHTTPGetNon200(t *testing.T) {
 	defer ts.Close()
 
 	headers := map[string]string{"foo": "bar", "hi": "hello, sup"}
-	closer, err := httpGet(context.Background(), ts.URL, "", headers)
+	closer, err := httpGet(context.Background(), ts.URL, "", headers, "")
 	assert.Nil(t, closer)
 	assert.EqualError(t, err, "error fetching asset: Response Code 404")
 }

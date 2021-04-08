@@ -17,7 +17,7 @@ import (
 
 type localFetcher struct{}
 
-func (f *localFetcher) Fetch(ctx context.Context, path string, headers map[string]string) (*os.File, error) {
+func (f *localFetcher) Fetch(ctx context.Context, path string, headers map[string]string, proxy string) (*os.File, error) {
 	return os.Open(path)
 }
 

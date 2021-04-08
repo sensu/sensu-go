@@ -50,6 +50,7 @@ func (f *filteredManager) Get(ctx context.Context, asset *corev2.Asset) (*Runtim
 				Sha512:     build.Sha512,
 				Filters:    build.Filters,
 				Headers:    build.Headers,
+				Proxy:      build.Proxy,
 				ObjectMeta: asset.ObjectMeta,
 			}
 

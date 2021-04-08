@@ -126,7 +126,7 @@ func (b *boltDBAssetManager) Get(ctx context.Context, asset *corev2.Asset) (*Run
 		}
 
 		// install the asset
-		tmpFile, err := b.fetcher.Fetch(ctx, asset.URL, asset.Headers)
+		tmpFile, err := b.fetcher.Fetch(ctx, asset.URL, asset.Headers, asset.Proxy)
 		if err != nil {
 			return err
 		}

@@ -18,7 +18,7 @@ type mockFetcher struct {
 	pass bool
 }
 
-func (m *mockFetcher) Fetch(context.Context, string, map[string]string) (*os.File, error) {
+func (m *mockFetcher) Fetch(context.Context, string, map[string]string, string) (*os.File, error) {
 	if m.pass {
 		return ioutil.TempFile(os.TempDir(), "boltdb_manager_test_fetcher")
 	}
