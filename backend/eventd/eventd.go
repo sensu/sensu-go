@@ -50,7 +50,7 @@ const (
 
 	// EventsProcessedTypeLabelUnknown is the value to use for the type label if
 	// the event type is not known.
-	EventsProcessedTypeLabelUnknown "unknown"
+	EventsProcessedTypeLabelUnknown = "unknown"
 
 	// EventsProcessedTypeLabelCheck is the value to use for the type label if
 	// the event has a check.
@@ -194,8 +194,11 @@ func New(ctx context.Context, c Config, opts ...Option) (*Eventd, error) {
 		}
 	}
 
-	// Initialize the most likely labels
-	EventsProcessed.WithLabelValues(EventsProcessedLabelSuccess)
+	// Initialize labels
+	EventsProcessed.WithLabelValues(EventsProcessedLabelSuccess, EventsProcessedTypeLabelCheck)
+	EventsProcessed.WithLabelValues(EventsProcessedLabelSuccess, EventsProcessedTypeLabelMetrics)
+	EventsProcessed.WithLabelValues(EventsProcessedLabelError, EventsProcessedTypeLabelUnknown)
+	EventsProcessed.WithLabelValues(EventsProcessedLabelError, EventsProcessedTypeLabelCheck)
 	_ = prometheus.Register(EventsProcessed)
 
 	return e, nil
@@ -246,10 +249,10 @@ func (e *Eventd) startHandlers() {
 					return
 
 				case msg, ok := <-e.eventChan:
-					eventHandlersBusy.Inc()
+					eventHandlersBusy.WithLabelValues().Inc()
 					defer func() {
-						eventHandlersBusy.Dec()
-					}
+						eventHandlersBusy.WithLabelValues().Dec()
+					}()
 
 					// The message bus will close channels when it's shut down which means
 					// we will end up reading from a closed channel. If it's closed,
