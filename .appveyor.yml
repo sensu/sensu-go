@@ -29,6 +29,7 @@ install:
   - msiexec /i go%GOVERSION%.windows-%GOARCH%.msi /q
   - echo %PATH%
   - echo %GOPATH%
+  - unset GOROOT
   - set PATH=%GOPATH%\bin;C:\Program Files\go\bin;%PATH%
   - go version
   - go env
