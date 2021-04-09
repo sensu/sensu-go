@@ -431,21 +431,33 @@ func (t *Tessend) startPromMetricsUpdates() {
 
 // sendPromMetrics collects and sends prometheus metrics for event processing to tessen.
 func (t *Tessend) sendPromMetrics() {
-	var hostname string
 
 	// collect data
 	data := t.getDataPayload()
 	now := time.Now().Unix()
-	c := eventd.EventsProcessed.WithLabelValues(eventd.EventsProcessedLabelSuccess)
-	pb := &dto.Metric{}
-	err := c.Write(pb)
-	if err != nil {
-		logger.WithError(err).Warn("failed to retrieve prometheus event counter")
-		return
+
+	var value float64
+	{
+		c := eventd.EventsProcessed.WithLabelValues(eventd.EventsProcessedLabelSuccess, eventd.EventsProcessedTypeLabelCheck)
+		pb := &dto.Metric{}
+		if err := c.Write(pb); err != nil {
+			logger.WithError(err).Warn("failed to retrieve prometheus event counter")
+			return
+		}
+		value = value + pb.GetCounter().GetValue()
+	}
+	{
+		c := eventd.EventsProcessed.WithLabelValues(eventd.EventsProcessedLabelSuccess, eventd.EventsProcessedTypeLabelMetrics)
+		pb := &dto.Metric{}
+		if err := c.Write(pb); err != nil {
+			logger.WithError(err).Warn("failed to retrieve prometheus event counter")
+			return
+		}
+		value = value + pb.GetCounter().GetValue()
 	}
 
 	// get the backend hostname to use as a metric tag
-	hostname, err = os.Hostname()
+	hostname, err := os.Hostname()
 	if err != nil {
 		logger.WithError(err).Error("error getting hostname")
 	}
@@ -453,10 +465,10 @@ func (t *Tessend) sendPromMetrics() {
 	// populate data payload
 	mp := &corev2.MetricPoint{
 		Name:      eventd.EventsProcessedCounterVec,
-		Value:     pb.GetCounter().GetValue(),
+		Value:     value,
 		Timestamp: now,
 		Tags: []*corev2.MetricTag{
-			&corev2.MetricTag{
+			{
 				Name:  "hostname",
 				Value: hostname,
 			},
