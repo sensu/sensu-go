@@ -35,6 +35,7 @@ type Cluster struct {
 	TrustedCAFile         string `json:"trusted-ca-file"`
 	InsecureSkipTLSVerify bool   `json:"insecure-skip-tls-verify"`
 	*types.Tokens
+	APIKey  string
 	Timeout time.Duration `json:"timeout"`
 }
 
@@ -111,6 +112,10 @@ func (c *Config) flags(flags *pflag.FlagSet) {
 
 	if value, err := flags.GetString("trusted-ca-file"); err == nil && value != "" {
 		c.Cluster.TrustedCAFile = value
+	}
+
+	if value, err := flags.GetString("api-key"); err == nil && value != "" {
+		c.Cluster.APIKey = value
 	}
 
 	if value, err := flags.GetString("timeout"); err == nil && value != "" {

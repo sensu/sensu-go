@@ -49,3 +49,9 @@ func TestTokens(t *testing.T) {
 	conf := &Config{Cluster: Cluster{Tokens: tokens}}
 	assert.Equal(t, tokens.Access, conf.Tokens().Access)
 }
+
+func TestAPIKey(t *testing.T) {
+	apiKey := "f70f5a0a-c443-453e-8354-76e40b8b73bd"
+	conf := &Config{Cluster: Cluster{APIKey: apiKey}}
+	assert.Equal(t, apiKey, conf.APIKey())
+}

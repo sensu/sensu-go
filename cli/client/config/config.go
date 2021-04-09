@@ -43,6 +43,7 @@ type Read interface {
 	InsecureSkipTLSVerify() bool
 	Namespace() string
 	Tokens() *types.Tokens
+	APIKey() string
 	Timeout() time.Duration
 	TrustedCAFile() string
 }

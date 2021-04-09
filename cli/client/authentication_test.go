@@ -28,6 +28,7 @@ func TestCreateAccessToken(t *testing.T) {
 
 	mockConfig.On("APIUrl").Return("")
 	mockConfig.On("Tokens").Return(&corev2.Tokens{})
+	mockConfig.On("APIKey").Return("")
 
 	token, err := client.CreateAccessToken(server.URL, "foo", "bar")
 	assert.NoError(t, err)
@@ -47,6 +48,7 @@ func TestCreateAccessTokenForbidden(t *testing.T) {
 
 	mockConfig.On("APIUrl").Return("")
 	mockConfig.On("Tokens").Return(&corev2.Tokens{})
+	mockConfig.On("APIKey").Return("")
 
 	_, err := client.CreateAccessToken(server.URL, "foo", "bar")
 	assert.Error(t, err)
@@ -69,6 +71,7 @@ func TestRefreshAccessToken(t *testing.T) {
 
 	mockConfig.On("APIUrl").Return(server.URL)
 	mockConfig.On("Tokens").Return(&corev2.Tokens{Access: "foo"})
+	mockConfig.On("APIKey").Return("")
 
 	token, err := client.RefreshAccessToken(corev2.FixtureTokens("foo", "bar"))
 	assert.NoError(t, err)
@@ -88,6 +91,7 @@ func TestRefreshAccessTokenForbidden(t *testing.T) {
 
 	mockConfig.On("APIUrl").Return(server.URL)
 	mockConfig.On("Tokens").Return(&corev2.Tokens{Access: "foo"})
+	mockConfig.On("APIKey").Return("")
 
 	_, err := client.RefreshAccessToken(corev2.FixtureTokens("foo", "bar"))
 	assert.Error(t, err)

@@ -40,14 +40,16 @@ func ConfigurationPresent(cmd *cobra.Command, cli *cli.SensuCli) error {
 
 	if cli.Config.APIUrl() == "" {
 		return fmt.Errorf(
-			"No API URL is defined. You can configure an API URL by running \"%s configure\"",
+			"No API URL is defined. You can either configure an API URL by running \"%s configure\" "+
+				"or by using the --api-url command line option",
 			os.Args[0],
 		)
 	}
 
-	if tokens == nil || tokens.Access == "" {
+	if (tokens == nil || tokens.Access == "") && cli.Config.APIKey() == "" {
 		return fmt.Errorf(
-			"Unable to locate credentials. You can configure credentials by running \"%s configure\"",
+			"Unable to locate credentials. You can either configure credentials by running \"%s configure\" "+
+				"or by using the --api-key command line option",
 			os.Args[0],
 		)
 	}

@@ -9,10 +9,11 @@ image:
   # - Visual Studio 2017
 
 cache:
-  - c:\go\pkg\mod -> go.mod, go.sum
+  - c:\Program Files\Go\pkg\mod -> go.mod, go.sum
 
 environment:
   GOPATH: c:\gopath
+  GOROOT: c:\Program Files\Go
   GOVERSION: 1.16.3
   GO111MODULE: 'on'
   GOPROXY: 'https://proxy.golang.org'
@@ -29,7 +30,7 @@ install:
   - msiexec /i go%GOVERSION%.windows-%GOARCH%.msi /q
   - echo %PATH%
   - echo %GOPATH%
-  - set PATH=%GOPATH%\bin;c:\go\bin;%PATH%
+  - set PATH=%GOPATH%\bin;c:\Program Files\Go\bin;%PATH%
   - go version
   - go env
   - mkdir %GOPATH%\bin
