@@ -25,7 +25,7 @@ environment:
 
 install:
   - rmdir c:\go /s /q
-  - appveyor DownloadFile https://storage.googleapis.com/golang/go%GOVERSION%.windows-%GOARCH%.msi
+  - appveyor DownloadFile https://golang.org/dl/go%GOVERSION%.windows-%GOARCH%.msi
   - msiexec /i go%GOVERSION%.windows-%GOARCH%.msi /q
   - echo %PATH%
   - echo %GOPATH%
