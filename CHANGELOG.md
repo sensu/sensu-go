@@ -5,10 +5,14 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic
 Versioning](http://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+### Added
 - Added `etcd-log-level` configuration flag for setting the log level of the
-  embedded etcd server.
-- Added API key authentication support to sensuctl
+embedded etcd server.
+- Added API key authentication support to sensuctl.
+
+### Changed
+- Upgraded Go version from 1.13.15 to 1.16.
+- Upgraded Etcd version from 3.3.22 to 3.4.15.
 
 ## [6.3.0] - 2021-04-07
 
@@ -19,12 +23,6 @@ namespaces with initial resources.
 - Add `EntityServiceClass` constant to the `corev2` package, representing BSM Services.
 - Added ResourceTemplate instantiation on namespace creation.
 - Added more context when logging JavaScript filter evaluation errors.
-- Added `etcd-log-level` configuration flag for setting the log level of the
-embedded etcd server.
-
-### Changed
-- Upgraded Go version from 1.13.15 to 1.16.
-- Upgraded Etcd version from 3.3.22 to 3.4.15.
 
 ### Fixed
 - Both V2 & V3 resources are now validated when used with storev2.
