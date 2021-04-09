@@ -6,7 +6,8 @@ and this project adheres to [Semantic
 Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
-- There are currently no unreleased changes.
+- Added `etcd-log-level` configuration flag for setting the log level of the
+  embedded etcd server.
 - Added API key authentication support to sensuctl
 
 ## [6.3.0] - 2021-04-07
