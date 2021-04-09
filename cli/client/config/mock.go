@@ -99,3 +99,8 @@ func (m *MockConfig) Tokens() *corev2.Tokens {
 	args := m.Called()
 	return args.Get(0).(*corev2.Tokens)
 }
+
+func (m *MockConfig) APIKey() string {
+	args := m.Called()
+	return args.String(0)
+}

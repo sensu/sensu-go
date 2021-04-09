@@ -93,6 +93,11 @@ func (m *MockConfig) Tokens() *types.Tokens {
 	return args.Get(0).(*types.Tokens)
 }
 
+func (m *MockConfig) APIKey() string {
+	args := m.Called()
+	return args.String(0)
+}
+
 // SaveTrustedCAFile ...
 func (m *MockConfig) SaveTrustedCAFile(file string) error {
 	args := m.Called(file)

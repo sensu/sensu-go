@@ -17,6 +17,7 @@ func testSetupMocks(t *testing.T, config *mockclient.MockConfig) {
 	config.On("Tokens").Return(
 		corev2.FixtureTokens("eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE1NjIxODkzMTcsImp0aSI6IjAwZDFlYTE2OGU1MTQ1ZGEzN2U2Njg0YmRlOTgwNDM4Iiwic3ViIjoiYWRtaW4iLCJncm91cHMiOlsiY2x1c3Rlci1hZG1pbnMiLCJzeXN0ZW06dXNlcnMiXSwicHJvdmlkZXIiOnsicHJvdmlkZXJfaWQiOiJiYXNpYyIsInVzZXJfaWQiOiJhZG1pbiJ9fQ.ksuMGCJtkN5724CQ7e2W1P7T2ZPpR8IxU3fH9WhBMLk", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiI0MGVhYTRiMzRkMzU4YTkzNTY5YzIzZWM1YjcxNmZiMiIsInN1YiI6ImFkbWluIiwiZ3JvdXBzIjpudWxsLCJwcm92aWRlciI6eyJwcm92aWRlcl9pZCI6IiIsInVzZXJfaWQiOiIifX0.7t0qoBvKEkHD1DJbhP-VfSj95yhsFyrPoeFhqEbKOn8"),
 	)
+	config.On("APIKey").Return("")
 	config.On("TrustedCAFile").Return("")
 	config.On("InsecureSkipTLSVerify").Return(false)
 }
