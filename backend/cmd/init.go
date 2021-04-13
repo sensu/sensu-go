@@ -26,6 +26,7 @@ const (
 	flagInitAdminPassword = "cluster-admin-password"
 	flagInteractive       = "interactive"
 	flagTimeout           = "timeout"
+	flagWait              = "wait"
 )
 
 type seedConfig struct {
@@ -172,22 +173,31 @@ func InitCommand() *cobra.Command {
 			// required to debug TLS errors because the seeding below will not print
 			// the latest connection error (see
 			// https://github.com/sensu/sensu-go/issues/3663)
-			for _, url := range clientURLs {
-				tctx, cancel := context.WithTimeout(context.Background(), timeout*time.Second)
-				defer cancel()
-				_, err = client.Status(tctx, url)
-				if err != nil {
-					// We do not need to log the error, etcd's client interceptor will log
-					// the actual underlying error
-					continue
-				}
-				// The endpoint did not return any error, therefore we can proceed
-				goto seed
-			}
-			// All endpoints returned an error, return the latest one
-			return err
+			wait := viper.GetBool(flagWait)
+			connected := false
+			for !connected {
+				for _, url := range clientURLs {
+					logger.Infof("attempting to connect to etcd server: %s", url)
 
-		seed:
+					tctx, cancel := context.WithTimeout(context.Background(), timeout*time.Second)
+					defer cancel()
+
+					_, err = client.Status(tctx, url)
+					if err != nil {
+						// We do not need to log the error, etcd's client interceptor will log
+						// the actual underlying error
+						continue
+					}
+					// The endpoint did not return any error, therefore we can proceed
+					connected = true
+					break
+				}
+				if !wait {
+					// All endpoints returned an error, return the latest one
+					return err
+				}
+			}
+
 			return seedCluster(client, seedConfig)
 		},
 	}
@@ -196,6 +206,7 @@ func InitCommand() *cobra.Command {
 	cmd.Flags().String(flagInitAdminPassword, "", "cluster admin password")
 	cmd.Flags().Bool(flagInteractive, false, "interactive mode")
 	cmd.Flags().String(flagTimeout, defaultTimeout, "timeout, in seconds, for failing to establish a connection to etcd")
+	cmd.Flags().Bool(flagWait, false, "wait indefinitely to establish a connection to etcd (takes precedence over timeout)")
 
 	setupErr = handleConfig(cmd, os.Args[1:], false)
 
