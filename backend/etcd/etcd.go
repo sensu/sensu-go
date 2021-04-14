@@ -230,6 +230,8 @@ func NewEtcd(config *Config) (*Etcd, error) {
 	cfg.Logger = "zap"
 	cfg.LogLevel = config.LogLevel
 
+	cfg.ExperimentalBackendFreelistType = "map"
+
 	e, err := embed.StartEtcd(cfg)
 	if err != nil {
 		return nil, err
