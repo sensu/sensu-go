@@ -32,16 +32,44 @@ const (
 	// EventsProcessedCounterVec is the name of the prometheus counter vec used to count events processed.
 	EventsProcessedCounterVec = "sensu_go_events_processed"
 
-	// EventsProcessedLabelName is the name of the label which stores prometheus values.
+	// EventsProcessedLabelName is the name of the label which describes if an
+	// event was processed successfully or not.
 	EventsProcessedLabelName = "status"
 
-	// EventsProcessedLabelSuccess is the name of the label used to count events processed successfully.
+	// EventsProcessedLabelSuccess is the value to use for the status label if
+	// an event has been processed successfully.
 	EventsProcessedLabelSuccess = "success"
+
+	// EventsProcessedLabelError is the value to use for the status label if
+	// an event has errored during processing.
+	EventsProcessedLabelError = "error"
+
+	// EventsProcessedTypeLabelName is the name of the label which describes
+	// what type of event is being processed.
+	EventsProcessedTypeLabelName = "type"
+
+	// EventsProcessedTypeLabelUnknown is the value to use for the type label if
+	// the event type is not known.
+	EventsProcessedTypeLabelUnknown = "unknown"
+
+	// EventsProcessedTypeLabelCheck is the value to use for the type label if
+	// the event has a check.
+	EventsProcessedTypeLabelCheck = "check"
+
+	// EventProcessedTypeLabelMetrics is the value to use for the type label if
+	// the event doesn't have a check (metrics-only).
+	EventsProcessedTypeLabelMetrics = "metrics"
+
+	// EventHandlerDuration is the name of the prometheus summary vec used to
+	// track average latencies of event handling.
+	EventHandlerDuration = "sensu_go_event_handler_duration"
+
+	// EventHandlersBusyGaugeVec is the name of the prometheus gauge vec used to
+	// track how many eventd handlers are busy processing events.
+	EventHandlersBusyGaugeVec = "sensu_go_event_handlers_busy"
 
 	// defaultStoreTimeout is the store timeout used if the backend did not configure one
 	defaultStoreTimeout = time.Minute
-
-	EventHandlerDuration = "sensu_go_event_handler_duration"
 )
 
 var (
@@ -55,7 +83,7 @@ var (
 			Name: EventsProcessedCounterVec,
 			Help: "The total number of processed events",
 		},
-		[]string{EventsProcessedLabelName},
+		[]string{EventsProcessedLabelName, EventsProcessedTypeLabelName},
 	)
 
 	eventHandlerDuration = prometheus.NewSummaryVec(
@@ -66,10 +94,19 @@ var (
 		},
 		[]string{},
 	)
+
+	eventHandlersBusy = prometheus.NewGaugeVec(
+		prometheus.GaugeOpts{
+			Name: EventHandlersBusyGaugeVec,
+			Help: "The number of event handlers currently processing",
+		},
+		[]string{},
+	)
 )
 
 func init() {
 	_ = prometheus.Register(eventHandlerDuration)
+	_ = prometheus.Register(eventHandlersBusy)
 }
 
 const deletedEventSentinel = -1
@@ -157,8 +194,11 @@ func New(ctx context.Context, c Config, opts ...Option) (*Eventd, error) {
 		}
 	}
 
-	// Initialize the most likely labels
-	EventsProcessed.WithLabelValues(EventsProcessedLabelSuccess)
+	// Initialize labels
+	EventsProcessed.WithLabelValues(EventsProcessedLabelSuccess, EventsProcessedTypeLabelCheck)
+	EventsProcessed.WithLabelValues(EventsProcessedLabelSuccess, EventsProcessedTypeLabelMetrics)
+	EventsProcessed.WithLabelValues(EventsProcessedLabelError, EventsProcessedTypeLabelUnknown)
+	EventsProcessed.WithLabelValues(EventsProcessedLabelError, EventsProcessedTypeLabelCheck)
 	_ = prometheus.Register(EventsProcessed)
 
 	return e, nil
@@ -209,6 +249,11 @@ func (e *Eventd) startHandlers() {
 					return
 
 				case msg, ok := <-e.eventChan:
+					eventHandlersBusy.WithLabelValues().Inc()
+					defer func() {
+						eventHandlersBusy.WithLabelValues().Dec()
+					}()
+
 					// The message bus will close channels when it's shut down which means
 					// we will end up reading from a closed channel. If it's closed,
 					// return from this goroutine and emit a fatal error. It is then
@@ -253,6 +298,7 @@ func (e *Eventd) handleMessage(msg interface{}) error {
 	}()
 	event, ok := msg.(*corev2.Event)
 	if !ok {
+		EventsProcessed.WithLabelValues(EventsProcessedLabelError, EventsProcessedTypeLabelUnknown).Inc()
 		return errors.New("received non-Event on event channel")
 	}
 
@@ -261,6 +307,7 @@ func (e *Eventd) handleMessage(msg interface{}) error {
 
 	// Validate the received event
 	if err := event.Validate(); err != nil {
+		EventsProcessed.WithLabelValues(EventsProcessedLabelError, EventsProcessedTypeLabelUnknown).Inc()
 		return err
 	}
 
@@ -268,6 +315,7 @@ func (e *Eventd) handleMessage(msg interface{}) error {
 	// publish the event without writing to the store
 	if !event.HasCheck() {
 		e.Logger.Println(event)
+		EventsProcessed.WithLabelValues(EventsProcessedLabelSuccess, EventsProcessedTypeLabelMetrics).Inc()
 		return e.bus.Publish(messaging.TopicEvent, event)
 	}
 
@@ -276,6 +324,7 @@ func (e *Eventd) handleMessage(msg interface{}) error {
 	// Create a proxy entity if required and update the event's entity with it,
 	// but only if the event's entity is not an agent.
 	if err := createProxyEntity(event, e.store); err != nil {
+		EventsProcessed.WithLabelValues(EventsProcessedLabelError, EventsProcessedTypeLabelCheck).Inc()
 		return err
 	}
 
@@ -288,6 +337,7 @@ func (e *Eventd) handleMessage(msg interface{}) error {
 	// Merge the new event with the stored event if a match is found
 	event, prevEvent, err := e.eventStore.UpdateEvent(ctx, event)
 	if err != nil {
+		EventsProcessed.WithLabelValues(EventsProcessedLabelError, EventsProcessedTypeLabelCheck).Inc()
 		return err
 	}
 
@@ -304,6 +354,7 @@ func (e *Eventd) handleMessage(msg interface{}) error {
 		// Reset the switch
 		timeout := int64(event.Check.Ttl)
 		if err := switches.Alive(context.TODO(), switchKey, timeout); err != nil {
+			EventsProcessed.WithLabelValues(EventsProcessedLabelError, EventsProcessedTypeLabelCheck).Inc()
 			return err
 		}
 	} else if (prevEvent != nil && prevEvent.Check.Ttl > 0) || event.Check.Ttl == deletedEventSentinel {
@@ -318,7 +369,7 @@ func (e *Eventd) handleMessage(msg interface{}) error {
 
 NOTTL:
 
-	EventsProcessed.WithLabelValues(EventsProcessedLabelSuccess).Inc()
+	EventsProcessed.WithLabelValues(EventsProcessedLabelSuccess, EventsProcessedTypeLabelCheck).Inc()
 
 	return e.bus.Publish(messaging.TopicEvent, event)
 }
