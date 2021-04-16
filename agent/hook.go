@@ -21,6 +21,9 @@ import (
 // ExecuteHooks executes all hooks contained in a check request based on
 // the check status code of the check request
 func (a *Agent) ExecuteHooks(ctx context.Context, request *corev2.CheckRequest, event *corev2.Event, assets map[string]*corev2.AssetList) []*corev2.Hook {
+	ctx, span := tracer.Start(ctx, "Agent/ExecuteHooks")
+	defer span.End()
+
 	executedHooks := []*corev2.Hook{}
 	for _, hookList := range request.Config.CheckHooks {
 		// find the hookList with the corresponding type
@@ -65,6 +68,9 @@ func errorHookConfig(namespace, name string, err error) *corev2.HookConfig {
 }
 
 func (a *Agent) executeHook(ctx context.Context, hookConfig *corev2.HookConfig, event *corev2.Event, hookAssets map[string]*corev2.AssetList) *corev2.Hook {
+	ctx, span := tracer.Start(ctx, "Agent/executeHook")
+	defer span.End()
+
 	// Instantiate Hook
 	hook := &corev2.Hook{
 		HookConfig: *hookConfig,
@@ -102,6 +108,7 @@ func (a *Agent) executeHook(ctx context.Context, hookConfig *corev2.HookConfig, 
 	assets, err := asset.GetAll(ctx, a.assetGetter, assetList)
 	if err != nil {
 		logger.WithError(err).WithFields(fields).Error("error getting assets for hook")
+		span.RecordError(err)
 		return failedHook(hook)
 	}
 
@@ -114,16 +121,19 @@ func (a *Agent) executeHook(ctx context.Context, hookConfig *corev2.HookConfig, 
 		path, err := lookPath(strings.Split(hookConfig.Command, " ")[0], env)
 		if err != nil {
 			logger.WithFields(fields).WithError(err).Error("unable to find the executable path")
+			span.RecordError(err)
 			return failedHook(hook)
 		}
 		file, err := os.Open(path)
 		if err != nil {
 			logger.WithFields(fields).WithError(err).Error("unable to open executable")
+			span.RecordError(err)
 			return failedHook(hook)
 		}
 		verifier := asset.Sha512Verifier{}
 		if err := verifier.Verify(file, matchedEntry.Sha512); err != nil {
 			logger.WithFields(fields).WithError(err).Error("hook sha does not match agent allow list")
+			span.RecordError(err)
 			return failedHook(hook)
 		}
 	}
@@ -148,7 +158,7 @@ func (a *Agent) executeHook(ctx context.Context, hookConfig *corev2.HookConfig, 
 		ex.Input = string(input)
 	}
 
-	hookExec, err := a.executor.Execute(context.Background(), ex)
+	hookExec, err := a.executor.Execute(ctx, ex)
 	if err != nil {
 		hook.Output = err.Error()
 	} else {

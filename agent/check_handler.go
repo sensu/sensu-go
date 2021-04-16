@@ -19,6 +19,7 @@ import (
 	"github.com/sensu/sensu-go/transport"
 	"github.com/sensu/sensu-go/util/environment"
 	"github.com/sirupsen/logrus"
+	"go.opentelemetry.io/otel/attribute"
 )
 
 const (
@@ -30,11 +31,17 @@ const (
 // handleCheck is the check message handler.
 // TODO(greg): At some point, we're going to need max parallelism.
 func (a *Agent) handleCheck(ctx context.Context, payload []byte) error {
+	ctx, span := tracer.Start(ctx, "Agent/handleCheck")
+	defer span.End()
+
 	request := &corev2.CheckRequest{}
 	if err := a.unmarshal(payload, request); err != nil {
+		span.RecordError(err)
 		return err
 	} else if request == nil {
-		return errors.New("given check configuration appears invalid")
+		err = errors.New("given check configuration appears invalid")
+		span.RecordError(err)
+		return err
 	}
 
 	checkConfig := request.Config
@@ -48,21 +55,30 @@ func (a *Agent) handleCheck(ctx context.Context, payload []byte) error {
 		a.sendFailure(event, err)
 	}
 
+	span.SetAttributes(
+		attribute.String("check.key", checkKey(request)),
+	)
+
 	if a.config.DisableAssets && len(request.Assets) > 0 {
 		err := errors.New("check requested assets, but they are disabled on this agent")
 		sendFailure(err)
+		span.RecordError(err)
 		return nil
 	}
 
 	// only schedule check execution if its not already in progress
 	// ** check hooks are part of a checks execution
 	if a.checkInProgress(request) {
-		return fmt.Errorf("check execution still in progress: %s", checkConfig.Name)
+		err := fmt.Errorf("check execution still in progress: %s", checkConfig.Name)
+		span.RecordError(err)
+		return err
 	}
 
 	// Validate that the given check is valid.
 	if err := request.Config.Validate(); err != nil {
-		sendFailure(fmt.Errorf("given check is invalid: %s", err))
+		err := fmt.Errorf("given check is invalid: %s", err)
+		sendFailure(err)
+		span.RecordError(err)
 		return nil
 	}
 
@@ -76,6 +92,9 @@ func (a *Agent) handleCheck(ctx context.Context, payload []byte) error {
 
 // handleCheckNoop is used to discard incoming check requests
 func (a *Agent) handleCheckNoop(ctx context.Context, payload []byte) error {
+	_, span := tracer.Start(ctx, "Agent/handleCheckNoop")
+	defer span.End()
+
 	return nil
 }
 
@@ -107,6 +126,9 @@ func (a *Agent) removeInProgress(request *corev2.CheckRequest) {
 }
 
 func (a *Agent) executeCheck(ctx context.Context, request *corev2.CheckRequest, entity *corev2.Entity) {
+	ctx, span := tracer.Start(ctx, "Agent/executeCheck")
+	defer span.End()
+
 	a.addInProgress(request)
 	defer a.removeInProgress(request)
 
@@ -237,7 +259,8 @@ func (a *Agent) executeCheck(ctx context.Context, request *corev2.CheckRequest, 
 		ex.Input = string(input)
 	}
 
-	checkExec, err := a.executor.Execute(context.Background(), ex)
+	// checkExec, err := a.executor.Execute(context.Background(), ex)
+	checkExec, err := a.executor.Execute(ctx, ex)
 	if err != nil {
 		event.Check.Output = err.Error()
 		checkExec.Status = 3
@@ -281,6 +304,7 @@ func (a *Agent) executeCheck(ctx context.Context, request *corev2.CheckRequest, 
 	msg, err := a.marshal(event)
 	if err != nil {
 		logger.WithError(err).Error("error marshaling check result")
+		span.RecordError(err)
 		return
 	}
 

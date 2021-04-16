@@ -198,6 +198,10 @@ type Config struct {
 
 	// PrometheusBinding, if set, serves prometheus metrics on this address. (e.g. localhost:8888)
 	PrometheusBinding string
+
+	TracingEnabled        bool
+	TracingAgentAddress   string
+	TracingServiceNameKey string
 }
 
 // StatsdServerConfig contains the statsd server configuration

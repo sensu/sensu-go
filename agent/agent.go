@@ -23,6 +23,8 @@ import (
 	"github.com/google/uuid"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
 	"golang.org/x/time/rate"
 
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
@@ -34,6 +36,7 @@ import (
 	"github.com/sensu/sensu-go/process"
 	"github.com/sensu/sensu-go/system"
 	"github.com/sensu/sensu-go/transport"
+	otelutil "github.com/sensu/sensu-go/util/otel"
 	"github.com/sensu/sensu-go/util/retry"
 	utilstrings "github.com/sensu/sensu-go/util/strings"
 	"github.com/sirupsen/logrus"
@@ -256,6 +259,9 @@ func (a *Agent) refreshSystemInfoPeriodically(ctx context.Context) {
 	for {
 		select {
 		case <-ticker.C:
+			ctx, span := tracer.Start(ctx, "Agent/refreshSystemInfoPeriodically/tick")
+			defer span.End()
+
 			ctx, cancel := context.WithTimeout(ctx, time.Duration(DefaultSystemInfoRefreshInterval)*time.Second/2)
 			defer cancel()
 			if err := a.RefreshSystemInfo(ctx); err != nil {
@@ -297,6 +303,9 @@ func (a *Agent) buildTransportHeaderMap() http.Header {
 // 8. Start sending periodic keepalives.
 // 9. Start the API server, shutdown the agent if doing so fails.
 func (a *Agent) Run(ctx context.Context) error {
+	tracerCf, _ := otelutil.InitTracer(a.config.TracingEnabled, a.config.TracingAgentAddress, a.config.TracingServiceNameKey)
+	defer tracerCf()
+
 	ctx, cancel := context.WithCancel(ctx)
 	defer func() {
 		if err := a.apiQueue.Close(); err != nil {
@@ -395,9 +404,12 @@ func (a *Agent) Run(ctx context.Context) error {
 	return nil
 }
 
-func (a *Agent) connectionManager(ctx context.Context, cancel context.CancelFunc) {
+func (a *Agent) connectionManager(gctx context.Context, cancel context.CancelFunc) {
 	defer logger.Info("shutting down connection manager")
 	for {
+		ctx, span := tracer.Start(gctx, "Agent/connectionManager")
+		defer span.End()
+
 		// Make sure the process is not shutting down before trying to connect
 		if ctx.Err() != nil {
 			logger.Warning("not retrying to connect")
@@ -435,7 +447,7 @@ func (a *Agent) connectionManager(ctx context.Context, cancel context.CancelFunc
 			cancel()
 		}
 
-		connCtx, connCancel := context.WithCancel(ctx)
+		connCtx, connCancel := context.WithCancel(gctx)
 		defer connCancel()
 
 		// Start sending hearbeats to the backend
@@ -473,18 +485,23 @@ func (a *Agent) connectionManager(ctx context.Context, cancel context.CancelFunc
 	}
 }
 
-func (a *Agent) receiveLoop(ctx context.Context, cancel context.CancelFunc, conn transport.Transport) {
+func (a *Agent) receiveLoop(gctx context.Context, cancel context.CancelFunc, conn transport.Transport) {
 	defer cancel()
 	for {
+		ctx, span := tracer.Start(gctx, "Agent/receiveLoop", trace.WithSpanKind(trace.SpanKindClient))
+		defer span.End()
+
 		if err := ctx.Err(); err != nil {
 			if err := conn.Close(); err != nil {
 				logger.WithError(err).Error("error closing websocket connection")
 			}
 			return
 		}
+
 		m, err := conn.Receive()
 		if err != nil {
 			logger.WithError(err).Error("transport receive error")
+			span.RecordError(err)
 			return
 		}
 		messagesReceived.WithLabelValues().Inc()
@@ -517,7 +534,7 @@ func logEvent(e *corev2.Event) {
 	logger.WithFields(fields).Info("sending event to backend")
 }
 
-func (a *Agent) sendLoop(ctx context.Context, cancel context.CancelFunc, conn transport.Transport) error {
+func (a *Agent) sendLoop(gctx context.Context, cancel context.CancelFunc, conn transport.Transport) error {
 	defer cancel()
 	keepalive := time.NewTicker(time.Duration(a.config.KeepaliveInterval) * time.Second)
 	defer keepalive.Stop()
@@ -526,24 +543,36 @@ func (a *Agent) sendLoop(ctx context.Context, cancel context.CancelFunc, conn tr
 		return err
 	}
 	for {
+		ctx, span := tracer.Start(gctx, "Agent/sendLoop", trace.WithSpanKind(trace.SpanKindClient))
+		defer span.End()
+
 		select {
 		case <-ctx.Done():
 			if err := conn.Close(); err != nil {
 				logger.WithError(err).Error("error closing websocket connection")
+				span.RecordError(err)
 				return err
 			}
 			return nil
 		case msg := <-a.sendq:
+			_, span2 := tracer.Start(ctx, "Agent/sendLoop/message", trace.WithSpanKind(trace.SpanKindServer))
+			defer span2.End()
+
 			if err := conn.Send(msg); err != nil {
 				messagesDropped.WithLabelValues().Inc()
 				logger.WithError(err).Error("error sending message over websocket")
+				span2.RecordError(err)
 				return err
 			}
 			messagesSent.WithLabelValues().Inc()
 		case <-keepalive.C:
+			_, span2 := tracer.Start(ctx, "Agent/sendLoop/keepalive", trace.WithSpanKind(trace.SpanKindServer))
+			defer span2.End()
+
 			if err := conn.Send(a.newKeepalive()); err != nil {
 				messagesDropped.WithLabelValues().Inc()
 				logger.WithError(err).Error("error sending message over websocket")
+				span2.RecordError(err)
 				return err
 			}
 			messagesSent.WithLabelValues().Inc()
@@ -671,6 +700,9 @@ func (a *Agent) StartStatsd(ctx context.Context) {
 func (a *Agent) connectWithBackoff(ctx context.Context) (transport.Transport, error) {
 	var conn transport.Transport
 
+	ctx, span := tracer.Start(ctx, "Agent/connectWithBackoff")
+	defer span.End()
+
 	backoff := retry.ExponentialBackoff{
 		InitialDelayInterval: 10 * time.Millisecond,
 		MaxDelayInterval:     10 * time.Second,
@@ -681,6 +713,10 @@ func (a *Agent) connectWithBackoff(ctx context.Context) (transport.Transport, er
 	err := backoff.Retry(func(retry int) (bool, error) {
 		backendURL := a.backendSelector.Select()
 
+		_, span2 := tracer.Start(ctx, "Agent/connectWithBackoff/retry")
+		span2.SetAttributes(attribute.String("backend.url", backendURL))
+		defer span2.End()
+
 		logger.Infof("connecting to backend URL %q", backendURL)
 		a.header.Set("Accept", agentd.ProtobufSerializationHeader)
 		logger.WithField("header", fmt.Sprintf("Accept: %s", agentd.ProtobufSerializationHeader)).Debug("setting header")
@@ -688,6 +724,7 @@ func (a *Agent) connectWithBackoff(ctx context.Context) (transport.Transport, er
 		if err != nil {
 			websocketErrors.WithLabelValues().Inc()
 			logger.WithError(err).Error("reconnection attempt failed")
+			span2.RecordError(err)
 			return false, nil
 		}
 
