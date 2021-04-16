@@ -24,7 +24,7 @@ import (
 	"github.com/sensu/sensu-go/backend/store/provider"
 	"github.com/sensu/sensu-go/version"
 	"github.com/sirupsen/logrus"
-	"go.etcd.io/etcd/clientv3"
+	"go.etcd.io/etcd/client/v3"
 )
 
 const (

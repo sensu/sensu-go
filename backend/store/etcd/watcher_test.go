@@ -12,8 +12,8 @@ import (
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/testing/fixture"
 	"github.com/sirupsen/logrus/hooks/test"
-	"go.etcd.io/etcd/clientv3"
-	"go.etcd.io/etcd/integration"
+	"go.etcd.io/etcd/client/v3"
+	"go.etcd.io/etcd/tests/v3/integration"
 )
 
 const timeout = 10
