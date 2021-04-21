@@ -12,6 +12,8 @@ import (
 	"os"
 	"strings"
 
+	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
+	"go.opentelemetry.io/otel/semconv"
 	"golang.org/x/time/rate"
 )
 
@@ -36,7 +38,11 @@ type urlGetter func(context.Context, string, string, map[string]string) (io.Read
 
 // Get the target URL and return an io.ReadCloser
 func httpGet(ctx context.Context, path, trustedCAFile string, headers map[string]string) (io.ReadCloser, error) {
-	client := &http.Client{}
+	ctx, span := tracer.Start(ctx, "asset/httpGet")
+	span.SetAttributes(semconv.HTTPURLKey.String(path))
+	defer span.End()
+
+	client := &http.Client{Transport: otelhttp.NewTransport(http.DefaultTransport)}
 
 	if trustedCAFile != "" {
 		rootCAs, err := x509.SystemCertPool()
@@ -59,12 +65,12 @@ func httpGet(ctx context.Context, path, trustedCAFile string, headers map[string
 		appendCerts(rootCAs)
 
 		client = &http.Client{
-			Transport: &http.Transport{
+			Transport: otelhttp.NewTransport(&http.Transport{
 				Proxy: http.ProxyFromEnvironment,
 				TLSClientConfig: &tls.Config{
 					RootCAs: rootCAs,
 				},
-			},
+			}),
 		}
 	}
 
@@ -102,6 +108,10 @@ type httpFetcher struct {
 // Fetch the file found at the specified url, and return the file or an
 // error indicating why the fetch failed.
 func (h *httpFetcher) Fetch(ctx context.Context, url string, headers map[string]string) (*os.File, error) {
+	ctx, span := tracer.Start(ctx, "asset.httpFetcher/Fetch")
+	span.SetAttributes(semconv.HTTPURLKey.String(url))
+	defer span.End()
+
 	if h.URLGetter == nil {
 		h.URLGetter = httpGet
 	}

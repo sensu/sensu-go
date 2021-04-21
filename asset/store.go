@@ -9,6 +9,9 @@ import (
 
 // GetAssets retrieves all Assets from the store if contained in the list of asset names
 func GetAssets(ctx context.Context, store store.Store, assetList []string) []types.Asset {
+	ctx, span := tracer.Start(ctx, "asset/GetAssets")
+	defer span.End()
+
 	assets := []types.Asset{}
 
 	for _, assetName := range assetList {
