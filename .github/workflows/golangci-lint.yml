@@ -3,12 +3,12 @@ name: golangci-lint
 on:
   push:
     tags:
-      - v*
+      - 'v*'
     branches:
       - main
   pull_request:
     branches:
-      - *
+      - '*'
 
 env:
   GO_VERSION: 1.16.3
