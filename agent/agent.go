@@ -373,7 +373,7 @@ func (a *Agent) Run(ctx context.Context) error {
 	// Increment the waitgroup counter here too in case none of the components
 	// above were started, and rely on the system info collector to decrement it
 	// once it exits
-	go a.connectionManager(ctx)
+	go a.connectionManager(ctx, cancel)
 	go a.refreshSystemInfoPeriodically(ctx)
 	go a.handleAPIQueue(ctx)
 
@@ -397,7 +397,7 @@ func (a *Agent) Run(ctx context.Context) error {
 	return nil
 }
 
-func (a *Agent) connectionManager(ctx context.Context) {
+func (a *Agent) connectionManager(ctx context.Context, cancel context.CancelFunc) {
 	defer logger.Info("shutting down connection manager")
 	for {
 		// Make sure the process is not shutting down before trying to connect
@@ -436,10 +436,10 @@ func (a *Agent) connectionManager(ctx context.Context) {
 			cancel()
 		}
 
-		connectionCtx, cancel := context.WithCancel(ctx)
+		connCtx, connCancel := context.WithCancel(ctx)
 
 		// Start sending hearbeats to the backend
-		conn.Heartbeat(connectionCtx, a.config.BackendHeartbeatInterval, a.config.BackendHeartbeatTimeout)
+		conn.Heartbeat(connCtx, a.config.BackendHeartbeatInterval, a.config.BackendHeartbeatTimeout)
 
 		a.connectedMu.Lock()
 		a.connected = true
@@ -447,7 +447,7 @@ func (a *Agent) connectionManager(ctx context.Context) {
 
 		newConnections.WithLabelValues().Inc()
 
-		go a.receiveLoop(connectionCtx, cancel, conn)
+		go a.receiveLoop(connCtx, connCancel, conn)
 
 		// Block until we receive an entity config, or the grace period expires,
 		// unless the agent manages its entity
@@ -457,7 +457,7 @@ func (a *Agent) connectionManager(ctx context.Context) {
 				logger.Debug("successfully received the initial entity config")
 			case <-time.After(entityConfigGracePeriod):
 				logger.Warning("the initial entity config was never received, using the local entity")
-			case <-connectionCtx.Done():
+			case <-connCtx.Done():
 				// The connection was closed before we received an entity config or we
 				// reached the grace period
 				continue
@@ -467,7 +467,7 @@ func (a *Agent) connectionManager(ctx context.Context) {
 		// Handle check config requests
 		a.handler.AddHandler(corev2.CheckRequestType, a.handleCheck)
 
-		if err := a.sendLoop(connectionCtx, cancel, conn); err != nil && err != connectionCtx.Err() {
+		if err := a.sendLoop(connCtx, connCancel, conn); err != nil && err != connCtx.Err() {
 			logger.WithError(err).Error("error sending messages")
 		}
 	}
