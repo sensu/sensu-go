@@ -325,9 +325,9 @@ func (a *Agent) Run(ctx context.Context) error {
 		return errors.New("no backend URLs defined")
 	}
 
-	logger.Debug("validating backend URLs", a.config.BackendURLs)
+	logger.Debug("validating backend URLs: ", a.config.BackendURLs)
 	for _, burl := range a.config.BackendURLs {
-		logger.Debug("validating backend URL", burl)
+		logger.Debug("validating backend URL: ", burl)
 		if u, err := url.Parse(burl); err != nil {
 			return fmt.Errorf("bad backend URL (%s): %s", burl, err)
 		} else {
@@ -377,15 +377,10 @@ func (a *Agent) Run(ctx context.Context) error {
 	go a.refreshSystemInfoPeriodically(ctx)
 	go a.handleAPIQueue(ctx)
 
-	// Listen for a signal to gracefully shutdown the agent
-	sigs := make(chan os.Signal, 1)
-	signal.Notify(sigs, os.Interrupt, syscall.SIGTERM)
+	// Wait for context to complete
 	select {
 	case <-ctx.Done():
 		logger.Info("agent shutting down")
-	case s := <-sigs:
-		logger.Infof("signal %q received, shutting down agent", s)
-		cancel()
 	}
 
 	// Wait for all goroutines to gracefully shutdown, but not too long
@@ -615,10 +610,11 @@ func (a *Agent) StartAPI(ctx context.Context) {
 	a.api = newServer(a)
 
 	// Allow Stop() to block until the HTTP server shuts down.
-	a.wg.Add(1)
+	a.wg.Add(2)
 
 	// Start the HTTP API server
 	go func() {
+		defer a.wg.Done()
 		logger.Info("starting api on address: ", a.api.Addr)
 
 		if err := a.api.ListenAndServe(); err != http.ErrServerClosed {
@@ -635,7 +631,7 @@ func (a *Agent) StartAPI(ctx context.Context) {
 		<-ctx.Done()
 		logger.Info("API shutting down")
 
-		ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
+		ctx, cancel := context.WithTimeout(ctx, 1*time.Second)
 		defer cancel()
 
 		if err := a.api.Shutdown(ctx); err != nil {
@@ -713,4 +709,16 @@ func (a *Agent) connectWithBackoff(ctx context.Context) (transport.Transport, er
 	})
 
 	return conn, err
+}
+
+// GracefulShutdown listens for the SIGINT & SIGTERM signals and cancel the
+// contexts once a signal is received.
+func GracefulShutdown(cancel context.CancelFunc) {
+	var shutdownSignal = make(chan os.Signal)
+	signal.Notify(shutdownSignal, syscall.SIGINT, syscall.SIGTERM)
+	go func() {
+		s := <-shutdownSignal
+		logger.Infof("signal %q received, shutting down agent", s)
+		cancel()
+	}()
 }
