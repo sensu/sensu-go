@@ -11,6 +11,7 @@ import (
 	"strings"
 	"sync"
 	"testing"
+	"time"
 
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	sensutesting "github.com/sensu/sensu-go/testing"
@@ -304,4 +305,56 @@ func TestInvalidKeepaliveTimeout(t *testing.T) {
 	if _, err := NewAgent(cfg); err == nil {
 		t.Error("expected non-nil error")
 	}
+}
+
+// TestConnectionManager validates the connection manager reconnects after a
+// connection is closed. It also validates that it doesn't try to reconnect after
+// the shutdown process is started.
+func TestConnectionManager(t *testing.T) {
+	connectCount := 0
+
+	server := transport.NewServer()
+	agentCtx, agentCancel := context.WithCancel(context.Background())
+
+	// Server handling the connection requests from the connection manager
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		conn, err := server.Serve(w, r)
+		require.NoError(t, err)
+
+		if connectCount == 0 {
+			// First connection
+			// Close the connection after 2 seconds and wait for a reconnect
+			connectCount++
+			time.Sleep(2 * time.Second)
+			_ = conn.Close()
+		} else if connectCount == 1 {
+			// Second connection (reconnect)
+			// Shutdown the agent, should not attempt to reconnect
+			connectCount++
+			time.Sleep(2 * time.Second)
+			agentCancel()
+			_ = conn.Close()
+		} else {
+			// Beyond - should not happen
+			t.Fatal("should not attempt to reconnect after shutdown")
+		}
+	}))
+	defer ts.Close()
+
+	wsURL := strings.Replace(ts.URL, "http", "ws", 1)
+	cfg, cleanup := FixtureConfig()
+	defer cleanup()
+	cfg.BackendURLs = []string{wsURL}
+	cfg.API.Port = 0
+	cfg.Socket.Port = 0
+	ta, err := NewAgent(cfg)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err = ta.Run(agentCtx); err != nil {
+		t.Fatal(err)
+	}
+
+	// Give time for a potential reconnect by the connection manager
+	time.Sleep(1 * time.Second)
 }

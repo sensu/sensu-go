@@ -405,6 +405,12 @@ func (a *Agent) Run(ctx context.Context) error {
 func (a *Agent) connectionManager(ctx context.Context, cancel context.CancelFunc) {
 	defer logger.Info("shutting down connection manager")
 	for {
+		// Make sure the process is not shutting down before trying to connect
+		if ctx.Err() != nil {
+			logger.Warning("not retrying to connect")
+			return
+		}
+
 		a.connectedMu.Lock()
 		a.connected = false
 		a.connectedMu.Unlock()
