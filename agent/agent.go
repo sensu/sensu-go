@@ -631,7 +631,7 @@ func (a *Agent) StartAPI(ctx context.Context) {
 		<-ctx.Done()
 		logger.Info("API shutting down")
 
-		ctx, cancel := context.WithTimeout(ctx, 1*time.Second)
+		ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
 		defer cancel()
 
 		if err := a.api.Shutdown(ctx); err != nil {
@@ -718,7 +718,7 @@ func GracefulShutdown(cancel context.CancelFunc) {
 	signal.Notify(shutdownSignal, syscall.SIGINT, syscall.SIGTERM)
 	go func() {
 		s := <-shutdownSignal
-		logger.Infof("signal %q received, shutting down agent", s)
+		logger.Warnf("signal %q received, shutting down agent", s)
 		cancel()
 	}()
 }
