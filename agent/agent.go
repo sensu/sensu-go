@@ -373,7 +373,7 @@ func (a *Agent) Run(ctx context.Context) error {
 	// Increment the waitgroup counter here too in case none of the components
 	// above were started, and rely on the system info collector to decrement it
 	// once it exits
-	go a.connectionManager(ctx, cancel)
+	go a.connectionManager(ctx)
 	go a.refreshSystemInfoPeriodically(ctx)
 	go a.handleAPIQueue(ctx)
 
@@ -397,13 +397,12 @@ func (a *Agent) Run(ctx context.Context) error {
 	return nil
 }
 
-func (a *Agent) connectionManager(ctx context.Context, cancel context.CancelFunc) {
+func (a *Agent) connectionManager(ctx context.Context) {
 	defer logger.Info("shutting down connection manager")
 	for {
 		// Make sure the process is not shutting down before trying to connect
 		if ctx.Err() != nil {
 			logger.Warning("not retrying to connect")
-			return
 		}
 
 		a.connectedMu.Lock()
@@ -437,10 +436,10 @@ func (a *Agent) connectionManager(ctx context.Context, cancel context.CancelFunc
 			cancel()
 		}
 
-		ctx, cancel := context.WithCancel(ctx)
+		connectionCtx, cancel := context.WithCancel(ctx)
 
 		// Start sending hearbeats to the backend
-		conn.Heartbeat(ctx, a.config.BackendHeartbeatInterval, a.config.BackendHeartbeatTimeout)
+		conn.Heartbeat(connectionCtx, a.config.BackendHeartbeatInterval, a.config.BackendHeartbeatTimeout)
 
 		a.connectedMu.Lock()
 		a.connected = true
@@ -448,7 +447,7 @@ func (a *Agent) connectionManager(ctx context.Context, cancel context.CancelFunc
 
 		newConnections.WithLabelValues().Inc()
 
-		go a.receiveLoop(ctx, cancel, conn)
+		go a.receiveLoop(connectionCtx, cancel, conn)
 
 		// Block until we receive an entity config, or the grace period expires,
 		// unless the agent manages its entity
@@ -458,7 +457,7 @@ func (a *Agent) connectionManager(ctx context.Context, cancel context.CancelFunc
 				logger.Debug("successfully received the initial entity config")
 			case <-time.After(entityConfigGracePeriod):
 				logger.Warning("the initial entity config was never received, using the local entity")
-			case <-ctx.Done():
+			case <-connectionCtx.Done():
 				// The connection was closed before we received an entity config or we
 				// reached the grace period
 				continue
@@ -468,7 +467,7 @@ func (a *Agent) connectionManager(ctx context.Context, cancel context.CancelFunc
 		// Handle check config requests
 		a.handler.AddHandler(corev2.CheckRequestType, a.handleCheck)
 
-		if err := a.sendLoop(ctx, cancel, conn); err != nil && err != ctx.Err() {
+		if err := a.sendLoop(connectionCtx, cancel, conn); err != nil && err != connectionCtx.Err() {
 			logger.WithError(err).Error("error sending messages")
 		}
 	}
@@ -477,6 +476,13 @@ func (a *Agent) connectionManager(ctx context.Context, cancel context.CancelFunc
 func (a *Agent) receiveLoop(ctx context.Context, cancel context.CancelFunc, conn transport.Transport) {
 	defer cancel()
 	for {
+		select {
+		case <-ctx.Done():
+			if err := conn.Close(); err != nil {
+				logger.WithError(err).Error("error closing websocket connection")
+			}
+			return
+		}
 		m, err := conn.Receive()
 		if err != nil {
 			logger.WithError(err).Error("transport receive error")
