@@ -356,5 +356,5 @@ func TestConnectionManager(t *testing.T) {
 	}
 
 	// Give time for a potential reconnect by the connection manager
-	time.Sleep(1 * time.Second)
+	time.Sleep(3 * time.Second)
 }
