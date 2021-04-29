@@ -401,6 +401,7 @@ func (a *Agent) connectionManager(ctx context.Context, cancel context.CancelFunc
 		// Make sure the process is not shutting down before trying to connect
 		if ctx.Err() != nil {
 			logger.Warning("not retrying to connect")
+			return
 		}
 
 		a.connectedMu.Lock()
@@ -435,6 +436,7 @@ func (a *Agent) connectionManager(ctx context.Context, cancel context.CancelFunc
 		}
 
 		connCtx, connCancel := context.WithCancel(ctx)
+		defer connCancel()
 
 		// Start sending hearbeats to the backend
 		conn.Heartbeat(connCtx, a.config.BackendHeartbeatInterval, a.config.BackendHeartbeatTimeout)
