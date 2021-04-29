@@ -476,13 +476,11 @@ func (a *Agent) connectionManager(ctx context.Context, cancel context.CancelFunc
 func (a *Agent) receiveLoop(ctx context.Context, cancel context.CancelFunc, conn transport.Transport) {
 	defer cancel()
 	for {
-		select {
-		case <-ctx.Done():
+		if err := ctx.Err(); err != nil {
 			if err := conn.Close(); err != nil {
 				logger.WithError(err).Error("error closing websocket connection")
 			}
 			return
-		default:
 		}
 		m, err := conn.Receive()
 		if err != nil {
