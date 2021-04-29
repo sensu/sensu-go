@@ -17,6 +17,7 @@ var logger = logrus.WithFields(logrus.Fields{
 
 func main() {
 	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
 
 	// Define our root command and add our commands
 	rootCmd := &cobra.Command{
