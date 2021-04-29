@@ -378,10 +378,8 @@ func (a *Agent) Run(ctx context.Context) error {
 	go a.handleAPIQueue(ctx)
 
 	// Wait for context to complete
-	select {
-	case <-ctx.Done():
-		logger.Info("agent shutting down")
-	}
+	<-ctx.Done()
+	logger.Info("agent shutting down")
 
 	// Wait for all goroutines to gracefully shutdown, but not too long
 	done := make(chan struct{})
@@ -482,6 +480,7 @@ func (a *Agent) receiveLoop(ctx context.Context, cancel context.CancelFunc, conn
 				logger.WithError(err).Error("error closing websocket connection")
 			}
 			return
+		default:
 		}
 		m, err := conn.Receive()
 		if err != nil {
