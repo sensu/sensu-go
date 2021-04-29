@@ -115,6 +115,8 @@ func (a *Agent) handleAPIQueue(ctx context.Context) {
 	}()
 	for {
 		select {
+		case <-ctx.Done():
+			return
 		case message, ok := <-ch:
 			if !ok {
 				return
@@ -133,8 +135,6 @@ func (a *Agent) handleAPIQueue(ctx context.Context) {
 				},
 			}
 			a.sendMessage(msg)
-		case <-ctx.Done():
-			return
 		}
 	}
 }

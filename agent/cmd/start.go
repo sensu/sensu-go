@@ -191,13 +191,20 @@ func NewAgentConfig(cmd *cobra.Command) (*agent.Config, error) {
 // NewAgentRunE intializes and executes sensu-agent, and returns any errors
 // encountered
 func NewAgentRunE(initialize InitializeFunc, cmd *cobra.Command) func(cmd *cobra.Command, args []string) error {
+	return NewAgentRunEWithContext(initialize, cmd, context.Background())
+}
+
+// NewAgentRunEWithContext is like NewAgentRunE, but takes a context.
+func NewAgentRunEWithContext(initialize InitializeFunc, cmd *cobra.Command, ctx context.Context) func(cmd *cobra.Command, args []string) error {
 	return func(cmd *cobra.Command, args []string) error {
+		ctx, cancel := context.WithCancel(ctx)
+		defer cancel()
+
 		cfg, err := NewAgentConfig(cmd)
 		if err != nil {
 			return err
 		}
-		ctx, cancel := context.WithCancel(context.Background())
-		defer cancel()
+
 		sensuAgent, err := initialize(ctx, cfg)
 		if err != nil {
 			return err
@@ -220,6 +227,12 @@ func StartCommand(initialize InitializeFunc) *cobra.Command {
 // StartCommandWithError is like StartCommand, but returns an error instead of
 // delegating the error handling to the RunE method.
 func StartCommandWithError(initialize InitializeFunc) (*cobra.Command, error) {
+	return StartCommandWithErrorAndContext(initialize, context.Background())
+}
+
+// StartCommandWithErrorAndContext is like StartCommandWithError, but takes a
+// context.
+func StartCommandWithErrorAndContext(initialize InitializeFunc, ctx context.Context) (*cobra.Command, error) {
 	cmd := &cobra.Command{
 		Use:           "start",
 		Short:         "start the sensu agent",
@@ -227,7 +240,7 @@ func StartCommandWithError(initialize InitializeFunc) (*cobra.Command, error) {
 		SilenceUsage:  true,
 	}
 
-	cmd.RunE = NewAgentRunE(initialize, cmd)
+	cmd.RunE = NewAgentRunEWithContext(initialize, cmd, ctx)
 	return cmd, handleConfig(cmd, os.Args[1:])
 }
 

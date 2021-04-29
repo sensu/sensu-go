@@ -325,9 +325,9 @@ func (a *Agent) Run(ctx context.Context) error {
 		return errors.New("no backend URLs defined")
 	}
 
-	logger.Debug("validating backend URLs", a.config.BackendURLs)
+	logger.Debug("validating backend URLs: ", a.config.BackendURLs)
 	for _, burl := range a.config.BackendURLs {
-		logger.Debug("validating backend URL", burl)
+		logger.Debug("validating backend URL: ", burl)
 		if u, err := url.Parse(burl); err != nil {
 			return fmt.Errorf("bad backend URL (%s): %s", burl, err)
 		} else {
@@ -377,16 +377,9 @@ func (a *Agent) Run(ctx context.Context) error {
 	go a.refreshSystemInfoPeriodically(ctx)
 	go a.handleAPIQueue(ctx)
 
-	// Listen for a signal to gracefully shutdown the agent
-	sigs := make(chan os.Signal, 1)
-	signal.Notify(sigs, os.Interrupt, syscall.SIGTERM)
-	select {
-	case <-ctx.Done():
-		logger.Info("agent shutting down")
-	case s := <-sigs:
-		logger.Infof("signal %q received, shutting down agent", s)
-		cancel()
-	}
+	// Wait for context to complete
+	<-ctx.Done()
+	logger.Info("agent shutting down")
 
 	// Wait for all goroutines to gracefully shutdown, but not too long
 	done := make(chan struct{})
@@ -442,10 +435,11 @@ func (a *Agent) connectionManager(ctx context.Context, cancel context.CancelFunc
 			cancel()
 		}
 
-		ctx, cancel := context.WithCancel(ctx)
+		connCtx, connCancel := context.WithCancel(ctx)
+		defer connCancel()
 
 		// Start sending hearbeats to the backend
-		conn.Heartbeat(ctx, a.config.BackendHeartbeatInterval, a.config.BackendHeartbeatTimeout)
+		conn.Heartbeat(connCtx, a.config.BackendHeartbeatInterval, a.config.BackendHeartbeatTimeout)
 
 		a.connectedMu.Lock()
 		a.connected = true
@@ -453,7 +447,7 @@ func (a *Agent) connectionManager(ctx context.Context, cancel context.CancelFunc
 
 		newConnections.WithLabelValues().Inc()
 
-		go a.receiveLoop(ctx, cancel, conn)
+		go a.receiveLoop(connCtx, connCancel, conn)
 
 		// Block until we receive an entity config, or the grace period expires,
 		// unless the agent manages its entity
@@ -463,7 +457,7 @@ func (a *Agent) connectionManager(ctx context.Context, cancel context.CancelFunc
 				logger.Debug("successfully received the initial entity config")
 			case <-time.After(entityConfigGracePeriod):
 				logger.Warning("the initial entity config was never received, using the local entity")
-			case <-ctx.Done():
+			case <-connCtx.Done():
 				// The connection was closed before we received an entity config or we
 				// reached the grace period
 				continue
@@ -473,7 +467,7 @@ func (a *Agent) connectionManager(ctx context.Context, cancel context.CancelFunc
 		// Handle check config requests
 		a.handler.AddHandler(corev2.CheckRequestType, a.handleCheck)
 
-		if err := a.sendLoop(ctx, cancel, conn); err != nil && err != ctx.Err() {
+		if err := a.sendLoop(connCtx, connCancel, conn); err != nil && err != connCtx.Err() {
 			logger.WithError(err).Error("error sending messages")
 		}
 	}
@@ -482,6 +476,12 @@ func (a *Agent) connectionManager(ctx context.Context, cancel context.CancelFunc
 func (a *Agent) receiveLoop(ctx context.Context, cancel context.CancelFunc, conn transport.Transport) {
 	defer cancel()
 	for {
+		if err := ctx.Err(); err != nil {
+			if err := conn.Close(); err != nil {
+				logger.WithError(err).Error("error closing websocket connection")
+			}
+			return
+		}
 		m, err := conn.Receive()
 		if err != nil {
 			logger.WithError(err).Error("transport receive error")
@@ -615,10 +615,11 @@ func (a *Agent) StartAPI(ctx context.Context) {
 	a.api = newServer(a)
 
 	// Allow Stop() to block until the HTTP server shuts down.
-	a.wg.Add(1)
+	a.wg.Add(2)
 
 	// Start the HTTP API server
 	go func() {
+		defer a.wg.Done()
 		logger.Info("starting api on address: ", a.api.Addr)
 
 		if err := a.api.ListenAndServe(); err != http.ErrServerClosed {
@@ -713,4 +714,16 @@ func (a *Agent) connectWithBackoff(ctx context.Context) (transport.Transport, er
 	})
 
 	return conn, err
+}
+
+// GracefulShutdown listens for the SIGINT & SIGTERM signals and cancel the
+// contexts once a signal is received.
+func GracefulShutdown(cancel context.CancelFunc) {
+	var shutdownSignal = make(chan os.Signal)
+	signal.Notify(shutdownSignal, syscall.SIGINT, syscall.SIGTERM)
+	go func() {
+		s := <-shutdownSignal
+		logger.Warnf("signal %q received, shutting down agent", s)
+		cancel()
+	}()
 }
