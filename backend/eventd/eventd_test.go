@@ -483,3 +483,16 @@ func entityNotFound(s *storetest.Store, namespace, name string) {
 func entityLookupError(s *storetest.Store, namespace, name string) {
 	entityError(s, namespace, name, errors.New("some error"))
 }
+
+func TestWorkerCount(t *testing.T) {
+	// TODO(eric): this is tech debt, better to pass in a config with this
+	// property and test after New(). Unfortunately, New() requires a working
+	// etcd client and would be too heavy for this test.
+	const workers = 10
+	daemon := Eventd{
+		workerCount: workers,
+	}
+	if got, want := daemon.Workers(), workers; got != want {
+		t.Fatalf("bad workers: got %d, want %d", got, want)
+	}
+}

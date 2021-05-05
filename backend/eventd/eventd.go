@@ -537,3 +537,8 @@ func (e *Eventd) Err() <-chan error {
 func (e *Eventd) Name() string {
 	return "eventd"
 }
+
+// Workers returns the number of configured worker goroutines.
+func (e *Eventd) Workers() int {
+	return e.workerCount
+}
