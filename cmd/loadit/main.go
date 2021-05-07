@@ -23,6 +23,7 @@ import (
 var (
 	flagCount             = flag.Int("count", 1000, "number of concurrent simulated agents")
 	flagBackends          = flag.String("backends", "ws://localhost:8081", "comma separated list of backend URLs")
+	flagNamespace         = flag.String("namespace", agent.DefaultNamespace, "namespace to use for agents")
 	flagSubscriptions     = flag.String("subscriptions", "default", "comma separated list of subscriptions")
 	flagKeepaliveInterval = flag.Int("keepalive-interval", agent.DefaultKeepaliveInterval, "Keepalive interval")
 	flagKeepaliveTimeout  = flag.Int("keepalive-timeout", types.DefaultKeepaliveTimeout, "Keepalive timeout")
@@ -64,7 +65,7 @@ func main() {
 		}
 		cfg.KeepaliveInterval = uint32(*flagKeepaliveInterval)
 		cfg.KeepaliveWarningTimeout = uint32(*flagKeepaliveTimeout)
-		cfg.Namespace = agent.DefaultNamespace
+		cfg.Namespace = *flagNamespace
 		cfg.Password = agent.DefaultPassword
 		cfg.Socket.Host = agent.DefaultAPIHost
 		cfg.Socket.Port = agent.DefaultAPIPort
