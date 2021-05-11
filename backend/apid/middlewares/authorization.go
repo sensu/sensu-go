@@ -6,6 +6,7 @@ import (
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/apid/actions"
 	"github.com/sensu/sensu-go/backend/authorization"
+	"github.com/sensu/sensu-go/backend/authorization/rbac"
 )
 
 // Authorization is an HTTP middleware that enforces authorization
@@ -43,6 +44,13 @@ func (a Authorization) Then(next http.Handler) http.Handler {
 
 		authorized, err := a.Authorizer.Authorize(ctx, attrs)
 		if err != nil {
+			if _, ok := err.(rbac.ErrRoleNotFound); ok {
+				writeErr(w, actions.NewErrorf(
+					actions.PermissionDenied,
+					err.Error(),
+				))
+				return
+			}
 			logger.WithError(err).Warning("unexpected error occurred during authorization")
 			writeErr(w, actions.NewErrorf(
 				actions.InternalErr,

@@ -4,6 +4,7 @@ import (
 	"context"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 
 	"github.com/dgrijalva/jwt-go"
@@ -16,7 +17,9 @@ import (
 	"github.com/sensu/sensu-go/backend/seeds"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/backend/store/etcd/testutil"
+	"github.com/sensu/sensu-go/testing/mockstore"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 )
 
 func seedStore(t *testing.T, store store.Store) {
@@ -172,12 +175,12 @@ func TestAuthorization(t *testing.T) {
 	seedStore(t, store)
 
 	cases := []struct {
-		description         string
-		method              string
-		url                 string
-		group               string         // Group the user belongs to
-		attibutesMiddleware HTTPMiddleware // Legacy or Kubernetes-like routes
-		expectedCode        int
+		description          string
+		method               string
+		url                  string
+		group                string         // Group the user belongs to
+		attributesMiddleware HTTPMiddleware // Legacy or Kubernetes-like routes
+		expectedCode         int
 	}{
 		//
 		// The cluster-admins group should grant all permissions on every resource
@@ -185,52 +188,52 @@ func TestAuthorization(t *testing.T) {
 		// ClusterRole: cluster-admin (default)
 		//
 		{
-			description:         "cluster-admins can list users",
-			method:              "GET",
-			url:                 "/api/core/v2/users",
-			group:               "cluster-admins",
-			attibutesMiddleware: AuthorizationAttributes{},
-			expectedCode:        200,
+			description:          "cluster-admins can list users",
+			method:               "GET",
+			url:                  "/api/core/v2/users",
+			group:                "cluster-admins",
+			attributesMiddleware: AuthorizationAttributes{},
+			expectedCode:         200,
 		},
 		{
-			description:         "cluster-admins can create users",
-			method:              "POST",
-			url:                 "/api/core/v2/users",
-			group:               "cluster-admins",
-			attibutesMiddleware: AuthorizationAttributes{},
-			expectedCode:        200,
+			description:          "cluster-admins can create users",
+			method:               "POST",
+			url:                  "/api/core/v2/users",
+			group:                "cluster-admins",
+			attributesMiddleware: AuthorizationAttributes{},
+			expectedCode:         200,
 		},
 		{
-			description:         "cluster-admins can list ClusterRoles",
-			method:              "GET",
-			url:                 "/api/core/v2/clusterroles",
-			group:               "cluster-admins",
-			attibutesMiddleware: AuthorizationAttributes{},
-			expectedCode:        200,
+			description:          "cluster-admins can list ClusterRoles",
+			method:               "GET",
+			url:                  "/api/core/v2/clusterroles",
+			group:                "cluster-admins",
+			attributesMiddleware: AuthorizationAttributes{},
+			expectedCode:         200,
 		},
 		{
-			description:         "cluster-admins can create ClusterRoles",
-			method:              "POST",
-			url:                 "/api/core/v2/clusterroles",
-			group:               "cluster-admins",
-			attibutesMiddleware: AuthorizationAttributes{},
-			expectedCode:        200,
+			description:          "cluster-admins can create ClusterRoles",
+			method:               "POST",
+			url:                  "/api/core/v2/clusterroles",
+			group:                "cluster-admins",
+			attributesMiddleware: AuthorizationAttributes{},
+			expectedCode:         200,
 		},
 		{
-			description:         "cluster-admins can access checks in default namespace",
-			method:              "GET",
-			url:                 "/api/core/v2/namespaces/default/checks/check-cpu",
-			group:               "cluster-admins",
-			attibutesMiddleware: AuthorizationAttributes{},
-			expectedCode:        200,
+			description:          "cluster-admins can access checks in default namespace",
+			method:               "GET",
+			url:                  "/api/core/v2/namespaces/default/checks/check-cpu",
+			group:                "cluster-admins",
+			attributesMiddleware: AuthorizationAttributes{},
+			expectedCode:         200,
 		},
 		{
-			description:         "cluster-admins can access checks of any namespace",
-			method:              "GET",
-			url:                 "/api/core/v2/namespaces/acme/checks/check-cpu",
-			group:               "cluster-admins",
-			attibutesMiddleware: AuthorizationAttributes{},
-			expectedCode:        200,
+			description:          "cluster-admins can access checks of any namespace",
+			method:               "GET",
+			url:                  "/api/core/v2/namespaces/acme/checks/check-cpu",
+			group:                "cluster-admins",
+			attributesMiddleware: AuthorizationAttributes{},
+			expectedCode:         200,
 		},
 		//
 		// The local-admins group should grant all permissions on all resources
@@ -239,44 +242,44 @@ func TestAuthorization(t *testing.T) {
 		// ClusterRole: admin
 		//
 		{
-			description:         "local-admins can't list ClusterRoles",
-			method:              "GET",
-			url:                 "/api/core/v2/clusterroles",
-			group:               "local-admins",
-			attibutesMiddleware: AuthorizationAttributes{},
-			expectedCode:        403,
+			description:          "local-admins can't list ClusterRoles",
+			method:               "GET",
+			url:                  "/api/core/v2/clusterroles",
+			group:                "local-admins",
+			attributesMiddleware: AuthorizationAttributes{},
+			expectedCode:         403,
 		},
 		{
-			description:         "local-admins can't create namespaces",
-			method:              "POST",
-			url:                 "/api/core/v2/namespaces",
-			group:               "local-admins",
-			attibutesMiddleware: AuthorizationAttributes{},
-			expectedCode:        403,
+			description:          "local-admins can't create namespaces",
+			method:               "POST",
+			url:                  "/api/core/v2/namespaces",
+			group:                "local-admins",
+			attributesMiddleware: AuthorizationAttributes{},
+			expectedCode:         403,
 		},
 		{
-			description:         "local-admins can list namespaces",
-			method:              "GET",
-			url:                 "/api/core/v2/namespaces",
-			group:               "local-admins",
-			attibutesMiddleware: AuthorizationAttributes{},
-			expectedCode:        200,
+			description:          "local-admins can list namespaces",
+			method:               "GET",
+			url:                  "/api/core/v2/namespaces",
+			group:                "local-admins",
+			attributesMiddleware: AuthorizationAttributes{},
+			expectedCode:         200,
 		},
 		{
-			description:         "local-admins can access resource of any namespaces",
-			method:              "GET",
-			url:                 "/api/core/v2/namespaces/acme/checks/check-cpu",
-			group:               "local-admins",
-			attibutesMiddleware: AuthorizationAttributes{},
-			expectedCode:        200,
+			description:          "local-admins can access resource of any namespaces",
+			method:               "GET",
+			url:                  "/api/core/v2/namespaces/acme/checks/check-cpu",
+			group:                "local-admins",
+			attributesMiddleware: AuthorizationAttributes{},
+			expectedCode:         200,
 		},
 		{
-			description:         "local-admins can create RoleBindings",
-			method:              "POST",
-			url:                 "/api/core/v2/namespaces/acme/rolebindings",
-			group:               "local-admins",
-			attibutesMiddleware: AuthorizationAttributes{},
-			expectedCode:        200,
+			description:          "local-admins can create RoleBindings",
+			method:               "POST",
+			url:                  "/api/core/v2/namespaces/acme/rolebindings",
+			group:                "local-admins",
+			attributesMiddleware: AuthorizationAttributes{},
+			expectedCode:         200,
 		},
 		//
 		// The admins group should grant all permissions on every resource within
@@ -285,44 +288,44 @@ func TestAuthorization(t *testing.T) {
 		// ClusterRole: admin
 		//
 		{
-			description:         "admins can't list ClusterRoles",
-			method:              "GET",
-			url:                 "/api/core/v2/clusterroles",
-			group:               "admins",
-			attibutesMiddleware: AuthorizationAttributes{},
-			expectedCode:        403,
+			description:          "admins can't list ClusterRoles",
+			method:               "GET",
+			url:                  "/api/core/v2/clusterroles",
+			group:                "admins",
+			attributesMiddleware: AuthorizationAttributes{},
+			expectedCode:         403,
 		},
 		{
-			description:         "admins can't create namespaces",
-			method:              "POST",
-			url:                 "/api/core/v2/namespaces",
-			group:               "admins",
-			attibutesMiddleware: AuthorizationAttributes{},
-			expectedCode:        403,
+			description:          "admins can't create namespaces",
+			method:               "POST",
+			url:                  "/api/core/v2/namespaces",
+			group:                "admins",
+			attributesMiddleware: AuthorizationAttributes{},
+			expectedCode:         403,
 		},
 		{
-			description:         "admins can't access resource outside of their namespaces",
-			method:              "GET",
-			url:                 "/api/core/v2/namespaces/acme/checks/check-cpu",
-			group:               "admins",
-			attibutesMiddleware: AuthorizationAttributes{},
-			expectedCode:        403,
+			description:          "admins can't access resource outside of their namespaces",
+			method:               "GET",
+			url:                  "/api/core/v2/namespaces/acme/checks/check-cpu",
+			group:                "admins",
+			attributesMiddleware: AuthorizationAttributes{},
+			expectedCode:         403,
 		},
 		{
-			description:         "admins can create RoleBindings within their namespace",
-			method:              "POST",
-			url:                 "/api/core/v2/namespaces/default/rolebindings",
-			group:               "admins",
-			attibutesMiddleware: AuthorizationAttributes{},
-			expectedCode:        200,
+			description:          "admins can create RoleBindings within their namespace",
+			method:               "POST",
+			url:                  "/api/core/v2/namespaces/default/rolebindings",
+			group:                "admins",
+			attributesMiddleware: AuthorizationAttributes{},
+			expectedCode:         200,
 		},
 		{
-			description:         "admins can access resource within their namespace",
-			method:              "GET",
-			url:                 "/api/core/v2/namespaces/default/checks/check-cpu",
-			group:               "admins",
-			attibutesMiddleware: AuthorizationAttributes{},
-			expectedCode:        200,
+			description:          "admins can access resource within their namespace",
+			method:               "GET",
+			url:                  "/api/core/v2/namespaces/default/checks/check-cpu",
+			group:                "admins",
+			attributesMiddleware: AuthorizationAttributes{},
+			expectedCode:         200,
 		},
 		//
 		// The editors group should grant read/write access to most objects in the
@@ -330,44 +333,44 @@ func TestAuthorization(t *testing.T) {
 		// edit ClusterRole: edit
 		//
 		{
-			description:         "editors can't list ClusterRoles",
-			method:              "GET",
-			url:                 "/api/core/v2/clusterroles",
-			group:               "editors",
-			attibutesMiddleware: AuthorizationAttributes{},
-			expectedCode:        403,
+			description:          "editors can't list ClusterRoles",
+			method:               "GET",
+			url:                  "/api/core/v2/clusterroles",
+			group:                "editors",
+			attributesMiddleware: AuthorizationAttributes{},
+			expectedCode:         403,
 		},
 		{
-			description:         "editors can't create namespaces",
-			method:              "POST",
-			url:                 "/api/core/v2/namespaces",
-			group:               "editors",
-			attibutesMiddleware: AuthorizationAttributes{},
-			expectedCode:        403,
+			description:          "editors can't create namespaces",
+			method:               "POST",
+			url:                  "/api/core/v2/namespaces",
+			group:                "editors",
+			attributesMiddleware: AuthorizationAttributes{},
+			expectedCode:         403,
 		},
 		{
-			description:         "editors can't access resource outside of their namespaces",
-			method:              "GET",
-			url:                 "/api/core/v2/namespaces/acme/checks/check-cpu",
-			group:               "editors",
-			attibutesMiddleware: AuthorizationAttributes{},
-			expectedCode:        403,
+			description:          "editors can't access resource outside of their namespaces",
+			method:               "GET",
+			url:                  "/api/core/v2/namespaces/acme/checks/check-cpu",
+			group:                "editors",
+			attributesMiddleware: AuthorizationAttributes{},
+			expectedCode:         403,
 		},
 		{
-			description:         "editors can't create RoleBindings within their namespace",
-			method:              "POST",
-			url:                 "/api/core/v2/namespaces/default/rolebindings",
-			group:               "editors",
-			attibutesMiddleware: AuthorizationAttributes{},
-			expectedCode:        403,
+			description:          "editors can't create RoleBindings within their namespace",
+			method:               "POST",
+			url:                  "/api/core/v2/namespaces/default/rolebindings",
+			group:                "editors",
+			attributesMiddleware: AuthorizationAttributes{},
+			expectedCode:         403,
 		},
 		{
-			description:         "editors can access resource within their namespace",
-			method:              "GET",
-			url:                 "/api/core/v2/namespaces/default/checks/check-cpu",
-			group:               "editors",
-			attibutesMiddleware: AuthorizationAttributes{},
-			expectedCode:        200,
+			description:          "editors can access resource within their namespace",
+			method:               "GET",
+			url:                  "/api/core/v2/namespaces/default/checks/check-cpu",
+			group:                "editors",
+			attributesMiddleware: AuthorizationAttributes{},
+			expectedCode:         200,
 		},
 		//
 		// The viewers group only grant read access to most objects in the
@@ -376,52 +379,52 @@ func TestAuthorization(t *testing.T) {
 		// ClusterRole: view
 		//
 		{
-			description:         "viewers can't list ClusterRoles",
-			method:              "GET",
-			url:                 "/api/core/v2/clusterroles",
-			group:               "viewers",
-			attibutesMiddleware: AuthorizationAttributes{},
-			expectedCode:        403,
+			description:          "viewers can't list ClusterRoles",
+			method:               "GET",
+			url:                  "/api/core/v2/clusterroles",
+			group:                "viewers",
+			attributesMiddleware: AuthorizationAttributes{},
+			expectedCode:         403,
 		},
 		{
-			description:         "viewers can't create namespaces",
-			method:              "POST",
-			url:                 "/api/core/v2/namespaces",
-			group:               "viewers",
-			attibutesMiddleware: AuthorizationAttributes{},
-			expectedCode:        403,
+			description:          "viewers can't create namespaces",
+			method:               "POST",
+			url:                  "/api/core/v2/namespaces",
+			group:                "viewers",
+			attributesMiddleware: AuthorizationAttributes{},
+			expectedCode:         403,
 		},
 		{
-			description:         "viewers can't access resource outside of their namespaces",
-			method:              "GET",
-			url:                 "/api/core/v2/namespaces/acme/checks/check-cpu",
-			group:               "viewers",
-			attibutesMiddleware: AuthorizationAttributes{},
-			expectedCode:        403,
+			description:          "viewers can't access resource outside of their namespaces",
+			method:               "GET",
+			url:                  "/api/core/v2/namespaces/acme/checks/check-cpu",
+			group:                "viewers",
+			attributesMiddleware: AuthorizationAttributes{},
+			expectedCode:         403,
 		},
 		{
-			description:         "viewers can't create RoleBindings within their namespace",
-			method:              "POST",
-			url:                 "/api/core/v2/namespaces/default/rolebindings",
-			group:               "viewers",
-			attibutesMiddleware: AuthorizationAttributes{},
-			expectedCode:        403,
+			description:          "viewers can't create RoleBindings within their namespace",
+			method:               "POST",
+			url:                  "/api/core/v2/namespaces/default/rolebindings",
+			group:                "viewers",
+			attributesMiddleware: AuthorizationAttributes{},
+			expectedCode:         403,
 		},
 		{
-			description:         "viewers can't create resources within their namespace",
-			method:              "PUT",
-			url:                 "/api/core/v2/namespaces/default/checks/check-cpu",
-			group:               "viewers",
-			attibutesMiddleware: AuthorizationAttributes{},
-			expectedCode:        403,
+			description:          "viewers can't create resources within their namespace",
+			method:               "PUT",
+			url:                  "/api/core/v2/namespaces/default/checks/check-cpu",
+			group:                "viewers",
+			attributesMiddleware: AuthorizationAttributes{},
+			expectedCode:         403,
 		},
 		{
-			description:         "viewers can access resource within their namespace",
-			method:              "GET",
-			url:                 "/api/core/v2/namespaces/default/checks/check-cpu",
-			group:               "viewers",
-			attibutesMiddleware: AuthorizationAttributes{},
-			expectedCode:        200,
+			description:          "viewers can access resource within their namespace",
+			method:               "GET",
+			url:                  "/api/core/v2/namespaces/default/checks/check-cpu",
+			group:                "viewers",
+			attributesMiddleware: AuthorizationAttributes{},
+			expectedCode:         200,
 		},
 		//
 		// The system:agents group only grant read/write access to events
@@ -429,60 +432,60 @@ func TestAuthorization(t *testing.T) {
 		// ClusterRole: system:agent
 		//
 		{
-			description:         "system:agents can't list ClusterRoles",
-			method:              "GET",
-			url:                 "/api/core/v2/clusterroles",
-			group:               "system:agents",
-			attibutesMiddleware: AuthorizationAttributes{},
-			expectedCode:        403,
+			description:          "system:agents can't list ClusterRoles",
+			method:               "GET",
+			url:                  "/api/core/v2/clusterroles",
+			group:                "system:agents",
+			attributesMiddleware: AuthorizationAttributes{},
+			expectedCode:         403,
 		},
 		{
-			description:         "system:agents can't create namespaces",
-			method:              "POST",
-			url:                 "/api/core/v2/namespaces",
-			group:               "system:agents",
-			attibutesMiddleware: AuthorizationAttributes{},
-			expectedCode:        403,
+			description:          "system:agents can't create namespaces",
+			method:               "POST",
+			url:                  "/api/core/v2/namespaces",
+			group:                "system:agents",
+			attributesMiddleware: AuthorizationAttributes{},
+			expectedCode:         403,
 		},
 		{
-			description:         "system:agents can't access resource outside of their namespaces",
-			method:              "GET",
-			url:                 "/api/core/v2/namespaces/acme/checks/check-cpu",
-			group:               "system:agents",
-			attibutesMiddleware: AuthorizationAttributes{},
-			expectedCode:        403,
+			description:          "system:agents can't access resource outside of their namespaces",
+			method:               "GET",
+			url:                  "/api/core/v2/namespaces/acme/checks/check-cpu",
+			group:                "system:agents",
+			attributesMiddleware: AuthorizationAttributes{},
+			expectedCode:         403,
 		},
 		{
-			description:         "system:agents can't create RoleBindings within their namespace",
-			method:              "POST",
-			url:                 "/api/core/v2/namespaces/default/rolebindings",
-			group:               "system:agents",
-			attibutesMiddleware: AuthorizationAttributes{},
-			expectedCode:        403,
+			description:          "system:agents can't create RoleBindings within their namespace",
+			method:               "POST",
+			url:                  "/api/core/v2/namespaces/default/rolebindings",
+			group:                "system:agents",
+			attributesMiddleware: AuthorizationAttributes{},
+			expectedCode:         403,
 		},
 		{
-			description:         "system:agents can't create any resources within their namespace",
-			method:              "PUT",
-			url:                 "/api/core/v2/namespaces/default/checks/check-cpu",
-			group:               "system:agents",
-			attibutesMiddleware: AuthorizationAttributes{},
-			expectedCode:        403,
+			description:          "system:agents can't create any resources within their namespace",
+			method:               "PUT",
+			url:                  "/api/core/v2/namespaces/default/checks/check-cpu",
+			group:                "system:agents",
+			attributesMiddleware: AuthorizationAttributes{},
+			expectedCode:         403,
 		},
 		{
-			description:         "system:agents can list namespaces",
-			method:              "GET",
-			url:                 "/api/core/v2/namespaces",
-			group:               "system:agents",
-			attibutesMiddleware: AuthorizationAttributes{},
-			expectedCode:        200,
+			description:          "system:agents can list namespaces",
+			method:               "GET",
+			url:                  "/api/core/v2/namespaces",
+			group:                "system:agents",
+			attributesMiddleware: AuthorizationAttributes{},
+			expectedCode:         200,
 		},
 		{
-			description:         "system:agents can create events",
-			method:              "POST",
-			url:                 "/api/core/v2/namespaces/default/events",
-			group:               "system:agents",
-			attibutesMiddleware: AuthorizationAttributes{},
-			expectedCode:        200,
+			description:          "system:agents can create events",
+			method:               "POST",
+			url:                  "/api/core/v2/namespaces/default/events",
+			group:                "system:agents",
+			attributesMiddleware: AuthorizationAttributes{},
+			expectedCode:         200,
 		},
 		//
 		// The foo-viewers group only grant read access to a check named 'foo'
@@ -490,36 +493,36 @@ func TestAuthorization(t *testing.T) {
 		// ClusterRole: foo-viewer
 		//
 		{
-			description:         "foo-viewers can't get an event",
-			method:              "GET",
-			url:                 "/api/core/v2/namespaces/default/events/foo/bar",
-			group:               "foo-viewers",
-			attibutesMiddleware: AuthorizationAttributes{},
-			expectedCode:        403,
+			description:          "foo-viewers can't get an event",
+			method:               "GET",
+			url:                  "/api/core/v2/namespaces/default/events/foo/bar",
+			group:                "foo-viewers",
+			attributesMiddleware: AuthorizationAttributes{},
+			expectedCode:         403,
 		},
 		{
-			description:         "foo-viewers can't list checks",
-			method:              "GET",
-			url:                 "/api/core/v2/namespaces/default/checks",
-			group:               "foo-viewers",
-			attibutesMiddleware: AuthorizationAttributes{},
-			expectedCode:        403,
+			description:          "foo-viewers can't list checks",
+			method:               "GET",
+			url:                  "/api/core/v2/namespaces/default/checks",
+			group:                "foo-viewers",
+			attributesMiddleware: AuthorizationAttributes{},
+			expectedCode:         403,
 		},
 		{
-			description:         "foo-viewers can't update the foo check",
-			method:              "PUT",
-			url:                 "/api/core/v2/namespaces/default/checks/foo",
-			group:               "foo-viewers",
-			attibutesMiddleware: AuthorizationAttributes{},
-			expectedCode:        403,
+			description:          "foo-viewers can't update the foo check",
+			method:               "PUT",
+			url:                  "/api/core/v2/namespaces/default/checks/foo",
+			group:                "foo-viewers",
+			attributesMiddleware: AuthorizationAttributes{},
+			expectedCode:         403,
 		},
 		{
-			description:         "foo-viewers can view the foo check",
-			method:              "GET",
-			url:                 "/api/core/v2/namespaces/default/checks/foo",
-			group:               "foo-viewers",
-			attibutesMiddleware: AuthorizationAttributes{},
-			expectedCode:        200,
+			description:          "foo-viewers can view the foo check",
+			method:               "GET",
+			url:                  "/api/core/v2/namespaces/default/checks/foo",
+			group:                "foo-viewers",
+			attributesMiddleware: AuthorizationAttributes{},
+			expectedCode:         200,
 		},
 		//
 		// The system:users only grant the user access to view itself and update its
@@ -528,47 +531,47 @@ func TestAuthorization(t *testing.T) {
 		// ClusterRole: system:user
 		//
 		{
-			description:         "system:users can't view another user",
-			method:              "GET",
-			url:                 "/api/core/v2/users/bar",
-			group:               "system:users",
-			attibutesMiddleware: AuthorizationAttributes{},
-			expectedCode:        403,
+			description:          "system:users can't view another user",
+			method:               "GET",
+			url:                  "/api/core/v2/users/bar",
+			group:                "system:users",
+			attributesMiddleware: AuthorizationAttributes{},
+			expectedCode:         403,
 		},
 		{
-			description:         "system:users can't modify another user password",
-			method:              "PUT",
-			url:                 "/api/core/v2/users/bar/password",
-			group:               "system:users",
-			attibutesMiddleware: AuthorizationAttributes{},
-			expectedCode:        403,
+			description:          "system:users can't modify another user password",
+			method:               "PUT",
+			url:                  "/api/core/v2/users/bar/password",
+			group:                "system:users",
+			attributesMiddleware: AuthorizationAttributes{},
+			expectedCode:         403,
 		},
 		{
-			description:         "system:users can view themselves",
-			method:              "GET",
-			url:                 "/api/core/v2/users/foo",
-			group:               "system:users",
-			attibutesMiddleware: AuthorizationAttributes{},
-			expectedCode:        200,
+			description:          "system:users can view themselves",
+			method:               "GET",
+			url:                  "/api/core/v2/users/foo",
+			group:                "system:users",
+			attributesMiddleware: AuthorizationAttributes{},
+			expectedCode:         200,
 		},
 		{
-			description:         "system:users can modify their own user password",
-			method:              "PUT",
-			url:                 "/api/core/v2/users/foo/password",
-			group:               "system:users",
-			attibutesMiddleware: AuthorizationAttributes{},
-			expectedCode:        200,
+			description:          "system:users can modify their own user password",
+			method:               "PUT",
+			url:                  "/api/core/v2/users/foo/password",
+			group:                "system:users",
+			attributesMiddleware: AuthorizationAttributes{},
+			expectedCode:         200,
 		},
 		//
 		// A user with explicit permission on all verbs is able to PATCH resources
 		//
 		{
-			description:         "the update verb grants permission to PATCH",
-			method:              "PATCH",
-			url:                 "/api/core/v2/namespaces/default/checks/foo",
-			group:               "rw",
-			attibutesMiddleware: AuthorizationAttributes{},
-			expectedCode:        200,
+			description:          "the update verb grants permission to PATCH",
+			method:               "PATCH",
+			url:                  "/api/core/v2/namespaces/default/checks/foo",
+			group:                "rw",
+			attributesMiddleware: AuthorizationAttributes{},
+			expectedCode:         200,
 		},
 	}
 	for _, tt := range cases {
@@ -594,7 +597,7 @@ func TestAuthorization(t *testing.T) {
 
 			// Prepare our middlewares
 			namespaceMiddleware := Namespace{}
-			attributesMiddleware := tt.attibutesMiddleware
+			attributesMiddleware := tt.attributesMiddleware
 			authorizationMiddleware := Authorization{Authorizer: &rbac.Authorizer{Store: store}}
 
 			// Prepare the router
@@ -617,5 +620,78 @@ func TestAuthorization(t *testing.T) {
 				t.Logf("Response body: %s", w.Body.String())
 			}
 		})
+	}
+}
+
+func getFaultyRoleBinding() *corev2.RoleBinding {
+	return &corev2.RoleBinding{
+		Subjects: []corev2.Subject{
+			{
+				Type: "Group",
+				Name: "admins",
+			},
+		},
+		RoleRef: corev2.RoleRef{
+			Type: "Role",
+			Name: "doesnotexist",
+		},
+		ObjectMeta: corev2.ObjectMeta{
+			Name:      "myrolebinding",
+			Namespace: "default",
+		},
+	}
+}
+
+func TestRoleNotFound_GH4268(t *testing.T) {
+	store := new(mockstore.MockStore)
+	faultyRoleBindings := []*corev2.RoleBinding{getFaultyRoleBinding()}
+	store.On("ListRoleBindings", mock.Anything, mock.Anything).Return(faultyRoleBindings, nil)
+	store.On("ListClusterRoleBindings", mock.Anything, mock.Anything).Return([]*corev2.ClusterRoleBinding{}, nil)
+	store.On("GetRole", mock.Anything, mock.Anything).Return((*corev2.Role)(nil), nil)
+
+	// testHandler is a catch-all handler that returns 200 OK
+	testHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
+
+	// Prepare our HTTP server
+	w := httptest.NewRecorder()
+
+	// Prepare the request
+	r, err := http.NewRequest("GET", "/api/core/v2/namespaces/default/checks/foo", nil)
+	if err != nil {
+		t.Fatal("Couldn't create request: ", err)
+	}
+
+	// Inject the claims into the request context
+	claims := corev2.Claims{
+		StandardClaims: jwt.StandardClaims{Subject: "foo"},
+		Groups:         []string{"admins"},
+	}
+	ctx := sensuJWT.SetClaimsIntoContext(r, &claims)
+
+	// Prepare our middlewares
+	namespaceMiddleware := Namespace{}
+	attributesMiddleware := AuthorizationAttributes{}
+	authorizationMiddleware := Authorization{Authorizer: &rbac.Authorizer{Store: store}}
+
+	// Prepare the router
+	router := mux.NewRouter()
+	router.PathPrefix("/api/{group}/{version}/{resource:users}/{id}/{subresource}").Handler(testHandler)
+	router.PathPrefix("/api/{group}/{version}/namespaces/{namespace}/{resource}/{id}").Handler(testHandler)
+	router.PathPrefix("/api/{group}/{version}/namespaces/{namespace}/{resource}").Handler(testHandler)
+	router.PathPrefix("/api/{group}/{version}/{resource}/{id}").Handler(testHandler)
+	router.PathPrefix("/api/{group}/{version}/{resource}").Handler(testHandler)
+	router.PathPrefix("/api/{group}/{version}/{resource:namespaces}/{id}").Handler(testHandler)
+	router.PathPrefix("/api/{group}/{version}/{resource:namespaces}").Handler(testHandler)
+	router.PathPrefix("/api/{group}/{version}/{resource:users}/{id}").Handler(testHandler)
+	router.PathPrefix("/").Handler(testHandler) // catch all for legacy routes
+	router.Use(namespaceMiddleware.Then, attributesMiddleware.Then, authorizationMiddleware.Then)
+
+	// Serve the request
+	router.ServeHTTP(w, r.WithContext(ctx))
+	if got, want := w.Code, http.StatusForbidden; got != want {
+		t.Errorf("bad status: got %d, want %d", got, want)
+	}
+	if !strings.Contains(w.Body.String(), "role not found") {
+		t.Error(w.Body.String())
 	}
 }

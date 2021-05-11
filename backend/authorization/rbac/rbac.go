@@ -10,6 +10,22 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+type ErrRoleNotFound struct {
+	Role    string
+	Cluster bool
+}
+
+func (e ErrRoleNotFound) Type() string {
+	if e.Cluster {
+		return "cluster role"
+	}
+	return "role"
+}
+
+func (e ErrRoleNotFound) Error() string {
+	return fmt.Sprintf("%s not found: %s", e.Type(), e.Role)
+}
+
 // Store is the storage requirements for the Authorizer. If you find that you
 // need functionality that is not in here, add it method by method. The god
 // type in the store package will have it.
@@ -57,7 +73,7 @@ func (a *Authorizer) VisitRulesFor(ctx context.Context, attrs *authorization.Att
 		}
 
 		// Get the RoleRef that matched our user
-		rules, err := a.getRoleReferencerules(ctx, binding.RoleRef)
+		rules, err := a.getRoleReferenceRules(ctx, binding.RoleRef)
 		if err != nil {
 			if !visitor(binding, empty, err) {
 				return
@@ -90,7 +106,7 @@ func (a *Authorizer) VisitRulesFor(ctx context.Context, attrs *authorization.Att
 		ctx = store.NamespaceContext(ctx, binding.Namespace)
 
 		// Get the RoleRef that matched our user
-		rules, err := a.getRoleReferencerules(ctx, binding.RoleRef)
+		rules, err := a.getRoleReferenceRules(ctx, binding.RoleRef)
 		if err != nil {
 			if !visitor(nil, empty, err) {
 				return
@@ -133,6 +149,11 @@ func (a *Authorizer) Authorize(ctx context.Context, attrs *authorization.Attribu
 			case *store.ErrNotFound:
 				// No ClusterRoleBindings founds, let's continue with the RoleBindings
 				logger.WithError(err).Debug("no bindings found")
+			case ErrRoleNotFound:
+				// The role binding specified a role that does not exist
+				logger.WithError(err).Error("rbac configuration error")
+				visitErr = err
+				return false
 			default:
 				if ctx.Err() == nil {
 					logger.WithError(err).Warning("could not retrieve the ClusterRoleBindings or RoleBindings")
@@ -162,14 +183,14 @@ func (a *Authorizer) Authorize(ctx context.Context, attrs *authorization.Attribu
 	return authorized, visitErr
 }
 
-func (a *Authorizer) getRoleReferencerules(ctx context.Context, roleRef corev2.RoleRef) ([]corev2.Rule, error) {
+func (a *Authorizer) getRoleReferenceRules(ctx context.Context, roleRef corev2.RoleRef) ([]corev2.Rule, error) {
 	switch roleRef.Type {
 	case "Role":
 		role, err := a.Store.GetRole(ctx, roleRef.Name)
 		if err != nil {
 			return nil, fmt.Errorf("could not retrieve the Role %s: %s", roleRef.Name, err.Error())
 		} else if role == nil {
-			return nil, fmt.Errorf("the Role %s is invalid", roleRef.Name)
+			return nil, ErrRoleNotFound{Role: roleRef.Name, Cluster: false}
 		}
 		return role.Rules, nil
 
@@ -178,7 +199,7 @@ func (a *Authorizer) getRoleReferencerules(ctx context.Context, roleRef corev2.R
 		if err != nil {
 			return nil, fmt.Errorf("could not retrieve the ClusterRole %s: %s", roleRef.Name, err.Error())
 		} else if clusterRole == nil {
-			return nil, fmt.Errorf("the ClusterRole %s is invalid", roleRef.Name)
+			return nil, ErrRoleNotFound{Role: roleRef.Name, Cluster: true}
 		}
 		return clusterRole.Rules, nil
 
