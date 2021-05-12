@@ -19,6 +19,9 @@ embedded etcd server.
 - Fixed config deprecation warnings from being shown when deprecated config
 options weren't set.
 - Fixed issue with keepalive status remaining in OK status after agent shutdown.
+- Fixed a bug where role bindings that refer to missing roles would cause the
+wrong status to be returned from the HTTP API, and the dashboard to go into a
+crash loop.
 
 ## [6.3.0] - 2021-04-07
 

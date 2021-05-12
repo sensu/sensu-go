@@ -250,6 +250,37 @@ func TestAuthorize(t *testing.T) {
 			},
 			want: false,
 		},
+		{
+			name: "role specified by role binding not found",
+			attrs: &authorization.Attributes{
+				Namespace: "acme",
+				User: corev2.User{
+					Username: "foo",
+				},
+				Verb:         "create",
+				Resource:     "checks",
+				ResourceName: "check-cpu",
+			},
+			storeFunc: func(s *mockstore.MockStore) {
+				s.On("ListClusterRoleBindings", mock.AnythingOfType("*context.emptyCtx"), &store.SelectionPredicate{}).
+					Return(nilClusterRoleBindings, nil)
+
+				s.On("ListRoleBindings", mock.AnythingOfType("*context.emptyCtx"), &store.SelectionPredicate{}).
+					Return([]*corev2.RoleBinding{{
+						RoleRef: corev2.RoleRef{
+							Type: "Role",
+							Name: "admin",
+						},
+						Subjects: []corev2.Subject{
+							{Type: corev2.UserType, Name: "foo"},
+						},
+					}}, nil)
+				s.On("GetRole", mock.Anything, "admin").
+					Return((*corev2.Role)(nil), nil)
+			},
+			want:    false,
+			wantErr: true,
+		},
 	}
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
