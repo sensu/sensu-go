@@ -3,11 +3,12 @@ package seeds
 import (
 	"context"
 	"errors"
+	"fmt"
 	"time"
 
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/authentication/bcrypt"
-	"github.com/sensu/sensu-go/backend/store"
+	storev1 "github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/backend/store/etcd"
 	"github.com/sensu/sensu-go/types"
 	"go.etcd.io/etcd/clientv3"
@@ -24,123 +25,137 @@ type Config struct {
 var ErrAlreadyInitialized = errors.New("sensu-backend already initialized")
 
 // SeedCluster seeds the cluster according to the provided config.
-func SeedCluster(ctx context.Context, store store.Store, client *clientv3.Client, config Config) error {
-	errs := make(chan error, 1)
-	go func() {
-		var err error
-		defer func() {
-			if err != nil {
-				errs <- err
-			}
-			close(errs)
-		}()
-		initializer, err := store.NewInitializer()
-		if err != nil {
-			return
-		}
-		logger := logger.WithField("component", "backend.seeds")
+func SeedCluster(ctx context.Context, store storev1.Store, client *clientv3.Client, config Config) (fErr error) {
+	logger := logger.WithField("component", "backend.seeds")
 
-		// Lock initialization key to avoid competing installations
-		if err = initializer.Lock(); err != nil {
-			return
-		}
-		defer func() {
-			e := initializer.Close()
-			if err == nil {
-				err = e
-			}
-		}()
-
-		// Check that the store hasn't already been seeded
-		var initialized bool
-		initialized, err = initializer.IsInitialized()
-		if err != nil {
-			return
-		}
-		if initialized {
-			logger.Info("store already initialized")
-			err = ErrAlreadyInitialized
-			return
-		}
-
-		logger.Info("seeding etcd store with intial data")
-
-		// Create the default namespace
-		if err = setupDefaultNamespace(store); err != nil {
-			logger.WithError(err).Error("unable to setup 'default' namespace")
-			return
-		}
-
-		// Create the admin user
-		if err = setupAdminUser(store, config.AdminUsername, config.AdminPassword); err != nil {
-			logger.WithError(err).Error("could not initialize the admin user")
-			return
-		}
-
-		// Create the agent user
-		if err = setupAgentUser(store, "agent", "P@ssw0rd!"); err != nil {
-			logger.WithError(err).Error("could not initialize the agent user")
-			return
-		}
-
-		// Create the default ClusterRoles
-		if err = setupClusterRoles(store); err != nil {
-			logger.WithError(err).Error("could not initialize the default ClusterRoles and Roles")
-			return
-		}
-
-		// Create the default ClusterRoleBindings
-		if err = setupClusterRoleBindings(store); err != nil {
-			logger.WithError(err).Error("could not initialize the default ClusterRoles and Roles")
-			return
-		}
-
-		if client != nil {
-			// Migrate the cluster to the latest version
-			if err = etcd.MigrateDB(ctx, client, etcd.Migrations); err != nil {
-				logger.WithError(err).Error("error bringing the database to the latest version")
-				return
-			}
-			if len(etcd.EnterpriseMigrations) > 0 {
-				if err = etcd.MigrateEnterpriseDB(ctx, client, etcd.EnterpriseMigrations); err != nil {
-					logger.WithError(err).Error("error bringing the enterprise database to the latest version")
-					return
-				}
-			}
-		}
-
-		// Set initialized flag
-		err = initializer.FlagAsInitialized()
-	}()
-	select {
-	case err := <-errs:
-		return err
-	case <-ctx.Done():
-		return ctx.Err()
+	initializer, err := store.NewInitializer(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to create seed initializer: %w", err)
 	}
+
+	// Lock initialization key to avoid competing installations
+	if err = initializer.Lock(ctx); err != nil {
+		return fmt.Errorf("failed to create initializer lock: %w", err)
+	}
+	defer func() {
+		if err := initializer.Close(ctx); fErr == nil && err != nil {
+			fErr = fmt.Errorf("failed to close initializer: %w", err)
+		}
+		return
+	}()
+
+	// Check that the store hasn't already been initialized
+	initialized, err := initializer.IsInitialized(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to check if cluster has been initialized: %w", err)
+	}
+
+	if initialized {
+		logger.Info("store already initialized")
+		return ErrAlreadyInitialized
+	}
+
+	logger.Info("seeding etcd store with initial data")
+
+	// Create the default namespace
+	if err := setupDefaultNamespace(ctx, store); err != nil {
+		switch err := err.(type) {
+		case *storev1.ErrAlreadyExists:
+			logger.Warn("default namespace already exists")
+		default:
+			msg := "unable to setup default namespace"
+			logger.WithError(err).Error(msg)
+			return fmt.Errorf("%s: %w", msg, err)
+		}
+	}
+
+	// Create the admin user
+	if err := setupAdminUser(ctx, store, config.AdminUsername, config.AdminPassword); err != nil {
+		switch err := err.(type) {
+		case *storev1.ErrAlreadyExists:
+			logger.Warn("admin user already exists")
+		default:
+			msg := "could not initialize the admin user"
+			logger.WithError(err).Error(msg)
+			return fmt.Errorf("%s: %w", msg, err)
+		}
+	}
+
+	// Create the agent user
+	if err := setupAgentUser(ctx, store, "agent", "P@ssw0rd!"); err != nil {
+		switch err := err.(type) {
+		case *storev1.ErrAlreadyExists:
+			logger.Warn("agent user already exists")
+		default:
+			msg := "could not initialize the agent user"
+			logger.WithError(err).Error(msg)
+			return fmt.Errorf("%s: %w", msg, err)
+		}
+	}
+
+	// Create the default ClusterRoles
+	if err := setupClusterRoles(ctx, store); err != nil {
+		switch err := err.(type) {
+		case *storev1.ErrAlreadyExists:
+			logger.Warn("default ClusterRoles and Roles already exist")
+		default:
+			msg := "could not initialize the default ClusterRoles and Roles"
+			logger.WithError(err).Error(msg)
+			return fmt.Errorf("%s: %w", msg, err)
+		}
+	}
+
+	// Create the default ClusterRoleBindings
+	if err := setupClusterRoleBindings(ctx, store); err != nil {
+		switch err := err.(type) {
+		case *storev1.ErrAlreadyExists:
+			logger.Warn("default ClusterRoleBindings already exist")
+		default:
+			msg := "could not initialize the default ClusterRoleBindings"
+			logger.WithError(err).Error(msg)
+			return fmt.Errorf("%s: %w", err)
+		}
+	}
+
+	if client != nil {
+		// Migrate the cluster to the latest version
+		if err := etcd.MigrateDB(ctx, client, etcd.Migrations); err != nil {
+			logger.WithError(err).Error("error bringing the database to the latest version")
+			return fmt.Errorf("error bringing the database to the latest version: %w", err)
+		}
+	}
+
+	// Set initialized flag
+	return initializer.FlagAsInitialized(ctx)
 }
 
 // SeedInitialData will seed a store with initial data. This method is
 // idempotent and can be safely run every time the backend starts.
-func SeedInitialData(store store.Store) (err error) {
+func SeedInitialData(store storev1.Store) (err error) {
+	return SeedInitialDataWithContext(context.Background(), store)
+}
+
+// SeedInitialDataWithContext is like SeedInitialData except it takes an existing
+// context.
+func SeedInitialDataWithContext(ctx context.Context, store storev1.Store) (err error) {
 	config := Config{
 		AdminUsername: "admin",
 		AdminPassword: "P@ssw0rd!",
 	}
-	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
+	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
 	defer cancel()
 	return SeedCluster(ctx, store, nil, config)
 }
 
-func setupDefaultNamespace(store store.Store) error {
+func setupDefaultNamespace(ctx context.Context, store storev1.Store) error {
 	return store.CreateNamespace(
-		context.Background(),
+		ctx,
 		&types.Namespace{
 			Name: "default",
 		})
 }
 
-func setupClusterRoleBindings(store store.Store) error {
+func setupClusterRoleBindings(ctx context.Context, store storev1.Store) error {
 	// The cluster-admin ClusterRoleBinding grants permission found in the
 	// cluster-admin ClusterRole to any user belonging to the cluster-admins group
 	clusterAdmin := &types.ClusterRoleBinding{
@@ -156,7 +171,7 @@ func setupClusterRoleBindings(store store.Store) error {
 			},
 		},
 	}
-	if err := store.CreateClusterRoleBinding(context.Background(), clusterAdmin); err != nil {
+	if err := store.CreateClusterRoleBinding(ctx, clusterAdmin); err != nil {
 		return err
 	}
 
@@ -175,7 +190,7 @@ func setupClusterRoleBindings(store store.Store) error {
 			},
 		},
 	}
-	if err := store.CreateClusterRoleBinding(context.Background(), systemAgent); err != nil {
+	if err := store.CreateClusterRoleBinding(ctx, systemAgent); err != nil {
 		return err
 	}
 
@@ -194,10 +209,10 @@ func setupClusterRoleBindings(store store.Store) error {
 			},
 		},
 	}
-	return store.CreateClusterRoleBinding(context.Background(), systemUser)
+	return store.CreateClusterRoleBinding(ctx, systemUser)
 }
 
-func setupClusterRoles(store store.Store) error {
+func setupClusterRoles(ctx context.Context, store storev1.Store) error {
 	// The cluster-admin ClusterRole gives access to perform any action on any
 	// resource. When used in a ClusterRoleBinding, it gives full control over
 	// every resource in the cluster and in all namespaces. When used in a
@@ -212,7 +227,7 @@ func setupClusterRoles(store store.Store) error {
 			},
 		},
 	}
-	if err := store.CreateClusterRole(context.Background(), clusterAdmin); err != nil {
+	if err := store.CreateClusterRole(ctx, clusterAdmin); err != nil {
 		return err
 	}
 
@@ -238,7 +253,7 @@ func setupClusterRoles(store store.Store) error {
 			},
 		},
 	}
-	if err := store.CreateClusterRole(context.Background(), admin); err != nil {
+	if err := store.CreateClusterRole(ctx, admin); err != nil {
 		return err
 	}
 
@@ -260,7 +275,7 @@ func setupClusterRoles(store store.Store) error {
 			},
 		},
 	}
-	if err := store.CreateClusterRole(context.Background(), edit); err != nil {
+	if err := store.CreateClusterRole(ctx, edit); err != nil {
 		return err
 	}
 
@@ -278,7 +293,7 @@ func setupClusterRoles(store store.Store) error {
 			},
 		},
 	}
-	if err := store.CreateClusterRole(context.Background(), view); err != nil {
+	if err := store.CreateClusterRole(ctx, view); err != nil {
 		return err
 	}
 
@@ -294,7 +309,7 @@ func setupClusterRoles(store store.Store) error {
 			},
 		},
 	}
-	if err := store.CreateClusterRole(context.Background(), systemAgent); err != nil {
+	if err := store.CreateClusterRole(ctx, systemAgent); err != nil {
 		return err
 	}
 
@@ -311,10 +326,10 @@ func setupClusterRoles(store store.Store) error {
 			},
 		},
 	}
-	return store.CreateClusterRole(context.Background(), systemUser)
+	return store.CreateClusterRole(ctx, systemUser)
 }
 
-func setupAdminUser(store store.Store, username, password string) error {
+func setupAdminUser(ctx context.Context, store storev1.Store, username, password string) error {
 	hash, err := bcrypt.HashPassword(password)
 	if err != nil {
 		return err
@@ -326,10 +341,10 @@ func setupAdminUser(store store.Store, username, password string) error {
 		PasswordHash: hash,
 		Groups:       []string{"cluster-admins"},
 	}
-	return store.CreateUser(admin)
+	return store.CreateUser(ctx, admin)
 }
 
-func setupAgentUser(store store.Store, username, password string) error {
+func setupAgentUser(ctx context.Context, store storev1.Store, username, password string) error {
 	hash, err := bcrypt.HashPassword("P@ssw0rd!")
 	if err != nil {
 		return err
@@ -341,5 +356,5 @@ func setupAgentUser(store store.Store, username, password string) error {
 		PasswordHash: hash,
 		Groups:       []string{"system:agents"},
 	}
-	return store.CreateUser(agent)
+	return store.CreateUser(ctx, agent)
 }
