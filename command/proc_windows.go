@@ -21,11 +21,6 @@ func Command(ctx context.Context, command string) *exec.Cmd {
 	return cmd
 }
 
-// SetProcessGroup sets the process group of the command process
-func SetProcessGroup(cmd *exec.Cmd) {
-	cmd.SysProcAttr.CreationFlags = syscall.CREATE_NEW_PROCESS_GROUP
-}
-
 // KillProcess kills the command process and any child processes
 func KillProcess(cmd *exec.Cmd) error {
 	return cmd.Process.Kill()
