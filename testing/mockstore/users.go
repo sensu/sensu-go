@@ -17,8 +17,8 @@ func (s *MockStore) AuthenticateUser(
 }
 
 // CreateUser ...
-func (s *MockStore) CreateUser(user *types.User) error {
-	args := s.Called(user)
+func (s *MockStore) CreateUser(ctx context.Context, user *types.User) error {
+	args := s.Called(ctx, user)
 	return args.Error(0)
 }
 

@@ -41,7 +41,6 @@ func SeedCluster(ctx context.Context, store storev1.Store, client *clientv3.Clie
 		if err := initializer.Close(ctx); fErr == nil && err != nil {
 			fErr = fmt.Errorf("failed to close initializer: %w", err)
 		}
-		return
 	}()
 
 	// Check that the store hasn't already been initialized
@@ -113,7 +112,7 @@ func SeedCluster(ctx context.Context, store storev1.Store, client *clientv3.Clie
 		default:
 			msg := "could not initialize the default ClusterRoleBindings"
 			logger.WithError(err).Error(msg)
-			return fmt.Errorf("%s: %w", err)
+			return fmt.Errorf("%s: %w", msg, err)
 		}
 	}
 
