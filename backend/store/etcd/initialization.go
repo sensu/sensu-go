@@ -2,6 +2,7 @@ package etcd
 
 import (
 	"context"
+	"fmt"
 	"path"
 
 	"github.com/sensu/sensu-go/backend/store"
@@ -17,43 +18,48 @@ const (
 // StoreInitializer ...
 type StoreInitializer struct {
 	mutex *concurrency.Mutex
-	ctx   context.Context
 
 	session *concurrency.Session
 	client  *clientv3.Client
 }
 
 // NewInitializer returns a new store initializer
-func (store *Store) NewInitializer() (store.Initializer, error) {
+func (store *Store) NewInitializer(ctx context.Context) (store.Initializer, error) {
 	client := store.client
-	session, err := concurrency.NewSession(client) // TODO: move session into etcdStore?
+
+	// Create a lease to associate with the lock
+	resp, err := client.Grant(ctx, 2)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to create etcd lease: %w", err)
+	}
+
+	session, err := concurrency.NewSession(client, concurrency.WithLease(resp.ID)) // TODO: move session into etcdStore?
+	if err != nil {
+		return nil, fmt.Errorf("failed to start etcd session: %w", err)
 	}
 
 	return &StoreInitializer{
 		mutex:   concurrency.NewMutex(session, initializationLockKey),
 		session: session,
 		client:  client,
-		ctx:     context.TODO(),
 	}, nil
 }
 
 // Lock mutex to avoid competing writes
-func (s *StoreInitializer) Lock() error {
-	return s.mutex.Lock(s.ctx)
+func (s *StoreInitializer) Lock(ctx context.Context) error {
+	return s.mutex.Lock(ctx)
 }
 
 // IsInitialized checks the state of the .initialized key
-func (s *StoreInitializer) IsInitialized() (bool, error) {
-	r, err := s.client.Get(s.ctx, path.Join(EtcdRoot, initializationKey))
+func (s *StoreInitializer) IsInitialized(ctx context.Context) (bool, error) {
+	r, err := s.client.Get(ctx, path.Join(EtcdRoot, initializationKey))
 	if err != nil {
 		return false, err
 	}
 
 	// if there is no result, test the fallback and return using same logic
 	if len(r.Kvs) == 0 {
-		fallback, err := s.client.Get(s.ctx, initializationKey)
+		fallback, err := s.client.Get(ctx, initializationKey)
 		if err != nil {
 			return false, err
 		} else {
@@ -65,14 +71,14 @@ func (s *StoreInitializer) IsInitialized() (bool, error) {
 }
 
 // FlagAsInitialized - set .initialized key
-func (s *StoreInitializer) FlagAsInitialized() error {
-	_, err := s.client.Put(s.ctx, path.Join(EtcdRoot, initializationKey), "1")
+func (s *StoreInitializer) FlagAsInitialized(ctx context.Context) error {
+	_, err := s.client.Put(ctx, path.Join(EtcdRoot, initializationKey), "1")
 	return err
 }
 
 // Close session & unlock
-func (s *StoreInitializer) Close() error {
-	if err := s.mutex.Unlock(s.ctx); err != nil {
+func (s *StoreInitializer) Close(ctx context.Context) error {
+	if err := s.mutex.Unlock(ctx); err != nil {
 		return err
 	}
 

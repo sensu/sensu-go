@@ -37,7 +37,7 @@ func TestUserStorage(t *testing.T) {
 
 		user := types.FixtureUser("foo")
 		user.PasswordHash = passwordDigest
-		err = s.CreateUser(user)
+		err = s.CreateUser(ctx, user)
 		assert.NoError(t, err)
 
 		// The user should be fetchable
@@ -54,7 +54,7 @@ func TestUserStorage(t *testing.T) {
 		assert.Error(t, err)
 
 		// User already exist
-		err = s.CreateUser(user)
+		err = s.CreateUser(ctx, user)
 		assert.Error(t, err)
 
 		mockedUser := types.FixtureUser("bar")
@@ -114,7 +114,7 @@ func TestGetAllUsersPagination(t *testing.T) {
 			objectName := fmt.Sprintf("%.2d", i)
 			object := corev2.FixtureUser(objectName)
 
-			if err := store.CreateUser(object); err != nil {
+			if err := store.CreateUser(context.Background(), object); err != nil {
 				t.Fatal(err)
 			}
 		}

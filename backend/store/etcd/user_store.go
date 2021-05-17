@@ -53,7 +53,7 @@ func (s *Store) AuthenticateUser(ctx context.Context, username, password string)
 }
 
 // CreateUser creates a new user
-func (s *Store) CreateUser(u *corev2.User) error {
+func (s *Store) CreateUser(ctx context.Context, u *corev2.User) error {
 	userBytes, err := proto.Marshal(u)
 	if err != nil {
 		return &store.ErrNotValid{Err: err}

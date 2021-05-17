@@ -53,6 +53,9 @@ in OSS builds.
 - Fixed a potential deadlock in agentd.
 - Fixed a bug where some Etcd watchers could try to process watch events holding
 invalid pointers.
+### Added
+- Added wait flag to the sensu-backend init command which toggles waiting
+indefinitely for etcd to become available.
 
 ## [6.2.3] - 2021-01-21
 
