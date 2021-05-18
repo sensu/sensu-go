@@ -13,6 +13,8 @@ embedded etcd server.
 ### Changed
 - Upgraded Go version from 1.13.15 to 1.16.
 - Upgraded Etcd version from 3.3.22 to 3.4.15.
+- The loadit tool now uses UUIDv4 instead of UUIDv1 for agent names.
+
 ## Unreleased
 
 ### Fixed
