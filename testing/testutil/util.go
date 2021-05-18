@@ -49,7 +49,7 @@ func CommandPath(s string, p ...string) string {
 
 // RandomUUIDV4 takes a testing.TB and will attempt to generate a random
 // Version 4 UUID. If an error is returned, a fatal testing error will occur.
-func RandomUUIDV4(tb *testing.TB) uuid.UUID {
+func RandomUUIDV4(tb testing.TB) uuid.UUID {
 	bytes, err := uuid.NewRandom()
 	if err != nil {
 		tb.Fatalf("failed to generate uuid: %s", err)
