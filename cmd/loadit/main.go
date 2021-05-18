@@ -47,7 +47,11 @@ func main() {
 
 	start := time.Now()
 	for i := 0; i < *flagCount; i++ {
-		name := uuid.New().String()
+		uuidBytes, err := uuid.NewRandom()
+		if err != nil {
+			log.Fatal(err)
+		}
+		name := uuidBytes.String()
 
 		cfg := agent.NewConfig()
 		cfg.API.Host = agent.DefaultAPIHost

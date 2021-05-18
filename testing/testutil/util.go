@@ -7,6 +7,8 @@ import (
 	"runtime"
 	"strings"
 	"testing"
+
+	"github.com/google/uuid"
 )
 
 // TempDir provides a test with a temporary directory (under os.TempDir())
@@ -43,4 +45,14 @@ func CommandPath(s string, p ...string) string {
 	params := strings.Join(p, " ")
 	fullCmd := fmt.Sprintf("%s %s", command, params)
 	return strings.Trim(fullCmd, " ")
+}
+
+// RandomUUIDV4 takes a testing.TB and will attempt to generate a random
+// Version 4 UUID. If an error is returned, a fatal testing error will occur.
+func RandomUUIDV4(tb testing.TB) uuid.UUID {
+	bytes, err := uuid.NewRandom()
+	if err != nil {
+		tb.Fatalf("failed to generate uuid: %s", err)
+	}
+	return bytes
 }
