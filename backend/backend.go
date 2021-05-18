@@ -85,7 +85,7 @@ type Backend struct {
 // EventStoreUpdater offers a way to update an event store to a different
 // implementation in-place.
 type EventStoreUpdater interface {
-	UpdateEventStore(to store.EventStore)
+	UpdateStore(to store.Store)
 }
 
 func newClient(ctx context.Context, config *Config, backend *Backend) (*clientv3.Client, error) {
@@ -221,8 +221,8 @@ func Initialize(ctx context.Context, config *Config) (*Backend, error) {
 		return nil, err
 	}
 
-	eventStoreProxy := store.NewEventStoreProxy(stor)
-	b.EventStore = eventStoreProxy
+	storeProxy := store.NewStoreProxy(stor)
+	b.EventStore = storeProxy
 
 	logger.Debug("Registering backend...")
 
@@ -284,7 +284,7 @@ func Initialize(ctx context.Context, config *Config) (*Backend, error) {
 		b.RunContext(),
 		eventd.Config{
 			Store:           storv2,
-			EventStore:      eventStoreProxy,
+			EventStore:      storeProxy,
 			Bus:             bus,
 			LivenessFactory: liveness.EtcdFactory(b.RunContext(), b.Client),
 			Client:          b.Client,
@@ -355,7 +355,7 @@ func Initialize(ctx context.Context, config *Config) (*Backend, error) {
 		Bus:                   bus,
 		Store:                 stor,
 		StoreV2:               storv2,
-		EventStore:            eventStoreProxy,
+		EventStore:            storeProxy,
 		LivenessFactory:       liveness.EtcdFactory(b.RunContext(), b.Client),
 		RingPool:              b.RingPool,
 		BufferSize:            viper.GetInt(FlagKeepalivedBufferSize),
@@ -393,8 +393,8 @@ func Initialize(ctx context.Context, config *Config) (*Backend, error) {
 	b.GraphQLService, err = graphql.NewService(graphql.ServiceConfig{
 		AssetClient:       api.NewAssetClient(stor, auth),
 		CheckClient:       api.NewCheckClient(stor, actions.NewCheckController(stor, queueGetter), auth),
-		EntityClient:      api.NewEntityClient(stor, storv2, eventStoreProxy, auth),
-		EventClient:       api.NewEventClient(eventStoreProxy, auth, bus),
+		EntityClient:      api.NewEntityClient(stor, storv2, storeProxy, auth),
+		EventClient:       api.NewEventClient(storeProxy, auth, bus),
 		EventFilterClient: api.NewEventFilterClient(stor, auth),
 		HandlerClient:     api.NewHandlerClient(stor, auth),
 		HealthController:  actions.NewHealthController(stor, b.Client.Cluster, etcdClientTLSConfig),
@@ -420,7 +420,7 @@ func Initialize(ctx context.Context, config *Config) (*Backend, error) {
 		Bus:                 bus,
 		Store:               stor,
 		Storev2:             storv2,
-		EventStore:          eventStoreProxy,
+		EventStore:          storeProxy,
 		QueueGetter:         queueGetter,
 		TLS:                 config.TLS,
 		Cluster:             b.Client.Cluster,
@@ -441,7 +441,7 @@ func Initialize(ctx context.Context, config *Config) (*Backend, error) {
 		b.RunContext(),
 		tessend.Config{
 			Store:      stor,
-			EventStore: eventStoreProxy,
+			EventStore: storeProxy,
 			RingPool:   b.RingPool,
 			Client:     b.Client,
 			Bus:        bus,
@@ -702,7 +702,4 @@ func getSystemInfo() corev2.System {
 		logger.WithError(err).Error("error getting system info")
 	}
 	return info
-}
-
-type RingPoolProvider struct {
 }
