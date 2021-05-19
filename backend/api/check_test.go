@@ -794,7 +794,7 @@ func TestExecuteCheck(t *testing.T) {
 							Resource:     "checks",
 							ResourceName: "default",
 							UserName:     "legit",
-							Verb:         "create",
+							Verb:         "execute",
 						}: true,
 					},
 				}
