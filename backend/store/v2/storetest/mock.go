@@ -4,7 +4,6 @@ import (
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/backend/store/patch"
 	storev2 "github.com/sensu/sensu-go/backend/store/v2"
-	"github.com/sensu/sensu-go/backend/store/v2/wrap"
 	"github.com/stretchr/testify/mock"
 )
 
@@ -14,24 +13,24 @@ type Store struct {
 	mock.Mock
 }
 
-func (s *Store) CreateOrUpdate(req storev2.ResourceRequest, w *storev2.Wrapper) error {
+func (s *Store) CreateOrUpdate(req storev2.ResourceRequest, w storev2.Wrapper) error {
 	args := s.Called(req, w)
 	return args.Error(0)
 }
 
-func (s *Store) UpdateIfExists(req storev2.ResourceRequest, w *storev2.Wrapper) error {
+func (s *Store) UpdateIfExists(req storev2.ResourceRequest, w storev2.Wrapper) error {
 	args := s.Called(req, w)
 	return args.Error(0)
 }
 
-func (s *Store) CreateIfNotExists(req storev2.ResourceRequest, w *storev2.Wrapper) error {
+func (s *Store) CreateIfNotExists(req storev2.ResourceRequest, w storev2.Wrapper) error {
 	args := s.Called(req, w)
 	return args.Error(0)
 }
 
-func (s *Store) Get(req storev2.ResourceRequest) (*storev2.Wrapper, error) {
+func (s *Store) Get(req storev2.ResourceRequest) (storev2.Wrapper, error) {
 	args := s.Called(req)
-	return args.Get(0).(*storev2.Wrapper), args.Error(1)
+	return args.Get(0).(storev2.Wrapper), args.Error(1)
 }
 
 func (s *Store) Delete(req storev2.ResourceRequest) error {
@@ -39,9 +38,9 @@ func (s *Store) Delete(req storev2.ResourceRequest) error {
 	return args.Error(0)
 }
 
-func (s *Store) List(req storev2.ResourceRequest, pred *store.SelectionPredicate) (wrap.List, error) {
+func (s *Store) List(req storev2.ResourceRequest, pred *store.SelectionPredicate) (storev2.WrapList, error) {
 	args := s.Called(req, pred)
-	return args.Get(0).(wrap.List), args.Error(1)
+	return args.Get(0).(storev2.WrapList), args.Error(1)
 }
 
 func (s *Store) Exists(req storev2.ResourceRequest) (bool, error) {
@@ -49,7 +48,7 @@ func (s *Store) Exists(req storev2.ResourceRequest) (bool, error) {
 	return args.Get(0).(bool), args.Error(1)
 }
 
-func (s *Store) Patch(req storev2.ResourceRequest, w *storev2.Wrapper, patcher patch.Patcher, conditions *store.ETagCondition) error {
+func (s *Store) Patch(req storev2.ResourceRequest, w storev2.Wrapper, patcher patch.Patcher, conditions *store.ETagCondition) error {
 	args := s.Called(req, w, patcher, conditions)
 	return args.Error(0)
 }

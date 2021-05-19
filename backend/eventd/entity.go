@@ -33,10 +33,12 @@ func createProxyEntity(event *corev2.Event, s storev2.Interface) error {
 	configReq := storev2.NewResourceRequestFromResource(context.Background(), config)
 	stateReq := storev2.NewResourceRequestFromResource(context.Background(), state)
 
-	var wState *wrap.Wrapper
-	var wConfig *wrap.Wrapper
+	var (
+		wState, wConfig storev2.Wrapper
+		err             error
+	)
 
-	wConfig, err := s.Get(configReq)
+	wConfig, err = s.Get(configReq)
 	if err == nil {
 		if err := wConfig.UnwrapInto(config); err != nil {
 			return err

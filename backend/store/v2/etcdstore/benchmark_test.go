@@ -385,7 +385,7 @@ func BenchmarkListV3EntityState(b *testing.B) {
 				if err != nil {
 					b.Fatal(err)
 				}
-				if got, want := len(list), 1000; got != want {
+				if got, want := list.Len(), 1000; got != want {
 					b.Fatalf("wrong number of entities: got %d, want %d", got, want)
 				}
 				entities := make([]corev3.EntityState, 0, 1000)
@@ -430,7 +430,7 @@ func BenchmarkListV3EntityStateNoUnwrap(b *testing.B) {
 				if err != nil {
 					b.Fatal(err)
 				}
-				if got, want := len(list), 1000; got != want {
+				if got, want := list.Len(), 1000; got != want {
 					b.Fatalf("wrong number of entities: got %d, want %d", got, want)
 				}
 			}

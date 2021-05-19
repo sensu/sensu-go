@@ -260,6 +260,11 @@ func (w *Wrapper) UnwrapInto(p interface{}) error {
 // List is a slice of wrappers.
 type List []*Wrapper
 
+// Len tells the length of the wrap list.
+func (l List) Len() int {
+	return len(l)
+}
+
 // Unwrap unwraps each item in the list and returns a slice of resources of the
 // same size.
 func (l List) Unwrap() ([]corev3.Resource, error) {
