@@ -3,5 +3,7 @@ run:
   build-tags:
     - integration
   issues:
-    exclude:
-      - SA1019
+    exclude-rules:
+      - linters:
+          - staticcheck
+        text: "SA1019:"
