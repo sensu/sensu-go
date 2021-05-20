@@ -29,7 +29,7 @@ require (
 	github.com/go-resty/resty/v2 v2.5.0
 	github.com/gogo/protobuf v1.3.1
 	github.com/golang/groupcache v0.0.0-20191002201903-404acd9df4cc // indirect
-	github.com/golang/protobuf v1.3.3
+	github.com/golang/protobuf v1.5.0
 	github.com/golang/snappy v0.0.1
 	github.com/google/uuid v1.1.1
 	github.com/gorilla/mux v1.7.3
