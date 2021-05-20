@@ -2,7 +2,6 @@ run:
   timeout: 5m
   build-tags:
     - integration
-  linters-settings:
-    staticcheck:
-      excludes:
-        - SA1019
+  issues:
+    exclude:
+      - SA1019
