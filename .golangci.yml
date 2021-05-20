@@ -2,8 +2,3 @@ run:
   timeout: 5m
   build-tags:
     - integration
-  issues:
-    exclude-rules:
-      - linters:
-          - staticcheck
-        text: "SA1019:"
