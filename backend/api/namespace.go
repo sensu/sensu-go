@@ -10,7 +10,6 @@ import (
 	"github.com/sensu/sensu-go/backend/authorization/rbac"
 	"github.com/sensu/sensu-go/backend/store"
 	storev2 "github.com/sensu/sensu-go/backend/store/v2"
-	"github.com/sensu/sensu-go/backend/store/v2/wrap"
 	stringsutil "github.com/sensu/sensu-go/util/strings"
 	"github.com/sirupsen/logrus"
 )
@@ -348,7 +347,7 @@ func (a *NamespaceClient) createResourceTemplates(ctx context.Context, namespace
 			return err
 		}
 		req := storev2.NewResourceRequestFromResource(ctx, resource)
-		wrapper, err := wrap.Resource(resource)
+		wrapper, err := storev2.WrapResource(resource)
 		if err != nil {
 			return err
 		}

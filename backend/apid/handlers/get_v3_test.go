@@ -10,7 +10,7 @@ import (
 
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/store"
-	"github.com/sensu/sensu-go/backend/store/v2/wrap"
+	storev2 "github.com/sensu/sensu-go/backend/store/v2"
 	"github.com/sensu/sensu-go/testing/fixture"
 	"github.com/sensu/sensu-go/testing/mockstore"
 )
@@ -18,7 +18,7 @@ import (
 func TestHandlers_GetV3Resource(t *testing.T) {
 	meta := corev2.NewObjectMeta("default", "bar")
 	barResource := &fixture.V3Resource{Metadata: &meta}
-	wrapper, _ := wrap.Resource(barResource)
+	wrapper, _ := storev2.WrapResource(barResource)
 	tests := []struct {
 		name      string
 		urlVars   map[string]string
@@ -36,7 +36,7 @@ func TestHandlers_GetV3Resource(t *testing.T) {
 			urlVars: map[string]string{"id": "foo"},
 			storeFunc: func(s *mockstore.V2MockStore) {
 				s.On("Get", mock.Anything).
-					Return((*wrap.Wrapper)(nil), &store.ErrNotFound{})
+					Return((storev2.Wrapper)(nil), &store.ErrNotFound{})
 			},
 			wantErr: true,
 		},
@@ -45,7 +45,7 @@ func TestHandlers_GetV3Resource(t *testing.T) {
 			urlVars: map[string]string{"id": "foo"},
 			storeFunc: func(s *mockstore.V2MockStore) {
 				s.On("Get", mock.Anything).
-					Return((*wrap.Wrapper)(nil), &store.ErrInternal{})
+					Return((storev2.Wrapper)(nil), &store.ErrInternal{})
 			},
 			wantErr: true,
 		},

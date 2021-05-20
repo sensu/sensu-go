@@ -6,6 +6,7 @@ import (
 
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	corev3 "github.com/sensu/sensu-go/api/core/v3"
+	"github.com/sensu/sensu-go/backend/store/v2/wrap"
 )
 
 type SortOrder int
@@ -15,6 +16,12 @@ const (
 	SortAscend
 	SortDescend
 )
+
+// WrapResource is made variable, for the purpose of swapping it out for another
+// implementation.
+var WrapResource = func(resource corev3.Resource, opts ...wrap.Option) (Wrapper, error) {
+	return wrap.Resource(resource, opts...)
+}
 
 // ResourceRequest contains all the information necessary to query a store.
 type ResourceRequest struct {

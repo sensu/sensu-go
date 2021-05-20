@@ -56,7 +56,7 @@ func TestEntityCacheIntegration(t *testing.T) {
 		fixture.EntityClass = corev2.EntityProxyClass
 		fixtures = append(fixtures, getCacheValue(fixture, true))
 		req = storev2.NewResourceRequestFromResource(ctx, fixture)
-		wrapper, err = wrap.Resource(fixture)
+		wrapper, err := storev2.WrapResource(fixture)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -84,7 +84,7 @@ func TestEntityCacheIntegration(t *testing.T) {
 		fixture.EntityClass = corev2.EntityProxyClass
 		otherFixtures = append(otherFixtures, getCacheValue(fixture, true))
 		req = storev2.NewResourceRequestFromResource(ctx, fixture)
-		wrapper, err = wrap.Resource(fixture)
+		wrapper, err := storev2.WrapResource(fixture)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -118,11 +118,11 @@ func TestEntityCacheIntegration(t *testing.T) {
 	newEntity := corev3.FixtureEntityConfig("new")
 	newEntity.EntityClass = corev2.EntityProxyClass
 	req = storev2.NewResourceRequestFromResource(ctx, newEntity)
-	wrapper, err = wrap.Resource(newEntity)
+	entWrapper, err := storev2.WrapResource(newEntity)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if err := store.CreateOrUpdate(req, wrapper); err != nil {
+	if err := store.CreateOrUpdate(req, entWrapper); err != nil {
 		t.Fatal(err)
 	}
 	<-watcher

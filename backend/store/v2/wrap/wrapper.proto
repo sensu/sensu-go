@@ -38,4 +38,8 @@ message Wrapper {
 
   // Value contains the encoded resource value
   bytes value = 4;
+
+  // PreferPostgres, if set, will tell the store to use postgres if it is
+  // available. (Currently only available in the enterprise product)
+  bool PreferPostgres = 5;
 }

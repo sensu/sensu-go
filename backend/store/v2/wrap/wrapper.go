@@ -121,6 +121,13 @@ var CompressSnappy Option = func(w *Wrapper, r interface{}) error {
 	return nil
 }
 
+// PreferPostgres will tell the store to use postgres if it is available.
+// (Currently only available in the enterprise product)
+var PreferPostgres Option = func(w *Wrapper, r interface{}) error {
+	w.PreferPostgres = true
+	return nil
+}
+
 // CompressDefault is the default compression algorithm.
 var CompressDefault = CompressSnappy
 

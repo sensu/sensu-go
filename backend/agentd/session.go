@@ -19,7 +19,6 @@ import (
 	"github.com/sensu/sensu-go/backend/ringv2"
 	"github.com/sensu/sensu-go/backend/store"
 	storev2 "github.com/sensu/sensu-go/backend/store/v2"
-	"github.com/sensu/sensu-go/backend/store/v2/wrap"
 	"github.com/sensu/sensu-go/handler"
 	"github.com/sensu/sensu-go/transport"
 	"github.com/sirupsen/logrus"
@@ -319,7 +318,7 @@ func (s *Session) sender() {
 
 				// Update the entity in the store
 				configReq := storev2.NewResourceRequestFromResource(s.ctx, watchEvent.Entity)
-				wrapper, err := wrap.Resource(watchEvent.Entity)
+				wrapper, err := storev2.WrapResource(watchEvent.Entity)
 				if err != nil {
 					lager.WithError(err).Error("could not wrap the entity config")
 					continue

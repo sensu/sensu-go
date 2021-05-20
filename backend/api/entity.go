@@ -11,7 +11,6 @@ import (
 	"github.com/sensu/sensu-go/backend/authorization"
 	"github.com/sensu/sensu-go/backend/store"
 	storev2 "github.com/sensu/sensu-go/backend/store/v2"
-	"github.com/sensu/sensu-go/backend/store/v2/wrap"
 )
 
 // EntityClient is an API client for entities.
@@ -108,7 +107,7 @@ func (e *EntityClient) UpdateEntity(ctx context.Context, entity *corev2.Entity) 
 		config.Subscriptions = corev2.AddEntitySubscription(config.Metadata.Name, config.Subscriptions)
 		req := storev2.NewResourceRequestFromResource(ctx, config)
 
-		wConfig, err := wrap.Resource(config)
+		wConfig, err := storev2.WrapResource(config)
 		if err != nil {
 			return err
 		}

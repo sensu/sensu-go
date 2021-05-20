@@ -11,7 +11,6 @@ import (
 	"github.com/sensu/sensu-go/backend/authorization"
 	"github.com/sensu/sensu-go/backend/store"
 	storev2 "github.com/sensu/sensu-go/backend/store/v2"
-	"github.com/sensu/sensu-go/backend/store/v2/wrap"
 	"github.com/sensu/sensu-go/types"
 )
 
@@ -47,7 +46,7 @@ func (g *GenericClient) createResource(ctx context.Context, value corev2.Resourc
 		resource := value.Resource
 		req := storev2.NewResourceRequestFromResource(ctx, resource)
 		req.Namespace = corev2.ContextNamespace(ctx)
-		wrapper, err := wrap.Resource(resource)
+		wrapper, err := storev2.WrapResource(resource)
 		if err != nil {
 			return err
 		}
@@ -108,7 +107,7 @@ func (g *GenericClient) updateResource(ctx context.Context, value corev2.Resourc
 		resource := value.Resource
 		req := storev2.NewResourceRequestFromResource(ctx, resource)
 		req.Namespace = corev2.ContextNamespace(ctx)
-		wrapper, err := wrap.Resource(resource)
+		wrapper, err := storev2.WrapResource(resource)
 		if err != nil {
 			return err
 		}

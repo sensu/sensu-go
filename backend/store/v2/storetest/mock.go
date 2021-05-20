@@ -30,7 +30,8 @@ func (s *Store) CreateIfNotExists(req storev2.ResourceRequest, w storev2.Wrapper
 
 func (s *Store) Get(req storev2.ResourceRequest) (storev2.Wrapper, error) {
 	args := s.Called(req)
-	return args.Get(0).(storev2.Wrapper), args.Error(1)
+	w, _ := args.Get(0).(storev2.Wrapper)
+	return w, args.Error(1)
 }
 
 func (s *Store) Delete(req storev2.ResourceRequest) error {

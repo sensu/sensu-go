@@ -14,6 +14,7 @@ import (
 	corev3 "github.com/sensu/sensu-go/api/core/v3"
 	"github.com/sensu/sensu-go/backend/messaging"
 	"github.com/sensu/sensu-go/backend/store"
+	storev2 "github.com/sensu/sensu-go/backend/store/v2"
 	"github.com/sensu/sensu-go/backend/store/v2/storetest"
 	"github.com/sensu/sensu-go/backend/store/v2/wrap"
 	"github.com/sensu/sensu-go/handler"
@@ -372,7 +373,7 @@ func TestSession_Start(t *testing.T) {
 			},
 			storeFunc: func(s *storetest.Store, wg *sync.WaitGroup) {
 				cfg := corev3.FixtureEntityConfig("testing")
-				wrappedConfig, err := wrap.Resource(cfg)
+				wrappedConfig, err := storev2.WrapResource(cfg)
 				if err != nil {
 					t.Fatal(err)
 				}

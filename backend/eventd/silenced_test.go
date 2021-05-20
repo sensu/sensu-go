@@ -9,8 +9,8 @@ import (
 	corev3 "github.com/sensu/sensu-go/api/core/v3"
 	"github.com/sensu/sensu-go/backend/messaging"
 	"github.com/sensu/sensu-go/backend/store/cache"
+	storev2 "github.com/sensu/sensu-go/backend/store/v2"
 	"github.com/sensu/sensu-go/backend/store/v2/storetest"
-	"github.com/sensu/sensu-go/backend/store/v2/wrap"
 	"github.com/sensu/sensu-go/testing/mockbus"
 	"github.com/sensu/sensu-go/testing/mockstore"
 	"github.com/stretchr/testify/assert"
@@ -197,15 +197,15 @@ func TestEventd_handleMessage(t *testing.T) {
 
 	var nilEvent *corev2.Event
 
-	newEntityConfig := func() *wrap.Wrapper {
+	newEntityConfig := func() storev2.Wrapper {
 		entity := corev3.FixtureEntityConfig("foo")
-		e, err := wrap.Resource(entity)
+		e, err := storev2.WrapResource(entity)
 		require.NoError(t, err)
 		return e
 	}
-	newEntityState := func() *wrap.Wrapper {
+	newEntityState := func() storev2.Wrapper {
 		state := corev3.FixtureEntityState("foo")
-		e, err := wrap.Resource(state)
+		e, err := storev2.WrapResource(state)
 		require.NoError(t, err)
 		return e
 	}

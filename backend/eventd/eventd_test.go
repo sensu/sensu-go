@@ -21,7 +21,6 @@ import (
 	"github.com/sensu/sensu-go/backend/store/cache"
 	storev2 "github.com/sensu/sensu-go/backend/store/v2"
 	"github.com/sensu/sensu-go/backend/store/v2/storetest"
-	"github.com/sensu/sensu-go/backend/store/v2/wrap"
 	"github.com/sensu/sensu-go/testing/mockstore"
 )
 
@@ -421,12 +420,12 @@ func addMockEntityV2(t *testing.T, s *storetest.Store, entity *corev2.Entity) {
 	stateReq := storev2.NewResourceRequestFromResource(context.Background(), entityState)
 	configReq := storev2.NewResourceRequestFromResource(context.Background(), entityConfig)
 
-	wConfig, err := wrap.Resource(entityConfig)
+	wConfig, err := storev2.WrapResource(entityConfig)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	wState, err := wrap.Resource(entityState)
+	wState, err := storev2.WrapResource(entityState)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -445,12 +444,12 @@ func addFixtureEntity(store *storetest.Store, namespace, name string) {
 	stateReq := storev2.NewResourceRequestFromResource(context.Background(), entityState)
 	configReq := storev2.NewResourceRequestFromResource(context.Background(), entityConfig)
 
-	wConfig, err := wrap.Resource(entityConfig)
+	wConfig, err := storev2.WrapResource(entityConfig)
 	if err != nil {
 		panic(fmt.Sprintf("couldn't wrap fixture resource, that fixture is probably broken in some way (%v)", err))
 	}
 
-	wState, err := wrap.Resource(entityState)
+	wState, err := storev2.WrapResource(entityState)
 	if err != nil {
 		panic(fmt.Sprintf("couldn't wrap fixture resource, that fixture is probably broken in some way (%v)", err))
 	}
@@ -469,7 +468,7 @@ func addFixtureEntity(store *storetest.Store, namespace, name string) {
 }
 
 func entityError(s *storetest.Store, namespace, name string, err error) {
-	var nilWrapper *wrap.Wrapper = nil
+	var nilWrapper storev2.Wrapper
 
 	s.On("Get", mock.MatchedBy(func(req storev2.ResourceRequest) bool {
 		return req.Name == name && req.Namespace == namespace

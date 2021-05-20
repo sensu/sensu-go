@@ -8,7 +8,6 @@ import (
 	corev3 "github.com/sensu/sensu-go/api/core/v3"
 	"github.com/sensu/sensu-go/backend/store"
 	storev2 "github.com/sensu/sensu-go/backend/store/v2"
-	"github.com/sensu/sensu-go/backend/store/v2/wrap"
 )
 
 // EntityController exposes actions in which a viewer can perform.
@@ -124,7 +123,7 @@ func (c EntityController) CreateOrReplace(ctx context.Context, entity corev2.Ent
 		config.Subscriptions = corev2.AddEntitySubscription(config.Metadata.Name, config.Subscriptions)
 		req := storev2.NewResourceRequestFromResource(ctx, config)
 
-		wConfig, err := wrap.Resource(config)
+		wConfig, err := storev2.WrapResource(config)
 		if err != nil {
 			return err
 		}

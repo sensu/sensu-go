@@ -135,11 +135,11 @@ func TestResourceRebuild(t *testing.T) {
 	// Resource added to a new namespace
 	foo := corev3.FixtureEntityConfig("foo")
 	req = storev2.NewResourceRequestFromResource(ctx, foo)
-	wrapper, err = wrap.Resource(foo)
+	fooWrapper, err := storev2.WrapResource(foo)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if err := store.CreateOrUpdate(req, wrapper); err != nil {
+	if err := store.CreateOrUpdate(req, fooWrapper); err != nil {
 		t.Fatal(err)
 	}
 	if updates, err := cacher.rebuild(ctx); err != nil {
@@ -153,11 +153,11 @@ func TestResourceRebuild(t *testing.T) {
 	// Resource added to an existing namespace
 	bar := corev3.FixtureEntityConfig("bar")
 	req = storev2.NewResourceRequestFromResource(ctx, bar)
-	wrapper, err = wrap.Resource(bar)
+	barWrapper, err := storev2.WrapResource(bar)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if err := store.CreateOrUpdate(req, wrapper); err != nil {
+	if err := store.CreateOrUpdate(req, barWrapper); err != nil {
 		t.Fatal(err)
 	}
 	if updates, err := cacher.rebuild(ctx); err != nil {
@@ -171,11 +171,11 @@ func TestResourceRebuild(t *testing.T) {
 	// Resource updated
 	bar.User = "acme"
 	req = storev2.NewResourceRequestFromResource(ctx, bar)
-	wrapper, err = wrap.Resource(bar)
+	barWrapper, err = storev2.WrapResource(bar)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if err := store.CreateOrUpdate(req, wrapper); err != nil {
+	if err := store.CreateOrUpdate(req, barWrapper); err != nil {
 		t.Fatal(err)
 	}
 	if updates, err := cacher.rebuild(ctx); err != nil {

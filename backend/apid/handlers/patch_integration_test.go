@@ -18,7 +18,6 @@ import (
 	etcdstore "github.com/sensu/sensu-go/backend/store/etcd"
 	storev2 "github.com/sensu/sensu-go/backend/store/v2"
 	etcdstorev2 "github.com/sensu/sensu-go/backend/store/v2/etcdstore"
-	"github.com/sensu/sensu-go/backend/store/v2/wrap"
 	"github.com/sirupsen/logrus"
 )
 
@@ -142,7 +141,7 @@ func TestHandlers_PatchResource(t *testing.T) {
 				ctx := store.NamespaceContext(context.Background(), "default")
 				entity := corev3.FixtureEntityConfig("testentity")
 				req := storev2.NewResourceRequestFromResource(ctx, entity)
-				wrapper, err := wrap.Resource(entity)
+				wrapper, err := storev2.WrapResource(entity)
 				if err != nil {
 					t.Fatal(err)
 				}
@@ -166,7 +165,7 @@ func TestHandlers_PatchResource(t *testing.T) {
 				ctx := store.NamespaceContext(context.Background(), "default")
 				entity := corev3.FixtureEntityConfig("testentity")
 				req := storev2.NewResourceRequestFromResource(ctx, entity)
-				wrapper, err := wrap.Resource(entity)
+				wrapper, err := storev2.WrapResource(entity)
 				if err != nil {
 					t.Fatal(err)
 				}
@@ -188,7 +187,7 @@ func TestHandlers_PatchResource(t *testing.T) {
 				ctx := store.NamespaceContext(context.Background(), "default")
 				entity := corev3.FixtureEntityConfig("testentity")
 				req := storev2.NewResourceRequestFromResource(ctx, entity)
-				wrapper, err := wrap.Resource(entity)
+				wrapper, err := storev2.WrapResource(entity)
 				if err != nil {
 					t.Fatal(err)
 				}
