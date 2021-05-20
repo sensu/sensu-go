@@ -123,7 +123,7 @@ func AskForURL(c config.Config) *survey.Question {
 	return &survey.Question{
 		Name: "url",
 		Prompt: &survey.Input{
-			Message: "Sensu Backend URL:",
+			Message: "Sensu Backend API URL:",
 			Default: url,
 		},
 	}
