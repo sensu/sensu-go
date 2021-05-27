@@ -179,3 +179,65 @@ func TestEntityTypeToJSONField(t *testing.T) {
 	require.NoError(t, err)
 	assert.NotEmpty(t, res)
 }
+
+func Test_entityImpl_IsSilenced(t *testing.T) {
+	testCases := []struct {
+		name     string
+		entity   *corev2.Entity
+		silence  *corev2.Silenced
+		expected bool
+	}{
+		{
+			name:     "matches subscription",
+			entity:   &corev2.Entity{Subscriptions: []string{"unix"}},
+			silence:  &corev2.Silenced{Subscription: "unix"},
+			expected: true,
+		},
+		{
+			name:     "matches subscription w/ wildcard check",
+			entity:   &corev2.Entity{Subscriptions: []string{"unix"}},
+			silence:  &corev2.Silenced{Subscription: "unix", Check: "*"},
+			expected: true,
+		},
+		{
+			name:     "matches subscription but check also specified",
+			entity:   &corev2.Entity{Subscriptions: []string{"unix"}},
+			silence:  &corev2.Silenced{Subscription: "unix", Check: "disk-check"},
+			expected: false,
+		},
+		{
+			name:     "matches subscription but start date is in far future",
+			entity:   &corev2.Entity{Subscriptions: []string{"unix"}},
+			silence:  &corev2.Silenced{Subscription: "unix", Begin: 999_999_999_999},
+			expected: false,
+		},
+		{
+			name:     "matches subscription but start date is in distant past",
+			entity:   &corev2.Entity{Subscriptions: []string{"unix"}},
+			silence:  &corev2.Silenced{Subscription: "unix", Begin: 0},
+			expected: true,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			client := new(MockSilencedClient)
+			client.On("ListSilenced", mock.Anything).Return([]*corev2.Silenced{
+				tc.silence,
+			}, nil).Once()
+
+			impl := &entityImpl{}
+			params := graphql.ResolveParams{}
+			cfg := ServiceConfig{SilencedClient: client}
+			params.Context = contextWithLoadersNoCache(context.Background(), cfg)
+			params.Source = tc.entity
+
+			// return associated silence
+			r, err := impl.IsSilenced(params)
+			if err != nil {
+				t.Fatal(err)
+			}
+			assert.Equal(t, tc.expected, r)
+		})
+	}
+}

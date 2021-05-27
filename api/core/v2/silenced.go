@@ -54,14 +54,13 @@ func (s *Silenced) Validate() error {
 	return nil
 }
 
-// StartSilence returns true if the current unix timestamp is less than the begin
-// timestamp.
-func (s *Silenced) StartSilence(currentTime int64) bool {
-	// if begin time is zero, it has not been set, so silencing can start.
-	if s.Begin == 0 {
-		return true
-	}
-	return currentTime > s.Begin
+// StartSilence returns true if the given unix timestamp is equal to or occurs
+// after the Silence's start time.
+//
+// Deprecated: To be removed in a future release, please simply use the Begin
+// field.
+func (s *Silenced) StartSilence(t int64) bool {
+	return t >= s.Begin
 }
 
 // Prepare prepares a silenced entry for storage

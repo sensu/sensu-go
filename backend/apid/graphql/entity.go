@@ -148,7 +148,7 @@ func (r *entityImpl) Silences(p graphql.ResolveParams) (interface{}, error) {
 func filterSilenceByEntity(src *corev2.Entity) silencePredicate {
 	now := time.Now().Unix()
 	return func(obj *corev2.Silenced) bool {
-		if !(obj.Check == "" || obj.Check == "*") || !obj.StartSilence(now) {
+		if !(obj.Check == "" || obj.Check == "*") || obj.Begin > now {
 			return false
 		}
 		if strings.InArray(obj.Subscription, src.Subscriptions) {
