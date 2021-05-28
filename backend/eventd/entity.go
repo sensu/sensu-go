@@ -74,7 +74,7 @@ func createProxyEntity(event *corev2.Event, s storev2.Interface) error {
 			// because we want to overwrite any existing EntityState that could
 			// have been left behind due to a failed operation or failure to
 			// clean up old state.
-			wState, err := storev2.WrapResource(state, wrap.PreferPostgres)
+			wState, err := storev2.WrapResource(state, wrap.UsePostgres)
 			if err != nil {
 				return err
 			}

@@ -121,10 +121,9 @@ var CompressSnappy Option = func(w *Wrapper, r interface{}) error {
 	return nil
 }
 
-// PreferPostgres will tell the store to use postgres if it is available.
+// UsePostgres will tell the store to use postgres if it is available.
 // (Currently only available in the enterprise product)
-var PreferPostgres Option = func(w *Wrapper, r interface{}) error {
-	w.PreferPostgres = true
+var UsePostgres Option = func(w *Wrapper, r interface{}) error {
 	return nil
 }
 

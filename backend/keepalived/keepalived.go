@@ -657,7 +657,7 @@ func (k *Keepalived) handleUpdate(e *corev2.Event) error {
 	entity.LastSeen = e.Timestamp
 	_, entityState := corev3.V2EntityToV3(entity)
 
-	wrapper, err := storev2.WrapResource(entityState, wrap.PreferPostgres)
+	wrapper, err := storev2.WrapResource(entityState, wrap.UsePostgres)
 	if err != nil {
 		logger.WithError(err).Error("error wrapping entity state")
 		return err
