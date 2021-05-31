@@ -378,7 +378,7 @@ func (e *Event) IsSilencedBy(entry *Silenced) bool {
 
 	// Make sure the silence has started
 	now := time.Now().Unix()
-	if !entry.StartSilence(now) {
+	if entry.Begin > now {
 		return false
 	}
 

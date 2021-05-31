@@ -383,3 +383,63 @@ func TestCheckTypeOutputFieldImpl(t *testing.T) {
 		})
 	}
 }
+
+func Test_checkCfgImpl_IsSilenced(t *testing.T) {
+	testCases := []struct {
+		name     string
+		check    *corev2.CheckConfig
+		silence  *corev2.Silenced
+		expected bool
+	}{
+		{
+			name:     "matches check",
+			check:    corev2.FixtureCheckConfig("check"),
+			silence:  corev2.FixtureSilenced("*:check"),
+			expected: true,
+		},
+		{
+			name:     "matches subscription",
+			check:    &corev2.CheckConfig{Subscriptions: []string{"unix"}},
+			silence:  corev2.FixtureSilenced("unix:*"),
+			expected: true,
+		},
+		{
+			name:     "no match",
+			check:    &corev2.CheckConfig{Subscriptions: []string{"unix"}},
+			silence:  corev2.FixtureSilenced("cats:dogs"),
+			expected: false,
+		},
+		{
+			name:     "starts in far future",
+			check:    corev2.FixtureCheckConfig("check"),
+			silence:  &corev2.Silenced{Check: "check", Begin: 999_999_999_999},
+			expected: false,
+		},
+		{
+			name:     "starts in distant past",
+			check:    corev2.FixtureCheckConfig("check"),
+			silence:  &corev2.Silenced{Check: "check", Begin: 0},
+			expected: true,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			client := new(MockSilencedClient)
+			client.On("ListSilenced", mock.Anything).Return([]*corev2.Silenced{
+				tc.silence,
+			}, nil).Once()
+
+			impl := &checkCfgImpl{}
+			params := graphql.ResolveParams{}
+			cfg := ServiceConfig{SilencedClient: client}
+			params.Context = contextWithLoadersNoCache(context.Background(), cfg)
+			params.Source = tc.check
+
+			// return associated silence
+			res, err := impl.IsSilenced(params)
+			require.NoError(t, err)
+			assert.Equal(t, tc.expected, res)
+		})
+	}
+}

@@ -56,14 +56,7 @@ func (r *checkCfgImpl) IsSilenced(p graphql.ResolveParams) (bool, error) {
 
 	results, err := loadSilenceds(p.Context, src.Namespace)
 	records := filterSilenceds(results, func(obj *corev2.Silenced) bool {
-		if !obj.StartSilence(now) {
-			return false
-		}
-		if (obj.Check == src.GetName() && (obj.Subscription == "" || obj.Subscription == "*")) ||
-			((obj.Check == "" || obj.Check == "*") && strings.InArray(obj.Subscription, src.GetSubscriptions())) {
-			return true
-		}
-		return false
+		return checkIsSilencedBy(src, obj, now)
 	})
 	return len(records) > 0, err
 }
@@ -75,17 +68,25 @@ func (r *checkCfgImpl) Silences(p graphql.ResolveParams) (interface{}, error) {
 
 	results, err := loadSilenceds(p.Context, src.Namespace)
 	records := filterSilenceds(results, func(obj *corev2.Silenced) bool {
-		if !obj.StartSilence(now) {
-			return false
-		}
-		if (obj.Check == src.GetName() && (obj.Subscription == "" || obj.Subscription == "*")) ||
-			((obj.Check == "" || obj.Check == "*") && strings.InArray(obj.Subscription, src.GetSubscriptions())) {
-			return true
-		}
-		return false
+		return checkIsSilencedBy(src, obj, now)
 	})
 
 	return records, err
+}
+
+func checkIsSilencedBy(check interface {
+	GetName() string
+	GetSubscriptions() []string
+}, silence *corev2.Silenced, t int64) bool {
+	if silence.Begin > t {
+		return false
+	}
+	if (silence.Check == check.GetName() && (silence.Subscription == "" || silence.Subscription == "*")) ||
+		((silence.Check == "" || silence.Check == "*") && strings.InArray(silence.Subscription, check.GetSubscriptions())) {
+		return true
+	}
+	return false
+
 }
 
 // ToJSON implements response to request for 'toJSON' field.

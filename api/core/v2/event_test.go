@@ -348,10 +348,23 @@ func TestEventIsSilencedBy(t *testing.T) {
 			expected: false,
 		},
 		{
-			name:     "Check provided and matches, no subscription",
-			event:    FixtureEvent("entity1", "check1"),
-			silenced: FixtureSilenced("*:check1"),
+			name:  "Check provided and matches, no subscription",
+			event: FixtureEvent("entity1", "check1"),
+			silenced: &Silenced{
+				Subscription: "",
+				Check:        "check1",
+			},
 			expected: true,
+		},
+		{
+			name:  "Check provided and matches, no subscription; begins in future",
+			event: FixtureEvent("entity1", "check1"),
+			silenced: &Silenced{
+				Subscription: "",
+				Check:        "check1",
+				Begin:        time.Now().Unix() + 300,
+			},
+			expected: false,
 		},
 		{
 			name:     "Subscription provided and doesn't match, no check",

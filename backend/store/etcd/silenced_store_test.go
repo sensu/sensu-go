@@ -134,11 +134,11 @@ func TestSilencedStorageWithBegin(t *testing.T) {
 		entry, err := store.GetSilencedEntryByName(ctx, silenced.Name)
 		require.NoError(t, err)
 		require.NotNil(t, entry)
-		assert.False(t, entry.StartSilence(currentTime))
+		assert.False(t, entry.Begin < currentTime)
 
 		// reset current time to be ahead of begin time
 		currentTime = time.Date(1970, 01, 01, 02, 00, 00, 00, time.UTC).Unix()
-		assert.True(t, entry.StartSilence(currentTime))
+		assert.True(t, entry.Begin < currentTime)
 	})
 }
 
@@ -161,7 +161,7 @@ func TestSilencedStorageWithBeginAndExpire(t *testing.T) {
 		entry, err := store.GetSilencedEntryByName(ctx, silenced.Name)
 		assert.NoError(t, err)
 		assert.NotNil(t, entry)
-		assert.False(t, entry.StartSilence(currentTime))
+		assert.False(t, entry.Begin < currentTime)
 		// Check that the ttl includes the expire time and delta between current
 		// and begin time
 		assert.Equal(t, entry.Expire, int64(15))
