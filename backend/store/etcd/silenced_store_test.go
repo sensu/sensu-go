@@ -161,7 +161,7 @@ func TestSilencedStorageWithBeginAndExpire(t *testing.T) {
 		entry, err := store.GetSilencedEntryByName(ctx, silenced.Name)
 		assert.NoError(t, err)
 		assert.NotNil(t, entry)
-		assert.False(t, entry.Begin < currentTime))
+		assert.False(t, entry.Begin < currentTime)
 		// Check that the ttl includes the expire time and delta between current
 		// and begin time
 		assert.Equal(t, entry.Expire, int64(15))
