@@ -274,11 +274,13 @@ func StartCommand(initialize InitializeFunc) *cobra.Command {
 
 			// Etcd log level
 			if cfg.EtcdLogLevel == "" {
-				switch cfg.LogLevel {
-				case "trace":
+				switch level {
+				case logrus.TraceLevel:
 					cfg.EtcdLogLevel = "debug"
+				case logrus.WarnLevel:
+					cfg.EtcdLogLevel = "warn"
 				default:
-					cfg.EtcdLogLevel = cfg.LogLevel
+					cfg.EtcdLogLevel = level.String()
 				}
 			}
 
