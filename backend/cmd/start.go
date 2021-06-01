@@ -272,6 +272,16 @@ func StartCommand(initialize InitializeFunc) *cobra.Command {
 				ClientCertAuth: viper.GetBool(flagEtcdPeerClientCertAuth),
 			}
 
+			// Etcd log level
+			if cfg.EtcdLogLevel == "" {
+				switch cfg.LogLevel {
+				case "trace":
+					cfg.EtcdLogLevel = "debug"
+				default:
+					cfg.EtcdLogLevel = cfg.LogLevel
+				}
+			}
+
 			ctx, cancel := context.WithCancel(context.Background())
 			defer cancel()
 			sensuBackend, err := initialize(ctx, cfg)
@@ -375,7 +385,6 @@ func handleConfig(cmd *cobra.Command, arguments []string, server bool) error {
 	viper.SetDefault(flagEtcdMaxRequestBytes, etcd.DefaultMaxRequestBytes)
 	viper.SetDefault(flagEtcdHeartbeatInterval, etcd.DefaultTickMs)
 	viper.SetDefault(flagEtcdElectionTimeout, etcd.DefaultElectionMs)
-	viper.SetDefault(flagEtcdLogLevel, "warn")
 
 	if server {
 		viper.SetDefault(flagNoEmbedEtcd, false)
