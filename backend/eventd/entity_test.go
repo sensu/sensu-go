@@ -13,12 +13,11 @@ import (
 	"github.com/sensu/sensu-go/backend/store"
 	storev2 "github.com/sensu/sensu-go/backend/store/v2"
 	"github.com/sensu/sensu-go/backend/store/v2/storetest"
-	"github.com/sensu/sensu-go/backend/store/v2/wrap"
 )
 
 func TestCreateProxyEntity(t *testing.T) {
 	type storeFunc func(*storetest.Store, *corev2.Event)
-	var nilWrapper *wrap.Wrapper = nil
+	var nilWrapper storev2.Wrapper
 
 	tests := []struct {
 		name           string
@@ -42,12 +41,12 @@ func TestCreateProxyEntity(t *testing.T) {
 				stateReq := storev2.NewResourceRequestFromResource(context.Background(), state)
 				configReq := storev2.NewResourceRequestFromResource(context.Background(), config)
 
-				wConfig, err := wrap.Resource(config)
+				wConfig, err := storev2.WrapResource(config)
 				if err != nil {
 					t.Fatal(err)
 				}
 
-				wState, err := wrap.Resource(state)
+				wState, err := storev2.WrapResource(state)
 				if err != nil {
 					t.Fatal(err)
 				}
@@ -81,34 +80,18 @@ func TestCreateProxyEntity(t *testing.T) {
 				config := corev3.FixtureEntityConfig("foo")
 				configReq := storev2.NewResourceRequestFromResource(context.Background(), config)
 
-				wState, err := wrap.Resource(state)
-				if err != nil {
-					t.Fatal(err)
-				}
-
-				wConfig, err := wrap.Resource(config)
-				if err != nil {
-					t.Fatal(err)
-				}
-
 				s.On("Get", mock.AnythingOfType("v2.ResourceRequest")).
 					Return(nilWrapper, &store.ErrNotFound{})
 
 				// Assert that CreateOrUpdate() was called with the expected
 				// request and wrapper
-				s.On("CreateOrUpdate", stateReq,
-					mock.MatchedBy(func(w *wrap.Wrapper) bool {
-						return w.String() == wState.String()
-					})).Return(nil)
+				s.On("CreateOrUpdate", stateReq, mock.Anything).Return(nil)
 
 				// Assert that CreateIfNotExists() was called with the expected
 				// request and wrapper type
 				// TODO(ccressent): can we do something more strict with the
 				// matching?
-				s.On("CreateIfNotExists", configReq,
-					mock.MatchedBy(func(w *wrap.Wrapper) bool {
-						return w.TypeMeta.Equal(wConfig.TypeMeta)
-					})).Return(nil)
+				s.On("CreateIfNotExists", configReq, mock.Anything).Return(nil)
 			},
 			wantEntity: &corev2.Entity{
 				ObjectMeta: corev2.ObjectMeta{
@@ -157,12 +140,12 @@ func TestCreateProxyEntity(t *testing.T) {
 				stateReq := storev2.NewResourceRequestFromResource(context.Background(), state)
 				configReq := storev2.NewResourceRequestFromResource(context.Background(), config)
 
-				wState, err := wrap.Resource(state)
+				wState, err := storev2.WrapResource(state)
 				if err != nil {
 					t.Fatal(err)
 				}
 
-				wConfig, err := wrap.Resource(config)
+				wConfig, err := storev2.WrapResource(config)
 				if err != nil {
 					t.Fatal(err)
 				}
@@ -193,33 +176,17 @@ func TestCreateProxyEntity(t *testing.T) {
 				configReq := storev2.NewResourceRequestFromResource(context.Background(), config)
 				stateReq := storev2.NewResourceRequestFromResource(context.Background(), state)
 
-				wState, err := wrap.Resource(state)
-				if err != nil {
-					t.Fatal(err)
-				}
-
-				wConfig, err := wrap.Resource(config)
-				if err != nil {
-					t.Fatal(err)
-				}
-
 				s.On("Get", configReq).Return(nilWrapper, &store.ErrNotFound{})
 
 				// Assert that CreateOrUpdate() was called with the expected
 				// request and wrapper
-				s.On("CreateOrUpdate", stateReq,
-					mock.MatchedBy(func(w *wrap.Wrapper) bool {
-						return w.String() == wState.String()
-					})).Return(nil)
+				s.On("CreateOrUpdate", stateReq, mock.Anything).Return(nil)
 
 				// Assert that CreateIfNotExists() was called with the expected
 				// request and wrapper type
 				// TODO(ccressent): can we do something more strict with the
 				// matching?
-				s.On("CreateIfNotExists", configReq,
-					mock.MatchedBy(func(w *wrap.Wrapper) bool {
-						return w.TypeMeta.Equal(wConfig.TypeMeta)
-					})).Return(nil)
+				s.On("CreateIfNotExists", configReq, mock.Anything).Return(nil)
 			},
 			wantEntityName: "bar",
 		},
@@ -248,7 +215,7 @@ func TestCreateProxyEntity(t *testing.T) {
 				s.On("Get", configReq).
 					Return(nilWrapper, &store.ErrNotFound{})
 
-				s.On("CreateOrUpdate", stateReq, mock.AnythingOfType("*wrap.Wrapper")).
+				s.On("CreateOrUpdate", stateReq, mock.Anything).
 					Return(errors.New("error"))
 			},
 			wantEntityName: "bar",

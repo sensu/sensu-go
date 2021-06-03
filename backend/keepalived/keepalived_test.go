@@ -10,6 +10,7 @@ import (
 	"github.com/sensu/sensu-go/backend/liveness"
 	"github.com/sensu/sensu-go/backend/messaging"
 	stor "github.com/sensu/sensu-go/backend/store"
+	storev2 "github.com/sensu/sensu-go/backend/store/v2"
 	storv2 "github.com/sensu/sensu-go/backend/store/v2"
 	"github.com/sensu/sensu-go/backend/store/v2/storetest"
 	"github.com/sensu/sensu-go/backend/store/v2/wrap"
@@ -61,13 +62,13 @@ func fakeFactory(name string, dead, alive liveness.EventFunc, logger logrus.Fiel
 
 func newKeepalivedTest(t *testing.T) *keepalivedTest {
 	store := &mockstore.MockStore{}
-	storev2 := &storetest.Store{}
+	storv2 := &storetest.Store{}
 	deregisterer := &mockDeregisterer{}
 	bus, err := messaging.NewWizardBus(messaging.WizardBusConfig{})
 	require.NoError(t, err)
 	k, err := New(Config{
 		Store:           store,
-		StoreV2:         storev2,
+		StoreV2:         storv2,
 		EventStore:      store,
 		Bus:             bus,
 		LivenessFactory: fakeFactory,
@@ -79,7 +80,7 @@ func newKeepalivedTest(t *testing.T) *keepalivedTest {
 	test := &keepalivedTest{
 		MessageBus:   bus,
 		Store:        store,
-		StoreV2:      storev2,
+		StoreV2:      storv2,
 		Deregisterer: deregisterer,
 		Keepalived:   k,
 		receiver:     make(chan interface{}),
@@ -223,10 +224,10 @@ func TestProcessRegistration(t *testing.T) {
 		return entity
 	}
 
-	newEntityConfigWithClass := func(class string) *wrap.Wrapper {
+	newEntityConfigWithClass := func(class string) storv2.Wrapper {
 		entity := corev3.FixtureEntityConfig("agent1")
 		entity.EntityClass = class
-		e, err := wrap.Resource(entity)
+		e, err := storv2.WrapResource(entity)
 		require.NoError(t, err)
 		return e
 	}
@@ -240,13 +241,13 @@ func TestProcessRegistration(t *testing.T) {
 		return entity
 	}
 
-	newAgentManagedEntityConfig := func(class string) *wrap.Wrapper {
+	newAgentManagedEntityConfig := func(class string) storv2.Wrapper {
 		entity := corev3.FixtureEntityConfig("agent1")
 		entity.EntityClass = class
 		entity.Metadata.Labels = map[string]string{
 			corev2.ManagedByLabel: "sensu-agent",
 		}
-		e, err := wrap.Resource(entity)
+		e, err := storv2.WrapResource(entity)
 		require.NoError(t, err)
 		return e
 	}
@@ -257,7 +258,7 @@ func TestProcessRegistration(t *testing.T) {
 		name                   string
 		entity                 *corev2.Entity
 		event                  *corev2.Event
-		storeEntity            *wrap.Wrapper
+		storeEntity            storv2.Wrapper
 		expectedEventLen       int
 		storeGetErr            error
 		storeCreateOrUpdateErr error
@@ -311,7 +312,7 @@ func TestProcessRegistration(t *testing.T) {
 			require.NoError(t, err)
 			require.NoError(t, messageBus.Start())
 
-			storev2 := &storetest.Store{}
+			storv2 := &storetest.Store{}
 
 			tsubEvent := testSubscriber{
 				ch: make(chan interface{}, 1),
@@ -320,7 +321,7 @@ func TestProcessRegistration(t *testing.T) {
 			require.NoError(t, err)
 
 			keepalived, err := New(Config{
-				StoreV2:         storev2,
+				StoreV2:         storv2,
 				Bus:             messageBus,
 				LivenessFactory: fakeFactory,
 				WorkerCount:     1,
@@ -329,9 +330,9 @@ func TestProcessRegistration(t *testing.T) {
 			})
 			require.NoError(t, err)
 
-			storev2.On("CreateIfNotExists", mock.Anything, mock.Anything).Return(tc.storeCreateOrUpdateErr)
-			storev2.On("UpdateIfExists", mock.Anything, mock.Anything).Return(tc.storeCreateOrUpdateErr)
-			storev2.On("Get", mock.Anything).Return(tc.storeEntity, tc.storeGetErr)
+			storv2.On("CreateIfNotExists", mock.Anything, mock.Anything).Return(tc.storeCreateOrUpdateErr)
+			storv2.On("UpdateIfExists", mock.Anything, mock.Anything).Return(tc.storeCreateOrUpdateErr)
+			storv2.On("Get", mock.Anything).Return(tc.storeEntity, tc.storeGetErr)
 			err = keepalived.handleEntityRegistration(tc.entity, tc.event)
 			require.NoError(t, err)
 
@@ -339,7 +340,7 @@ func TestProcessRegistration(t *testing.T) {
 			assert.NoError(t, subscriptionEvent.Cancel())
 
 			if tc.assertionFunc != nil {
-				tc.assertionFunc(storev2)
+				tc.assertionFunc(storv2)
 			}
 		})
 	}
@@ -391,7 +392,7 @@ func TestDeadCallbackNoEntity(t *testing.T) {
 	store := &storetest.Store{}
 	store.On("Get", mock.MatchedBy(func(req storv2.ResourceRequest) bool {
 		return req.StoreName == new(corev3.EntityConfig).StoreName()
-	})).Return((*wrap.Wrapper)(nil), &stor.ErrNotFound{Key: "foo"})
+	})).Return((storv2.Wrapper)(nil), &stor.ErrNotFound{Key: "foo"})
 	keepalived, err := New(Config{
 		StoreV2:         store,
 		Bus:             messageBus,
@@ -424,7 +425,7 @@ func TestDeadCallbackNoEvent(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	wrapper, err := wrap.Resource(
+	wrapper, err := storev2.WrapResource(
 		corev3.FixtureEntityConfig("entity1"),
 		[]wrap.Option{wrap.CompressNone, wrap.EncodeJSON}...)
 	require.NoError(t, err)

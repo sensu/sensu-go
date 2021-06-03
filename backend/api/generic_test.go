@@ -40,12 +40,12 @@ func defaultV2TestClient(store storev2.Interface, auth authorization.Authorizer)
 
 func defaultV2ResourceStore() storev2.Interface {
 	store := new(storetest.Store)
-	wrappedResource, err := wrap.Resource(corev3.FixtureEntityConfig("default"))
+	wrappedResource, err := storev2.WrapResource(corev3.FixtureEntityConfig("default"))
 	if err != nil {
 		panic(err)
 	}
 	store.On("Get", mock.Anything).Return(wrappedResource, nil)
-	store.On("List", mock.Anything, mock.Anything).Return(wrap.List{wrappedResource}, nil)
+	store.On("List", mock.Anything, mock.Anything).Return(wrap.List{wrappedResource.(*wrap.Wrapper)}, nil)
 	store.On("CreateIfNotExists", mock.Anything, mock.Anything).Return(nil)
 	store.On("CreateOrUpdate", mock.Anything, mock.Anything).Return(nil)
 	store.On("Delete", mock.Anything).Return(nil)

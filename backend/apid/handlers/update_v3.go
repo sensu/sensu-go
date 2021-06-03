@@ -11,7 +11,6 @@ import (
 	"github.com/sensu/sensu-go/backend/authentication/jwt"
 	"github.com/sensu/sensu-go/backend/store"
 	storev2 "github.com/sensu/sensu-go/backend/store/v2"
-	"github.com/sensu/sensu-go/backend/store/v2/wrap"
 )
 
 // CreateOrUpdateResource creates or updates the resource given in the request
@@ -38,7 +37,7 @@ func (h Handlers) CreateOrUpdateV3Resource(r *http.Request) (interface{}, error)
 		meta.CreatedBy = claims.StandardClaims.Subject
 	}
 
-	wrapper, err := wrap.Resource(resource)
+	wrapper, err := storev2.WrapResource(resource)
 	if err != nil {
 		return nil, actions.NewError(actions.InvalidArgument, err)
 	}

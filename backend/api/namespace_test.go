@@ -10,6 +10,7 @@ import (
 	"github.com/sensu/sensu-go/backend/authorization"
 	"github.com/sensu/sensu-go/backend/authorization/rbac"
 	"github.com/sensu/sensu-go/backend/store"
+	storev2 "github.com/sensu/sensu-go/backend/store/v2"
 	"github.com/sensu/sensu-go/backend/store/v2/wrap"
 	"github.com/sensu/sensu-go/testing/mockstore"
 	"github.com/stretchr/testify/mock"
@@ -406,11 +407,11 @@ func TestFetchNamespace(t *testing.T) {
 				Type:       "EntityConfig",
 				Template:   string(tmplEntityConfig),
 			}
-			wrappedResourceTemplate, err := wrap.Resource(resourceTemplate)
+			wrappedResourceTemplate, err := storev2.WrapResource(resourceTemplate)
 			if err != nil {
 				t.Fatal(err)
 			}
-			wrapList := wrap.List{wrappedResourceTemplate}
+			wrapList := wrap.List{wrappedResourceTemplate.(*wrap.Wrapper)}
 			s2 := new(mockstore.V2MockStore)
 			s2.On("CreateOrUpdate", mock.Anything, mock.Anything).Return(nil)
 			s2.On("List", mock.Anything, mock.Anything).Return(wrapList, nil)
@@ -792,11 +793,11 @@ func TestNamespaceList(t *testing.T) {
 				Type:       "EntityConfig",
 				Template:   string(tmplEntityConfig),
 			}
-			wrappedResourceTemplate, err := wrap.Resource(resourceTemplate)
+			wrappedResourceTemplate, err := storev2.WrapResource(resourceTemplate)
 			if err != nil {
 				t.Fatal(err)
 			}
-			wrapList := wrap.List{wrappedResourceTemplate}
+			wrapList := wrap.List{wrappedResourceTemplate.(*wrap.Wrapper)}
 			s2 := new(mockstore.V2MockStore)
 			s2.On("CreateOrUpdate", mock.Anything, mock.Anything).Return(nil)
 			s2.On("List", mock.Anything, mock.Anything).Return(wrapList, nil)
@@ -888,11 +889,11 @@ func TestNamespaceCreateSideEffects(t *testing.T) {
 		Type:       "EntityConfig",
 		Template:   string(tmplEntityConfig),
 	}
-	wrappedResourceTemplate, err := wrap.Resource(resourceTemplate)
+	wrappedResourceTemplate, err := storev2.WrapResource(resourceTemplate)
 	if err != nil {
 		t.Fatal(err)
 	}
-	wrapList := wrap.List{wrappedResourceTemplate}
+	wrapList := wrap.List{wrappedResourceTemplate.(*wrap.Wrapper)}
 	s2 := new(mockstore.V2MockStore)
 	s2.On("CreateOrUpdate", mock.Anything, mock.Anything).Return(nil)
 	s2.On("List", mock.Anything, mock.Anything).Return(wrapList, nil)
@@ -1022,11 +1023,11 @@ func TestNamespaceUpdateSideEffects(t *testing.T) {
 		Type:       "EntityConfig",
 		Template:   string(tmplEntityConfig),
 	}
-	wrappedResourceTemplate, err := wrap.Resource(resourceTemplate)
+	wrappedResourceTemplate, err := storev2.WrapResource(resourceTemplate)
 	if err != nil {
 		t.Fatal(err)
 	}
-	wrapList := wrap.List{wrappedResourceTemplate}
+	wrapList := wrap.List{wrappedResourceTemplate.(*wrap.Wrapper)}
 	s2 := new(mockstore.V2MockStore)
 	s2.On("CreateOrUpdate", mock.Anything, mock.Anything).Return(nil)
 	s2.On("List", mock.Anything, mock.Anything).Return(wrapList, nil)

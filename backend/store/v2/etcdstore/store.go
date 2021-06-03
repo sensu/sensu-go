@@ -2,6 +2,7 @@ package etcdstore
 
 import (
 	"encoding/json"
+	"fmt"
 	"path"
 	"strings"
 
@@ -86,10 +87,15 @@ func NewStore(client *clientv3.Client) *Store {
 	return store
 }
 
-func (s *Store) CreateOrUpdate(req storev2.ResourceRequest, w *storev2.Wrapper) error {
+func (s *Store) CreateOrUpdate(req storev2.ResourceRequest, wrapper storev2.Wrapper) error {
 	key := StoreKey(req)
 	if err := req.Validate(); err != nil {
 		return &store.ErrNotValid{Err: err}
+	}
+
+	w, ok := wrapper.(*wrap.Wrapper)
+	if !ok {
+		return &store.ErrNotValid{Err: fmt.Errorf("etcdstore only works with wrap.Wrapper, not %T", wrapper)}
 	}
 
 	msg, err := proto.Marshal(w)
@@ -105,9 +111,14 @@ func (s *Store) CreateOrUpdate(req storev2.ResourceRequest, w *storev2.Wrapper) 
 	return kvc.Txn(req.Context, s.client, comparator, op)
 }
 
-func (s *Store) Patch(req storev2.ResourceRequest, w *storev2.Wrapper, patcher patch.Patcher, conditions *store.ETagCondition) error {
+func (s *Store) Patch(req storev2.ResourceRequest, wrapper storev2.Wrapper, patcher patch.Patcher, conditions *store.ETagCondition) error {
 	if err := req.Validate(); err != nil {
 		return &store.ErrNotValid{Err: err}
+	}
+
+	w, ok := wrapper.(*wrap.Wrapper)
+	if !ok {
+		return &store.ErrNotValid{Err: fmt.Errorf("etcdstore only works with wrap.Wrapper, not %T", wrapper)}
 	}
 
 	key := StoreKey(req)
@@ -187,7 +198,11 @@ func (s *Store) Patch(req storev2.ResourceRequest, w *storev2.Wrapper, patcher p
 	return s.Update(req, w, comparisons...)
 }
 
-func (s *Store) UpdateIfExists(req storev2.ResourceRequest, w *storev2.Wrapper) error {
+func (s *Store) UpdateIfExists(req storev2.ResourceRequest, wrapper storev2.Wrapper) error {
+	w, ok := wrapper.(*wrap.Wrapper)
+	if !ok {
+		return &store.ErrNotValid{Err: fmt.Errorf("etcdstore only works with wrap.Wrapper, not %T", wrapper)}
+	}
 	key := StoreKey(req)
 	comparisons := []kvc.Predicate{
 		kvc.NamespaceExists(req.Namespace),
@@ -197,7 +212,11 @@ func (s *Store) UpdateIfExists(req storev2.ResourceRequest, w *storev2.Wrapper) 
 	return s.Update(req, w, comparisons...)
 }
 
-func (s *Store) Update(req storev2.ResourceRequest, w *storev2.Wrapper, comparisons ...kvc.Predicate) error {
+func (s *Store) Update(req storev2.ResourceRequest, wrapper storev2.Wrapper, comparisons ...kvc.Predicate) error {
+	w, ok := wrapper.(*wrap.Wrapper)
+	if !ok {
+		return &store.ErrNotValid{Err: fmt.Errorf("etcdstore only works with wrap.Wrapper, not %T", wrapper)}
+	}
 	key := StoreKey(req)
 	if err := req.Validate(); err != nil {
 		return &store.ErrNotValid{Err: err}
@@ -214,7 +233,11 @@ func (s *Store) Update(req storev2.ResourceRequest, w *storev2.Wrapper, comparis
 	return kvc.Txn(req.Context, s.client, comparator, op)
 }
 
-func (s *Store) CreateIfNotExists(req storev2.ResourceRequest, w *storev2.Wrapper) error {
+func (s *Store) CreateIfNotExists(req storev2.ResourceRequest, wrapper storev2.Wrapper) error {
+	w, ok := wrapper.(*wrap.Wrapper)
+	if !ok {
+		return &store.ErrNotValid{Err: fmt.Errorf("etcdstore only works with wrap.Wrapper, not %T", wrapper)}
+	}
 	key := StoreKey(req)
 	if err := req.Validate(); err != nil {
 		return &store.ErrNotValid{Err: err}
@@ -234,14 +257,14 @@ func (s *Store) CreateIfNotExists(req storev2.ResourceRequest, w *storev2.Wrappe
 	return kvc.Txn(req.Context, s.client, comparator, op)
 }
 
-func (s *Store) Get(req storev2.ResourceRequest) (*storev2.Wrapper, error) {
+func (s *Store) Get(req storev2.ResourceRequest) (storev2.Wrapper, error) {
 	key := StoreKey(req)
 	resp, err := s.GetWithResponse(req)
 	if err != nil {
 		return nil, err
 	}
 
-	var wrapper storev2.Wrapper
+	var wrapper wrap.Wrapper
 	if err := proto.UnmarshalMerge(resp.Kvs[0].Value, &wrapper); err != nil {
 		return nil, &store.ErrDecode{Key: key, Err: err}
 	}
@@ -283,7 +306,7 @@ func (s *Store) Delete(req storev2.ResourceRequest) error {
 	return kvc.Txn(req.Context, s.client, comparator, op)
 }
 
-func (s *Store) List(req storev2.ResourceRequest, pred *store.SelectionPredicate) (wrap.List, error) {
+func (s *Store) List(req storev2.ResourceRequest, pred *store.SelectionPredicate) (storev2.WrapList, error) {
 	// For any list request, the name must be zeroed out so that the key can
 	// be correctly generated.
 	req.Name = ""
@@ -320,9 +343,9 @@ func (s *Store) List(req storev2.ResourceRequest, pred *store.SelectionPredicate
 		return nil, err
 	}
 
-	result := make([]*storev2.Wrapper, 0, len(resp.Kvs))
+	result := make(wrap.List, 0, len(resp.Kvs))
 	for _, kv := range resp.Kvs {
-		var wrapper storev2.Wrapper
+		var wrapper wrap.Wrapper
 		if err := proto.Unmarshal(kv.Value, &wrapper); err != nil {
 			return nil, &store.ErrDecode{Key: string(kv.Key), Err: err}
 		}

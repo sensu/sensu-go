@@ -222,11 +222,11 @@ func (s *Store) GetEntities(ctx context.Context, pred *store.SelectionPredicate)
 		}
 		pred.Continue = cont
 	}
-	states := make([]corev3.EntityState, len(stateList))
+	states := make([]corev3.EntityState, stateList.Len())
 	if err := stateList.UnwrapInto(&states); err != nil {
 		return nil, &store.ErrDecode{Err: err, Key: etcdstore.StoreKey(stateReq)}
 	}
-	configs := make([]corev3.EntityConfig, len(configList))
+	configs := make([]corev3.EntityConfig, configList.Len())
 	if err := configList.UnwrapInto(&configs); err != nil {
 		return nil, &store.ErrDecode{Err: err, Key: etcdstore.StoreKey(configReq)}
 	}

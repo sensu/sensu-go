@@ -177,7 +177,7 @@ func TestGet(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		if want := wrapper; !proto.Equal(got, wrapper) {
+		if want := wrapper; !proto.Equal(got.(proto.Message), wrapper) {
 			t.Errorf("bad resource; got %v, want %v", got, want)
 		}
 	})
@@ -255,7 +255,7 @@ func TestList(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		if got, want := len(list), 5; got != want {
+		if got, want := list.Len(), 5; got != want {
 			t.Errorf("wrong number of items: got %d, want %d", got, want)
 		}
 		if got, want := pred.Continue, "foo-4\x00"; got != want {
@@ -266,7 +266,7 @@ func TestList(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		if got, want := len(list), 5; got != want {
+		if got, want := list.Len(), 5; got != want {
 			t.Errorf("wrong number of items: got %d, want %d", got, want)
 		}
 		if pred.Continue != "" {
@@ -279,7 +279,7 @@ func TestList(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		if got, want := len(list), 5; got != want {
+		if got, want := list.Len(), 5; got != want {
 			t.Errorf("wrong number of items: got %d, want %d", got, want)
 		}
 		if got, want := pred.Continue, "default/foo-4\x00"; got != want {
@@ -290,7 +290,7 @@ func TestList(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		if got, want := len(list), 5; got != want {
+		if got, want := list.Len(), 5; got != want {
 			t.Errorf("wrong number of items: got %d, want %d", got, want)
 		}
 		if pred.Continue != "" {
@@ -303,10 +303,10 @@ func TestList(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		if got := len(list); got == 0 {
+		if got := list.Len(); got == 0 {
 			t.Fatalf("wrong number of items: got %d, want > %d", got, 0)
 		}
-		firstObj, err := list[0].Unwrap()
+		firstObj, err := list.(wrap.List)[0].Unwrap()
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -320,10 +320,10 @@ func TestList(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		if got := len(list); got == 0 {
+		if got := list.Len(); got == 0 {
 			t.Fatalf("wrong number of items: got %d, want > %d", got, 0)
 		}
-		firstObj, err = list[0].Unwrap()
+		firstObj, err = list.(wrap.List)[0].Unwrap()
 		if err != nil {
 			t.Fatal(err)
 		}

@@ -11,7 +11,6 @@ import (
 	"github.com/sensu/sensu-go/backend/authentication/jwt"
 	"github.com/sensu/sensu-go/backend/store"
 	storev2 "github.com/sensu/sensu-go/backend/store/v2"
-	"github.com/sensu/sensu-go/backend/store/v2/wrap"
 )
 
 // CreateV3Resource creates the resource given in the request body but only if it
@@ -37,7 +36,7 @@ func (h Handlers) CreateV3Resource(r *http.Request) (interface{}, error) {
 	}
 
 	req := storev2.NewResourceRequestFromResource(r.Context(), resource)
-	wrapper, err := wrap.Resource(resource)
+	wrapper, err := storev2.WrapResource(resource)
 	if err != nil {
 		return nil, actions.NewError(actions.InvalidArgument, err)
 	}

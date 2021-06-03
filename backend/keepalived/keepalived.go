@@ -349,7 +349,7 @@ func (k *Keepalived) handleEntityRegistration(entity *corev2.Entity, event *core
 	defer cancel()
 
 	config, _ := corev3.V2EntityToV3(entity)
-	wrapper, err := wrap.Resource(config)
+	wrapper, err := storev2.WrapResource(config)
 	if err != nil {
 		logger.WithError(err).Error("error wrapping entity config")
 		return err
@@ -392,7 +392,7 @@ func (k *Keepalived) handleEntityRegistration(entity *corev2.Entity, event *core
 		if storedEntityConfig.Metadata.Labels[corev2.ManagedByLabel] == "sensu-agent" {
 			// Remove the managed_by label and update the stored entity config
 			delete(storedEntityConfig.Metadata.Labels, corev2.ManagedByLabel)
-			wrapper, err = wrap.Resource(config)
+			wrapper, err = storev2.WrapResource(config)
 			if err != nil {
 				logger.WithError(err).Error("error wrapping entity config")
 				return err
@@ -657,7 +657,7 @@ func (k *Keepalived) handleUpdate(e *corev2.Event) error {
 	entity.LastSeen = e.Timestamp
 	_, entityState := corev3.V2EntityToV3(entity)
 
-	wrapper, err := wrap.Resource(entityState)
+	wrapper, err := storev2.WrapResource(entityState, wrap.UsePostgres)
 	if err != nil {
 		logger.WithError(err).Error("error wrapping entity state")
 		return err

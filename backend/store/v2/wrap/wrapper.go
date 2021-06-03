@@ -121,6 +121,12 @@ var CompressSnappy Option = func(w *Wrapper, r interface{}) error {
 	return nil
 }
 
+// UsePostgres will tell the store to use postgres if it is available.
+// (Currently only available in the enterprise product)
+var UsePostgres Option = func(w *Wrapper, r interface{}) error {
+	return nil
+}
+
 // CompressDefault is the default compression algorithm.
 var CompressDefault = CompressSnappy
 
@@ -259,6 +265,11 @@ func (w *Wrapper) UnwrapInto(p interface{}) error {
 
 // List is a slice of wrappers.
 type List []*Wrapper
+
+// Len tells the length of the wrap list.
+func (l List) Len() int {
+	return len(l)
+}
 
 // Unwrap unwraps each item in the list and returns a slice of resources of the
 // same size.

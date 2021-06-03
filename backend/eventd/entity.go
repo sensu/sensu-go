@@ -33,10 +33,12 @@ func createProxyEntity(event *corev2.Event, s storev2.Interface) error {
 	configReq := storev2.NewResourceRequestFromResource(context.Background(), config)
 	stateReq := storev2.NewResourceRequestFromResource(context.Background(), state)
 
-	var wState *wrap.Wrapper
-	var wConfig *wrap.Wrapper
+	var (
+		wState, wConfig storev2.Wrapper
+		err             error
+	)
 
-	wConfig, err := s.Get(configReq)
+	wConfig, err = s.Get(configReq)
 	if err == nil {
 		if err := wConfig.UnwrapInto(config); err != nil {
 			return err
@@ -72,7 +74,7 @@ func createProxyEntity(event *corev2.Event, s storev2.Interface) error {
 			// because we want to overwrite any existing EntityState that could
 			// have been left behind due to a failed operation or failure to
 			// clean up old state.
-			wState, err := wrap.Resource(state)
+			wState, err := storev2.WrapResource(state, wrap.UsePostgres)
 			if err != nil {
 				return err
 			}
@@ -86,7 +88,7 @@ func createProxyEntity(event *corev2.Event, s storev2.Interface) error {
 			// Wrap and store the new entity's configuration. We use
 			// CreateIfNotExists() to assert that this EntityConfig is indeed
 			// brand new.
-			wConfig, err := wrap.Resource(config)
+			wConfig, err := storev2.WrapResource(config)
 			if err != nil {
 				return err
 			}

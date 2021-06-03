@@ -8,6 +8,7 @@ import (
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	corev3 "github.com/sensu/sensu-go/api/core/v3"
 	"github.com/sensu/sensu-go/backend/store"
+	storev2 "github.com/sensu/sensu-go/backend/store/v2"
 	"github.com/sensu/sensu-go/backend/store/v2/wrap"
 	"github.com/sensu/sensu-go/testing/fixture"
 	"github.com/sensu/sensu-go/testing/mockstore"
@@ -17,7 +18,7 @@ import (
 func TestHandlers_ListV3Resources(t *testing.T) {
 	meta := corev2.NewObjectMeta("default", "bar")
 	barResource := &fixture.V3Resource{Metadata: &meta}
-	wrapper, _ := wrap.Resource(barResource)
+	wrapper, _ := storev2.WrapResource(barResource)
 	tests := []struct {
 		name      string
 		storeFunc func(*mockstore.V2MockStore)
@@ -28,7 +29,7 @@ func TestHandlers_ListV3Resources(t *testing.T) {
 			name: "store err",
 			storeFunc: func(s *mockstore.V2MockStore) {
 				s.On("List", mock.Anything, mock.Anything).
-					Return((wrap.List)(nil), &store.ErrInternal{})
+					Return((storev2.WrapList)(nil), &store.ErrInternal{})
 			},
 			want:    []corev3.Resource(nil),
 			wantErr: true,
@@ -37,7 +38,7 @@ func TestHandlers_ListV3Resources(t *testing.T) {
 			name: "sucessful list",
 			storeFunc: func(s *mockstore.V2MockStore) {
 				s.On("List", mock.Anything, mock.Anything).
-					Return(wrap.List{wrapper}, nil)
+					Return(storev2.WrapList(wrap.List{wrapper.(*wrap.Wrapper)}), nil)
 			},
 			want: []corev3.Resource{corev3.Resource(barResource)},
 		},
