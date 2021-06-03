@@ -1,51 +1,31 @@
-package store
+package store_test
 
 import (
 	"context"
 	"errors"
 	"testing"
 
-	corev2 "github.com/sensu/sensu-go/api/core/v2"
-	"github.com/sensu/sensu-go/types"
+	"github.com/sensu/sensu-go/backend/store"
+	"github.com/sensu/sensu-go/testing/mockstore"
+	"github.com/stretchr/testify/mock"
 )
 
-type mockEventStore struct {
-	id string
-}
+func TestStoreProxy(t *testing.T) {
+	storeA := new(mockstore.MockStore)
+	storeB := new(mockstore.MockStore)
 
-func (m mockEventStore) DeleteEventByEntityCheck(ctx context.Context, entity, check string) error {
-	return errors.New(m.id)
-}
-
-func (mockEventStore) GetEvents(ctx context.Context, pred *SelectionPredicate) ([]*corev2.Event, error) {
-	return nil, nil
-}
-
-func (mockEventStore) GetEventsByEntity(ctx context.Context, entity string, pred *SelectionPredicate) ([]*corev2.Event, error) {
-	return nil, nil
-}
-
-func (mockEventStore) GetEventByEntityCheck(ctx context.Context, entity, check string) (*types.Event, error) {
-	return nil, nil
-}
-
-func (mockEventStore) UpdateEvent(ctx context.Context, event *types.Event) (old, new *types.Event, err error) {
-	return nil, nil, nil
-}
-
-func TestEventStoreProxy(t *testing.T) {
-	storeA := mockEventStore{"a"}
-	storeB := mockEventStore{"b"}
-
-	proxy := NewEventStoreProxy(storeA)
+	proxy := store.NewStoreProxy(storeA)
 	ctx := context.Background()
+
+	storeA.On("DeleteEventByEntityCheck", mock.Anything, mock.Anything, mock.Anything).Return(errors.New("a"))
+	storeB.On("DeleteEventByEntityCheck", mock.Anything, mock.Anything, mock.Anything).Return(errors.New("b"))
 
 	err := proxy.DeleteEventByEntityCheck(ctx, "", "")
 	if got, want := err.Error(), "a"; got != want {
 		t.Fatalf("bad response from event store: got %s, want %s", got, want)
 	}
 
-	proxy.UpdateEventStore(storeB)
+	proxy.UpdateStore(storeB)
 
 	err = proxy.DeleteEventByEntityCheck(ctx, "", "")
 	if got, want := err.Error(), "b"; got != want {
