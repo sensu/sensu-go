@@ -169,7 +169,7 @@ func newClient(ctx context.Context, config *Config, backend *Backend) (*clientv3
 	// Create an etcd client
 	var client *clientv3.Client
 	if config.EtcdUseEmbeddedClient {
-		client = e.NewEmbeddedClient()
+		client = e.NewEmbeddedClientWithContext(ctx)
 	} else {
 		cl, err := e.NewClientContext(backend.runCtx)
 		if err != nil {
