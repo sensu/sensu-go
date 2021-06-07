@@ -28,6 +28,18 @@ func TestNextCronTime(t *testing.T) {
 	assert.True(t, nextCron >= 0)
 	assert.True(t, now.Add(nextCron).Minute() == 0)
 
+	// Valid cron Sunday as zero
+	nextCron, err = NextCronTime(now, "0 * * * 0")
+	assert.Nil(t, err)
+	assert.True(t, nextCron >= 0)
+	assert.True(t, now.Add(nextCron).Minute() == 0)
+
+	// Valid cron Sunday as letter
+	nextCron, err = NextCronTime(now, "0 * * * SUN")
+	assert.Nil(t, err)
+	assert.True(t, nextCron >= 0)
+	assert.True(t, now.Add(nextCron).Minute() == 0)
+
 	// Invalid cron string with timezone in the wrong spot
 	nextCron, err = NextCronTime(now, "0 * * * * CRON_TZ=Asia/Tokyo")
 	assert.NotNil(t, err)
