@@ -2,7 +2,6 @@
 package command
 
 import (
-	"bytes"
 	"context"
 	"fmt"
 	"math"
@@ -13,6 +12,7 @@ import (
 	"time"
 
 	"github.com/sensu/sensu-go/types"
+	bytesutil "github.com/sensu/sensu-go/util/bytes"
 	"github.com/sirupsen/logrus"
 )
 
@@ -147,7 +147,7 @@ func (e *ExecutionRequest) Execute(ctx context.Context, execution ExecutionReque
 
 	// Share an output buffer between STDOUT/ERR, following the
 	// Nagios plugin spec.
-	var output bytes.Buffer
+	var output bytesutil.SyncBuffer
 
 	cmd.Stdout = &output
 	cmd.Stderr = &output
@@ -222,7 +222,7 @@ func (e *ExecutionRequest) Execute(ctx context.Context, execution ExecutionReque
 		}
 	} else {
 		// Everything is A-OK.
-		resp.Status = 0
+		resp.Status = OKExitStatus
 	}
 
 	return resp, nil
@@ -244,7 +244,7 @@ func escapeZombie(ex *ExecutionRequest) {
 func FixtureExecutionResponse(status int, output string) *ExecutionResponse {
 	return &ExecutionResponse{
 		Output:   output,
-		Status:   0,
+		Status:   status,
 		Duration: 1,
 	}
 }
