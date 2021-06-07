@@ -230,26 +230,7 @@ func NewEtcd(config *Config) (*Etcd, error) {
 
 	cfg.Logger = "zap"
 	cfg.LogLevel = config.LogLevel
-	var zl zapcore.Level
-	switch config.LogLevel {
-	case "debug":
-		zl = zapcore.DebugLevel
-	case "info":
-		zl = zapcore.InfoLevel
-	case "warn":
-		zl = zapcore.WarnLevel
-	case "error":
-		zl = zapcore.ErrorLevel
-	case "dpanic":
-		zl = zapcore.DPanicLevel
-	case "panic":
-		zl = zapcore.PanicLevel
-	case "fatal":
-		zl = zapcore.FatalLevel
-	default:
-		panic("invalid etcd log level")
-	}
-	logutil.DefaultZapLoggerConfig.Level.SetLevel(zl)
+	logutil.DefaultZapLoggerConfig.Level.SetLevel(levelToZap(config.LogLevel))
 
 	e, err := embed.StartEtcd(cfg)
 	if err != nil {
@@ -293,6 +274,8 @@ func (e *Etcd) NewClient() (*clientv3.Client, error) {
 // NewClientContext is like NewClient, but sets the provided context on the
 // client.
 func (e *Etcd) NewClientContext(ctx context.Context) (*clientv3.Client, error) {
+	logutil.DefaultZapLoggerConfig.Level.SetLevel(levelToZap(e.cfg.LogLevel))
+
 	tlsConfig, err := ((transport.TLSInfo)(e.cfg.ClientTLSInfo)).ClientConfig()
 	if err != nil {
 		return nil, err
@@ -317,6 +300,8 @@ func (e *Etcd) NewEmbeddedClient() *clientv3.Client {
 // client. Only for testing.
 // Based on https://github.com/etcd-io/etcd/blob/v3.4.16/etcdserver/api/v3client/v3client.go#L30.
 func (e *Etcd) NewEmbeddedClientWithContext(ctx context.Context) *clientv3.Client {
+	logutil.DefaultZapLoggerConfig.Level.SetLevel(levelToZap(e.cfg.LogLevel))
+
 	c := clientv3.NewCtxClient(ctx)
 
 	kvc := adapter.KvServerToKvClient(v3rpc.NewQuotaKVServer(e.etcd.Server))
@@ -371,4 +356,25 @@ type watchWrapper struct{ clientv3.Watcher }
 
 func (ww *watchWrapper) Watch(ctx context.Context, key string, opts ...clientv3.OpOption) clientv3.WatchChan {
 	return ww.Watcher.Watch(&blankContext{ctx}, key, opts...)
+}
+
+func levelToZap(level string) zapcore.Level {
+	switch level {
+	case "debug":
+		return zapcore.DebugLevel
+	case "info":
+		return zapcore.InfoLevel
+	case "warn":
+		return zapcore.WarnLevel
+	case "error":
+		return zapcore.ErrorLevel
+	case "dpanic":
+		return zapcore.DPanicLevel
+	case "panic":
+		return zapcore.PanicLevel
+	case "fatal":
+		return zapcore.FatalLevel
+	default:
+		panic("invalid etcd log level")
+	}
 }
