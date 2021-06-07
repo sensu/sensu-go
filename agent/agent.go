@@ -93,6 +93,9 @@ var (
 		},
 		[]string{},
 	)
+
+	eventsWebsocketPath, _     = url.Parse("/events")
+	keepalivesWebsocketPath, _ = url.Parse("/keepalives")
 )
 
 func init() {
@@ -370,6 +373,8 @@ func (a *Agent) Run(ctx context.Context) error {
 		a.StartSocketListeners(ctx)
 	}
 
+	// REVIEW(ccressent): I really do not understand the comment below.  Added
+	// by Simon. I suggest deleting altogether?
 	// Increment the waitgroup counter here too in case none of the components
 	// above were started, and rely on the system info collector to decrement it
 	// once it exits
@@ -426,28 +431,40 @@ func (a *Agent) connectionManager(ctx context.Context, cancel context.CancelFunc
 
 		a.clearAgentEntity()
 
-		conn, err := a.connectWithBackoff(ctx)
+		eventsConn, err := a.connectEventsWebsocketWithBackoff(ctx)
 		if err != nil {
 			if err == ctx.Err() {
 				return
 			}
-			logger.WithError(err).Error("couldn't connect to backend")
+			logger.WithError(err).Error("couldn't connect to backend's events websocket")
 			cancel()
 		}
+		newConnections.WithLabelValues().Inc()
+		eventsConnCtx, eventsConnCancel := context.WithCancel(ctx)
+		defer eventsConnCancel()
 
-		connCtx, connCancel := context.WithCancel(ctx)
-		defer connCancel()
+		keepalivesConn, err := a.connectKeepalivesWebsocketWithBackoff(ctx)
+		if err != nil {
+			if err == ctx.Err() {
+				return
+			}
+			logger.WithError(err).Error("couldn't connect to backend's keepalives websocket")
+			cancel()
+		}
+		newConnections.WithLabelValues().Inc()
+		keepalivesConnCtx, keepalivesConnCancel := context.WithCancel(ctx)
+		defer keepalivesConnCancel()
 
 		// Start sending hearbeats to the backend
-		conn.Heartbeat(connCtx, a.config.BackendHeartbeatInterval, a.config.BackendHeartbeatTimeout)
+		eventsConn.Heartbeat(eventsConnCtx, a.config.BackendHeartbeatInterval, a.config.BackendHeartbeatTimeout)
+		keepalivesConn.Heartbeat(keepalivesConnCtx, a.config.BackendHeartbeatInterval, a.config.BackendHeartbeatTimeout)
 
 		a.connectedMu.Lock()
 		a.connected = true
 		a.connectedMu.Unlock()
 
-		newConnections.WithLabelValues().Inc()
-
-		go a.receiveLoop(connCtx, connCancel, conn)
+		go a.receiveLoop(eventsConnCtx, eventsConnCancel, eventsConn)
+		go a.receiveLoop(keepalivesConnCtx, keepalivesConnCancel, keepalivesConn)
 
 		// Block until we receive an entity config, or the grace period expires,
 		// unless the agent manages its entity
@@ -457,9 +474,12 @@ func (a *Agent) connectionManager(ctx context.Context, cancel context.CancelFunc
 				logger.Debug("successfully received the initial entity config")
 			case <-time.After(entityConfigGracePeriod):
 				logger.Warning("the initial entity config was never received, using the local entity")
-			case <-connCtx.Done():
-				// The connection was closed before we received an entity config or we
-				// reached the grace period
+
+			// One of the connections was closed before we received an entity
+			// config or we reached the grace period so we try to reconnect.
+			case <-eventsConnCtx.Done():
+				continue
+			case <-keepalivesConnCtx.Done():
 				continue
 			}
 		}
@@ -467,7 +487,17 @@ func (a *Agent) connectionManager(ctx context.Context, cancel context.CancelFunc
 		// Handle check config requests
 		a.handler.AddHandler(corev2.CheckRequestType, a.handleCheck)
 
-		if err := a.sendLoop(connCtx, connCancel, conn); err != nil && err != connCtx.Err() {
+		// TODO(ccressent): I don't like how errors are handled below.  I
+		// probably want to consider the 2 send loops and "continue" if any one
+		// of the 2 terminates? Even then, I don't think that's the correct
+		// behaviour in the face of socket errors.
+		go func() {
+			if err := a.sendKeepalivesLoop(keepalivesConnCtx, keepalivesConnCancel, keepalivesConn); err != nil && err != keepalivesConnCtx.Err() {
+				logger.WithError(err).Error("error sending keepalives")
+			}
+		}()
+
+		if err := a.sendEventsLoop(eventsConnCtx, eventsConnCancel, eventsConn); err != nil && err != eventsConnCtx.Err() {
 			logger.WithError(err).Error("error sending messages")
 		}
 	}
@@ -517,33 +547,53 @@ func logEvent(e *corev2.Event) {
 	logger.WithFields(fields).Info("sending event to backend")
 }
 
-func (a *Agent) sendLoop(ctx context.Context, cancel context.CancelFunc, conn transport.Transport) error {
+func (a *Agent) sendEventsLoop(ctx context.Context, cancel context.CancelFunc, conn transport.Transport) error {
 	defer cancel()
-	keepalive := time.NewTicker(time.Duration(a.config.KeepaliveInterval) * time.Second)
-	defer keepalive.Stop()
-	if err := conn.Send(a.newKeepalive()); err != nil {
-		logger.WithError(err).Error("error sending message over websocket")
-		return err
-	}
+
 	for {
 		select {
 		case <-ctx.Done():
 			if err := conn.Close(); err != nil {
-				logger.WithError(err).Error("error closing websocket connection")
+				logger.WithError(err).Error("error closing events websocket connection")
 				return err
 			}
 			return nil
+
 		case msg := <-a.sendq:
 			if err := conn.Send(msg); err != nil {
 				messagesDropped.WithLabelValues().Inc()
-				logger.WithError(err).Error("error sending message over websocket")
+				logger.WithError(err).Error("error sending message over events websocket")
 				return err
 			}
 			messagesSent.WithLabelValues().Inc()
+		}
+	}
+}
+
+func (a *Agent) sendKeepalivesLoop(ctx context.Context, cancel context.CancelFunc, conn transport.Transport) error {
+	defer cancel()
+
+	keepalive := time.NewTicker(time.Duration(a.config.KeepaliveInterval) * time.Second)
+	defer keepalive.Stop()
+
+	if err := conn.Send(a.newKeepalive()); err != nil {
+		logger.WithError(err).Error("error sending message over keepalives websocket")
+		return err
+	}
+
+	for {
+		select {
+		case <-ctx.Done():
+			if err := conn.Close(); err != nil {
+				logger.WithError(err).Error("error closing keepalives websocket connection")
+				return err
+			}
+			return nil
+
 		case <-keepalive.C:
 			if err := conn.Send(a.newKeepalive()); err != nil {
 				messagesDropped.WithLabelValues().Inc()
-				logger.WithError(err).Error("error sending message over websocket")
+				logger.WithError(err).Error("error sending message over keepalives websocket")
 				return err
 			}
 			messagesSent.WithLabelValues().Inc()
@@ -668,7 +718,39 @@ func (a *Agent) StartStatsd(ctx context.Context) {
 	}()
 }
 
-func (a *Agent) connectWithBackoff(ctx context.Context) (transport.Transport, error) {
+// TODO: that "state" tied to a.header needs to go, or we need to separate it
+// into events and keepalives socket state.
+func (a *Agent) connect(ctx context.Context, url string) (transport.Transport, error) {
+	logger.Infof("connecting to %q", url)
+	a.header.Set("Accept", agentd.ProtobufSerializationHeader)
+	logger.WithField("header", fmt.Sprintf("Accept: %s", agentd.ProtobufSerializationHeader)).Debug("setting header")
+
+	conn, respHeader, err := transport.Connect(url, a.config.TLS, a.header, a.config.BackendHandshakeTimeout)
+	if err != nil {
+		websocketErrors.WithLabelValues().Inc()
+		logger.WithError(err).Error("connection attempt failed")
+		return nil, err
+	}
+	logger.Infof("successfully connected to %q", url)
+
+	logger.WithField("header", fmt.Sprintf("Accept: %s", respHeader["Accept"])).Debug("received header")
+	if utilstrings.InArray(agentd.ProtobufSerializationHeader, respHeader["Accept"]) {
+		a.contentType = agentd.ProtobufSerializationHeader
+		a.unmarshal = proto.Unmarshal
+		a.marshal = proto.Marshal
+		logger.WithField("format", "protobuf").Debug("setting serialization/deserialization")
+	} else {
+		a.contentType = agentd.JSONSerializationHeader
+		a.unmarshal = agentd.UnmarshalJSON
+		a.marshal = agentd.MarshalJSON
+		logger.WithField("format", "JSON").Debug("setting serialization/deserialization")
+	}
+	a.header.Set("Content-Type", a.contentType)
+	logger.WithField("header", fmt.Sprintf("Content-Type: %s", a.contentType)).Debug("setting header")
+	return conn, nil
+}
+
+func (a *Agent) connectEventsWebsocketWithBackoff(ctx context.Context) (transport.Transport, error) {
 	var conn transport.Transport
 
 	backoff := retry.ExponentialBackoff{
@@ -679,37 +761,49 @@ func (a *Agent) connectWithBackoff(ctx context.Context) (transport.Transport, er
 	}
 
 	err := backoff.Retry(func(retry int) (bool, error) {
-		backendURL := a.backendSelector.Select()
-
-		logger.Infof("connecting to backend URL %q", backendURL)
-		a.header.Set("Accept", agentd.ProtobufSerializationHeader)
-		logger.WithField("header", fmt.Sprintf("Accept: %s", agentd.ProtobufSerializationHeader)).Debug("setting header")
-		c, respHeader, err := transport.Connect(backendURL, a.config.TLS, a.header, a.config.BackendHandshakeTimeout)
+		backendURLString := a.backendSelector.Select()
+		backendBaseURL, err := url.Parse(backendURLString)
 		if err != nil {
-			websocketErrors.WithLabelValues().Inc()
-			logger.WithError(err).Error("reconnection attempt failed")
+			return false, err
+		}
+		eventsWebsocketURL := backendBaseURL.ResolveReference(eventsWebsocketPath)
+
+		c, err := a.connect(ctx, eventsWebsocketURL.String())
+		if err != nil {
 			return false, nil
 		}
 
-		logger.Info("successfully connected")
+		conn = c
+		return true, nil
+	})
+
+	return conn, err
+}
+
+func (a *Agent) connectKeepalivesWebsocketWithBackoff(ctx context.Context) (transport.Transport, error) {
+	var conn transport.Transport
+
+	backoff := retry.ExponentialBackoff{
+		InitialDelayInterval: 10 * time.Millisecond,
+		MaxDelayInterval:     10 * time.Second,
+		Multiplier:           10,
+		Ctx:                  ctx,
+	}
+
+	err := backoff.Retry(func(retry int) (bool, error) {
+		backendURLString := a.backendSelector.Select()
+		backendBaseURL, err := url.Parse(backendURLString)
+		if err != nil {
+			return false, err
+		}
+		keepalivesWebsocketURL := backendBaseURL.ResolveReference(keepalivesWebsocketPath)
+
+		c, err := a.connect(ctx, keepalivesWebsocketURL.String())
+		if err != nil {
+			return false, nil
+		}
 
 		conn = c
-
-		logger.WithField("header", fmt.Sprintf("Accept: %s", respHeader["Accept"])).Debug("received header")
-		if utilstrings.InArray(agentd.ProtobufSerializationHeader, respHeader["Accept"]) {
-			a.contentType = agentd.ProtobufSerializationHeader
-			a.unmarshal = proto.Unmarshal
-			a.marshal = proto.Marshal
-			logger.WithField("format", "protobuf").Debug("setting serialization/deserialization")
-		} else {
-			a.contentType = agentd.JSONSerializationHeader
-			a.unmarshal = agentd.UnmarshalJSON
-			a.marshal = agentd.MarshalJSON
-			logger.WithField("format", "JSON").Debug("setting serialization/deserialization")
-		}
-		a.header.Set("Content-Type", a.contentType)
-		logger.WithField("header", fmt.Sprintf("Content-Type: %s", a.contentType)).Debug("setting header")
-
 		return true, nil
 	})
 
