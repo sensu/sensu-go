@@ -158,8 +158,16 @@ func New(c Config, opts ...Option) (*Agentd, error) {
 	a.healthRouter.Mount(router)
 
 	route := router.NewRoute().Subrouter()
-	route.HandleFunc("/", a.webSocketHandler)
 	route.Use(agentLimit, authenticate, authorize)
+
+	// This is the legacy route that handles both events and keepalives on the
+	// same websocket.
+	route.HandleFunc("/", a.webSocketHandler)
+
+	// Those are the 2 new routes, one for a websocket dealing with events and
+	// the other for a websocket dealing with keepalives.
+	route.HandleFunc("/events", a.webSocketHandler)
+	route.HandleFunc("/keepalives", a.webSocketHandler)
 
 	a.httpServer = &http.Server{
 		Addr:         fmt.Sprintf("%s:%d", a.Host, a.Port),
