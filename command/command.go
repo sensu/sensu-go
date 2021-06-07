@@ -4,6 +4,8 @@ package command
 import (
 	"bytes"
 	"context"
+	"fmt"
+	"math"
 	"os/exec"
 	"strings"
 	"sync"
@@ -160,36 +162,50 @@ func (e *ExecutionRequest) Execute(ctx context.Context, execution ExecutionReque
 		resp.Duration = time.Since(started).Seconds()
 	}()
 
-	var timer *time.Timer
-	// Kill process and all of its children when the timeout has expired.
+	timer := time.NewTimer(math.MaxInt64)
+	defer timer.Stop()
 	if execution.Timeout != 0 {
 		SetProcessGroup(cmd)
-		timer = time.AfterFunc(time.Duration(execution.Timeout)*time.Second, func() {
-			timeout()
-			if err := KillProcess(cmd); err != nil {
-				logger.WithError(err).Errorf("Execution timed out - Unable to TERM/KILL the process: #%d", cmd.Process.Pid)
-				escapeZombie(&execution)
-			}
-		})
-		defer timer.Stop()
+		timer.Stop()
+		timer = time.NewTimer(time.Duration(execution.Timeout) * time.Second)
 	}
-
 	if err := cmd.Start(); err != nil {
-		// Something unexpected happended when attepting to
+		// Something unexpected happened when attempting to
 		// fork/exec, return immediately.
 		return resp, err
 	}
 
-	err := cmd.Wait()
-	if timer != nil {
-		timer.Stop()
+	waitCh := make(chan struct{})
+	var err error
+	go func() {
+		err = cmd.Wait()
+		waitCh <- struct{}{}
+	}()
+
+	// Wait for the process to complete or the timer to trigger, whichever comes first.
+	var killErr error
+	select {
+	case <-waitCh:
+		break
+	case <-timer.C:
+		if killErr = KillProcess(cmd); killErr != nil {
+			logger.WithError(killErr).Errorf("Execution timed out - Unable to TERM/KILL the process: #%d", cmd.Process.Pid)
+			escapeZombie(&execution)
+		}
+		timeout()
+		break
 	}
 
 	resp.Output = output.String()
 
 	// The command execution timed out if the context was cancelled prematurely
 	if ctx.Err() == context.Canceled {
-		resp.Output = TimeoutOutput
+		var killErrOutput string
+		if killErr != nil {
+			killErrOutput = fmt.Sprintf("Unable to TERM/KILL the process: #%d\n", cmd.Process.Pid)
+		}
+		killOutput := fmt.Sprintf("%s%s%s", TimeoutOutput, killErrOutput, output.String())
+		resp.Output = killOutput
 		resp.Status = TimeoutExitStatus
 	} else if err != nil {
 		// The command most likely return a non-zero exit status.
