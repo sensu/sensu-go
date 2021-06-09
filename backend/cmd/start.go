@@ -487,8 +487,6 @@ func flagSet(server bool) *pflag.FlagSet {
 		flagSet.Bool(flagDebug, false, "enable debugging and profiling features")
 		flagSet.String(flagLogLevel, viper.GetString(flagLogLevel), "logging level [panic, fatal, error, warn, info, debug, trace]")
 		flagSet.String(flagEtcdLogLevel, viper.GetString(flagEtcdLogLevel), "etcd logging level [panic, fatal, error, warn, info, debug]")
-		flagSet.String(flagEtcdUsername, viper.GetString(flagEtcdUsername), "username to use with external etcd instead of certificate authentication. Requires password")
-		flagSet.String(flagEtcdPassword, viper.GetString(flagEtcdPassword), "password to use with external etcd instead of certificate authentication. Requires username")
 		flagSet.Int(backend.FlagEventdWorkers, viper.GetInt(backend.FlagEventdWorkers), "number of workers spawned for processing incoming events")
 		flagSet.Int(backend.FlagEventdBufferSize, viper.GetInt(backend.FlagEventdBufferSize), "number of incoming events that can be buffered")
 		flagSet.Int(backend.FlagKeepalivedWorkers, viper.GetInt(backend.FlagKeepalivedWorkers), "number of workers spawned for processing incoming keepalives")
@@ -526,6 +524,10 @@ func flagSet(server bool) *pflag.FlagSet {
 		_ = flagSet.SetAnnotation(flagEtcdHeartbeatInterval, "categories", []string{"store"})
 		flagSet.Uint(flagEtcdElectionTimeout, viper.GetUint(flagEtcdElectionTimeout), "time in ms a follower node will go without hearing a heartbeat before attempting to become leader itself")
 		_ = flagSet.SetAnnotation(flagEtcdElectionTimeout, "categories", []string{"store"})
+		flagSet.String(flagEtcdUsername, viper.GetString(flagEtcdUsername), "username to use with external etcd instead of certificate authentication. Requires password")
+		_ = flagSet.SetAnnotation(flagEtcdUsername, "categories", []string{"store"})
+		flagSet.String(flagEtcdPassword, viper.GetString(flagEtcdPassword), "password to use with external etcd instead of certificate authentication. Requires username")
+		_ = flagSet.SetAnnotation(flagEtcdPassword, "categories", []string{"store"})
 
 		// Etcd server TLS flags
 		flagSet.String(flagEtcdPeerCertFile, viper.GetString(flagEtcdPeerCertFile), "path to the peer server TLS cert file")
