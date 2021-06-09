@@ -31,6 +31,9 @@ type SilencedFieldResolvers interface {
 	// Expires implements response to request for 'expires' field.
 	Expires(p graphql.ResolveParams) (*time.Time, error)
 
+	// ExpireAt implements response to request for 'expireAt' field.
+	ExpireAt(p graphql.ResolveParams) (*time.Time, error)
+
 	// ExpireOnResolve implements response to request for 'expireOnResolve' field.
 	ExpireOnResolve(p graphql.ResolveParams) (bool, error)
 
@@ -126,6 +129,19 @@ func (_ SilencedAliases) Expires(p graphql.ResolveParams) (*time.Time, error) {
 	}
 	if !ok {
 		return ret, errors.New("unable to coerce value for field 'expires'")
+	}
+	return ret, err
+}
+
+// ExpireAt implements response to request for 'expireAt' field.
+func (_ SilencedAliases) ExpireAt(p graphql.ResolveParams) (*time.Time, error) {
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	ret, ok := val.(*time.Time)
+	if err != nil {
+		return ret, err
+	}
+	if !ok {
+		return ret, errors.New("unable to coerce value for field 'expireAt'")
 	}
 	return ret, err
 }
@@ -268,6 +284,15 @@ func _ObjTypeSilencedExpiresHandler(impl interface{}) graphql1.FieldResolveFn {
 	}
 }
 
+func _ObjTypeSilencedExpireAtHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(interface {
+		ExpireAt(p graphql.ResolveParams) (*time.Time, error)
+	})
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.ExpireAt(frp)
+	}
+}
+
 func _ObjTypeSilencedExpireOnResolveHandler(impl interface{}) graphql1.FieldResolveFn {
 	resolver := impl.(interface {
 		ExpireOnResolve(p graphql.ResolveParams) (bool, error)
@@ -363,6 +388,13 @@ func _ObjectTypeSilencedConfigFn() graphql1.ObjectConfig {
 				Name:              "expire",
 				Type:              graphql1.NewNonNull(graphql1.Int),
 			},
+			"expireAt": &graphql1.Field{
+				Args:              graphql1.FieldConfigArgument{},
+				DeprecationReason: "",
+				Description:       "Exact time at which the silenced entry will expire",
+				Name:              "expireAt",
+				Type:              graphql1.DateTime,
+			},
 			"expireOnResolve": &graphql1.Field{
 				Args:              graphql1.FieldConfigArgument{},
 				DeprecationReason: "",
@@ -372,7 +404,7 @@ func _ObjectTypeSilencedConfigFn() graphql1.ObjectConfig {
 			},
 			"expires": &graphql1.Field{
 				Args:              graphql1.FieldConfigArgument{},
-				DeprecationReason: "",
+				DeprecationReason: "use expireAt instead",
 				Description:       "Exact time at which the silenced entry will expire",
 				Name:              "expires",
 				Type:              graphql1.DateTime,
@@ -451,6 +483,7 @@ var _ObjectTypeSilencedDesc = graphql.ObjectDesc{
 		"check":           _ObjTypeSilencedCheckHandler,
 		"creator":         _ObjTypeSilencedCreatorHandler,
 		"expire":          _ObjTypeSilencedExpireHandler,
+		"expireAt":        _ObjTypeSilencedExpireAtHandler,
 		"expireOnResolve": _ObjTypeSilencedExpireOnResolveHandler,
 		"expires":         _ObjTypeSilencedExpiresHandler,
 		"id":              _ObjTypeSilencedIDHandler,
