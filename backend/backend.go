@@ -104,12 +104,12 @@ func newClient(ctx context.Context, config *Config, backend *Backend) (*clientv3
 
 		var clientv3Config clientv3.Config
 
-		if config.EtcdUsername != "" && config.EtcdPassword != "" {
+		if config.EtcdClientUsername != "" && config.EtcdClientPassword != "" {
 			clientv3Config = clientv3.Config{
 				Endpoints:   clientURLs,
 				DialTimeout: 5 * time.Second,
-				Username:    config.EtcdUsername,
-				Password:    config.EtcdPassword,
+				Username:    config.EtcdClientUsername,
+				Password:    config.EtcdClientPassword,
 				TLS:         tlsConfig,
 				DialOptions: []grpc.DialOption{
 					grpc.WithBlock(),
