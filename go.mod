@@ -7,7 +7,7 @@ replace (
 	github.com/sensu/sensu-go/api/core/v3 => ./api/core/v3
 	github.com/sensu/sensu-go/backend/store/v2 => ./backend/store/v2
 	github.com/sensu/sensu-go/types => ./types
-	go.etcd.io/etcd => go.etcd.io/etcd v0.0.0-20210512015243-d19fbe541bf9
+	go.etcd.io/etcd => github.com/amdprophet/etcd v0.0.0-20210609170852-746df5f86d84
 )
 
 require (
