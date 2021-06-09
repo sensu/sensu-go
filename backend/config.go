@@ -95,6 +95,8 @@ type Config struct {
 	EtcdDiscovery                string
 	EtcdDiscoverySrv             string
 	EtcdUseEmbeddedClient        bool
+	EtcdUsername                 string
+	EtcdPassword                 string
 
 	// Etcd TLS configuration
 	EtcdClientTLSInfo     etcd.TLSInfo
