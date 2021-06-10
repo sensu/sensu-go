@@ -25,7 +25,47 @@ func TestEvaluateRaceCondition(t *testing.T) {
 
 func TestTimeFunctions(t *testing.T) {
 	timestamp := int64(7323)
-	t.Run("hour() function", func(t *testing.T) {
+	t.Run("failing hour() function", func(t *testing.T) {
+		entity := corev2.FixtureEvent("foo", "bar")
+		entity.Timestamp = timestamp
+		synth := dynamic.Synthesize(entity)
+		params := map[string]interface{}{"event": synth}
+
+		result, err := Evaluate("hour(event.timestamp) != 2", params, nil)
+		assert.NoError(t, err)
+		assert.Equal(t, false, result)
+	})
+	t.Run("failing minute() function", func(t *testing.T) {
+		entity := corev2.FixtureEvent("foo", "bar")
+		entity.Timestamp = timestamp
+		synth := dynamic.Synthesize(entity)
+		params := map[string]interface{}{"event": synth}
+
+		result, err := Evaluate("minute(event.timestamp) != 2", params, nil)
+		assert.NoError(t, err)
+		assert.Equal(t, false, result)
+	})
+	t.Run("failing second() function", func(t *testing.T) {
+		entity := corev2.FixtureEvent("foo", "bar")
+		entity.Timestamp = timestamp
+		synth := dynamic.Synthesize(entity)
+		params := map[string]interface{}{"event": synth}
+
+		result, err := Evaluate("second(event.timestamp) != 3", params, nil)
+		assert.NoError(t, err)
+		assert.Equal(t, false, result)
+	})
+	t.Run("failing seconds_since() function", func(t *testing.T) {
+		entity := corev2.FixtureEvent("foo", "bar")
+		entity.Timestamp = timestamp
+		synth := dynamic.Synthesize(entity)
+		params := map[string]interface{}{"event": synth}
+
+		result, err := Evaluate("seconds_since(event.timestamp) <= 10000", params, nil)
+		assert.NoError(t, err)
+		assert.Equal(t, false, result)
+	})
+	t.Run("passing hour() function", func(t *testing.T) {
 		entity := corev2.FixtureEvent("foo", "bar")
 		entity.Timestamp = timestamp
 		synth := dynamic.Synthesize(entity)
@@ -35,7 +75,7 @@ func TestTimeFunctions(t *testing.T) {
 		assert.NoError(t, err)
 		assert.Equal(t, true, result)
 	})
-	t.Run("minute() function", func(t *testing.T) {
+	t.Run("passing minute() function", func(t *testing.T) {
 		entity := corev2.FixtureEvent("foo", "bar")
 		entity.Timestamp = timestamp
 		synth := dynamic.Synthesize(entity)
@@ -45,7 +85,7 @@ func TestTimeFunctions(t *testing.T) {
 		assert.NoError(t, err)
 		assert.Equal(t, true, result)
 	})
-	t.Run("second() function", func(t *testing.T) {
+	t.Run("passing second() function", func(t *testing.T) {
 		entity := corev2.FixtureEvent("foo", "bar")
 		entity.Timestamp = timestamp
 		synth := dynamic.Synthesize(entity)
@@ -55,7 +95,7 @@ func TestTimeFunctions(t *testing.T) {
 		assert.NoError(t, err)
 		assert.Equal(t, true, result)
 	})
-	t.Run("seconds_since() function", func(t *testing.T) {
+	t.Run("passing seconds_since() function", func(t *testing.T) {
 		entity := corev2.FixtureEvent("foo", "bar")
 		entity.Timestamp = timestamp
 		synth := dynamic.Synthesize(entity)
