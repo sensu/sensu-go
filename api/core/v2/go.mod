@@ -6,15 +6,15 @@ require (
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/echlebek/crock v1.0.1
 	github.com/echlebek/timeproxy v1.0.0
-	github.com/gogo/protobuf v1.3.1
-	github.com/golang/protobuf v1.3.5
-	github.com/google/uuid v1.1.1
+	github.com/gogo/protobuf v1.3.2
+	github.com/golang/protobuf v1.5.2
+	github.com/google/uuid v1.1.2
 	github.com/json-iterator/go v1.1.9
 	github.com/robertkrimen/otto v0.0.0-20191219234010-c382bd3c16ff
 	github.com/robfig/cron/v3 v3.0.1
 	github.com/sirupsen/logrus v1.6.0
 	github.com/stretchr/testify v1.6.0
-	go.etcd.io/etcd/api/v3 v3.5.0-alpha.0
+	go.etcd.io/etcd/api/v3 v3.5.0-rc.1
 	gopkg.in/sourcemap.v1 v1.0.5 // indirect
 	gopkg.in/yaml.v2 v2.3.0 // indirect
 )
