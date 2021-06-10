@@ -13,7 +13,7 @@ import (
 	"github.com/sensu/sensu-go/backend/store/v2/wrap"
 	"github.com/sensu/sensu-go/types/dynamic"
 	"github.com/stretchr/testify/assert"
-	"go.etcd.io/etcd/integration"
+	"go.etcd.io/etcd/tests/v3/integration"
 )
 
 func fixtureEntity(namespace, name string) *corev3.EntityConfig {
