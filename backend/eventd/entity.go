@@ -7,7 +7,6 @@ import (
 	corev3 "github.com/sensu/sensu-go/api/core/v3"
 	"github.com/sensu/sensu-go/backend/store"
 	storev2 "github.com/sensu/sensu-go/backend/store/v2"
-	"github.com/sensu/sensu-go/backend/store/v2/wrap"
 )
 
 // createProxyEntity creates a proxy entity for the given event if the entity
@@ -32,6 +31,9 @@ func createProxyEntity(event *corev2.Event, s storev2.Interface) error {
 
 	configReq := storev2.NewResourceRequestFromResource(context.Background(), config)
 	stateReq := storev2.NewResourceRequestFromResource(context.Background(), state)
+
+	// Use postgres when available (enterprise only, entity state only)
+	stateReq.UsePostgres = true
 
 	var (
 		wState, wConfig storev2.Wrapper
@@ -74,7 +76,7 @@ func createProxyEntity(event *corev2.Event, s storev2.Interface) error {
 			// because we want to overwrite any existing EntityState that could
 			// have been left behind due to a failed operation or failure to
 			// clean up old state.
-			wState, err := storev2.WrapResource(state, wrap.UsePostgres)
+			wState, err := storev2.WrapResource(state)
 			if err != nil {
 				return err
 			}
