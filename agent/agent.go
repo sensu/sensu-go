@@ -719,7 +719,7 @@ func (a *Agent) connectWithBackoff(ctx context.Context) (transport.Transport, er
 // GracefulShutdown listens for the SIGINT & SIGTERM signals and cancel the
 // contexts once a signal is received.
 func GracefulShutdown(cancel context.CancelFunc) {
-	var shutdownSignal = make(chan os.Signal)
+	var shutdownSignal = make(chan os.Signal, 1)
 	signal.Notify(shutdownSignal, syscall.SIGINT, syscall.SIGTERM)
 	go func() {
 		s := <-shutdownSignal

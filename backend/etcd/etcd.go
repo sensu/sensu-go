@@ -57,7 +57,7 @@ const (
 )
 
 func init() {
-	clientv3.SetLogger(grpclog.NewLoggerV2(ioutil.Discard, ioutil.Discard, ioutil.Discard))
+	grpclog.SetLoggerV2(grpclog.NewLoggerV2(ioutil.Discard, ioutil.Discard, ioutil.Discard))
 
 	logutil.DefaultZapLoggerConfig.Encoding = "sensu-json"
 	logutil.DefaultZapLoggerConfig.EncoderConfig.TimeKey = "time"
