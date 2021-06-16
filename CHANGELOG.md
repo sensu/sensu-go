@@ -13,9 +13,12 @@ embedded etcd server.
 - Added API key authentication support to sensuctl.
 
 ### Changed
-- Upgraded Go version from 1.13.15 to 1.16.
-- Upgraded Etcd version from 3.3.22 to 3.4.15.
+- Upgraded Go version from 1.13.15 to 1.16.5.
+- Upgraded Etcd version from 3.3.22 to 3.5.0.
 - The loadit tool now uses UUIDv4 instead of UUIDv1 for agent names.
+- Some Prometheus metric names have changed with the upgrade to Etcd 3.5. See
+https://etcd.io/docs/v3.5/metrics/etcd-metrics-latest.txt for the metrics that
+Etcd 3.5 exposes.
 
 ### Fixed
 - Fixed config deprecation warnings from being shown when deprecated config
