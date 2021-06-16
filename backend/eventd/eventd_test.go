@@ -418,6 +418,8 @@ func addMockEntityV2(t *testing.T, s *storetest.Store, entity *corev2.Entity) {
 	entityConfig, entityState := corev3.V2EntityToV3(entity)
 
 	stateReq := storev2.NewResourceRequestFromResource(context.Background(), entityState)
+	stateReq.UsePostgres = true
+
 	configReq := storev2.NewResourceRequestFromResource(context.Background(), entityConfig)
 
 	wConfig, err := storev2.WrapResource(entityConfig)
@@ -442,6 +444,8 @@ func addFixtureEntity(store *storetest.Store, namespace, name string) {
 	entityConfig.Metadata.Namespace = namespace
 
 	stateReq := storev2.NewResourceRequestFromResource(context.Background(), entityState)
+	stateReq.UsePostgres = true
+
 	configReq := storev2.NewResourceRequestFromResource(context.Background(), entityConfig)
 
 	wConfig, err := storev2.WrapResource(entityConfig)
