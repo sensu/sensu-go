@@ -179,50 +179,42 @@ func (e *ExecutionRequest) Execute(ctx context.Context, execution ExecutionReque
 	var err error
 	go func() {
 		err = cmd.Wait()
-		waitCh <- struct{}{}
+		close(waitCh)
 	}()
 
 	// Wait for the process to complete or the timer to trigger, whichever comes first.
 	var killErr error
 	select {
 	case <-waitCh:
-		break
-	case <-timer.C:
-		if killErr = KillProcess(cmd); killErr != nil {
-			logger.WithError(killErr).Errorf("Execution timed out - Unable to TERM/KILL the process: #%d", cmd.Process.Pid)
-			escapeZombie(&execution)
-		}
-		timeout()
-		break
-	}
-
-	resp.Output = output.String()
-
-	// The command execution timed out if the context was cancelled prematurely
-	if ctx.Err() == context.Canceled {
-		var killErrOutput string
-		if killErr != nil {
-			killErrOutput = fmt.Sprintf("Unable to TERM/KILL the process: #%d\n", cmd.Process.Pid)
-		}
-		killOutput := fmt.Sprintf("%s%s%s", TimeoutOutput, killErrOutput, output.String())
-		resp.Output = killOutput
-		resp.Status = TimeoutExitStatus
-	} else if err != nil {
-		// The command most likely return a non-zero exit status.
-		if exitError, ok := err.(*exec.ExitError); ok {
-			// Best effort to determine the exit status, this
-			// should work on Linux, OSX, and Windows.
-			if status, ok := exitError.Sys().(syscall.WaitStatus); ok {
-				resp.Status = status.ExitStatus()
+		resp.Output = output.String()
+		if err != nil {
+			// The command most likely return a non-zero exit status.
+			if exitError, ok := err.(*exec.ExitError); ok {
+				// Best effort to determine the exit status, this
+				// should work on Linux, OSX, and Windows.
+				if status, ok := exitError.Sys().(syscall.WaitStatus); ok {
+					resp.Status = status.ExitStatus()
+				} else {
+					resp.Status = FallbackExitStatus
+				}
 			} else {
 				resp.Status = FallbackExitStatus
 			}
 		} else {
-			resp.Status = FallbackExitStatus
+			// Everything is A-OK.
+			resp.Status = OKExitStatus
 		}
-	} else {
-		// Everything is A-OK.
-		resp.Status = OKExitStatus
+
+	case <-timer.C:
+		var killErrOutput string
+		if killErr = KillProcess(cmd); killErr != nil {
+			logger.WithError(killErr).Errorf("Execution timed out - Unable to TERM/KILL the process: #%d", cmd.Process.Pid)
+			killErrOutput = fmt.Sprintf("Unable to TERM/KILL the process: #%d\n", cmd.Process.Pid)
+			escapeZombie(&execution)
+		}
+		timeout()
+		resp.Output = fmt.Sprintf("%s%s%s", TimeoutOutput, killErrOutput, output.String())
+		resp.Status = TimeoutExitStatus
 	}
 
 	return resp, nil
