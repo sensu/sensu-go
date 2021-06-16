@@ -250,10 +250,6 @@ func (e *Eventd) startHandlers() {
 
 				case msg, ok := <-e.eventChan:
 					eventHandlersBusy.WithLabelValues().Inc()
-					defer func() {
-						eventHandlersBusy.WithLabelValues().Dec()
-					}()
-
 					// The message bus will close channels when it's shut down which means
 					// we will end up reading from a closed channel. If it's closed,
 					// return from this goroutine and emit a fatal error. It is then
@@ -266,6 +262,7 @@ func (e *Eventd) startHandlers() {
 						case e.errChan <- errors.New("event channel closed"):
 						default:
 						}
+						eventHandlersBusy.WithLabelValues().Dec()
 						return
 					}
 
@@ -273,6 +270,7 @@ func (e *Eventd) startHandlers() {
 						logger := withEventFields(msg, logger)
 						logger.WithError(err).Error("error handling event")
 					}
+					eventHandlersBusy.WithLabelValues().Dec()
 				}
 			}
 		}()
