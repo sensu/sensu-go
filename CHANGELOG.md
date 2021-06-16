@@ -1,3 +1,4 @@
+
 # Changelog
 All notable changes to this project will be documented in this file.
 
@@ -24,6 +25,7 @@ options weren't set.
 - Fixed a bug where role bindings that refer to missing roles would cause the
 wrong status to be returned from the HTTP API, and the dashboard to go into a
 crash loop.
+- Fixed a bug where an empty subscription was present in the deregistration event's check.
 
 ## [6.3.0] - 2021-04-07
 
