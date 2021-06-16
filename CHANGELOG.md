@@ -26,6 +26,7 @@ options weren't set.
 wrong status to be returned from the HTTP API, and the dashboard to go into a
 crash loop.
 - Fixed a bug where an empty subscription was present in the deregistration event's check.
+- Fixed issue with Windows agent not handling command timeouts properly
 
 ## [6.3.0] - 2021-04-07
 
