@@ -110,6 +110,7 @@ func TestBuildCache(t *testing.T) {
 }
 
 func TestResourceRebuild(t *testing.T) {
+	integration.BeforeTestExternal(t)
 	c := integration.NewClusterV3(t, &integration.ClusterConfig{Size: 1})
 	defer c.Terminate(t)
 	client := c.RandClient()
