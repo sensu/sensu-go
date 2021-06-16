@@ -70,7 +70,7 @@ func (d *Deregistration) Deregister(entity *types.Entity) error {
 		deregistrationCheck := &types.Check{
 			ObjectMeta:    corev2.NewObjectMeta("deregistration", entity.Namespace),
 			Interval:      1,
-			Subscriptions: []string{""},
+			Subscriptions: []string{},
 			Command:       "",
 			Handlers:      []string{entity.Deregistration.Handler},
 			Status:        1,
