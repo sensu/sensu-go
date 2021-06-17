@@ -15,13 +15,13 @@ import (
 	"time"
 
 	"github.com/sensu/sensu-go/util/path"
-	"go.etcd.io/etcd/clientv3"
-	"go.etcd.io/etcd/embed"
-	"go.etcd.io/etcd/etcdserver/api/v3rpc"
-	"go.etcd.io/etcd/pkg/logutil"
-	"go.etcd.io/etcd/pkg/transport"
-	etcdTypes "go.etcd.io/etcd/pkg/types"
-	"go.etcd.io/etcd/proxy/grpcproxy/adapter"
+	"go.etcd.io/etcd/client/v3"
+	"go.etcd.io/etcd/server/v3/etcdserver/api/v3rpc"
+	"go.etcd.io/etcd/client/pkg/v3/logutil"
+	"go.etcd.io/etcd/client/pkg/v3/transport"
+	etcdTypes "go.etcd.io/etcd/client/pkg/v3/types"
+	"go.etcd.io/etcd/server/v3/embed"
+	"go.etcd.io/etcd/server/v3/proxy/grpcproxy/adapter"
 	zapcore "go.uber.org/zap/zapcore"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/grpclog"
@@ -57,7 +57,7 @@ const (
 )
 
 func init() {
-	clientv3.SetLogger(grpclog.NewLoggerV2(ioutil.Discard, ioutil.Discard, ioutil.Discard))
+	grpclog.SetLoggerV2(grpclog.NewLoggerV2(ioutil.Discard, ioutil.Discard, ioutil.Discard))
 
 	logutil.DefaultZapLoggerConfig.Encoding = "sensu-json"
 	logutil.DefaultZapLoggerConfig.EncoderConfig.TimeKey = "time"

@@ -8,7 +8,7 @@ import (
 
 	"github.com/sensu/sensu-go/backend/store"
 	utilbytes "github.com/sensu/sensu-go/util/bytes"
-	"go.etcd.io/etcd/clientv3"
+	"go.etcd.io/etcd/client/v3"
 )
 
 func getAuthenticationPath(id string) string {

@@ -3,7 +3,7 @@ package ringv2
 import (
 	"sync"
 
-	"go.etcd.io/etcd/clientv3"
+	"go.etcd.io/etcd/client/v3"
 )
 
 // Pool is a pool of rings. It exists to help users avoid creating too many

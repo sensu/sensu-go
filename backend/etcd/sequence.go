@@ -7,7 +7,7 @@ import (
 	"errors"
 	"fmt"
 
-	"go.etcd.io/etcd/clientv3"
+	"go.etcd.io/etcd/client/v3"
 )
 
 var initialItemKey []byte

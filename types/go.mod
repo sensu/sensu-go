@@ -5,7 +5,6 @@ go 1.13
 replace (
 	github.com/sensu/sensu-go => ../
 	github.com/sensu/sensu-go/api/core/v2 => ../api/core/v2
-	go.etcd.io/etcd => go.etcd.io/etcd v0.0.0-20210226220824-aa7126864d82
 )
 
 require (

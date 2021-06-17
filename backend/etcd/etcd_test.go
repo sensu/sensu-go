@@ -7,7 +7,6 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 func TestNewEtcd(t *testing.T) {
@@ -35,8 +34,6 @@ func TestNewEtcd(t *testing.T) {
 	assert.Equal(t, 1, len(getResp.Kvs))
 	assert.Equal(t, "key", string(getResp.Kvs[0].Key))
 	assert.Equal(t, "value", string(getResp.Kvs[0].Value))
-
-	require.NoError(t, e.Shutdown())
 }
 
 func TestEtcdHealthy(t *testing.T) {

@@ -10,7 +10,7 @@ import (
 	"github.com/sensu/sensu-go/backend/store/patch"
 	"github.com/sensu/sensu-go/backend/store/provider"
 	"github.com/sensu/sensu-go/types"
-	"go.etcd.io/etcd/clientv3"
+	clientv3 "go.etcd.io/etcd/client/v3"
 )
 
 var _ Store = new(StoreProxy)
