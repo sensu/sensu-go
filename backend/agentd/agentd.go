@@ -162,12 +162,12 @@ func New(c Config, opts ...Option) (*Agentd, error) {
 
 	// This is the legacy route that handles both events and keepalives on the
 	// same websocket.
-	route.HandleFunc("/", a.webSocketHandler)
+	route.HandleFunc("/", a.webSocketHandler(SessionType_Legacy))
 
 	// Those are the 2 new routes, one for a websocket dealing with events and
 	// the other for a websocket dealing with keepalives.
-	route.HandleFunc("/events", a.webSocketHandler)
-	route.HandleFunc("/keepalives", a.webSocketHandler)
+	route.HandleFunc("/events", a.webSocketHandler(SessionType_Events))
+	route.HandleFunc("/keepalives", a.webSocketHandler(SessionType_Keepalives))
 
 	a.httpServer = &http.Server{
 		Addr:         fmt.Sprintf("%s:%d", a.Host, a.Port),
@@ -300,108 +300,111 @@ func (a *Agentd) Name() string {
 	return "agentd"
 }
 
-func (a *Agentd) webSocketHandler(w http.ResponseWriter, r *http.Request) {
-	then := time.Now()
-	defer func() {
-		duration := time.Since(then)
-		websocketUpgradeDuration.WithLabelValues().Observe(float64(duration) / float64(time.Millisecond))
-	}()
-	var marshal MarshalFunc
-	var unmarshal UnmarshalFunc
-	var contentType string
+func (a *Agentd) webSocketHandler(sessionType SessionType) func(http.ResponseWriter, *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
+		then := time.Now()
+		defer func() {
+			duration := time.Since(then)
+			websocketUpgradeDuration.WithLabelValues().Observe(float64(duration) / float64(time.Millisecond))
+		}()
+		var marshal MarshalFunc
+		var unmarshal UnmarshalFunc
+		var contentType string
 
-	lager := logger.WithFields(logrus.Fields{
-		"address":   r.RemoteAddr,
-		"agent":     r.Header.Get(transport.HeaderKeyAgentName),
-		"namespace": r.Header.Get(transport.HeaderKeyNamespace),
-	})
+		lager := logger.WithFields(logrus.Fields{
+			"address":   r.RemoteAddr,
+			"agent":     r.Header.Get(transport.HeaderKeyAgentName),
+			"namespace": r.Header.Get(transport.HeaderKeyNamespace),
+		})
 
-	responseHeader := make(http.Header)
-	responseHeader.Add("Accept", ProtobufSerializationHeader)
-	lager.WithField("header", fmt.Sprintf("Accept: %s", ProtobufSerializationHeader)).Debug("setting header")
-	responseHeader.Add("Accept", JSONSerializationHeader)
-	lager.WithField("header", fmt.Sprintf("Accept: %s", JSONSerializationHeader)).Debug("setting header")
-	if r.Header.Get("Accept") == ProtobufSerializationHeader {
-		marshal = proto.Marshal
-		unmarshal = proto.Unmarshal
-		contentType = ProtobufSerializationHeader
-		lager.WithField("format", "protobuf").Debug("setting serialization/deserialization")
-	} else {
-		marshal = MarshalJSON
-		unmarshal = UnmarshalJSON
-		contentType = JSONSerializationHeader
-		lager.WithField("format", "JSON").Debug("setting serialization/deserialization")
-	}
-	responseHeader.Set("Content-Type", contentType)
-	lager.WithField("header", fmt.Sprintf("Content-Type: %s", contentType)).Debug("setting header")
-
-	// Validate the agent namespace
-	namespace := r.Header.Get(transport.HeaderKeyNamespace)
-	var found bool
-	values := a.namespaceCache.Get("")
-	for _, value := range values {
-		if namespace == value.Resource.GetObjectMeta().Name {
-			found = true
-			break
+		responseHeader := make(http.Header)
+		responseHeader.Add("Accept", ProtobufSerializationHeader)
+		lager.WithField("header", fmt.Sprintf("Accept: %s", ProtobufSerializationHeader)).Debug("setting header")
+		responseHeader.Add("Accept", JSONSerializationHeader)
+		lager.WithField("header", fmt.Sprintf("Accept: %s", JSONSerializationHeader)).Debug("setting header")
+		if r.Header.Get("Accept") == ProtobufSerializationHeader {
+			marshal = proto.Marshal
+			unmarshal = proto.Unmarshal
+			contentType = ProtobufSerializationHeader
+			lager.WithField("format", "protobuf").Debug("setting serialization/deserialization")
+		} else {
+			marshal = MarshalJSON
+			unmarshal = UnmarshalJSON
+			contentType = JSONSerializationHeader
+			lager.WithField("format", "JSON").Debug("setting serialization/deserialization")
 		}
-	}
-	if namespace == "" || !found {
-		lager.Warningf("namespace %q not found", namespace)
-		http.Error(w, fmt.Sprintf("namespace %q not found", namespace), http.StatusNotFound)
-		return
-	}
+		responseHeader.Set("Content-Type", contentType)
+		lager.WithField("header", fmt.Sprintf("Content-Type: %s", contentType)).Debug("setting header")
 
-	conn, err := upgrader.Upgrade(w, r, responseHeader)
-	if err != nil {
-		lager.WithError(err).Error("transport error on websocket upgrade")
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	cfg := SessionConfig{
-		AgentAddr:     r.RemoteAddr,
-		AgentName:     r.Header.Get(transport.HeaderKeyAgentName),
-		Namespace:     r.Header.Get(transport.HeaderKeyNamespace),
-		User:          r.Header.Get(transport.HeaderKeyUser),
-		Subscriptions: strings.Split(r.Header.Get(transport.HeaderKeySubscriptions), ","),
-		RingPool:      a.ringPool,
-		ContentType:   contentType,
-		WriteTimeout:  a.writeTimeout,
-		Bus:           a.bus,
-		Conn:          transport.NewTransport(conn),
-		Store:         a.store,
-		Storev2:       a.storev2,
-		Marshal:       marshal,
-		Unmarshal:     unmarshal,
-	}
-
-	cfg.Subscriptions = corev2.AddEntitySubscription(cfg.AgentName, cfg.Subscriptions)
-
-	session, err := NewSession(a.ctx, cfg)
-	if err != nil {
-		lager.WithError(err).Error("failed to create session")
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		// There was an error retrieving the namespace from
-		// etcd, indicating that this backend has a potentially
-		// unrecoverable issue.
-		if _, ok := err.(*store.ErrInternal); ok {
-			select {
-			case a.errChan <- err:
-			case <-a.ctx.Done():
+		// Validate the agent namespace
+		namespace := r.Header.Get(transport.HeaderKeyNamespace)
+		var found bool
+		values := a.namespaceCache.Get("")
+		for _, value := range values {
+			if namespace == value.Resource.GetObjectMeta().Name {
+				found = true
+				break
 			}
 		}
-		return
-	}
-
-	if err := session.Start(); err != nil {
-		lager.WithError(err).Error("failed to start session")
-		if _, ok := err.(*store.ErrInternal); ok {
-			select {
-			case a.errChan <- err:
-			case <-a.ctx.Done():
-			}
+		if namespace == "" || !found {
+			lager.Warningf("namespace %q not found", namespace)
+			http.Error(w, fmt.Sprintf("namespace %q not found", namespace), http.StatusNotFound)
+			return
 		}
-		return
+
+		conn, err := upgrader.Upgrade(w, r, responseHeader)
+		if err != nil {
+			lager.WithError(err).Error("transport error on websocket upgrade")
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		cfg := SessionConfig{
+			AgentAddr:     r.RemoteAddr,
+			AgentName:     r.Header.Get(transport.HeaderKeyAgentName),
+			Namespace:     r.Header.Get(transport.HeaderKeyNamespace),
+			User:          r.Header.Get(transport.HeaderKeyUser),
+			Subscriptions: strings.Split(r.Header.Get(transport.HeaderKeySubscriptions), ","),
+			RingPool:      a.ringPool,
+			ContentType:   contentType,
+			SessionType:   sessionType,
+			WriteTimeout:  a.writeTimeout,
+			Bus:           a.bus,
+			Conn:          transport.NewTransport(conn),
+			Store:         a.store,
+			Storev2:       a.storev2,
+			Marshal:       marshal,
+			Unmarshal:     unmarshal,
+		}
+
+		cfg.Subscriptions = corev2.AddEntitySubscription(cfg.AgentName, cfg.Subscriptions)
+
+		session, err := NewSession(a.ctx, cfg)
+		if err != nil {
+			lager.WithError(err).Error("failed to create session")
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			// There was an error retrieving the namespace from
+			// etcd, indicating that this backend has a potentially
+			// unrecoverable issue.
+			if _, ok := err.(*store.ErrInternal); ok {
+				select {
+				case a.errChan <- err:
+				case <-a.ctx.Done():
+				}
+			}
+			return
+		}
+
+		if err := session.Start(); err != nil {
+			lager.WithError(err).Error("failed to start session")
+			if _, ok := err.(*store.ErrInternal); ok {
+				select {
+				case a.errChan <- err:
+				case <-a.ctx.Done():
+				}
+			}
+			return
+		}
 	}
 }
 
