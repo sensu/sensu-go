@@ -21,7 +21,7 @@ import (
 )
 
 const (
-	defaultTimeout = "5"
+	defaultTimeout = "5s"
 
 	flagInitAdminUsername = "cluster-admin-username"
 	flagInitAdminPassword = "cluster-admin-password"
@@ -139,13 +139,18 @@ func InitCommand() *cobra.Command {
 				clientURLs = viper.GetStringSlice(flagEtcdAdvertiseClientURLs)
 			}
 
+			timeout := viper.GetDuration(flagTimeout)
+			if timeout < 1 * time.Second {
+				timeout = timeout * time.Second
+			}
+
 			initConfig := initConfig{
 				Config: *cfg,
 				SeedConfig: seeds.Config{
 					AdminUsername: viper.GetString(flagInitAdminUsername),
 					AdminPassword: viper.GetString(flagInitAdminPassword),
 				},
-				Timeout: viper.GetDuration(flagTimeout),
+				Timeout: timeout,
 			}
 
 			wait := viper.GetBool(flagWait)
@@ -199,8 +204,8 @@ func InitCommand() *cobra.Command {
 	cmd.Flags().String(flagInitAdminUsername, "", "cluster admin username")
 	cmd.Flags().String(flagInitAdminPassword, "", "cluster admin password")
 	cmd.Flags().Bool(flagInteractive, false, "interactive mode")
-	cmd.Flags().String(flagTimeout, defaultTimeout, "timeout, in seconds, for failing to establish a connection to etcd")
-	cmd.Flags().Bool(flagWait, false, "wait indefinitely to establish a connection to etcd (takes precedence over timeout)")
+	cmd.Flags().String(flagTimeout, defaultTimeout, "duration to wait before a connection attempt to etcd is considered failed (must be >= 1s)")
+	cmd.Flags().Bool(flagWait, false, "continuously retry to establish a connection to etcd until it is successful")
 
 	setupErr = handleConfig(cmd, os.Args[1:], false)
 
@@ -209,7 +214,7 @@ func InitCommand() *cobra.Command {
 
 func initializeStore(clientConfig clientv3.Config, initConfig initConfig, endpoint string) error {
 	ctx, cancel := context.WithTimeout(
-		clientv3.WithRequireLeader(context.Background()), initConfig.Timeout*time.Second)
+		clientv3.WithRequireLeader(context.Background()), initConfig.Timeout)
 	defer cancel()
 
 	clientConfig.Context = ctx
