@@ -12,6 +12,8 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 - Added `etcd-log-level` configuration flag for setting the log level of the
 embedded etcd server.
 - Added API key authentication support to sensuctl.
+- Added wait flag to the sensu-backend init command which toggles waiting
+indefinitely for etcd to become available.
 
 ### Changed
 - Upgraded Go version from 1.13.15 to 1.16.5.
@@ -20,6 +22,9 @@ embedded etcd server.
 - Some Prometheus metric names have changed with the upgrade to Etcd 3.5. See
 https://etcd.io/docs/v3.5/metrics/etcd-metrics-latest.txt for the metrics that
 Etcd 3.5 exposes.
+- The timeout flag for `sensu-backend init` is now treated as a duration instead
+of seconds. If the value is less than 1 second, the value is converted to
+seconds.
 
 ### Fixed
 - Fixed config deprecation warnings from being shown when deprecated config
@@ -62,9 +67,6 @@ in OSS builds.
 - Fixed a potential deadlock in agentd.
 - Fixed a bug where some Etcd watchers could try to process watch events holding
 invalid pointers.
-### Added
-- Added wait flag to the sensu-backend init command which toggles waiting
-indefinitely for etcd to become available.
 
 ## [6.2.3] - 2021-01-21
 
