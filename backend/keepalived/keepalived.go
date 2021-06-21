@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/sensu/sensu-go/agent"
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	corev3 "github.com/sensu/sensu-go/api/core/v3"
@@ -41,7 +42,34 @@ const (
 	// a registration event is passed to pipelined.
 	// DEPRECATED, use core/v2
 	RegistrationHandlerName = "registration"
+
+	// KeepaliveCounterVec is the name of the prometheus metric that Sensu
+	// exports for counting keepalive events, both dead and alive.
+	KeepaliveCounterVec = "sensu_go_keepalives"
+
+	// KeepaliveCounterLabelName represents the status of a counted keepalive.
+	KeepaliveCounterLabelName = "status"
+
+	// KeepaliveCounterLabelAlive represents a call to alive().
+	KeepaliveCounterLabelAlive = "alive"
+
+	// KeepaliveCounterLabelDead represents a call to dead().
+	KeepaliveCounterLabelDead = "dead"
 )
+
+var KeepalivesProcessed = prometheus.NewCounterVec(
+	prometheus.CounterOpts{
+		Name: KeepaliveCounterVec,
+		Help: "The total name of processed keepalives",
+	},
+	[]string{KeepaliveCounterLabelName},
+)
+
+func init() {
+	KeepalivesProcessed.WithLabelValues(KeepaliveCounterLabelAlive)
+	KeepalivesProcessed.WithLabelValues(KeepaliveCounterLabelDead)
+	_ = prometheus.Register(KeepalivesProcessed)
+}
 
 const deletedEventSentinel = -1
 
@@ -484,6 +512,7 @@ func createRegistrationEvent(entity *corev2.Entity) *corev2.Event {
 }
 
 func (k *Keepalived) alive(key string, prev liveness.State, leader bool) bool {
+	KeepalivesProcessed.WithLabelValues(KeepaliveCounterLabelAlive).Inc()
 	lager := logger.WithFields(logrus.Fields{
 		"status":          liveness.Alive.String(),
 		"previous_status": prev.String(),
@@ -503,6 +532,7 @@ func (k *Keepalived) alive(key string, prev liveness.State, leader bool) bool {
 
 // this is a callback - it should not write to k.errChan
 func (k *Keepalived) dead(key string, prev liveness.State, leader bool) bool {
+	KeepalivesProcessed.WithLabelValues(KeepaliveCounterLabelDead).Inc()
 	if k.ctx.Err() != nil {
 		return false
 	}
