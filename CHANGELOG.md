@@ -14,7 +14,6 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 ### Added
 - Added `etcd-log-level` configuration flag for setting the log level of the
 embedded etcd server.
-- Added API key authentication support to sensuctl.
 - Added wait flag to the sensu-backend init command which toggles waiting
 indefinitely for etcd to become available.
 - Added sensu_go_keepalives prometheus counter.
