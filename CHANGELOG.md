@@ -7,6 +7,9 @@ and this project adheres to [Semantic
 Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
+ - There are currently no unreleased changes.
+
+## [6.4.0] - 2021-06-23
 
 ### Added
 - Added `etcd-log-level` configuration flag for setting the log level of the
