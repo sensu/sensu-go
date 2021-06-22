@@ -14,6 +14,7 @@ embedded etcd server.
 - Added API key authentication support to sensuctl.
 - Added wait flag to the sensu-backend init command which toggles waiting
 indefinitely for etcd to become available.
+- Added sensu_go_keepalives prometheus counter.
 
 ### Changed
 - Upgraded Go version from 1.13.15 to 1.16.5.
