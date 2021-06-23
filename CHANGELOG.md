@@ -11,9 +11,11 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 - Added `etcd-log-level` configuration flag for setting the log level of the
 embedded etcd server.
 - Added API key authentication support to sensuctl.
-- Added `etcd-client-username` and `etcd-client-password` configuration flags
-for connecting to external etcds that use user/password authentication instead
-of client certificate authentication. Typical with DBaaS etcd providers.
+- Added support for `SENSU_BACKEND_ETCD_CLIENT_USERNAME` and
+`SENSU_BACKEND_ETCD_CLIENT_PASSWORD` environment variables for connecting to
+external etcds that use user/password authentication instead of client
+certificate authentication. Typical with DBaaS etcd providers. These can only be
+set via these environment variables and intentionally cannot be set via flags.
 
 ### Changed
 - Upgraded Go version from 1.13.15 to 1.16.

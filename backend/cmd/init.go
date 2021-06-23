@@ -107,8 +107,8 @@ func InitCommand() *cobra.Command {
 			trustedCAFile := viper.GetString(flagTrustedCAFile)
 
 			// Optional username/password auth
-			etcdClientUsername := viper.GetString(flagEtcdClientUsername)
-			etcdClientPassword := viper.GetString(flagEtcdClientPassword)
+			etcdClientUsername := viper.GetString(envEtcdClientUsername)
+			etcdClientPassword := viper.GetString(envEtcdClientPassword)
 
 			if certFile != "" && keyFile != "" {
 				cfg.TLS = &corev2.TLSOptions{

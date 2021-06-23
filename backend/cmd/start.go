@@ -82,8 +82,6 @@ const (
 	flagEtcdHeartbeatInterval        = "etcd-heartbeat-interval"
 	flagEtcdElectionTimeout          = "etcd-election-timeout"
 	flagEtcdLogLevel                 = "etcd-log-level"
-	flagEtcdClientUsername           = "etcd-client-username"
-	flagEtcdClientPassword           = "etcd-client-password"
 
 	// Etcd TLS flag constants
 	flagEtcdCertFile           = "etcd-cert-file"
@@ -98,6 +96,9 @@ const (
 	flagEtcdMaxRequestBytes    = "etcd-max-request-bytes"
 	flagEtcdQuotaBackendBytes  = "etcd-quota-backend-bytes"
 
+	// Etcd Client Auth Env vars
+	envEtcdClientUsername = "etcd-client-username"
+	envEtcdClientPassword = "etcd-client-password"
 	// Default values
 
 	// defaultEtcdClientURL is the default URL to listen for Etcd clients
@@ -220,8 +221,8 @@ func StartCommand(initialize InitializeFunc) *cobra.Command {
 				EtcdHeartbeatInterval:        viper.GetUint(flagEtcdHeartbeatInterval),
 				EtcdElectionTimeout:          viper.GetUint(flagEtcdElectionTimeout),
 				EtcdLogLevel:                 viper.GetString(flagEtcdLogLevel),
-				EtcdClientUsername:           viper.GetString(flagEtcdClientUsername),
-				EtcdClientPassword:           viper.GetString(flagEtcdClientPassword),
+				EtcdClientUsername:           viper.GetString(envEtcdClientUsername),
+				EtcdClientPassword:           viper.GetString(envEtcdClientPassword),
 				NoEmbedEtcd:                  viper.GetBool(flagNoEmbedEtcd),
 				Labels:                       viper.GetStringMapString(flagLabels),
 				Annotations:                  viper.GetStringMapString(flagAnnotations),
@@ -463,12 +464,6 @@ func flagSet(server bool) *pflag.FlagSet {
 	_ = flagSet.SetAnnotation(flagEtcdTrustedCAFile, "categories", []string{"store"})
 	flagSet.String(flagEtcdClientURLs, viper.GetString(flagEtcdClientURLs), "client URLs to use when operating as an etcd client")
 	_ = flagSet.SetAnnotation(flagEtcdClientURLs, "categories", []string{"store"})
-
-	// Etcd client username/password auth
-	flagSet.String(flagEtcdClientUsername, viper.GetString(flagEtcdClientUsername), "username to use with external etcd instead of certificate authentication. Requires password")
-	_ = flagSet.SetAnnotation(flagEtcdClientUsername, "categories", []string{"store"})
-	flagSet.String(flagEtcdClientPassword, viper.GetString(flagEtcdClientPassword), "password to use with external etcd instead of certificate authentication. Requires username")
-	_ = flagSet.SetAnnotation(flagEtcdClientPassword, "categories", []string{"store"})
 
 	if server {
 		// Main Flags
