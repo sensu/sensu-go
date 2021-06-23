@@ -7,7 +7,10 @@ and this project adheres to [Semantic
 Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
- - There are currently no unreleased changes.
+
+### Changed
+- When keepalived encounters round-robin ring errors, the backend no longer
+internally restarts.
 
 ## [6.4.0] - 2021-06-23
 
