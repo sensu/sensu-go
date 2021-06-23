@@ -725,9 +725,6 @@ func (k *Keepalived) handleUpdate(e *corev2.Event) error {
 			})
 			if err := ring.Add(tctx, entity.Name, int64(e.Check.Timeout)); err != nil {
 				lager.WithError(err).Error("error adding entity to ring")
-				if _, ok := err.(*store.ErrInternal); ok {
-					return err
-				}
 			} else {
 				lager.Info("added entity to ring")
 			}
