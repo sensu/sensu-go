@@ -9,6 +9,9 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 ## Unreleased
  - There are currently no unreleased changes.
 
+### Fixed
+- Sensu Go OSS can now be built on `darwin/arm64`.
+
 ## [6.4.0] - 2021-06-23
 
 ### Added
