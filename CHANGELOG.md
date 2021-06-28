@@ -17,7 +17,6 @@ internally restarts.
 ### Added
 - Added `etcd-log-level` configuration flag for setting the log level of the
 embedded etcd server.
-- Added API key authentication support to sensuctl.
 - Added wait flag to the sensu-backend init command which toggles waiting
 indefinitely for etcd to become available.
 - Added sensu_go_keepalives prometheus counter.
@@ -42,6 +41,7 @@ wrong status to be returned from the HTTP API, and the dashboard to go into a
 crash loop.
 - Fixed a bug where an empty subscription was present in the deregistration event's check.
 - Fixed issue with Windows agent not handling command timeouts properly
+- Sensu Go OSS can now be built on `darwin/arm64`.
 
 ## [6.3.0] - 2021-04-07
 

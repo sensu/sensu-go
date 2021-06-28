@@ -35,10 +35,27 @@ func TestSilencedTypeExpiresField(t *testing.T) {
 	assert.Nil(t, res)
 
 	// with expiry set
-	silenced.Expire = 1234
+	silenced.ExpireAt = 1234
 	res, err = impl.Expires(graphql.ResolveParams{Source: silenced, Context: context.Background()})
 	require.NoError(t, err)
 	assert.NotNil(t, res)
+}
+
+func TestSilencedTypeExpireAtField(t *testing.T) {
+	silenced := corev2.FixtureSilenced("unix:http-check")
+	impl := &silencedImpl{}
+
+	// with expiry unset
+	res, err := impl.ExpireAt(graphql.ResolveParams{Source: silenced, Context: context.Background()})
+	require.NoError(t, err)
+	assert.Nil(t, res)
+
+	// with expiry set
+	silenced.ExpireAt = 1234
+	res, err = impl.ExpireAt(graphql.ResolveParams{Source: silenced, Context: context.Background()})
+	require.NoError(t, err)
+	assert.NotNil(t, res)
+	assert.Equal(t, convertTs(1234), res)
 }
 
 func TestSilencedTypeBeginField(t *testing.T) {
