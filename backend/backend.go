@@ -13,8 +13,8 @@ import (
 
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/spf13/viper"
-	"go.etcd.io/etcd/clientv3"
-	"go.etcd.io/etcd/pkg/transport"
+	"go.etcd.io/etcd/client/pkg/v3/transport"
+	"go.etcd.io/etcd/client/v3"
 	"golang.org/x/time/rate"
 	"google.golang.org/grpc"
 
@@ -169,7 +169,7 @@ func newClient(ctx context.Context, config *Config, backend *Backend) (*clientv3
 	// Create an etcd client
 	var client *clientv3.Client
 	if config.EtcdUseEmbeddedClient {
-		client = e.NewEmbeddedClient()
+		client = e.NewEmbeddedClientWithContext(ctx)
 	} else {
 		cl, err := e.NewClientContext(backend.runCtx)
 		if err != nil {

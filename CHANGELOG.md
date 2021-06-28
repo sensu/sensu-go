@@ -1,3 +1,4 @@
+
 # Changelog
 All notable changes to this project will be documented in this file.
 
@@ -7,15 +8,30 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
 
+### Changed
+- When keepalived encounters round-robin ring errors, the backend no longer
+internally restarts.
+
+## [6.4.0] - 2021-06-23
+
 ### Added
 - Added `etcd-log-level` configuration flag for setting the log level of the
 embedded etcd server.
 - Added API key authentication support to sensuctl.
+- Added wait flag to the sensu-backend init command which toggles waiting
+indefinitely for etcd to become available.
+- Added sensu_go_keepalives prometheus counter.
 
 ### Changed
-- Upgraded Go version from 1.13.15 to 1.16.
-- Upgraded Etcd version from 3.3.22 to 3.4.15.
+- Upgraded Go version from 1.13.15 to 1.16.5.
+- Upgraded Etcd version from 3.3.22 to 3.5.0.
 - The loadit tool now uses UUIDv4 instead of UUIDv1 for agent names.
+- Some Prometheus metric names have changed with the upgrade to Etcd 3.5. See
+https://etcd.io/docs/v3.5/metrics/etcd-metrics-latest.txt for the metrics that
+Etcd 3.5 exposes.
+- The timeout flag for `sensu-backend init` is now treated as a duration instead
+of seconds. If the value is less than 1 second, the value is converted to
+seconds.
 
 ### Fixed
 - Fixed config deprecation warnings from being shown when deprecated config
@@ -24,6 +40,8 @@ options weren't set.
 - Fixed a bug where role bindings that refer to missing roles would cause the
 wrong status to be returned from the HTTP API, and the dashboard to go into a
 crash loop.
+- Fixed a bug where an empty subscription was present in the deregistration event's check.
+- Fixed issue with Windows agent not handling command timeouts properly
 
 ## [6.3.0] - 2021-04-07
 
@@ -56,9 +74,6 @@ in OSS builds.
 - Fixed a potential deadlock in agentd.
 - Fixed a bug where some Etcd watchers could try to process watch events holding
 invalid pointers.
-### Added
-- Added wait flag to the sensu-backend init command which toggles waiting
-indefinitely for etcd to become available.
 
 ## [6.2.3] - 2021-01-21
 

@@ -15,7 +15,7 @@ import (
 	"github.com/sensu/sensu-go/types/dynamic"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"go.etcd.io/etcd/integration"
+	"go.etcd.io/etcd/tests/v3/integration"
 )
 
 func fixtureEntity(namespace, name string) *corev2.Entity {
@@ -110,6 +110,7 @@ func TestBuildCache(t *testing.T) {
 }
 
 func TestResourceRebuild(t *testing.T) {
+	integration.BeforeTestExternal(t)
 	c := integration.NewClusterV3(t, &integration.ClusterConfig{Size: 1})
 	defer c.Terminate(t)
 	client := c.RandClient()

@@ -11,7 +11,7 @@ import (
 
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/sirupsen/logrus"
-	"go.etcd.io/etcd/clientv3"
+	"go.etcd.io/etcd/client/v3"
 
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	corev3 "github.com/sensu/sensu-go/api/core/v3"
@@ -121,6 +121,7 @@ type Eventd struct {
 	workerCount     int
 	livenessFactory liveness.Factory
 	eventChan       chan interface{}
+	keepaliveChan   chan interface{}
 	subscription    messaging.Subscription
 	errChan         chan error
 	mu              *sync.Mutex
@@ -175,6 +176,7 @@ func New(ctx context.Context, c Config, opts ...Option) (*Eventd, error) {
 		errChan:         make(chan error, 1),
 		shutdownChan:    make(chan struct{}, 1),
 		eventChan:       make(chan interface{}, c.BufferSize),
+		keepaliveChan:   make(chan interface{}, c.BufferSize),
 		wg:              &sync.WaitGroup{},
 		mu:              &sync.Mutex{},
 		Logger:          &RawLogger{},
@@ -250,9 +252,6 @@ func (e *Eventd) startHandlers() {
 
 				case msg, ok := <-e.eventChan:
 					eventHandlersBusy.WithLabelValues().Inc()
-					defer func() {
-						eventHandlersBusy.WithLabelValues().Dec()
-					}()
 
 					// The message bus will close channels when it's shut down which means
 					// we will end up reading from a closed channel. If it's closed,
@@ -268,11 +267,43 @@ func (e *Eventd) startHandlers() {
 						}
 						return
 					}
-
+					for {
+						select {
+						case keepMsg, ok := <-e.keepaliveChan:
+							if !ok {
+								goto DRAINED
+							}
+							if err := e.handleMessage(keepMsg); err != nil {
+								logger := withEventFields(msg, logger)
+								logger.WithError(err).Error("error handling event")
+							}
+						default:
+							goto DRAINED
+						}
+					}
+				DRAINED:
 					if err := e.handleMessage(msg); err != nil {
 						logger := withEventFields(msg, logger)
 						logger.WithError(err).Error("error handling event")
 					}
+					eventHandlersBusy.WithLabelValues().Dec()
+				case msg, ok := <-e.keepaliveChan:
+					eventHandlersBusy.WithLabelValues().Inc()
+					if !ok {
+						select {
+						// If this channel send doesn't occur immediately it means
+						// another goroutine has placed an error there already; we
+						// don't need to send another.
+						case e.errChan <- errors.New("event channel closed"):
+						default:
+						}
+						return
+					}
+					if err := e.handleMessage(msg); err != nil {
+						logger := withEventFields(msg, logger)
+						logger.WithError(err).Error("error handling event")
+					}
+					eventHandlersBusy.WithLabelValues().Dec()
 				}
 			}
 		}()

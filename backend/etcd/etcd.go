@@ -15,12 +15,13 @@ import (
 	"time"
 
 	"github.com/sensu/sensu-go/util/path"
-	"go.etcd.io/etcd/clientv3"
-	"go.etcd.io/etcd/embed"
-	"go.etcd.io/etcd/etcdserver/api/v3client"
-	"go.etcd.io/etcd/pkg/logutil"
-	"go.etcd.io/etcd/pkg/transport"
-	etcdTypes "go.etcd.io/etcd/pkg/types"
+	"go.etcd.io/etcd/client/v3"
+	"go.etcd.io/etcd/server/v3/etcdserver/api/v3rpc"
+	"go.etcd.io/etcd/client/pkg/v3/logutil"
+	"go.etcd.io/etcd/client/pkg/v3/transport"
+	etcdTypes "go.etcd.io/etcd/client/pkg/v3/types"
+	"go.etcd.io/etcd/server/v3/embed"
+	"go.etcd.io/etcd/server/v3/proxy/grpcproxy/adapter"
 	zapcore "go.uber.org/zap/zapcore"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/grpclog"
@@ -56,7 +57,7 @@ const (
 )
 
 func init() {
-	clientv3.SetLogger(grpclog.NewLoggerV2(ioutil.Discard, ioutil.Discard, ioutil.Discard))
+	grpclog.SetLoggerV2(grpclog.NewLoggerV2(ioutil.Discard, ioutil.Discard, ioutil.Discard))
 
 	logutil.DefaultZapLoggerConfig.Encoding = "sensu-json"
 	logutil.DefaultZapLoggerConfig.EncoderConfig.TimeKey = "time"
@@ -229,6 +230,7 @@ func NewEtcd(config *Config) (*Etcd, error) {
 
 	cfg.Logger = "zap"
 	cfg.LogLevel = config.LogLevel
+	logutil.DefaultZapLoggerConfig.Level.SetLevel(levelToZap(config.LogLevel))
 
 	e, err := embed.StartEtcd(cfg)
 	if err != nil {
@@ -272,6 +274,8 @@ func (e *Etcd) NewClient() (*clientv3.Client, error) {
 // NewClientContext is like NewClient, but sets the provided context on the
 // client.
 func (e *Etcd) NewClientContext(ctx context.Context) (*clientv3.Client, error) {
+	logutil.DefaultZapLoggerConfig.Level.SetLevel(levelToZap(e.cfg.LogLevel))
+
 	tlsConfig, err := ((transport.TLSInfo)(e.cfg.ClientTLSInfo)).ClientConfig()
 	if err != nil {
 		return nil, err
@@ -289,7 +293,33 @@ func (e *Etcd) NewClientContext(ctx context.Context) (*clientv3.Client, error) {
 
 // NewEmbeddedClient delivers a new embedded etcd client. Only for testing.
 func (e *Etcd) NewEmbeddedClient() *clientv3.Client {
-	return v3client.New(e.etcd.Server)
+	return e.NewEmbeddedClientWithContext(context.Background())
+}
+
+// NewEmbeddedClientWithContext takes a context and delivers a new embedded etcd
+// client. Only for testing.
+// Based on https://github.com/etcd-io/etcd/blob/v3.4.16/etcdserver/api/v3client/v3client.go#L30.
+func (e *Etcd) NewEmbeddedClientWithContext(ctx context.Context) *clientv3.Client {
+	logutil.DefaultZapLoggerConfig.Level.SetLevel(levelToZap(e.cfg.LogLevel))
+
+	c := clientv3.NewCtxClient(ctx)
+
+	kvc := adapter.KvServerToKvClient(v3rpc.NewQuotaKVServer(e.etcd.Server))
+	c.KV = clientv3.NewKVFromKVClient(kvc, c)
+
+	lc := adapter.LeaseServerToLeaseClient(v3rpc.NewQuotaLeaseServer(e.etcd.Server))
+	c.Lease = clientv3.NewLeaseFromLeaseClient(lc, c, time.Second)
+
+	wc := adapter.WatchServerToWatchClient(v3rpc.NewWatchServer(e.etcd.Server))
+	c.Watcher = &watchWrapper{clientv3.NewWatchFromWatchClient(wc, c)}
+
+	mc := adapter.MaintenanceServerToMaintenanceClient(v3rpc.NewMaintenanceServer(e.etcd.Server))
+	c.Maintenance = clientv3.NewMaintenanceFromMaintenanceClient(mc, c)
+
+	clc := adapter.ClusterServerToClusterClient(v3rpc.NewClusterServer(e.etcd.Server))
+	c.Cluster = clientv3.NewClusterFromClusterClient(clc, c)
+
+	return c
 }
 
 // Healthy returns Etcd status information. DEPRECATED.
@@ -311,4 +341,40 @@ func (e *Etcd) GetClientURLs() []string {
 		results = append(results, list.Addr().String())
 	}
 	return results
+}
+
+// BlankContext implements Stringer on a context so the ctx string doesn't
+// depend on the context's WithValue data, which tends to be unsynchronized
+// (e.g., x/net/trace), causing ctx.String() to throw data races.
+type blankContext struct{ context.Context }
+
+func (*blankContext) String() string { return "(blankCtx)" }
+
+// watchWrapper wraps clientv3 watch calls to blank out the context
+// to avoid races on trace data.
+type watchWrapper struct{ clientv3.Watcher }
+
+func (ww *watchWrapper) Watch(ctx context.Context, key string, opts ...clientv3.OpOption) clientv3.WatchChan {
+	return ww.Watcher.Watch(&blankContext{ctx}, key, opts...)
+}
+
+func levelToZap(level string) zapcore.Level {
+	switch level {
+	case "debug":
+		return zapcore.DebugLevel
+	case "info":
+		return zapcore.InfoLevel
+	case "warn":
+		return zapcore.WarnLevel
+	case "error":
+		return zapcore.ErrorLevel
+	case "dpanic":
+		return zapcore.DPanicLevel
+	case "panic":
+		return zapcore.PanicLevel
+	case "fatal":
+		return zapcore.FatalLevel
+	default:
+		panic("invalid etcd log level")
+	}
 }

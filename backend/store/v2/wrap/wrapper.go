@@ -6,7 +6,9 @@ import (
 	"fmt"
 	"reflect"
 
+	//nolint:staticcheck // SA1004 Replacing this will take some planning.
 	"github.com/golang/protobuf/proto"
+
 	"github.com/golang/snappy"
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	corev3 "github.com/sensu/sensu-go/api/core/v3"
