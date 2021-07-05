@@ -99,6 +99,9 @@ func (w *Watcher) start() {
 	go func() {
 	RetryLoop:
 		for {
+			_, span := tracer.Start(ctx, "backend.store.etcd.Watcher/start/retry")
+			defer span.End()
+
 			select {
 			case <-watchChanStopped:
 				// The watch channel is broken, so let's make sure to close the watcher

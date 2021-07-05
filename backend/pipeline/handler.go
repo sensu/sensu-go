@@ -28,6 +28,9 @@ type handlerExtensionUnion struct {
 // errors are only logged and used for flow control, they will not
 // interupt event handling.
 func (p *Pipeline) HandleEvent(ctx context.Context, event *corev2.Event) error {
+	ctx, span := tracer.Start(ctx, "backend.pipeline/HandleEvent")
+	defer span.End()
+
 	ctx = context.WithValue(ctx, corev2.NamespaceKey, event.Entity.Namespace)
 
 	// Prepare debug log entry
@@ -49,6 +52,7 @@ func (p *Pipeline) HandleEvent(ctx context.Context, event *corev2.Event) error {
 
 	handlers, err := p.expandHandlers(ctx, handlerList, 1)
 	if err != nil {
+		span.RecordError(err)
 		return err
 	}
 
@@ -61,8 +65,9 @@ func (p *Pipeline) HandleEvent(ctx context.Context, event *corev2.Event) error {
 		handler := u.Handler
 		fields["handler"] = handler.Name
 
-		filter, err := p.FilterEvent(handler, event)
+		filter, err := p.FilterEvent(ctx, handler, event)
 		if err != nil {
+			span.RecordError(err)
 			if _, ok := err.(*store.ErrInternal); ok {
 				// Fatal error
 				return err
@@ -76,6 +81,7 @@ func (p *Pipeline) HandleEvent(ctx context.Context, event *corev2.Event) error {
 
 		eventData, err := p.mutateEvent(handler, event)
 		if err != nil {
+			span.RecordError(err)
 			logger.WithFields(fields).WithError(err).Error("error mutating event")
 			if _, ok := err.(*store.ErrInternal); ok {
 				// Fatal error
@@ -88,22 +94,25 @@ func (p *Pipeline) HandleEvent(ctx context.Context, event *corev2.Event) error {
 
 		switch handler.Type {
 		case "pipe":
-			if _, err := p.pipeHandler(handler, event, eventData); err != nil {
+			if _, err := p.pipeHandler(ctx, handler, event, eventData); err != nil {
 				logger.WithFields(fields).Error(err)
+				span.RecordError(err)
 				if _, ok := err.(*store.ErrInternal); ok {
 					return err
 				}
 			}
 		case "tcp", "udp":
-			if _, err := p.socketHandler(handler, event, eventData); err != nil {
+			if _, err := p.socketHandler(ctx, handler, event, eventData); err != nil {
 				logger.WithFields(fields).Error(err)
+				span.RecordError(err)
 				if _, ok := err.(*store.ErrInternal); ok {
 					return err
 				}
 			}
 		case "grpc":
-			if _, err := p.grpcHandler(u.Extension, event, eventData); err != nil {
+			if _, err := p.grpcHandler(ctx, u.Extension, event, eventData); err != nil {
 				logger.WithFields(fields).Error(err)
+				span.RecordError(err)
 				if _, ok := err.(*store.ErrInternal); ok {
 					return err
 				}
@@ -120,6 +129,9 @@ func (p *Pipeline) HandleEvent(ctx context.Context, event *corev2.Event) error {
 // handlers, while expanding handler sets with support for some
 // nesting. Handlers are fetched from etcd.
 func (p *Pipeline) expandHandlers(ctx context.Context, handlers []string, level int) (map[string]handlerExtensionUnion, error) {
+	ctx, span := tracer.Start(ctx, "backend.pipeline/expandHandlers")
+	defer span.End()
+
 	if level > 3 {
 		return nil, errors.New("handler sets cannot be deeply nested")
 	}
@@ -209,8 +221,11 @@ func (p *Pipeline) expandHandlers(ctx context.Context, handlers []string, level 
 
 // pipeHandler fork/executes a child process for a Sensu pipe handler
 // command and writes the mutated eventData to it via STDIN.
-func (p *Pipeline) pipeHandler(handler *corev2.Handler, event *corev2.Event, eventData []byte) (*command.ExecutionResponse, error) {
-	ctx := corev2.SetContextFromResource(context.Background(), handler)
+func (p *Pipeline) pipeHandler(ctx context.Context, handler *corev2.Handler, event *corev2.Event, eventData []byte) (*command.ExecutionResponse, error) {
+	ctx, span := tracer.Start(ctx, "backend.pipeline/pipeHandler")
+	defer span.End()
+
+	ctx = corev2.SetContextFromResource(ctx, handler)
 	// Prepare log entry
 	fields := utillogging.EventFields(event, false)
 	fields["handler_name"] = handler.Name
@@ -225,6 +240,7 @@ func (p *Pipeline) pipeHandler(handler *corev2.Handler, event *corev2.Event, eve
 	secrets, err := p.secretsProviderManager.SubSecrets(ctx, handler.Secrets)
 	if err != nil {
 		logger.WithFields(fields).WithError(err).Error("failed to retrieve secrets for handler")
+		span.RecordError(err)
 		return nil, err
 	}
 
@@ -243,7 +259,7 @@ func (p *Pipeline) pipeHandler(handler *corev2.Handler, event *corev2.Event, eve
 		// Fetch and install all assets required for handler execution
 		matchedAssets := asset.GetAssets(ctx, p.store, handler.RuntimeAssets)
 
-		assets, err := asset.GetAll(context.TODO(), p.assetGetter, matchedAssets)
+		assets, err := asset.GetAll(ctx, p.assetGetter, matchedAssets)
 		if err != nil {
 			logger.WithFields(fields).WithError(err).Error("failed to retrieve assets for handler")
 			if _, ok := err.(*store.ErrInternal); ok {
@@ -255,10 +271,11 @@ func (p *Pipeline) pipeHandler(handler *corev2.Handler, event *corev2.Event, eve
 		}
 	}
 
-	result, err := p.executor.Execute(context.Background(), handlerExec)
+	result, err := p.executor.Execute(ctx, handlerExec)
 
 	if err != nil {
 		logger.WithFields(fields).WithError(err).Error("failed to execute event pipe handler")
+		span.RecordError(err)
 	} else {
 		fields["status"] = result.Status
 		fields["output"] = result.Output
@@ -268,7 +285,10 @@ func (p *Pipeline) pipeHandler(handler *corev2.Handler, event *corev2.Event, eve
 	return result, err
 }
 
-func (p *Pipeline) grpcHandler(ext *corev2.Extension, evt *corev2.Event, mutated []byte) (rpc.HandleEventResponse, error) {
+func (p *Pipeline) grpcHandler(ctx context.Context, ext *corev2.Extension, evt *corev2.Event, mutated []byte) (rpc.HandleEventResponse, error) {
+	_, span := tracer.Start(ctx, "backend.pipeline/grpcHandler")
+	defer span.End()
+
 	// Prepare log entry
 	fields := logrus.Fields{
 		"namespace": ext.GetNamespace(),
@@ -301,7 +321,10 @@ func (p *Pipeline) grpcHandler(ext *corev2.Extension, evt *corev2.Event, mutated
 
 // socketHandler creates either a TCP or UDP client to write eventData
 // to a socket. The provided handler Type determines the protocol.
-func (p *Pipeline) socketHandler(handler *corev2.Handler, event *corev2.Event, eventData []byte) (conn net.Conn, err error) {
+func (p *Pipeline) socketHandler(ctx context.Context, handler *corev2.Handler, event *corev2.Event, eventData []byte) (conn net.Conn, err error) {
+	_, span := tracer.Start(ctx, "backend.pipeline/socketHandler")
+	defer span.End()
+
 	protocol := handler.Type
 	host := handler.Socket.Host
 	port := handler.Socket.Port
@@ -325,6 +348,7 @@ func (p *Pipeline) socketHandler(handler *corev2.Handler, event *corev2.Event, e
 
 	conn, err = net.DialTimeout(protocol, address, timeoutDuration)
 	if err != nil {
+		span.RecordError(err)
 		return nil, err
 	}
 	defer func() {
@@ -338,6 +362,7 @@ func (p *Pipeline) socketHandler(handler *corev2.Handler, event *corev2.Event, e
 
 	if err != nil {
 		logger.WithFields(fields).WithError(err).Error("failed to execute event handler")
+		span.RecordError(err)
 	} else {
 		fields["bytes"] = bytes
 		logger.WithFields(fields).Info("event socket handler executed")

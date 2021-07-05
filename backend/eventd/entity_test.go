@@ -235,7 +235,7 @@ func TestCreateProxyEntity(t *testing.T) {
 			}
 			defer store.AssertExpectations(t)
 
-			if err := createProxyEntity(tt.event, store); (err != nil) != tt.wantErr {
+			if err := createProxyEntity(context.Background(), tt.event, store); (err != nil) != tt.wantErr {
 				t.Errorf("createProxyEntity() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}

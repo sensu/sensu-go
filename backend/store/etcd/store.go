@@ -13,6 +13,8 @@ import (
 	"github.com/sensu/sensu-go/backend/store/etcd/kvc"
 	"github.com/sensu/sensu-go/types"
 	"go.etcd.io/etcd/client/v3"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
 
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 )
@@ -40,6 +42,10 @@ func NewStore(client *clientv3.Client, name string) *Store {
 
 // Create the given key with the serialized object.
 func Create(ctx context.Context, client *clientv3.Client, key, namespace string, object interface{}) error {
+	ctx, span := tracer.Start(ctx, "backend.store.etcd/Create", trace.WithSpanKind(trace.SpanKindClient))
+	span.SetAttributes(attribute.String("db.key", key))
+	defer span.End()
+
 	bytes, err := marshal(object)
 	if err != nil {
 		return &store.ErrEncode{Key: key, Err: err}
@@ -57,6 +63,10 @@ func Create(ctx context.Context, client *clientv3.Client, key, namespace string,
 // CreateOrUpdate writes the given key with the serialized object, regarless of
 // its current existence
 func CreateOrUpdate(ctx context.Context, client *clientv3.Client, key, namespace string, object interface{}) error {
+	ctx, span := tracer.Start(ctx, "backend.store.etcd/CreateOrUpdate", trace.WithSpanKind(trace.SpanKindClient))
+	span.SetAttributes(attribute.String("db.key", key))
+	defer span.End()
+
 	bytes, err := marshal(object)
 	if err != nil {
 		return &store.ErrEncode{Key: key, Err: err}
@@ -72,6 +82,10 @@ func CreateOrUpdate(ctx context.Context, client *clientv3.Client, key, namespace
 
 // Delete the given key
 func Delete(ctx context.Context, client *clientv3.Client, key string) error {
+	ctx, span := tracer.Start(ctx, "backend.store.etcd/Delete", trace.WithSpanKind(trace.SpanKindClient))
+	span.SetAttributes(attribute.String("db.key", key))
+	defer span.End()
+
 	var resp *clientv3.DeleteResponse
 	err := kvc.Backoff(ctx).Retry(func(n int) (done bool, err error) {
 		resp, err = client.Delete(ctx, key)
@@ -95,6 +109,10 @@ func Get(ctx context.Context, client *clientv3.Client, key string, object interf
 // GetWithResponse retrieves an object with the given key and returns the etcd
 // response
 func GetWithResponse(ctx context.Context, client *clientv3.Client, key string, object interface{}) (*clientv3.GetResponse, error) {
+	ctx, span := tracer.Start(ctx, "backend.store.etcd/GetWithResponse", trace.WithSpanKind(trace.SpanKindClient))
+	span.SetAttributes(attribute.String("db.key", key))
+	defer span.End()
+
 	// Fetch the key from the store
 	var resp *clientv3.GetResponse
 	err := kvc.Backoff(ctx).Retry(func(n int) (done bool, err error) {
@@ -124,6 +142,9 @@ type KeyBuilderFn func(context.Context, string) string
 // List retrieves all keys from storage under the provided prefix key, while
 // supporting all namespaces, and deserialize it into objsPtr.
 func List(ctx context.Context, client *clientv3.Client, keyBuilder KeyBuilderFn, objsPtr interface{}, pred *store.SelectionPredicate) error {
+	ctx, span := tracer.Start(ctx, "backend.store.etcd/List", trace.WithSpanKind(trace.SpanKindClient))
+	defer span.End()
+
 	// Make sure the interface is a pointer, and that the element at this address
 	// is a slice.
 	v := reflect.ValueOf(objsPtr)
@@ -152,6 +173,8 @@ func List(ctx context.Context, client *clientv3.Client, keyBuilder KeyBuilderFn,
 			key += "/"
 		}
 	}
+
+	span.SetAttributes(attribute.String("db.key", key))
 
 	var resp *clientv3.GetResponse
 	err := kvc.Backoff(ctx).Retry(func(n int) (done bool, err error) {
@@ -207,6 +230,10 @@ func List(ctx context.Context, client *clientv3.Client, keyBuilder KeyBuilderFn,
 
 // Update a key given with the serialized object.
 func Update(ctx context.Context, client *clientv3.Client, key, namespace string, object proto.Message) error {
+	ctx, span := tracer.Start(ctx, "backend.store.etcd/Update", trace.WithSpanKind(trace.SpanKindClient))
+	span.SetAttributes(attribute.String("db.key", key))
+	defer span.End()
+
 	bytes, err := proto.Marshal(object)
 	if err != nil {
 		return &store.ErrEncode{Key: key, Err: err}
@@ -224,6 +251,10 @@ func Update(ctx context.Context, client *clientv3.Client, key, namespace string,
 // UpdateWithValue updates the given resource if and only if the given value
 // matches the stored key value
 func UpdateWithComparisons(ctx context.Context, client *clientv3.Client, key string, object interface{}, comparisons ...kvc.Predicate) error {
+	ctx, span := tracer.Start(ctx, "backend.store.etcd/UpdateWithComparisons", trace.WithSpanKind(trace.SpanKindClient))
+	span.SetAttributes(attribute.String("db.key", key))
+	defer span.End()
+
 	bytes, err := marshal(object)
 	if err != nil {
 		return &store.ErrEncode{Key: key, Err: err}
@@ -240,6 +271,10 @@ func UpdateWithComparisons(ctx context.Context, client *clientv3.Client, key str
 // Count retrieves the count of all keys from storage under the
 // provided prefix key, while supporting all namespaces.
 func Count(ctx context.Context, client *clientv3.Client, key string) (int64, error) {
+	ctx, span := tracer.Start(ctx, "backend.store.etcd/Count", trace.WithSpanKind(trace.SpanKindClient))
+	span.SetAttributes(attribute.String("db.key", key))
+	defer span.End()
+
 	opts := []clientv3.OpOption{
 		clientv3.WithCountOnly(),
 		clientv3.WithRange(clientv3.GetPrefixRangeEnd(key)),

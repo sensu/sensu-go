@@ -7,11 +7,15 @@ import (
 	corev3 "github.com/sensu/sensu-go/api/core/v3"
 	"github.com/sensu/sensu-go/backend/store"
 	storev2 "github.com/sensu/sensu-go/backend/store/v2"
+	"go.opentelemetry.io/otel/attribute"
 )
 
 // createProxyEntity creates a proxy entity for the given event if the entity
 // does not exist already and returns the entity created
-func createProxyEntity(event *corev2.Event, s storev2.Interface) error {
+func createProxyEntity(ctx context.Context, event *corev2.Event, s storev2.Interface) error {
+	ctx, span := tracer.Start(ctx, "backend.eventd/createProxyEntity")
+	defer span.End()
+
 	entityName := event.Entity.Name
 	namespace := event.Entity.Namespace
 
@@ -22,6 +26,10 @@ func createProxyEntity(event *corev2.Event, s storev2.Interface) error {
 		return nil
 	}
 
+	span.SetAttributes(
+		attribute.String("entity.name", entityName),
+	)
+
 	// Determine if the entity exists
 	//NOTE(ccressent): there is no timeout for this operation?
 	entityMeta := corev2.NewObjectMeta(entityName, namespace)
@@ -29,8 +37,8 @@ func createProxyEntity(event *corev2.Event, s storev2.Interface) error {
 	state := corev3.NewEntityState(namespace, entityName)
 	config := corev3.NewEntityConfig(namespace, entityName)
 
-	configReq := storev2.NewResourceRequestFromResource(context.Background(), config)
-	stateReq := storev2.NewResourceRequestFromResource(context.Background(), state)
+	configReq := storev2.NewResourceRequestFromResource(ctx, config)
+	stateReq := storev2.NewResourceRequestFromResource(ctx, state)
 
 	// Use postgres when available (enterprise only, entity state only)
 	stateReq.UsePostgres = true

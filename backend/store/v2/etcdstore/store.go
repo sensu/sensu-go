@@ -15,6 +15,8 @@ import (
 	storev2 "github.com/sensu/sensu-go/backend/store/v2"
 	"github.com/sensu/sensu-go/backend/store/v2/wrap"
 	"go.etcd.io/etcd/client/v3"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
 )
 
 var (
@@ -88,7 +90,11 @@ func NewStore(client *clientv3.Client) *Store {
 }
 
 func (s *Store) CreateOrUpdate(req storev2.ResourceRequest, wrapper storev2.Wrapper) error {
+	_, span := tracer.Start(req.Context, "backend.store.v2.etcdstore/CreateOrUpdate", trace.WithSpanKind(trace.SpanKindClient))
+	defer span.End()
+
 	key := StoreKey(req)
+	span.SetAttributes(attribute.String("db.key", key))
 	if err := req.Validate(); err != nil {
 		return &store.ErrNotValid{Err: err}
 	}
@@ -112,6 +118,9 @@ func (s *Store) CreateOrUpdate(req storev2.ResourceRequest, wrapper storev2.Wrap
 }
 
 func (s *Store) Patch(req storev2.ResourceRequest, wrapper storev2.Wrapper, patcher patch.Patcher, conditions *store.ETagCondition) error {
+	_, span := tracer.Start(req.Context, "backend.store.v2.etcdstore/Patch", trace.WithSpanKind(trace.SpanKindClient))
+	defer span.End()
+
 	if err := req.Validate(); err != nil {
 		return &store.ErrNotValid{Err: err}
 	}
@@ -122,6 +131,7 @@ func (s *Store) Patch(req storev2.ResourceRequest, wrapper storev2.Wrapper, patc
 	}
 
 	key := StoreKey(req)
+	span.SetAttributes(attribute.String("db.key", key))
 
 	// Get the stored resource along with the etcd response so we can use the
 	// revision later to ensure the resource wasn't modified in the mean time
@@ -213,11 +223,16 @@ func (s *Store) UpdateIfExists(req storev2.ResourceRequest, wrapper storev2.Wrap
 }
 
 func (s *Store) Update(req storev2.ResourceRequest, wrapper storev2.Wrapper, comparisons ...kvc.Predicate) error {
+	_, span := tracer.Start(req.Context, "backend.store.v2.etcdstore/Update", trace.WithSpanKind(trace.SpanKindClient))
+	defer span.End()
+
 	w, ok := wrapper.(*wrap.Wrapper)
 	if !ok {
 		return &store.ErrNotValid{Err: fmt.Errorf("etcdstore only works with wrap.Wrapper, not %T", wrapper)}
 	}
+
 	key := StoreKey(req)
+	span.SetAttributes(attribute.String("db.key", key))
 	if err := req.Validate(); err != nil {
 		return &store.ErrNotValid{Err: err}
 	}
@@ -234,11 +249,16 @@ func (s *Store) Update(req storev2.ResourceRequest, wrapper storev2.Wrapper, com
 }
 
 func (s *Store) CreateIfNotExists(req storev2.ResourceRequest, wrapper storev2.Wrapper) error {
+	_, span := tracer.Start(req.Context, "backend.store.v2.etcdstore/CreateIfNotExists", trace.WithSpanKind(trace.SpanKindClient))
+	defer span.End()
+
 	w, ok := wrapper.(*wrap.Wrapper)
 	if !ok {
 		return &store.ErrNotValid{Err: fmt.Errorf("etcdstore only works with wrap.Wrapper, not %T", wrapper)}
 	}
+
 	key := StoreKey(req)
+	span.SetAttributes(attribute.String("db.key", key))
 	if err := req.Validate(); err != nil {
 		return &store.ErrNotValid{Err: err}
 	}
@@ -258,7 +278,11 @@ func (s *Store) CreateIfNotExists(req storev2.ResourceRequest, wrapper storev2.W
 }
 
 func (s *Store) Get(req storev2.ResourceRequest) (storev2.Wrapper, error) {
+	_, span := tracer.Start(req.Context, "backend.store.v2.etcdstore/Get", trace.WithSpanKind(trace.SpanKindClient))
+	defer span.End()
+
 	key := StoreKey(req)
+	span.SetAttributes(attribute.String("db.key", key))
 	resp, err := s.GetWithResponse(req)
 	if err != nil {
 		return nil, err
@@ -272,7 +296,11 @@ func (s *Store) Get(req storev2.ResourceRequest) (storev2.Wrapper, error) {
 }
 
 func (s *Store) GetWithResponse(req storev2.ResourceRequest) (*clientv3.GetResponse, error) {
+	_, span := tracer.Start(req.Context, "backend.store.v2.etcdstore/GetWithResponse", trace.WithSpanKind(trace.SpanKindClient))
+	defer span.End()
+
 	key := StoreKey(req)
+	span.SetAttributes(attribute.String("db.key", key))
 	if err := req.Validate(); err != nil {
 		return nil, &store.ErrNotValid{Err: err}
 	}
@@ -293,7 +321,11 @@ func (s *Store) GetWithResponse(req storev2.ResourceRequest) (*clientv3.GetRespo
 }
 
 func (s *Store) Delete(req storev2.ResourceRequest) error {
+	_, span := tracer.Start(req.Context, "backend.store.v2.etcdstore/Delete", trace.WithSpanKind(trace.SpanKindClient))
+	defer span.End()
+
 	key := StoreKey(req)
+	span.SetAttributes(attribute.String("db.key", key))
 	if err := req.Validate(); err != nil {
 		return &store.ErrNotValid{Err: err}
 	}
@@ -307,10 +339,14 @@ func (s *Store) Delete(req storev2.ResourceRequest) error {
 }
 
 func (s *Store) List(req storev2.ResourceRequest, pred *store.SelectionPredicate) (storev2.WrapList, error) {
+	_, span := tracer.Start(req.Context, "backend.store.v2.etcdstore/List", trace.WithSpanKind(trace.SpanKindClient))
+	defer span.End()
+
 	// For any list request, the name must be zeroed out so that the key can
 	// be correctly generated.
 	req.Name = ""
 	key := StoreKey(req)
+	span.SetAttributes(attribute.String("db.key", key))
 	if err := req.Validate(); err != nil {
 		return nil, &store.ErrNotValid{Err: err}
 	}
@@ -364,7 +400,11 @@ func (s *Store) List(req storev2.ResourceRequest, pred *store.SelectionPredicate
 }
 
 func (s *Store) Exists(req storev2.ResourceRequest) (bool, error) {
+	_, span := tracer.Start(req.Context, "backend.store.v2.etcdstore/Exists", trace.WithSpanKind(trace.SpanKindClient))
+	defer span.End()
+
 	key := StoreKey(req)
+	span.SetAttributes(attribute.String("db.key", key))
 	if err := req.Validate(); err != nil {
 		return false, &store.ErrNotValid{Err: err}
 	}

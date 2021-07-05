@@ -16,6 +16,7 @@ import (
 	"github.com/sensu/sensu-go/types"
 	stringsutil "github.com/sensu/sensu-go/util/strings"
 	"github.com/sirupsen/logrus"
+	"go.opentelemetry.io/otel/attribute"
 )
 
 var (
@@ -60,6 +61,13 @@ func (c *CheckExecutor) publishProxyCheckRequests(entities []*corev3.EntityConfi
 }
 
 func (c *CheckExecutor) execute(check *corev2.CheckConfig) error {
+	_, span := tracer.Start(context.Background(), "backend.schedulerd.CheckExecutor/execute")
+	span.SetAttributes(
+		attribute.Bool("check.publish", check.Publish),
+		attribute.String("check.name", check.Name),
+	)
+	defer span.End()
+
 	// Ensure the check is configured to publish check requests
 	if !check.Publish {
 		return nil
@@ -88,6 +96,14 @@ func (c *CheckExecutor) execute(check *corev2.CheckConfig) error {
 }
 
 func (c *CheckExecutor) executeOnEntity(check *corev2.CheckConfig, entity string) error {
+	_, span := tracer.Start(context.Background(), "backend.schedulerd.CheckExecutor/executeOnEntity")
+	span.SetAttributes(
+		attribute.Bool("check.publish", check.Publish),
+		attribute.String("check.name", check.Name),
+		attribute.String("entity.name", entity),
+	)
+	defer span.End()
+
 	// Ensure the check is configured to publish check requests
 	if !check.Publish {
 		return nil
@@ -239,6 +255,13 @@ func (a *AdhocRequestExecutor) publishProxyCheckRequests(entities []*corev3.Enti
 }
 
 func (a *AdhocRequestExecutor) execute(check *corev2.CheckConfig) error {
+	_, span := tracer.Start(context.Background(), "backend.schedulerd.AdhocRequestExecutor/execute")
+	span.SetAttributes(
+		attribute.Bool("check.publish", check.Publish),
+		attribute.String("check.name", check.Name),
+	)
+	defer span.End()
+
 	var err error
 	request, err := a.buildRequest(check)
 	if err != nil {
@@ -363,7 +386,13 @@ func publishRoundRobinProxyCheckRequests(executor *CheckExecutor, check *corev2.
 }
 
 func buildRequest(check *corev2.CheckConfig, s store.Store, secretsProviderManager *secrets.ProviderManager) (*corev2.CheckRequest, error) {
-	ctx := corev2.SetContextFromResource(context.Background(), check)
+	ctx, span := tracer.Start(context.Background(), "backend.schedulerd/buildRequest")
+	span.SetAttributes(
+		attribute.String("check.name", check.Name),
+	)
+	defer span.End()
+
+	ctx = corev2.SetContextFromResource(ctx, check)
 	request := &corev2.CheckRequest{}
 	request.Config = check
 	request.HookAssets = make(map[string]*corev2.AssetList)
