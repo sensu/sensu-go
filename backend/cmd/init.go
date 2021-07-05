@@ -187,7 +187,7 @@ func InitCommand() *cobra.Command {
 					err := initializeStore(clientConfig, initConfig, url)
 					if err != nil {
 						if errors.Is(err, seeds.ErrAlreadyInitialized) {
-							return nil
+							return err
 						}
 						logger.Error(err.Error())
 						continue
@@ -235,7 +235,7 @@ func initializeStore(clientConfig clientv3.Config, initConfig initConfig, endpoi
 	store := etcdstore.NewStore(client, "")
 	if err := seeds.SeedCluster(ctx, store, client, initConfig.SeedConfig); err != nil {
 		if errors.Is(err, seeds.ErrAlreadyInitialized) {
-			return nil
+			return err
 		}
 		return fmt.Errorf("error seeding cluster, is cluster healthy? %w", err)
 	}
