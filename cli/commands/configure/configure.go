@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/AlecAivazis/survey"
+	"github.com/AlecAivazis/survey/v2"
 	"github.com/sensu/sensu-go/cli"
 	config "github.com/sensu/sensu-go/cli/client/config"
 	hooks "github.com/sensu/sensu-go/cli/commands/hooks"
