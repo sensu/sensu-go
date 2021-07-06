@@ -13,8 +13,8 @@ import (
 func TestExecuteWindows(t *testing.T) {
 	// test that commands can time out on windows
 	timeoutRequest := ExecutionRequest{
-		Command: "PowerShell.exe Write-Host \"start sleep\"; Start-Sleep -s 10 ; Write-Host \"sleep done\"",
-		Timeout: 1,
+		Command: "PowerShell.exe Write-Host \"start sleep\"; Start-Sleep -s 20 ; Write-Host \"sleep done\"",
+		Timeout: 10,
 		Name:    "sleep-test",
 	}
 	timeout := NewExecutor()
