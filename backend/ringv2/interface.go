@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 
-	"github.com/robfig/cron"
+	"github.com/robfig/cron/v3"
 )
 
 // Interface is the interface of a round-robin ring.
@@ -63,7 +63,7 @@ func (r Subscription) Validate() error {
 		return errors.New("ring: both cron and interval schedules defined")
 	}
 	if r.CronSchedule != "" {
-		if _, err := cron.Parse(r.CronSchedule); err != nil {
+		if _, err := cron.ParseStandard(r.CronSchedule); err != nil {
 			return err
 		}
 	}

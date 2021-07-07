@@ -54,7 +54,6 @@ require (
 	github.com/prometheus/client_model v0.2.0
 	github.com/prometheus/common v0.26.0
 	github.com/robertkrimen/otto v0.0.0-20191219234010-c382bd3c16ff
-	github.com/robfig/cron v1.2.0
 	github.com/robfig/cron/v3 v3.0.1
 	github.com/sensu/lasr v1.2.1
 	github.com/sensu/sensu-go/api/core/v2 v2.6.0
