@@ -166,7 +166,7 @@ func (b *WizardBus) Publish(topic string, msg interface{}) error {
 		duration := time.Since(then)
 		messagePublishedDurations.WithLabelValues(genericTopic).Observe(float64(duration) / float64(time.Millisecond))
 	}()
-	if !b.running.Load().(bool) {
+	if running := b.running.Load(); running == nil || !running.(bool) {
 		return errors.New("bus no longer running")
 	}
 

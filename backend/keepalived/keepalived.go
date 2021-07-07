@@ -18,7 +18,6 @@ import (
 	"github.com/sensu/sensu-go/backend/ringv2"
 	"github.com/sensu/sensu-go/backend/store"
 	storev2 "github.com/sensu/sensu-go/backend/store/v2"
-	"github.com/sensu/sensu-go/backend/store/v2/wrap"
 	"github.com/sirupsen/logrus"
 )
 
@@ -382,6 +381,7 @@ func (k *Keepalived) handleEntityRegistration(entity *corev2.Entity, event *core
 		logger.WithError(err).Error("error wrapping entity config")
 		return err
 	}
+
 	req := storev2.NewResourceRequestFromResource(tctx, config)
 
 	exists := true
@@ -687,13 +687,17 @@ func (k *Keepalived) handleUpdate(e *corev2.Event) error {
 	entity.LastSeen = e.Timestamp
 	_, entityState := corev3.V2EntityToV3(entity)
 
-	wrapper, err := storev2.WrapResource(entityState, wrap.UsePostgres)
+	wrapper, err := storev2.WrapResource(entityState)
 	if err != nil {
 		logger.WithError(err).Error("error wrapping entity state")
 		return err
 	}
 
 	req := storev2.NewResourceRequestFromResource(k.ctx, entityState)
+
+	// use postgres, if available (enterprise only, entity state only)
+	req.UsePostgres = true
+
 	if err := k.storev2.CreateOrUpdate(req, wrapper); err != nil {
 		logger.WithError(err).Error("error updating entity state in store")
 		return err
