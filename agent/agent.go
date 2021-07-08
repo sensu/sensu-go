@@ -464,10 +464,13 @@ func (a *Agent) connectionManager(gctx context.Context, cancel context.CancelFun
 		// Block until we receive an entity config, or the grace period expires,
 		// unless the agent manages its entity
 		if !a.config.AgentManagedEntity {
+			timeout := time.NewTicker(entityConfigGracePeriod)
+			defer timeout.Stop()
+
 			select {
 			case <-a.entityConfigCh:
 				logger.Debug("successfully received the initial entity config")
-			case <-time.After(entityConfigGracePeriod):
+			case <-timeout.C:
 				logger.Warning("the initial entity config was never received, using the local entity")
 			case <-connCtx.Done():
 				// The connection was closed before we received an entity config or we
