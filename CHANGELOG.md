@@ -11,6 +11,10 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 ### Changed
 - When keepalived encounters round-robin ring errors, the backend no longer
 internally restarts.
+### Fixed
+- Sensu Go OSS can now be built on `darwin/arm64`.
+- Fixed a regression in `sensu-backend init` where the exit status returned 0
+if the store was already initialized.
 
 ## [6.4.0] - 2021-06-23
 
