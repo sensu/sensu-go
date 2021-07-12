@@ -21,6 +21,8 @@ internally restarts.
 - Sensu Go OSS can now be built on `darwin/arm64`.
 - Fixed a regression in `sensu-backend init` where the exit status returned 0
 if the store was already initialized.
+- Guard against potential crash in the sensuctl cluster member-list command when
+the etcd response header is nil.
 
 ## [6.4.0] - 2021-06-23
 
