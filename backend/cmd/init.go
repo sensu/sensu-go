@@ -23,6 +23,7 @@ import (
 const (
 	defaultTimeout = "5s"
 
+	flagIgnoreAlreadyInitialized = "ignore-already-initialized"
 	flagInitAdminUsername = "cluster-admin-username"
 	flagInitAdminPassword = "cluster-admin-password"
 	flagInteractive       = "interactive"
@@ -187,6 +188,9 @@ func InitCommand() *cobra.Command {
 					err := initializeStore(clientConfig, initConfig, url)
 					if err != nil {
 						if errors.Is(err, seeds.ErrAlreadyInitialized) {
+							if viper.GetBool(flagIgnoreAlreadyInitialized) {
+								return nil
+							}
 							return err
 						}
 						logger.Error(err.Error())
@@ -201,6 +205,7 @@ func InitCommand() *cobra.Command {
 		},
 	}
 
+	cmd.Flags().Bool(flagIgnoreAlreadyInitialized, false, "exit 0 if the cluster has already been initialized")
 	cmd.Flags().String(flagInitAdminUsername, "", "cluster admin username")
 	cmd.Flags().String(flagInitAdminPassword, "", "cluster admin password")
 	cmd.Flags().Bool(flagInteractive, false, "interactive mode")
