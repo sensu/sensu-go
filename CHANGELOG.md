@@ -8,9 +8,15 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
 
+### Added
+- Added `ignore-already-initialized` configuration flag to the sensu-backend
+init command for returning exit code 0 when a cluster has already been
+initialized.
+
 ### Changed
 - When keepalived encounters round-robin ring errors, the backend no longer
 internally restarts.
+
 ### Fixed
 - Sensu Go OSS can now be built on `darwin/arm64`.
 - Fixed a regression in `sensu-backend init` where the exit status returned 0
