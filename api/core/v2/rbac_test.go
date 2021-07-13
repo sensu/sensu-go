@@ -156,7 +156,7 @@ func Test_validateVerbs(t *testing.T) {
 		},
 		{
 			name:    "explicit verbs",
-			verbs:   []string{"get", "list", "create", "update", "delete"},
+			verbs:   []string{"get", "list", "create", "update", "delete", "execute"},
 			wantErr: false,
 		},
 	}
