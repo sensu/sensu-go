@@ -10,6 +10,7 @@ import (
 	"github.com/dustin/go-humanize"
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	bolt "go.etcd.io/bbolt"
+	"go.opentelemetry.io/otel/attribute"
 	"golang.org/x/time/rate"
 )
 
@@ -75,6 +76,10 @@ type boltDBAssetManager struct {
 // If a value is not returned, the asset is not installed or not installed
 // correctly. We then proceed to attempt asset installation.
 func (b *boltDBAssetManager) Get(ctx context.Context, asset *corev2.Asset) (*RuntimeAsset, error) {
+	ctx, span := tracer.Start(ctx, "asset.boltDBAssetManager/Get")
+	span.SetAttributes(attribute.String("asset.name", asset.Name))
+	defer span.End()
+
 	key := []byte(asset.GetSha512())
 	var localAsset *RuntimeAsset
 
@@ -97,6 +102,7 @@ func (b *boltDBAssetManager) Get(ctx context.Context, asset *corev2.Asset) (*Run
 
 		return nil
 	}); err != nil {
+		span.RecordError(err)
 		return nil, err
 	}
 
@@ -164,6 +170,7 @@ func (b *boltDBAssetManager) Get(ctx context.Context, asset *corev2.Asset) (*Run
 
 		return bucket.Put(key, assetJSON)
 	}); err != nil {
+		span.RecordError(err)
 		return nil, err
 	}
 

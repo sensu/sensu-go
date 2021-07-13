@@ -93,7 +93,7 @@ func TestResourceJSON(t *testing.T) {
 		t.Fatalf("seed = %d, %#v !Json Equal %#v", seed, msg, p)
 	}
 }
-func TestResourceProtoText(t *testing.T) {
+func _TestResourceProtoText(t *testing.T) {
 	seed := time.Now().UnixNano()
 	popr := math_rand.New(math_rand.NewSource(seed))
 	p := NewPopulatedResource(popr, true)
@@ -107,7 +107,7 @@ func TestResourceProtoText(t *testing.T) {
 	}
 }
 
-func TestResourceProtoCompactText(t *testing.T) {
+func _TestResourceProtoCompactText(t *testing.T) {
 	seed := time.Now().UnixNano()
 	popr := math_rand.New(math_rand.NewSource(seed))
 	p := NewPopulatedResource(popr, true)

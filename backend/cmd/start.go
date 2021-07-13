@@ -111,6 +111,11 @@ const (
 	// URLs to advertise to the rest of the cluster
 	defaultEtcdAdvertiseClientURL = "http://localhost:2379"
 
+	// OTEL
+	flagTracingEnabled        = "tracing-enabled"
+	flagTracingAgentAddress   = "tracing-address"
+	flagTracingServiceNameKey = "tracing-name-key"
+
 	// Start command usage template
 	startUsageTemplate = `Usage:{{if .Runnable}}
   {{.UseLine}}{{end}}{{if .HasAvailableSubCommands}}
@@ -221,6 +226,10 @@ func StartCommand(initialize InitializeFunc) *cobra.Command {
 				NoEmbedEtcd:                  viper.GetBool(flagNoEmbedEtcd),
 				Labels:                       viper.GetStringMapString(flagLabels),
 				Annotations:                  viper.GetStringMapString(flagAnnotations),
+
+				TracingEnabled:        viper.GetBool(flagTracingEnabled),
+				TracingAgentAddress:   viper.GetString(flagTracingAgentAddress),
+				TracingServiceNameKey: viper.GetString(flagTracingServiceNameKey),
 			}
 
 			if flag := cmd.Flags().Lookup(flagLabels); flag != nil && flag.Changed {
@@ -392,6 +401,10 @@ func handleConfig(cmd *cobra.Command, arguments []string, server bool) error {
 		viper.SetDefault(flagNoEmbedEtcd, false)
 	}
 
+	viper.SetDefault(flagTracingEnabled, false)
+	viper.SetDefault(flagTracingAgentAddress, "localhost:4317")
+	viper.SetDefault(flagTracingServiceNameKey, defaultEtcdName)
+
 	// Merge in flag set so that it appears in command usage
 	flags := flagSet(server)
 	cmd.Flags().AddFlagSet(flags)
@@ -532,6 +545,10 @@ func flagSet(server bool) *pflag.FlagSet {
 		_ = flagSet.SetAnnotation(flagEtcdPeerTrustedCAFile, "categories", []string{"store"})
 		flagSet.String(flagEtcdNodeName, viper.GetString(flagEtcdNodeName), "name for this etcd node")
 		_ = flagSet.SetAnnotation(flagEtcdNodeName, "categories", []string{"store"})
+
+		flagSet.Bool(flagTracingEnabled, viper.GetBool(flagTracingEnabled), "enable OTEL")
+		flagSet.String(flagTracingAgentAddress, viper.GetString(flagTracingAgentAddress), "otlp collector host:port")
+		flagSet.String(flagTracingServiceNameKey, viper.GetString(flagTracingServiceNameKey), "tracing service name key")
 	}
 
 	flagSet.SetOutput(ioutil.Discard)

@@ -15,6 +15,7 @@ import (
 	"github.com/sensu/sensu-go/transport"
 	"github.com/sensu/sensu-go/types"
 	"github.com/sensu/sensu-go/version"
+	"go.opentelemetry.io/contrib/instrumentation/github.com/gorilla/mux/otelmux"
 	"golang.org/x/time/rate"
 )
 
@@ -32,6 +33,7 @@ type sensuVersion struct {
 // newServer returns a new HTTP server
 func newServer(a *Agent) *http.Server {
 	router := mux.NewRouter()
+	router.Use(otelmux.Middleware("sensu-agent-api"))
 	registerRoutes(a, router)
 
 	server := &http.Server{

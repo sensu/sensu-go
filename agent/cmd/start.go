@@ -80,6 +80,11 @@ const (
 	flagCertFile              = "cert-file"
 	flagKeyFile               = "key-file"
 
+	// OTEL
+	flagTracingEnabled        = "tracing-enabled"
+	flagTracingAgentAddress   = "tracing-address"
+	flagTracingServiceNameKey = "tracing-name-key"
+
 	// Deprecated flags
 	deprecatedFlagAgentID          = "id"
 	deprecatedFlagKeepaliveTimeout = "keepalive-timeout"
@@ -142,6 +147,10 @@ func NewAgentConfig(cmd *cobra.Command) (*agent.Config, error) {
 	cfg.TLS.InsecureSkipVerify = viper.GetBool(flagInsecureSkipTLSVerify)
 	cfg.TLS.CertFile = viper.GetString(flagCertFile)
 	cfg.TLS.KeyFile = viper.GetString(flagKeyFile)
+
+	cfg.TracingEnabled = viper.GetBool(flagTracingEnabled)
+	cfg.TracingAgentAddress = viper.GetString(flagTracingAgentAddress)
+	cfg.TracingServiceNameKey = viper.GetString(flagTracingServiceNameKey)
 
 	if cfg.KeepaliveCriticalTimeout != 0 && cfg.KeepaliveCriticalTimeout < cfg.KeepaliveWarningTimeout {
 		return nil, fmt.Errorf("if set, --%s must be greater than --%s",
@@ -310,6 +319,10 @@ func handleConfig(cmd *cobra.Command, arguments []string) error {
 	viper.SetDefault(flagBackendHeartbeatInterval, 30)
 	viper.SetDefault(flagBackendHeartbeatTimeout, 45)
 
+	viper.SetDefault(flagTracingEnabled, false)
+	viper.SetDefault(flagTracingAgentAddress, "localhost:4317")
+	viper.SetDefault(flagTracingServiceNameKey, agent.GetDefaultAgentName())
+
 	// Merge in flag set so that it appears in command usage
 	flags := flagSet()
 	cmd.Flags().AddFlagSet(flags)
@@ -427,6 +440,10 @@ func flagSet() *pflag.FlagSet {
 	flagSet.Int(flagBackendHeartbeatInterval, viper.GetInt(flagBackendHeartbeatInterval), "interval at which the agent should send heartbeats to the backend")
 	flagSet.Int(flagBackendHeartbeatTimeout, viper.GetInt(flagBackendHeartbeatTimeout), "number of seconds the agent should wait for a response to a hearbeat")
 	flagSet.Bool(flagAgentManagedEntity, viper.GetBool(flagAgentManagedEntity), "manage this entity via the agent")
+
+	flagSet.Bool(flagTracingEnabled, viper.GetBool(flagTracingEnabled), "enable OTEL")
+	flagSet.String(flagTracingAgentAddress, viper.GetString(flagTracingAgentAddress), "otlp collector host:port")
+	flagSet.String(flagTracingServiceNameKey, viper.GetString(flagTracingServiceNameKey), "tracing service name key")
 
 	flagSet.SetOutput(ioutil.Discard)
 

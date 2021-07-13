@@ -9,6 +9,7 @@ import (
 	"github.com/sensu/sensu-go/token"
 	"github.com/sensu/sensu-go/types/dynamic"
 	"github.com/sirupsen/logrus"
+	"go.opentelemetry.io/otel/attribute"
 )
 
 // NewFilteredManager returns an asset Getter that filters assets based on the
@@ -30,6 +31,10 @@ type filteredManager struct {
 
 // Get fetches, verifies, and expands an asset, but only if it is filtered.
 func (f *filteredManager) Get(ctx context.Context, asset *corev2.Asset) (*RuntimeAsset, error) {
+	ctx, span := tracer.Start(ctx, "asset.filteredManager/Get")
+	span.SetAttributes(attribute.String("asset.name", asset.Name))
+	defer span.End()
+
 	var filteredAsset *corev2.Asset
 
 	fields := logrus.Fields{

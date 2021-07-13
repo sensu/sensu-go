@@ -38,6 +38,9 @@ func schedulerFor(c *corev2.CheckConfig) string {
 
 // DeleteCheckConfigByName deletes a CheckConfig by name.
 func (s *Store) DeleteCheckConfigByName(ctx context.Context, name string) error {
+	ctx, span := tracer.Start(ctx, "backend.store.etcd/DeleteCheckConfigByName")
+	defer span.End()
+
 	if name == "" {
 		return &store.ErrNotValid{Err: errors.New("must specify name")}
 	}
@@ -51,9 +54,13 @@ func (s *Store) DeleteCheckConfigByName(ctx context.Context, name string) error 
 
 // GetCheckConfigs returns check configurations for an (optional) namespace.
 func (s *Store) GetCheckConfigs(ctx context.Context, pred *store.SelectionPredicate) ([]*corev2.CheckConfig, error) {
+	ctx, span := tracer.Start(ctx, "backend.store.etcd/GetCheckConfigs")
+	defer span.End()
+
 	checks := []*corev2.CheckConfig{}
 	err := List(ctx, s.client, GetCheckConfigsPath, &checks, pred)
 	if err != nil {
+		span.RecordError(err)
 		return nil, err
 	}
 	for _, check := range checks {
@@ -64,6 +71,9 @@ func (s *Store) GetCheckConfigs(ctx context.Context, pred *store.SelectionPredic
 
 // GetCheckConfigByName gets a CheckConfig by name.
 func (s *Store) GetCheckConfigByName(ctx context.Context, name string) (*corev2.CheckConfig, error) {
+	ctx, span := tracer.Start(ctx, "backend.store.etcd/GetCheckConfigByName")
+	defer span.End()
+
 	if name == "" {
 		return nil, &store.ErrNotValid{Err: errors.New("must specify name")}
 	}
@@ -73,6 +83,7 @@ func (s *Store) GetCheckConfigByName(ctx context.Context, name string) (*corev2.
 		if _, ok := err.(*store.ErrNotFound); ok {
 			err = nil
 		}
+		span.RecordError(err)
 		return nil, err
 	}
 	check.Scheduler = schedulerFor(&check)
@@ -88,6 +99,9 @@ func (s *Store) GetCheckConfigByName(ctx context.Context, name string) (*corev2.
 
 // UpdateCheckConfig updates a CheckConfig.
 func (s *Store) UpdateCheckConfig(ctx context.Context, check *corev2.CheckConfig) error {
+	ctx, span := tracer.Start(ctx, "backend.store.etcd/UpdateCheckConfig")
+	defer span.End()
+
 	if err := check.Validate(); err != nil {
 		return &store.ErrNotValid{Err: err}
 	}

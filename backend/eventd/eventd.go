@@ -12,6 +12,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/sirupsen/logrus"
 	"go.etcd.io/etcd/client/v3"
+	"go.opentelemetry.io/otel/attribute"
 
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	corev3 "github.com/sensu/sensu-go/api/core/v3"
@@ -322,6 +323,9 @@ func eventKey(event *corev2.Event) string {
 }
 
 func (e *Eventd) handleMessage(msg interface{}) error {
+	ctx, span := tracer.Start(context.Background(), "backend.eventd/handleMessage")
+	defer span.End()
+
 	then := time.Now()
 	defer func() {
 		duration := time.Since(then)
@@ -350,12 +354,18 @@ func (e *Eventd) handleMessage(msg interface{}) error {
 		return e.bus.Publish(messaging.TopicEvent, event)
 	}
 
-	ctx := context.WithValue(context.Background(), corev2.NamespaceKey, event.Entity.Namespace)
+	span.SetAttributes(
+		attribute.String("check.name", event.Check.Name),
+		attribute.String("entity.name", event.Entity.Name),
+	)
+
+	ctx = context.WithValue(ctx, corev2.NamespaceKey, event.Entity.Namespace)
 
 	// Create a proxy entity if required and update the event's entity with it,
 	// but only if the event's entity is not an agent.
-	if err := createProxyEntity(event, e.store); err != nil {
+	if err := createProxyEntity(ctx, event, e.store); err != nil {
 		EventsProcessed.WithLabelValues(EventsProcessedLabelError, EventsProcessedTypeLabelCheck).Inc()
+		span.RecordError(err)
 		return err
 	}
 
@@ -369,6 +379,7 @@ func (e *Eventd) handleMessage(msg interface{}) error {
 	event, prevEvent, err := e.eventStore.UpdateEvent(ctx, event)
 	if err != nil {
 		EventsProcessed.WithLabelValues(EventsProcessedLabelError, EventsProcessedTypeLabelCheck).Inc()
+		span.RecordError(err)
 		return err
 	}
 
@@ -427,6 +438,9 @@ func (e *Eventd) alive(key string, prev liveness.State, leader bool) (bury bool)
 }
 
 func (e *Eventd) dead(key string, prev liveness.State, leader bool) (bury bool) {
+	ctx, span := tracer.Start(context.Background(), "backend.eventd/dead")
+	defer span.End()
+
 	if e.ctx.Err() != nil {
 		return false
 	}
@@ -454,7 +468,7 @@ func (e *Eventd) dead(key string, prev liveness.State, leader bool) (bury bool) 
 		return true
 	}
 
-	ctx := store.NamespaceContext(context.Background(), namespace)
+	ctx = store.NamespaceContext(ctx, namespace)
 	// TODO(eric): make this configurable? Or dynamic based on some property?
 	// 120s seems like a reasonable, it not somewhat large, timeout for check TTL processing.
 	ctx, cancel := context.WithTimeout(ctx, e.storeTimeout)
@@ -533,6 +547,9 @@ func parseKey(key string) (namespace, check, entity string, err error) {
 // handleFailure creates a check event with a warn status and publishes it to
 // TopicEvent.
 func (e *Eventd) handleFailure(ctx context.Context, event *corev2.Event) error {
+	ctx, span := tracer.Start(ctx, "backend.eventd/handleFailure")
+	defer span.End()
+
 	// don't update the event with ttl output for keepalives,
 	// there is a different mechanism for that
 	if event.Check.Name == keepalived.KeepaliveCheckName {
@@ -563,6 +580,9 @@ func (e *Eventd) handleFailure(ctx context.Context, event *corev2.Event) error {
 }
 
 func (e *Eventd) createFailedCheckEvent(ctx context.Context, event *corev2.Event) (*corev2.Event, error) {
+	ctx, span := tracer.Start(ctx, "backend.eventd/createFailedCheckEvent")
+	defer span.End()
+
 	if !event.HasCheck() {
 		return nil, errors.New("event does not contain a check")
 	}

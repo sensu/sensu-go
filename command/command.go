@@ -14,7 +14,10 @@ import (
 	"github.com/sensu/sensu-go/types"
 	bytesutil "github.com/sensu/sensu-go/util/bytes"
 	"github.com/sirupsen/logrus"
+	"go.opentelemetry.io/otel"
 )
+
+var tracer = otel.Tracer("command")
 
 const undocumentedTestCheckCommand = "!sensu_test_check!"
 
@@ -117,6 +120,9 @@ func NewExecutor() Executor {
 // timeout, optionally writing to STDIN, capturing its combined output
 // (STDOUT/ERR) and exit status.
 func (e *ExecutionRequest) Execute(ctx context.Context, execution ExecutionRequest) (*ExecutionResponse, error) {
+	ctx, span := tracer.Start(ctx, "command.ExecutionRequest/Execute")
+	defer span.End()
+
 	if execution.Command == undocumentedTestCheckCommand {
 		return cannedResponse, nil
 	}
@@ -172,6 +178,7 @@ func (e *ExecutionRequest) Execute(ctx context.Context, execution ExecutionReque
 	if err := cmd.Start(); err != nil {
 		// Something unexpected happened when attempting to
 		// fork/exec, return immediately.
+		span.RecordError(err)
 		return resp, err
 	}
 
@@ -208,6 +215,7 @@ func (e *ExecutionRequest) Execute(ctx context.Context, execution ExecutionReque
 	case <-timer.C:
 		var killErrOutput string
 		if killErr = KillProcess(cmd); killErr != nil {
+			span.RecordError(killErr)
 			logger.WithError(killErr).Errorf("Execution timed out - Unable to TERM/KILL the process: #%d", cmd.Process.Pid)
 			killErrOutput = fmt.Sprintf("Unable to TERM/KILL the process: #%d\n", cmd.Process.Pid)
 			escapeZombie(&execution)

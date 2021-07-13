@@ -211,7 +211,7 @@ func TestPipelinePipeHandler(t *testing.T) {
 	event := corev2.FixtureEvent("test", "test")
 	eventData, _ := json.Marshal(event)
 
-	handlerExec, err := p.pipeHandler(handler, event, eventData)
+	handlerExec, err := p.pipeHandler(context.TODO(), handler, event, eventData)
 
 	assert.NoError(t, err)
 	assert.Equal(t, string(eventData[:]), handlerExec.Output)
@@ -268,7 +268,7 @@ func TestPipelineTcpHandler(t *testing.T) {
 	}()
 
 	<-ready
-	_, err := p.socketHandler(handler, event, eventData)
+	_, err := p.socketHandler(context.TODO(), handler, event, eventData)
 
 	assert.NoError(t, err)
 	<-done
@@ -316,7 +316,7 @@ func TestPipelineUdpHandler(t *testing.T) {
 
 	<-ready
 
-	_, err := p.socketHandler(handler, event, eventData)
+	_, err := p.socketHandler(context.TODO(), handler, event, eventData)
 
 	assert.NoError(t, err)
 	<-done
@@ -336,7 +336,7 @@ func TestPipelineGRPCHandler(t *testing.T) {
 	p := &Pipeline{
 		extensionExecutor: execFn,
 	}
-	result, err := p.grpcHandler(extension, event, nil)
+	result, err := p.grpcHandler(context.TODO(), extension, event, nil)
 
 	assert.NoError(t, err)
 	assert.Equal(t, "ok", result.Output)

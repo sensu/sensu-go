@@ -2,6 +2,7 @@ package schedulerd
 
 import (
 	"context"
+	"fmt"
 	"strings"
 	"sync"
 
@@ -11,6 +12,7 @@ import (
 	"github.com/sensu/sensu-go/backend/secrets"
 	"github.com/sensu/sensu-go/backend/store"
 	cachev2 "github.com/sensu/sensu-go/backend/store/cache/v2"
+	"go.opentelemetry.io/otel/attribute"
 )
 
 // CheckWatcher manages all the check schedulers
@@ -86,6 +88,9 @@ func (c *CheckWatcher) startScheduler(check *corev2.CheckConfig) error {
 
 // Start starts the CheckWatcher.
 func (c *CheckWatcher) Start() error {
+	_, span := tracer.Start(context.Background(), "backend.schedulerd.CheckWatcher/Start")
+	defer span.End()
+
 	// for each check
 	checkConfigs, err := c.store.GetCheckConfigs(c.ctx, &store.SelectionPredicate{})
 	if err != nil {
@@ -97,6 +102,7 @@ func (c *CheckWatcher) Start() error {
 
 	for _, cfg := range checkConfigs {
 		if err := c.startScheduler(cfg); err != nil {
+			span.RecordError(err)
 			return err
 		}
 	}
@@ -128,14 +134,20 @@ func (c *CheckWatcher) startWatcher() {
 }
 
 func (c *CheckWatcher) handleWatchEvent(watchEvent store.WatchEventCheckConfig) {
+	_, span := tracer.Start(context.Background(), "backend.schedulerd.CheckWatcher/handleWatchEvent")
+	defer span.End()
+
 	check := watchEvent.CheckConfig
 
 	if check == nil {
 		logger.Error("nil check config received from check config watcher")
+		span.RecordError(fmt.Errorf("nil check config received from check config watcher"))
 		return
 	}
 
 	key := concatUniqueKey(check.Name, check.Namespace)
+
+	span.SetAttributes(attribute.String("check.key", key))
 
 	c.mu.Lock()
 	defer c.mu.Unlock()
@@ -145,6 +157,7 @@ func (c *CheckWatcher) handleWatchEvent(watchEvent store.WatchEventCheckConfig) 
 		// we need to spin up a new CheckScheduler for the newly created check
 		if err := c.startScheduler(check); err != nil {
 			logger.WithError(err).Error("unable to start check scheduler")
+			span.RecordError(err)
 		}
 	case store.WatchUpdate:
 		// Interrupt the check scheduler, causing the check to execute and the timer to be reset.
@@ -154,6 +167,7 @@ func (c *CheckWatcher) handleWatchEvent(watchEvent store.WatchEventCheckConfig) 
 			logger.Info("starting new scheduler")
 			if err := c.startScheduler(check); err != nil {
 				logger.WithError(err).Error("unable to start check scheduler")
+				span.RecordError(err)
 			}
 			return
 		}
@@ -164,10 +178,12 @@ func (c *CheckWatcher) handleWatchEvent(watchEvent store.WatchEventCheckConfig) 
 			logger.Info("stopping existing scheduler, starting new scheduler")
 			if err := sched.Stop(); err != nil {
 				logger.WithError(err).Error("error stopping check scheduler")
+				span.RecordError(err)
 			}
 			delete(c.items, key)
 			if err := c.startScheduler(check); err != nil {
 				logger.WithError(err).Error("unable to start check scheduler")
+				span.RecordError(err)
 			}
 		}
 	case store.WatchDelete:
@@ -176,6 +192,7 @@ func (c *CheckWatcher) handleWatchEvent(watchEvent store.WatchEventCheckConfig) 
 		if ok {
 			if err := sched.Stop(); err != nil {
 				logger.WithError(err).Error("error stopping check scheduler")
+				span.RecordError(err)
 			}
 			delete(c.items, key)
 		}

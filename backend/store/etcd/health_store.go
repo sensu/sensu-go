@@ -13,6 +13,7 @@ import (
 	"github.com/sensu/sensu-go/backend/store"
 	"go.etcd.io/etcd/api/v3/v3rpc/rpctypes"
 	"go.etcd.io/etcd/client/v3"
+	"go.opentelemetry.io/otel/attribute"
 )
 
 func isEmbeddedClient(clientURLs []string) bool {
@@ -27,6 +28,10 @@ func isEmbeddedClient(clientURLs []string) bool {
 }
 
 func (s *Store) getHealth(ctx context.Context, id uint64, name string, urls []string, tls *tls.Config) *corev2.ClusterHealth {
+	ctx, span := tracer.Start(ctx, "backend.store.etcd/getHealth")
+	span.SetAttributes(attribute.String("etcd.name", name))
+	defer span.End()
+
 	health := &corev2.ClusterHealth{
 		MemberID: id,
 		Name:     name,
@@ -47,6 +52,7 @@ func (s *Store) getHealth(ctx context.Context, id uint64, name string, urls []st
 
 	if cliErr != nil {
 		logger.WithField("member", id).WithField("name", name).WithError(cliErr).Error("unhealthy cluster member")
+		span.RecordError(cliErr)
 		health.Err = cliErr.Error()
 		return health
 	}
@@ -60,6 +66,7 @@ func (s *Store) getHealth(ctx context.Context, id uint64, name string, urls []st
 		health.Err = ""
 		health.Healthy = true
 	} else {
+		span.RecordError(getErr)
 		health.Err = getErr.Error()
 	}
 
@@ -68,6 +75,9 @@ func (s *Store) getHealth(ctx context.Context, id uint64, name string, urls []st
 
 // GetClusterHealth retrieves the cluster health
 func (s *Store) GetClusterHealth(ctx context.Context, cluster clientv3.Cluster, etcdClientTLSConfig *tls.Config) *corev2.HealthResponse {
+	ctx, span := tracer.Start(ctx, "backend.store.etcd/GetClusterHealth")
+	defer span.End()
+
 	healthResponse := &corev2.HealthResponse{}
 
 	var timeout time.Duration
@@ -88,6 +98,7 @@ func (s *Store) GetClusterHealth(ctx context.Context, cluster clientv3.Cluster, 
 	mList, err := cluster.MemberList(tctx)
 	if err != nil {
 		logger.WithError(err).Error("could not get the cluster member list")
+		span.RecordError(err)
 		healthResponse.ClusterHealth = []*corev2.ClusterHealth{
 			{
 				Name: "etcd client",
@@ -139,6 +150,7 @@ func (s *Store) GetClusterHealth(ctx context.Context, cluster clientv3.Cluster, 
 	alarmResponse, err := s.client.Maintenance.AlarmList(tctx)
 	if err != nil {
 		logger.WithError(err).Error("failed to fetch etcd alarm list")
+		span.RecordError(err)
 	} else {
 		logger.WithField("alarms", len(alarmResponse.Alarms)).Info("cluster alarms")
 		healthResponse.Alarms = alarmResponse.Alarms

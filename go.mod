@@ -9,6 +9,23 @@ replace (
 	github.com/sensu/sensu-go/types => ./types
 )
 
+exclude (
+	// etcd 3.5.0 cannot use otlp > 0.20.0, see https://github.com/etcd-io/etcd/issues/13141
+	go.opentelemetry.io/contrib/instrumentation/github.com/gorilla/mux/otelmux v0.21.0
+	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.21.0
+	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.21.0
+	go.opentelemetry.io/otel v1.0.0-RC1
+	go.opentelemetry.io/otel/exporters/otlp v1.0.0-RC1
+	go.opentelemetry.io/otel/exporters/stdout v1.0.0-RC1
+	go.opentelemetry.io/otel/internal/metric v0.21.0
+	go.opentelemetry.io/otel/metric v0.21.0
+	go.opentelemetry.io/otel/sdk v1.0.0-RC1
+	go.opentelemetry.io/otel/sdk/metric v0.21.0
+	go.opentelemetry.io/otel/trace v1.0.0-RC1
+	go.opentelemetry.io/proto/otlp v0.8.0
+	go.opentelemetry.io/proto/otlp v0.9.0
+)
+
 require (
 	github.com/AlecAivazis/survey/v2 v2.2.14
 	github.com/Azure/go-ansiterm v0.0.0-20170929234023-d6e3b3328b78 // indirect
@@ -74,6 +91,15 @@ require (
 	go.etcd.io/etcd/client/v3 v3.5.0
 	go.etcd.io/etcd/server/v3 v3.5.0
 	go.etcd.io/etcd/tests/v3 v3.5.0
+	go.opentelemetry.io/contrib/instrumentation/github.com/gorilla/mux/otelmux v0.20.0
+	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.20.0
+	go.opentelemetry.io/otel v0.20.0
+	go.opentelemetry.io/otel/exporters/otlp v0.20.0
+	go.opentelemetry.io/otel/exporters/stdout v0.20.0
+	go.opentelemetry.io/otel/metric v0.20.0
+	go.opentelemetry.io/otel/sdk v0.20.0
+	go.opentelemetry.io/otel/sdk/metric v0.20.0
+	go.opentelemetry.io/otel/trace v0.20.0
 	go.uber.org/zap v1.17.0
 	golang.org/x/crypto v0.0.0-20201002170205-7f63de1d35b0
 	golang.org/x/net v0.0.0-20210405180319-a5a99cb37ef4

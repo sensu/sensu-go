@@ -13,6 +13,8 @@ import (
 	"github.com/sensu/sensu-go/backend/store/etcd/kvc"
 	"github.com/sensu/sensu-go/backend/store/provider"
 	"go.etcd.io/etcd/client/v3"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
 
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 )
@@ -76,6 +78,9 @@ func (s *Store) DeleteEventByEntityCheck(ctx context.Context, entityName, checkN
 // GetEvents returns the events for an (optional) namespace. If namespace is the
 // empty string, GetEvents returns all events for all namespaces.
 func (s *Store) GetEvents(ctx context.Context, pred *store.SelectionPredicate) ([]*corev2.Event, error) {
+	ctx, span := tracer.Start(ctx, "backend.store.etcd/GetEvents", trace.WithSpanKind(trace.SpanKindClient))
+	defer span.End()
+
 	opts := []clientv3.OpOption{
 		clientv3.WithLimit(pred.Limit),
 	}
@@ -92,6 +97,7 @@ func (s *Store) GetEvents(ctx context.Context, pred *store.SelectionPredicate) (
 			key += "/"
 		}
 	}
+	span.SetAttributes(attribute.String("db.key", key))
 
 	var resp *clientv3.GetResponse
 	err := kvc.Backoff(ctx).Retry(func(n int) (done bool, err error) {
@@ -134,6 +140,9 @@ func (s *Store) GetEvents(ctx context.Context, pred *store.SelectionPredicate) (
 
 // GetEventsByEntity gets all events matching a given entity name.
 func (s *Store) GetEventsByEntity(ctx context.Context, entityName string, pred *store.SelectionPredicate) ([]*corev2.Event, error) {
+	ctx, span := tracer.Start(ctx, "backend.store.etcd/GetEventsByEntity", trace.WithSpanKind(trace.SpanKindClient))
+	defer span.End()
+
 	if entityName == "" {
 		return nil, &store.ErrNotValid{Err: errors.New("must specify entity name")}
 	}
@@ -145,6 +154,11 @@ func (s *Store) GetEventsByEntity(ctx context.Context, entityName string, pred *
 	keyPrefix := GetEventsPath(ctx, entityName)
 	rangeEnd := clientv3.GetPrefixRangeEnd(keyPrefix)
 	opts = append(opts, clientv3.WithRange(rangeEnd))
+
+	span.SetAttributes(
+		attribute.String("db.key_prefix", keyPrefix),
+		attribute.String("entity.name", entityName),
+	)
 
 	var resp *clientv3.GetResponse
 	err := kvc.Backoff(ctx).Retry(func(n int) (done bool, err error) {
@@ -188,6 +202,9 @@ func (s *Store) GetEventsByEntity(ctx context.Context, entityName string, pred *
 
 // GetEventByEntityCheck gets an event by entity and check name.
 func (s *Store) GetEventByEntityCheck(ctx context.Context, entityName, checkName string) (*corev2.Event, error) {
+	ctx, span := tracer.Start(ctx, "backend.store.etcd/GetEventByEntityCheck", trace.WithSpanKind(trace.SpanKindClient))
+	defer span.End()
+
 	if entityName == "" || checkName == "" {
 		return nil, &store.ErrNotValid{Err: errors.New("must specify entity and check name")}
 	}
@@ -196,6 +213,12 @@ func (s *Store) GetEventByEntityCheck(ctx context.Context, entityName, checkName
 	if err != nil {
 		return nil, &store.ErrNotValid{Err: err}
 	}
+
+	span.SetAttributes(
+		attribute.String("db.key", path),
+		attribute.String("entity.name", entityName),
+		attribute.String("check.name", checkName),
+	)
 
 	var resp *clientv3.GetResponse
 	err = kvc.Backoff(ctx).Retry(func(n int) (done bool, err error) {
@@ -227,6 +250,9 @@ func (s *Store) GetEventByEntityCheck(ctx context.Context, entityName, checkName
 
 // UpdateEvent updates an event.
 func (s *Store) UpdateEvent(ctx context.Context, event *corev2.Event) (*corev2.Event, *corev2.Event, error) {
+	ctx, span := tracer.Start(ctx, "backend.store.etcd/UpdateEvent", trace.WithSpanKind(trace.SpanKindClient))
+	defer span.End()
+
 	if event == nil || event.Check == nil {
 		return nil, nil, &store.ErrNotValid{Err: errors.New("event has no check")}
 	}

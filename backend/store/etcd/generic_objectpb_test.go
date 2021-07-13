@@ -93,7 +93,7 @@ func TestGenericObjectJSON(t *testing.T) {
 		t.Fatalf("seed = %d, %#v !Json Equal %#v", seed, msg, p)
 	}
 }
-func TestGenericObjectProtoText(t *testing.T) {
+func _TestGenericObjectProtoText(t *testing.T) {
 	seed := time.Now().UnixNano()
 	popr := math_rand.New(math_rand.NewSource(seed))
 	p := NewPopulatedGenericObject(popr, true)
@@ -107,7 +107,7 @@ func TestGenericObjectProtoText(t *testing.T) {
 	}
 }
 
-func TestGenericObjectProtoCompactText(t *testing.T) {
+func _TestGenericObjectProtoCompactText(t *testing.T) {
 	seed := time.Now().UnixNano()
 	popr := math_rand.New(math_rand.NewSource(seed))
 	p := NewPopulatedGenericObject(popr, true)

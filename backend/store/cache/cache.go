@@ -13,7 +13,8 @@ import (
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/backend/store/etcd"
 	"github.com/sensu/sensu-go/types/dynamic"
-	"go.etcd.io/etcd/client/v3"
+	clientv3 "go.etcd.io/etcd/client/v3"
+	"go.opentelemetry.io/otel/attribute"
 )
 
 // Value contains a cached value, and its synthesized companion.
@@ -103,6 +104,9 @@ type Resource struct {
 
 // getResources retrieves the resources from the store
 func getResources(ctx context.Context, client *clientv3.Client, resource corev2.Resource) ([]corev2.Resource, error) {
+	ctx, span := tracer.Start(ctx, "backend.store.cache/getResources")
+	defer span.End()
+
 	// Get the type of the resource and create a slice type of []type
 	typeOfResource := reflect.TypeOf(resource)
 	sliceOfResource := reflect.SliceOf(typeOfResource)
@@ -227,16 +231,19 @@ func (r *Resource) notifyWatchers() {
 	r.watchers = newWatchers
 }
 
-func (r *Resource) start(ctx context.Context) {
+func (r *Resource) start(gctx context.Context) {
 	// 1s is the minimum scheduling interval, and so is the rate that
 	// the cache will update at.
 	ticker := time.NewTicker(time.Second * 5)
 	defer ticker.Stop()
 	for {
 		select {
-		case <-ctx.Done():
+		case <-gctx.Done():
 			return
 		case <-ticker.C:
+			ctx, span := tracer.Start(gctx, "backend.store.cache/start/tick")
+			defer span.End()
+
 			updates, err := r.rebuild(ctx)
 			if err != nil {
 				logger.WithError(err).Error("couldn't rebuild cache")
@@ -250,6 +257,10 @@ func (r *Resource) start(ctx context.Context) {
 
 // rebuild the cache using the store as the source of truth
 func (r *Resource) rebuild(ctx context.Context) (bool, error) {
+	ctx, span := tracer.Start(ctx, "backend.store.cache/rebuild")
+	span.SetAttributes(attribute.String("resource.type", fmt.Sprintf("%T", r.resourceT)))
+	defer span.End()
+
 	logger.Debugf("rebuilding the cache for resource type %T", r.resourceT)
 	resources, err := getResources(ctx, r.client, r.resourceT)
 	if err != nil {

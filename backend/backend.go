@@ -48,6 +48,7 @@ import (
 	"github.com/sensu/sensu-go/backend/tessend"
 	"github.com/sensu/sensu-go/rpc"
 	"github.com/sensu/sensu-go/system"
+	otelutil "github.com/sensu/sensu-go/util/otel"
 	"github.com/sensu/sensu-go/util/retry"
 )
 
@@ -553,6 +554,9 @@ func (b *Backend) RunContext() context.Context {
 // RunWithInitializer is like Run but accepts an initialization function to use
 // for initialization, instead of using the default Initialize().
 func (b *Backend) RunWithInitializer(initialize func(context.Context, *Config) (*Backend, error)) error {
+	tracerCf, _ := otelutil.InitTracer(b.cfg.TracingEnabled, b.cfg.TracingAgentAddress, b.cfg.TracingServiceNameKey)
+	defer tracerCf()
+
 	// we allow inErrChan to leak to avoid panics from other
 	// goroutines writing errors to either after shutdown has been initiated.
 	backoff := retry.ExponentialBackoff{

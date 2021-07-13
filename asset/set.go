@@ -49,6 +49,9 @@ func (r RuntimeAssetSet) Scripts() (map[string]io.ReadCloser, error) {
 
 // GetAll gets a list of assets with the provided getter.
 func GetAll(ctx context.Context, getter Getter, assets []types.Asset) (RuntimeAssetSet, error) {
+	ctx, span := tracer.Start(ctx, "asset/GetAll")
+	defer span.End()
+
 	runtimeAssets := make([]*RuntimeAsset, 0, len(assets))
 	for _, asset := range assets {
 		runtimeAsset, err := getter.Get(ctx, &asset)

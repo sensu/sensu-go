@@ -107,4 +107,8 @@ type Config struct {
 
 	LogLevel     string
 	EtcdLogLevel string
+
+	TracingEnabled        bool
+	TracingAgentAddress   string
+	TracingServiceNameKey string
 }

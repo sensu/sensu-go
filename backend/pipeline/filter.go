@@ -13,6 +13,9 @@ import (
 
 // Returns true if the event should be filtered/denied.
 func evaluateEventFilter(ctx context.Context, event *corev2.Event, filter *corev2.EventFilter, assets asset.RuntimeAssetSet) bool {
+	ctx, span := tracer.Start(ctx, "backend.pipeline/evaluateEventFilter")
+	defer span.End()
+
 	// Redact the entity to avoid leaking sensitive information
 	event.Entity = event.Entity.GetRedactedEntity()
 
@@ -109,7 +112,10 @@ func evaluateEventFilter(ctx context.Context, event *corev2.Event, filter *corev
 // FilterEvent filters a Sensu event, determining if it will continue through
 // the Sensu pipeline. Returns the filter's name if the event was filtered and
 // any error encountered
-func (p *Pipeline) FilterEvent(handler *corev2.Handler, event *corev2.Event) (string, error) {
+func (p *Pipeline) FilterEvent(gctx context.Context, handler *corev2.Handler, event *corev2.Event) (string, error) {
+	gctx, span := tracer.Start(gctx, "backend.pipeline/FilterEvent")
+	defer span.End()
+
 	// Prepare the logging
 	fields := utillogging.EventFields(event, false)
 	fields["handler"] = handler.Name
@@ -140,11 +146,12 @@ func (p *Pipeline) FilterEvent(handler *corev2.Handler, event *corev2.Event) (st
 			}
 		default:
 			// Retrieve the filter from the store with its name
-			ctx := corev2.SetContextFromResource(context.Background(), event.Entity)
+			ctx := corev2.SetContextFromResource(gctx, event.Entity)
 			tctx, cancel := context.WithTimeout(ctx, p.storeTimeout)
 			filter, err := p.store.GetEventFilterByName(tctx, filterName)
 			cancel()
 			if err != nil {
+				span.RecordError(err)
 				logger.WithFields(fields).WithError(err).
 					Warning("could not retrieve filter")
 				return "", err
@@ -154,10 +161,11 @@ func (p *Pipeline) FilterEvent(handler *corev2.Handler, event *corev2.Event) (st
 				// Execute the filter, evaluating each of its
 				// expressions against the event. The event is rejected
 				// if the product of all expressions is true.
-				ctx := corev2.SetContextFromResource(context.Background(), filter)
+				ctx := corev2.SetContextFromResource(gctx, filter)
 				matchedAssets := asset.GetAssets(ctx, p.store, filter.RuntimeAssets)
-				assets, err := asset.GetAll(context.TODO(), p.assetGetter, matchedAssets)
+				assets, err := asset.GetAll(gctx, p.assetGetter, matchedAssets)
 				if err != nil {
+					span.RecordError(err)
 					logger.WithFields(fields).WithError(err).Error("failed to retrieve assets for filter")
 					if _, ok := err.(*store.ErrInternal); ok {
 						// Fatal error
@@ -175,6 +183,7 @@ func (p *Pipeline) FilterEvent(handler *corev2.Handler, event *corev2.Event) (st
 			// If the filter didn't exist, it might be an extension filter
 			ext, err := p.store.GetExtension(ctx, filterName)
 			if err != nil {
+				span.RecordError(err)
 				logger.WithFields(fields).WithError(err).
 					Warning("could not retrieve filter")
 				if _, ok := err.(*store.ErrInternal); ok {
@@ -186,17 +195,20 @@ func (p *Pipeline) FilterEvent(handler *corev2.Handler, event *corev2.Event) (st
 
 			executor, err := p.extensionExecutor(ext)
 			if err != nil {
+				span.RecordError(err)
 				logger.WithFields(fields).WithError(err).
 					Error("could not execute filter")
 				continue
 			}
 			defer func() {
 				if err := executor.Close(); err != nil {
+					span.RecordError(err)
 					logger.WithError(err).Debug("error closing grpc client")
 				}
 			}()
 			filtered, err := executor.FilterEvent(event)
 			if err != nil {
+				span.RecordError(err)
 				logger.WithFields(fields).WithError(err).
 					Error("could not execute filter")
 				continue

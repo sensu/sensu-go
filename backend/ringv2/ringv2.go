@@ -17,6 +17,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"go.etcd.io/etcd/api/v3/mvccpb"
 	clientv3 "go.etcd.io/etcd/client/v3"
+	"go.opentelemetry.io/otel/attribute"
 	"golang.org/x/time/rate"
 )
 
@@ -179,6 +180,9 @@ func New(client *clientv3.Client, storePath string) *Ring {
 
 // IsEmpty returns true if there are no items in the ring.
 func (r *Ring) IsEmpty(ctx context.Context) (bool, error) {
+	ctx, span := tracer.Start(ctx, "backend.ringv2/IsEmpty")
+	defer span.End()
+
 	var resp *clientv3.GetResponse
 	err := kvc.Backoff(ctx).Retry(func(n int) (done bool, err error) {
 		resp, err = r.client.Get(ctx, r.itemPrefix,
@@ -188,6 +192,7 @@ func (r *Ring) IsEmpty(ctx context.Context) (bool, error) {
 		return kvc.RetryRequest(n, err)
 	})
 	if err != nil {
+		span.RecordError(err)
 		return false, err
 	}
 	return len(resp.Kvs) == 0, nil
@@ -203,11 +208,15 @@ func (w *watcher) grant(ctx context.Context) (*clientv3.LeaseGrantResponse, erro
 // will be reset. Values that are not kept alive will expire and be removed
 // from the ring.
 func (r *Ring) Add(ctx context.Context, value string, keepalive int64) (rerr error) {
+	ctx, span := tracer.Start(ctx, "backend.ringv2/Add")
+	defer span.End()
+
 	if keepalive < 5 {
 		return fmt.Errorf("couldn't add %q to ring: keepalive must be >5s", value)
 	}
 
 	itemKey := path.Join(r.itemPrefix, value)
+	span.SetAttributes(attribute.String("ring.key", itemKey))
 
 	var getresp *clientv3.GetResponse
 	err := kvc.Backoff(ctx).Retry(func(n int) (done bool, err error) {
@@ -215,6 +224,7 @@ func (r *Ring) Add(ctx context.Context, value string, keepalive int64) (rerr err
 		return kvc.RetryRequest(n, err)
 	})
 	if err != nil {
+		span.RecordError(err)
 		return fmt.Errorf("couldn't add %q to ring: %s", value, err)
 	}
 
@@ -245,6 +255,7 @@ NEWLEASE:
 		return kvc.RetryRequest(n, err)
 	})
 	if err != nil {
+		span.RecordError(err)
 		return fmt.Errorf("couldn't add %q to ring: %s", value, err)
 	}
 	defer func() {
@@ -258,6 +269,7 @@ NEWLEASE:
 		return kvc.RetryRequest(n, err)
 	})
 	if err != nil {
+		span.RecordError(err)
 		return fmt.Errorf("couldn't add %q to ring: %s", value, err)
 	}
 
@@ -277,14 +289,19 @@ func (r *Ring) notifyWatchers() {
 // Remove removes a value from the list. If the value does not exist, nothing
 // happens.
 func (r *Ring) Remove(ctx context.Context, value string) error {
+	ctx, span := tracer.Start(ctx, "backend.ringv2/Remove")
+	defer span.End()
+
 	// Try to get the item and revoke its lease if found
 	var getresp *clientv3.GetResponse
 	key := path.Join(r.itemPrefix, value)
+	span.SetAttributes(attribute.String("ring.key", key))
 	err := kvc.Backoff(ctx).Retry(func(n int) (done bool, err error) {
 		getresp, err = r.client.Get(ctx, key)
 		return kvc.RetryRequest(n, err)
 	})
 	if err != nil {
+		span.RecordError(err)
 		return err
 	}
 
@@ -363,6 +380,10 @@ func (w *watcher) getInterval() int {
 // does not have an active trigger, the first lexical key in the ring will
 // be returned in the string return value.
 func (w *watcher) hasTrigger(ctx context.Context) (bool, string, error) {
+	ctx, span := tracer.Start(ctx, "backend.ringv2/hasTrigger")
+	span.SetAttributes(attribute.String("watcher.trigger_key", w.triggerKey()))
+	defer span.End()
+
 	getTrigger := clientv3.OpGet(w.triggerKey())
 	getFirst := clientv3.OpGet(w.ring.itemPrefix, clientv3.WithPrefix(), clientv3.WithLimit(1))
 	var resp *clientv3.TxnResponse
@@ -371,6 +392,7 @@ func (w *watcher) hasTrigger(ctx context.Context) (bool, string, error) {
 		return kvc.RetryRequest(n, err)
 	})
 	if err != nil {
+		span.RecordError(err)
 		return false, "", err
 	}
 	if got := len(resp.Responses); got != 2 {
@@ -389,6 +411,10 @@ func (w *watcher) hasTrigger(ctx context.Context) (bool, string, error) {
 }
 
 func (w *watcher) ensureActiveTrigger(ctx context.Context) error {
+	ctx, span := tracer.Start(ctx, "backend.ringv2/ensureActiveTrigger")
+	span.SetAttributes(attribute.String("watcher.trigger_key", w.triggerKey()))
+	defer span.End()
+
 	backoff := retry.ExponentialBackoff{
 		InitialDelayInterval: 10 * time.Millisecond,
 		MaxDelayInterval:     10 * time.Second,
@@ -428,26 +454,29 @@ func (w *watcher) ensureActiveTrigger(ctx context.Context) error {
 		return true, nil
 	})
 
+	if err != nil {
+		span.RecordError(err)
+	}
 	return err
 }
 
-func (r *Ring) startWatchers(ctx context.Context, ch chan Event, name string, values, interval int, cron string) {
-	_ = r.watchLimiter.Wait(ctx)
+func (r *Ring) startWatchers(gctx context.Context, ch chan Event, name string, values, interval int, cron string) {
+	_ = r.watchLimiter.Wait(gctx)
 	watcher, err := newWatcher(r, ch, name, values, interval, cron)
 	if err != nil {
-		notifyError(ctx, ch, err)
-		notifyClosing(ctx, ch)
+		notifyError(gctx, ch, err)
+		notifyClosing(gctx, ch)
 		return
 	}
-	cancelCtx, cancel := context.WithCancel(clientv3.WithRequireLeader(ctx))
+	cancelCtx, cancel := context.WithCancel(clientv3.WithRequireLeader(gctx))
 	itemsC := r.client.Watch(cancelCtx, r.itemPrefix, clientv3.WithPrefix())
 	nextC := r.client.Watch(cancelCtx, watcher.triggerKey(), clientv3.WithFilterPut(), clientv3.WithPrevKV())
 	r.mu.Lock()
 	r.watchers[watcher.watcherKey] = watcher
 	r.mu.Unlock()
-	if err := watcher.ensureActiveTrigger(ctx); err != nil {
-		notifyError(ctx, ch, fmt.Errorf("error while starting ring watcher: %s", err))
-		notifyClosing(ctx, ch)
+	if err := watcher.ensureActiveTrigger(gctx); err != nil {
+		notifyError(gctx, ch, fmt.Errorf("error while starting ring watcher: %s", err))
+		notifyClosing(gctx, ch)
 		cancel()
 		return
 	}
@@ -455,6 +484,10 @@ func (r *Ring) startWatchers(ctx context.Context, ch chan Event, name string, va
 	go func() {
 		defer cancel()
 		for {
+			ctx, span := tracer.Start(gctx, "backend.ringv2/startWatchers/tick")
+			span.SetAttributes(attribute.String("watcher.key", watcher.watcherKey.name))
+			defer span.End()
+
 			select {
 			case <-ctx.Done():
 				r.mu.Lock()
@@ -465,12 +498,13 @@ func (r *Ring) startWatchers(ctx context.Context, ch chan Event, name string, va
 			case response, ok := <-itemsC:
 				err := response.Err()
 				if err != nil {
+					span.RecordError(err)
 					notifyError(ctx, ch, err)
 				}
 				if !ok || response.Canceled {
 					// The watcher needs to be reinstated
 					if ctx.Err() == nil {
-						r.startWatchers(ctx, ch, name, values, interval, cron)
+						r.startWatchers(gctx, ch, name, values, interval, cron)
 						return
 					} else {
 						continue
@@ -482,12 +516,13 @@ func (r *Ring) startWatchers(ctx context.Context, ch chan Event, name string, va
 			case response, ok := <-nextC:
 				err := response.Err()
 				if err != nil {
+					span.RecordError(err)
 					notifyError(ctx, ch, err)
 				}
 				if !ok || response.Canceled {
 					// The watcher needs to be reinstated
 					if ctx.Err() == nil {
-						r.startWatchers(ctx, ch, name, values, interval, cron)
+						r.startWatchers(gctx, ch, name, values, interval, cron)
 						return
 					} else {
 						continue
@@ -514,6 +549,9 @@ func notifyClosing(ctx context.Context, ch chan<- Event) {
 }
 
 func (r *Ring) nextInRing(ctx context.Context, prevKv *mvccpb.KeyValue, n int64) ([]*mvccpb.KeyValue, error) {
+	ctx, span := tracer.Start(ctx, "backend.ringv2/nextInRing")
+	defer span.End()
+
 	opts := []clientv3.OpOption{clientv3.WithLimit(n)}
 	var key string
 	if prevKv == nil {
@@ -526,12 +564,14 @@ func (r *Ring) nextInRing(ctx context.Context, prevKv *mvccpb.KeyValue, n int64)
 		opts = append(opts, clientv3.WithFromKey())
 		opts = append(opts, clientv3.WithRange(end))
 	}
+	span.SetAttributes(attribute.String("ring.key", key))
 	var resp *clientv3.GetResponse
 	err := kvc.Backoff(ctx).Retry(func(n int) (done bool, err error) {
 		resp, err = r.client.Get(ctx, key, opts...)
 		return kvc.RetryRequest(n, err)
 	})
 	if err != nil {
+		span.RecordError(err)
 		return nil, fmt.Errorf("couldn't get next item(s) in ring: %s", err)
 	}
 	result := resp.Kvs
@@ -550,6 +590,7 @@ func (r *Ring) nextInRing(ctx context.Context, prevKv *mvccpb.KeyValue, n int64)
 			return kvc.RetryRequest(n, err)
 		})
 		if err != nil {
+			span.RecordError(err)
 			return nil, fmt.Errorf("couldn't get next item(s) in ring: %s", err)
 		}
 		result = append(result, resp.Kvs...)
@@ -569,9 +610,14 @@ func repeatKVs(kvs []*mvccpb.KeyValue, items int) []*mvccpb.KeyValue {
 }
 
 func (w *watcher) advanceRing(ctx context.Context, prevKv *mvccpb.KeyValue) ([]*mvccpb.KeyValue, error) {
+	ctx, span := tracer.Start(ctx, "backend.ringv2/advanceRing")
+	span.SetAttributes(attribute.String("ring.key", string(prevKv.Key)))
+	defer span.End()
+
 	items, err := w.ring.nextInRing(ctx, prevKv, int64(w.values)+1)
 	if err != nil {
-		return nil, fmt.Errorf("couldn't advance ring: %s", err)
+		span.RecordError(err)
+		return nil, fmt.Errorf("couldn't advance ring: %w", err)
 	}
 
 	if len(items) == 0 {
@@ -588,7 +634,8 @@ func (w *watcher) advanceRing(ctx context.Context, prevKv *mvccpb.KeyValue) ([]*
 
 	lease, err := w.grant(ctx)
 	if err != nil {
-		return nil, fmt.Errorf("couldn't advance ring: %s", err)
+		span.RecordError(err)
+		return nil, fmt.Errorf("couldn't advance ring: %w", err)
 	}
 
 	txnSuccess := false
@@ -608,7 +655,8 @@ func (w *watcher) advanceRing(ctx context.Context, prevKv *mvccpb.KeyValue) ([]*
 		return kvc.RetryRequest(n, err)
 	})
 	if err != nil {
-		return nil, fmt.Errorf("couldn't advance ring: %s", err)
+		span.RecordError(err)
+		return nil, fmt.Errorf("couldn't advance ring: %w", err)
 	}
 
 	// Captured by the deferred function
