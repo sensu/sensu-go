@@ -7,6 +7,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/sensu/sensu-go/agent"
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
@@ -73,6 +74,9 @@ const (
 	flagBackendHeartbeatInterval = "backend-heartbeat-interval"
 	flagBackendHeartbeatTimeout  = "backend-heartbeat-timeout"
 	flagAgentManagedEntity       = "agent-managed-entity"
+	flagRetryMin                 = "retry-min"
+	flagRetryMax                 = "retry-max"
+	flagRetryMultiplier          = "retry-multiplier"
 
 	// TLS flags
 	flagTrustedCAFile         = "trusted-ca-file"
@@ -131,6 +135,10 @@ func NewAgentConfig(cmd *cobra.Command) (*agent.Config, error) {
 	cfg.BackendHandshakeTimeout = viper.GetInt(flagBackendHandshakeTimeout)
 	cfg.BackendHeartbeatInterval = viper.GetInt(flagBackendHeartbeatInterval)
 	cfg.BackendHeartbeatTimeout = viper.GetInt(flagBackendHeartbeatTimeout)
+	cfg.RetryMin = viper.GetDuration(flagRetryMin)
+	cfg.RetryMax = viper.GetDuration(flagRetryMax)
+	cfg.RetryMultiplier = viper.GetFloat64(flagRetryMultiplier)
+
 	// Set the labels & annotations using values defined configuration files
 	// and/or environment variables for now
 	cfg.Labels = viper.GetStringMapString(flagLabels)
@@ -309,6 +317,9 @@ func handleConfig(cmd *cobra.Command, arguments []string) error {
 	viper.SetDefault(flagBackendHandshakeTimeout, 15)
 	viper.SetDefault(flagBackendHeartbeatInterval, 30)
 	viper.SetDefault(flagBackendHeartbeatTimeout, 45)
+	viper.SetDefault(flagRetryMin, time.Second)
+	viper.SetDefault(flagRetryMax, 120*time.Second)
+	viper.SetDefault(flagRetryMultiplier, 2.0)
 
 	// Merge in flag set so that it appears in command usage
 	flags := flagSet()
