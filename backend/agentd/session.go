@@ -61,6 +61,24 @@ const ProtobufSerializationHeader = "application/octet-stream"
 // JSONSerializationHeader is the Content-Type header which indicates JSON serialization.
 const JSONSerializationHeader = "application/json"
 
+// SessionType represents the type of the agent <-> backend `Session` and is
+// used to alter the session's behavior depending on what it is used for.
+type SessionType uint
+
+const (
+	// SessionType_Legacy represents the "old" session type that does
+	// "everything".
+	SessionType_Legacy = 0
+
+	// SessionType_Events represents a session that only handles events and
+	// check requests.
+	SessionType_Events = 1
+
+	// SessionType_Keepalives represents a session that only handles keepalives
+	// from agents.
+	SessionType_Keepalives = 2
+)
+
 // MarshalFunc is the function signature for protobuf/JSON marshaling.
 type MarshalFunc = func(pb proto.Message) ([]byte, error)
 
@@ -128,6 +146,7 @@ func newSessionHandler(s *Session) *handler.MessageHandler {
 // an agent session.
 type SessionConfig struct {
 	ContentType   string
+	SessionType   SessionType
 	Namespace     string
 	AgentAddr     string
 	AgentName     string
@@ -365,19 +384,24 @@ func (s *Session) sender() {
 
 			msg = transport.NewMessage(transport.MessageTypeEntityConfig, bytes)
 		case c := <-s.checkChannel:
-			request, ok := c.(*corev2.CheckRequest)
-			if !ok {
-				logger.Error("session received non-config over check channel")
+			// Only "legacy" and "events" sessions send check requests
+			if s.cfg.SessionType == SessionType_Legacy || s.cfg.SessionType == SessionType_Events {
+				request, ok := c.(*corev2.CheckRequest)
+				if !ok {
+					logger.Error("session received non-config over check channel")
+					continue
+				}
+
+				configBytes, err := s.marshal(request)
+				if err != nil {
+					logger.WithError(err).Error("session failed to serialize check request")
+					continue
+				}
+
+				msg = transport.NewMessage(corev2.CheckRequestType, configBytes)
+			} else {
 				continue
 			}
-
-			configBytes, err := s.marshal(request)
-			if err != nil {
-				logger.WithError(err).Error("session failed to serialize check request")
-				continue
-			}
-
-			msg = transport.NewMessage(corev2.CheckRequestType, configBytes)
 		case <-s.ctx.Done():
 			return
 		}
