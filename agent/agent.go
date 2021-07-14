@@ -373,11 +373,6 @@ func (a *Agent) Run(ctx context.Context) error {
 		a.StartSocketListeners(ctx)
 	}
 
-	// REVIEW(ccressent): I really do not understand the comment below.  Added
-	// by Simon. I suggest deleting altogether?
-	// Increment the waitgroup counter here too in case none of the components
-	// above were started, and rely on the system info collector to decrement it
-	// once it exits
 	go a.connectionManager(ctx, cancel)
 	go a.refreshSystemInfoPeriodically(ctx)
 	go a.handleAPIQueue(ctx)
