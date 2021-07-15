@@ -12,6 +12,7 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 - Added `ignore-already-initialized` configuration flag to the sensu-backend
 init command for returning exit code 0 when a cluster has already been
 initialized.
+- Added `keepalive-labels`and `keepalive-annotations` configuration flags to the sensu-agent
 
 ### Changed
 - When keepalived encounters round-robin ring errors, the backend no longer
