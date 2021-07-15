@@ -24,6 +24,8 @@ import (
 var (
 	annotations               map[string]string
 	labels                    map[string]string
+	keepaliveLabels           map[string]string
+	keepaliveAnnotations      map[string]string
 	configFileDefaultLocation = filepath.Join(path.SystemConfigDir(), "agent.yml")
 )
 
@@ -51,6 +53,8 @@ const (
 	flagKeepaliveInterval        = "keepalive-interval"
 	flagKeepaliveWarningTimeout  = "keepalive-warning-timeout"
 	flagKeepaliveCriticalTimeout = "keepalive-critical-timeout"
+	flagKeepaliveLabels          = "keepalive-labels"
+	flagKeepaliveAnnotations     = "keepalive-annotations"
 	flagNamespace                = "namespace"
 	flagPassword                 = "password"
 	flagRedact                   = "redact"
@@ -122,6 +126,8 @@ func NewAgentConfig(cmd *cobra.Command) (*agent.Config, error) {
 	cfg.KeepaliveInterval = uint32(viper.GetInt(flagKeepaliveInterval))
 	cfg.KeepaliveWarningTimeout = uint32(viper.GetInt(flagKeepaliveWarningTimeout))
 	cfg.KeepaliveCriticalTimeout = uint32(viper.GetInt(flagKeepaliveCriticalTimeout))
+	cfg.KeepaliveLabels = viper.GetStringMapString(flagKeepaliveLabels)
+	cfg.KeepaliveAnnotations = viper.GetStringMapString(flagKeepaliveAnnotations)
 	cfg.Namespace = viper.GetString(flagNamespace)
 	cfg.Password = viper.GetString(flagPassword)
 	cfg.Socket.Host = viper.GetString(flagSocketHost)
@@ -426,6 +432,8 @@ func flagSet() *pflag.FlagSet {
 	flagSet.Int(flagKeepaliveInterval, viper.GetInt(flagKeepaliveInterval), "number of seconds to send between keepalive events")
 	flagSet.Uint32(flagKeepaliveWarningTimeout, uint32(viper.GetInt(flagKeepaliveWarningTimeout)), "number of seconds until agent is considered dead by backend to create a warning event")
 	flagSet.Uint32(flagKeepaliveCriticalTimeout, uint32(viper.GetInt(flagKeepaliveCriticalTimeout)), "number of seconds until agent is considered dead by backend to create a critical event")
+	flagSet.StringToStringVar(&keepaliveLabels, flagKeepaliveLabels, nil, "keepalive labels map")
+	flagSet.StringToStringVar(&keepaliveAnnotations, flagKeepaliveAnnotations, nil, "keepalive annotations map")
 	flagSet.Bool(flagDisableAPI, viper.GetBool(flagDisableAPI), "disable the Agent HTTP API")
 	flagSet.Bool(flagDisableAssets, viper.GetBool(flagDisableAssets), "disable check assets on this agent")
 	flagSet.Bool(flagDisableSockets, viper.GetBool(flagDisableSockets), "disable the Agent TCP and UDP event sockets")

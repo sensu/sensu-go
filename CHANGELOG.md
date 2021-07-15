@@ -214,6 +214,7 @@ agent processed a particular event.
 - Added `sensu_go_agentd_event_bytes` & `sensu_go_store_event_bytes` summary
 metrics to the `/metrics` endpoint.
 - Added support for environment variable arguments in `sensuctl`.
+- Added `keepalive-labels`and `keepalive-annotations` configuration flags to the sensu-agent
 
 ### Changed
 - When deleting resource with sensuctl, the resource type will now be displayed
