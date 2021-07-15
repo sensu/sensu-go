@@ -51,6 +51,44 @@ func TestNewAgentConfigFlags(t *testing.T) {
 	}
 }
 
+func TestNewAgentConfigKeepaliveLabelsFlags(t *testing.T) {
+	cmd := &cobra.Command{
+		Use: "test",
+	}
+	if err := handleConfig(cmd, []string{}); err != nil {
+		t.Fatal("unexpected error while calling handleConfig: ", err)
+	}
+	_ = cmd.Flags().Set(flagKeepaliveLabels, "foo=bar")
+
+	cfg, err := NewAgentConfig(cmd)
+	if err != nil {
+		t.Fatal("unexpected error while calling handleConfig: ", err)
+	}
+
+	if !reflect.DeepEqual(cfg.KeepaliveLabels, map[string]string{"foo": "bar"}) {
+		t.Fatalf("TestNewAgentConfigFlags() labels = %v, want %v", cfg.KeepaliveLabels, `{"foo":"bar"}`)
+	}
+}
+
+func TestNewAgentConfigKeepaliveAnnotationsFlags(t *testing.T) {
+	cmd := &cobra.Command{
+		Use: "test",
+	}
+	if err := handleConfig(cmd, []string{}); err != nil {
+		t.Fatal("unexpected error while calling handleConfig: ", err)
+	}
+	_ = cmd.Flags().Set(flagKeepaliveAnnotations, "foo=bar")
+
+	cfg, err := NewAgentConfig(cmd)
+	if err != nil {
+		t.Fatal("unexpected error while calling handleConfig: ", err)
+	}
+
+	if !reflect.DeepEqual(cfg.KeepaliveAnnotations, map[string]string{"foo": "bar"}) {
+		t.Fatalf("TestNewAgentConfigFlags() labels = %v, want %v", cfg.KeepaliveAnnotations, `{"foo":"bar"}`)
+	}
+}
+
 func TestNewAgentConfig_AgentManagedEntityFlag(t *testing.T) {
 	cmd := &cobra.Command{
 		Use: "test",
