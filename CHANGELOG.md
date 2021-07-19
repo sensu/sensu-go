@@ -14,6 +14,8 @@ init command for returning exit code 0 when a cluster has already been
 initialized.
 
 ### Changed
+- When deleting resource with sensuctl, the resource type will now be displayed
+in the confirmation prompt
 - When keepalived encounters round-robin ring errors, the backend no longer
 internally restarts.
 
