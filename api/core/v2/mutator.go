@@ -21,6 +21,19 @@ func (m *Mutator) StorePrefix() string {
 	return MutatorsResource
 }
 
+var validMutatorTypes = map[string]struct{}{
+	"javascript": struct{}{},
+	"pipe":       struct{}{},
+}
+
+func fmtMutatorTypes() string {
+	types := make([]string, 0, len(validMutatorTypes))
+	for k := range validMutatorTypes {
+		types = append(types, k)
+	}
+	return strings.Join(types, ", ")
+}
+
 // URIPath returns the path component of a mutator URI.
 func (m *Mutator) URIPath() string {
 	if m.Namespace == "" {
@@ -40,6 +53,12 @@ func (m *Mutator) Validate() error {
 
 	if m.Namespace == "" {
 		return errors.New("namespace must be set")
+	}
+
+	if m.Type != "" {
+		if _, ok := validMutatorTypes[m.Type]; !ok {
+			return fmt.Errorf("invalid mutator type %q, valid types are %q", m.Type, fmtMutatorTypes())
+		}
 	}
 
 	return nil
