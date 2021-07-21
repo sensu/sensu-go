@@ -18,34 +18,36 @@ func prepareEvent(a *Agent, event *corev2.Event) error {
 		return fmt.Errorf("an event must be provided")
 	}
 
-	if !event.HasCheck() {
-		return fmt.Errorf("check has not been instantiated for this event")
-	}
-
-	if event.Timestamp == 0 {
-		event.Timestamp = time.Now().Unix()
-	}
-
-	// Make sure the check has all required attributes
-	if event.Check.Interval == 0 {
-		event.Check.Interval = 1
-	}
-
-	if event.Check.Namespace == "" {
-		event.Check.Namespace = a.config.Namespace
+	if !event.HasCheck() && !event.HasMetrics() {
+		return fmt.Errorf("at least check or metrics need to be instantiated for this event")
 	}
 
 	if event.ObjectMeta.Namespace == "" {
 		event.ObjectMeta.Namespace = a.config.Namespace
 	}
 
-	if event.Check.Executed == 0 {
-		event.Check.Executed = time.Now().Unix()
+	if event.Timestamp == 0 {
+		event.Timestamp = time.Now().Unix()
 	}
 
-	// The check should pass validation at this point
-	if err := event.Check.Validate(); err != nil {
-		return err
+	// Make sure the check, if present, has all the required attributes
+	if event.HasCheck() {
+		if event.Check.Interval == 0 {
+			event.Check.Interval = 1
+		}
+
+		if event.Check.Namespace == "" {
+			event.Check.Namespace = a.config.Namespace
+		}
+
+		if event.Check.Executed == 0 {
+			event.Check.Executed = time.Now().Unix()
+		}
+
+		// The check should pass validation at this point
+		if err := event.Check.Validate(); err != nil {
+			return err
+		}
 	}
 
 	// Verify if an entity was provided and that it's not the agent's entity.
