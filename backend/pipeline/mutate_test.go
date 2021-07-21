@@ -367,9 +367,6 @@ func TestPipelineJavascriptMutatorUseAsset(t *testing.T) {
 		RuntimeAssets: []string{"mutatorAsset"},
 	}
 
-	td := os.TempDir()
-	defer os.RemoveAll(td)
-
 	stor := &mockstore.MockStore{}
 	stor.On("GetExtension", mock.Anything, mock.Anything).Return((*corev2.Extension)(nil), store.ErrNoExtension)
 	stor.On("GetMutatorByName", mock.Anything, mock.Anything).Return(mutator, nil)
