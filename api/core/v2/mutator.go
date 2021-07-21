@@ -21,9 +21,14 @@ func (m *Mutator) StorePrefix() string {
 	return MutatorsResource
 }
 
+const (
+	JavascriptMutator = "javascript"
+	PipeMutator       = "pipe"
+)
+
 var validMutatorTypes = map[string]struct{}{
-	"javascript": struct{}{},
-	"pipe":       struct{}{},
+	JavascriptMutator: struct{}{},
+	PipeMutator:       struct{}{},
 }
 
 func fmtMutatorTypes() string {
@@ -58,6 +63,12 @@ func (m *Mutator) Validate() error {
 	if m.Type != "" {
 		if _, ok := validMutatorTypes[m.Type]; !ok {
 			return fmt.Errorf("invalid mutator type %q, valid types are %q", m.Type, fmtMutatorTypes())
+		}
+	}
+
+	for _, kv := range m.EnvVars {
+		if idx := strings.Index(kv, "="); idx <= 0 {
+			return fmt.Errorf("invalid mutator environment variable: %q is not of the form K=V", kv)
 		}
 	}
 

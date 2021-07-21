@@ -6,11 +6,13 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"time"
 
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/asset"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/command"
+	"github.com/sensu/sensu-go/js"
 	"github.com/sensu/sensu-go/util/environment"
 	utillogging "github.com/sensu/sensu-go/util/logging"
 	"github.com/sirupsen/logrus"
@@ -81,7 +83,27 @@ func (p *Pipeline) mutateEvent(handler *corev2.Handler, event *corev2.Event) ([]
 		return eventData, nil
 	}
 
-	eventData, err := p.pipeMutator(mutator, event)
+	var eventData []byte
+
+	var assets asset.RuntimeAssetSet
+	if len(mutator.RuntimeAssets) > 0 {
+		logger.WithFields(fields).Debug("fetching assets for mutator")
+
+		// Fetch and install all assets required for handler execution
+		matchedAssets := asset.GetAssets(ctx, p.store, mutator.RuntimeAssets)
+
+		var err error
+		assets, err = asset.GetAll(context.TODO(), p.assetGetter, matchedAssets)
+		if err != nil {
+			logger.WithFields(fields).WithError(err).Error("failed to retrieve assets for mutator")
+		}
+	}
+
+	if mutator.Type == "" || mutator.Type == corev2.PipeMutator {
+		eventData, err = p.pipeMutator(mutator, event, assets)
+	} else if mutator.Type == corev2.JavascriptMutator {
+		eventData, err = p.javascriptMutator(mutator, event, assets)
+	}
 
 	if err != nil {
 		logger.WithFields(fields).WithError(err).Error("failed to mutate the event")
@@ -119,7 +141,7 @@ func (p *Pipeline) onlyCheckOutputMutator(event *corev2.Event) []byte {
 // command, writes the JSON encoding of the Sensu event to it via
 // STDIN, and captures the command output (STDOUT/ERR) to be used as
 // the mutated event data for a Sensu event handler.
-func (p *Pipeline) pipeMutator(mutator *corev2.Mutator, event *corev2.Event) ([]byte, error) {
+func (p *Pipeline) pipeMutator(mutator *corev2.Mutator, event *corev2.Event, assets asset.RuntimeAssetSet) ([]byte, error) {
 	ctx := corev2.SetContextFromResource(context.Background(), mutator)
 	// Prepare log entry
 	fields := logrus.Fields{
@@ -150,17 +172,8 @@ func (p *Pipeline) pipeMutator(mutator *corev2.Mutator, event *corev2.Event) ([]
 	mutatorExec.Input = string(eventData[:])
 
 	// Only add assets to execution context if handler requires them
-	if len(mutator.RuntimeAssets) != 0 {
-		logger.WithFields(fields).Debug("fetching assets for mutator")
-		// Fetch and install all assets required for handler execution
-		matchedAssets := asset.GetAssets(ctx, p.store, mutator.RuntimeAssets)
-
-		assets, err := asset.GetAll(context.TODO(), p.assetGetter, matchedAssets)
-		if err != nil {
-			logger.WithFields(fields).WithError(err).Error("failed to retrieve assets for mutator")
-		} else {
-			mutatorExec.Env = environment.MergeEnvironments(os.Environ(), assets.Env(), mutator.EnvVars, secrets)
-		}
+	if assets != nil {
+		mutatorExec.Env = environment.MergeEnvironments(os.Environ(), assets.Env(), mutator.EnvVars, secrets)
 	}
 
 	result, err := p.executor.Execute(context.Background(), mutatorExec)
@@ -175,7 +188,54 @@ func (p *Pipeline) pipeMutator(mutator *corev2.Mutator, event *corev2.Event) ([]
 		return nil, errors.New("pipe mutator execution returned non-zero exit status")
 	}
 
-	logger.WithFields(fields).Debug("event pipe mutator executed")
+	logger.WithFields(fields).Debug("pipe event mutator executed")
 
 	return []byte(result.Output), nil
+}
+
+func (p *Pipeline) javascriptMutator(mutator *corev2.Mutator, event *corev2.Event, assets js.JavascriptAssets) ([]byte, error) {
+	ctx := corev2.SetContextFromResource(context.Background(), mutator)
+	var cancel context.CancelFunc
+	if mutator.Timeout > 0 {
+		ctx, cancel = context.WithTimeout(ctx, time.Second*time.Duration(mutator.Timeout))
+		defer cancel()
+	}
+	// Prepare log entry
+	fields := logrus.Fields{
+		"namespace": mutator.Namespace,
+		"mutator":   mutator.Name,
+		"assets":    mutator.RuntimeAssets,
+	}
+
+	// Guard against nil metadata labels and annotations to improve the user
+	// experience of querying these them.
+	if event.ObjectMeta.Annotations == nil {
+		event.ObjectMeta.Annotations = make(map[string]string)
+	}
+	if event.ObjectMeta.Labels == nil {
+		event.ObjectMeta.Labels = make(map[string]string)
+	}
+	if event.Check.ObjectMeta.Annotations == nil {
+		event.Check.ObjectMeta.Annotations = make(map[string]string)
+	}
+	if event.Check.ObjectMeta.Labels == nil {
+		event.Check.ObjectMeta.Labels = make(map[string]string)
+	}
+	if event.Entity.ObjectMeta.Annotations == nil {
+		event.Entity.ObjectMeta.Annotations = make(map[string]string)
+	}
+	if event.Entity.ObjectMeta.Labels == nil {
+		event.Entity.ObjectMeta.Labels = make(map[string]string)
+	}
+
+	env := MutatorExecutionEnvironment{
+		Event:   event,
+		Env:     mutator.EnvVars,
+		Timeout: time.Duration(mutator.Timeout) * time.Second,
+		Assets:  assets,
+	}
+
+	logger.WithFields(fields).Debug("javascript event mutator executed")
+
+	return env.Eval(ctx, mutator.Command)
 }

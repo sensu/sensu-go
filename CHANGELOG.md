@@ -12,10 +12,16 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 - Added `ignore-already-initialized` configuration flag to the sensu-backend
 init command for returning exit code 0 when a cluster has already been
 initialized.
+- Added javascript mutators, which can be selected by setting
+"type": "javascript" on core/v2.Mutators, and specifying valid ECMAScript 5
+code in the "command" field. See documentation for details.
 
 ### Changed
 - When keepalived encounters round-robin ring errors, the backend no longer
 internally restarts.
+- The core/v2.Mutator type now has a Type field which can be used to tell
+Sensu that the mutator is a different type from the default (pipe). Currently,
+the supported types are "pipe" and "javascript".
 
 ### Fixed
 - Sensu Go OSS can now be built on `darwin/arm64`.
