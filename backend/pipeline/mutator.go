@@ -93,7 +93,7 @@ func (p *Pipeline) mutateEvent(handler *corev2.Handler, event *corev2.Event) ([]
 		matchedAssets := asset.GetAssets(ctx, p.store, mutator.RuntimeAssets)
 
 		var err error
-		assets, err = asset.GetAll(context.TODO(), p.assetGetter, matchedAssets)
+		assets, err = asset.GetAll(ctx, p.assetGetter, matchedAssets)
 		if err != nil {
 			logger.WithFields(fields).WithError(err).Error("failed to retrieve assets for mutator")
 		}
