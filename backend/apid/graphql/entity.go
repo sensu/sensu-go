@@ -120,7 +120,7 @@ func (r *entityImpl) Status(p graphql.ResolveParams) (interface{}, error) {
 
 	// return -1 (unknown) if no events found
 	if len(evs) == 0 {
-		return -1
+		return -1, nil
 	}
 
 	// find MAX value
