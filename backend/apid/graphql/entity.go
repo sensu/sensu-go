@@ -118,6 +118,11 @@ func (r *entityImpl) Status(p graphql.ResolveParams) (interface{}, error) {
 		return obj.Entity.Name == src.Name
 	})
 
+	// return -1 (unknown) if no events found
+	if len(evs) == 0 {
+		return -1
+	}
+
 	// find MAX value
 	var st uint32
 	for _, ev := range evs {
