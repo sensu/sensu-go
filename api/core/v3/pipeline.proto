@@ -1,0 +1,46 @@
+syntax = "proto3";
+
+import "github.com/gogo/protobuf@v1.3.1/gogoproto/gogo.proto";
+import "github.com/sensu/sensu-go/api/core/v2/meta.proto";
+
+package sensu.core.v3;
+
+option go_package = "v3";
+option (gogoproto.populate_all) = true;
+option (gogoproto.equal_all) = true;
+option (gogoproto.marshaler_all) = true;
+option (gogoproto.unmarshaler_all) = true;
+option (gogoproto.sizer_all) = true;
+option (gogoproto.testgen_all) = true;
+
+// Pipeline represents a pipeline resource.
+message Pipeline {
+  // Metadata contains the name, namespace, labels and annotations of the
+  // pipeline.
+  sensu.core.v2.ObjectMeta metadata = 1 [ (gogoproto.jsontag) = "metadata", (gogoproto.nullable) = true ];
+
+  // Workflows contains one or more pipeline workflows.
+  repeated sensu.core.v3.PipelineWorkflow workflows = 2 [ (gogoproto.jsontag) = "workflows" ];
+}
+
+message PipelineWorkflow {
+  // Name contains a descriptive name of the pipeline workflow.
+  string name = 1 [ (gogoproto.jsontag) = "name,omitempty", (gogoproto.moretags) = "yaml: \"name,omitempty\"" ];
+
+  // Filters contains one or more primitive references to use as an event filter.
+  repeated PipelineWorkflowPrimitiveReference filters = 2 [ (gogoproto.jsontag) = "filters,omitempty", (gogo.moretags) = "yaml: \"filters,omitempty\"" ];
+
+  // Mutator contains a reference to a primitive to use to use as an event mutator.
+  PipelineWorkflowPrimitiveReference mutator = 3 [ (gogoproto.jsontag) = "mutator,omitempty", (gogo.moretags) = "yaml: \"mutator,omitempty\"" ];
+
+  // Handler contains a reference to a primitive to use as an event handler.
+  PipelineWorkflowPrimitiveReference handler = 4 [ (gogoproto.jsontag) = "handler,omitempty", (gogo.moretags) = "yaml: \"handler,omitempty\"" ];
+}
+
+message PipelineWorkflowPrimitiveReference {
+  // Name contains the name of the primitive (e.g. filter, mutator, handler) to reference.
+  string name = 1 [ (gogoproto.jsontag) = "name,omitempty", (gogoproto.moretags) = "yaml: \"name,omitempty\"" ];
+
+  // TypeMeta contains the API version and resource type of the referenced primitive.
+  TypeMeta type_meta = 2 [ (gogoproto.jsontag) = "type_meta", (gogoproto.moretags) = "yaml: \"type_meta,omitempty\"" ];
+}
