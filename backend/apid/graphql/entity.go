@@ -104,7 +104,7 @@ func (r *entityImpl) Related(p schema.EntityRelatedFieldResolverParams) (interfa
 }
 
 // Status implements response to request for 'status' field.
-func (r *entityImpl) Status(p graphql.ResolveParams) (interface{}, error) {
+func (r *entityImpl) Status(p graphql.ResolveParams) (int, error) {
 	src := p.Source.(*corev2.Entity)
 
 	// fetch
@@ -124,12 +124,12 @@ func (r *entityImpl) Status(p graphql.ResolveParams) (interface{}, error) {
 	}
 
 	// find MAX value
-	var st uint32
+	var st int
 	for _, ev := range evs {
 		if ev.Check == nil {
 			continue
 		}
-		st = maxUint32(ev.Check.Status, st)
+		st = maxInt(int(ev.Check.Status), st)
 	}
 	return st, nil
 }
