@@ -237,5 +237,5 @@ func (p *Pipeline) javascriptMutator(mutator *corev2.Mutator, event *corev2.Even
 
 	logger.WithFields(fields).Debug("javascript event mutator executed")
 
-	return env.Eval(ctx, mutator.Command)
+	return env.Eval(ctx, mutator.Eval)
 }

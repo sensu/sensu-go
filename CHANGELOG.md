@@ -14,7 +14,7 @@ init command for returning exit code 0 when a cluster has already been
 initialized.
 - Added javascript mutators, which can be selected by setting
 "type": "javascript" on core/v2.Mutators, and specifying valid ECMAScript 5
-code in the "command" field. See documentation for details.
+code in the "eval" field. See documentation for details.
 
 ### Changed
 - When keepalived encounters round-robin ring errors, the backend no longer

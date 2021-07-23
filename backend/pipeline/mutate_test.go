@@ -154,7 +154,7 @@ func TestPipelineJavascriptMutatorImplicit(t *testing.T) {
 			Namespace: "default",
 			Name:      "my_mutator",
 		},
-		Command: `event.check.labels["hockey"] = hockey;`,
+		Eval:    `event.check.labels["hockey"] = hockey;`,
 		Type:    corev2.JavascriptMutator,
 		EnvVars: []string{"hockey=puck"},
 	}
@@ -197,7 +197,7 @@ func TestPipelineJavascriptMutatorExplicit(t *testing.T) {
 			Namespace: "default",
 			Name:      "my_mutator",
 		},
-		Command: `event.check.labels["hockey"] = hockey; return JSON.stringify(event);`,
+		Eval:    `event.check.labels["hockey"] = hockey; return JSON.stringify(event);`,
 		Type:    corev2.JavascriptMutator,
 		EnvVars: []string{"hockey=puck"},
 	}
@@ -240,7 +240,7 @@ func TestPipelineJavascriptMutatorObjectFailure(t *testing.T) {
 			Namespace: "default",
 			Name:      "my_mutator",
 		},
-		Command: `event.check.labels["hockey"] = hockey; return {};`,
+		Eval:    `event.check.labels["hockey"] = hockey; return {};`,
 		Type:    corev2.JavascriptMutator,
 		EnvVars: []string{"hockey=puck"},
 	}
@@ -272,7 +272,7 @@ func TestPipelineJavascriptMutatorTimeoutFailure(t *testing.T) {
 			Namespace: "default",
 			Name:      "my_mutator",
 		},
-		Command: `sleep(2);`,
+		Eval:    `sleep(2);`,
 		Type:    corev2.JavascriptMutator,
 		EnvVars: []string{"hockey=puck"},
 		Timeout: 1,
@@ -305,7 +305,7 @@ func TestPipelineJavascriptMutatorReturnNull(t *testing.T) {
 			Namespace: "default",
 			Name:      "my_mutator",
 		},
-		Command: `event.check.labels["hockey"] = hockey; return null;`,
+		Eval:    `event.check.labels["hockey"] = hockey; return null;`,
 		Type:    corev2.JavascriptMutator,
 		EnvVars: []string{"hockey=puck"},
 	}
@@ -361,7 +361,7 @@ func TestPipelineJavascriptMutatorUseAsset(t *testing.T) {
 			Namespace: "default",
 			Name:      "my_mutator",
 		},
-		Command:       `assetFunc();`,
+		Eval:          `assetFunc();`,
 		Type:          corev2.JavascriptMutator,
 		EnvVars:       []string{"hockey=puck"},
 		RuntimeAssets: []string{"mutatorAsset"},
