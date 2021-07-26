@@ -8,6 +8,9 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
 
+### Fixed
+- Agent events API now accepts metrics event
+
 ### Added
 - Added `ignore-already-initialized` configuration flag to the sensu-backend
 init command for returning exit code 0 when a cluster has already been
