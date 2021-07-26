@@ -56,7 +56,7 @@ func TestHealthCommandAlarmCorrupt(t *testing.T) {
 	healthResponse.ClusterHealth = clusterHealth
 	healthResponse.Alarms = alarms
 
-	cli := test.NewCLI()
+	cli := test.NewCLIWithValue("none")
 	client := cli.Client.(*client.MockClient)
 	client.On("Health").Return(healthResponse, nil)
 
@@ -104,7 +104,7 @@ func TestHealthCommandAlarmNoSpace(t *testing.T) {
 	healthResponse.ClusterHealth = clusterHealth
 	healthResponse.Alarms = alarms
 
-	cli := test.NewCLI()
+	cli := test.NewCLIWithValue("none")
 	client := cli.Client.(*client.MockClient)
 	client.On("Health").Return(healthResponse, nil)
 

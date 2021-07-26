@@ -78,7 +78,7 @@ func TestListCommandRunEClosureWithAll(t *testing.T) {
 
 func TestListCommandRunEClosureWithTable(t *testing.T) {
 	assert := assert.New(t)
-	cli := test.NewCLI()
+	cli := test.NewCLIWithValue("none")
 
 	filter := corev2.FixtureEventFilter("name-one")
 
@@ -162,7 +162,7 @@ func TestListFlags(t *testing.T) {
 
 func TestListCommandRunEClosureWithTableAllow(t *testing.T) {
 	assert := assert.New(t)
-	cli := test.NewCLI()
+	cli := test.NewCLIWithValue("none")
 
 	filter := corev2.FixtureEventFilter("name-one")
 	filter.Expressions = append(filter.Expressions, "event.check.name == 'dev'")
@@ -192,7 +192,7 @@ func TestListCommandRunEClosureWithTableAllow(t *testing.T) {
 
 func TestListCommandRunEClosureWithTableDeny(t *testing.T) {
 	assert := assert.New(t)
-	cli := test.NewCLI()
+	cli := test.NewCLIWithValue("none")
 
 	filter := corev2.FixtureEventFilter("name-one")
 	filter.Expressions = append(filter.Expressions, "event.check.name == 'dev'")

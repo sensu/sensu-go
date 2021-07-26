@@ -56,7 +56,7 @@ func TestInfoCommandRunMissingArgs(t *testing.T) {
 func TestInfoCommandRunEClosureWithTable(t *testing.T) {
 	assert := assert.New(t)
 
-	cli := test.NewCLI()
+	cli := test.NewCLIWithValue("none")
 	client := cli.Client.(*client.MockClient)
 	client.On("FetchSilenced", mock.Anything).Return(types.FixtureSilenced("foo:bar"), nil)
 

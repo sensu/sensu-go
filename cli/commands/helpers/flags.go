@@ -9,7 +9,11 @@ import (
 	"github.com/sensu/sensu-go/cli/client/config"
 	"github.com/sensu/sensu-go/cli/commands/flags"
 	"github.com/spf13/pflag"
+	"github.com/spf13/viper"
 )
+
+// Environment variable prefix for Viper
+const environmentPrefix = "sensu"
 
 var commaWhitespaceRegex *regexp.Regexp
 
@@ -72,11 +76,23 @@ func GetChangedStringValueFlag(name string, flagset *pflag.FlagSet) string {
 		return ""
 	}
 
-	if value, err := flagset.GetString(name); err == nil {
-		return value
+	return viper.GetString(name)
+}
+
+// EnvHasChanged determines if the user has set the value of an environment variable or flag
+// or left it to default
+func EnvHasChanged(name string, v *viper.Viper) bool {
+	return v.IsSet(name)
+}
+
+// GetChangedStringValueEnv returns the value of an environment variable or flag that has been explicitly
+// changed by the user, and not left to default
+func GetChangedStringValueEnv(name string, v *viper.Viper) string {
+	if !EnvHasChanged(name, v) {
+		return ""
 	}
 
-	return ""
+	return v.GetString(name)
 }
 
 // SafeSplitCSV splits given string and trims and extraneous whitespace
@@ -115,6 +131,18 @@ func ListOptionsFromFlags(flagSet *pflag.FlagSet) (client.ListOptions, error) {
 	opts.ChunkSize = chunkSize
 
 	return opts, nil
+}
+
+func InitViper(flagSet *pflag.FlagSet) (*viper.Viper, error) {
+	v := viper.New()
+	if err := v.BindPFlags(flagSet); err != nil {
+		return nil, err
+	}
+	v.SetEnvPrefix(environmentPrefix)
+	v.SetEnvKeyReplacer(strings.NewReplacer("-", "_"))
+	v.AutomaticEnv()
+
+	return v, nil
 }
 
 func init() {

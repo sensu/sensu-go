@@ -7,10 +7,23 @@ import (
 
 	"github.com/AlecAivazis/survey/v2"
 	"github.com/sensu/sensu-go/cli"
-	config "github.com/sensu/sensu-go/cli/client/config"
-	hooks "github.com/sensu/sensu-go/cli/commands/hooks"
+	"github.com/sensu/sensu-go/cli/client/config"
+	"github.com/sensu/sensu-go/cli/commands/helpers"
+	"github.com/sensu/sensu-go/cli/commands/hooks"
 	"github.com/spf13/cobra"
-	"github.com/spf13/pflag"
+	"github.com/spf13/viper"
+)
+
+const (
+	FlagFormat                = "format"
+	FlagInsecureSkipTlsVerify = "insecure-skip-tls-verify"
+	FlagNamespace             = "namespace"
+	FlagNonInteractive        = "non-interactive"
+	FlagPassword              = "password"
+	FlagTimeout               = "timeout"
+	FlagTrustedCaFile         = "trusted-ca-file"
+	FlagUrl                   = "url"
+	FlagUsername              = "username"
 )
 
 type Answers struct {
@@ -32,11 +45,20 @@ func Command(cli *cli.SensuCli) *cobra.Command {
 		SilenceUsage: true,
 		PreRun: func(cmd *cobra.Command, args []string) {
 			flags := cmd.Flags()
-			nonInteractive, _ := flags.GetBool("non-interactive")
+			v, err := helpers.InitViper(flags)
+			if err != nil {
+				return
+			}
+
+			nonInteractive := v.GetBool(FlagNonInteractive)
 			if nonInteractive {
-				// Mark flags are required for bash-completions
-				_ = cmd.MarkFlagRequired("username")
-				_ = cmd.MarkFlagRequired("password")
+				username := v.GetString(FlagUsername)
+				password := v.GetString(FlagPassword)
+				if username == "" || password == "" {
+					// Mark flags are required for bash-completions when they're missing
+					_ = cmd.MarkFlagRequired(FlagUsername)
+					_ = cmd.MarkFlagRequired(FlagPassword)
+				}
 			}
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -46,33 +68,34 @@ func Command(cli *cli.SensuCli) *cobra.Command {
 			}
 
 			flags := cmd.Flags()
-
-			nonInteractive, err := flags.GetBool("non-interactive")
+			v, err := helpers.InitViper(flags)
 			if err != nil {
 				return err
 			}
 
+			nonInteractive := v.GetBool(FlagNonInteractive)
+
 			answers := &Answers{}
 			if nonInteractive {
-				answers.WithFlags(flags)
+				answers.WithFlags(v)
 			} else {
-				if err = answers.AdministerQuestionnaire(cli.Config); err != nil {
+				if err := answers.AdministerQuestionnaire(cli.Config); err != nil {
 					return err
 				}
 			}
 
 			// First save the API URL
-			if err := SaveAPIURL(cli, cmd, answers); err != nil {
-				fmt.Fprintln(cmd.OutOrStderr())
+			if err := SaveAPIURL(cli, answers); err != nil {
+				_, _ = fmt.Fprintln(cmd.OutOrStderr())
 				return err
 			}
 
 			if err := Authenticate(cli, answers); err != nil {
-				fmt.Fprintln(cmd.OutOrStderr())
+				_, _ = fmt.Fprintln(cmd.OutOrStderr())
 				return err
 			}
 
-			return SaveConfig(cli, cmd, answers, flags)
+			return SaveConfig(cli, answers, v)
 		},
 		Annotations: map[string]string{
 			// We want to be able to run this command regardless of whether the CLI
@@ -87,13 +110,13 @@ func Command(cli *cli.SensuCli) *cobra.Command {
 }
 
 func AddFlags(cli *cli.SensuCli, cmd *cobra.Command) {
-	_ = cmd.Flags().BoolP("non-interactive", "n", false, "do not administer interactive questionnaire")
-	_ = cmd.Flags().StringP("url", "", cli.Config.APIUrl(), "the sensu backend url")
-	_ = cmd.Flags().StringP("username", "", "", "username")
-	_ = cmd.Flags().StringP("password", "", "", "password")
-	_ = cmd.Flags().StringP("format", "", cli.Config.Format(), "preferred output format")
-	_ = cmd.Flags().StringP("namespace", "", cli.Config.Namespace(), "namespace")
-	_ = cmd.Flags().DurationP("timeout", "", cli.Config.Timeout(), "timeout when communicating with backend url")
+	_ = cmd.Flags().BoolP(FlagNonInteractive, "n", false, "do not administer interactive questionnaire")
+	_ = cmd.Flags().StringP(FlagUrl, "", cli.Config.APIUrl(), "the sensu backend url")
+	_ = cmd.Flags().StringP(FlagUsername, "", "", "username")
+	_ = cmd.Flags().StringP(FlagPassword, "", "", "password")
+	_ = cmd.Flags().StringP(FlagFormat, "", cli.Config.Format(), "preferred output format")
+	_ = cmd.Flags().StringP(FlagNamespace, "", cli.Config.Namespace(), "namespace")
+	_ = cmd.Flags().DurationP(FlagTimeout, "", cli.Config.Timeout(), "timeout when communicating with backend url")
 }
 
 func (answers *Answers) AdministerQuestionnaire(c config.Config) error {
@@ -108,13 +131,13 @@ func (answers *Answers) AdministerQuestionnaire(c config.Config) error {
 	return survey.Ask(qs, answers)
 }
 
-func (answers *Answers) WithFlags(flags *pflag.FlagSet) {
-	answers.URL, _ = flags.GetString("url")
-	answers.Username, _ = flags.GetString("username")
-	answers.Password, _ = flags.GetString("password")
-	answers.Format, _ = flags.GetString("format")
-	answers.Namespace, _ = flags.GetString("namespace")
-	answers.Timeout, _ = flags.GetDuration("timeout")
+func (answers *Answers) WithFlags(v *viper.Viper) {
+	answers.URL = v.GetString(FlagUrl)
+	answers.Username = v.GetString(FlagUsername)
+	answers.Password = v.GetString(FlagPassword)
+	answers.Format = v.GetString(FlagFormat)
+	answers.Namespace = v.GetString(FlagNamespace)
+	answers.Timeout = v.GetDuration(FlagTimeout)
 }
 
 func AskForURL(c config.Config) *survey.Question {
@@ -199,7 +222,7 @@ func Authenticate(cli *cli.SensuCli, answers *Answers) error {
 }
 
 // SaveAPIURL saves the backend API URL
-func SaveAPIURL(cli *cli.SensuCli, cmd *cobra.Command, answers *Answers) error {
+func SaveAPIURL(cli *cli.SensuCli, answers *Answers) error {
 	// Write new API URL to disk
 	if err := cli.Config.SaveAPIUrl(answers.URL); err != nil {
 		return fmt.Errorf(
@@ -211,7 +234,7 @@ func SaveAPIURL(cli *cli.SensuCli, cmd *cobra.Command, answers *Answers) error {
 }
 
 // SaveConfig writes to disk the user preferences
-func SaveConfig(cli *cli.SensuCli, cmd *cobra.Command, answers *Answers, flags *pflag.FlagSet) error {
+func SaveConfig(cli *cli.SensuCli, answers *Answers, v *viper.Viper) error {
 	// Write CLI preferences to disk
 	if err := cli.Config.SaveFormat(answers.Format); err != nil {
 		return fmt.Errorf(
@@ -228,37 +251,35 @@ func SaveConfig(cli *cli.SensuCli, cmd *cobra.Command, answers *Answers, flags *
 	}
 
 	// Write the TLS preferences to disk
-	if value, err := flags.GetBool("insecure-skip-tls-verify"); err == nil {
-		if err = cli.Config.SaveInsecureSkipTLSVerify(value); err != nil {
-			return fmt.Errorf(
-				"unable to write new configuration file with error: %s",
-				err,
-			)
-		}
-	}
-	if value, err := flags.GetString("trusted-ca-file"); err == nil {
-		if err = cli.Config.SaveTrustedCAFile(value); err != nil {
-			return fmt.Errorf(
-				"unable to write new configuration file with error: %s",
-				err,
-			)
-		}
+	skipTlsValue := v.GetBool(FlagInsecureSkipTlsVerify)
+	if err := cli.Config.SaveInsecureSkipTLSVerify(skipTlsValue); err != nil {
+		return fmt.Errorf(
+			"unable to write new configuration file with error: %s",
+			err,
+		)
 	}
 
-	if value, err := flags.GetString("timeout"); err == nil {
-		duration, err := time.ParseDuration(value)
-		if err != nil {
-			return fmt.Errorf(
-				"unable to parse timeout with error: %s",
-				err,
-			)
-		}
-		if err = cli.Config.SaveTimeout(duration); err != nil {
-			return fmt.Errorf(
-				"unable to write new configuration file with error: %s",
-				err,
-			)
-		}
+	caFileValue := v.GetString(FlagTrustedCaFile)
+	if err := cli.Config.SaveTrustedCAFile(caFileValue); err != nil {
+		return fmt.Errorf(
+			"unable to write new configuration file with error: %s",
+			err,
+		)
+	}
+
+	timeoutValue := v.GetString(FlagTimeout)
+	duration, err := time.ParseDuration(timeoutValue)
+	if err != nil {
+		return fmt.Errorf(
+			"unable to parse timeout with error: %s",
+			err,
+		)
+	}
+	if err = cli.Config.SaveTimeout(duration); err != nil {
+		return fmt.Errorf(
+			"unable to write new configuration file with error: %s",
+			err,
+		)
 	}
 
 	return nil

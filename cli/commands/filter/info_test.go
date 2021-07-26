@@ -53,7 +53,7 @@ func TestShowCommandRunMissingArgs(t *testing.T) {
 func TestShowCommandRunEClosureWithTable(t *testing.T) {
 	assert := assert.New(t)
 
-	cli := test.NewCLI()
+	cli := test.NewCLIWithValue("none")
 	client := cli.Client.(*client.MockClient)
 	client.On("FetchFilter", "in").Return(types.FixtureEventFilter("name-one"), nil)
 

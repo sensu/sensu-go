@@ -79,7 +79,7 @@ func TestListCommandRunEClosureWithAllNamespaces(t *testing.T) {
 
 func TestListCommandRunEClosureWithTable(t *testing.T) {
 	assert := assert.New(t)
-	cli := newConfiguredCLI()
+	cli := newConfiguredCLIWithValue("none")
 	client := cli.Client.(*client.MockClient)
 	resources := []corev2.Event{}
 	client.On("List", mock.Anything, &resources, mock.Anything, mock.Anything).Return(nil).Run(
@@ -135,9 +135,13 @@ func TestListFlags(t *testing.T) {
 }
 
 func newConfiguredCLI() *cli.SensuCli {
+	return newConfiguredCLIWithValue("json")
+}
+
+func newConfiguredCLIWithValue(format string) *cli.SensuCli {
 	cli := test.NewMockCLI()
 	config := cli.Config.(*client.MockConfig)
-	config.On("Format").Return("json")
+	config.On("Format").Return(format)
 	return cli
 }
 

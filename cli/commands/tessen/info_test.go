@@ -54,7 +54,7 @@ func TestInfoCommandWithArgs(t *testing.T) {
 func TestInfoCommandRunEClosureWithTable(t *testing.T) {
 	assert := assert.New(t)
 
-	cli := test.NewCLI()
+	cli := test.NewCLIWithValue("none")
 	client := cli.Client.(*client.MockClient)
 	client.On("Get", mock.Anything, &corev2.TessenConfig{OptOut: false}).Return(nil)
 

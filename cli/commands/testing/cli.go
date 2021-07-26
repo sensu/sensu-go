@@ -12,33 +12,42 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// NewCLI returns a SensuCLI instace with mocked values with json format
 func NewCLI() *cli.SensuCli {
-	cli := NewMockCLI()
-	config := cli.Config.(*clientmock.MockConfig)
-	config.On("Format").Return("json")
-
-	return cli
+	return NewCLIWithValue("json")
 }
 
-// NewMockCLI return SensuCLI instance w/ mocked values
+// NewCLIWithValue returns a SensuCLI instace with mocked values with json format
+func NewCLIWithValue(format string) *cli.SensuCli {
+	mockCLI := NewMockCLI()
+	config := mockCLI.Config.(*clientmock.MockConfig)
+	config.On("Format").Return(format)
+
+	return mockCLI
+}
+
+// NewMockCLI return SensuCLI instance w/ default mocked values
 func NewMockCLI() *cli.SensuCli {
-	config := &clientmock.MockConfig{}
-	client := &clientmock.MockClient{}
+	return NewMockCLIWithValue("default")
+}
+
+// NewMockCLIWithValue return SensuCLI instance w/ mocked values
+func NewMockCLIWithValue(namespace string) *cli.SensuCli {
+	mockConfig := &clientmock.MockConfig{}
+	mockClient := &clientmock.MockClient{}
 
 	// Set defaults ...
-	config.On("Namespace").Return("default")
+	mockConfig.On("Namespace").Return(namespace)
 
 	return &cli.SensuCli{
-		Client: client,
-		Config: config,
+		Client: mockClient,
+		Config: mockConfig,
 		InFile: os.Stdin,
 	}
 }
 
 // SimpleSensuCLI return SensuCLI instance w/ given client & live config
 func SimpleSensuCLI(apiClient client.APIClient) *cli.SensuCli {
-	c := basic.Load(nil)
+	c := basic.Load(nil, nil)
 
 	return &cli.SensuCli{
 		Client: apiClient,

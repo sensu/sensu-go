@@ -79,7 +79,7 @@ func TestListCommandRunEClosureWithAll(t *testing.T) {
 
 func TestListCommandRunEClosureWithTable(t *testing.T) {
 	assert := assert.New(t)
-	cli := test.NewCLI()
+	cli := test.NewCLIWithValue("none")
 
 	apikey := corev2.FixtureAPIKey("my-api-key", "user1")
 	client := cli.Client.(*client.MockClient)

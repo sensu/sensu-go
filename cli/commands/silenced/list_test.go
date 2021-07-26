@@ -67,7 +67,7 @@ func TestListCommandRunEClosureWithAll(t *testing.T) {
 
 func TestListCommandRunEClosureWithTable(t *testing.T) {
 	assert := assert.New(t)
-	cli := test.NewCLI()
+	cli := test.NewCLIWithValue("none")
 
 	silenced := corev2.FixtureSilenced("foo:bar")
 	silenced.Reason = "justcause!"

@@ -79,7 +79,7 @@ func TestListCommandRunEClosureWithAll(t *testing.T) {
 
 func TestListCommandRunEClosureWithTable(t *testing.T) {
 	assert := assert.New(t)
-	cli := test.NewCLI()
+	cli := test.NewCLIWithValue("none")
 
 	mutator := corev2.FixtureMutator("name-one")
 

@@ -70,7 +70,7 @@ func TestListCommandRunEClosureWithErr(t *testing.T) {
 // subtests, to at least share the common initialization code.
 func TestListCommandRunEClosureWithTable(t *testing.T) {
 	assert := assert.New(t)
-	cli := test.NewCLI()
+	cli := test.NewCLIWithValue("none")
 
 	client := cli.Client.(*client.MockClient)
 	resources := []corev2.User{}
