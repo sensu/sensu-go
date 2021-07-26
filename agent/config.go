@@ -198,6 +198,18 @@ type Config struct {
 
 	// PrometheusBinding, if set, serves prometheus metrics on this address. (e.g. localhost:8888)
 	PrometheusBinding string
+
+	// RetryMin is the minimum amount of time to wait before retrying an agent
+	// connection to the backend.
+	RetryMin time.Duration
+
+	// RetryMax is the maximum amount of time to wait before retrying an agent
+	// connection to the backend.
+	RetryMax time.Duration
+
+	// RetryMultiplier is multiplied with the current retry delay to produce
+	// a longer retry delay. It is bounded by RetryMax.
+	RetryMultiplier float64
 }
 
 // StatsdServerConfig contains the statsd server configuration

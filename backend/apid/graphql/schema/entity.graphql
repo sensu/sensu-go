@@ -30,7 +30,7 @@ type Entity implements Node & Namespaced & Silenceable & Resource {
 
   """
   Status represents the MAX status of all events associated with the entity. If
-  no events are present value is 0.
+  no events are present value is -1.
   """
   status: Uint!
 

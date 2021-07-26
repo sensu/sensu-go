@@ -672,9 +672,9 @@ func (a *Agent) connectWithBackoff(ctx context.Context) (transport.Transport, er
 	var conn transport.Transport
 
 	backoff := retry.ExponentialBackoff{
-		InitialDelayInterval: 10 * time.Millisecond,
-		MaxDelayInterval:     10 * time.Second,
-		Multiplier:           10,
+		InitialDelayInterval: a.config.RetryMin,
+		MaxDelayInterval:     a.config.RetryMax,
+		Multiplier:           a.config.RetryMultiplier,
 		Ctx:                  ctx,
 	}
 
@@ -686,6 +686,17 @@ func (a *Agent) connectWithBackoff(ctx context.Context) (transport.Transport, er
 		logger.WithField("header", fmt.Sprintf("Accept: %s", agentd.ProtobufSerializationHeader)).Debug("setting header")
 		c, respHeader, err := transport.Connect(backendURL, a.config.TLS, a.header, a.config.BackendHandshakeTimeout)
 		if err != nil {
+			if err == transport.ErrTooManyRequests {
+				// Give the backend extra breathing room
+				logger.WithError(err).Error("backend overloaded, increasing retry delay")
+				backoff.InitialDelayInterval = a.config.RetryMin * 2
+				backoff.MaxDelayInterval = a.config.RetryMax * 2
+				backoff.Multiplier = a.config.RetryMultiplier * 2
+			} else {
+				backoff.InitialDelayInterval = a.config.RetryMin
+				backoff.MaxDelayInterval = a.config.RetryMax
+				backoff.Multiplier = a.config.RetryMultiplier
+			}
 			websocketErrors.WithLabelValues().Inc()
 			logger.WithError(err).Error("reconnection attempt failed")
 			return false, nil

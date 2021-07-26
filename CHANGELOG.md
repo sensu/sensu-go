@@ -15,6 +15,10 @@ initialized.
 - Added javascript mutators, which can be selected by setting
 "type": "javascript" on core/v2.Mutators, and specifying valid ECMAScript 5
 code in the "eval" field. See documentation for details.
+- Added --retry-min, --retry-max, and --retry-multiplier flags to sensu-agent
+for controlling agent retry exponential backoff behaviour. --retry-min and 
+--retry-max expect duration values like 1s, 10m, 4h. --retry-multiplier expects
+a decimal multiplier value.
 
 ### Changed
 - When keepalived encounters round-robin ring errors, the backend no longer
@@ -22,6 +26,8 @@ internally restarts.
 - The core/v2.Mutator type now has a Type field which can be used to tell
 Sensu that the mutator is a different type from the default (pipe). Currently,
 the supported types are "pipe" and "javascript".
+- The default retry values have been increased from a minimum of 10ms to 1s, a
+maximum of 10s to 120s, and the multiplier decreased from 10.0 to 2.0.
 
 ### Fixed
 - Sensu Go OSS can now be built on `darwin/arm64`.
