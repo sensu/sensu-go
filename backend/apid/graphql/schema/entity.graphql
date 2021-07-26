@@ -32,7 +32,7 @@ type Entity implements Node & Namespaced & Silenceable & Resource {
   Status represents the MAX status of all events associated with the entity. If
   no events are present value is -1.
   """
-  status: Uint!
+  status: Int!
 
   "Related returns a sorted list of like entities from the same environment."
   related(limit: Int = 10): [Entity]!
