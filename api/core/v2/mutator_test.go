@@ -100,3 +100,22 @@ func TestMutatorFields(t *testing.T) {
 		})
 	}
 }
+
+func TestValidateMutatorTypes(t *testing.T) {
+	passTests := []string{"", "javascript", "pipe"}
+	failTests := []string{"Javascript", "js", "Pipe"}
+	for _, test := range passTests {
+		mutator := FixtureMutator("foo")
+		mutator.Type = test
+		if err := mutator.Validate(); err != nil {
+			t.Fatal(err)
+		}
+	}
+	for _, test := range failTests {
+		mutator := FixtureMutator("foo")
+		mutator.Type = test
+		if err := mutator.Validate(); err == nil {
+			t.Fatal("expecte non-nil error")
+		}
+	}
+}

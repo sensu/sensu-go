@@ -243,7 +243,7 @@ func (p *Pipeline) pipeHandler(handler *corev2.Handler, event *corev2.Event, eve
 		// Fetch and install all assets required for handler execution
 		matchedAssets := asset.GetAssets(ctx, p.store, handler.RuntimeAssets)
 
-		assets, err := asset.GetAll(context.TODO(), p.assetGetter, matchedAssets)
+		assets, err := asset.GetAll(ctx, p.assetGetter, matchedAssets)
 		if err != nil {
 			logger.WithFields(fields).WithError(err).Error("failed to retrieve assets for handler")
 			if _, ok := err.(*store.ErrInternal); ok {

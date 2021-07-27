@@ -3,6 +3,7 @@ package pipeline
 import (
 	"encoding/json"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"os"
 	"strings"
@@ -125,7 +126,7 @@ func TestPipelinePipeMutator(t *testing.T) {
 
 	event := &corev2.Event{}
 
-	output, err := p.pipeMutator(mutator, event)
+	output, err := p.pipeMutator(mutator, event, nil)
 
 	expected, _ := json.Marshal(event)
 
@@ -145,4 +146,247 @@ func TestPipelineNoMutator_GH2784(t *testing.T) {
 	eventData, err := p.mutateEvent(handler, event)
 	require.Error(t, err)
 	require.Nil(t, eventData)
+}
+
+func TestPipelineJavascriptMutatorImplicit(t *testing.T) {
+	mutator := &corev2.Mutator{
+		ObjectMeta: corev2.ObjectMeta{
+			Namespace: "default",
+			Name:      "my_mutator",
+		},
+		Eval:    `event.check.labels["hockey"] = hockey;`,
+		Type:    corev2.JavascriptMutator,
+		EnvVars: []string{"hockey=puck"},
+	}
+
+	handler := &corev2.Handler{
+		ObjectMeta: corev2.ObjectMeta{
+			Namespace: "default",
+			Name:      "my_handler",
+		},
+		Mutator: "my_mutator",
+	}
+
+	stor := &mockstore.MockStore{}
+	stor.On("GetExtension", mock.Anything, mock.Anything).Return((*corev2.Extension)(nil), store.ErrNoExtension)
+	stor.On("GetMutatorByName", mock.Anything, mock.Anything).Return(mutator, nil)
+
+	p := New(Config{SecretsProviderManager: secrets.NewProviderManager(), Store: stor})
+
+	event := corev2.FixtureEvent("default", "default")
+
+	output, err := p.mutateEvent(handler, event)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if got, want := event.Check.Labels["hockey"], "puck"; got != want {
+		t.Errorf("bad mutation: got %q, want %q", got, want)
+	}
+
+	expected, err := json.Marshal(event)
+	if err != nil {
+		t.Fatal(err)
+	}
+	assert.JSONEq(t, string(output), string(expected))
+}
+
+func TestPipelineJavascriptMutatorExplicit(t *testing.T) {
+	mutator := &corev2.Mutator{
+		ObjectMeta: corev2.ObjectMeta{
+			Namespace: "default",
+			Name:      "my_mutator",
+		},
+		Eval:    `event.check.labels["hockey"] = hockey; return JSON.stringify(event);`,
+		Type:    corev2.JavascriptMutator,
+		EnvVars: []string{"hockey=puck"},
+	}
+
+	handler := &corev2.Handler{
+		ObjectMeta: corev2.ObjectMeta{
+			Namespace: "default",
+			Name:      "my_handler",
+		},
+		Mutator: "my_mutator",
+	}
+
+	stor := &mockstore.MockStore{}
+	stor.On("GetExtension", mock.Anything, mock.Anything).Return((*corev2.Extension)(nil), store.ErrNoExtension)
+	stor.On("GetMutatorByName", mock.Anything, mock.Anything).Return(mutator, nil)
+
+	p := New(Config{SecretsProviderManager: secrets.NewProviderManager(), Store: stor})
+
+	event := corev2.FixtureEvent("default", "default")
+
+	output, err := p.mutateEvent(handler, event)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if got, want := event.Check.Labels["hockey"], "puck"; got != want {
+		t.Errorf("bad mutation: got %q, want %q", got, want)
+	}
+
+	expected, err := json.Marshal(event)
+	if err != nil {
+		t.Fatal(err)
+	}
+	assert.JSONEq(t, string(output), string(expected))
+}
+
+func TestPipelineJavascriptMutatorObjectFailure(t *testing.T) {
+	mutator := &corev2.Mutator{
+		ObjectMeta: corev2.ObjectMeta{
+			Namespace: "default",
+			Name:      "my_mutator",
+		},
+		Eval:    `event.check.labels["hockey"] = hockey; return {};`,
+		Type:    corev2.JavascriptMutator,
+		EnvVars: []string{"hockey=puck"},
+	}
+
+	handler := &corev2.Handler{
+		ObjectMeta: corev2.ObjectMeta{
+			Namespace: "default",
+			Name:      "my_handler",
+		},
+		Mutator: "my_mutator",
+	}
+
+	stor := &mockstore.MockStore{}
+	stor.On("GetExtension", mock.Anything, mock.Anything).Return((*corev2.Extension)(nil), store.ErrNoExtension)
+	stor.On("GetMutatorByName", mock.Anything, mock.Anything).Return(mutator, nil)
+
+	p := New(Config{SecretsProviderManager: secrets.NewProviderManager(), Store: stor})
+
+	event := corev2.FixtureEvent("default", "default")
+
+	if _, err := p.mutateEvent(handler, event); err == nil {
+		t.Fatal("expected non-nil error")
+	}
+}
+
+func TestPipelineJavascriptMutatorTimeoutFailure(t *testing.T) {
+	mutator := &corev2.Mutator{
+		ObjectMeta: corev2.ObjectMeta{
+			Namespace: "default",
+			Name:      "my_mutator",
+		},
+		Eval:    `sleep(2);`,
+		Type:    corev2.JavascriptMutator,
+		EnvVars: []string{"hockey=puck"},
+		Timeout: 1,
+	}
+
+	handler := &corev2.Handler{
+		ObjectMeta: corev2.ObjectMeta{
+			Namespace: "default",
+			Name:      "my_handler",
+		},
+		Mutator: "my_mutator",
+	}
+
+	stor := &mockstore.MockStore{}
+	stor.On("GetExtension", mock.Anything, mock.Anything).Return((*corev2.Extension)(nil), store.ErrNoExtension)
+	stor.On("GetMutatorByName", mock.Anything, mock.Anything).Return(mutator, nil)
+
+	p := New(Config{SecretsProviderManager: secrets.NewProviderManager(), Store: stor})
+
+	event := corev2.FixtureEvent("default", "default")
+
+	if _, err := p.mutateEvent(handler, event); err == nil {
+		t.Fatal("expected non-nil error")
+	}
+}
+
+func TestPipelineJavascriptMutatorReturnNull(t *testing.T) {
+	mutator := &corev2.Mutator{
+		ObjectMeta: corev2.ObjectMeta{
+			Namespace: "default",
+			Name:      "my_mutator",
+		},
+		Eval:    `event.check.labels["hockey"] = hockey; return null;`,
+		Type:    corev2.JavascriptMutator,
+		EnvVars: []string{"hockey=puck"},
+	}
+
+	handler := &corev2.Handler{
+		ObjectMeta: corev2.ObjectMeta{
+			Namespace: "default",
+			Name:      "my_handler",
+		},
+		Mutator: "my_mutator",
+	}
+
+	stor := &mockstore.MockStore{}
+	stor.On("GetExtension", mock.Anything, mock.Anything).Return((*corev2.Extension)(nil), store.ErrNoExtension)
+	stor.On("GetMutatorByName", mock.Anything, mock.Anything).Return(mutator, nil)
+
+	p := New(Config{SecretsProviderManager: secrets.NewProviderManager(), Store: stor})
+
+	event := corev2.FixtureEvent("default", "default")
+
+	output, err := p.mutateEvent(handler, event)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if got, want := event.Check.Labels["hockey"], "puck"; got != want {
+		t.Errorf("bad mutation: got %q, want %q", got, want)
+	}
+
+	expected, err := json.Marshal(event)
+	if err != nil {
+		t.Fatal(err)
+	}
+	assert.JSONEq(t, string(output), string(expected))
+}
+
+type mutatorAssetSet struct {
+}
+
+func (mutatorAssetSet) Key() string {
+	return "mutatorAsset"
+}
+
+func (mutatorAssetSet) Scripts() (map[string]io.ReadCloser, error) {
+	result := make(map[string]io.ReadCloser)
+	result["mutatorAsset"] = ioutil.NopCloser(strings.NewReader(`var assetFunc = function () { event.check.labels["hockey"] = hockey; }`))
+	return result, nil
+}
+
+func TestPipelineJavascriptMutatorUseAsset(t *testing.T) {
+	mutator := &corev2.Mutator{
+		ObjectMeta: corev2.ObjectMeta{
+			Namespace: "default",
+			Name:      "my_mutator",
+		},
+		Eval:          `assetFunc();`,
+		Type:          corev2.JavascriptMutator,
+		EnvVars:       []string{"hockey=puck"},
+		RuntimeAssets: []string{"mutatorAsset"},
+	}
+
+	stor := &mockstore.MockStore{}
+	stor.On("GetExtension", mock.Anything, mock.Anything).Return((*corev2.Extension)(nil), store.ErrNoExtension)
+	stor.On("GetMutatorByName", mock.Anything, mock.Anything).Return(mutator, nil)
+
+	p := New(Config{SecretsProviderManager: secrets.NewProviderManager(), Store: stor})
+
+	event := corev2.FixtureEvent("default", "default")
+
+	output, err := p.javascriptMutator(mutator, event, mutatorAssetSet{})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if got, want := event.Check.Labels["hockey"], "puck"; got != want {
+		t.Errorf("bad mutation: got %q, want %q", got, want)
+	}
+
+	expected, err := json.Marshal(event)
+	if err != nil {
+		t.Fatal(err)
+	}
+	assert.JSONEq(t, string(output), string(expected))
 }

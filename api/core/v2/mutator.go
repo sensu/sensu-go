@@ -21,6 +21,24 @@ func (m *Mutator) StorePrefix() string {
 	return MutatorsResource
 }
 
+const (
+	JavascriptMutator = "javascript"
+	PipeMutator       = "pipe"
+)
+
+var validMutatorTypes = map[string]struct{}{
+	JavascriptMutator: struct{}{},
+	PipeMutator:       struct{}{},
+}
+
+func fmtMutatorTypes() string {
+	types := make([]string, 0, len(validMutatorTypes))
+	for k := range validMutatorTypes {
+		types = append(types, k)
+	}
+	return strings.Join(types, ", ")
+}
+
 // URIPath returns the path component of a mutator URI.
 func (m *Mutator) URIPath() string {
 	if m.Namespace == "" {
@@ -40,6 +58,18 @@ func (m *Mutator) Validate() error {
 
 	if m.Namespace == "" {
 		return errors.New("namespace must be set")
+	}
+
+	if m.Type != "" {
+		if _, ok := validMutatorTypes[m.Type]; !ok {
+			return fmt.Errorf("invalid mutator type %q, valid types are %q", m.Type, fmtMutatorTypes())
+		}
+	}
+
+	for _, kv := range m.EnvVars {
+		if idx := strings.Index(kv, "="); idx <= 0 {
+			return fmt.Errorf("invalid mutator environment variable: %q is not of the form K=V", kv)
+		}
 	}
 
 	return nil
