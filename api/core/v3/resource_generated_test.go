@@ -321,6 +321,161 @@ func TestEntityStateGetTypeMeta(t *testing.T) {
 	}
 }
 
+func TestPipelineSetMetadata(t *testing.T) {
+	value := new(Pipeline)
+	var iface interface{} = value
+	metaer, ok := iface.(getMetadataer)
+	if !ok {
+		return
+	}
+	meta := &corev2.ObjectMeta{
+		Name:        "snoopdogg",
+		Namespace:   "lbc",
+		Labels:      make(map[string]string),
+		Annotations: make(map[string]string),
+	}
+	value.SetMetadata(meta)
+	if got, want := metaer.GetMetadata(), meta; !reflect.DeepEqual(got, want) {
+		t.Fatalf("bad metadata: got %v, want %v", got, want)
+	}
+}
+
+func TestPipelineStoreName(t *testing.T) {
+	var value Pipeline
+	got := value.StoreName()
+	if len(got) == 0 {
+		t.Error("undefined store suffix")
+	}
+	var iface interface{} = value
+	if suffixer, ok := iface.(storeNamer); ok {
+		if got, want := value.StoreName(), suffixer.storeName(); got != want {
+			t.Errorf("bad store suffix: got %s, want %s", got, want)
+		}
+	}
+}
+
+func TestPipelineRBACName(t *testing.T) {
+	var value Pipeline
+	got := value.RBACName()
+	if len(got) == 0 {
+		t.Error("undefined rbac name")
+	}
+	var iface interface{} = value
+	if namer, ok := iface.(rbacNamer); ok {
+		if got, want := value.RBACName(), namer.rbacName(); got != want {
+			t.Errorf("bad rbac name: got %s, want %s", got, want)
+		}
+	}
+}
+
+func TestPipelineURIPath(t *testing.T) {
+	var value Pipeline
+	value.Metadata = &corev2.ObjectMeta{
+		Namespace: "default",
+		Name:      "foo",
+	}
+	got := value.URIPath()
+	if _, err := url.Parse(got); err != nil {
+		t.Error(err)
+	}
+	var iface interface{} = value
+	if pather, ok := iface.(uriPather); ok {
+		if got, want := value.URIPath(), pather.uriPath(); got != want {
+			t.Errorf("bad uri path: got %s, want %s", got, want)
+		}
+	}
+}
+
+func TestPipelineValidate(t *testing.T) {
+	var value Pipeline
+	if err := value.Validate(); err == nil {
+		t.Errorf("expected non-nil error for nil metadata")
+	}
+	value.Metadata = &corev2.ObjectMeta{
+		Name:        "#@$@#%@#%@#%",
+		Labels:      make(map[string]string),
+		Annotations: make(map[string]string),
+	}
+	if err := value.Validate(); err == nil {
+		t.Errorf("expected non-nil error for invalid metadata name")
+	}
+	value.Metadata.Name = "foo"
+	var iface interface{} = &value
+	if validator, ok := iface.(validator); ok {
+		if got, want := value.Validate(), validator.validate(); got.Error() != want.Error() {
+			t.Errorf("validator error: got %s, want %s", got, want)
+		}
+		return
+	}
+	if err := value.Validate(); err != nil {
+		t.Error(err)
+	}
+}
+
+func TestPipelineUnmarshalJSON(t *testing.T) {
+	msg := []byte(`{"metadata": {"namespace": "default", "name": "foo"}}`)
+	var value Pipeline
+	if err := json.Unmarshal(msg, &value); err != nil {
+		t.Fatal(err)
+	}
+	var iface interface{} = &value
+	if metaer, ok := iface.(getMetadataer); ok {
+		meta := metaer.GetMetadata()
+		if meta == nil {
+			t.Fatal("nil metadata")
+		}
+		if got, want := meta.Namespace, "default"; got != want {
+			t.Errorf("bad namespace: got %s, want %s", got, want)
+		}
+		if got, want := meta.Name, "foo"; got != want {
+			t.Errorf("bad name: got %s, want %s", got, want)
+		}
+		if meta.Labels == nil {
+			t.Error("nil labels")
+		}
+		if meta.Annotations == nil {
+			t.Error("nil annotations")
+		}
+	}
+
+	// make sure labels are not accidentally zeroed out
+	msg = []byte(`{"metadata": {"namespace": "default", "name": "foo", "labels": {"a": "b"}}}`)
+	if err := json.Unmarshal(msg, &value); err != nil {
+		t.Fatal(err)
+	}
+
+	if metaer, ok := iface.(getMetadataer); ok {
+		meta := metaer.GetMetadata()
+		if got, want := len(meta.Labels), 1; got != want {
+			t.Error("expected one label")
+		}
+	}
+
+	// make sure annotations are not accidentally zeroed out
+	msg = []byte(`{"metadata": {"namespace": "default", "name": "foo", "annotations": {"a": "b"}}}`)
+	if err := json.Unmarshal(msg, &value); err != nil {
+		t.Fatal(err)
+	}
+
+	if metaer, ok := iface.(getMetadataer); ok {
+		meta := metaer.GetMetadata()
+		if got, want := len(meta.Annotations), 1; got != want {
+			t.Error("expected one annotation")
+		}
+	}
+}
+
+func TestPipelineGetTypeMeta(t *testing.T) {
+	var value Pipeline
+	meta := value.GetTypeMeta()
+	if got, want := meta.APIVersion, "core/v3"; got != want {
+		t.Errorf("bad api version: got %s, want %s", got, want)
+	}
+	if got, want := meta.Type, "Pipeline"; got != want {
+		t.Errorf("bad type: got %s, want %s", got, want)
+	}
+}
+
 func TestResourceTemplateSetMetadata(t *testing.T) {
 	value := new(ResourceTemplate)
 	var iface interface{} = value
