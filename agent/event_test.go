@@ -320,6 +320,11 @@ func Test_prepareEvent(t *testing.T) {
 			if id := tt.args.event.GetUUID(); id == uuid.Nil {
 				t.Errorf("bad uuid: %s", id.String())
 			}
+			if tt.args.agent != nil && tt.args.event.Check != nil {
+				if got, want := tt.args.event.Check.ProcessedBy, tt.args.agent.config.AgentName; got != want {
+					t.Errorf("bad processed_by: got %q, want %q", got, want)
+				}
+			}
 		})
 	}
 }

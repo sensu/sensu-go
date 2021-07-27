@@ -247,6 +247,7 @@ func (a *Agent) executeCheck(ctx context.Context, request *corev2.CheckRequest, 
 
 	event.Check.Duration = checkExec.Duration
 	event.Check.Status = uint32(checkExec.Status)
+	event.Check.ProcessedBy = a.config.AgentName
 
 	event.Timestamp = time.Now().Unix()
 	id, err := uuid.NewRandom()
