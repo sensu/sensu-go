@@ -2,9 +2,11 @@ package main
 
 import (
 	"context"
+	"encoding/base64"
 	"flag"
 	"fmt"
 	"log"
+	"math/rand"
 	"os"
 	"os/signal"
 	"strings"
@@ -13,6 +15,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/sensu/sensu-go/agent"
+	"github.com/sensu/sensu-go/command"
 	"github.com/sensu/sensu-go/types"
 	"github.com/sirupsen/logrus"
 
@@ -29,10 +32,20 @@ var (
 	flagKeepaliveTimeout  = flag.Int("keepalive-timeout", types.DefaultKeepaliveTimeout, "Keepalive timeout")
 	flagProfilingPort     = flag.Int("pprof-port", 6060, "pprof port to bind to")
 	flagPromBinding       = flag.String("prom", ":8080", "binding for prometheus server")
+	flagHugeEvents        = flag.Bool("huge-events", false, "send 1 MB events to the backend")
 )
 
 func main() {
 	flag.Parse()
+
+	if *flagHugeEvents {
+		oneMegabyte := make([]byte, 1024*1024)
+		for i := range oneMegabyte {
+			oneMegabyte[i] = byte(rand.Uint32() % 255)
+		}
+		oneMegabyteString := base64.StdEncoding.EncodeToString(oneMegabyte)
+		command.CannedResponse.Output = oneMegabyteString
+	}
 
 	go func() {
 		log.Println(http.ListenAndServe(fmt.Sprintf("localhost:%d", *flagProfilingPort), nil))
