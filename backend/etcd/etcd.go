@@ -15,12 +15,12 @@ import (
 	"time"
 
 	"github.com/sensu/sensu-go/util/path"
-	"go.etcd.io/etcd/client/v3"
-	"go.etcd.io/etcd/server/v3/etcdserver/api/v3rpc"
 	"go.etcd.io/etcd/client/pkg/v3/logutil"
 	"go.etcd.io/etcd/client/pkg/v3/transport"
 	etcdTypes "go.etcd.io/etcd/client/pkg/v3/types"
+	"go.etcd.io/etcd/client/v3"
 	"go.etcd.io/etcd/server/v3/embed"
+	"go.etcd.io/etcd/server/v3/etcdserver/api/v3rpc"
 	"go.etcd.io/etcd/server/v3/proxy/grpcproxy/adapter"
 	zapcore "go.uber.org/zap/zapcore"
 	"google.golang.org/grpc"
@@ -47,13 +47,18 @@ const (
 	// For best practices, the parameter should be set around round-trip time
 	// between members.
 	// See: https://github.com/etcd-io/etcd/blob/master/Documentation/tuning.md#time-parameters
-	DefaultTickMs = 100
+	// We have increased the default from 100 to 500, the regular
+	// etcd default value is too sensitive to latency for our use-case.
+	DefaultTickMs = 500
 
 	// DefaultElectionMs is the default Election Timeout. This timeout is how
 	// long a follower node will go without hearing a heartbeat before
 	// attempting to become leader itself.
 	// See: https://github.com/etcd-io/etcd/blob/master/Documentation/tuning.md#time-parameters
-	DefaultElectionMs = 1000
+	// We have increased the default from 1000 to 5000, the
+	// regular etcd default value is too sensitive to latency for
+	// our use-case.
+	DefaultElectionMs = 5000
 )
 
 func init() {
