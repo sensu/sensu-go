@@ -48,6 +48,7 @@ func prepareEvent(a *Agent, event *corev2.Event) error {
 		if err := event.Check.Validate(); err != nil {
 			return err
 		}
+		event.Check.ProcessedBy = a.config.AgentName
 	}
 
 	// Verify if an entity was provided and that it's not the agent's entity.

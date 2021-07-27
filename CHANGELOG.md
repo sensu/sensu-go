@@ -19,6 +19,8 @@ initialized.
 for controlling agent retry exponential backoff behaviour. --retry-min and 
 --retry-max expect duration values like 1s, 10m, 4h. --retry-multiplier expects
 a decimal multiplier value.
+- Added ProcessedBy field to check results. The ProcessedBy field indicates which
+agent processed a particular event.
 
 ### Changed
 - When keepalived encounters round-robin ring errors, the backend no longer

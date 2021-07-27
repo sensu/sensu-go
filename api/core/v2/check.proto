@@ -312,6 +312,10 @@ message Check {
   // setting by the user will be overridden.
   string scheduler = 44 [ (gogoproto.jsontag) = "scheduler" ];
 
+  // ProcessedBy indicates the name of the agent that processed the event. This
+  // is mainly useful for determining which agent executed a proxy check request.
+  string ProcessedBy = 45 [ (gogoproto.jsontag) = "processed_by,omitempty", (gogoproto.moretags) = "yaml: \"processed_by\"" ];
+
   // ExtendedAttributes store serialized arbitrary JSON-encoded data
   bytes ExtendedAttributes = 99 [ (gogoproto.jsontag) = "-" ];
 }
