@@ -17,31 +17,39 @@ option (gogoproto.testgen_all) = true;
 message Pipeline {
   // Metadata contains the name, namespace, labels and annotations of the
   // pipeline.
-  sensu.core.v2.ObjectMeta metadata = 1 [ (gogoproto.jsontag) = "metadata", (gogoproto.nullable) = true ];
+  sensu.core.v2.ObjectMeta Metadata = 1 [ (gogoproto.jsontag) = "metadata", (gogoproto.nullable) = true ];
 
   // Pipelines contains one or more pipelines.
-  repeated sensu.core.v3.PipelineWorkflow workflows = 2 [ (gogoproto.jsontag) = "pipelines" ];
+  repeated sensu.core.v3.PipelineWorkflow Workflows = 2 [ (gogoproto.jsontag) = "pipelines" ];
 }
 
+// PipelineWorkflow represents a workflow of filters, mutator, & handler to use
+// in a pipeline.
+//sensu:nogen
 message PipelineWorkflow {
-  // Name contains a descriptive name of the pipeline workflow.
-  string name = 1 [ (gogoproto.jsontag) = "name,omitempty", (gogoproto.moretags) = "yaml: \"name,omitempty\"" ];
+  // Name is a descriptive name of the pipeline workflow.
+  string Name = 1 [ (gogoproto.jsontag) = "name", (gogoproto.moretags) = "yaml: \"name" ];
 
   // Filters contains one or more references to a resource to use as an event
   // filter.
-  repeated ResourceReference filters = 2 [ (gogoproto.jsontag) = "filters,omitempty", (gogo.moretags) = "yaml: \"filters,omitempty\"" ];
+  repeated ResourceReference Filters = 2 [ (gogoproto.jsontag) = "filters,omitempty", (gogoproto.moretags) = "yaml: \"filters,omitempty\"" ];
 
   // Mutator contains a reference to a resource to use as an event mutator.
-  ResourceReference mutator = 3 [ (gogoproto.jsontag) = "mutator,omitempty", (gogo.moretags) = "yaml: \"mutator,omitempty\"" ];
+  ResourceReference Mutator = 3 [ (gogoproto.jsontag) = "mutator,omitempty", (gogoproto.moretags) = "yaml: \"mutator,omitempty\"" ];
 
   // Handler contains a reference to a resource to use as an event handler.
-  ResourceReference handler = 4 [ (gogoproto.jsontag) = "handler,omitempty", (gogo.moretags) = "yaml: \"handler,omitempty\"" ];
+  ResourceReference Handler = 4 [ (gogoproto.jsontag) = "handler,omitempty", (gogoproto.moretags) = "yaml: \"handler,omitempty\"" ];
 }
 
+// ResourceReference represents a reference to another resource.
+//sensu:nogen
 message ResourceReference {
-  // Name contains the name of the resource (e.g. filter, mutator, handler) to reference.
-  string name = 1 [ (gogoproto.jsontag) = "name,omitempty", (gogoproto.moretags) = "yaml: \"name,omitempty\"" ];
+  // Name is the name of the resource to reference.
+  string Name = 1 [ (gogoproto.jsontag) = "name", (gogoproto.moretags) = "yaml: \"name" ];
 
-  // TypeMeta contains the API version and resource type of the referenced resource.
-  TypeMeta type_meta = 2 [ (gogoproto.jsontag) = "type_meta,omitempty", (gogoproto.moretags) = "yaml: \"type_meta,omitempty\"" ];
+  // Type is the name of the data type of the resource to reference.
+  string Type = 2 [ (gogoproto.jsontag) = "type", (gogoproto.moretags) = "yaml: \"type\"" ];
+
+  // APIVersion is the API version of the resource to reference.
+  string APIVersion = 3 [ (gogoproto.jsontag) = "api_version", (gogoproto.moretags) = "yaml: \"api_version\"" ];
 }
