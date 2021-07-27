@@ -26,6 +26,9 @@ agent processed a particular event.
 - Added `sensu_go_agentd_event_bytes` & `sensu_go_store_event_bytes` summary
 metrics to the `/metrics` endpoint.
 - Added support for environment variable arguments in `sensuctl`.
+- Added `core/v2.Pipeline` resource for configuring Pipeline resources.
+- Added `pipelines` field to `Check` and `CheckConfig`
+- Added `core/v3.Pipeline` resource for configuring Pipeline resources.
 
 ### Changed
 - When deleting resource with sensuctl, the resource type will now be displayed
