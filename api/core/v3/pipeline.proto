@@ -19,8 +19,8 @@ message Pipeline {
   // pipeline.
   sensu.core.v2.ObjectMeta Metadata = 1 [ (gogoproto.jsontag) = "metadata", (gogoproto.nullable) = true ];
 
-  // Pipelines contains one or more pipelines.
-  repeated sensu.core.v3.PipelineWorkflow Workflows = 2 [ (gogoproto.jsontag) = "pipelines" ];
+  // Workflows contains one or more pipeline workflows.
+  repeated sensu.core.v3.PipelineWorkflow Workflows = 2 [ (gogoproto.jsontag) = "workflows", (gogoproto.moretags) = "yaml: \"workflows\"" ];
 }
 
 // PipelineWorkflow represents a workflow of filters, mutator, & handler to use
@@ -38,7 +38,7 @@ message PipelineWorkflow {
   ResourceReference Mutator = 3 [ (gogoproto.jsontag) = "mutator,omitempty", (gogoproto.moretags) = "yaml: \"mutator,omitempty\"" ];
 
   // Handler contains a reference to a resource to use as an event handler.
-  ResourceReference Handler = 4 [ (gogoproto.jsontag) = "handler,omitempty", (gogoproto.moretags) = "yaml: \"handler,omitempty\"" ];
+  ResourceReference Handler = 4 [ (gogoproto.jsontag) = "handler", (gogoproto.moretags) = "yaml: \"handler]\"" ];
 }
 
 // ResourceReference represents a reference to another resource.
