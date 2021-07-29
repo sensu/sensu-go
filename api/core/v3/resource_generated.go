@@ -258,6 +258,112 @@ func (e *EntityState) GetTypeMeta() corev2.TypeMeta {
 
 // SetMetadata sets the provided metadata on the type. If the type does not
 // have any metadata, nothing will happen.
+func (p *Pipeline) SetMetadata(meta *corev2.ObjectMeta) {
+	// The function has to use reflection, since not all of the generated types
+	// will have metadata.
+	value := reflect.Indirect(reflect.ValueOf(p))
+	field := value.FieldByName("Metadata")
+	if !field.CanSet() {
+		return
+	}
+	field.Set(reflect.ValueOf(meta))
+}
+
+// StoreName returns the store name for Pipeline. It will be
+// overridden if there is a method for Pipeline called "storeName".
+func (p *Pipeline) StoreName() string {
+	var iface interface{} = p
+	if prefixer, ok := iface.(storeNamer); ok {
+		return prefixer.storeName()
+	}
+	return "pipelines"
+}
+
+// RBACName returns the RBAC name for Pipeline. It will be overridden if
+// there is a method for Pipeline called "rbacName".
+func (p *Pipeline) RBACName() string {
+	var iface interface{} = p
+	if namer, ok := iface.(rbacNamer); ok {
+		return namer.rbacName()
+	}
+	return "pipelines"
+}
+
+// URIPath returns the URI path for Pipeline. It will be overridden if
+// there is a method for Pipeline called uriPath.
+func (p *Pipeline) URIPath() string {
+	var iface interface{} = p
+	if pather, ok := iface.(uriPather); ok {
+		return pather.uriPath()
+	}
+	metaer, ok := iface.(getMetadataer)
+	if !ok {
+		return ""
+	}
+	meta := metaer.GetMetadata()
+	if meta == nil {
+		return uriPath("pipelines", "", "")
+	}
+	return uriPath("pipelines", meta.Namespace, meta.Name)
+}
+
+// Validate validates the Pipeline. If the Pipeline has metadata,
+// it will be validated via ValidateMetadata. If there is a method for
+// Pipeline called validate, then it will be used to cooperatively
+// validate the Pipeline.
+func (p *Pipeline) Validate() error {
+	if p == nil {
+		return errors.New("nil Pipeline")
+	}
+	var iface interface{} = p
+	if resource, ok := iface.(Resource); ok {
+		if err := ValidateMetadata(resource.GetMetadata()); err != nil {
+			return fmt.Errorf("invalid Pipeline: %s", err)
+		}
+	}
+	if validator, ok := iface.(validator); ok {
+		if err := validator.validate(); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// UnmarshalJSON is provided in order to ensure that metadata labels and
+// annotations are never nil.
+func (p *Pipeline) UnmarshalJSON(msg []byte) error {
+	type Clone Pipeline
+	var clone Clone
+	if err := json.Unmarshal(msg, &clone); err != nil {
+		return err
+	}
+	*p = *(*Pipeline)(&clone)
+	var iface interface{} = p
+	var meta *corev2.ObjectMeta
+	if metaer, ok := iface.(getMetadataer); ok {
+		meta = metaer.GetMetadata()
+	}
+	if meta != nil {
+		if meta.Labels == nil {
+			meta.Labels = make(map[string]string)
+		}
+		if meta.Annotations == nil {
+			meta.Annotations = make(map[string]string)
+		}
+	}
+	return nil
+}
+
+// GetTypeMeta gets the type metadata for a Pipeline.
+func (p *Pipeline) GetTypeMeta() corev2.TypeMeta {
+	return corev2.TypeMeta{
+		APIVersion: "core/v3",
+		Type:       "Pipeline",
+	}
+}
+
+// SetMetadata sets the provided metadata on the type. If the type does not
+// have any metadata, nothing will happen.
 func (r *ResourceTemplate) SetMetadata(meta *corev2.ObjectMeta) {
 	// The function has to use reflection, since not all of the generated types
 	// will have metadata.
