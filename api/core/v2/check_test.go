@@ -159,6 +159,14 @@ func TestCheckHasNonNilHandlers(t *testing.T) {
 	require.NotNil(t, c.Handlers)
 }
 
+func TestCheckHasNonNilPipelines(t *testing.T) {
+	var c Check
+	b, err := json.Marshal(&c)
+	require.NoError(t, err)
+	require.NoError(t, json.Unmarshal(b, &c))
+	require.NotNil(t, c.Pipelines)
+}
+
 func TestCheckFlapThresholdValidation(t *testing.T) {
 	c := FixtureCheck("foo")
 	// zero-valued flap threshold is valid

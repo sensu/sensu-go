@@ -7,6 +7,7 @@ import "github.com/sensu/sensu-go/api/core/v2/meta.proto";
 import "github.com/sensu/sensu-go/api/core/v2/time_window.proto";
 import "github.com/sensu/sensu-go/api/core/v2/secret.proto";
 import "github.com/sensu/sensu-go/api/core/v2/metrics.proto";
+import "github.com/sensu/sensu-go/api/core/v2/pipeline.proto";
 
 package sensu.core.v2;
 
@@ -162,6 +163,9 @@ message CheckConfig {
   // can be "memory", "etcd", or "postgres". Scheduler is set by Sensu - any
   // setting by the user will be overridden.
   string scheduler = 31 [ (gogoproto.jsontag) = "-", (gogoproto.moretags) = "yaml: \"-\"" ];
+
+  // Pipelines are the pipelines this check will use to process its events.
+  repeated Pipeline pipelines = 32 [ (gogoproto.jsontag) = "pipelines" ];
 }
 
 // A Check is a check specification and optionally the results of the check's
@@ -318,6 +322,9 @@ message Check {
 
   // ExtendedAttributes store serialized arbitrary JSON-encoded data
   bytes ExtendedAttributes = 99 [ (gogoproto.jsontag) = "-" ];
+
+  // Pipelines are the pipelines this check will use to process its events.
+  repeated Pipeline pipelines = 46 [ (gogoproto.jsontag) = "pipelines" ];
 }
 
 // CheckHistory is a record of a check execution and its status
