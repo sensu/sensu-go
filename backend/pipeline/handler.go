@@ -9,6 +9,7 @@ import (
 	"time"
 
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
+	corev3 "github.com/sensu/sensu-go/api/core/v3"
 	"github.com/sensu/sensu-go/asset"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/command"
@@ -21,6 +22,96 @@ import (
 type handlerExtensionUnion struct {
 	*corev2.Extension
 	*corev2.Handler
+}
+
+func (p *Pipeline) getFilterProcessorForResource(ctx context.Context, ref *corev3.ResourceReference) (FilterProcessor, error) {
+	for _, processor := range p.filterProcessors {
+		if processor.CanFilter(ctx, ref) {
+			return processor, nil
+		}
+	}
+	return nil, fmt.Errorf("no filter processors were found that can filter the resource: %s.%s = %s", ref.APIVersion, ref.Type, ref.Name)
+}
+
+func (p *Pipeline) getMutatorProcessorForResource(ctx context.Context, ref *corev3.ResourceReference) (MutatorProcessor, error) {
+	for _, processor := range p.mutatorProcessors {
+		if processor.CanMutate(ctx, ref) {
+			return processor, nil
+		}
+	}
+	return nil, fmt.Errorf("no mutator processors were found that can mutate the resource: %s.%s = %s", ref.APIVersion, ref.Type, ref.Name)
+}
+
+func (p *Pipeline) getHandlerProcessorForResource(ctx context.Context, ref *corev3.ResourceReference) (HandlerProcessor, error) {
+	for _, processor := range p.handlerProcessors {
+		if processor.CanHandle(ctx, ref) {
+			return processor, nil
+		}
+	}
+	return nil, fmt.Errorf("no handler processors were found that can handle the resource: %s.%s = %s", ref.APIVersion, ref.Type, ref.Name)
+}
+
+func (p *Pipeline) processFilters(ctx context.Context, refs []*corev3.ResourceReference, event *corev2.Event) (bool, error) {
+	// for each filter in the workflow, loop through each filter processor
+	// until one is found that supports filtering the event using the referenced
+	// resource.
+	for _, ref := range refs {
+		processor, err := p.getFilterProcessorForResource(ctx, ref)
+		if err != nil {
+			return false, err
+		}
+
+		filtered, err := processor.Filter(ctx, ref, event)
+		if err != nil {
+			return false, err
+		}
+		if filtered {
+			return true, nil
+		}
+	}
+
+	return false, nil
+}
+
+func (p *Pipeline) processMutator(ctx context.Context, ref *corev3.ResourceReference, event *corev2.Event) (*corev2.Event, error) {
+	processor, err := p.getMutatorProcessorForResource(ctx, ref)
+	if err != nil {
+		return nil, err
+	}
+
+	return processor.Mutate(ctx, ref, event)
+}
+
+func (p *Pipeline) processHandler(ctx context.Context, ref *corev3.ResourceReference, event *corev2.Event) error {
+	processor, err := p.getHandlerProcessorForResource(ctx, ref)
+	if err != nil {
+		return err
+	}
+
+	return processor.Handle(ctx, ref, event)
+}
+
+func (p *Pipeline) ExecuteWorkflowForEvent(ctx context.Context, workflow *corev3.PipelineWorkflow, event *corev2.Event) error {
+	// Process the event through the workflow filters
+	filtered, err := p.processFilters(ctx, workflow.Filters, event)
+	if err != nil {
+		return err
+	}
+	if filtered {
+		return nil
+	}
+
+	// Process the event through the workflow mutator
+	mutatedEvent, err := p.processMutator(ctx, workflow.Mutator, event)
+	if err != nil {
+		return err
+	}
+	if mutatedEvent != nil {
+		event = mutatedEvent
+	}
+
+	// Process the event through the workflow handler
+	return p.processHandler(ctx, workflow.Handler, event)
 }
 
 // HandleEvent takes a Sensu event through a Sensu pipeline, filters

@@ -1,11 +1,68 @@
 package v3
 
 import (
+	"context"
 	"errors"
 	"fmt"
 
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 )
+
+const (
+	PipelineFromHandlersName        = "PipelineFromHandlers"
+	PipelineWorkflowFromHandlerName = "PipelineWorkflowFromHandler-%s"
+)
+
+// PipelineFromHandlers takes a slice of corev2.Handlers, converts it to a
+// Pipeline and then returns it.
+func PipelineFromHandlers(ctx context.Context, handlers []*corev2.Handler) *Pipeline {
+	pipeline := &Pipeline{
+		Metadata: &corev2.ObjectMeta{
+			Name:      PipelineFromHandlersName,
+			Namespace: corev2.ContextNamespace(ctx),
+		},
+		Workflows: []*PipelineWorkflow{},
+	}
+
+	for _, handler := range handlers {
+		pipeline.Workflows = append(pipeline.Workflows, PipelineWorkflowFromHandler(ctx, handler))
+	}
+
+	return pipeline
+}
+
+// PipelineWorkflowFromHandler takes a corev2.Handler, converts it to a
+// PipelineWorkflow and then returns it.
+func PipelineWorkflowFromHandler(ctx context.Context, handler *corev2.Handler) *PipelineWorkflow {
+	filterRefs := []*ResourceReference{}
+	for _, filterName := range handler.Filters {
+		ref := &ResourceReference{
+			Name:       filterName,
+			APIVersion: "core/v2",
+			Type:       "EventFilter",
+		}
+		filterRefs = append(filterRefs, ref)
+	}
+
+	mutatorRef := &ResourceReference{
+		Name:       handler.Mutator,
+		APIVersion: "core/v2",
+		Type:       "Mutator",
+	}
+
+	handlerRef := &ResourceReference{
+		Name:       handler.Name,
+		APIVersion: "core/v2",
+		Type:       "Handler",
+	}
+
+	return &PipelineWorkflow{
+		Name:    fmt.Sprintf(PipelineWorkflowFromHandlerName, handler.Name),
+		Filters: filterRefs,
+		Mutator: mutatorRef,
+		Handler: handlerRef,
+	}
+}
 
 // validate checks if a pipeline resource passes validation rules.
 func (p *Pipeline) validate() error {
