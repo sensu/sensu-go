@@ -1,14 +1,12 @@
-package v3
+package v2
 
 import (
 	"testing"
-
-	v2 "github.com/sensu/sensu-go/api/core/v2"
 )
 
 func TestPipeline_validate(t *testing.T) {
 	type fields struct {
-		Metadata  *v2.ObjectMeta
+		Metadata  *ObjectMeta
 		Workflows []*PipelineWorkflow
 	}
 	tests := []struct {
@@ -26,7 +24,7 @@ func TestPipeline_validate(t *testing.T) {
 		{
 			name: "fails when name is empty",
 			fields: fields{
-				Metadata: &v2.ObjectMeta{},
+				Metadata: &ObjectMeta{},
 			},
 			wantErr: true,
 			wantMsg: "name must not be empty",
@@ -34,7 +32,7 @@ func TestPipeline_validate(t *testing.T) {
 		{
 			name: "fails when namespace is empty",
 			fields: fields{
-				Metadata: &v2.ObjectMeta{
+				Metadata: &ObjectMeta{
 					Name: "my-pipeline",
 				},
 			},
@@ -44,7 +42,7 @@ func TestPipeline_validate(t *testing.T) {
 		{
 			name: "fails when a workflow is invalid",
 			fields: fields{
-				Metadata: &v2.ObjectMeta{
+				Metadata: &ObjectMeta{
 					Name:      "my-pipeline",
 					Namespace: "default",
 				},
@@ -56,7 +54,7 @@ func TestPipeline_validate(t *testing.T) {
 		{
 			name: "succeeds when metadata is valid",
 			fields: fields{
-				Metadata: &v2.ObjectMeta{
+				Metadata: &ObjectMeta{
 					Name:      "my-pipeline",
 					Namespace: "default",
 				},
