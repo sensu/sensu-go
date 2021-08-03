@@ -28,6 +28,8 @@ agent processed a particular event.
 - Added `pipelines` field to `Check` and `CheckConfig`
 
 ### Changed
+- When deleting resource with sensuctl, the resource type will now be displayed
+in the confirmation prompt
 - When keepalived encounters round-robin ring errors, the backend no longer
 internally restarts.
 - The core/v2.Mutator type now has a Type field which can be used to tell
