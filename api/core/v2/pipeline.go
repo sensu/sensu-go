@@ -1,10 +1,8 @@
-package v3
+package v2
 
 import (
 	"errors"
 	"fmt"
-
-	corev2 "github.com/sensu/sensu-go/api/core/v2"
 )
 
 // validate checks if a pipeline resource passes validation rules.
@@ -13,7 +11,7 @@ func (p *Pipeline) validate() error {
 		return errors.New("metadata must be set")
 	}
 
-	if err := corev2.ValidateName(p.Metadata.Name); err != nil {
+	if err := ValidateName(p.Metadata.Name); err != nil {
 		return errors.New("name " + err.Error())
 	}
 
@@ -32,7 +30,7 @@ func (p *Pipeline) validate() error {
 
 // validate checks if a pipeline workflow resource passes validation rules.
 func (w *PipelineWorkflow) validate() error {
-	if err := corev2.ValidateName(w.Name); err != nil {
+	if err := ValidateName(w.Name); err != nil {
 		return errors.New("name " + err.Error())
 	}
 
@@ -73,7 +71,7 @@ func (w *PipelineWorkflow) validate() error {
 
 // validate checks if a resource reference resource passes validation rules.
 func (r *ResourceReference) validate() error {
-	if err := corev2.ValidateName(r.Name); err != nil {
+	if err := ValidateName(r.Name); err != nil {
 		return errors.New("name " + err.Error())
 	}
 

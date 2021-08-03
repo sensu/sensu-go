@@ -59,6 +59,14 @@ func TestCheckConfigHasNonNilHandlers(t *testing.T) {
 	require.NotNil(t, c.Handlers)
 }
 
+func TestCheckConfigHasNonNilPipelines(t *testing.T) {
+	var c CheckConfig
+	b, err := json.Marshal(&c)
+	require.NoError(t, err)
+	require.NoError(t, json.Unmarshal(b, &c))
+	require.NotNil(t, c.Pipelines)
+}
+
 func TestCheckConfigHasNoEmptyStringsInSub(t *testing.T) {
 	c := FixtureCheckConfig("foo")
 	c.Subscriptions = append(c.Subscriptions, "demo", "foo")
