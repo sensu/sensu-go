@@ -101,7 +101,7 @@ func (opts *hookOpts) administerQuestionnaire(editing bool) error {
 				Default: opts.Stdin,
 			},
 			Validate: func(val interface{}) error {
-				if str := val.(string); str != "false" && str != "true" {
+				if str, ok := val.(string); ok && str != "false" && str != "true" {
 					return fmt.Errorf("Please enter either true or false")
 				}
 				return nil
