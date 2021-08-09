@@ -32,6 +32,14 @@ const (
 )
 
 var (
+	eventBytesSummary = prometheus.NewSummaryVec(
+		prometheus.SummaryOpts{
+			Name:       "sensu_go_agentd_event_bytes",
+			Help:       "Distribution of event sizes, in bytes, received by agentd on this backend",
+			Objectives: map[float64]float64{0.5: 0.05, 0.9: 0.01, 0.99: 0.001},
+		},
+		[]string{"type"},
+	)
 	sessionCounter = prometheus.NewGaugeVec(
 		prometheus.GaugeOpts{
 			Name: "sensu_go_agent_sessions",
@@ -611,12 +619,20 @@ func (s *Session) handleEvent(_ context.Context, payload []byte) error {
 	// Add the entity subscription to the subscriptions of this entity
 	event.Entity.Subscriptions = corev2.AddEntitySubscription(event.Entity.Name, event.Entity.Subscriptions)
 
-	if event.HasCheck() && event.Check.Name == corev2.KeepaliveCheckName {
-		return s.bus.Publish(messaging.TopicKeepaliveRaw, event)
-	} else {
-		return s.bus.Publish(messaging.TopicEventRaw, event)
+	if event.HasCheck() {
+		if event.HasMetrics() {
+			eventBytesSummary.WithLabelValues("check+metrics").Observe(float64(len(payload)))
+		} else {
+			eventBytesSummary.WithLabelValues("check").Observe(float64(len(payload)))
+		}
+		if event.Check.Name == corev2.KeepaliveCheckName {
+			return s.bus.Publish(messaging.TopicKeepaliveRaw, event)
+		}
+	} else if event.HasMetrics() {
+		eventBytesSummary.WithLabelValues("metrics").Observe(float64(len(payload)))
 	}
 
+	return s.bus.Publish(messaging.TopicEventRaw, event)
 }
 
 // subscribe adds a subscription to the session for every check subscriptions

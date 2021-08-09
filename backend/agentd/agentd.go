@@ -32,7 +32,7 @@ import (
 	"github.com/sensu/sensu-go/backend/store/v2/etcdstore"
 	"github.com/sensu/sensu-go/transport"
 	"github.com/sirupsen/logrus"
-	"go.etcd.io/etcd/client/v3"
+	clientv3 "go.etcd.io/etcd/client/v3"
 )
 
 var (
@@ -63,6 +63,7 @@ func init() {
 	_ = prometheus.Register(websocketUpgradeDuration)
 	_ = prometheus.Register(websocketErrorCounter)
 	_ = prometheus.Register(sessionErrorCounter)
+	_ = prometheus.Register(eventBytesSummary)
 }
 
 // Agentd is the backend HTTP API.

@@ -9,10 +9,11 @@ import (
 	"time"
 
 	"github.com/gogo/protobuf/proto"
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/backend/store/etcd/kvc"
 	"github.com/sensu/sensu-go/backend/store/provider"
-	"go.etcd.io/etcd/client/v3"
+	clientv3 "go.etcd.io/etcd/client/v3"
 
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 )
@@ -25,6 +26,15 @@ const (
 
 var (
 	eventKeyBuilder = store.NewKeyBuilder(eventsPathPrefix)
+
+	eventBytesSummary = prometheus.NewSummaryVec(
+		prometheus.SummaryOpts{
+			Name:       "sensu_go_store_event_bytes",
+			Help:       "Distribution of event sizes, in bytes, received by the store on this backend",
+			Objectives: map[float64]float64{0.5: 0.05, 0.9: 0.01, 0.99: 0.001},
+		},
+		[]string{"type"},
+	)
 )
 
 func getEventPath(event *corev2.Event) string {
@@ -292,6 +302,10 @@ func (s *Store) UpdateEvent(ctx context.Context, event *corev2.Event) (*corev2.E
 	if err != nil {
 		return nil, nil, &store.ErrEncode{Err: err}
 	}
+
+	// only record event size for check events as all events will have a check
+	// and no metrics by this point
+	eventBytesSummary.WithLabelValues("check").Observe(float64(len(eventBytes)))
 
 	cmp := namespaceExistsForResource(event.Entity)
 	req := clientv3.OpPut(getEventPath(event), string(eventBytes))
