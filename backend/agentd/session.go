@@ -16,6 +16,7 @@ import (
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	corev3 "github.com/sensu/sensu-go/api/core/v3"
 	"github.com/sensu/sensu-go/backend/messaging"
+	"github.com/sensu/sensu-go/backend/metrics"
 	"github.com/sensu/sensu-go/backend/ringv2"
 	"github.com/sensu/sensu-go/backend/store"
 	storev2 "github.com/sensu/sensu-go/backend/store/v2"
@@ -29,17 +30,19 @@ const (
 
 	// Time to wait before force close on connection.
 	closeGracePeriod = 10 * time.Second
+
+	// EventBytesSummaryName is the name of the prometheus summary vec used to
+	// track event sizes (in bytes).
+	EventBytesSummaryName = "sensu_go_agentd_event_bytes"
+
+	// EventBytesSummaryHelp is the help message for EventBytesSummary
+	// Prometheus metrics.
+	EventBytesSummaryHelp = "Distribution of event sizes, in bytes, received by agentd on this backend"
 )
 
 var (
-	eventBytesSummary = prometheus.NewSummaryVec(
-		prometheus.SummaryOpts{
-			Name:       "sensu_go_agentd_event_bytes",
-			Help:       "Distribution of event sizes, in bytes, received by agentd on this backend",
-			Objectives: map[float64]float64{0.5: 0.05, 0.9: 0.01, 0.99: 0.001},
-		},
-		[]string{"type"},
-	)
+	eventBytesSummary = metrics.NewEventBytesSummaryVec(EventBytesSummaryName, EventBytesSummaryHelp)
+
 	sessionCounter = prometheus.NewGaugeVec(
 		prometheus.GaugeOpts{
 			Name: "sensu_go_agent_sessions",
@@ -621,15 +624,15 @@ func (s *Session) handleEvent(_ context.Context, payload []byte) error {
 
 	if event.HasCheck() {
 		if event.HasMetrics() {
-			eventBytesSummary.WithLabelValues("check+metrics").Observe(float64(len(payload)))
+			eventBytesSummary.WithLabelValues(metrics.EventTypeLabelCheckAndMetrics).Observe(float64(len(payload)))
 		} else {
-			eventBytesSummary.WithLabelValues("check").Observe(float64(len(payload)))
+			eventBytesSummary.WithLabelValues(metrics.EventTypeLabelCheck).Observe(float64(len(payload)))
 		}
 		if event.Check.Name == corev2.KeepaliveCheckName {
 			return s.bus.Publish(messaging.TopicKeepaliveRaw, event)
 		}
 	} else if event.HasMetrics() {
-		eventBytesSummary.WithLabelValues("metrics").Observe(float64(len(payload)))
+		eventBytesSummary.WithLabelValues(metrics.EventTypeLabelMetrics).Observe(float64(len(payload)))
 	}
 
 	return s.bus.Publish(messaging.TopicEventRaw, event)
