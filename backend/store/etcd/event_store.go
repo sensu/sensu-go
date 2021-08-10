@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/gogo/protobuf/proto"
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/sensu/sensu-go/backend/metrics"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/backend/store/etcd/kvc"
@@ -37,6 +38,10 @@ var (
 
 	eventBytesSummary = metrics.NewEventBytesSummaryVec(EventBytesSummaryName, EventBytesSummaryHelp)
 )
+
+func init() {
+	_ = prometheus.Register(eventBytesSummary)
+}
 
 func getEventPath(event *corev2.Event) string {
 	return path.Join(
@@ -266,6 +271,7 @@ func (s *Store) UpdateEvent(ctx context.Context, event *corev2.Event) (*corev2.E
 	updateOccurrences(event.Check)
 
 	persistEvent := event
+	typeLabelValue := metrics.EventTypeLabelCheck
 
 	if event.HasMetrics() {
 		// Taking pains to not modify our input, set metrics to nil so they are
@@ -273,6 +279,7 @@ func (s *Store) UpdateEvent(ctx context.Context, event *corev2.Event) (*corev2.E
 		newEvent := *event
 		persistEvent = &newEvent
 		persistEvent.Metrics = nil
+		typeLabelValue = metrics.EventTypeLabelCheckAndMetrics
 	}
 
 	// Truncate check output if the output is larger than MaxOutputSize
@@ -306,7 +313,7 @@ func (s *Store) UpdateEvent(ctx context.Context, event *corev2.Event) (*corev2.E
 
 	// only record event size for check events as all events will have a check
 	// and no metrics by this point
-	eventBytesSummary.WithLabelValues(metrics.EventTypeLabelCheck).Observe(float64(len(eventBytes)))
+	eventBytesSummary.WithLabelValues(typeLabelValue).Observe(float64(len(eventBytes)))
 
 	cmp := namespaceExistsForResource(event.Entity)
 	req := clientv3.OpPut(getEventPath(event), string(eventBytes))

@@ -9,7 +9,6 @@ import (
 	"strings"
 
 	"github.com/gogo/protobuf/proto"
-	"github.com/prometheus/client_golang/prometheus"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/backend/store/etcd/kvc"
 	"github.com/sensu/sensu-go/types"
@@ -22,10 +21,6 @@ const (
 	// EtcdRoot is the root of all sensu storage.
 	EtcdRoot = "/sensu.io"
 )
-
-func init() {
-	_ = prometheus.Register(eventBytesSummary)
-}
 
 // Store is an implementation of the sensu-go/backend/store.Store iface.
 type Store struct {
