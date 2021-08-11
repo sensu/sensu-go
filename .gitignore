@@ -19,31 +19,15 @@ coverage.out
 *.pem
 !/backend/authentication/jwt/testdata/*
 ca-config.json
-
-# packaging
 *.log
-.vagrant/
-*.deb
-*.rpm
-*.pkg
-*.dmg
-*.bff
-*.solaris
-*.txz
-*.tar.gz
-packages/*
-packaging/hooks/*/deb/*
-!packaging/hooks/*/deb/*.erb
-packaging/hooks/*/rpm/*
-!packaging/hooks/*/rpm/*.erb
-.kitchen/
-.kitchen.local.yml
-.packagecloud
-gcs-service-account.json
-*.wixobj
-*.wixpdb
-*.msi
-version-bin
+.envrc
 
 # editors
 .idea
+
+# binaries
+sensu-agent
+sensu-backend
+sensuctl
+loadit
+*.exe

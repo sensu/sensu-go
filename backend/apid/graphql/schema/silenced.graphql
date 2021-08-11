@@ -18,7 +18,10 @@ type Silenced implements Node & Namespaced & Resource {
   expire: Int!
 
   "Exact time at which the silenced entry will expire"
-  expires: DateTime
+  expires: DateTime @deprecated(reason: "use expireAt instead")
+
+  "Exact time at which the silenced entry will expire"
+  expireAt: DateTime
 
   """
   ExpireOnResolve defaults to false, clears the entry on resolution when set

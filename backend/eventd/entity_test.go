@@ -39,6 +39,7 @@ func TestCreateProxyEntity(t *testing.T) {
 				config := corev3.FixtureEntityConfig("foo")
 
 				stateReq := storev2.NewResourceRequestFromResource(context.Background(), state)
+				stateReq.UsePostgres = true
 				configReq := storev2.NewResourceRequestFromResource(context.Background(), config)
 
 				wConfig, err := storev2.WrapResource(config)
@@ -76,6 +77,7 @@ func TestCreateProxyEntity(t *testing.T) {
 			storeFunc: func(s *storetest.Store, e *corev2.Event) {
 				_, state := corev3.V2EntityToV3(e.Entity)
 				stateReq := storev2.NewResourceRequestFromResource(context.Background(), state)
+				stateReq.UsePostgres = true
 
 				config := corev3.FixtureEntityConfig("foo")
 				configReq := storev2.NewResourceRequestFromResource(context.Background(), config)
@@ -138,6 +140,7 @@ func TestCreateProxyEntity(t *testing.T) {
 				config := corev3.FixtureEntityConfig("bar")
 
 				stateReq := storev2.NewResourceRequestFromResource(context.Background(), state)
+				stateReq.UsePostgres = true
 				configReq := storev2.NewResourceRequestFromResource(context.Background(), config)
 
 				wState, err := storev2.WrapResource(state)
@@ -175,6 +178,7 @@ func TestCreateProxyEntity(t *testing.T) {
 
 				configReq := storev2.NewResourceRequestFromResource(context.Background(), config)
 				stateReq := storev2.NewResourceRequestFromResource(context.Background(), state)
+				stateReq.UsePostgres = true
 
 				s.On("Get", configReq).Return(nilWrapper, &store.ErrNotFound{})
 
@@ -208,6 +212,7 @@ func TestCreateProxyEntity(t *testing.T) {
 				e.Entity.ObjectMeta.Name = "bar"
 				_, state := corev3.V2EntityToV3(e.Entity)
 				stateReq := storev2.NewResourceRequestFromResource(context.Background(), state)
+				stateReq.UsePostgres = true
 
 				config := corev3.FixtureEntityConfig("bar")
 				configReq := storev2.NewResourceRequestFromResource(context.Background(), config)

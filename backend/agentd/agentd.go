@@ -32,7 +32,7 @@ import (
 	"github.com/sensu/sensu-go/backend/store/v2/etcdstore"
 	"github.com/sensu/sensu-go/transport"
 	"github.com/sirupsen/logrus"
-	"go.etcd.io/etcd/clientv3"
+	"go.etcd.io/etcd/client/v3"
 )
 
 var (

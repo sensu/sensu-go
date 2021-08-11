@@ -38,9 +38,14 @@ func (r *silencedImpl) Check(p graphql.ResolveParams) (interface{}, error) {
 
 // Expires implements response to request for 'expires' field.
 func (r *silencedImpl) Expires(p graphql.ResolveParams) (*time.Time, error) {
+	return r.ExpireAt(p)
+}
+
+// ExpireAt implements response to request for 'expireAt' field.
+func (r *silencedImpl) ExpireAt(p graphql.ResolveParams) (*time.Time, error) {
 	s := p.Source.(*corev2.Silenced)
-	if s.Expire > 0 {
-		return convertTs(s.Begin + s.Expire), nil
+	if s.ExpireAt > 0 {
+		return convertTs(s.ExpireAt), nil
 	}
 	return nil, nil
 }

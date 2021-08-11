@@ -14,7 +14,7 @@ import (
 	"github.com/sensu/sensu-go/backend/store/patch"
 	storev2 "github.com/sensu/sensu-go/backend/store/v2"
 	"github.com/sensu/sensu-go/backend/store/v2/wrap"
-	"go.etcd.io/etcd/clientv3"
+	"go.etcd.io/etcd/client/v3"
 )
 
 var (

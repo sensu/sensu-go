@@ -12,7 +12,7 @@ import (
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/backend/store/etcd/kvc"
 	"github.com/sensu/sensu-go/types"
-	"go.etcd.io/etcd/clientv3"
+	"go.etcd.io/etcd/client/v3"
 
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 )

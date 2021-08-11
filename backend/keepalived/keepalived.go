@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/sensu/sensu-go/agent"
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	corev3 "github.com/sensu/sensu-go/api/core/v3"
@@ -17,7 +18,6 @@ import (
 	"github.com/sensu/sensu-go/backend/ringv2"
 	"github.com/sensu/sensu-go/backend/store"
 	storev2 "github.com/sensu/sensu-go/backend/store/v2"
-	"github.com/sensu/sensu-go/backend/store/v2/wrap"
 	"github.com/sirupsen/logrus"
 )
 
@@ -41,7 +41,34 @@ const (
 	// a registration event is passed to pipelined.
 	// DEPRECATED, use core/v2
 	RegistrationHandlerName = "registration"
+
+	// KeepaliveCounterVec is the name of the prometheus metric that Sensu
+	// exports for counting keepalive events, both dead and alive.
+	KeepaliveCounterVec = "sensu_go_keepalives"
+
+	// KeepaliveCounterLabelName represents the status of a counted keepalive.
+	KeepaliveCounterLabelName = "status"
+
+	// KeepaliveCounterLabelAlive represents a call to alive().
+	KeepaliveCounterLabelAlive = "alive"
+
+	// KeepaliveCounterLabelDead represents a call to dead().
+	KeepaliveCounterLabelDead = "dead"
 )
+
+var KeepalivesProcessed = prometheus.NewCounterVec(
+	prometheus.CounterOpts{
+		Name: KeepaliveCounterVec,
+		Help: "The total name of processed keepalives",
+	},
+	[]string{KeepaliveCounterLabelName},
+)
+
+func init() {
+	KeepalivesProcessed.WithLabelValues(KeepaliveCounterLabelAlive)
+	KeepalivesProcessed.WithLabelValues(KeepaliveCounterLabelDead)
+	_ = prometheus.Register(KeepalivesProcessed)
+}
 
 const deletedEventSentinel = -1
 
@@ -354,6 +381,7 @@ func (k *Keepalived) handleEntityRegistration(entity *corev2.Entity, event *core
 		logger.WithError(err).Error("error wrapping entity config")
 		return err
 	}
+
 	req := storev2.NewResourceRequestFromResource(tctx, config)
 
 	exists := true
@@ -484,6 +512,7 @@ func createRegistrationEvent(entity *corev2.Entity) *corev2.Event {
 }
 
 func (k *Keepalived) alive(key string, prev liveness.State, leader bool) bool {
+	KeepalivesProcessed.WithLabelValues(KeepaliveCounterLabelAlive).Inc()
 	lager := logger.WithFields(logrus.Fields{
 		"status":          liveness.Alive.String(),
 		"previous_status": prev.String(),
@@ -503,6 +532,7 @@ func (k *Keepalived) alive(key string, prev liveness.State, leader bool) bool {
 
 // this is a callback - it should not write to k.errChan
 func (k *Keepalived) dead(key string, prev liveness.State, leader bool) bool {
+	KeepalivesProcessed.WithLabelValues(KeepaliveCounterLabelDead).Inc()
 	if k.ctx.Err() != nil {
 		return false
 	}
@@ -657,13 +687,17 @@ func (k *Keepalived) handleUpdate(e *corev2.Event) error {
 	entity.LastSeen = e.Timestamp
 	_, entityState := corev3.V2EntityToV3(entity)
 
-	wrapper, err := storev2.WrapResource(entityState, wrap.UsePostgres)
+	wrapper, err := storev2.WrapResource(entityState)
 	if err != nil {
 		logger.WithError(err).Error("error wrapping entity state")
 		return err
 	}
 
 	req := storev2.NewResourceRequestFromResource(k.ctx, entityState)
+
+	// use postgres, if available (enterprise only, entity state only)
+	req.UsePostgres = true
+
 	if err := k.storev2.CreateOrUpdate(req, wrapper); err != nil {
 		logger.WithError(err).Error("error updating entity state in store")
 		return err
@@ -695,9 +729,6 @@ func (k *Keepalived) handleUpdate(e *corev2.Event) error {
 			})
 			if err := ring.Add(tctx, entity.Name, int64(e.Check.Timeout)); err != nil {
 				lager.WithError(err).Error("error adding entity to ring")
-				if _, ok := err.(*store.ErrInternal); ok {
-					return err
-				}
 			} else {
 				lager.Info("added entity to ring")
 			}

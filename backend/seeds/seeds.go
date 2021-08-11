@@ -11,7 +11,7 @@ import (
 	storev1 "github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/backend/store/etcd"
 	"github.com/sensu/sensu-go/types"
-	"go.etcd.io/etcd/clientv3"
+	"go.etcd.io/etcd/client/v3"
 )
 
 type Config struct {
@@ -121,6 +121,12 @@ func SeedCluster(ctx context.Context, store storev1.Store, client *clientv3.Clie
 		if err := etcd.MigrateDB(ctx, client, etcd.Migrations); err != nil {
 			logger.WithError(err).Error("error bringing the database to the latest version")
 			return fmt.Errorf("error bringing the database to the latest version: %w", err)
+		}
+		if len(etcd.EnterpriseMigrations) > 0 {
+			if err = etcd.MigrateEnterpriseDB(ctx, client, etcd.EnterpriseMigrations); err != nil {
+				logger.WithError(err).Error("error bringing the enterprise database to the latest version")
+				return
+			}
 		}
 	}
 

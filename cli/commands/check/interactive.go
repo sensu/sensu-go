@@ -4,7 +4,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/AlecAivazis/survey"
+	"github.com/AlecAivazis/survey/v2"
 	cron "github.com/robfig/cron/v3"
 	"github.com/sensu/sensu-go/cli/commands/helpers"
 	"github.com/sensu/sensu-go/types"
@@ -139,8 +139,8 @@ func (opts *checkOpts) administerQuestionnaire(editing bool) error {
 				Default: opts.Cron,
 			},
 			Validate: func(val interface{}) error {
-				if val.(string) != "" {
-					if _, err := cron.ParseStandard(val.(string)); err != nil {
+				if value, ok := val.(string); ok && value != "" {
+					if _, err := cron.ParseStandard(value); err != nil {
 						return err
 					}
 				}
@@ -192,8 +192,11 @@ func (opts *checkOpts) administerQuestionnaire(editing bool) error {
 				Help:    "If check requests are published for the check. Value must be true or false.",
 			},
 			Validate: func(val interface{}) error {
-				_, err := strconv.ParseBool(val.(string))
-				return err
+				if value, ok := val.(string); ok {
+					_, err := strconv.ParseBool(value)
+					return err
+				}
+				return nil
 			},
 		},
 		{
@@ -234,8 +237,8 @@ func (opts *checkOpts) administerQuestionnaire(editing bool) error {
 				Default: opts.OutputMetricFormat,
 			},
 			Validate: func(val interface{}) error {
-				if value := strings.TrimSpace(val.(string)); value != "" && value != "none" {
-					if err := types.ValidateOutputMetricFormat(val.(string)); err != nil {
+				if value, _ := val.(string); value != "" && strings.TrimSpace(value) != "none" {
+					if err := types.ValidateOutputMetricFormat(value); err != nil {
 						return err
 					}
 				}
@@ -257,8 +260,11 @@ func (opts *checkOpts) administerQuestionnaire(editing bool) error {
 				Help:    "if true, schedule this check in a round-robin fashion",
 			},
 			Validate: func(val interface{}) error {
-				_, err := strconv.ParseBool(val.(string))
-				return err
+				if value, ok := val.(string); ok {
+					_, err := strconv.ParseBool(value)
+					return err
+				}
+				return nil
 			},
 		},
 	}...)

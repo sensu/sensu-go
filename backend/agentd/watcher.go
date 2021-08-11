@@ -12,7 +12,7 @@ import (
 	storev2 "github.com/sensu/sensu-go/backend/store/v2"
 	etcdstorev2 "github.com/sensu/sensu-go/backend/store/v2/etcdstore"
 	"github.com/sensu/sensu-go/backend/store/v2/wrap"
-	"go.etcd.io/etcd/clientv3"
+	"go.etcd.io/etcd/client/v3"
 )
 
 // GetEntityConfigWatcher watches changes to EntityConfig in etcd and publish them

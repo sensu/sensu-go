@@ -226,7 +226,7 @@ func Test_prepareEvent(t *testing.T) {
 			wantErr: true,
 		},
 		{
-			name: "missing check",
+			name: "missing check and metrics",
 			args: args{
 				agent: &Agent{},
 				event: &corev2.Event{
@@ -234,6 +234,40 @@ func Test_prepareEvent(t *testing.T) {
 				},
 			},
 			wantErr: true,
+		},
+		{
+			name: "check event",
+			args: args{
+				agent: &Agent{
+					config: &Config{
+						AgentName: "agent1",
+						Namespace: "default",
+					},
+				},
+				event: &corev2.Event{
+					ObjectMeta: corev2.ObjectMeta{Namespace: "default"},
+					Check:      corev2.FixtureCheck("check1"),
+				},
+			},
+			wantErr:       false,
+			wantNamespace: "default",
+		},
+		{
+			name: "metrics event",
+			args: args{
+				agent: &Agent{
+					config: &Config{
+						AgentName: "agent1",
+						Namespace: "default",
+					},
+				},
+				event: &corev2.Event{
+					ObjectMeta: corev2.ObjectMeta{Namespace: "default"},
+					Metrics:    corev2.FixtureMetrics(),
+				},
+			},
+			wantErr:       false,
+			wantNamespace: "default",
 		},
 		{
 			name: "invalid check",
@@ -285,6 +319,11 @@ func Test_prepareEvent(t *testing.T) {
 			}
 			if id := tt.args.event.GetUUID(); id == uuid.Nil {
 				t.Errorf("bad uuid: %s", id.String())
+			}
+			if tt.args.agent != nil && tt.args.event.Check != nil {
+				if got, want := tt.args.event.Check.ProcessedBy, tt.args.agent.config.AgentName; got != want {
+					t.Errorf("bad processed_by: got %q, want %q", got, want)
+				}
 			}
 		})
 	}

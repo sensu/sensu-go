@@ -1,6 +1,7 @@
 package cluster
 
 import (
+	"errors"
 	"fmt"
 	"io"
 
@@ -9,7 +10,7 @@ import (
 	"github.com/sensu/sensu-go/cli/elements/table"
 	"github.com/sensu/sensu-go/types"
 	"github.com/spf13/cobra"
-	"go.etcd.io/etcd/etcdserver/etcdserverpb"
+	"go.etcd.io/etcd/api/v3/etcdserverpb"
 )
 
 // HealthCommand gets the Sensu health status of a cluster
@@ -22,6 +23,9 @@ func HealthCommand(cli *cli.SensuCli) *cobra.Command {
 			result, err := cli.Client.Health()
 			if err != nil {
 				return err
+			}
+			if result.Header == nil {
+				return errors.New("result header was empty, etcd cluster may be down")
 			}
 			err = helpers.PrintTitle(helpers.GetChangedStringValueFlag("format", cmd.Flags()), cli.Config.Format(), fmt.Sprintf("Etcd Cluster ID: %x", result.Header.ClusterId), cmd.OutOrStdout())
 			if err != nil {

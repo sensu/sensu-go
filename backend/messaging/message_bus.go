@@ -33,6 +33,11 @@ const (
 
 	// TopicTessenMetric is the topic prefix for tessen api metrics to Tessend.
 	TopicTessenMetric = "sensu:tessen-metric"
+
+	// TopicKeepaliveRaw is a separate channel for keepalives that
+	// allows eventd to process keepalives at a higher priority than
+	// regular events.
+	TopicKeepaliveRaw = "sensu:keepalive-raw"
 )
 
 var (

@@ -156,7 +156,7 @@ func (p *Pipeline) FilterEvent(handler *corev2.Handler, event *corev2.Event) (st
 				// if the product of all expressions is true.
 				ctx := corev2.SetContextFromResource(context.Background(), filter)
 				matchedAssets := asset.GetAssets(ctx, p.store, filter.RuntimeAssets)
-				assets, err := asset.GetAll(context.TODO(), p.assetGetter, matchedAssets)
+				assets, err := asset.GetAll(ctx, p.assetGetter, matchedAssets)
 				if err != nil {
 					logger.WithFields(fields).WithError(err).Error("failed to retrieve assets for filter")
 					if _, ok := err.(*store.ErrInternal); ok {

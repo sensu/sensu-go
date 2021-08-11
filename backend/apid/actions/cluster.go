@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/sensu/sensu-go/backend/store"
-	"go.etcd.io/etcd/clientv3"
+	"go.etcd.io/etcd/client/v3"
 )
 
 // ClusterController is a thin wrapper around clientv3.Cluster. It exists

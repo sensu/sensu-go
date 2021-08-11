@@ -1,6 +1,7 @@
 package cluster
 
 import (
+	"errors"
 	"fmt"
 	"io"
 	"strings"
@@ -9,8 +10,8 @@ import (
 	"github.com/sensu/sensu-go/cli/commands/helpers"
 	"github.com/sensu/sensu-go/cli/elements/table"
 	"github.com/spf13/cobra"
-	"go.etcd.io/etcd/clientv3"
-	"go.etcd.io/etcd/etcdserver/etcdserverpb"
+	"go.etcd.io/etcd/api/v3/etcdserverpb"
+	"go.etcd.io/etcd/client/v3"
 )
 
 // MemberListCommand lists the cluster members
@@ -23,6 +24,9 @@ func MemberListCommand(cli *cli.SensuCli) *cobra.Command {
 			result, err := cli.Client.MemberList()
 			if err != nil {
 				return fmt.Errorf("error listing cluster members: %s", err)
+			}
+			if result.Header == nil {
+				return errors.New("result header was empty, etcd cluster may be down")
 			}
 			err = helpers.PrintTitle(helpers.GetChangedStringValueFlag("format", cmd.Flags()), cli.Config.Format(), fmt.Sprintf("Etcd Cluster ID: %x", result.Header.ClusterId), cmd.OutOrStdout())
 			if err != nil {

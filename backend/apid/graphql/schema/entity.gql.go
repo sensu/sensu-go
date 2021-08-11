@@ -90,7 +90,7 @@ type EntityFieldResolvers interface {
 	Redact(p graphql.ResolveParams) ([]string, error)
 
 	// Status implements response to request for 'status' field.
-	Status(p graphql.ResolveParams) (interface{}, error)
+	Status(p graphql.ResolveParams) (int, error)
 
 	// Related implements response to request for 'related' field.
 	Related(p EntityRelatedFieldResolverParams) (interface{}, error)
@@ -263,9 +263,16 @@ func (_ EntityAliases) Redact(p graphql.ResolveParams) ([]string, error) {
 }
 
 // Status implements response to request for 'status' field.
-func (_ EntityAliases) Status(p graphql.ResolveParams) (interface{}, error) {
+func (_ EntityAliases) Status(p graphql.ResolveParams) (int, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	return val, err
+	ret, ok := graphql1.Int.ParseValue(val).(int)
+	if err != nil {
+		return ret, err
+	}
+	if !ok {
+		return ret, errors.New("unable to coerce value for field 'status'")
+	}
+	return ret, err
 }
 
 // Related implements response to request for 'related' field.
@@ -434,7 +441,7 @@ func _ObjTypeEntityRedactHandler(impl interface{}) graphql1.FieldResolveFn {
 
 func _ObjTypeEntityStatusHandler(impl interface{}) graphql1.FieldResolveFn {
 	resolver := impl.(interface {
-		Status(p graphql.ResolveParams) (interface{}, error)
+		Status(p graphql.ResolveParams) (int, error)
 	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.Status(frp)
@@ -618,9 +625,9 @@ func _ObjectTypeEntityConfigFn() graphql1.ObjectConfig {
 			"status": &graphql1.Field{
 				Args:              graphql1.FieldConfigArgument{},
 				DeprecationReason: "",
-				Description:       "Status represents the MAX status of all events associated with the entity. If\nno events are present value is 0.",
+				Description:       "Status represents the MAX status of all events associated with the entity. If\nno events are present value is -1.",
 				Name:              "status",
-				Type:              graphql1.NewNonNull(graphql.OutputType("Uint")),
+				Type:              graphql1.NewNonNull(graphql1.Int),
 			},
 			"subscriptions": &graphql1.Field{
 				Args:              graphql1.FieldConfigArgument{},

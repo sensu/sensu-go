@@ -13,8 +13,8 @@ import (
 
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/spf13/viper"
-	"go.etcd.io/etcd/clientv3"
-	"go.etcd.io/etcd/pkg/transport"
+	"go.etcd.io/etcd/client/pkg/v3/transport"
+	"go.etcd.io/etcd/client/v3"
 	"golang.org/x/time/rate"
 	"google.golang.org/grpc"
 
@@ -68,7 +68,8 @@ type Backend struct {
 	Etcd                   *etcd.Etcd
 	Store                  store.Store
 	StoreV2                storev2.Interface
-	EventStore             EventStoreUpdater
+	StoreUpdater           StoreUpdater
+	StoreV2Updater         StoreV2Updater
 	RingPool               *ringv2.RingPool
 	GraphQLService         *graphql.Service
 	SecretsProviderManager *secrets.ProviderManager
@@ -82,10 +83,15 @@ type Backend struct {
 	cfg       *Config
 }
 
-// EventStoreUpdater offers a way to update an event store to a different
+// StoreUpdater offers a way to update an event store to a different
 // implementation in-place.
-type EventStoreUpdater interface {
+type StoreUpdater interface {
 	UpdateStore(to store.Store)
+}
+
+// StoreV2Updater is like StoreUpdater, but works on a storev2.Interface.
+type StoreV2Updater interface {
+	UpdateStore(to storev2.Interface)
 }
 
 func newClient(ctx context.Context, config *Config, backend *Backend) (*clientv3.Client, error) {
@@ -220,7 +226,10 @@ func Initialize(ctx context.Context, config *Config) (*Backend, error) {
 	stor := etcdstore.NewStore(b.Client, config.EtcdName)
 	b.Store = stor
 	storv2 := etcdstorev2.NewStore(b.Client)
-	b.StoreV2 = storv2
+	var storev2Proxy storev2.Proxy
+	storev2Proxy.UpdateStore(storv2)
+	b.StoreV2 = &storev2Proxy
+	b.StoreV2Updater = &storev2Proxy
 
 	// Create the ring pool for round-robin functionality
 	b.RingPool = ringv2.NewRingPool(func(path string) ringv2.Interface {
@@ -238,7 +247,8 @@ func Initialize(ctx context.Context, config *Config) (*Backend, error) {
 	}
 
 	storeProxy := store.NewStoreProxy(stor)
-	b.EventStore = storeProxy
+	b.StoreUpdater = storeProxy
+	b.Store = storeProxy
 
 	logger.Debug("Registering backend...")
 
@@ -276,11 +286,11 @@ func Initialize(ctx context.Context, config *Config) (*Backend, error) {
 	// Initialize the secrets provider manager
 	b.SecretsProviderManager = secrets.NewProviderManager()
 
-	auth := &rbac.Authorizer{Store: stor}
+	auth := &rbac.Authorizer{Store: b.Store}
 
 	// Initialize pipelined
 	pipeline, err := pipelined.New(pipelined.Config{
-		Store:                   stor,
+		Store:                   b.Store,
 		Bus:                     bus,
 		ExtensionExecutorGetter: rpc.NewGRPCExtensionExecutor,
 		AssetGetter:             assetGetter,
@@ -299,8 +309,8 @@ func Initialize(ctx context.Context, config *Config) (*Backend, error) {
 	event, err := eventd.New(
 		b.RunContext(),
 		eventd.Config{
-			Store:           storv2,
-			EventStore:      storeProxy,
+			Store:           b.StoreV2,
+			EventStore:      b.Store,
 			Bus:             bus,
 			LivenessFactory: liveness.EtcdFactory(b.RunContext(), b.Client),
 			Client:          b.Client,
@@ -318,7 +328,7 @@ func Initialize(ctx context.Context, config *Config) (*Backend, error) {
 	scheduler, err := schedulerd.New(
 		b.RunContext(),
 		schedulerd.Config{
-			Store:                  stor,
+			Store:                  b.Store,
 			Bus:                    bus,
 			QueueGetter:            queueGetter,
 			RingPool:               b.RingPool,
@@ -352,7 +362,7 @@ func Initialize(ctx context.Context, config *Config) (*Backend, error) {
 		Host:                config.AgentHost,
 		Port:                config.AgentPort,
 		Bus:                 bus,
-		Store:               stor,
+		Store:               b.Store,
 		TLS:                 config.AgentTLSOptions,
 		RingPool:            b.RingPool,
 		WriteTimeout:        config.AgentWriteTimeout,
@@ -369,9 +379,9 @@ func Initialize(ctx context.Context, config *Config) (*Backend, error) {
 	keepalive, err := keepalived.New(keepalived.Config{
 		DeregistrationHandler: config.DeregistrationHandler,
 		Bus:                   bus,
-		Store:                 stor,
-		StoreV2:               storv2,
-		EventStore:            storeProxy,
+		Store:                 b.Store,
+		StoreV2:               b.StoreV2,
+		EventStore:            b.Store,
 		LivenessFactory:       liveness.EtcdFactory(b.RunContext(), b.Client),
 		RingPool:              b.RingPool,
 		BufferSize:            viper.GetInt(FlagKeepalivedBufferSize),
@@ -387,7 +397,7 @@ func Initialize(ctx context.Context, config *Config) (*Backend, error) {
 	authenticator := &authentication.Authenticator{}
 	basic := &basic.Provider{
 		ObjectMeta: corev2.ObjectMeta{Name: basic.Type},
-		Store:      stor,
+		Store:      b.Store,
 	}
 	authenticator.AddProvider(basic)
 
@@ -403,26 +413,26 @@ func Initialize(ctx context.Context, config *Config) (*Backend, error) {
 	}
 
 	// Initialize the health router
-	b.HealthRouter = routers.NewHealthRouter(actions.NewHealthController(stor, b.Client.Cluster, b.EtcdClientTLSConfig))
+	b.HealthRouter = routers.NewHealthRouter(actions.NewHealthController(b.Store, b.Client.Cluster, b.EtcdClientTLSConfig))
 
 	// Initialize GraphQL service
 	b.GraphQLService, err = graphql.NewService(graphql.ServiceConfig{
-		AssetClient:       api.NewAssetClient(stor, auth),
-		CheckClient:       api.NewCheckClient(stor, actions.NewCheckController(stor, queueGetter), auth),
-		EntityClient:      api.NewEntityClient(stor, storv2, storeProxy, auth),
-		EventClient:       api.NewEventClient(storeProxy, auth, bus),
-		EventFilterClient: api.NewEventFilterClient(stor, auth),
-		HandlerClient:     api.NewHandlerClient(stor, auth),
-		HealthController:  actions.NewHealthController(stor, b.Client.Cluster, etcdClientTLSConfig),
-		MutatorClient:     api.NewMutatorClient(stor, auth),
-		SilencedClient:    api.NewSilencedClient(stor, auth),
-		NamespaceClient:   api.NewNamespaceClient(stor, stor, auth, storv2),
-		HookClient:        api.NewHookConfigClient(stor, auth),
-		UserClient:        api.NewUserClient(stor, auth),
-		RBACClient:        api.NewRBACClient(stor, auth),
+		AssetClient:       api.NewAssetClient(b.Store, auth),
+		CheckClient:       api.NewCheckClient(b.Store, actions.NewCheckController(b.Store, queueGetter), auth),
+		EntityClient:      api.NewEntityClient(b.Store, b.StoreV2, b.Store, auth),
+		EventClient:       api.NewEventClient(b.Store, auth, bus),
+		EventFilterClient: api.NewEventFilterClient(b.Store, auth),
+		HandlerClient:     api.NewHandlerClient(b.Store, auth),
+		HealthController:  actions.NewHealthController(b.Store, b.Client.Cluster, etcdClientTLSConfig),
+		MutatorClient:     api.NewMutatorClient(b.Store, auth),
+		SilencedClient:    api.NewSilencedClient(b.Store, auth),
+		NamespaceClient:   api.NewNamespaceClient(b.Store, b.Store, auth, b.StoreV2),
+		HookClient:        api.NewHookConfigClient(b.Store, auth),
+		UserClient:        api.NewUserClient(b.Store, auth),
+		RBACClient:        api.NewRBACClient(b.Store, auth),
 		VersionController: actions.NewVersionController(clusterVersion),
 		MetricGatherer:    prometheus.DefaultGatherer,
-		GenericClient:     &api.GenericClient{Store: stor, Auth: auth},
+		GenericClient:     &api.GenericClient{Store: b.Store, Auth: auth},
 	})
 	if err != nil {
 		return nil, fmt.Errorf("error initializing graphql.Service: %s", err)
@@ -434,9 +444,9 @@ func Initialize(ctx context.Context, config *Config) (*Backend, error) {
 		RequestLimit:        config.APIRequestLimit,
 		URL:                 config.APIURL,
 		Bus:                 bus,
-		Store:               stor,
-		Storev2:             storv2,
-		EventStore:          storeProxy,
+		Store:               b.Store,
+		Storev2:             b.StoreV2,
+		EventStore:          b.Store,
 		QueueGetter:         queueGetter,
 		TLS:                 config.TLS,
 		Cluster:             b.Client.Cluster,
@@ -456,8 +466,8 @@ func Initialize(ctx context.Context, config *Config) (*Backend, error) {
 	tessen, err := tessend.New(
 		b.RunContext(),
 		tessend.Config{
-			Store:      stor,
-			EventStore: storeProxy,
+			Store:      b.Store,
+			EventStore: b.Store,
 			RingPool:   b.RingPool,
 			Client:     b.Client,
 			Bus:        bus,
@@ -471,7 +481,7 @@ func Initialize(ctx context.Context, config *Config) (*Backend, error) {
 }
 
 func (b *Backend) runOnce() error {
-	eCloser := b.EventStore.(closer)
+	eCloser := b.StoreUpdater.(closer)
 	defer eCloser.Close()
 
 	var derr error

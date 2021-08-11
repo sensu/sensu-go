@@ -4,8 +4,8 @@ import (
 	"bytes"
 	"testing"
 
-	"go.etcd.io/etcd/clientv3"
-	"go.etcd.io/etcd/etcdserver/etcdserverpb"
+	"go.etcd.io/etcd/client/v3"
+	"go.etcd.io/etcd/api/v3/etcdserverpb"
 )
 
 func TestRenderMemberAddTemplate(t *testing.T) {

@@ -1,7 +1,7 @@
 package v2
 
 import (
-	etcdVersion "go.etcd.io/etcd/version"
+	etcdVersion "go.etcd.io/etcd/api/v3/version"
 )
 
 // Version holds the current etcd server and cluster version, and the sensu-backend version.

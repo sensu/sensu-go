@@ -15,8 +15,8 @@ import (
 	"github.com/sensu/sensu-go/backend/store/etcd/kvc"
 	"github.com/sensu/sensu-go/util/retry"
 	"github.com/sirupsen/logrus"
-	"go.etcd.io/etcd/clientv3"
-	"go.etcd.io/etcd/mvcc/mvccpb"
+	"go.etcd.io/etcd/api/v3/mvccpb"
+	clientv3 "go.etcd.io/etcd/client/v3"
 	"golang.org/x/time/rate"
 )
 
@@ -68,10 +68,10 @@ func Path(namespace, subscription string) string {
 // UnPath parses a path created by Path.
 func UnPath(key string) (namespace, subscription string, err error) {
 	parts := strings.Split(key, "/")
-	if len(parts) < 4 {
+	if len(parts) < 5 {
 		return "", "", errors.New("invalid ring key")
 	}
-	return parts[2], parts[3], nil
+	return parts[3], parts[4], nil
 }
 
 // Event represents an event that occurred in a ring. The event can originate

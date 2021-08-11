@@ -1,7 +1,7 @@
 package namespace
 
 import (
-	"github.com/AlecAivazis/survey"
+	"github.com/AlecAivazis/survey/v2"
 	"github.com/sensu/sensu-go/types"
 )
 

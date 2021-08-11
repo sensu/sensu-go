@@ -3,7 +3,7 @@ package helpers
 import (
 	"fmt"
 
-	"github.com/AlecAivazis/survey"
+	"github.com/AlecAivazis/survey/v2"
 	"github.com/sensu/sensu-go/cli/elements/globals"
 )
 
@@ -11,6 +11,16 @@ import (
 func ConfirmDelete(name string) bool {
 	confirm := &ConfirmDestructiveOp{
 		Type: "resource",
+		Op:   "delete",
+	}
+	ok, _ := confirm.Ask(name)
+	return ok
+}
+
+// ConfirmDeleteResource confirm a deletion operation before it is completed.
+func ConfirmDeleteResource(name string, resourceType string) bool {
+	confirm := &ConfirmDestructiveOp{
+		Type: fmt.Sprintf("%s resource", resourceType),
 		Op:   "delete",
 	}
 	ok, _ := confirm.Ask(name)

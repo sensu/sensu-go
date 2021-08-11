@@ -369,11 +369,11 @@ func handleConfig(cmd *cobra.Command, arguments []string, server bool) error {
 		viper.SetDefault(flagInsecureSkipTLSVerify, false)
 		viper.SetDefault(flagLogLevel, "warn")
 		viper.SetDefault(backend.FlagEventdWorkers, 100)
-		viper.SetDefault(backend.FlagEventdBufferSize, 100)
+		viper.SetDefault(backend.FlagEventdBufferSize, 1000)
 		viper.SetDefault(backend.FlagKeepalivedWorkers, 100)
-		viper.SetDefault(backend.FlagKeepalivedBufferSize, 100)
+		viper.SetDefault(backend.FlagKeepalivedBufferSize, 1000)
 		viper.SetDefault(backend.FlagPipelinedWorkers, 100)
-		viper.SetDefault(backend.FlagPipelinedBufferSize, 100)
+		viper.SetDefault(backend.FlagPipelinedBufferSize, 1000)
 		viper.SetDefault(backend.FlagAgentWriteTimeout, 15)
 	}
 

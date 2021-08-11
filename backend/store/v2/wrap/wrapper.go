@@ -6,7 +6,9 @@ import (
 	"fmt"
 	"reflect"
 
+	//nolint:staticcheck // SA1004 Replacing this will take some planning.
 	"github.com/golang/protobuf/proto"
+
 	"github.com/golang/snappy"
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	corev3 "github.com/sensu/sensu-go/api/core/v3"
@@ -118,12 +120,6 @@ var CompressNone Option = func(w *Wrapper, r interface{}) error {
 // CompressSnappy is an option for setting snappy compression.
 var CompressSnappy Option = func(w *Wrapper, r interface{}) error {
 	w.Compression = Compression_snappy
-	return nil
-}
-
-// UsePostgres will tell the store to use postgres if it is available.
-// (Currently only available in the enterprise product)
-var UsePostgres Option = func(w *Wrapper, r interface{}) error {
 	return nil
 }
 

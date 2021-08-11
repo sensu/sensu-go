@@ -7,15 +7,15 @@ import (
 	"os"
 	"time"
 
-	"github.com/AlecAivazis/survey"
+	"github.com/AlecAivazis/survey/v2"
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend"
 	"github.com/sensu/sensu-go/backend/etcd"
 	etcdstore "github.com/sensu/sensu-go/backend/store/etcd"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	"go.etcd.io/etcd/clientv3"
-	"go.etcd.io/etcd/pkg/transport"
+	"go.etcd.io/etcd/client/pkg/v3/transport"
+	"go.etcd.io/etcd/client/v3"
 )
 
 const (

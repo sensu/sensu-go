@@ -522,3 +522,36 @@ func TestFailOnAssetCheckWithDisabledAssets(t *testing.T) {
 		t.Errorf("bad status: got %d, want %d", got, want)
 	}
 }
+
+func TestCheckHandlerProcessedBy(t *testing.T) {
+	checkConfig := corev2.FixtureCheckConfig("check")
+	request := &corev2.CheckRequest{Config: checkConfig, Issued: time.Now().Unix()}
+	checkConfig.Stdin = true
+
+	config, cleanup := FixtureConfig()
+	defer cleanup()
+	config.AgentName = "boris"
+	agent, err := NewAgent(config)
+	if err != nil {
+		t.Fatal(err)
+	}
+	ch := make(chan *transport.Message, 1)
+	agent.sendq = ch
+	ex := &mockexecutor.MockExecutor{}
+	agent.executor = ex
+	output := "Here is some output"
+	execution := command.FixtureExecutionResponse(0, output)
+	ex.Return(execution, nil)
+
+	agent.executeCheck(context.TODO(), request, agent.getAgentEntity())
+	msg := <-ch
+
+	event := &corev2.Event{}
+	if err := json.Unmarshal(msg.Payload, event); err != nil {
+		t.Fatal(err)
+	}
+
+	if got, want := event.Check.ProcessedBy, "boris"; got != want {
+		t.Errorf("bad processed_by: got %q, want %q", got, want)
+	}
+}

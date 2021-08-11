@@ -1,3 +1,4 @@
+
 # Changelog
 All notable changes to this project will be documented in this file.
 
@@ -6,6 +7,47 @@ and this project adheres to [Semantic
 Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
+
+### Fixed
+- Agent events API now accepts metrics event
+
+### Added
+- Added `ignore-already-initialized` configuration flag to the sensu-backend
+init command for returning exit code 0 when a cluster has already been
+initialized.
+- Added javascript mutators, which can be selected by setting
+"type": "javascript" on core/v2.Mutators, and specifying valid ECMAScript 5
+code in the "eval" field. See documentation for details.
+- Added --retry-min, --retry-max, and --retry-multiplier flags to sensu-agent
+for controlling agent retry exponential backoff behaviour. --retry-min and
+--retry-max expect duration values like 1s, 10m, 4h. --retry-multiplier expects
+a decimal multiplier value.
+- Added ProcessedBy field to check results. The ProcessedBy field indicates which
+agent processed a particular event.
+- Added `core/v2.Pipeline` resource for configuring Pipeline resources.
+- Added `pipelines` field to `Check` and `CheckConfig`
+
+### Changed
+- When deleting resource with sensuctl, the resource type will now be displayed
+in the confirmation prompt
+- When keepalived encounters round-robin ring errors, the backend no longer
+internally restarts.
+- The core/v2.Mutator type now has a Type field which can be used to tell
+Sensu that the mutator is a different type from the default (pipe). Currently,
+the supported types are "pipe" and "javascript".
+- The default retry values have been increased from a minimum of 10ms to 1s, a
+maximum of 10s to 120s, and the multiplier decreased from 10.0 to 2.0.
+- The backend internal bus default buffer sizes have been increased from 100
+to 1000 items.
+
+### Fixed
+- Sensu Go OSS can now be built on `darwin/arm64`.
+- Fixed a regression in `sensu-backend init` where the exit status returned 0
+if the store was already initialized.
+- Guard against potential crash in the sensuctl cluster member-list command when
+the etcd response header is nil.
+
+## [6.4.0] - 2021-06-23
 
 ### Added
 - Added `etcd-log-level` configuration flag for setting the log level of the
@@ -16,11 +58,20 @@ embedded etcd server.
 external etcds that use user/password authentication instead of client
 certificate authentication. Typical with DBaaS etcd providers. These can only be
 set via these environment variables and intentionally cannot be set via flags.
+- Added wait flag to the sensu-backend init command which toggles waiting
+indefinitely for etcd to become available.
+- Added sensu_go_keepalives prometheus counter.
 
 ### Changed
-- Upgraded Go version from 1.13.15 to 1.16.
-- Upgraded Etcd version from 3.3.22 to 3.4.15.
+- Upgraded Go version from 1.13.15 to 1.16.5.
+- Upgraded Etcd version from 3.3.22 to 3.5.0.
 - The loadit tool now uses UUIDv4 instead of UUIDv1 for agent names.
+- Some Prometheus metric names have changed with the upgrade to Etcd 3.5. See
+https://etcd.io/docs/v3.5/metrics/etcd-metrics-latest.txt for the metrics that
+Etcd 3.5 exposes.
+- The timeout flag for `sensu-backend init` is now treated as a duration instead
+of seconds. If the value is less than 1 second, the value is converted to
+seconds.
 
 ### Fixed
 - Fixed config deprecation warnings from being shown when deprecated config
@@ -29,6 +80,9 @@ options weren't set.
 - Fixed a bug where role bindings that refer to missing roles would cause the
 wrong status to be returned from the HTTP API, and the dashboard to go into a
 crash loop.
+- Fixed a bug where an empty subscription was present in the deregistration event's check.
+- Fixed issue with Windows agent not handling command timeouts properly
+- Sensu Go OSS can now be built on `darwin/arm64`.
 
 ## [6.3.0] - 2021-04-07
 
@@ -61,9 +115,6 @@ in OSS builds.
 - Fixed a potential deadlock in agentd.
 - Fixed a bug where some Etcd watchers could try to process watch events holding
 invalid pointers.
-### Added
-- Added wait flag to the sensu-backend init command which toggles waiting
-indefinitely for etcd to become available.
 
 ## [6.2.3] - 2021-01-21
 

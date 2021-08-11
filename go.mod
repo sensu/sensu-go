@@ -7,11 +7,10 @@ replace (
 	github.com/sensu/sensu-go/api/core/v3 => ./api/core/v3
 	github.com/sensu/sensu-go/backend/store/v2 => ./backend/store/v2
 	github.com/sensu/sensu-go/types => ./types
-	go.etcd.io/etcd => go.etcd.io/etcd v0.0.0-20210512015243-d19fbe541bf9
 )
 
 require (
-	github.com/AlecAivazis/survey v1.4.1
+	github.com/AlecAivazis/survey/v2 v2.2.14
 	github.com/Azure/go-ansiterm v0.0.0-20170929234023-d6e3b3328b78 // indirect
 	github.com/StackExchange/wmi v0.0.0-20180725035823-b12b22c5341f // indirect
 	github.com/ash2k/stager v0.0.0-20170622123058-6e9c7b0eacd4 // indirect
@@ -26,19 +25,17 @@ require (
 	github.com/evanphx/json-patch/v5 v5.1.0
 	github.com/frankban/quicktest v1.7.2 // indirect
 	github.com/ghodss/yaml v1.0.0
+	github.com/go-ole/go-ole v1.2.1 // indirect
 	github.com/go-resty/resty/v2 v2.5.0
-	github.com/gogo/protobuf v1.3.1
-	github.com/golang/groupcache v0.0.0-20191002201903-404acd9df4cc // indirect
-	github.com/golang/protobuf v1.3.3
+	github.com/gogo/protobuf v1.3.2
+	github.com/golang/protobuf v1.5.2
 	github.com/golang/snappy v0.0.1
-	github.com/google/uuid v1.1.1
-	github.com/gorilla/mux v1.7.3
+	github.com/google/uuid v1.1.2
+	github.com/gorilla/mux v1.8.0
 	github.com/gorilla/websocket v1.4.2
 	github.com/gotestyourself/gotestyourself v2.2.0+incompatible // indirect
 	github.com/graph-gophers/dataloader v0.0.0-20180104184831-78139374585c
 	github.com/graphql-go/graphql v0.7.9-0.20191125031726-2e2b648ecbe4
-	github.com/grpc-ecosystem/go-grpc-middleware v1.1.0 // indirect
-	github.com/grpc-ecosystem/grpc-gateway v1.11.3 // indirect
 	github.com/gxed/GoEndian v0.0.0-20160916112711-0f5c6873267e // indirect
 	github.com/gxed/eventfd v0.0.0-20160916113412-80a92cca79a8 // indirect
 	github.com/hashicorp/go-version v1.2.0
@@ -47,46 +44,43 @@ require (
 	github.com/libp2p/go-reuseport v0.0.0-20180416043609-15a1cd37f050 // indirect
 	github.com/libp2p/go-sockaddr v0.1.0 // indirect
 	github.com/mattn/go-colorable v0.1.4 // indirect
-	github.com/mattn/go-runewidth v0.0.9 // indirect
 	github.com/mgutz/ansi v0.0.0-20170206155736-9520e82c474b
 	github.com/mholt/archiver/v3 v3.3.1-0.20191129193105-44285f7ed244
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/mitchellh/hashstructure v1.0.0
 	github.com/mitchellh/mapstructure v1.1.2
-	github.com/olekukonko/tablewriter v0.0.0-20180506121414-d4647c9c7a84
-	github.com/pkg/errors v0.9.1 // indirect
-	github.com/prometheus/client_golang v1.2.0
-	github.com/prometheus/client_model v0.0.0-20190812154241-14fe0d1b01d4
-	github.com/prometheus/common v0.7.0
+	github.com/olekukonko/tablewriter v0.0.5
+	github.com/prometheus/client_golang v1.11.0
+	github.com/prometheus/client_model v0.2.0
+	github.com/prometheus/common v0.26.0
 	github.com/robertkrimen/otto v0.0.0-20191219234010-c382bd3c16ff
-	github.com/robfig/cron v1.2.0
 	github.com/robfig/cron/v3 v3.0.1
 	github.com/sensu/lasr v1.2.1
 	github.com/sensu/sensu-go/api/core/v2 v2.6.0
 	github.com/sensu/sensu-go/api/core/v3 v3.3.0
 	github.com/sensu/sensu-go/types v0.3.0
-	github.com/shirou/gopsutil v0.0.0-20190901111213-e4ec7b275ada
-	github.com/sirupsen/logrus v1.6.0
-	github.com/spf13/cobra v0.0.5
+	github.com/shirou/gopsutil v3.21.4+incompatible
+	github.com/sirupsen/logrus v1.7.0
+	github.com/spf13/cobra v1.1.3
 	github.com/spf13/pflag v1.0.5
-	github.com/spf13/viper v1.6.2
+	github.com/spf13/viper v1.7.0
 	github.com/stretchr/objx v0.2.0 // indirect
-	github.com/stretchr/testify v1.6.0
+	github.com/stretchr/testify v1.7.0
+	github.com/tklauser/go-sysconf v0.3.6 // indirect
 	github.com/willf/pad v0.0.0-20160331131008-b3d780601022
-	go.etcd.io/bbolt v1.3.4
-	go.etcd.io/etcd v3.4.16+incompatible
-	go.uber.org/zap v1.16.0
-	golang.org/x/crypto v0.0.0-20200622213623-75b288015ac9
-	golang.org/x/net v0.0.0-20201224014010-6772e930b67b
-	golang.org/x/sys v0.0.0-20210119212857-b64e53b001e4
-	golang.org/x/time v0.0.0-20191024005414-555d28b269f0
-	golang.org/x/tools v0.0.0-20200207224406-61798d64f025 // indirect
-	google.golang.org/genproto v0.0.0-20191009194640-548a555dbc03 // indirect
-	google.golang.org/grpc v1.26.0
-	gopkg.in/AlecAivazis/survey.v1 v1.4.0 // indirect
-	gopkg.in/check.v1 v1.0.0-20190902080502-41f04d3bba15 // indirect
+	go.etcd.io/bbolt v1.3.6
+	go.etcd.io/etcd/api/v3 v3.5.0
+	go.etcd.io/etcd/client/pkg/v3 v3.5.0
+	go.etcd.io/etcd/client/v3 v3.5.0
+	go.etcd.io/etcd/server/v3 v3.5.0
+	go.etcd.io/etcd/tests/v3 v3.5.0
+	go.uber.org/zap v1.17.0
+	golang.org/x/crypto v0.0.0-20201002170205-7f63de1d35b0
+	golang.org/x/net v0.0.0-20210405180319-a5a99cb37ef4
+	golang.org/x/sys v0.0.0-20210603081109-ebe580a85c40
+	golang.org/x/time v0.0.0-20210220033141-f8bda1e9f3ba
+	google.golang.org/grpc v1.38.0
 	gopkg.in/h2non/filetype.v1 v1.0.3
-	gopkg.in/yaml.v2 v2.3.0
+	gopkg.in/yaml.v2 v2.4.0
 	gotest.tools v2.2.0+incompatible // indirect
-	sigs.k8s.io/yaml v1.2.0 // indirect
 )

@@ -151,7 +151,6 @@ func TestVersion(t *testing.T) {
 			w := httptest.NewRecorder()
 			router.ServeHTTP(w, r)
 
-
 			assert.Equal(t, tc.expectedResponse, w.Code)
 			assert.Equal(t, tc.json, w.Body.String())
 		})

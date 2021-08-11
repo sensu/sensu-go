@@ -7,7 +7,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/AlecAivazis/survey"
+	"github.com/AlecAivazis/survey/v2"
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend"
 	"github.com/sensu/sensu-go/backend/etcd"
@@ -15,14 +15,15 @@ import (
 	etcdstore "github.com/sensu/sensu-go/backend/store/etcd"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	"go.etcd.io/etcd/clientv3"
-	"go.etcd.io/etcd/pkg/transport"
+	"go.etcd.io/etcd/client/v3"
+	"go.etcd.io/etcd/client/pkg/v3/transport"
 	"google.golang.org/grpc"
 )
 
 const (
-	defaultTimeout = "5"
+	defaultTimeout = "5s"
 
+	flagIgnoreAlreadyInitialized = "ignore-already-initialized"
 	flagInitAdminUsername = "cluster-admin-username"
 	flagInitAdminPassword = "cluster-admin-password"
 	flagInteractive       = "interactive"
@@ -143,13 +144,18 @@ func InitCommand() *cobra.Command {
 				clientURLs = viper.GetStringSlice(flagEtcdAdvertiseClientURLs)
 			}
 
+			timeout := viper.GetDuration(flagTimeout)
+			if timeout < 1 * time.Second {
+				timeout = timeout * time.Second
+			}
+
 			initConfig := initConfig{
 				Config: *cfg,
 				SeedConfig: seeds.Config{
 					AdminUsername: viper.GetString(flagInitAdminUsername),
 					AdminPassword: viper.GetString(flagInitAdminPassword),
 				},
-				Timeout: viper.GetDuration(flagTimeout),
+				Timeout: timeout,
 			}
 
 			wait := viper.GetBool(flagWait)
@@ -197,7 +203,10 @@ func InitCommand() *cobra.Command {
 					err := initializeStore(clientConfig, initConfig, url)
 					if err != nil {
 						if errors.Is(err, seeds.ErrAlreadyInitialized) {
-							return nil
+							if viper.GetBool(flagIgnoreAlreadyInitialized) {
+								return nil
+							}
+							return err
 						}
 						logger.Error(err.Error())
 						continue
@@ -211,11 +220,12 @@ func InitCommand() *cobra.Command {
 		},
 	}
 
+	cmd.Flags().Bool(flagIgnoreAlreadyInitialized, false, "exit 0 if the cluster has already been initialized")
 	cmd.Flags().String(flagInitAdminUsername, "", "cluster admin username")
 	cmd.Flags().String(flagInitAdminPassword, "", "cluster admin password")
 	cmd.Flags().Bool(flagInteractive, false, "interactive mode")
-	cmd.Flags().String(flagTimeout, defaultTimeout, "timeout, in seconds, for failing to establish a connection to etcd")
-	cmd.Flags().Bool(flagWait, false, "wait indefinitely to establish a connection to etcd (takes precedence over timeout)")
+	cmd.Flags().String(flagTimeout, defaultTimeout, "duration to wait before a connection attempt to etcd is considered failed (must be >= 1s)")
+	cmd.Flags().Bool(flagWait, false, "continuously retry to establish a connection to etcd until it is successful")
 
 	setupErr = handleConfig(cmd, os.Args[1:], false)
 
@@ -224,7 +234,7 @@ func InitCommand() *cobra.Command {
 
 func initializeStore(clientConfig clientv3.Config, initConfig initConfig, endpoint string) error {
 	ctx, cancel := context.WithTimeout(
-		clientv3.WithRequireLeader(context.Background()), initConfig.Timeout*time.Second)
+		clientv3.WithRequireLeader(context.Background()), initConfig.Timeout)
 	defer cancel()
 
 	clientConfig.Context = ctx
@@ -245,7 +255,7 @@ func initializeStore(clientConfig clientv3.Config, initConfig initConfig, endpoi
 	store := etcdstore.NewStore(client, "")
 	if err := seeds.SeedCluster(ctx, store, client, initConfig.SeedConfig); err != nil {
 		if errors.Is(err, seeds.ErrAlreadyInitialized) {
-			return nil
+			return err
 		}
 		return fmt.Errorf("error seeding cluster, is cluster healthy? %w", err)
 	}

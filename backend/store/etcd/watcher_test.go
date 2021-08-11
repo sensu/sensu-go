@@ -12,8 +12,8 @@ import (
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/testing/fixture"
 	"github.com/sirupsen/logrus/hooks/test"
-	"go.etcd.io/etcd/clientv3"
-	"go.etcd.io/etcd/integration"
+	"go.etcd.io/etcd/client/v3"
+	"go.etcd.io/etcd/tests/v3/integration"
 )
 
 const timeout = 10
@@ -158,6 +158,7 @@ func TestWatchQueueEvent(t *testing.T) {
 }
 
 func TestWatchRetry(t *testing.T) {
+	integration.BeforeTestExternal(t)
 	c := integration.NewClusterV3(t, &integration.ClusterConfig{GRPCKeepAliveInterval: 1 * time.Second, GRPCKeepAliveTimeout: 2 * time.Second, Size: 3})
 	defer c.Terminate(t)
 
@@ -193,6 +194,7 @@ func TestWatchRetry(t *testing.T) {
 }
 
 func TestWatchCompactedRevision(t *testing.T) {
+	integration.BeforeTestExternal(t)
 	c := integration.NewClusterV3(t, &integration.ClusterConfig{GRPCKeepAliveInterval: 1 * time.Second, GRPCKeepAliveTimeout: 2 * time.Second, Size: 3})
 	defer c.Terminate(t)
 
@@ -245,6 +247,7 @@ func TestWatchCompactedRevision(t *testing.T) {
 }
 
 func TestWatchRevisions(t *testing.T) {
+	integration.BeforeTestExternal(t)
 	c := integration.NewClusterV3(t, &integration.ClusterConfig{GRPCKeepAliveInterval: 1 * time.Second, GRPCKeepAliveTimeout: 2 * time.Second, Size: 3})
 	defer c.Terminate(t)
 

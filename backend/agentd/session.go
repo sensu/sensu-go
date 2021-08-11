@@ -611,7 +611,12 @@ func (s *Session) handleEvent(_ context.Context, payload []byte) error {
 	// Add the entity subscription to the subscriptions of this entity
 	event.Entity.Subscriptions = corev2.AddEntitySubscription(event.Entity.Name, event.Entity.Subscriptions)
 
-	return s.bus.Publish(messaging.TopicEventRaw, event)
+	if event.HasCheck() && event.Check.Name == corev2.KeepaliveCheckName {
+		return s.bus.Publish(messaging.TopicKeepaliveRaw, event)
+	} else {
+		return s.bus.Publish(messaging.TopicEventRaw, event)
+	}
+
 }
 
 // subscribe adds a subscription to the session for every check subscriptions

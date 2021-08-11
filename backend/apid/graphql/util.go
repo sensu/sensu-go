@@ -18,15 +18,15 @@ func clampInt(num, min, max int) int {
 	return num
 }
 
-// maxUint32 returns larger of x or y.
-func maxUint32(x, y uint32) uint32 {
+// maxInt returns larger of x or y.
+func maxInt(x, y int) int {
 	if x > y {
 		return x
 	}
 	return y
 }
 
-// maxUint32 returns larger of x or y.
+// clampSlice ensures given indexes are within bounds.
 func clampSlice(low, high, len int) (int, int) {
 	low = clampInt(low, 0, len)
 	high = clampInt(high, low, len)

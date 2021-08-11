@@ -7,7 +7,7 @@ import (
 	"testing"
 
 	"github.com/sensu/sensu-go/backend/store"
-	"go.etcd.io/etcd/clientv3"
+	"go.etcd.io/etcd/client/v3"
 )
 
 func TestGetSetDatabaseVersion(t *testing.T) {

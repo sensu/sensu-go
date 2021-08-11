@@ -11,8 +11,8 @@ import (
 
 	"github.com/sensu/sensu-go/backend/store/etcd/kvc"
 	"github.com/sirupsen/logrus"
-	"go.etcd.io/etcd/clientv3"
-	"go.etcd.io/etcd/mvcc/mvccpb"
+	"go.etcd.io/etcd/client/v3"
+	"go.etcd.io/etcd/api/v3/mvccpb"
 	"golang.org/x/time/rate"
 )
 

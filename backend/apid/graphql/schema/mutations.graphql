@@ -290,8 +290,11 @@ input SilenceInputs {
   """
   expireOnResolve: Boolean = true
 
-  "Expire is the number of seconds the entry will live"
-  expire: Int = -1
+  "Expire is the number of seconds the entry will live. If the expireAt field is given, it will take precedence."
+  expire: Int = -1 @deprecated(reason: "prefer use of expireAt field; will be removed in a future release")
+
+  "ExpireAt is the time at which the entry expires"
+  expireAt: DateTime
 }
 
 type CreateSilencePayload {

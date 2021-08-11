@@ -10,7 +10,7 @@ import (
 
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/stretchr/testify/assert"
-	"go.etcd.io/etcd/clientv3"
+	"go.etcd.io/etcd/client/v3"
 )
 
 func TestGetClusterHealth(t *testing.T) {

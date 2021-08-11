@@ -1632,8 +1632,14 @@ type SilenceInputs struct {
 	   to true
 	*/
 	ExpireOnResolve bool
-	// Expire is the number of seconds the entry will live
+	/*
+	   Expire is the number of seconds the entry will live. If the expireAt field is given, it will take precedence.
+
+	   Deprecated: prefer use of expireAt field; will be removed in a future release
+	*/
 	Expire int
+	// ExpireAt is the time at which the entry expires
+	ExpireAt time.Time
 }
 
 // SilenceInputsType self descriptive
@@ -1653,8 +1659,12 @@ func _InputTypeSilenceInputsConfigFn() graphql1.InputObjectConfig {
 			},
 			"expire": &graphql1.InputObjectFieldConfig{
 				DefaultValue: -1,
-				Description:  "Expire is the number of seconds the entry will live",
+				Description:  "Expire is the number of seconds the entry will live. If the expireAt field is given, it will take precedence.",
 				Type:         graphql1.Int,
+			},
+			"expireAt": &graphql1.InputObjectFieldConfig{
+				Description: "ExpireAt is the time at which the entry expires",
+				Type:        graphql1.DateTime,
 			},
 			"expireOnResolve": &graphql1.InputObjectFieldConfig{
 				DefaultValue: true,

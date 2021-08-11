@@ -401,7 +401,13 @@ func copySilenceInputs(r *corev2.Silenced, ins *schema.SilenceInputs) {
 		r.Begin = ins.Begin.Unix()
 	}
 
+	r.ExpireAt = 0
+	if ins.ExpireAt.After(time.Now()) {
+		r.ExpireAt = ins.ExpireAt.Unix()
+	} else if ins.Expire > 0 {
+		r.ExpireAt = int64(ins.Expire)
+	}
+
 	r.Reason = ins.Reason
-	r.Expire = int64(ins.Expire)
 	r.ExpireOnResolve = ins.ExpireOnResolve
 }

@@ -95,6 +95,30 @@ func addAssets(vm *otto.Otto, assets JavascriptAssets) error {
 
 func addTimeFuncs(vm *otto.Otto) error {
 	funcs := map[string]interface{}{
+		"seconds_since": func(args ...interface{}) interface{} {
+			if len(args) == 0 {
+				return 0
+			}
+			t := time.Unix(toInt64(args[0]), 0).UTC()
+			s := time.Since(t)
+			return s.Seconds()
+		},
+		// second returns the second within a minute
+		"second": func(args ...interface{}) interface{} {
+			if len(args) == 0 {
+				return 0
+			}
+			t := time.Unix(toInt64(args[0]), 0).UTC()
+			return t.Second()
+		},
+		// minute returns the minute within an hour
+		"minute": func(args ...interface{}) interface{} {
+			if len(args) == 0 {
+				return 0
+			}
+			t := time.Unix(toInt64(args[0]), 0).UTC()
+			return t.Minute()
+		},
 		// hour returns the hour within the day
 		"hour": func(args ...interface{}) interface{} {
 			if len(args) == 0 {

@@ -1,6 +1,6 @@
 package testing
 
-import "go.etcd.io/etcd/clientv3"
+import "go.etcd.io/etcd/client/v3"
 
 // MemberList ...
 func (c *MockClient) MemberList() (*clientv3.MemberListResponse, error) {

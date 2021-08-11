@@ -4,7 +4,7 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/AlecAivazis/survey"
+	"github.com/AlecAivazis/survey/v2"
 	"github.com/sensu/sensu-go/cli"
 	"github.com/sensu/sensu-go/cli/commands/flags"
 	"github.com/sensu/sensu-go/cli/commands/helpers"
