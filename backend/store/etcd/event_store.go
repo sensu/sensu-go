@@ -36,11 +36,11 @@ const (
 var (
 	eventKeyBuilder = store.NewKeyBuilder(eventsPathPrefix)
 
-	eventBytesSummary = metrics.NewEventBytesSummaryVec(EventBytesSummaryName, EventBytesSummaryHelp)
+	EventBytesSummary = metrics.NewEventBytesSummaryVec(EventBytesSummaryName, EventBytesSummaryHelp)
 )
 
 func init() {
-	_ = prometheus.Register(eventBytesSummary)
+	_ = prometheus.Register(EventBytesSummary)
 }
 
 func getEventPath(event *corev2.Event) string {
@@ -311,9 +311,7 @@ func (s *Store) UpdateEvent(ctx context.Context, event *corev2.Event) (*corev2.E
 		return nil, nil, &store.ErrEncode{Err: err}
 	}
 
-	// only record event size for check events as all events will have a check
-	// and no metrics by this point
-	eventBytesSummary.WithLabelValues(typeLabelValue).Observe(float64(len(eventBytes)))
+	EventBytesSummary.WithLabelValues(typeLabelValue).Observe(float64(len(eventBytes)))
 
 	cmp := namespaceExistsForResource(event.Entity)
 	req := clientv3.OpPut(getEventPath(event), string(eventBytes))
