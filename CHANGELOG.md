@@ -26,6 +26,11 @@ a decimal multiplier value.
 agent processed a particular event.
 - Added `core/v2.Pipeline` resource for configuring Pipeline resources.
 - Added `pipelines` field to `Check` and `CheckConfig`
+- Added support for `SENSU_BACKEND_ETCD_CLIENT_USERNAME` and
+`SENSU_BACKEND_ETCD_CLIENT_PASSWORD` environment variables for connecting to
+external etcds that use user/password authentication instead of client
+certificate authentication. Typical with DBaaS etcd providers. These can only be
+set via these environment variables and intentionally cannot be set via flags.
 
 ### Changed
 - When deleting resource with sensuctl, the resource type will now be displayed
@@ -52,12 +57,6 @@ the etcd response header is nil.
 ### Added
 - Added `etcd-log-level` configuration flag for setting the log level of the
 embedded etcd server.
-- Added API key authentication support to sensuctl.
-- Added support for `SENSU_BACKEND_ETCD_CLIENT_USERNAME` and
-`SENSU_BACKEND_ETCD_CLIENT_PASSWORD` environment variables for connecting to
-external etcds that use user/password authentication instead of client
-certificate authentication. Typical with DBaaS etcd providers. These can only be
-set via these environment variables and intentionally cannot be set via flags.
 - Added wait flag to the sensu-backend init command which toggles waiting
 indefinitely for etcd to become available.
 - Added sensu_go_keepalives prometheus counter.
