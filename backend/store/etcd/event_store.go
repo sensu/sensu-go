@@ -40,7 +40,9 @@ var (
 )
 
 func init() {
-	_ = prometheus.Register(EventBytesSummary)
+	if err := prometheus.Register(EventBytesSummary); err != nil {
+		metrics.LogError(logger, EventBytesSummaryName, err)
+	}
 }
 
 func getEventPath(event *corev2.Event) string {

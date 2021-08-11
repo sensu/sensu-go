@@ -31,6 +31,15 @@ const (
 	// Time to wait before force close on connection.
 	closeGracePeriod = 10 * time.Second
 
+	// Name of the sessions counter metric
+	sessionCounterName = "sensu_go_agent_sessions"
+
+	// Name of the session errors counter metric
+	sessionErrorCounterName = "sensu_go_session_errors"
+
+	// Name of the websocket errors metric
+	websocketErrorCounterName = "sensu_go_websocket_errors"
+
 	// EventBytesSummaryName is the name of the prometheus summary vec used to
 	// track event sizes (in bytes).
 	EventBytesSummaryName = "sensu_go_agentd_event_bytes"
@@ -45,21 +54,21 @@ var (
 
 	sessionCounter = prometheus.NewGaugeVec(
 		prometheus.GaugeOpts{
-			Name: "sensu_go_agent_sessions",
+			Name: sessionCounterName,
 			Help: "Number of active agent sessions on this backend",
 		},
 		[]string{"namespace"},
 	)
 	websocketErrorCounter = prometheus.NewCounterVec(
 		prometheus.CounterOpts{
-			Name: "sensu_go_websocket_errors",
+			Name: websocketErrorCounterName,
 			Help: "The total number of websocket errors",
 		},
 		[]string{"op", "error"},
 	)
 	sessionErrorCounter = prometheus.NewCounterVec(
 		prometheus.CounterOpts{
-			Name: "sensu_go_session_errors",
+			Name: sessionErrorCounterName,
 			Help: "The total number of session errors",
 		},
 		[]string{"error"},
