@@ -8,7 +8,6 @@ import (
 	"time"
 
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
-	corev3 "github.com/sensu/sensu-go/api/core/v3"
 	"github.com/sensu/sensu-go/asset"
 	"github.com/sensu/sensu-go/backend/licensing"
 	"github.com/sensu/sensu-go/backend/messaging"
@@ -19,54 +18,6 @@ import (
 	"github.com/sensu/sensu-go/rpc"
 	"github.com/sirupsen/logrus"
 )
-
-type WorkflowProcessor struct {
-	Filters  []Filter
-	Mutators []Mutator
-	Handlers []Handler
-}
-
-// func NewWorkflowProcessor() WorkflowProcessor {}
-
-//handlers := []Handler{
-//	ogPipelineHandler{},
-//	tcpStreamHandler{}
-//}
-
-type EventProcessor interface {
-	Process(context.Context, interface{}) error
-}
-
-type Pipeline struct {
-	// the pipeline daemon now may be configured with different
-	// implementations
-	processors []EventProcessor // to be safe, we may want a mutex as well
-}
-
-// when we handle an event we iterate through the available processors until
-// we find one that can work with the current event.
-// func (p *Pipeline) HandleEvent(ctx context.Context, event *corev2.Event) error {
-// 	var processor Processor
-// 	for _, po := range p.processor {
-// 		if !p.processor.CanProcess(event) {
-// 			continue
-// 		}
-// 		processor = po
-// 	}
-// 	processor.Process(event)
-// }
-
-// flatten event handlers (check & metrics), reduced into common interface for pipelines
-//workflows := []corev3.PipelineWorkflow{}
-//for _, handlers := range event.Check.Handlers {
-
-// check (has both check output and metrics)
-//   into pipelined
-//     pipelines ->
-//       ops-check-pipeline ->
-//         -> slack
-//       ops-metrics-pipeline ->
-//         -> influxdb
 
 var defaultStoreTimeout = time.Minute
 
@@ -95,6 +46,9 @@ type Pipelined struct {
 	secretsProviderManager *secrets.ProviderManager
 	backendEntity          *corev2.Entity
 	LicenseGetter          licensing.Getter
+	pipelineFilters        []pipeline.Filter
+	pipelineMutators       []pipeline.Mutator
+	pipelineHandlers       []pipeline.Handler
 }
 
 // Config configures a Pipelined.
@@ -195,7 +149,19 @@ func (p *Pipelined) Name() string {
 	return "pipelined"
 }
 
-func (p *Pipelined) pipelineFromEventHandlers(ctx context.Context, event *corev2.Event) (*corev3.Pipeline, error) {
+func (p *Pipelined) AddPipelineFilter(filter pipeline.Filter) {
+	p.pipelineFilters = append(p.pipelineFilters, filter)
+}
+
+func (p *Pipelined) AddPipelineMutator(mutator pipeline.Mutator) {
+	p.pipelineMutators = append(p.piplineMutators, mutator)
+}
+
+func (p *Pipelined) AddPipelineHandler(handler pipeline.Handler) {
+	p.pipelineHandlers = append(p.pipelineHandlers, handler)
+}
+
+func (p *Pipelined) pipelineFromEventHandlers(ctx context.Context, event *corev2.Event) (*corev2.Pipeline, error) {
 	fields := logrus.Fields{
 		"namespace": corev2.ContextNamespace(ctx),
 	}
@@ -223,7 +189,7 @@ func (p *Pipelined) pipelineFromEventHandlers(ctx context.Context, event *corev2
 		handlers = append(handlers, handler)
 	}
 
-	return corev3.PipelineFromHandlers(ctx, handlers), nil
+	return corev2.PipelineFromHandlers(ctx, handlers), nil
 }
 
 // createPipelines creates several goroutines, responsible for pulling
@@ -254,13 +220,9 @@ func (p *Pipelined) createPipelines(count int, channel chan interface{}) {
 					}
 
 					ctx, cancel := context.WithCancel(context.Background())
+					defer cancel()
 
-					pipelines := []*corev3.Pipeline{}
-
-					// convert event's handlers to their own pipeline and add
-					// the pipeline to the list of pipelines.
-					handlersPipeline, err := p.pipelineFromEventHandlers(ctx, event)
-					if err != nil {
+					if err := pipeline.HandleEvent(ctx, event); err != nil {
 						if _, ok := err.(*store.ErrInternal); ok {
 							select {
 							case p.errChan <- err:
@@ -269,25 +231,6 @@ func (p *Pipelined) createPipelines(count int, channel chan interface{}) {
 							return
 						}
 						logger.Error(err)
-					}
-					pipelines = append(pipelines, handlersPipeline)
-
-					for _, eventPipeline := range pipelines {
-						pipeline.
-							pipeline.ExecutePipeline()
-						if err := pipeline.HandleEvent(ctx, event); err != nil {
-						}
-						cancel()
-						if err != nil {
-							if _, ok := err.(*store.ErrInternal); ok {
-								select {
-								case p.errChan <- err:
-								case <-p.stopping:
-								}
-								return
-							}
-							logger.Error(err)
-						}
 					}
 				}
 			}

@@ -1,34 +1,16 @@
 package pipeline
 
 import (
-	"context"
 	"time"
 
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
-	corev3 "github.com/sensu/sensu-go/api/core/v3"
 	"github.com/sensu/sensu-go/asset"
 	"github.com/sensu/sensu-go/backend/licensing"
+	"github.com/sensu/sensu-go/backend/pipeline/legacy"
 	"github.com/sensu/sensu-go/backend/secrets"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/command"
-	"github.com/sensu/sensu-go/rpc"
-	"github.com/sensu/sensu-go/types"
 )
-
-type FilterProcessor interface {
-	CanFilter(context.Context, *corev3.ResourceReference) bool
-	Filter(context.Context, *corev3.ResourceReference, *corev2.Event) (bool, error)
-}
-
-type MutatorProcessor interface {
-	CanMutate(context.Context, *corev3.ResourceReference) bool
-	Mutate(context.Context, *corev3.ResourceReference, *corev2.Event) (*corev2.Event, error)
-}
-
-type HandlerProcessor interface {
-	CanHandle(context.Context, *corev3.ResourceReference) bool
-	Handle(context.Context, *corev3.ResourceReference, *corev2.Event) error
-}
 
 // Pipeline takes events as inputs, and treats them in various ways according
 // to the event's check configuration.
@@ -41,32 +23,31 @@ type Pipeline struct {
 	storeTimeout           time.Duration
 	secretsProviderManager *secrets.ProviderManager
 	licenseGetter          licensing.Getter
-	filterProcessors       []FilterProcessor
-	mutatorProcessors      []MutatorProcessor
-	handlerProcessors      []HandlerProcessor
+	filters                []Filter
+	mutators               []Mutator
+	handlers               []Handler
 }
 
-func (p *Pipeline) AddFilterProcessor(processor FilterProcessor) {
-	p.filterProcessors = append(p.filterProcessors, processor)
+func (p *Pipeline) AddFilter(filter Filter) {
+	p.filters = append(p.filters, filter)
 }
 
-func (p *Pipeline) AddMutatorProcessor(processor MutatorProcessor) {
-	p.mutatorProcessors = append(p.mutatorProcessors, processor)
+func (p *Pipeline) AddMutator(mutator Mutator) {
+	p.mutators = append(p.mutators, mutator)
 }
 
-func (p *Pipeline) AddHandlerProcessor(processor HandlerProcessor) {
-	p.handlerProcessors = append(p.handlerProcessors, processor)
+func (p *Pipeline) AddHandler(handler HandlerProcessor) {
+	p.handlers = append(p.handlers, handler)
 }
 
 // Config holds the configuration for a Pipeline.
 type Config struct {
-	Store                   store.Store
-	AssetGetter             asset.Getter
-	BackendEntity           *corev2.Entity
-	ExtensionExecutorGetter ExtensionExecutorGetterFunc
-	StoreTimeout            time.Duration
-	SecretsProviderManager  *secrets.ProviderManager
-	LicenseGetter           licensing.Getter
+	Store                  store.Store
+	AssetGetter            asset.Getter
+	BackendEntity          *corev2.Entity
+	StoreTimeout           time.Duration
+	SecretsProviderManager *secrets.ProviderManager
+	LicenseGetter          licensing.Getter
 }
 
 // Option is a functional option used to configure Pipelines.
@@ -74,48 +55,52 @@ type Option func(*Pipeline)
 
 // New creates a new Pipeline from the provided configuration.
 func New(c Config, options ...Option) *Pipeline {
-	defaultFilterProcessors := []FilterProcessor{
-		&StandardFilterProcessor{
-			assetGetter:       c.AssetGetter,
-			extensionExecutor: c.ExtensionExecutorGetter,
-			store:             c.Store,
-			storeTimeout:      c.StoreTimeout,
+	// default pipeline filters to search through when searching for a pipeline
+	// filter that supports a referenced event filter resource.
+	defaultFilters := []Filter{
+		&legacy.Filter{
+			AssetGetter:  c.AssetGetter,
+			Store:        c.Store,
+			StoreTimeout: c.StoreTimeout,
 		},
 	}
 
-	defaultMutatorProcessors := []MutatorProcessor{
-		&StandardMutatorProcessor{store: c.Store},
+	// default pipeline mutators to search through when searching for a pipeline
+	// mutator that supports a referenced event mutator resource.
+	defaultMutators := []Mutator{
+		&legacy.Mutator{
+			Store:        c.Store,
+			StoreTimeout: c.StoreTimeout,
+		},
 	}
 
-	defaultHandlerProcessors := []HandlerProcessor{
-		&StandardHandlerProcessor{store: c.Store},
+	// default pipeline handlers to search through when searching for a pipeline
+	// handler that supports a referenced event handler resource.
+	defaultHandlers := []Handler{
+		&legacy.Handler{
+			AssetGetter:            c.AssetGetter,
+			Executor:               command.NewExecutor(),
+			LicenseGetter:          c.LicenseGetter,
+			SecretsProviderManager: c.SecretsProviderManager,
+			Store:                  c.Store,
+			StoreTimeout:           c.StoreTimeout,
+		},
 	}
 
 	pipeline := &Pipeline{
 		store:                  c.Store,
 		assetGetter:            c.AssetGetter,
 		backendEntity:          c.BackendEntity,
-		extensionExecutor:      c.ExtensionExecutorGetter,
 		executor:               command.NewExecutor(),
 		storeTimeout:           c.StoreTimeout,
 		secretsProviderManager: c.SecretsProviderManager,
 		licenseGetter:          c.LicenseGetter,
-		filterProcessors:       defaultFilterProcessors,
-		mutatorProcessors:      defaultMutatorProcessors,
-		handlerProcessors:      defaultHandlerProcessors,
+		filters:                defaultFilters,
+		mutators:               defaultMutators,
+		handlers:               defaultHandlers,
 	}
 	for _, o := range options {
 		o(pipeline)
 	}
 	return pipeline
 }
-
-const (
-	// DefaultSocketTimeout specifies the default socket dial
-	// timeout in seconds for TCP and UDP handlers.
-	DefaultSocketTimeout uint32 = 60
-)
-
-// ExtensionExecutorGetterFunc gets an ExtensionExecutor. Used to decouple
-// pipelines from gRPC.
-type ExtensionExecutorGetterFunc func(*types.Extension) (rpc.ExtensionExecutor, error)

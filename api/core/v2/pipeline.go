@@ -1,9 +1,66 @@
 package v2
 
 import (
+	"context"
 	"errors"
 	"fmt"
 )
+
+const (
+	PipelineFromHandlersName        = "PipelineFromHandlers"
+	PipelineWorkflowFromHandlerName = "PipelineWorkflowFromHandler-%s"
+)
+
+// PipelineFromHandlers takes a slice of Handlers, converts it to a Pipeline and
+// then returns it.
+func PipelineFromHandlers(ctx context.Context, handlers []*Handler) *Pipeline {
+	pipeline := &Pipeline{
+		Metadata: &ObjectMeta{
+			Name:      PipelineFromHandlersName,
+			Namespace: ContextNamespace(ctx),
+		},
+		Workflows: []*PipelineWorkflow{},
+	}
+
+	for _, handler := range handlers {
+		pipeline.Workflows = append(pipeline.Workflows, PipelineWorkflowFromHandler(ctx, handler))
+	}
+
+	return pipeline
+}
+
+// PipelineWorkflowFromHandler takes a Handler, converts it to a
+// PipelineWorkflow and then returns it.
+func PipelineWorkflowFromHandler(ctx context.Context, handler *Handler) *PipelineWorkflow {
+	filterRefs := []*ResourceReference{}
+	for _, filterName := range handler.Filters {
+		ref := &ResourceReference{
+			Name:       filterName,
+			APIVersion: "core/v2",
+			Type:       "EventFilter",
+		}
+		filterRefs = append(filterRefs, ref)
+	}
+
+	mutatorRef := &ResourceReference{
+		Name:       handler.Mutator,
+		APIVersion: "core/v2",
+		Type:       "Mutator",
+	}
+
+	handlerRef := &ResourceReference{
+		Name:       handler.Name,
+		APIVersion: "core/v2",
+		Type:       "Handler",
+	}
+
+	return &PipelineWorkflow{
+		Name:    fmt.Sprintf(PipelineWorkflowFromHandlerName, handler.Name),
+		Filters: filterRefs,
+		Mutator: mutatorRef,
+		Handler: handlerRef,
+	}
+}
 
 // validate checks if a pipeline resource passes validation rules.
 func (p *Pipeline) validate() error {

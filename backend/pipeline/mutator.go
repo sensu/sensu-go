@@ -4,113 +4,24 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"os"
 	"time"
 
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/asset"
-	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/command"
 	"github.com/sensu/sensu-go/js"
 	"github.com/sensu/sensu-go/util/environment"
-	utillogging "github.com/sensu/sensu-go/util/logging"
 	"github.com/sirupsen/logrus"
 )
 
-// mutateEvent mutates (transforms) a Sensu event into a serialized
-// format (byte slice) to be provided to a Sensu event handler.
+type Mutator interface {
+	CanMutate(context.Context, *corev2.ResourceReference) bool
+	Mutate(context.Context, *corev2.ResourceReference, *corev2.Event) (*corev2.Event, error)
+}
+
 func (p *Pipeline) mutateEvent(handler *corev2.Handler, event *corev2.Event) ([]byte, error) {
-	// Prepare log entry
-	fields := utillogging.EventFields(event, false)
-	fields["handler"] = handler.Name
 
-	if handler.Mutator == "" {
-		eventData, err := p.jsonMutator(event)
-
-		if err != nil {
-			logger.WithFields(fields).WithError(err).Error("failed to mutate event")
-			return nil, err
-		}
-
-		return eventData, nil
-	}
-
-	if handler.Mutator == "only_check_output" {
-		if event.HasCheck() {
-			eventData := p.onlyCheckOutputMutator(event)
-			return eventData, nil
-		}
-	}
-
-	ctx := context.WithValue(context.Background(), corev2.NamespaceKey, event.Entity.Namespace)
-	fields["mutator"] = handler.Mutator
-
-	tctx, cancel := context.WithTimeout(ctx, p.storeTimeout)
-	defer cancel()
-	mutator, err := p.store.GetMutatorByName(tctx, handler.Mutator)
-	if err != nil {
-		// Warning: do not wrap this error
-		logger.WithFields(fields).WithError(err).Error("failed to retrieve mutator")
-		return nil, err
-	}
-
-	if mutator == nil {
-		// Check to see if there is an extension matching the mutator
-		tctx, cancel := context.WithTimeout(ctx, p.storeTimeout)
-		defer cancel()
-		extension, err := p.store.GetExtension(tctx, handler.Mutator)
-		if err != nil {
-			if err == store.ErrNoExtension {
-				return nil, fmt.Errorf("mutator %q does not exist", handler.Mutator)
-			}
-			// Warning: do not wrap this error
-			return nil, err
-		}
-		executor, err := p.extensionExecutor(extension)
-		if err != nil {
-			return nil, err
-		}
-		defer func() {
-			if err := executor.Close(); err != nil {
-				logger.WithError(err).Debug("error closing grpc client conn")
-			}
-		}()
-		eventData, err := executor.MutateEvent(event)
-		if err != nil {
-			return nil, err
-		}
-		return eventData, nil
-	}
-
-	var eventData []byte
-
-	var assets asset.RuntimeAssetSet
-	if len(mutator.RuntimeAssets) > 0 {
-		logger.WithFields(fields).Debug("fetching assets for mutator")
-
-		// Fetch and install all assets required for handler execution
-		matchedAssets := asset.GetAssets(ctx, p.store, mutator.RuntimeAssets)
-
-		var err error
-		assets, err = asset.GetAll(ctx, p.assetGetter, matchedAssets)
-		if err != nil {
-			logger.WithFields(fields).WithError(err).Error("failed to retrieve assets for mutator")
-		}
-	}
-
-	if mutator.Type == "" || mutator.Type == corev2.PipeMutator {
-		eventData, err = p.pipeMutator(mutator, event, assets)
-	} else if mutator.Type == corev2.JavascriptMutator {
-		eventData, err = p.javascriptMutator(mutator, event, assets)
-	}
-
-	if err != nil {
-		logger.WithFields(fields).WithError(err).Error("failed to mutate the event")
-		return nil, err
-	}
-
-	return eventData, nil
 }
 
 // jsonMutator produces the JSON encoding of the Sensu event. This
