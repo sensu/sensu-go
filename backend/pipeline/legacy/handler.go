@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net"
 	"os"
 	"time"
 
@@ -128,4 +129,51 @@ func (h *Handler) pipeHandler(ctx context.Context, handler *corev2.Handler, even
 	}
 
 	return result, err
+}
+
+// socketHandler creates either a TCP or UDP client to write eventData
+// to a socket. The provided handler Type determines the protocol.
+func (h *Handler) socketHandler(handler *corev2.Handler, event *corev2.Event, eventData []byte) (conn net.Conn, err error) {
+	protocol := handler.Type
+	host := handler.Socket.Host
+	port := handler.Socket.Port
+	timeout := handler.Timeout
+
+	// Prepare log entry
+	fields := utillogging.EventFields(event, false)
+	fields["handler_name"] = handler.Name
+	fields["handler_namespace"] = handler.Namespace
+	fields["handler_protocol"] = protocol
+
+	// If Timeout is not specified, use the default.
+	if timeout == 0 {
+		timeout = DefaultSocketTimeout
+	}
+
+	address := fmt.Sprintf("%s:%d", host, port)
+	timeoutDuration := time.Duration(timeout) * time.Second
+
+	logger.WithFields(fields).Debug("sending event to socket handler")
+
+	conn, err = net.DialTimeout(protocol, address, timeoutDuration)
+	if err != nil {
+		return nil, err
+	}
+	defer func() {
+		e := conn.Close()
+		if err == nil {
+			err = e
+		}
+	}()
+
+	bytes, err := conn.Write(eventData)
+
+	if err != nil {
+		logger.WithFields(fields).WithError(err).Error("failed to execute event handler")
+	} else {
+		fields["bytes"] = bytes
+		logger.WithFields(fields).Info("event socket handler executed")
+	}
+
+	return conn, nil
 }

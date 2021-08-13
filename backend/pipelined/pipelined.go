@@ -16,7 +16,6 @@ import (
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/command"
 	"github.com/sensu/sensu-go/rpc"
-	"github.com/sirupsen/logrus"
 )
 
 var defaultStoreTimeout = time.Minute
@@ -159,37 +158,6 @@ func (p *Pipelined) AddPipelineMutator(mutator pipeline.Mutator) {
 
 func (p *Pipelined) AddPipelineHandler(handler pipeline.Handler) {
 	p.pipelineHandlers = append(p.pipelineHandlers, handler)
-}
-
-func (p *Pipelined) pipelineFromEventHandlers(ctx context.Context, event *corev2.Event) (*corev2.Pipeline, error) {
-	fields := logrus.Fields{
-		"namespace": corev2.ContextNamespace(ctx),
-	}
-
-	handlers := []*corev2.Handler{}
-	for _, handlerName := range event.Check.Handlers {
-		fields["handler"] = handlerName
-
-		tctx, cancel := context.WithTimeout(ctx, p.storeTimeout)
-		handler, err := p.store.GetHandlerByName(tctx, handlerName)
-		cancel()
-		if err != nil {
-			if _, ok := err.(*store.ErrInternal); ok {
-				// fatal error
-				return nil, err
-			}
-			logger.WithFields(fields).WithError(err).Error("failed to fetch handler")
-			continue
-		}
-		if handler == nil {
-			logger.WithFields(fields).WithError(err).Error("fetched handler is nil")
-			continue
-		}
-
-		handlers = append(handlers, handler)
-	}
-
-	return corev2.PipelineFromHandlers(ctx, handlers), nil
 }
 
 // createPipelines creates several goroutines, responsible for pulling

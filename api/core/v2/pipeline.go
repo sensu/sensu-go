@@ -7,16 +7,17 @@ import (
 )
 
 const (
-	PipelineFromHandlersName        = "PipelineFromHandlers"
-	PipelineWorkflowFromHandlerName = "PipelineWorkflowFromHandler-%s"
+	LegacyPipelineName         = "LegacyPipeline"
+	LegacyPipelineWorkflowName = "LegacyPipelineWorkflow-%s"
 )
 
-// PipelineFromHandlers takes a slice of Handlers, converts it to a Pipeline and
-// then returns it.
+// PipelineFromHandlers takes a slice of legacy event handlers (event.Handlers),
+// converts each of them to a PipelineWorkflow, adds the PipelineWorkflows to a
+// Pipeline and then returns it.
 func PipelineFromHandlers(ctx context.Context, handlers []*Handler) *Pipeline {
 	pipeline := &Pipeline{
 		Metadata: &ObjectMeta{
-			Name:      PipelineFromHandlersName,
+			Name:      LegacyPipelineName,
 			Namespace: ContextNamespace(ctx),
 		},
 		Workflows: []*PipelineWorkflow{},
@@ -55,7 +56,7 @@ func PipelineWorkflowFromHandler(ctx context.Context, handler *Handler) *Pipelin
 	}
 
 	return &PipelineWorkflow{
-		Name:    fmt.Sprintf(PipelineWorkflowFromHandlerName, handler.Name),
+		Name:    fmt.Sprintf(LegacyPipelineWorkflowName, handler.Name),
 		Filters: filterRefs,
 		Mutator: mutatorRef,
 		Handler: handlerRef,
