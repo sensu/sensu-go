@@ -5,7 +5,7 @@ import "github.com/sensu/sensu-go/api/core/v2/entity.proto";
 import "github.com/sensu/sensu-go/api/core/v2/check.proto";
 import "github.com/sensu/sensu-go/api/core/v2/metrics.proto";
 import "github.com/sensu/sensu-go/api/core/v2/meta.proto";
-import "github.com/sensu/sensu-go/api/core/v2/pipeline.proto";
+import "github.com/sensu/sensu-go/api/core/v2/resource_reference.proto";
 
 package sensu.core.v2;
 

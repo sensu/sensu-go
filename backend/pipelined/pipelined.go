@@ -186,7 +186,7 @@ func (p *Pipelined) createPipelines(count int, channel chan interface{}) {
 					ctx, cancel := context.WithCancel(context.Background())
 					defer cancel()
 
-					if err := pipeline.HandleEvent(ctx, event); err != nil {
+					if err := pipeline.RunEventPipelines(ctx context.Context, event *corev2.Event); err != nil {
 						if _, ok := err.(*store.ErrInternal); ok {
 							select {
 							case p.errChan <- err:

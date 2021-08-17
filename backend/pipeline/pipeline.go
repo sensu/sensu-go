@@ -13,6 +13,7 @@ import (
 	"github.com/sensu/sensu-go/backend/secrets"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/command"
+	utillogging "github.com/sensu/sensu-go/util/logging"
 	"github.com/sirupsen/logrus"
 )
 
@@ -48,6 +49,98 @@ func (p *Pipeline) AddHandler(handler HandlerProcessor) {
 	p.handlers = append(p.handlers, handler)
 }
 
+// DEPRECATED: use RunEventPipelines instead.
+// HandleEvent takes a Sensu event through a Sensu pipeline, filters
+// -> mutator -> handler. An event may have one or more handlers. Most
+// errors are only logged and used for flow control, they will not
+// interupt event handling.
+func (p *Pipeline) HandleEvent(ctx context.Context, event *corev2.Event) error {
+	return p.RunEventPipelines(ctx, event)
+}
+
+// RunEventPipelines loops through an event's pipelines and runs them.
+func (p *Pipeline) RunEventPipelines(ctx context.Context, event *corev2.Event) error {
+	ctx = context.WithValue(ctx, corev2.NamespaceKey, event.Entity.Namespace)
+
+	// Prepare debug log entry
+	debugFields := utillogging.EventFields(event, true)
+	logger.WithFields(debugFields).Debug("received event")
+
+	// Prepare log entry
+	fields := utillogging.EventFields(event, false)
+
+	// Get the event's pipelines
+	eventPipelines, err := p.getEventPipelines(ctx, event)
+	if err != nil {
+		return err
+	}
+	if len(eventPipelines) == 0 {
+		logger.WithFields(fields).Info("no pipelines available")
+		return nil
+	}
+
+	return nil
+}
+
+// getEventPipelines resolves any pipeline references for a given event,
+// constructs a legacy pipeline for any check/metric handlers, and then returns
+// a slice of the pipelines.
+func (p *Pipeline) getEventPipelines(ctx context.Context, event *corev2.Event) ([]*corev2.Pipeline, error) {
+	// Prepare log entry
+	fields := utillogging.EventFields(event, false)
+
+	pipelines, err := p.expandEventPipelines(ctx, event.Pipelines)
+	if err != nil {
+		return nil, err
+	}
+
+	// generate a pipeline for any check and/or metric handlers that exist in
+	// the event and add it to the list of event pipelines.
+	legacyPipeline, err := p.generateLegacyEventPipeline(ctx, event)
+	if err != nil {
+		return nil, err
+	}
+	if legacyEventPipeline != nil {
+		pipelines = append(pipelines, legacyPipeline)
+	} else {
+		logger.WithFields(fields).Debug("no handlers available to generate a legacy pipeline")
+	}
+
+	return pipelines, nil
+}
+
+func (p *Pipeline) resolveEventPipelines(ctx context.Context, pipelines []*corev2.ResourceReference) ([]*corev2.Pipeline, error) {
+	expandedPipelines := []*corev2.Pipeline{}
+
+	for _, pipeline := range pipelineRefs {
+		tctx, cancel := context.WithTimeout(ctx, p.storeTimeout)
+		
+		handler, err := p.store.GetPipelineByName(tctx, pipelineName)
+		cancel()
+
+		// Add handler name to log entry
+		fields["handler"] = handlerName
+
+		if handler == nil {
+			if err != nil {
+				(logger.
+					WithFields(fields).
+					WithError(err).
+					Error("failed to retrieve a handler"))
+				if _, ok := err.(*store.ErrInternal); ok {
+					// Fatal error
+					return nil, err
+				}
+				continue
+			}
+
+			logger.WithFields(fields).Info("handler does not exist, will be ignored")
+			continue
+	}
+
+	return pipelines, nil
+}
+
 func (p *Pipeline) generateLegacyEventPipeline(ctx context.Context, event *corev2.Event) (*corev2.Pipeline, error) {
 	// initialize a list of handler names for storing the names of any legacy
 	// check and/or metrics handlers.
@@ -81,21 +174,6 @@ func (p *Pipeline) generateLegacyEventPipeline(ctx context.Context, event *corev
 	}
 
 	return pipeline, nil
-}
-
-// RunEventPipelines loops through an event's pipelines and runs them.
-func (p *Pipeline) RunEventPipelines(ctx context.Context, event *corev2.Event) error {
-	eventPipelines := event.Pipelines
-
-	// generate a pipeline for any check and/or metric handlers that exist in
-	// the event and add it to the list of event pipelines.
-	legacyEventPipeline, err := p.generateLegacyEventPipeline(ctx, event)
-	if err != nil {
-		return err
-	}
-	eventPipelines = append(eventPipelines, legacyEventPipeline)
-
-	return nil
 }
 
 func (p *Pipeline) runEventWorkflow(ctx context.Context, workflow *corev2.PipelineWorkflow, event *corev2.Event) error {
@@ -236,3 +314,66 @@ func (p *Pipeline) expandHandlers(ctx context.Context, handlers []string, level 
 
 	return expanded, nil
 }
+
+// func (p *Pipeline) HandleEvent(ctx context.Context, event *corev2.Event) error {
+// 	ctx = context.WithValue(ctx, corev2.NamespaceKey, event.Entity.Namespace)
+
+// 	// Prepare debug log entry
+// 	debugFields := utillogging.EventFields(event, true)
+// 	logger.WithFields(debugFields).Debug("received event")
+
+// 	// Prepare log entry
+// 	fields := utillogging.EventFields(event, false)
+
+// 	var handlerList []string
+
+// 	if event.HasCheck() {
+// 		handlerList = append(handlerList, event.Check.Handlers...)
+// 	}
+
+// 	if event.HasMetrics() {
+// 		handlerList = append(handlerList, event.Metrics.Handlers...)
+// 	}
+
+// 	handlers, err := p.expandHandlers(ctx, handlerList, 1)
+// 	if err != nil {
+// 		return err
+// 	}
+
+// 	if len(handlers) == 0 {
+// 		logger.WithFields(fields).Info("no handlers available")
+// 		return nil
+// 	}
+
+// 	for _, u := range handlers {
+// 		handler := u.Handler
+// 		fields["handler"] = handler.Name
+
+// 		filter, err := p.FilterEvent(handler, event)
+// 		if err != nil {
+// 			if _, ok := err.(*store.ErrInternal); ok {
+// 				// Fatal error
+// 				return err
+// 			}
+// 			logger.WithError(err).Warn("error filtering event")
+// 		}
+// 		if filter != "" {
+// 			logger.WithFields(fields).Infof("event filtered by filter %q", filter)
+// 			continue
+// 		}
+
+// 		eventData, err := p.mutateEvent(handler, event)
+// 		if err != nil {
+// 			logger.WithFields(fields).WithError(err).Error("error mutating event")
+// 			if _, ok := err.(*store.ErrInternal); ok {
+// 				// Fatal error
+// 				return err
+// 			}
+// 			continue
+// 		}
+
+// 		logger.WithFields(fields).Info("sending event to handler")
+// 	}
+
+// 	return nil
+// }
