@@ -1,6 +1,9 @@
 package v2
 
-import "errors"
+import (
+	"errors"
+	"fmt"
+)
 
 // validate checks if a resource reference resource passes validation rules.
 func (r *ResourceReference) Validate() error {
@@ -17,4 +20,8 @@ func (r *ResourceReference) Validate() error {
 	}
 
 	return nil
+}
+
+func (r *ResourceReference) ResourceID() string {
+	fmt.Sprintf("%s.%s(%s)", r.APIVersion, r.Type, r.Name)
 }

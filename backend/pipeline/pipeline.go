@@ -89,7 +89,7 @@ func (p *Pipeline) getEventPipelines(ctx context.Context, event *corev2.Event) (
 	// Prepare log entry
 	fields := utillogging.EventFields(event, false)
 
-	pipelines, err := p.expandEventPipelines(ctx, event.Pipelines)
+	pipelines, err := p.resolveEventPipelineReferences(ctx, event.Pipelines)
 	if err != nil {
 		return nil, err
 	}
@@ -100,7 +100,7 @@ func (p *Pipeline) getEventPipelines(ctx context.Context, event *corev2.Event) (
 	if err != nil {
 		return nil, err
 	}
-	if legacyEventPipeline != nil {
+	if legacyPipeline != nil {
 		pipelines = append(pipelines, legacyPipeline)
 	} else {
 		logger.WithFields(fields).Debug("no handlers available to generate a legacy pipeline")
@@ -109,24 +109,33 @@ func (p *Pipeline) getEventPipelines(ctx context.Context, event *corev2.Event) (
 	return pipelines, nil
 }
 
-func (p *Pipeline) resolveEventPipelines(ctx context.Context, pipelines []*corev2.ResourceReference) ([]*corev2.Pipeline, error) {
-	expandedPipelines := []*corev2.Pipeline{}
+func (p *Pipeline) resolveEventPipelineReferences(ctx context.Context, refs []*corev2.ResourceReference) ([]*corev2.Pipeline, error) {
+	// Prepare log entry
+	fields := logrus.Fields{}
 
-	for _, pipeline := range pipelineRefs {
+	pipelines := []*corev2.Pipeline{}
+
+	for _, ref := range refs {
+		fields["pipeline_reference"] = ref.ResourceID()
+
+		// TODO: introduce a pipeline.Executor interface type and a
+		// pipelineExecutors field to Pipeline. Loop through each
+		// pipelineExecutor to find one that can support each pipeline
+		// reference.
+		if !p.canExecuteEventPipeline(ctx, ref) {
+			logger.WithFields(fields).Info("no pipeline executors support pipeline reference, will be ignored")
+		}
+
 		tctx, cancel := context.WithTimeout(ctx, p.storeTimeout)
-		
-		handler, err := p.store.GetPipelineByName(tctx, pipelineName)
+		pipeline, err := p.store.GetPipelineByName(tctx, ref.Name)
 		cancel()
 
-		// Add handler name to log entry
-		fields["handler"] = handlerName
-
-		if handler == nil {
+		if pipeline == nil {
 			if err != nil {
 				(logger.
 					WithFields(fields).
 					WithError(err).
-					Error("failed to retrieve a handler"))
+					Error("failed to retrieve a pipeline"))
 				if _, ok := err.(*store.ErrInternal); ok {
 					// Fatal error
 					return nil, err
@@ -134,11 +143,19 @@ func (p *Pipeline) resolveEventPipelines(ctx context.Context, pipelines []*corev
 				continue
 			}
 
-			logger.WithFields(fields).Info("handler does not exist, will be ignored")
+			logger.WithFields(fields).Info("pipeline does not exist, will be ignored")
 			continue
+		}
 	}
 
 	return pipelines, nil
+}
+
+func (p *Pipeline) canExecuteEventPipeline(ctx context.Context, ref *corev2.ResourceReference) bool {
+	if ref.APIVersion == "core/v2" && ref.Type == "Pipeline" {
+		return true
+	}
+	return false
 }
 
 func (p *Pipeline) generateLegacyEventPipeline(ctx context.Context, event *corev2.Event) (*corev2.Pipeline, error) {
