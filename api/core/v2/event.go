@@ -72,6 +72,12 @@ func (e *Event) Validate() error {
 		}
 	}
 
+	for _, pipeline := range e.Pipelines {
+		if err := e.ValidatePipelineReference(pipeline); err != nil {
+			return errors.New("pipeline reference is invalid: " + err.Error())
+		}
+	}
+
 	if e.Name != "" {
 		return errors.New("events cannot be named")
 	}
@@ -162,6 +168,19 @@ func (e *Event) SynthesizeExtras() map[string]interface{} {
 		"is_flapping_start": e.IsFlappingStart(),
 		"is_flapping_end":   e.IsFlappingEnd(),
 	}
+}
+
+// validatePipelineReference validates that a resource reference is capable of
+// acting as a pipeline.
+func (e *Event) validatePipelineReference(ref *ResourceReference) error {
+	switch ref.APIVersion {
+	case "core/v2":
+		switch ref.Type {
+		case "Pipeline":
+			return nil
+		}
+	}
+	return fmt.Errorf("resource type not capable of acting as a pipeline: %s.%s", ref.APIVersion, ref.Type)
 }
 
 // FixtureEvent returns a testing fixture for an Event object.

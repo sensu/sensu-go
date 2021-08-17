@@ -38,7 +38,6 @@ type Pipelined struct {
 	subscription           messaging.Subscription
 	store                  store.Store
 	bus                    messaging.MessageBus
-	extensionExecutor      pipeline.ExtensionExecutorGetterFunc
 	executor               command.Executor
 	workerCount            int
 	storeTimeout           time.Duration
@@ -52,16 +51,15 @@ type Pipelined struct {
 
 // Config configures a Pipelined.
 type Config struct {
-	Store                   store.Store
-	Bus                     messaging.MessageBus
-	ExtensionExecutorGetter pipeline.ExtensionExecutorGetterFunc
-	AssetGetter             asset.Getter
-	BufferSize              int
-	WorkerCount             int
-	StoreTimeout            time.Duration
-	SecretsProviderManager  *secrets.ProviderManager
-	BackendEntity           *corev2.Entity
-	LicenseGetter           licensing.Getter
+	Store                  store.Store
+	Bus                    messaging.MessageBus
+	AssetGetter            asset.Getter
+	BufferSize             int
+	WorkerCount            int
+	StoreTimeout           time.Duration
+	SecretsProviderManager *secrets.ProviderManager
+	BackendEntity          *corev2.Entity
+	LicenseGetter          licensing.Getter
 }
 
 // Option is a functional option used to configure Pipelined.
@@ -85,7 +83,6 @@ func New(c Config, options ...Option) (*Pipelined, error) {
 	p := &Pipelined{
 		store:                  c.Store,
 		bus:                    c.Bus,
-		extensionExecutor:      c.ExtensionExecutorGetter,
 		stopping:               make(chan struct{}, 1),
 		running:                &atomic.Value{},
 		wg:                     &sync.WaitGroup{},
@@ -153,7 +150,7 @@ func (p *Pipelined) AddPipelineFilter(filter pipeline.Filter) {
 }
 
 func (p *Pipelined) AddPipelineMutator(mutator pipeline.Mutator) {
-	p.pipelineMutators = append(p.piplineMutators, mutator)
+	p.pipelineMutators = append(p.pipelineMutators, mutator)
 }
 
 func (p *Pipelined) AddPipelineHandler(handler pipeline.Handler) {
@@ -166,13 +163,12 @@ func (p *Pipelined) AddPipelineHandler(handler pipeline.Handler) {
 func (p *Pipelined) createPipelines(count int, channel chan interface{}) {
 	for i := 1; i <= count; i++ {
 		pipeline := pipeline.New(pipeline.Config{
-			Store:                   p.store,
-			ExtensionExecutorGetter: p.extensionExecutor,
-			AssetGetter:             p.assetGetter,
-			StoreTimeout:            p.storeTimeout,
-			SecretsProviderManager:  p.secretsProviderManager,
-			BackendEntity:           p.backendEntity,
-			LicenseGetter:           p.LicenseGetter,
+			Store:                  p.store,
+			AssetGetter:            p.assetGetter,
+			StoreTimeout:           p.storeTimeout,
+			SecretsProviderManager: p.secretsProviderManager,
+			BackendEntity:          p.backendEntity,
+			LicenseGetter:          p.LicenseGetter,
 		})
 		p.wg.Add(1)
 		go func() {

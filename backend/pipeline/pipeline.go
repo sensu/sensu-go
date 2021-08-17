@@ -3,6 +3,7 @@ package pipeline
 import (
 	"context"
 	"errors"
+	"fmt"
 	"time"
 
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
@@ -13,6 +14,11 @@ import (
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/command"
 	"github.com/sirupsen/logrus"
+)
+
+const (
+	LegacyEventPipelineName         = "LegacyEventPipeline"
+	LegacyEventPipelineWorkflowName = "LegacyEventPipelineWorkflow-%s"
 )
 
 // Pipeline takes events as inputs, and treats them in various ways according
@@ -42,30 +48,52 @@ func (p *Pipeline) AddHandler(handler HandlerProcessor) {
 	p.handlers = append(p.handlers, handler)
 }
 
+func (p *Pipeline) generateLegacyEventPipeline(ctx context.Context, event *corev2.Event) (*corev2.Pipeline, error) {
+	// initialize a list of handler names for storing the names of any legacy
+	// check and/or metrics handlers.
+	legacyHandlerNames := []string{}
+
+	if event.HasCheck() {
+		legacyHandlerNames = append(legacyHandlerNames, event.Check.Handlers...)
+	}
+
+	if event.HasMetrics() {
+		legacyHandlerNames = append(legacyHandlerNames, event.Metrics.Handlers...)
+	}
+
+	handlers, err := p.expandHandlers(ctx, legacyHandlerNames, 1)
+	if err != nil {
+		return nil, err
+	}
+
+	pipeline := &corev2.Pipeline{
+		Metadata: &corev2.ObjectMeta{
+			Name:      LegacyEventPipelineName,
+			Namespace: corev2.ContextNamespace(ctx),
+		},
+		Workflows: []*corev2.PipelineWorkflow{},
+	}
+
+	for handlerName, handler := range handlers {
+		workflowName := fmt.Sprintf(LegacyEventPipelineWorkflowName, handlerName)
+		workflow := corev2.PipelineWorkflowFromHandler(ctx, workflowName, handler)
+		pipeline.Workflows = append(pipeline.Workflows, workflow)
+	}
+
+	return pipeline, nil
+}
+
 // RunEventPipelines loops through an event's pipelines and runs them.
 func (p *Pipeline) RunEventPipelines(ctx context.Context, event *corev2.Event) error {
-	eventPipelines := []*corev2.Pipeline{}
+	eventPipelines := event.Pipelines
 
-	// convert the event's handlers to their own pipeline and add the pipeline
-	// to the list of pipelines.
-	if event.HasCheck() {
-
-	}
-	if event.HasMetrics() {
-
-	}
-	legacyCheckEventPipeline, err := p.pipelineFromEventHandlers(ctx, event)
+	// generate a pipeline for any check and/or metric handlers that exist in
+	// the event and add it to the list of event pipelines.
+	legacyEventPipeline, err := p.generateLegacyEventPipeline(ctx, event)
 	if err != nil {
-		if _, ok := err.(*store.ErrInternal); ok {
-			select {
-			case p.errChan <- err:
-			case <-p.stopping:
-			}
-			return
-		}
-		logger.Error(err)
+		return err
 	}
-	pipelines = append(eventPipelines, legacyEventPipeline)
+	eventPipelines = append(eventPipelines, legacyEventPipeline)
 
 	return nil
 }
@@ -145,46 +173,10 @@ func New(c Config, options ...Option) *Pipeline {
 	return pipeline
 }
 
-// pipelineFromHandlers converts an event's non-pipeline handlers
-// (event.Handlers) and converts them to pipeline workflows under
-// a single "LegacyPipeline".
-func (p *Pipeline) pipelineFromHandlers(ctx context.Context, event *corev2.Event) (*corev2.Pipeline, error) {
-	fields := logrus.Fields{
-		"namespace": corev2.ContextNamespace(ctx),
-	}
-
-	handlers := []*corev2.Handler{}
-	for _, handlerName := range event.Check.Handlers {
-		fields["handler"] = handlerName
-
-		tctx, cancel := context.WithTimeout(ctx, p.storeTimeout)
-		handler, err := p.store.GetHandlerByName(tctx, handlerName)
-		cancel()
-		if err != nil {
-			if _, ok := err.(*store.ErrInternal); ok {
-				// fatal error
-				return nil, err
-			}
-			logger.WithFields(fields).WithError(err).Error("failed to fetch handler")
-			continue
-		}
-		if handler == nil {
-			logger.WithFields(fields).WithError(err).Error("fetched handler is nil")
-			continue
-		}
-
-		handlers = append(handlers, handler)
-	}
-
-	return corev2.PipelineFromHandlers(ctx, handlers), nil
-}
-
-type HandlerMap map[string][]*corev2.Handler
-
 // expandHandlers turns a list of Sensu handler names into a list of
 // handlers, while expanding handler sets with support for some
 // nesting. Handlers are fetched from etcd.
-func (p *Pipeline) expandHandlers(ctx context.Context, handlers []string, level int) (HandlerMap, error) {
+func (p *Pipeline) expandHandlers(ctx context.Context, handlers []string, level int) ([]*corev2.Handler, error) {
 	if level > 3 {
 		return nil, errors.New("handler sets cannot be deeply nested")
 	}
@@ -201,7 +193,6 @@ func (p *Pipeline) expandHandlers(ctx context.Context, handlers []string, level 
 		tctx, cancel := context.WithTimeout(ctx, p.storeTimeout)
 		handler, err := p.store.GetHandlerByName(tctx, handlerName)
 		cancel()
-		var extension *corev2.Extension
 
 		// Add handler name to log entry
 		fields["handler"] = handlerName
@@ -239,10 +230,6 @@ func (p *Pipeline) expandHandlers(ctx context.Context, handlers []string, level 
 						expandedHandlers[name] = expandedHandler
 					}
 				}
-			}
-		} else {
-			if _, ok := expanded[handler.Name]; !ok {
-				expanded[handler.Name] = handlerExtensionUnion{Handler: handler, Extension: extension}
 			}
 		}
 	}

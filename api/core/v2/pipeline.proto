@@ -45,7 +45,7 @@ message PipelineWorkflow {
 //sensu:nogen
 message ResourceReference {
   // Name is the name of the resource to reference.
-  string Name = 1 [ (gogoproto.jsontag) = "name", (gogoproto.moretags) = "yaml: \"name" ];
+  string Name = 1 [ (gogoproto.jsontag) = "name", (gogoproto.moretags) = "yaml: \"name\"" ];
 
   // Type is the name of the data type of the resource to reference.
   string Type = 2 [ (gogoproto.jsontag) = "type", (gogoproto.moretags) = "yaml: \"type\"" ];

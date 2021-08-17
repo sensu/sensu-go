@@ -6,33 +6,9 @@ import (
 	"fmt"
 )
 
-const (
-	LegacyPipelineName         = "LegacyPipeline"
-	LegacyPipelineWorkflowName = "LegacyPipelineWorkflow-%s"
-)
-
-// PipelineFromHandlers takes a slice of legacy event handlers (event.Handlers),
-// converts each of them to a PipelineWorkflow, adds the PipelineWorkflows to a
-// Pipeline and then returns it.
-func PipelineFromHandlers(ctx context.Context, handlers []*Handler) *Pipeline {
-	pipeline := &Pipeline{
-		Metadata: &ObjectMeta{
-			Name:      LegacyPipelineName,
-			Namespace: ContextNamespace(ctx),
-		},
-		Workflows: []*PipelineWorkflow{},
-	}
-
-	for _, handler := range handlers {
-		pipeline.Workflows = append(pipeline.Workflows, PipelineWorkflowFromHandler(ctx, handler))
-	}
-
-	return pipeline
-}
-
 // PipelineWorkflowFromHandler takes a Handler, converts it to a
 // PipelineWorkflow and then returns it.
-func PipelineWorkflowFromHandler(ctx context.Context, handler *Handler) *PipelineWorkflow {
+func PipelineWorkflowFromHandler(ctx context.Context, workflowName string, handler *Handler) *PipelineWorkflow {
 	filterRefs := []*ResourceReference{}
 	for _, filterName := range handler.Filters {
 		ref := &ResourceReference{
@@ -56,7 +32,7 @@ func PipelineWorkflowFromHandler(ctx context.Context, handler *Handler) *Pipelin
 	}
 
 	return &PipelineWorkflow{
-		Name:    fmt.Sprintf(LegacyPipelineWorkflowName, handler.Name),
+		Name:    workflowName,
 		Filters: filterRefs,
 		Mutator: mutatorRef,
 		Handler: handlerRef,
@@ -64,7 +40,7 @@ func PipelineWorkflowFromHandler(ctx context.Context, handler *Handler) *Pipelin
 }
 
 // validate checks if a pipeline resource passes validation rules.
-func (p *Pipeline) validate() error {
+func (p *Pipeline) Validate() error {
 	if p.Metadata == nil {
 		return errors.New("metadata must be set")
 	}
@@ -78,7 +54,7 @@ func (p *Pipeline) validate() error {
 	}
 
 	for _, workflow := range p.Workflows {
-		if err := workflow.validate(); err != nil {
+		if err := workflow.Validate(); err != nil {
 			return fmt.Errorf("workflow %w", err)
 		}
 	}
@@ -87,27 +63,27 @@ func (p *Pipeline) validate() error {
 }
 
 // validate checks if a pipeline workflow resource passes validation rules.
-func (w *PipelineWorkflow) validate() error {
+func (w *PipelineWorkflow) Validate() error {
 	if err := ValidateName(w.Name); err != nil {
 		return errors.New("name " + err.Error())
 	}
 
 	if w.Filters != nil {
 		for _, filter := range w.Filters {
-			if err := filter.validate(); err != nil {
+			if err := filter.Validate(); err != nil {
 				return fmt.Errorf("filter %w", err)
 			}
-			if err := filter.ValidateEventFilterReference(); err != nil {
+			if err := w.validateEventFilterReference(filter); err != nil {
 				return fmt.Errorf("filter %w", err)
 			}
 		}
 	}
 
 	if w.Mutator != nil {
-		if err := w.Mutator.validate(); err != nil {
+		if err := w.Mutator.Validate(); err != nil {
 			return fmt.Errorf("mutator %w", err)
 		}
-		if err := w.Mutator.ValidateMutatorReference(); err != nil {
+		if err := w.validateMutatorReference(w.Mutator); err != nil {
 			return fmt.Errorf("mutator %w", err)
 		}
 	}
@@ -116,19 +92,52 @@ func (w *PipelineWorkflow) validate() error {
 		return errors.New("handler must be set")
 	}
 
-	if err := w.Handler.validate(); err != nil {
+	if err := w.Handler.Validate(); err != nil {
 		return fmt.Errorf("handler %w", err)
 	}
 
-	if err := w.Handler.ValidateHandlerReference(); err != nil {
+	if err := w.validateHandlerReference(w.Handler); err != nil {
 		return fmt.Errorf("handler %w", err)
 	}
 
 	return nil
 }
 
+func (w *PipelineWorkflow) validateEventFilterReference(ref *ResourceReference) error {
+	switch ref.APIVersion {
+	case "core/v2":
+		switch ref.Type {
+		case "EventFilter":
+			return nil
+		}
+	}
+	return fmt.Errorf("resource type not capable of filtering events: %s.%s", ref.APIVersion, ref.Type)
+}
+
+func (w *PipelineWorkflow) validateMutatorReference(ref *ResourceReference) error {
+	switch ref.APIVersion {
+	case "core/v2":
+		switch ref.Type {
+		case "Mutator":
+			return nil
+		}
+	}
+	return fmt.Errorf("resource type not capable of mutating events: %s.%s", ref.APIVersion, ref.Type)
+}
+
+func (w *PipelineWorkflow) validateHandlerReference(ref *ResourceReference) error {
+	switch ref.APIVersion {
+	case "core/v2":
+		switch ref.Type {
+		case "Handler":
+			return nil
+		}
+	}
+	return fmt.Errorf("resource type not capable of handling events: %s.%s", ref.APIVersion, ref.Type)
+}
+
 // validate checks if a resource reference resource passes validation rules.
-func (r *ResourceReference) validate() error {
+func (r *ResourceReference) Validate() error {
 	if err := ValidateName(r.Name); err != nil {
 		return errors.New("name " + err.Error())
 	}
@@ -142,37 +151,4 @@ func (r *ResourceReference) validate() error {
 	}
 
 	return nil
-}
-
-func (r *ResourceReference) ValidateEventFilterReference() error {
-	switch r.APIVersion {
-	case "core/v2":
-		switch r.Type {
-		case "EventFilter":
-			return nil
-		}
-	}
-	return fmt.Errorf("resource type not capable of filtering events: %s.%s", r.APIVersion, r.Type)
-}
-
-func (r *ResourceReference) ValidateMutatorReference() error {
-	switch r.APIVersion {
-	case "core/v2":
-		switch r.Type {
-		case "Mutator":
-			return nil
-		}
-	}
-	return fmt.Errorf("resource type not capable of mutating events: %s.%s", r.APIVersion, r.Type)
-}
-
-func (r *ResourceReference) ValidateHandlerReference() error {
-	switch r.APIVersion {
-	case "core/v2":
-		switch r.Type {
-		case "Handler":
-			return nil
-		}
-	}
-	return fmt.Errorf("resource type not capable of handling events: %s.%s", r.APIVersion, r.Type)
 }
