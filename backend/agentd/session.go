@@ -16,6 +16,7 @@ import (
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	corev3 "github.com/sensu/sensu-go/api/core/v3"
 	"github.com/sensu/sensu-go/backend/messaging"
+	"github.com/sensu/sensu-go/backend/metrics"
 	"github.com/sensu/sensu-go/backend/ringv2"
 	"github.com/sensu/sensu-go/backend/store"
 	storev2 "github.com/sensu/sensu-go/backend/store/v2"
@@ -29,26 +30,45 @@ const (
 
 	// Time to wait before force close on connection.
 	closeGracePeriod = 10 * time.Second
+
+	// Name of the sessions counter metric
+	sessionCounterName = "sensu_go_agent_sessions"
+
+	// Name of the session errors counter metric
+	sessionErrorCounterName = "sensu_go_session_errors"
+
+	// Name of the websocket errors metric
+	websocketErrorCounterName = "sensu_go_websocket_errors"
+
+	// EventBytesSummaryName is the name of the prometheus summary vec used to
+	// track event sizes (in bytes).
+	EventBytesSummaryName = "sensu_go_agentd_event_bytes"
+
+	// EventBytesSummaryHelp is the help message for EventBytesSummary
+	// Prometheus metrics.
+	EventBytesSummaryHelp = "Distribution of event sizes, in bytes, received by agentd on this backend"
 )
 
 var (
+	eventBytesSummary = metrics.NewEventBytesSummaryVec(EventBytesSummaryName, EventBytesSummaryHelp)
+
 	sessionCounter = prometheus.NewGaugeVec(
 		prometheus.GaugeOpts{
-			Name: "sensu_go_agent_sessions",
+			Name: sessionCounterName,
 			Help: "Number of active agent sessions on this backend",
 		},
 		[]string{"namespace"},
 	)
 	websocketErrorCounter = prometheus.NewCounterVec(
 		prometheus.CounterOpts{
-			Name: "sensu_go_websocket_errors",
+			Name: websocketErrorCounterName,
 			Help: "The total number of websocket errors",
 		},
 		[]string{"op", "error"},
 	)
 	sessionErrorCounter = prometheus.NewCounterVec(
 		prometheus.CounterOpts{
-			Name: "sensu_go_session_errors",
+			Name: sessionErrorCounterName,
 			Help: "The total number of session errors",
 		},
 		[]string{"error"},
@@ -611,12 +631,20 @@ func (s *Session) handleEvent(_ context.Context, payload []byte) error {
 	// Add the entity subscription to the subscriptions of this entity
 	event.Entity.Subscriptions = corev2.AddEntitySubscription(event.Entity.Name, event.Entity.Subscriptions)
 
-	if event.HasCheck() && event.Check.Name == corev2.KeepaliveCheckName {
-		return s.bus.Publish(messaging.TopicKeepaliveRaw, event)
-	} else {
-		return s.bus.Publish(messaging.TopicEventRaw, event)
+	if event.HasCheck() {
+		if event.HasMetrics() {
+			eventBytesSummary.WithLabelValues(metrics.EventTypeLabelCheckAndMetrics).Observe(float64(len(payload)))
+		} else {
+			eventBytesSummary.WithLabelValues(metrics.EventTypeLabelCheck).Observe(float64(len(payload)))
+		}
+		if event.Check.Name == corev2.KeepaliveCheckName {
+			return s.bus.Publish(messaging.TopicKeepaliveRaw, event)
+		}
+	} else if event.HasMetrics() {
+		eventBytesSummary.WithLabelValues(metrics.EventTypeLabelMetrics).Observe(float64(len(payload)))
 	}
 
+	return s.bus.Publish(messaging.TopicEventRaw, event)
 }
 
 // subscribe adds a subscription to the session for every check subscriptions
