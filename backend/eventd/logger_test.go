@@ -130,7 +130,7 @@ func (h *testHook) Levels() []logrus.Level {
 	}
 }
 
-func TestrawLogger(t *testing.T) {
+func TestRawLogger(t *testing.T) {
 	type writeFunc func(*mockWriter)
 
 	tests := []struct {
@@ -233,7 +233,7 @@ func (w *nilWriter) Sync() error {
 	return nil
 }
 
-func TestrawLogger_ringBuffer(t *testing.T) {
+func TestRawLogger_ringBuffer(t *testing.T) {
 	tests := []struct {
 		name    string
 		input   chan interface{}

@@ -14,8 +14,6 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-var selectedMetricNames = map[string]struct{}{}
-
 // InfluxBridge is a bridge between prometheus metrics and influxdb line metrics,
 // similar to the graphite bridge published by prometheus.
 // https://github.com/prometheus/client_golang/blob/v1.11.0/prometheus/graphite

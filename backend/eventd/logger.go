@@ -14,12 +14,13 @@ import (
 
 // FileLogger is a rotatable logger.
 type FileLogger struct {
-	Path       string
-	BufferSize int
-	BufferWait time.Duration
-	Bus        messaging.MessageBus
-	notify     chan interface{}
-	rawLogger  *rawLogger
+	Path         string
+	BufferSize   int
+	BufferWait   time.Duration
+	Bus          messaging.MessageBus
+	notify       chan interface{}
+	rawLogger    *rawLogger
+	subscription messaging.Subscription
 }
 
 // Start replaces the core event logger with the enteprise one, which logs
@@ -32,7 +33,13 @@ func (f *FileLogger) Start() {
 
 	f.notify = make(chan interface{}, 1)
 	consumerName := fmt.Sprintf("filelogger://%s", f.Path)
-	f.Bus.Subscribe(messaging.SignalTopic(syscall.SIGHUP), consumerName, f)
+	subscription, err := f.Bus.Subscribe(messaging.SignalTopic(syscall.SIGHUP), consumerName, f)
+	if err != nil {
+		logger.WithError(err).Error("could not start event logging")
+		return
+	}
+
+	f.subscription = subscription
 
 	rawLogger, err := newRawLogger(f.Path, f.BufferSize, f.BufferWait, f.notify)
 	if err != nil {
@@ -56,6 +63,7 @@ func (f *FileLogger) Receiver() chan<- interface{} {
 }
 
 func (f *FileLogger) Stop() {
+	f.subscription.Cancel()
 	f.rawLogger.Stop()
 }
 

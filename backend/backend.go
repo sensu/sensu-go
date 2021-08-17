@@ -64,15 +64,12 @@ func (e ErrStartup) Error() string {
 
 var selectedMetrics = []string{
 	"sensu_go_wizard_bus",
-	"sensu_go_wizard_bus",
-	"sensu_go_wizard_bus",
-	"sensu_go_wizard_bus",
-	"sensu_go_wizard_bus",
 	"sensu_go_event_handler_duration",
 	"sensu_go_events_processed",
-	"sensu_go_events_processed",
-	"sensu_go_events_processed",
 	"sensu_go_agent_sessions",
+	"sensu_go_session_errors",
+	"sensu_go_websocket_errors",
+	"sensu_go_agentd_event_bytes",
 	"etcd_debugging_mvcc_keys_total",
 	"etcd_debugging_mvcc_delete_total",
 	"etcd_debugging_mvcc_put_total",
