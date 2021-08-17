@@ -26,6 +26,12 @@ a decimal multiplier value.
 agent processed a particular event.
 - Added `core/v2.Pipeline` resource for configuring Pipeline resources.
 - Added `pipelines` field to `Check` and `CheckConfig`
+- Added the platform metrics log. This log contains a listing of core Sensu
+metrics in influx-line format. It is enabled by default but can be disabled
+with the --disable-platform-metrics flag. By default the log is appended to
+every 60s, and written to /var/lib/sensu/sensu-backend/stats.log.
+- Open-sourced the previously enterprise-only event logger. The event logger
+can be used to send the events a backend processes to a rotatable log file.
 
 ### Changed
 - When deleting resource with sensuctl, the resource type will now be displayed

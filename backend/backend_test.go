@@ -96,6 +96,7 @@ func TestBackendHTTPListener(t *testing.T) {
 				EtcdPeerTLSInfo:              tlsInfo,
 				EtcdUseEmbeddedClient:        true,
 				EtcdLogLevel:                 "info",
+				DisablePlatformMetrics:       true,
 			}
 			ctx, cancel := context.WithCancel(context.Background())
 			b, err := Initialize(ctx, cfg)

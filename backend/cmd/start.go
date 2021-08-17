@@ -12,6 +12,7 @@ import (
 	"runtime"
 	"strings"
 	"syscall"
+	"time"
 
 	"github.com/sensu/sensu-go/backend/apid/middlewares"
 
@@ -96,6 +97,20 @@ const (
 	flagEtcdMaxRequestBytes    = "etcd-max-request-bytes"
 	flagEtcdQuotaBackendBytes  = "etcd-quota-backend-bytes"
 
+	// Metric logging flags
+	flagDisablePlatformMetrics         = "disable-platform-metrics"
+	flagPlatformMetricsLoggingInterval = "platform-metrics-logging-interval"
+	flagPlatformMetricsLogFile         = "platform-metrics-log-file"
+
+	// FlagEventLogBufferSize indicates the size of the events buffer
+	flagEventLogBufferSize = "event-log-buffer-size"
+
+	// FlagEventLogBufferWait indicates the full buffer wait time
+	flagEventLogBufferWait = "event-log-buffer-wait"
+
+	// FlagEventLogFile indicates the path to the event log file
+	flagEventLogFile = "event-log-file"
+
 	// Default values
 
 	// defaultEtcdClientURL is the default URL to listen for Etcd clients
@@ -139,6 +154,13 @@ Additional help topics:{{range .Commands}}{{if .IsAdditionalHelpTopicCommand}}
 
 Use "{{.CommandPath}} [command] --help" for more information about a command.{{end}}
 `
+)
+
+var (
+	// platform metric logging defaults
+	defaultDisablePlatformMetrics         = false
+	defaultPlatformMetricsLoggingInterval = 60 * time.Second
+	defaultPlatformMetricsLogFile         = filepath.Join(path.SystemDataDir("sensu-backend"), "stats.log")
 )
 
 // InitializeFunc represents the signature of an initialization function, used
@@ -201,26 +223,32 @@ func StartCommand(initialize InitializeFunc) *cobra.Command {
 				CacheDir:              viper.GetString(flagCacheDir),
 				StateDir:              viper.GetString(flagStateDir),
 
-				EtcdAdvertiseClientURLs:      viper.GetStringSlice(flagEtcdAdvertiseClientURLs),
-				EtcdListenClientURLs:         viper.GetStringSlice(flagEtcdListenClientURLs),
-				EtcdClientURLs:               fallbackStringSlice(flagEtcdClientURLs, flagEtcdAdvertiseClientURLs),
-				EtcdListenPeerURLs:           viper.GetStringSlice(flagEtcdPeerURLs),
-				EtcdInitialCluster:           initialCluster,
-				EtcdInitialClusterState:      viper.GetString(flagEtcdInitialClusterState),
-				EtcdDiscovery:                etcdDiscovery,
-				EtcdDiscoverySrv:             SrvDiscovery,
-				EtcdInitialAdvertisePeerURLs: viper.GetStringSlice(flagEtcdInitialAdvertisePeerURLs),
-				EtcdInitialClusterToken:      viper.GetString(flagEtcdInitialClusterToken),
-				EtcdName:                     viper.GetString(flagEtcdNodeName),
-				EtcdCipherSuites:             viper.GetStringSlice(flagEtcdCipherSuites),
-				EtcdQuotaBackendBytes:        viper.GetInt64(flagEtcdQuotaBackendBytes),
-				EtcdMaxRequestBytes:          viper.GetUint(flagEtcdMaxRequestBytes),
-				EtcdHeartbeatInterval:        viper.GetUint(flagEtcdHeartbeatInterval),
-				EtcdElectionTimeout:          viper.GetUint(flagEtcdElectionTimeout),
-				EtcdLogLevel:                 viper.GetString(flagEtcdLogLevel),
-				NoEmbedEtcd:                  viper.GetBool(flagNoEmbedEtcd),
-				Labels:                       viper.GetStringMapString(flagLabels),
-				Annotations:                  viper.GetStringMapString(flagAnnotations),
+				EtcdAdvertiseClientURLs:        viper.GetStringSlice(flagEtcdAdvertiseClientURLs),
+				EtcdListenClientURLs:           viper.GetStringSlice(flagEtcdListenClientURLs),
+				EtcdClientURLs:                 fallbackStringSlice(flagEtcdClientURLs, flagEtcdAdvertiseClientURLs),
+				EtcdListenPeerURLs:             viper.GetStringSlice(flagEtcdPeerURLs),
+				EtcdInitialCluster:             initialCluster,
+				EtcdInitialClusterState:        viper.GetString(flagEtcdInitialClusterState),
+				EtcdDiscovery:                  etcdDiscovery,
+				EtcdDiscoverySrv:               SrvDiscovery,
+				EtcdInitialAdvertisePeerURLs:   viper.GetStringSlice(flagEtcdInitialAdvertisePeerURLs),
+				EtcdInitialClusterToken:        viper.GetString(flagEtcdInitialClusterToken),
+				EtcdName:                       viper.GetString(flagEtcdNodeName),
+				EtcdCipherSuites:               viper.GetStringSlice(flagEtcdCipherSuites),
+				EtcdQuotaBackendBytes:          viper.GetInt64(flagEtcdQuotaBackendBytes),
+				EtcdMaxRequestBytes:            viper.GetUint(flagEtcdMaxRequestBytes),
+				EtcdHeartbeatInterval:          viper.GetUint(flagEtcdHeartbeatInterval),
+				EtcdElectionTimeout:            viper.GetUint(flagEtcdElectionTimeout),
+				EtcdLogLevel:                   viper.GetString(flagEtcdLogLevel),
+				NoEmbedEtcd:                    viper.GetBool(flagNoEmbedEtcd),
+				Labels:                         viper.GetStringMapString(flagLabels),
+				Annotations:                    viper.GetStringMapString(flagAnnotations),
+				DisablePlatformMetrics:         viper.GetBool(flagDisablePlatformMetrics),
+				PlatformMetricsLoggingInterval: viper.GetDuration(flagPlatformMetricsLoggingInterval),
+				PlatformMetricsLogFile:         viper.GetString(flagPlatformMetricsLogFile),
+				EventLogBufferSize:             viper.GetInt(flagEventLogBufferSize),
+				EventLogBufferWait:             viper.GetDuration(flagEventLogBufferWait),
+				EventLogFile:                   viper.GetString(flagEventLogFile),
 			}
 
 			if flag := cmd.Flags().Lookup(flagLabels); flag != nil && flag.Changed {
@@ -370,6 +398,12 @@ func handleConfig(cmd *cobra.Command, arguments []string, server bool) error {
 		viper.SetDefault(backend.FlagPipelinedWorkers, 100)
 		viper.SetDefault(backend.FlagPipelinedBufferSize, 1000)
 		viper.SetDefault(backend.FlagAgentWriteTimeout, 15)
+		viper.SetDefault(flagDisablePlatformMetrics, defaultDisablePlatformMetrics)
+		viper.SetDefault(flagPlatformMetricsLoggingInterval, defaultPlatformMetricsLoggingInterval)
+		viper.SetDefault(flagPlatformMetricsLogFile, defaultPlatformMetricsLogFile)
+		viper.SetDefault(flagEventLogBufferWait, 10*time.Millisecond)
+		viper.SetDefault(flagEventLogBufferSize, 100000)
+		viper.SetDefault(flagEventLogFile, "")
 	}
 
 	// Etcd defaults
@@ -494,6 +528,9 @@ func flagSet(server bool) *pflag.FlagSet {
 		flagSet.String(backend.FlagJWTPublicKeyFile, viper.GetString(backend.FlagJWTPublicKeyFile), "path to the PEM-encoded public key to use to verify JWT signatures")
 		flagSet.StringToStringVar(&labels, flagLabels, nil, "entity labels map")
 		flagSet.StringToStringVar(&annotations, flagAnnotations, nil, "entity annotations map")
+		flagSet.Bool(flagDisablePlatformMetrics, viper.GetBool(flagDisablePlatformMetrics), "disable platform metrics logging")
+		flagSet.Duration(flagPlatformMetricsLoggingInterval, viper.GetDuration(flagPlatformMetricsLoggingInterval), "platform metrics logging interval")
+		flagSet.String(flagPlatformMetricsLogFile, viper.GetString(flagPlatformMetricsLogFile), "platform metrics log file path")
 
 		// Etcd server flags
 		flagSet.StringSlice(flagEtcdPeerURLs, viper.GetStringSlice(flagEtcdPeerURLs), "list of URLs to listen on for peer traffic")
@@ -532,6 +569,22 @@ func flagSet(server bool) *pflag.FlagSet {
 		_ = flagSet.SetAnnotation(flagEtcdPeerTrustedCAFile, "categories", []string{"store"})
 		flagSet.String(flagEtcdNodeName, viper.GetString(flagEtcdNodeName), "name for this etcd node")
 		_ = flagSet.SetAnnotation(flagEtcdNodeName, "categories", []string{"store"})
+
+		_ = flagSet.String(flagEventLogFile, "", "path to the event log file")
+
+		// Use a default value of 100,000 messages for the buffer. A serialized event
+		// takes a minimum of around 1300 bytes, so once full the buffer ring could
+		// require about 130MB of memory.
+		_ = flagSet.Int(flagEventLogBufferSize, 100000, "buffer size of the event logger")
+
+		// Use a default value of 10ms for the full buffer wait time. When the buffer
+		// is full, the logger will wait for the writer to consume events from the buffer.
+		// This helps reduce event data loss but comes at the cost of event back-pressure
+		// for the backend and it's agent sessions. If the buffer fills and the wait time
+		// is too low, it will dicard too many events. If the wait time is too high,
+		// event back-pressure could stop the backend and it's agent sessions from
+		// producing and processing new events and possibly lead to a crash.
+		_ = flagSet.String(flagEventLogBufferWait, "10ms", "full buffer wait time")
 	}
 
 	flagSet.SetOutput(ioutil.Discard)
