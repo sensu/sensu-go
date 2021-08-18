@@ -124,21 +124,28 @@ func (h *httpFetcher) Fetch(ctx context.Context, url string, headers map[string]
 		return nil, fmt.Errorf("can't open tmp file for asset: %s", err)
 	}
 
+	cleanup := func() {
+		tmpFile.Close()
+		_ = os.Remove(tmpFile.Name())
+	}
+
 	buffered := bufio.NewWriter(tmpFile)
 	if _, err = io.Copy(buffered, resp); err != nil {
+		cleanup()
 		return nil, fmt.Errorf("error downloading asset: %s", err)
 	}
 	if err := buffered.Flush(); err != nil {
+		cleanup()
 		return nil, fmt.Errorf("error downloading asset: %s", err)
 	}
 
 	if err := tmpFile.Sync(); err != nil {
-		tmpFile.Close()
+		cleanup()
 		return nil, err
 	}
 
 	if _, err := tmpFile.Seek(0, 0); err != nil {
-		tmpFile.Close()
+		cleanup()
 		return nil, err
 	}
 
