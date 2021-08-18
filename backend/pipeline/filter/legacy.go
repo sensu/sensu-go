@@ -1,4 +1,4 @@
-package legacy
+package filter
 
 import (
 	"context"
@@ -11,13 +11,13 @@ import (
 	utillogging "github.com/sensu/sensu-go/util/logging"
 )
 
-type Filter struct {
+type Legacy struct {
 	AssetGetter  asset.Getter
 	Store        store.Store
 	StoreTimeout time.Duration
 }
 
-func (f *Filter) CanFilter(ctx context.Context, ref *corev2.ResourceReference) bool {
+func (l *Legacy) CanFilter(ctx context.Context, ref *corev2.ResourceReference) bool {
 	if ref.APIVersion == "core/v2" && ref.Type == "EventFilter" {
 		return true
 	}
@@ -27,7 +27,7 @@ func (f *Filter) CanFilter(ctx context.Context, ref *corev2.ResourceReference) b
 // Filter filters a Sensu event, determining if it will continue through the
 // Sensu pipeline. It returns whether or not the event was filtered and if any
 // error was encountered.
-func (f *Filter) Filter(ctx context.Context, ref *corev2.ResourceReference, event *corev2.Event) (bool, error) {
+func (l *Legacy) Filter(ctx context.Context, ref *corev2.ResourceReference, event *corev2.Event) (bool, error) {
 	// Prepare log entry
 	// TODO: add pipeline & pipeline workflow names to fields
 	fields := utillogging.EventFields(event, false)
@@ -54,8 +54,8 @@ func (f *Filter) Filter(ctx context.Context, ref *corev2.ResourceReference, even
 	default:
 		// Retrieve the filter from the store with its name
 		ctx := corev2.SetContextFromResource(context.Background(), event.Entity)
-		tctx, cancel := context.WithTimeout(ctx, f.StoreTimeout)
-		filter, err := f.Store.GetEventFilterByName(tctx, ref.Name)
+		tctx, cancel := context.WithTimeout(ctx, l.StoreTimeout)
+		filter, err := l.Store.GetEventFilterByName(tctx, ref.Name)
 		cancel()
 		if err != nil {
 			logger.WithFields(fields).WithError(err).Warning("could not retrieve filter")
@@ -67,8 +67,8 @@ func (f *Filter) Filter(ctx context.Context, ref *corev2.ResourceReference, even
 			// expressions against the event. The event is rejected
 			// if the product of all expressions is true.
 			ctx := corev2.SetContextFromResource(context.Background(), filter)
-			matchedAssets := asset.GetAssets(ctx, f.Store, filter.RuntimeAssets)
-			assets, err := asset.GetAll(ctx, f.AssetGetter, matchedAssets)
+			matchedAssets := asset.GetAssets(ctx, l.Store, filter.RuntimeAssets)
+			assets, err := asset.GetAll(ctx, l.AssetGetter, matchedAssets)
 			if err != nil {
 				logger.WithFields(fields).WithError(err).Error("failed to retrieve assets for filter")
 				if _, ok := err.(*store.ErrInternal); ok {

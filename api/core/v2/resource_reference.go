@@ -23,5 +23,5 @@ func (r *ResourceReference) Validate() error {
 }
 
 func (r *ResourceReference) ResourceID() string {
-	fmt.Sprintf("%s.%s(%s)", r.APIVersion, r.Type, r.Name)
+	return fmt.Sprintf("%s.%s(Name=%s)", r.APIVersion, r.Type, r.Name)
 }

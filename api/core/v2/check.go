@@ -103,7 +103,6 @@ func NewCheck(c *CheckConfig) *Check {
 		},
 		Command:              c.Command,
 		Handlers:             c.Handlers,
-		Pipelines:            c.Pipelines,
 		HighFlapThreshold:    c.HighFlapThreshold,
 		Interval:             c.Interval,
 		LowFlapThreshold:     c.LowFlapThreshold,
@@ -249,9 +248,6 @@ func (c *Check) MarshalJSON() ([]byte, error) {
 	}
 	if c.Handlers == nil {
 		c.Handlers = []string{}
-	}
-	if c.Pipelines == nil {
-		c.Pipelines = []*Pipeline{}
 	}
 
 	type Clone Check

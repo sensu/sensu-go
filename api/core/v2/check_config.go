@@ -53,7 +53,18 @@ func (c *CheckConfig) MarshalJSON() ([]byte, error) {
 		c.Handlers = []string{}
 	}
 	if c.Pipelines == nil {
-		c.Pipelines = []*Pipeline{}
+		c.Pipelines = []*ResourceReference{}
+	}
+
+	for _, ref := range c.Pipelines {
+		// default to core/v2 for APIVersion when not set
+		if ref.APIVersion == "" {
+			ref.APIVersion = "core/v2"
+		}
+		// default to Pipeline for Type when not set
+		if ref.Type == "" {
+			ref.Type = "Pipeline"
+		}
 	}
 
 	type Clone CheckConfig
@@ -230,11 +241,11 @@ func CheckConfigFields(r Resource) map[string]string {
 	}
 	stringsutil.MergeMapWithPrefix(fields, resource.ObjectMeta.Labels, "check.labels.")
 
-	pipelineNames := []string{}
+	pipelineIDs := []string{}
 	for _, pipeline := range resource.Pipelines {
-		pipelineNames = append(pipelineNames, pipeline.Metadata.Name)
+		pipelineIDs = append(pipelineIDs, pipeline.ResourceID())
 	}
-	fields["check.pipelines"] = strings.Join(pipelineNames, ",")
+	fields["check.pipelines"] = strings.Join(pipelineIDs, ",")
 
 	return fields
 }

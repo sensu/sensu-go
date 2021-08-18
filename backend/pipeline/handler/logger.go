@@ -1,4 +1,4 @@
-package legacy
+package handler
 
 import "github.com/sirupsen/logrus"
 

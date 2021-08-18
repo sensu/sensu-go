@@ -13,16 +13,16 @@ type Filter interface {
 }
 
 func (p *Pipeline) getFilterForResource(ctx context.Context, ref *corev2.ResourceReference) (Filter, error) {
-	for _, processor := range p.filters {
-		if processor.CanFilter(ctx, ref) {
-			return processor, nil
+	for _, filter := range p.filters {
+		if filter.CanFilter(ctx, ref) {
+			return filter, nil
 		}
 	}
-	return nil, fmt.Errorf("no filter processors were found that can filter the resource: %s.%s = %s", ref.APIVersion, ref.Type, ref.Name)
+	return nil, fmt.Errorf("no pipeline filters were found that can filter using resource: %s.%s = %s", ref.APIVersion, ref.Type, ref.Name)
 }
 
 func (p *Pipeline) processFilters(ctx context.Context, refs []*corev2.ResourceReference, event *corev2.Event) (bool, error) {
-	// for each filter in the workflow, loop through each filter processor
+	// for each filter in the workflow, loop through each pipeline filter
 	// until one is found that supports filtering the event using the referenced
 	// resource.
 	for _, ref := range refs {

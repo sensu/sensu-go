@@ -19,10 +19,13 @@ func PipelineWorkflowFromHandler(ctx context.Context, workflowName string, handl
 		filterRefs = append(filterRefs, ref)
 	}
 
-	mutatorRef := &ResourceReference{
-		Name:       handler.Mutator,
-		APIVersion: "core/v2",
-		Type:       "Mutator",
+	var mutatorRef *ResourceReference
+	if handler.Mutator != "" {
+		mutatorRef = &ResourceReference{
+			Name:       handler.Mutator,
+			APIVersion: "core/v2",
+			Type:       "Mutator",
+		}
 	}
 
 	handlerRef := &ResourceReference{

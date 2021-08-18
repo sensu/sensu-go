@@ -2,10 +2,8 @@ package pipeline
 
 import (
 	"encoding/json"
-	"fmt"
 	"io"
 	"io/ioutil"
-	"os"
 	"strings"
 	"testing"
 
@@ -18,21 +16,6 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 )
-
-func TestHelperMutatorProcess(t *testing.T) {
-	if os.Getenv("GO_WANT_HELPER_MUTATOR_PROCESS") != "1" {
-		return
-	}
-
-	command := strings.Join(os.Args[3:], " ")
-	stdin, _ := ioutil.ReadAll(os.Stdin)
-
-	switch command {
-	case "cat":
-		fmt.Fprintf(os.Stdout, "%s", stdin)
-	}
-	os.Exit(0)
-}
 
 func TestPipelineMutate(t *testing.T) {
 	p := New(Config{})

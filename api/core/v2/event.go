@@ -73,7 +73,7 @@ func (e *Event) Validate() error {
 	}
 
 	for _, pipeline := range e.Pipelines {
-		if err := e.ValidatePipelineReference(pipeline); err != nil {
+		if err := e.validatePipelineReference(pipeline); err != nil {
 			return errors.New("pipeline reference is invalid: " + err.Error())
 		}
 	}
@@ -96,9 +96,33 @@ func (e *Event) HasCheck() bool {
 	return e.Check != nil
 }
 
+// HasCheckHandlers determines if an event has one or more check handlers.
+func (e *Event) HasCheckHandlers() bool {
+	if e.HasCheck() && len(e.Check.Handlers) > 0 {
+		return true
+	}
+	return false
+}
+
 // HasMetrics determines if an event has metric data.
 func (e *Event) HasMetrics() bool {
 	return e.Metrics != nil
+}
+
+// HasMetricHandlers determines if an event has one or more metric handlers.
+func (e *Event) HasMetricHandlers() bool {
+	if e.HasMetrics() && len(e.Metrics.Handlers) > 0 {
+		return true
+	}
+	return false
+}
+
+// HasHandlers determines if an event has one or more check or metric handlers.
+func (e *Event) HasHandlers() bool {
+	if e.HasCheckHandlers() || e.HasMetricHandlers() {
+		return true
+	}
+	return false
 }
 
 // IsIncident determines if an event indicates an incident.

@@ -1,4 +1,4 @@
-package legacy
+package mutator
 
 import "github.com/sirupsen/logrus"
 

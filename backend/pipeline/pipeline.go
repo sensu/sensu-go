@@ -9,6 +9,7 @@ import (
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/asset"
 	"github.com/sensu/sensu-go/backend/licensing"
+	"github.com/sensu/sensu-go/backend/pipeline/filter"
 	"github.com/sensu/sensu-go/backend/pipeline/legacy"
 	"github.com/sensu/sensu-go/backend/secrets"
 	"github.com/sensu/sensu-go/backend/store"
@@ -18,8 +19,8 @@ import (
 )
 
 const (
-	LegacyEventPipelineName         = "LegacyEventPipeline"
-	LegacyEventPipelineWorkflowName = "LegacyEventPipelineWorkflow-%s"
+	LegacyPipelineName         = "legacy-pipeline"
+	LegacyPipelineWorkflowName = "legacy-pipeline-workflow-%s"
 )
 
 // Pipeline takes events as inputs, and treats them in various ways according
@@ -35,6 +36,7 @@ type Pipeline struct {
 	filters                []Filter
 	mutators               []Mutator
 	handlers               []Handler
+	runners                []Runner
 }
 
 func (p *Pipeline) AddFilter(filter Filter) {
@@ -45,21 +47,14 @@ func (p *Pipeline) AddMutator(mutator Mutator) {
 	p.mutators = append(p.mutators, mutator)
 }
 
-func (p *Pipeline) AddHandler(handler HandlerProcessor) {
+func (p *Pipeline) AddHandler(handler Handler) {
 	p.handlers = append(p.handlers, handler)
 }
 
-// DEPRECATED: use RunEventPipelines instead.
-// HandleEvent takes a Sensu event through a Sensu pipeline, filters
-// -> mutator -> handler. An event may have one or more handlers. Most
-// errors are only logged and used for flow control, they will not
-// interupt event handling.
+// HandleEvent takes a Sensu event through its own pipelines. An event may have
+// one or more pipelines. Most errors are only logged and used for flow control,
+// they will not interupt event handling.
 func (p *Pipeline) HandleEvent(ctx context.Context, event *corev2.Event) error {
-	return p.RunEventPipelines(ctx, event)
-}
-
-// RunEventPipelines loops through an event's pipelines and runs them.
-func (p *Pipeline) RunEventPipelines(ctx context.Context, event *corev2.Event) error {
 	ctx = context.WithValue(ctx, corev2.NamespaceKey, event.Entity.Namespace)
 
 	// Prepare debug log entry
@@ -69,17 +64,49 @@ func (p *Pipeline) RunEventPipelines(ctx context.Context, event *corev2.Event) e
 	// Prepare log entry
 	fields := utillogging.EventFields(event, false)
 
-	// Get the event's pipelines
-	eventPipelines, err := p.getEventPipelines(ctx, event)
-	if err != nil {
-		return err
+	// Construct a list of pipeline references
+	pipelineRefs := event.Pipelines
+
+	// Add a legacy pipeline "reference" if the event has handlers
+	if event.HasHandlers() {
+		legacyPipelineRef := &corev2.ResourceReference{
+			APIVersion: "core/v2",
+			Type:       "Pipeline",
+			Name:       LegacyPipelineName,
+		}
+		pipelineRefs = append(pipelineRefs, legacyPipelineRef)
 	}
-	if len(eventPipelines) == 0 {
-		logger.WithFields(fields).Info("no pipelines available")
+
+	if len(pipelineRefs) == 0 {
+		logger.WithFields(fields).Info("no pipelines defined")
 		return nil
 	}
 
+	// Loop through each event pipeline, search for a compatible pipeline
+	// runner & run it
+	for _, pipelineRef := range pipelineRefs {
+		for _, runner := range runners {
+			if runner.CanRun(pipelineRef) {
+				runner.Run(pipelineRef)
+			}
+		}
+	}
+
 	return nil
+}
+
+type Runner interface {
+	CanRun(context.Context, *corev2.ResourceReference) bool
+	Run(context.Context, *corev2.ResourceReference, interface{}) error
+}
+
+func (p *Pipeline) getRunnerForResource(ctx context.Context, ref *corev2.ResourceReference) (PipelineRunner, error) {
+	for _, runner := range p.runners {
+		if runner.CanRun(ctx, ref) {
+			return runner, nil
+		}
+	}
+	return nil, fmt.Errorf("no pipeline runners were found that support resource: %s.%s = %s", ref.APIVersion, ref.Type, ref.Name)
 }
 
 // getEventPipelines resolves any pipeline references for a given event,
@@ -109,6 +136,8 @@ func (p *Pipeline) getEventPipelines(ctx context.Context, event *corev2.Event) (
 	return pipelines, nil
 }
 
+// resolveEventPipelineReferences takes a list of resource references and
+//
 func (p *Pipeline) resolveEventPipelineReferences(ctx context.Context, refs []*corev2.ResourceReference) ([]*corev2.Pipeline, error) {
 	// Prepare log entry
 	fields := logrus.Fields{}
@@ -158,6 +187,8 @@ func (p *Pipeline) canExecuteEventPipeline(ctx context.Context, ref *corev2.Reso
 	return false
 }
 
+// generateLegacyEventPipeline will build an event pipeline with a pipeline
+// workflow for each event.Check.Handlers & event.Metrics.Handlers
 func (p *Pipeline) generateLegacyEventPipeline(ctx context.Context, event *corev2.Event) (*corev2.Pipeline, error) {
 	// initialize a list of handler names for storing the names of any legacy
 	// check and/or metrics handlers.
@@ -185,7 +216,7 @@ func (p *Pipeline) generateLegacyEventPipeline(ctx context.Context, event *corev
 	}
 
 	for handlerName, handler := range handlers {
-		workflowName := fmt.Sprintf(LegacyEventPipelineWorkflowName, handlerName)
+		workflowName := fmt.Sprintf(LegacyPipelineWorkflowName, handlerName)
 		workflow := corev2.PipelineWorkflowFromHandler(ctx, workflowName, handler)
 		pipeline.Workflows = append(pipeline.Workflows, workflow)
 	}
@@ -221,7 +252,7 @@ func New(c Config, options ...Option) *Pipeline {
 	// default pipeline filters to search through when searching for a pipeline
 	// filter that supports a referenced event filter resource.
 	defaultFilters := []Filter{
-		&legacy.Filter{
+		&filter.Legacy{
 			AssetGetter:  c.AssetGetter,
 			Store:        c.Store,
 			StoreTimeout: c.StoreTimeout,
