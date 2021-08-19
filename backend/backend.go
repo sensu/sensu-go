@@ -549,7 +549,9 @@ func (b *Backend) runOnce() error {
 			logger.WithError(err).Error("unable to subscribe to SIGHUP signal notifications")
 			return err
 		}
-		defer subscription.Cancel()
+		defer func() {
+			_ = subscription.Cancel()
+		}()
 		metricsLogWriter, err := logging.NewRotateWriter(b.cfg.PlatformMetricsLogFile, sighup)
 		if err != nil {
 			logger.WithError(err).Error("unable to open platform metrics log file")

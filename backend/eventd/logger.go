@@ -63,7 +63,7 @@ func (f *FileLogger) Receiver() chan<- interface{} {
 }
 
 func (f *FileLogger) Stop() {
-	f.subscription.Cancel()
+	_ = f.subscription.Cancel()
 	f.rawLogger.Stop()
 }
 
