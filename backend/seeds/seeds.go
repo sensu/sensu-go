@@ -20,6 +20,10 @@ type Config struct {
 
 	// AdminPassword is the password of the cluster admin.
 	AdminPassword string
+
+	// AdminAPIKey is the API key of the cluster admin. Can be used instead of
+	// AdminUsername and AdminPassword.
+	AdminAPIKey string
 }
 
 var ErrAlreadyInitialized = errors.New("sensu-backend already initialized")
@@ -69,7 +73,7 @@ func SeedCluster(ctx context.Context, store storev1.Store, client *clientv3.Clie
 	}
 
 	// Create the admin user
-	if err := setupAdminUser(ctx, store, config.AdminUsername, config.AdminPassword); err != nil {
+	if err := setupAdminUser(ctx, store, config.AdminUsername, config.AdminPassword, config.AdminAPIKey); err != nil {
 		switch err := err.(type) {
 		case *storev1.ErrAlreadyExists:
 			logger.Warn("admin user already exists")
@@ -334,7 +338,7 @@ func setupClusterRoles(ctx context.Context, store storev1.Store) error {
 	return store.CreateClusterRole(ctx, systemUser)
 }
 
-func setupAdminUser(ctx context.Context, store storev1.Store, username, password string) error {
+func setupAdminUser(ctx context.Context, store storev1.Store, username, password, apiKey string) error {
 	hash, err := bcrypt.HashPassword(password)
 	if err != nil {
 		return err
@@ -346,7 +350,21 @@ func setupAdminUser(ctx context.Context, store storev1.Store, username, password
 		PasswordHash: hash,
 		Groups:       []string{"cluster-admins"},
 	}
-	return store.CreateUser(ctx, admin)
+	if err := store.CreateUser(ctx, admin); err != nil {
+		return err
+	}
+	key := &corev2.APIKey{
+		ObjectMeta: corev2.ObjectMeta{
+			Name: apiKey,
+			CreatedBy: username,
+		},
+		Username: username,
+		CreatedAt: time.Now().Unix(),
+	}
+	if err := store.CreateResource(ctx, key); err != nil {
+		return err
+	}
+	return nil
 }
 
 func setupAgentUser(ctx context.Context, store storev1.Store, username, password string) error {
