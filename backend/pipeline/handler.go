@@ -8,6 +8,7 @@ import (
 )
 
 type Handler interface {
+	Name() string
 	CanHandle(context.Context, *corev2.ResourceReference) bool
 	Handle(context.Context, *corev2.ResourceReference, *corev2.Event) error
 }

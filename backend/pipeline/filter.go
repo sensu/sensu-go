@@ -8,6 +8,7 @@ import (
 )
 
 type Filter interface {
+	Name() string
 	CanFilter(context.Context, *corev2.ResourceReference) bool
 	Filter(context.Context, *corev2.ResourceReference, *corev2.Event) (bool, error)
 }

@@ -8,6 +8,7 @@ import (
 )
 
 type Mutator interface {
+	Name() string
 	CanMutate(context.Context, *corev2.ResourceReference) bool
 	Mutate(context.Context, *corev2.ResourceReference, *corev2.Event) (*corev2.Event, error)
 }
