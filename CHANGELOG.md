@@ -8,9 +8,6 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
 
-### Fixed
-- Agent events API now accepts metrics event
-
 ### Added
 - Added `ignore-already-initialized` configuration flag to the sensu-backend
 init command for returning exit code 0 when a cluster has already been
@@ -48,6 +45,9 @@ to 1000 items.
 if the store was already initialized.
 - Guard against potential crash in the sensuctl cluster member-list command when
 the etcd response header is nil.
+- Agent events API now accepts metrics event.
+- Fixed rare cases where the agent could fail to delete temporary files when
+downloading assets.
 
 ## [6.4.0] - 2021-06-23
 
