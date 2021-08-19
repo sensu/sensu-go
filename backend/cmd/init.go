@@ -7,7 +7,7 @@ import (
 	"os"
 	"time"
 
-	"go.etcd.io/etcd/client/v3"
+	"github.com/AlecAivazis/survey/v2"
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend"
 	"github.com/sensu/sensu-go/backend/etcd"
@@ -16,8 +16,8 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"go.etcd.io/etcd/client/pkg/v3/transport"
+	clientv3 "go.etcd.io/etcd/client/v3"
 	"google.golang.org/grpc"
-	"github.com/AlecAivazis/survey/v2"
 )
 
 const (
@@ -51,7 +51,7 @@ type initOpts struct {
 	AdminUsername             string `survey:"cluster-admin-username"`
 	AdminPassword             string `survey:"cluster-admin-password"`
 	AdminPasswordConfirmation string `survey:"cluster-admin-password-confirmation"`
-	AdminAPIKey 			  string `survey:"cluster-admin-api-key"`
+	AdminAPIKey               string `survey:"cluster-admin-api-key"`
 }
 
 func (i *initOpts) administerQuestionnaire() error {

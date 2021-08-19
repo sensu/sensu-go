@@ -11,7 +11,7 @@ import (
 	storev1 "github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/backend/store/etcd"
 	"github.com/sensu/sensu-go/types"
-	"go.etcd.io/etcd/client/v3"
+	clientv3 "go.etcd.io/etcd/client/v3"
 )
 
 type Config struct {
@@ -353,16 +353,18 @@ func setupAdminUser(ctx context.Context, store storev1.Store, username, password
 	if err := store.CreateUser(ctx, admin); err != nil {
 		return err
 	}
-	key := &corev2.APIKey{
-		ObjectMeta: corev2.ObjectMeta{
-			Name: apiKey,
-			CreatedBy: username,
-		},
-		Username: username,
-		CreatedAt: time.Now().Unix(),
-	}
-	if err := store.CreateResource(ctx, key); err != nil {
-		return err
+	if apiKey != "" {
+		key := &corev2.APIKey{
+			ObjectMeta: corev2.ObjectMeta{
+				Name:      apiKey,
+				CreatedBy: username,
+			},
+			Username:  username,
+			CreatedAt: time.Now().Unix(),
+		}
+		if err := store.CreateResource(ctx, key); err != nil {
+			return err
+		}
 	}
 	return nil
 }
