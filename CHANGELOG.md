@@ -10,21 +10,21 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ### Added
 - Added `ignore-already-initialized` configuration flag to the sensu-backend
-  init command for returning exit code 0 when a cluster has already been
-  initialized.
+init command for returning exit code 0 when a cluster has already been
+initialized.
 - Added javascript mutators, which can be selected by setting
-  "type": "javascript" on core/v2.Mutators, and specifying valid ECMAScript 5
-  code in the "eval" field. See documentation for details.
+"type": "javascript" on core/v2.Mutators, and specifying valid ECMAScript 5
+code in the "eval" field. See documentation for details.
 - Added --retry-min, --retry-max, and --retry-multiplier flags to sensu-agent
-  for controlling agent retry exponential backoff behaviour. --retry-min and
-  --retry-max expect duration values like 1s, 10m, 4h. --retry-multiplier expects
-  a decimal multiplier value.
+for controlling agent retry exponential backoff behaviour. --retry-min and
+--retry-max expect duration values like 1s, 10m, 4h. --retry-multiplier expects
+a decimal multiplier value.
 - Added ProcessedBy field to check results. The ProcessedBy field indicates which
-  agent processed a particular event.
+agent processed a particular event.
 - Added `core/v2.Pipeline` resource for configuring Pipeline resources.
 - Added `pipelines` field to `Check` and `CheckConfig`.
 - Added `sensu_go_agentd_event_bytes` & `sensu_go_store_event_bytes` summary
-  metrics to the `/metrics` endpoint.
+metrics to the `/metrics` endpoint.
 - Added support for environment variable arguments in `sensuctl`.
 
 ### Changed
