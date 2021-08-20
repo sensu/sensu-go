@@ -601,6 +601,40 @@ func TestResolveObjectMeta(t *testing.T) {
 	}
 }
 
+func TestResolvePipeline(t *testing.T) {
+	var value interface{} = new(Pipeline)
+	if _, ok := value.(Resource); ok {
+		if _, err := ResolveResource("Pipeline"); err != nil {
+			t.Fatal(err)
+		}
+		return
+	}
+	_, err := ResolveResource("Pipeline")
+	if err == nil {
+		t.Fatal("expected non-nil error")
+	}
+	if got, want := err.Error(), `"Pipeline" is not a Resource`; got != want {
+		t.Fatalf("unexpected error: %s", err)
+	}
+}
+
+func TestResolvePipelineWorkflow(t *testing.T) {
+	var value interface{} = new(PipelineWorkflow)
+	if _, ok := value.(Resource); ok {
+		if _, err := ResolveResource("PipelineWorkflow"); err != nil {
+			t.Fatal(err)
+		}
+		return
+	}
+	_, err := ResolveResource("PipelineWorkflow")
+	if err == nil {
+		t.Fatal("expected non-nil error")
+	}
+	if got, want := err.Error(), `"PipelineWorkflow" is not a Resource`; got != want {
+		t.Fatalf("unexpected error: %s", err)
+	}
+}
+
 func TestResolvePostgresHealth(t *testing.T) {
 	var value interface{} = new(PostgresHealth)
 	if _, ok := value.(Resource); ok {
@@ -648,6 +682,23 @@ func TestResolveProxyRequests(t *testing.T) {
 		t.Fatal("expected non-nil error")
 	}
 	if got, want := err.Error(), `"ProxyRequests" is not a Resource`; got != want {
+		t.Fatalf("unexpected error: %s", err)
+	}
+}
+
+func TestResolveResourceReference(t *testing.T) {
+	var value interface{} = new(ResourceReference)
+	if _, ok := value.(Resource); ok {
+		if _, err := ResolveResource("ResourceReference"); err != nil {
+			t.Fatal(err)
+		}
+		return
+	}
+	_, err := ResolveResource("ResourceReference")
+	if err == nil {
+		t.Fatal("expected non-nil error")
+	}
+	if got, want := err.Error(), `"ResourceReference" is not a Resource`; got != want {
 		t.Fatalf("unexpected error: %s", err)
 	}
 }

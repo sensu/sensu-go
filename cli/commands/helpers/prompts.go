@@ -17,6 +17,16 @@ func ConfirmDelete(name string) bool {
 	return ok
 }
 
+// ConfirmDeleteResource confirm a deletion operation before it is completed.
+func ConfirmDeleteResource(name string, resourceType string) bool {
+	confirm := &ConfirmDestructiveOp{
+		Type: fmt.Sprintf("%s resource", resourceType),
+		Op:   "delete",
+	}
+	ok, _ := confirm.Ask(name)
+	return ok
+}
+
 // ConfirmDestructiveOp presents prompt for a destructive operation.
 type ConfirmDestructiveOp struct {
 	Type string

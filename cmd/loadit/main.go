@@ -13,7 +13,6 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/google/uuid"
 	"github.com/sensu/sensu-go/agent"
 	"github.com/sensu/sensu-go/command"
 	"github.com/sensu/sensu-go/types"
@@ -33,6 +32,9 @@ var (
 	flagProfilingPort     = flag.Int("pprof-port", 6060, "pprof port to bind to")
 	flagPromBinding       = flag.String("prom", ":8080", "binding for prometheus server")
 	flagHugeEvents        = flag.Bool("huge-events", false, "send 1 MB events to the backend")
+	flagUser              = flag.String("user", agent.DefaultUser, "user to authenticate with server")
+	flagPassword          = flag.String("password", agent.DefaultPassword, "password to authenticate with server")
+	flagBaseEntityName    = flag.String("base-entity-name", "test-host", "base entity name to prepend with count number.")
 )
 
 func main() {
@@ -61,11 +63,7 @@ func main() {
 
 	start := time.Now()
 	for i := 0; i < *flagCount; i++ {
-		uuidBytes, err := uuid.NewRandom()
-		if err != nil {
-			log.Fatal(err)
-		}
-		name := uuidBytes.String()
+		name := fmt.Sprintf("%s-%d", *flagBaseEntityName, i+1)
 
 		cfg := agent.NewConfig()
 		cfg.API.Host = agent.DefaultAPIHost
@@ -83,10 +81,10 @@ func main() {
 		cfg.KeepaliveInterval = uint32(*flagKeepaliveInterval)
 		cfg.KeepaliveWarningTimeout = uint32(*flagKeepaliveTimeout)
 		cfg.Namespace = *flagNamespace
-		cfg.Password = agent.DefaultPassword
+		cfg.Password = *flagPassword
 		cfg.Socket.Host = agent.DefaultAPIHost
 		cfg.Socket.Port = agent.DefaultAPIPort
-		cfg.User = agent.DefaultUser
+		cfg.User = *flagUser
 		cfg.Subscriptions = subscriptions
 		cfg.AgentName = name
 		cfg.BackendURLs = backends

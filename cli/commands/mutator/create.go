@@ -71,6 +71,8 @@ func CreateCommand(cli *cli.SensuCli) *cobra.Command {
 	cmd.Flags().String("env-vars", "", "comma separated list of key=value environment variables for the mutator command")
 	cmd.Flags().StringP("timeout", "t", "", "execution duration timeout in seconds (hard stop)")
 	cmd.Flags().StringP("runtime-assets", "r", "", "comma separated list of assets this mutator depends on")
+	cmd.Flags().String("type", "pipe", "type of mutator to create")
+	cmd.Flags().String("eval", "", "javascript expression to use when type is javascript")
 	helpers.AddInteractiveFlag(cmd.Flags())
 	return cmd
 }

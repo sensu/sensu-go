@@ -25,6 +25,7 @@ import (
 	"github.com/sensu/sensu-go/backend/authorization"
 	"github.com/sensu/sensu-go/backend/authorization/rbac"
 	"github.com/sensu/sensu-go/backend/messaging"
+	"github.com/sensu/sensu-go/backend/metrics"
 	"github.com/sensu/sensu-go/backend/ringv2"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/backend/store/cache"
@@ -32,7 +33,7 @@ import (
 	"github.com/sensu/sensu-go/backend/store/v2/etcdstore"
 	"github.com/sensu/sensu-go/transport"
 	"github.com/sirupsen/logrus"
-	"go.etcd.io/etcd/client/v3"
+	clientv3 "go.etcd.io/etcd/client/v3"
 )
 
 var (
@@ -60,9 +61,18 @@ var (
 )
 
 func init() {
-	_ = prometheus.Register(websocketUpgradeDuration)
-	_ = prometheus.Register(websocketErrorCounter)
-	_ = prometheus.Register(sessionErrorCounter)
+	if err := prometheus.Register(websocketUpgradeDuration); err != nil {
+		metrics.LogError(logger, WebsocketUpgradeDuration, err)
+	}
+	if err := prometheus.Register(websocketErrorCounter); err != nil {
+		metrics.LogError(logger, websocketErrorCounterName, err)
+	}
+	if err := prometheus.Register(sessionErrorCounter); err != nil {
+		metrics.LogError(logger, sessionErrorCounterName, err)
+	}
+	if err := prometheus.Register(eventBytesSummary); err != nil {
+		metrics.LogError(logger, EventBytesSummaryName, err)
+	}
 }
 
 // Agentd is the backend HTTP API.
