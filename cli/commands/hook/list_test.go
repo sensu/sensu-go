@@ -79,7 +79,7 @@ func TestListCommandRunEClosureWithAll(t *testing.T) {
 
 func TestListCommandRunEClosureWithTable(t *testing.T) {
 	assert := assert.New(t)
-	cli := test.NewCLIWithValue("none")
+	cli := test.NewCLI()
 
 	hook := corev2.FixtureHookConfig("name-one")
 

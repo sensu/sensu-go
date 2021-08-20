@@ -12,35 +12,26 @@ import (
 	"github.com/spf13/cobra"
 )
 
+// NewCLI returns a SensuCLI instace with mocked values with json format
 func NewCLI() *cli.SensuCli {
-	return NewCLIWithValue("json")
+	cli := NewMockCLI()
+	config := cli.Config.(*clientmock.MockConfig)
+	config.On("Format").Return("json")
+
+	return cli
 }
 
-// NewCLIWithValue returns a SensuCLI instace with mocked values with json format
-func NewCLIWithValue(format string) *cli.SensuCli {
-	mockCLI := NewMockCLI()
-	config := mockCLI.Config.(*clientmock.MockConfig)
-	config.On("Format").Return(format)
-
-	return mockCLI
-}
-
-// NewMockCLI return SensuCLI instance w/ default mocked values
+// NewMockCLI return SensuCLI instance w/ mocked values
 func NewMockCLI() *cli.SensuCli {
-	return NewMockCLIWithValue("default")
-}
-
-// NewMockCLIWithValue return SensuCLI instance w/ mocked values
-func NewMockCLIWithValue(namespace string) *cli.SensuCli {
-	mockConfig := &clientmock.MockConfig{}
-	mockClient := &clientmock.MockClient{}
+	config := &clientmock.MockConfig{}
+	client := &clientmock.MockClient{}
 
 	// Set defaults ...
-	mockConfig.On("Namespace").Return(namespace)
+	config.On("Namespace").Return("default")
 
 	return &cli.SensuCli{
-		Client: mockClient,
-		Config: mockConfig,
+		Client: client,
+		Config: config,
 		InFile: os.Stdin,
 	}
 }

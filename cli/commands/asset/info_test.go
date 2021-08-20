@@ -53,7 +53,7 @@ func TestInfoCommandRunMissingArgs(t *testing.T) {
 func TestInfoCommandRunEClosureWithTable(t *testing.T) {
 	assert := assert.New(t)
 
-	cli := test.NewCLIWithValue("none")
+	cli := test.NewCLI()
 	client := cli.Client.(*client.MockClient)
 	client.On("FetchAsset", "in").Return(types.FixtureAsset("name-one"), nil)
 

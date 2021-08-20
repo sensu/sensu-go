@@ -77,7 +77,7 @@ func TestListCommandRunEClosureWithAllNamespaces(t *testing.T) {
 func TestListCommandRunEClosureWithTable(t *testing.T) {
 	assert := assert.New(t)
 
-	cli := test.NewCLIWithValue("none")
+	cli := test.NewCLI()
 	client := cli.Client.(*client.MockClient)
 	resources := []corev2.Handler{}
 	client.On("List", mock.Anything, &resources, mock.Anything, mock.Anything).Return(nil).Run(

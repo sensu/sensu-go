@@ -57,10 +57,10 @@ func TestListCommandRunEClosure(t *testing.T) {
 func TestListCommandRunEClosureWithAll(t *testing.T) {
 	assert := assert.New(t)
 
-	cli := test.NewCLIWithValue("none")
-	mockClient := cli.Client.(*client.MockClient)
+	cli := test.NewCLI()
+	client := cli.Client.(*client.MockClient)
 	resources := []corev2.CheckConfig{}
-	mockClient.On("List", mock.Anything, &resources, mock.Anything, mock.Anything).Return(nil).Run(
+	client.On("List", mock.Anything, &resources, mock.Anything, mock.Anything).Return(nil).Run(
 		func(args mock.Arguments) {
 			resources := args[1].(*[]corev2.CheckConfig)
 			*resources = []corev2.CheckConfig{
@@ -68,8 +68,7 @@ func TestListCommandRunEClosureWithAll(t *testing.T) {
 			}
 		},
 	)
-	mockConfig := cli.Config.(*client.MockConfig)
-	mockConfig.Mock.ExpectedCalls[1].Return("tabular")
+
 	cmd := ListCommand(cli)
 	require.NoError(t, cmd.Flags().Set(flags.Format, "json"))
 	require.NoError(t, cmd.Flags().Set(flags.AllNamespaces, "t"))
@@ -80,7 +79,7 @@ func TestListCommandRunEClosureWithAll(t *testing.T) {
 
 func TestListCommandRunEClosureWithTable(t *testing.T) {
 	assert := assert.New(t)
-	cli := test.NewCLIWithValue("none")
+	cli := test.NewCLI()
 
 	check := corev2.FixtureCheckConfig("name-one")
 	check.RuntimeAssets = []string{"asset-one"}

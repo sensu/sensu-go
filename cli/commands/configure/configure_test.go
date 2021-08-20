@@ -37,7 +37,7 @@ func TestCommand(t *testing.T) {
 func TestCommandRunEClosureWithFlags(t *testing.T) {
 	assert := assert.New(t)
 
-	cli := test.NewCLIWithValue(config.DefaultFormat)
+	cli := test.NewCLI()
 	mockClient := cli.Client.(*client.MockClient)
 	mockConfig := cli.Config.(*client.MockConfig)
 	mockConfig.On("APIUrl").Return("http://127.0.0.1:8080")

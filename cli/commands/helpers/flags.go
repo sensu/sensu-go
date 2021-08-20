@@ -76,7 +76,10 @@ func GetChangedStringValueFlag(name string, flagset *pflag.FlagSet) string {
 		return ""
 	}
 
-	return viper.GetString(name)
+	if value, err := flagset.GetString(name); err == nil {
+		return value
+	}
+	return ""
 }
 
 // EnvHasChanged determines if the user has set the value of an environment variable or flag

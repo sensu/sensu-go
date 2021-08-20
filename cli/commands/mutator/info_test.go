@@ -53,7 +53,7 @@ func TestShowCommandRunMissingArgs(t *testing.T) {
 func TestShowCommandRunEClosureWithTable(t *testing.T) {
 	assert := assert.New(t)
 
-	cli := test.NewCLIWithValue("none")
+	cli := test.NewCLI()
 	client := cli.Client.(*client.MockClient)
 	client.On("FetchMutator", "in").Return(types.FixtureMutator("name-one"), nil)
 
