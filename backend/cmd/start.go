@@ -160,7 +160,7 @@ var (
 	// platform metric logging defaults
 	defaultDisablePlatformMetrics         = false
 	defaultPlatformMetricsLoggingInterval = 60 * time.Second
-	defaultPlatformMetricsLogFile         = filepath.Join(path.SystemDataDir("sensu-backend"), "stats.log")
+	defaultPlatformMetricsLogFile         = filepath.Join(path.SystemLogDir(), "backend-stats.log")
 )
 
 // InitializeFunc represents the signature of an initialization function, used
@@ -580,9 +580,9 @@ func flagSet(server bool) *pflag.FlagSet {
 		// Use a default value of 10ms for the full buffer wait time. When the buffer
 		// is full, the logger will wait for the writer to consume events from the buffer.
 		// This helps reduce event data loss but comes at the cost of event back-pressure
-		// for the backend and it's agent sessions. If the buffer fills and the wait time
+		// for the backend and its agent sessions. If the buffer fills and the wait time
 		// is too low, it will dicard too many events. If the wait time is too high,
-		// event back-pressure could stop the backend and it's agent sessions from
+		// event back-pressure could stop the backend and its agent sessions from
 		// producing and processing new events and possibly lead to a crash.
 		_ = flagSet.String(flagEventLogBufferWait, "10ms", "full buffer wait time")
 	}
