@@ -4,7 +4,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/sensu/sensu-go/rpc"
 	"github.com/sensu/sensu-go/testing/mockstore"
 	"github.com/sensu/sensu-go/types"
 	"github.com/stretchr/testify/assert"
@@ -49,14 +48,6 @@ func TestPipelineFilter(t *testing.T) {
 	store.On("GetEventFilterByName", mock.Anything, "allowFilterFoo").Return(allowFilterFoo, nil)
 	store.On("GetEventFilterByName", mock.Anything, "denyFilterBar").Return(denyFilterBar, nil)
 	store.On("GetEventFilterByName", mock.Anything, "denyFilterFoo").Return(denyFilterFoo, nil)
-	store.On("GetEventFilterByName", mock.Anything, "extension_filter").Return((*types.EventFilter)(nil), nil)
-	store.On("GetExtension", mock.Anything, "extension_filter").Return(&types.Extension{URL: "http://127.0.0.1"}, nil)
-
-	p.extensionExecutor = func(ext *types.Extension) (rpc.ExtensionExecutor, error) {
-		m := &mockExec{}
-		m.On("FilterEvent", mock.Anything).Return(true, nil)
-		return m, nil
-	}
 
 	testCases := []struct {
 		name           string
@@ -178,11 +169,6 @@ func TestPipelineFilter(t *testing.T) {
 			silenced:       []string{},
 			filters:        []string{"is_incident"},
 			expectedFilter: "",
-		},
-		{
-			name:           "Extension filter",
-			filters:        []string{"extension_filter"},
-			expectedFilter: "extension_filter",
 		},
 	}
 
