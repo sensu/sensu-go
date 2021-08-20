@@ -32,7 +32,7 @@ import (
 	"github.com/sensu/sensu-go/backend/store/v2/etcdstore"
 	"github.com/sensu/sensu-go/transport"
 	"github.com/sirupsen/logrus"
-	"go.etcd.io/etcd/client/v3"
+	clientv3 "go.etcd.io/etcd/client/v3"
 )
 
 var (
@@ -194,7 +194,7 @@ func New(c Config, opts ...Option) (*Agentd, error) {
 
 // Start Agentd.
 func (a *Agentd) Start() error {
-	logger.Info("starting agentd on address: ", a.httpServer.Addr)
+	logger.Warn("starting agentd on address: ", a.httpServer.Addr)
 	ln, err := net.Listen("tcp", a.httpServer.Addr)
 	if err != nil {
 		return fmt.Errorf("failed to start agentd: %s", err)
