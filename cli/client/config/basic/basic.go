@@ -47,7 +47,6 @@ type Profile struct {
 }
 
 // Load imports the CLI configuration and returns an initialized Config struct
-//func Load(flags *pflag.FlagSet) *Config {
 func Load(flags *pflag.FlagSet, v *viper.Viper) *Config {
 	conf := &Config{}
 
