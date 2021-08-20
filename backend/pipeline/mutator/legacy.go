@@ -2,6 +2,7 @@ package mutator
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
@@ -19,7 +20,11 @@ var (
 	}
 )
 
-// Legacy is
+// Legacy is a pipeline mutator that acts as a bridge between corev2.Mutators,
+// excluding those with a built-in name (e.g. json, or only_check_output), and
+// the Pipe & Javascript pipeline mutators. The corev2.Mutator's type field is
+// used to select which bridged pipeline mutator to use. For example, if the
+// type field is set to "pipe", the event will be sent to the Pipe mutator.
 type Legacy struct {
 	AssetGetter            asset.Getter
 	Executor               command.Executor
@@ -63,6 +68,9 @@ func (l *Legacy) Mutate(ctx context.Context, ref *corev2.ResourceReference, even
 		// Warning: do not wrap this error
 		logger.WithFields(fields).WithError(err).Error("failed to retrieve mutator")
 		return nil, err
+	}
+	if mutator == nil {
+		return nil, fmt.Errorf("mutator %q does not exist", ref.Name)
 	}
 
 	var eventData []byte

@@ -2,7 +2,7 @@ package mutator
 
 import (
 	"context"
-	"reflect"
+	"encoding/json"
 	"testing"
 	"time"
 
@@ -11,6 +11,9 @@ import (
 	"github.com/sensu/sensu-go/backend/secrets"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/command"
+	"github.com/sensu/sensu-go/testing/mockstore"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 )
 
 func TestLegacy_Name(t *testing.T) {
@@ -117,10 +120,56 @@ func TestLegacy_Mutate(t *testing.T) {
 		name    string
 		fields  fields
 		args    args
-		want    []byte
+		wantFn  func(*corev2.Event) []byte
 		wantErr bool
 	}{
-		// TODO: Add test cases.
+		{
+			name: "can mutate using a pipe mutator",
+			fields: fields{
+				Store: func() store.Store {
+					mutator := corev2.FakeMutatorCommand("cat")
+					stor := &mockstore.MockStore{}
+					stor.On("GetMutatorByName", mock.Anything, mock.Anything).Return(mutator, nil)
+					return stor
+				}(),
+				Executor: command.NewExecutor(),
+			},
+			args: args{
+				ctx: context.Background(),
+				ref: &corev2.ResourceReference{
+					APIVersion: "core/v2",
+					Type:       "Mutator",
+					Name:       "cat",
+				},
+				event: corev2.FixtureEvent("default", "default"),
+			},
+			wantFn: func(event *corev2.Event) []byte {
+				bytes, _ := json.Marshal(event)
+				return bytes
+			},
+			wantErr: false,
+		},
+		{
+			name: "returns an error when a mutator cannot be found in the store (GH2784)",
+			fields: fields{
+				Store: func() store.Store {
+					stor := &mockstore.MockStore{}
+					stor.On("GetMutatorByName", mock.Anything, mock.Anything).Return((*corev2.Mutator)(nil), nil)
+					return stor
+				}(),
+				Executor: command.NewExecutor(),
+			},
+			args: args{
+				ctx: context.Background(),
+				ref: &corev2.ResourceReference{
+					APIVersion: "core/v2",
+					Type:       "Mutator",
+					Name:       "cat",
+				},
+				event: corev2.FixtureEvent("default", "default"),
+			},
+			wantErr: true,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -136,8 +185,9 @@ func TestLegacy_Mutate(t *testing.T) {
 				t.Errorf("Legacy.Mutate() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
-			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("Legacy.Mutate() = %v, want %v", got, tt.want)
+			if tt.wantFn != nil {
+				want := tt.wantFn(tt.args.event)
+				assert.JSONEq(t, string(want), string(got))
 			}
 		})
 	}

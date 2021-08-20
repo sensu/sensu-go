@@ -87,7 +87,7 @@ func (p *Pipe) run(ctx context.Context, mutator *corev2.Mutator, event *corev2.E
 		mutatorExec.Env = environment.MergeEnvironments(os.Environ(), assets.Env(), mutator.EnvVars, secrets)
 	}
 
-	result, err := p.Executor.Execute(context.Background(), mutatorExec)
+	result, err := p.Executor.Execute(ctx, mutatorExec)
 
 	fields["status"] = result.Status
 	fields["output"] = result.Output
