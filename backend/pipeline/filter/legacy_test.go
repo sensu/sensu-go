@@ -8,6 +8,8 @@ import (
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/asset"
 	"github.com/sensu/sensu-go/backend/store"
+	"github.com/sensu/sensu-go/testing/mockstore"
+	"github.com/stretchr/testify/mock"
 )
 
 func TestLegacy_Name(t *testing.T) {
@@ -115,6 +117,25 @@ func TestLegacy_Filter(t *testing.T) {
 		ref   *corev2.ResourceReference
 		event *corev2.Event
 	}
+	newEvent := func() *corev2.Event {
+		event := corev2.FixtureEvent("default", "default")
+		event.Check.Output = "matched"
+		return event
+	}
+	newFilter := func(action string, expressions []string) *corev2.EventFilter {
+		return &corev2.EventFilter{
+			ObjectMeta:  corev2.ObjectMeta{Name: "my_filter"},
+			Action:      action,
+			Expressions: expressions,
+		}
+	}
+	newArgs := func() args {
+		return args{
+			ctx:   context.Background(),
+			ref:   &corev2.ResourceReference{Name: "my_filter"},
+			event: newEvent(),
+		}
+	}
 	tests := []struct {
 		name    string
 		fields  fields
@@ -122,7 +143,96 @@ func TestLegacy_Filter(t *testing.T) {
 		want    bool
 		wantErr bool
 	}{
-		// TODO: Add test cases.
+		{
+			name: "allow filters deny events that do not match expression",
+			args: newArgs(),
+			fields: fields{
+				Store: func() store.Store {
+					filter := newFilter(corev2.EventFilterActionAllow, []string{`event.check.output == "unmatched"`})
+					stor := &mockstore.MockStore{}
+					stor.On("GetEventFilterByName", mock.Anything, filter.Name).Return(filter, nil)
+					return stor
+				}(),
+			},
+			want:    true,
+			wantErr: false,
+		},
+		{
+			name: "allow filters allow events that match expression",
+			args: newArgs(),
+			fields: fields{
+				Store: func() store.Store {
+					filter := newFilter(corev2.EventFilterActionAllow, []string{`event.check.output == "matched"`})
+					stor := &mockstore.MockStore{}
+					stor.On("GetEventFilterByName", mock.Anything, filter.Name).Return(filter, nil)
+					return stor
+				}(),
+			},
+			want:    false,
+			wantErr: false,
+		},
+		{
+			name: "allow filters deny events that only match some expressions",
+			args: newArgs(),
+			fields: fields{
+				Store: func() store.Store {
+					filter := newFilter(corev2.EventFilterActionAllow, []string{
+						`event.check.output == "matched"`,
+						`event.check.output == "unmatched"`,
+					})
+					stor := &mockstore.MockStore{}
+					stor.On("GetEventFilterByName", mock.Anything, filter.Name).Return(filter, nil)
+					return stor
+				}(),
+			},
+			want:    true,
+			wantErr: false,
+		},
+		{
+			name: "deny filters allow events that do not match expression",
+			args: newArgs(),
+			fields: fields{
+				Store: func() store.Store {
+					filter := newFilter(corev2.EventFilterActionDeny, []string{`event.check.output == "unmatched"`})
+					stor := &mockstore.MockStore{}
+					stor.On("GetEventFilterByName", mock.Anything, filter.Name).Return(filter, nil)
+					return stor
+				}(),
+			},
+			want:    false,
+			wantErr: false,
+		},
+		{
+			name: "deny filters deny events that match expression",
+			args: newArgs(),
+			fields: fields{
+				Store: func() store.Store {
+					filter := newFilter(corev2.EventFilterActionDeny, []string{`event.check.output == "matched"`})
+					stor := &mockstore.MockStore{}
+					stor.On("GetEventFilterByName", mock.Anything, filter.Name).Return(filter, nil)
+					return stor
+				}(),
+			},
+			want:    true,
+			wantErr: false,
+		},
+		{
+			name: "deny filters allow events that only match some expressions",
+			args: newArgs(),
+			fields: fields{
+				Store: func() store.Store {
+					filter := newFilter(corev2.EventFilterActionDeny, []string{
+						`event.check.output == "unmatched"`,
+						`event.check.output == "matched"`,
+					})
+					stor := &mockstore.MockStore{}
+					stor.On("GetEventFilterByName", mock.Anything, filter.Name).Return(filter, nil)
+					return stor
+				}(),
+			},
+			want:    false,
+			wantErr: false,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
