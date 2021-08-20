@@ -15,6 +15,10 @@ if the store was already initialized.
 - Guard against potential crash in the sensuctl cluster member-list command when
 the etcd response header is nil.
 
+### Changed
+- API and agent services now log at warn level when the start up, not at info.
+- Backend now reports when it is ready to process events at warn level.
+
 ## [6.4.0] - 2021-06-23
 
 ### Added
