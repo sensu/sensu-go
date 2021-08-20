@@ -40,7 +40,7 @@ const cannedResponseText = `
                      ;MMMMMMMMMMMMWXNNMMMMW.
 `
 
-var cannedResponse = &ExecutionResponse{
+var CannedResponse = &ExecutionResponse{
 	Output: cannedResponseText,
 }
 
@@ -118,7 +118,7 @@ func NewExecutor() Executor {
 // (STDOUT/ERR) and exit status.
 func (e *ExecutionRequest) Execute(ctx context.Context, execution ExecutionRequest) (*ExecutionResponse, error) {
 	if execution.Command == undocumentedTestCheckCommand {
-		return cannedResponse, nil
+		return CannedResponse, nil
 	}
 	resp := &ExecutionResponse{}
 	logger := logrus.WithFields(logrus.Fields{"component": "command"})
