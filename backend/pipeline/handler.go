@@ -10,7 +10,7 @@ import (
 type Handler interface {
 	Name() string
 	CanHandle(context.Context, *corev2.ResourceReference) bool
-	Handle(context.Context, *corev2.ResourceReference, *corev2.Event, []bytes) error
+	Handle(context.Context, *corev2.ResourceReference, *corev2.Event, []byte) error
 }
 
 func (p *Pipeline) getHandlerForResource(ctx context.Context, ref *corev2.ResourceReference) (Handler, error) {
@@ -22,7 +22,7 @@ func (p *Pipeline) getHandlerForResource(ctx context.Context, ref *corev2.Resour
 	return nil, fmt.Errorf("no handler processors were found that can handle the resource: %s.%s = %s", ref.APIVersion, ref.Type, ref.Name)
 }
 
-func (p *Pipeline) processHandler(ctx context.Context, ref *corev2.ResourceReference, event *corev2.Event, mutatedData []bytes) error {
+func (p *Pipeline) processHandler(ctx context.Context, ref *corev2.ResourceReference, event *corev2.Event, mutatedData []byte) error {
 	handler, err := p.getHandlerForResource(ctx, ref)
 	if err != nil {
 		return err

@@ -10,7 +10,8 @@ import (
 	"github.com/sensu/sensu-go/asset"
 	"github.com/sensu/sensu-go/backend/licensing"
 	"github.com/sensu/sensu-go/backend/pipeline/filter"
-	"github.com/sensu/sensu-go/backend/pipeline/legacy"
+	"github.com/sensu/sensu-go/backend/pipeline/handler"
+	"github.com/sensu/sensu-go/backend/pipeline/mutator"
 	"github.com/sensu/sensu-go/backend/secrets"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/command"
@@ -22,6 +23,8 @@ const (
 	LegacyPipelineName         = "legacy-pipeline"
 	LegacyPipelineWorkflowName = "legacy-pipeline-workflow-%s"
 )
+
+type HandlerMap map[string]*corev2.Handler
 
 // Pipeline takes events as inputs, and treats them in various ways according
 // to the event's check configuration.
@@ -85,9 +88,9 @@ func (p *Pipeline) HandleEvent(ctx context.Context, event *corev2.Event) error {
 	// Loop through each event pipeline, search for a compatible pipeline
 	// runner & run it
 	for _, pipelineRef := range pipelineRefs {
-		for _, runner := range runners {
-			if runner.CanRun(pipelineRef) {
-				runner.Run(pipelineRef)
+		for _, runner := range p.runners {
+			if runner.CanRun(ctx, pipelineRef) {
+				runner.Run(ctx, pipelineRef, event)
 			}
 		}
 	}
@@ -97,7 +100,7 @@ func (p *Pipeline) HandleEvent(ctx context.Context, event *corev2.Event) error {
 
 type Runner interface {
 	CanRun(context.Context, *corev2.ResourceReference) bool
-	Run(context.Context, *corev2.ResourceReference, interface{}) error
+	Run(context.Context, *corev2.ResourceReference, *corev2.Event) error
 }
 
 func (p *Pipeline) getRunnerForResource(ctx context.Context, ref *corev2.ResourceReference) (PipelineRunner, error) {
@@ -209,7 +212,7 @@ func (p *Pipeline) generateLegacyEventPipeline(ctx context.Context, event *corev
 
 	pipeline := &corev2.Pipeline{
 		Metadata: &corev2.ObjectMeta{
-			Name:      LegacyEventPipelineName,
+			Name:      LegacyPipelineName,
 			Namespace: corev2.ContextNamespace(ctx),
 		},
 		Workflows: []*corev2.PipelineWorkflow{},
@@ -235,16 +238,13 @@ func (p *Pipeline) runEventWorkflow(ctx context.Context, workflow *corev2.Pipeli
 	}
 
 	// Process the event through the workflow mutator
-	mutatedEvent, err := p.processMutator(ctx, workflow.Mutator, event)
+	mutatedData, err := p.processMutator(ctx, workflow.Mutator, event)
 	if err != nil {
 		return err
 	}
-	if mutatedEvent != nil {
-		event = mutatedEvent
-	}
 
 	// Process the event through the workflow handler
-	return p.processHandler(ctx, workflow.Handler, event)
+	return p.processHandler(ctx, workflow.Handler, event, mutatedData)
 }
 
 // New creates a new Pipeline from the provided configuration.
@@ -262,7 +262,7 @@ func New(c Config, options ...Option) *Pipeline {
 	// default pipeline mutators to search through when searching for a pipeline
 	// mutator that supports a referenced event mutator resource.
 	defaultMutators := []Mutator{
-		&legacy.Mutator{
+		&mutator.Legacy{
 			Store:        c.Store,
 			StoreTimeout: c.StoreTimeout,
 		},
@@ -271,7 +271,7 @@ func New(c Config, options ...Option) *Pipeline {
 	// default pipeline handlers to search through when searching for a pipeline
 	// handler that supports a referenced event handler resource.
 	defaultHandlers := []Handler{
-		&legacy.Handler{
+		&handler.Legacy{
 			AssetGetter:            c.AssetGetter,
 			Executor:               command.NewExecutor(),
 			LicenseGetter:          c.LicenseGetter,
@@ -302,7 +302,7 @@ func New(c Config, options ...Option) *Pipeline {
 // expandHandlers turns a list of Sensu handler names into a list of
 // handlers, while expanding handler sets with support for some
 // nesting. Handlers are fetched from etcd.
-func (p *Pipeline) expandHandlers(ctx context.Context, handlers []string, level int) ([]*corev2.Handler, error) {
+func (p *Pipeline) expandHandlers(ctx context.Context, handlers []string, level int) (HandlerMap, error) {
 	if level > 3 {
 		return nil, errors.New("handler sets cannot be deeply nested")
 	}
@@ -360,7 +360,7 @@ func (p *Pipeline) expandHandlers(ctx context.Context, handlers []string, level 
 		}
 	}
 
-	return expanded, nil
+	return expandedHandlers, nil
 }
 
 // func (p *Pipeline) HandleEvent(ctx context.Context, event *corev2.Event) error {

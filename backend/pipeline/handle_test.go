@@ -101,7 +101,7 @@ func TestPipelineExpandHandlers(t *testing.T) {
 		name      string
 		handlers  []string
 		storeFunc storeFunc
-		want      map[string]handlerExtensionUnion
+		want      map[string]*corev2.Handler
 	}{
 		{
 			name:     "pipe handler",
@@ -109,8 +109,8 @@ func TestPipelineExpandHandlers(t *testing.T) {
 			storeFunc: func(s *mockstore.MockStore) {
 				s.On("GetHandlerByName", mock.Anything, "pipeHandler").Return(pipeHandler, nil)
 			},
-			want: map[string]handlerExtensionUnion{
-				"pipeHandler": handlerExtensionUnion{Handler: pipeHandler},
+			want: map[string]*corev2.Handler{
+				"pipeHandler": pipeHandler,
 			},
 		},
 		{
@@ -119,7 +119,7 @@ func TestPipelineExpandHandlers(t *testing.T) {
 			storeFunc: func(s *mockstore.MockStore) {
 				s.On("GetHandlerByName", mock.Anything, "pipeHandler").Return(nilHandler, errors.New("error"))
 			},
-			want: map[string]handlerExtensionUnion{},
+			want: map[string]*corev2.Handler{},
 		},
 		{
 			name:     "set handler",
@@ -128,8 +128,8 @@ func TestPipelineExpandHandlers(t *testing.T) {
 				s.On("GetHandlerByName", mock.Anything, "setHandler").Return(setHandler, nil)
 				s.On("GetHandlerByName", mock.Anything, "pipeHandler").Return(pipeHandler, nil)
 			},
-			want: map[string]handlerExtensionUnion{
-				"pipeHandler": handlerExtensionUnion{Handler: pipeHandler},
+			want: map[string]*corev2.Handler{
+				"pipeHandler": pipeHandler,
 			},
 		},
 		{
@@ -138,7 +138,7 @@ func TestPipelineExpandHandlers(t *testing.T) {
 			storeFunc: func(s *mockstore.MockStore) {
 				s.On("GetHandlerByName", mock.Anything, "recursiveLoopHandler").Return(recursiveLoopHandler, nil)
 			},
-			want: map[string]handlerExtensionUnion{},
+			want: map[string]*corev2.Handler{},
 		},
 		{
 			name:     "multiple nested set handlers",
@@ -149,8 +149,8 @@ func TestPipelineExpandHandlers(t *testing.T) {
 				s.On("GetHandlerByName", mock.Anything, "setHandler").Return(setHandler, nil)
 				s.On("GetHandlerByName", mock.Anything, "pipeHandler").Return(pipeHandler, nil)
 			},
-			want: map[string]handlerExtensionUnion{
-				"pipeHandler": handlerExtensionUnion{Handler: pipeHandler},
+			want: map[string]*corev2.Handler{
+				"pipeHandler": pipeHandler,
 			},
 		},
 	}
