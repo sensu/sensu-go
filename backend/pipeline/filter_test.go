@@ -59,38 +59,6 @@ func TestPipelineFilter(t *testing.T) {
 		expectedFilter string
 	}{
 		{
-			name:           "Not Incident",
-			status:         0,
-			metrics:        nil,
-			silenced:       []string{},
-			filters:        []string{"is_incident"},
-			expectedFilter: "is_incident",
-		},
-		{
-			name:           "Incident",
-			status:         1,
-			metrics:        nil,
-			silenced:       []string{},
-			filters:        []string{"is_incident"},
-			expectedFilter: "",
-		},
-		{
-			name:           "Metrics OK Status",
-			status:         0,
-			metrics:        &types.Metrics{},
-			silenced:       []string{},
-			filters:        []string{"has_metrics"},
-			expectedFilter: "",
-		},
-		{
-			name:           "Metrics Warning Status",
-			status:         1,
-			metrics:        &types.Metrics{},
-			silenced:       []string{},
-			filters:        []string{"has_metrics"},
-			expectedFilter: "",
-		},
-		{
 			name:           "Silenced With Metrics",
 			status:         1,
 			metrics:        &types.Metrics{},

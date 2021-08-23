@@ -8,20 +8,11 @@ import (
 )
 
 func TestHasMetrics_Name(t *testing.T) {
-	tests := []struct {
-		name string
-		i    *HasMetrics
-		want string
-	}{
-		// TODO: Add test cases.
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			i := &HasMetrics{}
-			if got := i.Name(); got != tt.want {
-				t.Errorf("HasMetrics.Name() = %v, want %v", got, tt.want)
-			}
-		})
+	o := &HasMetrics{}
+	want := "HasMetrics"
+
+	if got := o.Name(); want != got {
+		t.Errorf("HasMetrics.Name() = %v, want %v", got, want)
 	}
 }
 
@@ -36,7 +27,38 @@ func TestHasMetrics_CanFilter(t *testing.T) {
 		args args
 		want bool
 	}{
-		// TODO: Add test cases.
+		{
+			name: "returns false when resource reference is not a core/v2.EventFilter",
+			args: args{
+				ref: &corev2.ResourceReference{
+					APIVersion: "core/v2",
+					Type:       "Handler",
+				},
+			},
+			want: false,
+		},
+		{
+			name: "returns false when resource reference is a core/v2.EventFilter and its name is not has_metrics",
+			args: args{
+				ref: &corev2.ResourceReference{
+					APIVersion: "core/v2",
+					Type:       "EventFilter",
+					Name:       "is_incident",
+				},
+			},
+			want: false,
+		},
+		{
+			name: "returns true when resource reference is a core/v2.EventFilter and its name is has_metrics",
+			args: args{
+				ref: &corev2.ResourceReference{
+					APIVersion: "core/v2",
+					Type:       "EventFilter",
+					Name:       "has_metrics",
+				},
+			},
+			want: true,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -61,7 +83,31 @@ func TestHasMetrics_Filter(t *testing.T) {
 		want    bool
 		wantErr bool
 	}{
-		// TODO: Add test cases.
+		{
+			name: "event is denied when it does not have metrics",
+			args: args{
+				ctx: context.Background(),
+				event: func() *corev2.Event {
+					event := corev2.FixtureEvent("default", "default")
+					return event
+				}(),
+			},
+			want:    true,
+			wantErr: false,
+		},
+		{
+			name: "event is allowed when it has metrics",
+			args: args{
+				ctx: context.Background(),
+				event: func() *corev2.Event {
+					event := corev2.FixtureEvent("default", "default")
+					event.Metrics = corev2.FixtureMetrics()
+					return event
+				}(),
+			},
+			want:    false,
+			wantErr: false,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
