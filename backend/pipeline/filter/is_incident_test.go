@@ -8,20 +8,11 @@ import (
 )
 
 func TestIsIncident_Name(t *testing.T) {
-	tests := []struct {
-		name string
-		i    *IsIncident
-		want string
-	}{
-		// TODO: Add test cases.
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			i := &IsIncident{}
-			if got := i.Name(); got != tt.want {
-				t.Errorf("IsIncident.Name() = %v, want %v", got, tt.want)
-			}
-		})
+	o := &IsIncident{}
+	want := "IsIncident"
+
+	if got := o.Name(); want != got {
+		t.Errorf("IsIncident.Name() = %v, want %v", got, want)
 	}
 }
 
@@ -36,7 +27,38 @@ func TestIsIncident_CanFilter(t *testing.T) {
 		args args
 		want bool
 	}{
-		// TODO: Add test cases.
+		{
+			name: "returns false when resource reference is not a core/v2.EventFilter",
+			args: args{
+				ref: &corev2.ResourceReference{
+					APIVersion: "core/v2",
+					Type:       "Handler",
+				},
+			},
+			want: false,
+		},
+		{
+			name: "returns false when resource reference is a core/v2.EventFilter and its name is not is_incident",
+			args: args{
+				ref: &corev2.ResourceReference{
+					APIVersion: "core/v2",
+					Type:       "EventFilter",
+					Name:       "has_metrics",
+				},
+			},
+			want: false,
+		},
+		{
+			name: "returns true when resource reference is a core/v2.EventFilter and its name is is_incident",
+			args: args{
+				ref: &corev2.ResourceReference{
+					APIVersion: "core/v2",
+					Type:       "EventFilter",
+					Name:       "is_incident",
+				},
+			},
+			want: true,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -61,7 +83,46 @@ func TestIsIncident_Filter(t *testing.T) {
 		want    bool
 		wantErr bool
 	}{
-		// TODO: Add test cases.
+		{
+			name: "event is denied when it is not an incident or a resolution",
+			args: args{
+				ctx: context.Background(),
+				event: func() *corev2.Event {
+					event := corev2.FixtureEvent("default", "default")
+					event.Check.Status = 0
+					return event
+				}(),
+			},
+			want:    true,
+			wantErr: false,
+		},
+		{
+			name: "event is allowed when it is an incident",
+			args: args{
+				ctx: context.Background(),
+				event: func() *corev2.Event {
+					event := corev2.FixtureEvent("default", "default")
+					event.Check.Status = 1
+					return event
+				}(),
+			},
+			want:    false,
+			wantErr: false,
+		},
+		{
+			name: "event is allowed when it is a resolution",
+			args: args{
+				ctx: context.Background(),
+				event: func() *corev2.Event {
+					event := corev2.FixtureEvent("default", "default")
+					event.Check.Status = 0
+					event.Check.History[len(event.Check.History)-2].Status = 1
+					return event
+				}(),
+			},
+			want:    false,
+			wantErr: false,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
