@@ -30,6 +30,7 @@ var (
 	PipelineFilterFuncs map[string]interface{}
 )
 
+// Legacy is a filter that supports the legacy core.v2/EventFilter type.
 type Legacy struct {
 	AssetGetter  asset.Getter
 	Store        store.Store

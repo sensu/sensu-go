@@ -11,13 +11,13 @@ import (
 type NotSilenced struct{}
 
 // Name returns the name of the pipeline filter.
-func (i *NotSilenced) Name() string {
+func (n *NotSilenced) Name() string {
 	return "NotSilenced"
 }
 
 // CanFilter determines whether the NotSilenced filter can filter the resource
 // being referenced.
-func (i *NotSilenced) CanFilter(ctx context.Context, ref *corev2.ResourceReference) bool {
+func (n *NotSilenced) CanFilter(ctx context.Context, ref *corev2.ResourceReference) bool {
 	if ref.APIVersion == "core/v2" && ref.Type == "EventFilter" && ref.Name == "not_silenced" {
 		return true
 	}
@@ -25,7 +25,7 @@ func (i *NotSilenced) CanFilter(ctx context.Context, ref *corev2.ResourceReferen
 }
 
 // Filter will evaluate the event and determine whether or not to filter it.
-func (i *NotSilenced) Filter(ctx context.Context, ref *corev2.ResourceReference, event *corev2.Event) (bool, error) {
+func (n *NotSilenced) Filter(ctx context.Context, ref *corev2.ResourceReference, event *corev2.Event) (bool, error) {
 	// Prepare log entry
 	// TODO: add pipeline & pipeline workflow names to fields
 	fields := utillogging.EventFields(event, false)

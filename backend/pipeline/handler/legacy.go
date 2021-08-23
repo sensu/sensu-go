@@ -24,7 +24,8 @@ const (
 	DefaultSocketTimeout uint32 = 60
 )
 
-type Handler struct {
+// Legacy is a handler that supports the legacy core.v2/Handler type.
+type Legacy struct {
 	AssetGetter            asset.Getter
 	Executor               command.Executor
 	LicenseGetter          licensing.Getter
@@ -33,31 +34,44 @@ type Handler struct {
 	StoreTimeout           time.Duration
 }
 
-func (h *Handler) CanHandle(ctx context.Context, ref *corev2.ResourceReference) bool {
+// Name returns the name of the pipeline handler.
+func (l *Legacy) Name() string {
+	return "Legacy"
+}
+
+// CanHandle determines whether the Legacy handler can handle the resource being
+// referenced.
+func (l *Legacy) CanHandle(ctx context.Context, ref *corev2.ResourceReference) bool {
 	if ref.APIVersion == "core/v2" && ref.Type == "Handler" {
 		return true
 	}
 	return false
 }
 
-func (h *Handler) Handle(ctx context.Context, ref *corev2.ResourceReference, event *corev2.Event) error {
-	tctx, cancel := context.WithTimeout(ctx, h.StoreTimeout)
-	handler, err := h.Store.GetHandlerByName(tctx, ref.Name)
+// Handle handles a Sensu event. It will pass any mutated data along to pipe or
+// tcp/udp handlers.
+func (l *Legacy) Handle(ctx context.Context, ref *corev2.ResourceReference, event *corev2.Event, mutatedData []byte) error {
+	// Prepare log entry
+	// TODO: add pipeline & pipeline workflow names to fields
+	fields := utillogging.EventFields(event, false)
+
+	tctx, cancel := context.WithTimeout(ctx, l.StoreTimeout)
+	handler, err := l.Store.GetHandlerByName(tctx, ref.Name)
 	cancel()
 	if err != nil {
-		// TODO: handle this
+		return fmt.Errorf("failed to fetch handler from store: %v", err)
 	}
 
 	switch handler.Type {
 	case "pipe":
-		if _, err := h.pipeHandler(handler, event, eventData); err != nil {
+		if _, err := l.pipeHandler(ctx, handler, event, mutatedData); err != nil {
 			logger.WithFields(fields).Error(err)
 			if _, ok := err.(*store.ErrInternal); ok {
 				return err
 			}
 		}
 	case "tcp", "udp":
-		if _, err := h.socketHandler(handler, event, eventData); err != nil {
+		if _, err := l.socketHandler(ctx, handler, event, mutatedData); err != nil {
 			logger.WithFields(fields).Error(err)
 			if _, ok := err.(*store.ErrInternal); ok {
 				return err
@@ -70,8 +84,8 @@ func (h *Handler) Handle(ctx context.Context, ref *corev2.ResourceReference, eve
 }
 
 // pipeHandler fork/executes a child process for a Sensu pipe handler command
-// and writes the mutated eventData to it via STDIN.
-func (h *Handler) pipeHandler(ctx context.Context, handler *corev2.Handler, event *corev2.Event, eventData []byte) (*command.ExecutionResponse, error) {
+// and writes the mutated data to it via STDIN.
+func (l *Legacy) pipeHandler(ctx context.Context, handler *corev2.Handler, event *corev2.Event, mutatedData []byte) (*command.ExecutionResponse, error) {
 	ctx = corev2.SetContextFromResource(ctx, handler)
 
 	// Prepare log entry
@@ -79,13 +93,13 @@ func (h *Handler) pipeHandler(ctx context.Context, handler *corev2.Handler, even
 	fields["handler_name"] = handler.Name
 	fields["handler_namespace"] = handler.Namespace
 
-	if h.LicenseGetter != nil {
-		if license := h.LicenseGetter.Get(); license != "" {
+	if l.LicenseGetter != nil {
+		if license := l.LicenseGetter.Get(); license != "" {
 			handler.EnvVars = append(handler.EnvVars, fmt.Sprintf("SENSU_LICENSE_FILE=%s", license))
 		}
 	}
 
-	secrets, err := h.SecretsProviderManager.SubSecrets(ctx, handler.Secrets)
+	secrets, err := l.SecretsProviderManager.SubSecrets(ctx, handler.Secrets)
 	if err != nil {
 		logger.WithFields(fields).WithError(err).Error("failed to retrieve secrets for handler")
 		return nil, err
@@ -98,15 +112,15 @@ func (h *Handler) pipeHandler(ctx context.Context, handler *corev2.Handler, even
 	handlerExec.Command = handler.Command
 	handlerExec.Timeout = int(handler.Timeout)
 	handlerExec.Env = env
-	handlerExec.Input = string(eventData[:])
+	handlerExec.Input = string(mutatedData[:])
 
 	// Only add assets to execution context if handler requires them
 	if len(handler.RuntimeAssets) != 0 {
 		logger.WithFields(fields).Debug("fetching assets for handler")
 		// Fetch and install all assets required for handler execution
-		matchedAssets := asset.GetAssets(ctx, h.Store, handler.RuntimeAssets)
+		matchedAssets := asset.GetAssets(ctx, l.Store, handler.RuntimeAssets)
 
-		assets, err := asset.GetAll(ctx, h.AssetGetter, matchedAssets)
+		assets, err := asset.GetAll(ctx, l.AssetGetter, matchedAssets)
 		if err != nil {
 			logger.WithFields(fields).WithError(err).Error("failed to retrieve assets for handler")
 			if _, ok := err.(*store.ErrInternal); ok {
@@ -118,7 +132,7 @@ func (h *Handler) pipeHandler(ctx context.Context, handler *corev2.Handler, even
 		}
 	}
 
-	result, err := h.Executor.Execute(context.Background(), handlerExec)
+	result, err := l.Executor.Execute(context.Background(), handlerExec)
 
 	if err != nil {
 		logger.WithFields(fields).WithError(err).Error("failed to execute event pipe handler")
@@ -131,9 +145,9 @@ func (h *Handler) pipeHandler(ctx context.Context, handler *corev2.Handler, even
 	return result, err
 }
 
-// socketHandler creates either a TCP or UDP client to write eventData
+// socketHandler creates either a TCP or UDP client to write mutatedData
 // to a socket. The provided handler Type determines the protocol.
-func (h *Handler) socketHandler(handler *corev2.Handler, event *corev2.Event, eventData []byte) (conn net.Conn, err error) {
+func (l *Legacy) socketHandler(ctx context.Context, handler *corev2.Handler, event *corev2.Event, mutatedData []byte) (conn net.Conn, err error) {
 	protocol := handler.Type
 	host := handler.Socket.Host
 	port := handler.Socket.Port
@@ -166,7 +180,7 @@ func (h *Handler) socketHandler(handler *corev2.Handler, event *corev2.Event, ev
 		}
 	}()
 
-	bytes, err := conn.Write(eventData)
+	bytes, err := conn.Write(mutatedData)
 
 	if err != nil {
 		logger.WithFields(fields).WithError(err).Error("failed to execute event handler")
