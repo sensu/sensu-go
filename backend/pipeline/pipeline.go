@@ -229,7 +229,7 @@ func (p *Pipeline) generateLegacyEventPipeline(ctx context.Context, event *corev
 
 func (p *Pipeline) runEventWorkflow(ctx context.Context, workflow *corev2.PipelineWorkflow, event *corev2.Event) error {
 	// Process the event through the workflow filters
-	filtered, err := p.runWorkflowFilters(ctx, workflow.Filters, event)
+	filtered, err := p.processFilters(ctx, workflow.Filters, event)
 	if err != nil {
 		return err
 	}

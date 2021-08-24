@@ -1,9 +1,17 @@
 package pipeline
 
 import (
+	"context"
+	"reflect"
 	"testing"
 	"time"
 
+	corev2 "github.com/sensu/sensu-go/api/core/v2"
+	"github.com/sensu/sensu-go/asset"
+	"github.com/sensu/sensu-go/backend/licensing"
+	"github.com/sensu/sensu-go/backend/secrets"
+	"github.com/sensu/sensu-go/backend/store"
+	"github.com/sensu/sensu-go/command"
 	"github.com/sensu/sensu-go/testing/mockstore"
 	"github.com/sensu/sensu-go/types"
 	"github.com/stretchr/testify/assert"
@@ -123,7 +131,7 @@ func TestPipelineFilter(t *testing.T) {
 				Metrics: tc.metrics,
 			}
 
-			f, _ := p.FilterEvent(handler, event)
+			f, _ := p.processFilters(ctx, refs, event)
 			assert.Equal(t, tc.expectedFilter, f)
 		})
 	}
@@ -219,6 +227,115 @@ func TestPipelineWhenFilter(t *testing.T) {
 
 			f, _ := p.FilterEvent(handler, event)
 			assert.Equal(t, tc.expectedFilter, f)
+		})
+	}
+}
+
+func TestPipeline_getFilterForResource(t *testing.T) {
+	type fields struct {
+		store                  store.Store
+		assetGetter            asset.Getter
+		backendEntity          *corev2.Entity
+		executor               command.Executor
+		storeTimeout           time.Duration
+		secretsProviderManager *secrets.ProviderManager
+		licenseGetter          licensing.Getter
+		filters                []Filter
+		mutators               []Mutator
+		handlers               []Handler
+		runners                []Runner
+	}
+	type args struct {
+		ctx context.Context
+		ref *corev2.ResourceReference
+	}
+	tests := []struct {
+		name    string
+		fields  fields
+		args    args
+		want    Filter
+		wantErr bool
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			p := &Pipeline{
+				store:                  tt.fields.store,
+				assetGetter:            tt.fields.assetGetter,
+				backendEntity:          tt.fields.backendEntity,
+				executor:               tt.fields.executor,
+				storeTimeout:           tt.fields.storeTimeout,
+				secretsProviderManager: tt.fields.secretsProviderManager,
+				licenseGetter:          tt.fields.licenseGetter,
+				filters:                tt.fields.filters,
+				mutators:               tt.fields.mutators,
+				handlers:               tt.fields.handlers,
+				runners:                tt.fields.runners,
+			}
+			got, err := p.getFilterForResource(tt.args.ctx, tt.args.ref)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("Pipeline.getFilterForResource() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("Pipeline.getFilterForResource() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestPipeline_processFilters(t *testing.T) {
+	type fields struct {
+		store                  store.Store
+		assetGetter            asset.Getter
+		backendEntity          *corev2.Entity
+		executor               command.Executor
+		storeTimeout           time.Duration
+		secretsProviderManager *secrets.ProviderManager
+		licenseGetter          licensing.Getter
+		filters                []Filter
+		mutators               []Mutator
+		handlers               []Handler
+		runners                []Runner
+	}
+	type args struct {
+		ctx   context.Context
+		refs  []*corev2.ResourceReference
+		event *corev2.Event
+	}
+	tests := []struct {
+		name    string
+		fields  fields
+		args    args
+		want    bool
+		wantErr bool
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			p := &Pipeline{
+				store:                  tt.fields.store,
+				assetGetter:            tt.fields.assetGetter,
+				backendEntity:          tt.fields.backendEntity,
+				executor:               tt.fields.executor,
+				storeTimeout:           tt.fields.storeTimeout,
+				secretsProviderManager: tt.fields.secretsProviderManager,
+				licenseGetter:          tt.fields.licenseGetter,
+				filters:                tt.fields.filters,
+				mutators:               tt.fields.mutators,
+				handlers:               tt.fields.handlers,
+				runners:                tt.fields.runners,
+			}
+			got, err := p.processFilters(tt.args.ctx, tt.args.refs, tt.args.event)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("Pipeline.processFilters() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if got != tt.want {
+				t.Errorf("Pipeline.processFilters() = %v, want %v", got, tt.want)
+			}
 		})
 	}
 }
