@@ -98,6 +98,17 @@ func GetChangedStringValueEnv(name string, v *viper.Viper) string {
 	return v.GetString(name)
 }
 
+// GetChangedStringValueViper returns the value of an environment variable or flag that has been explicitly
+// changed by the user, and not left to default, from a Cobra FlagSet.
+func GetChangedStringValueViper(name string, flagset *pflag.FlagSet) string {
+	v, err := InitViper(flagset)
+	if err != nil {
+		return ""
+	}
+
+	return GetChangedStringValueEnv(name, v)
+}
+
 // SafeSplitCSV splits given string and trims and extraneous whitespace
 func SafeSplitCSV(i string) []string {
 	trimmed := strings.TrimSpace(i)
