@@ -12,6 +12,7 @@ import (
 	"github.com/sensu/sensu-go/backend/licensing"
 	"github.com/sensu/sensu-go/backend/messaging"
 	"github.com/sensu/sensu-go/backend/pipeline"
+	"github.com/sensu/sensu-go/backend/pipeline/filter"
 	"github.com/sensu/sensu-go/backend/secrets"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/command"
@@ -19,10 +20,6 @@ import (
 )
 
 var defaultStoreTimeout = time.Minute
-
-// ExtensionExecutorGetterFunc gets an ExtensionExecutor. Used to decouple
-// Pipelined from gRPC.
-type ExtensionExecutorGetterFunc func(*corev2.Extension) (rpc.ExtensionExecutor, error)
 
 // Pipelined handles incoming Sensu events and puts them through a
 // Sensu event pipeline, i.e. filter -> mutator -> handler. The Sensu
@@ -101,6 +98,15 @@ func New(c Config, options ...Option) (*Pipelined, error) {
 			return nil, err
 		}
 	}
+	// TODO: Add default pipeline runner(s)
+	// TODO: consider adding pipeline filters, mutators, handlers to
+	// each pipeline runner instead of pipeline/pipelined?
+	p.AddPipelineFilter(filter.Legacy{
+		AssetGetter: p.assetGetter,
+		Store: p.store,
+		StoreTimeout: p.storeTimeout,
+	})
+	p.AddPipelineFilter(filter.HasMetrics{})
 	return p, nil
 }
 

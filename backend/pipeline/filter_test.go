@@ -58,13 +58,15 @@ func TestPipelineFilter(t *testing.T) {
 	store.On("GetEventFilterByName", mock.Anything, "denyFilterFoo").Return(denyFilterFoo, nil)
 
 	testCases := []struct {
-		name           string
-		status         uint32
-		history        []types.CheckHistory
-		metrics        *types.Metrics
-		silenced       []string
-		filters        []string
-		expectedFilter string
+		name       string
+		status     uint32
+		history    []types.CheckHistory
+		metrics    *types.Metrics
+		silenced   []string
+		filters    []*corev2.ResourceReference
+		want       bool
+		wantErr    error
+		wantErrMsg string
 	}{
 		{
 			name:           "Silenced With Metrics",
@@ -75,11 +77,22 @@ func TestPipelineFilter(t *testing.T) {
 			expectedFilter: "",
 		},
 		{
-			name:           "Silenced Without Metrics",
-			status:         1,
-			metrics:        nil,
-			silenced:       []string{"entity1"},
-			filters:        []string{"is_incident", "not_silenced"},
+			name:     "Silenced Without Metrics",
+			status:   1,
+			metrics:  nil,
+			silenced: []string{"entity1"},
+			filters: []*corev2.ResourceReference{
+				&corev2.ResourceReference{
+					APIVersion: "core/v2",
+					Type:       "EventFilter",
+					Name:       "is_incident",
+				},
+				&corev2.ResourceReference{
+					APIVersion: "core/v2",
+					Type:       "EventFilter",
+					Name:       "not_silenced",
+				},
+			},
 			expectedFilter: "not_silenced",
 		},
 		{
@@ -109,12 +122,6 @@ func TestPipelineFilter(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		handler := &types.Handler{
-			Type:    "pipe",
-			Command: "cat",
-			Filters: tc.filters,
-		}
-
 		t.Run(tc.name, func(t *testing.T) {
 			event := &types.Event{
 				Check: &types.Check{
@@ -155,12 +162,14 @@ func TestPipelineWhenFilter(t *testing.T) {
 	}
 
 	testCases := []struct {
-		name           string
-		filterName     string
-		action         string
-		begin          time.Duration
-		end            time.Duration
-		expectedFilter string
+		name       string
+		filterName string
+		action     string
+		begin      time.Duration
+		end        time.Duration
+		want       bool
+		wantErr    error
+		wantErrMsg string
 	}{
 		{
 			name:           "in time window action allow",

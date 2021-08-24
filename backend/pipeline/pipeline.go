@@ -78,6 +78,8 @@ func (p *Pipeline) HandleEvent(ctx context.Context, event *corev2.Event) error {
 			Name:       LegacyPipelineName,
 		}
 		pipelineRefs = append(pipelineRefs, legacyPipelineRef)
+	} else {
+		logger.WithFields(fields).Debug("no handlers available to generate a legacy pipeline")
 	}
 
 	if len(pipelineRefs) == 0 {
@@ -98,10 +100,15 @@ func (p *Pipeline) HandleEvent(ctx context.Context, event *corev2.Event) error {
 	return nil
 }
 
+// A runner will resolve and run a pipeline reference so long as CanRun()
+// returns true for the ResourceReference.
 type Runner interface {
+	Name() string
 	CanRun(context.Context, *corev2.ResourceReference) bool
-	Run(context.Context, *corev2.ResourceReference, *corev2.Event) error
+	Run(context.Context, *corev2.ResourceReference, interface{}) error
 }
+
+type StandardPipelineRunner struct{}
 
 func (p *Pipeline) getRunnerForResource(ctx context.Context, ref *corev2.ResourceReference) (PipelineRunner, error) {
 	for _, runner := range p.runners {
@@ -112,36 +119,46 @@ func (p *Pipeline) getRunnerForResource(ctx context.Context, ref *corev2.Resourc
 	return nil, fmt.Errorf("no pipeline runners were found that support resource: %s.%s = %s", ref.APIVersion, ref.Type, ref.Name)
 }
 
-// getEventPipelines resolves any pipeline references for a given event,
-// constructs a legacy pipeline for any check/metric handlers, and then returns
-// a slice of the pipelines.
-func (p *Pipeline) getEventPipelines(ctx context.Context, event *corev2.Event) ([]*corev2.Pipeline, error) {
-	// Prepare log entry
-	fields := utillogging.EventFields(event, false)
+// generateLegacyPipeline will build an event pipeline with a pipeline
+// workflow for each event.Check.Handlers & event.Metrics.Handlers
+func (p *Pipeline) generateLegacyPipeline(ctx context.Context, event *corev2.Event) (*corev2.Pipeline, error) {
+	// initialize a list of handler names for storing the names of any legacy
+	// check and/or metrics handlers.
+	legacyHandlerNames := []string{}
 
-	pipelines, err := p.resolveEventPipelineReferences(ctx, event.Pipelines)
+	if event.HasCheck() {
+		legacyHandlerNames = append(legacyHandlerNames, event.Check.Handlers...)
+	}
+
+	if event.HasMetrics() {
+		legacyHandlerNames = append(legacyHandlerNames, event.Metrics.Handlers...)
+	}
+
+	handlers, err := p.expandHandlers(ctx, legacyHandlerNames, 1)
 	if err != nil {
 		return nil, err
 	}
 
-	// generate a pipeline for any check and/or metric handlers that exist in
-	// the event and add it to the list of event pipelines.
-	legacyPipeline, err := p.generateLegacyEventPipeline(ctx, event)
-	if err != nil {
-		return nil, err
-	}
-	if legacyPipeline != nil {
-		pipelines = append(pipelines, legacyPipeline)
-	} else {
-		logger.WithFields(fields).Debug("no handlers available to generate a legacy pipeline")
+	pipeline := &corev2.Pipeline{
+		Metadata: &corev2.ObjectMeta{
+			Name:      LegacyPipelineName,
+			Namespace: corev2.ContextNamespace(ctx),
+		},
+		Workflows: []*corev2.PipelineWorkflow{},
 	}
 
-	return pipelines, nil
+	for handlerName, handler := range handlers {
+		workflowName := fmt.Sprintf(LegacyPipelineWorkflowName, handlerName)
+		workflow := corev2.PipelineWorkflowFromHandler(ctx, workflowName, handler)
+		pipeline.Workflows = append(pipeline.Workflows, workflow)
+	}
+
+	return pipeline, nil
 }
 
-// resolveEventPipelineReferences takes a list of resource references and
-//
-func (p *Pipeline) resolveEventPipelineReferences(ctx context.Context, refs []*corev2.ResourceReference) ([]*corev2.Pipeline, error) {
+// resolvePipelineReference fetches a core/v2.Pipeline reference from the
+// store and returns a core/v2.Pipeline.
+func (p *Pipeline) resolvePipelineReference(ctx context.Context, ref *corev2.ResourceReference) (*corev2.Pipeline, error) {
 	// Prepare log entry
 	fields := logrus.Fields{}
 
@@ -183,51 +200,19 @@ func (p *Pipeline) resolveEventPipelineReferences(ctx context.Context, refs []*c
 	return pipelines, nil
 }
 
-func (p *Pipeline) canExecuteEventPipeline(ctx context.Context, ref *corev2.ResourceReference) bool {
+func (p *StandardPipelineRunner) CanRun(ctx context.Context, ref *corev2.ResourceReference) bool {
 	if ref.APIVersion == "core/v2" && ref.Type == "Pipeline" {
 		return true
 	}
 	return false
 }
 
-// generateLegacyEventPipeline will build an event pipeline with a pipeline
-// workflow for each event.Check.Handlers & event.Metrics.Handlers
-func (p *Pipeline) generateLegacyEventPipeline(ctx context.Context, event *corev2.Event) (*corev2.Pipeline, error) {
-	// initialize a list of handler names for storing the names of any legacy
-	// check and/or metrics handlers.
-	legacyHandlerNames := []string{}
+func (p *StandardPipelineRunner) Run(ctx context.Context, workflow *corev2.PipelineWorkflow, event *corev2.Event) error {
+	// TODO: Either check for LegacyPipelineName here and determine whether or not to
+	// call generateLegacyPipeline() or resolvePipelineReference(), or create
+	// two different runners that separate the logic by adding a check for
+	// the ref.Name equalling the value of LegacyPipelineName.
 
-	if event.HasCheck() {
-		legacyHandlerNames = append(legacyHandlerNames, event.Check.Handlers...)
-	}
-
-	if event.HasMetrics() {
-		legacyHandlerNames = append(legacyHandlerNames, event.Metrics.Handlers...)
-	}
-
-	handlers, err := p.expandHandlers(ctx, legacyHandlerNames, 1)
-	if err != nil {
-		return nil, err
-	}
-
-	pipeline := &corev2.Pipeline{
-		Metadata: &corev2.ObjectMeta{
-			Name:      LegacyPipelineName,
-			Namespace: corev2.ContextNamespace(ctx),
-		},
-		Workflows: []*corev2.PipelineWorkflow{},
-	}
-
-	for handlerName, handler := range handlers {
-		workflowName := fmt.Sprintf(LegacyPipelineWorkflowName, handlerName)
-		workflow := corev2.PipelineWorkflowFromHandler(ctx, workflowName, handler)
-		pipeline.Workflows = append(pipeline.Workflows, workflow)
-	}
-
-	return pipeline, nil
-}
-
-func (p *Pipeline) runEventWorkflow(ctx context.Context, workflow *corev2.PipelineWorkflow, event *corev2.Event) error {
 	// Process the event through the workflow filters
 	filtered, err := p.processFilters(ctx, workflow.Filters, event)
 	if err != nil {
