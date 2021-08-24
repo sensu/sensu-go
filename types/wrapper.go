@@ -167,7 +167,6 @@ func (w *Wrapper) UnmarshalJSON(b []byte) error {
 		return fmt.Errorf("no spec provided")
 	}
 	dec := json.NewDecoder(bytes.NewReader(*wrapper.Value))
-	dec.DisallowUnknownFields()
 	if err := dec.Decode(&resource); err != nil {
 		return err
 	}

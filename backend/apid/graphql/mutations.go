@@ -43,7 +43,6 @@ func (r *mutationsImpl) PutWrapped(p schema.MutationPutWrappedFieldResolverParam
 
 	// decode given
 	dec := json.NewDecoder(strings.NewReader(raw))
-	dec.DisallowUnknownFields()
 	if err = dec.Decode(&ret); err != nil {
 		return map[string]interface{}{
 			"errors": wrapInputErrors("raw", err),

@@ -14,6 +14,8 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 if the store was already initialized.
 - Guard against potential crash in the sensuctl cluster member-list command when
 the etcd response header is nil.
+- Forwards compatibility with newer Sensu backends has been improved. Users can
+now create resources with fields that are unknown to Sensu.
 
 ### Changed
 - API and agent services now log at warn level when the start up, not at info.
