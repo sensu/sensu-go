@@ -20,7 +20,7 @@ const HeaderWarning = "Sensu-Entity-Warning"
 // PrintList prints a list of resources to stdout with a title, if relevant.
 func PrintList(cmd *cobra.Command, format string, printTable printTableFunc, objects []types.Resource, v interface{}, header http.Header) error {
 	if warning := header.Get(HeaderWarning); warning != "" {
-		if err := PrintTitle(GetChangedStringValueFlag(flags.Format, cmd.Flags()), format, warning, cmd.OutOrStdout()); err != nil {
+		if err := PrintTitle(GetChangedStringValueViper(flags.Format, cmd.Flags()), format, warning, cmd.OutOrStdout()); err != nil {
 			return err
 		}
 	}

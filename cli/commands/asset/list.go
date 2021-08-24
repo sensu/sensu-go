@@ -50,7 +50,7 @@ func ListCommand(cli *cli.SensuCli) *cobra.Command {
 
 			// Determine the user's preferred format
 			var format string
-			if format = helpers.GetChangedStringValueFlag("format", cmd.Flags()); format == "" {
+			if format = helpers.GetChangedStringValueViper("format", cmd.Flags()); format == "" {
 				format = cli.Config.Format()
 			}
 

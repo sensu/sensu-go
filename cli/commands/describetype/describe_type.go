@@ -98,7 +98,7 @@ func execute(cli *cli.SensuCli) func(*cobra.Command, []string) error {
 func getFormat(cli *cli.SensuCli, cmd *cobra.Command) string {
 	// get the configured format or the flag override
 	format := cli.Config.Format()
-	if flag := helpers.GetChangedStringValueFlag("format", cmd.Flags()); flag != "" {
+	if flag := helpers.GetChangedStringValueViper("format", cmd.Flags()); flag != "" {
 		format = flag
 	}
 	return format

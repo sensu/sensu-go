@@ -85,9 +85,9 @@ func printAllTypes(cli *cli.SensuCli, cmd *cobra.Command) error {
 }
 
 func getFormat(cli *cli.SensuCli, cmd *cobra.Command) string {
-	// get the configured format or the flag override
+	// get the configured format or the flag overrideå
 	format := cli.Config.Format()
-	if flag := helpers.GetChangedStringValueFlag("format", cmd.Flags()); flag != "" {
+	if flag := helpers.GetChangedStringValueViper("format", cmd.Flags()); flag != "" {
 		format = flag
 	}
 	return format
