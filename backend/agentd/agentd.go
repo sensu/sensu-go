@@ -204,7 +204,7 @@ func New(c Config, opts ...Option) (*Agentd, error) {
 
 // Start Agentd.
 func (a *Agentd) Start() error {
-	logger.Info("starting agentd on address: ", a.httpServer.Addr)
+	logger.Warn("starting agentd on address: ", a.httpServer.Addr)
 	ln, err := net.Listen("tcp", a.httpServer.Addr)
 	if err != nil {
 		return fmt.Errorf("failed to start agentd: %s", err)

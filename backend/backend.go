@@ -14,7 +14,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/spf13/viper"
 	"go.etcd.io/etcd/client/pkg/v3/transport"
-	"go.etcd.io/etcd/client/v3"
+	clientv3 "go.etcd.io/etcd/client/v3"
 	"golang.org/x/time/rate"
 	"google.golang.org/grpc"
 
@@ -522,6 +522,8 @@ func (b *Backend) runOnce() error {
 	errCtx, errCancel := context.WithCancel(b.RunContext())
 	defer errCancel()
 	eg.Go(errCtx)
+
+	logger.Warn("backend is running and ready to accept events")
 
 	select {
 	case err := <-eg.Err():

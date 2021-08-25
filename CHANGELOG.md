@@ -6,7 +6,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic
 Versioning](http://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## [6.4.1] - 2021-08-24
 
 ### Added
 - Added `ignore-already-initialized` configuration flag to the sensu-backend
@@ -48,6 +48,12 @@ the etcd response header is nil.
 - Agent events API now accepts metrics event.
 - Fixed rare cases where the agent could fail to delete temporary files when
 downloading assets.
+- Forwards compatibility with newer Sensu backends has been improved. Users can
+now create resources with fields that are unknown to Sensu.
+
+### Changed
+- API and agent services now log at warn level when the start up, not at info.
+- Backend now reports when it is ready to process events at warn level.
 
 ## [6.4.0] - 2021-06-23
 
