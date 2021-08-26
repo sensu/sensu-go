@@ -11,6 +11,7 @@ import (
 	"github.com/sensu/sensu-go/types"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/pflag"
+	"github.com/spf13/viper"
 )
 
 const (
@@ -46,11 +47,11 @@ type Profile struct {
 }
 
 // Load imports the CLI configuration and returns an initialized Config struct
-func Load(flags *pflag.FlagSet) *Config {
+func Load(flags *pflag.FlagSet, v *viper.Viper) *Config {
 	conf := &Config{}
 
 	// Retrieve the path of the configuration directory
-	if flags != nil {
+	if flags != nil && v != nil {
 		// When Load() is called, some sub-command local flags, such as
 		// --format, are not registered yet and this leads to "unknown flags"
 		// errors being returned by cobra. Such an error can throw off the cobra
@@ -68,7 +69,7 @@ func Load(flags *pflag.FlagSet) *Config {
 		flags.ParseErrorsWhitelist = pflag.ParseErrorsWhitelist{UnknownFlags: true}
 		_ = flags.Parse(os.Args[1:])
 
-		if value, err := flags.GetString("config-dir"); err == nil && value != "" {
+		if value := v.GetString("config-dir"); value != "" {
 			conf.path = value
 		}
 	}
@@ -83,42 +84,37 @@ func Load(flags *pflag.FlagSet) *Config {
 		logger.Debug(err)
 	}
 
-	if flags != nil {
+	if v != nil {
 		// Override namespace
-		if value := helpers.GetChangedStringValueFlag("namespace", flags); value != "" {
+		if value := helpers.GetChangedStringValueEnv("namespace", v); value != "" {
 			conf.Profile.Namespace = value
 		}
 	}
 
 	// Load the flags config
-	conf.flags(flags)
+	conf.flags(v)
 
 	return conf
 }
 
-func (c *Config) flags(flags *pflag.FlagSet) {
-	if flags == nil {
+func (c *Config) flags(v *viper.Viper) {
+	if v == nil {
 		return
 	}
 
-	// Set the API URL
-	if value, err := flags.GetString("api-url"); err == nil && value != "" {
+	if value := v.GetString("api-url"); value != "" {
 		c.Cluster.APIUrl = value
 	}
-
-	if value, err := flags.GetBool("insecure-skip-tls-verify"); err == nil && value {
-		c.Cluster.InsecureSkipTLSVerify = value
-	}
-
-	if value, err := flags.GetString("trusted-ca-file"); err == nil && value != "" {
-		c.Cluster.TrustedCAFile = value
-	}
-
-	if value, err := flags.GetString("api-key"); err == nil && value != "" {
+	if value := v.GetString("api-key"); value != "" {
 		c.Cluster.APIKey = value
 	}
-
-	if value, err := flags.GetString("timeout"); err == nil && value != "" {
+	if value := v.GetBool("insecure-skip-tls-verify"); value {
+		c.Cluster.InsecureSkipTLSVerify = value
+	}
+	if value := v.GetString("trusted-ca-file"); value != "" {
+		c.Cluster.TrustedCAFile = value
+	}
+	if value := v.GetString("timeout"); value != "" {
 		duration, err := time.ParseDuration(value)
 		if err == nil {
 			c.Cluster.Timeout = duration

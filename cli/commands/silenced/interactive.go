@@ -59,7 +59,7 @@ func (o *silencedOpts) withFlags(flags *pflag.FlagSet) {
 	o.Check, _ = flags.GetString("check")
 	o.Begin, _ = flags.GetString("begin")
 
-	if namespace := helpers.GetChangedStringValueFlag("namespace", flags); namespace != "" {
+	if namespace := helpers.GetChangedStringValueViper("namespace", flags); namespace != "" {
 		o.Namespace = namespace
 	}
 }

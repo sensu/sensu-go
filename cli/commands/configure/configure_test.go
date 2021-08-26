@@ -37,11 +37,10 @@ func TestCommand(t *testing.T) {
 func TestCommandRunEClosureWithFlags(t *testing.T) {
 	assert := assert.New(t)
 
-	cli := test.NewMockCLI()
+	cli := test.NewCLI()
 	mockClient := cli.Client.(*client.MockClient)
 	mockConfig := cli.Config.(*client.MockConfig)
 	mockConfig.On("APIUrl").Return("http://127.0.0.1:8080")
-	mockConfig.On("Format").Return(config.DefaultFormat)
 	mockConfig.On("SaveAPIUrl", mock.Anything).Return(nil)
 	mockClient.On("CreateAccessToken", mock.Anything, mock.Anything, mock.Anything).Return(&types.Tokens{}, nil)
 	mockConfig.On("SaveTokens", mock.Anything).Return(nil)
@@ -50,6 +49,7 @@ func TestCommandRunEClosureWithFlags(t *testing.T) {
 	mockConfig.On("SaveNamespace", mock.Anything).Return(nil)
 	mockConfig.On("SaveInsecureSkipTLSVerify", mock.Anything).Return(nil)
 	mockConfig.On("SaveTrustedCAFile", mock.Anything).Return(nil)
+	mockConfig.On("SaveTimeout", mock.Anything).Return(nil)
 	mockConfig.On("Timeout").Return(time.Second * 15)
 
 	// We need to call the "configure" command via the rootCmd so the global flags
