@@ -8,6 +8,8 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
 
+## [6.4.2] - 2021-08-31
+
 ### Added
 - Added `sensu_go_agentd_event_bytes` & `sensu_go_store_event_bytes` summary
 metrics to the `/metrics` endpoint.
