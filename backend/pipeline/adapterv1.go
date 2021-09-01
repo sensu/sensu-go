@@ -17,6 +17,8 @@ const (
 	LegacyPipelineWorkflowName = "legacy-pipeline-workflow-%s"
 )
 
+type HandlerMap map[string]*corev2.Handler
+
 // AdapterV1 is a pipeline adapter that can run a pipeline for corev2.Events.
 type AdapterV1 struct {
 	Store           store.Store
@@ -90,6 +92,8 @@ func (a *AdapterV1) resolvePipelineReference(ctx context.Context, ref *corev2.Re
 	}
 }
 
+// getPipelineFromStore fetches a core/v2.Pipeline reference from the store and
+// returns a core/v2.Pipeline.
 func (a *AdapterV1) getPipelineFromStore(ctx context.Context, ref *corev2.ResourceReference) (*corev2.Pipeline, error) {
 	tctx, cancel := context.WithTimeout(ctx, a.StoreTimeout)
 	pipeline, err := a.Store.GetPipelineByName(tctx, ref.Name)

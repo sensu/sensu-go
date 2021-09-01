@@ -45,6 +45,8 @@ type Event struct {
 	// reconnects to another backend, the sequence number is reset to 1.
 	Sequence int64 `protobuf:"varint,7,opt,name=Sequence,proto3" json:"sequence"`
 	// Pipelines are the pipelines that should be used to process an event.
+	// APIVersion should default to "core/v2" and Type should default to
+	// "Pipeline".
 	Pipelines            []*ResourceReference `protobuf:"bytes,8,rep,name=pipelines,proto3" json:"pipelines"`
 	XXX_NoUnkeyedLiteral struct{}             `json:"-"`
 	XXX_unrecognized     []byte               `json:"-"`

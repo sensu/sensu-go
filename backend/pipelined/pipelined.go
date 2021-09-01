@@ -3,6 +3,7 @@ package pipelined
 
 import (
 	"context"
+	"fmt"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -181,7 +182,7 @@ func (p *Pipelined) handleMessage(ctx context.Context, msg interface{}) error {
 			legacyPipelineRef := &corev2.ResourceReference{
 				APIVersion: "core/v2",
 				Type:       "Pipeline",
-				Name:       LegacyPipelineName,
+				Name:       pipeline.LegacyPipelineName,
 			}
 			pipelineRefs = append(pipelineRefs, legacyPipelineRef)
 		} else {
@@ -215,9 +216,9 @@ func (p *Pipelined) handleMessage(ctx context.Context, msg interface{}) error {
 			}
 		}
 		if !adapterFound {
-			// TODO: log that no adapters were found to run the
-			// pipeline reference
-			// panic?
+			return fmt.Errorf("no pipeline adapters were found that support the resource: %s.%s = %s", ref.APIVersion, ref.Type, ref.Name)
 		}
 	}
+
+	return nil
 }
