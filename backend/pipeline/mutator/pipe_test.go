@@ -32,16 +32,16 @@ func TestHelperMutatorProcess(t *testing.T) {
 	os.Exit(0)
 }
 
-func TestPipe_Name(t *testing.T) {
-	o := &Pipe{}
-	want := "Pipe"
+func TestPipeAdapter_Name(t *testing.T) {
+	o := &PipeAdapter{}
+	want := "PipeAdapter"
 
 	if got := o.Name(); want != got {
-		t.Errorf("Pipe.Name() = %v, want %v", got, want)
+		t.Errorf("PipeAdapter.Name() = %v, want %v", got, want)
 	}
 }
 
-func TestPipe_CanMutate(t *testing.T) {
+func TestPipeAdapter_CanMutate(t *testing.T) {
 	type fields struct {
 		AssetGetter            asset.Getter
 		Executor               command.Executor
@@ -66,7 +66,7 @@ func TestPipe_CanMutate(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			p := &Pipe{
+			p := &PipeAdapter{
 				AssetGetter:            tt.fields.AssetGetter,
 				Executor:               tt.fields.Executor,
 				SecretsProviderManager: tt.fields.SecretsProviderManager,
@@ -74,13 +74,13 @@ func TestPipe_CanMutate(t *testing.T) {
 				StoreTimeout:           tt.fields.StoreTimeout,
 			}
 			if got := p.CanMutate(tt.args.ctx, tt.args.ref); got != tt.want {
-				t.Errorf("Pipe.CanMutate() = %v, want %v", got, tt.want)
+				t.Errorf("PipeAdapter.CanMutate() = %v, want %v", got, tt.want)
 			}
 		})
 	}
 }
 
-func TestPipe_Mutate(t *testing.T) {
+func TestPipeAdapter_Mutate(t *testing.T) {
 	type fields struct {
 		AssetGetter            asset.Getter
 		Executor               command.Executor
@@ -107,7 +107,7 @@ func TestPipe_Mutate(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			p := &Pipe{
+			p := &PipeAdapter{
 				AssetGetter:            tt.fields.AssetGetter,
 				Executor:               tt.fields.Executor,
 				SecretsProviderManager: tt.fields.SecretsProviderManager,
@@ -116,17 +116,17 @@ func TestPipe_Mutate(t *testing.T) {
 			}
 			got, err := p.Mutate(tt.args.ctx, tt.args.ref, tt.args.event)
 			if (err != nil) != tt.wantErr {
-				t.Errorf("Pipe.Mutate() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("PipeAdapter.Mutate() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
 			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("Pipe.Mutate() = %v, want %v", got, tt.want)
+				t.Errorf("PipeAdapter.Mutate() = %v, want %v", got, tt.want)
 			}
 		})
 	}
 }
 
-func TestPipe_run(t *testing.T) {
+func TestPipeAdapter_run(t *testing.T) {
 	type fields struct {
 		AssetGetter            asset.Getter
 		Executor               command.Executor
@@ -151,7 +151,7 @@ func TestPipe_run(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			p := &Pipe{
+			p := &PipeAdapter{
 				AssetGetter:            tt.fields.AssetGetter,
 				Executor:               tt.fields.Executor,
 				SecretsProviderManager: tt.fields.SecretsProviderManager,
@@ -160,11 +160,11 @@ func TestPipe_run(t *testing.T) {
 			}
 			got, err := p.run(tt.args.ctx, tt.args.mutator, tt.args.event, tt.args.assets)
 			if (err != nil) != tt.wantErr {
-				t.Errorf("Pipe.run() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("PipeAdapter.run() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
 			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("Pipe.run() = %v, want %v", got, tt.want)
+				t.Errorf("PipeAdapter.run() = %v, want %v", got, tt.want)
 			}
 		})
 	}

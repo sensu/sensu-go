@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"os"
 	"time"
 
@@ -17,11 +16,11 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-// Pipe is a mutator which fork/executes a child process for a Sensu mutator
-// command, writes the JSON encoding of the Sensu event to it via STDIN, and
-// captures the command output (STDOUT/ERR) to be used as the mutated event data
-// for a Sensu event handler.
-type Pipe struct {
+// PipeAdapter is a mutator adapter which fork/executes a child process for a
+// Sensu mutator command, writes the JSON encoding of the Sensu event to it via
+// STDIN, and captures the command output (STDOUT/ERR) to be used as the mutated
+// event data for a Sensu event handler.
+type PipeAdapter struct {
 	AssetGetter            asset.Getter
 	Executor               command.Executor
 	SecretsProviderManager *secrets.ProviderManager
@@ -29,29 +28,29 @@ type Pipe struct {
 	StoreTimeout           time.Duration
 }
 
-// Name returns the name of the pipeline mutator.
-func (p *Pipe) Name() string {
-	return "Pipe"
+// Name returns the name of the mutator adapter.
+func (p *PipeAdapter) Name() string {
+	return "PipeAdapter"
 }
 
-// CanMutate determines whether the Pipe mutator can mutate the resource being
+// CanMutate determines whether PipeAdapter can mutate the resource being
 // referenced.
 // TODO: update this function if/when we implement a proper PipeMutator type
-func (p *Pipe) CanMutate(ctx context.Context, ref *corev2.ResourceReference) bool {
+func (p *PipeAdapter) CanMutate(ctx context.Context, ref *corev2.ResourceReference) bool {
 	return false
 }
 
 // Mutate will mutate the event and return it as bytes.
 // TODO: update this function if/when we implement a proper PipeMutator type
-func (p *Pipe) Mutate(ctx context.Context, ref *corev2.ResourceReference, event *corev2.Event) ([]byte, error) {
+func (p *PipeAdapter) Mutate(ctx context.Context, ref *corev2.ResourceReference, event *corev2.Event) ([]byte, error) {
 	// eventData, err := p.run(ctx, mutator, event, assets)
 	// if err != nil {
 	// 	return nil, err
 	// }
-	return nil, fmt.Errorf("mutator cannot be used as a pipeline mutator at this time")
+	return nil, errors.New("mutator adapter cannot be used directly at this time")
 }
 
-func (p *Pipe) run(ctx context.Context, mutator *corev2.Mutator, event *corev2.Event, assets asset.RuntimeAssetSet) ([]byte, error) {
+func (p *PipeAdapter) run(ctx context.Context, mutator *corev2.Mutator, event *corev2.Event, assets asset.RuntimeAssetSet) ([]byte, error) {
 	ctx = corev2.SetContextFromResource(ctx, mutator)
 
 	// Prepare log entry

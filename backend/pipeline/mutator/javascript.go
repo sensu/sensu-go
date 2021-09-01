@@ -20,36 +20,37 @@ var (
 	halt = errors.New("halt")
 )
 
-// Javascript is a mutator which mutates an event using javascript.
-type Javascript struct {
+// JavascriptAdapter is a mutator adapter which mutates an event using
+// javascript.
+type JavascriptAdapter struct {
 	AssetGetter  asset.Getter
 	Store        store.Store
 	StoreTimeout time.Duration
 }
 
-// Name returns the name of the pipeline mutator.
-func (j *Javascript) Name() string {
-	return "Javascript"
+// Name returns the name of the mutator adapter.
+func (j *JavascriptAdapter) Name() string {
+	return "JavascriptAdapter"
 }
 
-// CanMutate determines whether the Javascript mutator can mutate the resource
+// CanMutate determines whether JavascriptAdapter can mutate the resource
 // being referenced.
 // TODO: update this function if/when we implement a proper JavascriptMutator type
-func (j *Javascript) CanMutate(ctx context.Context, ref *corev2.ResourceReference) bool {
+func (j *JavascriptAdapter) CanMutate(ctx context.Context, ref *corev2.ResourceReference) bool {
 	return false
 }
 
 // Mutate will mutate the event and return it as bytes.
 // TODO: update this function if/when we implement a proper JavascriptMutator type
-func (j *Javascript) Mutate(ctx context.Context, ref *corev2.ResourceReference, event *corev2.Event) ([]byte, error) {
+func (j *JavascriptAdapter) Mutate(ctx context.Context, ref *corev2.ResourceReference, event *corev2.Event) ([]byte, error) {
 	// eventData, err := j.run(ctx, mutator, event, assets)
 	// if err != nil {
 	// 	return nil, err
 	// }
-	return nil, fmt.Errorf("mutator cannot be used as a pipeline mutator at this time")
+	return nil, fmt.Errorf("mutator adapter cannot be used directly at this time")
 }
 
-func (j *Javascript) run(ctx context.Context, mutator *corev2.Mutator, event *corev2.Event, assets js.JavascriptAssets) ([]byte, error) {
+func (j *JavascriptAdapter) run(ctx context.Context, mutator *corev2.Mutator, event *corev2.Event, assets js.JavascriptAssets) ([]byte, error) {
 	ctx = corev2.SetContextFromResource(context.Background(), mutator)
 
 	// Use a context with a timeout if the mutator has a timeout set

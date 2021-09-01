@@ -7,23 +7,23 @@ import (
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 )
 
-func TestIsIncident_Name(t *testing.T) {
-	o := &IsIncident{}
-	want := "IsIncident"
+func TestIsIncidentAdapter_Name(t *testing.T) {
+	o := &IsIncidentAdapter{}
+	want := "IsIncidentAdapter"
 
 	if got := o.Name(); want != got {
-		t.Errorf("IsIncident.Name() = %v, want %v", got, want)
+		t.Errorf("IsIncidentAdapter.Name() = %v, want %v", got, want)
 	}
 }
 
-func TestIsIncident_CanFilter(t *testing.T) {
+func TestIsIncidentAdapter_CanFilter(t *testing.T) {
 	type args struct {
 		ctx context.Context
 		ref *corev2.ResourceReference
 	}
 	tests := []struct {
 		name string
-		i    *IsIncident
+		i    *IsIncidentAdapter
 		args args
 		want bool
 	}{
@@ -62,15 +62,15 @@ func TestIsIncident_CanFilter(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			i := &IsIncident{}
+			i := &IsIncidentAdapter{}
 			if got := i.CanFilter(tt.args.ctx, tt.args.ref); got != tt.want {
-				t.Errorf("IsIncident.CanFilter() = %v, want %v", got, tt.want)
+				t.Errorf("IsIncidentAdapter.CanFilter() = %v, want %v", got, tt.want)
 			}
 		})
 	}
 }
 
-func TestIsIncident_Filter(t *testing.T) {
+func TestIsIncidentAdapter_Filter(t *testing.T) {
 	type args struct {
 		ctx   context.Context
 		ref   *corev2.ResourceReference
@@ -78,7 +78,7 @@ func TestIsIncident_Filter(t *testing.T) {
 	}
 	tests := []struct {
 		name    string
-		i       *IsIncident
+		i       *IsIncidentAdapter
 		args    args
 		want    bool
 		wantErr bool
@@ -126,14 +126,14 @@ func TestIsIncident_Filter(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			i := &IsIncident{}
+			i := &IsIncidentAdapter{}
 			got, err := i.Filter(tt.args.ctx, tt.args.ref, tt.args.event)
 			if (err != nil) != tt.wantErr {
-				t.Errorf("IsIncident.Filter() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("IsIncidentAdapter.Filter() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
 			if got != tt.want {
-				t.Errorf("IsIncident.Filter() = %v, want %v", got, tt.want)
+				t.Errorf("IsIncidentAdapter.Filter() = %v, want %v", got, tt.want)
 			}
 		})
 	}

@@ -20,12 +20,13 @@ var (
 	}
 )
 
-// Legacy is a pipeline mutator that acts as a bridge between corev2.Mutators,
-// excluding those with a built-in name (e.g. json, or only_check_output), and
-// the Pipe & Javascript pipeline mutators. The corev2.Mutator's type field is
-// used to select which bridged pipeline mutator to use. For example, if the
-// type field is set to "pipe", the event will be sent to the Pipe mutator.
-type Legacy struct {
+// LegacyAdapter is a mutator adapter that acts as a bridge between
+// corev2.Mutators, excluding those with a built-in name (e.g. json, or
+// only_check_output), and PipeAdapter & JavascriptAdapter mutators. The
+// corev2.Mutator's type field is used to select which bridged mutator adapter
+// to use. For example, if the type field is set to "pipe", the event will be
+// sent to PipeAdapter.
+type LegacyAdapter struct {
 	AssetGetter            asset.Getter
 	Executor               command.Executor
 	SecretsProviderManager *secrets.ProviderManager
@@ -33,14 +34,14 @@ type Legacy struct {
 	StoreTimeout           time.Duration
 }
 
-// Name returns the name of the pipeline mutator.
-func (l *Legacy) Name() string {
-	return "Legacy"
+// Name returns the name of the mutator adapter.
+func (l *LegacyAdapter) Name() string {
+	return "LegacyAdapter"
 }
 
-// CanMutate determines whether the Legacy mutator can mutate the resource being
+// CanMutate determines whether LegacyAdapter can mutate the resource being
 // referenced.
-func (l *Legacy) CanMutate(ctx context.Context, ref *corev2.ResourceReference) bool {
+func (l *LegacyAdapter) CanMutate(ctx context.Context, ref *corev2.ResourceReference) bool {
 	if ref.APIVersion == "core/v2" && ref.Type == "Mutator" {
 		for _, name := range builtInMutatorNames {
 			if ref.Name == name {
@@ -54,7 +55,7 @@ func (l *Legacy) CanMutate(ctx context.Context, ref *corev2.ResourceReference) b
 
 // Mutate mutates (transforms) a Sensu event into a serialized format (byte
 // slice) to be provided to a Sensu event handler.
-func (l *Legacy) Mutate(ctx context.Context, ref *corev2.ResourceReference, event *corev2.Event) ([]byte, error) {
+func (l *LegacyAdapter) Mutate(ctx context.Context, ref *corev2.ResourceReference, event *corev2.Event) ([]byte, error) {
 	// Prepare log entry
 	// TODO: add pipeline & pipeline workflow names to fields
 	fields := utillogging.EventFields(event, false)
@@ -90,7 +91,7 @@ func (l *Legacy) Mutate(ctx context.Context, ref *corev2.ResourceReference, even
 	}
 
 	if mutator.Type == "" || mutator.Type == corev2.PipeMutator {
-		pipeMutator := &Pipe{
+		pipeMutator := &PipeAdapter{
 			AssetGetter:            l.AssetGetter,
 			Executor:               l.Executor,
 			SecretsProviderManager: l.SecretsProviderManager,
@@ -99,7 +100,7 @@ func (l *Legacy) Mutate(ctx context.Context, ref *corev2.ResourceReference, even
 		}
 		eventData, err = pipeMutator.run(ctx, mutator, event, assets)
 	} else if mutator.Type == corev2.JavascriptMutator {
-		javascriptMutator := Javascript{
+		javascriptMutator := JavascriptAdapter{
 			AssetGetter:  l.AssetGetter,
 			Store:        l.Store,
 			StoreTimeout: l.StoreTimeout,

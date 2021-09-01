@@ -9,23 +9,23 @@ import (
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 )
 
-func TestJSON_Name(t *testing.T) {
-	o := &JSON{}
-	want := "JSON"
+func TestJSONAdapter_Name(t *testing.T) {
+	o := &JSONAdapter{}
+	want := "JSONAdapter"
 
 	if got := o.Name(); want != got {
-		t.Errorf("JSON.Name() = %v, want %v", got, want)
+		t.Errorf("JSONAdapter.Name() = %v, want %v", got, want)
 	}
 }
 
-func TestJSON_CanMutate(t *testing.T) {
+func TestJSONAdapter_CanMutate(t *testing.T) {
 	type args struct {
 		ctx context.Context
 		ref *corev2.ResourceReference
 	}
 	tests := []struct {
 		name string
-		j    *JSON
+		j    *JSONAdapter
 		args args
 		want bool
 	}{
@@ -64,15 +64,15 @@ func TestJSON_CanMutate(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			j := &JSON{}
+			j := &JSONAdapter{}
 			if got := j.CanMutate(tt.args.ctx, tt.args.ref); got != tt.want {
-				t.Errorf("JSON.CanMutate() = %v, want %v", got, tt.want)
+				t.Errorf("JSONAdapter.CanMutate() = %v, want %v", got, tt.want)
 			}
 		})
 	}
 }
 
-func TestJSON_Mutate(t *testing.T) {
+func TestJSONAdapter_Mutate(t *testing.T) {
 	type args struct {
 		ctx   context.Context
 		ref   *corev2.ResourceReference
@@ -80,7 +80,7 @@ func TestJSON_Mutate(t *testing.T) {
 	}
 	tests := []struct {
 		name    string
-		j       *JSON
+		j       *JSONAdapter
 		args    args
 		wantFn  func(*corev2.Event) []byte
 		wantErr bool
@@ -99,15 +99,15 @@ func TestJSON_Mutate(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			j := &JSON{}
+			j := &JSONAdapter{}
 			got, err := j.Mutate(tt.args.ctx, tt.args.ref, tt.args.event)
 			if (err != nil) != tt.wantErr {
-				t.Errorf("JSON.Mutate() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("JSONAdapter.Mutate() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
 			want := tt.wantFn(tt.args.event)
 			if !reflect.DeepEqual(got, want) {
-				t.Errorf("JSON.Mutate() = %v, want %v", got, want)
+				t.Errorf("JSONAdapter.Mutate() = %v, want %v", got, want)
 			}
 		})
 	}

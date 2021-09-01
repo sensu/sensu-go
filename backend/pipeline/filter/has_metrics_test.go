@@ -7,23 +7,23 @@ import (
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 )
 
-func TestHasMetrics_Name(t *testing.T) {
-	o := &HasMetrics{}
-	want := "HasMetrics"
+func TestHasMetricsAdapter_Name(t *testing.T) {
+	o := &HasMetricsAdapter{}
+	want := "HasMetricsAdapter"
 
 	if got := o.Name(); want != got {
-		t.Errorf("HasMetrics.Name() = %v, want %v", got, want)
+		t.Errorf("HasMetricsAdapter.Name() = %v, want %v", got, want)
 	}
 }
 
-func TestHasMetrics_CanFilter(t *testing.T) {
+func TestHasMetricsAdapter_CanFilter(t *testing.T) {
 	type args struct {
 		ctx context.Context
 		ref *corev2.ResourceReference
 	}
 	tests := []struct {
 		name string
-		i    *HasMetrics
+		i    *HasMetricsAdapter
 		args args
 		want bool
 	}{
@@ -62,15 +62,15 @@ func TestHasMetrics_CanFilter(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			i := &HasMetrics{}
+			i := &HasMetricsAdapter{}
 			if got := i.CanFilter(tt.args.ctx, tt.args.ref); got != tt.want {
-				t.Errorf("HasMetrics.CanFilter() = %v, want %v", got, tt.want)
+				t.Errorf("HasMetricsAdapter.CanFilter() = %v, want %v", got, tt.want)
 			}
 		})
 	}
 }
 
-func TestHasMetrics_Filter(t *testing.T) {
+func TestHasMetricsAdapter_Filter(t *testing.T) {
 	type args struct {
 		ctx   context.Context
 		ref   *corev2.ResourceReference
@@ -78,7 +78,7 @@ func TestHasMetrics_Filter(t *testing.T) {
 	}
 	tests := []struct {
 		name    string
-		i       *HasMetrics
+		i       *HasMetricsAdapter
 		args    args
 		want    bool
 		wantErr bool
@@ -111,14 +111,14 @@ func TestHasMetrics_Filter(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			i := &HasMetrics{}
+			i := &HasMetricsAdapter{}
 			got, err := i.Filter(tt.args.ctx, tt.args.ref, tt.args.event)
 			if (err != nil) != tt.wantErr {
-				t.Errorf("HasMetrics.Filter() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("HasMetricsAdapter.Filter() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
 			if got != tt.want {
-				t.Errorf("HasMetrics.Filter() = %v, want %v", got, tt.want)
+				t.Errorf("HasMetricsAdapter.Filter() = %v, want %v", got, tt.want)
 			}
 		})
 	}

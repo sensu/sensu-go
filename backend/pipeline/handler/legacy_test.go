@@ -36,16 +36,16 @@ func TestHelperHandlerProcess(t *testing.T) {
 	os.Exit(0)
 }
 
-func TestLegacy_Name(t *testing.T) {
-	o := &Legacy{}
-	want := "Legacy"
+func TestLegacyAdapter_Name(t *testing.T) {
+	o := &LegacyAdapter{}
+	want := "LegacyAdapter"
 
 	if got := o.Name(); want != got {
-		t.Errorf("Legacy.Name() = %v, want %v", got, want)
+		t.Errorf("LegacyAdapter.Name() = %v, want %v", got, want)
 	}
 }
 
-func TestLegacy_CanHandle(t *testing.T) {
+func TestLegacyAdapter_CanHandle(t *testing.T) {
 	type fields struct {
 		AssetGetter            asset.Getter
 		Executor               command.Executor
@@ -87,7 +87,7 @@ func TestLegacy_CanHandle(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			h := &Legacy{
+			h := &LegacyAdapter{
 				AssetGetter:            tt.fields.AssetGetter,
 				Executor:               tt.fields.Executor,
 				LicenseGetter:          tt.fields.LicenseGetter,
@@ -96,13 +96,13 @@ func TestLegacy_CanHandle(t *testing.T) {
 				StoreTimeout:           tt.fields.StoreTimeout,
 			}
 			if got := h.CanHandle(tt.args.ctx, tt.args.ref); got != tt.want {
-				t.Errorf("Legacy.CanHandle() = %v, want %v", got, tt.want)
+				t.Errorf("LegacyAdapter.CanHandle() = %v, want %v", got, tt.want)
 			}
 		})
 	}
 }
 
-func TestLegacy_Handle(t *testing.T) {
+func TestLegacyAdapter_Handle(t *testing.T) {
 	type fields struct {
 		AssetGetter            asset.Getter
 		Executor               command.Executor
@@ -127,7 +127,7 @@ func TestLegacy_Handle(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			l := &Legacy{
+			l := &LegacyAdapter{
 				AssetGetter:            tt.fields.AssetGetter,
 				Executor:               tt.fields.Executor,
 				LicenseGetter:          tt.fields.LicenseGetter,
@@ -136,13 +136,13 @@ func TestLegacy_Handle(t *testing.T) {
 				StoreTimeout:           tt.fields.StoreTimeout,
 			}
 			if err := l.Handle(tt.args.ctx, tt.args.ref, tt.args.event, tt.args.mutatedData); (err != nil) != tt.wantErr {
-				t.Errorf("Legacy.Handle() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("LegacyAdapter.Handle() error = %v, wantErr %v", err, tt.wantErr)
 			}
 		})
 	}
 }
 
-func TestLegacy_pipeHandler(t *testing.T) {
+func TestLegacyAdapter_pipeHandler(t *testing.T) {
 	type fields struct {
 		AssetGetter            asset.Getter
 		Executor               command.Executor
@@ -194,7 +194,7 @@ func TestLegacy_pipeHandler(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			l := &Legacy{
+			l := &LegacyAdapter{
 				AssetGetter:            tt.fields.AssetGetter,
 				Executor:               tt.fields.Executor,
 				LicenseGetter:          tt.fields.LicenseGetter,
@@ -206,21 +206,21 @@ func TestLegacy_pipeHandler(t *testing.T) {
 
 			got, err := l.pipeHandler(tt.args.ctx, tt.args.handler, tt.args.event, mutatedData)
 			if (err != nil) != tt.wantErr {
-				t.Errorf("Legacy.pipeHandler() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("LegacyAdapter.pipeHandler() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
 			if (got == nil) != tt.wantNil {
-				t.Errorf("Legacy.pipeHandler() got = %v, wantNil %v", got, tt.wantNil)
+				t.Errorf("LegacyAdapter.pipeHandler() got = %v, wantNil %v", got, tt.wantNil)
 				return
 			}
 			if got != nil {
 				if got.Status != tt.wantStatus {
-					t.Errorf("Legacy.pipeHandler() status = %v, want %v", got.Status, tt.wantStatus)
+					t.Errorf("LegacyAdapter.pipeHandler() status = %v, want %v", got.Status, tt.wantStatus)
 					return
 				}
 				wantOutput := tt.wantOutputFn(mutatedData)
 				if got.Output != wantOutput {
-					t.Errorf("Legacy.pipeHandler() output = %v, want %v", got.Output, wantOutput)
+					t.Errorf("LegacyAdapter.pipeHandler() output = %v, want %v", got.Output, wantOutput)
 					return
 				}
 			}
@@ -228,7 +228,7 @@ func TestLegacy_pipeHandler(t *testing.T) {
 	}
 }
 
-func TestLegacy_socketHandlerTCP(t *testing.T) {
+func TestLegacyAdapter_socketHandlerTCP(t *testing.T) {
 	ready := make(chan struct{})
 	done := make(chan struct{})
 
@@ -243,7 +243,7 @@ func TestLegacy_socketHandlerTCP(t *testing.T) {
 		},
 	}
 
-	l := &Legacy{}
+	l := &LegacyAdapter{}
 
 	go func() {
 		listener, err := net.Listen("tcp", "127.0.0.1:5678")
@@ -282,7 +282,7 @@ func TestLegacy_socketHandlerTCP(t *testing.T) {
 	<-done
 }
 
-func TestLegacy_socketHandlerUDP(t *testing.T) {
+func TestLegacyAdapter_socketHandlerUDP(t *testing.T) {
 	ready := make(chan struct{})
 	done := make(chan struct{})
 
@@ -297,7 +297,7 @@ func TestLegacy_socketHandlerUDP(t *testing.T) {
 		},
 	}
 
-	l := &Legacy{}
+	l := &LegacyAdapter{}
 
 	go func() {
 		listener, err := net.ListenPacket("udp", ":5678")

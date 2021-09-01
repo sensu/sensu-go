@@ -7,26 +7,26 @@ import (
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 )
 
-type Mutator interface {
+type MutatorAdapter interface {
 	Name() string
 	CanMutate(context.Context, *corev2.ResourceReference) bool
 	Mutate(context.Context, *corev2.ResourceReference, *corev2.Event) ([]byte, error)
 }
 
-func (p *Pipeline) getMutatorForResource(ctx context.Context, ref *corev2.ResourceReference) (Mutator, error) {
-	for _, mutator := range p.mutators {
-		if mutator.CanMutate(ctx, ref) {
-			return mutator, nil
-		}
-	}
-	return nil, fmt.Errorf("no pipeline mutators were found that can mutate the resource: %s.%s = %s", ref.APIVersion, ref.Type, ref.Name)
-}
-
-func (p *Pipeline) processMutator(ctx context.Context, ref *corev2.ResourceReference, event *corev2.Event) ([]byte, error) {
-	mutator, err := p.getMutatorForResource(ctx, ref)
+func (a *AdapterV1) processMutator(ctx context.Context, ref *corev2.ResourceReference, event *corev2.Event) ([]byte, error) {
+	mutator, err := a.getMutatorForResource(ctx, ref)
 	if err != nil {
 		return nil, err
 	}
 
 	return mutator.Mutate(ctx, ref, event)
+}
+
+func (a *AdapterV1) getMutatorForResource(ctx context.Context, ref *corev2.ResourceReference) (MutatorAdapter, error) {
+	for _, mutatorAdapter := range a.MutatorAdapters {
+		if mutatorAdapter.CanMutate(ctx, ref) {
+			return mutatorAdapter, nil
+		}
+	}
+	return nil, fmt.Errorf("no mutator adapters were found that can mutate the resource: %s.%s = %s", ref.APIVersion, ref.Type, ref.Name)
 }

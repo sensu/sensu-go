@@ -7,23 +7,23 @@ import (
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 )
 
-func TestNotSilenced_Name(t *testing.T) {
-	o := &NotSilenced{}
-	want := "NotSilenced"
+func TestNotSilencedAdapter_Name(t *testing.T) {
+	o := &NotSilencedAdapter{}
+	want := "NotSilencedAdapter"
 
 	if got := o.Name(); want != got {
-		t.Errorf("NotSilenced.Name() = %v, want %v", got, want)
+		t.Errorf("NotSilencedAdapter.Name() = %v, want %v", got, want)
 	}
 }
 
-func TestNotSilenced_CanFilter(t *testing.T) {
+func TestNotSilencedAdapter_CanFilter(t *testing.T) {
 	type args struct {
 		ctx context.Context
 		ref *corev2.ResourceReference
 	}
 	tests := []struct {
 		name string
-		i    *NotSilenced
+		i    *NotSilencedAdapter
 		args args
 		want bool
 	}{
@@ -62,15 +62,15 @@ func TestNotSilenced_CanFilter(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			i := &NotSilenced{}
+			i := &NotSilencedAdapter{}
 			if got := i.CanFilter(tt.args.ctx, tt.args.ref); got != tt.want {
-				t.Errorf("NotSilenced.CanFilter() = %v, want %v", got, tt.want)
+				t.Errorf("NotSilencedAdapter.CanFilter() = %v, want %v", got, tt.want)
 			}
 		})
 	}
 }
 
-func TestNotSilenced_Filter(t *testing.T) {
+func TestNotSilencedAdapter_Filter(t *testing.T) {
 	type args struct {
 		ctx   context.Context
 		ref   *corev2.ResourceReference
@@ -78,7 +78,7 @@ func TestNotSilenced_Filter(t *testing.T) {
 	}
 	tests := []struct {
 		name    string
-		i       *NotSilenced
+		i       *NotSilencedAdapter
 		args    args
 		want    bool
 		wantErr bool
@@ -111,14 +111,14 @@ func TestNotSilenced_Filter(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			i := &NotSilenced{}
+			i := &NotSilencedAdapter{}
 			got, err := i.Filter(tt.args.ctx, tt.args.ref, tt.args.event)
 			if (err != nil) != tt.wantErr {
-				t.Errorf("NotSilenced.Filter() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("NotSilencedAdapter.Filter() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
 			if got != tt.want {
-				t.Errorf("NotSilenced.Filter() = %v, want %v", got, tt.want)
+				t.Errorf("NotSilencedAdapter.Filter() = %v, want %v", got, tt.want)
 			}
 		})
 	}

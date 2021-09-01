@@ -15,16 +15,16 @@ import (
 	"github.com/stretchr/testify/mock"
 )
 
-func TestLegacy_Name(t *testing.T) {
-	o := &Legacy{}
-	want := "Legacy"
+func TestLegacyAdapter_Name(t *testing.T) {
+	o := &LegacyAdapter{}
+	want := "LegacyAdapter"
 
 	if got := o.Name(); want != got {
-		t.Errorf("Legacy.Name() = %v, want %v", got, want)
+		t.Errorf("LegacyAdapter.Name() = %v, want %v", got, want)
 	}
 }
 
-func TestLegacy_CanFilter(t *testing.T) {
+func TestLegacyAdapter_CanFilter(t *testing.T) {
 	type fields struct {
 		AssetGetter  asset.Getter
 		Store        store.Store
@@ -97,19 +97,19 @@ func TestLegacy_CanFilter(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			l := &Legacy{
+			l := &LegacyAdapter{
 				AssetGetter:  tt.fields.AssetGetter,
 				Store:        tt.fields.Store,
 				StoreTimeout: tt.fields.StoreTimeout,
 			}
 			if got := l.CanFilter(tt.args.ctx, tt.args.ref); got != tt.want {
-				t.Errorf("Legacy.CanFilter() = %v, want %v", got, tt.want)
+				t.Errorf("LegacyAdapter.CanFilter() = %v, want %v", got, tt.want)
 			}
 		})
 	}
 }
 
-func TestLegacy_Filter(t *testing.T) {
+func TestLegacyAdapter_Filter(t *testing.T) {
 	type fields struct {
 		AssetGetter  asset.Getter
 		Store        store.Store
@@ -239,18 +239,18 @@ func TestLegacy_Filter(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			l := &Legacy{
+			l := &LegacyAdapter{
 				AssetGetter:  tt.fields.AssetGetter,
 				Store:        tt.fields.Store,
 				StoreTimeout: tt.fields.StoreTimeout,
 			}
 			got, err := l.Filter(tt.args.ctx, tt.args.ref, tt.args.event)
 			if (err != nil) != tt.wantErr {
-				t.Errorf("Legacy.Filter() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("LegacyAdapter.Filter() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
 			if got != tt.want {
-				t.Errorf("Legacy.Filter() = %v, want %v", got, tt.want)
+				t.Errorf("LegacyAdapter.Filter() = %v, want %v", got, tt.want)
 			}
 		})
 	}

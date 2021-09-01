@@ -24,8 +24,9 @@ const (
 	DefaultSocketTimeout uint32 = 60
 )
 
-// Legacy is a handler that supports the legacy core.v2/Handler type.
-type Legacy struct {
+// LegacyAdapter is a handler adapter that supports the legacy core.v2/Handler
+// type.
+type LegacyAdapter struct {
 	AssetGetter            asset.Getter
 	Executor               command.Executor
 	LicenseGetter          licensing.Getter
@@ -34,14 +35,14 @@ type Legacy struct {
 	StoreTimeout           time.Duration
 }
 
-// Name returns the name of the pipeline handler.
-func (l *Legacy) Name() string {
-	return "Legacy"
+// Name returns the name of the handler adapter.
+func (l *LegacyAdapter) Name() string {
+	return "LegacyAdapter"
 }
 
-// CanHandle determines whether the Legacy handler can handle the resource being
+// CanHandle determines whether LegacyAdapter can handle the resource being
 // referenced.
-func (l *Legacy) CanHandle(ctx context.Context, ref *corev2.ResourceReference) bool {
+func (l *LegacyAdapter) CanHandle(ctx context.Context, ref *corev2.ResourceReference) bool {
 	if ref.APIVersion == "core/v2" && ref.Type == "Handler" {
 		return true
 	}
@@ -50,7 +51,7 @@ func (l *Legacy) CanHandle(ctx context.Context, ref *corev2.ResourceReference) b
 
 // Handle handles a Sensu event. It will pass any mutated data along to pipe or
 // tcp/udp handlers.
-func (l *Legacy) Handle(ctx context.Context, ref *corev2.ResourceReference, event *corev2.Event, mutatedData []byte) error {
+func (l *LegacyAdapter) Handle(ctx context.Context, ref *corev2.ResourceReference, event *corev2.Event, mutatedData []byte) error {
 	// Prepare log entry
 	// TODO: add pipeline & pipeline workflow names to fields
 	fields := utillogging.EventFields(event, false)
@@ -85,7 +86,7 @@ func (l *Legacy) Handle(ctx context.Context, ref *corev2.ResourceReference, even
 
 // pipeHandler fork/executes a child process for a Sensu pipe handler command
 // and writes the mutated data to it via STDIN.
-func (l *Legacy) pipeHandler(ctx context.Context, handler *corev2.Handler, event *corev2.Event, mutatedData []byte) (*command.ExecutionResponse, error) {
+func (l *LegacyAdapter) pipeHandler(ctx context.Context, handler *corev2.Handler, event *corev2.Event, mutatedData []byte) (*command.ExecutionResponse, error) {
 	ctx = corev2.SetContextFromResource(ctx, handler)
 
 	// Prepare log entry
@@ -147,7 +148,7 @@ func (l *Legacy) pipeHandler(ctx context.Context, handler *corev2.Handler, event
 
 // socketHandler creates either a TCP or UDP client to write mutatedData
 // to a socket. The provided handler Type determines the protocol.
-func (l *Legacy) socketHandler(ctx context.Context, handler *corev2.Handler, event *corev2.Event, mutatedData []byte) (conn net.Conn, err error) {
+func (l *LegacyAdapter) socketHandler(ctx context.Context, handler *corev2.Handler, event *corev2.Event, mutatedData []byte) (conn net.Conn, err error) {
 	protocol := handler.Type
 	host := handler.Socket.Host
 	port := handler.Socket.Port

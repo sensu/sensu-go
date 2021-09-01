@@ -7,17 +7,17 @@ import (
 	utillogging "github.com/sensu/sensu-go/util/logging"
 )
 
-// IsIncident is a filter which will filter events that are incidents.
-type IsIncident struct{}
+// IsIncident is a filter adapter which will filter events that are incidents.
+type IsIncidentAdapter struct{}
 
-// Name returns the name of the pipeline filter.
-func (i *IsIncident) Name() string {
-	return "IsIncident"
+// Name returns the name of the filter adapter.
+func (i *IsIncidentAdapter) Name() string {
+	return "IsIncidentAdapter"
 }
 
-// CanFilter determines whether the IsIncident filter can filter the resource
-// being referenced.
-func (i *IsIncident) CanFilter(ctx context.Context, ref *corev2.ResourceReference) bool {
+// CanFilter determines whether IsIncidentAdapter can filter the resource being
+// referenced.
+func (i *IsIncidentAdapter) CanFilter(ctx context.Context, ref *corev2.ResourceReference) bool {
 	if ref.APIVersion == "core/v2" && ref.Type == "EventFilter" && ref.Name == "is_incident" {
 		return true
 	}
@@ -25,7 +25,7 @@ func (i *IsIncident) CanFilter(ctx context.Context, ref *corev2.ResourceReferenc
 }
 
 // Filter will evaluate the event and determine whether or not to filter it.
-func (i *IsIncident) Filter(ctx context.Context, ref *corev2.ResourceReference, event *corev2.Event) (bool, error) {
+func (i *IsIncidentAdapter) Filter(ctx context.Context, ref *corev2.ResourceReference, event *corev2.Event) (bool, error) {
 	// Prepare log entry
 	// TODO: add pipeline & pipeline workflow names to fields
 	fields := utillogging.EventFields(event, false)

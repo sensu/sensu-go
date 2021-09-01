@@ -36,6 +36,10 @@ import (
 	"github.com/sensu/sensu-go/backend/keepalived"
 	"github.com/sensu/sensu-go/backend/liveness"
 	"github.com/sensu/sensu-go/backend/messaging"
+	"github.com/sensu/sensu-go/backend/pipeline"
+	"github.com/sensu/sensu-go/backend/pipeline/filter"
+	"github.com/sensu/sensu-go/backend/pipeline/handler"
+	"github.com/sensu/sensu-go/backend/pipeline/mutator"
 	"github.com/sensu/sensu-go/backend/pipelined"
 	"github.com/sensu/sensu-go/backend/queue"
 	"github.com/sensu/sensu-go/backend/ringv2"
@@ -46,7 +50,7 @@ import (
 	storev2 "github.com/sensu/sensu-go/backend/store/v2"
 	etcdstorev2 "github.com/sensu/sensu-go/backend/store/v2/etcdstore"
 	"github.com/sensu/sensu-go/backend/tessend"
-	"github.com/sensu/sensu-go/rpc"
+	"github.com/sensu/sensu-go/command"
 	"github.com/sensu/sensu-go/system"
 	"github.com/sensu/sensu-go/util/retry"
 )
@@ -76,6 +80,7 @@ type Backend struct {
 	HealthRouter           *routers.HealthRouter
 	EtcdClientTLSConfig    *tls.Config
 	APIDConfig             apid.Config
+	PipelineAdapterV1      pipeline.AdapterV1
 
 	ctx       context.Context
 	runCtx    context.Context
@@ -273,21 +278,72 @@ func Initialize(ctx context.Context, config *Config) (*Backend, error) {
 	auth := &rbac.Authorizer{Store: b.Store}
 
 	// Initialize pipelined
-	pipeline, err := pipelined.New(pipelined.Config{
-		Store:                   b.Store,
-		Bus:                     bus,
-		ExtensionExecutorGetter: rpc.NewGRPCExtensionExecutor,
-		AssetGetter:             assetGetter,
-		BufferSize:              viper.GetInt(FlagPipelinedBufferSize),
-		WorkerCount:             viper.GetInt(FlagPipelinedWorkers),
-		StoreTimeout:            2 * time.Minute,
-		SecretsProviderManager:  b.SecretsProviderManager,
-		BackendEntity:           backendEntity,
+	pipelineDaemon, err := pipelined.New(pipelined.Config{
+		Bus:         bus,
+		BufferSize:  viper.GetInt(FlagPipelinedBufferSize),
+		WorkerCount: viper.GetInt(FlagPipelinedWorkers),
 	})
 	if err != nil {
-		return nil, fmt.Errorf("error initializing %s: %s", pipeline.Name(), err)
+		return nil, fmt.Errorf("error initializing %s: %s", pipelineDaemon.Name(), err)
 	}
-	b.Daemons = append(b.Daemons, pipeline)
+
+	// Initialize PipelineAdapterV1
+	storeTimeout := 2 * time.Minute
+	b.PipelineAdapterV1 = pipeline.AdapterV1{
+		Store:        b.Store,
+		StoreTimeout: storeTimeout,
+	}
+
+	// Initialize PipelineAdapterV1 filter adapters
+	legacyFilterAdapter := &filter.LegacyAdapter{
+		AssetGetter:  assetGetter,
+		Store:        b.Store,
+		StoreTimeout: storeTimeout,
+	}
+	hasMetricsFilterAdapter := &filter.HasMetricsAdapter{}
+	isIncidentFilterAdapter := &filter.IsIncidentAdapter{}
+	notSilencedFilterAdapter := &filter.NotSilencedAdapter{}
+
+	b.PipelineAdapterV1.FilterAdapters = []pipeline.FilterAdapter{
+		legacyFilterAdapter,
+		hasMetricsFilterAdapter,
+		isIncidentFilterAdapter,
+		notSilencedFilterAdapter,
+	}
+
+	// Initialize PipelineAdapterV1 mutator adapters
+	legacyMutatorAdapter := &mutator.LegacyAdapter{
+		AssetGetter:            assetGetter,
+		Executor:               command.NewExecutor(),
+		SecretsProviderManager: b.SecretsProviderManager,
+		Store:                  b.Store,
+		StoreTimeout:           storeTimeout,
+	}
+	onlyCheckOutputMutatorAdapter := &mutator.OnlyCheckOutputAdapter{}
+	jsonMutatorAdapter := &mutator.JSONAdapter{}
+
+	b.PipelineAdapterV1.MutatorAdapters = []pipeline.MutatorAdapter{
+		legacyMutatorAdapter,
+		onlyCheckOutputMutatorAdapter,
+		jsonMutatorAdapter,
+	}
+
+	// Initialize PipelineAdapterV1 handler adapters
+	legacyHandlerAdapter := &handler.LegacyAdapter{
+		AssetGetter:            assetGetter,
+		Executor:               command.NewExecutor(),
+		LicenseGetter:          nil,
+		SecretsProviderManager: b.SecretsProviderManager,
+		Store:                  b.Store,
+		StoreTimeout:           storeTimeout,
+	}
+
+	b.PipelineAdapterV1.HandlerAdapters = []pipeline.HandlerAdapter{
+		legacyHandlerAdapter,
+	}
+
+	pipelineDaemon.AddAdapter(&b.PipelineAdapterV1)
+	b.Daemons = append(b.Daemons, pipelineDaemon)
 
 	// Initialize eventd
 	event, err := eventd.New(

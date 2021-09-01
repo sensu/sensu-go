@@ -29,16 +29,16 @@ func (mutatorAssetSet) Scripts() (map[string]io.ReadCloser, error) {
 	return result, nil
 }
 
-func TestJavascript_Name(t *testing.T) {
-	o := &Javascript{}
-	want := "Javascript"
+func TestJavascriptAdapter_Name(t *testing.T) {
+	o := &JavascriptAdapter{}
+	want := "JavascriptAdapter"
 
 	if got := o.Name(); want != got {
-		t.Errorf("Javascript.Name() = %v, want %v", got, want)
+		t.Errorf("JavascriptAdapter.Name() = %v, want %v", got, want)
 	}
 }
 
-func TestJavascript_CanMutate(t *testing.T) {
+func TestJavascriptAdapter_CanMutate(t *testing.T) {
 	type fields struct {
 		AssetGetter  asset.Getter
 		Store        store.Store
@@ -61,19 +61,19 @@ func TestJavascript_CanMutate(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			j := &Javascript{
+			j := &JavascriptAdapter{
 				AssetGetter:  tt.fields.AssetGetter,
 				Store:        tt.fields.Store,
 				StoreTimeout: tt.fields.StoreTimeout,
 			}
 			if got := j.CanMutate(tt.args.ctx, tt.args.ref); got != tt.want {
-				t.Errorf("Javascript.CanMutate() = %v, want %v", got, tt.want)
+				t.Errorf("JavascriptAdapter.CanMutate() = %v, want %v", got, tt.want)
 			}
 		})
 	}
 }
 
-func TestJavascript_Mutate(t *testing.T) {
+func TestJavascriptAdapter_Mutate(t *testing.T) {
 	type fields struct {
 		AssetGetter  asset.Getter
 		Store        store.Store
@@ -98,24 +98,24 @@ func TestJavascript_Mutate(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			j := &Javascript{
+			j := &JavascriptAdapter{
 				AssetGetter:  tt.fields.AssetGetter,
 				Store:        tt.fields.Store,
 				StoreTimeout: tt.fields.StoreTimeout,
 			}
 			got, err := j.Mutate(tt.args.ctx, tt.args.ref, tt.args.event)
 			if (err != nil) != tt.wantErr {
-				t.Errorf("Javascript.Mutate() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("JavascriptAdapter.Mutate() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
 			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("Javascript.Mutate() = %v, want %v", got, tt.want)
+				t.Errorf("JavascriptAdapter.Mutate() = %v, want %v", got, tt.want)
 			}
 		})
 	}
 }
 
-func TestJavascript_run(t *testing.T) {
+func TestJavascriptAdapter_run(t *testing.T) {
 	type fields struct {
 		AssetGetter  asset.Getter
 		Store        store.Store
@@ -265,18 +265,18 @@ func TestJavascript_run(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			j := &Javascript{
+			j := &JavascriptAdapter{
 				AssetGetter:  tt.fields.AssetGetter,
 				Store:        tt.fields.Store,
 				StoreTimeout: tt.fields.StoreTimeout,
 			}
 			got, err := j.run(tt.args.ctx, tt.args.mutator, tt.args.event, tt.args.assets)
 			if (err != nil) != tt.wantErr {
-				t.Errorf("Javascript.run() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("JavascriptAdapter.run() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
 			if err != nil && err.Error() != tt.wantErrMsg {
-				t.Errorf("Javascript.run() errorMsg = %v, wantErrMsg %v", err, tt.wantErrMsg)
+				t.Errorf("JavascriptAdapter.run() errorMsg = %v, wantErrMsg %v", err, tt.wantErrMsg)
 				return
 			}
 			if !tt.wantErr {

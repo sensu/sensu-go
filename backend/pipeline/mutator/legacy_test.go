@@ -16,16 +16,16 @@ import (
 	"github.com/stretchr/testify/mock"
 )
 
-func TestLegacy_Name(t *testing.T) {
-	o := &Legacy{}
-	want := "Legacy"
+func TestLegacyAdapter_Name(t *testing.T) {
+	o := &LegacyAdapter{}
+	want := "LegacyAdapter"
 
 	if got := o.Name(); want != got {
-		t.Errorf("Legacy.Name() = %v, want %v", got, want)
+		t.Errorf("LegacyAdapter.Name() = %v, want %v", got, want)
 	}
 }
 
-func TestLegacy_CanMutate(t *testing.T) {
+func TestLegacyAdapter_CanMutate(t *testing.T) {
 	type fields struct {
 		AssetGetter            asset.Getter
 		Executor               command.Executor
@@ -89,7 +89,7 @@ func TestLegacy_CanMutate(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			l := &Legacy{
+			l := &LegacyAdapter{
 				AssetGetter:            tt.fields.AssetGetter,
 				Executor:               tt.fields.Executor,
 				SecretsProviderManager: tt.fields.SecretsProviderManager,
@@ -97,13 +97,13 @@ func TestLegacy_CanMutate(t *testing.T) {
 				StoreTimeout:           tt.fields.StoreTimeout,
 			}
 			if got := l.CanMutate(tt.args.ctx, tt.args.ref); got != tt.want {
-				t.Errorf("Legacy.CanMutate() = %v, want %v", got, tt.want)
+				t.Errorf("LegacyAdapter.CanMutate() = %v, want %v", got, tt.want)
 			}
 		})
 	}
 }
 
-func TestLegacy_Mutate(t *testing.T) {
+func TestLegacyAdapter_Mutate(t *testing.T) {
 	type fields struct {
 		AssetGetter            asset.Getter
 		Executor               command.Executor
@@ -173,7 +173,7 @@ func TestLegacy_Mutate(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			l := &Legacy{
+			l := &LegacyAdapter{
 				AssetGetter:            tt.fields.AssetGetter,
 				Executor:               tt.fields.Executor,
 				SecretsProviderManager: tt.fields.SecretsProviderManager,
@@ -182,7 +182,7 @@ func TestLegacy_Mutate(t *testing.T) {
 			}
 			got, err := l.Mutate(tt.args.ctx, tt.args.ref, tt.args.event)
 			if (err != nil) != tt.wantErr {
-				t.Errorf("Legacy.Mutate() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("LegacyAdapter.Mutate() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
 			if tt.wantFn != nil {

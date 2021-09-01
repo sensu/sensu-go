@@ -30,21 +30,22 @@ var (
 	PipelineFilterFuncs map[string]interface{}
 )
 
-// Legacy is a filter that supports the legacy core.v2/EventFilter type.
-type Legacy struct {
+// LegacyAdapter is a filter adapter that supports the legacy
+// core.v2/EventFilter type.
+type LegacyAdapter struct {
 	AssetGetter  asset.Getter
 	Store        store.Store
 	StoreTimeout time.Duration
 }
 
-// Name returns the name of the pipeline filter.
-func (l *Legacy) Name() string {
-	return "Legacy"
+// Name returns the name of the filter adapter.
+func (l *LegacyAdapter) Name() string {
+	return "LegacyAdapter"
 }
 
-// CanFilter determines whether the Legacy filter can filter the resource being
+// CanFilter determines whether LegacyAdapter can filter the resource being
 // referenced.
-func (l *Legacy) CanFilter(ctx context.Context, ref *corev2.ResourceReference) bool {
+func (l *LegacyAdapter) CanFilter(ctx context.Context, ref *corev2.ResourceReference) bool {
 	if ref.APIVersion == "core/v2" && ref.Type == "EventFilter" {
 		for _, name := range builtInFilterNames {
 			if ref.Name == name {
@@ -59,7 +60,7 @@ func (l *Legacy) CanFilter(ctx context.Context, ref *corev2.ResourceReference) b
 // Filter filters a Sensu event, determining if it will continue through the
 // Sensu pipeline. It returns whether or not the event was filtered and if any
 // error was encountered.
-func (l *Legacy) Filter(ctx context.Context, ref *corev2.ResourceReference, event *corev2.Event) (bool, error) {
+func (l *LegacyAdapter) Filter(ctx context.Context, ref *corev2.ResourceReference, event *corev2.Event) (bool, error) {
 	// Prepare log entry
 	// TODO: add pipeline & pipeline workflow names to fields
 	fields := utillogging.EventFields(event, false)
