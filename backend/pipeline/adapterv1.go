@@ -146,7 +146,7 @@ func (a *AdapterV1) generateLegacyPipeline(ctx context.Context, event *corev2.Ev
 	}
 
 	pipeline := &corev2.Pipeline{
-		Metadata: &corev2.ObjectMeta{
+		ObjectMeta: corev2.ObjectMeta{
 			Name:      LegacyPipelineName,
 			Namespace: corev2.ContextNamespace(ctx),
 		},

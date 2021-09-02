@@ -7,15 +7,11 @@ import (
 
 // validate checks if a pipeline resource passes validation rules.
 func (p *Pipeline) Validate() error {
-	if p.Metadata == nil {
-		return errors.New("metadata must be set")
-	}
-
-	if err := ValidateName(p.Metadata.Name); err != nil {
+	if err := ValidateName(p.ObjectMeta.Name); err != nil {
 		return errors.New("name " + err.Error())
 	}
 
-	if p.Metadata.Namespace == "" {
+	if p.ObjectMeta.Namespace == "" {
 		return errors.New("namespace must be set")
 	}
 
