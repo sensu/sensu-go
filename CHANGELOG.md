@@ -8,6 +8,10 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
 
+### Fixed
+- Fixed a crash when running the backend on `darwin/arm64` when compressing a
+wrapped resource.
+
 ## [6.4.2] - 2021-08-31
 
 ### Added
@@ -15,7 +19,6 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 metrics to the `/metrics` endpoint.
 
 ## [6.4.1] - 2021-08-24
-## Unreleased
 
 ### Fixed
 - Agent events API now accepts metrics event
