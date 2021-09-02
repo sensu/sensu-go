@@ -74,24 +74,6 @@ func TestHandlerValidate(t *testing.T) {
 					Name:      "foo",
 					Namespace: "default",
 				},
-				Type: "grpc",
-			},
-		},
-		{
-			Handler: Handler{
-				ObjectMeta: ObjectMeta{
-					Name:      "foo",
-					Namespace: "default",
-				},
-				Type: "grpc",
-			},
-		},
-		{
-			Handler: Handler{
-				ObjectMeta: ObjectMeta{
-					Name:      "foo",
-					Namespace: "default",
-				},
 				Type: "set",
 			},
 		},

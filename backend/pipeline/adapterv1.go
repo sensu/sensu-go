@@ -95,6 +95,12 @@ func (a *AdapterV1) resolvePipelineReference(ctx context.Context, ref *corev2.Re
 // getPipelineFromStore fetches a core/v2.Pipeline reference from the store and
 // returns a core/v2.Pipeline.
 func (a *AdapterV1) getPipelineFromStore(ctx context.Context, ref *corev2.ResourceReference) (*corev2.Pipeline, error) {
+	fields := logrus.Fields{
+		"ref_api_version": ref.APIVersion,
+		"ref_type":        ref.Type,
+		"ref_name":        ref.Name,
+	}
+
 	tctx, cancel := context.WithTimeout(ctx, a.StoreTimeout)
 	pipeline, err := a.Store.GetPipelineByName(tctx, ref.Name)
 	cancel()

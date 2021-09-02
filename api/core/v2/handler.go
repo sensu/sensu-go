@@ -32,9 +32,6 @@ const (
 	// socket
 	HandlerUDPType = "udp"
 
-	// HandlerGRPCType is a special kind of handler that represents an extension
-	HandlerGRPCType = "grpc"
-
 	// KeepaliveHandlerName is the name of the handler that is executed when
 	// a keepalive timeout occurs.
 	KeepaliveHandlerName = "keepalive"
@@ -85,7 +82,7 @@ func (h *Handler) validateType() error {
 			return errors.New("missing command")
 		}
 		return nil
-	case "set", "grpc":
+	case "set":
 		return nil
 	case "tcp", "udp":
 		return h.Socket.Validate()

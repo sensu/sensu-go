@@ -177,7 +177,6 @@ func CoreSubrouter(router *mux.Router, cfg Config) *mux.Router {
 		routers.NewClusterRoleBindingsRouter(cfg.Store),
 		routers.NewClusterRouter(actions.NewClusterController(cfg.Cluster, cfg.Store)),
 		routers.NewEventFiltersRouter(cfg.Store),
-		routers.NewExtensionsRouter(cfg.Store),
 		routers.NewHandlersRouter(cfg.Store),
 		routers.NewHooksRouter(cfg.Store),
 		routers.NewMutatorsRouter(cfg.Store),

@@ -18,7 +18,6 @@ type (
 	Entity              = v2.Entity
 	Event               = v2.Event
 	EventFilter         = v2.EventFilter
-	Extension           = v2.Extension
 	Handler             = v2.Handler
 	HandlerSocket       = v2.HandlerSocket
 	HealthResponse      = v2.HealthResponse
@@ -122,9 +121,6 @@ const (
 	// socket
 	HandlerUDPType = v2.HandlerUDPType
 
-	// HandlerGRPCType is a special kind of handler that represents an extension
-	HandlerGRPCType = v2.HandlerGRPCType
-
 	// EventFilterActionAllow is an action to allow events to pass through to the pipeline
 	EventFilterActionAllow = v2.EventFilterActionAllow
 
@@ -206,7 +202,6 @@ var (
 	FixtureEvent              = v2.FixtureEvent
 	FixtureEventFilter        = v2.FixtureEventFilter
 	FixtureDenyEventFilter    = v2.FixtureDenyEventFilter
-	FixtureExtension          = v2.FixtureExtension
 	FixtureMutator            = v2.FixtureMutator
 	FixtureAsset              = v2.FixtureAsset
 	FixtureSubject            = v2.FixtureSubject
