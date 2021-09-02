@@ -268,7 +268,109 @@ func Test_evaluateEventFilter(t *testing.T) {
 		args args
 		want bool
 	}{
-		// TODO: Add test cases.
+		{
+			name: "returns false when an event is within a time window with action allow",
+			args: args{
+				event: corev2.FixtureEvent("entity1", "check1"),
+				filter: func() *corev2.EventFilter {
+					now := time.Now().UTC()
+					filter := &corev2.EventFilter{
+						ObjectMeta: corev2.ObjectMeta{
+							Name: "in_time_window_allow",
+						},
+						Action: corev2.EventFilterActionAllow,
+						When: &corev2.TimeWindowWhen{
+							Days: corev2.TimeWindowDays{
+								All: []*corev2.TimeWindowTimeRange{{
+									Begin: now.Add(-time.Minute * time.Duration(1)).Format("03:04PM"),
+									End:   now.Add(time.Minute * time.Duration(1)).Format("03:04PM"),
+								}},
+							},
+						},
+					}
+					return filter
+				}(),
+			},
+			want: false,
+		},
+		{
+			name: "returns true when an event is not within a time window with action allow",
+			args: args{
+				event: corev2.FixtureEvent("entity1", "check1"),
+				filter: func() *corev2.EventFilter {
+					now := time.Now().UTC()
+					filter := &corev2.EventFilter{
+						ObjectMeta: corev2.ObjectMeta{
+							Name: "outside_time_window_allow",
+						},
+						Action: corev2.EventFilterActionAllow,
+						When: &corev2.TimeWindowWhen{
+							Days: corev2.TimeWindowDays{
+								All: []*corev2.TimeWindowTimeRange{{
+									Begin: now.Add(time.Minute * time.Duration(10)).Format("03:04PM"),
+									End:   now.Add(time.Minute * time.Duration(20)).Format("03:04PM"),
+								}},
+							},
+						},
+					}
+					return filter
+				}(),
+			},
+			want: true,
+		},
+		{
+			name: "returns true when an event is within a time window with action deny",
+			args: args{
+				event: func() *corev2.Event {
+					event := corev2.FixtureEvent("entity1", "check1")
+					return event
+				}(),
+				filter: func() *corev2.EventFilter {
+					now := time.Now().UTC()
+					filter := &corev2.EventFilter{
+						ObjectMeta: corev2.ObjectMeta{
+							Name: "in_time_window_deny",
+						},
+						Action: corev2.EventFilterActionDeny,
+						When: &corev2.TimeWindowWhen{
+							Days: corev2.TimeWindowDays{
+								All: []*corev2.TimeWindowTimeRange{{
+									Begin: now.Add(-time.Minute * time.Duration(1)).Format("03:04PM"),
+									End:   now.Add(time.Minute * time.Duration(1)).Format("03:04PM"),
+								}},
+							},
+						},
+					}
+					return filter
+				}(),
+			},
+			want: true,
+		},
+		{
+			name: "returns false when an event is not within a time window with action deny",
+			args: args{
+				event: corev2.FixtureEvent("entity1", "check1"),
+				filter: func() *corev2.EventFilter {
+					now := time.Now().UTC()
+					filter := &corev2.EventFilter{
+						ObjectMeta: corev2.ObjectMeta{
+							Name: "outside_time_window_deny",
+						},
+						Action: corev2.EventFilterActionDeny,
+						When: &corev2.TimeWindowWhen{
+							Days: corev2.TimeWindowDays{
+								All: []*corev2.TimeWindowTimeRange{{
+									Begin: now.Add(time.Minute * time.Duration(10)).Format("03:04PM"),
+									End:   now.Add(time.Minute * time.Duration(20)).Format("03:04PM"),
+								}},
+							},
+						},
+					}
+					return filter
+				}(),
+			},
+			want: false,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
