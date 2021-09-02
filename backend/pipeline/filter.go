@@ -14,11 +14,10 @@ type FilterAdapter interface {
 }
 
 func (a *AdapterV1) processFilters(ctx context.Context, refs []*corev2.ResourceReference, event *corev2.Event) (bool, error) {
-	// for each filter in the workflow, loop through each pipeline filter
-	// until one is found that supports filtering the event using the referenced
-	// resource.
+	// for each filter reference in the workflow, attempt to find a compatible
+	// filter adapter and use it to filter the event.
 	for _, ref := range refs {
-		filter, err := a.getFilterForResource(ctx, ref)
+		filter, err := a.getFilterAdapterForResource(ctx, ref)
 		if err != nil {
 			return false, err
 		}
@@ -35,7 +34,7 @@ func (a *AdapterV1) processFilters(ctx context.Context, refs []*corev2.ResourceR
 	return false, nil
 }
 
-func (a *AdapterV1) getFilterForResource(ctx context.Context, ref *corev2.ResourceReference) (FilterAdapter, error) {
+func (a *AdapterV1) getFilterAdapterForResource(ctx context.Context, ref *corev2.ResourceReference) (FilterAdapter, error) {
 	for _, filterAdapter := range a.FilterAdapters {
 		if filterAdapter.CanFilter(ctx, ref) {
 			return filterAdapter, nil
