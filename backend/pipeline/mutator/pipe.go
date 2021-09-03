@@ -36,7 +36,7 @@ func (p *PipeAdapter) Name() string {
 // CanMutate determines whether PipeAdapter can mutate the resource being
 // referenced.
 // TODO: update this function if/when we implement a proper PipeMutator type
-func (p *PipeAdapter) CanMutate(ctx context.Context, ref *corev2.ResourceReference) bool {
+func (p *PipeAdapter) CanMutate(ref *corev2.ResourceReference) bool {
 	return false
 }
 

@@ -18,7 +18,7 @@ func (j *JSONAdapter) Name() string {
 
 // CanMutate determines whether JSONAdapter can mutate the resource being
 // referenced.
-func (j *JSONAdapter) CanMutate(ctx context.Context, ref *corev2.ResourceReference) bool {
+func (j *JSONAdapter) CanMutate(ref *corev2.ResourceReference) bool {
 	if ref.APIVersion == "core/v2" && ref.Type == "Mutator" && ref.Name == "json" {
 		return true
 	}

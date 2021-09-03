@@ -17,7 +17,7 @@ func (i *IsIncidentAdapter) Name() string {
 
 // CanFilter determines whether IsIncidentAdapter can filter the resource being
 // referenced.
-func (i *IsIncidentAdapter) CanFilter(ctx context.Context, ref *corev2.ResourceReference) bool {
+func (i *IsIncidentAdapter) CanFilter(ref *corev2.ResourceReference) bool {
 	if ref.APIVersion == "core/v2" && ref.Type == "EventFilter" && ref.Name == "is_incident" {
 		return true
 	}

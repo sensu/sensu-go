@@ -19,15 +19,8 @@ func TestPipelined(t *testing.T) {
 	require.NoError(t, err)
 	require.NoError(t, p.Start())
 
-	entity := corev2.FixtureEntity("entity1")
-	check := corev2.FixtureCheck("check1")
-	metrics := corev2.FixtureMetrics()
-
-	event := &corev2.Event{
-		Entity:  entity,
-		Check:   check,
-		Metrics: metrics,
-	}
+	event := corev2.FixtureEvent("entity1", "check1")
+	event.Metrics = corev2.FixtureMetrics()
 
 	assert.NoError(t, bus.Publish(messaging.TopicEvent, event))
 

@@ -12,8 +12,6 @@ import (
 	"github.com/sensu/sensu-go/backend/messaging"
 	"github.com/sensu/sensu-go/backend/pipeline"
 	"github.com/sensu/sensu-go/backend/store"
-	utillogging "github.com/sensu/sensu-go/util/logging"
-	"github.com/sirupsen/logrus"
 )
 
 var defaultStoreTimeout = time.Minute
@@ -52,6 +50,7 @@ type Option func(*Pipelined) error
 // slice of Pipeline resource references.
 type PipelineGetter interface {
 	GetPipelines() []*corev2.ResourceReference
+	LogFields(bool) map[string]interface{}
 }
 
 // New creates a new Pipelined with supplied Options applied.
@@ -171,13 +170,12 @@ func (p *Pipelined) handleMessage(ctx context.Context, msg interface{}) error {
 		panic("message received was not a PipelineGetter")
 	}
 
+	fields := getter.LogFields(false)
 	pipelineRefs := getter.GetPipelines()
 
 	// Add a legacy pipeline "reference" if msg is a
 	// corev2.Event & has handlers.
 	if event, ok := msg.(*corev2.Event); ok {
-		// Prepare log entry
-		fields := utillogging.EventFields(event, false)
 		if event.HasHandlers() {
 			legacyPipelineRef := &corev2.ResourceReference{
 				APIVersion: "core/v2",
@@ -191,7 +189,7 @@ func (p *Pipelined) handleMessage(ctx context.Context, msg interface{}) error {
 	}
 
 	if len(pipelineRefs) == 0 {
-		//logger.WithFields(fields).Info("no pipelines defined")
+		logger.WithFields(fields).Info("no pipelines defined in resource")
 		return nil
 	}
 
@@ -200,17 +198,17 @@ func (p *Pipelined) handleMessage(ctx context.Context, msg interface{}) error {
 	for _, ref := range pipelineRefs {
 		adapterFound := false
 
-		fields := logrus.Fields{
-			"pipeline_reference": ref.ResourceID(),
-		}
+		fields["pipeline_reference"] = ref.ResourceID()
 
 		for _, adapter := range p.adapters {
-			if adapter.CanRun(ctx, ref) {
+			fields["pipeline_adapter"] = adapter.Name()
+
+			if adapter.CanRun(ref) {
 				if err := adapter.Run(ctx, ref, msg); err != nil {
 					if _, ok := err.(*store.ErrInternal); ok {
 						return err
 					}
-					logger.WithFields(fields).Error(err)
+					logger.WithFields(fields).Errorf("%s, skipping execution of pipeline", err.Error())
 				}
 				adapterFound = true
 			}

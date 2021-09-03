@@ -18,7 +18,7 @@ func (i *HasMetricsAdapter) Name() string {
 
 // CanFilter determines whether HasMetricsAdapter can filter the resource being
 // referenced.
-func (i *HasMetricsAdapter) CanFilter(ctx context.Context, ref *corev2.ResourceReference) bool {
+func (i *HasMetricsAdapter) CanFilter(ref *corev2.ResourceReference) bool {
 	if ref.APIVersion == "core/v2" && ref.Type == "EventFilter" && ref.Name == "has_metrics" {
 		return true
 	}

@@ -31,7 +31,6 @@ func TestLegacyAdapter_CanFilter(t *testing.T) {
 		StoreTimeout time.Duration
 	}
 	type args struct {
-		ctx context.Context
 		ref *corev2.ResourceReference
 	}
 	tests := []struct {
@@ -102,7 +101,7 @@ func TestLegacyAdapter_CanFilter(t *testing.T) {
 				Store:        tt.fields.Store,
 				StoreTimeout: tt.fields.StoreTimeout,
 			}
-			if got := l.CanFilter(tt.args.ctx, tt.args.ref); got != tt.want {
+			if got := l.CanFilter(tt.args.ref); got != tt.want {
 				t.Errorf("LegacyAdapter.CanFilter() = %v, want %v", got, tt.want)
 			}
 		})

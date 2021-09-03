@@ -540,6 +540,48 @@ func (e *Event) GetUUID() uuid.UUID {
 	return id
 }
 
+// LogFields populates a map with fields containing relevant information about
+// an event for logging
+func (e *Event) LogFields(debug bool) map[string]interface{} {
+	// Ensure the entity is present
+	if e.Entity == nil {
+		return map[string]interface{}{}
+	}
+
+	fields := map[string]interface{}{
+		"event_id":         e.GetUUID().String(),
+		"entity_name":      e.Entity.Name,
+		"entity_namespace": e.Entity.Namespace,
+	}
+
+	if e.HasCheck() {
+		fields["check_name"] = e.Check.Name
+		fields["check_namespace"] = e.Check.Namespace
+	}
+
+	if debug {
+		fields["timestamp"] = e.Timestamp
+		if e.HasMetrics() {
+			fields["metrics"] = e.Metrics
+		}
+		if e.HasCheck() {
+			fields["hooks"] = e.Check.Hooks
+			fields["silenced"] = e.Check.Silenced
+		}
+	} else {
+		if e.HasMetrics() {
+			count := len(e.Metrics.Points)
+			fields["metric_count"] = count
+			if count > 0 {
+				fields["first_metric_name"] = e.Metrics.Points[0].Name
+				fields["first_metric_value"] = e.Metrics.Points[0].Value
+			}
+		}
+	}
+
+	return fields
+}
+
 func (e Event) MarshalJSON() ([]byte, error) {
 	type clone Event
 	b, err := jsoniter.Marshal((*clone)(&e))

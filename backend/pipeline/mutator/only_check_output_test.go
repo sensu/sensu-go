@@ -19,7 +19,6 @@ func TestOnlyCheckOutputAdapter_Name(t *testing.T) {
 
 func TestOnlyCheckOutputAdapter_CanMutate(t *testing.T) {
 	type args struct {
-		ctx context.Context
 		ref *corev2.ResourceReference
 	}
 	tests := []struct {
@@ -64,7 +63,7 @@ func TestOnlyCheckOutputAdapter_CanMutate(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			o := &OnlyCheckOutputAdapter{}
-			if got := o.CanMutate(tt.args.ctx, tt.args.ref); got != tt.want {
+			if got := o.CanMutate(tt.args.ref); got != tt.want {
 				t.Errorf("OnlyCheckOutputAdapter.CanMutate() = %v, want %v", got, tt.want)
 			}
 		})

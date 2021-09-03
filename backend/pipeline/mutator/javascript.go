@@ -36,7 +36,7 @@ func (j *JavascriptAdapter) Name() string {
 // CanMutate determines whether JavascriptAdapter can mutate the resource
 // being referenced.
 // TODO: update this function if/when we implement a proper JavascriptMutator type
-func (j *JavascriptAdapter) CanMutate(ctx context.Context, ref *corev2.ResourceReference) bool {
+func (j *JavascriptAdapter) CanMutate(ref *corev2.ResourceReference) bool {
 	return false
 }
 

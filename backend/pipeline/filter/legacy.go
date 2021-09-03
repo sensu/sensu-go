@@ -12,7 +12,6 @@ import (
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/js"
 	"github.com/sensu/sensu-go/types/dynamic"
-	utillogging "github.com/sensu/sensu-go/util/logging"
 )
 
 const pipelineRoleName = "system:pipeline"
@@ -45,7 +44,7 @@ func (l *LegacyAdapter) Name() string {
 
 // CanFilter determines whether LegacyAdapter can filter the resource being
 // referenced.
-func (l *LegacyAdapter) CanFilter(ctx context.Context, ref *corev2.ResourceReference) bool {
+func (l *LegacyAdapter) CanFilter(ref *corev2.ResourceReference) bool {
 	if ref.APIVersion == "core/v2" && ref.Type == "EventFilter" {
 		for _, name := range builtInFilterNames {
 			if ref.Name == name {
@@ -63,7 +62,7 @@ func (l *LegacyAdapter) CanFilter(ctx context.Context, ref *corev2.ResourceRefer
 func (l *LegacyAdapter) Filter(ctx context.Context, ref *corev2.ResourceReference, event *corev2.Event) (bool, error) {
 	// Prepare log entry
 	// TODO: add pipeline & pipeline workflow names to fields
-	fields := utillogging.EventFields(event, false)
+	fields := event.LogFields(false)
 
 	// Retrieve the filter from the store with its name
 	ctx = corev2.SetContextFromResource(context.Background(), event.Entity)
@@ -108,7 +107,7 @@ func evaluateEventFilter(ctx context.Context, event *corev2.Event, filter *corev
 	// Redact the entity to avoid leaking sensitive information
 	event.Entity = event.Entity.GetRedactedEntity()
 
-	fields := utillogging.EventFields(event, false)
+	fields := event.LogFields(false)
 	fields["filter"] = filter.Name
 	fields["assets"] = filter.RuntimeAssets
 

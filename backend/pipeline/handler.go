@@ -9,7 +9,7 @@ import (
 
 type HandlerAdapter interface {
 	Name() string
-	CanHandle(context.Context, *corev2.ResourceReference) bool
+	CanHandle(*corev2.ResourceReference) bool
 	Handle(context.Context, *corev2.ResourceReference, *corev2.Event, []byte) error
 }
 
@@ -24,7 +24,7 @@ func (a *AdapterV1) processHandler(ctx context.Context, ref *corev2.ResourceRefe
 
 func (a *AdapterV1) getHandlerForResource(ctx context.Context, ref *corev2.ResourceReference) (HandlerAdapter, error) {
 	for _, handlerAdapter := range a.HandlerAdapters {
-		if handlerAdapter.CanHandle(ctx, ref) {
+		if handlerAdapter.CanHandle(ref) {
 			return handlerAdapter, nil
 		}
 	}

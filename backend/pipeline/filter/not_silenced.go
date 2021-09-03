@@ -18,7 +18,7 @@ func (n *NotSilencedAdapter) Name() string {
 
 // CanFilter determines whether NotSilencedAdapter can filter the resource being
 // referenced.
-func (n *NotSilencedAdapter) CanFilter(ctx context.Context, ref *corev2.ResourceReference) bool {
+func (n *NotSilencedAdapter) CanFilter(ref *corev2.ResourceReference) bool {
 	if ref.APIVersion == "core/v2" && ref.Type == "EventFilter" && ref.Name == "not_silenced" {
 		return true
 	}

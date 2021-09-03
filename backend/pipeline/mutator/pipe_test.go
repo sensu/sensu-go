@@ -50,7 +50,6 @@ func TestPipeAdapter_CanMutate(t *testing.T) {
 		StoreTimeout           time.Duration
 	}
 	type args struct {
-		ctx context.Context
 		ref *corev2.ResourceReference
 	}
 	tests := []struct {
@@ -73,7 +72,7 @@ func TestPipeAdapter_CanMutate(t *testing.T) {
 				Store:                  tt.fields.Store,
 				StoreTimeout:           tt.fields.StoreTimeout,
 			}
-			if got := p.CanMutate(tt.args.ctx, tt.args.ref); got != tt.want {
+			if got := p.CanMutate(tt.args.ref); got != tt.want {
 				t.Errorf("PipeAdapter.CanMutate() = %v, want %v", got, tt.want)
 			}
 		})

@@ -10,6 +10,6 @@ import (
 // run references to pipelines.
 type Adapter interface {
 	Name() string
-	CanRun(context.Context, *corev2.ResourceReference) bool
+	CanRun(*corev2.ResourceReference) bool
 	Run(context.Context, *corev2.ResourceReference, interface{}) error
 }

@@ -18,7 +18,6 @@ func TestIsIncidentAdapter_Name(t *testing.T) {
 
 func TestIsIncidentAdapter_CanFilter(t *testing.T) {
 	type args struct {
-		ctx context.Context
 		ref *corev2.ResourceReference
 	}
 	tests := []struct {
@@ -63,7 +62,7 @@ func TestIsIncidentAdapter_CanFilter(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			i := &IsIncidentAdapter{}
-			if got := i.CanFilter(tt.args.ctx, tt.args.ref); got != tt.want {
+			if got := i.CanFilter(tt.args.ref); got != tt.want {
 				t.Errorf("IsIncidentAdapter.CanFilter() = %v, want %v", got, tt.want)
 			}
 		})

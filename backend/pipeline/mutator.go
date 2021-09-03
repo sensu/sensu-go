@@ -9,7 +9,7 @@ import (
 
 type MutatorAdapter interface {
 	Name() string
-	CanMutate(context.Context, *corev2.ResourceReference) bool
+	CanMutate(*corev2.ResourceReference) bool
 	Mutate(context.Context, *corev2.ResourceReference, *corev2.Event) ([]byte, error)
 }
 
@@ -24,7 +24,7 @@ func (a *AdapterV1) processMutator(ctx context.Context, ref *corev2.ResourceRefe
 
 func (a *AdapterV1) getMutatorForResource(ctx context.Context, ref *corev2.ResourceReference) (MutatorAdapter, error) {
 	for _, mutatorAdapter := range a.MutatorAdapters {
-		if mutatorAdapter.CanMutate(ctx, ref) {
+		if mutatorAdapter.CanMutate(ref) {
 			return mutatorAdapter, nil
 		}
 	}

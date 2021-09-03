@@ -20,7 +20,6 @@ func TestJSONAdapter_Name(t *testing.T) {
 
 func TestJSONAdapter_CanMutate(t *testing.T) {
 	type args struct {
-		ctx context.Context
 		ref *corev2.ResourceReference
 	}
 	tests := []struct {
@@ -65,7 +64,7 @@ func TestJSONAdapter_CanMutate(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			j := &JSONAdapter{}
-			if got := j.CanMutate(tt.args.ctx, tt.args.ref); got != tt.want {
+			if got := j.CanMutate(tt.args.ref); got != tt.want {
 				t.Errorf("JSONAdapter.CanMutate() = %v, want %v", got, tt.want)
 			}
 		})

@@ -19,7 +19,7 @@ func (o *OnlyCheckOutputAdapter) Name() string {
 
 // CanMutate determines whether LegacyOnlyCheckOutputAdapter can mutate the
 // resource being referenced.
-func (o *OnlyCheckOutputAdapter) CanMutate(ctx context.Context, ref *corev2.ResourceReference) bool {
+func (o *OnlyCheckOutputAdapter) CanMutate(ref *corev2.ResourceReference) bool {
 	if ref.APIVersion == "core/v2" && ref.Type == "Mutator" && ref.Name == "only_check_output" {
 		return true
 	}

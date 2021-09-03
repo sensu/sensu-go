@@ -18,7 +18,6 @@ func TestHasMetricsAdapter_Name(t *testing.T) {
 
 func TestHasMetricsAdapter_CanFilter(t *testing.T) {
 	type args struct {
-		ctx context.Context
 		ref *corev2.ResourceReference
 	}
 	tests := []struct {
@@ -63,7 +62,7 @@ func TestHasMetricsAdapter_CanFilter(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			i := &HasMetricsAdapter{}
-			if got := i.CanFilter(tt.args.ctx, tt.args.ref); got != tt.want {
+			if got := i.CanFilter(tt.args.ref); got != tt.want {
 				t.Errorf("HasMetricsAdapter.CanFilter() = %v, want %v", got, tt.want)
 			}
 		})

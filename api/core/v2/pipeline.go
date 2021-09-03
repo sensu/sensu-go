@@ -23,3 +23,13 @@ func (p *Pipeline) Validate() error {
 
 	return nil
 }
+
+// FixturePipelineReference returns a testing fixture for a ResourceReference
+// object referencing a corev2.Pipeline.
+func FixturePipelineReference(name string) *ResourceReference {
+	return &ResourceReference{
+		APIVersion: "core/v2",
+		Type:       "Pipeline",
+		Name:       name,
+	}
+}

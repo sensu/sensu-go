@@ -45,7 +45,6 @@ func TestJavascriptAdapter_CanMutate(t *testing.T) {
 		StoreTimeout time.Duration
 	}
 	type args struct {
-		ctx context.Context
 		ref *corev2.ResourceReference
 	}
 	tests := []struct {
@@ -66,7 +65,7 @@ func TestJavascriptAdapter_CanMutate(t *testing.T) {
 				Store:        tt.fields.Store,
 				StoreTimeout: tt.fields.StoreTimeout,
 			}
-			if got := j.CanMutate(tt.args.ctx, tt.args.ref); got != tt.want {
+			if got := j.CanMutate(tt.args.ref); got != tt.want {
 				t.Errorf("JavascriptAdapter.CanMutate() = %v, want %v", got, tt.want)
 			}
 		})

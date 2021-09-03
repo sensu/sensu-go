@@ -8,7 +8,6 @@ import (
 
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/store"
-	utillogging "github.com/sensu/sensu-go/util/logging"
 	"github.com/sirupsen/logrus"
 )
 
@@ -29,10 +28,10 @@ type AdapterV1 struct {
 }
 
 func (a *AdapterV1) Name() string {
-	return "V1Adapter"
+	return "AdapterV1"
 }
 
-func (a *AdapterV1) CanRun(ctx context.Context, ref *corev2.ResourceReference) bool {
+func (a *AdapterV1) CanRun(ref *corev2.ResourceReference) bool {
 	if ref.APIVersion == "core/v2" && ref.Type == "Pipeline" {
 		return true
 	}
@@ -45,6 +44,17 @@ func (a *AdapterV1) Run(ctx context.Context, ref *corev2.ResourceReference, reso
 		return fmt.Errorf("resource is not a corev2.Event")
 	}
 
+	// Prepare log entry
+	fields := event.LogFields(false)
+	fields["adapter_name"] = a.Name()
+	fields["pipeline"] = ref.LogFields(false)
+
+	// Prepare debug log entry
+	debugFields := event.LogFields(true)
+	debugFields["adapter_name"] = fields["adapter_name"]
+	debugFields["pipeline"] = fields["pipeline"]
+	logger.WithFields(debugFields).Debugf("adapter received event")
+
 	ctx = context.WithValue(ctx, corev2.NamespaceKey, event.Entity.Namespace)
 
 	pipeline, err := a.resolvePipelineReference(ctx, ref, event)
@@ -53,11 +63,13 @@ func (a *AdapterV1) Run(ctx context.Context, ref *corev2.ResourceReference, reso
 	}
 
 	if len(pipeline.Workflows) < 1 {
-		logger.Info("pipeline has no workflows, skipping execution")
-		return nil
+		return errors.New("pipeline has no workflows")
 	}
 
 	for _, workflow := range pipeline.Workflows {
+		fields["pipeline_workflow"] = workflow.GetName()
+		debugFields["pipeline_workflow"] = workflow.GetName()
+
 		// Process the event through the workflow filters
 		filtered, err := a.processFilters(ctx, workflow.Filters, event)
 		if err != nil {
@@ -65,6 +77,15 @@ func (a *AdapterV1) Run(ctx context.Context, ref *corev2.ResourceReference, reso
 		}
 		if filtered {
 			return nil
+		}
+
+		// If no workflow mutator is set, use the JSON mutator
+		if workflow.Mutator == nil {
+			workflow.Mutator = &corev2.ResourceReference{
+				APIVersion: "core/v2",
+				Type:       "Mutator",
+				Name:       "json",
+			}
 		}
 
 		// Process the event through the workflow mutator
@@ -76,10 +97,6 @@ func (a *AdapterV1) Run(ctx context.Context, ref *corev2.ResourceReference, reso
 		// Process the event through the workflow handler
 		return a.processHandler(ctx, workflow.Handler, event, mutatedData)
 	}
-
-	// Prepare debug log entry
-	debugFields := utillogging.EventFields(event, true)
-	logger.WithFields(debugFields).Debug("received event")
 
 	return nil
 }
@@ -95,31 +112,15 @@ func (a *AdapterV1) resolvePipelineReference(ctx context.Context, ref *corev2.Re
 // getPipelineFromStore fetches a core/v2.Pipeline reference from the store and
 // returns a core/v2.Pipeline.
 func (a *AdapterV1) getPipelineFromStore(ctx context.Context, ref *corev2.ResourceReference) (*corev2.Pipeline, error) {
-	fields := logrus.Fields{
-		"ref_api_version": ref.APIVersion,
-		"ref_type":        ref.Type,
-		"ref_name":        ref.Name,
-	}
-
 	tctx, cancel := context.WithTimeout(ctx, a.StoreTimeout)
 	pipeline, err := a.Store.GetPipelineByName(tctx, ref.Name)
 	cancel()
 
 	if pipeline == nil {
 		if err != nil {
-			logger.
-				WithFields(fields).
-				WithError(err).
-				Error("failed to retrieve a pipeline")
-			if _, ok := err.(*store.ErrInternal); ok {
-				// Fatal error
-				return nil, err
-			}
-			return nil, nil
+			return nil, err
 		}
-
-		logger.WithFields(fields).Info("pipeline does not exist, will be ignored")
-		return nil, nil
+		return nil, errors.New("pipeline does not exist")
 	}
 
 	return pipeline, nil

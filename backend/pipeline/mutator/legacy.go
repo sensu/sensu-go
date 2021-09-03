@@ -41,7 +41,7 @@ func (l *LegacyAdapter) Name() string {
 
 // CanMutate determines whether LegacyAdapter can mutate the resource being
 // referenced.
-func (l *LegacyAdapter) CanMutate(ctx context.Context, ref *corev2.ResourceReference) bool {
+func (l *LegacyAdapter) CanMutate(ref *corev2.ResourceReference) bool {
 	if ref.APIVersion == "core/v2" && ref.Type == "Mutator" {
 		for _, name := range builtInMutatorNames {
 			if ref.Name == name {

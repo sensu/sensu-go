@@ -42,7 +42,7 @@ func (l *LegacyAdapter) Name() string {
 
 // CanHandle determines whether LegacyAdapter can handle the resource being
 // referenced.
-func (l *LegacyAdapter) CanHandle(ctx context.Context, ref *corev2.ResourceReference) bool {
+func (l *LegacyAdapter) CanHandle(ref *corev2.ResourceReference) bool {
 	if ref.APIVersion == "core/v2" && ref.Type == "Handler" {
 		return true
 	}

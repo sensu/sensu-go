@@ -18,7 +18,6 @@ func TestNotSilencedAdapter_Name(t *testing.T) {
 
 func TestNotSilencedAdapter_CanFilter(t *testing.T) {
 	type args struct {
-		ctx context.Context
 		ref *corev2.ResourceReference
 	}
 	tests := []struct {
@@ -63,7 +62,7 @@ func TestNotSilencedAdapter_CanFilter(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			i := &NotSilencedAdapter{}
-			if got := i.CanFilter(tt.args.ctx, tt.args.ref); got != tt.want {
+			if got := i.CanFilter(tt.args.ref); got != tt.want {
 				t.Errorf("NotSilencedAdapter.CanFilter() = %v, want %v", got, tt.want)
 			}
 		})
