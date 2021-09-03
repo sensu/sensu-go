@@ -2,6 +2,7 @@ package pipeline
 
 import (
 	"context"
+	"errors"
 	"reflect"
 	"testing"
 	"time"
@@ -507,7 +508,37 @@ func TestAdapterV1_generateLegacyPipeline(t *testing.T) {
 		want    *corev2.Pipeline
 		wantErr bool
 	}{
-		// TODO: Add test cases.
+		{
+			name: "a legacy pipeline can be generated from an event with check handlers",
+			args: args{
+				ctx: context.Background(),
+				event: func() *corev2.Event {
+					event := corev2.FixtureEvent("entity1", "check1")
+					event.Check.Handlers = []string{"handler1"}
+					return event
+				}(),
+			},
+			fields: fields{
+				Store: func() store.Store {
+					handler := corev2.FixtureHandler("handler1")
+					stor := &mockstore.MockStore{}
+					stor.On("GetHandlerByName", mock.Anything, handler.GetName()).
+						Return(handler, nil)
+					return stor
+				}(),
+			},
+			want: &corev2.Pipeline{
+				ObjectMeta: corev2.NewObjectMeta("legacy-pipeline", "default"),
+				Workflows: []*corev2.PipelineWorkflow{{
+					Name: "legacy-pipeline-workflow-handler1",
+					Handler: &corev2.ResourceReference{
+						APIVersion: "core/v2",
+						Type:       "Handler",
+						Name:       "handler1",
+					},
+				}},
+			},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -601,7 +632,7 @@ func TestAdapterV1_expandHandlers(t *testing.T) {
 			},
 		},
 		{
-			name: "returns an error when the store produces an error",
+			name: "returns an error when an internal store error occurs",
 			args: args{
 				ctx:      context.Background(),
 				handlers: []string{"pipeHandler"},
@@ -616,6 +647,22 @@ func TestAdapterV1_expandHandlers(t *testing.T) {
 			},
 			wantErr:    true,
 			wantErrMsg: "internal error: etcd timeout",
+		},
+		{
+			name: "returns handlers when a non-internal store error occurs",
+			args: args{
+				ctx:      context.Background(),
+				handlers: []string{"pipeHandler"},
+			},
+			fields: fields{
+				Store: func() store.Store {
+					stor := &mockstore.MockStore{}
+					stor.On("GetHandlerByName", mock.Anything, "pipeHandler").
+						Return(nilHandler, errors.New("error"))
+					return stor
+				}(),
+			},
+			want: map[string]*corev2.Handler{},
 		},
 		{
 			name: "supports & expands set handlers",

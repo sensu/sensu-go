@@ -49,19 +49,6 @@ import (
 // 	m.AssertCalled(t, "HandleEvent", event, mock.Anything)
 // }
 
-// func TestPipelineExpandHandlers(t *testing.T) {
-// 	type storeFunc func(*mockstore.MockStore)
-
-// 	var nilHandler *corev2.Handler
-// 	pipeHandler := corev2.FixtureHandler("pipeHandler")
-// 	setHandler := &corev2.Handler{
-// 		ObjectMeta: corev2.NewObjectMeta("setHandler", "default"),
-// 		Type:       corev2.HandlerSetType,
-// 		Handlers:   []string{"pipeHandler"},
-// 	}
-// 	nestedHandler :=
-//
-
 func TestAdapterV1_processHandler(t *testing.T) {
 	type fields struct {
 		Store           store.Store
