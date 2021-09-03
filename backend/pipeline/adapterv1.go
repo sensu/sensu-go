@@ -214,6 +214,8 @@ func (a *AdapterV1) expandHandlers(ctx context.Context, handlers []string, level
 				if _, ok := err.(*store.ErrInternal); ok {
 					return nil, err
 				}
+				// TODO(jk): do we intend to continue here despite receiving
+				// an error?
 			} else {
 				for name, expandedHandler := range setHandlers {
 					if _, ok := expandedHandlers[name]; !ok {

@@ -531,9 +531,37 @@ func TestAdapterV1_generateLegacyPipeline(t *testing.T) {
 }
 
 func TestAdapterV1_expandHandlers(t *testing.T) {
-	pipeHandler := func() *corev2.Handler {
-		return corev2.FixtureHandler("pipeHandler")
-	}
+	var (
+		nilHandler *corev2.Handler
+
+		pipeHandler = func() *corev2.Handler {
+			return corev2.FixtureHandler("pipeHandler")
+		}
+
+		setHandler = func() *corev2.Handler {
+			return &corev2.Handler{
+				ObjectMeta: corev2.NewObjectMeta("setHandler", "default"),
+				Type:       corev2.HandlerSetType,
+				Handlers:   []string{"pipeHandler"},
+			}
+		}
+
+		nestedHandler = func() *corev2.Handler {
+			return &corev2.Handler{
+				ObjectMeta: corev2.NewObjectMeta("nestedHandler", "default"),
+				Type:       corev2.HandlerSetType,
+				Handlers:   []string{"setHandler"},
+			}
+		}
+
+		recursiveLoopHandler = func() *corev2.Handler {
+			return &corev2.Handler{
+				ObjectMeta: corev2.NewObjectMeta("recursiveLoopHandler", "default"),
+				Type:       corev2.HandlerSetType,
+				Handlers:   []string{"recursiveLoopHandler"},
+			}
+		}
+	)
 	type fields struct {
 		Store           store.Store
 		StoreTimeout    time.Duration
@@ -547,14 +575,15 @@ func TestAdapterV1_expandHandlers(t *testing.T) {
 		level    int
 	}
 	tests := []struct {
-		name    string
-		fields  fields
-		args    args
-		want    HandlerMap
-		wantErr bool
+		name       string
+		fields     fields
+		args       args
+		want       HandlerMap
+		wantErr    bool
+		wantErrMsg string
 	}{
 		{
-			name: "pipe handler",
+			name: "supports pipe handlers",
 			args: args{
 				ctx:      context.Background(),
 				handlers: []string{"pipeHandler"},
@@ -562,6 +591,80 @@ func TestAdapterV1_expandHandlers(t *testing.T) {
 			fields: fields{
 				Store: func() store.Store {
 					stor := &mockstore.MockStore{}
+					stor.On("GetHandlerByName", mock.Anything, "pipeHandler").
+						Return(pipeHandler(), nil)
+					return stor
+				}(),
+			},
+			want: map[string]*corev2.Handler{
+				"pipeHandler": pipeHandler(),
+			},
+		},
+		{
+			name: "returns an error when the store produces an error",
+			args: args{
+				ctx:      context.Background(),
+				handlers: []string{"pipeHandler"},
+			},
+			fields: fields{
+				Store: func() store.Store {
+					stor := &mockstore.MockStore{}
+					stor.On("GetHandlerByName", mock.Anything, "pipeHandler").
+						Return(nilHandler, &store.ErrInternal{Message: "etcd timeout"})
+					return stor
+				}(),
+			},
+			wantErr:    true,
+			wantErrMsg: "internal error: etcd timeout",
+		},
+		{
+			name: "supports & expands set handlers",
+			args: args{
+				ctx:      context.Background(),
+				handlers: []string{"setHandler"},
+			},
+			fields: fields{
+				Store: func() store.Store {
+					stor := &mockstore.MockStore{}
+					stor.On("GetHandlerByName", mock.Anything, "setHandler").
+						Return(setHandler(), nil)
+					stor.On("GetHandlerByName", mock.Anything, "pipeHandler").
+						Return(pipeHandler(), nil)
+					return stor
+				}(),
+			},
+			want: map[string]*corev2.Handler{
+				"pipeHandler": pipeHandler(),
+			},
+		},
+		{
+			name: "skips expanding any sets that are nested too deeply",
+			args: args{
+				ctx:      context.Background(),
+				handlers: []string{"recursiveLoopHandler"},
+			},
+			fields: fields{
+				Store: func() store.Store {
+					stor := &mockstore.MockStore{}
+					stor.On("GetHandlerByName", mock.Anything, "recursiveLoopHandler").
+						Return(recursiveLoopHandler(), nil)
+					return stor
+				}(),
+			},
+			want: map[string]*corev2.Handler{},
+		},
+		{
+			name: "supports multiple nested set handlers",
+			args: args{
+				ctx:      context.Background(),
+				handlers: []string{"recursiveLoopHandler", "nestedHandler"},
+			},
+			fields: fields{
+				Store: func() store.Store {
+					stor := &mockstore.MockStore{}
+					stor.On("GetHandlerByName", mock.Anything, "recursiveLoopHandler").Return(recursiveLoopHandler(), nil)
+					stor.On("GetHandlerByName", mock.Anything, "nestedHandler").Return(nestedHandler(), nil)
+					stor.On("GetHandlerByName", mock.Anything, "setHandler").Return(setHandler(), nil)
 					stor.On("GetHandlerByName", mock.Anything, "pipeHandler").Return(pipeHandler(), nil)
 					return stor
 				}(),
@@ -583,6 +686,10 @@ func TestAdapterV1_expandHandlers(t *testing.T) {
 			got, err := a.expandHandlers(tt.args.ctx, tt.args.handlers, tt.args.level)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("AdapterV1.expandHandlers() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if err != nil && err.Error() != tt.wantErrMsg {
+				t.Errorf("AdapterV1.expandHandlers() error msg = %v, wantErrMsg %v", err.Error(), tt.wantErrMsg)
 				return
 			}
 			if !reflect.DeepEqual(got, tt.want) {
