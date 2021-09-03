@@ -2,11 +2,10 @@
 package pipelined
 
 import (
-	"encoding/json"
 	"testing"
 
+	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/messaging"
-	"github.com/sensu/sensu-go/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -20,23 +19,20 @@ func TestPipelined(t *testing.T) {
 	require.NoError(t, err)
 	require.NoError(t, p.Start())
 
-	entity := types.FixtureEntity("entity1")
-	check := types.FixtureCheck("check1")
-	metrics := types.FixtureMetrics()
+	entity := corev2.FixtureEntity("entity1")
+	check := corev2.FixtureCheck("check1")
+	metrics := corev2.FixtureMetrics()
 
-	event := &types.Event{
+	event := &corev2.Event{
 		Entity:  entity,
 		Check:   check,
 		Metrics: metrics,
 	}
 
-	notIncident, _ := json.Marshal(event)
-	assert.NoError(t, bus.Publish(messaging.TopicEvent, notIncident))
+	assert.NoError(t, bus.Publish(messaging.TopicEvent, event))
 
 	event.Check.Status = 1
-
-	incident, _ := json.Marshal(event)
-	assert.NoError(t, bus.Publish(messaging.TopicEvent, incident))
+	assert.NoError(t, bus.Publish(messaging.TopicEvent, event))
 
 	assert.NoError(t, p.Stop())
 }
