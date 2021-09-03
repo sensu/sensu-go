@@ -7,6 +7,7 @@ import (
 	"time"
 
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
+	"github.com/sensu/sensu-go/backend/pipeline/filter"
 	"github.com/sensu/sensu-go/backend/pipeline/handler"
 	"github.com/sensu/sensu-go/backend/pipeline/mutator"
 	"github.com/sensu/sensu-go/backend/store"
@@ -166,6 +167,125 @@ func TestAdapterV1_Run(t *testing.T) {
 			wantErrMsg: "pipeline has no workflows",
 		},
 		{
+			name: "returns error when filter produces an error",
+			args: args{
+				ctx:      context.Background(),
+				ref:      corev2.FixturePipelineReference("pipeline1"),
+				resource: corev2.FixtureEvent("entity1", "check1"),
+			},
+			fields: fields{
+				FilterAdapters: func() []FilterAdapter {
+					var nilFilter *corev2.EventFilter
+					err := &store.ErrInternal{Message: "etcd timeout"}
+					stor := &mockstore.MockStore{}
+					stor.On("GetEventFilterByName", mock.Anything, mock.Anything).
+						Return(nilFilter, err)
+					return []FilterAdapter{
+						&filter.LegacyAdapter{
+							Store: stor,
+						},
+					}
+				}(),
+				Store: func() store.Store {
+					pipeline := &corev2.Pipeline{
+						ObjectMeta: corev2.NewObjectMeta("pipeline1", "default"),
+						Workflows: []*corev2.PipelineWorkflow{
+							{
+								Name: "send metrics to prometheus",
+								Filters: []*corev2.ResourceReference{{
+									APIVersion: "core/v2",
+									Type:       "EventFilter",
+									Name:       "filter1",
+								}},
+							},
+						},
+					}
+					stor := &mockstore.MockStore{}
+					stor.On("GetPipelineByName", mock.Anything, pipeline.GetName()).Return(pipeline, nil)
+					return stor
+				}(),
+			},
+			wantErr:    true,
+			wantErrMsg: "internal error: etcd timeout",
+		},
+		{
+			name: "returns error when event is filtered",
+			args: args{
+				ctx:      context.Background(),
+				ref:      corev2.FixturePipelineReference("pipeline1"),
+				resource: corev2.FixtureEvent("entity1", "check1"),
+			},
+			fields: fields{
+				FilterAdapters: func() []FilterAdapter {
+					return []FilterAdapter{
+						&filter.HasMetricsAdapter{},
+					}
+				}(),
+				Store: func() store.Store {
+					pipeline := &corev2.Pipeline{
+						ObjectMeta: corev2.NewObjectMeta("pipeline1", "default"),
+						Workflows: []*corev2.PipelineWorkflow{
+							{
+								Name: "send metrics to prometheus",
+								Filters: []*corev2.ResourceReference{{
+									APIVersion: "core/v2",
+									Type:       "EventFilter",
+									Name:       "has_metrics",
+								}},
+							},
+						},
+					}
+					stor := &mockstore.MockStore{}
+					stor.On("GetPipelineByName", mock.Anything, pipeline.GetName()).Return(pipeline, nil)
+					return stor
+				}(),
+			},
+			wantErr:    true,
+			wantErrMsg: "event was filtered",
+		},
+		{
+			name: "returns error when mutator produces an error",
+			args: args{
+				ctx:      context.Background(),
+				ref:      corev2.FixturePipelineReference("pipeline1"),
+				resource: corev2.FixtureEvent("entity1", "check1"),
+			},
+			fields: fields{
+				MutatorAdapters: func() []MutatorAdapter {
+					var nilMutator *corev2.Mutator
+					err := &store.ErrInternal{Message: "etcd timeout"}
+					stor := &mockstore.MockStore{}
+					stor.On("GetMutatorByName", mock.Anything, mock.Anything).
+						Return(nilMutator, err)
+					return []MutatorAdapter{
+						&mutator.LegacyAdapter{
+							Store: stor,
+						},
+					}
+				}(),
+				Store: func() store.Store {
+					pipeline := &corev2.Pipeline{
+						ObjectMeta: corev2.NewObjectMeta("pipeline1", "default"),
+						Workflows: []*corev2.PipelineWorkflow{
+							{
+								Name: "send metrics to prometheus",
+								Mutator: &corev2.ResourceReference{
+									APIVersion: "core/v2",
+									Type:       "Mutator",
+									Name:       "mutator1",
+								},
+							},
+						},
+					}
+					stor := &mockstore.MockStore{}
+					stor.On("GetPipelineByName", mock.Anything, pipeline.GetName()).Return(pipeline, nil)
+					return stor
+				}(),
+			},
+			wantErr:    true,
+			wantErrMsg: "internal error: etcd timeout",
+		},
+		{
 			name: "returns error when handler produces an error",
 			args: args{
 				ctx:      context.Background(),
@@ -197,9 +317,7 @@ func TestAdapterV1_Run(t *testing.T) {
 						ObjectMeta: corev2.NewObjectMeta("pipeline1", "default"),
 						Workflows: []*corev2.PipelineWorkflow{
 							{
-								Name:    "send metrics to prometheus",
-								Filters: nil,
-								Mutator: nil,
+								Name: "send metrics to prometheus",
 								Handler: &corev2.ResourceReference{
 									APIVersion: "core/v2",
 									Type:       "Handler",

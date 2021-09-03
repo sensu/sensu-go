@@ -76,7 +76,7 @@ func (a *AdapterV1) Run(ctx context.Context, ref *corev2.ResourceReference, reso
 			return err
 		}
 		if filtered {
-			return nil
+			return errors.New("event was filtered")
 		}
 
 		// If no workflow mutator is set, use the JSON mutator
