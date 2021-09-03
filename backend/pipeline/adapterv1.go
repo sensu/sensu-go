@@ -221,6 +221,8 @@ func (a *AdapterV1) expandHandlers(ctx context.Context, handlers []string, level
 					}
 				}
 			}
+		} else {
+			expandedHandlers[handler.Name] = handler
 		}
 	}
 

@@ -1,33 +1,14 @@
 package pipeline
 
 import (
+	"context"
+	"reflect"
+	"testing"
+	"time"
+
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
-	"github.com/stretchr/testify/mock"
+	"github.com/sensu/sensu-go/backend/store"
 )
-
-type mockExec struct {
-	mock.Mock
-}
-
-// func (m *mockExec) HandleEvent(evt *corev2.Event, mut []byte) (rpc.HandleEventResponse, error) {
-// 	args := m.Called(evt, mut)
-// 	return args.Get(0).(rpc.HandleEventResponse), args.Error(1)
-// }
-
-func (m *mockExec) MutateEvent(evt *corev2.Event) ([]byte, error) {
-	args := m.Called(evt)
-	return args.Get(0).([]byte), args.Error(1)
-}
-
-func (m *mockExec) FilterEvent(evt *corev2.Event) (bool, error) {
-	args := m.Called(evt)
-	return args.Get(0).(bool), args.Error(1)
-}
-
-// No need to override this method, consumers only log its error
-func (m *mockExec) Close() error {
-	return nil
-}
 
 // func TestPipelineHandleEvent(t *testing.T) {
 // 	t.SkipNow()
@@ -161,3 +142,83 @@ func (m *mockExec) Close() error {
 // 		})
 // 	}
 // }
+
+func TestAdapterV1_processHandler(t *testing.T) {
+	type fields struct {
+		Store           store.Store
+		StoreTimeout    time.Duration
+		FilterAdapters  []FilterAdapter
+		MutatorAdapters []MutatorAdapter
+		HandlerAdapters []HandlerAdapter
+	}
+	type args struct {
+		ctx         context.Context
+		ref         *corev2.ResourceReference
+		event       *corev2.Event
+		mutatedData []byte
+	}
+	tests := []struct {
+		name    string
+		fields  fields
+		args    args
+		wantErr bool
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			a := &AdapterV1{
+				Store:           tt.fields.Store,
+				StoreTimeout:    tt.fields.StoreTimeout,
+				FilterAdapters:  tt.fields.FilterAdapters,
+				MutatorAdapters: tt.fields.MutatorAdapters,
+				HandlerAdapters: tt.fields.HandlerAdapters,
+			}
+			if err := a.processHandler(tt.args.ctx, tt.args.ref, tt.args.event, tt.args.mutatedData); (err != nil) != tt.wantErr {
+				t.Errorf("AdapterV1.processHandler() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}
+
+func TestAdapterV1_getHandlerForResource(t *testing.T) {
+	type fields struct {
+		Store           store.Store
+		StoreTimeout    time.Duration
+		FilterAdapters  []FilterAdapter
+		MutatorAdapters []MutatorAdapter
+		HandlerAdapters []HandlerAdapter
+	}
+	type args struct {
+		ctx context.Context
+		ref *corev2.ResourceReference
+	}
+	tests := []struct {
+		name    string
+		fields  fields
+		args    args
+		want    HandlerAdapter
+		wantErr bool
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			a := &AdapterV1{
+				Store:           tt.fields.Store,
+				StoreTimeout:    tt.fields.StoreTimeout,
+				FilterAdapters:  tt.fields.FilterAdapters,
+				MutatorAdapters: tt.fields.MutatorAdapters,
+				HandlerAdapters: tt.fields.HandlerAdapters,
+			}
+			got, err := a.getHandlerForResource(tt.args.ctx, tt.args.ref)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("AdapterV1.getHandlerForResource() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("AdapterV1.getHandlerForResource() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}

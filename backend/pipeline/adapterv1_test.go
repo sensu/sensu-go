@@ -531,6 +531,9 @@ func TestAdapterV1_generateLegacyPipeline(t *testing.T) {
 }
 
 func TestAdapterV1_expandHandlers(t *testing.T) {
+	pipeHandler := func() *corev2.Handler {
+		return corev2.FixtureHandler("pipeHandler")
+	}
 	type fields struct {
 		Store           store.Store
 		StoreTimeout    time.Duration
@@ -550,7 +553,23 @@ func TestAdapterV1_expandHandlers(t *testing.T) {
 		want    HandlerMap
 		wantErr bool
 	}{
-		// TODO: Add test cases.
+		{
+			name: "pipe handler",
+			args: args{
+				ctx:      context.Background(),
+				handlers: []string{"pipeHandler"},
+			},
+			fields: fields{
+				Store: func() store.Store {
+					stor := &mockstore.MockStore{}
+					stor.On("GetHandlerByName", mock.Anything, "pipeHandler").Return(pipeHandler(), nil)
+					return stor
+				}(),
+			},
+			want: map[string]*corev2.Handler{
+				"pipeHandler": pipeHandler(),
+			},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
