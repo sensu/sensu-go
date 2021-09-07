@@ -18,7 +18,6 @@ import (
 	"github.com/sensu/sensu-go/backend/secrets"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/command"
-	"github.com/sensu/sensu-go/testing/mockassetgetter"
 	"github.com/sensu/sensu-go/testing/mockstore"
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
@@ -156,41 +155,45 @@ func TestLegacyAdapter_Handle(t *testing.T) {
 			wantErr:    true,
 			wantErrMsg: "failed to fetch handler from store: not found",
 		},
-		{
-			name: "returns an error if a pipe handler returns an internal store error",
-			args: args{
-				ctx: context.Background(),
-				ref: &corev2.ResourceReference{
-					Name: "handler1",
-				},
-				event: func() *corev2.Event {
-					event := corev2.FixtureEvent("entity1", "check1")
-					return event
-				}(),
-			},
-			fields: fields{
-				AssetGetter: func() asset.Getter {
-					//var asset *corev2.Asset
-					//err := store.ErrInternal{Message: "etcd timeout"}
-					mag := &mockassetgetter.MockAssetGetter{}
-					//mag.On("GetAssetByName", mock.Anything, "asset1").Return(asset, err)
-					return mag
-				}(),
-				Store: func() store.Store {
-					handler := corev2.FixtureHandler("handler1")
-					handler.RuntimeAssets = []string{"asset1"}
+		// TODO: uncomment this test when asset.GetAssets() returns errors. This
+		// test cannot test for store.ErrInternal until then as
+		// asset.GetAssets() swallows its errors.
+		//
+		// {
+		// 	name: "returns an error if a pipe handler returns an internal store error",
+		// 	args: args{
+		// 		ctx: context.Background(),
+		// 		ref: &corev2.ResourceReference{
+		// 			Name: "handler1",
+		// 		},
+		// 		event: func() *corev2.Event {
+		// 			event := corev2.FixtureEvent("entity1", "check1")
+		// 			return event
+		// 		}(),
+		// 	},
+		// 	fields: fields{
+		// 		AssetGetter: func() asset.Getter {
+		// 			//var asset *corev2.Asset
+		// 			//err := store.ErrInternal{Message: "etcd timeout"}
+		// 			mag := &mockassetgetter.MockAssetGetter{}
+		// 			//mag.On("GetAssetByName", mock.Anything, "asset1").Return(asset, err)
+		// 			return mag
+		// 		}(),
+		// 		Store: func() store.Store {
+		// 			handler := corev2.FixtureHandler("handler1")
+		// 			handler.RuntimeAssets = []string{"asset1"}
 
-					var asset *corev2.Asset
+		// 			var asset *corev2.Asset
 
-					stor := &mockstore.MockStore{}
-					stor.On("GetHandlerByName", mock.Anything, "handler1").Return(handler, nil)
-					stor.On("GetAssetByName", mock.Anything, "asset1").
-						Return(asset, &store.ErrInternal{Message: "etcd timeout"})
+		// 			stor := &mockstore.MockStore{}
+		// 			stor.On("GetHandlerByName", mock.Anything, "handler1").Return(handler, nil)
+		// 			stor.On("GetAssetByName", mock.Anything, "asset1").
+		// 				Return(asset, &store.ErrInternal{Message: "etcd timeout"})
 
-					return stor
-				}(),
-			},
-		},
+		// 			return stor
+		// 		}(),
+		// 	},
+		//},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
