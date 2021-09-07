@@ -3,6 +3,7 @@ package handler
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"net"
@@ -17,9 +18,17 @@ import (
 	"github.com/sensu/sensu-go/backend/secrets"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/command"
+	"github.com/sensu/sensu-go/testing/mockassetgetter"
+	"github.com/sensu/sensu-go/testing/mockstore"
+	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 )
+
+func init() {
+	logrus.SetOutput(ioutil.Discard)
+}
 
 func TestHelperHandlerProcess(t *testing.T) {
 	if os.Getenv("GO_WANT_HELPER_HANDLER_PROCESS") != "1" {
@@ -117,12 +126,71 @@ func TestLegacyAdapter_Handle(t *testing.T) {
 		mutatedData []byte
 	}
 	tests := []struct {
-		name    string
-		fields  fields
-		args    args
-		wantErr bool
+		name       string
+		fields     fields
+		args       args
+		wantErr    bool
+		wantErrMsg string
 	}{
-		// TODO: Add test cases.
+		{
+			name: "returns an error if a handler cannot be fetched from the store",
+			args: args{
+				ctx: context.Background(),
+				ref: &corev2.ResourceReference{
+					Name: "handler1",
+				},
+				event: func() *corev2.Event {
+					event := corev2.FixtureEvent("entity1", "check1")
+					return event
+				}(),
+			},
+			fields: fields{
+				Store: func() store.Store {
+					var handler *corev2.Handler
+					err := errors.New("not found")
+					stor := &mockstore.MockStore{}
+					stor.On("GetHandlerByName", mock.Anything, "handler1").Return(handler, err)
+					return stor
+				}(),
+			},
+			wantErr:    true,
+			wantErrMsg: "failed to fetch handler from store: not found",
+		},
+		{
+			name: "returns an error if a pipe handler returns an internal store error",
+			args: args{
+				ctx: context.Background(),
+				ref: &corev2.ResourceReference{
+					Name: "handler1",
+				},
+				event: func() *corev2.Event {
+					event := corev2.FixtureEvent("entity1", "check1")
+					return event
+				}(),
+			},
+			fields: fields{
+				AssetGetter: func() asset.Getter {
+					//var asset *corev2.Asset
+					//err := store.ErrInternal{Message: "etcd timeout"}
+					mag := &mockassetgetter.MockAssetGetter{}
+					//mag.On("GetAssetByName", mock.Anything, "asset1").Return(asset, err)
+					return mag
+				}(),
+				Store: func() store.Store {
+					handler := corev2.FixtureHandler("handler1")
+					handler.RuntimeAssets = []string{"asset1"}
+
+					var asset *corev2.Asset
+
+					stor := &mockstore.MockStore{}
+					stor.On("GetHandlerByName", mock.Anything, "handler1").Return(handler, nil)
+					stor.On("GetAssetByName", mock.Anything, "asset1").
+						Return(asset, &store.ErrInternal{Message: "etcd timeout"})
+
+					return stor
+				}(),
+			},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -134,8 +202,13 @@ func TestLegacyAdapter_Handle(t *testing.T) {
 				Store:                  tt.fields.Store,
 				StoreTimeout:           tt.fields.StoreTimeout,
 			}
-			if err := l.Handle(tt.args.ctx, tt.args.ref, tt.args.event, tt.args.mutatedData); (err != nil) != tt.wantErr {
+			err := l.Handle(tt.args.ctx, tt.args.ref, tt.args.event, tt.args.mutatedData)
+			if (err != nil) != tt.wantErr {
 				t.Errorf("LegacyAdapter.Handle() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if err != nil && err.Error() != tt.wantErrMsg {
+				t.Errorf("LegacyAdapter.Handle() error msg = %v, wantErrMsg %v", err.Error(), tt.wantErrMsg)
 			}
 		})
 	}

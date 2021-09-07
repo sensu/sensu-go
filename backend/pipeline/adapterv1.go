@@ -99,7 +99,9 @@ func (a *AdapterV1) Run(ctx context.Context, ref *corev2.ResourceReference, reso
 		}
 
 		// Process the event through the workflow handler
-		return a.processHandler(ctx, workflow.Handler, event, mutatedData)
+		if err := a.processHandler(ctx, workflow.Handler, event, mutatedData); err != nil {
+			return err
+		}
 	}
 
 	return nil

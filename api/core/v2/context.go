@@ -2,7 +2,6 @@ package v2
 
 import (
 	"context"
-	"fmt"
 )
 
 // Define the key type to avoid key collisions in context
@@ -57,7 +56,6 @@ func ContextNamespace(ctx context.Context) string {
 
 // ContextPipeline returns the pipeline injected in the context
 func ContextPipeline(ctx context.Context) string {
-	fmt.Println("PipelineKey:", PipelineKey)
 	if value := ctx.Value(PipelineKey); value != nil {
 		return value.(string)
 	}
