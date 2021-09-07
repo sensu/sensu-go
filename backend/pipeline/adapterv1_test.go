@@ -3,10 +3,12 @@ package pipeline
 import (
 	"context"
 	"errors"
+	"io/ioutil"
 	"reflect"
 	"testing"
 	"time"
 
+	"github.com/golang/protobuf/proto"
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/pipeline/filter"
 	"github.com/sensu/sensu-go/backend/pipeline/handler"
@@ -15,8 +17,13 @@ import (
 	"github.com/sensu/sensu-go/command"
 	"github.com/sensu/sensu-go/testing/mockexecutor"
 	"github.com/sensu/sensu-go/testing/mockstore"
+	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/mock"
 )
+
+func init() {
+	logrus.SetOutput(ioutil.Discard)
+}
 
 func TestAdapterV1_Name(t *testing.T) {
 	o := &AdapterV1{}
@@ -424,7 +431,58 @@ func TestAdapterV1_resolvePipelineReference(t *testing.T) {
 		want    *corev2.Pipeline
 		wantErr bool
 	}{
-		// TODO: Add test cases.
+		{
+			name: "returns a legacy pipeline if the ref name is legacy-pipeline",
+			args: args{
+				ctx: context.WithValue(context.Background(), "namespace", "default"),
+				ref: &corev2.ResourceReference{
+					Name: "legacy-pipeline",
+				},
+				event: func() *corev2.Event {
+					event := corev2.FixtureEvent("entity1", "check1")
+					return event
+				}(),
+			},
+			want: func() *corev2.Pipeline {
+				pipeline := &corev2.Pipeline{
+					ObjectMeta: corev2.NewObjectMeta("legacy-pipeline", "default"),
+					Workflows:  []*corev2.PipelineWorkflow{},
+				}
+				return pipeline
+			}(),
+		},
+		{
+			name: "returns a stored pipeline if the ref name is not legacy-pipeline",
+			args: args{
+				ctx: context.WithValue(context.Background(), "namespace", "default"),
+				ref: &corev2.ResourceReference{
+					Name: "pipeline1",
+				},
+				event: func() *corev2.Event {
+					event := corev2.FixtureEvent("entity1", "check1")
+					return event
+				}(),
+			},
+			fields: fields{
+				Store: func() store.Store {
+					pipeline := &corev2.Pipeline{
+						ObjectMeta: corev2.NewObjectMeta("pipeline1", "default"),
+						Workflows:  []*corev2.PipelineWorkflow{},
+					}
+					stor := &mockstore.MockStore{}
+					stor.On("GetPipelineByName", mock.Anything, pipeline.GetName()).
+						Return(pipeline, nil)
+					return stor
+				}(),
+			},
+			want: func() *corev2.Pipeline {
+				pipeline := &corev2.Pipeline{
+					ObjectMeta: corev2.NewObjectMeta("pipeline1", "default"),
+					Workflows:  []*corev2.PipelineWorkflow{},
+				}
+				return pipeline
+			}(),
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -440,7 +498,7 @@ func TestAdapterV1_resolvePipelineReference(t *testing.T) {
 				t.Errorf("AdapterV1.resolvePipelineReference() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
-			if !reflect.DeepEqual(got, tt.want) {
+			if !proto.Equal(got, tt.want) {
 				t.Errorf("AdapterV1.resolvePipelineReference() = %v, want %v", got, tt.want)
 			}
 		})
@@ -460,13 +518,79 @@ func TestAdapterV1_getPipelineFromStore(t *testing.T) {
 		ref *corev2.ResourceReference
 	}
 	tests := []struct {
-		name    string
-		fields  fields
-		args    args
-		want    *corev2.Pipeline
-		wantErr bool
+		name       string
+		fields     fields
+		args       args
+		want       *corev2.Pipeline
+		wantErr    bool
+		wantErrMsg string
 	}{
-		// TODO: Add test cases.
+		{
+			name: "returns an error if the store returns an error",
+			args: args{
+				ctx: context.WithValue(context.Background(), "namespace", "default"),
+				ref: &corev2.ResourceReference{
+					Name: "pipeline1",
+				},
+			},
+			fields: fields{
+				Store: func() store.Store {
+					var pipeline *corev2.Pipeline
+					stor := &mockstore.MockStore{}
+					stor.On("GetPipelineByName", mock.Anything, "pipeline1").
+						Return(pipeline, errors.New("store error"))
+					return stor
+				}(),
+			},
+			wantErr:    true,
+			wantErrMsg: "store error",
+		},
+		{
+			name: "returns an error if the pipeline is nil",
+			args: args{
+				ctx: context.WithValue(context.Background(), "namespace", "default"),
+				ref: &corev2.ResourceReference{
+					Name: "pipeline1",
+				},
+			},
+			fields: fields{
+				Store: func() store.Store {
+					var pipeline *corev2.Pipeline
+					stor := &mockstore.MockStore{}
+					stor.On("GetPipelineByName", mock.Anything, "pipeline1").
+						Return(pipeline, nil)
+					return stor
+				}(),
+			},
+			wantErr:    true,
+			wantErrMsg: "pipeline does not exist",
+		},
+		{
+			name: "returns a pipeline when successful",
+			args: args{
+				ctx: context.WithValue(context.Background(), "namespace", "default"),
+				ref: &corev2.ResourceReference{
+					Name: "pipeline1",
+				},
+			},
+			fields: fields{
+				Store: func() store.Store {
+					pipeline := &corev2.Pipeline{
+						ObjectMeta: corev2.NewObjectMeta("pipeline1", "default"),
+					}
+					stor := &mockstore.MockStore{}
+					stor.On("GetPipelineByName", mock.Anything, "pipeline1").
+						Return(pipeline, nil)
+					return stor
+				}(),
+			},
+			want: func() *corev2.Pipeline {
+				pipeline := &corev2.Pipeline{
+					ObjectMeta: corev2.NewObjectMeta("pipeline1", "default"),
+				}
+				return pipeline
+			}(),
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -482,7 +606,11 @@ func TestAdapterV1_getPipelineFromStore(t *testing.T) {
 				t.Errorf("AdapterV1.getPipelineFromStore() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
-			if !reflect.DeepEqual(got, tt.want) {
+			if err != nil && err.Error() != tt.wantErrMsg {
+				t.Errorf("AdapterV1.getPipelineFromStore() error msg = %v, wantErrMsg %v", err.Error(), tt.wantErrMsg)
+				return
+			}
+			if !proto.Equal(got, tt.want) {
 				t.Errorf("AdapterV1.getPipelineFromStore() = %v, want %v", got, tt.want)
 			}
 		})
@@ -539,6 +667,86 @@ func TestAdapterV1_generateLegacyPipeline(t *testing.T) {
 				}},
 			},
 		},
+		{
+			name: "a legacy pipeline can be generated from an event with metrics handlers",
+			args: args{
+				ctx: context.Background(),
+				event: func() *corev2.Event {
+					event := corev2.FixtureEvent("entity1", "check1")
+					event.Metrics = &corev2.Metrics{
+						Handlers: []string{"handler1"},
+					}
+					return event
+				}(),
+			},
+			fields: fields{
+				Store: func() store.Store {
+					handler := corev2.FixtureHandler("handler1")
+					stor := &mockstore.MockStore{}
+					stor.On("GetHandlerByName", mock.Anything, handler.GetName()).
+						Return(handler, nil)
+					return stor
+				}(),
+			},
+			want: &corev2.Pipeline{
+				ObjectMeta: corev2.NewObjectMeta("legacy-pipeline", "default"),
+				Workflows: []*corev2.PipelineWorkflow{{
+					Name: "legacy-pipeline-workflow-handler1",
+					Handler: &corev2.ResourceReference{
+						APIVersion: "core/v2",
+						Type:       "Handler",
+						Name:       "handler1",
+					},
+				}},
+			},
+		},
+		{
+			name: "a legacy pipeline can be generated from an event with both check & metrics handlers",
+			args: args{
+				ctx: context.Background(),
+				event: func() *corev2.Event {
+					event := corev2.FixtureEvent("entity1", "check1")
+					event.Check.Handlers = []string{"checkhandler"}
+					event.Metrics = &corev2.Metrics{
+						Handlers: []string{"metricshandler"},
+					}
+					return event
+				}(),
+			},
+			fields: fields{
+				Store: func() store.Store {
+					checkHandler := corev2.FixtureHandler("checkhandler")
+					metricsHandler := corev2.FixtureHandler("metricshandler")
+					stor := &mockstore.MockStore{}
+					stor.On("GetHandlerByName", mock.Anything, checkHandler.GetName()).
+						Return(checkHandler, nil)
+					stor.On("GetHandlerByName", mock.Anything, metricsHandler.GetName()).
+						Return(metricsHandler, nil)
+					return stor
+				}(),
+			},
+			want: &corev2.Pipeline{
+				ObjectMeta: corev2.NewObjectMeta("legacy-pipeline", "default"),
+				Workflows: []*corev2.PipelineWorkflow{
+					{
+						Name: "legacy-pipeline-workflow-checkhandler",
+						Handler: &corev2.ResourceReference{
+							APIVersion: "core/v2",
+							Type:       "Handler",
+							Name:       "checkhandler",
+						},
+					},
+					{
+						Name: "legacy-pipeline-workflow-metricshandler",
+						Handler: &corev2.ResourceReference{
+							APIVersion: "core/v2",
+							Type:       "Handler",
+							Name:       "metricshandler",
+						},
+					},
+				},
+			},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -554,7 +762,7 @@ func TestAdapterV1_generateLegacyPipeline(t *testing.T) {
 				t.Errorf("AdapterV1.generateLegacyPipeline() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
-			if !reflect.DeepEqual(got, tt.want) {
+			if !proto.Equal(got, tt.want) {
 				t.Errorf("AdapterV1.generateLegacyPipeline() = %v, want %v", got, tt.want)
 			}
 		})

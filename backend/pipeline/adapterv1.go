@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"sort"
 	"time"
 
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
@@ -113,13 +114,13 @@ func (a *AdapterV1) resolvePipelineReference(ctx context.Context, ref *corev2.Re
 // returns a core/v2.Pipeline.
 func (a *AdapterV1) getPipelineFromStore(ctx context.Context, ref *corev2.ResourceReference) (*corev2.Pipeline, error) {
 	tctx, cancel := context.WithTimeout(ctx, a.StoreTimeout)
-	pipeline, err := a.Store.GetPipelineByName(tctx, ref.Name)
-	cancel()
+	defer cancel()
 
+	pipeline, err := a.Store.GetPipelineByName(tctx, ref.Name)
+	if err != nil {
+		return nil, err
+	}
 	if pipeline == nil {
-		if err != nil {
-			return nil, err
-		}
 		return nil, errors.New("pipeline does not exist")
 	}
 
@@ -154,9 +155,17 @@ func (a *AdapterV1) generateLegacyPipeline(ctx context.Context, event *corev2.Ev
 		Workflows: []*corev2.PipelineWorkflow{},
 	}
 
-	for handlerName, handler := range handlers {
+	// sort the keys of the handlers map to guarantee the ordering of the
+	// slice of handlers
+	handlerNames := make([]string, 0, len(handlers))
+	for handlerName := range handlers {
+		handlerNames = append(handlerNames, handlerName)
+	}
+	sort.Strings(handlerNames)
+
+	for _, handlerName := range handlerNames {
 		workflowName := fmt.Sprintf(LegacyPipelineWorkflowName, handlerName)
-		workflow := corev2.PipelineWorkflowFromHandler(ctx, workflowName, handler)
+		workflow := corev2.PipelineWorkflowFromHandler(ctx, workflowName, handlers[handlerName])
 		pipeline.Workflows = append(pipeline.Workflows, workflow)
 	}
 
