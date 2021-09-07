@@ -55,9 +55,11 @@ func (p *PipeAdapter) run(ctx context.Context, mutator *corev2.Mutator, event *c
 
 	// Prepare log entry
 	fields := logrus.Fields{
-		"namespace": mutator.Namespace,
-		"mutator":   mutator.Name,
-		"assets":    mutator.RuntimeAssets,
+		"namespace":         mutator.Namespace,
+		"mutator":           mutator.Name,
+		"assets":            mutator.RuntimeAssets,
+		"pipeline":          corev2.ContextPipeline(ctx),
+		"pipeline_workflow": corev2.ContextPipelineWorkflow(ctx),
 	}
 
 	secrets, err := p.SecretsProviderManager.SubSecrets(ctx, mutator.Secrets)

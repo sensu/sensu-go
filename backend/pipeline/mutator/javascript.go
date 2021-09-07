@@ -51,7 +51,7 @@ func (j *JavascriptAdapter) Mutate(ctx context.Context, ref *corev2.ResourceRefe
 }
 
 func (j *JavascriptAdapter) run(ctx context.Context, mutator *corev2.Mutator, event *corev2.Event, assets js.JavascriptAssets) ([]byte, error) {
-	ctx = corev2.SetContextFromResource(context.Background(), mutator)
+	ctx = corev2.SetContextFromResource(ctx, mutator)
 
 	// Use a context with a timeout if the mutator has a timeout set
 	var cancel context.CancelFunc
@@ -61,9 +61,11 @@ func (j *JavascriptAdapter) run(ctx context.Context, mutator *corev2.Mutator, ev
 	}
 	// Prepare log entry
 	fields := logrus.Fields{
-		"namespace": mutator.Namespace,
-		"mutator":   mutator.Name,
-		"assets":    mutator.RuntimeAssets,
+		"namespace":         mutator.Namespace,
+		"mutator":           mutator.Name,
+		"assets":            mutator.RuntimeAssets,
+		"pipeline":          corev2.ContextPipeline(ctx),
+		"pipeline_workflow": corev2.ContextPipelineWorkflow(ctx),
 	}
 
 	// Guard against nil metadata labels and annotations to improve the user

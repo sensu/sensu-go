@@ -53,8 +53,9 @@ func (l *LegacyAdapter) CanHandle(ref *corev2.ResourceReference) bool {
 // tcp/udp handlers.
 func (l *LegacyAdapter) Handle(ctx context.Context, ref *corev2.ResourceReference, event *corev2.Event, mutatedData []byte) error {
 	// Prepare log entry
-	// TODO: add pipeline & pipeline workflow names to fields
 	fields := utillogging.EventFields(event, false)
+	fields["pipeline"] = corev2.ContextPipeline(ctx)
+	fields["pipeline_workflow"] = corev2.ContextPipelineWorkflow(ctx)
 
 	tctx, cancel := context.WithTimeout(ctx, l.StoreTimeout)
 	handler, err := l.Store.GetHandlerByName(tctx, ref.Name)
@@ -93,6 +94,8 @@ func (l *LegacyAdapter) pipeHandler(ctx context.Context, handler *corev2.Handler
 	fields := utillogging.EventFields(event, false)
 	fields["handler_name"] = handler.Name
 	fields["handler_namespace"] = handler.Namespace
+	fields["pipeline"] = corev2.ContextPipeline(ctx)
+	fields["pipeline_workflow"] = corev2.ContextPipelineWorkflow(ctx)
 
 	if l.LicenseGetter != nil {
 		if license := l.LicenseGetter.Get(); license != "" {
@@ -133,7 +136,7 @@ func (l *LegacyAdapter) pipeHandler(ctx context.Context, handler *corev2.Handler
 		}
 	}
 
-	result, err := l.Executor.Execute(context.Background(), handlerExec)
+	result, err := l.Executor.Execute(ctx, handlerExec)
 
 	if err != nil {
 		logger.WithFields(fields).WithError(err).Error("failed to execute event pipe handler")
@@ -159,6 +162,8 @@ func (l *LegacyAdapter) socketHandler(ctx context.Context, handler *corev2.Handl
 	fields["handler_name"] = handler.Name
 	fields["handler_namespace"] = handler.Namespace
 	fields["handler_protocol"] = protocol
+	fields["pipeline"] = corev2.ContextPipeline(ctx)
+	fields["pipeline_workflow"] = corev2.ContextPipelineWorkflow(ctx)
 
 	// If Timeout is not specified, use the default.
 	if timeout == 0 {

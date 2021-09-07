@@ -270,6 +270,7 @@ func Test_evaluateEventFilter(t *testing.T) {
 		{
 			name: "returns false when an event is within a time window with action allow",
 			args: args{
+				ctx:   context.Background(),
 				event: corev2.FixtureEvent("entity1", "check1"),
 				filter: func() *corev2.EventFilter {
 					now := time.Now().UTC()
@@ -295,6 +296,7 @@ func Test_evaluateEventFilter(t *testing.T) {
 		{
 			name: "returns true when an event is not within a time window with action allow",
 			args: args{
+				ctx:   context.Background(),
 				event: corev2.FixtureEvent("entity1", "check1"),
 				filter: func() *corev2.EventFilter {
 					now := time.Now().UTC()
@@ -320,6 +322,7 @@ func Test_evaluateEventFilter(t *testing.T) {
 		{
 			name: "returns true when an event is within a time window with action deny",
 			args: args{
+				ctx: context.Background(),
 				event: func() *corev2.Event {
 					event := corev2.FixtureEvent("entity1", "check1")
 					return event
@@ -348,6 +351,7 @@ func Test_evaluateEventFilter(t *testing.T) {
 		{
 			name: "returns false when an event is not within a time window with action deny",
 			args: args{
+				ctx:   context.Background(),
 				event: corev2.FixtureEvent("entity1", "check1"),
 				filter: func() *corev2.EventFilter {
 					now := time.Now().UTC()

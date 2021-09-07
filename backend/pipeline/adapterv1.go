@@ -62,14 +62,17 @@ func (a *AdapterV1) Run(ctx context.Context, ref *corev2.ResourceReference, reso
 	if err != nil {
 		return err
 	}
+	ctx = context.WithValue(ctx, corev2.PipelineKey, pipeline.Name)
 
 	if len(pipeline.Workflows) < 1 {
 		return errors.New("pipeline has no workflows")
 	}
 
 	for _, workflow := range pipeline.Workflows {
-		fields["pipeline_workflow"] = workflow.GetName()
-		debugFields["pipeline_workflow"] = workflow.GetName()
+		ctx = context.WithValue(ctx, corev2.PipelineWorkflowKey, workflow.Name)
+
+		fields["pipeline_workflow"] = workflow.Name
+		debugFields["pipeline_workflow"] = workflow.Name
 
 		// Process the event through the workflow filters
 		filtered, err := a.processFilters(ctx, workflow.Filters, event)

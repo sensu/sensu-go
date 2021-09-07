@@ -61,11 +61,12 @@ func (l *LegacyAdapter) CanFilter(ref *corev2.ResourceReference) bool {
 // error was encountered.
 func (l *LegacyAdapter) Filter(ctx context.Context, ref *corev2.ResourceReference, event *corev2.Event) (bool, error) {
 	// Prepare log entry
-	// TODO: add pipeline & pipeline workflow names to fields
 	fields := event.LogFields(false)
+	fields["pipeline"] = corev2.ContextPipeline(ctx)
+	fields["pipeline_workflow"] = corev2.ContextPipelineWorkflow(ctx)
 
 	// Retrieve the filter from the store with its name
-	ctx = corev2.SetContextFromResource(context.Background(), event.Entity)
+	ctx = context.WithValue(ctx, corev2.NamespaceKey, event.Entity.Namespace)
 	tctx, cancel := context.WithTimeout(ctx, l.StoreTimeout)
 
 	filter, err := l.Store.GetEventFilterByName(tctx, ref.Name)
@@ -110,6 +111,8 @@ func evaluateEventFilter(ctx context.Context, event *corev2.Event, filter *corev
 	fields := event.LogFields(false)
 	fields["filter"] = filter.Name
 	fields["assets"] = filter.RuntimeAssets
+	fields["pipeline"] = corev2.ContextPipeline(ctx)
+	fields["pipeline_workflow"] = corev2.ContextPipelineWorkflow(ctx)
 
 	if filter.When != nil {
 		inWindows, err := filter.When.InWindows(time.Now().UTC())

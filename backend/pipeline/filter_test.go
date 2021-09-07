@@ -35,6 +35,7 @@ func TestAdapterV1_processFilters(t *testing.T) {
 		{
 			name: "returns an error when no filter adapters match",
 			args: args{
+				ctx: context.Background(),
 				refs: []*corev2.ResourceReference{
 					{
 						APIVersion: "core/v2",
@@ -49,6 +50,7 @@ func TestAdapterV1_processFilters(t *testing.T) {
 		{
 			name: "returns true when an event is denied by a filter",
 			args: args{
+				ctx: context.Background(),
 				refs: []*corev2.ResourceReference{
 					{
 						APIVersion: "core/v2",
@@ -71,6 +73,7 @@ func TestAdapterV1_processFilters(t *testing.T) {
 		{
 			name: "returns true when an event is allowed by one filter but denied by another",
 			args: args{
+				ctx: context.Background(),
 				refs: []*corev2.ResourceReference{
 					{
 						APIVersion: "core/v2",
@@ -100,6 +103,7 @@ func TestAdapterV1_processFilters(t *testing.T) {
 		{
 			name: "returns true when an event is allowed by all filters",
 			args: args{
+				ctx: context.Background(),
 				refs: []*corev2.ResourceReference{
 					{
 						APIVersion: "core/v2",

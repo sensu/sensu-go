@@ -57,14 +57,16 @@ func (l *LegacyAdapter) CanMutate(ref *corev2.ResourceReference) bool {
 // slice) to be provided to a Sensu event handler.
 func (l *LegacyAdapter) Mutate(ctx context.Context, ref *corev2.ResourceReference, event *corev2.Event) ([]byte, error) {
 	// Prepare log entry
-	// TODO: add pipeline & pipeline workflow names to fields
 	fields := utillogging.EventFields(event, false)
+	fields["pipeline"] = corev2.ContextPipeline(ctx)
+	fields["pipeline_workflow"] = corev2.ContextPipelineWorkflow(ctx)
 
+	// Retrieve the mutator from the store with its name
 	ctx = context.WithValue(ctx, corev2.NamespaceKey, event.Entity.Namespace)
 	tctx, cancel := context.WithTimeout(ctx, l.StoreTimeout)
-	defer cancel()
 
 	mutator, err := l.Store.GetMutatorByName(tctx, ref.Name)
+	cancel()
 	if err != nil {
 		// Warning: do not wrap this error
 		logger.WithFields(fields).WithError(err).Error("failed to retrieve mutator")

@@ -28,8 +28,9 @@ func (n *NotSilencedAdapter) CanFilter(ref *corev2.ResourceReference) bool {
 // Filter will evaluate the event and determine whether or not to filter it.
 func (n *NotSilencedAdapter) Filter(ctx context.Context, ref *corev2.ResourceReference, event *corev2.Event) (bool, error) {
 	// Prepare log entry
-	// TODO: add pipeline & pipeline workflow names to fields
 	fields := utillogging.EventFields(event, false)
+	fields["pipeline"] = corev2.ContextPipeline(ctx)
+	fields["pipeline_workflow"] = corev2.ContextPipelineWorkflow(ctx)
 
 	// Deny an event if it is silenced
 	if event.IsSilenced() {
