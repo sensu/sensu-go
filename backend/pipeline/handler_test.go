@@ -2,6 +2,7 @@ package pipeline
 
 import (
 	"context"
+	"errors"
 	"testing"
 	"time"
 
@@ -10,45 +11,6 @@ import (
 	"github.com/sensu/sensu-go/testing/mockpipeline"
 	"github.com/stretchr/testify/mock"
 )
-
-// func TestPipelineHandleEvent(t *testing.T) {
-// 	t.SkipNow()
-// 	p := &Pipeline{}
-
-// 	store := &mockstore.MockStore{}
-// 	p.store = store
-
-// 	entity := corev2.FixtureEntity("entity1")
-// 	check := corev2.FixtureCheck("check1")
-// 	handler := corev2.FixtureHandler("handler1")
-// 	handler.Type = "udp"
-// 	handler.Socket = &corev2.HandlerSocket{
-// 		Host: "127.0.0.1",
-// 		Port: 6789,
-// 	}
-// 	event := &corev2.Event{
-// 		Entity: entity,
-// 		Check:  check,
-// 	}
-
-// 	// Currently fire and forget. You may choose to return a map
-// 	// of handler execution information in the future, don't know
-// 	// how useful this would be.
-// 	assert.NoError(t, p.HandleEvent(context.Background(), event))
-
-// 	event.Check.Handlers = []string{"handler1", "handler2"}
-
-// 	store.On("GetHandlerByName", mock.Anything, "handler1").Return(handler, nil)
-// 	store.On("GetHandlerByName", mock.Anything, "handler2").Return((*corev2.Handler)(nil), nil)
-// 	m := &mockExec{}
-// 	// m.On("HandleEvent", event, mock.Anything).Return(rpc.HandleEventResponse{
-// 	// 	Output: "ok",
-// 	// 	Error:  "",
-// 	// }, nil)
-
-// 	assert.NoError(t, p.HandleEvent(context.Background(), event))
-// 	m.AssertCalled(t, "HandleEvent", event, mock.Anything)
-// }
 
 func TestAdapterV1_processHandler(t *testing.T) {
 	type fields struct {
@@ -65,12 +27,65 @@ func TestAdapterV1_processHandler(t *testing.T) {
 		mutatedData []byte
 	}
 	tests := []struct {
-		name    string
-		fields  fields
-		args    args
-		wantErr bool
+		name       string
+		fields     fields
+		args       args
+		wantErr    bool
+		wantErrMsg string
 	}{
-		// TODO: Add test cases.
+		{
+			name: "returns an error when getHandlerAdapterForResource() returns an error",
+			args: args{
+				ref: &corev2.ResourceReference{
+					APIVersion: "core/v2",
+					Type:       "Handler",
+					Name:       "handler1",
+				},
+			},
+			wantErr:    true,
+			wantErrMsg: "no handler adapters were found that can handle the resource: core/v2.Handler = handler1",
+		},
+		{
+			name: "returns an error when handler.Handle() returns an error",
+			fields: fields{
+				HandlerAdapters: func() []HandlerAdapter {
+					adapter := mockpipeline.HandlerAdapter{}
+					adapter.On("CanHandle", mock.Anything).Return(true)
+					adapter.On("Handle", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+						Return(errors.New("handler error"))
+					return []HandlerAdapter{adapter}
+				}(),
+			},
+			args: args{
+				ref: &corev2.ResourceReference{
+					APIVersion: "core/v2",
+					Type:       "Handler",
+					Name:       "handler1",
+				},
+			},
+			wantErr:    true,
+			wantErrMsg: "handler error",
+		},
+		{
+			name: "returns nil when no errors occur",
+			fields: fields{
+				HandlerAdapters: func() []HandlerAdapter {
+					adapter := mockpipeline.HandlerAdapter{}
+					adapter.On("CanHandle", mock.Anything).Return(true)
+					adapter.On("Handle", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+						Return(nil)
+					return []HandlerAdapter{adapter}
+				}(),
+			},
+			args: args{
+				ref: &corev2.ResourceReference{
+					APIVersion: "core/v2",
+					Type:       "Handler",
+					Name:       "handler1",
+				},
+			},
+			wantErr: false,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -81,8 +96,13 @@ func TestAdapterV1_processHandler(t *testing.T) {
 				MutatorAdapters: tt.fields.MutatorAdapters,
 				HandlerAdapters: tt.fields.HandlerAdapters,
 			}
-			if err := a.processHandler(tt.args.ctx, tt.args.ref, tt.args.event, tt.args.mutatedData); (err != nil) != tt.wantErr {
+			err := a.processHandler(tt.args.ctx, tt.args.ref, tt.args.event, tt.args.mutatedData)
+			if (err != nil) != tt.wantErr {
 				t.Errorf("AdapterV1.processHandler() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if err != nil && err.Error() != tt.wantErrMsg {
+				t.Errorf("AdapterV1.processHandler() error msg = %v, wantErrMsg %v", err.Error(), tt.wantErrMsg)
 			}
 		})
 	}
