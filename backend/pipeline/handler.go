@@ -14,7 +14,7 @@ type HandlerAdapter interface {
 }
 
 func (a *AdapterV1) processHandler(ctx context.Context, ref *corev2.ResourceReference, event *corev2.Event, mutatedData []byte) error {
-	handler, err := a.getHandlerForResource(ctx, ref)
+	handler, err := a.getHandlerAdapterForResource(ctx, ref)
 	if err != nil {
 		return err
 	}
@@ -22,7 +22,7 @@ func (a *AdapterV1) processHandler(ctx context.Context, ref *corev2.ResourceRefe
 	return handler.Handle(ctx, ref, event, mutatedData)
 }
 
-func (a *AdapterV1) getHandlerForResource(ctx context.Context, ref *corev2.ResourceReference) (HandlerAdapter, error) {
+func (a *AdapterV1) getHandlerAdapterForResource(ctx context.Context, ref *corev2.ResourceReference) (HandlerAdapter, error) {
 	for _, handlerAdapter := range a.HandlerAdapters {
 		if handlerAdapter.CanHandle(ref) {
 			return handlerAdapter, nil

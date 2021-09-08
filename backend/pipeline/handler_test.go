@@ -2,12 +2,13 @@ package pipeline
 
 import (
 	"context"
-	"reflect"
 	"testing"
 	"time"
 
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/store"
+	"github.com/sensu/sensu-go/testing/mockpipeline"
+	"github.com/stretchr/testify/mock"
 )
 
 // func TestPipelineHandleEvent(t *testing.T) {
@@ -87,7 +88,7 @@ func TestAdapterV1_processHandler(t *testing.T) {
 	}
 }
 
-func TestAdapterV1_getHandlerForResource(t *testing.T) {
+func TestAdapterV1_getHandlerAdapterForResource(t *testing.T) {
 	type fields struct {
 		Store           store.Store
 		StoreTimeout    time.Duration
@@ -100,13 +101,78 @@ func TestAdapterV1_getHandlerForResource(t *testing.T) {
 		ref *corev2.ResourceReference
 	}
 	tests := []struct {
-		name    string
-		fields  fields
-		args    args
-		want    HandlerAdapter
-		wantErr bool
+		name       string
+		fields     fields
+		args       args
+		wantNil    bool
+		wantName   string
+		wantErr    bool
+		wantErrMsg string
 	}{
-		// TODO: Add test cases.
+		{
+			name: "returns an error when no handler adapters exist",
+			args: args{
+				ctx: context.Background(),
+				ref: &corev2.ResourceReference{
+					APIVersion: "core/v2",
+					Type:       "Handler",
+					Name:       "handler1",
+				},
+			},
+			wantNil:    true,
+			wantErr:    true,
+			wantErrMsg: "no handler adapters were found that can handle the resource: core/v2.Handler = handler1",
+		},
+		{
+			name: "returns an error when no handler adapters support the resource reference",
+			fields: fields{
+				HandlerAdapters: func() []HandlerAdapter {
+					adapter := mockpipeline.HandlerAdapter{}
+					adapter.On("CanHandle", mock.Anything).Return(false)
+					return []HandlerAdapter{adapter}
+				}(),
+			},
+			args: args{
+				ctx: context.Background(),
+				ref: &corev2.ResourceReference{
+					APIVersion: "core/v2",
+					Type:       "Handler",
+					Name:       "handler1",
+				},
+			},
+			wantNil:    true,
+			wantErr:    true,
+			wantErrMsg: "no handler adapters were found that can handle the resource: core/v2.Handler = handler1",
+		},
+		{
+			name: "returns the first adapter that can support the resource reference",
+			fields: fields{
+				HandlerAdapters: func() []HandlerAdapter {
+					adapter1 := mockpipeline.HandlerAdapter{}
+					adapter1.On("Name").Return("adapter1")
+					adapter1.On("CanHandle", mock.Anything).Return(false)
+
+					adapter2 := mockpipeline.HandlerAdapter{}
+					adapter2.On("Name").Return("adapter2")
+					adapter2.On("CanHandle", mock.Anything).Return(true)
+
+					adapter3 := mockpipeline.HandlerAdapter{}
+					adapter3.On("Name").Return("adapter3")
+					adapter3.On("CanHandle", mock.Anything).Return(true)
+
+					return []HandlerAdapter{adapter1, adapter2, adapter3}
+				}(),
+			},
+			args: args{
+				ctx: context.Background(),
+				ref: &corev2.ResourceReference{
+					APIVersion: "core/v2",
+					Type:       "Handler",
+					Name:       "handler1",
+				},
+			},
+			wantName: "adapter2",
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -117,13 +183,24 @@ func TestAdapterV1_getHandlerForResource(t *testing.T) {
 				MutatorAdapters: tt.fields.MutatorAdapters,
 				HandlerAdapters: tt.fields.HandlerAdapters,
 			}
-			got, err := a.getHandlerForResource(tt.args.ctx, tt.args.ref)
+			got, err := a.getHandlerAdapterForResource(tt.args.ctx, tt.args.ref)
 			if (err != nil) != tt.wantErr {
-				t.Errorf("AdapterV1.getHandlerForResource() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("AdapterV1.getHandlerAdapterForResource() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
-			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("AdapterV1.getHandlerForResource() = %v, want %v", got, tt.want)
+			if err != nil && err.Error() != tt.wantErrMsg {
+				t.Errorf("AdapterV1.getHandlerAdapterForResource() error msg = %v, wantErrMsg %v", err.Error(), tt.wantErrMsg)
+				return
+			}
+			gotNil := (got == nil)
+			if gotNil != tt.wantNil {
+				t.Errorf("AdapterV1.getHandlerAdapterForResource() nil = %v, wantNil %v", gotNil, tt.wantNil)
+				return
+			}
+			if got != nil {
+				if got.Name() != tt.wantName {
+					t.Errorf("AdapterV1.getHandlerAdapterForResource() Name() = %v, wantName %v", got, tt.wantName)
+				}
 			}
 		})
 	}
