@@ -8,6 +8,7 @@ import (
 	"io/ioutil"
 	"net"
 	"os"
+	"reflect"
 	"strings"
 	"testing"
 	"time"
@@ -18,6 +19,10 @@ import (
 	"github.com/sensu/sensu-go/backend/secrets"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/command"
+	"github.com/sensu/sensu-go/testing/mockassetgetter"
+	"github.com/sensu/sensu-go/testing/mockexecutor"
+	"github.com/sensu/sensu-go/testing/mocklicense"
+	"github.com/sensu/sensu-go/testing/mocksecrets"
 	"github.com/sensu/sensu-go/testing/mockstore"
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
@@ -114,7 +119,7 @@ func TestLegacyAdapter_Handle(t *testing.T) {
 		AssetGetter            asset.Getter
 		Executor               command.Executor
 		LicenseGetter          licensing.Getter
-		SecretsProviderManager *secrets.ProviderManager
+		SecretsProviderManager secrets.ProviderManagerer
 		Store                  store.Store
 		StoreTimeout           time.Duration
 	}
@@ -155,45 +160,35 @@ func TestLegacyAdapter_Handle(t *testing.T) {
 			wantErr:    true,
 			wantErrMsg: "failed to fetch handler from store: not found",
 		},
-		// TODO: uncomment this test when asset.GetAssets() returns errors. This
-		// test cannot test for store.ErrInternal until then as
-		// asset.GetAssets() swallows its errors.
-		//
-		// {
-		// 	name: "returns an error if a pipe handler returns an internal store error",
-		// 	args: args{
-		// 		ctx: context.Background(),
-		// 		ref: &corev2.ResourceReference{
-		// 			Name: "handler1",
-		// 		},
-		// 		event: func() *corev2.Event {
-		// 			event := corev2.FixtureEvent("entity1", "check1")
-		// 			return event
-		// 		}(),
-		// 	},
-		// 	fields: fields{
-		// 		AssetGetter: func() asset.Getter {
-		// 			//var asset *corev2.Asset
-		// 			//err := store.ErrInternal{Message: "etcd timeout"}
-		// 			mag := &mockassetgetter.MockAssetGetter{}
-		// 			//mag.On("GetAssetByName", mock.Anything, "asset1").Return(asset, err)
-		// 			return mag
-		// 		}(),
-		// 		Store: func() store.Store {
-		// 			handler := corev2.FixtureHandler("handler1")
-		// 			handler.RuntimeAssets = []string{"asset1"}
-
-		// 			var asset *corev2.Asset
-
-		// 			stor := &mockstore.MockStore{}
-		// 			stor.On("GetHandlerByName", mock.Anything, "handler1").Return(handler, nil)
-		// 			stor.On("GetAssetByName", mock.Anything, "asset1").
-		// 				Return(asset, &store.ErrInternal{Message: "etcd timeout"})
-
-		// 			return stor
-		// 		}(),
-		// 	},
-		//},
+		{
+			name: "returns an error if a pipe handler returns an error",
+			args: args{
+				ctx: context.Background(),
+				ref: &corev2.ResourceReference{
+					Name: "handler1",
+				},
+				event: func() *corev2.Event {
+					event := corev2.FixtureEvent("entity1", "check1")
+					return event
+				}(),
+			},
+			fields: fields{
+				SecretsProviderManager: func() secrets.ProviderManagerer {
+					var secrets []string
+					manager := &mocksecrets.ProviderManager{}
+					manager.On("SubSecrets", mock.Anything, mock.Anything).Return(secrets, errors.New("secrets error"))
+					return manager
+				}(),
+				Store: func() store.Store {
+					handler := corev2.FixtureHandler("handler1")
+					stor := &mockstore.MockStore{}
+					stor.On("GetHandlerByName", mock.Anything, "handler1").Return(handler, nil)
+					return stor
+				}(),
+			},
+			wantErr:    true,
+			wantErrMsg: "secrets error",
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -222,49 +217,180 @@ func TestLegacyAdapter_pipeHandler(t *testing.T) {
 		AssetGetter            asset.Getter
 		Executor               command.Executor
 		LicenseGetter          licensing.Getter
-		SecretsProviderManager *secrets.ProviderManager
+		SecretsProviderManager secrets.ProviderManagerer
 		Store                  store.Store
 		StoreTimeout           time.Duration
 	}
 	type args struct {
-		ctx           context.Context
-		handler       *corev2.Handler
-		event         *corev2.Event
-		mutatedDataFn func(*corev2.Event) []byte
+		ctx         context.Context
+		handler     *corev2.Handler
+		event       *corev2.Event
+		mutatedData []byte
 	}
 	tests := []struct {
-		name         string
-		fields       fields
-		args         args
-		wantNil      bool
-		wantStatus   int
-		wantOutputFn func([]byte) string
-		wantErr      bool
+		name       string
+		fields     fields
+		args       args
+		want       *command.ExecutionResponse
+		wantErr    bool
+		wantErrMsg string
 	}{
 		{
-			name: "can successfully run a pipe handler",
+			name: "appends the license file to envvars when a licensegetter and license exist",
 			fields: fields{
-				Executor: &command.ExecutionRequest{},
+				LicenseGetter: func() licensing.Getter {
+					getter := &mocklicense.Getter{}
+					getter.On("Get").Return("foo-license")
+					return getter
+				}(),
+				Executor: func() command.Executor {
+					ex := &mockexecutor.MockExecutor{}
+					ex.SetRequestFunc(func(_ context.Context, request command.ExecutionRequest) {
+						for _, env := range request.Env {
+							if env == "SENSU_LICENSE_FILE=foo-license" {
+								response := command.FixtureExecutionResponse(0, "")
+								ex.UnsafeReturn(response, nil)
+								return
+							}
+						}
+						response := command.FixtureExecutionResponse(1, "")
+						ex.UnsafeReturn(response, nil)
+					})
+					return ex
+				}(),
+			},
+			args: args{
+				ctx:         context.Background(),
+				handler:     corev2.FixtureHandler("handler1"),
+				event:       corev2.FixtureEvent("entity1", "check1"),
+				mutatedData: []byte{},
+			},
+			want: command.FixtureExecutionResponse(0, ""),
+		},
+		{
+			name: "returns an error if secret retrieval fails",
+			fields: fields{
+				SecretsProviderManager: func() secrets.ProviderManagerer {
+					manager := &mocksecrets.ProviderManager{}
+					manager.On("SubSecrets", mock.Anything, mock.Anything).Return([]string{}, errors.New("secrets error"))
+					return manager
+				}(),
+			},
+			args: args{
+				ctx:         context.Background(),
+				handler:     corev2.FixtureHandler("handler1"),
+				event:       corev2.FixtureEvent("entity1", "check1"),
+				mutatedData: []byte{},
+			},
+			wantErr:    true,
+			wantErrMsg: "secrets error",
+		},
+		{
+			name: "secrets are added to the execution environment",
+			fields: fields{
+				SecretsProviderManager: func() secrets.ProviderManagerer {
+					manager := &mocksecrets.ProviderManager{}
+					manager.On("SubSecrets",
+						mock.Anything,
+						mock.MatchedBy(func(secrets []*corev2.Secret) bool {
+							for _, secret := range secrets {
+								if secret.Name == "MYSECRET" && secret.Secret == "topsecret" {
+									return true
+								}
+							}
+							return false
+						})).
+						Return([]string{"MYSECRET=topsecret"}, nil)
+					return manager
+				}(),
+				Executor: func() command.Executor {
+					ex := &mockexecutor.MockExecutor{}
+					ex.SetRequestFunc(func(_ context.Context, request command.ExecutionRequest) {
+						for _, env := range request.Env {
+							if env == "MYSECRET=topsecret" {
+								response := command.FixtureExecutionResponse(0, "")
+								ex.UnsafeReturn(response, nil)
+								return
+							}
+						}
+						response := command.FixtureExecutionResponse(1, "")
+						ex.UnsafeReturn(response, nil)
+					})
+					return ex
+				}(),
 			},
 			args: args{
 				ctx: context.Background(),
 				handler: func() *corev2.Handler {
-					handler := corev2.FakeHandlerCommand("cat")
-					handler.Type = "pipe"
+					handler := corev2.FixtureHandler("handler1")
+					handler.Secrets = []*corev2.Secret{
+						{
+							Name:   "MYSECRET",
+							Secret: "topsecret",
+						},
+					}
 					return handler
 				}(),
-				event: corev2.FixtureEvent("test", "test"),
-				mutatedDataFn: func(event *corev2.Event) []byte {
-					data, _ := json.Marshal(event)
-					return data
-				},
+				event:       corev2.FixtureEvent("entity1", "check1"),
+				mutatedData: []byte{},
 			},
-			wantNil:    false,
-			wantStatus: 0,
-			wantOutputFn: func(mutatedData []byte) string {
-				return string(mutatedData)
+			want: command.FixtureExecutionResponse(0, ""),
+		},
+		// TODO: add a test here for when asset.GetAssets() returns errors. The
+		// asset.GetAssets() function does not currently return errors and
+		// only logs them.
+		// See issue #4407: https://github.com/sensu/sensu-go/issues/4407
+		{
+			name: "asset environment variables are added to the execution environment",
+			fields: fields{
+				AssetGetter: func() asset.Getter {
+					getter := &mockassetgetter.MockAssetGetter{}
+					runtimeAsset := &asset.RuntimeAsset{
+						Name: "asset1",
+						Path: "/path/to/asset1",
+					}
+					getter.On("Get",
+						mock.Anything,
+						mock.MatchedBy(func(asset *corev2.Asset) bool {
+							return asset.Name == "asset1"
+						})).
+						Return(runtimeAsset, nil)
+					return getter
+				}(),
+				Executor: func() command.Executor {
+					ex := &mockexecutor.MockExecutor{}
+					ex.SetRequestFunc(func(_ context.Context, request command.ExecutionRequest) {
+						for _, env := range request.Env {
+							if env == "ASSET1_PATH=/path/to/asset1" {
+								response := command.FixtureExecutionResponse(0, "")
+								ex.UnsafeReturn(response, nil)
+								return
+							}
+						}
+						response := command.FixtureExecutionResponse(1, "")
+						ex.UnsafeReturn(response, nil)
+					})
+					return ex
+				}(),
+				Store: func() store.Store {
+					asset := corev2.FixtureAsset("asset1")
+					stor := &mockstore.MockStore{}
+					stor.On("GetAssetByName", mock.Anything, "asset1").
+						Return(asset, nil)
+					return stor
+				}(),
 			},
-			wantErr: false,
+			args: args{
+				ctx: context.Background(),
+				handler: func() *corev2.Handler {
+					handler := corev2.FixtureHandler("handler1")
+					handler.RuntimeAssets = []string{"asset1"}
+					return handler
+				}(),
+				event:       corev2.FixtureEvent("entity1", "check1"),
+				mutatedData: []byte{},
+			},
+			want: command.FixtureExecutionResponse(0, ""),
 		},
 	}
 	for _, tt := range tests {
@@ -277,27 +403,17 @@ func TestLegacyAdapter_pipeHandler(t *testing.T) {
 				Store:                  tt.fields.Store,
 				StoreTimeout:           tt.fields.StoreTimeout,
 			}
-			mutatedData := tt.args.mutatedDataFn(tt.args.event)
-
-			got, err := l.pipeHandler(tt.args.ctx, tt.args.handler, tt.args.event, mutatedData)
+			got, err := l.pipeHandler(tt.args.ctx, tt.args.handler, tt.args.event, tt.args.mutatedData)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("LegacyAdapter.pipeHandler() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
-			if (got == nil) != tt.wantNil {
-				t.Errorf("LegacyAdapter.pipeHandler() got = %v, wantNil %v", got, tt.wantNil)
+			if err != nil && err.Error() != tt.wantErrMsg {
+				t.Errorf("LegacyAdapter.pipeHandler() error msg = %v, wantErrMsg %v", err.Error(), tt.wantErrMsg)
 				return
 			}
-			if got != nil {
-				if got.Status != tt.wantStatus {
-					t.Errorf("LegacyAdapter.pipeHandler() status = %v, want %v", got.Status, tt.wantStatus)
-					return
-				}
-				wantOutput := tt.wantOutputFn(mutatedData)
-				if got.Output != wantOutput {
-					t.Errorf("LegacyAdapter.pipeHandler() output = %v, want %v", got.Output, wantOutput)
-					return
-				}
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("LegacyAdapter.pipeHandler() got = %v, want %v", got, tt.want)
 			}
 		})
 	}

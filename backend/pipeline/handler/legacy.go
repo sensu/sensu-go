@@ -30,7 +30,7 @@ type LegacyAdapter struct {
 	AssetGetter            asset.Getter
 	Executor               command.Executor
 	LicenseGetter          licensing.Getter
-	SecretsProviderManager *secrets.ProviderManager
+	SecretsProviderManager secrets.ProviderManagerer
 	Store                  store.Store
 	StoreTimeout           time.Duration
 }
@@ -66,22 +66,26 @@ func (l *LegacyAdapter) Handle(ctx context.Context, ref *corev2.ResourceReferenc
 
 	switch handler.Type {
 	case "pipe":
-		if _, err := l.pipeHandler(ctx, handler, event, mutatedData); err != nil {
-			logger.WithFields(fields).Error(err)
-			if _, ok := err.(*store.ErrInternal); ok {
-				return err
-			}
+		result, err := l.pipeHandler(ctx, handler, event, mutatedData)
+		if err != nil {
+			logger.WithFields(fields).
+				WithError(err).
+				Error("failed to execute event pipe handler")
+			return err
 		}
+		fields["status"] = result.Status
+		fields["output"] = result.Output
+		logger.WithFields(fields).Info("event pipe handler executed")
 	case "tcp", "udp":
-		if _, err := l.socketHandler(ctx, handler, event, mutatedData); err != nil {
+		_, err := l.socketHandler(ctx, handler, event, mutatedData)
+		if err != nil {
 			logger.WithFields(fields).Error(err)
-			if _, ok := err.(*store.ErrInternal); ok {
-				return err
-			}
+			return err
 		}
 	default:
 		return errors.New("unknown handler type")
 	}
+
 	return nil
 }
 
@@ -103,10 +107,14 @@ func (l *LegacyAdapter) pipeHandler(ctx context.Context, handler *corev2.Handler
 		}
 	}
 
-	secrets, err := l.SecretsProviderManager.SubSecrets(ctx, handler.Secrets)
-	if err != nil {
-		logger.WithFields(fields).WithError(err).Error("failed to retrieve secrets for handler")
-		return nil, err
+	secrets := []string{}
+	if l.SecretsProviderManager != nil {
+		substituted, err := l.SecretsProviderManager.SubSecrets(ctx, handler.Secrets)
+		if err != nil {
+			logger.WithFields(fields).WithError(err).Error("failed to retrieve secrets for handler")
+			return nil, err
+		}
+		secrets = append(secrets, substituted...)
 	}
 
 	// Prepare environment variables
@@ -122,11 +130,17 @@ func (l *LegacyAdapter) pipeHandler(ctx context.Context, handler *corev2.Handler
 	if len(handler.RuntimeAssets) != 0 {
 		logger.WithFields(fields).Debug("fetching assets for handler")
 		// Fetch and install all assets required for handler execution
+		// TODO: check for errors here once GetAssets() has been updated to
+		// return errors.
+		// See issue #4407: https://github.com/sensu/sensu-go/issues/4407
 		matchedAssets := asset.GetAssets(ctx, l.Store, handler.RuntimeAssets)
 
 		assets, err := asset.GetAll(ctx, l.AssetGetter, matchedAssets)
 		if err != nil {
 			logger.WithFields(fields).WithError(err).Error("failed to retrieve assets for handler")
+			// TODO(jk): I think we should return an error here regardless of
+			// the type of error.
+			// See issue #4407: https://github.com/sensu/sensu-go/issues/4407
 			if _, ok := err.(*store.ErrInternal); ok {
 				// Fatal error
 				return nil, err
@@ -136,17 +150,7 @@ func (l *LegacyAdapter) pipeHandler(ctx context.Context, handler *corev2.Handler
 		}
 	}
 
-	result, err := l.Executor.Execute(ctx, handlerExec)
-
-	if err != nil {
-		logger.WithFields(fields).WithError(err).Error("failed to execute event pipe handler")
-	} else {
-		fields["status"] = result.Status
-		fields["output"] = result.Output
-		logger.WithFields(fields).Info("event pipe handler executed")
-	}
-
-	return result, err
+	return l.Executor.Execute(ctx, handlerExec)
 }
 
 // socketHandler creates either a TCP or UDP client to write mutatedData
@@ -187,13 +191,15 @@ func (l *LegacyAdapter) socketHandler(ctx context.Context, handler *corev2.Handl
 	}()
 
 	bytes, err := conn.Write(mutatedData)
-
 	if err != nil {
 		logger.WithFields(fields).WithError(err).Error("failed to execute event handler")
-	} else {
-		fields["bytes"] = bytes
-		logger.WithFields(fields).Info("event socket handler executed")
+		return nil, err
 	}
 
+	fields["bytes"] = bytes
+	logger.WithFields(fields).Info("event socket handler executed")
+
+	// TODO(jk): Why return the connection here if we never make use of it?
+	// Perhaps we should return bytes or a result type?
 	return conn, nil
 }
