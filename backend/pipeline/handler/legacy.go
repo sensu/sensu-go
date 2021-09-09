@@ -138,7 +138,7 @@ func (l *LegacyAdapter) pipeHandler(ctx context.Context, handler *corev2.Handler
 		assets, err := asset.GetAll(ctx, l.AssetGetter, matchedAssets)
 		if err != nil {
 			logger.WithFields(fields).WithError(err).Error("failed to retrieve assets for handler")
-			// TODO(jk): I think we should return an error here regardless of
+			// TODO(jk): I think we should return an error here regardless of // nosemgrep:dgryski.semgrep-go.errtodo.err-todo
 			// the type of error.
 			// See issue #4407: https://github.com/sensu/sensu-go/issues/4407
 			if _, ok := err.(*store.ErrInternal); ok {
@@ -199,7 +199,7 @@ func (l *LegacyAdapter) socketHandler(ctx context.Context, handler *corev2.Handl
 	fields["bytes"] = bytes
 	logger.WithFields(fields).Info("event socket handler executed")
 
-	// TODO(jk): Why return the connection here if we never make use of it? // nosemgrep:dgryski.semgrep-go.errtodo.err-todo
+	// TODO(jk): Why return the connection here if we never make use of it?
 	// Perhaps we should return bytes or a result type?
 	return conn, nil
 }
