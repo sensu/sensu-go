@@ -3,7 +3,6 @@ package basic
 import (
 	"encoding/json"
 	"io/ioutil"
-	"os"
 	"path/filepath"
 	"testing"
 	"time"
@@ -15,26 +14,9 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func tmpDir(t *testing.T) (string, func()) {
-	t.Helper()
-
-	dir, err := ioutil.TempDir("", "sensu")
-	if err != nil {
-		t.Fatal(err)
-	}
-	cleanup := func() {
-		err := os.RemoveAll(dir)
-		if err != nil {
-			t.Fatal(err)
-		}
-	}
-
-	return dir, cleanup
-}
-
 func TestSaveAPIUrl(t *testing.T) {
-	dir, cleanup := tmpDir(t)
-	defer cleanup()
+	// Create a dummy directory for testing
+	dir := t.TempDir()
 
 	// Set flags
 	flags := pflag.NewFlagSet("config-dir", pflag.ContinueOnError)
@@ -50,8 +32,8 @@ func TestSaveAPIUrl(t *testing.T) {
 }
 
 func TestSaveFormat(t *testing.T) {
-	dir, cleanup := tmpDir(t)
-	defer cleanup()
+	// Create a dummy directory for testing
+	dir := t.TempDir()
 
 	// Set flags
 	flags := pflag.NewFlagSet("config-dir", pflag.ContinueOnError)
@@ -67,8 +49,8 @@ func TestSaveFormat(t *testing.T) {
 }
 
 func TestSaveNamespace(t *testing.T) {
-	dir, cleanup := tmpDir(t)
-	defer cleanup()
+	// Create a dummy directory for testing
+	dir := t.TempDir()
 
 	// Set flags
 	flags := pflag.NewFlagSet("config-dir", pflag.ContinueOnError)
@@ -84,8 +66,8 @@ func TestSaveNamespace(t *testing.T) {
 }
 
 func TestSaveTimeout(t *testing.T) {
-	dir, cleanup := tmpDir(t)
-	defer cleanup()
+	// Create a dummy directory for testing
+	dir := t.TempDir()
 
 	// Set flags
 	flags := pflag.NewFlagSet("config-dir", pflag.ContinueOnError)
@@ -101,8 +83,8 @@ func TestSaveTimeout(t *testing.T) {
 }
 
 func TestSaveTokens(t *testing.T) {
-	dir, cleanup := tmpDir(t)
-	defer cleanup()
+	// Create a dummy directory for testing
+	dir := t.TempDir()
 
 	// Set flags
 	flags := pflag.NewFlagSet("config-dir", pflag.ContinueOnError)
@@ -119,12 +101,13 @@ func TestSaveTokens(t *testing.T) {
 
 func TestSaveTokensWithAPIUrlFlag(t *testing.T) {
 	// In case the API URL is passed with a flag, we don't want to save it
-	dir, cleanup := tmpDir(t)
-	defer cleanup()
+	// Create a dummy directory for testing
+	dir := t.TempDir()
 
 	// Set flags
 	flags := pflag.NewFlagSet("api-url", pflag.ContinueOnError)
 	flags.String("api-url", "setFromFlag", "")
+	flags.String("config-dir", dir, "")
 	v := viper.New()
 	_ = v.BindPFlags(flags)
 
@@ -152,8 +135,8 @@ func TestSaveTokensWithAPIUrlFlag(t *testing.T) {
 }
 
 func TestWrite(t *testing.T) {
-	dir, cleanup := tmpDir(t)
-	defer cleanup()
+	// Create a dummy directory for testing
+	dir := t.TempDir()
 
 	// Set flags
 	flags := pflag.NewFlagSet("config-dir", pflag.ContinueOnError)
