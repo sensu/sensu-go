@@ -14,7 +14,7 @@ type MutatorAdapter interface {
 }
 
 func (a *AdapterV1) processMutator(ctx context.Context, ref *corev2.ResourceReference, event *corev2.Event) ([]byte, error) {
-	mutator, err := a.getMutatorForResource(ctx, ref)
+	mutator, err := a.getMutatorAdapterForResource(ctx, ref)
 	if err != nil {
 		return nil, err
 	}
@@ -22,7 +22,7 @@ func (a *AdapterV1) processMutator(ctx context.Context, ref *corev2.ResourceRefe
 	return mutator.Mutate(ctx, ref, event)
 }
 
-func (a *AdapterV1) getMutatorForResource(ctx context.Context, ref *corev2.ResourceReference) (MutatorAdapter, error) {
+func (a *AdapterV1) getMutatorAdapterForResource(ctx context.Context, ref *corev2.ResourceReference) (MutatorAdapter, error) {
 	for _, mutatorAdapter := range a.MutatorAdapters {
 		if mutatorAdapter.CanMutate(ref) {
 			return mutatorAdapter, nil
