@@ -4,6 +4,9 @@ coverage.txt
 *~
 \#*
 
+# semgrep rules
+dgryski
+
 # dashboard
 .env
 npm-debug.log*

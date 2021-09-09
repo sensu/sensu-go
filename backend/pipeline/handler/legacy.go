@@ -199,8 +199,7 @@ func (l *LegacyAdapter) socketHandler(ctx context.Context, handler *corev2.Handl
 	fields["bytes"] = bytes
 	logger.WithFields(fields).Info("event socket handler executed")
 
-	// nosemgrep: dgryski.semgrep-go.errtodo.err-todo
-	// TODO(jk): Why return the connection here if we never make use of it?
+	// TODO(jk): Why return the connection here if we never make use of it? // nosemgrep:dgryski.semgrep-go.errtodo.err-todo
 	// Perhaps we should return bytes or a result type?
 	return conn, nil
 }
