@@ -2,7 +2,7 @@ package v2
 
 import (
 	"errors"
-	fmt "fmt"
+	"fmt"
 	"net/url"
 	"path"
 	"sort"
