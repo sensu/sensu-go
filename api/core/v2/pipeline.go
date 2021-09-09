@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"net/url"
 	"path"
+
+	stringsutil "github.com/sensu/sensu-go/api/core/v2/internal/stringutil"
 )
 
 const (
@@ -39,6 +41,9 @@ func (p *Pipeline) RBACName() string {
 
 // URIPath gives the path component of a pipeline URI.
 func (p *Pipeline) URIPath() string {
+	if p.Namespace == "" {
+		return path.Join(URLPrefix, PipelinesResource, url.PathEscape(p.Name))
+	}
 	return path.Join(URLPrefix, "namespaces", url.PathEscape(p.Namespace), PipelinesResource, url.PathEscape(p.Name))
 }
 
@@ -59,6 +64,25 @@ func (p *Pipeline) Validate() error {
 	}
 
 	return nil
+}
+
+// PipelineFields returns a set of fields that represent that resource.
+func PipelineFields(r Resource) map[string]string {
+	resource := r.(*Pipeline)
+	fields := map[string]string{
+		"pipeline.name":      resource.ObjectMeta.Name,
+		"pipeline.namespace": resource.ObjectMeta.Namespace,
+	}
+	stringsutil.MergeMapWithPrefix(fields, resource.ObjectMeta.Labels, "pipeline.labels.")
+	return fields
+}
+
+// FixturePipeline returns a testing fixture for a Pipeline object.
+func FixturePipeline(name, namespace string) *Pipeline {
+	return &Pipeline{
+		ObjectMeta: NewObjectMeta(name, namespace),
+		Workflows:  []*PipelineWorkflow{},
+	}
 }
 
 // FixturePipelineReference returns a testing fixture for a ResourceReference
