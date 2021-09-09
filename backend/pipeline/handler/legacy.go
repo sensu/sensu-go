@@ -174,7 +174,7 @@ func (l *LegacyAdapter) socketHandler(ctx context.Context, handler *corev2.Handl
 		timeout = DefaultSocketTimeout
 	}
 
-	address := fmt.Sprintf("%s:%d", host, port)
+	address := net.JoinHostPort(host, fmt.Sprint(port))
 	timeoutDuration := time.Duration(timeout) * time.Second
 
 	logger.WithFields(fields).Debug("sending event to socket handler")
@@ -199,6 +199,7 @@ func (l *LegacyAdapter) socketHandler(ctx context.Context, handler *corev2.Handl
 	fields["bytes"] = bytes
 	logger.WithFields(fields).Info("event socket handler executed")
 
+	// nosemgrep: dgryski.semgrep-go.errtodo.err-todo
 	// TODO(jk): Why return the connection here if we never make use of it?
 	// Perhaps we should return bytes or a result type?
 	return conn, nil

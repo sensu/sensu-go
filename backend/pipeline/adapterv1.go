@@ -228,6 +228,7 @@ func (a *AdapterV1) expandHandlers(ctx context.Context, handlers []string, level
 				if _, ok := err.(*store.ErrInternal); ok {
 					return nil, err
 				}
+				// nosemgrep: dgryski.semgrep-go.errtodo.err-todo
 				// TODO(jk): do we intend to continue here despite receiving
 				// an error?
 			} else {
