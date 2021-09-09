@@ -13,19 +13,19 @@ type MutatorAdapter struct {
 }
 
 // Name ...
-func (m MutatorAdapter) Name() string {
+func (m *MutatorAdapter) Name() string {
 	args := m.Called()
 	return args.Get(0).(string)
 }
 
 // CanMutate ...
-func (m MutatorAdapter) CanMutate(ref *corev2.ResourceReference) bool {
+func (m *MutatorAdapter) CanMutate(ref *corev2.ResourceReference) bool {
 	args := m.Called(ref)
 	return args.Get(0).(bool)
 }
 
 // Mutate ...
-func (m MutatorAdapter) Mutate(ctx context.Context, ref *corev2.ResourceReference, event *corev2.Event) ([]byte, error) {
+func (m *MutatorAdapter) Mutate(ctx context.Context, ref *corev2.ResourceReference, event *corev2.Event) ([]byte, error) {
 	args := m.Called(ctx, ref, event)
 	return args.Get(0).([]byte), args.Error(1)
 }

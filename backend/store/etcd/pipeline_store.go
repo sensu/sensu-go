@@ -16,6 +16,8 @@ var (
 	pipelineKeyBuilder = store.NewKeyBuilder(pipelinesPathPrefix)
 )
 
+// TODO(jk): remove the nolint line after the pipeline store is complete
+//nolint:deadcode,unused
 func getPipelinePath(pipeline *corev2.Pipeline) string {
 	return pipelineKeyBuilder.WithResource(pipeline).Build(pipeline.Name)
 }

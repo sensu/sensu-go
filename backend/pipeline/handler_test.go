@@ -49,7 +49,7 @@ func TestAdapterV1_processHandler(t *testing.T) {
 			name: "returns an error when handler.Handle() returns an error",
 			fields: fields{
 				HandlerAdapters: func() []HandlerAdapter {
-					adapter := mockpipeline.HandlerAdapter{}
+					adapter := &mockpipeline.HandlerAdapter{}
 					adapter.On("CanHandle", mock.Anything).Return(true)
 					adapter.On("Handle", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
 						Return(errors.New("handler error"))
@@ -70,7 +70,7 @@ func TestAdapterV1_processHandler(t *testing.T) {
 			name: "returns nil when no errors occur",
 			fields: fields{
 				HandlerAdapters: func() []HandlerAdapter {
-					adapter := mockpipeline.HandlerAdapter{}
+					adapter := &mockpipeline.HandlerAdapter{}
 					adapter.On("CanHandle", mock.Anything).Return(true)
 					adapter.On("Handle", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
 						Return(nil)
@@ -147,7 +147,7 @@ func TestAdapterV1_getHandlerAdapterForResource(t *testing.T) {
 			name: "returns an error when no handler adapters support the resource reference",
 			fields: fields{
 				HandlerAdapters: func() []HandlerAdapter {
-					adapter := mockpipeline.HandlerAdapter{}
+					adapter := &mockpipeline.HandlerAdapter{}
 					adapter.On("CanHandle", mock.Anything).Return(false)
 					return []HandlerAdapter{adapter}
 				}(),
@@ -168,15 +168,15 @@ func TestAdapterV1_getHandlerAdapterForResource(t *testing.T) {
 			name: "returns the first adapter that can support the resource reference",
 			fields: fields{
 				HandlerAdapters: func() []HandlerAdapter {
-					adapter1 := mockpipeline.HandlerAdapter{}
+					adapter1 := &mockpipeline.HandlerAdapter{}
 					adapter1.On("Name").Return("adapter1")
 					adapter1.On("CanHandle", mock.Anything).Return(false)
 
-					adapter2 := mockpipeline.HandlerAdapter{}
+					adapter2 := &mockpipeline.HandlerAdapter{}
 					adapter2.On("Name").Return("adapter2")
 					adapter2.On("CanHandle", mock.Anything).Return(true)
 
-					adapter3 := mockpipeline.HandlerAdapter{}
+					adapter3 := &mockpipeline.HandlerAdapter{}
 					adapter3.On("Name").Return("adapter3")
 					adapter3.On("CanHandle", mock.Anything).Return(true)
 

@@ -22,10 +22,9 @@ func TestAdapterV1_processMutator(t *testing.T) {
 		HandlerAdapters []HandlerAdapter
 	}
 	type args struct {
-		ctx         context.Context
-		ref         *corev2.ResourceReference
-		event       *corev2.Event
-		mutatedData []byte
+		ctx   context.Context
+		ref   *corev2.ResourceReference
+		event *corev2.Event
 	}
 	tests := []struct {
 		name       string
@@ -51,7 +50,7 @@ func TestAdapterV1_processMutator(t *testing.T) {
 			name: "returns an error when mutator.Mutate() returns an error",
 			fields: fields{
 				MutatorAdapters: func() []MutatorAdapter {
-					adapter := mockpipeline.MutatorAdapter{}
+					adapter := &mockpipeline.MutatorAdapter{}
 					adapter.On("CanMutate", mock.Anything).Return(true)
 					adapter.On("Mutate", mock.Anything, mock.Anything, mock.Anything).
 						Return([]byte{}, errors.New("mutator error"))
@@ -73,7 +72,7 @@ func TestAdapterV1_processMutator(t *testing.T) {
 			name: "can return mutated data without errors",
 			fields: fields{
 				MutatorAdapters: func() []MutatorAdapter {
-					adapter := mockpipeline.MutatorAdapter{}
+					adapter := &mockpipeline.MutatorAdapter{}
 					adapter.On("CanMutate", mock.Anything).Return(true)
 					adapter.On("Mutate", mock.Anything, mock.Anything, mock.Anything).
 						Return([]byte("mutated data"), nil)
@@ -154,7 +153,7 @@ func TestAdapterV1_getMutatorAdapterForResource(t *testing.T) {
 			name: "returns an error when no mutator adapters support the resource reference",
 			fields: fields{
 				MutatorAdapters: func() []MutatorAdapter {
-					adapter := mockpipeline.MutatorAdapter{}
+					adapter := &mockpipeline.MutatorAdapter{}
 					adapter.On("CanMutate", mock.Anything).Return(false)
 					return []MutatorAdapter{adapter}
 				}(),
@@ -175,15 +174,15 @@ func TestAdapterV1_getMutatorAdapterForResource(t *testing.T) {
 			name: "returns the first adapter that can support the resource reference",
 			fields: fields{
 				MutatorAdapters: func() []MutatorAdapter {
-					adapter1 := mockpipeline.MutatorAdapter{}
+					adapter1 := &mockpipeline.MutatorAdapter{}
 					adapter1.On("Name").Return("adapter1")
 					adapter1.On("CanMutate", mock.Anything).Return(false)
 
-					adapter2 := mockpipeline.MutatorAdapter{}
+					adapter2 := &mockpipeline.MutatorAdapter{}
 					adapter2.On("Name").Return("adapter2")
 					adapter2.On("CanMutate", mock.Anything).Return(true)
 
-					adapter3 := mockpipeline.MutatorAdapter{}
+					adapter3 := &mockpipeline.MutatorAdapter{}
 					adapter3.On("Name").Return("adapter3")
 					adapter3.On("CanMutate", mock.Anything).Return(true)
 

@@ -8,7 +8,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/golang/protobuf/proto"
+	"github.com/golang/protobuf/proto" //nolint:staticcheck // ignore SA1019
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/pipeline/filter"
 	"github.com/sensu/sensu-go/backend/pipeline/handler"
@@ -434,7 +434,7 @@ func TestAdapterV1_resolvePipelineReference(t *testing.T) {
 		{
 			name: "returns a legacy pipeline if the ref name is legacy-pipeline",
 			args: args{
-				ctx: context.WithValue(context.Background(), "namespace", "default"),
+				ctx: context.WithValue(context.Background(), corev2.NamespaceKey, "default"),
 				ref: &corev2.ResourceReference{
 					Name: "legacy-pipeline",
 				},
@@ -454,7 +454,7 @@ func TestAdapterV1_resolvePipelineReference(t *testing.T) {
 		{
 			name: "returns a stored pipeline if the ref name is not legacy-pipeline",
 			args: args{
-				ctx: context.WithValue(context.Background(), "namespace", "default"),
+				ctx: context.WithValue(context.Background(), corev2.NamespaceKey, "default"),
 				ref: &corev2.ResourceReference{
 					Name: "pipeline1",
 				},
@@ -528,7 +528,7 @@ func TestAdapterV1_getPipelineFromStore(t *testing.T) {
 		{
 			name: "returns an error if the store returns an error",
 			args: args{
-				ctx: context.WithValue(context.Background(), "namespace", "default"),
+				ctx: context.WithValue(context.Background(), corev2.NamespaceKey, "default"),
 				ref: &corev2.ResourceReference{
 					Name: "pipeline1",
 				},
@@ -548,7 +548,7 @@ func TestAdapterV1_getPipelineFromStore(t *testing.T) {
 		{
 			name: "returns an error if the pipeline is nil",
 			args: args{
-				ctx: context.WithValue(context.Background(), "namespace", "default"),
+				ctx: context.WithValue(context.Background(), corev2.NamespaceKey, "default"),
 				ref: &corev2.ResourceReference{
 					Name: "pipeline1",
 				},
@@ -568,7 +568,7 @@ func TestAdapterV1_getPipelineFromStore(t *testing.T) {
 		{
 			name: "returns a pipeline when successful",
 			args: args{
-				ctx: context.WithValue(context.Background(), "namespace", "default"),
+				ctx: context.WithValue(context.Background(), corev2.NamespaceKey, "default"),
 				ref: &corev2.ResourceReference{
 					Name: "pipeline1",
 				},
