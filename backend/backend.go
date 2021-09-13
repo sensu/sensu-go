@@ -34,6 +34,7 @@ import (
 	"github.com/sensu/sensu-go/backend/etcd"
 	"github.com/sensu/sensu-go/backend/eventd"
 	"github.com/sensu/sensu-go/backend/keepalived"
+	"github.com/sensu/sensu-go/backend/licensing"
 	"github.com/sensu/sensu-go/backend/liveness"
 	"github.com/sensu/sensu-go/backend/messaging"
 	"github.com/sensu/sensu-go/backend/pipeline"
@@ -81,6 +82,7 @@ type Backend struct {
 	EtcdClientTLSConfig    *tls.Config
 	APIDConfig             apid.Config
 	PipelineAdapterV1      pipeline.AdapterV1
+	LicenseGetter          licensing.Getter
 
 	ctx       context.Context
 	runCtx    context.Context
@@ -332,7 +334,7 @@ func Initialize(ctx context.Context, config *Config) (*Backend, error) {
 	legacyHandlerAdapter := &handler.LegacyAdapter{
 		AssetGetter:            assetGetter,
 		Executor:               command.NewExecutor(),
-		LicenseGetter:          nil,
+		LicenseGetter:          b.LicenseGetter,
 		SecretsProviderManager: b.SecretsProviderManager,
 		Store:                  b.Store,
 		StoreTimeout:           storeTimeout,
