@@ -10,8 +10,8 @@ import (
 	"net/http"
 	"strings"
 
-	jwt "github.com/dgrijalva/jwt-go"
 	time "github.com/echlebek/timeproxy"
+	jwt "github.com/golang-jwt/jwt"
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/types"

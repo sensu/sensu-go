@@ -6,7 +6,7 @@ import (
 	"errors"
 	"testing"
 
-	jwt "github.com/dgrijalva/jwt-go"
+	jwt "github.com/golang-jwt/jwt"
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	coreJWT "github.com/sensu/sensu-go/backend/authentication/jwt"
 	"github.com/sensu/sensu-go/testing/mockstore"

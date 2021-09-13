@@ -5,8 +5,8 @@ import (
 	"errors"
 	"fmt"
 
-	jwt "github.com/dgrijalva/jwt-go"
 	"github.com/go-resty/resty/v2"
+	jwt "github.com/golang-jwt/jwt"
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 )
 

@@ -7,7 +7,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/dgrijalva/jwt-go"
+	"github.com/golang-jwt/jwt"
 	"github.com/sirupsen/logrus"
 
 	"github.com/gorilla/mux"

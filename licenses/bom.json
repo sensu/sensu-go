@@ -108,7 +108,7 @@
 		]
 	},
 	{
-		"project": "github.com/dgrijalva/jwt-go",
+		"project": "github.com/golang-jwt/jwt",
 		"licenses": [
 			{
 				"type": "MIT License",
