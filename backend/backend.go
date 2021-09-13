@@ -250,6 +250,9 @@ func Initialize(ctx context.Context, config *Config) (*Backend, error) {
 	// Initialize an etcd getter
 	queueGetter := queue.EtcdGetter{Client: b.Client, BackendIDGetter: backendID}
 
+	// Initialize the LicenseGetter
+	b.LicenseGetter = config.LicenseGetter
+
 	// Initialize the bus
 	bus, err := messaging.NewWizardBus(messaging.WizardBusConfig{})
 	if err != nil {

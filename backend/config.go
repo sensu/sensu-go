@@ -3,6 +3,7 @@ package backend
 import (
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/etcd"
+	"github.com/sensu/sensu-go/backend/licensing"
 	"golang.org/x/time/rate"
 )
 
@@ -107,4 +108,6 @@ type Config struct {
 
 	LogLevel     string
 	EtcdLogLevel string
+
+	LicenseGetter licensing.Getter
 }
