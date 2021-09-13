@@ -7,6 +7,11 @@ import (
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 )
 
+const (
+	// OnlyCheckOutputAdapterName is the name of the mutator adapter.
+	OnlyCheckOutputAdapterName = "OnlyCheckOutputAdapter"
+)
+
 // OnlyCheckOutputAdapter is a mutator adapter which returns only the check
 // output from the Sensu event. This mutator is considered to be "built-in"
 // (1.x parity), it is most commonly used by tcp/udp handlers (e.g. influxdb).
@@ -14,7 +19,7 @@ type OnlyCheckOutputAdapter struct{}
 
 // Name returns the name of the mutator adapter.
 func (o *OnlyCheckOutputAdapter) Name() string {
-	return "OnlyCheckOutputAdapter"
+	return OnlyCheckOutputAdapterName
 }
 
 // CanMutate determines whether LegacyOnlyCheckOutputAdapter can mutate the

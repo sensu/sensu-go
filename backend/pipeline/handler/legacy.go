@@ -22,6 +22,9 @@ const (
 	// DefaultSocketTimeout specifies the default socket dial
 	// timeout in seconds for TCP and UDP handlers.
 	DefaultSocketTimeout uint32 = 60
+
+	// LegacyAdapterName is the name of the handler adapter.
+	LegacyAdapterName = "LegacyAdapter"
 )
 
 // LegacyAdapter is a handler adapter that supports the legacy core.v2/Handler
@@ -37,7 +40,7 @@ type LegacyAdapter struct {
 
 // Name returns the name of the handler adapter.
 func (l *LegacyAdapter) Name() string {
-	return "LegacyAdapter"
+	return LegacyAdapterName
 }
 
 // CanHandle determines whether LegacyAdapter can handle the resource being

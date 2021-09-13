@@ -16,6 +16,11 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+const (
+	// JavascriptAdapterName is the name of the mutator adapter.
+	JavascriptAdapterName = "JavascriptAdapter"
+)
+
 var (
 	halt = errors.New("halt")
 )
@@ -30,7 +35,7 @@ type JavascriptAdapter struct {
 
 // Name returns the name of the mutator adapter.
 func (j *JavascriptAdapter) Name() string {
-	return "JavascriptAdapter"
+	return JavascriptAdapterName
 }
 
 // CanMutate determines whether JavascriptAdapter can mutate the resource

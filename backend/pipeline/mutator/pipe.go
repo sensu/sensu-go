@@ -16,6 +16,11 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+const (
+	// PipeAdapterName is the name of the mutator adapter.
+	PipeAdapterName = "PipeAdapter"
+)
+
 // PipeAdapter is a mutator adapter which fork/executes a child process for a
 // Sensu mutator command, writes the JSON encoding of the Sensu event to it via
 // STDIN, and captures the command output (STDOUT/ERR) to be used as the mutated
@@ -30,7 +35,7 @@ type PipeAdapter struct {
 
 // Name returns the name of the mutator adapter.
 func (p *PipeAdapter) Name() string {
-	return "PipeAdapter"
+	return PipeAdapterName
 }
 
 // CanMutate determines whether PipeAdapter can mutate the resource being

@@ -13,6 +13,11 @@ import (
 	utillogging "github.com/sensu/sensu-go/util/logging"
 )
 
+const (
+	// LegacyAdapterName is the name of the mutator adapter.
+	LegacyAdapterName = "LegacyAdapter"
+)
+
 var (
 	builtInMutatorNames = []string{
 		"json",
@@ -36,7 +41,7 @@ type LegacyAdapter struct {
 
 // Name returns the name of the mutator adapter.
 func (l *LegacyAdapter) Name() string {
-	return "LegacyAdapter"
+	return LegacyAdapterName
 }
 
 // CanMutate determines whether LegacyAdapter can mutate the resource being

@@ -14,7 +14,12 @@ import (
 	"github.com/sensu/sensu-go/types/dynamic"
 )
 
-const pipelineRoleName = "system:pipeline"
+const (
+	pipelineRoleName = "system:pipeline"
+
+	// LegacyAdapterName is the name of the filter adapter.
+	LegacyAdapterName = "LegacyAdapter"
+)
 
 var (
 	builtInFilterNames = []string{
@@ -39,7 +44,7 @@ type LegacyAdapter struct {
 
 // Name returns the name of the filter adapter.
 func (l *LegacyAdapter) Name() string {
-	return "LegacyAdapter"
+	return LegacyAdapterName
 }
 
 // CanFilter determines whether LegacyAdapter can filter the resource being

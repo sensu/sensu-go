@@ -7,13 +7,18 @@ import (
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 )
 
+const (
+	// JSONAdapterName is the name of the mutator adapter.
+	JSONAdapterName = "JSONAdapter"
+)
+
 // JSONAdapter is a mutator adapter which produces the JSON encoding of the
 // Sensu event.
 type JSONAdapter struct{}
 
 // Name returns the name of the mutator adapter.
 func (j *JSONAdapter) Name() string {
-	return "JSONAdapter"
+	return JSONAdapterName
 }
 
 // CanMutate determines whether JSONAdapter can mutate the resource being

@@ -7,12 +7,17 @@ import (
 	utillogging "github.com/sensu/sensu-go/util/logging"
 )
 
+const (
+	// IsIncidentAdapterName is the name of the filter adapter.
+	IsIncidentAdapterName = "IsIncidentAdapter"
+)
+
 // IsIncident is a filter adapter which will filter events that are incidents.
 type IsIncidentAdapter struct{}
 
 // Name returns the name of the filter adapter.
 func (i *IsIncidentAdapter) Name() string {
-	return "IsIncidentAdapter"
+	return IsIncidentAdapterName
 }
 
 // CanFilter determines whether IsIncidentAdapter can filter the resource being

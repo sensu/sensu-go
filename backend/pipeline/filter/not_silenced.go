@@ -7,13 +7,18 @@ import (
 	utillogging "github.com/sensu/sensu-go/util/logging"
 )
 
+const (
+	// NotSilencedAdapter is the name of the filter adapter.
+	NotSilencedAdapterName = "NotSilencedAdapter"
+)
+
 // NotSilencedAdapter is a filter adapter which will filter events that are not
 // silenced.
 type NotSilencedAdapter struct{}
 
 // Name returns the name of the filter adapter.
 func (n *NotSilencedAdapter) Name() string {
-	return "NotSilencedAdapter"
+	return NotSilencedAdapterName
 }
 
 // CanFilter determines whether NotSilencedAdapter can filter the resource being

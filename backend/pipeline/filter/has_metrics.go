@@ -7,13 +7,18 @@ import (
 	utillogging "github.com/sensu/sensu-go/util/logging"
 )
 
+const (
+	// HasMetricsAdapterName is the name of the filter adapter.
+	HasMetricsAdapterName = "HasMetricsAdapter"
+)
+
 // HasMetricsAdapter is a filter adapter which will filter events that have
 // metrics.
 type HasMetricsAdapter struct{}
 
 // Name returns the name of the filter adapter.
 func (i *HasMetricsAdapter) Name() string {
-	return "HasMetricsAdapter"
+	return HasMetricsAdapterName
 }
 
 // CanFilter determines whether HasMetricsAdapter can filter the resource being
