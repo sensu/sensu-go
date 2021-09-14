@@ -7,7 +7,7 @@ import (
 
 	"github.com/echlebek/crock"
 	time "github.com/echlebek/timeproxy"
-	jwt "github.com/golang-jwt/jwt"
+	jwt "github.com/golang-jwt/jwt/v4"
 	v2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/testing/mockstore"
 	"github.com/sensu/sensu-go/types"

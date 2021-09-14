@@ -3,7 +3,7 @@ package v2
 import (
 	"errors"
 
-	jwt "github.com/golang-jwt/jwt"
+	jwt "github.com/golang-jwt/jwt/v4"
 )
 
 var (
