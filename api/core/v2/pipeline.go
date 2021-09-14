@@ -15,17 +15,17 @@ const (
 )
 
 // GetObjectMeta returns the object metadata for the resource.
-func (p Pipeline) GetObjectMeta() ObjectMeta {
+func (p *Pipeline) GetObjectMeta() ObjectMeta {
 	return p.ObjectMeta
 }
 
 // SetObjectMeta sets the object metadata for the resource.
-func (p Pipeline) SetObjectMeta(meta ObjectMeta) {
+func (p *Pipeline) SetObjectMeta(meta ObjectMeta) {
 	p.ObjectMeta = meta
 }
 
 // SetNamespace sets the namespace of the resource.
-func (p Pipeline) SetNamespace(namespace string) {
+func (p *Pipeline) SetNamespace(namespace string) {
 	p.Namespace = namespace
 }
 
