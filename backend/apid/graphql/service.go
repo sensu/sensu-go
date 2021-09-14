@@ -131,7 +131,7 @@ func NewService(cfg ServiceConfig) (*Service, error) {
 	schema.RegisterHandlerSocket(svc, &handlerSocketImpl{})
 
 	// Register health types
-	schema.RegisterClusterHealth(svc, &clusterHealthImpl{})
+	schema.RegisterClusterHealth(svc, &clusterHealthImpl{healthController: cfg.HealthController})
 	schema.RegisterEtcdAlarmMember(svc, &etcdAlarmMemberImpl{})
 	schema.RegisterEtcdAlarmType(svc)
 	schema.RegisterEtcdClusterHealth(svc, &etcdClusterHealthImpl{})
