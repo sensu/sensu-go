@@ -51,6 +51,8 @@ the etcd response header is nil.
 downloading assets.
 - Forwards compatibility with newer Sensu backends has been improved. Users can
 now create resources with fields that are unknown to Sensu.
+- The `--retry-min`, `--retry-max` and `--retry-multiplier` flags are now listed
+in the `sensu-agent start --help` output.
 
 ### Changed
 - API and agent services now log at warn level when the start up, not at info.
