@@ -51,9 +51,8 @@ Describes the health of the Sensu backend and it's components
 """
 type ClusterHealth {
   "Returns health of the etcd cluster."
-  etcd: EtcdClusterHealth
-
-  # The store interface does not currently return an error if one occurs.
-  # "Holds the string representation of any errors encountered while checking the member's health."
-  # etcdErr: String
+  etcd(
+    "time (in milliseconds) to wait for response from clusters"
+    timeout: Int! = 2500
+  ): EtcdClusterHealth
 }

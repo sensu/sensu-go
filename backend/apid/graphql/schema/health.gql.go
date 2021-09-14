@@ -5,6 +5,7 @@ package schema
 import (
 	errors "errors"
 	graphql1 "github.com/graphql-go/graphql"
+	mapstructure "github.com/mitchellh/mapstructure"
 	graphql "github.com/sensu/sensu-go/graphql"
 )
 
@@ -442,12 +443,23 @@ type _EnumTypeEtcdAlarmTypeValues struct {
 	CORRUPT EtcdAlarmType
 }
 
+// ClusterHealthEtcdFieldResolverArgs contains arguments provided to etcd when selected
+type ClusterHealthEtcdFieldResolverArgs struct {
+	Timeout int // Timeout - time (in milliseconds) to wait for response from clusters
+}
+
+// ClusterHealthEtcdFieldResolverParams contains contextual info to resolve etcd field
+type ClusterHealthEtcdFieldResolverParams struct {
+	graphql.ResolveParams
+	Args ClusterHealthEtcdFieldResolverArgs
+}
+
 //
 // ClusterHealthFieldResolvers represents a collection of methods whose products represent the
 // response values of the 'ClusterHealth' type.
 type ClusterHealthFieldResolvers interface {
 	// Etcd implements response to request for 'etcd' field.
-	Etcd(p graphql.ResolveParams) (interface{}, error)
+	Etcd(p ClusterHealthEtcdFieldResolverParams) (interface{}, error)
 }
 
 // ClusterHealthAliases implements all methods on ClusterHealthFieldResolvers interface by using reflection to
@@ -457,7 +469,7 @@ type ClusterHealthFieldResolvers interface {
 type ClusterHealthAliases struct{}
 
 // Etcd implements response to request for 'etcd' field.
-func (_ ClusterHealthAliases) Etcd(p graphql.ResolveParams) (interface{}, error) {
+func (_ ClusterHealthAliases) Etcd(p ClusterHealthEtcdFieldResolverParams) (interface{}, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
 	return val, err
 }
@@ -471,9 +483,15 @@ func RegisterClusterHealth(svc *graphql.Service, impl ClusterHealthFieldResolver
 }
 func _ObjTypeClusterHealthEtcdHandler(impl interface{}) graphql1.FieldResolveFn {
 	resolver := impl.(interface {
-		Etcd(p graphql.ResolveParams) (interface{}, error)
+		Etcd(p ClusterHealthEtcdFieldResolverParams) (interface{}, error)
 	})
-	return func(frp graphql1.ResolveParams) (interface{}, error) {
+	return func(p graphql1.ResolveParams) (interface{}, error) {
+		frp := ClusterHealthEtcdFieldResolverParams{ResolveParams: p}
+		err := mapstructure.Decode(p.Args, &frp.Args)
+		if err != nil {
+			return nil, err
+		}
+
 		return resolver.Etcd(frp)
 	}
 }
@@ -482,7 +500,11 @@ func _ObjectTypeClusterHealthConfigFn() graphql1.ObjectConfig {
 	return graphql1.ObjectConfig{
 		Description: "Describes the health of the Sensu backend and it's components",
 		Fields: graphql1.Fields{"etcd": &graphql1.Field{
-			Args:              graphql1.FieldConfigArgument{},
+			Args: graphql1.FieldConfigArgument{"timeout": &graphql1.ArgumentConfig{
+				DefaultValue: 2500,
+				Description:  "time (in milliseconds) to wait for response from clusters",
+				Type:         graphql1.NewNonNull(graphql1.Int),
+			}},
 			DeprecationReason: "",
 			Description:       "Returns health of the etcd cluster.",
 			Name:              "etcd",
