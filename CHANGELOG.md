@@ -10,6 +10,7 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ### Added
 - Added `core/v2.Pipeline` resource for configuring event pipelines.
+- Added `pipelines` field to `Check` and `CheckConfig`
 
 ## [6.4.1] - 2021-08-24
 
@@ -26,14 +27,10 @@ for controlling agent retry exponential backoff behaviour. --retry-min and
 a decimal multiplier value.
 - Added ProcessedBy field to check results. The ProcessedBy field indicates which
 agent processed a particular event.
-- Added `core/v2.Pipeline` resource for configuring Pipeline resources.- Added `pipelines` field to `Check` and `CheckConfig`
 - Added API key support for admin user at cluster init time.
 - Added `sensu_go_agentd_event_bytes` & `sensu_go_store_event_bytes` summary
 metrics to the `/metrics` endpoint.
 - Added support for environment variable arguments in `sensuctl`.
-- Added `core/v2.Pipeline` resource for configuring Pipeline resources.
-- Added `pipelines` field to `Check` and `CheckConfig`
-- Added `core/v3.Pipeline` resource for configuring Pipeline resources.
 
 ### Changed
 - When deleting resource with sensuctl, the resource type will now be displayed
