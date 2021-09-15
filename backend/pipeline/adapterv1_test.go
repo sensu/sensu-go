@@ -217,7 +217,7 @@ func TestAdapterV1_Run(t *testing.T) {
 			wantErrMsg: "internal error: etcd timeout",
 		},
 		{
-			name: "returns error when event is filtered",
+			name: "returns nil when event is filtered",
 			args: args{
 				ctx:      context.Background(),
 				ref:      corev2.FixturePipelineReference("pipeline1"),
@@ -248,8 +248,7 @@ func TestAdapterV1_Run(t *testing.T) {
 					return stor
 				}(),
 			},
-			wantErr:    true,
-			wantErrMsg: "event was filtered",
+			wantErr: false,
 		},
 		{
 			name: "returns error when mutator produces an error",
