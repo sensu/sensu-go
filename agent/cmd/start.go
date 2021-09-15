@@ -438,6 +438,9 @@ func flagSet() *pflag.FlagSet {
 	flagSet.Int(flagBackendHeartbeatInterval, viper.GetInt(flagBackendHeartbeatInterval), "interval at which the agent should send heartbeats to the backend")
 	flagSet.Int(flagBackendHeartbeatTimeout, viper.GetInt(flagBackendHeartbeatTimeout), "number of seconds the agent should wait for a response to a hearbeat")
 	flagSet.Bool(flagAgentManagedEntity, viper.GetBool(flagAgentManagedEntity), "manage this entity via the agent")
+	flagSet.Duration(flagRetryMin, viper.GetDuration(flagRetryMin), "minimum amount of time to wait before retrying an agent connection to the backend")
+	flagSet.Duration(flagRetryMax, viper.GetDuration(flagRetryMax), "maximum amount of time to wait before retrying an agent connection to the backend")
+	flagSet.Float64(flagRetryMultiplier, viper.GetFloat64(flagRetryMultiplier), "value multiplied with the current retry delay to produce a longer retry delay (bounded by --retry-max)")
 
 	flagSet.SetOutput(ioutil.Discard)
 
