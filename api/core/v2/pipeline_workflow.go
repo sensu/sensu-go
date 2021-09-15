@@ -4,7 +4,54 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"sync"
 )
+
+type resourceReferences struct {
+	references []ResourceReference
+	mutex      *sync.RWMutex
+}
+
+func (r resourceReferences) add(ref ResourceReference) {
+	r.mutex.Lock()
+	defer r.mutex.Unlock()
+	r.references = append(r.references, ref)
+}
+
+var (
+	validPipelineWorkflowFilterReferences = resourceReferences{
+		references: []ResourceReference{{APIVersion: "core/v2", Type: "EventFilter"}},
+	}
+
+	validPipelineWorkflowMutatorReferences = resourceReferences{
+		references: []ResourceReference{{APIVersion: "core/v2", Type: "Mutator"}},
+	}
+
+	validPipelineWorkflowHandlerReferences = resourceReferences{
+		references: []ResourceReference{{APIVersion: "core/v2", Type: "Handler"}},
+	}
+)
+
+// AddValidPipelineWorkflowFilterReference adds a ResourceReference to the
+// list of valid resource references for filters. Only the APIVersion and
+// Type fields are used to validate resource references at this time.
+func AddValidPipelineWorkflowFilterReference(ref ResourceReference) {
+	validPipelineWorkflowFilterReferences.add(ref)
+}
+
+// AddValidPipelineWorkflowMutatorReference adds a ResourceReference to the
+// list of valid resource references for mutators. Only the APIVersion and
+// Type fields are used to validate resource references at this time.
+func AddValidPipelineWorkflowMutatorReference(ref ResourceReference) {
+	validPipelineWorkflowMutatorReferences.add(ref)
+}
+
+// AddValidPipelineWorkflowHandlerReference adds a ResourceReference to the
+// list of valid resource references for handlers. Only the APIVersion and
+// Type fields are used to validate resource references at this time.
+func AddValidPipelineWorkflowHandlerReference(ref ResourceReference) {
+	validPipelineWorkflowHandlerReferences.add(ref)
+}
 
 // PipelineWorkflowFromHandler takes a Handler, converts it to a
 // PipelineWorkflow and then returns it.
@@ -84,10 +131,8 @@ func (w *PipelineWorkflow) Validate() error {
 }
 
 func (w *PipelineWorkflow) validateEventFilterReference(ref *ResourceReference) error {
-	switch ref.APIVersion {
-	case "core/v2":
-		switch ref.Type {
-		case "EventFilter":
+	for _, allowed := range validPipelineWorkflowFilterReferences.references {
+		if allowed.APIVersion == ref.APIVersion && allowed.Type == ref.Type {
 			return nil
 		}
 	}
@@ -95,10 +140,8 @@ func (w *PipelineWorkflow) validateEventFilterReference(ref *ResourceReference) 
 }
 
 func (w *PipelineWorkflow) validateMutatorReference(ref *ResourceReference) error {
-	switch ref.APIVersion {
-	case "core/v2":
-		switch ref.Type {
-		case "Mutator":
+	for _, allowed := range validPipelineWorkflowMutatorReferences.references {
+		if allowed.APIVersion == ref.APIVersion && allowed.Type == ref.Type {
 			return nil
 		}
 	}
@@ -106,10 +149,8 @@ func (w *PipelineWorkflow) validateMutatorReference(ref *ResourceReference) erro
 }
 
 func (w *PipelineWorkflow) validateHandlerReference(ref *ResourceReference) error {
-	switch ref.APIVersion {
-	case "core/v2":
-		switch ref.Type {
-		case "Handler":
+	for _, allowed := range validPipelineWorkflowHandlerReferences.references {
+		if allowed.APIVersion == ref.APIVersion && allowed.Type == ref.Type {
 			return nil
 		}
 	}
