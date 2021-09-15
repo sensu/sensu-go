@@ -9,12 +9,12 @@ import (
 
 type resourceReferences struct {
 	references []ResourceReference
-	mutex      *sync.RWMutex
+	mu         sync.RWMutex
 }
 
-func (r resourceReferences) add(ref ResourceReference) {
-	r.mutex.Lock()
-	defer r.mutex.Unlock()
+func (r *resourceReferences) add(ref ResourceReference) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
 	r.references = append(r.references, ref)
 }
 
