@@ -179,7 +179,7 @@ func (p *Pipelined) handleMessage(ctx context.Context, msg interface{}) error {
 		if event.HasHandlers() {
 			legacyPipelineRef := &corev2.ResourceReference{
 				APIVersion: "core/v2",
-				Type:       "Pipeline",
+				Type:       "LegacyPipeline",
 				Name:       pipeline.LegacyPipelineName,
 			}
 			pipelineRefs = append(pipelineRefs, legacyPipelineRef)

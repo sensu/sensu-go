@@ -33,8 +33,10 @@ func (a *AdapterV1) Name() string {
 }
 
 func (a *AdapterV1) CanRun(ref *corev2.ResourceReference) bool {
-	if ref.APIVersion == "core/v2" && ref.Type == "Pipeline" {
-		return true
+	if ref.APIVersion == "core/v2" {
+		if ref.Type == "Pipeline" || ref.Type == "LegacyPipeline" {
+			return true
+		}
 	}
 	return false
 }
