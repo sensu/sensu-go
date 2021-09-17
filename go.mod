@@ -25,7 +25,7 @@ require (
 	github.com/evanphx/json-patch/v5 v5.1.0
 	github.com/frankban/quicktest v1.7.2 // indirect
 	github.com/ghodss/yaml v1.0.0
-	github.com/go-ole/go-ole v1.2.1 // indirect
+	github.com/go-ole/go-ole v1.2.6-0.20210915003542-8b1f7f90f6b1 // indirect
 	github.com/go-resty/resty/v2 v2.5.0
 	github.com/gogo/protobuf v1.3.2
 	github.com/golang/protobuf v1.5.2
@@ -60,7 +60,7 @@ require (
 	github.com/sensu/sensu-go/api/core/v2 v2.6.0
 	github.com/sensu/sensu-go/api/core/v3 v3.3.0
 	github.com/sensu/sensu-go/types v0.3.0
-	github.com/shirou/gopsutil v3.21.4+incompatible
+	github.com/shirou/gopsutil v3.21.9-0.20210911021155-ce5729cbcdf6+incompatible
 	github.com/sirupsen/logrus v1.7.0
 	github.com/spf13/cobra v1.1.3
 	github.com/spf13/pflag v1.0.5
