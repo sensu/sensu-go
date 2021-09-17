@@ -13,7 +13,7 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
-	"go.etcd.io/etcd/client/v3"
+	clientv3 "go.etcd.io/etcd/client/v3"
 
 	"github.com/sensu/sensu-go/backend/apid/actions"
 	"github.com/sensu/sensu-go/backend/apid/graphql"
@@ -269,7 +269,7 @@ func notFoundHandler(w http.ResponseWriter, req *http.Request) {
 
 // Start APId.
 func (a *APId) Start() error {
-	logger.Info("starting apid on address: ", a.HTTPServer.Addr)
+	logger.Warn("starting apid on address: ", a.HTTPServer.Addr)
 	ln, err := net.Listen("tcp", a.HTTPServer.Addr)
 	if err != nil {
 		return fmt.Errorf("failed to start apid: %s", err)

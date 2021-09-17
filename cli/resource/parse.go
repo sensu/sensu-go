@@ -51,7 +51,8 @@ func Parse(in io.Reader) ([]*types.Wrapper, error) {
 			}
 		}
 		dec := json.NewDecoder(bytes.NewReader(jsonBytes))
-		dec.DisallowUnknownFields()
+		dec.DisallowUnknownFields() // this will only warn about top-level keys like spec, api_version
+		warnDec := json.NewDecoder(bytes.NewReader(jsonBytes))
 		errCount := 0
 		for dec.More() {
 			var w types.Wrapper
@@ -68,6 +69,9 @@ func Parse(in io.Reader) ([]*types.Wrapper, error) {
 				continue
 			}
 
+			// Warn if there are unknown fields
+			stripWrapperAndMaybeWarn(warnDec, &w, count)
+
 			resources = append(resources, &w)
 			count++
 		}
@@ -77,6 +81,28 @@ func Parse(in io.Reader) ([]*types.Wrapper, error) {
 	filterCheckSubdue(resources)
 
 	return resources, err
+}
+
+// warn if there are any unknown fields in the resource. ignores errors because
+// they would be caught by the other decoder.
+func stripWrapperAndMaybeWarn(dec *json.Decoder, wrapper *types.Wrapper, count int) {
+	envelope := map[string]*json.RawMessage{}
+	if err := dec.Decode(&envelope); err != nil {
+		return
+	}
+	msg := envelope["spec"]
+	if msg == nil {
+		return
+	}
+	resource, err := types.ResolveRaw(wrapper.APIVersion, wrapper.Type)
+	if err != nil {
+		return
+	}
+	dec = json.NewDecoder(bytes.NewReader(*msg))
+	dec.DisallowUnknownFields()
+	if err := dec.Decode(&resource); err != nil {
+		describeError(count, fmt.Errorf("warning: %s", err))
+	}
 }
 
 // splitResources scans the content of the reader and splits the resources.

@@ -205,9 +205,7 @@ func TestListBuildsWithTabular(t *testing.T) {
 func TestListBuildsWithJSON(t *testing.T) {
 	assert := assert.New(t)
 
-	cli := test.NewMockCLI()
-	config := cli.Config.(*client.MockConfig)
-	config.On("Format").Return("json")
+	cli := test.NewCLI()
 
 	asset := *corev2.FixtureAsset("builds")
 	asset.Builds = []*corev2.AssetBuild{

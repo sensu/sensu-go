@@ -37,7 +37,7 @@ func InfoCommand(cli *cli.SensuCli) *cobra.Command {
 			}
 
 			// Determine the format to use to output the data
-			flag := helpers.GetChangedStringValueFlag("format", cmd.Flags())
+			flag := helpers.GetChangedStringValueViper("format", cmd.Flags())
 			format := cli.Config.Format()
 			return helpers.PrintFormatted(flag, format, event, cmd.OutOrStdout(), printToList)
 		},

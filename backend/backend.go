@@ -588,6 +588,8 @@ func (b *Backend) runOnce() error {
 	defer errCancel()
 	eg.Go(errCtx)
 
+	logger.Warn("backend is running and ready to accept events")
+
 	select {
 	case err := <-eg.Err():
 		logger.WithError(err).Error("backend stopped working and is restarting")

@@ -48,7 +48,7 @@ func (opts *hookOpts) withFlags(flags *pflag.FlagSet) {
 	stdinBool, _ := flags.GetBool("stdin")
 	opts.Stdin = strconv.FormatBool(stdinBool)
 
-	if namespace := helpers.GetChangedStringValueFlag("namespace", flags); namespace != "" {
+	if namespace := helpers.GetChangedStringValueViper("namespace", flags); namespace != "" {
 		opts.Namespace = namespace
 	}
 }
