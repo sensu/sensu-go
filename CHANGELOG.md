@@ -6,6 +6,16 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic
 Versioning](http://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+
+### Added
+- Added the platform metrics log. This log contains a listing of core Sensu
+metrics in influx-line format. It is enabled by default but can be disabled
+with the --disable-platform-metrics flag. By default the log is appended to
+every 60s, and written to /var/lib/sensu/sensu-backend/stats.log.
+- Open-sourced the previously enterprise-only event logger. The event logger
+can be used to send the events a backend processes to a rotatable log file.
+
 ## [6.4.1] - 2021-08-24
 
 ### Added
