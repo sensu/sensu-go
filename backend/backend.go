@@ -36,6 +36,7 @@ import (
 	"github.com/sensu/sensu-go/backend/keepalived"
 	"github.com/sensu/sensu-go/backend/licensing"
 	"github.com/sensu/sensu-go/backend/liveness"
+	"github.com/sensu/sensu-go/backend/logging"
 	"github.com/sensu/sensu-go/backend/messaging"
 	"github.com/sensu/sensu-go/backend/pipeline"
 	"github.com/sensu/sensu-go/backend/pipeline/filter"
@@ -52,6 +53,7 @@ import (
 	etcdstorev2 "github.com/sensu/sensu-go/backend/store/v2/etcdstore"
 	"github.com/sensu/sensu-go/backend/tessend"
 	"github.com/sensu/sensu-go/command"
+	"github.com/sensu/sensu-go/metrics"
 	"github.com/sensu/sensu-go/system"
 	"github.com/sensu/sensu-go/util/retry"
 )
@@ -63,6 +65,29 @@ type ErrStartup struct {
 
 func (e ErrStartup) Error() string {
 	return fmt.Sprintf("error starting %s: %s", e.Name, e.Err)
+}
+
+var selectedMetrics = []string{
+	"sensu_go_wizard_bus",
+	"sensu_go_event_handler_duration",
+	"sensu_go_events_processed",
+	"sensu_go_agent_sessions",
+	"sensu_go_session_errors",
+	"sensu_go_websocket_errors",
+	"sensu_go_agentd_event_bytes",
+	"etcd_debugging_mvcc_keys_total",
+	"etcd_debugging_mvcc_delete_total",
+	"etcd_debugging_mvcc_put_total",
+	"etcd_debugging_mvcc_range_total",
+	"etcd_debugging_mvcc_txn_total",
+	"etcd_debugging_mvcc_db_total_size_in_bytes",
+	"etcd_disk_wal_fsync_duration_seconds_bucket",
+	"etcd_disk_backend_commit_duration_seconds_bucket",
+	"etcd_network_client_grpc_received_bytes_total",
+	"etcd_network_client_grpc_sent_bytes_total",
+	"etcd_network_peer_received_bytes_total",
+	"etcd_network_peer_sent_bytes_total",
+	"etcd_snap_db_fsync_duration_seconds_bucket",
 }
 
 // Backend represents the backend server, which is used to hold the datastore
@@ -83,6 +108,7 @@ type Backend struct {
 	APIDConfig             apid.Config
 	PipelineAdapterV1      pipeline.AdapterV1
 	LicenseGetter          licensing.Getter
+	Bus                    messaging.MessageBus
 
 	ctx       context.Context
 	runCtx    context.Context
@@ -258,7 +284,11 @@ func Initialize(ctx context.Context, config *Config) (*Backend, error) {
 	if err != nil {
 		return nil, fmt.Errorf("error initializing %s: %s", bus.Name(), err)
 	}
+	b.Bus = bus
 	b.Daemons = append(b.Daemons, bus)
+
+	// Publish all SIGHUP signals to wizard bus until the provided context is cancelled
+	messaging.MultiplexSignal(b.RunContext(), bus, syscall.SIGHUP)
 
 	// Initialize asset manager
 	backendEntity := b.getBackendEntity(config)
@@ -362,6 +392,9 @@ func Initialize(ctx context.Context, config *Config) (*Backend, error) {
 			BufferSize:      viper.GetInt(FlagEventdBufferSize),
 			WorkerCount:     viper.GetInt(FlagEventdWorkers),
 			StoreTimeout:    2 * time.Minute,
+			LogPath:         b.cfg.EventLogFile,
+			LogBufferSize:   b.cfg.EventLogBufferSize,
+			LogBufferWait:   b.cfg.EventLogBufferWait,
 		},
 	)
 	if err != nil {
@@ -566,6 +599,38 @@ func (b *Backend) runOnce() error {
 
 		// Add the daemon to our stopGroup
 		sg = append(sg, d)
+	}
+
+	if !b.cfg.DisablePlatformMetrics {
+		consumer := fmt.Sprintf("filelogger://%s", b.cfg.PlatformMetricsLogFile)
+		sighup := make(messaging.ChanSubscriber, 1)
+		defer close(sighup)
+		subscription, err := b.Bus.Subscribe(messaging.SignalTopic(syscall.SIGHUP), consumer, sighup)
+		if err != nil {
+			logger.WithError(err).Error("unable to subscribe to SIGHUP signal notifications")
+			return err
+		}
+		defer func() {
+			_ = subscription.Cancel()
+		}()
+		metricsLogWriter, err := logging.NewRotateWriter(b.cfg.PlatformMetricsLogFile, sighup)
+		if err != nil {
+			logger.WithError(err).Error("unable to open platform metrics log file")
+			return err
+		}
+		defer metricsLogWriter.Close()
+		metricsBridge, err := metrics.NewInfluxBridge(&metrics.InfluxBridgeConfig{
+			Writer:    metricsLogWriter,
+			Interval:  b.cfg.PlatformMetricsLoggingInterval,
+			Gatherer:  prometheus.DefaultGatherer,
+			ErrLogger: logger,
+			Select:    selectedMetrics,
+		})
+		if err != nil {
+			logger.WithError(err).Error("unable to start the platform metrics bridge")
+			return err
+		}
+		go metricsBridge.Run(b.RunContext())
 	}
 
 	// Reverse the order of our stopGroup so daemons are stopped in the proper

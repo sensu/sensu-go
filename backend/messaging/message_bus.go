@@ -68,6 +68,12 @@ func (t Subscription) Cancel() error {
 	return t.cancel(t.id)
 }
 
+type ChanSubscriber chan interface{}
+
+func (c ChanSubscriber) Receiver() chan<- interface{} {
+	return c
+}
+
 // MessageBus is the interface to the internal messaging system.
 //
 // The MessageBus is a simple implementation of Event Sourcing where you have

@@ -58,7 +58,7 @@ func newEventd(store storev2.Interface, eventStore store.Store, bus messaging.Me
 		eventChan:       make(chan interface{}, 100),
 		wg:              &sync.WaitGroup{},
 		mu:              &sync.Mutex{},
-		Logger:          &RawLogger{},
+		Logger:          NoopLogger{},
 		workerCount:     5,
 		storeTimeout:    time.Minute,
 		silencedCache:   &cache.Resource{},
@@ -122,6 +122,7 @@ func TestEventHandling(t *testing.T) {
 	// Make sure the event has been marked with the proper state
 	assert.Equal(t, corev2.EventPassingState, event.Check.State)
 	assert.Equal(t, event.Timestamp, event.Check.LastOK)
+
 }
 
 func TestEventMonitor(t *testing.T) {
@@ -265,7 +266,7 @@ func TestCheckTTL(t *testing.T) {
 				livenessFactory: newFakeFactory(switches),
 				workerCount:     1,
 				wg:              &sync.WaitGroup{},
-				Logger:          &RawLogger{},
+				Logger:          NoopLogger{},
 				silencedCache:   &cache.Resource{},
 			}
 

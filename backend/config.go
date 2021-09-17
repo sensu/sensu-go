@@ -1,6 +1,8 @@
 package backend
 
 import (
+	"time"
+
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/etcd"
 	"github.com/sensu/sensu-go/backend/licensing"
@@ -110,4 +112,12 @@ type Config struct {
 	EtcdLogLevel string
 
 	LicenseGetter licensing.Getter
+
+	DisablePlatformMetrics         bool
+	PlatformMetricsLoggingInterval time.Duration
+	PlatformMetricsLogFile         string
+
+	EventLogBufferSize int
+	EventLogBufferWait time.Duration
+	EventLogFile       string
 }
