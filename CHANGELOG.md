@@ -15,6 +15,7 @@ with the --disable-platform-metrics flag. By default the log is appended to
 every 60s, and written to /var/lib/sensu/sensu-backend/stats.log.
 - Open-sourced the previously enterprise-only event logger. The event logger
 can be used to send the events a backend processes to a rotatable log file.
+
 ### Changed
 - Upgraded Go version from 1.16.5 to 1.17.1.
 
