@@ -40,6 +40,7 @@ type APIClient interface {
 	HookAPIClient
 	MutatorAPIClient
 	NamespaceAPIClient
+	PipelineAPIClient
 	RoleAPIClient
 	RoleBindingAPIClient
 	UserAPIClient
@@ -176,6 +177,12 @@ type NamespaceAPIClient interface {
 	UpdateNamespace(*corev2.Namespace) error
 	DeleteNamespace(string) error
 	FetchNamespace(string) (*corev2.Namespace, error)
+}
+
+// PipelineAPIClient client methods for pipelines
+type PipelineAPIClient interface {
+	DeletePipeline(string, string) error
+	FetchPipeline(string) (*corev2.Pipeline, error)
 }
 
 // UserAPIClient client methods for users
