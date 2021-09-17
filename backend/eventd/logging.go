@@ -1,16 +1,14 @@
 package eventd
 
-// Logger ...
+// Logger is the logging interface for eventd.
 type Logger interface {
 	Stop()
 	Println(v interface{})
 }
 
-// RawLogger ...
-type RawLogger struct{}
+type NoopLogger struct {
+}
 
-// Println ...
-func (l *RawLogger) Println(v interface{}) {}
+func (NoopLogger) Stop() {}
 
-// Stop ...
-func (l *RawLogger) Stop() {}
+func (NoopLogger) Println(interface{}) {}

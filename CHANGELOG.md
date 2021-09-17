@@ -11,6 +11,14 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 ### Security
 - Migrated the package dgrijalva/jwt-go to golang-jwt/jwt to address [CVE-2020-26160](https://github.com/advisories/GHSA-w73w-5m7g-f7qc)
 
+### Added
+- Added the platform metrics log. This log contains a listing of core Sensu
+metrics in influx-line format. It is enabled by default but can be disabled
+with the --disable-platform-metrics flag. By default the log is appended to
+every 60s, and written to /var/lib/sensu/sensu-backend/stats.log.
+- Open-sourced the previously enterprise-only event logger. The event logger
+can be used to send the events a backend processes to a rotatable log file.
+
 ## [6.4.1] - 2021-08-24
 
 ### Added
@@ -56,6 +64,8 @@ the etcd response header is nil.
 downloading assets.
 - Forwards compatibility with newer Sensu backends has been improved. Users can
 now create resources with fields that are unknown to Sensu.
+- The `--retry-min`, `--retry-max` and `--retry-multiplier` flags are now listed
+in the `sensu-agent start --help` output.
 
 ### Changed
 - API and agent services now log at warn level when the start up, not at info.

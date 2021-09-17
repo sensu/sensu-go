@@ -11,7 +11,7 @@ import (
 
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/sirupsen/logrus"
-	"go.etcd.io/etcd/client/v3"
+	clientv3 "go.etcd.io/etcd/client/v3"
 
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	corev3 "github.com/sensu/sensu-go/api/core/v3"
@@ -130,6 +130,9 @@ type Eventd struct {
 	Logger          Logger
 	silencedCache   Cache
 	storeTimeout    time.Duration
+	logPath         string
+	logBufferSize   int
+	logBufferWait   time.Duration
 }
 
 // Cache interfaces the cache.Resource struct for easier testing
@@ -150,6 +153,9 @@ type Config struct {
 	BufferSize      int
 	WorkerCount     int
 	StoreTimeout    time.Duration
+	LogPath         string
+	LogBufferSize   int
+	LogBufferWait   time.Duration
 }
 
 // New creates a new Eventd.
@@ -179,8 +185,11 @@ func New(ctx context.Context, c Config, opts ...Option) (*Eventd, error) {
 		keepaliveChan:   make(chan interface{}, c.BufferSize),
 		wg:              &sync.WaitGroup{},
 		mu:              &sync.Mutex{},
-		Logger:          &RawLogger{},
 		storeTimeout:    c.StoreTimeout,
+		logPath:         c.LogPath,
+		logBufferSize:   c.LogBufferSize,
+		logBufferWait:   c.LogBufferWait,
+		Logger:          NoopLogger{},
 	}
 
 	e.ctx, e.cancel = context.WithCancel(ctx)
@@ -219,6 +228,20 @@ func (e *Eventd) Start() error {
 	if err != nil {
 		return err
 	}
+
+	// Start the event logger if configured
+	if e.logPath != "" {
+		logger := FileLogger{
+			Path:       e.logPath,
+			BufferSize: e.logBufferSize,
+			BufferWait: e.logBufferWait,
+			Bus:        e.bus,
+		}
+		logger.Start()
+
+		e.Logger = &logger
+	}
+
 	e.startHandlers()
 
 	return nil
@@ -330,7 +353,7 @@ func (e *Eventd) handleMessage(msg interface{}) error {
 	event, ok := msg.(*corev2.Event)
 	if !ok {
 		EventsProcessed.WithLabelValues(EventsProcessedLabelError, EventsProcessedTypeLabelUnknown).Inc()
-		return errors.New("received non-Event on event channel")
+		return fmt.Errorf("received non-Event on event channel: %v", msg)
 	}
 
 	fields := utillogging.EventFields(event, false)
@@ -607,6 +630,9 @@ func (e *Eventd) Stop() error {
 	close(e.eventChan)
 	close(e.shutdownChan)
 	e.wg.Wait()
+	if e.Logger != nil {
+		e.Logger.Stop()
+	}
 	return nil
 }
 
