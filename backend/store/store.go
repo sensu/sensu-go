@@ -3,14 +3,13 @@ package store
 import (
 	"context"
 	"crypto/tls"
-	"errors"
 	"fmt"
 
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	corev3 "github.com/sensu/sensu-go/api/core/v3"
 	"github.com/sensu/sensu-go/backend/store/patch"
 	"github.com/sensu/sensu-go/types"
-	"go.etcd.io/etcd/client/v3"
+	clientv3 "go.etcd.io/etcd/client/v3"
 )
 
 // ErrAlreadyExists is returned when an object already exists
@@ -200,6 +199,9 @@ type Store interface {
 	// ClusterRoleBindingStore provides an interface for managing cluster role bindings
 	ClusterRoleBindingStore
 
+	// PipelineStore provides an interface for managing pipelines
+	PipelineStore
+
 	// RoleStore provides an interface for managing roles
 	RoleStore
 
@@ -215,9 +217,6 @@ type Store interface {
 
 	// UserStore provides an interface for managing users
 	UserStore
-
-	// ExtensionRegistry tracks third-party extensions.
-	ExtensionRegistry
 
 	// ResourceStore ...
 	ResourceStore
@@ -498,6 +497,13 @@ type NamespaceStore interface {
 	UpdateNamespace(ctx context.Context, org *types.Namespace) error
 }
 
+// PipelineStore provides methods for managing pipelines
+type PipelineStore interface {
+	// GetPipelineByName returns a pipeline using the given name and the
+	// namespace stored in ctx. The resulting pipeline is nil if none was found.
+	GetPipelineByName(ctx context.Context, name string) (*corev2.Pipeline, error)
+}
+
 // ResourceStore ...
 type ResourceStore interface {
 	CreateResource(ctx context.Context, resource corev2.Resource) error
@@ -641,26 +647,4 @@ type Initializer interface {
 
 	// Lock locks a mutex to avoid competing writes
 	Lock(context.Context) error
-}
-
-// ErrNoExtension is returned when a named extension does not exist.
-var ErrNoExtension = errors.New("the extension does not exist")
-
-// ExtensionRegistry registers and tracks Sensu extensions.
-type ExtensionRegistry interface {
-	// RegisterExtension registers an extension. It associates an extension type and
-	// name with a URL. The registry assumes that the extension provides
-	// a handler and a mutator named 'name'.
-	RegisterExtension(context.Context, *types.Extension) error
-
-	// DeregisterExtension deregisters an extension. If the extension does not exist,
-	// nil error is returned.
-	DeregisterExtension(ctx context.Context, name string) error
-
-	// GetExtension gets the address of a registered extension. If the extension does
-	// not exist, ErrNoExtension is returned.
-	GetExtension(ctx context.Context, name string) (*types.Extension, error)
-
-	// GetExtensions gets all the extensions for the namespace in ctx.
-	GetExtensions(ctx context.Context, pred *SelectionPredicate) ([]*types.Extension, error)
 }

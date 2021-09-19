@@ -16,6 +16,14 @@ type Provider interface {
 	Get(id string) (string, error)
 }
 
+// ProviderManagerer represents an abstracted secrets provider manager.
+type ProviderManagerer interface {
+	AddProvider(Provider)
+	Providers() map[string]Provider
+	RemoveProvider(string) error
+	SubSecrets(context.Context, []*corev2.Secret) ([]string, error)
+}
+
 // ProviderManager manages the list of secrets providers.
 type ProviderManager struct {
 	mu         *sync.RWMutex

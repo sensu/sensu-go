@@ -2,12 +2,10 @@
 package pipelined
 
 import (
-	"encoding/json"
 	"testing"
 
+	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/messaging"
-	"github.com/sensu/sensu-go/testing/mockstore"
-	"github.com/sensu/sensu-go/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -16,29 +14,18 @@ func TestPipelined(t *testing.T) {
 	bus, err := messaging.NewWizardBus(messaging.WizardBusConfig{})
 	require.NoError(t, err)
 	require.NoError(t, bus.Start())
-	store := &mockstore.MockStore{}
 
-	p, err := New(Config{Bus: bus, Store: store})
+	p, err := New(Config{Bus: bus})
 	require.NoError(t, err)
 	require.NoError(t, p.Start())
 
-	entity := types.FixtureEntity("entity1")
-	check := types.FixtureCheck("check1")
-	metrics := types.FixtureMetrics()
+	event := corev2.FixtureEvent("entity1", "check1")
+	event.Metrics = corev2.FixtureMetrics()
 
-	event := &types.Event{
-		Entity:  entity,
-		Check:   check,
-		Metrics: metrics,
-	}
-
-	notIncident, _ := json.Marshal(event)
-	assert.NoError(t, bus.Publish(messaging.TopicEvent, notIncident))
+	assert.NoError(t, bus.Publish(messaging.TopicEvent, event))
 
 	event.Check.Status = 1
-
-	incident, _ := json.Marshal(event)
-	assert.NoError(t, bus.Publish(messaging.TopicEvent, incident))
+	assert.NoError(t, bus.Publish(messaging.TopicEvent, event))
 
 	assert.NoError(t, p.Stop())
 }

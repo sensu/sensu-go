@@ -7,7 +7,7 @@ import "github.com/sensu/sensu-go/api/core/v2/meta.proto";
 import "github.com/sensu/sensu-go/api/core/v2/time_window.proto";
 import "github.com/sensu/sensu-go/api/core/v2/secret.proto";
 import "github.com/sensu/sensu-go/api/core/v2/metrics.proto";
-import "github.com/sensu/sensu-go/api/core/v2/pipeline.proto";
+import "github.com/sensu/sensu-go/api/core/v2/resource_reference.proto";
 
 package sensu.core.v2;
 
@@ -165,7 +165,7 @@ message CheckConfig {
   string scheduler = 31 [ (gogoproto.jsontag) = "-", (gogoproto.moretags) = "yaml: \"-\"" ];
 
   // Pipelines are the pipelines this check will use to process its events.
-  repeated Pipeline pipelines = 32 [ (gogoproto.jsontag) = "pipelines" ];
+  repeated ResourceReference pipelines = 32 [ (gogoproto.jsontag) = "pipelines" ];
 }
 
 // A Check is a check specification and optionally the results of the check's
@@ -320,11 +320,11 @@ message Check {
   // is mainly useful for determining which agent executed a proxy check request.
   string ProcessedBy = 45 [ (gogoproto.jsontag) = "processed_by,omitempty", (gogoproto.moretags) = "yaml: \"processed_by\"" ];
 
+  // Pipelines are the pipelines this check will use to process its events.
+  repeated ResourceReference pipelines = 46 [ (gogoproto.jsontag) = "pipelines" ];
+
   // ExtendedAttributes store serialized arbitrary JSON-encoded data
   bytes ExtendedAttributes = 99 [ (gogoproto.jsontag) = "-" ];
-
-  // Pipelines are the pipelines this check will use to process its events.
-  repeated Pipeline pipelines = 46 [ (gogoproto.jsontag) = "pipelines" ];
 }
 
 // CheckHistory is a record of a check execution and its status
