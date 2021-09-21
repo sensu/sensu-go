@@ -503,7 +503,7 @@ func _ObjectTypeClusterHealthConfigFn() graphql1.ObjectConfig {
 			Args: graphql1.FieldConfigArgument{"timeout": &graphql1.ArgumentConfig{
 				DefaultValue: 2500,
 				Description:  "time (in milliseconds) to wait for response from clusters",
-				Type:         graphql1.NewNonNull(graphql1.Int),
+				Type:         graphql1.Int,
 			}},
 			DeprecationReason: "",
 			Description:       "Returns health of the etcd cluster.",

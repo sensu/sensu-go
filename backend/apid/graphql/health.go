@@ -7,7 +7,6 @@ import (
 
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/apid/graphql/schema"
-	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/graphql"
 	"go.etcd.io/etcd/api/v3/etcdserverpb"
 )
@@ -27,8 +26,8 @@ type clusterHealthImpl struct {
 
 // Etcd implements response to request for 'etcd' field.
 func (r *clusterHealthImpl) Etcd(p schema.ClusterHealthEtcdFieldResolverParams) (interface{}, error) {
-	timeout := time.Duration(p.Args.Timeout) * time.Millisecond
-	ctx := context.WithValue(p.Context, store.ContextKeyTimeout, timeout)
+	ctx, cancel := context.WithTimeout(p.Context, time.Duration(p.Args.Timeout)*time.Millisecond)
+	defer cancel()
 	resp := r.healthController.GetClusterHealth(ctx)
 	return resp, nil
 }

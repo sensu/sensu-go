@@ -53,6 +53,6 @@ type ClusterHealth {
   "Returns health of the etcd cluster."
   etcd(
     "time (in milliseconds) to wait for response from clusters"
-    timeout: Int! = 2500
+    timeout: Int = 2500
   ): EtcdClusterHealth
 }
