@@ -46,6 +46,12 @@ const (
 	// PreconditionFailed is used to indicate that a precondition header (e.g.
 	// If-Match) is not matching the server side state
 	PreconditionFailed
+
+	// The deadline expired before the operation could complete. For operations
+	// that change the state of the system, this error may be returned even if
+	// the operation has completed successfully. For example, a successful
+	// response from a server could have been delayed long
+	DeadlineExceeded
 )
 
 // Default error messages if not message is provided.
@@ -58,6 +64,7 @@ var standardErrorMessages = map[ErrCode]string{
 	Unauthenticated:    "unauthenticated",
 	PaymentRequired:    "license required",
 	PreconditionFailed: "precondition failed",
+	DeadlineExceeded:   "deadline exceeded",
 }
 
 // Error describes an issue that ocurred while performing the action.

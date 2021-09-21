@@ -9,27 +9,32 @@ import (
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/apid/graphql/schema"
 	"github.com/sensu/sensu-go/graphql"
+	"github.com/stretchr/testify/mock"
 	"go.etcd.io/etcd/api/v3/etcdserverpb"
 )
 
 func Test_clusterHealthImpl_Etcd(t *testing.T) {
 	tests := []struct {
 		name    string
-		source  interface{}
+		getResp *corev2.HealthResponse
 		want    interface{}
 		wantErr bool
 	}{
 		{
 			name:    "main",
-			source:  "fred",
-			want:    "fred",
+			getResp: corev2.FixtureHealthResponse(false),
+			want:    corev2.FixtureHealthResponse(false),
 			wantErr: false,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			r := &clusterHealthImpl{}
-			got, err := r.Etcd(graphql.ResolveParams{Source: tt.source, Context: context.Background()})
+			controller := new(MockEtcdHealthController)
+			controller.On("GetClusterHealth", mock.Anything).Return(tt.getResp)
+			r := &clusterHealthImpl{
+				healthController: controller,
+			}
+			got, err := r.Etcd(schema.ClusterHealthEtcdFieldResolverParams{ResolveParams: graphql.ResolveParams{Context: context.Background()}})
 			if (err != nil) != tt.wantErr {
 				t.Errorf("clusterHealthImpl.Etcd() error = %v, wantErr %v", err, tt.wantErr)
 				return

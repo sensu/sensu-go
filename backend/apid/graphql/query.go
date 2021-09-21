@@ -169,8 +169,7 @@ func (r *queryImpl) Versions(p graphql.ResolveParams) (interface{}, error) {
 
 // Health implements response to request for 'health' field.
 func (r *queryImpl) Health(p graphql.ResolveParams) (interface{}, error) {
-	resp := r.svc.HealthController.GetClusterHealth(p.Context)
-	return resp, nil
+	return struct{}{}, nil
 }
 
 // Metrics implements response to request for 'metrics' field.

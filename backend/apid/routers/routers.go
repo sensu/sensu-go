@@ -117,6 +117,8 @@ func HTTPStatusFromCode(code actions.ErrCode) int {
 		return http.StatusUnauthorized
 	case actions.PreconditionFailed:
 		return http.StatusPreconditionFailed
+	case actions.DeadlineExceeded:
+		return http.StatusGatewayTimeout
 	}
 
 	logger.WithField("code", code).Error("unknown error code")
