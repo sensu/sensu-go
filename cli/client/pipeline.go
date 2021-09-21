@@ -51,3 +51,23 @@ func (client *RestClient) UpdatePipeline(pipeline *corev2.Pipeline) error {
 
 	return nil
 }
+
+// CreatePipeline creates a new pipeline
+func (client *RestClient) CreatePipeline(pipeline *corev2.Pipeline) (err error) {
+	bytes, err := json.Marshal(pipeline)
+	if err != nil {
+		return err
+	}
+
+	path := EntitiesPath(pipeline.Namespace)
+	res, err := client.R().SetBody(bytes).Post(path)
+	if err != nil {
+		return err
+	}
+
+	if res.StatusCode() >= 400 {
+		return UnmarshalError(res)
+	}
+
+	return nil
+}

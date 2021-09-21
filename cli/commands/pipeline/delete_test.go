@@ -29,7 +29,7 @@ func TestDeleteCommandRunEClosure(t *testing.T) {
 
 	cmd := DeleteCommand(cli)
 	require.NoError(t, cmd.Flags().Set("skip-confirm", "t"))
-	out, err := test.RunCmd(cmd, []string{"foo", "check_foo"})
+	out, err := test.RunCmd(cmd, []string{"foo"})
 
 	assert.NotEmpty(t, out)
 	assert.Contains(t, out, "Deleted")
@@ -54,7 +54,7 @@ func TestDeleteCommandRunEClosureWithErr(t *testing.T) {
 
 	cmd := DeleteCommand(cli)
 	require.NoError(t, cmd.Flags().Set("skip-confirm", "t"))
-	out, err := test.RunCmd(cmd, []string{"foo", "check_foo"})
+	out, err := test.RunCmd(cmd, []string{"foo"})
 
 	assert.NotNil(t, err)
 	assert.Equal(t, "error", err.Error())
@@ -66,7 +66,7 @@ func TestDeleteCommandRunEFailConfirm(t *testing.T) {
 
 	cli := test.NewMockCLI()
 	cmd := DeleteCommand(cli)
-	out, err := test.RunCmd(cmd, []string{"foo", "check_foo"})
+	out, err := test.RunCmd(cmd, []string{"foo"})
 
 	assert.Contains(out, "Canceled")
 	assert.NoError(err)

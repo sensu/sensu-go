@@ -25,20 +25,20 @@ func TestListCommand(t *testing.T) {
 	assert.NotNil(cmd, "cmd should be returned")
 	assert.NotNil(cmd.RunE, "cmd should be able to be executed")
 	assert.Regexp("list", cmd.Use)
-	assert.Regexp("events", cmd.Short)
+	assert.Regexp("pipelines", cmd.Short)
 }
 
 func TestListCommandRunEClosure(t *testing.T) {
 	assert := assert.New(t)
 	cli := newConfiguredCLI()
 	client := cli.Client.(*client.MockClient)
-	resources := []corev2.Event{}
+	resources := []corev2.Pipeline{}
 	client.On("List", mock.Anything, &resources, mock.Anything, mock.Anything).Return(nil).Run(
 		func(args mock.Arguments) {
-			resources := args[1].(*[]corev2.Event)
-			*resources = []corev2.Event{
-				*corev2.FixtureEvent("1", "something"),
-				*corev2.FixtureEvent("2", "funny"),
+			resources := args[1].(*[]corev2.Pipeline)
+			*resources = []corev2.Pipeline{
+				*corev2.FixturePipeline("1", "something"),
+				*corev2.FixturePipeline("2", "funny"),
 			}
 		},
 	)
@@ -58,12 +58,12 @@ func TestListCommandRunEClosureWithAllNamespaces(t *testing.T) {
 	assert := assert.New(t)
 	cli := newConfiguredCLI()
 	client := cli.Client.(*client.MockClient)
-	resources := []corev2.Event{}
+	resources := []corev2.Pipeline{}
 	client.On("List", mock.Anything, &resources, mock.Anything, mock.Anything).Return(nil).Run(
 		func(args mock.Arguments) {
-			resources := args[1].(*[]corev2.Event)
-			*resources = []corev2.Event{
-				*corev2.FixtureEvent("1", "something"),
+			resources := args[1].(*[]corev2.Pipeline)
+			*resources = []corev2.Pipeline{
+				*corev2.FixturePipeline("1", "something"),
 			}
 		},
 	)
@@ -81,13 +81,13 @@ func TestListCommandRunEClosureWithTable(t *testing.T) {
 	assert := assert.New(t)
 	cli := newConfiguredCLI()
 	client := cli.Client.(*client.MockClient)
-	resources := []corev2.Event{}
+	resources := []corev2.Pipeline{}
 	client.On("List", mock.Anything, &resources, mock.Anything, mock.Anything).Return(nil).Run(
 		func(args mock.Arguments) {
-			resources := args[1].(*[]corev2.Event)
-			*resources = []corev2.Event{
-				*corev2.FixtureEvent("1", "something"),
-				*corev2.FixtureEvent("2", "funny"),
+			resources := args[1].(*[]corev2.Pipeline)
+			*resources = []corev2.Pipeline{
+				*corev2.FixturePipeline("foo", "default"),
+				*corev2.FixturePipeline("bar", "default"),
 			}
 		},
 	)
@@ -97,12 +97,10 @@ func TestListCommandRunEClosureWithTable(t *testing.T) {
 	out, err := test.RunCmd(cmd, []string{})
 
 	assert.NotEmpty(out)
-	assert.Contains(out, "Entity")    // Heading
-	assert.Contains(out, "Check")     // Heading
-	assert.Contains(out, "Output")    // Heading
-	assert.Contains(out, "Timestamp") // Heading
-	assert.Contains(out, "something")
-	assert.Contains(out, "funny")
+	assert.Contains(out, "Name")      // Heading
+	assert.Contains(out, "Workflows") // Heading
+	assert.Contains(out, "foo")
+	assert.Contains(out, "bar")
 	assert.Nil(err)
 }
 
@@ -110,7 +108,7 @@ func TestListCommandRunEClosureWithErr(t *testing.T) {
 	assert := assert.New(t)
 	cli := newConfiguredCLI()
 	client := cli.Client.(*client.MockClient)
-	resources := []corev2.Event{}
+	resources := []corev2.Pipeline{}
 	client.On("List", mock.Anything, &resources, mock.Anything, mock.Anything).Return(errors.New("fun-msg"))
 
 	cmd := ListCommand(cli)
@@ -150,11 +148,11 @@ func TestListCommandRunEClosureWithHeader(t *testing.T) {
 
 	client := cli.Client.(*client.MockClient)
 	var header http.Header
-	resources := []corev2.Event{}
+	resources := []corev2.Pipeline{}
 	client.On("List", mock.Anything, &resources, mock.Anything, &header).Return(nil).Run(
 		func(args mock.Arguments) {
-			resources := args[1].(*[]corev2.Event)
-			*resources = []corev2.Event{}
+			resources := args[1].(*[]corev2.Pipeline)
+			*resources = []corev2.Pipeline{}
 			header := args[3].(*http.Header)
 			*header = make(http.Header)
 			header.Add(helpers.HeaderWarning, "E_TOO_MANY_ENTITIES")
