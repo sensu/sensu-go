@@ -67,7 +67,7 @@ func (a *AdapterV1) Run(ctx context.Context, ref *corev2.ResourceReference, reso
 	ctx = context.WithValue(ctx, corev2.PipelineKey, pipeline.Name)
 
 	if len(pipeline.Workflows) < 1 {
-		return errors.New("pipeline has no workflows")
+		return &ErrNoWorkflows{}
 	}
 
 	for _, workflow := range pipeline.Workflows {
