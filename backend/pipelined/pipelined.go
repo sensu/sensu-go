@@ -208,7 +208,13 @@ func (p *Pipelined) handleMessage(ctx context.Context, msg interface{}) error {
 					if _, ok := err.(*store.ErrInternal); ok {
 						return err
 					}
-					logger.WithFields(fields).Errorf("%s, skipping execution of pipeline", err.Error())
+					skipPipelineErr := fmt.Errorf("%w, skipping execution of pipeline", err)
+					if _, ok := err.(*pipeline.ErrNoWorkflows); ok {
+						logger.WithFields(fields).Warn(skipPipelineErr)
+					} else {
+						logger.WithFields(fields).Error(skipPipelineErr)
+					}
+
 				}
 				adapterFound = true
 			}

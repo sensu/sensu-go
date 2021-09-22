@@ -13,3 +13,10 @@ type Adapter interface {
 	CanRun(*corev2.ResourceReference) bool
 	Run(context.Context, *corev2.ResourceReference, interface{}) error
 }
+
+// ErrNoWorkflows is returned when a pipeline has no workflows
+type ErrNoWorkflows struct{}
+
+func (e *ErrNoWorkflows) Error() string {
+	return "pipeline has no workflows"
+}

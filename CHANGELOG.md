@@ -17,6 +17,7 @@ with the --disable-platform-metrics flag. By default the log is appended to
 every 60s, and written to /var/lib/sensu/sensu-backend/stats.log.
 - Open-sourced the previously enterprise-only event logger. The event logger
 can be used to send the events a backend processes to a rotatable log file.
+- Added sensuctl commands for pipeline list, info, and delete.
 
 ### Fixed
 - `sensuctl env` now properly displays the `SENSU_API_KEY` and `SENSU_TIMEOUT`
