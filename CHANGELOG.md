@@ -18,6 +18,12 @@ every 60s, and written to /var/lib/sensu/sensu-backend/stats.log.
 - Open-sourced the previously enterprise-only event logger. The event logger
 can be used to send the events a backend processes to a rotatable log file.
 
+### Fixed
+- `sensuctl env` now properly displays the `SENSU_API_KEY` and `SENSU_TIMEOUT`
+environment variables.
+- `sensuctl command exec` now properly adds the `SENSU_API_KEY` and
+`SENSU_TIMEOUT` variables to the command's environment.
+
 ### Changed
 - Upgraded Go version from 1.16.5 to 1.17.1.
 
