@@ -167,16 +167,19 @@ func (l *rawLogger) ringBuffer() {
 		select {
 		case l.encoderInput <- v:
 		case <-time.After(l.wait):
-			// The new event could not be placed on the outgoing channel, therefore
-			// take the oldest event in the buffer, drop it, and place the new event
-			// at its place
-			<-l.encoderInput
-			l.encoderInput <- v
-
-			// Increment the eventsDropped counter
-			mu.Lock()
-			eventsDropped++
-			mu.Unlock()
+			dropped := false
+			select {
+			case <-l.encoderInput:
+				dropped = true
+			case l.encoderInput <- v:
+			}
+			if dropped {
+				// Increment the eventsDropped counter
+				mu.Lock()
+				eventsDropped++
+				mu.Unlock()
+				l.encoderInput <- v
+			}
 		}
 	}
 }
