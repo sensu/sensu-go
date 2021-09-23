@@ -147,9 +147,9 @@ func (p *Pipelined) createWorkers(count int, channel chan interface{}) {
 					return
 				case msg := <-channel:
 					ctx, cancel := context.WithCancel(context.Background())
-					defer cancel()
-
-					if err := p.handleMessage(ctx, msg); err != nil {
+					err := p.handleMessage(ctx, msg)
+					cancel()
+					if err != nil {
 						if _, ok := err.(*store.ErrInternal); ok {
 							select {
 							case p.errChan <- err:
