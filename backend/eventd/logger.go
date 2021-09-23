@@ -64,6 +64,7 @@ func (f *FileLogger) Start() {
 	go rawLogger.ringBuffer()
 	// Listen to the output channel of the ring buffer and write it to the log
 	go rawLogger.write()
+	go rawLogger.metricsWriter()
 }
 
 func (f *FileLogger) numEncoders() int {
