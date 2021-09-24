@@ -6,8 +6,8 @@ import (
 
 func TestPipeline_validate(t *testing.T) {
 	type fields struct {
-		Metadata  *ObjectMeta
-		Workflows []*PipelineWorkflow
+		ObjectMeta ObjectMeta
+		Workflows  []*PipelineWorkflow
 	}
 	tests := []struct {
 		name    string
@@ -16,15 +16,9 @@ func TestPipeline_validate(t *testing.T) {
 		wantMsg string
 	}{
 		{
-			name:    "fails when metadata is nil",
-			fields:  fields{},
-			wantErr: true,
-			wantMsg: "metadata must be set",
-		},
-		{
 			name: "fails when name is empty",
 			fields: fields{
-				Metadata: &ObjectMeta{},
+				ObjectMeta: ObjectMeta{},
 			},
 			wantErr: true,
 			wantMsg: "name must not be empty",
@@ -32,7 +26,7 @@ func TestPipeline_validate(t *testing.T) {
 		{
 			name: "fails when namespace is empty",
 			fields: fields{
-				Metadata: &ObjectMeta{
+				ObjectMeta: ObjectMeta{
 					Name: "my-pipeline",
 				},
 			},
@@ -42,7 +36,7 @@ func TestPipeline_validate(t *testing.T) {
 		{
 			name: "fails when a workflow is invalid",
 			fields: fields{
-				Metadata: &ObjectMeta{
+				ObjectMeta: ObjectMeta{
 					Name:      "my-pipeline",
 					Namespace: "default",
 				},
@@ -54,7 +48,7 @@ func TestPipeline_validate(t *testing.T) {
 		{
 			name: "succeeds when metadata is valid",
 			fields: fields{
-				Metadata: &ObjectMeta{
+				ObjectMeta: ObjectMeta{
 					Name:      "my-pipeline",
 					Namespace: "default",
 				},
@@ -65,10 +59,10 @@ func TestPipeline_validate(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			p := &Pipeline{
-				Metadata:  tt.fields.Metadata,
-				Workflows: tt.fields.Workflows,
+				ObjectMeta: tt.fields.ObjectMeta,
+				Workflows:  tt.fields.Workflows,
 			}
-			err := p.validate()
+			err := p.Validate()
 			if (err != nil) != tt.wantErr {
 				t.Errorf("Pipeline.validate() error = %v, wantErr %v", err, tt.wantErr)
 			}
@@ -219,7 +213,7 @@ func TestPipelineWorkflow_validate(t *testing.T) {
 				Mutator: tt.fields.Mutator,
 				Handler: tt.fields.Handler,
 			}
-			err := w.validate()
+			err := w.Validate()
 			if (err != nil) != tt.wantErr {
 				t.Errorf("PipelineWorkflow.validate() error = %v, wantErr %v", err, tt.wantErr)
 			}
@@ -282,174 +276,12 @@ func TestResourceReference_validate(t *testing.T) {
 				Type:       tt.fields.Type,
 				APIVersion: tt.fields.APIVersion,
 			}
-			err := r.validate()
+			err := r.Validate()
 			if (err != nil) != tt.wantErr {
 				t.Errorf("ResourceReference.validate() error = %v, wantErr %v", err, tt.wantErr)
 			}
 			if err != nil && err.Error() != tt.wantMsg {
 				t.Errorf("ResourceReference.validate() error = %v, wantMsg %v", err.Error(), tt.wantMsg)
-			}
-		})
-	}
-}
-
-func TestResourceReference_ValidateEventFilterReference(t *testing.T) {
-	type fields struct {
-		Type       string
-		APIVersion string
-	}
-	tests := []struct {
-		name    string
-		fields  fields
-		wantErr bool
-		wantMsg string
-	}{
-		{
-			name:    "fails when the api version does not contain any event filter types",
-			wantErr: true,
-			wantMsg: "resource type not capable of filtering events: core/fake.EventFilter",
-			fields: fields{
-				APIVersion: "core/fake",
-				Type:       "EventFilter",
-			},
-		},
-		{
-			name:    "fails when the type is not capable of filtering events",
-			wantErr: true,
-			wantMsg: "resource type not capable of filtering events: core/v2.Mutator",
-			fields: fields{
-				APIVersion: "core/v2",
-				Type:       "Mutator",
-			},
-		},
-		{
-			name: "succeeds when the resource is a core/v2.EventFilter",
-			fields: fields{
-				APIVersion: "core/v2",
-				Type:       "EventFilter",
-			},
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			r := &ResourceReference{
-				Type:       tt.fields.Type,
-				APIVersion: tt.fields.APIVersion,
-			}
-			err := r.ValidateEventFilterReference()
-			if (err != nil) != tt.wantErr {
-				t.Errorf("ResourceReference.ValidateEventFilterReference() error = %v, wantErr %v", err, tt.wantErr)
-			}
-			if err != nil && err.Error() != tt.wantMsg {
-				t.Errorf("ResourceReference.ValidateEventFilterReference() error = %v, wantMsg %v", err.Error(), tt.wantMsg)
-			}
-		})
-	}
-}
-
-func TestResourceReference_ValidateMutatorReference(t *testing.T) {
-	type fields struct {
-		Type       string
-		APIVersion string
-	}
-	tests := []struct {
-		name    string
-		fields  fields
-		wantErr bool
-		wantMsg string
-	}{
-		{
-			name:    "fails when the api version does not contain any mutator types",
-			wantErr: true,
-			wantMsg: "resource type not capable of mutating events: core/fake.Mutator",
-			fields: fields{
-				APIVersion: "core/fake",
-				Type:       "Mutator",
-			},
-		},
-		{
-			name:    "fails when the type is not capable of mutating events",
-			wantErr: true,
-			wantMsg: "resource type not capable of mutating events: core/v2.EventFilter",
-			fields: fields{
-				APIVersion: "core/v2",
-				Type:       "EventFilter",
-			},
-		},
-		{
-			name: "succeeds when the resource is a core/v2.Mutator",
-			fields: fields{
-				APIVersion: "core/v2",
-				Type:       "Mutator",
-			},
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			r := &ResourceReference{
-				Type:       tt.fields.Type,
-				APIVersion: tt.fields.APIVersion,
-			}
-			err := r.ValidateMutatorReference()
-			if (err != nil) != tt.wantErr {
-				t.Errorf("ResourceReference.ValidateMutatorReference() error = %v, wantErr %v", err, tt.wantErr)
-			}
-			if err != nil && err.Error() != tt.wantMsg {
-				t.Errorf("ResourceReference.ValidateMutatorReference() error = %v, wantMsg %v", err.Error(), tt.wantMsg)
-			}
-		})
-	}
-}
-
-func TestResourceReference_ValidateHandlerReference(t *testing.T) {
-	type fields struct {
-		Type       string
-		APIVersion string
-	}
-	tests := []struct {
-		name    string
-		fields  fields
-		wantErr bool
-		wantMsg string
-	}{
-		{
-			name:    "fails when the api version does not contain any handler types",
-			wantErr: true,
-			wantMsg: "resource type not capable of handling events: core/fake.Handler",
-			fields: fields{
-				APIVersion: "core/fake",
-				Type:       "Handler",
-			},
-		},
-		{
-			name:    "fails when the type is not capable of handling events",
-			wantErr: true,
-			wantMsg: "resource type not capable of handling events: core/v2.EventFilter",
-			fields: fields{
-				APIVersion: "core/v2",
-				Type:       "EventFilter",
-			},
-		},
-		{
-			name: "succeeds when the resource is a core/v2.Handler",
-			fields: fields{
-				APIVersion: "core/v2",
-				Type:       "Handler",
-			},
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			r := &ResourceReference{
-				Type:       tt.fields.Type,
-				APIVersion: tt.fields.APIVersion,
-			}
-			err := r.ValidateHandlerReference()
-			if (err != nil) != tt.wantErr {
-				t.Errorf("ResourceReference.ValidateHandlerReference() error = %v, wantErr %v", err, tt.wantErr)
-			}
-			if err != nil && err.Error() != tt.wantMsg {
-				t.Errorf("ResourceReference.ValidateHandlerReference() error = %v, wantMsg %v", err.Error(), tt.wantMsg)
 			}
 		})
 	}

@@ -15,8 +15,8 @@ import (
 	etcdstore "github.com/sensu/sensu-go/backend/store/etcd"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	"go.etcd.io/etcd/client/v3"
 	"go.etcd.io/etcd/client/pkg/v3/transport"
+	clientv3 "go.etcd.io/etcd/client/v3"
 	"google.golang.org/grpc"
 )
 
@@ -24,11 +24,12 @@ const (
 	defaultTimeout = "5s"
 
 	flagIgnoreAlreadyInitialized = "ignore-already-initialized"
-	flagInitAdminUsername = "cluster-admin-username"
-	flagInitAdminPassword = "cluster-admin-password"
-	flagInteractive       = "interactive"
-	flagTimeout           = "timeout"
-	flagWait              = "wait"
+	flagInitAdminUsername        = "cluster-admin-username"
+	flagInitAdminPassword        = "cluster-admin-password"
+	flagInteractive              = "interactive"
+	flagTimeout                  = "timeout"
+	flagWait                     = "wait"
+	flagInitAdminAPIKey          = "cluster-admin-api-key"
 )
 
 var errEtcdEndpointUnreachable = errors.New("etcd endpoint could not be reached")
@@ -41,7 +42,7 @@ type initConfig struct {
 
 func (c *initConfig) Validate() error {
 	if c.SeedConfig.AdminUsername == "" || c.SeedConfig.AdminPassword == "" {
-		return fmt.Errorf("both %s and %s are required to be set", flagInitAdminUsername, flagInitAdminPassword)
+		return fmt.Errorf("both %s and %s are required to be set (or an API key)", flagInitAdminUsername, flagInitAdminPassword)
 	}
 	return nil
 }
@@ -50,6 +51,7 @@ type initOpts struct {
 	AdminUsername             string `survey:"cluster-admin-username"`
 	AdminPassword             string `survey:"cluster-admin-password"`
 	AdminPasswordConfirmation string `survey:"cluster-admin-password-confirmation"`
+	AdminAPIKey               string `survey:"cluster-admin-api-key"`
 }
 
 func (i *initOpts) administerQuestionnaire() error {
@@ -74,6 +76,12 @@ func (i *initOpts) administerQuestionnaire() error {
 				Message: "Retype Cluster Admin Password:",
 			},
 			Validate: survey.Required,
+		},
+		{
+			Name: "cluster-admin-api-key",
+			Prompt: &survey.Input{
+				Message: "Cluster Admin API Key:",
+			},
 		},
 	}
 
@@ -145,7 +153,7 @@ func InitCommand() *cobra.Command {
 			}
 
 			timeout := viper.GetDuration(flagTimeout)
-			if timeout < 1 * time.Second {
+			if timeout < 1*time.Second {
 				timeout = timeout * time.Second
 			}
 
@@ -154,6 +162,7 @@ func InitCommand() *cobra.Command {
 				SeedConfig: seeds.Config{
 					AdminUsername: viper.GetString(flagInitAdminUsername),
 					AdminPassword: viper.GetString(flagInitAdminPassword),
+					AdminAPIKey:   viper.GetString(flagInitAdminAPIKey),
 				},
 				Timeout: timeout,
 			}
@@ -170,6 +179,7 @@ func InitCommand() *cobra.Command {
 				}
 				initConfig.SeedConfig.AdminUsername = opts.AdminUsername
 				initConfig.SeedConfig.AdminPassword = opts.AdminPassword
+				initConfig.SeedConfig.AdminAPIKey = opts.AdminAPIKey
 			}
 
 			if err := initConfig.Validate(); err != nil {
@@ -226,6 +236,7 @@ func InitCommand() *cobra.Command {
 	cmd.Flags().Bool(flagInteractive, false, "interactive mode")
 	cmd.Flags().String(flagTimeout, defaultTimeout, "duration to wait before a connection attempt to etcd is considered failed (must be >= 1s)")
 	cmd.Flags().Bool(flagWait, false, "continuously retry to establish a connection to etcd until it is successful")
+	cmd.Flags().String(flagInitAdminAPIKey, "", "cluster admin API key")
 
 	setupErr = handleConfig(cmd, os.Args[1:], false)
 

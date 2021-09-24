@@ -329,23 +329,6 @@ func TestResolveEventFilter(t *testing.T) {
 	}
 }
 
-func TestResolveExtension(t *testing.T) {
-	var value interface{} = new(Extension)
-	if _, ok := value.(Resource); ok {
-		if _, err := ResolveResource("Extension"); err != nil {
-			t.Fatal(err)
-		}
-		return
-	}
-	_, err := ResolveResource("Extension")
-	if err == nil {
-		t.Fatal("expected non-nil error")
-	}
-	if got, want := err.Error(), `"Extension" is not a Resource`; got != want {
-		t.Fatalf("unexpected error: %s", err)
-	}
-}
-
 func TestResolveHandler(t *testing.T) {
 	var value interface{} = new(Handler)
 	if _, ok := value.(Resource); ok {

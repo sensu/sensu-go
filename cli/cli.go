@@ -8,6 +8,7 @@ import (
 	"github.com/sensu/sensu-go/cli/client"
 	"github.com/sensu/sensu-go/cli/client/config"
 	"github.com/sensu/sensu-go/cli/client/config/basic"
+	"github.com/sensu/sensu-go/cli/commands/helpers"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/pflag"
 )
@@ -29,8 +30,13 @@ type SensuCli struct {
 
 // New SensuCLI given persistent flags from command
 func New(flags *pflag.FlagSet) *SensuCli {
-	conf := basic.Load(flags)
-	client := client.New(conf)
+	v, err := helpers.InitViper(flags)
+	if err != nil {
+		return nil
+	}
+
+	conf := basic.Load(flags, v)
+	cliClient := client.New(conf)
 	logger := logrus.WithFields(logrus.Fields{
 		"component": "cli-client",
 	})
@@ -49,10 +55,10 @@ func New(flags *pflag.FlagSet) *SensuCli {
 	tlsConfig.InsecureSkipVerify = conf.InsecureSkipTLSVerify()
 	tlsConfig.CipherSuites = corev2.DefaultCipherSuites
 
-	client.SetTLSClientConfig(&tlsConfig)
+	cliClient.SetTLSClientConfig(&tlsConfig)
 
 	return &SensuCli{
-		Client: client,
+		Client: cliClient,
 		Config: conf,
 		Logger: logger,
 		InFile: os.Stdin,

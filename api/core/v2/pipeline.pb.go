@@ -28,7 +28,7 @@ const _ = proto.ProtoPackageIsVersion3 // please upgrade the proto package
 type Pipeline struct {
 	// Metadata contains the name, namespace, labels and annotations of the
 	// pipeline.
-	Metadata *ObjectMeta `protobuf:"bytes,1,opt,name=Metadata,proto3" json:"metadata"`
+	ObjectMeta `protobuf:"bytes,1,opt,name=Metadata,proto3,embedded=Metadata" json:"metadata,omitempty"`
 	// Workflows contains one or more pipeline workflows.
 	Workflows            []*PipelineWorkflow `protobuf:"bytes,2,rep,name=Workflows,proto3" json:"workflows" yaml: "workflows"`
 	XXX_NoUnkeyedLiteral struct{}            `json:"-"`
@@ -69,13 +69,6 @@ func (m *Pipeline) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_Pipeline proto.InternalMessageInfo
 
-func (m *Pipeline) GetMetadata() *ObjectMeta {
-	if m != nil {
-		return m.Metadata
-	}
-	return nil
-}
-
 func (m *Pipeline) GetWorkflows() []*PipelineWorkflow {
 	if m != nil {
 		return m.Workflows
@@ -83,157 +76,8 @@ func (m *Pipeline) GetWorkflows() []*PipelineWorkflow {
 	return nil
 }
 
-// PipelineWorkflow represents a workflow of filters, mutator, & handler to use
-// in a pipeline.
-//sensu:nogen
-type PipelineWorkflow struct {
-	// Name is a descriptive name of the pipeline workflow.
-	Name string `protobuf:"bytes,1,opt,name=Name,proto3" json:"name" yaml: "name`
-	// Filters contains one or more references to a resource to use as an event
-	// filter.
-	Filters []*ResourceReference `protobuf:"bytes,2,rep,name=Filters,proto3" json:"filters,omitempty" yaml: "filters,omitempty"`
-	// Mutator contains a reference to a resource to use as an event mutator.
-	Mutator *ResourceReference `protobuf:"bytes,3,opt,name=Mutator,proto3" json:"mutator,omitempty" yaml: "mutator,omitempty"`
-	// Handler contains a reference to a resource to use as an event handler.
-	Handler              *ResourceReference `protobuf:"bytes,4,opt,name=Handler,proto3" json:"handler" yaml: "handler]"`
-	XXX_NoUnkeyedLiteral struct{}           `json:"-"`
-	XXX_unrecognized     []byte             `json:"-"`
-	XXX_sizecache        int32              `json:"-"`
-}
-
-func (m *PipelineWorkflow) Reset()         { *m = PipelineWorkflow{} }
-func (m *PipelineWorkflow) String() string { return proto.CompactTextString(m) }
-func (*PipelineWorkflow) ProtoMessage()    {}
-func (*PipelineWorkflow) Descriptor() ([]byte, []int) {
-	return fileDescriptor_9109df54029b8d07, []int{1}
-}
-func (m *PipelineWorkflow) XXX_Unmarshal(b []byte) error {
-	return m.Unmarshal(b)
-}
-func (m *PipelineWorkflow) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	if deterministic {
-		return xxx_messageInfo_PipelineWorkflow.Marshal(b, m, deterministic)
-	} else {
-		b = b[:cap(b)]
-		n, err := m.MarshalToSizedBuffer(b)
-		if err != nil {
-			return nil, err
-		}
-		return b[:n], nil
-	}
-}
-func (m *PipelineWorkflow) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_PipelineWorkflow.Merge(m, src)
-}
-func (m *PipelineWorkflow) XXX_Size() int {
-	return m.Size()
-}
-func (m *PipelineWorkflow) XXX_DiscardUnknown() {
-	xxx_messageInfo_PipelineWorkflow.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_PipelineWorkflow proto.InternalMessageInfo
-
-func (m *PipelineWorkflow) GetName() string {
-	if m != nil {
-		return m.Name
-	}
-	return ""
-}
-
-func (m *PipelineWorkflow) GetFilters() []*ResourceReference {
-	if m != nil {
-		return m.Filters
-	}
-	return nil
-}
-
-func (m *PipelineWorkflow) GetMutator() *ResourceReference {
-	if m != nil {
-		return m.Mutator
-	}
-	return nil
-}
-
-func (m *PipelineWorkflow) GetHandler() *ResourceReference {
-	if m != nil {
-		return m.Handler
-	}
-	return nil
-}
-
-// ResourceReference represents a reference to another resource.
-//sensu:nogen
-type ResourceReference struct {
-	// Name is the name of the resource to reference.
-	Name string `protobuf:"bytes,1,opt,name=Name,proto3" json:"name" yaml: "name`
-	// Type is the name of the data type of the resource to reference.
-	Type string `protobuf:"bytes,2,opt,name=Type,proto3" json:"type" yaml: "type"`
-	// APIVersion is the API version of the resource to reference.
-	APIVersion           string   `protobuf:"bytes,3,opt,name=APIVersion,proto3" json:"api_version" yaml: "api_version"`
-	XXX_NoUnkeyedLiteral struct{} `json:"-"`
-	XXX_unrecognized     []byte   `json:"-"`
-	XXX_sizecache        int32    `json:"-"`
-}
-
-func (m *ResourceReference) Reset()         { *m = ResourceReference{} }
-func (m *ResourceReference) String() string { return proto.CompactTextString(m) }
-func (*ResourceReference) ProtoMessage()    {}
-func (*ResourceReference) Descriptor() ([]byte, []int) {
-	return fileDescriptor_9109df54029b8d07, []int{2}
-}
-func (m *ResourceReference) XXX_Unmarshal(b []byte) error {
-	return m.Unmarshal(b)
-}
-func (m *ResourceReference) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	if deterministic {
-		return xxx_messageInfo_ResourceReference.Marshal(b, m, deterministic)
-	} else {
-		b = b[:cap(b)]
-		n, err := m.MarshalToSizedBuffer(b)
-		if err != nil {
-			return nil, err
-		}
-		return b[:n], nil
-	}
-}
-func (m *ResourceReference) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ResourceReference.Merge(m, src)
-}
-func (m *ResourceReference) XXX_Size() int {
-	return m.Size()
-}
-func (m *ResourceReference) XXX_DiscardUnknown() {
-	xxx_messageInfo_ResourceReference.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_ResourceReference proto.InternalMessageInfo
-
-func (m *ResourceReference) GetName() string {
-	if m != nil {
-		return m.Name
-	}
-	return ""
-}
-
-func (m *ResourceReference) GetType() string {
-	if m != nil {
-		return m.Type
-	}
-	return ""
-}
-
-func (m *ResourceReference) GetAPIVersion() string {
-	if m != nil {
-		return m.APIVersion
-	}
-	return ""
-}
-
 func init() {
 	proto.RegisterType((*Pipeline)(nil), "sensu.core.v2.Pipeline")
-	proto.RegisterType((*PipelineWorkflow)(nil), "sensu.core.v2.PipelineWorkflow")
-	proto.RegisterType((*ResourceReference)(nil), "sensu.core.v2.ResourceReference")
 }
 
 func init() {
@@ -241,39 +85,26 @@ func init() {
 }
 
 var fileDescriptor_9109df54029b8d07 = []byte{
-	// 502 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x94, 0x93, 0x31, 0x6f, 0xd3, 0x4e,
-	0x18, 0xc6, 0xff, 0x97, 0x46, 0xff, 0x24, 0x17, 0x90, 0x12, 0x33, 0xe0, 0x76, 0xf0, 0x45, 0x37,
-	0xa0, 0x4a, 0x14, 0x9b, 0xba, 0x4c, 0x4c, 0xe0, 0xa1, 0xc0, 0x50, 0xa8, 0x4e, 0x08, 0x24, 0x10,
-	0x42, 0x97, 0xf4, 0x4d, 0x6a, 0x88, 0x7d, 0x96, 0x73, 0x76, 0x95, 0x6f, 0xc2, 0x47, 0xe0, 0x13,
-	0x20, 0x3e, 0x42, 0x47, 0x3e, 0xc1, 0x09, 0xcc, 0xe6, 0xd1, 0x13, 0x03, 0x03, 0xf2, 0xd9, 0x2e,
-	0x21, 0x61, 0x08, 0x8b, 0xe5, 0x7b, 0xee, 0xf9, 0x3d, 0xcf, 0xab, 0x57, 0x36, 0xbe, 0x37, 0xf3,
-	0xe5, 0x79, 0x32, 0xb6, 0x27, 0x22, 0x70, 0x16, 0x10, 0x2e, 0x92, 0xea, 0x79, 0x67, 0x26, 0x1c,
-	0x1e, 0xf9, 0xce, 0x44, 0xc4, 0xe0, 0xa4, 0xae, 0x13, 0xf9, 0x11, 0xcc, 0xfd, 0x10, 0xec, 0x28,
-	0x16, 0x52, 0x18, 0xd7, 0xb5, 0xc9, 0x2e, 0x6f, 0xed, 0xd4, 0xdd, 0x5b, 0x0d, 0x99, 0x89, 0x99,
-	0x70, 0xb4, 0x6b, 0x9c, 0x4c, 0x1f, 0xa4, 0x87, 0xf6, 0x91, 0x7d, 0xa8, 0x45, 0xad, 0xe9, 0xb7,
-	0x2a, 0x64, 0xef, 0xee, 0x76, 0xd5, 0x01, 0x48, 0x5e, 0x11, 0xf4, 0x13, 0xc2, 0xdd, 0xd3, 0x7a,
-	0x12, 0xe3, 0x11, 0xee, 0x9e, 0x80, 0xe4, 0x67, 0x5c, 0x72, 0x13, 0x8d, 0xd0, 0x7e, 0xdf, 0xdd,
-	0xb5, 0xff, 0x18, 0xcb, 0x7e, 0x36, 0x7e, 0x07, 0x13, 0x59, 0x9a, 0xbc, 0xc1, 0xa5, 0x22, 0x28,
-	0x57, 0xa4, 0x1b, 0xd4, 0x08, 0xbb, 0x82, 0x0d, 0x8e, 0x7b, 0x2f, 0x45, 0xfc, 0x7e, 0x3a, 0x17,
-	0x17, 0x0b, 0xb3, 0x35, 0xda, 0xd9, 0xef, 0xbb, 0x64, 0x2d, 0xa9, 0x29, 0x6d, 0x7c, 0x1e, 0xcd,
-	0x15, 0xe9, 0x5d, 0x34, 0x54, 0xa1, 0xc8, 0x70, 0xc9, 0x83, 0xf9, 0xfd, 0x11, 0xbd, 0xd2, 0x28,
-	0xfb, 0x9d, 0x4a, 0x7f, 0xb6, 0xf0, 0x60, 0x3d, 0xc3, 0xb8, 0x8d, 0xdb, 0x4f, 0x79, 0x00, 0x7a,
-	0xf8, 0x9e, 0x77, 0x33, 0x57, 0xa4, 0x1d, 0xf2, 0x00, 0x0a, 0x45, 0xfa, 0x75, 0x58, 0x79, 0x64,
-	0xda, 0x64, 0x84, 0xb8, 0x73, 0xec, 0xcf, 0x25, 0xc4, 0xcd, 0x88, 0xa3, 0xb5, 0x11, 0x19, 0x2c,
-	0x44, 0x12, 0x4f, 0x80, 0xc1, 0x14, 0x62, 0x08, 0x27, 0xe0, 0xb9, 0xb9, 0x22, 0xc3, 0x69, 0x05,
-	0x1d, 0x88, 0xc0, 0x97, 0x10, 0x44, 0x72, 0x59, 0x28, 0xb2, 0x5b, 0xc7, 0x6f, 0xdc, 0x51, 0xd6,
-	0x94, 0x94, 0x7d, 0x27, 0x89, 0xe4, 0x52, 0xc4, 0xe6, 0x8e, 0x5e, 0xee, 0x96, 0x7d, 0x41, 0x05,
-	0xfd, 0xb5, 0x6f, 0xe3, 0x8e, 0xb2, 0xa6, 0xc4, 0x78, 0x8d, 0x3b, 0x8f, 0x79, 0x78, 0x36, 0x87,
-	0xd8, 0x6c, 0x6f, 0xd9, 0x47, 0x72, 0x45, 0x3a, 0xe7, 0x15, 0x54, 0x28, 0x32, 0xa8, 0x5b, 0x6a,
-	0xe5, 0x0d, 0x65, 0x4d, 0x62, 0xf9, 0xdd, 0x0c, 0x37, 0xf8, 0x7f, 0xdb, 0xff, 0x01, 0x6e, 0x3f,
-	0x5f, 0x46, 0x60, 0xb6, 0xb4, 0xd9, 0x2c, 0xcd, 0x72, 0x19, 0x95, 0xe6, 0x6b, 0xb5, 0xb9, 0x3c,
-	0x52, 0xa6, 0x5d, 0xc6, 0x31, 0xc6, 0x0f, 0x4f, 0x9f, 0xbc, 0x80, 0x78, 0xe1, 0x8b, 0x50, 0x2f,
-	0xb0, 0xe7, 0xdd, 0xca, 0x15, 0xe9, 0xf3, 0xc8, 0x7f, 0x9b, 0x56, 0x72, 0xa1, 0xc8, 0x8d, 0x1a,
-	0x5d, 0x51, 0x29, 0x5b, 0x21, 0xbd, 0xd1, 0x8f, 0x6f, 0x16, 0xfa, 0x98, 0x59, 0xe8, 0x73, 0x66,
-	0xa1, 0xcb, 0xcc, 0x42, 0x5f, 0x32, 0x0b, 0x7d, 0xcd, 0x2c, 0xf4, 0xe1, 0xbb, 0xf5, 0xdf, 0xab,
-	0x56, 0xea, 0x8e, 0xff, 0xd7, 0x7f, 0xc6, 0xd1, 0xaf, 0x00, 0x00, 0x00, 0xff, 0xff, 0xf2, 0x71,
-	0x58, 0xf8, 0xc8, 0x03, 0x00, 0x00,
+	// 298 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xe2, 0x32, 0x49, 0xcf, 0x2c, 0xc9,
+	0x28, 0x4d, 0xd2, 0x4b, 0xce, 0xcf, 0xd5, 0x2f, 0x4e, 0xcd, 0x2b, 0x2e, 0x85, 0x90, 0xba, 0xe9,
+	0xf9, 0xfa, 0x89, 0x05, 0x99, 0xfa, 0xc9, 0xf9, 0x45, 0xa9, 0xfa, 0x65, 0x46, 0xfa, 0x05, 0x99,
+	0x05, 0xa9, 0x39, 0x99, 0x79, 0xa9, 0x7a, 0x05, 0x45, 0xf9, 0x25, 0xf9, 0x42, 0xbc, 0x60, 0x45,
+	0x7a, 0x20, 0x59, 0xbd, 0x32, 0x23, 0x29, 0x64, 0x43, 0xd2, 0xf3, 0xd3, 0xf3, 0xf5, 0xc1, 0xaa,
+	0x92, 0x4a, 0xd3, 0x1c, 0xca, 0x0c, 0xf5, 0x8c, 0xf5, 0x0c, 0xc1, 0x82, 0x60, 0x31, 0x30, 0x0b,
+	0x62, 0x88, 0x94, 0x01, 0x71, 0x56, 0xe7, 0xa6, 0x96, 0x24, 0x42, 0x75, 0xd8, 0x92, 0xe6, 0xd8,
+	0xf8, 0xf2, 0xfc, 0xa2, 0xec, 0xb4, 0x9c, 0xfc, 0x72, 0x88, 0x76, 0xa5, 0x23, 0x8c, 0x5c, 0x1c,
+	0x01, 0x50, 0x39, 0xa1, 0x50, 0x2e, 0x0e, 0xdf, 0xd4, 0x92, 0xc4, 0x94, 0xc4, 0x92, 0x44, 0x09,
+	0x46, 0x05, 0x46, 0x0d, 0x6e, 0x23, 0x49, 0x3d, 0x14, 0x5f, 0xe9, 0xf9, 0x27, 0x65, 0xa5, 0x26,
+	0x97, 0x80, 0x14, 0x39, 0xc9, 0x9d, 0xb8, 0x27, 0xcf, 0x70, 0xe1, 0x9e, 0x3c, 0xe3, 0xab, 0x7b,
+	0xf2, 0x42, 0xb9, 0x50, 0x6d, 0x3a, 0xf9, 0xb9, 0x99, 0x25, 0xa9, 0xb9, 0x05, 0x25, 0x95, 0x41,
+	0x70, 0xa3, 0x84, 0x12, 0xb9, 0x38, 0xc3, 0xa1, 0xb6, 0x16, 0x4b, 0x30, 0x29, 0x30, 0x6b, 0x70,
+	0x1b, 0xc9, 0xa3, 0x99, 0x0b, 0x73, 0x02, 0x4c, 0x9d, 0x93, 0xd2, 0xab, 0x7b, 0xf2, 0x9c, 0x30,
+	0xb7, 0x16, 0x7f, 0xba, 0x27, 0x2f, 0x58, 0x99, 0x98, 0x9b, 0x63, 0xa5, 0xa0, 0x04, 0x17, 0x53,
+	0x0a, 0x42, 0x98, 0xea, 0xa4, 0xf0, 0xe3, 0xa1, 0x1c, 0xe3, 0x8a, 0x47, 0x72, 0x8c, 0x3b, 0x1e,
+	0xc9, 0x31, 0x9e, 0x78, 0x24, 0xc7, 0x78, 0xe1, 0x91, 0x1c, 0xe3, 0x83, 0x47, 0x72, 0x8c, 0x33,
+	0x1e, 0xcb, 0x31, 0x44, 0x31, 0x95, 0x19, 0x25, 0xb1, 0x81, 0xfd, 0x6b, 0x0c, 0x08, 0x00, 0x00,
+	0xff, 0xff, 0x6e, 0x2f, 0x8b, 0x77, 0xdd, 0x01, 0x00, 0x00,
 }
 
 func (this *Pipeline) Equal(that interface{}) bool {
@@ -295,7 +126,7 @@ func (this *Pipeline) Equal(that interface{}) bool {
 	} else if this == nil {
 		return false
 	}
-	if !this.Metadata.Equal(that1.Metadata) {
+	if !this.ObjectMeta.Equal(&that1.ObjectMeta) {
 		return false
 	}
 	if len(this.Workflows) != len(that1.Workflows) {
@@ -305,80 +136,6 @@ func (this *Pipeline) Equal(that interface{}) bool {
 		if !this.Workflows[i].Equal(that1.Workflows[i]) {
 			return false
 		}
-	}
-	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
-		return false
-	}
-	return true
-}
-func (this *PipelineWorkflow) Equal(that interface{}) bool {
-	if that == nil {
-		return this == nil
-	}
-
-	that1, ok := that.(*PipelineWorkflow)
-	if !ok {
-		that2, ok := that.(PipelineWorkflow)
-		if ok {
-			that1 = &that2
-		} else {
-			return false
-		}
-	}
-	if that1 == nil {
-		return this == nil
-	} else if this == nil {
-		return false
-	}
-	if this.Name != that1.Name {
-		return false
-	}
-	if len(this.Filters) != len(that1.Filters) {
-		return false
-	}
-	for i := range this.Filters {
-		if !this.Filters[i].Equal(that1.Filters[i]) {
-			return false
-		}
-	}
-	if !this.Mutator.Equal(that1.Mutator) {
-		return false
-	}
-	if !this.Handler.Equal(that1.Handler) {
-		return false
-	}
-	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
-		return false
-	}
-	return true
-}
-func (this *ResourceReference) Equal(that interface{}) bool {
-	if that == nil {
-		return this == nil
-	}
-
-	that1, ok := that.(*ResourceReference)
-	if !ok {
-		that2, ok := that.(ResourceReference)
-		if ok {
-			that1 = &that2
-		} else {
-			return false
-		}
-	}
-	if that1 == nil {
-		return this == nil
-	} else if this == nil {
-		return false
-	}
-	if this.Name != that1.Name {
-		return false
-	}
-	if this.Type != that1.Type {
-		return false
-	}
-	if this.APIVersion != that1.APIVersion {
-		return false
 	}
 	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
 		return false
@@ -423,138 +180,16 @@ func (m *Pipeline) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 			dAtA[i] = 0x12
 		}
 	}
-	if m.Metadata != nil {
-		{
-			size, err := m.Metadata.MarshalToSizedBuffer(dAtA[:i])
-			if err != nil {
-				return 0, err
-			}
-			i -= size
-			i = encodeVarintPipeline(dAtA, i, uint64(size))
+	{
+		size, err := m.ObjectMeta.MarshalToSizedBuffer(dAtA[:i])
+		if err != nil {
+			return 0, err
 		}
-		i--
-		dAtA[i] = 0xa
+		i -= size
+		i = encodeVarintPipeline(dAtA, i, uint64(size))
 	}
-	return len(dAtA) - i, nil
-}
-
-func (m *PipelineWorkflow) Marshal() (dAtA []byte, err error) {
-	size := m.Size()
-	dAtA = make([]byte, size)
-	n, err := m.MarshalToSizedBuffer(dAtA[:size])
-	if err != nil {
-		return nil, err
-	}
-	return dAtA[:n], nil
-}
-
-func (m *PipelineWorkflow) MarshalTo(dAtA []byte) (int, error) {
-	size := m.Size()
-	return m.MarshalToSizedBuffer(dAtA[:size])
-}
-
-func (m *PipelineWorkflow) MarshalToSizedBuffer(dAtA []byte) (int, error) {
-	i := len(dAtA)
-	_ = i
-	var l int
-	_ = l
-	if m.XXX_unrecognized != nil {
-		i -= len(m.XXX_unrecognized)
-		copy(dAtA[i:], m.XXX_unrecognized)
-	}
-	if m.Handler != nil {
-		{
-			size, err := m.Handler.MarshalToSizedBuffer(dAtA[:i])
-			if err != nil {
-				return 0, err
-			}
-			i -= size
-			i = encodeVarintPipeline(dAtA, i, uint64(size))
-		}
-		i--
-		dAtA[i] = 0x22
-	}
-	if m.Mutator != nil {
-		{
-			size, err := m.Mutator.MarshalToSizedBuffer(dAtA[:i])
-			if err != nil {
-				return 0, err
-			}
-			i -= size
-			i = encodeVarintPipeline(dAtA, i, uint64(size))
-		}
-		i--
-		dAtA[i] = 0x1a
-	}
-	if len(m.Filters) > 0 {
-		for iNdEx := len(m.Filters) - 1; iNdEx >= 0; iNdEx-- {
-			{
-				size, err := m.Filters[iNdEx].MarshalToSizedBuffer(dAtA[:i])
-				if err != nil {
-					return 0, err
-				}
-				i -= size
-				i = encodeVarintPipeline(dAtA, i, uint64(size))
-			}
-			i--
-			dAtA[i] = 0x12
-		}
-	}
-	if len(m.Name) > 0 {
-		i -= len(m.Name)
-		copy(dAtA[i:], m.Name)
-		i = encodeVarintPipeline(dAtA, i, uint64(len(m.Name)))
-		i--
-		dAtA[i] = 0xa
-	}
-	return len(dAtA) - i, nil
-}
-
-func (m *ResourceReference) Marshal() (dAtA []byte, err error) {
-	size := m.Size()
-	dAtA = make([]byte, size)
-	n, err := m.MarshalToSizedBuffer(dAtA[:size])
-	if err != nil {
-		return nil, err
-	}
-	return dAtA[:n], nil
-}
-
-func (m *ResourceReference) MarshalTo(dAtA []byte) (int, error) {
-	size := m.Size()
-	return m.MarshalToSizedBuffer(dAtA[:size])
-}
-
-func (m *ResourceReference) MarshalToSizedBuffer(dAtA []byte) (int, error) {
-	i := len(dAtA)
-	_ = i
-	var l int
-	_ = l
-	if m.XXX_unrecognized != nil {
-		i -= len(m.XXX_unrecognized)
-		copy(dAtA[i:], m.XXX_unrecognized)
-	}
-	if len(m.APIVersion) > 0 {
-		i -= len(m.APIVersion)
-		copy(dAtA[i:], m.APIVersion)
-		i = encodeVarintPipeline(dAtA, i, uint64(len(m.APIVersion)))
-		i--
-		dAtA[i] = 0x1a
-	}
-	if len(m.Type) > 0 {
-		i -= len(m.Type)
-		copy(dAtA[i:], m.Type)
-		i = encodeVarintPipeline(dAtA, i, uint64(len(m.Type)))
-		i--
-		dAtA[i] = 0x12
-	}
-	if len(m.Name) > 0 {
-		i -= len(m.Name)
-		copy(dAtA[i:], m.Name)
-		i = encodeVarintPipeline(dAtA, i, uint64(len(m.Name)))
-		i--
-		dAtA[i] = 0xa
-	}
+	i--
+	dAtA[i] = 0xa
 	return len(dAtA) - i, nil
 }
 
@@ -571,51 +206,17 @@ func encodeVarintPipeline(dAtA []byte, offset int, v uint64) int {
 }
 func NewPopulatedPipeline(r randyPipeline, easy bool) *Pipeline {
 	this := &Pipeline{}
+	v1 := NewPopulatedObjectMeta(r, easy)
+	this.ObjectMeta = *v1
 	if r.Intn(5) != 0 {
-		this.Metadata = NewPopulatedObjectMeta(r, easy)
-	}
-	if r.Intn(5) != 0 {
-		v1 := r.Intn(5)
-		this.Workflows = make([]*PipelineWorkflow, v1)
-		for i := 0; i < v1; i++ {
+		v2 := r.Intn(5)
+		this.Workflows = make([]*PipelineWorkflow, v2)
+		for i := 0; i < v2; i++ {
 			this.Workflows[i] = NewPopulatedPipelineWorkflow(r, easy)
 		}
 	}
 	if !easy && r.Intn(10) != 0 {
 		this.XXX_unrecognized = randUnrecognizedPipeline(r, 3)
-	}
-	return this
-}
-
-func NewPopulatedPipelineWorkflow(r randyPipeline, easy bool) *PipelineWorkflow {
-	this := &PipelineWorkflow{}
-	this.Name = string(randStringPipeline(r))
-	if r.Intn(5) != 0 {
-		v2 := r.Intn(5)
-		this.Filters = make([]*ResourceReference, v2)
-		for i := 0; i < v2; i++ {
-			this.Filters[i] = NewPopulatedResourceReference(r, easy)
-		}
-	}
-	if r.Intn(5) != 0 {
-		this.Mutator = NewPopulatedResourceReference(r, easy)
-	}
-	if r.Intn(5) != 0 {
-		this.Handler = NewPopulatedResourceReference(r, easy)
-	}
-	if !easy && r.Intn(10) != 0 {
-		this.XXX_unrecognized = randUnrecognizedPipeline(r, 5)
-	}
-	return this
-}
-
-func NewPopulatedResourceReference(r randyPipeline, easy bool) *ResourceReference {
-	this := &ResourceReference{}
-	this.Name = string(randStringPipeline(r))
-	this.Type = string(randStringPipeline(r))
-	this.APIVersion = string(randStringPipeline(r))
-	if !easy && r.Intn(10) != 0 {
-		this.XXX_unrecognized = randUnrecognizedPipeline(r, 4)
 	}
 	return this
 }
@@ -698,69 +299,13 @@ func (m *Pipeline) Size() (n int) {
 	}
 	var l int
 	_ = l
-	if m.Metadata != nil {
-		l = m.Metadata.Size()
-		n += 1 + l + sovPipeline(uint64(l))
-	}
+	l = m.ObjectMeta.Size()
+	n += 1 + l + sovPipeline(uint64(l))
 	if len(m.Workflows) > 0 {
 		for _, e := range m.Workflows {
 			l = e.Size()
 			n += 1 + l + sovPipeline(uint64(l))
 		}
-	}
-	if m.XXX_unrecognized != nil {
-		n += len(m.XXX_unrecognized)
-	}
-	return n
-}
-
-func (m *PipelineWorkflow) Size() (n int) {
-	if m == nil {
-		return 0
-	}
-	var l int
-	_ = l
-	l = len(m.Name)
-	if l > 0 {
-		n += 1 + l + sovPipeline(uint64(l))
-	}
-	if len(m.Filters) > 0 {
-		for _, e := range m.Filters {
-			l = e.Size()
-			n += 1 + l + sovPipeline(uint64(l))
-		}
-	}
-	if m.Mutator != nil {
-		l = m.Mutator.Size()
-		n += 1 + l + sovPipeline(uint64(l))
-	}
-	if m.Handler != nil {
-		l = m.Handler.Size()
-		n += 1 + l + sovPipeline(uint64(l))
-	}
-	if m.XXX_unrecognized != nil {
-		n += len(m.XXX_unrecognized)
-	}
-	return n
-}
-
-func (m *ResourceReference) Size() (n int) {
-	if m == nil {
-		return 0
-	}
-	var l int
-	_ = l
-	l = len(m.Name)
-	if l > 0 {
-		n += 1 + l + sovPipeline(uint64(l))
-	}
-	l = len(m.Type)
-	if l > 0 {
-		n += 1 + l + sovPipeline(uint64(l))
-	}
-	l = len(m.APIVersion)
-	if l > 0 {
-		n += 1 + l + sovPipeline(uint64(l))
 	}
 	if m.XXX_unrecognized != nil {
 		n += len(m.XXX_unrecognized)
@@ -805,7 +350,7 @@ func (m *Pipeline) Unmarshal(dAtA []byte) error {
 		switch fieldNum {
 		case 1:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Metadata", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field ObjectMeta", wireType)
 			}
 			var msglen int
 			for shift := uint(0); ; shift += 7 {
@@ -832,10 +377,7 @@ func (m *Pipeline) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			if m.Metadata == nil {
-				m.Metadata = &ObjectMeta{}
-			}
-			if err := m.Metadata.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+			if err := m.ObjectMeta.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
 			iNdEx = postIndex
@@ -872,342 +414,6 @@ func (m *Pipeline) Unmarshal(dAtA []byte) error {
 			if err := m.Workflows[len(m.Workflows)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
-			iNdEx = postIndex
-		default:
-			iNdEx = preIndex
-			skippy, err := skipPipeline(dAtA[iNdEx:])
-			if err != nil {
-				return err
-			}
-			if (skippy < 0) || (iNdEx+skippy) < 0 {
-				return ErrInvalidLengthPipeline
-			}
-			if (iNdEx + skippy) > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.XXX_unrecognized = append(m.XXX_unrecognized, dAtA[iNdEx:iNdEx+skippy]...)
-			iNdEx += skippy
-		}
-	}
-
-	if iNdEx > l {
-		return io.ErrUnexpectedEOF
-	}
-	return nil
-}
-func (m *PipelineWorkflow) Unmarshal(dAtA []byte) error {
-	l := len(dAtA)
-	iNdEx := 0
-	for iNdEx < l {
-		preIndex := iNdEx
-		var wire uint64
-		for shift := uint(0); ; shift += 7 {
-			if shift >= 64 {
-				return ErrIntOverflowPipeline
-			}
-			if iNdEx >= l {
-				return io.ErrUnexpectedEOF
-			}
-			b := dAtA[iNdEx]
-			iNdEx++
-			wire |= uint64(b&0x7F) << shift
-			if b < 0x80 {
-				break
-			}
-		}
-		fieldNum := int32(wire >> 3)
-		wireType := int(wire & 0x7)
-		if wireType == 4 {
-			return fmt.Errorf("proto: PipelineWorkflow: wiretype end group for non-group")
-		}
-		if fieldNum <= 0 {
-			return fmt.Errorf("proto: PipelineWorkflow: illegal tag %d (wire type %d)", fieldNum, wire)
-		}
-		switch fieldNum {
-		case 1:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Name", wireType)
-			}
-			var stringLen uint64
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowPipeline
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				stringLen |= uint64(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
-				return ErrInvalidLengthPipeline
-			}
-			postIndex := iNdEx + intStringLen
-			if postIndex < 0 {
-				return ErrInvalidLengthPipeline
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.Name = string(dAtA[iNdEx:postIndex])
-			iNdEx = postIndex
-		case 2:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Filters", wireType)
-			}
-			var msglen int
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowPipeline
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				msglen |= int(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			if msglen < 0 {
-				return ErrInvalidLengthPipeline
-			}
-			postIndex := iNdEx + msglen
-			if postIndex < 0 {
-				return ErrInvalidLengthPipeline
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.Filters = append(m.Filters, &ResourceReference{})
-			if err := m.Filters[len(m.Filters)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
-				return err
-			}
-			iNdEx = postIndex
-		case 3:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Mutator", wireType)
-			}
-			var msglen int
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowPipeline
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				msglen |= int(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			if msglen < 0 {
-				return ErrInvalidLengthPipeline
-			}
-			postIndex := iNdEx + msglen
-			if postIndex < 0 {
-				return ErrInvalidLengthPipeline
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			if m.Mutator == nil {
-				m.Mutator = &ResourceReference{}
-			}
-			if err := m.Mutator.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
-				return err
-			}
-			iNdEx = postIndex
-		case 4:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Handler", wireType)
-			}
-			var msglen int
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowPipeline
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				msglen |= int(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			if msglen < 0 {
-				return ErrInvalidLengthPipeline
-			}
-			postIndex := iNdEx + msglen
-			if postIndex < 0 {
-				return ErrInvalidLengthPipeline
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			if m.Handler == nil {
-				m.Handler = &ResourceReference{}
-			}
-			if err := m.Handler.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
-				return err
-			}
-			iNdEx = postIndex
-		default:
-			iNdEx = preIndex
-			skippy, err := skipPipeline(dAtA[iNdEx:])
-			if err != nil {
-				return err
-			}
-			if (skippy < 0) || (iNdEx+skippy) < 0 {
-				return ErrInvalidLengthPipeline
-			}
-			if (iNdEx + skippy) > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.XXX_unrecognized = append(m.XXX_unrecognized, dAtA[iNdEx:iNdEx+skippy]...)
-			iNdEx += skippy
-		}
-	}
-
-	if iNdEx > l {
-		return io.ErrUnexpectedEOF
-	}
-	return nil
-}
-func (m *ResourceReference) Unmarshal(dAtA []byte) error {
-	l := len(dAtA)
-	iNdEx := 0
-	for iNdEx < l {
-		preIndex := iNdEx
-		var wire uint64
-		for shift := uint(0); ; shift += 7 {
-			if shift >= 64 {
-				return ErrIntOverflowPipeline
-			}
-			if iNdEx >= l {
-				return io.ErrUnexpectedEOF
-			}
-			b := dAtA[iNdEx]
-			iNdEx++
-			wire |= uint64(b&0x7F) << shift
-			if b < 0x80 {
-				break
-			}
-		}
-		fieldNum := int32(wire >> 3)
-		wireType := int(wire & 0x7)
-		if wireType == 4 {
-			return fmt.Errorf("proto: ResourceReference: wiretype end group for non-group")
-		}
-		if fieldNum <= 0 {
-			return fmt.Errorf("proto: ResourceReference: illegal tag %d (wire type %d)", fieldNum, wire)
-		}
-		switch fieldNum {
-		case 1:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Name", wireType)
-			}
-			var stringLen uint64
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowPipeline
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				stringLen |= uint64(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
-				return ErrInvalidLengthPipeline
-			}
-			postIndex := iNdEx + intStringLen
-			if postIndex < 0 {
-				return ErrInvalidLengthPipeline
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.Name = string(dAtA[iNdEx:postIndex])
-			iNdEx = postIndex
-		case 2:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Type", wireType)
-			}
-			var stringLen uint64
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowPipeline
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				stringLen |= uint64(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
-				return ErrInvalidLengthPipeline
-			}
-			postIndex := iNdEx + intStringLen
-			if postIndex < 0 {
-				return ErrInvalidLengthPipeline
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.Type = string(dAtA[iNdEx:postIndex])
-			iNdEx = postIndex
-		case 3:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field APIVersion", wireType)
-			}
-			var stringLen uint64
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowPipeline
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				stringLen |= uint64(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
-				return ErrInvalidLengthPipeline
-			}
-			postIndex := iNdEx + intStringLen
-			if postIndex < 0 {
-				return ErrInvalidLengthPipeline
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.APIVersion = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
 		default:
 			iNdEx = preIndex

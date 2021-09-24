@@ -26,6 +26,7 @@ import (
 	"github.com/sensu/sensu-go/cli/commands/logout"
 	"github.com/sensu/sensu-go/cli/commands/mutator"
 	"github.com/sensu/sensu-go/cli/commands/namespace"
+	"github.com/sensu/sensu-go/cli/commands/pipeline"
 	"github.com/sensu/sensu-go/cli/commands/role"
 	"github.com/sensu/sensu-go/cli/commands/rolebinding"
 	"github.com/sensu/sensu-go/cli/commands/silenced"
@@ -51,6 +52,7 @@ func AddCommands(rootCmd *cobra.Command, cli *cli.SensuCli) {
 		clusterrolebinding.HelpCommand(cli),
 		entity.HelpCommand(cli),
 		event.HelpCommand(cli),
+		pipeline.HelpCommand(cli),
 		filter.HelpCommand(cli),
 		handler.HelpCommand(cli),
 		hook.HelpCommand(cli),
@@ -62,7 +64,6 @@ func AddCommands(rootCmd *cobra.Command, cli *cli.SensuCli) {
 		silenced.HelpCommand(cli),
 		create.CreateCommand(cli),
 		delete.DeleteCommand(cli),
-		//extension.HelpCommand(cli),
 		cluster.HelpCommand(cli),
 		edit.Command(cli),
 		tessen.HelpCommand(cli),

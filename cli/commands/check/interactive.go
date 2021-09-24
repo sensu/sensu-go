@@ -86,7 +86,7 @@ func (opts *checkOpts) withFlags(flags *pflag.FlagSet) {
 	roundRobinBool, _ := flags.GetBool("round-robin")
 	opts.RoundRobin = strconv.FormatBool(roundRobinBool)
 
-	if namespace := helpers.GetChangedStringValueFlag("namespace", flags); namespace != "" {
+	if namespace := helpers.GetChangedStringValueViper("namespace", flags); namespace != "" {
 		opts.Namespace = namespace
 	}
 }

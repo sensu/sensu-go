@@ -6,7 +6,7 @@ import (
 	"github.com/go-resty/resty/v2"
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/types"
-	"go.etcd.io/etcd/client/v3"
+	clientv3 "go.etcd.io/etcd/client/v3"
 )
 
 // ListOptions represents the various options that can be used when listing
@@ -34,13 +34,13 @@ type APIClient interface {
 	ClusterRoleBindingAPIClient
 	EntityAPIClient
 	EventAPIClient
-	ExtensionAPIClient
 	FilterAPIClient
 	HandlerAPIClient
 	HealthAPIClient
 	HookAPIClient
 	MutatorAPIClient
 	NamespaceAPIClient
+	PipelineAPIClient
 	RoleAPIClient
 	RoleBindingAPIClient
 	UserAPIClient
@@ -142,12 +142,6 @@ type EventAPIClient interface {
 	ResolveEvent(*corev2.Event) error
 }
 
-// ExtensionAPIClient client methods for extensions
-type ExtensionAPIClient interface {
-	RegisterExtension(*corev2.Extension) error
-	DeregisterExtension(name, namespace string) error
-}
-
 // HandlerAPIClient client methods for handlers
 type HandlerAPIClient interface {
 	CreateHandler(*corev2.Handler) error
@@ -183,6 +177,12 @@ type NamespaceAPIClient interface {
 	UpdateNamespace(*corev2.Namespace) error
 	DeleteNamespace(string) error
 	FetchNamespace(string) (*corev2.Namespace, error)
+}
+
+// PipelineAPIClient client methods for pipelines
+type PipelineAPIClient interface {
+	DeletePipeline(string, string) error
+	FetchPipeline(string) (*corev2.Pipeline, error)
 }
 
 // UserAPIClient client methods for users

@@ -23,7 +23,7 @@ func CreateCommand(cli *cli.SensuCli) *cobra.Command {
 			}
 
 			var namespace string
-			if namespace = helpers.GetChangedStringValueFlag("namespace", cmd.Flags()); namespace == "" {
+			if namespace = helpers.GetChangedStringValueViper("namespace", cmd.Flags()); namespace == "" {
 				namespace = cli.Config.Namespace()
 			}
 			roleBinding := v2.NewRoleBinding(v2.NewObjectMeta(args[0], namespace))

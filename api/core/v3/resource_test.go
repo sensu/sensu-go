@@ -27,7 +27,7 @@ func (t testResource) GetMetadata() *corev2.ObjectMeta {
 }
 
 func (t testResource) SetMetadata(meta *corev2.ObjectMeta) {
-	t.meta = meta
+	t.meta = meta //nolint:staticcheck
 }
 
 func (t testResource) StoreName() string {

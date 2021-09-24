@@ -536,33 +536,15 @@ func (s *StoreProxy) GetAllUsers(pred *SelectionPredicate) ([]*types.User, error
 	return s.do().GetAllUsers(pred)
 }
 
-// UpdateHandler updates a given user.
+// UpdateUser updates a given user.
 func (s *StoreProxy) UpdateUser(user *types.User) error {
 	return s.do().UpdateUser(user)
 }
 
-// RegisterExtension registers an extension. It associates an extension type and
-// name with a URL. The registry assumes that the extension provides
-// a handler and a mutator named 'name'.
-func (s *StoreProxy) RegisterExtension(ctx context.Context, ext *types.Extension) error {
-	return s.do().RegisterExtension(ctx, ext)
-}
-
-// DeregisterExtension deregisters an extension. If the extension does not exist,
-// nil error is returned.
-func (s *StoreProxy) DeregisterExtension(ctx context.Context, name string) error {
-	return s.do().DeregisterExtension(ctx, name)
-}
-
-// GetExtension gets the address of a registered extension. If the extension does
-// not exist, ErrNoExtension is returned.
-func (s *StoreProxy) GetExtension(ctx context.Context, name string) (*types.Extension, error) {
-	return s.do().GetExtension(ctx, name)
-}
-
-// GetExtensions gets all the extensions for the namespace in ctx.
-func (s *StoreProxy) GetExtensions(ctx context.Context, pred *SelectionPredicate) ([]*types.Extension, error) {
-	return s.do().GetExtensions(ctx, pred)
+// GetPipelineByName returns a pipeline using the given name and the namespace
+// stored in ctx. The resulting pipeline is nil if none was found.
+func (s *StoreProxy) GetPipelineByName(ctx context.Context, name string) (*corev2.Pipeline, error) {
+	return s.do().GetPipelineByName(ctx, name)
 }
 
 // NewInitializer returns the Initializer interfaces, which provides the

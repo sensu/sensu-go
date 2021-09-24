@@ -296,7 +296,7 @@ func TestEventd_handleMessage(t *testing.T) {
 				livenessFactory: newFakeFactory(switches),
 				workerCount:     1,
 				wg:              &sync.WaitGroup{},
-				Logger:          &RawLogger{},
+				Logger:          NoopLogger{},
 				silencedCache:   cache,
 			}
 			if err := e.handleMessage(&tt.event); (err != nil) != tt.wantErr {

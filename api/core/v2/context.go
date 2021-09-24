@@ -1,6 +1,8 @@
 package v2
 
-import "context"
+import (
+	"context"
+)
 
 // Define the key type to avoid key collisions in context
 type key int
@@ -36,11 +38,33 @@ const (
 
 	// PageSizeKey contains the page size used in pagination
 	PageSizeKey
+
+	// PipelineKey contains the key name to retrieve the pipeline from context
+	PipelineKey
+
+	// PipelineWorkflowKey contains the key name to retrieve the pipeline workflow from context
+	PipelineWorkflowKey
 )
 
 // ContextNamespace returns the namespace injected in the context
 func ContextNamespace(ctx context.Context) string {
 	if value := ctx.Value(NamespaceKey); value != nil {
+		return value.(string)
+	}
+	return ""
+}
+
+// ContextPipeline returns the pipeline injected in the context
+func ContextPipeline(ctx context.Context) string {
+	if value := ctx.Value(PipelineKey); value != nil {
+		return value.(string)
+	}
+	return ""
+}
+
+// ContextPipelineWorkflow returns the pipeline workflow injected in the context
+func ContextPipelineWorkflow(ctx context.Context) string {
+	if value := ctx.Value(PipelineWorkflowKey); value != nil {
 		return value.(string)
 	}
 	return ""

@@ -5,6 +5,7 @@ import "github.com/sensu/sensu-go/api/core/v2/entity.proto";
 import "github.com/sensu/sensu-go/api/core/v2/check.proto";
 import "github.com/sensu/sensu-go/api/core/v2/metrics.proto";
 import "github.com/sensu/sensu-go/api/core/v2/meta.proto";
+import "github.com/sensu/sensu-go/api/core/v2/resource_reference.proto";
 
 package sensu.core.v2;
 
@@ -44,4 +45,9 @@ message Event {
   // number by one for every successive event. When the agent restarts or
   // reconnects to another backend, the sequence number is reset to 1.
   int64 Sequence = 7 [ (gogoproto.jsontag) = "sequence" ];
+
+  // Pipelines are the pipelines that should be used to process an event.
+  // APIVersion should default to "core/v2" and Type should default to
+  // "Pipeline".
+  repeated ResourceReference pipelines = 8 [ (gogoproto.jsontag) = "pipelines" ];
 }

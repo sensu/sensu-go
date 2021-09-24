@@ -12,7 +12,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// NewCLI returns a SensuCLI instace with mocked values with json format
+// NewCLI returns a SensuCLI instance with mocked values with json format
 func NewCLI() *cli.SensuCli {
 	cli := NewMockCLI()
 	config := cli.Config.(*clientmock.MockConfig)
@@ -38,7 +38,7 @@ func NewMockCLI() *cli.SensuCli {
 
 // SimpleSensuCLI return SensuCLI instance w/ given client & live config
 func SimpleSensuCLI(apiClient client.APIClient) *cli.SensuCli {
-	c := basic.Load(nil)
+	c := basic.Load(nil, nil)
 
 	return &cli.SensuCli{
 		Client: apiClient,

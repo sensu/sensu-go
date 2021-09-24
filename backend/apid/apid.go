@@ -13,7 +13,7 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
-	"go.etcd.io/etcd/client/v3"
+	clientv3 "go.etcd.io/etcd/client/v3"
 
 	"github.com/sensu/sensu-go/backend/apid/actions"
 	"github.com/sensu/sensu-go/backend/apid/graphql"
@@ -177,11 +177,11 @@ func CoreSubrouter(router *mux.Router, cfg Config) *mux.Router {
 		routers.NewClusterRoleBindingsRouter(cfg.Store),
 		routers.NewClusterRouter(actions.NewClusterController(cfg.Cluster, cfg.Store)),
 		routers.NewEventFiltersRouter(cfg.Store),
-		routers.NewExtensionsRouter(cfg.Store),
 		routers.NewHandlersRouter(cfg.Store),
 		routers.NewHooksRouter(cfg.Store),
 		routers.NewMutatorsRouter(cfg.Store),
 		routers.NewNamespacesRouter(cfg.Store, cfg.Store, &rbac.Authorizer{Store: cfg.Store}, cfg.Storev2),
+		routers.NewPipelinesRouter(cfg.Store),
 		routers.NewRolesRouter(cfg.Store),
 		routers.NewRoleBindingsRouter(cfg.Store),
 		routers.NewSilencedRouter(cfg.Store),
@@ -269,7 +269,7 @@ func notFoundHandler(w http.ResponseWriter, req *http.Request) {
 
 // Start APId.
 func (a *APId) Start() error {
-	logger.Info("starting apid on address: ", a.HTTPServer.Addr)
+	logger.Warn("starting apid on address: ", a.HTTPServer.Addr)
 	ln, err := net.Listen("tcp", a.HTTPServer.Addr)
 	if err != nil {
 		return fmt.Errorf("failed to start apid: %s", err)
