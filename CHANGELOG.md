@@ -21,6 +21,11 @@ every 60s, and written to /var/lib/sensu/sensu-backend/stats.log.
 - Open-sourced the previously enterprise-only event logger. The event logger
 can be used to send the events a backend processes to a rotatable log file.
 - Added sensuctl commands for pipeline list, info, and delete.
+- Added support for `SENSU_BACKEND_ETCD_CLIENT_USERNAME` and
+`SENSU_BACKEND_ETCD_CLIENT_PASSWORD` environment variables for connecting to
+external etcds that use user/password authentication instead of client
+certificate authentication. Typical with DBaaS etcd providers. These can only be
+set via these environment variables and intentionally cannot be set via flags.
 
 ### Fixed
 - `sensuctl env` now properly displays the `SENSU_API_KEY` and `SENSU_TIMEOUT`

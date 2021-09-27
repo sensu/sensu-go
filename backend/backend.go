@@ -141,16 +141,32 @@ func newClient(ctx context.Context, config *Config, backend *Backend) (*clientv3
 			clientURLs = config.EtcdAdvertiseClientURLs
 		}
 
+		var clientv3Config clientv3.Config
+
+		if config.EtcdClientUsername != "" && config.EtcdClientPassword != "" {
+			clientv3Config = clientv3.Config{
+				Endpoints:   clientURLs,
+				DialTimeout: 5 * time.Second,
+				Username:    config.EtcdClientUsername,
+				Password:    config.EtcdClientPassword,
+				TLS:         tlsConfig,
+				DialOptions: []grpc.DialOption{
+					grpc.WithBlock(),
+				},
+			}
+		} else {
+			clientv3Config = clientv3.Config{
+				Endpoints:   clientURLs,
+				DialTimeout: 5 * time.Second,
+				TLS:         tlsConfig,
+				DialOptions: []grpc.DialOption{
+					grpc.WithBlock(),
+				},
+			}
+		}
 		// Don't start up an embedded etcd, return a client that connects to an
 		// external etcd instead.
-		client, err := clientv3.New(clientv3.Config{
-			Endpoints:   clientURLs,
-			DialTimeout: 5 * time.Second,
-			TLS:         tlsConfig,
-			DialOptions: []grpc.DialOption{
-				grpc.WithBlock(),
-			},
-		})
+		client, err := clientv3.New(clientv3Config)
 		if err != nil {
 			return nil, err
 		}

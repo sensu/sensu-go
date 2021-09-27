@@ -115,6 +115,10 @@ func InitCommand() *cobra.Command {
 			insecureSkipTLSVerify := viper.GetBool(flagInsecureSkipTLSVerify)
 			trustedCAFile := viper.GetString(flagTrustedCAFile)
 
+			// Optional username/password auth
+			etcdClientUsername := viper.GetString(envEtcdClientUsername)
+			etcdClientPassword := viper.GetString(envEtcdClientPassword)
+
 			if certFile != "" && keyFile != "" {
 				cfg.TLS = &corev2.TLSOptions{
 					CertFile:           certFile,
@@ -186,14 +190,25 @@ func InitCommand() *cobra.Command {
 			// required to debug TLS errors because the seeding below will not print
 			// the latest connection error (see
 			// https://github.com/sensu/sensu-go/issues/3663)
+			var clientConfig clientv3.Config
 			for {
 				for _, url := range clientURLs {
 					logger.Infof("attempting to connect to etcd server: %s", url)
 
-					clientConfig := clientv3.Config{
-						Endpoints:   []string{url},
-						TLS:         tlsConfig,
-						DialOptions: []grpc.DialOption{grpc.WithBlock()},
+					if etcdClientUsername != "" && etcdClientPassword != "" {
+						clientConfig = clientv3.Config{
+							Endpoints:   []string{url},
+							Username:    etcdClientUsername,
+							Password:    etcdClientPassword,
+							TLS:         tlsConfig,
+							DialOptions: []grpc.DialOption{grpc.WithBlock()},
+						}
+					} else {
+						clientConfig = clientv3.Config{
+							Endpoints:   []string{url},
+							TLS:         tlsConfig,
+							DialOptions: []grpc.DialOption{grpc.WithBlock()},
+						}
 					}
 					err := initializeStore(clientConfig, initConfig, url)
 					if err != nil {

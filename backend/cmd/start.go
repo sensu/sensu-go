@@ -97,7 +97,11 @@ const (
 	flagEtcdMaxRequestBytes    = "etcd-max-request-bytes"
 	flagEtcdQuotaBackendBytes  = "etcd-quota-backend-bytes"
 
-	// Metric logging flags
+	// Etcd Client Auth Env vars
+	envEtcdClientUsername = "etcd-client-username"
+	envEtcdClientPassword = "etcd-client-password"
+
+  // Metric logging flags
 	flagDisablePlatformMetrics         = "disable-platform-metrics"
 	flagPlatformMetricsLoggingInterval = "platform-metrics-logging-interval"
 	flagPlatformMetricsLogFile         = "platform-metrics-log-file"
@@ -240,6 +244,8 @@ func StartCommand(initialize InitializeFunc) *cobra.Command {
 				EtcdHeartbeatInterval:          viper.GetUint(flagEtcdHeartbeatInterval),
 				EtcdElectionTimeout:            viper.GetUint(flagEtcdElectionTimeout),
 				EtcdLogLevel:                   viper.GetString(flagEtcdLogLevel),
+        EtcdClientUsername:             viper.GetString(envEtcdClientUsername),
+				EtcdClientPassword:             viper.GetString(envEtcdClientPassword),
 				NoEmbedEtcd:                    viper.GetBool(flagNoEmbedEtcd),
 				Labels:                         viper.GetStringMapString(flagLabels),
 				Annotations:                    viper.GetStringMapString(flagAnnotations),
