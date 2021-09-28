@@ -28,6 +28,7 @@ var (
 		&corev2.Handler{},
 		&corev2.HookConfig{},
 		&corev2.Mutator{},
+		&corev2.Pipeline{},
 		&corev2.Role{},
 		&corev2.RoleBinding{},
 		&corev2.Silenced{},
