@@ -35,6 +35,15 @@ environment variables.
 
 ### Changed
 - Upgraded Go version from 1.16.5 to 1.17.1.
+### Fixed
+- Fixed a crash when running the backend on `darwin/arm64` when compressing a
+wrapped resource.
+
+## [6.4.2] - 2021-08-31
+
+### Added
+- Added `sensu_go_agentd_event_bytes` & `sensu_go_store_event_bytes` summary
+metrics to the `/metrics` endpoint.
 
 ## [6.4.1] - 2021-08-24
 
