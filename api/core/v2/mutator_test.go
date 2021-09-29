@@ -107,6 +107,10 @@ func TestValidateMutatorTypes(t *testing.T) {
 	for _, test := range passTests {
 		mutator := FixtureMutator("foo")
 		mutator.Type = test
+		if mutator.Type == JavascriptMutator {
+			mutator.Command = ""
+			mutator.Eval = "return 'asdf';"
+		}
 		if err := mutator.Validate(); err != nil {
 			t.Fatal(err)
 		}
@@ -117,5 +121,14 @@ func TestValidateMutatorTypes(t *testing.T) {
 		if err := mutator.Validate(); err == nil {
 			t.Fatal("expecte non-nil error")
 		}
+	}
+}
+
+func TestValidateMutatorCommandWithJavascript(t *testing.T) {
+	mutator := FixtureMutator("foo")
+	mutator.Command = "asdfasdf"
+	mutator.Type = JavascriptMutator
+	if err := mutator.Validate(); err == nil {
+		t.Fatal("expected non-nil error")
 	}
 }
