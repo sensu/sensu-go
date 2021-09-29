@@ -32,12 +32,11 @@ set via these environment variables and intentionally cannot be set via flags.
 environment variables.
 - `sensuctl command exec` now properly adds the `SENSU_API_KEY` and
 `SENSU_TIMEOUT` variables to the command's environment.
+- Fixed a crash when running the backend on `darwin/arm64` when compressing a
+wrapped resource.
 
 ### Changed
 - Upgraded Go version from 1.16.5 to 1.17.1.
-### Fixed
-- Fixed a crash when running the backend on `darwin/arm64` when compressing a
-wrapped resource.
 
 ## [6.4.2] - 2021-08-31
 
