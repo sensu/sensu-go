@@ -113,7 +113,7 @@ type Backend struct {
 	ctx       context.Context
 	runCtx    context.Context
 	runCancel context.CancelFunc
-	cfg       *Config
+	Cfg       *Config
 }
 
 // StoreUpdater offers a way to update an event store to a different
@@ -245,7 +245,7 @@ func newClient(ctx context.Context, config *Config, backend *Backend) (*clientv3
 func Initialize(ctx context.Context, config *Config) (*Backend, error) {
 	var err error
 	// Initialize a Backend struct
-	b := &Backend{cfg: config}
+	b := &Backend{Cfg: config}
 
 	b.ctx = ctx
 	b.runCtx, b.runCancel = context.WithCancel(b.ctx)
@@ -314,11 +314,11 @@ func Initialize(ctx context.Context, config *Config) (*Backend, error) {
 		trustedCAFile = config.TLS.TrustedCAFile
 	}
 	assetManager := asset.NewManager(config.CacheDir, trustedCAFile, backendEntity, &sync.WaitGroup{})
-	limit := b.cfg.AssetsRateLimit
+	limit := b.Cfg.AssetsRateLimit
 	if limit == 0 {
 		limit = rate.Limit(asset.DefaultAssetsRateLimit)
 	}
-	assetGetter, err := assetManager.StartAssetManager(b.RunContext(), rate.NewLimiter(limit, b.cfg.AssetsBurstLimit))
+	assetGetter, err := assetManager.StartAssetManager(b.RunContext(), rate.NewLimiter(limit, b.Cfg.AssetsBurstLimit))
 	if err != nil {
 		return nil, fmt.Errorf("error initializing asset manager: %s", err)
 	}
@@ -408,10 +408,10 @@ func Initialize(ctx context.Context, config *Config) (*Backend, error) {
 			BufferSize:          viper.GetInt(FlagEventdBufferSize),
 			WorkerCount:         viper.GetInt(FlagEventdWorkers),
 			StoreTimeout:        2 * time.Minute,
-			LogPath:             b.cfg.EventLogFile,
-			LogBufferSize:       b.cfg.EventLogBufferSize,
-			LogBufferWait:       b.cfg.EventLogBufferWait,
-			LogParallelEncoders: b.cfg.EventLogParallelEncoders,
+			LogPath:             b.Cfg.EventLogFile,
+			LogBufferSize:       b.Cfg.EventLogBufferSize,
+			LogBufferWait:       b.Cfg.EventLogBufferWait,
+			LogParallelEncoders: b.Cfg.EventLogParallelEncoders,
 		},
 	)
 	if err != nil {
@@ -618,8 +618,8 @@ func (b *Backend) runOnce() error {
 		sg = append(sg, d)
 	}
 
-	if !b.cfg.DisablePlatformMetrics {
-		consumer := fmt.Sprintf("filelogger://%s", b.cfg.PlatformMetricsLogFile)
+	if !b.Cfg.DisablePlatformMetrics {
+		consumer := fmt.Sprintf("filelogger://%s", b.Cfg.PlatformMetricsLogFile)
 		sighup := make(messaging.ChanSubscriber, 1)
 		defer close(sighup)
 		subscription, err := b.Bus.Subscribe(messaging.SignalTopic(syscall.SIGHUP), consumer, sighup)
@@ -630,7 +630,7 @@ func (b *Backend) runOnce() error {
 		defer func() {
 			_ = subscription.Cancel()
 		}()
-		metricsLogWriter, err := logging.NewRotateWriter(b.cfg.PlatformMetricsLogFile, sighup)
+		metricsLogWriter, err := logging.NewRotateWriter(b.Cfg.PlatformMetricsLogFile, sighup)
 		if err != nil {
 			logger.WithError(err).Error("unable to open platform metrics log file")
 			return err
@@ -638,7 +638,7 @@ func (b *Backend) runOnce() error {
 		defer metricsLogWriter.Close()
 		metricsBridge, err := metrics.NewInfluxBridge(&metrics.InfluxBridgeConfig{
 			Writer:    metricsLogWriter,
-			Interval:  b.cfg.PlatformMetricsLoggingInterval,
+			Interval:  b.Cfg.PlatformMetricsLoggingInterval,
 			Gatherer:  prometheus.DefaultGatherer,
 			ErrLogger: logger,
 			Select:    selectedMetrics,
@@ -729,7 +729,7 @@ func (b *Backend) RunWithInitializer(initialize func(context.Context, *Config) (
 		// Yes, two levels of retry... this could improve. Unfortunately Intialize()
 		// is called elsewhere.
 		err = backoff.Retry(func(int) (bool, error) {
-			backend, err := initialize(b.ctx, b.cfg)
+			backend, err := initialize(b.ctx, b.Cfg)
 			if err != nil && err != context.Canceled {
 				logger.Error(err)
 				return false, nil
@@ -826,8 +826,8 @@ func (b *Backend) getBackendEntity(config *Config) *corev2.Entity {
 		System:      getSystemInfo(),
 		ObjectMeta: corev2.ObjectMeta{
 			Name:        getDefaultBackendID(),
-			Labels:      b.cfg.Labels,
-			Annotations: b.cfg.Annotations,
+			Labels:      b.Cfg.Labels,
+			Annotations: b.Cfg.Annotations,
 		},
 	}
 
