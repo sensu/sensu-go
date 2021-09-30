@@ -55,6 +55,9 @@ func (m *Mutator) Validate() error {
 	if m.Command == "" && m.Eval == "" {
 		return errors.New("mutator command or eval must be set")
 	}
+	if m.Type == JavascriptMutator && m.Command != "" {
+		return errors.New(`"command" used with javascript mutator, should be "eval"`)
+	}
 
 	if m.Namespace == "" {
 		return errors.New("namespace must be set")
