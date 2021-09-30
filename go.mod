@@ -16,7 +16,6 @@ require (
 	github.com/ash2k/stager v0.0.0-20170622123058-6e9c7b0eacd4 // indirect
 	github.com/atlassian/gostatsd v0.0.0-20180514010436-af796620006e
 	github.com/dave/jennifer v0.0.0-20171207062344-d8bdbdbee4e1
-	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/docker/docker v0.0.0-20180409082103-cbde00b44273
 	github.com/dustin/go-humanize v1.0.0
 	github.com/echlebek/crock v1.0.1
@@ -25,11 +24,12 @@ require (
 	github.com/evanphx/json-patch/v5 v5.1.0
 	github.com/frankban/quicktest v1.7.2 // indirect
 	github.com/ghodss/yaml v1.0.0
-	github.com/go-ole/go-ole v1.2.1 // indirect
+	github.com/go-ole/go-ole v1.2.6-0.20210915003542-8b1f7f90f6b1 // indirect
 	github.com/go-resty/resty/v2 v2.5.0
 	github.com/gogo/protobuf v1.3.2
+	github.com/golang-jwt/jwt/v4 v4.0.0
 	github.com/golang/protobuf v1.5.2
-	github.com/golang/snappy v0.0.1
+	github.com/golang/snappy v0.0.4
 	github.com/google/uuid v1.1.2
 	github.com/gorilla/mux v1.8.0
 	github.com/gorilla/websocket v1.4.2
@@ -39,6 +39,7 @@ require (
 	github.com/gxed/GoEndian v0.0.0-20160916112711-0f5c6873267e // indirect
 	github.com/gxed/eventfd v0.0.0-20160916113412-80a92cca79a8 // indirect
 	github.com/hashicorp/go-version v1.2.0
+	github.com/influxdata/line-protocol v0.0.0-20210311194329-9aa0e372d097
 	github.com/ipfs/go-log v1.0.4 // indirect
 	github.com/jbenet/go-reuseport v0.0.0-20180416043609-15a1cd37f050 // indirect
 	github.com/libp2p/go-reuseport v0.0.0-20180416043609-15a1cd37f050 // indirect
@@ -59,7 +60,7 @@ require (
 	github.com/sensu/sensu-go/api/core/v2 v2.6.0
 	github.com/sensu/sensu-go/api/core/v3 v3.3.0
 	github.com/sensu/sensu-go/types v0.3.0
-	github.com/shirou/gopsutil v3.21.4+incompatible
+	github.com/shirou/gopsutil v3.21.9-0.20210911021155-ce5729cbcdf6+incompatible
 	github.com/sirupsen/logrus v1.7.0
 	github.com/spf13/cobra v1.1.3
 	github.com/spf13/pflag v1.0.5

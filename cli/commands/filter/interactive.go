@@ -95,7 +95,7 @@ func (opts *filterOpts) withFlags(flags *pflag.FlagSet) {
 	opts.Action, _ = flags.GetString("action")
 	opts.Expressions, _ = flags.GetString("expressions")
 
-	if namespace := helpers.GetChangedStringValueFlag("namespace", flags); namespace != "" {
+	if namespace := helpers.GetChangedStringValueViper("namespace", flags); namespace != "" {
 		opts.Namespace = namespace
 	}
 }

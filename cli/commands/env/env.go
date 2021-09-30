@@ -17,11 +17,13 @@ const (
 	envTmpl = `{{ .Prefix }}SENSU_API_URL{{ .Delimiter }}{{ .APIURL }}{{ .LineEnding }}` +
 		`{{ .Prefix }}SENSU_NAMESPACE{{ .Delimiter }}{{ .Namespace }}{{ .LineEnding }}` +
 		`{{ .Prefix }}SENSU_FORMAT{{ .Delimiter }}{{ .Format }}{{ .LineEnding }}` +
+		`{{ .Prefix }}SENSU_API_KEY{{ .Delimiter }}{{ .APIKey }}{{ .LineEnding }}` +
 		`{{ .Prefix }}SENSU_ACCESS_TOKEN{{ .Delimiter }}{{ .AccessToken }}{{ .LineEnding }}` +
 		`{{ .Prefix }}SENSU_ACCESS_TOKEN_EXPIRES_AT{{ .Delimiter }}{{ .AccessTokenExpiresAt }}{{ .LineEnding }}` +
 		`{{ .Prefix }}SENSU_REFRESH_TOKEN{{ .Delimiter }}{{ .RefreshToken }}{{ .LineEnding }}` +
 		`{{ .Prefix }}SENSU_TRUSTED_CA_FILE{{ .Delimiter }}{{ .TrustedCAFile }}{{ .LineEnding }}` +
 		`{{ .Prefix }}SENSU_INSECURE_SKIP_TLS_VERIFY{{ .Delimiter }}{{ .InsecureSkipTLSVerify }}{{ .LineEnding }}` +
+		`{{ .Prefix }}SENSU_TIMEOUT{{ .Delimiter }}{{ .Timeout }}{{ .LineEnding }}` +
 		`{{ .UsageHint }}`
 
 	shellFlag = "shell"
@@ -56,11 +58,13 @@ type shellConfig struct {
 	APIURL                string
 	Namespace             string
 	Format                string
+	APIKey                string
 	AccessToken           string
 	AccessTokenExpiresAt  int64
 	RefreshToken          string
 	TrustedCAFile         string
 	InsecureSkipTLSVerify string
+	Timeout               string
 }
 
 func (s shellConfig) UsageHint() string {
@@ -89,11 +93,13 @@ func execute(cli *cli.SensuCli) func(*cobra.Command, []string) error {
 			APIURL:                cli.Config.APIUrl(),
 			Namespace:             cli.Config.Namespace(),
 			Format:                cli.Config.Format(),
+			APIKey:                cli.Config.APIKey(),
 			AccessToken:           cli.Config.Tokens().Access,
 			AccessTokenExpiresAt:  cli.Config.Tokens().ExpiresAt,
 			RefreshToken:          cli.Config.Tokens().Refresh,
 			TrustedCAFile:         cli.Config.TrustedCAFile(),
 			InsecureSkipTLSVerify: strconv.FormatBool(cli.Config.InsecureSkipTLSVerify()),
+			Timeout:               cli.Config.Timeout().String(),
 		}
 
 		// Get the user shell

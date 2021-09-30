@@ -59,7 +59,7 @@ func (o *silencedOpts) withFlags(flags *pflag.FlagSet) {
 	o.Check, _ = flags.GetString("check")
 	o.Begin, _ = flags.GetString("begin")
 
-	if namespace := helpers.GetChangedStringValueFlag("namespace", flags); namespace != "" {
+	if namespace := helpers.GetChangedStringValueViper("namespace", flags); namespace != "" {
 		o.Namespace = namespace
 	}
 }
@@ -104,8 +104,11 @@ func (o *silencedOpts) administerQuestionnaire(editing bool) error {
 				Help:    "Start silencing events at this time. Format: Jan 02 2006 3:04PM MST",
 			},
 			Validate: func(val interface{}) error {
-				_, err := timeutil.ConvertToUnix(val.(string))
-				return err
+				if value, ok := val.(string); ok {
+					_, err := timeutil.ConvertToUnix(value)
+					return err
+				}
+				return nil
 			},
 		},
 		{

@@ -1,0 +1,33 @@
+syntax = "proto3";
+
+import "github.com/gogo/protobuf@v1.3.1/gogoproto/gogo.proto";
+import "github.com/sensu/sensu-go/api/core/v2/meta.proto";
+import "github.com/sensu/sensu-go/api/core/v2/resource_reference.proto";
+
+package sensu.core.v2;
+
+option go_package = "v2";
+option (gogoproto.populate_all) = true;
+option (gogoproto.equal_all) = true;
+option (gogoproto.marshaler_all) = true;
+option (gogoproto.unmarshaler_all) = true;
+option (gogoproto.sizer_all) = true;
+option (gogoproto.testgen_all) = true;
+
+// PipelineWorkflow represents a workflow of filters, mutator, & handler to use
+// in a pipeline.
+//sensu:nogen
+message PipelineWorkflow {
+  // Name is a descriptive name of the pipeline workflow.
+  string Name = 1 [ (gogoproto.jsontag) = "name", (gogoproto.moretags) = "yaml: \"name" ];
+
+  // Filters contains one or more references to a resource to use as an event
+  // filter.
+  repeated ResourceReference Filters = 2 [ (gogoproto.jsontag) = "filters,omitempty", (gogoproto.moretags) = "yaml: \"filters,omitempty\"" ];
+
+  // Mutator contains a reference to a resource to use as an event mutator.
+  ResourceReference Mutator = 3 [ (gogoproto.jsontag) = "mutator,omitempty", (gogoproto.moretags) = "yaml: \"mutator,omitempty\"" ];
+
+  // Handler contains a reference to a resource to use as an event handler.
+  ResourceReference Handler = 4 [ (gogoproto.jsontag) = "handler", (gogoproto.moretags) = "yaml: \"handler]\"" ];
+}

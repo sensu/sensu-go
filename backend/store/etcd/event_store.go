@@ -9,10 +9,12 @@ import (
 	"time"
 
 	"github.com/gogo/protobuf/proto"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/sensu/sensu-go/backend/metrics"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/backend/store/etcd/kvc"
 	"github.com/sensu/sensu-go/backend/store/provider"
-	"go.etcd.io/etcd/client/v3"
+	clientv3 "go.etcd.io/etcd/client/v3"
 
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 )
@@ -21,11 +23,27 @@ const (
 	eventsPathPrefix = "events"
 	// Type is the type of an etcd store provider.
 	Type = "etcd"
+
+	// EventBytesSummaryName is the name of the prometheus summary vec used to
+	// track event sizes (in bytes).
+	EventBytesSummaryName = "sensu_go_store_event_bytes"
+
+	// EventBytesSummaryHelp is the help message for EventBytesSummary
+	// Prometheus metrics.
+	EventBytesSummaryHelp = "Distribution of event sizes, in bytes, received by the store on this backend"
 )
 
 var (
 	eventKeyBuilder = store.NewKeyBuilder(eventsPathPrefix)
+
+	EventBytesSummary = metrics.NewEventBytesSummaryVec(EventBytesSummaryName, EventBytesSummaryHelp)
 )
+
+func init() {
+	if err := prometheus.Register(EventBytesSummary); err != nil {
+		metrics.LogError(logger, EventBytesSummaryName, err)
+	}
+}
 
 func getEventPath(event *corev2.Event) string {
 	return path.Join(
@@ -255,6 +273,7 @@ func (s *Store) UpdateEvent(ctx context.Context, event *corev2.Event) (*corev2.E
 	updateOccurrences(event.Check)
 
 	persistEvent := event
+	typeLabelValue := metrics.EventTypeLabelCheck
 
 	if event.HasMetrics() {
 		// Taking pains to not modify our input, set metrics to nil so they are
@@ -262,6 +281,7 @@ func (s *Store) UpdateEvent(ctx context.Context, event *corev2.Event) (*corev2.E
 		newEvent := *event
 		persistEvent = &newEvent
 		persistEvent.Metrics = nil
+		typeLabelValue = metrics.EventTypeLabelCheckAndMetrics
 	}
 
 	// Truncate check output if the output is larger than MaxOutputSize
@@ -292,6 +312,8 @@ func (s *Store) UpdateEvent(ctx context.Context, event *corev2.Event) (*corev2.E
 	if err != nil {
 		return nil, nil, &store.ErrEncode{Err: err}
 	}
+
+	EventBytesSummary.WithLabelValues(typeLabelValue).Observe(float64(len(eventBytes)))
 
 	cmp := namespaceExistsForResource(event.Entity)
 	req := clientv3.OpPut(getEventPath(event), string(eventBytes))

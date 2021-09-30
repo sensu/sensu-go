@@ -249,6 +249,9 @@ func (c *Check) MarshalJSON() ([]byte, error) {
 	if c.Handlers == nil {
 		c.Handlers = []string{}
 	}
+	if c.Pipelines == nil {
+		c.Pipelines = []*ResourceReference{}
+	}
 
 	type Clone Check
 	clone := &Clone{}

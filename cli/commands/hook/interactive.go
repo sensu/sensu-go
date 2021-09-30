@@ -48,7 +48,7 @@ func (opts *hookOpts) withFlags(flags *pflag.FlagSet) {
 	stdinBool, _ := flags.GetBool("stdin")
 	opts.Stdin = strconv.FormatBool(stdinBool)
 
-	if namespace := helpers.GetChangedStringValueFlag("namespace", flags); namespace != "" {
+	if namespace := helpers.GetChangedStringValueViper("namespace", flags); namespace != "" {
 		opts.Namespace = namespace
 	}
 }
@@ -101,7 +101,7 @@ func (opts *hookOpts) administerQuestionnaire(editing bool) error {
 				Default: opts.Stdin,
 			},
 			Validate: func(val interface{}) error {
-				if str := val.(string); str != "false" && str != "true" {
+				if str, ok := val.(string); ok && str != "false" && str != "true" {
 					return fmt.Errorf("Please enter either true or false")
 				}
 				return nil

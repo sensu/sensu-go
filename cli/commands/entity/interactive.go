@@ -24,7 +24,7 @@ func (opts *entityOpts) withFlags(flags *pflag.FlagSet) {
 	opts.EntityClass, _ = flags.GetString("entity-class")
 	opts.Subscriptions, _ = flags.GetString("subscriptions")
 
-	if namespace := helpers.GetChangedStringValueFlag("namespace", flags); namespace != "" {
+	if namespace := helpers.GetChangedStringValueViper("namespace", flags); namespace != "" {
 		opts.Namespace = namespace
 	}
 }

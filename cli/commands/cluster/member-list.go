@@ -28,7 +28,7 @@ func MemberListCommand(cli *cli.SensuCli) *cobra.Command {
 			if result.Header == nil {
 				return errors.New("result header was empty, etcd cluster may be down")
 			}
-			err = helpers.PrintTitle(helpers.GetChangedStringValueFlag("format", cmd.Flags()), cli.Config.Format(), fmt.Sprintf("Etcd Cluster ID: %x", result.Header.ClusterId), cmd.OutOrStdout())
+			err = helpers.PrintTitle(helpers.GetChangedStringValueViper("format", cmd.Flags()), cli.Config.Format(), fmt.Sprintf("Etcd Cluster ID: %x", result.Header.ClusterId), cmd.OutOrStdout())
 			if err != nil {
 				return err
 			}

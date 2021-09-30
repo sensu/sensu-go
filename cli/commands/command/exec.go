@@ -50,11 +50,13 @@ func execCommandExecute(cli *cli.SensuCli) func(cmd *cobra.Command, args []strin
 			fmt.Sprintf("SENSU_API_URL=%s", cli.Config.APIUrl()),
 			fmt.Sprintf("SENSU_NAMESPACE=%s", cli.Config.Namespace()),
 			fmt.Sprintf("SENSU_FORMAT=%s", cli.Config.Format()),
+			fmt.Sprintf("SENSU_API_KEY=%s", cli.Config.APIKey()),
 			fmt.Sprintf("SENSU_ACCESS_TOKEN=%s", cli.Config.Tokens().Access),
 			fmt.Sprintf("SENSU_ACCESS_TOKEN_EXPIRES_AT=%d", cli.Config.Tokens().ExpiresAt),
 			fmt.Sprintf("SENSU_REFRESH_TOKEN=%s", cli.Config.Tokens().Refresh),
 			fmt.Sprintf("SENSU_TRUSTED_CA_FILE=%s", cli.Config.TrustedCAFile()),
 			fmt.Sprintf("SENSU_INSECURE_SKIP_TLS_VERIFY=%s", strconv.FormatBool(cli.Config.InsecureSkipTLSVerify())),
+			fmt.Sprintf("SENSU_TIMEOUT=%s", cli.Config.Timeout().String()),
 		}
 
 		ctx := context.TODO()

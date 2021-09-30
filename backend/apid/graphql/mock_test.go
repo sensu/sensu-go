@@ -299,3 +299,12 @@ func (m *MockMetricGatherer) Gather() ([]*dto.MetricFamily, error) {
 	args := m.Called()
 	return args.Get(0).([]*dto.MetricFamily), args.Error(1)
 }
+
+type MockEtcdHealthController struct {
+	mock.Mock
+}
+
+func (m *MockEtcdHealthController) GetClusterHealth(ctx context.Context) *corev2.HealthResponse {
+	args := m.Called(ctx)
+	return args.Get(0).(*corev2.HealthResponse)
+}

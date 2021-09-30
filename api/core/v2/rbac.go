@@ -49,7 +49,6 @@ var CommonCoreResources = []string{
 	"assets",
 	"checks",
 	"entities",
-	"extensions",
 	"events",
 	"filters",
 	"handlers",

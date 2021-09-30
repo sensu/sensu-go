@@ -11,11 +11,13 @@ import (
 )
 
 type mutatorOpts struct {
+	Type          string `survey:"type"`
 	Name          string `survey:"name"`
 	Command       string `survey:"command"`
+	Eval          string `survey:"eval"`
 	Timeout       string `survey:"timeout"`
 	EnvVars       string `survey:"env-vars"`
-	Namespace     string
+	Namespace     string `survey:"namespace"`
 	RuntimeAssets string `survey:"assets"`
 }
 
@@ -27,7 +29,8 @@ func newMutatorOpts() *mutatorOpts {
 func (opts *mutatorOpts) withMutator(mutator *types.Mutator) {
 	opts.Name = mutator.Name
 	opts.Namespace = mutator.Namespace
-
+	opts.Type = mutator.Type
+	opts.Eval = mutator.Eval
 	opts.Command = mutator.Command
 	opts.Timeout = strconv.FormatUint(uint64(mutator.Timeout), 10)
 	opts.EnvVars = strings.Join(mutator.EnvVars, ",")
@@ -39,8 +42,10 @@ func (opts *mutatorOpts) withFlags(flags *pflag.FlagSet) {
 	opts.Timeout, _ = flags.GetString("timeout")
 	opts.EnvVars, _ = flags.GetString("env-vars")
 	opts.RuntimeAssets, _ = flags.GetString("runtime-assets")
+	opts.Type, _ = flags.GetString("type")
+	opts.Eval, _ = flags.GetString("eval")
 
-	if namespace := helpers.GetChangedStringValueFlag("namespace", flags); namespace != "" {
+	if namespace := helpers.GetChangedStringValueViper("namespace", flags); namespace != "" {
 		opts.Namespace = namespace
 	}
 }
@@ -67,10 +72,24 @@ func (opts *mutatorOpts) administerQuestionnaire(editing bool) error {
 		}...)
 	}
 	qs = append(qs, []*survey.Question{
-		{Name: "command",
+		{
+			Name: "type",
+			Prompt: &survey.Input{
+				Message: "Type:",
+				Default: "pipe",
+			},
+		},
+		{
+			Name: "command",
 			Prompt: &survey.Input{
 				Message: "Command:",
 				Default: opts.Command,
+			},
+		},
+		{
+			Name: "eval",
+			Prompt: &survey.Input{
+				Message: "Eval:",
 			},
 		},
 		{
@@ -104,7 +123,8 @@ func (opts *mutatorOpts) administerQuestionnaire(editing bool) error {
 func (opts *mutatorOpts) Copy(mutator *types.Mutator) {
 	mutator.Name = opts.Name
 	mutator.Namespace = opts.Namespace
-
+	mutator.Type = opts.Type
+	mutator.Eval = opts.Eval
 	mutator.Command = opts.Command
 	mutator.EnvVars = helpers.SafeSplitCSV(opts.EnvVars)
 

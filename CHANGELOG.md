@@ -8,8 +8,43 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
 
+### Security
+- Migrated the package dgrijalva/jwt-go to golang-jwt/jwt to address [CVE-2020-26160](https://github.com/advisories/GHSA-w73w-5m7g-f7qc)
+
+### Added
+- Added `core/v2.Pipeline` resource for configuring event pipelines.
+- Added `pipelines` field to `Check` and `CheckConfig`
+- Added the platform metrics log. This log contains a listing of core Sensu
+metrics in influx-line format. It is enabled by default but can be disabled
+with the --disable-platform-metrics flag. By default the log is appended to
+every 60s, and written to /var/lib/sensu/sensu-backend/stats.log.
+- Open-sourced the previously enterprise-only event logger. The event logger
+can be used to send the events a backend processes to a rotatable log file.
+- Added sensuctl commands for pipeline list, info, and delete.
+- Added support for `SENSU_BACKEND_ETCD_CLIENT_USERNAME` and
+`SENSU_BACKEND_ETCD_CLIENT_PASSWORD` environment variables for connecting to
+external etcds that use user/password authentication instead of client
+certificate authentication. Typical with DBaaS etcd providers. These can only be
+set via these environment variables and intentionally cannot be set via flags.
+
 ### Fixed
-- Agent events API now accepts metrics event
+- `sensuctl env` now properly displays the `SENSU_API_KEY` and `SENSU_TIMEOUT`
+environment variables.
+- `sensuctl command exec` now properly adds the `SENSU_API_KEY` and
+`SENSU_TIMEOUT` variables to the command's environment.
+- Fixed a crash when running the backend on `darwin/arm64` when compressing a
+wrapped resource.
+
+### Changed
+- Upgraded Go version from 1.16.5 to 1.17.1.
+
+## [6.4.2] - 2021-08-31
+
+### Added
+- Added `sensu_go_agentd_event_bytes` & `sensu_go_store_event_bytes` summary
+metrics to the `/metrics` endpoint.
+
+## [6.4.1] - 2021-08-24
 
 ### Added
 - Added `ignore-already-initialized` configuration flag to the sensu-backend
@@ -22,8 +57,16 @@ code in the "eval" field. See documentation for details.
 for controlling agent retry exponential backoff behaviour. --retry-min and
 --retry-max expect duration values like 1s, 10m, 4h. --retry-multiplier expects
 a decimal multiplier value.
+- Added ProcessedBy field to check results. The ProcessedBy field indicates which
+agent processed a particular event.
+- Added API key support for admin user at cluster init time.
+- Added `sensu_go_agentd_event_bytes` & `sensu_go_store_event_bytes` summary
+metrics to the `/metrics` endpoint.
+- Added support for environment variable arguments in `sensuctl`.
 
 ### Changed
+- When deleting resource with sensuctl, the resource type will now be displayed
+in the confirmation prompt
 - When keepalived encounters round-robin ring errors, the backend no longer
 internally restarts.
 - The core/v2.Mutator type now has a Type field which can be used to tell
@@ -33,6 +76,8 @@ the supported types are "pipe" and "javascript".
 maximum of 10s to 120s, and the multiplier decreased from 10.0 to 2.0.
 - The default embedded etcd heatbeat interval has been increased from 100 to 500.
 - The default embedded etcd election timeout has been increased from 1000 to 5000.
+- The backend internal bus default buffer sizes have been increased from 100
+to 1000 items.
 
 ### Fixed
 - Sensu Go OSS can now be built on `darwin/arm64`.
@@ -40,6 +85,17 @@ maximum of 10s to 120s, and the multiplier decreased from 10.0 to 2.0.
 if the store was already initialized.
 - Guard against potential crash in the sensuctl cluster member-list command when
 the etcd response header is nil.
+- Agent events API now accepts metrics event.
+- Fixed rare cases where the agent could fail to delete temporary files when
+downloading assets.
+- Forwards compatibility with newer Sensu backends has been improved. Users can
+now create resources with fields that are unknown to Sensu.
+- The `--retry-min`, `--retry-max` and `--retry-multiplier` flags are now listed
+in the `sensu-agent start --help` output.
+
+### Changed
+- API and agent services now log at warn level when the start up, not at info.
+- Backend now reports when it is ready to process events at warn level.
 
 ## [6.4.0] - 2021-06-23
 

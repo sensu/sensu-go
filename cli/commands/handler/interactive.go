@@ -66,7 +66,7 @@ func (opts *handlerOpts) withFlags(flags *pflag.FlagSet) {
 	opts.Type, _ = flags.GetString("type")
 	opts.RuntimeAssets, _ = flags.GetString("runtime-assets")
 
-	if namespace := helpers.GetChangedStringValueFlag("namespace", flags); namespace != "" {
+	if namespace := helpers.GetChangedStringValueViper("namespace", flags); namespace != "" {
 		opts.Namespace = namespace
 	}
 }

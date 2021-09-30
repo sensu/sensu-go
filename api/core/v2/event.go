@@ -72,6 +72,12 @@ func (e *Event) Validate() error {
 		}
 	}
 
+	for _, pipeline := range e.Pipelines {
+		if err := e.validatePipelineReference(pipeline); err != nil {
+			return errors.New("pipeline reference is invalid: " + err.Error())
+		}
+	}
+
 	if e.Name != "" {
 		return errors.New("events cannot be named")
 	}
@@ -90,9 +96,33 @@ func (e *Event) HasCheck() bool {
 	return e.Check != nil
 }
 
+// HasCheckHandlers determines if an event has one or more check handlers.
+func (e *Event) HasCheckHandlers() bool {
+	if e.HasCheck() && len(e.Check.Handlers) > 0 {
+		return true
+	}
+	return false
+}
+
 // HasMetrics determines if an event has metric data.
 func (e *Event) HasMetrics() bool {
 	return e.Metrics != nil
+}
+
+// HasMetricHandlers determines if an event has one or more metric handlers.
+func (e *Event) HasMetricHandlers() bool {
+	if e.HasMetrics() && len(e.Metrics.Handlers) > 0 {
+		return true
+	}
+	return false
+}
+
+// HasHandlers determines if an event has one or more check or metric handlers.
+func (e *Event) HasHandlers() bool {
+	if e.HasCheckHandlers() || e.HasMetricHandlers() {
+		return true
+	}
+	return false
 }
 
 // IsIncident determines if an event indicates an incident.
@@ -162,6 +192,19 @@ func (e *Event) SynthesizeExtras() map[string]interface{} {
 		"is_flapping_start": e.IsFlappingStart(),
 		"is_flapping_end":   e.IsFlappingEnd(),
 	}
+}
+
+// validatePipelineReference validates that a resource reference is capable of
+// acting as a pipeline.
+func (e *Event) validatePipelineReference(ref *ResourceReference) error {
+	switch ref.APIVersion {
+	case "core/v2":
+		switch ref.Type {
+		case "Pipeline":
+			return nil
+		}
+	}
+	return fmt.Errorf("resource type not capable of acting as a pipeline: %s.%s", ref.APIVersion, ref.Type)
 }
 
 // FixtureEvent returns a testing fixture for an Event object.
@@ -495,6 +538,48 @@ func (e *Event) RBACName() string {
 func (e *Event) GetUUID() uuid.UUID {
 	id, _ := uuid.FromBytes(e.ID)
 	return id
+}
+
+// LogFields populates a map with fields containing relevant information about
+// an event for logging
+func (e *Event) LogFields(debug bool) map[string]interface{} {
+	// Ensure the entity is present
+	if e.Entity == nil {
+		return map[string]interface{}{}
+	}
+
+	fields := map[string]interface{}{
+		"event_id":         e.GetUUID().String(),
+		"entity_name":      e.Entity.Name,
+		"entity_namespace": e.Entity.Namespace,
+	}
+
+	if e.HasCheck() {
+		fields["check_name"] = e.Check.Name
+		fields["check_namespace"] = e.Check.Namespace
+	}
+
+	if debug {
+		fields["timestamp"] = e.Timestamp
+		if e.HasMetrics() {
+			fields["metrics"] = e.Metrics
+		}
+		if e.HasCheck() {
+			fields["hooks"] = e.Check.Hooks
+			fields["silenced"] = e.Check.Silenced
+		}
+	} else {
+		if e.HasMetrics() {
+			count := len(e.Metrics.Points)
+			fields["metric_count"] = count
+			if count > 0 {
+				fields["first_metric_name"] = e.Metrics.Points[0].Name
+				fields["first_metric_value"] = e.Metrics.Points[0].Value
+			}
+		}
+	}
+
+	return fields
 }
 
 func (e Event) MarshalJSON() ([]byte, error) {

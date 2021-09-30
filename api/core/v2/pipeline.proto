@@ -1,0 +1,25 @@
+syntax = "proto3";
+
+import "github.com/gogo/protobuf@v1.3.1/gogoproto/gogo.proto";
+import "github.com/sensu/sensu-go/api/core/v2/meta.proto";
+import "github.com/sensu/sensu-go/api/core/v2/pipeline_workflow.proto";
+
+package sensu.core.v2;
+
+option go_package = "v2";
+option (gogoproto.populate_all) = true;
+option (gogoproto.equal_all) = true;
+option (gogoproto.marshaler_all) = true;
+option (gogoproto.unmarshaler_all) = true;
+option (gogoproto.sizer_all) = true;
+option (gogoproto.testgen_all) = true;
+
+// Pipeline represents a named collection of pipeline workflows.
+message Pipeline {
+  // Metadata contains the name, namespace, labels and annotations of the
+  // pipeline.
+  ObjectMeta Metadata = 1 [ (gogoproto.jsontag) = "metadata,omitempty", (gogoproto.embed) = true, (gogoproto.nullable) = false ];
+
+  // Workflows contains one or more pipeline workflows.
+  repeated PipelineWorkflow Workflows = 2 [ (gogoproto.jsontag) = "workflows", (gogoproto.moretags) = "yaml: \"workflows\"" ];
+}

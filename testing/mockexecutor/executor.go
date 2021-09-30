@@ -27,6 +27,11 @@ func (e *MockExecutor) Return(r *command.ExecutionResponse, err error) {
 	e.err = err
 }
 
+func (e *MockExecutor) UnsafeReturn(r *command.ExecutionResponse, err error) {
+	e.response = r
+	e.err = err
+}
+
 func (e *MockExecutor) SetRequestFunc(fn RequestFunc) {
 	e.mu.Lock()
 	defer e.mu.Unlock()

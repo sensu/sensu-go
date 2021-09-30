@@ -1,7 +1,9 @@
 package graphql
 
 import (
+	"context"
 	"strconv"
+	"time"
 
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/apid/graphql/schema"
@@ -18,11 +20,16 @@ var _ schema.EtcdClusterMemberHealthFieldResolvers = (*etcdClusterMemberHealthIm
 // Implement ClusterHealthFieldResolvers
 //
 
-type clusterHealthImpl struct{}
+type clusterHealthImpl struct {
+	healthController EtcdHealthController
+}
 
 // Etcd implements response to request for 'etcd' field.
-func (r *clusterHealthImpl) Etcd(p graphql.ResolveParams) (interface{}, error) {
-	return p.Source, nil
+func (r *clusterHealthImpl) Etcd(p schema.ClusterHealthEtcdFieldResolverParams) (interface{}, error) {
+	ctx, cancel := context.WithTimeout(p.Context, time.Duration(p.Args.Timeout)*time.Millisecond)
+	defer cancel()
+	resp := r.healthController.GetClusterHealth(ctx)
+	return resp, nil
 }
 
 //
