@@ -37,6 +37,8 @@ wrapped resource.
 
 ### Changed
 - Upgraded Go version from 1.16.5 to 1.17.1.
+- The default embedded etcd heartbeat interval has been increased from 100 to 500.
+- The default embedded etcd election timeout has been increased from 1000 to 5000.
 
 ## [6.4.2] - 2021-08-31
 
@@ -74,10 +76,10 @@ Sensu that the mutator is a different type from the default (pipe). Currently,
 the supported types are "pipe" and "javascript".
 - The default retry values have been increased from a minimum of 10ms to 1s, a
 maximum of 10s to 120s, and the multiplier decreased from 10.0 to 2.0.
-- The default embedded etcd heatbeat interval has been increased from 100 to 500.
-- The default embedded etcd election timeout has been increased from 1000 to 5000.
 - The backend internal bus default buffer sizes have been increased from 100
 to 1000 items.
+- API and agent services now log at warn level when the start up, not at info.
+- Backend now reports when it is ready to process events at warn level.
 
 ### Fixed
 - Sensu Go OSS can now be built on `darwin/arm64`.
@@ -92,10 +94,6 @@ downloading assets.
 now create resources with fields that are unknown to Sensu.
 - The `--retry-min`, `--retry-max` and `--retry-multiplier` flags are now listed
 in the `sensu-agent start --help` output.
-
-### Changed
-- API and agent services now log at warn level when the start up, not at info.
-- Backend now reports when it is ready to process events at warn level.
 
 ## [6.4.0] - 2021-06-23
 
