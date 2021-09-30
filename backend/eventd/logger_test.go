@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
+	"math"
 	"os"
 	"reflect"
 	"sync"
@@ -54,7 +55,7 @@ func TestLogger(t *testing.T) {
 	defer os.Remove(file.Name())
 	l.Path = file.Name()
 	l.Start()
-	assert.Contains(t, hook.LastEntry().Message, "event logging is now enabled")
+	assert.Contains(t, hook.LastEntry().Message, "event logging using 1 JSON encoder")
 }
 
 func TestNewRawLogger(t *testing.T) {
@@ -153,7 +154,7 @@ func TestRawLogger(t *testing.T) {
 		},
 		{
 			name: "invalid JSON message",
-			msg:  json.RawMessage(`{"foo"}`),
+			msg:  math.Inf(1),
 			preMock: func(w *mockWriter) {
 				w.wg.Add(1)
 				w.On("Write", mock.AnythingOfType("string")).Return(0, nil)
@@ -196,12 +197,16 @@ func TestRawLogger(t *testing.T) {
 
 			wt, _ := time.ParseDuration("10ms")
 			l := &rawLogger{
-				input:  make(chan interface{}),
-				output: make(chan interface{}, 1),
-				writer: writer,
-				wait:   wt,
+				input:        make(chan interface{}),
+				encoderInput: make(chan interface{}),
+				output:       make(chan []byte, 1),
+				writer:       writer,
+				wait:         wt,
+				metrics:      newMetrics(),
+				done:         make(chan interface{}),
 			}
 			go l.ringBuffer()
+			go l.encoder()
 			go l.write()
 
 			l.Println(tt.msg)
@@ -235,27 +240,30 @@ func (w *nilWriter) Sync() error {
 
 func TestRawLogger_ringBuffer(t *testing.T) {
 	tests := []struct {
-		name    string
-		input   chan interface{}
-		output  chan interface{}
-		writer  LogWriter
-		want    interface{}
-		wantLog bool
+		name         string
+		input        chan interface{}
+		encoderInput chan interface{}
+		output       chan []byte
+		writer       LogWriter
+		want         interface{}
+		wantLog      bool
 	}{
 		{
-			name:   "all messages are passed when within buffer size",
-			input:  make(chan interface{}),
-			output: make(chan interface{}, 5),
-			writer: &nilWriter{},
-			want:   []interface{}{0, 1, 2, 3, 4},
+			name:         "all messages are passed when within buffer size",
+			input:        make(chan interface{}),
+			encoderInput: make(chan interface{}, 5),
+			output:       make(chan []byte, 5),
+			writer:       &nilWriter{},
+			want:         []interface{}{0, 1, 2, 3, 4},
 		},
 		{
-			name:    "older messages are removed from the buffer when over the buffer size",
-			input:   make(chan interface{}),
-			output:  make(chan interface{}, 4),
-			writer:  &nilWriter{},
-			want:    []interface{}{1, 2, 3, 4},
-			wantLog: true,
+			name:         "older messages are removed from the buffer when over the buffer size",
+			input:        make(chan interface{}),
+			encoderInput: make(chan interface{}, 4),
+			output:       make(chan []byte, 4),
+			writer:       &nilWriter{},
+			want:         []interface{}{1, 2, 3, 4},
+			wantLog:      true,
 		},
 	}
 	for _, tt := range tests {
@@ -265,10 +273,13 @@ func TestRawLogger_ringBuffer(t *testing.T) {
 
 			wt, _ := time.ParseDuration("10ms")
 			l := &rawLogger{
-				input:  tt.input,
-				output: tt.output,
-				writer: tt.writer,
-				wait:   wt,
+				input:        tt.input,
+				encoderInput: tt.encoderInput,
+				output:       tt.output,
+				writer:       tt.writer,
+				wait:         wt,
+				metrics:      newMetrics(),
+				done:         make(chan interface{}),
 			}
 			go l.ringBuffer()
 
@@ -283,7 +294,7 @@ func TestRawLogger_ringBuffer(t *testing.T) {
 
 			// Get the resulting messages sent over the output channel
 			var results []interface{}
-			for result := range l.output {
+			for result := range l.encoderInput {
 				results = append(results, result)
 			}
 
@@ -294,7 +305,68 @@ func TestRawLogger_ringBuffer(t *testing.T) {
 			if tt.wantLog && len(hook.AllEntries()) == 0 {
 				t.Error("rawLogger.ringBuffer() expected a log entry, got 0")
 			}
-			fmt.Println(hook.LastEntry())
+		})
+	}
+}
+
+func TestRawLogger_encoder(t *testing.T) {
+	type Tmp struct {
+		Id int `json:"id"`
+	}
+
+	tests := []struct {
+		name         string
+		input        chan interface{}
+		encoderInput chan interface{}
+		output       chan []byte
+		writer       LogWriter
+		want         []string
+	}{
+		{
+			name:         "all messages are passed when within buffer size",
+			input:        make(chan interface{}),
+			encoderInput: make(chan interface{}),
+			output:       make(chan []byte, 5),
+			writer:       &nilWriter{},
+			want:         []string{"{\"id\":0}\n", "{\"id\":1}\n", "{\"id\":2}\n", "{\"id\":3}\n", "{\"id\":4}\n"},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			nullLogger, _ := test.NewNullLogger()
+			logger = nullLogger.WithField("test", tt.name)
+
+			l := &rawLogger{
+				input:        tt.input,
+				encoderInput: tt.encoderInput,
+				output:       tt.output,
+				writer:       tt.writer,
+				wait:         0,
+				metrics:      newMetrics(),
+				done:         make(chan interface{}),
+			}
+			go l.ringBuffer()
+			go l.encoder()
+
+			// Send messages over input channel
+			for i := 0; i < 5; i++ {
+				l.encoderInput <- Tmp{i}
+			}
+
+			// Wait for any event to be logged
+			time.Sleep(time.Second * 2)
+			l.Stop()
+
+			// Get the resulting messages sent over the output channel
+			var results []string
+			for result := range l.output {
+				results = append(results, string(result))
+			}
+
+			if !reflect.DeepEqual(results, tt.want) {
+				t.Errorf("RawLogger.encoder() = %#v, want %#v", results, tt.want)
+			}
 		})
 	}
 }

@@ -119,7 +119,8 @@ type Config struct {
 	PlatformMetricsLoggingInterval time.Duration
 	PlatformMetricsLogFile         string
 
-	EventLogBufferSize int
-	EventLogBufferWait time.Duration
-	EventLogFile       string
+	EventLogBufferSize       int
+	EventLogBufferWait       time.Duration
+	EventLogFile             string
+	EventLogParallelEncoders bool
 }

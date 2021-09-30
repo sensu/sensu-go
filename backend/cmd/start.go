@@ -106,14 +106,17 @@ const (
 	flagPlatformMetricsLoggingInterval = "platform-metrics-logging-interval"
 	flagPlatformMetricsLogFile         = "platform-metrics-log-file"
 
-	// FlagEventLogBufferSize indicates the size of the events buffer
+	// flagEventLogBufferSize indicates the size of the events buffer
 	flagEventLogBufferSize = "event-log-buffer-size"
 
-	// FlagEventLogBufferWait indicates the full buffer wait time
+	// flagEventLogBufferWait indicates the full buffer wait time
 	flagEventLogBufferWait = "event-log-buffer-wait"
 
-	// FlagEventLogFile indicates the path to the event log file
+	// flagEventLogFile indicates the path to the event log file
 	flagEventLogFile = "event-log-file"
+
+	// flagEventLogParallelEncoders used to indicate parallel encoders should be used for event logging
+	flagEventLogParallelEncoders = "event-log-parallel-encoders"
 
 	// Default values
 
@@ -255,6 +258,7 @@ func StartCommand(initialize InitializeFunc) *cobra.Command {
 				EventLogBufferSize:             viper.GetInt(flagEventLogBufferSize),
 				EventLogBufferWait:             viper.GetDuration(flagEventLogBufferWait),
 				EventLogFile:                   viper.GetString(flagEventLogFile),
+				EventLogParallelEncoders:       viper.GetBool(flagEventLogParallelEncoders),
 			}
 
 			if flag := cmd.Flags().Lookup(flagLabels); flag != nil && flag.Changed {
@@ -410,6 +414,7 @@ func handleConfig(cmd *cobra.Command, arguments []string, server bool) error {
 		viper.SetDefault(flagEventLogBufferWait, 10*time.Millisecond)
 		viper.SetDefault(flagEventLogBufferSize, 100000)
 		viper.SetDefault(flagEventLogFile, "")
+		viper.SetDefault(flagEventLogParallelEncoders, false)
 	}
 
 	// Etcd defaults
@@ -577,6 +582,7 @@ func flagSet(server bool) *pflag.FlagSet {
 		_ = flagSet.SetAnnotation(flagEtcdNodeName, "categories", []string{"store"})
 
 		_ = flagSet.String(flagEventLogFile, "", "path to the event log file")
+		_ = flagSet.Bool(flagEventLogParallelEncoders, false, "use parallel JSON encoding for the event log")
 
 		// Use a default value of 100,000 messages for the buffer. A serialized event
 		// takes a minimum of around 1300 bytes, so once full the buffer ring could
