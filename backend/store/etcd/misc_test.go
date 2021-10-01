@@ -5,7 +5,7 @@ import (
 	"testing"
 )
 
-func testPartitionStrings(t *testing.T) {
+func TestPartitionStrings(t *testing.T) {
 	data := []string{"a", "a", "a", "a", "a", "a", "a", "a", "a"}
 	want := [][]string{
 		{"a", "a", "a", "a"},
