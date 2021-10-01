@@ -34,6 +34,8 @@ environment variables.
 `SENSU_TIMEOUT` variables to the command's environment.
 - Fixed a crash when running the backend on `darwin/arm64` when compressing a
 wrapped resource.
+- Fixed a bug where large number of silences could cause etcd errors by not
+exceeding etcd'd default maximum number of transaction operations.
 
 ### Changed
 - Upgraded Go version from 1.16.5 to 1.17.1.

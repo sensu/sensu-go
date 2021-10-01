@@ -10,11 +10,12 @@ import (
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/backend/store/etcd/kvc"
-	"go.etcd.io/etcd/client/v3"
+	clientv3 "go.etcd.io/etcd/client/v3"
 )
 
 const (
 	silencedPathPrefix = "silenced"
+	maxTxnOps          = 64 // this is half of the etcd default maximum
 )
 
 var (
@@ -30,20 +31,40 @@ func GetSilencedPath(ctx context.Context, name string) string {
 	return silencedKeyBuilder.WithContext(ctx).Build(name)
 }
 
+func partitionStrings(data []string, partitionSize int) [][]string {
+	result := make([][]string, 0, len(data)/partitionSize)
+	for i := 0; i < len(data); i += partitionSize {
+		partitionEnd := i + partitionSize
+		if lendata := len(data); lendata < partitionEnd {
+			partitionEnd = lendata
+		}
+		result = append(result, data[i:partitionEnd])
+	}
+	return result
+}
+
 // DeleteSilencedEntryByName deletes one or more silenced entries by name
 func (s *Store) DeleteSilencedEntryByName(ctx context.Context, silencedNames ...string) error {
 	if len(silencedNames) == 0 {
 		return nil
 	}
-	ops := make([]clientv3.Op, 0, len(silencedNames))
-	for _, silenced := range silencedNames {
-		ops = append(ops, clientv3.OpDelete(GetSilencedPath(ctx, silenced)))
-	}
 
-	return kvc.Backoff(ctx).Retry(func(n int) (done bool, err error) {
-		_, err = s.client.Txn(ctx).Then(ops...).Commit()
-		return kvc.RetryRequest(n, err)
-	})
+	partitions := partitionStrings(silencedNames, maxTxnOps)
+	for _, partition := range partitions {
+		ops := make([]clientv3.Op, 0, len(partition))
+		for _, silenced := range partition {
+			ops = append(ops, clientv3.OpDelete(GetSilencedPath(ctx, silenced)))
+		}
+
+		if err := kvc.Backoff(ctx).Retry(func(n int) (done bool, err error) {
+			_, err = s.client.Txn(ctx).Then(ops...).Commit()
+			return kvc.RetryRequest(n, err)
+		}); err != nil {
+			return err
+		}
+	}
+	return nil
+
 }
 
 // GetSilencedEntries gets all silenced entries.
@@ -68,21 +89,31 @@ func (s *Store) GetSilencedEntriesBySubscription(ctx context.Context, subscripti
 	if len(subscriptions) == 0 {
 		return nil, &store.ErrNotValid{Err: errors.New("couldn't get silenced entries: must specify at least one subscription")}
 	}
-	var ops []clientv3.Op
-	for _, subscription := range subscriptions {
-		ops = append(ops, clientv3.OpGet(GetSilencedPath(ctx, subscription), clientv3.WithPrefix()))
-	}
+	result := []*corev2.Silenced{}
+	partitions := partitionStrings(subscriptions, maxTxnOps)
+	for _, partition := range partitions {
+		ops := make([]clientv3.Op, 0, len(partition))
+		for _, subscription := range partition {
+			ops = append(ops, clientv3.OpGet(GetSilencedPath(ctx, subscription), clientv3.WithPrefix()))
+		}
 
-	var resp *clientv3.TxnResponse
-	err := kvc.Backoff(ctx).Retry(func(n int) (done bool, err error) {
-		resp, err = s.client.Txn(ctx).Then(ops...).Commit()
-		return kvc.RetryRequest(n, err)
-	})
-	if err != nil {
-		return nil, err
-	}
+		var resp *clientv3.TxnResponse
+		err := kvc.Backoff(ctx).Retry(func(n int) (done bool, err error) {
+			resp, err = s.client.Txn(ctx).Then(ops...).Commit()
+			return kvc.RetryRequest(n, err)
+		})
+		if err != nil {
+			return nil, err
+		}
 
-	return s.arrayTxnSilencedEntries(ctx, resp)
+		entries, err := s.arrayTxnSilencedEntries(ctx, resp)
+		if err != nil {
+			return result, err
+		}
+
+		result = append(result, entries...)
+	}
+	return result, nil
 }
 
 // GetSilencedEntriesByCheckName gets all silenced entries that match a check name.
@@ -146,19 +177,28 @@ func (s *Store) GetSilencedEntriesByName(ctx context.Context, names ...string) (
 	if len(names) == 0 {
 		return nil, nil
 	}
-	ops := make([]clientv3.Op, 0, len(names))
-	for _, name := range names {
-		ops = append(ops, clientv3.OpGet(GetSilencedPath(ctx, name)))
+	result := []*corev2.Silenced{}
+	partitions := partitionStrings(names, maxTxnOps)
+	for _, partition := range partitions {
+		ops := make([]clientv3.Op, 0, len(partition))
+		for _, name := range partition {
+			ops = append(ops, clientv3.OpGet(GetSilencedPath(ctx, name)))
+		}
+		var resp *clientv3.TxnResponse
+		err := kvc.Backoff(ctx).Retry(func(n int) (done bool, err error) {
+			resp, err = s.client.Txn(ctx).Then(ops...).Commit()
+			return kvc.RetryRequest(n, err)
+		})
+		if err != nil {
+			return nil, err
+		}
+		entries, err := s.arrayTxnSilencedEntries(ctx, resp)
+		if err != nil {
+			return nil, err
+		}
+		result = append(result, entries...)
 	}
-	var resp *clientv3.TxnResponse
-	err := kvc.Backoff(ctx).Retry(func(n int) (done bool, err error) {
-		resp, err = s.client.Txn(ctx).Then(ops...).Commit()
-		return kvc.RetryRequest(n, err)
-	})
-	if err != nil {
-		return nil, err
-	}
-	return s.arrayTxnSilencedEntries(ctx, resp)
+	return result, nil
 }
 
 // UpdateSilencedEntry updates a Silenced.
