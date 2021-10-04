@@ -633,21 +633,21 @@ func (b *Backend) runOnce() error {
 		metricsLogWriter, err := logging.NewRotateWriter(b.Cfg.PlatformMetricsLogFile, sighup)
 		if err != nil {
 			logger.WithError(err).Error("unable to open platform metrics log file")
-			return err
+		} else {
+			defer metricsLogWriter.Close()
+			metricsBridge, err := metrics.NewInfluxBridge(&metrics.InfluxBridgeConfig{
+				Writer:    metricsLogWriter,
+				Interval:  b.Cfg.PlatformMetricsLoggingInterval,
+				Gatherer:  prometheus.DefaultGatherer,
+				ErrLogger: logger,
+				Select:    selectedMetrics,
+			})
+			if err != nil {
+				logger.WithError(err).Error("unable to start the platform metrics bridge")
+				return err
+			}
+			go metricsBridge.Run(b.RunContext())
 		}
-		defer metricsLogWriter.Close()
-		metricsBridge, err := metrics.NewInfluxBridge(&metrics.InfluxBridgeConfig{
-			Writer:    metricsLogWriter,
-			Interval:  b.Cfg.PlatformMetricsLoggingInterval,
-			Gatherer:  prometheus.DefaultGatherer,
-			ErrLogger: logger,
-			Select:    selectedMetrics,
-		})
-		if err != nil {
-			logger.WithError(err).Error("unable to start the platform metrics bridge")
-			return err
-		}
-		go metricsBridge.Run(b.RunContext())
 	}
 
 	// Reverse the order of our stopGroup so daemons are stopped in the proper
