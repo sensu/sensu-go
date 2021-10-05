@@ -67,7 +67,9 @@ func (e ErrStartup) Error() string {
 	return fmt.Sprintf("error starting %s: %s", e.Name, e.Err)
 }
 
-var selectedMetrics = []string{
+// SelectedMetrics is a list of Prometheus metric names to use when fetching
+// metrics for the metrics logger.
+var SelectedMetrics = []string{
 	"sensu_go_wizard_bus",
 	"sensu_go_event_handler_duration",
 	"sensu_go_events_processed",
@@ -640,7 +642,7 @@ func (b *Backend) runOnce() error {
 				Interval:  b.Cfg.PlatformMetricsLoggingInterval,
 				Gatherer:  prometheus.DefaultGatherer,
 				ErrLogger: logger,
-				Select:    selectedMetrics,
+				Select:    SelectedMetrics,
 			})
 			if err != nil {
 				logger.WithError(err).Error("unable to start the platform metrics bridge")
