@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"github.com/gogo/protobuf/proto"
-	"github.com/prometheus/client_golang/prometheus"
 	"github.com/sensu/sensu-go/backend/metrics"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/backend/store/etcd/kvc"
@@ -23,27 +22,11 @@ const (
 	eventsPathPrefix = "events"
 	// Type is the type of an etcd store provider.
 	Type = "etcd"
-
-	// EventBytesSummaryName is the name of the prometheus summary vec used to
-	// track event sizes (in bytes).
-	EventBytesSummaryName = "sensu_go_store_event_bytes"
-
-	// EventBytesSummaryHelp is the help message for EventBytesSummary
-	// Prometheus metrics.
-	EventBytesSummaryHelp = "Distribution of event sizes, in bytes, received by the store on this backend"
 )
 
 var (
 	eventKeyBuilder = store.NewKeyBuilder(eventsPathPrefix)
-
-	EventBytesSummary = metrics.NewEventBytesSummaryVec(EventBytesSummaryName, EventBytesSummaryHelp)
 )
-
-func init() {
-	if err := prometheus.Register(EventBytesSummary); err != nil {
-		metrics.LogError(logger, EventBytesSummaryName, err)
-	}
-}
 
 func getEventPath(event *corev2.Event) string {
 	return path.Join(
@@ -243,6 +226,44 @@ func (s *Store) GetEventByEntityCheck(ctx context.Context, entityName, checkName
 	return event, nil
 }
 
+func (s *Store) PutEvent(ctx context.Context, event *corev2.Event) error {
+	if event == nil || event.Check == nil {
+		return &store.ErrNotValid{Err: errors.New("event has no check")}
+	}
+
+	if err := event.Check.Validate(); err != nil {
+		return &store.ErrNotValid{Err: err}
+	}
+
+	if err := event.Entity.Validate(); err != nil {
+		return &store.ErrNotValid{Err: err}
+	}
+
+	ctx = store.NamespaceContext(ctx, event.Entity.Namespace)
+
+	// update the history
+	// marshal the new event and store it.
+	eventBytes, err := proto.Marshal(event)
+	if err != nil {
+		return &store.ErrEncode{Err: err}
+	}
+
+	cmp := namespaceExistsForResource(event.Entity)
+	req := clientv3.OpPut(getEventPath(event), string(eventBytes))
+	var res *clientv3.TxnResponse
+	err = kvc.Backoff(ctx).Retry(func(n int) (done bool, err error) {
+		res, err = s.client.Txn(ctx).If(cmp).Then(req).Commit()
+		return kvc.RetryRequest(n, err)
+	})
+	if err != nil {
+		return err
+	}
+	if !res.Succeeded {
+		return &store.ErrNamespaceMissing{Namespace: event.Entity.Namespace}
+	}
+	return nil
+}
+
 // UpdateEvent updates an event.
 func (s *Store) UpdateEvent(ctx context.Context, event *corev2.Event) (*corev2.Event, *corev2.Event, error) {
 	if event == nil || event.Check == nil {
@@ -313,7 +334,7 @@ func (s *Store) UpdateEvent(ctx context.Context, event *corev2.Event) (*corev2.E
 		return nil, nil, &store.ErrEncode{Err: err}
 	}
 
-	EventBytesSummary.WithLabelValues(typeLabelValue).Observe(float64(len(eventBytes)))
+	store.EventBytesSummary.WithLabelValues(typeLabelValue).Observe(float64(len(eventBytes)))
 
 	cmp := namespaceExistsForResource(event.Entity)
 	req := clientv3.OpPut(getEventPath(event), string(eventBytes))

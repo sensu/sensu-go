@@ -20,6 +20,7 @@ import (
 	"github.com/sensu/sensu-go/backend/messaging"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/backend/store/cache"
+	"github.com/sensu/sensu-go/backend/store/memory"
 	storev2 "github.com/sensu/sensu-go/backend/store/v2"
 	utillogging "github.com/sensu/sensu-go/util/logging"
 )
@@ -175,9 +176,15 @@ func New(ctx context.Context, c Config, opts ...Option) (*Eventd, error) {
 		c.StoreTimeout = defaultStoreTimeout
 	}
 
+	eventStore := memory.NewEventStore(ctx, memory.EventStoreConfig{
+		DB:             c.EventStore,
+		Store:          c.EventStore.(store.Store),
+		UpdateInterval: time.Second * 60,
+	})
+
 	e := &Eventd{
 		store:               c.Store,
-		eventStore:          c.EventStore,
+		eventStore:          eventStore,
 		bus:                 c.Bus,
 		workerCount:         c.WorkerCount,
 		livenessFactory:     c.LivenessFactory,
