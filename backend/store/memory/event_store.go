@@ -70,11 +70,7 @@ func (e *EventStore) update(ctx context.Context) {
 			logger.WithError(err).Error("error writing event")
 			return true
 		}
-		putter, ok := e.db.(eventPutter)
-		if !ok {
-			logger.Error("no event putter available!")
-			return false
-		}
+		putter := e.db.(eventPutter)
 		ctx = store.NamespaceContext(ctx, event.Entity.Namespace)
 		if err := putter.PutEvent(ctx, &event); err != nil {
 			logger.WithError(err).Error("error writing event")
