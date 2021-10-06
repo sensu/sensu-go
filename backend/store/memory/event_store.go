@@ -214,6 +214,9 @@ func (e *EventStore) UpdateEvent(ctx context.Context, event *corev2.Event) (*cor
 		if err != nil {
 			return nil, nil, err
 		}
+		if newEvent == nil {
+			newEvent = oldEvent
+		}
 		newEventBytes, err := proto.Marshal(newEvent)
 		if err != nil {
 			return nil, nil, &store.ErrEncode{Err: err, Key: eventPath}
