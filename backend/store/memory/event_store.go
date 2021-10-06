@@ -53,7 +53,10 @@ func (e *EventStore) run(ctx context.Context, interval time.Duration) {
 }
 
 func (e *EventStore) update(ctx context.Context) {
+	logger.Info("updating event store")
+	count := 0
 	e.data.Range(func(keyI, valueI interface{}) bool {
+		count++
 		value := valueI.([]byte)
 		eventBytes, err := snappy.Decode(nil, value)
 		if err != nil {
@@ -78,6 +81,7 @@ func (e *EventStore) update(ctx context.Context) {
 		}
 		return true
 	})
+	logger.WithField("num_events", count).Info("updated event store")
 }
 
 func getEventWithCheckPath(ctx context.Context, entity, check string) (string, error) {
