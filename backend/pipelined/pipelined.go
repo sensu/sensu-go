@@ -207,11 +207,14 @@ func (p *Pipelined) handleMessage(ctx context.Context, msg interface{}) error {
 					}
 					skipPipelineErr := fmt.Errorf("%w, skipping execution of pipeline", err)
 					if _, ok := err.(*pipeline.ErrNoWorkflows); ok {
-						logger.WithFields(fields).Warn(skipPipelineErr)
+						if fields["check_name"] != "keepalive" {
+							// only warn about empty pipelines if it's not a keepalive.
+							// this reduces log spam.
+							logger.WithFields(fields).Warn(skipPipelineErr)
+						}
 					} else {
 						logger.WithFields(fields).Error(skipPipelineErr)
 					}
-
 				}
 				adapterFound = true
 			}

@@ -216,7 +216,11 @@ func (a *AdapterV1) expandHandlers(ctx context.Context, handlers []string, level
 				continue
 			}
 
-			logger.WithFields(fields).Info("handler does not exist, will be ignored")
+			if level > 1 {
+				logger.WithFields(fields).Error("set handler specified a handler that does not exist")
+			} else {
+				logger.WithFields(fields).Info("handler does not exist, will be ignored")
+			}
 			continue
 		}
 
