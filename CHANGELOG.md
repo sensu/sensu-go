@@ -8,6 +8,8 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
 
+## [6.5.0] - 2021-10-12
+
 ### Security
 - Migrated the package dgrijalva/jwt-go to golang-jwt/jwt to address [CVE-2020-26160](https://github.com/advisories/GHSA-w73w-5m7g-f7qc)
 
