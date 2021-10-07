@@ -67,6 +67,12 @@ func (s *StoreProxy) UpdateEvent(ctx context.Context, event *corev2.Event) (old,
 	return s.do().UpdateEvent(ctx, event)
 }
 
+func (s *StoreProxy) PutEvent(ctx context.Context, event *corev2.Event) error {
+	return s.do().(interface {
+		PutEvent(context.Context, *corev2.Event) error
+	}).PutEvent(ctx, event)
+}
+
 // DeleteAssetByName deletes an asset using the given name and the
 // namespace stored in ctx.
 func (s *StoreProxy) DeleteAssetByName(ctx context.Context, name string) error {
