@@ -45,9 +45,9 @@ message Mutator {
   // and run on the Otto VM. The runtime assets will be assumed to be javascript
   // assets, and the environment variables will be made available to the global
   // environment of the mutator.
-  string type = 10 [ (gogoproto.jsontag) = "type" ];
+  string type = 10 [ (gogoproto.jsontag) = "type,omitempty" ];
 
   // When the type of the mutator is "javascript", the eval field will be expected
   // to hold a valid ECMAScript 5 expression.
-  string eval = 11 [ (gogoproto.jsontag) = "eval" ];
+  string eval = 11 [ (gogoproto.jsontag) = "eval,omitempty" ];
 }
