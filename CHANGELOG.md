@@ -14,6 +14,9 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 - Migrated the package dgrijalva/jwt-go to golang-jwt/jwt to address [CVE-2020-26160](https://github.com/advisories/GHSA-w73w-5m7g-f7qc)
 
 ### Added
+- Added javascript mutators, which can be selected by setting
+"type": "javascript" on core/v2.Mutators, and specifying valid ECMAScript 5
+code in the "eval" field. See documentation for details.
 - Added `core/v2.Pipeline` resource for configuring event pipelines.
 - Added `pipelines` field to `Check` and `CheckConfig`
 - Added the platform metrics log. This log contains a listing of core Sensu
@@ -54,9 +57,6 @@ metrics to the `/metrics` endpoint.
 - Added `ignore-already-initialized` configuration flag to the sensu-backend
 init command for returning exit code 0 when a cluster has already been
 initialized.
-- Added javascript mutators, which can be selected by setting
-"type": "javascript" on core/v2.Mutators, and specifying valid ECMAScript 5
-code in the "eval" field. See documentation for details.
 - Added --retry-min, --retry-max, and --retry-multiplier flags to sensu-agent
 for controlling agent retry exponential backoff behaviour. --retry-min and
 --retry-max expect duration values like 1s, 10m, 4h. --retry-multiplier expects
