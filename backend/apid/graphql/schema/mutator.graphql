@@ -24,6 +24,22 @@ type Mutator implements Node & Namespaced & Resource {
   envVars: [String!]
 
   """
+  Type specifies the type of the mutator. If blank or set to "pipe", the
+  mutator will execute a command with the default shell of the sensu user.
+  If set to "javascript", the eval field will be used, interpreted as ECMAScript 5
+  and run on the Otto VM. The runtime assets will be assumed to be javascript
+  assets, and the environment variables will be made available to the global
+  environment of the mutator.
+  """
+  type: String!
+
+  """
+  When the type of the mutator is "javascript", the eval field will be expected
+  to hold a valid ECMAScript 5 expression.
+  """
+  eval: String!
+
+  """
   toJSON returns a REST API compatible representation of the resource. Handy for
   sharing snippets that can then be imported with `sensuctl create`.
   """
