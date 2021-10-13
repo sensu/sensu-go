@@ -101,6 +101,7 @@ type Agentd struct {
 	client              *clientv3.Client
 	etcdClientTLSConfig *tls.Config
 	healthRouter        *routers.HealthRouter
+	mu                  sync.Mutex
 }
 
 // Config configures an Agentd.
@@ -378,6 +379,11 @@ func (a *Agentd) webSocketHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	cfg.Subscriptions = corev2.AddEntitySubscription(cfg.AgentName, cfg.Subscriptions)
+
+	// lock this mutex to serialize new session creation. This is purely to
+	// limit requests to etcd and could probably be done in a better way.
+	a.mu.Lock()
+	defer a.mu.Unlock()
 
 	session, err := NewSession(a.ctx, cfg)
 	if err != nil {
