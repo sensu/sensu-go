@@ -385,19 +385,7 @@ func (s *Session) sender() {
 
 			msg = transport.NewMessage(transport.MessageTypeEntityConfig, bytes)
 		case c := <-s.checkChannel:
-			request, ok := c.(*corev2.CheckRequest)
-			if !ok {
-				logger.Error("session received non-config over check channel")
-				continue
-			}
-
-			configBytes, err := s.marshal(request)
-			if err != nil {
-				logger.WithError(err).Error("session failed to serialize check request")
-				continue
-			}
-
-			msg = transport.NewMessage(corev2.CheckRequestType, configBytes)
+			msg = c.(*transport.Message)
 		case <-s.ctx.Done():
 			return
 		}

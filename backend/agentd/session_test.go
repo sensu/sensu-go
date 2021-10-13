@@ -174,7 +174,13 @@ func TestSession_sender(t *testing.T) {
 				conn.On("Close").Return(nil)
 			},
 			busFunc: func(bus *messaging.WizardBus, wg *sync.WaitGroup) {
-				if err := bus.Publish(messaging.SubscriptionTopic("default", "testing"), corev2.FixtureCheckRequest("foo")); err != nil {
+				cr := corev2.FixtureCheckRequest("foo")
+				payload, err := proto.Marshal(cr)
+				if err != nil {
+					panic(err)
+				}
+				msg := transport.NewMessage(corev2.CheckRequestType, payload)
+				if err := bus.Publish(messaging.SubscriptionTopic("default", "testing"), msg); err != nil {
 					t.Fatal(err)
 				}
 			},
@@ -208,7 +214,13 @@ func TestSession_sender(t *testing.T) {
 				// send a check request to this new subscription "linux"
 				wg.Wait()
 				wg.Add(1)
-				if err := bus.Publish(messaging.SubscriptionTopic("default", "linux"), corev2.FixtureCheckRequest("foo")); err != nil {
+				cr := corev2.FixtureCheckRequest("foo")
+				payload, err := proto.Marshal(cr)
+				if err != nil {
+					panic(err)
+				}
+				msg := transport.NewMessage(corev2.CheckRequestType, payload)
+				if err := bus.Publish(messaging.SubscriptionTopic("default", "linux"), msg); err != nil {
 					t.Fatal(err)
 				}
 			},
@@ -242,7 +254,13 @@ func TestSession_sender(t *testing.T) {
 				// Wait for the session to subscribe to our new subscription, and then
 				// send a check request to this old subscription "windows"
 				wg.Wait()
-				if err := bus.Publish(messaging.SubscriptionTopic("default", "windows"), corev2.FixtureCheckRequest("foo")); err != nil {
+				cr := corev2.FixtureCheckRequest("foo")
+				payload, err := proto.Marshal(cr)
+				if err != nil {
+					panic(err)
+				}
+				msg := transport.NewMessage(corev2.CheckRequestType, payload)
+				if err := bus.Publish(messaging.SubscriptionTopic("default", "windows"), msg); err != nil {
 					t.Fatal(err)
 				}
 			},

@@ -7,6 +7,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/gogo/protobuf/proto"
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/messaging"
 	"github.com/sensu/sensu-go/backend/queue"
@@ -14,6 +15,7 @@ import (
 	"github.com/sensu/sensu-go/backend/store"
 	cachev2 "github.com/sensu/sensu-go/backend/store/cache/v2"
 	"github.com/sensu/sensu-go/testing/mockstore"
+	"github.com/sensu/sensu-go/transport"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -144,9 +146,12 @@ func TestIntervalScheduling(t *testing.T) {
 	var wg sync.WaitGroup
 	wg.Add(1)
 	go func() {
-		msg := <-scheduler.channel
-		res, ok := msg.(*corev2.CheckRequest)
-		assert.True(ok)
+		msg := (<-scheduler.channel).(*transport.Message)
+		var res corev2.CheckRequest
+		if err := proto.Unmarshal(msg.Payload, &res); err != nil {
+			// panic because goroutine, t.Fatal no good
+			panic(err)
+		}
 		assert.Equal("check1", res.Config.Name)
 		wg.Done()
 	}()
@@ -238,9 +243,11 @@ func TestCronScheduling(t *testing.T) {
 	var wg sync.WaitGroup
 	wg.Add(1)
 	go func() {
-		msg := <-scheduler.channel
-		res, ok := msg.(*corev2.CheckRequest)
-		assert.True(ok)
+		msg := (<-scheduler.channel).(*transport.Message)
+		var res corev2.CheckRequest
+		if err := proto.Unmarshal(msg.Payload, &res); err != nil {
+			panic(err)
+		}
 		assert.Equal("check1", res.Config.Name)
 		wg.Done()
 	}()

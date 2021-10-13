@@ -7,12 +7,14 @@ import (
 	"strings"
 
 	time "github.com/echlebek/timeproxy"
+	"github.com/gogo/protobuf/proto"
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	corev3 "github.com/sensu/sensu-go/api/core/v3"
 	"github.com/sensu/sensu-go/backend/messaging"
 	"github.com/sensu/sensu-go/backend/secrets"
 	"github.com/sensu/sensu-go/backend/store"
 	cachev2 "github.com/sensu/sensu-go/backend/store/cache/v2"
+	"github.com/sensu/sensu-go/transport"
 	"github.com/sensu/sensu-go/types"
 	stringsutil "github.com/sensu/sensu-go/util/strings"
 	"github.com/sirupsen/logrus"
@@ -71,6 +73,13 @@ func (c *CheckExecutor) execute(check *corev2.CheckConfig) error {
 		return err
 	}
 
+	requestBytes, err := proto.Marshal(request)
+	if err != nil {
+		return err
+	}
+
+	msg := transport.NewMessage(corev2.CheckRequestType, requestBytes)
+
 	for _, sub := range check.Subscriptions {
 		topic := messaging.SubscriptionTopic(check.Namespace, sub)
 		logger.WithFields(logrus.Fields{
@@ -78,7 +87,7 @@ func (c *CheckExecutor) execute(check *corev2.CheckConfig) error {
 			"topic": topic,
 		}).Debug("sending check request")
 
-		if pubErr := c.bus.Publish(topic, request); pubErr != nil {
+		if pubErr := c.bus.Publish(topic, msg); pubErr != nil {
 			logger.WithError(pubErr).Error("error publishing check request")
 			err = pubErr
 		}
@@ -99,13 +108,20 @@ func (c *CheckExecutor) executeOnEntity(check *corev2.CheckConfig, entity string
 		return err
 	}
 
+	requestBytes, err := proto.Marshal(request)
+	if err != nil {
+		return err
+	}
+
+	msg := transport.NewMessage(corev2.CheckRequestType, requestBytes)
+
 	topic := messaging.SubscriptionTopic(check.Namespace, fmt.Sprintf("entity:%s", entity))
 	logger.WithFields(logrus.Fields{
 		"check": check.Name,
 		"topic": topic,
 	}).Debug("sending check request")
 
-	return c.bus.Publish(topic, request)
+	return c.bus.Publish(topic, msg)
 }
 
 func (c *CheckExecutor) buildRequest(check *corev2.CheckConfig) (*corev2.CheckRequest, error) {
@@ -245,6 +261,13 @@ func (a *AdhocRequestExecutor) execute(check *corev2.CheckConfig) error {
 		return err
 	}
 
+	requestBytes, err := proto.Marshal(request)
+	if err != nil {
+		return err
+	}
+
+	msg := transport.NewMessage(corev2.CheckRequestType, requestBytes)
+
 	for _, sub := range check.Subscriptions {
 		topic := messaging.SubscriptionTopic(check.Namespace, sub)
 		logger.WithFields(logrus.Fields{
@@ -252,7 +275,7 @@ func (a *AdhocRequestExecutor) execute(check *corev2.CheckConfig) error {
 			"topic": topic,
 		}).Debug("sending check request")
 
-		if pubErr := a.bus.Publish(topic, request); pubErr != nil {
+		if pubErr := a.bus.Publish(topic, msg); pubErr != nil {
 			logger.WithError(pubErr).Error("error publishing check request")
 			err = pubErr
 		}
