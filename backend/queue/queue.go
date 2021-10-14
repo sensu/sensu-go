@@ -10,11 +10,12 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/sensu/sensu-go/backend/etcd"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/backend/store/etcd/kvc"
 	"github.com/sensu/sensu-go/types"
-	"go.etcd.io/etcd/client/v3"
 	"go.etcd.io/etcd/api/v3/mvccpb"
+	clientv3 "go.etcd.io/etcd/client/v3"
 )
 
 const (
@@ -134,6 +135,7 @@ func (q *Queue) swapLane(ctx context.Context, currentKey, value string, lane str
 			response, err = q.kv.Txn(ctx).If(putCmp).Then(putReq, delReq).Commit()
 			return kvc.RetryRequest(n, err)
 		})
+		etcd.LeaseOperationsCounter.WithLabelValues(etcd.LeaseOperationTypePut, etcd.LeaseStatusFor(err)).Inc()
 		if err != nil {
 			return err
 		}
@@ -177,6 +179,7 @@ func (q *Queue) Enqueue(ctx context.Context, value string) error {
 			response, err = q.kv.Txn(ctx).If(cmps...).Then(ops...).Commit()
 			return kvc.RetryRequest(n, err)
 		})
+		etcd.LeaseOperationsCounter.WithLabelValues(etcd.LeaseOperationTypePut, etcd.LeaseStatusFor(err)).Inc()
 		if err == nil && response.Succeeded {
 			return nil
 		}

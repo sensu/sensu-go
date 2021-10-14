@@ -8,6 +8,9 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
 
+### Added
+- Added new prometheus metrics for tracking lease operations.
+
 ## [6.5.0] - 2021-10-12
 
 ### Security

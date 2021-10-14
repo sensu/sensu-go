@@ -5,8 +5,9 @@ import (
 	"fmt"
 	"path"
 
+	"github.com/sensu/sensu-go/backend/etcd"
 	"github.com/sensu/sensu-go/backend/store"
-	"go.etcd.io/etcd/client/v3"
+	clientv3 "go.etcd.io/etcd/client/v3"
 	"go.etcd.io/etcd/client/v3/concurrency"
 )
 
@@ -29,11 +30,13 @@ func (store *Store) NewInitializer(ctx context.Context) (store.Initializer, erro
 
 	// Create a lease to associate with the lock
 	resp, err := client.Grant(ctx, 2)
+	etcd.LeaseOperationsCounter.WithLabelValues(etcd.LeaseOperationTypeGrant, etcd.LeaseStatusFor(err)).Inc()
 	if err != nil {
 		return nil, fmt.Errorf("failed to create etcd lease: %w", err)
 	}
 
 	session, err := concurrency.NewSession(client, concurrency.WithLease(resp.ID)) // TODO: move session into etcdStore?
+	etcd.LeaseOperationsCounter.WithLabelValues(etcd.LeaseOperationTypePut, etcd.LeaseStatusFor(err)).Inc()
 	if err != nil {
 		return nil, fmt.Errorf("failed to start etcd session: %w", err)
 	}
