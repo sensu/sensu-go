@@ -225,7 +225,7 @@ func (t *SwitchSet) ping(ctx context.Context, id string, ttl int64, alive bool) 
 
 	return kvc.Backoff(ctx).Retry(func(n int) (done bool, err error) {
 		_, err = t.client.Put(ctx, key, val, clientv3.WithLease(leaseID), clientv3.WithPrevKV())
-		etcd.LeaseOperationsCounter.WithLabelValues(etcd.LeaseOperationTypePut, etcd.LeaseStatusFor(err)).Inc()
+		etcd.LeaseOperationsCounter.WithLabelValues("liveness", etcd.LeaseOperationTypePut, etcd.LeaseStatusFor(err)).Inc()
 		return kvc.RetryRequest(n, err)
 	})
 }
@@ -236,7 +236,7 @@ func (t *SwitchSet) getLeaseIDFromKV(ctx context.Context, kv *mvccpb.KeyValue, t
 		return t.getLeaseID(ctx, ttl, switchID)
 	}
 	if _, err := t.client.KeepAliveOnce(ctx, leaseID); err != nil {
-		etcd.LeaseOperationsCounter.WithLabelValues(etcd.LeaseOperationTypeKeepalive, etcd.LeaseOperationStatusExpired).Inc()
+		etcd.LeaseOperationsCounter.WithLabelValues("liveness", etcd.LeaseOperationTypeKeepalive, etcd.LeaseOperationStatusExpired).Inc()
 		return t.newLease(ctx, ttl)
 	}
 	return leaseID, nil
@@ -244,7 +244,7 @@ func (t *SwitchSet) getLeaseIDFromKV(ctx context.Context, kv *mvccpb.KeyValue, t
 
 func (t *SwitchSet) newLease(ctx context.Context, ttl int64) (clientv3.LeaseID, error) {
 	lease, err := t.client.Grant(ctx, ttl)
-	etcd.LeaseOperationsCounter.WithLabelValues(etcd.LeaseOperationTypeGrant, etcd.LeaseStatusFor(err)).Inc()
+	etcd.LeaseOperationsCounter.WithLabelValues("liveness", etcd.LeaseOperationTypeGrant, etcd.LeaseStatusFor(err)).Inc()
 	if err != nil {
 		return 0, err
 	}
@@ -259,11 +259,11 @@ func (t *SwitchSet) getLeaseID(ctx context.Context, ttl int64, switchID string) 
 		return kvc.RetryRequest(n, err)
 	})
 	if err != nil {
-		etcd.LeaseOperationsCounter.WithLabelValues(etcd.LeaseOperationTypeFind, etcd.LeaseOperationStatusError).Inc()
+		etcd.LeaseOperationsCounter.WithLabelValues("liveness", etcd.LeaseOperationTypeFind, etcd.LeaseOperationStatusError).Inc()
 		return 0, err
 	}
 	if len(resp.Kvs) == 0 {
-		etcd.LeaseOperationsCounter.WithLabelValues(etcd.LeaseOperationTypeFind, etcd.LeaseOperationStatusExpired).Inc()
+		etcd.LeaseOperationsCounter.WithLabelValues("liveness", etcd.LeaseOperationTypeFind, etcd.LeaseOperationStatusExpired).Inc()
 		return t.newLease(ctx, ttl)
 	}
 	return t.getLeaseIDFromKV(ctx, resp.Kvs[0], ttl, switchID)
@@ -390,7 +390,7 @@ func (t *SwitchSet) handleEvent(ctx context.Context, event *clientv3.Event) {
 		// entity is not alive.
 		put := clientv3.OpPut(key, fmt.Sprintf("%d", ttl), clientv3.WithLease(leaseID))
 		resp, err := t.client.Txn(ctx).If(cmp).Then(put).Commit()
-		etcd.LeaseOperationsCounter.WithLabelValues(etcd.LeaseOperationTypePut, etcd.LeaseStatusFor(err)).Inc()
+		etcd.LeaseOperationsCounter.WithLabelValues("liveness", etcd.LeaseOperationTypePut, etcd.LeaseStatusFor(err)).Inc()
 		if err != nil {
 			t.logger.WithError(err).Errorf("error commiting keepalive tx for %s", key)
 			return

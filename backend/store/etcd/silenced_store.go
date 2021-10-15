@@ -258,7 +258,7 @@ func (s *Store) arraySilencedEntries(ctx context.Context, resp *clientv3.GetResp
 		if leaseID > 0 {
 			// legacy expiry mechanism
 			ttl, err := s.client.TimeToLive(ctx, leaseID)
-			etcd.LeaseOperationsCounter.WithLabelValues(etcd.LeaseOperationTypeTTL, etcd.LeaseStatusFor(err)).Inc()
+			etcd.LeaseOperationsCounter.WithLabelValues("store", etcd.LeaseOperationTypeTTL, etcd.LeaseStatusFor(err)).Inc()
 			if err != nil {
 				logger.WithError(err).Error("error setting TTL on silenced")
 				continue
@@ -304,7 +304,7 @@ func (s *Store) arrayTxnSilencedEntries(ctx context.Context, resp *clientv3.TxnR
 			if leaseID > 0 {
 				// legacy expiry mechanism
 				ttl, err := s.client.TimeToLive(ctx, leaseID)
-				etcd.LeaseOperationsCounter.WithLabelValues(etcd.LeaseOperationTypeTTL, etcd.LeaseStatusFor(err)).Inc()
+				etcd.LeaseOperationsCounter.WithLabelValues("store", etcd.LeaseOperationTypeTTL, etcd.LeaseStatusFor(err)).Inc()
 				if err != nil {
 					logger.WithError(err).Error("error setting TTL on silenced")
 					continue

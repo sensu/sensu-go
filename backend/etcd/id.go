@@ -83,7 +83,7 @@ func (b *BackendIDGetter) keepAliveLease(ctx context.Context) {
 				}
 				return
 			}
-			LeaseOperationsCounter.WithLabelValues(LeaseOperationTypeKeepalive, LeaseOperationStatusAlive).Inc()
+			LeaseOperationsCounter.WithLabelValues("sensu-etcd", LeaseOperationTypeKeepalive, LeaseOperationStatusAlive).Inc()
 			if resp.ID == clientv3.NoLease {
 				// I believe this to be impossible
 				b.errors <- errors.New("no lease")
@@ -97,7 +97,7 @@ func (b *BackendIDGetter) keepAliveLease(ctx context.Context) {
 func (b *BackendIDGetter) getLease() (int64, <-chan *clientv3.LeaseKeepAliveResponse, error) {
 	// Grant a lease for 60 seconds
 	resp, err := b.client.Grant(b.ctx, backendIDLeasePeriod)
-	LeaseOperationsCounter.WithLabelValues(LeaseOperationTypeGrant, LeaseStatusFor(err)).Inc()
+	LeaseOperationsCounter.WithLabelValues("sensu-etcd", LeaseOperationTypeGrant, LeaseStatusFor(err)).Inc()
 	if err != nil {
 		return 0, nil, fmt.Errorf("error creating backend ID: error granting lease: %s", err)
 	}
@@ -108,14 +108,14 @@ func (b *BackendIDGetter) getLease() (int64, <-chan *clientv3.LeaseKeepAliveResp
 	value := fmt.Sprintf("%x", leaseID)
 	key := path.Join(backendIDKeyPrefix, value)
 	_, err = b.client.Put(b.ctx, key, value, clientv3.WithLease(leaseID))
-	LeaseOperationsCounter.WithLabelValues(LeaseOperationTypePut, LeaseStatusFor(err)).Inc()
+	LeaseOperationsCounter.WithLabelValues("sensu-etcd", LeaseOperationTypePut, LeaseStatusFor(err)).Inc()
 	if err != nil {
 		return 0, nil, fmt.Errorf("error creating backend ID: error creating key: %s", err)
 	}
 
 	// Keep the lease alive
 	ch, err := b.client.KeepAlive(b.ctx, leaseID)
-	LeaseOperationsCounter.WithLabelValues(LeaseOperationTypeKeepalive, LeaseStatusFor(err)).Inc()
+	LeaseOperationsCounter.WithLabelValues("sensu-etcd", LeaseOperationTypeKeepalive, LeaseStatusFor(err)).Inc()
 
 	return int64(leaseID), ch, err
 }

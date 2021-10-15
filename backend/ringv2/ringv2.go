@@ -197,7 +197,7 @@ func (r *Ring) IsEmpty(ctx context.Context) (bool, error) {
 func (w *watcher) grant(ctx context.Context) (*clientv3.LeaseGrantResponse, error) {
 	interval := w.getInterval()
 	lease, err := w.ring.client.Grant(ctx, int64(interval))
-	etcd.LeaseOperationsCounter.WithLabelValues(etcd.LeaseOperationTypeGrant, etcd.LeaseStatusFor(err)).Inc()
+	etcd.LeaseOperationsCounter.WithLabelValues("ring", etcd.LeaseOperationTypeGrant, etcd.LeaseStatusFor(err)).Inc()
 	return lease, err
 }
 
@@ -244,7 +244,7 @@ NEWLEASE:
 	var lease *clientv3.LeaseGrantResponse
 	err = kvc.Backoff(ctx).Retry(func(n int) (done bool, err error) {
 		lease, err = r.client.Grant(ctx, keepalive)
-		etcd.LeaseOperationsCounter.WithLabelValues(etcd.LeaseOperationTypeGrant, etcd.LeaseStatusFor(err)).Inc()
+		etcd.LeaseOperationsCounter.WithLabelValues("ring", etcd.LeaseOperationTypeGrant, etcd.LeaseStatusFor(err)).Inc()
 		return kvc.RetryRequest(n, err)
 	})
 	if err != nil {
@@ -253,13 +253,13 @@ NEWLEASE:
 	defer func() {
 		if rerr != nil && lease != nil {
 			_, revokeErr := r.client.Revoke(ctx, lease.ID)
-			etcd.LeaseOperationsCounter.WithLabelValues(etcd.LeaseOperationTypeRevoke, etcd.LeaseStatusFor(revokeErr)).Inc()
+			etcd.LeaseOperationsCounter.WithLabelValues("ring", etcd.LeaseOperationTypeRevoke, etcd.LeaseStatusFor(revokeErr)).Inc()
 		}
 	}()
 
 	err = kvc.Backoff(ctx).Retry(func(n int) (done bool, err error) {
 		_, err = r.client.Put(ctx, itemKey, "", clientv3.WithLease(lease.ID))
-		etcd.LeaseOperationsCounter.WithLabelValues(etcd.LeaseOperationTypePut, etcd.LeaseStatusFor(err)).Inc()
+		etcd.LeaseOperationsCounter.WithLabelValues("ring", etcd.LeaseOperationTypePut, etcd.LeaseStatusFor(err)).Inc()
 		return kvc.RetryRequest(n, err)
 	})
 	if err != nil {
@@ -298,7 +298,7 @@ func (r *Ring) Remove(ctx context.Context, value string) error {
 		if leaseID != 0 {
 			// Item already exists
 			_, revokeErr := r.client.Revoke(ctx, leaseID)
-			etcd.LeaseOperationsCounter.WithLabelValues(etcd.LeaseOperationTypeRevoke, etcd.LeaseStatusFor(revokeErr)).Inc()
+			etcd.LeaseOperationsCounter.WithLabelValues("ring", etcd.LeaseOperationTypeRevoke, etcd.LeaseStatusFor(revokeErr)).Inc()
 		}
 	}
 	return kvc.Backoff(ctx).Retry(func(n int) (done bool, err error) {
@@ -426,16 +426,16 @@ func (w *watcher) ensureActiveTrigger(ctx context.Context) error {
 
 		resp, err := w.ring.client.Txn(ctx).If(triggerCmp).Then(triggerOp).Commit()
 		if err != nil {
-			etcd.LeaseOperationsCounter.WithLabelValues(etcd.LeaseOperationTypePut, etcd.LeaseStatusFor(err)).Inc()
+			etcd.LeaseOperationsCounter.WithLabelValues("ring", etcd.LeaseOperationTypePut, etcd.LeaseStatusFor(err)).Inc()
 			return kvc.RetryRequest(retry, err)
 		}
 
 		if !resp.Succeeded {
 			_, revokeErr := w.ring.client.Revoke(ctx, lease.ID)
-			etcd.LeaseOperationsCounter.WithLabelValues(etcd.LeaseOperationTypeRevoke, etcd.LeaseStatusFor(revokeErr)).Inc()
+			etcd.LeaseOperationsCounter.WithLabelValues("ring", etcd.LeaseOperationTypeRevoke, etcd.LeaseStatusFor(revokeErr)).Inc()
 		}
 
-		etcd.LeaseOperationsCounter.WithLabelValues(etcd.LeaseOperationTypePut, etcd.LeaseOperationStatusOK).Inc()
+		etcd.LeaseOperationsCounter.WithLabelValues("ring", etcd.LeaseOperationTypePut, etcd.LeaseOperationStatusOK).Inc()
 		return true, nil
 	})
 
@@ -606,7 +606,7 @@ func (w *watcher) advanceRing(ctx context.Context, prevKv *mvccpb.KeyValue) ([]*
 	defer func() {
 		if !txnSuccess {
 			_, revokeErr := w.ring.client.Revoke(ctx, lease.ID)
-			etcd.LeaseOperationsCounter.WithLabelValues(etcd.LeaseOperationTypeRevoke, etcd.LeaseStatusFor(revokeErr)).Inc()
+			etcd.LeaseOperationsCounter.WithLabelValues("ring", etcd.LeaseOperationTypeRevoke, etcd.LeaseStatusFor(revokeErr)).Inc()
 		}
 	}()
 
@@ -617,7 +617,7 @@ func (w *watcher) advanceRing(ctx context.Context, prevKv *mvccpb.KeyValue) ([]*
 	var resp *clientv3.TxnResponse
 	err = kvc.Backoff(ctx).Retry(func(n int) (done bool, err error) {
 		resp, err = w.ring.client.Txn(ctx).If(triggerCmp).Then(triggerOp).Commit()
-		etcd.LeaseOperationsCounter.WithLabelValues(etcd.LeaseOperationTypePut, etcd.LeaseStatusFor(err)).Inc()
+		etcd.LeaseOperationsCounter.WithLabelValues("ring", etcd.LeaseOperationTypePut, etcd.LeaseStatusFor(err)).Inc()
 		return kvc.RetryRequest(n, err)
 	})
 	if err != nil {

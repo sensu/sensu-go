@@ -5,8 +5,9 @@ import "github.com/prometheus/client_golang/prometheus"
 const (
 	LeaseOperationsCounterVec = "sensu_go_lease_ops"
 
-	LeaseOperationTypeName   = "op"
-	LeaseOperationStatusName = "status"
+	LeaseOperationTypeName      = "op"
+	LeaseOperationStatusName    = "status"
+	LeaseOperationComponentName = "component"
 
 	LeaseOperationTypeGrant     = "grant"
 	LeaseOperationTypeRevoke    = "revoke"
@@ -26,7 +27,7 @@ var LeaseOperationsCounter = prometheus.NewCounterVec(
 		Name: LeaseOperationsCounterVec,
 		Help: "the total number of lease operations",
 	},
-	[]string{LeaseOperationTypeName, LeaseOperationStatusName},
+	[]string{LeaseOperationComponentName, LeaseOperationTypeName, LeaseOperationStatusName},
 )
 
 func LeaseStatusFor(err error) string {
