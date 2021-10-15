@@ -7,6 +7,7 @@ package agent
 import (
 	"context"
 	"encoding/base64"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io/ioutil"
@@ -28,7 +29,6 @@ import (
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	corev3 "github.com/sensu/sensu-go/api/core/v3"
 	"github.com/sensu/sensu-go/asset"
-	"github.com/sensu/sensu-go/backend/agentd"
 	"github.com/sensu/sensu-go/command"
 	"github.com/sensu/sensu-go/handler"
 	"github.com/sensu/sensu-go/process"
@@ -52,6 +52,26 @@ const (
 	NewConnections   = "sensu_go_agent_new_connections"
 	WebsocketErrors  = "sensu_go_agent_websocket_errors"
 )
+
+const (
+	// ProtobufSerializationHeader is the Content-Type header which indicates protobuf serialization.
+	ProtobufSerializationHeader = "application/octet-stream"
+
+	// JSONSerializationHeader is the Content-Type header which indicates JSON serialization.
+	JSONSerializationHeader = "application/json"
+)
+
+// MarshalFunc is the function signature for protobuf/JSON marshaling.
+type MarshalFunc = func(pb proto.Message) ([]byte, error)
+
+// UnmarshalFunc is the function signature for protobuf/JSON unmarshaling.
+type UnmarshalFunc = func(buf []byte, pb proto.Message) error
+
+// UnmarshalJSON is a wrapper to deserialize proto messages with JSON.
+func UnmarshalJSON(b []byte, msg proto.Message) error { return json.Unmarshal(b, &msg) }
+
+// MarshalJSON is a wrapper to serialize proto messages with JSON.
+func MarshalJSON(msg proto.Message) ([]byte, error) { return json.Marshal(msg) }
 
 var (
 	messagesReceived = prometheus.NewCounterVec(
@@ -138,8 +158,8 @@ type Agent struct {
 	systemInfoMu      sync.RWMutex
 	wg                sync.WaitGroup
 	apiQueue          queue
-	marshal           agentd.MarshalFunc
-	unmarshal         agentd.UnmarshalFunc
+	marshal           MarshalFunc
+	unmarshal         UnmarshalFunc
 	sequencesMu       sync.Mutex
 	sequences         map[string]int64
 
@@ -173,8 +193,8 @@ func NewAgentContext(ctx context.Context, config *Config) (*Agent, error) {
 		inProgressMu:    &sync.Mutex{},
 		sendq:           make(chan *transport.Message, 10),
 		systemInfo:      &corev2.System{},
-		unmarshal:       agentd.UnmarshalJSON,
-		marshal:         agentd.MarshalJSON,
+		unmarshal:       UnmarshalJSON,
+		marshal:         MarshalJSON,
 		ProcessGetter:   &process.NoopProcessGetter{},
 		sequences:       make(map[string]int64),
 	}
@@ -682,8 +702,8 @@ func (a *Agent) connectWithBackoff(ctx context.Context) (transport.Transport, er
 		backendURL := a.backendSelector.Select()
 
 		logger.Infof("connecting to backend URL %q", backendURL)
-		a.header.Set("Accept", agentd.ProtobufSerializationHeader)
-		logger.WithField("header", fmt.Sprintf("Accept: %s", agentd.ProtobufSerializationHeader)).Debug("setting header")
+		a.header.Set("Accept", ProtobufSerializationHeader)
+		logger.WithField("header", fmt.Sprintf("Accept: %s", ProtobufSerializationHeader)).Debug("setting header")
 		c, respHeader, err := transport.Connect(backendURL, a.config.TLS, a.header, a.config.BackendHandshakeTimeout)
 		if err != nil {
 			if err == transport.ErrTooManyRequests {
@@ -707,15 +727,15 @@ func (a *Agent) connectWithBackoff(ctx context.Context) (transport.Transport, er
 		conn = c
 
 		logger.WithField("header", fmt.Sprintf("Accept: %s", respHeader["Accept"])).Debug("received header")
-		if utilstrings.InArray(agentd.ProtobufSerializationHeader, respHeader["Accept"]) {
-			a.contentType = agentd.ProtobufSerializationHeader
+		if utilstrings.InArray(ProtobufSerializationHeader, respHeader["Accept"]) {
+			a.contentType = ProtobufSerializationHeader
 			a.unmarshal = proto.Unmarshal
 			a.marshal = proto.Marshal
 			logger.WithField("format", "protobuf").Debug("setting serialization/deserialization")
 		} else {
-			a.contentType = agentd.JSONSerializationHeader
-			a.unmarshal = agentd.UnmarshalJSON
-			a.marshal = agentd.MarshalJSON
+			a.contentType = JSONSerializationHeader
+			a.unmarshal = UnmarshalJSON
+			a.marshal = MarshalJSON
 			logger.WithField("format", "JSON").Debug("setting serialization/deserialization")
 		}
 		a.header.Set("Content-Type", a.contentType)

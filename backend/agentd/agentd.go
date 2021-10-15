@@ -17,6 +17,7 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/gorilla/websocket"
 	"github.com/prometheus/client_golang/prometheus"
+	"github.com/sensu/sensu-go/agent"
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/apid/actions"
 	"github.com/sensu/sensu-go/backend/apid/middlewares"
@@ -308,8 +309,8 @@ func (a *Agentd) webSocketHandler(w http.ResponseWriter, r *http.Request) {
 		duration := time.Since(then)
 		websocketUpgradeDuration.WithLabelValues().Observe(float64(duration) / float64(time.Millisecond))
 	}()
-	var marshal MarshalFunc
-	var unmarshal UnmarshalFunc
+	var marshal agent.MarshalFunc
+	var unmarshal agent.UnmarshalFunc
 	var contentType string
 
 	lager := logger.WithFields(logrus.Fields{
@@ -319,19 +320,19 @@ func (a *Agentd) webSocketHandler(w http.ResponseWriter, r *http.Request) {
 	})
 
 	responseHeader := make(http.Header)
-	responseHeader.Add("Accept", ProtobufSerializationHeader)
-	lager.WithField("header", fmt.Sprintf("Accept: %s", ProtobufSerializationHeader)).Debug("setting header")
-	responseHeader.Add("Accept", JSONSerializationHeader)
-	lager.WithField("header", fmt.Sprintf("Accept: %s", JSONSerializationHeader)).Debug("setting header")
-	if r.Header.Get("Accept") == ProtobufSerializationHeader {
+	responseHeader.Add("Accept", agent.ProtobufSerializationHeader)
+	lager.WithField("header", fmt.Sprintf("Accept: %s", agent.ProtobufSerializationHeader)).Debug("setting header")
+	responseHeader.Add("Accept", agent.JSONSerializationHeader)
+	lager.WithField("header", fmt.Sprintf("Accept: %s", agent.JSONSerializationHeader)).Debug("setting header")
+	if r.Header.Get("Accept") == agent.ProtobufSerializationHeader {
 		marshal = proto.Marshal
 		unmarshal = proto.Unmarshal
-		contentType = ProtobufSerializationHeader
+		contentType = agent.ProtobufSerializationHeader
 		lager.WithField("format", "protobuf").Debug("setting serialization/deserialization")
 	} else {
-		marshal = MarshalJSON
-		unmarshal = UnmarshalJSON
-		contentType = JSONSerializationHeader
+		marshal = agent.MarshalJSON
+		unmarshal = agent.UnmarshalJSON
+		contentType = agent.JSONSerializationHeader
 		lager.WithField("format", "JSON").Debug("setting serialization/deserialization")
 	}
 	responseHeader.Set("Content-Type", contentType)
