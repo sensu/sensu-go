@@ -57,6 +57,7 @@ metric.
 ### Added
 - Added new prometheus metrics for tracking lease operations.
 - Added pipeline workflow handler processing counters
+- Added new prometheus metrics for tracking lease operations.
 
 ## [6.5.0] - 2021-10-12
 

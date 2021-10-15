@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/gogo/protobuf/proto"
+	"github.com/sensu/sensu-go/agent"
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	corev3 "github.com/sensu/sensu-go/api/core/v3"
 	"github.com/sensu/sensu-go/backend/messaging"
@@ -283,8 +284,8 @@ func TestSession_sender(t *testing.T) {
 				Bus:           bus,
 				Store:         st,
 				Storev2:       storev2,
-				Unmarshal:     UnmarshalJSON,
-				Marshal:       MarshalJSON,
+				Unmarshal:     agent.UnmarshalJSON,
+				Marshal:       agent.MarshalJSON,
 			}
 			session, err := NewSession(context.Background(), cfg)
 			if err != nil {
@@ -341,7 +342,7 @@ func TestSession_Start(t *testing.T) {
 				conn.On("Send", mock.Anything).Run(func(args mock.Arguments) {
 					msg := args[0].(*transport.Message)
 					var entity corev3.EntityConfig
-					if err := UnmarshalJSON(msg.Payload, &entity); err != nil {
+					if err := agent.UnmarshalJSON(msg.Payload, &entity); err != nil {
 						t.Fatal(err)
 					}
 					if entity.Metadata.Name != corev3.EntityNotFound {
@@ -362,7 +363,7 @@ func TestSession_Start(t *testing.T) {
 				conn.On("Send", mock.Anything).Run(func(args mock.Arguments) {
 					msg := args[0].(*transport.Message)
 					var entity corev3.EntityConfig
-					if err := UnmarshalJSON(msg.Payload, &entity); err != nil {
+					if err := agent.UnmarshalJSON(msg.Payload, &entity); err != nil {
 						t.Fatal(err)
 					}
 					if entity.Metadata.Name != "testing" {
@@ -426,8 +427,8 @@ func TestSession_Start(t *testing.T) {
 				Bus:       bus,
 				Store:     st,
 				Storev2:   storev2,
-				Unmarshal: UnmarshalJSON,
-				Marshal:   MarshalJSON,
+				Unmarshal: agent.UnmarshalJSON,
+				Marshal:   agent.MarshalJSON,
 			}
 			session, err := NewSession(context.Background(), cfg)
 			if err != nil {
