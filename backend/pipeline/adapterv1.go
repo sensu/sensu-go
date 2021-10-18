@@ -38,8 +38,12 @@ var (
 )
 
 func init() {
-	_ = prometheus.Register(handlerRequestsTotalCounter)
-	_ = prometheus.Register(handlerRequestsCounter)
+	if err := prometheus.Register(handlerRequestsTotalCounter); err != nil {
+		panic(fmt.Errorf("error registering %s: %s", HandlerRequestsTotal, err))
+	}
+	if err := prometheus.Register(handlerRequestsCounter); err != nil {
+		panic(fmt.Errorf("error registering %s: %s", HandlerRequests, err))
+	}
 }
 
 type HandlerMap map[string]*corev2.Handler
