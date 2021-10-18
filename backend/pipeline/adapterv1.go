@@ -7,6 +7,7 @@ import (
 	"sort"
 	"time"
 
+	"github.com/prometheus/client_golang/prometheus"
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sirupsen/logrus"
@@ -15,7 +16,35 @@ import (
 const (
 	LegacyPipelineName         = "legacy-pipeline"
 	LegacyPipelineWorkflowName = "legacy-pipeline-workflow-%s"
+
+	HandlerRequests      = "sensu_go_handler_requests"
+	HandlerRequestsTotal = "sensu_go_handler_requests_total"
 )
+
+var (
+	handlerRequestsTotalCounter = prometheus.NewCounter(
+		prometheus.CounterOpts{
+			Name: HandlerRequestsTotal,
+			Help: "The total number of handler requests invoked",
+		},
+	)
+	handlerRequestsCounter = prometheus.NewCounterVec(
+		prometheus.CounterOpts{
+			Name: HandlerRequests,
+			Help: "The number of processed handler requets",
+		},
+		[]string{"status", "type"},
+	)
+)
+
+func init() {
+	if err := prometheus.Register(handlerRequestsTotalCounter); err != nil {
+		panic(fmt.Errorf("error registering %s: %s", HandlerRequestsTotal, err))
+	}
+	if err := prometheus.Register(handlerRequestsCounter); err != nil {
+		panic(fmt.Errorf("error registering %s: %s", HandlerRequests, err))
+	}
+}
 
 type HandlerMap map[string]*corev2.Handler
 
@@ -101,12 +130,24 @@ func (a *AdapterV1) Run(ctx context.Context, ref *corev2.ResourceReference, reso
 		}
 
 		// Process the event through the workflow handler
-		if err := a.processHandler(ctx, workflow.Handler, event, mutatedData); err != nil {
+		handlerRequestsTotalCounter.Inc()
+		err = a.processHandler(ctx, workflow.Handler, event, mutatedData)
+		incrementCounter(workflow.Handler, err)
+		if err != nil {
 			return err
 		}
 	}
 
 	return nil
+}
+
+func incrementCounter(handler *corev2.ResourceReference, err error) {
+	handlerType := fmt.Sprintf("%s.%s", handler.GetAPIVersion(), handler.GetType())
+	status := "0"
+	if err != nil {
+		status = "1"
+	}
+	handlerRequestsCounter.WithLabelValues(status, handlerType).Inc()
 }
 
 func (a *AdapterV1) resolvePipelineReference(ctx context.Context, ref *corev2.ResourceReference, event *corev2.Event) (*corev2.Pipeline, error) {

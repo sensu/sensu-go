@@ -10,6 +10,7 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ### Added
 - Added new prometheus metrics for tracking lease operations.
+- Added pipeline workflow handler processing counters
 
 ## [6.5.0] - 2021-10-12
 
