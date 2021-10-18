@@ -33,6 +33,12 @@ type MutatorFieldResolvers interface {
 	// EnvVars implements response to request for 'envVars' field.
 	EnvVars(p graphql.ResolveParams) ([]string, error)
 
+	// Type implements response to request for 'type' field.
+	Type(p graphql.ResolveParams) (string, error)
+
+	// Eval implements response to request for 'eval' field.
+	Eval(p graphql.ResolveParams) (string, error)
+
 	// ToJSON implements response to request for 'toJSON' field.
 	ToJSON(p graphql.ResolveParams) (interface{}, error)
 }
@@ -127,6 +133,32 @@ func (_ MutatorAliases) EnvVars(p graphql.ResolveParams) ([]string, error) {
 	return ret, err
 }
 
+// Type implements response to request for 'type' field.
+func (_ MutatorAliases) Type(p graphql.ResolveParams) (string, error) {
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	ret, ok := val.(string)
+	if err != nil {
+		return ret, err
+	}
+	if !ok {
+		return ret, errors.New("unable to coerce value for field 'type'")
+	}
+	return ret, err
+}
+
+// Eval implements response to request for 'eval' field.
+func (_ MutatorAliases) Eval(p graphql.ResolveParams) (string, error) {
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	ret, ok := val.(string)
+	if err != nil {
+		return ret, err
+	}
+	if !ok {
+		return ret, errors.New("unable to coerce value for field 'eval'")
+	}
+	return ret, err
+}
+
 // ToJSON implements response to request for 'toJSON' field.
 func (_ MutatorAliases) ToJSON(p graphql.ResolveParams) (interface{}, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
@@ -203,6 +235,24 @@ func _ObjTypeMutatorEnvVarsHandler(impl interface{}) graphql1.FieldResolveFn {
 	}
 }
 
+func _ObjTypeMutatorTypeHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(interface {
+		Type(p graphql.ResolveParams) (string, error)
+	})
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Type(frp)
+	}
+}
+
+func _ObjTypeMutatorEvalHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(interface {
+		Eval(p graphql.ResolveParams) (string, error)
+	})
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Eval(frp)
+	}
+}
+
 func _ObjTypeMutatorToJSONHandler(impl interface{}) graphql1.FieldResolveFn {
 	resolver := impl.(interface {
 		ToJSON(p graphql.ResolveParams) (interface{}, error)
@@ -229,6 +279,13 @@ func _ObjectTypeMutatorConfigFn() graphql1.ObjectConfig {
 				Description:       "Env is a list of environment variables to use with command execution",
 				Name:              "envVars",
 				Type:              graphql1.NewList(graphql1.NewNonNull(graphql1.String)),
+			},
+			"eval": &graphql1.Field{
+				Args:              graphql1.FieldConfigArgument{},
+				DeprecationReason: "",
+				Description:       "When the type of the mutator is \"javascript\", the eval field will be expected\nto hold a valid ECMAScript 5 expression.",
+				Name:              "eval",
+				Type:              graphql1.NewNonNull(graphql1.String),
 			},
 			"id": &graphql1.Field{
 				Args:              graphql1.FieldConfigArgument{},
@@ -272,6 +329,13 @@ func _ObjectTypeMutatorConfigFn() graphql1.ObjectConfig {
 				Name:              "toJSON",
 				Type:              graphql1.NewNonNull(graphql.OutputType("JSON")),
 			},
+			"type": &graphql1.Field{
+				Args:              graphql1.FieldConfigArgument{},
+				DeprecationReason: "",
+				Description:       "Type specifies the type of the mutator. If blank or set to \"pipe\", the\nmutator will execute a command with the default shell of the sensu user.\nIf set to \"javascript\", the eval field will be used, interpreted as ECMAScript 5\nand run on the Otto VM. The runtime assets will be assumed to be javascript\nassets, and the environment variables will be made available to the global\nenvironment of the mutator.",
+				Name:              "type",
+				Type:              graphql1.NewNonNull(graphql1.String),
+			},
 		},
 		Interfaces: []*graphql1.Interface{
 			graphql.Interface("Node"),
@@ -295,12 +359,14 @@ var _ObjectTypeMutatorDesc = graphql.ObjectDesc{
 	FieldHandlers: map[string]graphql.FieldHandler{
 		"command":   _ObjTypeMutatorCommandHandler,
 		"envVars":   _ObjTypeMutatorEnvVarsHandler,
+		"eval":      _ObjTypeMutatorEvalHandler,
 		"id":        _ObjTypeMutatorIDHandler,
 		"metadata":  _ObjTypeMutatorMetadataHandler,
 		"name":      _ObjTypeMutatorNameHandler,
 		"namespace": _ObjTypeMutatorNamespaceHandler,
 		"timeout":   _ObjTypeMutatorTimeoutHandler,
 		"toJSON":    _ObjTypeMutatorToJSONHandler,
+		"type":      _ObjTypeMutatorTypeHandler,
 	},
 }
 

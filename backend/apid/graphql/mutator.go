@@ -23,9 +23,18 @@ func (*mutatorImpl) ID(p graphql.ResolveParams) (string, error) {
 	return globalid.MutatorTranslator.EncodeToString(p.Context, p.Source), nil
 }
 
+// Type implements response to request for 'Type' field.
+func (*mutatorImpl) Type(p graphql.ResolveParams) (string, error) {
+	m, ok := p.Source.(*corev2.Mutator)
+	if !ok || m.Type == "" {
+		return "pipe", nil
+	}
+	return m.Type, nil
+}
+
 // IsTypeOf is used to determine if a given value is associated with the type
 func (*mutatorImpl) IsTypeOf(s interface{}, p graphql.IsTypeOfParams) bool {
-	_, ok := s.(*types.Mutator)
+	_, ok := s.(*corev2.Mutator)
 	return ok
 }
 
