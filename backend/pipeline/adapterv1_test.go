@@ -410,6 +410,95 @@ func TestAdapterV1_Run(t *testing.T) {
 	}
 }
 
+type cancelContextFilterAdapter struct {
+	Cancel context.CancelFunc
+}
+
+func (cancelContextFilterAdapter) Name() string {
+	return "cancel_context_filter_adapter"
+}
+
+func (cancelContextFilterAdapter) CanFilter(*corev2.ResourceReference) bool {
+	return true
+}
+
+func (c cancelContextFilterAdapter) Filter(context.Context, *corev2.ResourceReference, *corev2.Event) (bool, error) {
+	c.Cancel()
+	// returning false means to _not_ filter the event
+	return false, context.Canceled
+}
+
+type failIfRunHandlerAdapter struct {
+	T *testing.T
+}
+
+func (failIfRunHandlerAdapter) Name() string {
+	return "fail_if_run_handler_adapter"
+}
+
+func (failIfRunHandlerAdapter) CanHandle(*corev2.ResourceReference) bool {
+	return true
+}
+
+func (f failIfRunHandlerAdapter) Handle(context.Context, *corev2.ResourceReference, *corev2.Event) error {
+	f.T.Fatal("handler was run")
+	return nil
+}
+
+func TestHandlerDoesNotRunAfterFilterContextCancelled(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	filterAdapters := []FilterAdapter{
+		cancelContextFilterAdapter{
+			Cancel: cancel,
+		},
+	}
+	handlerAdapters := func() []HandlerAdapter {
+		storedHandler := corev2.FixtureHandler("handler1")
+		stor := &mockstore.MockStore{}
+		stor.On("GetHandlerByName", mock.Anything, storedHandler.GetName()).Return(storedHandler, nil)
+		ex := &mockexecutor.MockExecutor{}
+		execution := command.FixtureExecutionResponse(0, "foo")
+		ex.Return(execution, nil)
+		return []HandlerAdapter{
+			&handler.LegacyAdapter{
+				Store:    stor,
+				Executor: ex,
+			},
+		}
+	}()
+	stor := func() store.Store {
+		pipeline := &corev2.Pipeline{
+			ObjectMeta: corev2.NewObjectMeta("pipeline1", "default"),
+			Workflows: []*corev2.PipelineWorkflow{
+				{
+					Name: "send metrics to prometheus",
+					Handler: &corev2.ResourceReference{
+						APIVersion: "core/v2",
+						Type:       "Handler",
+						Name:       "handler1",
+					},
+				},
+			},
+		}
+		stor := &mockstore.MockStore{}
+		stor.On("GetPipelineByName", mock.Anything, mock.Anything).Return(pipeline, nil)
+		return stor
+	}()
+	a := &AdapterV1{
+		Store:          stor,
+		FilterAdapters: filterAdapters,
+		MutatorAdapters: []MutatorAdapter{
+			&mutator.JSONAdapter{},
+		},
+		HandlerAdapters: handlerAdapters,
+	}
+	if err := a.Run(ctx, new(corev2.ResourceReference), corev2.FixtureEvent("foo", "bar")); err != nil {
+		t.Fatal(err)
+	}
+
+}
+
 func TestAdapterV1_resolvePipelineReference(t *testing.T) {
 	type fields struct {
 		Store           store.Store
