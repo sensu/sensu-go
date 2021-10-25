@@ -8,6 +8,9 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
 
+### Changed
+- OS environment variables are now accessible via Javascript mutators.
+
 ## [6.5.1] - 2021-10-18
 
 ### Added

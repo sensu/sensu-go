@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"io"
 	"io/ioutil"
+	"os"
 	"reflect"
 	"strings"
 	"testing"
@@ -283,5 +284,34 @@ func TestJavascriptAdapter_run(t *testing.T) {
 				assert.JSONEq(t, string(got), string(want))
 			}
 		})
+	}
+}
+
+func TestJavascriptMutatorWithOSEnv(t *testing.T) {
+	adapter := new(JavascriptAdapter)
+	mutator := &corev2.Mutator{
+		ObjectMeta: corev2.ObjectMeta{
+			Namespace: "default",
+			Name:      "my_mutator",
+		},
+		Eval:          "return FOOBAR;",
+		Type:          corev2.JavascriptMutator,
+		EnvVars:       []string{"FOOBAR"},
+		RuntimeAssets: []string{"mutatorAsset"},
+	}
+	event := corev2.FixtureEvent("default", "default")
+	assets := mutatorAssetSet{}
+	os.Setenv("FOOBAR", "BAZ")
+	got, err := adapter.run(context.Background(), mutator, event, assets)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got, want := string(got), "BAZ"; got != want {
+		t.Errorf("bad result: got %q, want %q", got, want)
+	}
+	mutator.EnvVars = nil
+	got, err = adapter.run(context.Background(), mutator, event, assets)
+	if err == nil {
+		t.Error("expected non-nil error")
 	}
 }
