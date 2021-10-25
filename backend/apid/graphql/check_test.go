@@ -213,7 +213,7 @@ func TestCheckConfigTypeRuntimeAssetsField(t *testing.T) {
 
 func TestCheckConfigTypeHandlersField(t *testing.T) {
 	check := corev2.FixtureCheckConfig("my-check")
-	check.Handlers = []string{"one", "two"}
+	check.Handlers = []string{"one", "two", "four", "six:seven"}
 
 	impl := &checkCfgImpl{}
 
@@ -225,6 +225,8 @@ func TestCheckConfigTypeHandlersField(t *testing.T) {
 		corev2.FixtureHandler("one"),
 		corev2.FixtureHandler("two"),
 		corev2.FixtureHandler("three"),
+		corev2.FixtureHandler("four:five"),
+		corev2.FixtureHandler("six:seven"),
 	}, nil).Once()
 
 	cfg := ServiceConfig{HandlerClient: client}
@@ -233,12 +235,12 @@ func TestCheckConfigTypeHandlersField(t *testing.T) {
 
 	res, err := impl.Handlers(params)
 	require.NoError(t, err)
-	assert.Len(t, res, 2)
+	assert.Len(t, res, 3)
 }
 
 func TestCheckTypeHandlersField(t *testing.T) {
 	check := corev2.FixtureCheck("my-check")
-	check.Handlers = []string{"one", "two"}
+	check.Handlers = []string{"one", "two", "four", "six:seven"}
 
 	client := new(MockHandlerClient)
 	impl := &checkImpl{}
@@ -253,16 +255,18 @@ func TestCheckTypeHandlersField(t *testing.T) {
 		corev2.FixtureHandler("one"),
 		corev2.FixtureHandler("two"),
 		corev2.FixtureHandler("three"),
+		corev2.FixtureHandler("four:five"),
+		corev2.FixtureHandler("six:seven"),
 	}, nil).Once()
 
 	res, err := impl.Handlers(params)
 	require.NoError(t, err)
-	assert.Len(t, res, 2)
+	assert.Len(t, res, 3)
 }
 
 func TestCheckConfigTypeOutputMetricHandlersField(t *testing.T) {
 	check := corev2.FixtureCheckConfig("my-check")
-	check.OutputMetricHandlers = []string{"one", "two"}
+	check.OutputMetricHandlers = []string{"one", "two", "four", "six:seven"}
 
 	client := new(MockHandlerClient)
 	impl := &checkCfgImpl{}
@@ -277,16 +281,18 @@ func TestCheckConfigTypeOutputMetricHandlersField(t *testing.T) {
 		corev2.FixtureHandler("one"),
 		corev2.FixtureHandler("two"),
 		corev2.FixtureHandler("three"),
+		corev2.FixtureHandler("four:five"),
+		corev2.FixtureHandler("six:seven"),
 	}, nil).Once()
 
 	res, err := impl.OutputMetricHandlers(params)
 	require.NoError(t, err)
-	assert.Len(t, res, 2)
+	assert.Len(t, res, 3)
 }
 
 func TestCheckTypeOutputMetricHandlersField(t *testing.T) {
 	check := corev2.FixtureCheck("my-check")
-	check.OutputMetricHandlers = []string{"one", "two"}
+	check.OutputMetricHandlers = []string{"one", "two", "four", "six:seven"}
 
 	client := new(MockHandlerClient)
 	impl := &checkImpl{}
@@ -301,11 +307,13 @@ func TestCheckTypeOutputMetricHandlersField(t *testing.T) {
 		corev2.FixtureHandler("one"),
 		corev2.FixtureHandler("two"),
 		corev2.FixtureHandler("three"),
+		corev2.FixtureHandler("four:five"),
+		corev2.FixtureHandler("six:seven"),
 	}, nil).Once()
 
 	res, err := impl.OutputMetricHandlers(params)
 	require.NoError(t, err)
-	assert.Len(t, res, 2)
+	assert.Len(t, res, 3)
 }
 
 func TestCheckTypeToJSONField(t *testing.T) {

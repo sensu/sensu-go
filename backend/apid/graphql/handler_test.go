@@ -13,7 +13,7 @@ import (
 
 func TestHandlerTypeHandlersField(t *testing.T) {
 	handler := corev2.FixtureHandler("my-handler")
-	handler.Handlers = []string{"one", "two"}
+	handler.Handlers = []string{"one", "two", "four", "six:seven"}
 
 	client := new(MockHandlerClient)
 	impl := &handlerImpl{}
@@ -28,11 +28,13 @@ func TestHandlerTypeHandlersField(t *testing.T) {
 		corev2.FixtureHandler("one"),
 		corev2.FixtureHandler("two"),
 		corev2.FixtureHandler("three"),
+		corev2.FixtureHandler("four:five"),
+		corev2.FixtureHandler("six:seven"),
 	}, nil).Once()
 
 	res, err := impl.Handlers(params)
 	require.NoError(t, err)
-	assert.NotEmpty(t, res)
+	assert.Len(t, res, 3)
 }
 
 func TestHandlerTypeMutatorField(t *testing.T) {

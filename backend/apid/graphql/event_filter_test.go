@@ -13,13 +13,15 @@ import (
 
 func TestEventFilterTypeRuntimeAssetsField(t *testing.T) {
 	filter := corev2.FixtureEventFilter("my-filter")
-	filter.RuntimeAssets = []string{"one", "two"}
+	filter.RuntimeAssets = []string{"one", "two", "four", "six:seven"}
 
 	assetClient := new(MockAssetClient)
 	assetClient.On("ListAssets", mock.Anything, mock.Anything).Return([]*corev2.Asset{
 		corev2.FixtureAsset("one"),
 		corev2.FixtureAsset("two"),
 		corev2.FixtureAsset("three"),
+		corev2.FixtureAsset("four:five"),
+		corev2.FixtureAsset("six:seven"),
 	}, nil).Once()
 
 	// return associated silence
@@ -28,7 +30,7 @@ func TestEventFilterTypeRuntimeAssetsField(t *testing.T) {
 	ctx := contextWithLoaders(context.Background(), cfg)
 	res, err := impl.RuntimeAssets(graphql.ResolveParams{Source: filter, Context: ctx})
 	require.NoError(t, err)
-	assert.Len(t, res, 2)
+	assert.Len(t, res, 3)
 }
 
 func TestEventFilterTypeToJSONField(t *testing.T) {
