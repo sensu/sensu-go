@@ -8,6 +8,12 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
 
+### Added
+- Added `status` & `event_type` labels to the sensu_go_event_handler_duration
+metric.
+- Added `sensu_go_event_handler_duration_sum` &
+`sensu_go_event_handler_duration_count` to the metrics log.
+
 ## [6.5.1] - 2021-10-18
 
 ### Added
