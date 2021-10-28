@@ -25,6 +25,8 @@ metric.
 - Added metric `sensu_go_pipeline_filter_duration`.
 - Added metric `sensu_go_pipeline_mutator_duration`.
 - Added metric `sensu_go_pipeline_handler_duration`.
+- Added metric `sensu_go_asset_fetch_duration`.
+- Added metric `sensu_go_asset_expand_duration`.
 
 ## [6.5.1] - 2021-10-18
 
