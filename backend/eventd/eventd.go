@@ -577,7 +577,7 @@ func (e *Eventd) handleMessage(msg interface{}) (fEvent *corev2.Event, fErr erro
 			}
 			switchesAliveDuration.WithLabelValues(status).Observe(v)
 		}))
-		err = switches.Alive(context.TODO(), switchKey, timeout)
+		err = switches.Alive(ctx, switchKey, timeout)
 		aliveTimer.ObserveDuration()
 		if err != nil {
 			EventsProcessed.WithLabelValues(EventsProcessedLabelError, EventsProcessedTypeLabelCheck).Inc()
@@ -594,7 +594,7 @@ func (e *Eventd) handleMessage(msg interface{}) (fEvent *corev2.Event, fErr erro
 			}
 			switchesBuryDuration.WithLabelValues(status).Observe(v)
 		}))
-		err = switches.Bury(context.TODO(), switchKey)
+		err = switches.Bury(ctx, switchKey)
 		buryTimer.ObserveDuration()
 		if err != nil {
 			// It's better to publish the event even if this fails, so
