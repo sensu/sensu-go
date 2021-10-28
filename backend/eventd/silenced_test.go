@@ -299,7 +299,7 @@ func TestEventd_handleMessage(t *testing.T) {
 				Logger:          NoopLogger{},
 				silencedCache:   cache,
 			}
-			if err := e.handleMessage(&tt.event); (err != nil) != tt.wantErr {
+			if _, err := e.handleMessage(&tt.event); (err != nil) != tt.wantErr {
 				t.Errorf("Eventd.handleMessage() error = %v, wantErr %v", err, tt.wantErr)
 			}
 		})
