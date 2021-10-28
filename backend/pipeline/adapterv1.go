@@ -10,6 +10,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/store"
+	metricspkg "github.com/sensu/sensu-go/metrics"
 	"github.com/sirupsen/logrus"
 )
 
@@ -19,6 +20,26 @@ const (
 
 	HandlerRequests      = "sensu_go_handler_requests"
 	HandlerRequestsTotal = "sensu_go_handler_requests_total"
+
+	// PipelineDuration is the name of the prometheus summary vec used to track
+	// average latencies of pipeline execution.
+	PipelineDuration = "sensu_go_pipeline_duration"
+
+	// PipelineResolveDuration is the name of the prometheus summary vec used to
+	// track average latencies of pipeline reference resolving.
+	PipelineResolveDuration = "sensu_go_pipeline_resolve_duration"
+
+	// PipelineTypeLabelName is the name of a label which describes what type of
+	// pipeline a metric is being recorded for.
+	PipelineTypeLabelName = "pipeline_type"
+
+	// PipelineTypeLabelLegacy is the value to use for the pipeline_type label
+	// when the metric is for a legacy pipeline.
+	PipelineTypeLabelLegacy = "legacy"
+
+	// PipelineTypeLabelModern is the value to use for the pipeline_type label
+	// when the metric is for a modern pipeline.
+	PipelineTypeLabelModern = "modern"
 )
 
 var (
@@ -28,6 +49,7 @@ var (
 			Help: "The total number of handler requests invoked",
 		},
 	)
+
 	handlerRequestsCounter = prometheus.NewCounterVec(
 		prometheus.CounterOpts{
 			Name: HandlerRequests,
@@ -35,14 +57,55 @@ var (
 		},
 		[]string{"status", "type"},
 	)
+
+	pipelineDuration = prometheus.NewSummaryVec(
+		prometheus.SummaryOpts{
+			Name:       PipelineDuration,
+			Help:       "pipeline execution latency distribution",
+			Objectives: map[float64]float64{0.5: 0.05, 0.9: 0.01, 0.99: 0.001},
+		},
+		[]string{metricspkg.StatusLabelName, metricspkg.ResourceReferenceLabelName},
+	)
+
+	pipelineResolveDuration = prometheus.NewSummaryVec(
+		prometheus.SummaryOpts{
+			Name:       PipelineResolveDuration,
+			Help:       "pipeline reference resolving latency distribution",
+			Objectives: map[float64]float64{0.5: 0.05, 0.9: 0.01, 0.99: 0.001},
+		},
+		[]string{metricspkg.StatusLabelName, PipelineTypeLabelName},
+	)
 )
 
 func init() {
+	legacyResourceID := LegacyPipelineReference().ResourceID()
+	pipelineDuration.WithLabelValues(metricspkg.StatusLabelSuccess, legacyResourceID)
+	pipelineDuration.WithLabelValues(metricspkg.StatusLabelError, legacyResourceID)
+
+	pipelineResolveDuration.WithLabelValues(metricspkg.StatusLabelSuccess, PipelineTypeLabelLegacy)
+	pipelineResolveDuration.WithLabelValues(metricspkg.StatusLabelSuccess, PipelineTypeLabelModern)
+	pipelineResolveDuration.WithLabelValues(metricspkg.StatusLabelError, PipelineTypeLabelLegacy)
+	pipelineResolveDuration.WithLabelValues(metricspkg.StatusLabelError, PipelineTypeLabelModern)
+
 	if err := prometheus.Register(handlerRequestsTotalCounter); err != nil {
 		panic(fmt.Errorf("error registering %s: %s", HandlerRequestsTotal, err))
 	}
 	if err := prometheus.Register(handlerRequestsCounter); err != nil {
 		panic(fmt.Errorf("error registering %s: %s", HandlerRequests, err))
+	}
+	if err := prometheus.Register(pipelineDuration); err != nil {
+		panic(fmt.Errorf("error registering %s: %s", PipelineDuration, err))
+	}
+	if err := prometheus.Register(pipelineResolveDuration); err != nil {
+		panic(fmt.Errorf("error registering %s: %s", PipelineResolveDuration, err))
+	}
+}
+
+func LegacyPipelineReference() *corev2.ResourceReference {
+	return &corev2.ResourceReference{
+		APIVersion: "core/v2",
+		Type:       "LegacyPipeline",
+		Name:       LegacyPipelineName,
 	}
 }
 
@@ -70,7 +133,19 @@ func (a *AdapterV1) CanRun(ref *corev2.ResourceReference) bool {
 	return false
 }
 
-func (a *AdapterV1) Run(ctx context.Context, ref *corev2.ResourceReference, resource interface{}) error {
+func (a *AdapterV1) Run(ctx context.Context, ref *corev2.ResourceReference, resource interface{}) (fErr error) {
+	begin := time.Now()
+	defer func() {
+		duration := time.Since(begin)
+		status := metricspkg.StatusLabelSuccess
+		if fErr != nil {
+			status = metricspkg.StatusLabelError
+		}
+		pipelineDuration.
+			WithLabelValues(status, ref.ResourceID()).
+			Observe(float64(duration) / float64(time.Millisecond))
+	}()
+
 	event, ok := resource.(*corev2.Event)
 	if !ok {
 		return fmt.Errorf("resource is not a corev2.Event")
@@ -150,8 +225,23 @@ func incrementCounter(handler *corev2.ResourceReference, err error) {
 	handlerRequestsCounter.WithLabelValues(status, handlerType).Inc()
 }
 
-func (a *AdapterV1) resolvePipelineReference(ctx context.Context, ref *corev2.ResourceReference, event *corev2.Event) (*corev2.Pipeline, error) {
-	if ref.Name == LegacyPipelineName {
+func (a *AdapterV1) resolvePipelineReference(ctx context.Context, ref *corev2.ResourceReference, event *corev2.Event) (pipeline *corev2.Pipeline, err error) {
+	isLegacy := ref.Name == LegacyPipelineName
+
+	resolveTimer := prometheus.NewTimer(prometheus.ObserverFunc(func(v float64) {
+		status := metricspkg.StatusLabelSuccess
+		if err != nil {
+			status = metricspkg.StatusLabelError
+		}
+		pipelineType := PipelineTypeLabelModern
+		if isLegacy {
+			pipelineType = PipelineTypeLabelLegacy
+		}
+		pipelineResolveDuration.WithLabelValues(status, pipelineType).Observe(v)
+	}))
+	defer resolveTimer.ObserveDuration()
+
+	if isLegacy {
 		return a.generateLegacyPipeline(ctx, event)
 	} else {
 		return a.getPipelineFromStore(ctx, ref)
