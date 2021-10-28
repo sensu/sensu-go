@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"os"
 	"strings"
 	"time"
 
@@ -186,6 +187,7 @@ func parseEnv(vars []string) map[string]string {
 	for _, kv := range vars {
 		idx := strings.Index(kv, "=")
 		if idx <= 0 {
+			result[kv] = os.Getenv(kv)
 			continue
 		}
 		result[kv[:idx]] = kv[idx+1:]

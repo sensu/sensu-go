@@ -28,6 +28,9 @@ metric.
 - Added metric `sensu_go_asset_fetch_duration`.
 - Added metric `sensu_go_asset_expand_duration`.
 
+### Changed
+- OS environment variables are now accessible via Javascript mutators.
+
 ## [6.5.1] - 2021-10-18
 
 ### Added

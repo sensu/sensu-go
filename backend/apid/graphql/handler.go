@@ -44,7 +44,7 @@ func (r *handlerImpl) Handlers(p graphql.ResolveParams) (interface{}, error) {
 	src := p.Source.(*corev2.Handler)
 	results, err := loadHandlers(p.Context, src.Namespace)
 	records := filterHandlers(results, func(obj *corev2.Handler) bool {
-		return strings.FoundInArray(obj.Name, src.Handlers)
+		return strings.InArray(obj.Name, src.Handlers)
 	})
 	return records, err
 }

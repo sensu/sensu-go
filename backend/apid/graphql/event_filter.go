@@ -53,7 +53,7 @@ func (r *eventFilterImpl) RuntimeAssets(p graphql.ResolveParams) (interface{}, e
 	src := p.Source.(*corev2.EventFilter)
 	records, err := loadAssets(p.Context, src.Namespace)
 	results := filterAssets(records, func(obj *corev2.Asset) bool {
-		return strings.FoundInArray(obj.Name, src.RuntimeAssets)
+		return strings.InArray(obj.Name, src.RuntimeAssets)
 	})
 	return results, err
 }
