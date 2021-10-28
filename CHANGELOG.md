@@ -13,6 +13,12 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 metric.
 - Added `sensu_go_event_handler_duration_sum` &
 `sensu_go_event_handler_duration_count` to the metrics log.
+- Added metric `sensu_go_eventd_create_proxy_entity_duration`.
+- Added metric `sensu_go_eventd_update_event_duration`.
+- Added metric `sensu_go_eventd_bus_publish_duration`.
+- Added metric `sensu_go_eventd_liveness_factory_duration`.
+- Added metric `sensu_go_eventd_switches_alive_duration`.
+- Added metric `sensu_go_eventd_switches_bury_duration`.
 
 ## [6.5.1] - 2021-10-18
 
