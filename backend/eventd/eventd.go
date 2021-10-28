@@ -21,6 +21,7 @@ import (
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/backend/store/cache"
 	storev2 "github.com/sensu/sensu-go/backend/store/v2"
+	metricspkg "github.com/sensu/sensu-go/metrics"
 	utillogging "github.com/sensu/sensu-go/util/logging"
 )
 
@@ -92,7 +93,7 @@ var (
 			Help:       "event handler latency distribution",
 			Objectives: map[float64]float64{0.5: 0.05, 0.9: 0.01, 0.99: 0.001},
 		},
-		[]string{},
+		[]string{metricspkg.StatusLabelName, metricspkg.EventTypeLabelName},
 	)
 
 	eventHandlersBusy = prometheus.NewGaugeVec(
@@ -103,11 +104,6 @@ var (
 		[]string{},
 	)
 )
-
-func init() {
-	_ = prometheus.Register(eventHandlerDuration)
-	_ = prometheus.Register(eventHandlersBusy)
-}
 
 const deletedEventSentinel = -1
 
@@ -208,12 +204,22 @@ func New(ctx context.Context, c Config, opts ...Option) (*Eventd, error) {
 		}
 	}
 
-	// Initialize labels
+	// Initialize labels & register metric families with Prometheus
 	EventsProcessed.WithLabelValues(EventsProcessedLabelSuccess, EventsProcessedTypeLabelCheck)
 	EventsProcessed.WithLabelValues(EventsProcessedLabelSuccess, EventsProcessedTypeLabelMetrics)
 	EventsProcessed.WithLabelValues(EventsProcessedLabelError, EventsProcessedTypeLabelUnknown)
 	EventsProcessed.WithLabelValues(EventsProcessedLabelError, EventsProcessedTypeLabelCheck)
+
+	eventHandlerDuration.WithLabelValues(metricspkg.StatusLabelSuccess, metricspkg.EventTypeLabelCheck)
+	eventHandlerDuration.WithLabelValues(metricspkg.StatusLabelSuccess, metricspkg.EventTypeLabelMetrics)
+	eventHandlerDuration.WithLabelValues(metricspkg.StatusLabelSuccess, metricspkg.EventTypeLabelUnknown)
+	eventHandlerDuration.WithLabelValues(metricspkg.StatusLabelError, metricspkg.EventTypeLabelCheck)
+	eventHandlerDuration.WithLabelValues(metricspkg.StatusLabelError, metricspkg.EventTypeLabelMetrics)
+	eventHandlerDuration.WithLabelValues(metricspkg.StatusLabelError, metricspkg.EventTypeLabelUnknown)
+
 	_ = prometheus.Register(EventsProcessed)
+	_ = prometheus.Register(eventHandlerDuration)
+	_ = prometheus.Register(eventHandlersBusy)
 
 	return e, nil
 }
@@ -270,7 +276,7 @@ func (e *Eventd) startHandlers() {
 				case <-e.shutdownChan:
 					// drain the event channel.
 					for msg := range e.eventChan {
-						if err := e.handleMessage(msg); err != nil {
+						if _, err := e.handleMessage(msg); err != nil {
 							logger := withEventFields(msg, logger)
 							logger.WithError(err).Error("error handling event")
 						}
@@ -300,7 +306,7 @@ func (e *Eventd) startHandlers() {
 							if !ok {
 								goto DRAINED
 							}
-							if err := e.handleMessage(keepMsg); err != nil {
+							if _, err := e.handleMessage(keepMsg); err != nil {
 								logger := withEventFields(msg, logger)
 								logger.WithError(err).Error("error handling event")
 							}
@@ -309,7 +315,7 @@ func (e *Eventd) startHandlers() {
 						}
 					}
 				DRAINED:
-					if err := e.handleMessage(msg); err != nil {
+					if _, err := e.handleMessage(msg); err != nil {
 						logger := withEventFields(msg, logger)
 						logger.WithError(err).Error("error handling event")
 					}
@@ -326,7 +332,7 @@ func (e *Eventd) startHandlers() {
 						}
 						return
 					}
-					if err := e.handleMessage(msg); err != nil {
+					if _, err := e.handleMessage(msg); err != nil {
 						logger := withEventFields(msg, logger)
 						logger.WithError(err).Error("error handling event")
 					}
@@ -348,16 +354,36 @@ func eventKey(event *corev2.Event) string {
 	return path.Join(event.Entity.Namespace, event.Check.Name, event.Entity.Name)
 }
 
-func (e *Eventd) handleMessage(msg interface{}) error {
+func (e *Eventd) handleMessage(msg interface{}) (fEvent *corev2.Event, fErr error) {
 	then := time.Now()
 	defer func() {
 		duration := time.Since(then)
-		eventHandlerDuration.WithLabelValues().Observe(float64(duration) / float64(time.Millisecond))
+
+		// record the status of the handled event
+		status := metricspkg.StatusLabelSuccess
+		if fErr != nil {
+			status = metricspkg.StatusLabelError
+		}
+
+		// record the event type of the handled event
+		eventType := metricspkg.EventTypeLabelUnknown
+		if fEvent != nil {
+			if !fEvent.HasCheck() && fEvent.HasMetrics() {
+				eventType = metricspkg.EventTypeLabelMetrics
+			}
+			if fEvent.HasCheck() {
+				eventType = metricspkg.EventTypeLabelCheck
+			}
+		}
+
+		eventHandlerDuration.
+			WithLabelValues(status, eventType).
+			Observe(float64(duration) / float64(time.Millisecond))
 	}()
 	event, ok := msg.(*corev2.Event)
 	if !ok {
 		EventsProcessed.WithLabelValues(EventsProcessedLabelError, EventsProcessedTypeLabelUnknown).Inc()
-		return fmt.Errorf("received non-Event on event channel: %v", msg)
+		return event, fmt.Errorf("received non-Event on event channel: %v", msg)
 	}
 
 	fields := utillogging.EventFields(event, false)
@@ -366,7 +392,7 @@ func (e *Eventd) handleMessage(msg interface{}) error {
 	// Validate the received event
 	if err := event.Validate(); err != nil {
 		EventsProcessed.WithLabelValues(EventsProcessedLabelError, EventsProcessedTypeLabelUnknown).Inc()
-		return err
+		return event, err
 	}
 
 	// If the event does not contain a check (rather, it contains metrics)
@@ -374,7 +400,7 @@ func (e *Eventd) handleMessage(msg interface{}) error {
 	if !event.HasCheck() {
 		e.Logger.Println(event)
 		EventsProcessed.WithLabelValues(EventsProcessedLabelSuccess, EventsProcessedTypeLabelMetrics).Inc()
-		return e.bus.Publish(messaging.TopicEvent, event)
+		return event, e.bus.Publish(messaging.TopicEvent, event)
 	}
 
 	ctx := context.WithValue(context.Background(), corev2.NamespaceKey, event.Entity.Namespace)
@@ -383,7 +409,7 @@ func (e *Eventd) handleMessage(msg interface{}) error {
 	// but only if the event's entity is not an agent.
 	if err := createProxyEntity(event, e.store); err != nil {
 		EventsProcessed.WithLabelValues(EventsProcessedLabelError, EventsProcessedTypeLabelCheck).Inc()
-		return err
+		return event, err
 	}
 
 	// Add any silenced subscriptions to the event
@@ -396,7 +422,7 @@ func (e *Eventd) handleMessage(msg interface{}) error {
 	event, prevEvent, err := e.eventStore.UpdateEvent(ctx, event)
 	if err != nil {
 		EventsProcessed.WithLabelValues(EventsProcessedLabelError, EventsProcessedTypeLabelCheck).Inc()
-		return err
+		return event, err
 	}
 
 	e.Logger.Println(event)
@@ -413,7 +439,7 @@ func (e *Eventd) handleMessage(msg interface{}) error {
 		timeout := int64(event.Check.Ttl)
 		if err := switches.Alive(context.TODO(), switchKey, timeout); err != nil {
 			EventsProcessed.WithLabelValues(EventsProcessedLabelError, EventsProcessedTypeLabelCheck).Inc()
-			return err
+			return event, err
 		}
 	} else if (prevEvent != nil && prevEvent.Check.Ttl > 0) || event.Check.Ttl == deletedEventSentinel {
 		// The check TTL has been disabled, there is no longer a need to track it
@@ -429,7 +455,7 @@ NOTTL:
 
 	EventsProcessed.WithLabelValues(EventsProcessedLabelSuccess, EventsProcessedTypeLabelCheck).Inc()
 
-	return e.bus.Publish(messaging.TopicEvent, event)
+	return event, e.bus.Publish(messaging.TopicEvent, event)
 }
 
 func (e *Eventd) alive(key string, prev liveness.State, leader bool) (bury bool) {

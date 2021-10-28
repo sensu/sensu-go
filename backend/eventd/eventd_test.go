@@ -283,7 +283,7 @@ func TestCheckTTL(t *testing.T) {
 				Return([]*corev2.Silenced{}, nil)
 			eventStore.On("UpdateEvent", mock.Anything, mock.Anything).Return(tt.msg, mockEvent, nil)
 
-			if err := e.handleMessage(tt.msg); (err != nil) != tt.wantErr {
+			if _, err := e.handleMessage(tt.msg); (err != nil) != tt.wantErr {
 				t.Errorf("Eventd.handleMessage() error = %v, wantErr %v", err, tt.wantErr)
 			}
 		})
