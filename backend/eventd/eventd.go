@@ -305,33 +305,15 @@ func New(ctx context.Context, c Config, opts ...Option) (*Eventd, error) {
 	busPublishDuration.WithLabelValues(metricspkg.StatusLabelError, metricspkg.EventTypeLabelCheck)
 	busPublishDuration.WithLabelValues(metricspkg.StatusLabelError, metricspkg.EventTypeLabelMetrics)
 
-	if err := prometheus.Register(EventsProcessed); err != nil {
-		return nil, metricspkg.FormatRegistrationErr(EventsProcessedCounterVec, err)
-	}
-	if err := prometheus.Register(eventHandlerDuration); err != nil {
-		return nil, metricspkg.FormatRegistrationErr(EventHandlerDuration, err)
-	}
-	if err := prometheus.Register(eventHandlersBusy); err != nil {
-		return nil, metricspkg.FormatRegistrationErr(EventHandlersBusyGaugeVec, err)
-	}
-	if err := prometheus.Register(createProxyEntityDuration); err != nil {
-		return nil, metricspkg.FormatRegistrationErr(CreateProxyEntityDuration, err)
-	}
-	if err := prometheus.Register(updateEventDuration); err != nil {
-		return nil, metricspkg.FormatRegistrationErr(UpdateEventDuration, err)
-	}
-	if err := prometheus.Register(busPublishDuration); err != nil {
-		return nil, metricspkg.FormatRegistrationErr(BusPublishDuration, err)
-	}
-	if err := prometheus.Register(livenessFactoryDuration); err != nil {
-		return nil, metricspkg.FormatRegistrationErr(LivenessFactoryDuration, err)
-	}
-	if err := prometheus.Register(switchesAliveDuration); err != nil {
-		return nil, metricspkg.FormatRegistrationErr(SwitchesAliveDuration, err)
-	}
-	if err := prometheus.Register(switchesBuryDuration); err != nil {
-		return nil, metricspkg.FormatRegistrationErr(SwitchesBuryDuration, err)
-	}
+	_ = prometheus.Register(EventsProcessed)
+	_ = prometheus.Register(eventHandlerDuration)
+	_ = prometheus.Register(eventHandlersBusy)
+	_ = prometheus.Register(createProxyEntityDuration)
+	_ = prometheus.Register(updateEventDuration)
+	_ = prometheus.Register(busPublishDuration)
+	_ = prometheus.Register(livenessFactoryDuration)
+	_ = prometheus.Register(switchesAliveDuration)
+	_ = prometheus.Register(switchesBuryDuration)
 
 	return e, nil
 }
