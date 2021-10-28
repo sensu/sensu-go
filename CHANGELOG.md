@@ -19,6 +19,12 @@ metric.
 - Added metric `sensu_go_eventd_liveness_factory_duration`.
 - Added metric `sensu_go_eventd_switches_alive_duration`.
 - Added metric `sensu_go_eventd_switches_bury_duration`.
+- Added metric `sensu_go_pipelined_message_handler_duration`.
+- Added metric `sensu_go_pipeline_duration`.
+- Added metric `sensu_go_pipeline_resolve_duration`.
+- Added metric `sensu_go_pipeline_filter_duration`.
+- Added metric `sensu_go_pipeline_mutator_duration`.
+- Added metric `sensu_go_pipeline_handler_duration`.
 
 ### Changed
 - OS environment variables are now accessible via Javascript mutators.
