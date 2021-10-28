@@ -2,16 +2,18 @@ package eventd
 
 import (
 	"context"
+	"time"
 
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	corev3 "github.com/sensu/sensu-go/api/core/v3"
 	"github.com/sensu/sensu-go/backend/store"
 	storev2 "github.com/sensu/sensu-go/backend/store/v2"
+	metricspkg "github.com/sensu/sensu-go/metrics"
 )
 
 // createProxyEntity creates a proxy entity for the given event if the entity
 // does not exist already and returns the entity created
-func createProxyEntity(event *corev2.Event, s storev2.Interface) error {
+func createProxyEntity(event *corev2.Event, s storev2.Interface) (fErr error) {
 	entityName := event.Entity.Name
 	namespace := event.Entity.Namespace
 
@@ -21,6 +23,18 @@ func createProxyEntity(event *corev2.Event, s storev2.Interface) error {
 	} else if event.Entity.EntityClass == corev2.EntityAgentClass {
 		return nil
 	}
+
+	begin := time.Now()
+	defer func() {
+		duration := time.Since(begin)
+		status := metricspkg.StatusLabelSuccess
+		if fErr != nil {
+			status = metricspkg.StatusLabelError
+		}
+		createProxyEntityDuration.
+			WithLabelValues(status).
+			Observe(float64(duration) / float64(time.Millisecond))
+	}()
 
 	// Determine if the entity exists
 	//NOTE(ccressent): there is no timeout for this operation?

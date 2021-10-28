@@ -69,6 +69,30 @@ const (
 	// track how many eventd handlers are busy processing events.
 	EventHandlersBusyGaugeVec = "sensu_go_event_handlers_busy"
 
+	// CreateProxyEntityDuration is the name of the prometheus summary vec used
+	// to track average latencies of proxy entity creation.
+	CreateProxyEntityDuration = "sensu_go_eventd_create_proxy_entity_duration"
+
+	// UpdateEventDuration is the name of the prometheus summary vec used to
+	// track average latencies of updating events.
+	UpdateEventDuration = "sensu_go_eventd_update_event_duration"
+
+	// BusPublishDuration is the name of the prometheus summary vec used to
+	// track average latencies of publishing to the bus.
+	BusPublishDuration = "sensu_go_eventd_bus_publish_duration"
+
+	// LivenessFactoryDuration is the name of the prometheus summary vec used to
+	// track average latencies of calls to the liveness factory.
+	LivenessFactoryDuration = "sensu_go_eventd_liveness_factory_duration"
+
+	// SwitchesAliveDuration is the name of the prometheus summary vec used to
+	// track average latencies of calls to switches.Alive.
+	SwitchesAliveDuration = "sensu_go_eventd_switches_alive_duration"
+
+	// SwitchesBuryDuration is the name of the prometheus summary vec used to
+	// track average latencies of calls to switches.Bury.
+	SwitchesBuryDuration = "sensu_go_eventd_switches_bury_duration"
+
 	// defaultStoreTimeout is the store timeout used if the backend did not configure one
 	defaultStoreTimeout = time.Minute
 )
@@ -100,6 +124,59 @@ var (
 		prometheus.GaugeOpts{
 			Name: EventHandlersBusyGaugeVec,
 			Help: "The number of event handlers currently processing",
+		},
+		[]string{},
+	)
+
+	createProxyEntityDuration = prometheus.NewSummaryVec(
+		prometheus.SummaryOpts{
+			Name:       CreateProxyEntityDuration,
+			Help:       "proxy entity creation latency distribution in eventd",
+			Objectives: map[float64]float64{0.5: 0.05, 0.9: 0.01, 0.99: 0.001},
+		},
+		[]string{metricspkg.StatusLabelName},
+	)
+
+	updateEventDuration = prometheus.NewSummaryVec(
+		prometheus.SummaryOpts{
+			Name:       UpdateEventDuration,
+			Help:       "event updating latency distribution in eventd",
+			Objectives: map[float64]float64{0.5: 0.05, 0.9: 0.01, 0.99: 0.001},
+		},
+		[]string{metricspkg.StatusLabelName},
+	)
+
+	busPublishDuration = prometheus.NewSummaryVec(
+		prometheus.SummaryOpts{
+			Name:       BusPublishDuration,
+			Help:       "bus publishing latency distribution in eventd",
+			Objectives: map[float64]float64{0.5: 0.05, 0.9: 0.01, 0.99: 0.001},
+		},
+		[]string{metricspkg.StatusLabelName, metricspkg.EventTypeLabelName},
+	)
+
+	livenessFactoryDuration = prometheus.NewSummary(
+		prometheus.SummaryOpts{
+			Name:       LivenessFactoryDuration,
+			Help:       "liveness factory latency distribution in eventd",
+			Objectives: map[float64]float64{0.5: 0.05, 0.9: 0.01, 0.99: 0.001},
+		},
+	)
+
+	switchesAliveDuration = prometheus.NewSummaryVec(
+		prometheus.SummaryOpts{
+			Name:       SwitchesAliveDuration,
+			Help:       "switches.Alive() latency distribution in eventd",
+			Objectives: map[float64]float64{0.5: 0.05, 0.9: 0.01, 0.99: 0.001},
+		},
+		[]string{},
+	)
+
+	switchesBuryDuration = prometheus.NewSummaryVec(
+		prometheus.SummaryOpts{
+			Name:       SwitchesBuryDuration,
+			Help:       "switches.Bury() latency distribution in eventd",
+			Objectives: map[float64]float64{0.5: 0.05, 0.9: 0.01, 0.99: 0.001},
 		},
 		[]string{},
 	)
@@ -217,9 +294,44 @@ func New(ctx context.Context, c Config, opts ...Option) (*Eventd, error) {
 	eventHandlerDuration.WithLabelValues(metricspkg.StatusLabelError, metricspkg.EventTypeLabelMetrics)
 	eventHandlerDuration.WithLabelValues(metricspkg.StatusLabelError, metricspkg.EventTypeLabelUnknown)
 
-	_ = prometheus.Register(EventsProcessed)
-	_ = prometheus.Register(eventHandlerDuration)
-	_ = prometheus.Register(eventHandlersBusy)
+	createProxyEntityDuration.WithLabelValues(metricspkg.StatusLabelSuccess)
+	createProxyEntityDuration.WithLabelValues(metricspkg.StatusLabelError)
+
+	updateEventDuration.WithLabelValues(metricspkg.StatusLabelSuccess)
+	updateEventDuration.WithLabelValues(metricspkg.StatusLabelError)
+
+	busPublishDuration.WithLabelValues(metricspkg.StatusLabelSuccess, metricspkg.EventTypeLabelCheck)
+	busPublishDuration.WithLabelValues(metricspkg.StatusLabelSuccess, metricspkg.EventTypeLabelMetrics)
+	busPublishDuration.WithLabelValues(metricspkg.StatusLabelError, metricspkg.EventTypeLabelCheck)
+	busPublishDuration.WithLabelValues(metricspkg.StatusLabelError, metricspkg.EventTypeLabelMetrics)
+
+	if err := prometheus.Register(EventsProcessed); err != nil {
+		return nil, metricspkg.FormatRegistrationErr(EventsProcessedCounterVec, err)
+	}
+	if err := prometheus.Register(eventHandlerDuration); err != nil {
+		return nil, metricspkg.FormatRegistrationErr(EventHandlerDuration, err)
+	}
+	if err := prometheus.Register(eventHandlersBusy); err != nil {
+		return nil, metricspkg.FormatRegistrationErr(EventHandlersBusyGaugeVec, err)
+	}
+	if err := prometheus.Register(createProxyEntityDuration); err != nil {
+		return nil, metricspkg.FormatRegistrationErr(CreateProxyEntityDuration, err)
+	}
+	if err := prometheus.Register(updateEventDuration); err != nil {
+		return nil, metricspkg.FormatRegistrationErr(UpdateEventDuration, err)
+	}
+	if err := prometheus.Register(busPublishDuration); err != nil {
+		return nil, metricspkg.FormatRegistrationErr(BusPublishDuration, err)
+	}
+	if err := prometheus.Register(livenessFactoryDuration); err != nil {
+		return nil, metricspkg.FormatRegistrationErr(LivenessFactoryDuration, err)
+	}
+	if err := prometheus.Register(switchesAliveDuration); err != nil {
+		return nil, metricspkg.FormatRegistrationErr(SwitchesAliveDuration, err)
+	}
+	if err := prometheus.Register(switchesBuryDuration); err != nil {
+		return nil, metricspkg.FormatRegistrationErr(SwitchesBuryDuration, err)
+	}
 
 	return e, nil
 }
@@ -354,6 +466,42 @@ func eventKey(event *corev2.Event) string {
 	return path.Join(event.Entity.Namespace, event.Check.Name, event.Entity.Name)
 }
 
+func (e *Eventd) publishEventWithDuration(event *corev2.Event) (fErr error) {
+	begin := time.Now()
+	defer func() {
+		duration := time.Since(begin)
+		status := metricspkg.StatusLabelSuccess
+		if fErr != nil {
+			status = metricspkg.StatusLabelError
+		}
+		eventType := metricspkg.EventTypeLabelMetrics
+		if event.HasCheck() {
+			eventType = metricspkg.EventTypeLabelCheck
+		}
+		busPublishDuration.
+			WithLabelValues(status, eventType).
+			Observe(float64(duration) / float64(time.Millisecond))
+	}()
+
+	return e.bus.Publish(messaging.TopicEvent, event)
+}
+
+func (e *Eventd) updateEventWithDuration(ctx context.Context, event *corev2.Event) (fEvent, fPrevEvent *corev2.Event, fErr error) {
+	begin := time.Now()
+	defer func() {
+		duration := time.Since(begin)
+		status := metricspkg.StatusLabelSuccess
+		if fErr != nil {
+			status = metricspkg.StatusLabelError
+		}
+		updateEventDuration.
+			WithLabelValues(status).
+			Observe(float64(duration) / float64(time.Millisecond))
+	}()
+
+	return e.eventStore.UpdateEvent(ctx, event)
+}
+
 func (e *Eventd) handleMessage(msg interface{}) (fEvent *corev2.Event, fErr error) {
 	then := time.Now()
 	defer func() {
@@ -400,7 +548,7 @@ func (e *Eventd) handleMessage(msg interface{}) (fEvent *corev2.Event, fErr erro
 	if !event.HasCheck() {
 		e.Logger.Println(event)
 		EventsProcessed.WithLabelValues(EventsProcessedLabelSuccess, EventsProcessedTypeLabelMetrics).Inc()
-		return event, e.bus.Publish(messaging.TopicEvent, event)
+		return event, e.publishEventWithDuration(event)
 	}
 
 	ctx := context.WithValue(context.Background(), corev2.NamespaceKey, event.Entity.Namespace)
@@ -419,7 +567,7 @@ func (e *Eventd) handleMessage(msg interface{}) (fEvent *corev2.Event, fErr erro
 	}
 
 	// Merge the new event with the stored event if a match is found
-	event, prevEvent, err := e.eventStore.UpdateEvent(ctx, event)
+	event, prevEvent, err := e.updateEventWithDuration(ctx, event)
 	if err != nil {
 		EventsProcessed.WithLabelValues(EventsProcessedLabelError, EventsProcessedTypeLabelCheck).Inc()
 		return event, err
@@ -427,7 +575,9 @@ func (e *Eventd) handleMessage(msg interface{}) (fEvent *corev2.Event, fErr erro
 
 	e.Logger.Println(event)
 
+	livenessFactoryTimer := prometheus.NewTimer(livenessFactoryDuration)
 	switches := e.livenessFactory("eventd", e.dead, e.alive, logger)
+	livenessFactoryTimer.ObserveDuration()
 	switchKey := eventKey(event)
 
 	if event.Check.Name == corev2.KeepaliveCheckName {
@@ -437,14 +587,34 @@ func (e *Eventd) handleMessage(msg interface{}) (fEvent *corev2.Event, fErr erro
 	if event.Check.Ttl > 0 {
 		// Reset the switch
 		timeout := int64(event.Check.Ttl)
-		if err := switches.Alive(context.TODO(), switchKey, timeout); err != nil {
+		var err error
+		aliveTimer := prometheus.NewTimer(prometheus.ObserverFunc(func(v float64) {
+			status := metricspkg.StatusLabelSuccess
+			if err != nil {
+				status = metricspkg.StatusLabelError
+			}
+			switchesAliveDuration.WithLabelValues(status).Observe(v)
+		}))
+		err = switches.Alive(context.TODO(), switchKey, timeout)
+		aliveTimer.ObserveDuration()
+		if err != nil {
 			EventsProcessed.WithLabelValues(EventsProcessedLabelError, EventsProcessedTypeLabelCheck).Inc()
 			return event, err
 		}
 	} else if (prevEvent != nil && prevEvent.Check.Ttl > 0) || event.Check.Ttl == deletedEventSentinel {
 		// The check TTL has been disabled, there is no longer a need to track it
 		logger.Debug("check ttl disabled")
-		if err := switches.Bury(context.TODO(), switchKey); err != nil {
+		var err error
+		buryTimer := prometheus.NewTimer(prometheus.ObserverFunc(func(v float64) {
+			status := metricspkg.StatusLabelSuccess
+			if err != nil {
+				status = metricspkg.StatusLabelError
+			}
+			switchesBuryDuration.WithLabelValues(status).Observe(v)
+		}))
+		err = switches.Bury(context.TODO(), switchKey)
+		buryTimer.ObserveDuration()
+		if err != nil {
 			// It's better to publish the event even if this fails, so
 			// don't return the error here.
 			logger.WithError(err).Error("error burying switch")
@@ -455,7 +625,7 @@ NOTTL:
 
 	EventsProcessed.WithLabelValues(EventsProcessedLabelSuccess, EventsProcessedTypeLabelCheck).Inc()
 
-	return event, e.bus.Publish(messaging.TopicEvent, event)
+	return event, e.publishEventWithDuration(event)
 }
 
 func (e *Eventd) alive(key string, prev liveness.State, leader bool) (bury bool) {
