@@ -310,8 +310,7 @@ func TestJavascriptMutatorWithOSEnv(t *testing.T) {
 		t.Errorf("bad result: got %q, want %q", got, want)
 	}
 	mutator.EnvVars = nil
-	got, err = adapter.run(context.Background(), mutator, event, assets)
-	if err == nil {
+	if _, err := adapter.run(context.Background(), mutator, event, assets); err == nil {
 		t.Error("expected non-nil error")
 	}
 }
