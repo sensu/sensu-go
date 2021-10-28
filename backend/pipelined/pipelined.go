@@ -114,9 +114,7 @@ func New(c Config, options ...Option) (*Pipelined, error) {
 	messageHandlerDuration.WithLabelValues(metricspkg.StatusLabelError, "0")
 	messageHandlerDuration.WithLabelValues(metricspkg.StatusLabelError, "1")
 
-	if err := prometheus.Register(messageHandlerDuration); err != nil {
-		return nil, metricspkg.FormatRegistrationErr(MessageHandlerDuration, err)
-	}
+	_ = prometheus.Register(messageHandlerDuration)
 
 	return p, nil
 }
