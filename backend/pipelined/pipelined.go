@@ -8,13 +8,36 @@ import (
 	"sync/atomic"
 	"time"
 
+	"github.com/prometheus/client_golang/prometheus"
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/messaging"
 	"github.com/sensu/sensu-go/backend/pipeline"
 	"github.com/sensu/sensu-go/backend/store"
+	metricspkg "github.com/sensu/sensu-go/metrics"
 )
 
-var defaultStoreTimeout = time.Minute
+const (
+	// MessageHandlerDuration is the name of the prometheus summary vec used to
+	// track average latencies of pipelined message handling.
+	MessageHandlerDuration = "sensu_go_pipelined_message_handler_duration"
+
+	// HasPipelinesLabelName is the name of a label which describes whether or
+	// not the metric being recorded is for an event with pipelines.
+	HasPipelinesLabelName = "has_pipelines"
+)
+
+var (
+	defaultStoreTimeout = time.Minute
+
+	messageHandlerDuration = prometheus.NewSummaryVec(
+		prometheus.SummaryOpts{
+			Name:       MessageHandlerDuration,
+			Help:       "pipelined message handler latency distribution",
+			Objectives: map[float64]float64{0.5: 0.05, 0.9: 0.01, 0.99: 0.001},
+		},
+		[]string{metricspkg.StatusLabelName, HasPipelinesLabelName},
+	)
+)
 
 // Pipelined handles incoming Sensu events and puts them through a
 // Sensu event pipeline, i.e. filter -> mutator -> handler. The Sensu
@@ -85,6 +108,14 @@ func New(c Config, options ...Option) (*Pipelined, error) {
 		}
 	}
 
+	// Initialize labels & register metric families with Prometheus
+	messageHandlerDuration.WithLabelValues(metricspkg.StatusLabelSuccess, "0")
+	messageHandlerDuration.WithLabelValues(metricspkg.StatusLabelSuccess, "1")
+	messageHandlerDuration.WithLabelValues(metricspkg.StatusLabelError, "0")
+	messageHandlerDuration.WithLabelValues(metricspkg.StatusLabelError, "1")
+
+	_ = prometheus.Register(messageHandlerDuration)
+
 	return p, nil
 }
 
@@ -146,7 +177,7 @@ func (p *Pipelined) createWorkers(count int, channel chan interface{}) {
 				case <-p.stopping:
 					return
 				case msg := <-channel:
-					if err := p.handleMessage(context.Background(), msg); err != nil {
+					if _, err := p.handleMessage(context.Background(), msg); err != nil {
 						if _, ok := err.(*store.ErrInternal); ok {
 							select {
 							case p.errChan <- err:
@@ -161,7 +192,23 @@ func (p *Pipelined) createWorkers(count int, channel chan interface{}) {
 	}
 }
 
-func (p *Pipelined) handleMessage(ctx context.Context, msg interface{}) error {
+func (p *Pipelined) handleMessage(ctx context.Context, msg interface{}) (hadPipelines bool, fErr error) {
+	begin := time.Now()
+	defer func() {
+		duration := time.Since(begin)
+		status := metricspkg.StatusLabelSuccess
+		if fErr != nil {
+			status = metricspkg.StatusLabelError
+		}
+		hasPipelines := "0"
+		if hadPipelines {
+			hasPipelines = "1"
+		}
+		messageHandlerDuration.
+			WithLabelValues(status, hasPipelines).
+			Observe(float64(duration) / float64(time.Millisecond))
+	}()
+
 	getter, ok := msg.(PipelineGetter)
 	if !ok {
 		panic("message received was not a PipelineGetter")
@@ -174,12 +221,7 @@ func (p *Pipelined) handleMessage(ctx context.Context, msg interface{}) error {
 	// corev2.Event & has handlers.
 	if event, ok := msg.(*corev2.Event); ok {
 		if event.HasHandlers() {
-			legacyPipelineRef := &corev2.ResourceReference{
-				APIVersion: "core/v2",
-				Type:       "LegacyPipeline",
-				Name:       pipeline.LegacyPipelineName,
-			}
-			pipelineRefs = append(pipelineRefs, legacyPipelineRef)
+			pipelineRefs = append(pipelineRefs, pipeline.LegacyPipelineReference())
 		} else {
 			logger.WithFields(fields).Debug("event has no handlers defined, skipping addition of legacy pipeline reference")
 		}
@@ -187,7 +229,7 @@ func (p *Pipelined) handleMessage(ctx context.Context, msg interface{}) error {
 
 	if len(pipelineRefs) == 0 {
 		logger.WithFields(fields).Info("no pipelines defined in resource")
-		return nil
+		return false, nil
 	}
 
 	// loop through list of pipeline references and find
@@ -203,7 +245,7 @@ func (p *Pipelined) handleMessage(ctx context.Context, msg interface{}) error {
 			if adapter.CanRun(ref) {
 				if err := adapter.Run(ctx, ref, msg); err != nil {
 					if _, ok := err.(*store.ErrInternal); ok {
-						return err
+						return true, err
 					}
 					skipPipelineErr := fmt.Errorf("%w, skipping execution of pipeline", err)
 					if _, ok := err.(*pipeline.ErrNoWorkflows); ok {
@@ -220,9 +262,9 @@ func (p *Pipelined) handleMessage(ctx context.Context, msg interface{}) error {
 			}
 		}
 		if !adapterFound {
-			return fmt.Errorf("no pipeline adapters were found that support the resource: %s.%s = %s", ref.APIVersion, ref.Type, ref.Name)
+			return true, fmt.Errorf("no pipeline adapters were found that support the resource: %s.%s = %s", ref.APIVersion, ref.Type, ref.Name)
 		}
 	}
 
-	return nil
+	return true, nil
 }
