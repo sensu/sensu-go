@@ -29,4 +29,8 @@ const (
 	// metrics which represent an event where the type is not yet known or
 	// an event without both a check & metrics.
 	EventTypeLabelUnknown = "unknown"
+
+	// ResourceReferenceLabelName is the name of a label which describes the
+	// resource reference a metric is tracking.
+	ResourceReferenceLabelName = "resource_ref"
 )

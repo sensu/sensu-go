@@ -112,6 +112,7 @@ func TestAdapterV1_Run(t *testing.T) {
 			name: "returns error when resource is not a core/v2.Event",
 			args: args{
 				resource: corev2.FixtureHandler("handler1"),
+				ref:      corev2.FixturePipelineReference("pipeline1"),
 			},
 			wantErr:    true,
 			wantErrMsg: "resource is not a corev2.Event",
