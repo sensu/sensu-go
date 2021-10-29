@@ -69,12 +69,6 @@ func (m *Mutator) Validate() error {
 		}
 	}
 
-	for _, kv := range m.EnvVars {
-		if idx := strings.Index(kv, "="); idx <= 0 {
-			return fmt.Errorf("invalid mutator environment variable: %q is not of the form K=V", kv)
-		}
-	}
-
 	return nil
 }
 
