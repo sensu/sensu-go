@@ -8,12 +8,15 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
 
+## [6.5.3] - 2021-10-29
+
 ### Added
 - Added eventd, pipeline, & asset metrics from 6.5.2 to the metrics log.
 
 ### Fixed
 - Fixed a bug where API validation caused javascript environment variable
 specifications to be rejected.
+- Fixed a bug where the asset expansion error was not handled
 
 ## [6.5.2] - 2021-10-28
 
