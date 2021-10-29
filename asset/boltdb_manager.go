@@ -8,14 +8,53 @@ import (
 	"path/filepath"
 
 	"github.com/dustin/go-humanize"
+	"github.com/prometheus/client_golang/prometheus"
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
+	metricspkg "github.com/sensu/sensu-go/metrics"
 	bolt "go.etcd.io/bbolt"
 	"golang.org/x/time/rate"
 )
 
+const (
+	// FetchDuration is the name of the prometheus summary vec used to track
+	// average latencies of asset fetching.
+	FetchDuration = "sensu_go_asset_fetch_duration"
+
+	// ExpandDuration is the name of the prometheus summary vec used to track
+	// average latencies of asset expansion.
+	ExpandDuration = "sensu_go_asset_expand_duration"
+)
+
 var (
 	assetBucketName = []byte("assets")
+
+	fetchDuration = prometheus.NewSummaryVec(
+		prometheus.SummaryOpts{
+			Name:       FetchDuration,
+			Help:       "asset fetching latency distribution",
+			Objectives: map[float64]float64{0.5: 0.05, 0.9: 0.01, 0.99: 0.001},
+		},
+		[]string{metricspkg.StatusLabelName, "name", "namespace"},
+	)
+
+	expandDuration = prometheus.NewSummaryVec(
+		prometheus.SummaryOpts{
+			Name:       ExpandDuration,
+			Help:       "asset expansion latency distribution",
+			Objectives: map[float64]float64{0.5: 0.05, 0.9: 0.01, 0.99: 0.001},
+		},
+		[]string{metricspkg.StatusLabelName, "name", "namespace"},
+	)
 )
+
+func init() {
+	if err := prometheus.Register(fetchDuration); err != nil {
+		panic(metricspkg.FormatRegistrationErr(FetchDuration, err))
+	}
+	if err := prometheus.Register(expandDuration); err != nil {
+		panic(metricspkg.FormatRegistrationErr(ExpandDuration, err))
+	}
+}
 
 // NewBoltDBGetter returns a new default asset Getter. If fetcher, verifier, or
 // expander are nil, the getter will use the built-in components.
@@ -126,7 +165,7 @@ func (b *boltDBAssetManager) Get(ctx context.Context, asset *corev2.Asset) (*Run
 		}
 
 		// install the asset
-		tmpFile, err := b.fetcher.Fetch(ctx, asset.URL, asset.Headers)
+		tmpFile, err := b.fetchWithDuration(ctx, asset)
 		if err != nil {
 			return err
 		}
@@ -148,10 +187,7 @@ func (b *boltDBAssetManager) Get(ctx context.Context, asset *corev2.Asset) (*Run
 		}
 
 		// expand
-		assetPath := filepath.Join(b.localStorage, asset.Sha512)
-		if err := b.expander.Expand(tmpFile, assetPath); err != nil {
-			return err
-		}
+		assetPath, err := b.expandWithDuration(tmpFile, asset)
 
 		localAsset = &RuntimeAsset{
 			Path: assetPath,
@@ -173,4 +209,35 @@ func (b *boltDBAssetManager) Get(ctx context.Context, asset *corev2.Asset) (*Run
 	}
 
 	return localAsset, nil
+}
+
+func (b *boltDBAssetManager) fetchWithDuration(ctx context.Context, asset *corev2.Asset) (file *os.File, err error) {
+	timer := prometheus.NewTimer(prometheus.ObserverFunc(func(v float64) {
+		status := metricspkg.StatusLabelSuccess
+		if err != nil {
+			status = metricspkg.StatusLabelError
+		}
+		fetchDuration.
+			WithLabelValues(status, asset.ObjectMeta.Name, asset.ObjectMeta.Namespace).
+			Observe(v)
+	}))
+	defer timer.ObserveDuration()
+
+	return b.fetcher.Fetch(ctx, asset.URL, asset.Headers)
+}
+
+func (b *boltDBAssetManager) expandWithDuration(tmpFile *os.File, asset *corev2.Asset) (assetPath string, err error) {
+	timer := prometheus.NewTimer(prometheus.ObserverFunc(func(v float64) {
+		status := metricspkg.StatusLabelSuccess
+		if err != nil {
+			status = metricspkg.StatusLabelError
+		}
+		expandDuration.
+			WithLabelValues(status, asset.ObjectMeta.Name, asset.ObjectMeta.Namespace).
+			Observe(v)
+	}))
+	defer timer.ObserveDuration()
+
+	assetPath = filepath.Join(b.localStorage, asset.Sha512)
+	return assetPath, b.expander.Expand(tmpFile, assetPath)
 }

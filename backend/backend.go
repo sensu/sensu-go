@@ -72,6 +72,8 @@ func (e ErrStartup) Error() string {
 var SelectedMetrics = []string{
 	"sensu_go_wizard_bus",
 	"sensu_go_event_handler_duration",
+	"sensu_go_event_handler_duration_sum",
+	"sensu_go_event_handler_duration_count",
 	"sensu_go_events_processed",
 	"sensu_go_agent_sessions",
 	"sensu_go_session_errors",

@@ -6,7 +6,30 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic
 Versioning](http://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## [6.5.2] - 2021-10-28
+
+### Added
+- Added `status` & `event_type` labels to the sensu_go_event_handler_duration
+metric.
+- Added `sensu_go_event_handler_duration_sum` &
+`sensu_go_event_handler_duration_count` to the metrics log.
+- Added metric `sensu_go_eventd_create_proxy_entity_duration`.
+- Added metric `sensu_go_eventd_update_event_duration`.
+- Added metric `sensu_go_eventd_bus_publish_duration`.
+- Added metric `sensu_go_eventd_liveness_factory_duration`.
+- Added metric `sensu_go_eventd_switches_alive_duration`.
+- Added metric `sensu_go_eventd_switches_bury_duration`.
+- Added metric `sensu_go_pipelined_message_handler_duration`.
+- Added metric `sensu_go_pipeline_duration`.
+- Added metric `sensu_go_pipeline_resolve_duration`.
+- Added metric `sensu_go_pipeline_filter_duration`.
+- Added metric `sensu_go_pipeline_mutator_duration`.
+- Added metric `sensu_go_pipeline_handler_duration`.
+- Added metric `sensu_go_asset_fetch_duration`.
+- Added metric `sensu_go_asset_expand_duration`.
+
+### Changed
+- OS environment variables are now accessible via Javascript mutators.
 
 ## [6.5.1] - 2021-10-18
 

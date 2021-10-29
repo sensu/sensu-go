@@ -148,11 +148,21 @@ func (b *InfluxBridge) logMetrics(families []*dto.MetricFamily) error {
 
 	for _, sample := range samples {
 		metric := (*promSampleInfluxMetric)(sample)
+
+		// ignore metrics with values that have not yet been recorded as the
+		// encoder does not support "NaN"
+		if metric.Value.String() == "NaN" {
+			continue
+		}
+
+		// ignore metrics with names that are not included in the list of
+		// metrics we want to log
 		if len(b.filter) > 0 {
 			if _, ok := b.filter[metric.Name()]; !ok {
 				continue
 			}
 		}
+
 		if _, err := encoder.Encode(metric); err != nil {
 			b.errLogger.WithError(err).Error("error encoding metric")
 		}

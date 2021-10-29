@@ -34,7 +34,7 @@ func (r *checkCfgImpl) Handlers(p graphql.ResolveParams) (interface{}, error) {
 	src := p.Source.(*corev2.CheckConfig)
 	results, err := loadHandlers(p.Context, src.Namespace)
 	records := filterHandlers(results, func(obj *corev2.Handler) bool {
-		return strings.FoundInArray(obj.Name, src.Handlers)
+		return strings.InArray(obj.Name, src.Handlers)
 	})
 	return records, err
 }
@@ -44,7 +44,7 @@ func (r *checkCfgImpl) OutputMetricHandlers(p graphql.ResolveParams) (interface{
 	src := p.Source.(*corev2.CheckConfig)
 	results, err := loadHandlers(p.Context, src.Namespace)
 	records := filterHandlers(results, func(obj *corev2.Handler) bool {
-		return strings.FoundInArray(obj.Name, src.OutputMetricHandlers)
+		return strings.InArray(obj.Name, src.OutputMetricHandlers)
 	})
 	return records, err
 }
@@ -99,7 +99,7 @@ func (r *checkCfgImpl) RuntimeAssets(p graphql.ResolveParams) (interface{}, erro
 	src := p.Source.(*corev2.CheckConfig)
 	records, err := loadAssets(p.Context, src.Namespace)
 	results := filterAssets(records, func(obj *corev2.Asset) bool {
-		return strings.FoundInArray(obj.Name, src.RuntimeAssets)
+		return strings.InArray(obj.Name, src.RuntimeAssets)
 	})
 	return results, err
 }
@@ -168,7 +168,7 @@ func (r *checkImpl) Handlers(p graphql.ResolveParams) (interface{}, error) {
 	src := p.Source.(*corev2.Check)
 	results, err := loadHandlers(p.Context, src.Namespace)
 	records := filterHandlers(results, func(obj *corev2.Handler) bool {
-		return strings.FoundInArray(obj.Name, src.Handlers)
+		return strings.InArray(obj.Name, src.Handlers)
 	})
 	return records, err
 }
@@ -184,7 +184,7 @@ func (r *checkImpl) Silences(p graphql.ResolveParams) (interface{}, error) {
 	src := p.Source.(*corev2.Check)
 	results, err := loadSilenceds(p.Context, src.Namespace)
 	records := filterSilenceds(results, func(obj *corev2.Silenced) bool {
-		return strings.FoundInArray(obj.Name, src.Silenced)
+		return strings.InArray(obj.Name, src.Silenced)
 	})
 	return records, err
 }
@@ -209,7 +209,7 @@ func (r *checkImpl) OutputMetricHandlers(p graphql.ResolveParams) (interface{}, 
 	src := p.Source.(*corev2.Check)
 	results, err := loadHandlers(p.Context, src.Namespace)
 	records := filterHandlers(results, func(obj *corev2.Handler) bool {
-		return strings.FoundInArray(obj.Name, src.OutputMetricHandlers)
+		return strings.InArray(obj.Name, src.OutputMetricHandlers)
 	})
 	return records, err
 }
@@ -219,7 +219,7 @@ func (r *checkImpl) RuntimeAssets(p graphql.ResolveParams) (interface{}, error) 
 	src := p.Source.(*corev2.Check)
 	records, err := loadAssets(p.Context, src.Namespace)
 	results := filterAssets(records, func(obj *corev2.Asset) bool {
-		return strings.FoundInArray(obj.Name, src.RuntimeAssets)
+		return strings.InArray(obj.Name, src.RuntimeAssets)
 	})
 	return results, err
 }
