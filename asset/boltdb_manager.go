@@ -188,6 +188,9 @@ func (b *boltDBAssetManager) Get(ctx context.Context, asset *corev2.Asset) (*Run
 
 		// expand
 		assetPath, err := b.expandWithDuration(tmpFile, asset)
+		if err != nil {
+			return err
+		}
 
 		localAsset = &RuntimeAsset{
 			Path: assetPath,
