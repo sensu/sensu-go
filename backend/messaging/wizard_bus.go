@@ -1,6 +1,7 @@
 package messaging
 
 import (
+	"context"
 	"errors"
 	"strings"
 	"sync"
@@ -75,8 +76,9 @@ func NewWizardBus(cfg WizardBusConfig, opts ...WizardOption) (*WizardBus, error)
 	return bus, nil
 }
 
-// Start ...
-func (b *WizardBus) Start() error {
+// Start starts WizardBus.
+// TODO(eric): Make the supplied context be of use.
+func (b *WizardBus) Start(ctx context.Context) error {
 	b.running.Store(true)
 	return nil
 }

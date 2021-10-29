@@ -11,8 +11,8 @@ import (
 
 	"github.com/sensu/sensu-go/backend/store/etcd/kvc"
 	"github.com/sirupsen/logrus"
-	"go.etcd.io/etcd/client/v3"
 	"go.etcd.io/etcd/api/v3/mvccpb"
+	clientv3 "go.etcd.io/etcd/client/v3"
 	"golang.org/x/time/rate"
 )
 
@@ -120,7 +120,7 @@ type SwitchSet struct {
 // The EventFunc should return whether or not to bury the switch. If bury is
 // true, then the key associated with the EventFunc will be buried and no
 // further events will occur for this key.
-type EventFunc func(key string, prev State, leader bool) (bury bool)
+type EventFunc func(ctx context.Context, key string, prev State, leader bool) (bury bool)
 
 // NewSwitchSet creates a new SwitchSet. It will use an etcd prefix of
 // path.Join(SwitchPrefix, name). The dead and live callbacks will be called
@@ -389,7 +389,7 @@ func (t *SwitchSet) handleEvent(ctx context.Context, event *clientv3.Event) {
 			return
 		}
 		t.events <- func() (string, bool) {
-			return key, t.notifyDead(strings.TrimPrefix(key, t.prefix+"/"), prevState, resp.Succeeded)
+			return key, t.notifyDead(ctx, strings.TrimPrefix(key, t.prefix+"/"), prevState, resp.Succeeded)
 		}
 
 	case mvccpb.PUT:
@@ -403,7 +403,7 @@ func (t *SwitchSet) handleEvent(ctx context.Context, event *clientv3.Event) {
 			// A positive TTL indicates the entity is alive
 			t.logger.Debugf("%s alive: %d", key, ttl)
 			t.events <- func() (string, bool) {
-				return key, t.notifyAlive(strings.TrimPrefix(key, t.prefix+"/"), prevState, false)
+				return key, t.notifyAlive(ctx, strings.TrimPrefix(key, t.prefix+"/"), prevState, false)
 			}
 		}
 	}

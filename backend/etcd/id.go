@@ -9,7 +9,7 @@ import (
 	"sync/atomic"
 
 	"github.com/sensu/sensu-go/backend/store"
-	"go.etcd.io/etcd/client/v3"
+	clientv3 "go.etcd.io/etcd/client/v3"
 )
 
 var (
@@ -28,7 +28,6 @@ type BackendIDGetterClient interface {
 type BackendIDGetter struct {
 	id     int64
 	wg     sync.WaitGroup
-	ctx    context.Context
 	client BackendIDGetterClient
 	errors chan error
 }
@@ -45,26 +44,17 @@ func (b *BackendIDGetter) GetBackendID() int64 {
 // should be valid for the life of the application, to pass to etcd.
 // It requires a BackendIDGetterClient, which users can provide by using
 // an etcd *clientv3.Client.
-func NewBackendIDGetter(ctx context.Context, client BackendIDGetterClient) *BackendIDGetter {
+func NewBackendIDGetter(client BackendIDGetterClient) *BackendIDGetter {
 	getter := &BackendIDGetter{
 		client: client,
-		ctx:    ctx,
 		errors: make(chan error, 1),
 	}
-	// Wait until the backend ID has been created
-	getter.wg.Add(1)
-
-	// Start the async worker that populates the backend ID
-	go getter.keepAliveLease(ctx)
-
-	// Wait until the worker has acquired a backend ID
-	getter.wg.Wait()
 
 	return getter
 }
 
 func (b *BackendIDGetter) keepAliveLease(ctx context.Context) {
-	id, ch, err := b.getLease()
+	id, ch, err := b.getLease(ctx)
 	if err != nil {
 		if err != ctx.Err() {
 			logger.WithError(err).Error("error generating backend ID")
@@ -92,9 +82,9 @@ func (b *BackendIDGetter) keepAliveLease(ctx context.Context) {
 	}
 }
 
-func (b *BackendIDGetter) getLease() (int64, <-chan *clientv3.LeaseKeepAliveResponse, error) {
+func (b *BackendIDGetter) getLease(ctx context.Context) (int64, <-chan *clientv3.LeaseKeepAliveResponse, error) {
 	// Grant a lease for 60 seconds
-	resp, err := b.client.Grant(b.ctx, backendIDLeasePeriod)
+	resp, err := b.client.Grant(ctx, backendIDLeasePeriod)
 	if err != nil {
 		return 0, nil, fmt.Errorf("error creating backend ID: error granting lease: %s", err)
 	}
@@ -104,13 +94,13 @@ func (b *BackendIDGetter) getLease() (int64, <-chan *clientv3.LeaseKeepAliveResp
 	// able to send specific backends messages
 	value := fmt.Sprintf("%x", leaseID)
 	key := path.Join(backendIDKeyPrefix, value)
-	_, err = b.client.Put(b.ctx, key, value, clientv3.WithLease(leaseID))
+	_, err = b.client.Put(ctx, key, value, clientv3.WithLease(leaseID))
 	if err != nil {
 		return 0, nil, fmt.Errorf("error creating backend ID: error creating key: %s", err)
 	}
 
 	// Keep the lease alive
-	ch, err := b.client.KeepAlive(b.ctx, leaseID)
+	ch, err := b.client.KeepAlive(ctx, leaseID)
 
 	return int64(leaseID), ch, err
 }
@@ -120,8 +110,15 @@ func (b *BackendIDGetter) Stop() error {
 	return nil
 }
 
-func (b *BackendIDGetter) Start() error {
-	// no-op as we start on New
+func (b *BackendIDGetter) Start(ctx context.Context) error {
+	// Wait until the backend ID has been created
+	b.wg.Add(1)
+
+	// Start the async worker that populates the backend ID
+	go b.keepAliveLease(ctx)
+
+	// Wait until the worker has acquired a backend ID
+	b.wg.Wait()
 	return nil
 }
 

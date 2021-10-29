@@ -24,7 +24,7 @@ import (
 	"github.com/sensu/sensu-go/backend/store/provider"
 	"github.com/sensu/sensu-go/version"
 	"github.com/sirupsen/logrus"
-	"go.etcd.io/etcd/client/v3"
+	clientv3 "go.etcd.io/etcd/client/v3"
 )
 
 const (
@@ -80,8 +80,6 @@ type Tessend struct {
 	interval          uint32
 	store             store.Store
 	eventStore        store.EventStore
-	ctx               context.Context
-	cancel            context.CancelFunc
 	errChan           chan error
 	ringPool          *ringv2.RingPool
 	interrupt         chan *corev2.TessenConfig
@@ -110,7 +108,7 @@ type Config struct {
 }
 
 // New creates a new TessenD.
-func New(ctx context.Context, c Config, opts ...Option) (*Tessend, error) {
+func New(c Config, opts ...Option) (*Tessend, error) {
 	t := &Tessend{
 		interval:    corev2.DefaultTessenInterval,
 		store:       c.Store,
@@ -124,7 +122,6 @@ func New(ctx context.Context, c Config, opts ...Option) (*Tessend, error) {
 		duration:    perResourceDuration,
 		AllowOptOut: true,
 	}
-	t.ctx, t.cancel = context.WithCancel(ctx)
 	t.interrupt = make(chan *corev2.TessenConfig, 1)
 	t.ringPool = c.RingPool
 	t.EntityClassCounts = func() map[string]int {
@@ -152,35 +149,34 @@ func (t *Tessend) getEventStore() string {
 }
 
 // Start the Tessen daemon.
-func (t *Tessend) Start() error {
-	tessen, err := t.store.GetTessenConfig(t.ctx)
+func (t *Tessend) Start(ctx context.Context) error {
+	tessen, err := t.store.GetTessenConfig(ctx)
 	// create the default tessen config if one does not already exist
 	if err != nil || tessen == nil {
 		tessen = corev2.DefaultTessenConfig()
-		err = t.store.CreateOrUpdateTessenConfig(t.ctx, tessen)
+		err = t.store.CreateOrUpdateTessenConfig(ctx, tessen)
 		if err != nil {
+			if ctx.Err() != nil {
+				return ctx.Err()
+			}
 			// log the error and continue with the default config
 			logger.WithError(err).Error("unable to update tessen store")
 		}
 	}
 	t.config = tessen
 
-	if err := t.ctx.Err(); err != nil {
-		return err
-	}
-
 	if err = t.subscribe(messaging.TopicTessen, messaging.TopicTessenMetric); err != nil {
 		return err
 	}
 
-	go t.startMessageHandler()
-	go t.startWatcher()
-	go t.startRingUpdates()
-	go t.startPromMetricsUpdates()
-	go t.start()
+	go t.startMessageHandler(ctx)
+	go t.startWatcher(ctx)
+	go t.startRingUpdates(ctx)
+	go t.startPromMetricsUpdates(ctx)
+	go t.start(ctx)
 	// Attempt to send data immediately if tessen is enabled
 	if t.enabled() {
-		go t.collectAndSend()
+		go t.collectAndSend(ctx)
 	}
 
 	return nil
@@ -188,8 +184,16 @@ func (t *Tessend) Start() error {
 
 // Stop the Tessen daemon.
 func (t *Tessend) Stop() error {
+	defer close(t.messageChan)
+
+	for _, sub := range t.subscription {
+		if err := sub.Cancel(); err != nil {
+			logger.WithError(err).Error("unable to unsubscribe from message bus")
+		}
+	}
+
 	defer func() {
-		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 		defer cancel()
 		key := ringv2.Path("global", "backends")
 		ring := t.ringPool.Get(key)
@@ -198,14 +202,8 @@ func (t *Tessend) Stop() error {
 		} else {
 			logger.WithField("key", t.backendID).Debug("removed a key from the ring")
 		}
-		for _, sub := range t.subscription {
-			if err := sub.Cancel(); err != nil {
-				logger.WithError(err).Error("unable to unsubscribe from message bus")
-			}
-		}
 	}()
-	t.cancel()
-	close(t.messageChan)
+
 	return nil
 }
 
@@ -237,7 +235,7 @@ func (t *Tessend) subscribe(subscriptions ...string) error {
 }
 
 // startMessageHandler listens to the message channel and handles incoming messages.
-func (t *Tessend) startMessageHandler() {
+func (t *Tessend) startMessageHandler(ctx context.Context) {
 	var hostname string
 	var err error
 	for {
@@ -249,13 +247,13 @@ func (t *Tessend) startMessageHandler() {
 				logger.Debug("tessen message channel closed")
 				return
 			}
-		case <-t.ctx.Done():
+		case <-ctx.Done():
 			return
 		}
 
 		tessen, ok := msg.(*corev2.TessenConfig)
 		if ok {
-			data := t.getDataPayload()
+			data := t.getDataPayload(ctx)
 			t.getTessenConfigMetrics(time.Now().Unix(), tessen, data)
 			logger.WithFields(logrus.Fields{
 				"url":                       t.url,
@@ -270,7 +268,7 @@ func (t *Tessend) startMessageHandler() {
 		metrics, ok := msg.([]corev2.MetricPoint)
 		if ok {
 			if t.enabled() {
-				data := t.getDataPayload()
+				data := t.getDataPayload(ctx)
 				now := time.Now().Unix()
 				for _, metric := range metrics {
 					if hostname, err = os.Hostname(); err != nil {
@@ -298,18 +296,18 @@ func (t *Tessend) startMessageHandler() {
 }
 
 // startWatcher watches the TessenConfig store for changes to the opt-out configuration.
-func (t *Tessend) startWatcher() {
-	watchChan := t.store.GetTessenConfigWatcher(t.ctx)
+func (t *Tessend) startWatcher(ctx context.Context) {
+	watchChan := t.store.GetTessenConfigWatcher(ctx)
 	for {
 		select {
 		case watchEvent, ok := <-watchChan:
 			if !ok {
 				// The watchChan has closed. Restart the watcher.
-				watchChan = t.store.GetTessenConfigWatcher(t.ctx)
+				watchChan = t.store.GetTessenConfigWatcher(ctx)
 				continue
 			}
 			t.handleWatchEvent(watchEvent)
-		case <-t.ctx.Done():
+		case <-ctx.Done():
 			return
 		}
 	}
@@ -338,25 +336,25 @@ func (t *Tessend) handleWatchEvent(watchEvent store.WatchEventTessenConfig) {
 }
 
 // startRingUpdates starts a loop to periodically update the ring.
-func (t *Tessend) startRingUpdates() {
+func (t *Tessend) startRingUpdates(ctx context.Context) {
 	ticker := time.NewTicker(ringUpdateInterval)
 	defer ticker.Stop()
-	t.updateRing()
+	t.updateRing(ctx)
 	for {
 		select {
-		case <-t.ctx.Done():
+		case <-ctx.Done():
 			return
 		case <-ticker.C:
-			t.updateRing()
+			t.updateRing(ctx)
 		}
 	}
 }
 
 // updateRing adds/updates the ring with a given key.
-func (t *Tessend) updateRing() {
+func (t *Tessend) updateRing(ctx context.Context) {
 	key := ringv2.Path("global", "backends")
 	ring := t.ringPool.Get(key)
-	if err := ring.Add(t.ctx, t.backendID, ringBackendKeepalive); err != nil {
+	if err := ring.Add(ctx, t.backendID, ringBackendKeepalive); err != nil {
 		logger.WithField("key", t.backendID).WithError(err).Error("error adding key to the ring")
 	} else {
 		logger.WithField("key", t.backendID).Debug("added a key to the ring")
@@ -400,7 +398,7 @@ func (t *Tessend) handleEvents(ctx context.Context, tessen *corev2.TessenConfig,
 				// only trigger tessen if the next backend in the ring is this backend
 				if len(event.Values) > 0 && event.Values[0] == t.backendID {
 					if t.enabled() {
-						go t.collectAndSend()
+						go t.collectAndSend(ctx)
 					}
 				}
 			case ringv2.EventClosing:
@@ -414,26 +412,26 @@ func (t *Tessend) handleEvents(ctx context.Context, tessen *corev2.TessenConfig,
 
 // startPromMetricsUpdates starts a loop to periodically send prometheus metrics
 // from each backend to tessen.
-func (t *Tessend) startPromMetricsUpdates() {
+func (t *Tessend) startPromMetricsUpdates(ctx context.Context) {
 	ticker := time.NewTicker(time.Duration(t.interval) * time.Second)
 	defer ticker.Stop()
 	for {
 		select {
-		case <-t.ctx.Done():
+		case <-ctx.Done():
 			return
 		case <-ticker.C:
 			if t.enabled() {
-				t.sendPromMetrics()
+				t.sendPromMetrics(ctx)
 			}
 		}
 	}
 }
 
 // sendPromMetrics collects and sends prometheus metrics for event processing to tessen.
-func (t *Tessend) sendPromMetrics() {
+func (t *Tessend) sendPromMetrics(ctx context.Context) {
 
 	// collect data
-	data := t.getDataPayload()
+	data := t.getDataPayload(ctx)
 	now := time.Now().Unix()
 
 	var value float64
@@ -489,22 +487,23 @@ func (t *Tessend) sendPromMetrics() {
 }
 
 // start starts the tessen service.
-func (t *Tessend) start() {
-	ctx, cancel := context.WithCancel(t.ctx)
+func (t *Tessend) start(octx context.Context) {
+	ctx, cancel := context.WithCancel(octx)
+	defer cancel()
 	wg := new(sync.WaitGroup)
 	wg.Add(1)
 	t.watchRing(ctx, t.config, wg)
 
 	for {
 		select {
-		case <-t.ctx.Done():
-			cancel()
+		case <-ctx.Done():
 			return
 		case config := <-t.interrupt:
 			// Config change indicates the need to recreate the watcher
 			cancel()
 			wg.Wait()
-			ctx, cancel = context.WithCancel(t.ctx)
+			ctx, cancel = context.WithCancel(octx)
+			defer cancel()
 			wg.Add(1)
 			t.watchRing(ctx, config, wg)
 		}
@@ -528,14 +527,14 @@ func (t *Tessend) enabled() bool {
 
 // collectAndSend is a durable function to collect and send data to tessen.
 // Errors are logged and tessen continues to the best of its ability.
-func (t *Tessend) collectAndSend() {
+func (t *Tessend) collectAndSend(ctx context.Context) {
 	// collect data
-	data := t.getDataPayload()
-	if err := t.getPerResourceMetrics(time.Now().Unix(), data); err != nil {
+	data := t.getDataPayload(ctx)
+	if err := t.getPerResourceMetrics(ctx, time.Now().Unix(), data); err != nil {
 		if err, ok := err.(*store.ErrInternal); ok {
 			select {
 			case t.errChan <- err:
-			case <-t.ctx.Done():
+			case <-ctx.Done():
 			}
 		}
 		return
@@ -578,16 +577,16 @@ func (t *Tessend) collectAndSend() {
 
 // getDataPayload retrieves cluster, version, and license information
 // and returns the populated data payload.
-func (t *Tessend) getDataPayload() *Data {
+func (t *Tessend) getDataPayload(ctx context.Context) *Data {
 	// collect cluster id
-	clusterID, err := t.store.GetClusterID(t.ctx)
+	clusterID, err := t.store.GetClusterID(ctx)
 	if err != nil {
 		logger.WithError(err).Error("unable to retrieve cluster id")
 	}
 
 	// collect license information
 	wrapper := &Wrapper{}
-	err = etcd.Get(t.ctx, t.client, licenseStorePath, wrapper)
+	err = etcd.Get(ctx, t.client, licenseStorePath, wrapper)
 	if err != nil {
 		logger.WithError(err).Debug("unable to retrieve license")
 	}
@@ -606,11 +605,11 @@ func (t *Tessend) getDataPayload() *Data {
 }
 
 // getPerResourceMetrics populates the data payload with the total number of each resource.
-func (t *Tessend) getPerResourceMetrics(now int64, data *Data) error {
+func (t *Tessend) getPerResourceMetrics(ctx context.Context, now int64, data *Data) error {
 	var backendCount float64
 
 	// collect backend count
-	cluster, err := t.client.Cluster.MemberList(t.ctx)
+	cluster, err := t.client.Cluster.MemberList(ctx)
 	if err != nil {
 		logger.WithError(err).Error("unable to retrieve backend count")
 		return err
@@ -641,11 +640,11 @@ func (t *Tessend) getPerResourceMetrics(now int64, data *Data) error {
 	defer ticker.Stop()
 	for metricName, metricFunc := range resourceMetrics {
 		select {
-		case <-t.ctx.Done():
-			return t.ctx.Err()
+		case <-ctx.Done():
+			return ctx.Err()
 		case <-ticker.C:
 		}
-		count, err := etcd.Count(t.ctx, t.client, metricFunc(t.ctx, ""))
+		count, err := etcd.Count(ctx, t.client, metricFunc(ctx, ""))
 		if err != nil {
 			return err
 		}

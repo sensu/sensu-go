@@ -3,6 +3,7 @@
 package eventd
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -29,7 +30,9 @@ func TestLogger(t *testing.T) {
 	logger = log.WithField("test", "TestLogger")
 
 	bus, _ := messaging.NewWizardBus(messaging.WizardBusConfig{})
-	_ = bus.Start()
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	_ = bus.Start(ctx)
 
 	wt, _ := time.ParseDuration("10ms")
 	l := &FileLogger{

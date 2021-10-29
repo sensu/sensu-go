@@ -13,8 +13,8 @@ type MockBus struct {
 }
 
 // Start ...
-func (m *MockBus) Start() error {
-	args := m.Called()
+func (m *MockBus) Start(ctx context.Context) error {
+	args := m.Called(ctx)
 	return args.Error(0)
 }
 

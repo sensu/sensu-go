@@ -32,6 +32,10 @@ end users to configure the HTTP server's write timeout value
 - Fixed a bug where API validation caused javascript environment variable
 specifications to be rejected.
 - Fixed a bug where the asset expansion error was not handled
+### Fixed
+- sensu-backend now stops and restarts correctly. Previously, it could hang
+when under heavy load or when handler assets failed to download, when users
+issued a shutdown.
 
 ## [6.5.2] - 2021-10-28
 

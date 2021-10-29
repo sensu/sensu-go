@@ -21,6 +21,9 @@ import (
 )
 
 func TestAdhocExecutor(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
 	store, err := testutil.NewStoreInstance()
 
 	if err != nil {
@@ -31,7 +34,7 @@ func TestAdhocExecutor(t *testing.T) {
 	pm := secrets.NewProviderManager()
 	newAdhocExec := NewAdhocRequestExecutor(context.Background(), store, &queue.Memory{}, bus, &cachev2.Resource{}, pm)
 	defer newAdhocExec.Stop()
-	assert.NoError(t, newAdhocExec.bus.Start())
+	assert.NoError(t, newAdhocExec.bus.Start(ctx))
 
 	goodCheck := corev2.FixtureCheckConfig("goodCheck")
 

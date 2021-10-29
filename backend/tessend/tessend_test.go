@@ -24,9 +24,12 @@ import (
 
 func newTessendTest(t *testing.T) *Tessend {
 	t.Helper()
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
 	bus, err := messaging.NewWizardBus(messaging.WizardBusConfig{})
 	require.NoError(t, err)
-	require.NoError(t, bus.Start())
+	require.NoError(t, bus.Start(ctx))
 
 	e, cleanup := etcd.NewTestEtcd(t)
 	defer cleanup()
@@ -42,7 +45,6 @@ func newTessendTest(t *testing.T) *Tessend {
 	s.On("GetClusterID", mock.Anything).Return("foo", fmt.Errorf("foo"))
 
 	tessend, err := New(
-		context.Background(),
 		Config{
 			Store:  s,
 			Client: client,
@@ -59,6 +61,8 @@ func newTessendTest(t *testing.T) *Tessend {
 
 func TestTessendBus(t *testing.T) {
 	t.Parallel()
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		assert.NotEmpty(t, r.Body)
 		w.WriteHeader(http.StatusOK)
@@ -67,15 +71,18 @@ func TestTessendBus(t *testing.T) {
 
 	tessend := newTessendTest(t)
 	tessend.url = ts.URL
-	require.NoError(t, tessend.Start())
+	require.NoError(t, tessend.Start(ctx))
 	require.NoError(t, tessend.bus.Publish(messaging.TopicTessen, corev2.DefaultTessenConfig()))
 	time.Sleep(2 * time.Second)
+	cancel()
 	assert.NoError(t, tessend.Stop())
 	assert.Equal(t, tessend.Name(), "tessend")
 }
 
 func TestTessendBusMetrics(t *testing.T) {
 	t.Parallel()
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		assert.NotEmpty(t, r.Body)
 		w.WriteHeader(http.StatusOK)
@@ -84,7 +91,7 @@ func TestTessendBusMetrics(t *testing.T) {
 
 	tessend := newTessendTest(t)
 	tessend.url = ts.URL
-	require.NoError(t, tessend.Start())
+	require.NoError(t, tessend.Start(ctx))
 	require.NoError(t, tessend.bus.Publish(messaging.TopicTessenMetric, []corev2.MetricPoint{
 		corev2.MetricPoint{
 			Name:  "metric",
@@ -92,12 +99,15 @@ func TestTessendBusMetrics(t *testing.T) {
 		},
 	}))
 	time.Sleep(2 * time.Second)
+	cancel()
 	assert.NoError(t, tessend.Stop())
 	assert.Equal(t, tessend.Name(), "tessend")
 }
 
 func TestTessend200(t *testing.T) {
 	t.Parallel()
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("tessen-reporting-interval", "1800")
 		assert.NotEmpty(t, r.Body)
@@ -107,8 +117,9 @@ func TestTessend200(t *testing.T) {
 
 	tessend := newTessendTest(t)
 	tessend.url = ts.URL
-	require.NoError(t, tessend.Start())
+	require.NoError(t, tessend.Start(ctx))
 	time.Sleep(3 * time.Second)
+	cancel()
 	assert.NoError(t, tessend.Stop())
 	require.Equal(t, uint32(1800), tessend.interval)
 	assert.Equal(t, tessend.Name(), "tessend")
@@ -116,6 +127,8 @@ func TestTessend200(t *testing.T) {
 
 func TestTessend200InvalidHeaderKey(t *testing.T) {
 	t.Parallel()
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("foo", "1800")
 		assert.NotEmpty(t, r.Body)
@@ -125,8 +138,9 @@ func TestTessend200InvalidHeaderKey(t *testing.T) {
 
 	tessend := newTessendTest(t)
 	tessend.url = ts.URL
-	require.NoError(t, tessend.Start())
+	require.NoError(t, tessend.Start(ctx))
 	time.Sleep(3 * time.Second)
+	cancel()
 	assert.NoError(t, tessend.Stop())
 	require.Equal(t, uint32(corev2.DefaultTessenInterval), tessend.interval)
 	assert.Equal(t, tessend.Name(), "tessend")
@@ -134,6 +148,8 @@ func TestTessend200InvalidHeaderKey(t *testing.T) {
 
 func TestTessend200InvalidHeaderValue(t *testing.T) {
 	t.Parallel()
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("tessen-reporting-interval", "216000")
 		assert.NotEmpty(t, r.Body)
@@ -143,8 +159,9 @@ func TestTessend200InvalidHeaderValue(t *testing.T) {
 
 	tessend := newTessendTest(t)
 	tessend.url = ts.URL
-	require.NoError(t, tessend.Start())
+	require.NoError(t, tessend.Start(ctx))
 	time.Sleep(3 * time.Second)
+	cancel()
 	assert.NoError(t, tessend.Stop())
 	require.Equal(t, uint32(corev2.DefaultTessenInterval), tessend.interval)
 	assert.Equal(t, tessend.Name(), "tessend")
@@ -152,6 +169,8 @@ func TestTessend200InvalidHeaderValue(t *testing.T) {
 
 func TestTessend500(t *testing.T) {
 	t.Parallel()
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		assert.NotEmpty(t, r.Body)
 		w.WriteHeader(http.StatusInternalServerError)
@@ -160,8 +179,9 @@ func TestTessend500(t *testing.T) {
 
 	tessend := newTessendTest(t)
 	tessend.url = ts.URL
-	require.NoError(t, tessend.Start())
+	require.NoError(t, tessend.Start(ctx))
 	time.Sleep(3 * time.Second)
+	cancel()
 	assert.NoError(t, tessend.Stop())
 	assert.Equal(t, tessend.Name(), "tessend")
 }

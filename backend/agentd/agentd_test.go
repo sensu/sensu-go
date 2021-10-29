@@ -21,6 +21,7 @@ import (
 	"github.com/sensu/sensu-go/transport"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
 )
 
 func TestAgentdMiddlewares(t *testing.T) {
@@ -162,7 +163,9 @@ func TestRunWatcher(t *testing.T) {
 			})
 			assert.NoError(t, err)
 
-			go agent.runWatcher()
+			ctx, cancel := context.WithCancel(context.Background())
+			defer cancel()
+			go agent.runWatcher(ctx)
 
 			watcher <- tt.watchEvent
 		})
@@ -180,7 +183,16 @@ func TestHealthHandler(t *testing.T) {
 		Store:  stor,
 		Client: client,
 	})
-	assert.NoError(t, err)
+	require.NoError(t, err)
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	if err := agent.Start(ctx); err != nil {
+		t.Fatal(err)
+	}
+
+	defer agent.Stop()
 
 	srv := httptest.NewServer(agent.httpServer.Handler)
 	defer srv.Close()
@@ -217,7 +229,7 @@ func TestReplaceHealthController(t *testing.T) {
 		mockResponse: mockHealth,
 	})
 
-	srv := httptest.NewServer(agent.httpServer.Handler)
+	srv := httptest.NewServer(agent.rootRouter)
 	defer srv.Close()
 
 	req, _ := http.NewRequest(http.MethodGet, fmt.Sprintf("%s/health", srv.URL), bytes.NewBuffer([]byte{}))

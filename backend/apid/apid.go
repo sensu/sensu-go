@@ -8,7 +8,6 @@ import (
 	"net"
 	"net/http"
 	"sync"
-	"sync/atomic"
 	"time"
 
 	"github.com/gorilla/mux"
@@ -36,8 +35,6 @@ type APId struct {
 	GraphQLSubrouter           *mux.Router
 	RequestLimit               int64
 
-	stopping            chan struct{}
-	running             *atomic.Value
 	wg                  *sync.WaitGroup
 	errChan             chan error
 	bus                 messaging.MessageBus
@@ -83,8 +80,6 @@ func New(c Config, opts ...Option) (*APId, error) {
 		queueGetter:         c.QueueGetter,
 		tls:                 c.TLS,
 		bus:                 c.Bus,
-		stopping:            make(chan struct{}, 1),
-		running:             &atomic.Value{},
 		wg:                  &sync.WaitGroup{},
 		errChan:             make(chan error, 1),
 		cluster:             c.Cluster,
@@ -280,9 +275,9 @@ func notFoundHandler(w http.ResponseWriter, req *http.Request) {
 }
 
 // Start APId.
-func (a *APId) Start() error {
+func (a *APId) Start(ctx context.Context) error {
 	logger.Warn("starting apid on address: ", a.HTTPServer.Addr)
-	ln, err := net.Listen("tcp", a.HTTPServer.Addr)
+	ln, err := new(net.ListenConfig).Listen(ctx, "tcp", a.HTTPServer.Addr)
 	if err != nil {
 		return fmt.Errorf("failed to start apid: %s", err)
 	}
@@ -298,7 +293,7 @@ func (a *APId) Start() error {
 		} else {
 			err = a.HTTPServer.Serve(ln)
 		}
-		if err != nil && err != http.ErrServerClosed {
+		if err != nil && err != http.ErrServerClosed && ctx.Err() == nil {
 			a.errChan <- fmt.Errorf("failure while serving api: %s", err)
 		}
 	}()
@@ -308,18 +303,17 @@ func (a *APId) Start() error {
 
 // Stop httpApi.
 func (a *APId) Stop() error {
-	if err := a.HTTPServer.Shutdown(context.TODO()); err != nil {
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	defer cancel()
+	defer close(a.errChan)
+	if err := a.HTTPServer.Shutdown(ctx); err != nil {
 		// failure/timeout shutting down the server gracefully
 		logger.Error("failed to shutdown http server gracefully - forcing shutdown")
 		if closeErr := a.HTTPServer.Close(); closeErr != nil {
 			logger.Error("failed to shutdown http server forcefully")
 		}
+		return err
 	}
-
-	a.running.Store(false)
-	close(a.stopping)
-	a.wg.Wait()
-	close(a.errChan)
 
 	return nil
 }

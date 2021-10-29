@@ -2,6 +2,7 @@ package schedulerd
 
 import (
 	"context"
+	"sync"
 
 	"github.com/sensu/sensu-go/backend/messaging"
 	"github.com/sensu/sensu-go/backend/secrets"
@@ -19,15 +20,15 @@ type CronScheduler struct {
 	store                  store.Store
 	bus                    messaging.MessageBus
 	logger                 *logrus.Entry
-	ctx                    context.Context
-	cancel                 context.CancelFunc
 	interrupt              chan *corev2.CheckConfig
 	entityCache            *cachev2.Resource
 	secretsProviderManager *secrets.ProviderManager
+	wg                     sync.WaitGroup
+	done                   chan struct{}
 }
 
 // NewCronScheduler initializes a CronScheduler
-func NewCronScheduler(ctx context.Context, store store.Store, bus messaging.MessageBus, check *corev2.CheckConfig, cache *cachev2.Resource, secretsProviderManager *secrets.ProviderManager) *CronScheduler {
+func NewCronScheduler(store store.Store, bus messaging.MessageBus, check *corev2.CheckConfig, cache *cachev2.Resource, secretsProviderManager *secrets.ProviderManager) *CronScheduler {
 	sched := &CronScheduler{
 		store:         store,
 		bus:           bus,
@@ -41,13 +42,12 @@ func NewCronScheduler(ctx context.Context, store store.Store, bus messaging.Mess
 		}),
 		entityCache:            cache,
 		secretsProviderManager: secretsProviderManager,
+		done:                   make(chan struct{}),
 	}
-	sched.ctx, sched.cancel = context.WithCancel(ctx)
-	sched.ctx = corev2.SetContextFromResource(sched.ctx, check)
 	return sched
 }
 
-func (s *CronScheduler) schedule(timer *CronTimer, executor *CheckExecutor) {
+func (s *CronScheduler) schedule(ctx context.Context, timer *CronTimer, executor *CheckExecutor) {
 	defer s.resetTimer(timer)
 
 	if s.check.IsSubdued() {
@@ -57,18 +57,21 @@ func (s *CronScheduler) schedule(timer *CronTimer, executor *CheckExecutor) {
 
 	s.logger.Debug("check is not subdued")
 
-	if err := executor.processCheck(s.ctx, s.check); err != nil {
+	if err := executor.processCheck(ctx, s.check); err != nil {
 		logger.Error(err)
 	}
 }
 
 // Start starts the cron scheduler.
-func (s *CronScheduler) Start() {
+func (s *CronScheduler) Start(ctx context.Context) {
 	cronCounter.WithLabelValues(s.check.Namespace).Inc()
-	go s.start()
+	ctx = corev2.SetContextFromResource(ctx, s.check)
+	s.wg.Add(1)
+	go s.start(ctx)
 }
 
-func (s *CronScheduler) start() {
+func (s *CronScheduler) start(ctx context.Context) {
+	defer s.wg.Done()
 	s.logger.Info("starting new cron scheduler")
 	timer := NewCronTimer(s.check.Name, s.check.Cron)
 	executor := NewCheckExecutor(s.bus, s.check.Namespace, s.store, s.entityCache, s.secretsProviderManager)
@@ -76,7 +79,10 @@ func (s *CronScheduler) start() {
 
 	for {
 		select {
-		case <-s.ctx.Done():
+		case <-ctx.Done():
+			timer.Stop()
+			return
+		case <-s.done:
 			timer.Stop()
 			return
 		case check := <-s.interrupt:
@@ -84,13 +90,13 @@ func (s *CronScheduler) start() {
 			s.check = check
 			if s.toggleSchedule() {
 				timer.Stop()
-				defer s.Start()
+				defer s.Start(ctx)
 				return
 			}
 			continue
 		case <-timer.C():
 		}
-		s.schedule(timer, executor)
+		s.schedule(ctx, timer, executor)
 	}
 }
 
@@ -101,9 +107,14 @@ func (s *CronScheduler) Interrupt(check *corev2.CheckConfig) {
 
 // Stop stops the cron scheduler.
 func (s *CronScheduler) Stop() error {
+	select {
+	case <-s.done:
+	default:
+		close(s.done)
+	}
 	cronCounter.WithLabelValues(s.check.Namespace).Dec()
 	logger.Info("stopping cron scheduler")
-	s.cancel()
+	s.wg.Wait()
 
 	return nil
 }

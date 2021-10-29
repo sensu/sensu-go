@@ -23,8 +23,6 @@ type RoundRobinCronScheduler struct {
 	store         store.Store
 	bus           messaging.MessageBus
 	logger        *logrus.Entry
-	ctx           context.Context
-	cancel        context.CancelFunc
 	interrupt     chan *corev2.CheckConfig
 	ringPool      *ringv2.RingPool
 	cancels       map[string]ringCancel
@@ -32,10 +30,12 @@ type RoundRobinCronScheduler struct {
 	entityCache   *cachev2.Resource
 	mu            sync.Mutex
 	proxyEntities []*corev3.EntityConfig
+	wg            sync.WaitGroup
+	done          chan struct{}
 }
 
 // NewRoundRobinCronScheduler creates a new RoundRobinCronScheduler.
-func NewRoundRobinCronScheduler(ctx context.Context, store store.Store, bus messaging.MessageBus, pool *ringv2.RingPool, check *corev2.CheckConfig, cache *cachev2.Resource, secretsProviderManager *secrets.ProviderManager) *RoundRobinCronScheduler {
+func NewRoundRobinCronScheduler(store store.Store, bus messaging.MessageBus, pool *ringv2.RingPool, check *corev2.CheckConfig, cache *cachev2.Resource, secretsProviderManager *secrets.ProviderManager) *RoundRobinCronScheduler {
 	sched := &RoundRobinCronScheduler{
 		store:         store,
 		bus:           bus,
@@ -52,19 +52,20 @@ func NewRoundRobinCronScheduler(ctx context.Context, store store.Store, bus mess
 		cancels:     make(map[string]ringCancel),
 		executor:    NewCheckExecutor(bus, check.Namespace, store, cache, secretsProviderManager),
 		entityCache: cache,
+		done:        make(chan struct{}),
 	}
-	sched.ctx, sched.cancel = context.WithCancel(ctx)
-	sched.ctx = corev2.SetContextFromResource(sched.ctx, check)
 	return sched
 }
 
 // Start starts the scheduler.
-func (s *RoundRobinCronScheduler) Start() {
+func (s *RoundRobinCronScheduler) Start(ctx context.Context) {
+	ctx = corev2.SetContextFromResource(ctx, s.check)
 	rrCronCounter.WithLabelValues(s.check.Namespace).Inc()
-	go s.start()
+	s.wg.Add(1)
+	go s.start(ctx)
 }
 
-func (s *RoundRobinCronScheduler) handleEvent(executor *CheckExecutor, event ringv2.Event) {
+func (s *RoundRobinCronScheduler) handleEvent(ctx context.Context, executor *CheckExecutor, event ringv2.Event) {
 	switch event.Type {
 	case ringv2.EventError:
 		s.logger.WithError(event.Err).Error("error scheduling check")
@@ -88,7 +89,7 @@ func (s *RoundRobinCronScheduler) handleEvent(executor *CheckExecutor, event rin
 		// be executed.
 		s.logger.WithFields(logrus.Fields{"agents": event.Values}).Info("executing round robin check on agents")
 		s.mu.Lock()
-		s.schedule(executor, s.proxyEntities, event.Values)
+		s.schedule(ctx, executor, s.proxyEntities, event.Values)
 		s.mu.Unlock()
 
 	case ringv2.EventClosing:
@@ -96,44 +97,47 @@ func (s *RoundRobinCronScheduler) handleEvent(executor *CheckExecutor, event rin
 	}
 }
 
-func (s *RoundRobinCronScheduler) start() {
+func (s *RoundRobinCronScheduler) start(ctx context.Context) {
+	defer s.wg.Done()
 	s.logger.Info("starting new round-robin cron scheduler")
 	s.setLastState()
-	s.updateRings()
+	s.updateRings(ctx)
 
-	entityWatcher := s.entityCache.Watch(s.ctx)
+	entityWatcher := s.entityCache.Watch(ctx)
 
 	for {
 		select {
-		case <-s.ctx.Done():
+		case <-ctx.Done():
+			return
+		case <-s.done:
 			return
 		case check := <-s.interrupt:
 			s.check = check
 			if s.toggleSchedule() {
 				s.logger.Debug("cron schedule updated")
-				s.updateRings()
+				s.updateRings(ctx)
 			}
 		case <-entityWatcher:
 			if s.check.ProxyRequests != nil {
 				// The set of proxy entities to consider may have changed
 				s.logger.Debug("proxy entities updated")
-				s.updateRings()
+				s.updateRings(ctx)
 			}
 		}
 	}
 }
 
-func (s *RoundRobinCronScheduler) handleEvents(executor *CheckExecutor, ch <-chan ringv2.Event, wg *sync.WaitGroup) {
+func (s *RoundRobinCronScheduler) handleEvents(ctx context.Context, executor *CheckExecutor, ch <-chan ringv2.Event, wg *sync.WaitGroup) {
 	defer wg.Done()
 	for event := range ch {
-		s.handleEvent(executor, event)
+		s.handleEvent(ctx, executor, event)
 	}
 }
 
 // this function technically can leak its cancel, but the design makes it
 // difficult to fix, and there are no known issues with it.
 //nolint:govet
-func (s *RoundRobinCronScheduler) updateRings() {
+func (s *RoundRobinCronScheduler) updateRings(ctx context.Context) {
 	agentEntitiesRequest := 1
 	if s.check.ProxyRequests != nil {
 		entities := s.entityCache.Get(s.check.Namespace)
@@ -157,7 +161,7 @@ func (s *RoundRobinCronScheduler) updateRings() {
 		s.logger.WithField("ring", key).Debug("creating new ring watcher")
 
 		// Create a new watcher
-		ctx, cancel := context.WithCancel(s.ctx)
+		ctx, cancel := context.WithCancel(ctx)
 		sub := ringv2.Subscription{
 			Name:             s.check.Name,
 			Items:            agentEntitiesRequest,
@@ -172,13 +176,13 @@ func (s *RoundRobinCronScheduler) updateRings() {
 		wg := new(sync.WaitGroup)
 		wg.Add(1)
 		val := ringCancel{cancel: cancel, AgentEntitiesRequest: agentEntitiesRequest, wg: wg}
-		go s.handleEvents(s.executor, wc, wg)
+		go s.handleEvents(ctx, s.executor, wc, wg)
 		newCancels[key] = val
 	}
 	s.cancels = newCancels
 }
 
-func (s *RoundRobinCronScheduler) schedule(executor *CheckExecutor, proxyEntities []*corev3.EntityConfig, agentEntities []string) {
+func (s *RoundRobinCronScheduler) schedule(ctx context.Context, executor *CheckExecutor, proxyEntities []*corev3.EntityConfig, agentEntities []string) {
 	if s.check.IsSubdued() {
 		s.logger.Debug("check is subdued")
 		return
@@ -186,7 +190,7 @@ func (s *RoundRobinCronScheduler) schedule(executor *CheckExecutor, proxyEntitie
 
 	s.logger.Debug("check is not subdued")
 
-	if err := processRoundRobinCheck(s.ctx, executor, s.check, proxyEntities, agentEntities); err != nil {
+	if err := processRoundRobinCheck(ctx, executor, s.check, proxyEntities, agentEntities); err != nil {
 		logger.WithError(err).Error("error executing check")
 	}
 }
@@ -220,9 +224,14 @@ func (s *RoundRobinCronScheduler) Interrupt(check *corev2.CheckConfig) {
 
 // Stop stops the scheduler
 func (s *RoundRobinCronScheduler) Stop() error {
+	select {
+	case <-s.done:
+	default:
+		close(s.done)
+	}
 	rrCronCounter.WithLabelValues(s.check.Namespace).Dec()
 	s.logger.Info("stopping scheduler")
-	s.cancel()
+	s.wg.Wait()
 	return nil
 }
 

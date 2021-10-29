@@ -1,6 +1,10 @@
 package schedulerd
 
-import corev2 "github.com/sensu/sensu-go/api/core/v2"
+import (
+	"context"
+
+	corev2 "github.com/sensu/sensu-go/api/core/v2"
+)
 
 // Scheduler is a check scheduler. It is responsible for determining the
 // scheduling interval of a check, given a particular configuration.
@@ -8,8 +12,9 @@ import corev2 "github.com/sensu/sensu-go/api/core/v2"
 // check according to its schedule. When Interrupt is called, the schedule
 // will be recalculated.
 type Scheduler interface {
-	// Start stops the scheduler.
-	Start()
+	// Start starts the scheduler. It will run until the supplied context is
+	// cancelled.
+	Start(context.Context)
 
 	// Stop stops the scheduler.
 	Stop() error

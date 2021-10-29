@@ -126,14 +126,13 @@ func (p *Pipelined) Receiver() chan<- interface{} {
 
 // Start pipelined, subscribing to the "event" message bus topic to
 // pass Sensu events to the pipelines for handling (goroutines).
-func (p *Pipelined) Start() error {
+func (p *Pipelined) Start(ctx context.Context) error {
 	sub, err := p.bus.Subscribe(messaging.TopicEvent, "pipelined", p)
 	if err != nil {
 		return err
 	}
 	p.subscription = sub
-
-	p.createWorkers(p.workerCount, p.eventChan)
+	p.createWorkers(ctx, p.workerCount, p.eventChan)
 
 	return nil
 }
@@ -167,7 +166,7 @@ func (p *Pipelined) AddAdapter(adapter pipeline.Adapter) {
 // createWorkers creates several goroutines, responsible for pulling
 // Sensu events from a channel (bound to message bus "event" topic)
 // and passing them to their referenced pipelines.
-func (p *Pipelined) createWorkers(count int, channel chan interface{}) {
+func (p *Pipelined) createWorkers(ctx context.Context, count int, channel chan interface{}) {
 	for i := 1; i <= count; i++ {
 		p.wg.Add(1)
 		go func() {
@@ -177,7 +176,7 @@ func (p *Pipelined) createWorkers(count int, channel chan interface{}) {
 				case <-p.stopping:
 					return
 				case msg := <-channel:
-					if _, err := p.handleMessage(context.Background(), msg); err != nil {
+					if _, err := p.handleMessage(ctx, msg); err != nil {
 						if _, ok := err.(*store.ErrInternal); ok {
 							select {
 							case p.errChan <- err:

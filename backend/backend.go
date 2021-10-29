@@ -19,6 +19,7 @@ import (
 	"google.golang.org/grpc"
 
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
+	corev3 "github.com/sensu/sensu-go/api/core/v3"
 	"github.com/sensu/sensu-go/asset"
 	"github.com/sensu/sensu-go/backend/agentd"
 	"github.com/sensu/sensu-go/backend/api"
@@ -48,6 +49,7 @@ import (
 	"github.com/sensu/sensu-go/backend/schedulerd"
 	"github.com/sensu/sensu-go/backend/secrets"
 	"github.com/sensu/sensu-go/backend/store"
+	cachev2 "github.com/sensu/sensu-go/backend/store/cache/v2"
 	etcdstore "github.com/sensu/sensu-go/backend/store/etcd"
 	storev2 "github.com/sensu/sensu-go/backend/store/v2"
 	etcdstorev2 "github.com/sensu/sensu-go/backend/store/v2/etcdstore"
@@ -336,7 +338,7 @@ func Initialize(ctx context.Context, config *Config) (*Backend, error) {
 
 	logger.Debug("Registering backend...")
 
-	backendID := etcd.NewBackendIDGetter(b.RunContext(), b.Client)
+	backendID := etcd.NewBackendIDGetter(b.Client)
 	logger.Debug("Done registering backend.")
 	b.Daemons = append(b.Daemons, backendID)
 
@@ -470,9 +472,13 @@ func Initialize(ctx context.Context, config *Config) (*Backend, error) {
 	}
 	b.Daemons = append(b.Daemons, event)
 
+	entityCache, err := cachev2.New(b.RunContext(), b.Client, &corev3.EntityConfig{}, true)
+	if err != nil {
+		return nil, err
+	}
+
 	// Initialize schedulerd
 	scheduler, err := schedulerd.New(
-		b.RunContext(),
 		schedulerd.Config{
 			Store:                  b.Store,
 			Bus:                    bus,
@@ -480,6 +486,7 @@ func Initialize(ctx context.Context, config *Config) (*Backend, error) {
 			RingPool:               b.RingPool,
 			Client:                 b.Client,
 			SecretsProviderManager: b.SecretsProviderManager,
+			EntityCache:            entityCache,
 		})
 	if err != nil {
 		return nil, fmt.Errorf("error initializing %s: %s", scheduler.Name(), err)
@@ -622,7 +629,6 @@ func Initialize(ctx context.Context, config *Config) (*Backend, error) {
 
 	// Initialize tessend
 	tessen, err := tessend.New(
-		b.RunContext(),
 		tessend.Config{
 			Store:      b.Store,
 			EventStore: b.Store,
@@ -669,7 +675,7 @@ func (b *Backend) runOnce() error {
 
 	// Loop across the daemons in order to start them, then add them to our groups
 	for _, d := range b.Daemons {
-		if err := d.Start(); err != nil {
+		if err := d.Start(b.RunContext()); err != nil {
 			_ = sg.Stop()
 			return ErrStartup{Err: err, Name: d.Name()}
 		}

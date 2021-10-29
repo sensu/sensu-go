@@ -4,6 +4,7 @@ package schedulerd
 
 import (
 	"context"
+	"fmt"
 	"testing"
 
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
@@ -17,17 +18,19 @@ import (
 )
 
 func TestCheckWatcherSmoke(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
 	st := &mockstore.MockStore{}
 
 	bus, err := messaging.NewWizardBus(messaging.WizardBusConfig{})
 	require.NoError(t, err)
-	require.NoError(t, bus.Start())
+	require.NoError(t, bus.Start(ctx))
 	defer func() {
+		cancel()
+		fmt.Println("trying to stop")
 		require.NoError(t, bus.Stop())
 	}()
-
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
 
 	checkA := corev2.FixtureCheckConfig("a")
 	checkB := corev2.FixtureCheckConfig("b")
@@ -41,8 +44,8 @@ func TestCheckWatcherSmoke(t *testing.T) {
 	st.On("GetCheckConfigWatcher", mock.Anything).Return((<-chan store.WatchEventCheckConfig)(watcherChan), nil)
 
 	pm := secrets.NewProviderManager()
-	watcher := NewCheckWatcher(ctx, bus, st, nil, &cachev2.Resource{}, pm)
-	require.NoError(t, watcher.Start())
+	watcher := NewCheckWatcher(bus, st, nil, &cachev2.Resource{}, pm)
+	require.NoError(t, watcher.Start(ctx))
 
 	checkAA := corev2.FixtureCheckConfig("a")
 	checkAA.Interval = 5
@@ -51,19 +54,25 @@ func TestCheckWatcherSmoke(t *testing.T) {
 		Action:      store.WatchUpdate,
 	}
 
+	fmt.Println("A")
+
 	checkB.Cron = "* * * * *"
 	watcherChan <- store.WatchEventCheckConfig{
 		CheckConfig: checkB,
 		Action:      store.WatchUpdate,
 	}
 
+	fmt.Println("B")
+
 	watcherChan <- store.WatchEventCheckConfig{
 		CheckConfig: checkAA,
 		Action:      store.WatchDelete,
 	}
+	fmt.Println("C")
 
 	watcherChan <- store.WatchEventCheckConfig{
 		CheckConfig: checkB,
 		Action:      store.WatchCreate,
 	}
+	fmt.Println("D")
 }

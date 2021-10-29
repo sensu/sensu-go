@@ -109,8 +109,6 @@ type Session struct {
 	checkChannel     chan interface{}
 	bus              messaging.MessageBus
 	ringPool         *ringv2.RingPool
-	ctx              context.Context
-	cancel           context.CancelFunc
 	marshal          MarshalFunc
 	unmarshal        UnmarshalFunc
 	entityConfig     *entityConfig
@@ -169,15 +167,13 @@ type SessionConfig struct {
 // connection, message bus, and store.
 // The Session is responsible for stopping itself, and does so when it
 // encounters a receive error.
-func NewSession(ctx context.Context, cfg SessionConfig) (*Session, error) {
+func NewSession(cfg SessionConfig) (*Session, error) {
 	logger.WithFields(logrus.Fields{
 		"addr":          cfg.AgentAddr,
 		"namespace":     cfg.Namespace,
 		"agent":         cfg.AgentName,
 		"subscriptions": cfg.Subscriptions,
 	}).Info("agent connected")
-
-	ctx, cancel := context.WithCancel(ctx)
 
 	s := &Session{
 		conn:             cfg.Conn,
@@ -188,8 +184,6 @@ func NewSession(ctx context.Context, cfg SessionConfig) (*Session, error) {
 		storev2:          cfg.Storev2,
 		bus:              cfg.Bus,
 		subscriptionsMap: map[string]subscription{},
-		ctx:              ctx,
-		cancel:           cancel,
 		ringPool:         cfg.RingPool,
 		unmarshal:        cfg.Unmarshal,
 		marshal:          cfg.Marshal,
@@ -239,20 +233,21 @@ func (s *Session) Receiver() chan<- interface{} {
 	return s.checkChannel
 }
 
-func (s *Session) receiver() {
+func (s *Session) receiver(ctx context.Context) {
 	defer func() {
-		s.cancel()
 		s.wg.Done()
 		logger.Info("shutting down agent session: stopping receiver")
 	}()
 
 	for {
-		if err := s.ctx.Err(); err != nil {
-			sessionErrorCounter.WithLabelValues(err.Error()).Inc()
+		if err := ctx.Err(); err != nil {
 			return
 		}
 		msg, err := s.conn.Receive()
 		if err != nil {
+			if ctx.Err() != nil {
+				return
+			}
 			switch err := err.(type) {
 			case transport.ConnectionError:
 				websocketErrorCounter.WithLabelValues("recv", "ConnectionError").Inc()
@@ -272,8 +267,11 @@ func (s *Session) receiver() {
 			}
 			return
 		}
-		ctx, cancel := context.WithTimeout(s.ctx, time.Duration(s.cfg.WriteTimeout)*time.Second)
+		ctx, cancel := context.WithTimeout(ctx, time.Duration(s.cfg.WriteTimeout)*time.Second)
 		if err := s.handler.Handle(ctx, msg.Type, msg.Payload); err != nil {
+			if ctx.Err() != nil {
+				return
+			}
 			logger.WithError(err).WithFields(logrus.Fields{
 				"type":    msg.Type,
 				"payload": string(msg.Payload)}).Error("error handling message")
@@ -288,9 +286,8 @@ func (s *Session) receiver() {
 	}
 }
 
-func (s *Session) sender() {
+func (s *Session) sender(ctx context.Context) {
 	defer func() {
-		s.cancel()
 		s.wg.Done()
 		logger.Info("shutting down agent session: stopping sender")
 	}()
@@ -337,7 +334,7 @@ func (s *Session) sender() {
 				)
 
 				// Update the entity in the store
-				configReq := storev2.NewResourceRequestFromResource(s.ctx, watchEvent.Entity)
+				configReq := storev2.NewResourceRequestFromResource(ctx, watchEvent.Entity)
 				wrapper, err := storev2.WrapResource(watchEvent.Entity)
 				if err != nil {
 					lager.WithError(err).Error("could not wrap the entity config")
@@ -398,7 +395,7 @@ func (s *Session) sender() {
 			}
 
 			msg = transport.NewMessage(corev2.CheckRequestType, configBytes)
-		case <-s.ctx.Done():
+		case <-ctx.Done():
 			return
 		}
 		logger.WithFields(logrus.Fields{
@@ -406,6 +403,9 @@ func (s *Session) sender() {
 			"payload_size": len(msg.Payload),
 		}).Debug("session - sending message")
 		if err := s.conn.Send(msg); err != nil {
+			if ctx.Err() != nil {
+				return
+			}
 			switch err := err.(type) {
 			case transport.ConnectionError:
 				websocketErrorCounter.WithLabelValues("send", "ConnectionError").Inc()
@@ -424,23 +424,22 @@ func (s *Session) sender() {
 // 1. Start sender
 // 2. Start receiver
 // 3. Start goroutine that waits for context cancellation, and shuts down service.
-func (s *Session) Start() (err error) {
+func (s *Session) Start(ctx context.Context) (err error) {
 	defer close(s.entityConfig.subscriptions)
 	sessionCounter.WithLabelValues(s.cfg.Namespace).Inc()
 	s.wg = &sync.WaitGroup{}
 	s.wg.Add(2)
 	s.stopWG.Add(1)
-	go s.sender()
-	go s.receiver()
+	go s.sender(ctx)
+	go s.receiver(ctx)
 	go func() {
-		<-s.ctx.Done()
+		<-ctx.Done()
 		s.stop()
 	}()
 
 	defer func() {
 		if err != nil {
 			sessionErrorCounter.WithLabelValues("ErrStart").Inc()
-			s.cancel()
 		}
 	}()
 
@@ -464,7 +463,7 @@ func (s *Session) Start() (err error) {
 	s.entityConfig.subscriptions <- subscription
 
 	// Determine if the entity already exists
-	req := storev2.NewResourceRequest(s.ctx, s.cfg.Namespace, s.cfg.AgentName, (&corev3.EntityConfig{}).StoreName())
+	req := storev2.NewResourceRequest(ctx, s.cfg.Namespace, s.cfg.AgentName, (&corev3.EntityConfig{}).StoreName())
 	wrapper, err := s.storev2.Get(req)
 	if err != nil {
 		// We do not want to send an error if the entity config does not exist
@@ -541,7 +540,6 @@ func (s *Session) Start() (err error) {
 // Stop a running session. This will cause the send and receive loops to
 // shutdown. Blocks until the session has shutdown.
 func (s *Session) Stop() {
-	s.cancel()
 	s.wg.Wait()
 	s.stopWG.Wait()
 }
@@ -566,22 +564,6 @@ func (s *Session) stop() {
 
 	sessionCounter.WithLabelValues(s.cfg.Namespace).Dec()
 
-	// Gracefully wait for the send and receiver to exit, but force the websocket
-	// connection to close itself after the grace period
-	done := make(chan struct{})
-	go func() {
-		s.wg.Wait()
-		close(done)
-	}()
-	select {
-	case <-done:
-	case <-time.After(closeGracePeriod):
-		sessionErrorCounter.WithLabelValues("GracePeriodExpired").Inc()
-	}
-
-	close(s.entityConfig.updatesChannel)
-	close(s.checkChannel)
-
 	// Remove the entity config subscriptions
 	for sub := range s.entityConfig.subscriptions {
 		if err := sub.Cancel(); err != nil {
@@ -591,6 +573,9 @@ func (s *Session) stop() {
 
 	// Unsubscribe the session from every configured check subscriptions
 	s.unsubscribe(s.cfg.Subscriptions)
+
+	close(s.entityConfig.updatesChannel)
+	close(s.checkChannel)
 }
 
 // handleKeepalive is the keepalive message handler.
@@ -707,17 +692,17 @@ func (s *Session) unsubscribe(subscriptions []string) {
 		topic := messaging.SubscriptionTopic(s.cfg.Namespace, subscriptionName)
 		if subscription, ok := s.subscriptionsMap[topic]; ok {
 			if err := subscription.Cancel(); err != nil {
-				lager.WithError(err).Errorf("unable to unsubscribe from %q", subscriptionName)
+				lager.WithError(err).Errorf("session shutdown: unable to unsubscribe from %q", subscriptionName)
 				continue
 			}
 
-			lager.Debugf("successfully unsubscribed from %q", subscriptionName)
+			lager.Debugf("session shutdown: successfully unsubscribed from %q", subscriptionName)
 
 			// Once the subscription is successfully canceled, remove it from our
 			// subscriptions map
 			delete(s.subscriptionsMap, topic)
 		} else {
-			lager.Errorf("session was not subscribed to %q", subscriptionName)
+			lager.Errorf("session shutdown: session was not subscribed to %q", subscriptionName)
 		}
 	}
 
@@ -737,11 +722,13 @@ func (s *Session) unsubscribe(subscriptions []string) {
 		ringWG.Add(1)
 		go func(sub string) {
 			defer ringWG.Done()
+			ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+			defer cancel()
 			ring := s.ringPool.Get(ringv2.Path(s.cfg.Namespace, sub))
-			lager.Infof("removing agent from ring for subscription %q", sub)
-			if err := ring.Remove(context.Background(), s.cfg.AgentName); err != nil {
+			lager.Infof("session shutdown: removing agent from ring for subscription %q", sub)
+			if err := ring.Remove(ctx, s.cfg.AgentName); err != nil {
 				sessionErrorCounter.WithLabelValues("ring.Remove").Inc()
-				lager.WithError(err).Error("unable to remove agent from ring")
+				lager.WithError(err).Error("session shutdown: unable to remove agent from ring within 1s")
 			}
 		}(sub)
 	}

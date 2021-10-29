@@ -40,9 +40,6 @@ var (
 	// upgrader is safe for concurrent use, and we don't need any particularly
 	// specialized configurations for different uses.
 	upgrader = &websocket.Upgrader{}
-
-	// used for registering prometheus session counter
-	sessionCounterOnce sync.Once
 )
 
 const (
@@ -93,14 +90,14 @@ type Agentd struct {
 	bus                 messaging.MessageBus
 	tls                 *corev2.TLSOptions
 	ringPool            *ringv2.RingPool
-	ctx                 context.Context
-	cancel              context.CancelFunc
 	writeTimeout        int
 	namespaceCache      *cache.Resource
 	watcher             <-chan store.WatchEventEntityConfig
 	client              *clientv3.Client
 	etcdClientTLSConfig *tls.Config
 	healthRouter        *routers.HealthRouter
+	tlsConfig           *tls.Config
+	rootRouter          *mux.Router
 }
 
 // Config configures an Agentd.
@@ -122,7 +119,6 @@ type Option func(*Agentd) error
 
 // New creates a new Agentd.
 func New(c Config, opts ...Option) (*Agentd, error) {
-	ctx, cancel := context.WithCancel(context.Background())
 	a := &Agentd{
 		Host:                c.Host,
 		Port:                c.Port,
@@ -134,19 +130,11 @@ func New(c Config, opts ...Option) (*Agentd, error) {
 		wg:                  &sync.WaitGroup{},
 		errChan:             make(chan error, 1),
 		ringPool:            c.RingPool,
-		ctx:                 ctx,
-		cancel:              cancel,
 		writeTimeout:        c.WriteTimeout,
 		storev2:             etcdstore.NewStore(c.Client),
 		watcher:             c.Watcher,
 		client:              c.Client,
 		etcdClientTLSConfig: c.EtcdClientTLSConfig,
-	}
-
-	// prepare server TLS config
-	tlsServerConfig, err := c.TLS.ToServerTLSConfig()
-	if err != nil {
-		return nil, err
 	}
 
 	// Configure the middlewares used by agentd's HTTP server by assigning them to
@@ -156,27 +144,53 @@ func New(c Config, opts ...Option) (*Agentd, error) {
 	AgentLimiterMiddleware = a.AgentLimiterMiddleware
 	EntityLimiterMiddleware = a.EntityLimiterMiddleware
 
-	// Initialize a mux router that indirectly uses our middlewares defined above.
+	// prepare server TLS config
+	tlsServerConfig, err := c.TLS.ToServerTLSConfig()
+	if err != nil {
+		return nil, err
+	}
+
+	a.tlsConfig = tlsServerConfig
+
+	// Initialize a mux router that indirectly uses our middlewares.
 	// We can't directly use them because mux will keep a copy of the middleware
 	// functions, which prevent us from modifying the actual middleware logic at
 	// runtime, so we need this workaround
-	router := mux.NewRouter()
+	a.rootRouter = mux.NewRouter()
 
 	a.healthRouter = routers.NewHealthRouter(
 		actions.NewHealthController(a.store, a.client.Cluster, a.etcdClientTLSConfig),
 	)
-	a.healthRouter.Mount(router)
+	a.healthRouter.Mount(a.rootRouter)
 
-	route := router.NewRoute().Subrouter()
-	route.HandleFunc("/", a.webSocketHandler)
+	for _, o := range opts {
+		if err := o(a); err != nil {
+			return nil, err
+		}
+	}
+
+	return a, nil
+}
+
+func init() {
+	if err := prometheus.Register(sessionCounter); err != nil {
+		panic(err)
+	}
+}
+
+// Start Agentd.
+func (a *Agentd) Start(ctx context.Context) error {
+
+	route := a.rootRouter.NewRoute().Subrouter()
+	route.HandleFunc("/", a.webSocketHandler(ctx))
 	route.Use(agentLimit, authenticate, authorize)
 
 	a.httpServer = &http.Server{
 		Addr:         fmt.Sprintf("%s:%d", a.Host, a.Port),
-		Handler:      router,
-		WriteTimeout: time.Duration(c.WriteTimeout) * time.Second,
+		Handler:      a.rootRouter,
+		WriteTimeout: time.Duration(a.writeTimeout) * time.Second,
 		ReadTimeout:  15 * time.Second,
-		TLSConfig:    tlsServerConfig,
+		TLSConfig:    a.tlsConfig,
 		// Capture the log entries from agentd's HTTP server
 		ErrorLog: log.New(&logrusIOWriter{entry: logger}, "", 0),
 		ConnState: func(c net.Conn, cs http.ConnState) {
@@ -188,24 +202,18 @@ func New(c Config, opts ...Option) (*Agentd, error) {
 			}
 		},
 	}
-	for _, o := range opts {
-		if err := o(a); err != nil {
-			return nil, err
+
+	if a.client != nil {
+		var err error
+		a.namespaceCache, err = cache.New(ctx, a.client, &corev2.Namespace{}, false)
+		if err != nil {
+			return err
 		}
 	}
 
-	a.namespaceCache, err = cache.New(ctx, c.Client, &corev2.Namespace{}, false)
-	if err != nil {
-		return nil, err
-	}
-
-	return a, nil
-}
-
-// Start Agentd.
-func (a *Agentd) Start() error {
 	logger.Warn("starting agentd on address: ", a.httpServer.Addr)
-	ln, err := net.Listen("tcp", a.httpServer.Addr)
+
+	ln, err := new(net.ListenConfig).Listen(ctx, "tcp", a.httpServer.Addr)
 	if err != nil {
 		return fmt.Errorf("failed to start agentd: %s", err)
 	}
@@ -226,38 +234,31 @@ func (a *Agentd) Start() error {
 		}
 	}()
 
-	go a.runWatcher()
-
-	sessionCounterOnce.Do(func() {
-		if err := prometheus.Register(sessionCounter); err != nil {
-			logger.WithError(err).Error("error registering session counter")
-			a.errChan <- err
-		}
-	})
+	go a.runWatcher(ctx)
 
 	return nil
 }
 
-func (a *Agentd) runWatcher() {
+func (a *Agentd) runWatcher(ctx context.Context) {
 	defer func() {
 		logger.Warn("shutting down entity config watcher")
 	}()
 	for {
 		select {
-		case <-a.ctx.Done():
+		case <-ctx.Done():
 			return
 		case event, ok := <-a.watcher:
 			if !ok {
 				return
 			}
-			if err := a.handleEvent(event); err != nil {
+			if err := a.handleEvent(ctx, event); err != nil {
 				logger.WithError(err).Error("error handling entity config watch event")
 			}
 		}
 	}
 }
 
-func (a *Agentd) handleEvent(event store.WatchEventEntityConfig) error {
+func (a *Agentd) handleEvent(ctx context.Context, event store.WatchEventEntityConfig) error {
 	if event.Entity == nil {
 		return errors.New("nil entity received from entity config watcher")
 	}
@@ -276,8 +277,9 @@ func (a *Agentd) handleEvent(event store.WatchEventEntityConfig) error {
 
 // Stop Agentd.
 func (a *Agentd) Stop() error {
-	a.cancel()
-	if err := a.httpServer.Shutdown(context.TODO()); err != nil {
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	defer cancel()
+	if err := a.httpServer.Shutdown(ctx); err != nil {
 		// failure/timeout shutting down the server gracefully
 		logger.Error("failed to shutdown http server gracefully - forcing shutdown")
 		if closeErr := a.httpServer.Close(); closeErr != nil {
@@ -302,108 +304,110 @@ func (a *Agentd) Name() string {
 	return "agentd"
 }
 
-func (a *Agentd) webSocketHandler(w http.ResponseWriter, r *http.Request) {
-	then := time.Now()
-	defer func() {
-		duration := time.Since(then)
-		websocketUpgradeDuration.WithLabelValues().Observe(float64(duration) / float64(time.Millisecond))
-	}()
-	var marshal MarshalFunc
-	var unmarshal UnmarshalFunc
-	var contentType string
+func (a *Agentd) webSocketHandler(ctx context.Context) func(http.ResponseWriter, *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
+		then := time.Now()
+		defer func() {
+			duration := time.Since(then)
+			websocketUpgradeDuration.WithLabelValues().Observe(float64(duration) / float64(time.Millisecond))
+		}()
+		var marshal MarshalFunc
+		var unmarshal UnmarshalFunc
+		var contentType string
 
-	lager := logger.WithFields(logrus.Fields{
-		"address":   r.RemoteAddr,
-		"agent":     r.Header.Get(transport.HeaderKeyAgentName),
-		"namespace": r.Header.Get(transport.HeaderKeyNamespace),
-	})
+		lager := logger.WithFields(logrus.Fields{
+			"address":   r.RemoteAddr,
+			"agent":     r.Header.Get(transport.HeaderKeyAgentName),
+			"namespace": r.Header.Get(transport.HeaderKeyNamespace),
+		})
 
-	responseHeader := make(http.Header)
-	responseHeader.Add("Accept", ProtobufSerializationHeader)
-	lager.WithField("header", fmt.Sprintf("Accept: %s", ProtobufSerializationHeader)).Debug("setting header")
-	responseHeader.Add("Accept", JSONSerializationHeader)
-	lager.WithField("header", fmt.Sprintf("Accept: %s", JSONSerializationHeader)).Debug("setting header")
-	if r.Header.Get("Accept") == ProtobufSerializationHeader {
-		marshal = proto.Marshal
-		unmarshal = proto.Unmarshal
-		contentType = ProtobufSerializationHeader
-		lager.WithField("format", "protobuf").Debug("setting serialization/deserialization")
-	} else {
-		marshal = MarshalJSON
-		unmarshal = UnmarshalJSON
-		contentType = JSONSerializationHeader
-		lager.WithField("format", "JSON").Debug("setting serialization/deserialization")
-	}
-	responseHeader.Set("Content-Type", contentType)
-	lager.WithField("header", fmt.Sprintf("Content-Type: %s", contentType)).Debug("setting header")
-
-	// Validate the agent namespace
-	namespace := r.Header.Get(transport.HeaderKeyNamespace)
-	var found bool
-	values := a.namespaceCache.Get("")
-	for _, value := range values {
-		if namespace == value.Resource.GetObjectMeta().Name {
-			found = true
-			break
+		responseHeader := make(http.Header)
+		responseHeader.Add("Accept", ProtobufSerializationHeader)
+		lager.WithField("header", fmt.Sprintf("Accept: %s", ProtobufSerializationHeader)).Debug("setting header")
+		responseHeader.Add("Accept", JSONSerializationHeader)
+		lager.WithField("header", fmt.Sprintf("Accept: %s", JSONSerializationHeader)).Debug("setting header")
+		if r.Header.Get("Accept") == ProtobufSerializationHeader {
+			marshal = proto.Marshal
+			unmarshal = proto.Unmarshal
+			contentType = ProtobufSerializationHeader
+			lager.WithField("format", "protobuf").Debug("setting serialization/deserialization")
+		} else {
+			marshal = MarshalJSON
+			unmarshal = UnmarshalJSON
+			contentType = JSONSerializationHeader
+			lager.WithField("format", "JSON").Debug("setting serialization/deserialization")
 		}
-	}
-	if namespace == "" || !found {
-		lager.Warningf("namespace %q not found", namespace)
-		http.Error(w, fmt.Sprintf("namespace %q not found", namespace), http.StatusNotFound)
-		return
-	}
+		responseHeader.Set("Content-Type", contentType)
+		lager.WithField("header", fmt.Sprintf("Content-Type: %s", contentType)).Debug("setting header")
 
-	conn, err := upgrader.Upgrade(w, r, responseHeader)
-	if err != nil {
-		lager.WithError(err).Error("transport error on websocket upgrade")
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	cfg := SessionConfig{
-		AgentAddr:     r.RemoteAddr,
-		AgentName:     r.Header.Get(transport.HeaderKeyAgentName),
-		Namespace:     r.Header.Get(transport.HeaderKeyNamespace),
-		User:          r.Header.Get(transport.HeaderKeyUser),
-		Subscriptions: strings.Split(r.Header.Get(transport.HeaderKeySubscriptions), ","),
-		RingPool:      a.ringPool,
-		ContentType:   contentType,
-		WriteTimeout:  a.writeTimeout,
-		Bus:           a.bus,
-		Conn:          transport.NewTransport(conn),
-		Store:         a.store,
-		Storev2:       a.storev2,
-		Marshal:       marshal,
-		Unmarshal:     unmarshal,
-	}
-
-	cfg.Subscriptions = corev2.AddEntitySubscription(cfg.AgentName, cfg.Subscriptions)
-
-	session, err := NewSession(a.ctx, cfg)
-	if err != nil {
-		lager.WithError(err).Error("failed to create session")
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		// There was an error retrieving the namespace from
-		// etcd, indicating that this backend has a potentially
-		// unrecoverable issue.
-		if _, ok := err.(*store.ErrInternal); ok {
-			select {
-			case a.errChan <- err:
-			case <-a.ctx.Done():
+		// Validate the agent namespace
+		namespace := r.Header.Get(transport.HeaderKeyNamespace)
+		var found bool
+		values := a.namespaceCache.Get("")
+		for _, value := range values {
+			if namespace == value.Resource.GetObjectMeta().Name {
+				found = true
+				break
 			}
 		}
-		return
-	}
-
-	if err := session.Start(); err != nil {
-		lager.WithError(err).Error("failed to start session")
-		if _, ok := err.(*store.ErrInternal); ok {
-			select {
-			case a.errChan <- err:
-			case <-a.ctx.Done():
-			}
+		if namespace == "" || !found {
+			lager.Warningf("namespace %q not found", namespace)
+			http.Error(w, fmt.Sprintf("namespace %q not found", namespace), http.StatusNotFound)
+			return
 		}
-		return
+
+		conn, err := upgrader.Upgrade(w, r, responseHeader)
+		if err != nil {
+			lager.WithError(err).Error("transport error on websocket upgrade")
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		cfg := SessionConfig{
+			AgentAddr:     r.RemoteAddr,
+			AgentName:     r.Header.Get(transport.HeaderKeyAgentName),
+			Namespace:     r.Header.Get(transport.HeaderKeyNamespace),
+			User:          r.Header.Get(transport.HeaderKeyUser),
+			Subscriptions: strings.Split(r.Header.Get(transport.HeaderKeySubscriptions), ","),
+			RingPool:      a.ringPool,
+			ContentType:   contentType,
+			WriteTimeout:  a.writeTimeout,
+			Bus:           a.bus,
+			Conn:          transport.NewTransport(conn),
+			Store:         a.store,
+			Storev2:       a.storev2,
+			Marshal:       marshal,
+			Unmarshal:     unmarshal,
+		}
+
+		cfg.Subscriptions = corev2.AddEntitySubscription(cfg.AgentName, cfg.Subscriptions)
+
+		session, err := NewSession(cfg)
+		if err != nil {
+			lager.WithError(err).Error("failed to create session")
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			// There was an error retrieving the namespace from
+			// etcd, indicating that this backend has a potentially
+			// unrecoverable issue.
+			if _, ok := err.(*store.ErrInternal); ok {
+				select {
+				case a.errChan <- err:
+				case <-ctx.Done():
+				}
+			}
+			return
+		}
+
+		if err := session.Start(ctx); err != nil {
+			lager.WithError(err).Error("failed to start session")
+			if _, ok := err.(*store.ErrInternal); ok {
+				select {
+				case a.errChan <- err:
+				case <-ctx.Done():
+				}
+			}
+			return
+		}
 	}
 }
 
@@ -429,10 +433,6 @@ func (a *Agentd) AuthenticationMiddleware(next http.Handler) http.Handler {
 					WithField("user", username).
 					WithError(err).
 					Error("unexpected error while authenticating the user")
-				select {
-				case a.errChan <- err:
-				case <-a.ctx.Done():
-				}
 				http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 				return
 			}
@@ -490,7 +490,7 @@ func (a *Agentd) AuthorizationMiddleware(next http.Handler) http.Handler {
 				logger.WithError(err).Error("unexpected error while authorizing the session")
 				select {
 				case a.errChan <- err:
-				case <-a.ctx.Done():
+				case <-ctx.Done():
 				}
 				http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 				return

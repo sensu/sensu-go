@@ -60,7 +60,7 @@ func fakeFactory(name string, dead, alive liveness.EventFunc, logger logrus.Fiel
 	return fakeLivenessInterface{}
 }
 
-func newKeepalivedTest(t *testing.T) *keepalivedTest {
+func newKeepalivedTest(ctx context.Context, t *testing.T) *keepalivedTest {
 	store := &mockstore.MockStore{}
 	storv2 := &storetest.Store{}
 	deregisterer := &mockDeregisterer{}
@@ -85,7 +85,7 @@ func newKeepalivedTest(t *testing.T) *keepalivedTest {
 		Keepalived:   k,
 		receiver:     make(chan interface{}),
 	}
-	require.NoError(t, test.MessageBus.Start())
+	require.NoError(t, test.MessageBus.Start(ctx))
 	return test
 }
 
@@ -163,7 +163,9 @@ func TestStartStop(t *testing.T) {
 
 	for _, tc := range tt {
 		t.Run(tc.name, func(t *testing.T) {
-			test := newKeepalivedTest(t)
+			ctx, cancel := context.WithCancel(context.Background())
+			defer cancel()
+			test := newKeepalivedTest(ctx, t)
 			defer test.Dispose(t)
 
 			k := test.Keepalived
@@ -176,7 +178,7 @@ func TestStartStop(t *testing.T) {
 				}
 			}
 
-			require.NoError(t, k.Start())
+			require.NoError(t, k.Start(ctx))
 
 			var err error
 			select {
@@ -184,15 +186,18 @@ func TestStartStop(t *testing.T) {
 			default:
 			}
 			assert.NoError(t, err)
+			cancel()
 			assert.NoError(t, k.Stop())
 		})
 	}
 }
 
 func TestEventProcessing(t *testing.T) {
-	test := newKeepalivedTest(t)
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	test := newKeepalivedTest(ctx, t)
 	test.Store.On("GetFailingKeepalives", mock.Anything).Return([]*corev2.KeepaliveRecord{}, nil)
-	require.NoError(t, test.Keepalived.Start())
+	require.NoError(t, test.Keepalived.Start(ctx))
 
 	event := corev2.FixtureEvent("entity", "keepalive")
 	event.Check.Status = 1
@@ -204,6 +209,7 @@ func TestEventProcessing(t *testing.T) {
 	test.Store.On("DeleteFailingKeepalive", mock.Anything, event.Entity).Return(nil)
 
 	test.Keepalived.keepaliveChan <- event
+	cancel()
 	assert.NoError(t, test.Keepalived.Stop())
 }
 
@@ -308,9 +314,11 @@ func TestProcessRegistration(t *testing.T) {
 
 	for _, tc := range tt {
 		t.Run(tc.name, func(t *testing.T) {
+			ctx, cancel := context.WithCancel(context.Background())
+			defer cancel()
 			messageBus, err := messaging.NewWizardBus(messaging.WizardBusConfig{})
 			require.NoError(t, err)
-			require.NoError(t, messageBus.Start())
+			require.NoError(t, messageBus.Start(ctx))
 
 			storv2 := &storetest.Store{}
 
@@ -333,7 +341,7 @@ func TestProcessRegistration(t *testing.T) {
 			storv2.On("CreateIfNotExists", mock.Anything, mock.Anything).Return(tc.storeCreateOrUpdateErr)
 			storv2.On("UpdateIfExists", mock.Anything, mock.Anything).Return(tc.storeCreateOrUpdateErr)
 			storv2.On("Get", mock.Anything).Return(tc.storeEntity, tc.storeGetErr)
-			err = keepalived.handleEntityRegistration(tc.entity, tc.event)
+			err = keepalived.handleEntityRegistration(ctx, tc.entity, tc.event)
 			require.NoError(t, err)
 
 			assert.Equal(t, tc.expectedEventLen, len(tsubEvent.ch))
@@ -376,11 +384,13 @@ func TestCreateRegistrationEvent(t *testing.T) {
 }
 
 func TestDeadCallbackNoEntity(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
 	messageBus, err := messaging.NewWizardBus(messaging.WizardBusConfig{})
 	if err != nil {
 		t.Fatal(err)
 	}
-	if err := messageBus.Start(); err != nil {
+	if err := messageBus.Start(ctx); err != nil {
 		t.Fatal(err)
 	}
 	tsub := testSubscriber{
@@ -405,17 +415,19 @@ func TestDeadCallbackNoEntity(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if got, want := keepalived.dead("default/testSubscriber", liveness.Alive, true), true; got != want {
+	if got, want := keepalived.dead(ctx, "default/testSubscriber", liveness.Alive, true), true; got != want {
 		t.Fatalf("got bury: %v, want bury: %v", got, want)
 	}
 }
 
 func TestDeadCallbackNoEvent(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
 	messageBus, err := messaging.NewWizardBus(messaging.WizardBusConfig{})
 	if err != nil {
 		t.Fatal(err)
 	}
-	if err := messageBus.Start(); err != nil {
+	if err := messageBus.Start(ctx); err != nil {
 		t.Fatal(err)
 	}
 	tsub := testSubscriber{
@@ -455,7 +467,7 @@ func TestDeadCallbackNoEvent(t *testing.T) {
 	}
 
 	// The switch should be buried since the event is nil
-	if got, want := keepalived.dead("default/testSubscriber", liveness.Alive, true), true; got != want {
+	if got, want := keepalived.dead(ctx, "default/testSubscriber", liveness.Alive, true), true; got != want {
 		t.Fatalf("got bury: %v, want bury: %v", got, want)
 	}
 }

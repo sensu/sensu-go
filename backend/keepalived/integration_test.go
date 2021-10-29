@@ -28,7 +28,10 @@ func TestKeepaliveMonitor(t *testing.T) {
 	bus, err := messaging.NewWizardBus(messaging.WizardBusConfig{})
 	require.NoError(t, err)
 
-	if err := bus.Start(); err != nil {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	if err := bus.Start(ctx); err != nil {
 		assert.FailNow(t, "message bus failed to start")
 	}
 
@@ -46,7 +49,7 @@ func TestKeepaliveMonitor(t *testing.T) {
 	}()
 
 	entity := corev2.FixtureEntity("entity1")
-	ctx := store.NamespaceContext(context.Background(), entity.Namespace)
+	ctx = store.NamespaceContext(ctx, entity.Namespace)
 
 	store, err := testutil.NewStoreInstance()
 	if err != nil {
@@ -94,7 +97,7 @@ func TestKeepaliveMonitor(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	if err := k.Start(); err != nil {
+	if err := k.Start(ctx); err != nil {
 		assert.FailNow(t, err.Error())
 	}
 

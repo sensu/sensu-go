@@ -19,19 +19,17 @@ type CheckWatcher struct {
 	store                  store.Store
 	bus                    messaging.MessageBus
 	mu                     sync.Mutex
-	ctx                    context.Context
 	ringPool               *ringv2.RingPool
 	entityCache            *cachev2.Resource
 	secretsProviderManager *secrets.ProviderManager
 }
 
 // NewCheckWatcher creates a new ScheduleManager.
-func NewCheckWatcher(ctx context.Context, msgBus messaging.MessageBus, store store.Store, pool *ringv2.RingPool, cache *cachev2.Resource, secretsProviderManager *secrets.ProviderManager) *CheckWatcher {
+func NewCheckWatcher(msgBus messaging.MessageBus, store store.Store, pool *ringv2.RingPool, cache *cachev2.Resource, secretsProviderManager *secrets.ProviderManager) *CheckWatcher {
 	watcher := &CheckWatcher{
 		store:                  store,
 		items:                  make(map[string]Scheduler),
 		bus:                    msgBus,
-		ctx:                    ctx,
 		ringPool:               pool,
 		entityCache:            cache,
 		secretsProviderManager: secretsProviderManager,
@@ -41,9 +39,9 @@ func NewCheckWatcher(ctx context.Context, msgBus messaging.MessageBus, store sto
 }
 
 // startScheduler starts a new scheduler for the given check. It assumes mu is locked.
-func (c *CheckWatcher) startScheduler(check *corev2.CheckConfig) error {
+func (c *CheckWatcher) startScheduler(ctx context.Context, check *corev2.CheckConfig) error {
 	// Guard against updates while the daemon is shutting down
-	if err := c.ctx.Err(); err != nil {
+	if err := ctx.Err(); err != nil {
 		return err
 	}
 
@@ -64,20 +62,20 @@ func (c *CheckWatcher) startScheduler(check *corev2.CheckConfig) error {
 
 	switch GetSchedulerType(check) {
 	case IntervalType:
-		scheduler = NewIntervalScheduler(c.ctx, c.store, c.bus, check, c.entityCache, c.secretsProviderManager)
+		scheduler = NewIntervalScheduler(c.store, c.bus, check, c.entityCache, c.secretsProviderManager)
 	case CronType:
-		scheduler = NewCronScheduler(c.ctx, c.store, c.bus, check, c.entityCache, c.secretsProviderManager)
+		scheduler = NewCronScheduler(c.store, c.bus, check, c.entityCache, c.secretsProviderManager)
 	case RoundRobinIntervalType:
-		scheduler = NewRoundRobinIntervalScheduler(c.ctx, c.store, c.bus, c.ringPool, check, c.entityCache, c.secretsProviderManager)
+		scheduler = NewRoundRobinIntervalScheduler(c.store, c.bus, c.ringPool, check, c.entityCache, c.secretsProviderManager)
 	case RoundRobinCronType:
-		scheduler = NewRoundRobinCronScheduler(c.ctx, c.store, c.bus, c.ringPool, check, c.entityCache, c.secretsProviderManager)
+		scheduler = NewRoundRobinCronScheduler(c.store, c.bus, c.ringPool, check, c.entityCache, c.secretsProviderManager)
 	default:
 		logger.Error("bad scheduler type, falling back to interval scheduler")
-		scheduler = NewIntervalScheduler(c.ctx, c.store, c.bus, check, c.entityCache, c.secretsProviderManager)
+		scheduler = NewIntervalScheduler(c.store, c.bus, check, c.entityCache, c.secretsProviderManager)
 	}
 
 	// Start scheduling check
-	scheduler.Start()
+	scheduler.Start(ctx)
 
 	// Register new check scheduler
 	c.items[key] = scheduler
@@ -85,9 +83,9 @@ func (c *CheckWatcher) startScheduler(check *corev2.CheckConfig) error {
 }
 
 // Start starts the CheckWatcher.
-func (c *CheckWatcher) Start() error {
+func (c *CheckWatcher) Start(ctx context.Context) error {
 	// for each check
-	checkConfigs, err := c.store.GetCheckConfigs(c.ctx, &store.SelectionPredicate{})
+	checkConfigs, err := c.store.GetCheckConfigs(ctx, &store.SelectionPredicate{})
 	if err != nil {
 		return err
 	}
@@ -96,25 +94,25 @@ func (c *CheckWatcher) Start() error {
 	defer c.mu.Unlock()
 
 	for _, cfg := range checkConfigs {
-		if err := c.startScheduler(cfg); err != nil {
+		if err := c.startScheduler(ctx, cfg); err != nil {
 			return err
 		}
 	}
 
-	go c.startWatcher()
+	go c.startWatcher(ctx)
 
 	return nil
 }
 
-func (c *CheckWatcher) startWatcher() {
-	watchChan := c.store.GetCheckConfigWatcher(c.ctx)
+func (c *CheckWatcher) startWatcher(ctx context.Context) {
+	watchChan := c.store.GetCheckConfigWatcher(ctx)
 	for {
 		select {
 		case watchEvent, ok := <-watchChan:
 			if ok {
-				c.handleWatchEvent(watchEvent)
+				c.handleWatchEvent(ctx, watchEvent)
 			}
-		case <-c.ctx.Done():
+		case <-ctx.Done():
 			c.mu.Lock()
 			defer c.mu.Unlock()
 			for _, scheduler := range c.items {
@@ -127,7 +125,7 @@ func (c *CheckWatcher) startWatcher() {
 	}
 }
 
-func (c *CheckWatcher) handleWatchEvent(watchEvent store.WatchEventCheckConfig) {
+func (c *CheckWatcher) handleWatchEvent(ctx context.Context, watchEvent store.WatchEventCheckConfig) {
 	check := watchEvent.CheckConfig
 
 	if check == nil {
@@ -143,7 +141,7 @@ func (c *CheckWatcher) handleWatchEvent(watchEvent store.WatchEventCheckConfig) 
 	switch watchEvent.Action {
 	case store.WatchCreate:
 		// we need to spin up a new CheckScheduler for the newly created check
-		if err := c.startScheduler(check); err != nil {
+		if err := c.startScheduler(ctx, check); err != nil {
 			logger.WithError(err).Error("unable to start check scheduler")
 		}
 	case store.WatchUpdate:
@@ -152,7 +150,7 @@ func (c *CheckWatcher) handleWatchEvent(watchEvent store.WatchEventCheckConfig) 
 		sched, ok := c.items[key]
 		if !ok {
 			logger.Info("starting new scheduler")
-			if err := c.startScheduler(check); err != nil {
+			if err := c.startScheduler(ctx, check); err != nil {
 				logger.WithError(err).Error("unable to start check scheduler")
 			}
 			return
@@ -166,7 +164,7 @@ func (c *CheckWatcher) handleWatchEvent(watchEvent store.WatchEventCheckConfig) 
 				logger.WithError(err).Error("error stopping check scheduler")
 			}
 			delete(c.items, key)
-			if err := c.startScheduler(check); err != nil {
+			if err := c.startScheduler(ctx, check); err != nil {
 				logger.WithError(err).Error("unable to start check scheduler")
 			}
 		}

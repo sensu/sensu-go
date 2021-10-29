@@ -21,7 +21,13 @@ func TestEnqueue(t *testing.T) {
 	client := e.NewEmbeddedClient()
 	defer client.Close()
 
-	backendID := etcd.NewBackendIDGetter(context.TODO(), client)
+	backendID := etcd.NewBackendIDGetter(client)
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	if err := backendID.Start(ctx); err != nil {
+		t.Fatal(err)
+	}
+
 	queue := New("testenq", client, backendID)
 	err := queue.Enqueue(context.Background(), "test item")
 	assert.NoError(t, err)
@@ -35,7 +41,12 @@ func TestDequeueSingleItem(t *testing.T) {
 	client := e.NewEmbeddedClient()
 	defer client.Close()
 
-	backendID := etcd.NewBackendIDGetter(context.TODO(), client)
+	backendID := etcd.NewBackendIDGetter(client)
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	if err := backendID.Start(ctx); err != nil {
+		t.Fatal(err)
+	}
 	queue := New("testdeq", client, backendID)
 	err := queue.Enqueue(context.Background(), "test single item dequeue")
 	require.NoError(t, err)
@@ -48,7 +59,7 @@ func TestDequeueSingleItem(t *testing.T) {
 		assert.NoError(t, item.Ack(context.Background()))
 	}()
 
-	ctx, cancel := context.WithTimeout(context.Background(), 100*time.Millisecond)
+	ctx, cancel = context.WithTimeout(ctx, 100*time.Millisecond)
 	defer cancel()
 
 	_, err = queue.Dequeue(ctx)
@@ -63,7 +74,12 @@ func TestDequeueFIFO(t *testing.T) {
 	client := e.NewEmbeddedClient()
 	defer client.Close()
 
-	backendID := etcd.NewBackendIDGetter(context.TODO(), client)
+	backendID := etcd.NewBackendIDGetter(client)
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	if err := backendID.Start(ctx); err != nil {
+		t.Fatal(err)
+	}
 	queue := New("testfifo", client, backendID)
 	items := []string{"hello", "there", "world", "asdf", "fjdksl", "lalalal"}
 
@@ -90,7 +106,12 @@ func TestNack(t *testing.T) {
 	client := e.NewEmbeddedClient()
 	defer client.Close()
 
-	backendID := etcd.NewBackendIDGetter(context.TODO(), client)
+	backendID := etcd.NewBackendIDGetter(client)
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	if err := backendID.Start(ctx); err != nil {
+		t.Fatal(err)
+	}
 	queue := New("testnack", client, backendID)
 	err := queue.Enqueue(context.Background(), "test item")
 	require.NoError(t, err)
@@ -115,7 +136,12 @@ func TestAck(t *testing.T) {
 	client := e.NewEmbeddedClient()
 	defer client.Close()
 
-	backendID := etcd.NewBackendIDGetter(context.TODO(), client)
+	backendID := etcd.NewBackendIDGetter(client)
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	if err := backendID.Start(ctx); err != nil {
+		t.Fatal(err)
+	}
 	queue := New("testack", client, backendID)
 	err := queue.Enqueue(context.Background(), "test item")
 	require.NoError(t, err)
@@ -127,7 +153,7 @@ func TestAck(t *testing.T) {
 	err = item.Ack(context.Background())
 	require.NoError(t, err)
 
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	ctx, cancel = context.WithTimeout(ctx, time.Second)
 	defer cancel()
 	_, err = queue.Dequeue(ctx)
 	require.Error(t, err)
@@ -141,7 +167,12 @@ func TestOnce(t *testing.T) {
 	client := e.NewEmbeddedClient()
 	defer client.Close()
 
-	backendID := etcd.NewBackendIDGetter(context.TODO(), client)
+	backendID := etcd.NewBackendIDGetter(client)
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	if err := backendID.Start(ctx); err != nil {
+		t.Fatal(err)
+	}
 	queue := New("testonce", client, backendID)
 
 	err := queue.Enqueue(context.Background(), "test item")
@@ -169,16 +200,27 @@ func TestMultipleSubscribers(t *testing.T) {
 	client := e.NewEmbeddedClient()
 	defer client.Close()
 
-	backendID1 := etcd.NewBackendIDGetter(context.TODO(), client)
-	backendID2 := etcd.NewBackendIDGetter(context.TODO(), client)
-	backendID3 := etcd.NewBackendIDGetter(context.TODO(), client)
+	backendID1 := etcd.NewBackendIDGetter(client)
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	if err := backendID1.Start(ctx); err != nil {
+		t.Fatal(err)
+	}
+	backendID2 := etcd.NewBackendIDGetter(client)
+	if err := backendID2.Start(ctx); err != nil {
+		t.Fatal(err)
+	}
+	backendID3 := etcd.NewBackendIDGetter(client)
+	if err := backendID3.Start(ctx); err != nil {
+		t.Fatal(err)
+	}
 
 	// Each queue is associated with a different backend
 	q1 := New("testMultipleSubscribers", client, backendID1)
 	q2 := New("testMultipleSubscribers", client, backendID2)
 	q3 := New("testMultipleSubscribers", client, backendID3)
 
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
+	ctx, cancel = context.WithTimeout(ctx, time.Second*5)
 	defer cancel()
 
 	require.NoError(t, q1.Enqueue(ctx, "foobar"))
@@ -199,7 +241,12 @@ func TestDequeueParallel(t *testing.T) {
 	defer cleanup()
 	client := e.NewEmbeddedClient()
 	defer client.Close()
-	backendID := etcd.NewBackendIDGetter(context.TODO(), client)
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	backendID := etcd.NewBackendIDGetter(client)
+	if err := backendID.Start(ctx); err != nil {
+		t.Fatal(err)
+	}
 	queue := New("testparallel", client, backendID)
 	items := map[string]struct{}{
 		"hello":   struct{}{},

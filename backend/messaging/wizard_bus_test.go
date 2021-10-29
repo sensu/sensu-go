@@ -1,6 +1,7 @@
 package messaging
 
 import (
+	"context"
 	"fmt"
 	"math/rand"
 	"testing"
@@ -19,9 +20,12 @@ func (c channelSubscriber) Receiver() chan<- interface{} {
 }
 
 func TestWizardBus(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
 	b, err := NewWizardBus(WizardBusConfig{})
 	require.NoError(t, err)
-	require.NoError(t, b.Start())
+	require.NoError(t, b.Start(ctx))
 
 	// Should be able to publish with no subscribers.
 	require.NoError(t, b.Publish("topic", "message1"))
@@ -97,28 +101,36 @@ func BenchmarkSubscribe(b *testing.B) {
 	rand.Seed(time.Now().UnixNano())
 
 	for _, tc := range testCases {
-		bus, _ := NewWizardBus(WizardBusConfig{})
-		_ = bus.Start()
-		b.Run(fmt.Sprintf("%d subscribers", tc), func(b *testing.B) {
-			b.SetParallelism(tc)
-			b.RunParallel(func(pb *testing.PB) {
-				i := 0
-				for pb.Next() {
-					sub := channelSubscriber{make(chan interface{})}
-					_, _ = bus.Subscribe("topic", fmt.Sprintf("client-%d", i), sub)
-					i++
-				}
+		func() {
+			ctx, cancel := context.WithCancel(context.Background())
+			defer cancel()
+
+			bus, _ := NewWizardBus(WizardBusConfig{})
+			_ = bus.Start(ctx)
+			b.Run(fmt.Sprintf("%d subscribers", tc), func(b *testing.B) {
+				b.SetParallelism(tc)
+				b.RunParallel(func(pb *testing.PB) {
+					i := 0
+					for pb.Next() {
+						sub := channelSubscriber{make(chan interface{})}
+						_, _ = bus.Subscribe("topic", fmt.Sprintf("client-%d", i), sub)
+						i++
+					}
+				})
 			})
-		})
-		_ = bus.Stop()
+			_ = bus.Stop()
+		}()
 	}
 }
 
 func TestBug1407(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
 	bus, err := NewWizardBus(WizardBusConfig{})
 	require.NoError(t, err)
 
-	require.NoError(t, bus.Start())
+	require.NoError(t, bus.Start(ctx))
 	defer func() {
 		_ = bus.Stop()
 	}()

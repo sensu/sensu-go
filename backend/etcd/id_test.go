@@ -6,7 +6,7 @@ import (
 	"sync"
 	"testing"
 
-	"go.etcd.io/etcd/client/v3"
+	clientv3 "go.etcd.io/etcd/client/v3"
 )
 
 type mockBackendIDGetterClient struct {
@@ -57,7 +57,14 @@ func newMockBackendIDGetterClient() *mockBackendIDGetterClient {
 
 func TestBackendIDGetter(t *testing.T) {
 	client := newMockBackendIDGetterClient()
-	getter := NewBackendIDGetter(context.TODO(), client)
+	getter := NewBackendIDGetter(client)
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	if err := getter.Start(ctx); err != nil {
+		t.Fatal(err)
+	}
 
 	got := getter.GetBackendID()
 	if want := int64(1234); got != want {

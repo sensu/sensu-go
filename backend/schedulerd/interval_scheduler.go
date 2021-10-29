@@ -2,6 +2,7 @@ package schedulerd
 
 import (
 	"context"
+	"sync"
 
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/messaging"
@@ -18,15 +19,15 @@ type IntervalScheduler struct {
 	store                  store.Store
 	bus                    messaging.MessageBus
 	logger                 *logrus.Entry
-	ctx                    context.Context
-	cancel                 context.CancelFunc
 	interrupt              chan *corev2.CheckConfig
 	entityCache            *cachev2.Resource
 	secretsProviderManager *secrets.ProviderManager
+	wg                     sync.WaitGroup
+	done                   chan struct{}
 }
 
 // NewIntervalScheduler initializes an IntervalScheduler
-func NewIntervalScheduler(ctx context.Context, store store.Store, bus messaging.MessageBus, check *corev2.CheckConfig, cache *cachev2.Resource, secretsProviderManager *secrets.ProviderManager) *IntervalScheduler {
+func NewIntervalScheduler(store store.Store, bus messaging.MessageBus, check *corev2.CheckConfig, cache *cachev2.Resource, secretsProviderManager *secrets.ProviderManager) *IntervalScheduler {
 	sched := &IntervalScheduler{
 		store:             store,
 		bus:               bus,
@@ -40,13 +41,12 @@ func NewIntervalScheduler(ctx context.Context, store store.Store, bus messaging.
 		}),
 		entityCache:            cache,
 		secretsProviderManager: secretsProviderManager,
+		done:                   make(chan struct{}),
 	}
-	sched.ctx, sched.cancel = context.WithCancel(ctx)
-	sched.ctx = corev2.SetContextFromResource(sched.ctx, check)
 	return sched
 }
 
-func (s *IntervalScheduler) schedule(timer CheckTimer, executor *CheckExecutor) {
+func (s *IntervalScheduler) schedule(ctx context.Context, timer CheckTimer, executor *CheckExecutor) {
 	s.resetTimer(timer)
 
 	if s.check.IsSubdued() {
@@ -56,18 +56,21 @@ func (s *IntervalScheduler) schedule(timer CheckTimer, executor *CheckExecutor) 
 
 	s.logger.Debug("check is not subdued")
 
-	if err := executor.processCheck(s.ctx, s.check); err != nil {
+	if err := executor.processCheck(ctx, s.check); err != nil {
 		logger.WithError(err).Error("error executing check")
 	}
 }
 
 // Start starts the IntervalScheduler.
-func (s *IntervalScheduler) Start() {
+func (s *IntervalScheduler) Start(ctx context.Context) {
 	intervalCounter.WithLabelValues(s.check.Namespace).Inc()
-	go s.start()
+	ctx = corev2.SetContextFromResource(ctx, s.check)
+	s.wg.Add(1)
+	go s.start(ctx)
 }
 
-func (s *IntervalScheduler) start() {
+func (s *IntervalScheduler) start(ctx context.Context) {
+	defer s.wg.Done()
 	s.logger.Info("starting new interval scheduler")
 	timer := NewIntervalTimer(s.check.Name, uint(s.check.Interval))
 	executor := NewCheckExecutor(s.bus, s.check.Namespace, s.store, s.entityCache, s.secretsProviderManager)
@@ -76,7 +79,10 @@ func (s *IntervalScheduler) start() {
 
 	for {
 		select {
-		case <-s.ctx.Done():
+		case <-s.done:
+			timer.Stop()
+			return
+		case <-ctx.Done():
 			timer.Stop()
 			return
 		case check := <-s.interrupt:
@@ -84,13 +90,13 @@ func (s *IntervalScheduler) start() {
 			s.check = check
 			if s.toggleSchedule() {
 				timer.Stop()
-				defer s.Start()
+				defer s.Start(ctx)
 				return
 			}
 			continue
 		case <-timer.C():
 		}
-		s.schedule(timer, executor)
+		s.schedule(ctx, timer, executor)
 	}
 }
 
@@ -101,9 +107,14 @@ func (s *IntervalScheduler) Interrupt(check *corev2.CheckConfig) {
 
 // Stop stops the IntervalScheduler
 func (s *IntervalScheduler) Stop() error {
+	select {
+	case <-s.done:
+	default:
+		close(s.done)
+	}
 	intervalCounter.WithLabelValues(s.check.Namespace).Dec()
 	s.logger.Info("stopping scheduler")
-	s.cancel()
+	s.wg.Wait()
 
 	return nil
 }

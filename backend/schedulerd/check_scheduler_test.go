@@ -66,9 +66,9 @@ func newIntervalScheduler(ctx context.Context, t *testing.T, executor string) *T
 	scheduler.msgBus = bus
 	pm := secrets.NewProviderManager()
 
-	scheduler.scheduler = NewIntervalScheduler(ctx, s, scheduler.msgBus, scheduler.check, &cachev2.Resource{}, pm)
+	scheduler.scheduler = NewIntervalScheduler(s, scheduler.msgBus, scheduler.check, &cachev2.Resource{}, pm)
 
-	assert.NoError(scheduler.msgBus.Start())
+	assert.NoError(scheduler.msgBus.Start(ctx))
 
 	switch executor {
 	case "adhoc":
@@ -104,9 +104,9 @@ func newCronScheduler(ctx context.Context, t *testing.T, executor string) *TestC
 	scheduler.msgBus = bus
 	pm := secrets.NewProviderManager()
 
-	scheduler.scheduler = NewCronScheduler(ctx, s, scheduler.msgBus, scheduler.check, &cachev2.Resource{}, pm)
+	scheduler.scheduler = NewCronScheduler(s, scheduler.msgBus, scheduler.check, &cachev2.Resource{}, pm)
 
-	assert.NoError(scheduler.msgBus.Start())
+	assert.NoError(scheduler.msgBus.Start(ctx))
 
 	switch executor {
 	case "adhoc":
@@ -151,10 +151,11 @@ func TestIntervalScheduling(t *testing.T) {
 		wg.Done()
 	}()
 
-	scheduler.scheduler.Start()
+	scheduler.scheduler.Start(ctx)
 	mockTime.Start()
 	wg.Wait()
 	mockTime.Stop()
+	cancel()
 	assert.NoError(scheduler.scheduler.Stop())
 }
 
@@ -199,8 +200,9 @@ func TestCheckSubdueInterval(t *testing.T) {
 		assert.NoError(scheduler.msgBus.Stop())
 	}()
 
-	scheduler.scheduler.Start()
+	scheduler.scheduler.Start(ctx)
 	mockTime.Set(mockTime.Now().Add(2 * time.Second))
+	cancel()
 	assert.NoError(scheduler.scheduler.Stop())
 
 	// We should have no element in our channel
@@ -245,10 +247,11 @@ func TestCronScheduling(t *testing.T) {
 		wg.Done()
 	}()
 
-	scheduler.scheduler.Start()
+	scheduler.scheduler.Start(ctx)
 	mockTime.Start()
 	wg.Wait()
 	mockTime.Stop()
+	cancel()
 	assert.NoError(scheduler.scheduler.Stop())
 }
 
@@ -294,8 +297,9 @@ func TestCheckSubdueCron(t *testing.T) {
 		assert.NoError(scheduler.msgBus.Stop())
 	}()
 
-	scheduler.scheduler.Start()
+	scheduler.scheduler.Start(ctx)
 	mockTime.Set(mockTime.Now().Add(10 * time.Second))
+	cancel()
 	assert.NoError(scheduler.scheduler.Stop())
 
 	// We should have no element in our channel

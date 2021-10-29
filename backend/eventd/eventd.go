@@ -186,10 +186,9 @@ const deletedEventSentinel = -1
 
 // Eventd handles incoming sensu events and stores them in etcd.
 type Eventd struct {
-	ctx                 context.Context
-	cancel              context.CancelFunc
 	store               storev2.Interface
 	eventStore          store.EventStore
+	client              *clientv3.Client
 	bus                 messaging.MessageBus
 	workerCount         int
 	livenessFactory     liveness.Factory
@@ -266,14 +265,8 @@ func New(ctx context.Context, c Config, opts ...Option) (*Eventd, error) {
 		logBufferWait:       c.LogBufferWait,
 		logParallelEncoders: c.LogParallelEncoders,
 		Logger:              NoopLogger{},
+		client:              c.Client,
 	}
-
-	e.ctx, e.cancel = context.WithCancel(ctx)
-	cache, err := cache.New(e.ctx, c.Client, &corev2.Silenced{}, false)
-	if err != nil {
-		return nil, err
-	}
-	e.silencedCache = cache
 
 	for _, o := range opts {
 		if err := o(e); err != nil {
@@ -324,7 +317,17 @@ func (e *Eventd) Receiver() chan<- interface{} {
 }
 
 // Start eventd.
-func (e *Eventd) Start() error {
+func (e *Eventd) Start(ctx context.Context) error {
+	if e.client != nil {
+		// TODO(eric): this is technical debt; the tests assume that eventd can
+		// work without a cache or etcd client.
+		cache, err := cache.New(ctx, e.client, &corev2.Silenced{}, false)
+		if err != nil {
+			return err
+		}
+		e.silencedCache = cache
+	}
+
 	e.wg.Add(e.workerCount)
 	sub, err := e.bus.Subscribe(messaging.TopicEventRaw, "eventd", e)
 	e.subscription = sub
@@ -346,7 +349,7 @@ func (e *Eventd) Start() error {
 		e.Logger = &logger
 	}
 
-	e.startHandlers()
+	e.startHandlers(ctx)
 
 	return nil
 }
@@ -360,21 +363,14 @@ func withEventFields(e interface{}, logger *logrus.Entry) *logrus.Entry {
 	return logger
 }
 
-func (e *Eventd) startHandlers() {
+func (e *Eventd) startHandlers(ctx context.Context) {
 	for i := 0; i < e.workerCount; i++ {
 		go func() {
 			defer e.wg.Done()
 
 			for {
 				select {
-				case <-e.shutdownChan:
-					// drain the event channel.
-					for msg := range e.eventChan {
-						if _, err := e.handleMessage(msg); err != nil {
-							logger := withEventFields(msg, logger)
-							logger.WithError(err).Error("error handling event")
-						}
-					}
+				case <-ctx.Done():
 					return
 
 				case msg, ok := <-e.eventChan:
@@ -400,16 +396,18 @@ func (e *Eventd) startHandlers() {
 							if !ok {
 								goto DRAINED
 							}
-							if _, err := e.handleMessage(keepMsg); err != nil {
+							if _, err := e.handleMessage(ctx, keepMsg); err != nil {
 								logger := withEventFields(msg, logger)
 								logger.WithError(err).Error("error handling event")
 							}
+						case <-ctx.Done():
+							return
 						default:
 							goto DRAINED
 						}
 					}
 				DRAINED:
-					if _, err := e.handleMessage(msg); err != nil {
+					if _, err := e.handleMessage(ctx, msg); err != nil {
 						logger := withEventFields(msg, logger)
 						logger.WithError(err).Error("error handling event")
 					}
@@ -426,7 +424,7 @@ func (e *Eventd) startHandlers() {
 						}
 						return
 					}
-					if _, err := e.handleMessage(msg); err != nil {
+					if _, err := e.handleMessage(ctx, msg); err != nil {
 						logger := withEventFields(msg, logger)
 						logger.WithError(err).Error("error handling event")
 					}
@@ -484,7 +482,7 @@ func (e *Eventd) updateEventWithDuration(ctx context.Context, event *corev2.Even
 	return e.eventStore.UpdateEvent(ctx, event)
 }
 
-func (e *Eventd) handleMessage(msg interface{}) (fEvent *corev2.Event, fErr error) {
+func (e *Eventd) handleMessage(ctx context.Context, msg interface{}) (fEvent *corev2.Event, fErr error) {
 	then := time.Now()
 	defer func() {
 		duration := time.Since(then)
@@ -533,7 +531,7 @@ func (e *Eventd) handleMessage(msg interface{}) (fEvent *corev2.Event, fErr erro
 		return event, e.publishEventWithDuration(event)
 	}
 
-	ctx := context.WithValue(context.Background(), corev2.NamespaceKey, event.Entity.Namespace)
+	ctx = context.WithValue(ctx, corev2.NamespaceKey, event.Entity.Namespace)
 
 	// Create a proxy entity if required and update the event's entity with it,
 	// but only if the event's entity is not an agent.
@@ -610,7 +608,7 @@ NOTTL:
 	return event, e.publishEventWithDuration(event)
 }
 
-func (e *Eventd) alive(key string, prev liveness.State, leader bool) (bury bool) {
+func (e *Eventd) alive(ctx context.Context, key string, prev liveness.State, leader bool) (bury bool) {
 	lager := logger.WithFields(logrus.Fields{
 		"status":          liveness.Alive.String(),
 		"previous_status": prev.String()})
@@ -631,8 +629,8 @@ func (e *Eventd) alive(key string, prev liveness.State, leader bool) (bury bool)
 	return false
 }
 
-func (e *Eventd) dead(key string, prev liveness.State, leader bool) (bury bool) {
-	if e.ctx.Err() != nil {
+func (e *Eventd) dead(ctx context.Context, key string, prev liveness.State, leader bool) (bury bool) {
+	if ctx.Err() != nil {
 		return false
 	}
 	lager := logger.WithFields(logrus.Fields{
@@ -659,7 +657,7 @@ func (e *Eventd) dead(key string, prev liveness.State, leader bool) (bury bool) 
 		return true
 	}
 
-	ctx := store.NamespaceContext(context.Background(), namespace)
+	ctx = store.NamespaceContext(ctx, namespace)
 	// TODO(eric): make this configurable? Or dynamic based on some property?
 	// 120s seems like a reasonable, it not somewhat large, timeout for check TTL processing.
 	ctx, cancel := context.WithTimeout(ctx, e.storeTimeout)
@@ -679,7 +677,7 @@ func (e *Eventd) dead(key string, prev liveness.State, leader bool) (bury bool) 
 			// Fatal error
 			select {
 			case e.errChan <- err:
-			case <-e.ctx.Done():
+			case <-ctx.Done():
 			}
 		}
 		return false
@@ -704,7 +702,7 @@ func (e *Eventd) dead(key string, prev liveness.State, leader bool) (bury bool) 
 			// Fatal error
 			select {
 			case e.errChan <- err:
-			case <-e.ctx.Done():
+			case <-ctx.Done():
 			}
 		}
 		return false
@@ -757,7 +755,7 @@ func (e *Eventd) handleFailure(ctx context.Context, event *corev2.Event) error {
 			// Fatal error
 			select {
 			case e.errChan <- err:
-			case <-e.ctx.Done():
+			case <-ctx.Done():
 			}
 		}
 		return err
@@ -780,7 +778,7 @@ func (e *Eventd) createFailedCheckEvent(ctx context.Context, event *corev2.Event
 			// Fatal error
 			select {
 			case e.errChan <- err:
-			case <-e.ctx.Done():
+			case <-ctx.Done():
 			}
 		}
 		return nil, err
@@ -808,8 +806,7 @@ func (e *Eventd) Stop() error {
 	if err := e.subscription.Cancel(); err != nil {
 		logger.WithError(err).Error("unable to unsubscribe from message bus")
 	}
-	e.cancel()
-	close(e.eventChan)
+	defer close(e.eventChan)
 	close(e.shutdownChan)
 	e.wg.Wait()
 	if e.Logger != nil {

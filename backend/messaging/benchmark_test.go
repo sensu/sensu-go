@@ -1,6 +1,7 @@
 package messaging
 
 import (
+	"context"
 	"fmt"
 	"sync"
 	"testing"
@@ -35,8 +36,10 @@ func BenchmarkWizardBusPublish(b *testing.B) {
 
 	for _, tc := range tt {
 		b.Run(fmt.Sprintf("%d-clients", tc), func(b *testing.B) {
+			ctx, cancel := context.WithCancel(context.Background())
+			defer cancel()
 			bus, _ := NewWizardBus(WizardBusConfig{})
-			_ = bus.Start()
+			_ = bus.Start(ctx)
 
 			wg := &sync.WaitGroup{}
 			wg.Add(tc)

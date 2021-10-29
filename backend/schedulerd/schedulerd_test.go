@@ -15,10 +15,13 @@ import (
 )
 
 func TestSchedulerd(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
 	// Setup wizard bus
 	bus, err := messaging.NewWizardBus(messaging.WizardBusConfig{})
 	require.NoError(t, err)
-	if berr := bus.Start(); berr != nil {
+	if berr := bus.Start(ctx); berr != nil {
 		assert.FailNow(t, berr.Error())
 	}
 
@@ -30,16 +33,16 @@ func TestSchedulerd(t *testing.T) {
 	defer st.Teardown()
 
 	// Mock a default namespace
-	require.NoError(t, st.CreateNamespace(context.Background(), types.FixtureNamespace("default")))
+	require.NoError(t, st.CreateNamespace(ctx, types.FixtureNamespace("default")))
 
-	schedulerd, err := New(context.Background(), Config{
+	schedulerd, err := New(Config{
 		Store:       st,
 		QueueGetter: queue.NewMemoryGetter(),
 		Bus:         bus,
 		Client:      st.Client,
 	})
 	require.NoError(t, err)
-	require.NoError(t, schedulerd.Start())
+	require.NoError(t, schedulerd.Start(ctx))
 
 	tsub := testSubscriber{
 		ch: make(chan interface{}, 10),
@@ -50,7 +53,7 @@ func TestSchedulerd(t *testing.T) {
 	}
 
 	check := types.FixtureCheckConfig("check_name")
-	ctx := context.WithValue(context.Background(), types.NamespaceKey, check.Namespace)
+	ctx = context.WithValue(ctx, types.NamespaceKey, check.Namespace)
 
 	assert.NoError(t, check.Validate())
 	assert.NoError(t, st.UpdateCheckConfig(ctx, check))
@@ -60,6 +63,7 @@ func TestSchedulerd(t *testing.T) {
 	assert.NoError(t, sub.Cancel())
 	close(tsub.ch)
 
+	cancel()
 	assert.NoError(t, schedulerd.Stop())
 	assert.NoError(t, bus.Stop())
 

@@ -4,14 +4,13 @@ import (
 	"context"
 
 	"github.com/prometheus/client_golang/prometheus"
-	corev3 "github.com/sensu/sensu-go/api/core/v3"
 	"github.com/sensu/sensu-go/backend/messaging"
 	"github.com/sensu/sensu-go/backend/ringv2"
 	"github.com/sensu/sensu-go/backend/secrets"
 	"github.com/sensu/sensu-go/backend/store"
 	cachev2 "github.com/sensu/sensu-go/backend/store/cache/v2"
 	"github.com/sensu/sensu-go/types"
-	"go.etcd.io/etcd/client/v3"
+	clientv3 "go.etcd.io/etcd/client/v3"
 )
 
 var (
@@ -52,8 +51,6 @@ type Schedulerd struct {
 	bus                    messaging.MessageBus
 	checkWatcher           *CheckWatcher
 	adhocRequestExecutor   *AdhocRequestExecutor
-	ctx                    context.Context
-	cancel                 context.CancelFunc
 	errChan                chan error
 	ringPool               *ringv2.RingPool
 	entityCache            *cachev2.Resource
@@ -69,12 +66,13 @@ type Config struct {
 	QueueGetter            types.QueueGetter
 	RingPool               *ringv2.RingPool
 	Bus                    messaging.MessageBus
+	EntityCache            *cachev2.Resource
 	Client                 *clientv3.Client
 	SecretsProviderManager *secrets.ProviderManager
 }
 
 // New creates a new Schedulerd.
-func New(ctx context.Context, c Config, opts ...Option) (*Schedulerd, error) {
+func New(c Config, opts ...Option) (*Schedulerd, error) {
 	s := &Schedulerd{
 		store:                  c.Store,
 		queueGetter:            c.QueueGetter,
@@ -83,14 +81,8 @@ func New(ctx context.Context, c Config, opts ...Option) (*Schedulerd, error) {
 		ringPool:               c.RingPool,
 		secretsProviderManager: c.SecretsProviderManager,
 	}
-	s.ctx, s.cancel = context.WithCancel(ctx)
-	cache, err := cachev2.New(s.ctx, c.Client, &corev3.EntityConfig{}, true)
-	if err != nil {
-		return nil, err
-	}
-	s.entityCache = cache
-	s.checkWatcher = NewCheckWatcher(s.ctx, c.Bus, c.Store, c.RingPool, cache, s.secretsProviderManager)
-	s.adhocRequestExecutor = NewAdhocRequestExecutor(s.ctx, s.store, s.queueGetter.GetQueue(adhocQueueName), s.bus, s.entityCache, s.secretsProviderManager)
+	s.entityCache = c.EntityCache
+	s.checkWatcher = NewCheckWatcher(c.Bus, c.Store, c.RingPool, c.EntityCache, s.secretsProviderManager)
 
 	for _, o := range opts {
 		if err := o(s); err != nil {
@@ -101,17 +93,19 @@ func New(ctx context.Context, c Config, opts ...Option) (*Schedulerd, error) {
 }
 
 // Start the Scheduler daemon.
-func (s *Schedulerd) Start() error {
+func (s *Schedulerd) Start(ctx context.Context) error {
+	s.adhocRequestExecutor = NewAdhocRequestExecutor(ctx, s.store, s.queueGetter.GetQueue(adhocQueueName), s.bus, s.entityCache, s.secretsProviderManager)
+
 	_ = prometheus.Register(intervalCounter)
 	_ = prometheus.Register(cronCounter)
 	_ = prometheus.Register(rrIntervalCounter)
 	_ = prometheus.Register(rrCronCounter)
-	return s.checkWatcher.Start()
+
+	return s.checkWatcher.Start(ctx)
 }
 
 // Stop the scheduler daemon.
 func (s *Schedulerd) Stop() error {
-	s.cancel()
 	close(s.errChan)
 	return nil
 }

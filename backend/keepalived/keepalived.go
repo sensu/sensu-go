@@ -88,8 +88,6 @@ type Keepalived struct {
 	errChan               chan error
 	livenessFactory       liveness.Factory
 	ringPool              *ringv2.RingPool
-	ctx                   context.Context
-	cancel                context.CancelFunc
 	storeTimeout          time.Duration
 }
 
@@ -125,8 +123,6 @@ func New(c Config, opts ...Option) (*Keepalived, error) {
 		c.StoreTimeout = time.Minute
 	}
 
-	ctx, cancel := context.WithCancel(context.Background())
-
 	k := &Keepalived{
 		store:                 c.Store,
 		storev2:               c.StoreV2,
@@ -139,8 +135,6 @@ func New(c Config, opts ...Option) (*Keepalived, error) {
 		mu:                    &sync.Mutex{},
 		errChan:               make(chan error, 1),
 		ringPool:              c.RingPool,
-		ctx:                   ctx,
-		cancel:                cancel,
 		storeTimeout:          c.StoreTimeout,
 	}
 	for _, o := range opts {
@@ -158,30 +152,29 @@ func (k *Keepalived) Receiver() chan<- interface{} {
 
 // Start starts the daemon, returning an error if preconditions for startup
 // fail.
-func (k *Keepalived) Start() error {
+func (k *Keepalived) Start(ctx context.Context) error {
 	sub, err := k.bus.Subscribe(messaging.TopicKeepalive, "keepalived", k)
 	if err != nil {
 		return err
 	}
 
 	k.subscription = sub
-	if err := k.initFromStore(context.Background()); err != nil {
+	if err := k.initFromStore(ctx); err != nil {
 		_ = sub.Cancel()
 		return err
 	}
 
-	k.startWorkers()
+	k.startWorkers(ctx)
 
 	return nil
 }
 
 // Stop stops the daemon, returning an error if one was encountered during
-// shutdown.
+// shutdown. Stop blocks until the context provided to Start is cancelled.
 func (k *Keepalived) Stop() error {
-	k.cancel()
+	k.wg.Wait()
 	err := k.subscription.Cancel()
 	close(k.keepaliveChan)
-	k.wg.Wait()
 	close(k.errChan)
 	return err
 }
@@ -250,12 +243,12 @@ func (k *Keepalived) initFromStore(ctx context.Context) error {
 	return nil
 }
 
-func (k *Keepalived) startWorkers() {
+func (k *Keepalived) startWorkers(ctx context.Context) {
 	k.wg = &sync.WaitGroup{}
 	k.wg.Add(k.workerCount)
 
 	for i := 0; i < k.workerCount; i++ {
-		go k.processKeepalives(k.ctx)
+		go k.processKeepalives(ctx)
 	}
 }
 
@@ -309,7 +302,7 @@ func (k *Keepalived) processKeepalives(ctx context.Context) {
 				continue
 			}
 
-			if err := k.handleEntityRegistration(entity, event); err != nil {
+			if err := k.handleEntityRegistration(ctx, entity, event); err != nil {
 				logger.WithError(err).Error("error handling entity registration")
 				if _, ok := err.(*store.ErrInternal); ok {
 					// Fatal error
@@ -366,12 +359,12 @@ func (k *Keepalived) HandleError(err error) {
 	logger.WithError(err).Error(err)
 }
 
-func (k *Keepalived) handleEntityRegistration(entity *corev2.Entity, event *corev2.Event) error {
+func (k *Keepalived) handleEntityRegistration(ctx context.Context, entity *corev2.Entity, event *corev2.Event) error {
 	if entity.EntityClass != corev2.EntityAgentClass {
 		return nil
 	}
 
-	ctx := corev2.SetContextFromResource(k.ctx, entity)
+	ctx = corev2.SetContextFromResource(ctx, entity)
 	tctx, cancel := context.WithTimeout(ctx, k.storeTimeout)
 	defer cancel()
 
@@ -511,7 +504,7 @@ func createRegistrationEvent(entity *corev2.Entity) *corev2.Event {
 	return registrationEvent
 }
 
-func (k *Keepalived) alive(key string, prev liveness.State, leader bool) bool {
+func (k *Keepalived) alive(ctx context.Context, key string, prev liveness.State, leader bool) bool {
 	KeepalivesProcessed.WithLabelValues(KeepaliveCounterLabelAlive).Inc()
 	lager := logger.WithFields(logrus.Fields{
 		"status":          liveness.Alive.String(),
@@ -531,9 +524,9 @@ func (k *Keepalived) alive(key string, prev liveness.State, leader bool) bool {
 }
 
 // this is a callback - it should not write to k.errChan
-func (k *Keepalived) dead(key string, prev liveness.State, leader bool) bool {
+func (k *Keepalived) dead(ctx context.Context, key string, prev liveness.State, leader bool) bool {
 	KeepalivesProcessed.WithLabelValues(KeepaliveCounterLabelDead).Inc()
-	if k.ctx.Err() != nil {
+	if ctx.Err() != nil {
 		return false
 	}
 	// Parse the key to determine the namespace and entity name. The error will be
@@ -566,7 +559,7 @@ func (k *Keepalived) dead(key string, prev liveness.State, leader bool) bool {
 		return true
 	}
 
-	ctx := store.NamespaceContext(k.ctx, namespace)
+	ctx = store.NamespaceContext(ctx, namespace)
 	meta := corev2.NewObjectMeta(name, namespace)
 	cfg := &corev3.EntityConfig{Metadata: &meta}
 
@@ -693,7 +686,7 @@ func (k *Keepalived) handleUpdate(e *corev2.Event) error {
 		return err
 	}
 
-	req := storev2.NewResourceRequestFromResource(k.ctx, entityState)
+	req := storev2.NewResourceRequestFromResource(ctx, entityState)
 
 	// use postgres, if available (enterprise only, entity state only)
 	req.UsePostgres = true

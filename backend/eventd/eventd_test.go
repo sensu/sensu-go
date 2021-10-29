@@ -45,10 +45,7 @@ func newFakeFactory(f liveness.Interface) liveness.Factory {
 }
 
 func newEventd(store storev2.Interface, eventStore store.Store, bus messaging.MessageBus, livenessFactory liveness.Factory) *Eventd {
-	ctx, cancel := context.WithCancel(context.Background())
 	return &Eventd{
-		ctx:             ctx,
-		cancel:          cancel,
 		store:           store,
 		eventStore:      eventStore,
 		bus:             bus,
@@ -68,13 +65,15 @@ func newEventd(store storev2.Interface, eventStore store.Store, bus messaging.Me
 func TestEventHandling(t *testing.T) {
 	bus, err := messaging.NewWizardBus(messaging.WizardBusConfig{})
 	require.NoError(t, err)
-	require.NoError(t, bus.Start())
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	require.NoError(t, bus.Start(ctx))
 
 	mockEntityStore := &storetest.Store{}
 	mockStore := &mockstore.MockStore{}
 	e := newEventd(mockEntityStore, mockStore, bus, newFakeFactory(&fakeSwitchSet{}))
 
-	require.NoError(t, e.Start())
+	require.NoError(t, e.Start(ctx))
 	require.NoError(t, bus.Publish(messaging.TopicEventRaw, nil))
 
 	badEvent := &corev2.Event{}
@@ -98,7 +97,9 @@ func TestEventHandling(t *testing.T) {
 	event.Check.Occurrences = 1
 	event.Check.State = corev2.EventPassingState
 	event.Check.LastOK = event.Timestamp
-	mockStore.On("UpdateEvent", mock.Anything).Return(event, nilEvent, nil)
+	var wg sync.WaitGroup
+	wg.Add(1)
+	mockStore.On("UpdateEvent", mock.Anything).Run(func(mock.Arguments) { wg.Done() }).Return(event, nilEvent, nil)
 
 	// No silenced entries
 	mockStore.On(
@@ -112,6 +113,9 @@ func TestEventHandling(t *testing.T) {
 
 	require.NoError(t, bus.Publish(messaging.TopicEventRaw, event))
 
+	wg.Wait()
+
+	cancel()
 	err = e.Stop()
 	assert.NoError(t, err)
 
@@ -126,15 +130,17 @@ func TestEventHandling(t *testing.T) {
 }
 
 func TestEventMonitor(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
 	bus, err := messaging.NewWizardBus(messaging.WizardBusConfig{})
 	require.NoError(t, err)
-	require.NoError(t, bus.Start())
+	require.NoError(t, bus.Start(ctx))
 
 	mockEntityStore := &storetest.Store{}
 	mockStore := &mockstore.MockStore{}
 	e := newEventd(mockEntityStore, mockStore, bus, newFakeFactory(&fakeSwitchSet{}))
 
-	require.NoError(t, e.Start())
+	require.NoError(t, e.Start(ctx))
 	require.NoError(t, bus.Publish(messaging.TopicEventRaw, nil))
 
 	event := corev2.FixtureEvent("entity", "check")
@@ -165,6 +171,7 @@ func TestEventMonitor(t *testing.T) {
 
 	require.NoError(t, bus.Publish(messaging.TopicEventRaw, event))
 
+	cancel()
 	err = e.Stop()
 	assert.NoError(t, err)
 
@@ -250,6 +257,8 @@ func TestCheckTTL(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			ctx, cancel := context.WithCancel(context.Background())
+			defer cancel()
 			store := &storetest.Store{}
 			eventStore := &mockstore.MockStore{}
 			switches := &mockSwitchSet{}
@@ -273,7 +282,7 @@ func TestCheckTTL(t *testing.T) {
 			var err error
 			e.bus, err = messaging.NewWizardBus(messaging.WizardBusConfig{})
 			require.NoError(t, err)
-			require.NoError(t, e.bus.Start())
+			require.NoError(t, e.bus.Start(ctx))
 
 			eventStore.On("GetEventByEntityCheck", mock.Anything, "entity", "check").
 				Return(tt.previousEvent, tt.previousEventErr)
@@ -283,7 +292,7 @@ func TestCheckTTL(t *testing.T) {
 				Return([]*corev2.Silenced{}, nil)
 			eventStore.On("UpdateEvent", mock.Anything, mock.Anything).Return(tt.msg, mockEvent, nil)
 
-			if _, err := e.handleMessage(tt.msg); (err != nil) != tt.wantErr {
+			if _, err := e.handleMessage(ctx, tt.msg); (err != nil) != tt.wantErr {
 				t.Errorf("Eventd.handleMessage() error = %v, wantErr %v", err, tt.wantErr)
 			}
 		})
@@ -407,8 +416,10 @@ func TestBuryConditions(t *testing.T) {
 				test.eventStoreFunc(eventStore)
 			}
 
-			eventd := &Eventd{store: store, eventStore: eventStore, ctx: context.Background()}
-			if got, want := eventd.dead(test.key, liveness.Alive, false), test.bury; got != want {
+			eventd := &Eventd{store: store, eventStore: eventStore}
+			ctx, cancel := context.WithCancel(context.Background())
+			defer cancel()
+			if got, want := eventd.dead(ctx, test.key, liveness.Alive, false), test.bury; got != want {
 				t.Fatalf("bad bury result: got %v, want %v", got, want)
 			}
 		})

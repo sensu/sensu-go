@@ -35,7 +35,7 @@ func TestSwitchSet(t *testing.T) {
 	results := make(map[string][]int)
 
 	// This callback gets executed when the entity dies
-	expired := func(key string, prev State, leader bool) bool {
+	expired := func(ctx context.Context, key string, prev State, leader bool) bool {
 		mu.Lock()
 		defer mu.Unlock()
 		results[key] = append(results[key], int(Dead))
@@ -44,7 +44,7 @@ func TestSwitchSet(t *testing.T) {
 	}
 
 	// This callback gets executed when the entity asserts its liveness
-	alive := func(key string, prev State, leader bool) bool {
+	alive := func(ctx context.Context, key string, prev State, leader bool) bool {
 		mu.Lock()
 		defer mu.Unlock()
 		results[key] = append(results[key], int(Alive))
@@ -98,7 +98,7 @@ func TestDead(t *testing.T) {
 	deadC := make(chan struct{})
 
 	// This callback gets executed when the entity dies
-	expired := func(key string, prev State, leader bool) bool {
+	expired := func(ctx context.Context, key string, prev State, leader bool) bool {
 		mu.Lock()
 		defer mu.Unlock()
 		results[key] = append(results[key], int(Dead))
@@ -107,7 +107,7 @@ func TestDead(t *testing.T) {
 	}
 
 	// This callback gets executed when the entity asserts its liveness
-	alive := func(key string, prev State, leader bool) bool {
+	alive := func(ctx context.Context, key string, prev State, leader bool) bool {
 		mu.Lock()
 		defer mu.Unlock()
 		results[key] = append(results[key], int(Alive))
@@ -143,13 +143,13 @@ func TestBury(t *testing.T) {
 	defer cancel()
 
 	// This callback gets executed when the entity dies
-	expired := func(key string, prev State, leader bool) bool {
+	expired := func(ctx context.Context, key string, prev State, leader bool) bool {
 		t.Fatal("expired should never be called on key " + key)
 		return false
 	}
 
 	// This callback gets executed when the entity asserts its liveness
-	alive := func(key string, prev State, leader bool) bool {
+	alive := func(ctx context.Context, key string, prev State, leader bool) bool {
 		t.Fatal("alive should never be called on key " + key)
 		return false
 	}
@@ -180,13 +180,13 @@ func TestBuryOnCallback(t *testing.T) {
 	defer cancel()
 
 	// This callback gets executed when the entity dies
-	expired := func(key string, prev State, leader bool) bool {
+	expired := func(ctx context.Context, key string, prev State, leader bool) bool {
 		t.Fatal("expired should not have been called")
 		return true
 	}
 
 	// This callback gets executed when the entity asserts its liveness
-	alive := func(key string, prev State, leader bool) bool {
+	alive := func(ctx context.Context, key string, prev State, leader bool) bool {
 		if prev != Dead {
 			t.Fatal("bad previous state")
 		}
