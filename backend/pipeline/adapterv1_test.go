@@ -411,6 +411,101 @@ func TestAdapterV1_Run(t *testing.T) {
 	}
 }
 
+type cancelContextFilterAdapter struct {
+	Cancel context.CancelFunc
+	Run    *bool
+}
+
+func (cancelContextFilterAdapter) Name() string {
+	return "cancel_context_filter_adapter"
+}
+
+func (cancelContextFilterAdapter) CanFilter(*corev2.ResourceReference) bool {
+	return true
+}
+
+func (c cancelContextFilterAdapter) Filter(context.Context, *corev2.ResourceReference, *corev2.Event) (bool, error) {
+	c.Cancel()
+	*c.Run = true
+	// returning false means to _not_ filter the event
+	return false, context.Canceled
+}
+
+type failIfRunHandlerAdapter struct {
+	T *testing.T
+}
+
+func (failIfRunHandlerAdapter) Name() string {
+	return "fail_if_run_handler_adapter"
+}
+
+func (failIfRunHandlerAdapter) CanHandle(*corev2.ResourceReference) bool {
+	return true
+}
+
+func (f failIfRunHandlerAdapter) Handle(context.Context, *corev2.ResourceReference, *corev2.Event, []byte) error {
+	f.T.Fatal("handler was run")
+	return nil
+}
+
+func TestHandlerDoesNotRunAfterFilterContextCancelled(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	var filterRun bool
+	filterAdapters := []FilterAdapter{
+		cancelContextFilterAdapter{
+			Run:    &filterRun,
+			Cancel: cancel,
+		},
+	}
+	handlerAdapters := []HandlerAdapter{
+		failIfRunHandlerAdapter{T: t},
+	}
+	stor := func() store.Store {
+		pipeline := &corev2.Pipeline{
+			ObjectMeta: corev2.NewObjectMeta("pipeline1", "default"),
+			Workflows: []*corev2.PipelineWorkflow{
+				{
+					Name: "send metrics to prometheus",
+					Handler: &corev2.ResourceReference{
+						APIVersion: "core/v2",
+						Type:       "Handler",
+						Name:       "handler1",
+					},
+					Filters: []*corev2.ResourceReference{
+						&corev2.ResourceReference{
+							APIVersion: "core/v2",
+							Type:       "EventFilter",
+							Name:       "filter1",
+						},
+					},
+				},
+			},
+		}
+		stor := &mockstore.MockStore{}
+		stor.On("GetPipelineByName", mock.Anything, mock.Anything).Return(pipeline, nil)
+		return stor
+	}()
+	a := &AdapterV1{
+		Store:          stor,
+		FilterAdapters: filterAdapters,
+		MutatorAdapters: []MutatorAdapter{
+			&mutator.JSONAdapter{},
+		},
+		HandlerAdapters: handlerAdapters,
+	}
+	if err := a.Run(ctx, new(corev2.ResourceReference), corev2.FixtureEvent("foo", "bar")); err != nil {
+		if err != context.Canceled {
+			t.Fatal(err)
+		}
+	} else {
+		t.Fatal("no error from adapter Run()")
+	}
+	if !filterRun {
+		t.Fatal("filter was never run")
+	}
+}
+
 func TestAdapterV1_resolvePipelineReference(t *testing.T) {
 	type fields struct {
 		Store           store.Store
