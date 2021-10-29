@@ -132,3 +132,11 @@ func TestValidateMutatorCommandWithJavascript(t *testing.T) {
 		t.Fatal("expected non-nil error")
 	}
 }
+
+func TestValidateMutatorEnv(t *testing.T) {
+	mutator := FixtureMutator("foo")
+	mutator.EnvVars = []string{"FOO"}
+	if err := mutator.Validate(); err != nil {
+		t.Fatal(err)
+	}
+}
