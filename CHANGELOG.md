@@ -8,7 +8,7 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
 
-## [6.5.3] - 2021-10-29
+## [6.5.3, 6.5.4] - 2021-10-29
 
 ### Added
 - Added eventd, pipeline, & asset metrics from 6.5.2 to the metrics log.
