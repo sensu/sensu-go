@@ -8,6 +8,9 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
 
+### Added
+- Added objectives (0.5, 0.9, 0.99) to `graphql_duration_seconds` metric.
+
 ## [6.5.3, 6.5.4] - 2021-10-29
 
 ### Added
