@@ -238,8 +238,8 @@ func GraphQLSubrouter(router *mux.Router, cfg Config) *mux.Router {
 	// clients to determine what occurred. As such give the service as much time
 	// as possible to produce results.
 	timeout := time.Duration(cfg.WriteTimeout*int64(time.Second)) - (50 * time.Microsecond)
-	if timeout <= 0 {
-		timeout = time.Duration(1)
+	if timeout < 0 {
+		timeout = 0
 	}
 
 	mountRouters(
