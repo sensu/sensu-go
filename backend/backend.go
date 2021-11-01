@@ -136,6 +136,9 @@ var SelectedMetrics = []string{
 	"etcd_network_peer_received_bytes_total",
 	"etcd_network_peer_sent_bytes_total",
 	"etcd_snap_db_fsync_duration_seconds_bucket",
+	"graphql_duration_seconds",
+	"graphql_duration_seconds_sum",
+	"graphql_duration_seconds_count",
 }
 
 // Backend represents the backend server, which is used to hold the datastore
