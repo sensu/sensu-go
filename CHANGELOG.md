@@ -13,6 +13,7 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 - Added `graphql_duration_seconds`, `graphql_duration_seconds_sum` &
 `graphql_duration_seconds_count` to the metrics log.
 - Added new prometheus metrics for tracking lease operations.
+- Added `sensu_go_lease_ops` to the metrics log.
 
 ### Fixed
 - Duration metrics for assets, pipeline, and eventd have been updated to use
