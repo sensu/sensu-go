@@ -8,6 +8,11 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
 
+### Changed
+
+- Empty and zero value configuration parameters for `etcd` do not overwrite
+  defaults anymore.
+
 ## [6.5.3, 6.5.4] - 2021-10-29
 
 ### Added
