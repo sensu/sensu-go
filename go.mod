@@ -15,7 +15,7 @@ require (
 	github.com/StackExchange/wmi v0.0.0-20180725035823-b12b22c5341f // indirect
 	github.com/ash2k/stager v0.0.0-20170622123058-6e9c7b0eacd4 // indirect
 	github.com/atlassian/gostatsd v0.0.0-20180514010436-af796620006e
-	github.com/blang/semver/v4 v4.0.0 // indirect
+	github.com/blang/semver/v4 v4.0.0
 	github.com/dave/jennifer v0.0.0-20171207062344-d8bdbdbee4e1
 	github.com/docker/docker v0.0.0-20180409082103-cbde00b44273
 	github.com/dustin/go-humanize v1.0.0
