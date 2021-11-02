@@ -44,7 +44,7 @@ func (a *AdapterV1) processHandler(ctx context.Context, ref *corev2.ResourceRefe
 		if fErr != nil {
 			status = metricspkg.StatusLabelError
 		}
-		handlerDuration.WithLabelValues(status, ref.ResourceID()).Observe(v)
+		handlerDuration.WithLabelValues(status, ref.ResourceID()).Observe(v * float64(1000))
 	}))
 	defer handlerTimer.ObserveDuration()
 

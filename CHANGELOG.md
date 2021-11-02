@@ -13,6 +13,10 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 - Added `graphql_duration_seconds`, `graphql_duration_seconds_sum` &
 `graphql_duration_seconds_count` to the metrics log.
 
+### Fixed
+- Duration metrics for assets, pipeline, and eventd have been updated to use
+milliseconds to match other duration metrics.
+
 ## [6.5.3, 6.5.4] - 2021-10-29
 
 ### Added
