@@ -35,7 +35,6 @@ type APId struct {
 	EntityLimitedCoreSubrouter *mux.Router
 	GraphQLSubrouter           *mux.Router
 	RequestLimit               int64
-	WriteTimeout               int64
 
 	stopping            chan struct{}
 	running             *atomic.Value
@@ -59,7 +58,7 @@ type Option func(*APId) error
 type Config struct {
 	ListenAddress       string
 	RequestLimit        int64
-	WriteTimeout        int64
+	WriteTimeout        time.Duration
 	URL                 string
 	Bus                 messaging.MessageBus
 	Store               store.Store
@@ -93,7 +92,6 @@ func New(c Config, opts ...Option) (*APId, error) {
 		Authenticator:       c.Authenticator,
 		clusterVersion:      c.ClusterVersion,
 		RequestLimit:        c.RequestLimit,
-		WriteTimeout:        c.WriteTimeout,
 	}
 
 	// prepare TLS config
@@ -116,7 +114,7 @@ func New(c Config, opts ...Option) (*APId, error) {
 	a.HTTPServer = &http.Server{
 		Addr:         c.ListenAddress,
 		Handler:      router,
-		WriteTimeout: time.Duration(c.WriteTimeout) * time.Second,
+		WriteTimeout: c.WriteTimeout * time.Second,
 		ReadTimeout:  15 * time.Second,
 		TLSConfig:    tlsServerConfig,
 	}
@@ -237,7 +235,7 @@ func GraphQLSubrouter(router *mux.Router, cfg Config) *mux.Router {
 	// The write timeout hangs up the request making it more difficult for
 	// clients to determine what occurred. As such give the service as much time
 	// as possible to produce results.
-	timeout := time.Duration(cfg.WriteTimeout*int64(time.Second)) - (50 * time.Millisecond)
+	timeout := (cfg.WriteTimeout * time.Second) - (50 * time.Millisecond)
 	if timeout < 0 {
 		timeout = 0
 	}

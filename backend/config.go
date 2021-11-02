@@ -60,7 +60,7 @@ type Config struct {
 	APIListenAddress string
 	APIRequestLimit  int64
 	APIURL           string
-	APIWriteTimeout  int64
+	APIWriteTimeout  time.Duration
 
 	// AssetsRateLimit is the maximum number of assets per second that will be fetched.
 	AssetsRateLimit rate.Limit
@@ -73,7 +73,7 @@ type Config struct {
 	DashboardPort         int
 	DashboardTLSCertFile  string
 	DashboardTLSKeyFile   string
-	DashboardWriteTimeout int64
+	DashboardWriteTimeout time.Duration
 
 	// Pipelined Configuration
 	DeregistrationHandler string

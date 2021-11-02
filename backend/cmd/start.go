@@ -222,14 +222,14 @@ func StartCommand(initialize InitializeFunc) *cobra.Command {
 				APIListenAddress:      viper.GetString(flagAPIListenAddress),
 				APIRequestLimit:       viper.GetInt64(flagAPIRequestLimit),
 				APIURL:                viper.GetString(flagAPIURL),
-				APIWriteTimeout:       viper.GetInt64(flagAPIWriteTimeout),
+				APIWriteTimeout:       viper.GetDuration(flagAPIWriteTimeout),
 				AssetsRateLimit:       rate.Limit(viper.GetFloat64(flagAssetsRateLimit)),
 				AssetsBurstLimit:      viper.GetInt(flagAssetsBurstLimit),
 				DashboardHost:         viper.GetString(flagDashboardHost),
 				DashboardPort:         viper.GetInt(flagDashboardPort),
 				DashboardTLSCertFile:  viper.GetString(flagDashboardCertFile),
 				DashboardTLSKeyFile:   viper.GetString(flagDashboardKeyFile),
-				DashboardWriteTimeout: viper.GetInt64(flagDashboardWriteTimeout),
+				DashboardWriteTimeout: viper.GetDuration(flagDashboardWriteTimeout),
 				DeregistrationHandler: viper.GetString(flagDeregistrationHandler),
 				CacheDir:              viper.GetString(flagCacheDir),
 				StateDir:              viper.GetString(flagStateDir),
@@ -391,14 +391,14 @@ func handleConfig(cmd *cobra.Command, arguments []string, server bool) error {
 		viper.SetDefault(flagAPIListenAddress, "[::]:8080")
 		viper.SetDefault(flagAPIRequestLimit, middlewares.MaxBytesLimit)
 		viper.SetDefault(flagAPIURL, "http://localhost:8080")
-		viper.SetDefault(flagAPIWriteTimeout, 15)
+		viper.SetDefault(flagAPIWriteTimeout, "15s")
 		viper.SetDefault(flagAssetsRateLimit, asset.DefaultAssetsRateLimit)
 		viper.SetDefault(flagAssetsBurstLimit, asset.DefaultAssetsBurstLimit)
 		viper.SetDefault(flagDashboardHost, "[::]")
 		viper.SetDefault(flagDashboardPort, 3000)
 		viper.SetDefault(flagDashboardCertFile, "")
 		viper.SetDefault(flagDashboardKeyFile, "")
-		viper.SetDefault(flagDashboardWriteTimeout, 15)
+		viper.SetDefault(flagDashboardWriteTimeout, "15s")
 		viper.SetDefault(flagDeregistrationHandler, "")
 		viper.SetDefault(flagCacheDir, path.SystemCacheDir("sensu-backend"))
 		viper.SetDefault(flagStateDir, path.SystemDataDir("sensu-backend"))
@@ -518,14 +518,14 @@ func flagSet(server bool) *pflag.FlagSet {
 		flagSet.String(flagAPIListenAddress, viper.GetString(flagAPIListenAddress), "address to listen on for api traffic")
 		flagSet.Int64(flagAPIRequestLimit, viper.GetInt64(flagAPIRequestLimit), "maximum API request body size, in bytes")
 		flagSet.String(flagAPIURL, viper.GetString(flagAPIURL), "url of the api to connect to")
-		flagSet.Int64(flagAPIWriteTimeout, viper.GetInt64(flagAPIWriteTimeout), "maximum duration before timing out writes of responses")
+		flagSet.Duration(flagAPIWriteTimeout, viper.GetDuration(flagAPIWriteTimeout), "maximum duration before timing out writes of responses")
 		flagSet.Float64(flagAssetsRateLimit, viper.GetFloat64(flagAssetsRateLimit), "maximum number of assets fetched per second")
 		flagSet.Int(flagAssetsBurstLimit, viper.GetInt(flagAssetsBurstLimit), "asset fetch burst limit")
 		flagSet.String(flagDashboardHost, viper.GetString(flagDashboardHost), "dashboard listener host")
 		flagSet.Int(flagDashboardPort, viper.GetInt(flagDashboardPort), "dashboard listener port")
 		flagSet.String(flagDashboardCertFile, viper.GetString(flagDashboardCertFile), "dashboard TLS certificate in PEM format")
 		flagSet.String(flagDashboardKeyFile, viper.GetString(flagDashboardKeyFile), "dashboard TLS certificate key in PEM format")
-		flagSet.Int64(flagDashboardWriteTimeout, viper.GetInt64(flagDashboardWriteTimeout), "maximum duration before timing out writes of responses")
+		flagSet.Duration(flagDashboardWriteTimeout, viper.GetDuration(flagDashboardWriteTimeout), "maximum duration before timing out writes of responses")
 		flagSet.String(flagDeregistrationHandler, viper.GetString(flagDeregistrationHandler), "default deregistration handler")
 		flagSet.String(flagCacheDir, viper.GetString(flagCacheDir), "path to store cached data")
 		flagSet.StringP(flagStateDir, "d", viper.GetString(flagStateDir), "path to sensu state storage")
