@@ -8,6 +8,9 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
 
+### Fixed
+- In addition to the context error print the connection error when sensu-go can't connect to etcd.
+
 ## [6.5.3, 6.5.4] - 2021-10-29
 
 ### Added
