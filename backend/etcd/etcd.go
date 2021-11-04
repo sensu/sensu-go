@@ -187,20 +187,28 @@ func NewEtcd(config *Config) (*Etcd, error) {
 	}
 
 	cfg := embed.NewConfig()
-	cfg.Name = config.Name
+	if config.Name != "" {
+		cfg.Name = config.Name
+	}
 
 	cfg.Dir = filepath.Join(config.DataDir, "etcd", "data")
-	cfg.WalDir = filepath.Join(config.DataDir, "etcd", "wal")
 	if err := ensureDir(cfg.Dir); err != nil {
 		return nil, err
 	}
+
+	cfg.WalDir = filepath.Join(config.DataDir, "etcd", "wal")
 	if err := ensureDir(cfg.WalDir); err != nil {
 		return nil, err
 	}
 
 	// Heartbeat and Election timeouts
-	cfg.TickMs = config.TickMs
-	cfg.ElectionMs = config.ElectionMs
+	if config.TickMs != 0 {
+		cfg.TickMs = config.TickMs
+	}
+
+	if config.ElectionMs != 0 {
+		cfg.ElectionMs = config.ElectionMs
+	}
 
 	// Client config
 	cfg.ACUrls = acURLs
@@ -212,25 +220,50 @@ func NewEtcd(config *Config) (*Etcd, error) {
 	cfg.LPUrls = lpURLs
 	cfg.PeerTLSInfo = (transport.TLSInfo)(config.PeerTLSInfo)
 
-	cfg.CipherSuites = config.CipherSuites
+	if len(config.CipherSuites) > 0 {
+		cfg.CipherSuites = config.CipherSuites
+	}
 
 	// Cluster config
-	cfg.InitialClusterToken = config.InitialClusterToken
-	cfg.InitialCluster = config.InitialCluster
-	cfg.ClusterState = config.InitialClusterState
-	cfg.Durl = config.Discovery
-	cfg.DNSCluster = config.DiscoverySrv
+	if config.InitialClusterToken != "" {
+		cfg.InitialClusterToken = config.InitialClusterToken
+	}
+
+	if config.InitialCluster != "" {
+		cfg.InitialCluster = config.InitialCluster
+	}
+
+	if config.InitialClusterState != "" {
+		cfg.ClusterState = config.InitialClusterState
+	}
+
+	if config.Discovery != "" {
+		cfg.Durl = config.Discovery
+	}
+
+	if config.DiscoverySrv != "" {
+		cfg.DNSCluster = config.DiscoverySrv
+	}
 
 	// Every 5 minutes, we will prune all values in etcd to only their latest
 	// revision.
 	cfg.AutoCompactionMode = "revision"
 	cfg.AutoCompactionRetention = "2"
-	cfg.QuotaBackendBytes = config.QuotaBackendBytes
-	cfg.MaxRequestBytes = config.MaxRequestBytes
+
+	if config.QuotaBackendBytes != 0 {
+		cfg.QuotaBackendBytes = config.QuotaBackendBytes
+	}
+
+	if config.MaxRequestBytes != 0 {
+		cfg.MaxRequestBytes = config.MaxRequestBytes
+	}
 
 	cfg.Logger = "zap"
-	cfg.LogLevel = config.LogLevel
-	logutil.DefaultZapLoggerConfig.Level.SetLevel(levelToZap(config.LogLevel))
+
+	if config.LogLevel != "" {
+		cfg.LogLevel = config.LogLevel
+		logutil.DefaultZapLoggerConfig.Level.SetLevel(levelToZap(config.LogLevel))
+	}
 
 	e, err := embed.StartEtcd(cfg)
 	if err != nil {
