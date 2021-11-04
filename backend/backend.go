@@ -200,6 +200,7 @@ func newClient(ctx context.Context, config *Config, backend *Backend) (*clientv3
 				TLS:         tlsConfig,
 				DialOptions: []grpc.DialOption{
 					grpc.WithReturnConnectionError(),
+					grpc.WithBlock(),
 				},
 			}
 		} else {
@@ -209,6 +210,7 @@ func newClient(ctx context.Context, config *Config, backend *Backend) (*clientv3
 				TLS:         tlsConfig,
 				DialOptions: []grpc.DialOption{
 					grpc.WithReturnConnectionError(),
+					grpc.WithBlock(),
 				},
 			}
 		}

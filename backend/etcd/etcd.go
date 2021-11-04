@@ -286,6 +286,7 @@ func (e *Etcd) NewClientContext(ctx context.Context) (*clientv3.Client, error) {
 		TLS:         tlsConfig,
 		DialOptions: []grpc.DialOption{
 			grpc.WithReturnConnectionError(),
+			grpc.WithBlock(),
 		},
 		Context: ctx,
 	})

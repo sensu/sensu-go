@@ -197,17 +197,23 @@ func InitCommand() *cobra.Command {
 
 					if etcdClientUsername != "" && etcdClientPassword != "" {
 						clientConfig = clientv3.Config{
-							Endpoints:   []string{url},
-							Username:    etcdClientUsername,
-							Password:    etcdClientPassword,
-							TLS:         tlsConfig,
-							DialOptions: []grpc.DialOption{grpc.WithReturnConnectionError()},
+							Endpoints: []string{url},
+							Username:  etcdClientUsername,
+							Password:  etcdClientPassword,
+							TLS:       tlsConfig,
+							DialOptions: []grpc.DialOption{
+								grpc.WithReturnConnectionError(),
+								grpc.WithBlock(),
+							},
 						}
 					} else {
 						clientConfig = clientv3.Config{
-							Endpoints:   []string{url},
-							TLS:         tlsConfig,
-							DialOptions: []grpc.DialOption{grpc.WithReturnConnectionError()},
+							Endpoints: []string{url},
+							TLS:       tlsConfig,
+							DialOptions: []grpc.DialOption{
+								grpc.WithReturnConnectionError(),
+								grpc.WithBlock(),
+							},
 						}
 					}
 					err := initializeStore(clientConfig, initConfig, url)
