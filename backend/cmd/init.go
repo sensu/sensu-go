@@ -197,17 +197,23 @@ func InitCommand() *cobra.Command {
 
 					if etcdClientUsername != "" && etcdClientPassword != "" {
 						clientConfig = clientv3.Config{
-							Endpoints:   []string{url},
-							Username:    etcdClientUsername,
-							Password:    etcdClientPassword,
-							TLS:         tlsConfig,
-							DialOptions: []grpc.DialOption{grpc.WithBlock()},
+							Endpoints: []string{url},
+							Username:  etcdClientUsername,
+							Password:  etcdClientPassword,
+							TLS:       tlsConfig,
+							DialOptions: []grpc.DialOption{
+								grpc.WithReturnConnectionError(),
+								grpc.WithBlock(),
+							},
 						}
 					} else {
 						clientConfig = clientv3.Config{
-							Endpoints:   []string{url},
-							TLS:         tlsConfig,
-							DialOptions: []grpc.DialOption{grpc.WithBlock()},
+							Endpoints: []string{url},
+							TLS:       tlsConfig,
+							DialOptions: []grpc.DialOption{
+								grpc.WithReturnConnectionError(),
+								grpc.WithBlock(),
+							},
 						}
 					}
 					err := initializeStore(clientConfig, initConfig, url)
@@ -254,7 +260,7 @@ func initializeStore(clientConfig clientv3.Config, initConfig initConfig, endpoi
 	if err != nil {
 		return fmt.Errorf("error connecting to etcd endpoint: %w", err)
 	}
-	defer client.Close()
+	defer func() { _ = client.Close() }()
 
 	// Check if etcd endpoint is reachable
 	if _, err := client.Status(ctx, endpoint); err != nil {

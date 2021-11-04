@@ -8,6 +8,8 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
 
+### Fixed
+- In addition to the context error print the connection error when sensu-go can't connect to etcd.
 ### Changed
 
 - Empty and zero value configuration parameters for `etcd` do not overwrite

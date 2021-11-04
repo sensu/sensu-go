@@ -318,6 +318,7 @@ func (e *Etcd) NewClientContext(ctx context.Context) (*clientv3.Client, error) {
 		DialTimeout: 60 * time.Second,
 		TLS:         tlsConfig,
 		DialOptions: []grpc.DialOption{
+			grpc.WithReturnConnectionError(),
 			grpc.WithBlock(),
 		},
 		Context: ctx,
