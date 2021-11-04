@@ -199,7 +199,7 @@ func newClient(ctx context.Context, config *Config, backend *Backend) (*clientv3
 				Password:    config.EtcdClientPassword,
 				TLS:         tlsConfig,
 				DialOptions: []grpc.DialOption{
-					grpc.WithBlock(),
+					grpc.WithReturnConnectionError(),
 				},
 			}
 		} else {
@@ -208,7 +208,7 @@ func newClient(ctx context.Context, config *Config, backend *Backend) (*clientv3
 				DialTimeout: 5 * time.Second,
 				TLS:         tlsConfig,
 				DialOptions: []grpc.DialOption{
-					grpc.WithBlock(),
+					grpc.WithReturnConnectionError(),
 				},
 			}
 		}
@@ -538,11 +538,11 @@ func Initialize(ctx context.Context, config *Config) (*Backend, error) {
 
 	// Prepare the authentication providers
 	authenticator := &authentication.Authenticator{}
-	basic := &basic.Provider{
+	provider := &basic.Provider{
 		ObjectMeta: corev2.ObjectMeta{Name: basic.Type},
 		Store:      b.Store,
 	}
-	authenticator.AddProvider(basic)
+	authenticator.AddProvider(provider)
 
 	var clusterVersion string
 	// only retrieve the cluster version if etcd is embedded
@@ -625,7 +625,7 @@ func Initialize(ctx context.Context, config *Config) (*Backend, error) {
 
 func (b *Backend) runOnce() error {
 	eCloser := b.StoreUpdater.(closer)
-	defer eCloser.Close()
+	defer func() { _ = eCloser.Close() }()
 
 	var derr error
 
@@ -682,7 +682,7 @@ func (b *Backend) runOnce() error {
 		if err != nil {
 			logger.WithError(err).Error("unable to open platform metrics log file")
 		} else {
-			defer metricsLogWriter.Close()
+			defer func() { _ = metricsLogWriter.Close() }()
 			metricsBridge, err := metrics.NewInfluxBridge(&metrics.InfluxBridgeConfig{
 				Writer:    metricsLogWriter,
 				Interval:  b.Cfg.PlatformMetricsLoggingInterval,
