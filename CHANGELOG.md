@@ -8,10 +8,13 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
 
+### Added
+- Add backend label to logged metrics.
+
 ### Fixed
 - In addition to the context error print the connection error when sensu-go can't connect to etcd.
-### Changed
 
+### Changed
 - Empty and zero value configuration parameters for `etcd` do not overwrite
   defaults anymore.
 

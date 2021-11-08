@@ -21,11 +21,12 @@ import (
 // See here for details about how to transform prometheus metrics into influx metrics:
 // https://www.influxdata.com/blog/prometheus-remote-write-support-with-influxdb-2-0/
 type InfluxBridge struct {
-	interval  time.Duration
-	gatherer  prometheus.Gatherer
-	writer    io.Writer
-	errLogger *logrus.Entry
-	filter    map[string]struct{}
+	interval    time.Duration
+	gatherer    prometheus.Gatherer
+	writer      io.Writer
+	errLogger   *logrus.Entry
+	filter      map[string]struct{}
+	extraLabels map[string]string
 }
 
 // InfluxBridgeConfig configures an InfluxBridge.
@@ -46,16 +47,23 @@ type InfluxBridgeConfig struct {
 	// Select, if non-nil, will limit the exported metrics to the names present
 	// in the list.
 	Select []string
+
+	// ExtraLabels are the additional labels to add to each of the metrics output.
+	ExtraLabels map[string]string
 }
 
 // NewInfluxBridge creates a new InfluxBridge. If the supplied InfluxBridgeConfig
 // is not correctly formed, an error will be returned.
 func NewInfluxBridge(cfg *InfluxBridgeConfig) (*InfluxBridge, error) {
 	bridge := &InfluxBridge{
-		filter: make(map[string]struct{}),
+		filter:      make(map[string]struct{}),
+		extraLabels: make(map[string]string),
 	}
 	for _, selectedMetric := range cfg.Select {
 		bridge.filter[selectedMetric] = struct{}{}
+	}
+	for key, value := range cfg.ExtraLabels {
+		bridge.extraLabels[key] = value
 	}
 	if cfg.Interval == 0 {
 		return nil, errors.New("influx bridge interval not set")
@@ -127,12 +135,16 @@ func (p *promSampleInfluxMetric) TagList() []*influx.Tag {
 
 func (p *promSampleInfluxMetric) FieldList() []*influx.Field {
 	fields := []*influx.Field{
-		&influx.Field{
+		{
 			Key:   p.Name(),
 			Value: float64(p.Value),
 		},
 	}
 	return fields
+}
+
+func (p *promSampleInfluxMetric) addLabel(name string, value string) {
+	p.Metric[model.LabelName(name)] = model.LabelValue(value)
 }
 
 func (b *InfluxBridge) logMetrics(families []*dto.MetricFamily) error {
@@ -161,6 +173,10 @@ func (b *InfluxBridge) logMetrics(families []*dto.MetricFamily) error {
 			if _, ok := b.filter[metric.Name()]; !ok {
 				continue
 			}
+		}
+
+		for tagKey, tagValue := range b.extraLabels {
+			metric.addLabel(tagKey, tagValue)
 		}
 
 		if _, err := encoder.Encode(metric); err != nil {

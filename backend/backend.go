@@ -686,11 +686,12 @@ func (b *Backend) runOnce() error {
 		} else {
 			defer func() { _ = metricsLogWriter.Close() }()
 			metricsBridge, err := metrics.NewInfluxBridge(&metrics.InfluxBridgeConfig{
-				Writer:    metricsLogWriter,
-				Interval:  b.Cfg.PlatformMetricsLoggingInterval,
-				Gatherer:  prometheus.DefaultGatherer,
-				ErrLogger: logger,
-				Select:    SelectedMetrics,
+				Writer:      metricsLogWriter,
+				Interval:    b.Cfg.PlatformMetricsLoggingInterval,
+				Gatherer:    prometheus.DefaultGatherer,
+				ErrLogger:   logger,
+				Select:      SelectedMetrics,
+				ExtraLabels: map[string]string{"backend": getDefaultBackendID()},
 			})
 			if err != nil {
 				logger.WithError(err).Error("unable to start the platform metrics bridge")
