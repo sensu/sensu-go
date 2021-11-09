@@ -114,6 +114,7 @@ type Session struct {
 	entityConfig     *entityConfig
 	mu               sync.Mutex
 	subscriptionsMap map[string]subscription
+	deregister       bool
 }
 
 // subscription is used to abstract a message.Subscription and therefore allow
@@ -350,6 +351,9 @@ func (s *Session) sender(ctx context.Context) {
 				// for the watch event for that entity config
 				continue
 			}
+
+			// Track if the entity should be deregistered on session stop
+			s.deregister = watchEvent.Entity.Deregister
 
 			bytes, err := s.marshal(watchEvent.Entity)
 			if err != nil {
@@ -712,27 +716,32 @@ func (s *Session) unsubscribe(subscriptions []string) {
 		return
 	}
 
+	if !s.deregister {
+		// No need to do ring removals when entities are not set to deregister.
+		// We expect the entity to join the cluster again shortly.
+		return
+	}
+
 	// Remove the ring for every subscription
-	var ringWG sync.WaitGroup
 	for _, sub := range subscriptions {
+		// NB: DO NOT log errors from this cleanup routine. They will spam the
+		// logs for any appreciably sized Sensu cluster. Instead, rely on the
+		// metrics from sessionErrorCounter.
 		if strings.HasPrefix(sub, "entity:") {
 			// Entity subscriptions don't get rings
 			continue
 		}
-		ringWG.Add(1)
-		go func(sub string) {
-			defer ringWG.Done()
-			ctx, cancel := context.WithTimeout(context.Background(), time.Second)
-			defer cancel()
-			ring := s.ringPool.Get(ringv2.Path(s.cfg.Namespace, sub))
-			lager.Infof("session shutdown: removing agent from ring for subscription %q", sub)
-			if err := ring.Remove(ctx, s.cfg.AgentName); err != nil {
-				sessionErrorCounter.WithLabelValues("ring.Remove").Inc()
-				lager.WithError(err).Error("session shutdown: unable to remove agent from ring within 1s")
+		ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+		defer cancel()
+		ring := s.ringPool.Get(ringv2.Path(s.cfg.Namespace, sub))
+		if err := ring.Remove(ctx, s.cfg.AgentName); err != nil {
+			sessionErrorCounter.WithLabelValues("ring.Remove").Inc()
+			if ctx.Err() != nil {
+				// assume that the etcd client is unavailable and give up
+				return
 			}
-		}(sub)
+		}
 	}
-	ringWG.Wait()
 }
 
 func agentUUID(namespace, name string) string {
