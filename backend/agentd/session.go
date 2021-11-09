@@ -576,7 +576,10 @@ func (s *Session) stop() {
 	}
 
 	// Unsubscribe the session from every configured check subscriptions
-	s.unsubscribe(s.cfg.Subscriptions)
+	s.mu.Lock()
+	subs := s.cfg.Subscriptions
+	s.mu.Unlock()
+	s.unsubscribe(subs)
 
 	close(s.entityConfig.updatesChannel)
 	close(s.checkChannel)

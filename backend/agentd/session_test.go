@@ -254,6 +254,11 @@ func TestSession_sender(t *testing.T) {
 				// Wait for the session to subscribe to our new subscription, and then
 				// send a check request to this new subscription "linux"
 				wg.Wait()
+				// TODO(eric): the original tests incorrectly conflate waiting on a waitgroup
+				// with session subscription being complete. An additional wait is necessary.
+				// These tests are pretty brittle and the session as a whole could probably stand
+				// some refactoring.
+				time.Sleep(time.Second)
 				wg.Add(1)
 				if err := bus.Publish(messaging.SubscriptionTopic("default", "linux"), corev2.FixtureCheckRequest("foo")); err != nil {
 					t.Fatal(err)
