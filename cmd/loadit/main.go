@@ -70,7 +70,7 @@ func main() {
 		cfg.API.Port = agent.DefaultAPIPort
 		cfg.CacheDir = os.DevNull
 		cfg.DisableAssets = true
-		cfg.Deregister = true
+		cfg.Deregister = false
 		cfg.DeregistrationHandler = ""
 		cfg.DisableAPI = true
 		cfg.DisableSockets = true
