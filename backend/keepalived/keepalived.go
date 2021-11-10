@@ -288,7 +288,7 @@ func (k *Keepalived) processKeepalives(ctx context.Context) {
 				tctx, cancel := context.WithTimeout(ctx, k.storeTimeout)
 				err := switches.Bury(tctx, id)
 				cancel()
-				if err != nil {
+				if err != nil && ctx.Err() == nil {
 					if _, ok := err.(*store.ErrInternal); ok {
 						// Fatal error
 						select {
@@ -302,7 +302,7 @@ func (k *Keepalived) processKeepalives(ctx context.Context) {
 				continue
 			}
 
-			if err := k.handleEntityRegistration(ctx, entity, event); err != nil {
+			if err := k.handleEntityRegistration(ctx, entity, event); err != nil && ctx.Err() == nil {
 				logger.WithError(err).Error("error handling entity registration")
 				if _, ok := err.(*store.ErrInternal); ok {
 					// Fatal error
@@ -326,7 +326,7 @@ func (k *Keepalived) processKeepalives(ctx context.Context) {
 			tctx, cancel := context.WithTimeout(ctx, k.storeTimeout)
 			err := switches.Alive(tctx, key, ttl)
 			cancel()
-			if err != nil {
+			if err != nil && ctx.Err() == nil {
 				logger.WithError(err).Errorf("error on switch %q", key)
 				if _, ok := err.(*store.ErrInternal); ok {
 					// Fatal error
@@ -339,7 +339,7 @@ func (k *Keepalived) processKeepalives(ctx context.Context) {
 				continue
 			}
 
-			if err := k.handleUpdate(event); err != nil {
+			if err := k.handleUpdate(event); err != nil && ctx.Err() == nil {
 				logger.WithError(err).Error("error updating event")
 				if _, ok := err.(*store.ErrInternal); ok {
 					// Fatal error
@@ -380,7 +380,7 @@ func (k *Keepalived) handleEntityRegistration(ctx context.Context, entity *corev
 	exists := true
 	wrappedEntityConfig, err := k.storev2.Get(req)
 	if err != nil {
-		if _, ok := err.(*store.ErrNotFound); !ok {
+		if _, ok := err.(*store.ErrNotFound); !ok && ctx.Err() != nil {
 			logger.WithError(err).Error("error while checking if entity exists")
 			return err
 		}
