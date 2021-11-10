@@ -588,6 +588,7 @@ func Initialize(ctx context.Context, config *Config) (*Backend, error) {
 	b.APIDConfig = apid.Config{
 		ListenAddress:       config.APIListenAddress,
 		RequestLimit:        config.APIRequestLimit,
+		WriteTimeout:        config.APIWriteTimeout,
 		URL:                 config.APIURL,
 		Bus:                 bus,
 		Store:               b.Store,

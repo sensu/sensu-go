@@ -21,6 +21,8 @@ milliseconds to match other duration metrics.
 
 ### Added
 - Added eventd, pipeline, & asset metrics from 6.5.2 to the metrics log.
+- Added `--api-write-timeout` & `--dashboard-write-timeout` flags to allow
+end users to configure the HTTP server's write timeout value
 
 ### Fixed
 - Fixed a bug where API validation caused javascript environment variable
