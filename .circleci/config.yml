@@ -36,7 +36,6 @@ jobs:
     resource_class: large
     steps:
       - checkout
-      - go/mod-download-cached
       # Run tests
       - run: ./build.sh unit
 
