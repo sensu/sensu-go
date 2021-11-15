@@ -16,6 +16,8 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 ### Fixed
 - Duration metrics for assets, pipeline, and eventd have been updated to use
 milliseconds to match other duration metrics.
+- Fixed an error where sensu-backend or sensu-agent could panic due to
+concurrent websocket writes.
 
 ## [6.5.3, 6.5.4] - 2021-10-29
 
