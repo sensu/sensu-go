@@ -35,7 +35,7 @@ esac
 unit_test_commands () {
     echo "Running unit tests..."
 
-    go test -timeout=60s $RACE $(go list ./... | egrep -v '(testing|vendor|scripts)')
+    go test -timeout=80s $RACE $(go list ./... | egrep -v '(testing|vendor|scripts)')
     if [ $? -ne 0 ]; then
         echo "Unit testing failed..."
         exit 1
