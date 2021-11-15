@@ -339,9 +339,9 @@ func (k *Keepalived) processKeepalives(ctx context.Context) {
 				continue
 			}
 
-			if err := k.handleUpdate(event); err != nil && ctx.Err() == nil {
+			if err := k.handleUpdate(ctx, event); err != nil && ctx.Err() == nil {
 				logger.WithError(err).Error("error updating event")
-				if _, ok := err.(*store.ErrInternal); ok {
+				if _, ok := err.(*store.ErrInternal); ok && ctx.Err() == nil {
 					// Fatal error
 					select {
 					case k.errChan <- err:
@@ -668,10 +668,10 @@ func parseKey(key string) (namespace, name string, err error) {
 
 // handleUpdate sets the entity's last seen time and publishes an OK check event
 // to the message bus.
-func (k *Keepalived) handleUpdate(e *corev2.Event) error {
+func (k *Keepalived) handleUpdate(ctx context.Context, e *corev2.Event) error {
 	entity := e.Entity
 
-	ctx := corev2.SetContextFromResource(context.Background(), entity)
+	ctx = corev2.SetContextFromResource(ctx, entity)
 	if err := k.store.DeleteFailingKeepalive(ctx, e.Entity); err != nil {
 		// Warning: do not wrap this error
 		return err

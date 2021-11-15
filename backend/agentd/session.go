@@ -276,7 +276,7 @@ func (s *Session) receiver(ctx context.Context) {
 			logger.WithError(err).WithFields(logrus.Fields{
 				"type":    msg.Type,
 				"payload": string(msg.Payload)}).Error("error handling message")
-			if _, ok := err.(*store.ErrInternal); ok {
+			if _, ok := err.(*store.ErrInternal); ok && ctx.Err() == nil {
 				// Fatal error - boot the agent out of the session
 				sessionErrorCounter.WithLabelValues("store.ErrInternal").Inc()
 				logger.Error("internal error - stopping session")

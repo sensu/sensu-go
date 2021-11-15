@@ -389,7 +389,7 @@ func (a *Agentd) webSocketHandler(ctx context.Context) func(http.ResponseWriter,
 			// There was an error retrieving the namespace from
 			// etcd, indicating that this backend has a potentially
 			// unrecoverable issue.
-			if _, ok := err.(*store.ErrInternal); ok {
+			if _, ok := err.(*store.ErrInternal); ok && ctx.Err() == nil {
 				select {
 				case a.errChan <- err:
 				case <-ctx.Done():
@@ -400,7 +400,7 @@ func (a *Agentd) webSocketHandler(ctx context.Context) func(http.ResponseWriter,
 
 		if err := session.Start(ctx); err != nil {
 			lager.WithError(err).Error("failed to start session")
-			if _, ok := err.(*store.ErrInternal); ok {
+			if _, ok := err.(*store.ErrInternal); ok && ctx.Err() == nil {
 				select {
 				case a.errChan <- err:
 				case <-ctx.Done():
