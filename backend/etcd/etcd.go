@@ -15,12 +15,12 @@ import (
 	"time"
 
 	"github.com/sensu/sensu-go/util/path"
-	"go.etcd.io/etcd/client/v3"
-	"go.etcd.io/etcd/server/v3/etcdserver/api/v3rpc"
 	"go.etcd.io/etcd/client/pkg/v3/logutil"
 	"go.etcd.io/etcd/client/pkg/v3/transport"
 	etcdTypes "go.etcd.io/etcd/client/pkg/v3/types"
+	clientv3 "go.etcd.io/etcd/client/v3"
 	"go.etcd.io/etcd/server/v3/embed"
+	"go.etcd.io/etcd/server/v3/etcdserver/api/v3rpc"
 	"go.etcd.io/etcd/server/v3/proxy/grpcproxy/adapter"
 	zapcore "go.uber.org/zap/zapcore"
 	"google.golang.org/grpc"
@@ -286,6 +286,7 @@ func (e *Etcd) NewClientContext(ctx context.Context) (*clientv3.Client, error) {
 		TLS:         tlsConfig,
 		DialOptions: []grpc.DialOption{
 			grpc.WithBlock(),
+			grpc.FailFast(false),
 		},
 		Context: ctx,
 	})
