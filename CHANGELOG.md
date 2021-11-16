@@ -16,6 +16,8 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 ### Fixed
 - Duration metrics for assets, pipeline, and eventd have been updated to use
 milliseconds to match other duration metrics.
+- The sensu-backend's /version API has updated to reflect the version of a an
+external etcd cluster.
 
 ## [6.5.3, 6.5.4] - 2021-10-29
 
