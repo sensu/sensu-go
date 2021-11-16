@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/gorilla/websocket"
@@ -125,7 +126,7 @@ type Transport interface {
 // WebSocket.
 type WebSocketTransport struct {
 	Connection *websocket.Conn
-	closed     bool // protected by writeMu
+	closed     atomic.Value
 	readMu     sync.Mutex
 	writeMu    sync.Mutex
 }
@@ -134,7 +135,6 @@ type WebSocketTransport struct {
 func NewTransport(conn *websocket.Conn) Transport {
 	return &WebSocketTransport{
 		Connection: conn,
-		closed:     false,
 	}
 }
 
@@ -151,14 +151,14 @@ func NewMessage(msgType string, payload []byte) *Message {
 // panic. We rescue potential panics and consider the connection closed,
 // returning nil, because the connection _will_ be closed. Hay!
 func (t *WebSocketTransport) Close() (err error) {
-	t.writeMu.Lock()
-	defer t.writeMu.Unlock()
-
-	if t.closed {
+	if t.Closed() {
 		return nil
 	}
 
-	t.closed = true
+	t.writeMu.Lock()
+	defer t.writeMu.Unlock()
+
+	t.closed.Store(true)
 
 	defer func() {
 		cerr := t.Connection.Close()
@@ -172,9 +172,11 @@ func (t *WebSocketTransport) Close() (err error) {
 
 // Closed returns true if the underlying websocket connection has been closed.
 func (t *WebSocketTransport) Closed() bool {
-	t.writeMu.Lock()
-	defer t.writeMu.Unlock()
-	return t.closed
+	val := t.closed.Load()
+	if val == nil {
+		return false
+	}
+	return val.(bool)
 }
 
 // Heartbeat starts a goroutine that sends ping frames to the backend in order
@@ -233,9 +235,7 @@ func (t *WebSocketTransport) Receive() (*Message, error) {
 	_, p, err := t.Connection.ReadMessage()
 	if err != nil {
 		if websocket.IsCloseError(err, websocket.CloseGoingAway) {
-			t.writeMu.Lock()
-			defer t.writeMu.Unlock()
-			t.closed = true
+			t.closed.Store(true)
 			return nil, ClosedError{err.Error()}
 		}
 		return nil, ConnectionError{err.Error()}
@@ -256,7 +256,7 @@ func (t *WebSocketTransport) Receive() (*Message, error) {
 func (t *WebSocketTransport) Send(m *Message) (err error) {
 	t.writeMu.Lock()
 	defer t.writeMu.Unlock()
-	if t.closed {
+	if t.Closed() {
 		return ClosedError{"the websocket connection is no longer open"}
 	}
 
@@ -272,7 +272,7 @@ func (t *WebSocketTransport) Send(m *Message) (err error) {
 		// because it's _really_ hard to figure out what errors from the
 		// websocket library are terminal and which aren't. So, abandon all
 		// hope, and reconnect if we get an error from the websocket lib.
-		t.closed = true
+		t.closed.Store(true)
 		if websocket.IsCloseError(err, websocket.CloseGoingAway) {
 			return ClosedError{err.Error()}
 		}
