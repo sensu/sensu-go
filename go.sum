@@ -493,6 +493,7 @@ go.etcd.io/etcd/server/v3 v3.5.1 h1:u8risUH348DmLy2XD3krH/S3GWk2ljuCrs8V3hd4584=
 go.etcd.io/etcd/server/v3 v3.5.1/go.mod h1:yBKYw++NWu6ciuWoKuL7UXgGKDP7ICBCuVQrIcYbPdw=
 go.etcd.io/etcd/tests/v3 v3.5.0 h1:+uMuHYKKlLUzbW322XrQXbaGM9qiV7vUL+AEPT/KYY4=
 go.etcd.io/etcd/tests/v3 v3.5.0/go.mod h1:f+mtZ1bE1YPvgKdOJV2BKy4JQW0nAFnQehgOE7+WyJE=
+go.etcd.io/etcd/tests/v3 v3.5.1 h1:u9wrZcRj9TKh2VONWlCQc4JKRnKWzQ0BuxmEKbf7LmA=
 go.etcd.io/etcd/tests/v3 v3.5.1/go.mod h1:BxTA5IIMhb/VeVZpqp0Q3oaBRqn7lZOER/tYO0HMFCA=
 go.opencensus.io v0.21.0/go.mod h1:mSImk1erAIZhrmZN+AvHh14ztQfjbGwt4TtuofqLduU=
 go.opencensus.io v0.22.0/go.mod h1:+kGneAE2xo2IficOXnaByMWTGM9T73dGwxeWcUqIpI8=
