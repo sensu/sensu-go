@@ -26,6 +26,8 @@ func Backoff(ctx context.Context) *retry.ExponentialBackoff {
 	return &retry.ExponentialBackoff{
 		Ctx:                  ctx,
 		InitialDelayInterval: EtcdInitialDelay,
+		MaxDelayInterval:     10 * time.Second,
+		Multiplier:           5,
 	}
 }
 
@@ -47,7 +49,10 @@ func RetryRequest(n int, err error) (bool, error) {
 	// using string comparison here because it's too difficult to tell
 	// what kind of error the client is actually delivering
 	if strings.Contains(err.Error(), "etcdserver: too many requests") {
-		logger.WithError(err).WithField("retry", n).Error("retrying")
+		if n > 3 {
+			// don't log the first few retries, to avoid unnecessary log spam
+			logger.WithError(err).WithField("retry", n).Error("retrying")
+		}
 		return false, nil
 	}
 	return true, &store.ErrInternal{Message: err.Error()}
