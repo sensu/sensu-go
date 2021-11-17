@@ -793,7 +793,10 @@ func (b *Backend) RunWithInitializer(initialize func(context.Context, *Config) (
 			}
 		}
 
-		_ = b.Client.Close()
+		if err := b.Client.Close(); err != nil {
+			logger.Error(err)
+			return false, err
+		}
 
 		// Yes, two levels of retry... this could improve. Unfortunately Intialize()
 		// is called elsewhere.
