@@ -243,7 +243,7 @@ func (t *SwitchSet) newLease(ctx context.Context, ttl int64) (clientv3.LeaseID, 
 	var leaseID clientv3.LeaseID
 	err := kvc.Backoff(ctx).Retry(func(n int) (done bool, err error) {
 		lease, err := t.client.Grant(ctx, ttl)
-		if err != nil {
+		if err == nil {
 			leaseID = lease.ID
 		}
 		return kvc.RetryRequest(n, err)
