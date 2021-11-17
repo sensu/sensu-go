@@ -69,6 +69,7 @@ func main() {
 		imports:   imports,
 		camelCase: *camelCase,
 		pkgPrefix: !*noPkg,
+		pkgName:   prefix,
 	}
 	doc := &gqlast.Document{Kind: gqlkind.Document}
 	for _, s := range structs {
@@ -120,6 +121,7 @@ type translatorCfg struct {
 	imports   map[string]string
 	camelCase bool
 	pkgPrefix bool
+	pkgName   string
 }
 
 func translateFields(list *ast.FieldList, cfg *translatorCfg) []*gqlast.FieldDefinition {
@@ -160,7 +162,6 @@ func translateField(f *ast.Field, cfg *translatorCfg) *gqlast.FieldDefinition {
 	} else if cfg.camelCase && !snakeCase {
 		name = pascalToCamel(name)
 	}
-	log.Default().Printf("doc: %s", f.Doc.Text())
 	return &gqlast.FieldDefinition{
 		Kind: gqlkind.FieldDefinition,
 		Name: &gqlast.Name{
@@ -171,7 +172,7 @@ func translateField(f *ast.Field, cfg *translatorCfg) *gqlast.FieldDefinition {
 			Kind:  gqlkind.StringValue,
 			Value: gostrings.TrimSpace(f.Doc.Text()),
 		},
-		Type: translateType(f.Type, false, "", cfg),
+		Type: translateType(f.Type, false, cfg.pkgName, cfg),
 	}
 }
 
