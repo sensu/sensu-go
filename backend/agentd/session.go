@@ -296,10 +296,16 @@ func (s *Session) sender(ctx context.Context) {
 	for {
 		var msg *transport.Message
 		select {
-		case e := <-s.entityConfig.updatesChannel:
+		case e, ok := <-s.entityConfig.updatesChannel:
+			if !ok {
+				if ctx.Err() == nil {
+					logger.Error("entity updates chan closed, terminating session")
+				}
+				return
+			}
 			watchEvent, ok := e.(*store.WatchEventEntityConfig)
 			if !ok {
-				logger.Errorf("session received unexpected struct: %T", e)
+				logger.Errorf("session received unexpected type: %T", e)
 				continue
 			}
 
@@ -385,7 +391,13 @@ func (s *Session) sender(ctx context.Context) {
 			}
 
 			msg = transport.NewMessage(transport.MessageTypeEntityConfig, bytes)
-		case c := <-s.checkChannel:
+		case c, ok := <-s.checkChannel:
+			if !ok {
+				if ctx.Err() == nil {
+					logger.Error("check channel closed, terminating session")
+				}
+				return
+			}
 			request, ok := c.(*corev2.CheckRequest)
 			if !ok {
 				logger.Error("session received non-config over check channel")
