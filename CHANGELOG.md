@@ -20,6 +20,8 @@ milliseconds to match other duration metrics.
 concurrent websocket writes.
 - The sensu-backend's /version API has updated to reflect the version of a an
 external etcd cluster.
+- When keepalive lease grant operations fail due to rate limiting, they are now
+retried.
 
 ## [6.5.3, 6.5.4] - 2021-10-29
 
