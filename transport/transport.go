@@ -146,10 +146,8 @@ func NewMessage(msgType string, payload []byte) *Message {
 	}
 }
 
-// Close attempts to send a "going away" message over the websocket connection.
-// This will cause a Write over the websocket transport, which can cause a
-// panic. We rescue potential panics and consider the connection closed,
-// returning nil, because the connection _will_ be closed. Hay!
+// Close closes the WebsocketTransport. Before closing, a closing message will
+// be sent to the other side.
 func (t *WebSocketTransport) Close() (err error) {
 	if t.Closed() {
 		return nil
@@ -162,12 +160,16 @@ func (t *WebSocketTransport) Close() (err error) {
 
 	defer func() {
 		cerr := t.Connection.Close()
-		if err == nil {
+		if err == nil && cerr != websocket.ErrCloseSent {
 			err = cerr
 		}
 	}()
 
-	return t.Connection.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseGoingAway, "bye"))
+	if err := t.Connection.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseGoingAway, "bye")); err != websocket.ErrCloseSent {
+		return err
+	}
+
+	return nil
 }
 
 // Closed returns true if the underlying websocket connection has been closed.
