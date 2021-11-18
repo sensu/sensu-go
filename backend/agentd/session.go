@@ -569,15 +569,6 @@ func (s *Session) stop() {
 		}
 	}()
 
-	// Send a close message to ensure the agent closes its connection if the
-	// connection is not already closed
-	if !s.conn.Closed() {
-		if err := s.conn.SendCloseMessage(); err != nil {
-			websocketErrorCounter.WithLabelValues("send", "SendCloseMessage").Inc()
-			logger.Warning("unexpected error while sending a close message to the agent")
-		}
-	}
-
 	sessionCounter.WithLabelValues(s.cfg.Namespace).Dec()
 
 	// Remove the entity config subscriptions
