@@ -114,7 +114,7 @@ func New(c Config, opts ...Option) (*APId, error) {
 	a.HTTPServer = &http.Server{
 		Addr:         c.ListenAddress,
 		Handler:      router,
-		WriteTimeout: c.WriteTimeout * time.Second,
+		WriteTimeout: c.WriteTimeout,
 		ReadTimeout:  15 * time.Second,
 		TLSConfig:    tlsServerConfig,
 	}
@@ -235,7 +235,7 @@ func GraphQLSubrouter(router *mux.Router, cfg Config) *mux.Router {
 	// The write timeout hangs up the request making it more difficult for
 	// clients to determine what occurred. As such give the service as much time
 	// as possible to produce results.
-	timeout := (cfg.WriteTimeout * time.Second) - (50 * time.Millisecond)
+	timeout := cfg.WriteTimeout - (50 * time.Millisecond)
 	if timeout < 0 {
 		timeout = 0
 	}
