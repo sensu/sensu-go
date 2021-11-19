@@ -2,7 +2,6 @@ package agentd
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"sort"
@@ -10,9 +9,9 @@ import (
 	"sync"
 	"time"
 
-	"github.com/gogo/protobuf/proto"
 	"github.com/google/uuid"
 	"github.com/prometheus/client_golang/prometheus"
+	"github.com/sensu/sensu-go/agent"
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	corev3 "github.com/sensu/sensu-go/api/core/v3"
 	"github.com/sensu/sensu-go/backend/messaging"
@@ -75,24 +74,6 @@ var (
 	)
 )
 
-// ProtobufSerializationHeader is the Content-Type header which indicates protobuf serialization.
-const ProtobufSerializationHeader = "application/octet-stream"
-
-// JSONSerializationHeader is the Content-Type header which indicates JSON serialization.
-const JSONSerializationHeader = "application/json"
-
-// MarshalFunc is the function signature for protobuf/JSON marshaling.
-type MarshalFunc = func(pb proto.Message) ([]byte, error)
-
-// UnmarshalFunc is the function signature for protobuf/JSON unmarshaling.
-type UnmarshalFunc = func(buf []byte, pb proto.Message) error
-
-// UnmarshalJSON is a wrapper to deserialize proto messages with JSON.
-func UnmarshalJSON(b []byte, msg proto.Message) error { return json.Unmarshal(b, &msg) }
-
-// MarshalJSON is a wrapper to serialize proto messages with JSON.
-func MarshalJSON(msg proto.Message) ([]byte, error) { return json.Marshal(msg) }
-
 // A Session is a server-side connection between a Sensu backend server and
 // the Sensu agent process via the Sensu transport. It is responsible for
 // relaying messages to the message bus on behalf of the agent and from the
@@ -111,8 +92,8 @@ type Session struct {
 	ringPool         *ringv2.RingPool
 	ctx              context.Context
 	cancel           context.CancelFunc
-	marshal          MarshalFunc
-	unmarshal        UnmarshalFunc
+	marshal          agent.MarshalFunc
+	unmarshal        agent.UnmarshalFunc
 	entityConfig     *entityConfig
 	mu               sync.Mutex
 	subscriptionsMap map[string]subscription
@@ -161,8 +142,8 @@ type SessionConfig struct {
 	Store    store.Store
 	Storev2  storev2.Interface
 
-	Marshal   MarshalFunc
-	Unmarshal UnmarshalFunc
+	Marshal   agent.MarshalFunc
+	Unmarshal agent.UnmarshalFunc
 }
 
 // NewSession creates a new Session object given the triple of a transport

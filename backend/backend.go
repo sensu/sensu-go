@@ -99,6 +99,7 @@ var SelectedMetrics = []string{
 	"sensu_go_eventd_switches_bury_duration",
 	"sensu_go_eventd_switches_bury_duration_sum",
 	"sensu_go_eventd_switches_bury_duration_count",
+	"sensu_go_lease_ops",
 	"sensu_go_pipelined_message_handler_duration",
 	"sensu_go_pipelined_message_handler_duration_sum",
 	"sensu_go_pipelined_message_handler_duration_count",
