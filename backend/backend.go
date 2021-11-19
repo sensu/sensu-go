@@ -549,8 +549,19 @@ func Initialize(ctx context.Context, config *Config) (*Backend, error) {
 	authenticator.AddProvider(basic)
 
 	var clusterVersion string
-	// only retrieve the cluster version if etcd is embedded
-	if !config.NoEmbedEtcd {
+	if config.NoEmbedEtcd {
+		// get cluster version from first available etcd endpoint
+		endpoints := b.Client.Endpoints()
+		for _, ep := range endpoints {
+			status, err := b.Client.Status(ctx, ep)
+			if err != nil {
+				logger.WithError(err).Error("error getting etcd cluster version info")
+				continue
+			}
+			clusterVersion = status.Version
+			break
+		}
+	} else {
 		clusterVersion = b.Etcd.GetClusterVersion()
 	}
 
@@ -589,6 +600,7 @@ func Initialize(ctx context.Context, config *Config) (*Backend, error) {
 	b.APIDConfig = apid.Config{
 		ListenAddress:       config.APIListenAddress,
 		RequestLimit:        config.APIRequestLimit,
+		WriteTimeout:        config.APIWriteTimeout,
 		URL:                 config.APIURL,
 		Bus:                 bus,
 		Store:               b.Store,
