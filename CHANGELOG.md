@@ -8,6 +8,10 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
 
+### Fixed
+- Fixed a bug where sensu-backend could crash if the BackendIDGetter encounters
+etcd client unavailability.
+
 ## [6.5.5] - 2021-11-19
 
 ### Added
