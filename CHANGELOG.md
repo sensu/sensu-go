@@ -8,7 +8,7 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
 
-## [6.5.5] - 2021-11-18
+## [6.5.5] - 2021-11-19
 
 ### Added
 - Added objectives (0.5, 0.9, 0.99) to `graphql_duration_seconds` metric.
@@ -16,6 +16,8 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 `graphql_duration_seconds_count` to the metrics log.
 - Added new prometheus metrics for tracking lease operations.
 - Added `sensu_go_lease_ops` to the metrics log.
+- Added `--api-write-timeout` & `--dashboard-write-timeout` flags to allow
+end users to configure the HTTP server's write timeout value
 
 ### Fixed
 - Duration metrics for assets, pipeline, and eventd have been updated to use
@@ -31,8 +33,6 @@ retried.
 
 ### Added
 - Added eventd, pipeline, & asset metrics from 6.5.2 to the metrics log.
-- Added `--api-write-timeout` & `--dashboard-write-timeout` flags to allow
-end users to configure the HTTP server's write timeout value
 
 ### Fixed
 - Fixed a bug where API validation caused javascript environment variable
