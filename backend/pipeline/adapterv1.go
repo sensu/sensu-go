@@ -238,7 +238,7 @@ func (a *AdapterV1) resolvePipelineReference(ctx context.Context, ref *corev2.Re
 		if isLegacy {
 			pipelineType = PipelineTypeLabelLegacy
 		}
-		pipelineResolveDuration.WithLabelValues(status, pipelineType).Observe(v)
+		pipelineResolveDuration.WithLabelValues(status, pipelineType).Observe(v * float64(1000))
 	}))
 	defer resolveTimer.ObserveDuration()
 

@@ -44,7 +44,7 @@ func (a *AdapterV1) processMutator(ctx context.Context, ref *corev2.ResourceRefe
 		if fErr != nil {
 			status = metricspkg.StatusLabelError
 		}
-		mutatorDuration.WithLabelValues(status, ref.ResourceID()).Observe(v)
+		mutatorDuration.WithLabelValues(status, ref.ResourceID()).Observe(v * float64(1000))
 	}))
 	defer mutatorTimer.ObserveDuration()
 

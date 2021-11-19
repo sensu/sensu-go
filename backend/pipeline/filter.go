@@ -59,7 +59,7 @@ func (a *AdapterV1) processFilter(ctx context.Context, ref *corev2.ResourceRefer
 		if fErr != nil {
 			status = metricspkg.StatusLabelError
 		}
-		filterDuration.WithLabelValues(status, ref.ResourceID()).Observe(v)
+		filterDuration.WithLabelValues(status, ref.ResourceID()).Observe(v * float64(1000))
 	}))
 	defer filterTimer.ObserveDuration()
 

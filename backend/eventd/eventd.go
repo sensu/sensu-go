@@ -575,7 +575,7 @@ func (e *Eventd) handleMessage(msg interface{}) (fEvent *corev2.Event, fErr erro
 			if err != nil {
 				status = metricspkg.StatusLabelError
 			}
-			switchesAliveDuration.WithLabelValues(status).Observe(v)
+			switchesAliveDuration.WithLabelValues(status).Observe(v * float64(1000))
 		}))
 		err = switches.Alive(ctx, switchKey, timeout)
 		aliveTimer.ObserveDuration()
@@ -592,7 +592,7 @@ func (e *Eventd) handleMessage(msg interface{}) (fEvent *corev2.Event, fErr erro
 			if err != nil {
 				status = metricspkg.StatusLabelError
 			}
-			switchesBuryDuration.WithLabelValues(status).Observe(v)
+			switchesBuryDuration.WithLabelValues(status).Observe(v * float64(1000))
 		}))
 		err = switches.Bury(ctx, switchKey)
 		buryTimer.ObserveDuration()

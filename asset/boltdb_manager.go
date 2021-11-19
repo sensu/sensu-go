@@ -222,7 +222,7 @@ func (b *boltDBAssetManager) fetchWithDuration(ctx context.Context, asset *corev
 		}
 		fetchDuration.
 			WithLabelValues(status, asset.ObjectMeta.Name, asset.ObjectMeta.Namespace).
-			Observe(v)
+			Observe(v * float64(1000))
 	}))
 	defer timer.ObserveDuration()
 
@@ -237,7 +237,7 @@ func (b *boltDBAssetManager) expandWithDuration(tmpFile *os.File, asset *corev2.
 		}
 		expandDuration.
 			WithLabelValues(status, asset.ObjectMeta.Name, asset.ObjectMeta.Namespace).
-			Observe(v)
+			Observe(v * float64(1000))
 	}))
 	defer timer.ObserveDuration()
 

@@ -243,12 +243,16 @@ func (t *SwitchSet) getLeaseIDFromKV(ctx context.Context, kv *mvccpb.KeyValue, t
 }
 
 func (t *SwitchSet) newLease(ctx context.Context, ttl int64) (clientv3.LeaseID, error) {
-	lease, err := t.client.Grant(ctx, ttl)
-	etcd.LeaseOperationsCounter.WithLabelValues("liveness", etcd.LeaseOperationTypeGrant, etcd.LeaseStatusFor(err)).Inc()
-	if err != nil {
-		return 0, err
-	}
-	return lease.ID, nil
+	var leaseID clientv3.LeaseID
+	err := kvc.Backoff(ctx).Retry(func(n int) (done bool, err error) {
+		lease, err := t.client.Grant(ctx, ttl)
+		etcd.LeaseOperationsCounter.WithLabelValues("liveness", etcd.LeaseOperationTypeGrant, etcd.LeaseStatusFor(err)).Inc()
+		if err == nil {
+			leaseID = lease.ID
+		}
+		return kvc.RetryRequest(n, err)
+	})
+	return leaseID, err
 }
 
 func (t *SwitchSet) getLeaseID(ctx context.Context, ttl int64, switchID string) (clientv3.LeaseID, error) {

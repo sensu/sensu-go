@@ -99,6 +99,7 @@ var SelectedMetrics = []string{
 	"sensu_go_eventd_switches_bury_duration",
 	"sensu_go_eventd_switches_bury_duration_sum",
 	"sensu_go_eventd_switches_bury_duration_count",
+	"sensu_go_lease_ops",
 	"sensu_go_pipelined_message_handler_duration",
 	"sensu_go_pipelined_message_handler_duration_sum",
 	"sensu_go_pipelined_message_handler_duration_count",
@@ -136,6 +137,9 @@ var SelectedMetrics = []string{
 	"etcd_network_peer_received_bytes_total",
 	"etcd_network_peer_sent_bytes_total",
 	"etcd_snap_db_fsync_duration_seconds_bucket",
+	"graphql_duration_seconds",
+	"graphql_duration_seconds_sum",
+	"graphql_duration_seconds_count",
 }
 
 // Backend represents the backend server, which is used to hold the datastore
@@ -547,8 +551,19 @@ func Initialize(ctx context.Context, config *Config) (*Backend, error) {
 	authenticator.AddProvider(provider)
 
 	var clusterVersion string
-	// only retrieve the cluster version if etcd is embedded
-	if !config.NoEmbedEtcd {
+	if config.NoEmbedEtcd {
+		// get cluster version from first available etcd endpoint
+		endpoints := b.Client.Endpoints()
+		for _, ep := range endpoints {
+			status, err := b.Client.Status(ctx, ep)
+			if err != nil {
+				logger.WithError(err).Error("error getting etcd cluster version info")
+				continue
+			}
+			clusterVersion = status.Version
+			break
+		}
+	} else {
 		clusterVersion = b.Etcd.GetClusterVersion()
 	}
 
@@ -587,6 +602,7 @@ func Initialize(ctx context.Context, config *Config) (*Backend, error) {
 	b.APIDConfig = apid.Config{
 		ListenAddress:       config.APIListenAddress,
 		RequestLimit:        config.APIRequestLimit,
+		WriteTimeout:        config.APIWriteTimeout,
 		URL:                 config.APIURL,
 		Bus:                 bus,
 		Store:               b.Store,

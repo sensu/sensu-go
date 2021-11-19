@@ -6,21 +6,15 @@ import (
 	"errors"
 	"fmt"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/gorilla/websocket"
 )
 
 var (
-	sep     = []byte("\n")
-	msgPool sync.Pool
+	sep = []byte("\n")
 )
-
-func init() {
-	msgPool.New = func() interface{} {
-		return &Message{}
-	}
-}
 
 const (
 	// MessageTypeKeepalive is the message type sent for keepalives--which are just an
@@ -132,54 +126,59 @@ type Transport interface {
 // WebSocket.
 type WebSocketTransport struct {
 	Connection *websocket.Conn
-	closed     bool
-	mutex      *sync.RWMutex
+	closed     atomic.Value
+	readMu     sync.Mutex
+	writeMu    sync.Mutex
 }
 
 // NewTransport creates an initialized Transport and return its pointer.
 func NewTransport(conn *websocket.Conn) Transport {
 	return &WebSocketTransport{
 		Connection: conn,
-		closed:     false,
-		mutex:      &sync.RWMutex{},
 	}
 }
 
 // NewMessage creates a new Message.
 func NewMessage(msgType string, payload []byte) *Message {
-	msg := msgPool.Get().(*Message)
-	msg.Type = msgType
-	msg.Payload = payload
-	return msg
+	return &Message{
+		Type:    msgType,
+		Payload: payload,
+	}
 }
 
-// Close attempts to send a "going away" message over the websocket connection.
-// This will cause a Write over the websocket transport, which can cause a
-// panic. We rescue potential panics and consider the connection closed,
-// returning nil, because the connection _will_ be closed. Hay!
-func (t *WebSocketTransport) Close() error {
-	t.mutex.Lock()
-
-	defer func() {
-		// WriteMessage can annoyingly panic, because the websocket conn isn't safe
-		// for concurrent use. Recover here, and unlock the mutex.
-		_ = recover()
-		t.mutex.Unlock()
-	}()
-
-	if t.closed {
+// Close closes the WebsocketTransport. Before closing, a closing message will
+// be sent to the other side.
+func (t *WebSocketTransport) Close() (err error) {
+	if t.Closed() {
 		return nil
 	}
 
-	t.closed = true
-	return t.Connection.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseGoingAway, "bye"))
+	t.writeMu.Lock()
+	defer t.writeMu.Unlock()
+
+	t.closed.Store(true)
+
+	defer func() {
+		cerr := t.Connection.Close()
+		if err == nil && cerr != websocket.ErrCloseSent {
+			err = cerr
+		}
+	}()
+
+	if err := t.Connection.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseGoingAway, "bye")); err != websocket.ErrCloseSent {
+		return err
+	}
+
+	return nil
 }
 
 // Closed returns true if the underlying websocket connection has been closed.
 func (t *WebSocketTransport) Closed() bool {
-	t.mutex.RLock()
-	defer t.mutex.RUnlock()
-	return t.closed
+	val := t.closed.Load()
+	if val == nil {
+		return false
+	}
+	return val.(bool)
 }
 
 // Heartbeat starts a goroutine that sends ping frames to the backend in order
@@ -228,22 +227,17 @@ func (t *WebSocketTransport) Heartbeat(ctx context.Context, interval, timeout in
 // a ClosedError or a ConnectionError if unable to receive a message. Receive
 // blocks until the connection has a message ready or a timeout is reached.
 func (t *WebSocketTransport) Receive() (*Message, error) {
-	t.mutex.RLock()
-	if t.closed {
-		t.mutex.RUnlock()
+	t.readMu.Lock()
+	defer t.readMu.Unlock()
+
+	if t.Closed() {
 		return nil, ClosedError{"the websocket connection is no longer open"}
 	}
-	t.mutex.RUnlock()
 
 	_, p, err := t.Connection.ReadMessage()
 	if err != nil {
-		t.mutex.Lock()
-		t.closed = true
-		t.mutex.Unlock()
-
-		defer t.Connection.Close()
-
 		if websocket.IsCloseError(err, websocket.CloseGoingAway) {
+			t.closed.Store(true)
 			return nil, ClosedError{err.Error()}
 		}
 		return nil, ConnectionError{err.Error()}
@@ -254,9 +248,7 @@ func (t *WebSocketTransport) Receive() (*Message, error) {
 		return nil, err
 	}
 
-	msg := msgPool.Get().(*Message)
-	msg.Type = msgType
-	msg.Payload = payload
+	msg := NewMessage(msgType, payload)
 	return msg, nil
 }
 
@@ -264,18 +256,17 @@ func (t *WebSocketTransport) Receive() (*Message, error) {
 // closed, returns a ClosedError. Returns a ConnectionError if the websocket
 // connection returns an error while sending, but the connection is still open.
 func (t *WebSocketTransport) Send(m *Message) (err error) {
-	defer msgPool.Put(m)
+	t.writeMu.Lock()
+	defer t.writeMu.Unlock()
+	if t.Closed() {
+		return ClosedError{"the websocket connection is no longer open"}
+	}
+
 	defer func() {
 		if m.SendCallback != nil {
 			m.SendCallback(err)
 		}
 	}()
-	t.mutex.RLock()
-	if t.closed {
-		t.mutex.RUnlock()
-		return ClosedError{"the websocket connection is no longer open"}
-	}
-	t.mutex.RUnlock()
 
 	msg := Encode(m.Type, m.Payload)
 	if err := t.Connection.WriteMessage(websocket.BinaryMessage, msg); err != nil {
@@ -283,9 +274,7 @@ func (t *WebSocketTransport) Send(m *Message) (err error) {
 		// because it's _really_ hard to figure out what errors from the
 		// websocket library are terminal and which aren't. So, abandon all
 		// hope, and reconnect if we get an error from the websocket lib.
-		t.mutex.Lock()
-		t.closed = true
-		t.mutex.Unlock()
+		t.closed.Store(true)
 		if websocket.IsCloseError(err, websocket.CloseGoingAway) {
 			return ClosedError{err.Error()}
 		}
@@ -297,5 +286,7 @@ func (t *WebSocketTransport) Send(m *Message) (err error) {
 
 // SendCloseMessage sends a close control message over the transport
 func (t *WebSocketTransport) SendCloseMessage() (err error) {
+	t.writeMu.Lock()
+	defer t.writeMu.Unlock()
 	return t.Connection.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, ""))
 }

@@ -9,6 +9,8 @@ import (
 	"sync/atomic"
 
 	"github.com/sensu/sensu-go/backend/store"
+	"github.com/sensu/sensu-go/backend/store/etcd/kvc"
+
 	clientv3 "go.etcd.io/etcd/client/v3"
 )
 
@@ -63,10 +65,12 @@ func NewBackendIDGetter(ctx context.Context, client BackendIDGetterClient) *Back
 	return getter
 }
 
+// the caller MUST add 1 to b.wg before calling this
 func (b *BackendIDGetter) keepAliveLease(ctx context.Context) {
-	id, ch, err := b.getLease()
+	id, ch, err := b.getLease(ctx)
 	if err != nil {
-		if err != ctx.Err() {
+		b.wg.Done()
+		if ctx.Err() == nil {
 			logger.WithError(err).Error("error generating backend ID")
 			b.errors <- err
 		}
@@ -79,7 +83,9 @@ func (b *BackendIDGetter) keepAliveLease(ctx context.Context) {
 		case resp, ok := <-ch:
 			if !ok {
 				if ctx.Err() == nil {
-					b.errors <- errors.New("keeplive channel closed")
+					// retry the whole mess
+					b.wg.Add(1)
+					go b.keepAliveLease(ctx)
 				}
 				return
 			}
@@ -94,30 +100,43 @@ func (b *BackendIDGetter) keepAliveLease(ctx context.Context) {
 	}
 }
 
-func (b *BackendIDGetter) getLease() (int64, <-chan *clientv3.LeaseKeepAliveResponse, error) {
+func (b *BackendIDGetter) getLease(ctx context.Context) (int64, <-chan *clientv3.LeaseKeepAliveResponse, error) {
 	// Grant a lease for 60 seconds
-	resp, err := b.client.Grant(b.ctx, backendIDLeasePeriod)
-	LeaseOperationsCounter.WithLabelValues("sensu-etcd", LeaseOperationTypeGrant, LeaseStatusFor(err)).Inc()
+	var id int64
+	var ch <-chan *clientv3.LeaseKeepAliveResponse
+	err := kvc.Backoff(ctx).Retry(func(n int) (done bool, err error) {
+		resp, err := b.client.Grant(ctx, backendIDLeasePeriod)
+		LeaseOperationsCounter.WithLabelValues("sensu-etcd", LeaseOperationTypeGrant, LeaseStatusFor(err)).Inc()
+		if err != nil {
+			return false, err
+		}
+		leaseID := resp.ID
+		id = int64(leaseID)
+		// Register the backend's lease - this is for clients that need to be
+		// able to send specific backends messages
+		value := fmt.Sprintf("%x", leaseID)
+		key := path.Join(backendIDKeyPrefix, value)
+		_, err = b.client.Put(b.ctx, key, value, clientv3.WithLease(leaseID))
+		LeaseOperationsCounter.WithLabelValues("sensu-etcd", LeaseOperationTypePut, LeaseStatusFor(err)).Inc()
+		if err != nil {
+			return false, err
+		}
+
+		// Keep the lease alive
+		ch, err = b.client.KeepAlive(b.ctx, leaseID)
+		LeaseOperationsCounter.WithLabelValues("sensu-etcd", LeaseOperationTypeKeepalive, LeaseStatusFor(err)).Inc()
+		if err != nil {
+			return false, err
+		}
+
+		return true, nil
+	})
+
 	if err != nil {
-		return 0, nil, fmt.Errorf("error creating backend ID: error granting lease: %s", err)
-	}
-	leaseID := resp.ID
-
-	// Register the backend's lease - this is for clients that need to be
-	// able to send specific backends messages
-	value := fmt.Sprintf("%x", leaseID)
-	key := path.Join(backendIDKeyPrefix, value)
-	_, err = b.client.Put(b.ctx, key, value, clientv3.WithLease(leaseID))
-	LeaseOperationsCounter.WithLabelValues("sensu-etcd", LeaseOperationTypePut, LeaseStatusFor(err)).Inc()
-	if err != nil {
-		return 0, nil, fmt.Errorf("error creating backend ID: error creating key: %s", err)
+		return 0, nil, fmt.Errorf("error creating backend ID: %s", err)
 	}
 
-	// Keep the lease alive
-	ch, err := b.client.KeepAlive(b.ctx, leaseID)
-	LeaseOperationsCounter.WithLabelValues("sensu-etcd", LeaseOperationTypeKeepalive, LeaseStatusFor(err)).Inc()
-
-	return int64(leaseID), ch, err
+	return id, ch, nil
 }
 
 func (b *BackendIDGetter) Stop() error {

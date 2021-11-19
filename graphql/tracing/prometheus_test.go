@@ -40,6 +40,9 @@ func TestPrometheusTracer_ParseDidStart(t *testing.T) {
 			delta:     200,
 			runs:      1,
 			want: summaryMetadata + `
+        graphql_duration_seconds{key="parse",platform_key="graphql.parse",quantile="0.5"} 200
+        graphql_duration_seconds{key="parse",platform_key="graphql.parse",quantile="0.9"} 200
+        graphql_duration_seconds{key="parse",platform_key="graphql.parse",quantile="0.99"} 200
         graphql_duration_seconds_sum{key="parse",platform_key="graphql.parse"} 200
         graphql_duration_seconds_count{key="parse",platform_key="graphql.parse"} 1
       `,
@@ -50,6 +53,9 @@ func TestPrometheusTracer_ParseDidStart(t *testing.T) {
 			delta:     20,
 			runs:      5,
 			want: summaryMetadata + `
+        graphql_duration_seconds{key="parse",platform_key="graphql.parse",quantile="0.5"} 20
+        graphql_duration_seconds{key="parse",platform_key="graphql.parse",quantile="0.9"} 20
+        graphql_duration_seconds{key="parse",platform_key="graphql.parse",quantile="0.99"} 20
         graphql_duration_seconds_sum{key="parse",platform_key="graphql.parse"} 100
         graphql_duration_seconds_count{key="parse",platform_key="graphql.parse"} 5
       `,
@@ -96,6 +102,9 @@ func TestPrometheusTracer_ValidationDidStart(t *testing.T) {
 			delta:     150,
 			runs:      1,
 			want: summaryMetadata + `
+        graphql_duration_seconds{key="validate",platform_key="graphql.validate",quantile="0.5"} 150
+        graphql_duration_seconds{key="validate",platform_key="graphql.validate",quantile="0.9"} 150
+        graphql_duration_seconds{key="validate",platform_key="graphql.validate",quantile="0.99"} 150
         graphql_duration_seconds_sum{key="validate",platform_key="graphql.validate"} 150
         graphql_duration_seconds_count{key="validate",platform_key="graphql.validate"} 1
       `,
@@ -106,6 +115,9 @@ func TestPrometheusTracer_ValidationDidStart(t *testing.T) {
 			delta:     15,
 			runs:      8,
 			want: summaryMetadata + `
+        graphql_duration_seconds{key="validate",platform_key="graphql.validate",quantile="0.5"} 15
+        graphql_duration_seconds{key="validate",platform_key="graphql.validate",quantile="0.9"} 15
+        graphql_duration_seconds{key="validate",platform_key="graphql.validate",quantile="0.99"} 15
         graphql_duration_seconds_sum{key="validate",platform_key="graphql.validate"} 120
         graphql_duration_seconds_count{key="validate",platform_key="graphql.validate"} 8
       `,
@@ -152,6 +164,9 @@ func TestPrometheusTracer_ExecutionDidStart(t *testing.T) {
 			delta:     120,
 			runs:      1,
 			want: summaryMetadata + `
+        graphql_duration_seconds{key="execute_query",platform_key="graphql.execute",quantile="0.5"} 120
+        graphql_duration_seconds{key="execute_query",platform_key="graphql.execute",quantile="0.9"} 120
+        graphql_duration_seconds{key="execute_query",platform_key="graphql.execute",quantile="0.99"} 120
         graphql_duration_seconds_sum{key="execute_query",platform_key="graphql.execute"} 120
         graphql_duration_seconds_count{key="execute_query",platform_key="graphql.execute"} 1
       `,
@@ -162,6 +177,9 @@ func TestPrometheusTracer_ExecutionDidStart(t *testing.T) {
 			delta:     12,
 			runs:      9,
 			want: summaryMetadata + `
+        graphql_duration_seconds{key="execute_query",platform_key="graphql.execute",quantile="0.5"} 12
+        graphql_duration_seconds{key="execute_query",platform_key="graphql.execute",quantile="0.9"} 12
+        graphql_duration_seconds{key="execute_query",platform_key="graphql.execute",quantile="0.99"} 12
         graphql_duration_seconds_sum{key="execute_query",platform_key="graphql.execute"} 108
         graphql_duration_seconds_count{key="execute_query",platform_key="graphql.execute"} 9
       `,
@@ -208,6 +226,9 @@ func TestPrometheusTracer_ResolveFieldDidStart(t *testing.T) {
 			delta:     120,
 			runs:      1,
 			want: summaryMetadata + `
+        graphql_duration_seconds{key="execute_field",platform_key="Check.interval",quantile="0.5"} 120
+        graphql_duration_seconds{key="execute_field",platform_key="Check.interval",quantile="0.9"} 120
+        graphql_duration_seconds{key="execute_field",platform_key="Check.interval",quantile="0.99"} 120
         graphql_duration_seconds_sum{key="execute_field",platform_key="Check.interval"} 120
         graphql_duration_seconds_count{key="execute_field",platform_key="Check.interval"} 1
       `,
@@ -218,6 +239,9 @@ func TestPrometheusTracer_ResolveFieldDidStart(t *testing.T) {
 			delta:     15,
 			runs:      7,
 			want: summaryMetadata + `
+        graphql_duration_seconds{key="execute_field",platform_key="Check.interval",quantile="0.5"} 15
+        graphql_duration_seconds{key="execute_field",platform_key="Check.interval",quantile="0.9"} 15
+        graphql_duration_seconds{key="execute_field",platform_key="Check.interval",quantile="0.99"} 15
         graphql_duration_seconds_sum{key="execute_field",platform_key="Check.interval"} 105
         graphql_duration_seconds_count{key="execute_field",platform_key="Check.interval"} 7
       `,

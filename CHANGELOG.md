@@ -17,6 +17,30 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 ### Changed
 - Empty and zero value configuration parameters for `etcd` do not overwrite
   defaults anymore.
+### Fixed
+- Fixed a bug where sensu-backend could crash if the BackendIDGetter encounters
+etcd client unavailability.
+
+## [6.5.5] - 2021-11-19
+
+### Added
+- Added objectives (0.5, 0.9, 0.99) to `graphql_duration_seconds` metric.
+- Added `graphql_duration_seconds`, `graphql_duration_seconds_sum` &
+`graphql_duration_seconds_count` to the metrics log.
+- Added new prometheus metrics for tracking lease operations.
+- Added `sensu_go_lease_ops` to the metrics log.
+- Added `--api-write-timeout` & `--dashboard-write-timeout` flags to allow
+end users to configure the HTTP server's write timeout value
+
+### Fixed
+- Duration metrics for assets, pipeline, and eventd have been updated to use
+milliseconds to match other duration metrics.
+- Fixed an error where sensu-backend or sensu-agent could panic due to
+concurrent websocket writes.
+- The sensu-backend's /version API has updated to reflect the version of a an
+external etcd cluster.
+- When keepalive lease grant operations fail due to rate limiting, they are now
+retried.
 
 ## [6.5.3, 6.5.4] - 2021-10-29
 
@@ -56,7 +80,6 @@ metric.
 ## [6.5.1] - 2021-10-18
 
 ### Added
-- Added new prometheus metrics for tracking lease operations.
 - Added pipeline workflow handler processing counters
 
 ## [6.5.0] - 2021-10-12
