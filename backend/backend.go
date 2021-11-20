@@ -197,25 +197,31 @@ func newClient(ctx context.Context, config *Config, backend *Backend) (*clientv3
 
 		if config.EtcdClientUsername != "" && config.EtcdClientPassword != "" {
 			clientv3Config = clientv3.Config{
-				Endpoints:   clientURLs,
-				DialTimeout: 5 * time.Second,
-				Username:    config.EtcdClientUsername,
-				Password:    config.EtcdClientPassword,
-				TLS:         tlsConfig,
+				Endpoints:            clientURLs,
+				DialKeepAliveTime:    10 * time.Second,
+				DialKeepAliveTimeout: 20 * time.Second,
+				DialTimeout:          5 * time.Second,
+				Username:             config.EtcdClientUsername,
+				Password:             config.EtcdClientPassword,
+				TLS:                  tlsConfig,
 				DialOptions: []grpc.DialOption{
 					grpc.WithReturnConnectionError(),
 					grpc.WithBlock(),
 				},
+				PermitWithoutStream: true,
 			}
 		} else {
 			clientv3Config = clientv3.Config{
-				Endpoints:   clientURLs,
-				DialTimeout: 5 * time.Second,
-				TLS:         tlsConfig,
+				Endpoints:            clientURLs,
+				DialKeepAliveTime:    10 * time.Second,
+				DialKeepAliveTimeout: 20 * time.Second,
+				DialTimeout:          5 * time.Second,
+				TLS:                  tlsConfig,
 				DialOptions: []grpc.DialOption{
 					grpc.WithReturnConnectionError(),
 					grpc.WithBlock(),
 				},
+				PermitWithoutStream: true,
 			}
 		}
 		// Don't start up an embedded etcd, return a client that connects to an
