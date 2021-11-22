@@ -3,7 +3,6 @@ package mutator
 import (
 	"context"
 	"fmt"
-	"time"
 
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/asset"
@@ -36,7 +35,6 @@ type LegacyAdapter struct {
 	Executor               command.Executor
 	SecretsProviderManager *secrets.ProviderManager
 	Store                  store.Store
-	StoreTimeout           time.Duration
 }
 
 // Name returns the name of the mutator adapter.
@@ -68,10 +66,8 @@ func (l *LegacyAdapter) Mutate(ctx context.Context, ref *corev2.ResourceReferenc
 
 	// Retrieve the mutator from the store with its name
 	ctx = context.WithValue(ctx, corev2.NamespaceKey, event.Entity.Namespace)
-	tctx, cancel := context.WithTimeout(ctx, l.StoreTimeout)
 
-	mutator, err := l.Store.GetMutatorByName(tctx, ref.Name)
-	cancel()
+	mutator, err := l.Store.GetMutatorByName(ctx, ref.Name)
 	if err != nil {
 		// Warning: do not wrap this error
 		logger.WithFields(fields).WithError(err).Error("failed to retrieve mutator")
@@ -103,14 +99,12 @@ func (l *LegacyAdapter) Mutate(ctx context.Context, ref *corev2.ResourceReferenc
 			Executor:               l.Executor,
 			SecretsProviderManager: l.SecretsProviderManager,
 			Store:                  l.Store,
-			StoreTimeout:           l.StoreTimeout,
 		}
 		eventData, err = pipeMutator.run(ctx, mutator, event, assets)
 	} else if mutator.Type == corev2.JavascriptMutator {
 		javascriptMutator := JavascriptAdapter{
-			AssetGetter:  l.AssetGetter,
-			Store:        l.Store,
-			StoreTimeout: l.StoreTimeout,
+			AssetGetter: l.AssetGetter,
+			Store:       l.Store,
 		}
 		eventData, err = javascriptMutator.run(ctx, mutator, event, assets)
 	}

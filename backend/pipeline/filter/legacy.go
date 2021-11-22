@@ -37,9 +37,8 @@ var (
 // LegacyAdapter is a filter adapter that supports the legacy
 // core.v2/EventFilter type.
 type LegacyAdapter struct {
-	AssetGetter  asset.Getter
-	Store        store.Store
-	StoreTimeout time.Duration
+	AssetGetter asset.Getter
+	Store       store.Store
 }
 
 // Name returns the name of the filter adapter.
@@ -72,10 +71,8 @@ func (l *LegacyAdapter) Filter(ctx context.Context, ref *corev2.ResourceReferenc
 
 	// Retrieve the filter from the store with its name
 	ctx = context.WithValue(ctx, corev2.NamespaceKey, event.Entity.Namespace)
-	tctx, cancel := context.WithTimeout(ctx, l.StoreTimeout)
 
-	filter, err := l.Store.GetEventFilterByName(tctx, ref.Name)
-	cancel()
+	filter, err := l.Store.GetEventFilterByName(ctx, ref.Name)
 	if err != nil {
 		logger.WithFields(fields).WithError(err).Warning(getFilterErr.Error())
 		return false, err

@@ -114,7 +114,6 @@ type HandlerMap map[string]*corev2.Handler
 // AdapterV1 is a pipeline adapter that can run a pipeline for corev2.Events.
 type AdapterV1 struct {
 	Store           store.Store
-	StoreTimeout    time.Duration
 	FilterAdapters  []FilterAdapter
 	MutatorAdapters []MutatorAdapter
 	HandlerAdapters []HandlerAdapter
@@ -251,10 +250,7 @@ func (a *AdapterV1) resolvePipelineReference(ctx context.Context, ref *corev2.Re
 // getPipelineFromStore fetches a core/v2.Pipeline reference from the store and
 // returns a core/v2.Pipeline.
 func (a *AdapterV1) getPipelineFromStore(ctx context.Context, ref *corev2.ResourceReference) (*corev2.Pipeline, error) {
-	tctx, cancel := context.WithTimeout(ctx, a.StoreTimeout)
-	defer cancel()
-
-	pipeline, err := a.Store.GetPipelineByName(tctx, ref.Name)
+	pipeline, err := a.Store.GetPipelineByName(ctx, ref.Name)
 	if err != nil {
 		return nil, err
 	}
@@ -327,9 +323,7 @@ func (a *AdapterV1) expandHandlers(ctx context.Context, handlers []string, level
 	}
 
 	for _, handlerName := range handlers {
-		tctx, cancel := context.WithTimeout(ctx, a.StoreTimeout)
-		handler, err := a.Store.GetHandlerByName(tctx, handlerName)
-		cancel()
+		handler, err := a.Store.GetHandlerByName(ctx, handlerName)
 
 		// Add handler name to log entry
 		fields["handler"] = handlerName

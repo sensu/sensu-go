@@ -35,7 +35,6 @@ type LegacyAdapter struct {
 	LicenseGetter          licensing.Getter
 	SecretsProviderManager secrets.ProviderManagerer
 	Store                  store.Store
-	StoreTimeout           time.Duration
 }
 
 // Name returns the name of the handler adapter.
@@ -60,9 +59,7 @@ func (l *LegacyAdapter) Handle(ctx context.Context, ref *corev2.ResourceReferenc
 	fields["pipeline"] = corev2.ContextPipeline(ctx)
 	fields["pipeline_workflow"] = corev2.ContextPipelineWorkflow(ctx)
 
-	tctx, cancel := context.WithTimeout(ctx, l.StoreTimeout)
-	handler, err := l.Store.GetHandlerByName(tctx, ref.Name)
-	cancel()
+	handler, err := l.Store.GetHandlerByName(ctx, ref.Name)
 	if err != nil {
 		return fmt.Errorf("failed to fetch handler from store: %v", err)
 	}

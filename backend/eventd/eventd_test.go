@@ -57,7 +57,6 @@ func newEventd(store storev2.Interface, eventStore store.Store, bus messaging.Me
 		mu:              &sync.Mutex{},
 		Logger:          NoopLogger{},
 		workerCount:     5,
-		storeTimeout:    time.Minute,
 		silencedCache:   &cache.Resource{},
 	}
 }

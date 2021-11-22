@@ -4,7 +4,6 @@ import (
 	"context"
 	"reflect"
 	"testing"
-	"time"
 
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/pipeline/filter"
@@ -14,7 +13,6 @@ import (
 func TestAdapterV1_processFilters(t *testing.T) {
 	type fields struct {
 		Store           store.Store
-		StoreTimeout    time.Duration
 		FilterAdapters  []FilterAdapter
 		MutatorAdapters []MutatorAdapter
 		HandlerAdapters []HandlerAdapter
@@ -137,7 +135,6 @@ func TestAdapterV1_processFilters(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			a := &AdapterV1{
 				Store:           tt.fields.Store,
-				StoreTimeout:    tt.fields.StoreTimeout,
 				FilterAdapters:  tt.fields.FilterAdapters,
 				MutatorAdapters: tt.fields.MutatorAdapters,
 				HandlerAdapters: tt.fields.HandlerAdapters,
@@ -161,7 +158,6 @@ func TestAdapterV1_processFilters(t *testing.T) {
 func TestAdapterV1_getFilterAdapterForResource(t *testing.T) {
 	type fields struct {
 		Store           store.Store
-		StoreTimeout    time.Duration
 		FilterAdapters  []FilterAdapter
 		MutatorAdapters []MutatorAdapter
 		HandlerAdapters []HandlerAdapter
@@ -214,7 +210,6 @@ func TestAdapterV1_getFilterAdapterForResource(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			a := &AdapterV1{
 				Store:           tt.fields.Store,
-				StoreTimeout:    tt.fields.StoreTimeout,
 				FilterAdapters:  tt.fields.FilterAdapters,
 				MutatorAdapters: tt.fields.MutatorAdapters,
 				HandlerAdapters: tt.fields.HandlerAdapters,

@@ -11,7 +11,6 @@ import (
 	"reflect"
 	"strings"
 	"testing"
-	"time"
 
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/asset"
@@ -65,7 +64,6 @@ func TestLegacyAdapter_CanHandle(t *testing.T) {
 		LicenseGetter          licensing.Getter
 		SecretsProviderManager *secrets.ProviderManager
 		Store                  store.Store
-		StoreTimeout           time.Duration
 	}
 	type args struct {
 		ref *corev2.ResourceReference
@@ -105,7 +103,6 @@ func TestLegacyAdapter_CanHandle(t *testing.T) {
 				LicenseGetter:          tt.fields.LicenseGetter,
 				SecretsProviderManager: tt.fields.SecretsProviderManager,
 				Store:                  tt.fields.Store,
-				StoreTimeout:           tt.fields.StoreTimeout,
 			}
 			if got := h.CanHandle(tt.args.ref); got != tt.want {
 				t.Errorf("LegacyAdapter.CanHandle() = %v, want %v", got, tt.want)
@@ -121,7 +118,6 @@ func TestLegacyAdapter_Handle(t *testing.T) {
 		LicenseGetter          licensing.Getter
 		SecretsProviderManager secrets.ProviderManagerer
 		Store                  store.Store
-		StoreTimeout           time.Duration
 	}
 	type args struct {
 		ctx         context.Context
@@ -198,7 +194,6 @@ func TestLegacyAdapter_Handle(t *testing.T) {
 				LicenseGetter:          tt.fields.LicenseGetter,
 				SecretsProviderManager: tt.fields.SecretsProviderManager,
 				Store:                  tt.fields.Store,
-				StoreTimeout:           tt.fields.StoreTimeout,
 			}
 			err := l.Handle(tt.args.ctx, tt.args.ref, tt.args.event, tt.args.mutatedData)
 			if (err != nil) != tt.wantErr {
@@ -219,7 +214,6 @@ func TestLegacyAdapter_pipeHandler(t *testing.T) {
 		LicenseGetter          licensing.Getter
 		SecretsProviderManager secrets.ProviderManagerer
 		Store                  store.Store
-		StoreTimeout           time.Duration
 	}
 	type args struct {
 		ctx         context.Context
@@ -401,7 +395,6 @@ func TestLegacyAdapter_pipeHandler(t *testing.T) {
 				LicenseGetter:          tt.fields.LicenseGetter,
 				SecretsProviderManager: tt.fields.SecretsProviderManager,
 				Store:                  tt.fields.Store,
-				StoreTimeout:           tt.fields.StoreTimeout,
 			}
 			got, err := l.pipeHandler(tt.args.ctx, tt.args.handler, tt.args.event, tt.args.mutatedData)
 			if (err != nil) != tt.wantErr {

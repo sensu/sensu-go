@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"testing"
-	"time"
 
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/asset"
@@ -31,7 +30,6 @@ func TestLegacyAdapter_CanMutate(t *testing.T) {
 		Executor               command.Executor
 		SecretsProviderManager *secrets.ProviderManager
 		Store                  store.Store
-		StoreTimeout           time.Duration
 	}
 	type args struct {
 		ref *corev2.ResourceReference
@@ -93,7 +91,6 @@ func TestLegacyAdapter_CanMutate(t *testing.T) {
 				Executor:               tt.fields.Executor,
 				SecretsProviderManager: tt.fields.SecretsProviderManager,
 				Store:                  tt.fields.Store,
-				StoreTimeout:           tt.fields.StoreTimeout,
 			}
 			if got := l.CanMutate(tt.args.ref); got != tt.want {
 				t.Errorf("LegacyAdapter.CanMutate() = %v, want %v", got, tt.want)
@@ -108,7 +105,6 @@ func TestLegacyAdapter_Mutate(t *testing.T) {
 		Executor               command.Executor
 		SecretsProviderManager *secrets.ProviderManager
 		Store                  store.Store
-		StoreTimeout           time.Duration
 	}
 	type args struct {
 		ctx   context.Context
@@ -177,7 +173,6 @@ func TestLegacyAdapter_Mutate(t *testing.T) {
 				Executor:               tt.fields.Executor,
 				SecretsProviderManager: tt.fields.SecretsProviderManager,
 				Store:                  tt.fields.Store,
-				StoreTimeout:           tt.fields.StoreTimeout,
 			}
 			got, err := l.Mutate(tt.args.ctx, tt.args.ref, tt.args.event)
 			if (err != nil) != tt.wantErr {

@@ -392,17 +392,14 @@ func Initialize(ctx context.Context, config *Config) (*Backend, error) {
 	}
 
 	// Initialize PipelineAdapterV1
-	storeTimeout := 2 * time.Minute
 	b.PipelineAdapterV1 = pipeline.AdapterV1{
-		Store:        b.Store,
-		StoreTimeout: storeTimeout,
+		Store: b.Store,
 	}
 
 	// Initialize PipelineAdapterV1 filter adapters
 	legacyFilterAdapter := &filter.LegacyAdapter{
-		AssetGetter:  assetGetter,
-		Store:        b.Store,
-		StoreTimeout: storeTimeout,
+		AssetGetter: assetGetter,
+		Store:       b.Store,
 	}
 	hasMetricsFilterAdapter := &filter.HasMetricsAdapter{}
 	isIncidentFilterAdapter := &filter.IsIncidentAdapter{}
@@ -421,7 +418,6 @@ func Initialize(ctx context.Context, config *Config) (*Backend, error) {
 		Executor:               command.NewExecutor(),
 		SecretsProviderManager: b.SecretsProviderManager,
 		Store:                  b.Store,
-		StoreTimeout:           storeTimeout,
 	}
 	onlyCheckOutputMutatorAdapter := &mutator.OnlyCheckOutputAdapter{}
 	jsonMutatorAdapter := &mutator.JSONAdapter{}
@@ -439,7 +435,6 @@ func Initialize(ctx context.Context, config *Config) (*Backend, error) {
 		LicenseGetter:          b.LicenseGetter,
 		SecretsProviderManager: b.SecretsProviderManager,
 		Store:                  b.Store,
-		StoreTimeout:           storeTimeout,
 	}
 
 	b.PipelineAdapterV1.HandlerAdapters = []pipeline.HandlerAdapter{
@@ -460,7 +455,6 @@ func Initialize(ctx context.Context, config *Config) (*Backend, error) {
 			Client:              b.Client,
 			BufferSize:          viper.GetInt(FlagEventdBufferSize),
 			WorkerCount:         viper.GetInt(FlagEventdWorkers),
-			StoreTimeout:        2 * time.Minute,
 			LogPath:             b.Cfg.EventLogFile,
 			LogBufferSize:       b.Cfg.EventLogBufferSize,
 			LogBufferWait:       b.Cfg.EventLogBufferWait,
@@ -539,7 +533,6 @@ func Initialize(ctx context.Context, config *Config) (*Backend, error) {
 		RingPool:              b.RingPool,
 		BufferSize:            viper.GetInt(FlagKeepalivedBufferSize),
 		WorkerCount:           viper.GetInt(FlagKeepalivedWorkers),
-		StoreTimeout:          2 * time.Minute,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("error initializing %s: %s", keepalive.Name(), err)

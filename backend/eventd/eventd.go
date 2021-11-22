@@ -92,9 +92,6 @@ const (
 	// SwitchesBuryDuration is the name of the prometheus summary vec used to
 	// track average latencies of calls to switches.Bury.
 	SwitchesBuryDuration = "sensu_go_eventd_switches_bury_duration"
-
-	// defaultStoreTimeout is the store timeout used if the backend did not configure one
-	defaultStoreTimeout = time.Minute
 )
 
 var (
@@ -201,7 +198,6 @@ type Eventd struct {
 	wg                  *sync.WaitGroup
 	Logger              Logger
 	silencedCache       Cache
-	storeTimeout        time.Duration
 	logPath             string
 	logBufferSize       int
 	logBufferWait       time.Duration
@@ -225,7 +221,6 @@ type Config struct {
 	Client              *clientv3.Client
 	BufferSize          int
 	WorkerCount         int
-	StoreTimeout        time.Duration
 	LogPath             string
 	LogBufferSize       int
 	LogBufferWait       time.Duration
@@ -242,10 +237,6 @@ func New(ctx context.Context, c Config, opts ...Option) (*Eventd, error) {
 		logger.Warn("WorkerCount not configured")
 		c.WorkerCount = 1
 	}
-	if c.StoreTimeout == 0 {
-		logger.Warn("StoreTimeout not configured")
-		c.StoreTimeout = defaultStoreTimeout
-	}
 
 	e := &Eventd{
 		store:               c.Store,
@@ -259,7 +250,6 @@ func New(ctx context.Context, c Config, opts ...Option) (*Eventd, error) {
 		keepaliveChan:       make(chan interface{}, c.BufferSize),
 		wg:                  &sync.WaitGroup{},
 		mu:                  &sync.Mutex{},
-		storeTimeout:        c.StoreTimeout,
 		logPath:             c.LogPath,
 		logBufferSize:       c.LogBufferSize,
 		logBufferWait:       c.LogBufferWait,
@@ -658,10 +648,6 @@ func (e *Eventd) dead(ctx context.Context, key string, prev liveness.State, lead
 	}
 
 	ctx = store.NamespaceContext(ctx, namespace)
-	// TODO(eric): make this configurable? Or dynamic based on some property?
-	// 120s seems like a reasonable, it not somewhat large, timeout for check TTL processing.
-	ctx, cancel := context.WithTimeout(ctx, e.storeTimeout)
-	defer cancel()
 
 	// The entity has been deleted, and so there is no reason to track check
 	// TTL for it anymore.

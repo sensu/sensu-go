@@ -26,9 +26,8 @@ func TestLegacyAdapter_Name(t *testing.T) {
 
 func TestLegacyAdapter_CanFilter(t *testing.T) {
 	type fields struct {
-		AssetGetter  asset.Getter
-		Store        store.Store
-		StoreTimeout time.Duration
+		AssetGetter asset.Getter
+		Store       store.Store
 	}
 	type args struct {
 		ref *corev2.ResourceReference
@@ -97,9 +96,8 @@ func TestLegacyAdapter_CanFilter(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			l := &LegacyAdapter{
-				AssetGetter:  tt.fields.AssetGetter,
-				Store:        tt.fields.Store,
-				StoreTimeout: tt.fields.StoreTimeout,
+				AssetGetter: tt.fields.AssetGetter,
+				Store:       tt.fields.Store,
 			}
 			if got := l.CanFilter(tt.args.ref); got != tt.want {
 				t.Errorf("LegacyAdapter.CanFilter() = %v, want %v", got, tt.want)
@@ -110,9 +108,8 @@ func TestLegacyAdapter_CanFilter(t *testing.T) {
 
 func TestLegacyAdapter_Filter(t *testing.T) {
 	type fields struct {
-		AssetGetter  asset.Getter
-		Store        store.Store
-		StoreTimeout time.Duration
+		AssetGetter asset.Getter
+		Store       store.Store
 	}
 	type args struct {
 		ctx   context.Context
@@ -239,9 +236,8 @@ func TestLegacyAdapter_Filter(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			l := &LegacyAdapter{
-				AssetGetter:  tt.fields.AssetGetter,
-				Store:        tt.fields.Store,
-				StoreTimeout: tt.fields.StoreTimeout,
+				AssetGetter: tt.fields.AssetGetter,
+				Store:       tt.fields.Store,
 			}
 			got, err := l.Filter(tt.args.ctx, tt.args.ref, tt.args.event)
 			if (err != nil) != tt.wantErr {

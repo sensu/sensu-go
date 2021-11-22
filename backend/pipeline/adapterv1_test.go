@@ -6,7 +6,6 @@ import (
 	"io/ioutil"
 	"reflect"
 	"testing"
-	"time"
 
 	"github.com/golang/protobuf/proto" //nolint:staticcheck // ignore SA1019
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
@@ -37,7 +36,6 @@ func TestAdapterV1_Name(t *testing.T) {
 func TestAdapterV1_CanRun(t *testing.T) {
 	type fields struct {
 		Store           store.Store
-		StoreTimeout    time.Duration
 		FilterAdapters  []FilterAdapter
 		MutatorAdapters []MutatorAdapter
 		HandlerAdapters []HandlerAdapter
@@ -76,7 +74,6 @@ func TestAdapterV1_CanRun(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			a := &AdapterV1{
 				Store:           tt.fields.Store,
-				StoreTimeout:    tt.fields.StoreTimeout,
 				FilterAdapters:  tt.fields.FilterAdapters,
 				MutatorAdapters: tt.fields.MutatorAdapters,
 				HandlerAdapters: tt.fields.HandlerAdapters,
@@ -91,7 +88,6 @@ func TestAdapterV1_CanRun(t *testing.T) {
 func TestAdapterV1_Run(t *testing.T) {
 	type fields struct {
 		Store           store.Store
-		StoreTimeout    time.Duration
 		FilterAdapters  []FilterAdapter
 		MutatorAdapters []MutatorAdapter
 		HandlerAdapters []HandlerAdapter
@@ -395,7 +391,6 @@ func TestAdapterV1_Run(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			a := &AdapterV1{
 				Store:           tt.fields.Store,
-				StoreTimeout:    tt.fields.StoreTimeout,
 				FilterAdapters:  tt.fields.FilterAdapters,
 				MutatorAdapters: tt.fields.MutatorAdapters,
 				HandlerAdapters: tt.fields.HandlerAdapters,
@@ -414,7 +409,6 @@ func TestAdapterV1_Run(t *testing.T) {
 func TestAdapterV1_resolvePipelineReference(t *testing.T) {
 	type fields struct {
 		Store           store.Store
-		StoreTimeout    time.Duration
 		FilterAdapters  []FilterAdapter
 		MutatorAdapters []MutatorAdapter
 		HandlerAdapters []HandlerAdapter
@@ -488,7 +482,6 @@ func TestAdapterV1_resolvePipelineReference(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			a := &AdapterV1{
 				Store:           tt.fields.Store,
-				StoreTimeout:    tt.fields.StoreTimeout,
 				FilterAdapters:  tt.fields.FilterAdapters,
 				MutatorAdapters: tt.fields.MutatorAdapters,
 				HandlerAdapters: tt.fields.HandlerAdapters,
@@ -508,7 +501,6 @@ func TestAdapterV1_resolvePipelineReference(t *testing.T) {
 func TestAdapterV1_getPipelineFromStore(t *testing.T) {
 	type fields struct {
 		Store           store.Store
-		StoreTimeout    time.Duration
 		FilterAdapters  []FilterAdapter
 		MutatorAdapters []MutatorAdapter
 		HandlerAdapters []HandlerAdapter
@@ -596,7 +588,6 @@ func TestAdapterV1_getPipelineFromStore(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			a := &AdapterV1{
 				Store:           tt.fields.Store,
-				StoreTimeout:    tt.fields.StoreTimeout,
 				FilterAdapters:  tt.fields.FilterAdapters,
 				MutatorAdapters: tt.fields.MutatorAdapters,
 				HandlerAdapters: tt.fields.HandlerAdapters,
@@ -620,7 +611,6 @@ func TestAdapterV1_getPipelineFromStore(t *testing.T) {
 func TestAdapterV1_generateLegacyPipeline(t *testing.T) {
 	type fields struct {
 		Store           store.Store
-		StoreTimeout    time.Duration
 		FilterAdapters  []FilterAdapter
 		MutatorAdapters []MutatorAdapter
 		HandlerAdapters []HandlerAdapter
@@ -752,7 +742,6 @@ func TestAdapterV1_generateLegacyPipeline(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			a := &AdapterV1{
 				Store:           tt.fields.Store,
-				StoreTimeout:    tt.fields.StoreTimeout,
 				FilterAdapters:  tt.fields.FilterAdapters,
 				MutatorAdapters: tt.fields.MutatorAdapters,
 				HandlerAdapters: tt.fields.HandlerAdapters,
@@ -803,7 +792,6 @@ func TestAdapterV1_expandHandlers(t *testing.T) {
 	)
 	type fields struct {
 		Store           store.Store
-		StoreTimeout    time.Duration
 		FilterAdapters  []FilterAdapter
 		MutatorAdapters []MutatorAdapter
 		HandlerAdapters []HandlerAdapter
@@ -933,7 +921,6 @@ func TestAdapterV1_expandHandlers(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			a := &AdapterV1{
 				Store:           tt.fields.Store,
-				StoreTimeout:    tt.fields.StoreTimeout,
 				FilterAdapters:  tt.fields.FilterAdapters,
 				MutatorAdapters: tt.fields.MutatorAdapters,
 				HandlerAdapters: tt.fields.HandlerAdapters,
