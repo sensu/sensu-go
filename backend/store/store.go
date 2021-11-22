@@ -101,12 +101,17 @@ type SelectionPredicate struct {
 	Continue string
 	// Limit indicates the number of resources to retrieve
 	Limit int64
+	// Start indicates the first index after sorting of the resources to retrieve.
+	// If supported by the store
+	Start int64
 	// Subcollection represents a sub-collection of the primary collection
 	Subcollection string
+	// Ordering indicates the property to sort on, if supported by the store
+	Ordering string
 }
 
 // A WatchEventCheckConfig contains the modified store object and the action
-// that occured during the modification.
+// that occurred during the modification.
 type WatchEventCheckConfig struct {
 	CheckConfig *types.CheckConfig
 	Action      WatchActionType
@@ -151,7 +156,7 @@ type WatchEventEntityConfig struct {
 }
 
 // Store is used to abstract the durable storage used by the Sensu backend
-// processses. Each Sensu resources is represented by its own interface. A
+// processes. Each Sensu resources is represented by its own interface. A
 // MockStore is available in order to mock a store implementation
 type Store interface {
 	// AssetStore provides an interface for managing checks assets
@@ -295,30 +300,30 @@ type ClusterIDStore interface {
 // ClusterRoleBindingStore provides methods for managing RBAC cluster role
 // bindings
 type ClusterRoleBindingStore interface {
-	// Create a given cluster role binding
+	// CreateClusterRoleBinding creates a given cluster role binding
 	CreateClusterRoleBinding(ctx context.Context, clusterRoleBinding *types.ClusterRoleBinding) error
 
-	// CreateOrUpdateRole overwrites the given cluster role binding
+	// CreateOrUpdateClusterRoleBinding overwrites the given cluster role binding
 	CreateOrUpdateClusterRoleBinding(ctx context.Context, clusterRoleBinding *types.ClusterRoleBinding) error
 
-	// DeleteRole deletes a cluster role binding using the given name.
+	// DeleteClusterRoleBinding deletes a cluster role binding using the given name.
 	DeleteClusterRoleBinding(ctx context.Context, name string) error
 
-	// GetRole returns a cluster role binding using the given name. An error is
+	// GetClusterRoleBinding returns a cluster role binding using the given name. An error is
 	// returned if no binding was found
 	GetClusterRoleBinding(ctx context.Context, name string) (*types.ClusterRoleBinding, error)
 
-	// ListRoles returns all cluster role binding. An error is returned if no
+	// ListClusterRoleBindings returns all cluster role binding. An error is returned if no
 	// binding were found
 	ListClusterRoleBindings(ctx context.Context, pred *SelectionPredicate) (clusterRoleBindings []*types.ClusterRoleBinding, err error)
 
-	// UpdateRole creates or updates a given cluster role binding.
+	// UpdateClusterRoleBinding creates or updates a given cluster role binding.
 	UpdateClusterRoleBinding(ctx context.Context, clusterRoleBinding *types.ClusterRoleBinding) error
 }
 
 // ClusterRoleStore provides methods for managing RBAC cluster roles and rules
 type ClusterRoleStore interface {
-	// Create a given cluster role
+	// CreateClusterRole creates a given cluster role
 	CreateClusterRole(ctx context.Context, clusterRole *types.ClusterRole) error
 
 	// CreateOrUpdateClusterRole overwrites the given cluster role
@@ -521,30 +526,30 @@ type ResourceStore interface {
 
 // RoleBindingStore provides methods for managing RBAC role bindings
 type RoleBindingStore interface {
-	// Create a given role binding
+	// CreateRoleBinding creates a given role binding
 	CreateRoleBinding(ctx context.Context, roleBinding *types.RoleBinding) error
 
-	// CreateOrUpdateRole overwrites the given role binding
+	// CreateOrUpdateRoleBinding overwrites the given role binding
 	CreateOrUpdateRoleBinding(ctx context.Context, roleBinding *types.RoleBinding) error
 
-	// DeleteRole deletes a role binding using the given name.
+	// DeleteRoleBinding deletes a role binding using the given name.
 	DeleteRoleBinding(ctx context.Context, name string) error
 
-	// GetRole returns a role binding using the given name. An error is returned
+	// GetRoleBinding returns a role binding using the given name. An error is returned
 	// if no binding was found
 	GetRoleBinding(ctx context.Context, name string) (*types.RoleBinding, error)
 
-	// ListRoles returns all role binding. An error is returned if no binding were
+	// ListRoleBindings returns all role binding. An error is returned if no binding were
 	// found
 	ListRoleBindings(ctx context.Context, pred *SelectionPredicate) (roleBindings []*types.RoleBinding, err error)
 
-	// UpdateRole creates or updates a given role binding.
+	// UpdateRoleBinding creates or updates a given role binding.
 	UpdateRoleBinding(ctx context.Context, roleBinding *types.RoleBinding) error
 }
 
 // RoleStore provides methods for managing RBAC roles and rules
 type RoleStore interface {
-	// Create a given role
+	// CreateRole creates a given role
 	CreateRole(ctx context.Context, role *types.Role) error
 
 	// CreateOrUpdateRole overwrites the given role
@@ -579,7 +584,7 @@ type SilencedStore interface {
 	// returned if none were found.
 	GetSilencedEntriesByCheckName(ctx context.Context, check string) ([]*types.Silenced, error)
 
-	// GetSilencedEntriesByCheckName returns all entries for the given subscription
+	// GetSilencedEntriesBySubscription returns all entries for the given subscription
 	// within the ctx's namespace. A nil slice with no error is
 	// returned if none were found.
 	GetSilencedEntriesBySubscription(ctx context.Context, subscriptions ...string) ([]*types.Silenced, error)
@@ -589,7 +594,7 @@ type SilencedStore interface {
 	// none was found.
 	GetSilencedEntryByName(ctx context.Context, id string) (*types.Silenced, error)
 
-	// UpdateHandler creates or updates a given entry.
+	// UpdateSilencedEntry creates or updates a given entry.
 	UpdateSilencedEntry(ctx context.Context, entry *types.Silenced) error
 
 	// GetSilencedEntriesByName gets all the named silenced entries.
@@ -615,7 +620,7 @@ type UserStore interface {
 	// disabled or the given password does not match.
 	AuthenticateUser(ctx context.Context, username, password string) (*types.User, error)
 
-	// CreateUsern creates a new user with the given user struct.
+	// CreateUser creates a new user with the given user struct.
 	CreateUser(ctx context.Context, user *types.User) error
 
 	// GetUser returns a user using the given username.
@@ -625,11 +630,11 @@ type UserStore interface {
 	// returned if none were found.
 	GetUsers() ([]*types.User, error)
 
-	// GetUsers returns all users, including the disabled ones. A nil slice with
+	// GetAllUsers returns all users, including the disabled ones. A nil slice with
 	// no error is  returned if none were found.
 	GetAllUsers(pred *SelectionPredicate) ([]*types.User, error)
 
-	// UpdateHandler updates a given user.
+	// UpdateUser updates a given user.
 	UpdateUser(user *types.User) error
 }
 

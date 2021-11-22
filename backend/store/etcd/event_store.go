@@ -79,12 +79,12 @@ func (s *Store) DeleteEventByEntityCheck(ctx context.Context, entityName, checkN
 		return &store.ErrNotValid{Err: errors.New("must specify entity and check name")}
 	}
 
-	path, err := getEventWithCheckPath(ctx, entityName, checkName)
+	eventPath, err := getEventWithCheckPath(ctx, entityName, checkName)
 	if err != nil {
 		return &store.ErrNotValid{Err: err}
 	}
 
-	err = Delete(ctx, s.client, path)
+	err = Delete(ctx, s.client, eventPath)
 	if _, ok := err.(*store.ErrNotFound); ok {
 		err = nil
 	}
@@ -124,7 +124,7 @@ func (s *Store) GetEvents(ctx context.Context, pred *store.SelectionPredicate) (
 		return []*corev2.Event{}, nil
 	}
 
-	events := []*corev2.Event{}
+	events := make([]*corev2.Event, 0, len(resp.Kvs))
 	for _, kv := range resp.Kvs {
 		event := &corev2.Event{}
 		if err := unmarshal(kv.Value, event); err != nil {
@@ -141,10 +141,30 @@ func (s *Store) GetEvents(ctx context.Context, pred *store.SelectionPredicate) (
 		events = append(events, event)
 	}
 
-	if pred.Limit != 0 && resp.Count > pred.Limit {
-		pred.Continue = ComputeContinueToken(ctx, events[len(events)-1])
+	corev2.SortEvents(events, pred.Ordering)
+
+	if pred.Start > 0 {
+		low := pred.Start
+		if low >= resp.Count {
+			low = -1
+		}
+		high := low + pred.Limit
+		if high > resp.Count {
+			high = resp.Count
+		}
+		if low+high > resp.Count {
+			high = resp.Count - low
+		}
+
+		if low >= 0 {
+			events = events[low:high]
+		}
 	} else {
-		pred.Continue = ""
+		if pred.Limit != 0 && resp.Count > pred.Limit {
+			pred.Continue = ComputeContinueToken(ctx, events[len(events)-1])
+		} else {
+			pred.Continue = ""
+		}
 	}
 
 	return events, nil
@@ -166,7 +186,11 @@ func (s *Store) GetEventsByEntity(ctx context.Context, entityName string, pred *
 
 	var resp *clientv3.GetResponse
 	err := kvc.Backoff(ctx).Retry(func(n int) (done bool, err error) {
-		resp, err = s.client.Get(ctx, fmt.Sprintf("%s/", path.Join(keyPrefix, pred.Continue)), opts...)
+		if pred.Start > 0 {
+			resp, err = s.client.Get(ctx, fmt.Sprintf("%s/", keyPrefix), opts...)
+		} else {
+			resp, err = s.client.Get(ctx, fmt.Sprintf("%s/", path.Join(keyPrefix, pred.Continue)), opts...)
+		}
 		return kvc.RetryRequest(n, err)
 	})
 	if err != nil {
@@ -177,7 +201,7 @@ func (s *Store) GetEventsByEntity(ctx context.Context, entityName string, pred *
 		return nil, nil
 	}
 
-	events := []*corev2.Event{}
+	events := make([]*corev2.Event, 0, len(resp.Kvs))
 	for _, kv := range resp.Kvs {
 		event := &corev2.Event{}
 		if err := unmarshal(kv.Value, event); err != nil {
@@ -194,11 +218,31 @@ func (s *Store) GetEventsByEntity(ctx context.Context, entityName string, pred *
 		events = append(events, event)
 	}
 
-	if pred.Limit != 0 && resp.Count > pred.Limit {
-		lastEvent := events[len(events)-1]
-		pred.Continue = lastEvent.Check.Name + "\x00"
+	corev2.SortEvents(events, pred.Ordering)
+
+	if pred.Start > 0 {
+		low := pred.Start
+		if low >= resp.Count {
+			low = -1
+		}
+		high := low + pred.Limit
+		if high > resp.Count {
+			high = resp.Count
+		}
+		if low+high > resp.Count {
+			high = resp.Count - low
+		}
+
+		if low >= 0 {
+			events = events[low:high]
+		}
 	} else {
-		pred.Continue = ""
+		if pred.Limit != 0 && resp.Count > pred.Limit {
+			lastEvent := events[len(events)-1]
+			pred.Continue = lastEvent.Check.Name + "\x00"
+		} else {
+			pred.Continue = ""
+		}
 	}
 
 	return events, nil
@@ -210,14 +254,14 @@ func (s *Store) GetEventByEntityCheck(ctx context.Context, entityName, checkName
 		return nil, &store.ErrNotValid{Err: errors.New("must specify entity and check name")}
 	}
 
-	path, err := getEventWithCheckPath(ctx, entityName, checkName)
+	eventPath, err := getEventWithCheckPath(ctx, entityName, checkName)
 	if err != nil {
 		return nil, &store.ErrNotValid{Err: err}
 	}
 
 	var resp *clientv3.GetResponse
 	err = kvc.Backoff(ctx).Retry(func(n int) (done bool, err error) {
-		resp, err = s.client.Get(ctx, path, clientv3.WithPrefix(), clientv3.WithSerializable())
+		resp, err = s.client.Get(ctx, eventPath, clientv3.WithPrefix(), clientv3.WithSerializable())
 		return kvc.RetryRequest(n, err)
 	})
 	if err != nil {
@@ -345,7 +389,7 @@ func (s *Store) GetProviderInfo() *provider.Info {
 	}
 }
 
-// updateCheckHistory takes two events and merges the check result history of
+// updateEventHistory takes two events and merges the check result history of
 // the second event into the first event.
 func updateEventHistory(event *corev2.Event, prevEvent *corev2.Event) error {
 	if prevEvent != nil {
@@ -401,8 +445,8 @@ func handleExpireOnResolveEntries(ctx context.Context, event *corev2.Event, st s
 	if err != nil {
 		return err
 	}
-	toDelete := []string{}
-	toRetain := []string{}
+	var toDelete []string
+	var toRetain []string
 	for _, entry := range entries {
 		if entry.ExpireOnResolve {
 			toDelete = append(toDelete, entry.Name)
