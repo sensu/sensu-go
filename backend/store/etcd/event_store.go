@@ -418,3 +418,23 @@ func handleExpireOnResolveEntries(ctx context.Context, event *corev2.Event, st s
 
 	return nil
 }
+
+// CountEvents counts events in the namespace. The SelectionPredicate is not
+// supported.
+func (s *Store) CountEvents(ctx context.Context, _ *store.SelectionPredicate) (int64, error) {
+	var count int64
+
+	key := GetEventsPath(ctx, "")
+	if !strings.HasSuffix(key, "/") {
+		key += "/"
+	}
+
+	err := kvc.Backoff(ctx).Retry(func(n int) (done bool, err error) {
+		resp, err := s.client.Get(ctx, key, clientv3.WithCountOnly(), clientv3.WithPrefix())
+		if err == nil {
+			count = resp.Count
+		}
+		return kvc.RetryRequest(n, err)
+	})
+	return count, err
+}
