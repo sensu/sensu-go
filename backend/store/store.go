@@ -402,6 +402,10 @@ type EventStore interface {
 	// event, which may be the same as the event that was passed in, and the
 	// previous event, if one existed, as well as any error that occurred.
 	UpdateEvent(ctx context.Context, event *types.Event) (old, new *types.Event, err error)
+
+	// CountEvents counts the number of events in the namespace. The namespace is
+	// provided as part of the context.
+	CountEvents(context.Context, *SelectionPredicate) (int64, error)
 }
 
 // EventFilterStore provides methods for managing events filters

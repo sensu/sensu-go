@@ -10,7 +10,6 @@ import (
 
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/testing/mockstore"
-	"github.com/sensu/sensu-go/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -40,8 +39,8 @@ func TestEventStorageMaxOutputSize(t *testing.T) {
 func TestEventStorage(t *testing.T) {
 	testWithEtcd(t, func(s store.Store) {
 		// Create new namespaces
-		require.NoError(t, s.CreateNamespace(context.Background(), types.FixtureNamespace("acme")))
-		require.NoError(t, s.CreateNamespace(context.Background(), types.FixtureNamespace("acme-devel")))
+		require.NoError(t, s.CreateNamespace(context.Background(), corev2.FixtureNamespace("acme")))
+		require.NoError(t, s.CreateNamespace(context.Background(), corev2.FixtureNamespace("acme-devel")))
 
 		event := corev2.FixtureEvent("entity1", "check1")
 		ctx := context.WithValue(context.Background(), corev2.NamespaceKey, event.Entity.Namespace)
@@ -161,7 +160,7 @@ func TestEventStorage(t *testing.T) {
 func TestEventByEntity(t *testing.T) {
 	testWithEtcd(t, func(s store.Store) {
 		// Create new namespaces
-		require.NoError(t, s.CreateNamespace(context.Background(), types.FixtureNamespace("acme")))
+		require.NoError(t, s.CreateNamespace(context.Background(), corev2.FixtureNamespace("acme")))
 
 		e1 := corev2.FixtureEvent("entity", "check1")
 		e2 := corev2.FixtureEvent("entity1", "check1")
@@ -787,4 +786,53 @@ func TestStateLastOK(t *testing.T) {
 		}
 	})
 
+}
+
+func TestCountEvents(t *testing.T) {
+	testWithEtcd(t, func(s store.Store) {
+		if err := s.CreateNamespace(context.Background(), corev2.FixtureNamespace("foobar")); err != nil {
+			t.Fatal(err)
+		}
+		ctx := store.NamespaceContext(context.Background(), "default")
+		event := corev2.FixtureEvent("foo", "bar")
+		for i := 0; i < 30; i++ {
+			event.Check.Name = fmt.Sprintf("%d", i)
+			_, _, err := s.UpdateEvent(ctx, event)
+			if err != nil {
+				t.Fatal(err)
+			}
+		}
+		count, err := s.CountEvents(ctx, nil)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if got, want := count, int64(30); got != want {
+			t.Errorf("bad event count: got %d, want %d", got, want)
+		}
+		ctx = store.NamespaceContext(context.Background(), "foobar")
+		event.Entity.Namespace = "foobar"
+		event.Check.Namespace = "foobar"
+		for i := 0; i < 15; i++ {
+			event.Check.Name = fmt.Sprintf("%d", i)
+			_, _, err := s.UpdateEvent(ctx, event)
+			if err != nil {
+				t.Fatal(err)
+			}
+		}
+		count, err = s.CountEvents(ctx, nil)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if got, want := count, int64(15); got != want {
+			t.Errorf("bad event count: got %d, want %d", got, want)
+		}
+		ctx = store.NamespaceContext(context.Background(), "notexists")
+		count, err = s.CountEvents(ctx, nil)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if got, want := count, int64(0); got != want {
+			t.Errorf("bad event count: got %d, want %d", got, want)
+		}
+	})
 }

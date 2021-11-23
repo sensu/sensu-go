@@ -36,3 +36,8 @@ func (s *MockStore) UpdateEvent(ctx context.Context, event *corev2.Event) (*core
 	args := s.Called(event)
 	return args.Get(0).(*corev2.Event), args.Get(1).(*corev2.Event), args.Error(2)
 }
+
+func (s *MockStore) CountEvents(ctx context.Context, pred *store.SelectionPredicate) (int64, error) {
+	args := s.Called(ctx, pred)
+	return args.Get(0).(int64), args.Error(1)
+}
