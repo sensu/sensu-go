@@ -8,6 +8,10 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
 
+### Added
+- Check & CheckConfig validation errors related to cron now provide additional
+context.
+
 ### Fixed
 - Fixed a bug where sensu-backend could crash if the BackendIDGetter encounters
 etcd client unavailability.
