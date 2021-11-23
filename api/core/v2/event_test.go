@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"reflect"
-	"sort"
 	"testing"
 	"time"
 
@@ -118,15 +117,15 @@ func TestEventIsResolution(t *testing.T) {
 	}{
 		{
 			name:     "check has no history",
-			history:  []CheckHistory{CheckHistory{}},
+			history:  []CheckHistory{{}},
 			status:   0,
 			expected: false,
 		},
 		{
 			name: "check has not transitioned",
 			history: []CheckHistory{
-				CheckHistory{Status: 1},
-				CheckHistory{Status: 0},
+				{Status: 1},
+				{Status: 0},
 			},
 			status:   0,
 			expected: true,
@@ -134,8 +133,8 @@ func TestEventIsResolution(t *testing.T) {
 		{
 			name: "check has just transitioned",
 			history: []CheckHistory{
-				CheckHistory{Status: 0},
-				CheckHistory{Status: 1},
+				{Status: 0},
+				{Status: 1},
 			},
 			status:   0,
 			expected: false,
@@ -143,8 +142,8 @@ func TestEventIsResolution(t *testing.T) {
 		{
 			name: "check has transitioned but still an incident",
 			history: []CheckHistory{
-				CheckHistory{Status: 2},
-				CheckHistory{Status: 1},
+				{Status: 2},
+				{Status: 1},
 			},
 			status:   1,
 			expected: false,
@@ -212,15 +211,15 @@ func TestEventIsFlappingStart(t *testing.T) {
 	}{
 		{
 			name:     "check has no history",
-			history:  []CheckHistory{CheckHistory{}},
+			history:  []CheckHistory{{}},
 			state:    EventPassingState,
 			expected: false,
 		},
 		{
 			name: "check was not flapping previously, nor is now",
 			history: []CheckHistory{
-				CheckHistory{Flapping: false},
-				CheckHistory{Flapping: false},
+				{Flapping: false},
+				{Flapping: false},
 			},
 			state:    EventPassingState,
 			expected: false,
@@ -228,8 +227,8 @@ func TestEventIsFlappingStart(t *testing.T) {
 		{
 			name: "check is already flapping",
 			history: []CheckHistory{
-				CheckHistory{Flapping: true},
-				CheckHistory{Flapping: true},
+				{Flapping: true},
+				{Flapping: true},
 			},
 			state:    EventFlappingState,
 			expected: false,
@@ -237,8 +236,8 @@ func TestEventIsFlappingStart(t *testing.T) {
 		{
 			name: "check was not previously flapping",
 			history: []CheckHistory{
-				CheckHistory{Flapping: false},
-				CheckHistory{Flapping: true},
+				{Flapping: false},
+				{Flapping: true},
 			},
 			state:    EventFlappingState,
 			expected: true,
@@ -267,15 +266,15 @@ func TestEventIsFlappingEnd(t *testing.T) {
 	}{
 		{
 			name:     "check has no history",
-			history:  []CheckHistory{CheckHistory{}},
+			history:  []CheckHistory{{}},
 			state:    EventPassingState,
 			expected: false,
 		},
 		{
 			name: "check was not flapping previously, nor is now",
 			history: []CheckHistory{
-				CheckHistory{Flapping: false},
-				CheckHistory{Flapping: false},
+				{Flapping: false},
+				{Flapping: false},
 			},
 			state:    EventPassingState,
 			expected: false,
@@ -283,8 +282,8 @@ func TestEventIsFlappingEnd(t *testing.T) {
 		{
 			name: "check is already flapping",
 			history: []CheckHistory{
-				CheckHistory{Flapping: true},
-				CheckHistory{Flapping: true},
+				{Flapping: true},
+				{Flapping: true},
 			},
 			state:    EventFlappingState,
 			expected: false,
@@ -292,8 +291,8 @@ func TestEventIsFlappingEnd(t *testing.T) {
 		{
 			name: "check was previously flapping but now is in OK state",
 			history: []CheckHistory{
-				CheckHistory{Flapping: true},
-				CheckHistory{Flapping: false},
+				{Flapping: true},
+				{Flapping: false},
 			},
 			state:    EventPassingState,
 			expected: true,
@@ -301,8 +300,8 @@ func TestEventIsFlappingEnd(t *testing.T) {
 		{
 			name: "check was previously flapping but now is in failing state",
 			history: []CheckHistory{
-				CheckHistory{Flapping: true},
-				CheckHistory{Flapping: false},
+				{Flapping: true},
+				{Flapping: false},
 			},
 			state:    EventFailingState,
 			expected: true,
@@ -413,175 +412,6 @@ func TestEventIsSilencedBy(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			assert.Equal(t, tc.expected, tc.event.IsSilencedBy(tc.silenced))
-		})
-	}
-}
-
-func TestEventsBySeverity(t *testing.T) {
-	critical := FixtureEvent("entity", "check")
-	critical.Check.Status = 2 // crit
-	warn := FixtureEvent("entity", "check")
-	warn.Check.Status = 1 // warn
-	unknown := FixtureEvent("entity", "check")
-	unknown.Check.Status = 3 // unknown
-	ok := FixtureEvent("entity", "check")
-	ok.Check.Status = 0 // ok
-	ok.Check.LastOK = 42
-	okOlder := FixtureEvent("entity", "check")
-	okOlder.Check.Status = 0 // ok
-	okOlder.Check.LastOK = 7
-	okOlderDiff := FixtureEvent("entity", "check")
-	okOlderDiff.Check.Status = 0 // ok
-	okOlderDiff.Check.LastOK = 7
-	okOlderDiff.Entity.Name = "zzz"
-	noCheck := FixtureEvent("entity", "check")
-	noCheck.Check = nil
-
-	testCases := []struct {
-		name     string
-		input    []*Event
-		expected []*Event
-	}{
-		{
-			name:     "Sorts by severity",
-			input:    []*Event{ok, warn, unknown, noCheck, okOlderDiff, okOlder, critical},
-			expected: []*Event{critical, warn, unknown, ok, okOlder, okOlderDiff, noCheck},
-		},
-		{
-			name:     "Fallback to lastOK when severity is same",
-			input:    []*Event{okOlder, ok, okOlder},
-			expected: []*Event{ok, okOlder, okOlder},
-		},
-		{
-			name:     "Fallback to entity name when severity is same",
-			input:    []*Event{okOlderDiff, okOlder, ok, okOlder},
-			expected: []*Event{ok, okOlder, okOlder, okOlderDiff},
-		},
-		{
-			name:     "Events w/o a check are sorted to end",
-			input:    []*Event{critical, noCheck, ok},
-			expected: []*Event{critical, ok, noCheck},
-		},
-	}
-
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			sort.Sort(EventsBySeverity(tc.input))
-			assert.EqualValues(t, tc.expected, tc.input)
-		})
-	}
-}
-
-func TestEventsByLastOk(t *testing.T) {
-	incident := FixtureEvent("zeta", "check")
-	incident.Check.State = EventFailingState
-	incidentNewer := FixtureEvent("zeta", "check")
-	incidentNewer.Check.State = EventFlappingState
-	incidentNewer.Check.LastOK = 1
-	ok := FixtureEvent("zeta", "check")
-	ok.Check.State = EventPassingState
-	okNewer := FixtureEvent("zeta", "check")
-	okNewer.Check.State = EventPassingState
-	okNewer.Check.LastOK = 1
-	okDiffEntity := FixtureEvent("abba", "check")
-	okDiffEntity.Check.State = EventPassingState
-	okDiffCheck := FixtureEvent("abba", "0bba")
-	okDiffCheck.Check.State = EventPassingState
-
-	testCases := []struct {
-		name     string
-		input    []*Event
-		expected []*Event
-	}{
-		{
-			name:     "sort by lastOK",
-			input:    []*Event{ok, okNewer, incidentNewer, incident},
-			expected: []*Event{incidentNewer, incident, okNewer, ok},
-		},
-		{
-			name:     "non-passing are sorted to the top",
-			input:    []*Event{okNewer, incidentNewer, ok, incident},
-			expected: []*Event{incidentNewer, incident, okNewer, ok},
-		},
-		{
-			name:     "fallback to entity & check name when severity is same",
-			input:    []*Event{ok, okNewer, okDiffCheck, okDiffEntity},
-			expected: []*Event{okNewer, okDiffCheck, okDiffEntity, ok},
-		},
-	}
-
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			sort.Sort(EventsByLastOk(tc.input))
-			assert.EqualValues(t, tc.expected, tc.input)
-		})
-	}
-}
-
-func TestEventsByTimestamp(t *testing.T) {
-	old := &Event{Timestamp: 3}
-	older := &Event{Timestamp: 2}
-	oldest := &Event{Timestamp: 1}
-	okButHow := &Event{Timestamp: 0}
-
-	testCases := []struct {
-		name     string
-		inEvents []*Event
-		inDir    bool
-		expected []*Event
-	}{
-		{
-			name:     "Sorts ascending",
-			inDir:    false,
-			inEvents: []*Event{old, okButHow, oldest, older},
-			expected: []*Event{okButHow, oldest, older, old},
-		},
-		{
-			name:     "Sorts descending",
-			inDir:    true,
-			inEvents: []*Event{old, okButHow, oldest, older},
-			expected: []*Event{old, older, oldest, okButHow},
-		},
-	}
-
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			sort.Sort(EventsByTimestamp(tc.inEvents, tc.inDir))
-			assert.EqualValues(t, tc.expected, tc.inEvents)
-		})
-	}
-}
-
-func TestEventsByEntity(t *testing.T) {
-	a1 := FixtureEvent("a", "a")
-	a2 := FixtureEvent("a", "b")
-	b1 := FixtureEvent("b", "a")
-	b2 := FixtureEvent("b", "b")
-
-	testCases := []struct {
-		name      string
-		inEvents  []*Event
-		ascending bool
-		expected  []*Event
-	}{
-		{
-			name:      "Sorts ascending",
-			ascending: true,
-			inEvents:  []*Event{b1, a2, a1, b2},
-			expected:  []*Event{a1, a2, b1, b2},
-		},
-		{
-			name:      "Sorts descending",
-			ascending: false,
-			inEvents:  []*Event{b1, a2, a1, b2},
-			expected:  []*Event{b2, b1, a2, a1},
-		},
-	}
-
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			sort.Sort(EventsByEntityName(tc.inEvents, tc.ascending))
-			assert.EqualValues(t, tc.expected, tc.inEvents)
 		})
 	}
 }
