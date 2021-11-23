@@ -2,6 +2,7 @@ package etcd
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"path"
@@ -39,10 +40,35 @@ var (
 	EventBytesSummary = metrics.NewEventBytesSummaryVec(EventBytesSummaryName, EventBytesSummaryHelp)
 )
 
+type continueToken struct {
+	Offset  int64  `json:"offset,omitempty"`
+	EtcdKey string `json:"etcd_key,omitempty"`
+}
+
 func init() {
 	if err := prometheus.Register(EventBytesSummary); err != nil {
 		metrics.LogError(logger, EventBytesSummaryName, err)
 	}
+}
+
+func encodeContinueToken(token *continueToken) (string, error) {
+	data, err := json.Marshal(token)
+	if err != nil {
+		return "", err
+	}
+	return string(data), nil
+}
+
+func decodeContinueToken(data string) (*continueToken, error) {
+	token := &continueToken{}
+	if data == "" {
+		return token, nil
+	}
+	err := json.Unmarshal([]byte(data), token)
+	if err != nil {
+		return nil, err
+	}
+	return token, nil
 }
 
 func getEventPath(event *corev2.Event) string {
@@ -102,9 +128,13 @@ func (s *Store) GetEvents(ctx context.Context, pred *store.SelectionPredicate) (
 	rangeEnd := clientv3.GetPrefixRangeEnd(keyPrefix)
 	opts = append(opts, clientv3.WithRange(rangeEnd))
 
+	token, err := decodeContinueToken(pred.Continue)
+	if err != nil {
+		return nil, fmt.Errorf("error decoding continue token: %s", err.Error())
+	}
 	key := keyPrefix
-	if pred.Continue != "" {
-		key = path.Join(keyPrefix, pred.Continue)
+	if token.EtcdKey != "" {
+		key = path.Join(keyPrefix, token.EtcdKey)
 	} else {
 		if !strings.HasSuffix(key, "/") {
 			key += "/"
@@ -112,7 +142,7 @@ func (s *Store) GetEvents(ctx context.Context, pred *store.SelectionPredicate) (
 	}
 
 	var resp *clientv3.GetResponse
-	err := kvc.Backoff(ctx).Retry(func(n int) (done bool, err error) {
+	err = kvc.Backoff(ctx).Retry(func(n int) (done bool, err error) {
 		resp, err = s.client.Get(ctx, key, opts...)
 		return kvc.RetryRequest(n, err)
 	})
@@ -141,31 +171,9 @@ func (s *Store) GetEvents(ctx context.Context, pred *store.SelectionPredicate) (
 		events = append(events, event)
 	}
 
-	corev2.SortEvents(events, pred.Ordering)
-
-	if pred.Start > 0 {
-		low := pred.Start
-		if low >= resp.Count {
-			low = -1
-		}
-		high := low + pred.Limit
-		if high > resp.Count {
-			high = resp.Count
-		}
-		if low+high > resp.Count {
-			high = resp.Count - low
-		}
-
-		if low >= 0 {
-			events = events[low:high]
-		}
-	} else {
-		if pred.Limit != 0 && resp.Count > pred.Limit {
-			pred.Continue = ComputeContinueToken(ctx, events[len(events)-1])
-		} else {
-			pred.Continue = ""
-		}
-	}
+	events, err = handleSortAndPagination(events, pred, token, resp, func(event *corev2.Event) string {
+		return ComputeContinueToken(ctx, events[len(events)-1])
+	})
 
 	return events, nil
 }
@@ -184,12 +192,17 @@ func (s *Store) GetEventsByEntity(ctx context.Context, entityName string, pred *
 	rangeEnd := clientv3.GetPrefixRangeEnd(keyPrefix)
 	opts = append(opts, clientv3.WithRange(rangeEnd))
 
+	token, err := decodeContinueToken(pred.Continue)
+	if err != nil {
+		return nil, fmt.Errorf("error decoding continue token: %s", err.Error())
+	}
+
 	var resp *clientv3.GetResponse
-	err := kvc.Backoff(ctx).Retry(func(n int) (done bool, err error) {
-		if pred.Start > 0 {
+	err = kvc.Backoff(ctx).Retry(func(n int) (done bool, err error) {
+		if token.EtcdKey == "" {
 			resp, err = s.client.Get(ctx, fmt.Sprintf("%s/", keyPrefix), opts...)
 		} else {
-			resp, err = s.client.Get(ctx, fmt.Sprintf("%s/", path.Join(keyPrefix, pred.Continue)), opts...)
+			resp, err = s.client.Get(ctx, fmt.Sprintf("%s/", path.Join(keyPrefix, token.EtcdKey)), opts...)
 		}
 		return kvc.RetryRequest(n, err)
 	})
@@ -218,31 +231,11 @@ func (s *Store) GetEventsByEntity(ctx context.Context, entityName string, pred *
 		events = append(events, event)
 	}
 
-	corev2.SortEvents(events, pred.Ordering)
-
-	if pred.Start > 0 {
-		low := pred.Start
-		if low >= resp.Count {
-			low = -1
-		}
-		high := low + pred.Limit
-		if high > resp.Count {
-			high = resp.Count
-		}
-		if low+high > resp.Count {
-			high = resp.Count - low
-		}
-
-		if low >= 0 {
-			events = events[low:high]
-		}
-	} else {
-		if pred.Limit != 0 && resp.Count > pred.Limit {
-			lastEvent := events[len(events)-1]
-			pred.Continue = lastEvent.Check.Name + "\x00"
-		} else {
-			pred.Continue = ""
-		}
+	events, err = handleSortAndPagination(events, pred, token, resp, func(event *corev2.Event) string {
+		return event.Check.Name + "\x00"
+	})
+	if err != nil {
+		return nil, err
 	}
 
 	return events, nil
@@ -461,4 +454,55 @@ func handleExpireOnResolveEntries(ctx context.Context, event *corev2.Event, st s
 	event.Check.Silenced = toRetain
 
 	return nil
+}
+
+func handleSortAndPagination(events []*corev2.Event, pred *store.SelectionPredicate, token *continueToken,
+	resp *clientv3.GetResponse, nextEtcdKeyFn func(*corev2.Event) string) ([]*corev2.Event, error) {
+	corev2.SortEvents(events, pred.Ordering)
+
+	// offset: 0  = beginning
+	// offset: -1 = no more data
+	// offset: +int = actual offset
+	nextToken := &continueToken{-1, ""}
+	if pred.Ordering != "" {
+		// when ordering is present an offset token will be used
+		low := token.Offset
+		if low >= resp.Count {
+			low = -1
+		}
+		high := int64(0)
+		if pred.Limit > 0 {
+			high = low + pred.Limit
+			if high > resp.Count {
+				high = resp.Count
+			}
+		}
+
+		if low >= 0 {
+			if high > 0 {
+				events = events[low:high]
+				if high < resp.Count {
+					nextToken.Offset = high
+				}
+			} else {
+				events = events[low:]
+			}
+		} else {
+			events = []*corev2.Event{}
+		}
+	} else {
+		if pred.Limit != 0 && resp.Count > pred.Limit {
+			lastEvent := events[len(events)-1]
+			nextToken.EtcdKey = nextEtcdKeyFn(lastEvent)
+			nextToken.EtcdKey = lastEvent.Check.Name + "\x00"
+		}
+	}
+
+	var err error
+	pred.Continue, err = encodeContinueToken(nextToken)
+	if err != nil {
+		return nil, fmt.Errorf("error encoding continue token: %s", err.Error())
+	}
+
+	return events, nil
 }

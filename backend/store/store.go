@@ -101,9 +101,6 @@ type SelectionPredicate struct {
 	Continue string
 	// Limit indicates the number of resources to retrieve
 	Limit int64
-	// Start indicates the first index after sorting of the resources to retrieve.
-	// If supported by the store
-	Start int64
 	// Subcollection represents a sub-collection of the primary collection
 	Subcollection string
 	// Ordering indicates the property to sort on, if supported by the store
