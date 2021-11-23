@@ -1,0 +1,11 @@
+# automatically generated file, do not edit!
+
+"""A Secret is a secret specification."""
+type CoreV2Secret {
+  
+  """Name is the name of the secret referenced in an executable command."""
+  name: String!
+  
+  """Secret is the name of the Sensu secret resource."""
+  secret: String!
+}

@@ -65,6 +65,7 @@ func NewService(cfg ServiceConfig) (*Service, error) {
 
 	// Register types
 	schema.RegisterAsset(svc, &assetImpl{})
+	schema.RegisterCoreV2Secret(svc, &schema.CoreV2SecretAliases{})
 	schema.RegisterNamespace(svc, &namespaceImpl{client: cfg.NamespaceClient})
 	schema.RegisterErrCode(svc)
 	schema.RegisterEvent(svc, &eventImpl{})
