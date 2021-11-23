@@ -23,6 +23,16 @@ type EventClient struct {
 	bus   Publisher
 }
 
+// EventsStoreSupportsFiltering stub impl
+func (EventClient) EventsStoreSupportsFiltering(ctx context.Context) bool {
+	return false
+}
+
+// CountEvents proxies to store client
+func (c EventClient) CountEvents(ctx context.Context, pred *store.SelectionPredicate) (int64, error) {
+	return c.store.CountEvents(ctx, pred)
+}
+
 // NewEventClient creates a new EventClient, given a store, authorizer, and bus.
 func NewEventClient(store store.EventStore, auth authorization.Authorizer, bus Publisher) *EventClient {
 	return &EventClient{

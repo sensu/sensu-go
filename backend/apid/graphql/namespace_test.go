@@ -69,13 +69,14 @@ func TestNamespaceTypeEntitiesField(t *testing.T) {
 
 func TestNamespaceTypeEventsField(t *testing.T) {
 	client := new(MockEventClient)
+	client.On("EventsStoreSupportsFiltering", mock.Anything).Return(false)
 	client.On("ListEvents", mock.Anything, mock.Anything).Return([]*corev2.Event{
 		corev2.FixtureEvent("a", "b"),
 		corev2.FixtureEvent("b", "c"),
 		corev2.FixtureEvent("c", "d"),
 	}, nil).Once()
 
-	impl := &namespaceImpl{}
+	impl := &namespaceImpl{eventClient: client}
 	params := schema.NamespaceEventsFieldResolverParams{ResolveParams: graphql.ResolveParams{Context: context.Background()}}
 	cfg := ServiceConfig{EventClient: client}
 	params.Context = contextWithLoadersNoCache(context.Background(), cfg)
@@ -86,6 +87,44 @@ func TestNamespaceTypeEventsField(t *testing.T) {
 	res, err := impl.Events(params)
 	assert.NoError(t, err)
 	assert.NotEmpty(t, res.(offsetContainer).Nodes)
+
+	// Store err
+	client.On("ListEvents", mock.Anything, mock.Anything).Return([]*corev2.Event{}, errors.New("abc")).Once()
+	res, err = impl.Events(params)
+	assert.Empty(t, res.(offsetContainer).Nodes)
+	assert.Error(t, err)
+}
+
+func TestNamespaceTypeEventsFieldWithStoreFiltering(t *testing.T) {
+	client := new(MockEventClient)
+	// event client with filtering enabled
+	client.On("EventsStoreSupportsFiltering", mock.Anything).Return(true)
+	client.On("CountEvents", mock.Anything, mock.Anything).Return(int64(128), nil)
+
+	client.On("ListEvents", mock.Anything, mock.Anything).Return([]*corev2.Event{
+		corev2.FixtureEvent("a", "b"),
+		corev2.FixtureEvent("b", "c"),
+		corev2.FixtureEvent("c", "d"),
+	}, nil).Once()
+
+	impl := &namespaceImpl{eventClient: client}
+	params := schema.NamespaceEventsFieldResolverParams{
+		ResolveParams: graphql.ResolveParams{Context: context.Background()},
+		Args:          schema.NamespaceEventsFieldResolverArgs{Offset: 20, Limit: 10, OrderBy: "DESC"},
+	}
+	params.Context = context.Background()
+	params.Source = corev2.FixtureNamespace("default")
+
+	// Success
+	res, err := impl.Events(params)
+	assert.NoError(t, err)
+	actual := res.(offsetContainer)
+	assert.NotEmpty(t, actual.Nodes)
+	assert.Equal(t, 128, actual.PageInfo.totalCount)
+	callCtx := client.Calls[1].Arguments[0].(context.Context)
+	assert.Equal(t, "DESC", callCtx.Value(storeOrdering))
+	assert.Equal(t, 10, callCtx.Value(storeLimit))
+	assert.Equal(t, 20, callCtx.Value(storeOffset))
 
 	// Store err
 	client.On("ListEvents", mock.Anything, mock.Anything).Return([]*corev2.Event{}, errors.New("abc")).Once()

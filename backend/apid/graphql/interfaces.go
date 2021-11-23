@@ -38,6 +38,8 @@ type EventClient interface {
 	DeleteEvent(ctx context.Context, entity, check string) error
 	ListEvents(ctx context.Context, pred *store.SelectionPredicate) ([]*corev2.Event, error)
 	ListEventsByEntity(ctx context.Context, entity string, pred *store.SelectionPredicate) ([]*corev2.Event, error)
+	CountEvents(ctx context.Context, pred *store.SelectionPredicate) (int64, error)
+	EventsStoreSupportsFiltering(context.Context) bool
 }
 
 type EventFilterClient interface {

@@ -1,16 +1,24 @@
 package graphql
 
 import (
+	"context"
 	"sort"
 
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/apid/graphql/filter"
 	"github.com/sensu/sensu-go/backend/apid/graphql/globalid"
 	"github.com/sensu/sensu-go/backend/apid/graphql/schema"
+	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/graphql"
 )
 
 var _ schema.NamespaceFieldResolvers = (*namespaceImpl)(nil)
+
+const (
+	storeOffset   = "io.sensu.store.filtering.offset"
+	storeLimit    = "io.sensu.store.filtering.limit"
+	storeOrdering = "io.sensu.store.filtering.ordering"
+)
 
 //
 // Implement NamespaceFieldResolvers
@@ -18,7 +26,8 @@ var _ schema.NamespaceFieldResolvers = (*namespaceImpl)(nil)
 
 type namespaceImpl struct {
 	schema.MutatorAliases
-	client NamespaceClient
+	client      NamespaceClient
+	eventClient EventClient
 }
 
 // ID implements response to request for 'id' field.
@@ -259,8 +268,37 @@ func (r *namespaceImpl) Entities(p schema.NamespaceEntitiesFieldResolverParams) 
 	return res, nil
 }
 
+func (r *namespaceImpl) eventsWithInStoreFiltering(p schema.NamespaceEventsFieldResolverParams) (interface{}, error) {
+	res := newOffsetContainer(p.Args.Offset, p.Args.Limit)
+	nsp := p.Source.(*corev2.Namespace)
+
+	ctx := store.NamespaceContext(p.Context, nsp.Name)
+	// attach limit, offset and ordering to context
+	ctx = context.WithValue(ctx, storeOffset, p.Args.Offset)
+	ctx = context.WithValue(ctx, storeLimit, p.Args.Limit)
+	ctx = context.WithValue(ctx, storeOrdering, string(p.Args.OrderBy))
+
+	events, err := listEvents(ctx, r.eventClient, "")
+	if err != nil {
+		return res, err
+	}
+	// No predicate for all events in namespace
+	totalResultCount, err := r.eventClient.CountEvents(ctx, nil)
+	if err != nil {
+		return res, err
+	}
+
+	res.Nodes = events
+	res.PageInfo.totalCount = int(totalResultCount)
+	return res, nil
+}
+
 // Events implements response to request for 'events' field.
 func (r *namespaceImpl) Events(p schema.NamespaceEventsFieldResolverParams) (interface{}, error) {
+	if r.eventClient.EventsStoreSupportsFiltering(p.Context) {
+		return r.eventsWithInStoreFiltering(p)
+	}
+
 	res := newOffsetContainer(p.Args.Offset, p.Args.Limit)
 	nsp := p.Source.(*corev2.Namespace)
 
