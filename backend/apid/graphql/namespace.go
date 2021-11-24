@@ -1,7 +1,6 @@
 package graphql
 
 import (
-	"context"
 	"sort"
 
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
@@ -268,17 +267,37 @@ func (r *namespaceImpl) Entities(p schema.NamespaceEntitiesFieldResolverParams) 
 	return res, nil
 }
 
+func listEventsOrdering(order schema.EventsListOrder) (string, bool) {
+	switch order {
+	case schema.EventsListOrders.ENTITY:
+		return corev2.EventSortEntity, false
+	case schema.EventsListOrders.ENTITY_DESC:
+		return corev2.EventSortEntity, true
+	case schema.EventsListOrders.LASTOK:
+		return corev2.EventSortLastOk, false
+	case schema.EventsListOrders.NEWEST:
+		return corev2.EventSortTimestamp, true
+	case schema.EventsListOrders.OLDEST:
+		return corev2.EventSortTimestamp, false
+	default:
+		return corev2.EventSortTimestamp, true
+	}
+}
+
 func (r *namespaceImpl) eventsWithInStoreFiltering(p schema.NamespaceEventsFieldResolverParams) (interface{}, error) {
 	res := newOffsetContainer(p.Args.Offset, p.Args.Limit)
 	nsp := p.Source.(*corev2.Namespace)
 
 	ctx := store.NamespaceContext(p.Context, nsp.Name)
-	// attach limit, offset and ordering to context
-	ctx = context.WithValue(ctx, storeOffset, p.Args.Offset)
-	ctx = context.WithValue(ctx, storeLimit, p.Args.Limit)
-	ctx = context.WithValue(ctx, storeOrdering, string(p.Args.OrderBy))
 
-	events, err := listEvents(ctx, r.eventClient, "")
+	ordering, direction := listEventsOrdering(p.Args.OrderBy)
+	pred := &store.SelectionPredicate{
+		Limit:      int64(p.Args.Limit),
+		Offset:     int64(p.Args.Offset),
+		Ordering:   ordering,
+		Descending: direction,
+	}
+	events, err := r.eventClient.ListEvents(ctx, pred)
 	if err != nil {
 		return res, err
 	}

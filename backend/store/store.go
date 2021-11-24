@@ -101,6 +101,8 @@ type SelectionPredicate struct {
 	Continue string
 	// Limit indicates the number of resources to retrieve
 	Limit int64
+	// Offset into the collection
+	Offset int64
 	// Subcollection represents a sub-collection of the primary collection
 	Subcollection string
 	// Ordering indicates the property to sort on, if supported by the store

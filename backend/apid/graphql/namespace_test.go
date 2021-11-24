@@ -7,6 +7,7 @@ import (
 
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/apid/graphql/schema"
+	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/graphql"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -110,7 +111,7 @@ func TestNamespaceTypeEventsFieldWithStoreFiltering(t *testing.T) {
 	impl := &namespaceImpl{eventClient: client}
 	params := schema.NamespaceEventsFieldResolverParams{
 		ResolveParams: graphql.ResolveParams{Context: context.Background()},
-		Args:          schema.NamespaceEventsFieldResolverArgs{Offset: 20, Limit: 10, OrderBy: "DESC"},
+		Args:          schema.NamespaceEventsFieldResolverArgs{Offset: 20, Limit: 10, OrderBy: schema.EventsListOrders.LASTOK},
 	}
 	params.Context = context.Background()
 	params.Source = corev2.FixtureNamespace("default")
@@ -121,10 +122,12 @@ func TestNamespaceTypeEventsFieldWithStoreFiltering(t *testing.T) {
 	actual := res.(offsetContainer)
 	assert.NotEmpty(t, actual.Nodes)
 	assert.Equal(t, 128, actual.PageInfo.totalCount)
-	callCtx := client.Calls[1].Arguments[0].(context.Context)
-	assert.Equal(t, "DESC", callCtx.Value(storeOrdering))
-	assert.Equal(t, 10, callCtx.Value(storeLimit))
-	assert.Equal(t, 20, callCtx.Value(storeOffset))
+	actualPred := client.Calls[1].Arguments[1].(*store.SelectionPredicate)
+
+	assert.Equal(t, false, actualPred.Descending)
+	assert.Equal(t, corev2.EventSortLastOk, actualPred.Ordering)
+	assert.Equal(t, int64(10), actualPred.Limit)
+	assert.Equal(t, int64(20), actualPred.Offset)
 
 	// Store err
 	client.On("ListEvents", mock.Anything, mock.Anything).Return([]*corev2.Event{}, errors.New("abc")).Once()
