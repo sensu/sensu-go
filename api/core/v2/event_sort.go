@@ -2,7 +2,6 @@ package v2
 
 import (
 	"sort"
-	"strings"
 )
 
 const (
@@ -15,26 +14,16 @@ const (
 	SortDescending = "DESC"
 )
 
-func SortEvents(events []*Event, ordering string) {
+func SortEvents(events []*Event, ordering string, orderingDirection string) {
 	if len(ordering) == 0 {
 		return
 	}
 
 	// default sort by newest to oldest
-	sortField := EventSortTimestamp
-	asc := false
-
-	idx := strings.Index(ordering, "_")
-	if idx > 0 {
-		sortField = ordering[0:idx]
-		asc = ordering[idx+1:] != SortDescending
-	} else if len(ordering) > 0 {
-		sortField = ordering
-		asc = true
-	}
+	asc := orderingDirection == SortAscending
 
 	var sortIf sort.Interface
-	switch sortField {
+	switch ordering {
 	case EventSortEntity:
 		sortIf = EventsByEntityName(events, asc)
 	case EventSortLastOk:
