@@ -105,8 +105,8 @@ type SelectionPredicate struct {
 	Subcollection string
 	// Ordering indicates the property to sort on, if supported by the store
 	Ordering string
-	// OrderDirection indicates the sorting direction
-	OrderingDirection string
+	// Descending indicates the sort direction is in descending order.
+	Descending bool
 }
 
 // A WatchEventCheckConfig contains the modified store object and the action

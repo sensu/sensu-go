@@ -9,18 +9,14 @@ const (
 	EventSortLastOk    = "LASTOK"
 	EventSortSeverity  = "SEVERITY"
 	EventSortTimestamp = "TIMESTAMP"
-
-	SortAscending  = "ASC"
-	SortDescending = "DESC"
 )
 
-func SortEvents(events []*Event, ordering string, orderingDirection string) {
+func SortEvents(events []*Event, ordering string, descending bool) {
 	if len(ordering) == 0 {
 		return
 	}
 
-	// default sort by newest to oldest
-	asc := orderingDirection == SortAscending
+	asc := !descending
 
 	var sortIf sort.Interface
 	switch ordering {
