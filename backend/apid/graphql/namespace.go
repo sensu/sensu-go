@@ -13,12 +13,6 @@ import (
 
 var _ schema.NamespaceFieldResolvers = (*namespaceImpl)(nil)
 
-const (
-	storeOffset   = "io.sensu.store.filtering.offset"
-	storeLimit    = "io.sensu.store.filtering.limit"
-	storeOrdering = "io.sensu.store.filtering.ordering"
-)
-
 //
 // Implement NamespaceFieldResolvers
 //
