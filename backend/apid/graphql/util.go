@@ -45,9 +45,9 @@ func convertTs(ts int64) *time.Time {
 // sortEvents by given enum value
 func sortEvents(evs []*corev2.Event, order schema.EventsListOrder) {
 	if order == schema.EventsListOrders.SEVERITY {
-		sort.Sort(corev2.EventsBySeverity(evs))
+		sort.Sort(corev2.EventsBySeverity(evs, false))
 	} else if order == schema.EventsListOrders.LASTOK {
-		sort.Sort(corev2.EventsByLastOk(evs))
+		sort.Sort(corev2.EventsByLastOk(evs, false))
 	} else if order == schema.EventsListOrders.ENTITY || order == schema.EventsListOrders.ENTITY_DESC {
 		sort.Sort(corev2.EventsByEntityName(evs, order == schema.EventsListOrders.ENTITY))
 	} else {

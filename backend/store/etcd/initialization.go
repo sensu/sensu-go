@@ -25,8 +25,8 @@ type StoreInitializer struct {
 }
 
 // NewInitializer returns a new store initializer
-func (store *Store) NewInitializer(ctx context.Context) (store.Initializer, error) {
-	client := store.client
+func (s *Store) NewInitializer(ctx context.Context) (store.Initializer, error) {
+	client := s.client
 
 	// Create a lease to associate with the lock
 	resp, err := client.Grant(ctx, 2)
