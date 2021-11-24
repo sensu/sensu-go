@@ -46,9 +46,8 @@ func (r *namespaceImpl) Checks(p schema.NamespaceChecksFieldResolverParams) (int
 	res := newOffsetContainer(p.Args.Offset, p.Args.Limit)
 	nsp := p.Source.(*corev2.Namespace)
 
-	results := []*corev2.CheckConfig{}
-	req := &loadResourceReq{namespace: nsp.Name, typename: "CheckConfig", apigroup: "core/v2"}
-	err := loadResource(p.Context, req, results)
+	// finds all records
+	results, err := loadCheckConfigs(p.Context, nsp.Name)
 	if err != nil {
 		return res, err
 	}
@@ -83,9 +82,8 @@ func (r *namespaceImpl) EventFilters(p schema.NamespaceEventFiltersFieldResolver
 	res := newOffsetContainer(p.Args.Offset, p.Args.Limit)
 	nsp := p.Source.(*corev2.Namespace)
 
-	results := []*corev2.EventFilter{}
-	req := &loadResourceReq{namespace: nsp.Name, typename: "EventFilter", apigroup: "core/v2"}
-	err := loadResource(p.Context, req, results)
+	// find all records
+	results, err := loadEventFilters(p.Context, nsp.Name)
 	if err != nil {
 		return res, err
 	}
@@ -120,9 +118,8 @@ func (r *namespaceImpl) Handlers(p schema.NamespaceHandlersFieldResolverParams) 
 	res := newOffsetContainer(p.Args.Offset, p.Args.Limit)
 	nsp := p.Source.(*corev2.Namespace)
 
-	results := []*corev2.Handler{}
-	req := &loadResourceReq{namespace: nsp.Name, typename: "Handler", apigroup: "core/v2"}
-	err := loadResource(p.Context, req, results)
+	// finds all records
+	results, err := loadHandlers(p.Context, nsp.Name)
 	if err != nil {
 		return res, err
 	}
@@ -157,9 +154,8 @@ func (r *namespaceImpl) Mutators(p schema.NamespaceMutatorsFieldResolverParams) 
 	res := newOffsetContainer(p.Args.Offset, p.Args.Limit)
 	nsp := p.Source.(*corev2.Namespace)
 
-	results := []*corev2.Mutator{}
-	req := loadResourceReq{namespace: nsp.Name, typename: "Mutator", apigroup: "core/v2"}
-	err := loadResource(p.Context, &req, results)
+	// finds all records
+	results, err := loadMutators(p.Context, nsp.Name)
 	if err != nil {
 		return res, err
 	}

@@ -270,9 +270,23 @@ func loadNamespaces(ctx context.Context) ([]*corev2.Namespace, error) {
 
 // helpers
 
-func loadSilenceds(ctx context.Context, namespace string) ([]*corev2.Silenced, error) {
-	results := []*corev2.Silenced{}
-	req := loadResourceReq{namespace: namespace, typename: "Silenced", apigroup: "core/v2"}
+func loadAssets(ctx context.Context, namespace string) ([]*corev2.Asset, error) {
+	results := []*corev2.Asset{}
+	req := loadResourceReq{namespace: namespace, typename: "Asset", apigroup: "core/v2"}
+	err := loadResource(ctx, &req, results)
+	return results, err
+}
+
+func loadCheckConfigs(ctx context.Context, namespace string) ([]*corev2.CheckConfig, error) {
+	results := []*corev2.CheckConfig{}
+	req := loadResourceReq{namespace: namespace, typename: "CheckConfig", apigroup: "core/v2"}
+	err := loadResource(ctx, &req, results)
+	return results, err
+}
+
+func loadEventFilters(ctx context.Context, namespace string) ([]*corev2.EventFilter, error) {
+	results := []*corev2.EventFilter{}
+	req := loadResourceReq{namespace: namespace, typename: "EventFilter", apigroup: "core/v2"}
 	err := loadResource(ctx, &req, results)
 	return results, err
 }
@@ -284,9 +298,16 @@ func loadHandlers(ctx context.Context, namespace string) ([]*corev2.Handler, err
 	return results, err
 }
 
-func loadAssets(ctx context.Context, namespace string) ([]*corev2.Asset, error) {
-	results := []*corev2.Asset{}
-	req := loadResourceReq{namespace: namespace, typename: "Asset", apigroup: "core/v2"}
+func loadMutators(ctx context.Context, namespace string) ([]*corev2.Mutator, error) {
+	results := []*corev2.Mutator{}
+	req := loadResourceReq{namespace: namespace, typename: "Mutator", apigroup: "core/v2"}
+	err := loadResource(ctx, &req, results)
+	return results, err
+}
+
+func loadSilenceds(ctx context.Context, namespace string) ([]*corev2.Silenced, error) {
+	results := []*corev2.Silenced{}
+	req := loadResourceReq{namespace: namespace, typename: "Silenced", apigroup: "core/v2"}
 	err := loadResource(ctx, &req, results)
 	return results, err
 }
