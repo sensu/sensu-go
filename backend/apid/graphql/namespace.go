@@ -7,7 +7,15 @@ import (
 	"github.com/sensu/sensu-go/backend/apid/graphql/filter"
 	"github.com/sensu/sensu-go/backend/apid/graphql/globalid"
 	"github.com/sensu/sensu-go/backend/apid/graphql/schema"
+	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/graphql"
+)
+
+const (
+	// the maximum number of entities that will be read from the store into
+	// memory; things likely won't work well if the upper bound is hit but at
+	// least we aren't breaking the existing behaviour.
+	maxLengthNamespaceEntityList = 25_000
 )
 
 var _ schema.NamespaceFieldResolvers = (*namespaceImpl)(nil)
@@ -18,7 +26,8 @@ var _ schema.NamespaceFieldResolvers = (*namespaceImpl)(nil)
 
 type namespaceImpl struct {
 	schema.MutatorAliases
-	client NamespaceClient
+	client       NamespaceClient
+	entityClient EntityClient
 }
 
 // ID implements response to request for 'id' field.
@@ -37,8 +46,9 @@ func (r *namespaceImpl) Checks(p schema.NamespaceChecksFieldResolverParams) (int
 	res := newOffsetContainer(p.Args.Offset, p.Args.Limit)
 	nsp := p.Source.(*corev2.Namespace)
 
-	// finds all records
-	results, err := loadCheckConfigs(p.Context, nsp.Name)
+	results := []*corev2.CheckConfig{}
+	req := &loadResourceReq{namespace: nsp.Name, typename: "CheckConfig", apigroup: "core/v2"}
+	err := loadResource(p.Context, req, results)
 	if err != nil {
 		return res, err
 	}
@@ -73,8 +83,9 @@ func (r *namespaceImpl) EventFilters(p schema.NamespaceEventFiltersFieldResolver
 	res := newOffsetContainer(p.Args.Offset, p.Args.Limit)
 	nsp := p.Source.(*corev2.Namespace)
 
-	// find all records
-	results, err := loadEventFilters(p.Context, nsp.Name)
+	results := []*corev2.EventFilter{}
+	req := &loadResourceReq{namespace: nsp.Name, typename: "EventFilter", apigroup: "core/v2"}
+	err := loadResource(p.Context, req, results)
 	if err != nil {
 		return res, err
 	}
@@ -109,8 +120,9 @@ func (r *namespaceImpl) Handlers(p schema.NamespaceHandlersFieldResolverParams) 
 	res := newOffsetContainer(p.Args.Offset, p.Args.Limit)
 	nsp := p.Source.(*corev2.Namespace)
 
-	// finds all records
-	results, err := loadHandlers(p.Context, nsp.Name)
+	results := []*corev2.Handler{}
+	req := &loadResourceReq{namespace: nsp.Name, typename: "Handler", apigroup: "core/v2"}
+	err := loadResource(p.Context, req, results)
 	if err != nil {
 		return res, err
 	}
@@ -145,8 +157,9 @@ func (r *namespaceImpl) Mutators(p schema.NamespaceMutatorsFieldResolverParams) 
 	res := newOffsetContainer(p.Args.Offset, p.Args.Limit)
 	nsp := p.Source.(*corev2.Namespace)
 
-	// finds all records
-	results, err := loadMutators(p.Context, nsp.Name)
+	results := []*corev2.Mutator{}
+	req := loadResourceReq{namespace: nsp.Name, typename: "Mutator", apigroup: "core/v2"}
+	err := loadResource(p.Context, &req, results)
 	if err != nil {
 		return res, err
 	}
@@ -224,7 +237,8 @@ func (r *namespaceImpl) Entities(p schema.NamespaceEntitiesFieldResolverParams) 
 	nsp := p.Source.(*corev2.Namespace)
 
 	// fetch
-	results, err := loadEntities(p.Context, nsp.Name)
+	ctx := store.NamespaceContext(p.Context, nsp.Name)
+	results, err := listEntities(ctx, r.entityClient, maxLengthNamespaceEntityList)
 	if err != nil {
 		return res, err
 	}

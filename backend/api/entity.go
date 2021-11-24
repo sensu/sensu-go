@@ -134,14 +134,10 @@ func (e *EntityClient) FetchEntity(ctx context.Context, name string) (*corev2.En
 }
 
 // ListEntities lists all entities in a namespace, if authorized.
-func (e *EntityClient) ListEntities(ctx context.Context) ([]*corev2.Entity, error) {
+func (e *EntityClient) ListEntities(ctx context.Context, pred *store.SelectionPredicate) ([]*corev2.Entity, error) {
 	attrs := entityAuthAttributes(ctx, "list", "")
 	if err := authorize(ctx, e.auth, attrs); err != nil {
 		return nil, err
-	}
-	pred := &store.SelectionPredicate{
-		Continue: corev2.PageContinueFromContext(ctx),
-		Limit:    int64(corev2.PageSizeFromContext(ctx)),
 	}
 	slice, err := e.entityStore.GetEntities(ctx, pred)
 	if err != nil {
