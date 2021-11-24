@@ -39,7 +39,7 @@ type EventClient interface {
 	ListEvents(ctx context.Context, pred *store.SelectionPredicate) ([]*corev2.Event, error)
 	ListEventsByEntity(ctx context.Context, entity string, pred *store.SelectionPredicate) ([]*corev2.Event, error)
 	CountEvents(ctx context.Context, pred *store.SelectionPredicate) (int64, error)
-	EventsStoreSupportsFiltering(context.Context) bool
+	EventStoreSupportsFiltering(context.Context) bool
 }
 
 type EventFilterClient interface {

@@ -69,7 +69,7 @@ func TestNamespaceTypeEntitiesField(t *testing.T) {
 
 func TestNamespaceTypeEventsField(t *testing.T) {
 	client := new(MockEventClient)
-	client.On("EventsStoreSupportsFiltering", mock.Anything).Return(false)
+	client.On("EventStoreSupportsFiltering", mock.Anything).Return(false)
 	client.On("ListEvents", mock.Anything, mock.Anything).Return([]*corev2.Event{
 		corev2.FixtureEvent("a", "b"),
 		corev2.FixtureEvent("b", "c"),
@@ -98,7 +98,7 @@ func TestNamespaceTypeEventsField(t *testing.T) {
 func TestNamespaceTypeEventsFieldWithStoreFiltering(t *testing.T) {
 	client := new(MockEventClient)
 	// event client with filtering enabled
-	client.On("EventsStoreSupportsFiltering", mock.Anything).Return(true)
+	client.On("EventStoreSupportsFiltering", mock.Anything).Return(true)
 	client.On("CountEvents", mock.Anything, mock.Anything).Return(int64(128), nil)
 
 	client.On("ListEvents", mock.Anything, mock.Anything).Return([]*corev2.Event{

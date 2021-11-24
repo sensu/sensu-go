@@ -429,3 +429,9 @@ func (s *Store) CountEvents(ctx context.Context, _ *store.SelectionPredicate) (i
 
 	return Count(ctx, s.client, key)
 }
+
+// EventStoreSupportsFiltering the etcd store does not currently support
+// filtering.
+func (s *Store) EventStoreSupportsFiltering(context.Context) bool {
+	return false
+}

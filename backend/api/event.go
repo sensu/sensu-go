@@ -23,9 +23,9 @@ type EventClient struct {
 	bus   Publisher
 }
 
-// EventsStoreSupportsFiltering stub impl
-func (EventClient) EventsStoreSupportsFiltering(ctx context.Context) bool {
-	return false
+// EventStoreSupportsFiltering stub impl
+func (c EventClient) EventStoreSupportsFiltering(ctx context.Context) bool {
+	return c.store.EventStoreSupportsFiltering(ctx)
 }
 
 // CountEvents proxies to store client

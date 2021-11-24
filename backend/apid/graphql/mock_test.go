@@ -172,7 +172,7 @@ func (c *MockEventClient) CountEvents(ctx context.Context, _ *store.SelectionPre
 	return args.Get(0).(int64), args.Error(1)
 }
 
-func (c *MockEventClient) EventsStoreSupportsFiltering(ctx context.Context) bool {
+func (c *MockEventClient) EventStoreSupportsFiltering(ctx context.Context) bool {
 	return c.Called(ctx).Get(0).(bool)
 }
 

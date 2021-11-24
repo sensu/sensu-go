@@ -74,6 +74,12 @@ func (s *StoreProxy) CountEvents(ctx context.Context, pred *SelectionPredicate) 
 	return s.do().CountEvents(ctx, pred)
 }
 
+// EventStoreSupportsFiltering signals whether an event store implementation
+// supporting filtering, ordering and offsets. Currently an enterprise postgres store feature.
+func (s *StoreProxy) EventStoreSupportsFiltering(ctx context.Context) bool {
+	return s.do().EventStoreSupportsFiltering(ctx)
+}
+
 // DeleteAssetByName deletes an asset using the given name and the
 // namespace stored in ctx.
 func (s *StoreProxy) DeleteAssetByName(ctx context.Context, name string) error {

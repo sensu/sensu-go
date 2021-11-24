@@ -410,6 +410,10 @@ type EventStore interface {
 	// CountEvents counts the number of events in the namespace. The namespace is
 	// provided as part of the context.
 	CountEvents(context.Context, *SelectionPredicate) (int64, error)
+
+	// EventStoreSupportsFiltering signals whether an event store implementation
+	// supporting filtering, ordering and offsets. Currently an enterprise postgres store feature.
+	EventStoreSupportsFiltering(ctx context.Context) bool
 }
 
 // EventFilterStore provides methods for managing events filters

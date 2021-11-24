@@ -295,7 +295,7 @@ func (r *namespaceImpl) eventsWithInStoreFiltering(p schema.NamespaceEventsField
 
 // Events implements response to request for 'events' field.
 func (r *namespaceImpl) Events(p schema.NamespaceEventsFieldResolverParams) (interface{}, error) {
-	if r.eventClient.EventsStoreSupportsFiltering(p.Context) {
+	if r.eventClient.EventStoreSupportsFiltering(p.Context) {
 		return r.eventsWithInStoreFiltering(p)
 	}
 
