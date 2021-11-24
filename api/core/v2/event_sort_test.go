@@ -1,7 +1,6 @@
 package v2
 
 import (
-	"fmt"
 	"sort"
 	"testing"
 	"time"
@@ -241,8 +240,6 @@ func TestEventsBySeverity(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			sort.Sort(EventsBySeverity(tc.input, false))
-			fmt.Println("EXP:", eventsToId(tc.expected))
-			fmt.Println("RES:", eventsToId(tc.input))
 			assert.EqualValues(t, eventsToId(tc.expected), eventsToId(tc.input))
 		})
 	}
