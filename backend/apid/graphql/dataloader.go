@@ -165,11 +165,6 @@ type loadResourceReq struct {
 	typename  string
 }
 
-func hydrateLoadResourceReq(key string) *loadResourceReq {
-	els := strings.SplitN(key, "\n", 2)
-	return &loadResourceReq{apigroup: els[0], typename: els[1], namespace: els[2]}
-}
-
 func (k *loadResourceReq) String() string {
 	return strings.Join([]string{k.apigroup, k.typename, k.namespace}, "\n")
 }
@@ -178,30 +173,35 @@ func (k *loadResourceReq) Raw() interface{} {
 	return k
 }
 
+func hydrateLoadResourceReq(key string) *loadResourceReq {
+	els := strings.SplitN(key, "\n", 3)
+	return &loadResourceReq{apigroup: els[0], typename: els[1], namespace: els[2]}
+}
+
 // sliceFromTypeMeta returns a slice of the type corresponding to the given
 // api_group and type name.
-func sliceFromTypeMeta(apigroup, typename string) (slice interface{}, err error) {
+func sliceFromTypeMeta(apigroup, typename string) (interface{}, error) {
 	t, err := types.ResolveType(apigroup, typename)
 	if err != nil {
 		return []interface{}{}, err
 	}
-	objT := reflect.MakeSlice(reflect.SliceOf(reflect.PtrTo(reflect.TypeOf(t).Elem())), 0, 0)
-	objs := reflect.New(objT.Type())
-	objs.Elem().Set(objT)
-	return objs.Interface(), nil
+	slice := reflect.MakeSlice(reflect.SliceOf(reflect.PtrTo(reflect.TypeOf(t).Elem())), 0, 0)
+	return slice.Interface(), nil
 }
 
-func listResource(ctx context.Context, c GenericClient, resources interface{}, maxSize int) error {
+func listResource(ctx context.Context, c GenericClient, resourcesPtr interface{}, maxSize int) error {
 	pred := &store.SelectionPredicate{Continue: "", Limit: int64(loaderPageSize)}
-	results := reflect.ValueOf(resources).Elem()
+	results := reflect.ValueOf(resourcesPtr).Elem()
 	for {
-		res := reflect.MakeSlice(reflect.TypeOf(resources), 0, 0)
-		err := c.List(ctx, res.Interface(), pred)
+		res := reflect.MakeSlice(results.Type(), 0, 0)
+		ptr := reflect.New(res.Type())
+		ptr.Elem().Set(res)
+		err := c.List(ctx, ptr.Interface(), pred)
 		if err != nil {
 			return err
 		}
-		results.Set(reflect.AppendSlice(results, res))
-		if pred.Continue == "" || res.Len() < loaderPageSize || results.Len() >= maxSize {
+		results.Set(reflect.AppendSlice(results, ptr.Elem()))
+		if pred.Continue == "" || ptr.Elem().Len() < loaderPageSize || results.Len() >= maxSize {
 			break
 		}
 	}
@@ -214,12 +214,15 @@ func loadResourceBatchFn(c GenericClient, maxSize int) dataloader.BatchFunc {
 		for _, key := range keys {
 			key := hydrateLoadResourceReq(key.String())
 			ctx := store.NamespaceContext(ctx, key.namespace)
-			records, err := sliceFromTypeMeta(key.apigroup, key.typename)
-			if err == nil {
-				err = listResource(ctx, c, records, maxSize)
+			d, err := sliceFromTypeMeta(key.apigroup, key.typename)
+			if err != nil {
+				results = append(results, &dataloader.Result{Data: d, Error: err})
+			} else {
+				ptr := reflect.New(reflect.TypeOf(d))
+				ptr.Elem().Set(reflect.ValueOf(d))
+				err = listResource(ctx, c, ptr.Interface(), maxSize)
+				results = append(results, &dataloader.Result{Data: ptr.Elem().Interface(), Error: err})
 			}
-			result := &dataloader.Result{Data: records, Error: err}
-			results = append(results, result)
 		}
 		return results
 	}
@@ -273,42 +276,42 @@ func loadNamespaces(ctx context.Context) ([]*corev2.Namespace, error) {
 func loadAssets(ctx context.Context, namespace string) ([]*corev2.Asset, error) {
 	results := []*corev2.Asset{}
 	req := loadResourceReq{namespace: namespace, typename: "Asset", apigroup: "core/v2"}
-	err := loadResource(ctx, &req, results)
+	err := loadResource(ctx, &req, &results)
 	return results, err
 }
 
 func loadCheckConfigs(ctx context.Context, namespace string) ([]*corev2.CheckConfig, error) {
 	results := []*corev2.CheckConfig{}
 	req := loadResourceReq{namespace: namespace, typename: "CheckConfig", apigroup: "core/v2"}
-	err := loadResource(ctx, &req, results)
+	err := loadResource(ctx, &req, &results)
 	return results, err
 }
 
 func loadEventFilters(ctx context.Context, namespace string) ([]*corev2.EventFilter, error) {
 	results := []*corev2.EventFilter{}
 	req := loadResourceReq{namespace: namespace, typename: "EventFilter", apigroup: "core/v2"}
-	err := loadResource(ctx, &req, results)
+	err := loadResource(ctx, &req, &results)
 	return results, err
 }
 
 func loadHandlers(ctx context.Context, namespace string) ([]*corev2.Handler, error) {
 	results := []*corev2.Handler{}
 	req := loadResourceReq{namespace: namespace, typename: "Handler", apigroup: "core/v2"}
-	err := loadResource(ctx, &req, results)
+	err := loadResource(ctx, &req, &results)
 	return results, err
 }
 
 func loadMutators(ctx context.Context, namespace string) ([]*corev2.Mutator, error) {
 	results := []*corev2.Mutator{}
 	req := loadResourceReq{namespace: namespace, typename: "Mutator", apigroup: "core/v2"}
-	err := loadResource(ctx, &req, results)
+	err := loadResource(ctx, &req, &results)
 	return results, err
 }
 
 func loadSilenceds(ctx context.Context, namespace string) ([]*corev2.Silenced, error) {
 	results := []*corev2.Silenced{}
 	req := loadResourceReq{namespace: namespace, typename: "Silenced", apigroup: "core/v2"}
-	err := loadResource(ctx, &req, results)
+	err := loadResource(ctx, &req, &results)
 	return results, err
 }
 

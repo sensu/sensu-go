@@ -28,7 +28,7 @@ func TestEntityTypeRelatedField(t *testing.T) {
 	source := corev2.FixtureEntity("c")
 
 	client := new(MockEntityClient)
-	client.On("ListEntities", mock.Anything).Return([]*corev2.Entity{
+	client.On("ListEntities", mock.Anything, mock.Anything).Return([]*corev2.Entity{
 		source,
 		corev2.FixtureEntity("a"),
 		corev2.FixtureEntity("b"),
@@ -128,24 +128,27 @@ func TestEntityTypeSilencesField(t *testing.T) {
 	entity := corev2.FixtureEntity("en")
 	entity.Subscriptions = []string{"entity:en", "unix", "www"}
 
-	client := new(MockSilencedClient)
-	client.On("ListSilenced", mock.Anything).Return([]*corev2.Silenced{
-		corev2.FixtureSilenced("entity:en:*"),
-		corev2.FixtureSilenced("www:*"),
-		corev2.FixtureSilenced("unix:my-check"),
-		corev2.FixtureSilenced("entity:unrelated:*"),
-	}, nil).Once()
+	client := new(MockGenericClient)
+	client.On("List", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Run(func(args mock.Arguments) {
+		list := args.Get(1).(*[]*corev2.Silenced)
+		*list = []*corev2.Silenced{
+			corev2.FixtureSilenced("entity:en:*"),
+			corev2.FixtureSilenced("www:*"),
+			corev2.FixtureSilenced("unix:my-check"),
+			corev2.FixtureSilenced("entity:unrelated:*"),
+		}
+	}).Return(nil).Once()
 
-	impl := &entityImpl{}
+	cfg := ServiceConfig{GenericClient: client}
+
 	params := graphql.ResolveParams{}
-	cfg := ServiceConfig{SilencedClient: client}
 	params.Context = contextWithLoadersNoCache(context.Background(), cfg)
 	params.Source = entity
 
-	// return associated silence
-	evs, err := impl.Silences(params)
+	resolver := &entityImpl{}
+	got, err := resolver.Silences(params)
 	require.NoError(t, err)
-	assert.Len(t, evs, 2)
+	assert.Len(t, got, 2)
 }
 
 func TestEntityTypeIsSilencedField(t *testing.T) {

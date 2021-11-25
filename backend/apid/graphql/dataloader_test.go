@@ -180,50 +180,64 @@ func Test_listResource(t *testing.T) {
 			name: "single page",
 			setup: func(c *MockGenericClient) {
 				c.On("List", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Run(func(args mock.Arguments) {
-					list := args.Get(0).(*[]*corev2.CheckConfig)
+					list := args.Get(1).(*[]*corev2.CheckConfig)
 					*list = mkChecks(500)
-					pred := args.Get(1).(*store.SelectionPredicate)
-					pred.Continue = "test"
+					pred := args.Get(2).(*store.SelectionPredicate)
+					pred.Continue = ""
 				}).Return(nil).Once()
 			},
 			maxSize: 10_000,
 			wantLen: 500,
 			wantErr: false,
 		},
-		// {
-		// 	name: "many pages",
-		// 	setup: func(c *MockGenericClient) {
-		// 		c.On("List", mock.Anything, mock.Anything).Return(mkChecks(2000), nil).Run(func(args mock.Arguments) {
-		// 			arg := args.Get(1).(*store.SelectionPredicate)
-		// 			arg.Continue = "test"
-		// 		}).Once()
-		// 		c.On("ListEntities", mock.Anything, mock.Anything).Return(mkChecks(20), nil).Once()
-		// 	},
-		// 	maxSize: 10_000,
-		// 	wantLen: 2020,
-		// 	wantErr: false,
-		// },
-		// {
-		// 	name: "hit upper bounds",
-		// 	setup: func(c *MockGenericClient) {
-		// 		c.On("List", mock.Anything, mock.Anything).Return(mkChecks(1000), nil).Run(func(args mock.Arguments) {
-		// 			arg := args.Get(1).(*store.SelectionPredicate)
-		// 			arg.Continue = "test"
-		// 		})
-		// 	},
-		// 	maxSize: 2500,
-		// 	wantLen: 3000,
-		// 	wantErr: false,
-		// },
-		// {
-		// 	name: "fetch err",
-		// 	setup: func(c *MockGenericClient) {
-		// 		c.On("List", mock.Anything, mock.Anything).Return(mkChecks(2), errors.New("err")).Once()
-		// 	},
-		// 	maxSize: 10_000,
-		// 	wantLen: 0,
-		// 	wantErr: true,
-		// },
+		{
+			name: "many pages",
+			setup: func(c *MockGenericClient) {
+				c.On("List", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Run(func(args mock.Arguments) {
+					list := args.Get(1).(*[]*corev2.CheckConfig)
+					*list = mkChecks(500)
+					pred := args.Get(2).(*store.SelectionPredicate)
+					pred.Continue = "test"
+				}).Return(nil).Once()
+				c.On("List", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Run(func(args mock.Arguments) {
+					list := args.Get(1).(*[]*corev2.CheckConfig)
+					*list = mkChecks(500)
+					pred := args.Get(2).(*store.SelectionPredicate)
+					pred.Continue = ""
+				}).Return(nil).Once()
+			},
+			maxSize: 10_000,
+			wantLen: 1000,
+			wantErr: false,
+		},
+		{
+			name: "hit upper bounds",
+			setup: func(c *MockGenericClient) {
+				c.On("List", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Run(func(args mock.Arguments) {
+					list := args.Get(1).(*[]*corev2.CheckConfig)
+					*list = mkChecks(1000)
+					pred := args.Get(2).(*store.SelectionPredicate)
+					pred.Continue = "test"
+				}).Return(nil)
+			},
+			maxSize: 2500,
+			wantLen: 3000,
+			wantErr: false,
+		},
+		{
+			name: "fetch err",
+			setup: func(c *MockGenericClient) {
+				c.On("List", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Run(func(args mock.Arguments) {
+					list := args.Get(1).(*[]*corev2.CheckConfig)
+					*list = mkChecks(1000)
+					pred := args.Get(2).(*store.SelectionPredicate)
+					pred.Continue = "test"
+				}).Return(errors.New("sdfasdf")).Once()
+			},
+			maxSize: 10_000,
+			wantLen: 0,
+			wantErr: true,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
