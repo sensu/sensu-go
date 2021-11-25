@@ -42,28 +42,27 @@ func TestNamespaceTypeCheckConfigsField(t *testing.T) {
 
 func TestNamespaceTypeEntitiesField(t *testing.T) {
 	client := new(MockEntityClient)
-	client.On("ListEntities", mock.Anything).Return([]*corev2.Entity{
+	client.On("ListEntities", mock.Anything, mock.Anything).Return([]*corev2.Entity{
 		corev2.FixtureEntity("a"),
 		corev2.FixtureEntity("b"),
 		corev2.FixtureEntity("c"),
 	}, nil).Once()
 
-	impl := &namespaceImpl{}
 	params := schema.NamespaceEntitiesFieldResolverParams{ResolveParams: graphql.ResolveParams{Context: context.Background()}}
-	cfg := ServiceConfig{EntityClient: client}
-	params.Context = contextWithLoadersNoCache(context.Background(), cfg)
+	params.Context = context.Background()
 	params.Source = corev2.FixtureNamespace("default")
 	params.Args.Limit = 20
 
 	// Success
-	res, err := impl.Entities(params)
+	resolver := &namespaceImpl{entityClient: client}
+	got, err := resolver.Entities(params)
 	assert.NoError(t, err)
-	assert.NotEmpty(t, res.(offsetContainer).Nodes)
+	assert.NotEmpty(t, got.(offsetContainer).Nodes)
 
 	// Store err
 	client.On("ListEntities", mock.Anything, mock.Anything).Return([]*corev2.Entity{}, errors.New("abc")).Once()
-	res, err = impl.Entities(params)
-	assert.Empty(t, res.(offsetContainer).Nodes)
+	got, err = resolver.Entities(params)
+	assert.Empty(t, got.(offsetContainer).Nodes)
 	assert.Error(t, err)
 }
 

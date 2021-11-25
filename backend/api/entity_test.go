@@ -138,12 +138,12 @@ func TestListEntities(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.Name, func(t *testing.T) {
 			ctx := test.Ctx()
-			store := test.Store()
+			storev1 := test.Store()
 			storev2 := &storetest.Store{}
 			eventStore := test.EventStore()
 			auth := test.Auth()
-			client := NewEntityClient(store, storev2, eventStore, auth)
-			entities, err := client.ListEntities(ctx)
+			client := NewEntityClient(storev1, storev2, eventStore, auth)
+			entities, err := client.ListEntities(ctx, &store.SelectionPredicate{})
 			if err != nil && !test.ExpErr {
 				t.Fatal(err)
 			}

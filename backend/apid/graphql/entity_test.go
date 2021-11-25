@@ -28,7 +28,7 @@ func TestEntityTypeRelatedField(t *testing.T) {
 	source := corev2.FixtureEntity("c")
 
 	client := new(MockEntityClient)
-	client.On("ListEntities", mock.Anything).Return([]*corev2.Entity{
+	client.On("ListEntities", mock.Anything, mock.Anything).Return([]*corev2.Entity{
 		source,
 		corev2.FixtureEntity("a"),
 		corev2.FixtureEntity("b"),

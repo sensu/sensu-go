@@ -26,7 +26,14 @@ const (
 	namespacesLoaderKey
 	silencedsLoaderKey
 
-	loaderPageSize = 1000
+	// chunk size used by dataloader when retrieving resources from the store
+	loaderPageSize = 250
+
+	// the maximum number of records that will be read from the store by the
+	// dataloader; too many can put significant strain on memory.
+	maxLengthEntityDataloader  = 1_000
+	maxLengthEventDataloader   = 1_000
+	maxLengthGenericDataloader = 2_500
 )
 
 var (
@@ -41,7 +48,8 @@ func loadAssetsBatchFn(c AssetClient) dataloader.BatchFunc {
 	return func(ctx context.Context, keys dataloader.Keys) []*dataloader.Result {
 		results := make([]*dataloader.Result, 0, len(keys))
 		for _, key := range keys {
-			ctx = store.NamespaceContext(ctx, key.String())
+			ctx := store.NamespaceContext(ctx, key.String())
+			ctx = context.WithValue(ctx, corev2.PageSizeKey, maxLengthGenericDataloader)
 			records, err := c.ListAssets(ctx)
 			result := &dataloader.Result{Data: records, Error: handleListErr(err)}
 			results = append(results, result)
@@ -72,6 +80,7 @@ func loadCheckConfigsBatchFn(c CheckClient) dataloader.BatchFunc {
 		results := make([]*dataloader.Result, 0, len(keys))
 		for _, key := range keys {
 			ctx := store.NamespaceContext(ctx, key.String())
+			ctx = context.WithValue(ctx, corev2.PageSizeKey, maxLengthGenericDataloader)
 			records, err := c.ListChecks(ctx)
 			result := &dataloader.Result{Data: records, Error: handleListErr(err)}
 			results = append(results, result)
@@ -97,12 +106,28 @@ func loadCheckConfigs(ctx context.Context, ns string) ([]*corev2.CheckConfig, er
 
 // entities
 
+func listEntities(ctx context.Context, c EntityClient, maxSize int) ([]*corev2.Entity, error) {
+	pred := &store.SelectionPredicate{Continue: "", Limit: int64(loaderPageSize)}
+	results := []*corev2.Entity{}
+	for {
+		r, err := c.ListEntities(ctx, pred)
+		if err != nil {
+			return results, err
+		}
+		results = append(results, r...)
+		if pred.Continue == "" || len(r) < loaderPageSize || len(results) >= maxSize {
+			break
+		}
+	}
+	return results, nil
+}
+
 func loadEntitiesBatchFn(c EntityClient) dataloader.BatchFunc {
 	return func(ctx context.Context, keys dataloader.Keys) []*dataloader.Result {
 		results := make([]*dataloader.Result, 0, len(keys))
 		for _, key := range keys {
 			ctx := store.NamespaceContext(ctx, key.String())
-			records, err := c.ListEntities(ctx)
+			records, err := listEntities(ctx, c, maxLengthEntityDataloader)
 			result := &dataloader.Result{Data: records, Error: handleListErr(err)}
 			results = append(results, result)
 		}
@@ -145,7 +170,7 @@ func (k *eventCacheKey) Raw() interface{} {
 	return k
 }
 
-func listEvents(ctx context.Context, c EventClient, entity string) ([]*corev2.Event, error) {
+func listEvents(ctx context.Context, c EventClient, entity string, maxSize int) ([]*corev2.Event, error) {
 	pred := &store.SelectionPredicate{Continue: "", Limit: int64(loaderPageSize)}
 	list := func(ctx context.Context, entity string, pred *store.SelectionPredicate) ([]*corev2.Event, error) {
 		if entity == "" {
@@ -160,7 +185,7 @@ func listEvents(ctx context.Context, c EventClient, entity string) ([]*corev2.Ev
 			return results, err
 		}
 		results = append(results, r...)
-		if pred.Continue == "" || len(r) < loaderPageSize {
+		if pred.Continue == "" || len(r) < loaderPageSize || len(results) >= maxSize {
 			break
 		}
 	}
@@ -173,7 +198,7 @@ func loadEventsBatchFn(c EventClient) dataloader.BatchFunc {
 		for _, key := range keys {
 			key := newEventCacheKey(key.String())
 			ctx := store.NamespaceContext(ctx, key.namespace)
-			records, err := listEvents(ctx, c, key.entity)
+			records, err := listEvents(ctx, c, key.entity, maxLengthEventDataloader)
 			result := &dataloader.Result{Data: records, Error: handleListErr(err)}
 			results = append(results, result)
 		}
@@ -204,6 +229,7 @@ func loadEventFiltersBatchFn(c EventFilterClient) dataloader.BatchFunc {
 		results := make([]*dataloader.Result, 0, len(keys))
 		for _, key := range keys {
 			ctx := store.NamespaceContext(ctx, key.String())
+			ctx = context.WithValue(ctx, corev2.PageSizeKey, maxLengthGenericDataloader)
 			records, err := c.ListEventFilters(ctx)
 			result := &dataloader.Result{Data: records, Error: handleListErr(err)}
 			results = append(results, result)
@@ -234,6 +260,7 @@ func loadHandlersBatchFn(c HandlerClient) dataloader.BatchFunc {
 		results := make([]*dataloader.Result, 0, len(keys))
 		for _, key := range keys {
 			ctx := store.NamespaceContext(ctx, key.String())
+			ctx = context.WithValue(ctx, corev2.PageSizeKey, maxLengthGenericDataloader)
 			records, err := c.ListHandlers(ctx)
 			result := &dataloader.Result{Data: records, Error: handleListErr(err)}
 			results = append(results, result)
@@ -264,6 +291,7 @@ func loadMutatorsBatchFn(c MutatorClient) dataloader.BatchFunc {
 		results := make([]*dataloader.Result, 0, len(keys))
 		for _, key := range keys {
 			ctx := store.NamespaceContext(ctx, key.String())
+			ctx = context.WithValue(ctx, corev2.PageSizeKey, maxLengthGenericDataloader)
 			records, err := c.ListMutators(ctx)
 			result := &dataloader.Result{Data: records, Error: handleListErr(err)}
 			results = append(results, result)
@@ -293,6 +321,7 @@ func loadNamespacesBatchFn(c NamespaceClient) dataloader.BatchFunc {
 	return func(ctx context.Context, keys dataloader.Keys) []*dataloader.Result {
 		results := make([]*dataloader.Result, 0, len(keys))
 		for range keys {
+			ctx := context.WithValue(ctx, corev2.PageSizeKey, maxLengthGenericDataloader)
 			records, err := c.ListNamespaces(ctx, &store.SelectionPredicate{})
 			result := &dataloader.Result{Data: records, Error: handleListErr(err)}
 			results = append(results, result)
@@ -323,6 +352,7 @@ func loadSilencedsBatchFn(c SilencedClient) dataloader.BatchFunc {
 		results := make([]*dataloader.Result, 0, len(keys))
 		for _, key := range keys {
 			ctx := store.NamespaceContext(ctx, key.String())
+			ctx = context.WithValue(ctx, corev2.PageSizeKey, maxLengthGenericDataloader)
 			records, err := c.ListSilenced(ctx)
 			result := &dataloader.Result{Data: records, Error: handleListErr(err)}
 			results = append(results, result)

@@ -7,7 +7,17 @@ import (
 	"github.com/sensu/sensu-go/backend/apid/graphql/filter"
 	"github.com/sensu/sensu-go/backend/apid/graphql/globalid"
 	"github.com/sensu/sensu-go/backend/apid/graphql/schema"
+	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/graphql"
+)
+
+const (
+	// the maximum number of events & entities that will be read from the store
+	// into memory; things likely won't work well if the upper bound is hit but
+	// at least we aren't breaking the existing behaviour. Eventually this
+	// interface will be deprecated in lieu of one that can be performant.
+	maxSizeNamespaceListEntities = 25_000
+	maxSizeNamespaceListEvents   = 25_000
 )
 
 var _ schema.NamespaceFieldResolvers = (*namespaceImpl)(nil)
@@ -18,7 +28,9 @@ var _ schema.NamespaceFieldResolvers = (*namespaceImpl)(nil)
 
 type namespaceImpl struct {
 	schema.MutatorAliases
-	client NamespaceClient
+	client       NamespaceClient
+	eventClient  EventClient
+	entityClient EntityClient
 }
 
 // ID implements response to request for 'id' field.
@@ -224,7 +236,8 @@ func (r *namespaceImpl) Entities(p schema.NamespaceEntitiesFieldResolverParams) 
 	nsp := p.Source.(*corev2.Namespace)
 
 	// fetch
-	results, err := loadEntities(p.Context, nsp.Name)
+	ctx := store.NamespaceContext(p.Context, nsp.Name)
+	results, err := listEntities(ctx, r.entityClient, maxSizeNamespaceListEntities)
 	if err != nil {
 		return res, err
 	}
