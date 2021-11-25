@@ -4,33 +4,29 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"reflect"
 	"strings"
 
 	"github.com/graph-gophers/dataloader"
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/authorization"
 	"github.com/sensu/sensu-go/backend/store"
-	"github.com/sensu/sensu-go/types"
 )
 
 type key int
 
 const (
 	loadersKey key = iota
+	assetsLoaderKey
+	checkConfigsLoaderKey
 	entitiesLoaderKey
 	eventsLoaderKey
-	genericLoaderKey
+	eventFiltersLoaderKey
+	handlersLoaderKey
+	mutatorsLoaderKey
 	namespacesLoaderKey
+	silencedsLoaderKey
 
-	// chunk size used by dataloader when retrieving resources from the store
-	loaderPageSize = 250
-
-	// the maximum number of records that will be read from the store by the
-	// dataloader; too many can put significant strain on memory.
-	maxLengthEntityDataloader  = 1_000
-	maxLengthEventDataloader   = 1_000
-	maxLengthGenericDataloader = 5_000
+	loaderPageSize = 1000
 )
 
 var (
@@ -39,30 +35,74 @@ var (
 	errUnexpectedLoaderResult = errors.New("loader returned unexpected result")
 )
 
-// entities
+// assets
 
-func listEntities(ctx context.Context, c EntityClient, maxSize int) ([]*corev2.Entity, error) {
-	pred := &store.SelectionPredicate{Continue: "", Limit: int64(loaderPageSize)}
-	results := []*corev2.Entity{}
-	for {
-		r, err := c.ListEntities(ctx, pred)
-		if err != nil {
-			return results, err
+func loadAssetsBatchFn(c AssetClient) dataloader.BatchFunc {
+	return func(ctx context.Context, keys dataloader.Keys) []*dataloader.Result {
+		results := make([]*dataloader.Result, 0, len(keys))
+		for _, key := range keys {
+			ctx = store.NamespaceContext(ctx, key.String())
+			records, err := c.ListAssets(ctx)
+			result := &dataloader.Result{Data: records, Error: handleListErr(err)}
+			results = append(results, result)
 		}
-		results = append(results, r...)
-		if pred.Continue == "" || len(r) < loaderPageSize || len(results) >= maxSize {
-			break
-		}
+		return results
 	}
-	return results, nil
 }
+
+func loadAssets(ctx context.Context, ns string) ([]*corev2.Asset, error) {
+	var records []*corev2.Asset
+	loader, err := getLoader(ctx, assetsLoaderKey)
+	if err != nil {
+		return records, err
+	}
+
+	results, err := loader.Load(ctx, dataloader.StringKey(ns))()
+	records, ok := results.([]*corev2.Asset)
+	if err == nil && !ok {
+		err = fmt.Errorf("asset loader: %s", errUnexpectedLoaderResult)
+	}
+	return records, err
+}
+
+// checks
+
+func loadCheckConfigsBatchFn(c CheckClient) dataloader.BatchFunc {
+	return func(ctx context.Context, keys dataloader.Keys) []*dataloader.Result {
+		results := make([]*dataloader.Result, 0, len(keys))
+		for _, key := range keys {
+			ctx := store.NamespaceContext(ctx, key.String())
+			records, err := c.ListChecks(ctx)
+			result := &dataloader.Result{Data: records, Error: handleListErr(err)}
+			results = append(results, result)
+		}
+		return results
+	}
+}
+
+func loadCheckConfigs(ctx context.Context, ns string) ([]*corev2.CheckConfig, error) {
+	var records []*corev2.CheckConfig
+	loader, err := getLoader(ctx, checkConfigsLoaderKey)
+	if err != nil {
+		return records, err
+	}
+
+	results, err := loader.Load(ctx, dataloader.StringKey(ns))()
+	records, ok := results.([]*corev2.CheckConfig)
+	if err == nil && !ok {
+		err = fmt.Errorf("check loader: %s", errUnexpectedLoaderResult)
+	}
+	return records, err
+}
+
+// entities
 
 func loadEntitiesBatchFn(c EntityClient) dataloader.BatchFunc {
 	return func(ctx context.Context, keys dataloader.Keys) []*dataloader.Result {
 		results := make([]*dataloader.Result, 0, len(keys))
 		for _, key := range keys {
 			ctx := store.NamespaceContext(ctx, key.String())
-			records, err := listEntities(ctx, c, 1000)
+			records, err := c.ListEntities(ctx)
 			result := &dataloader.Result{Data: records, Error: handleListErr(err)}
 			results = append(results, result)
 		}
@@ -157,89 +197,94 @@ func loadEvents(ctx context.Context, ns, entity string) ([]*corev2.Event, error)
 	return records, err
 }
 
-// generic loader
+// event filters
 
-type loadResourceReq struct {
-	namespace string
-	apigroup  string
-	typename  string
-}
-
-func (k *loadResourceReq) String() string {
-	return strings.Join([]string{k.apigroup, k.typename, k.namespace}, "\n")
-}
-
-func (k *loadResourceReq) Raw() interface{} {
-	return k
-}
-
-func hydrateLoadResourceReq(key string) *loadResourceReq {
-	els := strings.SplitN(key, "\n", 3)
-	return &loadResourceReq{apigroup: els[0], typename: els[1], namespace: els[2]}
-}
-
-// sliceFromTypeMeta returns a slice of the type corresponding to the given
-// api_group and type name.
-func sliceFromTypeMeta(apigroup, typename string) (interface{}, error) {
-	t, err := types.ResolveType(apigroup, typename)
-	if err != nil {
-		return []interface{}{}, err
-	}
-	slice := reflect.MakeSlice(reflect.SliceOf(reflect.PtrTo(reflect.TypeOf(t).Elem())), 0, 0)
-	return slice.Interface(), nil
-}
-
-func listResource(ctx context.Context, c GenericClient, resourcesPtr interface{}, maxSize int) error {
-	pred := &store.SelectionPredicate{Continue: "", Limit: int64(loaderPageSize)}
-	results := reflect.ValueOf(resourcesPtr).Elem()
-	for {
-		res := reflect.MakeSlice(results.Type(), 0, 0)
-		ptr := reflect.New(res.Type())
-		ptr.Elem().Set(res)
-		err := c.List(ctx, ptr.Interface(), pred)
-		if err != nil {
-			return err
-		}
-		results.Set(reflect.AppendSlice(results, ptr.Elem()))
-		if pred.Continue == "" || ptr.Elem().Len() < loaderPageSize || results.Len() >= maxSize {
-			break
-		}
-	}
-	return nil
-}
-
-func loadResourceBatchFn(c GenericClient, maxSize int) dataloader.BatchFunc {
+func loadEventFiltersBatchFn(c EventFilterClient) dataloader.BatchFunc {
 	return func(ctx context.Context, keys dataloader.Keys) []*dataloader.Result {
 		results := make([]*dataloader.Result, 0, len(keys))
 		for _, key := range keys {
-			key := hydrateLoadResourceReq(key.String())
-			ctx := store.NamespaceContext(ctx, key.namespace)
-			d, err := sliceFromTypeMeta(key.apigroup, key.typename)
-			if err != nil {
-				results = append(results, &dataloader.Result{Data: d, Error: err})
-			} else {
-				ptr := reflect.New(reflect.TypeOf(d))
-				ptr.Elem().Set(reflect.ValueOf(d))
-				err = listResource(ctx, c, ptr.Interface(), maxSize)
-				results = append(results, &dataloader.Result{Data: ptr.Elem().Interface(), Error: err})
-			}
+			ctx := store.NamespaceContext(ctx, key.String())
+			records, err := c.ListEventFilters(ctx)
+			result := &dataloader.Result{Data: records, Error: handleListErr(err)}
+			results = append(results, result)
 		}
 		return results
 	}
 }
 
-func loadResource(ctx context.Context, req *loadResourceReq, res interface{}) error {
-	loaded := reflect.ValueOf(res).Elem()
-	loader, err := getLoader(ctx, genericLoaderKey)
+func loadEventFilters(ctx context.Context, ns string) ([]*corev2.EventFilter, error) {
+	var records []*corev2.EventFilter
+	loader, err := getLoader(ctx, eventFiltersLoaderKey)
 	if err != nil {
-		return err
+		return records, err
 	}
-	result, err := loader.Load(ctx, req)()
+
+	results, err := loader.Load(ctx, dataloader.StringKey(ns))()
+	records, ok := results.([]*corev2.EventFilter)
+	if err == nil && !ok {
+		err = fmt.Errorf("filter loader: %s", errUnexpectedLoaderResult)
+	}
+	return records, err
+}
+
+// handlers
+
+func loadHandlersBatchFn(c HandlerClient) dataloader.BatchFunc {
+	return func(ctx context.Context, keys dataloader.Keys) []*dataloader.Result {
+		results := make([]*dataloader.Result, 0, len(keys))
+		for _, key := range keys {
+			ctx := store.NamespaceContext(ctx, key.String())
+			records, err := c.ListHandlers(ctx)
+			result := &dataloader.Result{Data: records, Error: handleListErr(err)}
+			results = append(results, result)
+		}
+		return results
+	}
+}
+
+func loadHandlers(ctx context.Context, ns string) ([]*corev2.Handler, error) {
+	var records []*corev2.Handler
+	loader, err := getLoader(ctx, handlersLoaderKey)
 	if err != nil {
-		return err
+		return records, err
 	}
-	loaded.Set(reflect.ValueOf(result))
-	return nil
+
+	results, err := loader.Load(ctx, dataloader.StringKey(ns))()
+	records, ok := results.([]*corev2.Handler)
+	if err == nil && !ok {
+		err = fmt.Errorf("handler loader: %s", errUnexpectedLoaderResult)
+	}
+	return records, err
+}
+
+// mutators
+
+func loadMutatorsBatchFn(c MutatorClient) dataloader.BatchFunc {
+	return func(ctx context.Context, keys dataloader.Keys) []*dataloader.Result {
+		results := make([]*dataloader.Result, 0, len(keys))
+		for _, key := range keys {
+			ctx := store.NamespaceContext(ctx, key.String())
+			records, err := c.ListMutators(ctx)
+			result := &dataloader.Result{Data: records, Error: handleListErr(err)}
+			results = append(results, result)
+		}
+		return results
+	}
+}
+
+func loadMutators(ctx context.Context, ns string) ([]*corev2.Mutator, error) {
+	var records []*corev2.Mutator
+	loader, err := getLoader(ctx, mutatorsLoaderKey)
+	if err != nil {
+		return records, err
+	}
+
+	results, err := loader.Load(ctx, dataloader.StringKey(ns))()
+	records, ok := results.([]*corev2.Mutator)
+	if err == nil && !ok {
+		err = fmt.Errorf("mutator loader: %s", errUnexpectedLoaderResult)
+	}
+	return records, err
 }
 
 // namespaces
@@ -271,48 +316,34 @@ func loadNamespaces(ctx context.Context) ([]*corev2.Namespace, error) {
 	return records, err
 }
 
-// helpers
+// silences
 
-func loadAssets(ctx context.Context, namespace string) ([]*corev2.Asset, error) {
-	results := []*corev2.Asset{}
-	req := loadResourceReq{namespace: namespace, typename: "Asset", apigroup: "core/v2"}
-	err := loadResource(ctx, &req, &results)
-	return results, err
+func loadSilencedsBatchFn(c SilencedClient) dataloader.BatchFunc {
+	return func(ctx context.Context, keys dataloader.Keys) []*dataloader.Result {
+		results := make([]*dataloader.Result, 0, len(keys))
+		for _, key := range keys {
+			ctx := store.NamespaceContext(ctx, key.String())
+			records, err := c.ListSilenced(ctx)
+			result := &dataloader.Result{Data: records, Error: handleListErr(err)}
+			results = append(results, result)
+		}
+		return results
+	}
 }
 
-func loadCheckConfigs(ctx context.Context, namespace string) ([]*corev2.CheckConfig, error) {
-	results := []*corev2.CheckConfig{}
-	req := loadResourceReq{namespace: namespace, typename: "CheckConfig", apigroup: "core/v2"}
-	err := loadResource(ctx, &req, &results)
-	return results, err
-}
+func loadSilenceds(ctx context.Context, ns string) ([]*corev2.Silenced, error) {
+	var records []*corev2.Silenced
+	loader, err := getLoader(ctx, silencedsLoaderKey)
+	if err != nil {
+		return records, err
+	}
 
-func loadEventFilters(ctx context.Context, namespace string) ([]*corev2.EventFilter, error) {
-	results := []*corev2.EventFilter{}
-	req := loadResourceReq{namespace: namespace, typename: "EventFilter", apigroup: "core/v2"}
-	err := loadResource(ctx, &req, &results)
-	return results, err
-}
-
-func loadHandlers(ctx context.Context, namespace string) ([]*corev2.Handler, error) {
-	results := []*corev2.Handler{}
-	req := loadResourceReq{namespace: namespace, typename: "Handler", apigroup: "core/v2"}
-	err := loadResource(ctx, &req, &results)
-	return results, err
-}
-
-func loadMutators(ctx context.Context, namespace string) ([]*corev2.Mutator, error) {
-	results := []*corev2.Mutator{}
-	req := loadResourceReq{namespace: namespace, typename: "Mutator", apigroup: "core/v2"}
-	err := loadResource(ctx, &req, &results)
-	return results, err
-}
-
-func loadSilenceds(ctx context.Context, namespace string) ([]*corev2.Silenced, error) {
-	results := []*corev2.Silenced{}
-	req := loadResourceReq{namespace: namespace, typename: "Silenced", apigroup: "core/v2"}
-	err := loadResource(ctx, &req, &results)
-	return results, err
+	results, err := loader.Load(ctx, dataloader.StringKey(ns))()
+	records, ok := results.([]*corev2.Silenced)
+	if err == nil && !ok {
+		err = fmt.Errorf("silenced loader: %s", errUnexpectedLoaderResult)
+	}
+	return records, err
 }
 
 func contextWithLoaders(ctx context.Context, cfg ServiceConfig, opts ...dataloader.Option) context.Context {
@@ -321,10 +352,15 @@ func contextWithLoaders(ctx context.Context, cfg ServiceConfig, opts ...dataload
 	opts = append([]dataloader.Option{dataloader.WithBatchCapacity(1)}, opts...)
 
 	loaders := map[key]*dataloader.Loader{}
+	loaders[assetsLoaderKey] = dataloader.NewBatchedLoader(loadAssetsBatchFn(cfg.AssetClient), opts...)
+	loaders[checkConfigsLoaderKey] = dataloader.NewBatchedLoader(loadCheckConfigsBatchFn(cfg.CheckClient), opts...)
 	loaders[entitiesLoaderKey] = dataloader.NewBatchedLoader(loadEntitiesBatchFn(cfg.EntityClient), opts...)
 	loaders[eventsLoaderKey] = dataloader.NewBatchedLoader(loadEventsBatchFn(cfg.EventClient), opts...)
-	loaders[genericLoaderKey] = dataloader.NewBatchedLoader(loadResourceBatchFn(cfg.GenericClient, maxLengthGenericDataloader), opts...)
+	loaders[eventFiltersLoaderKey] = dataloader.NewBatchedLoader(loadEventFiltersBatchFn(cfg.EventFilterClient), opts...)
+	loaders[handlersLoaderKey] = dataloader.NewBatchedLoader(loadHandlersBatchFn(cfg.HandlerClient), opts...)
+	loaders[mutatorsLoaderKey] = dataloader.NewBatchedLoader(loadMutatorsBatchFn(cfg.MutatorClient), opts...)
 	loaders[namespacesLoaderKey] = dataloader.NewBatchedLoader(loadNamespacesBatchFn(cfg.NamespaceClient), opts...)
+	loaders[silencedsLoaderKey] = dataloader.NewBatchedLoader(loadSilencedsBatchFn(cfg.SilencedClient), opts...)
 	return context.WithValue(ctx, loadersKey, loaders)
 }
 

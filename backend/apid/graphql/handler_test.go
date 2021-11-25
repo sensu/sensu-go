@@ -15,28 +15,26 @@ func TestHandlerTypeHandlersField(t *testing.T) {
 	handler := corev2.FixtureHandler("my-handler")
 	handler.Handlers = []string{"one", "two", "four", "six:seven"}
 
-	client := new(MockGenericClient)
-	client.On("List", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Run(func(args mock.Arguments) {
-		list := args.Get(1).(*[]*corev2.Handler)
-		*list = []*corev2.Handler{
-			corev2.FixtureHandler("one"),
-			corev2.FixtureHandler("two"),
-			corev2.FixtureHandler("three"),
-			corev2.FixtureHandler("four:five"),
-			corev2.FixtureHandler("six:seven"),
-		}
-	}).Return(nil).Once()
-
-	cfg := ServiceConfig{GenericClient: client}
+	client := new(MockHandlerClient)
+	impl := &handlerImpl{}
 
 	params := graphql.ResolveParams{}
+	cfg := ServiceConfig{HandlerClient: client}
 	params.Context = contextWithLoadersNoCache(context.Background(), cfg)
 	params.Source = handler
 
-	resolver := &handlerImpl{}
-	got, err := resolver.Handlers(params)
+	// Success
+	client.On("ListHandlers", mock.Anything).Return([]*corev2.Handler{
+		corev2.FixtureHandler("one"),
+		corev2.FixtureHandler("two"),
+		corev2.FixtureHandler("three"),
+		corev2.FixtureHandler("four:five"),
+		corev2.FixtureHandler("six:seven"),
+	}, nil).Once()
+
+	res, err := impl.Handlers(params)
 	require.NoError(t, err)
-	assert.Len(t, got, 3)
+	assert.Len(t, res, 3)
 }
 
 func TestHandlerTypeMutatorField(t *testing.T) {

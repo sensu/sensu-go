@@ -121,7 +121,7 @@ func (r *queryImpl) Suggest(p schema.QuerySuggestFieldResolverParams) (interface
 	// interface, to work around this we use the entity client.
 	var entities []*corev2.Entity
 	if res.Group == "core/v2" && res.Name == "entity" {
-		entities, err = r.svc.EntityClient.ListEntities(ctx, &store.SelectionPredicate{})
+		entities, err = r.svc.EntityClient.ListEntities(ctx)
 		objs.Elem().Set(reflect.ValueOf(entities))
 	} else {
 		err = client.List(ctx, objs.Interface(), &store.SelectionPredicate{})

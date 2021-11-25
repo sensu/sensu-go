@@ -104,239 +104,216 @@ func TestCheckTypeSilencesField(t *testing.T) {
 	check.Subscriptions = []string{"unix"}
 	check.Silenced = []string{"unix:my-check"}
 
-	client := new(MockGenericClient)
-	client.On("List", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Run(func(args mock.Arguments) {
-		list := args.Get(1).(*[]*corev2.Silenced)
-		*list = []*corev2.Silenced{
-			corev2.FixtureSilenced("unix:my-check"),
-			corev2.FixtureSilenced("fred:my-check"),
-			corev2.FixtureSilenced("unix:not-my-check"),
-		}
-	}).Return(nil).Once()
+	client := new(MockSilencedClient)
+	client.On("ListSilenced", mock.Anything).Return([]*corev2.Silenced{
+		corev2.FixtureSilenced("unix:my-check"),
+		corev2.FixtureSilenced("fred:my-check"),
+		corev2.FixtureSilenced("unix:not-my-check"),
+	}, nil).Once()
 
-	cfg := ServiceConfig{GenericClient: client}
-
+	impl := &checkImpl{}
+	cfg := ServiceConfig{SilencedClient: client}
 	params := graphql.ResolveParams{}
 	params.Context = contextWithLoadersNoCache(context.Background(), cfg)
 	params.Source = check
 
 	// return associated silence
-	resolver := &checkImpl{}
-	got, err := resolver.Silences(params)
+	res, err := impl.Silences(params)
 	require.NoError(t, err)
-	assert.Len(t, got, 1)
+	assert.Len(t, res, 1)
 }
 
 func TestCheckTypeRuntimeAssetsField(t *testing.T) {
 	check := corev2.FixtureCheck("my-check")
 	check.RuntimeAssets = []string{"one", "two"}
 
-	client := new(MockGenericClient)
-	client.On("List", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Run(func(args mock.Arguments) {
-		list := args.Get(1).(*[]*corev2.Asset)
-		*list = []*corev2.Asset{
-			corev2.FixtureAsset("one"),
-			corev2.FixtureAsset("two"),
-			corev2.FixtureAsset("three"),
-		}
-	}).Return(nil).Once()
+	assetClient := new(MockAssetClient)
+	assetClient.On("ListAssets", mock.Anything).Return([]*corev2.Asset{
+		corev2.FixtureAsset("one"),
+		corev2.FixtureAsset("two"),
+		corev2.FixtureAsset("three"),
+	}, nil).Once()
 
-	cfg := ServiceConfig{GenericClient: client}
+	// return associated silence
+	impl := &checkImpl{}
+	cfg := ServiceConfig{AssetClient: assetClient}
 	ctx := contextWithLoaders(context.Background(), cfg)
-
-	resolver := &checkImpl{}
-	got, err := resolver.RuntimeAssets(graphql.ResolveParams{Source: check, Context: ctx})
+	res, err := impl.RuntimeAssets(graphql.ResolveParams{Source: check, Context: ctx})
 	require.NoError(t, err)
-	assert.Len(t, got, 2)
+	assert.Len(t, res, 2)
 }
 
 func TestCheckConfigTypeIsSilencedField(t *testing.T) {
 	check := corev2.FixtureCheckConfig("my-check")
 	check.Subscriptions = []string{"unix"}
 
-	client := new(MockGenericClient)
-	client.On("List", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Run(func(args mock.Arguments) {
-		list := args.Get(1).(*[]*corev2.Silenced)
-		*list = []*corev2.Silenced{
-			corev2.FixtureSilenced("*:my-check"),
-			corev2.FixtureSilenced("unix:not-my-check"),
-		}
-	}).Return(nil).Once()
+	client := new(MockSilencedClient)
+	client.On("ListSilenced", mock.Anything).Return([]*corev2.Silenced{
+		corev2.FixtureSilenced("*:my-check"),
+		corev2.FixtureSilenced("unix:not-my-check"),
+	}, nil).Once()
 
-	cfg := ServiceConfig{GenericClient: client}
-
+	impl := &checkCfgImpl{}
 	params := graphql.ResolveParams{}
+	cfg := ServiceConfig{SilencedClient: client}
 	params.Context = contextWithLoadersNoCache(context.Background(), cfg)
 	params.Source = check
 
 	// return associated silence
-	resolver := &checkCfgImpl{}
-	got, err := resolver.IsSilenced(params)
+	res, err := impl.IsSilenced(params)
 	require.NoError(t, err)
-	assert.True(t, got)
+	assert.True(t, res)
 }
 
 func TestCheckConfigTypeSilencesField(t *testing.T) {
 	check := corev2.FixtureCheckConfig("my-check")
 	check.Subscriptions = []string{"unix"}
 
-	client := new(MockGenericClient)
-	client.On("List", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Run(func(args mock.Arguments) {
-		list := args.Get(1).(*[]*corev2.Silenced)
-		*list = []*corev2.Silenced{
-			corev2.FixtureSilenced("*:my-check"),
-			corev2.FixtureSilenced("unix:*"),
-			corev2.FixtureSilenced("unix:my-check"),
-			corev2.FixtureSilenced("unix:different-check"),
-			corev2.FixtureSilenced("unrelated:my-check"),
-			corev2.FixtureSilenced("*:another-check"),
-		}
-	}).Return(nil).Once()
+	client := new(MockSilencedClient)
+	client.On("ListSilenced", mock.Anything).Return([]*corev2.Silenced{
+		corev2.FixtureSilenced("*:my-check"),
+		corev2.FixtureSilenced("unix:*"),
+		corev2.FixtureSilenced("unix:my-check"),
+		corev2.FixtureSilenced("unix:different-check"),
+		corev2.FixtureSilenced("unrelated:my-check"),
+		corev2.FixtureSilenced("*:another-check"),
+	}, nil).Once()
 
-	cfg := ServiceConfig{GenericClient: client}
-
+	impl := &checkCfgImpl{}
 	params := graphql.ResolveParams{}
+	cfg := ServiceConfig{SilencedClient: client}
 	params.Context = contextWithLoadersNoCache(context.Background(), cfg)
 	params.Source = check
 
-	resolver := &checkCfgImpl{}
-	got, err := resolver.Silences(params)
+	// return associated silence
+	res, err := impl.Silences(params)
 	require.NoError(t, err)
-	assert.Len(t, got, 2)
+	assert.Len(t, res, 2)
 }
 
 func TestCheckConfigTypeRuntimeAssetsField(t *testing.T) {
 	check := corev2.FixtureCheckConfig("my-check")
 	check.RuntimeAssets = []string{"one", "two"}
 
-	client := new(MockGenericClient)
-	client.On("List", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Run(func(args mock.Arguments) {
-		list := args.Get(1).(*[]*corev2.Asset)
-		*list = []*corev2.Asset{
-			corev2.FixtureAsset("one"),
-			corev2.FixtureAsset("two"),
-			corev2.FixtureAsset("three"),
-		}
-	}).Return(nil).Once()
+	assetClient := new(MockAssetClient)
+	assetClient.On("ListAssets", mock.Anything).Return([]*corev2.Asset{
+		corev2.FixtureAsset("one"),
+		corev2.FixtureAsset("two"),
+		corev2.FixtureAsset("three"),
+	}, nil).Once()
 
-	cfg := ServiceConfig{GenericClient: client}
+	// return associated silence
+	impl := &checkCfgImpl{}
+	cfg := ServiceConfig{AssetClient: assetClient}
 	ctx := contextWithLoaders(context.Background(), cfg)
-
-	resolver := &checkCfgImpl{}
-	got, err := resolver.RuntimeAssets(graphql.ResolveParams{Source: check, Context: ctx})
+	res, err := impl.RuntimeAssets(graphql.ResolveParams{Source: check, Context: ctx})
 	require.NoError(t, err)
-	assert.Len(t, got, 2)
+	assert.Len(t, res, 2)
 }
 
 func TestCheckConfigTypeHandlersField(t *testing.T) {
 	check := corev2.FixtureCheckConfig("my-check")
 	check.Handlers = []string{"one", "two", "four", "six:seven"}
 
-	client := new(MockGenericClient)
-	client.On("List", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Run(func(args mock.Arguments) {
-		list := args.Get(1).(*[]*corev2.Handler)
-		*list = []*corev2.Handler{
-			corev2.FixtureHandler("one"),
-			corev2.FixtureHandler("two"),
-			corev2.FixtureHandler("three"),
-			corev2.FixtureHandler("four:five"),
-			corev2.FixtureHandler("six:seven"),
-		}
-	}).Return(nil).Once()
-
-	cfg := ServiceConfig{GenericClient: client}
+	impl := &checkCfgImpl{}
 
 	params := graphql.ResolveParams{}
+	client := new(MockHandlerClient)
+
+	// return associated silence
+	client.On("ListHandlers", mock.Anything).Return([]*corev2.Handler{
+		corev2.FixtureHandler("one"),
+		corev2.FixtureHandler("two"),
+		corev2.FixtureHandler("three"),
+		corev2.FixtureHandler("four:five"),
+		corev2.FixtureHandler("six:seven"),
+	}, nil).Once()
+
+	cfg := ServiceConfig{HandlerClient: client}
 	params.Context = contextWithLoadersNoCache(context.Background(), cfg)
 	params.Source = check
 
-	resolver := &checkCfgImpl{}
-	got, err := resolver.Handlers(params)
+	res, err := impl.Handlers(params)
 	require.NoError(t, err)
-	assert.Len(t, got, 3)
+	assert.Len(t, res, 3)
 }
 
 func TestCheckTypeHandlersField(t *testing.T) {
 	check := corev2.FixtureCheck("my-check")
 	check.Handlers = []string{"one", "two", "four", "six:seven"}
 
-	params := graphql.ResolveParams{}
-	client := new(MockGenericClient)
-	client.On("List", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Run(func(args mock.Arguments) {
-		list := args.Get(1).(*[]*corev2.Handler)
-		*list = []*corev2.Handler{
-			corev2.FixtureHandler("one"),
-			corev2.FixtureHandler("two"),
-			corev2.FixtureHandler("three"),
-			corev2.FixtureHandler("four:five"),
-			corev2.FixtureHandler("six:seven"),
-		}
-	}).Return(nil).Once()
+	client := new(MockHandlerClient)
+	impl := &checkImpl{}
 
-	cfg := ServiceConfig{GenericClient: client}
+	params := graphql.ResolveParams{}
+	cfg := ServiceConfig{HandlerClient: client}
 	params.Context = contextWithLoadersNoCache(context.Background(), cfg)
 	params.Source = check
 
-	resolver := &checkImpl{}
-	got, err := resolver.Handlers(params)
+	// return associated silence
+	client.On("ListHandlers", mock.Anything).Return([]*corev2.Handler{
+		corev2.FixtureHandler("one"),
+		corev2.FixtureHandler("two"),
+		corev2.FixtureHandler("three"),
+		corev2.FixtureHandler("four:five"),
+		corev2.FixtureHandler("six:seven"),
+	}, nil).Once()
+
+	res, err := impl.Handlers(params)
 	require.NoError(t, err)
-	assert.Len(t, got, 3)
+	assert.Len(t, res, 3)
 }
 
 func TestCheckConfigTypeOutputMetricHandlersField(t *testing.T) {
 	check := corev2.FixtureCheckConfig("my-check")
 	check.OutputMetricHandlers = []string{"one", "two", "four", "six:seven"}
 
-	client := new(MockGenericClient)
-	client.On("List", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Run(func(args mock.Arguments) {
-		list := args.Get(1).(*[]*corev2.Handler)
-		*list = []*corev2.Handler{
-			corev2.FixtureHandler("one"),
-			corev2.FixtureHandler("two"),
-			corev2.FixtureHandler("three"),
-			corev2.FixtureHandler("four:five"),
-			corev2.FixtureHandler("six:seven"),
-		}
-	}).Return(nil).Once()
-
-	cfg := ServiceConfig{GenericClient: client}
+	client := new(MockHandlerClient)
+	impl := &checkCfgImpl{}
 
 	params := graphql.ResolveParams{}
+	cfg := ServiceConfig{HandlerClient: client}
 	params.Context = contextWithLoadersNoCache(context.Background(), cfg)
 	params.Source = check
 
-	resolver := &checkCfgImpl{}
-	got, err := resolver.OutputMetricHandlers(params)
+	// return associated silence
+	client.On("ListHandlers", mock.Anything).Return([]*corev2.Handler{
+		corev2.FixtureHandler("one"),
+		corev2.FixtureHandler("two"),
+		corev2.FixtureHandler("three"),
+		corev2.FixtureHandler("four:five"),
+		corev2.FixtureHandler("six:seven"),
+	}, nil).Once()
+
+	res, err := impl.OutputMetricHandlers(params)
 	require.NoError(t, err)
-	assert.Len(t, got, 3)
+	assert.Len(t, res, 3)
 }
 
 func TestCheckTypeOutputMetricHandlersField(t *testing.T) {
 	check := corev2.FixtureCheck("my-check")
 	check.OutputMetricHandlers = []string{"one", "two", "four", "six:seven"}
 
-	client := new(MockGenericClient)
-	client.On("List", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Run(func(args mock.Arguments) {
-		list := args.Get(1).(*[]*corev2.Handler)
-		*list = []*corev2.Handler{
-			corev2.FixtureHandler("one"),
-			corev2.FixtureHandler("two"),
-			corev2.FixtureHandler("three"),
-			corev2.FixtureHandler("four:five"),
-			corev2.FixtureHandler("six:seven"),
-		}
-	}).Return(nil).Once()
-
-	cfg := ServiceConfig{GenericClient: client}
+	client := new(MockHandlerClient)
+	impl := &checkImpl{}
 
 	params := graphql.ResolveParams{}
+	cfg := ServiceConfig{HandlerClient: client}
 	params.Context = contextWithLoadersNoCache(context.Background(), cfg)
 	params.Source = check
 
-	resolver := &checkImpl{}
-	got, err := resolver.OutputMetricHandlers(params)
+	// return associated silence
+	client.On("ListHandlers", mock.Anything).Return([]*corev2.Handler{
+		corev2.FixtureHandler("one"),
+		corev2.FixtureHandler("two"),
+		corev2.FixtureHandler("three"),
+		corev2.FixtureHandler("four:five"),
+		corev2.FixtureHandler("six:seven"),
+	}, nil).Once()
+
+	res, err := impl.OutputMetricHandlers(params)
 	require.NoError(t, err)
-	assert.Len(t, got, 3)
+	assert.Len(t, res, 3)
 }
 
 func TestCheckTypeToJSONField(t *testing.T) {
@@ -456,24 +433,21 @@ func Test_checkCfgImpl_IsSilenced(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			client := new(MockGenericClient)
-			client.On("List", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Run(func(args mock.Arguments) {
-				list := args.Get(1).(*[]*corev2.Silenced)
-				*list = []*corev2.Silenced{
-					tc.silence,
-				}
-			}).Return(nil).Once()
+			client := new(MockSilencedClient)
+			client.On("ListSilenced", mock.Anything).Return([]*corev2.Silenced{
+				tc.silence,
+			}, nil).Once()
 
-			cfg := ServiceConfig{GenericClient: client}
-
+			impl := &checkCfgImpl{}
 			params := graphql.ResolveParams{}
+			cfg := ServiceConfig{SilencedClient: client}
 			params.Context = contextWithLoadersNoCache(context.Background(), cfg)
 			params.Source = tc.check
 
-			resolver := &checkCfgImpl{}
-			got, err := resolver.IsSilenced(params)
+			// return associated silence
+			res, err := impl.IsSilenced(params)
 			require.NoError(t, err)
-			assert.Equal(t, tc.expected, got)
+			assert.Equal(t, tc.expected, res)
 		})
 	}
 }

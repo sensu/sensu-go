@@ -29,7 +29,7 @@ type EntityClient interface {
 	CreateEntity(context.Context, *corev2.Entity) error
 	UpdateEntity(context.Context, *corev2.Entity) error
 	FetchEntity(context.Context, string) (*corev2.Entity, error)
-	ListEntities(ctx context.Context, pred *store.SelectionPredicate) ([]*corev2.Entity, error)
+	ListEntities(ctx context.Context) ([]*corev2.Entity, error)
 }
 
 type EventClient interface {
