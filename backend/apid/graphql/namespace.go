@@ -279,13 +279,15 @@ func listEventsOrdering(order schema.EventsListOrder) (string, bool) {
 	case schema.EventsListOrders.ENTITY_DESC:
 		return corev2.EventSortEntity, true
 	case schema.EventsListOrders.LASTOK:
-		return corev2.EventSortLastOk, false
+		return corev2.EventSortLastOk, true
 	case schema.EventsListOrders.NEWEST:
 		return corev2.EventSortTimestamp, true
 	case schema.EventsListOrders.OLDEST:
 		return corev2.EventSortTimestamp, false
+	case schema.EventsListOrders.SEVERITY:
+		return corev2.EventSortSeverity, true
 	default:
-		return corev2.EventSortTimestamp, true
+		return corev2.EventSortLastOk, true
 	}
 }
 
