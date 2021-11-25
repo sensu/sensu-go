@@ -106,20 +106,19 @@ func loadCheckConfigs(ctx context.Context, ns string) ([]*corev2.CheckConfig, er
 
 // entities
 
-func listEntities(ctx context.Context, c EntityClient, maxSize int) ([]*corev2.Entity, error) {
+func listEntities(ctx context.Context, c EntityClient, maxSize int) (records []*corev2.Entity, err error) {
 	pred := &store.SelectionPredicate{Continue: "", Limit: int64(loaderPageSize)}
-	results := []*corev2.Entity{}
 	for {
 		r, err := c.ListEntities(ctx, pred)
 		if err != nil {
-			return results, err
+			return records, err
 		}
-		results = append(results, r...)
-		if pred.Continue == "" || len(r) < loaderPageSize || len(results) >= maxSize {
+		records = append(records, r...)
+		if pred.Continue == "" || len(r) < loaderPageSize || len(records) >= maxSize {
 			break
 		}
 	}
-	return results, nil
+	return
 }
 
 func loadEntitiesBatchFn(c EntityClient) dataloader.BatchFunc {
