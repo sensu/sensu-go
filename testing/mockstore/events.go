@@ -41,3 +41,7 @@ func (s *MockStore) CountEvents(ctx context.Context, pred *store.SelectionPredic
 	args := s.Called(ctx, pred)
 	return args.Get(0).(int64), args.Error(1)
 }
+
+func (s *MockStore) EventStoreSupportsFiltering(ctx context.Context) bool {
+	return s.Called(ctx).Get(0).(bool)
+}
