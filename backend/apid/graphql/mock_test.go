@@ -167,6 +167,15 @@ func (c *MockEventClient) ListEventsByEntity(ctx context.Context, entity string,
 	return args.Get(0).([]*corev2.Event), args.Error(1)
 }
 
+func (c *MockEventClient) CountEvents(ctx context.Context, _ *store.SelectionPredicate) (int64, error) {
+	args := c.Called(ctx)
+	return args.Get(0).(int64), args.Error(1)
+}
+
+func (c *MockEventClient) EventStoreSupportsFiltering(ctx context.Context) bool {
+	return c.Called(ctx).Get(0).(bool)
+}
+
 type MockMutatorClient struct {
 	mock.Mock
 }

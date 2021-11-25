@@ -7,6 +7,7 @@ import (
 	"github.com/sensu/sensu-go/backend/apid/graphql/filter"
 	"github.com/sensu/sensu-go/backend/apid/graphql/globalid"
 	"github.com/sensu/sensu-go/backend/apid/graphql/schema"
+	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/graphql"
 )
 
@@ -18,7 +19,8 @@ var _ schema.NamespaceFieldResolvers = (*namespaceImpl)(nil)
 
 type namespaceImpl struct {
 	schema.MutatorAliases
-	client NamespaceClient
+	client      NamespaceClient
+	eventClient EventClient
 }
 
 // ID implements response to request for 'id' field.
@@ -259,8 +261,57 @@ func (r *namespaceImpl) Entities(p schema.NamespaceEntitiesFieldResolverParams) 
 	return res, nil
 }
 
+func listEventsOrdering(order schema.EventsListOrder) (string, bool) {
+	switch order {
+	case schema.EventsListOrders.ENTITY:
+		return corev2.EventSortEntity, false
+	case schema.EventsListOrders.ENTITY_DESC:
+		return corev2.EventSortEntity, true
+	case schema.EventsListOrders.LASTOK:
+		return corev2.EventSortLastOk, false
+	case schema.EventsListOrders.NEWEST:
+		return corev2.EventSortTimestamp, true
+	case schema.EventsListOrders.OLDEST:
+		return corev2.EventSortTimestamp, false
+	default:
+		return corev2.EventSortTimestamp, true
+	}
+}
+
+func (r *namespaceImpl) eventsWithInStoreFiltering(p schema.NamespaceEventsFieldResolverParams) (interface{}, error) {
+	res := newOffsetContainer(p.Args.Offset, p.Args.Limit)
+	nsp := p.Source.(*corev2.Namespace)
+
+	ctx := store.NamespaceContext(p.Context, nsp.Name)
+
+	ordering, direction := listEventsOrdering(p.Args.OrderBy)
+	pred := &store.SelectionPredicate{
+		Limit:      int64(p.Args.Limit),
+		Offset:     int64(p.Args.Offset),
+		Ordering:   ordering,
+		Descending: direction,
+	}
+	events, err := r.eventClient.ListEvents(ctx, pred)
+	if err != nil {
+		return res, err
+	}
+	// No predicate for all events in namespace
+	totalResultCount, err := r.eventClient.CountEvents(ctx, nil)
+	if err != nil {
+		return res, err
+	}
+
+	res.Nodes = events
+	res.PageInfo.totalCount = int(totalResultCount)
+	return res, nil
+}
+
 // Events implements response to request for 'events' field.
 func (r *namespaceImpl) Events(p schema.NamespaceEventsFieldResolverParams) (interface{}, error) {
+	if r.eventClient.EventStoreSupportsFiltering(p.Context) {
+		return r.eventsWithInStoreFiltering(p)
+	}
+
 	res := newOffsetContainer(p.Args.Offset, p.Args.Limit)
 	nsp := p.Source.(*corev2.Namespace)
 

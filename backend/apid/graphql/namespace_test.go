@@ -7,6 +7,7 @@ import (
 
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/apid/graphql/schema"
+	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/graphql"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -69,13 +70,14 @@ func TestNamespaceTypeEntitiesField(t *testing.T) {
 
 func TestNamespaceTypeEventsField(t *testing.T) {
 	client := new(MockEventClient)
+	client.On("EventStoreSupportsFiltering", mock.Anything).Return(false)
 	client.On("ListEvents", mock.Anything, mock.Anything).Return([]*corev2.Event{
 		corev2.FixtureEvent("a", "b"),
 		corev2.FixtureEvent("b", "c"),
 		corev2.FixtureEvent("c", "d"),
 	}, nil).Once()
 
-	impl := &namespaceImpl{}
+	impl := &namespaceImpl{eventClient: client}
 	params := schema.NamespaceEventsFieldResolverParams{ResolveParams: graphql.ResolveParams{Context: context.Background()}}
 	cfg := ServiceConfig{EventClient: client}
 	params.Context = contextWithLoadersNoCache(context.Background(), cfg)
@@ -92,6 +94,123 @@ func TestNamespaceTypeEventsField(t *testing.T) {
 	res, err = impl.Events(params)
 	assert.Empty(t, res.(offsetContainer).Nodes)
 	assert.Error(t, err)
+}
+
+func TestNamespaceTypeEventsFieldWithStoreFiltering(t *testing.T) {
+
+	newClient := func(countTotal int64, listEventsErr bool) *MockEventClient {
+		client := new(MockEventClient)
+		// event client with filtering enabled
+		client.On("EventStoreSupportsFiltering", mock.Anything).Return(true)
+		client.On("CountEvents", mock.Anything, mock.Anything).Return(countTotal, nil)
+
+		if listEventsErr {
+			client.On("ListEvents", mock.Anything, mock.Anything).Return([]*corev2.Event{}, errors.New("abc")).Once()
+			return client
+		}
+		client.On("ListEvents", mock.Anything, mock.Anything).Return([]*corev2.Event{
+			corev2.FixtureEvent("a", "b"),
+			corev2.FixtureEvent("b", "c"),
+			corev2.FixtureEvent("c", "d"),
+		}, nil).Once()
+		return client
+	}
+
+	testCases := []struct {
+		name               string
+		client             *MockEventClient
+		args               schema.NamespaceEventsFieldResolverArgs
+		expectErr          bool
+		expectedOrdering   string
+		expectedDescending bool
+		expectedLimit      int64
+		expectedOffset     int64
+		expectedTotal      int
+	}{
+		{
+			name:   "New query by Newest",
+			client: newClient(128, false),
+			args: schema.NamespaceEventsFieldResolverArgs{
+				Limit:   100,
+				OrderBy: schema.EventsListOrders.NEWEST,
+			},
+			expectedOrdering:   corev2.EventSortTimestamp,
+			expectedDescending: true,
+			expectedLimit:      100,
+			expectedTotal:      128,
+		}, {
+			name:   "Offset query for Oldest",
+			client: newClient(9999, false),
+			args: schema.NamespaceEventsFieldResolverArgs{
+				Limit:   5,
+				Offset:  900,
+				OrderBy: schema.EventsListOrders.OLDEST,
+			},
+			expectedOrdering:   corev2.EventSortTimestamp,
+			expectedDescending: false,
+			expectedLimit:      5,
+			expectedOffset:     900,
+			expectedTotal:      9999,
+		}, {
+			name:   "New query by entity",
+			client: newClient(128, false),
+			args: schema.NamespaceEventsFieldResolverArgs{
+				Limit:   100,
+				OrderBy: schema.EventsListOrders.ENTITY,
+			},
+			expectedOrdering:   corev2.EventSortEntity,
+			expectedDescending: false,
+			expectedLimit:      100,
+			expectedTotal:      128,
+		}, {
+			name:   "New query by entity descending",
+			client: newClient(128, false),
+			args: schema.NamespaceEventsFieldResolverArgs{
+				Limit:   100,
+				OrderBy: schema.EventsListOrders.ENTITY_DESC,
+			},
+			expectedOrdering:   corev2.EventSortEntity,
+			expectedDescending: true,
+			expectedLimit:      100,
+			expectedTotal:      128,
+		}, {
+			name:   "Store Error",
+			client: newClient(0, true),
+			args: schema.NamespaceEventsFieldResolverArgs{
+				Limit:   100,
+				OrderBy: schema.EventsListOrders.ENTITY_DESC,
+			},
+			expectErr: true,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			impl := &namespaceImpl{eventClient: tc.client}
+			params := schema.NamespaceEventsFieldResolverParams{
+				ResolveParams: graphql.ResolveParams{Context: context.Background()},
+				Args:          tc.args,
+			}
+			params.Context = context.Background()
+			params.Source = corev2.FixtureNamespace("default")
+
+			res, err := impl.Events(params)
+
+			if tc.expectErr {
+				assert.Error(t, err)
+				return
+			}
+			actual := res.(offsetContainer)
+			assert.NotEmpty(t, actual.Nodes)
+			assert.Equal(t, tc.expectedTotal, actual.PageInfo.totalCount)
+			actualPred := tc.client.Calls[1].Arguments[1].(*store.SelectionPredicate)
+
+			assert.Equal(t, tc.expectedDescending, actualPred.Descending)
+			assert.Equal(t, tc.expectedOrdering, actualPred.Ordering)
+			assert.Equal(t, tc.expectedLimit, actualPred.Limit)
+			assert.Equal(t, tc.expectedOffset, actualPred.Offset)
+		})
+	}
 }
 
 func TestNamespaceTypeEventFiltersField(t *testing.T) {

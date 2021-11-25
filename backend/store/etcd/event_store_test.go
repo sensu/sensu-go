@@ -1,6 +1,7 @@
 package etcd
 
 import (
+	"context"
 	"reflect"
 	"testing"
 
@@ -141,4 +142,9 @@ func Test_updateEventHistory(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestEventStoreSupportsFilteringUnsupported(t *testing.T) {
+	store := NewStore(nil, "")
+	assert.Equal(t, false, store.EventStoreSupportsFiltering(context.Background()), "etcd event store not expected to support filtering")
 }
