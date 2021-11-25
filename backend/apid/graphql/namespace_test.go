@@ -74,22 +74,21 @@ func TestNamespaceTypeEventsField(t *testing.T) {
 		corev2.FixtureEvent("c", "d"),
 	}, nil).Once()
 
-	impl := &namespaceImpl{}
-	params := schema.NamespaceEventsFieldResolverParams{ResolveParams: graphql.ResolveParams{Context: context.Background()}}
-	cfg := ServiceConfig{EventClient: client}
-	params.Context = contextWithLoadersNoCache(context.Background(), cfg)
+	params := schema.NamespaceEventsFieldResolverParams{}
+	params.Context = context.Background()
 	params.Source = corev2.FixtureNamespace("default")
 	params.Args.Limit = 20
 
 	// Success
-	res, err := impl.Events(params)
+	resolver := &namespaceImpl{eventClient: client}
+	got, err := resolver.Events(params)
 	assert.NoError(t, err)
-	assert.NotEmpty(t, res.(offsetContainer).Nodes)
+	assert.NotEmpty(t, got.(offsetContainer).Nodes)
 
 	// Store err
 	client.On("ListEvents", mock.Anything, mock.Anything).Return([]*corev2.Event{}, errors.New("abc")).Once()
-	res, err = impl.Events(params)
-	assert.Empty(t, res.(offsetContainer).Nodes)
+	got, err = resolver.Events(params)
+	assert.Empty(t, got.(offsetContainer).Nodes)
 	assert.Error(t, err)
 }
 

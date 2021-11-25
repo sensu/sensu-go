@@ -30,7 +30,7 @@ const (
 	loaderPageSize = 250
 
 	// the maximum number of records that will be read from the store by the
-	// dataloader; too many can put significant strain on memory.
+	// dataloader; too many puts significant strain on memory.
 	maxLengthEntityDataloader  = 1_000
 	maxLengthEventDataloader   = 1_000
 	maxLengthGenericDataloader = 2_500

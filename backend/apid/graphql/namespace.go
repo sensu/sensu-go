@@ -278,7 +278,8 @@ func (r *namespaceImpl) Events(p schema.NamespaceEventsFieldResolverParams) (int
 	nsp := p.Source.(*corev2.Namespace)
 
 	// fetch
-	results, err := loadEvents(p.Context, nsp.Name, "")
+	ctx := store.NamespaceContext(p.Context, nsp.Name)
+	results, err := listEvents(ctx, r.eventClient, "", maxSizeNamespaceListEvents)
 	if err != nil {
 		return res, err
 	}
