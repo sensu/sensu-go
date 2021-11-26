@@ -57,6 +57,7 @@ func (client *RestClient) UpdateEvent(event *corev2.Event) error {
 func (client *RestClient) ResolveEvent(event *corev2.Event) error {
 	event.Check.Status = 0
 	event.Check.Output = "Resolved manually by sensuctl"
-	event.Timestamp = int64(time.Now().Unix())
+	event.Check.Executed = int64(time.Now().Unix())
+	event.Timestamp = event.Check.Executed
 	return client.UpdateEvent(event)
 }
