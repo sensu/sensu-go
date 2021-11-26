@@ -12,6 +12,9 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ### Added
 - Add backend label to logged metrics.
+### Added
+- Check & CheckConfig validation errors related to cron now provide additional
+context.
 
 ### Fixed
 - In addition to the context error print the connection error when
