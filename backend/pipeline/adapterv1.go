@@ -182,7 +182,6 @@ func (a *AdapterV1) Run(ctx context.Context, ref *corev2.ResourceReference, reso
 
 		// Process the event through the workflow filters
 		filtered, err := a.processFilters(ctx, workflow.Filters, event)
-		fmt.Println(filtered, err)
 		if err != nil {
 			return err
 		}
