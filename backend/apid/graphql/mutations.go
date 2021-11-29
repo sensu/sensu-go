@@ -232,7 +232,8 @@ func (r *mutationsImpl) ResolveEvent(p schema.MutationResolveEventFieldResolverP
 	if event.HasCheck() && event.Check.Status > 0 {
 		event.Check.Status = 0
 		event.Check.Output = "Resolved manually with " + p.Args.Input.Source
-		event.Timestamp = int64(time.Now().Unix())
+		event.Check.Executed = int64(time.Now().Unix())
+		event.Timestamp = event.Check.Executed
 
 		err = client.UpdateEvent(ctx, event)
 		if err != nil {
