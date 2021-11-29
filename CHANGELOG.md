@@ -10,6 +10,10 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## [6.6.1] - 2021-11-29
 
+### Added
+- Check & CheckConfig validation errors related to cron now provide additional
+context.
+
 ### Fixed
 - Remove debugging log entry.
 - Event executed timestamps are now set when resolving an event through
@@ -19,9 +23,6 @@ sensuctl or the webui.
 
 ### Added
 - Add backend label to logged metrics.
-### Added
-- Check & CheckConfig validation errors related to cron now provide additional
-context.
 
 ### Fixed
 - In addition to the context error print the connection error when
