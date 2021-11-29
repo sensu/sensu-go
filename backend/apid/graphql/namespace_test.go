@@ -174,6 +174,27 @@ func TestNamespaceTypeEventsFieldWithStoreFiltering(t *testing.T) {
 			expectedLimit:      100,
 			expectedTotal:      128,
 		}, {
+			name:   "New query by last ok",
+			client: newClient(128, false),
+			args: schema.NamespaceEventsFieldResolverArgs{
+				Limit:   100,
+				OrderBy: schema.EventsListOrders.LASTOK,
+			},
+			expectedOrdering:   corev2.EventSortLastOk,
+			expectedDescending: true,
+			expectedLimit:      100,
+			expectedTotal:      128,
+		}, {
+			name:   "New query ordering not specified",
+			client: newClient(128, false),
+			args: schema.NamespaceEventsFieldResolverArgs{
+				Limit: 100,
+			},
+			expectedOrdering:   corev2.EventSortLastOk,
+			expectedDescending: true,
+			expectedLimit:      100,
+			expectedTotal:      128,
+		}, {
 			name:   "Store Error",
 			client: newClient(0, true),
 			args: schema.NamespaceEventsFieldResolverArgs{
