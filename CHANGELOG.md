@@ -8,6 +8,9 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
 
+### Fixed
+- Remove debugging log entry.
+
 ## [6.6.0] - 2021-11-25
 
 ### Added
