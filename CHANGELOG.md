@@ -8,8 +8,12 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
 
+## [6.6.1] - 2021-11-29
+
 ### Fixed
 - Remove debugging log entry.
+- Event executed timestamps are now set when resolving an event through
+sensuctl or the webui.
 
 ## [6.6.0] - 2021-11-25
 
