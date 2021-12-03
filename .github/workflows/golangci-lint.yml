@@ -18,26 +18,26 @@ env:
 
 jobs:
   lint:
-    name: ${{ matrix.workdir }}
+    name: lint #${{ matrix.workdir }}
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        workdir:
-          - .
-          - api/core/v2
-          - api/core/v3
-          - backend/store/v2
-          - types
+    # strategy:
+    #   matrix:
+    #     workdir:
+    #       - .
+    #       - api/core/v2
+    #       - api/core/v3
+    #       - backend/store/v2
+    #       - types
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-go@v2
         with:
           go-version: ${{ env.GO_VERSION }}
       - name: golangci-lint github-actions format
-        uses: golangci/golangci-lint-action@v2
+        uses: guyarb/golangci-lint-action@v0.4.1
         with:
           version: ${{ env.GOLANGCI_LINT_VERSION }}
-          working-directory: ${{ matrix.workdir }}
+          #working-directory: ${{ matrix.workdir }}
           args: --timeout=5m
       # - name: golangci-lint colored-line-number format
       #   if: ${{ failure() }}
