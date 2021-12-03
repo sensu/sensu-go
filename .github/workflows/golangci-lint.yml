@@ -23,7 +23,7 @@ jobs:
     strategy:
       matrix:
         workdir:
-          - ${{}}
+          - .
           - api/core/v2
           - api/core/v3
           - backend/store/v2
