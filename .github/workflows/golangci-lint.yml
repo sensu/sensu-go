@@ -23,7 +23,7 @@ jobs:
       - uses: actions/setup-go@v2
         with:
           go-version: "${{ env.GO_VERSION }}"
-      - name: golangci-lint github-actions format
+      - name: golangci-lint
         uses: golangci/golangci-lint-action@v2
         with:
           version: "${{ env.GOLANGCI_LINT_VERSION }}"
@@ -36,7 +36,7 @@ jobs:
       - uses: actions/setup-go@v2
         with:
           go-version: "${{ env.GO_VERSION }}"
-      - name: golangci-lint github-actions format
+      - name: golangci-lint
         uses: golangci/golangci-lint-action@v2
         with:
           version: "${{ env.GOLANGCI_LINT_VERSION }}"
@@ -50,7 +50,7 @@ jobs:
       - uses: actions/setup-go@v2
         with:
           go-version: "${{ env.GO_VERSION }}"
-      - name: golangci-lint github-actions format
+      - name: golangci-lint
         uses: golangci/golangci-lint-action@v2
         with:
           version: "${{ env.GOLANGCI_LINT_VERSION }}"
@@ -64,7 +64,7 @@ jobs:
       - uses: actions/setup-go@v2
         with:
           go-version: "${{ env.GO_VERSION }}"
-      - name: golangci-lint github-actions format
+      - name: golangci-lint
         uses: golangci/golangci-lint-action@v2
         with:
           version: "${{ env.GOLANGCI_LINT_VERSION }}"
@@ -78,7 +78,7 @@ jobs:
       - uses: actions/setup-go@v2
         with:
           go-version: "${{ env.GO_VERSION }}"
-      - name: golangci-lint github-actions format
+      - name: golangci-lint
         uses: golangci/golangci-lint-action@v2
         with:
           version: "${{ env.GOLANGCI_LINT_VERSION }}"
