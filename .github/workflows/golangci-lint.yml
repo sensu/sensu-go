@@ -40,24 +40,6 @@ jobs:
           version: "${{ env.GOLANGCI_LINT_VERSION }}"
           working_directory: "${{ matrix.workdir }}"
           args: "-c ${{ env.GOLANGCI_LINT_CONFIG }}"
-  lint-gh:
-    name: lint-gh
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        workdir:
-          - "."
-          - "api/core/v2"
-          - "api/core/v3"
-          - "backend/store/v2"
-          - "types"
-    steps:
-      - uses: actions/checkout@v2
-      - uses: actions/setup-go@v2
-        with:
-          go-version: "${{ env.GO_VERSION }}"
-      - name: golangci-lint
-        uses: golangci/golangci-lint-action@v2
-        with:
-          version: "${{ env.GOLANGCI_LINT_VERSION }}"
-          args: "-c ${{ env.GOLANGCI_LINT_CONFIG }} --out-format github-actions --issues${NO_FUTURE}-exit-code 0"
+      - name: errors
+        run: golangci-lint run
+        if: ${{ failure() }}
