@@ -200,6 +200,7 @@ linters-settings:
       - "-ST1020"
       - "-ST1021"
       - "-ST1022"
+      - "-ST1023"
     # https://staticcheck.io/docs/options#dot_import_whitelist
     # dot-import-whitelist:
     #   - fmt
