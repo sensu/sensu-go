@@ -38,8 +38,9 @@ jobs:
         uses: golangci/golangci-lint-action@v2
         with:
           version: "${{ env.GOLANGCI_LINT_VERSION }}"
-          working_directory: "${{ matrix.workdir }}"
+          working-directory: "${{ matrix.workdir }}"
           args: "-c ${{ env.GOLANGCI_LINT_CONFIG }}"
       - name: errors
         run: golangci-lint run
+        working-directory: "${{ matrix.workdir }}"
         if: ${{ failure() }}
