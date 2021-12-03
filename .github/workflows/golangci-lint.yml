@@ -15,20 +15,20 @@ env:
   GOLANGCI_LINT_VERSION: v1.43.0
   GOSUMDB: off
   GOPROXY: direct
-  ARGS: "--timeout=5m -c ${{ github.workspace }}/.golangci.yml"
+  ARGS: -c ${{ github.workspace }}/.golangci.yml
 
 jobs:
   lint:
-    name: lint
+    name: ${{ matrix.workdir }}
     runs-on: ubuntu-latest
     strategy:
       matrix:
         workdir:
-          - "."
-          - "api/core/v2"
-          - "api/core/v3"
-          - "backend/store/v2"
-          - "types"
+          - '.'
+          - 'api/core/v2'
+          - 'api/core/v3'
+          - 'backend/store/v2'
+          - 'types'
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-go@v2
@@ -39,7 +39,7 @@ jobs:
         with:
           version: "${{ env.GOLANGCI_LINT_VERSION }}"
           working-directory: "${{ matrix.workdir }}"
-          args: "${{ env.ARGS }}"
+          args: ${{ env.ARGS }}
       - name: golangci-lint colored-line-number format
         run: |
           golangci-lint run ${{ env.ARGS }} --out-format colored-line-number
