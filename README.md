@@ -44,7 +44,7 @@ See the [installation documentation](https://docs.sensu.io/sensu-go/latest/opera
 ### Building from source
 
 The various components of Sensu Go can be manually built from this repository.
-You will first need [Go 1.13.3](https://golang.org/doc/install#install)
+You will first need [Go >= 1.13](https://golang.org/doc/install#install)
 installed. Then, you should clone this repository **outside** of the GOPATH
 since Sensu Go uses [Go Modules](https://github.com/golang/go/wiki/Modules):
 ```
