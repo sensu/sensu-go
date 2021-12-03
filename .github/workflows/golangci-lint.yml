@@ -15,7 +15,7 @@ env:
   GOLANGCI_LINT_VERSION: v1.43.0
   GOSUMDB: off
   GOPROXY: direct
-  GOLANGCI_LINT_CONFIG: "${{ github.workspace }}/.golangci.yml"
+  ARGS: "-c ${{ github.workspace }}/.golangci.yml --timeout 5m"
 
 jobs:
   lint:
@@ -39,8 +39,9 @@ jobs:
         with:
           version: "${{ env.GOLANGCI_LINT_VERSION }}"
           working-directory: "${{ matrix.workdir }}"
-          args: "-c ${{ env.GOLANGCI_LINT_CONFIG }} --out-format github-actions"
+          args: "${{ env.ARGS }}"
       - name: golangci-lint colored-line-number format
-        run: "golangci-lint run -c ${{ env.GOLANGCI_LINT_CONFIG }}"
+        run: |
+          golangci-lint run ${{ env.ARGS }} --out-format colored-line-number
         working-directory: "${{ matrix.workdir }}"
         if: ${{ failure() }}
