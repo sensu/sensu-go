@@ -34,13 +34,13 @@ jobs:
       - uses: actions/setup-go@v2
         with:
           go-version: "${{ env.GO_VERSION }}"
-      - name: golangci-lint
+      - name: golangci-lint github-actions format
         uses: golangci/golangci-lint-action@v2
         with:
           version: "${{ env.GOLANGCI_LINT_VERSION }}"
           working-directory: "${{ matrix.workdir }}"
-          args: "-c ${{ env.GOLANGCI_LINT_CONFIG }}"
-      - name: errors
-        run: golangci-lint run
+          args: "-c ${{ env.GOLANGCI_LINT_CONFIG }} --out-format github-actions"
+      - name: golangci-lint colored-line-number format
+        run: "golangci-lint run -c ${{ env.GOLANGCI_LINT_CONFIG }}"
         working-directory: "${{ matrix.workdir }}"
         if: ${{ failure() }}
