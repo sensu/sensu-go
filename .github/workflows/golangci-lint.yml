@@ -38,6 +38,7 @@ jobs:
         uses: golangci/golangci-lint-action@v2
         with:
           version: "${{ env.GOLANGCI_LINT_VERSION }}"
+          working_directory: "${{ matrix.workdir }}"
           args: "-c ${{ env.GOLANGCI_LINT_CONFIG }}"
   lint-gh:
     name: lint-gh
@@ -59,4 +60,4 @@ jobs:
         uses: golangci/golangci-lint-action@v2
         with:
           version: "${{ env.GOLANGCI_LINT_VERSION }}"
-          args: "-c ${{ env.GOLANGCI_LINT_CONFIG }} --out-format github-actions --issues-exit-code 0"
+          args: "-c ${{ env.GOLANGCI_LINT_CONFIG }} --out-format github-actions --issues${NO_FUTURE}-exit-code 0"
