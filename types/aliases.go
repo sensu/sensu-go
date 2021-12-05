@@ -171,7 +171,11 @@ const (
 	// InfluxDBOutputMetricFormat is the accepted string to represent the output metric format of
 	// InfluxDB Line
 	InfluxDBOutputMetricFormat = v2.InfluxDBOutputMetricFormat
-
+	
+	// PrometheusOutputMetricFormat is the accepted string to represent the output metric format of
+	// Prometheus Line
+	PrometheusOutputMetricFormat = v2.PrometheusOutputMetricFormat
+	
 	// CoreEdition represents the Sensu Core Edition (CE)
 	CoreEdition = v2.CoreEdition
 
