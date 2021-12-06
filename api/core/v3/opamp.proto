@@ -1,0 +1,22 @@
+syntax = "proto3";
+
+import "github.com/gogo/protobuf@v1.3.1/gogoproto/gogo.proto";
+import "github.com/sensu/sensu-go/api/core/v2/meta.proto";
+
+package sensu.core.v3;
+
+option go_package = "v3";
+option (gogoproto.populate_all) = true;
+option (gogoproto.equal_all) = true;
+option (gogoproto.marshaler_all) = true;
+option (gogoproto.unmarshaler_all) = true;
+option (gogoproto.sizer_all) = true;
+option (gogoproto.testgen_all) = true;
+
+
+message OpampAgentConfig {
+    sensu.core.v2.ObjectMeta metadata = 1 [ (gogoproto.jsontag) = "metadata", (gogoproto.nullable) = true ];
+
+    string body = 2 [ (gogoproto.jsontag) = "body" ];
+    string content_type = 3 [ (gogoproto.jsontag) = "content_type" ];
+}
