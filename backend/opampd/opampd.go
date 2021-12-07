@@ -15,9 +15,10 @@ import (
 )
 
 type Config struct {
-	Host string
-	Port int
-	Path string
+	Host    string
+	Port    int
+	Path    string
+	Handler MessageHandler
 }
 
 type OpAMPD struct {
@@ -30,10 +31,13 @@ type OpAMPD struct {
 	httpServer  *http.Server
 	wg          *sync.WaitGroup
 	errChan     chan error
+	handler     MessageHandler
 }
 
 // New creates and bind the OpAMP server to the specified port.
 func New(config *Config) (*OpAMPD, error) {
+	// Add validation here
+
 	d := &OpAMPD{
 		host: config.Host,
 		port: config.Port,
@@ -48,6 +52,7 @@ func New(config *Config) (*OpAMPD, error) {
 		connections: make(map[string]*websocket.Conn),
 		wg:          &sync.WaitGroup{},
 		errChan:     make(chan error, 1),
+		handler:     config.Handler,
 	}
 
 	router := mux.NewRouter()
@@ -142,13 +147,13 @@ func (d *OpAMPD) messageReader(connection *websocket.Conn) {
 			}
 			break
 		}
-		go d.handleMessage(message)
+		go d.handleMessage(connection, message)
 	}
 }
 
 // handleMessage parses a protobuf message received from the agent and calls the
 // appropriate handler.
-func (d *OpAMPD) handleMessage(message []byte) {
+func (d *OpAMPD) handleMessage(connection *websocket.Conn, message []byte) {
 	a2s := protobufs.AgentToServer{}
 	err := proto.Unmarshal(message, &a2s)
 	if err != nil {
@@ -158,15 +163,36 @@ func (d *OpAMPD) handleMessage(message []byte) {
 
 	logger.Infof("OpAMP message received from %s\n", a2s.InstanceUid)
 
+	var s2a *protobufs.ServerToAgent
 	if a2s.StatusReport != nil {
-		logger.Infoln("status report")
+		logger.Infoln("received status report from %s", a2s.InstanceUid)
+		s2a, err = d.handler.OnStatusReport(a2s.InstanceUid, a2s.StatusReport)
 	} else if a2s.AddonStatuses != nil {
-		logger.Infoln("addon statuses")
+		logger.Infoln("received addon statuses from %s", a2s.InstanceUid)
+		s2a, err = d.handler.OnAddonStatuses(a2s.InstanceUid, a2s.AddonStatuses)
 	} else if a2s.AgentInstallStatus != nil {
-		logger.Infoln("agent install status")
+		logger.Infoln("received agent install status from %s", a2s.InstanceUid)
+		s2a, err = d.handler.OnAgentInstallStatus(a2s.InstanceUid, a2s.AgentInstallStatus)
 	} else if a2s.AgentDisconnect != nil {
-		logger.Infoln("agent disconnect")
+		logger.Infoln("received agent disconnect %s", a2s.InstanceUid)
+		s2a, err = d.handler.OnAgentDisconnect(s2a.InstanceUid, a2s.AgentDisconnect)
 	} else {
 		// invalid message
+		logger.Errorf("invalid message from %s", a2s.InstanceUid)
+	}
+
+	if err != nil {
+		logger.Errorf("error processing message from agent %s: %v", a2s.InstanceUid, err)
+		return
+	}
+
+	binary, err := proto.Marshal(s2a)
+	if err != nil {
+		logger.Errorf("error marshaling ServerToAgent message for agent %s: %v", a2s.InstanceUid, err)
+	}
+
+	err = connection.WriteMessage(websocket.BinaryMessage, binary)
+	if err != nil {
+		logger.Errorf("error writing response back to agent %s: %v", a2s.InstanceUid, err)
 	}
 }
