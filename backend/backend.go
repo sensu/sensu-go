@@ -546,7 +546,8 @@ func Initialize(ctx context.Context, config *Config) (*Backend, error) {
 	// Initialize the OpAMP daemon
 	opamp, err := opampd.New(&opampd.Config{
 		Host: "0.0.0.0",
-		Port: 9800,
+		Port: 4320,
+		Path: "/v1/opamp",
 	})
 	if err != nil {
 		return nil, fmt.Errorf("error initializing OpAMP daemon: %s", err)
