@@ -7,6 +7,7 @@ import (
 	"time"
 
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
+	corev3 "github.com/sensu/sensu-go/api/core/v3"
 	"github.com/sensu/sensu-go/backend/store/patch"
 	"github.com/sensu/sensu-go/backend/store/provider"
 	"github.com/sensu/sensu-go/types"
@@ -558,6 +559,16 @@ func (s *StoreProxy) UpdateUser(user *types.User) error {
 // stored in ctx. The resulting pipeline is nil if none was found.
 func (s *StoreProxy) GetPipelineByName(ctx context.Context, name string) (*corev2.Pipeline, error) {
 	return s.do().GetPipelineByName(ctx, name)
+}
+
+// GetAgentConfig returns the opamp agent config
+func (s *StoreProxy) GetAgentConfig(ctx context.Context) (*corev3.OpampAgentConfig, error) {
+	return s.do().GetAgentConfig(ctx)
+}
+
+// UpdateAgentConfig updates the opamp agent config
+func (s *StoreProxy) UpdateAgentConfig(ctx context.Context, config *corev3.OpampAgentConfig) error {
+	return s.do().UpdateAgentConfig(ctx, config)
 }
 
 // NewInitializer returns the Initializer interfaces, which provides the

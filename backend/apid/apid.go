@@ -34,6 +34,7 @@ type APId struct {
 	CoreSubrouter              *mux.Router
 	EntityLimitedCoreSubrouter *mux.Router
 	GraphQLSubrouter           *mux.Router
+	OpampSubrouter             *mux.Router
 	RequestLimit               int64
 
 	stopping            chan struct{}
@@ -110,6 +111,7 @@ func New(c Config, opts ...Option) (*APId, error) {
 	_ = AuthenticationSubrouter(router, c)
 	a.CoreSubrouter = CoreSubrouter(router, c)
 	a.EntityLimitedCoreSubrouter = EntityLimitedCoreSubrouter(router, c)
+	a.OpampSubrouter = OpampSubrouter(router, c)
 
 	a.HTTPServer = &http.Server{
 		Addr:         c.ListenAddress,
@@ -268,6 +270,16 @@ func PublicSubrouter(router *mux.Router, cfg Config) *mux.Router {
 
 	subrouter.Handle("/metrics", promhttp.Handler())
 
+	return subrouter
+}
+
+// OpampSubrouter initializes a subrouter to handle all opamp routes
+// under /api/opamp/*
+func OpampSubrouter(router *mux.Router, cfg Config) *mux.Router {
+	subrouter := NewSubrouter(
+		router.PathPrefix("/api/opamp"),
+	)
+	routers.NewOpampAgentConfRouter(cfg.Store).Mount(subrouter)
 	return subrouter
 }
 

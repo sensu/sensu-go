@@ -227,6 +227,9 @@ type Store interface {
 	// ResourceStore ...
 	ResourceStore
 
+	// OpampStore ...
+	OpampStore
+
 	// NewInitializer returns the Initializer interfaces, which provides the
 	// required mechanism to verify if a store is initialized
 	NewInitializer(context.Context) (Initializer, error)
@@ -645,6 +648,11 @@ type UserStore interface {
 
 	// UpdateUser updates a given user.
 	UpdateUser(user *types.User) error
+}
+
+type OpampStore interface {
+	UpdateAgentConfig(context.Context, *corev3.OpampAgentConfig) error
+	GetAgentConfig(context.Context) (*corev3.OpampAgentConfig, error)
 }
 
 // Initializer provides methods to verify if a store is initialized

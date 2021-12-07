@@ -26,6 +26,7 @@ import (
 	"github.com/sensu/sensu-go/cli/commands/logout"
 	"github.com/sensu/sensu-go/cli/commands/mutator"
 	"github.com/sensu/sensu-go/cli/commands/namespace"
+	"github.com/sensu/sensu-go/cli/commands/opampagent"
 	"github.com/sensu/sensu-go/cli/commands/pipeline"
 	"github.com/sensu/sensu-go/cli/commands/role"
 	"github.com/sensu/sensu-go/cli/commands/rolebinding"
@@ -70,6 +71,7 @@ func AddCommands(rootCmd *cobra.Command, cli *cli.SensuCli) {
 		dump.Command(cli),
 		command.HelpCommand(cli),
 		describetype.Command(cli),
+		opampagent.HelpCommand(cli),
 	)
 
 	for _, cmd := range rootCmd.Commands() {

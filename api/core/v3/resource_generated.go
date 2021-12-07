@@ -258,6 +258,112 @@ func (e *EntityState) GetTypeMeta() corev2.TypeMeta {
 
 // SetMetadata sets the provided metadata on the type. If the type does not
 // have any metadata, nothing will happen.
+func (o *OpampAgentConfig) SetMetadata(meta *corev2.ObjectMeta) {
+	// The function has to use reflection, since not all of the generated types
+	// will have metadata.
+	value := reflect.Indirect(reflect.ValueOf(o))
+	field := value.FieldByName("Metadata")
+	if !field.CanSet() {
+		return
+	}
+	field.Set(reflect.ValueOf(meta))
+}
+
+// StoreName returns the store name for OpampAgentConfig. It will be
+// overridden if there is a method for OpampAgentConfig called "storeName".
+func (o *OpampAgentConfig) StoreName() string {
+	var iface interface{} = o
+	if prefixer, ok := iface.(storeNamer); ok {
+		return prefixer.storeName()
+	}
+	return "opamp_agent_configs"
+}
+
+// RBACName returns the RBAC name for OpampAgentConfig. It will be overridden if
+// there is a method for OpampAgentConfig called "rbacName".
+func (o *OpampAgentConfig) RBACName() string {
+	var iface interface{} = o
+	if namer, ok := iface.(rbacNamer); ok {
+		return namer.rbacName()
+	}
+	return "opamp_agent_configs"
+}
+
+// URIPath returns the URI path for OpampAgentConfig. It will be overridden if
+// there is a method for OpampAgentConfig called uriPath.
+func (o *OpampAgentConfig) URIPath() string {
+	var iface interface{} = o
+	if pather, ok := iface.(uriPather); ok {
+		return pather.uriPath()
+	}
+	metaer, ok := iface.(getMetadataer)
+	if !ok {
+		return ""
+	}
+	meta := metaer.GetMetadata()
+	if meta == nil {
+		return uriPath("opamp-agent-configs", "", "")
+	}
+	return uriPath("opamp-agent-configs", meta.Namespace, meta.Name)
+}
+
+// Validate validates the OpampAgentConfig. If the OpampAgentConfig has metadata,
+// it will be validated via ValidateMetadata. If there is a method for
+// OpampAgentConfig called validate, then it will be used to cooperatively
+// validate the OpampAgentConfig.
+func (o *OpampAgentConfig) Validate() error {
+	if o == nil {
+		return errors.New("nil OpampAgentConfig")
+	}
+	var iface interface{} = o
+	if resource, ok := iface.(Resource); ok {
+		if err := ValidateMetadata(resource.GetMetadata()); err != nil {
+			return fmt.Errorf("invalid OpampAgentConfig: %s", err)
+		}
+	}
+	if validator, ok := iface.(validator); ok {
+		if err := validator.validate(); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// UnmarshalJSON is provided in order to ensure that metadata labels and
+// annotations are never nil.
+func (o *OpampAgentConfig) UnmarshalJSON(msg []byte) error {
+	type Clone OpampAgentConfig
+	var clone Clone
+	if err := json.Unmarshal(msg, &clone); err != nil {
+		return err
+	}
+	*o = *(*OpampAgentConfig)(&clone)
+	var iface interface{} = o
+	var meta *corev2.ObjectMeta
+	if metaer, ok := iface.(getMetadataer); ok {
+		meta = metaer.GetMetadata()
+	}
+	if meta != nil {
+		if meta.Labels == nil {
+			meta.Labels = make(map[string]string)
+		}
+		if meta.Annotations == nil {
+			meta.Annotations = make(map[string]string)
+		}
+	}
+	return nil
+}
+
+// GetTypeMeta gets the type metadata for a OpampAgentConfig.
+func (o *OpampAgentConfig) GetTypeMeta() corev2.TypeMeta {
+	return corev2.TypeMeta{
+		APIVersion: "core/v3",
+		Type:       "OpampAgentConfig",
+	}
+}
+
+// SetMetadata sets the provided metadata on the type. If the type does not
+// have any metadata, nothing will happen.
 func (r *ResourceTemplate) SetMetadata(meta *corev2.ObjectMeta) {
 	// The function has to use reflection, since not all of the generated types
 	// will have metadata.
