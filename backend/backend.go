@@ -544,13 +544,14 @@ func Initialize(ctx context.Context, config *Config) (*Backend, error) {
 	b.Daemons = append(b.Daemons, keepalive)
 
 	// Initialize the OpAMP daemon
-	_, err = opampd.New(&opampd.Config{
+	opamp, err := opampd.New(&opampd.Config{
 		Host: "0.0.0.0",
 		Port: 9800,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("error initializing OpAMP daemon: %s", err)
 	}
+	b.Daemons = append(b.Daemons, opamp)
 
 	// Prepare the authentication providers
 	authenticator := &authentication.Authenticator{}
