@@ -279,7 +279,7 @@ func OpampSubrouter(router *mux.Router, cfg Config) *mux.Router {
 	subrouter := NewSubrouter(
 		router.PathPrefix("/api/opamp"),
 	)
-	routers.NewOpampAgentConfRouter(&actions.OpampAgentConfController{}).Mount(subrouter)
+	routers.NewOpampAgentConfRouter(cfg.Store).Mount(subrouter)
 	return subrouter
 }
 

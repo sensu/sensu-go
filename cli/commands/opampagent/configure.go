@@ -1,7 +1,7 @@
 package opampagent
 
 import (
-	"io/ioutil"
+	"os"
 
 	corev3 "github.com/sensu/sensu-go/api/core/v3"
 	"github.com/sensu/sensu-go/cli"
@@ -26,7 +26,7 @@ func ConfigureCommand(cli *cli.SensuCli) *cobra.Command {
 				return err
 			}
 
-			contents, err := ioutil.ReadFile(fPath)
+			contents, err := os.ReadFile(fPath)
 			if err != nil {
 				return err
 			}

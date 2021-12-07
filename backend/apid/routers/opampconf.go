@@ -1,25 +1,20 @@
 package routers
 
 import (
-	"context"
 	"net/http"
 
 	"github.com/gorilla/mux"
 	corev3 "github.com/sensu/sensu-go/api/core/v3"
+	"github.com/sensu/sensu-go/backend/store"
 )
 
-type OpampAgentConfController interface {
-	CreateOrUpdate(context.Context, *corev3.OpampAgentConfig) error
-	Get(context.Context) (*corev3.OpampAgentConfig, error)
-}
-
 type OpampAgentConfRouter struct {
-	controller OpampAgentConfController
+	store store.OpampStore
 }
 
-func NewOpampAgentConfRouter(ctrl OpampAgentConfController) *OpampAgentConfRouter {
+func NewOpampAgentConfRouter(s store.OpampStore) *OpampAgentConfRouter {
 	return &OpampAgentConfRouter{
-		controller: ctrl,
+		store: s,
 	}
 }
 
@@ -29,19 +24,19 @@ func (r *OpampAgentConfRouter) Mount(parent *mux.Router) {
 		PathPrefix: corev3.OpampAgentConfigResource,
 	}
 	routes.Path("", r.get).Methods(http.MethodGet)
-	routes.Path("", r.createOrUpdate).Methods(http.MethodPut)
+	routes.Path("", r.update).Methods(http.MethodPut)
 }
 
 func (r *OpampAgentConfRouter) get(req *http.Request) (interface{}, error) {
-	return r.controller.Get(req.Context())
+	return r.store.GetAgentConfig(req.Context())
 }
 
-func (r *OpampAgentConfRouter) createOrUpdate(req *http.Request) (interface{}, error) {
+func (r *OpampAgentConfRouter) update(req *http.Request) (interface{}, error) {
 	obj := &corev3.OpampAgentConfig{}
 	obj.URIPath()
 	if err := UnmarshalBody(req, &obj); err != nil {
 		return nil, err
 	}
-	err := r.controller.CreateOrUpdate(req.Context(), obj)
+	err := r.store.UpdateAgentConfig(req.Context(), obj)
 	return obj, err
 }

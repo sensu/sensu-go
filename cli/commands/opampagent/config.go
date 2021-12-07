@@ -19,7 +19,7 @@ func ListConfigCommand(cli *cli.SensuCli) *cobra.Command {
 		SilenceUsage: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if len(args) != 0 {
-				cmd.Help()
+				_ = cmd.Help()
 				return errors.New("invalid argument(s)")
 			}
 
