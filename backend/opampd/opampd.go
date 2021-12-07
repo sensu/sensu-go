@@ -10,7 +10,7 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/gorilla/websocket"
-	"github.com/sensu/sensu-go/api/core/v3/protobufs"
+	"github.com/open-telemetry/opamp-go/protobufs"
 	"google.golang.org/protobuf/proto"
 )
 
