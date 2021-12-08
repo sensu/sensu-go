@@ -25,7 +25,8 @@ func (p *Protocol) OnStatusReport(instanceUid string, report *protobufs.StatusRe
 		logger.Infof("updating remote agent config for agent %s", instanceUid)
 		cfg, err := p.Store.GetAgentConfig(context.Background())
 		if err != nil {
-			return s2a, err
+			logger.WithError(err).Warn("unable to provide opamp agent with remote configuration")
+			return s2a, nil
 		}
 		s2a.RemoteConfig = &protobufs.AgentRemoteConfig{
 			Config: &protobufs.AgentConfigMap{
