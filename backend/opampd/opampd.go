@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net"
 	"net/http"
+	"strconv"
 	"sync"
 	"time"
 
@@ -27,7 +28,6 @@ type OpAMPD struct {
 	path        string
 	upgrader    *websocket.Upgrader
 	connections map[string]*websocket.Conn
-	err         error
 	httpServer  *http.Server
 	wg          *sync.WaitGroup
 	errChan     chan error
@@ -59,7 +59,7 @@ func New(config *Config) (*OpAMPD, error) {
 	router.HandleFunc(d.path, d.handleWS)
 
 	d.httpServer = &http.Server{
-		Addr:         fmt.Sprintf("%s:%d", d.host, d.port),
+		Addr:         net.JoinHostPort(d.host, strconv.Itoa(d.port)),
 		Handler:      router,
 		WriteTimeout: 15 * time.Second,
 		ReadTimeout:  15 * time.Second,
@@ -100,7 +100,7 @@ func (d *OpAMPD) Start() error {
 }
 
 func (d *OpAMPD) Stop() error {
-	if err := d.httpServer.Shutdown(context.TODO()); err != nil {
+	if err := d.httpServer.Shutdown(context.Background()); err != nil {
 		// failure/timeout shutting down the server gracefully
 		logger.Error("failed to shutdown http server gracefully - forcing shutdown")
 		if closeErr := d.httpServer.Close(); closeErr != nil {
@@ -165,16 +165,16 @@ func (d *OpAMPD) handleMessage(connection *websocket.Conn, message []byte) {
 
 	var s2a *protobufs.ServerToAgent
 	if a2s.StatusReport != nil {
-		logger.Infoln("received status report from %s", a2s.InstanceUid)
+		logger.Infof("received status report from %s", a2s.InstanceUid)
 		s2a, err = d.handler.OnStatusReport(a2s.InstanceUid, a2s.StatusReport)
 	} else if a2s.AddonStatuses != nil {
-		logger.Infoln("received addon statuses from %s", a2s.InstanceUid)
+		logger.Infof("received addon statuses from %s", a2s.InstanceUid)
 		s2a, err = d.handler.OnAddonStatuses(a2s.InstanceUid, a2s.AddonStatuses)
 	} else if a2s.AgentInstallStatus != nil {
-		logger.Infoln("received agent install status from %s", a2s.InstanceUid)
+		logger.Infof("received agent install status from %s", a2s.InstanceUid)
 		s2a, err = d.handler.OnAgentInstallStatus(a2s.InstanceUid, a2s.AgentInstallStatus)
 	} else if a2s.AgentDisconnect != nil {
-		logger.Infoln("received agent disconnect %s", a2s.InstanceUid)
+		logger.Infof("received agent disconnect %s", a2s.InstanceUid)
 		s2a, err = d.handler.OnAgentDisconnect(s2a.InstanceUid, a2s.AgentDisconnect)
 	} else {
 		// invalid message
