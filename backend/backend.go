@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
+	"github.com/sensu/sensu-go/backend/opampd"
 	"github.com/spf13/viper"
 	"go.etcd.io/etcd/client/pkg/v3/transport"
 	clientv3 "go.etcd.io/etcd/client/v3"
@@ -541,6 +542,18 @@ func Initialize(ctx context.Context, config *Config) (*Backend, error) {
 		return nil, fmt.Errorf("error initializing %s: %s", keepalive.Name(), err)
 	}
 	b.Daemons = append(b.Daemons, keepalive)
+
+	// Initialize the OpAMP daemon
+	opamp, err := opampd.New(&opampd.Config{
+		Host:    "0.0.0.0",
+		Port:    4320,
+		Path:    "/v1/opamp",
+		Handler: &opampd.Protocol{},
+	})
+	if err != nil {
+		return nil, fmt.Errorf("error initializing OpAMP daemon: %s", err)
+	}
+	b.Daemons = append(b.Daemons, opamp)
 
 	// Prepare the authentication providers
 	authenticator := &authentication.Authenticator{}
