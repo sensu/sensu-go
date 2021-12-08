@@ -8,7 +8,7 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
 
-## [6.6.1] - 2021-11-29
+## [6.6.1, 6.6.2] - 2021-11-29
 
 ### Added
 - Check & CheckConfig validation errors related to cron now provide additional
