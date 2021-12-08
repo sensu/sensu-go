@@ -1,6 +1,8 @@
 package opampd
 
-import "github.com/open-telemetry/opamp-go/protobufs"
+import (
+	"github.com/open-telemetry/opamp-go/protobufs"
+)
 
 type MessageHandler interface {
 	OnStatusReport(instanceUid string, report *protobufs.StatusReport) (*protobufs.ServerToAgent, error)
