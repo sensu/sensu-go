@@ -69,13 +69,7 @@ func (p *Protocol) OnAgentDisconnect(instanceUid string, disconnect *protobufs.A
 }
 
 func (p *Protocol) createEntity(instanceUid string, report *protobufs.StatusReport) error {
-	entity, err := p.Store.GetEntityByName(context.WithValue(context.Background(), corev2.NamespaceKey, entityNamespace), instanceUid)
-
-	if err != nil {
-		return err
-	}
-
-	entity = &corev2.Entity{
+	entity := &corev2.Entity{
 		EntityClass:        corev2.EntityAgentClass,
 		System:             corev2.System{},
 		Subscriptions:      []string{"opamp"},
