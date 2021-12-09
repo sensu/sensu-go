@@ -5,17 +5,27 @@ import (
 	"fmt"
 
 	"github.com/open-telemetry/opamp-go/protobufs"
+	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/store"
+)
+
+const (
+	entityNamespace = "default"
 )
 
 const supportedCapabilities = protobufs.ServerCapabilities_AcceptsStatus | protobufs.ServerCapabilities_OffersRemoteConfig
 
 type Protocol struct {
-	Store     store.OpampStore
+	Store     store.Store
 	PartyMode bool
 }
 
 func (p *Protocol) OnStatusReport(instanceUid string, report *protobufs.StatusReport) (*protobufs.ServerToAgent, error) {
+	err := p.createEntity(instanceUid, report)
+	if err != nil {
+		return nil, err
+	}
+
 	c := report.Capabilities
 	s2a := &protobufs.ServerToAgent{
 		InstanceUid:  instanceUid,
@@ -39,6 +49,7 @@ func (p *Protocol) OnStatusReport(instanceUid string, report *protobufs.StatusRe
 			},
 		}
 	}
+
 	return s2a, nil
 }
 
@@ -55,4 +66,38 @@ func (p *Protocol) OnAgentInstallStatus(instanceUid string, status *protobufs.Ag
 func (p *Protocol) OnAgentDisconnect(instanceUid string, disconnect *protobufs.AgentDisconnect) (*protobufs.ServerToAgent, error) {
 	//TODO implement me
 	return nil, fmt.Errorf("implement me")
+}
+
+func (p *Protocol) createEntity(instanceUid string, report *protobufs.StatusReport) error {
+	entity, err := p.Store.GetEntityByName(context.WithValue(context.Background(), corev2.NamespaceKey, entityNamespace), instanceUid)
+
+	if err != nil {
+		return err
+	}
+
+	entity = &corev2.Entity{
+		EntityClass:        corev2.EntityAgentClass,
+		System:             corev2.System{},
+		Subscriptions:      []string{"opamp"},
+		LastSeen:           0,
+		Deregister:         true,
+		Deregistration:     corev2.Deregistration{},
+		User:               "",
+		ExtendedAttributes: nil,
+		Redact:             nil,
+		ObjectMeta: corev2.ObjectMeta{
+			Name:      instanceUid,
+			Namespace: entityNamespace,
+			Labels: map[string]string{
+				"opamp-instanceid": instanceUid,
+				"opamp-agent-type": report.AgentDescription.AgentType,
+			},
+			Annotations: nil,
+			CreatedBy:   "",
+		},
+		SensuAgentVersion: report.AgentDescription.AgentVersion,
+		KeepaliveHandlers: nil,
+	}
+
+	return p.Store.UpdateEntity(context.WithValue(context.Background(), corev2.NamespaceKey, entityNamespace), entity)
 }
