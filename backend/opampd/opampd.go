@@ -12,6 +12,7 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/gorilla/websocket"
 	"github.com/open-telemetry/opamp-go/protobufs"
+	"github.com/sensu/sensu-go/backend/messaging"
 	"google.golang.org/protobuf/proto"
 )
 
@@ -132,28 +133,50 @@ func (d *OpAMPD) handleWS(response http.ResponseWriter, request *http.Request) {
 	}
 	logger.Infof("WebSocket client connected from %s\n", remoteAddr)
 	d.connections[remoteAddr] = connection
-	go d.messageReader(connection)
+	s := session{
+		conn:    connection,
+		handler: d.handler,
+	}
+	go s.Start(context.TODO())
+}
+
+type session struct {
+	conn    *websocket.Conn
+	cancel  func()
+	handler MessageHandler
+	sub     *messaging.Subscription
+}
+
+func (s *session) Start(ctx context.Context) {
+	ctx, cancel := context.WithCancel(ctx)
+	s.cancel = cancel
+	go s.messageReader(ctx)
+	// go s.listentosub(ctx)
 }
 
 // messageReader  is a goroutine that reads messages from a websocket
 ///connection. There is one goroutine per client connection. The received
 // messages are published to the inMessages channel to notify the listeners
-func (d *OpAMPD) messageReader(connection *websocket.Conn) {
+func (s *session) messageReader(ctx context.Context) {
 	for {
-		_, message, err := connection.ReadMessage()
+		if ctx.Err() != nil {
+			break
+		}
+		_, message, err := s.conn.ReadMessage()
 		if err != nil {
 			if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
 				logger.Errorf("error: %v", err.Error())
 			}
 			break
 		}
-		go d.handleMessage(connection, message)
+		go s.handleMessage(ctx, message)
+
 	}
 }
 
 // handleMessage parses a protobuf message received from the agent and calls the
 // appropriate handler.
-func (d *OpAMPD) handleMessage(connection *websocket.Conn, message []byte) {
+func (s *session) handleMessage(ctx context.Context, message []byte) {
 	a2s := protobufs.AgentToServer{}
 	err := proto.Unmarshal(message, &a2s)
 	if err != nil {
@@ -166,16 +189,17 @@ func (d *OpAMPD) handleMessage(connection *websocket.Conn, message []byte) {
 	var s2a *protobufs.ServerToAgent
 	if a2s.StatusReport != nil {
 		logger.Infof("received status report from %s", a2s.InstanceUid)
-		s2a, err = d.handler.OnStatusReport(a2s.InstanceUid, a2s.StatusReport)
+		s2a, err = s.handler.OnStatusReport(a2s.InstanceUid, a2s.StatusReport)
 	} else if a2s.AddonStatuses != nil {
 		logger.Infof("received addon statuses from %s", a2s.InstanceUid)
-		s2a, err = d.handler.OnAddonStatuses(a2s.InstanceUid, a2s.AddonStatuses)
+		s2a, err = s.handler.OnAddonStatuses(a2s.InstanceUid, a2s.AddonStatuses)
 	} else if a2s.AgentInstallStatus != nil {
 		logger.Infof("received agent install status from %s", a2s.InstanceUid)
-		s2a, err = d.handler.OnAgentInstallStatus(a2s.InstanceUid, a2s.AgentInstallStatus)
+		s2a, err = s.handler.OnAgentInstallStatus(a2s.InstanceUid, a2s.AgentInstallStatus)
 	} else if a2s.AgentDisconnect != nil {
 		logger.Infof("received agent disconnect %s", a2s.InstanceUid)
-		s2a, err = d.handler.OnAgentDisconnect(s2a.InstanceUid, a2s.AgentDisconnect)
+		s2a, err = s.handler.OnAgentDisconnect(s2a.InstanceUid, a2s.AgentDisconnect)
+		defer s.cancel()
 	} else {
 		// invalid message
 		logger.Errorf("invalid message from %s", a2s.InstanceUid)
@@ -191,7 +215,7 @@ func (d *OpAMPD) handleMessage(connection *websocket.Conn, message []byte) {
 		logger.Errorf("error marshaling ServerToAgent message for agent %s: %v", a2s.InstanceUid, err)
 	}
 
-	err = connection.WriteMessage(websocket.BinaryMessage, binary)
+	err = s.conn.WriteMessage(websocket.BinaryMessage, binary)
 	if err != nil {
 		logger.Errorf("error writing response back to agent %s: %v", a2s.InstanceUid, err)
 	}
