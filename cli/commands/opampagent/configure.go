@@ -42,7 +42,7 @@ func ConfigureCommand(cli *cli.SensuCli) *cobra.Command {
 		},
 	}
 	_ = cmd.Flags().StringP("file", "f", "", "otel collector configuration file")
-	_ = cmd.Flags().StringP("content-type", "c", "yaml", "otel collector configuration file content type")
+	_ = cmd.Flags().StringP("content-type", "c", "text/yaml", "otel collector configuration file content type")
 
 	return cmd
 }
