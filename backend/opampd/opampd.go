@@ -7,7 +7,11 @@ import (
 	"net/http"
 	"strconv"
 	"sync"
+	"sync/atomic"
 	"time"
+
+	corev2 "github.com/sensu/sensu-go/api/core/v2"
+	"github.com/sensu/sensu-go/backend/messaging"
 
 	"github.com/gorilla/mux"
 	"github.com/gorilla/websocket"
@@ -15,23 +19,82 @@ import (
 	"google.golang.org/protobuf/proto"
 )
 
+const (
+	// emitMetricsEventInterval is the interval at which an OpAMP metrics event
+	// is published.
+	emitMetricsEventInterval = 30 * time.Second
+
+	statusReportsReceivedLabel = "ot-status-reports-received-total"
+	agentConfigsSentLabel      = "ot-agent-configs-sent-total"
+	errorCountLabel            = "ot-error-count-total"
+)
+
+var (
+	// statusReportsReceived is the total number of StatusReport messages
+	// received from OpenTelemetry agents.
+	statusReportReceived uint64
+
+	// agentConfigsSent in the total number of AgentRemoteConfig messages sent
+	// to OpenTelemetry agents.
+	agentConfigsSent uint64
+
+	// errorCount is the total number of errors encountered while exchanging
+	// messages with OpenTelemetry agents.
+	errorCount uint64
+)
+
+//
+func emitMetricsEvent(bus messaging.MessageBus, entity *corev2.Entity) error {
+	event := &corev2.Event{}
+	event.Name = "opampd-metrics"
+	event.Namespace = "default"
+	event.Entity = entity
+	event.Timestamp = time.Now().Unix()
+
+	event.Metrics = &corev2.Metrics{
+		Points: []*corev2.MetricPoint{
+			{
+				Name:      statusReportsReceivedLabel,
+				Value:     float64(atomic.LoadUint64(&statusReportReceived)),
+				Timestamp: time.Now().Unix(),
+			},
+			{
+				Name:      agentConfigsSentLabel,
+				Value:     float64(atomic.LoadUint64(&agentConfigsSent)),
+				Timestamp: time.Now().Unix(),
+			},
+			{
+				Name:      errorCountLabel,
+				Value:     float64(atomic.LoadUint64(&errorCount)),
+				Timestamp: time.Now().Unix(),
+			},
+		},
+	}
+
+	return bus.Publish(messaging.TopicEventRaw, event)
+}
+
 type Config struct {
-	Host    string
-	Port    int
-	Path    string
-	Handler MessageHandler
+	Host          string
+	Port          int
+	Path          string
+	Handler       MessageHandler
+	EventBus      messaging.MessageBus
+	BackendEntity *corev2.Entity
 }
 
 type OpAMPD struct {
-	host        string
-	port        int
-	path        string
-	upgrader    *websocket.Upgrader
-	connections map[string]*websocket.Conn
-	httpServer  *http.Server
-	wg          *sync.WaitGroup
-	errChan     chan error
-	handler     MessageHandler
+	host          string
+	port          int
+	path          string
+	upgrader      *websocket.Upgrader
+	connections   map[string]*websocket.Conn
+	httpServer    *http.Server
+	wg            *sync.WaitGroup
+	errChan       chan error
+	handler       MessageHandler
+	eventBus      messaging.MessageBus
+	backendEntity *corev2.Entity
 }
 
 // New creates and bind the OpAMP server to the specified port.
@@ -49,10 +112,12 @@ func New(config *Config) (*OpAMPD, error) {
 				return true
 			},
 		},
-		connections: make(map[string]*websocket.Conn),
-		wg:          &sync.WaitGroup{},
-		errChan:     make(chan error, 1),
-		handler:     config.Handler,
+		connections:   make(map[string]*websocket.Conn),
+		wg:            &sync.WaitGroup{},
+		errChan:       make(chan error, 1),
+		handler:       config.Handler,
+		eventBus:      config.EventBus,
+		backendEntity: config.BackendEntity,
 	}
 
 	router := mux.NewRouter()
@@ -93,6 +158,15 @@ func (d *OpAMPD) Start() error {
 		err := d.httpServer.Serve(ln)
 		if err != nil && err != http.ErrServerClosed {
 			d.errChan <- fmt.Errorf("opampd failed while serving: %s", err)
+		}
+	}()
+
+	go func() {
+		ticker := time.NewTicker(emitMetricsEventInterval)
+		for range ticker.C {
+			if err := emitMetricsEvent(d.eventBus, d.backendEntity); err != nil {
+				d.errChan <- err
+			}
 		}
 	}()
 
@@ -166,6 +240,7 @@ func (d *OpAMPD) handleMessage(connection *websocket.Conn, message []byte) {
 	var s2a *protobufs.ServerToAgent
 	if a2s.StatusReport != nil {
 		logger.Infof("received status report from %s", a2s.InstanceUid)
+		atomic.AddUint64(&statusReportReceived, 1)
 		s2a, err = d.handler.OnStatusReport(a2s.InstanceUid, a2s.StatusReport)
 	} else if a2s.AddonStatuses != nil {
 		logger.Infof("received addon statuses from %s", a2s.InstanceUid)
@@ -179,20 +254,24 @@ func (d *OpAMPD) handleMessage(connection *websocket.Conn, message []byte) {
 	} else {
 		// invalid message
 		logger.Errorf("invalid message from %s", a2s.InstanceUid)
+		atomic.AddUint64(&errorCount, 1)
 	}
 
 	if err != nil {
 		logger.Errorf("error processing message from agent %s: %v", a2s.InstanceUid, err)
+		atomic.AddUint64(&errorCount, 1)
 		return
 	}
 
 	binary, err := proto.Marshal(s2a)
 	if err != nil {
 		logger.Errorf("error marshaling ServerToAgent message for agent %s: %v", a2s.InstanceUid, err)
+		atomic.AddUint64(&errorCount, 1)
 	}
 
 	err = connection.WriteMessage(websocket.BinaryMessage, binary)
 	if err != nil {
 		logger.Errorf("error writing response back to agent %s: %v", a2s.InstanceUid, err)
+		atomic.AddUint64(&errorCount, 1)
 	}
 }

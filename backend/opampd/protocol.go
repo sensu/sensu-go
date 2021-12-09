@@ -3,6 +3,7 @@ package opampd
 import (
 	"context"
 	"fmt"
+	"sync/atomic"
 
 	"github.com/open-telemetry/opamp-go/protobufs"
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
@@ -36,6 +37,7 @@ func (p *Protocol) OnStatusReport(instanceUid string, report *protobufs.StatusRe
 		cfg, err := p.Store.GetAgentConfig(context.Background())
 		if err != nil {
 			logger.WithError(err).Warn("unable to provide opamp agent with remote configuration")
+			atomic.AddUint64(&errorCount, 1)
 			return s2a, nil
 		}
 		s2a.RemoteConfig = &protobufs.AgentRemoteConfig{
@@ -48,6 +50,7 @@ func (p *Protocol) OnStatusReport(instanceUid string, report *protobufs.StatusRe
 				},
 			},
 		}
+		atomic.AddUint64(&agentConfigsSent, 1)
 	}
 
 	return s2a, nil
