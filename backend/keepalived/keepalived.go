@@ -644,7 +644,7 @@ func (k *Keepalived) dead(key string, prev liveness.State, leader bool) bool {
 		return false
 	}
 
-	if event.Entity.EntityClass != corev2.EntityAgentClass {
+	if event.Entity.EntityClass != corev2.EntityAgentClass && event.Entity.EntityClass != corev2.EntityOpAMPClass {
 		return false
 	}
 

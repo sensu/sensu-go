@@ -69,8 +69,14 @@ func (p *Protocol) OnAgentDisconnect(instanceUid string, disconnect *protobufs.A
 }
 
 func (p *Protocol) createEntity(instanceUid string, report *protobufs.StatusReport) error {
+	agentType := ""
+	agentVersion := ""
+	if report.AgentDescription != nil {
+		agentType = report.AgentDescription.AgentType
+		agentVersion = report.AgentDescription.AgentVersion
+	}
 	entity := &corev2.Entity{
-		EntityClass:        corev2.EntityAgentClass,
+		EntityClass:        corev2.EntityOpAMPClass,
 		System:             corev2.System{},
 		Subscriptions:      []string{"opamp"},
 		LastSeen:           0,
@@ -83,13 +89,14 @@ func (p *Protocol) createEntity(instanceUid string, report *protobufs.StatusRepo
 			Name:      instanceUid,
 			Namespace: entityNamespace,
 			Labels: map[string]string{
-				"opamp-instanceid": instanceUid,
-				"opamp-agent-type": report.AgentDescription.AgentType,
+				"opamp-instanceid":    instanceUid,
+				"opamp-agent-type":    agentType,
+				"opamp-agent-version": agentVersion,
 			},
 			Annotations: nil,
 			CreatedBy:   "",
 		},
-		SensuAgentVersion: report.AgentDescription.AgentVersion,
+		SensuAgentVersion: "",
 		KeepaliveHandlers: nil,
 	}
 
