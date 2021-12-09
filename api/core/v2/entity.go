@@ -26,6 +26,9 @@ const (
 	// EntityBackendClass is the name of the class given to backend entities.
 	EntityBackendClass = "backend"
 
+	// EntityOpAMPClass is the name of the class given to OpAMP entities.
+	EntityOpAMPClass = "opamp"
+
 	// EntityServiceClass is the name of the class given to BSM service entities.
 	EntityServiceClass = "service"
 
