@@ -238,10 +238,12 @@ func (d *OpAMPD) handleMessage(connection *websocket.Conn, message []byte) {
 	logger.Infof("OpAMP message received from %s\n", a2s.InstanceUid)
 
 	var s2a *protobufs.ServerToAgent
+	var event *corev2.Event
+
 	if a2s.StatusReport != nil {
 		logger.Infof("received status report from %s", a2s.InstanceUid)
 		atomic.AddUint64(&statusReportReceived, 1)
-		s2a, err = d.handler.OnStatusReport(a2s.InstanceUid, a2s.StatusReport)
+		s2a, event, err = d.handler.OnStatusReport(a2s.InstanceUid, a2s.StatusReport)
 	} else if a2s.AddonStatuses != nil {
 		logger.Infof("received addon statuses from %s", a2s.InstanceUid)
 		s2a, err = d.handler.OnAddonStatuses(a2s.InstanceUid, a2s.AddonStatuses)
@@ -273,5 +275,9 @@ func (d *OpAMPD) handleMessage(connection *websocket.Conn, message []byte) {
 	if err != nil {
 		logger.Errorf("error writing response back to agent %s: %v", a2s.InstanceUid, err)
 		atomic.AddUint64(&errorCount, 1)
+	}
+
+	if event != nil {
+		d.eventBus.Publish(messaging.TopicEventRaw, event)
 	}
 }
