@@ -175,5 +175,5 @@ type EntityConnection {
 enum EntityListOrder {
   ID
   ID_DESC
-  LASTSEEN
+  LASTSEEN @deprecated(reason: "no longer supported; required scan of entire entities keyspace, performed poorly")
 }
