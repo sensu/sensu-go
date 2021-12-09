@@ -109,7 +109,7 @@ func (c *CheckConfig) Validate() error {
 		}
 
 		if _, err := cron.ParseStandard(c.Cron); err != nil {
-			return errors.New("check cron string is invalid")
+			return fmt.Errorf("check cron string is invalid: %w", err)
 		}
 	}
 

@@ -8,18 +8,34 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
 
+## [6.6.1, 6.6.2] - 2021-11-29
+
+### Added
+- Check & CheckConfig validation errors related to cron now provide additional
+context.
+
+### Fixed
+- Remove debugging log entry.
+- Event executed timestamps are now set when resolving an event through
+sensuctl or the webui.
+
+## [6.6.0] - 2021-11-25
+
 ### Added
 - Add backend label to logged metrics.
+### Added
+- Check & CheckConfig validation errors related to cron now provide additional
+context.
 
 ### Fixed
-- In addition to the context error print the connection error when sensu-go can't connect to etcd.
+- In addition to the context error print the connection error when
+sensu-go can't connect to etcd.
+- Fixed a bug where sensu-backend could crash if the BackendIDGetter
+encounters etcd client unavailability.
 
 ### Changed
-- Empty and zero value configuration parameters for `etcd` do not overwrite
-  defaults anymore.
-### Fixed
-- Fixed a bug where sensu-backend could crash if the BackendIDGetter encounters
-etcd client unavailability.
+- Empty and zero value configuration parameters for `etcd` do not
+overwrite defaults anymore.
 
 ## [6.5.5] - 2021-11-19
 
