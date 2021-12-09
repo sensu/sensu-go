@@ -44,10 +44,11 @@ var (
 )
 
 //
-func emitMetricsEvent(bus messaging.MessageBus) error {
+func emitMetricsEvent(bus messaging.MessageBus, entity *corev2.Entity) error {
 	event := &corev2.Event{}
 	event.Name = "opampd-metrics"
 	event.Namespace = "default"
+	event.Entity = entity
 	event.Timestamp = time.Now().Unix()
 
 	event.Metrics = &corev2.Metrics{
@@ -74,24 +75,26 @@ func emitMetricsEvent(bus messaging.MessageBus) error {
 }
 
 type Config struct {
-	Host     string
-	Port     int
-	Path     string
-	Handler  MessageHandler
-	EventBus messaging.MessageBus
+	Host          string
+	Port          int
+	Path          string
+	Handler       MessageHandler
+	EventBus      messaging.MessageBus
+	BackendEntity *corev2.Entity
 }
 
 type OpAMPD struct {
-	host        string
-	port        int
-	path        string
-	upgrader    *websocket.Upgrader
-	connections map[string]*websocket.Conn
-	httpServer  *http.Server
-	wg          *sync.WaitGroup
-	errChan     chan error
-	handler     MessageHandler
-	eventBus    messaging.MessageBus
+	host          string
+	port          int
+	path          string
+	upgrader      *websocket.Upgrader
+	connections   map[string]*websocket.Conn
+	httpServer    *http.Server
+	wg            *sync.WaitGroup
+	errChan       chan error
+	handler       MessageHandler
+	eventBus      messaging.MessageBus
+	backendEntity *corev2.Entity
 }
 
 // New creates and bind the OpAMP server to the specified port.
@@ -109,11 +112,12 @@ func New(config *Config) (*OpAMPD, error) {
 				return true
 			},
 		},
-		connections: make(map[string]*websocket.Conn),
-		wg:          &sync.WaitGroup{},
-		errChan:     make(chan error, 1),
-		handler:     config.Handler,
-		eventBus:    config.EventBus,
+		connections:   make(map[string]*websocket.Conn),
+		wg:            &sync.WaitGroup{},
+		errChan:       make(chan error, 1),
+		handler:       config.Handler,
+		eventBus:      config.EventBus,
+		backendEntity: config.BackendEntity,
 	}
 
 	router := mux.NewRouter()
@@ -160,7 +164,7 @@ func (d *OpAMPD) Start() error {
 	go func() {
 		ticker := time.NewTicker(emitMetricsEventInterval)
 		for range ticker.C {
-			if err := emitMetricsEvent(d.eventBus); err != nil {
+			if err := emitMetricsEvent(d.eventBus, d.backendEntity); err != nil {
 				d.errChan <- err
 			}
 		}

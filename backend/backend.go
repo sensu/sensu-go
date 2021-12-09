@@ -552,7 +552,8 @@ func Initialize(ctx context.Context, config *Config) (*Backend, error) {
 			Store:     b.Store,
 			PartyMode: true,
 		},
-		EventBus: bus,
+		EventBus:      bus,
+		BackendEntity: backendEntity,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("error initializing OpAMP daemon: %s", err)
