@@ -278,6 +278,8 @@ func (d *OpAMPD) handleMessage(connection *websocket.Conn, message []byte) {
 	}
 
 	if event != nil {
-		d.eventBus.Publish(messaging.TopicEventRaw, event)
+		if err := d.eventBus.Publish(messaging.TopicEventRaw, event); err != nil {
+			logger.Errorf("couldn't publish event: %v", err)
+		}
 	}
 }
