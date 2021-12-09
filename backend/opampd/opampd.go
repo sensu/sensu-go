@@ -9,11 +9,26 @@ import (
 	"sync"
 	"time"
 
+	"github.com/sensu/sensu-go/backend/messaging"
+
 	"github.com/gorilla/mux"
 	"github.com/gorilla/websocket"
 	"github.com/open-telemetry/opamp-go/protobufs"
 	"google.golang.org/protobuf/proto"
 )
+
+// Emit a metrics event at this interval
+// const opampdStatisticsInterval = 60 * time.Second
+
+// Statistics
+// - StatusReportsReceived
+// - AgentConfigsSent
+// - ErrorCount
+
+//
+func emitMetricsEvent(bus messaging.MessageBus) {
+	bus.Publish(messaging.TopicEventRaw, nil)
+}
 
 type Config struct {
 	Host    string
