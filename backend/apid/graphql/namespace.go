@@ -16,8 +16,7 @@ const (
 	// into memory; things likely won't work well if the upper bound is hit but
 	// at least we aren't breaking the existing behaviour. Eventually this
 	// interface will be deprecated in lieu of one that can be performant.
-	maxSizeNamespaceListEntities = 25_000
-	maxSizeNamespaceListEvents   = 25_000
+	maxSizeNamespaceListEvents = 25_000
 )
 
 var _ schema.NamespaceFieldResolvers = (*namespaceImpl)(nil)
@@ -230,45 +229,65 @@ func (r *namespaceImpl) Silences(p schema.NamespaceSilencesFieldResolverParams) 
 	return res, nil
 }
 
+func min(x, y int) int {
+	if x > y {
+		return y
+	}
+	return x
+}
+
+func listEntitiesOrdering(order schema.EntityListOrder) (string, bool) {
+	switch order {
+	case schema.EntityListOrders.ID:
+		return corev2.EntitySortName, false
+	default:
+		return corev2.EntitySortName, true
+	}
+}
+
 // Entities implements response to request for 'entities' field.
 func (r *namespaceImpl) Entities(p schema.NamespaceEntitiesFieldResolverParams) (interface{}, error) {
 	res := newOffsetContainer(p.Args.Offset, p.Args.Limit)
-	nsp := p.Source.(*corev2.Namespace)
+	ctx := store.NamespaceContext(p.Context, p.Source.(*corev2.Namespace).Name)
 
-	// fetch
-	ctx := store.NamespaceContext(p.Context, nsp.Name)
-	results, err := listEntities(ctx, r.entityClient, maxSizeNamespaceListEntities)
+	ordering, desc := listEntitiesOrdering(p.Args.OrderBy)
+	pred := &store.SelectionPredicate{Ordering: ordering, Descending: desc, Limit: int64(min(p.Args.Limit, 100))}
+
+	matches := 0
+	records := make([]*corev2.Entity, 0, p.Args.Limit)
+
+CONTINUE:
+	// query store
+	queryResult, err := r.entityClient.ListEntities(ctx, pred)
 	if err != nil {
 		return res, err
 	}
 
 	// filter
-	matches, err := filter.Compile(p.Args.Filters, EntityFilters(), corev2.EntityFields)
+	matchFn, err := filter.Compile(p.Args.Filters, EntityFilters(), corev2.EntityFields)
 	if err != nil {
 		return res, err
 	}
-	filteredResults := make([]*corev2.Entity, 0, len(results))
-	for i := range results {
-		if matches(results[i]) {
-			filteredResults = append(filteredResults, results[i])
+	for i := range queryResult {
+		if matchFn(queryResult[i]) {
+			matches++
+			if matches > p.Args.Offset {
+				records = append(records, queryResult[i])
+			}
+		}
+		if len(records) == p.Args.Limit {
+			break
 		}
 	}
 
-	// sort records
-	switch p.Args.OrderBy {
-	case schema.EntityListOrders.LASTSEEN:
-		sort.Sort(corev2.SortEntitiesByLastSeen(filteredResults))
-	default:
-		sort.Sort(corev2.SortEntitiesByID(
-			filteredResults,
-			p.Args.OrderBy == schema.EntityListOrders.ID,
-		))
+	if len(records) < p.Args.Limit && pred.Continue != "" {
+		goto CONTINUE
 	}
 
 	// paginate
-	l, h := clampSlice(p.Args.Offset, p.Args.Offset+p.Args.Limit, len(filteredResults))
-	res.Nodes = filteredResults[l:h]
-	res.PageInfo.totalCount = len(filteredResults)
+	l, h := clampSlice(p.Args.Offset, p.Args.Offset+p.Args.Limit, len(records))
+	res.Nodes = records[l:h]
+	res.PageInfo.totalCount = len(records)
 	return res, nil
 }
 

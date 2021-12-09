@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"net/url"
 	"path"
-	"sort"
 	"strconv"
 	"strings"
 
@@ -165,56 +164,6 @@ func FixtureEntity(name string) *Entity {
 		LastSeen:          12345,
 		SensuAgentVersion: "0.0.1",
 	}
-}
-
-//
-// Sorting
-
-// SortEntitiesByPredicate can be used to sort a given collection using a given
-// predicate.
-func SortEntitiesByPredicate(es []*Entity, fn func(a, b *Entity) bool) sort.Interface {
-	return &entitySorter{entities: es, byFn: fn}
-}
-
-// SortEntitiesByID can be used to sort a given collection of entities by their
-// IDs.
-func SortEntitiesByID(es []*Entity, asc bool) sort.Interface {
-	if asc {
-		return SortEntitiesByPredicate(es, func(a, b *Entity) bool {
-			return a.Name < b.Name
-		})
-	}
-	return SortEntitiesByPredicate(es, func(a, b *Entity) bool {
-		return a.Name > b.Name
-	})
-}
-
-// SortEntitiesByLastSeen can be used to sort a given collection of entities by
-// last time each was seen.
-func SortEntitiesByLastSeen(es []*Entity) sort.Interface {
-	return SortEntitiesByPredicate(es, func(a, b *Entity) bool {
-		return a.LastSeen > b.LastSeen
-	})
-}
-
-type entitySorter struct {
-	entities []*Entity
-	byFn     func(a, b *Entity) bool
-}
-
-// Len implements sort.Interface.
-func (s *entitySorter) Len() int {
-	return len(s.entities)
-}
-
-// Swap implements sort.Interface.
-func (s *entitySorter) Swap(i, j int) {
-	s.entities[i], s.entities[j] = s.entities[j], s.entities[i]
-}
-
-// Less implements sort.Interface.
-func (s *entitySorter) Less(i, j int) bool {
-	return s.byFn(s.entities[i], s.entities[j])
 }
 
 // EntityFields returns a set of fields that represent that resource

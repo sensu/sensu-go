@@ -52,7 +52,7 @@ func TestNamespaceTypeEntitiesField(t *testing.T) {
 	params := schema.NamespaceEntitiesFieldResolverParams{ResolveParams: graphql.ResolveParams{Context: context.Background()}}
 	params.Context = context.Background()
 	params.Source = corev2.FixtureNamespace("default")
-	params.Args.Limit = 20
+	params.Args.Limit = 2
 
 	// Success
 	resolver := &namespaceImpl{entityClient: client}

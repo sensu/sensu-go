@@ -3,7 +3,6 @@ package v2
 import (
 	"encoding/json"
 	"reflect"
-	"sort"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -52,72 +51,6 @@ func TestEntityMarshal(t *testing.T) {
 	bytes, err := json.Marshal(entity)
 	require.NoError(t, err)
 	assert.Contains(t, string(bytes), "myAgent")
-}
-
-func TestSortEntitiesByID(t *testing.T) {
-	a := FixtureEntity("Abernathy")
-	b := FixtureEntity("Bernard")
-	c := FixtureEntity("Clementine")
-	d := FixtureEntity("Dolores")
-
-	testCases := []struct {
-		name      string
-		inDir     bool
-		inRecords []*Entity
-		expected  []*Entity
-	}{
-		{
-			name:      "Sorts ascending",
-			inDir:     true,
-			inRecords: []*Entity{d, c, a, b},
-			expected:  []*Entity{a, b, c, d},
-		},
-		{
-			name:      "Sorts descending",
-			inDir:     false,
-			inRecords: []*Entity{d, a, c, b},
-			expected:  []*Entity{d, c, b, a},
-		},
-	}
-
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			sort.Sort(SortEntitiesByID(tc.inRecords, tc.inDir))
-			assert.EqualValues(t, tc.expected, tc.inRecords)
-		})
-	}
-}
-
-func TestSortEntitiesByLastSeen(t *testing.T) {
-	a := FixtureEntity("Abernathy")
-	a.LastSeen = 4
-	b := FixtureEntity("Bernard")
-	b.LastSeen = 3
-	c := FixtureEntity("Clementine")
-	c.LastSeen = 2
-	d := FixtureEntity("Dolores")
-	d.LastSeen = 1
-
-	testCases := []struct {
-		name      string
-		inDir     bool
-		inRecords []*Entity
-		expected  []*Entity
-	}{
-		{
-			name:      "Sort by last seen",
-			inDir:     false,
-			inRecords: []*Entity{d, a, c, b},
-			expected:  []*Entity{a, b, c, d},
-		},
-	}
-
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			sort.Sort(SortEntitiesByLastSeen(tc.inRecords))
-			assert.EqualValues(t, tc.expected, tc.inRecords)
-		})
-	}
 }
 
 func TestEntityFields(t *testing.T) {
