@@ -158,11 +158,10 @@ func (d *OpAMPD) Start() error {
 	}()
 
 	go func() {
-		tick := time.Tick(emitMetricsEventInterval)
-		for {
-			select {
-			case <-tick:
-				emitMetricsEvent(d.eventBus)
+		ticker := time.NewTicker(emitMetricsEventInterval)
+		for range ticker.C {
+			if err := emitMetricsEvent(d.eventBus); err != nil {
+				d.errChan <- err
 			}
 		}
 	}()
