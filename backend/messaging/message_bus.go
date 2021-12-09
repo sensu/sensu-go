@@ -38,6 +38,10 @@ const (
 	// allows eventd to process keepalives at a higher priority than
 	// regular events.
 	TopicKeepaliveRaw = "sensu:keepalive-raw"
+
+	// TopicOpampAgentConfig is a channel for announcing changes
+	// to the global opamp agent configuration resource
+	TopicOpampAgentConfig = "sensu:opamp-agent-config"
 )
 
 var (

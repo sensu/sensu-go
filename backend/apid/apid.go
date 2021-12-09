@@ -278,8 +278,13 @@ func PublicSubrouter(router *mux.Router, cfg Config) *mux.Router {
 func OpampSubrouter(router *mux.Router, cfg Config) *mux.Router {
 	subrouter := NewSubrouter(
 		router.PathPrefix("/api/opamp"),
+		middlewares.Authentication{Store: cfg.Store},
+		middlewares.SimpleLogger{},
+		middlewares.AuthorizationAttributes{},
+		middlewares.Authorization{Authorizer: &rbac.Authorizer{Store: cfg.Store}},
+		middlewares.LimitRequest{Limit: cfg.RequestLimit},
 	)
-	routers.NewOpampAgentConfRouter(cfg.Store).Mount(subrouter)
+	routers.NewOpampAgentConfRouter(cfg.Store, cfg.Bus).Mount(subrouter)
 	return subrouter
 }
 
