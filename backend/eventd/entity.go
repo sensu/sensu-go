@@ -98,7 +98,9 @@ func createProxyEntity(event *corev2.Event, s storev2.Interface) (fErr error) {
 				return err
 			}
 
-			config.EntityClass = corev2.EntityProxyClass
+			if config.EntityClass != corev2.EntityBackendClass {
+				config.EntityClass = corev2.EntityProxyClass
+			}
 			config.Subscriptions = append(config.Subscriptions, corev2.GetEntitySubscription(entityName))
 
 			// Wrap and store the new entity's configuration. We use
