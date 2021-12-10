@@ -4,10 +4,12 @@ import (
 	"context"
 	"fmt"
 	"sync/atomic"
+	"time"
 
-	"github.com/open-telemetry/opamp-go/protobufs"
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/store"
+
+	"github.com/open-telemetry/opamp-go/protobufs"
 )
 
 const (
@@ -21,10 +23,10 @@ type Protocol struct {
 	PartyMode bool
 }
 
-func (p *Protocol) OnStatusReport(instanceUid string, report *protobufs.StatusReport) (*protobufs.ServerToAgent, error) {
-	err := p.createEntity(instanceUid, report)
+func (p *Protocol) OnStatusReport(instanceUid string, report *protobufs.StatusReport) (*protobufs.ServerToAgent, *corev2.Event, error) {
+	entity, err := p.createEntity(instanceUid, report)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	c := report.Capabilities
@@ -38,7 +40,7 @@ func (p *Protocol) OnStatusReport(instanceUid string, report *protobufs.StatusRe
 		if err != nil {
 			logger.WithError(err).Warn("unable to provide opamp agent with remote configuration")
 			atomic.AddUint64(&errorCount, 1)
-			return s2a, nil
+			return s2a, nil, nil
 		}
 		s2a.RemoteConfig = &protobufs.AgentRemoteConfig{
 			Config: &protobufs.AgentConfigMap{
@@ -53,7 +55,31 @@ func (p *Protocol) OnStatusReport(instanceUid string, report *protobufs.StatusRe
 		atomic.AddUint64(&agentConfigsSent, 1)
 	}
 
-	return s2a, nil
+	var event *corev2.Event
+	if report.RemoteConfigStatus != nil {
+		event = corev2.NewEvent(entity.ObjectMeta)
+		event.Entity = entity
+		event.Check = corev2.NewCheck(&corev2.CheckConfig{})
+
+		switch report.RemoteConfigStatus.Status {
+		case protobufs.RemoteConfigStatus_Failed:
+			event.Check.Status = 1
+			event.Check.State = corev2.EventFailingState
+			event.Check.Output = report.RemoteConfigStatus.ErrorMessage
+
+		case protobufs.RemoteConfigStatus_Applying:
+			// status code 3 meant to represent "applying"
+			event.Check.Status = 3
+			event.Check.State = "applying"
+
+		case protobufs.RemoteConfigStatus_Applied:
+			event.Check.Status = 0
+			event.Check.State = corev2.EventPassingState
+			event.Check.LastOK = time.Now().Unix()
+		}
+	}
+
+	return s2a, event, nil
 }
 
 func (p *Protocol) OnAddonStatuses(instanceUid string, status *protobufs.AgentAddonStatuses) (*protobufs.ServerToAgent, error) {
@@ -71,7 +97,7 @@ func (p *Protocol) OnAgentDisconnect(instanceUid string, disconnect *protobufs.A
 	return nil, fmt.Errorf("implement me")
 }
 
-func (p *Protocol) createEntity(instanceUid string, report *protobufs.StatusReport) error {
+func (p *Protocol) createEntity(instanceUid string, report *protobufs.StatusReport) (*corev2.Entity, error) {
 	agentType := ""
 	agentVersion := ""
 	if report.AgentDescription != nil {
@@ -103,5 +129,5 @@ func (p *Protocol) createEntity(instanceUid string, report *protobufs.StatusRepo
 		KeepaliveHandlers: nil,
 	}
 
-	return p.Store.UpdateEntity(context.WithValue(context.Background(), corev2.NamespaceKey, entityNamespace), entity)
+	return entity, p.Store.UpdateEntity(context.WithValue(context.Background(), corev2.NamespaceKey, entityNamespace), entity)
 }
