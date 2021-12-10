@@ -77,6 +77,8 @@ func (p *Protocol) OnStatusReport(instanceUid string, report *protobufs.StatusRe
 			event.Check.State = corev2.EventPassingState
 			event.Check.LastOK = time.Now().Unix()
 		}
+	} else {
+		logger.Infof("no RemoteConfigStatus in StatusReport, no events will be generated")
 	}
 
 	return s2a, event, nil
