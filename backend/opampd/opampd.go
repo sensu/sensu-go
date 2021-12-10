@@ -46,10 +46,15 @@ var (
 //
 func emitMetricsEvent(bus messaging.MessageBus, entity *corev2.Entity) error {
 	event := &corev2.Event{}
-	event.Name = "opampd-metrics"
 	event.Namespace = "default"
 	event.Entity = entity
+	event.Entity.Namespace = "default"
 	event.Timestamp = time.Now().Unix()
+
+	event.Check = &corev2.Check{}
+	event.Check.Name = "opampd-metrics"
+	event.Check.Namespace = "default"
+	event.Check.Handlers = []string{"dummy"}
 
 	event.Metrics = &corev2.Metrics{
 		Points: []*corev2.MetricPoint{

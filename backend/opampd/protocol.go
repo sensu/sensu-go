@@ -2,6 +2,7 @@ package opampd
 
 import (
 	"context"
+	"crypto/sha256"
 	"fmt"
 	"sync/atomic"
 	"time"
@@ -42,6 +43,7 @@ func (p *Protocol) OnStatusReport(instanceUid string, report *protobufs.StatusRe
 			atomic.AddUint64(&errorCount, 1)
 			return s2a, nil, nil
 		}
+		configHash := sha256.Sum256([]byte(cfg.Body))
 		s2a.RemoteConfig = &protobufs.AgentRemoteConfig{
 			Config: &protobufs.AgentConfigMap{
 				ConfigMap: map[string]*protobufs.AgentConfigFile{
@@ -51,6 +53,7 @@ func (p *Protocol) OnStatusReport(instanceUid string, report *protobufs.StatusRe
 					},
 				},
 			},
+			ConfigHash: configHash[:],
 		}
 		atomic.AddUint64(&agentConfigsSent, 1)
 	}
@@ -58,8 +61,13 @@ func (p *Protocol) OnStatusReport(instanceUid string, report *protobufs.StatusRe
 	var event *corev2.Event
 	if report.RemoteConfigStatus != nil {
 		event = corev2.NewEvent(entity.ObjectMeta)
+		event.Name = ""
 		event.Entity = entity
 		event.Check = corev2.NewCheck(&corev2.CheckConfig{})
+		event.Timestamp = time.Now().Unix()
+		event.Check.Name = entity.Name
+		event.Check.Namespace = entity.Namespace
+		event.Check.Handlers = []string{"dummy"}
 
 		switch report.RemoteConfigStatus.Status {
 		case protobufs.RemoteConfigStatus_Failed:
@@ -77,6 +85,21 @@ func (p *Protocol) OnStatusReport(instanceUid string, report *protobufs.StatusRe
 			event.Check.State = corev2.EventPassingState
 			event.Check.LastOK = time.Now().Unix()
 		}
+	} else {
+		logger.Infof("no RemoteConfigStatus in StatusReport, a demo event will be generated")
+
+		event = corev2.NewEvent(entity.ObjectMeta)
+		event.Name = ""
+		event.Entity = entity
+		event.Check = corev2.NewCheck(&corev2.CheckConfig{})
+		event.Timestamp = time.Now().Unix()
+
+		event.Check.Name = entity.Name
+		event.Check.Namespace = entity.Namespace
+		event.Check.Handlers = []string{"dummy"}
+		event.Check.Status = 0
+		event.Check.State = corev2.EventPassingState
+		event.Check.LastOK = time.Now().Unix()
 	}
 
 	return s2a, event, nil
@@ -108,7 +131,7 @@ func (p *Protocol) createEntity(instanceUid string, report *protobufs.StatusRepo
 		EntityClass:        corev2.EntityOpAMPClass,
 		System:             corev2.System{},
 		Subscriptions:      []string{"opamp"},
-		LastSeen:           0,
+		LastSeen:           time.Now().Unix(),
 		Deregister:         true,
 		Deregistration:     corev2.Deregistration{},
 		User:               "",
