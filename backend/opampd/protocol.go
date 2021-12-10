@@ -2,6 +2,7 @@ package opampd
 
 import (
 	"context"
+	"crypto/sha256"
 	"fmt"
 	"sync/atomic"
 	"time"
@@ -42,6 +43,7 @@ func (p *Protocol) OnStatusReport(instanceUid string, report *protobufs.StatusRe
 			atomic.AddUint64(&errorCount, 1)
 			return s2a, nil, nil
 		}
+		configHash := sha256.Sum256([]byte(cfg.Body))
 		s2a.RemoteConfig = &protobufs.AgentRemoteConfig{
 			Config: &protobufs.AgentConfigMap{
 				ConfigMap: map[string]*protobufs.AgentConfigFile{
@@ -51,6 +53,7 @@ func (p *Protocol) OnStatusReport(instanceUid string, report *protobufs.StatusRe
 					},
 				},
 			},
+			ConfigHash: configHash[:],
 		}
 		atomic.AddUint64(&agentConfigsSent, 1)
 	}
