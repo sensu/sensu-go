@@ -22,7 +22,7 @@ import (
 const (
 	// emitMetricsEventInterval is the interval at which an OpAMP metrics event
 	// is published.
-	emitMetricsEventInterval = 5 * time.Second
+	emitMetricsEventInterval = 30 * time.Second
 
 	statusReportsReceivedLabel = "ot-status-reports-received-total"
 	agentConfigsSentLabel      = "ot-agent-configs-sent-total"
