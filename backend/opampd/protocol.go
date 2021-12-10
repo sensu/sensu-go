@@ -128,7 +128,7 @@ func (p *Protocol) createEntity(instanceUid string, report *protobufs.StatusRepo
 		EntityClass:        corev2.EntityOpAMPClass,
 		System:             corev2.System{},
 		Subscriptions:      []string{"opamp"},
-		LastSeen:           0,
+		LastSeen:           time.Now().Unix(),
 		Deregister:         true,
 		Deregistration:     corev2.Deregistration{},
 		User:               "",
