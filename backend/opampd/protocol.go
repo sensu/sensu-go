@@ -58,8 +58,13 @@ func (p *Protocol) OnStatusReport(instanceUid string, report *protobufs.StatusRe
 	var event *corev2.Event
 	if report.RemoteConfigStatus != nil {
 		event = corev2.NewEvent(entity.ObjectMeta)
+		event.Name = ""
 		event.Entity = entity
 		event.Check = corev2.NewCheck(&corev2.CheckConfig{})
+		event.Timestamp = time.Now().Unix()
+		event.Check.Name = entity.Name
+		event.Check.Namespace = entity.Namespace
+		event.Check.Handlers = []string{"dummy"}
 
 		switch report.RemoteConfigStatus.Status {
 		case protobufs.RemoteConfigStatus_Failed:
@@ -78,7 +83,20 @@ func (p *Protocol) OnStatusReport(instanceUid string, report *protobufs.StatusRe
 			event.Check.LastOK = time.Now().Unix()
 		}
 	} else {
-		logger.Infof("no RemoteConfigStatus in StatusReport, no events will be generated")
+		logger.Infof("no RemoteConfigStatus in StatusReport, a demo event will be generated")
+
+		event = corev2.NewEvent(entity.ObjectMeta)
+		event.Name = ""
+		event.Entity = entity
+		event.Check = corev2.NewCheck(&corev2.CheckConfig{})
+		event.Timestamp = time.Now().Unix()
+
+		event.Check.Name = entity.Name
+		event.Check.Namespace = entity.Namespace
+		event.Check.Handlers = []string{"dummy"}
+		event.Check.Status = 0
+		event.Check.State = corev2.EventPassingState
+		event.Check.LastOK = time.Now().Unix()
 	}
 
 	return s2a, event, nil
