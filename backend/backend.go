@@ -20,6 +20,7 @@ import (
 	"google.golang.org/grpc"
 
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
+	corev3 "github.com/sensu/sensu-go/api/core/v3"
 	"github.com/sensu/sensu-go/asset"
 	"github.com/sensu/sensu-go/backend/agentd"
 	"github.com/sensu/sensu-go/backend/api"
@@ -552,8 +553,9 @@ func Initialize(ctx context.Context, config *Config) (*Backend, error) {
 			Store:     b.Store,
 			PartyMode: true,
 		},
-		EventBus:      bus,
-		BackendEntity: backendEntity,
+		EventBus:            bus,
+		BackendEntity:       backendEntity,
+		StoredConfigWatcher: etcdstore.Watch(ctx, b.Client, store.NewKeyBuilder("opamp").Build(corev3.OpampAgentConfigResource), false),
 	})
 	if err != nil {
 		return nil, fmt.Errorf("error initializing OpAMP daemon: %s", err)

@@ -2,6 +2,7 @@ package opampd
 
 import (
 	"context"
+	"crypto/sha256"
 	"fmt"
 	"net"
 	"net/http"
@@ -11,7 +12,10 @@ import (
 	"time"
 
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
+	corev3 "github.com/sensu/sensu-go/api/core/v3"
 	"github.com/sensu/sensu-go/backend/messaging"
+	"github.com/sensu/sensu-go/backend/store"
+	"github.com/sensu/sensu-go/backend/store/etcd"
 
 	"github.com/gorilla/mux"
 	"github.com/gorilla/websocket"
@@ -80,34 +84,37 @@ func emitMetricsEvent(bus messaging.MessageBus, entity *corev2.Entity) error {
 }
 
 type Config struct {
-	Host          string
-	Port          int
-	Path          string
-	Handler       MessageHandler
-	EventBus      messaging.MessageBus
-	BackendEntity *corev2.Entity
+	Host                string
+	Port                int
+	Path                string
+	Handler             MessageHandler
+	EventBus            messaging.MessageBus
+	BackendEntity       *corev2.Entity
+	StoredConfigWatcher *etcd.Watcher
 }
 
 type OpAMPD struct {
-	host          string
-	port          int
-	path          string
-	upgrader      *websocket.Upgrader
-	connections   map[string]*WSSession
-	connLock      sync.Mutex
-	httpServer    *http.Server
-	wg            *sync.WaitGroup
-	errChan       chan error
-	handler       MessageHandler
-	eventBus      messaging.MessageBus
-	backendEntity *corev2.Entity
+	host                string
+	port                int
+	path                string
+	upgrader            *websocket.Upgrader
+	connections         map[string]*WSSession
+	connLock            sync.Mutex
+	httpServer          *http.Server
+	wg                  *sync.WaitGroup
+	errChan             chan error
+	handler             MessageHandler
+	eventBus            messaging.MessageBus
+	backendEntity       *corev2.Entity
+	storedConfigWatcher *etcd.Watcher
 }
 
 type WSSession struct {
-	conn   *websocket.Conn
-	opAMPD *OpAMPD
-	lock   sync.Mutex
-	closed bool
+	clientUID string
+	conn      *websocket.Conn
+	opAMPD    *OpAMPD
+	lock      sync.Mutex
+	closed    bool
 }
 
 // New creates and bind the OpAMP server to the specified port.
@@ -125,12 +132,13 @@ func New(config *Config) (*OpAMPD, error) {
 				return true
 			},
 		},
-		connections:   make(map[string]*WSSession),
-		wg:            &sync.WaitGroup{},
-		errChan:       make(chan error, 1),
-		handler:       config.Handler,
-		eventBus:      config.EventBus,
-		backendEntity: config.BackendEntity,
+		connections:         make(map[string]*WSSession),
+		wg:                  &sync.WaitGroup{},
+		errChan:             make(chan error, 1),
+		handler:             config.Handler,
+		eventBus:            config.EventBus,
+		backendEntity:       config.BackendEntity,
+		storedConfigWatcher: config.StoredConfigWatcher,
 	}
 
 	router := mux.NewRouter()
@@ -179,6 +187,40 @@ func (d *OpAMPD) Start() error {
 		for range ticker.C {
 			if err := emitMetricsEvent(d.eventBus, d.backendEntity); err != nil {
 				d.errChan <- err
+			}
+		}
+	}()
+
+	go func() {
+		for event := range d.storedConfigWatcher.Result() {
+			config := &corev3.OpampAgentConfig{}
+			if err := config.Unmarshal(event.Object); err != nil {
+				logger.Error("couldn't unmarshal OpampAgentConfig")
+				continue
+			}
+
+			s2a := &protobufs.ServerToAgent{
+				Capabilities: protobufs.ServerCapabilities_AcceptsStatus | protobufs.ServerCapabilities_OffersRemoteConfig,
+			}
+
+			configHash := sha256.Sum256([]byte(config.Body))
+			s2a.RemoteConfig = &protobufs.AgentRemoteConfig{
+				Config: &protobufs.AgentConfigMap{
+					ConfigMap: map[string]*protobufs.AgentConfigFile{
+						"sensu.io": {
+							Body:        []byte(config.Body),
+							ContentType: config.ContentType,
+						},
+					},
+				},
+				ConfigHash: configHash[:],
+			}
+
+			switch event.Type {
+			case store.WatchCreate:
+				d.BroadcastMessage(s2a)
+			case store.WatchUpdate:
+				d.BroadcastMessage(s2a)
 			}
 		}
 	}()
@@ -238,9 +280,12 @@ func (d *OpAMPD) BroadcastMessage(s2a *protobufs.ServerToAgent) {
 	defer d.connLock.Unlock()
 	for _, v := range d.connections {
 		go func(session *WSSession) {
-			err := session.writeMessage(s2a)
-			if err != nil {
-				logger.WithError(err).Errorf("error writing broadcast message to %s", session.conn.RemoteAddr())
+			if session.clientUID != "" {
+				s2a.InstanceUid = session.clientUID
+				err := session.writeMessage(s2a)
+				if err != nil {
+					logger.WithError(err).Errorf("error writing broadcast message to %s", session.conn.RemoteAddr())
+				}
 			}
 		}(v)
 	}
@@ -281,6 +326,7 @@ func (s *WSSession) handleMessage(connection *websocket.Conn, message []byte) {
 		logger.Infof("received status report from %s", a2s.InstanceUid)
 		atomic.AddUint64(&statusReportReceived, 1)
 		s2a, event, err = s.opAMPD.handler.OnStatusReport(a2s.InstanceUid, a2s.StatusReport)
+		s.clientUID = s2a.InstanceUid
 	} else if a2s.AddonStatuses != nil {
 		logger.Infof("received addon statuses from %s", a2s.InstanceUid)
 		s2a, err = s.opAMPD.handler.OnAddonStatuses(a2s.InstanceUid, a2s.AddonStatuses)
