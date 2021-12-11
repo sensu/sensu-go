@@ -77,10 +77,12 @@ func (p *Protocol) OnStatusReport(instanceUid string, report *protobufs.StatusRe
 
 		case protobufs.RemoteConfigStatus_Applying:
 			// status code 3 meant to represent "applying"
+			event.Check.Output = "Applying remote configuration"
 			event.Check.Status = 3
 			event.Check.State = "applying"
 
 		case protobufs.RemoteConfigStatus_Applied:
+			event.Check.Output = "Remote configuration applied"
 			event.Check.Status = 0
 			event.Check.State = corev2.EventPassingState
 			event.Check.LastOK = time.Now().Unix()
@@ -97,6 +99,7 @@ func (p *Protocol) OnStatusReport(instanceUid string, report *protobufs.StatusRe
 		event.Check.Name = entity.Name
 		event.Check.Namespace = entity.Namespace
 		event.Check.Handlers = []string{"dummy"}
+		event.Check.Output = "Remote configuration applied"
 		event.Check.Status = 0
 		event.Check.State = corev2.EventPassingState
 		event.Check.LastOK = time.Now().Unix()
