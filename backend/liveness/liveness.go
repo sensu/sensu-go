@@ -7,14 +7,12 @@ import (
 	"path"
 	"strings"
 	"sync"
-	"time"
 
 	"github.com/sensu/sensu-go/backend/etcd"
 	"github.com/sensu/sensu-go/backend/store/etcd/kvc"
 	"github.com/sirupsen/logrus"
 	"go.etcd.io/etcd/api/v3/mvccpb"
 	clientv3 "go.etcd.io/etcd/client/v3"
-	"golang.org/x/time/rate"
 )
 
 // SwitchPrefix contains the base path for switchset, which are tracked under
@@ -356,8 +354,6 @@ func (t *SwitchSet) monitor(ctx context.Context) {
 	}()
 	go func() {
 		ctx := clientv3.WithRequireLeader(ctx)
-		limiter := rate.NewLimiter(rate.Every(time.Second), 1)
-		_ = limiter.Wait(ctx)
 	OUTER:
 		for {
 			select {
