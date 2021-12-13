@@ -38,6 +38,10 @@ func (*fakeSwitchSet) Bury(context.Context, string) error {
 	return nil
 }
 
+func (*fakeSwitchSet) BuryAndRevokeLease(context.Context, string) error {
+	return nil
+}
+
 func newFakeFactory(f liveness.Interface) liveness.Factory {
 	return func(name string, dead, alive liveness.EventFunc, logger logrus.FieldLogger) liveness.Interface {
 		return f
@@ -187,6 +191,11 @@ func (m *mockSwitchSet) Dead(ctx context.Context, id string, ttl int64) error {
 }
 
 func (m *mockSwitchSet) Bury(ctx context.Context, id string) error {
+	args := m.Called(ctx, id)
+	return args.Error(0)
+}
+
+func (m *mockSwitchSet) BuryAndRevokeLease(ctx context.Context, id string) error {
 	args := m.Called(ctx, id)
 	return args.Error(0)
 }

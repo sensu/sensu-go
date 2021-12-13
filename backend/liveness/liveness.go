@@ -61,6 +61,9 @@ type Interface interface {
 
 	// Bury forgets an entity exists
 	Bury(ctx context.Context, id string) error
+
+	// BuryAndRevokeLease forgets an entity exists and revokes the lease associated with it
+	BuryAndRevokeLease(ctx context.Context, id string) error
 }
 
 // Factory is a function that can deliver an Interface
@@ -152,6 +155,41 @@ func (t *SwitchSet) Alive(ctx context.Context, id string, ttl int64) error {
 	})
 }
 
+// BuryAndRevokeLease is similar to Bury() but will revoke the lease associated
+// with the switch if one exists.
+func (t *SwitchSet) BuryAndRevokeLease(ctx context.Context, id string) error {
+	key := path.Join(t.prefix, id)
+
+	// find lease ID that we will revoke later on
+	var leaseID clientv3.LeaseID
+	var getResp *clientv3.GetResponse
+	if err := kvc.Backoff(ctx).Retry(func(n int) (done bool, err error) {
+		getResp, err = t.client.Get(ctx, key, clientv3.WithIgnoreValue())
+		return kvc.RetryRequest(n, err)
+	}); err != nil {
+		return fmt.Errorf("switch retrieval failed: %s", err)
+	}
+	if len(getResp.Kvs) != 0 {
+		leaseID = clientv3.LeaseID(getResp.Kvs[0].Lease)
+	}
+
+	// bury the key as usual
+	if err := t.Bury(ctx, id); err != nil {
+		return err
+	}
+
+	// revoke the lease from earlier if it exists
+	if leaseID != 0 {
+		if _, err := t.client.Revoke(ctx, leaseID); err != nil {
+			t.logger.Debugf(
+				"error revoking lease for buried switch, lease may have already been revoked: %s",
+				err)
+		}
+	}
+
+	return nil
+}
+
 // Bury buries a live or dead switch. The switch will no longer
 // or callbacks.
 func (t *SwitchSet) Bury(ctx context.Context, id string) error {
@@ -159,19 +197,21 @@ func (t *SwitchSet) Bury(ctx context.Context, id string) error {
 
 	t.logger.WithFields(logrus.Fields{"key": key}).Debug("burying key")
 
-	err := kvc.Backoff(ctx).Retry(func(n int) (done bool, err error) {
+	// set the value of the switch key to buried
+	if err := kvc.Backoff(ctx).Retry(func(n int) (done bool, err error) {
 		_, err = t.client.Put(ctx, key, buried)
 		return kvc.RetryRequest(n, err)
-	})
-	if err != nil {
+	}); err != nil {
+		t.logger.WithFields(logrus.Fields{"key": key}).Errorf("error burying key: %s", err)
 		return fmt.Errorf("error burying switch: %s", err)
 	}
 
-	err = kvc.Backoff(ctx).Retry(func(n int) (done bool, err error) {
+	// delete the switch key
+	if err := kvc.Backoff(ctx).Retry(func(n int) (done bool, err error) {
 		_, err = t.client.Delete(ctx, key)
 		return kvc.RetryRequest(n, err)
-	})
-	if err != nil {
+	}); err != nil {
+		t.logger.WithFields(logrus.Fields{"key": key}).Errorf("error deleting key: %s", err)
 		return fmt.Errorf("error burying switch: %s", err)
 	}
 
