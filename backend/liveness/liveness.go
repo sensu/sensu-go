@@ -180,11 +180,10 @@ func (t *SwitchSet) BuryAndRevokeLease(ctx context.Context, id string) error {
 
 	// revoke the lease from earlier if it exists
 	if leaseID != 0 {
-		if err := kvc.Backoff(ctx).Retry(func(n int) (done bool, err error) {
-			_, err = t.client.Revoke(ctx, leaseID)
-			return kvc.RetryRequest(n, err)
-		}); err != nil {
-			return fmt.Errorf("error burying switch: %s", err)
+		if _, err := t.client.Revoke(ctx, leaseID); err != nil {
+			t.logger.Debugf(
+				"error revoking lease for buried switch, lease may have already been revoked: %s",
+				err)
 		}
 	}
 
