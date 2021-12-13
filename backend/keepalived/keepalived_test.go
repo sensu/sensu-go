@@ -53,6 +53,10 @@ func (fakeLivenessInterface) Bury(context.Context, string) error {
 	return nil
 }
 
+func (fakeLivenessInterface) BuryAndRevokeLease(context.Context, string) error {
+	return nil
+}
+
 // type assertion
 var _ liveness.Interface = fakeLivenessInterface{}
 
