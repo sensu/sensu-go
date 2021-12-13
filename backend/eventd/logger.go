@@ -2,6 +2,7 @@ package eventd
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"io"
 	"runtime"
@@ -29,10 +30,9 @@ type FileLogger struct {
 
 // Start replaces the core event logger with the enteprise one, which logs
 // events to a log file
-func (f *FileLogger) Start() {
+func (f *FileLogger) Start() error {
 	if f.Path == "" {
-		logger.Info("no event log file specified, event logging is disabled")
-		return
+		return errors.New("could not start file logger without configured path")
 	}
 
 	f.notify = make(chan interface{}, 1)
@@ -40,15 +40,14 @@ func (f *FileLogger) Start() {
 	subscription, err := f.Bus.Subscribe(messaging.SignalTopic(syscall.SIGHUP), consumerName, f)
 	if err != nil {
 		logger.WithError(err).Error("could not start event logging")
-		return
+		return fmt.Errorf("failed to subscribe event logger to SIGHUP: %v", err)
 	}
 
 	f.subscription = subscription
 
 	rawLogger, err := newRawLogger(f.Path, f.BufferSize, f.BufferWait, f.notify)
 	if err != nil {
-		logger.WithError(err).Error("could not start event logging")
-		return
+		return fmt.Errorf("could not start event logging: %v", err)
 	}
 
 	f.rawLogger = rawLogger
@@ -65,6 +64,7 @@ func (f *FileLogger) Start() {
 	// Listen to the output channel of the ring buffer and write it to the log
 	go rawLogger.write()
 	go rawLogger.metricsWriter()
+	return nil
 }
 
 func (f *FileLogger) numEncoders() int {
