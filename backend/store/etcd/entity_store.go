@@ -13,7 +13,7 @@ import (
 	storev2 "github.com/sensu/sensu-go/backend/store/v2"
 	"github.com/sensu/sensu-go/backend/store/v2/etcdstore"
 	"github.com/sensu/sensu-go/backend/store/v2/wrap"
-	"go.etcd.io/etcd/client/v3"
+	clientv3 "go.etcd.io/etcd/client/v3"
 )
 
 const (
@@ -201,6 +201,14 @@ func (s *Store) GetEntities(ctx context.Context, pred *store.SelectionPredicate)
 			}
 			statePred.Continue = string(token.StateContinue)
 			configPred.Continue = string(token.ConfigContinue)
+		}
+		if pred.Ordering == corev2.EntitySortName {
+			dir := storev2.SortAscend
+			if pred.Descending {
+				dir = storev2.SortDescend
+			}
+			stateReq.SortOrder = dir
+			configReq.SortOrder = dir
 		}
 	}
 	stateList, err := v2store.List(stateReq, statePred)

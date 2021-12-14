@@ -9,6 +9,9 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 ## Unreleased
 
 ### Changed
+
+- [GraphQL] Improvements to entity list response times and significant reduction
+in memory usage.
 - The agentd daemon now starts up after all other daemons which improves the
 chances of a cluster recovering after the loss of a backend.
 - The `etcd-log-level` flag now applies to the internal Etcd client.

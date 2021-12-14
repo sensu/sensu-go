@@ -1949,7 +1949,7 @@ func _EnumTypeEntityListOrderConfigFn() graphql1.EnumConfig {
 				Value:             "ID_DESC",
 			},
 			"LASTSEEN": &graphql1.EnumValueConfig{
-				DeprecationReason: "",
+				DeprecationReason: "no longer supported; required scan of entire entities keyspace, performed poorly",
 				Description:       "self descriptive",
 				Value:             "LASTSEEN",
 			},
