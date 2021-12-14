@@ -15,6 +15,8 @@ chances of a cluster recovering after the loss of a backend.
 
 ### Fixed
 - New agent sessions will no longer result in a leaked Etcd lease.
+- sensu-backend now prints warning and continues instead of crashing
+when --event-log-file cannot be written to.
 
 ## [6.6.1, 6.6.2] - 2021-11-29
 

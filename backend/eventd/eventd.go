@@ -332,18 +332,8 @@ func (e *Eventd) Start() error {
 		return err
 	}
 
-	// Start the event logger if configured
-	if e.logPath != "" {
-		logger := FileLogger{
-			Path:                 e.logPath,
-			BufferSize:           e.logBufferSize,
-			BufferWait:           e.logBufferWait,
-			Bus:                  e.bus,
-			ParallelJSONEncoding: e.logParallelEncoders,
-		}
-		logger.Start()
-
-		e.Logger = &logger
+	if logger := e.startFileLogger(); logger != nil {
+		e.Logger = logger
 	}
 
 	e.startHandlers()
@@ -831,4 +821,24 @@ func (e *Eventd) Name() string {
 // Workers returns the number of configured worker goroutines.
 func (e *Eventd) Workers() int {
 	return e.workerCount
+}
+
+// startFileLogger attempts to configure and start a FileLogger.
+// returns nil when not available
+func (e Eventd) startFileLogger() Logger {
+	if e.logPath == "" {
+		return nil
+	}
+	log := FileLogger{
+		Path:                 e.logPath,
+		BufferSize:           e.logBufferSize,
+		BufferWait:           e.logBufferWait,
+		Bus:                  e.bus,
+		ParallelJSONEncoding: e.logParallelEncoders,
+	}
+	if err := log.Start(); err != nil {
+		logger.WithError(err).Warning("event log file could not be configured. event logs will not be recorded.")
+		return nil
+	}
+	return &log
 }

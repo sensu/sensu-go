@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/sirupsen/logrus"
+	"github.com/sirupsen/logrus/hooks/test"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -508,4 +509,22 @@ func TestWorkerCount(t *testing.T) {
 	if got, want := daemon.Workers(), workers; got != want {
 		t.Fatalf("bad workers: got %d, want %d", got, want)
 	}
+}
+
+func TestEventLog(t *testing.T) {
+	log, hook := test.NewNullLogger()
+	logger = log.WithField("test", "TestLogger")
+
+	bus, err := messaging.NewWizardBus(messaging.WizardBusConfig{})
+	require.NoError(t, err)
+	require.NoError(t, bus.Start())
+
+	mockEntityStore := &storetest.Store{}
+	mockStore := &mockstore.MockStore{}
+	e := newEventd(mockEntityStore, mockStore, bus, newFakeFactory(&fakeSwitchSet{}))
+	// eventd does not panic when started with invalid path
+	e.logPath = "/"
+	require.NoError(t, e.Start())
+	assert.Contains(t, hook.LastEntry().Message, "event log file could not be configured. event logs will not be recorded.")
+	require.NoError(t, e.Stop())
 }
