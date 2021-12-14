@@ -1,5 +1,15 @@
 name: static-check
-on: [pull_request]
+
+on:
+  push:
+    tags:
+      - 'v*'
+    branches:
+      - main
+  pull_request:
+    branches:
+      - '*'
+
 jobs:
   staticcheck:
     name: staticcheck (project)
@@ -13,4 +23,3 @@ jobs:
           version: "2021.1.1"
 env:
   GO_VERSION: 1.17.1
-  GOLANGCI_LINT_VERSION: v1.42.1
