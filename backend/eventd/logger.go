@@ -41,7 +41,6 @@ func (f *FileLogger) Start() error {
 	consumerName := fmt.Sprintf("filelogger://%s", f.Path)
 	subscription, err := f.Bus.Subscribe(messaging.SignalTopic(syscall.SIGHUP), consumerName, f)
 	if err != nil {
-		logger.WithError(err).Error("could not start event logging")
 		return fmt.Errorf("failed to subscribe event logger to SIGHUP: %v", err)
 	}
 	f.subscription = subscription
