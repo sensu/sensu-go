@@ -1,3 +1,4 @@
+//go:build !solaris
 // +build !solaris
 
 // Package agent is the running Sensu agent. Agents connect to a Sensu backend,
