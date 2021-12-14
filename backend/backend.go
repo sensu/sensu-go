@@ -681,6 +681,7 @@ func (b *Backend) runOnce() error {
 
 	// Loop across the daemons in order to start them, then add them to our groups
 	for _, d := range b.Daemons {
+		logger.Infof("starting daemon: %s", d.Name())
 		if err := d.Start(); err != nil {
 			_ = sg.Stop()
 			return ErrStartup{Err: err, Name: d.Name()}
