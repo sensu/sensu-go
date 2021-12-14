@@ -15,6 +15,7 @@ import (
 	"github.com/spf13/viper"
 	"go.etcd.io/etcd/client/pkg/v3/transport"
 	clientv3 "go.etcd.io/etcd/client/v3"
+	"go.uber.org/zap"
 	"golang.org/x/time/rate"
 	"google.golang.org/grpc"
 
@@ -195,6 +196,9 @@ func newClient(ctx context.Context, config *Config, backend *Backend) (*clientv3
 
 		var clientv3Config clientv3.Config
 
+		atomicLogLevel := zap.NewAtomicLevel()
+		atomicLogLevel.SetLevel(zap.ErrorLevel)
+
 		if config.EtcdClientUsername != "" && config.EtcdClientPassword != "" {
 			clientv3Config = clientv3.Config{
 				Endpoints:   clientURLs,
@@ -212,6 +216,9 @@ func newClient(ctx context.Context, config *Config, backend *Backend) (*clientv3
 				Endpoints:   clientURLs,
 				DialTimeout: 5 * time.Second,
 				TLS:         tlsConfig,
+				LogConfig: &zap.Config{
+					Level: atomicLogLevel,
+				},
 				DialOptions: []grpc.DialOption{
 					grpc.WithReturnConnectionError(),
 					grpc.WithBlock(),
@@ -506,24 +513,6 @@ func Initialize(ctx context.Context, config *Config) (*Backend, error) {
 	}
 	b.EtcdClientTLSConfig = etcdClientTLSConfig
 
-	// Initialize agentd
-	agent, err := agentd.New(agentd.Config{
-		Host:                config.AgentHost,
-		Port:                config.AgentPort,
-		Bus:                 bus,
-		Store:               b.Store,
-		TLS:                 config.AgentTLSOptions,
-		RingPool:            b.RingPool,
-		WriteTimeout:        config.AgentWriteTimeout,
-		Client:              b.Client,
-		Watcher:             entityConfigWatcher,
-		EtcdClientTLSConfig: b.EtcdClientTLSConfig,
-	})
-	if err != nil {
-		return nil, fmt.Errorf("error initializing %s: %s", agent.Name(), err)
-	}
-	b.Daemons = append(b.Daemons, agent)
-
 	// Initialize keepalived
 	keepalive, err := keepalived.New(keepalived.Config{
 		DeregistrationHandler: config.DeregistrationHandler,
@@ -637,6 +626,24 @@ func Initialize(ctx context.Context, config *Config) (*Backend, error) {
 		return nil, fmt.Errorf("error initializing %s: %s", tessen.Name(), err)
 	}
 	b.Daemons = append(b.Daemons, tessen)
+
+	// Initialize agentd
+	agent, err := agentd.New(agentd.Config{
+		Host:                config.AgentHost,
+		Port:                config.AgentPort,
+		Bus:                 bus,
+		Store:               b.Store,
+		TLS:                 config.AgentTLSOptions,
+		RingPool:            b.RingPool,
+		WriteTimeout:        config.AgentWriteTimeout,
+		Client:              b.Client,
+		Watcher:             entityConfigWatcher,
+		EtcdClientTLSConfig: b.EtcdClientTLSConfig,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("error initializing %s: %s", agent.Name(), err)
+	}
+	b.Daemons = append(b.Daemons, agent)
 
 	return b, nil
 }
