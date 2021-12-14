@@ -210,6 +210,7 @@ func (s *Store) GetEntities(ctx context.Context, pred *store.SelectionPredicate)
 			stateReq.SortOrder = dir
 			configReq.SortOrder = dir
 		}
+		logger.WithField("stateReq", stateReq).WithField("configReq", configReq).Warn("configured request")
 	}
 	stateList, err := v2store.List(stateReq, statePred)
 	if err != nil {
