@@ -324,7 +324,7 @@ func (s *Store) List(req storev2.ResourceRequest, pred *store.SelectionPredicate
 		clientv3.WithSort(clientv3.SortByKey, getSortOrder(req.SortOrder)),
 	}
 	rangeEnd := ""
-	if req.SortOrder == storev2.SortDescend {
+	if req.SortOrder == storev2.SortDescend && pred.Continue != "" {
 		rangeEnd = strings.TrimRight(pred.Continue, "\x00")
 	} else {
 		rangeEnd = clientv3.GetPrefixRangeEnd(key)
