@@ -323,10 +323,15 @@ func (s *Store) List(req storev2.ResourceRequest, pred *store.SelectionPredicate
 		clientv3.WithSerializable(),
 		clientv3.WithSort(clientv3.SortByKey, getSortOrder(req.SortOrder)),
 	}
-	rangeEnd := clientv3.GetPrefixRangeEnd(key)
+	rangeEnd := ""
+	if req.SortOrder == storev2.SortDescend {
+		rangeEnd = strings.TrimRight(pred.Continue, "\x00")
+	} else {
+		rangeEnd = clientv3.GetPrefixRangeEnd(key)
+	}
 	opts = append(opts, clientv3.WithRange(rangeEnd))
 
-	if pred.Continue != "" {
+	if pred.Continue != "" && req.SortOrder != storev2.SortDescend {
 		key = path.Join(key, pred.Continue)
 	} else {
 		if !strings.HasSuffix(key, "/") {
