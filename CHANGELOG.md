@@ -8,6 +8,11 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
 
+### Changed
+
+- [GraphQL] Improvements to entity list response times and significant reduction
+in memory usage.
+
 ## [6.6.1, 6.6.2] - 2021-11-29
 
 ### Added
@@ -23,9 +28,6 @@ sensuctl or the webui.
 
 ### Added
 - Add backend label to logged metrics.
-### Added
-- Check & CheckConfig validation errors related to cron now provide additional
-context.
 
 ### Fixed
 - In addition to the context error print the connection error when
