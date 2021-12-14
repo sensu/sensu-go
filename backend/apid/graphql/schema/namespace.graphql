@@ -51,7 +51,7 @@ type Namespace implements Node {
     "Limit adds optional limit to the number of entries returned."
     limit: Int = 10,
     "OrderBy adds optional order to the records retrieved."
-    orderBy: EntityListOrder = ID_DESC
+    orderBy: EntityListOrder = ID
     "DEPRECATED: Please use the filters argument instead."
     filter: String = "",
     """
