@@ -224,7 +224,8 @@ func newClient(ctx context.Context, config *Config, backend *Backend) (*clientv3
 		atomicLogLevel := zap.NewAtomicLevel()
 		atomicLogLevel.SetLevel(zap.ErrorLevel)
 		clientv3Config.LogConfig = &zap.Config{
-			Level: atomicLogLevel,
+			Level:    atomicLogLevel,
+			Encoding: "json",
 		}
 
 		// Don't start up an embedded etcd, return a client that connects to an
