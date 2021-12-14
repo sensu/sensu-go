@@ -11,6 +11,9 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 ### Fixed
 - New agent sessions will no longer result in a leaked Etcd lease.
 
+### Changed
+- Removed unused rate limiting code in the liveness package.
+
 ## [6.6.1, 6.6.2] - 2021-11-29
 
 ### Added
