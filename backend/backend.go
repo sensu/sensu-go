@@ -15,6 +15,8 @@ import (
 	"github.com/spf13/viper"
 	"go.etcd.io/etcd/client/pkg/v3/transport"
 	clientv3 "go.etcd.io/etcd/client/v3"
+	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
 	"golang.org/x/time/rate"
 	"google.golang.org/grpc"
 
@@ -218,6 +220,31 @@ func newClient(ctx context.Context, config *Config, backend *Backend) (*clientv3
 				},
 			}
 		}
+
+		var level zapcore.Level
+		switch config.EtcdLogLevel {
+		case "debug", "trace":
+			level = zapcore.DebugLevel
+		case "error":
+			level = zapcore.ErrorLevel
+		case "fatal":
+			level = zapcore.FatalLevel
+		case "info":
+			level = zapcore.InfoLevel
+		case "panic":
+			level = zapcore.PanicLevel
+		case "warn":
+			level = zapcore.DebugLevel
+		}
+
+		// Set etcd client log level
+		atomicLogLevel := zap.NewAtomicLevel()
+		atomicLogLevel.SetLevel(level)
+		clientv3Config.LogConfig = &zap.Config{
+			Level:    atomicLogLevel,
+			Encoding: "json",
+		}
+
 		// Don't start up an embedded etcd, return a client that connects to an
 		// external etcd instead.
 		client, err := clientv3.New(clientv3Config)
@@ -506,24 +533,6 @@ func Initialize(ctx context.Context, config *Config) (*Backend, error) {
 	}
 	b.EtcdClientTLSConfig = etcdClientTLSConfig
 
-	// Initialize agentd
-	agent, err := agentd.New(agentd.Config{
-		Host:                config.AgentHost,
-		Port:                config.AgentPort,
-		Bus:                 bus,
-		Store:               b.Store,
-		TLS:                 config.AgentTLSOptions,
-		RingPool:            b.RingPool,
-		WriteTimeout:        config.AgentWriteTimeout,
-		Client:              b.Client,
-		Watcher:             entityConfigWatcher,
-		EtcdClientTLSConfig: b.EtcdClientTLSConfig,
-	})
-	if err != nil {
-		return nil, fmt.Errorf("error initializing %s: %s", agent.Name(), err)
-	}
-	b.Daemons = append(b.Daemons, agent)
-
 	// Initialize keepalived
 	keepalive, err := keepalived.New(keepalived.Config{
 		DeregistrationHandler: config.DeregistrationHandler,
@@ -638,6 +647,24 @@ func Initialize(ctx context.Context, config *Config) (*Backend, error) {
 	}
 	b.Daemons = append(b.Daemons, tessen)
 
+	// Initialize agentd
+	agent, err := agentd.New(agentd.Config{
+		Host:                config.AgentHost,
+		Port:                config.AgentPort,
+		Bus:                 bus,
+		Store:               b.Store,
+		TLS:                 config.AgentTLSOptions,
+		RingPool:            b.RingPool,
+		WriteTimeout:        config.AgentWriteTimeout,
+		Client:              b.Client,
+		Watcher:             entityConfigWatcher,
+		EtcdClientTLSConfig: b.EtcdClientTLSConfig,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("error initializing %s: %s", agent.Name(), err)
+	}
+	b.Daemons = append(b.Daemons, agent)
+
 	return b, nil
 }
 
@@ -672,6 +699,7 @@ func (b *Backend) runOnce() error {
 
 	// Loop across the daemons in order to start them, then add them to our groups
 	for _, d := range b.Daemons {
+		logger.Infof("starting daemon: %s", d.Name())
 		if err := d.Start(); err != nil {
 			_ = sg.Stop()
 			return ErrStartup{Err: err, Name: d.Name()}

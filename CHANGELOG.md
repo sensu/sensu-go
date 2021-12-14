@@ -8,6 +8,11 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
 
+### Changed
+- The agentd daemon now starts up after all other daemons which improves the
+chances of a cluster recovering after the loss of a backend.
+- The `etcd-log-level` flag now applies to the internal Etcd client.
+
 ### Fixed
 - New agent sessions will no longer result in a leaked Etcd lease.
 
