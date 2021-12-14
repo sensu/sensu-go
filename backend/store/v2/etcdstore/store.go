@@ -14,7 +14,6 @@ import (
 	"github.com/sensu/sensu-go/backend/store/patch"
 	storev2 "github.com/sensu/sensu-go/backend/store/v2"
 	"github.com/sensu/sensu-go/backend/store/v2/wrap"
-	"github.com/sirupsen/logrus"
 	clientv3 "go.etcd.io/etcd/client/v3"
 )
 
@@ -334,7 +333,6 @@ func (s *Store) List(req storev2.ResourceRequest, pred *store.SelectionPredicate
 			key += "/"
 		}
 	}
-	logrus.WithField("req opts", opts).Warn("configured request")
 
 	var resp *clientv3.GetResponse
 	err := kvc.Backoff(ctx).Retry(func(n int) (done bool, err error) {
