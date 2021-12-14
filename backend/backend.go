@@ -196,9 +196,6 @@ func newClient(ctx context.Context, config *Config, backend *Backend) (*clientv3
 
 		var clientv3Config clientv3.Config
 
-		atomicLogLevel := zap.NewAtomicLevel()
-		atomicLogLevel.SetLevel(zap.ErrorLevel)
-
 		if config.EtcdClientUsername != "" && config.EtcdClientPassword != "" {
 			clientv3Config = clientv3.Config{
 				Endpoints:   clientURLs,
@@ -216,15 +213,20 @@ func newClient(ctx context.Context, config *Config, backend *Backend) (*clientv3
 				Endpoints:   clientURLs,
 				DialTimeout: 5 * time.Second,
 				TLS:         tlsConfig,
-				LogConfig: &zap.Config{
-					Level: atomicLogLevel,
-				},
 				DialOptions: []grpc.DialOption{
 					grpc.WithReturnConnectionError(),
 					grpc.WithBlock(),
 				},
 			}
 		}
+
+		// Set etcd client log level to error
+		atomicLogLevel := zap.NewAtomicLevel()
+		atomicLogLevel.SetLevel(zap.ErrorLevel)
+		clientv3Config.LogConfig = &zap.Config{
+			Level: atomicLogLevel,
+		}
+
 		// Don't start up an embedded etcd, return a client that connects to an
 		// external etcd instead.
 		client, err := clientv3.New(clientv3Config)
