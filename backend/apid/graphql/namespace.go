@@ -17,6 +17,15 @@ const (
 	// at least we aren't breaking the existing behaviour. Eventually this
 	// interface will be deprecated in lieu of one that can be performant.
 	maxSizeNamespaceListEvents = 25_000
+
+	// When this number is exceeded the resolver will cease to count the total
+	// number of entities. This should reduce the instances where we scan the
+	// entire keyspace.
+	maxCountNamespaceListEntities = 500
+
+	// The maximum page size the list resolver will use when fetching entities
+	// from the store.
+	maxPageSizeNamespaceListEntities = 100
 )
 
 var _ schema.NamespaceFieldResolvers = (*namespaceImpl)(nil)
@@ -229,13 +238,6 @@ func (r *namespaceImpl) Silences(p schema.NamespaceSilencesFieldResolverParams) 
 	return res, nil
 }
 
-func min(x, y int) int {
-	if x > y {
-		return y
-	}
-	return x
-}
-
 func listEntitiesOrdering(order schema.EntityListOrder) (string, bool) {
 	switch order {
 	case schema.EntityListOrders.ID:
@@ -251,7 +253,11 @@ func (r *namespaceImpl) Entities(p schema.NamespaceEntitiesFieldResolverParams) 
 	ctx := store.NamespaceContext(p.Context, p.Source.(*corev2.Namespace).Name)
 
 	ordering, desc := listEntitiesOrdering(p.Args.OrderBy)
-	pred := &store.SelectionPredicate{Ordering: ordering, Descending: desc, Limit: int64(min(p.Args.Limit, 100))}
+	pred := &store.SelectionPredicate{
+		Ordering:   ordering,
+		Descending: desc,
+		Limit:      int64(minInt(p.Args.Limit, maxPageSizeNamespaceListEntities)),
+	}
 
 	matches := 0
 	records := make([]*corev2.Entity, 0, p.Args.Limit)
@@ -271,23 +277,20 @@ CONTINUE:
 	for i := range queryResult {
 		if matchFn(queryResult[i]) {
 			matches++
-			if matches > p.Args.Offset {
+			if matches > p.Args.Offset && len(records) < p.Args.Limit {
 				records = append(records, queryResult[i])
 			}
 		}
-		if len(records) == p.Args.Limit {
-			break
-		}
 	}
 
-	if len(records) < p.Args.Limit && pred.Continue != "" {
+	if pred.Continue != "" && matches < maxCountNamespaceListEntities {
 		goto CONTINUE
 	}
 
 	// paginate
 	l, h := clampSlice(p.Args.Offset, p.Args.Offset+p.Args.Limit, len(records))
 	res.Nodes = records[l:h]
-	res.PageInfo.totalCount = len(records)
+	res.PageInfo.totalCount = matches
 	return res, nil
 }
 
