@@ -12,6 +12,14 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 - [GraphQL] Improvements to entity list response times and significant reduction
 in memory usage.
+- The agentd daemon now starts up after all other daemons which improves the
+chances of a cluster recovering after the loss of a backend.
+- The `etcd-log-level` flag now applies to the internal Etcd client.
+
+### Fixed
+- New agent sessions will no longer result in a leaked Etcd lease.
+- sensu-backend now prints warning and continues instead of crashing
+when --event-log-file cannot be written to.
 
 ## [6.6.1, 6.6.2] - 2021-11-29
 

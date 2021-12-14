@@ -223,7 +223,7 @@ func (k *Keepalived) initFromStore(ctx context.Context) error {
 		if event == nil {
 			tctx, cancel := context.WithTimeout(entityCtx, k.storeTimeout)
 			defer cancel()
-			if err := switches.Bury(tctx, id); err != nil {
+			if err := switches.BuryAndRevokeLease(tctx, id); err != nil {
 				return err
 			}
 			continue
@@ -289,11 +289,12 @@ func (k *Keepalived) processKeepalives(ctx context.Context) {
 				continue
 			}
 
+			id := path.Join(entity.Namespace, entity.Name)
+
 			if event.Timestamp == deletedEventSentinel {
 				// The keepalive event was deleted, so we should bury its associated switch
-				id := path.Join(entity.Namespace, entity.Name)
 				tctx, cancel := context.WithTimeout(ctx, k.storeTimeout)
-				err := switches.Bury(tctx, id)
+				err := switches.BuryAndRevokeLease(tctx, id)
 				cancel()
 				if err != nil {
 					if _, ok := err.(*store.ErrInternal); ok {
@@ -324,17 +325,15 @@ func (k *Keepalived) processKeepalives(ctx context.Context) {
 			// Retrieve the keepalive timeout or use a default value in case an older
 			// agent version was used, since entity.KeepaliveTimeout no longer exist
 			ttl := int64(corev2.DefaultKeepaliveTimeout)
-			if event.Check != nil {
+			if event.Check != nil && event.Check.Timeout != 0 {
 				ttl = int64(event.Check.Timeout)
 			}
 
-			key := path.Join(entity.Namespace, entity.Name)
-
 			tctx, cancel := context.WithTimeout(ctx, k.storeTimeout)
-			err := switches.Alive(tctx, key, ttl)
+			err := switches.Alive(tctx, id, ttl)
 			cancel()
 			if err != nil {
-				logger.WithError(err).Errorf("error on switch %q", key)
+				logger.WithError(err).Errorf("error on switch %q", id)
 				if _, ok := err.(*store.ErrInternal); ok {
 					// Fatal error
 					select {

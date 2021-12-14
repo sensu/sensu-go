@@ -10,7 +10,7 @@ jobs:
         id: semgrep
         uses: returntocorp/semgrep-action@v1
         with:
-          config: p/dgryski.semgrep-go
+          config: p/semgrep-go-correctness
   semgrep-sensu: # looks for .semgrep.yml due to missing config section
     runs-on: ubuntu-latest
     name: Check
