@@ -16,6 +16,7 @@ import (
 	"go.etcd.io/etcd/client/pkg/v3/transport"
 	clientv3 "go.etcd.io/etcd/client/v3"
 	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
 	"golang.org/x/time/rate"
 	"google.golang.org/grpc"
 
@@ -220,9 +221,25 @@ func newClient(ctx context.Context, config *Config, backend *Backend) (*clientv3
 			}
 		}
 
-		// Set etcd client log level to error
+		var level zapcore.Level
+		switch config.EtcdLogLevel {
+		case "debug", "trace":
+			level = zapcore.DebugLevel
+		case "error":
+			level = zapcore.ErrorLevel
+		case "fatal":
+			level = zapcore.FatalLevel
+		case "info":
+			level = zapcore.InfoLevel
+		case "panic":
+			level = zapcore.PanicLevel
+		case "warn":
+			level = zapcore.DebugLevel
+		}
+
+		// Set etcd client log level
 		atomicLogLevel := zap.NewAtomicLevel()
-		atomicLogLevel.SetLevel(zap.ErrorLevel)
+		atomicLogLevel.SetLevel(level)
 		clientv3Config.LogConfig = &zap.Config{
 			Level:    atomicLogLevel,
 			Encoding: "json",
