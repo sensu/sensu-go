@@ -1,3 +1,4 @@
+//go:build integration && !race
 // +build integration,!race
 
 package etcdstore_test
@@ -298,6 +299,7 @@ func TestList(t *testing.T) {
 		}
 		// Test listing in descending order
 		pred.Continue = ""
+		pred.Limit = 5
 		req.SortOrder = storev2.SortDescend
 		list, err = s.List(req, pred)
 		if err != nil {
@@ -311,6 +313,20 @@ func TestList(t *testing.T) {
 			t.Fatal(err)
 		}
 		if got, want := firstObj.GetMetadata().Name, "foo-9"; got != want {
+			t.Errorf("unexpected first item in list: got %s, want %s", got, want)
+		}
+		list, err = s.List(req, pred) // get second chunk
+		if err != nil {
+			t.Fatal(err)
+		}
+		if got := list.Len(); got == 0 {
+			t.Fatalf("wrong number of items: got %d, want > %d", got, 0)
+		}
+		firstObj, err = list.(wrap.List)[0].Unwrap()
+		if err != nil {
+			t.Fatal(err)
+		}
+		if got, want := firstObj.GetMetadata().Name, "foo-4"; got != want {
 			t.Errorf("unexpected first item in list: got %s, want %s", got, want)
 		}
 		// Test listing in ascending order
@@ -328,6 +344,20 @@ func TestList(t *testing.T) {
 			t.Fatal(err)
 		}
 		if got, want := firstObj.GetMetadata().Name, "foo-0"; got != want {
+			t.Errorf("unexpected first item in list: got %s, want %s", got, want)
+		}
+		list, err = s.List(req, pred) // get second chunk
+		if err != nil {
+			t.Fatal(err)
+		}
+		if got := list.Len(); got == 0 {
+			t.Fatalf("wrong number of items: got %d, want > %d", got, 0)
+		}
+		firstObj, err = list.(wrap.List)[0].Unwrap()
+		if err != nil {
+			t.Fatal(err)
+		}
+		if got, want := firstObj.GetMetadata().Name, "foo-5"; got != want {
 			t.Errorf("unexpected first item in list: got %s, want %s", got, want)
 		}
 	})
