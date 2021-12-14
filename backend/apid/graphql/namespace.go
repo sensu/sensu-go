@@ -263,7 +263,6 @@ func (r *namespaceImpl) Entities(p schema.NamespaceEntitiesFieldResolverParams) 
 	records := make([]*corev2.Entity, 0, p.Args.Limit)
 
 CONTINUE:
-	// query store
 	queryResult, err := r.entityClient.ListEntities(ctx, pred)
 	if err != nil {
 		return res, err
@@ -287,9 +286,7 @@ CONTINUE:
 		goto CONTINUE
 	}
 
-	// paginate
-	l, h := clampSlice(p.Args.Offset, p.Args.Offset+p.Args.Limit, len(records))
-	res.Nodes = records[l:h]
+	res.Nodes = records
 	res.PageInfo.totalCount = matches
 	return res, nil
 }
