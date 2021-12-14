@@ -9,8 +9,7 @@ import (
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/backend/store/etcd/kvc"
-	"go.etcd.io/etcd/client/v3"
-	v3 "go.etcd.io/etcd/client/v3"
+	clientv3 "go.etcd.io/etcd/client/v3"
 )
 
 const (
@@ -42,10 +41,10 @@ func (s *Store) CreateNamespace(ctx context.Context, namespace *corev2.Namespace
 	res, err := s.client.Txn(ctx).
 		If(
 			// Ensure the namespace does not already exist
-			v3.Compare(v3.Version(namespaceKey), "=", 0)).
+			clientv3.Compare(clientv3.Version(namespaceKey), "=", 0)).
 		Then(
 			// Create it
-			v3.OpPut(namespaceKey, string(namespaceBytes)),
+			clientv3.OpPut(namespaceKey, string(namespaceBytes)),
 		).Commit()
 	if err != nil {
 		return &store.ErrInternal{Message: err.Error()}
@@ -68,14 +67,14 @@ func (s *Store) DeleteNamespace(ctx context.Context, name string) error {
 	err := kvc.Backoff(ctx).Retry(func(n int) (done bool, err error) {
 		// Validate whether there are any resources referencing the namespace
 		getresp, err = s.client.Txn(ctx).Then(
-			v3.OpGet(checkKeyBuilder.WithNamespace(name).Build(), v3.WithPrefix(), v3.WithCountOnly()),
-			v3.OpGet(entityConfigKeyBuilder.WithNamespace(name).Build(), v3.WithPrefix(), v3.WithCountOnly()),
-			v3.OpGet(assetKeyBuilder.WithNamespace(name).Build(), v3.WithPrefix(), v3.WithCountOnly()),
-			v3.OpGet(handlerKeyBuilder.WithNamespace(name).Build(), v3.WithPrefix(), v3.WithCountOnly()),
-			v3.OpGet(mutatorKeyBuilder.WithNamespace(name).Build(), v3.WithPrefix(), v3.WithCountOnly()),
-			v3.OpGet(eventFilterKeyBuilder.WithNamespace(name).Build(), v3.WithPrefix(), v3.WithCountOnly()),
-			v3.OpGet(hookKeyBuilder.WithNamespace(name).Build(), v3.WithPrefix(), v3.WithCountOnly()),
-			v3.OpGet(silencedKeyBuilder.WithNamespace(name).Build(), v3.WithPrefix(), v3.WithCountOnly()),
+			clientv3.OpGet(checkKeyBuilder.WithNamespace(name).Build(), clientv3.WithPrefix(), clientv3.WithCountOnly()),
+			clientv3.OpGet(entityConfigKeyBuilder.WithNamespace(name).Build(), clientv3.WithPrefix(), clientv3.WithCountOnly()),
+			clientv3.OpGet(assetKeyBuilder.WithNamespace(name).Build(), clientv3.WithPrefix(), clientv3.WithCountOnly()),
+			clientv3.OpGet(handlerKeyBuilder.WithNamespace(name).Build(), clientv3.WithPrefix(), clientv3.WithCountOnly()),
+			clientv3.OpGet(mutatorKeyBuilder.WithNamespace(name).Build(), clientv3.WithPrefix(), clientv3.WithCountOnly()),
+			clientv3.OpGet(eventFilterKeyBuilder.WithNamespace(name).Build(), clientv3.WithPrefix(), clientv3.WithCountOnly()),
+			clientv3.OpGet(hookKeyBuilder.WithNamespace(name).Build(), clientv3.WithPrefix(), clientv3.WithCountOnly()),
+			clientv3.OpGet(silencedKeyBuilder.WithNamespace(name).Build(), clientv3.WithPrefix(), clientv3.WithCountOnly()),
 		).Commit()
 		return kvc.RetryRequest(n, err)
 	})

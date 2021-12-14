@@ -5,7 +5,6 @@ import (
 
 	"github.com/graphql-go/graphql"
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
-	v2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/apid/graphql/globalid"
 	"github.com/sensu/sensu-go/backend/apid/graphql/schema"
 	"github.com/sensu/sensu-go/types"
@@ -91,7 +90,7 @@ func checkIsSilencedBy(check interface {
 
 // ToJSON implements response to request for 'toJSON' field.
 func (r *checkCfgImpl) ToJSON(p graphql.ResolveParams) (interface{}, error) {
-	return types.WrapResource(p.Source.(v2.Resource)), nil
+	return types.WrapResource(p.Source.(corev2.Resource)), nil
 }
 
 // RuntimeAssets implements response to request for 'runtimeAssets' field.
@@ -226,7 +225,7 @@ func (r *checkImpl) RuntimeAssets(p graphql.ResolveParams) (interface{}, error) 
 
 // ToJSON implements response to request for 'toJSON' field.
 func (r *checkImpl) ToJSON(p graphql.ResolveParams) (interface{}, error) {
-	return types.WrapResource(p.Source.(v2.Resource)), nil
+	return types.WrapResource(p.Source.(corev2.Resource)), nil
 }
 
 //
