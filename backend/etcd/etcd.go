@@ -316,12 +316,15 @@ func (e *Etcd) NewClient() (*clientv3.Client, error) {
 // NewClientContext is like NewClient, but sets the provided context on the
 // client.
 func (e *Etcd) NewClientContext(ctx context.Context) (*clientv3.Client, error) {
-	logutil.DefaultZapLoggerConfig.Level.SetLevel(LogLevelToZap(e.cfg.LogLevel))
-
 	tlsConfig, err := ((transport.TLSInfo)(e.cfg.ClientTLSInfo)).ClientConfig()
 	if err != nil {
 		return nil, err
 	}
+
+	// Set etcd client log level
+	logConfig := clientv3.CreateDefaultZapLoggerConfig()
+	logConfig.Level.SetLevel(LogLevelToZap(e.cfg.ClientLogLevel))
+
 	return clientv3.New(clientv3.Config{
 		Endpoints:   e.cfg.AdvertiseClientURLs,
 		DialTimeout: 60 * time.Second,
@@ -330,7 +333,8 @@ func (e *Etcd) NewClientContext(ctx context.Context) (*clientv3.Client, error) {
 			grpc.WithReturnConnectionError(),
 			grpc.WithBlock(),
 		},
-		Context: ctx,
+		Context:   ctx,
+		LogConfig: &logConfig,
 	})
 }
 
@@ -343,9 +347,15 @@ func (e *Etcd) NewEmbeddedClient() *clientv3.Client {
 // client. Only for testing.
 // Based on https://github.com/etcd-io/etcd/blob/v3.4.16/etcdserver/api/v3client/v3client.go#L30.
 func (e *Etcd) NewEmbeddedClientWithContext(ctx context.Context) *clientv3.Client {
-	logutil.DefaultZapLoggerConfig.Level.SetLevel(LogLevelToZap(e.cfg.ClientLogLevel))
+	// Set etcd client log level
+	logConfig := clientv3.CreateDefaultZapLoggerConfig()
+	logConfig.Level.SetLevel(LogLevelToZap(e.cfg.ClientLogLevel))
+	clientLogger, err := logConfig.Build()
+	if err != nil {
+		panic(fmt.Sprintf("error building etcd client logger: %s", err))
+	}
 
-	c := clientv3.NewCtxClient(ctx)
+	c := clientv3.NewCtxClient(ctx).WithLogger(clientLogger)
 
 	kvc := adapter.KvServerToKvClient(v3rpc.NewQuotaKVServer(e.etcd.Server))
 	c.KV = clientv3.NewKVFromKVClient(kvc, c)
