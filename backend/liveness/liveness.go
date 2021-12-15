@@ -13,7 +13,6 @@ import (
 	"github.com/sensu/sensu-go/backend/store/etcd/kvc"
 	"github.com/sirupsen/logrus"
 	"go.etcd.io/etcd/api/v3/mvccpb"
-	rpctypes "go.etcd.io/etcd/api/v3/v3rpc/rpctypes"
 	clientv3 "go.etcd.io/etcd/client/v3"
 	"golang.org/x/time/rate"
 )
@@ -263,26 +262,19 @@ func (t *SwitchSet) ping(ctx context.Context, id string, ttl int64, alive bool) 
 		// WithIgnoreLease will re-use the existing lease
 		resp, err := t.client.Put(ctx, key, val, clientv3.WithIgnoreLease(), clientv3.WithPrevKV())
 		if err != nil {
-			if err.Error() == rpctypes.ErrLeaseNotFound.Error() || err.Error() == rpctypes.ErrKeyNotFound.Error() {
-				// The existing lease wasn't found, it must have expired or
-				// been revoked. This isn't strictly an error as it can occur
-				// in the course of normal operation. As such, we won't track
-				// metrics for it.
-				//
-				// it's ugly, but this is how etcd itself matches this error,
-				// so doing it here too.
-				leaseID, err := t.newLease(ctx, ttl)
-				if err != nil {
-					etcd.LeaseOperationsCounter.WithLabelValues("liveness", etcd.LeaseOperationTypePut, etcd.LeaseStatusFor(err)).Inc()
-					return kvc.RetryRequest(n, err)
-				}
-				_, err = t.client.Put(ctx, key, val, clientv3.WithLease(leaseID))
-				if err != nil {
-					etcd.LeaseOperationsCounter.WithLabelValues("liveness", etcd.LeaseOperationTypePut, etcd.LeaseStatusFor(err)).Inc()
-				}
+			// The existing lease wasn't found, it must have expired or
+			// been revoked. This isn't strictly an error as it can occur
+			// in the course of normal operation. As such, we won't track
+			// metrics for it.
+			leaseID, err := t.newLease(ctx, ttl)
+			if err != nil {
+				etcd.LeaseOperationsCounter.WithLabelValues("liveness", etcd.LeaseOperationTypePut, etcd.LeaseStatusFor(err)).Inc()
 				return kvc.RetryRequest(n, err)
 			}
-			etcd.LeaseOperationsCounter.WithLabelValues("liveness", etcd.LeaseOperationTypePut, etcd.LeaseStatusFor(err)).Inc()
+			_, err = t.client.Put(ctx, key, val, clientv3.WithLease(leaseID))
+			if err != nil {
+				etcd.LeaseOperationsCounter.WithLabelValues("liveness", etcd.LeaseOperationTypePut, etcd.LeaseStatusFor(err)).Inc()
+			}
 			return kvc.RetryRequest(n, err)
 		}
 		leaseID := clientv3.LeaseID(resp.PrevKv.Lease)
