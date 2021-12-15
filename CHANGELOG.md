@@ -8,6 +8,8 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
 
+## [6.6.3] - 2021-12-15
+
 ### Added
 - Added `etcd-client-log-level` configuration flag for setting the log level of
 the etcd client used internally within sensu-backend.
