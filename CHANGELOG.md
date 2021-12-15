@@ -15,6 +15,10 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 - Removed unused rate limiting code in the liveness package.
 - Include new Go 1.17+ build constraint syntax by running gofmt
 
+### Added
+- Add `sensu_go_event_metric_points_processed` counter metric and
+included it in tessen reporting.
+
 ## [6.6.1, 6.6.2] - 2021-11-29
 
 ### Added
