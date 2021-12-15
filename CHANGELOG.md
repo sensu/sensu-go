@@ -8,13 +8,15 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
 
-### Changed
+### Added
+- Added `etcd-client-log-level` configuration flag for setting the log level of
+the etcd client used internally within sensu-backend.
 
+### Changed
 - [GraphQL] Improvements to entity list response times and significant reduction
 in memory usage.
 - The agentd daemon now starts up after all other daemons which improves the
 chances of a cluster recovering after the loss of a backend.
-- The `etcd-log-level` flag now applies to the internal Etcd client.
 
 ### Fixed
 - New agent sessions will no longer result in a leaked Etcd lease.

@@ -85,6 +85,7 @@ const (
 	flagEtcdHeartbeatInterval        = "etcd-heartbeat-interval"
 	flagEtcdElectionTimeout          = "etcd-election-timeout"
 	flagEtcdLogLevel                 = "etcd-log-level"
+	flagEtcdClientLogLevel           = "etcd-client-log-level"
 
 	// Etcd TLS flag constants
 	flagEtcdCertFile           = "etcd-cert-file"
@@ -251,6 +252,7 @@ func StartCommand(initialize InitializeFunc) *cobra.Command {
 				EtcdHeartbeatInterval:          viper.GetUint(flagEtcdHeartbeatInterval),
 				EtcdElectionTimeout:            viper.GetUint(flagEtcdElectionTimeout),
 				EtcdLogLevel:                   viper.GetString(flagEtcdLogLevel),
+				EtcdClientLogLevel:             viper.GetString(flagEtcdClientLogLevel),
 				EtcdClientUsername:             viper.GetString(envEtcdClientUsername),
 				EtcdClientPassword:             viper.GetString(envEtcdClientPassword),
 				NoEmbedEtcd:                    viper.GetBool(flagNoEmbedEtcd),
@@ -438,6 +440,7 @@ func handleConfig(cmd *cobra.Command, arguments []string, server bool) error {
 	viper.SetDefault(flagEtcdMaxRequestBytes, etcd.DefaultMaxRequestBytes)
 	viper.SetDefault(flagEtcdHeartbeatInterval, etcd.DefaultTickMs)
 	viper.SetDefault(flagEtcdElectionTimeout, etcd.DefaultElectionMs)
+	viper.SetDefault(flagEtcdClientLogLevel, etcd.DefaultClientLogLevel)
 
 	if server {
 		viper.SetDefault(flagNoEmbedEtcd, false)
@@ -490,6 +493,8 @@ func flagSet(server bool) *pflag.FlagSet {
 	// Etcd client/server flags
 	flagSet.StringSlice(flagEtcdCipherSuites, nil, "list of ciphers to use for etcd TLS configuration")
 	_ = flagSet.SetAnnotation(flagEtcdCipherSuites, "categories", []string{"store"})
+	flagSet.String(flagEtcdClientLogLevel, viper.GetString(flagEtcdClientLogLevel), "etcd client logging level [panic, fatal, error, warn, info, debug]")
+	_ = flagSet.SetAnnotation(flagEtcdClientLogLevel, "categories", []string{"store"})
 
 	// This one is really only a server flag, but because we lacked
 	// --etcd-client-urls until recently, it's used as a fallback.
@@ -535,7 +540,6 @@ func flagSet(server bool) *pflag.FlagSet {
 		flagSet.Bool(flagInsecureSkipTLSVerify, viper.GetBool(flagInsecureSkipTLSVerify), "skip TLS verification (not recommended!)")
 		flagSet.Bool(flagDebug, false, "enable debugging and profiling features")
 		flagSet.String(flagLogLevel, viper.GetString(flagLogLevel), "logging level [panic, fatal, error, warn, info, debug, trace]")
-		flagSet.String(flagEtcdLogLevel, viper.GetString(flagEtcdLogLevel), "etcd logging level [panic, fatal, error, warn, info, debug]")
 		flagSet.Int(backend.FlagEventdWorkers, viper.GetInt(backend.FlagEventdWorkers), "number of workers spawned for processing incoming events")
 		flagSet.Int(backend.FlagEventdBufferSize, viper.GetInt(backend.FlagEventdBufferSize), "number of incoming events that can be buffered")
 		flagSet.Int(backend.FlagKeepalivedWorkers, viper.GetInt(backend.FlagKeepalivedWorkers), "number of workers spawned for processing incoming keepalives")
@@ -576,6 +580,8 @@ func flagSet(server bool) *pflag.FlagSet {
 		_ = flagSet.SetAnnotation(flagEtcdHeartbeatInterval, "categories", []string{"store"})
 		flagSet.Uint(flagEtcdElectionTimeout, viper.GetUint(flagEtcdElectionTimeout), "time in ms a follower node will go without hearing a heartbeat before attempting to become leader itself")
 		_ = flagSet.SetAnnotation(flagEtcdElectionTimeout, "categories", []string{"store"})
+		flagSet.String(flagEtcdLogLevel, viper.GetString(flagEtcdLogLevel), "etcd server logging level [panic, fatal, error, warn, info, debug]")
+		_ = flagSet.SetAnnotation(flagEtcdLogLevel, "categories", []string{"store"})
 
 		// Etcd server TLS flags
 		flagSet.String(flagEtcdPeerCertFile, viper.GetString(flagEtcdPeerCertFile), "path to the peer server TLS cert file")
