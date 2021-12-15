@@ -54,6 +54,12 @@ const (
 	// attempting to become leader itself.
 	// See: https://github.com/etcd-io/etcd/blob/master/Documentation/tuning.md#time-parameters
 	DefaultElectionMs = 1000
+
+	// DefaultLogLevel is the default log level for the embedded etcd server.
+	DefaultLogLevel = "warn"
+
+	// DefaultClientLogLevel is the default log level for the etcd client.
+	DefaultClientLogLevel = "error"
 )
 
 func init() {
@@ -111,6 +117,8 @@ func NewConfig() *Config {
 	c.QuotaBackendBytes = DefaultQuotaBackendBytes
 	c.TickMs = DefaultTickMs
 	c.ElectionMs = DefaultElectionMs
+	c.LogLevel = DefaultLogLevel
+	c.ClientLogLevel = DefaultClientLogLevel
 
 	return c
 }
@@ -410,6 +418,6 @@ func LogLevelToZap(level string) zapcore.Level {
 	case "fatal":
 		return zapcore.FatalLevel
 	default:
-		panic("invalid etcd log level")
+		panic(fmt.Sprintf("invalid etcd log level: %s", level))
 	}
 }
