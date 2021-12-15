@@ -1,3 +1,4 @@
+//go:build integration && !race
 // +build integration,!race
 
 // These tests are unfortunately quite slow. This is somewhat mitigated by the

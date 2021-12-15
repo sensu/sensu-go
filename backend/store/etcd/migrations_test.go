@@ -1,3 +1,4 @@
+//go:build !race && integration
 // +build !race,integration
 
 package etcd
