@@ -15,8 +15,6 @@ import (
 	"github.com/spf13/viper"
 	"go.etcd.io/etcd/client/pkg/v3/transport"
 	clientv3 "go.etcd.io/etcd/client/v3"
-	"go.uber.org/zap"
-	"go.uber.org/zap/zapcore"
 	"golang.org/x/time/rate"
 	"google.golang.org/grpc"
 
@@ -221,29 +219,10 @@ func newClient(ctx context.Context, config *Config, backend *Backend) (*clientv3
 			}
 		}
 
-		var level zapcore.Level
-		switch config.EtcdLogLevel {
-		case "debug", "trace":
-			level = zapcore.DebugLevel
-		case "error":
-			level = zapcore.ErrorLevel
-		case "fatal":
-			level = zapcore.FatalLevel
-		case "info":
-			level = zapcore.InfoLevel
-		case "panic":
-			level = zapcore.PanicLevel
-		case "warn":
-			level = zapcore.DebugLevel
-		}
-
 		// Set etcd client log level
-		atomicLogLevel := zap.NewAtomicLevel()
-		atomicLogLevel.SetLevel(level)
-		clientv3Config.LogConfig = &zap.Config{
-			Level:    atomicLogLevel,
-			Encoding: "json",
-		}
+		logConfig := clientv3.CreateDefaultZapLoggerConfig()
+		logConfig.Level.SetLevel(etcd.LogLevelToZap(config.EtcdClientLogLevel))
+		clientv3Config.LogConfig = &logConfig
 
 		// Don't start up an embedded etcd, return a client that connects to an
 		// external etcd instead.
@@ -271,6 +250,7 @@ func newClient(ctx context.Context, config *Config, backend *Backend) (*clientv3
 	cfg.DiscoverySrv = config.EtcdDiscoverySrv
 	cfg.Name = config.EtcdName
 	cfg.LogLevel = config.EtcdLogLevel
+	cfg.ClientLogLevel = config.EtcdClientLogLevel
 
 	// Heartbeat interval
 	if config.EtcdHeartbeatInterval > 0 {

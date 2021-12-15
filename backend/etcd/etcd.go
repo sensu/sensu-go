@@ -18,7 +18,7 @@ import (
 	"go.etcd.io/etcd/client/pkg/v3/logutil"
 	"go.etcd.io/etcd/client/pkg/v3/transport"
 	etcdTypes "go.etcd.io/etcd/client/pkg/v3/types"
-	"go.etcd.io/etcd/client/v3"
+	clientv3 "go.etcd.io/etcd/client/v3"
 	"go.etcd.io/etcd/server/v3/embed"
 	"go.etcd.io/etcd/server/v3/etcdserver/api/v3rpc"
 	"go.etcd.io/etcd/server/v3/proxy/grpcproxy/adapter"
@@ -96,7 +96,8 @@ type Config struct {
 	MaxRequestBytes   uint
 	QuotaBackendBytes int64
 
-	LogLevel string
+	LogLevel       string
+	ClientLogLevel string
 }
 
 // TLSInfo wraps etcd transport TLSInfo
@@ -262,7 +263,7 @@ func NewEtcd(config *Config) (*Etcd, error) {
 
 	if config.LogLevel != "" {
 		cfg.LogLevel = config.LogLevel
-		logutil.DefaultZapLoggerConfig.Level.SetLevel(levelToZap(config.LogLevel))
+		logutil.DefaultZapLoggerConfig.Level.SetLevel(LogLevelToZap(config.LogLevel))
 	}
 
 	e, err := embed.StartEtcd(cfg)
@@ -307,7 +308,7 @@ func (e *Etcd) NewClient() (*clientv3.Client, error) {
 // NewClientContext is like NewClient, but sets the provided context on the
 // client.
 func (e *Etcd) NewClientContext(ctx context.Context) (*clientv3.Client, error) {
-	logutil.DefaultZapLoggerConfig.Level.SetLevel(levelToZap(e.cfg.LogLevel))
+	logutil.DefaultZapLoggerConfig.Level.SetLevel(LogLevelToZap(e.cfg.LogLevel))
 
 	tlsConfig, err := ((transport.TLSInfo)(e.cfg.ClientTLSInfo)).ClientConfig()
 	if err != nil {
@@ -334,7 +335,7 @@ func (e *Etcd) NewEmbeddedClient() *clientv3.Client {
 // client. Only for testing.
 // Based on https://github.com/etcd-io/etcd/blob/v3.4.16/etcdserver/api/v3client/v3client.go#L30.
 func (e *Etcd) NewEmbeddedClientWithContext(ctx context.Context) *clientv3.Client {
-	logutil.DefaultZapLoggerConfig.Level.SetLevel(levelToZap(e.cfg.LogLevel))
+	logutil.DefaultZapLoggerConfig.Level.SetLevel(LogLevelToZap(e.cfg.ClientLogLevel))
 
 	c := clientv3.NewCtxClient(ctx)
 
@@ -392,7 +393,7 @@ func (ww *watchWrapper) Watch(ctx context.Context, key string, opts ...clientv3.
 	return ww.Watcher.Watch(&blankContext{ctx}, key, opts...)
 }
 
-func levelToZap(level string) zapcore.Level {
+func LogLevelToZap(level string) zapcore.Level {
 	switch level {
 	case "debug":
 		return zapcore.DebugLevel
