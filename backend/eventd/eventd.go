@@ -33,6 +33,10 @@ const (
 	// EventsProcessedCounterVec is the name of the prometheus counter vec used to count events processed.
 	EventsProcessedCounterVec = "sensu_go_events_processed"
 
+	// EventMetricPointsProcessedCounter is the name of the prometheus counter used to count metric points
+	// processed by eventd.
+	EventMetricPointsProcessedCounter = "sensu_go_event_metric_points_processed"
+
 	// EventsProcessedLabelName is the name of the label which describes if an
 	// event was processed successfully or not.
 	EventsProcessedLabelName = "status"
@@ -104,6 +108,21 @@ var (
 
 	// EventsProcessed counts the number of sensu go events processed.
 	EventsProcessed = prometheus.NewCounterVec(
+		prometheus.CounterOpts{
+			Name: EventsProcessedCounterVec,
+			Help: "The total number of processed events",
+		},
+		[]string{EventsProcessedLabelName, EventsProcessedTypeLabelName},
+	)
+
+	MetricPointsProcessed = prometheus.NewCounter(
+		prometheus.CounterOpts{
+			Name: EventMetricPointsProcessedCounter,
+			Help: "The total number of processed event metric points",
+		},
+	)
+
+	eventsProcessed = prometheus.NewCounterVec(
 		prometheus.CounterOpts{
 			Name: EventsProcessedCounterVec,
 			Help: "The total number of processed events",
@@ -306,6 +325,7 @@ func New(ctx context.Context, c Config, opts ...Option) (*Eventd, error) {
 	busPublishDuration.WithLabelValues(metricspkg.StatusLabelError, metricspkg.EventTypeLabelMetrics)
 
 	_ = prometheus.Register(EventsProcessed)
+	_ = prometheus.Register(MetricPointsProcessed)
 	_ = prometheus.Register(eventHandlerDuration)
 	_ = prometheus.Register(eventHandlersBusy)
 	_ = prometheus.Register(createProxyEntityDuration)
@@ -523,6 +543,10 @@ func (e *Eventd) handleMessage(msg interface{}) (fEvent *corev2.Event, fErr erro
 	if err := event.Validate(); err != nil {
 		EventsProcessed.WithLabelValues(EventsProcessedLabelError, EventsProcessedTypeLabelUnknown).Inc()
 		return event, err
+	}
+
+	if event.HasMetrics() {
+		MetricPointsProcessed.Add(float64(len(event.Metrics.Points)))
 	}
 
 	// If the event does not contain a check (rather, it contains metrics)
