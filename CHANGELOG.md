@@ -28,8 +28,9 @@ which is necessary to avoid member corruption.
 - New agent sessions will no longer result in a leaked Etcd lease.
 - sensu-backend now prints warning and continues instead of crashing
 when --event-log-file cannot be written to.
-- Fixed an infinite loop that can occur when keepalive leases are revoked on
-another backend, or by an etcd operator.
+- Fixed a crash that can occur when keepalive leases are revoked on another
+backend, or by an etcd operator.
+- Fixed an issue where sensu-backend would not terminate correctly.
 
 ## [6.6.1, 6.6.2] - 2021-11-29
 
