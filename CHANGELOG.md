@@ -20,6 +20,8 @@ chances of a cluster recovering after the loss of a backend.
 - New agent sessions will no longer result in a leaked Etcd lease.
 - sensu-backend now prints warning and continues instead of crashing
 when --event-log-file cannot be written to.
+- Fixed an infinite loop that can occur when keepalive leases are revoked on
+another backend, or by an etcd operator.
 
 ## [6.6.1, 6.6.2] - 2021-11-29
 
