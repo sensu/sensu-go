@@ -1,3 +1,4 @@
+//go:build integration
 // +build integration
 
 package backend
@@ -96,6 +97,7 @@ func TestBackendHTTPListener(t *testing.T) {
 				EtcdPeerTLSInfo:              tlsInfo,
 				EtcdUseEmbeddedClient:        true,
 				EtcdLogLevel:                 "info",
+				EtcdClientLogLevel:           "error",
 				DisablePlatformMetrics:       true,
 			}
 			ctx, cancel := context.WithCancel(context.Background())
