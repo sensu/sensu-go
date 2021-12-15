@@ -263,19 +263,20 @@ func (t *SwitchSet) ping(ctx context.Context, id string, ttl int64, alive bool) 
 			// in the course of normal operation. As such, we won't track
 			// metrics for it.
 			leaseID, err := t.newLease(ctx, ttl)
+			etcd.LeaseOperationsCounter.WithLabelValues("liveness", etcd.LeaseOperationTypePut, etcd.LeaseStatusFor(err)).Inc()
 			if err != nil {
-				etcd.LeaseOperationsCounter.WithLabelValues("liveness", etcd.LeaseOperationTypePut, etcd.LeaseStatusFor(err)).Inc()
 				return kvc.RetryRequest(n, err)
 			}
 			_, err = t.client.Put(ctx, key, val, clientv3.WithLease(leaseID))
+			etcd.LeaseOperationsCounter.WithLabelValues("liveness", etcd.LeaseOperationTypePut, etcd.LeaseStatusFor(err)).Inc()
 			if err != nil {
-				etcd.LeaseOperationsCounter.WithLabelValues("liveness", etcd.LeaseOperationTypePut, etcd.LeaseStatusFor(err)).Inc()
 				return false, err
 			}
 			return true, nil
 		}
 		leaseID := clientv3.LeaseID(resp.PrevKv.Lease)
 		_, err = t.client.KeepAliveOnce(ctx, leaseID)
+		etcd.LeaseOperationsCounter.WithLabelValues("liveness", etcd.LeaseOperationTypeKeepalive, etcd.LeaseStatusFor(err)).Inc()
 		if err != nil {
 			return false, err
 		}
@@ -288,8 +289,9 @@ func (t *SwitchSet) getLeaseIDFromKV(ctx context.Context, kv *mvccpb.KeyValue, t
 	if leaseID == 0 {
 		return t.newLease(ctx, ttl)
 	}
-	if _, err := t.client.KeepAliveOnce(ctx, leaseID); err != nil {
-		etcd.LeaseOperationsCounter.WithLabelValues("liveness", etcd.LeaseOperationTypeKeepalive, etcd.LeaseOperationStatusExpired).Inc()
+	_, err := t.client.KeepAliveOnce(ctx, leaseID)
+	etcd.LeaseOperationsCounter.WithLabelValues("liveness", etcd.LeaseOperationTypeKeepalive, etcd.LeaseStatusFor(err)).Inc()
+	if err != nil {
 		return t.newLease(ctx, ttl)
 	}
 	return leaseID, nil
