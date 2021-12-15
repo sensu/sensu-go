@@ -122,14 +122,6 @@ var (
 		},
 	)
 
-	eventsProcessed = prometheus.NewCounterVec(
-		prometheus.CounterOpts{
-			Name: EventsProcessedCounterVec,
-			Help: "The total number of processed events",
-		},
-		[]string{EventsProcessedLabelName, EventsProcessedTypeLabelName},
-	)
-
 	eventHandlerDuration = prometheus.NewSummaryVec(
 		prometheus.SummaryOpts{
 			Name:       EventHandlerDuration,
