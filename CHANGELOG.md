@@ -17,6 +17,12 @@ the etcd client used internally within sensu-backend.
 in memory usage.
 - The agentd daemon now starts up after all other daemons which improves the
 chances of a cluster recovering after the loss of a backend.
+- The `etcd-log-level` flag now applies to the internal Etcd client.
+- sensu-backend will now crash when its daemons do not stop within 30s. This can
+happen as the result of an intentional shutdown, or when an internal restart is
+triggered by database unavailability. This only applies when --no-embed-etcd is
+true. Embedded etcd sensu-backend will do everything it can to avoid crashing,
+which is necessary to avoid member corruption.
 
 ### Fixed
 - New agent sessions will no longer result in a leaked Etcd lease.

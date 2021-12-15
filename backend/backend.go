@@ -675,7 +675,8 @@ func (b *Backend) runOnce() error {
 		}()
 	}
 
-	sg := stopGroup{}
+	// crash the stopgroup after a hard-coded timeout, when etcd is not embedded.
+	sg := &stopGroup{crashOnTimeout: b.Cfg.NoEmbedEtcd, waitTime: 30 * time.Second}
 
 	// Loop across the daemons in order to start them, then add them to our groups
 	for _, d := range b.Daemons {
@@ -689,7 +690,7 @@ func (b *Backend) runOnce() error {
 		eg.daemons = append(eg.daemons, d)
 
 		// Add the daemon to our stopGroup
-		sg = append(sg, d)
+		sg.Add(d)
 	}
 
 	if !b.Cfg.DisablePlatformMetrics {
@@ -723,13 +724,6 @@ func (b *Backend) runOnce() error {
 			}
 			go metricsBridge.Run(b.RunContext())
 		}
-	}
-
-	// Reverse the order of our stopGroup so daemons are stopped in the proper
-	// order (last one started is first one stopped)
-	for i := len(sg)/2 - 1; i >= 0; i-- {
-		opp := len(sg) - 1 - i
-		sg[i], sg[opp] = sg[opp], sg[i]
 	}
 
 	if b.Etcd != nil {
@@ -839,15 +833,46 @@ type stopper interface {
 	Name() string
 }
 
-type stopGroup []stopper
+type stopGroup struct {
+	stoppers       []stopper
+	crashOnTimeout bool
+	waitTime       time.Duration
+}
+
+func (s *stopGroup) Add(stopper stopper) {
+	s.stoppers = append(s.stoppers, stopper)
+}
 
 func (s stopGroup) Stop() (err error) {
-	for _, stopper := range s {
-		logger.Info("shutting down ", stopper.Name())
-		e := stopper.Stop()
-		if err == nil {
-			err = e
-		}
+	// Reverse the order of our stopGroup so daemons are stopped in the proper
+	// order (last one started is first one stopped)
+	stoppers := make([]stopper, 0, len(s.stoppers))
+	for _, stpr := range s.stoppers {
+		stoppers = append(stoppers, stpr)
+	}
+	for i := len(stoppers)/2 - 1; i >= 0; i-- {
+		opp := len(stoppers) - 1 - i
+		stoppers[i], stoppers[opp] = stoppers[opp], stoppers[i]
+	}
+
+	for _, stpr := range stoppers {
+		func() {
+			logger.Info("shutting down ", stpr.Name())
+			if s.crashOnTimeout {
+				ctx, cancel := context.WithTimeout(context.Background(), s.waitTime)
+				defer cancel()
+				go func() {
+					<-ctx.Done()
+					if ctx.Err() == context.DeadlineExceeded {
+						panic(fmt.Sprintf("%s did not stop within %s", stpr.Name(), s.waitTime))
+					}
+				}()
+			}
+			e := stpr.Stop()
+			if err == nil {
+				err = e
+			}
+		}()
 	}
 	return err
 }
