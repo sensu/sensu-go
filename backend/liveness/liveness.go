@@ -150,9 +150,7 @@ func NewSwitchSet(client *clientv3.Client, name string, dead, alive EventFunc, l
 // TTL value is 5. If a smaller value is passed, then an error will be returned
 // and no registration will occur.
 func (t *SwitchSet) Alive(ctx context.Context, id string, ttl int64) error {
-	return kvc.Backoff(ctx).Retry(func(n int) (done bool, err error) {
-		return kvc.RetryRequest(n, t.ping(ctx, id, ttl, true))
-	})
+	return t.ping(ctx, id, ttl, true)
 }
 
 // BuryAndRevokeLease is similar to Bury() but will revoke the lease associated
@@ -230,9 +228,7 @@ func (t *SwitchSet) Bury(ctx context.Context, id string) error {
 // TTL value is 5. If a smaller value is passed, then an error will be returned
 // and no registration will occur.
 func (t *SwitchSet) Dead(ctx context.Context, id string, ttl int64) error {
-	return kvc.Backoff(ctx).Retry(func(n int) (done bool, err error) {
-		return kvc.RetryRequest(n, t.ping(ctx, id, ttl, false))
-	})
+	return t.ping(ctx, id, ttl, false)
 }
 
 func isBuried(event *clientv3.Event) bool {
@@ -274,12 +270,16 @@ func (t *SwitchSet) ping(ctx context.Context, id string, ttl int64, alive bool) 
 			_, err = t.client.Put(ctx, key, val, clientv3.WithLease(leaseID))
 			if err != nil {
 				etcd.LeaseOperationsCounter.WithLabelValues("liveness", etcd.LeaseOperationTypePut, etcd.LeaseStatusFor(err)).Inc()
+				return false, err
 			}
-			return kvc.RetryRequest(n, err)
+			return true, nil
 		}
 		leaseID := clientv3.LeaseID(resp.PrevKv.Lease)
 		_, err = t.client.KeepAliveOnce(ctx, leaseID)
-		return kvc.RetryRequest(n, err)
+		if err != nil {
+			return false, err
+		}
+		return true, nil
 	})
 }
 
