@@ -437,7 +437,7 @@ func (t *Tessend) sendPromMetrics() {
 	data := t.getDataPayload()
 	now := time.Now().Unix()
 
-	var value float64
+	var eventsProcessed float64
 	{
 		c := eventd.EventsProcessed.WithLabelValues(eventd.EventsProcessedLabelSuccess, eventd.EventsProcessedTypeLabelCheck)
 		pb := &dto.Metric{}
@@ -445,7 +445,7 @@ func (t *Tessend) sendPromMetrics() {
 			logger.WithError(err).Warn("failed to retrieve prometheus event counter")
 			return
 		}
-		value = value + pb.GetCounter().GetValue()
+		eventsProcessed = eventsProcessed + pb.GetCounter().GetValue()
 	}
 	{
 		c := eventd.EventsProcessed.WithLabelValues(eventd.EventsProcessedLabelSuccess, eventd.EventsProcessedTypeLabelMetrics)
@@ -454,7 +454,17 @@ func (t *Tessend) sendPromMetrics() {
 			logger.WithError(err).Warn("failed to retrieve prometheus event counter")
 			return
 		}
-		value = value + pb.GetCounter().GetValue()
+		eventsProcessed = eventsProcessed + pb.GetCounter().GetValue()
+	}
+
+	var metricPointsProcessed float64
+	{
+		c := eventd.MetricPointsProcessed
+		pb := &dto.Metric{}
+		if err := c.Write(pb); err != nil {
+			return
+		}
+		metricPointsProcessed = pb.GetCounter().GetValue()
 	}
 
 	// get the backend hostname to use as a metric tag
@@ -464,21 +474,31 @@ func (t *Tessend) sendPromMetrics() {
 	}
 
 	// populate data payload
-	mp := &corev2.MetricPoint{
-		Name:      eventd.EventsProcessedCounterVec,
-		Value:     value,
-		Timestamp: now,
-		Tags: []*corev2.MetricTag{
-			{
-				Name:  "hostname",
-				Value: hostname,
+	mps := []*corev2.MetricPoint{
+		{
+			Name:      eventd.EventsProcessedCounterVec,
+			Value:     eventsProcessed,
+			Timestamp: now,
+			Tags: []*corev2.MetricTag{
+				{Name: "hostname", Value: hostname},
+			},
+		},
+		{
+			Name:      eventd.EventMetricPointsProcessedCounter,
+			Value:     metricPointsProcessed,
+			Timestamp: now,
+			Tags: []*corev2.MetricTag{
+				{Name: "hostname", Value: hostname},
 			},
 		},
 	}
-	appendInternalTag(mp)
-	appendStoreConfig(mp, t.GetStoreConfig())
-	logMetric(mp)
-	data.Metrics.Points = append(data.Metrics.Points, mp)
+
+	for _, mp := range mps {
+		appendInternalTag(mp)
+		appendStoreConfig(mp, t.GetStoreConfig())
+		logMetric(mp)
+	}
+	data.Metrics.Points = append(data.Metrics.Points, mps...)
 
 	logger.WithFields(logrus.Fields{
 		"url": t.url,

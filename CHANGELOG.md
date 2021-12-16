@@ -35,6 +35,10 @@ backend, or by an etcd operator.
 - Proxy entity state is now created when it is missing and a matching entity
 config already exists.
 
+### Added
+- Add `sensu_go_event_metric_points_processed` counter metric and
+included it in tessen reporting.
+
 ## [6.6.1, 6.6.2] - 2021-11-29
 
 ### Added
