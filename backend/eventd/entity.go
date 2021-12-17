@@ -64,6 +64,31 @@ func createProxyEntity(event *corev2.Event, s storev2.Interface) (fErr error) {
 		// order to create a fully formed corev2.Entity for the event.
 		wState, err = s.Get(stateReq)
 		if err != nil {
+			switch err.(type) {
+			case *store.ErrNotFound:
+				if event.Check.ProxyEntityName != "" {
+					state.SetMetadata(&entityMeta)
+				} else {
+					// Use on the provided entity
+					_, state = corev3.V2EntityToV3(event.Entity)
+				}
+
+				state.Metadata.CreatedBy = event.CreatedBy
+
+				// Wrap and store the new entity's state. We use CreateOrUpdate()
+				// because we want to overwrite any existing EntityState that could
+				// have been left behind due to a failed operation or failure to
+				// clean up old state.
+				wState, err = storev2.WrapResource(state)
+				if err != nil {
+					return err
+				}
+				if err := s.CreateOrUpdate(stateReq, wState); err != nil {
+					return err
+				}
+			default:
+				return err
+			}
 			return err
 		}
 
