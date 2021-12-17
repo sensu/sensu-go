@@ -89,7 +89,6 @@ func createProxyEntity(event *corev2.Event, s storev2.Interface) (fErr error) {
 			default:
 				return err
 			}
-			return err
 		}
 
 		if err := wState.UnwrapInto(state); err != nil {
