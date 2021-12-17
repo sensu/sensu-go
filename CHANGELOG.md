@@ -8,8 +8,31 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
 
+## [6.6.3] - 2021-12-15
+
+### Added
+- Added `etcd-client-log-level` configuration flag for setting the log level of
+the etcd client used internally within sensu-backend.
+
+### Changed
+- [GraphQL] Improvements to entity list response times and significant reduction
+in memory usage.
+- The agentd daemon now starts up after all other daemons which improves the
+chances of a cluster recovering after the loss of a backend.
+- The `etcd-log-level` flag now applies to the internal Etcd client.
+- sensu-backend will now crash when its daemons do not stop within 30s. This can
+happen as the result of an intentional shutdown, or when an internal restart is
+triggered by database unavailability. This only applies when --no-embed-etcd is
+true. Embedded etcd sensu-backend will do everything it can to avoid crashing,
+which is necessary to avoid member corruption.
+
 ### Fixed
 - New agent sessions will no longer result in a leaked Etcd lease.
+- sensu-backend now prints warning and continues instead of crashing
+when --event-log-file cannot be written to.
+- Fixed a crash that can occur when keepalive leases are revoked on another
+backend, or by an etcd operator.
+- Fixed an issue where sensu-backend would not terminate correctly.
 
 ### Changed
 - Removed unused rate limiting code in the liveness package.

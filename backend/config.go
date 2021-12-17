@@ -112,8 +112,9 @@ type Config struct {
 
 	TLS *corev2.TLSOptions
 
-	LogLevel     string
-	EtcdLogLevel string
+	LogLevel           string
+	EtcdLogLevel       string
+	EtcdClientLogLevel string
 
 	LicenseGetter licensing.Getter
 

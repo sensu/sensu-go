@@ -40,13 +40,13 @@ func TestLogger(t *testing.T) {
 	}
 
 	// Providing an empty path should return an error
-	l.Start()
-	assert.Contains(t, hook.LastEntry().Message, "event logging is disabled")
+	err := l.Start()
+	assert.Error(t, err)
 
 	// Providing an invalid path should return an error
 	l.Path = "/"
-	l.Start()
-	assert.Contains(t, hook.LastEntry().Message, "could not start event logging")
+	err = l.Start()
+	assert.Error(t, err)
 
 	// Providing a valid path should start the logger
 	file, err := ioutil.TempFile(os.TempDir(), "event.*.log")
@@ -55,7 +55,8 @@ func TestLogger(t *testing.T) {
 	}
 	defer os.Remove(file.Name())
 	l.Path = file.Name()
-	l.Start()
+	err = l.Start()
+	assert.NoError(t, err)
 	assert.Contains(t, hook.LastEntry().Message, "event logging using 1 JSON encoder")
 }
 

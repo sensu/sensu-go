@@ -18,7 +18,7 @@ import (
 	"go.etcd.io/etcd/client/pkg/v3/logutil"
 	"go.etcd.io/etcd/client/pkg/v3/transport"
 	etcdTypes "go.etcd.io/etcd/client/pkg/v3/types"
-	"go.etcd.io/etcd/client/v3"
+	clientv3 "go.etcd.io/etcd/client/v3"
 	"go.etcd.io/etcd/server/v3/embed"
 	"go.etcd.io/etcd/server/v3/etcdserver/api/v3rpc"
 	"go.etcd.io/etcd/server/v3/proxy/grpcproxy/adapter"
@@ -54,6 +54,12 @@ const (
 	// attempting to become leader itself.
 	// See: https://github.com/etcd-io/etcd/blob/master/Documentation/tuning.md#time-parameters
 	DefaultElectionMs = 1000
+
+	// DefaultLogLevel is the default log level for the embedded etcd server.
+	DefaultLogLevel = "warn"
+
+	// DefaultClientLogLevel is the default log level for the etcd client.
+	DefaultClientLogLevel = "error"
 )
 
 func init() {
@@ -96,7 +102,8 @@ type Config struct {
 	MaxRequestBytes   uint
 	QuotaBackendBytes int64
 
-	LogLevel string
+	LogLevel       string
+	ClientLogLevel string
 }
 
 // TLSInfo wraps etcd transport TLSInfo
@@ -110,6 +117,8 @@ func NewConfig() *Config {
 	c.QuotaBackendBytes = DefaultQuotaBackendBytes
 	c.TickMs = DefaultTickMs
 	c.ElectionMs = DefaultElectionMs
+	c.LogLevel = DefaultLogLevel
+	c.ClientLogLevel = DefaultClientLogLevel
 
 	return c
 }
@@ -262,7 +271,7 @@ func NewEtcd(config *Config) (*Etcd, error) {
 
 	if config.LogLevel != "" {
 		cfg.LogLevel = config.LogLevel
-		logutil.DefaultZapLoggerConfig.Level.SetLevel(levelToZap(config.LogLevel))
+		logutil.DefaultZapLoggerConfig.Level.SetLevel(LogLevelToZap(config.LogLevel))
 	}
 
 	e, err := embed.StartEtcd(cfg)
@@ -307,12 +316,15 @@ func (e *Etcd) NewClient() (*clientv3.Client, error) {
 // NewClientContext is like NewClient, but sets the provided context on the
 // client.
 func (e *Etcd) NewClientContext(ctx context.Context) (*clientv3.Client, error) {
-	logutil.DefaultZapLoggerConfig.Level.SetLevel(levelToZap(e.cfg.LogLevel))
-
 	tlsConfig, err := ((transport.TLSInfo)(e.cfg.ClientTLSInfo)).ClientConfig()
 	if err != nil {
 		return nil, err
 	}
+
+	// Set etcd client log level
+	logConfig := clientv3.CreateDefaultZapLoggerConfig()
+	logConfig.Level.SetLevel(LogLevelToZap(e.cfg.ClientLogLevel))
+
 	return clientv3.New(clientv3.Config{
 		Endpoints:   e.cfg.AdvertiseClientURLs,
 		DialTimeout: 60 * time.Second,
@@ -321,7 +333,8 @@ func (e *Etcd) NewClientContext(ctx context.Context) (*clientv3.Client, error) {
 			grpc.WithReturnConnectionError(),
 			grpc.WithBlock(),
 		},
-		Context: ctx,
+		Context:   ctx,
+		LogConfig: &logConfig,
 	})
 }
 
@@ -334,9 +347,15 @@ func (e *Etcd) NewEmbeddedClient() *clientv3.Client {
 // client. Only for testing.
 // Based on https://github.com/etcd-io/etcd/blob/v3.4.16/etcdserver/api/v3client/v3client.go#L30.
 func (e *Etcd) NewEmbeddedClientWithContext(ctx context.Context) *clientv3.Client {
-	logutil.DefaultZapLoggerConfig.Level.SetLevel(levelToZap(e.cfg.LogLevel))
+	// Set etcd client log level
+	logConfig := clientv3.CreateDefaultZapLoggerConfig()
+	logConfig.Level.SetLevel(LogLevelToZap(e.cfg.ClientLogLevel))
+	clientLogger, err := logConfig.Build()
+	if err != nil {
+		panic(fmt.Sprintf("error building etcd client logger: %s", err))
+	}
 
-	c := clientv3.NewCtxClient(ctx)
+	c := clientv3.NewCtxClient(ctx).WithLogger(clientLogger)
 
 	kvc := adapter.KvServerToKvClient(v3rpc.NewQuotaKVServer(e.etcd.Server))
 	c.KV = clientv3.NewKVFromKVClient(kvc, c)
@@ -392,7 +411,7 @@ func (ww *watchWrapper) Watch(ctx context.Context, key string, opts ...clientv3.
 	return ww.Watcher.Watch(&blankContext{ctx}, key, opts...)
 }
 
-func levelToZap(level string) zapcore.Level {
+func LogLevelToZap(level string) zapcore.Level {
 	switch level {
 	case "debug":
 		return zapcore.DebugLevel
@@ -409,6 +428,6 @@ func levelToZap(level string) zapcore.Level {
 	case "fatal":
 		return zapcore.FatalLevel
 	default:
-		panic("invalid etcd log level")
+		panic(fmt.Sprintf("invalid etcd log level: %s", level))
 	}
 }

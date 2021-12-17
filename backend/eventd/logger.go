@@ -29,29 +29,21 @@ type FileLogger struct {
 
 // Start replaces the core event logger with the enteprise one, which logs
 // events to a log file
-func (f *FileLogger) Start() {
-	if f.Path == "" {
-		logger.Info("no event log file specified, event logging is disabled")
-		return
-	}
-
+func (f *FileLogger) Start() error {
 	f.notify = make(chan interface{}, 1)
-	consumerName := fmt.Sprintf("filelogger://%s", f.Path)
-	subscription, err := f.Bus.Subscribe(messaging.SignalTopic(syscall.SIGHUP), consumerName, f)
-	if err != nil {
-		logger.WithError(err).Error("could not start event logging")
-		return
-	}
-
-	f.subscription = subscription
 
 	rawLogger, err := newRawLogger(f.Path, f.BufferSize, f.BufferWait, f.notify)
 	if err != nil {
-		logger.WithError(err).Error("could not start event logging")
-		return
+		return fmt.Errorf("could not start event logging: %v", err)
 	}
-
 	f.rawLogger = rawLogger
+
+	consumerName := fmt.Sprintf("filelogger://%s", f.Path)
+	subscription, err := f.Bus.Subscribe(messaging.SignalTopic(syscall.SIGHUP), consumerName, f)
+	if err != nil {
+		return fmt.Errorf("failed to subscribe event logger to SIGHUP: %v", err)
+	}
+	f.subscription = subscription
 
 	// Start the encoders
 	numEncoders := f.numEncoders()
@@ -65,6 +57,7 @@ func (f *FileLogger) Start() {
 	// Listen to the output channel of the ring buffer and write it to the log
 	go rawLogger.write()
 	go rawLogger.metricsWriter()
+	return nil
 }
 
 func (f *FileLogger) numEncoders() int {

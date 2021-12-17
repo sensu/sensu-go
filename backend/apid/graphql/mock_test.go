@@ -135,8 +135,8 @@ func (c *MockEntityClient) FetchEntity(ctx context.Context, name string) (*corev
 	return args.Get(0).(*corev2.Entity), args.Error(1)
 }
 
-func (c *MockEntityClient) ListEntities(ctx context.Context) ([]*corev2.Entity, error) {
-	args := c.Called(ctx)
+func (c *MockEntityClient) ListEntities(ctx context.Context, pred *store.SelectionPredicate) ([]*corev2.Entity, error) {
+	args := c.Called(ctx, pred)
 	return args.Get(0).([]*corev2.Entity), args.Error(1)
 }
 

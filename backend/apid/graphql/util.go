@@ -18,6 +18,14 @@ func clampInt(num, min, max int) int {
 	return num
 }
 
+// minInt returns smaller of x or y.
+func minInt(x, y int) int {
+	if x > y {
+		return y
+	}
+	return x
+}
+
 // maxInt returns larger of x or y.
 func maxInt(x, y int) int {
 	if x > y {

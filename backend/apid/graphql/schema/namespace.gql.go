@@ -500,7 +500,7 @@ func _ObjectTypeNamespaceConfigFn() graphql1.ObjectConfig {
 						Type:         graphql1.Int,
 					},
 					"orderBy": &graphql1.ArgumentConfig{
-						DefaultValue: "ID_DESC",
+						DefaultValue: "ID",
 						Description:  "OrderBy adds optional order to the records retrieved.",
 						Type:         graphql.InputType("EntityListOrder"),
 					},
