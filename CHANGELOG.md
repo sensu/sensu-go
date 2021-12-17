@@ -32,6 +32,8 @@ when --event-log-file cannot be written to.
 - Fixed a crash that can occur when keepalive leases are revoked on another
 backend, or by an etcd operator.
 - Fixed an issue where sensu-backend would not terminate correctly.
+- Proxy entity state is now created when it is missing and a matching entity
+config already exists.
 
 ## [6.6.1, 6.6.2] - 2021-11-29
 
