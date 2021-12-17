@@ -19,7 +19,6 @@ the etcd client used internally within sensu-backend.
 in memory usage.
 - The agentd daemon now starts up after all other daemons which improves the
 chances of a cluster recovering after the loss of a backend.
-- The `etcd-log-level` flag now applies to the internal Etcd client.
 - sensu-backend will now crash when its daemons do not stop within 30s. This can
 happen as the result of an intentional shutdown, or when an internal restart is
 triggered by database unavailability. This only applies when --no-embed-etcd is
@@ -33,6 +32,8 @@ when --event-log-file cannot be written to.
 - Fixed a crash that can occur when keepalive leases are revoked on another
 backend, or by an etcd operator.
 - Fixed an issue where sensu-backend would not terminate correctly.
+- Proxy entity state is now created when it is missing and a matching entity
+config already exists.
 
 ### Changed
 - Removed unused rate limiting code in the liveness package.

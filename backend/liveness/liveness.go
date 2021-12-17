@@ -257,7 +257,8 @@ func (t *SwitchSet) ping(ctx context.Context, id string, ttl int64, alive bool) 
 		resp, err := t.client.Put(ctx, key, val, clientv3.WithIgnoreLease(), clientv3.WithPrevKV())
 		if err != nil {
 			// The existing lease wasn't found, it must have expired or
-			// been revoked. This isn't strictly an error as it can occur
+			// been revoked. Or, the key associated with the lease was already deleted.
+			// This isn't strictly an error as it can occur
 			// in the course of normal operation. As such, we won't track
 			// metrics for it.
 			leaseID, err := t.newLease(ctx, ttl)
@@ -431,6 +432,11 @@ func (t *SwitchSet) handleEvent(ctx context.Context, event *clientv3.Event) {
 		if err != nil {
 			t.logger.WithError(err).Errorf("error commiting keepalive tx for %s", key)
 			return
+		}
+		if !resp.Succeeded {
+			if _, err := t.client.Revoke(ctx, leaseID); err != nil {
+				t.logger.WithError(err).Error("error revoking lease on keepalive follower")
+			}
 		}
 		t.events <- func() (string, bool) {
 			return key, t.notifyDead(strings.TrimPrefix(key, t.prefix+"/"), prevState, resp.Succeeded)

@@ -144,6 +144,25 @@ type SessionConfig struct {
 
 	Marshal   agent.MarshalFunc
 	Unmarshal agent.UnmarshalFunc
+
+	// BurialReceiver is used to detect when the previous switch associated
+	// with the session has been buried. Necessary when running parallel keepalived
+	// workers.
+	BurialReceiver *BurialReceiver
+}
+
+type BurialReceiver struct {
+	ch chan interface{}
+}
+
+func NewBurialReceiver() *BurialReceiver {
+	return &BurialReceiver{
+		ch: make(chan interface{}, 1),
+	}
+}
+
+func (b *BurialReceiver) Receiver() chan<- interface{} {
+	return b.ch
 }
 
 // NewSession creates a new Session object given the triple of a transport
@@ -179,9 +198,30 @@ func NewSession(ctx context.Context, cfg SessionConfig) (*Session, error) {
 			updatesChannel: make(chan interface{}, 10),
 		},
 	}
+
+	// Optionally subscribe to burial notifications
+	if cfg.BurialReceiver != nil {
+		topic := messaging.BurialTopic(cfg.Namespace, cfg.AgentName)
+		subscription, err := s.bus.Subscribe(topic, cfg.AgentName, cfg.BurialReceiver)
+		if err != nil {
+			return nil, err
+		}
+		defer subscription.Cancel()
+	}
+
 	if err := s.bus.Publish(messaging.TopicKeepalive, makeEntitySwitchBurialEvent(cfg)); err != nil {
 		return nil, err
 	}
+
+	// wait for indication that the burial has been processed
+	if cfg.BurialReceiver != nil {
+		select {
+		case <-cfg.BurialReceiver.ch:
+		case <-time.After(time.Minute):
+			return nil, errors.New("session could not be established after 60s, giving up")
+		}
+	}
+
 	s.handler = newSessionHandler(s)
 	return s, nil
 }

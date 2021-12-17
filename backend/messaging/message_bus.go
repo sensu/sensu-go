@@ -109,3 +109,9 @@ func EntityConfigTopic(namespace, name string) string {
 func SubscriptionTopic(namespace, sub string) string {
 	return fmt.Sprintf("%s:%s:%s", TopicSubscriptions, namespace, sub)
 }
+
+// BurialTopic is used to signal to agentd sessions that a keepalive burial
+// has been processed.
+func BurialTopic(namespace, entity string) string {
+	return fmt.Sprintf("sensu:burial:%s:%s", namespace, entity)
+}

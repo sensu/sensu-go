@@ -307,6 +307,8 @@ func (k *Keepalived) processKeepalives(ctx context.Context) {
 					}
 					logger.WithError(err).Error("error deleting keepalive")
 				}
+				// ignore error as this message is advisory
+				_ = k.bus.Publish(messaging.BurialTopic(event.Entity.Namespace, event.Entity.Name), nil)
 				continue
 			}
 
