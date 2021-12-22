@@ -80,6 +80,7 @@ func TestParseProm(t *testing.T) {
 					Metric: model.Metric{
 						model.MetricNameLabel: "go_memstats_alloc_bytes_total",
 						"prom_type":           "counter",
+						"prom_help":           "Total number of bytes allocated, even if freed.",
 					},
 					Value:     4.095146016e+09,
 					Timestamp: model.TimeFromUnix(ts),
