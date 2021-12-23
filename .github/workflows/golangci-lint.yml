@@ -6,10 +6,9 @@ on:
       - 'v*'
     branches:
       - main
-      - 'release/*'
   pull_request:
     branches:
-      - '*'
+      - '**'
 
 env:
   GO_VERSION: 1.17.1
