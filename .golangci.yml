@@ -2,3 +2,7 @@ run:
   timeout: 5m
   build-tags:
     - integration
+
+issues:
+  new-from-rev: v6.6.3
+  whole-files: true
