@@ -12,6 +12,11 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+const (
+	PromTypeTagName = "prom_type"
+	PromHelpTagName = "prom_help"
+)
+
 // PromList contains Prometheus vector (samples)
 type PromList model.Vector
 
@@ -73,7 +78,10 @@ func ParseProm(event *types.Event) PromList {
 		familySamples, _ := expfmt.ExtractSamples(decodeOptions, family)
 		for _, prom := range familySamples {
 			lv := model.LabelValue(strings.ToLower(family.Type.String()))
-			prom.Metric[model.LabelName("prom_type")] = lv
+			prom.Metric[model.LabelName(PromTypeTagName)] = lv
+			if help := family.GetHelp(); help != "" {
+				prom.Metric[model.LabelName(PromHelpTagName)] = model.LabelValue(help)
+			}
 		}
 		p = append(p, familySamples...)
 	}

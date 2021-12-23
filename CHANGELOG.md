@@ -8,6 +8,9 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
 
+### Changed
+- Agent now persists prometheus HELP messages as a metric tag.
+
 ## [6.6.3] - 2021-12-15
 
 ### Added
