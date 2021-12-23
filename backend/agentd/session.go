@@ -206,7 +206,9 @@ func NewSession(ctx context.Context, cfg SessionConfig) (*Session, error) {
 		if err != nil {
 			return nil, err
 		}
-		defer subscription.Cancel()
+		defer func() {
+			_ = subscription.Cancel()
+		}()
 	}
 
 	if err := s.bus.Publish(messaging.TopicKeepalive, makeEntitySwitchBurialEvent(cfg)); err != nil {
