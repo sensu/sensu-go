@@ -11,6 +11,10 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 ### Changed
 - Agent now persists prometheus HELP messages as a metric tag.
 
+### Fixed
+- Empty map fields (e.g. an entity with no labels) are no longer treated as nil
+when used with token substitution.
+
 ## [6.6.3] - 2021-12-15
 
 ### Added

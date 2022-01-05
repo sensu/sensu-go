@@ -217,6 +217,10 @@ func synthesizeStruct(value reflect.Value) map[string]interface{} {
 		// Don't add empty/nil fields to the map if omitempty is specified
 		empty := isEmpty(fieldValue)
 		if empty && omitEmpty {
+			// If value is a map, set field to nil with map type
+			if fieldValue.Kind() == reflect.Map {
+				out[fieldName] = (map[string]interface{})(nil)
+			}
 			continue
 		}
 
