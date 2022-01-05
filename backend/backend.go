@@ -846,10 +846,8 @@ func (s *stopGroup) Add(stopper stopper) {
 func (s stopGroup) Stop() (err error) {
 	// Reverse the order of our stopGroup so daemons are stopped in the proper
 	// order (last one started is first one stopped)
-	stoppers := make([]stopper, 0, len(s.stoppers))
-	for _, stpr := range s.stoppers {
-		stoppers = append(stoppers, stpr)
-	}
+	stoppers := make([]stopper, len(s.stoppers))
+	copy(stoppers, s.stoppers)
 	for i := len(stoppers)/2 - 1; i >= 0; i-- {
 		opp := len(stoppers) - 1 - i
 		stoppers[i], stoppers[opp] = stoppers[opp], stoppers[i]

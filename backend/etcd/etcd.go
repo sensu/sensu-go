@@ -355,7 +355,7 @@ func (e *Etcd) NewEmbeddedClientWithContext(ctx context.Context) *clientv3.Clien
 		panic(fmt.Sprintf("error building etcd client logger: %s", err))
 	}
 
-	c := clientv3.NewCtxClient(ctx).WithLogger(clientLogger)
+	c := clientv3.NewCtxClient(ctx, clientv3.WithZapLogger(clientLogger))
 
 	kvc := adapter.KvServerToKvClient(v3rpc.NewQuotaKVServer(e.etcd.Server))
 	c.KV = clientv3.NewKVFromKVClient(kvc, c)
