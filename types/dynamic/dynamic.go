@@ -211,18 +211,8 @@ func synthesizeStruct(value reflect.Value) map[string]interface{} {
 			continue
 		}
 		s := structField{Field: field}
-		fieldName, omitEmpty := s.jsonFieldName()
+		fieldName, _ := s.jsonFieldName()
 		fieldValue := value.Field(i)
-
-		// Don't add empty/nil fields to the map if omitempty is specified
-		empty := isEmpty(fieldValue)
-		if empty && omitEmpty {
-			// If value is a map, set field to nil with map type
-			if fieldValue.Kind() == reflect.Map {
-				out[fieldName] = (map[string]interface{})(nil)
-			}
-			continue
-		}
 
 		switch fieldValue.Kind() {
 		case reflect.Struct:
