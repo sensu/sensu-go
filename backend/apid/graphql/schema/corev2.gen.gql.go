@@ -9,6 +9,400 @@ import (
 )
 
 //
+// CoreV2PipelineFieldResolvers represents a collection of methods whose products represent the
+// response values of the 'CoreV2Pipeline' type.
+type CoreV2PipelineFieldResolvers interface {
+	// Metadata implements response to request for 'metadata' field.
+	Metadata(p graphql.ResolveParams) (interface{}, error)
+
+	// Workflows implements response to request for 'workflows' field.
+	Workflows(p graphql.ResolveParams) (interface{}, error)
+}
+
+// CoreV2PipelineAliases implements all methods on CoreV2PipelineFieldResolvers interface by using reflection to
+// match name of field to a field on the given value. Intent is reduce friction
+// of writing new resolvers by removing all the instances where you would simply
+// have the resolvers method return a field.
+type CoreV2PipelineAliases struct{}
+
+// Metadata implements response to request for 'metadata' field.
+func (_ CoreV2PipelineAliases) Metadata(p graphql.ResolveParams) (interface{}, error) {
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	return val, err
+}
+
+// Workflows implements response to request for 'workflows' field.
+func (_ CoreV2PipelineAliases) Workflows(p graphql.ResolveParams) (interface{}, error) {
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	return val, err
+}
+
+// CoreV2PipelineType Pipeline represents a named collection of pipeline workflows.
+var CoreV2PipelineType = graphql.NewType("CoreV2Pipeline", graphql.ObjectKind)
+
+// RegisterCoreV2Pipeline registers CoreV2Pipeline object type with given service.
+func RegisterCoreV2Pipeline(svc *graphql.Service, impl CoreV2PipelineFieldResolvers) {
+	svc.RegisterObject(_ObjectTypeCoreV2PipelineDesc, impl)
+}
+func _ObjTypeCoreV2PipelineMetadataHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(interface {
+		Metadata(p graphql.ResolveParams) (interface{}, error)
+	})
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Metadata(frp)
+	}
+}
+
+func _ObjTypeCoreV2PipelineWorkflowsHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(interface {
+		Workflows(p graphql.ResolveParams) (interface{}, error)
+	})
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Workflows(frp)
+	}
+}
+
+func _ObjectTypeCoreV2PipelineConfigFn() graphql1.ObjectConfig {
+	return graphql1.ObjectConfig{
+		Description: "Pipeline represents a named collection of pipeline workflows.",
+		Fields: graphql1.Fields{
+			"metadata": &graphql1.Field{
+				Args:              graphql1.FieldConfigArgument{},
+				DeprecationReason: "",
+				Description:       "Metadata contains the name, namespace, labels and annotations of the\npipeline.",
+				Name:              "metadata",
+				Type:              graphql1.NewNonNull(graphql.OutputType("ObjectMeta")),
+			},
+			"workflows": &graphql1.Field{
+				Args:              graphql1.FieldConfigArgument{},
+				DeprecationReason: "",
+				Description:       "Workflows contains one or more pipeline workflows.",
+				Name:              "workflows",
+				Type:              graphql1.NewNonNull(graphql1.NewList(graphql.OutputType("CoreV2PipelineWorkflow"))),
+			},
+		},
+		Interfaces: []*graphql1.Interface{},
+		IsTypeOf: func(_ graphql1.IsTypeOfParams) bool {
+			// NOTE:
+			// Panic by default. Intent is that when Service is invoked, values of
+			// these fields are updated with instantiated resolvers. If these
+			// defaults are called it is most certainly programmer err.
+			// If you're see this comment then: 'Whoops! Sorry, my bad.'
+			panic("Unimplemented; see CoreV2PipelineFieldResolvers.")
+		},
+		Name: "CoreV2Pipeline",
+	}
+}
+
+// describe CoreV2Pipeline's configuration; kept private to avoid unintentional tampering of configuration at runtime.
+var _ObjectTypeCoreV2PipelineDesc = graphql.ObjectDesc{
+	Config: _ObjectTypeCoreV2PipelineConfigFn,
+	FieldHandlers: map[string]graphql.FieldHandler{
+		"metadata":  _ObjTypeCoreV2PipelineMetadataHandler,
+		"workflows": _ObjTypeCoreV2PipelineWorkflowsHandler,
+	},
+}
+
+//
+// CoreV2PipelineWorkflowFieldResolvers represents a collection of methods whose products represent the
+// response values of the 'CoreV2PipelineWorkflow' type.
+type CoreV2PipelineWorkflowFieldResolvers interface {
+	// Name implements response to request for 'name' field.
+	Name(p graphql.ResolveParams) (string, error)
+
+	// Filters implements response to request for 'filters' field.
+	Filters(p graphql.ResolveParams) (interface{}, error)
+
+	// Mutator implements response to request for 'mutator' field.
+	Mutator(p graphql.ResolveParams) (interface{}, error)
+
+	// Handler implements response to request for 'handler' field.
+	Handler(p graphql.ResolveParams) (interface{}, error)
+}
+
+// CoreV2PipelineWorkflowAliases implements all methods on CoreV2PipelineWorkflowFieldResolvers interface by using reflection to
+// match name of field to a field on the given value. Intent is reduce friction
+// of writing new resolvers by removing all the instances where you would simply
+// have the resolvers method return a field.
+type CoreV2PipelineWorkflowAliases struct{}
+
+// Name implements response to request for 'name' field.
+func (_ CoreV2PipelineWorkflowAliases) Name(p graphql.ResolveParams) (string, error) {
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	ret, ok := val.(string)
+	if err != nil {
+		return ret, err
+	}
+	if !ok {
+		return ret, errors.New("unable to coerce value for field 'name'")
+	}
+	return ret, err
+}
+
+// Filters implements response to request for 'filters' field.
+func (_ CoreV2PipelineWorkflowAliases) Filters(p graphql.ResolveParams) (interface{}, error) {
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	return val, err
+}
+
+// Mutator implements response to request for 'mutator' field.
+func (_ CoreV2PipelineWorkflowAliases) Mutator(p graphql.ResolveParams) (interface{}, error) {
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	return val, err
+}
+
+// Handler implements response to request for 'handler' field.
+func (_ CoreV2PipelineWorkflowAliases) Handler(p graphql.ResolveParams) (interface{}, error) {
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	return val, err
+}
+
+/*
+CoreV2PipelineWorkflowType PipelineWorkflow represents a workflow of filters, mutator, & handler to use
+in a pipeline.
+*/
+var CoreV2PipelineWorkflowType = graphql.NewType("CoreV2PipelineWorkflow", graphql.ObjectKind)
+
+// RegisterCoreV2PipelineWorkflow registers CoreV2PipelineWorkflow object type with given service.
+func RegisterCoreV2PipelineWorkflow(svc *graphql.Service, impl CoreV2PipelineWorkflowFieldResolvers) {
+	svc.RegisterObject(_ObjectTypeCoreV2PipelineWorkflowDesc, impl)
+}
+func _ObjTypeCoreV2PipelineWorkflowNameHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(interface {
+		Name(p graphql.ResolveParams) (string, error)
+	})
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Name(frp)
+	}
+}
+
+func _ObjTypeCoreV2PipelineWorkflowFiltersHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(interface {
+		Filters(p graphql.ResolveParams) (interface{}, error)
+	})
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Filters(frp)
+	}
+}
+
+func _ObjTypeCoreV2PipelineWorkflowMutatorHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(interface {
+		Mutator(p graphql.ResolveParams) (interface{}, error)
+	})
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Mutator(frp)
+	}
+}
+
+func _ObjTypeCoreV2PipelineWorkflowHandlerHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(interface {
+		Handler(p graphql.ResolveParams) (interface{}, error)
+	})
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Handler(frp)
+	}
+}
+
+func _ObjectTypeCoreV2PipelineWorkflowConfigFn() graphql1.ObjectConfig {
+	return graphql1.ObjectConfig{
+		Description: "PipelineWorkflow represents a workflow of filters, mutator, & handler to use\nin a pipeline.",
+		Fields: graphql1.Fields{
+			"filters": &graphql1.Field{
+				Args:              graphql1.FieldConfigArgument{},
+				DeprecationReason: "",
+				Description:       "Filters contains one or more references to a resource to use as an event\nfilter.",
+				Name:              "filters",
+				Type:              graphql1.NewNonNull(graphql1.NewList(graphql.OutputType("CoreV2ResourceReference"))),
+			},
+			"handler": &graphql1.Field{
+				Args:              graphql1.FieldConfigArgument{},
+				DeprecationReason: "",
+				Description:       "Handler contains a reference to a resource to use as an event handler.",
+				Name:              "handler",
+				Type:              graphql.OutputType("CoreV2ResourceReference"),
+			},
+			"mutator": &graphql1.Field{
+				Args:              graphql1.FieldConfigArgument{},
+				DeprecationReason: "",
+				Description:       "Mutator contains a reference to a resource to use as an event mutator.",
+				Name:              "mutator",
+				Type:              graphql.OutputType("CoreV2ResourceReference"),
+			},
+			"name": &graphql1.Field{
+				Args:              graphql1.FieldConfigArgument{},
+				DeprecationReason: "",
+				Description:       "Name is a descriptive name of the pipeline workflow.",
+				Name:              "name",
+				Type:              graphql1.NewNonNull(graphql1.String),
+			},
+		},
+		Interfaces: []*graphql1.Interface{},
+		IsTypeOf: func(_ graphql1.IsTypeOfParams) bool {
+			// NOTE:
+			// Panic by default. Intent is that when Service is invoked, values of
+			// these fields are updated with instantiated resolvers. If these
+			// defaults are called it is most certainly programmer err.
+			// If you're see this comment then: 'Whoops! Sorry, my bad.'
+			panic("Unimplemented; see CoreV2PipelineWorkflowFieldResolvers.")
+		},
+		Name: "CoreV2PipelineWorkflow",
+	}
+}
+
+// describe CoreV2PipelineWorkflow's configuration; kept private to avoid unintentional tampering of configuration at runtime.
+var _ObjectTypeCoreV2PipelineWorkflowDesc = graphql.ObjectDesc{
+	Config: _ObjectTypeCoreV2PipelineWorkflowConfigFn,
+	FieldHandlers: map[string]graphql.FieldHandler{
+		"filters": _ObjTypeCoreV2PipelineWorkflowFiltersHandler,
+		"handler": _ObjTypeCoreV2PipelineWorkflowHandlerHandler,
+		"mutator": _ObjTypeCoreV2PipelineWorkflowMutatorHandler,
+		"name":    _ObjTypeCoreV2PipelineWorkflowNameHandler,
+	},
+}
+
+//
+// CoreV2ResourceReferenceFieldResolvers represents a collection of methods whose products represent the
+// response values of the 'CoreV2ResourceReference' type.
+type CoreV2ResourceReferenceFieldResolvers interface {
+	// Name implements response to request for 'name' field.
+	Name(p graphql.ResolveParams) (string, error)
+
+	// Type implements response to request for 'type' field.
+	Type(p graphql.ResolveParams) (string, error)
+
+	// Api_version implements response to request for 'api_version' field.
+	Api_version(p graphql.ResolveParams) (string, error)
+}
+
+// CoreV2ResourceReferenceAliases implements all methods on CoreV2ResourceReferenceFieldResolvers interface by using reflection to
+// match name of field to a field on the given value. Intent is reduce friction
+// of writing new resolvers by removing all the instances where you would simply
+// have the resolvers method return a field.
+type CoreV2ResourceReferenceAliases struct{}
+
+// Name implements response to request for 'name' field.
+func (_ CoreV2ResourceReferenceAliases) Name(p graphql.ResolveParams) (string, error) {
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	ret, ok := val.(string)
+	if err != nil {
+		return ret, err
+	}
+	if !ok {
+		return ret, errors.New("unable to coerce value for field 'name'")
+	}
+	return ret, err
+}
+
+// Type implements response to request for 'type' field.
+func (_ CoreV2ResourceReferenceAliases) Type(p graphql.ResolveParams) (string, error) {
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	ret, ok := val.(string)
+	if err != nil {
+		return ret, err
+	}
+	if !ok {
+		return ret, errors.New("unable to coerce value for field 'type'")
+	}
+	return ret, err
+}
+
+// Api_version implements response to request for 'api_version' field.
+func (_ CoreV2ResourceReferenceAliases) Api_version(p graphql.ResolveParams) (string, error) {
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	ret, ok := val.(string)
+	if err != nil {
+		return ret, err
+	}
+	if !ok {
+		return ret, errors.New("unable to coerce value for field 'api_version'")
+	}
+	return ret, err
+}
+
+// CoreV2ResourceReferenceType ResourceReference represents a reference to another resource.
+var CoreV2ResourceReferenceType = graphql.NewType("CoreV2ResourceReference", graphql.ObjectKind)
+
+// RegisterCoreV2ResourceReference registers CoreV2ResourceReference object type with given service.
+func RegisterCoreV2ResourceReference(svc *graphql.Service, impl CoreV2ResourceReferenceFieldResolvers) {
+	svc.RegisterObject(_ObjectTypeCoreV2ResourceReferenceDesc, impl)
+}
+func _ObjTypeCoreV2ResourceReferenceNameHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(interface {
+		Name(p graphql.ResolveParams) (string, error)
+	})
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Name(frp)
+	}
+}
+
+func _ObjTypeCoreV2ResourceReferenceTypeHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(interface {
+		Type(p graphql.ResolveParams) (string, error)
+	})
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Type(frp)
+	}
+}
+
+func _ObjTypeCoreV2ResourceReferenceApi_versionHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(interface {
+		Api_version(p graphql.ResolveParams) (string, error)
+	})
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Api_version(frp)
+	}
+}
+
+func _ObjectTypeCoreV2ResourceReferenceConfigFn() graphql1.ObjectConfig {
+	return graphql1.ObjectConfig{
+		Description: "ResourceReference represents a reference to another resource.",
+		Fields: graphql1.Fields{
+			"api_version": &graphql1.Field{
+				Args:              graphql1.FieldConfigArgument{},
+				DeprecationReason: "",
+				Description:       "APIVersion is the API version of the resource to reference.",
+				Name:              "api_version",
+				Type:              graphql1.NewNonNull(graphql1.String),
+			},
+			"name": &graphql1.Field{
+				Args:              graphql1.FieldConfigArgument{},
+				DeprecationReason: "",
+				Description:       "Name is the name of the resource to reference.",
+				Name:              "name",
+				Type:              graphql1.NewNonNull(graphql1.String),
+			},
+			"type": &graphql1.Field{
+				Args:              graphql1.FieldConfigArgument{},
+				DeprecationReason: "",
+				Description:       "Type is the name of the data type of the resource to reference.",
+				Name:              "type",
+				Type:              graphql1.NewNonNull(graphql1.String),
+			},
+		},
+		Interfaces: []*graphql1.Interface{},
+		IsTypeOf: func(_ graphql1.IsTypeOfParams) bool {
+			// NOTE:
+			// Panic by default. Intent is that when Service is invoked, values of
+			// these fields are updated with instantiated resolvers. If these
+			// defaults are called it is most certainly programmer err.
+			// If you're see this comment then: 'Whoops! Sorry, my bad.'
+			panic("Unimplemented; see CoreV2ResourceReferenceFieldResolvers.")
+		},
+		Name: "CoreV2ResourceReference",
+	}
+}
+
+// describe CoreV2ResourceReference's configuration; kept private to avoid unintentional tampering of configuration at runtime.
+var _ObjectTypeCoreV2ResourceReferenceDesc = graphql.ObjectDesc{
+	Config: _ObjectTypeCoreV2ResourceReferenceConfigFn,
+	FieldHandlers: map[string]graphql.FieldHandler{
+		"api_version": _ObjTypeCoreV2ResourceReferenceApi_versionHandler,
+		"name":        _ObjTypeCoreV2ResourceReferenceNameHandler,
+		"type":        _ObjTypeCoreV2ResourceReferenceTypeHandler,
+	},
+}
+
+//
 // CoreV2SecretFieldResolvers represents a collection of methods whose products represent the
 // response values of the 'CoreV2Secret' type.
 type CoreV2SecretFieldResolvers interface {

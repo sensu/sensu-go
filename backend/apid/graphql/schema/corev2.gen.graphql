@@ -1,5 +1,53 @@
 # automatically generated file, do not edit!
 
+"""Pipeline represents a named collection of pipeline workflows."""
+type CoreV2Pipeline {
+  
+  """
+  Metadata contains the name, namespace, labels and annotations of the
+  pipeline.
+  """
+  metadata: ObjectMeta!
+  
+  """Workflows contains one or more pipeline workflows."""
+  workflows: [CoreV2PipelineWorkflow]!
+}
+
+"""
+PipelineWorkflow represents a workflow of filters, mutator, & handler to use
+in a pipeline.
+"""
+type CoreV2PipelineWorkflow {
+  
+  """Name is a descriptive name of the pipeline workflow."""
+  name: String!
+  
+  """
+  Filters contains one or more references to a resource to use as an event
+  filter.
+  """
+  filters: [CoreV2ResourceReference]!
+  
+  """Mutator contains a reference to a resource to use as an event mutator."""
+  mutator: CoreV2ResourceReference
+  
+  """Handler contains a reference to a resource to use as an event handler."""
+  handler: CoreV2ResourceReference
+}
+
+"""ResourceReference represents a reference to another resource."""
+type CoreV2ResourceReference {
+  
+  """Name is the name of the resource to reference."""
+  name: String!
+  
+  """Type is the name of the data type of the resource to reference."""
+  type: String!
+  
+  """APIVersion is the API version of the resource to reference."""
+  api_version: String!
+}
+
 """A Secret is a secret specification."""
 type CoreV2Secret {
   
