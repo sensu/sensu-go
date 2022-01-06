@@ -25,6 +25,20 @@ var logger = logrus.WithFields(logrus.Fields{
 	"component": "ring",
 })
 
+type deleteEntityContextKeyT struct{}
+
+// DeleteEntityContextKey can be set to tell the ring implementation to delete
+// the entity as well as the entity's ring association. Does not currently apply
+// to the etcd-based ring.
+var DeleteEntityContextKey = deleteEntityContextKeyT{}
+
+// DeleteEntityContext modifies a context with a value that can inform ring
+// implementations that deleting the entity is desired as well as deleting
+// the ring association. Does not currently apply to the etcd-based ring.
+func DeleteEntityContext(ctx context.Context) context.Context {
+	return context.WithValue(ctx, DeleteEntityContextKey, struct{}{})
+}
+
 // EventType is an enum that describes the type of event received by watchers.
 type EventType int
 
