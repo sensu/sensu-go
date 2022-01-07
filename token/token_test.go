@@ -13,11 +13,12 @@ import (
 
 func TestSubstitution(t *testing.T) {
 	testCases := []struct {
-		name            string
-		data            interface{}
-		input           interface{}
-		expectedCommand string
-		expectedError   bool
+		name                  string
+		data                  interface{}
+		input                 interface{}
+		expectedCommand       string
+		expectedError         bool
+		expectedErrorContains string
 	}{
 		{
 			name:            "empty data",
@@ -109,6 +110,45 @@ func TestSubstitution(t *testing.T) {
 			expectedError:   false,
 		},
 		{
+			name: "labels with index missing key",
+			data: corev2.Check{
+				ObjectMeta: corev2.ObjectMeta{
+					Labels: map[string]string{"foo": "bar"},
+				},
+			},
+			input: corev2.CheckConfig{
+				Command: `echo {{ index .labels "bar" }}`,
+			},
+			expectedError:         true,
+			expectedErrorContains: "unmatched token: found an undefined value but could not identify the token",
+		},
+		{
+			name: "empty labels with missing key",
+			data: corev2.Check{
+				ObjectMeta: corev2.ObjectMeta{
+					Labels: map[string]string{},
+				},
+			},
+			input: corev2.CheckConfig{
+				Command: `echo {{ .labels.foo }}`,
+			},
+			expectedError:         true,
+			expectedErrorContains: "has no entry for key",
+		},
+		{
+			name: "empty labels with index missing key",
+			data: corev2.Check{
+				ObjectMeta: corev2.ObjectMeta{
+					Labels: map[string]string{},
+				},
+			},
+			input: corev2.CheckConfig{
+				Command: `echo {{ index .labels "foo" }}`,
+			},
+			expectedError:         true,
+			expectedErrorContains: "unmatched token: found an undefined value but could not identify the token",
+		},
+		{
 			name: "quoted strings in template",
 			data: corev2.FixtureEntity("foo"),
 			input: corev2.CheckConfig{
@@ -130,6 +170,8 @@ func TestSubstitution(t *testing.T) {
 				assert.NoError(t, err)
 
 				assert.Equal(t, tc.expectedCommand, checkResult.Command)
+			} else {
+				assert.Contains(t, err.Error(), tc.expectedErrorContains)
 			}
 		})
 	}
