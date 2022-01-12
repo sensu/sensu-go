@@ -8,6 +8,8 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
 
+## [6.6.4] - 2022-01-13
+
 ### Added
 - Add `sensu_go_event_metric_points_processed` counter metric and
 included it in tessen reporting.
