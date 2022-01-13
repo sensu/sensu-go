@@ -34,6 +34,19 @@ func init() {
 	logrus.SetOutput(ioutil.Discard)
 }
 
+func TestNilHandlerBug_GH4584(t *testing.T) {
+	// tests to make sure Handle() doesn't panic when the handler is not found.
+	mockStore := new(mockstore.MockStore)
+	mockStore.On("GetHandlerByName", mock.Anything, mock.Anything).Return((*corev2.Handler)(nil), nil)
+	adapter := &LegacyAdapter{
+		Store: mockStore,
+	}
+	err := adapter.Handle(context.Background(), &corev2.ResourceReference{}, corev2.FixtureEvent("foo", "bar"), nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+}
+
 func TestHelperHandlerProcess(t *testing.T) {
 	if os.Getenv("GO_WANT_HELPER_HANDLER_PROCESS") != "1" {
 		return
