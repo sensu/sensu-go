@@ -75,7 +75,7 @@ func (a *Agent) handleCheck(ctx context.Context, payload []byte) error {
 }
 
 // handleCheckNoop is used to discard incoming check requests
-func (a *Agent) handleCheckNoop(ctx context.Context, payload []byte) error {
+func (a *Agent) handleCheckNoop(_ context.Context, _ []byte) error {
 	return nil
 }
 
@@ -263,6 +263,10 @@ func (a *Agent) executeCheck(ctx context.Context, request *corev2.CheckRequest, 
 
 	if check.OutputMetricFormat != "" {
 		event.Metrics.Points = extractMetrics(event)
+
+		if event.Check.Status == 0 && len(event.Metrics.Points) > 0 && len(check.OutputMetricThresholds) > 0 {
+			event.Check.Status = evaluateOutputMetricThresholds(event)
+		}
 	}
 
 	if len(check.OutputMetricHandlers) != 0 {
@@ -352,4 +356,56 @@ func extractMetrics(event *corev2.Event) []*corev2.MetricPoint {
 	}
 
 	return transformer.Transform()
+}
+
+func evaluateOutputMetricThresholds(event *corev2.Event) uint32 {
+	if event.Check.Status > 0 {
+		return event.Check.Status
+	}
+
+	points := event.Metrics.Points
+	thresholds := event.Check.OutputMetricThresholds
+
+	var status uint32 = 0
+	for _, thresholdRule := range thresholds {
+		for _, metricPoint := range points {
+			ruleMatched := false
+			if thresholdRule.MatchesMetricPoint(metricPoint) {
+				ruleMatched = true
+				for _, rule := range thresholdRule.Thresholds {
+					if rule.Min != "" {
+						min, err := strconv.ParseFloat(rule.Min, 64)
+						if err != nil {
+							continue
+						}
+						if metricPoint.Value < min {
+							if status < rule.Status {
+								status = rule.Status
+							}
+							continue
+						}
+					}
+					if rule.Max != "" {
+						max, err := strconv.ParseFloat(rule.Max, 64)
+						if err != nil {
+							continue
+						}
+						if metricPoint.Value > max {
+							if status < rule.Status {
+								status = rule.Status
+							}
+						}
+					}
+				}
+			}
+			if !ruleMatched {
+				for _, rule := range thresholdRule.Thresholds {
+					if rule.NullStatus > 0 && status < rule.NullStatus {
+						status = rule.NullStatus
+					}
+				}
+			}
+		}
+	}
+	return status
 }

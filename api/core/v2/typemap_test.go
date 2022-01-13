@@ -329,6 +329,23 @@ func TestResolveEventFilter(t *testing.T) {
 	}
 }
 
+func TestResolveExtension(t *testing.T) {
+	var value interface{} = new(Extension)
+	if _, ok := value.(Resource); ok {
+		if _, err := ResolveResource("Extension"); err != nil {
+			t.Fatal(err)
+		}
+		return
+	}
+	_, err := ResolveResource("Extension")
+	if err == nil {
+		t.Fatal("expected non-nil error")
+	}
+	if got, want := err.Error(), `"Extension" is not a Resource`; got != want {
+		t.Fatalf("unexpected error: %s", err)
+	}
+}
+
 func TestResolveHandler(t *testing.T) {
 	var value interface{} = new(Handler)
 	if _, ok := value.(Resource); ok {
@@ -478,6 +495,57 @@ func TestResolveMetricTag(t *testing.T) {
 		t.Fatal("expected non-nil error")
 	}
 	if got, want := err.Error(), `"MetricTag" is not a Resource`; got != want {
+		t.Fatalf("unexpected error: %s", err)
+	}
+}
+
+func TestResolveMetricThreshold(t *testing.T) {
+	var value interface{} = new(MetricThreshold)
+	if _, ok := value.(Resource); ok {
+		if _, err := ResolveResource("MetricThreshold"); err != nil {
+			t.Fatal(err)
+		}
+		return
+	}
+	_, err := ResolveResource("MetricThreshold")
+	if err == nil {
+		t.Fatal("expected non-nil error")
+	}
+	if got, want := err.Error(), `"MetricThreshold" is not a Resource`; got != want {
+		t.Fatalf("unexpected error: %s", err)
+	}
+}
+
+func TestResolveMetricThresholdRule(t *testing.T) {
+	var value interface{} = new(MetricThresholdRule)
+	if _, ok := value.(Resource); ok {
+		if _, err := ResolveResource("MetricThresholdRule"); err != nil {
+			t.Fatal(err)
+		}
+		return
+	}
+	_, err := ResolveResource("MetricThresholdRule")
+	if err == nil {
+		t.Fatal("expected non-nil error")
+	}
+	if got, want := err.Error(), `"MetricThresholdRule" is not a Resource`; got != want {
+		t.Fatalf("unexpected error: %s", err)
+	}
+}
+
+func TestResolveMetricThresholdTag(t *testing.T) {
+	var value interface{} = new(MetricThresholdTag)
+	if _, ok := value.(Resource); ok {
+		if _, err := ResolveResource("MetricThresholdTag"); err != nil {
+			t.Fatal(err)
+		}
+		return
+	}
+	_, err := ResolveResource("MetricThresholdTag")
+	if err == nil {
+		t.Fatal("expected non-nil error")
+	}
+	if got, want := err.Error(), `"MetricThresholdTag" is not a Resource`; got != want {
 		t.Fatalf("unexpected error: %s", err)
 	}
 }

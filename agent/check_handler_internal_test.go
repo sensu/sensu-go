@@ -555,3 +555,77 @@ func TestCheckHandlerProcessedBy(t *testing.T) {
 		t.Errorf("bad processed_by: got %q, want %q", got, want)
 	}
 }
+
+func TestEvaluateOutputMetricThresholds(t *testing.T) {
+	now := time.Now().UnixMilli()
+
+	metric1 := &corev2.MetricPoint{Name: "disk_rate", Value: 100000.0, Timestamp: now, Tags: nil}
+	metric2 := &corev2.MetricPoint{Name: "network_rate", Value: 100000.0, Timestamp: now, Tags: []*corev2.MetricTag{{Name: "device", Value: "eth0"}}}
+
+	testCases := []struct {
+		name           string
+		event          *corev2.Event
+		metrics        []*corev2.MetricPoint
+		thresholds     []*corev2.MetricThreshold
+		expectedStatus uint32
+	}{
+		{
+			name:           "minimum rule match",
+			event:          &corev2.Event{Check: &corev2.Check{Status: 0}},
+			metrics:        []*corev2.MetricPoint{metric1},
+			thresholds:     []*corev2.MetricThreshold{{Name: "disk_rate", Thresholds: []*corev2.MetricThresholdRule{{Min: "200000.0", Status: 2}}}},
+			expectedStatus: 2,
+		}, {
+			name:           "maximum rule match",
+			event:          &corev2.Event{Check: &corev2.Check{Status: 0}},
+			metrics:        []*corev2.MetricPoint{metric1},
+			thresholds:     []*corev2.MetricThreshold{{Name: "disk_rate", Thresholds: []*corev2.MetricThresholdRule{{Max: "50000.0", Status: 2}}}},
+			expectedStatus: 2,
+		}, {
+			name:           "no min rule match",
+			event:          &corev2.Event{Check: &corev2.Check{Status: 0}},
+			metrics:        []*corev2.MetricPoint{metric1},
+			thresholds:     []*corev2.MetricThreshold{{Name: "disk_rate", Thresholds: []*corev2.MetricThresholdRule{{Min: "50000.0", Status: 2}}}},
+			expectedStatus: 0,
+		}, {
+			name:           "no max rule match",
+			event:          &corev2.Event{Check: &corev2.Check{Status: 0}},
+			metrics:        []*corev2.MetricPoint{metric1},
+			thresholds:     []*corev2.MetricThreshold{{Name: "disk_rate", Thresholds: []*corev2.MetricThresholdRule{{Max: "200000.0", Status: 2}}}},
+			expectedStatus: 0,
+		}, {
+			name:           "min and max rule match",
+			event:          &corev2.Event{Check: &corev2.Check{Status: 0}},
+			metrics:        []*corev2.MetricPoint{metric1},
+			thresholds:     []*corev2.MetricThreshold{{Name: "disk_rate", Thresholds: []*corev2.MetricThresholdRule{{Min: "200000.0", Status: 1}, {Max: "75000.0", Status: 2}}}},
+			expectedStatus: 2,
+		}, {
+			name:           "only one rule match",
+			event:          &corev2.Event{Check: &corev2.Check{Status: 0}},
+			metrics:        []*corev2.MetricPoint{metric1},
+			thresholds:     []*corev2.MetricThreshold{{Name: "disk_rate", Thresholds: []*corev2.MetricThresholdRule{{Min: "200000.0", Status: 1}, {Max: "200000.0", Status: 2}}}},
+			expectedStatus: 1,
+		}, {
+			name:           "no filter match - null status",
+			event:          &corev2.Event{Check: &corev2.Check{Status: 0}},
+			metrics:        []*corev2.MetricPoint{metric1},
+			thresholds:     []*corev2.MetricThreshold{{Name: "not_a_disk_rate", Thresholds: []*corev2.MetricThresholdRule{{Max: "200000.0", Status: 2, NullStatus: 1}}}},
+			expectedStatus: 1,
+		}, {
+			name:           "multi metric and rule matches",
+			event:          &corev2.Event{Check: &corev2.Check{Status: 0}},
+			metrics:        []*corev2.MetricPoint{metric1, metric2},
+			thresholds:     []*corev2.MetricThreshold{{Name: "disk_rate", Thresholds: []*corev2.MetricThresholdRule{{Max: "200000.0", Status: 2, NullStatus: 1}}}},
+			expectedStatus: 1,
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.name, func(t *testing.T) {
+			test.event.Metrics = &corev2.Metrics{Points: test.metrics}
+			test.event.Check.OutputMetricThresholds = test.thresholds
+			status := evaluateOutputMetricThresholds(test.event)
+			assert.Equal(t, test.expectedStatus, status)
+		})
+	}
+}
