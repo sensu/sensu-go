@@ -59,12 +59,18 @@ func (l *LegacyAdapter) Handle(ctx context.Context, ref *corev2.ResourceReferenc
 	fields := utillogging.EventFields(event, false)
 	fields["pipeline"] = corev2.ContextPipeline(ctx)
 	fields["pipeline_workflow"] = corev2.ContextPipelineWorkflow(ctx)
+	fields["handler"] = ref.Name
 
 	tctx, cancel := context.WithTimeout(ctx, l.StoreTimeout)
 	handler, err := l.Store.GetHandlerByName(tctx, ref.Name)
 	cancel()
 	if err != nil {
 		return fmt.Errorf("failed to fetch handler from store: %v", err)
+	}
+	if handler == nil {
+		logger.WithFields(fields).
+			Error("handler not found, skipping handler execution")
+		return nil
 	}
 
 	switch handler.Type {
