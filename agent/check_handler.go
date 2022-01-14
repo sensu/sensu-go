@@ -368,8 +368,8 @@ func evaluateOutputMetricThresholds(event *corev2.Event) uint32 {
 
 	var status uint32 = 0
 	for _, thresholdRule := range thresholds {
+		ruleMatched := false
 		for _, metricPoint := range points {
-			ruleMatched := false
 			if thresholdRule.MatchesMetricPoint(metricPoint) {
 				ruleMatched = true
 				for _, rule := range thresholdRule.Thresholds {
@@ -398,11 +398,11 @@ func evaluateOutputMetricThresholds(event *corev2.Event) uint32 {
 					}
 				}
 			}
-			if !ruleMatched {
-				for _, rule := range thresholdRule.Thresholds {
-					if rule.NullStatus > 0 && status < rule.NullStatus {
-						status = rule.NullStatus
-					}
+		}
+		if !ruleMatched {
+			for _, rule := range thresholdRule.Thresholds {
+				if rule.NullStatus > 0 && status < rule.NullStatus {
+					status = rule.NullStatus
 				}
 			}
 		}
