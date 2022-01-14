@@ -101,30 +101,31 @@ func NewCheck(c *CheckConfig) *Check {
 			Labels:      c.Labels,
 			Annotations: c.Annotations,
 		},
-		Command:              c.Command,
-		Handlers:             c.Handlers,
-		HighFlapThreshold:    c.HighFlapThreshold,
-		Interval:             c.Interval,
-		LowFlapThreshold:     c.LowFlapThreshold,
-		Publish:              c.Publish,
-		RuntimeAssets:        c.RuntimeAssets,
-		Subscriptions:        c.Subscriptions,
-		ProxyEntityName:      c.ProxyEntityName,
-		CheckHooks:           c.CheckHooks,
-		Stdin:                c.Stdin,
-		Subdue:               c.Subdue,
-		Cron:                 c.Cron,
-		Ttl:                  c.Ttl,
-		Timeout:              c.Timeout,
-		ProxyRequests:        c.ProxyRequests,
-		RoundRobin:           c.RoundRobin,
-		OutputMetricFormat:   c.OutputMetricFormat,
-		OutputMetricHandlers: c.OutputMetricHandlers,
-		OutputMetricTags:     c.OutputMetricTags,
-		EnvVars:              c.EnvVars,
-		DiscardOutput:        c.DiscardOutput,
-		MaxOutputSize:        c.MaxOutputSize,
-		Scheduler:            c.Scheduler,
+		Command:                c.Command,
+		Handlers:               c.Handlers,
+		HighFlapThreshold:      c.HighFlapThreshold,
+		Interval:               c.Interval,
+		LowFlapThreshold:       c.LowFlapThreshold,
+		Publish:                c.Publish,
+		RuntimeAssets:          c.RuntimeAssets,
+		Subscriptions:          c.Subscriptions,
+		ProxyEntityName:        c.ProxyEntityName,
+		CheckHooks:             c.CheckHooks,
+		Stdin:                  c.Stdin,
+		Subdue:                 c.Subdue,
+		Cron:                   c.Cron,
+		Ttl:                    c.Ttl,
+		Timeout:                c.Timeout,
+		ProxyRequests:          c.ProxyRequests,
+		RoundRobin:             c.RoundRobin,
+		OutputMetricFormat:     c.OutputMetricFormat,
+		OutputMetricHandlers:   c.OutputMetricHandlers,
+		OutputMetricTags:       c.OutputMetricTags,
+		OutputMetricThresholds: c.OutputMetricThresholds,
+		EnvVars:                c.EnvVars,
+		DiscardOutput:          c.DiscardOutput,
+		MaxOutputSize:          c.MaxOutputSize,
+		Scheduler:              c.Scheduler,
 	}
 	if check.Labels == nil {
 		check.Labels = make(map[string]string)
@@ -233,6 +234,12 @@ func (c *Check) Validate() error {
 
 	if c.MaxOutputSize < 0 {
 		return fmt.Errorf("MaxOutputSize must be >= 0")
+	}
+
+	if c.OutputMetricThresholds != nil {
+		if err := MetricThresholds(c.OutputMetricThresholds).Validate(); err != nil {
+			return err
+		}
 	}
 
 	return c.Subdue.Validate()

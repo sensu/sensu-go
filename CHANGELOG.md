@@ -1,4 +1,5 @@
 
+
 # Changelog
 All notable changes to this project will be documented in this file.
 
@@ -7,6 +8,9 @@ and this project adheres to [Semantic
 Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
+
+### Added
+- Added metric threshold service checks.
 
 ### Changed
 - Agent now persists prometheus HELP messages as a metric tag.

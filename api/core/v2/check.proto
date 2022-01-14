@@ -4,10 +4,11 @@ import "github.com/gogo/protobuf@v1.3.1/gogoproto/gogo.proto";
 import "github.com/sensu/sensu-go/api/core/v2/asset.proto";
 import "github.com/sensu/sensu-go/api/core/v2/hook.proto";
 import "github.com/sensu/sensu-go/api/core/v2/meta.proto";
-import "github.com/sensu/sensu-go/api/core/v2/time_window.proto";
-import "github.com/sensu/sensu-go/api/core/v2/secret.proto";
+import "github.com/sensu/sensu-go/api/core/v2/metric_threshold.proto";
 import "github.com/sensu/sensu-go/api/core/v2/metrics.proto";
 import "github.com/sensu/sensu-go/api/core/v2/resource_reference.proto";
+import "github.com/sensu/sensu-go/api/core/v2/secret.proto";
+import "github.com/sensu/sensu-go/api/core/v2/time_window.proto";
 
 package sensu.core.v2;
 
@@ -166,6 +167,8 @@ message CheckConfig {
 
   // Pipelines are the pipelines this check will use to process its events.
   repeated ResourceReference pipelines = 32 [ (gogoproto.jsontag) = "pipelines" ];
+
+  repeated MetricThreshold output_metric_thresholds = 33 [ (gogoproto.jsontag) = "output_metric_thresholds,omitempty", (gogoproto.moretags) = "yaml: \"output_metric_thresholds,omitempty\"" ];
 }
 
 // A Check is a check specification and optionally the results of the check's
@@ -322,6 +325,10 @@ message Check {
 
   // Pipelines are the pipelines this check will use to process its events.
   repeated ResourceReference pipelines = 46 [ (gogoproto.jsontag) = "pipelines" ];
+
+  // MetricThresholds are a list of thresholds to apply to metrics in order to determine
+  // the check status.
+  repeated MetricThreshold output_metric_thresholds = 47 [ (gogoproto.jsontag) = "output_metric_thresholds,omitempty", (gogoproto.moretags) = "yaml: \"output_metric_thresholds,omitempty\"" ];
 
   // ExtendedAttributes store serialized arbitrary JSON-encoded data
   bytes ExtendedAttributes = 99 [ (gogoproto.jsontag) = "-" ];

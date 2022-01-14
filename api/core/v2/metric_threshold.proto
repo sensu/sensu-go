@@ -1,0 +1,49 @@
+syntax = "proto3";
+
+import "github.com/gogo/protobuf@v1.3.1/gogoproto/gogo.proto";
+
+package sensu.core.v2;
+
+option go_package = "v2";
+option (gogoproto.populate_all) = true;
+option (gogoproto.equal_all) = true;
+option (gogoproto.marshaler_all) = true;
+option (gogoproto.unmarshaler_all) = true;
+option (gogoproto.sizer_all) = true;
+option (gogoproto.testgen_all) = true;
+
+// A rule to apply to a metric to determine its status
+message MetricThresholdRule {
+  // Minimum value for the metric to be considered ok
+  string min = 1 [ (gogoproto.jsontag) = "min" ];
+
+  // Maximum value for the metric to be considered ok
+  string max = 2 [ (gogoproto.jsontag) = "max" ];
+
+  // The status of the metric if the value is below the minimum or above the maximum
+  uint32 status = 3 [ (gogoproto.jsontag) = "status" ];
+
+  // The metric status if the measurement is missing
+  uint32 null_status = 4 [ (gogoproto.jsontag) = "null_status" ];
+}
+
+// Represents the measurement tags to match
+message MetricThresholdTag {
+  // Name of the metric tag to match
+  string name = 1 [ (gogoproto.jsontag) = "name" ];
+
+  // Value of the metric tag to match
+  string value = 2 [ (gogoproto.jsontag) = "value" ];
+}
+
+// Represents an instance of a metric filter to evaluate
+message MetricThreshold {
+  // Name of the metric to match
+  string name = 1 [ (gogoproto.jsontag) = "name" ];
+
+  // Tag values to match with the metric
+  repeated MetricThresholdTag tags = 2 [ (gogoproto.jsontag) = "tags" ];
+
+  // Rules to evaluate when the filter matches a metric
+  repeated MetricThresholdRule thresholds = 3 [ (gogoproto.jsontag) = "thresholds" ];
+}
