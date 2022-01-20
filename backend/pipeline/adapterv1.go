@@ -53,7 +53,7 @@ var (
 	handlerRequestsCounter = prometheus.NewCounterVec(
 		prometheus.CounterOpts{
 			Name: HandlerRequests,
-			Help: "The number of processed handler requets",
+			Help: "The number of processed handler requests",
 		},
 		[]string{"status", "type"},
 	)
