@@ -476,11 +476,14 @@ func (a *Agent) connectionManager(ctx context.Context, cancel context.CancelFunc
 		// Block until we receive an entity config, or the grace period expires,
 		// unless the agent manages its entity
 		if !a.config.AgentManagedEntity {
+			entityConfigGracePeriodTimer := time.NewTimer(entityConfigGracePeriod)
+
 			select {
 			case <-a.entityConfigCh:
 				logger.Debug("successfully received the initial entity config")
-			case <-time.After(entityConfigGracePeriod):
+			case <-entityConfigGracePeriodTimer.C:
 				logger.Warning("the initial entity config was never received, using the local entity")
+				entityConfigGracePeriodTimer.Stop()
 			case <-connCtx.Done():
 				// The connection was closed before we received an entity config or we
 				// reached the grace period
