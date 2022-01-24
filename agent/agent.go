@@ -508,11 +508,9 @@ func (a *Agent) enforceMaxSessionLength(connCancel context.CancelFunc) {
 		timeout := a.maxSessionLength + jitter
 
 		logger.Infof("Session will be terminated in %v", timeout)
-		select {
-		case <-time.After(timeout):
-			logger.Infof("Ending session after %v (max session length is %v)", timeout, a.maxSessionLength)
-			connCancel()
-		}
+		<-time.After(timeout)
+		logger.Infof("Ending session after %v (max session length is %v)", timeout, a.maxSessionLength)
+		connCancel()
 	} else {
 		logger.Debugf("maxSessionLength is %v, agent won't periodically disconnect", a.maxSessionLength)
 	}
