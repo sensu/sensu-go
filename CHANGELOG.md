@@ -11,6 +11,8 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ### Added
 - Added metric threshold service checks.
+- Added `--max-session-length` flag to agent to configure the maximum duration
+  after which the agent will reconnect to one of its backends.
 
 ### Changed
 - Agent now persists prometheus HELP messages as a metric tag.
