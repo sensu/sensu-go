@@ -34,7 +34,8 @@ var (
 	flagHugeEvents        = flag.Bool("huge-events", false, "send 1 MB events to the backend")
 	flagUser              = flag.String("user", agent.DefaultUser, "user to authenticate with server")
 	flagPassword          = flag.String("password", agent.DefaultPassword, "password to authenticate with server")
-	flagBaseEntityName    = flag.String("base-entity-name", "test-host", "base entity name to prepend with count number.")
+	flagBaseEntityName    = flag.String("base-entity-name", "test-host", "base entity name to prepend with count number")
+	flagMaxSessionLength  = flag.Duration("max-session-length", 0*time.Second, "maximum amount of time after which the agent will reconnect to one of the configure backends")
 )
 
 func main() {
@@ -92,6 +93,7 @@ func main() {
 		cfg.BackendHeartbeatInterval = 30
 		cfg.BackendHeartbeatTimeout = 300
 		cfg.PrometheusBinding = *flagPromBinding
+		cfg.MaxSessionLength = *flagMaxSessionLength
 
 		agent, err := agent.NewAgent(cfg)
 		if err != nil {

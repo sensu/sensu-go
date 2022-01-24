@@ -210,6 +210,10 @@ type Config struct {
 	// RetryMultiplier is multiplied with the current retry delay to produce
 	// a longer retry delay. It is bounded by RetryMax.
 	RetryMultiplier float64
+
+	// MaxSessionLength is the maximum duration after which the agent will
+	// reconnect to one of the backends.
+	MaxSessionLength time.Duration
 }
 
 // StatsdServerConfig contains the statsd server configuration
