@@ -15,6 +15,7 @@ import (
 )
 
 func init() {
+	types.RegisterResolver("wrap_test/v2", testResolver)
 	types.RegisterResolver("v2/wrap_test", testResolver)
 }
 
@@ -60,7 +61,7 @@ func (t *testResource) Validate() error {
 func (t *testResource) GetTypeMeta() corev2.TypeMeta {
 	return corev2.TypeMeta{
 		Type:       "testResource",
-		APIVersion: "v2/wrap_test",
+		APIVersion: "wrap_test/v2",
 	}
 }
 
@@ -81,7 +82,7 @@ func TestWrapResourceSimple(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if got, want := wrapper.TypeMeta.APIVersion, "v2/wrap_test"; got != want {
+	if got, want := wrapper.TypeMeta.APIVersion, "wrap_test/v2"; got != want {
 		t.Errorf("bad api version: got %s, want %s", got, want)
 	}
 	if got, want := wrapper.TypeMeta.Type, "testResource"; got != want {

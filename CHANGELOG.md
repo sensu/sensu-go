@@ -15,6 +15,10 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ### Changed
 - Agent now persists prometheus HELP messages as a metric tag.
+- Resource specifications can now use precise core/v2 and core/v3 module
+versions. For instance, api_version: core/v2.5.1 or core/v2.3. The resource
+validation system will reject the resource if Sensu does not have at least the
+specified version.
 
 ### Fixed
 - Empty map fields (e.g. an entity with no labels) are no longer treated as nil

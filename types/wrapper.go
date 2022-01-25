@@ -10,6 +10,7 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/blang/semver/v4"
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 )
 
@@ -295,7 +296,15 @@ func ResolveType(apiVersion string, typename string) (Resource, error) {
 	// Guard read access to packageMap
 	packageMapMu.RLock()
 	defer packageMapMu.RUnlock()
-	resolver, ok := packageMap[apiVersion]
+	apiGroup, reqVer := ParseAPIVersion(apiVersion)
+	availableModules := APIModuleVersions()
+	foundVer, ok := availableModules[apiGroup]
+	if ok {
+		if semverGreater(reqVer, foundVer) {
+			return nil, fmt.Errorf("requested version was %s, but only %s is available", reqVer, foundVer)
+		}
+	}
+	resolver, ok := packageMap[apiGroup]
 	if !ok {
 		return nil, fmt.Errorf("invalid API version: %s", apiVersion)
 	}
@@ -308,12 +317,34 @@ func ResolveType(apiVersion string, typename string) (Resource, error) {
 	}
 }
 
+func semverGreater(s1, s2 string) bool {
+	s1Ver, err := semver.ParseTolerant(s1)
+	if err != nil {
+		// semver should be validated before being passed here
+		panic(err)
+	}
+	s2Ver, err := semver.ParseTolerant(s2)
+	if err != nil {
+		// semver should be validated before being passed here
+		panic(err)
+	}
+	return s1Ver.GT(s2Ver)
+}
+
 // ResolveRaw resolves the raw type for the requested type.
 func ResolveRaw(apiVersion string, typename string) (interface{}, error) {
 	// Guard read access to packageMap
 	packageMapMu.RLock()
 	defer packageMapMu.RUnlock()
-	resolver, ok := packageMap[apiVersion]
+	apiGroup, reqVer := ParseAPIVersion(apiVersion)
+	availableModules := APIModuleVersions()
+	foundVer, ok := availableModules[apiGroup]
+	if ok {
+		if semverGreater(reqVer, foundVer) {
+			return nil, fmt.Errorf("requested version was %s, but only %s is available", reqVer, foundVer)
+		}
+	}
+	resolver, ok := packageMap[apiGroup]
 	if !ok {
 		return nil, ErrAPINotFound
 	}
