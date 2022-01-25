@@ -11,6 +11,7 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ### Added
 - Added metric threshold service checks.
+- Added API group version information to the /version endpoint.
 
 ### Changed
 - Agent now persists prometheus HELP messages as a metric tag.
