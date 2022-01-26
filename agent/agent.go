@@ -500,15 +500,21 @@ func (a *Agent) connectionManager(ctx context.Context, cancel context.CancelFunc
 	}
 }
 
-// Note that as it stands, "max session length" is not really the maximum
-// because of the way we add a jitter of up to 1 * maxSessionLength on top of
-// maxSessionLength... Maybe we should use maxSessionsLength/2 + up to 1 *
-// maxSessionLength so that it's indeed an upper bound on the length of the
-// session?
+// enforceMaxSessionLength cancels the connection's context after some amount of
+// time, forcing the agent to reconnect to one of the configured backends.
+//
+// That amount of time, the timeout, is the maximum session length minus some
+// random jitter, to avoid creating potential thundering herds where all the
+// agents started at the same time and with the maximum same session length all
+// reconnect at once. The jitter is a random duration between 0 and
+// half the maximum session length.
+//
+// This effectively makes agents reconnect after some random duration between
+// half --max-session-length and --max-session-length.
 func (a *Agent) enforceMaxSessionLength(connCancel context.CancelFunc) {
 	if a.maxSessionLength > 0 {
-		jitter := time.Duration(rand.Float64() * float64(a.maxSessionLength))
-		timeout := a.maxSessionLength + jitter
+		jitter := time.Duration(rand.Float64() * 0.5 * float64(a.maxSessionLength))
+		timeout := a.maxSessionLength - jitter
 
 		logger.Infof("Session will be terminated in %v", timeout)
 		<-time.After(timeout)
