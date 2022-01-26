@@ -193,6 +193,7 @@ func (t *Tessend) Stop() error {
 		defer cancel()
 		key := ringv2.Path("global", "backends")
 		ring := t.ringPool.Get(key)
+		ctx = ringv2.DeleteEntityContext(ctx)
 		if err := ring.Remove(ctx, t.backendID); err != nil {
 			logger.WithField("key", t.backendID).WithError(err).Error("error removing key from the ring")
 		} else {
