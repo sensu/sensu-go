@@ -8,6 +8,10 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
 
+### Fixed
+- Fixed interactive wording for `sensu-backend upgrade`. The wording no longer
+refers to Sensu 5.x.
+
 ## [6.6.4] - 2022-01-13
 
 ### Added

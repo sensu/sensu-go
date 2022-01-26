@@ -15,7 +15,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"go.etcd.io/etcd/client/pkg/v3/transport"
-	"go.etcd.io/etcd/client/v3"
+	clientv3 "go.etcd.io/etcd/client/v3"
 )
 
 const (
@@ -26,7 +26,7 @@ func UpgradeCommand() *cobra.Command {
 	var setupErr error
 	cmd := &cobra.Command{
 		Use:           "upgrade",
-		Short:         "upgrade a sensu installation from 5.x to 6.x",
+		Short:         "upgrade a sensu etcd database to the current version",
 		SilenceErrors: true,
 		SilenceUsage:  true,
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -97,7 +97,7 @@ func UpgradeCommand() *cobra.Command {
 			if !skipConfirm {
 				var confirm bool
 				prompt := &survey.Confirm{
-					Message: "Do you really want to upgrade your Sensu 5.x database to 6.x? This operation cannot be undone; make sure you back up your database!",
+					Message: "Are you sure you want to upgrade your Sensu database? This operation cannot be undone; make sure you back up your database!",
 				}
 				if err := survey.AskOne(prompt, &confirm, nil); err != nil {
 					return err
