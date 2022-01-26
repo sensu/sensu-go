@@ -444,7 +444,7 @@ func flagSet() *pflag.FlagSet {
 	flagSet.Duration(flagRetryMin, viper.GetDuration(flagRetryMin), "minimum amount of time to wait before retrying an agent connection to the backend")
 	flagSet.Duration(flagRetryMax, viper.GetDuration(flagRetryMax), "maximum amount of time to wait before retrying an agent connection to the backend")
 	flagSet.Float64(flagRetryMultiplier, viper.GetFloat64(flagRetryMultiplier), "value multiplied with the current retry delay to produce a longer retry delay (bounded by --retry-max)")
-	flagSet.Duration(flagMaxSessionLength, viper.GetDuration(flagMaxSessionLength), "maximum amount of time after which the agent will reconnect to one of the configured backends")
+	flagSet.Duration(flagMaxSessionLength, viper.GetDuration(flagMaxSessionLength), "maximum amount of time after which the agent will reconnect to one of the configured backends (no maximum by default)")
 
 	flagSet.SetOutput(ioutil.Discard)
 
