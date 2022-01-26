@@ -8,6 +8,7 @@ import (
 type Version struct {
 	Etcd         *etcdVersion.Versions `json:"etcd"`
 	SensuBackend string                `json:"sensu_backend"`
+	APIGroups    map[string]string     `json:"api_groups"`
 }
 
 // FixtureVersion returns a Version fixture for testing.

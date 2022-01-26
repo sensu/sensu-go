@@ -13,6 +13,7 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 - Added metric threshold service checks.
 - Added `--max-session-length` flag to agent to configure the maximum duration
   after which the agent will reconnect to one of its backends.
+- Added API group version information to the /version endpoint.
 
 ### Changed
 - Agent now persists prometheus HELP messages as a metric tag.
@@ -20,6 +21,14 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 ### Fixed
 - Empty map fields (e.g. an entity with no labels) are no longer treated as nil
 when used with token substitution.
+## [6.6.4] - 2022-01-13
+
+### Added
+- Add `sensu_go_event_metric_points_processed` counter metric and
+included it in tessen reporting.
+
+### Fixed
+- Referencing a non-existent handler in a pipeline no longer results in a crash.
 
 ## [6.6.3] - 2021-12-15
 
