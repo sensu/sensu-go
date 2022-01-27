@@ -1,3 +1,4 @@
+//go:build integration && !race
 // +build integration,!race
 
 // These tests are unfortunately quite slow. This is somewhat mitigated by the
@@ -449,4 +450,45 @@ func TestMultipleItems(t *testing.T) {
 	if got, want := event.Values, []string{"frohike", "mulder", "scully"}; !reflect.DeepEqual(got, want) {
 		t.Fatalf("bad values: got %v, want %v", got, want)
 	}
+}
+
+// TestReWatch asserts that cancelling the context associated with one
+// watcher does not affect other identical subscriptions
+func TestReWatch(t *testing.T) {
+	t.Parallel()
+
+	e, cleanup := etcd.NewTestEtcd(t)
+	defer cleanup()
+
+	client := e.NewEmbeddedClient()
+	defer client.Close()
+
+	ring := New(client, t.Name())
+	testCtx, testCancel := context.WithCancel(context.Background())
+	defer testCancel()
+
+	ctx, cancel := context.WithCancel(testCtx)
+	wc := ring.Watch(ctx, "test", 1, 5, "")
+
+	if err := ring.Add(testCtx, "foo", 100); err != nil {
+		t.Fatal(err)
+	}
+
+	for i := 0; i < 5; i++ {
+		e := <-wc
+		t.Logf("got event %v", e)
+		c := 0
+		for e.Type != EventTrigger {
+			if c > 5 {
+				t.Fatal("caught in error loop")
+			}
+			e = <-wc
+			c++
+		}
+		cancel()
+		ctx, cancel = context.WithCancel(testCtx)
+		wc = ring.Watch(ctx, "test", 1, 5, "")
+	}
+
+	cancel()
 }
