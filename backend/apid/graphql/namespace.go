@@ -23,9 +23,10 @@ const (
 	// entire keyspace.
 	maxCountNamespaceListEntities = 500
 
-	// The maximum page size the list resolver will use when fetching entities
+	// Range of applicable chunk sizes that will be used when retrieving entities
 	// from the store.
-	maxPageSizeNamespaceListEntities = 100
+	minChunkSizeNamespaceListEntities = 250
+	maxChunkSizeNamespaceListEntities = 500
 )
 
 var _ schema.NamespaceFieldResolvers = (*namespaceImpl)(nil)
@@ -252,11 +253,17 @@ func (r *namespaceImpl) Entities(p schema.NamespaceEntitiesFieldResolverParams) 
 	res := newOffsetContainer(p.Args.Offset, p.Args.Limit)
 	ctx := store.NamespaceContext(p.Context, p.Source.(*corev2.Namespace).Name)
 
+	chunkSize := p.Args.Limit
+	if len(p.Args.Filters) != 0 {
+		chunkSize = maxInt(chunkSize, minChunkSizeNamespaceListEntities)
+		chunkSize = minInt(chunkSize, maxChunkSizeNamespaceListEntities)
+	}
+
 	ordering, desc := listEntitiesOrdering(p.Args.OrderBy)
 	pred := &store.SelectionPredicate{
 		Ordering:   ordering,
 		Descending: desc,
-		Limit:      int64(minInt(p.Args.Limit, maxPageSizeNamespaceListEntities)),
+		Limit:      int64(chunkSize),
 	}
 
 	matches := 0
