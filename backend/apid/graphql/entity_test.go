@@ -2,6 +2,7 @@ package graphql
 
 import (
 	"context"
+	"math"
 	"testing"
 	"time"
 
@@ -79,10 +80,22 @@ func TestEntityTypeStatusField(t *testing.T) {
 	}, nil).Once()
 
 	// exit status: 2
-	// params.Context = contextWithLoaders(context.Background(), client)
 	st, err = impl.Status(params)
 	require.NoError(t, err)
 	assert.EqualValues(t, 2, st)
+
+	// event with status > math.MaxInt32
+	highStatusEv := corev2.FixtureEvent(entity.Name, "bad")
+	highStatusEv.Check.Status = math.MaxInt32 + 12
+	client.On("ListEventsByEntity", mock.Anything, entity.Name, mock.Anything).Return([]*corev2.Event{
+		corev2.FixtureEvent(entity.Name, "a"),
+		highStatusEv,
+	}, nil).Once()
+
+	// exit status: 2
+	st, err = impl.Status(params)
+	require.NoError(t, err)
+	assert.EqualValues(t, math.MaxInt32, st)
 }
 
 func TestEntityTypeLastSeenField(t *testing.T) {
