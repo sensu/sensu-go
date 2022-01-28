@@ -286,6 +286,12 @@ CONTINUE:
 		goto CONTINUE
 	}
 
+	// if the count was abandoned due to reaching the count limit, set the
+	// partialCount flag so that clients are aware
+	if matches >= maxCountNamespaceListEntities {
+		res.PageInfo.partialCount = true
+	}
+
 	res.Nodes = records
 	res.PageInfo.totalCount = matches
 	return res, nil
