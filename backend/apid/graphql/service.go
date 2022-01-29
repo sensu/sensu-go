@@ -67,7 +67,7 @@ func NewService(cfg ServiceConfig) (*Service, error) {
 	// Register types
 	schema.RegisterAsset(svc, &assetImpl{})
 	schema.RegisterCoreV2Secret(svc, &schema.CoreV2SecretAliases{})
-	schema.RegisterNamespace(svc, &namespaceImpl{client: cfg.NamespaceClient, entityClient: cfg.EntityClient, eventClient: cfg.EventClient, metricsStore: cfg.ClusterMetricStore})
+	schema.RegisterNamespace(svc, &namespaceImpl{client: cfg.NamespaceClient, entityClient: cfg.EntityClient, eventClient: cfg.EventClient, serviceConfig: &cfg})
 	schema.RegisterErrCode(svc)
 	schema.RegisterEvent(svc, &eventImpl{})
 	schema.RegisterEventsListOrder(svc)

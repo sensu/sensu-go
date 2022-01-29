@@ -63,7 +63,7 @@ func TestNamespaceTypeEntitiesField(t *testing.T) {
 	// Metrics
 	metricsStore := new(MockClusterMetricStore)
 	metricsStore.On("EntityCount", mock.Anything, "total").Return(10, nil)
-	resolver.metricsStore = metricsStore
+	resolver.serviceConfig = &ServiceConfig{ClusterMetricStore: metricsStore}
 	got, err = resolver.Entities(params)
 	assert.NoError(t, err)
 	assert.NotEmpty(t, got.(offsetContainer).Nodes)
