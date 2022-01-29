@@ -96,6 +96,10 @@ type UserClient interface {
 	UpdateUser(ctx context.Context, user *corev2.User) error
 }
 
+type ClusterMetricStore interface {
+	EntityCount(ctx context.Context, kind string) (int, error)
+}
+
 type RBACClient interface {
 	ListRoleBindings(ctx context.Context) ([]*corev2.RoleBinding, error)
 	FetchRoleBinding(ctx context.Context, name string) (*corev2.RoleBinding, error)

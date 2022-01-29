@@ -39,6 +39,7 @@ type namespaceImpl struct {
 	client       NamespaceClient
 	eventClient  EventClient
 	entityClient EntityClient
+	metricsStore ClusterMetricStore
 }
 
 // ID implements response to request for 'id' field.
@@ -286,9 +287,19 @@ CONTINUE:
 		goto CONTINUE
 	}
 
+	var hasTotalCount bool
+	if len(p.Args.Filter) == 0 && r.metricsStore != nil {
+		if count, err := r.metricsStore.EntityCount(ctx, "total"); err != nil {
+			logger.WithError(err).Warn("Namespace.Entities: unable to retrieve total entity count")
+		} else if count > 0 {
+			hasTotalCount = true
+			matches = count
+		}
+	}
+
 	// if the count was abandoned due to reaching the count limit, set the
 	// partialCount flag so that clients are aware
-	if matches >= maxCountNamespaceListEntities {
+	if matches >= maxCountNamespaceListEntities && !hasTotalCount {
 		res.PageInfo.partialCount = true
 	}
 

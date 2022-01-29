@@ -23,22 +23,23 @@ type ClientFactory interface {
 
 // ServiceConfig describes values required to instantiate service.
 type ServiceConfig struct {
-	AssetClient       AssetClient
-	CheckClient       CheckClient
-	EntityClient      EntityClient
-	EventClient       EventClient
-	EventFilterClient EventFilterClient
-	HandlerClient     HandlerClient
-	HealthController  EtcdHealthController
-	MutatorClient     MutatorClient
-	SilencedClient    SilencedClient
-	NamespaceClient   NamespaceClient
-	HookClient        HookClient
-	UserClient        UserClient
-	RBACClient        RBACClient
-	VersionController VersionController
-	GenericClient     GenericClient
-	MetricGatherer    MetricGatherer
+	AssetClient        AssetClient
+	CheckClient        CheckClient
+	EntityClient       EntityClient
+	EventClient        EventClient
+	EventFilterClient  EventFilterClient
+	HandlerClient      HandlerClient
+	HealthController   EtcdHealthController
+	MutatorClient      MutatorClient
+	SilencedClient     SilencedClient
+	NamespaceClient    NamespaceClient
+	HookClient         HookClient
+	UserClient         UserClient
+	RBACClient         RBACClient
+	VersionController  VersionController
+	GenericClient      GenericClient
+	MetricGatherer     MetricGatherer
+	ClusterMetricStore ClusterMetricStore
 }
 
 // Service describes the Sensu GraphQL service capable of handling queries.
@@ -66,7 +67,7 @@ func NewService(cfg ServiceConfig) (*Service, error) {
 	// Register types
 	schema.RegisterAsset(svc, &assetImpl{})
 	schema.RegisterCoreV2Secret(svc, &schema.CoreV2SecretAliases{})
-	schema.RegisterNamespace(svc, &namespaceImpl{client: cfg.NamespaceClient, entityClient: cfg.EntityClient, eventClient: cfg.EventClient})
+	schema.RegisterNamespace(svc, &namespaceImpl{client: cfg.NamespaceClient, entityClient: cfg.EntityClient, eventClient: cfg.EventClient, metricsStore: cfg.ClusterMetricStore})
 	schema.RegisterErrCode(svc)
 	schema.RegisterEvent(svc, &eventImpl{})
 	schema.RegisterEventsListOrder(svc)

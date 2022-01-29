@@ -317,3 +317,12 @@ func (m *MockEtcdHealthController) GetClusterHealth(ctx context.Context) *corev2
 	args := m.Called(ctx)
 	return args.Get(0).(*corev2.HealthResponse)
 }
+
+type MockClusterMetricStore struct {
+	mock.Mock
+}
+
+func (m *MockClusterMetricStore) EntityCount(ctx context.Context, kind string) (int, error) {
+	args := m.Called(ctx, kind)
+	return args.Get(0).(int), args.Error(1)
+}
