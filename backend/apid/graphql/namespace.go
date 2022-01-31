@@ -254,10 +254,8 @@ func (r *namespaceImpl) Entities(p schema.NamespaceEntitiesFieldResolverParams) 
 	ctx := store.NamespaceContext(p.Context, p.Source.(*corev2.Namespace).Name)
 
 	chunkSize := p.Args.Limit
-	if len(p.Args.Filters) != 0 {
-		chunkSize = maxInt(chunkSize, minChunkSizeNamespaceListEntities)
-		chunkSize = minInt(chunkSize, maxChunkSizeNamespaceListEntities)
-	}
+	chunkSize = maxInt(chunkSize, minChunkSizeNamespaceListEntities)
+	chunkSize = minInt(chunkSize, maxChunkSizeNamespaceListEntities)
 
 	ordering, desc := listEntitiesOrdering(p.Args.OrderBy)
 	pred := &store.SelectionPredicate{
