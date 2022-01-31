@@ -16,7 +16,7 @@ const (
 	// into memory; things likely won't work well if the upper bound is hit but
 	// at least we aren't breaking the existing behaviour. Eventually this
 	// interface will be deprecated in lieu of one that can be performant.
-	maxSizeNamespaceListEvents = 25_000
+	maxSizeNamespaceListEvents = 50_000
 
 	// When this number is exceeded the resolver will cease to count the total
 	// number of entities. This should reduce the instances where we scan the
