@@ -11,6 +11,7 @@ import (
 	"errors"
 	"fmt"
 	"io/ioutil"
+	"math/rand"
 	"net/http"
 	"net/url"
 	"os"
@@ -162,6 +163,7 @@ type Agent struct {
 	unmarshal         UnmarshalFunc
 	sequencesMu       sync.Mutex
 	sequences         map[string]int64
+	maxSessionLength  time.Duration
 
 	// ProcessGetter gets information about local agent processes.
 	ProcessGetter process.Getter
@@ -183,20 +185,21 @@ func NewAgentContext(ctx context.Context, config *Config) (*Agent, error) {
 		return nil, errors.New("keepalive warning timeout must be greater than keepalive interval")
 	}
 	agent := &Agent{
-		backendSelector: &RandomBackendSelector{Backends: config.BackendURLs},
-		connected:       false,
-		config:          config,
-		executor:        command.NewExecutor(),
-		handler:         handler.NewMessageHandler(),
-		entityConfigCh:  make(chan struct{}),
-		inProgress:      make(map[string]*corev2.CheckConfig),
-		inProgressMu:    &sync.Mutex{},
-		sendq:           make(chan *transport.Message, 10),
-		systemInfo:      &corev2.System{},
-		unmarshal:       UnmarshalJSON,
-		marshal:         MarshalJSON,
-		ProcessGetter:   &process.NoopProcessGetter{},
-		sequences:       make(map[string]int64),
+		backendSelector:  &RandomBackendSelector{Backends: config.BackendURLs},
+		connected:        false,
+		config:           config,
+		executor:         command.NewExecutor(),
+		handler:          handler.NewMessageHandler(),
+		entityConfigCh:   make(chan struct{}),
+		inProgress:       make(map[string]*corev2.CheckConfig),
+		inProgressMu:     &sync.Mutex{},
+		sendq:            make(chan *transport.Message, 10),
+		systemInfo:       &corev2.System{},
+		unmarshal:        UnmarshalJSON,
+		marshal:          MarshalJSON,
+		ProcessGetter:    &process.NoopProcessGetter{},
+		sequences:        make(map[string]int64),
+		maxSessionLength: config.MaxSessionLength,
 	}
 
 	agent.statsdServer = NewStatsdServer(agent)
@@ -467,16 +470,20 @@ func (a *Agent) connectionManager(ctx context.Context, cancel context.CancelFunc
 
 		newConnections.WithLabelValues().Inc()
 
+		go a.enforceMaxSessionLength(connCancel)
 		go a.receiveLoop(connCtx, connCancel, conn)
 
 		// Block until we receive an entity config, or the grace period expires,
 		// unless the agent manages its entity
 		if !a.config.AgentManagedEntity {
+			entityConfigGracePeriodTimer := time.NewTimer(entityConfigGracePeriod)
+
 			select {
 			case <-a.entityConfigCh:
 				logger.Debug("successfully received the initial entity config")
-			case <-time.After(entityConfigGracePeriod):
+			case <-entityConfigGracePeriodTimer.C:
 				logger.Warning("the initial entity config was never received, using the local entity")
+				entityConfigGracePeriodTimer.Stop()
 			case <-connCtx.Done():
 				// The connection was closed before we received an entity config or we
 				// reached the grace period
@@ -490,6 +497,31 @@ func (a *Agent) connectionManager(ctx context.Context, cancel context.CancelFunc
 		if err := a.sendLoop(connCtx, connCancel, conn); err != nil && err != connCtx.Err() {
 			logger.WithError(err).Error("error sending messages")
 		}
+	}
+}
+
+// enforceMaxSessionLength cancels the connection's context after some amount of
+// time, forcing the agent to reconnect to one of the configured backends.
+//
+// That amount of time, the timeout, is the maximum session length minus some
+// random jitter, to avoid creating potential thundering herds where all the
+// agents started at the same time and with the maximum same session length all
+// reconnect at once. The jitter is a random duration between 0 and
+// half the maximum session length.
+//
+// This effectively makes agents reconnect after some random duration between
+// half --max-session-length and --max-session-length.
+func (a *Agent) enforceMaxSessionLength(connCancel context.CancelFunc) {
+	if a.maxSessionLength > 0 {
+		jitter := time.Duration(rand.Float64() * 0.5 * float64(a.maxSessionLength))
+		timeout := a.maxSessionLength - jitter
+
+		logger.Infof("Session will be terminated in %v", timeout)
+		<-time.After(timeout)
+		logger.Infof("Ending session after %v (max session length is %v)", timeout, a.maxSessionLength)
+		connCancel()
+	} else {
+		logger.Debugf("maxSessionLength is %v, agent won't periodically disconnect", a.maxSessionLength)
 	}
 }
 
