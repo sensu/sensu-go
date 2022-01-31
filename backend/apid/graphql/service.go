@@ -45,7 +45,7 @@ type ServiceConfig struct {
 // Service describes the Sensu GraphQL service capable of handling queries.
 type Service struct {
 	Target       *graphql.Service
-	Config       ServiceConfig
+	Config       *ServiceConfig
 	NodeRegister *relay.NodeRegister
 }
 
@@ -57,7 +57,7 @@ func NewService(cfg ServiceConfig) (*Service, error) {
 	nodeResolver := relay.Resolver{Register: &nodeRegister}
 	wrapper := Service{
 		Target:       svc,
-		Config:       cfg,
+		Config:       &cfg,
 		NodeRegister: &nodeRegister,
 	}
 
@@ -210,7 +210,7 @@ func NewService(cfg ServiceConfig) (*Service, error) {
 // Do executes given query string and variables
 func (svc *Service) Do(ctx context.Context, p graphql.QueryParams) *graphql.Result {
 	// Instantiate loaders and lift them into the context
-	qryCtx := contextWithLoaders(ctx, svc.Config)
+	qryCtx := contextWithLoaders(ctx, *svc.Config)
 
 	// Execute query inside context
 	return svc.Target.Do(qryCtx, p)
