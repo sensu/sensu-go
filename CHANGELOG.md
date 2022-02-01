@@ -9,6 +9,8 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 ## Unreleased
 
 ### Fixed
+- Fixed interactive wording for `sensu-backend upgrade`. The wording no longer
+refers to Sensu 5.x.
 - Resolves unpredictable ringv2 behavior when identical subscriptions are
 created from different contexts.
 
