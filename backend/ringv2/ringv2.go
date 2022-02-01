@@ -135,6 +135,7 @@ type Ring struct {
 }
 
 type watcherKey struct {
+	ctx      context.Context
 	name     string
 	values   int
 	interval int
@@ -157,7 +158,7 @@ type watcher struct {
 	events   <-chan Event
 }
 
-func newWatcher(ring *Ring, ch <-chan Event, name string, values, interval int, schedule string) (*watcher, error) {
+func newWatcher(ctx context.Context, ring *Ring, ch <-chan Event, name string, values, interval int, schedule string) (*watcher, error) {
 	var sched cron.Schedule
 	if schedule != "" {
 		var err error
@@ -168,6 +169,7 @@ func newWatcher(ring *Ring, ch <-chan Event, name string, values, interval int, 
 	}
 	return &watcher{
 		watcherKey: watcherKey{
+			ctx:      ctx,
 			name:     name,
 			values:   values,
 			cron:     schedule,
@@ -345,7 +347,7 @@ func (r *Ring) Remove(ctx context.Context, value string) error {
 // If the requested number of values is greater than the number of items in
 // the values will contain repetitions in order to satisfy the request.
 func (r *Ring) Watch(ctx context.Context, name string, values, interval int, cron string) <-chan Event {
-	key := watcherKey{name: name, values: values, interval: interval, cron: cron}
+	key := watcherKey{ctx: ctx, name: name, values: values, interval: interval, cron: cron}
 	r.mu.Lock()
 	w, ok := r.watchers[key]
 	r.mu.Unlock()
@@ -458,7 +460,7 @@ func (w *watcher) ensureActiveTrigger(ctx context.Context) error {
 
 func (r *Ring) startWatchers(ctx context.Context, ch chan Event, name string, values, interval int, cron string) {
 	_ = r.watchLimiter.Wait(ctx)
-	watcher, err := newWatcher(r, ch, name, values, interval, cron)
+	watcher, err := newWatcher(ctx, r, ch, name, values, interval, cron)
 	if err != nil {
 		notifyError(ctx, ch, err)
 		notifyClosing(ctx, ch)
