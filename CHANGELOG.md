@@ -8,6 +8,10 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
 
+### Fixed
+- Resolves unpredictable ringv2 behavior when identical subscriptions are
+created from different contexts.
+
 ## [6.6.4] - 2022-01-13
 
 ### Added
