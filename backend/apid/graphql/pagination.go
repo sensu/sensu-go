@@ -15,9 +15,10 @@ type offsetContainer struct {
 }
 
 type offsetPageInfo struct {
-	offset     int
-	limit      int
-	totalCount int
+	offset       int
+	limit        int
+	totalCount   int
+	partialCount bool
 }
 
 func newOffsetContainer(offset, limit int) offsetContainer {
@@ -70,4 +71,10 @@ func (*offsetPageInfoImpl) PreviousOffset(p graphql.ResolveParams) (int, error) 
 func (*offsetPageInfoImpl) TotalCount(p graphql.ResolveParams) (int, error) {
 	page := p.Source.(offsetPageInfo)
 	return page.totalCount, nil
+}
+
+// PartialCount implements response to request for 'totalCount' field.
+func (*offsetPageInfoImpl) PartialCount(p graphql.ResolveParams) (bool, error) {
+	page := p.Source.(offsetPageInfo)
+	return page.partialCount, nil
 }

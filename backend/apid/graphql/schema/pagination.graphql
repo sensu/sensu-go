@@ -16,4 +16,7 @@ type OffsetPageInfo {
 
   "Total count of records in relationship."
   totalCount: Int!
+
+  "When true the total count does not represent the entire data set"
+  partialCount: Boolean!
 }
