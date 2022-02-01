@@ -295,7 +295,7 @@ CONTINUE:
 	// if no filter was applied, use the cluster metrics service to get the total
 	// count
 	var hasTotalCount bool
-	if len(p.Args.Filter) == 0 && metricStore != nil {
+	if len(p.Args.Filters) == 0 && metricStore != nil {
 		if count, err := metricStore.EntityCount(ctx, "total"); err != nil {
 			logger.WithError(err).Warn("Namespace.Entities: unable to retrieve total entity count")
 		} else if count > 0 {
