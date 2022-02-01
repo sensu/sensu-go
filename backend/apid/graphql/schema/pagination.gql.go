@@ -26,6 +26,9 @@ type OffsetPageInfoFieldResolvers interface {
 
 	// TotalCount implements response to request for 'totalCount' field.
 	TotalCount(p graphql.ResolveParams) (int, error)
+
+	// PartialCount implements response to request for 'partialCount' field.
+	PartialCount(p graphql.ResolveParams) (bool, error)
 }
 
 // OffsetPageInfoAliases implements all methods on OffsetPageInfoFieldResolvers interface by using reflection to
@@ -99,6 +102,19 @@ func (_ OffsetPageInfoAliases) TotalCount(p graphql.ResolveParams) (int, error) 
 	return ret, err
 }
 
+// PartialCount implements response to request for 'partialCount' field.
+func (_ OffsetPageInfoAliases) PartialCount(p graphql.ResolveParams) (bool, error) {
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	ret, ok := val.(bool)
+	if err != nil {
+		return ret, err
+	}
+	if !ok {
+		return ret, errors.New("unable to coerce value for field 'partialCount'")
+	}
+	return ret, err
+}
+
 // OffsetPageInfoType Information about the current page.
 var OffsetPageInfoType = graphql.NewType("OffsetPageInfo", graphql.ObjectKind)
 
@@ -151,6 +167,15 @@ func _ObjTypeOffsetPageInfoTotalCountHandler(impl interface{}) graphql1.FieldRes
 	}
 }
 
+func _ObjTypeOffsetPageInfoPartialCountHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(interface {
+		PartialCount(p graphql.ResolveParams) (bool, error)
+	})
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.PartialCount(frp)
+	}
+}
+
 func _ObjectTypeOffsetPageInfoConfigFn() graphql1.ObjectConfig {
 	return graphql1.ObjectConfig{
 		Description: "Information about the current page.",
@@ -175,6 +200,13 @@ func _ObjectTypeOffsetPageInfoConfigFn() graphql1.ObjectConfig {
 				Description:       "Next offset to use when paginating forward; null if there are no more items.",
 				Name:              "nextOffset",
 				Type:              graphql1.Int,
+			},
+			"partialCount": &graphql1.Field{
+				Args:              graphql1.FieldConfigArgument{},
+				DeprecationReason: "",
+				Description:       "When true the total count does not represent the entire data set",
+				Name:              "partialCount",
+				Type:              graphql1.NewNonNull(graphql1.Boolean),
 			},
 			"previousOffset": &graphql1.Field{
 				Args:              graphql1.FieldConfigArgument{},
@@ -211,6 +243,7 @@ var _ObjectTypeOffsetPageInfoDesc = graphql.ObjectDesc{
 		"hasNextPage":     _ObjTypeOffsetPageInfoHasNextPageHandler,
 		"hasPreviousPage": _ObjTypeOffsetPageInfoHasPreviousPageHandler,
 		"nextOffset":      _ObjTypeOffsetPageInfoNextOffsetHandler,
+		"partialCount":    _ObjTypeOffsetPageInfoPartialCountHandler,
 		"previousOffset":  _ObjTypeOffsetPageInfoPreviousOffsetHandler,
 		"totalCount":      _ObjTypeOffsetPageInfoTotalCountHandler,
 	},

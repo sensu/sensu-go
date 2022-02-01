@@ -47,7 +47,7 @@ func TestNamespaceTypeEntitiesField(t *testing.T) {
 		corev2.FixtureEntity("a"),
 		corev2.FixtureEntity("b"),
 		corev2.FixtureEntity("c"),
-	}, nil).Once()
+	}, nil).Times(2)
 
 	params := schema.NamespaceEntitiesFieldResolverParams{ResolveParams: graphql.ResolveParams{Context: context.Background()}}
 	params.Context = context.Background()
@@ -59,6 +59,16 @@ func TestNamespaceTypeEntitiesField(t *testing.T) {
 	got, err := resolver.Entities(params)
 	assert.NoError(t, err)
 	assert.NotEmpty(t, got.(offsetContainer).Nodes)
+
+	// Metrics
+	metricsStore := new(MockClusterMetricStore)
+	metricsStore.On("EntityCount", mock.Anything, "total").Return(10, nil)
+	resolver.serviceConfig = &ServiceConfig{ClusterMetricStore: metricsStore}
+	got, err = resolver.Entities(params)
+	assert.NoError(t, err)
+	assert.NotEmpty(t, got.(offsetContainer).Nodes)
+	assert.Equal(t, got.(offsetContainer).PageInfo.totalCount, 10)
+	assert.False(t, got.(offsetContainer).PageInfo.partialCount)
 
 	// Store err
 	client.On("ListEntities", mock.Anything, mock.Anything).Return([]*corev2.Entity{}, errors.New("abc")).Once()

@@ -23,28 +23,29 @@ type ClientFactory interface {
 
 // ServiceConfig describes values required to instantiate service.
 type ServiceConfig struct {
-	AssetClient       AssetClient
-	CheckClient       CheckClient
-	EntityClient      EntityClient
-	EventClient       EventClient
-	EventFilterClient EventFilterClient
-	HandlerClient     HandlerClient
-	HealthController  EtcdHealthController
-	MutatorClient     MutatorClient
-	SilencedClient    SilencedClient
-	NamespaceClient   NamespaceClient
-	HookClient        HookClient
-	UserClient        UserClient
-	RBACClient        RBACClient
-	VersionController VersionController
-	GenericClient     GenericClient
-	MetricGatherer    MetricGatherer
+	AssetClient        AssetClient
+	CheckClient        CheckClient
+	EntityClient       EntityClient
+	EventClient        EventClient
+	EventFilterClient  EventFilterClient
+	HandlerClient      HandlerClient
+	HealthController   EtcdHealthController
+	MutatorClient      MutatorClient
+	SilencedClient     SilencedClient
+	NamespaceClient    NamespaceClient
+	HookClient         HookClient
+	UserClient         UserClient
+	RBACClient         RBACClient
+	VersionController  VersionController
+	GenericClient      GenericClient
+	MetricGatherer     MetricGatherer
+	ClusterMetricStore ClusterMetricStore
 }
 
 // Service describes the Sensu GraphQL service capable of handling queries.
 type Service struct {
 	Target       *graphql.Service
-	Config       ServiceConfig
+	Config       *ServiceConfig
 	NodeRegister *relay.NodeRegister
 }
 
@@ -56,7 +57,7 @@ func NewService(cfg ServiceConfig) (*Service, error) {
 	nodeResolver := relay.Resolver{Register: &nodeRegister}
 	wrapper := Service{
 		Target:       svc,
-		Config:       cfg,
+		Config:       &cfg,
 		NodeRegister: &nodeRegister,
 	}
 
@@ -66,7 +67,7 @@ func NewService(cfg ServiceConfig) (*Service, error) {
 	// Register types
 	schema.RegisterAsset(svc, &assetImpl{})
 	schema.RegisterCoreV2Secret(svc, &schema.CoreV2SecretAliases{})
-	schema.RegisterNamespace(svc, &namespaceImpl{client: cfg.NamespaceClient, entityClient: cfg.EntityClient, eventClient: cfg.EventClient})
+	schema.RegisterNamespace(svc, &namespaceImpl{client: cfg.NamespaceClient, entityClient: cfg.EntityClient, eventClient: cfg.EventClient, serviceConfig: &cfg})
 	schema.RegisterErrCode(svc)
 	schema.RegisterEvent(svc, &eventImpl{})
 	schema.RegisterEventsListOrder(svc)
@@ -209,7 +210,7 @@ func NewService(cfg ServiceConfig) (*Service, error) {
 // Do executes given query string and variables
 func (svc *Service) Do(ctx context.Context, p graphql.QueryParams) *graphql.Result {
 	// Instantiate loaders and lift them into the context
-	qryCtx := contextWithLoaders(ctx, svc.Config)
+	qryCtx := contextWithLoaders(ctx, *svc.Config)
 
 	// Execute query inside context
 	return svc.Target.Do(qryCtx, p)
