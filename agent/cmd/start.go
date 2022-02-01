@@ -24,8 +24,8 @@ import (
 var (
 	annotations               map[string]string
 	labels                    map[string]string
-	keepaliveLabels           map[string]string
-	keepaliveAnnotations      map[string]string
+	keepaliveCheckLabels      map[string]string
+	keepaliveCheckAnnotations map[string]string
 	configFileDefaultLocation = filepath.Join(path.SystemConfigDir(), "agent.yml")
 )
 
@@ -36,52 +36,52 @@ const (
 
 	environmentPrefix = "sensu"
 
-	flagAgentName                = "name"
-	flagAPIHost                  = "api-host"
-	flagAPIPort                  = "api-port"
-	flagAssetsRateLimit          = "assets-rate-limit"
-	flagAssetsBurstLimit         = "assets-burst-limit"
-	flagBackendURL               = "backend-url"
-	flagCacheDir                 = "cache-dir"
-	flagConfigFile               = "config-file"
-	flagDeregister               = "deregister"
-	flagDeregistrationHandler    = "deregistration-handler"
-	flagDetectCloudProvider      = "detect-cloud-provider"
-	flagEventsRateLimit          = "events-rate-limit"
-	flagEventsBurstLimit         = "events-burst-limit"
-	flagKeepaliveHandlers        = "keepalive-handlers"
-	flagKeepaliveInterval        = "keepalive-interval"
-	flagKeepaliveWarningTimeout  = "keepalive-warning-timeout"
-	flagKeepaliveCriticalTimeout = "keepalive-critical-timeout"
-	flagKeepaliveLabels          = "keepalive-labels"
-	flagKeepaliveAnnotations     = "keepalive-annotations"
-	flagNamespace                = "namespace"
-	flagPassword                 = "password"
-	flagRedact                   = "redact"
-	flagSocketHost               = "socket-host"
-	flagSocketPort               = "socket-port"
-	flagStatsdDisable            = "statsd-disable"
-	flagStatsdEventHandlers      = "statsd-event-handlers"
-	flagStatsdFlushInterval      = "statsd-flush-interval"
-	flagStatsdMetricsHost        = "statsd-metrics-host"
-	flagStatsdMetricsPort        = "statsd-metrics-port"
-	flagSubscriptions            = "subscriptions"
-	flagUser                     = "user"
-	flagDisableAPI               = "disable-api"
-	flagDisableAssets            = "disable-assets"
-	flagDisableSockets           = "disable-sockets"
-	flagLogLevel                 = "log-level"
-	flagLabels                   = "labels"
-	flagAnnotations              = "annotations"
-	flagAllowList                = "allow-list"
-	flagBackendHandshakeTimeout  = "backend-handshake-timeout"
-	flagBackendHeartbeatInterval = "backend-heartbeat-interval"
-	flagBackendHeartbeatTimeout  = "backend-heartbeat-timeout"
-	flagAgentManagedEntity       = "agent-managed-entity"
-	flagRetryMin                 = "retry-min"
-	flagRetryMax                 = "retry-max"
-	flagRetryMultiplier          = "retry-multiplier"
-	flagMaxSessionLength         = "max-session-length"
+	flagAgentName                 = "name"
+	flagAPIHost                   = "api-host"
+	flagAPIPort                   = "api-port"
+	flagAssetsRateLimit           = "assets-rate-limit"
+	flagAssetsBurstLimit          = "assets-burst-limit"
+	flagBackendURL                = "backend-url"
+	flagCacheDir                  = "cache-dir"
+	flagConfigFile                = "config-file"
+	flagDeregister                = "deregister"
+	flagDeregistrationHandler     = "deregistration-handler"
+	flagDetectCloudProvider       = "detect-cloud-provider"
+	flagEventsRateLimit           = "events-rate-limit"
+	flagEventsBurstLimit          = "events-burst-limit"
+	flagKeepaliveHandlers         = "keepalive-handlers"
+	flagKeepaliveInterval         = "keepalive-interval"
+	flagKeepaliveWarningTimeout   = "keepalive-warning-timeout"
+	flagKeepaliveCriticalTimeout  = "keepalive-critical-timeout"
+	flagKeepaliveCheckLabels      = "keepalive-check-labels"
+	flagKeepaliveCheckAnnotations = "keepalive-check-annotations"
+	flagNamespace                 = "namespace"
+	flagPassword                  = "password"
+	flagRedact                    = "redact"
+	flagSocketHost                = "socket-host"
+	flagSocketPort                = "socket-port"
+	flagStatsdDisable             = "statsd-disable"
+	flagStatsdEventHandlers       = "statsd-event-handlers"
+	flagStatsdFlushInterval       = "statsd-flush-interval"
+	flagStatsdMetricsHost         = "statsd-metrics-host"
+	flagStatsdMetricsPort         = "statsd-metrics-port"
+	flagSubscriptions             = "subscriptions"
+	flagUser                      = "user"
+	flagDisableAPI                = "disable-api"
+	flagDisableAssets             = "disable-assets"
+	flagDisableSockets            = "disable-sockets"
+	flagLogLevel                  = "log-level"
+	flagLabels                    = "labels"
+	flagAnnotations               = "annotations"
+	flagAllowList                 = "allow-list"
+	flagBackendHandshakeTimeout   = "backend-handshake-timeout"
+	flagBackendHeartbeatInterval  = "backend-heartbeat-interval"
+	flagBackendHeartbeatTimeout   = "backend-heartbeat-timeout"
+	flagAgentManagedEntity        = "agent-managed-entity"
+	flagRetryMin                  = "retry-min"
+	flagRetryMax                  = "retry-max"
+	flagRetryMultiplier           = "retry-multiplier"
+	flagMaxSessionLength          = "max-session-length"
 
 	// TLS flags
 	flagTrustedCAFile         = "trusted-ca-file"
@@ -126,8 +126,8 @@ func NewAgentConfig(cmd *cobra.Command) (*agent.Config, error) {
 	cfg.KeepaliveInterval = uint32(viper.GetInt(flagKeepaliveInterval))
 	cfg.KeepaliveWarningTimeout = uint32(viper.GetInt(flagKeepaliveWarningTimeout))
 	cfg.KeepaliveCriticalTimeout = uint32(viper.GetInt(flagKeepaliveCriticalTimeout))
-	cfg.KeepaliveLabels = viper.GetStringMapString(flagKeepaliveLabels)
-	cfg.KeepaliveAnnotations = viper.GetStringMapString(flagKeepaliveAnnotations)
+	cfg.KeepaliveCheckLabels = viper.GetStringMapString(flagKeepaliveCheckLabels)
+	cfg.KeepaliveCheckAnnotations = viper.GetStringMapString(flagKeepaliveCheckAnnotations)
 	cfg.Namespace = viper.GetString(flagNamespace)
 	cfg.Password = viper.GetString(flagPassword)
 	cfg.Socket.Host = viper.GetString(flagSocketHost)
@@ -432,8 +432,8 @@ func flagSet() *pflag.FlagSet {
 	flagSet.Int(flagKeepaliveInterval, viper.GetInt(flagKeepaliveInterval), "number of seconds to send between keepalive events")
 	flagSet.Uint32(flagKeepaliveWarningTimeout, uint32(viper.GetInt(flagKeepaliveWarningTimeout)), "number of seconds until agent is considered dead by backend to create a warning event")
 	flagSet.Uint32(flagKeepaliveCriticalTimeout, uint32(viper.GetInt(flagKeepaliveCriticalTimeout)), "number of seconds until agent is considered dead by backend to create a critical event")
-	flagSet.StringToStringVar(&keepaliveLabels, flagKeepaliveLabels, nil, "keepalive labels map")
-	flagSet.StringToStringVar(&keepaliveAnnotations, flagKeepaliveAnnotations, nil, "keepalive annotations map")
+	flagSet.StringToStringVar(&keepaliveCheckLabels, flagKeepaliveCheckLabels, nil, "keepalive labels map to add to keepalive events")
+	flagSet.StringToStringVar(&keepaliveCheckAnnotations, flagKeepaliveCheckAnnotations, nil, "keepalive annotations map to add to keepalive events")
 	flagSet.Bool(flagDisableAPI, viper.GetBool(flagDisableAPI), "disable the Agent HTTP API")
 	flagSet.Bool(flagDisableAssets, viper.GetBool(flagDisableAssets), "disable check assets on this agent")
 	flagSet.Bool(flagDisableSockets, viper.GetBool(flagDisableSockets), "disable the Agent TCP and UDP event sockets")

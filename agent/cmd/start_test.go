@@ -58,15 +58,15 @@ func TestNewAgentConfigKeepaliveLabelsFlags(t *testing.T) {
 	if err := handleConfig(cmd, []string{}); err != nil {
 		t.Fatal("unexpected error while calling handleConfig: ", err)
 	}
-	_ = cmd.Flags().Set(flagKeepaliveLabels, "foo=bar")
+	_ = cmd.Flags().Set(flagKeepaliveCheckLabels, "foo=bar")
 
 	cfg, err := NewAgentConfig(cmd)
 	if err != nil {
 		t.Fatal("unexpected error while calling handleConfig: ", err)
 	}
 
-	if !reflect.DeepEqual(cfg.KeepaliveLabels, map[string]string{"foo": "bar"}) {
-		t.Fatalf("TestNewAgentConfigFlags() labels = %v, want %v", cfg.KeepaliveLabels, `{"foo":"bar"}`)
+	if !reflect.DeepEqual(cfg.KeepaliveCheckLabels, map[string]string{"foo": "bar"}) {
+		t.Fatalf("TestNewAgentConfigFlags() labels = %v, want %v", cfg.KeepaliveCheckLabels, `{"foo":"bar"}`)
 	}
 }
 
@@ -77,15 +77,15 @@ func TestNewAgentConfigKeepaliveAnnotationsFlags(t *testing.T) {
 	if err := handleConfig(cmd, []string{}); err != nil {
 		t.Fatal("unexpected error while calling handleConfig: ", err)
 	}
-	_ = cmd.Flags().Set(flagKeepaliveAnnotations, "foo=bar")
+	_ = cmd.Flags().Set(flagKeepaliveCheckAnnotations, "foo=bar")
 
 	cfg, err := NewAgentConfig(cmd)
 	if err != nil {
 		t.Fatal("unexpected error while calling handleConfig: ", err)
 	}
 
-	if !reflect.DeepEqual(cfg.KeepaliveAnnotations, map[string]string{"foo": "bar"}) {
-		t.Fatalf("TestNewAgentConfigFlags() labels = %v, want %v", cfg.KeepaliveAnnotations, `{"foo":"bar"}`)
+	if !reflect.DeepEqual(cfg.KeepaliveCheckAnnotations, map[string]string{"foo": "bar"}) {
+		t.Fatalf("TestNewAgentConfigFlags() labels = %v, want %v", cfg.KeepaliveCheckAnnotations, `{"foo":"bar"}`)
 	}
 }
 

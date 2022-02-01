@@ -639,8 +639,8 @@ func (a *Agent) newKeepalive() *transport.Message {
 		Ttl:        int64(a.config.KeepaliveCriticalTimeout),
 	}
 
-	keepalive.ObjectMeta.Labels = a.config.KeepaliveLabels
-	keepalive.ObjectMeta.Annotations = a.config.KeepaliveAnnotations
+	keepalive.Labels = a.config.KeepaliveCheckLabels
+	keepalive.Annotations = a.config.KeepaliveCheckAnnotations
 
 	keepalive.Entity = entity
 	keepalive.Timestamp = time.Now().Unix()

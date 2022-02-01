@@ -14,6 +14,7 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 - Added `--max-session-length` flag to agent to configure the maximum duration
   after which the agent will reconnect to one of its backends.
 - Added API group version information to the /version endpoint.
+- Added `keepalive-check-labels`and `keepalive-check-annotations` configuration flags to the sensu-agent
 
 ### Changed
 - Agent now persists prometheus HELP messages as a metric tag.
@@ -214,7 +215,6 @@ agent processed a particular event.
 - Added `sensu_go_agentd_event_bytes` & `sensu_go_store_event_bytes` summary
 metrics to the `/metrics` endpoint.
 - Added support for environment variable arguments in `sensuctl`.
-- Added `keepalive-labels`and `keepalive-annotations` configuration flags to the sensu-agent
 
 ### Changed
 - When deleting resource with sensuctl, the resource type will now be displayed
