@@ -142,6 +142,12 @@ type Config struct {
 	// by the backend to create a critical event.
 	KeepaliveCriticalTimeout uint32
 
+	// KeepaliveCheckLabels are key-value pairs that users can provide to keepalive events
+	KeepaliveCheckLabels map[string]string
+
+	// KeepaliveCheckAnnotations are key-value pairs that users can provide to keepalive events
+	KeepaliveCheckAnnotations map[string]string
+
 	// Labels are key-value pairs that users can provide to agent entities
 	Labels map[string]string
 
