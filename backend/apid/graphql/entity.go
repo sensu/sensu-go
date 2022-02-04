@@ -1,6 +1,7 @@
 package graphql
 
 import (
+	"math"
 	"sort"
 	"time"
 
@@ -108,15 +109,10 @@ func (r *entityImpl) Status(p graphql.ResolveParams) (int, error) {
 	src := p.Source.(*corev2.Entity)
 
 	// fetch
-	results, err := loadEvents(p.Context, src.Namespace, src.Name)
+	evs, err := loadEvents(p.Context, src.Namespace, src.Name)
 	if err != nil {
 		return 0, err
 	}
-
-	// filter events associated w/ entity
-	evs := filterEvents(results, func(obj *corev2.Event) bool {
-		return obj.Entity.Name == src.Name
-	})
 
 	// return -1 (unknown) if no events found
 	if len(evs) == 0 {
@@ -131,6 +127,12 @@ func (r *entityImpl) Status(p graphql.ResolveParams) (int, error) {
 		}
 		st = maxInt(int(ev.Check.Status), st)
 	}
+
+	// web browsers handle values > math.MaxInt32 inconsistently
+	if st < int(math.MinInt32) || st > int(math.MaxInt32) {
+		st = math.MaxInt32
+	}
+
 	return st, nil
 }
 

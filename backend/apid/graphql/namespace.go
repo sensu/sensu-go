@@ -16,16 +16,17 @@ const (
 	// into memory; things likely won't work well if the upper bound is hit but
 	// at least we aren't breaking the existing behaviour. Eventually this
 	// interface will be deprecated in lieu of one that can be performant.
-	maxSizeNamespaceListEvents = 25_000
+	maxSizeNamespaceListEvents = 50_000
 
 	// When this number is exceeded the resolver will cease to count the total
 	// number of entities. This should reduce the instances where we scan the
 	// entire keyspace.
 	maxCountNamespaceListEntities = 500
 
-	// The maximum page size the list resolver will use when fetching entities
+	// Range of applicable chunk sizes that will be used when retrieving entities
 	// from the store.
-	maxPageSizeNamespaceListEntities = 100
+	minChunkSizeNamespaceListEntities = 250
+	maxChunkSizeNamespaceListEntities = 500
 )
 
 var _ schema.NamespaceFieldResolvers = (*namespaceImpl)(nil)
@@ -36,9 +37,10 @@ var _ schema.NamespaceFieldResolvers = (*namespaceImpl)(nil)
 
 type namespaceImpl struct {
 	schema.MutatorAliases
-	client       NamespaceClient
-	eventClient  EventClient
-	entityClient EntityClient
+	client        NamespaceClient
+	eventClient   EventClient
+	entityClient  EntityClient
+	serviceConfig *ServiceConfig
 }
 
 // ID implements response to request for 'id' field.
@@ -252,11 +254,15 @@ func (r *namespaceImpl) Entities(p schema.NamespaceEntitiesFieldResolverParams) 
 	res := newOffsetContainer(p.Args.Offset, p.Args.Limit)
 	ctx := store.NamespaceContext(p.Context, p.Source.(*corev2.Namespace).Name)
 
+	chunkSize := p.Args.Limit
+	chunkSize = maxInt(chunkSize, minChunkSizeNamespaceListEntities)
+	chunkSize = minInt(chunkSize, maxChunkSizeNamespaceListEntities)
+
 	ordering, desc := listEntitiesOrdering(p.Args.OrderBy)
 	pred := &store.SelectionPredicate{
 		Ordering:   ordering,
 		Descending: desc,
-		Limit:      int64(minInt(p.Args.Limit, maxPageSizeNamespaceListEntities)),
+		Limit:      int64(chunkSize),
 	}
 
 	matches := 0
@@ -284,6 +290,31 @@ CONTINUE:
 
 	if pred.Continue != "" && matches < maxCountNamespaceListEntities {
 		goto CONTINUE
+	}
+
+	var metricStore ClusterMetricStore
+	if r.serviceConfig != nil {
+		metricStore = r.serviceConfig.ClusterMetricStore
+	}
+
+	// if no filter was applied, use the cluster metrics service to get the total
+	// count
+	var hasTotalCount bool
+	if len(p.Args.Filters) == 0 && metricStore != nil {
+		if count, err := metricStore.EntityCount(ctx, "total"); err != nil {
+			logger.WithError(err).Warn("Namespace.Entities: unable to retrieve total entity count")
+		} else if count > 0 {
+			hasTotalCount = true
+			matches = count
+		}
+	} else if metricStore == nil {
+		logger.Debug("Namespace.Entities: metric store is not present")
+	}
+
+	// if the count was abandoned due to reaching the count limit, set the
+	// partialCount flag so that clients are aware
+	if matches >= maxCountNamespaceListEntities && !hasTotalCount {
+		res.PageInfo.partialCount = true
 	}
 
 	res.Nodes = records
