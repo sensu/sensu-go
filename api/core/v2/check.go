@@ -50,6 +50,10 @@ const (
 	// entity sends a keepalive and the entity does not yet exist in the store.
 	RegistrationCheckName = "registration"
 
+	// BackendCheckName is the name fo the check that is created when a backend
+	// event is generated from an error.
+	BackendCheckName = "backend"
+
 	// MemoryScheduler indicates that a check is scheduled in-memory.
 	MemoryScheduler = "memory"
 

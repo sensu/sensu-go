@@ -6,7 +6,12 @@ import (
 	"sync"
 
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
+	"github.com/sensu/sensu-go/backend/resource"
 	"github.com/sirupsen/logrus"
+)
+
+const (
+	msgSecretsProviderOk = "secrets provider ok"
 )
 
 // Provider represents an abstracted secrets provider.
@@ -26,17 +31,23 @@ type ProviderManagerer interface {
 
 // ProviderManager manages the list of secrets providers.
 type ProviderManager struct {
-	mu         *sync.RWMutex
-	providers  map[string]Provider
-	TLSenabled bool
-	Getter     Getter
+	mu            *sync.RWMutex
+	providers     map[string]Provider
+	TLSenabled    bool
+	Getter        Getter
+	eventReceiver EventReceiver
+}
+
+type EventReceiver interface {
+	GenerateBackendEvent(component string, status uint32, output string) error
 }
 
 // NewProviderManager instantiates a new provider manager.
-func NewProviderManager() *ProviderManager {
+func NewProviderManager(eventReceiver EventReceiver) *ProviderManager {
 	return &ProviderManager{
-		providers: map[string]Provider{},
-		mu:        &sync.RWMutex{},
+		providers:     map[string]Provider{},
+		mu:            &sync.RWMutex{},
+		eventReceiver: eventReceiver,
 	}
 }
 
@@ -97,10 +108,10 @@ func (m *ProviderManager) SubSecrets(ctx context.Context, secrets []*corev2.Secr
 	providers := m.Providers()
 	// short circuit the function if there are no secrets providers
 	if len(providers) == 0 {
-		return secretVars, fmt.Errorf("no secrets providers defined")
+		return secretVars, &ErrNoProviderDefined{}
 	}
 	if m.Getter == nil {
-		return []string{}, fmt.Errorf("secrets management is not supported")
+		return []string{}, &ErrSecretsNotSupported{}
 	}
 
 	// iterate through each secret in the config
@@ -112,11 +123,11 @@ func (m *ProviderManager) SubSecrets(ctx context.Context, secrets []*corev2.Secr
 				"provider": providerName,
 				"secret":   secret.Secret,
 			}).WithError(err).Error("unable to retrieve secret from provider")
-			return []string{}, err
+			return []string{}, ErrInvalidSecretInfo(secret.Secret)
 		}
 		provider := providers[providerName]
 		if provider == nil {
-			err = fmt.Errorf("provider not found, or not working: %s", providerName)
+			err = ErrProviderNotFound(providerName)
 			logger.WithFields(logrus.Fields{
 				"provider": providerName,
 				"secret":   secret.Secret,
@@ -131,11 +142,20 @@ func (m *ProviderManager) SubSecrets(ctx context.Context, secrets []*corev2.Secr
 				"provider": providerName,
 				"secretID": secretID,
 			}).WithError(err).Error("unable to retrieve secret from provider")
+			if _, ok := err.(ErrProviderNotAvailable); ok {
+				_ = m.eventReceiver.GenerateBackendEvent(resource.ComponentSecrets, 2, err.Error())
+			} else if _, ok := err.(ErrSecretNotFound); ok {
+				_ = m.eventReceiver.GenerateBackendEvent(resource.ComponentSecrets, 0, msgSecretsProviderOk)
+			}
+
 			return []string{}, err
 		}
 		if secretValue != "" {
 			secretVars = append(secretVars, fmt.Sprintf("%s=%s", secretKey, secretValue))
 		}
+	}
+	if err := m.eventReceiver.GenerateBackendEvent(resource.ComponentSecrets, 0, msgSecretsProviderOk); err != nil {
+		return []string{}, err
 	}
 
 	return secretVars, nil
