@@ -289,13 +289,13 @@ CONTINUE:
 	}
 
 	// in the case where there are still more entities to scan through,
-	// continue scanning if...
+	// continue scanning...
 	if pred.Continue != "" {
 		// ...if the user's requested slice is not yet satisfied
 		if (matches - p.Args.Offset) < p.Args.Limit {
 			goto CONTINUE
 		}
-		// ...or, we are still determining the total count.
+		// ...or, if we are still determining the total count.
 		if matches < maxCountNamespaceListEntities {
 			goto CONTINUE
 		}
