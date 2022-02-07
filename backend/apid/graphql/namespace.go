@@ -288,8 +288,17 @@ CONTINUE:
 		}
 	}
 
-	if pred.Continue != "" && matches < maxCountNamespaceListEntities {
-		goto CONTINUE
+	// in the case where there are still more entities to scan through,
+	// continue scanning if...
+	if pred.Continue != "" {
+		// ...if the user's requested slice is not yet satisfied
+		if (matches - p.Args.Offset) < p.Args.Limit {
+			goto CONTINUE
+		}
+		// ...or, we are still determining the total count.
+		if matches < maxCountNamespaceListEntities {
+			goto CONTINUE
+		}
 	}
 
 	var metricStore ClusterMetricStore
@@ -297,8 +306,9 @@ CONTINUE:
 		metricStore = r.serviceConfig.ClusterMetricStore
 	}
 
-	// if no filter was applied, use the cluster metrics service to get the total
-	// count
+	// If no filter was applied, use the cluster metrics service to get the
+	// total count. This allows us to present an accurate count without having
+	// to scan the entire key space.
 	var hasTotalCount bool
 	if len(p.Args.Filters) == 0 && metricStore != nil {
 		if count, err := metricStore.EntityCount(ctx, "total"); err != nil {
@@ -311,13 +321,14 @@ CONTINUE:
 		logger.Debug("Namespace.Entities: metric store is not present")
 	}
 
-	// if the count was abandoned due to reaching the count limit, set the
-	// partialCount flag so that clients are aware
-	if matches >= maxCountNamespaceListEntities && !hasTotalCount {
-		res.PageInfo.partialCount = true
+	// In the case where we ended up scanning the entire keyspace we can also
+	// confidently convey that the total count is complete.
+	if !hasTotalCount && pred.Continue == "" {
+		hasTotalCount = true
 	}
 
 	res.Nodes = records
+	res.PageInfo.partialCount = !hasTotalCount
 	res.PageInfo.totalCount = matches
 	return res, nil
 }
