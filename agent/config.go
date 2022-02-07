@@ -148,6 +148,9 @@ type Config struct {
 	// KeepaliveCheckAnnotations are key-value pairs that users can provide to keepalive events
 	KeepaliveCheckAnnotations map[string]string
 
+	// KeepalivePipelines contain pipelines for agent's keepalive events
+	KeepalivePipelines []string
+
 	// Labels are key-value pairs that users can provide to agent entities
 	Labels map[string]string
 

@@ -55,6 +55,7 @@ const (
 	flagKeepaliveCriticalTimeout  = "keepalive-critical-timeout"
 	flagKeepaliveCheckLabels      = "keepalive-check-labels"
 	flagKeepaliveCheckAnnotations = "keepalive-check-annotations"
+	flagKeepalivePipelines        = "keepalive-pipelines"
 	flagNamespace                 = "namespace"
 	flagPassword                  = "password"
 	flagRedact                    = "redact"
@@ -128,6 +129,7 @@ func NewAgentConfig(cmd *cobra.Command) (*agent.Config, error) {
 	cfg.KeepaliveCriticalTimeout = uint32(viper.GetInt(flagKeepaliveCriticalTimeout))
 	cfg.KeepaliveCheckLabels = viper.GetStringMapString(flagKeepaliveCheckLabels)
 	cfg.KeepaliveCheckAnnotations = viper.GetStringMapString(flagKeepaliveCheckAnnotations)
+	cfg.KeepalivePipelines = viper.GetStringSlice(flagKeepalivePipelines)
 	cfg.Namespace = viper.GetString(flagNamespace)
 	cfg.Password = viper.GetString(flagPassword)
 	cfg.Socket.Host = viper.GetString(flagSocketHost)
@@ -434,6 +436,7 @@ func flagSet() *pflag.FlagSet {
 	flagSet.Uint32(flagKeepaliveCriticalTimeout, uint32(viper.GetInt(flagKeepaliveCriticalTimeout)), "number of seconds until agent is considered dead by backend to create a critical event")
 	flagSet.StringToStringVar(&keepaliveCheckLabels, flagKeepaliveCheckLabels, nil, "keepalive labels map to add to keepalive events")
 	flagSet.StringToStringVar(&keepaliveCheckAnnotations, flagKeepaliveCheckAnnotations, nil, "keepalive annotations map to add to keepalive events")
+	flagSet.StringSlice(flagKeepalivePipelines, viper.GetStringSlice(flagKeepalivePipelines), "comma-delimited list of pipeline references for keepalive event")
 	flagSet.Bool(flagDisableAPI, viper.GetBool(flagDisableAPI), "disable the Agent HTTP API")
 	flagSet.Bool(flagDisableAssets, viper.GetBool(flagDisableAssets), "disable check assets on this agent")
 	flagSet.Bool(flagDisableSockets, viper.GetBool(flagDisableSockets), "disable the Agent TCP and UDP event sockets")
