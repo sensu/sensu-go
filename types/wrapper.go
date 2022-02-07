@@ -293,11 +293,12 @@ func RegisterResolver(key string, resolver func(string) (interface{}, error)) {
 
 // ResolveType returns the Resource associated with the given package and type.
 func ResolveType(apiVersion string, typename string) (Resource, error) {
+	availableModules := APIModuleVersions()
+
 	// Guard read access to packageMap
 	packageMapMu.RLock()
 	defer packageMapMu.RUnlock()
 	apiGroup, reqVer := ParseAPIVersion(apiVersion)
-	availableModules := APIModuleVersions()
 	foundVer, ok := availableModules[apiGroup]
 	if ok {
 		if semverGreater(reqVer, foundVer) {
@@ -333,11 +334,12 @@ func semverGreater(s1, s2 string) bool {
 
 // ResolveRaw resolves the raw type for the requested type.
 func ResolveRaw(apiVersion string, typename string) (interface{}, error) {
+	availableModules := APIModuleVersions()
+
 	// Guard read access to packageMap
 	packageMapMu.RLock()
 	defer packageMapMu.RUnlock()
 	apiGroup, reqVer := ParseAPIVersion(apiVersion)
-	availableModules := APIModuleVersions()
 	foundVer, ok := availableModules[apiGroup]
 	if ok {
 		if semverGreater(reqVer, foundVer) {
