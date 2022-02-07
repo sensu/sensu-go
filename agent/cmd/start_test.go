@@ -89,6 +89,25 @@ func TestNewAgentConfigKeepaliveAnnotationsFlags(t *testing.T) {
 	}
 }
 
+func TestNewAgentConfigKeepalivePipelinesFlag(t *testing.T) {
+	cmd := &cobra.Command{
+		Use: "test",
+	}
+	if err := handleConfig(cmd, []string{}); err != nil {
+		t.Fatal("unexpected error while calling handleConfig: ", err)
+	}
+	_ = cmd.Flags().Set(flagKeepalivePipelines, "core/v2.Pipeline.a,core/v2.Pipeline b,kazoo")
+
+	cfg, err := NewAgentConfig(cmd)
+	if err != nil {
+		t.Fatal("unexpected error while calling handleConfig: ", err)
+	}
+
+	if !reflect.DeepEqual(cfg.KeepalivePipelines, []string{"core/v2.Pipeline.a", "core/v2.Pipeline b", "kazoo"}) {
+		t.Fatalf("TestNewAgentConfigFlags() labels = %v, want %v", cfg.KeepalivePipelines, `[core/v2.Pipeline.a core/v2.Pipeline b kazoo]`)
+	}
+}
+
 func TestNewAgentConfig_AgentManagedEntityFlag(t *testing.T) {
 	cmd := &cobra.Command{
 		Use: "test",
