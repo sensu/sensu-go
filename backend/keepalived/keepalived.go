@@ -472,6 +472,7 @@ func createKeepaliveEvent(rawEvent *corev2.Event) *corev2.Event {
 		Timeout:   check.Timeout,
 		Ttl:       check.Ttl,
 		Handlers:  handlers,
+		Pipelines: rawEvent.Pipelines,
 		Executed:  time.Now().Unix(),
 		Issued:    time.Now().Unix(),
 		Scheduler: corev2.EtcdScheduler,
