@@ -67,8 +67,86 @@ func TestNamespaceTypeEntitiesField(t *testing.T) {
 	got, err = resolver.Entities(params)
 	assert.NoError(t, err)
 	assert.NotEmpty(t, got.(offsetContainer).Nodes)
-	assert.Equal(t, got.(offsetContainer).PageInfo.totalCount, 10)
+	assert.Equal(t, 10, got.(offsetContainer).PageInfo.totalCount)
 	assert.False(t, got.(offsetContainer).PageInfo.partialCount)
+
+	// Multiple chunks
+	client.On("ListEntities", mock.Anything, mock.Anything).Run(func(args mock.Arguments) {
+		pred := args[1].(*store.SelectionPredicate)
+		pred.Continue = "next"
+	}).Return([]*corev2.Entity{
+		corev2.FixtureEntity("a"),
+		corev2.FixtureEntity("b"),
+		corev2.FixtureEntity("c"),
+		corev2.FixtureEntity("d"),
+		corev2.FixtureEntity("e"),
+	}, nil).Times(100)
+	params.Args.Limit = 20
+	resolver = &namespaceImpl{entityClient: client}
+	got, err = resolver.Entities(params)
+	assert.NoError(t, err)
+	assert.Len(t, got.(offsetContainer).Nodes, 20)
+	assert.Equal(t, 500, got.(offsetContainer).PageInfo.totalCount)
+	assert.Equal(t, true, got.(offsetContainer).PageInfo.partialCount)
+
+	// Finite chunks
+	client.On("ListEntities", mock.Anything, mock.Anything).Run(func(args mock.Arguments) {
+		pred := args[1].(*store.SelectionPredicate)
+		pred.Continue = "next"
+	}).Return([]*corev2.Entity{
+		corev2.FixtureEntity("a"),
+		corev2.FixtureEntity("b"),
+		corev2.FixtureEntity("c"),
+		corev2.FixtureEntity("d"),
+		corev2.FixtureEntity("e"),
+	}, nil).Times(50)
+	client.On("ListEntities", mock.Anything, mock.Anything).Run(func(args mock.Arguments) {
+		pred := args[1].(*store.SelectionPredicate)
+		pred.Continue = ""
+	}).Return([]*corev2.Entity{
+		corev2.FixtureEntity("a"),
+		corev2.FixtureEntity("b"),
+		corev2.FixtureEntity("c"),
+		corev2.FixtureEntity("d"),
+		corev2.FixtureEntity("e"),
+	}, nil).Once()
+	params.Args.Limit = 20
+	resolver = &namespaceImpl{entityClient: client}
+	got, err = resolver.Entities(params)
+	assert.NoError(t, err)
+	assert.Len(t, got.(offsetContainer).Nodes, 20)
+	assert.Equal(t, 255, got.(offsetContainer).PageInfo.totalCount)
+	assert.Equal(t, false, got.(offsetContainer).PageInfo.partialCount)
+
+	// w/ offset
+	client.On("ListEntities", mock.Anything, mock.Anything).Run(func(args mock.Arguments) {
+		pred := args[1].(*store.SelectionPredicate)
+		pred.Continue = "next"
+	}).Return([]*corev2.Entity{
+		corev2.FixtureEntity("a"),
+		corev2.FixtureEntity("b"),
+		corev2.FixtureEntity("c"),
+		corev2.FixtureEntity("d"),
+		corev2.FixtureEntity("e"),
+	}, nil).Times(50)
+	client.On("ListEntities", mock.Anything, mock.Anything).Run(func(args mock.Arguments) {
+		pred := args[1].(*store.SelectionPredicate)
+		pred.Continue = ""
+	}).Return([]*corev2.Entity{
+		corev2.FixtureEntity("a"),
+		corev2.FixtureEntity("b"),
+		corev2.FixtureEntity("c"),
+		corev2.FixtureEntity("d"),
+		corev2.FixtureEntity("e"),
+	}, nil).Once()
+	params.Args.Limit = 20
+	params.Args.Offset = 250
+	resolver = &namespaceImpl{entityClient: client}
+	got, err = resolver.Entities(params)
+	assert.NoError(t, err)
+	assert.Len(t, got.(offsetContainer).Nodes, 5)
+	assert.Equal(t, 255, got.(offsetContainer).PageInfo.totalCount)
+	assert.Equal(t, false, got.(offsetContainer).PageInfo.partialCount)
 
 	// Store err
 	client.On("ListEntities", mock.Anything, mock.Anything).Return([]*corev2.Entity{}, errors.New("abc")).Once()
