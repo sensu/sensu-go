@@ -102,6 +102,7 @@ func (opts *hookOpts) administerQuestionnaire(editing bool) error {
 			},
 			Validate: func(val interface{}) error {
 				if str, ok := val.(string); ok && str != "false" && str != "true" {
+					//lint:ignore ST1005 this error is written to stdout/stderr
 					return fmt.Errorf("Please enter either true or false")
 				}
 				return nil

@@ -170,7 +170,7 @@ func (m *CommandManager) InstallCommandFromBonsai(alias, bonsaiAssetName string)
 
 	asset, ok := wrapper.Value.(*corev2.Asset)
 	if !ok {
-		return fmt.Errorf("bonsai returned %s.%s, want core/v2.Asset!", wrapper.APIVersion, wrapper.Type)
+		return fmt.Errorf("bonsai returned %s.%s, want core/v2.Asset", wrapper.APIVersion, wrapper.Type)
 	}
 
 	asset.Namespace = sensuctlAssetNamespace

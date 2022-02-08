@@ -57,10 +57,7 @@ func toMap(s []string) map[string]string {
 
 		switch len(split) {
 		case 1:
-			if split[0] == v {
-				// There is no '=' in the input, consider it malformed
-				break
-			} else {
+			if split[0] != v {
 				// We came across VAR=, which is equivalent to VAR=""
 				m[split[0]] = ""
 			}
@@ -69,9 +66,6 @@ func toMap(s []string) map[string]string {
 			key := coerceKey(split[0])
 			// A proper VAR=VALUE definiton
 			m[key] = split[1]
-		default:
-			// Anything else is considered malformed and ignored
-			break
 		}
 	}
 

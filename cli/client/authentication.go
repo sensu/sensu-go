@@ -46,6 +46,7 @@ func (client *RestClient) TestCreds(userid, password string) error {
 	if res.StatusCode() == 401 {
 		return errors.New(string(res.Body()))
 	} else if res.StatusCode() >= 400 {
+		//lint:ignore ST1005 this error is written to stdout/stderr
 		return errors.New("Received an unexpected response from the API")
 	}
 
@@ -63,6 +64,7 @@ func (client *RestClient) Logout(token string) error {
 	}
 
 	if res.StatusCode() >= 400 {
+		//lint:ignore ST1005 this error is written to stdout/stderr
 		return fmt.Errorf("The server returned the error: %d %s",
 			res.StatusCode(),
 			res.String(),
@@ -112,6 +114,7 @@ func (client *RestClient) RefreshAccessToken(tokens *corev2.Tokens) (*corev2.Tok
 	}
 
 	if res.StatusCode() >= 400 {
+		//lint:ignore ST1005 this error is written to stdout/stderr
 		return nil, fmt.Errorf("The server returned the error: %d %s",
 			res.StatusCode(),
 			res.String(),
@@ -120,6 +123,7 @@ func (client *RestClient) RefreshAccessToken(tokens *corev2.Tokens) (*corev2.Tok
 
 	tokens, ok := res.Result().(*corev2.Tokens)
 	if !ok {
+		//lint:ignore ST1005 this error is written to stdout/stderr
 		return nil, fmt.Errorf("Unable to unmarshal response from server")
 	}
 

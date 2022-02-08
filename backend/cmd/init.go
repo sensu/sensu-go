@@ -175,6 +175,7 @@ func InitCommand() *cobra.Command {
 					return err
 				}
 				if opts.AdminPassword != opts.AdminPasswordConfirmation {
+					//lint:ignore ST1005 this error is written to stdout/stderr
 					return errors.New("Password confirmation doesn't match the password")
 				}
 				initConfig.SeedConfig.AdminUsername = opts.AdminUsername

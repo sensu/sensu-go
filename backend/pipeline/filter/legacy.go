@@ -28,7 +28,7 @@ var (
 		"not_silenced",
 	}
 
-	getFilterErr = errors.New("could not retrieve filter")
+	errCouldNotRetrieveFilter = errors.New("could not retrieve filter")
 
 	// PipelineFilterFuncs gets patched by enterprise sensu-go
 	PipelineFilterFuncs map[string]interface{}
@@ -77,12 +77,12 @@ func (l *LegacyAdapter) Filter(ctx context.Context, ref *corev2.ResourceReferenc
 	filter, err := l.Store.GetEventFilterByName(tctx, ref.Name)
 	cancel()
 	if err != nil {
-		logger.WithFields(fields).WithError(err).Warning(getFilterErr.Error())
+		logger.WithFields(fields).WithError(err).Warning(errCouldNotRetrieveFilter.Error())
 		return false, err
 	}
 	if filter == nil {
-		logger.WithFields(fields).WithError(err).Warning(getFilterErr.Error())
-		return false, fmt.Errorf(getFilterErr.Error())
+		logger.WithFields(fields).WithError(err).Warning(errCouldNotRetrieveFilter.Error())
+		return false, fmt.Errorf(errCouldNotRetrieveFilter.Error())
 	}
 
 	// Execute the filter, evaluating each of its

@@ -55,6 +55,7 @@ func CreateCommand(cli *cli.SensuCli) *cobra.Command {
 			}
 
 			if isInteractive && opts.Password != opts.PasswordConfirmation {
+				//lint:ignore ST1005 this error is written to stdout/stderr
 				return errors.New("Password confirmation doesn't match the password")
 			}
 			user := opts.toUser()
