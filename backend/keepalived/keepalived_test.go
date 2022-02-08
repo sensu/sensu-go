@@ -10,7 +10,6 @@ import (
 	"github.com/sensu/sensu-go/backend/liveness"
 	"github.com/sensu/sensu-go/backend/messaging"
 	stor "github.com/sensu/sensu-go/backend/store"
-	storev2 "github.com/sensu/sensu-go/backend/store/v2"
 	storv2 "github.com/sensu/sensu-go/backend/store/v2"
 	"github.com/sensu/sensu-go/backend/store/v2/storetest"
 	"github.com/sensu/sensu-go/backend/store/v2/wrap"
@@ -429,7 +428,7 @@ func TestDeadCallbackNoEvent(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	wrapper, err := storev2.WrapResource(
+	wrapper, err := storv2.WrapResource(
 		corev3.FixtureEntityConfig("entity1"),
 		[]wrap.Option{wrap.CompressNone, wrap.EncodeJSON}...)
 	require.NoError(t, err)

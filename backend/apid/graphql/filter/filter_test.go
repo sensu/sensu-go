@@ -21,7 +21,7 @@ func TestCompile(t *testing.T) {
 
 	// statement doesn't match a filter
 	m, err = Compile([]string{"unknown:test"}, filters, nil)
-	require.Error(t, err, KeylessStatementErr)
+	require.Error(t, err, ErrKeylessStatement)
 	assert.Nil(t, m)
 
 	// statement is not valid

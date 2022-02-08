@@ -8,11 +8,15 @@ import (
 )
 
 var (
-	// KeylessStatementErr statement is missing a key
-	KeylessStatementErr = errors.New("filters must have the format KEY:VAL")
+	// ErrKeylessStatement is returned when a statement is missing a key
+	ErrKeylessStatement = errors.New("filters must have the format KEY:VAL")
+	// DEPRECATED: use ErrKeylessStatement
+	KeylessStatementErr = ErrKeylessStatement
 
-	// FilterNotFoundErr could not match a filter for the given key
-	FilterNotFoundErr = errors.New("no filter could be matched with the given statement")
+	// ErrFilterNotFound is returned when a filter is not found for a given key
+	ErrFilterNotFound = errors.New("no filter could be matched with the given statement")
+	// DEPRECATED: use ErrFilterNotFound
+	FilterNotFoundErr = ErrFilterNotFound
 )
 
 // Match a given resource
@@ -35,12 +39,12 @@ func Compile(statements []string, filters map[string]Filter, fieldsFn FieldsFunc
 	for _, s := range statements {
 		ss := strings.SplitN(s, statementSeparator, 2)
 		if len(ss) != 2 {
-			return nil, KeylessStatementErr
+			return nil, ErrKeylessStatement
 		}
 		k, v := ss[0], ss[1]
 		f, ok := filters[k]
 		if !ok {
-			return nil, FilterNotFoundErr
+			return nil, ErrFilterNotFound
 		}
 		matcher, err := f(v, fieldsFn)
 		if err != nil {

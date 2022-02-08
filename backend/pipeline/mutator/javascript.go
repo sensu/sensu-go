@@ -23,7 +23,7 @@ const (
 )
 
 var (
-	halt = errors.New("halt")
+	errHalt = errors.New("halt")
 )
 
 // JavascriptAdapter is a mutator adapter which mutates an event using
@@ -146,7 +146,7 @@ func (m *MutatorExecutionEnvironment) Eval(ctx context.Context, expression strin
 		}
 		vm.Interrupt = make(chan func(), 1)
 		defer func() {
-			if e := recover(); e != nil && e == halt {
+			if e := recover(); e != nil && e == errHalt {
 				err = errors.New("mutator timeout reached, execution halted")
 			} else if e != nil {
 				panic(e)
@@ -158,7 +158,7 @@ func (m *MutatorExecutionEnvironment) Eval(ctx context.Context, expression strin
 				select {
 				case <-time.After(m.Timeout):
 					vm.Interrupt <- func() {
-						panic(halt)
+						panic(errHalt)
 					}
 				case <-done:
 				}

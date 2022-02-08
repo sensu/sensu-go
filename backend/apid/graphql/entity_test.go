@@ -7,7 +7,6 @@ import (
 	"time"
 
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
-	v2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/apid/graphql/schema"
 	"github.com/sensu/sensu-go/graphql"
 	"github.com/stretchr/testify/assert"
@@ -22,7 +21,7 @@ func TestEntityTypeMetadataField(t *testing.T) {
 	res, err := impl.Metadata(graphql.ResolveParams{Source: src, Context: context.Background()})
 	require.NoError(t, err)
 	assert.NotEmpty(t, res)
-	assert.IsType(t, v2.ObjectMeta{}, res)
+	assert.IsType(t, corev2.ObjectMeta{}, res)
 }
 
 func TestEntityTypeRelatedField(t *testing.T) {
