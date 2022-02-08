@@ -6,6 +6,13 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic
 Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [6.6.6] - ???
+
+### Fixed
+
+- [GraphQL] Fixed issue where one could not use an offset >= 500 when paging
+through entities.
+
 ## [6.6.5] - 2022-02-03
 
 ### Fixed
