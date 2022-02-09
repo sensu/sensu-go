@@ -60,6 +60,9 @@ func (br *BackendResource) EnsureBackendResources(ctx context.Context) error {
 	}
 
 	backendEntity, err := getEntity()
+	if err != nil {
+		return err
+	}
 	err = br.entityStore.UpdateEntity(ctx, backendEntity)
 	if err != nil {
 		return err
