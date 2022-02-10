@@ -43,6 +43,15 @@ func (tcs *TestCronScheduler) Receiver() chan<- interface{} {
 	return tcs.channel
 }
 
+type mockEventReceiver struct {
+	mock.Mock
+}
+
+func (m *mockEventReceiver) GenerateBackendEvent(component string, status uint32, output string) error {
+	args := m.Called(component, status, output)
+	return args.Error(0)
+}
+
 func newIntervalScheduler(ctx context.Context, t *testing.T, executor string) *TestIntervalScheduler {
 	t.Helper()
 
@@ -64,7 +73,7 @@ func newIntervalScheduler(ctx context.Context, t *testing.T, executor string) *T
 	bus, err := messaging.NewWizardBus(messaging.WizardBusConfig{})
 	require.NoError(t, err)
 	scheduler.msgBus = bus
-	pm := secrets.NewProviderManager()
+	pm := secrets.NewProviderManager(&mockEventReceiver{})
 
 	scheduler.scheduler = NewIntervalScheduler(ctx, s, scheduler.msgBus, scheduler.check, &cachev2.Resource{}, pm)
 
@@ -102,7 +111,7 @@ func newCronScheduler(ctx context.Context, t *testing.T, executor string) *TestC
 	bus, err := messaging.NewWizardBus(messaging.WizardBusConfig{})
 	require.NoError(t, err)
 	scheduler.msgBus = bus
-	pm := secrets.NewProviderManager()
+	pm := secrets.NewProviderManager(&mockEventReceiver{})
 
 	scheduler.scheduler = NewCronScheduler(ctx, s, scheduler.msgBus, scheduler.check, &cachev2.Resource{}, pm)
 

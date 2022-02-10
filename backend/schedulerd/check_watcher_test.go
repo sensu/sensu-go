@@ -41,7 +41,7 @@ func TestCheckWatcherSmoke(t *testing.T) {
 	watcherChan := make(chan store.WatchEventCheckConfig)
 	st.On("GetCheckConfigWatcher", mock.Anything).Return((<-chan store.WatchEventCheckConfig)(watcherChan), nil)
 
-	pm := secrets.NewProviderManager()
+	pm := secrets.NewProviderManager(&mockEventReceiver{})
 	watcher := NewCheckWatcher(ctx, bus, st, nil, &cachev2.Resource{}, pm)
 	require.NoError(t, watcher.Start())
 

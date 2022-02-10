@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
+	"github.com/sensu/sensu-go/backend/resource"
 	"github.com/spf13/viper"
 	"go.etcd.io/etcd/client/pkg/v3/transport"
 	clientv3 "go.etcd.io/etcd/client/v3"
@@ -377,15 +378,21 @@ func Initialize(ctx context.Context, config *Config) (*Backend, error) {
 	assetManager := asset.NewManager(config.CacheDir, trustedCAFile, backendEntity, &sync.WaitGroup{})
 	limit := b.Cfg.AssetsRateLimit
 	if limit == 0 {
-		limit = rate.Limit(asset.DefaultAssetsRateLimit)
+		limit = asset.DefaultAssetsRateLimit
 	}
 	assetGetter, err := assetManager.StartAssetManager(b.RunContext(), rate.NewLimiter(limit, b.Cfg.AssetsBurstLimit))
 	if err != nil {
 		return nil, fmt.Errorf("error initializing asset manager: %s", err)
 	}
 
+	// Create sensu-system namespace and backend entity
+	br := resource.New(b.Store, b.Store, bus)
+	if err := br.EnsureBackendResources(ctx); err != nil {
+		return nil, fmt.Errorf("error creating system namespace and backend entity: %s", err.Error())
+	}
+
 	// Initialize the secrets provider manager
-	b.SecretsProviderManager = secrets.NewProviderManager()
+	b.SecretsProviderManager = secrets.NewProviderManager(br)
 
 	auth := &rbac.Authorizer{Store: b.Store}
 
@@ -606,11 +613,11 @@ func Initialize(ctx context.Context, config *Config) (*Backend, error) {
 		GraphQLService:      b.GraphQLService,
 		HealthRouter:        b.HealthRouter,
 	}
-	api, err := apid.New(b.APIDConfig)
+	newApi, err := apid.New(b.APIDConfig)
 	if err != nil {
-		return nil, fmt.Errorf("error initializing %s: %s", api.Name(), err)
+		return nil, fmt.Errorf("error initializing %s: %s", newApi.Name(), err)
 	}
-	b.Daemons = append(b.Daemons, api)
+	b.Daemons = append(b.Daemons, newApi)
 
 	// Initialize tessend
 	tessen, err := tessend.New(
@@ -795,7 +802,7 @@ func (b *Backend) RunWithInitializer(initialize func(context.Context, *Config) (
 
 		_ = b.Client.Close()
 
-		// Yes, two levels of retry... this could improve. Unfortunately Intialize()
+		// Yes, two levels of retry... this could improve. Unfortunately Initialize()
 		// is called elsewhere.
 		err = backoff.Retry(func(int) (bool, error) {
 			backend, err := initialize(b.ctx, b.Cfg)

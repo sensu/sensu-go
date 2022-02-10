@@ -29,7 +29,7 @@ func TestAdhocExecutor(t *testing.T) {
 	}
 	bus, err := messaging.NewWizardBus(messaging.WizardBusConfig{})
 	require.NoError(t, err)
-	pm := secrets.NewProviderManager()
+	pm := secrets.NewProviderManager(&mockEventReceiver{})
 	newAdhocExec := NewAdhocRequestExecutor(context.Background(), store, &queue.Memory{}, bus, &cachev2.Resource{}, pm)
 	defer newAdhocExec.Stop()
 	assert.NoError(t, newAdhocExec.bus.Start())

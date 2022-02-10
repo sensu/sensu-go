@@ -376,12 +376,12 @@ func buildRequest(check *corev2.CheckConfig, s store.Store, secretsProviderManag
 	}
 
 	if secretsProviderManager.TLSenabled {
-		secrets, err := secretsProviderManager.SubSecrets(ctx, check.Secrets)
+		secretValues, err := secretsProviderManager.SubSecrets(ctx, check.Secrets)
 		if err != nil {
 			logger.WithFields(fields).WithError(err).Error("failed to retrieve secrets for check")
 			return nil, err
 		}
-		request.Secrets = secrets
+		request.Secrets = secretValues
 	} else if len(check.Secrets) > 0 {
 		logger.WithFields(fields).Warning(
 			"secrets will not be transmitted to agents without mutual TLS authentication (mTLS)",
