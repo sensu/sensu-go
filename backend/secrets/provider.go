@@ -95,7 +95,7 @@ func (m *ProviderManager) RemoveProvider(name string) error {
 
 // SubSecrets substitutes all secret tokens with the value of the secret.
 func (m *ProviderManager) SubSecrets(ctx context.Context, secrets []*corev2.Secret) ([]string, error) {
-	secretVars := []string{}
+	secretVars := make([]string, 0, len(secrets))
 	// short circuit the function if there are no secrets
 	if len(secrets) == 0 {
 		return secretVars, nil
@@ -108,10 +108,10 @@ func (m *ProviderManager) SubSecrets(ctx context.Context, secrets []*corev2.Secr
 	providers := m.Providers()
 	// short circuit the function if there are no secrets providers
 	if len(providers) == 0 {
-		return secretVars, &ErrNoProviderDefined{}
+		return secretVars, ErrNoProviderDefined
 	}
 	if m.Getter == nil {
-		return []string{}, &ErrSecretsNotSupported{}
+		return []string{}, ErrSecretsNotSupported
 	}
 
 	// iterate through each secret in the config

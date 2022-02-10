@@ -3,7 +3,6 @@ package resource
 import (
 	"context"
 	"errors"
-	"fmt"
 	"time"
 
 	"github.com/google/uuid"
@@ -79,8 +78,7 @@ func (br *BackendResource) GenerateBackendEvent(component string, status uint32,
 	}
 
 	now := time.Now().Unix()
-	checkName := fmt.Sprintf("%s-%s", corev2.BackendCheckName, component)
-	if lastEvent, ok := br.lastEvents[checkName]; ok {
+	if lastEvent, ok := br.lastEvents[component]; ok {
 		if lastEvent.status == status && now-lastEvent.timestampSec < br.repeatIntervalSec {
 			return nil
 		}
@@ -91,21 +89,18 @@ func (br *BackendResource) GenerateBackendEvent(component string, status uint32,
 		Timestamp: now,
 		Entity:    br.backendEntity,
 		Check: &corev2.Check{
-			ObjectMeta: corev2.ObjectMeta{
-				Name:      checkName,
-				Namespace: systemNamespaceName,
-			},
-			Issued:   now,
-			Executed: now,
-			Output:   output,
-			Status:   status,
+			ObjectMeta: corev2.NewObjectMeta(component, systemNamespaceName),
+			Issued:     now,
+			Executed:   now,
+			Output:     output,
+			Status:     status,
 		},
-		ObjectMeta: corev2.ObjectMeta{},
+		ObjectMeta: corev2.NewObjectMeta("", systemNamespaceName),
 		ID:         id[:],
 	}
 	err := br.bus.Publish(messaging.TopicEventRaw, event)
 	if err == nil {
-		br.lastEvents[checkName] = &eventInfo{
+		br.lastEvents[component] = &eventInfo{
 			status:       status,
 			timestampSec: now,
 		}
