@@ -481,6 +481,7 @@ func createKeepaliveEvent(rawEvent *corev2.Event) *corev2.Event {
 		Timestamp:  time.Now().Unix(),
 		Entity:     rawEvent.Entity,
 		Check:      keepaliveCheck,
+		Pipelines:  rawEvent.Pipelines,
 	}
 
 	uid, _ := uuid.NewRandom()
