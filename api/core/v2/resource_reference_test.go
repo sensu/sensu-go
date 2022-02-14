@@ -42,9 +42,6 @@ func TestStringRef(t *testing.T) {
 			Input:       "a/v1..",
 			ExpectError: true,
 		}, {
-			Input:       "a/v1..",
-			ExpectError: true,
-		}, {
 			Input:       "foo",
 			ExpectError: true,
 		},
