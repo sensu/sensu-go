@@ -35,7 +35,7 @@ func (r *ResourceReference) StringRef() string {
 	return fmt.Sprintf("%s.%s.%s", r.APIVersion, r.Type, r.Name)
 }
 
-var resourceRefRE = regexp.MustCompile(`(\w+\/v\d+)\.(\w+)(?:\.|\s+)(\w+)`)
+var resourceRefRE = regexp.MustCompile(`(\w+\/v\d+)\.(\w+)(?:\.|\s+)([\w\.\-\:]+)`)
 
 func FromStringRef(s string) (*ResourceReference, error) {
 	var ref ResourceReference

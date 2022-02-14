@@ -26,6 +26,11 @@ func TestStringRef(t *testing.T) {
 			ExpectedType:    "X",
 			ExpectedName:    "testcase",
 		}, {
+			Input:           "core/v2.X  test-case_123:A.b.C",
+			ExpectedVersion: "core/v2",
+			ExpectedType:    "X",
+			ExpectedName:    "test-case_123:A.b.C",
+		}, {
 			Input:           "api_version/v0.type.testcase",
 			ExpectedVersion: "api_version/v0",
 			ExpectedType:    "type",
