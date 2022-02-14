@@ -13,6 +13,9 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 - Automatically create system namespace and backend entities.
 - Generate backend events on secret provider access errors.
 
+### Fixed
+- Log agent IP address for connections with faulty TLS configurations.
+
 ## [6.6.5] - 2022-02-03
 
 ### Fixed

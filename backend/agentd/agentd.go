@@ -184,7 +184,7 @@ func New(c Config, opts ...Option) (*Agentd, error) {
 			if cs != http.StateClosed {
 				var msg []byte
 				if _, err := c.Read(msg); err != nil {
-					logger.WithError(err).Error("websocket connection error")
+					logger.WithField("source", c.RemoteAddr().String()).WithError(err).Error("websocket connection error")
 				}
 			}
 		},
