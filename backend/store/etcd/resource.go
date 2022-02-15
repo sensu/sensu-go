@@ -41,8 +41,23 @@ func (s *Store) CreateOrUpdateResource(ctx context.Context, resource corev2.Reso
 	return CreateOrUpdate(ctx, s.client, key, namespace, resource)
 }
 
+// ReplaceResource creates or replaces resource.
+// returns previous copy of resource if it exists and no errors occured
 func (s *Store) ReplaceResource(ctx context.Context, resource corev2.Resource) (corev2.Resource, error) {
-	return nil, nil
+	if err := resource.Validate(); err != nil {
+		return nil, &store.ErrNotValid{Err: err}
+	}
+
+	key := store.KeyFromResource(resource)
+	namespace := resource.GetObjectMeta().Namespace
+	prev, err := CreateOrReplace(ctx, s.client, key, namespace, resource)
+
+	var prevResource corev2.Resource
+	if prev != nil {
+		prevResource = prev.(corev2.Resource)
+	}
+
+	return prevResource, err
 }
 
 // DeleteResource deletes the resource using the given resource prefix and name
