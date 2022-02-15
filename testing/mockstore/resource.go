@@ -20,6 +20,12 @@ func (s *MockStore) CreateOrUpdateResource(ctx context.Context, resource corev2.
 	return args.Error(0)
 }
 
+// ReplaceResource ...
+func (s *MockStore) ReplaceResource(ctx context.Context, resource corev2.Resource) (corev2.Resource, error) {
+	args := s.Called(ctx, resource)
+	return args.Get(0).(corev2.Resource), args.Error(1)
+}
+
 // DeleteResource ...
 func (s *MockStore) DeleteResource(ctx context.Context, kind, name string) error {
 	args := s.Called(ctx, kind, name)

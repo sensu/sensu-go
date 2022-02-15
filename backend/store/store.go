@@ -524,6 +524,8 @@ type ResourceStore interface {
 
 	CreateOrUpdateResource(ctx context.Context, resource corev2.Resource) error
 
+	ReplaceResource(ctx context.Context, resource corev2.Resource) (corev2.Resource, error)
+
 	DeleteResource(ctx context.Context, kind, name string) error
 
 	GetResource(ctx context.Context, name string, resource corev2.Resource) error

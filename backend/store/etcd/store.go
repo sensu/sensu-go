@@ -65,9 +65,51 @@ func CreateOrUpdate(ctx context.Context, client *clientv3.Client, key, namespace
 	comparator := kvc.Comparisons(
 		kvc.NamespaceExists(namespace),
 	)
-	op := clientv3.OpPut(key, string(bytes))
+	op := clientv3.OpPut(key, string(bytes), clientv3.WithPrevKV())
 
 	return kvc.Txn(ctx, client, comparator, op)
+}
+
+func CreateOrReplace(ctx context.Context, client *clientv3.Client, key, namespace string, object interface{}) (interface{}, error) {
+	bytes, err := marshal(object)
+	if err != nil {
+		return nil, &store.ErrEncode{Key: key, Err: err}
+	}
+
+	comparator := kvc.Comparisons(
+		kvc.NamespaceExists(namespace),
+	)
+	op := clientv3.OpPut(key, string(bytes), clientv3.WithPrevKV())
+
+	var resp *clientv3.TxnResponse
+	err = kvc.Backoff(ctx).Retry(func(n int) (done bool, err error) {
+		resp, err = client.Txn(ctx).If(
+			comparator.Cmp()...,
+		).Then(
+			op,
+		).Else(
+			comparator.Failure()...,
+		).Commit()
+		return kvc.RetryRequest(n, err)
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	if !resp.Succeeded {
+		return nil, comparator.Error(resp)
+	}
+
+	prevKV := resp.Responses[0].GetResponsePut().GetPrevKv()
+	if prevKV == nil {
+		return nil, nil
+	}
+
+	var prevResource GenericObject
+	unmarshal(prevKV.Value, &prevResource)
+
+	return &prevResource, nil
 }
 
 // Delete the given key

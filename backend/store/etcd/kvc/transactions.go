@@ -6,8 +6,8 @@ import (
 	"path"
 
 	"github.com/sensu/sensu-go/backend/store"
-	"go.etcd.io/etcd/client/v3"
 	"go.etcd.io/etcd/api/v3/etcdserverpb"
+	clientv3 "go.etcd.io/etcd/client/v3"
 )
 
 // Txn performs an etcd transaction using the given comparator and operations

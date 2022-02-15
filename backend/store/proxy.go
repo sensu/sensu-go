@@ -384,6 +384,10 @@ func (s *StoreProxy) CreateOrUpdateResource(ctx context.Context, resource corev2
 	return s.do().CreateOrUpdateResource(ctx, resource)
 }
 
+func (s *StoreProxy) ReplaceResource(ctx context.Context, resource corev2.Resource) (corev2.Resource, error) {
+	return s.do().ReplaceResource(ctx, resource)
+}
+
 func (s *StoreProxy) DeleteResource(ctx context.Context, kind, name string) error {
 	return s.do().DeleteResource(ctx, kind, name)
 }

@@ -110,6 +110,22 @@ func TestCreate(t *testing.T) {
 	})
 }
 
+func TestCreateOrReplace(t *testing.T) {
+	testWithEtcdStore(t, func(s *Store) {
+		obj := &GenericObject{Revision: 1}
+		ctx := context.WithValue(context.Background(), types.NamespaceKey, "default")
+		prev, err := CreateOrReplace(ctx, s.client, "/default/foo", "default", obj)
+		assert.NoError(t, err)
+		assert.Nil(t, prev)
+
+		objv2 := &GenericObject{Revision: 2}
+		prev, err = CreateOrReplace(ctx, s.client, "/default/foo", "default", objv2)
+		assert.NoError(t, err)
+		assert.Equal(t, obj, prev)
+
+	})
+}
+
 func TestCreateOrUpdate(t *testing.T) {
 	testWithEtcdStore(t, func(s *Store) {
 		// Creating a namespaced key that does not exist should work

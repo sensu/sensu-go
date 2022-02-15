@@ -41,6 +41,10 @@ func (s *Store) CreateOrUpdateResource(ctx context.Context, resource corev2.Reso
 	return CreateOrUpdate(ctx, s.client, key, namespace, resource)
 }
 
+func (s *Store) ReplaceResource(ctx context.Context, resource corev2.Resource) (corev2.Resource, error) {
+	return nil, nil
+}
+
 // DeleteResource deletes the resource using the given resource prefix and name
 func (s *Store) DeleteResource(ctx context.Context, resourcePrefix, name string) error {
 	key := store.KeyFromArgs(ctx, resourcePrefix, name)
