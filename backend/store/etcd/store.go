@@ -12,6 +12,7 @@ import (
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/backend/store/etcd/kvc"
 	"github.com/sensu/sensu-go/types"
+	"go.etcd.io/etcd/api/v3/etcdserverpb"
 	clientv3 "go.etcd.io/etcd/client/v3"
 
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
@@ -72,12 +73,23 @@ func CreateOrUpdate(ctx context.Context, client *clientv3.Client, key, namespace
 	)
 
 	if cfg.Previous != nil {
-		op := clientv3.OpPut(key, string(bytes), clientv3.WithPrevKV())
-		resp, err := kvc.TxnWithResult(ctx, client, comparator, kvc.PutOperation{PutOp: op})
+		var previousBytes []byte
+		operation := kvc.Operation{
+			Op: clientv3.OpPut(key, string(bytes), clientv3.WithPrevKV()),
+			Handler: func(resp *etcdserverpb.ResponseOp) error {
+				prevKV := resp.GetResponsePut().GetPrevKv()
+				if prevKV == nil {
+					return nil
+				}
+				previousBytes = prevKV.Value
+				return nil
+			},
+		}
+		err := kvc.TxnWithOperator(ctx, client, comparator, kvc.Operations(operation))
 		if err != nil {
 			return err
 		}
-		return unmarshal(resp, cfg.Previous)
+		return unmarshal(previousBytes, cfg.Previous)
 	}
 
 	op := clientv3.OpPut(key, string(bytes))
