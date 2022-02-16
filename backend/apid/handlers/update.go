@@ -35,13 +35,22 @@ func (h Handlers) CreateOrUpdateResource(r *http.Request) (interface{}, error) {
 		resource.SetObjectMeta(meta)
 	}
 
-	if err := h.Store.CreateOrUpdateResource(r.Context(), resource); err != nil {
+	prevType := reflect.New(reflect.TypeOf(h.Resource).Elem())
+	prev := prevType.Interface().(corev2.Resource)
+	if err := h.Store.CreateOrUpdateResource(r.Context(), resource, prev); err != nil {
 		switch err := err.(type) {
 		case *store.ErrNotValid:
 			return nil, actions.NewError(actions.InvalidArgument, err)
 		default:
 			return nil, actions.NewError(actions.InternalErr, err)
 		}
+	}
+	if prev.GetObjectMeta().Name == "" {
+		logger.Warn("PUT Created Resource")
+	} else if reflect.DeepEqual(prev, resource) {
+		logger.Warn("PUT No Change")
+	} else {
+		logger.WithField("prev", prev).WithField("curr", resource).Warn("PUT Replaced Resource")
 	}
 
 	return nil, nil
