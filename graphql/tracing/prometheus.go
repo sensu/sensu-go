@@ -2,6 +2,7 @@ package tracing
 
 import (
 	"context"
+	"fmt"
 
 	time "github.com/echlebek/timeproxy"
 	"github.com/graphql-go/graphql"
@@ -24,7 +25,7 @@ var (
 			Help:       "Time spent in GraphQL operations, in seconds",
 			Objectives: map[float64]float64{0.5: 0.05, 0.9: 0.01, 0.99: 0.001},
 		},
-		[]string{"key", "platform_key"},
+		[]string{"key", "platform_key", "err"},
 	)
 
 	noopParse    = func(_ error) {}
@@ -73,9 +74,9 @@ func (c *PrometheusTracer) ParseDidStart(ctx context.Context) (context.Context, 
 		return ctx, noopParse
 	}
 	t := time.Now()
-	return ctx, func(_ error) {
+	return ctx, func(err error) {
 		dur := msecSince(t)
-		met := Collector.WithLabelValues(KeyParse, platformKeys[KeyParse])
+		met := Collector.WithLabelValues(KeyParse, platformKeys[KeyParse], extractErrType(err))
 		met.Observe(dur)
 	}
 }
@@ -86,9 +87,13 @@ func (c *PrometheusTracer) ValidationDidStart(ctx context.Context) (context.Cont
 		return ctx, noopValidate
 	}
 	t := time.Now()
-	return ctx, func(_ []gqlerrors.FormattedError) {
+	return ctx, func(errs []gqlerrors.FormattedError) {
 		dur := msecSince(t)
-		met := Collector.WithLabelValues(KeyValidate, platformKeys[KeyValidate])
+		err := "<nil>"
+		if len(errs) > 0 {
+			err = extractErrType(errs[0].OriginalError())
+		}
+		met := Collector.WithLabelValues(KeyValidate, platformKeys[KeyValidate], err)
 		met.Observe(dur)
 	}
 }
@@ -99,9 +104,13 @@ func (c *PrometheusTracer) ExecutionDidStart(ctx context.Context) (context.Conte
 		return ctx, noopQuery
 	}
 	t := time.Now()
-	return ctx, func(_ *graphql.Result) {
+	return ctx, func(result *graphql.Result) {
 		dur := msecSince(t)
-		met := Collector.WithLabelValues(KeyExecuteQuery, platformKeys[KeyExecuteQuery])
+		err := "<nil>"
+		if result != nil && len(result.Errors) > 0 {
+			err = extractErrType(result.Errors[0].OriginalError())
+		}
+		met := Collector.WithLabelValues(KeyExecuteQuery, platformKeys[KeyExecuteQuery], err)
 		met.Observe(dur)
 	}
 }
@@ -112,10 +121,10 @@ func (c *PrometheusTracer) ResolveFieldDidStart(ctx context.Context, i *graphql.
 		return ctx, noopField
 	}
 	t := time.Now()
-	return ctx, func(_ interface{}, _ error) {
+	return ctx, func(_ interface{}, err error) {
 		dur := msecSince(t)
 		key := i.ParentType.Name() + "." + i.FieldName
-		met := Collector.WithLabelValues(KeyExecuteField, key)
+		met := Collector.WithLabelValues(KeyExecuteField, key, extractErrType(err))
 		met.Observe(dur)
 	}
 }
@@ -135,4 +144,8 @@ func (c *PrometheusTracer) Collector() prometheus.Collector {
 func msecSince(t time.Time) float64 {
 	dur := time.Since(t)
 	return float64(dur) / float64(time.Millisecond)
+}
+
+func extractErrType(err error) string {
+	return fmt.Sprintf("%T", err)
 }
