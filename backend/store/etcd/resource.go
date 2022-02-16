@@ -31,13 +31,17 @@ func (s *Store) CreateResource(ctx context.Context, resource corev2.Resource) er
 
 // CreateOrUpdateResource creates or updates the given resource regardless of
 // whether it already exists or not
-func (s *Store) CreateOrUpdateResource(ctx context.Context, resource corev2.Resource) error {
+func (s *Store) CreateOrUpdateResource(ctx context.Context, resource corev2.Resource, prev ...corev2.Resource) error {
 	if err := resource.Validate(); err != nil {
 		return &store.ErrNotValid{Err: err}
 	}
 
 	key := store.KeyFromResource(resource)
 	namespace := resource.GetObjectMeta().Namespace
+
+	if len(prev) > 0 {
+		return CreateOrUpdate(ctx, s.client, key, namespace, resource, WithPreviousValue(prev[0]))
+	}
 	return CreateOrUpdate(ctx, s.client, key, namespace, resource)
 }
 

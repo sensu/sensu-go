@@ -56,7 +56,12 @@ func Create(ctx context.Context, client *clientv3.Client, key, namespace string,
 
 // CreateOrUpdate writes the given key with the serialized object, regarless of
 // its current existence
-func CreateOrUpdate(ctx context.Context, client *clientv3.Client, key, namespace string, object interface{}) error {
+func CreateOrUpdate(ctx context.Context, client *clientv3.Client, key, namespace string, object interface{}, options ...CreateOrUpdateOption) error {
+	cfg := updateConfig{}
+	for _, op := range options {
+		op(&cfg)
+	}
+
 	bytes, err := marshal(object)
 	if err != nil {
 		return &store.ErrEncode{Key: key, Err: err}
@@ -65,9 +70,31 @@ func CreateOrUpdate(ctx context.Context, client *clientv3.Client, key, namespace
 	comparator := kvc.Comparisons(
 		kvc.NamespaceExists(namespace),
 	)
+
+	if cfg.Previous != nil {
+		op := clientv3.OpPut(key, string(bytes), clientv3.WithPrevKV())
+		resp, err := kvc.TxnWithResult(ctx, client, comparator, kvc.PutOperation{PutOp: op})
+		if err != nil {
+			return err
+		}
+		return unmarshal(resp, cfg.Previous)
+	}
+
 	op := clientv3.OpPut(key, string(bytes))
 
 	return kvc.Txn(ctx, client, comparator, op)
+}
+
+type CreateOrUpdateOption func(*updateConfig)
+
+func WithPreviousValue(ref interface{}) CreateOrUpdateOption {
+	return func(cfg *updateConfig) {
+		cfg.Previous = ref
+	}
+}
+
+type updateConfig struct {
+	Previous interface{}
 }
 
 // Delete the given key

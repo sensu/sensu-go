@@ -6,8 +6,8 @@ import (
 	"path"
 
 	"github.com/sensu/sensu-go/backend/store"
-	"go.etcd.io/etcd/client/v3"
 	"go.etcd.io/etcd/api/v3/etcdserverpb"
+	clientv3 "go.etcd.io/etcd/client/v3"
 )
 
 // Txn performs an etcd transaction using the given comparator and operations
@@ -37,8 +37,59 @@ func Txn(ctx context.Context, client *clientv3.Client, comparator *Comparator, o
 	return nil
 }
 
+func TxnWithResult(ctx context.Context, client *clientv3.Client, comparator *Comparator, operation Operation) ([]byte, error) {
+	var resp *clientv3.TxnResponse
+	err := Backoff(ctx).Retry(func(n int) (done bool, err error) {
+		resp, err = client.Txn(ctx).If(
+			comparator.Cmp()...,
+		).Then(
+			operation.Op(),
+		).Else(
+			comparator.Failure()...,
+		).Commit()
+		return RetryRequest(n, err)
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	// Determine whether our comparisons in the If block evaluated to true or
+	// false. resp contains a list of responses from applying the If
+	// block if Succeeded is true or the Else block if Succeeded is false
+	if !resp.Succeeded {
+		return nil, comparator.Error(resp)
+	}
+	if len(resp.Responses) == 0 {
+		return nil, &store.ErrInternal{
+			Message: "transaction failed due to a missing response",
+		}
+	}
+
+	return operation.Result(resp.Responses[0])
+}
+
 type Comparator struct {
 	predicates []Predicate
+}
+
+type Operation interface {
+	Op() clientv3.Op
+	Result(resp *etcdserverpb.ResponseOp) ([]byte, error)
+}
+
+type PutOperation struct {
+	PutOp clientv3.Op
+}
+
+func (p PutOperation) Op() clientv3.Op {
+	return p.PutOp
+}
+func (p PutOperation) Result(resp *etcdserverpb.ResponseOp) ([]byte, error) {
+	prevKV := resp.GetResponsePut().GetPrevKv()
+	if prevKV == nil {
+		return nil, nil
+	}
+	return prevKV.Value, nil
 }
 
 func Comparisons(comparisons ...Predicate) *Comparator {

@@ -380,7 +380,7 @@ func (s *StoreProxy) CreateResource(ctx context.Context, resource corev2.Resourc
 	return s.do().CreateResource(ctx, resource)
 }
 
-func (s *StoreProxy) CreateOrUpdateResource(ctx context.Context, resource corev2.Resource) error {
+func (s *StoreProxy) CreateOrUpdateResource(ctx context.Context, resource corev2.Resource, prev ...corev2.Resource) error {
 	return s.do().CreateOrUpdateResource(ctx, resource)
 }
 

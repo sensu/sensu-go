@@ -14,6 +14,40 @@ import (
 	"go.etcd.io/etcd/client/v3"
 )
 
+func TestStore_RepalceResource(t *testing.T) {
+	testWithEtcdClient(t, func(s store.Store, client *clientv3.Client) {
+		// Create a resource
+		obj := &corev2.CheckConfig{
+			Command:    "exit 2",
+			Handlers:   []string{"handler-1"},
+			Interval:   30,
+			ObjectMeta: corev2.ObjectMeta{Name: "foo", Namespace: "default"},
+		}
+
+		ctx := context.WithValue(context.Background(), corev2.NamespaceKey, "default")
+
+		if err := s.CreateOrUpdateResource(ctx, obj); err != nil {
+			t.Fatalf("could not create a resource: %s", err)
+		}
+		objv2 := &corev2.CheckConfig{
+			Command:    "exit 0",
+			Handlers:   []string{"handler-1"},
+			Interval:   20,
+			ObjectMeta: corev2.ObjectMeta{Name: "foo", Namespace: "default"},
+		}
+
+		prev := &corev2.CheckConfig{}
+		err := s.CreateOrUpdateResource(ctx, objv2, prev)
+		if err != nil {
+			t.Fatalf("could not replace resource: %s", err)
+		}
+		if !reflect.DeepEqual(obj, prev) {
+			t.Error("expected prev to equal initial object")
+		}
+
+	})
+}
+
 func TestStore_PatchResource(t *testing.T) {
 	testWithEtcdClient(t, func(s store.Store, client *clientv3.Client) {
 		// Create a resource

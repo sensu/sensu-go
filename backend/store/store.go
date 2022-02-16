@@ -522,7 +522,7 @@ type PipelineStore interface {
 type ResourceStore interface {
 	CreateResource(ctx context.Context, resource corev2.Resource) error
 
-	CreateOrUpdateResource(ctx context.Context, resource corev2.Resource) error
+	CreateOrUpdateResource(ctx context.Context, resource corev2.Resource, prev ...corev2.Resource) error
 
 	DeleteResource(ctx context.Context, kind, name string) error
 
@@ -532,6 +532,8 @@ type ResourceStore interface {
 
 	PatchResource(ctx context.Context, resource corev2.Resource, name string, patcher patch.Patcher, condition *ETagCondition) error
 }
+
+type CreateOrUpdateOption func(interface{})
 
 // RoleBindingStore provides methods for managing RBAC role bindings
 type RoleBindingStore interface {

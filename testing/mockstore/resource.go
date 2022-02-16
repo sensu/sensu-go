@@ -15,8 +15,8 @@ func (s *MockStore) CreateResource(ctx context.Context, resource corev2.Resource
 }
 
 // CreateOrUpdateResource ...
-func (s *MockStore) CreateOrUpdateResource(ctx context.Context, resource corev2.Resource) error {
-	args := s.Called(ctx, resource)
+func (s *MockStore) CreateOrUpdateResource(ctx context.Context, resource corev2.Resource, prev ...corev2.Resource) error {
+	args := s.Called(ctx, resource, prev)
 	return args.Error(0)
 }
 
