@@ -201,6 +201,12 @@ func NewService(cfg ServiceConfig) (*Service, error) {
 
 	// Configure tracing
 	tracer := tracing.NewPrometheusTracer()
+	tracer.AllowList = []string{
+		tracing.KeyParse,
+		tracing.KeyValidate,
+		tracing.KeyExecuteQuery,
+		tracing.KeyExecuteField,
+	}
 	svc.RegisterMiddleware(tracer)
 
 	err := svc.Regenerate()

@@ -8,6 +8,7 @@ import (
 	"github.com/echlebek/crock"
 	time "github.com/echlebek/timeproxy"
 	"github.com/graphql-go/graphql"
+	"github.com/graphql-go/graphql/gqlerrors"
 	"github.com/prometheus/client_golang/prometheus/testutil"
 )
 
@@ -25,6 +26,7 @@ func TestPrometheusTracer_ParseDidStart(t *testing.T) {
 		allowList []string
 		delta     time.Duration
 		runs      int
+		err       error
 		want      string
 	}{
 		{
@@ -40,11 +42,11 @@ func TestPrometheusTracer_ParseDidStart(t *testing.T) {
 			delta:     200,
 			runs:      1,
 			want: summaryMetadata + `
-        graphql_duration_seconds{key="parse",platform_key="graphql.parse",quantile="0.5"} 200
-        graphql_duration_seconds{key="parse",platform_key="graphql.parse",quantile="0.9"} 200
-        graphql_duration_seconds{key="parse",platform_key="graphql.parse",quantile="0.99"} 200
-        graphql_duration_seconds_sum{key="parse",platform_key="graphql.parse"} 200
-        graphql_duration_seconds_count{key="parse",platform_key="graphql.parse"} 1
+        graphql_duration_seconds{err="<nil>",key="parse",platform_key="graphql.parse",quantile="0.5"} 200
+        graphql_duration_seconds{err="<nil>",key="parse",platform_key="graphql.parse",quantile="0.9"} 200
+        graphql_duration_seconds{err="<nil>",key="parse",platform_key="graphql.parse",quantile="0.99"} 200
+        graphql_duration_seconds_sum{err="<nil>",key="parse",platform_key="graphql.parse"} 200
+        graphql_duration_seconds_count{err="<nil>",key="parse",platform_key="graphql.parse"} 1
       `,
 		},
 		{
@@ -53,11 +55,25 @@ func TestPrometheusTracer_ParseDidStart(t *testing.T) {
 			delta:     20,
 			runs:      5,
 			want: summaryMetadata + `
-        graphql_duration_seconds{key="parse",platform_key="graphql.parse",quantile="0.5"} 20
-        graphql_duration_seconds{key="parse",platform_key="graphql.parse",quantile="0.9"} 20
-        graphql_duration_seconds{key="parse",platform_key="graphql.parse",quantile="0.99"} 20
-        graphql_duration_seconds_sum{key="parse",platform_key="graphql.parse"} 100
-        graphql_duration_seconds_count{key="parse",platform_key="graphql.parse"} 5
+        graphql_duration_seconds{err="<nil>",key="parse",platform_key="graphql.parse",quantile="0.5"} 20
+        graphql_duration_seconds{err="<nil>",key="parse",platform_key="graphql.parse",quantile="0.9"} 20
+        graphql_duration_seconds{err="<nil>",key="parse",platform_key="graphql.parse",quantile="0.99"} 20
+        graphql_duration_seconds_sum{err="<nil>",key="parse",platform_key="graphql.parse"} 100
+        graphql_duration_seconds_count{err="<nil>",key="parse",platform_key="graphql.parse"} 5
+      `,
+		},
+		{
+			name:      "encountered error",
+			allowList: []string{KeyParse},
+			delta:     20,
+			runs:      5,
+			err:       context.DeadlineExceeded,
+			want: summaryMetadata + `
+        graphql_duration_seconds{err="context.deadlineExceededError",key="parse",platform_key="graphql.parse",quantile="0.5"} 20
+        graphql_duration_seconds{err="context.deadlineExceededError",key="parse",platform_key="graphql.parse",quantile="0.9"} 20
+        graphql_duration_seconds{err="context.deadlineExceededError",key="parse",platform_key="graphql.parse",quantile="0.99"} 20
+        graphql_duration_seconds_sum{err="context.deadlineExceededError",key="parse",platform_key="graphql.parse"} 100
+        graphql_duration_seconds_count{err="context.deadlineExceededError",key="parse",platform_key="graphql.parse"} 5
       `,
 		},
 	}
@@ -68,7 +84,7 @@ func TestPrometheusTracer_ParseDidStart(t *testing.T) {
 			for i := 0; i < tt.runs; i++ {
 				_, fn := trace.ParseDidStart(context.Background())
 				mockTime.Set(time.Now().Add(tt.delta * time.Millisecond))
-				fn(nil)
+				fn(tt.err)
 			}
 
 			if err := testutil.CollectAndCompare(trace.Collector(), strings.NewReader(tt.want), "graphql_duration_seconds"); err != nil {
@@ -86,6 +102,7 @@ func TestPrometheusTracer_ValidationDidStart(t *testing.T) {
 		name      string
 		allowList []string
 		delta     time.Duration
+		err       error
 		runs      int
 		want      string
 	}{
@@ -102,11 +119,11 @@ func TestPrometheusTracer_ValidationDidStart(t *testing.T) {
 			delta:     150,
 			runs:      1,
 			want: summaryMetadata + `
-        graphql_duration_seconds{key="validate",platform_key="graphql.validate",quantile="0.5"} 150
-        graphql_duration_seconds{key="validate",platform_key="graphql.validate",quantile="0.9"} 150
-        graphql_duration_seconds{key="validate",platform_key="graphql.validate",quantile="0.99"} 150
-        graphql_duration_seconds_sum{key="validate",platform_key="graphql.validate"} 150
-        graphql_duration_seconds_count{key="validate",platform_key="graphql.validate"} 1
+        graphql_duration_seconds{err="<nil>",key="validate",platform_key="graphql.validate",quantile="0.5"} 150
+        graphql_duration_seconds{err="<nil>",key="validate",platform_key="graphql.validate",quantile="0.9"} 150
+        graphql_duration_seconds{err="<nil>",key="validate",platform_key="graphql.validate",quantile="0.99"} 150
+        graphql_duration_seconds_sum{err="<nil>",key="validate",platform_key="graphql.validate"} 150
+        graphql_duration_seconds_count{err="<nil>",key="validate",platform_key="graphql.validate"} 1
       `,
 		},
 		{
@@ -115,11 +132,25 @@ func TestPrometheusTracer_ValidationDidStart(t *testing.T) {
 			delta:     15,
 			runs:      8,
 			want: summaryMetadata + `
-        graphql_duration_seconds{key="validate",platform_key="graphql.validate",quantile="0.5"} 15
-        graphql_duration_seconds{key="validate",platform_key="graphql.validate",quantile="0.9"} 15
-        graphql_duration_seconds{key="validate",platform_key="graphql.validate",quantile="0.99"} 15
-        graphql_duration_seconds_sum{key="validate",platform_key="graphql.validate"} 120
-        graphql_duration_seconds_count{key="validate",platform_key="graphql.validate"} 8
+        graphql_duration_seconds{err="<nil>",key="validate",platform_key="graphql.validate",quantile="0.5"} 15
+        graphql_duration_seconds{err="<nil>",key="validate",platform_key="graphql.validate",quantile="0.9"} 15
+        graphql_duration_seconds{err="<nil>",key="validate",platform_key="graphql.validate",quantile="0.99"} 15
+        graphql_duration_seconds_sum{err="<nil>",key="validate",platform_key="graphql.validate"} 120
+        graphql_duration_seconds_count{err="<nil>",key="validate",platform_key="graphql.validate"} 8
+      `,
+		},
+		{
+			name:      "encountered error",
+			allowList: []string{KeyValidate},
+			delta:     15,
+			runs:      8,
+			err:       context.DeadlineExceeded,
+			want: summaryMetadata + `
+        graphql_duration_seconds{err="context.deadlineExceededError",key="validate",platform_key="graphql.validate",quantile="0.5"} 15
+        graphql_duration_seconds{err="context.deadlineExceededError",key="validate",platform_key="graphql.validate",quantile="0.9"} 15
+        graphql_duration_seconds{err="context.deadlineExceededError",key="validate",platform_key="graphql.validate",quantile="0.99"} 15
+        graphql_duration_seconds_sum{err="context.deadlineExceededError",key="validate",platform_key="graphql.validate"} 120
+        graphql_duration_seconds_count{err="context.deadlineExceededError",key="validate",platform_key="graphql.validate"} 8
       `,
 		},
 	}
@@ -130,7 +161,12 @@ func TestPrometheusTracer_ValidationDidStart(t *testing.T) {
 			for i := 0; i < tt.runs; i++ {
 				_, fn := trace.ValidationDidStart(context.Background())
 				mockTime.Set(time.Now().Add(tt.delta * time.Millisecond))
-				fn(nil)
+
+				var errs []gqlerrors.FormattedError
+				if tt.err != nil {
+					errs = gqlerrors.FormatErrors(tt.err)
+				}
+				fn(errs)
 			}
 
 			if err := testutil.CollectAndCompare(trace.Collector(), strings.NewReader(tt.want), "graphql_duration_seconds"); err != nil {
@@ -149,6 +185,7 @@ func TestPrometheusTracer_ExecutionDidStart(t *testing.T) {
 		allowList []string
 		delta     time.Duration
 		runs      int
+		err       error
 		want      string
 	}{
 		{
@@ -164,11 +201,11 @@ func TestPrometheusTracer_ExecutionDidStart(t *testing.T) {
 			delta:     120,
 			runs:      1,
 			want: summaryMetadata + `
-        graphql_duration_seconds{key="execute_query",platform_key="graphql.execute",quantile="0.5"} 120
-        graphql_duration_seconds{key="execute_query",platform_key="graphql.execute",quantile="0.9"} 120
-        graphql_duration_seconds{key="execute_query",platform_key="graphql.execute",quantile="0.99"} 120
-        graphql_duration_seconds_sum{key="execute_query",platform_key="graphql.execute"} 120
-        graphql_duration_seconds_count{key="execute_query",platform_key="graphql.execute"} 1
+        graphql_duration_seconds{err="<nil>",key="execute_query",platform_key="graphql.execute",quantile="0.5"} 120
+        graphql_duration_seconds{err="<nil>",key="execute_query",platform_key="graphql.execute",quantile="0.9"} 120
+        graphql_duration_seconds{err="<nil>",key="execute_query",platform_key="graphql.execute",quantile="0.99"} 120
+        graphql_duration_seconds_sum{err="<nil>",key="execute_query",platform_key="graphql.execute"} 120
+        graphql_duration_seconds_count{err="<nil>",key="execute_query",platform_key="graphql.execute"} 1
       `,
 		},
 		{
@@ -177,11 +214,24 @@ func TestPrometheusTracer_ExecutionDidStart(t *testing.T) {
 			delta:     12,
 			runs:      9,
 			want: summaryMetadata + `
-        graphql_duration_seconds{key="execute_query",platform_key="graphql.execute",quantile="0.5"} 12
-        graphql_duration_seconds{key="execute_query",platform_key="graphql.execute",quantile="0.9"} 12
-        graphql_duration_seconds{key="execute_query",platform_key="graphql.execute",quantile="0.99"} 12
-        graphql_duration_seconds_sum{key="execute_query",platform_key="graphql.execute"} 108
-        graphql_duration_seconds_count{key="execute_query",platform_key="graphql.execute"} 9
+        graphql_duration_seconds{err="<nil>",key="execute_query",platform_key="graphql.execute",quantile="0.5"} 12
+        graphql_duration_seconds{err="<nil>",key="execute_query",platform_key="graphql.execute",quantile="0.9"} 12
+        graphql_duration_seconds{err="<nil>",key="execute_query",platform_key="graphql.execute",quantile="0.99"} 12
+        graphql_duration_seconds_sum{err="<nil>",key="execute_query",platform_key="graphql.execute"} 108
+        graphql_duration_seconds_count{err="<nil>",key="execute_query",platform_key="graphql.execute"} 9
+      `,
+		}, {
+			name:      "encountered error",
+			allowList: []string{KeyExecuteQuery},
+			delta:     12,
+			runs:      9,
+			err:       context.DeadlineExceeded,
+			want: summaryMetadata + `
+        graphql_duration_seconds{err="context.deadlineExceededError",key="execute_query",platform_key="graphql.execute",quantile="0.5"} 12
+        graphql_duration_seconds{err="context.deadlineExceededError",key="execute_query",platform_key="graphql.execute",quantile="0.9"} 12
+        graphql_duration_seconds{err="context.deadlineExceededError",key="execute_query",platform_key="graphql.execute",quantile="0.99"} 12
+        graphql_duration_seconds_sum{err="context.deadlineExceededError",key="execute_query",platform_key="graphql.execute"} 108
+        graphql_duration_seconds_count{err="context.deadlineExceededError",key="execute_query",platform_key="graphql.execute"} 9
       `,
 		},
 	}
@@ -192,7 +242,12 @@ func TestPrometheusTracer_ExecutionDidStart(t *testing.T) {
 			for i := 0; i < tt.runs; i++ {
 				_, fn := trace.ExecutionDidStart(context.Background())
 				mockTime.Set(time.Now().Add(tt.delta * time.Millisecond))
-				fn(nil)
+
+				result := &graphql.Result{}
+				if tt.err != nil {
+					result.Errors = gqlerrors.FormatErrors(tt.err)
+				}
+				fn(result)
 			}
 
 			if err := testutil.CollectAndCompare(trace.Collector(), strings.NewReader(tt.want), "graphql_duration_seconds"); err != nil {
@@ -211,6 +266,7 @@ func TestPrometheusTracer_ResolveFieldDidStart(t *testing.T) {
 		allowList []string
 		delta     time.Duration
 		runs      int
+		err       error
 		want      string
 	}{
 		{
@@ -226,11 +282,11 @@ func TestPrometheusTracer_ResolveFieldDidStart(t *testing.T) {
 			delta:     120,
 			runs:      1,
 			want: summaryMetadata + `
-        graphql_duration_seconds{key="execute_field",platform_key="Check.interval",quantile="0.5"} 120
-        graphql_duration_seconds{key="execute_field",platform_key="Check.interval",quantile="0.9"} 120
-        graphql_duration_seconds{key="execute_field",platform_key="Check.interval",quantile="0.99"} 120
-        graphql_duration_seconds_sum{key="execute_field",platform_key="Check.interval"} 120
-        graphql_duration_seconds_count{key="execute_field",platform_key="Check.interval"} 1
+        graphql_duration_seconds{err="<nil>",key="execute_field",platform_key="Check.interval",quantile="0.5"} 120
+        graphql_duration_seconds{err="<nil>",key="execute_field",platform_key="Check.interval",quantile="0.9"} 120
+        graphql_duration_seconds{err="<nil>",key="execute_field",platform_key="Check.interval",quantile="0.99"} 120
+        graphql_duration_seconds_sum{err="<nil>",key="execute_field",platform_key="Check.interval"} 120
+        graphql_duration_seconds_count{err="<nil>",key="execute_field",platform_key="Check.interval"} 1
       `,
 		},
 		{
@@ -239,11 +295,25 @@ func TestPrometheusTracer_ResolveFieldDidStart(t *testing.T) {
 			delta:     15,
 			runs:      7,
 			want: summaryMetadata + `
-        graphql_duration_seconds{key="execute_field",platform_key="Check.interval",quantile="0.5"} 15
-        graphql_duration_seconds{key="execute_field",platform_key="Check.interval",quantile="0.9"} 15
-        graphql_duration_seconds{key="execute_field",platform_key="Check.interval",quantile="0.99"} 15
-        graphql_duration_seconds_sum{key="execute_field",platform_key="Check.interval"} 105
-        graphql_duration_seconds_count{key="execute_field",platform_key="Check.interval"} 7
+        graphql_duration_seconds{err="<nil>",key="execute_field",platform_key="Check.interval",quantile="0.5"} 15
+        graphql_duration_seconds{err="<nil>",key="execute_field",platform_key="Check.interval",quantile="0.9"} 15
+        graphql_duration_seconds{err="<nil>",key="execute_field",platform_key="Check.interval",quantile="0.99"} 15
+        graphql_duration_seconds_sum{err="<nil>",key="execute_field",platform_key="Check.interval"} 105
+        graphql_duration_seconds_count{err="<nil>",key="execute_field",platform_key="Check.interval"} 7
+      `,
+		},
+		{
+			name:      "encountered error",
+			allowList: []string{KeyExecuteField},
+			delta:     15,
+			runs:      7,
+			err:       context.DeadlineExceeded,
+			want: summaryMetadata + `
+        graphql_duration_seconds{err="context.deadlineExceededError",key="execute_field",platform_key="Check.interval",quantile="0.5"} 15
+        graphql_duration_seconds{err="context.deadlineExceededError",key="execute_field",platform_key="Check.interval",quantile="0.9"} 15
+        graphql_duration_seconds{err="context.deadlineExceededError",key="execute_field",platform_key="Check.interval",quantile="0.99"} 15
+        graphql_duration_seconds_sum{err="context.deadlineExceededError",key="execute_field",platform_key="Check.interval"} 105
+        graphql_duration_seconds_count{err="context.deadlineExceededError",key="execute_field",platform_key="Check.interval"} 7
       `,
 		},
 	}
@@ -258,7 +328,7 @@ func TestPrometheusTracer_ResolveFieldDidStart(t *testing.T) {
 			for i := 0; i < tt.runs; i++ {
 				_, fn := trace.ResolveFieldDidStart(context.Background(), info)
 				mockTime.Set(time.Now().Add(tt.delta * time.Millisecond))
-				fn(nil, nil)
+				fn(nil, tt.err)
 			}
 
 			if err := testutil.CollectAndCompare(trace.Collector(), strings.NewReader(tt.want), "graphql_duration_seconds"); err != nil {
