@@ -19,6 +19,12 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ### Fixed
 - Log agent IP address for connections with faulty TLS configurations.
+## [6.6.6] - 2022-02-16
+
+### Fixed
+
+- [GraphQL] Fixed issue where one could not use an offset >= 500 when paging
+through entities.
 
 ## [6.6.5] - 2022-02-03
 
