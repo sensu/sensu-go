@@ -12,13 +12,15 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 ### Added
 - Automatically create system namespace and backend entities.
 - Generate backend events on secret provider access errors.
-## Unreleased
-
-### Added
 - Added `keepalive-pipelines` configuration flag to the sensu-agent
 
 ### Fixed
 - Log agent IP address for connections with faulty TLS configurations.
+
+### Changed
+- The default embedded etcd heartbeat interval has been increased from 100 to 300.
+- The default embedded etcd election timeout has been increased from 1000 to 3000.
+
 ## [6.6.6] - 2022-02-16
 
 ### Fixed
