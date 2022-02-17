@@ -47,13 +47,13 @@ const (
 	// For best practices, the parameter should be set around round-trip time
 	// between members.
 	// See: https://github.com/etcd-io/etcd/blob/master/Documentation/tuning.md#time-parameters
-	DefaultTickMs = 100
+	DefaultTickMs = 300
 
 	// DefaultElectionMs is the default Election Timeout. This timeout is how
 	// long a follower node will go without hearing a heartbeat before
 	// attempting to become leader itself.
 	// See: https://github.com/etcd-io/etcd/blob/master/Documentation/tuning.md#time-parameters
-	DefaultElectionMs = 1000
+	DefaultElectionMs = 3000
 
 	// DefaultLogLevel is the default log level for the embedded etcd server.
 	DefaultLogLevel = "warn"
