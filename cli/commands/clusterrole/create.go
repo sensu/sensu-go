@@ -4,17 +4,18 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/sensu/sensu-go/api/core/v2"
+	v2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/cli"
 	"github.com/sensu/sensu-go/cli/commands/helpers"
 	"github.com/sensu/sensu-go/types"
 	"github.com/spf13/cobra"
+	"github.com/spf13/pflag"
 )
 
 // CreateCommand defines new command to create a cluster role
 func CreateCommand(cli *cli.SensuCli) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:          "create [NAME] --verb=VERBS --resource=RESOURCES [--resource-name=RESOURCE_NAMES]",
+		Use:          "create [NAME] --verbs=VERBS --resources=RESOURCES [--resource-name=RESOURCE_NAMES]",
 		Short:        "create a new cluster role with a single rule",
 		SilenceUsage: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -32,7 +33,7 @@ func CreateCommand(cli *cli.SensuCli) *cobra.Command {
 			// Retrieve the rule from the flags
 			rule := types.Rule{}
 
-			verbs, err := cmd.Flags().GetStringSlice("verb")
+			verbs, err := cmd.Flags().GetStringSlice("verbs")
 			if err != nil {
 				return err
 			}
@@ -41,7 +42,7 @@ func CreateCommand(cli *cli.SensuCli) *cobra.Command {
 			}
 			rule.Verbs = verbs
 
-			resources, err := cmd.Flags().GetStringSlice("resource")
+			resources, err := cmd.Flags().GetStringSlice("resources")
 			if err != nil {
 				return err
 			}
@@ -70,15 +71,40 @@ func CreateCommand(cli *cli.SensuCli) *cobra.Command {
 		},
 	}
 
-	_ = cmd.Flags().StringSliceP("verb", "v", []string{},
+	// To be removed in a later version?
+	_ = cmd.Flags().StringSliceP("verb", "", []string{},
 		"verbs that apply to the resources contained in the rule",
 	)
-	_ = cmd.Flags().StringSliceP("resource", "r", []string{},
+	_ = cmd.Flags().StringSliceP("verbs", "v", []string{},
+		"verbs that apply to the resources contained in the rule",
+	)
+	// To be removed in a later version?
+	_ = cmd.Flags().StringSliceP("resource", "", []string{},
+		"resources that the rule applies to",
+	)
+	_ = cmd.Flags().StringSliceP("resources", "r", []string{},
 		"resources that the rule applies to",
 	)
 	_ = cmd.Flags().StringSliceP("resource-name", "n", []string{},
 		"optional resource names that the rule applies to",
 	)
 
+	cmd.Flags().MarkDeprecated("resource", "please use resources instead.")
+	cmd.Flags().MarkDeprecated("verb", "please use verbs instead.")
+	cmd.Flags().MarkHidden("resource")
+	cmd.Flags().MarkHidden("verb")
+	cmd.Flags().SetNormalizeFunc(normalizeParamsRun)
+
 	return cmd
+}
+
+func normalizeParamsRun(f *pflag.FlagSet, name string) pflag.NormalizedName {
+	switch name {
+	case "resource":
+		name = "resources"
+	case "verb":
+		name = "verbs"
+	}
+
+	return pflag.NormalizedName(name)
 }

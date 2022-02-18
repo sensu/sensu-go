@@ -35,7 +35,7 @@ func TestCreateCommandRunEClosureMissingArgs(t *testing.T) {
 	assert.Error(err)
 }
 
-func TestCreateCommandRunEClosureWithDeps(t *testing.T) {
+func TestCreateCommandDeprecatedRunEClosureWithDeps(t *testing.T) {
 	assert := assert.New(t)
 	cli := test.NewMockCLI()
 	client := cli.Client.(*client.MockClient)
@@ -44,6 +44,21 @@ func TestCreateCommandRunEClosureWithDeps(t *testing.T) {
 	cmd := CreateCommand(cli)
 	require.NoError(t, cmd.Flags().Set("verb", "list"))
 	require.NoError(t, cmd.Flags().Set("resource", "events"))
+	out, err := test.RunCmd(cmd, []string{"my-role"})
+
+	assert.NoError(err)
+	assert.Regexp("Created", out)
+}
+
+func TestCreateCommandRunEClosureWithDeps(t *testing.T) {
+	assert := assert.New(t)
+	cli := test.NewMockCLI()
+	client := cli.Client.(*client.MockClient)
+	client.On("CreateClusterRole", mock.Anything).Return(nil)
+
+	cmd := CreateCommand(cli)
+	require.NoError(t, cmd.Flags().Set("verbs", "list"))
+	require.NoError(t, cmd.Flags().Set("resources", "events"))
 	out, err := test.RunCmd(cmd, []string{"my-role"})
 
 	assert.NoError(err)
