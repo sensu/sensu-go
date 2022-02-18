@@ -27,6 +27,7 @@ mid-write.
 - The default embedded etcd heartbeat interval has been increased from 100 to 300.
 - The default embedded etcd election timeout has been increased from 1000 to 3000.
 - Upgraded etcd version from 3.5.0 to 3.5.2.
+- Changing parameters for `sensuctl cluster-role create` to use plurals
 
 ## [6.6.6] - 2022-02-16
 
