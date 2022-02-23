@@ -9,7 +9,6 @@ import (
 	"github.com/sensu/sensu-go/cli/commands/helpers"
 	"github.com/sensu/sensu-go/types"
 	"github.com/spf13/cobra"
-	"github.com/spf13/pflag"
 )
 
 // CreateCommand defines new command to create a cluster role
@@ -38,7 +37,15 @@ func CreateCommand(cli *cli.SensuCli) *cobra.Command {
 				return err
 			}
 			if len(verbs) == 0 {
-				return errors.New("at least one verb must be provided")
+				// Check the old "verb"
+				verbs, err = cmd.Flags().GetStringSlice("verb")
+				if err != nil {
+					return err
+				}
+				// If it's still zero raise an error
+				if len(verbs) == 0 {
+					return errors.New("at least one verb must be provided")
+				}
 			}
 			rule.Verbs = verbs
 
@@ -47,7 +54,14 @@ func CreateCommand(cli *cli.SensuCli) *cobra.Command {
 				return err
 			}
 			if len(resources) == 0 {
-				return errors.New("at least one resource must be provided")
+				// Check old resource
+				resources, err = cmd.Flags().GetStringSlice("resource")
+				if err != nil {
+					return err
+				}
+				if len(resources) == 0 {
+					return errors.New("at least one resource must be provided")
+				}
 			}
 			rule.Resources = resources
 
@@ -71,16 +85,18 @@ func CreateCommand(cli *cli.SensuCli) *cobra.Command {
 		},
 	}
 
+	// Non plural
 	// To be removed in a later version?
 	_ = cmd.Flags().StringSliceP("verb", "", []string{},
 		"verbs that apply to the resources contained in the rule",
 	)
-	_ = cmd.Flags().StringSliceP("verbs", "v", []string{},
-		"verbs that apply to the resources contained in the rule",
-	)
-	// To be removed in a later version?
 	_ = cmd.Flags().StringSliceP("resource", "", []string{},
 		"resources that the rule applies to",
+	)
+
+	// Plural
+	_ = cmd.Flags().StringSliceP("verbs", "v", []string{},
+		"verbs that apply to the resources contained in the rule",
 	)
 	_ = cmd.Flags().StringSliceP("resources", "r", []string{},
 		"resources that the rule applies to",
@@ -93,18 +109,6 @@ func CreateCommand(cli *cli.SensuCli) *cobra.Command {
 	cmd.Flags().MarkDeprecated("verb", "please use verbs instead.")
 	cmd.Flags().MarkHidden("resource")
 	cmd.Flags().MarkHidden("verb")
-	cmd.Flags().SetNormalizeFunc(normalizeParamsRun)
 
 	return cmd
-}
-
-func normalizeParamsRun(f *pflag.FlagSet, name string) pflag.NormalizedName {
-	switch name {
-	case "resource":
-		name = "resources"
-	case "verb":
-		name = "verbs"
-	}
-
-	return pflag.NormalizedName(name)
 }
