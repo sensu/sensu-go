@@ -274,5 +274,19 @@ func DefaultSuggestSchema() suggest.Register {
 				},
 			},
 		},
+		&suggest.Resource{
+			Group: "core/v2",
+			Name:  "pipeline",
+			Path:  "/api/core/v2/pipeline",
+			Fields: []suggest.Field{
+				&suggest.ObjectField{
+					Name: "metadata",
+					Fields: []suggest.Field{
+						suggest.NameField,
+						suggest.LabelsField,
+					},
+				},
+			},
+		},
 	}
 }
