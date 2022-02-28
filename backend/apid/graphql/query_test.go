@@ -136,12 +136,26 @@ func TestQueryTypeSuggestField(t *testing.T) {
 	cfg := ServiceConfig{GenericClient: client}
 	impl := queryImpl{svc: cfg}
 
+	prevGlobalFilters := GlobalFilters
+	GlobalFilters = CheckFilters()
+	defer func() {
+		GlobalFilters = prevGlobalFilters
+	}()
+
 	params := schema.QuerySuggestFieldResolverParams{ResolveParams: graphql.ResolveParams{Context: context.Background()}}
 	params.Args.Namespace = "default"
 	params.Args.Ref = "core/v2/check_config/subscriptions"
+	params.Args.Filters = []string{"published: true"}
+	params.Args.Q = "sql"
 
 	// Success
-	client.On("List", mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
+	client.On("List", mock.Anything, mock.Anything, mock.Anything).Run(func(args mock.Arguments) {
+		arg := args.Get(1).(*[]*corev2.CheckConfig)
+		*arg = []*corev2.CheckConfig{
+			{Publish: true, Subscriptions: []string{"bsd", "psql"}},
+			{Publish: false, Subscriptions: []string{"windows", "mssql"}},
+		}
+	}).Return(nil).Once()
 	client.On("SetTypeMeta", mock.Anything).Return(nil)
 	res, err := impl.Suggest(params)
 	require.NoError(t, err)

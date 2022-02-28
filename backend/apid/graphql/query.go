@@ -1,13 +1,16 @@
 package graphql
 
 import (
+	"context"
 	"fmt"
 	"reflect"
 	"sort"
 	"strings"
+	"time"
 
 	dto "github.com/prometheus/client_model/go"
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
+	"github.com/sensu/sensu-go/backend/apid/graphql/filter"
 	"github.com/sensu/sensu-go/backend/apid/graphql/relay"
 	"github.com/sensu/sensu-go/backend/apid/graphql/schema"
 	"github.com/sensu/sensu-go/backend/apid/graphql/suggest"
@@ -15,6 +18,12 @@ import (
 	"github.com/sensu/sensu-go/graphql"
 	"github.com/sensu/sensu-go/types"
 	utilstrings "github.com/sensu/sensu-go/util/strings"
+)
+
+var (
+	// Defines the max amount of time we will allocate to fetching, filtering
+	// and sorting suggestions
+	suggestResolverTimeout = 1_500 * time.Millisecond
 )
 
 var _ schema.QueryFieldResolvers = (*queryImpl)(nil)
@@ -116,6 +125,8 @@ func (r *queryImpl) Suggest(p schema.QuerySuggestFieldResolverParams) (interface
 	_ = client.SetTypeMeta(corev2.TypeMeta{Type: res.Name, APIVersion: res.Group})
 
 	ctx := store.NamespaceContext(p.Context, p.Args.Namespace)
+	ctx, cancel := context.WithTimeout(ctx, suggestResolverTimeout)
+	defer cancel()
 
 	// CRUFT: entities can no longer be retrieved through the generic API
 	// interface, to work around this we use the entity client.
@@ -130,10 +141,31 @@ func (r *queryImpl) Suggest(p schema.QuerySuggestFieldResolverParams) (interface
 		return results, err
 	}
 
+	// if given one or more filters, configure a matcher
+	var matches filter.Matcher = func(corev2.Resource) bool { return true }
+	if len(p.Args.Filters) > 0 {
+		matches, err = filter.Compile(p.Args.Filters, GlobalFilters, res.FilterFunc)
+		if err != nil {
+			return results, err
+		}
+	}
+
 	q := strings.ToLower(p.Args.Q)
 	set := utilstrings.OccurrenceSet{}
 	for i := 0; i < objs.Elem().Len(); i++ {
+		// IF the result set from the store was huge continue to check if we've
+		// exceeded the deadline while we process the results. This feels a bit
+		// crufty but may help avoid wasting a bunch of CPU time on a fairly
+		// low priority process.
+		if (i+1)%500 == 0 {
+			if err := ctx.Err(); err != nil {
+				break
+			}
+		}
 		s := objs.Elem().Index(i).Interface().(corev2.Resource)
+		if !matches(s) {
+			continue
+		}
 		for _, v := range field.Value(s, ref.FieldPath) {
 			if v != "" && strings.Contains(strings.ToLower(v), q) {
 				set.Add(v)

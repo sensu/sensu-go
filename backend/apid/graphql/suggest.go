@@ -3,6 +3,7 @@ package graphql
 import (
 	"strconv"
 
+	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	v2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/apid/graphql/suggest"
 )
@@ -39,9 +40,9 @@ func timeoutFn(res v2.Resource) []string {
 func DefaultSuggestSchema() suggest.Register {
 	return suggest.Register{
 		&suggest.Resource{
-			Group: "core/v2",
-			Name:  "asset",
-			Path:  "/api/core/v2/namespaces/{namespace}/assets",
+			Group:      "core/v2",
+			Name:       "asset",
+			FilterFunc: corev2.AssetFields,
 			Fields: []suggest.Field{
 				&suggest.ObjectField{
 					Name: "metadata",
@@ -59,9 +60,9 @@ func DefaultSuggestSchema() suggest.Register {
 			},
 		},
 		&suggest.Resource{
-			Group: "core/v2",
-			Name:  "check_config",
-			Path:  "/api/core/v2/namespaces/{namespace}/checks",
+			Group:      "core/v2",
+			Name:       "check_config",
+			FilterFunc: corev2.CheckConfigFields,
 			Fields: []suggest.Field{
 				&suggest.ObjectField{
 					Name: "metadata",
@@ -91,9 +92,9 @@ func DefaultSuggestSchema() suggest.Register {
 			},
 		},
 		&suggest.Resource{
-			Group: "core/v2",
-			Name:  "entity",
-			Path:  "/api/core/v2/namespaces/{namespace}/entities",
+			Group:      "core/v2",
+			Name:       "entity",
+			FilterFunc: corev2.EntityFields,
 			Fields: []suggest.Field{
 				&suggest.ObjectField{
 					Name: "metadata",
@@ -144,9 +145,9 @@ func DefaultSuggestSchema() suggest.Register {
 			},
 		},
 		&suggest.Resource{
-			Group: "core/v2",
-			Name:  "filter",
-			Path:  "/api/core/v2/namespaces/{namespace}/filters",
+			Group:      "core/v2",
+			Name:       "filter",
+			FilterFunc: corev2.EventFilterFields,
 			Fields: []suggest.Field{
 				&suggest.ObjectField{
 					Name: "metadata",
@@ -158,31 +159,9 @@ func DefaultSuggestSchema() suggest.Register {
 			},
 		},
 		&suggest.Resource{
-			Group: "core/v2",
-			Name:  "handler",
-			Path:  "/api/core/v2/namespaces/{namespace}/handlers",
-			Fields: []suggest.Field{
-				&suggest.ObjectField{
-					Name: "metadata",
-					Fields: []suggest.Field{
-						suggest.NameField,
-						suggest.LabelsField,
-					},
-				},
-				&suggest.CustomField{
-					Name:      "command",
-					FieldFunc: commandFn,
-				},
-				&suggest.CustomField{
-					Name:      "timeout",
-					FieldFunc: timeoutFn,
-				},
-			},
-		},
-		&suggest.Resource{
-			Group: "core/v2",
-			Name:  "hook_config",
-			Path:  "/api/core/v2/namespaces/{namespace}/hooks",
+			Group:      "core/v2",
+			Name:       "handler",
+			FilterFunc: corev2.HandlerFields,
 			Fields: []suggest.Field{
 				&suggest.ObjectField{
 					Name: "metadata",
@@ -202,9 +181,9 @@ func DefaultSuggestSchema() suggest.Register {
 			},
 		},
 		&suggest.Resource{
-			Group: "core/v2",
-			Name:  "mutator",
-			Path:  "/api/core/v2/namespaces/{namespace}/mutators",
+			Group:      "core/v2",
+			Name:       "hook_config",
+			FilterFunc: corev2.HookConfigFields,
 			Fields: []suggest.Field{
 				&suggest.ObjectField{
 					Name: "metadata",
@@ -224,9 +203,45 @@ func DefaultSuggestSchema() suggest.Register {
 			},
 		},
 		&suggest.Resource{
-			Group: "core/v2",
-			Name:  "silenced",
-			Path:  "/api/core/v2/namespaces/{namespace}/silenced",
+			Group:      "core/v2",
+			Name:       "mutator",
+			FilterFunc: corev2.MutatorFields,
+			Fields: []suggest.Field{
+				&suggest.ObjectField{
+					Name: "metadata",
+					Fields: []suggest.Field{
+						suggest.NameField,
+						suggest.LabelsField,
+					},
+				},
+				&suggest.CustomField{
+					Name:      "command",
+					FieldFunc: commandFn,
+				},
+				&suggest.CustomField{
+					Name:      "timeout",
+					FieldFunc: timeoutFn,
+				},
+			},
+		},
+		&suggest.Resource{
+			Group:      "core/v2",
+			Name:       "pipeline",
+			FilterFunc: corev2.PipelineFields,
+			Fields: []suggest.Field{
+				&suggest.ObjectField{
+					Name: "metadata",
+					Fields: []suggest.Field{
+						suggest.NameField,
+						suggest.LabelsField,
+					},
+				},
+			},
+		},
+		&suggest.Resource{
+			Group:      "core/v2",
+			Name:       "silenced",
+			FilterFunc: corev2.SilencedFields,
 			Fields: []suggest.Field{
 				&suggest.ObjectField{
 					Name: "metadata",
@@ -256,9 +271,9 @@ func DefaultSuggestSchema() suggest.Register {
 			},
 		},
 		&suggest.Resource{
-			Group: "core/v2",
-			Name:  "user",
-			Path:  "/api/core/v2/users",
+			Group:      "core/v2",
+			Name:       "user",
+			FilterFunc: corev2.UserFields,
 			Fields: []suggest.Field{
 				&suggest.CustomField{
 					Name: "username",
@@ -270,20 +285,6 @@ func DefaultSuggestSchema() suggest.Register {
 					Name: "groups",
 					FieldFunc: func(res v2.Resource) []string {
 						return res.(*v2.User).Groups
-					},
-				},
-			},
-		},
-		&suggest.Resource{
-			Group: "core/v2",
-			Name:  "pipeline",
-			Path:  "/api/core/v2/pipeline",
-			Fields: []suggest.Field{
-				&suggest.ObjectField{
-					Name: "metadata",
-					Fields: []suggest.Field{
-						suggest.NameField,
-						suggest.LabelsField,
 					},
 				},
 			},
