@@ -23,7 +23,7 @@ import (
 var (
 	// Defines the max amount of time we will allocate to fetching, filtering
 	// and sorting suggestions
-	suggestResolverTimeout = 1_500 * time.Millisecond
+	suggestResolverTimeout = 850 * time.Millisecond
 )
 
 var _ schema.QueryFieldResolvers = (*queryImpl)(nil)
@@ -157,7 +157,7 @@ func (r *queryImpl) Suggest(p schema.QuerySuggestFieldResolverParams) (interface
 		// exceeded the deadline while we process the results. This feels a bit
 		// crufty but may help avoid wasting a bunch of CPU time on a fairly
 		// low priority process.
-		if (i+1)%500 == 0 {
+		if (i+1)%250 == 0 {
 			if err := ctx.Err(); err != nil {
 				break
 			}

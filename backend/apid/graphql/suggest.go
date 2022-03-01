@@ -4,7 +4,6 @@ import (
 	"strconv"
 
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
-	v2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/apid/graphql/suggest"
 )
 
@@ -24,15 +23,15 @@ type Timeoutable interface {
 	GetTimeout() uint32
 }
 
-func subscriptionsFn(res v2.Resource) []string {
+func subscriptionsFn(res corev2.Resource) []string {
 	return res.(Subscribable).GetSubscriptions()
 }
 
-func commandFn(res v2.Resource) []string {
+func commandFn(res corev2.Resource) []string {
 	return []string{res.(Commandable).GetCommand()}
 }
 
-func timeoutFn(res v2.Resource) []string {
+func timeoutFn(res corev2.Resource) []string {
 	t := res.(Timeoutable).GetTimeout()
 	return []string{strconv.FormatUint(uint64(t), 10)}
 }
@@ -53,8 +52,8 @@ func DefaultSuggestSchema() suggest.Register {
 				},
 				&suggest.CustomField{
 					Name: "filters",
-					FieldFunc: func(res v2.Resource) []string {
-						return res.(*v2.Asset).Filters
+					FieldFunc: func(res corev2.Resource) []string {
+						return res.(*corev2.Asset).Filters
 					},
 				},
 			},
@@ -73,8 +72,8 @@ func DefaultSuggestSchema() suggest.Register {
 				},
 				&suggest.CustomField{
 					Name: "proxy_entity_name",
-					FieldFunc: func(res v2.Resource) []string {
-						return []string{res.(*v2.CheckConfig).ProxyEntityName}
+					FieldFunc: func(res corev2.Resource) []string {
+						return []string{res.(*corev2.CheckConfig).ProxyEntityName}
 					},
 				},
 				&suggest.CustomField{
@@ -108,26 +107,26 @@ func DefaultSuggestSchema() suggest.Register {
 					Fields: []suggest.Field{
 						&suggest.CustomField{
 							Name: "os",
-							FieldFunc: func(res v2.Resource) []string {
-								return []string{res.(*v2.Entity).System.OS}
+							FieldFunc: func(res corev2.Resource) []string {
+								return []string{res.(*corev2.Entity).System.OS}
 							},
 						},
 						&suggest.CustomField{
 							Name: "platform",
-							FieldFunc: func(res v2.Resource) []string {
-								return []string{res.(*v2.Entity).System.Platform}
+							FieldFunc: func(res corev2.Resource) []string {
+								return []string{res.(*corev2.Entity).System.Platform}
 							},
 						},
 						&suggest.CustomField{
 							Name: "platform_family",
-							FieldFunc: func(res v2.Resource) []string {
-								return []string{res.(*v2.Entity).System.PlatformFamily}
+							FieldFunc: func(res corev2.Resource) []string {
+								return []string{res.(*corev2.Entity).System.PlatformFamily}
 							},
 						},
 						&suggest.CustomField{
 							Name: "arch",
-							FieldFunc: func(res v2.Resource) []string {
-								return []string{res.(*v2.Entity).System.Arch}
+							FieldFunc: func(res corev2.Resource) []string {
+								return []string{res.(*corev2.Entity).System.Arch}
 							},
 						},
 					},
@@ -138,8 +137,8 @@ func DefaultSuggestSchema() suggest.Register {
 				},
 				&suggest.CustomField{
 					Name: "user",
-					FieldFunc: func(res v2.Resource) []string {
-						return []string{res.(*v2.Entity).User}
+					FieldFunc: func(res corev2.Resource) []string {
+						return []string{res.(*corev2.Entity).User}
 					},
 				},
 			},
@@ -252,20 +251,20 @@ func DefaultSuggestSchema() suggest.Register {
 				},
 				&suggest.CustomField{
 					Name: "check",
-					FieldFunc: func(res v2.Resource) []string {
-						return []string{res.(*v2.Silenced).Check}
+					FieldFunc: func(res corev2.Resource) []string {
+						return []string{res.(*corev2.Silenced).Check}
 					},
 				},
 				&suggest.CustomField{
 					Name: "subscription",
-					FieldFunc: func(res v2.Resource) []string {
-						return []string{res.(*v2.Silenced).Subscription}
+					FieldFunc: func(res corev2.Resource) []string {
+						return []string{res.(*corev2.Silenced).Subscription}
 					},
 				},
 				&suggest.CustomField{
 					Name: "creator",
-					FieldFunc: func(res v2.Resource) []string {
-						return []string{res.(*v2.Silenced).Creator}
+					FieldFunc: func(res corev2.Resource) []string {
+						return []string{res.(*corev2.Silenced).Creator}
 					},
 				},
 			},
@@ -277,14 +276,14 @@ func DefaultSuggestSchema() suggest.Register {
 			Fields: []suggest.Field{
 				&suggest.CustomField{
 					Name: "username",
-					FieldFunc: func(res v2.Resource) []string {
-						return []string{res.(*v2.User).Username}
+					FieldFunc: func(res corev2.Resource) []string {
+						return []string{res.(*corev2.User).Username}
 					},
 				},
 				&suggest.CustomField{
 					Name: "groups",
-					FieldFunc: func(res v2.Resource) []string {
-						return res.(*v2.User).Groups
+					FieldFunc: func(res corev2.Resource) []string {
+						return res.(*corev2.User).Groups
 					},
 				},
 			},
