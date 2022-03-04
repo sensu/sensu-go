@@ -120,6 +120,10 @@ func isNonNullableEnum(tt ast.Type, i info) bool {
 }
 
 func isEnum(tt ast.Type, i info) bool {
+	n, ok := tt.(*ast.NonNull)
+	if ok {
+		return isEnum(n.Type, i)
+	}
 	t, ok := tt.(*ast.Named)
 	if !ok {
 		return false

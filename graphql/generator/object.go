@@ -641,7 +641,7 @@ func genFieldHandlerFn(field *ast.FieldDefinition, i info) jen.Code {
 			g.Id("resolver").Op(":=").Id("impl").Assert(jen.Interface(genFieldResolverSignature))
 
 			var callResolver jen.Code
-			if isNonNullableEnum(field.Type, i) {
+			if isEnum(field.Type, i) {
 				g := newGroup()
 				g.List(jen.Id("val"), jen.Id("err")).
 					Op(":=").
