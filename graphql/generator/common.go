@@ -111,14 +111,6 @@ func genRegisterFn(node ast.Node, resolverImpl jen.Code) jen.Code {
 	return code
 }
 
-func isNonNullableEnum(tt ast.Type, i info) bool {
-	t, ok := tt.(*ast.NonNull)
-	if !ok {
-		return false
-	}
-	return isEnum(t.Type, i)
-}
-
 func isEnum(tt ast.Type, i info) bool {
 	n, ok := tt.(*ast.NonNull)
 	if ok {
