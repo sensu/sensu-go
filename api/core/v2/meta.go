@@ -31,6 +31,22 @@ func NewObjectMetaP(name, namespace string) *ObjectMeta {
 	return &meta
 }
 
+// AddLabel safely adds a label to this ObjectMeta, creating the map if necessary
+func (o *ObjectMeta) AddLabel(key, value string) {
+	if o.Labels == nil {
+		o.Labels = make(map[string]string)
+	}
+	o.Labels[key] = value
+}
+
+// AddAnnotation safely adds an annotation to this ObjectMeta, creating the map if necessary
+func (o *ObjectMeta) AddAnnotation(key, value string) {
+	if o.Annotations == nil {
+		o.Annotations = make(map[string]string)
+	}
+	o.Annotations[key] = value
+}
+
 // Cmp compares this ObjectMeta with another ObjectMeta.
 func (o *ObjectMeta) Cmp(other *ObjectMeta) Comparison {
 	if o == nil {
