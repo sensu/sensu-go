@@ -627,7 +627,7 @@ func TestEvaluateOutputMetricThresholds(t *testing.T) {
 			metrics:             []*corev2.MetricPoint{metric1},
 			thresholds:          []*corev2.MetricThreshold{{Name: "not_a_disk_rate", Thresholds: []*corev2.MetricThresholdRule{{Max: "200000.0", Status: 2, NullStatus: 1}}}},
 			expectedStatus:      1,
-			expectedAnnotations: []string{notDiskWarningNullAnnotation},
+			expectedAnnotations: []string{statusWarningAnnotation, notDiskWarningNullAnnotation},
 		}, {
 			name:                "multi metric and filter match, no rule match",
 			event:               &corev2.Event{Check: &corev2.Check{Status: 0}},
