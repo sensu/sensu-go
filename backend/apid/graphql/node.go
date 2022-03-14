@@ -3,26 +3,29 @@ package graphql
 import (
 	"errors"
 
+	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/apid/graphql/globalid"
 	"github.com/sensu/sensu-go/backend/apid/graphql/relay"
 	"github.com/sensu/sensu-go/backend/apid/graphql/schema"
+	util_relay "github.com/sensu/sensu-go/backend/apid/graphql/util/relay"
 )
 
 func registerNodeResolvers(register relay.NodeRegister, cfg ServiceConfig) {
 	registerAssetNodeResolver(register, cfg.AssetClient)
 	registerCheckNodeResolver(register, cfg.CheckClient)
+	registerClusterRoleNodeResolver(register, cfg.RBACClient)
+	registerClusterRoleBindingNodeResolver(register, cfg.RBACClient)
 	registerEntityNodeResolver(register, cfg.EntityClient)
+	registerEventNodeResolver(register, cfg.EventClient)
 	registerEventFilterNodeResolver(register, cfg.EventFilterClient)
 	registerHandlerNodeResolver(register, cfg.HandlerClient)
 	registerHookNodeResolver(register, cfg.HookClient)
 	registerMutatorNodeResolver(register, cfg.MutatorClient)
-	registerClusterRoleNodeResolver(register, cfg.RBACClient)
-	registerClusterRoleBindingNodeResolver(register, cfg.RBACClient)
+	registerNamespaceNodeResolver(register, cfg.NamespaceClient)
+	registerPipelineNodeResolver(register, cfg.GenericClient)
 	registerRoleNodeResolver(register, cfg.RBACClient)
 	registerRoleBindingNodeResolver(register, cfg.RBACClient)
 	registerUserNodeResolver(register, cfg.UserClient)
-	registerEventNodeResolver(register, cfg.EventClient)
-	registerNamespaceNodeResolver(register, cfg.NamespaceClient)
 	registerSilencedNodeResolver(register, cfg.SilencedClient)
 }
 
@@ -343,4 +346,16 @@ func (f *silencedNodeResolver) fetch(p relay.NodeResolverParams) (interface{}, e
 	ctx := setContextFromComponents(p.Context, p.IDComponents)
 	record, err := f.client.GetSilencedByName(ctx, p.IDComponents.UniqueComponent())
 	return handleFetchResult(record, err)
+}
+
+// pipelines
+
+func registerPipelineNodeResolver(register relay.NodeRegister, client GenericClient) {
+	register.RegisterResolver(relay.NodeResolver{
+		ObjectType: schema.SilencedType,
+		Translator: globalid.SilenceTranslator,
+		Resolve: util_relay.MakeNodeResolver(
+			client,
+			corev2.TypeMeta{Type: "Pipeline", APIVersion: "core/v2"}),
+	})
 }
