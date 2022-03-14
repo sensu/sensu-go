@@ -338,10 +338,10 @@ package descriptor
 	options?:    #MethodOptions @protobuf(4,MethodOptions)
 
 	// Identifies if client streams multiple client messages
-	clientStreaming?: bool @protobuf(5,bool,name=client_streaming,"default=false")
+	clientStreaming?: bool @protobuf(5,bool,"default=false",name=client_streaming)
 
 	// Identifies if server streams multiple server messages
-	serverStreaming?: bool @protobuf(6,bool,name=server_streaming,"default=false")
+	serverStreaming?: bool @protobuf(6,bool,"default=false",name=server_streaming)
 }
 
 #FileOptions: {
@@ -364,10 +364,10 @@ package descriptor
 	// named by java_outer_classname.  However, the outer class will still be
 	// generated to contain the file's getDescriptor() method as well as any
 	// top-level extensions defined in the file.
-	javaMultipleFiles?: bool @protobuf(10,bool,name=java_multiple_files,"default=false")
+	javaMultipleFiles?: bool @protobuf(10,bool,"default=false",name=java_multiple_files)
 
 	// This option does nothing.
-	javaGenerateEqualsAndHash?: bool @protobuf(20,bool,name=java_generate_equals_and_hash,deprecated)
+	javaGenerateEqualsAndHash?: bool @protobuf(20,bool,deprecated,name=java_generate_equals_and_hash)
 
 	// If set true, then the Java2 code generator will generate code that
 	// throws an exception whenever an attempt is made to assign a non-UTF-8
@@ -375,7 +375,7 @@ package descriptor
 	// Message reflection will do the same.
 	// However, an extension field still accepts non-UTF-8 byte sequences.
 	// This option has no effect on when used with the lite runtime.
-	javaStringCheckUtf8?: bool @protobuf(27,bool,name=java_string_check_utf8,"default=false")
+	javaStringCheckUtf8?: bool @protobuf(27,bool,"default=false",name=java_string_check_utf8)
 
 	// Generated classes can be optimized for speed or code size.
 	#OptimizeMode:
@@ -395,7 +395,7 @@ package descriptor
 		CODE_SIZE:    2
 		LITE_RUNTIME: 3
 	}
-	optimizeFor?: #OptimizeMode @protobuf(9,OptimizeMode,name=optimize_for,"default=SPEED")
+	optimizeFor?: #OptimizeMode @protobuf(9,OptimizeMode,"default=SPEED",name=optimize_for)
 
 	// Sets the Go package where structs generated from this .proto will be
 	// placed. If omitted, the Go package will be derived from the following:
@@ -414,10 +414,10 @@ package descriptor
 	// that generate code specific to your particular RPC system.  Therefore,
 	// these default to false.  Old code which depends on generic services should
 	// explicitly set them to true.
-	ccGenericServices?:   bool @protobuf(16,bool,name=cc_generic_services,"default=false")
-	javaGenericServices?: bool @protobuf(17,bool,name=java_generic_services,"default=false")
-	pyGenericServices?:   bool @protobuf(18,bool,name=py_generic_services,"default=false")
-	phpGenericServices?:  bool @protobuf(42,bool,name=php_generic_services,"default=false")
+	ccGenericServices?:   bool @protobuf(16,bool,"default=false",name=cc_generic_services)
+	javaGenericServices?: bool @protobuf(17,bool,"default=false",name=java_generic_services)
+	pyGenericServices?:   bool @protobuf(18,bool,"default=false",name=py_generic_services)
+	phpGenericServices?:  bool @protobuf(42,bool,"default=false",name=php_generic_services)
 
 	// Is this file deprecated?
 	// Depending on the target platform, this can emit Deprecated annotations
@@ -427,7 +427,7 @@ package descriptor
 
 	// Enables the use of arenas for the proto messages in this file. This applies
 	// only to generated classes for C++.
-	ccEnableArenas?: bool @protobuf(31,bool,name=cc_enable_arenas,"default=false")
+	ccEnableArenas?: bool @protobuf(31,bool,"default=false",name=cc_enable_arenas)
 
 	// Sets the objective c class prefix which is prepended to all objective c
 	// generated classes from this .proto. There is no default.
@@ -486,12 +486,12 @@ package descriptor
 	//
 	// Because this is an option, the above two restrictions are not enforced by
 	// the protocol compiler.
-	messageSetWireFormat?: bool @protobuf(1,bool,name=message_set_wire_format,"default=false")
+	messageSetWireFormat?: bool @protobuf(1,bool,"default=false",name=message_set_wire_format)
 
 	// Disables the generation of the standard "descriptor()" accessor, which can
 	// conflict with a field of the same name.  This is meant to make migration
 	// from proto1 easier; new code should avoid fields named "descriptor".
-	noStandardDescriptorAccessor?: bool @protobuf(2,bool,name=no_standard_descriptor_accessor,"default=false")
+	noStandardDescriptorAccessor?: bool @protobuf(2,bool,"default=false",name=no_standard_descriptor_accessor)
 
 	// Is this message deprecated?
 	// Depending on the target platform, this can emit Deprecated annotations
@@ -714,7 +714,7 @@ package descriptor
 		NO_SIDE_EFFECTS:     1
 		IDEMPOTENT:          2
 	}
-	idempotencyLevel?: #IdempotencyLevel @protobuf(34,IdempotencyLevel,name=idempotency_level,"default=IDEMPOTENCY_UNKNOWN")
+	idempotencyLevel?: #IdempotencyLevel @protobuf(34,IdempotencyLevel,"default=IDEMPOTENCY_UNKNOWN",name=idempotency_level)
 
 	// The parser stores options it doesn't recognize here. See above.
 	uninterpretedOption?: [...#UninterpretedOption] @protobuf(999,UninterpretedOption,name=uninterpreted_option)
