@@ -16,6 +16,7 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ### Fixed
 - Log agent IP address for connections with faulty TLS configurations.
+- ARM Version detection
 
 ### Changed
 - The default embedded etcd heartbeat interval has been increased from 100 to 300.

@@ -64,6 +64,17 @@ type Query {
     """
     q: String = "",
     """
+    Filters reduces the set using given arbitrary expression[s]; expressions
+    take on the form KEY: VALUE. The accepted key(s) are: fieldSelector &
+    labelSelector.
+
+    Eg.
+
+    fieldSelector:check.published == true
+    labelSelector:platform matches unix
+    """
+    filters: [String!] = [],
+    """
     Ref is used to uniquely identify a resource in the system as well as a field
     on said resource. Refs take the form: :group/:version/:type/:field. The
     field segment may be a path in and of it's own, eg. metadata/name would

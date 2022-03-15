@@ -37,6 +37,9 @@ type Foo implements Bar {
   nine: [Url!]
   ten(integer: Int = 4): Float!
   eleven(float: Float!): Int!
+  twelve: Locale
+  thirteen: Site!
+  fourteen: String!
 }
 
 type AnnotatedObject @onObject(arg: "value") {

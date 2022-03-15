@@ -98,6 +98,16 @@ type QuerySuggestFieldResolverArgs struct {
 	Q - If the value of a field does not contain the value of this argument it will
 	be omitted from the response. Operation is case-insensitive.
 	*/
+	Filters []string /*
+	Filters reduces the set using given arbitrary expression[s]; expressions
+	take on the form KEY: VALUE. The accepted key(s) are: fieldSelector &
+	labelSelector.
+
+	Eg.
+
+	fieldSelector:check.published == true
+	labelSelector:platform matches unix
+	*/
 	Ref string /*
 	Ref is used to uniquely identify a resource in the system as well as a field
 	on said resource. Refs take the form: :group/:version/:type/:field. The
@@ -645,6 +655,11 @@ func _ObjectTypeQueryConfigFn() graphql1.ObjectConfig {
 			},
 			"suggest": &graphql1.Field{
 				Args: graphql1.FieldConfigArgument{
+					"filters": &graphql1.ArgumentConfig{
+						DefaultValue: []interface{}{},
+						Description:  "Filters reduces the set using given arbitrary expression[s]; expressions\ntake on the form KEY: VALUE. The accepted key(s) are: fieldSelector &\nlabelSelector.\n\nEg.\n\nfieldSelector:check.published == true\nlabelSelector:platform matches unix",
+						Type:         graphql1.NewList(graphql1.NewNonNull(graphql1.String)),
+					},
 					"limit": &graphql1.ArgumentConfig{
 						DefaultValue: 10,
 						Description:  "self descriptive",
