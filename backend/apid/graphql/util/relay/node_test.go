@@ -7,7 +7,6 @@ import (
 	"testing"
 
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
-	v2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/apid/graphql/globalid"
 	"github.com/sensu/sensu-go/backend/apid/graphql/relay"
 	"github.com/stretchr/testify/mock"
@@ -39,7 +38,7 @@ func TestToGID(t *testing.T) {
 			name: "check",
 			args: args{
 				ctx: context.Background(),
-				r:   v2.FixtureCheckConfig("name"),
+				r:   corev2.FixtureCheckConfig("name"),
 			},
 			want: "srn:checks:default:name",
 		},
