@@ -352,8 +352,8 @@ func (f *silencedNodeResolver) fetch(p relay.NodeResolverParams) (interface{}, e
 
 func registerPipelineNodeResolver(register relay.NodeRegister, client GenericClient) {
 	register.RegisterResolver(relay.NodeResolver{
-		ObjectType: schema.SilencedType,
-		Translator: globalid.SilenceTranslator,
+		ObjectType: schema.CoreV2PipelineType,
+		Translator: globalid.PipelineTranslator,
 		Resolve: util_relay.MakeNodeResolver(
 			client,
 			corev2.TypeMeta{Type: "Pipeline", APIVersion: "core/v2"}),
