@@ -155,6 +155,162 @@ func TestUnwrapGetResult(t *testing.T) {
 	}
 }
 
+func TestHandleListResult(t *testing.T) {
+	type args struct {
+		res interface{}
+		err error
+	}
+	tests := []struct {
+		name    string
+		args    args
+		want    interface{}
+		wantErr bool
+	}{
+		{
+			name: "wrapped results",
+			args: args{
+				res: []*types.Wrapper{{Value: corev2.FixtureHandler("")}},
+				err: nil,
+			},
+			want: map[string]interface{}{
+				"nodes": []interface{}{corev2.FixtureHandler("")},
+			},
+			wantErr: false,
+		},
+		{
+			name: "unauthorized",
+			args: args{
+				res: []*types.Wrapper{{Value: corev2.FixtureHandler("")}},
+				err: authorization.ErrUnauthorized,
+			},
+			want: map[string]interface{}{
+				"code":    "ERR_PERMISSION_DENIED",
+				"message": authorization.ErrUnauthorized.Error(),
+			},
+			wantErr: false,
+		},
+		{
+			name: "no claims",
+			args: args{
+				res: []*types.Wrapper{{Value: corev2.FixtureHandler("")}},
+				err: authorization.ErrNoClaims,
+			},
+			want: map[string]interface{}{
+				"code":    "ERR_PERMISSION_DENIED",
+				"message": authorization.ErrNoClaims.Error(),
+			},
+			wantErr: false,
+		},
+		{
+			name: "err",
+			args: args{
+				res: []*types.Wrapper{{Value: corev2.FixtureHandler("")}},
+				err: fmt.Errorf("something bad"),
+			},
+			want:    nil,
+			wantErr: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := HandleListResult(tt.args.res, tt.args.err)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("HandleListResult() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("HandleListResult() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestHandleGetResult(t *testing.T) {
+	type args struct {
+		res interface{}
+		err error
+	}
+	tests := []struct {
+		name    string
+		args    args
+		want    interface{}
+		wantErr bool
+	}{
+		{
+			name: "standard",
+			args: args{
+				res: corev2.FixtureHandler(""),
+				err: nil,
+			},
+			want:    corev2.FixtureHandler(""),
+			wantErr: false,
+		},
+		{
+			name: "wrapped results",
+			args: args{
+				res: &types.Wrapper{Value: corev2.FixtureHandler("")},
+				err: nil,
+			},
+			want:    corev2.FixtureHandler(""),
+			wantErr: false,
+		},
+		{
+			name: "unauthorized",
+			args: args{
+				res: &types.Wrapper{Value: corev2.FixtureHandler("")},
+				err: authorization.ErrUnauthorized,
+			},
+			want: map[string]interface{}{
+				"code":    "ERR_PERMISSION_DENIED",
+				"message": authorization.ErrUnauthorized.Error(),
+			},
+			wantErr: false,
+		},
+		{
+			name: "no claims",
+			args: args{
+				res: &types.Wrapper{Value: corev2.FixtureHandler("")},
+				err: authorization.ErrNoClaims,
+			},
+			want: map[string]interface{}{
+				"code":    "ERR_PERMISSION_DENIED",
+				"message": authorization.ErrNoClaims.Error(),
+			},
+			wantErr: false,
+		},
+		{
+			name: "store err",
+			args: args{
+				res: &types.Wrapper{Value: corev2.FixtureHandler("")},
+				err: &store.ErrNotFound{},
+			},
+			want:    nil,
+			wantErr: false,
+		},
+		{
+			name: "err",
+			args: args{
+				res: &types.Wrapper{Value: corev2.FixtureHandler("")},
+				err: fmt.Errorf("something bad"),
+			},
+			want:    nil,
+			wantErr: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := HandleGetResult(tt.args.res, tt.args.err)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("HandleGetResult() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("HandleGetResult() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
 func TestWrapResource(t *testing.T) {
 	v3resource := corev3.FixtureEntityConfig("name")
 	v2resource := corev2.FixtureAsset("name")
