@@ -15,7 +15,7 @@ func registerNodeResolvers(register relay.NodeRegister, cfg ServiceConfig) {
 	registerCheckNodeResolver(register, cfg.GenericClient)
 	registerClusterRoleNodeResolver(register, cfg.RBACClient)
 	registerClusterRoleBindingNodeResolver(register, cfg.RBACClient)
-	registerEntityNodeResolver(register, cfg.GenericClient)
+	registerEntityNodeResolver(register, cfg.EntityClient)
 	registerEventNodeResolver(register, cfg.EventClient)
 	registerEventFilterNodeResolver(register, cfg.GenericClient)
 	registerHandlerNodeResolver(register, cfg.GenericClient)
@@ -55,13 +55,15 @@ func registerCheckNodeResolver(register relay.NodeRegister, client GenericClient
 
 // entities
 
-func registerEntityNodeResolver(register relay.NodeRegister, client GenericClient) {
+func registerEntityNodeResolver(register relay.NodeRegister, client EntityClient) {
 	register.RegisterResolver(relay.NodeResolver{
 		ObjectType: schema.EntityType,
 		Translator: globalid.EntityTranslator,
-		Resolve: util_relay.MakeNodeResolver(
-			client,
-			corev2.TypeMeta{Type: "Entity", APIVersion: "core/v2"}),
+		Resolve: func(p relay.NodeResolverParams) (interface{}, error) {
+			ctx := setContextFromComponents(p.Context, p.IDComponents)
+			record, err := client.FetchEntity(ctx, p.IDComponents.UniqueComponent())
+			return handleFetchResult(record, err)
+		},
 	})
 }
 

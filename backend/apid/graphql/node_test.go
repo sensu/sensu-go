@@ -86,17 +86,13 @@ func TestNodeResolvers(t *testing.T) {
 		{
 			name: "entities",
 			setupNode: func() interface{} {
-				return corev2.FixtureEntity("name")
+				return corev2.FixtureEntity("sensu")
 			},
 			setupID: func(r interface{}) string {
 				return globalid.EntityTranslator.EncodeToString(context.Background(), r)
 			},
 			setup: func(r interface{}) {
-				cfg.GenericClient.(onner).On("SetTypeMeta", mock.Anything).Return(nil).Once()
-				cfg.GenericClient.(onner).On("Get", mock.Anything, "name", mock.Anything).Run(func(args mock.Arguments) {
-					arg := args.Get(2).(*corev2.Entity)
-					*arg = *r.(*corev2.Entity)
-				}).Return(nil).Once()
+				cfg.EntityClient.(onner).On("FetchEntity", mock.Anything, "sensu").Return(r, nil).Once()
 			},
 		},
 		{
