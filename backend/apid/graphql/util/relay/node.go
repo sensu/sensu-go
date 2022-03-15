@@ -29,7 +29,7 @@ func MakeNodeResolver(client Fetcher, tm corev2.TypeMeta) func(relay.NodeResolve
 		}
 		r := compat.V2Resource(raw)
 		err = client.Get(p.Context, p.IDComponents.UniqueComponent(), r)
-		return util_api.HandleGetResult(util_api.UnwrapResource(r), err)
+		return util_api.UnwrapGetResult(util_api.UnwrapResource(r), err)
 	}
 }
 

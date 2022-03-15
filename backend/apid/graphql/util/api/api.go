@@ -71,27 +71,6 @@ func HandleGetResult(res interface{}, err error) (interface{}, error) {
 	return UnwrapResource(res), err
 }
 
-// HandleConnectionResult helps format the result of a list operation for
-// selection.
-func HandleConnectionResult(res interface{}, pa, pb *store.SelectionPredicate, err error) (interface{}, error) {
-	fe := ToFetchErr(err)
-	if fe == nil && err != nil {
-		return nil, err
-	}
-	return map[string]interface{}{
-		"nodes": UnwrapList(res),
-		"pageInfo": map[string]interface{}{
-			"hasNextPage": pb.Continue != "",
-			"endCursor":   pb.Continue,
-			// TODO: future enhancement; support for backward pagination
-			"hasPreviousPage": false,
-			"startCursor":     "",
-		},
-		"error":      fe,
-		"totalCount": nil, // TODO: future enhancement; always nil for now
-	}, nil
-}
-
 // Unwraps the results returned by the api client.
 func UnwrapList(ws interface{}) interface{} {
 	if wrapped, ok := ws.([]*types.Wrapper); ok {
