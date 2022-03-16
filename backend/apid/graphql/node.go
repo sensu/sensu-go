@@ -3,258 +3,172 @@ package graphql
 import (
 	"errors"
 
+	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/apid/graphql/globalid"
 	"github.com/sensu/sensu-go/backend/apid/graphql/relay"
 	"github.com/sensu/sensu-go/backend/apid/graphql/schema"
+	util_relay "github.com/sensu/sensu-go/backend/apid/graphql/util/relay"
 )
 
 func registerNodeResolvers(register relay.NodeRegister, cfg ServiceConfig) {
-	registerAssetNodeResolver(register, cfg.AssetClient)
-	registerCheckNodeResolver(register, cfg.CheckClient)
-	registerEntityNodeResolver(register, cfg.EntityClient)
-	registerEventFilterNodeResolver(register, cfg.EventFilterClient)
-	registerHandlerNodeResolver(register, cfg.HandlerClient)
-	registerHookNodeResolver(register, cfg.HookClient)
-	registerMutatorNodeResolver(register, cfg.MutatorClient)
+	registerAssetNodeResolver(register, cfg.GenericClient)
+	registerCheckNodeResolver(register, cfg.GenericClient)
 	registerClusterRoleNodeResolver(register, cfg.RBACClient)
 	registerClusterRoleBindingNodeResolver(register, cfg.RBACClient)
+	registerEntityNodeResolver(register, cfg.EntityClient)
+	registerEventNodeResolver(register, cfg.EventClient)
+	registerEventFilterNodeResolver(register, cfg.GenericClient)
+	registerHandlerNodeResolver(register, cfg.GenericClient)
+	registerHookNodeResolver(register, cfg.GenericClient)
+	registerMutatorNodeResolver(register, cfg.GenericClient)
+	registerNamespaceNodeResolver(register, cfg.NamespaceClient)
+	registerPipelineNodeResolver(register, cfg.GenericClient)
 	registerRoleNodeResolver(register, cfg.RBACClient)
 	registerRoleBindingNodeResolver(register, cfg.RBACClient)
 	registerUserNodeResolver(register, cfg.UserClient)
-	registerEventNodeResolver(register, cfg.EventClient)
-	registerNamespaceNodeResolver(register, cfg.NamespaceClient)
 	registerSilencedNodeResolver(register, cfg.SilencedClient)
 }
 
 // assets
 
-type assetNodeResolver struct {
-	client AssetClient
-}
-
-func registerAssetNodeResolver(register relay.NodeRegister, client AssetClient) {
-	resolver := &assetNodeResolver{client: client}
+func registerAssetNodeResolver(register relay.NodeRegister, client GenericClient) {
 	register.RegisterResolver(relay.NodeResolver{
 		ObjectType: schema.AssetType,
 		Translator: globalid.AssetTranslator,
-		Resolve:    resolver.fetch,
+		Resolve: util_relay.MakeNodeResolver(
+			client,
+			corev2.TypeMeta{Type: "Asset", APIVersion: "core/v2"}),
 	})
-}
-
-func (f *assetNodeResolver) fetch(p relay.NodeResolverParams) (interface{}, error) {
-	ctx := setContextFromComponents(p.Context, p.IDComponents)
-	record, err := f.client.FetchAsset(ctx, p.IDComponents.UniqueComponent())
-	return handleFetchResult(record, err)
 }
 
 // checks
 
-type checkNodeResolver struct {
-	client CheckClient
-}
-
-func registerCheckNodeResolver(register relay.NodeRegister, client CheckClient) {
-	resolver := &checkNodeResolver{client: client}
+func registerCheckNodeResolver(register relay.NodeRegister, client GenericClient) {
 	register.RegisterResolver(relay.NodeResolver{
 		ObjectType: schema.CheckConfigType,
 		Translator: globalid.CheckTranslator,
-		Resolve:    resolver.fetch,
+		Resolve: util_relay.MakeNodeResolver(
+			client,
+			corev2.TypeMeta{Type: "CheckConfig", APIVersion: "core/v2"}),
 	})
-}
-
-func (f *checkNodeResolver) fetch(p relay.NodeResolverParams) (interface{}, error) {
-	ctx := setContextFromComponents(p.Context, p.IDComponents)
-	record, err := f.client.FetchCheck(ctx, p.IDComponents.UniqueComponent())
-	return handleFetchResult(record, err)
 }
 
 // entities
 
-type entityNodeResolver struct {
-	client EntityClient
-}
-
 func registerEntityNodeResolver(register relay.NodeRegister, client EntityClient) {
-	resolver := &entityNodeResolver{client: client}
 	register.RegisterResolver(relay.NodeResolver{
 		ObjectType: schema.EntityType,
 		Translator: globalid.EntityTranslator,
-		Resolve:    resolver.fetch,
+		Resolve: func(p relay.NodeResolverParams) (interface{}, error) {
+			ctx := setContextFromComponents(p.Context, p.IDComponents)
+			record, err := client.FetchEntity(ctx, p.IDComponents.UniqueComponent())
+			return handleFetchResult(record, err)
+		},
 	})
-}
-
-func (f *entityNodeResolver) fetch(p relay.NodeResolverParams) (interface{}, error) {
-	ctx := setContextFromComponents(p.Context, p.IDComponents)
-	record, err := f.client.FetchEntity(ctx, p.IDComponents.UniqueComponent())
-	return handleFetchResult(record, err)
 }
 
 // event filters
 
-type eventFilterNodeResolver struct {
-	client EventFilterClient
-}
-
-func registerEventFilterNodeResolver(register relay.NodeRegister, client EventFilterClient) {
-	resolver := &eventFilterNodeResolver{client: client}
+func registerEventFilterNodeResolver(register relay.NodeRegister, client GenericClient) {
 	register.RegisterResolver(relay.NodeResolver{
 		ObjectType: schema.EventFilterType,
 		Translator: globalid.EventFilterTranslator,
-		Resolve:    resolver.fetch,
+		Resolve: util_relay.MakeNodeResolver(
+			client,
+			corev2.TypeMeta{Type: "EventFilter", APIVersion: "core/v2"}),
 	})
-}
-
-func (f *eventFilterNodeResolver) fetch(p relay.NodeResolverParams) (interface{}, error) {
-	ctx := setContextFromComponents(p.Context, p.IDComponents)
-	record, err := f.client.FetchEventFilter(ctx, p.IDComponents.UniqueComponent())
-	return handleFetchResult(record, err)
 }
 
 // handlers
 
-type handlerNodeResolver struct {
-	client HandlerClient
-}
-
-func registerHandlerNodeResolver(register relay.NodeRegister, client HandlerClient) {
-	resolver := &handlerNodeResolver{client: client}
+func registerHandlerNodeResolver(register relay.NodeRegister, client GenericClient) {
 	register.RegisterResolver(relay.NodeResolver{
 		ObjectType: schema.HandlerType,
 		Translator: globalid.HandlerTranslator,
-		Resolve:    resolver.fetch,
+		Resolve: util_relay.MakeNodeResolver(
+			client,
+			corev2.TypeMeta{Type: "Handler", APIVersion: "core/v2"}),
 	})
-}
-
-func (f *handlerNodeResolver) fetch(p relay.NodeResolverParams) (interface{}, error) {
-	ctx := setContextFromComponents(p.Context, p.IDComponents)
-	record, err := f.client.FetchHandler(ctx, p.IDComponents.UniqueComponent())
-	return handleFetchResult(record, err)
 }
 
 // hooks
 
-type hookNodeResolver struct {
-	client HookClient
-}
-
-func registerHookNodeResolver(register relay.NodeRegister, client HookClient) {
-	resolver := &hookNodeResolver{client: client}
+func registerHookNodeResolver(register relay.NodeRegister, client GenericClient) {
 	register.RegisterResolver(relay.NodeResolver{
 		ObjectType: schema.HookConfigType,
 		Translator: globalid.HookTranslator,
-		Resolve:    resolver.fetch,
+		Resolve: util_relay.MakeNodeResolver(
+			client,
+			corev2.TypeMeta{Type: "HookConfig", APIVersion: "core/v2"}),
 	})
-}
-
-func (f *hookNodeResolver) fetch(p relay.NodeResolverParams) (interface{}, error) {
-	ctx := setContextFromComponents(p.Context, p.IDComponents)
-	record, err := f.client.FetchHookConfig(ctx, p.IDComponents.UniqueComponent())
-	return handleFetchResult(record, err)
 }
 
 // mutators
 
-type mutatorNodeResolver struct {
-	client MutatorClient
-}
-
-func registerMutatorNodeResolver(register relay.NodeRegister, client MutatorClient) {
-	resolver := &mutatorNodeResolver{client: client}
+func registerMutatorNodeResolver(register relay.NodeRegister, client GenericClient) {
 	register.RegisterResolver(relay.NodeResolver{
 		ObjectType: schema.MutatorType,
 		Translator: globalid.MutatorTranslator,
-		Resolve:    resolver.fetch,
+		Resolve: util_relay.MakeNodeResolver(
+			client,
+			corev2.TypeMeta{Type: "Mutator", APIVersion: "core/v2"}),
 	})
-}
-
-func (f *mutatorNodeResolver) fetch(p relay.NodeResolverParams) (interface{}, error) {
-	ctx := setContextFromComponents(p.Context, p.IDComponents)
-	record, err := f.client.FetchMutator(ctx, p.IDComponents.UniqueComponent())
-	return handleFetchResult(record, err)
 }
 
 // cluster roles
 
-type clusterRoleNodeResolver struct {
-	client RBACClient
-}
-
 func registerClusterRoleNodeResolver(register relay.NodeRegister, client RBACClient) {
-	resolver := &clusterRoleNodeResolver{client: client}
 	register.RegisterResolver(relay.NodeResolver{
 		ObjectType: schema.ClusterRoleType,
 		Translator: globalid.ClusterRoleTranslator,
-		Resolve:    resolver.fetch,
+		Resolve: func(p relay.NodeResolverParams) (interface{}, error) {
+			ctx := setContextFromComponents(p.Context, p.IDComponents)
+			record, err := client.FetchClusterRole(ctx, p.IDComponents.UniqueComponent())
+			return handleFetchResult(record, err)
+		},
 	})
-}
-
-func (f *clusterRoleNodeResolver) fetch(p relay.NodeResolverParams) (interface{}, error) {
-	ctx := setContextFromComponents(p.Context, p.IDComponents)
-	record, err := f.client.FetchClusterRole(ctx, p.IDComponents.UniqueComponent())
-	return handleFetchResult(record, err)
 }
 
 // cluster role bindings
 
-type clusterRoleBindingNodeResolver struct {
-	client RBACClient
-}
-
 func registerClusterRoleBindingNodeResolver(register relay.NodeRegister, client RBACClient) {
-	resolver := &clusterRoleBindingNodeResolver{client: client}
 	register.RegisterResolver(relay.NodeResolver{
 		ObjectType: schema.ClusterRoleBindingType,
 		Translator: globalid.ClusterRoleBindingTranslator,
-		Resolve:    resolver.fetch,
+		Resolve: func(p relay.NodeResolverParams) (interface{}, error) {
+			ctx := setContextFromComponents(p.Context, p.IDComponents)
+			record, err := client.FetchClusterRoleBinding(ctx, p.IDComponents.UniqueComponent())
+			return handleFetchResult(record, err)
+		},
 	})
-}
-
-func (f *clusterRoleBindingNodeResolver) fetch(p relay.NodeResolverParams) (interface{}, error) {
-	ctx := setContextFromComponents(p.Context, p.IDComponents)
-	record, err := f.client.FetchClusterRoleBinding(ctx, p.IDComponents.UniqueComponent())
-	return handleFetchResult(record, err)
 }
 
 // roles
 
-type roleNodeResolver struct {
-	client RBACClient
-}
-
 func registerRoleNodeResolver(register relay.NodeRegister, client RBACClient) {
-	resolver := &roleNodeResolver{client: client}
 	register.RegisterResolver(relay.NodeResolver{
 		ObjectType: schema.RoleType,
 		Translator: globalid.RoleTranslator,
-		Resolve:    resolver.fetch,
+		Resolve: func(p relay.NodeResolverParams) (interface{}, error) {
+			ctx := setContextFromComponents(p.Context, p.IDComponents)
+			record, err := client.FetchRole(ctx, p.IDComponents.UniqueComponent())
+			return handleFetchResult(record, err)
+		},
 	})
-}
-
-func (f *roleNodeResolver) fetch(p relay.NodeResolverParams) (interface{}, error) {
-	ctx := setContextFromComponents(p.Context, p.IDComponents)
-	record, err := f.client.FetchRole(ctx, p.IDComponents.UniqueComponent())
-	return handleFetchResult(record, err)
 }
 
 // role bindings
 
-type roleBindingNodeResolver struct {
-	client RBACClient
-}
-
 func registerRoleBindingNodeResolver(register relay.NodeRegister, client RBACClient) {
-	resolver := &roleBindingNodeResolver{client: client}
 	register.RegisterResolver(relay.NodeResolver{
 		ObjectType: schema.RoleBindingType,
 		Translator: globalid.RoleBindingTranslator,
-		Resolve:    resolver.fetch,
+		Resolve: func(p relay.NodeResolverParams) (interface{}, error) {
+			ctx := setContextFromComponents(p.Context, p.IDComponents)
+			record, err := client.FetchRoleBinding(ctx, p.IDComponents.UniqueComponent())
+			return handleFetchResult(record, err)
+		},
 	})
-}
-
-func (f *roleBindingNodeResolver) fetch(p relay.NodeResolverParams) (interface{}, error) {
-	ctx := setContextFromComponents(p.Context, p.IDComponents)
-	record, err := f.client.FetchRoleBinding(ctx, p.IDComponents.UniqueComponent())
-	return handleFetchResult(record, err)
 }
 
 // user
@@ -326,21 +240,26 @@ func (f *namespaceNodeResolver) fetch(p relay.NodeResolverParams) (interface{}, 
 
 // silences
 
-type silencedNodeResolver struct {
-	client SilencedClient
-}
-
 func registerSilencedNodeResolver(register relay.NodeRegister, client SilencedClient) {
-	resolver := &silencedNodeResolver{client: client}
 	register.RegisterResolver(relay.NodeResolver{
 		ObjectType: schema.SilencedType,
 		Translator: globalid.SilenceTranslator,
-		Resolve:    resolver.fetch,
+		Resolve: func(p relay.NodeResolverParams) (interface{}, error) {
+			ctx := setContextFromComponents(p.Context, p.IDComponents)
+			record, err := client.GetSilencedByName(ctx, p.IDComponents.UniqueComponent())
+			return handleFetchResult(record, err)
+		},
 	})
 }
 
-func (f *silencedNodeResolver) fetch(p relay.NodeResolverParams) (interface{}, error) {
-	ctx := setContextFromComponents(p.Context, p.IDComponents)
-	record, err := f.client.GetSilencedByName(ctx, p.IDComponents.UniqueComponent())
-	return handleFetchResult(record, err)
+// pipelines
+
+func registerPipelineNodeResolver(register relay.NodeRegister, client GenericClient) {
+	register.RegisterResolver(relay.NodeResolver{
+		ObjectType: schema.CoreV2PipelineType,
+		Translator: globalid.PipelineTranslator,
+		Resolve: util_relay.MakeNodeResolver(
+			client,
+			corev2.TypeMeta{Type: "Pipeline", APIVersion: "core/v2"}),
+	})
 }
