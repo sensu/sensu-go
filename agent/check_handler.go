@@ -409,13 +409,11 @@ func evaluateOutputMetricThresholds(event *corev2.Event) uint32 {
 			}
 		}
 		if !ruleMatched {
-			for _, rule := range thresholdRule.Thresholds {
-				if rule.NullStatus > 0 {
-					addNullStatusThresholdAnnotation(event, thresholdRule, rule.NullStatus)
-					if status < rule.NullStatus {
-						status = rule.NullStatus
-						annotationValue = getNullStatusAnnotationValue(thresholdRule)
-					}
+			if thresholdRule.NullStatus > 0 {
+				addNullStatusThresholdAnnotation(event, thresholdRule, thresholdRule.NullStatus)
+				if status < thresholdRule.NullStatus {
+					status = thresholdRule.NullStatus
+					annotationValue = getNullStatusAnnotationValue(thresholdRule)
 				}
 			}
 		}
@@ -490,21 +488,44 @@ func getNullStatusAnnotationValue(metricThreshold *corev2.MetricThreshold) strin
 
 	for tagIdx, tag := range metricThreshold.Tags {
 		if tagIdx > 0 {
-			tagsKeyVal.WriteString(",")
+			tagsKeyVal.WriteString(", ")
 		}
 		tagsKeyVal.WriteString(tag.Name)
-		tagsKeyVal.WriteString("=")
+		tagsKeyVal.WriteString("=\"")
 		tagsKeyVal.WriteString(tag.Value)
+		tagsKeyVal.WriteString("\"")
 	}
 
-	val.WriteString("The ")
+	val.WriteString(strings.ToUpper(corev2.CheckStatusToCaption(metricThreshold.NullStatus)))
+	val.WriteString(" : no metric matching \"")
 	val.WriteString(metricThreshold.Name)
+	val.WriteString("\"")
 	if tagsKeyVal.Len() > 0 {
 		val.WriteString(" (")
 		val.WriteString(tagsKeyVal.String())
 		val.WriteString(")")
 	}
-	val.WriteString(" rule did not match any metric point.")
+	val.WriteString(" was found")
+
+	for _, t := range metricThreshold.Thresholds {
+		hasMin := len(t.Min) > 0
+		hasMax := len(t.Max) > 0
+		val.WriteString("; expected ")
+		if hasMin {
+			val.WriteString("min: ")
+			val.WriteString(t.Min)
+		}
+		if hasMin && hasMax {
+			val.WriteString(" - ")
+		}
+		if hasMax {
+			val.WriteString("max: ")
+			val.WriteString(t.Max)
+		}
+		val.WriteString(" (status: ")
+		val.WriteString(corev2.CheckStatusToCaption(t.Status))
+		val.WriteString(")")
+	}
 
 	return val.String()
 }
