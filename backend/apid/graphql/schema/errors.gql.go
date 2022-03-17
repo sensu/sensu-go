@@ -269,3 +269,114 @@ type _EnumTypeErrCodeValues struct {
 	*/
 	ERR_PERMISSION_DENIED ErrCode
 }
+
+//
+// FetchErrFieldResolvers represents a collection of methods whose products represent the
+// response values of the 'FetchErr' type.
+type FetchErrFieldResolvers interface {
+	// Code implements response to request for 'code' field.
+	Code(p graphql.ResolveParams) (ErrCode, error)
+
+	// Message implements response to request for 'message' field.
+	Message(p graphql.ResolveParams) (string, error)
+}
+
+// FetchErrAliases implements all methods on FetchErrFieldResolvers interface by using reflection to
+// match name of field to a field on the given value. Intent is reduce friction
+// of writing new resolvers by removing all the instances where you would simply
+// have the resolvers method return a field.
+type FetchErrAliases struct{}
+
+// Code implements response to request for 'code' field.
+func (_ FetchErrAliases) Code(p graphql.ResolveParams) (ErrCode, error) {
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	ret, ok := ErrCode(val.(string)), true
+	if err != nil {
+		return ret, err
+	}
+	if !ok {
+		return ret, errors.New("unable to coerce value for field 'code'")
+	}
+	return ret, err
+}
+
+// Message implements response to request for 'message' field.
+func (_ FetchErrAliases) Message(p graphql.ResolveParams) (string, error) {
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	ret, ok := val.(string)
+	if err != nil {
+		return ret, err
+	}
+	if !ok {
+		return ret, errors.New("unable to coerce value for field 'message'")
+	}
+	return ret, err
+}
+
+// FetchErrType Describes error that occurred during a fetch operation.
+var FetchErrType = graphql.NewType("FetchErr", graphql.ObjectKind)
+
+// RegisterFetchErr registers FetchErr object type with given service.
+func RegisterFetchErr(svc *graphql.Service, impl FetchErrFieldResolvers) {
+	svc.RegisterObject(_ObjectTypeFetchErrDesc, impl)
+}
+func _ObjTypeFetchErrCodeHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(interface {
+		Code(p graphql.ResolveParams) (ErrCode, error)
+	})
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+
+		val, err := resolver.Code(frp)
+		return string(val), err
+	}
+}
+
+func _ObjTypeFetchErrMessageHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(interface {
+		Message(p graphql.ResolveParams) (string, error)
+	})
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Message(frp)
+	}
+}
+
+func _ObjectTypeFetchErrConfigFn() graphql1.ObjectConfig {
+	return graphql1.ObjectConfig{
+		Description: "Describes error that occurred during a fetch operation.",
+		Fields: graphql1.Fields{
+			"code": &graphql1.Field{
+				Args:              graphql1.FieldConfigArgument{},
+				DeprecationReason: "",
+				Description:       "self descriptive",
+				Name:              "code",
+				Type:              graphql1.NewNonNull(graphql.OutputType("ErrCode")),
+			},
+			"message": &graphql1.Field{
+				Args:              graphql1.FieldConfigArgument{},
+				DeprecationReason: "",
+				Description:       "self descriptive",
+				Name:              "message",
+				Type:              graphql1.NewNonNull(graphql1.String),
+			},
+		},
+		Interfaces: []*graphql1.Interface{},
+		IsTypeOf: func(_ graphql1.IsTypeOfParams) bool {
+			// NOTE:
+			// Panic by default. Intent is that when Service is invoked, values of
+			// these fields are updated with instantiated resolvers. If these
+			// defaults are called it is most certainly programmer err.
+			// If you're see this comment then: 'Whoops! Sorry, my bad.'
+			panic("Unimplemented; see FetchErrFieldResolvers.")
+		},
+		Name: "FetchErr",
+	}
+}
+
+// describe FetchErr's configuration; kept private to avoid unintentional tampering of configuration at runtime.
+var _ObjectTypeFetchErrDesc = graphql.ObjectDesc{
+	Config: _ObjectTypeFetchErrConfigFn,
+	FieldHandlers: map[string]graphql.FieldHandler{
+		"code":    _ObjTypeFetchErrCodeHandler,
+		"message": _ObjTypeFetchErrMessageHandler,
+	},
+}

@@ -26,15 +26,15 @@ type KVPairString struct {
 
 // Labels implements response to request for 'labels' field.
 func (r *objectMetaImpl) Labels(p graphql.ResolveParams) (interface{}, error) {
-	return makeKVPairString(toObjMeta(p.Source).Labels), nil
+	return makeKVPairString(toObjectMeta(p.Source).Labels), nil
 }
 
 // Annotations implements response to request for 'annotations' field.
 func (r *objectMetaImpl) Annotations(p graphql.ResolveParams) (interface{}, error) {
-	return makeKVPairString(toObjMeta(p.Source).Annotations), nil
+	return makeKVPairString(toObjectMeta(p.Source).Annotations), nil
 }
 
-func toObjMeta(m interface{}) corev2.ObjectMeta {
+func toObjectMeta(m interface{}) corev2.ObjectMeta {
 	switch m := m.(type) {
 	case corev2.ObjectMeta:
 		return m
@@ -54,4 +54,14 @@ func makeKVPairString(m map[string]string) []KVPairString {
 		return pairs[i].Key < pairs[j].Key
 	})
 	return pairs
+}
+
+func inputToTypeMeta(i *schema.TypeMetaInput) *corev2.TypeMeta {
+	if i == nil {
+		return nil
+	}
+	return &corev2.TypeMeta{
+		Type:       i.Type,
+		APIVersion: i.ApiVersion,
+	}
 }

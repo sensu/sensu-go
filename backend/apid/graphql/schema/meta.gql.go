@@ -313,3 +313,81 @@ var _ObjectTypeObjectMetaDesc = graphql.ObjectDesc{
 		"namespace":   _ObjTypeObjectMetaNamespaceHandler,
 	},
 }
+
+// TypeMetaInput TypeMeta is information that can be used to resolve a data type
+type TypeMetaInput struct {
+	// Type is the type name of the data type
+	Type string
+	// ApiVersion - APIVersion is the APIVersion of the data type
+	ApiVersion string
+}
+
+// TypeMetaInputType TypeMeta is information that can be used to resolve a data type
+var TypeMetaInputType = graphql.NewType("TypeMetaInput", graphql.InputKind)
+
+// RegisterTypeMetaInput registers TypeMetaInput object type with given service.
+func RegisterTypeMetaInput(svc *graphql.Service) {
+	svc.RegisterInput(_InputTypeTypeMetaInputDesc)
+}
+func _InputTypeTypeMetaInputConfigFn() graphql1.InputObjectConfig {
+	return graphql1.InputObjectConfig{
+		Description: "TypeMeta is information that can be used to resolve a data type",
+		Fields: graphql1.InputObjectConfigFieldMap{
+			"apiVersion": &graphql1.InputObjectFieldConfig{
+				Description: "APIVersion is the APIVersion of the data type",
+				Type:        graphql1.NewNonNull(graphql1.String),
+			},
+			"type": &graphql1.InputObjectFieldConfig{
+				Description: "Type is the type name of the data type",
+				Type:        graphql1.NewNonNull(graphql1.String),
+			},
+		},
+		Name: "TypeMetaInput",
+	}
+}
+
+// describe TypeMetaInput's configuration; kept private to avoid unintentional tampering of configuration at runtime.
+var _InputTypeTypeMetaInputDesc = graphql.InputDesc{Config: _InputTypeTypeMetaInputConfigFn}
+
+// ObjectMetaInput ObjectMeta is metadata all persisted objects have.
+type ObjectMetaInput struct {
+	/*
+	   Name must be unique within a namespace. Name is primarily intended for
+	   creation idempotence and configuration definition. Optional.
+	*/
+	Name string
+	/*
+	   Namespace defines a logical grouping of objects within which each object
+	   name must be unique.
+	*/
+	Namespace string
+}
+
+// ObjectMetaInputType ObjectMeta is metadata all persisted objects have.
+var ObjectMetaInputType = graphql.NewType("ObjectMetaInput", graphql.InputKind)
+
+// RegisterObjectMetaInput registers ObjectMetaInput object type with given service.
+func RegisterObjectMetaInput(svc *graphql.Service) {
+	svc.RegisterInput(_InputTypeObjectMetaInputDesc)
+}
+func _InputTypeObjectMetaInputConfigFn() graphql1.InputObjectConfig {
+	return graphql1.InputObjectConfig{
+		Description: "ObjectMeta is metadata all persisted objects have.",
+		Fields: graphql1.InputObjectConfigFieldMap{
+			"name": &graphql1.InputObjectFieldConfig{
+				DefaultValue: "",
+				Description:  "Name must be unique within a namespace. Name is primarily intended for\ncreation idempotence and configuration definition. Optional.",
+				Type:         graphql1.String,
+			},
+			"namespace": &graphql1.InputObjectFieldConfig{
+				DefaultValue: "",
+				Description:  "Namespace defines a logical grouping of objects within which each object\nname must be unique.",
+				Type:         graphql1.String,
+			},
+		},
+		Name: "ObjectMetaInput",
+	}
+}
+
+// describe ObjectMetaInput's configuration; kept private to avoid unintentional tampering of configuration at runtime.
+var _InputTypeObjectMetaInputDesc = graphql.InputDesc{Config: _InputTypeObjectMetaInputConfigFn}

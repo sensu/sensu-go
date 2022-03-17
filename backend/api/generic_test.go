@@ -118,6 +118,9 @@ func TestGenericClient(t *testing.T) {
 		ListErr   bool
 		DelName   string
 		DelErr    bool
+		AuthVerb  string
+		AuthName  string
+		AuthErr   bool
 		Ctx       context.Context
 	}{
 		{
@@ -133,6 +136,9 @@ func TestGenericClient(t *testing.T) {
 			DelName:   "todelete",
 			DelErr:    true,
 			ListErr:   true,
+			AuthVerb:  "get",
+			AuthName:  "todelete",
+			AuthErr:   true,
 			Ctx:       contextWithUser(defaultContext(), "tom", nil),
 		},
 		{
@@ -168,6 +174,9 @@ func TestGenericClient(t *testing.T) {
 			DelName:   "default",
 			DelErr:    true,
 			ListErr:   false,
+			AuthVerb:  "delete",
+			AuthName:  "default",
+			AuthErr:   true,
 			Ctx:       contextWithUser(defaultContext(), "tom", nil),
 		},
 		{
@@ -230,6 +239,9 @@ func TestGenericClient(t *testing.T) {
 			DelName:   "default",
 			DelErr:    false,
 			ListErr:   false,
+			AuthVerb:  "get",
+			AuthName:  "default",
+			AuthErr:   false,
 			Ctx:       contextWithUser(defaultContext(), "tom", nil),
 		},
 	}
@@ -286,6 +298,15 @@ func TestGenericClient(t *testing.T) {
 				if err == nil && val.Validate() != nil {
 					t.Fatal(val.Validate())
 				}
+			}
+		})
+		t.Run(test.Name+"_authorize", func(t *testing.T) {
+			err := test.Client.Authorize(test.Ctx, test.AuthVerb, test.AuthName)
+			if err != nil && !test.AuthErr {
+				t.Fatal(err)
+			}
+			if err == nil && test.AuthErr {
+				t.Fatal(err)
 			}
 		})
 	}

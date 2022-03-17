@@ -52,3 +52,11 @@ enum ErrCode {
   """
   ERR_PERMISSION_DENIED
 }
+
+"""
+Describes error that occurred during a fetch operation.
+"""
+type FetchErr {
+  code: ErrCode!
+  message: String!
+}

@@ -42,3 +42,30 @@ type ObjectMeta {
   """
   createdBy: String!
 }
+
+"TypeMeta is information that can be used to resolve a data type"
+input TypeMetaInput {
+  "Type is the type name of the data type"
+  type: String!
+
+  "APIVersion is the APIVersion of the data type"
+  apiVersion: String!
+}
+
+"ObjectMeta is metadata all persisted objects have."
+input ObjectMetaInput {
+  """
+  Name must be unique within a namespace. Name is primarily intended for
+  creation idempotence and configuration definition. Optional.
+  """
+  name: String = ""
+
+  """
+  Namespace defines a logical grouping of objects within which each object
+  name must be unique.
+  """
+  namespace: String = ""
+
+  # TODO: someday ...
+  # cluster: String = ""
+}

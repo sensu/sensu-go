@@ -1,0 +1,15 @@
+#
+# Extends root query object with an field resolver that allows one to test
+# whether they're able to perform an action. Inspired by K8s
+# SelfSubjectAccessReview API.
+#
+# @link https://github.com/kubernetes/kubernetes/blob/c1e69551be1a72f0f8db6778f20658199d3a686d/staging/src/k8s.io/api/authorization/v1/types.go#L45-L67
+#
+extend type Query @named(suffix: "SelfSubjectAccessReview") {
+  """
+  Checks whether or not the current user can perform an action; provides handy
+  interface to preemptively test if an action will succeed. Returns null if the
+  action is allowed and otherwise a FetchErr.
+  """
+  cani(type: TypeMetaInput!, meta: ObjectMetaInput!, verb: String!): FetchErr
+}
