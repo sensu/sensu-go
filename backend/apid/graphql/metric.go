@@ -1,10 +1,12 @@
 package graphql
 
 import (
+	"time"
+
 	dto "github.com/prometheus/client_model/go"
 	"github.com/sensu/sensu-go/backend/apid/graphql/schema"
+	util_api "github.com/sensu/sensu-go/backend/apid/graphql/util/api"
 	"github.com/sensu/sensu-go/graphql"
-	"time"
 )
 
 var _ graphql.InterfaceTypeResolver = (*metricImpl)(nil)
@@ -159,11 +161,11 @@ type commonMetricImpl struct{}
 
 func (*commonMetricImpl) Labels(p graphql.ResolveParams) (interface{}, error) {
 	v := p.Source.(*dto.Metric)
-	kv := make([]KVPairString, 0, len(v.Label))
+	kv := make([]util_api.KVPairString, 0, len(v.Label))
 	for _, pair := range v.Label {
 		kv = append(
 			kv,
-			KVPairString{
+			util_api.KVPairString{
 				Key: formatString(pair.Name),
 				Val: formatString(pair.Value),
 			},

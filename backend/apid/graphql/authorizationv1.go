@@ -13,7 +13,11 @@ type selfSubjectAccessReviewImpl struct {
 
 // Cani implements response to request for 'cani' field.
 func (r *selfSubjectAccessReviewImpl) Cani(p schema.QueryExtensionSelfSubjectAccessReviewCaniFieldResolverParams) (interface{}, error) {
-	if err := r.client.SetTypeMeta(*inputToTypeMeta(p.Args.Type)); err != nil {
+	tm := util_api.InputToTypeMeta(p.Args.Type)
+	if tm == nil { // type meta input is marked as non-null, if nil something is very very wrong
+		panic("type meta is nil")
+	}
+	if err := r.client.SetTypeMeta(*tm); err != nil {
 		return util_api.HandleGetResult(nil, err)
 	}
 	ctx := contextWithNamespace(p.Context, p.Args.Meta.Namespace)

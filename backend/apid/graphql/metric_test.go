@@ -8,6 +8,7 @@ import (
 
 	dto "github.com/prometheus/client_model/go"
 	"github.com/sensu/sensu-go/backend/apid/graphql/schema"
+	util_api "github.com/sensu/sensu-go/backend/apid/graphql/util/api"
 	"github.com/sensu/sensu-go/graphql"
 )
 
@@ -65,7 +66,7 @@ func Test_commonMetricImpl_Labels(t *testing.T) {
 		{
 			name:    "empty",
 			val:     &dto.Metric{Label: []*dto.LabelPair{}},
-			want:    []KVPairString{},
+			want:    []util_api.KVPairString{},
 			wantErr: false,
 		},
 		{
@@ -78,8 +79,8 @@ func Test_commonMetricImpl_Labels(t *testing.T) {
 					},
 				},
 			},
-			want: []KVPairString{
-				KVPairString{
+			want: []util_api.KVPairString{
+				util_api.KVPairString{
 					Key: nameA,
 					Val: nameB,
 				},
@@ -96,8 +97,8 @@ func Test_commonMetricImpl_Labels(t *testing.T) {
 					},
 				},
 			},
-			want: []KVPairString{
-				KVPairString{
+			want: []util_api.KVPairString{
+				util_api.KVPairString{
 					Key: "",
 					Val: "",
 				},
