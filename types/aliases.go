@@ -27,6 +27,10 @@ type (
 	KeepaliveRecord     = v2.KeepaliveRecord
 	MetricPoint         = v2.MetricPoint
 	MetricTag           = v2.MetricTag
+	MetricThreshold     = v2.MetricThreshold
+	MetricThresholds    = v2.MetricThresholds
+	MetricThresholdRule = v2.MetricThresholdRule
+	MetricThresholdTag  = v2.MetricThresholdTag
 	Metrics             = v2.Metrics
 	Mutator             = v2.Mutator
 	Namespace           = v2.Namespace

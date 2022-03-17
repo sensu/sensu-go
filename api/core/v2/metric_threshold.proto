@@ -22,9 +22,6 @@ message MetricThresholdRule {
 
   // The status of the metric if the value is below the minimum or above the maximum
   uint32 status = 3 [ (gogoproto.jsontag) = "status" ];
-
-  // The metric status if the measurement is missing
-  uint32 null_status = 4 [ (gogoproto.jsontag) = "null_status" ];
 }
 
 // Represents the measurement tags to match
@@ -46,4 +43,8 @@ message MetricThreshold {
 
   // Rules to evaluate when the filter matches a metric
   repeated MetricThresholdRule thresholds = 3 [ (gogoproto.jsontag) = "thresholds" ];
+
+
+  // The metric status if the measurement is missing
+  uint32 null_status = 4 [ (gogoproto.jsontag) = "null_status" ];
 }

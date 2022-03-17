@@ -6,7 +6,7 @@ import (
 	"regexp"
 )
 
-var libprotoRe = regexp.MustCompile(`^libprotoc 3.9.1\s$`)
+var libprotoRe = regexp.MustCompile(`^libprotoc 3.19.4\s$`)
 
 func main() {
 	out, err := exec.Command("protoc", "--version").Output()
