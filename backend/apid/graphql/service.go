@@ -84,6 +84,7 @@ func NewService(cfg ServiceConfig) (*Service, error) {
 	schema.RegisterNode(svc, &nodeImpl{&nodeResolver})
 	schema.RegisterNamespaced(svc, nil)
 	schema.RegisterObjectMeta(svc, &objectMetaImpl{})
+	schema.RegisterObjectMetaInput(svc)
 	schema.RegisterOffsetPageInfo(svc, &offsetPageInfoImpl{})
 	schema.RegisterProxyRequests(svc, &schema.ProxyRequestsAliases{})
 	schema.RegisterResource(svc, nil)
@@ -97,6 +98,10 @@ func NewService(cfg ServiceConfig) (*Service, error) {
 	schema.RegisterSuggestionResultSet(svc, &schema.SuggestionResultSetAliases{})
 	schema.RegisterUint(svc, unsignedIntegerImpl{})
 	schema.RegisterViewer(svc, &viewerImpl{userClient: cfg.UserClient})
+	schema.RegisterTypeMetaInput(svc)
+
+	// authorization
+	schema.RegisterQueryExtensionSelfSubjectAccessReview(svc, &selfSubjectAccessReviewImpl{client: cfg.GenericClient})
 
 	// Register check types
 	schema.RegisterCheck(svc, &checkImpl{})
@@ -195,8 +200,9 @@ func NewService(cfg ServiceConfig) (*Service, error) {
 	schema.RegisterPutWrappedPayload(svc, &schema.PutWrappedPayloadAliases{})
 
 	// Errors
-	schema.RegisterStandardError(svc, stdErrImpl{})
 	schema.RegisterError(svc, &errImpl{})
+	schema.RegisterFetchErr(svc, &schema.FetchErrAliases{})
+	schema.RegisterStandardError(svc, stdErrImpl{})
 
 	// Run init hooks allowing consumers to extend service
 	for _, hookFn := range InitHooks {

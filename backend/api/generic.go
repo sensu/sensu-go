@@ -217,7 +217,7 @@ func (g *GenericClient) List(ctx context.Context, resources interface{}, pred *s
 
 // Authorize tests whether or not the current user can perform an action.
 // Returns nil if action is allow and otherwise an auth error.
-func (g *GenericClient) Authorize(ctx context.Context, verb string, name string) error {
+func (g *GenericClient) Authorize(ctx context.Context, verb, name string) error {
 	attrs := &authorization.Attributes{
 		APIGroup:     g.APIGroup,
 		APIVersion:   g.APIVersion,
