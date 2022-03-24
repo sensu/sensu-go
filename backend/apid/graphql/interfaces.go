@@ -126,6 +126,7 @@ type GenericClient interface {
 	Delete(ctx context.Context, name string) error
 	Get(ctx context.Context, name string, val corev2.Resource) error
 	List(ctx context.Context, resources interface{}, pred *store.SelectionPredicate) error
+	Authorize(ctx context.Context, verb, name string) error
 }
 
 type EtcdHealthController interface {
