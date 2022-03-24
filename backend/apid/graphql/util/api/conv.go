@@ -16,7 +16,7 @@ func InputToTypeMeta(i *schema.TypeMetaInput) *corev2.TypeMeta {
 	}
 }
 
-// ToObjectMeta
+// ToObjectMeta returns ObjectMeta for given
 func ToObjectMeta(m interface{}) corev2.ObjectMeta {
 	if w, ok := m.(interface{ GetObjectMeta() corev2.ObjectMeta }); ok {
 		m = w.GetObjectMeta()
