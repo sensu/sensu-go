@@ -63,15 +63,7 @@ func (g *GenericClient) Create(ctx context.Context, value corev2.Resource) error
 	if err := value.Validate(); err != nil {
 		return err
 	}
-	attrs := &authorization.Attributes{
-		APIGroup:     g.APIGroup,
-		APIVersion:   g.APIVersion,
-		Resource:     g.Kind.RBACName(),
-		Namespace:    corev2.ContextNamespace(ctx),
-		Verb:         "create",
-		ResourceName: value.GetObjectMeta().Name,
-	}
-	if err := authorize(ctx, g.Auth, attrs); err != nil {
+	if err := g.Authorize(ctx, "create", value.GetObjectMeta().Name); err != nil {
 		return err
 	}
 	setCreatedBy(ctx, value)
@@ -124,15 +116,7 @@ func (g *GenericClient) Update(ctx context.Context, value corev2.Resource) error
 	if err := value.Validate(); err != nil {
 		return err
 	}
-	attrs := &authorization.Attributes{
-		APIGroup:     g.APIGroup,
-		APIVersion:   g.APIVersion,
-		Resource:     g.Kind.RBACName(),
-		Namespace:    corev2.ContextNamespace(ctx),
-		Verb:         "update",
-		ResourceName: value.GetObjectMeta().Name,
-	}
-	if err := authorize(ctx, g.Auth, attrs); err != nil {
+	if err := g.Authorize(ctx, "update", value.GetObjectMeta().Name); err != nil {
 		return err
 	}
 	setCreatedBy(ctx, value)
@@ -157,15 +141,7 @@ func (g *GenericClient) Delete(ctx context.Context, name string) error {
 	if err := g.validateConfig(); err != nil {
 		return err
 	}
-	attrs := &authorization.Attributes{
-		APIGroup:     g.APIGroup,
-		APIVersion:   g.APIVersion,
-		Resource:     g.Kind.RBACName(),
-		Namespace:    corev2.ContextNamespace(ctx),
-		Verb:         "delete",
-		ResourceName: name,
-	}
-	if err := authorize(ctx, g.Auth, attrs); err != nil {
+	if err := g.Authorize(ctx, "delete", name); err != nil {
 		return err
 	}
 	return g.deleteResource(ctx, name)
@@ -193,15 +169,7 @@ func (g *GenericClient) Get(ctx context.Context, name string, val corev2.Resourc
 	if err := g.validateConfig(); err != nil {
 		return err
 	}
-	attrs := &authorization.Attributes{
-		APIGroup:     g.APIGroup,
-		APIVersion:   g.APIVersion,
-		Resource:     g.Kind.RBACName(),
-		Namespace:    corev2.ContextNamespace(ctx),
-		Verb:         "get",
-		ResourceName: name,
-	}
-	if err := authorize(ctx, g.Auth, attrs); err != nil {
+	if err := g.Authorize(ctx, "get", name); err != nil {
 		return err
 	}
 	return g.getResource(ctx, name, val)
@@ -241,15 +209,25 @@ func (g *GenericClient) List(ctx context.Context, resources interface{}, pred *s
 	if err := g.validateConfig(); err != nil {
 		return err
 	}
+	if err := g.Authorize(ctx, "list", ""); err != nil {
+		return err
+	}
+	return g.list(ctx, resources, pred)
+}
+
+// Authorize tests whether or not the current user can perform an action.
+// Returns nil if action is allow and otherwise an auth error.
+func (g *GenericClient) Authorize(ctx context.Context, verb, name string) error {
 	attrs := &authorization.Attributes{
-		APIGroup:   g.APIGroup,
-		APIVersion: g.APIVersion,
-		Resource:   g.Kind.RBACName(),
-		Namespace:  corev2.ContextNamespace(ctx),
-		Verb:       "list",
+		APIGroup:     g.APIGroup,
+		APIVersion:   g.APIVersion,
+		Namespace:    corev2.ContextNamespace(ctx),
+		Resource:     g.Kind.RBACName(),
+		ResourceName: name,
+		Verb:         verb,
 	}
 	if err := authorize(ctx, g.Auth, attrs); err != nil {
 		return err
 	}
-	return g.list(ctx, resources, pred)
+	return nil
 }
