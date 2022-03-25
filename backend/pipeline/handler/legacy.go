@@ -86,7 +86,7 @@ func (l *LegacyAdapter) Handle(ctx context.Context, ref *corev2.ResourceReferenc
 		fields["output"] = result.Output
 		logger.WithFields(fields).Info("event pipe handler executed")
 	case "tcp", "udp":
-		_, err := l.socketHandler(ctx, handler, event, mutatedData)
+		err := l.socketHandler(ctx, handler, event, mutatedData)
 		if err != nil {
 			logger.WithFields(fields).Error(err)
 			return err
@@ -164,7 +164,7 @@ func (l *LegacyAdapter) pipeHandler(ctx context.Context, handler *corev2.Handler
 
 // socketHandler creates either a TCP or UDP client to write mutatedData
 // to a socket. The provided handler Type determines the protocol.
-func (l *LegacyAdapter) socketHandler(ctx context.Context, handler *corev2.Handler, event *corev2.Event, mutatedData []byte) (conn net.Conn, err error) {
+func (l *LegacyAdapter) socketHandler(ctx context.Context, handler *corev2.Handler, event *corev2.Event, mutatedData []byte) (err error) {
 	protocol := handler.Type
 	host := handler.Socket.Host
 	port := handler.Socket.Port
@@ -189,9 +189,9 @@ func (l *LegacyAdapter) socketHandler(ctx context.Context, handler *corev2.Handl
 	logger.WithFields(fields).Debug("sending event to socket handler")
 
 	deadline := time.Now().Add(timeoutDuration)
-	conn, err = net.DialTimeout(protocol, address, timeoutDuration)
-	if err != nil {
-		return nil, err
+	conn, cerr := net.DialTimeout(protocol, address, timeoutDuration)
+	if cerr != nil {
+		return cerr
 	}
 	defer func() {
 		e := conn.Close()
@@ -201,19 +201,23 @@ func (l *LegacyAdapter) socketHandler(ctx context.Context, handler *corev2.Handl
 	}()
 
 	if err := conn.SetWriteDeadline(deadline); err != nil {
-		return conn, err
+		return err
 	}
 
 	bytes, err := conn.Write(mutatedData)
+	fields["bytes"] = bytes
 	if err != nil {
 		logger.WithFields(fields).WithError(err).Error("failed to execute event handler")
-		return nil, err
+		return err
+	}
+	// n.b., I'm not sure if this condition is necessary, and it may be
+	// unnecessarily defensive.
+	if bytes < len(mutatedData) {
+		logger.WithFields(fields).Error("short write")
+		return errors.New("short write for socket handler")
 	}
 
-	fields["bytes"] = bytes
 	logger.WithFields(fields).Info("event socket handler executed")
 
-	// TODO(jk): Why return the connection here if we never make use of it?
-	// Perhaps we should return bytes or a result type?
-	return conn, nil
+	return nil
 }

@@ -492,7 +492,7 @@ func TestLegacyAdapter_socketHandlerTCP(t *testing.T) {
 		close(done)
 	}()
 
-	if _, err := l.socketHandler(ctx, handler, event, mutatedData); err != nil {
+	if err := l.socketHandler(ctx, handler, event, mutatedData); err != nil {
 		t.Fatal(err)
 	}
 
@@ -536,12 +536,8 @@ func TestLegacyAdapter_GH4675(t *testing.T) {
 		close(done)
 	}()
 
-	conn, err := l.socketHandler(ctx, handler, event, mutatedData)
-	if err == nil {
+	if err := l.socketHandler(ctx, handler, event, mutatedData); err == nil {
 		t.Error("expected non-nil error")
-	}
-	if conn == nil {
-		t.Fatal("nil conn")
 	}
 	<-done
 }
@@ -594,7 +590,7 @@ func TestLegacyAdapter_socketHandlerUDP(t *testing.T) {
 		assert.Equal(t, mutatedData, buffer[0:rlen])
 	}()
 
-	if _, err := l.socketHandler(ctx, handler, event, mutatedData); err != nil {
+	if err := l.socketHandler(ctx, handler, event, mutatedData); err != nil {
 		t.Fatal(err)
 	}
 

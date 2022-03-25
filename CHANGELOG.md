@@ -11,6 +11,8 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 ### Fixed
 - Fixed a bug where pipelines in check configuration were not represented in
 the check object of events that were produced with the check configuration.
+- Socket handlers will no longer cause sensu-backend to panic when interrupted
+mid-write.
 
 ## [6.6.6] - 2022-02-16
 
