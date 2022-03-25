@@ -188,6 +188,7 @@ func (l *LegacyAdapter) socketHandler(ctx context.Context, handler *corev2.Handl
 
 	logger.WithFields(fields).Debug("sending event to socket handler")
 
+	deadline := time.Now().Add(timeoutDuration)
 	conn, err = net.DialTimeout(protocol, address, timeoutDuration)
 	if err != nil {
 		return nil, err
@@ -198,6 +199,10 @@ func (l *LegacyAdapter) socketHandler(ctx context.Context, handler *corev2.Handl
 			err = e
 		}
 	}()
+
+	if err := conn.SetWriteDeadline(deadline); err != nil {
+		return conn, err
+	}
 
 	bytes, err := conn.Write(mutatedData)
 	if err != nil {

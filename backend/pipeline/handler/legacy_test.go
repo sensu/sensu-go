@@ -9,6 +9,7 @@ import (
 	"net"
 	"os"
 	"reflect"
+	"strconv"
 	"strings"
 	"testing"
 	"time"
@@ -226,6 +227,7 @@ func TestLegacyAdapter_Handle(t *testing.T) {
 }
 
 func TestLegacyAdapter_pipeHandler(t *testing.T) {
+	t.Parallel()
 	type fields struct {
 		AssetGetter            asset.Getter
 		Executor               command.Executor
@@ -432,36 +434,47 @@ func TestLegacyAdapter_pipeHandler(t *testing.T) {
 	}
 }
 
-func TestLegacyAdapter_socketHandlerTCP(t *testing.T) {
-	ready := make(chan struct{})
-	done := make(chan struct{})
+func newListener(t *testing.T, network string) (ln net.Listener, host string, portU32 uint32, closeListener func()) {
+	listener, err := net.Listen("tcp", "127.0.0.1:0")
+	if err != nil {
+		t.Fatal(err)
+	}
 
+	host, portS, err := net.SplitHostPort(listener.Addr().String())
+	if err != nil {
+		t.Fatal(err)
+	}
+	port, err := strconv.Atoi(portS)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	return listener, host, uint32(port), func() {
+		_ = listener.Close()
+	}
+}
+
+func TestLegacyAdapter_socketHandlerTCP(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
 	event := corev2.FixtureEvent("test", "test")
 	mutatedData, _ := json.Marshal(event)
+
+	listener, host, port, closeListener := newListener(t, "tcp")
+	defer closeListener()
+
 	handler := &corev2.Handler{
-		Type: "tcp",
+		Type: listener.Addr().Network(),
 		Socket: &corev2.HandlerSocket{
-			Host: "127.0.0.1",
-			Port: 5678,
+			Host: host,
+			Port: port,
 		},
 	}
 
 	l := &LegacyAdapter{}
 
+	done := make(chan struct{})
 	go func() {
-		listener, err := net.Listen("tcp", "127.0.0.1:5678")
-		assert.NoError(t, err)
-		if err != nil {
-			return
-		}
-
-		defer func() {
-			require.NoError(t, listener.Close())
-		}()
-
-		ready <- struct{}{}
-
 		conn, err := listener.Accept()
 		if err != nil {
 			return
@@ -476,58 +489,114 @@ func TestLegacyAdapter_socketHandlerTCP(t *testing.T) {
 		}
 
 		assert.Equal(t, mutatedData, buffer)
-		done <- struct{}{}
+		close(done)
 	}()
 
-	<-ready
-	_, err := l.socketHandler(ctx, handler, event, mutatedData)
+	if _, err := l.socketHandler(ctx, handler, event, mutatedData); err != nil {
+		t.Fatal(err)
+	}
 
-	assert.NoError(t, err)
+	<-done
+}
+
+func TestLegacyAdapter_GH4675(t *testing.T) {
+	t.Parallel()
+	done := make(chan struct{})
+
+	ctx := context.Background()
+	event := corev2.FixtureEvent("test", "test")
+	// put a lot of data in the event to make sure it's too big for tcp buffer
+	bigLongBytes := make([]byte, 10_000_000)
+	for i := range bigLongBytes {
+		bigLongBytes[i] = '!'
+	}
+	event.Check.Output = string(bigLongBytes)
+	mutatedData, _ := json.Marshal(event)
+
+	listener, host, port, closeListener := newListener(t, "tcp")
+	defer closeListener()
+
+	handler := &corev2.Handler{
+		Type: listener.Addr().Network(),
+		Socket: &corev2.HandlerSocket{
+			Host: host,
+			Port: port,
+		},
+		Timeout: 1,
+	}
+
+	l := &LegacyAdapter{}
+
+	go func() {
+		_, err := listener.Accept()
+		if err != nil {
+			panic(err)
+		}
+		closeListener()
+		close(done)
+	}()
+
+	conn, err := l.socketHandler(ctx, handler, event, mutatedData)
+	if err == nil {
+		t.Error("expected non-nil error")
+	}
+	if conn == nil {
+		t.Fatal("nil conn")
+	}
 	<-done
 }
 
 func TestLegacyAdapter_socketHandlerUDP(t *testing.T) {
-	ready := make(chan struct{})
+	t.Parallel()
 	done := make(chan struct{})
 
 	ctx := context.Background()
 	event := corev2.FixtureEvent("test", "test")
 	mutatedData, _ := json.Marshal(event)
+
+	listener, err := net.ListenPacket("udp", "127.0.0.1:0")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	defer func() {
+		if err := listener.Close(); err != nil {
+			t.Fatal(err)
+		}
+	}()
+
+	host, portS, err := net.SplitHostPort(listener.LocalAddr().String())
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	port, err := strconv.Atoi(portS)
+	if err != nil {
+		t.Fatal(err)
+	}
+
 	handler := &corev2.Handler{
-		Type: "udp",
+		Type: listener.LocalAddr().Network(),
 		Socket: &corev2.HandlerSocket{
-			Host: "127.0.0.1",
-			Port: 5678,
+			Host: host,
+			Port: uint32(port),
 		},
 	}
 
 	l := &LegacyAdapter{}
 
 	go func() {
-		listener, err := net.ListenPacket("udp", ":5678")
-		assert.NoError(t, err)
-		if err != nil {
-			return
-		}
-
-		defer func() {
-			require.NoError(t, listener.Close())
-		}()
-
-		ready <- struct{}{}
-
+		defer close(done)
 		buffer := make([]byte, 8192)
 		rlen, _, err := listener.ReadFrom(buffer)
 
 		assert.NoError(t, err)
 		assert.Equal(t, mutatedData, buffer[0:rlen])
-		done <- struct{}{}
 	}()
 
-	<-ready
+	if _, err := l.socketHandler(ctx, handler, event, mutatedData); err != nil {
+		t.Fatal(err)
+	}
 
-	_, err := l.socketHandler(ctx, handler, event, mutatedData)
-
-	assert.NoError(t, err)
 	<-done
 }
