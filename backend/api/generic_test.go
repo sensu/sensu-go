@@ -118,7 +118,7 @@ func TestGenericClient(t *testing.T) {
 		ListErr   bool
 		DelName   string
 		DelErr    bool
-		AuthVerb  string
+		AuthVerb  RBACVerb
 		AuthName  string
 		AuthErr   bool
 		Ctx       context.Context
@@ -136,7 +136,7 @@ func TestGenericClient(t *testing.T) {
 			DelName:   "todelete",
 			DelErr:    true,
 			ListErr:   true,
-			AuthVerb:  "get",
+			AuthVerb:  VerbGet,
 			AuthName:  "todelete",
 			AuthErr:   true,
 			Ctx:       contextWithUser(defaultContext(), "tom", nil),
@@ -174,7 +174,7 @@ func TestGenericClient(t *testing.T) {
 			DelName:   "default",
 			DelErr:    true,
 			ListErr:   false,
-			AuthVerb:  "delete",
+			AuthVerb:  VerbDetete,
 			AuthName:  "default",
 			AuthErr:   true,
 			Ctx:       contextWithUser(defaultContext(), "tom", nil),
@@ -239,7 +239,7 @@ func TestGenericClient(t *testing.T) {
 			DelName:   "default",
 			DelErr:    false,
 			ListErr:   false,
-			AuthVerb:  "get",
+			AuthVerb:  VerbGet,
 			AuthName:  "default",
 			AuthErr:   false,
 			Ctx:       contextWithUser(defaultContext(), "tom", nil),

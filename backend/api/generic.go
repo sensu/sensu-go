@@ -14,6 +14,16 @@ import (
 	"github.com/sensu/sensu-go/types"
 )
 
+type RBACVerb string
+
+const (
+	VerbGet    RBACVerb = "get"
+	VerbList   RBACVerb = "list"
+	VerbCreate RBACVerb = "create"
+	VerbUpdate RBACVerb = "update"
+	VerbDetete RBACVerb = "delete"
+)
+
 // GenericClient is a generic API client that uses the ResourceStore.
 type GenericClient struct {
 	Kind       corev2.Resource
@@ -217,14 +227,14 @@ func (g *GenericClient) List(ctx context.Context, resources interface{}, pred *s
 
 // Authorize tests whether or not the current user can perform an action.
 // Returns nil if action is allow and otherwise an auth error.
-func (g *GenericClient) Authorize(ctx context.Context, verb, name string) error {
+func (g *GenericClient) Authorize(ctx context.Context, verb RBACVerb, name string) error {
 	attrs := &authorization.Attributes{
 		APIGroup:     g.APIGroup,
 		APIVersion:   g.APIVersion,
 		Namespace:    corev2.ContextNamespace(ctx),
 		Resource:     g.Kind.RBACName(),
 		ResourceName: name,
-		Verb:         verb,
+		Verb:         string(verb),
 	}
 	if err := authorize(ctx, g.Auth, attrs); err != nil {
 		return err
