@@ -5,6 +5,7 @@ import (
 
 	dto "github.com/prometheus/client_model/go"
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
+	"github.com/sensu/sensu-go/backend/api"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/stretchr/testify/mock"
 )
@@ -230,7 +231,7 @@ func (c *MockGenericClient) List(ctx context.Context, resources interface{}, pre
 	return c.Called(ctx, resources, pred).Error(0)
 }
 
-func (c *MockGenericClient) Authorize(ctx context.Context, verb, name string) error {
+func (c *MockGenericClient) Authorize(ctx context.Context, verb api.RBACVerb, name string) error {
 	return c.Called(ctx, verb, name).Error(0)
 }
 
