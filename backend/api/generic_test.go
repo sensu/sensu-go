@@ -174,7 +174,7 @@ func TestGenericClient(t *testing.T) {
 			DelName:   "default",
 			DelErr:    true,
 			ListErr:   false,
-			AuthVerb:  VerbDetete,
+			AuthVerb:  VerbDelete,
 			AuthName:  "default",
 			AuthErr:   true,
 			Ctx:       contextWithUser(defaultContext(), "tom", nil),

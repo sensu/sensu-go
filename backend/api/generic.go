@@ -21,7 +21,7 @@ const (
 	VerbList   RBACVerb = "list"
 	VerbCreate RBACVerb = "create"
 	VerbUpdate RBACVerb = "update"
-	VerbDetete RBACVerb = "delete"
+	VerbDelete RBACVerb = "delete"
 )
 
 // GenericClient is a generic API client that uses the ResourceStore.
