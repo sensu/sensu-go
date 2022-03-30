@@ -165,21 +165,23 @@ func (c *CheckConfig) Validate() error {
 		return err
 	}
 
+	if err := ValidateSubdues(c.Subdues); err != nil {
+		return err
+	}
+
 	return c.Subdue.Validate()
 }
 
 // IsSubdued returns true if the check is subdued at the current time.
 // It returns false otherwise.
 func (c *CheckConfig) IsSubdued() bool {
-	subdue := c.GetSubdue()
-	if subdue == nil {
-		return false
+	for _, subdue := range c.Subdues {
+		subdued := subdue.InWindows(time.Now())
+		if subdued {
+			return true
+		}
 	}
-	subdued, err := subdue.InWindows(time.Now())
-	if err != nil {
-		return false
-	}
-	return subdued
+	return false
 }
 
 //

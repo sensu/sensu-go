@@ -246,6 +246,10 @@ func (c *Check) Validate() error {
 		}
 	}
 
+	if err := ValidateSubdues(c.Subdues); err != nil {
+		return err
+	}
+
 	return c.Subdue.Validate()
 }
 
@@ -306,6 +310,15 @@ func ValidateOutputMetricFormat(format string) error {
 		return nil
 	}
 	return errors.New("output metric format is not valid")
+}
+
+func ValidateSubdues(subdues []*TimeWindowRepeated) error {
+	for i, subdue := range subdues {
+		if err := subdue.Validate(); err != nil {
+			return fmt.Errorf("subdue %d invalid: %s", i, err)
+		}
+	}
+	return nil
 }
 
 // previousOccurrence returns the most recent CheckHistory item, excluding the current result.
