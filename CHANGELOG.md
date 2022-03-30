@@ -13,6 +13,7 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 - Automatically create system namespace and backend entities.
 - Generate backend events on secret provider access errors.
 - Added `keepalive-pipelines` configuration flag to the sensu-agent
+- Implement new check subdue specification
 
 ### Fixed
 - Log agent IP address for connections with faulty TLS configurations.
