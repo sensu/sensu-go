@@ -297,15 +297,6 @@
 		]
 	},
 	{
-		"project": "github.com/json-iterator/go",
-		"licenses": [
-			{
-				"type": "MIT License",
-				"confidence": 1
-			}
-		]
-	},
-	{
 		"project": "github.com/libp2p/go-reuseport",
 		"licenses": [
 			{

@@ -41,7 +41,7 @@ require (
 	github.com/influxdata/line-protocol v0.0.0-20210311194329-9aa0e372d097
 	github.com/ipfs/go-log v1.0.4 // indirect
 	github.com/jbenet/go-reuseport v0.0.0-20180416043609-15a1cd37f050 // indirect
-	github.com/json-iterator/go v1.1.12
+	github.com/json-iterator/go v1.1.12 // indirect
 	github.com/libp2p/go-reuseport v0.0.0-20180416043609-15a1cd37f050 // indirect
 	github.com/libp2p/go-sockaddr v0.1.0 // indirect
 	github.com/mattn/go-colorable v0.1.4 // indirect
@@ -57,9 +57,9 @@ require (
 	github.com/robertkrimen/otto v0.0.0-20191219234010-c382bd3c16ff
 	github.com/robfig/cron/v3 v3.0.1
 	github.com/sensu/lasr v1.2.1
-	github.com/sensu/sensu-go/api/core/v2 v2.6.0
-	github.com/sensu/sensu-go/api/core/v3 v3.3.0
-	github.com/sensu/sensu-go/types v0.3.0
+	github.com/sensu/sensu-go/api/core/v2 v2.9.1-alpha
+	github.com/sensu/sensu-go/api/core/v3 v3.6.1-alpha
+	github.com/sensu/sensu-go/types v0.9.1-alpha
 	github.com/shirou/gopsutil/v3 v3.21.12
 	github.com/sirupsen/logrus v1.7.0
 	github.com/spf13/cobra v1.1.3
@@ -75,6 +75,7 @@ require (
 	go.etcd.io/etcd/client/v3 v3.5.0
 	go.etcd.io/etcd/server/v3 v3.5.0
 	go.etcd.io/etcd/tests/v3 v3.5.0
+	go.uber.org/atomic v1.7.0
 	go.uber.org/zap v1.17.0
 	golang.org/x/crypto v0.0.0-20201002170205-7f63de1d35b0
 	golang.org/x/net v0.0.0-20210405180319-a5a99cb37ef4
