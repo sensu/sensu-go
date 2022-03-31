@@ -11,7 +11,6 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	jsoniter "github.com/json-iterator/go"
 	stringsutil "github.com/sensu/sensu-go/api/core/v2/internal/stringutil"
 )
 
@@ -412,7 +411,7 @@ func (e *Event) LogFields(debug bool) map[string]interface{} {
 
 func (e Event) MarshalJSON() ([]byte, error) {
 	type clone Event
-	b, err := jsoniter.Marshal((*clone)(&e))
+	b, err := json.Marshal((*clone)(&e))
 	if err != nil {
 		return nil, err
 	}
@@ -426,10 +425,10 @@ func (e Event) MarshalJSON() ([]byte, error) {
 		if err != nil {
 			return nil, fmt.Errorf("invalid event ID: %s", err)
 		}
-		idBytes, _ := jsoniter.Marshal(uid.String())
+		idBytes, _ := json.Marshal(uid.String())
 		msg["id"] = (*json.RawMessage)(&idBytes)
 	}
-	return jsoniter.Marshal(msg)
+	return json.Marshal(msg)
 }
 
 func (e *Event) UnmarshalJSON(b []byte) error {
@@ -447,7 +446,7 @@ func (e *Event) UnmarshalJSON(b []byte) error {
 	}
 	if len(id) > 0 {
 		delete(msg, "id")
-		b, _ = jsoniter.Marshal(msg)
+		b, _ = json.Marshal(msg)
 	}
 	if err := json.Unmarshal(b, (*clone)(e)); err != nil {
 		return err

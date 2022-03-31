@@ -1,6 +1,7 @@
 package v2
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"net/url"
@@ -8,7 +9,6 @@ import (
 	"strconv"
 	"strings"
 
-	jsoniter "github.com/json-iterator/go"
 	"github.com/sensu/sensu-go/api/core/v2/internal/stringutil"
 )
 
@@ -112,7 +112,7 @@ func (e *Entity) MarshalJSON() ([]byte, error) {
 	type Clone Entity
 	clone := (*Clone)(e)
 
-	return jsoniter.Marshal(clone)
+	return json.Marshal(clone)
 }
 
 // GetEntitySubscription returns the entity subscription, using the format

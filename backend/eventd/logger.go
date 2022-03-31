@@ -2,6 +2,7 @@ package eventd
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"io"
 	"runtime"
@@ -9,7 +10,6 @@ import (
 	"syscall"
 	"time"
 
-	jsoniter "github.com/json-iterator/go"
 	"github.com/sensu/sensu-go/backend/logging"
 	"github.com/sensu/sensu-go/backend/messaging"
 	"github.com/sirupsen/logrus"
@@ -182,7 +182,7 @@ func (l *rawLogger) encoder() {
 	defer close(l.output)
 
 	var buf bytes.Buffer
-	encoder := jsoniter.NewEncoder(&buf)
+	encoder := json.NewEncoder(&buf)
 
 	for input := range l.encoderInput {
 		buf.Reset()
