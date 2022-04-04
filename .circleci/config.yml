@@ -24,6 +24,18 @@ jobs:
       # Run tests
       - run: ./build.sh unit
       - run: ./build.sh integration
+  test-core-v2:
+    <<: *sensu_go_build_env
+    environment:
+      GO111MODULE: 'on'
+      GOPROXY: 'https://proxy.golang.org'
+    resource_class: large
+    working_directory: ~/sensu-go/api/core/v2
+    steps:
+      - checkout:
+          path: ~/sensu-go
+      - go/mod-download-cached
+      - run: go test ./...
   build:
     <<: *sensu_go_build_env
     parameters:
@@ -59,6 +71,7 @@ workflows:
           filters:
             tags:
               ignore: /.*/
+      - test-core-v2
   build:
     jobs:
       # darwin/amd64
