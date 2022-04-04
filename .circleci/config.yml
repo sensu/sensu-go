@@ -36,6 +36,18 @@ jobs:
           path: ~/sensu-go
       - go/mod-download-cached
       - run: go test ./...
+  test-types:
+    <<: *sensu_go_build_env
+    environment:
+      GO111MODULE: 'on'
+      GOPROXY: 'https://proxy.golang.org'
+    resource_class: large
+    working_directory: ~/sensu-go/types
+    steps:
+      - checkout:
+          path: ~/sensu-go
+      - go/mod-download-cached
+      - run: go test ./...
   build:
     <<: *sensu_go_build_env
     parameters:
@@ -72,6 +84,7 @@ workflows:
             tags:
               ignore: /.*/
       - test-core-v2
+      - test-types
   build:
     jobs:
       # darwin/amd64
