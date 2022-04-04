@@ -77,10 +77,13 @@ workflows:
             tags:
               ignore: /.*/
       - test-module:
+          name: core/v2
           path: api/core/v2
       - test-module:
+          name: core/v3
           path: api/core/v3
       - test-module:
+          name: types
           path: types
   build:
     jobs:
