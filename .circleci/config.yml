@@ -10,13 +10,16 @@ sensu_go_build_env: &sensu_go_build_env
         username: $DOCKER_USERNAME
         password: $DOCKER_PASSWORD
 
-jobs:
-  test:
-    <<: *sensu_go_build_env
+go_test_env: &sensu_go_test_env
+    resource_class: large
     environment:
       GO111MODULE: 'on'
       GOPROXY: 'https://proxy.golang.org'
-    resource_class: large
+
+jobs:
+  test:
+    <<: *sensu_go_build_env
+    <<: *sensu_go_test_env
     steps:
       - checkout
       - go/mod-download-cached
@@ -24,30 +27,20 @@ jobs:
       # Run tests
       - run: ./build.sh unit
       - run: ./build.sh integration
-  test-core-v2:
+
+  test-module:
+    parameters:
+      path:
+        type: string
+    working_directory: ~/sensu-go/<< parameters.path>>
     <<: *sensu_go_build_env
-    environment:
-      GO111MODULE: 'on'
-      GOPROXY: 'https://proxy.golang.org'
-    resource_class: large
-    working_directory: ~/sensu-go/api/core/v2
+    <<: *sensu_go_test_env
     steps:
       - checkout:
           path: ~/sensu-go
       - go/mod-download-cached
       - run: go test ./...
-  test-types:
-    <<: *sensu_go_build_env
-    environment:
-      GO111MODULE: 'on'
-      GOPROXY: 'https://proxy.golang.org'
-    resource_class: large
-    working_directory: ~/sensu-go/types
-    steps:
-      - checkout:
-          path: ~/sensu-go
-      - go/mod-download-cached
-      - run: go test ./...
+
   build:
     <<: *sensu_go_build_env
     parameters:
@@ -83,8 +76,12 @@ workflows:
           filters:
             tags:
               ignore: /.*/
-      - test-core-v2
-      - test-types
+      - test-module:
+          path: api/core/v2
+      - test-module:
+          path: api/core/v3
+      - test-module:
+          path: types
   build:
     jobs:
       # darwin/amd64
