@@ -27,6 +27,8 @@ func (mutatorAssetSet) Key() string {
 func (mutatorAssetSet) Scripts() (map[string]io.ReadCloser, error) {
 	result := make(map[string]io.ReadCloser)
 	result["mutatorAsset"] = ioutil.NopCloser(strings.NewReader(`var assetFunc = function () { event.check.labels["hockey"] = hockey; }`))
+	result["mutatorToNanosecondsAsset"] = ioutil.NopCloser(
+		strings.NewReader(`var assetToNanosecondsFunc = function () { data = JSON.parse(JSON.stringify(event)); for (i=0; i < data.metrics.points.length; i++) { point = data.metrics.points[i]; point.timestamp = toNanoseconds(point.timestamp); data.metrics.points[i] = point; return data }}`))
 	return result, nil
 }
 
@@ -257,6 +259,31 @@ func TestJavascriptAdapter_run(t *testing.T) {
 			},
 			wantFn: func(event *corev2.Event) []byte {
 				event.Check.Labels["hockey"] = "puck"
+				bytes, _ := json.Marshal(event)
+				return bytes
+			},
+			wantErr: false,
+		},
+		{
+			name: "successfuly mutates when toNanoseconds func is used",
+			args: args{
+				ctx: context.Background(),
+				mutator: &corev2.Mutator{
+					ObjectMeta: corev2.ObjectMeta{
+						Namespace: "default",
+						Name:      "my_mutator",
+					},
+					Eval: `assetToNanosecondsFunc();`,
+					Type: corev2.JavascriptMutator,
+				},
+				event: func() *corev2.Event {
+					event := corev2.FixtureEvent("default", "default")
+					event.Metrics = corev2.FixtureMetrics()
+					return event
+				}(),
+				assets: mutatorAssetSet{},
+			},
+			wantFn: func(event *corev2.Event) []byte {
 				bytes, _ := json.Marshal(event)
 				return bytes
 			},

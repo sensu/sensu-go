@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"math"
 	"os"
 	"strings"
 	"time"
@@ -134,6 +135,12 @@ func (m *MutatorExecutionEnvironment) Eval(ctx context.Context, expression strin
 	var result []byte
 
 	err := js.WithOttoVM(assets, func(vm *otto.Otto) (err error) {
+		vm.Set("toNanoseconds", func(call otto.FunctionCall) otto.Value {
+			timestamp, _ := call.Argument(0).ToInteger()
+			result, _ := vm.ToValue(toNanoseconds(timestamp))
+			return result
+		})
+
 		for k, v := range parameters {
 			if err := vm.Set(k, v); err != nil {
 				return err
@@ -193,4 +200,37 @@ func parseEnv(vars []string) map[string]string {
 		result[kv[:idx]] = kv[idx+1:]
 	}
 	return result
+}
+
+func toNanoseconds(timestamp int64) int64 {
+	switch ts := math.Log10(float64(timestamp)); {
+	case ts < 10:
+		// assume timestamp is seconds
+		timestamp = time.Unix(timestamp, 0).UnixNano() / int64(time.Nanosecond)
+	case ts < 13:
+		// assume timestamp is milliseconds
+	case ts < 16:
+		// assume timestamp is microseconds
+		timestamp = (timestamp * 1000) / int64(time.Nanosecond)
+	}
+
+	return timestamp
+}
+
+func toMilliseconds(timestamp int64) int64 {
+	switch ts := math.Log10(float64(timestamp)); {
+	case ts < 10:
+		// assume timestamp is seconds
+		timestamp = time.Unix(timestamp, 0).UnixNano() / int64(time.Millisecond)
+	case ts < 13:
+		// assume timestamp is milliseconds
+	case ts < 16:
+		// assume timestamp is microseconds
+		timestamp = (timestamp * 1000) / int64(time.Millisecond)
+	default:
+		// assume timestamp is nanoseconds
+		timestamp = timestamp / int64(time.Millisecond)
+	}
+
+	return timestamp
 }
