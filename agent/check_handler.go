@@ -266,6 +266,11 @@ func (a *Agent) executeCheck(ctx context.Context, request *corev2.CheckRequest, 
 	}
 
 	if check.OutputMetricFormat != "" {
+		fmt.Println("OutputMetricFormat:", check.OutputMetricFormat)
+		if len(event.Metrics.Points) > 0 {
+			fmt.Println("Before extractMetrics:", event.Metrics.Points[0].Timestamp)
+		}
+
 		event.Metrics.Points = extractMetrics(event)
 
 		if len(event.Metrics.Points) > 0 {
@@ -355,13 +360,7 @@ func extractMetrics(event *corev2.Event) []*corev2.MetricPoint {
 	case corev2.OpenTSDBOutputMetricFormat:
 		transformer = transformers.ParseOpenTSDB(event)
 	case corev2.PrometheusOutputMetricFormat:
-		if len(event.Metrics.Points) > 0 {
-			fmt.Println("Before ParseProm:", event.Metrics.Points[0].Timestamp)
-		}
 		transformer = transformers.ParseProm(event)
-		if len(event.Metrics.Points) > 0 {
-			fmt.Println("After ParseProm:", event.Metrics.Points[0].Timestamp)
-		}
 	}
 
 	if transformer == nil {
