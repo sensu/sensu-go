@@ -305,12 +305,10 @@ func (t *TimeWindowRepeated) inTimeRange(actualTime time.Time) bool {
 	}
 
 	duration := endTime.Sub(beginTime)
-	//duration := endTime.Unix() - beginTime.Unix()
 	beginHour, beginMin, beginSec := beginTime.Clock()
 
 	todayBegin := time.Date(actualTime.Year(), actualTime.Month(), actualTime.Day(), beginHour, beginMin, beginSec, 0, beginTime.Location())
 	todayEnd := todayBegin.Add(duration)
-	//todayEnd := time.Unix(todayBegin.Unix()+duration, 0)
 	todayEnd = todayEnd.In(beginTime.Location())
 
 	return actualTime.After(todayBegin) && actualTime.Before(todayEnd)
