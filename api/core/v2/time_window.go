@@ -173,12 +173,8 @@ func (t *TimeWindowRepeated) Validate() error {
 	if err != nil {
 		return fmt.Errorf("invalid end time format: %v", err)
 	}
-	if end.Unix()-begin.Unix() < 0 {
+	if end.Before(begin) {
 		return errors.New("end time must be after begin time")
-	}
-
-	if len(t.Repeat) == 0 {
-		return fmt.Errorf("missing repeat interval")
 	}
 
 	for _, repeat := range t.Repeat {
@@ -208,6 +204,11 @@ func (t *TimeWindowRepeated) GetEndTime() (time.Time, error) {
 }
 
 func (t *TimeWindowRepeated) InWindows(currentTime time.Time) bool {
+
+	if len(t.Repeat) == 0 {
+		return t.inAbsoluteTimeRange(currentTime)
+	}
+
 	for _, repeat := range t.Repeat {
 		inTimeRange := false
 		switch repeat {
@@ -247,6 +248,19 @@ func (t *TimeWindowRepeated) InWindows(currentTime time.Time) bool {
 	return false
 }
 
+func (t *TimeWindowRepeated) inAbsoluteTimeRange(actualTime time.Time) bool {
+	beginTime, err := t.GetBeginTime()
+	if err != nil {
+		return false
+	}
+	endTime, err := t.GetEndTime()
+	if err != nil {
+		return false
+	}
+
+	return actualTime.After(beginTime) && actualTime.Before(endTime)
+}
+
 func (t *TimeWindowRepeated) inDayTimeRange(actualTime time.Time, weekday time.Weekday) bool {
 	beginTime, err := t.GetBeginTime()
 	if err != nil {
@@ -257,17 +271,22 @@ func (t *TimeWindowRepeated) inDayTimeRange(actualTime time.Time, weekday time.W
 		return false
 	}
 
+	if actualTime.Before(beginTime) {
+		return false
+	}
+
 	actualTime = actualTime.In(beginTime.Location())
-	duration := endTime.Unix() - beginTime.Unix()
+	duration := endTime.Sub(beginTime)
 	beginHour, beginMin, beginSec := beginTime.Clock()
 
 	thisWeekBegin := time.Date(actualTime.Year(), actualTime.Month(), actualTime.Day(), beginHour, beginMin, beginSec, 0, beginTime.Location())
 	dayOffset := int(weekday) - int(actualTime.Weekday())
 	thisWeekBegin = thisWeekBegin.AddDate(0, 0, dayOffset)
-	thisWeekEnd := time.Unix(thisWeekBegin.Unix()+duration, 0)
-	thisWeekEnd = thisWeekEnd.In(beginTime.Location())
 
-	return actualTime.Unix() > thisWeekBegin.Unix() && actualTime.Unix() < thisWeekEnd.Unix()
+	thisWeekEnd := thisWeekBegin.Add(duration)
+	thisWeekEnd.In(beginTime.Location())
+
+	return actualTime.After(thisWeekBegin) && actualTime.Before(thisWeekEnd)
 }
 
 func (t *TimeWindowRepeated) inTimeRange(actualTime time.Time) bool {
@@ -281,14 +300,20 @@ func (t *TimeWindowRepeated) inTimeRange(actualTime time.Time) bool {
 	}
 
 	actualTime = actualTime.In(beginTime.Location())
-	duration := endTime.Unix() - beginTime.Unix()
+	if actualTime.Before(beginTime) {
+		return false
+	}
+
+	duration := endTime.Sub(beginTime)
+	//duration := endTime.Unix() - beginTime.Unix()
 	beginHour, beginMin, beginSec := beginTime.Clock()
 
 	todayBegin := time.Date(actualTime.Year(), actualTime.Month(), actualTime.Day(), beginHour, beginMin, beginSec, 0, beginTime.Location())
-	todayEnd := time.Unix(todayBegin.Unix()+duration, 0)
+	todayEnd := todayBegin.Add(duration)
+	//todayEnd := time.Unix(todayBegin.Unix()+duration, 0)
 	todayEnd = todayEnd.In(beginTime.Location())
 
-	return actualTime.Unix() > todayBegin.Unix() && actualTime.Unix() < todayEnd.Unix()
+	return actualTime.After(todayBegin) && actualTime.Before(todayEnd)
 }
 
 func (t *TimeWindowRepeated) inWeekdayTimeRange(actualTime time.Time) bool {

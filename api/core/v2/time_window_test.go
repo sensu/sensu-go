@@ -382,6 +382,13 @@ func TestTimeWindowRepeated_InDayTimeRange(t *testing.T) {
 			"2022-03-30T06:00:00-04:00", // wednesday
 			time.Tuesday,
 			true,
+		}, {
+			"negative previous week",
+			"2022-03-22T09:00:00-04:00",
+			"2022-03-22T11:00:00-04:00",
+			"2022-03-15T10:00:00-04:00", // tuesday
+			time.Tuesday,
+			false,
 		},
 	}
 
@@ -415,6 +422,12 @@ func TestTimeWindowRepeated_InTimeRange(t *testing.T) {
 			"2022-03-22T10:00:00+00:00",
 			true,
 		}, {
+			"negative before valid times",
+			"2022-03-22T09:00:00-07:00", // tuesday
+			"2022-03-22T11:00:00-07:00",
+			"2022-01-12T10:00:00-07:00",
+			false,
+		}, {
 			"simple negative before",
 			"2022-03-22T09:00:00+00:00", // tuesday
 			"2022-03-22T11:00:00+00:00",
@@ -426,12 +439,6 @@ func TestTimeWindowRepeated_InTimeRange(t *testing.T) {
 			"2022-03-22T11:00:00+00:00",
 			"2022-03-22T11:05:00+00:00",
 			false,
-		}, {
-			"positive before different day",
-			"2022-03-22T09:00:00-07:00", // tuesday
-			"2022-03-22T11:00:00-07:00",
-			"2022-01-12T10:00:00-07:00",
-			true,
 		}, {
 			"positive after different day",
 			"2022-03-22T09:00:00-07:00", // tuesday
@@ -482,6 +489,12 @@ func TestTimeWindowRepeated_InMonthlyTimeRange(t *testing.T) {
 			"2022-03-22T11:00:00+00:00",
 			"2022-03-22T10:00:00+00:00",
 			true,
+		}, {
+			"previous month same day",
+			"2022-03-22T09:00:00+00:00",
+			"2022-03-22T11:00:00+00:00",
+			"2022-02-22T10:00:00+00:00",
+			false,
 		}, {
 			"next month same day",
 			"2022-03-22T09:00:00+00:00",
@@ -560,7 +573,6 @@ func TestTimeWindowRepeated_InYearlyTimeRange(t *testing.T) {
 		beginTime      string
 		endTime        string
 		actualTime     string
-		weekday        time.Weekday
 		expectedResult bool
 	}{
 		{
@@ -568,28 +580,30 @@ func TestTimeWindowRepeated_InYearlyTimeRange(t *testing.T) {
 			"2022-03-22T09:00:00+00:00",
 			"2022-03-22T11:00:00+00:00",
 			"2022-03-22T10:00:00+00:00",
-			time.Tuesday,
 			true,
 		}, {
 			"positive next year",
 			"2022-03-22T09:00:00+00:00",
 			"2022-03-22T11:00:00+00:00",
 			"2023-03-22T10:00:00+00:00",
-			time.Tuesday,
 			true,
+		}, {
+			"negative previous year matching date and time",
+			"2022-03-22T09:00:00+00:00",
+			"2022-03-22T11:00:00+00:00",
+			"2021-03-22T10:00:00+00:00",
+			false,
 		}, {
 			"this year different date before",
 			"2022-03-22T09:00:00+00:00",
 			"2022-03-22T11:00:00+00:00",
 			"2023-03-21T10:00:00+00:00",
-			time.Tuesday,
 			false,
 		}, {
 			"this year different date after",
 			"2022-03-22T09:00:00+00:00",
 			"2022-03-22T11:00:00+00:00",
 			"2023-03-23T10:00:00+00:00",
-			time.Tuesday,
 			false,
 		},
 	}
@@ -606,5 +620,4 @@ func TestTimeWindowRepeated_InYearlyTimeRange(t *testing.T) {
 			assert.Equal(t, test.expectedResult, window.inYearlyTimeRange(actualTime))
 		})
 	}
-
 }
