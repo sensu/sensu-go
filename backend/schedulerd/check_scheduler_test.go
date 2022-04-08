@@ -178,18 +178,15 @@ func TestCheckSubdueInterval(t *testing.T) {
 	// Set interval to smallest valid value
 	check := scheduler.check
 	check.Subscriptions = []string{"subscription1"}
-	check.Subdue = &corev2.TimeWindowWhen{
-		Days: corev2.TimeWindowDays{
-			All: []*corev2.TimeWindowTimeRange{
-				{
-					Begin: "1:00 AM",
-					End:   "11:00 PM",
-				},
-				{
-					Begin: "10:00 PM",
-					End:   "2:00 AM",
-				},
-			},
+	check.Subdues = []*corev2.TimeWindowRepeated{
+		{
+			Begin:  "2022-04-06T01:00:00-0400",
+			End:    "2022-04-06T23:00:00-0400",
+			Repeat: []string{corev2.RepeatPeriodDaily},
+		}, {
+			Begin:  "2022-04-06T22:00:00-0400",
+			End:    "2022-04-07T02:00:00-0400",
+			Repeat: []string{corev2.RepeatPeriodDaily},
 		},
 	}
 
@@ -273,18 +270,15 @@ func TestCheckSubdueCron(t *testing.T) {
 	check := scheduler.check
 	check.Cron = "* * * * *"
 	check.Subscriptions = []string{"subscription1"}
-	check.Subdue = &corev2.TimeWindowWhen{
-		Days: corev2.TimeWindowDays{
-			All: []*corev2.TimeWindowTimeRange{
-				{
-					Begin: "1:00 AM",
-					End:   "11:00 PM",
-				},
-				{
-					Begin: "10:00 PM",
-					End:   "2:00 AM",
-				},
-			},
+	check.Subdues = []*corev2.TimeWindowRepeated{
+		{
+			Begin:  "2022-04-06T01:00:00-0400",
+			End:    "2022-04-06T23:00:00-0400",
+			Repeat: []string{corev2.RepeatPeriodDaily},
+		}, {
+			Begin:  "2022-04-06T22:00:00-0400",
+			End:    "2022-04-07T02:00:00-0400",
+			Repeat: []string{corev2.RepeatPeriodDaily},
 		},
 	}
 

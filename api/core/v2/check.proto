@@ -169,6 +169,8 @@ message CheckConfig {
   repeated ResourceReference pipelines = 32 [ (gogoproto.jsontag) = "pipelines" ];
 
   repeated MetricThreshold output_metric_thresholds = 33 [ (gogoproto.jsontag) = "output_metric_thresholds,omitempty", (gogoproto.moretags) = "yaml: \"output_metric_thresholds,omitempty\"" ];
+
+  repeated TimeWindowRepeated subdues = 34  [ (gogoproto.jsontag) = "subdues,omitempty" ];
 }
 
 // A Check is a check specification and optionally the results of the check's
@@ -329,6 +331,8 @@ message Check {
   // MetricThresholds are a list of thresholds to apply to metrics in order to determine
   // the check status.
   repeated MetricThreshold output_metric_thresholds = 47 [ (gogoproto.jsontag) = "output_metric_thresholds,omitempty", (gogoproto.moretags) = "yaml: \"output_metric_thresholds,omitempty\"" ];
+
+  repeated TimeWindowRepeated subdues = 48  [ (gogoproto.jsontag) = "subdues,omitempty" ];
 
   // ExtendedAttributes store serialized arbitrary JSON-encoded data
   bytes ExtendedAttributes = 99 [ (gogoproto.jsontag) = "-" ];

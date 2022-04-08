@@ -40,3 +40,16 @@ message TimeWindowTimeRange {
   // satisfies the time.Kitchen format
   string end = 2 [ (gogoproto.jsontag) = "end" ];
 }
+
+message TimeWindowRepeated {
+  // Begin is the time which the date/time window should begin, in the ISO3339
+  // format
+  string begin = 1 [ (gogoproto.jsontag) = "begin" ];
+
+  // End is the time which the date/time window should begin, in the ISO3339
+  // format
+  string end = 2 [ (gogoproto.jsontag) = "end" ];
+
+  // The time period the begin and end time repeat
+  repeated string repeat = 3 [ (gogoproto.jsontag) = "repeat" ];
+}
