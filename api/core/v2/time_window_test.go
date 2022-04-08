@@ -467,7 +467,7 @@ func TestTimeWindowRepeated_InTimeRange(t *testing.T) {
 				End:   test.endTime,
 			}
 
-			actualTime, err := time.Parse(time.RFC3339, test.actualTime)
+			actualTime, err := time.ParseInLocation(time.RFC3339, test.actualTime, time.UTC)
 			require.NoError(t, err)
 
 			assert.Equal(t, test.expectedResult, window.inTimeRange(actualTime))

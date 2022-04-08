@@ -187,7 +187,7 @@ func (t *TimeWindowRepeated) Validate() error {
 }
 
 func (t *TimeWindowRepeated) GetBeginTime() (time.Time, error) {
-	beginTime, err := time.Parse(time.RFC3339, t.Begin)
+	beginTime, err := time.ParseInLocation(time.RFC3339, t.Begin, time.UTC)
 	if err != nil {
 		return time.Time{}, err
 	}
@@ -196,7 +196,7 @@ func (t *TimeWindowRepeated) GetBeginTime() (time.Time, error) {
 }
 
 func (t *TimeWindowRepeated) GetEndTime() (time.Time, error) {
-	endTime, err := time.Parse(time.RFC3339, t.End)
+	endTime, err := time.ParseInLocation(time.RFC3339, t.End, time.UTC)
 	if err != nil {
 		return time.Time{}, err
 	}
