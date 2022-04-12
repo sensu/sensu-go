@@ -13,8 +13,13 @@ import (
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/backend/store/etcd"
 	"github.com/sensu/sensu-go/types/dynamic"
-	"go.etcd.io/etcd/client/v3"
+	clientv3 "go.etcd.io/etcd/client/v3"
 )
+
+// Cache interfaces the cache.Resource struct for easier testing
+type Cache interface {
+	Get(namespace string) []Value
+}
 
 // Value contains a cached value, and its synthesized companion.
 type Value struct {

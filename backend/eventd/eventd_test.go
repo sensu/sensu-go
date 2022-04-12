@@ -22,6 +22,8 @@ import (
 	"github.com/sensu/sensu-go/backend/store/cache"
 	storev2 "github.com/sensu/sensu-go/backend/store/v2"
 	"github.com/sensu/sensu-go/backend/store/v2/storetest"
+	"github.com/sensu/sensu-go/testing/mockbus"
+	"github.com/sensu/sensu-go/testing/mockcache"
 	"github.com/sensu/sensu-go/testing/mockstore"
 )
 
@@ -527,4 +529,121 @@ func TestEventLog(t *testing.T) {
 	require.NoError(t, e.Start())
 	assert.Contains(t, hook.LastEntry().Message, "event log file could not be configured. event logs will not be recorded.")
 	require.NoError(t, e.Stop())
+}
+
+func TestEventd_handleMessage(t *testing.T) {
+	type busFunc func(*mockbus.MockBus)
+	type cacheFunc func(*mockcache.MockCache)
+	type eventStoreFunc func(*mockstore.MockStore)
+	type storeFunc func(*storetest.Store)
+
+	var nilEvent *corev2.Event
+
+	newEntityConfig := func() storev2.Wrapper {
+		entity := corev3.FixtureEntityConfig("foo")
+		e, err := storev2.WrapResource(entity)
+		require.NoError(t, err)
+		return e
+	}
+	newEntityState := func() storev2.Wrapper {
+		state := corev3.FixtureEntityState("foo")
+		e, err := storev2.WrapResource(state)
+		require.NoError(t, err)
+		return e
+	}
+
+	tests := []struct {
+		name           string
+		event          corev2.Event
+		busFunc        busFunc
+		cacheFunc      cacheFunc
+		eventStoreFunc eventStoreFunc
+		storeFunc      storeFunc
+		wantErr        bool
+	}{
+		{
+			name: "metrics events are published without being stored",
+			event: corev2.Event{
+				Entity:  corev2.FixtureEntity("foo"),
+				Metrics: &corev2.Metrics{},
+			},
+			busFunc: func(bus *mockbus.MockBus) {
+				bus.On("Publish", messaging.TopicEvent, mock.Anything).Once().Return(nil)
+			},
+		},
+		{
+			name: "silenced events are properly identified",
+			event: corev2.Event{
+				Check:  corev2.FixtureCheck("check-cpu"),
+				Entity: corev2.FixtureEntity("foo"),
+			},
+			busFunc: func(bus *mockbus.MockBus) {
+				bus.On("Publish", messaging.TopicEvent, mock.Anything).Once().Return(nil)
+			},
+			cacheFunc: func(c *mockcache.MockCache) {
+				c.On("Get", "default").Once().Return(
+					[]cache.Value{
+						{Resource: corev2.FixtureSilenced("linux:check-cpu")},
+					},
+				)
+			},
+			eventStoreFunc: func(store *mockstore.MockStore) {
+				store.On("UpdateEvent", mock.AnythingOfType("*v2.Event")).
+					Run(func(args mock.Arguments) {
+						event := args[0].(*corev2.Event)
+
+						// The event we receive should be identified as silenced and contain
+						// the list of silenced entries that apply to it
+						if !event.Check.IsSilenced || len(event.Check.Silenced) == 0 {
+							t.Fatal("the check should be silenced")
+						}
+					}).Return(
+					corev2.FixtureEvent("foo", "check-cpu"), nilEvent, nil,
+				)
+			},
+			storeFunc: func(store *storetest.Store) {
+				store.On("Get", mock.Anything).Once().Return(
+					newEntityConfig(), nil,
+				)
+				store.On("Get", mock.Anything).Once().Return(
+					newEntityState(), nil,
+				)
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			bus := &mockbus.MockBus{}
+			if tt.busFunc != nil {
+				tt.busFunc(bus)
+			}
+			cache := &mockcache.MockCache{}
+			if tt.cacheFunc != nil {
+				tt.cacheFunc(cache)
+			}
+			eventStore := &mockstore.MockStore{}
+			if tt.eventStoreFunc != nil {
+				tt.eventStoreFunc(eventStore)
+			}
+			store := &storetest.Store{}
+			if tt.storeFunc != nil {
+				tt.storeFunc(store)
+			}
+			switches := &mockSwitchSet{}
+
+			e := &Eventd{
+				bus:             bus,
+				store:           store,
+				eventStore:      eventStore,
+				livenessFactory: newFakeFactory(switches),
+				workerCount:     1,
+				wg:              &sync.WaitGroup{},
+				Logger:          NoopLogger{},
+				silencedCache:   cache,
+			}
+			if _, err := e.handleMessage(&tt.event); (err != nil) != tt.wantErr {
+				t.Errorf("Eventd.handleMessage() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
 }

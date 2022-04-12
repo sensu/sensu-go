@@ -17,8 +17,10 @@ import (
 	"github.com/sensu/sensu-go/backend/messaging"
 	"github.com/sensu/sensu-go/backend/ringv2"
 	"github.com/sensu/sensu-go/backend/store"
+	"github.com/sensu/sensu-go/backend/store/cache"
 	storev2 "github.com/sensu/sensu-go/backend/store/v2"
 	"github.com/sirupsen/logrus"
+	clientv3 "go.etcd.io/etcd/client/v3"
 )
 
 const (
@@ -75,6 +77,7 @@ const deletedEventSentinel = -1
 // Keepalived is responsible for monitoring keepalive events and recording
 // keepalives for entities.
 type Keepalived struct {
+	client                *clientv3.Client
 	bus                   messaging.MessageBus
 	workerCount           int
 	store                 store.Store
@@ -91,6 +94,7 @@ type Keepalived struct {
 	ctx                   context.Context
 	cancel                context.CancelFunc
 	storeTimeout          time.Duration
+	silencedCache         cache.Cache
 }
 
 // Option is a functional option.
@@ -98,6 +102,7 @@ type Option func(*Keepalived) error
 
 // Config configures Keepalived.
 type Config struct {
+	Client                *clientv3.Client
 	Store                 store.Store
 	StoreV2               storev2.Interface
 	EventStore            store.EventStore
@@ -128,6 +133,7 @@ func New(c Config, opts ...Option) (*Keepalived, error) {
 	ctx, cancel := context.WithCancel(context.Background())
 
 	k := &Keepalived{
+		client:                c.Client,
 		store:                 c.Store,
 		storev2:               c.StoreV2,
 		eventStore:            c.EventStore,
@@ -603,11 +609,16 @@ func (k *Keepalived) dead(key string, prev liveness.State, leader bool) bool {
 	}
 
 	if entityConfig.Deregister {
+		cache, err := cache.New(ctx, k.client, &corev2.Silenced{}, false)
+		if err != nil {
+			return false
+		}
 		deregisterer := &Deregistration{
-			EntityStore:  k.store,
-			EventStore:   k.eventStore,
-			MessageBus:   k.bus,
-			StoreTimeout: k.storeTimeout,
+			EntityStore:   k.store,
+			EventStore:    k.eventStore,
+			MessageBus:    k.bus,
+			SilencedCache: cache,
+			StoreTimeout:  k.storeTimeout,
 		}
 		if err := deregisterer.Deregister(currentEvent.Entity); err != nil {
 			lager.WithError(err).Error("error deregistering entity")
