@@ -104,6 +104,9 @@ const (
 	envEtcdClientUsername = "etcd-client-username"
 	envEtcdClientPassword = "etcd-client-password"
 
+	// Etcd unsafe constants
+	flagEtcdUnsafeNoFsync = "etcd-unsafe-no-fsync"
+
 	// Metric logging flags
 	flagDisablePlatformMetrics         = "disable-platform-metrics"
 	flagPlatformMetricsLoggingInterval = "platform-metrics-logging-interval"
@@ -255,6 +258,7 @@ func StartCommand(initialize InitializeFunc) *cobra.Command {
 				EtcdClientLogLevel:             viper.GetString(flagEtcdClientLogLevel),
 				EtcdClientUsername:             viper.GetString(envEtcdClientUsername),
 				EtcdClientPassword:             viper.GetString(envEtcdClientPassword),
+				EtcdUnsafeNoFsync:              viper.GetBool(flagEtcdUnsafeNoFsync),
 				NoEmbedEtcd:                    viper.GetBool(flagNoEmbedEtcd),
 				Labels:                         viper.GetStringMapString(flagLabels),
 				Annotations:                    viper.GetStringMapString(flagAnnotations),
@@ -597,6 +601,9 @@ func flagSet(server bool) *pflag.FlagSet {
 
 		_ = flagSet.String(flagEventLogFile, "", "path to the event log file")
 		_ = flagSet.Bool(flagEventLogParallelEncoders, false, "use parallel JSON encoding for the event log")
+
+		// Etcd server unsafe flags
+		_ = flagSet.Bool(flagEtcdUnsafeNoFsync, false, "disables fsync, unsafe, may cause data loss")
 
 		// Use a default value of 100,000 messages for the buffer. A serialized event
 		// takes a minimum of around 1300 bytes, so once full the buffer ring could

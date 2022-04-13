@@ -116,6 +116,9 @@ type Config struct {
 	EtcdLogLevel       string
 	EtcdClientLogLevel string
 
+	// Etcd unsafe configuration
+	EtcdUnsafeNoFsync bool
+
 	LicenseGetter licensing.Getter
 
 	DisablePlatformMetrics         bool
