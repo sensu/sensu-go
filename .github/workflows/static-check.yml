@@ -1,14 +1,12 @@
 name: static-check
 
 on:
+  pull_request:
   push:
     tags:
       - 'v*'
     branches:
       - main
-  pull_request:
-    branches:
-      - '*'
 
 jobs:
   staticcheck:
