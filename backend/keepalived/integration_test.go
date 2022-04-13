@@ -89,6 +89,7 @@ func TestKeepaliveMonitor(t *testing.T) {
 		BufferSize:      1,
 		WorkerCount:     1,
 		StoreTimeout:    time.Minute,
+		Client:          store.Client,
 	})
 	require.NoError(t, err)
 
