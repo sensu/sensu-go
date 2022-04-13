@@ -13,10 +13,10 @@ var (
 	thresholdOneTag   = &MetricThreshold{Name: "metric-name", Thresholds: []*MetricThresholdRule{thresholdRuleAll}, Tags: []*MetricThresholdTag{tag1}}
 	thresholdTwoTags  = &MetricThreshold{Name: "metric-name", Thresholds: []*MetricThresholdRule{thresholdRuleAll}, Tags: []*MetricThresholdTag{tag1, tag2}}
 
-	thresholdRuleAll      = &MetricThresholdRule{Min: "3.4", Max: "10.2", Status: 2, NullStatus: 0}
-	thresholdRuleNoMin    = &MetricThresholdRule{Min: "", Max: "10.2", Status: 2, NullStatus: 0}
-	thresholdRuleNoMax    = &MetricThresholdRule{Min: "", Max: "10.2", Status: 2, NullStatus: 0}
-	thresholdRuleNoMinMax = &MetricThresholdRule{Min: "", Max: "", Status: 2, NullStatus: 0}
+	thresholdRuleAll      = &MetricThresholdRule{Min: "3.4", Max: "10.2", Status: 2}
+	thresholdRuleNoMin    = &MetricThresholdRule{Min: "", Max: "10.2", Status: 2}
+	thresholdRuleNoMax    = &MetricThresholdRule{Min: "", Max: "10.2", Status: 2}
+	thresholdRuleNoMinMax = &MetricThresholdRule{Min: "", Max: "", Status: 2}
 
 	tagValid       = &MetricThresholdTag{Name: "tag-name", Value: "tag-value"}
 	tagNoName      = &MetricThresholdTag{Name: "", Value: "tag-value"}

@@ -119,6 +119,8 @@ var typeMap = map[string]interface{}{
 	"tessen_config":          &TessenConfig{},
 	"TimeWindowDays":         &TimeWindowDays{},
 	"time_window_days":       &TimeWindowDays{},
+	"TimeWindowRepeated":     &TimeWindowRepeated{},
+	"time_window_repeated":   &TimeWindowRepeated{},
 	"TimeWindowTimeRange":    &TimeWindowTimeRange{},
 	"time_window_time_range": &TimeWindowTimeRange{},
 	"TimeWindowWhen":         &TimeWindowWhen{},

@@ -941,6 +941,23 @@ func TestResolveTimeWindowDays(t *testing.T) {
 	}
 }
 
+func TestResolveTimeWindowRepeated(t *testing.T) {
+	var value interface{} = new(TimeWindowRepeated)
+	if _, ok := value.(Resource); ok {
+		if _, err := ResolveResource("TimeWindowRepeated"); err != nil {
+			t.Fatal(err)
+		}
+		return
+	}
+	_, err := ResolveResource("TimeWindowRepeated")
+	if err == nil {
+		t.Fatal("expected non-nil error")
+	}
+	if got, want := err.Error(), `"TimeWindowRepeated" is not a Resource`; got != want {
+		t.Fatalf("unexpected error: %s", err)
+	}
+}
+
 func TestResolveTimeWindowTimeRange(t *testing.T) {
 	var value interface{} = new(TimeWindowTimeRange)
 	if _, ok := value.(Resource); ok {
