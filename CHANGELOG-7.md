@@ -19,3 +19,8 @@ software is upgraded when there are active keepalive failures.
 
 ### Changed
 - Changed parameters for `sensuctl cluster-role create` to be plural
+## [Unreleased]
+
+### Changed
+- Deregistration events are now silenced if a silenced entry exists matching the
+entity subscriptions and/or a check named `deregistration`.
