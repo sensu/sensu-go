@@ -11,7 +11,7 @@ branch to base your changes on, and so on.
 1. Open an issue to describe your proposed improvement or feature
 1. [Install Go and fork the Sensu Go repository](https://github.com/sensu/sensu-go#building-from-source)
 1. Create your feature branch (`git checkout -b my-new-feature`)
-1. If applicable, add a [CHANGELOG.md entry](#changelog) describing your change.
+1. If applicable, add a [CHANGELOG-6.md entry](#changelog) describing your change.
 1. Commit your changes with a [DCO Signed-off-by statement](#dco) (`git commit --signoff`)
 1. Push your feature branch (`git push origin my-new-feature`)
 1. Create a Pull Request as appropriate based on the issue discussion
@@ -95,7 +95,7 @@ after this with `git push -f`. -- Thanks Chef!
 
 ## Changelog
 
-The Sensu [Changelog](CHANGELOG.md) is based on the Sensu Community
+The Sensu [Changelog](CHANGELOG-6.md) is based on the Sensu Community
 [Changelog guidelines](https://github.com/sensu-plugins/community/blob/master/HOW_WE_CHANGELOG.md).
 
 All new changes go underneath the _Unreleased_ heading at the top of the Changelog.
