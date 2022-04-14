@@ -103,11 +103,11 @@ type Resource struct {
 	watchersMu sync.Mutex
 	synthesize bool
 	resourceT  corev2.Resource
-	client     *clientv3.Client
+	client     clientv3.KV
 }
 
 // getResources retrieves the resources from the store
-func getResources(ctx context.Context, client *clientv3.Client, resource corev2.Resource) ([]corev2.Resource, error) {
+func getResources(ctx context.Context, client clientv3.KV, resource corev2.Resource) ([]corev2.Resource, error) {
 	// Get the type of the resource and create a slice type of []type
 	typeOfResource := reflect.TypeOf(resource)
 	sliceOfResource := reflect.SliceOf(typeOfResource)
@@ -140,7 +140,7 @@ func getResources(ctx context.Context, client *clientv3.Client, resource corev2.
 
 // New creates a new resource cache. It retrieves all resources from the
 // store on creation.
-func New(ctx context.Context, client *clientv3.Client, resource corev2.Resource, synthesize bool) (*Resource, error) {
+func New(ctx context.Context, client clientv3.KV, resource corev2.Resource, synthesize bool) (*Resource, error) {
 	resources, err := getResources(ctx, client, resource)
 	if err != nil {
 		return nil, err

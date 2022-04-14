@@ -10,14 +10,17 @@ import (
 	"github.com/sensu/sensu-go/backend/liveness"
 	"github.com/sensu/sensu-go/backend/messaging"
 	stor "github.com/sensu/sensu-go/backend/store"
+	"github.com/sensu/sensu-go/backend/store/cache"
 	storv2 "github.com/sensu/sensu-go/backend/store/v2"
 	"github.com/sensu/sensu-go/backend/store/v2/storetest"
 	"github.com/sensu/sensu-go/backend/store/v2/wrap"
+	"github.com/sensu/sensu-go/testing/mockclientv3"
 	"github.com/sensu/sensu-go/testing/mockstore"
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+	clientv3 "go.etcd.io/etcd/client/v3"
 )
 
 type mockDeregisterer struct {
@@ -25,12 +28,14 @@ type mockDeregisterer struct {
 }
 
 type keepalivedTest struct {
-	Keepalived   *Keepalived
-	MessageBus   messaging.MessageBus
-	StoreV2      *storetest.Store
-	Store        *mockstore.MockStore
-	Deregisterer *mockDeregisterer
-	receiver     chan interface{}
+	Keepalived    *Keepalived
+	MessageBus    messaging.MessageBus
+	StoreV2       *storetest.Store
+	Store         *mockstore.MockStore
+	Deregisterer  *mockDeregisterer
+	receiver      chan interface{}
+	SilencedCache cache.Cache
+	Client        mockclientv3.MockClientV3
 }
 
 func (k *keepalivedTest) Receiver() chan<- interface{} {
@@ -63,13 +68,14 @@ func fakeFactory(name string, dead, alive liveness.EventFunc, logger logrus.Fiel
 	return fakeLivenessInterface{}
 }
 
-func newKeepalivedTest(t *testing.T) *keepalivedTest {
+func newKeepalivedTest(t *testing.T, client mockclientv3.MockClientV3) *keepalivedTest {
 	store := &mockstore.MockStore{}
 	storv2 := &storetest.Store{}
 	deregisterer := &mockDeregisterer{}
 	bus, err := messaging.NewWizardBus(messaging.WizardBusConfig{})
 	require.NoError(t, err)
 	k, err := New(Config{
+		Client:          client,
 		Store:           store,
 		StoreV2:         storv2,
 		EventStore:      store,
@@ -87,6 +93,7 @@ func newKeepalivedTest(t *testing.T) *keepalivedTest {
 		Deregisterer: deregisterer,
 		Keepalived:   k,
 		receiver:     make(chan interface{}),
+		Client:       client,
 	}
 	require.NoError(t, test.MessageBus.Start())
 	return test
@@ -166,7 +173,12 @@ func TestStartStop(t *testing.T) {
 
 	for _, tc := range tt {
 		t.Run(tc.name, func(t *testing.T) {
-			test := newKeepalivedTest(t)
+			client := mockclientv3.MockClientV3{}
+			getResp := &clientv3.GetResponse{}
+			client.On("Get", mock.Anything, "/sensu.io/silenced/", mock.Anything).
+				Return(getResp, nil)
+
+			test := newKeepalivedTest(t, client)
 			defer test.Dispose(t)
 
 			k := test.Keepalived
@@ -193,7 +205,12 @@ func TestStartStop(t *testing.T) {
 }
 
 func TestEventProcessing(t *testing.T) {
-	test := newKeepalivedTest(t)
+	client := mockclientv3.MockClientV3{}
+	getResp := &clientv3.GetResponse{}
+	client.On("Get", mock.Anything, "/sensu.io/silenced/", mock.Anything).
+		Return(getResp, nil)
+
+	test := newKeepalivedTest(t, client)
 	test.Store.On("GetFailingKeepalives", mock.Anything).Return([]*corev2.KeepaliveRecord{}, nil)
 	require.NoError(t, test.Keepalived.Start())
 
@@ -323,7 +340,13 @@ func TestProcessRegistration(t *testing.T) {
 			subscriptionEvent, err := messageBus.Subscribe(messaging.TopicEvent, "testSubscriberEvent", tsubEvent)
 			require.NoError(t, err)
 
+			client := mockclientv3.MockClientV3{}
+			getResp := &clientv3.GetResponse{}
+			client.On("Get", mock.Anything, "/sensu.io/silenced/", mock.Anything).
+				Return(getResp, nil)
+
 			keepalived, err := New(Config{
+				Client:          client,
 				StoreV2:         storv2,
 				Bus:             messageBus,
 				LivenessFactory: fakeFactory,
@@ -396,7 +419,14 @@ func TestDeadCallbackNoEntity(t *testing.T) {
 	store.On("Get", mock.MatchedBy(func(req storv2.ResourceRequest) bool {
 		return req.StoreName == new(corev3.EntityConfig).StoreName()
 	})).Return((storv2.Wrapper)(nil), &stor.ErrNotFound{Key: "foo"})
+
+	client := mockclientv3.MockClientV3{}
+	getResp := &clientv3.GetResponse{}
+	client.On("Get", mock.Anything, "/sensu.io/silenced/", mock.Anything).
+		Return(getResp, nil)
+
 	keepalived, err := New(Config{
+		Client:          client,
 		StoreV2:         store,
 		Bus:             messageBus,
 		LivenessFactory: fakeFactory,
@@ -444,7 +474,13 @@ func TestDeadCallbackNoEvent(t *testing.T) {
 	eventStore := &mockstore.MockStore{}
 	eventStore.On("GetEventByEntityCheck", mock.Anything, mock.Anything, mock.Anything).Return((*corev2.Event)(nil), nil)
 
+	client := mockclientv3.MockClientV3{}
+	getResp := &clientv3.GetResponse{}
+	client.On("Get", mock.Anything, "/sensu.io/silenced/", mock.Anything).
+		Return(getResp, nil)
+
 	keepalived, err := New(Config{
+		Client:          client,
 		StoreV2:         store,
 		EventStore:      eventStore,
 		Bus:             messageBus,

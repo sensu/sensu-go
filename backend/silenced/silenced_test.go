@@ -5,17 +5,9 @@ import (
 	"testing"
 
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
-	"github.com/sensu/sensu-go/backend/liveness"
 	"github.com/sensu/sensu-go/backend/store/cache"
-	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 )
-
-func newFakeFactory(f liveness.Interface) liveness.Factory {
-	return func(name string, dead, alive liveness.EventFunc, logger logrus.FieldLogger) liveness.Interface {
-		return f
-	}
-}
 
 func TestGetSilenced(t *testing.T) {
 	testCases := []struct {

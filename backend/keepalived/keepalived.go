@@ -77,7 +77,7 @@ const deletedEventSentinel = -1
 // Keepalived is responsible for monitoring keepalive events and recording
 // keepalives for entities.
 type Keepalived struct {
-	client                *clientv3.Client
+	client                clientv3.KV
 	bus                   messaging.MessageBus
 	workerCount           int
 	store                 store.Store
@@ -102,7 +102,7 @@ type Option func(*Keepalived) error
 
 // Config configures Keepalived.
 type Config struct {
-	Client                *clientv3.Client
+	Client                clientv3.KV
 	Store                 store.Store
 	StoreV2               storev2.Interface
 	EventStore            store.EventStore
@@ -132,6 +132,12 @@ func New(c Config, opts ...Option) (*Keepalived, error) {
 
 	ctx, cancel := context.WithCancel(context.Background())
 
+	silencedCache, err := cache.New(ctx, c.Client, &corev2.Silenced{}, false)
+	if err != nil {
+		cancel()
+		return nil, err
+	}
+
 	k := &Keepalived{
 		client:                c.Client,
 		store:                 c.Store,
@@ -148,6 +154,7 @@ func New(c Config, opts ...Option) (*Keepalived, error) {
 		ctx:                   ctx,
 		cancel:                cancel,
 		storeTimeout:          c.StoreTimeout,
+		silencedCache:         silencedCache,
 	}
 	for _, o := range opts {
 		if err := o(k); err != nil {
@@ -609,15 +616,11 @@ func (k *Keepalived) dead(key string, prev liveness.State, leader bool) bool {
 	}
 
 	if entityConfig.Deregister {
-		cache, err := cache.New(ctx, k.client, &corev2.Silenced{}, false)
-		if err != nil {
-			return false
-		}
 		deregisterer := &Deregistration{
 			EntityStore:   k.store,
 			EventStore:    k.eventStore,
 			MessageBus:    k.bus,
-			SilencedCache: cache,
+			SilencedCache: k.silencedCache,
 			StoreTimeout:  k.storeTimeout,
 		}
 		if err := deregisterer.Deregister(currentEvent.Entity); err != nil {
