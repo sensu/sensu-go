@@ -277,9 +277,7 @@ func NewEtcd(config *Config) (*Etcd, error) {
 	}
 
 	// Unsafe options.
-	if config.UnsafeNoFsync == true {
-		cfg.UnsafeNoFsync = config.UnsafeNoFsync
-	}
+	cfg.UnsafeNoFsync = config.UnsafeNoFsync
 
 	e, err := embed.StartEtcd(cfg)
 	if err != nil {
