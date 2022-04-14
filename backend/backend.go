@@ -16,6 +16,11 @@ import (
 	"github.com/spf13/viper"
 	"go.etcd.io/etcd/client/pkg/v3/transport"
 	clientv3 "go.etcd.io/etcd/client/v3"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/exporters/otlp/otlptrace"
+	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp"
+	"go.opentelemetry.io/otel/propagation"
+	"go.opentelemetry.io/otel/sdk/trace"
 	"golang.org/x/time/rate"
 	"google.golang.org/grpc"
 
@@ -311,6 +316,10 @@ func Initialize(ctx context.Context, config *Config) (*Backend, error) {
 
 	b.ctx = ctx
 	b.runCtx, b.runCancel = context.WithCancel(b.ctx)
+
+	if err := initTracer(); err != nil {
+		return nil, err
+	}
 
 	b.Client, err = newClient(b.RunContext(), config, b)
 	if err != nil {
@@ -962,4 +971,28 @@ func getSystemInfo() corev2.System {
 		logger.WithError(err).Error("error getting system info")
 	}
 	return info
+}
+
+func initTracer() error {
+	ctx := context.Background()
+
+	client := otlptracehttp.NewClient()
+
+	otlpTraceExporter, err := otlptrace.New(ctx, client)
+	if err != nil {
+		logger.WithError(err).Errorf("error creating otlp trace exporter")
+		return err
+	}
+
+	batchSpanProcessor := trace.NewBatchSpanProcessor(otlpTraceExporter)
+
+	tracerProvider := trace.NewTracerProvider(
+		trace.WithSpanProcessor(batchSpanProcessor),
+		//trace.WithSampler(sdktrace.AlwaysSample()), - please check TracerProvider.WithSampler() implementation for details.
+	)
+
+	otel.SetTracerProvider(tracerProvider)
+	otel.SetTextMapPropagator(propagation.NewCompositeTextMapPropagator(propagation.TraceContext{}, propagation.Baggage{}))
+
+	return nil
 }

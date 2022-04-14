@@ -14,6 +14,7 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	clientv3 "go.etcd.io/etcd/client/v3"
+	"go.opentelemetry.io/contrib/instrumentation/github.com/gorilla/mux/otelmux"
 
 	"github.com/sensu/sensu-go/backend/apid/actions"
 	"github.com/sensu/sensu-go/backend/apid/graphql"
@@ -132,6 +133,8 @@ func New(c Config, opts ...Option) (*APId, error) {
 // and serves all requests
 func NewRouter() *mux.Router {
 	router := mux.NewRouter().UseEncodedPath()
+
+	router.Use(otelmux.Middleware("apid"))
 
 	// Register a default handler when no routes match
 	router.NotFoundHandler = middlewares.SimpleLogger{}.Then(http.HandlerFunc(notFoundHandler))

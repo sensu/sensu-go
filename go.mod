@@ -65,7 +65,7 @@ require (
 	github.com/spf13/pflag v1.0.5
 	github.com/spf13/viper v1.8.1
 	github.com/stretchr/objx v0.2.0 // indirect
-	github.com/stretchr/testify v1.7.0
+	github.com/stretchr/testify v1.7.1
 	github.com/ulikunitz/xz v0.5.10 // indirect
 	github.com/willf/pad v0.0.0-20160331131008-b3d780601022
 	go.etcd.io/bbolt v1.3.6
@@ -74,6 +74,11 @@ require (
 	go.etcd.io/etcd/client/v3 v3.6.0-alpha.0
 	go.etcd.io/etcd/server/v3 v3.6.0-alpha.0
 	go.etcd.io/etcd/tests/v3 v3.6.0-alpha.0
+	go.opentelemetry.io/contrib/instrumentation/github.com/gorilla/mux/otelmux v0.31.0
+	go.opentelemetry.io/otel v1.6.1
+	go.opentelemetry.io/otel/exporters/otlp/otlptrace v1.1.0
+	go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp v1.1.0
+	go.opentelemetry.io/otel/sdk v1.2.0
 	go.uber.org/atomic v1.7.0
 	go.uber.org/zap v1.17.0
 	golang.org/x/crypto v0.0.0-20210513164829-c07d793c2f9a
