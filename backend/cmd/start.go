@@ -604,6 +604,7 @@ func flagSet(server bool) *pflag.FlagSet {
 
 		// Etcd server unsafe flags
 		_ = flagSet.Bool(flagEtcdUnsafeNoFsync, false, "disables fsync, unsafe, may cause data loss")
+		_ = flagSet.SetAnnotation(flagEtcdUnsafeNoFsync, "categories", []string{"store"})
 
 		// Use a default value of 100,000 messages for the buffer. A serialized event
 		// takes a minimum of around 1300 bytes, so once full the buffer ring could
