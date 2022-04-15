@@ -53,7 +53,7 @@ func TestExecutorPoolConcurrencyLimits(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.Name, func(t *testing.T) {
 			bufferSize, concurrentExecutions := tc.BufferSize, tc.ConcurrentExecutions
-			p := NewExecutionPool(int64(bufferSize))
+			p := NewExecutionPool(int64(bufferSize), false)
 
 			results := make(chan result, concurrentExecutions)
 			ctx, cancel := context.WithTimeout(testCtx, time.Millisecond*100)
@@ -89,7 +89,7 @@ func TestExecutorPoolConcurrencyLimits(t *testing.T) {
 }
 
 func TestExecutionPoolTimeout(t *testing.T) {
-	pool := NewExecutionPool(1)
+	pool := NewExecutionPool(1, false)
 
 	timeout := time.Millisecond * 25
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)

@@ -19,30 +19,12 @@ import (
 	"github.com/sensu/sensu-go/command"
 	bytesutil "github.com/sensu/sensu-go/util/bytes"
 	"github.com/sirupsen/logrus"
-	"golang.org/x/sync/semaphore"
 )
 
 var (
-	unixShellCommand     []string = []string{"sh", "-c"}
-	ErrExecutionPoolFull          = errors.New("execution pool is full")
-	errEmptyCommand               = errors.New("execute requires a command")
+	unixShellCommand []string = []string{"sh", "-c"}
+	errEmptyCommand           = errors.New("execute requires a command")
 )
-
-type ExecutionPool struct {
-	*semaphore.Weighted
-}
-
-func NewExecutionPool(capacity int64) *ExecutionPool {
-	return &ExecutionPool{semaphore.NewWeighted(capacity)}
-}
-
-func (e *ExecutionPool) Execute(ctx context.Context, execution ExecutionRequest) (*command.ExecutionResponse, error) {
-	if ok := e.TryAcquire(1); !ok {
-		return nil, ErrExecutionPoolFull
-	}
-	defer e.Release(1)
-	return execute(ctx, execution)
-}
 
 type ExecutionRequest struct {
 	// Command is the command to be executed.
