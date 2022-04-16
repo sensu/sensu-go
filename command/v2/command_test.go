@@ -50,50 +50,54 @@ func TestExecute(t *testing.T) {
 	// test that stdout can be read from
 	echo := FakeCommand("echo", "foo")
 
-	echoExec, echoErr := execute(context.Background(), echo)
+	echoOut := strings.Builder{}
+	echo.Stdout = &echoOut
+	echoErr := echo.Execute(context.Background())
 	assert.Equal(t, nil, echoErr)
-	assert.Equal(t, "foo\n", echoExec.Output)
-	assert.Equal(t, 0, echoExec.Status)
-	assert.NotEqual(t, 0, echoExec.Duration)
+	assert.Equal(t, "foo\n", echoOut.String())
 
 	// test that input can be passed to a command through stdin
 	cat := FakeCommand("cat")
-	cat.Input = "bar"
+	catOut := strings.Builder{}
+	cat.Stdin = strings.NewReader("bar")
+	cat.Stdout = &catOut
 
-	catExec, catErr := execute(context.Background(), cat)
+	catErr := cat.Execute(context.Background())
 	assert.Equal(t, nil, catErr)
-	assert.Equal(t, "bar", testutil.CleanOutput(catExec.Output))
-	assert.Equal(t, 0, catExec.Status)
-	assert.NotEqual(t, 0, catExec.Duration)
+	assert.Equal(t, "bar", testutil.CleanOutput(catOut.String()))
 
 	// test that command exit codes can be read
 	falseCmd := FakeCommand("false")
+	falseOut := strings.Builder{}
+	falseCmd.Stdout, falseCmd.Stderr = &falseOut, &falseOut
 
-	falseExec, falseErr := execute(context.Background(), falseCmd)
-	assert.Equal(t, nil, falseErr)
-	assert.Equal(t, "", testutil.CleanOutput(falseExec.Output))
-	assert.Equal(t, 1, falseExec.Status)
-	assert.NotEqual(t, 0, falseExec.Duration)
+	falseErr := falseCmd.Execute(context.Background())
+	exitErr, ok := falseErr.(ExitError)
+	assert.Truef(t, ok, "expected exit code error")
+	assert.Equal(t, "", testutil.CleanOutput(falseOut.String()))
+	assert.Equal(t, 1, exitErr.ExitStatus())
 
 	// test that stderr can be read from
-	outputs := FakeCommand("echo", "bar")
+	outputCmd := FakeCommand("echo", "bar")
+	outputOut := strings.Builder{}
+	outputCmd.Stdout, outputCmd.Stderr = &outputOut, &outputOut
 
-	outputsExec, outputsErr := execute(context.Background(), outputs)
+	outputsErr := outputCmd.Execute(context.Background())
 	assert.Equal(t, nil, outputsErr)
-	assert.Equal(t, "bar\n", testutil.CleanOutput(outputsExec.Output))
-	assert.Equal(t, 0, outputsExec.Status)
-	assert.NotEqual(t, 0, outputsExec.Duration)
+	assert.Equal(t, "bar\n", testutil.CleanOutput(outputOut.String()))
 
 	// test that commands can time out
 	sleep := FakeCommand("sleep 10")
+	sleepOut := strings.Builder{}
+	sleep.Stdout, sleep.Stderr = &sleepOut, &sleepOut
 
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 	defer cancel()
-	sleepExec, sleepErr := execute(ctx, sleep)
-	assert.Equal(t, nil, sleepErr)
-	assert.Equal(t, "Execution timed out\n", testutil.CleanOutput(sleepExec.Output))
-	assert.Equal(t, 2, sleepExec.Status)
-	assert.NotEqual(t, 0, sleepExec.Duration)
+	sleepErr := sleep.Execute(ctx)
+	timeoutErr, ok := sleepErr.(ExecutionTimeout)
+	assert.Truef(t, ok, "expected timeout error")
+	assert.Equal(t, "", testutil.CleanOutput(sleepOut.String()))
+	assert.NotEqual(t, 0, timeoutErr.Timeout())
 }
 
 // FakeCommand takes a command and (optionally) command args and will execute
@@ -108,7 +112,7 @@ func FakeCommand(command string, args ...string) ExecutionRequest {
 			"--",
 			command,
 		},
-		Input: "bar",
+		Stdin: strings.NewReader("bar"),
 		Env:   env,
 	}
 
@@ -118,20 +122,24 @@ func FakeCommand(command string, args ...string) ExecutionRequest {
 
 func TestExecuteUnix(t *testing.T) {
 	// test that multiple commands can time out
+	outputBuf := strings.Builder{}
 	sleepMultiple := ExecutionRequest{
 		Command: ShellCommand("echo $TEST_EXECUTE_UNIX_VAR && sleep 10"),
 		Env:     []string{"TEST_EXECUTE_UNIX_VAR=test-echo-output"},
+		Stdout:  &outputBuf,
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 	defer cancel()
 
-	sleepMultipleExec, sleepMultipleErr := execute(ctx, sleepMultiple)
-	assert.Equal(t, nil, sleepMultipleErr)
-	assert.Equal(t, "Execution timed out\ntest-echo-output\n", testutil.CleanOutput(sleepMultipleExec.Output))
-	assert.Equal(t, 2, sleepMultipleExec.Status)
-	assert.NotEqual(t, 0, sleepMultipleExec.Duration)
+	sleepMultipleErr := sleepMultiple.Execute(ctx)
+	timeoutErr, ok := sleepMultipleErr.(ExecutionTimeout)
+	assert.Truef(t, ok, "expected timeout error")
+
+	assert.Equal(t, "test-echo-output\n", testutil.CleanOutput(outputBuf.String()))
+	assert.NotEqual(t, 0, timeoutErr.Timeout())
 	// within 20% of the 1 second timeout
-	assert.Less(t, 0.8, sleepMultipleExec.Duration)
-	assert.Greater(t, 1.2, sleepMultipleExec.Duration)
+	duration := timeoutErr.Timeout().Seconds()
+	assert.Less(t, 0.8, duration)
+	assert.Greater(t, 1.2, duration)
 }

@@ -11,13 +11,12 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io"
 	"os/exec"
-	"strings"
 	"syscall"
 	"time"
 
 	"github.com/sensu/sensu-go/command"
-	bytesutil "github.com/sensu/sensu-go/util/bytes"
 	"github.com/sirupsen/logrus"
 )
 
@@ -29,46 +28,91 @@ var (
 type ExecutionRequest struct {
 	// Command is the command to be executed.
 	Command []string
-	// Env ...
+	// Env environment variables in "foo=bar" format
 	Env []string
-	// Input to provide the command via STDIN.
-	Input string
+	// Stdin
+	Stdin io.Reader
+	// Stdout
+	Stdout io.Writer
+	// Stderr
+	Stderr io.Writer
 }
 
-func execute(ctx context.Context, execution ExecutionRequest) (*command.ExecutionResponse, error) {
-	resp := &command.ExecutionResponse{}
+// ExecutionTimeout is returned when a command
+// is interrupted by context cancellation
+type ExecutionTimeout interface {
+	Timeout() time.Duration
+}
+
+type timeoutError struct {
+	time.Duration
+	Wrapped error
+}
+
+func (t timeoutError) Error() string {
+	if t.Wrapped != nil {
+		return t.Wrapped.Error()
+	}
+	return fmt.Sprintf("command timed out after %f seconds", t.Seconds())
+}
+
+func (t timeoutError) Timeout() time.Duration {
+	return t.Duration
+}
+
+// ExitError is returned when a command sucessfully
+// forked/executed but the process exits with a non-zero status
+type ExitError interface {
+	// ExitStatus best effort process exit code
+	ExitStatus() int
+}
+
+type commandError struct {
+	wrapped error
+	status  int
+}
+
+func (e commandError) Error() string {
+	return fmt.Sprintf("command exited with status %d: %s", e.status, e.wrapped)
+}
+
+func (e commandError) ExitStatus() int {
+	return e.status
+}
+
+// Execute runs an ExecutionRequest
+//
+// Returns an error if the command does not run and exit with status 0
+//
+// Attempts to honor timeouts via context cancellation without abandoning
+// child processes, but the world is messy and sensu intends to move on.
+func (execution ExecutionRequest) Execute(ctx context.Context) error {
 	if len(execution.Command) == 0 {
-		return nil, errEmptyCommand
+		return errEmptyCommand
 	}
 	executable, args := execution.Command[0], execution.Command[1:]
-	logger := logrus.WithFields(logrus.Fields{"component": "commandv2"})
 	var cmd *exec.Cmd
 	cmd = exec.CommandContext(ctx, executable, args...)
 	if len(execution.Env) > 0 {
 		cmd.Env = execution.Env
 	}
-
-	var output bytesutil.SyncBuffer
-
-	cmd.Stdout = &output
-	cmd.Stderr = &output
-
-	// If Input is specified, write to STDIN.
-	if execution.Input != "" {
-		cmd.Stdin = strings.NewReader(execution.Input)
+	if execution.Stdin != nil {
+		cmd.Stdin = execution.Stdin
 	}
-
-	started := time.Now()
-	defer func() {
-		resp.Duration = time.Since(started).Seconds()
-	}()
-
+	if execution.Stdout != nil {
+		cmd.Stdout = execution.Stdout
+	}
+	if execution.Stderr != nil {
+		cmd.Stderr = execution.Stderr
+	}
 	command.SetProcessGroup(cmd)
+	start := time.Now()
 	if err := cmd.Start(); err != nil {
 		// Something unexpected happened when attempting to
 		// fork/exec, return immediately.
-		return resp, err
+		return err
 	}
+	// process was started.
 	waitCh := make(chan struct{})
 	var err error
 	go func() {
@@ -76,42 +120,36 @@ func execute(ctx context.Context, execution ExecutionRequest) (*command.Executio
 		close(waitCh)
 	}()
 
-	// Wait for the process to complete or the timer to trigger, whichever comes first.
-	var killErr error
+	// Wait for the process to complete or the context to be cancelled, whichever comes first.
 	select {
 	case <-waitCh:
-		resp.Output = output.String()
 		if err != nil {
-			// The command most likely return a non-zero exit status.
+			// The command most likely returned a non-zero exit status.
 			if exitError, ok := err.(*exec.ExitError); ok {
 				// Best effort to determine the exit status, this
 				// should work on Linux, OSX, and Windows.
 				if status, ok := exitError.Sys().(syscall.WaitStatus); ok {
-					resp.Status = status.ExitStatus()
-				} else {
-					resp.Status = command.FallbackExitStatus
+					return &commandError{wrapped: err, status: status.ExitStatus()}
 				}
-			} else {
-				resp.Status = command.FallbackExitStatus
+				return &commandError{wrapped: err, status: command.FallbackExitStatus}
 			}
-		} else {
-			// Everything is A-OK.
-			resp.Status = command.OKExitStatus
+			return &commandError{wrapped: err, status: command.FallbackExitStatus}
 		}
-
+		// process finished without error
+		return nil
 	case <-ctx.Done():
-		var killErrOutput string
-		if killErr = command.KillProcess(cmd); killErr != nil {
-			logger.WithError(killErr).Errorf("Execution timed out - Unable to TERM/KILL the process: #%d", cmd.Process.Pid)
-			killErrOutput = fmt.Sprintf("Unable to TERM/KILL the process: #%d\n", cmd.Process.Pid)
+		if err := command.KillProcess(cmd); err != nil {
+			killErr := fmt.Errorf("unable to kill process id #%d after command timeout: %s", cmd.Process.Pid, err.Error())
+			logger := logrus.WithFields(logrus.Fields{"component": "commandv2"})
+			logger.WithError(killErr).Errorf("Execution timed out - Unable to TERM/KILL the process: #%d. Potential zombie process.", cmd.Process.Pid)
+			return timeoutError{Duration: time.Since(start), Wrapped: killErr}
 		}
-		resp.Output = fmt.Sprintf("%s%s%s", command.TimeoutOutput, killErrOutput, output.String())
-		resp.Status = command.TimeoutExitStatus
+		return timeoutError{Duration: time.Since(start)}
 	}
-
-	return resp, nil
 }
 
+// ShellCommand builds a host appropriate shell command
+// for use with ExecutionRequest.Command
 func ShellCommand(command string) []string {
 	return append(unixShellCommand, command)
 }

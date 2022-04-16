@@ -7,17 +7,10 @@ import (
 	"context"
 	"testing"
 	"time"
-
-	"github.com/sensu/sensu-go/command"
 )
 
 func TestExecutorPoolConcurrencyLimits(t *testing.T) {
 	testCtx := context.Background()
-
-	type result struct {
-		ExecutionResult *command.ExecutionResponse
-		Error           error
-	}
 
 	// Attempts to start #ConcurrentExecutions Executions
 	// of `sleep 10` which should all time out.
@@ -55,28 +48,27 @@ func TestExecutorPoolConcurrencyLimits(t *testing.T) {
 			bufferSize, concurrentExecutions := tc.BufferSize, tc.ConcurrentExecutions
 			p := NewExecutionPool(int64(bufferSize), false)
 
-			results := make(chan result, concurrentExecutions)
+			results := make(chan error, concurrentExecutions)
 			ctx, cancel := context.WithTimeout(testCtx, time.Millisecond*100)
 			defer cancel()
 			// Start N goroutines each trying to run a command that should time out
 			for i := 0; i < concurrentExecutions; i++ {
 				go func() {
-					r, err := p.Execute(ctx, ExecutionRequest{
+					results <- p.Execute(ctx, ExecutionRequest{
 						Command: []string{"sleep", "10"},
 					})
-					results <- result{
-						ExecutionResult: r,
-						Error:           err,
-					}
 				}()
 			}
 			waitingCt := 0
 			ranCt := 0
 			for i := 0; i < concurrentExecutions; i++ {
 				r := <-results
-				if r.Error == ErrExecutionPoolFull {
+				if r == ErrExecutionPoolFull {
 					waitingCt++
 				} else {
+					if _, ok := r.(ExecutionTimeout); !ok {
+						t.Errorf("exepcted all other errors to be timeout errors: %v", r)
+					}
 					ranCt++
 				}
 			}
@@ -95,14 +87,11 @@ func TestExecutionPoolTimeout(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	start := time.Now()
 	defer cancel()
-	r, err := pool.Execute(ctx, ExecutionRequest{
+	err := pool.Execute(ctx, ExecutionRequest{
 		Command: ShellCommand("sleep 1"),
 	})
-	if err != nil {
-		t.Errorf("unexpected error %v", err)
-	}
-	if r.Status == 0 {
-		t.Error("expected non-zero exit code")
+	if _, ok := err.(ExecutionTimeout); !ok {
+		t.Errorf("expected timeout error. instead got %v", err)
 	}
 	elapsedTime := time.Since(start)
 	if elapsedTime > (timeout+timeout/4) || (timeout-timeout/4) > elapsedTime {
