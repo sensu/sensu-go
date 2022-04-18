@@ -1,8 +1,8 @@
-// Package provides a unix-only system command execution
-// and process limiting. Differs from sensu-go/command in
-// that it does not assume a shell and has multiple options
-// for handling timeouts appropriate for commands that may
-// write to disk.
+// Package provides a system command execution interface
+// and process limiting mechanism. Differs from sensu-go/command
+// in that it does not assume a shell, has timeout strategies
+// that can be slightly more polite than `kill -9`, and avoids
+// assuming the caller is a check or hook.
 package exec
 
 import (
