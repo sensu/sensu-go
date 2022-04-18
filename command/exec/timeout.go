@@ -1,12 +1,9 @@
-package v2
+package exec
 
 import (
 	"context"
 	"os/exec"
-	"syscall"
 	"time"
-
-	"github.com/sensu/sensu-go/command"
 )
 
 // TimeoutKillOnContextDone signals for a timeout on context cancellation
@@ -46,19 +43,16 @@ func (d timeoutWithRetry) Signal() <-chan struct{} {
 
 func (d timeoutWithRetry) Cleanup(ctx context.Context, cmd *exec.Cmd, waitErrCh <-chan error) error {
 	var retryCt int
-	signal := func() error {
-		return syscall.Kill(-cmd.Process.Pid, syscall.SIGTERM)
-	}
 	if d.Retries < 0 {
 		select {
 		case waitErr := <-waitErrCh:
 			return handleWaitErr(waitErr)
 		default:
-			return command.KillProcess(cmd)
+			return KillProcess(cmd)
 		}
 	}
 
-	if err := signal(); err != nil {
+	if err := SignalTerminate(cmd); err != nil {
 		return err
 	}
 
@@ -70,9 +64,9 @@ func (d timeoutWithRetry) Cleanup(ctx context.Context, cmd *exec.Cmd, waitErrCh 
 		case <-time.Tick(d.Delay):
 			retryCt++
 			if retryCt > d.Retries {
-				return command.KillProcess(cmd)
+				return KillProcess(cmd)
 			}
-			if err := signal(); err != nil {
+			if err := SignalTerminate(cmd); err != nil {
 				return err
 			}
 		}

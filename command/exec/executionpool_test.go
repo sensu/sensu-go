@@ -1,7 +1,7 @@
 //go:build !windows
 // +build !windows
 
-package v2
+package exec
 
 import (
 	"context"

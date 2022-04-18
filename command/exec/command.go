@@ -1,12 +1,9 @@
-//go:build !windows
-// +build !windows
-
 // Package provides a unix-only system command execution
 // and process limiting. Differs from sensu-go/command in
 // that it does not assume a shell and has multiple options
 // for handling timeouts appropriate for commands that may
 // write to disk.
-package v2
+package exec
 
 import (
 	"context"
@@ -16,14 +13,13 @@ import (
 	"os/exec"
 	"syscall"
 	"time"
-
-	"github.com/sensu/sensu-go/command"
 )
 
 var (
-	unixShellCommand []string = []string{"sh", "-c"}
-	errEmptyCommand           = errors.New("execute requires a command")
+	errEmptyCommand = errors.New("execute requires a command")
 )
+
+const FallbackExitStatus int = 3
 
 type ExecutionRequest struct {
 	// Command is the command to be executed.
@@ -121,7 +117,7 @@ func (execution ExecutionRequest) Execute(ctx context.Context) error {
 	if execution.Timeout == nil {
 		execution.Timeout = TimeoutKillOnContextDone(ctx)
 	}
-	command.SetProcessGroup(cmd)
+	SetProcessGroup(cmd)
 	start := time.Now()
 	if err := cmd.Start(); err != nil {
 		// Something unexpected happened when attempting to
@@ -155,12 +151,6 @@ func (execution ExecutionRequest) Execute(ctx context.Context) error {
 	}
 }
 
-// ShellCommand builds a host appropriate shell command
-// for use with ExecutionRequest.Command
-func ShellCommand(command string) []string {
-	return append(unixShellCommand, command)
-}
-
 func handleWaitErr(waitErr error) error {
 	if waitErr != nil {
 		// The command most likely returned a non-zero exit status.
@@ -170,9 +160,9 @@ func handleWaitErr(waitErr error) error {
 			if status, ok := exitErr.Sys().(syscall.WaitStatus); ok {
 				return &exitError{Err: waitErr, Status: status.ExitStatus()}
 			}
-			return &exitError{Err: waitErr, Status: command.FallbackExitStatus}
+			return &exitError{Err: waitErr, Status: FallbackExitStatus}
 		}
-		return &exitError{Err: waitErr, Status: command.FallbackExitStatus}
+		return &exitError{Err: waitErr, Status: FallbackExitStatus}
 	}
 	// process finished without error
 	return nil
