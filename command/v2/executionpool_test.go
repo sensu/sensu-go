@@ -66,7 +66,7 @@ func TestExecutorPoolConcurrencyLimits(t *testing.T) {
 				if r == ErrExecutionPoolFull {
 					waitingCt++
 				} else {
-					if _, ok := r.(ExecutionTimeout); !ok {
+					if _, ok := r.(TimeoutError); !ok {
 						t.Errorf("exepcted all other errors to be timeout errors: %v", r)
 					}
 					ranCt++
@@ -90,7 +90,7 @@ func TestExecutionPoolTimeout(t *testing.T) {
 	err := pool.Execute(ctx, ExecutionRequest{
 		Command: ShellCommand("sleep 1"),
 	})
-	if _, ok := err.(ExecutionTimeout); !ok {
+	if _, ok := err.(TimeoutError); !ok {
 		t.Errorf("expected timeout error. instead got %v", err)
 	}
 	elapsedTime := time.Since(start)
