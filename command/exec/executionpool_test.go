@@ -26,7 +26,7 @@ func TestExecutorPoolConcurrencyLimits(t *testing.T) {
 		{
 			Name:                 "serial execution",
 			BufferSize:           1,
-			ConcurrentExecutions: 1024,
+			ConcurrentExecutions: 32,
 			ExpectedExecutions:   1,
 		},
 		{
