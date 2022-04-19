@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
-	"strings"
 	"syscall"
 )
 
@@ -19,6 +18,9 @@ func ShellCommand(command string) []string {
 
 // SetProcessGroup sets the process group of the command process
 func SetProcessGroup(cmd *exec.Cmd) {
+	if cmd.SysProcAttr == nil {
+		cmd.SysProcAttr = &syscall.SysProcAttr{}
+	}
 	cmd.SysProcAttr.CreationFlags = syscall.CREATE_NEW_PROCESS_GROUP
 }
 
@@ -30,10 +32,12 @@ func SignalTerminate(cmd *exec.Cmd) error {
 		return nil
 	}
 
-	err := Command(context.Background(), fmt.Sprintf("taskkill /T /PID %d", process.Pid)).Run()
-	if err == nil {
-		return nil
+	taskKillCmd := exec.CommandContext(context.Background(), "cmd")
+	taskKillCmd.SysProcAttr = &syscall.SysProcAttr{
+		CreationFlags: syscall.CREATE_NEW_PROCESS_GROUP,
+		CmdLine:       fmt.Sprintf("/c taskkill /T /PID %d", process.Pid),
 	}
+	return taskKillCmd.Run()
 }
 
 // KillProcess kills the command process and any child processes
@@ -43,18 +47,21 @@ func KillProcess(cmd *exec.Cmd) error {
 		return nil
 	}
 
-	err := Command(context.Background(), fmt.Sprintf("taskkill /T /F /PID %d", process.Pid)).Run()
-	if err == nil {
-		return nil
+	taskKillCmd := exec.CommandContext(context.Background(), "cmd")
+	taskKillCmd.SysProcAttr = &syscall.SysProcAttr{
+		CreationFlags: syscall.CREATE_NEW_PROCESS_GROUP,
+		CmdLine:       fmt.Sprintf("/c taskkill /T /F /PID %d", process.Pid),
+	}
+	if err := taskKillCmd.Run(); err != nil {
+		return err
 	}
 
-	err = forceKill(process)
-	if err == nil {
+	if err := forceKill(process); err == nil {
 		return nil
 	}
-	err = process.Signal(os.Kill)
+	err := process.Signal(os.Kill)
 
-	return fmt.Errorf("could not kill process")
+	return fmt.Errorf("could not kill process: %v", err)
 }
 
 func forceKill(process *os.Process) error {
