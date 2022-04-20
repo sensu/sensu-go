@@ -37,6 +37,14 @@ type GeneratedType interface {
 	Validate() error
 }
 
+// GlobalResource  is an interface for indicating
+// a resource's namespace strategy
+type GlobalResource interface {
+	// IsGlobalResource returns true when the resource
+	// is not namespaced.
+	IsGlobalResource() bool
+}
+
 // V2ResourceProxy is a compatibility shim for converting from a v3 resource to
 // a v2 resource.
 //sensu:nogen
@@ -64,6 +72,14 @@ func (v *V2ResourceProxy) SetObjectMeta(meta corev2.ObjectMeta) {
 }
 
 func (v *V2ResourceProxy) SetNamespace(ns string) {
+	// SetNamespace expected to be a no-op for
+	// core/v2 Resources. sensu-go and sensu-go/types
+	// both depend on this property.
+	if gr, ok := v.Resource.(GlobalResource); ok {
+		if gr.IsGlobalResource() {
+			return
+		}
+	}
 	if v.GetMetadata() == nil {
 		v.SetMetadata(&corev2.ObjectMeta{
 			Labels:      make(map[string]string),
