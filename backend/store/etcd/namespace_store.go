@@ -9,6 +9,7 @@ import (
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/backend/store/etcd/kvc"
+	"github.com/sensu/sensu-go/traces"
 	clientv3 "go.etcd.io/etcd/client/v3"
 )
 
@@ -31,6 +32,9 @@ func (s *Store) CreateNamespace(ctx context.Context, namespace *corev2.Namespace
 		return &store.ErrNotValid{Err: err}
 	}
 
+	traceCtx, span := traces.NestedSpan(ctx, "etcd-CreateNamespace")
+	defer span.End()
+
 	namespaceBytes, err := proto.Marshal(namespace)
 	if err != nil {
 		return &store.ErrEncode{Err: err}
@@ -38,7 +42,7 @@ func (s *Store) CreateNamespace(ctx context.Context, namespace *corev2.Namespace
 
 	namespaceKey := getNamespacePath(namespace.Name)
 
-	res, err := s.client.Txn(ctx).
+	res, err := s.client.Txn(traceCtx).
 		If(
 			// Ensure the namespace does not already exist
 			clientv3.Compare(clientv3.Version(namespaceKey), "=", 0)).
@@ -63,10 +67,13 @@ func (s *Store) DeleteNamespace(ctx context.Context, name string) error {
 		return &store.ErrNotValid{Err: errors.New("must specify name")}
 	}
 
+	traceCtx, span := traces.NestedSpan(ctx, "etcd-DeleteNamespace")
+	defer span.End()
+
 	var getresp *clientv3.TxnResponse
-	err := kvc.Backoff(ctx).Retry(func(n int) (done bool, err error) {
+	err := kvc.Backoff(traceCtx).Retry(func(n int) (done bool, err error) {
 		// Validate whether there are any resources referencing the namespace
-		getresp, err = s.client.Txn(ctx).Then(
+		getresp, err = s.client.Txn(traceCtx).Then(
 			clientv3.OpGet(checkKeyBuilder.WithNamespace(name).Build(), clientv3.WithPrefix(), clientv3.WithCountOnly()),
 			clientv3.OpGet(entityConfigKeyBuilder.WithNamespace(name).Build(), clientv3.WithPrefix(), clientv3.WithCountOnly()),
 			clientv3.OpGet(assetKeyBuilder.WithNamespace(name).Build(), clientv3.WithPrefix(), clientv3.WithCountOnly()),
@@ -87,13 +94,16 @@ func (s *Store) DeleteNamespace(ctx context.Context, name string) error {
 		}
 	}
 
-	return Delete(ctx, s.client, getNamespacePath(name))
+	return Delete(traceCtx, s.client, getNamespacePath(name))
 }
 
 // GetNamespace returns a single namespace with the given name
 func (s *Store) GetNamespace(ctx context.Context, name string) (*corev2.Namespace, error) {
+	traceCtx, span := traces.NestedSpan(ctx, "etcd-GetNamespace")
+	defer span.End()
+
 	var namespace corev2.Namespace
-	err := Get(ctx, s.client, getNamespacePath(name), &namespace)
+	err := Get(traceCtx, s.client, getNamespacePath(name), &namespace)
 	if err != nil {
 		if _, ok := err.(*store.ErrNotFound); ok {
 			err = nil
@@ -105,8 +115,11 @@ func (s *Store) GetNamespace(ctx context.Context, name string) (*corev2.Namespac
 
 // ListNamespaces returns all namespaces
 func (s *Store) ListNamespaces(ctx context.Context, pred *store.SelectionPredicate) ([]*corev2.Namespace, error) {
+	traceCtx, span := traces.NestedSpan(ctx, "etcd-ListNamespaces")
+	defer span.End()
+
 	namespaces := []*corev2.Namespace{}
-	err := List(ctx, s.client, GetNamespacesPath, &namespaces, pred)
+	err := List(traceCtx, s.client, GetNamespacesPath, &namespaces, pred)
 	return namespaces, err
 }
 
@@ -116,13 +129,16 @@ func (s *Store) UpdateNamespace(ctx context.Context, namespace *corev2.Namespace
 		return &store.ErrNotValid{Err: err}
 	}
 
+	traceCtx, span := traces.NestedSpan(ctx, "etcd-UpdateNamespace")
+	defer span.End()
+
 	bytes, err := proto.Marshal(namespace)
 	if err != nil {
 		return &store.ErrEncode{Err: err}
 	}
 
-	return kvc.Backoff(ctx).Retry(func(n int) (done bool, err error) {
-		_, err = s.client.Put(ctx, getNamespacePath(namespace.Name), string(bytes))
+	return kvc.Backoff(traceCtx).Retry(func(n int) (done bool, err error) {
+		_, err = s.client.Put(traceCtx, getNamespacePath(namespace.Name), string(bytes))
 		return kvc.RetryRequest(n, err)
 	})
 }

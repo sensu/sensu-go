@@ -11,6 +11,7 @@ import (
 	"github.com/gogo/protobuf/proto"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/backend/store/etcd/kvc"
+	"github.com/sensu/sensu-go/traces"
 	"github.com/sensu/sensu-go/types"
 	clientv3 "go.etcd.io/etcd/client/v3"
 
@@ -45,16 +46,19 @@ func Create(ctx context.Context, client *clientv3.Client, key, namespace string,
 		return &store.ErrEncode{Key: key, Err: err}
 	}
 
+	traceCtx, span := traces.NestedSpan(ctx, "etcd-StoreCreate")
+	defer span.End()
+
 	comparator := kvc.Comparisons(
 		kvc.NamespaceExists(namespace),
 		kvc.KeyIsNotFound(key),
 	)
 	op := clientv3.OpPut(key, string(bytes))
 
-	return kvc.Txn(ctx, client, comparator, op)
+	return kvc.Txn(traceCtx, client, comparator, op)
 }
 
-// CreateOrUpdate writes the given key with the serialized object, regarless of
+// CreateOrUpdate writes the given key with the serialized object, regardless of
 // its current existence
 func CreateOrUpdate(ctx context.Context, client *clientv3.Client, key, namespace string, object interface{}) error {
 	bytes, err := marshal(object)
@@ -62,19 +66,25 @@ func CreateOrUpdate(ctx context.Context, client *clientv3.Client, key, namespace
 		return &store.ErrEncode{Key: key, Err: err}
 	}
 
+	traceCtx, span := traces.NestedSpan(ctx, "etcd-StoreCreateOrUpdate")
+	defer span.End()
+
 	comparator := kvc.Comparisons(
 		kvc.NamespaceExists(namespace),
 	)
 	op := clientv3.OpPut(key, string(bytes))
 
-	return kvc.Txn(ctx, client, comparator, op)
+	return kvc.Txn(traceCtx, client, comparator, op)
 }
 
 // Delete the given key
 func Delete(ctx context.Context, client *clientv3.Client, key string) error {
 	var resp *clientv3.DeleteResponse
-	err := kvc.Backoff(ctx).Retry(func(n int) (done bool, err error) {
-		resp, err = client.Delete(ctx, key)
+	traceCtx, span := traces.NestedSpan(ctx, "etcd-StoreDelete")
+	defer span.End()
+
+	err := kvc.Backoff(traceCtx).Retry(func(n int) (done bool, err error) {
+		resp, err = client.Delete(traceCtx, key)
 		return kvc.RetryRequest(n, err)
 	})
 	if err != nil {
@@ -95,10 +105,13 @@ func Get(ctx context.Context, client *clientv3.Client, key string, object interf
 // GetWithResponse retrieves an object with the given key and returns the etcd
 // response
 func GetWithResponse(ctx context.Context, client *clientv3.Client, key string, object interface{}) (*clientv3.GetResponse, error) {
+	traceCtx, span := traces.NestedSpan(ctx, "etcd-StoreGetWithResponse")
+	defer span.End()
+
 	// Fetch the key from the store
 	var resp *clientv3.GetResponse
-	err := kvc.Backoff(ctx).Retry(func(n int) (done bool, err error) {
-		resp, err = client.Get(ctx, key, clientv3.WithLimit(1))
+	err := kvc.Backoff(traceCtx).Retry(func(n int) (done bool, err error) {
+		resp, err = client.Get(traceCtx, key, clientv3.WithLimit(1))
 		return kvc.RetryRequest(n, err)
 	})
 	if err != nil {
@@ -126,6 +139,9 @@ type KeyBuilderFn func(context.Context, string) string
 func List(ctx context.Context, client *clientv3.Client, keyBuilder KeyBuilderFn, objsPtr interface{}, pred *store.SelectionPredicate) error {
 	// Make sure the interface is a pointer, and that the element at this address
 	// is a slice.
+	traceCtx, span := traces.NestedSpan(ctx, "etcd-StoreList")
+	defer span.End()
+
 	v := reflect.ValueOf(objsPtr)
 	if v.Kind() != reflect.Ptr {
 		return &store.ErrNotValid{Err: fmt.Errorf("expected pointer, but got %v type", v.Type())}
@@ -140,7 +156,7 @@ func List(ctx context.Context, client *clientv3.Client, keyBuilder KeyBuilderFn,
 		clientv3.WithSerializable(),
 	}
 
-	keyPrefix := keyBuilder(ctx, "")
+	keyPrefix := keyBuilder(traceCtx, "")
 	rangeEnd := clientv3.GetPrefixRangeEnd(keyPrefix)
 	opts = append(opts, clientv3.WithRange(rangeEnd))
 
@@ -154,8 +170,8 @@ func List(ctx context.Context, client *clientv3.Client, keyBuilder KeyBuilderFn,
 	}
 
 	var resp *clientv3.GetResponse
-	err := kvc.Backoff(ctx).Retry(func(n int) (done bool, err error) {
-		resp, err = client.Get(ctx, key, opts...)
+	err := kvc.Backoff(traceCtx).Retry(func(n int) (done bool, err error) {
+		resp, err = client.Get(traceCtx, key, opts...)
 		return kvc.RetryRequest(n, err)
 	})
 
@@ -197,7 +213,7 @@ func List(ctx context.Context, client *clientv3.Client, keyBuilder KeyBuilderFn,
 
 	if pred.Limit != 0 && resp.Count > pred.Limit {
 		lastObject := v.Index(v.Len() - 1).Interface().(corev2.Resource)
-		pred.Continue = ComputeContinueToken(ctx, lastObject)
+		pred.Continue = ComputeContinueToken(traceCtx, lastObject)
 	} else {
 		pred.Continue = ""
 	}
@@ -211,6 +227,8 @@ func Update(ctx context.Context, client *clientv3.Client, key, namespace string,
 	if err != nil {
 		return &store.ErrEncode{Key: key, Err: err}
 	}
+	traceCtx, span := traces.NestedSpan(ctx, "etcd-StoreUpdate")
+	defer span.End()
 
 	comparator := kvc.Comparisons(
 		kvc.NamespaceExists(namespace),
@@ -218,7 +236,7 @@ func Update(ctx context.Context, client *clientv3.Client, key, namespace string,
 	)
 	op := clientv3.OpPut(key, string(bytes))
 
-	return kvc.Txn(ctx, client, comparator, op)
+	return kvc.Txn(traceCtx, client, comparator, op)
 }
 
 // UpdateWithValue updates the given resource if and only if the given value
@@ -229,25 +247,31 @@ func UpdateWithComparisons(ctx context.Context, client *clientv3.Client, key str
 		return &store.ErrEncode{Key: key, Err: err}
 	}
 
+	traceCtx, span := traces.NestedSpan(ctx, "etcd-StoreUpdateWithComparison")
+	defer span.End()
+
 	req := clientv3.OpPut(key, string(bytes))
 	// Prepend the KeyIsFound key predicate
 	comparisons = append([]kvc.Predicate{kvc.KeyIsFound(key)}, comparisons...)
 	comparator := kvc.Comparisons(comparisons...)
 
-	return kvc.Txn(ctx, client, comparator, req)
+	return kvc.Txn(traceCtx, client, comparator, req)
 }
 
 // Count retrieves the count of all keys from storage under the
 // provided prefix key, while supporting all namespaces.
 func Count(ctx context.Context, client *clientv3.Client, key string) (int64, error) {
+	traceCtx, span := traces.NestedSpan(ctx, "etcd-StoreCount")
+	defer span.End()
+
 	opts := []clientv3.OpOption{
 		clientv3.WithCountOnly(),
 		clientv3.WithRange(clientv3.GetPrefixRangeEnd(key)),
 	}
 
 	var resp *clientv3.GetResponse
-	err := kvc.Backoff(ctx).Retry(func(n int) (done bool, err error) {
-		resp, err = client.Get(ctx, key, opts...)
+	err := kvc.Backoff(traceCtx).Retry(func(n int) (done bool, err error) {
+		resp, err = client.Get(traceCtx, key, opts...)
 		return kvc.RetryRequest(n, err)
 	})
 	if err != nil {
@@ -259,7 +283,10 @@ func Count(ctx context.Context, client *clientv3.Client, key string) (int64, err
 
 // ComputeContinueToken calculates a continue token based on the given resource
 func ComputeContinueToken(ctx context.Context, r corev2.Resource) string {
-	queriedNamespace := store.NewNamespaceFromContext(ctx)
+	traceCtx, span := traces.NestedSpan(ctx, "etcd-StoreComputeContinueToken")
+	defer span.End()
+
+	queriedNamespace := store.NewNamespaceFromContext(traceCtx)
 
 	switch resource := r.(type) {
 	case *corev2.Event:

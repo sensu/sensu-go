@@ -6,6 +6,7 @@ import (
 
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/store"
+	"github.com/sensu/sensu-go/traces"
 )
 
 const (
@@ -42,7 +43,10 @@ func (s *Store) DeleteCheckConfigByName(ctx context.Context, name string) error 
 		return &store.ErrNotValid{Err: errors.New("must specify name")}
 	}
 
-	err := Delete(ctx, s.client, GetCheckConfigsPath(ctx, name))
+	traceCtx, span := traces.NestedSpan(ctx, "etcd-DeleteCheckConfigByName")
+	defer span.End()
+
+	err := Delete(traceCtx, s.client, GetCheckConfigsPath(ctx, name))
 	if _, ok := err.(*store.ErrNotFound); ok {
 		err = nil
 	}
@@ -52,7 +56,10 @@ func (s *Store) DeleteCheckConfigByName(ctx context.Context, name string) error 
 // GetCheckConfigs returns check configurations for an (optional) namespace.
 func (s *Store) GetCheckConfigs(ctx context.Context, pred *store.SelectionPredicate) ([]*corev2.CheckConfig, error) {
 	checks := []*corev2.CheckConfig{}
-	err := List(ctx, s.client, GetCheckConfigsPath, &checks, pred)
+	traceCtx, span := traces.NestedSpan(ctx, "etcd-GetCheckConfigs")
+	defer span.End()
+
+	err := List(traceCtx, s.client, GetCheckConfigsPath, &checks, pred)
 	if err != nil {
 		return nil, err
 	}
@@ -68,8 +75,11 @@ func (s *Store) GetCheckConfigByName(ctx context.Context, name string) (*corev2.
 		return nil, &store.ErrNotValid{Err: errors.New("must specify name")}
 	}
 
+	traceCtx, span := traces.NestedSpan(ctx, "etcd-GetCheckConfigByName")
+	defer span.End()
+
 	var check corev2.CheckConfig
-	if err := Get(ctx, s.client, GetCheckConfigsPath(ctx, name), &check); err != nil {
+	if err := Get(traceCtx, s.client, GetCheckConfigsPath(traceCtx, name), &check); err != nil {
 		if _, ok := err.(*store.ErrNotFound); ok {
 			err = nil
 		}

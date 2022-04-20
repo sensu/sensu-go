@@ -13,6 +13,7 @@ import (
 	storev2 "github.com/sensu/sensu-go/backend/store/v2"
 	"github.com/sensu/sensu-go/backend/store/v2/etcdstore"
 	"github.com/sensu/sensu-go/backend/store/v2/wrap"
+	"github.com/sensu/sensu-go/traces"
 	clientv3 "go.etcd.io/etcd/client/v3"
 )
 
@@ -56,8 +57,12 @@ func (s *Store) DeleteEntity(ctx context.Context, e *corev2.Entity) error {
 	config := &corev3.EntityConfig{
 		Metadata: &e.ObjectMeta,
 	}
-	stateReq := storev2.NewResourceRequestFromResource(ctx, state)
-	configReq := storev2.NewResourceRequestFromResource(ctx, config)
+
+	traceCtx, span := traces.NestedSpan(ctx, "etcd-DeleteEntity")
+	defer span.End()
+
+	stateReq := storev2.NewResourceRequestFromResource(traceCtx, state)
+	configReq := storev2.NewResourceRequestFromResource(traceCtx, config)
 	stateKey := etcdstore.StoreKey(stateReq)
 	configKey := etcdstore.StoreKey(configReq)
 
@@ -67,7 +72,7 @@ func (s *Store) DeleteEntity(ctx context.Context, e *corev2.Entity) error {
 		clientv3.OpDelete(configKey),
 	}
 
-	return kvc.Txn(ctx, s.client, comparator, ops...)
+	return kvc.Txn(traceCtx, s.client, comparator, ops...)
 }
 
 // DeleteEntityByName deletes an Entity by its name.
@@ -75,6 +80,9 @@ func (s *Store) DeleteEntityByName(ctx context.Context, name string) error {
 	if name == "" {
 		return &store.ErrNotValid{Err: errors.New("must specify name")}
 	}
+
+	traceCtx, span := traces.NestedSpan(ctx, "etcd-DeleteEntityByName")
+	defer span.End()
 
 	state := &corev3.EntityState{
 		Metadata: &corev2.ObjectMeta{
@@ -88,8 +96,8 @@ func (s *Store) DeleteEntityByName(ctx context.Context, name string) error {
 			Namespace: corev2.ContextNamespace(ctx),
 		},
 	}
-	stateReq := storev2.NewResourceRequestFromResource(ctx, state)
-	configReq := storev2.NewResourceRequestFromResource(ctx, config)
+	stateReq := storev2.NewResourceRequestFromResource(traceCtx, state)
+	configReq := storev2.NewResourceRequestFromResource(traceCtx, config)
 	stateKey := etcdstore.StoreKey(stateReq)
 	configKey := etcdstore.StoreKey(configReq)
 
@@ -102,7 +110,7 @@ func (s *Store) DeleteEntityByName(ctx context.Context, name string) error {
 		clientv3.OpDelete(configKey),
 	}
 
-	return kvc.Txn(ctx, s.client, comparator, ops...)
+	return kvc.Txn(traceCtx, s.client, comparator, ops...)
 }
 
 // GetEntityByName gets an Entity by its name.
@@ -110,6 +118,10 @@ func (s *Store) GetEntityByName(ctx context.Context, name string) (*corev2.Entit
 	if name == "" {
 		return nil, &store.ErrNotValid{Err: errors.New("must specify name")}
 	}
+
+	traceCtx, span := traces.NestedSpan(ctx, "etcd-GetEntityByName")
+	defer span.End()
+
 	state := &corev3.EntityState{
 		Metadata: &corev2.ObjectMeta{
 			Name:      name,
@@ -122,8 +134,8 @@ func (s *Store) GetEntityByName(ctx context.Context, name string) (*corev2.Entit
 			Namespace: corev2.ContextNamespace(ctx),
 		},
 	}
-	stateReq := storev2.NewResourceRequestFromResource(ctx, state)
-	configReq := storev2.NewResourceRequestFromResource(ctx, config)
+	stateReq := storev2.NewResourceRequestFromResource(traceCtx, state)
+	configReq := storev2.NewResourceRequestFromResource(traceCtx, config)
 	stateKey := etcdstore.StoreKey(stateReq)
 	configKey := etcdstore.StoreKey(configReq)
 	ops := []clientv3.Op{
@@ -131,8 +143,8 @@ func (s *Store) GetEntityByName(ctx context.Context, name string) (*corev2.Entit
 		clientv3.OpGet(configKey, clientv3.WithLimit(1)),
 	}
 	var resp *clientv3.TxnResponse
-	err := kvc.Backoff(ctx).Retry(func(n int) (done bool, err error) {
-		resp, err = s.client.Txn(ctx).Then(ops...).Commit()
+	err := kvc.Backoff(traceCtx).Retry(func(n int) (done bool, err error) {
+		resp, err = s.client.Txn(traceCtx).Then(ops...).Commit()
 		return kvc.RetryRequest(n, err)
 	})
 	if err != nil {
@@ -176,15 +188,19 @@ func (s *Store) GetEntityByName(ctx context.Context, name string) (*corev2.Entit
 // GetEntities returns the entities for the namespace in the supplied context.
 func (s *Store) GetEntities(ctx context.Context, pred *store.SelectionPredicate) ([]*corev2.Entity, error) {
 	v2store := etcdstore.NewStore(s.client)
+
+	traceCtx, span := traces.NestedSpan(ctx, "etcd-GetEntities")
+	defer span.End()
+
 	namespace := corev2.ContextNamespace(ctx)
 	stateReq := storev2.ResourceRequest{
 		Namespace: namespace,
-		Context:   ctx,
+		Context:   traceCtx,
 		StoreName: new(corev3.EntityState).StoreName(),
 	}
 	configReq := storev2.ResourceRequest{
 		Namespace: namespace,
-		Context:   ctx,
+		Context:   traceCtx,
 		StoreName: new(corev3.EntityConfig).StoreName(),
 	}
 	statePred := new(store.SelectionPredicate)
@@ -284,11 +300,15 @@ func (s *Store) UpdateEntity(ctx context.Context, e *corev2.Entity) error {
 	if namespace == "" {
 		namespace = corev2.ContextNamespace(ctx)
 	}
+
+	traceCtx, span := traces.NestedSpan(ctx, "etcd-UpdateEntity")
+	defer span.End()
+
 	cfg, state := corev3.V2EntityToV3(e)
 	cfg.Metadata.Namespace = namespace
 	state.Metadata.Namespace = namespace
-	stateReq := storev2.NewResourceRequestFromResource(ctx, state)
-	configReq := storev2.NewResourceRequestFromResource(ctx, cfg)
+	stateReq := storev2.NewResourceRequestFromResource(traceCtx, state)
+	configReq := storev2.NewResourceRequestFromResource(traceCtx, cfg)
 	stateKey := etcdstore.StoreKey(stateReq)
 	configKey := etcdstore.StoreKey(configReq)
 	wrappedState, err := wrap.Resource(state)
@@ -316,5 +336,5 @@ func (s *Store) UpdateEntity(ctx context.Context, e *corev2.Entity) error {
 		clientv3.OpPut(stateKey, string(stateMsg)),
 	}
 
-	return kvc.Txn(ctx, s.client, comparator, ops...)
+	return kvc.Txn(traceCtx, s.client, comparator, ops...)
 }

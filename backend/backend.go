@@ -16,6 +16,7 @@ import (
 	"github.com/spf13/viper"
 	"go.etcd.io/etcd/client/pkg/v3/transport"
 	clientv3 "go.etcd.io/etcd/client/v3"
+	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/exporters/otlp/otlptrace"
 	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp"
@@ -211,6 +212,8 @@ func newClient(ctx context.Context, config *Config, backend *Backend) (*clientv3
 				DialOptions: []grpc.DialOption{
 					grpc.WithReturnConnectionError(),
 					grpc.WithBlock(),
+					grpc.WithUnaryInterceptor(otelgrpc.UnaryClientInterceptor()),
+					grpc.WithStreamInterceptor(otelgrpc.StreamClientInterceptor()),
 				},
 			}
 		} else {
@@ -221,6 +224,8 @@ func newClient(ctx context.Context, config *Config, backend *Backend) (*clientv3
 				DialOptions: []grpc.DialOption{
 					grpc.WithReturnConnectionError(),
 					grpc.WithBlock(),
+					grpc.WithUnaryInterceptor(otelgrpc.UnaryClientInterceptor()),
+					grpc.WithStreamInterceptor(otelgrpc.StreamClientInterceptor()),
 				},
 			}
 		}

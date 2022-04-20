@@ -229,6 +229,11 @@ func NewEtcd(config *Config) (*Etcd, error) {
 	cfg.LPUrls = lpURLs
 	cfg.PeerTLSInfo = (transport.TLSInfo)(config.PeerTLSInfo)
 
+	cfg.ExperimentalEnableDistributedTracing = true
+	cfg.ExperimentalDistributedTracingServiceName = "sensu-etcd"
+	cfg.ExperimentalDistributedTracingServiceInstanceID = config.Name
+	cfg.ExperimentalDistributedTracingAddress = "https://long-events.sumologic.net/receiver/v1/trace/ZaVnC4dhaV3SpvaKogZIVmvwxGdGpctR54ZAq7H5Cvp6HUApn3yQPi7eFT1teyOZCpWM1_6pNcx9p_0-9L0UZpPuqZxiZ6aDMROL2oDInHMzzL1FsBC90g=="
+
 	if len(config.CipherSuites) > 0 {
 		cfg.CipherSuites = config.CipherSuites
 	}
