@@ -7,7 +7,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic
 Versioning](http://semver.org/spec/v2.0.0.html).
 
-## [Unrealased]
+## Unreleased
 
 ### Added
 - Automatically create system namespace and backend entities.
@@ -18,18 +18,15 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 ### Fixed
 - Log agent IP address for connections with faulty TLS configurations.
 - ARM Version detection
+- Fixed a bug where pipelines in check configuration were not represented in
+the check object of events that were produced with the check configuration.
+- Socket handlers will no longer cause sensu-backend to panic when interrupted
+mid-write.
 
 ### Changed
 - The default embedded etcd heartbeat interval has been increased from 100 to 300.
 - The default embedded etcd election timeout has been increased from 1000 to 3000.
 - Upgraded etcd version from 3.5.0 to 3.5.2.
-## Unreleased
-
-### Fixed
-- Fixed a bug where pipelines in check configuration were not represented in
-the check object of events that were produced with the check configuration.
-- Socket handlers will no longer cause sensu-backend to panic when interrupted
-mid-write.
 
 ## [6.6.6] - 2022-02-16
 
