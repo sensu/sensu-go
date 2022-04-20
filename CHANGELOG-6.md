@@ -9,6 +9,8 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
 
+## [6.7.0] - 2022-04-21
+
 ### Added
 - Automatically create system namespace and backend entities.
 - Generate backend events on secret provider access errors.
