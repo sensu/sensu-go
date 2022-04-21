@@ -1,5 +1,5 @@
-//go:build !windows && !linux && !freebsd
-// +build !windows,!linux,!freebsd
+//go:build linux || freebsd
+// +build linux freebsd
 
 package exec
 
@@ -29,5 +29,5 @@ func ShellCommand(command string) []string {
 
 // SetProcessGroup sets the process group of the command process
 func SetProcessGroup(cmd *exec.Cmd) {
-	cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
+	cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true, Pdeathsig: syscall.SIGTERM}
 }
