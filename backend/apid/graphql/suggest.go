@@ -145,7 +145,7 @@ func DefaultSuggestSchema() suggest.Register {
 		},
 		&suggest.Resource{
 			Group:      "core/v2",
-			Name:       "filter",
+			Name:       "event_filter",
 			FilterFunc: corev2.EventFilterFields,
 			Fields: []suggest.Field{
 				&suggest.ObjectField{
