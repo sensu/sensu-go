@@ -26,7 +26,6 @@ jobs:
 
       # Run tests
       - run: ./build.sh unit
-      - run: ./build.sh integration
 
   test-module:
     parameters:
@@ -422,5 +421,3 @@ workflows:
       - build:
           name: sensuctl-windows-amd64
           binary: sensuctl
-          os: windows
-          arch: amd64

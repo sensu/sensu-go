@@ -1,6 +1,3 @@
-//go:build integration && !solaris
-// +build integration,!solaris
-
 package agent
 
 import (

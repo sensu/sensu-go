@@ -1,6 +1,3 @@
-//go:build integration && !race
-// +build integration,!race
-
 package etcd
 
 import (
@@ -11,7 +8,7 @@ import (
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/backend/store/patch"
-	"go.etcd.io/etcd/client/v3"
+	clientv3 "go.etcd.io/etcd/client/v3"
 )
 
 func TestStore_PatchResource(t *testing.T) {

@@ -180,100 +180,20 @@ type StoreV2Updater interface {
 	UpdateStore(to storev2.Interface)
 }
 
-func newClient(ctx context.Context, config *Config, backend *Backend) (*clientv3.Client, error) {
-	if config.NoEmbedEtcd {
-		logger.Info("dialing etcd server")
-		tlsInfo := (transport.TLSInfo)(config.EtcdClientTLSInfo)
-		tlsConfig, err := tlsInfo.ClientConfig()
-		if err != nil {
-			return nil, err
-		}
-
-		clientURLs := config.EtcdClientURLs
-		if len(clientURLs) == 0 {
-			clientURLs = config.EtcdAdvertiseClientURLs
-		}
-
-		var clientv3Config clientv3.Config
-
-		if config.EtcdClientUsername != "" && config.EtcdClientPassword != "" {
-			clientv3Config = clientv3.Config{
-				Endpoints:   clientURLs,
-				DialTimeout: 5 * time.Second,
-				Username:    config.EtcdClientUsername,
-				Password:    config.EtcdClientPassword,
-				TLS:         tlsConfig,
-				DialOptions: []grpc.DialOption{
-					grpc.WithReturnConnectionError(),
-					grpc.WithBlock(),
-				},
-			}
-		} else {
-			clientv3Config = clientv3.Config{
-				Endpoints:   clientURLs,
-				DialTimeout: 5 * time.Second,
-				TLS:         tlsConfig,
-				DialOptions: []grpc.DialOption{
-					grpc.WithReturnConnectionError(),
-					grpc.WithBlock(),
-				},
-			}
-		}
-
-		// Set etcd client log level
-		logConfig := clientv3.CreateDefaultZapLoggerConfig()
-		logConfig.Level.SetLevel(etcd.LogLevelToZap(config.EtcdClientLogLevel))
-		clientv3Config.LogConfig = &logConfig
-
-		// Don't start up an embedded etcd, return a client that connects to an
-		// external etcd instead.
-		client, err := clientv3.New(clientv3Config)
-		if err != nil {
-			return nil, err
-		}
-		if _, err := client.Get(ctx, "/sensu.io"); err != nil {
-			return nil, err
-		}
-		return client, nil
-	}
-
+func devModeClient(ctx context.Context, config *Config, backend *Backend) (*clientv3.Client, error) {
 	// Initialize and start etcd, because we'll need to provide an etcd client to
 	// the Wizard bus, which requires etcd to be started.
 	cfg := etcd.NewConfig()
 	cfg.DataDir = config.StateDir
-	cfg.ListenClientURLs = config.EtcdListenClientURLs
-	cfg.ListenPeerURLs = config.EtcdListenPeerURLs
-	cfg.InitialCluster = config.EtcdInitialCluster
-	cfg.InitialClusterState = config.EtcdInitialClusterState
-	cfg.InitialAdvertisePeerURLs = config.EtcdInitialAdvertisePeerURLs
-	cfg.AdvertiseClientURLs = config.EtcdAdvertiseClientURLs
-	cfg.Discovery = config.EtcdDiscovery
-	cfg.DiscoverySrv = config.EtcdDiscoverySrv
-	cfg.Name = config.EtcdName
-	cfg.LogLevel = config.EtcdLogLevel
+	cfg.ListenClientURLs = config.EtcdClientURLs
+	cfg.ListenPeerURLs = []string{"http://127.0.0.1:2380"}
+	cfg.InitialCluster = "dev=http://127.0.0.1:2380"
+	cfg.InitialClusterState = "new"
+	cfg.InitialAdvertisePeerURLs = cfg.ListenPeerURLs
+	cfg.AdvertiseClientURLs = config.EtcdClientURLs
+	cfg.Name = "dev"
+	cfg.LogLevel = "warn"
 	cfg.ClientLogLevel = config.EtcdClientLogLevel
-
-	// Heartbeat interval
-	if config.EtcdHeartbeatInterval > 0 {
-		cfg.TickMs = config.EtcdHeartbeatInterval
-	}
-
-	// Election timeout
-	if config.EtcdElectionTimeout > 0 {
-		cfg.ElectionMs = config.EtcdElectionTimeout
-	}
-
-	// Etcd TLS config
-	cfg.ClientTLSInfo = config.EtcdClientTLSInfo
-	cfg.PeerTLSInfo = config.EtcdPeerTLSInfo
-	cfg.CipherSuites = config.EtcdCipherSuites
-
-	if config.EtcdQuotaBackendBytes != 0 {
-		cfg.QuotaBackendBytes = config.EtcdQuotaBackendBytes
-	}
-	if config.EtcdMaxRequestBytes != 0 {
-		cfg.MaxRequestBytes = config.EtcdMaxRequestBytes
-	}
 
 	// Start etcd
 	e, err := etcd.NewEtcd(cfg)
@@ -284,15 +204,59 @@ func newClient(ctx context.Context, config *Config, backend *Backend) (*clientv3
 	backend.Etcd = e
 
 	// Create an etcd client
-	var client *clientv3.Client
-	if config.EtcdUseEmbeddedClient {
-		client = e.NewEmbeddedClientWithContext(ctx)
-	} else {
-		cl, err := e.NewClientContext(backend.runCtx)
-		if err != nil {
-			return nil, err
+	client := e.NewEmbeddedClientWithContext(ctx)
+	if _, err := client.Get(ctx, "/sensu.io"); err != nil {
+		return nil, err
+	}
+	return client, nil
+}
+
+func newClient(ctx context.Context, config *Config, backend *Backend) (*clientv3.Client, error) {
+	if config.DevMode {
+		return devModeClient(ctx, config, backend)
+	}
+	logger.Info("dialing etcd server")
+	tlsInfo := (transport.TLSInfo)(config.EtcdClientTLSInfo)
+	tlsConfig, err := tlsInfo.ClientConfig()
+	if err != nil {
+		return nil, err
+	}
+
+	clientURLs := config.EtcdClientURLs
+	var clientv3Config clientv3.Config
+
+	if config.EtcdClientUsername != "" && config.EtcdClientPassword != "" {
+		clientv3Config = clientv3.Config{
+			Endpoints:   clientURLs,
+			DialTimeout: 5 * time.Second,
+			Username:    config.EtcdClientUsername,
+			Password:    config.EtcdClientPassword,
+			TLS:         tlsConfig,
+			DialOptions: []grpc.DialOption{
+				grpc.WithReturnConnectionError(),
+				grpc.WithBlock(),
+			},
 		}
-		client = cl
+	} else {
+		clientv3Config = clientv3.Config{
+			Endpoints:   clientURLs,
+			DialTimeout: 5 * time.Second,
+			TLS:         tlsConfig,
+			DialOptions: []grpc.DialOption{
+				grpc.WithReturnConnectionError(),
+				grpc.WithBlock(),
+			},
+		}
+	}
+
+	// Set etcd client log level
+	logConfig := clientv3.CreateDefaultZapLoggerConfig()
+	logConfig.Level.SetLevel(etcd.LogLevelToZap(config.EtcdClientLogLevel))
+	clientv3Config.LogConfig = &logConfig
+
+	client, err := clientv3.New(clientv3Config)
+	if err != nil {
+		return nil, err
 	}
 	if _, err := client.Get(ctx, "/sensu.io"); err != nil {
 		return nil, err
@@ -318,7 +282,7 @@ func Initialize(ctx context.Context, config *Config) (*Backend, error) {
 	}
 
 	// Create the store, which lives on top of etcd
-	stor := etcdstore.NewStore(b.Client, config.EtcdName)
+	stor := etcdstore.NewStore(b.Client)
 	b.Store = stor
 	storv2 := etcdstorev2.NewStore(b.Client)
 	var storev2Proxy storev2.Proxy
@@ -547,7 +511,8 @@ func Initialize(ctx context.Context, config *Config) (*Backend, error) {
 	authenticator.AddProvider(provider)
 
 	var clusterVersion string
-	if config.NoEmbedEtcd {
+
+	if !config.DevMode {
 		// get cluster version from first available etcd endpoint
 		endpoints := b.Client.Endpoints()
 		for _, ep := range endpoints {
@@ -559,8 +524,6 @@ func Initialize(ctx context.Context, config *Config) (*Backend, error) {
 			clusterVersion = status.Version
 			break
 		}
-	} else {
-		clusterVersion = b.Etcd.GetClusterVersion()
 	}
 
 	// Load the JWT key pair
@@ -683,7 +646,7 @@ func (b *Backend) runOnce() error {
 	}
 
 	// crash the stopgroup after a hard-coded timeout, when etcd is not embedded.
-	sg := &stopGroup{crashOnTimeout: b.Cfg.NoEmbedEtcd, waitTime: 30 * time.Second}
+	sg := &stopGroup{crashOnTimeout: true, waitTime: 30 * time.Second}
 
 	// Loop across the daemons in order to start them, then add them to our groups
 	for _, d := range b.Daemons {

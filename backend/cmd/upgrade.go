@@ -36,10 +36,7 @@ func UpgradeCommand() *cobra.Command {
 			}
 
 			cfg := &backend.Config{
-				EtcdClientURLs:      fallbackStringSlice(flagEtcdClientURLs, flagEtcdAdvertiseClientURLs),
-				EtcdCipherSuites:    viper.GetStringSlice(flagEtcdCipherSuites),
-				EtcdMaxRequestBytes: viper.GetUint(flagEtcdMaxRequestBytes),
-				NoEmbedEtcd:         true,
+				EtcdClientURLs: viper.GetStringSlice(flagEtcdClientURLs),
 			}
 
 			// Sensu APIs TLS config
@@ -77,10 +74,6 @@ func UpgradeCommand() *cobra.Command {
 			}
 
 			clientURLs := viper.GetStringSlice(flagEtcdClientURLs)
-			if len(clientURLs) == 0 {
-				clientURLs = viper.GetStringSlice(flagEtcdAdvertiseClientURLs)
-			}
-
 			timeout := viper.GetDuration(flagTimeout)
 
 			client, err := clientv3.New(clientv3.Config{

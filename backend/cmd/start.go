@@ -68,37 +68,17 @@ const (
 	flagLogLevel              = "log-level"
 	flagLabels                = "labels"
 	flagAnnotations           = "annotations"
+	flagDevMode               = "dev"
 
 	// Etcd flag constants
-	flagEtcdClientURLs               = "etcd-client-urls"
-	flagEtcdListenClientURLs         = "etcd-listen-client-urls"
-	flagEtcdPeerURLs                 = "etcd-listen-peer-urls"
-	flagEtcdInitialCluster           = "etcd-initial-cluster"
-	flagEtcdDiscovery                = "etcd-discovery"
-	flagEtcdDiscoverySrv             = "etcd-discovery-srv"
-	flagEtcdInitialAdvertisePeerURLs = "etcd-initial-advertise-peer-urls"
-	flagEtcdInitialClusterState      = "etcd-initial-cluster-state"
-	flagEtcdInitialClusterToken      = "etcd-initial-cluster-token"
-	flagEtcdNodeName                 = "etcd-name"
-	flagNoEmbedEtcd                  = "no-embed-etcd"
-	flagEtcdAdvertiseClientURLs      = "etcd-advertise-client-urls"
-	flagEtcdHeartbeatInterval        = "etcd-heartbeat-interval"
-	flagEtcdElectionTimeout          = "etcd-election-timeout"
-	flagEtcdLogLevel                 = "etcd-log-level"
-	flagEtcdClientLogLevel           = "etcd-client-log-level"
+	flagEtcdClientURLs     = "etcd-client-urls"
+	flagEtcdClientLogLevel = "etcd-client-log-level"
 
 	// Etcd TLS flag constants
-	flagEtcdCertFile           = "etcd-cert-file"
-	flagEtcdKeyFile            = "etcd-key-file"
-	flagEtcdClientCertAuth     = "etcd-client-cert-auth"
-	flagEtcdTrustedCAFile      = "etcd-trusted-ca-file"
-	flagEtcdPeerCertFile       = "etcd-peer-cert-file"
-	flagEtcdPeerKeyFile        = "etcd-peer-key-file"
-	flagEtcdPeerClientCertAuth = "etcd-peer-client-cert-auth"
-	flagEtcdPeerTrustedCAFile  = "etcd-peer-trusted-ca-file"
-	flagEtcdCipherSuites       = "etcd-cipher-suites"
-	flagEtcdMaxRequestBytes    = "etcd-max-request-bytes"
-	flagEtcdQuotaBackendBytes  = "etcd-quota-backend-bytes"
+	flagEtcdCertFile       = "etcd-cert-file"
+	flagEtcdKeyFile        = "etcd-key-file"
+	flagEtcdClientCertAuth = "etcd-client-cert-auth"
+	flagEtcdTrustedCAFile  = "etcd-trusted-ca-file"
 
 	// Etcd Client Auth Env vars
 	envEtcdClientUsername = "etcd-client-username"
@@ -206,16 +186,6 @@ func StartCommand(initialize InitializeFunc) *cobra.Command {
 			}
 			logrus.SetLevel(level)
 
-			// If no clustering options are provided, default to a static
-			// cluster 'defaultEtcdName=defaultEtcdPeerURL'.
-			initialCluster := viper.GetString(flagEtcdInitialCluster)
-			etcdDiscovery := viper.GetString(flagEtcdDiscovery)
-			SrvDiscovery := viper.GetString(flagEtcdDiscoverySrv)
-
-			if initialCluster == "" && etcdDiscovery == "" && SrvDiscovery == "" {
-				initialCluster = fmt.Sprintf("%s=%s", defaultEtcdName, defaultEtcdPeerURL)
-			}
-
 			cfg := &backend.Config{
 				AgentHost:             viper.GetString(flagAgentHost),
 				AgentPort:             viper.GetInt(flagAgentPort),
@@ -235,27 +205,11 @@ func StartCommand(initialize InitializeFunc) *cobra.Command {
 				CacheDir:              viper.GetString(flagCacheDir),
 				StateDir:              viper.GetString(flagStateDir),
 
-				EtcdAdvertiseClientURLs:        viper.GetStringSlice(flagEtcdAdvertiseClientURLs),
-				EtcdListenClientURLs:           viper.GetStringSlice(flagEtcdListenClientURLs),
-				EtcdClientURLs:                 fallbackStringSlice(flagEtcdClientURLs, flagEtcdAdvertiseClientURLs),
-				EtcdListenPeerURLs:             viper.GetStringSlice(flagEtcdPeerURLs),
-				EtcdInitialCluster:             initialCluster,
-				EtcdInitialClusterState:        viper.GetString(flagEtcdInitialClusterState),
-				EtcdDiscovery:                  etcdDiscovery,
-				EtcdDiscoverySrv:               SrvDiscovery,
-				EtcdInitialAdvertisePeerURLs:   viper.GetStringSlice(flagEtcdInitialAdvertisePeerURLs),
-				EtcdInitialClusterToken:        viper.GetString(flagEtcdInitialClusterToken),
-				EtcdName:                       viper.GetString(flagEtcdNodeName),
-				EtcdCipherSuites:               viper.GetStringSlice(flagEtcdCipherSuites),
-				EtcdQuotaBackendBytes:          viper.GetInt64(flagEtcdQuotaBackendBytes),
-				EtcdMaxRequestBytes:            viper.GetUint(flagEtcdMaxRequestBytes),
-				EtcdHeartbeatInterval:          viper.GetUint(flagEtcdHeartbeatInterval),
-				EtcdElectionTimeout:            viper.GetUint(flagEtcdElectionTimeout),
-				EtcdLogLevel:                   viper.GetString(flagEtcdLogLevel),
+				EtcdClientURLs:                 viper.GetStringSlice(flagEtcdClientURLs),
 				EtcdClientLogLevel:             viper.GetString(flagEtcdClientLogLevel),
 				EtcdClientUsername:             viper.GetString(envEtcdClientUsername),
 				EtcdClientPassword:             viper.GetString(envEtcdClientPassword),
-				NoEmbedEtcd:                    viper.GetBool(flagNoEmbedEtcd),
+				DevMode:                        viper.GetBool(flagDevMode),
 				Labels:                         viper.GetStringMapString(flagLabels),
 				Annotations:                    viper.GetStringMapString(flagAnnotations),
 				DisablePlatformMetrics:         viper.GetBool(flagDisablePlatformMetrics),
@@ -308,24 +262,6 @@ func StartCommand(initialize InitializeFunc) *cobra.Command {
 				KeyFile:        viper.GetString(flagEtcdKeyFile),
 				TrustedCAFile:  viper.GetString(flagEtcdTrustedCAFile),
 				ClientCertAuth: viper.GetBool(flagEtcdClientCertAuth),
-			}
-			cfg.EtcdPeerTLSInfo = etcd.TLSInfo{
-				CertFile:       viper.GetString(flagEtcdPeerCertFile),
-				KeyFile:        viper.GetString(flagEtcdPeerKeyFile),
-				TrustedCAFile:  viper.GetString(flagEtcdPeerTrustedCAFile),
-				ClientCertAuth: viper.GetBool(flagEtcdPeerClientCertAuth),
-			}
-
-			// Etcd log level
-			if cfg.EtcdLogLevel == "" {
-				switch level {
-				case logrus.TraceLevel:
-					cfg.EtcdLogLevel = "debug"
-				case logrus.WarnLevel:
-					cfg.EtcdLogLevel = "warn"
-				default:
-					cfg.EtcdLogLevel = level.String()
-				}
 			}
 
 			ctx, cancel := context.WithCancel(context.Background())
@@ -426,25 +362,7 @@ func handleConfig(cmd *cobra.Command, arguments []string, server bool) error {
 	}
 
 	// Etcd defaults
-	viper.SetDefault(flagEtcdAdvertiseClientURLs, defaultEtcdAdvertiseClientURL)
-	viper.SetDefault(flagEtcdListenClientURLs, defaultEtcdClientURL)
-	viper.SetDefault(flagEtcdPeerURLs, defaultEtcdPeerURL)
-	viper.SetDefault(flagEtcdInitialCluster, "")
-	viper.SetDefault(flagEtcdDiscovery, "")
-	viper.SetDefault(flagEtcdDiscoverySrv, "")
-	viper.SetDefault(flagEtcdInitialAdvertisePeerURLs, defaultEtcdPeerURL)
-	viper.SetDefault(flagEtcdInitialClusterState, etcd.ClusterStateNew)
-	viper.SetDefault(flagEtcdInitialClusterToken, "")
-	viper.SetDefault(flagEtcdNodeName, defaultEtcdName)
-	viper.SetDefault(flagEtcdQuotaBackendBytes, etcd.DefaultQuotaBackendBytes)
-	viper.SetDefault(flagEtcdMaxRequestBytes, etcd.DefaultMaxRequestBytes)
-	viper.SetDefault(flagEtcdHeartbeatInterval, etcd.DefaultTickMs)
-	viper.SetDefault(flagEtcdElectionTimeout, etcd.DefaultElectionMs)
 	viper.SetDefault(flagEtcdClientLogLevel, etcd.DefaultClientLogLevel)
-
-	if server {
-		viper.SetDefault(flagNoEmbedEtcd, false)
-	}
 
 	// Merge in flag set so that it appears in command usage
 	flags := flagSet(server)
@@ -491,18 +409,8 @@ func flagSet(server bool) *pflag.FlagSet {
 	flagSet.StringP(flagConfigFile, "c", "", configFileDescription)
 
 	// Etcd client/server flags
-	flagSet.StringSlice(flagEtcdCipherSuites, nil, "list of ciphers to use for etcd TLS configuration")
-	_ = flagSet.SetAnnotation(flagEtcdCipherSuites, "categories", []string{"store"})
 	flagSet.String(flagEtcdClientLogLevel, viper.GetString(flagEtcdClientLogLevel), "etcd client logging level [panic, fatal, error, warn, info, debug]")
 	_ = flagSet.SetAnnotation(flagEtcdClientLogLevel, "categories", []string{"store"})
-
-	// This one is really only a server flag, but because we lacked
-	// --etcd-client-urls until recently, it's used as a fallback.
-	flagSet.StringSlice(flagEtcdAdvertiseClientURLs, viper.GetStringSlice(flagEtcdAdvertiseClientURLs), "list of this member's client URLs to advertise to clients")
-	_ = flagSet.SetAnnotation(flagEtcdAdvertiseClientURLs, "categories", []string{"store"})
-
-	flagSet.Uint(flagEtcdMaxRequestBytes, viper.GetUint(flagEtcdMaxRequestBytes), "maximum etcd request size in bytes (use with caution)")
-	_ = flagSet.SetAnnotation(flagEtcdMaxRequestBytes, "categories", []string{"store"})
 
 	// Etcd client/server TLS flags
 	flagSet.String(flagEtcdCertFile, viper.GetString(flagEtcdCertFile), "path to the client server TLS cert file")
@@ -555,45 +463,8 @@ func flagSet(server bool) *pflag.FlagSet {
 		flagSet.Duration(flagPlatformMetricsLoggingInterval, viper.GetDuration(flagPlatformMetricsLoggingInterval), "platform metrics logging interval")
 		flagSet.String(flagPlatformMetricsLogFile, viper.GetString(flagPlatformMetricsLogFile), "platform metrics log file path")
 
-		// Etcd server flags
-		flagSet.StringSlice(flagEtcdPeerURLs, viper.GetStringSlice(flagEtcdPeerURLs), "list of URLs to listen on for peer traffic")
-		_ = flagSet.SetAnnotation(flagEtcdPeerURLs, "categories", []string{"store"})
-		flagSet.String(flagEtcdInitialCluster, viper.GetString(flagEtcdInitialCluster), "initial cluster configuration for bootstrapping")
-		_ = flagSet.SetAnnotation(flagEtcdInitialCluster, "categories", []string{"store"})
-		flagSet.StringSlice(flagEtcdInitialAdvertisePeerURLs, viper.GetStringSlice(flagEtcdInitialAdvertisePeerURLs), "list of this member's peer URLs to advertise to the rest of the cluster")
-		_ = flagSet.SetAnnotation(flagEtcdInitialAdvertisePeerURLs, "categories", []string{"store"})
-		flagSet.String(flagEtcdInitialClusterState, viper.GetString(flagEtcdInitialClusterState), "initial cluster state (\"new\" or \"existing\")")
-		_ = flagSet.SetAnnotation(flagEtcdInitialClusterState, "categories", []string{"store"})
-		flagSet.String(flagEtcdDiscovery, viper.GetString(flagEtcdDiscovery), "discovery URL used to bootstrap the cluster")
-		_ = flagSet.SetAnnotation(flagEtcdDiscovery, "categories", []string{"store"})
-		flagSet.String(flagEtcdDiscoverySrv, viper.GetString(flagEtcdDiscoverySrv), "DNS SRV record used to bootstrap the cluster")
-		_ = flagSet.SetAnnotation(flagEtcdDiscoverySrv, "categories", []string{"store"})
-		flagSet.String(flagEtcdInitialClusterToken, viper.GetString(flagEtcdInitialClusterToken), "initial cluster token for the etcd cluster during bootstrap")
-		_ = flagSet.SetAnnotation(flagEtcdInitialClusterToken, "categories", []string{"store"})
-		flagSet.StringSlice(flagEtcdListenClientURLs, viper.GetStringSlice(flagEtcdListenClientURLs), "list of etcd client URLs to listen on")
-		_ = flagSet.SetAnnotation(flagEtcdListenClientURLs, "categories", []string{"store"})
-		flagSet.Bool(flagNoEmbedEtcd, viper.GetBool(flagNoEmbedEtcd), "don't embed etcd, use external etcd instead")
-		_ = flagSet.SetAnnotation(flagNoEmbedEtcd, "categories", []string{"store"})
-		flagSet.Int64(flagEtcdQuotaBackendBytes, viper.GetInt64(flagEtcdQuotaBackendBytes), "maximum etcd database size in bytes (use with caution)")
-		_ = flagSet.SetAnnotation(flagEtcdQuotaBackendBytes, "categories", []string{"store"})
-		flagSet.Uint(flagEtcdHeartbeatInterval, viper.GetUint(flagEtcdHeartbeatInterval), "interval in ms with which the etcd leader will notify followers that it is still the leader")
-		_ = flagSet.SetAnnotation(flagEtcdHeartbeatInterval, "categories", []string{"store"})
-		flagSet.Uint(flagEtcdElectionTimeout, viper.GetUint(flagEtcdElectionTimeout), "time in ms a follower node will go without hearing a heartbeat before attempting to become leader itself")
-		_ = flagSet.SetAnnotation(flagEtcdElectionTimeout, "categories", []string{"store"})
-		flagSet.String(flagEtcdLogLevel, viper.GetString(flagEtcdLogLevel), "etcd server logging level [panic, fatal, error, warn, info, debug]")
-		_ = flagSet.SetAnnotation(flagEtcdLogLevel, "categories", []string{"store"})
-
-		// Etcd server TLS flags
-		flagSet.String(flagEtcdPeerCertFile, viper.GetString(flagEtcdPeerCertFile), "path to the peer server TLS cert file")
-		_ = flagSet.SetAnnotation(flagEtcdPeerCertFile, "categories", []string{"store"})
-		flagSet.String(flagEtcdPeerKeyFile, viper.GetString(flagEtcdPeerKeyFile), "path to the peer server TLS key file")
-		_ = flagSet.SetAnnotation(flagEtcdPeerKeyFile, "categories", []string{"store"})
-		flagSet.Bool(flagEtcdPeerClientCertAuth, viper.GetBool(flagEtcdPeerClientCertAuth), "enable peer client cert authentication")
-		_ = flagSet.SetAnnotation(flagEtcdPeerClientCertAuth, "categories", []string{"store"})
-		flagSet.String(flagEtcdPeerTrustedCAFile, viper.GetString(flagEtcdPeerTrustedCAFile), "path to the peer server TLS trusted CA file")
-		_ = flagSet.SetAnnotation(flagEtcdPeerTrustedCAFile, "categories", []string{"store"})
-		flagSet.String(flagEtcdNodeName, viper.GetString(flagEtcdNodeName), "name for this etcd node")
-		_ = flagSet.SetAnnotation(flagEtcdNodeName, "categories", []string{"store"})
+		flagSet.Bool(flagDevMode, viper.GetBool(flagDevMode), "start sensu-backend in single-node developer mode, no external dependencies required")
+		_ = flagSet.SetAnnotation(flagDevMode, "categories", []string{"store"})
 
 		_ = flagSet.String(flagEventLogFile, "", "path to the event log file")
 		_ = flagSet.Bool(flagEventLogParallelEncoders, false, "use parallel JSON encoding for the event log")

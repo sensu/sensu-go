@@ -1,6 +1,3 @@
-//go:build integration && !race
-// +build integration,!race
-
 package etcd
 
 import (
@@ -8,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/sensu/sensu-go/backend/store"
-	"go.etcd.io/etcd/client/v3"
+	clientv3 "go.etcd.io/etcd/client/v3"
 )
 
 func TestGetSetDatabaseVersion(t *testing.T) {

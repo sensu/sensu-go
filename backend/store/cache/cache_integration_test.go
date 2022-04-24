@@ -1,6 +1,3 @@
-//go:build integration
-// +build integration
-
 package cache
 
 import (
@@ -32,7 +29,7 @@ func TestResourceCacheIntegration(t *testing.T) {
 
 	client := e.NewEmbeddedClient()
 
-	store := store.NewStore(client, e.Name())
+	store := store.NewStore(client)
 
 	if err := store.CreateNamespace(context.Background(), types.FixtureNamespace("default")); err != nil {
 		t.Fatal(err)

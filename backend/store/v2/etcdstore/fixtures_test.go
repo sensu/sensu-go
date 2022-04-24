@@ -77,7 +77,7 @@ func testWithV1Store(t testing.TB, f func(store.Store)) {
 	defer cleanup()
 
 	client := e.NewEmbeddedClient()
-	s := etcdstore.NewStore(client, "default")
+	s := etcdstore.NewStore(client)
 
 	f(s)
 }

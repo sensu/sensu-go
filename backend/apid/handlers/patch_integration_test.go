@@ -1,6 +1,3 @@
-//go:build integration
-// +build integration
-
 package handlers
 
 import (
@@ -34,7 +31,7 @@ func testWithEtcdStores(t *testing.T, f func(*etcdstore.Store, *etcdstorev2.Stor
 
 	client := e.NewEmbeddedClient()
 
-	s1 := etcdstore.NewStore(client, e.Name())
+	s1 := etcdstore.NewStore(client)
 	s2 := etcdstorev2.NewStore(client)
 
 	if err := seeds.SeedInitialData(s1); err != nil {
