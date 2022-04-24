@@ -35,19 +35,9 @@ esac
 unit_test_commands () {
     echo "Running unit tests..."
 
-    go test -timeout=60s $RACE $(go list ./... | egrep -v '(testing|vendor|scripts)')
+    go test $RACE ./...
     if [ $? -ne 0 ]; then
         echo "Unit testing failed..."
-        exit 1
-    fi
-}
-
-integration_test_commands () {
-    echo "Running integration tests..."
-
-    go test -timeout=180s -tags=integration $(go list ./... | egrep -v '(testing|vendor|scripts)')
-    if [ $? -ne 0 ]; then
-        echo "Integration testing failed..."
         exit 1
     fi
 }
@@ -59,11 +49,7 @@ case "$cmd" in
     "unit")
         unit_test_commands
         ;;
-    "integration")
-        integration_test_commands
-        ;;
     *)
         unit_test_commands
-        integration_test_commands
         ;;
 esac
