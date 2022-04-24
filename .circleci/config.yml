@@ -426,5 +426,3 @@ workflows:
       - build:
           name: sensuctl-windows-amd64
           binary: sensuctl
-          os: windows
-          arch: amd64
