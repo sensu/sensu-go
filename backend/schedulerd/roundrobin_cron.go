@@ -32,6 +32,7 @@ type RoundRobinCronScheduler struct {
 	entityCache   *cachev2.Resource
 	mu            sync.Mutex
 	proxyEntities []*corev3.EntityConfig
+	stopWg        sync.WaitGroup
 }
 
 // NewRoundRobinCronScheduler creates a new RoundRobinCronScheduler.
@@ -61,6 +62,7 @@ func NewRoundRobinCronScheduler(ctx context.Context, store store.Store, bus mess
 // Start starts the scheduler.
 func (s *RoundRobinCronScheduler) Start() {
 	rrCronCounter.WithLabelValues(s.check.Namespace).Inc()
+	s.stopWg.Add(1)
 	go s.start()
 }
 
@@ -97,6 +99,7 @@ func (s *RoundRobinCronScheduler) handleEvent(executor *CheckExecutor, event rin
 }
 
 func (s *RoundRobinCronScheduler) start() {
+	defer s.stopWg.Done()
 	s.logger.Info("starting new round-robin cron scheduler")
 	s.setLastState()
 	s.updateRings()
@@ -220,9 +223,10 @@ func (s *RoundRobinCronScheduler) Interrupt(check *corev2.CheckConfig) {
 
 // Stop stops the scheduler
 func (s *RoundRobinCronScheduler) Stop() error {
-	rrCronCounter.WithLabelValues(s.check.Namespace).Dec()
 	s.logger.Info("stopping scheduler")
 	s.cancel()
+	s.stopWg.Wait()
+	rrCronCounter.WithLabelValues(s.check.Namespace).Dec()
 	return nil
 }
 

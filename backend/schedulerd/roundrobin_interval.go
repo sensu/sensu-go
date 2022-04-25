@@ -45,6 +45,7 @@ type RoundRobinIntervalScheduler struct {
 	entityCache            *cachev2.Resource
 	mu                     sync.Mutex
 	proxyEntities          []*corev3.EntityConfig
+	stopWg                 sync.WaitGroup
 }
 
 // NewRoundRobinIntervalScheduler initializes a RoundRobinIntervalScheduler
@@ -123,6 +124,7 @@ func (s *RoundRobinIntervalScheduler) updateRings() {
 // Start starts the round robin interval scheduler.
 func (s *RoundRobinIntervalScheduler) Start() {
 	rrIntervalCounter.WithLabelValues(s.check.Namespace).Inc()
+	s.stopWg.Add(1)
 	go s.start()
 }
 
@@ -174,6 +176,7 @@ func (s *RoundRobinIntervalScheduler) handleEvent(executor *CheckExecutor, event
 }
 
 func (s *RoundRobinIntervalScheduler) start() {
+	defer s.stopWg.Done()
 	s.logger.Info("starting new round-robin interval scheduler")
 	s.setLastState()
 	s.updateRings()
@@ -245,9 +248,10 @@ func (s *RoundRobinIntervalScheduler) Interrupt(check *corev2.CheckConfig) {
 
 // Stop stops the scheduler
 func (s *RoundRobinIntervalScheduler) Stop() error {
-	rrIntervalCounter.WithLabelValues(s.check.Namespace).Dec()
 	s.logger.Info("stopping scheduler")
 	s.cancel()
+	s.stopWg.Wait()
+	rrIntervalCounter.WithLabelValues(s.check.Namespace).Dec()
 	return nil
 }
 
