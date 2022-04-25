@@ -14,6 +14,7 @@ import (
 	"github.com/sensu/sensu-go/traces"
 	"github.com/sensu/sensu-go/types"
 	clientv3 "go.etcd.io/etcd/client/v3"
+	"go.opentelemetry.io/otel/attribute"
 
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 )
@@ -105,7 +106,7 @@ func Get(ctx context.Context, client *clientv3.Client, key string, object interf
 // GetWithResponse retrieves an object with the given key and returns the etcd
 // response
 func GetWithResponse(ctx context.Context, client *clientv3.Client, key string, object interface{}) (*clientv3.GetResponse, error) {
-	traceCtx, span := traces.NestedSpan(ctx, "etcd-StoreGetWithResponse")
+	traceCtx, span := traces.NestedSpan(ctx, "etcd-StoreGetWithResponse", attribute.String("key", key))
 	defer span.End()
 
 	// Fetch the key from the store
@@ -227,7 +228,7 @@ func Update(ctx context.Context, client *clientv3.Client, key, namespace string,
 	if err != nil {
 		return &store.ErrEncode{Key: key, Err: err}
 	}
-	traceCtx, span := traces.NestedSpan(ctx, "etcd-StoreUpdate")
+	traceCtx, span := traces.NestedSpan(ctx, "etcd-StoreUpdate", attribute.String("key", key))
 	defer span.End()
 
 	comparator := kvc.Comparisons(
@@ -247,7 +248,7 @@ func UpdateWithComparisons(ctx context.Context, client *clientv3.Client, key str
 		return &store.ErrEncode{Key: key, Err: err}
 	}
 
-	traceCtx, span := traces.NestedSpan(ctx, "etcd-StoreUpdateWithComparison")
+	traceCtx, span := traces.NestedSpan(ctx, "etcd-StoreUpdateWithComparison", attribute.String("key", key))
 	defer span.End()
 
 	req := clientv3.OpPut(key, string(bytes))
@@ -261,7 +262,7 @@ func UpdateWithComparisons(ctx context.Context, client *clientv3.Client, key str
 // Count retrieves the count of all keys from storage under the
 // provided prefix key, while supporting all namespaces.
 func Count(ctx context.Context, client *clientv3.Client, key string) (int64, error) {
-	traceCtx, span := traces.NestedSpan(ctx, "etcd-StoreCount")
+	traceCtx, span := traces.NestedSpan(ctx, "etcd-StoreCount", attribute.String("key", key))
 	defer span.End()
 
 	opts := []clientv3.OpOption{
