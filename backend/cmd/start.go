@@ -103,19 +103,6 @@ const (
 
 	// Default values
 
-	// defaultEtcdClientURL is the default URL to listen for Etcd clients
-	defaultEtcdClientURL = "http://127.0.0.1:2379"
-	// defaultEtcdName is the default etcd member node name (single-node cluster
-	// only)
-	defaultEtcdName = "default"
-	// defaultEtcdPeerURL is the default URL to listen for Etcd peers (single-node
-	// cluster only)
-	defaultEtcdPeerURL = "http://127.0.0.1:2380"
-
-	// defaultEtcdAdvertiseClientURL is the default list of this member's client
-	// URLs to advertise to the rest of the cluster
-	defaultEtcdAdvertiseClientURL = "http://localhost:2379"
-
 	// Start command usage template
 	startUsageTemplate = `Usage:{{if .Runnable}}
   {{.UseLine}}{{end}}{{if .HasAvailableSubCommands}}
@@ -156,14 +143,6 @@ var (
 // InitializeFunc represents the signature of an initialization function, used
 // to initialize the backend
 type InitializeFunc func(context.Context, *backend.Config) (*backend.Backend, error)
-
-func fallbackStringSlice(newFlag, oldFlag string) []string {
-	slice := viper.GetStringSlice(newFlag)
-	if len(slice) == 0 {
-		slice = viper.GetStringSlice(oldFlag)
-	}
-	return slice
-}
 
 // StartCommand ...
 func StartCommand(initialize InitializeFunc) *cobra.Command {
