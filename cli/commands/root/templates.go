@@ -1,9 +1,10 @@
 package root
 
 import (
-	"github.com/docker/docker/pkg/term"
 	"github.com/spf13/cobra"
 )
+
+const outputWrapLength = 80 - 1
 
 var usageTemplate = `Usage:
 
@@ -86,17 +87,9 @@ func managementSubCommands(cmd *cobra.Command) []*cobra.Command {
 }
 
 func wrappedInheritedFlagUsages(cmd *cobra.Command) string {
-	width := 80
-	if ws, err := term.GetWinsize(0); err == nil {
-		width = int(ws.Width)
-	}
-	return cmd.InheritedFlags().FlagUsagesWrapped(width - 1)
+	return cmd.InheritedFlags().FlagUsagesWrapped(outputWrapLength)
 }
 
 func wrappedLocalFlagUsages(cmd *cobra.Command) string {
-	width := 80
-	if ws, err := term.GetWinsize(0); err == nil {
-		width = int(ws.Width)
-	}
-	return cmd.LocalFlags().FlagUsagesWrapped(width - 1)
+	return cmd.LocalFlags().FlagUsagesWrapped(outputWrapLength)
 }
