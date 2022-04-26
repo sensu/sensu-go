@@ -192,7 +192,7 @@ func devModeClient(ctx context.Context, config *Config, backend *Backend) (*clie
 	cfg.InitialAdvertisePeerURLs = cfg.ListenPeerURLs
 	cfg.AdvertiseClientURLs = config.EtcdClientURLs
 	cfg.Name = "dev"
-	cfg.LogLevel = "warn"
+	cfg.LogLevel = config.LogLevel
 	cfg.ClientLogLevel = config.EtcdClientLogLevel
 
 	// Start etcd
