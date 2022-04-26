@@ -21,8 +21,6 @@ environment:
   matrix:
     - GOARCH: amd64
       TEST_SUITE: unit
-    - GOARCH: amd64
-      TEST_SUITE: integration
 
 install:
   - rmdir c:\go /s /q
