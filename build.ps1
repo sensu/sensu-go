@@ -164,7 +164,7 @@ function unit_test_commands
 {
     echo "Running unit tests..."
 
-	go test $RACE ./...
+    go test $RACE ./agent/... ./asset/... ./bonsai/... ./cli/... ./command/...
     If ($LASTEXITCODE -ne 0) {
         echo "Unit testing failed..."
         exit 1
