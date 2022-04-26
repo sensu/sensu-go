@@ -25,7 +25,7 @@ import (
 func seedStore(t *testing.T, store store.Store) {
 	t.Helper()
 
-	if err := seeds.SeedInitialData(store); err != nil {
+	if err := seeds.SeedInitialDataWithContext(context.Background(), store); err != nil {
 		t.Fatalf("Could not seed the backend: %s", err)
 	}
 

@@ -95,7 +95,7 @@ func TestBackendHTTPListener(t *testing.T) {
 			}
 
 			store := etcdstore.NewStore(b.Client)
-			if err := seeds.SeedInitialData(store); err != nil {
+			if err := seeds.SeedInitialDataWithContext(context.Background(), store); err != nil {
 				t.Fatal(err)
 			}
 

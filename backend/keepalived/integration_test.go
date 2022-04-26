@@ -52,7 +52,7 @@ func TestKeepaliveMonitor(t *testing.T) {
 	}
 	storev2 := etcdstorev2.NewStore(store.Client)
 
-	if err := seeds.SeedInitialData(store); err != nil {
+	if err := seeds.SeedInitialDataWithContext(context.Background(), store); err != nil {
 		assert.FailNow(t, err.Error())
 	}
 
