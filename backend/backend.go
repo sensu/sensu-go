@@ -524,6 +524,13 @@ func Initialize(ctx context.Context, config *Config) (*Backend, error) {
 			clusterVersion = status.Version
 			break
 		}
+	} else {
+		status, err := b.Client.Status(ctx, config.EtcdClientURLs[0])
+		if err != nil {
+			logger.WithError(err).Error("error getting etcd cluster info")
+		} else {
+			clusterVersion = status.Version
+		}
 	}
 
 	// Load the JWT key pair
