@@ -175,7 +175,7 @@ func TestHealthHandler(t *testing.T) {
 	client := e.NewEmbeddedClient()
 	defer func() { _ = client.Close() }()
 
-	stor := etcdstore.NewStore(client, "test")
+	stor := etcdstore.NewStore(client)
 	agent, err := New(Config{
 		Store:  stor,
 		Client: client,
@@ -207,7 +207,7 @@ func TestReplaceHealthController(t *testing.T) {
 	client := e.NewEmbeddedClient()
 	defer func() { _ = client.Close() }()
 
-	stor := etcdstore.NewStore(client, "test")
+	stor := etcdstore.NewStore(client)
 	agent, err := New(Config{
 		Store:  stor,
 		Client: client,

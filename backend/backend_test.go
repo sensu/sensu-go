@@ -1,6 +1,3 @@
-//go:build integration
-// +build integration
-
 package backend
 
 import (
@@ -63,11 +60,10 @@ func TestBackendHTTPListener(t *testing.T) {
 			cachePath, cleanup := testutil.TempDir(t)
 			defer cleanup()
 
-			clURL := fmt.Sprintf("%s://127.0.0.1:0", tc.httpScheme)
-			apURL := fmt.Sprintf("%s://127.0.0.1:0", tc.httpScheme)
+			clURL := "http://127.0.0.1:0"
+
 			agentPort := 8081
 			apiPort := 8080
-			initCluster := fmt.Sprintf("default=%s", apURL)
 
 			var tlsInfo etcd.TLSInfo
 			if tc.tls != nil {
@@ -80,25 +76,17 @@ func TestBackendHTTPListener(t *testing.T) {
 			}
 
 			cfg := &Config{
-				AgentHost:                    "127.0.0.1",
-				AgentPort:                    agentPort,
-				APIListenAddress:             fmt.Sprintf("127.0.0.1:%d", apiPort),
-				StateDir:                     dataPath,
-				CacheDir:                     cachePath,
-				TLS:                          tc.tls,
-				EtcdAdvertiseClientURLs:      []string{clURL},
-				EtcdListenClientURLs:         []string{clURL},
-				EtcdListenPeerURLs:           []string{apURL},
-				EtcdInitialCluster:           initCluster,
-				EtcdInitialClusterState:      etcd.ClusterStateNew,
-				EtcdInitialAdvertisePeerURLs: []string{apURL},
-				EtcdName:                     "default",
-				EtcdClientTLSInfo:            tlsInfo,
-				EtcdPeerTLSInfo:              tlsInfo,
-				EtcdUseEmbeddedClient:        true,
-				EtcdLogLevel:                 "info",
-				EtcdClientLogLevel:           "error",
-				DisablePlatformMetrics:       true,
+				AgentHost:              "127.0.0.1",
+				AgentPort:              agentPort,
+				APIListenAddress:       fmt.Sprintf("127.0.0.1:%d", apiPort),
+				StateDir:               dataPath,
+				CacheDir:               cachePath,
+				TLS:                    tc.tls,
+				EtcdClientURLs:         []string{clURL},
+				EtcdClientTLSInfo:      tlsInfo,
+				DevMode:                true,
+				EtcdClientLogLevel:     "error",
+				DisablePlatformMetrics: true,
 			}
 			ctx, cancel := context.WithCancel(context.Background())
 			b, err := Initialize(ctx, cfg)
@@ -106,8 +94,8 @@ func TestBackendHTTPListener(t *testing.T) {
 				t.Fatalf("failed to start backend: %s", err)
 			}
 
-			store := etcdstore.NewStore(b.Client, cfg.EtcdName)
-			if err := seeds.SeedInitialData(store); err != nil {
+			store := etcdstore.NewStore(b.Client)
+			if err := seeds.SeedInitialDataWithContext(context.Background(), store); err != nil {
 				t.Fatal(err)
 			}
 

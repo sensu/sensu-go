@@ -138,12 +138,6 @@ func SeedCluster(ctx context.Context, store storev1.Store, client *clientv3.Clie
 	return initializer.FlagAsInitialized(ctx)
 }
 
-// SeedInitialData will seed a store with initial data. This method is
-// idempotent and can be safely run every time the backend starts.
-func SeedInitialData(store storev1.Store) (err error) {
-	return SeedInitialDataWithContext(context.Background(), store)
-}
-
 // SeedInitialDataWithContext is like SeedInitialData except it takes an existing
 // context.
 func SeedInitialDataWithContext(ctx context.Context, store storev1.Store) (err error) {
@@ -151,8 +145,6 @@ func SeedInitialDataWithContext(ctx context.Context, store storev1.Store) (err e
 		AdminUsername: "admin",
 		AdminPassword: "P@ssw0rd!",
 	}
-	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
-	defer cancel()
 	return SeedCluster(ctx, store, nil, config)
 }
 

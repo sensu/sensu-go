@@ -84,36 +84,20 @@ type Config struct {
 	// Annotations are key-value pairs that users can provide to backend entities
 	Annotations map[string]string
 
-	// Etcd configuration
-	EtcdAdvertiseClientURLs      []string
-	EtcdInitialAdvertisePeerURLs []string
-	EtcdInitialClusterToken      string
-	EtcdInitialClusterState      string
-	EtcdInitialCluster           string
-	EtcdClientURLs               []string
-	EtcdListenClientURLs         []string
-	EtcdListenPeerURLs           []string
-	EtcdName                     string
-	NoEmbedEtcd                  bool
-	EtcdHeartbeatInterval        uint
-	EtcdElectionTimeout          uint
-	EtcdDiscovery                string
-	EtcdDiscoverySrv             string
-	EtcdUseEmbeddedClient        bool
-	EtcdClientUsername           string
-	EtcdClientPassword           string
+	// DevMode starts up a single-node embedded etcd server when enabled.
+	DevMode bool
+
+	EtcdClientURLs        []string
+	EtcdClientUsername    string
+	EtcdClientPassword    string
+	EtcdUseEmbeddedClient bool
 
 	// Etcd TLS configuration
-	EtcdClientTLSInfo     etcd.TLSInfo
-	EtcdPeerTLSInfo       etcd.TLSInfo
-	EtcdCipherSuites      []string
-	EtcdMaxRequestBytes   uint
-	EtcdQuotaBackendBytes int64
+	EtcdClientTLSInfo etcd.TLSInfo
 
 	TLS *corev2.TLSOptions
 
 	LogLevel           string
-	EtcdLogLevel       string
 	EtcdClientLogLevel string
 
 	LicenseGetter licensing.Getter

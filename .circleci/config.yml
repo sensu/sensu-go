@@ -26,7 +26,6 @@ jobs:
 
       # Run tests
       - run: ./build.sh unit
-      - run: ./build.sh integration
 
   test-module:
     parameters:

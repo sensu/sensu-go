@@ -1,6 +1,3 @@
-//go:build integration && !race
-// +build integration,!race
-
 // These tests are unfortunately quite slow. This is somewhat mitigated by the
 // fact that they are parallelized, but still consume 30-45 seconds. This is
 // due to the fact that etcd lease expirations cannot be hurried. No, I don't

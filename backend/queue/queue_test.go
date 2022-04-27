@@ -1,6 +1,3 @@
-//go:build integration && !race
-// +build integration,!race
-
 package queue
 
 import (

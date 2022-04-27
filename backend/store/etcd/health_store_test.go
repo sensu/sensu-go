@@ -1,6 +1,3 @@
-//go:build integration && !race
-// +build integration,!race
-
 package etcd
 
 import (
@@ -11,7 +8,7 @@ import (
 
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/stretchr/testify/assert"
-	"go.etcd.io/etcd/client/v3"
+	clientv3 "go.etcd.io/etcd/client/v3"
 )
 
 func TestGetClusterHealth(t *testing.T) {

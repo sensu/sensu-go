@@ -29,10 +29,10 @@ type Store struct {
 }
 
 // NewStore creates a new Store.
-func NewStore(client *clientv3.Client, name string) *Store {
+func NewStore(client *clientv3.Client) *Store {
 	store := &Store{
 		client:         client,
-		keepalivesPath: path.Join(EtcdRoot, keepalivesPathPrefix, name),
+		keepalivesPath: path.Join(EtcdRoot, keepalivesPathPrefix),
 	}
 
 	return store

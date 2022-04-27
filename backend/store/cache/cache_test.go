@@ -114,7 +114,7 @@ func TestResourceRebuild(t *testing.T) {
 	c := integration.NewClusterV3(t, &integration.ClusterConfig{Size: 1})
 	defer c.Terminate(t)
 	client := c.RandClient()
-	s := etcd.NewStore(client, "store")
+	s := etcd.NewStore(client)
 	require.NoError(t, s.CreateNamespace(context.Background(), types.FixtureNamespace("default")))
 	ctx := store.NamespaceContext(context.Background(), "default")
 

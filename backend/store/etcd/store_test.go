@@ -1,6 +1,3 @@
-//go:build integration && !race
-// +build integration,!race
-
 package etcd
 
 import (
@@ -17,7 +14,7 @@ import (
 	"github.com/sensu/sensu-go/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"go.etcd.io/etcd/client/v3"
+	clientv3 "go.etcd.io/etcd/client/v3"
 )
 
 func testWithEtcd(t *testing.T, f func(store.Store)) {
@@ -26,7 +23,7 @@ func testWithEtcd(t *testing.T, f func(store.Store)) {
 
 	client := e.NewEmbeddedClient()
 
-	s := NewStore(client, e.Name())
+	s := NewStore(client)
 
 	// Mock a default namespace
 	require.NoError(t, s.CreateNamespace(context.Background(), types.FixtureNamespace("default")))
@@ -40,7 +37,7 @@ func testWithEtcdStore(t *testing.T, f func(*Store)) {
 
 	client := e.NewEmbeddedClient()
 
-	s := NewStore(client, e.Name())
+	s := NewStore(client)
 
 	// Mock a default namespace
 	require.NoError(t, s.CreateNamespace(context.Background(), types.FixtureNamespace("default")))
@@ -54,7 +51,7 @@ func testWithEtcdClient(t *testing.T, f func(store.Store, *clientv3.Client)) {
 
 	client := e.NewEmbeddedClient()
 
-	s := NewStore(client, e.Name())
+	s := NewStore(client)
 
 	// Mock a default namespace
 	require.NoError(t, s.CreateNamespace(context.Background(), types.FixtureNamespace("default")))

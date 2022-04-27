@@ -103,10 +103,7 @@ func InitCommand() *cobra.Command {
 			}
 
 			cfg := &backend.Config{
-				EtcdClientURLs:      fallbackStringSlice(flagEtcdClientURLs, flagEtcdAdvertiseClientURLs),
-				EtcdCipherSuites:    viper.GetStringSlice(flagEtcdCipherSuites),
-				EtcdMaxRequestBytes: viper.GetUint(flagEtcdMaxRequestBytes),
-				NoEmbedEtcd:         true,
+				EtcdClientURLs: viper.GetStringSlice(flagEtcdClientURLs),
 			}
 
 			// Sensu APIs TLS config
@@ -148,9 +145,6 @@ func InitCommand() *cobra.Command {
 			}
 
 			clientURLs := viper.GetStringSlice(flagEtcdClientURLs)
-			if len(clientURLs) == 0 {
-				clientURLs = viper.GetStringSlice(flagEtcdAdvertiseClientURLs)
-			}
 
 			timeout := viper.GetDuration(flagTimeout)
 			if timeout < 1*time.Second {
@@ -270,7 +264,7 @@ func initializeStore(clientConfig clientv3.Config, initConfig initConfig, endpoi
 	}
 
 	// The endpoint did not return any error, therefore we can proceed
-	store := etcdstore.NewStore(client, "")
+	store := etcdstore.NewStore(client)
 	if err := seeds.SeedCluster(ctx, store, client, initConfig.SeedConfig); err != nil {
 		if errors.Is(err, seeds.ErrAlreadyInitialized) {
 			return err

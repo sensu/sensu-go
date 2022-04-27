@@ -7,7 +7,7 @@ import (
 
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/store"
-	"go.etcd.io/etcd/client/v3"
+	clientv3 "go.etcd.io/etcd/client/v3"
 )
 
 // A migration is a function that receives a context and an etcd client, and
@@ -33,7 +33,7 @@ func Base(ctx context.Context, client *clientv3.Client) error {
 
 // In Sensu 6.0, we migrate v2 entities to v3.
 func MigrateV2EntityToV3(ctx context.Context, client *clientv3.Client) error {
-	s := NewStore(client, "")
+	s := NewStore(client)
 	responses := readPagedV2Entities(ctx, client)
 	for response := range responses {
 		if response.Err != nil {

@@ -7,7 +7,7 @@ import (
 	"github.com/sensu/sensu-go/backend/etcd"
 	"github.com/sensu/sensu-go/backend/store"
 	etcdstore "github.com/sensu/sensu-go/backend/store/etcd"
-	"go.etcd.io/etcd/client/v3"
+	clientv3 "go.etcd.io/etcd/client/v3"
 )
 
 // IntegrationTestStore wrapper for etcd & store
@@ -59,7 +59,7 @@ func NewStoreInstance() (*IntegrationTestStore, error) {
 
 	client := e.NewEmbeddedClient()
 
-	st := etcdstore.NewStore(client, e.Name())
+	st := etcdstore.NewStore(client)
 
 	return &IntegrationTestStore{
 		Store:        st,

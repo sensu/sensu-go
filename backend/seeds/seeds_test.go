@@ -9,7 +9,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestSeedInitialData(t *testing.T) {
+func TestSeedInitialDataWithContext(t *testing.T) {
 	// Setup store
 	ctx := context.Background()
 	st, serr := testutil.NewStoreInstance()
@@ -18,10 +18,10 @@ func TestSeedInitialData(t *testing.T) {
 	}
 	defer st.Teardown()
 
-	err := SeedInitialData(st)
+	err := SeedInitialDataWithContext(ctx, st)
 	require.NoError(t, err, "seeding process should not raise an error")
 
-	err = SeedInitialData(st)
+	err = SeedInitialDataWithContext(ctx, st)
 	if err != ErrAlreadyInitialized {
 		require.NoError(t, err, "seeding process should be able to be run more than once without error")
 	}

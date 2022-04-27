@@ -164,20 +164,9 @@ function unit_test_commands
 {
     echo "Running unit tests..."
 
-    go test -timeout=60s $(go list ./... | Select-String -pattern "scripts", "testing", "vendor", "backend" -notMatch)
+    go test $RACE ./agent/... ./asset/... ./bonsai/... ./cli/... ./command/...
     If ($LASTEXITCODE -ne 0) {
         echo "Unit testing failed..."
-        exit 1
-    }
-}
-
-function integration_test_commands
-{
-    echo "Running integration tests..."
-
-    go test -timeout=200s -tags=integration github.com/sensu/sensu-go/agent/...
-    If ($LASTEXITCODE -ne 0) {
-        echo "Integration testing failed..."
         exit 1
     }
 }
@@ -258,9 +247,6 @@ ElseIf ($cmd -eq "quality") {
 ElseIf ($cmd -eq "unit") {
     unit_test_commands
 }
-ElseIf ($cmd -eq "integration") {
-    integration_test_commands
-}
 ElseIf ($cmd -eq "wait_for_appveyor_jobs") {
     If (($env:APPVEYOR_REPO_TAG -eq $true) -and ($env:MSI_BUILDER -eq $true)) {
         $env:GOARCH = "amd64"
@@ -273,6 +259,5 @@ ElseIf ($cmd -eq "wait_for_appveyor_jobs") {
 }
 Else {
     unit_test_commands
-    integration_test_commands
     build_commands
 }

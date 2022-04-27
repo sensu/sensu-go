@@ -1,6 +1,3 @@
-//go:build integration
-// +build integration
-
 package eventd
 
 import (
@@ -58,7 +55,7 @@ func TestEventdMonitor(t *testing.T) {
 	}
 	storev2 := etcdstore.NewStore(store.Client)
 
-	if err := seeds.SeedInitialData(store); err != nil {
+	if err := seeds.SeedInitialDataWithContext(context.Background(), store); err != nil {
 		assert.FailNow(t, err.Error())
 	}
 

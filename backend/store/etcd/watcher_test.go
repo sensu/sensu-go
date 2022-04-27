@@ -1,6 +1,3 @@
-//go:build integration && !race
-// +build integration,!race
-
 package etcd
 
 import (
@@ -13,7 +10,7 @@ import (
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/testing/fixture"
 	"github.com/sirupsen/logrus/hooks/test"
-	"go.etcd.io/etcd/client/v3"
+	clientv3 "go.etcd.io/etcd/client/v3"
 	"go.etcd.io/etcd/tests/v3/integration"
 )
 
@@ -166,7 +163,7 @@ func TestWatchRetry(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 
 	client := c.Client(0)
-	s := NewStore(client, "store0")
+	s := NewStore(client)
 	w := Watch(ctx, client, "/sensu.io", true)
 
 	// Create resource
@@ -202,7 +199,7 @@ func TestWatchCompactedRevision(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 
 	client := c.Client(0)
-	s := NewStore(client, "store")
+	s := NewStore(client)
 
 	// Create the 'foo' resource to generate a new revision (revision=2)
 	foo := &fixture.Resource{ObjectMeta: corev2.ObjectMeta{Name: "foo"}}
@@ -255,7 +252,7 @@ func TestWatchRevisions(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 
 	client := c.Client(0)
-	s := NewStore(client, "store")
+	s := NewStore(client)
 
 	// Create the 'foo' resource to generate a new revision (revision=2)
 	foo := &fixture.Resource{ObjectMeta: corev2.ObjectMeta{Name: "foo"}}
