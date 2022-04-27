@@ -105,10 +105,10 @@ func (s *CronScheduler) Interrupt(check *corev2.CheckConfig) {
 
 // Stop stops the cron scheduler.
 func (s *CronScheduler) Stop() error {
+	logger.Info("stopping cron scheduler")
 	s.cancel()
 	s.stopWg.Wait()
 	cronCounter.WithLabelValues(s.check.Namespace).Dec()
-	logger.Info("stopping cron scheduler")
 
 	return nil
 }
