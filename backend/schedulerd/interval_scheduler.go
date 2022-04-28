@@ -2,6 +2,7 @@ package schedulerd
 
 import (
 	"context"
+	"sync"
 
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/messaging"
@@ -23,6 +24,7 @@ type IntervalScheduler struct {
 	interrupt              chan *corev2.CheckConfig
 	entityCache            *cachev2.Resource
 	secretsProviderManager *secrets.ProviderManager
+	stopWg                 sync.WaitGroup
 }
 
 // NewIntervalScheduler initializes an IntervalScheduler
@@ -64,10 +66,12 @@ func (s *IntervalScheduler) schedule(timer CheckTimer, executor *CheckExecutor) 
 // Start starts the IntervalScheduler.
 func (s *IntervalScheduler) Start() {
 	intervalCounter.WithLabelValues(s.check.Namespace).Inc()
+	s.stopWg.Add(1)
 	go s.start()
 }
 
 func (s *IntervalScheduler) start() {
+	defer s.stopWg.Done()
 	s.logger.Info("starting new interval scheduler")
 	timer := NewIntervalTimer(s.check.Name, uint(s.check.Interval))
 	executor := NewCheckExecutor(s.bus, s.check.Namespace, s.store, s.entityCache, s.secretsProviderManager)
@@ -101,9 +105,11 @@ func (s *IntervalScheduler) Interrupt(check *corev2.CheckConfig) {
 
 // Stop stops the IntervalScheduler
 func (s *IntervalScheduler) Stop() error {
-	intervalCounter.WithLabelValues(s.check.Namespace).Dec()
 	s.logger.Info("stopping scheduler")
 	s.cancel()
+	s.stopWg.Wait()
+
+	intervalCounter.WithLabelValues(s.check.Namespace).Dec()
 
 	return nil
 }

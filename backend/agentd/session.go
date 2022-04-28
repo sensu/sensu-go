@@ -577,6 +577,8 @@ func (s *Session) stop() {
 			logger.WithError(err).Error("error closing session")
 		}
 	}()
+	defer close(s.entityConfig.updatesChannel)
+	defer close(s.checkChannel)
 
 	sessionCounter.WithLabelValues(s.cfg.Namespace).Dec()
 
@@ -592,9 +594,6 @@ func (s *Session) stop() {
 	case <-time.After(closeGracePeriod):
 		sessionErrorCounter.WithLabelValues("GracePeriodExpired").Inc()
 	}
-
-	close(s.entityConfig.updatesChannel)
-	close(s.checkChannel)
 
 	// Remove the entity config subscriptions
 	for sub := range s.entityConfig.subscriptions {

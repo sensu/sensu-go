@@ -2,6 +2,7 @@ package schedulerd
 
 import (
 	"context"
+	"sync"
 
 	"github.com/sensu/sensu-go/backend/messaging"
 	"github.com/sensu/sensu-go/backend/secrets"
@@ -24,6 +25,7 @@ type CronScheduler struct {
 	interrupt              chan *corev2.CheckConfig
 	entityCache            *cachev2.Resource
 	secretsProviderManager *secrets.ProviderManager
+	stopWg                 sync.WaitGroup
 }
 
 // NewCronScheduler initializes a CronScheduler
@@ -65,10 +67,12 @@ func (s *CronScheduler) schedule(timer *CronTimer, executor *CheckExecutor) {
 // Start starts the cron scheduler.
 func (s *CronScheduler) Start() {
 	cronCounter.WithLabelValues(s.check.Namespace).Inc()
+	s.stopWg.Add(1)
 	go s.start()
 }
 
 func (s *CronScheduler) start() {
+	defer s.stopWg.Done()
 	s.logger.Info("starting new cron scheduler")
 	timer := NewCronTimer(s.check.Name, s.check.Cron)
 	executor := NewCheckExecutor(s.bus, s.check.Namespace, s.store, s.entityCache, s.secretsProviderManager)
@@ -101,9 +105,10 @@ func (s *CronScheduler) Interrupt(check *corev2.CheckConfig) {
 
 // Stop stops the cron scheduler.
 func (s *CronScheduler) Stop() error {
-	cronCounter.WithLabelValues(s.check.Namespace).Dec()
 	logger.Info("stopping cron scheduler")
 	s.cancel()
+	s.stopWg.Wait()
+	cronCounter.WithLabelValues(s.check.Namespace).Dec()
 
 	return nil
 }
