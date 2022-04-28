@@ -35,7 +35,7 @@ esac
 unit_test_commands () {
     echo "Running unit tests..."
 
-    go test $RACE ./...
+    go test -v $RACE ./...
     if [ $? -ne 0 ]; then
         echo "Unit testing failed..."
         exit 1
