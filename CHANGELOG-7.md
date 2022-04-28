@@ -16,3 +16,6 @@ software is upgraded when there are active keepalive failures.
 
 ### Added
 - Developer mode can now be enabled with the --dev flag.
+
+### Changed
+- Changed parameters for `sensuctl cluster-role create` to be plural
