@@ -1,5 +1,3 @@
-
-
 # Changelog
 All notable changes to this project will be documented in this file.
 
@@ -8,6 +6,16 @@ and this project adheres to [Semantic
 Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
+
+## [6.7.1] - 2022-04-28
+
+### Changed
+- Cron scheduler now logs that it is stopping before it begins the process of
+stopping.
+
+### Fixed
+- Fixed several data races in schedulerd.
+- Mitigate a data race in agentd sessions.
 
 ## [6.7.0] - 2022-04-21
 
