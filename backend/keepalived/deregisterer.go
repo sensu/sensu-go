@@ -8,7 +8,9 @@ import (
 	"github.com/google/uuid"
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/messaging"
+	"github.com/sensu/sensu-go/backend/silenced"
 	"github.com/sensu/sensu-go/backend/store"
+	"github.com/sensu/sensu-go/backend/store/cache"
 	"github.com/sensu/sensu-go/types"
 )
 
@@ -23,10 +25,11 @@ type Deregisterer interface {
 // Deregistration is an adapter for deregistering an entity from the store and
 // publishing a deregistration event to WizardBus.
 type Deregistration struct {
-	EntityStore  store.EntityStore
-	EventStore   store.EventStore
-	MessageBus   messaging.MessageBus
-	StoreTimeout time.Duration
+	EntityStore   store.EntityStore
+	EventStore    store.EventStore
+	MessageBus    messaging.MessageBus
+	SilencedCache cache.Cache
+	StoreTimeout  time.Duration
 }
 
 // Deregister an entity and all of its associated events.
@@ -86,6 +89,12 @@ func (d *Deregistration) Deregister(entity *types.Entity) error {
 			Check:     deregistrationCheck,
 			ID:        id[:],
 			Timestamp: time.Now().Unix(),
+		}
+
+		// Add any silenced subscriptions to the event
+		silenced.GetSilenced(ctx, deregistrationEvent, d.SilencedCache)
+		if len(deregistrationEvent.Check.Silenced) > 0 {
+			deregistrationEvent.Check.IsSilenced = true
 		}
 
 		return d.MessageBus.Publish(messaging.TopicEvent, deregistrationEvent)

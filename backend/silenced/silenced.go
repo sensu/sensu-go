@@ -1,26 +1,27 @@
-package eventd
+package silenced
 
 import (
 	"context"
 	"time"
 
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
+	"github.com/sensu/sensu-go/backend/store/cache"
 	stringsutil "github.com/sensu/sensu-go/util/strings"
 )
 
-// addToSilencedBy takes a silenced entry ID and adds it to a silence of IDs if
+// AddToSilencedBy takes a silenced entry ID and adds it to a silence of IDs if
 // it's not already present in order to avoid duplicated elements
-func addToSilencedBy(id string, ids []string) []string {
+func AddToSilencedBy(id string, ids []string) []string {
 	if !stringsutil.InArray(id, ids) {
 		ids = append(ids, id)
 	}
 	return ids
 }
 
-// getSilenced retrieves all silenced entries for a given event, using the
+// GetSilenced retrieves all silenced entries for a given event, using the
 // entity subscription, the check subscription and the check name while
 // supporting wildcard silenced entries (e.g. subscription:*)
-func getSilenced(ctx context.Context, event *corev2.Event, cache Cache) {
+func GetSilenced(ctx context.Context, event *corev2.Event, cache cache.Cache) {
 	if !event.HasCheck() {
 		return
 	}
@@ -37,19 +38,19 @@ func getSilenced(ctx context.Context, event *corev2.Event, cache Cache) {
 	}
 
 	// Determine which entries silence this event
-	silencedIDs := silencedBy(event, entries)
+	silencedIDs := SilencedBy(event, entries)
 
 	// Add to the event all silenced entries ID that actually silence it
 	event.Check.Silenced = silencedIDs
 }
 
-// silencedBy determines which of the given silenced entries silenced a given
+// SilencedBy determines which of the given silenced entries silenced a given
 // event and return a list of silenced entry IDs
-func silencedBy(event *corev2.Event, silencedEntries []*corev2.Silenced) []string {
+func SilencedBy(event *corev2.Event, silencedEntries []*corev2.Silenced) []string {
 	silencedBy := event.SilencedBy(silencedEntries)
 	names := make([]string, 0, len(silencedBy))
 	for _, entry := range silencedBy {
-		names = addToSilencedBy(entry.Name, names)
+		names = AddToSilencedBy(entry.Name, names)
 	}
 	return names
 }

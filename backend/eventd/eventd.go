@@ -18,6 +18,7 @@ import (
 	"github.com/sensu/sensu-go/backend/keepalived"
 	"github.com/sensu/sensu-go/backend/liveness"
 	"github.com/sensu/sensu-go/backend/messaging"
+	"github.com/sensu/sensu-go/backend/silenced"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/backend/store/cache"
 	storev2 "github.com/sensu/sensu-go/backend/store/v2"
@@ -212,7 +213,7 @@ type Eventd struct {
 	shutdownChan        chan struct{}
 	wg                  *sync.WaitGroup
 	Logger              Logger
-	silencedCache       Cache
+	silencedCache       cache.Cache
 	storeTimeout        time.Duration
 	logPath             string
 	logBufferSize       int
@@ -220,6 +221,7 @@ type Eventd struct {
 	logParallelEncoders bool
 }
 
+// DEPRECATED: use cache.Cache instead
 // Cache interfaces the cache.Resource struct for easier testing
 type Cache interface {
 	Get(namespace string) []cache.Value
@@ -280,11 +282,11 @@ func New(ctx context.Context, c Config, opts ...Option) (*Eventd, error) {
 	}
 
 	e.ctx, e.cancel = context.WithCancel(ctx)
-	cache, err := cache.New(e.ctx, c.Client, &corev2.Silenced{}, false)
+	silencedCache, err := cache.New(e.ctx, c.Client, &corev2.Silenced{}, false)
 	if err != nil {
 		return nil, err
 	}
-	e.silencedCache = cache
+	e.silencedCache = silencedCache
 
 	for _, o := range opts {
 		if err := o(e); err != nil {
@@ -549,7 +551,7 @@ func (e *Eventd) handleMessage(msg interface{}) (fEvent *corev2.Event, fErr erro
 	}
 
 	// Add any silenced subscriptions to the event
-	getSilenced(ctx, event, e.silencedCache)
+	silenced.GetSilenced(ctx, event, e.silencedCache)
 	if len(event.Check.Silenced) > 0 {
 		event.Check.IsSilenced = true
 	}

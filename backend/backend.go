@@ -486,6 +486,7 @@ func Initialize(ctx context.Context, config *Config) (*Backend, error) {
 
 	// Initialize keepalived
 	keepalive, err := keepalived.New(keepalived.Config{
+		Client:                b.Client,
 		DeregistrationHandler: config.DeregistrationHandler,
 		Bus:                   bus,
 		Store:                 b.Store,

@@ -123,7 +123,7 @@ type KeyBuilderFn func(context.Context, string) string
 
 // List retrieves all keys from storage under the provided prefix key, while
 // supporting all namespaces, and deserialize it into objsPtr.
-func List(ctx context.Context, client *clientv3.Client, keyBuilder KeyBuilderFn, objsPtr interface{}, pred *store.SelectionPredicate) error {
+func List(ctx context.Context, client clientv3.KV, keyBuilder KeyBuilderFn, objsPtr interface{}, pred *store.SelectionPredicate) error {
 	// Make sure the interface is a pointer, and that the element at this address
 	// is a slice.
 	v := reflect.ValueOf(objsPtr)
