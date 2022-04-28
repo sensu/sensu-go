@@ -3,9 +3,14 @@ version: 2.1
 orbs:
   go: circleci/go@1.1.2
 
+parameters:
+  go_version:
+    type: string
+    default: "1.17.6"
+
 sensu_go_build_env: &sensu_go_build_env
   docker:
-    - image: cimg/go:1.17.6
+    - image: cimg/go:<< pipeline.parameters.go_version >>
       auth:
         username: $DOCKER_USERNAME
         password: $DOCKER_PASSWORD
