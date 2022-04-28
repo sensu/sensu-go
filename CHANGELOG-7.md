@@ -5,7 +5,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic
 Versioning](http://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## [Unreleased]
 
 ### Breaking
 - Embedded etcd is no longer supported, all related configuration has been
@@ -19,8 +19,5 @@ software is upgraded when there are active keepalive failures.
 
 ### Changed
 - Changed parameters for `sensuctl cluster-role create` to be plural
-## [Unreleased]
-
-### Changed
 - Deregistration events are now silenced if a silenced entry exists matching the
 entity subscriptions and/or a check named `deregistration`.
