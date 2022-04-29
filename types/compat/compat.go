@@ -39,7 +39,17 @@ func SetNamespace(value interface{}, namespace string) {
 	case corev2.Resource:
 		value.SetNamespace(namespace)
 	case corev3.Resource:
-		value.GetMetadata().Namespace = namespace
+		if gr, ok := value.(corev3.GlobalResource); ok && gr.IsGlobalResource() {
+			// replicate corev2.Resource behavior where SetNamespace is no-op
+			// for global resources
+			return
+		}
+		meta := value.GetMetadata()
+		if meta == nil {
+			meta = &corev2.ObjectMeta{}
+			value.SetMetadata(meta)
+		}
+		meta.Namespace = namespace
 	default:
 		// impossible unless the type resolver is broken. fatal error.
 		panic("got neither corev2 resource nor corev3 resource")
