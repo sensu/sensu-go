@@ -20,6 +20,8 @@ software is upgraded when there are active keepalive failures.
 - Added sensu-backend configuration for postgresql.
 - Added configuration store selector to sensu-backend.
 - Added postgresql state store.
+- GlobalResource interface in core/v3 allows core/v3 resources to
+be marked as global resources.
 
 ### Changed
 - Changed parameters for `sensuctl cluster-role create` to be plural

@@ -14,11 +14,9 @@ type testResource struct {
 	meta *corev2.ObjectMeta
 }
 
-func (t testResource) GetMetadata() *corev2.ObjectMeta {
+func (t *testResource) GetMetadata() *corev2.ObjectMeta {
 	if t.meta == nil {
 		t.meta = &corev2.ObjectMeta{
-			Name:        "foo",
-			Namespace:   "default",
 			Labels:      make(map[string]string),
 			Annotations: make(map[string]string),
 		}
@@ -26,8 +24,8 @@ func (t testResource) GetMetadata() *corev2.ObjectMeta {
 	return t.meta
 }
 
-func (t testResource) SetMetadata(meta *corev2.ObjectMeta) {
-	t.meta = meta //nolint:staticcheck
+func (t *testResource) SetMetadata(meta *corev2.ObjectMeta) {
+	t.meta = meta
 }
 
 func (t testResource) StoreName() string {
@@ -46,8 +44,14 @@ func (t testResource) Validate() error {
 	return errors.New("invalid resource")
 }
 
+type globalTestResource struct {
+	testResource
+}
+
+func (g globalTestResource) IsGlobalResource() bool { return true }
+
 func TestV3ToV2Resource(t *testing.T) {
-	resource := testResource{}
+	resource := &testResource{}
 	corev2Resource := V3ToV2Resource(resource)
 
 	if got, want := corev2Resource.GetObjectMeta(), resource.GetMetadata(); !proto.Equal(&got, want) {
@@ -60,8 +64,11 @@ func TestV3ToV2Resource(t *testing.T) {
 	}
 
 	corev2Resource.SetNamespace("baz")
-	if got, want := resource.GetMetadata().Namespace, corev2Resource.GetObjectMeta().Namespace; got != want {
+	if got, want := corev2Resource.GetObjectMeta().Namespace, "baz"; got != want {
 		t.Errorf("SetNamespace had wrong effect: got Namespace %s, want %s", got, want)
+	}
+	if got, want := resource.GetMetadata().Namespace, corev2Resource.GetObjectMeta().Namespace; got != want {
+		t.Errorf("SetNamespace operation was not proxied: got Namespace %s, want %s", got, want)
 	}
 
 	if got, want := corev2Resource.StorePrefix(), resource.StoreName(); got != want {
@@ -78,5 +85,21 @@ func TestV3ToV2Resource(t *testing.T) {
 
 	if got, want := corev2Resource.Validate().Error(), resource.Validate().Error(); got != want {
 		t.Errorf("bad Validate(): got %s, want %s", got, want)
+	}
+
+	// test global resoruce
+	globalResource := &globalTestResource{}
+	globalCorev2Resource := V3ToV2Resource(globalResource)
+	globalCorev2Resource.SetObjectMeta(corev2.ObjectMeta{Name: "oof"})
+	if got, want := globalCorev2Resource.GetObjectMeta().Name, "oof"; got != want {
+		t.Errorf("SetMetadata had wrong effect: got Name %s, want %s", got, want)
+	}
+	if got, want := globalResource.GetMetadata().Name, globalCorev2Resource.GetObjectMeta().Name; got != want {
+		t.Errorf("SetMetadata was not proxied: got Name %s, want %s", got, want)
+	}
+
+	globalCorev2Resource.SetNamespace("baz")
+	if got, want := globalCorev2Resource.GetObjectMeta().Namespace, ""; got != want {
+		t.Errorf("SetNamespace had wrong effect: got Namespace %s, want %s", got, want)
 	}
 }
