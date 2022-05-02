@@ -34,3 +34,7 @@ sensu-backend
 sensuctl
 loadit
 *.exe
+
+# multi-module workspaces
+go.work
+go.work.sum
