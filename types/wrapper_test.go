@@ -156,10 +156,10 @@ func TestResolveType(t *testing.T) {
 		t.Run(fmt.Sprintf("%s/%s", tc.ApiVersion, tc.Type), func(t *testing.T) {
 			r, err := types.ResolveType(tc.ApiVersion, tc.Type)
 			if !reflect.DeepEqual(r, tc.ExpRet) {
-				t.Fatal("unexpected type")
+				t.Fatalf("unexpected type: got %T, want %T", r, tc.ExpRet)
 			}
 			if err != nil && !tc.ExpErr {
-				t.Fatal(err)
+				t.Fatalf("unexpected error: %v", err)
 			}
 			if err == nil && tc.ExpErr {
 				t.Fatal("expected an error")
