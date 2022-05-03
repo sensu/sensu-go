@@ -1,6 +1,6 @@
 module github.com/sensu/sensu-go/api/core/v3
 
-go 1.16
+go 1.18
 
 replace (
 	github.com/sensu/sensu-go/api/core/v2 => ../v2

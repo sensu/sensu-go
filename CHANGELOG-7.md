@@ -21,3 +21,4 @@ software is upgraded when there are active keepalive failures.
 - Changed parameters for `sensuctl cluster-role create` to be plural
 - Deregistration events are now silenced if a silenced entry exists matching the
 entity subscriptions and/or a check named `deregistration`.
+- Upgraded Go version from 1.17.1 to 1.18.1.
