@@ -146,16 +146,18 @@ func getAgentEntity(event ringv2.Event) string {
 func (s *RoundRobinIntervalScheduler) handleEvent(executor *CheckExecutor, event ringv2.Event) {
 	switch event.Type {
 	case ringv2.EventError:
-		s.logger.WithError(event.Err).Error("error scheduling check")
+		s.logger.WithFields(logrus.Fields{"source": event.Source}).WithError(event.Err).Error("error scheduling check")
 
 	case ringv2.EventAdd:
 		s.logger.WithFields(logrus.Fields{
 			"agent_entity": getAgentEntity(event),
+			"source":       event.Source,
 		}).Info("adding entity to round-robin")
 
 	case ringv2.EventRemove:
 		s.logger.WithFields(logrus.Fields{
 			"agent_entity": getAgentEntity(event),
+			"source":       event.Source,
 		}).Info("removing entity from round-robin")
 
 	case ringv2.EventTrigger:
@@ -165,9 +167,9 @@ func (s *RoundRobinIntervalScheduler) handleEvent(executor *CheckExecutor, event
 		}
 		// The ring has produced a trigger for the entity, and a check should
 		// be executed.
-		s.logger.WithFields(logrus.Fields{"agents": event.Values}).Info("executing round robin check on agents")
+		s.logger.WithFields(logrus.Fields{"agents": event.Values, "source": event.Source}).Info("executing round robin check on agents")
 		s.mu.Lock()
-		s.schedule(executor, s.proxyEntities, event.Values)
+		s.schedule(executor, s.proxyEntities, event.Values, event.Source)
 		s.mu.Unlock()
 
 	case ringv2.EventClosing:
@@ -201,7 +203,7 @@ func (s *RoundRobinIntervalScheduler) start() {
 	}
 }
 
-func (s *RoundRobinIntervalScheduler) schedule(executor *CheckExecutor, proxyEntities []*corev3.EntityConfig, agentEntities []string) {
+func (s *RoundRobinIntervalScheduler) schedule(executor *CheckExecutor, proxyEntities []*corev3.EntityConfig, agentEntities []string, source string) {
 	if s.check.IsSubdued() {
 		s.logger.Debug("check is subdued")
 		return
@@ -209,6 +211,7 @@ func (s *RoundRobinIntervalScheduler) schedule(executor *CheckExecutor, proxyEnt
 
 	s.logger.Debug("check is not subdued")
 
+	s.check.Scheduler = source
 	if err := processRoundRobinCheck(s.ctx, executor, s.check, proxyEntities, agentEntities); err != nil {
 		logger.WithError(err).Error("error executing check")
 	}
