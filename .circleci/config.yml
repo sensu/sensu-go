@@ -22,6 +22,21 @@ go_test_env: &sensu_go_test_env
       GOPROXY: 'https://proxy.golang.org'
 
 jobs:
+  assert-no-replace:
+    <<: *sensu_go_build_env
+    <<: *sensu_go_test_env
+    steps:
+      - checkout
+      - run:
+          name: Check For Replace Directives
+          command: |
+            replaces=$(grep -R --include="go.mod" "^replace " || :)
+            if [ -n "$replaces" ]
+            then
+              echo "replace directives not allowed"
+              echo "$replaces"
+              exit 1
+            fi
   test:
     <<: *sensu_go_build_env
     <<: *sensu_go_test_env
@@ -90,6 +105,7 @@ workflows:
       - test-module:
           name: types
           path: types
+      - assert-no-replace
   build:
     jobs:
       # darwin/amd64
