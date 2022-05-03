@@ -176,6 +176,7 @@ func TestCheckSubdueInterval(t *testing.T) {
 	scheduler := newIntervalScheduler(ctx, t, "check")
 
 	// Set interval to smallest valid value
+	mockTime.Set(time.Date(2022, time.April, 6, 1, 0, 0, 0, time.UTC))
 	check := scheduler.check
 	check.Subscriptions = []string{"subscription1"}
 	check.Subdues = []*corev2.TimeWindowRepeated{
