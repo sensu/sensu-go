@@ -2,7 +2,7 @@
 
 I wish there was some tool that would just make this for me.
 
-
+```
 etcd clientv3.Watcher.Watch(...)
 |- sensu-go/backend/livensess
 |   ... not included
@@ -10,37 +10,37 @@ etcd clientv3.Watcher.Watch(...)
 |   ... not included
 |-sensu-go/backend/ringv2
 |   ... not included
- -sensu-go/backend/store/etcd func Watch(...) Watcher [1](https://github.com/sensu/sensu-go/blob/b208e5e7adad0e53ec7ef6403236e69f48d03dee/backend/store/etcd/watcher.go#L41)
-  |- sensu-go/backend/agentd GetEntityConfigWatcher(...) <-chan store.WatchEventEntityConfig [2](https://github.com/sensu/sensu-go/blob/b208e5e7adad0e53ec7ef6403236e69f48d03dee/backend/agentd/watcher.go#L20)
+ -sensu-go/backend/store/etcd func Watch(...) Watcher
+  |- sensu-go/backend/agentd GetEntityConfigWatcher(...) <-chan store.WatchEventEntityConfig
   |  |- sensu-go/backend/backend.go for agentd daemon
   |
-  |- sensu-go/backend/store/etcd store.GetCheckConfigWatcher(...) <-chan store.WatchEventCheckConfig [3](https://github.com/sensu/sensu-go/blob/b208e5e7adad0e53ec7ef6403236e69f48d03dee/backend/store/etcd/watchers.go#L17)
+  |- sensu-go/backend/store/etcd store.GetCheckConfigWatcher(...) <-chan store.WatchEventCheckConfig
   |  |- sensu-go/backend/schedulerd/check_watcher.go for schedulerd
   |
-  |- sensu-go/backend/store/etcd store.GetTessenConfigWatcher(...) <-chan store.WatchEventTessenConfig [4](https://github.com/sensu/sensu-go/blob/b208e5e7adad0e53ec7ef6403236e69f48d03dee/backend/store/etcd/watchers.go#L59)
+  |- sensu-go/backend/store/etcd store.GetTessenConfigWatcher(...) <-chan store.WatchEventTessenConfig
   |  |- sensu-go/backend/tessend/tessend.go for tessend
   |
   |- sensu-go/backend/store/etcd GetResourceWatcher(...) <-chan store.WatchEventResource
   |  unused
   |
-  |- sensu-go/backend/store/etcd GetResourceV3Watcher(...) <-chan store.WatchEventResourceV3 [5](https://github.com/sensu/sensu-go/blob/b208e5e7adad0e53ec7ef6403236e69f48d03dee/backend/store/etcd/watchers.go#L131)
+  |- sensu-go/backend/store/etcd GetResourceV3Watcher(...) <-chan store.WatchEventResourceV3
   |  |- sensu-enterprise-go/backend/backend.go creates serviceComponentWatcher used by bsmd
   |
-  |- sensu-enterprise-go/backend/replicatord/watcher.go GetReplicatorWatcher(...) <-chan store.WatchEventResource [6](https://github.com/sensu/sensu-enterprise-go/blob/570d990e2724086643798cc55edb6167a517a36f/backend/replicatord/watcher.go#L14)
+  |- sensu-enterprise-go/backend/replicatord/watcher.go GetReplicatorWatcher(...) <-chan store.WatchEventResource
   |  |- sensu-enterprise-go/backend/backend.go for replicatord daemon
   |
-  |- sensu-enterprise-go/backend/secrets/watcher.go Watcher.Start(...) [7](https://github.com/sensu/sensu-enterprise-go/blob/570d990e2724086643798cc55edb6167a517a36f/backend/secrets/watcher.go#L41)
+  |- sensu-enterprise-go/backend/secrets/watcher.go Watcher.Start(...)
   |  |- sensu-enterprise-go/backend/backend.go starts secretsProviders.NewWatcher daemon
   |  
-  |- sensu-enterprise-go/backend/store/provider/watcher.go Watcher.Start(...) [8](https://github.com/sensu/sensu-enterprise-go/blob/570d990e2724086643798cc55edb6167a517a36f/backend/store/provider/watcher.go#L70)
+  |- sensu-enterprise-go/backend/store/provider/watcher.go Watcher.Start(...)
   |  |- sensu-enterprise-go/backend/backend.go starts storeprovider.NewWatcher daemon
   |  
-  |- sensu-enterprise-go/backend/authentication/providers/watcher.go Watcher.Start(...) [9](https://github.com/sensu/sensu-enterprise-go/blob/570d990e2724086643798cc55edb6167a517a36f/backend/authentication/providers/watcher.go#L34)
+  |- sensu-enterprise-go/backend/authentication/providers/watcher.go Watcher.Start(...)
   |  |- sensu-enterprise-go/backend/backend.go starts authProviders.NewWatcher daemon
   |  
-  |- sensu-enterprise-go/backend/licensing/licensing.go Watcher.Start(...) [10](https://github.com/sensu/sensu-enterprise-go/blob/570d990e2724086643798cc55edb6167a517a36f/backend/licensing/licensing.go#L59)
+  |- sensu-enterprise-go/backend/licensing/licensing.go Watcher.Start(...)
      |- sensu-enterprise-go/backend/backend.go starts licensing.New daemon
-
+```
 
 ## Interfaces That Need Reimplemented
 
