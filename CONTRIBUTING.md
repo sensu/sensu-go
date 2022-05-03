@@ -218,6 +218,30 @@ Once you make a change to any `*.proto` file within the **types** package, you w
 Sensu uses [Go modules](https://github.com/golang/go/wiki/Modules) for managing
 its dependencies.
 
+The sensu-go repository contains multiple go modules. `github.com/sensu/sensu-go` is the main module containing the bulk of sensu's logic, and has dependencies on the other sensu-go modules.
+`github.com/sensu/sensu-go/types`, `github.com/sensu/sensu-go/api/core/v2` and `github.com/sensu/sensu-go/api/core/v3` are supporting modules that define sensu's API resources.
+
+#### Working with local dependencies
+
+When developing changes across multiple modules in the sensu-go repository it can be helpful to use [workspaces](https://go.dev/ref/mod#workspaces) (go 1.18+) locally.
+
+Example:
+```
+$ go work init && go work use . ./types ./api/core/v2 ./api/core/v3
+```
+
+#### Staging PRs changing multiple modules
+
+If it is most convenient to review changes to multiple modules in the sensu-go repository in a single PR, we recommend that you organize commits by module.
+You may then `go get` a dependency by either commit sha or pushed `-dev` tag in a subsequent commit to the dependent module.
+
+Example CL for a PR:
+```
+bad91f2 (HEAD -> razzle-dazzle-feat) Add RazzleDazzle HTTP Routes to sensu-go
+8171511 Bump sensu-go /api/core/v3 dependency to v1.0.1-dev
+76e86d0 (tag: v1.0.1-dev) Add /api/core/v3/RazzleDazzle Resource
+```
+
 ## Testing
 
 Run test suites:
