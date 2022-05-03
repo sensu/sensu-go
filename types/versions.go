@@ -13,7 +13,7 @@ import (
 // the product.
 func APIModuleVersions() map[string]string {
 	buildInfo, ok := debug.ReadBuildInfo()
-	if !ok {
+	if !ok || buildInfo.Deps == nil {
 		// fallback case - ReadBuildInfo() not available in tests. Remove later.
 		return map[string]string{
 			"core/v2": "v2.6.0",

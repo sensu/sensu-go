@@ -10,8 +10,8 @@ import (
 
 // TODO(eric): This test doesn't work yet because of https://github.com/golang/go/issues/33976
 func TestAPIModuleVersions(t *testing.T) {
-	_, ok := debug.ReadBuildInfo()
-	if ok {
+	buildInfo, ok := debug.ReadBuildInfo()
+	if ok && buildInfo.Deps != nil {
 		t.Fatal("remove this if block, the test works now")
 	} else {
 		t.Skip()
