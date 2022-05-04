@@ -82,11 +82,15 @@ func TestBackendHTTPListener(t *testing.T) {
 				StateDir:               dataPath,
 				CacheDir:               cachePath,
 				TLS:                    tc.tls,
-				EtcdClientURLs:         []string{clURL},
-				EtcdClientTLSInfo:      tlsInfo,
 				DevMode:                true,
-				EtcdClientLogLevel:     "error",
 				DisablePlatformMetrics: true,
+				Store: StoreConfig{
+					EtcdConfigurationStore: EtcdConfig{
+						URLs:          []string{clURL},
+						ClientTLSInfo: tlsInfo,
+						LogLevel:      "error",
+					},
+				},
 			}
 			ctx, cancel := context.WithCancel(context.Background())
 			b, err := Initialize(ctx, cfg)

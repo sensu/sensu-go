@@ -185,15 +185,15 @@ func devModeClient(ctx context.Context, config *Config, backend *Backend) (*clie
 	// the Wizard bus, which requires etcd to be started.
 	cfg := etcd.NewConfig()
 	cfg.DataDir = config.StateDir
-	cfg.ListenClientURLs = config.EtcdClientURLs
-	cfg.ListenPeerURLs = []string{"http://127.0.0.1:2380"}
-	cfg.InitialCluster = "dev=http://127.0.0.1:2380"
+	cfg.ListenClientURLs = []string{"http://127.0.0.1:2379"}
+	cfg.ListenPeerURLs = []string{"http://127.0.0.1:0"}
+	cfg.InitialCluster = "dev=http://127.0.0.1:0"
 	cfg.InitialClusterState = "new"
 	cfg.InitialAdvertisePeerURLs = cfg.ListenPeerURLs
-	cfg.AdvertiseClientURLs = config.EtcdClientURLs
+	cfg.AdvertiseClientURLs = []string{"http://127.0.0.1:2379"}
 	cfg.Name = "dev"
 	cfg.LogLevel = config.LogLevel
-	cfg.ClientLogLevel = config.EtcdClientLogLevel
+	cfg.ClientLogLevel = config.Store.EtcdConfigurationStore.LogLevel
 
 	// Start etcd
 	e, err := etcd.NewEtcd(cfg)
@@ -216,21 +216,23 @@ func newClient(ctx context.Context, config *Config, backend *Backend) (*clientv3
 		return devModeClient(ctx, config, backend)
 	}
 	logger.Info("dialing etcd server")
-	tlsInfo := (transport.TLSInfo)(config.EtcdClientTLSInfo)
+	tlsInfo := (transport.TLSInfo)(config.Store.EtcdConfigurationStore.ClientTLSInfo)
 	tlsConfig, err := tlsInfo.ClientConfig()
 	if err != nil {
 		return nil, err
 	}
 
-	clientURLs := config.EtcdClientURLs
+	clientURLs := config.Store.EtcdConfigurationStore.URLs
 	var clientv3Config clientv3.Config
 
-	if config.EtcdClientUsername != "" && config.EtcdClientPassword != "" {
+	username := config.Store.EtcdConfigurationStore.Username
+	password := config.Store.EtcdConfigurationStore.Password
+	if username != "" && password != "" {
 		clientv3Config = clientv3.Config{
 			Endpoints:   clientURLs,
 			DialTimeout: 5 * time.Second,
-			Username:    config.EtcdClientUsername,
-			Password:    config.EtcdClientPassword,
+			Username:    username,
+			Password:    password,
 			TLS:         tlsConfig,
 			DialOptions: []grpc.DialOption{
 				grpc.WithReturnConnectionError(),
@@ -251,7 +253,7 @@ func newClient(ctx context.Context, config *Config, backend *Backend) (*clientv3
 
 	// Set etcd client log level
 	logConfig := clientv3.CreateDefaultZapLoggerConfig()
-	logConfig.Level.SetLevel(etcd.LogLevelToZap(config.EtcdClientLogLevel))
+	logConfig.Level.SetLevel(etcd.LogLevelToZap(config.Store.EtcdConfigurationStore.LogLevel))
 	clientv3Config.LogConfig = &logConfig
 
 	client, err := clientv3.New(clientv3Config)
@@ -477,7 +479,7 @@ func Initialize(ctx context.Context, config *Config) (*Backend, error) {
 	entityConfigWatcher := agentd.GetEntityConfigWatcher(b.ctx, b.Client)
 
 	// Prepare the etcd client TLS config
-	etcdClientTLSInfo := (transport.TLSInfo)(config.EtcdClientTLSInfo)
+	etcdClientTLSInfo := (transport.TLSInfo)(config.Store.EtcdConfigurationStore.ClientTLSInfo)
 	etcdClientTLSConfig, err := etcdClientTLSInfo.ClientConfig()
 	if err != nil {
 		return nil, err
@@ -526,7 +528,7 @@ func Initialize(ctx context.Context, config *Config) (*Backend, error) {
 			break
 		}
 	} else {
-		status, err := b.Client.Status(ctx, config.EtcdClientURLs[0])
+		status, err := b.Client.Status(ctx, "http://127.0.0.1:2379")
 		if err != nil {
 			logger.WithError(err).Error("error getting etcd cluster info")
 		} else {
