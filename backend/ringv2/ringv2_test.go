@@ -85,6 +85,7 @@ func TestWatchAddRemove(t *testing.T) {
 	want := Event{
 		Type:   EventAdd,
 		Values: []string{"foo"},
+		Source: "etcd",
 	}
 
 	if !reflect.DeepEqual(got, want) {
@@ -100,6 +101,7 @@ func TestWatchAddRemove(t *testing.T) {
 	want = Event{
 		Type:   EventRemove,
 		Values: []string{"foo"},
+		Source: "etcd",
 	}
 
 	if !reflect.DeepEqual(got, want) {
@@ -140,6 +142,7 @@ func TestWatchTrigger(t *testing.T) {
 		want := Event{
 			Type:   EventTrigger,
 			Values: []string{"foo"},
+			Source: "etcd",
 		}
 		if !reflect.DeepEqual(got, want) {
 			t.Fatalf("bad event: got %v, want %v", got, want)
@@ -188,6 +191,7 @@ func TestRingOrdering(t *testing.T) {
 		want := Event{
 			Type:   EventTrigger,
 			Values: []string{items[i%len(items)]},
+			Source: "etcd",
 		}
 		if !reflect.DeepEqual(got, want) {
 			t.Fatalf("bad event: got %v, want %v", got, want)
@@ -237,6 +241,7 @@ func TestConcurrentRingOrdering(t *testing.T) {
 			want := Event{
 				Type:   EventAdd,
 				Values: []string{items[i]},
+				Source: "etcd",
 			}
 
 			if !reflect.DeepEqual(got, want) {
@@ -261,11 +266,11 @@ func TestConcurrentRingOrdering(t *testing.T) {
 	wg.Wait()
 
 	exp := []Event{
-		{Type: EventTrigger, Values: []string{"mulder"}},
-		{Type: EventTrigger, Values: []string{"scully"}},
-		{Type: EventTrigger, Values: []string{"skinner"}},
-		{Type: EventTrigger, Values: []string{"mulder"}},
-		{Type: EventTrigger, Values: []string{"scully"}},
+		{Type: EventTrigger, Values: []string{"mulder"}, Source: "etcd"},
+		{Type: EventTrigger, Values: []string{"scully"}, Source: "etcd"},
+		{Type: EventTrigger, Values: []string{"skinner"}, Source: "etcd"},
+		{Type: EventTrigger, Values: []string{"mulder"}, Source: "etcd"},
+		{Type: EventTrigger, Values: []string{"scully"}, Source: "etcd"},
 	}
 
 	for i := range events {
@@ -323,25 +328,25 @@ func eventTest(t *testing.T, want []Event) {
 
 func TestRemoveNextTrigger(t *testing.T) {
 	eventTest(t, []Event{
-		{Type: EventAdd, Values: []string{"mulder"}},
-		{Type: EventAdd, Values: []string{"scully"}},
-		{Type: EventAdd, Values: []string{"skinner"}},
-		{Type: EventTrigger, Values: []string{"mulder"}},
-		{Type: EventTrigger, Values: []string{"scully"}},
-		{Type: EventRemove, Values: []string{"skinner"}},
-		{Type: EventTrigger, Values: []string{"mulder"}},
+		{Type: EventAdd, Values: []string{"mulder"}, Source: "etcd"},
+		{Type: EventAdd, Values: []string{"scully"}, Source: "etcd"},
+		{Type: EventAdd, Values: []string{"skinner"}, Source: "etcd"},
+		{Type: EventTrigger, Values: []string{"mulder"}, Source: "etcd"},
+		{Type: EventTrigger, Values: []string{"scully"}, Source: "etcd"},
+		{Type: EventRemove, Values: []string{"skinner"}, Source: "etcd"},
+		{Type: EventTrigger, Values: []string{"mulder"}, Source: "etcd"},
 	})
 }
 
 func TestWatchAndAddAfter(t *testing.T) {
 	eventTest(t, []Event{
-		{Type: EventAdd, Values: []string{"byers"}},
-		{Type: EventAdd, Values: []string{"frohike"}},
-		{Type: EventTrigger, Values: []string{"byers"}},
-		{Type: EventAdd, Values: []string{"langly"}},
-		{Type: EventTrigger, Values: []string{"frohike"}},
-		{Type: EventTrigger, Values: []string{"langly"}},
-		{Type: EventTrigger, Values: []string{"byers"}},
+		{Type: EventAdd, Values: []string{"byers"}, Source: "etcd"},
+		{Type: EventAdd, Values: []string{"frohike"}, Source: "etcd"},
+		{Type: EventTrigger, Values: []string{"byers"}, Source: "etcd"},
+		{Type: EventAdd, Values: []string{"langly"}, Source: "etcd"},
+		{Type: EventTrigger, Values: []string{"frohike"}, Source: "etcd"},
+		{Type: EventTrigger, Values: []string{"langly"}, Source: "etcd"},
+		{Type: EventTrigger, Values: []string{"byers"}, Source: "etcd"},
 	})
 }
 
@@ -366,7 +371,7 @@ func TestWatchAfterAdd(t *testing.T) {
 	wc := ring.Watch(ctx, "test", 1, 5, "")
 
 	got := <-wc
-	want := Event{Type: EventTrigger, Values: []string{"fowley"}}
+	want := Event{Type: EventTrigger, Values: []string{"fowley"}, Source: "etcd"}
 
 	if !reflect.DeepEqual(got, want) {
 		t.Fatalf("bad event: got %v, want %v", got, want)
