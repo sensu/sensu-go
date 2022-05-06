@@ -10,6 +10,7 @@ import (
 	"os"
 	"os/signal"
 	"path/filepath"
+	"reflect"
 	"runtime"
 	"strings"
 	"syscall"
@@ -163,6 +164,11 @@ var (
 // to initialize the backend
 type InitializeFunc func(context.Context, *backend.Config) (*backend.Backend, error)
 
+func anyConfig(cfg backend.EtcdConfig) bool {
+	var zero backend.EtcdConfig
+	return !reflect.DeepEqual(cfg, zero)
+}
+
 // StartCommand ...
 func StartCommand(initialize InitializeFunc) *cobra.Command {
 	var setupErr error
@@ -276,6 +282,9 @@ func StartCommand(initialize InitializeFunc) *cobra.Command {
 			}
 			if flag := cmd.Flags().Lookup(flagAnnotations); flag != nil && flag.Changed {
 				cfg.Annotations = annotations
+			}
+			if cfg.Store.ConfigurationStore != "etcd" && anyConfig(cfg.Store.EtcdConfigurationStore) {
+				return errors.New("etcd configuration specified, but config-store is not etcd")
 			}
 
 			// Sensu APIs TLS config
