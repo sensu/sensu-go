@@ -101,6 +101,9 @@ type Event struct {
 
 	// Err is any error that occurred while processing the event.
 	Err error
+
+	// Source is the notification source
+	Source string
 }
 
 // Ring is a circular queue of items that are cooperatively iterated over by one
@@ -534,7 +537,7 @@ func (r *Ring) startWatchers(ctx context.Context, ch chan Event, name string, va
 
 func notifyClosing(ctx context.Context, ch chan<- Event) {
 	select {
-	case ch <- Event{Type: EventClosing}:
+	case ch <- Event{Type: EventClosing, Source: "etcd"}:
 	case <-ctx.Done():
 	}
 	close(ch)
@@ -680,6 +683,7 @@ func notifyAddRemove(ch chan<- Event, response clientv3.WatchResponse) {
 		ch <- Event{
 			Type:   eventType,
 			Values: []string{path.Base(string(event.Kv.Key))},
+			Source: "etcd",
 		}
 	}
 }
@@ -699,6 +703,7 @@ func notifyTrigger(ch chan<- Event, items []*mvccpb.KeyValue) {
 	event := Event{
 		Type:   EventTrigger,
 		Values: values,
+		Source: "etcd",
 	}
 	ch <- event
 }

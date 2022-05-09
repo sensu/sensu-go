@@ -7,6 +7,9 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
 
+### Fixed
+- Print the correct round robin scheduler source (etcd or postgres).
+
 ## [6.7.1] - 2022-04-28
 
 ### Changed
