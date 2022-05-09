@@ -7,6 +7,12 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
 
+### Added
+- Added the `etcd-unsafe-no-fsync` backend configuration option,
+making it possible to run a sensu-backend with an embedded etcd node
+for testing and development without placing lots of load on the file
+system.
+
 ### Fixed
 - Print the correct round robin scheduler source (etcd or postgres).
 
