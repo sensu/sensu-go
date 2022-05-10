@@ -275,6 +275,9 @@ func newClient(ctx context.Context, config *Config, backend *Backend) (*clientv3
 		cfg.MaxRequestBytes = config.EtcdMaxRequestBytes
 	}
 
+	// Unsafe config
+	cfg.UnsafeNoFsync = config.EtcdUnsafeNoFsync
+
 	// Start etcd
 	e, err := etcd.NewEtcd(cfg)
 	if err != nil {

@@ -104,6 +104,8 @@ type Config struct {
 
 	LogLevel       string
 	ClientLogLevel string
+
+	UnsafeNoFsync bool
 }
 
 // TLSInfo wraps etcd transport TLSInfo
@@ -273,6 +275,9 @@ func NewEtcd(config *Config) (*Etcd, error) {
 		cfg.LogLevel = config.LogLevel
 		logutil.DefaultZapLoggerConfig.Level.SetLevel(LogLevelToZap(config.LogLevel))
 	}
+
+	// Unsafe options.
+	cfg.UnsafeNoFsync = config.UnsafeNoFsync
 
 	e, err := embed.StartEtcd(cfg)
 	if err != nil {
