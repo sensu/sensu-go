@@ -24,7 +24,6 @@ func main() {
 	rootCmd.AddCommand(cmd.StartCommand(backend.Initialize))
 	rootCmd.AddCommand(cmd.VersionCommand())
 	rootCmd.AddCommand(cmd.InitCommand())
-	rootCmd.AddCommand(cmd.UpgradeCommand())
 
 	if err := rootCmd.Execute(); err != nil {
 		if err == seeds.ErrAlreadyInitialized {

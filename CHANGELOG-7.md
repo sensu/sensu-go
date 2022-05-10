@@ -16,9 +16,15 @@ software is upgraded when there are active keepalive failures.
 
 ### Added
 - Developer mode can now be enabled with the --dev flag.
+- Added sensu-backend configuration for postgresql.
+- Added configuration store selector to sensu-backend.
 
 ### Changed
 - Changed parameters for `sensuctl cluster-role create` to be plural
 - Deregistration events are now silenced if a silenced entry exists matching the
 entity subscriptions and/or a check named `deregistration`.
 - Upgraded Go version from 1.17.1 to 1.18.1.
+- Changed sensu-backend etcd configuration options.
+
+### Removed
+- Removed sensu-backend upgrade command. May make an appearance again in later versions.

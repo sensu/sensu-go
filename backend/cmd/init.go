@@ -103,7 +103,28 @@ func InitCommand() *cobra.Command {
 			}
 
 			cfg := &backend.Config{
-				EtcdClientURLs: viper.GetStringSlice(flagEtcdClientURLs),
+				Store: backend.StoreConfig{
+					ConfigurationStore: viper.GetString(flagConfigStore),
+					PostgresConfigurationStore: backend.PostgresConfig{
+						DSN: viper.GetString(flagPGConfigStoreDSN),
+					},
+					PostgresStateStore: backend.PostgresConfig{
+						DSN: viper.GetString(flagPGStateStoreDSN),
+					},
+					EtcdConfigurationStore: backend.EtcdConfig{
+						ClientTLSInfo: etcd.TLSInfo{
+							CertFile:       viper.GetString(flagEtcdConfigStoreCertFile),
+							KeyFile:        viper.GetString(flagEtcdConfigStoreKeyFile),
+							TrustedCAFile:  viper.GetString(flagEtcdConfigStoreCACert),
+							ClientCertAuth: viper.GetBool(flagEtcdConfigStoreClientCertAuth),
+						},
+						URLs:              viper.GetStringSlice(flagEtcdConfigStoreURLs),
+						Username:          viper.GetString(envEtcdConfigStoreUsername),
+						Password:          viper.GetString(envEtcdConfigStorePassword),
+						LogLevel:          viper.GetString(flagEtcdConfigStoreLogLevel),
+						UseEmbeddedClient: viper.GetBool(flagDevMode),
+					},
+				},
 			}
 
 			// Sensu APIs TLS config
@@ -113,8 +134,8 @@ func InitCommand() *cobra.Command {
 			trustedCAFile := viper.GetString(flagTrustedCAFile)
 
 			// Optional username/password auth
-			etcdClientUsername := viper.GetString(envEtcdClientUsername)
-			etcdClientPassword := viper.GetString(envEtcdClientPassword)
+			etcdClientUsername := viper.GetString(envEtcdConfigStoreUsername)
+			etcdClientPassword := viper.GetString(envEtcdConfigStorePassword)
 
 			if certFile != "" && keyFile != "" {
 				cfg.TLS = &corev2.TLSOptions{
@@ -129,22 +150,12 @@ func InitCommand() *cobra.Command {
 					flagCertFile, flagKeyFile)
 			}
 
-			// Etcd TLS config
-			cfg.EtcdClientTLSInfo = etcd.TLSInfo{
-				CertFile:       viper.GetString(flagEtcdCertFile),
-				KeyFile:        viper.GetString(flagEtcdKeyFile),
-				TrustedCAFile:  viper.GetString(flagEtcdTrustedCAFile),
-				ClientCertAuth: viper.GetBool(flagEtcdClientCertAuth),
-			}
-
 			// Convert the TLS config into etcd's transport.TLSInfo
-			tlsInfo := (transport.TLSInfo)(cfg.EtcdClientTLSInfo)
+			tlsInfo := (transport.TLSInfo)(cfg.Store.EtcdConfigurationStore.ClientTLSInfo)
 			tlsConfig, err := tlsInfo.ClientConfig()
 			if err != nil {
 				return err
 			}
-
-			clientURLs := viper.GetStringSlice(flagEtcdClientURLs)
 
 			timeout := viper.GetDuration(flagTimeout)
 			if timeout < 1*time.Second {
@@ -179,6 +190,13 @@ func InitCommand() *cobra.Command {
 
 			if err := initConfig.Validate(); err != nil {
 				return err
+			}
+
+			var clientURLs []string
+			if viper.GetBool(flagDevMode) {
+				clientURLs = []string{"http://127.0.0.1:2379"}
+			} else {
+				clientURLs = viper.GetStringSlice(flagEtcdConfigStoreURLs)
 			}
 
 			// Make sure at least one of the provided endpoints is reachable. This is
@@ -238,6 +256,7 @@ func InitCommand() *cobra.Command {
 	cmd.Flags().String(flagTimeout, defaultTimeout, "duration to wait before a connection attempt to etcd is considered failed (must be >= 1s)")
 	cmd.Flags().Bool(flagWait, false, "continuously retry to establish a connection to etcd until it is successful")
 	cmd.Flags().String(flagInitAdminAPIKey, "", "cluster admin API key")
+	cmd.Flags().Bool(flagDevMode, viper.GetBool(flagDevMode), "sensu-backend is running in dev mode")
 
 	setupErr = handleConfig(cmd, os.Args[1:], false)
 

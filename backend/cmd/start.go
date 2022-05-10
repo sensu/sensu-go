@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -9,6 +10,7 @@ import (
 	"os"
 	"os/signal"
 	"path/filepath"
+	"reflect"
 	"runtime"
 	"strings"
 	"syscall"
@@ -70,19 +72,28 @@ const (
 	flagAnnotations           = "annotations"
 	flagDevMode               = "dev"
 
+	// config store selector (etcd, postgres)
+	flagConfigStore = "config-store"
+
+	// Postgres config store
+	flagPGConfigStoreDSN = "pg-config-store-dsn"
+
+	// Postgres state store
+	flagPGStateStoreDSN = "pg-state-store-dsn"
+
 	// Etcd flag constants
-	flagEtcdClientURLs     = "etcd-client-urls"
-	flagEtcdClientLogLevel = "etcd-client-log-level"
+	flagEtcdConfigStoreURLs     = "etcd-config-store-urls"
+	flagEtcdConfigStoreLogLevel = "etcd-config-store-log-level"
 
 	// Etcd TLS flag constants
-	flagEtcdCertFile       = "etcd-cert-file"
-	flagEtcdKeyFile        = "etcd-key-file"
-	flagEtcdClientCertAuth = "etcd-client-cert-auth"
-	flagEtcdTrustedCAFile  = "etcd-trusted-ca-file"
+	flagEtcdConfigStoreCertFile       = "etcd-config-store-cert-file"
+	flagEtcdConfigStoreKeyFile        = "etcd-config-store-key-file"
+	flagEtcdConfigStoreClientCertAuth = "etcd-config-store-client-cert-auth"
+	flagEtcdConfigStoreCACert         = "etcd-config-store-ca-cert"
 
 	// Etcd Client Auth Env vars
-	envEtcdClientUsername = "etcd-client-username"
-	envEtcdClientPassword = "etcd-client-password"
+	envEtcdConfigStoreUsername = "etcd-config-store-username"
+	envEtcdConfigStorePassword = "etcd-config-store-password"
 
 	// Metric logging flags
 	flagDisablePlatformMetrics         = "disable-platform-metrics"
@@ -121,7 +132,16 @@ General Flags:
 {{ $flags := categoryFlags "" .LocalFlags }}{{ $flags.FlagUsages | trimTrailingWhitespaces}}
 
 Store Flags:
-{{ $storeFlags := categoryFlags "store" .LocalFlags }}{{ $storeFlags.FlagUsages | trimTrailingWhitespaces}}{{end}}{{if .HasAvailableInheritedFlags}}
+{{ $storeFlags := categoryFlags "store" .LocalFlags }}{{ $storeFlags.FlagUsages | trimTrailingWhitespaces}}
+
+Postgresql State Store Flags:
+{{ $pgstateflags := categoryFlags "pgstate" .LocalFlags }}{{ $pgstateflags.FlagUsages | trimTrailingWhitespaces }}
+
+Postgresql Configuration Store Flags (--config-store postgres):
+{{ $pgcfgflags := categoryFlags "pgconfig" .LocalFlags }}{{ $pgcfgflags.FlagUsages | trimTrailingWhitespaces }}
+
+Etcd Configuration Store Flags (--config-store etcd):
+{{ $etcdflags := categoryFlags "etcdconfig" .LocalFlags }}{{ $etcdflags.FlagUsages | trimTrailingWhitespaces }}{{ end }}{{if .HasAvailableInheritedFlags}}
 
 Global Flags:
 {{.InheritedFlags.FlagUsages | trimTrailingWhitespaces}}{{end}}{{if .HasHelpSubCommands}}
@@ -144,6 +164,11 @@ var (
 // to initialize the backend
 type InitializeFunc func(context.Context, *backend.Config) (*backend.Backend, error)
 
+func anyConfig(cfg backend.EtcdConfig) bool {
+	var zero backend.EtcdConfig
+	return !reflect.DeepEqual(cfg, zero)
+}
+
 // StartCommand ...
 func StartCommand(initialize InitializeFunc) *cobra.Command {
 	var setupErr error
@@ -165,6 +190,18 @@ func StartCommand(initialize InitializeFunc) *cobra.Command {
 			}
 			logrus.SetLevel(level)
 
+			devMode := viper.GetBool(flagDevMode)
+			stateStore := "postgres"
+			configStore := viper.GetString(flagConfigStore)
+			if devMode {
+				stateStore = "dev"
+				configStore = "dev"
+			}
+
+			if configStore == "postgres" {
+				return errors.New("postgres config store not supported yet")
+			}
+
 			cfg := &backend.Config{
 				AgentHost:             viper.GetString(flagAgentHost),
 				AgentPort:             viper.GetInt(flagAgentPort),
@@ -184,11 +221,7 @@ func StartCommand(initialize InitializeFunc) *cobra.Command {
 				CacheDir:              viper.GetString(flagCacheDir),
 				StateDir:              viper.GetString(flagStateDir),
 
-				EtcdClientURLs:                 viper.GetStringSlice(flagEtcdClientURLs),
-				EtcdClientLogLevel:             viper.GetString(flagEtcdClientLogLevel),
-				EtcdClientUsername:             viper.GetString(envEtcdClientUsername),
-				EtcdClientPassword:             viper.GetString(envEtcdClientPassword),
-				DevMode:                        viper.GetBool(flagDevMode),
+				DevMode:                        devMode,
 				Labels:                         viper.GetStringMapString(flagLabels),
 				Annotations:                    viper.GetStringMapString(flagAnnotations),
 				DisablePlatformMetrics:         viper.GetBool(flagDisablePlatformMetrics),
@@ -198,6 +231,50 @@ func StartCommand(initialize InitializeFunc) *cobra.Command {
 				EventLogBufferWait:             viper.GetDuration(flagEventLogBufferWait),
 				EventLogFile:                   viper.GetString(flagEventLogFile),
 				EventLogParallelEncoders:       viper.GetBool(flagEventLogParallelEncoders),
+
+				Store: backend.StoreConfig{
+					ConfigurationStore: configStore,
+					StateStore:         stateStore,
+					PostgresConfigurationStore: backend.PostgresConfig{
+						DSN: viper.GetString(flagPGConfigStoreDSN),
+					},
+					PostgresStateStore: backend.PostgresConfig{
+						DSN: viper.GetString(flagPGStateStoreDSN),
+					},
+					EtcdConfigurationStore: backend.EtcdConfig{
+						ClientTLSInfo: etcd.TLSInfo{
+							CertFile:       viper.GetString(flagEtcdConfigStoreCertFile),
+							KeyFile:        viper.GetString(flagEtcdConfigStoreKeyFile),
+							TrustedCAFile:  viper.GetString(flagEtcdConfigStoreCACert),
+							ClientCertAuth: viper.GetBool(flagEtcdConfigStoreClientCertAuth),
+						},
+						URLs:              viper.GetStringSlice(flagEtcdConfigStoreURLs),
+						Username:          viper.GetString(envEtcdConfigStoreUsername),
+						Password:          viper.GetString(envEtcdConfigStorePassword),
+						LogLevel:          viper.GetString(flagEtcdConfigStoreLogLevel),
+						UseEmbeddedClient: viper.GetBool(flagDevMode),
+					},
+				},
+			}
+
+			if cfg.DevMode && cfg.CacheDir == "" {
+				var err error
+				cfg.CacheDir, err = os.MkdirTemp("", "sensu-cache")
+				if err != nil {
+					return err
+				}
+			} else if cfg.CacheDir == "" {
+				return errors.New("cache dir not set")
+			}
+
+			if cfg.DevMode && cfg.StateDir == "" {
+				var err error
+				cfg.StateDir, err = os.MkdirTemp("", "sensu-state")
+				if err != nil {
+					return err
+				}
+			} else if cfg.StateDir == "" {
+				return errors.New("state dir not set")
 			}
 
 			if flag := cmd.Flags().Lookup(flagLabels); flag != nil && flag.Changed {
@@ -205,6 +282,9 @@ func StartCommand(initialize InitializeFunc) *cobra.Command {
 			}
 			if flag := cmd.Flags().Lookup(flagAnnotations); flag != nil && flag.Changed {
 				cfg.Annotations = annotations
+			}
+			if cfg.Store.ConfigurationStore != "etcd" && anyConfig(cfg.Store.EtcdConfigurationStore) {
+				return errors.New("etcd configuration specified, but config-store is not etcd")
 			}
 
 			// Sensu APIs TLS config
@@ -233,14 +313,6 @@ func StartCommand(initialize InitializeFunc) *cobra.Command {
 					"dashboard tls configuration error, both flags --%s and --%s are required",
 					flagDashboardCertFile, flagDashboardKeyFile,
 				)
-			}
-
-			// Etcd TLS config
-			cfg.EtcdClientTLSInfo = etcd.TLSInfo{
-				CertFile:       viper.GetString(flagEtcdCertFile),
-				KeyFile:        viper.GetString(flagEtcdKeyFile),
-				TrustedCAFile:  viper.GetString(flagEtcdTrustedCAFile),
-				ClientCertAuth: viper.GetBool(flagEtcdClientCertAuth),
 			}
 
 			ctx, cancel := context.WithCancel(context.Background())
@@ -317,8 +389,6 @@ func handleConfig(cmd *cobra.Command, arguments []string, server bool) error {
 		viper.SetDefault(flagDashboardKeyFile, "")
 		viper.SetDefault(flagDashboardWriteTimeout, "15s")
 		viper.SetDefault(flagDeregistrationHandler, "")
-		viper.SetDefault(flagCacheDir, path.SystemCacheDir("sensu-backend"))
-		viper.SetDefault(flagStateDir, path.SystemDataDir("sensu-backend"))
 		viper.SetDefault(flagCertFile, "")
 		viper.SetDefault(flagKeyFile, "")
 		viper.SetDefault(flagTrustedCAFile, "")
@@ -341,7 +411,7 @@ func handleConfig(cmd *cobra.Command, arguments []string, server bool) error {
 	}
 
 	// Etcd defaults
-	viper.SetDefault(flagEtcdClientLogLevel, etcd.DefaultClientLogLevel)
+	viper.SetDefault(flagEtcdConfigStoreLogLevel, etcd.DefaultClientLogLevel)
 
 	// Merge in flag set so that it appears in command usage
 	flags := flagSet(server)
@@ -387,21 +457,30 @@ func flagSet(server bool) *pflag.FlagSet {
 	configFileDescription := fmt.Sprintf("path to sensu-backend config file (default %q)", configFileDefaultLocation)
 	flagSet.StringP(flagConfigFile, "c", "", configFileDescription)
 
+	flagSet.String(flagConfigStore, viper.GetString(flagConfigStore), "configuration store type [etcd, postgres]")
+	_ = flagSet.SetAnnotation(flagConfigStore, "categories", []string{"store"})
+
+	flagSet.String(flagPGConfigStoreDSN, viper.GetString(flagPGConfigStoreDSN), "postgresql configuration store DSN")
+	_ = flagSet.SetAnnotation(flagPGConfigStoreDSN, "categories", []string{"pgconfig"})
+
+	flagSet.String(flagPGStateStoreDSN, viper.GetString(flagPGStateStoreDSN), "postgresql state store DSN")
+	_ = flagSet.SetAnnotation(flagPGStateStoreDSN, "categories", []string{"pgstate"})
+
 	// Etcd client/server flags
-	flagSet.String(flagEtcdClientLogLevel, viper.GetString(flagEtcdClientLogLevel), "etcd client logging level [panic, fatal, error, warn, info, debug]")
-	_ = flagSet.SetAnnotation(flagEtcdClientLogLevel, "categories", []string{"store"})
+	flagSet.String(flagEtcdConfigStoreLogLevel, viper.GetString(flagEtcdConfigStoreLogLevel), "etcd client logging level [panic, fatal, error, warn, info, debug]")
+	_ = flagSet.SetAnnotation(flagEtcdConfigStoreLogLevel, "categories", []string{"etcdconfig"})
 
 	// Etcd client/server TLS flags
-	flagSet.String(flagEtcdCertFile, viper.GetString(flagEtcdCertFile), "path to the client server TLS cert file")
-	_ = flagSet.SetAnnotation(flagEtcdCertFile, "categories", []string{"store"})
-	flagSet.String(flagEtcdKeyFile, viper.GetString(flagEtcdKeyFile), "path to the client server TLS key file")
-	_ = flagSet.SetAnnotation(flagEtcdKeyFile, "categories", []string{"store"})
-	flagSet.Bool(flagEtcdClientCertAuth, viper.GetBool(flagEtcdClientCertAuth), "enable client cert authentication")
-	_ = flagSet.SetAnnotation(flagEtcdClientCertAuth, "categories", []string{"store"})
-	flagSet.String(flagEtcdTrustedCAFile, viper.GetString(flagEtcdTrustedCAFile), "path to the client server TLS trusted CA cert file")
-	_ = flagSet.SetAnnotation(flagEtcdTrustedCAFile, "categories", []string{"store"})
-	flagSet.String(flagEtcdClientURLs, viper.GetString(flagEtcdClientURLs), "client URLs to use when operating as an etcd client")
-	_ = flagSet.SetAnnotation(flagEtcdClientURLs, "categories", []string{"store"})
+	flagSet.String(flagEtcdConfigStoreCertFile, viper.GetString(flagEtcdConfigStoreCertFile), "path to the client server TLS cert file")
+	_ = flagSet.SetAnnotation(flagEtcdConfigStoreCertFile, "categories", []string{"etcdconfig"})
+	flagSet.String(flagEtcdConfigStoreKeyFile, viper.GetString(flagEtcdConfigStoreKeyFile), "path to the client server TLS key file")
+	_ = flagSet.SetAnnotation(flagEtcdConfigStoreKeyFile, "categories", []string{"etcdconfig"})
+	flagSet.Bool(flagEtcdConfigStoreClientCertAuth, viper.GetBool(flagEtcdConfigStoreClientCertAuth), "enable client cert authentication")
+	_ = flagSet.SetAnnotation(flagEtcdConfigStoreClientCertAuth, "categories", []string{"etcdconfig"})
+	flagSet.String(flagEtcdConfigStoreCACert, viper.GetString(flagEtcdConfigStoreCACert), "path to the client server TLS trusted CA cert file")
+	_ = flagSet.SetAnnotation(flagEtcdConfigStoreCACert, "categories", []string{"etcdconfig"})
+	flagSet.String(flagEtcdConfigStoreURLs, viper.GetString(flagEtcdConfigStoreURLs), "client URLs to use when operating as an etcd client")
+	_ = flagSet.SetAnnotation(flagEtcdConfigStoreURLs, "categories", []string{"etcdconfig"})
 
 	if server {
 		// Main Flags

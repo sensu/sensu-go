@@ -44,6 +44,39 @@ const (
 	FlagJWTPublicKeyFile = "jwt-public-key-file"
 )
 
+type StoreConfig struct {
+	// ConfigurationStore specifies the selected configuration store to use (either "postgres", "etcd", or "dev")
+	ConfigurationStore string
+
+	// StateStore specifies the selected state store to use (either "postgres" or "dev")
+	StateStore string
+
+	// PostgresConfigurationStore contains postgres configuration store details. It's only valid to set this when
+	// ConfigurationStore is set to be "postgres".
+	PostgresConfigurationStore PostgresConfig
+
+	// EtcdConfigurationStore contains etcd configuration store details. It's only valid to set this when
+	// ConfigurationStore is set to be "etcd".
+	EtcdConfigurationStore EtcdConfig
+
+	// PostgresStateStore contains postgres state store details. It's only valid to set this when
+	// StateStore is set to be "postgres".
+	PostgresStateStore PostgresConfig
+}
+
+type EtcdConfig struct {
+	ClientTLSInfo     etcd.TLSInfo
+	URLs              []string
+	Username          string
+	Password          string
+	LogLevel          string
+	UseEmbeddedClient bool
+}
+
+type PostgresConfig struct {
+	DSN string
+}
+
 // Config specifies a Backend configuration.
 type Config struct {
 	// Backend Configuration
@@ -87,18 +120,9 @@ type Config struct {
 	// DevMode starts up a single-node embedded etcd server when enabled.
 	DevMode bool
 
-	EtcdClientURLs        []string
-	EtcdClientUsername    string
-	EtcdClientPassword    string
-	EtcdUseEmbeddedClient bool
-
-	// Etcd TLS configuration
-	EtcdClientTLSInfo etcd.TLSInfo
-
 	TLS *corev2.TLSOptions
 
-	LogLevel           string
-	EtcdClientLogLevel string
+	LogLevel string
 
 	LicenseGetter licensing.Getter
 
@@ -110,4 +134,6 @@ type Config struct {
 	EventLogBufferWait       time.Duration
 	EventLogFile             string
 	EventLogParallelEncoders bool
+
+	Store StoreConfig
 }
