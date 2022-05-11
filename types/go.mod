@@ -1,12 +1,6 @@
 module github.com/sensu/sensu-go/types
 
-go 1.13
-
-replace (
-	github.com/sensu/sensu-go => ../
-	github.com/sensu/sensu-go/api/core/v2 => ../api/core/v2
-	github.com/sensu/sensu-go/api/core/v3 => ../api/core/v3
-)
+go 1.16
 
 require (
 	github.com/blang/semver/v4 v4.0.0

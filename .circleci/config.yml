@@ -37,6 +37,20 @@ executors:
       GOPROXY: "https://proxy.golang.org"
 
 jobs:
+  assert-no-replace:
+    executor: go
+    steps:
+      - checkout
+      - run:
+          name: Check For Replace Directives
+          command: |
+            replaces=$(grep -R --include="go.mod" "^replace " || :)
+            if [ -n "$replaces" ]
+            then
+              echo "replace directives not allowed"
+              echo "$replaces"
+              exit 1
+            fi
   test:
     executor: go-with-postgres
     steps:
@@ -102,6 +116,7 @@ workflows:
       - test-module:
           name: types
           path: types
+      - assert-no-replace
   build:
     jobs:
       # darwin/amd64
