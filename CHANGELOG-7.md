@@ -29,6 +29,7 @@ be marked as global resources.
 entity subscriptions and/or a check named `deregistration`.
 - Upgraded Go version from 1.17.1 to 1.18.1.
 - Changed sensu-backend etcd configuration options.
+- Upgraded etcd version from 3.5.2 to 3.5.4.
 
 ### Removed
 - Removed sensu-backend upgrade command. May make an appearance again in later versions.
