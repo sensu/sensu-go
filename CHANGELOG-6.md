@@ -16,6 +16,9 @@ system.
 ### Fixed
 - Print the correct round robin scheduler source (etcd or postgres).
 
+### Changed
+- Upgraded etcd version from 3.5.2 to 3.5.4.
+
 ## [6.7.1] - 2022-04-28
 
 ### Changed
