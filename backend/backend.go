@@ -14,6 +14,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/sensu/sensu-go/backend/resource"
 	"github.com/spf13/viper"
+	"go.etcd.io/etcd/client/pkg/v3/logutil"
 	"go.etcd.io/etcd/client/pkg/v3/transport"
 	clientv3 "go.etcd.io/etcd/client/v3"
 	"golang.org/x/time/rate"
@@ -221,7 +222,7 @@ func newClient(ctx context.Context, config *Config, backend *Backend) (*clientv3
 		}
 
 		// Set etcd client log level
-		logConfig := clientv3.CreateDefaultZapLoggerConfig()
+		logConfig := logutil.DefaultZapLoggerConfig
 		logConfig.Level.SetLevel(etcd.LogLevelToZap(config.EtcdClientLogLevel))
 		clientv3Config.LogConfig = &logConfig
 
