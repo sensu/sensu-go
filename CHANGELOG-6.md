@@ -7,6 +7,8 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
 
+## [6.7.2] - 2022-05-12
+
 ### Added
 - Added the `etcd-unsafe-no-fsync` backend configuration option,
 making it possible to run a sensu-backend with an embedded etcd node
