@@ -16,10 +16,32 @@ sensu_go_build_env: &sensu_go_build_env
         password: $DOCKER_PASSWORD
 
 go_test_env: &sensu_go_test_env
+    executor: go-with-postgres
     resource_class: large
     environment:
       GO111MODULE: 'on'
       GOPROXY: 'https://proxy.golang.org'
+
+executors:
+  go-with-postgres:
+    docker:
+      - image: cimg/go:<< pipeline.parameters.go_version >>
+        auth:
+          username: $DOCKER_USERNAME
+          password: $DOCKER_PASSWORD
+      - image: circleci/postgres:9.5.20-alpine
+        auth:
+          username: $DOCKER_USERNAME
+          password: $DOCKER_PASSWORD
+        environment:
+          POSTGRES_USER: circleci
+          POSTGRES_DB: circleci
+    environment:
+      PG_HOST: localhost
+      PG_USER: circleci
+      PG_URL: "host=localhost port=5432 user=circleci sslmode=disable"
+      GO111MODULE: "on"
+      GOPROXY: "https://proxy.golang.org"
 
 jobs:
   test:
