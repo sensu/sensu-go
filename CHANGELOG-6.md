@@ -10,6 +10,19 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 ### Added
 - GlobalResource interface in core/v3 allows core/v3 resources to
 be marked as global resources.
+## [6.7.2] - 2022-05-12
+
+### Added
+- Added the `etcd-unsafe-no-fsync` backend configuration option,
+making it possible to run a sensu-backend with an embedded etcd node
+for testing and development without placing lots of load on the file
+system.
+
+### Fixed
+- Print the correct round robin scheduler source (etcd or postgres).
+
+### Changed
+- Upgraded etcd version from 3.5.2 to 3.5.4.
 
 ## [6.7.1] - 2022-04-28
 
