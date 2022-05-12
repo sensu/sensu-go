@@ -9,14 +9,13 @@ parameters:
     type: string
     default: "1.18.1"
 
-sensu_go_build_env: &sensu_go_build_env
-  docker:
-    - image: cimg/go:<< pipeline.parameters.go_version >>
-      auth:
-        username: $DOCKER_USERNAME
-        password: $DOCKER_PASSWORD
-
 executors:
+  go:
+    docker:
+      - image: cimg/go:<< pipeline.parameters.go_version >>
+        auth:
+          username: $DOCKER_USERNAME
+          password: $DOCKER_PASSWORD
   go-with-postgres:
     docker:
       - image: cimg/go:<< pipeline.parameters.go_version >>
@@ -37,17 +36,9 @@ executors:
       GO111MODULE: "on"
       GOPROXY: "https://proxy.golang.org"
 
-go_test_env: &sensu_go_test_env
-    resource_class: large
-    environment:
-      GO111MODULE: 'on'
-      GOPROXY: 'https://proxy.golang.org'
-
 jobs:
   test:
     executor: go-with-postgres
-    <<: *sensu_go_build_env
-    <<: *sensu_go_test_env
     steps:
       - checkout
       - go/mod-download-cached
@@ -60,8 +51,7 @@ jobs:
       path:
         type: string
     working_directory: ~/sensu-go/<< parameters.path>>
-    <<: *sensu_go_build_env
-    <<: *sensu_go_test_env
+    executor: go
     steps:
       - checkout:
           path: ~/sensu-go
@@ -69,7 +59,7 @@ jobs:
       - run: go test -p 2 ./...
 
   build:
-    <<: *sensu_go_build_env
+    executor: go
     parameters:
       os:
         type: string
