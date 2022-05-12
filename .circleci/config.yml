@@ -15,13 +15,6 @@ sensu_go_build_env: &sensu_go_build_env
         username: $DOCKER_USERNAME
         password: $DOCKER_PASSWORD
 
-go_test_env: &sensu_go_test_env
-    executor: go-with-postgres
-    resource_class: large
-    environment:
-      GO111MODULE: 'on'
-      GOPROXY: 'https://proxy.golang.org'
-
 executors:
   go-with-postgres:
     docker:
@@ -43,8 +36,15 @@ executors:
       GO111MODULE: "on"
       GOPROXY: "https://proxy.golang.org"
 
+go_test_env: &sensu_go_test_env
+    resource_class: large
+    environment:
+      GO111MODULE: 'on'
+      GOPROXY: 'https://proxy.golang.org'
+
 jobs:
   test:
+    executor: go-with-postgres
     <<: *sensu_go_build_env
     <<: *sensu_go_test_env
     steps:
@@ -65,7 +65,7 @@ jobs:
       - checkout:
           path: ~/sensu-go
       - go/mod-download-cached
-      - run: go test ./...
+      - run: go test -p 2 ./...
 
   build:
     <<: *sensu_go_build_env
