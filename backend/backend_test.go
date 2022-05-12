@@ -85,7 +85,7 @@ func TestBackendHTTPListener(t *testing.T) {
 				DevMode:                true,
 				DisablePlatformMetrics: true,
 				Store: StoreConfig{
-					EtcdConfigurationStore: EtcdConfig{
+					EtcdConfigurationStore: etcdstore.Config{
 						URLs:          []string{clURL},
 						ClientTLSInfo: tlsInfo,
 						LogLevel:      "error",

@@ -4,7 +4,6 @@ import (
 	"context"
 
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
-	"github.com/sensu/sensu-go/backend"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/types"
 )
@@ -14,7 +13,7 @@ type Store struct {
 	store.Store
 	store.EventStore
 	store.EntityStore
-	Config backend.PostgresConfig
+	Config Config
 }
 
 func (s Store) DeleteEventByEntityCheck(ctx context.Context, entity, check string) error {

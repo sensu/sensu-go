@@ -11,6 +11,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/jackc/pgx/v4/pgxpool"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/sensu/sensu-go/backend/resource"
 	"github.com/spf13/viper"
@@ -50,8 +51,8 @@ import (
 	"github.com/sensu/sensu-go/backend/secrets"
 	"github.com/sensu/sensu-go/backend/store"
 	etcdstore "github.com/sensu/sensu-go/backend/store/etcd"
+	"github.com/sensu/sensu-go/backend/store/postgres"
 	storev2 "github.com/sensu/sensu-go/backend/store/v2"
-	etcdstorev2 "github.com/sensu/sensu-go/backend/store/v2/etcdstore"
 	"github.com/sensu/sensu-go/backend/tessend"
 	"github.com/sensu/sensu-go/command"
 	"github.com/sensu/sensu-go/metrics"
@@ -151,8 +152,7 @@ type Backend struct {
 	Etcd                   *etcd.Etcd
 	Store                  store.Store
 	StoreV2                storev2.Interface
-	StoreUpdater           StoreUpdater
-	StoreV2Updater         StoreV2Updater
+	EventStore             store.EventStore
 	RingPool               *ringv2.RingPool
 	GraphQLService         *graphql.Service
 	SecretsProviderManager *secrets.ProviderManager
@@ -167,17 +167,6 @@ type Backend struct {
 	runCtx    context.Context
 	runCancel context.CancelFunc
 	Cfg       *Config
-}
-
-// StoreUpdater offers a way to update an event store to a different
-// implementation in-place.
-type StoreUpdater interface {
-	UpdateStore(to store.Store)
-}
-
-// StoreV2Updater is like StoreUpdater, but works on a storev2.Interface.
-type StoreV2Updater interface {
-	UpdateStore(to storev2.Interface)
 }
 
 func devModeClient(ctx context.Context, config *Config, backend *Backend) (*clientv3.Client, error) {
@@ -283,14 +272,26 @@ func Initialize(ctx context.Context, config *Config) (*Backend, error) {
 		return nil, err
 	}
 
+	pgxConfig, err := pgxpool.ParseConfig(b.Cfg.Store.PostgresStateStore.DSN)
+	if err != nil {
+		return nil, err
+	}
+
+	// Create the event store, which runs on top of postgres
+	db, err := postgres.OpenEvents(b.runCtx, pgxConfig, true)
+	if err != nil {
+		return nil, err
+	}
+	eventStore, err := postgres.NewEventStore(db, b.Store, b.Cfg.Store.PostgresStateStore, 20)
+	if err != nil {
+		return nil, err
+	}
+
 	// Create the store, which lives on top of etcd
 	stor := etcdstore.NewStore(b.Client)
 	b.Store = stor
-	storv2 := etcdstorev2.NewStore(b.Client)
-	var storev2Proxy storev2.Proxy
-	storev2Proxy.UpdateStore(storv2)
-	b.StoreV2 = &storev2Proxy
-	b.StoreV2Updater = &storev2Proxy
+	pgStoreV2 := postgres.NewStoreV2(db, b.Client)
+	b.StoreV2 = pgStoreV2
 
 	// Create the ring pool for round-robin functionality
 	b.RingPool = ringv2.NewRingPool(func(path string) ringv2.Interface {
@@ -306,10 +307,6 @@ func Initialize(ctx context.Context, config *Config) (*Backend, error) {
 	if err := jwt.InitSecret(b.Store); err != nil {
 		return nil, err
 	}
-
-	storeProxy := store.NewStoreProxy(stor)
-	b.StoreUpdater = storeProxy
-	b.Store = storeProxy
 
 	logger.Debug("Registering backend...")
 
@@ -435,7 +432,7 @@ func Initialize(ctx context.Context, config *Config) (*Backend, error) {
 		b.RunContext(),
 		eventd.Config{
 			Store:               b.StoreV2,
-			EventStore:          b.Store,
+			EventStore:          eventStore,
 			Bus:                 bus,
 			LivenessFactory:     liveness.EtcdFactory(b.RunContext(), b.Client),
 			Client:              b.Client,
@@ -493,7 +490,7 @@ func Initialize(ctx context.Context, config *Config) (*Backend, error) {
 		Bus:                   bus,
 		Store:                 b.Store,
 		StoreV2:               b.StoreV2,
-		EventStore:            b.Store,
+		EventStore:            eventStore,
 		LivenessFactory:       liveness.EtcdFactory(b.RunContext(), b.Client),
 		RingPool:              b.RingPool,
 		BufferSize:            viper.GetInt(FlagKeepalivedBufferSize),
@@ -576,7 +573,7 @@ func Initialize(ctx context.Context, config *Config) (*Backend, error) {
 		Bus:                 bus,
 		Store:               b.Store,
 		Storev2:             b.StoreV2,
-		EventStore:          b.Store,
+		EventStore:          eventStore,
 		QueueGetter:         queueGetter,
 		TLS:                 config.TLS,
 		Cluster:             b.Client.Cluster,
@@ -597,7 +594,7 @@ func Initialize(ctx context.Context, config *Config) (*Backend, error) {
 		b.RunContext(),
 		tessend.Config{
 			Store:      b.Store,
-			EventStore: b.Store,
+			EventStore: eventStore,
 			RingPool:   b.RingPool,
 			Client:     b.Client,
 			Bus:        bus,
@@ -629,9 +626,6 @@ func Initialize(ctx context.Context, config *Config) (*Backend, error) {
 }
 
 func (b *Backend) runOnce() error {
-	eCloser := b.StoreUpdater.(closer)
-	defer func() { _ = eCloser.Close() }()
-
 	var derr error
 
 	eg := errGroup{

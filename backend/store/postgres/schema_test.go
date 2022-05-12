@@ -14,7 +14,6 @@ import (
 	"github.com/jackc/pgx/v4/pgxpool"
 	"github.com/lib/pq"
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
-	"github.com/sensu/sensu-go/backend"
 	"github.com/sensu/sensu-go/backend/store"
 )
 
@@ -533,7 +532,7 @@ func TestEventStoreSelectorsMigration(t *testing.T) {
 		if err := upgradeMigration(ctx, db, 3); err != nil {
 			t.Fatal(err)
 		}
-		st, err := NewEventStore(db, nil, backend.PostgresConfig{
+		st, err := NewEventStore(db, nil, Config{
 			DSN: pgURL,
 		}, 1)
 		if err != nil {
@@ -570,7 +569,7 @@ func benchmarkMigrateSelectors(b *testing.B, n int) {
 		if err := upgradeMigration(ctx, db, 3); err != nil {
 			b.Fatal(err)
 		}
-		st, err := NewEventStore(db, nil, backend.PostgresConfig{
+		st, err := NewEventStore(db, nil, Config{
 			DSN: pgURL,
 		}, 1)
 		if err != nil {

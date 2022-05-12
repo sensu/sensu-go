@@ -11,7 +11,6 @@ import (
 	"github.com/jackc/pgx/v4/pgxpool"
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	corev3 "github.com/sensu/sensu-go/api/core/v3"
-	"github.com/sensu/sensu-go/backend"
 	"github.com/sensu/sensu-go/backend/etcd"
 	"github.com/sensu/sensu-go/backend/store"
 	etcdstore "github.com/sensu/sensu-go/backend/store/etcd"
@@ -60,7 +59,7 @@ func testWithStore(t testing.TB, fn func(store.Store)) {
 	if err := upgrade(ctx, db); err != nil {
 		t.Fatal(err)
 	}
-	eventStore, err := NewEventStore(db, nil, backend.PostgresConfig{
+	eventStore, err := NewEventStore(db, nil, Config{
 		DSN: pgURL,
 	}, 100)
 	if err != nil {

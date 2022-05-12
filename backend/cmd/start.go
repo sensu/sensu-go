@@ -17,11 +17,13 @@ import (
 	"time"
 
 	"github.com/sensu/sensu-go/backend/apid/middlewares"
+	"github.com/sensu/sensu-go/backend/store/postgres"
 
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/asset"
 	"github.com/sensu/sensu-go/backend"
 	"github.com/sensu/sensu-go/backend/etcd"
+	etcdstore "github.com/sensu/sensu-go/backend/store/etcd"
 	"github.com/sensu/sensu-go/util/path"
 	stringsutil "github.com/sensu/sensu-go/util/strings"
 	"github.com/sirupsen/logrus"
@@ -164,8 +166,8 @@ var (
 // to initialize the backend
 type InitializeFunc func(context.Context, *backend.Config) (*backend.Backend, error)
 
-func anyConfig(cfg backend.EtcdConfig) bool {
-	var zero backend.EtcdConfig
+func anyConfig(cfg etcdstore.Config) bool {
+	var zero etcdstore.Config
 	return !reflect.DeepEqual(cfg, zero)
 }
 
@@ -235,13 +237,13 @@ func StartCommand(initialize InitializeFunc) *cobra.Command {
 				Store: backend.StoreConfig{
 					ConfigurationStore: configStore,
 					StateStore:         stateStore,
-					PostgresConfigurationStore: backend.PostgresConfig{
+					PostgresConfigurationStore: postgres.Config{
 						DSN: viper.GetString(flagPGConfigStoreDSN),
 					},
-					PostgresStateStore: backend.PostgresConfig{
+					PostgresStateStore: postgres.Config{
 						DSN: viper.GetString(flagPGStateStoreDSN),
 					},
-					EtcdConfigurationStore: backend.EtcdConfig{
+					EtcdConfigurationStore: etcdstore.Config{
 						ClientTLSInfo: etcd.TLSInfo{
 							CertFile:       viper.GetString(flagEtcdConfigStoreCertFile),
 							KeyFile:        viper.GetString(flagEtcdConfigStoreKeyFile),

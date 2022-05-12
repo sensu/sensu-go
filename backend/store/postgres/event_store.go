@@ -13,7 +13,6 @@ import (
 	"github.com/jackc/pgx/v4/pgxpool"
 	"github.com/lib/pq"
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
-	"github.com/sensu/sensu-go/backend"
 	coreMetrics "github.com/sensu/sensu-go/backend/metrics"
 	"github.com/sensu/sensu-go/backend/selector"
 	"github.com/sensu/sensu-go/backend/store"
@@ -32,7 +31,7 @@ var (
 type EventStore struct {
 	db             *pgxpool.Pool
 	coreStore      store.Store
-	postgresConfig backend.PostgresConfig
+	postgresConfig Config
 	batcher        *EventBatcher
 }
 
@@ -99,8 +98,8 @@ func totalStateChange(check *corev2.Check) uint32 {
 // NewEventStore creates a NewEventStore. It prepares several queries for
 // future use. If there is a non-nil error, it is due to query preparation
 // failing.
-func NewEventStore(db *pgxpool.Pool, coreStore store.Store, pg backend.PostgresConfig, producers int) (*EventStore, error) {
-	// TODO add these options to backend.PostgresConfig
+func NewEventStore(db *pgxpool.Pool, coreStore store.Store, pg Config, producers int) (*EventStore, error) {
+	// TODO add these options to postgres.Config
 	//workers := pg.BatchWorkers
 	//if workers == 0 {
 	//	workers = pg.PoolSize * 2

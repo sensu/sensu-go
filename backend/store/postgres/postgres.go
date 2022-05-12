@@ -13,8 +13,6 @@ import (
 // Open opens a new postgresql database for event storage. If the function
 // returns nil error, then the database will be upgraded to the latest schema
 // version, and will be ready to be passed to the NewEventStore function.
-//
-// Deprecated, use OpenEventsWithConfig.
 func OpenEvents(ctx context.Context, config *pgxpool.Config, retryForever bool) (*pgxpool.Pool, error) {
 	backoff := retry.ExponentialBackoff{
 		Ctx:                  ctx,

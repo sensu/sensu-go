@@ -13,7 +13,6 @@ import (
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v4/pgxpool"
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
-	"github.com/sensu/sensu-go/backend"
 	"github.com/sensu/sensu-go/backend/selector"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/stretchr/testify/assert"
@@ -51,7 +50,7 @@ func testWithPostgresEventStore(t *testing.T, fn func(store.EventStore)) {
 	if err := upgrade(ctx, db); err != nil {
 		t.Fatal(err)
 	}
-	store, err := NewEventStore(db, nil, backend.PostgresConfig{
+	store, err := NewEventStore(db, nil, Config{
 		DSN: pgURL,
 	}, 100)
 	if err != nil {
@@ -771,7 +770,7 @@ func TestEventStoreSelectors(t *testing.T) {
 		pgURL = "host=/run/postgresql sslmode=disable"
 	}
 	withPostgres(t, func(ctx context.Context, db *pgxpool.Pool, dsn string) {
-		st, err := NewEventStore(db, nil, backend.PostgresConfig{
+		st, err := NewEventStore(db, nil, Config{
 			DSN: pgURL,
 		}, 1)
 		if err != nil {
