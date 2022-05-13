@@ -18,14 +18,14 @@ import (
 	"github.com/sensu/sensu-go/types"
 )
 
-var entWrapper = NewEnterpriseResourceWrapper(storev2.WrapResource)
+var wrapper = NewResourceWrapper(storev2.WrapResource)
 
 func init() {
 	// This causes storev2.WrapResource to use postgres. Outside of test contexts,
 	// this is does in the store provider, which knows when postgres is being enabled
 	// or disabled.
-	entWrapper.EnablePostgres()
-	storev2.WrapResource = entWrapper.WrapResource
+	wrapper.EnablePostgres()
+	storev2.WrapResource = wrapper.WrapResource
 }
 
 func testWithStore(t testing.TB, fn func(store.Store)) {

@@ -13,7 +13,6 @@ type Store struct {
 	store.Store
 	store.EventStore
 	store.EntityStore
-	Config Config
 }
 
 func (s Store) DeleteEventByEntityCheck(ctx context.Context, entity, check string) error {

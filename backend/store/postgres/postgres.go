@@ -10,10 +10,10 @@ import (
 	"github.com/sensu/sensu-go/util/retry"
 )
 
-// Open opens a new postgresql database for event storage. If the function
+// Open opens a new postgresql database for state storage. If the function
 // returns nil error, then the database will be upgraded to the latest schema
-// version, and will be ready to be passed to the NewEventStore function.
-func OpenEvents(ctx context.Context, config *pgxpool.Config, retryForever bool) (*pgxpool.Pool, error) {
+// version, and will be ready to be used.
+func Open(ctx context.Context, config *pgxpool.Config, retryForever bool) (*pgxpool.Pool, error) {
 	backoff := retry.ExponentialBackoff{
 		Ctx:                  ctx,
 		MaxRetryAttempts:     3,

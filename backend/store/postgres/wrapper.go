@@ -8,19 +8,19 @@ import (
 	"github.com/sensu/sensu-go/backend/store/v2/wrap"
 )
 
-type EnterpriseResourceWrapper struct {
+type ResourceWrapper struct {
 	mu           sync.RWMutex
 	etcdWrapFunc func(corev3.Resource, ...wrap.Option) (storev2.Wrapper, error)
 	pgEnabled    bool
 }
 
-func NewEnterpriseResourceWrapper(wrapFunc func(corev3.Resource, ...wrap.Option) (storev2.Wrapper, error)) *EnterpriseResourceWrapper {
-	return &EnterpriseResourceWrapper{
+func NewResourceWrapper(wrapFunc func(corev3.Resource, ...wrap.Option) (storev2.Wrapper, error)) *ResourceWrapper {
+	return &ResourceWrapper{
 		etcdWrapFunc: wrapFunc,
 	}
 }
 
-func (e *EnterpriseResourceWrapper) WrapResource(resource corev3.Resource, opts ...wrap.Option) (storev2.Wrapper, error) {
+func (e *ResourceWrapper) WrapResource(resource corev3.Resource, opts ...wrap.Option) (storev2.Wrapper, error) {
 	e.mu.RLock()
 	defer e.mu.RUnlock()
 	if e.pgEnabled {
@@ -29,19 +29,19 @@ func (e *EnterpriseResourceWrapper) WrapResource(resource corev3.Resource, opts 
 	return e.etcdWrapFunc(resource, opts...)
 }
 
-func (e *EnterpriseResourceWrapper) EnablePostgres() {
+func (e *ResourceWrapper) EnablePostgres() {
 	e.mu.Lock()
 	defer e.mu.Unlock()
 	e.pgEnabled = true
 }
 
-func (e *EnterpriseResourceWrapper) DisablePostgres() {
+func (e *ResourceWrapper) DisablePostgres() {
 	e.mu.Lock()
 	defer e.mu.Unlock()
 	e.pgEnabled = false
 }
 
-func (e *EnterpriseResourceWrapper) wrapWithPostgres(resource corev3.Resource, opts ...wrap.Option) (storev2.Wrapper, error) {
+func (e *ResourceWrapper) wrapWithPostgres(resource corev3.Resource, opts ...wrap.Option) (storev2.Wrapper, error) {
 	switch value := resource.(type) {
 	case *corev3.EntityState:
 		return WrapEntityState(value), nil

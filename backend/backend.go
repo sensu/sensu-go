@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/jackc/pgx/v4/pgxpool"
+	"github.com/lib/pq"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/sensu/sensu-go/backend/resource"
 	"github.com/spf13/viper"
@@ -59,6 +60,18 @@ import (
 	"github.com/sensu/sensu-go/system"
 	"github.com/sensu/sensu-go/util/retry"
 )
+
+var pgWrapper = postgres.NewResourceWrapper(storev2.WrapResource)
+
+func init() {
+	// Replace the etcd resource wrapper with our postgres resource wrapper.
+	// This is technical debt - it's a package global and not safe to change
+	// except under specific conditions.
+	//
+	// This should go away once we add the postgres configuration store.
+	pgWrapper.EnablePostgres()
+	storev2.WrapResource = pgWrapper.WrapResource
+}
 
 type ErrStartup struct {
 	Err  error
@@ -174,7 +187,11 @@ func devModeClient(ctx context.Context, config *Config, backend *Backend) (*clie
 	// the Wizard bus, which requires etcd to be started.
 	cfg := etcd.NewConfig()
 	cfg.DataDir = config.StateDir
-	cfg.ListenClientURLs = []string{"http://127.0.0.1:2379"}
+	if urls := config.Store.EtcdConfigurationStore.URLs; len(urls) > 0 {
+		cfg.ListenClientURLs = urls
+	} else {
+		cfg.ListenClientURLs = []string{"http://127.0.0.1:2379"}
+	}
 	cfg.ListenPeerURLs = []string{"http://127.0.0.1:0"}
 	cfg.InitialCluster = "dev=http://127.0.0.1:0"
 	cfg.InitialClusterState = "new"
@@ -255,6 +272,21 @@ func newClient(ctx context.Context, config *Config, backend *Backend) (*clientv3
 	return client, nil
 }
 
+func errorReporter(event pq.ListenerEventType, err error) {
+	if err != nil {
+		logger.WithError(err).WithField("event", event).Error("postgres notification error")
+		return
+	}
+	switch event {
+	case 0:
+		logger.Info("postgres NOTIFY listener connected")
+	case 1:
+		logger.Info("postgres NOTIFY listener disconnected")
+	case 2:
+		logger.Info("postgres NOTIFY listener reconnected")
+	}
+}
+
 // Initialize instantiates a Backend struct with the provided config, by
 // configuring etcd and establishing a list of daemons, which constitute our
 // backend. The daemons will later be started according to their position in the
@@ -272,13 +304,14 @@ func Initialize(ctx context.Context, config *Config) (*Backend, error) {
 		return nil, err
 	}
 
-	pgxConfig, err := pgxpool.ParseConfig(b.Cfg.Store.PostgresStateStore.DSN)
+	pgDSN := b.Cfg.Store.PostgresStateStore.DSN
+	pgxConfig, err := pgxpool.ParseConfig(pgDSN)
 	if err != nil {
 		return nil, err
 	}
 
 	// Create the event store, which runs on top of postgres
-	db, err := postgres.OpenEvents(b.runCtx, pgxConfig, true)
+	db, err := postgres.Open(b.runCtx, pgxConfig, true)
 	if err != nil {
 		return nil, err
 	}
@@ -286,19 +319,34 @@ func Initialize(ctx context.Context, config *Config) (*Backend, error) {
 	if err != nil {
 		return nil, err
 	}
+	entityStore := postgres.NewEntityStore(db, b.Client)
 
-	// Create the store, which lives on top of etcd
-	stor := etcdstore.NewStore(b.Client)
-	b.Store = stor
+	pgStore := postgres.Store{
+		EventStore:  eventStore,
+		EntityStore: entityStore,
+		Store:       etcdstore.NewStore(b.Client),
+	}
+
+	b.Store = pgStore
+
 	pgStoreV2 := postgres.NewStoreV2(db, b.Client)
 	b.StoreV2 = pgStoreV2
 
 	// Create the ring pool for round-robin functionality
+	// Set up new postgres ringpool
+	listener := pq.NewListener(pgDSN, time.Second, time.Minute, errorReporter)
+	pgBus := postgres.NewBus(b.RunContext(), listener)
 	b.RingPool = ringv2.NewRingPool(func(path string) ringv2.Interface {
-		return ringv2.New(b.Client, path)
+		ring, err := postgres.NewRing(db, pgBus, path)
+		if err != nil {
+			logger.WithError(err).Error("error creating round-robin ring")
+			logger.Error("round-robin scheduling may be in a degraded state!")
+			panic(err)
+		}
+		return ring
 	})
 
-	if _, err := stor.GetClusterID(b.RunContext()); err != nil {
+	if _, err := b.Store.GetClusterID(b.RunContext()); err != nil {
 		return nil, err
 	}
 
