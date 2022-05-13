@@ -13,11 +13,13 @@ removed.
 - The prefix that keepalives are stored under has now changed. This could lead
 to dangling references when using an older Sensu database with 7.x, if the
 software is upgraded when there are active keepalive failures.
+- Etcd client configuration options have changed.
 
 ### Added
 - Developer mode can now be enabled with the --dev flag.
 - Added sensu-backend configuration for postgresql.
 - Added configuration store selector to sensu-backend.
+- Added postgresql state store.
 
 ### Changed
 - Changed parameters for `sensuctl cluster-role create` to be plural
