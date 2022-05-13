@@ -2,7 +2,10 @@ FROM golang:1.18.1-bullseye AS build
 
 WORKDIR /src/
 
-COPY . /src/
+COPY go.mod go.sum ./
+COPY cmd ./cmd
+COPY watcher ./watcher
+
 RUN go build -o /bin/traffic /src/cmd/traffic
 RUN go build -o /bin/watch /src/cmd/watch
 

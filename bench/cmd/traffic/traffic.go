@@ -14,6 +14,7 @@ import (
 	"time"
 
 	_ "github.com/lib/pq"
+	"github.com/sensu/sensu-go/bench/cmd/traffic/silenced"
 )
 
 type arrayFlag []string
@@ -29,10 +30,12 @@ func (i *arrayFlag) Set(value string) error {
 
 var dsns arrayFlag
 var connCount int
+var strategy string
 
 func main() {
 	flag.Var(&dsns, "dsn", "Connection DSN")
 	flag.IntVar(&connCount, "c", 0, "concurrent client connections")
+	flag.StringVar(&strategy, "s", "counter", "traffic type")
 
 	flag.Parse()
 
@@ -41,6 +44,21 @@ func main() {
 	}
 	if connCount < 1 {
 		log.Fatal("must specify at least one connection. -c 1")
+	}
+
+	var worker Worker
+	switch strategy {
+	case "counter":
+		worker = doCounterStuff
+		log.Println("Using strategy: counter")
+	case "silenced-rw-config":
+		worker = silenced.ReadWriteConfig
+		log.Println("Using strategy: silenced-rw-config")
+	case "silenced-rw-discrete":
+		worker = silenced.ReadWriteDiscrete
+		log.Println("Using strategy: silenced-rw-discrete")
+	default:
+		log.Fatalf("Unknown strategy: %s. Must be one of counter, silenced-rw-config, silenced-rw-discrete", strategy)
 	}
 
 	shutdown := make(chan os.Signal, 1)
@@ -68,7 +86,7 @@ func main() {
 	for i := 0; i < connCount; i++ {
 		wg.Add(1)
 		go func(i int) {
-			startWorker(ctx, connPool[i%len(connPool)])
+			startWorker(ctx, connPool[i%len(connPool)], worker)
 			wg.Done()
 		}(i)
 
@@ -76,7 +94,7 @@ func main() {
 	wg.Wait()
 }
 
-func startWorker(ctx context.Context, db *sql.DB) {
+func startWorker(ctx context.Context, db *sql.DB, worker Worker) {
 	randr := rand.New(rand.NewSource(time.Now().UnixNano()))
 	for {
 		select {
@@ -87,7 +105,7 @@ func startWorker(ctx context.Context, db *sql.DB) {
 			if err != nil {
 				log.Fatal(err)
 			}
-			if err := doit(ctx, randr, txn); err != nil {
+			if err := worker(ctx, randr, txn); err != nil {
 				log.Printf("doit failed with error: %v\n", err)
 				txn.Rollback()
 			} else {
@@ -98,7 +116,7 @@ func startWorker(ctx context.Context, db *sql.DB) {
 
 }
 
-func doit(ctx context.Context, randr *rand.Rand, tx *sql.Tx) error {
+func doCounterStuff(ctx context.Context, randr *rand.Rand, tx *sql.Tx) error {
 	op := randr.Intn(1000)
 	tableSize := getTableSize(ctx, tx)
 	rowid := randr.Int63n(tableSize)
@@ -148,3 +166,5 @@ func getTableSize(ctx context.Context, tx *sql.Tx) int64 {
 	ctRefreshDeadline = time.Now().Add(time.Second * 30)
 	return prevCt
 }
+
+type Worker func(context.Context, *rand.Rand, *sql.Tx) error
