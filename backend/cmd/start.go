@@ -16,8 +16,11 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/jackc/pgx/v4/pgxpool"
 	"github.com/sensu/sensu-go/backend/apid/middlewares"
 	"github.com/sensu/sensu-go/backend/store/postgres"
+	"go.etcd.io/etcd/client/pkg/v3/transport"
+	"google.golang.org/grpc"
 
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/asset"
@@ -319,7 +322,25 @@ func StartCommand(initialize InitializeFunc) *cobra.Command {
 
 			ctx, cancel := context.WithCancel(context.Background())
 			defer cancel()
-			sensuBackend, err := initialize(ctx, cfg)
+			client, err := newClient(ctx, cfg)
+			if err != nil {
+				return err
+			}
+			defer client.Close()
+			pgDSN := cfg.Store.PostgresStateStore.DSN
+			pgxConfig, err := pgxpool.ParseConfig(pgDSN)
+			if err != nil {
+				return nil, err
+			}
+
+			// Create the event store, which runs on top of postgres
+			db, err := postgres.Open(ctx, pgxConfig, true)
+			if err != nil {
+				return nil, err
+			}
+			defer db.Close()
+
+			sensuBackend, err := initialize(ctx, client, db, cfg)
 			if err != nil {
 				return err
 			}
@@ -339,13 +360,107 @@ func StartCommand(initialize InitializeFunc) *cobra.Command {
 					log.Println(http.ListenAndServe("127.0.0.1:6060", nil))
 				}()
 			}
-			return sensuBackend.RunWithInitializer(initialize)
+			return sensuBackend.Run(ctx)
 		},
 	}
 
 	setupErr = handleConfig(cmd, os.Args[1:], true)
 
 	return cmd
+}
+
+func newClient(ctx context.Context, config *Config) (*clientv3.Client, error) {
+	if config.DevMode {
+		return devModeClient(ctx, config)
+	}
+	logger.Info("dialing etcd server")
+	tlsInfo := (transport.TLSInfo)(config.Store.EtcdConfigurationStore.ClientTLSInfo)
+	tlsConfig, err := tlsInfo.ClientConfig()
+	if err != nil {
+		return nil, err
+	}
+
+	clientURLs := config.Store.EtcdConfigurationStore.URLs
+	var clientv3Config clientv3.Config
+
+	username := config.Store.EtcdConfigurationStore.Username
+	password := config.Store.EtcdConfigurationStore.Password
+	if username != "" && password != "" {
+		clientv3Config = clientv3.Config{
+			Endpoints:   clientURLs,
+			DialTimeout: 5 * time.Second,
+			Username:    username,
+			Password:    password,
+			TLS:         tlsConfig,
+			DialOptions: []grpc.DialOption{
+				grpc.WithReturnConnectionError(),
+				grpc.WithBlock(),
+			},
+		}
+	} else {
+		clientv3Config = clientv3.Config{
+			Endpoints:   clientURLs,
+			DialTimeout: 5 * time.Second,
+			TLS:         tlsConfig,
+			DialOptions: []grpc.DialOption{
+				grpc.WithReturnConnectionError(),
+				grpc.WithBlock(),
+			},
+		}
+	}
+
+	// Set etcd client log level
+	logConfig := clientv3.CreateDefaultZapLoggerConfig()
+	logConfig.Level.SetLevel(etcd.LogLevelToZap(config.Store.EtcdConfigurationStore.LogLevel))
+	clientv3Config.LogConfig = &logConfig
+
+	client, err := clientv3.New(clientv3Config)
+	if err != nil {
+		return nil, err
+	}
+	if _, err := client.Get(ctx, "/sensu.io"); err != nil {
+		return nil, err
+	}
+	return client, nil
+}
+
+func devModeClient(ctx context.Context, config *Config) (*clientv3.Client, error) {
+	// Initialize and start etcd, because we'll need to provide an etcd client to
+	// the Wizard bus, which requires etcd to be started.
+	cfg := etcd.NewConfig()
+	cfg.DataDir = config.StateDir
+	if urls := config.Store.EtcdConfigurationStore.URLs; len(urls) > 0 {
+		cfg.ListenClientURLs = urls
+	} else {
+		cfg.ListenClientURLs = []string{"http://127.0.0.1:2379"}
+	}
+	cfg.ListenPeerURLs = []string{"http://127.0.0.1:0"}
+	cfg.InitialCluster = "dev=http://127.0.0.1:0"
+	cfg.InitialClusterState = "new"
+	cfg.InitialAdvertisePeerURLs = cfg.ListenPeerURLs
+	cfg.AdvertiseClientURLs = []string{"http://127.0.0.1:2379"}
+	cfg.Name = "dev"
+	cfg.LogLevel = config.LogLevel
+	cfg.ClientLogLevel = config.Store.EtcdConfigurationStore.LogLevel
+
+	// Start etcd
+	e, err := etcd.NewEtcd(cfg)
+	if err != nil {
+		return nil, fmt.Errorf("error starting etcd: %s", err)
+	}
+	go func() {
+		<-ctx.Done()
+		if err := b.Etcd.Shutdown(); err != nil {
+			logger.Error(err)
+		}
+	}()
+
+	// Create an etcd client
+	client := e.NewEmbeddedClientWithContext(ctx)
+	if _, err := client.Get(ctx, "/sensu.io"); err != nil {
+		return nil, err
+	}
+	return client, nil
 }
 
 func handleConfig(cmd *cobra.Command, arguments []string, server bool) error {

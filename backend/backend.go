@@ -5,8 +5,6 @@ import (
 	"crypto/tls"
 	"fmt"
 	"os"
-	"os/signal"
-	"runtime/debug"
 	"sync"
 	"syscall"
 	"time"
@@ -19,7 +17,6 @@ import (
 	"go.etcd.io/etcd/client/pkg/v3/transport"
 	clientv3 "go.etcd.io/etcd/client/v3"
 	"golang.org/x/time/rate"
-	"google.golang.org/grpc"
 
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/asset"
@@ -58,7 +55,6 @@ import (
 	"github.com/sensu/sensu-go/command"
 	"github.com/sensu/sensu-go/metrics"
 	"github.com/sensu/sensu-go/system"
-	"github.com/sensu/sensu-go/util/retry"
 )
 
 var pgWrapper = postgres.NewResourceWrapper(storev2.WrapResource)
@@ -160,9 +156,7 @@ var SelectedMetrics = []string{
 // Backend represents the backend server, which is used to hold the datastore
 // and coordinating the daemons
 type Backend struct {
-	Client                 *clientv3.Client
 	Daemons                []daemon.Daemon
-	Etcd                   *etcd.Etcd
 	Store                  store.Store
 	StoreV2                storev2.Interface
 	EventStore             store.EventStore
@@ -176,100 +170,7 @@ type Backend struct {
 	LicenseGetter          licensing.Getter
 	Bus                    messaging.MessageBus
 
-	ctx       context.Context
-	runCtx    context.Context
-	runCancel context.CancelFunc
-	Cfg       *Config
-}
-
-func devModeClient(ctx context.Context, config *Config, backend *Backend) (*clientv3.Client, error) {
-	// Initialize and start etcd, because we'll need to provide an etcd client to
-	// the Wizard bus, which requires etcd to be started.
-	cfg := etcd.NewConfig()
-	cfg.DataDir = config.StateDir
-	if urls := config.Store.EtcdConfigurationStore.URLs; len(urls) > 0 {
-		cfg.ListenClientURLs = urls
-	} else {
-		cfg.ListenClientURLs = []string{"http://127.0.0.1:2379"}
-	}
-	cfg.ListenPeerURLs = []string{"http://127.0.0.1:0"}
-	cfg.InitialCluster = "dev=http://127.0.0.1:0"
-	cfg.InitialClusterState = "new"
-	cfg.InitialAdvertisePeerURLs = cfg.ListenPeerURLs
-	cfg.AdvertiseClientURLs = []string{"http://127.0.0.1:2379"}
-	cfg.Name = "dev"
-	cfg.LogLevel = config.LogLevel
-	cfg.ClientLogLevel = config.Store.EtcdConfigurationStore.LogLevel
-
-	// Start etcd
-	e, err := etcd.NewEtcd(cfg)
-	if err != nil {
-		return nil, fmt.Errorf("error starting etcd: %s", err)
-	}
-
-	backend.Etcd = e
-
-	// Create an etcd client
-	client := e.NewEmbeddedClientWithContext(ctx)
-	if _, err := client.Get(ctx, "/sensu.io"); err != nil {
-		return nil, err
-	}
-	return client, nil
-}
-
-func newClient(ctx context.Context, config *Config, backend *Backend) (*clientv3.Client, error) {
-	if config.DevMode {
-		return devModeClient(ctx, config, backend)
-	}
-	logger.Info("dialing etcd server")
-	tlsInfo := (transport.TLSInfo)(config.Store.EtcdConfigurationStore.ClientTLSInfo)
-	tlsConfig, err := tlsInfo.ClientConfig()
-	if err != nil {
-		return nil, err
-	}
-
-	clientURLs := config.Store.EtcdConfigurationStore.URLs
-	var clientv3Config clientv3.Config
-
-	username := config.Store.EtcdConfigurationStore.Username
-	password := config.Store.EtcdConfigurationStore.Password
-	if username != "" && password != "" {
-		clientv3Config = clientv3.Config{
-			Endpoints:   clientURLs,
-			DialTimeout: 5 * time.Second,
-			Username:    username,
-			Password:    password,
-			TLS:         tlsConfig,
-			DialOptions: []grpc.DialOption{
-				grpc.WithReturnConnectionError(),
-				grpc.WithBlock(),
-			},
-		}
-	} else {
-		clientv3Config = clientv3.Config{
-			Endpoints:   clientURLs,
-			DialTimeout: 5 * time.Second,
-			TLS:         tlsConfig,
-			DialOptions: []grpc.DialOption{
-				grpc.WithReturnConnectionError(),
-				grpc.WithBlock(),
-			},
-		}
-	}
-
-	// Set etcd client log level
-	logConfig := clientv3.CreateDefaultZapLoggerConfig()
-	logConfig.Level.SetLevel(etcd.LogLevelToZap(config.Store.EtcdConfigurationStore.LogLevel))
-	clientv3Config.LogConfig = &logConfig
-
-	client, err := clientv3.New(clientv3Config)
-	if err != nil {
-		return nil, err
-	}
-	if _, err := client.Get(ctx, "/sensu.io"); err != nil {
-		return nil, err
-	}
-	return client, nil
+	Cfg *Config
 }
 
 func errorReporter(event pq.ListenerEventType, err error) {
@@ -291,51 +192,33 @@ func errorReporter(event pq.ListenerEventType, err error) {
 // configuring etcd and establishing a list of daemons, which constitute our
 // backend. The daemons will later be started according to their position in the
 // b.Daemons list, and stopped in reverse order
-func Initialize(ctx context.Context, config *Config) (*Backend, error) {
+func Initialize(ctx context.Context, client *clientv3.Client, db *pgxpool.Pool, config *Config) (*Backend, error) {
 	var err error
 	// Initialize a Backend struct
 	b := &Backend{Cfg: config}
 
-	b.ctx = ctx
-	b.runCtx, b.runCancel = context.WithCancel(b.ctx)
-
-	b.Client, err = newClient(b.RunContext(), config, b)
-	if err != nil {
-		return nil, err
-	}
-
-	pgDSN := b.Cfg.Store.PostgresStateStore.DSN
-	pgxConfig, err := pgxpool.ParseConfig(pgDSN)
-	if err != nil {
-		return nil, err
-	}
-
-	// Create the event store, which runs on top of postgres
-	db, err := postgres.Open(b.runCtx, pgxConfig, true)
-	if err != nil {
-		return nil, err
-	}
 	eventStore, err := postgres.NewEventStore(db, b.Store, b.Cfg.Store.PostgresStateStore, 20)
 	if err != nil {
 		return nil, err
 	}
-	entityStore := postgres.NewEntityStore(db, b.Client)
+	entityStore := postgres.NewEntityStore(db, client)
 
 	pgStore := postgres.Store{
 		EventStore:  eventStore,
 		EntityStore: entityStore,
-		Store:       etcdstore.NewStore(b.Client),
+		Store:       etcdstore.NewStore(client),
 	}
 
 	b.Store = pgStore
 
-	pgStoreV2 := postgres.NewStoreV2(db, b.Client)
+	pgStoreV2 := postgres.NewStoreV2(db, client)
 	b.StoreV2 = pgStoreV2
 
 	// Create the ring pool for round-robin functionality
 	// Set up new postgres ringpool
+	pgDSN := b.Cfg.Store.PostgresStateStore.DSN
 	listener := pq.NewListener(pgDSN, time.Second, time.Minute, errorReporter)
-	pgBus := postgres.NewBus(b.RunContext(), listener)
+	pgBus := postgres.NewBus(ctx, listener)
 	b.RingPool = ringv2.NewRingPool(func(path string) ringv2.Interface {
 		ring, err := postgres.NewRing(db, pgBus, path)
 		if err != nil {
@@ -346,7 +229,7 @@ func Initialize(ctx context.Context, config *Config) (*Backend, error) {
 		return ring
 	})
 
-	if _, err := b.Store.GetClusterID(b.RunContext()); err != nil {
+	if _, err := b.Store.GetClusterID(ctx); err != nil {
 		return nil, err
 	}
 
@@ -356,14 +239,11 @@ func Initialize(ctx context.Context, config *Config) (*Backend, error) {
 		return nil, err
 	}
 
-	logger.Debug("Registering backend...")
-
-	backendID := etcd.NewBackendIDGetter(b.RunContext(), b.Client)
-	logger.Debug("Done registering backend.")
+	backendID := etcd.NewBackendIDGetter(ctx, client)
 	b.Daemons = append(b.Daemons, backendID)
 
 	// Initialize an etcd getter
-	queueGetter := queue.EtcdGetter{Client: b.Client, BackendIDGetter: backendID}
+	queueGetter := queue.EtcdGetter{Client: client, BackendIDGetter: backendID}
 
 	// Initialize the LicenseGetter
 	b.LicenseGetter = config.LicenseGetter
@@ -377,7 +257,7 @@ func Initialize(ctx context.Context, config *Config) (*Backend, error) {
 	b.Daemons = append(b.Daemons, bus)
 
 	// Publish all SIGHUP signals to wizard bus until the provided context is cancelled
-	messaging.MultiplexSignal(b.RunContext(), bus, syscall.SIGHUP)
+	messaging.MultiplexSignal(ctx, bus, syscall.SIGHUP)
 
 	// Initialize asset manager
 	backendEntity := b.getBackendEntity(config)
@@ -391,7 +271,7 @@ func Initialize(ctx context.Context, config *Config) (*Backend, error) {
 	if limit == 0 {
 		limit = asset.DefaultAssetsRateLimit
 	}
-	assetGetter, err := assetManager.StartAssetManager(b.RunContext(), rate.NewLimiter(limit, b.Cfg.AssetsBurstLimit))
+	assetGetter, err := assetManager.StartAssetManager(ctx, rate.NewLimiter(limit, b.Cfg.AssetsBurstLimit))
 	if err != nil {
 		return nil, fmt.Errorf("error initializing asset manager: %s", err)
 	}
@@ -477,13 +357,13 @@ func Initialize(ctx context.Context, config *Config) (*Backend, error) {
 
 	// Initialize eventd
 	event, err := eventd.New(
-		b.RunContext(),
+		ctx,
 		eventd.Config{
 			Store:               b.StoreV2,
 			EventStore:          eventStore,
 			Bus:                 bus,
-			LivenessFactory:     liveness.EtcdFactory(b.RunContext(), b.Client),
-			Client:              b.Client,
+			LivenessFactory:     liveness.EtcdFactory(ctx, client),
+			Client:              client,
 			BufferSize:          viper.GetInt(FlagEventdBufferSize),
 			WorkerCount:         viper.GetInt(FlagEventdWorkers),
 			StoreTimeout:        2 * time.Minute,
@@ -500,13 +380,13 @@ func Initialize(ctx context.Context, config *Config) (*Backend, error) {
 
 	// Initialize schedulerd
 	scheduler, err := schedulerd.New(
-		b.RunContext(),
+		ctx,
 		schedulerd.Config{
 			Store:                  b.Store,
 			Bus:                    bus,
 			QueueGetter:            queueGetter,
 			RingPool:               b.RingPool,
-			Client:                 b.Client,
+			Client:                 client,
 			SecretsProviderManager: b.SecretsProviderManager,
 		})
 	if err != nil {
@@ -521,7 +401,7 @@ func Initialize(ctx context.Context, config *Config) (*Backend, error) {
 	}
 
 	// Start the entity config watcher, so agentd sessions are notified of updates
-	entityConfigWatcher := agentd.GetEntityConfigWatcher(b.ctx, b.Client)
+	entityConfigWatcher := agentd.GetEntityConfigWatcher(ctx, client)
 
 	// Prepare the etcd client TLS config
 	etcdClientTLSInfo := (transport.TLSInfo)(config.Store.EtcdConfigurationStore.ClientTLSInfo)
@@ -533,13 +413,13 @@ func Initialize(ctx context.Context, config *Config) (*Backend, error) {
 
 	// Initialize keepalived
 	keepalive, err := keepalived.New(keepalived.Config{
-		Client:                b.Client,
+		Client:                client,
 		DeregistrationHandler: config.DeregistrationHandler,
 		Bus:                   bus,
 		Store:                 b.Store,
 		StoreV2:               b.StoreV2,
 		EventStore:            eventStore,
-		LivenessFactory:       liveness.EtcdFactory(b.RunContext(), b.Client),
+		LivenessFactory:       liveness.EtcdFactory(ctx, client),
 		RingPool:              b.RingPool,
 		BufferSize:            viper.GetInt(FlagKeepalivedBufferSize),
 		WorkerCount:           viper.GetInt(FlagKeepalivedWorkers),
@@ -562,9 +442,9 @@ func Initialize(ctx context.Context, config *Config) (*Backend, error) {
 
 	if !config.DevMode {
 		// get cluster version from first available etcd endpoint
-		endpoints := b.Client.Endpoints()
+		endpoints := client.Endpoints()
 		for _, ep := range endpoints {
-			status, err := b.Client.Status(ctx, ep)
+			status, err := client.Status(ctx, ep)
 			if err != nil {
 				logger.WithError(err).Error("error getting etcd cluster version info")
 				continue
@@ -573,7 +453,7 @@ func Initialize(ctx context.Context, config *Config) (*Backend, error) {
 			break
 		}
 	} else {
-		status, err := b.Client.Status(ctx, "http://127.0.0.1:2379")
+		status, err := client.Status(ctx, "http://127.0.0.1:2379")
 		if err != nil {
 			logger.WithError(err).Error("error getting etcd cluster info")
 		} else {
@@ -587,7 +467,7 @@ func Initialize(ctx context.Context, config *Config) (*Backend, error) {
 	}
 
 	// Initialize the health router
-	b.HealthRouter = routers.NewHealthRouter(actions.NewHealthController(b.Store, b.Client.Cluster, b.EtcdClientTLSConfig))
+	b.HealthRouter = routers.NewHealthRouter(actions.NewHealthController(b.Store, client.Cluster, b.EtcdClientTLSConfig))
 
 	// Initialize GraphQL service
 	b.GraphQLService, err = graphql.NewService(graphql.ServiceConfig{
@@ -597,7 +477,7 @@ func Initialize(ctx context.Context, config *Config) (*Backend, error) {
 		EventClient:       api.NewEventClient(b.Store, auth, bus),
 		EventFilterClient: api.NewEventFilterClient(b.Store, auth),
 		HandlerClient:     api.NewHandlerClient(b.Store, auth),
-		HealthController:  actions.NewHealthController(b.Store, b.Client.Cluster, etcdClientTLSConfig),
+		HealthController:  actions.NewHealthController(b.Store, client.Cluster, etcdClientTLSConfig),
 		MutatorClient:     api.NewMutatorClient(b.Store, auth),
 		SilencedClient:    api.NewSilencedClient(b.Store, auth),
 		NamespaceClient:   api.NewNamespaceClient(b.Store, b.Store, auth, b.StoreV2),
@@ -624,7 +504,7 @@ func Initialize(ctx context.Context, config *Config) (*Backend, error) {
 		EventStore:          eventStore,
 		QueueGetter:         queueGetter,
 		TLS:                 config.TLS,
-		Cluster:             b.Client.Cluster,
+		Cluster:             client.Cluster,
 		EtcdClientTLSConfig: etcdClientTLSConfig,
 		Authenticator:       authenticator,
 		ClusterVersion:      clusterVersion,
@@ -639,12 +519,12 @@ func Initialize(ctx context.Context, config *Config) (*Backend, error) {
 
 	// Initialize tessend
 	tessen, err := tessend.New(
-		b.RunContext(),
+		ctx,
 		tessend.Config{
 			Store:      b.Store,
 			EventStore: eventStore,
 			RingPool:   b.RingPool,
-			Client:     b.Client,
+			Client:     client,
 			Bus:        bus,
 		})
 	if err != nil {
@@ -661,7 +541,7 @@ func Initialize(ctx context.Context, config *Config) (*Backend, error) {
 		TLS:                 config.AgentTLSOptions,
 		RingPool:            b.RingPool,
 		WriteTimeout:        config.AgentWriteTimeout,
-		Client:              b.Client,
+		Client:              client,
 		Watcher:             entityConfigWatcher,
 		EtcdClientTLSConfig: b.EtcdClientTLSConfig,
 	})
@@ -673,7 +553,8 @@ func Initialize(ctx context.Context, config *Config) (*Backend, error) {
 	return b, nil
 }
 
-func (b *Backend) runOnce() error {
+// Run starts all of the Backend server's daemons
+func (b *Backend) Run(ctx context.Context) error {
 	var derr error
 
 	eg := errGroup{
@@ -681,21 +562,6 @@ func (b *Backend) runOnce() error {
 	}
 
 	defer eg.WaitStop()
-
-	if b.Etcd != nil {
-		defer func() {
-			logger.Info("shutting down etcd")
-			if err := recover(); err != nil {
-				trace := string(debug.Stack())
-				logger.WithField("panic", trace).WithError(fmt.Errorf("%s", err)).
-					Error("recovering from panic due to error, shutting down etcd")
-			}
-			err := b.Etcd.Shutdown()
-			if derr == nil {
-				derr = err
-			}
-		}()
-	}
 
 	// crash the stopgroup after a hard-coded timeout, when etcd is not embedded.
 	sg := &stopGroup{crashOnTimeout: true, waitTime: 30 * time.Second}
@@ -744,16 +610,11 @@ func (b *Backend) runOnce() error {
 				logger.WithError(err).Error("unable to start the platform metrics bridge")
 				return err
 			}
-			go metricsBridge.Run(b.RunContext())
+			go metricsBridge.Run(ctx)
 		}
 	}
 
-	if b.Etcd != nil {
-		// Add etcd to our errGroup, since it's not included in the daemon list
-		eg.daemons = append(eg.daemons, b.Etcd)
-	}
-
-	errCtx, errCancel := context.WithCancel(b.RunContext())
+	errCtx, errCancel := context.WithCancel(ctx)
 	defer errCancel()
 	eg.Go(errCtx)
 
@@ -762,7 +623,7 @@ func (b *Backend) runOnce() error {
 	select {
 	case err := <-eg.Err():
 		logger.WithError(err).Error("backend stopped working and is restarting")
-	case <-b.RunContext().Done():
+	case <-ctx.Done():
 		logger.Info("backend shutting down")
 	}
 	if err := sg.Stop(); err != nil {
@@ -771,83 +632,11 @@ func (b *Backend) runOnce() error {
 		}
 	}
 	if derr == nil {
-		derr = b.RunContext().Err()
+		derr = ctx.Err()
 	}
 
 	return derr
-}
 
-type closer interface {
-	Close() error
-}
-
-// RunContext returns the context for the current run of the backend.
-func (b *Backend) RunContext() context.Context {
-	return b.runCtx
-}
-
-// RunWithInitializer is like Run but accepts an initialization function to use
-// for initialization, instead of using the default Initialize().
-func (b *Backend) RunWithInitializer(initialize func(context.Context, *Config) (*Backend, error)) error {
-	// we allow inErrChan to leak to avoid panics from other
-	// goroutines writing errors to either after shutdown has been initiated.
-	backoff := retry.ExponentialBackoff{
-		Ctx:                  b.ctx,
-		InitialDelayInterval: time.Second,
-		MaxDelayInterval:     time.Second,
-		Multiplier:           1,
-	}
-
-	sighup := make(chan os.Signal, 1)
-	signal.Notify(sighup, syscall.SIGHUP)
-
-	err := backoff.Retry(func(int) (bool, error) {
-		err := b.runOnce()
-		b.Stop()
-		if err != nil {
-			if b.ctx.Err() != nil {
-				logger.Warn("shutting down")
-				return true, b.ctx.Err()
-			}
-			logger.Error(err)
-			if _, ok := err.(ErrStartup); ok {
-				return true, err
-			}
-		}
-
-		_ = b.Client.Close()
-
-		// Yes, two levels of retry... this could improve. Unfortunately Initialize()
-		// is called elsewhere.
-		err = backoff.Retry(func(int) (bool, error) {
-			backend, err := initialize(b.ctx, b.Cfg)
-			if err != nil && err != context.Canceled {
-				logger.Error(err)
-				return false, nil
-			} else if err == context.Canceled {
-				return true, err
-			}
-			// Replace b with a new backend - this is done to ensure that there is
-			// no side effects from the execution of b that have carried over
-			b = backend
-			return true, nil
-		})
-		if err != nil {
-			return true, err
-		}
-		return false, nil
-	})
-
-	if err == context.Canceled {
-		return nil
-	}
-
-	return err
-}
-
-// Run starts all of the Backend server's daemons
-func (b *Backend) Run() error {
-	return b.RunWithInitializer(Initialize)
 }
 
 type stopper interface {
@@ -933,11 +722,6 @@ func (e *errGroup) Err() <-chan error {
 
 func (e *errGroup) WaitStop() {
 	e.wg.Wait()
-}
-
-// Stop the Backend cleanly.
-func (b *Backend) Stop() {
-	b.runCancel()
 }
 
 func (b *Backend) getBackendEntity(config *Config) *corev2.Entity {
