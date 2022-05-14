@@ -10,14 +10,17 @@ import (
 	"testing"
 	"time"
 
+	"github.com/jackc/pgx/v4/pgxpool"
 	"github.com/sensu/sensu-go/backend/etcd"
 	"github.com/sensu/sensu-go/backend/seeds"
 	etcdstore "github.com/sensu/sensu-go/backend/store/etcd"
+	"github.com/sensu/sensu-go/backend/store/postgres"
 	"github.com/sensu/sensu-go/testing/testutil"
 	"github.com/sensu/sensu-go/transport"
 	"github.com/sensu/sensu-go/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	clientv3 "go.etcd.io/etcd/client/v3"
 )
 
 func retryConnect(t *testing.T, address string) {
@@ -92,13 +95,34 @@ func TestBackendHTTPListener(t *testing.T) {
 					},
 				},
 			}
+
 			ctx, cancel := context.WithCancel(context.Background())
-			b, err := Initialize(ctx, cfg)
+			defer cancel()
+
+			client, err := devModeClient(ctx, cfg)
+			if err != nil {
+				t.Fatal(err)
+			}
+			defer client.Close()
+
+			pgDSN := cfg.Store.PostgresStateStore.DSN
+			pgxConfig, err := pgxpool.ParseConfig(pgDSN)
+			if err != nil {
+				t.Fatal(err)
+			}
+			// Create the event store, which runs on top of postgres
+			db, err := postgres.Open(ctx, pgxConfig, true)
+			if err != nil {
+				t.Fatal(err)
+			}
+			defer db.Close()
+
+			b, err := Initialize(ctx, client, db, cfg)
 			if err != nil {
 				t.Fatalf("failed to start backend: %s", err)
 			}
 
-			store := etcdstore.NewStore(b.Client)
+			store := etcdstore.NewStore(client)
 			if err := seeds.SeedInitialDataWithContext(context.Background(), store); err != nil {
 				t.Fatal(err)
 			}
@@ -108,7 +132,7 @@ func TestBackendHTTPListener(t *testing.T) {
 			runWg.Add(1)
 			go func() {
 				defer runWg.Done()
-				runError = b.Run()
+				runError = b.Run(ctx)
 			}()
 			defer func() {
 				runWg.Wait()
@@ -128,12 +152,50 @@ func TestBackendHTTPListener(t *testing.T) {
 				transport.HeaderKeySubscriptions: {},
 			}
 			time.Sleep(5 * time.Second)
-			client, _, err := transport.Connect(fmt.Sprintf("%s://127.0.0.1:%d/", tc.wsScheme, agentPort), tc.tls, hdr, 5)
+			tclient, _, err := transport.Connect(fmt.Sprintf("%s://127.0.0.1:%d/", tc.wsScheme, agentPort), tc.tls, hdr, 5)
 			require.NoError(t, err)
-			require.NotNil(t, client)
+			require.NotNil(t, tclient)
 
-			assert.NoError(t, client.Close())
-			cancel()
+			assert.NoError(t, tclient.Close())
 		})
 	}
+}
+
+func devModeClient(ctx context.Context, config *Config) (*clientv3.Client, error) {
+	// Initialize and start etcd, because we'll need to provide an etcd client to
+	// the Wizard bus, which requires etcd to be started.
+	cfg := etcd.NewConfig()
+	cfg.DataDir = config.StateDir
+	if urls := config.Store.EtcdConfigurationStore.URLs; len(urls) > 0 {
+		cfg.ListenClientURLs = urls
+	} else {
+		cfg.ListenClientURLs = []string{"http://127.0.0.1:2379"}
+	}
+	cfg.ListenPeerURLs = []string{"http://127.0.0.1:0"}
+	cfg.InitialCluster = "dev=http://127.0.0.1:0"
+	cfg.InitialClusterState = "new"
+	cfg.InitialAdvertisePeerURLs = cfg.ListenPeerURLs
+	cfg.AdvertiseClientURLs = []string{"http://127.0.0.1:2379"}
+	cfg.Name = "dev"
+	cfg.LogLevel = config.LogLevel
+	cfg.ClientLogLevel = config.Store.EtcdConfigurationStore.LogLevel
+
+	// Start etcd
+	e, err := etcd.NewEtcd(cfg)
+	if err != nil {
+		return nil, fmt.Errorf("error starting etcd: %s", err)
+	}
+	go func() {
+		<-ctx.Done()
+		if err := e.Shutdown(); err != nil {
+			logger.Error(err)
+		}
+	}()
+
+	// Create an etcd client
+	client := e.NewEmbeddedClientWithContext(ctx)
+	if _, err := client.Get(ctx, "/sensu.io"); err != nil {
+		return nil, err
+	}
+	return client, nil
 }

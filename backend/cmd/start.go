@@ -16,6 +16,8 @@ import (
 	"syscall"
 	"time"
 
+	clientv3 "go.etcd.io/etcd/client/v3"
+
 	"github.com/jackc/pgx/v4/pgxpool"
 	"github.com/sensu/sensu-go/backend/apid/middlewares"
 	"github.com/sensu/sensu-go/backend/store/postgres"
@@ -167,7 +169,7 @@ var (
 
 // InitializeFunc represents the signature of an initialization function, used
 // to initialize the backend
-type InitializeFunc func(context.Context, *backend.Config) (*backend.Backend, error)
+type InitializeFunc func(context.Context, *clientv3.Client, *pgxpool.Pool, *backend.Config) (*backend.Backend, error)
 
 func anyConfig(cfg etcdstore.Config) bool {
 	var zero etcdstore.Config
@@ -330,13 +332,13 @@ func StartCommand(initialize InitializeFunc) *cobra.Command {
 			pgDSN := cfg.Store.PostgresStateStore.DSN
 			pgxConfig, err := pgxpool.ParseConfig(pgDSN)
 			if err != nil {
-				return nil, err
+				return err
 			}
 
 			// Create the event store, which runs on top of postgres
 			db, err := postgres.Open(ctx, pgxConfig, true)
 			if err != nil {
-				return nil, err
+				return err
 			}
 			defer db.Close()
 
@@ -369,7 +371,7 @@ func StartCommand(initialize InitializeFunc) *cobra.Command {
 	return cmd
 }
 
-func newClient(ctx context.Context, config *Config) (*clientv3.Client, error) {
+func newClient(ctx context.Context, config *backend.Config) (*clientv3.Client, error) {
 	if config.DevMode {
 		return devModeClient(ctx, config)
 	}
@@ -424,7 +426,7 @@ func newClient(ctx context.Context, config *Config) (*clientv3.Client, error) {
 	return client, nil
 }
 
-func devModeClient(ctx context.Context, config *Config) (*clientv3.Client, error) {
+func devModeClient(ctx context.Context, config *backend.Config) (*clientv3.Client, error) {
 	// Initialize and start etcd, because we'll need to provide an etcd client to
 	// the Wizard bus, which requires etcd to be started.
 	cfg := etcd.NewConfig()
@@ -450,7 +452,7 @@ func devModeClient(ctx context.Context, config *Config) (*clientv3.Client, error
 	}
 	go func() {
 		<-ctx.Done()
-		if err := b.Etcd.Shutdown(); err != nil {
+		if err := e.Shutdown(); err != nil {
 			logger.Error(err)
 		}
 	}()
