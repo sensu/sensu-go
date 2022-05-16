@@ -440,7 +440,7 @@ func devModeClient(ctx context.Context, config *backend.Config) (*clientv3.Clien
 	cfg.InitialCluster = "dev=http://127.0.0.1:0"
 	cfg.InitialClusterState = "new"
 	cfg.InitialAdvertisePeerURLs = cfg.ListenPeerURLs
-	cfg.AdvertiseClientURLs = []string{"http://127.0.0.1:2379"}
+	cfg.AdvertiseClientURLs = cfg.ListenClientURLs
 	cfg.Name = "dev"
 	cfg.LogLevel = config.LogLevel
 	cfg.ClientLogLevel = config.Store.EtcdConfigurationStore.LogLevel

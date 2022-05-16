@@ -51,6 +51,7 @@ import (
 	etcdstore "github.com/sensu/sensu-go/backend/store/etcd"
 	"github.com/sensu/sensu-go/backend/store/postgres"
 	storev2 "github.com/sensu/sensu-go/backend/store/v2"
+	etcdstorev2 "github.com/sensu/sensu-go/backend/store/v2/etcdstore"
 	"github.com/sensu/sensu-go/backend/tessend"
 	"github.com/sensu/sensu-go/command"
 	"github.com/sensu/sensu-go/metrics"
@@ -188,18 +189,18 @@ func errorReporter(event pq.ListenerEventType, err error) {
 	}
 }
 
-// Initialize instantiates a Backend struct with the provided config, by
-// configuring etcd and establishing a list of daemons, which constitute our
-// backend. The daemons will later be started according to their position in the
-// b.Daemons list, and stopped in reverse order
-func Initialize(ctx context.Context, client *clientv3.Client, db *pgxpool.Pool, config *Config) (*Backend, error) {
-	var err error
-	// Initialize a Backend struct
-	b := &Backend{Cfg: config}
+func initDevModeStateStore(ctx context.Context, b *Backend, client *clientv3.Client, config *Config) {
+	b.Store = etcdstore.NewStore(client)
+	b.StoreV2 = etcdstorev2.NewStore(client)
+	b.RingPool = ringv2.NewRingPool(func(path string) ringv2.Interface {
+		return ringv2.New(client, path)
+	})
+}
 
+func initPGStateStore(ctx context.Context, b *Backend, client *clientv3.Client, db *pgxpool.Pool, config *Config) error {
 	eventStore, err := postgres.NewEventStore(db, b.Store, b.Cfg.Store.PostgresStateStore, 20)
 	if err != nil {
-		return nil, err
+		return err
 	}
 	entityStore := postgres.NewEntityStore(db, client)
 
@@ -228,6 +229,25 @@ func Initialize(ctx context.Context, client *clientv3.Client, db *pgxpool.Pool, 
 		}
 		return ring
 	})
+	return nil
+}
+
+// Initialize instantiates a Backend struct with the provided config, by
+// configuring etcd and establishing a list of daemons, which constitute our
+// backend. The daemons will later be started according to their position in the
+// b.Daemons list, and stopped in reverse order
+func Initialize(ctx context.Context, client *clientv3.Client, db *pgxpool.Pool, config *Config) (*Backend, error) {
+	var err error
+	// Initialize a Backend struct
+	b := &Backend{Cfg: config}
+
+	if config.DevMode {
+		initDevModeStateStore(ctx, b, client, config)
+	} else {
+		if err := initPGStateStore(ctx, b, client, db, config); err != nil {
+			return nil, err
+		}
+	}
 
 	if _, err := b.Store.GetClusterID(ctx); err != nil {
 		return nil, err
@@ -360,7 +380,7 @@ func Initialize(ctx context.Context, client *clientv3.Client, db *pgxpool.Pool, 
 		ctx,
 		eventd.Config{
 			Store:               b.StoreV2,
-			EventStore:          eventStore,
+			EventStore:          b.EventStore,
 			Bus:                 bus,
 			LivenessFactory:     liveness.EtcdFactory(ctx, client),
 			Client:              client,
@@ -418,7 +438,7 @@ func Initialize(ctx context.Context, client *clientv3.Client, db *pgxpool.Pool, 
 		Bus:                   bus,
 		Store:                 b.Store,
 		StoreV2:               b.StoreV2,
-		EventStore:            eventStore,
+		EventStore:            b.EventStore,
 		LivenessFactory:       liveness.EtcdFactory(ctx, client),
 		RingPool:              b.RingPool,
 		BufferSize:            viper.GetInt(FlagKeepalivedBufferSize),
@@ -501,7 +521,7 @@ func Initialize(ctx context.Context, client *clientv3.Client, db *pgxpool.Pool, 
 		Bus:                 bus,
 		Store:               b.Store,
 		Storev2:             b.StoreV2,
-		EventStore:          eventStore,
+		EventStore:          b.EventStore,
 		QueueGetter:         queueGetter,
 		TLS:                 config.TLS,
 		Cluster:             client.Cluster,
@@ -522,7 +542,7 @@ func Initialize(ctx context.Context, client *clientv3.Client, db *pgxpool.Pool, 
 		ctx,
 		tessend.Config{
 			Store:      b.Store,
-			EventStore: eventStore,
+			EventStore: b.EventStore,
 			RingPool:   b.RingPool,
 			Client:     client,
 			Bus:        bus,
@@ -631,12 +651,11 @@ func (b *Backend) Run(ctx context.Context) error {
 			derr = err
 		}
 	}
-	if derr == nil {
+	if derr == nil && ctx.Err() != context.Canceled {
 		derr = ctx.Err()
 	}
 
 	return derr
-
 }
 
 type stopper interface {

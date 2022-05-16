@@ -10,11 +10,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/jackc/pgx/v4/pgxpool"
 	"github.com/sensu/sensu-go/backend/etcd"
 	"github.com/sensu/sensu-go/backend/seeds"
 	etcdstore "github.com/sensu/sensu-go/backend/store/etcd"
-	"github.com/sensu/sensu-go/backend/store/postgres"
 	"github.com/sensu/sensu-go/testing/testutil"
 	"github.com/sensu/sensu-go/transport"
 	"github.com/sensu/sensu-go/types"
@@ -105,19 +103,8 @@ func TestBackendHTTPListener(t *testing.T) {
 			}
 			defer client.Close()
 
-			pgDSN := cfg.Store.PostgresStateStore.DSN
-			pgxConfig, err := pgxpool.ParseConfig(pgDSN)
-			if err != nil {
-				t.Fatal(err)
-			}
-			// Create the event store, which runs on top of postgres
-			db, err := postgres.Open(ctx, pgxConfig, true)
-			if err != nil {
-				t.Fatal(err)
-			}
-			defer db.Close()
-
-			b, err := Initialize(ctx, client, db, cfg)
+			// note that the pg db is nil, which is fine when DevMode is enabled
+			b, err := Initialize(ctx, client, nil, cfg)
 			if err != nil {
 				t.Fatalf("failed to start backend: %s", err)
 			}
@@ -157,6 +144,7 @@ func TestBackendHTTPListener(t *testing.T) {
 			require.NotNil(t, tclient)
 
 			assert.NoError(t, tclient.Close())
+			cancel()
 		})
 	}
 }
@@ -175,7 +163,7 @@ func devModeClient(ctx context.Context, config *Config) (*clientv3.Client, error
 	cfg.InitialCluster = "dev=http://127.0.0.1:0"
 	cfg.InitialClusterState = "new"
 	cfg.InitialAdvertisePeerURLs = cfg.ListenPeerURLs
-	cfg.AdvertiseClientURLs = []string{"http://127.0.0.1:2379"}
+	cfg.AdvertiseClientURLs = cfg.ListenClientURLs
 	cfg.Name = "dev"
 	cfg.LogLevel = config.LogLevel
 	cfg.ClientLogLevel = config.Store.EtcdConfigurationStore.LogLevel
