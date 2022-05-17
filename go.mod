@@ -11,10 +11,10 @@ replace (
 
 require (
 	github.com/AlecAivazis/survey/v2 v2.2.14
+	github.com/Azure/go-ansiterm v0.0.0-20170929234023-d6e3b3328b78
 	github.com/atlassian/gostatsd v0.0.0-20180514010436-af796620006e
 	github.com/blang/semver/v4 v4.0.0
 	github.com/dave/jennifer v0.0.0-20171207062344-d8bdbdbee4e1
-	github.com/docker/docker v0.0.0-20180409082103-cbde00b44273
 	github.com/dustin/go-humanize v1.0.0
 	github.com/echlebek/crock v1.0.1
 	github.com/echlebek/migration v0.1.0
