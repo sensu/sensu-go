@@ -16,12 +16,19 @@ import (
 	"syscall"
 	"time"
 
+	clientv3 "go.etcd.io/etcd/client/v3"
+
+	"github.com/jackc/pgx/v4/pgxpool"
 	"github.com/sensu/sensu-go/backend/apid/middlewares"
+	"github.com/sensu/sensu-go/backend/store/postgres"
+	"go.etcd.io/etcd/client/pkg/v3/transport"
+	"google.golang.org/grpc"
 
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/asset"
 	"github.com/sensu/sensu-go/backend"
 	"github.com/sensu/sensu-go/backend/etcd"
+	etcdstore "github.com/sensu/sensu-go/backend/store/etcd"
 	"github.com/sensu/sensu-go/util/path"
 	stringsutil "github.com/sensu/sensu-go/util/strings"
 	"github.com/sirupsen/logrus"
@@ -162,10 +169,10 @@ var (
 
 // InitializeFunc represents the signature of an initialization function, used
 // to initialize the backend
-type InitializeFunc func(context.Context, *backend.Config) (*backend.Backend, error)
+type InitializeFunc func(context.Context, *clientv3.Client, *pgxpool.Pool, *backend.Config) (*backend.Backend, error)
 
-func anyConfig(cfg backend.EtcdConfig) bool {
-	var zero backend.EtcdConfig
+func anyConfig(cfg etcdstore.Config) bool {
+	var zero etcdstore.Config
 	return !reflect.DeepEqual(cfg, zero)
 }
 
@@ -235,13 +242,13 @@ func StartCommand(initialize InitializeFunc) *cobra.Command {
 				Store: backend.StoreConfig{
 					ConfigurationStore: configStore,
 					StateStore:         stateStore,
-					PostgresConfigurationStore: backend.PostgresConfig{
+					PostgresConfigurationStore: postgres.Config{
 						DSN: viper.GetString(flagPGConfigStoreDSN),
 					},
-					PostgresStateStore: backend.PostgresConfig{
+					PostgresStateStore: postgres.Config{
 						DSN: viper.GetString(flagPGStateStoreDSN),
 					},
-					EtcdConfigurationStore: backend.EtcdConfig{
+					EtcdConfigurationStore: etcdstore.Config{
 						ClientTLSInfo: etcd.TLSInfo{
 							CertFile:       viper.GetString(flagEtcdConfigStoreCertFile),
 							KeyFile:        viper.GetString(flagEtcdConfigStoreKeyFile),
@@ -317,7 +324,25 @@ func StartCommand(initialize InitializeFunc) *cobra.Command {
 
 			ctx, cancel := context.WithCancel(context.Background())
 			defer cancel()
-			sensuBackend, err := initialize(ctx, cfg)
+			client, err := newClient(ctx, cfg)
+			if err != nil {
+				return err
+			}
+			defer client.Close()
+			pgDSN := cfg.Store.PostgresStateStore.DSN
+			pgxConfig, err := pgxpool.ParseConfig(pgDSN)
+			if err != nil {
+				return err
+			}
+
+			// Create the event store, which runs on top of postgres
+			db, err := postgres.Open(ctx, pgxConfig, true)
+			if err != nil {
+				return err
+			}
+			defer db.Close()
+
+			sensuBackend, err := initialize(ctx, client, db, cfg)
 			if err != nil {
 				return err
 			}
@@ -337,13 +362,107 @@ func StartCommand(initialize InitializeFunc) *cobra.Command {
 					log.Println(http.ListenAndServe("127.0.0.1:6060", nil))
 				}()
 			}
-			return sensuBackend.RunWithInitializer(initialize)
+			return sensuBackend.Run(ctx)
 		},
 	}
 
 	setupErr = handleConfig(cmd, os.Args[1:], true)
 
 	return cmd
+}
+
+func newClient(ctx context.Context, config *backend.Config) (*clientv3.Client, error) {
+	if config.DevMode {
+		return devModeClient(ctx, config)
+	}
+	logger.Info("dialing etcd server")
+	tlsInfo := (transport.TLSInfo)(config.Store.EtcdConfigurationStore.ClientTLSInfo)
+	tlsConfig, err := tlsInfo.ClientConfig()
+	if err != nil {
+		return nil, err
+	}
+
+	clientURLs := config.Store.EtcdConfigurationStore.URLs
+	var clientv3Config clientv3.Config
+
+	username := config.Store.EtcdConfigurationStore.Username
+	password := config.Store.EtcdConfigurationStore.Password
+	if username != "" && password != "" {
+		clientv3Config = clientv3.Config{
+			Endpoints:   clientURLs,
+			DialTimeout: 5 * time.Second,
+			Username:    username,
+			Password:    password,
+			TLS:         tlsConfig,
+			DialOptions: []grpc.DialOption{
+				grpc.WithReturnConnectionError(),
+				grpc.WithBlock(),
+			},
+		}
+	} else {
+		clientv3Config = clientv3.Config{
+			Endpoints:   clientURLs,
+			DialTimeout: 5 * time.Second,
+			TLS:         tlsConfig,
+			DialOptions: []grpc.DialOption{
+				grpc.WithReturnConnectionError(),
+				grpc.WithBlock(),
+			},
+		}
+	}
+
+	// Set etcd client log level
+	logConfig := clientv3.CreateDefaultZapLoggerConfig()
+	logConfig.Level.SetLevel(etcd.LogLevelToZap(config.Store.EtcdConfigurationStore.LogLevel))
+	clientv3Config.LogConfig = &logConfig
+
+	client, err := clientv3.New(clientv3Config)
+	if err != nil {
+		return nil, err
+	}
+	if _, err := client.Get(ctx, "/sensu.io"); err != nil {
+		return nil, err
+	}
+	return client, nil
+}
+
+func devModeClient(ctx context.Context, config *backend.Config) (*clientv3.Client, error) {
+	// Initialize and start etcd, because we'll need to provide an etcd client to
+	// the Wizard bus, which requires etcd to be started.
+	cfg := etcd.NewConfig()
+	cfg.DataDir = config.StateDir
+	if urls := config.Store.EtcdConfigurationStore.URLs; len(urls) > 0 {
+		cfg.ListenClientURLs = urls
+	} else {
+		cfg.ListenClientURLs = []string{"http://127.0.0.1:2379"}
+	}
+	cfg.ListenPeerURLs = []string{"http://127.0.0.1:0"}
+	cfg.InitialCluster = "dev=http://127.0.0.1:0"
+	cfg.InitialClusterState = "new"
+	cfg.InitialAdvertisePeerURLs = cfg.ListenPeerURLs
+	cfg.AdvertiseClientURLs = cfg.ListenClientURLs
+	cfg.Name = "dev"
+	cfg.LogLevel = config.LogLevel
+	cfg.ClientLogLevel = config.Store.EtcdConfigurationStore.LogLevel
+
+	// Start etcd
+	e, err := etcd.NewEtcd(cfg)
+	if err != nil {
+		return nil, fmt.Errorf("error starting etcd: %s", err)
+	}
+	go func() {
+		<-ctx.Done()
+		if err := e.Shutdown(); err != nil {
+			logger.Error(err)
+		}
+	}()
+
+	// Create an etcd client
+	client := e.NewEmbeddedClientWithContext(ctx)
+	if _, err := client.Get(ctx, "/sensu.io"); err != nil {
+		return nil, err
+	}
+	return client, nil
 }
 
 func handleConfig(cmd *cobra.Command, arguments []string, server bool) error {

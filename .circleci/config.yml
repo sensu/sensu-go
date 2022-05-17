@@ -1,30 +1,44 @@
 version: 2.1
 
 orbs:
-  go: circleci/go@1.1.2
+  go: circleci/go@1.3.1
+  docker: circleci/docker@1.4.0
 
 parameters:
   go_version:
     type: string
     default: "1.18.1"
 
-sensu_go_build_env: &sensu_go_build_env
-  docker:
-    - image: cimg/go:<< pipeline.parameters.go_version >>
-      auth:
-        username: $DOCKER_USERNAME
-        password: $DOCKER_PASSWORD
-
-go_test_env: &sensu_go_test_env
-    resource_class: large
+executors:
+  go:
+    docker:
+      - image: cimg/go:<< pipeline.parameters.go_version >>
+        auth:
+          username: $DOCKER_USERNAME
+          password: $DOCKER_PASSWORD
+  go-with-postgres:
+    docker:
+      - image: cimg/go:<< pipeline.parameters.go_version >>
+        auth:
+          username: $DOCKER_USERNAME
+          password: $DOCKER_PASSWORD
+      - image: circleci/postgres:9.5.20-alpine
+        auth:
+          username: $DOCKER_USERNAME
+          password: $DOCKER_PASSWORD
+        environment:
+          POSTGRES_USER: circleci
+          POSTGRES_DB: circleci
     environment:
-      GO111MODULE: 'on'
-      GOPROXY: 'https://proxy.golang.org'
+      PG_HOST: localhost
+      PG_USER: circleci
+      PG_URL: "host=localhost port=5432 user=circleci sslmode=disable"
+      GO111MODULE: "on"
+      GOPROXY: "https://proxy.golang.org"
 
 jobs:
   test:
-    <<: *sensu_go_build_env
-    <<: *sensu_go_test_env
+    executor: go-with-postgres
     steps:
       - checkout
       - go/mod-download-cached
@@ -37,16 +51,15 @@ jobs:
       path:
         type: string
     working_directory: ~/sensu-go/<< parameters.path>>
-    <<: *sensu_go_build_env
-    <<: *sensu_go_test_env
+    executor: go
     steps:
       - checkout:
           path: ~/sensu-go
       - go/mod-download-cached
-      - run: go test ./...
+      - run: go test -p 2 ./...
 
   build:
-    <<: *sensu_go_build_env
+    executor: go
     parameters:
       os:
         type: string

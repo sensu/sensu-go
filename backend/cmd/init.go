@@ -13,6 +13,7 @@ import (
 	"github.com/sensu/sensu-go/backend/etcd"
 	"github.com/sensu/sensu-go/backend/seeds"
 	etcdstore "github.com/sensu/sensu-go/backend/store/etcd"
+	"github.com/sensu/sensu-go/backend/store/postgres"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"go.etcd.io/etcd/client/pkg/v3/transport"
@@ -105,13 +106,13 @@ func InitCommand() *cobra.Command {
 			cfg := &backend.Config{
 				Store: backend.StoreConfig{
 					ConfigurationStore: viper.GetString(flagConfigStore),
-					PostgresConfigurationStore: backend.PostgresConfig{
+					PostgresConfigurationStore: postgres.Config{
 						DSN: viper.GetString(flagPGConfigStoreDSN),
 					},
-					PostgresStateStore: backend.PostgresConfig{
+					PostgresStateStore: postgres.Config{
 						DSN: viper.GetString(flagPGStateStoreDSN),
 					},
-					EtcdConfigurationStore: backend.EtcdConfig{
+					EtcdConfigurationStore: etcdstore.Config{
 						ClientTLSInfo: etcd.TLSInfo{
 							CertFile:       viper.GetString(flagEtcdConfigStoreCertFile),
 							KeyFile:        viper.GetString(flagEtcdConfigStoreKeyFile),

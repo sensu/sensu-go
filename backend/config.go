@@ -4,8 +4,9 @@ import (
 	"time"
 
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
-	"github.com/sensu/sensu-go/backend/etcd"
 	"github.com/sensu/sensu-go/backend/licensing"
+	"github.com/sensu/sensu-go/backend/store/etcd"
+	"github.com/sensu/sensu-go/backend/store/postgres"
 	"golang.org/x/time/rate"
 )
 
@@ -51,30 +52,17 @@ type StoreConfig struct {
 	// StateStore specifies the selected state store to use (either "postgres" or "dev")
 	StateStore string
 
-	// PostgresConfigurationStore contains postgres configuration store details. It's only valid to set this when
+	// postgres.ConfigurationStore contains postgres configuration store details. It's only valid to set this when
 	// ConfigurationStore is set to be "postgres".
-	PostgresConfigurationStore PostgresConfig
+	PostgresConfigurationStore postgres.Config
 
 	// EtcdConfigurationStore contains etcd configuration store details. It's only valid to set this when
 	// ConfigurationStore is set to be "etcd".
-	EtcdConfigurationStore EtcdConfig
+	EtcdConfigurationStore etcd.Config
 
 	// PostgresStateStore contains postgres state store details. It's only valid to set this when
 	// StateStore is set to be "postgres".
-	PostgresStateStore PostgresConfig
-}
-
-type EtcdConfig struct {
-	ClientTLSInfo     etcd.TLSInfo
-	URLs              []string
-	Username          string
-	Password          string
-	LogLevel          string
-	UseEmbeddedClient bool
-}
-
-type PostgresConfig struct {
-	DSN string
+	PostgresStateStore postgres.Config
 }
 
 // Config specifies a Backend configuration.
