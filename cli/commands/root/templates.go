@@ -1,7 +1,6 @@
 package root
 
 import (
-	"github.com/sensu/sensu-go/cli/commands/helpers"
 	"github.com/spf13/cobra"
 )
 
@@ -87,16 +86,10 @@ func managementSubCommands(cmd *cobra.Command) []*cobra.Command {
 
 func wrappedInheritedFlagUsages(cmd *cobra.Command) string {
 	width := 80
-	if ws, err := helpers.GetTermSize(0); err == nil {
-		width = int(ws.Columns)
-	}
 	return cmd.InheritedFlags().FlagUsagesWrapped(width - 1)
 }
 
 func wrappedLocalFlagUsages(cmd *cobra.Command) string {
 	width := 80
-	if ws, err := helpers.GetTermSize(0); err == nil {
-		width = int(ws.Columns)
-	}
 	return cmd.LocalFlags().FlagUsagesWrapped(width - 1)
 }
