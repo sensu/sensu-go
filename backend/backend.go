@@ -202,6 +202,8 @@ func initPGStateStore(ctx context.Context, b *Backend, client *clientv3.Client, 
 	if err != nil {
 		return err
 	}
+	b.EventStore = eventStore
+
 	entityStore := postgres.NewEntityStore(db, client)
 
 	pgStore := postgres.Store{
