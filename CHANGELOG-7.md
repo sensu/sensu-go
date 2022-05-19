@@ -27,6 +27,7 @@ software is upgraded when there are active keepalive failures.
 entity subscriptions and/or a check named `deregistration`.
 - Upgraded Go version from 1.17.1 to 1.18.1.
 - Changed sensu-backend etcd configuration options.
+- Added VMware as a value return in `GetCloudProvider` function.
 
 ### Removed
 - Removed sensu-backend upgrade command. May make an appearance again in later versions.

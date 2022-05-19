@@ -148,6 +148,10 @@ func GetCloudProvider(ctx context.Context) string {
 			logger.Debug("Running on Azure")
 			return "Azure"
 		}
+		if strings.Contains(text, "vmware") {
+			logger.Debug("Running on VMware")
+			return "VMware"
+		}
 	case "windows":
 		return cloudMetadataFallback(ctx)
 	}
