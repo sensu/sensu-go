@@ -16,6 +16,7 @@ import (
 	"syscall"
 	"time"
 
+	"go.etcd.io/etcd/client/pkg/v3/logutil"
 	clientv3 "go.etcd.io/etcd/client/v3"
 
 	"github.com/jackc/pgx/v4/pgxpool"
@@ -412,7 +413,7 @@ func newClient(ctx context.Context, config *backend.Config) (*clientv3.Client, e
 	}
 
 	// Set etcd client log level
-	logConfig := clientv3.CreateDefaultZapLoggerConfig()
+	logConfig := logutil.DefaultZapLoggerConfig
 	logConfig.Level.SetLevel(etcd.LogLevelToZap(config.Store.EtcdConfigurationStore.LogLevel))
 	clientv3Config.LogConfig = &logConfig
 
