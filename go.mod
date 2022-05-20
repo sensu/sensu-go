@@ -11,12 +11,10 @@ replace (
 
 require (
 	github.com/AlecAivazis/survey/v2 v2.2.14
-	github.com/Azure/go-ansiterm v0.0.0-20170929234023-d6e3b3328b78 // indirect
 	github.com/ash2k/stager v0.0.0-20170622123058-6e9c7b0eacd4 // indirect
 	github.com/atlassian/gostatsd v0.0.0-20180514010436-af796620006e
 	github.com/blang/semver/v4 v4.0.0
 	github.com/dave/jennifer v0.0.0-20171207062344-d8bdbdbee4e1
-	github.com/docker/docker v0.0.0-20180409082103-cbde00b44273
 	github.com/dustin/go-humanize v1.0.0
 	github.com/echlebek/crock v1.0.1
 	github.com/echlebek/timeproxy v1.0.0
@@ -32,7 +30,6 @@ require (
 	github.com/google/uuid v1.1.2
 	github.com/gorilla/mux v1.8.0
 	github.com/gorilla/websocket v1.4.2
-	github.com/gotestyourself/gotestyourself v2.2.0+incompatible // indirect
 	github.com/graph-gophers/dataloader v0.0.0-20180104184831-78139374585c
 	github.com/graphql-go/graphql v0.7.10-0.20200426202700-116f19d099aa
 	github.com/gxed/GoEndian v0.0.0-20160916112711-0f5c6873267e // indirect
@@ -84,5 +81,4 @@ require (
 	google.golang.org/grpc v1.38.0
 	gopkg.in/h2non/filetype.v1 v1.0.3
 	gopkg.in/yaml.v2 v2.4.0
-	gotest.tools v2.2.0+incompatible // indirect
 )
