@@ -16,6 +16,8 @@ func init() {
 			return nil, fmt.Errorf("invalid resource: %s", name)
 		}
 	})
+	r := &V3Resource{}
+	types.RegisterTypeMeta(r.StoreName(), r.GetTypeMeta())
 }
 
 type V3Resource struct {
@@ -44,4 +46,11 @@ func (v *V3Resource) URIPath() string {
 
 func (v *V3Resource) Validate() error {
 	return nil
+}
+
+func (v *V3Resource) GetTypeMeta() corev2.TypeMeta {
+	return corev2.TypeMeta{
+		Type:       "V3Resource",
+		APIVersion: "testing/fixture",
+	}
 }

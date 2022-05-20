@@ -42,6 +42,10 @@ func (e *EntityWrapper) Unwrap() (corev3.Resource, error) {
 	return entity, e.unwrapIntoEntityState(entity)
 }
 
+func (e *EntityWrapper) UnwrapRaw() (interface{}, error) {
+	return e.Unwrap()
+}
+
 // WrapEntityState wraps an EntityState into an EntityWrapper.
 func WrapEntityState(entity *corev3.EntityState) storev2.Wrapper {
 	meta := entity.GetMetadata()

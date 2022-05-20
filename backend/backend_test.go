@@ -101,10 +101,10 @@ func TestBackendHTTPListener(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			defer client.Close()
+			defer func() { _ = client.Close() }()
 
 			// note that the pg db is nil, which is fine when DevMode is enabled
-			b, err := Initialize(ctx, client, nil, cfg)
+			b, err := Initialize(ctx, client, nil, nil, cfg)
 			if err != nil {
 				t.Fatalf("failed to start backend: %s", err)
 			}

@@ -10,6 +10,7 @@ import (
 type Wrapper interface {
 	Unwrap() (corev3.Resource, error)
 	UnwrapInto(interface{}) error
+	//UnwrapRaw() (interface{}, error)
 }
 
 // WrapList is a list of Wrappers.

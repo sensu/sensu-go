@@ -170,7 +170,7 @@ var (
 
 // InitializeFunc represents the signature of an initialization function, used
 // to initialize the backend
-type InitializeFunc func(context.Context, *clientv3.Client, *pgxpool.Pool, *backend.Config) (*backend.Backend, error)
+type InitializeFunc func(context.Context, *clientv3.Client, *pgxpool.Pool, *pgxpool.Pool, *backend.Config) (*backend.Backend, error)
 
 func anyConfig(cfg etcdstore.Config) bool {
 	var zero etcdstore.Config
@@ -206,10 +206,6 @@ func StartCommand(initialize InitializeFunc) *cobra.Command {
 				configStore = "dev"
 			}
 
-			if configStore == "postgres" {
-				return errors.New("postgres config store not supported yet")
-			}
-
 			cfg := &backend.Config{
 				AgentHost:             viper.GetString(flagAgentHost),
 				AgentPort:             viper.GetInt(flagAgentPort),
@@ -243,9 +239,6 @@ func StartCommand(initialize InitializeFunc) *cobra.Command {
 				Store: backend.StoreConfig{
 					ConfigurationStore: configStore,
 					StateStore:         stateStore,
-					PostgresConfigurationStore: postgres.Config{
-						DSN: viper.GetString(flagPGConfigStoreDSN),
-					},
 					PostgresStateStore: postgres.Config{
 						DSN: viper.GetString(flagPGStateStoreDSN),
 					},
@@ -265,6 +258,12 @@ func StartCommand(initialize InitializeFunc) *cobra.Command {
 				},
 			}
 
+			if cfg.Store.ConfigurationStore == "postgres" {
+				cfg.Store.PostgresConfigurationStore = postgres.Config{
+					DSN: viper.GetString(flagPGConfigStoreDSN),
+				}
+			}
+
 			if cfg.DevMode && cfg.CacheDir == "" {
 				var err error
 				cfg.CacheDir, err = os.MkdirTemp("", "sensu-cache")
@@ -281,8 +280,6 @@ func StartCommand(initialize InitializeFunc) *cobra.Command {
 				if err != nil {
 					return err
 				}
-			} else if cfg.StateDir == "" {
-				return errors.New("state dir not set")
 			}
 
 			if flag := cmd.Flags().Lookup(flagLabels); flag != nil && flag.Changed {
@@ -290,9 +287,6 @@ func StartCommand(initialize InitializeFunc) *cobra.Command {
 			}
 			if flag := cmd.Flags().Lookup(flagAnnotations); flag != nil && flag.Changed {
 				cfg.Annotations = annotations
-			}
-			if cfg.Store.ConfigurationStore != "etcd" && anyConfig(cfg.Store.EtcdConfigurationStore) {
-				return errors.New("etcd configuration specified, but config-store is not etcd")
 			}
 
 			// Sensu APIs TLS config
@@ -323,27 +317,30 @@ func StartCommand(initialize InitializeFunc) *cobra.Command {
 				)
 			}
 
+			var etcdConfigClient *clientv3.Client
+			var pgConfigDB *pgxpool.Pool
 			ctx, cancel := context.WithCancel(context.Background())
 			defer cancel()
-			client, err := newClient(ctx, cfg)
+			etcdConfigClient, err = devModeClient(ctx, cfg)
 			if err != nil {
 				return err
 			}
-			defer client.Close()
-			pgDSN := cfg.Store.PostgresStateStore.DSN
-			pgxConfig, err := pgxpool.ParseConfig(pgDSN)
-			if err != nil {
-				return err
+			defer func() { _ = etcdConfigClient.Close() }()
+			if cfg.Store.ConfigurationStore == "postgres" {
+				pgConfigDB, err := newPostgresPool(ctx, cfg.Store.PostgresConfigurationStore.DSN, false)
+				if err != nil {
+					return err
+				}
+				defer pgConfigDB.Close()
 			}
 
-			// Create the event store, which runs on top of postgres
-			db, err := postgres.Open(ctx, pgxConfig, true)
+			pgStateDB, err := newPostgresPool(ctx, cfg.Store.PostgresStateStore.DSN, true)
 			if err != nil {
 				return err
 			}
-			defer db.Close()
+			defer pgStateDB.Close()
 
-			sensuBackend, err := initialize(ctx, client, db, cfg)
+			sensuBackend, err := initialize(ctx, etcdConfigClient, pgConfigDB, pgStateDB, cfg)
 			if err != nil {
 				return err
 			}
@@ -425,6 +422,25 @@ func newClient(ctx context.Context, config *backend.Config) (*clientv3.Client, e
 		return nil, err
 	}
 	return client, nil
+}
+
+func newPostgresPool(ctx context.Context, dsn string, stateDB bool) (*pgxpool.Pool, error) {
+	pgxConfig, err := pgxpool.ParseConfig(dsn)
+	if err != nil {
+		return nil, err
+	}
+
+	// Create the event store, which runs on top of postgres
+	var db *pgxpool.Pool
+	if stateDB {
+		db, err = postgres.OpenStateDB(ctx, pgxConfig, true)
+	} else {
+		db, err = postgres.OpenConfigDB(ctx, pgxConfig, true)
+	}
+	if err != nil {
+		return nil, err
+	}
+	return db, nil
 }
 
 func devModeClient(ctx context.Context, config *backend.Config) (*clientv3.Client, error) {

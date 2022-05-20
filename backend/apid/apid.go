@@ -43,6 +43,7 @@ type APId struct {
 	bus                 messaging.MessageBus
 	store               store.Store
 	storev2             storev2.Interface
+	configStoreV2       storev2.Interface
 	eventStore          store.EventStore
 	queueGetter         types.QueueGetter
 	tls                 *types.TLSOptions
@@ -63,6 +64,7 @@ type Config struct {
 	Bus                 messaging.MessageBus
 	Store               store.Store
 	Storev2             storev2.Interface
+	ConfigStoreV2       storev2.Interface
 	EventStore          store.EventStore
 	QueueGetter         types.QueueGetter
 	TLS                 *types.TLSOptions
@@ -79,6 +81,7 @@ func New(c Config, opts ...Option) (*APId, error) {
 	a := &APId{
 		store:               c.Store,
 		storev2:             c.Storev2,
+		configStoreV2:       c.ConfigStoreV2,
 		eventStore:          c.EventStore,
 		queueGetter:         c.QueueGetter,
 		tls:                 c.TLS,
@@ -271,7 +274,7 @@ func PublicSubrouter(router *mux.Router, cfg Config) *mux.Router {
 	return subrouter
 }
 
-func notFoundHandler(w http.ResponseWriter, req *http.Request) {
+func notFoundHandler(w http.ResponseWriter, _ *http.Request) {
 	w.WriteHeader(http.StatusNotFound)
 	resp := map[string]interface{}{
 		"message": "not found", "code": actions.NotFound,

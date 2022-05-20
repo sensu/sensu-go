@@ -369,3 +369,25 @@ func ApiVersion(version string) string {
 	}
 	return path.Join(parts[len(parts)-2], parts[len(parts)-1])
 }
+
+var storeToTypeMetaMap = map[string]corev2.TypeMeta{}
+var storeToTypeMetaMu = sync.RWMutex{}
+
+func RegisterTypeMeta(store string, typeMeta corev2.TypeMeta) {
+	storeToTypeMetaMu.Lock()
+	defer storeToTypeMetaMu.Unlock()
+
+	storeToTypeMetaMap[store] = typeMeta
+}
+
+func ResolveTypeMeta(store string) (corev2.TypeMeta, error) {
+	storeToTypeMetaMu.RLock()
+	defer storeToTypeMetaMu.RUnlock()
+
+	typeMeta, ok := storeToTypeMetaMap[store]
+	if !ok {
+		return corev2.TypeMeta{}, fmt.Errorf("type not found for store %s", store)
+	}
+
+	return typeMeta, nil
+}

@@ -193,11 +193,9 @@ func InitCommand() *cobra.Command {
 				return err
 			}
 
-			var clientURLs []string
-			if viper.GetBool(flagDevMode) {
+			clientURLs := viper.GetStringSlice(flagEtcdConfigStoreURLs)
+			if len(clientURLs) == 0 {
 				clientURLs = []string{"http://127.0.0.1:2379"}
-			} else {
-				clientURLs = viper.GetStringSlice(flagEtcdConfigStoreURLs)
 			}
 
 			// Make sure at least one of the provided endpoints is reachable. This is

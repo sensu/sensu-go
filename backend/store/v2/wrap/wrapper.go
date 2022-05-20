@@ -192,7 +192,7 @@ func wrap(r interface{}, opts ...Option) (*Wrapper, error) {
 	return wrapWithoutValidation(r, opts...)
 }
 
-// Unwrap unmarshals the wrapper's value into a resource, according to the
+// Unwrap unmarshalls the wrapper's value into a resource, according to the
 // configuration of the wrapper. The unwrapped data structure will have
 // its labels and annotations set to non-nil empty slices, if they are nil.
 func (w *Wrapper) Unwrap() (corev3.Resource, error) {
