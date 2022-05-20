@@ -17,6 +17,7 @@ executors:
           username: $DOCKER_USERNAME
           password: $DOCKER_PASSWORD
   go-with-postgres:
+    resource_class: xlarge
     docker:
       - image: cimg/go:<< pipeline.parameters.go_version >>
         auth:
