@@ -55,6 +55,10 @@ var migrations = []migration.Migrator{
 		_, err := tx.Exec(context.Background(), migrateEntityState)
 		return err
 	},
+	func(tx migration.LimitedTx) error {
+		_, err := tx.Exec(context.Background(), migrateRefreshUpdatedAtProcedure)
+		return err
+	},
 }
 
 type eventRecord struct {

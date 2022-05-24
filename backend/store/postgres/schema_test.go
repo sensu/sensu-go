@@ -29,7 +29,7 @@ func withPostgres(t testing.TB, fn func(context.Context, *pgxpool.Pool, string))
 		return
 	}
 	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
+	t.Cleanup(cancel)
 	db, err := pgxpool.Connect(ctx, pgURL)
 	if err != nil {
 		t.Fatal(err)
@@ -38,14 +38,18 @@ func withPostgres(t testing.TB, fn func(context.Context, *pgxpool.Pool, string))
 	if _, err := db.Exec(ctx, fmt.Sprintf("CREATE DATABASE %s;", dbName)); err != nil {
 		t.Fatal(err)
 	}
-	defer dropAll(ctx, dbName, pgURL)
+	t.Cleanup(func() {
+		dropAll(ctx, dbName, pgURL)
+	})
 	db.Close()
 	dsn := fmt.Sprintf("dbname=%s ", dbName) + pgURL
 	db, err = pgxpool.Connect(ctx, dsn)
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer db.Close()
+	t.Cleanup(func() {
+		db.Close()
+	})
 	if err := upgrade(ctx, db); err != nil {
 		t.Fatal(err)
 	}
@@ -65,7 +69,7 @@ func withInitialPostgres(t testing.TB, fn func(context.Context, *pgxpool.Pool)) 
 		return
 	}
 	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
+	t.Cleanup(cancel)
 	db, err := pgxpool.Connect(ctx, pgURL)
 	if err != nil {
 		t.Fatal(err)
@@ -74,13 +78,17 @@ func withInitialPostgres(t testing.TB, fn func(context.Context, *pgxpool.Pool)) 
 	if _, err := db.Exec(ctx, fmt.Sprintf("CREATE DATABASE %s;", dbName)); err != nil {
 		t.Fatal(err)
 	}
-	defer dropAll(ctx, dbName, pgURL)
+	t.Cleanup(func() {
+		dropAll(ctx, dbName, pgURL)
+	})
 	db.Close()
 	db, err = pgxpool.Connect(ctx, fmt.Sprintf("dbname=%s ", dbName)+pgURL)
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer db.Close()
+	t.Cleanup(func() {
+		db.Close()
+	})
 	if err := upgradeMigration(ctx, db, 0); err != nil {
 		t.Fatal(err)
 	}
