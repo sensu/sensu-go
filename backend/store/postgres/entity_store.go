@@ -3,7 +3,7 @@ package postgres
 import (
 	"context"
 	"errors"
-	"sync"
+	"fmt"
 
 	"github.com/jackc/pgx/v4/pgxpool"
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
@@ -39,6 +39,7 @@ func (e *EntityStore) DeleteEntity(ctx context.Context, entity *corev2.Entity) e
 	stateReq := storev2.NewResourceRequestFromResource(ctx, state)
 	stateReq.UsePostgres = true
 	configReq := storev2.NewResourceRequestFromResource(ctx, config)
+	configReq.UsePostgres = true
 
 	if err := e.store.Delete(configReq); err != nil {
 		if _, ok := err.(*store.ErrNotFound); !ok {
@@ -76,6 +77,7 @@ func (e *EntityStore) DeleteEntityByName(ctx context.Context, name string) error
 	stateReq := storev2.NewResourceRequestFromResource(ctx, state)
 	stateReq.UsePostgres = true
 	configReq := storev2.NewResourceRequestFromResource(ctx, config)
+	configReq.UsePostgres = true
 	if err := e.store.Delete(configReq); err != nil {
 		if _, ok := err.(*store.ErrNotFound); !ok {
 			return err
@@ -102,9 +104,10 @@ func (e *EntityStore) GetEntities(ctx context.Context, pred *store.SelectionPred
 
 	// Fetch the entity configs with the selection predicate
 	configReq := storev2.ResourceRequest{
-		Namespace: namespace,
-		Context:   ctx,
-		StoreName: new(corev3.EntityConfig).StoreName(),
+		Namespace:   namespace,
+		Context:     ctx,
+		StoreName:   new(corev3.EntityConfig).StoreName(),
+		UsePostgres: true,
 	}
 	if pred.Ordering == corev2.EntitySortName {
 		configReq.SortOrder = storev2.SortAscend
@@ -191,9 +194,39 @@ func entityFromConfigOnly(config *corev3.EntityConfig) *corev2.Entity {
 	return entity
 }
 
-// GetEntityByName returns an entity using the given name and the namespace stored
-// in ctx. The resulting entity is nil if none was found.
-func (e *EntityStore) GetEntityByName(ctx context.Context, name string) (*corev2.Entity, error) {
+// GetEntityConfigByName returns an entity config using the given name and the
+// namespace stored in ctx. The resulting entity config is nil if none was
+// found.
+func (e *EntityStore) GetEntityConfigByName(ctx context.Context, name string) (*corev3.EntityConfig, error) {
+	if name == "" {
+		return nil, &store.ErrNotValid{Err: errors.New("must specify name")}
+	}
+	cfg := &corev3.EntityConfig{
+		Metadata: &corev2.ObjectMeta{
+			Name:      name,
+			Namespace: corev2.ContextNamespace(ctx),
+		},
+	}
+	req := storev2.NewResourceRequestFromResource(ctx, cfg)
+	req.UsePostgres = true
+	wrapper, err := e.store.Get(req)
+	if err != nil {
+		if _, ok := err.(*store.ErrNotFound); ok {
+			return nil, nil
+		}
+		return nil, err
+	}
+
+	if err := wrapper.UnwrapInto(cfg); err != nil {
+		return nil, err
+	}
+	return cfg, nil
+}
+
+// GetEntityStateByName returns an entity state using the given name and the
+// namespace stored in ctx. The resulting entity state is nil if none was
+// found.
+func (e *EntityStore) GetEntityStateByName(ctx context.Context, name string) (*corev3.EntityState, error) {
 	if name == "" {
 		return nil, &store.ErrNotValid{Err: errors.New("must specify name")}
 	}
@@ -203,29 +236,9 @@ func (e *EntityStore) GetEntityByName(ctx context.Context, name string) (*corev2
 			Namespace: corev2.ContextNamespace(ctx),
 		},
 	}
-	config := &corev3.EntityConfig{
-		Metadata: &corev2.ObjectMeta{
-			Name:      name,
-			Namespace: corev2.ContextNamespace(ctx),
-		},
-	}
-	stateReq := storev2.NewResourceRequestFromResource(ctx, state)
-	stateReq.UsePostgres = true
-	configReq := storev2.NewResourceRequestFromResource(ctx, config)
-	var wg sync.WaitGroup
-	var stateErr error
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
-		var wrapper storev2.Wrapper
-		wrapper, stateErr = e.store.Get(stateReq)
-		if stateErr != nil {
-			return
-		}
-		stateErr = wrapper.UnwrapInto(state)
-	}()
-
-	wrapper, err := e.store.Get(configReq)
+	req := storev2.NewResourceRequestFromResource(ctx, state)
+	req.UsePostgres = true
+	wrapper, err := e.store.Get(req)
 	if err != nil {
 		if _, ok := err.(*store.ErrNotFound); ok {
 			return nil, nil
@@ -233,20 +246,64 @@ func (e *EntityStore) GetEntityByName(ctx context.Context, name string) (*corev2
 		return nil, err
 	}
 
-	if err := wrapper.UnwrapInto(config); err != nil {
+	if err := wrapper.UnwrapInto(state); err != nil {
 		return nil, err
 	}
+	return state, nil
+}
 
-	wg.Wait()
-
-	if stateErr != nil {
-		if _, ok := stateErr.(*store.ErrNotFound); ok {
-			return entityFromConfigOnly(config), nil
-		}
-		return nil, stateErr
+// GetEntityByName returns an entity using the given name and the namespace stored
+// in ctx. The resulting entity is nil if none was found.
+func (e *EntityStore) GetEntityByName(ctx context.Context, name string) (*corev2.Entity, error) {
+	cfg, err := e.GetEntityConfigByName(ctx, name)
+	if err != nil {
+		return nil, fmt.Errorf("error fetching entity config: %w", err)
 	}
+	if cfg == nil {
+		return nil, nil
+	}
+	state, err := e.GetEntityStateByName(ctx, name)
+	if err != nil {
+		return nil, fmt.Errorf("error fetching entity state: %w", err)
+	}
+	if state == nil {
+		return entityFromConfigOnly(cfg), nil
+	}
+	return corev3.V3EntityToV2(cfg, state)
+}
 
-	return corev3.V3EntityToV2(config, state)
+// UpdateEntityConfig creates or updates a given entity config.
+func (e *EntityStore) UpdateEntityConfig(ctx context.Context, cfg *corev3.EntityConfig) error {
+	if cfg.Metadata.Namespace == "" {
+		cfg.Metadata.Namespace = corev2.ContextNamespace(ctx)
+	}
+	req := storev2.NewResourceRequestFromResource(ctx, cfg)
+	req.UsePostgres = true
+	wrappedConfig, err := storev2.WrapResource(cfg)
+	if err != nil {
+		return &store.ErrEncode{Err: err}
+	}
+	if err := e.store.CreateOrUpdate(req, wrappedConfig); err != nil {
+		return err
+	}
+	return nil
+}
+
+// UpdateEntityState creates or updates a given entity state.
+func (e *EntityStore) UpdateEntityState(ctx context.Context, state *corev3.EntityState) error {
+	if state.Metadata.Namespace == "" {
+		state.Metadata.Namespace = corev2.ContextNamespace(ctx)
+	}
+	req := storev2.NewResourceRequestFromResource(ctx, state)
+	req.UsePostgres = true
+	wrappedConfig, err := storev2.WrapResource(state)
+	if err != nil {
+		return &store.ErrEncode{Err: err}
+	}
+	if err := e.store.CreateOrUpdate(req, wrappedConfig); err != nil {
+		return err
+	}
+	return nil
 }
 
 // UpdateEntity creates or updates a given entity.
@@ -255,25 +312,16 @@ func (e *EntityStore) UpdateEntity(ctx context.Context, entity *corev2.Entity) e
 	if namespace == "" {
 		namespace = corev2.ContextNamespace(ctx)
 	}
+
 	cfg, state := corev3.V2EntityToV3(entity)
 	cfg.Metadata.Namespace = namespace
 	state.Metadata.Namespace = namespace
-	stateReq := storev2.NewResourceRequestFromResource(ctx, state)
-	stateReq.UsePostgres = true
-	configReq := storev2.NewResourceRequestFromResource(ctx, cfg)
-	wrappedState, err := storev2.WrapResource(state)
-	if err != nil {
-		return &store.ErrEncode{Err: err}
+
+	if err := e.UpdateEntityConfig(ctx, cfg); err != nil {
+		return fmt.Errorf("error updating entity config: %w", err)
 	}
-	wrappedConfig, err := storev2.WrapResource(cfg)
-	if err != nil {
-		return &store.ErrEncode{Err: err}
-	}
-	if err := e.store.CreateOrUpdate(configReq, wrappedConfig); err != nil {
-		return err
-	}
-	if err := e.store.CreateOrUpdate(stateReq, wrappedState); err != nil {
-		return err
+	if err := e.UpdateEntityState(ctx, state); err != nil {
+		return fmt.Errorf("error updating entity state: %w", err)
 	}
 	return nil
 }
