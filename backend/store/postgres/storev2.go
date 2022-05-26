@@ -4,12 +4,14 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"time"
 
 	"github.com/jackc/pgconn"
 	"github.com/jackc/pgx/v4"
 	"github.com/jackc/pgx/v4/pgxpool"
 	json "github.com/json-iterator/go"
 	corev3 "github.com/sensu/sensu-go/api/core/v3"
+	"github.com/sensu/sensu-go/backend/poll"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/backend/store/patch"
 	storev2 "github.com/sensu/sensu-go/backend/store/v2"
@@ -21,6 +23,9 @@ import (
 type StoreV2 struct {
 	db          *pgxpool.Pool
 	etcdStoreV2 storev2.Interface
+
+	watchInterval  time.Duration
+	watchTxnWindow time.Duration
 }
 
 func NewStoreV2(pg *pgxpool.Pool, client *clientv3.Client) *StoreV2 {
@@ -520,6 +525,39 @@ func (s *StoreV2) Patch(req storev2.ResourceRequest, w storev2.Wrapper, patcher 
 	}
 
 	return nil
+}
+
+func (s *StoreV2) Watch(ctx context.Context, req storev2.ResourceRequest) <-chan []storev2.WatchEvent {
+	eventChan := make(chan []storev2.WatchEvent, 32)
+
+	var table poll.Table
+
+	tableFactory, ok := getWatchStoreOverride(req.StoreName)
+	if !ok {
+		// assume configuration store?
+		tableFactory = func(storev2.ResourceRequest, *pgxpool.Pool) (poll.Table, error) {
+			return nil, fmt.Errorf("default watcher not yet implemented")
+		}
+	}
+	table, err := tableFactory(req, s.db)
+	if err != nil {
+		panic(fmt.Errorf("could not create watcher for request %v: %v", req, err))
+	}
+
+	interval, txnWindow := s.watchInterval, s.watchTxnWindow
+	if interval <= 0 {
+		interval = time.Second
+	}
+	if txnWindow <= 0 {
+		txnWindow = 5 * time.Second
+	}
+	p := &poll.Poller{
+		Interval:  interval,
+		TxnWindow: txnWindow,
+		Table:     table,
+	}
+	go watch(ctx, p, eventChan)
+	return eventChan
 }
 
 func wrapWithPostgres(resource corev3.Resource, opts ...wrap.Option) (storev2.Wrapper, error) {

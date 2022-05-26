@@ -1,53 +1,75 @@
 package postgres
 
 import (
+	"context"
+	"sync"
 	"time"
 
+	"github.com/jackc/pgx/v4/pgxpool"
 	"github.com/lib/pq"
-	corev3 "github.com/sensu/sensu-go/api/core/v3"
 	"github.com/sensu/sensu-go/backend/poll"
 	storev2 "github.com/sensu/sensu-go/backend/store/v2"
 )
 
-// Watcher is the postgres backed storev2.Watcher implementation
-type Watcher struct {
-	Builder WatchQueryBuilder
-	Config  WatchConfig
+// watchStoreOverrides contains per-store overrides to the default watcher query builder.
+var watchStoreOverridesMu sync.Mutex
+var watchStoreOverrides map[string]watchStoreFactory = make(map[string]watchStoreFactory)
+
+type watchStoreFactory func(storev2.ResourceRequest, *pgxpool.Pool) (poll.Table, error)
+
+func registerWatchStoreOverride(storeName string, factory watchStoreFactory) {
+	watchStoreOverridesMu.Lock()
+	defer watchStoreOverridesMu.Unlock()
+	watchStoreOverrides[storeName] = factory
 }
 
-func (w Watcher) Watch(req storev2.ResourceRequest) (<-chan storev2.WatchEvent, error) {
-	if w.Config.OutputBufferSize <= 0 {
-		w.Config.OutputBufferSize = 128
-	}
-	if w.Config.Interval <= 0 {
-		w.Config.Interval = time.Second
-	}
-	if w.Config.TxnWindow <= 0 {
-		w.Config.TxnWindow = 5 * time.Second
-	}
-
-	eventChan := make(chan storev2.WatchEvent, w.Config.OutputBufferSize)
-
-	table := w.Builder.queryFor(req.StoreName, req.Namespace)
-
-	p := poll.Poller{
-		Interval:  w.Config.Interval,
-		TxnWindow: w.Config.TxnWindow,
-		Table:     table,
-	}
-	go p.Watch(req.Context, eventChan)
-	return eventChan, nil
+func getWatchStoreOverride(storeName string) (factory watchStoreFactory, ok bool) {
+	watchStoreOverridesMu.Lock()
+	defer watchStoreOverridesMu.Unlock()
+	factory, ok = watchStoreOverrides[storeName]
+	return
 }
 
-type WatchConfig struct {
-	Interval         time.Duration
-	TxnWindow        time.Duration
-	OutputBufferSize int
-}
-
-// WatchQueryBuilder builds watcher queries for a specific postgres store backend
-type WatchQueryBuilder interface {
-	queryFor(storeName, namespace string) poll.Table
+func watch(ctx context.Context, poller *poll.Poller, watchChan chan []storev2.WatchEvent) {
+	defer close(watchChan)
+	poller.Initialize(ctx)
+	for {
+		changes, err := poller.Next(ctx)
+		if err != nil {
+			if ctx.Err() != nil {
+				return
+			}
+			watchChan <- []storev2.WatchEvent{{Err: err}}
+			return
+		}
+		if len(changes) == 0 {
+			continue
+		}
+		notifications := make([]storev2.WatchEvent, len(changes))
+		for i, change := range changes {
+			notifications[i].Value = change.Resource.(storev2.Wrapper)
+			r, err := notifications[i].Value.Unwrap()
+			if err != nil {
+				// shouldn't happen
+				panic(err)
+			}
+			meta := r.GetMetadata()
+			notifications[i].Key = storev2.ResourceRequest{
+				Namespace: meta.Namespace,
+				Name:      meta.Name,
+				StoreName: r.StoreName(),
+			}
+			switch change.Change {
+			case poll.Create:
+				notifications[i].Type = storev2.Create
+			case poll.Update:
+				notifications[i].Type = storev2.Update
+			case poll.Delete:
+				notifications[i].Type = storev2.Delete
+			}
+		}
+		watchChan <- notifications
+	}
 }
 
 // recordStatus used by postgres stores implementing poll.Table
@@ -58,7 +80,7 @@ type recordStatus struct {
 }
 
 // Row builds a poll.Row from a scanned row
-func (rs recordStatus) Row(id string, resource corev3.Resource) poll.Row {
+func (rs recordStatus) Row(id string, resource storev2.Wrapper) poll.Row {
 	row := poll.Row{
 		Id:        id,
 		Resource:  resource,

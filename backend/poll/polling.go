@@ -5,9 +5,6 @@ import (
 	"fmt"
 	"reflect"
 	"time"
-
-	corev3 "github.com/sensu/sensu-go/api/core/v3"
-	storev2 "github.com/sensu/sensu-go/backend/store/v2"
 )
 
 // Table interface for supporting poll-based watchers.
@@ -23,7 +20,20 @@ type Row struct {
 	UpdatedAt time.Time
 	DeletedAt *time.Time
 	Id        string
-	Resource  corev3.Resource
+	Resource  interface{}
+}
+
+type RowChangeType uint
+
+const (
+	Create RowChangeType = iota
+	Update
+	Delete
+)
+
+type RowChange struct {
+	Resource interface{}
+	Change   RowChangeType
 }
 
 // Poller configuration
@@ -31,68 +41,81 @@ type Poller struct {
 	// Interval the poller uses to query the Table for updates.
 	Interval time.Duration
 	// TxnWindow is the duration that the poller caches and requeries
-	// updates for. A zero or too aggresive TxnWindow will result in
-	// skipped updates. An overly long TxnWindow will result in higher
-	// memory usage and potentially extended poll intervals.
+	// updates for. A zero or too aggressive TxnWindow will result in
+	// skipped updates. Longer TxnWindows lead to increased query
+	// load on the underlying store.
 	TxnWindow time.Duration
 	// Table implements the access methods required by the poller.
 	Table Table
+
+	start    time.Time
+	nextPoll time.Time
+	cache    map[string]Row
 }
 
-// Watch starts the poller that will publish WatchEvents to the channel.
-// The channel will be closed after a WatchError or context timeout.
-func (p *Poller) Watch(ctx context.Context, events chan storev2.WatchEvent) {
-	defer close(events)
+// Initialize the Poller with the starting state of
+// the collection.
+// Initialize must be called exactly once before Next is called.
+func (p *Poller) Initialize(ctx context.Context) error {
+	var err error
+	p.cache = make(map[string]Row)
+	p.start, err = p.Table.Now(ctx)
+	p.nextPoll = time.Now().Add(p.Interval)
+	return err
+}
 
-	ticker := time.NewTicker(p.Interval)
-	defer ticker.Stop()
+// Next blocks until the next polling interval, then returns any changed rows.
+func (p *Poller) Next(ctx context.Context) ([]RowChange, error) {
+	nextInterval := time.NewTimer(time.Until(p.nextPoll))
+	defer nextInterval.Stop()
 
-	start, err := p.Table.Now(ctx)
-	if err != nil {
-		events <- storev2.WatchEvent{Action: storev2.WatchError}
-		return
+	p.nextPoll = p.nextPoll.Add(p.Interval)
+	select {
+	case <-ctx.Done():
+		return nil, ctx.Err()
+	case <-nextInterval.C:
 	}
 
-	cache := make(map[string]Row)
+	updates, err := p.Table.Since(ctx, p.start)
+	if err != nil {
+		return nil, fmt.Errorf("poller error getting updates since %v: %v", p.start, err)
+	}
+	newUpdates := merge(updates, p.cache)
+	results := make([]RowChange, len(newUpdates))
+	for i, update := range newUpdates {
+		var change RowChangeType
+		switch {
+		case update.DeletedAt != nil:
+			change = Delete
+		case update.CreatedAt == update.UpdatedAt:
+			change = Create
+		default:
+			change = Update
+		}
+		results[i].Resource = update.Resource
+		results[i].Change = change
+	}
 
-	for {
-		select {
-		case <-ctx.Done():
-			return
-		case <-ticker.C:
-			updates, err := p.Table.Since(ctx, start)
-			if err != nil {
-				fmt.Println(err)
-				events <- storev2.WatchEvent{Action: storev2.WatchError}
-				return
-			}
-			newUpdates := merge(updates, cache)
-			for _, update := range newUpdates {
-				action := storev2.Update
-				switch {
-				case update.DeletedAt != nil:
-					action = storev2.Delete
-				case update.CreatedAt == update.UpdatedAt:
-					action = storev2.Create
-				}
-				events <- storev2.WatchEvent{Action: action, Resource: update.Resource}
-			}
+	p.advanceStartTime()
+	return results, nil
+}
+
+// advanceStartTime progresses the poll window and clears outdated
+// cache entries.
+func (p *Poller) advanceStartTime() {
+	latest := p.start
+	for _, row := range p.cache {
+		if row.UpdatedAt.After(latest) {
+			latest = row.UpdatedAt
 		}
-		// find next start lower bound
-		latest := start
-		for _, row := range cache {
-			if row.UpdatedAt.After(latest) {
-				latest = row.UpdatedAt
-			}
-		}
-		next := latest.Add(-1 * p.TxnWindow)
-		if next.After(start) {
-			start = next
-			// retire outdated cache entries
-			for id, row := range cache {
-				if next.After(row.UpdatedAt) {
-					delete(cache, id)
-				}
+	}
+	next := latest.Add(-1 * p.TxnWindow)
+	if next.After(p.start) {
+		p.start = next
+		// retire outdated cache entries
+		for id, row := range p.cache {
+			if next.After(row.UpdatedAt) {
+				delete(p.cache, id)
 			}
 		}
 	}

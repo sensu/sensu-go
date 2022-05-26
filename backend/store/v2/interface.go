@@ -47,4 +47,26 @@ type Interface interface {
 
 	// Patch patches the resource given in the request
 	Patch(ResourceRequest, Wrapper, patch.Patcher, *store.ETagCondition) error
+
+	// Watch provides a channel for receiving updates to a particular resource
+	// or resource collection
+	// Watch(context.Context, ResourceRequest) <-chan []WatchEvent
+}
+
+type WatchActionType uint
+
+const (
+	Create WatchActionType = iota
+	Update
+	Delete
+	WatchError
+)
+
+type WatchEvent struct {
+	Type          WatchActionType
+	Key           ResourceRequest
+	Value         Wrapper
+	PreviousValue Wrapper
+	Revision      int64
+	Err           error
 }

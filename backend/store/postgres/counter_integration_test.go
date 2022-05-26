@@ -33,13 +33,10 @@ func TestCounterWatcherIntegration(t *testing.T) {
 		}
 
 		// Component under test - use watcher to keep counterState in sync with db
-		watcherUnderTest := Watcher{
-			Builder: &counterIndex{db: pool},
-			Config: WatchConfig{
-				Interval:  time.Millisecond * 10,
-				TxnWindow: TxnWindow,
-			},
-		}
+		watcherUnderTest := NewStoreV2(pool, nil)
+		watcherUnderTest.watchInterval = time.Millisecond * 10
+		watcherUnderTest.watchTxnWindow = TxnWindow
+
 		watchCtx, watchCancel := context.WithCancel(ctx)
 		defer watchCancel()
 		watchDone := watchState(t, watchCtx, watcherUnderTest, counterState)
@@ -126,35 +123,42 @@ func generateCountersTraffic(ctx context.Context, pool *pgxpool.Pool, workers in
 	return done
 }
 
-func watchState(t *testing.T, ctx context.Context, w Watcher, state map[int64]int64) <-chan struct{} {
+func watchState(t *testing.T, ctx context.Context, w *StoreV2, state map[int64]int64) <-chan struct{} {
 	t.Helper()
 
 	done := make(chan struct{})
-	watchEvents, _ := w.Watch(v2.ResourceRequest{Context: ctx})
+	watchEvents := w.Watch(ctx, v2.ResourceRequest{
+		StoreName: "testing::counter",
+	})
 	go func() {
 		defer func() {
 			close(done)
 		}()
 		for {
-			event, ok := <-watchEvents
+			watchEvents, ok := <-watchEvents
 			if !ok {
 				return
 			}
-			switch event.Action {
-			case v2.Delete:
-				r := event.Resource.(*counter)
-				delete(state, r.Id)
-			case v2.Update, v2.Create:
-				r := event.Resource.(*counter)
-				state[r.Id] = r.C
-			case v2.WatchError:
-				if ctx.Err() == nil {
-					t.Error("Received watch error")
+			for _, watchEvent := range watchEvents {
+				var r counter
+				wrapper := watchEvent.Value
+				if wrapper != nil {
+					wrapper.UnwrapInto(&r)
 				}
-				return
-			default:
-				t.Errorf("unexpected action %v", event.Action)
-				return
+				switch watchEvent.Type {
+				case v2.Delete:
+					delete(state, r.Id)
+				case v2.Update, v2.Create:
+					state[r.Id] = r.C
+				case v2.WatchError:
+					if ctx.Err() == nil {
+						t.Error("Received watch error")
+					}
+					return
+				default:
+					t.Errorf("unexpected action %v", watchEvent.Type)
+					return
+				}
 			}
 		}
 	}()

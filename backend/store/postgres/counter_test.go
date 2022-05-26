@@ -1,13 +1,18 @@
+// test resources for integration testing watcher correctness.
+// defines a Counter store resource compatible with sensu-go/backend/poll
 package postgres
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
 	"github.com/jackc/pgx/v4/pgxpool"
 	v2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/poll"
+	storev2 "github.com/sensu/sensu-go/backend/store/v2"
+	"github.com/sensu/sensu-go/types"
 )
 
 const (
@@ -47,7 +52,11 @@ type counter struct {
 }
 
 func (c *counter) GetMetadata() *v2.ObjectMeta {
-	return nil
+	return &v2.ObjectMeta{
+		Name:        fmt.Sprint(c.Id),
+		Labels:      make(map[string]string),
+		Annotations: make(map[string]string),
+	}
 }
 func (c *counter) SetMetadata(*v2.ObjectMeta) {
 }
@@ -64,13 +73,34 @@ func (c *counter) Validate() error {
 	return nil
 }
 
-// counterIndex watcher.Table and WatchQueryBuilder
-type counterIndex struct {
-	db *pgxpool.Pool
+func (c *counter) GetTypeMeta() v2.TypeMeta {
+	return v2.TypeMeta{
+		APIVersion: "counter_fixture/v2",
+		Type:       "Counter",
+	}
 }
 
-func (p *counterIndex) queryFor(s, n string) poll.Table {
-	return p
+func counterResolver(name string) (interface{}, error) {
+	switch name {
+	case "Counter":
+		return &counter{}, nil
+	default:
+		return nil, errors.New("type does not exist")
+	}
+}
+
+func init() {
+	types.RegisterResolver("counter_fixture/v2", counterResolver)
+
+	registerWatchStoreOverride("testing::counter", func(req storev2.ResourceRequest, db *pgxpool.Pool) (poll.Table, error) {
+		return &counterIndex{db: db}, nil
+	})
+
+}
+
+// counterIndex implements poll.Table for counter resources
+type counterIndex struct {
+	db *pgxpool.Pool
 }
 
 func (p *counterIndex) Now(ctx context.Context) (time.Time, error) {
@@ -101,7 +131,11 @@ func (p *counterIndex) Since(ctx context.Context, ts time.Time) ([]poll.Row, err
 		}
 		// unmarshal resource
 		resource := &counter{C: cr.C, Id: cr.Id}
-		result := cr.Row(fmt.Sprint(cr.Id), resource)
+		wr, err := wrapper.WrapResource(resource)
+		if err != nil {
+			return results, err
+		}
+		result := cr.Row(fmt.Sprint(cr.Id), wr)
 		results = append(results, result)
 	}
 	return results, nil
