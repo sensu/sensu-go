@@ -106,8 +106,14 @@ func ({{ receiver $typename }}) Validate() error {
 	}
 	var iface interface{} = {{ rvar $typename }}
 	if resource, ok := iface.(Resource); ok {
-		if err := ValidateMetadata(resource.GetMetadata()); err != nil {
+		meta := resource.GetMetadata()
+		if err := ValidateMetadata(meta); err != nil {
 			return fmt.Errorf("invalid {{ $typename }}: %s", err)
+		}
+		if gr, ok := iface.(GlobalResource); ok && gr.IsGlobalResource() {
+			if err := ValidateGlobalMetadata(meta); err != nil {
+			    return fmt.Errorf("invalid {{ $typename }}: %s", err)
+			}
 		}
 	}
 	if validator, ok := iface.(validator); ok {
