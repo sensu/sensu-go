@@ -14,3 +14,5 @@ package v2
 //go:generate go fmt typemap.go
 //go:generate go run ./internal/codegen/generate_type -t typemap_test.tmpl -o typemap_test.go
 //go:generate go fmt typemap_test.go
+//go:generate go run ./internal/codegen/generate_fieldsetmap -pkg-path . -api-version core/v2 -o ./fieldsetmap.go --prefix RoleBinding:rolebinding --prefix ClusterRoleBinding:clusterrolebinding --prefix ClusterRole:clusterrole --prefix CheckConfig:check --prefix EventFilter:filter --prefix HookConfig:hook
+//go:generate go fmt fieldsetmap.go
