@@ -21,8 +21,10 @@ import (
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 )
 
-func init() {
-	types.RegisterFieldsetFn("{{ .ApiVersion }}", LookupFieldsetFn)
+// LookupFieldsetFn is used to dynamically look up fieldset func for given typename
+func LookupFieldsetFn(typename string) (corev2.FieldsetFn, bool) {
+	fset, ok := fieldsetFnMap[typename]
+	return fset, ok
 }
 
 type fieldsetFnDesc struct {
@@ -39,7 +41,7 @@ func (f *fieldsetFnDesc) Fields(v corev2.Resource) map[string]string {
 }
 
 // fieldsetFnMap is used to dynamically look up fieldset func for given type
-var fieldsetFnMap = map[string]types.FieldsetFn{ {{ range $index, $field := .Fieldsets }}
+var fieldsetFnMap = map[string]corev2.FieldsetFn{ {{ range $index, $field := .Fieldsets }}
 	"{{ $field.Kind }}": &fieldsetFnDesc{
 		prefix: "{{ $field.Prefix }}",
 		fields:  {{ $field.Name }},
@@ -47,10 +49,8 @@ var fieldsetFnMap = map[string]types.FieldsetFn{ {{ range $index, $field := .Fie
 	{{ end }}
 }
 
-// LookupFieldsetFn is used to dynamically look up fieldset func for given typename
-func LookupFieldsetFn(typename string) (types.FieldsetFn, bool) {
-	fset, ok := fieldsetFnMap[typename]
-	return fset, ok
+func init() {
+	types.RegisterFieldsetFn("{{ .ApiVersion }}", LookupFieldsetFn)
 }
 `
 
