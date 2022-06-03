@@ -1,6 +1,7 @@
 package etcdstore
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"path"
@@ -383,6 +384,31 @@ func (s *Store) Exists(req storev2.ResourceRequest) (bool, error) {
 		return false, err
 	}
 	return resp.Count > 0, nil
+}
+
+func (s *Store) CreateNamespace(ctx context.Context, namespace *corev3.Namespace) error {
+	wrapped, err := wrap.Resource(namespace)
+	if err != nil {
+		return &store.ErrNotValid{Err: fmt.Errorf("etcdstore could not wrap namespace resource: %v", err)}
+	}
+
+	key := store.NewKeyBuilder(namespace.StoreName()).Build(namespace.Metadata.Name)
+	msg, err := proto.Marshal(wrapped)
+	if err != nil {
+		return &store.ErrEncode{Key: key, Err: err}
+	}
+
+	comparator := kvc.Comparisons(
+		kvc.KeyIsNotFound(key),
+	)
+	op := clientv3.OpPut(key, string(msg))
+
+	return kvc.Txn(ctx, s.client, comparator, op)
+}
+
+func (s *Store) DeleteNamespace(ctx context.Context, namespace string) error {
+	req := storev2.NewResourceRequest(ctx, "", namespace, "namespaces")
+	return s.Delete(req)
 }
 
 func getSortOrder(order storev2.SortOrder) clientv3.SortOrder {
