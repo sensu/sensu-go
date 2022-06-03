@@ -1,6 +1,8 @@
 package v2
 
 import (
+	"context"
+
 	corev3 "github.com/sensu/sensu-go/api/core/v3"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/backend/store/patch"
@@ -21,6 +23,9 @@ type WrapList interface {
 
 // Interface specifies the interface of a v2 store.
 type Interface interface {
+	// todo: uncomment after #4765 implements namespacestore on postgres store
+	// NamespaceStore
+
 	// CreateOrUpdate creates or updates the wrapped resource.
 	CreateOrUpdate(ResourceRequest, Wrapper) error
 
@@ -69,4 +74,12 @@ type WatchEvent struct {
 	PreviousValue Wrapper
 	Revision      int64
 	Err           error
+}
+
+type NamespaceStore interface {
+	// CreateNamespace persists a corev3.Namespace resource
+	CreateNamespace(context.Context, *corev3.Namespace) error
+	// DeleteNamespace deletes the corresponding corev3.Namespace resource and
+	// cleans up any store resources from that namespace.
+	DeleteNamespace(context.Context, string) error
 }
