@@ -34,10 +34,10 @@ const (
 // handleCheck is the check message handler.
 // TODO(greg): At some point, we're going to need max parallelism.
 func (a *Agent) handleCheck(ctx context.Context, payload []byte) error {
-	var request *corev2.CheckRequest
+	request := &corev2.CheckRequest{}
 	if err := a.unmarshal(payload, request); err != nil {
 		return err
-	} else if request == nil {
+	} else if !request.Validate() {
 		return errors.New("given check configuration appears invalid")
 	}
 
