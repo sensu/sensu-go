@@ -10,9 +10,9 @@ import (
 	storev2 "github.com/sensu/sensu-go/backend/store/v2"
 )
 
-// EntityWrapper is an implementation of storev2.Wrapper, for dealing with
-// postgresql entity storage.
-type EntityWrapper struct {
+// EntityStateWrapper is an implementation of storev2.Wrapper, for dealing with
+// postgresql entity state storage.
+type EntityStateWrapper struct {
 	Namespace         string
 	Name              string
 	LastSeen          int64
@@ -36,16 +36,21 @@ type EntityWrapper struct {
 	NetworkAddresses  []string
 }
 
-// Unwrap unwraps the EntityWrapper into an *EntityState.
-func (e *EntityWrapper) Unwrap() (corev3.Resource, error) {
-	entity := new(corev3.EntityState)
-	return entity, e.unwrapIntoEntityState(entity)
+// GetName returns the name of the entity.
+func (e *EntityStateWrapper) GetName() string {
+	return e.Name
 }
 
-// WrapEntityState wraps an EntityState into an EntityWrapper.
-func WrapEntityState(entity *corev3.EntityState) storev2.Wrapper {
-	meta := entity.GetMetadata()
-	sys := entity.System
+// Unwrap unwraps the EntityStateWrapper into an *EntityState.
+func (e *EntityStateWrapper) Unwrap() (corev3.Resource, error) {
+	state := new(corev3.EntityState)
+	return state, e.unwrapIntoEntityState(state)
+}
+
+// WrapEntityState wraps an EntityState into an EntityStateWrapper.
+func WrapEntityState(state *corev3.EntityState) storev2.Wrapper {
+	meta := state.GetMetadata()
+	sys := state.System
 	nics := sys.Network.Interfaces
 	annotations, _ := json.Marshal(meta.Annotations)
 	selectorMap := make(map[string]string)
@@ -54,12 +59,12 @@ func WrapEntityState(entity *corev3.EntityState) storev2.Wrapper {
 		selectorMap[k] = v
 	}
 	selectors, _ := json.Marshal(selectorMap)
-	wrapper := &EntityWrapper{
+	wrapper := &EntityStateWrapper{
 		Namespace:         meta.Namespace,
 		Name:              meta.Name,
 		Selectors:         selectors,
 		Annotations:       annotations,
-		LastSeen:          entity.LastSeen,
+		LastSeen:          state.LastSeen,
 		Hostname:          sys.Hostname,
 		OS:                sys.OS,
 		Platform:          sys.Platform,
@@ -72,7 +77,7 @@ func WrapEntityState(entity *corev3.EntityState) storev2.Wrapper {
 		VMRole:            sys.VMRole,
 		CloudProvider:     sys.CloudProvider,
 		FloatType:         sys.FloatType,
-		SensuAgentVersion: entity.SensuAgentVersion,
+		SensuAgentVersion: state.SensuAgentVersion,
 	}
 	for _, nic := range nics {
 		wrapper.NetworkNames = append(wrapper.NetworkNames, nic.Name)
@@ -83,29 +88,29 @@ func WrapEntityState(entity *corev3.EntityState) storev2.Wrapper {
 	return wrapper
 }
 
-func (e *EntityWrapper) unwrapIntoEntityState(entity *corev3.EntityState) error {
-	entity.Metadata = &corev2.ObjectMeta{
+func (e *EntityStateWrapper) unwrapIntoEntityState(state *corev3.EntityState) error {
+	state.Metadata = &corev2.ObjectMeta{
 		Namespace:   e.Namespace,
 		Name:        e.Name,
 		Labels:      make(map[string]string),
 		Annotations: make(map[string]string),
 	}
-	entity.LastSeen = e.LastSeen
+	state.LastSeen = e.LastSeen
 	selectors := make(map[string]string)
 	if err := json.Unmarshal(e.Selectors, &selectors); err != nil {
 		return fmt.Errorf("error unwrapping entity state: %s", err)
 	}
-	if err := json.Unmarshal(e.Annotations, &entity.Metadata.Annotations); err != nil {
+	if err := json.Unmarshal(e.Annotations, &state.Metadata.Annotations); err != nil {
 		return fmt.Errorf("error unwrapping entity state: %s", err)
 	}
 	for k, v := range selectors {
 		if strings.HasPrefix(k, "labels.") {
 			k = strings.TrimPrefix(k, "labels.")
-			entity.Metadata.Labels[k] = v
+			state.Metadata.Labels[k] = v
 		}
 	}
-	entity.SensuAgentVersion = e.SensuAgentVersion
-	entity.System = corev2.System{
+	state.SensuAgentVersion = e.SensuAgentVersion
+	state.System = corev2.System{
 		Hostname:        e.Hostname,
 		OS:              e.OS,
 		Platform:        e.Platform,
@@ -132,28 +137,28 @@ func (e *EntityWrapper) unwrapIntoEntityState(entity *corev3.EntityState) error 
 			MAC:       e.NetworkMACs[i],
 			Addresses: addresses,
 		}
-		entity.System.Network.Interfaces = append(
-			entity.System.Network.Interfaces,
+		state.System.Network.Interfaces = append(
+			state.System.Network.Interfaces,
 			nic,
 		)
 	}
 	return nil
 }
 
-// UnwrapInto unwraps an EntityWrapper into a provided *EntityState. Other data
-// types are not supported.
-func (e *EntityWrapper) UnwrapInto(face interface{}) error {
-	switch entity := face.(type) {
+// UnwrapInto unwraps an EntityStateWrapper into a provided *EntityState.
+// Other data types are not supported.
+func (e *EntityStateWrapper) UnwrapInto(face interface{}) error {
+	switch state := face.(type) {
 	case *corev3.EntityState:
-		return e.unwrapIntoEntityState(entity)
+		return e.unwrapIntoEntityState(state)
 	default:
-		return fmt.Errorf("error unwrapping entity state: unsupported type: %T", entity)
+		return fmt.Errorf("error unwrapping entity state: unsupported type: %T", state)
 	}
 }
 
-// SQLParams serializes an EntityWrapper into a slice of parameters, suitable
-// for passing to a postgresql query.
-func (e *EntityWrapper) SQLParams() []interface{} {
+// SQLParams serializes an EntityStateWrapper into a slice of parameters,
+// suitable for passing to a postgresql query.
+func (e *EntityStateWrapper) SQLParams() []interface{} {
 	return []interface{}{
 		&e.Namespace,
 		&e.Name,

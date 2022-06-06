@@ -42,20 +42,68 @@ const (
 	listAllQ           crudOp = 6
 	existsQ            crudOp = 7
 	patchQ             crudOp = 8
+	getMultipleQ       crudOp = 9
 )
 
 var (
-	entityStateStoreName = new(corev3.EntityState).StoreName()
+	entityConfigStoreName = new(corev3.EntityConfig).StoreName()
+	entityStateStoreName  = new(corev3.EntityState).StoreName()
 )
 
-type wrapperParams interface {
+type namedWrapperWithParams interface {
+	storev2.Wrapper
+	GetName() string
+	SQLParams() []any
+}
+
+type wrapperWithParams interface {
+	storev2.Wrapper
 	SQLParams() []interface{}
+}
+
+func (s *StoreV2) lookupWrapper(req storev2.ResourceRequest, op crudOp) namedWrapperWithParams {
+	storeName := req.StoreName
+	switch storeName {
+	case entityConfigStoreName:
+		return &EntityConfigWrapper{}
+	case entityStateStoreName:
+		return &EntityStateWrapper{}
+	default:
+		msg := fmt.Sprintf("no wrapper type defined for store: %s", storeName)
+		panic(msg)
+	}
 }
 
 func (s *StoreV2) lookupQuery(req storev2.ResourceRequest, op crudOp) (string, bool) {
 	storeName := req.StoreName
 	ordering := req.SortOrder
 	switch storeName {
+	case entityConfigStoreName:
+		switch op {
+		case createOrUpdateQ:
+			return createOrUpdateEntityConfigQuery, true
+		case updateIfExistsQ:
+			return updateIfExistsEntityConfigQuery, true
+		case createIfNotExistsQ:
+			return createIfNotExistsEntityConfigQuery, true
+		case getQ:
+			return getEntityConfigQuery, true
+		case getMultipleQ:
+			return getEntityConfigsQuery, true
+		case deleteQ:
+			return deleteEntityConfigQuery, true
+		case listQ, listAllQ:
+			switch ordering {
+			case storev2.SortDescend:
+				return listEntityConfigDescQuery, true
+			default:
+				return listEntityConfigQuery, true
+			}
+		case existsQ:
+			return existsEntityConfigQuery, true
+		default:
+			return "", false
+		}
 	case entityStateStoreName:
 		switch op {
 		case createOrUpdateQ:
@@ -66,6 +114,8 @@ func (s *StoreV2) lookupQuery(req storev2.ResourceRequest, op crudOp) (string, b
 			return createIfNotExistsEntityStateQuery, true
 		case getQ:
 			return getEntityStateQuery, true
+		case getMultipleQ:
+			return getEntityStatesQuery, true
 		case deleteQ:
 			return deleteEntityStateQuery, true
 		case listQ, listAllQ:
@@ -97,7 +147,7 @@ func (s *StoreV2) CreateOrUpdate(req storev2.ResourceRequest, wrapper storev2.Wr
 	if !req.UsePostgres {
 		return s.etcdStoreV2.CreateOrUpdate(req, wrapper)
 	}
-	pwrap, ok := wrapper.(wrapperParams)
+	pwrap, ok := wrapper.(wrapperWithParams)
 	if !ok {
 		return &store.ErrNotValid{Err: fmt.Errorf("bad wrapper type for postgres: %T", wrapper)}
 	}
@@ -120,7 +170,7 @@ func (s *StoreV2) UpdateIfExists(req storev2.ResourceRequest, wrapper storev2.Wr
 	if !req.UsePostgres {
 		return s.etcdStoreV2.UpdateIfExists(req, wrapper)
 	}
-	pwrap, ok := wrapper.(wrapperParams)
+	pwrap, ok := wrapper.(wrapperWithParams)
 	if !ok {
 		return &store.ErrNotValid{Err: fmt.Errorf("bad wrapper type for postgres: %T", wrapper)}
 	}
@@ -154,7 +204,7 @@ func (s *StoreV2) CreateIfNotExists(req storev2.ResourceRequest, wrapper storev2
 	if !req.UsePostgres {
 		return s.etcdStoreV2.CreateIfNotExists(req, wrapper)
 	}
-	pwrap, ok := wrapper.(wrapperParams)
+	pwrap, ok := wrapper.(wrapperWithParams)
 	if !ok {
 		return &store.ErrNotValid{Err: fmt.Errorf("bad wrapper type for postgres: %T", wrapper)}
 	}
@@ -169,7 +219,8 @@ func (s *StoreV2) CreateIfNotExists(req storev2.ResourceRequest, wrapper storev2
 	if _, err := s.db.Exec(req.Context, query, params...); err != nil {
 		pgError, ok := err.(*pgconn.PgError)
 		if ok {
-			if pgError.ConstraintName == "entities_namespace_name_key" {
+			switch pgError.ConstraintName {
+			case "entity_config_unique", "entity_state_unique":
 				return &store.ErrAlreadyExists{Key: fmt.Sprintf("%s/%s", req.Namespace, req.Name)}
 			}
 		}
@@ -183,21 +234,20 @@ func (s *StoreV2) Get(req storev2.ResourceRequest) (storev2.Wrapper, error) {
 	if !req.UsePostgres {
 		return s.etcdStoreV2.Get(req)
 	}
-	query, ok := s.lookupQuery(req, getQ)
+	op := getQ
+	query, ok := s.lookupQuery(req, op)
 	if !ok {
 		return nil, errNoQuery(req.StoreName)
 	}
 	row := s.db.QueryRow(req.Context, query, req.Namespace, req.Name)
-	// TODO(jk): make a generic wrapper type here or have the method take a
-	// wrapper as an argument.
-	var wrapper EntityWrapper
+	wrapper := s.lookupWrapper(req, op)
 	if err := row.Scan(wrapper.SQLParams()...); err != nil {
 		if err == pgx.ErrNoRows {
 			return nil, &store.ErrNotFound{Key: fmt.Sprintf("%s.%s", req.Namespace, req.Name)}
 		}
 		return nil, &store.ErrInternal{Message: err.Error()}
 	}
-	return &wrapper, nil
+	return wrapper, nil
 }
 
 func (s *StoreV2) GetMultiple(ctx context.Context, reqs []storev2.ResourceRequest) (map[storev2.ResourceRequest]storev2.Wrapper, error) {
@@ -215,9 +265,21 @@ func (s *StoreV2) GetMultiple(ctx context.Context, reqs []storev2.ResourceReques
 		Namespace string
 		Name      string
 	}
+
+	var storeName string
 	keyedResourceRequests := map[requestKey]storev2.ResourceRequest{}
 	namespacedResources := map[string][]string{}
-	for _, req := range reqs {
+	for i, req := range reqs {
+		if i == 0 {
+			storeName = reqs[0].StoreName
+		}
+		if err := req.Validate(); err != nil {
+			return nil, &store.ErrNotValid{Err: err}
+		}
+		if storeName != req.StoreName {
+			panic("GetMultiple() does not support requests with differing store names")
+		}
+
 		key := requestKey{
 			Namespace: req.Namespace,
 			Name:      req.Name,
@@ -227,16 +289,21 @@ func (s *StoreV2) GetMultiple(ctx context.Context, reqs []storev2.ResourceReques
 	}
 
 	wrappers := map[storev2.ResourceRequest]storev2.Wrapper{}
+	op := getMultipleQ
 	for namespace, resourceNames := range namespacedResources {
-		// TODO(jk): this is opinionated and needs to change if we want to
-		// support anything other than entity states
-		rows, err := tx.Query(ctx, getEntityStatesQuery, namespace, resourceNames)
+		query, ok := s.lookupQuery(reqs[0], op)
+		if !ok {
+			return nil, errNoQuery(storeName)
+		}
+
+		rows, err := tx.Query(ctx, query, namespace, resourceNames)
 		if err != nil {
 			return nil, err
 		}
 
 		for rows.Next() {
-			var wrapper EntityWrapper
+			wrapper := s.lookupWrapper(reqs[0], op)
+
 			if err := rows.Scan(wrapper.SQLParams()...); err != nil {
 				if err == pgx.ErrNoRows {
 					continue
@@ -246,14 +313,14 @@ func (s *StoreV2) GetMultiple(ctx context.Context, reqs []storev2.ResourceReques
 
 			key := requestKey{
 				Namespace: namespace,
-				Name:      wrapper.Name,
+				Name:      wrapper.GetName(),
 			}
 			req, ok := keyedResourceRequests[key]
 			if !ok {
 				panic("keyedResourceRequests key does not exist")
 			}
 
-			wrappers[req] = &wrapper
+			wrappers[req] = wrapper
 		}
 	}
 
@@ -292,10 +359,14 @@ func (w WrapList) Unwrap() ([]corev3.Resource, error) {
 
 func (w WrapList) UnwrapInto(dest interface{}) error {
 	switch list := dest.(type) {
+	case *[]corev3.EntityConfig:
+		return w.unwrapIntoEntityConfigList(list)
+	case *[]*corev3.EntityConfig:
+		return w.unwrapIntoEntityConfigPointerList(list)
 	case *[]corev3.EntityState:
-		return w.unwrapIntoEntityList(list)
+		return w.unwrapIntoEntityStateList(list)
 	case *[]*corev3.EntityState:
-		return w.unwrapIntoEntityPointerList(list)
+		return w.unwrapIntoEntityStatePointerList(list)
 	case *[]corev3.Resource:
 		return w.unwrapIntoResourceList(list)
 	default:
@@ -303,30 +374,60 @@ func (w WrapList) UnwrapInto(dest interface{}) error {
 	}
 }
 
-func (w WrapList) unwrapIntoEntityList(list *[]corev3.EntityState) error {
+func (w WrapList) unwrapIntoEntityConfigList(list *[]corev3.EntityConfig) error {
 	if len(*list) != len(w) {
-		*list = make([]corev3.EntityState, len(w))
+		*list = make([]corev3.EntityConfig, len(w))
 	}
-	for i, entity := range w {
+	for i, cfg := range w {
 		ptr := &((*list)[i])
-		if err := entity.UnwrapInto(ptr); err != nil {
+		if err := cfg.UnwrapInto(ptr); err != nil {
 			return err
 		}
 	}
 	return nil
 }
 
-func (w WrapList) unwrapIntoEntityPointerList(list *[]*corev3.EntityState) error {
+func (w WrapList) unwrapIntoEntityConfigPointerList(list *[]*corev3.EntityConfig) error {
+	if len(*list) != len(w) {
+		*list = make([]*corev3.EntityConfig, len(w))
+	}
+	for i, cfg := range w {
+		ptr := (*list)[i]
+		if ptr == nil {
+			ptr = new(corev3.EntityConfig)
+			(*list)[i] = ptr
+		}
+		if err := cfg.UnwrapInto(ptr); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (w WrapList) unwrapIntoEntityStateList(list *[]corev3.EntityState) error {
+	if len(*list) != len(w) {
+		*list = make([]corev3.EntityState, len(w))
+	}
+	for i, state := range w {
+		ptr := &((*list)[i])
+		if err := state.UnwrapInto(ptr); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (w WrapList) unwrapIntoEntityStatePointerList(list *[]*corev3.EntityState) error {
 	if len(*list) != len(w) {
 		*list = make([]*corev3.EntityState, len(w))
 	}
-	for i, entity := range w {
+	for i, state := range w {
 		ptr := (*list)[i]
 		if ptr == nil {
 			ptr = new(corev3.EntityState)
 			(*list)[i] = ptr
 		}
-		if err := entity.UnwrapInto(ptr); err != nil {
+		if err := state.UnwrapInto(ptr); err != nil {
 			return err
 		}
 	}
@@ -359,7 +460,8 @@ func (s *StoreV2) List(req storev2.ResourceRequest, pred *store.SelectionPredica
 	if !req.UsePostgres {
 		return s.etcdStoreV2.List(req, pred)
 	}
-	query, ok := s.lookupQuery(req, listQ)
+	op := listQ
+	query, ok := s.lookupQuery(req, op)
 	if !ok {
 		return nil, errNoQuery(req.StoreName)
 	}
@@ -381,14 +483,14 @@ func (s *StoreV2) List(req storev2.ResourceRequest, pred *store.SelectionPredica
 	var rowCount int64
 	for rows.Next() {
 		rowCount++
-		var wrapper EntityWrapper
+		wrapper := s.lookupWrapper(req, op)
 		if err := rows.Scan(wrapper.SQLParams()...); err != nil {
 			return nil, &store.ErrInternal{Message: err.Error()}
 		}
 		if err := rows.Err(); err != nil {
 			return nil, &store.ErrInternal{Message: err.Error()}
 		}
-		wrapList = append(wrapList, &wrapper)
+		wrapList = append(wrapList, wrapper)
 	}
 	if pred != nil {
 		if rowCount < pred.Limit {
@@ -427,12 +529,13 @@ func (s *StoreV2) Patch(req storev2.ResourceRequest, w storev2.Wrapper, patcher 
 		return &store.ErrNotValid{Err: err}
 	}
 
-	query, ok := s.lookupQuery(req, getQ)
+	op := getQ
+	query, ok := s.lookupQuery(req, op)
 	if !ok {
 		return errNoQuery(req.StoreName)
 	}
 
-	var originalWrapper EntityWrapper
+	originalWrapper := s.lookupWrapper(req, op)
 
 	tx, txerr := s.db.Begin(req.Context)
 	if err != nil {
@@ -443,7 +546,7 @@ func (s *StoreV2) Patch(req storev2.ResourceRequest, w storev2.Wrapper, patcher 
 			err = tx.Commit(req.Context)
 			return
 		}
-		if txerr := tx.Rollback(context.Background()); txerr != nil {
+		if txerr := tx.Rollback(req.Context); txerr != nil {
 			err = txerr
 		}
 	}()
@@ -503,7 +606,7 @@ func (s *StoreV2) Patch(req storev2.ResourceRequest, w storev2.Wrapper, patcher 
 		return &store.ErrEncode{Err: err}
 	}
 
-	pwrap, ok := wrapped.(wrapperParams)
+	pwrap, ok := wrapped.(wrapperWithParams)
 	if !ok {
 		return &store.ErrNotValid{Err: fmt.Errorf("bad wrapper type for postgres: %T", wrapped)}
 	}
@@ -513,9 +616,7 @@ func (s *StoreV2) Patch(req storev2.ResourceRequest, w storev2.Wrapper, patcher 
 		return errNoQuery(req.StoreName)
 	}
 
-	params := pwrap.SQLParams()
-
-	if _, err := tx.Exec(req.Context, query, params...); err != nil {
+	if _, err := tx.Exec(req.Context, query, pwrap.SQLParams()...); err != nil {
 		return &store.ErrInternal{Message: err.Error()}
 	}
 
@@ -524,6 +625,8 @@ func (s *StoreV2) Patch(req storev2.ResourceRequest, w storev2.Wrapper, patcher 
 
 func wrapWithPostgres(resource corev3.Resource, opts ...wrap.Option) (storev2.Wrapper, error) {
 	switch value := resource.(type) {
+	case *corev3.EntityConfig:
+		return WrapEntityConfig(value), nil
 	case *corev3.EntityState:
 		return WrapEntityState(value), nil
 	default:
