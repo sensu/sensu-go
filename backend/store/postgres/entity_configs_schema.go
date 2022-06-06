@@ -3,7 +3,7 @@ package postgres
 const entityConfigSchema = `
 --
 CREATE TABLE IF NOT EXISTS entity_configs (
-    id                 bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    id                 bigserial PRIMARY KEY,
     namespace          text NOT NULL,
     name               text NOT NULL,
     selectors          jsonb,
