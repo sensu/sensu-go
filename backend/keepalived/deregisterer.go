@@ -11,7 +11,7 @@ import (
 	"github.com/sensu/sensu-go/backend/silenced"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/backend/store/cache"
-	"github.com/sensu/sensu-go/types"
+	storev2 "github.com/sensu/sensu-go/backend/store/v2"
 )
 
 // A Deregisterer provides a mechanism for deregistering entities and
@@ -19,13 +19,13 @@ import (
 type Deregisterer interface {
 	// Deregister an entity and return an error if there was any problem during the
 	// deregistration process.
-	Deregister(e *types.Entity) error
+	Deregister(e *corev2.Entity) error
 }
 
 // Deregistration is an adapter for deregistering an entity from the store and
 // publishing a deregistration event to WizardBus.
 type Deregistration struct {
-	EntityStore   store.EntityStore
+	EntityStore   storev2.Interface
 	EventStore    store.EventStore
 	MessageBus    messaging.MessageBus
 	SilencedCache cache.Cache
@@ -33,12 +33,13 @@ type Deregistration struct {
 }
 
 // Deregister an entity and all of its associated events.
-func (d *Deregistration) Deregister(entity *types.Entity) error {
-	ctx := context.WithValue(context.Background(), types.NamespaceKey, entity.Namespace)
+func (d *Deregistration) Deregister(entity *corev2.Entity) error {
+	ctx := context.WithValue(context.Background(), corev2.NamespaceKey, entity.Namespace)
 	tctx, cancel := context.WithTimeout(ctx, d.StoreTimeout)
 	defer cancel()
 
-	if err := d.EntityStore.DeleteEntity(tctx, entity); err != nil {
+	rr := storev2.NewResourceRequestFromV2Resource(tctx, entity)
+	if err := d.EntityStore.Delete(rr); err != nil {
 		return fmt.Errorf("error deleting entity in store: %s", err)
 	}
 
@@ -62,7 +63,7 @@ func (d *Deregistration) Deregister(entity *types.Entity) error {
 
 		event.Check.Output = "Resolving due to entity deregistering"
 		event.Check.Status = 0
-		event.Check.History = []types.CheckHistory{}
+		event.Check.History = []corev2.CheckHistory{}
 
 		if err := d.MessageBus.Publish(messaging.TopicEvent, event); err != nil {
 			return fmt.Errorf("error publishing deregistration event: %s", err)
@@ -70,7 +71,7 @@ func (d *Deregistration) Deregister(entity *types.Entity) error {
 	}
 
 	if entity.Deregistration.Handler != "" {
-		deregistrationCheck := &types.Check{
+		deregistrationCheck := &corev2.Check{
 			ObjectMeta:    corev2.NewObjectMeta("deregistration", entity.Namespace),
 			Interval:      1,
 			Subscriptions: []string{},
@@ -84,7 +85,7 @@ func (d *Deregistration) Deregister(entity *types.Entity) error {
 			return err
 		}
 
-		deregistrationEvent := &types.Event{
+		deregistrationEvent := &corev2.Event{
 			Entity:    entity,
 			Check:     deregistrationCheck,
 			ID:        id[:],
