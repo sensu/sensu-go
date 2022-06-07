@@ -24,26 +24,6 @@ import (
 )
 
 const (
-	// KeepaliveCheckName is the name of the check that is created when a
-	// keepalive timeout occurs.
-	// DEPRECATED, use core/v2
-	KeepaliveCheckName = "keepalive"
-
-	// KeepaliveHandlerName is the name of the handler that is executed when
-	// a keepalive timeout occurs.
-	// DEPRECATED, use core/v2
-	KeepaliveHandlerName = "keepalive"
-
-	// RegistrationCheckName is the name of the check that is created when an
-	// entity sends a keepalive and the entity does not yet exist in the store.
-	// DEPRECATED, use core/v2
-	RegistrationCheckName = "registration"
-
-	// RegistrationHandlerName is the name of the handler that is executed when
-	// a registration event is passed to pipelined.
-	// DEPRECATED, use core/v2
-	RegistrationHandlerName = "registration"
-
 	// KeepaliveCounterVec is the name of the prometheus metric that Sensu
 	// exports for counting keepalive events, both dead and alive.
 	KeepaliveCounterVec = "sensu_go_keepalives"
