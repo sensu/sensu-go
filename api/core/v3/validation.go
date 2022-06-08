@@ -20,5 +20,19 @@ func ValidateMetadata(meta *corev2.ObjectMeta) error {
 	if meta.Annotations == nil {
 		return errors.New("nil annotations")
 	}
+
+	return nil
+}
+
+func ValidateGlobalMetadata(meta *corev2.ObjectMeta) error {
+	if meta == nil {
+		return errors.New("nil metadata")
+	}
+	if meta.Namespace != "" {
+		return fmt.Errorf(
+			"global resources must have empty namesapce: got %s",
+			meta.Namespace,
+		)
+	}
 	return nil
 }

@@ -91,7 +91,17 @@ func Test{{ $typename}}Validate(t *testing.T) {
 		t.Errorf("expected non-nil error for invalid metadata name")
 	}
 	value.Metadata.Name = "foo"
+
 	var iface interface{} = &value
+
+    if gr, ok := iface.(GlobalResource); ok && gr.IsGlobalResource() {
+        value.Metadata.Namespace = "fizz"
+        if err := value.Validate(); err == nil {
+            t.Errorf("expected non-nill error for global resource with namespace set")
+        }
+        value.Metadata.Namespace = ""
+    }
+
 	if validator, ok := iface.(validator); ok {
 		if got, want := value.Validate(), validator.validate(); got.Error() != want.Error() {
 			t.Errorf("validator error: got %s, want %s", got, want)

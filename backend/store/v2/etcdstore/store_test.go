@@ -3,10 +3,12 @@ package etcdstore_test
 import (
 	"context"
 	"fmt"
+	"reflect"
 	"testing"
 
 	"github.com/gogo/protobuf/proto"
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
+	corev3 "github.com/sensu/sensu-go/api/core/v3"
 	"github.com/sensu/sensu-go/backend/store"
 	storev2 "github.com/sensu/sensu-go/backend/store/v2"
 	"github.com/sensu/sensu-go/backend/store/v2/etcdstore"
@@ -22,6 +24,82 @@ func fixtureTestResource(name string) *testResource {
 			Annotations: make(map[string]string),
 		},
 	}
+}
+
+func TestCreateNamespace(t *testing.T) {
+	testWithEtcdStore(t, func(s *etcdstore.Store) {
+		ns := &corev3.Namespace{
+			Metadata: &corev2.ObjectMeta{
+				Name:        "testing-ns",
+				Labels:      map[string]string{"sensu.io.created_by": "sensu"},
+				Annotations: map[string]string{"my-annotation": ""},
+			},
+		}
+		ctx := context.Background()
+		if err := s.CreateNamespace(ctx, ns); err != nil {
+			t.Fatalf("could not create namespace: %v", err)
+		}
+
+		// Cannot recreate namespace
+		if err := s.CreateNamespace(ctx, &corev3.Namespace{Metadata: corev2.NewObjectMetaP("testing-ns", "")}); err == nil {
+			t.Errorf("expected error creating namesapce that already exists")
+		}
+
+		r, err := s.Get(storev2.NewResourceRequestFromResource(ctx, ns))
+		if err != nil {
+			t.Fatalf("error getting namesapce: %v", err)
+		}
+		nsCopy := &corev3.Namespace{}
+		if err := r.UnwrapInto(nsCopy); err != nil {
+			t.Errorf("failed to unwrap namesapce object: %v", err)
+		}
+
+		if !reflect.DeepEqual(ns, nsCopy) {
+			t.Errorf("expected: %+v, got: %+v", ns, nsCopy)
+		}
+	})
+}
+func TestDeleteNamespace(t *testing.T) {
+	testWithEtcdStore(t, func(s *etcdstore.Store) {
+		ns := &corev3.Namespace{
+			Metadata: &corev2.ObjectMeta{
+				Name:        "testing-ns",
+				Labels:      map[string]string{"sensu.io.created_by": "sensu"},
+				Annotations: map[string]string{"my-annotation": ""},
+			},
+		}
+		ctx := context.Background()
+		if err := s.CreateNamespace(ctx, ns); err != nil {
+			t.Fatalf("could not create namespace: %v", err)
+		}
+
+		// Create a resource under the testing-ns namespace
+		fixture := fixtureTestResource("foo")
+		fixture.Metadata.Namespace = "testing-ns"
+		fixtureReq := storev2.NewResourceRequestFromResource(ctx, fixture)
+		wrapper, err := wrap.Resource(fixture)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if err := s.CreateOrUpdate(fixtureReq, wrapper); err != nil {
+			t.Fatal(err)
+		}
+
+		// cannot delete namesapce with existing resources
+		if err := s.DeleteNamespace(ctx, "testing-ns"); err == nil {
+			t.Errorf("should not be allowed to delete namesapce with resources")
+		}
+
+		// clean up resource in test namespace
+		if err := s.Delete(fixtureReq); err != nil {
+			t.Fatal(err)
+		}
+
+		// can delete empty namespace
+		if err := s.DeleteNamespace(ctx, "testing-ns"); err != nil {
+			t.Errorf("expected to delete empty namespace: %v", err)
+		}
+	})
 }
 
 func TestCreateOrUpdate(t *testing.T) {
