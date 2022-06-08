@@ -52,7 +52,7 @@ func main() {
 	}
 	prefixMap := map[string]string{}
 	for _, prefix := range *prefixes {
-		typename, alias, ok := strings.Cut(prefix, ":")
+		typename, alias, ok := cut(prefix, ":")
 		if !ok {
 			log.Fatal("bad prefix: " + prefix)
 		}
@@ -122,13 +122,6 @@ func discoverPackageName(path string) (string, error) {
 	return pkg.Name, nil
 }
 
-func findPrefix(typename string, mapping map[string]string) string {
-	if val, ok := mapping[typename]; ok {
-		return val
-	}
-	return snakeCase(typename)
-}
-
 func parsePkg(path string) (pkg *ast.Package, err error) {
 	set := token.NewFileSet()
 	pkgs, err := parser.ParseDir(set, path, nil, parser.ParseComments)
@@ -179,6 +172,21 @@ func openFile(path string) (*os.File, error) {
 		fmt.Println(err)
 	}
 	return f, err
+}
+
+// strings.Cut isn't available in go1.17
+func cut(s, sep string) (before, after string, found bool) {
+	if i := strings.Index(s, sep); i >= 0 {
+		return s[:i], s[i+len(sep):], true
+	}
+	return s, "", false
+}
+
+func findPrefix(typename string, mapping map[string]string) string {
+	if val, ok := mapping[typename]; ok {
+		return val
+	}
+	return snakeCase(typename)
 }
 
 func snakeCase(camelCase string) string {
