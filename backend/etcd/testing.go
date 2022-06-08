@@ -5,7 +5,6 @@ import (
 	"testing"
 
 	"github.com/sensu/sensu-go/testing/testutil"
-	"github.com/stretchr/testify/require"
 )
 
 // NewTestEtcd creates a new Etcd for testing purposes.
@@ -21,12 +20,12 @@ func NewTestEtcdWithConfig(t testing.TB, cfg *Config) (*Etcd, func()) {
 	cfg.DataDir = tmpDir
 
 	e, err := NewEtcd(cfg)
-	require.NoError(t, err)
+	if err != nil {
+		t.Fatal(err)
+	}
 	return e, func() {
 		defer remove()
-		defer func() {
-			require.NoError(t, e.Shutdown())
-		}()
+		defer e.Shutdown()
 	}
 }
 

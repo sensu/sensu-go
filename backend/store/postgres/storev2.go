@@ -530,3 +530,7 @@ func wrapWithPostgres(resource corev3.Resource, opts ...wrap.Option) (storev2.Wr
 		return storev2.WrapResource(resource, opts...)
 	}
 }
+
+func (s *StoreV2) Watch(req storev2.ResourceRequest) <-chan []storev2.WatchEvent {
+	panic("unimplemented")
+}
