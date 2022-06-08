@@ -183,7 +183,7 @@ func testCheckResult(t *testing.T, w <-chan []storev2.WatchEvent, action storev2
 			return
 		}
 	case <-time.After(timeout * time.Second):
-		t.Fatalf("timeout after waiting %d for the Result() chan", timeout)
+		t.Errorf("timeout after waiting %d for the Result() chan", timeout)
 	}
 }
 
