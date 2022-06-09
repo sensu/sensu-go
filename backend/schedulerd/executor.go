@@ -11,8 +11,8 @@ import (
 	corev3 "github.com/sensu/sensu-go/api/core/v3"
 	"github.com/sensu/sensu-go/backend/messaging"
 	"github.com/sensu/sensu-go/backend/secrets"
-	"github.com/sensu/sensu-go/backend/store"
 	cachev2 "github.com/sensu/sensu-go/backend/store/cache/v2"
+	storev2 "github.com/sensu/sensu-go/backend/store/v2"
 	"github.com/sensu/sensu-go/types"
 	stringsutil "github.com/sensu/sensu-go/util/strings"
 	"github.com/sirupsen/logrus"
@@ -34,14 +34,14 @@ type Executor interface {
 // CheckExecutor executes scheduled checks in the check scheduler
 type CheckExecutor struct {
 	bus                    messaging.MessageBus
-	store                  store.Store
+	store                  storev2.Interface
 	namespace              string
 	entityCache            *cachev2.Resource
 	secretsProviderManager *secrets.ProviderManager
 }
 
 // NewCheckExecutor creates a new check executor
-func NewCheckExecutor(bus messaging.MessageBus, namespace string, store store.Store, cache *cachev2.Resource, secretsProviderManager *secrets.ProviderManager) *CheckExecutor {
+func NewCheckExecutor(bus messaging.MessageBus, namespace string, store storev2.Interface, cache *cachev2.Resource, secretsProviderManager *secrets.ProviderManager) *CheckExecutor {
 	return &CheckExecutor{bus: bus, namespace: namespace, store: store, entityCache: cache, secretsProviderManager: secretsProviderManager}
 }
 
@@ -138,7 +138,7 @@ func hookIsRelevant(hook *corev2.HookConfig, check *corev2.CheckConfig) bool {
 // them
 type AdhocRequestExecutor struct {
 	adhocQueue             types.Queue
-	store                  store.Store
+	store                  storev2.Interface
 	bus                    messaging.MessageBus
 	ctx                    context.Context
 	cancel                 context.CancelFunc
@@ -148,7 +148,7 @@ type AdhocRequestExecutor struct {
 }
 
 // NewAdhocRequestExecutor returns a new AdhocRequestExecutor.
-func NewAdhocRequestExecutor(ctx context.Context, store store.Store, queue types.Queue, bus messaging.MessageBus, cache *cachev2.Resource, secretsProviderManager *secrets.ProviderManager) *AdhocRequestExecutor {
+func NewAdhocRequestExecutor(ctx context.Context, store storev2.Interface, queue types.Queue, bus messaging.MessageBus, cache *cachev2.Resource, secretsProviderManager *secrets.ProviderManager) *AdhocRequestExecutor {
 	ctx, cancel := context.WithCancel(ctx)
 	executor := &AdhocRequestExecutor{
 		adhocQueue:             queue,
@@ -362,7 +362,7 @@ func publishRoundRobinProxyCheckRequests(executor *CheckExecutor, check *corev2.
 	return nil
 }
 
-func buildRequest(check *corev2.CheckConfig, s store.Store, secretsProviderManager *secrets.ProviderManager) (*corev2.CheckRequest, error) {
+func buildRequest(check *corev2.CheckConfig, s storev2.Interface, secretsProviderManager *secrets.ProviderManager) (*corev2.CheckRequest, error) {
 	ctx := corev2.SetContextFromResource(context.Background(), check)
 	request := &corev2.CheckRequest{}
 	request.Config = check
@@ -388,6 +388,7 @@ func buildRequest(check *corev2.CheckConfig, s store.Store, secretsProviderManag
 		)
 	}
 
+	// Replace with storev2.List()
 	assets, err := s.GetAssets(ctx, &store.SelectionPredicate{})
 	if err != nil {
 		return nil, err
@@ -416,6 +417,7 @@ func buildRequest(check *corev2.CheckConfig, s store.Store, secretsProviderManag
 	// the check in the first place.
 	if len(check.CheckHooks) != 0 {
 		// Explode hooks; get hooks & filter out those that are irrelevant
+		// Replace with storev2.List()
 		hooks, err := s.GetHookConfigs(ctx, &store.SelectionPredicate{})
 		if err != nil {
 			return nil, err

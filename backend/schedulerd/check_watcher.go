@@ -11,12 +11,13 @@ import (
 	"github.com/sensu/sensu-go/backend/secrets"
 	"github.com/sensu/sensu-go/backend/store"
 	cachev2 "github.com/sensu/sensu-go/backend/store/cache/v2"
+	storev2 "github.com/sensu/sensu-go/backend/store/v2"
 )
 
 // CheckWatcher manages all the check schedulers
 type CheckWatcher struct {
 	items                  map[string]Scheduler
-	store                  store.Store
+	store                  storev2.Interface
 	bus                    messaging.MessageBus
 	mu                     sync.Mutex
 	ctx                    context.Context
@@ -26,7 +27,7 @@ type CheckWatcher struct {
 }
 
 // NewCheckWatcher creates a new ScheduleManager.
-func NewCheckWatcher(ctx context.Context, msgBus messaging.MessageBus, store store.Store, pool *ringv2.RingPool, cache *cachev2.Resource, secretsProviderManager *secrets.ProviderManager) *CheckWatcher {
+func NewCheckWatcher(ctx context.Context, msgBus messaging.MessageBus, store storev2.Interface, pool *ringv2.RingPool, cache *cachev2.Resource, secretsProviderManager *secrets.ProviderManager) *CheckWatcher {
 	watcher := &CheckWatcher{
 		store:                  store,
 		items:                  make(map[string]Scheduler),

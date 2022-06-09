@@ -6,8 +6,8 @@ import (
 
 	"github.com/sensu/sensu-go/backend/messaging"
 	"github.com/sensu/sensu-go/backend/secrets"
-	"github.com/sensu/sensu-go/backend/store"
 	cachev2 "github.com/sensu/sensu-go/backend/store/cache/v2"
+	storev2 "github.com/sensu/sensu-go/backend/store/v2"
 	"github.com/sirupsen/logrus"
 
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
@@ -17,7 +17,7 @@ import (
 type CronScheduler struct {
 	lastCronState          string
 	check                  *corev2.CheckConfig
-	store                  store.Store
+	store                  storev2.Interface
 	bus                    messaging.MessageBus
 	logger                 *logrus.Entry
 	ctx                    context.Context
@@ -29,7 +29,7 @@ type CronScheduler struct {
 }
 
 // NewCronScheduler initializes a CronScheduler
-func NewCronScheduler(ctx context.Context, store store.Store, bus messaging.MessageBus, check *corev2.CheckConfig, cache *cachev2.Resource, secretsProviderManager *secrets.ProviderManager) *CronScheduler {
+func NewCronScheduler(ctx context.Context, store storev2.Interface, bus messaging.MessageBus, check *corev2.CheckConfig, cache *cachev2.Resource, secretsProviderManager *secrets.ProviderManager) *CronScheduler {
 	sched := &CronScheduler{
 		store:         store,
 		bus:           bus,
