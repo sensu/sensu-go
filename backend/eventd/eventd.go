@@ -15,7 +15,6 @@ import (
 
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	corev3 "github.com/sensu/sensu-go/api/core/v3"
-	"github.com/sensu/sensu-go/backend/keepalived"
 	"github.com/sensu/sensu-go/backend/liveness"
 	"github.com/sensu/sensu-go/backend/messaging"
 	"github.com/sensu/sensu-go/backend/silenced"
@@ -667,10 +666,9 @@ func (e *Eventd) dead(key string, prev liveness.State, leader bool) (bury bool) 
 		return true
 	}
 
-	ctx := store.NamespaceContext(context.Background(), namespace)
 	// TODO(eric): make this configurable? Or dynamic based on some property?
 	// 120s seems like a reasonable, it not somewhat large, timeout for check TTL processing.
-	ctx, cancel := context.WithTimeout(ctx, e.storeTimeout)
+	ctx, cancel := context.WithTimeout(context.Background(), e.storeTimeout)
 	defer cancel()
 
 	// The entity has been deleted, and so there is no reason to track check
@@ -679,11 +677,11 @@ func (e *Eventd) dead(key string, prev liveness.State, leader bool) (bury bool) 
 	req := storev2.NewResourceRequestFromResource(config)
 
 	_, err = e.store.Get(ctx, req)
-	if _, ok := err.(*store.ErrNotFound); ok {
+	if _, ok := err.(*storev2.ErrNotFound); ok {
 		return true
 	} else if err != nil {
 		lager.WithError(err).Error("check ttl: error retrieving entity")
-		if _, ok := err.(*store.ErrInternal); ok {
+		if _, ok := err.(*storev2.ErrInternal); ok {
 			// Fatal error
 			select {
 			case e.errChan <- err:
@@ -708,7 +706,7 @@ func (e *Eventd) dead(key string, prev liveness.State, leader bool) (bury bool) 
 	event, err := e.eventStore.GetEventByEntityCheck(ctx, entity, check)
 	if err != nil {
 		lager.WithError(err).Error("check ttl: error retrieving event")
-		if _, ok := err.(*store.ErrInternal); ok {
+		if _, ok := err.(*storev2.ErrInternal); ok {
 			// Fatal error
 			select {
 			case e.errChan <- err:
@@ -748,7 +746,7 @@ func parseKey(key string) (namespace, check, entity string, err error) {
 func (e *Eventd) handleFailure(ctx context.Context, event *corev2.Event) error {
 	// don't update the event with ttl output for keepalives,
 	// there is a different mechanism for that
-	if event.Check.Name == keepalived.KeepaliveCheckName {
+	if event.Check.Name == corev2.KeepaliveCheckName {
 		return nil
 	}
 
@@ -761,7 +759,7 @@ func (e *Eventd) handleFailure(ctx context.Context, event *corev2.Event) error {
 	}
 	updatedEvent, _, err := e.eventStore.UpdateEvent(ctx, failedCheckEvent)
 	if err != nil {
-		if _, ok := err.(*store.ErrInternal); ok {
+		if _, ok := err.(*storev2.ErrInternal); ok {
 			// Fatal error
 			select {
 			case e.errChan <- err:
@@ -784,7 +782,7 @@ func (e *Eventd) createFailedCheckEvent(ctx context.Context, event *corev2.Event
 		ctx, event.Entity.Name, event.Check.Name,
 	)
 	if err != nil {
-		if _, ok := err.(*store.ErrInternal); ok {
+		if _, ok := err.(*storev2.ErrInternal); ok {
 			// Fatal error
 			select {
 			case e.errChan <- err:
