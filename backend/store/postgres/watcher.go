@@ -1,7 +1,6 @@
 package postgres
 
 import (
-	"context"
 	"sync"
 	"time"
 
@@ -28,48 +27,6 @@ func getWatchStoreOverride(storeName string) (factory watchStoreFactory, ok bool
 	defer watchStoreOverridesMu.Unlock()
 	factory, ok = watchStoreOverrides[storeName]
 	return
-}
-
-func watch(ctx context.Context, poller *poll.Poller, watchChan chan []storev2.WatchEvent) {
-	defer close(watchChan)
-	poller.Initialize(ctx)
-	for {
-		changes, err := poller.Next(ctx)
-		if err != nil {
-			if ctx.Err() != nil {
-				return
-			}
-			watchChan <- []storev2.WatchEvent{{Err: err}}
-			return
-		}
-		if len(changes) == 0 {
-			continue
-		}
-		notifications := make([]storev2.WatchEvent, len(changes))
-		for i, change := range changes {
-			notifications[i].Value = change.Resource.(storev2.Wrapper)
-			r, err := notifications[i].Value.Unwrap()
-			if err != nil {
-				// shouldn't happen
-				panic(err)
-			}
-			meta := r.GetMetadata()
-			notifications[i].Key = storev2.ResourceRequest{
-				Namespace: meta.Namespace,
-				Name:      meta.Name,
-				StoreName: r.StoreName(),
-			}
-			switch change.Change {
-			case poll.Create:
-				notifications[i].Type = storev2.Create
-			case poll.Update:
-				notifications[i].Type = storev2.Update
-			case poll.Delete:
-				notifications[i].Type = storev2.Delete
-			}
-		}
-		watchChan <- notifications
-	}
 }
 
 // recordStatus used by postgres stores implementing poll.Table

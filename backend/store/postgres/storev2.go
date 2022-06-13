@@ -17,6 +17,7 @@ import (
 	storev2 "github.com/sensu/sensu-go/backend/store/v2"
 	"github.com/sensu/sensu-go/backend/store/v2/etcdstore"
 	"github.com/sensu/sensu-go/backend/store/v2/wrap"
+	"github.com/sensu/sensu-go/util/retry"
 	clientv3 "go.etcd.io/etcd/client/v3"
 )
 
@@ -551,13 +552,76 @@ func (s *StoreV2) Watch(ctx context.Context, req storev2.ResourceRequest) <-chan
 	if txnWindow <= 0 {
 		txnWindow = 5 * time.Second
 	}
-	p := &poll.Poller{
+	poller := &poll.Poller{
 		Interval:  interval,
 		TxnWindow: txnWindow,
 		Table:     table,
 	}
-	go watch(ctx, p, eventChan)
+
+	backoff := retry.ExponentialBackoff{
+		Ctx: ctx,
+	}
+	err = backoff.Retry(func(retry int) (bool, error) {
+		if err := poller.Initialize(ctx); err != nil {
+			logger.Errorf("watcher initialize polling error on retry %d: %v", retry, err)
+			return false, err
+		}
+		return true, nil
+	})
+	if err != nil {
+		logger.Errorf("watcher failed to start: %v", err)
+		close(eventChan)
+		return eventChan
+	}
+
+	go s.watchLoop(ctx, poller, eventChan)
 	return eventChan
+}
+
+func (s *StoreV2) watchLoop(ctx context.Context, poller *poll.Poller, watchChan chan []storev2.WatchEvent) {
+	defer close(watchChan)
+	for {
+		changes, err := poller.Next(ctx)
+		if err != nil {
+			if ctx.Err() != nil {
+				return
+			}
+			logger.Error(err)
+		}
+		if len(changes) == 0 {
+			continue
+		}
+		notifications := make([]storev2.WatchEvent, len(changes))
+		for i, change := range changes {
+			wrapper, ok := change.Resource.(storev2.Wrapper)
+			if !ok {
+				// Poller table must return Resource of type Wrapper.
+				panic("postgres store watcher resource is not storev2.Wrapper")
+			}
+			notifications[i].Value = wrapper
+			r, err := notifications[i].Value.Unwrap()
+			if err != nil {
+				notifications[i].Err = err
+			}
+			if r != nil {
+				meta := r.GetMetadata()
+				notifications[i].Key = storev2.ResourceRequest{
+					Namespace: meta.Namespace,
+					Name:      meta.Name,
+					StoreName: r.StoreName(),
+				}
+			}
+			switch change.Change {
+			case poll.Create:
+				notifications[i].Type = storev2.Create
+			case poll.Update:
+				notifications[i].Type = storev2.Update
+			case poll.Delete:
+				notifications[i].Type = storev2.Delete
+			}
+		}
+		watchChan <- notifications
+	}
 }
 
 func wrapWithPostgres(resource corev3.Resource, opts ...wrap.Option) (storev2.Wrapper, error) {
