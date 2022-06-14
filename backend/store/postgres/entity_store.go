@@ -296,11 +296,11 @@ func (e *EntityStore) UpdateEntityState(ctx context.Context, state *corev3.Entit
 	}
 	req := storev2.NewResourceRequestFromResource(ctx, state)
 	req.UsePostgres = true
-	wrappedConfig, err := storev2.WrapResource(state)
+	wrappedState, err := storev2.WrapResource(state)
 	if err != nil {
 		return &store.ErrEncode{Err: err}
 	}
-	if err := e.store.CreateOrUpdate(req, wrappedConfig); err != nil {
+	if err := e.store.CreateOrUpdate(req, wrappedState); err != nil {
 		return err
 	}
 	return nil

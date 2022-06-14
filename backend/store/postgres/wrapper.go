@@ -47,6 +47,8 @@ func (e *ResourceWrapper) wrapWithPostgres(resource corev3.Resource, opts ...wra
 		return WrapEntityConfig(value), nil
 	case *corev3.EntityState:
 		return WrapEntityState(value), nil
+	case *corev3.Namespace:
+		return WrapNamespace(value), nil
 	default:
 		return e.etcdWrapFunc(resource, opts...)
 	}
