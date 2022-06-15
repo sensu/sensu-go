@@ -20,7 +20,9 @@ import (
 //
 // generate_fielsetmap
 //
-//
+//   Given a path to an api package, finds all the fieldset functions, and
+//   creates a mapping. Makes it so that consumers can lookup a fieldset
+//   given only an api_version and a typename.
 //
 
 var (
