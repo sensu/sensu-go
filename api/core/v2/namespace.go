@@ -54,6 +54,11 @@ func NamespaceFields(r Resource) map[string]string {
 	}
 }
 
+// Fields returns a set of fields that represent that resource
+func (n *Namespace) Fields() map[string]string {
+	return NamespaceFields(n)
+}
+
 // SetNamespace sets the namespace of the resource.
 func (n *Namespace) SetNamespace(namespace string) {
 }

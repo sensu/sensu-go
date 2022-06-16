@@ -251,3 +251,8 @@ func CheckConfigFields(r Resource) map[string]string {
 
 	return fields
 }
+
+// CheckConfigFields returns a set of fields that represent that resource
+func (c *CheckConfig) Fields() map[string]string {
+	return CheckConfigFields(c)
+}

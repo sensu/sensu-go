@@ -177,6 +177,11 @@ func HookConfigFields(r Resource) map[string]string {
 	return fields
 }
 
+// Fields returns a set of fields that represent that resource
+func (h *HookConfig) Fields() map[string]string {
+	return HookConfigFields(h)
+}
+
 // SetNamespace sets the namespace of the resource.
 func (c *HookConfig) SetNamespace(namespace string) {
 	c.Namespace = namespace

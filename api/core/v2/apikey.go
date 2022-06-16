@@ -61,6 +61,11 @@ func APIKeyFields(r Resource) map[string]string {
 	return fields
 }
 
+// Fields returns a set of fields that represent the resource.
+func (a *APIKey) Fields() map[string]string {
+	return APIKeyFields(a)
+}
+
 // SetNamespace sets the namespace of the resource.
 func (a *APIKey) SetNamespace(namespace string) {}
 

@@ -332,6 +332,11 @@ func EventFields(r Resource) map[string]string {
 	return fields
 }
 
+// Fields returns a set of fields that represent that resource
+func (e *Event) Fields() map[string]string {
+	return EventFields(e)
+}
+
 func isSilenced(e *Event) string {
 	if len(e.Check.Silenced) > 0 {
 		return "true"

@@ -70,7 +70,7 @@ func TestSortMutatorsByName(t *testing.T) {
 func TestMutatorFields(t *testing.T) {
 	tests := []struct {
 		name    string
-		args    Resource
+		args    Fielder
 		wantKey string
 		want    string
 	}{
@@ -93,9 +93,9 @@ func TestMutatorFields(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := MutatorFields(tt.args)
+			got := tt.args.Fields()
 			if !reflect.DeepEqual(got[tt.wantKey], tt.want) {
-				t.Errorf("MutatorFields() = got[%s] %v, want[%s] %v", tt.wantKey, got[tt.wantKey], tt.wantKey, tt.want)
+				t.Errorf("Mutator.Fields() = got[%s] %v, want[%s] %v", tt.wantKey, got[tt.wantKey], tt.wantKey, tt.want)
 			}
 		})
 	}

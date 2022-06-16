@@ -360,3 +360,99 @@ func TestValidateRoleRef(t *testing.T) {
 		})
 	}
 }
+
+func TestRoleFields(t *testing.T) {
+	tests := []struct {
+		name    string
+		args    Fielder
+		wantKey string
+		want    string
+	}{
+		{
+			name:    "exposes name",
+			args:    FixtureRole("contoso", "default"),
+			wantKey: "role.name",
+			want:    "contoso",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := tt.args.Fields()
+			if !reflect.DeepEqual(got[tt.wantKey], tt.want) {
+				t.Errorf("Role.Fields() = got[%s] %v, want[%s] %v", tt.wantKey, got[tt.wantKey], tt.wantKey, tt.want)
+			}
+		})
+	}
+}
+
+func TestRoleBindingFields(t *testing.T) {
+	tests := []struct {
+		name    string
+		args    Fielder
+		wantKey string
+		want    string
+	}{
+		{
+			name:    "exposes name",
+			args:    FixtureRoleBinding("contoso", "default"),
+			wantKey: "rolebinding.name",
+			want:    "contoso",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := tt.args.Fields()
+			if !reflect.DeepEqual(got[tt.wantKey], tt.want) {
+				t.Errorf("RoleBinding.Fields() = got[%s] %v, want[%s] %v", tt.wantKey, got[tt.wantKey], tt.wantKey, tt.want)
+			}
+		})
+	}
+}
+
+func TestClusterRoleFields(t *testing.T) {
+	tests := []struct {
+		name    string
+		args    Fielder
+		wantKey string
+		want    string
+	}{
+		{
+			name:    "exposes name",
+			args:    FixtureClusterRole("contoso"),
+			wantKey: "clusterrole.name",
+			want:    "contoso",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := tt.args.Fields()
+			if !reflect.DeepEqual(got[tt.wantKey], tt.want) {
+				t.Errorf("ClusterRole.Fields() = got[%s] %v, want[%s] %v", tt.wantKey, got[tt.wantKey], tt.wantKey, tt.want)
+			}
+		})
+	}
+}
+
+func TestClusterRoleBindingFields(t *testing.T) {
+	tests := []struct {
+		name    string
+		args    Fielder
+		wantKey string
+		want    string
+	}{
+		{
+			name:    "exposes name",
+			args:    FixtureClusterRoleBinding("contoso"),
+			wantKey: "clusterrolebinding.name",
+			want:    "contoso",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := tt.args.Fields()
+			if !reflect.DeepEqual(got[tt.wantKey], tt.want) {
+				t.Errorf("ClusterRoleBinding.Fields() = got[%s] %v, want[%s] %v", tt.wantKey, got[tt.wantKey], tt.wantKey, tt.want)
+			}
+		})
+	}
+}
