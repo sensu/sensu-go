@@ -32,7 +32,7 @@ const (
 )
 
 var (
-	dupCheckRequestErr = errors.New("check request has already been received - agent & check may have multiple matching subscriptions")
+	dupCheckRequestErr = errors.New("check request has already been received - agent and check may have multiple matching subscriptions")
 	oldCheckRequestErr = errors.New("check request is older than a previously received check request")
 )
 
