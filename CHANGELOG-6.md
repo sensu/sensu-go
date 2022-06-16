@@ -9,6 +9,11 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## [6.7.3] - 2022-07-07
 
+### Changed
+- Agents will no longer execute check requests with equal or older issued
+timestamps than the issued timestamp for the last executed check request with
+the same check name.
+
 ## [6.7.2] - 2022-05-12
 
 ### Added

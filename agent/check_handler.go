@@ -31,6 +31,11 @@ const (
 	measureNullStatus = "null-status"
 )
 
+var (
+	errDupCheckRequest = errors.New("check request has already been received - agent and check may have multiple matching subscriptions")
+	errOldCheckRequest = errors.New("check request is older than a previously received check request")
+)
+
 // handleCheck is the check message handler.
 // TODO(greg): At some point, we're going to need max parallelism.
 func (a *Agent) handleCheck(ctx context.Context, payload []byte) error {
@@ -42,6 +47,23 @@ func (a *Agent) handleCheck(ctx context.Context, payload []byte) error {
 	}
 
 	checkConfig := request.Config
+
+	// only schedule check execution if the issued timestamp is newer than any
+	// previous executions of the check
+	lastIssued := a.getLastIssued(request)
+	if lastIssued > request.Issued {
+		return errOldCheckRequest
+	}
+	if lastIssued == request.Issued {
+		return errDupCheckRequest
+	}
+
+	// only schedule check execution if its not already in progress
+	// ** check hooks are part of a checks execution
+	if a.checkInProgress(request) {
+		return fmt.Errorf("check execution still in progress: %s", checkConfig.Name)
+	}
+
 	sendFailure := func(err error) {
 		check := corev2.NewCheck(checkConfig)
 		check.Executed = time.Now().Unix()
@@ -56,12 +78,6 @@ func (a *Agent) handleCheck(ctx context.Context, payload []byte) error {
 		err := errors.New("check requested assets, but they are disabled on this agent")
 		sendFailure(err)
 		return nil
-	}
-
-	// only schedule check execution if its not already in progress
-	// ** check hooks are part of a checks execution
-	if a.checkInProgress(request) {
-		return fmt.Errorf("check execution still in progress: %s", checkConfig.Name)
 	}
 
 	// Validate that the given check is valid.
@@ -100,17 +116,34 @@ func checkKey(request *corev2.CheckRequest) string {
 
 func (a *Agent) addInProgress(request *corev2.CheckRequest) {
 	a.inProgressMu.Lock()
+	defer a.inProgressMu.Unlock()
 	a.inProgress[checkKey(request)] = request.Config
-	a.inProgressMu.Unlock()
 }
 
 func (a *Agent) removeInProgress(request *corev2.CheckRequest) {
 	a.inProgressMu.Lock()
+	defer a.inProgressMu.Unlock()
 	delete(a.inProgress, checkKey(request))
-	a.inProgressMu.Unlock()
+}
+
+func (a *Agent) getLastIssued(request *corev2.CheckRequest) int64 {
+	a.lastIssuedMu.Lock()
+	defer a.lastIssuedMu.Unlock()
+	issued, ok := a.lastIssued[checkKey(request)]
+	if !ok {
+		return 0
+	}
+	return issued
+}
+
+func (a *Agent) setLastIssued(request *corev2.CheckRequest) {
+	a.lastIssuedMu.Lock()
+	defer a.lastIssuedMu.Unlock()
+	a.lastIssued[checkKey(request)] = request.Issued
 }
 
 func (a *Agent) executeCheck(ctx context.Context, request *corev2.CheckRequest, entity *corev2.Entity) {
+	a.setLastIssued(request)
 	a.addInProgress(request)
 	defer a.removeInProgress(request)
 
