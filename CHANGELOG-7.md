@@ -16,6 +16,7 @@ software is upgraded when there are active keepalive failures.
 - Etcd client configuration options have changed.
 - Entity configuration can now be stored in PostgreSQL. Existing entity
 configuration will not be migrated from Etcd.
+- PostgreSQL >= 9.6 is now required.
 
 ### Added
 - Developer mode can now be enabled with the --dev flag.
