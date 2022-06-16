@@ -31,6 +31,11 @@ const (
 	measureNullStatus = "null-status"
 )
 
+var (
+	dupCheckRequestErr = errors.New("check request has already been received - agent & check may have multiple matching subscriptions")
+	oldCheckRequestErr = errors.New("check request is older than a previously received check request")
+)
+
 // handleCheck is the check message handler.
 // TODO(greg): At some point, we're going to need max parallelism.
 func (a *Agent) handleCheck(ctx context.Context, payload []byte) error {
@@ -56,6 +61,14 @@ func (a *Agent) handleCheck(ctx context.Context, payload []byte) error {
 		err := errors.New("check requested assets, but they are disabled on this agent")
 		sendFailure(err)
 		return nil
+	}
+
+	lastIssued := a.getLastIssued(request)
+	if lastIssued > request.Issued {
+		return oldCheckRequestErr
+	}
+	if lastIssued == request.Issued {
+		return dupCheckRequestErr
 	}
 
 	// only schedule check execution if its not already in progress
@@ -110,7 +123,24 @@ func (a *Agent) removeInProgress(request *corev2.CheckRequest) {
 	a.inProgressMu.Unlock()
 }
 
+func (a *Agent) getLastIssued(request *corev2.CheckRequest) int64 {
+	a.lastIssuedMu.Lock()
+	issued, ok := a.lastIssued[checkKey(request)]
+	a.lastIssuedMu.Unlock()
+	if !ok {
+		return 0
+	}
+	return issued
+}
+
+func (a *Agent) setLastIssued(request *corev2.CheckRequest) {
+	a.lastIssuedMu.Lock()
+	a.lastIssued[checkKey(request)] = request.Issued
+	a.lastIssuedMu.Unlock()
+}
+
 func (a *Agent) executeCheck(ctx context.Context, request *corev2.CheckRequest, entity *corev2.Entity) {
+	a.setLastIssued(request)
 	a.addInProgress(request)
 	defer a.removeInProgress(request)
 

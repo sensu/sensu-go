@@ -40,11 +40,32 @@ func TestHandleCheck(t *testing.T) {
 	ch := make(chan *transport.Message, 5)
 	agent.sendq = ch
 
+	// check request issued timestamp is older than last issued
+	agent.lastIssuedMu.Lock()
+	agent.lastIssued[checkKey(request)] = time.Now().Unix() + 100
+	agent.lastIssuedMu.Unlock()
+	assert.ErrorIs(agent.handleCheck(context.TODO(), payload), oldCheckRequestErr)
+
+	// check request issued timestamp is the same as last issued
+	agent.lastIssuedMu.Lock()
+	agent.lastIssued[checkKey(request)] = request.Issued
+	agent.lastIssuedMu.Unlock()
+	assert.ErrorIs(agent.handleCheck(context.TODO(), payload), dupCheckRequestErr)
+
+	// check request issued timestamp is newer than last issued
+	agent.lastIssuedMu.Lock()
+	agent.lastIssued[checkKey(request)] = time.Now().Unix() - 100
+	agent.lastIssuedMu.Unlock()
+	assert.NoError(agent.handleCheck(context.TODO(), payload))
+
 	// check is already in progress, it shouldn't execute
 	agent.inProgressMu.Lock()
+	delete(agent.lastIssued, checkKey(request))
 	agent.inProgress[checkKey(request)] = request.Config
 	agent.inProgressMu.Unlock()
-	assert.Error(agent.handleCheck(context.TODO(), payload))
+	assert.EqualError(
+		agent.handleCheck(context.TODO(), payload),
+		fmt.Sprintf("check execution still in progress: %s", request.Config.Name))
 
 	// check is not in progress, it should execute
 	agent.inProgressMu.Lock()

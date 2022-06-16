@@ -152,6 +152,8 @@ type Agent struct {
 	header             http.Header
 	inProgress         map[string]*corev2.CheckConfig
 	inProgressMu       *sync.Mutex
+	lastIssued         map[string]int64
+	lastIssuedMu       *sync.Mutex
 	localEntityConfig  *corev3.EntityConfig
 	statsdServer       StatsdServer
 	sendq              chan *transport.Message
@@ -194,6 +196,8 @@ func NewAgentContext(ctx context.Context, config *Config) (*Agent, error) {
 		entityConfigCh:   make(chan struct{}),
 		inProgress:       make(map[string]*corev2.CheckConfig),
 		inProgressMu:     &sync.Mutex{},
+		lastIssued:       make(map[string]int64),
+		lastIssuedMu:     &sync.Mutex{},
 		sendq:            make(chan *transport.Message, 10),
 		systemInfo:       &corev2.System{},
 		unmarshal:        UnmarshalJSON,
@@ -559,7 +563,12 @@ func (a *Agent) receiveLoop(ctx context.Context, cancel context.CancelFunc, conn
 			}).Info("message received")
 			err := a.handler.Handle(ctx, msg.Type, msg.Payload)
 			if err != nil {
-				logger.WithError(err).Error("error handling message")
+				switch err {
+				case dupCheckRequestErr:
+					logger.WithError(err).Warn("error handling message")
+				default:
+					logger.WithError(err).Error("error handling message")
+				}
 			}
 		}(m)
 	}
