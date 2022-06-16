@@ -6,44 +6,18 @@ import (
 	"time"
 
 	"github.com/gogo/protobuf/proto"
-	"github.com/prometheus/client_golang/prometheus"
 	storev2 "github.com/sensu/sensu-go/backend/store/v2"
 	"github.com/sensu/sensu-go/backend/store/v2/wrap"
 	"go.etcd.io/etcd/api/v3/mvccpb"
 	clientv3 "go.etcd.io/etcd/client/v3"
 )
 
-const (
-	WatchEventsCounterVec = "sensu_go_watch_events"
-
-	WatchEventsLabelStatus       = "status"
-	WatchEventsLabelResourceType = "resource"
-	WatchEventsLabelNamespace    = "namespace"
-
-	WatchEventsStatusHandled = "handled"
-	WatchEventsStatusDropped = "dropped"
-)
-
 var (
-	WatchEventsProcessed = prometheus.NewCounterVec(
-		prometheus.CounterOpts{
-			Name: WatchEventsCounterVec,
-			Help: "The total number of store watch notifications",
-		},
-		[]string{WatchEventsLabelStatus, WatchEventsLabelResourceType, WatchEventsLabelNamespace},
-	)
-
 	watchOpts = []clientv3.OpOption{
 		clientv3.WithCreatedNotify(),
 		clientv3.WithPrevKV(),
 	}
 )
-
-func init() {
-	if err := prometheus.Register(WatchEventsProcessed); err != nil {
-		panic(err)
-	}
-}
 
 func (s *Store) Watch(req storev2.ResourceRequest) <-chan []storev2.WatchEvent {
 	logger.Infof("watching %s: %s/%s", req.StoreName, req.Namespace, req.Name)
@@ -82,14 +56,15 @@ func (s *Store) watchLoop(req storev2.ResourceRequest, outbox chan []storev2.Wat
 				var status string
 				select {
 				case outbox <- events:
-					status = WatchEventsStatusHandled
+					status = storev2.WatchEventsStatusHandled
 				default:
-					status = WatchEventsStatusDropped
+					status = storev2.WatchEventsStatusDropped
 				}
-				WatchEventsProcessed.WithLabelValues(
+				storev2.WatchEventsProcessed.WithLabelValues(
 					status,
 					req.StoreName,
 					req.Namespace,
+					storev2.WatcherProviderEtcd,
 				).Add(float64(len(events)))
 			}
 		}

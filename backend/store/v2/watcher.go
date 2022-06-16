@@ -1,5 +1,9 @@
 package v2
 
+import (
+	"github.com/prometheus/client_golang/prometheus"
+)
+
 const (
 	// WatchUnknown indicates that we received an unknown watch even tytpe
 	// from etcd.
@@ -47,4 +51,35 @@ func (t WatchActionType) String() string {
 		s = "Error"
 	}
 	return s
+}
+
+const (
+	WatchEventsCounterVec = "sensu_go_watch_events"
+
+	WatchEventsLabelStatus       = "status"
+	WatchEventsLabelResourceType = "resource"
+	WatchEventsLabelNamespace    = "namespace"
+
+	WatchEventsStatusHandled = "handled"
+	WatchEventsStatusDropped = "dropped"
+
+	WatcherProvider     = "provider"
+	WatcherProviderPG   = "postgres"
+	WatcherProviderEtcd = "etcd"
+)
+
+var (
+	WatchEventsProcessed = prometheus.NewCounterVec(
+		prometheus.CounterOpts{
+			Name: WatchEventsCounterVec,
+			Help: "The total number of store watch notifications",
+		},
+		[]string{WatchEventsLabelStatus, WatchEventsLabelResourceType, WatchEventsLabelNamespace, WatcherProvider},
+	)
+)
+
+func init() {
+	if err := prometheus.Register(WatchEventsProcessed); err != nil {
+		panic(err)
+	}
 }
