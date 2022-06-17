@@ -136,12 +136,6 @@ func (a *Agent) getLastIssued(request *corev2.CheckRequest) int64 {
 	return issued
 }
 
-func (a *Agent) removeLastIssued(request *corev2.CheckRequest) {
-	a.lastIssuedMu.Lock()
-	defer a.lastIssuedMu.Unlock()
-	delete(a.lastIssued, checkKey(request))
-}
-
 func (a *Agent) setLastIssued(request *corev2.CheckRequest) {
 	a.lastIssuedMu.Lock()
 	defer a.lastIssuedMu.Unlock()
