@@ -564,7 +564,7 @@ func (a *Agent) receiveLoop(ctx context.Context, cancel context.CancelFunc, conn
 			err := a.handler.Handle(ctx, msg.Type, msg.Payload)
 			if err != nil {
 				switch err {
-				case dupCheckRequestErr:
+				case errDupCheckRequest:
 					logger.WithError(err).Warn("error handling message")
 				default:
 					logger.WithError(err).Error("error handling message")
