@@ -1,6 +1,8 @@
 package mockstore
 
 import (
+	"context"
+
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/backend/store/patch"
 	storev2 "github.com/sensu/sensu-go/backend/store/v2"
@@ -49,7 +51,7 @@ func (v *V2MockStore) Patch(req storev2.ResourceRequest, w storev2.Wrapper, patc
 	return v.Called(req, w, patcher, cond).Error(0)
 }
 
-func (v *V2MockStore) Watch(req storev2.ResourceRequest) <-chan []storev2.WatchEvent {
-	args := v.Called(req)
+func (v *V2MockStore) Watch(ctx context.Context, req storev2.ResourceRequest) <-chan []storev2.WatchEvent {
+	args := v.Called(ctx, req)
 	return args.Get(0).(<-chan []storev2.WatchEvent)
 }
