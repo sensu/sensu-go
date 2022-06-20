@@ -70,7 +70,7 @@ func TestWatch(t *testing.T) {
 
 				req.Context = ctx
 
-				w := s.Watch(req)
+				w := s.Watch(ctx, req)
 
 				var wg sync.WaitGroup
 				wg.Add(1)
@@ -111,7 +111,7 @@ func TestWatchRetry(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	w := s.Watch(req)
+	w := s.Watch(ctx, req)
 
 	var wg sync.WaitGroup
 	wg.Add(1)

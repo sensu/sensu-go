@@ -19,17 +19,17 @@ var (
 	}
 )
 
-func (s *Store) Watch(req storev2.ResourceRequest) <-chan []storev2.WatchEvent {
+func (s *Store) Watch(ctx context.Context, req storev2.ResourceRequest) <-chan []storev2.WatchEvent {
 	logger.Infof("watching %s: %s/%s", req.StoreName, req.Namespace, req.Name)
 	outbox := make(chan []storev2.WatchEvent, 1)
-	go s.watchLoop(req, outbox)
+	go s.watchLoop(ctx, req, outbox)
 	return outbox
 }
 
-func (s *Store) watchLoop(req storev2.ResourceRequest, outbox chan []storev2.WatchEvent) {
+func (s *Store) watchLoop(ctx context.Context, req storev2.ResourceRequest, outbox chan []storev2.WatchEvent) {
 	defer logger.Infof("stopped watching %s: %s/%s", req.StoreName, req.Namespace, req.Name)
 	defer close(outbox)
-	ctx := clientv3.WithRequireLeader(req.Context)
+	ctx = clientv3.WithRequireLeader(ctx)
 	key := StoreKey(req)
 	prefix := req.Name == ""
 	if prefix && !strings.HasSuffix(key, "/") {

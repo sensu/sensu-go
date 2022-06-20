@@ -1,6 +1,7 @@
 package v2
 
 import (
+	"context"
 	"sync"
 
 	"github.com/sensu/sensu-go/backend/store"
@@ -82,8 +83,8 @@ func (p *Proxy) Patch(req ResourceRequest, wrapper Wrapper, patcher patch.Patche
 
 // Watch sets up a watcher that responds to updates to the given key or
 // keyspace indicated by the ResourceRequest.
-func (p *Proxy) Watch(req ResourceRequest) <-chan []WatchEvent {
+func (p *Proxy) Watch(ctx context.Context, req ResourceRequest) <-chan []WatchEvent {
 	p.mu.RLock()
 	defer p.mu.RUnlock()
-	return p.impl.Watch(req)
+	return p.impl.Watch(ctx, req)
 }

@@ -1,6 +1,8 @@
 package storetest
 
 import (
+	"context"
+
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/backend/store/patch"
 	storev2 "github.com/sensu/sensu-go/backend/store/v2"
@@ -54,6 +56,6 @@ func (s *Store) Patch(req storev2.ResourceRequest, w storev2.Wrapper, patcher pa
 	return args.Error(0)
 }
 
-func (s *Store) Watch(req storev2.ResourceRequest) <-chan []storev2.WatchEvent {
-	return s.Called(req).Get(0).(<-chan []storev2.WatchEvent)
+func (s *Store) Watch(ctx context.Context, req storev2.ResourceRequest) <-chan []storev2.WatchEvent {
+	return s.Called(ctx, req).Get(0).(<-chan []storev2.WatchEvent)
 }
