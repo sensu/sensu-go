@@ -70,6 +70,11 @@ func UserFields(r Resource) map[string]string {
 	}
 }
 
+// Fields returns a set of fields that represent that resource
+func (u *User) Fields() map[string]string {
+	return UserFields(u)
+}
+
 // SetNamespace sets the namespace of the resource.
 func (u *User) SetNamespace(namespace string) {
 }

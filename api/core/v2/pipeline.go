@@ -77,6 +77,11 @@ func PipelineFields(r Resource) map[string]string {
 	return fields
 }
 
+// Fields returns a set of fields that represent that resource.
+func (p *Pipeline) Fields() map[string]string {
+	return PipelineFields(p)
+}
+
 // FixturePipeline returns a testing fixture for a Pipeline object.
 func FixturePipeline(name, namespace string) *Pipeline {
 	return &Pipeline{

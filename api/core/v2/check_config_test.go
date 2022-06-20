@@ -144,7 +144,7 @@ func TestSortCheckConfigsByName(t *testing.T) {
 func TestCheckConfigFields(t *testing.T) {
 	tests := []struct {
 		name    string
-		args    Resource
+		args    Fielder
 		wantKey string
 		want    string
 	}{
@@ -167,6 +167,18 @@ func TestCheckConfigFields(t *testing.T) {
 			want:    "true",
 		},
 		{
+			name: "exposes pipelines",
+			args: &CheckConfig{
+				Pipelines: []*ResourceReference{{
+					Name:       "xxx",
+					Type:       "yyy",
+					APIVersion: "zzz",
+				}},
+			},
+			wantKey: "check.pipelines",
+			want:    "zzz.yyy(Name=xxx)",
+		},
+		{
 			name: "exposes labels",
 			args: &CheckConfig{
 				ObjectMeta: ObjectMeta{
@@ -179,9 +191,9 @@ func TestCheckConfigFields(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := CheckConfigFields(tt.args)
+			got := tt.args.Fields()
 			if !reflect.DeepEqual(got[tt.wantKey], tt.want) {
-				t.Errorf("CheckConfigFields() = got[%s] %v, want[%s] %v", tt.wantKey, got[tt.wantKey], tt.wantKey, tt.want)
+				t.Errorf("CheckConfig.Fields() = got[%s] %v, want[%s] %v", tt.wantKey, got[tt.wantKey], tt.wantKey, tt.want)
 			}
 		})
 	}

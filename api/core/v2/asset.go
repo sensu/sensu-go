@@ -147,6 +147,11 @@ func AssetFields(r Resource) map[string]string {
 	return fields
 }
 
+// Fields returns a set of fields that represent that resource
+func (a *Asset) Fields() map[string]string {
+	return AssetFields(a)
+}
+
 // SetNamespace sets the namespace of the resource.
 func (a *Asset) SetNamespace(namespace string) {
 	a.Namespace = namespace

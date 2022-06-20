@@ -180,6 +180,11 @@ func EntityFields(r Resource) map[string]string {
 	return fields
 }
 
+// Fields returns a set of fields that represent that resource
+func (e *Entity) Fields() map[string]string {
+	return EntityFields(e)
+}
+
 // SetNamespace sets the namespace of the resource.
 func (e *Entity) SetNamespace(namespace string) {
 	e.Namespace = namespace

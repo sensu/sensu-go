@@ -201,6 +201,11 @@ func SilencedFields(r Resource) map[string]string {
 	return fields
 }
 
+// Fields returns a set of fields that represent that resource
+func (s *Silenced) Fields() map[string]string {
+	return SilencedFields(s)
+}
+
 // SetNamespace sets the namespace of the resource.
 func (s *Silenced) SetNamespace(namespace string) {
 	s.Namespace = namespace

@@ -112,7 +112,7 @@ func TestHookUnmarshal_GH1520(t *testing.T) {
 func TestHookConfigFields(t *testing.T) {
 	tests := []struct {
 		name    string
-		args    Resource
+		args    Fielder
 		wantKey string
 		want    string
 	}{
@@ -135,9 +135,9 @@ func TestHookConfigFields(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := HookConfigFields(tt.args)
+			got := tt.args.Fields()
 			if !reflect.DeepEqual(got[tt.wantKey], tt.want) {
-				t.Errorf("HookConfigFields() = got[%s] %v, want[%s] %v", tt.wantKey, got[tt.wantKey], tt.wantKey, tt.want)
+				t.Errorf("HookConfig.Fields() = got[%s] %v, want[%s] %v", tt.wantKey, got[tt.wantKey], tt.wantKey, tt.want)
 			}
 		})
 	}
