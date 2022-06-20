@@ -20,10 +20,12 @@ import (
 // Add new migrations by adding to the migrations slice. Do not disturb the
 // ordering of existing migrations!
 var migrations = []migration.Migrator{
+	// Migration 0
 	func(tx migration.LimitedTx) error {
 		_, err := tx.Exec(context.Background(), EventsDDL)
 		return err
 	},
+	// Migration 1
 	func(tx migration.LimitedTx) error {
 		var version int64
 		row := tx.QueryRow(context.Background(), `SELECT to_number(substring(Version(), 'PostgreSQL (\d+)\.'), '99');`)
@@ -37,22 +39,53 @@ var migrations = []migration.Migrator{
 		_, err := tx.Exec(context.Background(), MigrateEventsID)
 		return err
 	},
+	// Migration 2
 	func(tx migration.LimitedTx) error {
 		_, err := tx.Exec(context.Background(), MigrateAddSortHistoryFunc)
 		return err
 	},
+	// Migration 3
 	func(tx migration.LimitedTx) error {
 		_, err := tx.Exec(context.Background(), MigrateAddSelectorColumn)
 		return err
 	},
+	// Migration 4
 	migrateUpdateSelectors,
+	// Migration 5
 	func(tx migration.LimitedTx) error {
 		_, err := tx.Exec(context.Background(), ringSchema)
 		return err
 	},
+	// Migration 6
 	fixMissingStateSelector,
+	// Migration 7
 	func(tx migration.LimitedTx) error {
 		_, err := tx.Exec(context.Background(), migrateEntityState)
+		return err
+	},
+	// Migration 8
+	func(tx migration.LimitedTx) error {
+		_, err := tx.Exec(context.Background(), migrateRefreshUpdatedAtProcedure)
+		return err
+	},
+	// Migration 9
+	func(tx migration.LimitedTx) error {
+		_, err := tx.Exec(context.Background(), migrateRenameEntitiesTable)
+		return err
+	},
+	// Migration 10
+	func(tx migration.LimitedTx) error {
+		_, err := tx.Exec(context.Background(), migrateRenameEntityStateUniqueConstraint)
+		return err
+	},
+	// Migration 11
+	func(tx migration.LimitedTx) error {
+		_, err := tx.Exec(context.Background(), entityConfigSchema)
+		return err
+	},
+	// Migration 12
+	func(tx migration.LimitedTx) error {
+		_, err := tx.Exec(context.Background(), migrateAddEntityConfigIdToEntityState)
 		return err
 	},
 }

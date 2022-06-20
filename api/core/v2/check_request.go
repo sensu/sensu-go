@@ -1,5 +1,12 @@
 package v2
 
+func (r *CheckRequest) Validate() bool {
+	if r.Config == nil {
+		return false
+	}
+	return true
+}
+
 // FixtureCheckRequest returns a fixture for a CheckRequest object.
 func FixtureCheckRequest(id string) *CheckRequest {
 	config := FixtureCheckConfig(id)

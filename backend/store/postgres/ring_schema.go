@@ -72,12 +72,12 @@ const updateRingSubscribersQuery = `
 --    the offset, so math cannot be done on it in the function.)
 -- $4 The time offset
 WITH current_pointer AS (
-	SELECT entities.name AS name
-	FROM rings, entities, ring_entities, ring_subscribers
+	SELECT entity_states.name AS name
+	FROM rings, entity_states, ring_entities, ring_subscribers
 	WHERE
 		rings.name = $1 AND
 		ring_entities.ring_id = rings.id AND
-		ring_entities.entity_id = entities.id AND
+		ring_entities.entity_id = entity_states.id AND
 		ring_entities.entity_id = ring_subscribers.pointer AND
 		ring_subscribers.name = $2 AND
 		ring_subscribers.ring_id = rings.id
@@ -86,32 +86,32 @@ next_all AS (
 	(
 		-- In most iterations, the pointer value will be higher than it was
 		-- previously.
-		SELECT entities.id AS pointer, entities.name AS entity_name
-		FROM rings, entities, ring_entities, ring_subscribers, current_pointer
+		SELECT entity_states.id AS pointer, entity_states.name AS entity_name
+		FROM rings, entity_states, ring_entities, ring_subscribers, current_pointer
 		WHERE
 			rings.name = $1 AND
 			ring_entities.ring_id = rings.id AND
-			ring_entities.entity_id = entities.id AND
+			ring_entities.entity_id = entity_states.id AND
 			ring_subscribers.name = $2 AND
 			ring_subscribers.ring_id = rings.id AND
-			entities.name > COALESCE(current_pointer.name, '') AND
-			entities.expires_at > now()
-		ORDER BY entities.name ASC
+			entity_states.name > COALESCE(current_pointer.name, '') AND
+			entity_states.expires_at > now()
+		ORDER BY entity_states.name ASC
 	)
 	UNION ALL
 	(
 		-- If the pointer was at the end or NULL, it will get set to the first
 		-- entity in the selection (considering the offset).
-		SELECT ring_entities.entity_id AS pointer, entities.name AS entity_name
-		FROM rings, entities, ring_entities, ring_subscribers
+		SELECT ring_entities.entity_id AS pointer, entity_states.name AS entity_name
+		FROM rings, entity_states, ring_entities, ring_subscribers
 		WHERE
 			rings.name = $1 AND
 			ring_entities.ring_id = rings.id AND
-			ring_entities.entity_id = entities.id AND
+			ring_entities.entity_id = entity_states.id AND
 			ring_subscribers.name = $2 AND
 			ring_subscribers.ring_id = rings.id AND
-			entities.expires_at > now()
-		ORDER BY entities.name ASC
+			entity_states.expires_at > now()
+		ORDER BY entity_states.name ASC
 	)
 ),
 next_numbered AS (
@@ -134,17 +134,17 @@ SET (last_updated, pointer) = (
 	now(),
 	next.pointer
 )
-FROM rings, entities, ring_entities, next
+FROM rings, entity_states, ring_entities, next
 WHERE
 	rings.name = $1 AND
 	ring_entities.ring_id = rings.id AND
-	ring_entities.entity_id = entities.id AND
-	entities.id = next.pointer AND
+	ring_entities.entity_id = entity_states.id AND
+	entity_states.id = next.pointer AND
 	ring_subscribers.ring_id = rings.id AND
-	entities.expires_at > now() AND
+	entity_states.expires_at > now() AND
 	ring_subscribers.last_updated + $4 < now() AND
 	ring_subscribers.name = $2
-RETURNING entities.name
+RETURNING entity_states.name
 `
 
 const getRingEntitiesQuery = `
@@ -165,34 +165,34 @@ const getRingEntitiesQuery = `
 -- entities are ephemeral, named via random identifier, and not accessible
 -- to users. This should change in the future.
 WITH deletes AS (
-	DELETE FROM entities
-	WHERE (entities.namespace = 'bsmd' OR entities.namespace = 'global') AND
-	entities.expires_at < now()
+	DELETE FROM entity_states
+	WHERE (entity_states.namespace = 'bsmd' OR entity_states.namespace = 'global') AND
+	entity_states.expires_at < now()
 ),
 current_pointer AS (
-	SELECT entities.name AS name
-	FROM rings, entities, ring_entities, ring_subscribers
+	SELECT entity_states.name AS name
+	FROM rings, entity_states, ring_entities, ring_subscribers
 	WHERE rings.name = $1 AND
 	ring_entities.ring_id = rings.id AND
 	ring_entities.entity_id = ring_subscribers.pointer AND
-	entities.id = ring_entities.entity_id AND
+	entity_states.id = ring_entities.entity_id AND
 	ring_subscribers.name = $2 AND
 	ring_subscribers.ring_id = rings.id
 )
 (
 	-- This part of the query selects rows that have a name larger than or
 	-- equal to the current pointer's name.
-	SELECT entities.name AS name
-	FROM rings, ring_entities, entities, ring_subscribers, current_pointer
+	SELECT entity_states.name AS name
+	FROM rings, ring_entities, entity_states, ring_subscribers, current_pointer
 	WHERE
 		rings.name = $1 AND
 		ring_entities.ring_id = rings.id AND
-		ring_entities.entity_id = entities.id AND
+		ring_entities.entity_id = entity_states.id AND
 		ring_subscribers.ring_id = rings.id AND
 		ring_subscribers.name = $2 AND
-		entities.name >= COALESCE(current_pointer.name, '') AND
-		entities.expires_at > now()
-	ORDER BY entities.name ASC
+		entity_states.name >= COALESCE(current_pointer.name, '') AND
+		entity_states.expires_at > now()
+	ORDER BY entity_states.name ASC
 	LIMIT $3
 )
 UNION ALL
@@ -200,16 +200,16 @@ UNION ALL
 	-- This part of the query selects rows that have a name smaller than
 	-- pointer.name. In many cases it will never be evaluated, as the limit
 	-- will have already been satisfied by the first half of the union.
-	SELECT entities.name AS name
-	FROM rings, ring_entities, entities, ring_subscribers
+	SELECT entity_states.name AS name
+	FROM rings, ring_entities, entity_states, ring_subscribers
 	WHERE
 		rings.name = $1 AND
 		ring_entities.ring_id = rings.id AND
-		ring_entities.entity_id = entities.id AND
+		ring_entities.entity_id = entity_states.id AND
 		ring_subscribers.ring_id = rings.id AND
 		ring_subscribers.name = $2 AND
-		entities.expires_at > now()
-	ORDER BY entities.name ASC
+		entity_states.expires_at > now()
+	ORDER BY entity_states.name ASC
 	LIMIT $3
 )
 LIMIT $3;
@@ -222,24 +222,17 @@ VALUES ($1)
 ON CONFLICT (name) DO NOTHING;
 `
 
-const insertEntityQuery = `
--- This query creates a new entity, or updates its expires_at if it already
--- exists. It returns a boolean value indicating if the entity was inserted or
--- not.
+const updateEntityStateExpiresAtQuery = `
+-- This query updates an entity state's expires_at value.
 --
 -- Parameters:
 -- $1: The entity namespace
 -- $2: The entity name
 -- $3: The keepalive timeout of the entity
-INSERT INTO entities ( namespace, name, expires_at )
-VALUES ( $1, $2, now() + $3 )
-ON CONFLICT ( namespace, name )
-DO UPDATE
+--
+UPDATE entity_states
 SET expires_at = now() + $3
--- Returning (xmax = 0) allows us to distinguish between the row being inserted
--- or updated, so the client can behave accordingly. For more information, see
--- postgres system column documentation.
-RETURNING (xmax = 0) AS inserted;
+WHERE namespace = $1 AND name = $2
 `
 
 const insertRingEntityQuery = `
@@ -251,11 +244,11 @@ const insertRingEntityQuery = `
 -- $3: The ring name
 --
 INSERT INTO ring_entities ( ring_id, entity_id )
-SELECT rings.id, entities.id
-FROM rings, entities
+SELECT rings.id, entity_states.id
+FROM rings, entity_states
 WHERE
-	entities.namespace = $1 AND
-	entities.name = $2 AND
+	entity_states.namespace = $1 AND
+	entity_states.name = $2 AND
 	rings.name = $3
 LIMIT 1
 ON CONFLICT DO NOTHING
@@ -273,13 +266,13 @@ INSERT INTO ring_subscribers ( ring_id, name, pointer )
 (
 	(
 		-- This case is for when the ring already has entities
-		SELECT rings.id AS ring_id, $2 AS subscriber_name, entities.id AS pointer
-		FROM rings, entities, ring_entities
+		SELECT rings.id AS ring_id, $2 AS subscriber_name, entity_states.id AS pointer
+		FROM rings, entity_states, ring_entities
 		WHERE
 			rings.name = $1 AND
 			rings.id = ring_entities.ring_id AND
-			entities.id = ring_entities.entity_id
-		ORDER BY entities.name ASC
+			entity_states.id = ring_entities.entity_id
+		ORDER BY entity_states.name ASC
 		LIMIT 1
 	)
 	UNION ALL
@@ -301,12 +294,12 @@ const getRingLengthQuery = `
 --
 -- Parameters:
 -- $1: Ring name
-SELECT count(entities.id)
-FROM rings, entities, ring_entities
+SELECT count(entity_states.id)
+FROM rings, entity_states, ring_entities
 WHERE
 	rings.name = $1 AND
 	rings.id = ring_entities.ring_id AND
-	entities.id = ring_entities.entity_id
+	entity_states.id = ring_entities.entity_id
 `
 
 const deleteRingEntityQuery = `
@@ -319,24 +312,14 @@ const deleteRingEntityQuery = `
 -- $3: Entity name
 --
 DELETE FROM ring_entities
-USING entities, rings
+USING entity_states, rings
 WHERE
-	entities.id = ring_entities.entity_id AND
+	entity_states.id = ring_entities.entity_id AND
 	rings.id = ring_entities.ring_id AND
-	entities.namespace = $1 AND
-	entities.name = $3 AND
+	entity_states.namespace = $1 AND
+	entity_states.name = $3 AND
 	rings.name = $2;
 `
 
 // The notification mechanism for ring subscribers
 const notifyRingChannelQuery = `SELECT pg_notify($1::text, '');`
-
-const deleteEntityQuery = `
--- This query deletes an entity.
---
--- Parameters:
--- $1 Namespace
--- $2 Entity name
-DELETE FROM entities
-WHERE entities.namespace = $1 AND entities.name = $2;
-`

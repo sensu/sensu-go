@@ -43,6 +43,8 @@ func (e *ResourceWrapper) DisablePostgres() {
 
 func (e *ResourceWrapper) wrapWithPostgres(resource corev3.Resource, opts ...wrap.Option) (storev2.Wrapper, error) {
 	switch value := resource.(type) {
+	case *corev3.EntityConfig:
+		return WrapEntityConfig(value), nil
 	case *corev3.EntityState:
 		return WrapEntityState(value), nil
 	default:
