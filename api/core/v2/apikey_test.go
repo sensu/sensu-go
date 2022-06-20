@@ -44,7 +44,7 @@ func TestAPIKeyValidate(t *testing.T) {
 func TestAPIKeyFields(t *testing.T) {
 	tests := []struct {
 		name    string
-		args    Resource
+		args    Fielder
 		wantKey string
 		want    string
 	}{
@@ -73,9 +73,9 @@ func TestAPIKeyFields(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := APIKeyFields(tt.args)
+			got := tt.args.Fields()
 			if !reflect.DeepEqual(got[tt.wantKey], tt.want) {
-				t.Errorf("APIKeyFields() = got[%s] %v, want[%s] %v", tt.wantKey, got[tt.wantKey], tt.wantKey, tt.want)
+				t.Errorf("APIKey.Fields() = got[%s] %v, want[%s] %v", tt.wantKey, got[tt.wantKey], tt.wantKey, tt.want)
 			}
 		})
 	}

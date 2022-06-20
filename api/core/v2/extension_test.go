@@ -8,7 +8,7 @@ import (
 func TestExtensionFields(t *testing.T) {
 	tests := []struct {
 		name    string
-		args    Resource
+		args    Fielder
 		wantKey string
 		want    string
 	}{
@@ -31,9 +31,9 @@ func TestExtensionFields(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := ExtensionFields(tt.args)
+			got := tt.args.Fields()
 			if !reflect.DeepEqual(got[tt.wantKey], tt.want) {
-				t.Errorf("ExtensionFields() = got[%s] %v, want[%s] %v", tt.wantKey, got[tt.wantKey], tt.wantKey, tt.want)
+				t.Errorf("Extension.Fields() = got[%s] %v, want[%s] %v", tt.wantKey, got[tt.wantKey], tt.wantKey, tt.want)
 			}
 		})
 	}

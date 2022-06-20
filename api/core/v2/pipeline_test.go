@@ -1,6 +1,7 @@
 package v2
 
 import (
+	"reflect"
 	"testing"
 )
 
@@ -282,6 +283,36 @@ func TestResourceReference_validate(t *testing.T) {
 			}
 			if err != nil && err.Error() != tt.wantMsg {
 				t.Errorf("ResourceReference.validate() error = %v, wantMsg %v", err.Error(), tt.wantMsg)
+			}
+		})
+	}
+}
+
+func TestPipelineFields(t *testing.T) {
+	tests := []struct {
+		name    string
+		args    Fielder
+		wantKey string
+		want    string
+	}{
+		{
+			name:    "exposes name",
+			args:    FixturePipeline("contoso", "default"),
+			wantKey: "pipeline.name",
+			want:    "contoso",
+		},
+		{
+			name:    "exposes namespace",
+			args:    FixturePipeline("contoso", "default"),
+			wantKey: "pipeline.namespace",
+			want:    "default",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := tt.args.Fields()
+			if !reflect.DeepEqual(got[tt.wantKey], tt.want) {
+				t.Errorf("Pipeline.Fields() = got[%s] %v, want[%s] %v", tt.wantKey, got[tt.wantKey], tt.wantKey, tt.want)
 			}
 		})
 	}

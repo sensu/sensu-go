@@ -160,6 +160,11 @@ func MutatorFields(r Resource) map[string]string {
 	return fields
 }
 
+// Fields returns a set of fields that represent that resource
+func (m *Mutator) Fields() map[string]string {
+	return MutatorFields(m)
+}
+
 // SetNamespace sets the namespace of the resource.
 func (m *Mutator) SetNamespace(namespace string) {
 	m.Namespace = namespace

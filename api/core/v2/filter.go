@@ -9,7 +9,6 @@ import (
 	"strings"
 
 	"github.com/sensu/sensu-go/api/core/v2/internal/js"
-	stringsutil "github.com/sensu/sensu-go/api/core/v2/internal/stringutil"
 	utilstrings "github.com/sensu/sensu-go/api/core/v2/internal/stringutil"
 )
 
@@ -173,8 +172,13 @@ func EventFilterFields(r Resource) map[string]string {
 		"filter.action":         resource.Action,
 		"filter.runtime_assets": strings.Join(resource.RuntimeAssets, ","),
 	}
-	stringsutil.MergeMapWithPrefix(fields, resource.ObjectMeta.Labels, "filter.labels.")
+	utilstrings.MergeMapWithPrefix(fields, resource.ObjectMeta.Labels, "filter.labels.")
 	return fields
+}
+
+// Fields returns a set of fields that represent that resource
+func (e *EventFilter) Fields() map[string]string {
+	return EventFilterFields(e)
 }
 
 // SetNamespace sets the namespace of the resource.

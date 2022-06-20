@@ -195,6 +195,11 @@ func HandlerFields(r Resource) map[string]string {
 	return fields
 }
 
+// Fields returns a set of fields that represent that resource
+func (h *Handler) Fields() map[string]string {
+	return HandlerFields(h)
+}
+
 // SetNamespace sets the namespace of the resource.
 func (h *Handler) SetNamespace(namespace string) {
 	h.Namespace = namespace

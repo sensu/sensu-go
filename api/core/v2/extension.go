@@ -61,6 +61,11 @@ func ExtensionFields(r Resource) map[string]string {
 	return fields
 }
 
+// ExtensionFields returns a set of fields that represent that resource
+func (e *Extension) Fields() map[string]string {
+	return ExtensionFields(e)
+}
+
 // SetNamespace sets the namespace of the resource.
 func (e *Extension) SetNamespace(namespace string) {
 	e.Namespace = namespace
