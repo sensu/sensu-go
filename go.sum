@@ -488,6 +488,8 @@ github.com/sensu/sensu-go/api/core/v2 v2.15.0-alpha1 h1:ULlSbeut2CXtFYQDamEZaqUP
 github.com/sensu/sensu-go/api/core/v2 v2.15.0-alpha1/go.mod h1:QxGKxqQv4rpweFrR4Jkp1tas3amGzAy0wO0fUwq0suU=
 github.com/sensu/sensu-go/api/core/v3 v3.6.1/go.mod h1:aqNOkJxkrwRq+rPW47XtVWeb5Rk1K5adlCZGBW9nsvM=
 github.com/sensu/sensu-go/api/core/v3 v3.6.2/go.mod h1:aqNOkJxkrwRq+rPW47XtVWeb5Rk1K5adlCZGBW9nsvM=
+github.com/sensu/sensu-go/api/core/v3 v3.6.3-alpha2 h1:hENCTTmVlypxMeNmy1BNAc81gMPdhfSXWNWl8f3kCs8=
+github.com/sensu/sensu-go/api/core/v3 v3.6.3-alpha2/go.mod h1:X0mcDXOt2LCjuu0sCzXNdeeYbLq9QLtxKSpnsDybclg=
 github.com/sensu/sensu-go/api/core/v3 v3.7.0-alpha1 h1:PJ7gvN1uPvIotdCswfOBiOREJM4kX1NaLY8iR8T6jsQ=
 github.com/sensu/sensu-go/api/core/v3 v3.7.0-alpha1/go.mod h1:X0mcDXOt2LCjuu0sCzXNdeeYbLq9QLtxKSpnsDybclg=
 github.com/sensu/sensu-go/types v0.10.0/go.mod h1:vFZJ9TYBAjSPYtYt+82PpS9P6m73Vzr4O23lmJonzrA=
