@@ -183,7 +183,6 @@ github.com/google/go-cmp v0.4.0/go.mod h1:v8dTdLbMG2kIc/vJvl+f65V22dbkXbowE6jgT/
 github.com/google/go-cmp v0.5.0/go.mod h1:v8dTdLbMG2kIc/vJvl+f65V22dbkXbowE6jgT/gNBxE=
 github.com/google/go-cmp v0.5.4/go.mod h1:v8dTdLbMG2kIc/vJvl+f65V22dbkXbowE6jgT/gNBxE=
 github.com/google/go-cmp v0.5.5/go.mod h1:v8dTdLbMG2kIc/vJvl+f65V22dbkXbowE6jgT/gNBxE=
-github.com/google/go-cmp v0.5.6 h1:BKbKCqvP6I+rmFHt06ZmyQtvB8xAkWdhFyr0ZUNZcxQ=
 github.com/google/go-cmp v0.5.6/go.mod h1:v8dTdLbMG2kIc/vJvl+f65V22dbkXbowE6jgT/gNBxE=
 github.com/google/go-cmp v0.5.8 h1:e6P7q2lk1O+qJJb4BtCQXlK8vWEO8V1ZeuEdJNOqZyg=
 github.com/google/go-cmp v0.5.8/go.mod h1:17dUlkBOakJ0+DkrSSNjCkIjxS6bF9zb3elmeNGIjoY=
@@ -490,10 +489,6 @@ github.com/sensu/sensu-go/api/core/v2 v2.15.0-alpha1 h1:ULlSbeut2CXtFYQDamEZaqUP
 github.com/sensu/sensu-go/api/core/v2 v2.15.0-alpha1/go.mod h1:QxGKxqQv4rpweFrR4Jkp1tas3amGzAy0wO0fUwq0suU=
 github.com/sensu/sensu-go/api/core/v3 v3.6.1/go.mod h1:aqNOkJxkrwRq+rPW47XtVWeb5Rk1K5adlCZGBW9nsvM=
 github.com/sensu/sensu-go/api/core/v3 v3.6.2/go.mod h1:aqNOkJxkrwRq+rPW47XtVWeb5Rk1K5adlCZGBW9nsvM=
-github.com/sensu/sensu-go/api/core/v3 v3.6.3-alpha2 h1:hENCTTmVlypxMeNmy1BNAc81gMPdhfSXWNWl8f3kCs8=
-github.com/sensu/sensu-go/api/core/v3 v3.6.3-alpha2/go.mod h1:X0mcDXOt2LCjuu0sCzXNdeeYbLq9QLtxKSpnsDybclg=
-github.com/sensu/sensu-go/api/core/v3 v3.7.0-alpha1 h1:PJ7gvN1uPvIotdCswfOBiOREJM4kX1NaLY8iR8T6jsQ=
-github.com/sensu/sensu-go/api/core/v3 v3.7.0-alpha1/go.mod h1:X0mcDXOt2LCjuu0sCzXNdeeYbLq9QLtxKSpnsDybclg=
 github.com/sensu/sensu-go/api/core/v3 v3.7.0-alpha2 h1:in2zff4g7eGEgRpqYgrsaa7DOOHdj+WeYkFipU7RbEE=
 github.com/sensu/sensu-go/api/core/v3 v3.7.0-alpha2/go.mod h1:X0mcDXOt2LCjuu0sCzXNdeeYbLq9QLtxKSpnsDybclg=
 github.com/sensu/sensu-go/types v0.10.0/go.mod h1:vFZJ9TYBAjSPYtYt+82PpS9P6m73Vzr4O23lmJonzrA=
@@ -817,7 +812,6 @@ golang.org/x/xerrors v0.0.0-20190513163551-3ee3066db522/go.mod h1:I/5z698sn9Ka8T
 golang.org/x/xerrors v0.0.0-20190717185122-a985d3407aa7/go.mod h1:I/5z698sn9Ka8TeJc9MKroUUfqBBauWjQqLJ2OPfmY0=
 golang.org/x/xerrors v0.0.0-20191011141410-1b5146add898/go.mod h1:I/5z698sn9Ka8TeJc9MKroUUfqBBauWjQqLJ2OPfmY0=
 golang.org/x/xerrors v0.0.0-20191204190536-9bdfabe68543/go.mod h1:I/5z698sn9Ka8TeJc9MKroUUfqBBauWjQqLJ2OPfmY0=
-golang.org/x/xerrors v0.0.0-20200804184101-5ec99f83aff1 h1:go1bK/D/BFZV2I8cIQd1NKEZ+0owSTG1fDTci4IqFcE=
 golang.org/x/xerrors v0.0.0-20200804184101-5ec99f83aff1/go.mod h1:I/5z698sn9Ka8TeJc9MKroUUfqBBauWjQqLJ2OPfmY0=
 google.golang.org/api v0.4.0/go.mod h1:8k5glujaEP+g9n7WNsDg8QP6cUVNI86fCNMcbazEtwE=
 google.golang.org/api v0.7.0/go.mod h1:WtwebWUNSVBH/HAw79HIFXZNqEvBhG+Ra+ax0hx3E3M=
