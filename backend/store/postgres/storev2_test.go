@@ -792,10 +792,9 @@ func TestStoreExists(t *testing.T) {
 
 func TestStorePatch(t *testing.T) {
 	type args struct {
-		req        storev2.ResourceRequest
-		wrapper    storev2.Wrapper
-		patcher    patch.Patcher
-		conditions *store.ETagCondition
+		req     storev2.ResourceRequest
+		wrapper storev2.Wrapper
+		patcher patch.Patcher
 	}
 	tests := []struct {
 		name       string
