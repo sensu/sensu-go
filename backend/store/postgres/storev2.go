@@ -675,11 +675,11 @@ func (s *StoreV2) Watch(ctx context.Context, req storev2.ResourceRequest) <-chan
 		return eventChan
 	}
 
-	go s.watchLoop(ctx, poller, eventChan)
+	go s.watchLoop(ctx, req, poller, eventChan)
 	return eventChan
 }
 
-func (s *StoreV2) watchLoop(ctx context.Context, poller *poll.Poller, watchChan chan []storev2.WatchEvent) {
+func (s *StoreV2) watchLoop(ctx context.Context, req storev2.ResourceRequest, poller *poll.Poller, watchChan chan []storev2.WatchEvent) {
 	defer close(watchChan)
 	for {
 		changes, err := poller.Next(ctx)
@@ -721,7 +721,19 @@ func (s *StoreV2) watchLoop(ctx context.Context, poller *poll.Poller, watchChan 
 				notifications[i].Type = storev2.WatchDelete
 			}
 		}
-		watchChan <- notifications
+		var status string
+		select {
+		case watchChan <- notifications:
+			status = storev2.WatchEventsStatusHandled
+		default:
+			status = storev2.WatchEventsStatusDropped
+		}
+		storev2.WatchEventsProcessed.WithLabelValues(
+			status,
+			req.StoreName,
+			req.Namespace,
+			storev2.WatcherProviderPG,
+		).Add(float64(len(notifications)))
 	}
 }
 
