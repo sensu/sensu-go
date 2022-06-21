@@ -1,6 +1,7 @@
 package etcdstore
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"path"
@@ -20,6 +21,8 @@ import (
 var (
 	_ storev2.Interface = new(Store)
 )
+
+const namespaceIndexStoreName = "internal/storev2/namespaces"
 
 // ComputeContinueToken calculates a continue token based on the given resource.
 // The resource can be a core/v2 or a core/v3 resource.
@@ -106,9 +109,15 @@ func (s *Store) CreateOrUpdate(req storev2.ResourceRequest, wrapper storev2.Wrap
 	comparator := kvc.Comparisons(
 		kvc.NamespaceExists(req.Namespace),
 	)
-	op := clientv3.OpPut(key, string(msg))
+	ops := []clientv3.Op{
+		clientv3.OpPut(key, string(msg)),
+	}
+	if req.Namespace != "" {
+		namespaceOp := clientv3.OpPut(namespaceIndexKey(req.Namespace, key), "")
+		ops = append(ops, namespaceOp)
+	}
 
-	return kvc.Txn(req.Context, s.client, comparator, op)
+	return kvc.Txn(req.Context, s.client, comparator, ops...)
 }
 
 func (s *Store) Patch(req storev2.ResourceRequest, wrapper storev2.Wrapper, patcher patch.Patcher, conditions *store.ETagCondition) error {
@@ -252,9 +261,15 @@ func (s *Store) CreateIfNotExists(req storev2.ResourceRequest, wrapper storev2.W
 		kvc.NamespaceExists(req.Namespace),
 		kvc.KeyIsNotFound(key),
 	)
-	op := clientv3.OpPut(key, string(msg))
+	ops := []clientv3.Op{
+		clientv3.OpPut(key, string(msg)),
+	}
+	if req.Namespace != "" {
+		namespaceOp := clientv3.OpPut(namespaceIndexKey(req.Namespace, key), "")
+		ops = append(ops, namespaceOp)
+	}
 
-	return kvc.Txn(req.Context, s.client, comparator, op)
+	return kvc.Txn(req.Context, s.client, comparator, ops...)
 }
 
 func (s *Store) Get(req storev2.ResourceRequest) (storev2.Wrapper, error) {
@@ -301,9 +316,15 @@ func (s *Store) Delete(req storev2.ResourceRequest) error {
 	comparator := kvc.Comparisons(
 		kvc.KeyIsFound(key),
 	)
-	op := clientv3.OpDelete(key)
+	ops := []clientv3.Op{
+		clientv3.OpDelete(key),
+	}
+	if req.Namespace != "" {
+		namespaceOp := clientv3.OpDelete(namespaceIndexKey(req.Namespace, key))
+		ops = append(ops, namespaceOp)
+	}
 
-	return kvc.Txn(req.Context, s.client, comparator, op)
+	return kvc.Txn(req.Context, s.client, comparator, ops...)
 }
 
 func (s *Store) List(req storev2.ResourceRequest, pred *store.SelectionPredicate) (storev2.WrapList, error) {
@@ -385,6 +406,44 @@ func (s *Store) Exists(req storev2.ResourceRequest) (bool, error) {
 	return resp.Count > 0, nil
 }
 
+func (s *Store) CreateNamespace(ctx context.Context, namespace *corev3.Namespace) error {
+	wrapped, err := wrap.Resource(namespace)
+	if err != nil {
+		return &store.ErrNotValid{Err: fmt.Errorf("etcdstore could not wrap namespace resource: %v", err)}
+	}
+
+	key := store.NewKeyBuilder(namespace.StoreName()).Build(namespace.Metadata.Name)
+	msg, err := proto.Marshal(wrapped)
+	if err != nil {
+		return &store.ErrEncode{Key: key, Err: err}
+	}
+
+	comparator := kvc.Comparisons(
+		kvc.KeyIsNotFound(key),
+		kvc.NamespaceExists(""),
+	)
+	op := clientv3.OpPut(key, string(msg))
+
+	return kvc.Txn(ctx, s.client, comparator, op)
+}
+
+func (s *Store) DeleteNamespace(ctx context.Context, namespace string) error {
+	key := store.NewKeyBuilder(namespaceIndexStoreName).Build(namespace)
+	var resp *clientv3.GetResponse
+	err := kvc.Backoff(ctx).Retry(func(n int) (done bool, err error) {
+		resp, err = s.client.Get(ctx, key, clientv3.WithPrefix(), clientv3.WithCountOnly())
+		return kvc.RetryRequest(n, err)
+	})
+	if err != nil {
+		return err
+	}
+	if resp.Count > 0 {
+		return fmt.Errorf("cannot delete namespace %s: namespace not empty", namespace)
+	}
+	req := storev2.NewResourceRequest(ctx, "", namespace, "namespaces")
+	return s.Delete(req)
+}
+
 func getSortOrder(order storev2.SortOrder) clientv3.SortOrder {
 	switch order {
 	case storev2.SortAscend:
@@ -393,4 +452,8 @@ func getSortOrder(order storev2.SortOrder) clientv3.SortOrder {
 		return clientv3.SortDescend
 	}
 	return clientv3.SortNone
+}
+
+func namespaceIndexKey(namespace, key string) string {
+	return store.NewKeyBuilder(namespaceIndexStoreName).WithNamespace(namespace).Build(key)
 }
