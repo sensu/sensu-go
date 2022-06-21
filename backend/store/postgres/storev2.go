@@ -714,11 +714,11 @@ func (s *StoreV2) watchLoop(ctx context.Context, poller *poll.Poller, watchChan 
 			}
 			switch change.Change {
 			case poll.Create:
-				notifications[i].Type = storev2.Create
+				notifications[i].Type = storev2.WatchCreate
 			case poll.Update:
-				notifications[i].Type = storev2.Update
+				notifications[i].Type = storev2.WatchUpdate
 			case poll.Delete:
-				notifications[i].Type = storev2.Delete
+				notifications[i].Type = storev2.WatchDelete
 			}
 		}
 		watchChan <- notifications

@@ -1,6 +1,8 @@
 package v2
 
 import (
+	"context"
+
 	corev3 "github.com/sensu/sensu-go/api/core/v3"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/backend/store/patch"
@@ -50,23 +52,5 @@ type Interface interface {
 
 	// Watch provides a channel for receiving updates to a particular resource
 	// or resource collection
-	// Watch(context.Context, ResourceRequest) <-chan []WatchEvent
-}
-
-type WatchActionType uint
-
-const (
-	Create WatchActionType = iota
-	Update
-	Delete
-	WatchError
-)
-
-type WatchEvent struct {
-	Type          WatchActionType
-	Key           ResourceRequest
-	Value         Wrapper
-	PreviousValue Wrapper
-	Revision      int64
-	Err           error
+	Watch(context.Context, ResourceRequest) <-chan []WatchEvent
 }

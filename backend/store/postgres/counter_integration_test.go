@@ -146,9 +146,9 @@ func watchState(t *testing.T, ctx context.Context, w *StoreV2, state map[int64]i
 					wrapper.UnwrapInto(&r)
 				}
 				switch watchEvent.Type {
-				case v2.Delete:
+				case v2.WatchDelete:
 					delete(state, r.Id)
-				case v2.Update, v2.Create:
+				case v2.WatchUpdate, v2.WatchCreate:
 					state[r.Id] = r.C
 				case v2.WatchError:
 					if ctx.Err() == nil {
