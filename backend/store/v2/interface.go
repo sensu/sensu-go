@@ -52,6 +52,10 @@ type Interface interface {
 
 	// Patch patches the resource given in the request
 	Patch(ResourceRequest, Wrapper, patch.Patcher, *store.ETagCondition) error
+
+	// Watch provides a channel for receiving updates to a particular resource
+	// or resource collection
+	Watch(context.Context, ResourceRequest) <-chan []WatchEvent
 }
 
 type NamespaceStore interface {

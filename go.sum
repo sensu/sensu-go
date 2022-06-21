@@ -185,6 +185,8 @@ github.com/google/go-cmp v0.5.4/go.mod h1:v8dTdLbMG2kIc/vJvl+f65V22dbkXbowE6jgT/
 github.com/google/go-cmp v0.5.5/go.mod h1:v8dTdLbMG2kIc/vJvl+f65V22dbkXbowE6jgT/gNBxE=
 github.com/google/go-cmp v0.5.6 h1:BKbKCqvP6I+rmFHt06ZmyQtvB8xAkWdhFyr0ZUNZcxQ=
 github.com/google/go-cmp v0.5.6/go.mod h1:v8dTdLbMG2kIc/vJvl+f65V22dbkXbowE6jgT/gNBxE=
+github.com/google/go-cmp v0.5.8 h1:e6P7q2lk1O+qJJb4BtCQXlK8vWEO8V1ZeuEdJNOqZyg=
+github.com/google/go-cmp v0.5.8/go.mod h1:17dUlkBOakJ0+DkrSSNjCkIjxS6bF9zb3elmeNGIjoY=
 github.com/google/gofuzz v1.0.0/go.mod h1:dBl0BpW6vV/+mYPU4Po3pmUjxk6FQPldtuIdl/M65Eg=
 github.com/google/gofuzz v1.0.0/go.mod h1:dBl0BpW6vV/+mYPU4Po3pmUjxk6FQPldtuIdl/M65Eg=
 github.com/google/martian v2.1.0+incompatible/go.mod h1:9I4somxYTbIHy5NJKHRl3wXiIaQGbYVAs8BPL6v8lEs=
@@ -488,8 +490,12 @@ github.com/sensu/sensu-go/api/core/v2 v2.15.0-alpha1 h1:ULlSbeut2CXtFYQDamEZaqUP
 github.com/sensu/sensu-go/api/core/v2 v2.15.0-alpha1/go.mod h1:QxGKxqQv4rpweFrR4Jkp1tas3amGzAy0wO0fUwq0suU=
 github.com/sensu/sensu-go/api/core/v3 v3.6.1/go.mod h1:aqNOkJxkrwRq+rPW47XtVWeb5Rk1K5adlCZGBW9nsvM=
 github.com/sensu/sensu-go/api/core/v3 v3.6.2/go.mod h1:aqNOkJxkrwRq+rPW47XtVWeb5Rk1K5adlCZGBW9nsvM=
+github.com/sensu/sensu-go/api/core/v3 v3.6.3-alpha2 h1:hENCTTmVlypxMeNmy1BNAc81gMPdhfSXWNWl8f3kCs8=
+github.com/sensu/sensu-go/api/core/v3 v3.6.3-alpha2/go.mod h1:X0mcDXOt2LCjuu0sCzXNdeeYbLq9QLtxKSpnsDybclg=
 github.com/sensu/sensu-go/api/core/v3 v3.7.0-alpha1 h1:PJ7gvN1uPvIotdCswfOBiOREJM4kX1NaLY8iR8T6jsQ=
 github.com/sensu/sensu-go/api/core/v3 v3.7.0-alpha1/go.mod h1:X0mcDXOt2LCjuu0sCzXNdeeYbLq9QLtxKSpnsDybclg=
+github.com/sensu/sensu-go/api/core/v3 v3.7.0-alpha2 h1:in2zff4g7eGEgRpqYgrsaa7DOOHdj+WeYkFipU7RbEE=
+github.com/sensu/sensu-go/api/core/v3 v3.7.0-alpha2/go.mod h1:X0mcDXOt2LCjuu0sCzXNdeeYbLq9QLtxKSpnsDybclg=
 github.com/sensu/sensu-go/types v0.10.0/go.mod h1:vFZJ9TYBAjSPYtYt+82PpS9P6m73Vzr4O23lmJonzrA=
 github.com/sensu/sensu-go/types v0.11.0-alpha1 h1:cjxVdmR6qPBkM7e7znLUR79/rGnG0lIXBgdY605EJDU=
 github.com/sensu/sensu-go/types v0.11.0-alpha1/go.mod h1:fhgW3xlvkPFMZiT0IppHySeyN61ZTIKevgSPFSoaQEk=
