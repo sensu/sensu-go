@@ -163,8 +163,8 @@ SELECT
 	annotations
 FROM namespaces
 ORDER BY ( name ) ASC
-LIMIT $2
-OFFSET $3
+LIMIT $1
+OFFSET $2
 `
 
 const listNamespaceDescQuery = `
@@ -176,8 +176,8 @@ SELECT
 	annotations
 FROM namespaces
 ORDER BY ( name ) DESC
-LIMIT $2
-OFFSET $3
+LIMIT $1
+OFFSET $2
 `
 
 const existsNamespaceQuery = `

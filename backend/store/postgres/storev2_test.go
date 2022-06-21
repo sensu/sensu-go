@@ -222,6 +222,7 @@ func TestStoreUpdateIfExists(t *testing.T) {
 			}(),
 			beforeHook: func(t *testing.T, s storev2.Interface) {
 				testCreateNamespace(t, s, "default")
+				testCreateEntityConfig(t, s, "foo")
 			},
 		},
 		{
@@ -236,9 +237,6 @@ func TestStoreUpdateIfExists(t *testing.T) {
 					wrapper: WrapNamespace(ns),
 				}
 			}(),
-			beforeHook: func(t *testing.T, s storev2.Interface) {
-				testCreateNamespace(t, s, "default")
-			},
 		},
 	}
 	for _, tt := range tests {
@@ -247,26 +245,21 @@ func TestStoreUpdateIfExists(t *testing.T) {
 				if tt.beforeHook != nil {
 					tt.beforeHook(t, s)
 				}
-				cfg := corev3.FixtureEntityConfig("foo")
-				ctx := context.Background()
-				req := storev2.NewResourceRequestFromResource(ctx, cfg)
-				req.UsePostgres = true
-				wrapper := WrapEntityConfig(cfg)
 
 				// UpdateIfExists should fail
-				if err := s.UpdateIfExists(req, wrapper); err == nil {
+				if err := s.UpdateIfExists(tt.args.req, tt.args.wrapper); err == nil {
 					t.Error("expected non-nil error")
 				} else {
 					if _, ok := err.(*store.ErrNotFound); !ok {
 						t.Errorf("wrong error: %s", err)
 					}
 				}
-				if err := s.CreateOrUpdate(req, wrapper); err != nil {
+				if err := s.CreateOrUpdate(tt.args.req, tt.args.wrapper); err != nil {
 					t.Fatal(err)
 				}
 
 				// UpdateIfExists should succeed
-				if err := s.UpdateIfExists(req, wrapper); err != nil {
+				if err := s.UpdateIfExists(tt.args.req, tt.args.wrapper); err != nil {
 					t.Error(err)
 				}
 			})
@@ -314,6 +307,7 @@ func TestStoreCreateIfNotExists(t *testing.T) {
 			}(),
 			beforeHook: func(t *testing.T, s storev2.Interface) {
 				testCreateNamespace(t, s, "default")
+				testCreateEntityConfig(t, s, "foo")
 			},
 		},
 		{
@@ -328,9 +322,6 @@ func TestStoreCreateIfNotExists(t *testing.T) {
 					wrapper: WrapNamespace(ns),
 				}
 			}(),
-			beforeHook: func(t *testing.T, s storev2.Interface) {
-				testCreateNamespace(t, s, "default")
-			},
 		},
 	}
 	for _, tt := range tests {
@@ -339,26 +330,21 @@ func TestStoreCreateIfNotExists(t *testing.T) {
 				if tt.beforeHook != nil {
 					tt.beforeHook(t, s)
 				}
-				cfg := corev3.FixtureEntityConfig("foo")
-				ctx := context.Background()
-				req := storev2.NewResourceRequestFromResource(ctx, cfg)
-				req.UsePostgres = true
-				wrapper := WrapEntityConfig(cfg)
 
 				// CreateIfNotExists should succeed
-				if err := s.CreateIfNotExists(req, wrapper); err != nil {
+				if err := s.CreateIfNotExists(tt.args.req, tt.args.wrapper); err != nil {
 					t.Fatal(err)
 				}
 
 				// CreateIfNotExists should fail
-				if err := s.CreateIfNotExists(req, wrapper); err == nil {
+				if err := s.CreateIfNotExists(tt.args.req, tt.args.wrapper); err == nil {
 					t.Error("expected non-nil error")
 				} else if _, ok := err.(*store.ErrAlreadyExists); !ok {
 					t.Errorf("wrong error: %s", err)
 				}
 
 				// UpdateIfExists should succeed
-				if err := s.UpdateIfExists(req, wrapper); err != nil {
+				if err := s.UpdateIfExists(tt.args.req, tt.args.wrapper); err != nil {
 					t.Error(err)
 				}
 			})
@@ -368,13 +354,13 @@ func TestStoreCreateIfNotExists(t *testing.T) {
 
 func TestStoreGet(t *testing.T) {
 	type args struct {
-		req     storev2.ResourceRequest
-		wrapper storev2.Wrapper
+		req storev2.ResourceRequest
 	}
 	tests := []struct {
 		name       string
 		args       args
 		beforeHook func(*testing.T, storev2.Interface)
+		want       storev2.Wrapper
 	}{
 		{
 			name: "an entity config can be retrieved",
@@ -384,13 +370,17 @@ func TestStoreGet(t *testing.T) {
 				req := storev2.NewResourceRequestFromResource(ctx, cfg)
 				req.UsePostgres = true
 				return args{
-					req:     req,
-					wrapper: WrapEntityConfig(cfg),
+					req: req,
 				}
 			}(),
 			beforeHook: func(t *testing.T, s storev2.Interface) {
 				testCreateNamespace(t, s, "default")
+				testCreateEntityConfig(t, s, "foo")
 			},
+			want: func() storev2.Wrapper {
+				cfg := corev3.FixtureEntityConfig("foo")
+				return WrapEntityConfig(cfg)
+			}(),
 		},
 		{
 			name: "an entity state can be retrieved",
@@ -400,29 +390,37 @@ func TestStoreGet(t *testing.T) {
 				req := storev2.NewResourceRequestFromResource(ctx, state)
 				req.UsePostgres = true
 				return args{
-					req:     req,
-					wrapper: WrapEntityState(state),
+					req: req,
 				}
 			}(),
 			beforeHook: func(t *testing.T, s storev2.Interface) {
 				testCreateNamespace(t, s, "default")
+				testCreateEntityConfig(t, s, "foo")
+				testCreateEntityState(t, s, "foo")
 			},
+			want: func() storev2.Wrapper {
+				state := corev3.FixtureEntityState("foo")
+				return WrapEntityState(state)
+			}(),
 		},
 		{
 			name: "a namespace can be retrieved",
 			args: func() args {
 				ctx := context.Background()
-				ns := corev3.FixtureNamespace("bar")
+				ns := corev3.FixtureNamespace("foo")
 				req := storev2.NewResourceRequestFromResource(ctx, ns)
 				req.UsePostgres = true
 				return args{
-					req:     req,
-					wrapper: WrapNamespace(ns),
+					req: req,
 				}
 			}(),
 			beforeHook: func(t *testing.T, s storev2.Interface) {
-				testCreateNamespace(t, s, "default")
+				testCreateNamespace(t, s, "foo")
 			},
+			want: func() storev2.Wrapper {
+				ns := corev3.FixtureNamespace("foo")
+				return WrapNamespace(ns)
+			}(),
 		},
 	}
 	for _, tt := range tests {
@@ -431,22 +429,13 @@ func TestStoreGet(t *testing.T) {
 				if tt.beforeHook != nil {
 					tt.beforeHook(t, s)
 				}
-				cfg := corev3.FixtureEntityConfig("foo")
-				ctx := context.Background()
-				req := storev2.NewResourceRequestFromResource(ctx, cfg)
-				req.UsePostgres = true
-				wrapper := WrapEntityConfig(cfg)
 
-				// CreateIfNotExists should succeed
-				if err := s.CreateOrUpdate(req, wrapper); err != nil {
-					t.Fatal(err)
-				}
-				got, err := s.Get(req)
+				got, err := s.Get(tt.args.req)
 				if err != nil {
 					t.Fatal(err)
 				}
-				if want := wrapper; !reflect.DeepEqual(got, wrapper) {
-					t.Errorf("bad resource; got %#v, want %#v", got, want)
+				if !reflect.DeepEqual(got, tt.want) {
+					t.Errorf("bad resource; got %#v, want %#v", got, tt.want)
 				}
 			})
 		})
@@ -493,6 +482,7 @@ func TestStoreDelete(t *testing.T) {
 			}(),
 			beforeHook: func(t *testing.T, s storev2.Interface) {
 				testCreateNamespace(t, s, "default")
+				testCreateEntityConfig(t, s, "foo")
 			},
 		},
 		{
@@ -518,24 +508,20 @@ func TestStoreDelete(t *testing.T) {
 				if tt.beforeHook != nil {
 					tt.beforeHook(t, s)
 				}
-				cfg := corev3.FixtureEntityConfig("foo")
-				ctx := context.Background()
-				req := storev2.NewResourceRequestFromResource(ctx, cfg)
-				req.UsePostgres = true
-				wrapper := WrapEntityConfig(cfg)
+
 				// CreateIfNotExists should succeed
-				if err := s.CreateIfNotExists(req, wrapper); err != nil {
+				if err := s.CreateIfNotExists(tt.args.req, tt.args.wrapper); err != nil {
 					t.Fatal(err)
 				}
-				if err := s.Delete(req); err != nil {
+				if err := s.Delete(tt.args.req); err != nil {
 					t.Fatal(err)
 				}
-				if err := s.Delete(req); err == nil {
+				if err := s.Delete(tt.args.req); err == nil {
 					t.Error("expected non-nil error")
 				} else if _, ok := err.(*store.ErrNotFound); !ok {
 					t.Errorf("expected ErrNotFound: got %s", err)
 				}
-				if _, err := s.Get(req); err == nil {
+				if _, err := s.Get(tt.args.req); err == nil {
 					t.Error("expected non-nil error")
 				} else if _, ok := err.(*store.ErrNotFound); !ok {
 					t.Errorf("expected ErrNotFound: got %s", err)
@@ -547,8 +533,8 @@ func TestStoreDelete(t *testing.T) {
 
 func TestStoreList(t *testing.T) {
 	type args struct {
-		req     storev2.ResourceRequest
-		wrapper storev2.Wrapper
+		req  storev2.ResourceRequest
+		pred *store.SelectionPredicate
 	}
 	tests := []struct {
 		name       string
@@ -559,48 +545,60 @@ func TestStoreList(t *testing.T) {
 			name: "entity configs can be listed",
 			args: func() args {
 				ctx := context.Background()
-				cfg := corev3.FixtureEntityConfig("foo")
-				req := storev2.NewResourceRequestFromResource(ctx, cfg)
+				req := storev2.NewResourceRequest(ctx, "default", "anything", entityConfigStoreName)
 				req.UsePostgres = true
+				pred := &store.SelectionPredicate{Limit: 5}
 				return args{
-					req:     req,
-					wrapper: WrapEntityConfig(cfg),
+					req:  req,
+					pred: pred,
 				}
 			}(),
 			beforeHook: func(t *testing.T, s storev2.Interface) {
 				testCreateNamespace(t, s, "default")
+				for i := 0; i < 10; i++ {
+					entityName := fmt.Sprintf("foo-%d", i)
+					testCreateEntityConfig(t, s, entityName)
+				}
 			},
 		},
 		{
 			name: "entity states can be listed",
 			args: func() args {
 				ctx := context.Background()
-				state := corev3.FixtureEntityState("foo")
-				req := storev2.NewResourceRequestFromResource(ctx, state)
+				req := storev2.NewResourceRequest(ctx, "default", "anything", entityStateStoreName)
 				req.UsePostgres = true
+				pred := &store.SelectionPredicate{Limit: 5}
 				return args{
-					req:     req,
-					wrapper: WrapEntityState(state),
+					req:  req,
+					pred: pred,
 				}
 			}(),
 			beforeHook: func(t *testing.T, s storev2.Interface) {
 				testCreateNamespace(t, s, "default")
+				for i := 0; i < 10; i++ {
+					entityName := fmt.Sprintf("foo-%d", i)
+					testCreateEntityConfig(t, s, entityName)
+					testCreateEntityState(t, s, entityName)
+				}
 			},
 		},
 		{
 			name: "namespaces can be listed",
 			args: func() args {
 				ctx := context.Background()
-				ns := corev3.FixtureNamespace("bar")
-				req := storev2.NewResourceRequestFromResource(ctx, ns)
+				req := storev2.NewResourceRequest(ctx, "", "anything", namespaceStoreName)
 				req.UsePostgres = true
+				pred := &store.SelectionPredicate{Limit: 5}
 				return args{
-					req:     req,
-					wrapper: WrapNamespace(ns),
+					req:  req,
+					pred: pred,
 				}
 			}(),
 			beforeHook: func(t *testing.T, s storev2.Interface) {
-				testCreateNamespace(t, s, "default")
+				for i := 0; i < 10; i++ {
+					namespaceName := fmt.Sprintf("foo-%d", i)
+					testCreateNamespace(t, s, namespaceName)
+				}
 			},
 		},
 	}
@@ -610,74 +608,64 @@ func TestStoreList(t *testing.T) {
 				if tt.beforeHook != nil {
 					tt.beforeHook(t, s)
 				}
-				for i := 0; i < 10; i++ {
-					// create 10 resources
-					cfg := corev3.FixtureEntityConfig(fmt.Sprintf("foo-%d", i))
-					ctx := context.Background()
-					req := storev2.NewResourceRequestFromResource(ctx, cfg)
-					req.UsePostgres = true
-					wrapper := WrapEntityConfig(cfg)
-					if err := s.CreateIfNotExists(req, wrapper); err != nil {
-						t.Fatal(err)
-					}
-				}
-				ctx := context.Background()
-				req := storev2.NewResourceRequest(ctx, "default", "anything", new(corev3.EntityConfig).StoreName())
-				req.UsePostgres = true
-				pred := &store.SelectionPredicate{Limit: 5}
+
 				// Test listing with limit of 5
-				list, err := s.List(req, pred)
+				list, err := s.List(tt.args.req, tt.args.pred)
 				if err != nil {
 					t.Fatal(err)
 				}
 				if got, want := list.Len(), 5; got != want {
 					t.Errorf("wrong number of items: got %d, want %d", got, want)
 				}
-				if got, want := pred.Continue, `{"offset":5}`; got != want {
+				if got, want := tt.args.pred.Continue, `{"offset":5}`; got != want {
 					t.Errorf("bad continue token: got %q, want %q", got, want)
 				}
+
 				// get the rest of the list
-				pred.Limit = 6
-				list, err = s.List(req, pred)
+				tt.args.pred.Limit = 6
+				list, err = s.List(tt.args.req, tt.args.pred)
 				if err != nil {
 					t.Fatal(err)
 				}
 				if got, want := list.Len(), 5; got != want {
 					t.Errorf("wrong number of items: got %d, want %d", got, want)
 				}
-				if pred.Continue != "" {
+				if tt.args.pred.Continue != "" {
 					t.Error("expected empty continue token")
 				}
+
 				// Test listing from all namespaces
-				req.Namespace = ""
-				pred = &store.SelectionPredicate{Limit: 5}
-				list, err = s.List(req, pred)
+				tt.args.req.Namespace = ""
+				tt.args.pred = &store.SelectionPredicate{Limit: 5}
+				list, err = s.List(tt.args.req, tt.args.pred)
 				if err != nil {
 					t.Fatal(err)
 				}
 				if got, want := list.Len(), 5; got != want {
 					t.Errorf("wrong number of items: got %d, want %d", got, want)
 				}
-				if got, want := pred.Continue, `{"offset":5}`; got != want {
+				if got, want := tt.args.pred.Continue, `{"offset":5}`; got != want {
 					t.Errorf("bad continue token: got %q, want %q", got, want)
 				}
-				pred.Limit = 6
+				tt.args.pred.Limit = 6
+
 				// get the rest of the list
-				list, err = s.List(req, pred)
+				list, err = s.List(tt.args.req, tt.args.pred)
 				if err != nil {
 					t.Fatal(err)
 				}
 				if got, want := list.Len(), 5; got != want {
 					t.Errorf("wrong number of items: got %d, want %d", got, want)
 				}
-				if pred.Continue != "" {
+				if tt.args.pred.Continue != "" {
 					t.Error("expected empty continue token")
 				}
-				pred.Limit = 5
+				tt.args.pred.Limit = 5
+
 				// Test listing in descending order
-				pred.Continue = ""
-				req.SortOrder = storev2.SortDescend
-				list, err = s.List(req, pred)
+				tt.args.pred.Continue = ""
+				tt.args.req.SortOrder = storev2.SortDescend
+				list, err = s.List(tt.args.req, tt.args.pred)
 				if err != nil {
 					t.Fatal(err)
 				}
@@ -691,10 +679,11 @@ func TestStoreList(t *testing.T) {
 				if got, want := firstObj.GetMetadata().Name, "foo-9"; got != want {
 					t.Errorf("unexpected first item in list: got %s, want %s", got, want)
 				}
+
 				// Test listing in ascending order
-				pred.Continue = ""
-				req.SortOrder = storev2.SortAscend
-				list, err = s.List(req, pred)
+				tt.args.pred.Continue = ""
+				tt.args.req.SortOrder = storev2.SortAscend
+				list, err = s.List(tt.args.req, tt.args.pred)
 				if err != nil {
 					t.Fatal(err)
 				}
@@ -753,6 +742,7 @@ func TestStoreExists(t *testing.T) {
 			}(),
 			beforeHook: func(t *testing.T, s storev2.Interface) {
 				testCreateNamespace(t, s, "default")
+				testCreateEntityConfig(t, s, "foo")
 			},
 		},
 		{
@@ -767,9 +757,6 @@ func TestStoreExists(t *testing.T) {
 					wrapper: WrapNamespace(ns),
 				}
 			}(),
-			beforeHook: func(t *testing.T, s storev2.Interface) {
-				testCreateNamespace(t, s, "default")
-			},
 		},
 	}
 	for _, tt := range tests {
@@ -778,12 +765,8 @@ func TestStoreExists(t *testing.T) {
 				if tt.beforeHook != nil {
 					tt.beforeHook(t, s)
 				}
-				cfg := corev3.FixtureEntityConfig("foo")
-				ctx := context.Background()
-				req := storev2.NewResourceRequestFromResource(ctx, cfg)
-				req.UsePostgres = true
 				// Exists should return false
-				got, err := s.Exists(req)
+				got, err := s.Exists(tt.args.req)
 				if err != nil {
 					t.Fatal(err)
 				}
@@ -791,13 +774,11 @@ func TestStoreExists(t *testing.T) {
 					t.Errorf("got true, want false")
 				}
 
-				// Create a resource under the default namespace
-				wrapper := WrapEntityConfig(cfg)
 				// CreateIfNotExists should succeed
-				if err := s.CreateIfNotExists(req, wrapper); err != nil {
+				if err := s.CreateIfNotExists(tt.args.req, tt.args.wrapper); err != nil {
 					t.Fatal(err)
 				}
-				got, err = s.Exists(req)
+				got, err = s.Exists(tt.args.req)
 				if err != nil {
 					t.Fatal(err)
 				}

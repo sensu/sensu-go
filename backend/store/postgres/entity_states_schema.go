@@ -196,14 +196,14 @@ const createIfNotExistsEntityStateQuery = `
 --
 WITH namespace AS (
 	SELECT id FROM namespaces
-	WHERE namespaces.name = $1
+	WHERE name = $1
 ), config AS (
 	SELECT id
 	FROM entity_configs
 	WHERE namespace_id = (SELECT id FROM namespace) AND name = $2
 ), state AS (
 	INSERT INTO entity_states ( entity_config_id, namespace_id, name, expires_at, last_seen, selectors, annotations )
-	VALUES ( SELECT config.id, (SELECT id FROM namespace), $2, now(), $3, $4, $5 )
+	VALUES ( (SELECT id FROM config), (SELECT id FROM namespace), $2, now(), $3, $4, $5 )
 	RETURNING id
 ), system AS (
 	INSERT INTO entities_systems
@@ -441,52 +441,7 @@ const listEntityStateQuery = `
 --
 WITH namespace AS (
 	SELECT id, name FROM namespaces
-	WHERE namespaces.name = $1
-), network AS (
-	SELECT
-		entity_states.id as entity_id,
-		array_agg(entities_networks.name) AS names,
-		array_agg(entities_networks.mac) AS macs,
-		array_agg(entities_networks.addresses) AS addresses
-	FROM entities_networks, entity_states
-	WHERE entity_states.namespace_id = (SELECT id FROM namespace) OR $1 IS NULL
-	GROUP BY entities.id
-)
-SELECT 
-	namespace.name,
-	entity_states.name,
-	entity_states.last_seen,
-	entity_states.selectors,
-	entity_states.annotations,
-	entities_systems.hostname,
-	entities_systems.os,
-	entities_systems.platform,
-	entities_systems.platform_family,
-	entities_systems.platform_version,
-	entities_systems.arch,
-	entities_systems.arm_version,
-	entities_systems.libc_type,
-	entities_systems.vm_system,
-	entities_systems.vm_role,
-	entities_systems.cloud_provider,
-	entities_systems.float_type,
-	entities_systems.sensu_agent_version,
-	network.names,
-	network.macs,
-	network.addresses::text[]
-FROM entity_states LEFT OUTER JOIN entities_systems ON entity_states.id = entities_systems.entity_id, network
-WHERE network.entity_id = entity_states.id
-ORDER BY ( namespace.name, entity_states.name ) ASC
-LIMIT $2
-OFFSET $3
-`
-
-const listEntityStateDescQuery = `
--- This query lists entities from a given namespace.
---
-WITH namespace AS (
-	SELECT id, name FROM namespaces
-	WHERE namespaces.name = $1
+	WHERE namespaces.name = $1 OR $1 IS NULL
 ), network AS (
 	SELECT
 		entity_states.id as entity_id,
@@ -519,7 +474,52 @@ SELECT
 	network.names,
 	network.macs,
 	network.addresses::text[]
-FROM entity_states LEFT OUTER JOIN entities_systems ON entity_states.id = entities_systems.entity_id, network
+FROM entity_states LEFT OUTER JOIN entities_systems ON entity_states.id = entities_systems.entity_id, network, namespace
+WHERE network.entity_id = entity_states.id
+ORDER BY ( namespace.name, entity_states.name ) ASC
+LIMIT $2
+OFFSET $3
+`
+
+const listEntityStateDescQuery = `
+-- This query lists entities from a given namespace.
+--
+WITH namespace AS (
+	SELECT id, name FROM namespaces
+	WHERE namespaces.name = $1 OR $1 IS NULL
+), network AS (
+	SELECT
+		entity_states.id as entity_id,
+		array_agg(entities_networks.name) AS names,
+		array_agg(entities_networks.mac) AS macs,
+		array_agg(entities_networks.addresses) AS addresses
+	FROM entities_networks, entity_states
+	WHERE entity_states.namespace_id = (SELECT id FROM namespace) OR $1 IS NULL
+	GROUP BY entity_states.id
+)
+SELECT 
+	namespace.name,
+	entity_states.name,
+	entity_states.last_seen,
+	entity_states.selectors,
+	entity_states.annotations,
+	entities_systems.hostname,
+	entities_systems.os,
+	entities_systems.platform,
+	entities_systems.platform_family,
+	entities_systems.platform_version,
+	entities_systems.arch,
+	entities_systems.arm_version,
+	entities_systems.libc_type,
+	entities_systems.vm_system,
+	entities_systems.vm_role,
+	entities_systems.cloud_provider,
+	entities_systems.float_type,
+	entities_systems.sensu_agent_version,
+	network.names,
+	network.macs,
+	network.addresses::text[]
+FROM entity_states LEFT OUTER JOIN entities_systems ON entity_states.id = entities_systems.entity_id, network, namespace
 WHERE network.entity_id = entity_states.id
 ORDER BY ( namespace.name, entity_states.name ) DESC
 LIMIT $2

@@ -248,7 +248,7 @@ func (s *StoreV2) CreateIfNotExists(req storev2.ResourceRequest, wrapper storev2
 		pgError, ok := err.(*pgconn.PgError)
 		if ok {
 			switch pgError.ConstraintName {
-			case "entity_config_unique", "entity_state_unique":
+			case "entity_config_unique", "entity_state_unique", "namespace_unique":
 				return &store.ErrAlreadyExists{Key: fmt.Sprintf("%s/%s", req.Namespace, req.Name)}
 			}
 		}
@@ -380,7 +380,12 @@ func (s *StoreV2) Delete(req storev2.ResourceRequest) error {
 	if !ok {
 		return errNoQuery(req.StoreName)
 	}
-	result, err := s.db.Exec(req.Context, query, req.Namespace, req.Name)
+	params := []interface{}{}
+	if req.StoreName != namespaceStoreName {
+		params = append(params, req.Namespace)
+	}
+	params = append(params, req.Name)
+	result, err := s.db.Exec(req.Context, query, params...)
 	if err != nil {
 		return &store.ErrInternal{Message: err.Error()}
 	}
@@ -509,7 +514,7 @@ func (w WrapList) unwrapIntoNamespacePointerList(list *[]*corev3.Namespace) erro
 	return nil
 }
 
-// todo: make this work generically
+// TODO: make this work generically
 func (w WrapList) unwrapIntoResourceList(list *[]corev3.Resource) error {
 	if len(*list) != len(w) {
 		*list = make([]corev3.Resource, len(w))
@@ -544,12 +549,20 @@ func (s *StoreV2) List(req storev2.ResourceRequest, pred *store.SelectionPredica
 	if err != nil {
 		return nil, err
 	}
-	var namespace sql.NullString
-	if req.Namespace != "" {
-		namespace.String = req.Namespace
-		namespace.Valid = true
+
+	params := []interface{}{}
+	if req.StoreName != namespaceStoreName {
+		var namespace sql.NullString
+		if req.Namespace != "" {
+			namespace.String = req.Namespace
+			namespace.Valid = true
+		}
+		params = append(params, namespace)
 	}
-	rows, rerr := s.db.Query(req.Context, query, namespace, limit, offset)
+	params = append(params, limit)
+	params = append(params, offset)
+
+	rows, rerr := s.db.Query(req.Context, query, params...)
 	if rerr != nil {
 		return nil, &store.ErrInternal{Message: rerr.Error()}
 	}
@@ -583,7 +596,12 @@ func (s *StoreV2) Exists(req storev2.ResourceRequest) (bool, error) {
 	if !ok {
 		return false, errNoQuery(req.StoreName)
 	}
-	row := s.db.QueryRow(req.Context, query, req.Namespace, req.Name)
+	params := []interface{}{}
+	if req.StoreName != namespaceStoreName {
+		params = append(params, req.Namespace)
+	}
+	params = append(params, req.Name)
+	row := s.db.QueryRow(req.Context, query, params...)
 	var found bool
 	err := row.Scan(&found)
 	if err == nil {
