@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"sync"
 	"testing"
 	"time"
 
@@ -17,40 +18,134 @@ import (
 )
 
 func TestHandleCheck(t *testing.T) {
-	assert := assert.New(t)
-
-	checkConfig := corev2.FixtureCheckConfig("check")
-
-	request := &corev2.CheckRequest{Config: checkConfig, Issued: time.Now().Unix()}
-	payload, err := json.Marshal(request)
-	if err != nil {
-		assert.FailNow("error marshaling check request")
+	newCheckRequest := func(t *testing.T, issued int64) []byte {
+		checkConfig := corev2.FixtureCheckConfig("check")
+		checkRequest := &corev2.CheckRequest{
+			Config: checkConfig,
+			Issued: issued,
+		}
+		payload, err := json.Marshal(checkRequest)
+		require.NoError(t, err)
+		return payload
 	}
-
-	config, cleanup := FixtureConfig()
-	defer cleanup()
-	agent, err := NewAgent(config)
-	if err != nil {
-		t.Fatal(err)
+	type fields struct {
+		inProgress map[string]*corev2.CheckConfig
+		lastIssued map[string]int64
+		sequences  map[string]int64
 	}
-	ex := &mockexecutor.MockExecutor{}
-	agent.executor = ex
-	execution := command.FixtureExecutionResponse(0, "")
-	ex.Return(execution, nil)
-	ch := make(chan *transport.Message, 5)
-	agent.sendq = ch
-
-	// check is already in progress, it shouldn't execute
-	agent.inProgressMu.Lock()
-	agent.inProgress[checkKey(request)] = request.Config
-	agent.inProgressMu.Unlock()
-	assert.Error(agent.handleCheck(context.TODO(), payload))
-
-	// check is not in progress, it should execute
-	agent.inProgressMu.Lock()
-	delete(agent.inProgress, checkKey(request))
-	agent.inProgressMu.Unlock()
-	assert.NoError(agent.handleCheck(context.TODO(), payload))
+	type args struct {
+		ctx     context.Context
+		payload []byte
+	}
+	tests := []struct {
+		name       string
+		fields     fields
+		args       args
+		wantErr    bool
+		wantErrMsg string
+	}{
+		{
+			name: "errors when issued timestamp is older than the previous",
+			fields: fields{
+				lastIssued: map[string]int64{
+					"check": time.Now().Unix() + 1000,
+				},
+			},
+			args: args{
+				ctx:     context.Background(),
+				payload: newCheckRequest(t, time.Now().Unix()),
+			},
+			wantErr:    true,
+			wantErrMsg: errOldCheckRequest.Error(),
+		},
+		{
+			name: "errors when issued timestamp is the same as the previous",
+			fields: fields{
+				lastIssued: map[string]int64{
+					"check": 1234,
+				},
+			},
+			args: args{
+				ctx:     context.Background(),
+				payload: newCheckRequest(t, 1234),
+			},
+			wantErr:    true,
+			wantErrMsg: errDupCheckRequest.Error(),
+		},
+		{
+			name: "errors when check execution is already in progress",
+			fields: fields{
+				inProgress: map[string]*corev2.CheckConfig{
+					"check": corev2.FixtureCheckConfig("check"),
+				},
+				lastIssued: map[string]int64{
+					"check": 1234,
+				},
+			},
+			args: args{
+				ctx:     context.Background(),
+				payload: newCheckRequest(t, 1235),
+			},
+			wantErr:    true,
+			wantErrMsg: "check execution still in progress: check",
+		},
+		{
+			name: "executes the first time a request for a check is received",
+			fields: fields{
+				inProgress: make(map[string]*corev2.CheckConfig),
+				lastIssued: make(map[string]int64),
+				sequences:  make(map[string]int64),
+			},
+			args: args{
+				ctx:     context.Background(),
+				payload: newCheckRequest(t, 1235),
+			},
+			wantErr: false,
+		},
+		{
+			name: "executes the second time a request for a check is received",
+			fields: fields{
+				inProgress: make(map[string]*corev2.CheckConfig),
+				lastIssued: map[string]int64{
+					"check": 1234,
+				},
+				sequences: map[string]int64{
+					"check": 1,
+				},
+			},
+			args: args{
+				ctx:     context.Background(),
+				payload: newCheckRequest(t, 1235),
+			},
+			wantErr: false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			agentConfig := &Config{}
+			ex := &mockexecutor.MockExecutor{}
+			execution := command.FixtureExecutionResponse(0, "")
+			ex.Return(execution, nil)
+			agent := &Agent{
+				config:       agentConfig,
+				executor:     ex,
+				inProgress:   tt.fields.inProgress,
+				inProgressMu: &sync.Mutex{},
+				lastIssued:   tt.fields.lastIssued,
+				lastIssuedMu: &sync.Mutex{},
+				marshal:      MarshalJSON,
+				sequences:    tt.fields.sequences,
+				unmarshal:    UnmarshalJSON,
+			}
+			err := agent.handleCheck(tt.args.ctx, tt.args.payload)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("Agent.handleCheck() error = %v, wantErr %v", err, tt.wantErr)
+			}
+			if err != nil && err.Error() != tt.wantErrMsg {
+				t.Errorf("Agent.handleCheck() error msg = %v, wantErrMsg %v", err.Error(), tt.wantErrMsg)
+			}
+		})
+	}
 }
 
 func TestCheckInProgress_GH2704(t *testing.T) {
