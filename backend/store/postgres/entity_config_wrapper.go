@@ -38,7 +38,7 @@ func (e *EntityConfigWrapper) Unwrap() (corev3.Resource, error) {
 	return cfg, e.unwrapIntoEntityConfig(cfg)
 }
 
-// WrapEntityConfig wraps an EntityConfig into an EntityStateWrapper.
+// WrapEntityConfig wraps an EntityConfig into an EntityConfigWrapper.
 func WrapEntityConfig(cfg *corev3.EntityConfig) storev2.Wrapper {
 	meta := cfg.GetMetadata()
 	annotations, _ := json.Marshal(meta.Annotations)

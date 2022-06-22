@@ -54,17 +54,17 @@ const (
 var (
 	entityConfigStoreName = new(corev3.EntityConfig).StoreName()
 	entityStateStoreName  = new(corev3.EntityState).StoreName()
+	namespaceStoreName    = new(corev3.Namespace).StoreName()
 )
-
-type namedWrapperWithParams interface {
-	storev2.Wrapper
-	GetName() string
-	SQLParams() []any
-}
 
 type wrapperWithParams interface {
 	storev2.Wrapper
-	SQLParams() []interface{}
+	SQLParams() []any
+}
+
+type namedWrapperWithParams interface {
+	wrapperWithParams
+	GetName() string
 }
 
 func (s *StoreV2) lookupWrapper(req storev2.ResourceRequest, op crudOp) namedWrapperWithParams {
@@ -74,6 +74,8 @@ func (s *StoreV2) lookupWrapper(req storev2.ResourceRequest, op crudOp) namedWra
 		return &EntityConfigWrapper{}
 	case entityStateStoreName:
 		return &EntityStateWrapper{}
+	case namespaceStoreName:
+		return &NamespaceWrapper{}
 	default:
 		msg := fmt.Sprintf("no wrapper type defined for store: %s", storeName)
 		panic(msg)
@@ -135,6 +137,32 @@ func (s *StoreV2) lookupQuery(req storev2.ResourceRequest, op crudOp) (string, b
 			return existsEntityStateQuery, true
 		case patchQ:
 			return patchEntityStateQuery, true
+		default:
+			return "", false
+		}
+	case namespaceStoreName:
+		switch op {
+		case createOrUpdateQ:
+			return createOrUpdateNamespaceQuery, true
+		case updateIfExistsQ:
+			return updateIfExistsNamespaceQuery, true
+		case createIfNotExistsQ:
+			return createIfNotExistsNamespaceQuery, true
+		case getQ:
+			return getNamespaceQuery, true
+		case getMultipleQ:
+			return getNamespacesQuery, true
+		case deleteQ:
+			return deleteNamespaceQuery, true
+		case listQ, listAllQ:
+			switch ordering {
+			case storev2.SortDescend:
+				return listNamespaceDescQuery, true
+			default:
+				return listNamespaceQuery, true
+			}
+		case existsQ:
+			return existsNamespaceQuery, true
 		default:
 			return "", false
 		}
@@ -226,7 +254,7 @@ func (s *StoreV2) CreateIfNotExists(req storev2.ResourceRequest, wrapper storev2
 		pgError, ok := err.(*pgconn.PgError)
 		if ok {
 			switch pgError.ConstraintName {
-			case "entity_config_unique", "entity_state_unique":
+			case "entity_config_unique", "entity_state_unique", "namespace_unique":
 				return &store.ErrAlreadyExists{Key: fmt.Sprintf("%s/%s", req.Namespace, req.Name)}
 			}
 		}
@@ -245,7 +273,14 @@ func (s *StoreV2) Get(req storev2.ResourceRequest) (storev2.Wrapper, error) {
 	if !ok {
 		return nil, errNoQuery(req.StoreName)
 	}
-	row := s.db.QueryRow(req.Context, query, req.Namespace, req.Name)
+
+	params := []interface{}{}
+	if req.StoreName != namespaceStoreName {
+		params = append(params, req.Namespace)
+	}
+	params = append(params, req.Name)
+
+	row := s.db.QueryRow(req.Context, query, params...)
 	wrapper := s.lookupWrapper(req, op)
 	if err := row.Scan(wrapper.SQLParams()...); err != nil {
 		if err == pgx.ErrNoRows {
@@ -302,7 +337,13 @@ func (s *StoreV2) GetMultiple(ctx context.Context, reqs []storev2.ResourceReques
 			return nil, errNoQuery(storeName)
 		}
 
-		rows, err := tx.Query(ctx, query, namespace, resourceNames)
+		args := []interface{}{}
+		if storeName != namespaceStoreName {
+			args = append(args, namespace)
+		}
+		args = append(args, resourceNames)
+
+		rows, err := tx.Query(ctx, query, args...)
 		if err != nil {
 			return nil, err
 		}
@@ -345,7 +386,12 @@ func (s *StoreV2) Delete(req storev2.ResourceRequest) error {
 	if !ok {
 		return errNoQuery(req.StoreName)
 	}
-	result, err := s.db.Exec(req.Context, query, req.Namespace, req.Name)
+	params := []interface{}{}
+	if req.StoreName != namespaceStoreName {
+		params = append(params, req.Namespace)
+	}
+	params = append(params, req.Name)
+	result, err := s.db.Exec(req.Context, query, params...)
 	if err != nil {
 		return &store.ErrInternal{Message: err.Error()}
 	}
@@ -373,6 +419,10 @@ func (w WrapList) UnwrapInto(dest interface{}) error {
 		return w.unwrapIntoEntityStateList(list)
 	case *[]*corev3.EntityState:
 		return w.unwrapIntoEntityStatePointerList(list)
+	case *[]corev3.Namespace:
+		return w.unwrapIntoNamespaceList(list)
+	case *[]*corev3.Namespace:
+		return w.unwrapIntoNamespacePointerList(list)
 	case *[]corev3.Resource:
 		return w.unwrapIntoResourceList(list)
 	default:
@@ -440,7 +490,37 @@ func (w WrapList) unwrapIntoEntityStatePointerList(list *[]*corev3.EntityState) 
 	return nil
 }
 
-// todo: make this work generically
+func (w WrapList) unwrapIntoNamespaceList(list *[]corev3.Namespace) error {
+	if len(*list) != len(w) {
+		*list = make([]corev3.Namespace, len(w))
+	}
+	for i, namespace := range w {
+		ptr := &((*list)[i])
+		if err := namespace.UnwrapInto(ptr); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (w WrapList) unwrapIntoNamespacePointerList(list *[]*corev3.Namespace) error {
+	if len(*list) != len(w) {
+		*list = make([]*corev3.Namespace, len(w))
+	}
+	for i, namespace := range w {
+		ptr := (*list)[i]
+		if ptr == nil {
+			ptr = new(corev3.Namespace)
+			(*list)[i] = ptr
+		}
+		if err := namespace.UnwrapInto(ptr); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// TODO: make this work generically
 func (w WrapList) unwrapIntoResourceList(list *[]corev3.Resource) error {
 	if len(*list) != len(w) {
 		*list = make([]corev3.Resource, len(w))
@@ -475,12 +555,20 @@ func (s *StoreV2) List(req storev2.ResourceRequest, pred *store.SelectionPredica
 	if err != nil {
 		return nil, err
 	}
-	var namespace sql.NullString
-	if req.Namespace != "" {
-		namespace.String = req.Namespace
-		namespace.Valid = true
+
+	params := []interface{}{}
+	if req.StoreName != namespaceStoreName {
+		var namespace sql.NullString
+		if req.Namespace != "" {
+			namespace.String = req.Namespace
+			namespace.Valid = true
+		}
+		params = append(params, namespace)
 	}
-	rows, rerr := s.db.Query(req.Context, query, namespace, limit, offset)
+	params = append(params, limit)
+	params = append(params, offset)
+
+	rows, rerr := s.db.Query(req.Context, query, params...)
 	if rerr != nil {
 		return nil, &store.ErrInternal{Message: rerr.Error()}
 	}
@@ -514,7 +602,12 @@ func (s *StoreV2) Exists(req storev2.ResourceRequest) (bool, error) {
 	if !ok {
 		return false, errNoQuery(req.StoreName)
 	}
-	row := s.db.QueryRow(req.Context, query, req.Namespace, req.Name)
+	params := []interface{}{}
+	if req.StoreName != namespaceStoreName {
+		params = append(params, req.Namespace)
+	}
+	params = append(params, req.Name)
+	row := s.db.QueryRow(req.Context, query, params...)
 	var found bool
 	err := row.Scan(&found)
 	if err == nil {
@@ -541,6 +634,12 @@ func (s *StoreV2) Patch(req storev2.ResourceRequest, w storev2.Wrapper, patcher 
 		return errNoQuery(req.StoreName)
 	}
 
+	params := []interface{}{}
+	if req.StoreName != namespaceStoreName {
+		params = append(params, req.Namespace)
+	}
+	params = append(params, req.Name)
+
 	originalWrapper := s.lookupWrapper(req, op)
 
 	tx, txerr := s.db.Begin(req.Context)
@@ -557,7 +656,7 @@ func (s *StoreV2) Patch(req storev2.ResourceRequest, w storev2.Wrapper, patcher 
 		}
 	}()
 
-	row := tx.QueryRow(req.Context, query, req.Namespace, req.Name)
+	row := tx.QueryRow(req.Context, query, params...)
 	if err := row.Scan(originalWrapper.SQLParams()...); err != nil {
 		if err == pgx.ErrNoRows {
 			return &store.ErrNotFound{Key: fmt.Sprintf("%s.%s", req.Namespace, req.Name)}
@@ -743,6 +842,8 @@ func wrapWithPostgres(resource corev3.Resource, opts ...wrap.Option) (storev2.Wr
 		return WrapEntityConfig(value), nil
 	case *corev3.EntityState:
 		return WrapEntityState(value), nil
+	case *corev3.Namespace:
+		return WrapNamespace(value), nil
 	default:
 		return storev2.WrapResource(resource, opts...)
 	}

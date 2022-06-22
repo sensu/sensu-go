@@ -37,7 +37,7 @@ CREATE OR REPLACE FUNCTION unnest_2d_1d(anyarray)
 $func$
 SELECT array_agg($1[d1][d2])
 FROM   generate_series(array_lower($1,1), array_upper($1,1)) d1
-     , generate_series(array_lower($1,2), array_upper($1,2)) d2
+	 , generate_series(array_lower($1,2), array_upper($1,2)) d2
 GROUP  BY d1
 ORDER  BY d1
 $func$
@@ -99,13 +99,16 @@ const createOrUpdateEntityStateQuery = `
 -- $20: Network MAC addresses, an array of strings.
 -- $21: Network names, an array of json-encoded arrays.
 --
-WITH config AS (
+WITH namespace AS (
+	SELECT id FROM namespaces
+	WHERE namespaces.name = $1
+), config AS (
 	SELECT id FROM entity_configs
-	WHERE entity_configs.namespace = $1 AND entity_configs.name = $2
+	WHERE entity_configs.namespace_id = (SELECT id FROM namespace) AND entity_configs.name = $2
 ), state AS (
-	INSERT INTO entity_states ( entity_config_id, namespace, name, expires_at, last_seen, selectors, annotations )
-	VALUES ( (SELECT id FROM config), $1, $2, now(), $3, $4, $5 )
-	ON CONFLICT ( namespace, name )
+	INSERT INTO entity_states ( entity_config_id, namespace_id, name, expires_at, last_seen, selectors, annotations )
+	VALUES ( (SELECT id FROM config), (SELECT id FROM namespace), $2, now(), $3, $4, $5 )
+	ON CONFLICT ( namespace_id, name )
 	DO UPDATE
 	SET last_seen = $3, selectors = $4, annotations = $5
 	RETURNING id AS id
@@ -191,13 +194,16 @@ const createIfNotExistsEntityStateQuery = `
 -- errors when an entity with the same namespace and name already
 -- exists.
 --
-WITH config AS (
+WITH namespace AS (
+	SELECT id FROM namespaces
+	WHERE name = $1
+), config AS (
 	SELECT id
 	FROM entity_configs
-	WHERE namespace = $1 AND name = $2
+	WHERE namespace_id = (SELECT id FROM namespace) AND name = $2
 ), state AS (
-	INSERT INTO entity_states ( entity_config_id, namespace, name, expires_at, last_seen, selectors, annotations )
-	VALUES ( SELECT config.id, $1, $2, now(), $3, $4, $5 )
+	INSERT INTO entity_states ( entity_config_id, namespace_id, name, expires_at, last_seen, selectors, annotations )
+	VALUES ( (SELECT id FROM config), (SELECT id FROM namespace), $2, now(), $3, $4, $5 )
 	RETURNING id
 ), system AS (
 	INSERT INTO entities_systems
@@ -235,9 +241,12 @@ AS nics ( name, mac, addresses )
 const updateIfExistsEntityStateQuery = `
 -- This query updates the entity state, but only if it exists.
 --
-WITH state AS (
+WITH namespace AS (
+	SELECT id FROM namespaces
+	WHERE namespaces.name = $1
+), state AS (
 	SELECT id FROM entity_states
-	WHERE entity_states.namespace = $1 AND entity_states.name = $2
+	WHERE entity_states.namespace_id = (SELECT id FROM namespace) AND entity_states.name = $2
 ), upd AS (
 	UPDATE entity_states
 	SET last_seen = $3, selectors = $4, annotations = $5
@@ -325,10 +334,13 @@ SELECT * FROM state;
 const getEntityStateQuery = `
 -- This query fetches a single entity state, or nothing.
 --
-WITH state AS (
+WITH namespace AS (
+	SELECT id, name FROM namespaces
+	WHERE namespaces.name = $1
+), state AS (
 	SELECT entity_states.id AS id
 	FROM entity_states
-	WHERE entity_states.namespace = $1 AND entity_states.name = $2
+	WHERE entity_states.namespace_id = (SELECT id FROM namespace) AND entity_states.name = $2
 ), network AS (
 	SELECT
 		array_agg(entities_networks.name) AS names,
@@ -338,8 +350,8 @@ WITH state AS (
 	WHERE entities_networks.entity_id = state.id
 )
 SELECT 
-    entity_states.namespace,
-    entity_states.name,
+	namespace.name,
+	entity_states.name,
 	entity_states.last_seen,
 	entity_states.selectors,
 	entity_states.annotations,
@@ -359,17 +371,20 @@ SELECT
 	network.names,
 	network.macs,
 	network.addresses::text[]
-FROM entity_states LEFT OUTER JOIN entities_systems ON entity_states.id = entities_systems.entity_id, network, state
+FROM entity_states LEFT OUTER JOIN entities_systems ON entity_states.id = entities_systems.entity_id, namespace, network, state
 WHERE entity_states.id = state.id
 `
 
 const getEntityStatesQuery = `
 -- This query fetches multiple entity states, including network information.
 --
-WITH state AS (
+WITH namespace AS (
+	SELECT id, name FROM namespaces
+	WHERE namespaces.name = $1
+), state AS (
 	SELECT entity_states.id AS id
 	FROM entity_states
-	WHERE entity_states.namespace = $1 AND entity_states.name IN (SELECT unnest($2::text[]))
+	WHERE entity_states.namespace_id = (SELECT id FROM namespace) AND entity_states.name IN (SELECT unnest($2::text[]))
 ), network AS (
 	SELECT
 		entities_networks.entity_id AS entity_id,
@@ -381,8 +396,8 @@ WITH state AS (
 	GROUP BY entities_networks.entity_id
 )
 SELECT
-    entity_states.namespace,
-    entity_states.name,
+	namespace.name,
+	entity_states.name,
 	entity_states.last_seen,
 	entity_states.selectors,
 	entity_states.annotations,
@@ -402,7 +417,8 @@ SELECT
 	network.names,
 	network.macs,
 	network.addresses::text[]
-FROM entity_states LEFT OUTER JOIN entities_systems ON entity_states.id = entities_systems.entity_id, network, state
+FROM entity_states
+LEFT OUTER JOIN entities_systems ON entity_states.id = entities_systems.entity_id, namespace, network, state
 WHERE entity_states.id = state.id AND entity_states.id = network.entity_id
 `
 
@@ -413,25 +429,32 @@ const deleteEntityStateQuery = `
 -- Parameters:
 -- $1 Namespace
 -- $2 Entity name
-DELETE FROM entity_states WHERE entity_states.namespace = $1 AND entity_states.name = $2;
+WITH namespace AS (
+	SELECT id FROM namespaces
+	WHERE namespaces.name = $1
+)
+DELETE FROM entity_states WHERE entity_states.namespace_id = (SELECT id FROM namespace) AND entity_states.name = $2;
 `
 
 const listEntityStateQuery = `
 -- This query lists entity states from a given namespace.
 --
-with network AS (
+WITH namespace AS (
+	SELECT id, name FROM namespaces
+	WHERE namespaces.name = $1 OR $1 IS NULL
+), network AS (
 	SELECT
 		entity_states.id as entity_id,
 		array_agg(entities_networks.name) AS names,
 		array_agg(entities_networks.mac) AS macs,
 		array_agg(entities_networks.addresses) AS addresses
 	FROM entities_networks, entity_states
-	WHERE entity_states.namespace = $1 OR $1 IS NULL
-	GROUP BY entities.id
+	WHERE entity_states.namespace_id = (SELECT id FROM namespace) OR $1 IS NULL
+	GROUP BY entity_states.id
 )
 SELECT 
-    entity_states.namespace,
-    entity_states.name,
+	namespace.name,
+	entity_states.name,
 	entity_states.last_seen,
 	entity_states.selectors,
 	entity_states.annotations,
@@ -451,9 +474,9 @@ SELECT
 	network.names,
 	network.macs,
 	network.addresses::text[]
-FROM entity_states LEFT OUTER JOIN entities_systems ON entity_states.id = entities_systems.entity_id, network
+FROM entity_states LEFT OUTER JOIN entities_systems ON entity_states.id = entities_systems.entity_id, network, namespace
 WHERE network.entity_id = entity_states.id
-ORDER BY ( entity_states.namespace, entity_states.name ) ASC
+ORDER BY ( namespace.name, entity_states.name ) ASC
 LIMIT $2
 OFFSET $3
 `
@@ -461,19 +484,22 @@ OFFSET $3
 const listEntityStateDescQuery = `
 -- This query lists entities from a given namespace.
 --
-with network AS (
+WITH namespace AS (
+	SELECT id, name FROM namespaces
+	WHERE namespaces.name = $1 OR $1 IS NULL
+), network AS (
 	SELECT
 		entity_states.id as entity_id,
 		array_agg(entities_networks.name) AS names,
 		array_agg(entities_networks.mac) AS macs,
 		array_agg(entities_networks.addresses) AS addresses
 	FROM entities_networks, entity_states
-	WHERE entity_states.namespace = $1 OR $1 IS NULL
+	WHERE entity_states.namespace_id = (SELECT id FROM namespace) OR $1 IS NULL
 	GROUP BY entity_states.id
 )
 SELECT 
-    entity_states.namespace,
-    entity_states.name,
+	namespace.name,
+	entity_states.name,
 	entity_states.last_seen,
 	entity_states.selectors,
 	entity_states.annotations,
@@ -493,9 +519,9 @@ SELECT
 	network.names,
 	network.macs,
 	network.addresses::text[]
-FROM entity_states LEFT OUTER JOIN entities_systems ON entity_states.id = entities_systems.entity_id, network
+FROM entity_states LEFT OUTER JOIN entities_systems ON entity_states.id = entities_systems.entity_id, network, namespace
 WHERE network.entity_id = entity_states.id
-ORDER BY ( entity_states.namespace, entity_states.name ) DESC
+ORDER BY ( namespace.name, entity_states.name ) DESC
 LIMIT $2
 OFFSET $3
 `
@@ -503,15 +529,23 @@ OFFSET $3
 const existsEntityStateQuery = `
 -- This query discovers if an entity exists, without retrieving it.
 --
+WITH namespace AS (
+	SELECT id FROM namespaces
+	WHERE namespaces.name = $1
+)
 SELECT true FROM entity_states
-WHERE entity_states.namespace = $1 AND entity_states.name = $2;
+WHERE entity_states.namespace_id = (SELECT id FROM namespace) AND entity_states.name = $2;
 `
 
 const patchEntityStateQuery = `
 -- This query updates only the last_seen and expires_at values of an
 -- entity.
 --
+WITH namespace AS (
+	SELECT id FROM namespaces
+	WHERE namespaces.name = $1
+)
 UPDATE entity_states
 SET expires_at = $3 + now(), last_seen = $4
-WHERE entity_states.namespace = $1 AND entity_states.name = $2;
+WHERE entity_states.namespace_id = (SELECT id FROM namespace) AND entity_states.name = $2;
 `

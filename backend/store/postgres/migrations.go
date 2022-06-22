@@ -88,6 +88,16 @@ var migrations = []migration.Migrator{
 		_, err := tx.Exec(context.Background(), migrateAddEntityConfigIdToEntityState)
 		return err
 	},
+	// Migration 13
+	func(tx migration.LimitedTx) error {
+		_, err := tx.Exec(context.Background(), namespaceSchema)
+		return err
+	},
+	// Migration 14
+	func(tx migration.LimitedTx) error {
+		_, err := tx.Exec(context.Background(), addNamespaceForeignKeys)
+		return err
+	},
 }
 
 type eventRecord struct {

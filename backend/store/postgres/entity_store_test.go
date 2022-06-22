@@ -76,12 +76,14 @@ func testWithStore(t testing.TB, fn func(store.Store)) {
 		t.Fatal(err)
 	}
 
+	namespaceStore := NewNamespaceStore(db, client)
 	entityStore := NewEntityStore(db, client)
 
 	pgStore := Store{
-		EventStore:  eventStore,
-		EntityStore: entityStore,
-		Store:       etcdStore,
+		EventStore:     eventStore,
+		EntityStore:    entityStore,
+		NamespaceStore: namespaceStore,
+		Store:          etcdStore,
 	}
 
 	fn(pgStore)
@@ -105,6 +107,10 @@ func TestEntityStorage(t *testing.T) {
 			t.Errorf("bad pred.Continue: got %q, want %q", got, want)
 		}
 
+		namespace := corev2.FixtureNamespace(entity.Namespace)
+		if err := s.UpdateNamespace(ctx, namespace); err != nil {
+			t.Fatal(err)
+		}
 		if err := s.UpdateEntity(ctx, entity); err != nil {
 			t.Fatal(err)
 		}
@@ -201,9 +207,9 @@ func TestEntityIterationNoPanicMismatched(t *testing.T) {
 		*corev3.FixtureEntityConfig("c"),
 	}
 	states := map[uniqueResource]*corev3.EntityState{
-		uniqueResource{Name: "a", Namespace: "default"}: corev3.FixtureEntityState("a"),
-		uniqueResource{Name: "b", Namespace: "default"}: corev3.FixtureEntityState("b"),
-		uniqueResource{Name: "c", Namespace: "default"}: corev3.FixtureEntityState("c"),
+		{Name: "a", Namespace: "default"}: corev3.FixtureEntityState("a"),
+		{Name: "b", Namespace: "default"}: corev3.FixtureEntityState("b"),
+		{Name: "c", Namespace: "default"}: corev3.FixtureEntityState("c"),
 	}
 	if _, err := entitiesFromConfigsAndStates(configs, states); err != nil {
 		t.Fatal(err)
@@ -229,6 +235,10 @@ func TestEntityCreateOrUpdateMultipleAddresses(t *testing.T) {
 			},
 		}
 		entity.System.Network.Interfaces[0].Addresses = append(entity.System.Network.Interfaces[0].Addresses, "1.1.1.1")
+		namespace := corev2.FixtureNamespace(entity.Namespace)
+		if err := s.UpdateNamespace(ctx, namespace); err != nil {
+			t.Fatal(err)
+		}
 		if err := s.UpdateEntity(ctx, entity); err != nil {
 			t.Fatal(err)
 		}

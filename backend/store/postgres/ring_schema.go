@@ -11,6 +11,9 @@ CREATE TABLE IF NOT EXISTS rings (
 );
 
 -- entities are sensu entities that exist within a namespace.
+-- table renamed to entity_states by migration 9
+-- namespace column replaced by namespace_id in migration 14
+--
 CREATE TABLE IF NOT EXISTS entities (
 	id bigserial PRIMARY KEY,
 	namespace text NOT NULL,
@@ -164,9 +167,12 @@ const getRingEntitiesQuery = `
 -- Delete expired backend entities. This is only necessary because backend
 -- entities are ephemeral, named via random identifier, and not accessible
 -- to users. This should change in the future.
-WITH deletes AS (
+WITH namespace AS (
+	SELECT id FROM namespaces
+	WHERE namespaces.name = 'bsmd' OR namespaces.name = 'global'
+), deletes AS (
 	DELETE FROM entity_states
-	WHERE (entity_states.namespace = 'bsmd' OR entity_states.namespace = 'global') AND
+	WHERE entity_states.namespace_id = (SELECT id FROM namespace) AND
 	entity_states.expires_at < now()
 ),
 current_pointer AS (
@@ -230,9 +236,13 @@ const updateEntityStateExpiresAtQuery = `
 -- $2: The entity name
 -- $3: The keepalive timeout of the entity
 --
+WITH namespace AS (
+	SELECT id FROM namespaces
+	WHERE namespaces.name = $1
+)
 UPDATE entity_states
 SET expires_at = now() + $3
-WHERE namespace = $1 AND name = $2
+WHERE namespace_id = (SELECT id FROM namespace) AND name = $2
 `
 
 const insertRingEntityQuery = `
@@ -243,11 +253,15 @@ const insertRingEntityQuery = `
 -- $2: The entity name
 -- $3: The ring name
 --
+WITH namespace AS (
+	SELECT id FROM namespaces
+	WHERE namespaces.name = $1
+)
 INSERT INTO ring_entities ( ring_id, entity_id )
 SELECT rings.id, entity_states.id
 FROM rings, entity_states
 WHERE
-	entity_states.namespace = $1 AND
+	entity_states.namespace_id = (SELECT id FROM namespace) AND
 	entity_states.name = $2 AND
 	rings.name = $3
 LIMIT 1
@@ -311,12 +325,16 @@ const deleteRingEntityQuery = `
 -- $2: Ring name
 -- $3: Entity name
 --
+WITH namespace AS (
+	SELECT id FROM namespaces
+	WHERE namespaces.name = $1
+)
 DELETE FROM ring_entities
 USING entity_states, rings
 WHERE
 	entity_states.id = ring_entities.entity_id AND
 	rings.id = ring_entities.ring_id AND
-	entity_states.namespace = $1 AND
+	entity_states.namespace_id = (SELECT id FROM namespace) AND
 	entity_states.name = $3 AND
 	rings.name = $2;
 `

@@ -20,6 +20,7 @@ func init() {
 func TestInsertEntityQuery(t *testing.T) {
 	t.Parallel()
 	withPostgres(t, func(ctx context.Context, db *pgxpool.Pool, dsn string) {
+		namespaceStore := NewNamespaceStore(db, nil)
 		entityStore := NewEntityStore(db, nil)
 		entityNames := []string{
 			"mulder",
@@ -32,6 +33,10 @@ func TestInsertEntityQuery(t *testing.T) {
 		}
 		for _, entityName := range entityNames {
 			entity := corev2.FixtureEntity(entityName)
+			namespace := corev2.FixtureNamespace(entity.Namespace)
+			if err := namespaceStore.UpdateNamespace(ctx, namespace); err != nil {
+				t.Fatal(err)
+			}
 			if err := entityStore.UpdateEntity(ctx, entity); err != nil {
 				t.Fatal(err)
 			}
@@ -46,6 +51,7 @@ func TestInsertEntityQuery(t *testing.T) {
 func TestInsertRingQuery(t *testing.T) {
 	t.Parallel()
 	withPostgres(t, func(ctx context.Context, db *pgxpool.Pool, dsn string) {
+		namespaceStore := NewNamespaceStore(db, nil)
 		entityStore := NewEntityStore(db, nil)
 		rings := []string{
 			"diamond",
@@ -54,6 +60,10 @@ func TestInsertRingQuery(t *testing.T) {
 		}
 		for _, ring := range rings {
 			entity := corev2.FixtureEntity(ring)
+			namespace := corev2.FixtureNamespace(entity.Namespace)
+			if err := namespaceStore.UpdateNamespace(ctx, namespace); err != nil {
+				t.Fatal(err)
+			}
 			if err := entityStore.UpdateEntity(ctx, entity); err != nil {
 				t.Fatal(err)
 			}
@@ -73,6 +83,7 @@ func TestInsertRingQuery(t *testing.T) {
 func TestInsertRingEntitiesQuery(t *testing.T) {
 	t.Parallel()
 	withPostgres(t, func(ctx context.Context, db *pgxpool.Pool, dsn string) {
+		namespaceStore := NewNamespaceStore(db, nil)
 		entityStore := NewEntityStore(db, nil)
 		entityNames := []string{
 			"mulder",
@@ -85,6 +96,10 @@ func TestInsertRingEntitiesQuery(t *testing.T) {
 		}
 		for _, entityName := range entityNames {
 			entity := corev2.FixtureEntity(entityName)
+			namespace := corev2.FixtureNamespace(entity.Namespace)
+			if err := namespaceStore.UpdateNamespace(ctx, namespace); err != nil {
+				t.Fatal(err)
+			}
 			if err := entityStore.UpdateEntity(ctx, entity); err != nil {
 				t.Fatal(err)
 			}
@@ -137,6 +152,7 @@ func TestInsertRingEntitiesQuery(t *testing.T) {
 func TestInsertRingSubscriberQuery(t *testing.T) {
 	t.Parallel()
 	withPostgres(t, func(ctx context.Context, db *pgxpool.Pool, dsn string) {
+		namespaceStore := NewNamespaceStore(db, nil)
 		entityStore := NewEntityStore(db, nil)
 		entityNames := []string{
 			"mulder",
@@ -154,6 +170,10 @@ func TestInsertRingSubscriberQuery(t *testing.T) {
 		}
 		for _, entityName := range entityNames {
 			entity := corev2.FixtureEntity(entityName)
+			namespace := corev2.FixtureNamespace(entity.Namespace)
+			if err := namespaceStore.UpdateNamespace(ctx, namespace); err != nil {
+				t.Fatal(err)
+			}
 			if err := entityStore.UpdateEntity(ctx, entity); err != nil {
 				t.Fatal(err)
 			}
@@ -191,6 +211,7 @@ func TestInsertRingSubscriberQuery(t *testing.T) {
 func TestUpdateRingSubscriberQuery(t *testing.T) {
 	t.Parallel()
 	withPostgres(t, func(ctx context.Context, db *pgxpool.Pool, dsn string) {
+		namespaceStore := NewNamespaceStore(db, nil)
 		entityStore := NewEntityStore(db, nil)
 		entityNames := []string{
 			"mulder",
@@ -208,6 +229,10 @@ func TestUpdateRingSubscriberQuery(t *testing.T) {
 		}
 		for _, entityName := range entityNames {
 			entity := corev2.FixtureEntity(entityName)
+			namespace := corev2.FixtureNamespace(entity.Namespace)
+			if err := namespaceStore.UpdateNamespace(ctx, namespace); err != nil {
+				t.Fatal(err)
+			}
 			if err := entityStore.UpdateEntity(ctx, entity); err != nil {
 				t.Fatal(err)
 			}
@@ -316,6 +341,7 @@ func TestUpdateRingSubscriberQuery(t *testing.T) {
 func TestUpdateRingSubscriberQueryWithSubsequentEntityInsert(t *testing.T) {
 	t.Parallel()
 	withPostgres(t, func(ctx context.Context, db *pgxpool.Pool, dsn string) {
+		namespaceStore := NewNamespaceStore(db, nil)
 		entityStore := NewEntityStore(db, nil)
 		entityNames := []string{
 			"mulder",
@@ -333,6 +359,10 @@ func TestUpdateRingSubscriberQueryWithSubsequentEntityInsert(t *testing.T) {
 		}
 		for _, entityName := range entityNames {
 			entity := corev2.FixtureEntity(entityName)
+			namespace := corev2.FixtureNamespace(entity.Namespace)
+			if err := namespaceStore.UpdateNamespace(ctx, namespace); err != nil {
+				t.Fatal(err)
+			}
 			if err := entityStore.UpdateEntity(ctx, entity); err != nil {
 				t.Fatal(err)
 			}
@@ -392,6 +422,7 @@ func TestUpdateRingSubscriberQueryWithSubsequentEntityInsert(t *testing.T) {
 func TestGetRingEntitiesQuery(t *testing.T) {
 	t.Parallel()
 	withPostgres(t, func(ctx context.Context, db *pgxpool.Pool, dsn string) {
+		namespaceStore := NewNamespaceStore(db, nil)
 		entityStore := NewEntityStore(db, nil)
 		entityNames := []string{
 			"mulder",
@@ -409,6 +440,10 @@ func TestGetRingEntitiesQuery(t *testing.T) {
 		}
 		for _, entityName := range entityNames {
 			entity := corev2.FixtureEntity(entityName)
+			namespace := corev2.FixtureNamespace(entity.Namespace)
+			if err := namespaceStore.UpdateNamespace(ctx, namespace); err != nil {
+				t.Fatal(err)
+			}
 			if err := entityStore.UpdateEntity(ctx, entity); err != nil {
 				t.Fatal(err)
 			}
@@ -515,6 +550,7 @@ func TestGetRingEntitiesQuery(t *testing.T) {
 func TestGetRingLengthQuery(t *testing.T) {
 	t.Parallel()
 	withPostgres(t, func(ctx context.Context, db *pgxpool.Pool, dsn string) {
+		namespaceStore := NewNamespaceStore(db, nil)
 		entityStore := NewEntityStore(db, nil)
 		entityNames := []string{
 			"mulder",
@@ -532,6 +568,10 @@ func TestGetRingLengthQuery(t *testing.T) {
 		}
 		for _, entityName := range entityNames {
 			entity := corev2.FixtureEntity(entityName)
+			namespace := corev2.FixtureNamespace(entity.Namespace)
+			if err := namespaceStore.UpdateNamespace(ctx, namespace); err != nil {
+				t.Fatal(err)
+			}
 			if err := entityStore.UpdateEntity(ctx, entity); err != nil {
 				t.Fatal(err)
 			}
@@ -572,6 +612,7 @@ func TestGetRingLengthQuery(t *testing.T) {
 func TestDeleteRingEntityQuery(t *testing.T) {
 	t.Parallel()
 	withPostgres(t, func(ctx context.Context, db *pgxpool.Pool, dsn string) {
+		namespaceStore := NewNamespaceStore(db, nil)
 		entityStore := NewEntityStore(db, nil)
 		entityNames := []string{
 			"mulder",
@@ -589,6 +630,10 @@ func TestDeleteRingEntityQuery(t *testing.T) {
 		}
 		for _, entityName := range entityNames {
 			entity := corev2.FixtureEntity(entityName)
+			namespace := corev2.FixtureNamespace(entity.Namespace)
+			if err := namespaceStore.UpdateNamespace(ctx, namespace); err != nil {
+				t.Fatal(err)
+			}
 			if err := entityStore.UpdateEntity(ctx, entity); err != nil {
 				t.Fatal(err)
 			}

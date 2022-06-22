@@ -39,6 +39,7 @@ func TestAdd(t *testing.T) {
 		}
 		defer func() { _ = ring.Close() }()
 
+		namespaceStore := NewNamespaceStore(db, nil)
 		entityStore := NewEntityStore(db, nil)
 
 		ctx, cancel := context.WithCancel(context.Background())
@@ -46,6 +47,10 @@ func TestAdd(t *testing.T) {
 
 		entityName := "foo"
 		entity := corev2.FixtureEntity(entityName)
+		namespace := corev2.FixtureNamespace(entity.Namespace)
+		if err := namespaceStore.UpdateNamespace(ctx, namespace); err != nil {
+			t.Fatal(err)
+		}
 		if err := entityStore.UpdateEntity(ctx, entity); err != nil {
 			t.Fatal(err)
 		}
@@ -76,6 +81,7 @@ func TestRemove(t *testing.T) {
 		}
 		defer func() { _ = ring.Close() }()
 
+		namespaceStore := NewNamespaceStore(db, nil)
 		entityStore := NewEntityStore(db, nil)
 
 		ctx, cancel := context.WithCancel(context.Background())
@@ -83,6 +89,10 @@ func TestRemove(t *testing.T) {
 
 		entityName := "foo"
 		entity := corev2.FixtureEntity(entityName)
+		namespace := corev2.FixtureNamespace(entity.Namespace)
+		if err := namespaceStore.UpdateNamespace(ctx, namespace); err != nil {
+			t.Fatal(err)
+		}
 		if err := entityStore.UpdateEntity(ctx, entity); err != nil {
 			t.Fatal(err)
 		}
@@ -113,6 +123,7 @@ func TestAddRemoveIsEmpty(t *testing.T) {
 		}
 		defer func() { _ = ring.Close() }()
 
+		namespaceStore := NewNamespaceStore(db, nil)
 		entityStore := NewEntityStore(db, nil)
 
 		ctx, cancel := context.WithCancel(context.Background())
@@ -120,6 +131,10 @@ func TestAddRemoveIsEmpty(t *testing.T) {
 
 		entityName := "foo"
 		entity := corev2.FixtureEntity(entityName)
+		namespace := corev2.FixtureNamespace(entity.Namespace)
+		if err := namespaceStore.UpdateNamespace(ctx, namespace); err != nil {
+			t.Fatal(err)
+		}
 		if err := entityStore.UpdateEntity(ctx, entity); err != nil {
 			t.Fatal(err)
 		}
@@ -156,6 +171,7 @@ func TestWatchTrigger(t *testing.T) {
 		}
 		defer func() { _ = ring.Close() }()
 
+		namespaceStore := NewNamespaceStore(db, nil)
 		entityStore := NewEntityStore(db, nil)
 
 		ctx, cancel := context.WithCancel(context.Background())
@@ -170,6 +186,10 @@ func TestWatchTrigger(t *testing.T) {
 
 		entityName := "foo"
 		entity := corev2.FixtureEntity(entityName)
+		namespace := corev2.FixtureNamespace(entity.Namespace)
+		if err := namespaceStore.UpdateNamespace(ctx, namespace); err != nil {
+			t.Fatal(err)
+		}
 		if err := entityStore.UpdateEntity(ctx, entity); err != nil {
 			t.Fatal(err)
 		}
@@ -208,6 +228,7 @@ func TestRingOrdering(t *testing.T) {
 		}
 		defer func() { _ = ring.Close() }()
 
+		namespaceStore := NewNamespaceStore(db, nil)
 		entityStore := NewEntityStore(db, nil)
 
 		ctx, cancel := context.WithCancel(context.Background())
@@ -225,6 +246,10 @@ func TestRingOrdering(t *testing.T) {
 
 		for _, item := range items {
 			entity := corev2.FixtureEntity(item)
+			namespace := corev2.FixtureNamespace(entity.Namespace)
+			if err := namespaceStore.UpdateNamespace(ctx, namespace); err != nil {
+				t.Fatal(err)
+			}
 			if err := entityStore.UpdateEntity(ctx, entity); err != nil {
 				t.Fatal(err)
 			}
@@ -273,6 +298,7 @@ func TestConcurrentRingOrdering(t *testing.T) {
 		}
 		defer func() { _ = ring.Close() }()
 
+		namespaceStore := NewNamespaceStore(db, nil)
 		entityStore := NewEntityStore(db, nil)
 
 		ctx, cancel := context.WithCancel(context.Background())
@@ -284,6 +310,10 @@ func TestConcurrentRingOrdering(t *testing.T) {
 
 		for _, item := range items {
 			entity := corev2.FixtureEntity(item)
+			namespace := corev2.FixtureNamespace(entity.Namespace)
+			if err := namespaceStore.UpdateNamespace(ctx, namespace); err != nil {
+				t.Fatal(err)
+			}
 			if err := entityStore.UpdateEntity(ctx, entity); err != nil {
 				t.Fatal(err)
 			}
@@ -375,6 +405,7 @@ func eventTest(t *testing.T, want []ringv2.Event) {
 		}
 		t.Cleanup(func() { _ = ring.Close() })
 
+		namespaceStore := NewNamespaceStore(db, nil)
 		entityStore := NewEntityStore(db, nil)
 
 		ctx, cancel := context.WithCancel(context.Background())
@@ -393,6 +424,10 @@ func eventTest(t *testing.T, want []ringv2.Event) {
 			switch event.Type {
 			case ringv2.EventAdd:
 				entity := corev2.FixtureEntity(event.Values[0])
+				namespace := corev2.FixtureNamespace(entity.Namespace)
+				if err := namespaceStore.UpdateNamespace(ctx, namespace); err != nil {
+					t.Fatal(err)
+				}
 				if err := entityStore.UpdateEntity(ctx, entity); err != nil {
 					t.Fatal(err)
 				}
@@ -461,6 +496,7 @@ func TestWatchAfterAdd(t *testing.T) {
 		}
 		defer func() { _ = ring.Close() }()
 
+		namespaceStore := NewNamespaceStore(db, nil)
 		entityStore := NewEntityStore(db, nil)
 
 		ctx, cancel := context.WithCancel(context.Background())
@@ -468,6 +504,10 @@ func TestWatchAfterAdd(t *testing.T) {
 
 		entityName := "fowley"
 		entity := corev2.FixtureEntity(entityName)
+		namespace := corev2.FixtureNamespace(entity.Namespace)
+		if err := namespaceStore.UpdateNamespace(ctx, namespace); err != nil {
+			t.Fatal(err)
+		}
 		if err := entityStore.UpdateEntity(ctx, entity); err != nil {
 			t.Fatal(err)
 		}
@@ -508,6 +548,7 @@ func TestMultipleItems(t *testing.T) {
 		}
 		defer func() { _ = ring.Close() }()
 
+		namespaceStore := NewNamespaceStore(db, nil)
 		entityStore := NewEntityStore(db, nil)
 
 		ctx, cancel := context.WithCancel(context.Background())
@@ -523,6 +564,10 @@ func TestMultipleItems(t *testing.T) {
 
 		for _, item := range items {
 			entity := corev2.FixtureEntity(item)
+			namespace := corev2.FixtureNamespace(entity.Namespace)
+			if err := namespaceStore.UpdateNamespace(ctx, namespace); err != nil {
+				t.Fatal(err)
+			}
 			if err := entityStore.UpdateEntity(ctx, entity); err != nil {
 				t.Fatal(err)
 			}
@@ -570,6 +615,7 @@ func TestRequestGreaterThanLenItems(t *testing.T) {
 		}
 		defer func() { _ = ring.Close() }()
 
+		namespaceStore := NewNamespaceStore(db, nil)
 		entityStore := NewEntityStore(db, nil)
 
 		ctx, cancel := context.WithCancel(context.Background())
@@ -585,6 +631,10 @@ func TestRequestGreaterThanLenItems(t *testing.T) {
 
 		for _, item := range items {
 			entity := corev2.FixtureEntity(item)
+			namespace := corev2.FixtureNamespace(entity.Namespace)
+			if err := namespaceStore.UpdateNamespace(ctx, namespace); err != nil {
+				t.Fatal(err)
+			}
 			if err := entityStore.UpdateEntity(ctx, entity); err != nil {
 				t.Fatal(err)
 			}
@@ -632,6 +682,7 @@ func TestChannelNameTooLong(t *testing.T) {
 		}
 		defer func() { _ = ring.Close() }()
 
+		namespaceStore := NewNamespaceStore(db, nil)
 		entityStore := NewEntityStore(db, nil)
 
 		ctx, cancel := context.WithCancel(context.Background())
@@ -647,6 +698,10 @@ func TestChannelNameTooLong(t *testing.T) {
 
 		for _, item := range items {
 			entity := corev2.FixtureEntity(item)
+			namespace := corev2.FixtureNamespace(entity.Namespace)
+			if err := namespaceStore.UpdateNamespace(ctx, namespace); err != nil {
+				t.Fatal(err)
+			}
 			if err := entityStore.UpdateEntity(ctx, entity); err != nil {
 				t.Fatal(err)
 			}
