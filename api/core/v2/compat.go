@@ -3,7 +3,7 @@ package v2
 // compatibility shims for core/v3.Resource support
 
 func (a *APIKey) StoreName() string {
-	return a.StorePrefix()
+	return "api_keys"
 }
 
 func (a *APIKey) GetMetadata() *ObjectMeta {
@@ -15,7 +15,7 @@ func (a *APIKey) SetMetadata(meta *ObjectMeta) {
 }
 
 func (a *AdhocRequest) StoreName() string {
-	return a.StorePrefix()
+	return "adhoc_requests"
 }
 
 func (a *AdhocRequest) GetMetadata() *ObjectMeta {
@@ -27,7 +27,7 @@ func (a *AdhocRequest) SetMetadata(meta *ObjectMeta) {
 }
 
 func (a *Asset) StoreName() string {
-	return a.StorePrefix()
+	return "assets"
 }
 
 func (a *Asset) GetMetadata() *ObjectMeta {
@@ -39,7 +39,7 @@ func (a *Asset) SetMetadata(meta *ObjectMeta) {
 }
 
 func (c *Check) StoreName() string {
-	return c.StorePrefix()
+	return "checks"
 }
 
 func (c *Check) GetMetadata() *ObjectMeta {
@@ -51,7 +51,7 @@ func (c *Check) SetMetadata(meta *ObjectMeta) {
 }
 
 func (c *CheckConfig) StoreName() string {
-	return c.StorePrefix()
+	return "check_configs"
 }
 
 func (c *CheckConfig) GetMetadata() *ObjectMeta {
@@ -63,7 +63,7 @@ func (c *CheckConfig) SetMetadata(meta *ObjectMeta) {
 }
 
 func (c *ClusterRole) StoreName() string {
-	return c.StorePrefix()
+	return "cluster_roles"
 }
 
 func (c *ClusterRole) GetMetadata() *ObjectMeta {
@@ -75,7 +75,7 @@ func (c *ClusterRole) SetMetadata(meta *ObjectMeta) {
 }
 
 func (c *ClusterRoleBinding) StoreName() string {
-	return c.StorePrefix()
+	return "cluster_role_bindings"
 }
 
 func (c *ClusterRoleBinding) GetMetadata() *ObjectMeta {
@@ -87,7 +87,7 @@ func (c *ClusterRoleBinding) SetMetadata(meta *ObjectMeta) {
 }
 
 func (e *Entity) StoreName() string {
-	return e.StorePrefix()
+	return "entities"
 }
 
 func (e *Entity) GetMetadata() *ObjectMeta {
@@ -99,7 +99,7 @@ func (e *Entity) SetMetadata(meta *ObjectMeta) {
 }
 
 func (e *Event) StoreName() string {
-	return e.StorePrefix()
+	return "events"
 }
 
 func (e *Event) GetMetadata() *ObjectMeta {
@@ -111,7 +111,7 @@ func (e *Event) SetMetadata(meta *ObjectMeta) {
 }
 
 func (e *EventFilter) StoreName() string {
-	return e.StorePrefix()
+	return "event_filters"
 }
 
 func (e *EventFilter) GetMetadata() *ObjectMeta {
@@ -123,7 +123,7 @@ func (e *EventFilter) SetMetadata(meta *ObjectMeta) {
 }
 
 func (e *Extension) StoreName() string {
-	return e.StorePrefix()
+	return "extensions"
 }
 
 func (e *Extension) GetMetadata() *ObjectMeta {
@@ -135,7 +135,7 @@ func (e *Extension) SetMetadata(meta *ObjectMeta) {
 }
 
 func (h *Handler) StoreName() string {
-	return h.StorePrefix()
+	return "handlers"
 }
 
 func (h *Handler) GetMetadata() *ObjectMeta {
@@ -147,7 +147,7 @@ func (h *Handler) SetMetadata(meta *ObjectMeta) {
 }
 
 func (h *Hook) StoreName() string {
-	return h.StorePrefix()
+	return "hooks"
 }
 
 func (h *Hook) GetMetadata() *ObjectMeta {
@@ -159,7 +159,7 @@ func (h *Hook) SetMetadata(meta *ObjectMeta) {
 }
 
 func (h *HookConfig) StoreName() string {
-	return h.StorePrefix()
+	return "hook_configs"
 }
 
 func (h *HookConfig) GetMetadata() *ObjectMeta {
@@ -171,7 +171,7 @@ func (h *HookConfig) SetMetadata(meta *ObjectMeta) {
 }
 
 func (m *Mutator) StoreName() string {
-	return m.StorePrefix()
+	return "mutators"
 }
 
 func (m *Mutator) GetMetadata() *ObjectMeta {
@@ -183,7 +183,7 @@ func (m *Mutator) SetMetadata(meta *ObjectMeta) {
 }
 
 func (p *Pipeline) StoreName() string {
-	return p.StorePrefix()
+	return "pipelines"
 }
 
 func (p *Pipeline) GetMetadata() *ObjectMeta {
@@ -195,7 +195,7 @@ func (p *Pipeline) SetMetadata(meta *ObjectMeta) {
 }
 
 func (r *Role) StoreName() string {
-	return r.StorePrefix()
+	return "roles"
 }
 
 func (r *Role) GetMetadata() *ObjectMeta {
@@ -207,7 +207,7 @@ func (r *Role) SetMetadata(meta *ObjectMeta) {
 }
 
 func (r *RoleBinding) StoreName() string {
-	return r.StorePrefix()
+	return "role_bindings"
 }
 
 func (r *RoleBinding) GetMetadata() *ObjectMeta {
@@ -219,7 +219,7 @@ func (r *RoleBinding) SetMetadata(meta *ObjectMeta) {
 }
 
 func (s *Silenced) StoreName() string {
-	return s.StorePrefix()
+	return "silenceds"
 }
 
 func (s *Silenced) GetMetadata() *ObjectMeta {
