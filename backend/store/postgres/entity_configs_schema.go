@@ -320,3 +320,55 @@ WHERE
 	name = $2 AND
 	deleted_at IS NULL;
 `
+
+const pollEntityConfigQuery = `
+-- Looks for updates to the entiy_config table
+-- since a specified timestamp
+--
+WITH ignored AS (
+	SELECT
+		$3::text,
+		$4::text,
+		$5::text,
+		$6::text,
+		$7::text,
+		$8::text[],
+		$9::boolean,
+		$10::text,
+		$11::text[],
+		$12::text[],
+		$13::bigint,
+		$14::bigint,
+		$15::timestamptz,
+		$17::timestamptz
+)
+SELECT
+	namespaces.name,
+	entity_configs.name,
+	entity_configs.selectors,
+	entity_configs.annotations,
+	entity_configs.created_by,
+	entity_configs.entity_class,
+	entity_configs.sensu_user,
+	entity_configs.subscriptions,
+	entity_configs.deregister,
+	entity_configs.deregistration,
+	entity_configs.keepalive_handlers,
+	entity_configs.redact,
+	entity_configs.id,
+	entity_configs.namespace_id,
+	entity_configs.created_at,
+	entity_configs.updated_at,
+	entity_configs.deleted_at
+FROM entity_configs
+LEFT OUTER JOIN namespaces ON entity_configs.namespace_id = namespaces.id
+WHERE entity_configs.updated_at >= $16
+AND CASE
+		WHEN $1 <> '' THEN namespaces.name = $1
+		ELSE true
+	END
+AND CASE
+		WHEN $2 <> '' THEN entity_configs.name = $2
+		ELSE TRUE
+	END
+`

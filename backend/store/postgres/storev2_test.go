@@ -1093,3 +1093,76 @@ func TestStoreGetMultiple(t *testing.T) {
 		})
 	}
 }
+
+func TestWatchEntityConfig(t *testing.T) {
+	testWithPostgresStoreV2(t, func(s storev2.Interface) {
+		stor, ok := s.(*StoreV2)
+		if !ok {
+			t.Fatal("expected storev2")
+		}
+		stor.watchInterval = time.Millisecond * 10
+		stor.watchTxnWindow = time.Second
+
+		ctx, cancel := context.WithCancel(context.Background())
+		defer cancel()
+		watchChannel := stor.Watch(ctx, storev2.NewResourceRequest(ctx, "", "", entityConfigStoreName))
+
+		select {
+		case record, ok := <-watchChannel:
+			t.Errorf("expected watch channel to be empty. Got %v, %v", record, ok)
+		default:
+			// OK
+		}
+
+		createNamespace(t, s, "default")
+		createEntityConfig(t, s, "foo")
+
+		var entityConfig corev3.EntityConfig
+		select {
+		case watchEvents, ok := <-watchChannel:
+			if !ok {
+				t.Errorf("unexpected watcher close")
+			}
+			event := watchEvents[0]
+			if watchErr := event.Err; watchErr != nil {
+				t.Errorf("unexpected watcher error %v", watchErr)
+			}
+			if event.Key.Name != "foo" || event.Key.Namespace != "default" {
+				t.Errorf("expected name 'foo' namespace 'default', got %v, %v", event.Key.Name, event.Key.Namespace)
+			}
+			if event.Type != storev2.WatchCreate {
+				t.Errorf("expected event type (%v), got %v", storev2.WatchCreate, event.Type)
+			}
+			if werr := event.Value.UnwrapInto(&entityConfig); werr != nil {
+				t.Fatal(werr)
+			}
+		case <-time.After(time.Millisecond * 100):
+			t.Fatalf("expected entity change notification but timed out")
+		}
+
+		delReq := storev2.NewResourceRequestFromResource(ctx, &entityConfig)
+		delReq.UsePostgres = true
+		if err := s.Delete(delReq); err != nil {
+			t.Fatalf("could not delete entity config: %v", err)
+		}
+
+		select {
+		case watchEvents, ok := <-watchChannel:
+			if !ok {
+				t.Errorf("unexpected watcher close")
+			}
+			event := watchEvents[0]
+			if event.Key.Name != "foo" || event.Key.Namespace != "default" {
+				t.Errorf("expected name 'foo' namespace 'default', got %v, %v", event.Key.Name, event.Key.Namespace)
+			}
+			if event.Type != storev2.WatchDelete {
+				t.Errorf("expected event type (%v), got %v", storev2.WatchDelete, event.Type)
+			}
+			if werr := event.Value.UnwrapInto(&entityConfig); werr != nil {
+				t.Fatal(werr)
+			}
+		case <-time.After(time.Millisecond * 100):
+			t.Errorf("expected entity delete notification but timed out")
+		}
+	})
+}
