@@ -1,85 +1,5 @@
 package postgres
 
-const migrateEntityState = `
--- This is a migration that expands the entities table, and creates
--- a new table that joins to it on entity_id called entities_systems.
---
-ALTER TABLE entities ADD COLUMN last_seen bigint DEFAULT 0;
-ALTER TABLE entities ADD COLUMN selectors jsonb;
-ALTER TABLE entities ADD COLUMN annotations jsonb;
-
--- entities_systems contains agent system information.
--- It's mostly composed of informational text values.
---
-CREATE TABLE entities_systems (
-  entity_id           bigint UNIQUE REFERENCES entities (id) ON DELETE CASCADE,
-  hostname            text,
-  os                  text,
-  platform            text,
-  platform_family     text,
-  platform_version    text,
-  arch                text,
-  arm_version         integer,
-  libc_type           text,
-  vm_system           text,
-  vm_role             text,
-  cloud_provider      text,
-  float_type          text,
-  sensu_agent_version text
-);
-
--- This function is used to turn a 2D array into a 1D array. UNNEST will
--- produce scalars, no matter how many input dimensions. Taken from
--- https://wiki.postgresql.org/wiki/Array_Unnest
---
-CREATE OR REPLACE FUNCTION unnest_2d_1d(anyarray)
-  RETURNS SETOF anyarray AS
-$func$
-SELECT array_agg($1[d1][d2])
-FROM   generate_series(array_lower($1,1), array_upper($1,1)) d1
-	 , generate_series(array_lower($1,2), array_upper($1,2)) d2
-GROUP  BY d1
-ORDER  BY d1
-$func$
-LANGUAGE sql IMMUTABLE;
-
--- entities_networks are network adapters found in the agent system.
--- entities can have many network adapters.
---
-CREATE TABLE IF NOT EXISTS entities_networks (
-  entity_id bigint REFERENCES entities (id) ON DELETE CASCADE,
-  name      text NOT NULL,
-  mac       text NOT NULL,
-  addresses jsonb,
-  UNIQUE(entity_id, name, mac, addresses)
-);
-
--- Index the entity_id colum on entities_networks
---
-CREATE INDEX ON entities_networks ( entity_id );
-`
-
-const migrateRenameEntitiesTable = `
--- This is a migration that renames the entities table to entity_states.
---
-ALTER TABLE entities RENAME TO entity_states;
-`
-
-const migrateAddEntityConfigIdToEntityState = `
--- This is a migration that adds an entity config foreign key to the
--- entity_states table.
---
-ALTER TABLE entity_states
-ADD COLUMN entity_config_id bigint NOT NULL REFERENCES entity_configs (id) ON DELETE CASCADE;
-`
-
-const migrateRenameEntityStateUniqueConstraint = `
--- This is a migration that renames the uniqueness constraint to
--- entity_state_unique for the entity_states table.
-ALTER TABLE entity_states RENAME CONSTRAINT entities_namespace_name_key TO entity_state_unique;
-`
-
-// see ring_schema.go
 const createOrUpdateEntityStateQuery = `
 -- This query creates a new entity state, or updates it if it already exists.
 --
@@ -98,19 +18,55 @@ const createOrUpdateEntityStateQuery = `
 -- $19: Network names, an array of strings.
 -- $20: Network MAC addresses, an array of strings.
 -- $21: Network names, an array of json-encoded arrays.
+-- $22: The entity state ID.
+-- $23: The namespace ID.
+-- $24: The entity config ID.
+-- $25: The time that the entity state was created.
+-- $26: The time that the entity state was last updated.
+-- $27: The time that the entity state was soft deleted.
 --
-WITH namespace AS (
-	SELECT id FROM namespaces
-	WHERE namespaces.name = $1
+WITH ignored AS (
+	SELECT $22::bigint, $25, $26, $27
+), namespace AS (
+	SELECT COALESCE (
+		NULLIF($23, 0),
+		(SELECT id FROM namespaces WHERE name = $1)
+	) AS id
 ), config AS (
-	SELECT id FROM entity_configs
-	WHERE entity_configs.namespace_id = (SELECT id FROM namespace) AND entity_configs.name = $2
+	SELECT COALESCE (
+		NULLIF($24, 0),
+		(SELECT id FROM entity_configs
+			WHERE
+				namespace_id = (SELECT id FROM namespace) AND
+				name = $2
+		)) AS id
 ), state AS (
-	INSERT INTO entity_states ( entity_config_id, namespace_id, name, expires_at, last_seen, selectors, annotations )
-	VALUES ( (SELECT id FROM config), (SELECT id FROM namespace), $2, now(), $3, $4, $5 )
+	INSERT INTO entity_states (
+		entity_config_id,
+		namespace_id,
+		name,
+		expires_at,
+		last_seen,
+		selectors,
+		annotations,
+		deleted_at
+	)
+	VALUES (
+		(SELECT id FROM config),
+		(SELECT id FROM namespace),
+		$2,
+		now(),
+		$3,
+		$4,
+		$5,
+		NULL
+	)
 	ON CONFLICT ( namespace_id, name )
-	DO UPDATE
-	SET last_seen = $3, selectors = $4, annotations = $5
+	DO UPDATE SET
+		last_seen = $3,
+		selectors = $4,
+		annotations = $5,
+		deleted_at = NULL
 	RETURNING id AS id
 ), system AS (
 	SELECT
@@ -194,16 +150,46 @@ const createIfNotExistsEntityStateQuery = `
 -- errors when an entity with the same namespace and name already
 -- exists.
 --
-WITH namespace AS (
-	SELECT id FROM namespaces
-	WHERE name = $1
+WITH ignored AS (
+	SELECT $22::bigint
+), namespace AS (
+	SELECT COALESCE (
+		NULLIF($23, 0),
+		(SELECT id FROM namespaces WHERE name = $1)
+	) AS id
 ), config AS (
-	SELECT id
-	FROM entity_configs
-	WHERE namespace_id = (SELECT id FROM namespace) AND name = $2
+	SELECT COALESCE (
+		NULLIF($24, 0),
+		(SELECT id FROM entity_configs
+			WHERE
+				namespace_id = (SELECT id FROM namespace) AND
+				name = $2
+		)) AS id
 ), state AS (
-	INSERT INTO entity_states ( entity_config_id, namespace_id, name, expires_at, last_seen, selectors, annotations )
-	VALUES ( (SELECT id FROM config), (SELECT id FROM namespace), $2, now(), $3, $4, $5 )
+	INSERT INTO entity_states (
+		entity_config_id,
+		namespace_id,
+		name,
+		expires_at,
+		last_seen,
+		selectors,
+		annotations,
+		created_at,
+		updated_at,
+		deleted_at
+	)
+	VALUES (
+		(SELECT id FROM config),
+		(SELECT id FROM namespace),
+		$2,
+		now(),
+		$3,
+		$4,
+		$5,
+		$25,
+		$26,
+		$27
+)
 	RETURNING id
 ), system AS (
 	INSERT INTO entities_systems
@@ -241,15 +227,25 @@ AS nics ( name, mac, addresses )
 const updateIfExistsEntityStateQuery = `
 -- This query updates the entity state, but only if it exists.
 --
-WITH namespace AS (
+WITH ignored AS (
+	SELECT
+		$22::bigint,
+		$23::bigint,
+		$24::bigint,
+		$25,
+		$26,
+		$27
+), namespace AS (
 	SELECT id FROM namespaces
 	WHERE namespaces.name = $1
 ), state AS (
 	SELECT id FROM entity_states
-	WHERE entity_states.namespace_id = (SELECT id FROM namespace) AND entity_states.name = $2
+	WHERE
+		entity_states.namespace_id = (SELECT id FROM namespace) AND
+		entity_states.name = $2
 ), upd AS (
 	UPDATE entity_states
-	SET last_seen = $3, selectors = $4, annotations = $5
+	SET last_seen = $3, selectors = $4, annotations = $5, deleted_at = NULL
 	FROM state
 	WHERE state.id = entity_states.id
 ), system AS (
@@ -335,12 +331,13 @@ const getEntityStateQuery = `
 -- This query fetches a single entity state, or nothing.
 --
 WITH namespace AS (
-	SELECT id, name FROM namespaces
-	WHERE namespaces.name = $1
+	SELECT id FROM namespaces WHERE name = $1
 ), state AS (
-	SELECT entity_states.id AS id
-	FROM entity_states
-	WHERE entity_states.namespace_id = (SELECT id FROM namespace) AND entity_states.name = $2
+	SELECT id FROM entity_states
+	WHERE
+		namespace_id = (SELECT id FROM namespace) AND
+		name = $2 AND
+		deleted_at IS NULL
 ), network AS (
 	SELECT
 		array_agg(entities_networks.name) AS names,
@@ -349,8 +346,8 @@ WITH namespace AS (
 	FROM entities_networks, state
 	WHERE entities_networks.entity_id = state.id
 )
-SELECT 
-	namespace.name,
+SELECT
+	$1,
 	entity_states.name,
 	entity_states.last_seen,
 	entity_states.selectors,
@@ -370,7 +367,13 @@ SELECT
 	entities_systems.sensu_agent_version,
 	network.names,
 	network.macs,
-	network.addresses::text[]
+	network.addresses::text[],
+	entity_states.id,
+	namespace.id,
+	entity_states.entity_config_id,
+	entity_states.created_at,
+	entity_states.updated_at,
+	entity_states.deleted_at
 FROM entity_states LEFT OUTER JOIN entities_systems ON entity_states.id = entities_systems.entity_id, namespace, network, state
 WHERE entity_states.id = state.id
 `
@@ -384,7 +387,10 @@ WITH namespace AS (
 ), state AS (
 	SELECT entity_states.id AS id
 	FROM entity_states
-	WHERE entity_states.namespace_id = (SELECT id FROM namespace) AND entity_states.name IN (SELECT unnest($2::text[]))
+	WHERE
+		entity_states.namespace_id = (SELECT id FROM namespace) AND
+		entity_states.name IN (SELECT unnest($2::text[])) AND
+		entity_states.deleted_at IS NULL
 ), network AS (
 	SELECT
 		entities_networks.entity_id AS entity_id,
@@ -416,13 +422,19 @@ SELECT
 	entities_systems.sensu_agent_version,
 	network.names,
 	network.macs,
-	network.addresses::text[]
+	network.addresses::text[],
+	entity_states.id,
+	namespace.id,
+	entity_states.entity_config_id,
+	entity_states.created_at,
+	entity_states.updated_at,
+	entity_states.deleted_at
 FROM entity_states
 LEFT OUTER JOIN entities_systems ON entity_states.id = entities_systems.entity_id, namespace, network, state
 WHERE entity_states.id = state.id AND entity_states.id = network.entity_id
 `
 
-const deleteEntityStateQuery = `
+const hardDeleteEntityStateQuery = `
 -- This query deletes an entity state. Any related system & network state will
 -- also be deleted via ON DELETE CASCADE triggers.
 --
@@ -431,9 +443,44 @@ const deleteEntityStateQuery = `
 -- $2 Entity name
 WITH namespace AS (
 	SELECT id FROM namespaces
-	WHERE namespaces.name = $1
+	WHERE name = $1
 )
-DELETE FROM entity_states WHERE entity_states.namespace_id = (SELECT id FROM namespace) AND entity_states.name = $2;
+DELETE FROM entity_states
+WHERE
+	namespace_id = (SELECT id FROM namespace) AND
+	name = $2;
+`
+
+const deleteEntityStateQuery = `
+-- This query soft deletes an entity state.
+--
+-- Parameters:
+-- $1 Namespace
+-- $2 Entity name
+WITH namespace AS (
+	SELECT id FROM namespaces
+	WHERE name = $1
+)
+UPDATE entity_states
+SET deleted_at = now()
+WHERE
+	namespace_id = (SELECT id FROM namespace) AND
+	name = $2;
+`
+
+const hardDeletedEntityStateQuery = `
+-- This query discovers if an entity state has been hard deleted.
+--
+WITH namespace AS (
+	SELECT id FROM namespaces
+	WHERE name = $1
+)
+SELECT NOT EXISTS (
+	SELECT true FROM entity_states
+	WHERE
+		namespace_id = (SELECT id FROM namespace) AND
+		name = $2
+);
 `
 
 const listEntityStateQuery = `
@@ -473,9 +520,17 @@ SELECT
 	entities_systems.sensu_agent_version,
 	network.names,
 	network.macs,
-	network.addresses::text[]
+	network.addresses::text[],
+	entity_states.id,
+	namespace.id,
+	entity_states.entity_config_id,
+	entity_states.created_at,
+	entity_states.updated_at,
+	entity_states.deleted_at
 FROM entity_states LEFT OUTER JOIN entities_systems ON entity_states.id = entities_systems.entity_id, network, namespace
-WHERE network.entity_id = entity_states.id
+WHERE
+	network.entity_id = entity_states.id AND
+	entity_states.deleted_at IS NULL
 ORDER BY ( namespace.name, entity_states.name ) ASC
 LIMIT $2
 OFFSET $3
@@ -518,9 +573,17 @@ SELECT
 	entities_systems.sensu_agent_version,
 	network.names,
 	network.macs,
-	network.addresses::text[]
+	network.addresses::text[],
+	entity_states.id,
+	namespace.id,
+	entity_states.entity_config_id,
+	entity_states.created_at,
+	entity_states.updated_at,
+	entity_states.deleted_at
 FROM entity_states LEFT OUTER JOIN entities_systems ON entity_states.id = entities_systems.entity_id, network, namespace
-WHERE network.entity_id = entity_states.id
+WHERE
+	network.entity_id = entity_states.id AND
+	entity_states.deleted_at IS NULL
 ORDER BY ( namespace.name, entity_states.name ) DESC
 LIMIT $2
 OFFSET $3
@@ -531,10 +594,13 @@ const existsEntityStateQuery = `
 --
 WITH namespace AS (
 	SELECT id FROM namespaces
-	WHERE namespaces.name = $1
+	WHERE name = $1
 )
 SELECT true FROM entity_states
-WHERE entity_states.namespace_id = (SELECT id FROM namespace) AND entity_states.name = $2;
+WHERE
+	namespace_id = (SELECT id FROM namespace) AND
+	name = $2 AND
+	deleted_at IS NULL;
 `
 
 const patchEntityStateQuery = `
@@ -543,9 +609,14 @@ const patchEntityStateQuery = `
 --
 WITH namespace AS (
 	SELECT id FROM namespaces
-	WHERE namespaces.name = $1
+	WHERE name = $1
 )
 UPDATE entity_states
-SET expires_at = $3 + now(), last_seen = $4
-WHERE entity_states.namespace_id = (SELECT id FROM namespace) AND entity_states.name = $2;
+SET
+	expires_at = $3 + now(),
+	last_seen = $4,
+	deleted_at = NULL
+WHERE
+	namespace_id = (SELECT id FROM namespace) AND
+	name = $2;
 `

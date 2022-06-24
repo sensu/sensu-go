@@ -10,8 +10,9 @@ import (
 )
 
 func TestEntityStateWrapperSQLParams(t *testing.T) {
-	want := len(new(EntityStateWrapper).SQLParams())
-	got := reflect.ValueOf(EntityStateWrapper{}).NumField()
+	wrapper := new(EntityStateWrapper)
+	want := len(wrapper.SQLParams())
+	got := reflect.ValueOf(*wrapper).NumField()
 	if got > want {
 		t.Errorf("field added to EntityStateWrapper but not SQLParams: got %d, want %d", got, want)
 	}

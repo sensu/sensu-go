@@ -40,7 +40,7 @@ type Interface interface {
 	// Get gets a wrapped resource from the store.
 	Get(ResourceRequest) (Wrapper, error)
 
-	// Delete deletes a resource from the store.
+	// Delete hard deletes a resource from the store.
 	Delete(ResourceRequest) error
 
 	// List lists all resources specified by the resource request, and the

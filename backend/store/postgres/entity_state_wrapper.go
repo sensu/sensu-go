@@ -1,9 +1,11 @@
 package postgres
 
 import (
+	"database/sql"
 	"encoding/json"
 	"fmt"
 	"strings"
+	"time"
 
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	corev3 "github.com/sensu/sensu-go/api/core/v3"
@@ -13,7 +15,10 @@ import (
 // EntityStateWrapper is an implementation of storev2.Wrapper, for dealing with
 // postgresql entity state storage.
 type EntityStateWrapper struct {
+	ID                int64
+	NamespaceID       int64
 	Namespace         string
+	EntityConfigID    int64
 	Name              string
 	LastSeen          int64
 	Selectors         []byte
@@ -34,11 +39,44 @@ type EntityStateWrapper struct {
 	NetworkNames      []string
 	NetworkMACs       []string
 	NetworkAddresses  []string
+	CreatedAt         time.Time
+	UpdatedAt         time.Time
+	DeletedAt         sql.NullTime
 }
 
 // GetName returns the name of the entity.
 func (e *EntityStateWrapper) GetName() string {
 	return e.Name
+}
+
+// GetCreatedAt returns the value of the CreatedAt field
+func (e *EntityStateWrapper) GetCreatedAt() time.Time {
+	return e.CreatedAt
+}
+
+// GetUpdatedAt returns the value of the UpdatedAt field
+func (e *EntityStateWrapper) GetUpdatedAt() time.Time {
+	return e.UpdatedAt
+}
+
+// GetDeletedAt returns the value of the DeletedAt field
+func (e *EntityStateWrapper) GetDeletedAt() sql.NullTime {
+	return e.DeletedAt
+}
+
+// SetCreatedAt sets the value of the CreatedAt field
+func (e *EntityStateWrapper) SetCreatedAt(t time.Time) {
+	e.CreatedAt = t
+}
+
+// SetUpdatedAt sets the value of the UpdatedAt field
+func (e *EntityStateWrapper) SetUpdatedAt(t time.Time) {
+	e.UpdatedAt = t
+}
+
+// SetDeletedAt sets the value of the DeletedAt field
+func (e *EntityStateWrapper) SetDeletedAt(t sql.NullTime) {
+	e.DeletedAt = t
 }
 
 // Unwrap unwraps the EntityStateWrapper into an *EntityState.
@@ -181,5 +219,11 @@ func (e *EntityStateWrapper) SQLParams() []interface{} {
 		&e.NetworkNames,
 		&e.NetworkMACs,
 		&e.NetworkAddresses,
+		&e.ID,
+		&e.NamespaceID,
+		&e.EntityConfigID,
+		&e.CreatedAt,
+		&e.UpdatedAt,
+		&e.DeletedAt,
 	}
 }

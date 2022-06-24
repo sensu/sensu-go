@@ -42,15 +42,16 @@ func (e *EntityStore) DeleteEntity(ctx context.Context, entity *corev2.Entity) e
 	configReq.UsePostgres = true
 
 	if err := e.store.Delete(configReq); err != nil {
-		if _, ok := err.(*store.ErrNotFound); !ok {
+		var e *store.ErrNotFound
+		if !errors.As(err, &e) {
 			return err
 		}
 	}
 	if err := e.store.Delete(stateReq); err != nil {
-		if _, ok := err.(*store.ErrNotFound); ok {
-			return nil
+		var e *store.ErrNotFound
+		if !errors.As(err, &e) {
+			return err
 		}
-		return err
 	}
 	return nil
 }
@@ -79,15 +80,16 @@ func (e *EntityStore) DeleteEntityByName(ctx context.Context, name string) error
 	configReq := storev2.NewResourceRequestFromResource(ctx, config)
 	configReq.UsePostgres = true
 	if err := e.store.Delete(configReq); err != nil {
-		if _, ok := err.(*store.ErrNotFound); !ok {
+		var e *store.ErrNotFound
+		if !errors.As(err, &e) {
 			return err
 		}
 	}
 	if err := e.store.Delete(stateReq); err != nil {
-		if _, ok := err.(*store.ErrNotFound); ok {
-			return nil
+		var e *store.ErrNotFound
+		if !errors.As(err, &e) {
+			return err
 		}
-		return err
 	}
 	return nil
 }
@@ -211,7 +213,8 @@ func (e *EntityStore) GetEntityConfigByName(ctx context.Context, name string) (*
 	req.UsePostgres = true
 	wrapper, err := e.store.Get(req)
 	if err != nil {
-		if _, ok := err.(*store.ErrNotFound); ok {
+		var e *store.ErrNotFound
+		if errors.As(err, &e) {
 			return nil, nil
 		}
 		return nil, err
@@ -240,7 +243,8 @@ func (e *EntityStore) GetEntityStateByName(ctx context.Context, name string) (*c
 	req.UsePostgres = true
 	wrapper, err := e.store.Get(req)
 	if err != nil {
-		if _, ok := err.(*store.ErrNotFound); ok {
+		var e *store.ErrNotFound
+		if errors.As(err, &e) {
 			return nil, nil
 		}
 		return nil, err

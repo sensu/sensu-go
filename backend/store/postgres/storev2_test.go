@@ -2,89 +2,19 @@ package postgres
 
 import (
 	"context"
+	"errors"
 	"fmt"
-	"os"
-	"reflect"
 	"strings"
 	"testing"
+	"time"
 
-	"github.com/google/uuid"
-	"github.com/jackc/pgx/v4/pgxpool"
+	"github.com/go-test/deep"
 	corev3 "github.com/sensu/sensu-go/api/core/v3"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/backend/store/patch"
 	storev2 "github.com/sensu/sensu-go/backend/store/v2"
+	"github.com/stretchr/testify/require"
 )
-
-func testWithPostgresStoreV2(t *testing.T, fn func(storev2.Interface)) {
-	t.Helper()
-	if testing.Short() {
-		t.Skip("skipping postgres test")
-		return
-	}
-	pgURL := os.Getenv("PG_URL")
-	if pgURL == "" {
-		t.Skip("skipping postgres test")
-		return
-	}
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-	db, err := pgxpool.Connect(ctx, pgURL)
-	if err != nil {
-		t.Fatal(err)
-	}
-	dbName := "sensu" + strings.ReplaceAll(uuid.New().String(), "-", "")
-	if _, err := db.Exec(ctx, fmt.Sprintf("CREATE DATABASE %s;", dbName)); err != nil {
-		t.Fatal(err)
-	}
-	defer dropAll(context.Background(), dbName, pgURL)
-	db.Close()
-	db, err = pgxpool.Connect(ctx, fmt.Sprintf("dbname=%s ", dbName)+pgURL)
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer db.Close()
-	if err := upgrade(ctx, db); err != nil {
-		t.Fatal(err)
-	}
-	fn(NewStoreV2(db, nil))
-}
-
-func testCreateNamespace(t *testing.T, s storev2.Interface, name string) {
-	t.Helper()
-	ctx := context.Background()
-	namespace := corev3.FixtureNamespace(name)
-	req := storev2.NewResourceRequestFromResource(ctx, namespace)
-	req.UsePostgres = true
-	wrapper := WrapNamespace(namespace)
-	if err := s.CreateOrUpdate(req, wrapper); err != nil {
-		t.Error(err)
-	}
-}
-
-func testCreateEntityConfig(t *testing.T, s storev2.Interface, name string) {
-	t.Helper()
-	ctx := context.Background()
-	cfg := corev3.FixtureEntityConfig(name)
-	req := storev2.NewResourceRequestFromResource(ctx, cfg)
-	req.UsePostgres = true
-	wrapper := WrapEntityConfig(cfg)
-	if err := s.CreateOrUpdate(req, wrapper); err != nil {
-		t.Error(err)
-	}
-}
-
-func testCreateEntityState(t *testing.T, s storev2.Interface, name string) {
-	t.Helper()
-	ctx := context.Background()
-	state := corev3.FixtureEntityState(name)
-	req := storev2.NewResourceRequestFromResource(ctx, state)
-	req.UsePostgres = true
-	wrapper := WrapEntityState(state)
-	if err := s.CreateOrUpdate(req, wrapper); err != nil {
-		t.Error(err)
-	}
-}
 
 func TestStoreCreateOrUpdate(t *testing.T) {
 	type args struct {
@@ -112,7 +42,7 @@ func TestStoreCreateOrUpdate(t *testing.T) {
 			}(),
 			verifyQuery: fmt.Sprintf("SELECT * FROM %s", entityConfigStoreName),
 			beforeHook: func(t *testing.T, s storev2.Interface) {
-				testCreateNamespace(t, s, "default")
+				createNamespace(t, s, "default")
 			},
 			want: 1,
 		},
@@ -130,8 +60,8 @@ func TestStoreCreateOrUpdate(t *testing.T) {
 			}(),
 			verifyQuery: fmt.Sprintf("SELECT * FROM %s", entityStateStoreName),
 			beforeHook: func(t *testing.T, s storev2.Interface) {
-				testCreateNamespace(t, s, "default")
-				testCreateEntityConfig(t, s, "foo")
+				createNamespace(t, s, "default")
+				createEntityConfig(t, s, "foo")
 			},
 			want: 1,
 		},
@@ -139,7 +69,7 @@ func TestStoreCreateOrUpdate(t *testing.T) {
 			name: "namespaces can be created and updated",
 			args: func() args {
 				ctx := context.Background()
-				ns := corev3.FixtureNamespace("bar")
+				ns := corev3.FixtureNamespace("foo")
 				req := storev2.NewResourceRequestFromResource(ctx, ns)
 				req.UsePostgres = true
 				return args{
@@ -157,18 +87,13 @@ func TestStoreCreateOrUpdate(t *testing.T) {
 				if tt.beforeHook != nil {
 					tt.beforeHook(t, s)
 				}
-				if err := s.CreateOrUpdate(tt.args.req, tt.args.wrapper); err != nil {
-					t.Error(err)
-				}
+				require.NoError(t, s.CreateOrUpdate(tt.args.req, tt.args.wrapper))
 
 				// Repeating the call to the store should succeed
-				if err := s.CreateOrUpdate(tt.args.req, tt.args.wrapper); err != nil {
-					t.Error(err)
-				}
+				require.NoError(t, s.CreateOrUpdate(tt.args.req, tt.args.wrapper))
+
 				rows, err := s.(*StoreV2).db.Query(context.Background(), tt.verifyQuery)
-				if err != nil {
-					t.Fatal(err)
-				}
+				require.NoError(t, err)
 				defer rows.Close()
 				got := 0
 				for rows.Next() {
@@ -205,7 +130,7 @@ func TestStoreUpdateIfExists(t *testing.T) {
 				}
 			}(),
 			beforeHook: func(t *testing.T, s storev2.Interface) {
-				testCreateNamespace(t, s, "default")
+				createNamespace(t, s, "default")
 			},
 		},
 		{
@@ -221,8 +146,8 @@ func TestStoreUpdateIfExists(t *testing.T) {
 				}
 			}(),
 			beforeHook: func(t *testing.T, s storev2.Interface) {
-				testCreateNamespace(t, s, "default")
-				testCreateEntityConfig(t, s, "foo")
+				createNamespace(t, s, "default")
+				createEntityConfig(t, s, "foo")
 			},
 		},
 		{
@@ -248,10 +173,11 @@ func TestStoreUpdateIfExists(t *testing.T) {
 
 				// UpdateIfExists should fail
 				if err := s.UpdateIfExists(tt.args.req, tt.args.wrapper); err == nil {
-					t.Error("expected non-nil error")
+					t.Fatal("expected non-nil error")
 				} else {
-					if _, ok := err.(*store.ErrNotFound); !ok {
-						t.Errorf("wrong error: %s", err)
+					var e *store.ErrNotFound
+					if !errors.As(err, &e) {
+						t.Fatalf("expected %T, got %T: %s", e, err, err)
 					}
 				}
 				if err := s.CreateOrUpdate(tt.args.req, tt.args.wrapper); err != nil {
@@ -260,7 +186,7 @@ func TestStoreUpdateIfExists(t *testing.T) {
 
 				// UpdateIfExists should succeed
 				if err := s.UpdateIfExists(tt.args.req, tt.args.wrapper); err != nil {
-					t.Error(err)
+					t.Fatal(err)
 				}
 			})
 		})
@@ -290,7 +216,7 @@ func TestStoreCreateIfNotExists(t *testing.T) {
 				}
 			}(),
 			beforeHook: func(t *testing.T, s storev2.Interface) {
-				testCreateNamespace(t, s, "default")
+				createNamespace(t, s, "default")
 			},
 		},
 		{
@@ -306,8 +232,8 @@ func TestStoreCreateIfNotExists(t *testing.T) {
 				}
 			}(),
 			beforeHook: func(t *testing.T, s storev2.Interface) {
-				testCreateNamespace(t, s, "default")
-				testCreateEntityConfig(t, s, "foo")
+				createNamespace(t, s, "default")
+				createEntityConfig(t, s, "foo")
 			},
 		},
 		{
@@ -338,9 +264,12 @@ func TestStoreCreateIfNotExists(t *testing.T) {
 
 				// CreateIfNotExists should fail
 				if err := s.CreateIfNotExists(tt.args.req, tt.args.wrapper); err == nil {
-					t.Error("expected non-nil error")
-				} else if _, ok := err.(*store.ErrAlreadyExists); !ok {
-					t.Errorf("wrong error: %s", err)
+					t.Fatal("expected non-nil error")
+				} else {
+					var e *store.ErrAlreadyExists
+					if !errors.As(err, &e) {
+						t.Fatalf("expected %T, got %T: %s", e, err, err)
+					}
 				}
 
 				// UpdateIfExists should succeed
@@ -360,7 +289,7 @@ func TestStoreGet(t *testing.T) {
 		name       string
 		args       args
 		beforeHook func(*testing.T, storev2.Interface)
-		want       storev2.Wrapper
+		want       wrapperWithStatus
 	}{
 		{
 			name: "an entity config can be retrieved",
@@ -374,12 +303,17 @@ func TestStoreGet(t *testing.T) {
 				}
 			}(),
 			beforeHook: func(t *testing.T, s storev2.Interface) {
-				testCreateNamespace(t, s, "default")
-				testCreateEntityConfig(t, s, "foo")
+				createNamespace(t, s, "default")
+				createEntityConfig(t, s, "foo")
 			},
-			want: func() storev2.Wrapper {
+			want: func() wrapperWithStatus {
 				cfg := corev3.FixtureEntityConfig("foo")
-				return WrapEntityConfig(cfg)
+				wrapper := WrapEntityConfig(cfg).(*EntityConfigWrapper)
+				wrapper.ID = 1
+				wrapper.NamespaceID = 1
+				wrapper.CreatedAt = time.Now()
+				wrapper.UpdatedAt = time.Now()
+				return wrapper
 			}(),
 		},
 		{
@@ -394,13 +328,19 @@ func TestStoreGet(t *testing.T) {
 				}
 			}(),
 			beforeHook: func(t *testing.T, s storev2.Interface) {
-				testCreateNamespace(t, s, "default")
-				testCreateEntityConfig(t, s, "foo")
-				testCreateEntityState(t, s, "foo")
+				createNamespace(t, s, "default")
+				createEntityConfig(t, s, "foo")
+				createEntityState(t, s, "foo")
 			},
-			want: func() storev2.Wrapper {
+			want: func() wrapperWithStatus {
 				state := corev3.FixtureEntityState("foo")
-				return WrapEntityState(state)
+				wrapper := WrapEntityState(state).(*EntityStateWrapper)
+				wrapper.ID = 1
+				wrapper.NamespaceID = 1
+				wrapper.EntityConfigID = 1
+				wrapper.CreatedAt = time.Now()
+				wrapper.UpdatedAt = time.Now()
+				return wrapper
 			}(),
 		},
 		{
@@ -415,11 +355,15 @@ func TestStoreGet(t *testing.T) {
 				}
 			}(),
 			beforeHook: func(t *testing.T, s storev2.Interface) {
-				testCreateNamespace(t, s, "foo")
+				createNamespace(t, s, "foo")
 			},
-			want: func() storev2.Wrapper {
+			want: func() wrapperWithStatus {
 				ns := corev3.FixtureNamespace("foo")
-				return WrapNamespace(ns)
+				wrapper := WrapNamespace(ns).(*NamespaceWrapper)
+				wrapper.ID = 1
+				wrapper.CreatedAt = time.Now()
+				wrapper.UpdatedAt = time.Now()
+				return wrapper
 			}(),
 		},
 	}
@@ -430,12 +374,24 @@ func TestStoreGet(t *testing.T) {
 					tt.beforeHook(t, s)
 				}
 
-				got, err := s.Get(tt.args.req)
+				wrapper, err := s.Get(tt.args.req)
 				if err != nil {
 					t.Fatal(err)
 				}
-				if !reflect.DeepEqual(got, tt.want) {
-					t.Errorf("bad resource; got %#v, want %#v", got, tt.want)
+				got := wrapper.(wrapperWithStatus)
+
+				createdAtDelta := time.Since(tt.want.GetCreatedAt()) / 2
+				wantCreatedAt := time.Now().Add(-createdAtDelta)
+				require.WithinDuration(t, wantCreatedAt, got.GetCreatedAt(), createdAtDelta)
+				got.SetCreatedAt(tt.want.GetCreatedAt())
+
+				updatedAtDelta := time.Since(tt.want.GetUpdatedAt()) / 2
+				wantUpdatedAt := time.Now().Add(-updatedAtDelta)
+				require.WithinDuration(t, wantUpdatedAt, got.GetUpdatedAt(), updatedAtDelta)
+				got.SetUpdatedAt(tt.want.GetUpdatedAt())
+
+				if diff := deep.Equal(got, tt.want); diff != nil {
+					t.Fatal(diff)
 				}
 			})
 		})
@@ -453,7 +409,7 @@ func TestStoreDelete(t *testing.T) {
 		beforeHook func(*testing.T, storev2.Interface)
 	}{
 		{
-			name: "an entity config can be deleted",
+			name: "an entity config can be soft deleted",
 			args: func() args {
 				ctx := context.Background()
 				cfg := corev3.FixtureEntityConfig("foo")
@@ -465,11 +421,11 @@ func TestStoreDelete(t *testing.T) {
 				}
 			}(),
 			beforeHook: func(t *testing.T, s storev2.Interface) {
-				testCreateNamespace(t, s, "default")
+				createNamespace(t, s, "default")
 			},
 		},
 		{
-			name: "an entity state can be deleted",
+			name: "an entity state can be soft deleted",
 			args: func() args {
 				ctx := context.Background()
 				state := corev3.FixtureEntityState("foo")
@@ -481,12 +437,12 @@ func TestStoreDelete(t *testing.T) {
 				}
 			}(),
 			beforeHook: func(t *testing.T, s storev2.Interface) {
-				testCreateNamespace(t, s, "default")
-				testCreateEntityConfig(t, s, "foo")
+				createNamespace(t, s, "default")
+				createEntityConfig(t, s, "foo")
 			},
 		},
 		{
-			name: "a namespace can be deleted",
+			name: "a namespace can be soft deleted",
 			args: func() args {
 				ctx := context.Background()
 				ns := corev3.FixtureNamespace("bar")
@@ -498,7 +454,7 @@ func TestStoreDelete(t *testing.T) {
 				}
 			}(),
 			beforeHook: func(t *testing.T, s storev2.Interface) {
-				testCreateNamespace(t, s, "default")
+				createNamespace(t, s, "default")
 			},
 		},
 	}
@@ -516,16 +472,95 @@ func TestStoreDelete(t *testing.T) {
 				if err := s.Delete(tt.args.req); err != nil {
 					t.Fatal(err)
 				}
-				if err := s.Delete(tt.args.req); err == nil {
-					t.Error("expected non-nil error")
-				} else if _, ok := err.(*store.ErrNotFound); !ok {
-					t.Errorf("expected ErrNotFound: got %s", err)
+				exists, err := s.(*StoreV2).Exists(tt.args.req)
+				if err != nil {
+					t.Fatal(err)
 				}
-				if _, err := s.Get(tt.args.req); err == nil {
-					t.Error("expected non-nil error")
-				} else if _, ok := err.(*store.ErrNotFound); !ok {
-					t.Errorf("expected ErrNotFound: got %s", err)
+				require.False(t, exists)
+			})
+		})
+	}
+}
+
+func TestStoreHardDelete(t *testing.T) {
+	type args struct {
+		req     storev2.ResourceRequest
+		wrapper storev2.Wrapper
+	}
+	tests := []struct {
+		name       string
+		args       args
+		beforeHook func(*testing.T, storev2.Interface)
+	}{
+		{
+			name: "an entity config can be hard deleted",
+			args: func() args {
+				ctx := context.Background()
+				cfg := corev3.FixtureEntityConfig("foo")
+				req := storev2.NewResourceRequestFromResource(ctx, cfg)
+				req.UsePostgres = true
+				return args{
+					req:     req,
+					wrapper: WrapEntityConfig(cfg),
 				}
+			}(),
+			beforeHook: func(t *testing.T, s storev2.Interface) {
+				createNamespace(t, s, "default")
+			},
+		},
+		{
+			name: "an entity state can be hard deleted",
+			args: func() args {
+				ctx := context.Background()
+				state := corev3.FixtureEntityState("foo")
+				req := storev2.NewResourceRequestFromResource(ctx, state)
+				req.UsePostgres = true
+				return args{
+					req:     req,
+					wrapper: WrapEntityState(state),
+				}
+			}(),
+			beforeHook: func(t *testing.T, s storev2.Interface) {
+				createNamespace(t, s, "default")
+				createEntityConfig(t, s, "foo")
+			},
+		},
+		{
+			name: "a namespace can be hard deleted",
+			args: func() args {
+				ctx := context.Background()
+				ns := corev3.FixtureNamespace("bar")
+				req := storev2.NewResourceRequestFromResource(ctx, ns)
+				req.UsePostgres = true
+				return args{
+					req:     req,
+					wrapper: WrapNamespace(ns),
+				}
+			}(),
+			beforeHook: func(t *testing.T, s storev2.Interface) {
+				createNamespace(t, s, "default")
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			testWithPostgresStoreV2(t, func(s storev2.Interface) {
+				if tt.beforeHook != nil {
+					tt.beforeHook(t, s)
+				}
+
+				// CreateIfNotExists should succeed
+				if err := s.CreateIfNotExists(tt.args.req, tt.args.wrapper); err != nil {
+					t.Fatal(err)
+				}
+				if err := s.(*StoreV2).HardDelete(tt.args.req); err != nil {
+					t.Fatal(err)
+				}
+				exists, err := s.(*StoreV2).Exists(tt.args.req)
+				if err != nil {
+					t.Fatal(err)
+				}
+				require.False(t, exists)
 			})
 		})
 	}
@@ -554,10 +589,10 @@ func TestStoreList(t *testing.T) {
 				}
 			}(),
 			beforeHook: func(t *testing.T, s storev2.Interface) {
-				testCreateNamespace(t, s, "default")
+				createNamespace(t, s, "default")
 				for i := 0; i < 10; i++ {
 					entityName := fmt.Sprintf("foo-%d", i)
-					testCreateEntityConfig(t, s, entityName)
+					createEntityConfig(t, s, entityName)
 				}
 			},
 		},
@@ -574,11 +609,11 @@ func TestStoreList(t *testing.T) {
 				}
 			}(),
 			beforeHook: func(t *testing.T, s storev2.Interface) {
-				testCreateNamespace(t, s, "default")
+				createNamespace(t, s, "default")
 				for i := 0; i < 10; i++ {
 					entityName := fmt.Sprintf("foo-%d", i)
-					testCreateEntityConfig(t, s, entityName)
-					testCreateEntityState(t, s, entityName)
+					createEntityConfig(t, s, entityName)
+					createEntityState(t, s, entityName)
 				}
 			},
 		},
@@ -597,7 +632,7 @@ func TestStoreList(t *testing.T) {
 			beforeHook: func(t *testing.T, s storev2.Interface) {
 				for i := 0; i < 10; i++ {
 					namespaceName := fmt.Sprintf("foo-%d", i)
-					testCreateNamespace(t, s, namespaceName)
+					createNamespace(t, s, namespaceName)
 				}
 			},
 		},
@@ -725,7 +760,7 @@ func TestStoreExists(t *testing.T) {
 				}
 			}(),
 			beforeHook: func(t *testing.T, s storev2.Interface) {
-				testCreateNamespace(t, s, "default")
+				createNamespace(t, s, "default")
 			},
 		},
 		{
@@ -741,8 +776,8 @@ func TestStoreExists(t *testing.T) {
 				}
 			}(),
 			beforeHook: func(t *testing.T, s storev2.Interface) {
-				testCreateNamespace(t, s, "default")
-				testCreateEntityConfig(t, s, "foo")
+				createNamespace(t, s, "default")
+				createEntityConfig(t, s, "foo")
 			},
 		},
 		{
@@ -817,7 +852,7 @@ func TestStorePatch(t *testing.T) {
 				}
 			}(),
 			beforeHook: func(t *testing.T, s storev2.Interface) {
-				testCreateNamespace(t, s, "default")
+				createNamespace(t, s, "default")
 			},
 		},
 		{
@@ -836,8 +871,8 @@ func TestStorePatch(t *testing.T) {
 				}
 			}(),
 			beforeHook: func(t *testing.T, s storev2.Interface) {
-				testCreateNamespace(t, s, "default")
-				testCreateEntityConfig(t, s, "foo")
+				createNamespace(t, s, "default")
+				createEntityConfig(t, s, "foo")
 			},
 		},
 		{
@@ -856,7 +891,7 @@ func TestStorePatch(t *testing.T) {
 				}
 			}(),
 			beforeHook: func(t *testing.T, s storev2.Interface) {
-				testCreateNamespace(t, s, "default")
+				createNamespace(t, s, "default")
 			},
 		},
 	}
@@ -915,7 +950,7 @@ func TestStoreGetMultiple(t *testing.T) {
 				}
 			}(),
 			reqs: func(t *testing.T, s storev2.Interface) []storev2.ResourceRequest {
-				testCreateNamespace(t, s, "default")
+				createNamespace(t, s, "default")
 				ctx := context.Background()
 				reqs := make([]storev2.ResourceRequest, 0)
 				for i := 0; i < 10; i++ {
@@ -924,7 +959,7 @@ func TestStoreGetMultiple(t *testing.T) {
 					req := storev2.NewResourceRequestFromResource(ctx, cfg)
 					req.UsePostgres = true
 					reqs = append(reqs, req)
-					testCreateEntityConfig(t, s, entityName)
+					createEntityConfig(t, s, entityName)
 				}
 				return reqs
 			},
@@ -955,7 +990,7 @@ func TestStoreGetMultiple(t *testing.T) {
 				}
 			}(),
 			reqs: func(t *testing.T, s storev2.Interface) []storev2.ResourceRequest {
-				testCreateNamespace(t, s, "default")
+				createNamespace(t, s, "default")
 				ctx := context.Background()
 				reqs := make([]storev2.ResourceRequest, 0)
 				for i := 0; i < 10; i++ {
@@ -964,8 +999,8 @@ func TestStoreGetMultiple(t *testing.T) {
 					req := storev2.NewResourceRequestFromResource(ctx, state)
 					req.UsePostgres = true
 					reqs = append(reqs, req)
-					testCreateEntityConfig(t, s, entityName)
-					testCreateEntityState(t, s, entityName)
+					createEntityConfig(t, s, entityName)
+					createEntityState(t, s, entityName)
 				}
 				return reqs
 			},
@@ -1004,7 +1039,7 @@ func TestStoreGetMultiple(t *testing.T) {
 					req := storev2.NewResourceRequestFromResource(ctx, namespace)
 					req.UsePostgres = true
 					reqs = append(reqs, req)
-					testCreateNamespace(t, s, namespaceName)
+					createNamespace(t, s, namespaceName)
 				}
 				return reqs
 			},
