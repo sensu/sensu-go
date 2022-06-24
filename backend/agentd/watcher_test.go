@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/sensu/sensu-go/backend/etcd"
+	"github.com/sensu/sensu-go/backend/store/v2/etcdstore"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -13,7 +14,8 @@ func TestGetEntityConfigWatcher(t *testing.T) {
 	defer cleanup()
 	client := e.NewEmbeddedClient()
 	defer client.Close()
+	store := etcdstore.NewStore(client)
 
-	ch := GetEntityConfigWatcher(context.Background(), client)
+	ch := GetEntityConfigWatcher(context.Background(), store)
 	assert.NotNil(t, ch)
 }

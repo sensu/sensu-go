@@ -3,19 +3,19 @@ package agentd
 import (
 	"bytes"
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	corev3 "github.com/sensu/sensu-go/api/core/v3"
+	"github.com/sensu/sensu-go/backend/apid/routers"
 	"github.com/sensu/sensu-go/backend/etcd"
-	"github.com/sensu/sensu-go/backend/store"
-	etcdstore "github.com/sensu/sensu-go/backend/store/etcd"
+	storev2 "github.com/sensu/sensu-go/backend/store/v2"
+	"github.com/sensu/sensu-go/backend/store/v2/etcdstore"
+	"github.com/sensu/sensu-go/backend/store/v2/wrap"
 	"github.com/sensu/sensu-go/testing/mockbus"
 	"github.com/sensu/sensu-go/testing/mockstore"
 	"github.com/sensu/sensu-go/transport"
@@ -34,7 +34,7 @@ func TestAgentdMiddlewares(t *testing.T) {
 		agentName    string
 		username     string
 		group        string
-		storeErr     error
+		authenErr    error
 		expectedCode int
 	}{
 		{
@@ -52,52 +52,73 @@ func TestAgentdMiddlewares(t *testing.T) {
 			description:  "Invalid user",
 			namespace:    "test-rbac",
 			username:     "nonexistent-user",
-			storeErr:     fmt.Errorf("user not found"),
+			authenErr:    fmt.Errorf("user not found"),
 			expectedCode: http.StatusUnauthorized,
 		},
 	}
 
+	resourceRequestMatcher := func(storeName, namespace, name string) func(interface{}) bool {
+		return func(i interface{}) bool {
+			rr, ok := i.(storev2.ResourceRequest)
+			if !ok {
+				return false
+			}
+			if rr.StoreName != storeName ||
+				rr.Namespace != namespace ||
+				rr.Name != name {
+				return false
+			}
+			return true
+		}
+	}
+
 	for _, tc := range tests {
-		stor := &mockstore.MockStore{}
-		user := corev2.FixtureUser(tc.username)
-		user.Groups = append(user.Groups, tc.group)
-		stor.On("GetUser", mock.Anything, tc.username).Return(user, tc.storeErr)
-		stor.On("AuthenticateUser", mock.Anything, tc.username, "password").Return(user, tc.storeErr)
-		stor.On("ListClusterRoleBindings", mock.Anything, &store.SelectionPredicate{}).
-			Return([]*corev2.ClusterRoleBinding{{
-				RoleRef: corev2.RoleRef{
-					Type: "ClusterRole",
-					Name: "cluster-admin",
-				},
-				Subjects: []corev2.Subject{
-					{Type: corev2.GroupType, Name: "cluster-admins"},
-				},
-				ObjectMeta: corev2.ObjectMeta{
-					Name: "cluster-admin",
-				},
-			}}, nil)
-		stor.On("ListRoleBindings", mock.Anything, &store.SelectionPredicate{}).
-			Return([]*corev2.RoleBinding{{
-				RoleRef: corev2.RoleRef{
-					Type: "ClusterRole",
-					Name: "admin",
-				},
-				Subjects: []corev2.Subject{
-					{Type: corev2.GroupType, Name: "group-test-rbac"},
-				},
-				ObjectMeta: corev2.ObjectMeta{
-					Name:      "role-test-rbac-admin",
-					Namespace: "test-rbac",
-				},
-			}}, nil)
-		stor.On("GetClusterRole", mock.Anything, "admin", mock.Anything).
-			Return(&corev2.ClusterRole{Rules: []corev2.Rule{
-				{
-					Verbs:     []string{"create"},
-					Resources: []string{"events"},
-				},
-			}}, nil)
-		agentd := &Agentd{store: stor}
+		authenticator := &mockAuthenticator{}
+		claims := corev2.FixtureClaims(tc.username, []string{"default", tc.group})
+		authenticator.On("Authenticate", mock.Anything, tc.username, "password").Return(claims, tc.authenErr)
+		stor := &mockstore.V2MockStore{}
+		stor.On("List", mock.Anything, mock.MatchedBy(resourceRequestMatcher("cluster_role_bindings", tc.namespace, "")), mock.Anything).
+			Return(mockstore.WrapList[*corev2.ClusterRoleBinding](
+				[]*corev2.ClusterRoleBinding{{
+					RoleRef: corev2.RoleRef{
+						Type: "ClusterRole",
+						Name: "cluster-admin",
+					},
+					Subjects: []corev2.Subject{
+						{Type: corev2.GroupType, Name: "cluster-admins"},
+					},
+					ObjectMeta: corev2.ObjectMeta{
+						Name: "cluster-admin",
+					},
+				}}), nil)
+
+		stor.On("List", mock.Anything, mock.MatchedBy(resourceRequestMatcher("role_bindings", tc.namespace, "")), mock.Anything).
+			Return(mockstore.WrapList[*corev2.RoleBinding](
+				[]*corev2.RoleBinding{{
+					RoleRef: corev2.RoleRef{
+						Type: "ClusterRole",
+						Name: "admin",
+					},
+					Subjects: []corev2.Subject{
+						{Type: corev2.GroupType, Name: "group-test-rbac"},
+					},
+					ObjectMeta: corev2.ObjectMeta{
+						Name:      "role-test-rbac-admin",
+						Namespace: "test-rbac",
+					},
+				}}), nil)
+		stor.On("Get", mock.Anything, mock.MatchedBy(resourceRequestMatcher("cluster_roles", tc.namespace, "admin")), mock.Anything).
+			Return(wrapResource(t,
+				&corev2.ClusterRole{
+					ObjectMeta: corev2.NewObjectMeta("group-test-rbac", ""),
+					Rules: []corev2.Rule{
+						{
+							Verbs:     []string{"create"},
+							Resources: []string{"events"},
+						},
+					}}), nil)
+
+		agentd := &Agentd{store: stor, authenticator: authenticator}
 		server := httptest.NewServer(agentd.AuthenticationMiddleware(agentd.AuthorizationMiddleware(testHandler)))
 		defer server.Close()
 		req, _ := http.NewRequest(http.MethodPost, server.URL, bytes.NewBuffer([]byte{}))
@@ -117,13 +138,15 @@ func TestRunWatcher(t *testing.T) {
 	tests := []struct {
 		name       string
 		busFunc    busFunc
-		watchEvent store.WatchEventEntityConfig
+		watchEvent []storev2.WatchEvent
 	}{
 		{
 			name: "bus error",
-			watchEvent: store.WatchEventEntityConfig{
-				Action: store.WatchCreate,
-				Entity: corev3.FixtureEntityConfig("foo"),
+			watchEvent: []storev2.WatchEvent{
+				{
+					Type:  storev2.WatchCreate,
+					Value: wrapResource(t, corev3.FixtureEntityConfig("foo")),
+				},
 			},
 			busFunc: func(bus *mockbus.MockBus) {
 				bus.On("Publish", mock.Anything, mock.Anything).Once().Return(errors.New("error"))
@@ -131,9 +154,11 @@ func TestRunWatcher(t *testing.T) {
 		},
 		{
 			name: "watch events are successfully published to the bus",
-			watchEvent: store.WatchEventEntityConfig{
-				Action: store.WatchCreate,
-				Entity: corev3.FixtureEntityConfig("foo"),
+			watchEvent: []storev2.WatchEvent{
+				{
+					Type:  storev2.WatchCreate,
+					Value: wrapResource(t, corev3.FixtureEntityConfig("foo")),
+				},
 			},
 			busFunc: func(bus *mockbus.MockBus) {
 				bus.On("Publish", mock.Anything, mock.Anything).Once().Return(nil)
@@ -142,7 +167,7 @@ func TestRunWatcher(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			watcher := make(chan store.WatchEventEntityConfig)
+			watcher := make(chan []storev2.WatchEvent)
 
 			// Mock the bus
 			bus := &mockbus.MockBus{}
@@ -154,11 +179,13 @@ func TestRunWatcher(t *testing.T) {
 			defer cleanup()
 			client := e.NewEmbeddedClient()
 			defer func() { _ = client.Close() }()
+			stor := etcdstore.NewStore(client)
 
 			agent, err := New(Config{
-				Bus:     bus,
-				Watcher: watcher,
-				Client:  client,
+				Bus:          bus,
+				Watcher:      watcher,
+				Store:        stor,
+				HealthRouter: routers.NewHealthRouter(nil),
 			})
 			assert.NoError(t, err)
 
@@ -169,76 +196,20 @@ func TestRunWatcher(t *testing.T) {
 	}
 }
 
-func TestHealthHandler(t *testing.T) {
-	e, cleanup := etcd.NewTestEtcd(t)
-	defer cleanup()
-	client := e.NewEmbeddedClient()
-	defer func() { _ = client.Close() }()
-
-	stor := etcdstore.NewStore(client)
-	agent, err := New(Config{
-		Store:  stor,
-		Client: client,
-	})
-	assert.NoError(t, err)
-
-	srv := httptest.NewServer(agent.httpServer.Handler)
-	defer srv.Close()
-
-	req, _ := http.NewRequest(http.MethodGet, fmt.Sprintf("%s/health", srv.URL), bytes.NewBuffer([]byte{}))
-	res, err := http.DefaultClient.Do(req)
-	assert.NoError(t, err)
-	assert.Equal(t, 200, res.StatusCode)
+type mockAuthenticator struct {
+	mock.Mock
 }
 
-func TestReplaceHealthController(t *testing.T) {
-	mockHealth := &corev2.HealthResponse{
-		PostgresHealth: []*corev2.PostgresHealth{
-			{
-				Name:    "MockPostgres",
-				Active:  true,
-				Healthy: true,
-			},
-		},
+func (m *mockAuthenticator) Authenticate(ctx context.Context, username, password string) (*corev2.Claims, error) {
+	args := m.Called(ctx, username, password)
+	claims, _ := args.Get(0).(*corev2.Claims)
+	return claims, args.Error(1)
+}
+
+func wrapResource(t *testing.T, r corev3.Resource, opts ...wrap.Option) storev2.Wrapper {
+	w, err := storev2.WrapResource(r, opts...)
+	if err != nil {
+		t.Errorf("error wrapping resource: %v", err)
 	}
-
-	e, cleanup := etcd.NewTestEtcd(t)
-	defer cleanup()
-	client := e.NewEmbeddedClient()
-	defer func() { _ = client.Close() }()
-
-	stor := etcdstore.NewStore(client)
-	agent, err := New(Config{
-		Store:  stor,
-		Client: client,
-	})
-	assert.NoError(t, err)
-	agent.ReplaceHealthController(&mockHealthController{
-		mockResponse: mockHealth,
-	})
-
-	srv := httptest.NewServer(agent.httpServer.Handler)
-	defer srv.Close()
-
-	req, _ := http.NewRequest(http.MethodGet, fmt.Sprintf("%s/health", srv.URL), bytes.NewBuffer([]byte{}))
-	res, err := http.DefaultClient.Do(req)
-	assert.NoError(t, err)
-	assert.Equal(t, 200, res.StatusCode)
-
-	assert.NotNil(t, res.Body)
-	body, err := ioutil.ReadAll(res.Body)
-	assert.NoError(t, err)
-
-	receivedHealth := &corev2.HealthResponse{}
-	err = json.Unmarshal(body, receivedHealth)
-	assert.NoError(t, err)
-	assert.Equal(t, mockHealth, receivedHealth)
-}
-
-type mockHealthController struct {
-	mockResponse *corev2.HealthResponse
-}
-
-func (mhc mockHealthController) GetClusterHealth(_ context.Context) *corev2.HealthResponse {
-	return mhc.mockResponse
+	return w
 }
