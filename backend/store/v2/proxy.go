@@ -4,6 +4,7 @@ import (
 	"context"
 	"sync"
 
+	corev3 "github.com/sensu/sensu-go/api/core/v3"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/backend/store/patch"
 )
@@ -87,4 +88,16 @@ func (p *Proxy) Watch(ctx context.Context, req ResourceRequest) <-chan []WatchEv
 	p.mu.RLock()
 	defer p.mu.RUnlock()
 	return p.impl.Watch(ctx, req)
+}
+
+func (p *Proxy) CreateNamespace(ctx context.Context, ns *corev3.Namespace) error {
+	p.mu.RLock()
+	defer p.mu.RUnlock()
+	return p.impl.CreateNamespace(ctx, ns)
+}
+
+func (p *Proxy) DeleteNamespace(ctx context.Context, name string) error {
+	p.mu.RLock()
+	defer p.mu.RUnlock()
+	return p.impl.DeleteNamespace(ctx, name)
 }
