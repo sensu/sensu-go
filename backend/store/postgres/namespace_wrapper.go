@@ -1,9 +1,11 @@
 package postgres
 
 import (
+	"database/sql"
 	"encoding/json"
 	"fmt"
 	"strings"
+	"time"
 
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	corev3 "github.com/sensu/sensu-go/api/core/v3"
@@ -13,14 +15,48 @@ import (
 // NamespaceWrapper is an implementation of storev2.Wrapper, for dealing with
 // postgresql namespace storage.
 type NamespaceWrapper struct {
+	ID          int64
 	Name        string
 	Selectors   []byte
 	Annotations []byte
+	CreatedAt   time.Time
+	UpdatedAt   time.Time
+	DeletedAt   sql.NullTime
 }
 
 // GetName returns the name of the namespace.
 func (e *NamespaceWrapper) GetName() string {
 	return e.Name
+}
+
+// GetCreatedAt returns the value of the CreatedAt field
+func (e *NamespaceWrapper) GetCreatedAt() time.Time {
+	return e.CreatedAt
+}
+
+// GetUpdatedAt returns the value of the UpdatedAt field
+func (e *NamespaceWrapper) GetUpdatedAt() time.Time {
+	return e.UpdatedAt
+}
+
+// GetDeletedAt returns the value of the DeletedAt field
+func (e *NamespaceWrapper) GetDeletedAt() sql.NullTime {
+	return e.DeletedAt
+}
+
+// SetCreatedAt sets the value of the CreatedAt field
+func (e *NamespaceWrapper) SetCreatedAt(t time.Time) {
+	e.CreatedAt = t
+}
+
+// SetUpdatedAt sets the value of the UpdatedAt field
+func (e *NamespaceWrapper) SetUpdatedAt(t time.Time) {
+	e.UpdatedAt = t
+}
+
+// SetDeletedAt sets the value of the DeletedAt field
+func (e *NamespaceWrapper) SetDeletedAt(t sql.NullTime) {
+	e.DeletedAt = t
 }
 
 // Unwrap unwraps the NamespaceWrapper into a *Namespace.
@@ -87,5 +123,9 @@ func (e *NamespaceWrapper) SQLParams() []interface{} {
 		&e.Name,
 		&e.Selectors,
 		&e.Annotations,
+		&e.ID,
+		&e.CreatedAt,
+		&e.UpdatedAt,
+		&e.DeletedAt,
 	}
 }

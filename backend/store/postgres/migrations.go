@@ -98,6 +98,11 @@ var migrations = []migration.Migrator{
 		_, err := tx.Exec(context.Background(), addNamespaceForeignKeys)
 		return err
 	},
+	// Migration 15
+	func(tx migration.LimitedTx) error {
+		_, err := tx.Exec(context.Background(), addTimestampColumns)
+		return err
+	},
 }
 
 type eventRecord struct {

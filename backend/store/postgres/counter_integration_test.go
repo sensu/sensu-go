@@ -7,9 +7,9 @@ import (
 	"testing"
 	"time"
 
+	"github.com/go-test/deep"
 	"github.com/jackc/pgx/v4/pgxpool"
 	v2 "github.com/sensu/sensu-go/backend/store/v2"
-	"github.com/stretchr/testify/assert"
 )
 
 func TestCounterWatcherIntegration(t *testing.T) {
@@ -64,7 +64,9 @@ func TestCounterWatcherIntegration(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		assert.Equal(t, actualState, counterState, "expected database and local state with watcher to match.")
+		if diff := deep.Equal(actualState, counterState); diff != nil {
+			t.Fatalf("expected database and local state with watcher to match: %v", diff)
+		}
 	})
 }
 
