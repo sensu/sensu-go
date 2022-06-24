@@ -231,7 +231,7 @@ func (s *Silenced) SetMetadata(meta *ObjectMeta) {
 }
 
 func (u *User) StoreName() string {
-	return u.StorePrefix()
+	return "users"
 }
 
 func (u *User) GetMetadata() *ObjectMeta {
