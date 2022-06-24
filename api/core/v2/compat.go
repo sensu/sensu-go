@@ -229,3 +229,18 @@ func (s *Silenced) GetMetadata() *ObjectMeta {
 func (s *Silenced) SetMetadata(meta *ObjectMeta) {
 	s.ObjectMeta = *meta
 }
+
+func (u *User) StoreName() string {
+	return u.StorePrefix()
+}
+
+func (u *User) GetMetadata() *ObjectMeta {
+	return &ObjectMeta{
+		Namespace: "",
+		Name:      u.Username,
+	}
+}
+
+func (u *User) SetMetadata(meta *ObjectMeta) {
+	u.Username = meta.Name
+}
