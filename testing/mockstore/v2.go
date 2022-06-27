@@ -2,6 +2,8 @@ package mockstore
 
 import (
 	"context"
+	"errors"
+	"reflect"
 
 	corev3 "github.com/sensu/sensu-go/api/core/v3"
 	"github.com/sensu/sensu-go/backend/store"
@@ -62,4 +64,44 @@ func (v *V2MockStore) CreateNamespace(ctx context.Context, ns *corev3.Namespace)
 
 func (v *V2MockStore) DeleteNamespace(ctx context.Context, name string) error {
 	return v.Called(ctx, name).Error(0)
+}
+
+type WrapList[T corev3.Resource] []T
+
+func (w WrapList[T]) Unwrap() ([]corev3.Resource, error) {
+	result := make([]corev3.Resource, 0)
+	for _, resource := range w {
+		result = append(result, resource)
+	}
+	return result, nil
+}
+
+func (w WrapList[T]) UnwrapInto(target interface{}) error {
+	list, ok := target.(*[]T)
+	if !ok {
+		return errors.New("bad target")
+	}
+	*list = w
+	return nil
+}
+
+func (w WrapList[T]) Len() int {
+	return len(w)
+}
+
+type Wrapper[T corev3.Resource] struct {
+	Value T
+}
+
+func (w Wrapper[T]) Unwrap() (corev3.Resource, error) {
+	return w.Value, nil
+}
+
+func (w Wrapper[T]) UnwrapInto(target interface{}) error {
+	val, ok := target.(T)
+	if !ok {
+		panic("bad target")
+	}
+	reflect.ValueOf(val).Elem().Set(reflect.ValueOf(w.Value).Elem())
+	return nil
 }
