@@ -23,8 +23,7 @@ type WrapList interface {
 
 // Interface specifies the interface of a v2 store.
 type Interface interface {
-	// todo: uncomment after #4765 implements namespacestore on postgres store
-	// NamespaceStore
+	NamespaceStore
 
 	// CreateOrUpdate creates or updates the wrapped resource.
 	CreateOrUpdate(ResourceRequest, Wrapper) error

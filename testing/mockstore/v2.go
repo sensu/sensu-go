@@ -3,10 +3,10 @@ package mockstore
 import (
 	"context"
 
+	corev3 "github.com/sensu/sensu-go/api/core/v3"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/backend/store/patch"
 	storev2 "github.com/sensu/sensu-go/backend/store/v2"
-	"github.com/sensu/sensu-go/backend/store/v2/wrap"
 	"github.com/stretchr/testify/mock"
 )
 
@@ -38,7 +38,7 @@ func (v *V2MockStore) Delete(req storev2.ResourceRequest) error {
 
 func (v *V2MockStore) List(req storev2.ResourceRequest, pred *store.SelectionPredicate) (storev2.WrapList, error) {
 	args := v.Called(req, pred)
-	list, _ := args.Get(0).(wrap.List)
+	list, _ := args.Get(0).(storev2.WrapList)
 	return list, args.Error(1)
 }
 
@@ -54,4 +54,12 @@ func (v *V2MockStore) Patch(req storev2.ResourceRequest, w storev2.Wrapper, patc
 func (v *V2MockStore) Watch(ctx context.Context, req storev2.ResourceRequest) <-chan []storev2.WatchEvent {
 	args := v.Called(ctx, req)
 	return args.Get(0).(<-chan []storev2.WatchEvent)
+}
+
+func (v *V2MockStore) CreateNamespace(ctx context.Context, ns *corev3.Namespace) error {
+	return v.Called(ctx, ns).Error(0)
+}
+
+func (v *V2MockStore) DeleteNamespace(ctx context.Context, name string) error {
+	return v.Called(ctx, name).Error(0)
 }
