@@ -15,8 +15,12 @@ import (
 )
 
 func init() {
+	tr := testResource{}
+	tr2 := testResource2{}
 	types.RegisterResolver("wrap_test/v2", testResolver)
 	types.RegisterResolver("v2/wrap_test", testResolver)
+	types.RegisterTypeMeta(tr.StoreName(), tr.GetTypeMeta())
+	types.RegisterTypeMeta(tr2.StoreName(), tr2.GetTypeMeta())
 }
 
 func testResolver(name string) (interface{}, error) {
@@ -212,7 +216,7 @@ func (t *testResource2) Validate() error {
 func (t *testResource2) GetTypeMeta() corev2.TypeMeta {
 	return corev2.TypeMeta{
 		Type:       "testResource2",
-		APIVersion: "test/v2",
+		APIVersion: "wrap_test/v2",
 	}
 }
 

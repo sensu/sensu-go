@@ -18,7 +18,7 @@ const ConfigurationDDL = `CREATE TABLE IF NOT EXISTS configuration (
     created_at          timestamptz NOT NULL DEFAULT NOW(),
     updated_at          timestamptz NOT NULL DEFAULT NOW(),
     deleted_at          timestamptz NOT NULL DEFAULT '-infinity',
-    CONSTRAINT resource_unique UNIQUE(api_version, api_type, namespace, name, deleted_at)
+    CONSTRAINT configuration_unique UNIQUE(api_version, api_type, namespace, name, deleted_at)
 );
 
 CREATE OR REPLACE FUNCTION refresh_updated_at_column()
