@@ -7,7 +7,7 @@ orbs:
 parameters:
   go_version:
     type: string
-    default: "1.18.1"
+    default: "1.18.3"
 
 executors:
   go:
@@ -23,7 +23,7 @@ executors:
         auth:
           username: $DOCKER_USERNAME
           password: $DOCKER_PASSWORD
-      - image: circleci/postgres:9.5.20-alpine
+      - image: cimg/postgres:10.17
         auth:
           username: $DOCKER_USERNAME
           password: $DOCKER_PASSWORD
