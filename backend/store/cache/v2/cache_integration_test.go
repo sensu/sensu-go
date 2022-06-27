@@ -94,7 +94,7 @@ func TestEntityCacheIntegration(t *testing.T) {
 	cacheCtx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	cache, err := New(cacheCtx, client, &corev3.EntityConfig{}, true)
+	cache, err := New(cacheCtx, store, &corev3.EntityConfig{}, true)
 	if err != nil {
 		t.Fatal(err)
 	}

@@ -12,9 +12,7 @@ import (
 	corev3 "github.com/sensu/sensu-go/api/core/v3"
 	"github.com/sensu/sensu-go/backend/store"
 	storev2 "github.com/sensu/sensu-go/backend/store/v2"
-	"github.com/sensu/sensu-go/backend/store/v2/etcdstore"
 	"github.com/sensu/sensu-go/types/dynamic"
-	clientv3 "go.etcd.io/etcd/client/v3"
 )
 
 // Value contains a cached value, and its synthesized companion.
@@ -99,13 +97,12 @@ type Resource struct {
 	watchersMu sync.Mutex
 	synthesize bool
 	resourceT  corev3.Resource
-	client     *clientv3.Client
+	store      storev2.Interface
 }
 
 // getResources retrieves the resources from the store
-func getResources(ctx context.Context, client *clientv3.Client, resource corev3.Resource) ([]corev3.Resource, error) {
+func getResources(ctx context.Context, stor storev2.Interface, resource corev3.Resource) ([]corev3.Resource, error) {
 	req := storev2.NewResourceRequestFromResource(resource)
-	stor := etcdstore.NewStore(client)
 	results, err := stor.List(ctx, req, &store.SelectionPredicate{})
 	if err != nil {
 		return nil, fmt.Errorf("error creating ResourceCacher: %s", err)
@@ -115,8 +112,8 @@ func getResources(ctx context.Context, client *clientv3.Client, resource corev3.
 
 // New creates a new resource cache. It retrieves all resources from the
 // store on creation.
-func New(ctx context.Context, client *clientv3.Client, resource corev3.Resource, synthesize bool) (*Resource, error) {
-	resources, err := getResources(ctx, client, resource)
+func New(ctx context.Context, store storev2.Interface, resource corev3.Resource, synthesize bool) (*Resource, error) {
+	resources, err := getResources(ctx, store, resource)
 	if err != nil {
 		return nil, err
 	}
@@ -127,7 +124,7 @@ func New(ctx context.Context, client *clientv3.Client, resource corev3.Resource,
 		cache:      cache,
 		synthesize: synthesize,
 		resourceT:  resource,
-		client:     client,
+		store:      store,
 	}
 	atomic.StoreInt64(&cacher.count, int64(len(resources)))
 
@@ -231,7 +228,7 @@ func (r *Resource) start(ctx context.Context) {
 // rebuild the cache using the store as the source of truth
 func (r *Resource) rebuild(ctx context.Context) (bool, error) {
 	logger.Debugf("rebuilding the cache for resource type %T", r.resourceT)
-	resources, err := getResources(ctx, r.client, r.resourceT)
+	resources, err := getResources(ctx, r.store, r.resourceT)
 	if err != nil {
 		return false, err
 	}
