@@ -396,10 +396,10 @@ func (k *Keepalived) handleEntityRegistration(entity *corev2.Entity, event *core
 		return err
 	}
 
-	req := storev2.NewResourceRequestFromResource(tctx, config)
+	req := storev2.NewResourceRequestFromResource(config)
 
 	exists := true
-	wrappedEntityConfig, err := k.storev2.Get(req)
+	wrappedEntityConfig, err := k.storev2.Get(tctx, req)
 	if err != nil {
 		if _, ok := err.(*store.ErrNotFound); !ok {
 			logger.WithError(err).Error("error while checking if entity exists")
@@ -414,7 +414,7 @@ func (k *Keepalived) handleEntityRegistration(entity *corev2.Entity, event *core
 			// If this keepalive is the first one sent by an agent, we want to update
 			// the stored entity config to reflect the sent one
 			if event.Sequence == 1 {
-				if err := k.storev2.UpdateIfExists(req, wrapper); err != nil {
+				if err := k.storev2.UpdateIfExists(tctx, req, wrapper); err != nil {
 					logger.WithError(err).Error("could not update entity")
 					return err
 				}
@@ -439,7 +439,7 @@ func (k *Keepalived) handleEntityRegistration(entity *corev2.Entity, event *core
 				logger.WithError(err).Error("error wrapping entity config")
 				return err
 			}
-			if err := k.storev2.UpdateIfExists(req, wrapper); err != nil {
+			if err := k.storev2.UpdateIfExists(tctx, req, wrapper); err != nil {
 				logger.WithError(err).Error("could not update entity")
 				return err
 			}
@@ -449,7 +449,7 @@ func (k *Keepalived) handleEntityRegistration(entity *corev2.Entity, event *core
 
 	// The entity config does not exist so create it and publish a registration
 	// event
-	if err := k.storev2.CreateIfNotExists(req, wrapper); err == nil {
+	if err := k.storev2.CreateIfNotExists(tctx, req, wrapper); err == nil {
 		event := createRegistrationEvent(entity)
 		return k.bus.Publish(messaging.TopicEvent, event)
 	} else if _, ok := err.(*store.ErrAlreadyExists); ok {
@@ -585,8 +585,8 @@ func (k *Keepalived) dead(key string, prev liveness.State, leader bool) bool {
 	meta := corev2.NewObjectMeta(name, namespace)
 	cfg := &corev3.EntityConfig{Metadata: &meta}
 
-	req := storev2.NewResourceRequestFromResource(ctx, cfg)
-	wrapper, err := k.storev2.Get(req)
+	req := storev2.NewResourceRequestFromResource(cfg)
+	wrapper, err := k.storev2.Get(ctx, req)
 	if err != nil {
 		if _, ok := err.(*store.ErrNotFound); ok {
 			// The entity has been deleted, there is no longer a need to track
@@ -709,12 +709,12 @@ func (k *Keepalived) handleUpdate(e *corev2.Event) error {
 		return err
 	}
 
-	req := storev2.NewResourceRequestFromResource(k.ctx, entityState)
+	req := storev2.NewResourceRequestFromResource(entityState)
 
 	// use postgres, if available (enterprise only, entity state only)
 	req.UsePostgres = true
 
-	if err := k.storev2.CreateOrUpdate(req, wrapper); err != nil {
+	if err := k.storev2.CreateOrUpdate(k.ctx, req, wrapper); err != nil {
 		logger.WithError(err).Error("error updating entity state in store")
 		return err
 	}

@@ -26,31 +26,31 @@ type Interface interface {
 	NamespaceStore
 
 	// CreateOrUpdate creates or updates the wrapped resource.
-	CreateOrUpdate(ResourceRequest, Wrapper) error
+	CreateOrUpdate(context.Context, ResourceRequest, Wrapper) error
 
 	// UpdateIfExists updates the resource with the wrapped resource, but only
 	// if it already exists in the store.
-	UpdateIfExists(ResourceRequest, Wrapper) error
+	UpdateIfExists(context.Context, ResourceRequest, Wrapper) error
 
 	// CreateIfNotExists writes the wrapped resource to the store, but only if
 	// it does not already exist.
-	CreateIfNotExists(ResourceRequest, Wrapper) error
+	CreateIfNotExists(context.Context, ResourceRequest, Wrapper) error
 
 	// Get gets a wrapped resource from the store.
-	Get(ResourceRequest) (Wrapper, error)
+	Get(context.Context, ResourceRequest) (Wrapper, error)
 
 	// Delete deletes a resource from the store.
-	Delete(ResourceRequest) error
+	Delete(context.Context, ResourceRequest) error
 
 	// List lists all resources specified by the resource request, and the
 	// selection predicate.
-	List(ResourceRequest, *store.SelectionPredicate) (WrapList, error)
+	List(context.Context, ResourceRequest, *store.SelectionPredicate) (WrapList, error)
 
 	// Exists returns true if the resource indicated by the request exists
-	Exists(ResourceRequest) (bool, error)
+	Exists(context.Context, ResourceRequest) (bool, error)
 
 	// Patch patches the resource given in the request
-	Patch(ResourceRequest, Wrapper, patch.Patcher, *store.ETagCondition) error
+	Patch(context.Context, ResourceRequest, Wrapper, patch.Patcher, *store.ETagCondition) error
 
 	// Watch provides a channel for receiving updates to a particular resource
 	// or resource collection

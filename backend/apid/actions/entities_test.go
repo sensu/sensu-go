@@ -331,7 +331,7 @@ func TestEntityCreateOrReplace(t *testing.T) {
 				Return(tc.createErr)
 
 			storev2.
-				On("CreateOrUpdate", mock.Anything, mock.Anything).
+				On("CreateOrUpdate", mock.Anything, mock.Anything, mock.Anything).
 				Return(tc.createErr)
 
 			if tc.exists {

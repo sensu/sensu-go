@@ -14,7 +14,7 @@ import (
 	storev2 "github.com/sensu/sensu-go/backend/store/v2"
 	"github.com/sensu/sensu-go/backend/store/v2/etcdstore"
 	"github.com/sensu/sensu-go/types/dynamic"
-	"go.etcd.io/etcd/client/v3"
+	clientv3 "go.etcd.io/etcd/client/v3"
 )
 
 // Value contains a cached value, and its synthesized companion.
@@ -104,9 +104,9 @@ type Resource struct {
 
 // getResources retrieves the resources from the store
 func getResources(ctx context.Context, client *clientv3.Client, resource corev3.Resource) ([]corev3.Resource, error) {
-	req := storev2.NewResourceRequestFromResource(ctx, resource)
+	req := storev2.NewResourceRequestFromResource(resource)
 	stor := etcdstore.NewStore(client)
-	results, err := stor.List(req, &store.SelectionPredicate{})
+	results, err := stor.List(ctx, req, &store.SelectionPredicate{})
 	if err != nil {
 		return nil, fmt.Errorf("error creating ResourceCacher: %s", err)
 	}

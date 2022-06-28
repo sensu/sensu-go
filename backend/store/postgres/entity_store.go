@@ -36,17 +36,17 @@ func (e *EntityStore) DeleteEntity(ctx context.Context, entity *corev2.Entity) e
 	config := &corev3.EntityConfig{
 		Metadata: &entity.ObjectMeta,
 	}
-	stateReq := storev2.NewResourceRequestFromResource(ctx, state)
+	stateReq := storev2.NewResourceRequestFromResource(state)
 	stateReq.UsePostgres = true
-	configReq := storev2.NewResourceRequestFromResource(ctx, config)
+	configReq := storev2.NewResourceRequestFromResource(config)
 	configReq.UsePostgres = true
 
-	if err := e.store.Delete(configReq); err != nil {
+	if err := e.store.Delete(ctx, configReq); err != nil {
 		if _, ok := err.(*store.ErrNotFound); !ok {
 			return err
 		}
 	}
-	if err := e.store.Delete(stateReq); err != nil {
+	if err := e.store.Delete(ctx, stateReq); err != nil {
 		if _, ok := err.(*store.ErrNotFound); ok {
 			return nil
 		}
@@ -74,16 +74,16 @@ func (e *EntityStore) DeleteEntityByName(ctx context.Context, name string) error
 			Namespace: corev2.ContextNamespace(ctx),
 		},
 	}
-	stateReq := storev2.NewResourceRequestFromResource(ctx, state)
+	stateReq := storev2.NewResourceRequestFromResource(state)
 	stateReq.UsePostgres = true
-	configReq := storev2.NewResourceRequestFromResource(ctx, config)
+	configReq := storev2.NewResourceRequestFromResource(config)
 	configReq.UsePostgres = true
-	if err := e.store.Delete(configReq); err != nil {
+	if err := e.store.Delete(ctx, configReq); err != nil {
 		if _, ok := err.(*store.ErrNotFound); !ok {
 			return err
 		}
 	}
-	if err := e.store.Delete(stateReq); err != nil {
+	if err := e.store.Delete(ctx, stateReq); err != nil {
 		if _, ok := err.(*store.ErrNotFound); ok {
 			return nil
 		}
@@ -103,10 +103,12 @@ func (e *EntityStore) GetEntities(ctx context.Context, pred *store.SelectionPred
 	namespace := corev2.ContextNamespace(ctx)
 
 	// Fetch the entity configs with the selection predicate
+	var ec corev3.EntityConfig
 	configReq := storev2.ResourceRequest{
 		Namespace:   namespace,
-		Context:     ctx,
-		StoreName:   new(corev3.EntityConfig).StoreName(),
+		Type:        "EntityConfig",
+		APIVersion:  "core/v3",
+		StoreName:   ec.StoreName(),
 		UsePostgres: true,
 	}
 	if pred.Ordering == corev2.EntitySortName {
@@ -116,7 +118,7 @@ func (e *EntityStore) GetEntities(ctx context.Context, pred *store.SelectionPred
 		}
 	}
 
-	wConfigs, err := e.store.List(configReq, pred)
+	wConfigs, err := e.store.List(ctx, configReq, pred)
 	if err != nil {
 		return nil, err
 	}
@@ -129,9 +131,10 @@ func (e *EntityStore) GetEntities(ctx context.Context, pred *store.SelectionPred
 	stateRequests := []storev2.ResourceRequest{}
 	for _, config := range configs {
 		req := storev2.ResourceRequest{
+			Type:        "EntityState",
+			APIVersion:  "core/v3",
 			Namespace:   namespace,
 			Name:        config.Metadata.Name,
-			Context:     ctx,
 			StoreName:   new(corev3.EntityState).StoreName(),
 			UsePostgres: true,
 		}
@@ -207,9 +210,9 @@ func (e *EntityStore) GetEntityConfigByName(ctx context.Context, name string) (*
 			Namespace: corev2.ContextNamespace(ctx),
 		},
 	}
-	req := storev2.NewResourceRequestFromResource(ctx, cfg)
+	req := storev2.NewResourceRequestFromResource(cfg)
 	req.UsePostgres = true
-	wrapper, err := e.store.Get(req)
+	wrapper, err := e.store.Get(ctx, req)
 	if err != nil {
 		if _, ok := err.(*store.ErrNotFound); ok {
 			return nil, nil
@@ -236,9 +239,9 @@ func (e *EntityStore) GetEntityStateByName(ctx context.Context, name string) (*c
 			Namespace: corev2.ContextNamespace(ctx),
 		},
 	}
-	req := storev2.NewResourceRequestFromResource(ctx, state)
+	req := storev2.NewResourceRequestFromResource(state)
 	req.UsePostgres = true
-	wrapper, err := e.store.Get(req)
+	wrapper, err := e.store.Get(ctx, req)
 	if err != nil {
 		if _, ok := err.(*store.ErrNotFound); ok {
 			return nil, nil
@@ -277,13 +280,13 @@ func (e *EntityStore) UpdateEntityConfig(ctx context.Context, cfg *corev3.Entity
 	if cfg.Metadata.Namespace == "" {
 		cfg.Metadata.Namespace = corev2.ContextNamespace(ctx)
 	}
-	req := storev2.NewResourceRequestFromResource(ctx, cfg)
+	req := storev2.NewResourceRequestFromResource(cfg)
 	req.UsePostgres = true
 	wrappedConfig, err := storev2.WrapResource(cfg)
 	if err != nil {
 		return &store.ErrEncode{Err: err}
 	}
-	if err := e.store.CreateOrUpdate(req, wrappedConfig); err != nil {
+	if err := e.store.CreateOrUpdate(ctx, req, wrappedConfig); err != nil {
 		return err
 	}
 	return nil
@@ -294,13 +297,13 @@ func (e *EntityStore) UpdateEntityState(ctx context.Context, state *corev3.Entit
 	if state.Metadata.Namespace == "" {
 		state.Metadata.Namespace = corev2.ContextNamespace(ctx)
 	}
-	req := storev2.NewResourceRequestFromResource(ctx, state)
+	req := storev2.NewResourceRequestFromResource(state)
 	req.UsePostgres = true
 	wrappedState, err := storev2.WrapResource(state)
 	if err != nil {
 		return &store.ErrEncode{Err: err}
 	}
-	if err := e.store.CreateOrUpdate(req, wrappedState); err != nil {
+	if err := e.store.CreateOrUpdate(ctx, req, wrappedState); err != nil {
 		return err
 	}
 	return nil

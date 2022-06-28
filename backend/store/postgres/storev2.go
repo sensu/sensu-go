@@ -177,9 +177,9 @@ func errNoQuery(storeName string) error {
 	}
 }
 
-func (s *StoreV2) CreateOrUpdate(req storev2.ResourceRequest, wrapper storev2.Wrapper) error {
+func (s *StoreV2) CreateOrUpdate(ctx context.Context, req storev2.ResourceRequest, wrapper storev2.Wrapper) error {
 	if !req.UsePostgres {
-		return s.etcdStoreV2.CreateOrUpdate(req, wrapper)
+		return s.etcdStoreV2.CreateOrUpdate(ctx, req, wrapper)
 	}
 	pwrap, ok := wrapper.(wrapperWithParams)
 	if !ok {
@@ -193,16 +193,16 @@ func (s *StoreV2) CreateOrUpdate(req storev2.ResourceRequest, wrapper storev2.Wr
 
 	params := pwrap.SQLParams()
 
-	if _, err := s.db.Exec(req.Context, query, params...); err != nil {
+	if _, err := s.db.Exec(ctx, query, params...); err != nil {
 		return &store.ErrInternal{Message: err.Error()}
 	}
 
 	return nil
 }
 
-func (s *StoreV2) UpdateIfExists(req storev2.ResourceRequest, wrapper storev2.Wrapper) error {
+func (s *StoreV2) UpdateIfExists(ctx context.Context, req storev2.ResourceRequest, wrapper storev2.Wrapper) error {
 	if !req.UsePostgres {
-		return s.etcdStoreV2.UpdateIfExists(req, wrapper)
+		return s.etcdStoreV2.UpdateIfExists(ctx, req, wrapper)
 	}
 	pwrap, ok := wrapper.(wrapperWithParams)
 	if !ok {
@@ -216,7 +216,7 @@ func (s *StoreV2) UpdateIfExists(req storev2.ResourceRequest, wrapper storev2.Wr
 
 	params := pwrap.SQLParams()
 
-	rows, err := s.db.Query(req.Context, query, params...)
+	rows, err := s.db.Query(ctx, query, params...)
 	if err != nil {
 		return &store.ErrInternal{Message: err.Error()}
 	}
@@ -234,9 +234,9 @@ func (s *StoreV2) UpdateIfExists(req storev2.ResourceRequest, wrapper storev2.Wr
 	return nil
 }
 
-func (s *StoreV2) CreateIfNotExists(req storev2.ResourceRequest, wrapper storev2.Wrapper) error {
+func (s *StoreV2) CreateIfNotExists(ctx context.Context, req storev2.ResourceRequest, wrapper storev2.Wrapper) error {
 	if !req.UsePostgres {
-		return s.etcdStoreV2.CreateIfNotExists(req, wrapper)
+		return s.etcdStoreV2.CreateIfNotExists(ctx, req, wrapper)
 	}
 	pwrap, ok := wrapper.(wrapperWithParams)
 	if !ok {
@@ -250,7 +250,7 @@ func (s *StoreV2) CreateIfNotExists(req storev2.ResourceRequest, wrapper storev2
 
 	params := pwrap.SQLParams()
 
-	if _, err := s.db.Exec(req.Context, query, params...); err != nil {
+	if _, err := s.db.Exec(ctx, query, params...); err != nil {
 		pgError, ok := err.(*pgconn.PgError)
 		if ok {
 			switch pgError.ConstraintName {
@@ -264,9 +264,9 @@ func (s *StoreV2) CreateIfNotExists(req storev2.ResourceRequest, wrapper storev2
 	return nil
 }
 
-func (s *StoreV2) Get(req storev2.ResourceRequest) (storev2.Wrapper, error) {
+func (s *StoreV2) Get(ctx context.Context, req storev2.ResourceRequest) (storev2.Wrapper, error) {
 	if !req.UsePostgres {
-		return s.etcdStoreV2.Get(req)
+		return s.etcdStoreV2.Get(ctx, req)
 	}
 	op := getQ
 	query, ok := s.lookupQuery(req, op)
@@ -280,7 +280,7 @@ func (s *StoreV2) Get(req storev2.ResourceRequest) (storev2.Wrapper, error) {
 	}
 	params = append(params, req.Name)
 
-	row := s.db.QueryRow(req.Context, query, params...)
+	row := s.db.QueryRow(ctx, query, params...)
 	wrapper := s.lookupWrapper(req, op)
 	if err := row.Scan(wrapper.SQLParams()...); err != nil {
 		if err == pgx.ErrNoRows {
@@ -378,9 +378,9 @@ func (s *StoreV2) GetMultiple(ctx context.Context, reqs []storev2.ResourceReques
 	return wrappers, nil
 }
 
-func (s *StoreV2) Delete(req storev2.ResourceRequest) error {
+func (s *StoreV2) Delete(ctx context.Context, req storev2.ResourceRequest) error {
 	if !req.UsePostgres {
-		return s.etcdStoreV2.Delete(req)
+		return s.etcdStoreV2.Delete(ctx, req)
 	}
 	query, ok := s.lookupQuery(req, deleteQ)
 	if !ok {
@@ -391,7 +391,7 @@ func (s *StoreV2) Delete(req storev2.ResourceRequest) error {
 		params = append(params, req.Namespace)
 	}
 	params = append(params, req.Name)
-	result, err := s.db.Exec(req.Context, query, params...)
+	result, err := s.db.Exec(ctx, query, params...)
 	if err != nil {
 		return &store.ErrInternal{Message: err.Error()}
 	}
@@ -542,9 +542,9 @@ func (w WrapList) Len() int {
 	return len(w)
 }
 
-func (s *StoreV2) List(req storev2.ResourceRequest, pred *store.SelectionPredicate) (list storev2.WrapList, err error) {
+func (s *StoreV2) List(ctx context.Context, req storev2.ResourceRequest, pred *store.SelectionPredicate) (list storev2.WrapList, err error) {
 	if !req.UsePostgres {
-		return s.etcdStoreV2.List(req, pred)
+		return s.etcdStoreV2.List(ctx, req, pred)
 	}
 	op := listQ
 	query, ok := s.lookupQuery(req, op)
@@ -568,7 +568,7 @@ func (s *StoreV2) List(req storev2.ResourceRequest, pred *store.SelectionPredica
 	params = append(params, limit)
 	params = append(params, offset)
 
-	rows, rerr := s.db.Query(req.Context, query, params...)
+	rows, rerr := s.db.Query(ctx, query, params...)
 	if rerr != nil {
 		return nil, &store.ErrInternal{Message: rerr.Error()}
 	}
@@ -594,9 +594,9 @@ func (s *StoreV2) List(req storev2.ResourceRequest, pred *store.SelectionPredica
 	return wrapList, nil
 }
 
-func (s *StoreV2) Exists(req storev2.ResourceRequest) (bool, error) {
+func (s *StoreV2) Exists(ctx context.Context, req storev2.ResourceRequest) (bool, error) {
 	if !req.UsePostgres {
-		return s.etcdStoreV2.Exists(req)
+		return s.etcdStoreV2.Exists(ctx, req)
 	}
 	query, ok := s.lookupQuery(req, existsQ)
 	if !ok {
@@ -607,7 +607,7 @@ func (s *StoreV2) Exists(req storev2.ResourceRequest) (bool, error) {
 		params = append(params, req.Namespace)
 	}
 	params = append(params, req.Name)
-	row := s.db.QueryRow(req.Context, query, params...)
+	row := s.db.QueryRow(ctx, query, params...)
 	var found bool
 	err := row.Scan(&found)
 	if err == nil {
@@ -619,9 +619,9 @@ func (s *StoreV2) Exists(req storev2.ResourceRequest) (bool, error) {
 	return false, &store.ErrInternal{Message: err.Error()}
 }
 
-func (s *StoreV2) Patch(req storev2.ResourceRequest, w storev2.Wrapper, patcher patch.Patcher, conditions *store.ETagCondition) (err error) {
+func (s *StoreV2) Patch(ctx context.Context, req storev2.ResourceRequest, w storev2.Wrapper, patcher patch.Patcher, conditions *store.ETagCondition) (err error) {
 	if !req.UsePostgres {
-		return s.etcdStoreV2.Patch(req, w, patcher, conditions)
+		return s.etcdStoreV2.Patch(ctx, req, w, patcher, conditions)
 	}
 
 	if err := req.Validate(); err != nil {
@@ -642,21 +642,21 @@ func (s *StoreV2) Patch(req storev2.ResourceRequest, w storev2.Wrapper, patcher 
 
 	originalWrapper := s.lookupWrapper(req, op)
 
-	tx, txerr := s.db.Begin(req.Context)
+	tx, txerr := s.db.Begin(ctx)
 	if err != nil {
 		return &store.ErrInternal{Message: txerr.Error()}
 	}
 	defer func() {
 		if err == nil {
-			err = tx.Commit(req.Context)
+			err = tx.Commit(ctx)
 			return
 		}
-		if txerr := tx.Rollback(req.Context); txerr != nil {
+		if txerr := tx.Rollback(ctx); txerr != nil {
 			err = txerr
 		}
 	}()
 
-	row := tx.QueryRow(req.Context, query, params...)
+	row := tx.QueryRow(ctx, query, params...)
 	if err := row.Scan(originalWrapper.SQLParams()...); err != nil {
 		if err == pgx.ErrNoRows {
 			return &store.ErrNotFound{Key: fmt.Sprintf("%s.%s", req.Namespace, req.Name)}
@@ -721,7 +721,7 @@ func (s *StoreV2) Patch(req storev2.ResourceRequest, w storev2.Wrapper, patcher 
 		return errNoQuery(req.StoreName)
 	}
 
-	if _, err := tx.Exec(req.Context, query, pwrap.SQLParams()...); err != nil {
+	if _, err := tx.Exec(ctx, query, pwrap.SQLParams()...); err != nil {
 		return &store.ErrInternal{Message: err.Error()}
 	}
 

@@ -10,6 +10,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v4/pgxpool"
+	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	corev3 "github.com/sensu/sensu-go/api/core/v3"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/backend/store/patch"
@@ -52,12 +53,11 @@ func testWithPostgresStoreV2(t *testing.T, fn func(storev2.Interface)) {
 
 func testCreateNamespace(t *testing.T, s storev2.Interface, name string) {
 	t.Helper()
-	ctx := context.Background()
 	namespace := corev3.FixtureNamespace(name)
-	req := storev2.NewResourceRequestFromResource(ctx, namespace)
+	req := storev2.NewResourceRequestFromResource(namespace)
 	req.UsePostgres = true
 	wrapper := WrapNamespace(namespace)
-	if err := s.CreateOrUpdate(req, wrapper); err != nil {
+	if err := s.CreateOrUpdate(context.Background(), req, wrapper); err != nil {
 		t.Error(err)
 	}
 }
@@ -66,10 +66,10 @@ func testCreateEntityConfig(t *testing.T, s storev2.Interface, name string) {
 	t.Helper()
 	ctx := context.Background()
 	cfg := corev3.FixtureEntityConfig(name)
-	req := storev2.NewResourceRequestFromResource(ctx, cfg)
+	req := storev2.NewResourceRequestFromResource(cfg)
 	req.UsePostgres = true
 	wrapper := WrapEntityConfig(cfg)
-	if err := s.CreateOrUpdate(req, wrapper); err != nil {
+	if err := s.CreateOrUpdate(ctx, req, wrapper); err != nil {
 		t.Error(err)
 	}
 }
@@ -78,10 +78,10 @@ func testCreateEntityState(t *testing.T, s storev2.Interface, name string) {
 	t.Helper()
 	ctx := context.Background()
 	state := corev3.FixtureEntityState(name)
-	req := storev2.NewResourceRequestFromResource(ctx, state)
+	req := storev2.NewResourceRequestFromResource(state)
 	req.UsePostgres = true
 	wrapper := WrapEntityState(state)
-	if err := s.CreateOrUpdate(req, wrapper); err != nil {
+	if err := s.CreateOrUpdate(ctx, req, wrapper); err != nil {
 		t.Error(err)
 	}
 }
@@ -101,9 +101,8 @@ func TestStoreCreateOrUpdate(t *testing.T) {
 		{
 			name: "entity configs can be created and updated",
 			args: func() args {
-				ctx := context.Background()
 				cfg := corev3.FixtureEntityConfig("foo")
-				req := storev2.NewResourceRequestFromResource(ctx, cfg)
+				req := storev2.NewResourceRequestFromResource(cfg)
 				req.UsePostgres = true
 				return args{
 					req:     req,
@@ -119,9 +118,8 @@ func TestStoreCreateOrUpdate(t *testing.T) {
 		{
 			name: "entity states can be created and updated",
 			args: func() args {
-				ctx := context.Background()
 				state := corev3.FixtureEntityState("foo")
-				req := storev2.NewResourceRequestFromResource(ctx, state)
+				req := storev2.NewResourceRequestFromResource(state)
 				req.UsePostgres = true
 				return args{
 					req:     req,
@@ -138,9 +136,8 @@ func TestStoreCreateOrUpdate(t *testing.T) {
 		{
 			name: "namespaces can be created and updated",
 			args: func() args {
-				ctx := context.Background()
 				ns := corev3.FixtureNamespace("bar")
-				req := storev2.NewResourceRequestFromResource(ctx, ns)
+				req := storev2.NewResourceRequestFromResource(ns)
 				req.UsePostgres = true
 				return args{
 					req:     req,
@@ -157,12 +154,13 @@ func TestStoreCreateOrUpdate(t *testing.T) {
 				if tt.beforeHook != nil {
 					tt.beforeHook(t, s)
 				}
-				if err := s.CreateOrUpdate(tt.args.req, tt.args.wrapper); err != nil {
+				ctx := context.Background()
+				if err := s.CreateOrUpdate(ctx, tt.args.req, tt.args.wrapper); err != nil {
 					t.Error(err)
 				}
 
 				// Repeating the call to the store should succeed
-				if err := s.CreateOrUpdate(tt.args.req, tt.args.wrapper); err != nil {
+				if err := s.CreateOrUpdate(ctx, tt.args.req, tt.args.wrapper); err != nil {
 					t.Error(err)
 				}
 				rows, err := s.(*StoreV2).db.Query(context.Background(), tt.verifyQuery)
@@ -195,9 +193,8 @@ func TestStoreUpdateIfExists(t *testing.T) {
 		{
 			name: "entity configs can be updated if one exists",
 			args: func() args {
-				ctx := context.Background()
 				cfg := corev3.FixtureEntityConfig("foo")
-				req := storev2.NewResourceRequestFromResource(ctx, cfg)
+				req := storev2.NewResourceRequestFromResource(cfg)
 				req.UsePostgres = true
 				return args{
 					req:     req,
@@ -211,9 +208,8 @@ func TestStoreUpdateIfExists(t *testing.T) {
 		{
 			name: "entity states can be updated if one exists",
 			args: func() args {
-				ctx := context.Background()
 				state := corev3.FixtureEntityState("foo")
-				req := storev2.NewResourceRequestFromResource(ctx, state)
+				req := storev2.NewResourceRequestFromResource(state)
 				req.UsePostgres = true
 				return args{
 					req:     req,
@@ -228,9 +224,8 @@ func TestStoreUpdateIfExists(t *testing.T) {
 		{
 			name: "namespaces can be updated if one exists",
 			args: func() args {
-				ctx := context.Background()
 				ns := corev3.FixtureNamespace("bar")
-				req := storev2.NewResourceRequestFromResource(ctx, ns)
+				req := storev2.NewResourceRequestFromResource(ns)
 				req.UsePostgres = true
 				return args{
 					req:     req,
@@ -245,21 +240,22 @@ func TestStoreUpdateIfExists(t *testing.T) {
 				if tt.beforeHook != nil {
 					tt.beforeHook(t, s)
 				}
+				ctx := context.Background()
 
 				// UpdateIfExists should fail
-				if err := s.UpdateIfExists(tt.args.req, tt.args.wrapper); err == nil {
+				if err := s.UpdateIfExists(ctx, tt.args.req, tt.args.wrapper); err == nil {
 					t.Error("expected non-nil error")
 				} else {
 					if _, ok := err.(*store.ErrNotFound); !ok {
 						t.Errorf("wrong error: %s", err)
 					}
 				}
-				if err := s.CreateOrUpdate(tt.args.req, tt.args.wrapper); err != nil {
+				if err := s.CreateOrUpdate(ctx, tt.args.req, tt.args.wrapper); err != nil {
 					t.Fatal(err)
 				}
 
 				// UpdateIfExists should succeed
-				if err := s.UpdateIfExists(tt.args.req, tt.args.wrapper); err != nil {
+				if err := s.UpdateIfExists(ctx, tt.args.req, tt.args.wrapper); err != nil {
 					t.Error(err)
 				}
 			})
@@ -280,9 +276,8 @@ func TestStoreCreateIfNotExists(t *testing.T) {
 		{
 			name: "entity configs can be created if one does not exist",
 			args: func() args {
-				ctx := context.Background()
 				cfg := corev3.FixtureEntityConfig("foo")
-				req := storev2.NewResourceRequestFromResource(ctx, cfg)
+				req := storev2.NewResourceRequestFromResource(cfg)
 				req.UsePostgres = true
 				return args{
 					req:     req,
@@ -296,9 +291,8 @@ func TestStoreCreateIfNotExists(t *testing.T) {
 		{
 			name: "entity states can be created if one does not exist",
 			args: func() args {
-				ctx := context.Background()
 				state := corev3.FixtureEntityState("foo")
-				req := storev2.NewResourceRequestFromResource(ctx, state)
+				req := storev2.NewResourceRequestFromResource(state)
 				req.UsePostgres = true
 				return args{
 					req:     req,
@@ -313,9 +307,8 @@ func TestStoreCreateIfNotExists(t *testing.T) {
 		{
 			name: "namespaces can be created if one does not exist",
 			args: func() args {
-				ctx := context.Background()
 				ns := corev3.FixtureNamespace("bar")
-				req := storev2.NewResourceRequestFromResource(ctx, ns)
+				req := storev2.NewResourceRequestFromResource(ns)
 				req.UsePostgres = true
 				return args{
 					req:     req,
@@ -331,20 +324,22 @@ func TestStoreCreateIfNotExists(t *testing.T) {
 					tt.beforeHook(t, s)
 				}
 
+				ctx := context.Background()
+
 				// CreateIfNotExists should succeed
-				if err := s.CreateIfNotExists(tt.args.req, tt.args.wrapper); err != nil {
+				if err := s.CreateIfNotExists(ctx, tt.args.req, tt.args.wrapper); err != nil {
 					t.Fatal(err)
 				}
 
 				// CreateIfNotExists should fail
-				if err := s.CreateIfNotExists(tt.args.req, tt.args.wrapper); err == nil {
+				if err := s.CreateIfNotExists(ctx, tt.args.req, tt.args.wrapper); err == nil {
 					t.Error("expected non-nil error")
 				} else if _, ok := err.(*store.ErrAlreadyExists); !ok {
 					t.Errorf("wrong error: %s", err)
 				}
 
 				// UpdateIfExists should succeed
-				if err := s.UpdateIfExists(tt.args.req, tt.args.wrapper); err != nil {
+				if err := s.UpdateIfExists(ctx, tt.args.req, tt.args.wrapper); err != nil {
 					t.Error(err)
 				}
 			})
@@ -365,9 +360,8 @@ func TestStoreGet(t *testing.T) {
 		{
 			name: "an entity config can be retrieved",
 			args: func() args {
-				ctx := context.Background()
 				cfg := corev3.FixtureEntityConfig("foo")
-				req := storev2.NewResourceRequestFromResource(ctx, cfg)
+				req := storev2.NewResourceRequestFromResource(cfg)
 				req.UsePostgres = true
 				return args{
 					req: req,
@@ -385,9 +379,8 @@ func TestStoreGet(t *testing.T) {
 		{
 			name: "an entity state can be retrieved",
 			args: func() args {
-				ctx := context.Background()
 				state := corev3.FixtureEntityState("foo")
-				req := storev2.NewResourceRequestFromResource(ctx, state)
+				req := storev2.NewResourceRequestFromResource(state)
 				req.UsePostgres = true
 				return args{
 					req: req,
@@ -406,9 +399,8 @@ func TestStoreGet(t *testing.T) {
 		{
 			name: "a namespace can be retrieved",
 			args: func() args {
-				ctx := context.Background()
 				ns := corev3.FixtureNamespace("foo")
-				req := storev2.NewResourceRequestFromResource(ctx, ns)
+				req := storev2.NewResourceRequestFromResource(ns)
 				req.UsePostgres = true
 				return args{
 					req: req,
@@ -430,7 +422,7 @@ func TestStoreGet(t *testing.T) {
 					tt.beforeHook(t, s)
 				}
 
-				got, err := s.Get(tt.args.req)
+				got, err := s.Get(context.Background(), tt.args.req)
 				if err != nil {
 					t.Fatal(err)
 				}
@@ -455,9 +447,8 @@ func TestStoreDelete(t *testing.T) {
 		{
 			name: "an entity config can be deleted",
 			args: func() args {
-				ctx := context.Background()
 				cfg := corev3.FixtureEntityConfig("foo")
-				req := storev2.NewResourceRequestFromResource(ctx, cfg)
+				req := storev2.NewResourceRequestFromResource(cfg)
 				req.UsePostgres = true
 				return args{
 					req:     req,
@@ -471,9 +462,8 @@ func TestStoreDelete(t *testing.T) {
 		{
 			name: "an entity state can be deleted",
 			args: func() args {
-				ctx := context.Background()
 				state := corev3.FixtureEntityState("foo")
-				req := storev2.NewResourceRequestFromResource(ctx, state)
+				req := storev2.NewResourceRequestFromResource(state)
 				req.UsePostgres = true
 				return args{
 					req:     req,
@@ -488,9 +478,8 @@ func TestStoreDelete(t *testing.T) {
 		{
 			name: "a namespace can be deleted",
 			args: func() args {
-				ctx := context.Background()
 				ns := corev3.FixtureNamespace("bar")
-				req := storev2.NewResourceRequestFromResource(ctx, ns)
+				req := storev2.NewResourceRequestFromResource(ns)
 				req.UsePostgres = true
 				return args{
 					req:     req,
@@ -508,20 +497,20 @@ func TestStoreDelete(t *testing.T) {
 				if tt.beforeHook != nil {
 					tt.beforeHook(t, s)
 				}
-
+				ctx := context.Background()
 				// CreateIfNotExists should succeed
-				if err := s.CreateIfNotExists(tt.args.req, tt.args.wrapper); err != nil {
+				if err := s.CreateIfNotExists(ctx, tt.args.req, tt.args.wrapper); err != nil {
 					t.Fatal(err)
 				}
-				if err := s.Delete(tt.args.req); err != nil {
+				if err := s.Delete(ctx, tt.args.req); err != nil {
 					t.Fatal(err)
 				}
-				if err := s.Delete(tt.args.req); err == nil {
+				if err := s.Delete(ctx, tt.args.req); err == nil {
 					t.Error("expected non-nil error")
 				} else if _, ok := err.(*store.ErrNotFound); !ok {
 					t.Errorf("expected ErrNotFound: got %s", err)
 				}
-				if _, err := s.Get(tt.args.req); err == nil {
+				if _, err := s.Get(ctx, tt.args.req); err == nil {
 					t.Error("expected non-nil error")
 				} else if _, ok := err.(*store.ErrNotFound); !ok {
 					t.Errorf("expected ErrNotFound: got %s", err)
@@ -544,8 +533,7 @@ func TestStoreList(t *testing.T) {
 		{
 			name: "entity configs can be listed",
 			args: func() args {
-				ctx := context.Background()
-				req := storev2.NewResourceRequest(ctx, "default", "anything", entityConfigStoreName)
+				req := storev2.NewResourceRequest(corev2.TypeMeta{Type: "EntityConfig", APIVersion: "core/v3"}, "default", "anything", entityConfigStoreName)
 				req.UsePostgres = true
 				pred := &store.SelectionPredicate{Limit: 5}
 				return args{
@@ -564,8 +552,7 @@ func TestStoreList(t *testing.T) {
 		{
 			name: "entity states can be listed",
 			args: func() args {
-				ctx := context.Background()
-				req := storev2.NewResourceRequest(ctx, "default", "anything", entityStateStoreName)
+				req := storev2.NewResourceRequest(corev2.TypeMeta{Type: "EntityState", APIVersion: "core/v3"}, "default", "anything", entityStateStoreName)
 				req.UsePostgres = true
 				pred := &store.SelectionPredicate{Limit: 5}
 				return args{
@@ -585,8 +572,7 @@ func TestStoreList(t *testing.T) {
 		{
 			name: "namespaces can be listed",
 			args: func() args {
-				ctx := context.Background()
-				req := storev2.NewResourceRequest(ctx, "", "anything", namespaceStoreName)
+				req := storev2.NewResourceRequest(corev2.TypeMeta{Type: "Namespace", APIVersion: "core/v3"}, "", "anything", namespaceStoreName)
 				req.UsePostgres = true
 				pred := &store.SelectionPredicate{Limit: 5}
 				return args{
@@ -609,8 +595,10 @@ func TestStoreList(t *testing.T) {
 					tt.beforeHook(t, s)
 				}
 
+				ctx := context.Background()
+
 				// Test listing with limit of 5
-				list, err := s.List(tt.args.req, tt.args.pred)
+				list, err := s.List(ctx, tt.args.req, tt.args.pred)
 				if err != nil {
 					t.Fatal(err)
 				}
@@ -623,7 +611,7 @@ func TestStoreList(t *testing.T) {
 
 				// get the rest of the list
 				tt.args.pred.Limit = 6
-				list, err = s.List(tt.args.req, tt.args.pred)
+				list, err = s.List(ctx, tt.args.req, tt.args.pred)
 				if err != nil {
 					t.Fatal(err)
 				}
@@ -637,7 +625,7 @@ func TestStoreList(t *testing.T) {
 				// Test listing from all namespaces
 				tt.args.req.Namespace = ""
 				tt.args.pred = &store.SelectionPredicate{Limit: 5}
-				list, err = s.List(tt.args.req, tt.args.pred)
+				list, err = s.List(ctx, tt.args.req, tt.args.pred)
 				if err != nil {
 					t.Fatal(err)
 				}
@@ -650,7 +638,7 @@ func TestStoreList(t *testing.T) {
 				tt.args.pred.Limit = 6
 
 				// get the rest of the list
-				list, err = s.List(tt.args.req, tt.args.pred)
+				list, err = s.List(ctx, tt.args.req, tt.args.pred)
 				if err != nil {
 					t.Fatal(err)
 				}
@@ -665,7 +653,7 @@ func TestStoreList(t *testing.T) {
 				// Test listing in descending order
 				tt.args.pred.Continue = ""
 				tt.args.req.SortOrder = storev2.SortDescend
-				list, err = s.List(tt.args.req, tt.args.pred)
+				list, err = s.List(ctx, tt.args.req, tt.args.pred)
 				if err != nil {
 					t.Fatal(err)
 				}
@@ -683,7 +671,7 @@ func TestStoreList(t *testing.T) {
 				// Test listing in ascending order
 				tt.args.pred.Continue = ""
 				tt.args.req.SortOrder = storev2.SortAscend
-				list, err = s.List(tt.args.req, tt.args.pred)
+				list, err = s.List(ctx, tt.args.req, tt.args.pred)
 				if err != nil {
 					t.Fatal(err)
 				}
@@ -715,9 +703,8 @@ func TestStoreExists(t *testing.T) {
 		{
 			name: "can check if an entity config exists",
 			args: func() args {
-				ctx := context.Background()
 				cfg := corev3.FixtureEntityConfig("foo")
-				req := storev2.NewResourceRequestFromResource(ctx, cfg)
+				req := storev2.NewResourceRequestFromResource(cfg)
 				req.UsePostgres = true
 				return args{
 					req:     req,
@@ -731,9 +718,8 @@ func TestStoreExists(t *testing.T) {
 		{
 			name: "can check if an entity state exists",
 			args: func() args {
-				ctx := context.Background()
 				state := corev3.FixtureEntityState("foo")
-				req := storev2.NewResourceRequestFromResource(ctx, state)
+				req := storev2.NewResourceRequestFromResource(state)
 				req.UsePostgres = true
 				return args{
 					req:     req,
@@ -748,9 +734,8 @@ func TestStoreExists(t *testing.T) {
 		{
 			name: "can check if a namespace exists",
 			args: func() args {
-				ctx := context.Background()
 				ns := corev3.FixtureNamespace("bar")
-				req := storev2.NewResourceRequestFromResource(ctx, ns)
+				req := storev2.NewResourceRequestFromResource(ns)
 				req.UsePostgres = true
 				return args{
 					req:     req,
@@ -765,8 +750,9 @@ func TestStoreExists(t *testing.T) {
 				if tt.beforeHook != nil {
 					tt.beforeHook(t, s)
 				}
+				ctx := context.Background()
 				// Exists should return false
-				got, err := s.Exists(tt.args.req)
+				got, err := s.Exists(ctx, tt.args.req)
 				if err != nil {
 					t.Fatal(err)
 				}
@@ -775,10 +761,10 @@ func TestStoreExists(t *testing.T) {
 				}
 
 				// CreateIfNotExists should succeed
-				if err := s.CreateIfNotExists(tt.args.req, tt.args.wrapper); err != nil {
+				if err := s.CreateIfNotExists(ctx, tt.args.req, tt.args.wrapper); err != nil {
 					t.Fatal(err)
 				}
-				got, err = s.Exists(tt.args.req)
+				got, err = s.Exists(ctx, tt.args.req)
 				if err != nil {
 					t.Fatal(err)
 				}
@@ -804,9 +790,8 @@ func TestStorePatch(t *testing.T) {
 		{
 			name: "an entity config can be patched",
 			args: func() args {
-				ctx := context.Background()
 				cfg := corev3.FixtureEntityConfig("foo")
-				req := storev2.NewResourceRequestFromResource(ctx, cfg)
+				req := storev2.NewResourceRequestFromResource(cfg)
 				req.UsePostgres = true
 				return args{
 					req:     req,
@@ -823,9 +808,8 @@ func TestStorePatch(t *testing.T) {
 		{
 			name: "an entity state can be patched",
 			args: func() args {
-				ctx := context.Background()
 				state := corev3.FixtureEntityState("foo")
-				req := storev2.NewResourceRequestFromResource(ctx, state)
+				req := storev2.NewResourceRequestFromResource(state)
 				req.UsePostgres = true
 				return args{
 					req:     req,
@@ -843,9 +827,8 @@ func TestStorePatch(t *testing.T) {
 		{
 			name: "a namespace can be patched",
 			args: func() args {
-				ctx := context.Background()
 				ns := corev3.FixtureNamespace("bar")
-				req := storev2.NewResourceRequestFromResource(ctx, ns)
+				req := storev2.NewResourceRequestFromResource(ns)
 				req.UsePostgres = true
 				return args{
 					req:     req,
@@ -866,14 +849,15 @@ func TestStorePatch(t *testing.T) {
 				if tt.beforeHook != nil {
 					tt.beforeHook(t, s)
 				}
-				if err := s.CreateOrUpdate(tt.args.req, tt.args.wrapper); err != nil {
+				ctx := context.Background()
+				if err := s.CreateOrUpdate(ctx, tt.args.req, tt.args.wrapper); err != nil {
 					t.Error(err)
 				}
-				if err := s.Patch(tt.args.req, tt.args.wrapper, tt.args.patcher, nil); err != nil {
+				if err := s.Patch(ctx, tt.args.req, tt.args.wrapper, tt.args.patcher, nil); err != nil {
 					t.Fatal(err)
 				}
 
-				updatedWrapper, err := s.Get(tt.args.req)
+				updatedWrapper, err := s.Get(ctx, tt.args.req)
 				if err != nil {
 					t.Fatal(err)
 				}
@@ -905,9 +889,8 @@ func TestStoreGetMultiple(t *testing.T) {
 		{
 			name: "multiple entity configs can be retrieved",
 			args: func() args {
-				ctx := context.Background()
 				cfg := corev3.FixtureEntityConfig("foo")
-				req := storev2.NewResourceRequestFromResource(ctx, cfg)
+				req := storev2.NewResourceRequestFromResource(cfg)
 				req.UsePostgres = true
 				return args{
 					req:     req,
@@ -916,12 +899,11 @@ func TestStoreGetMultiple(t *testing.T) {
 			}(),
 			reqs: func(t *testing.T, s storev2.Interface) []storev2.ResourceRequest {
 				testCreateNamespace(t, s, "default")
-				ctx := context.Background()
 				reqs := make([]storev2.ResourceRequest, 0)
 				for i := 0; i < 10; i++ {
 					entityName := fmt.Sprintf("foo-%d", i)
 					cfg := corev3.FixtureEntityConfig(entityName)
-					req := storev2.NewResourceRequestFromResource(ctx, cfg)
+					req := storev2.NewResourceRequestFromResource(cfg)
 					req.UsePostgres = true
 					reqs = append(reqs, req)
 					testCreateEntityConfig(t, s, entityName)
@@ -945,9 +927,8 @@ func TestStoreGetMultiple(t *testing.T) {
 		{
 			name: "multiple entity states can be retrieved",
 			args: func() args {
-				ctx := context.Background()
 				state := corev3.FixtureEntityState("foo")
-				req := storev2.NewResourceRequestFromResource(ctx, state)
+				req := storev2.NewResourceRequestFromResource(state)
 				req.UsePostgres = true
 				return args{
 					req:     req,
@@ -956,12 +937,11 @@ func TestStoreGetMultiple(t *testing.T) {
 			}(),
 			reqs: func(t *testing.T, s storev2.Interface) []storev2.ResourceRequest {
 				testCreateNamespace(t, s, "default")
-				ctx := context.Background()
 				reqs := make([]storev2.ResourceRequest, 0)
 				for i := 0; i < 10; i++ {
 					entityName := fmt.Sprintf("foo-%d", i)
 					state := corev3.FixtureEntityState(entityName)
-					req := storev2.NewResourceRequestFromResource(ctx, state)
+					req := storev2.NewResourceRequestFromResource(state)
 					req.UsePostgres = true
 					reqs = append(reqs, req)
 					testCreateEntityConfig(t, s, entityName)
@@ -986,9 +966,8 @@ func TestStoreGetMultiple(t *testing.T) {
 		{
 			name: "multiple namespaces can be retrieved",
 			args: func() args {
-				ctx := context.Background()
 				ns := corev3.FixtureNamespace("bar")
-				req := storev2.NewResourceRequestFromResource(ctx, ns)
+				req := storev2.NewResourceRequestFromResource(ns)
 				req.UsePostgres = true
 				return args{
 					req:     req,
@@ -996,12 +975,11 @@ func TestStoreGetMultiple(t *testing.T) {
 				}
 			}(),
 			reqs: func(t *testing.T, s storev2.Interface) []storev2.ResourceRequest {
-				ctx := context.Background()
 				reqs := make([]storev2.ResourceRequest, 0)
 				for i := 0; i < 10; i++ {
 					namespaceName := fmt.Sprintf("foo-%d", i)
 					namespace := corev3.FixtureNamespace(namespaceName)
-					req := storev2.NewResourceRequestFromResource(ctx, namespace)
+					req := storev2.NewResourceRequestFromResource(namespace)
 					req.UsePostgres = true
 					reqs = append(reqs, req)
 					testCreateNamespace(t, s, namespaceName)

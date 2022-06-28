@@ -52,8 +52,10 @@ type RuleVisitFunc func(RoleBinding, corev2.Rule, error) (terminate bool)
 func (a *Authorizer) VisitRulesFor(ctx context.Context, attrs *authorization.Attributes, visitor RuleVisitFunc) {
 	namespace := corev2.ContextNamespace(ctx)
 	var empty = corev2.Rule{}
-	req := storev2.NewResourceRequest(ctx, namespace, "", new(corev2.ClusterRoleBinding).StoreName())
-	list, err := a.Store.List(req, nil)
+	var crb corev2.ClusterRoleBinding
+	req := storev2.NewResourceRequestFromResource(&crb)
+	req.Namespace = namespace
+	list, err := a.Store.List(ctx, req, nil)
 	if err != nil {
 		if !visitor(nil, empty, err) {
 			return
@@ -89,8 +91,10 @@ func (a *Authorizer) VisitRulesFor(ctx context.Context, attrs *authorization.Att
 		return
 	}
 
-	req = storev2.NewResourceRequest(ctx, namespace, "", new(corev2.RoleBinding).StoreName())
-	list, err = a.Store.List(req, &store.SelectionPredicate{})
+	var rb corev2.RoleBinding
+	req = storev2.NewResourceRequestFromResource(&rb)
+	req.Namespace = namespace
+	list, err = a.Store.List(ctx, req, &store.SelectionPredicate{})
 	if err != nil {
 		if !visitor(nil, empty, err) {
 			return
@@ -192,8 +196,12 @@ func (a *Authorizer) Authorize(ctx context.Context, attrs *authorization.Attribu
 func (a *Authorizer) getRoleReferenceRules(ctx context.Context, namespace string, roleRef corev2.RoleRef) ([]corev2.Rule, error) {
 	switch roleRef.Type {
 	case "Role":
-		req := storev2.NewResourceRequest(ctx, namespace, roleRef.Name, new(corev2.Role).StoreName())
-		wrapper, err := a.Store.Get(req)
+		var role corev2.Role
+		req := storev2.NewResourceRequestFromResource(&role)
+		req.Namespace = namespace
+		req.Name = roleRef.Name
+
+		wrapper, err := a.Store.Get(ctx, req)
 		if _, ok := err.(*store.ErrNotFound); ok {
 			return nil, ErrRoleNotFound{Role: roleRef.Name, Cluster: false}
 		} else if err != nil {
@@ -201,15 +209,17 @@ func (a *Authorizer) getRoleReferenceRules(ctx context.Context, namespace string
 		} else if wrapper == nil {
 			return nil, &store.ErrNotFound{Key: "?"}
 		}
-		var role corev2.Role
 		if err := wrapper.UnwrapInto(&role); err != nil {
 			return nil, err
 		}
 		return role.Rules, nil
 
 	case "ClusterRole":
-		req := storev2.NewResourceRequest(ctx, namespace, roleRef.Name, new(corev2.ClusterRole).StoreName())
-		wrapper, err := a.Store.Get(req)
+		var role corev2.ClusterRole
+		req := storev2.NewResourceRequestFromResource(&role)
+		req.Namespace = namespace
+		req.Name = roleRef.Name
+		wrapper, err := a.Store.Get(ctx, req)
 		if _, ok := err.(*store.ErrNotFound); ok {
 			return nil, ErrRoleNotFound{Role: roleRef.Name, Cluster: true}
 		} else if err != nil {

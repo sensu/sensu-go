@@ -129,13 +129,16 @@ func (h Handlers) patchV3Resource(ctx context.Context, body []byte, name, namesp
 		return nil, actions.NewErrorf(actions.InvalidArgument)
 	}
 
-	req := storev2.NewResourceRequest(ctx, namespace, name, resource.StoreName())
+	req := storev2.NewResourceRequestFromResource(resource)
+	req.Namespace = namespace
+	req.Name = name
+
 	w, err := wrap.ResourceWithoutValidation(resource)
 	if err != nil {
 		return nil, actions.NewError(actions.InvalidArgument, err)
 	}
 
-	if err := h.StoreV2.Patch(req, w, patcher, conditions); err != nil {
+	if err := h.StoreV2.Patch(ctx, req, w, patcher, conditions); err != nil {
 		switch err := err.(type) {
 		case *store.ErrNotFound:
 			return nil, actions.NewError(actions.NotFound, err)
