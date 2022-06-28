@@ -35,13 +35,13 @@ func (h Handlers) CreateV3Resource(r *http.Request) (interface{}, error) {
 		meta.CreatedBy = claims.StandardClaims.Subject
 	}
 
-	req := storev2.NewResourceRequestFromResource(r.Context(), resource)
+	req := storev2.NewResourceRequestFromResource(resource)
 	wrapper, err := storev2.WrapResource(resource)
 	if err != nil {
 		return nil, actions.NewError(actions.InvalidArgument, err)
 	}
 
-	if err := h.StoreV2.CreateIfNotExists(req, wrapper); err != nil {
+	if err := h.StoreV2.CreateIfNotExists(r.Context(), req, wrapper); err != nil {
 		switch err := err.(type) {
 		case *store.ErrAlreadyExists:
 			return nil, actions.NewErrorf(actions.AlreadyExistsErr)

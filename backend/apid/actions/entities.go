@@ -121,14 +121,14 @@ func (c EntityController) CreateOrReplace(ctx context.Context, entity corev2.Ent
 		config, _ := corev3.V2EntityToV3(&entity)
 		// Ensure per-entity subscription does not get removed
 		config.Subscriptions = corev2.AddEntitySubscription(config.Metadata.Name, config.Subscriptions)
-		req := storev2.NewResourceRequestFromResource(ctx, config)
+		req := storev2.NewResourceRequestFromResource(config)
 
 		wConfig, err := storev2.WrapResource(config)
 		if err != nil {
 			return err
 		}
 
-		if err := c.storev2.CreateOrUpdate(req, wConfig); err != nil {
+		if err := c.storev2.CreateOrUpdate(ctx, req, wConfig); err != nil {
 			return err
 		}
 	}

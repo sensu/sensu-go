@@ -217,7 +217,7 @@ func TestEventProcessing(t *testing.T) {
 	event := corev2.FixtureEvent("entity", "keepalive")
 	event.Check.Status = 1
 
-	test.StoreV2.On("CreateOrUpdate", mock.MatchedBy(func(req storv2.ResourceRequest) bool {
+	test.StoreV2.On("CreateOrUpdate", mock.Anything, mock.MatchedBy(func(req storv2.ResourceRequest) bool {
 		return req.StoreName == new(corev3.EntityState).StoreName()
 	}), mock.Anything).Return(nil)
 
@@ -321,7 +321,7 @@ func TestProcessRegistration(t *testing.T) {
 			event:            new(corev2.Event),
 			expectedEventLen: 0,
 			assertionFunc: func(store *storetest.Store) {
-				store.AssertCalled(t, "UpdateIfExists", mock.Anything, mock.Anything)
+				store.AssertCalled(t, "UpdateIfExists", mock.Anything, mock.Anything, mock.Anything)
 			},
 		},
 	}
@@ -356,9 +356,9 @@ func TestProcessRegistration(t *testing.T) {
 			})
 			require.NoError(t, err)
 
-			storv2.On("CreateIfNotExists", mock.Anything, mock.Anything).Return(tc.storeCreateOrUpdateErr)
-			storv2.On("UpdateIfExists", mock.Anything, mock.Anything).Return(tc.storeCreateOrUpdateErr)
-			storv2.On("Get", mock.Anything).Return(tc.storeEntity, tc.storeGetErr)
+			storv2.On("CreateIfNotExists", mock.Anything, mock.Anything, mock.Anything).Return(tc.storeCreateOrUpdateErr)
+			storv2.On("UpdateIfExists", mock.Anything, mock.Anything, mock.Anything).Return(tc.storeCreateOrUpdateErr)
+			storv2.On("Get", mock.Anything, mock.Anything).Return(tc.storeEntity, tc.storeGetErr)
 			err = keepalived.handleEntityRegistration(tc.entity, tc.event)
 			require.NoError(t, err)
 
@@ -416,7 +416,7 @@ func TestDeadCallbackNoEntity(t *testing.T) {
 		t.Fatal(err)
 	}
 	store := &storetest.Store{}
-	store.On("Get", mock.MatchedBy(func(req storv2.ResourceRequest) bool {
+	store.On("Get", mock.Anything, mock.MatchedBy(func(req storv2.ResourceRequest) bool {
 		return req.StoreName == new(corev3.EntityConfig).StoreName()
 	})).Return((storv2.Wrapper)(nil), &stor.ErrNotFound{Key: "foo"})
 
@@ -464,10 +464,10 @@ func TestDeadCallbackNoEvent(t *testing.T) {
 	require.NoError(t, err)
 
 	store := &storetest.Store{}
-	store.On("Get", mock.MatchedBy(func(req storv2.ResourceRequest) bool {
+	store.On("Get", mock.Anything, mock.MatchedBy(func(req storv2.ResourceRequest) bool {
 		return req.StoreName == new(corev3.EntityConfig).StoreName()
 	})).Return(wrapper, nil)
-	store.On("Get", mock.MatchedBy(func(req storv2.ResourceRequest) bool {
+	store.On("Get", mock.Anything, mock.MatchedBy(func(req storv2.ResourceRequest) bool {
 		return req.StoreName == new(corev2.Event).StorePrefix()
 	})).Return((*wrap.Wrapper)(nil), &stor.ErrNotFound{Key: "foo"})
 

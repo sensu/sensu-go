@@ -16,8 +16,13 @@ import (
 func TestAuthorize(t *testing.T) {
 	type storeFunc func(*mockstore.V2MockStore)
 	ctx := store.NamespaceContext(context.Background(), "acme")
-	clusterRoleBindingListRequest := storev2.NewResourceRequest(ctx, "acme", "", new(corev2.ClusterRoleBinding).StoreName())
-	roleBindingListRequest := storev2.NewResourceRequest(ctx, "acme", "", new(corev2.RoleBinding).StoreName())
+	var crb corev2.ClusterRoleBinding
+	clusterRoleBindingListRequest := storev2.NewResourceRequestFromResource(&crb)
+	clusterRoleBindingListRequest.Namespace = "acme"
+	var rb corev2.RoleBinding
+
+	roleBindingListRequest := storev2.NewResourceRequestFromResource(&rb)
+	roleBindingListRequest.Namespace = "acme"
 	tests := []struct {
 		name      string
 		attrs     *authorization.Attributes
@@ -29,9 +34,9 @@ func TestAuthorize(t *testing.T) {
 			name:  "no bindings",
 			attrs: &authorization.Attributes{Namespace: "acme"},
 			storeFunc: func(s *mockstore.V2MockStore) {
-				s.On("List", clusterRoleBindingListRequest, mock.Anything).
+				s.On("List", mock.Anything, clusterRoleBindingListRequest, mock.Anything).
 					Return(mockstore.WrapList[*corev2.ClusterRoleBinding](nil), nil)
-				s.On("List", roleBindingListRequest, mock.Anything).
+				s.On("List", mock.Anything, roleBindingListRequest, mock.Anything).
 					Return(mockstore.WrapList[*corev2.RoleBinding](nil), nil)
 			},
 			want: false,
@@ -39,7 +44,7 @@ func TestAuthorize(t *testing.T) {
 		{
 			name: "ClusterRoleBindings store err",
 			storeFunc: func(s *mockstore.V2MockStore) {
-				s.On("List", mock.Anything, mock.Anything).
+				s.On("List", mock.Anything, mock.Anything, mock.Anything).
 					Return(mockstore.WrapList[*corev2.ClusterRoleBinding](nil), errors.New("error"))
 			},
 			wantErr: true,
@@ -53,13 +58,13 @@ func TestAuthorize(t *testing.T) {
 				},
 			},
 			storeFunc: func(s *mockstore.V2MockStore) {
-				s.On("List", clusterRoleBindingListRequest, mock.Anything).
+				s.On("List", mock.Anything, clusterRoleBindingListRequest, mock.Anything).
 					Return(mockstore.WrapList[*corev2.ClusterRoleBinding]{{
 						Subjects: []corev2.Subject{
 							{Type: corev2.UserType, Name: "bar"},
 						},
 					}}, nil)
-				s.On("List", roleBindingListRequest, mock.Anything).
+				s.On("List", mock.Anything, roleBindingListRequest, mock.Anything).
 					Return(mockstore.WrapList[*corev2.RoleBinding](nil), nil)
 			},
 			want: false,
@@ -73,7 +78,7 @@ func TestAuthorize(t *testing.T) {
 				},
 			},
 			storeFunc: func(s *mockstore.V2MockStore) {
-				s.On("List", mock.Anything, mock.Anything).
+				s.On("List", mock.Anything, mock.Anything, mock.Anything).
 					Return(mockstore.WrapList[*corev2.ClusterRoleBinding]{{
 						RoleRef: corev2.RoleRef{
 							Type: "ClusterRole",
@@ -83,7 +88,7 @@ func TestAuthorize(t *testing.T) {
 							{Type: corev2.UserType, Name: "foo"},
 						},
 					}}, (error)(nil))
-				s.On("Get", mock.Anything).
+				s.On("Get", mock.Anything, mock.Anything).
 					Return(nil, errors.New("error"))
 			},
 			wantErr: true,
@@ -99,7 +104,7 @@ func TestAuthorize(t *testing.T) {
 				},
 			},
 			storeFunc: func(s *mockstore.V2MockStore) {
-				s.On("List", clusterRoleBindingListRequest, mock.Anything).
+				s.On("List", mock.Anything, clusterRoleBindingListRequest, mock.Anything).
 					Return(mockstore.WrapList[*corev2.ClusterRoleBinding]{{
 						RoleRef: corev2.RoleRef{
 							Type: "ClusterRole",
@@ -109,7 +114,7 @@ func TestAuthorize(t *testing.T) {
 							{Type: corev2.UserType, Name: "foo"},
 						},
 					}}, nil)
-				s.On("Get", mock.Anything).
+				s.On("Get", mock.Anything, mock.Anything).
 					Return(mockstore.Wrapper[*corev2.ClusterRole]{Value: &corev2.ClusterRole{Rules: []corev2.Rule{
 						{
 							Verbs:         []string{"create"},
@@ -124,9 +129,9 @@ func TestAuthorize(t *testing.T) {
 			name:  "RoleBindings store err",
 			attrs: &authorization.Attributes{Namespace: "acme"},
 			storeFunc: func(s *mockstore.V2MockStore) {
-				s.On("List", clusterRoleBindingListRequest, mock.Anything).
+				s.On("List", mock.Anything, clusterRoleBindingListRequest, mock.Anything).
 					Return(mockstore.WrapList[*corev2.ClusterRoleBinding](nil), nil)
-				s.On("List", roleBindingListRequest, mock.Anything).
+				s.On("List", mock.Anything, roleBindingListRequest, mock.Anything).
 					Return(mockstore.WrapList[*corev2.RoleBinding](nil), errors.New("error"))
 			},
 			wantErr: true,
@@ -140,9 +145,9 @@ func TestAuthorize(t *testing.T) {
 				},
 			},
 			storeFunc: func(s *mockstore.V2MockStore) {
-				s.On("List", clusterRoleBindingListRequest, mock.Anything).
+				s.On("List", mock.Anything, clusterRoleBindingListRequest, mock.Anything).
 					Return(mockstore.WrapList[*corev2.ClusterRoleBinding](nil), nil)
-				s.On("List", roleBindingListRequest, mock.Anything).
+				s.On("List", mock.Anything, roleBindingListRequest, mock.Anything).
 					Return(mockstore.WrapList[*corev2.RoleBinding]{{
 						RoleRef: corev2.RoleRef{
 							Type: "Role",
@@ -152,7 +157,7 @@ func TestAuthorize(t *testing.T) {
 							{Type: corev2.UserType, Name: "foo"},
 						},
 					}}, nil)
-				s.On("Get", mock.Anything).
+				s.On("Get", mock.Anything, mock.Anything).
 					Return(nil, &store.ErrNotFound{})
 			},
 			want:    false,
@@ -167,9 +172,9 @@ func TestAuthorize(t *testing.T) {
 				},
 			},
 			storeFunc: func(s *mockstore.V2MockStore) {
-				s.On("List", clusterRoleBindingListRequest, mock.Anything).
+				s.On("List", mock.Anything, clusterRoleBindingListRequest, mock.Anything).
 					Return(mockstore.WrapList[*corev2.ClusterRoleBinding](nil), nil)
-				s.On("List", roleBindingListRequest, mock.Anything).
+				s.On("List", mock.Anything, roleBindingListRequest, mock.Anything).
 					Return(mockstore.WrapList[*corev2.RoleBinding]{{
 						RoleRef: corev2.RoleRef{
 							Type: "Role",
@@ -179,7 +184,7 @@ func TestAuthorize(t *testing.T) {
 							{Type: corev2.UserType, Name: "foo"},
 						},
 					}}, nil)
-				s.On("Get", mock.Anything).
+				s.On("Get", mock.Anything, mock.Anything).
 					Return(nil, &store.ErrNotFound{})
 			},
 			wantErr: true,
@@ -196,10 +201,10 @@ func TestAuthorize(t *testing.T) {
 				ResourceName: "check-cpu",
 			},
 			storeFunc: func(s *mockstore.V2MockStore) {
-				s.On("List", clusterRoleBindingListRequest, mock.Anything).
+				s.On("List", mock.Anything, clusterRoleBindingListRequest, mock.Anything).
 					Return(mockstore.WrapList[*corev2.ClusterRoleBinding](nil), nil)
 
-				s.On("List", roleBindingListRequest, mock.Anything).
+				s.On("List", mock.Anything, roleBindingListRequest, mock.Anything).
 					Return(mockstore.WrapList[*corev2.RoleBinding]{{
 						RoleRef: corev2.RoleRef{
 							Type: "Role",
@@ -209,7 +214,7 @@ func TestAuthorize(t *testing.T) {
 							{Type: corev2.UserType, Name: "foo"},
 						},
 					}}, nil)
-				s.On("Get", mock.Anything).
+				s.On("Get", mock.Anything, mock.Anything).
 					Return(mockstore.Wrapper[*corev2.Role]{Value: &corev2.Role{Rules: []corev2.Rule{
 						{
 							Verbs:         []string{"create"},
@@ -230,10 +235,10 @@ func TestAuthorize(t *testing.T) {
 				Resource: "users",
 			},
 			storeFunc: func(s *mockstore.V2MockStore) {
-				s.On("List", clusterRoleBindingListRequest, mock.Anything).
+				s.On("List", mock.Anything, clusterRoleBindingListRequest, mock.Anything).
 					Return(mockstore.WrapList[*corev2.ClusterRoleBinding](nil), nil)
 
-				s.On("List", roleBindingListRequest, mock.Anything).
+				s.On("List", mock.Anything, roleBindingListRequest, mock.Anything).
 					Return(mockstore.WrapList[*corev2.RoleBinding]{{
 						RoleRef: corev2.RoleRef{
 							Type: "ClusterRole",
@@ -243,7 +248,7 @@ func TestAuthorize(t *testing.T) {
 							{Type: corev2.UserType, Name: "foo"},
 						},
 					}}, nil)
-				s.On("Get", mock.Anything).
+				s.On("Get", mock.Anything, mock.Anything).
 					Return(mockstore.Wrapper[*corev2.ClusterRole]{Value: &corev2.ClusterRole{Rules: []corev2.Rule{
 						{
 							Verbs:     []string{"*"},
@@ -265,10 +270,10 @@ func TestAuthorize(t *testing.T) {
 				ResourceName: "check-cpu",
 			},
 			storeFunc: func(s *mockstore.V2MockStore) {
-				s.On("List", clusterRoleBindingListRequest, mock.Anything).
+				s.On("List", mock.Anything, clusterRoleBindingListRequest, mock.Anything).
 					Return(mockstore.WrapList[*corev2.ClusterRoleBinding](nil), nil)
 
-				s.On("List", roleBindingListRequest, mock.Anything).
+				s.On("List", mock.Anything, roleBindingListRequest, mock.Anything).
 					Return(mockstore.WrapList[*corev2.RoleBinding]{{
 						RoleRef: corev2.RoleRef{
 							Type: "Role",
@@ -278,7 +283,7 @@ func TestAuthorize(t *testing.T) {
 							{Type: corev2.UserType, Name: "foo"},
 						},
 					}}, nil)
-				s.On("Get", mock.Anything).
+				s.On("Get", mock.Anything, mock.Anything).
 					Return(mockstore.Wrapper[*corev2.Role]{Value: nil}, &store.ErrNotFound{})
 			},
 			want:    false,
@@ -446,12 +451,12 @@ func TestVisitRulesFor(t *testing.T) {
 		Store: stor,
 	}
 	ctx := store.NamespaceContext(context.Background(), "acme")
-	clusterRoleBindingListRequest := storev2.NewResourceRequest(ctx, "acme", "", new(corev2.ClusterRoleBinding).StoreName())
-	roleBindingListRequest := storev2.NewResourceRequest(ctx, "acme", "", new(corev2.RoleBinding).StoreName())
-	roleRequest := storev2.NewResourceRequest(store.NamespaceContext(ctx, "acme"), "acme", "admin", new(corev2.Role).StoreName())
-	clusterRoleRequest := storev2.NewResourceRequest(ctx, "acme", "admin", new(corev2.ClusterRole).StoreName())
+	clusterRoleBindingListRequest := storev2.NewResourceRequest(corev2.TypeMeta{Type: "ClusterRoleBinding", APIVersion: "core/v2"}, "acme", "", new(corev2.ClusterRoleBinding).StoreName())
+	roleBindingListRequest := storev2.NewResourceRequest(corev2.TypeMeta{Type: "RoleBinding", APIVersion: "core/v2"}, "acme", "", new(corev2.RoleBinding).StoreName())
+	roleRequest := storev2.NewResourceRequest(corev2.TypeMeta{Type: "Role", APIVersion: "core/v2"}, "acme", "admin", new(corev2.Role).StoreName())
+	clusterRoleRequest := storev2.NewResourceRequest(corev2.TypeMeta{Type: "ClusterRole", APIVersion: "core/v2"}, "acme", "admin", new(corev2.ClusterRole).StoreName())
 
-	stor.On("List", clusterRoleBindingListRequest, mock.Anything).
+	stor.On("List", mock.Anything, clusterRoleBindingListRequest, mock.Anything).
 		Return(mockstore.WrapList[*corev2.ClusterRoleBinding]{{
 			ObjectMeta: corev2.ObjectMeta{
 				Namespace: "acme",
@@ -465,7 +470,7 @@ func TestVisitRulesFor(t *testing.T) {
 			},
 		}}, nil)
 
-	stor.On("List", roleBindingListRequest, mock.Anything).
+	stor.On("List", mock.Anything, roleBindingListRequest, mock.Anything).
 		Return(mockstore.WrapList[*corev2.RoleBinding]{{
 			ObjectMeta: corev2.ObjectMeta{
 				Namespace: "acme",
@@ -478,7 +483,7 @@ func TestVisitRulesFor(t *testing.T) {
 				{Type: corev2.UserType, Name: "foo"},
 			},
 		}}, nil)
-	stor.On("Get", roleRequest).
+	stor.On("Get", mock.Anything, roleRequest).
 		Return(mockstore.Wrapper[*corev2.Role]{Value: &corev2.Role{Rules: []corev2.Rule{
 			{
 				Verbs:         []string{"create"},
@@ -486,7 +491,7 @@ func TestVisitRulesFor(t *testing.T) {
 				ResourceNames: []string{"check-cpu"},
 			},
 		}}}, nil)
-	stor.On("Get", clusterRoleRequest).
+	stor.On("Get", mock.Anything, clusterRoleRequest).
 		Return(mockstore.Wrapper[*corev2.ClusterRole]{Value: &corev2.ClusterRole{Rules: []corev2.Rule{
 			{
 				Verbs:         []string{"delete"},

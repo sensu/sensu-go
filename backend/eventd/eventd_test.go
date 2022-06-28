@@ -430,10 +430,10 @@ func TestBuryConditions(t *testing.T) {
 func addMockEntityV2(t *testing.T, s *storetest.Store, entity *corev2.Entity) {
 	entityConfig, entityState := corev3.V2EntityToV3(entity)
 
-	stateReq := storev2.NewResourceRequestFromResource(context.Background(), entityState)
+	stateReq := storev2.NewResourceRequestFromResource(entityState)
 	stateReq.UsePostgres = true
 
-	configReq := storev2.NewResourceRequestFromResource(context.Background(), entityConfig)
+	configReq := storev2.NewResourceRequestFromResource(entityConfig)
 
 	wConfig, err := storev2.WrapResource(entityConfig)
 	if err != nil {
@@ -445,8 +445,8 @@ func addMockEntityV2(t *testing.T, s *storetest.Store, entity *corev2.Entity) {
 		t.Fatal(err)
 	}
 
-	s.On("Get", stateReq).Return(wState, nil)
-	s.On("Get", configReq).Return(wConfig, nil)
+	s.On("Get", mock.Anything, stateReq).Return(wState, nil)
+	s.On("Get", mock.Anything, configReq).Return(wConfig, nil)
 }
 
 func addFixtureEntity(store *storetest.Store, namespace, name string) {
@@ -456,10 +456,10 @@ func addFixtureEntity(store *storetest.Store, namespace, name string) {
 	entityConfig := corev3.FixtureEntityConfig(name)
 	entityConfig.Metadata.Namespace = namespace
 
-	stateReq := storev2.NewResourceRequestFromResource(context.Background(), entityState)
+	stateReq := storev2.NewResourceRequestFromResource(entityState)
 	stateReq.UsePostgres = true
 
-	configReq := storev2.NewResourceRequestFromResource(context.Background(), entityConfig)
+	configReq := storev2.NewResourceRequestFromResource(entityConfig)
 
 	wConfig, err := storev2.WrapResource(entityConfig)
 	if err != nil {
@@ -471,13 +471,13 @@ func addFixtureEntity(store *storetest.Store, namespace, name string) {
 		panic(fmt.Sprintf("couldn't wrap fixture resource, that fixture is probably broken in some way (%v)", err))
 	}
 
-	store.On("Get", mock.MatchedBy(func(req storev2.ResourceRequest) bool {
+	store.On("Get", mock.Anything, mock.MatchedBy(func(req storev2.ResourceRequest) bool {
 		return req.Name == configReq.Name &&
 			req.Namespace == configReq.Namespace &&
 			req.StoreName == configReq.StoreName
 	})).Return(wConfig, nil)
 
-	store.On("Get", mock.MatchedBy(func(req storev2.ResourceRequest) bool {
+	store.On("Get", mock.Anything, mock.MatchedBy(func(req storev2.ResourceRequest) bool {
 		return req.Name == stateReq.Name &&
 			req.Namespace == stateReq.Namespace &&
 			req.StoreName == stateReq.StoreName
@@ -487,7 +487,7 @@ func addFixtureEntity(store *storetest.Store, namespace, name string) {
 func entityError(s *storetest.Store, namespace, name string, err error) {
 	var nilWrapper storev2.Wrapper
 
-	s.On("Get", mock.MatchedBy(func(req storev2.ResourceRequest) bool {
+	s.On("Get", mock.Anything, mock.MatchedBy(func(req storev2.ResourceRequest) bool {
 		return req.Name == name && req.Namespace == namespace
 	})).Return(nilWrapper, err)
 }
@@ -602,10 +602,10 @@ func TestEventd_handleMessage(t *testing.T) {
 				)
 			},
 			storeFunc: func(store *storetest.Store) {
-				store.On("Get", mock.Anything).Once().Return(
+				store.On("Get", mock.Anything, mock.Anything).Once().Return(
 					newEntityConfig(), nil,
 				)
-				store.On("Get", mock.Anything).Once().Return(
+				store.On("Get", mock.Anything, mock.Anything).Once().Return(
 					newEntityState(), nil,
 				)
 			},

@@ -30,7 +30,7 @@ func (h Handlers) CreateOrUpdateV3Resource(r *http.Request) (interface{}, error)
 		return nil, actions.NewErrorf(actions.InvalidArgument)
 	}
 
-	req := storev2.NewResourceRequestFromResource(r.Context(), resource)
+	req := storev2.NewResourceRequestFromResource(resource)
 	meta := resource.GetMetadata()
 
 	if claims := jwt.GetClaimsFromContext(r.Context()); claims != nil {
@@ -42,7 +42,7 @@ func (h Handlers) CreateOrUpdateV3Resource(r *http.Request) (interface{}, error)
 		return nil, actions.NewError(actions.InvalidArgument, err)
 	}
 
-	if err := h.StoreV2.CreateOrUpdate(req, wrapper); err != nil {
+	if err := h.StoreV2.CreateOrUpdate(r.Context(), req, wrapper); err != nil {
 		switch err := err.(type) {
 		case *store.ErrNotValid:
 			return nil, actions.NewError(actions.InvalidArgument, err)
