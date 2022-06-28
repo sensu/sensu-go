@@ -32,8 +32,8 @@ func TestWatch(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	req := storev2.NewResourceRequestFromResource(context.Background(), foo)
-	req2 := storev2.NewResourceRequestFromResource(context.Background(), bar)
+	req := storev2.NewResourceRequestFromResource(foo)
+	req2 := storev2.NewResourceRequestFromResource(bar)
 
 	testWithEtcdClient(t, func(s storev2.Interface, client *clientv3.Client) {
 		tests := []struct {
@@ -45,7 +45,7 @@ func TestWatch(t *testing.T) {
 			{
 				name: "resource is created",
 				storeFunc: func(ctx context.Context, s storev2.Interface) {
-					if err := s.CreateOrUpdate(req, wrapper); err != nil {
+					if err := s.CreateOrUpdate(ctx, req, wrapper); err != nil {
 						t.Fatal(err)
 					}
 				},
@@ -55,7 +55,7 @@ func TestWatch(t *testing.T) {
 			{
 				name: "resource is updated",
 				storeFunc: func(ctx context.Context, s storev2.Interface) {
-					if err := s.CreateOrUpdate(req2, wrapper2); err != nil {
+					if err := s.CreateOrUpdate(ctx, req2, wrapper2); err != nil {
 						t.Fatal(err)
 					}
 				},
@@ -67,8 +67,6 @@ func TestWatch(t *testing.T) {
 			t.Run(tt.name, func(t *testing.T) {
 				ctx, cancel := context.WithCancel(context.Background())
 				defer cancel()
-
-				req.Context = ctx
 
 				w := s.Watch(ctx, req)
 
@@ -106,7 +104,7 @@ func TestWatchRetry(t *testing.T) {
 
 	// Create resource
 	foo := corev3.FixtureEntityConfig("foo")
-	req := storev2.NewResourceRequestFromResource(ctx, foo)
+	req := storev2.NewResourceRequestFromResource(foo)
 	wrapper, err := storev2.WrapResource(foo)
 	if err != nil {
 		t.Fatal(err)
@@ -117,7 +115,7 @@ func TestWatchRetry(t *testing.T) {
 	wg.Add(1)
 	go testCheckResult(t, w, storev2.WatchCreate, foo, &wg)
 	time.Sleep(time.Second)
-	if err := s.CreateOrUpdate(req, wrapper); err != nil {
+	if err := s.CreateOrUpdate(ctx, req, wrapper); err != nil {
 		t.Fatal(err)
 	}
 	wg.Wait()
@@ -140,7 +138,7 @@ func TestWatchRetry(t *testing.T) {
 	wg2.Add(1)
 	go testCheckResult(t, w, storev2.WatchUpdate, foo, &wg2)
 	time.Sleep(time.Second)
-	if err := s.CreateOrUpdate(req, wrapper); err != nil {
+	if err := s.CreateOrUpdate(ctx, req, wrapper); err != nil {
 		t.Fatal(err)
 	}
 	wg2.Wait()

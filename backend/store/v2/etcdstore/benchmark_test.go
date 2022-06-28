@@ -116,24 +116,24 @@ func BenchmarkCreateOrUpdateV2Entity(b *testing.B) {
 	testWithEtcdStore(b, func(s *etcdstore.Store) {
 		ns := &corev2.Namespace{Name: "default"}
 		ctx := context.Background()
-		req := storev2.NewResourceRequestFromV2Resource(ctx, ns)
+		req := storev2.NewResourceRequestFromV2Resource(ns)
 		wrapper, err := wrap.V2Resource(ns)
 		if err != nil {
 			b.Fatal(err)
 		}
-		if err := s.CreateOrUpdate(req, wrapper); err != nil {
+		if err := s.CreateOrUpdate(ctx, req, wrapper); err != nil {
 			b.Fatal(err)
 		}
 		entity := fixtureV2Entity
 		b.ResetTimer()
 		b.RunParallel(func(pb *testing.PB) {
 			for pb.Next() {
-				req := storev2.NewResourceRequestFromV2Resource(ctx, entity)
+				req := storev2.NewResourceRequestFromV2Resource(entity)
 				wrapper, err := wrap.V2Resource(entity, wrap.CompressSnappy)
 				if err != nil {
 					b.Fatal(err)
 				}
-				if err := s.CreateOrUpdate(req, wrapper); err != nil {
+				if err := s.CreateOrUpdate(ctx, req, wrapper); err != nil {
 					b.Fatal(err)
 				}
 			}
@@ -146,24 +146,24 @@ func BenchmarkCreateOrUpdateV3EntityState(b *testing.B) {
 	testWithEtcdStore(b, func(s *etcdstore.Store) {
 		ns := &corev2.Namespace{Name: "default"}
 		ctx := context.Background()
-		req := storev2.NewResourceRequestFromV2Resource(ctx, ns)
+		req := storev2.NewResourceRequestFromV2Resource(ns)
 		wrapper, err := wrap.V2Resource(ns)
 		if err != nil {
 			b.Fatal(err)
 		}
-		if err := s.CreateOrUpdate(req, wrapper); err != nil {
+		if err := s.CreateOrUpdate(ctx, req, wrapper); err != nil {
 			b.Fatal(err)
 		}
 		eState := fixtureV3EntityState
 		b.ResetTimer()
 		b.RunParallel(func(pb *testing.PB) {
 			for pb.Next() {
-				req := storev2.NewResourceRequestFromResource(ctx, eState)
+				req := storev2.NewResourceRequestFromResource(eState)
 				wrapper, err := wrap.Resource(eState)
 				if err != nil {
 					b.Fatal(err)
 				}
-				if err := s.CreateOrUpdate(req, wrapper); err != nil {
+				if err := s.CreateOrUpdate(ctx, req, wrapper); err != nil {
 					b.Fatal(err)
 				}
 			}
@@ -176,24 +176,24 @@ func BenchmarkCreateOrUpdateV3EntityConfig(b *testing.B) {
 	testWithEtcdStore(b, func(s *etcdstore.Store) {
 		ns := &corev2.Namespace{Name: "default"}
 		ctx := context.Background()
-		req := storev2.NewResourceRequestFromV2Resource(ctx, ns)
+		req := storev2.NewResourceRequestFromV2Resource(ns)
 		wrapper, err := wrap.V2Resource(ns)
 		if err != nil {
 			b.Fatal(err)
 		}
-		if err := s.CreateOrUpdate(req, wrapper); err != nil {
+		if err := s.CreateOrUpdate(ctx, req, wrapper); err != nil {
 			b.Fatal(err)
 		}
 		eConfig := fixtureV3EntityConfig
 		b.ResetTimer()
 		b.RunParallel(func(pb *testing.PB) {
 			for pb.Next() {
-				req := storev2.NewResourceRequestFromResource(ctx, eConfig)
+				req := storev2.NewResourceRequestFromResource(eConfig)
 				wrapper, err := wrap.Resource(eConfig)
 				if err != nil {
 					b.Fatal(err)
 				}
-				if err := s.CreateOrUpdate(req, wrapper); err != nil {
+				if err := s.CreateOrUpdate(ctx, req, wrapper); err != nil {
 					b.Fatal(err)
 				}
 			}
@@ -251,27 +251,27 @@ func BenchmarkGetV3EntityState(b *testing.B) {
 	testWithEtcdStore(b, func(s *etcdstore.Store) {
 		ns := &corev2.Namespace{Name: "default"}
 		ctx := context.Background()
-		req := storev2.NewResourceRequestFromV2Resource(ctx, ns)
+		req := storev2.NewResourceRequestFromV2Resource(ns)
 		wrapper, err := wrap.V2Resource(ns)
 		if err != nil {
 			b.Fatal(err)
 		}
-		if err := s.CreateOrUpdate(req, wrapper); err != nil {
+		if err := s.CreateOrUpdate(ctx, req, wrapper); err != nil {
 			b.Fatal(err)
 		}
 		eState := fixtureV3EntityState
-		req = storev2.NewResourceRequestFromResource(ctx, eState)
+		req = storev2.NewResourceRequestFromResource(eState)
 		wrapper, err = wrap.Resource(eState)
 		if err != nil {
 			b.Fatal(err)
 		}
-		if err := s.CreateOrUpdate(req, wrapper); err != nil {
+		if err := s.CreateOrUpdate(ctx, req, wrapper); err != nil {
 			b.Fatal(err)
 		}
 		b.ResetTimer()
 		b.RunParallel(func(pb *testing.PB) {
 			for pb.Next() {
-				wrapper, err := s.Get(req)
+				wrapper, err := s.Get(ctx, req)
 				if err != nil {
 					b.Fatal(err)
 				}
@@ -288,27 +288,27 @@ func BenchmarkGetV3EntityConfig(b *testing.B) {
 	testWithEtcdStore(b, func(s *etcdstore.Store) {
 		ns := &corev2.Namespace{Name: "default"}
 		ctx := context.Background()
-		req := storev2.NewResourceRequestFromV2Resource(ctx, ns)
+		req := storev2.NewResourceRequestFromV2Resource(ns)
 		wrapper, err := wrap.V2Resource(ns)
 		if err != nil {
 			b.Fatal(err)
 		}
-		if err := s.CreateOrUpdate(req, wrapper); err != nil {
+		if err := s.CreateOrUpdate(ctx, req, wrapper); err != nil {
 			b.Fatal(err)
 		}
 		eCfg := fixtureV3EntityConfig
-		req = storev2.NewResourceRequestFromResource(ctx, eCfg)
+		req = storev2.NewResourceRequestFromResource(eCfg)
 		wrapper, err = wrap.Resource(eCfg)
 		if err != nil {
 			b.Fatal(err)
 		}
-		if err := s.CreateOrUpdate(req, wrapper); err != nil {
+		if err := s.CreateOrUpdate(ctx, req, wrapper); err != nil {
 			b.Fatal(err)
 		}
 		b.ResetTimer()
 		b.RunParallel(func(pb *testing.PB) {
 			for pb.Next() {
-				wrapper, err := s.Get(req)
+				wrapper, err := s.Get(ctx, req)
 				if err != nil {
 					b.Fatal(err)
 				}
@@ -357,31 +357,31 @@ func BenchmarkListV3EntityState(b *testing.B) {
 	testWithEtcdStore(b, func(s *etcdstore.Store) {
 		ns := &corev2.Namespace{Name: "default"}
 		ctx := context.Background()
-		req := storev2.NewResourceRequestFromV2Resource(ctx, ns)
+		req := storev2.NewResourceRequestFromV2Resource(ns)
 		wrapper, err := wrap.V2Resource(ns)
 		if err != nil {
 			b.Fatal(err)
 		}
-		if err := s.CreateOrUpdate(req, wrapper); err != nil {
+		if err := s.CreateOrUpdate(ctx, req, wrapper); err != nil {
 			b.Fatal(err)
 		}
 		for i := 0; i < 1000; i++ {
 			eState := *fixtureV3EntityState
 			eState.Metadata.Name = fmt.Sprintf("%s-%d", fixtureV3EntityState.Metadata.Name, i)
-			req := storev2.NewResourceRequestFromResource(ctx, &eState)
+			req := storev2.NewResourceRequestFromResource(&eState)
 			wrapper, err := wrap.Resource(&eState, wrap.CompressSnappy)
 			if err != nil {
 				b.Fatal(err)
 			}
-			if err := s.CreateOrUpdate(req, wrapper); err != nil {
+			if err := s.CreateOrUpdate(ctx, req, wrapper); err != nil {
 				b.Fatal(err)
 			}
 		}
-		listReq := storev2.NewResourceRequestFromResource(ctx, fixtureV3EntityState)
+		listReq := storev2.NewResourceRequestFromResource(fixtureV3EntityState)
 		b.ResetTimer()
 		b.RunParallel(func(pb *testing.PB) {
 			for pb.Next() {
-				list, err := s.List(listReq, nil)
+				list, err := s.List(ctx, listReq, nil)
 				if err != nil {
 					b.Fatal(err)
 				}
@@ -402,31 +402,31 @@ func BenchmarkListV3EntityStateNoUnwrap(b *testing.B) {
 	testWithEtcdStore(b, func(s *etcdstore.Store) {
 		ns := &corev2.Namespace{Name: "default"}
 		ctx := context.Background()
-		req := storev2.NewResourceRequestFromV2Resource(ctx, ns)
+		req := storev2.NewResourceRequestFromV2Resource(ns)
 		wrapper, err := wrap.V2Resource(ns)
 		if err != nil {
 			b.Fatal(err)
 		}
-		if err := s.CreateOrUpdate(req, wrapper); err != nil {
+		if err := s.CreateOrUpdate(ctx, req, wrapper); err != nil {
 			b.Fatal(err)
 		}
 		for i := 0; i < 1000; i++ {
 			eState := *fixtureV3EntityState
 			eState.Metadata.Name = fmt.Sprintf("%s-%d", fixtureV3EntityState.Metadata.Name, i)
-			req := storev2.NewResourceRequestFromResource(ctx, &eState)
+			req := storev2.NewResourceRequestFromResource(&eState)
 			wrapper, err := wrap.Resource(&eState, wrap.CompressSnappy)
 			if err != nil {
 				b.Fatal(err)
 			}
-			if err := s.CreateOrUpdate(req, wrapper); err != nil {
+			if err := s.CreateOrUpdate(ctx, req, wrapper); err != nil {
 				b.Fatal(err)
 			}
 		}
-		listReq := storev2.NewResourceRequestFromResource(ctx, fixtureV3EntityState)
+		listReq := storev2.NewResourceRequestFromResource(fixtureV3EntityState)
 		b.ResetTimer()
 		b.RunParallel(func(pb *testing.PB) {
 			for pb.Next() {
-				list, err := s.List(listReq, nil)
+				list, err := s.List(ctx, listReq, nil)
 				if err != nil {
 					b.Fatal(err)
 				}

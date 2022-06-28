@@ -26,13 +26,13 @@ func NewNamespaceStore(db *pgxpool.Pool, client *clientv3.Client) *NamespaceStor
 // CreateNamespace creates a namespace using the given namespace struct.
 func (e *NamespaceStore) CreateNamespace(ctx context.Context, n *corev2.Namespace) error {
 	namespace := corev3.V2NamespaceToV3(n)
-	req := storev2.NewResourceRequestFromResource(ctx, namespace)
+	req := storev2.NewResourceRequestFromResource(namespace)
 	req.UsePostgres = true
 	wrappedNamespace, err := storev2.WrapResource(namespace)
 	if err != nil {
 		return &store.ErrEncode{Err: err}
 	}
-	if err := e.store.CreateIfNotExists(req, wrappedNamespace); err != nil {
+	if err := e.store.CreateIfNotExists(ctx, req, wrappedNamespace); err != nil {
 		return err
 	}
 	return nil
@@ -45,10 +45,10 @@ func (e *NamespaceStore) DeleteNamespace(ctx context.Context, name string) error
 		return &store.ErrNotValid{Err: err}
 	}
 
-	req := storev2.NewResourceRequestFromResource(ctx, namespace)
+	req := storev2.NewResourceRequestFromResource(namespace)
 	req.UsePostgres = true
 
-	if err := e.store.Delete(req); err != nil {
+	if err := e.store.Delete(ctx, req); err != nil {
 		if _, ok := err.(*store.ErrNotFound); !ok {
 			return err
 		}
@@ -70,7 +70,8 @@ func (e *NamespaceStore) DeleteNamespaceByName(ctx context.Context, name string)
 func (e *NamespaceStore) GetNamespaces(ctx context.Context, pred *store.SelectionPredicate) ([]*corev3.Namespace, error) {
 	// Fetch the namespaces with the selection predicate
 	req := storev2.ResourceRequest{
-		Context:     ctx,
+		Type:        "Namespace",
+		APIVersion:  "core/v3",
 		StoreName:   new(corev3.Namespace).StoreName(),
 		UsePostgres: true,
 	}
@@ -81,7 +82,7 @@ func (e *NamespaceStore) GetNamespaces(ctx context.Context, pred *store.Selectio
 		}
 	}
 
-	wNamespaces, err := e.store.List(req, pred)
+	wNamespaces, err := e.store.List(ctx, req, pred)
 	if err != nil {
 		return nil, err
 	}
@@ -99,9 +100,9 @@ func (e *NamespaceStore) GetNamespace(ctx context.Context, name string) (*corev2
 		return nil, &store.ErrNotValid{Err: errors.New("must specify name")}
 	}
 	namespace := corev3.NewNamespace(name)
-	req := storev2.NewResourceRequestFromResource(ctx, namespace)
+	req := storev2.NewResourceRequestFromResource(namespace)
 	req.UsePostgres = true
-	wrapper, err := e.store.Get(req)
+	wrapper, err := e.store.Get(ctx, req)
 	if err != nil {
 		if _, ok := err.(*store.ErrNotFound); ok {
 			return nil, nil
@@ -126,9 +127,9 @@ func (e *NamespaceStore) GetNamespaceByName(ctx context.Context, name string) (*
 			Name: name,
 		},
 	}
-	req := storev2.NewResourceRequestFromResource(ctx, namespace)
+	req := storev2.NewResourceRequestFromResource(namespace)
 	req.UsePostgres = true
-	wrapper, err := e.store.Get(req)
+	wrapper, err := e.store.Get(ctx, req)
 	if err != nil {
 		if _, ok := err.(*store.ErrNotFound); ok {
 			return nil, nil
@@ -149,13 +150,13 @@ func (e *NamespaceStore) ListNamespaces(ctx context.Context, pred *store.Selecti
 // UpdateNamespace creates or updates a given namespace.
 func (e *NamespaceStore) UpdateNamespace(ctx context.Context, n *corev2.Namespace) error {
 	namespace := corev3.V2NamespaceToV3(n)
-	req := storev2.NewResourceRequestFromResource(ctx, namespace)
+	req := storev2.NewResourceRequestFromResource(namespace)
 	req.UsePostgres = true
 	wrappedNamespace, err := storev2.WrapResource(namespace)
 	if err != nil {
 		return &store.ErrEncode{Err: err}
 	}
-	if err := e.store.CreateOrUpdate(req, wrappedNamespace); err != nil {
+	if err := e.store.CreateOrUpdate(ctx, req, wrappedNamespace); err != nil {
 		return err
 	}
 	return nil
