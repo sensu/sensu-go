@@ -129,7 +129,7 @@ func TestResourceRebuild(t *testing.T) {
 
 	cacher := Resource{
 		cache:     make(map[string][]Value),
-		client:    client,
+		store:     store,
 		resourceT: &corev3.EntityConfig{},
 	}
 

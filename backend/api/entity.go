@@ -105,14 +105,14 @@ func (e *EntityClient) UpdateEntity(ctx context.Context, entity *corev2.Entity) 
 		config, _ := corev3.V2EntityToV3(entity)
 		// Ensure per-entity subscription does not get removed
 		config.Subscriptions = corev2.AddEntitySubscription(config.Metadata.Name, config.Subscriptions)
-		req := storev2.NewResourceRequestFromResource(ctx, config)
+		req := storev2.NewResourceRequestFromResource(config)
 
 		wConfig, err := storev2.WrapResource(config)
 		if err != nil {
 			return err
 		}
 
-		if err := e.storev2.CreateOrUpdate(req, wConfig); err != nil {
+		if err := e.storev2.CreateOrUpdate(ctx, req, wConfig); err != nil {
 			return err
 		}
 	}

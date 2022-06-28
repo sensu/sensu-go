@@ -423,7 +423,7 @@ func Initialize(ctx context.Context, client *clientv3.Client, db *pgxpool.Pool, 
 	}
 
 	// Start the entity config watcher, so agentd sessions are notified of updates
-	entityConfigWatcher := agentd.GetEntityConfigWatcher(ctx, client)
+	entityConfigWatcher := agentd.GetEntityConfigWatcher(ctx, b.StoreV2)
 
 	// Prepare the etcd client TLS config
 	etcdClientTLSInfo := (transport.TLSInfo)(config.Store.EtcdConfigurationStore.ClientTLSInfo)
@@ -556,16 +556,15 @@ func Initialize(ctx context.Context, client *clientv3.Client, db *pgxpool.Pool, 
 
 	// Initialize agentd
 	agent, err := agentd.New(agentd.Config{
-		Host:                config.AgentHost,
-		Port:                config.AgentPort,
-		Bus:                 bus,
-		Store:               b.Store,
-		TLS:                 config.AgentTLSOptions,
-		RingPool:            b.RingPool,
-		WriteTimeout:        config.AgentWriteTimeout,
-		Client:              client,
-		Watcher:             entityConfigWatcher,
-		EtcdClientTLSConfig: b.EtcdClientTLSConfig,
+		Host:         config.AgentHost,
+		Port:         config.AgentPort,
+		Bus:          bus,
+		Store:        b.StoreV2,
+		TLS:          config.AgentTLSOptions,
+		RingPool:     b.RingPool,
+		WriteTimeout: config.AgentWriteTimeout,
+		Watcher:      entityConfigWatcher,
+		HealthRouter: b.HealthRouter,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("error initializing %s: %s", agent.Name(), err)

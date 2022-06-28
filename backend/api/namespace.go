@@ -329,8 +329,8 @@ func (a *NamespaceClient) CreateNamespace(ctx context.Context, namespace *corev2
 }
 
 func (a *NamespaceClient) createResourceTemplates(ctx context.Context, namespace string) error {
-	req := storev2.NewResourceRequestFromResource(ctx, new(corev3.ResourceTemplate))
-	list, err := a.storev2.List(req, nil)
+	req := storev2.NewResourceRequestFromResource(new(corev3.ResourceTemplate))
+	list, err := a.storev2.List(ctx, req, nil)
 	if err != nil {
 		return err
 	}
@@ -346,12 +346,12 @@ func (a *NamespaceClient) createResourceTemplates(ctx context.Context, namespace
 		if err != nil {
 			return err
 		}
-		req := storev2.NewResourceRequestFromResource(ctx, resource)
+		req := storev2.NewResourceRequestFromResource(resource)
 		wrapper, err := storev2.WrapResource(resource)
 		if err != nil {
 			return err
 		}
-		if err := a.storev2.CreateOrUpdate(req, wrapper); err != nil {
+		if err := a.storev2.CreateOrUpdate(ctx, req, wrapper); err != nil {
 			return err
 		}
 	}

@@ -54,13 +54,13 @@ func (g GenericClient) validateConfig() error {
 func (g *GenericClient) createResource(ctx context.Context, value corev2.Resource) error {
 	if value, ok := value.(*corev3.V2ResourceProxy); ok {
 		resource := value.Resource
-		req := storev2.NewResourceRequestFromResource(ctx, resource)
+		req := storev2.NewResourceRequestFromResource(resource)
 		req.Namespace = corev2.ContextNamespace(ctx)
 		wrapper, err := storev2.WrapResource(resource)
 		if err != nil {
 			return err
 		}
-		return g.StoreV2.CreateIfNotExists(req, wrapper)
+		return g.StoreV2.CreateIfNotExists(ctx, req, wrapper)
 	}
 	return g.Store.CreateResource(ctx, value)
 }
@@ -107,13 +107,13 @@ func (g *GenericClient) SetTypeMeta(meta corev2.TypeMeta) error {
 func (g *GenericClient) updateResource(ctx context.Context, value corev2.Resource) error {
 	if value, ok := value.(*corev3.V2ResourceProxy); ok {
 		resource := value.Resource
-		req := storev2.NewResourceRequestFromResource(ctx, resource)
+		req := storev2.NewResourceRequestFromResource(resource)
 		req.Namespace = corev2.ContextNamespace(ctx)
 		wrapper, err := storev2.WrapResource(resource)
 		if err != nil {
 			return err
 		}
-		return g.StoreV2.CreateOrUpdate(req, wrapper)
+		return g.StoreV2.CreateOrUpdate(ctx, req, wrapper)
 	}
 	return g.Store.CreateOrUpdateResource(ctx, value)
 }
@@ -139,9 +139,8 @@ func (g *GenericClient) deleteResource(ctx context.Context, name string) error {
 			Namespace: corev2.ContextNamespace(ctx),
 			Name:      name,
 			StoreName: g.Kind.StorePrefix(),
-			Context:   ctx,
 		}
-		return g.StoreV2.Delete(req)
+		return g.StoreV2.Delete(ctx, req)
 	}
 	return g.Store.DeleteResource(ctx, g.Kind.StorePrefix(), name)
 }
@@ -163,9 +162,8 @@ func (g *GenericClient) getResource(ctx context.Context, name string, value core
 			Namespace: corev2.ContextNamespace(ctx),
 			Name:      name,
 			StoreName: value.StorePrefix(),
-			Context:   ctx,
 		}
-		wrapper, err := g.StoreV2.Get(req)
+		wrapper, err := g.StoreV2.Get(ctx, req)
 		if err != nil {
 			return err
 		}
@@ -190,9 +188,8 @@ func (g *GenericClient) list(ctx context.Context, resources interface{}, pred *s
 		req := storev2.ResourceRequest{
 			Namespace: corev2.ContextNamespace(ctx),
 			StoreName: g.Kind.StorePrefix(),
-			Context:   ctx,
 		}
-		list, err := g.StoreV2.List(req, pred)
+		list, err := g.StoreV2.List(ctx, req, pred)
 		if err != nil {
 			return err
 		}
