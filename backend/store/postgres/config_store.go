@@ -17,7 +17,6 @@ import (
 	"github.com/sensu/sensu-go/backend/store/patch"
 	storev2 "github.com/sensu/sensu-go/backend/store/v2"
 	"github.com/sensu/sensu-go/backend/store/v2/wrap"
-	"github.com/sensu/sensu-go/types"
 )
 
 const pgUniqueViolationCode = "23505"
@@ -122,26 +121,24 @@ func (s *ConfigStore) Get(request storev2.ResourceRequest) (storev2.Wrapper, err
 	if err := request.Validate(); err != nil {
 		return nil, &store.ErrNotValid{Err: err}
 	}
-
-	typeMeta, err := types.ResolveTypeMeta(request.StoreName)
-	if err != nil {
-		return nil, err
+	if request.TypeMeta == nil {
+		return nil, &store.ErrNotValid{Err: errors.New("type meta is missing")}
 	}
 
-	args := []interface{}{typeMeta.APIVersion, typeMeta.Type, request.Namespace, request.Name}
+	args := []interface{}{request.TypeMeta.APIVersion, request.TypeMeta.Type, request.Namespace, request.Name}
 
 	row := s.db.QueryRow(request.Context, GetConfigQuery, args...)
 	result := DBResource{}
-	err = row.Scan(&result.id, &result.labels, &result.annotations, &result.resource, &result.createdAt, &result.updatedAt)
-	if err != nil {
+
+	if err := row.Scan(&result.id, &result.labels, &result.annotations, &result.resource, &result.createdAt, &result.updatedAt); err != nil {
 		if err == pgx.ErrNoRows {
-			return nil, &store.ErrNotFound{Key: fmt.Sprintf("%s.%s/%s/%s", typeMeta.APIVersion, typeMeta.Type, request.Namespace, request.Name)}
+			return nil, &store.ErrNotFound{Key: fmt.Sprintf("%s.%s/%s/%s", request.TypeMeta.APIVersion, request.TypeMeta.Type, request.Namespace, request.Name)}
 		}
 		return nil, err
 	}
 
 	return &wrap.Wrapper{
-		TypeMeta:    &typeMeta,
+		TypeMeta:    request.TypeMeta,
 		Encoding:    wrap.Encoding_json,
 		Compression: 0,
 		Value:       []byte(result.resource),
@@ -152,13 +149,11 @@ func (s *ConfigStore) Delete(request storev2.ResourceRequest) error {
 	if err := request.Validate(); err != nil {
 		return &store.ErrNotValid{Err: err}
 	}
-
-	typeMeta, err := types.ResolveTypeMeta(request.StoreName)
-	if err != nil {
-		return err
+	if request.TypeMeta == nil {
+		return &store.ErrNotValid{Err: errors.New("type meta is missing")}
 	}
 
-	args := []interface{}{typeMeta.APIVersion, typeMeta.Type, request.Namespace, request.Name}
+	args := []interface{}{request.TypeMeta.APIVersion, request.TypeMeta.Type, request.Namespace, request.Name}
 
 	cmdTag, err := s.db.Exec(request.Context, DeleteConfigQuery, args...)
 	if err != nil {
@@ -166,7 +161,7 @@ func (s *ConfigStore) Delete(request storev2.ResourceRequest) error {
 	}
 
 	if cmdTag.RowsAffected() == 0 {
-		return &store.ErrNotFound{Key: fmt.Sprintf("%s.%s/%s/%s", typeMeta.APIVersion, typeMeta.Type, request.Namespace, request.Name)}
+		return &store.ErrNotFound{Key: fmt.Sprintf("%s.%s/%s/%s", request.TypeMeta.APIVersion, request.TypeMeta.Type, request.Namespace, request.Name)}
 	}
 
 	return nil
@@ -176,10 +171,8 @@ func (s *ConfigStore) List(request storev2.ResourceRequest, predicate *store.Sel
 	if err := request.Validate(); err != nil {
 		return nil, &store.ErrNotValid{Err: err}
 	}
-
-	typeMeta, err := types.ResolveTypeMeta(request.StoreName)
-	if err != nil {
-		return nil, err
+	if request.TypeMeta == nil {
+		return nil, &store.ErrNotValid{Err: errors.New("type meta is missing")}
 	}
 
 	//selector := selector.SelectorFromContext(request.Context)
@@ -196,7 +189,7 @@ func (s *ConfigStore) List(request storev2.ResourceRequest, predicate *store.Sel
 		return nil, err
 	}
 
-	args := []interface{}{typeMeta.APIVersion, typeMeta.Type, request.Namespace}
+	args := []interface{}{request.TypeMeta.APIVersion, request.TypeMeta.Type, request.Namespace}
 
 	query := queryBuilder.String()
 	rows, err := s.db.Query(request.Context, query, args...)
@@ -214,7 +207,7 @@ func (s *ConfigStore) List(request storev2.ResourceRequest, predicate *store.Sel
 		}
 
 		wrapped := wrap.Wrapper{
-			TypeMeta:    &typeMeta,
+			TypeMeta:    request.TypeMeta,
 			Encoding:    wrap.Encoding_json,
 			Compression: wrap.Compression_none,
 			Value:       []byte(dbResource.resource),
@@ -229,19 +222,16 @@ func (s *ConfigStore) Exists(request storev2.ResourceRequest) (bool, error) {
 	if err := request.Validate(); err != nil {
 		return false, &store.ErrNotValid{Err: err}
 	}
-
-	typeMeta, err := types.ResolveTypeMeta(request.StoreName)
-	if err != nil {
-		return false, err
+	if request.TypeMeta == nil {
+		return false, &store.ErrNotValid{Err: errors.New("type meta is missing")}
 	}
 
-	args := []interface{}{typeMeta.APIVersion, typeMeta.Type, request.Namespace, request.Name}
+	args := []interface{}{request.TypeMeta.APIVersion, request.TypeMeta.Type, request.Namespace, request.Name}
 
 	row := s.db.QueryRow(request.Context, ExistsConfigQuery, args...)
 
 	var count int
-	err = row.Scan(&count)
-	if err != nil {
+	if err := row.Scan(&count); err != nil {
 		return false, err
 	}
 

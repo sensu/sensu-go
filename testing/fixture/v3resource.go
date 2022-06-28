@@ -16,8 +16,6 @@ func init() {
 			return nil, fmt.Errorf("invalid resource: %s", name)
 		}
 	})
-	r := &V3Resource{}
-	types.RegisterTypeMeta(r.StoreName(), r.GetTypeMeta())
 }
 
 type V3Resource struct {

@@ -11,6 +11,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v4/pgxpool"
+	v2 "github.com/sensu/sensu-go/api/core/v2"
 	corev3 "github.com/sensu/sensu-go/api/core/v3"
 	"github.com/sensu/sensu-go/backend/store"
 	storev2 "github.com/sensu/sensu-go/backend/store/v2"
@@ -25,6 +26,9 @@ const (
 )
 
 func testWithPostgresConfigStore(t *testing.T, fn func(p storev2.Interface)) {
+
+	_ = os.Setenv("PG_URL", "user=4b6f0bad-b9e0-42f2-a62b-de1c087f426c password=70b1be6d-3c84-48d2-bcc7-d6ca45af4530 host=localhost port=5432 dbname=sensudb sslmode=disable")
+
 	t.Helper()
 	if testing.Short() {
 		t.Skip("skipping postgres test")
@@ -60,6 +64,9 @@ func testWithPostgresConfigStore(t *testing.T, fn func(p storev2.Interface)) {
 }
 
 func TestConfigStore_CreateOrUpdate(t *testing.T) {
+	ec := &corev3.EntityConfig{}
+	ec.GetTypeMeta()
+
 	testWithPostgresConfigStore(t, func(s storev2.Interface) {
 		ctx := context.Background()
 
@@ -309,6 +316,7 @@ func listEntities(ctx context.Context, pgStore storev2.Interface, namespace stri
 		Namespace:   namespace,
 		Name:        "",
 		StoreName:   "entity_configs",
+		TypeMeta:    &v2.TypeMeta{APIVersion: "core/v3", Type: "EntityConfig"},
 		Context:     ctx,
 		SortOrder:   0,
 		UsePostgres: true,
@@ -341,6 +349,7 @@ func getEntity(ctx context.Context, pgStore storev2.Interface, namespace, name s
 		Namespace:   namespace,
 		Name:        name,
 		StoreName:   "entity_configs",
+		TypeMeta:    &v2.TypeMeta{APIVersion: "core/v3", Type: "EntityConfig"},
 		Context:     ctx,
 		SortOrder:   0,
 		UsePostgres: true,
@@ -369,6 +378,7 @@ func deleteEntity(ctx context.Context, pgStore storev2.Interface, namespace, nam
 		Namespace:   namespace,
 		Name:        name,
 		StoreName:   "entity_configs",
+		TypeMeta:    &v2.TypeMeta{APIVersion: "core/v3", Type: "EntityConfig"},
 		Context:     ctx,
 		SortOrder:   0,
 		UsePostgres: true,
@@ -382,6 +392,7 @@ func entityExists(ctx context.Context, pgStore storev2.Interface, namespace, nam
 		Namespace:   namespace,
 		Name:        name,
 		StoreName:   "entity_configs",
+		TypeMeta:    &v2.TypeMeta{APIVersion: "core/v3", Type: "EntityConfig"},
 		Context:     ctx,
 		SortOrder:   0,
 		UsePostgres: true,

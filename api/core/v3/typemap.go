@@ -15,7 +15,6 @@ func init() {
 	for _, v := range typeMap {
 		if r, ok := v.(Resource); ok {
 			rbacMap[r.RBACName()] = r
-			types.RegisterTypeMeta(r.StoreName(), r.GetTypeMeta())
 		}
 	}
 	for _, v := range rbacMap {

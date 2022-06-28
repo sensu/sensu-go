@@ -35,9 +35,6 @@ type GeneratedType interface {
 
 	// Validate checks if the fields in the resource are valid.
 	Validate() error
-
-	// GetTypeMeta returns the generated type metadata
-	GetTypeMeta() corev2.TypeMeta
 }
 
 // GlobalResource  is an interface for indicating
