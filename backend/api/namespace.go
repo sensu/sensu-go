@@ -369,11 +369,7 @@ func (a *NamespaceClient) createResourceTemplates(ctx context.Context, namespace
 		if err != nil {
 			return err
 		}
-<<<<<<< HEAD
 		if err := a.store.CreateOrUpdate(ctx, req, wrapper); err != nil {
-=======
-		if err := a.storev2.CreateOrUpdate(ctx, req, wrapper); err != nil {
->>>>>>> b2d4ae75 (Move agentd to storev2 (#4784))
 			return err
 		}
 	}
