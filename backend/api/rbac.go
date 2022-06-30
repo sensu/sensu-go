@@ -5,6 +5,7 @@ import (
 
 	"github.com/sensu/sensu-go/backend/authorization"
 	"github.com/sensu/sensu-go/backend/store"
+	storev2 "github.com/sensu/sensu-go/backend/store/v2"
 
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 )
@@ -17,7 +18,7 @@ type RBACClient struct {
 	auth                authorization.Authorizer
 }
 
-func NewRBACClient(store store.ResourceStore, auth authorization.Authorizer) *RBACClient {
+func NewRBACClient(store storev2.Interface, auth authorization.Authorizer) *RBACClient {
 	return &RBACClient{
 		auth: auth,
 		roleC: GenericClient{

@@ -54,7 +54,6 @@ func (a *Authorizer) VisitRulesFor(ctx context.Context, attrs *authorization.Att
 	var empty = corev2.Rule{}
 	var crb corev2.ClusterRoleBinding
 	req := storev2.NewResourceRequestFromResource(&crb)
-	req.Namespace = namespace
 	list, err := a.Store.List(ctx, req, nil)
 	if err != nil {
 		if !visitor(nil, empty, err) {
@@ -217,7 +216,6 @@ func (a *Authorizer) getRoleReferenceRules(ctx context.Context, namespace string
 	case "ClusterRole":
 		var role corev2.ClusterRole
 		req := storev2.NewResourceRequestFromResource(&role)
-		req.Namespace = namespace
 		req.Name = roleRef.Name
 		wrapper, err := a.Store.Get(ctx, req)
 		if _, ok := err.(*store.ErrNotFound); ok {

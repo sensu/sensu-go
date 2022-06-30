@@ -18,7 +18,7 @@ import (
 	"github.com/stretchr/testify/mock"
 )
 
-func defaultTestClient(store store.ResourceStore, auth authorization.Authorizer) *GenericClient {
+func defaultTestClient(store storev2.Interface, auth authorization.Authorizer) *GenericClient {
 	return &GenericClient{
 		Kind:       defaultResource(),
 		Store:      store,
@@ -31,7 +31,7 @@ func defaultTestClient(store store.ResourceStore, auth authorization.Authorizer)
 func defaultV2TestClient(store storev2.Interface, auth authorization.Authorizer) *GenericClient {
 	return &GenericClient{
 		Kind:       defaultV3Resource(),
-		StoreV2:    store,
+		Store:      store,
 		Auth:       auth,
 		APIGroup:   "core",
 		APIVersion: "v3",
@@ -52,15 +52,15 @@ func defaultV2ResourceStore() storev2.Interface {
 	return store
 }
 
-func defaultV3Resource() corev2.Resource {
-	return corev3.V3ToV2Resource(corev3.FixtureEntityConfig("default"))
+func defaultV3Resource() corev3.Resource {
+	return corev3.FixtureEntityConfig("default")
 }
 
 type mockAuth struct {
 	attrs map[authorization.AttributesKey]bool
 }
 
-func defaultResource() corev2.Resource {
+func defaultResource() corev3.Resource {
 	return corev2.FixtureAsset("default")
 }
 
@@ -86,19 +86,13 @@ func contextWithUser(ctx context.Context, username string, groups []string) cont
 	return context.WithValue(ctx, corev2.ClaimsKey, corev2.FixtureClaims(username, groups))
 }
 
-func defaultResourceStore() store.ResourceStore {
-	store := &mockstore.MockStore{}
-	store.On("GetResource", mock.Anything, "default", mock.Anything).Run(func(args mock.Arguments) {
-		arg := args.Get(2).(*corev2.Asset)
-		*arg = *corev2.FixtureAsset("default")
-	}).Return(nil)
-	store.On("ListResources", mock.Anything, (&corev2.Asset{}).StorePrefix(), mock.Anything, mock.Anything).Run(func(args mock.Arguments) {
-		arg := args.Get(2).(*[]corev2.Resource)
-		*arg = []corev2.Resource{defaultResource()}
-	}).Return(nil)
-	store.On("CreateResource", mock.Anything, mock.Anything).Return(nil)
-	store.On("CreateOrUpdateResource", mock.Anything, mock.Anything).Return(nil)
-	store.On("DeleteResource", mock.Anything, mock.Anything, mock.Anything).Return(nil)
+func defaultResourceStore() storev2.Interface {
+	store := &mockstore.V2MockStore{}
+	store.On("Get", mock.Anything, mock.Anything).Return(mockstore.Wrapper[*corev2.Asset]{Value: corev2.FixtureAsset("default")}, nil)
+	store.On("List", mock.Anything, mock.Anything, mock.Anything).Return(mockstore.WrapList[corev3.Resource]{defaultResource()}, nil)
+	store.On("CreateIfNotExists", mock.Anything, mock.Anything, mock.Anything).Return(nil)
+	store.On("CreateOrUpdate", mock.Anything, mock.Anything, mock.Anything).Return(nil)
+	store.On("Delete", mock.Anything, mock.Anything).Return(nil)
 	return store
 }
 
@@ -106,14 +100,14 @@ func TestGenericClient(t *testing.T) {
 	tests := []struct {
 		Name      string
 		Client    *GenericClient
-		CreateVal corev2.Resource
+		CreateVal corev3.Resource
 		CreateErr bool
-		UpdateVal corev2.Resource
+		UpdateVal corev3.Resource
 		UpdateErr bool
 		GetName   string
-		GetVal    corev2.Resource
+		GetVal    corev3.Resource
 		GetErr    bool
-		ListVal   []corev2.Resource
+		ListVal   []corev3.Resource
 		ListPred  *store.SelectionPredicate
 		ListErr   bool
 		DelName   string
@@ -384,14 +378,14 @@ func TestGenericClientStoreV2(t *testing.T) {
 	tests := []struct {
 		Name      string
 		Client    *GenericClient
-		CreateVal corev2.Resource
+		CreateVal corev3.Resource
 		CreateErr bool
-		UpdateVal corev2.Resource
+		UpdateVal corev3.Resource
 		UpdateErr bool
 		GetName   string
-		GetVal    corev2.Resource
+		GetVal    corev3.Resource
 		GetErr    bool
-		ListVal   []corev2.Resource
+		ListVal   []corev3.Resource
 		ListPred  *store.SelectionPredicate
 		ListErr   bool
 		DelName   string
@@ -578,7 +572,7 @@ func TestSetTypeMetaV3Resource(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if _, ok := client.Kind.(*corev3.V2ResourceProxy); !ok {
-		t.Errorf("expected a v2 resource proxy")
+	if _, ok := client.Kind.(*corev3.EntityConfig); !ok {
+		t.Error("expected an entityconfig")
 	}
 }

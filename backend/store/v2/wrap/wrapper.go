@@ -289,6 +289,15 @@ func (l List) UnwrapInto(ptr interface{}) error {
 	// Assume that encoding and compression are the same throughout the range
 	encoding := l[0].Encoding
 	compression := l[0].Compression
+	// special case for *[]corev3.Resource
+	if list, ok := ptr.(*[]corev3.Resource); ok {
+		values, err := l.Unwrap()
+		if err != nil {
+			return err
+		}
+		*list = values
+		return nil
+	}
 	// Make sure the interface is a pointer, and that the element at this address
 	// is a slice.
 	v := reflect.ValueOf(ptr)

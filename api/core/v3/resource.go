@@ -17,6 +17,8 @@ type Resource interface {
 	GeneratedType
 }
 
+var _ Resource = new(corev2.Asset)
+
 // GeneratedType is an interface that specifies all the methods that are
 // automatically generated.
 type GeneratedType interface {
