@@ -26,7 +26,11 @@ const createOrUpdateEntityStateQuery = `
 -- $27: The time that the entity state was soft deleted.
 --
 WITH ignored AS (
-	SELECT $22::bigint, $25, $26, $27
+	SELECT
+		$22::bigint,
+		$25::timestamptz,
+		$26::timestamptz,
+		$27::timestamptz
 ), namespace AS (
 	SELECT COALESCE (
 		NULLIF($23, 0),
@@ -151,7 +155,11 @@ const createIfNotExistsEntityStateQuery = `
 -- exists.
 --
 WITH ignored AS (
-	SELECT $22::bigint
+	SELECT
+		$22::bigint,
+		$25::timestamptz,
+		$26::timestamptz,
+		$27::timestamptz
 ), namespace AS (
 	SELECT COALESCE (
 		NULLIF($23, 0),
@@ -173,10 +181,7 @@ WITH ignored AS (
 		expires_at,
 		last_seen,
 		selectors,
-		annotations,
-		created_at,
-		updated_at,
-		deleted_at
+		annotations
 	)
 	VALUES (
 		(SELECT id FROM config),
@@ -185,10 +190,7 @@ WITH ignored AS (
 		now(),
 		$3,
 		$4,
-		$5,
-		$25,
-		$26,
-		$27
+		$5
 )
 	RETURNING id
 ), system AS (
@@ -232,9 +234,9 @@ WITH ignored AS (
 		$22::bigint,
 		$23::bigint,
 		$24::bigint,
-		$25,
-		$26,
-		$27
+		$25::timestamptz,
+		$26::timestamptz,
+		$27::timestamptz
 ), namespace AS (
 	SELECT id FROM namespaces
 	WHERE namespaces.name = $1
