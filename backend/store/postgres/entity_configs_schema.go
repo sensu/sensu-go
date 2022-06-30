@@ -23,7 +23,11 @@ const createOrUpdateEntityConfigQuery = `
 -- $17: The time that the entity config was soft deleted.
 --
 WITH ignored AS (
-	SELECT $13::bigint, $15, $16, $17
+	SELECT
+		$13::bigint,
+		$15::timestamptz,
+		$16::timestamptz,
+		$17::timestamptz
 ), namespace AS (
 	SELECT COALESCE (
 		NULLIF($14, 0),
@@ -67,7 +71,11 @@ const createIfNotExistsEntityConfigQuery = `
 -- exists.
 --
 WITH ignored AS (
-	SELECT $13::bigint, $15, $16, $17
+	SELECT
+		$13::bigint,
+		$15::timestamptz,
+		$16::timestamptz,
+		$17::timestamptz
 ), namespace AS (
 	SELECT COALESCE (
 		NULLIF($14, 0),
@@ -97,7 +105,11 @@ const updateIfExistsEntityConfigQuery = `
 -- This query updates the entity config, but only if it exists.
 --
 WITH ignored AS (
-	SELECT $13::bigint, $15, $16, $17
+	SELECT
+		$13::bigint,
+		$15::timestamptz,
+		$16::timestamptz,
+		$17::timestamptz
 ), namespace AS (
 	SELECT COALESCE (
 		NULLIF($14, 0),

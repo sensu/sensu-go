@@ -13,7 +13,11 @@ const createOrUpdateNamespaceQuery = `
 -- $7: The time that the namespace was soft deleted.
 --
 WITH ignored AS (
-	SELECT $4::bigint, $5, $6, $7
+	SELECT
+		$4::bigint,
+		$5::timestamptz,
+		$6::timestamptz,
+		$7::timestamptz
 )
 INSERT INTO namespaces (
 	name,
@@ -34,7 +38,11 @@ const createIfNotExistsNamespaceQuery = `
 -- errors when a namespace with the same name already exists.
 --
 WITH ignored AS (
-	SELECT $4::bigint, $5, $6, $7
+	SELECT
+		$4::bigint,
+		$5::timestamptz,
+		$6::timestamptz,
+		$7::timestamptz
 ), namespace AS (
 	INSERT INTO namespaces (
 		name,
@@ -50,7 +58,11 @@ const updateIfExistsNamespaceQuery = `
 -- This query updates the namespace, but only if it exists.
 --
 WITH ignored AS (
-	SELECT $4::bigint, $5, $6, $7
+	SELECT
+		$4::bigint,
+		$5::timestamptz,
+		$6::timestamptz,
+		$7::timestamptz
 ), namespace AS (
 	SELECT id FROM namespaces
 	WHERE name = $1
