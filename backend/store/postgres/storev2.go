@@ -49,6 +49,8 @@ const (
 	existsQ            crudOp = 7
 	patchQ             crudOp = 8
 	getMultipleQ       crudOp = 9
+	hardDeleteQ        crudOp = 10
+	hardDeletedQ       crudOp = 11
 )
 
 var (
@@ -65,6 +67,44 @@ type wrapperWithParams interface {
 type namedWrapperWithParams interface {
 	wrapperWithParams
 	GetName() string
+}
+
+type wrapperWithStatus interface {
+	storev2.Wrapper
+	GetCreatedAt() time.Time
+	GetUpdatedAt() time.Time
+	GetDeletedAt() sql.NullTime
+	SetCreatedAt(time.Time)
+	SetUpdatedAt(time.Time)
+	SetDeletedAt(sql.NullTime)
+}
+
+type resourceRequestWrapperMap map[storev2.ResourceRequest]storev2.Wrapper
+
+type ErrStoreV2 struct {
+	Method    string
+	StoreName string
+	Err       error
+}
+
+func (e ErrStoreV2) Error() string {
+	return fmt.Sprintf("%s %s: %s", e.Method, e.StoreName, e.Err)
+}
+
+func (e ErrStoreV2) Unwrap() error {
+	return e.Err
+}
+
+func newStoreV2Error(method, storeName string, err error) error {
+	if err != nil {
+		return ErrStoreV2{
+			Method:    method,
+			StoreName: storeName,
+			Err:       err,
+		}
+	} else {
+		return nil
+	}
 }
 
 func (s *StoreV2) lookupWrapper(req storev2.ResourceRequest, op crudOp) namedWrapperWithParams {
@@ -100,6 +140,8 @@ func (s *StoreV2) lookupQuery(req storev2.ResourceRequest, op crudOp) (string, b
 			return getEntityConfigsQuery, true
 		case deleteQ:
 			return deleteEntityConfigQuery, true
+		case hardDeleteQ:
+			return hardDeleteEntityConfigQuery, true
 		case listQ, listAllQ:
 			switch ordering {
 			case storev2.SortDescend:
@@ -109,6 +151,8 @@ func (s *StoreV2) lookupQuery(req storev2.ResourceRequest, op crudOp) (string, b
 			}
 		case existsQ:
 			return existsEntityConfigQuery, true
+		case hardDeletedQ:
+			return hardDeletedEntityConfigQuery, true
 		default:
 			return "", false
 		}
@@ -126,6 +170,8 @@ func (s *StoreV2) lookupQuery(req storev2.ResourceRequest, op crudOp) (string, b
 			return getEntityStatesQuery, true
 		case deleteQ:
 			return deleteEntityStateQuery, true
+		case hardDeleteQ:
+			return hardDeleteEntityStateQuery, true
 		case listQ, listAllQ:
 			switch ordering {
 			case storev2.SortDescend:
@@ -135,6 +181,8 @@ func (s *StoreV2) lookupQuery(req storev2.ResourceRequest, op crudOp) (string, b
 			}
 		case existsQ:
 			return existsEntityStateQuery, true
+		case hardDeletedQ:
+			return hardDeletedEntityStateQuery, true
 		case patchQ:
 			return patchEntityStateQuery, true
 		default:
@@ -154,6 +202,8 @@ func (s *StoreV2) lookupQuery(req storev2.ResourceRequest, op crudOp) (string, b
 			return getNamespacesQuery, true
 		case deleteQ:
 			return deleteNamespaceQuery, true
+		case hardDeleteQ:
+			return hardDeleteNamespaceQuery, true
 		case listQ, listAllQ:
 			switch ordering {
 			case storev2.SortDescend:
@@ -163,6 +213,8 @@ func (s *StoreV2) lookupQuery(req storev2.ResourceRequest, op crudOp) (string, b
 			}
 		case existsQ:
 			return existsNamespaceQuery, true
+		case hardDeletedQ:
+			return hardDeletedNamespaceQuery, true
 		default:
 			return "", false
 		}
@@ -177,7 +229,11 @@ func errNoQuery(storeName string) error {
 	}
 }
 
-func (s *StoreV2) CreateOrUpdate(req storev2.ResourceRequest, wrapper storev2.Wrapper) error {
+func (s *StoreV2) CreateOrUpdate(req storev2.ResourceRequest, wrapper storev2.Wrapper) (fErr error) {
+	defer func() {
+		fErr = newStoreV2Error("CreateOrUpdate", req.StoreName, fErr)
+	}()
+
 	if !req.UsePostgres {
 		return s.etcdStoreV2.CreateOrUpdate(req, wrapper)
 	}
@@ -200,7 +256,11 @@ func (s *StoreV2) CreateOrUpdate(req storev2.ResourceRequest, wrapper storev2.Wr
 	return nil
 }
 
-func (s *StoreV2) UpdateIfExists(req storev2.ResourceRequest, wrapper storev2.Wrapper) error {
+func (s *StoreV2) UpdateIfExists(req storev2.ResourceRequest, wrapper storev2.Wrapper) (fErr error) {
+	defer func() {
+		fErr = newStoreV2Error("UpdateIfExists", req.StoreName, fErr)
+	}()
+
 	if !req.UsePostgres {
 		return s.etcdStoreV2.UpdateIfExists(req, wrapper)
 	}
@@ -234,7 +294,11 @@ func (s *StoreV2) UpdateIfExists(req storev2.ResourceRequest, wrapper storev2.Wr
 	return nil
 }
 
-func (s *StoreV2) CreateIfNotExists(req storev2.ResourceRequest, wrapper storev2.Wrapper) error {
+func (s *StoreV2) CreateIfNotExists(req storev2.ResourceRequest, wrapper storev2.Wrapper) (fErr error) {
+	defer func() {
+		fErr = newStoreV2Error("CreateIfNotExists", req.StoreName, fErr)
+	}()
+
 	if !req.UsePostgres {
 		return s.etcdStoreV2.CreateIfNotExists(req, wrapper)
 	}
@@ -264,7 +328,11 @@ func (s *StoreV2) CreateIfNotExists(req storev2.ResourceRequest, wrapper storev2
 	return nil
 }
 
-func (s *StoreV2) Get(req storev2.ResourceRequest) (storev2.Wrapper, error) {
+func (s *StoreV2) Get(req storev2.ResourceRequest) (fWrapper storev2.Wrapper, fErr error) {
+	defer func() {
+		fErr = newStoreV2Error("Get", req.StoreName, fErr)
+	}()
+
 	if !req.UsePostgres {
 		return s.etcdStoreV2.Get(req)
 	}
@@ -291,7 +359,16 @@ func (s *StoreV2) Get(req storev2.ResourceRequest) (storev2.Wrapper, error) {
 	return wrapper, nil
 }
 
-func (s *StoreV2) GetMultiple(ctx context.Context, reqs []storev2.ResourceRequest) (map[storev2.ResourceRequest]storev2.Wrapper, error) {
+func (s *StoreV2) GetMultiple(ctx context.Context, reqs []storev2.ResourceRequest) (wrapperMap resourceRequestWrapperMap, fErr error) {
+	if len(reqs) == 0 {
+		return resourceRequestWrapperMap{}, nil
+	}
+
+	storeName := reqs[0].StoreName
+	defer func() {
+		fErr = newStoreV2Error("GetMultiple", storeName, fErr)
+	}()
+
 	tx, err := s.db.Begin(ctx)
 	if err != nil {
 		return nil, err
@@ -307,13 +384,9 @@ func (s *StoreV2) GetMultiple(ctx context.Context, reqs []storev2.ResourceReques
 		Name      string
 	}
 
-	var storeName string
 	keyedResourceRequests := map[requestKey]storev2.ResourceRequest{}
 	namespacedResources := map[string][]string{}
-	for i, req := range reqs {
-		if i == 0 {
-			storeName = reqs[0].StoreName
-		}
+	for _, req := range reqs {
 		if err := req.Validate(); err != nil {
 			return nil, &store.ErrNotValid{Err: err}
 		}
@@ -329,7 +402,7 @@ func (s *StoreV2) GetMultiple(ctx context.Context, reqs []storev2.ResourceReques
 		namespacedResources[req.Namespace] = append(namespacedResources[req.Namespace], req.Name)
 	}
 
-	wrappers := map[storev2.ResourceRequest]storev2.Wrapper{}
+	wrappers := resourceRequestWrapperMap{}
 	op := getMultipleQ
 	for namespace, resourceNames := range namespacedResources {
 		query, ok := s.lookupQuery(reqs[0], op)
@@ -378,11 +451,45 @@ func (s *StoreV2) GetMultiple(ctx context.Context, reqs []storev2.ResourceReques
 	return wrappers, nil
 }
 
-func (s *StoreV2) Delete(req storev2.ResourceRequest) error {
+func (s *StoreV2) Delete(req storev2.ResourceRequest) (fErr error) {
+	defer func() {
+		fErr = newStoreV2Error("Delete", req.StoreName, fErr)
+	}()
+
 	if !req.UsePostgres {
 		return s.etcdStoreV2.Delete(req)
 	}
+
 	query, ok := s.lookupQuery(req, deleteQ)
+	if !ok {
+		return errNoQuery(req.StoreName)
+	}
+	params := []interface{}{}
+	if req.StoreName != namespaceStoreName {
+		params = append(params, req.Namespace)
+	}
+	params = append(params, req.Name)
+	result, err := s.db.Exec(req.Context, query, params...)
+	if err != nil {
+		return &store.ErrInternal{Message: err.Error()}
+	}
+	affected := result.RowsAffected()
+	if affected < 1 {
+		return &store.ErrNotFound{Key: fmt.Sprintf("%s.%s", req.Namespace, req.Name)}
+	}
+	return nil
+}
+
+func (s *StoreV2) HardDelete(req storev2.ResourceRequest) (fErr error) {
+	defer func() {
+		fErr = newStoreV2Error("HardDelete", req.StoreName, fErr)
+	}()
+
+	if !req.UsePostgres {
+		return s.etcdStoreV2.Delete(req)
+	}
+
+	query, ok := s.lookupQuery(req, hardDeleteQ)
 	if !ok {
 		return errNoQuery(req.StoreName)
 	}
@@ -542,7 +649,11 @@ func (w WrapList) Len() int {
 	return len(w)
 }
 
-func (s *StoreV2) List(req storev2.ResourceRequest, pred *store.SelectionPredicate) (list storev2.WrapList, err error) {
+func (s *StoreV2) List(req storev2.ResourceRequest, pred *store.SelectionPredicate) (list storev2.WrapList, fErr error) {
+	defer func() {
+		fErr = newStoreV2Error("List", req.StoreName, fErr)
+	}()
+
 	if !req.UsePostgres {
 		return s.etcdStoreV2.List(req, pred)
 	}
@@ -594,10 +705,15 @@ func (s *StoreV2) List(req storev2.ResourceRequest, pred *store.SelectionPredica
 	return wrapList, nil
 }
 
-func (s *StoreV2) Exists(req storev2.ResourceRequest) (bool, error) {
+func (s *StoreV2) Exists(req storev2.ResourceRequest) (fExists bool, fErr error) {
+	defer func() {
+		fErr = newStoreV2Error("Exists", req.StoreName, fErr)
+	}()
+
 	if !req.UsePostgres {
 		return s.etcdStoreV2.Exists(req)
 	}
+
 	query, ok := s.lookupQuery(req, existsQ)
 	if !ok {
 		return false, errNoQuery(req.StoreName)
@@ -619,7 +735,40 @@ func (s *StoreV2) Exists(req storev2.ResourceRequest) (bool, error) {
 	return false, &store.ErrInternal{Message: err.Error()}
 }
 
-func (s *StoreV2) Patch(req storev2.ResourceRequest, w storev2.Wrapper, patcher patch.Patcher, conditions *store.ETagCondition) (err error) {
+func (s *StoreV2) HardDeleted(req storev2.ResourceRequest) (fDeleted bool, fErr error) {
+	defer func() {
+		fErr = newStoreV2Error("HardDeleted", req.StoreName, fErr)
+	}()
+
+	op := hardDeletedQ
+	query, ok := s.lookupQuery(req, op)
+	if !ok {
+		return false, errNoQuery(req.StoreName)
+	}
+
+	params := []interface{}{}
+	if req.StoreName != namespaceStoreName {
+		params = append(params, req.Namespace)
+	}
+	params = append(params, req.Name)
+
+	row := s.db.QueryRow(req.Context, query, params...)
+	var found bool
+	err := row.Scan(&found)
+	if err == nil {
+		return found, nil
+	}
+	if err == pgx.ErrNoRows {
+		return false, nil
+	}
+	return false, &store.ErrInternal{Message: err.Error()}
+}
+
+func (s *StoreV2) Patch(req storev2.ResourceRequest, w storev2.Wrapper, patcher patch.Patcher, conditions *store.ETagCondition) (fErr error) {
+	defer func() {
+		fErr = newStoreV2Error("Patch", req.StoreName, fErr)
+	}()
+
 	if !req.UsePostgres {
 		return s.etcdStoreV2.Patch(req, w, patcher, conditions)
 	}
@@ -643,16 +792,16 @@ func (s *StoreV2) Patch(req storev2.ResourceRequest, w storev2.Wrapper, patcher 
 	originalWrapper := s.lookupWrapper(req, op)
 
 	tx, txerr := s.db.Begin(req.Context)
-	if err != nil {
+	if fErr != nil {
 		return &store.ErrInternal{Message: txerr.Error()}
 	}
 	defer func() {
-		if err == nil {
-			err = tx.Commit(req.Context)
+		if fErr == nil {
+			fErr = tx.Commit(req.Context)
 			return
 		}
 		if txerr := tx.Rollback(req.Context); txerr != nil {
-			err = txerr
+			fErr = txerr
 		}
 	}()
 

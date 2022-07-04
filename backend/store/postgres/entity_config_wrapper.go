@@ -1,9 +1,11 @@
 package postgres
 
 import (
+	"database/sql"
 	"encoding/json"
 	"fmt"
 	"strings"
+	"time"
 
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	corev3 "github.com/sensu/sensu-go/api/core/v3"
@@ -25,11 +27,46 @@ type EntityConfigWrapper struct {
 	Deregistration    string
 	KeepaliveHandlers []string
 	Redact            []string
+	ID                int64
+	NamespaceID       int64
+	CreatedAt         time.Time
+	UpdatedAt         time.Time
+	DeletedAt         sql.NullTime
 }
 
 // GetName returns the name of the entity.
 func (e *EntityConfigWrapper) GetName() string {
 	return e.Name
+}
+
+// GetCreatedAt returns the value of the CreatedAt field
+func (e *EntityConfigWrapper) GetCreatedAt() time.Time {
+	return e.CreatedAt
+}
+
+// GetUpdatedAt returns the value of the UpdatedAt field
+func (e *EntityConfigWrapper) GetUpdatedAt() time.Time {
+	return e.UpdatedAt
+}
+
+// GetDeletedAt returns the value of the DeletedAt field
+func (e *EntityConfigWrapper) GetDeletedAt() sql.NullTime {
+	return e.DeletedAt
+}
+
+// SetCreatedAt sets the value of the CreatedAt field
+func (e *EntityConfigWrapper) SetCreatedAt(t time.Time) {
+	e.CreatedAt = t
+}
+
+// SetUpdatedAt sets the value of the UpdatedAt field
+func (e *EntityConfigWrapper) SetUpdatedAt(t time.Time) {
+	e.UpdatedAt = t
+}
+
+// SetDeletedAt sets the value of the DeletedAt field
+func (e *EntityConfigWrapper) SetDeletedAt(t sql.NullTime) {
+	e.DeletedAt = t
 }
 
 // Unwrap unwraps the EntityConfigWrapper into an *EntityConfig.
@@ -123,5 +160,10 @@ func (e *EntityConfigWrapper) SQLParams() []interface{} {
 		&e.Deregistration,
 		&e.KeepaliveHandlers,
 		&e.Redact,
+		&e.ID,
+		&e.NamespaceID,
+		&e.CreatedAt,
+		&e.UpdatedAt,
+		&e.DeletedAt,
 	}
 }

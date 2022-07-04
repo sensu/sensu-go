@@ -142,7 +142,7 @@ func TestAddRemoveIsEmpty(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		if err := ring.Remove(context.TODO(), entityName); err != nil {
+		if err := ring.Remove(context.Background(), entityName); err != nil {
 			t.Fatal(err)
 		}
 

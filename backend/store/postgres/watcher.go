@@ -1,11 +1,11 @@
 package postgres
 
 import (
+	"database/sql"
 	"sync"
 	"time"
 
 	"github.com/jackc/pgx/v4/pgxpool"
-	"github.com/lib/pq"
 	"github.com/sensu/sensu-go/backend/poll"
 	storev2 "github.com/sensu/sensu-go/backend/store/v2"
 )
@@ -33,7 +33,7 @@ func getWatchStoreOverride(storeName string) (factory watchStoreFactory, ok bool
 type recordStatus struct {
 	CreatedAt time.Time
 	UpdatedAt time.Time
-	DeletedAt pq.NullTime
+	DeletedAt sql.NullTime
 }
 
 // Row builds a poll.Row from a scanned row

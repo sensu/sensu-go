@@ -49,7 +49,8 @@ func (e *NamespaceStore) DeleteNamespace(ctx context.Context, name string) error
 	req.UsePostgres = true
 
 	if err := e.store.Delete(req); err != nil {
-		if _, ok := err.(*store.ErrNotFound); !ok {
+		var e *store.ErrNotFound
+		if !errors.As(err, &e) {
 			return err
 		}
 	}
@@ -103,7 +104,8 @@ func (e *NamespaceStore) GetNamespace(ctx context.Context, name string) (*corev2
 	req.UsePostgres = true
 	wrapper, err := e.store.Get(req)
 	if err != nil {
-		if _, ok := err.(*store.ErrNotFound); ok {
+		var e *store.ErrNotFound
+		if errors.As(err, &e) {
 			return nil, nil
 		}
 		return nil, err
@@ -130,7 +132,8 @@ func (e *NamespaceStore) GetNamespaceByName(ctx context.Context, name string) (*
 	req.UsePostgres = true
 	wrapper, err := e.store.Get(req)
 	if err != nil {
-		if _, ok := err.(*store.ErrNotFound); ok {
+		var e *store.ErrNotFound
+		if errors.As(err, &e) {
 			return nil, nil
 		}
 		return nil, err
