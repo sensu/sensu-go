@@ -14,6 +14,19 @@ import (
 	"github.com/sensu/sensu-go/types"
 )
 
+type resourceTypes interface {
+	*corev2.Resource | *corev3.Resource
+}
+
+type actionHandlerFuncs interface {
+	actionHandlerFunc | actionHandlerFuncV3
+}
+
+type actionHandlerFunc func(r *http.Request) (interface{}, error)
+type actionHandlerFuncV3 func(r *http.Request) (corev3.Resource, error)
+
+type listHandlerFunc func(w http.ResponseWriter, req *http.Request) (interface{}, error)
+
 type errorBody struct {
 	Message string `json:"message"`
 	Code    uint32 `json:"code"`
@@ -24,10 +37,9 @@ func RespondWith(w http.ResponseWriter, r *http.Request, resources interface{}) 
 	// Set content-type to JSON
 	w.Header().Set("Content-Type", "application/json")
 
-	_, isCoreV2Resource := resources.(corev2.Resource)
 	_, isWrapper := resources.(types.Wrapper)
 	_, isV3Resource := resources.(corev3.Resource)
-	if isCoreV2Resource || isWrapper || isV3Resource {
+	if isWrapper || isV3Resource {
 		etag, err := store.ETag(resources)
 		if err != nil {
 			logger.WithError(err).Error("failed to generate etag")
@@ -144,7 +156,7 @@ func HTTPStatusFromCode(code actions.ErrCode) int {
 //    GET /echo/hey-there   --> 200 OK ["howdy", "there"]
 //    GET /echo/i-am-a-jerk --> 500    {code: 500, message: "fatal err"}
 //
-func actionHandler(action actionHandlerFunc) http.HandlerFunc {
+func actionHandler[T actionHandlerFuncs](action T) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		resources, err := action(r)
 		if err != nil {
@@ -170,10 +182,6 @@ func listHandler(fn listHandlerFunc) http.HandlerFunc {
 	}
 }
 
-type actionHandlerFunc func(r *http.Request) (interface{}, error)
-
-type listHandlerFunc func(w http.ResponseWriter, req *http.Request) (interface{}, error)
-
 //
 // ResourceRoute mounts resources in a convetional RESTful manner.
 //
@@ -192,9 +200,13 @@ type ResourceRoute struct {
 }
 
 // Get reads
-func (r *ResourceRoute) Get(fn actionHandlerFunc) *mux.Route {
+func Get[T actionHandlerFuncs](r *ResourceRoute, fn T) *mux.Route {
 	return r.Path("{id}", fn).Methods(http.MethodGet)
 }
+
+// func (r *ResourceRoute) Get(fn actionHandlerFunc) *mux.Route {
+// 	return r.Path("{id}", fn).Methods(http.MethodGet)
+// }
 
 // List resources
 func (r *ResourceRoute) List(fn ListControllerFunc, fields FieldsFunc) *mux.Route {
@@ -216,13 +228,6 @@ func (r *ResourceRoute) Post(fn actionHandlerFunc) *mux.Route {
 	return r.Path("", fn).Methods(http.MethodPost)
 }
 
-// TODO: uncomment this and use it once controller update fits
-// http patch semantics.
-// Patch updates/modifies
-// func (r *ResourceRoute) Patch(fn actionHandlerFunc) *mux.Route {
-// 	return r.Path("{id}", fn).Methods(http.MethodPatch)
-// }
-
 // Put updates/replaces
 func (r *ResourceRoute) Put(fn actionHandlerFunc) *mux.Route {
 	return r.Path("{id}", fn).Methods(http.MethodPut)
@@ -234,12 +239,12 @@ func (r *ResourceRoute) Del(fn actionHandlerFunc) *mux.Route {
 }
 
 // Path adds custom path
-func (r *ResourceRoute) Path(p string, fn actionHandlerFunc) *mux.Route {
+func Path[T actionHandlerFuncs](r *ResourceRoute, p string, fn T) *mux.Route {
 	fullPath := path.Join(r.PathPrefix, p)
 	return handleAction(r.Router, fullPath, fn)
 }
 
-func handleAction(router *mux.Router, path string, fn actionHandlerFunc) *mux.Route {
+func handleAction[T actionHandlerFuncs](router *mux.Router, path string, fn T) *mux.Route {
 	return router.HandleFunc(path, actionHandler(fn))
 }
 

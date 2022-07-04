@@ -43,7 +43,6 @@ func NewEntitiesRouter(store store.Store, storev2 storev2.Interface, events stor
 		configSubrouter: EntityConfigRouter{
 			handlers: handlers.Handlers{
 				V3Resource: &corev3.EntityConfig{},
-				Store:      store,
 				StoreV2:    storev2,
 			},
 		},

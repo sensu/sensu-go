@@ -19,24 +19,20 @@ import (
 
 // NamespacesRouter handles requests for /namespaces
 type NamespacesRouter struct {
-	handlers       handlers.Handlers
-	store          store.ResourceStore
-	storev2        storev2.Interface
-	namespaceStore store.NamespaceStore
-	auth           authorization.Authorizer
+	handlers handlers.Handlers
+	storev2  storev2.Interface
+	auth     authorization.Authorizer
 }
 
 // NewNamespacesRouter instantiates new router for controlling check resources
-func NewNamespacesRouter(store store.ResourceStore, namespaceStore store.NamespaceStore, auth authorization.Authorizer, storev2 storev2.Interface) *NamespacesRouter {
+func NewNamespacesRouter(auth authorization.Authorizer, store storev2.Interface) *NamespacesRouter {
 	return &NamespacesRouter{
-		store:          store,
-		namespaceStore: namespaceStore,
-		auth:           auth,
+		auth: auth,
 		handlers: handlers.Handlers{
 			Resource: &corev2.Namespace{},
-			Store:    store,
+			StoreV2:  store,
 		},
-		storev2: storev2,
+		storev2: store,
 	}
 }
 

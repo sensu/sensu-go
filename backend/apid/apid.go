@@ -41,7 +41,6 @@ type APId struct {
 	wg                  *sync.WaitGroup
 	errChan             chan error
 	bus                 messaging.MessageBus
-	store               store.Store
 	storev2             storev2.Interface
 	eventStore          store.EventStore
 	queueGetter         types.QueueGetter
@@ -61,8 +60,7 @@ type Config struct {
 	WriteTimeout        time.Duration
 	URL                 string
 	Bus                 messaging.MessageBus
-	Store               store.Store
-	Storev2             storev2.Interface
+	StoreV2             storev2.Interface
 	EventStore          store.EventStore
 	QueueGetter         types.QueueGetter
 	TLS                 *types.TLSOptions
@@ -77,8 +75,7 @@ type Config struct {
 // New creates a new APId.
 func New(c Config, opts ...Option) (*APId, error) {
 	a := &APId{
-		store:               c.Store,
-		storev2:             c.Storev2,
+		storev2:             c.StoreV2,
 		eventStore:          c.EventStore,
 		queueGetter:         c.QueueGetter,
 		tls:                 c.TLS,
@@ -150,7 +147,7 @@ func AuthenticationSubrouter(router *mux.Router, cfg Config) *mux.Router {
 	)
 
 	mountRouters(subrouter,
-		routers.NewAuthenticationRouter(cfg.Store, cfg.Authenticator),
+		routers.NewAuthenticationRouter(cfg.StoreV2, cfg.Authenticator),
 	)
 
 	return subrouter
@@ -162,7 +159,7 @@ func CoreSubrouter(router *mux.Router, cfg Config) *mux.Router {
 	subrouter := NewSubrouter(
 		router.PathPrefix("/api/{group:core}/{version:v2}/"),
 		middlewares.Namespace{},
-		middlewares.Authentication{Store: cfg.Store},
+		middlewares.Authentication{StoreV2: cfg.StoreV2},
 		middlewares.SimpleLogger{},
 		middlewares.AuthorizationAttributes{},
 		middlewares.Authorization{Authorizer: &rbac.Authorizer{Store: cfg.Store}},

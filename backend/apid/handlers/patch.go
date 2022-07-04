@@ -84,39 +84,11 @@ func (h Handlers) PatchResource(r *http.Request) (interface{}, error) {
 		return nil, actions.NewError(actions.InvalidArgument, err)
 	}
 
-	if h.Resource != nil {
-		return h.patchV2Resource(r.Context(), body, name, patcher, conditions)
-	} else if h.V3Resource != nil {
+	if h.V3Resource != nil {
 		return h.patchV3Resource(r.Context(), body, name, namespace, patcher, conditions)
 	}
 
 	return nil, actions.NewError(actions.InvalidArgument, errors.New("no resource available"))
-}
-
-func (h Handlers) patchV2Resource(ctx context.Context, body []byte, name string, patcher patch.Patcher, conditions *store.ETagCondition) (interface{}, error) {
-	payload := reflect.New(reflect.TypeOf(h.Resource).Elem())
-	if err := json.Unmarshal(body, payload.Interface()); err != nil {
-		return nil, actions.NewError(actions.InvalidArgument, err)
-	}
-	resource, ok := payload.Interface().(corev2.Resource)
-	if !ok {
-		return nil, actions.NewErrorf(actions.InvalidArgument)
-	}
-
-	if err := h.Store.PatchResource(ctx, resource, name, patcher, conditions); err != nil {
-		switch err := err.(type) {
-		case *store.ErrNotFound:
-			return nil, actions.NewError(actions.NotFound, err)
-		case *store.ErrNotValid:
-			return nil, actions.NewError(actions.InvalidArgument, err)
-		case *store.ErrPreconditionFailed:
-			return nil, actions.NewError(actions.PreconditionFailed, err)
-		default:
-			return nil, actions.NewError(actions.InternalErr, err)
-		}
-	}
-
-	return resource, nil
 }
 
 func (h Handlers) patchV3Resource(ctx context.Context, body []byte, name, namespace string, patcher patch.Patcher, conditions *store.ETagCondition) (interface{}, error) {

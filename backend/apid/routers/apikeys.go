@@ -13,23 +13,23 @@ import (
 	"github.com/gorilla/mux"
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/apid/handlers"
-	"github.com/sensu/sensu-go/backend/store"
+	storev2 "github.com/sensu/sensu-go/backend/store/v2"
 )
 
 // APIKeysRouter handles requests for /apikeys.
 type APIKeysRouter struct {
 	handlers handlers.Handlers
-	store    store.Store
+	storev2  storev2.Interface
 }
 
 // NewAPIKeysRouter instantiates new router for controlling apikeys resources.
-func NewAPIKeysRouter(store store.Store) *APIKeysRouter {
+func NewAPIKeysRouter(store storev2.Interface) *APIKeysRouter {
 	return &APIKeysRouter{
 		handlers: handlers.Handlers{
-			Resource: &corev2.APIKey{},
-			Store:    store,
+			V3Resource: &corev2.APIKey{},
+			StoreV2:    store,
 		},
-		store: store,
+		storev2: store,
 	}
 }
 
@@ -41,8 +41,8 @@ func (r *APIKeysRouter) Mount(parent *mux.Router) {
 	}
 
 	routes.Del(r.handlers.DeleteResource)
-	routes.Get(r.handlers.GetResource)
-	routes.List(r.handlers.ListResources, corev2.APIKeyFields)
+	routes.Get(r.handlers.GetV3Resource)
+	routes.List(r.handlers.ListV3Resources, corev2.APIKeyFields)
 	parent.HandleFunc(routes.PathPrefix, r.create).Methods(http.MethodPost)
 	routes.Patch(r.handlers.PatchResource)
 }
