@@ -15,23 +15,26 @@ import (
 // EntityConfigWrapper is an implementation of storev2.Wrapper, for dealing with
 // postgresql entity config storage.
 type EntityConfigWrapper struct {
-	Namespace         string
-	Name              string
-	Selectors         []byte
-	Annotations       []byte
-	CreatedBy         string
-	EntityClass       string
-	User              string
-	Subscriptions     []string
-	Deregister        bool
-	Deregistration    string
-	KeepaliveHandlers []string
-	Redact            []string
-	ID                int64
-	NamespaceID       int64
-	CreatedAt         time.Time
-	UpdatedAt         time.Time
-	DeletedAt         sql.NullTime
+	// Stored fields
+	ID                int64        `db:"id" fieldtag:"get,list"`
+	NamespaceID       int64        `db:"namespace_id" fieldtag:"get,list,unique"`
+	Name              string       `db:"name" fieldtag:"create,get,list,unique"`
+	Selectors         []byte       `db:"selectors" fieldtag:"create,update,get,list"`
+	Annotations       []byte       `db:"annotations" fieldtag:"create,update,get,list"`
+	CreatedBy         string       `db:"created_by" fieldtag:"create,get,list"`
+	EntityClass       string       `db:"entity_class" fieldtag:"create,update,get,list"`
+	User              string       `db:"user" fieldtag:"create,update,get,list"`
+	Subscriptions     []string     `db:"subscriptions" fieldtag:"create,update,get,list"`
+	Deregister        bool         `db:"deregister" fieldtag:"create,update,get,list"`
+	Deregistration    string       `db:"deregistration" fieldtag:"create,update,get,list"`
+	KeepaliveHandlers []string     `db:"keepalive_handlers" fieldtag:"create,update,get,list"`
+	Redact            []string     `db:"redact" fieldtag:"create,update,get,list"`
+	CreatedAt         time.Time    `db:"created_at" fieldtag:"get,list"`
+	UpdatedAt         time.Time    `db:"updated_at" fieldtag:"get,list"`
+	DeletedAt         sql.NullTime `db:"deleted_at" fieldtag:"update,get,list"`
+
+	// Non-stored fields
+	Namespace string
 }
 
 // GetName returns the name of the entity.
@@ -166,4 +169,8 @@ func (e *EntityConfigWrapper) SQLParams() []interface{} {
 		&e.UpdatedAt,
 		&e.DeletedAt,
 	}
+}
+
+func (e *EntityConfigWrapper) TableName() string {
+	return new(corev3.EntityConfig).StoreName()
 }

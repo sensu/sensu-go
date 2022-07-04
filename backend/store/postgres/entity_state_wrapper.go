@@ -227,3 +227,7 @@ func (e *EntityStateWrapper) SQLParams() []interface{} {
 		&e.DeletedAt,
 	}
 }
+
+func (e *EntityStateWrapper) TableName() string {
+	return new(corev3.EntityState).StoreName()
+}

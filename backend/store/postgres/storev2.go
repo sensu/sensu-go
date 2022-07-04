@@ -3,9 +3,12 @@ package postgres
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
+	"strings"
 	"time"
 
+	"github.com/huandu/go-sqlbuilder"
 	"github.com/jackc/pgconn"
 	"github.com/jackc/pgx/v4"
 	"github.com/jackc/pgx/v4/pgxpool"
@@ -237,17 +240,34 @@ func (s *StoreV2) CreateOrUpdate(req storev2.ResourceRequest, wrapper storev2.Wr
 	if !req.UsePostgres {
 		return s.etcdStoreV2.CreateOrUpdate(req, wrapper)
 	}
-	pwrap, ok := wrapper.(wrapperWithParams)
-	if !ok {
-		return &store.ErrNotValid{Err: fmt.Errorf("bad wrapper type for postgres: %T", wrapper)}
+
+	type pgWrapper interface {
+		TableName() string
 	}
 
-	query, ok := s.lookupQuery(req, createOrUpdateQ)
-	if !ok {
-		return errNoQuery(req.StoreName)
+	var tableName string
+	if w, ok := wrapper.(pgWrapper); ok {
+		tableName = w.TableName()
 	}
 
-	params := pwrap.SQLParams()
+	if tableName == "" {
+		return errors.New("table name cannot be empty")
+	}
+
+	if w, ok := wrapper.(wrapperWithStatus); ok {
+		w.SetDeletedAt(sql.NullTime{})
+		wrapper = w
+	}
+
+	if tableName == "namespaces" {
+	}
+
+	resourceStruct := sqlbuilder.NewStruct(wrapper)
+	unique := strings.Join(resourceStruct.ColumnsForTag("unique"), ", ")
+	ib := namespaceStruct.InsertIntoForTag(tableName, "create", wrapper)
+	ub := namespaceStruct.UpdateForTag("", "update", wrapper)
+	b := sqlbuilder.Buildf("%v ON CONFLICT ( %v ) DO %v", ib, sqlbuilder.Raw(unique), ub)
+	query, params := b.BuildWithFlavor(sqlbuilder.PostgreSQL)
 
 	if _, err := s.db.Exec(req.Context, query, params...); err != nil {
 		return &store.ErrInternal{Message: err.Error()}

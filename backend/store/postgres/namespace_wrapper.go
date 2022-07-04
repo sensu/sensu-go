@@ -15,13 +15,13 @@ import (
 // NamespaceWrapper is an implementation of storev2.Wrapper, for dealing with
 // postgresql namespace storage.
 type NamespaceWrapper struct {
-	ID          int64
-	Name        string
-	Selectors   []byte
-	Annotations []byte
-	CreatedAt   time.Time
-	UpdatedAt   time.Time
-	DeletedAt   sql.NullTime
+	ID          int64        `db:"id" fieldtag:"get,list"`
+	Name        string       `db:"name" fieldtag:"create,get,list,unique"`
+	Selectors   []byte       `db:"selectors" fieldtag:"create,update,get,list"`
+	Annotations []byte       `db:"annotations" fieldtag:"create,update,get,list"`
+	CreatedAt   time.Time    `db:"created_at" fieldtag:"get,list"`
+	UpdatedAt   time.Time    `db:"updated_at" fieldtag:"get,list"`
+	DeletedAt   sql.NullTime `db:"deleted_at" fieldtag:"update,get,list"`
 }
 
 // GetName returns the name of the namespace.
@@ -128,4 +128,8 @@ func (e *NamespaceWrapper) SQLParams() []interface{} {
 		&e.UpdatedAt,
 		&e.DeletedAt,
 	}
+}
+
+func (e *NamespaceWrapper) TableName() string {
+	return new(corev3.Namespace).StoreName()
 }
