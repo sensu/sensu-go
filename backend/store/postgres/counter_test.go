@@ -6,6 +6,7 @@ package postgres
 
 import (
 	"context"
+	"database/sql"
 	"errors"
 	"fmt"
 	"time"
@@ -105,6 +106,26 @@ type counterIndex struct {
 	db *pgxpool.Pool
 }
 
+// recordStatus used by postgres stores implementing poll.Table
+type recordStatus struct {
+	CreatedAt time.Time
+	UpdatedAt time.Time
+	DeletedAt sql.NullTime
+}
+
+// Row builds a poll.Row from a scanned row
+func (rs recordStatus) Row(id string, resource storev2.Wrapper) poll.Row {
+	row := poll.Row{
+		Id:        id,
+		Resource:  resource,
+		CreatedAt: rs.CreatedAt,
+		UpdatedAt: rs.UpdatedAt,
+	}
+	if rs.DeletedAt.Valid {
+		row.DeletedAt = &rs.DeletedAt.Time
+	}
+	return row
+}
 func (p *counterIndex) Now(ctx context.Context) (time.Time, error) {
 	var ts time.Time
 	row := p.db.QueryRow(ctx, nowQuery)
