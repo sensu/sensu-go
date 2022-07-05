@@ -1,3 +1,5 @@
+//go:build integration
+
 // test resources for integration testing watcher correctness.
 // defines a Counter store resource compatible with sensu-go/backend/poll
 package postgres

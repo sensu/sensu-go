@@ -1,3 +1,5 @@
+//go:build integration
+
 package postgres
 
 import (
@@ -18,7 +20,7 @@ func TestCounterWatcherIntegration(t *testing.T) {
 	// Set ExpectedTxnJitter to a very high percentile of expected transaction latency.
 	// This test case runs ~15k transactions - so p99 would mean on average 150 transactions
 	// that could fall out of the watcher's transaction window and cause a failure.
-	ExpectedTxnJitter := time.Millisecond * 1200
+	ExpectedTxnJitter := time.Millisecond * 1500
 	// additional transaction commit delay
 	SyntheticTxnJitter := time.Millisecond * 25
 	TxnWindow := ExpectedTxnJitter + SyntheticTxnJitter
