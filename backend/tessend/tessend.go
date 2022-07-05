@@ -166,8 +166,7 @@ func (t *Tessend) Start() error {
 		var wErr error
 		tessenWrapper, wErr = storev2.WrapResource(&tessen)
 		if wErr != nil {
-			logger.WithError(err).Error("failed to wrap default tessen config")
-			panic(wErr)
+			return fmt.Errorf("failed to wrap DefaultTessenConfig: %v", wErr)
 		}
 		err = t.store.CreateOrUpdate(t.ctx, req, tessenWrapper)
 		if err != nil {
