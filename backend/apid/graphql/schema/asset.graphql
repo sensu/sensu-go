@@ -36,5 +36,5 @@ type Asset implements Node & Namespaced & Resource {
   """
   Builds defines a collection of assets that this asset can install as a dependency for a check, handler, mutator, etc. .
   """
-  builds: [AssetBuild!]!
+  builds: [CoreV2AssetBuild!]!
 }
