@@ -35,6 +35,9 @@ type AssetFieldResolvers interface {
 
 	// ToJSON implements response to request for 'toJSON' field.
 	ToJSON(p graphql.ResolveParams) (interface{}, error)
+
+	// Builds implements response to request for 'builds' field.
+	Builds(p graphql.ResolveParams) (interface{}, error)
 }
 
 // AssetAliases implements all methods on AssetFieldResolvers interface by using reflection to
@@ -133,6 +136,12 @@ func (_ AssetAliases) ToJSON(p graphql.ResolveParams) (interface{}, error) {
 	return val, err
 }
 
+// Builds implements response to request for 'builds' field.
+func (_ AssetAliases) Builds(p graphql.ResolveParams) (interface{}, error) {
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	return val, err
+}
+
 // AssetType Asset defines an archive, an agent will install as a dependency for a check.
 var AssetType = graphql.NewType("Asset", graphql.ObjectKind)
 
@@ -212,10 +221,26 @@ func _ObjTypeAssetToJSONHandler(impl interface{}) graphql1.FieldResolveFn {
 	}
 }
 
+func _ObjTypeAssetBuildsHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(interface {
+		Builds(p graphql.ResolveParams) (interface{}, error)
+	})
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Builds(frp)
+	}
+}
+
 func _ObjectTypeAssetConfigFn() graphql1.ObjectConfig {
 	return graphql1.ObjectConfig{
 		Description: "Asset defines an archive, an agent will install as a dependency for a check.",
 		Fields: graphql1.Fields{
+			"builds": &graphql1.Field{
+				Args:              graphql1.FieldConfigArgument{},
+				DeprecationReason: "",
+				Description:       "Builds defines a collection of assets that this asset can install as a dependency for a check, handler, mutator, etc. .",
+				Name:              "builds",
+				Type:              graphql1.NewNonNull(graphql1.NewList(graphql1.NewNonNull(graphql.OutputType("AssetBuild")))),
+			},
 			"filters": &graphql1.Field{
 				Args:              graphql1.FieldConfigArgument{},
 				DeprecationReason: "",
@@ -293,6 +318,7 @@ func _ObjectTypeAssetConfigFn() graphql1.ObjectConfig {
 var _ObjectTypeAssetDesc = graphql.ObjectDesc{
 	Config: _ObjectTypeAssetConfigFn,
 	FieldHandlers: map[string]graphql.FieldHandler{
+		"builds":    _ObjTypeAssetBuildsHandler,
 		"filters":   _ObjTypeAssetFiltersHandler,
 		"id":        _ObjTypeAssetIDHandler,
 		"metadata":  _ObjTypeAssetMetadataHandler,
