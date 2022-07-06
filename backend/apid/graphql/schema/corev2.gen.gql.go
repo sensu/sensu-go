@@ -9,6 +9,177 @@ import (
 )
 
 //
+// CoreV2AssetBuildFieldResolvers represents a collection of methods whose products represent the
+// response values of the 'CoreV2AssetBuild' type.
+type CoreV2AssetBuildFieldResolvers interface {
+	// Url implements response to request for 'url' field.
+	Url(p graphql.ResolveParams) (string, error)
+
+	// Sha512 implements response to request for 'sha512' field.
+	Sha512(p graphql.ResolveParams) (string, error)
+
+	// Filters implements response to request for 'filters' field.
+	Filters(p graphql.ResolveParams) ([]string, error)
+
+	// Headers implements response to request for 'headers' field.
+	Headers(p graphql.ResolveParams) (interface{}, error)
+}
+
+// CoreV2AssetBuildAliases implements all methods on CoreV2AssetBuildFieldResolvers interface by using reflection to
+// match name of field to a field on the given value. Intent is reduce friction
+// of writing new resolvers by removing all the instances where you would simply
+// have the resolvers method return a field.
+type CoreV2AssetBuildAliases struct{}
+
+// Url implements response to request for 'url' field.
+func (_ CoreV2AssetBuildAliases) Url(p graphql.ResolveParams) (string, error) {
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	ret, ok := val.(string)
+	if err != nil {
+		return ret, err
+	}
+	if !ok {
+		return ret, errors.New("unable to coerce value for field 'url'")
+	}
+	return ret, err
+}
+
+// Sha512 implements response to request for 'sha512' field.
+func (_ CoreV2AssetBuildAliases) Sha512(p graphql.ResolveParams) (string, error) {
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	ret, ok := val.(string)
+	if err != nil {
+		return ret, err
+	}
+	if !ok {
+		return ret, errors.New("unable to coerce value for field 'sha512'")
+	}
+	return ret, err
+}
+
+// Filters implements response to request for 'filters' field.
+func (_ CoreV2AssetBuildAliases) Filters(p graphql.ResolveParams) ([]string, error) {
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	ret, ok := val.([]string)
+	if err != nil {
+		return ret, err
+	}
+	if !ok {
+		return ret, errors.New("unable to coerce value for field 'filters'")
+	}
+	return ret, err
+}
+
+// Headers implements response to request for 'headers' field.
+func (_ CoreV2AssetBuildAliases) Headers(p graphql.ResolveParams) (interface{}, error) {
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	return val, err
+}
+
+/*
+CoreV2AssetBuildType AssetBuild defines an individual asset that an asset can install as a
+dependency for a check, handler, mutator, etc.
+*/
+var CoreV2AssetBuildType = graphql.NewType("CoreV2AssetBuild", graphql.ObjectKind)
+
+// RegisterCoreV2AssetBuild registers CoreV2AssetBuild object type with given service.
+func RegisterCoreV2AssetBuild(svc *graphql.Service, impl CoreV2AssetBuildFieldResolvers) {
+	svc.RegisterObject(_ObjectTypeCoreV2AssetBuildDesc, impl)
+}
+func _ObjTypeCoreV2AssetBuildUrlHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(interface {
+		Url(p graphql.ResolveParams) (string, error)
+	})
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Url(frp)
+	}
+}
+
+func _ObjTypeCoreV2AssetBuildSha512Handler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(interface {
+		Sha512(p graphql.ResolveParams) (string, error)
+	})
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Sha512(frp)
+	}
+}
+
+func _ObjTypeCoreV2AssetBuildFiltersHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(interface {
+		Filters(p graphql.ResolveParams) ([]string, error)
+	})
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Filters(frp)
+	}
+}
+
+func _ObjTypeCoreV2AssetBuildHeadersHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(interface {
+		Headers(p graphql.ResolveParams) (interface{}, error)
+	})
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Headers(frp)
+	}
+}
+
+func _ObjectTypeCoreV2AssetBuildConfigFn() graphql1.ObjectConfig {
+	return graphql1.ObjectConfig{
+		Description: "AssetBuild defines an individual asset that an asset can install as a\ndependency for a check, handler, mutator, etc.",
+		Fields: graphql1.Fields{
+			"filters": &graphql1.Field{
+				Args:              graphql1.FieldConfigArgument{},
+				DeprecationReason: "",
+				Description:       "Filters are a collection of sensu queries, used by the system to\ndetermine if the asset should be installed. If more than one filter is\npresent the queries are joined by the \"AND\" operator.",
+				Name:              "filters",
+				Type:              graphql1.NewNonNull(graphql1.NewList(graphql1.NewNonNull(graphql1.String))),
+			},
+			"headers": &graphql1.Field{
+				Args:              graphql1.FieldConfigArgument{},
+				DeprecationReason: "",
+				Description:       "Headers is a collection of key/value string pairs used as HTTP headers\nfor asset retrieval.",
+				Name:              "headers",
+				Type:              graphql1.NewNonNull(graphql.OutputType("JSON")),
+			},
+			"sha512": &graphql1.Field{
+				Args:              graphql1.FieldConfigArgument{},
+				DeprecationReason: "",
+				Description:       "Sha512 is the SHA-512 checksum of the asset",
+				Name:              "sha512",
+				Type:              graphql1.NewNonNull(graphql1.String),
+			},
+			"url": &graphql1.Field{
+				Args:              graphql1.FieldConfigArgument{},
+				DeprecationReason: "",
+				Description:       "URL is the location of the asset",
+				Name:              "url",
+				Type:              graphql1.NewNonNull(graphql1.String),
+			},
+		},
+		Interfaces: []*graphql1.Interface{},
+		IsTypeOf: func(_ graphql1.IsTypeOfParams) bool {
+			// NOTE:
+			// Panic by default. Intent is that when Service is invoked, values of
+			// these fields are updated with instantiated resolvers. If these
+			// defaults are called it is most certainly programmer err.
+			// If you're see this comment then: 'Whoops! Sorry, my bad.'
+			panic("Unimplemented; see CoreV2AssetBuildFieldResolvers.")
+		},
+		Name: "CoreV2AssetBuild",
+	}
+}
+
+// describe CoreV2AssetBuild's configuration; kept private to avoid unintentional tampering of configuration at runtime.
+var _ObjectTypeCoreV2AssetBuildDesc = graphql.ObjectDesc{
+	Config: _ObjectTypeCoreV2AssetBuildConfigFn,
+	FieldHandlers: map[string]graphql.FieldHandler{
+		"filters": _ObjTypeCoreV2AssetBuildFiltersHandler,
+		"headers": _ObjTypeCoreV2AssetBuildHeadersHandler,
+		"sha512":  _ObjTypeCoreV2AssetBuildSha512Handler,
+		"url":     _ObjTypeCoreV2AssetBuildUrlHandler,
+	},
+}
+
+//
 // CoreV2PipelineFieldResolvers represents a collection of methods whose products represent the
 // response values of the 'CoreV2Pipeline' type.
 type CoreV2PipelineFieldResolvers interface {
