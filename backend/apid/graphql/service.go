@@ -66,6 +66,7 @@ func NewService(cfg ServiceConfig) (*Service, error) {
 
 	// Register types
 	schema.RegisterAsset(svc, &assetImpl{})
+	schema.RegisterCoreV2AssetBuild(svc, &schema.CoreV2AssetBuildAliases{})
 	schema.RegisterCoreV2Pipeline(svc, &corev2PipelineImpl{})
 	schema.RegisterCoreV2PipelineExtensionOverrides(svc, &corev2PipelineImpl{})
 	schema.RegisterCoreV2PipelineWorkflow(svc, &schema.CoreV2PipelineWorkflowAliases{})

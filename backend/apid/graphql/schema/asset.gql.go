@@ -239,7 +239,7 @@ func _ObjectTypeAssetConfigFn() graphql1.ObjectConfig {
 				DeprecationReason: "",
 				Description:       "Builds defines a collection of assets that this asset can install as a dependency for a check, handler, mutator, etc. .",
 				Name:              "builds",
-				Type:              graphql1.NewNonNull(graphql1.NewList(graphql1.NewNonNull(graphql.OutputType("AssetBuild")))),
+				Type:              graphql1.NewNonNull(graphql1.NewList(graphql1.NewNonNull(graphql.OutputType("CoreV2AssetBuild")))),
 			},
 			"filters": &graphql1.Field{
 				Args:              graphql1.FieldConfigArgument{},
