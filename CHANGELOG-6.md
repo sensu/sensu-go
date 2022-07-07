@@ -7,6 +7,8 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
 
+## [6.7.3] - 2022-07-07
+
 ## [6.7.2] - 2022-05-12
 
 ### Added
@@ -143,7 +145,6 @@ sensuctl or the webui.
 
 ### Added
 - Add backend label to logged metrics.
-### Added
 - Check & CheckConfig validation errors related to cron now provide additional
 context.
 
