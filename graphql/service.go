@@ -87,7 +87,6 @@ func (service *Service) RegisterObject(t ObjectDesc, impl interface{}) {
 
 		cfg.IsTypeOf = nil
 		if typeResolver, ok := impl.(isTypeOfResolver); ok {
-			logrus.Warnf("%s: %T", cfg.Name, cfg.IsTypeOf)
 			cfg.IsTypeOf = newIsTypeOfFn(typeResolver)
 		}
 
@@ -98,6 +97,8 @@ func (service *Service) RegisterObject(t ObjectDesc, impl interface{}) {
 
 		cfg.Fields = fieldsThunk(m, fields)
 		cfg.Interfaces = interfacesThunk(m, cfg.Interfaces)
+
+		logrus.Warnf("%s: [%T]: %#v", cfg.Name, cfg.IsTypeOf, cfg.IsTypeOf)
 		return graphql.NewObject(cfg)
 	}
 	service.types.addType(cfg.Name, ObjectKind, registrar)
