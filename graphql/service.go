@@ -87,9 +87,9 @@ func (service *Service) RegisterObject(t ObjectDesc, impl interface{}) {
 
 		cfg.IsTypeOf = nil
 		if typeResolver, ok := impl.(isTypeOfResolver); ok {
+			logrus.Warnf("%s: %T", cfg.Name, cfg.IsTypeOf)
 			cfg.IsTypeOf = newIsTypeOfFn(typeResolver)
 		}
-		logrus.Warnf("%s: %T", cfg.Name, cfg.IsTypeOf)
 
 		for _, ext := range service.types.extensionsForType(cfg.Name) {
 			extObjCfg := ext.(graphql.ObjectConfig)
