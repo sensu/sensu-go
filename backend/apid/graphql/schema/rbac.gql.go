@@ -154,11 +154,20 @@ var _ObjectTypeRuleDesc = graphql.ObjectDesc{
 // ClusterRoleFieldResolvers represents a collection of methods whose products represent the
 // response values of the 'ClusterRole' type.
 type ClusterRoleFieldResolvers interface {
+	// ID implements response to request for 'id' field.
+	ID(p graphql.ResolveParams) (string, error)
+
+	// Metadata implements response to request for 'metadata' field.
+	Metadata(p graphql.ResolveParams) (interface{}, error)
+
 	// Rules implements response to request for 'rules' field.
 	Rules(p graphql.ResolveParams) (interface{}, error)
 
 	// Name implements response to request for 'name' field.
 	Name(p graphql.ResolveParams) (string, error)
+
+	// ToJSON implements response to request for 'toJSON' field.
+	ToJSON(p graphql.ResolveParams) (interface{}, error)
 }
 
 // ClusterRoleAliases implements all methods on ClusterRoleFieldResolvers interface by using reflection to
@@ -166,6 +175,25 @@ type ClusterRoleFieldResolvers interface {
 // of writing new resolvers by removing all the instances where you would simply
 // have the resolvers method return a field.
 type ClusterRoleAliases struct{}
+
+// ID implements response to request for 'id' field.
+func (_ ClusterRoleAliases) ID(p graphql.ResolveParams) (string, error) {
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	ret, ok := val.(string)
+	if err != nil {
+		return ret, err
+	}
+	if !ok {
+		return ret, errors.New("unable to coerce value for field 'id'")
+	}
+	return ret, err
+}
+
+// Metadata implements response to request for 'metadata' field.
+func (_ ClusterRoleAliases) Metadata(p graphql.ResolveParams) (interface{}, error) {
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	return val, err
+}
 
 // Rules implements response to request for 'rules' field.
 func (_ ClusterRoleAliases) Rules(p graphql.ResolveParams) (interface{}, error) {
@@ -186,6 +214,12 @@ func (_ ClusterRoleAliases) Name(p graphql.ResolveParams) (string, error) {
 	return ret, err
 }
 
+// ToJSON implements response to request for 'toJSON' field.
+func (_ ClusterRoleAliases) ToJSON(p graphql.ResolveParams) (interface{}, error) {
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	return val, err
+}
+
 // ClusterRoleType ClusterRole applies to all namespaces within a cluster.
 var ClusterRoleType = graphql.NewType("ClusterRole", graphql.ObjectKind)
 
@@ -193,6 +227,24 @@ var ClusterRoleType = graphql.NewType("ClusterRole", graphql.ObjectKind)
 func RegisterClusterRole(svc *graphql.Service, impl ClusterRoleFieldResolvers) {
 	svc.RegisterObject(_ObjectTypeClusterRoleDesc, impl)
 }
+func _ObjTypeClusterRoleIDHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(interface {
+		ID(p graphql.ResolveParams) (string, error)
+	})
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.ID(frp)
+	}
+}
+
+func _ObjTypeClusterRoleMetadataHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(interface {
+		Metadata(p graphql.ResolveParams) (interface{}, error)
+	})
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Metadata(frp)
+	}
+}
+
 func _ObjTypeClusterRoleRulesHandler(impl interface{}) graphql1.FieldResolveFn {
 	resolver := impl.(interface {
 		Rules(p graphql.ResolveParams) (interface{}, error)
@@ -211,10 +263,33 @@ func _ObjTypeClusterRoleNameHandler(impl interface{}) graphql1.FieldResolveFn {
 	}
 }
 
+func _ObjTypeClusterRoleToJSONHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(interface {
+		ToJSON(p graphql.ResolveParams) (interface{}, error)
+	})
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.ToJSON(frp)
+	}
+}
+
 func _ObjectTypeClusterRoleConfigFn() graphql1.ObjectConfig {
 	return graphql1.ObjectConfig{
 		Description: "ClusterRole applies to all namespaces within a cluster.",
 		Fields: graphql1.Fields{
+			"id": &graphql1.Field{
+				Args:              graphql1.FieldConfigArgument{},
+				DeprecationReason: "",
+				Description:       "The globally unique identifier of the record",
+				Name:              "id",
+				Type:              graphql1.NewNonNull(graphql1.ID),
+			},
+			"metadata": &graphql1.Field{
+				Args:              graphql1.FieldConfigArgument{},
+				DeprecationReason: "",
+				Description:       "metadata contains name, namespace, labels and annotations of the record",
+				Name:              "metadata",
+				Type:              graphql.OutputType("ObjectMeta"),
+			},
 			"name": &graphql1.Field{
 				Args:              graphql1.FieldConfigArgument{},
 				DeprecationReason: "",
@@ -225,12 +300,21 @@ func _ObjectTypeClusterRoleConfigFn() graphql1.ObjectConfig {
 			"rules": &graphql1.Field{
 				Args:              graphql1.FieldConfigArgument{},
 				DeprecationReason: "",
-				Description:       "self descriptive",
+				Description:       "List of rules associated with the given role",
 				Name:              "rules",
 				Type:              graphql1.NewList(graphql1.NewNonNull(graphql.OutputType("Rule"))),
 			},
+			"toJSON": &graphql1.Field{
+				Args:              graphql1.FieldConfigArgument{},
+				DeprecationReason: "",
+				Description:       "toJSON returns a REST API compatible representation of the resource. Handy for\nsharing snippets that can then be imported with `sensuctl create`.",
+				Name:              "toJSON",
+				Type:              graphql1.NewNonNull(graphql.OutputType("JSON")),
+			},
 		},
-		Interfaces: []*graphql1.Interface{},
+		Interfaces: []*graphql1.Interface{
+			graphql.Interface("Node"),
+			graphql.Interface("Resource")},
 		IsTypeOf: func(_ graphql1.IsTypeOfParams) bool {
 			// NOTE:
 			// Panic by default. Intent is that when Service is invoked, values of
@@ -247,8 +331,11 @@ func _ObjectTypeClusterRoleConfigFn() graphql1.ObjectConfig {
 var _ObjectTypeClusterRoleDesc = graphql.ObjectDesc{
 	Config: _ObjectTypeClusterRoleConfigFn,
 	FieldHandlers: map[string]graphql.FieldHandler{
-		"name":  _ObjTypeClusterRoleNameHandler,
-		"rules": _ObjTypeClusterRoleRulesHandler,
+		"id":       _ObjTypeClusterRoleIDHandler,
+		"metadata": _ObjTypeClusterRoleMetadataHandler,
+		"name":     _ObjTypeClusterRoleNameHandler,
+		"rules":    _ObjTypeClusterRoleRulesHandler,
+		"toJSON":   _ObjTypeClusterRoleToJSONHandler,
 	},
 }
 
@@ -256,14 +343,17 @@ var _ObjectTypeClusterRoleDesc = graphql.ObjectDesc{
 // RoleFieldResolvers represents a collection of methods whose products represent the
 // response values of the 'Role' type.
 type RoleFieldResolvers interface {
+	// ID implements response to request for 'id' field.
+	ID(p graphql.ResolveParams) (string, error)
+
+	// Metadata implements response to request for 'metadata' field.
+	Metadata(p graphql.ResolveParams) (interface{}, error)
+
 	// Rules implements response to request for 'rules' field.
 	Rules(p graphql.ResolveParams) (interface{}, error)
 
-	// Namespace implements response to request for 'namespace' field.
-	Namespace(p graphql.ResolveParams) (string, error)
-
-	// Name implements response to request for 'name' field.
-	Name(p graphql.ResolveParams) (string, error)
+	// ToJSON implements response to request for 'toJSON' field.
+	ToJSON(p graphql.ResolveParams) (interface{}, error)
 }
 
 // RoleAliases implements all methods on RoleFieldResolvers interface by using reflection to
@@ -272,36 +362,35 @@ type RoleFieldResolvers interface {
 // have the resolvers method return a field.
 type RoleAliases struct{}
 
+// ID implements response to request for 'id' field.
+func (_ RoleAliases) ID(p graphql.ResolveParams) (string, error) {
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	ret, ok := val.(string)
+	if err != nil {
+		return ret, err
+	}
+	if !ok {
+		return ret, errors.New("unable to coerce value for field 'id'")
+	}
+	return ret, err
+}
+
+// Metadata implements response to request for 'metadata' field.
+func (_ RoleAliases) Metadata(p graphql.ResolveParams) (interface{}, error) {
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	return val, err
+}
+
 // Rules implements response to request for 'rules' field.
 func (_ RoleAliases) Rules(p graphql.ResolveParams) (interface{}, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
 	return val, err
 }
 
-// Namespace implements response to request for 'namespace' field.
-func (_ RoleAliases) Namespace(p graphql.ResolveParams) (string, error) {
+// ToJSON implements response to request for 'toJSON' field.
+func (_ RoleAliases) ToJSON(p graphql.ResolveParams) (interface{}, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret, ok := val.(string)
-	if err != nil {
-		return ret, err
-	}
-	if !ok {
-		return ret, errors.New("unable to coerce value for field 'namespace'")
-	}
-	return ret, err
-}
-
-// Name implements response to request for 'name' field.
-func (_ RoleAliases) Name(p graphql.ResolveParams) (string, error) {
-	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret, ok := val.(string)
-	if err != nil {
-		return ret, err
-	}
-	if !ok {
-		return ret, errors.New("unable to coerce value for field 'name'")
-	}
-	return ret, err
+	return val, err
 }
 
 // RoleType Role applies only to a single namespace.
@@ -311,6 +400,24 @@ var RoleType = graphql.NewType("Role", graphql.ObjectKind)
 func RegisterRole(svc *graphql.Service, impl RoleFieldResolvers) {
 	svc.RegisterObject(_ObjectTypeRoleDesc, impl)
 }
+func _ObjTypeRoleIDHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(interface {
+		ID(p graphql.ResolveParams) (string, error)
+	})
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.ID(frp)
+	}
+}
+
+func _ObjTypeRoleMetadataHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(interface {
+		Metadata(p graphql.ResolveParams) (interface{}, error)
+	})
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Metadata(frp)
+	}
+}
+
 func _ObjTypeRoleRulesHandler(impl interface{}) graphql1.FieldResolveFn {
 	resolver := impl.(interface {
 		Rules(p graphql.ResolveParams) (interface{}, error)
@@ -320,21 +427,12 @@ func _ObjTypeRoleRulesHandler(impl interface{}) graphql1.FieldResolveFn {
 	}
 }
 
-func _ObjTypeRoleNamespaceHandler(impl interface{}) graphql1.FieldResolveFn {
+func _ObjTypeRoleToJSONHandler(impl interface{}) graphql1.FieldResolveFn {
 	resolver := impl.(interface {
-		Namespace(p graphql.ResolveParams) (string, error)
+		ToJSON(p graphql.ResolveParams) (interface{}, error)
 	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
-		return resolver.Namespace(frp)
-	}
-}
-
-func _ObjTypeRoleNameHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(interface {
-		Name(p graphql.ResolveParams) (string, error)
-	})
-	return func(frp graphql1.ResolveParams) (interface{}, error) {
-		return resolver.Name(frp)
+		return resolver.ToJSON(frp)
 	}
 }
 
@@ -342,29 +440,38 @@ func _ObjectTypeRoleConfigFn() graphql1.ObjectConfig {
 	return graphql1.ObjectConfig{
 		Description: "Role applies only to a single namespace.",
 		Fields: graphql1.Fields{
-			"name": &graphql1.Field{
+			"id": &graphql1.Field{
 				Args:              graphql1.FieldConfigArgument{},
 				DeprecationReason: "",
-				Description:       "Name of the Role",
-				Name:              "name",
-				Type:              graphql1.NewNonNull(graphql1.String),
+				Description:       "The globally unique identifier of the record",
+				Name:              "id",
+				Type:              graphql1.NewNonNull(graphql1.ID),
 			},
-			"namespace": &graphql1.Field{
+			"metadata": &graphql1.Field{
 				Args:              graphql1.FieldConfigArgument{},
 				DeprecationReason: "",
-				Description:       "Namespace of the Role",
-				Name:              "namespace",
-				Type:              graphql1.NewNonNull(graphql1.String),
+				Description:       "metadata contains name, namespace, labels and annotations of the record",
+				Name:              "metadata",
+				Type:              graphql.OutputType("ObjectMeta"),
 			},
 			"rules": &graphql1.Field{
 				Args:              graphql1.FieldConfigArgument{},
 				DeprecationReason: "",
-				Description:       "self descriptive",
+				Description:       "List of rules associated with the given role",
 				Name:              "rules",
 				Type:              graphql1.NewList(graphql1.NewNonNull(graphql.OutputType("Rule"))),
 			},
+			"toJSON": &graphql1.Field{
+				Args:              graphql1.FieldConfigArgument{},
+				DeprecationReason: "",
+				Description:       "toJSON returns a REST API compatible representation of the resource. Handy for\nsharing snippets that can then be imported with `sensuctl create`.",
+				Name:              "toJSON",
+				Type:              graphql1.NewNonNull(graphql.OutputType("JSON")),
+			},
 		},
-		Interfaces: []*graphql1.Interface{},
+		Interfaces: []*graphql1.Interface{
+			graphql.Interface("Node"),
+			graphql.Interface("Resource")},
 		IsTypeOf: func(_ graphql1.IsTypeOfParams) bool {
 			// NOTE:
 			// Panic by default. Intent is that when Service is invoked, values of
@@ -381,9 +488,380 @@ func _ObjectTypeRoleConfigFn() graphql1.ObjectConfig {
 var _ObjectTypeRoleDesc = graphql.ObjectDesc{
 	Config: _ObjectTypeRoleConfigFn,
 	FieldHandlers: map[string]graphql.FieldHandler{
-		"name":      _ObjTypeRoleNameHandler,
-		"namespace": _ObjTypeRoleNamespaceHandler,
-		"rules":     _ObjTypeRoleRulesHandler,
+		"id":       _ObjTypeRoleIDHandler,
+		"metadata": _ObjTypeRoleMetadataHandler,
+		"rules":    _ObjTypeRoleRulesHandler,
+		"toJSON":   _ObjTypeRoleToJSONHandler,
+	},
+}
+
+//
+// ClusterRoleBindingFieldResolvers represents a collection of methods whose products represent the
+// response values of the 'ClusterRoleBinding' type.
+type ClusterRoleBindingFieldResolvers interface {
+	// ID implements response to request for 'id' field.
+	ID(p graphql.ResolveParams) (string, error)
+
+	// Metadata implements response to request for 'metadata' field.
+	Metadata(p graphql.ResolveParams) (interface{}, error)
+
+	// Subjects implements response to request for 'subjects' field.
+	Subjects(p graphql.ResolveParams) (interface{}, error)
+
+	// RoleRef implements response to request for 'roleRef' field.
+	RoleRef(p graphql.ResolveParams) (interface{}, error)
+
+	// ToJSON implements response to request for 'toJSON' field.
+	ToJSON(p graphql.ResolveParams) (interface{}, error)
+}
+
+// ClusterRoleBindingAliases implements all methods on ClusterRoleBindingFieldResolvers interface by using reflection to
+// match name of field to a field on the given value. Intent is reduce friction
+// of writing new resolvers by removing all the instances where you would simply
+// have the resolvers method return a field.
+type ClusterRoleBindingAliases struct{}
+
+// ID implements response to request for 'id' field.
+func (_ ClusterRoleBindingAliases) ID(p graphql.ResolveParams) (string, error) {
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	ret, ok := val.(string)
+	if err != nil {
+		return ret, err
+	}
+	if !ok {
+		return ret, errors.New("unable to coerce value for field 'id'")
+	}
+	return ret, err
+}
+
+// Metadata implements response to request for 'metadata' field.
+func (_ ClusterRoleBindingAliases) Metadata(p graphql.ResolveParams) (interface{}, error) {
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	return val, err
+}
+
+// Subjects implements response to request for 'subjects' field.
+func (_ ClusterRoleBindingAliases) Subjects(p graphql.ResolveParams) (interface{}, error) {
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	return val, err
+}
+
+// RoleRef implements response to request for 'roleRef' field.
+func (_ ClusterRoleBindingAliases) RoleRef(p graphql.ResolveParams) (interface{}, error) {
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	return val, err
+}
+
+// ToJSON implements response to request for 'toJSON' field.
+func (_ ClusterRoleBindingAliases) ToJSON(p graphql.ResolveParams) (interface{}, error) {
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	return val, err
+}
+
+/*
+ClusterRoleBindingType ClusterRoleBinding grants the permissions defined in a ClusterRole referenced
+to a user or a set of users
+*/
+var ClusterRoleBindingType = graphql.NewType("ClusterRoleBinding", graphql.ObjectKind)
+
+// RegisterClusterRoleBinding registers ClusterRoleBinding object type with given service.
+func RegisterClusterRoleBinding(svc *graphql.Service, impl ClusterRoleBindingFieldResolvers) {
+	svc.RegisterObject(_ObjectTypeClusterRoleBindingDesc, impl)
+}
+func _ObjTypeClusterRoleBindingIDHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(interface {
+		ID(p graphql.ResolveParams) (string, error)
+	})
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.ID(frp)
+	}
+}
+
+func _ObjTypeClusterRoleBindingMetadataHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(interface {
+		Metadata(p graphql.ResolveParams) (interface{}, error)
+	})
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Metadata(frp)
+	}
+}
+
+func _ObjTypeClusterRoleBindingSubjectsHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(interface {
+		Subjects(p graphql.ResolveParams) (interface{}, error)
+	})
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Subjects(frp)
+	}
+}
+
+func _ObjTypeClusterRoleBindingRoleRefHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(interface {
+		RoleRef(p graphql.ResolveParams) (interface{}, error)
+	})
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.RoleRef(frp)
+	}
+}
+
+func _ObjTypeClusterRoleBindingToJSONHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(interface {
+		ToJSON(p graphql.ResolveParams) (interface{}, error)
+	})
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.ToJSON(frp)
+	}
+}
+
+func _ObjectTypeClusterRoleBindingConfigFn() graphql1.ObjectConfig {
+	return graphql1.ObjectConfig{
+		Description: "ClusterRoleBinding grants the permissions defined in a ClusterRole referenced\nto a user or a set of users",
+		Fields: graphql1.Fields{
+			"id": &graphql1.Field{
+				Args:              graphql1.FieldConfigArgument{},
+				DeprecationReason: "",
+				Description:       "The globally unique identifier of the record",
+				Name:              "id",
+				Type:              graphql1.NewNonNull(graphql1.ID),
+			},
+			"metadata": &graphql1.Field{
+				Args:              graphql1.FieldConfigArgument{},
+				DeprecationReason: "",
+				Description:       "metadata contains name, namespace, labels and annotations of the record",
+				Name:              "metadata",
+				Type:              graphql.OutputType("ObjectMeta"),
+			},
+			"roleRef": &graphql1.Field{
+				Args:              graphql1.FieldConfigArgument{},
+				DeprecationReason: "",
+				Description:       "RoleRef references a ClusterRole in the current namespace",
+				Name:              "roleRef",
+				Type:              graphql.OutputType("RoleRef"),
+			},
+			"subjects": &graphql1.Field{
+				Args:              graphql1.FieldConfigArgument{},
+				DeprecationReason: "",
+				Description:       "Subjects holds references to the objects the ClusterRole applies to",
+				Name:              "subjects",
+				Type:              graphql1.NewList(graphql1.NewNonNull(graphql.OutputType("Subject"))),
+			},
+			"toJSON": &graphql1.Field{
+				Args:              graphql1.FieldConfigArgument{},
+				DeprecationReason: "",
+				Description:       "toJSON returns a REST API compatible representation of the resource. Handy for\nsharing snippets that can then be imported with `sensuctl create`.",
+				Name:              "toJSON",
+				Type:              graphql1.NewNonNull(graphql.OutputType("JSON")),
+			},
+		},
+		Interfaces: []*graphql1.Interface{
+			graphql.Interface("Node"),
+			graphql.Interface("Resource")},
+		IsTypeOf: func(_ graphql1.IsTypeOfParams) bool {
+			// NOTE:
+			// Panic by default. Intent is that when Service is invoked, values of
+			// these fields are updated with instantiated resolvers. If these
+			// defaults are called it is most certainly programmer err.
+			// If you're see this comment then: 'Whoops! Sorry, my bad.'
+			panic("Unimplemented; see ClusterRoleBindingFieldResolvers.")
+		},
+		Name: "ClusterRoleBinding",
+	}
+}
+
+// describe ClusterRoleBinding's configuration; kept private to avoid unintentional tampering of configuration at runtime.
+var _ObjectTypeClusterRoleBindingDesc = graphql.ObjectDesc{
+	Config: _ObjectTypeClusterRoleBindingConfigFn,
+	FieldHandlers: map[string]graphql.FieldHandler{
+		"id":       _ObjTypeClusterRoleBindingIDHandler,
+		"metadata": _ObjTypeClusterRoleBindingMetadataHandler,
+		"roleRef":  _ObjTypeClusterRoleBindingRoleRefHandler,
+		"subjects": _ObjTypeClusterRoleBindingSubjectsHandler,
+		"toJSON":   _ObjTypeClusterRoleBindingToJSONHandler,
+	},
+}
+
+//
+// RoleBindingFieldResolvers represents a collection of methods whose products represent the
+// response values of the 'RoleBinding' type.
+type RoleBindingFieldResolvers interface {
+	// ID implements response to request for 'id' field.
+	ID(p graphql.ResolveParams) (string, error)
+
+	// Metadata implements response to request for 'metadata' field.
+	Metadata(p graphql.ResolveParams) (interface{}, error)
+
+	// Subjects implements response to request for 'subjects' field.
+	Subjects(p graphql.ResolveParams) (interface{}, error)
+
+	// RoleRef implements response to request for 'roleRef' field.
+	RoleRef(p graphql.ResolveParams) (interface{}, error)
+
+	// ToJSON implements response to request for 'toJSON' field.
+	ToJSON(p graphql.ResolveParams) (interface{}, error)
+}
+
+// RoleBindingAliases implements all methods on RoleBindingFieldResolvers interface by using reflection to
+// match name of field to a field on the given value. Intent is reduce friction
+// of writing new resolvers by removing all the instances where you would simply
+// have the resolvers method return a field.
+type RoleBindingAliases struct{}
+
+// ID implements response to request for 'id' field.
+func (_ RoleBindingAliases) ID(p graphql.ResolveParams) (string, error) {
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	ret, ok := val.(string)
+	if err != nil {
+		return ret, err
+	}
+	if !ok {
+		return ret, errors.New("unable to coerce value for field 'id'")
+	}
+	return ret, err
+}
+
+// Metadata implements response to request for 'metadata' field.
+func (_ RoleBindingAliases) Metadata(p graphql.ResolveParams) (interface{}, error) {
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	return val, err
+}
+
+// Subjects implements response to request for 'subjects' field.
+func (_ RoleBindingAliases) Subjects(p graphql.ResolveParams) (interface{}, error) {
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	return val, err
+}
+
+// RoleRef implements response to request for 'roleRef' field.
+func (_ RoleBindingAliases) RoleRef(p graphql.ResolveParams) (interface{}, error) {
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	return val, err
+}
+
+// ToJSON implements response to request for 'toJSON' field.
+func (_ RoleBindingAliases) ToJSON(p graphql.ResolveParams) (interface{}, error) {
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	return val, err
+}
+
+/*
+RoleBindingType RoleBinding grants the permissions defined in a Role referenced to a user or
+a set of users
+*/
+var RoleBindingType = graphql.NewType("RoleBinding", graphql.ObjectKind)
+
+// RegisterRoleBinding registers RoleBinding object type with given service.
+func RegisterRoleBinding(svc *graphql.Service, impl RoleBindingFieldResolvers) {
+	svc.RegisterObject(_ObjectTypeRoleBindingDesc, impl)
+}
+func _ObjTypeRoleBindingIDHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(interface {
+		ID(p graphql.ResolveParams) (string, error)
+	})
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.ID(frp)
+	}
+}
+
+func _ObjTypeRoleBindingMetadataHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(interface {
+		Metadata(p graphql.ResolveParams) (interface{}, error)
+	})
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Metadata(frp)
+	}
+}
+
+func _ObjTypeRoleBindingSubjectsHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(interface {
+		Subjects(p graphql.ResolveParams) (interface{}, error)
+	})
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Subjects(frp)
+	}
+}
+
+func _ObjTypeRoleBindingRoleRefHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(interface {
+		RoleRef(p graphql.ResolveParams) (interface{}, error)
+	})
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.RoleRef(frp)
+	}
+}
+
+func _ObjTypeRoleBindingToJSONHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(interface {
+		ToJSON(p graphql.ResolveParams) (interface{}, error)
+	})
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.ToJSON(frp)
+	}
+}
+
+func _ObjectTypeRoleBindingConfigFn() graphql1.ObjectConfig {
+	return graphql1.ObjectConfig{
+		Description: "RoleBinding grants the permissions defined in a Role referenced to a user or\na set of users",
+		Fields: graphql1.Fields{
+			"id": &graphql1.Field{
+				Args:              graphql1.FieldConfigArgument{},
+				DeprecationReason: "",
+				Description:       "The globally unique identifier of the record",
+				Name:              "id",
+				Type:              graphql1.NewNonNull(graphql1.ID),
+			},
+			"metadata": &graphql1.Field{
+				Args:              graphql1.FieldConfigArgument{},
+				DeprecationReason: "",
+				Description:       "metadata contains name, namespace, labels and annotations of the record",
+				Name:              "metadata",
+				Type:              graphql.OutputType("ObjectMeta"),
+			},
+			"roleRef": &graphql1.Field{
+				Args:              graphql1.FieldConfigArgument{},
+				DeprecationReason: "",
+				Description:       "RoleRef references a Role in the current namespace",
+				Name:              "roleRef",
+				Type:              graphql.OutputType("RoleRef"),
+			},
+			"subjects": &graphql1.Field{
+				Args:              graphql1.FieldConfigArgument{},
+				DeprecationReason: "",
+				Description:       "Subjects holds references to the objects the Role applies to",
+				Name:              "subjects",
+				Type:              graphql1.NewList(graphql1.NewNonNull(graphql.OutputType("Subject"))),
+			},
+			"toJSON": &graphql1.Field{
+				Args:              graphql1.FieldConfigArgument{},
+				DeprecationReason: "",
+				Description:       "toJSON returns a REST API compatible representation of the resource. Handy for\nsharing snippets that can then be imported with `sensuctl create`.",
+				Name:              "toJSON",
+				Type:              graphql1.NewNonNull(graphql.OutputType("JSON")),
+			},
+		},
+		Interfaces: []*graphql1.Interface{
+			graphql.Interface("Node"),
+			graphql.Interface("Resource")},
+		IsTypeOf: func(_ graphql1.IsTypeOfParams) bool {
+			// NOTE:
+			// Panic by default. Intent is that when Service is invoked, values of
+			// these fields are updated with instantiated resolvers. If these
+			// defaults are called it is most certainly programmer err.
+			// If you're see this comment then: 'Whoops! Sorry, my bad.'
+			panic("Unimplemented; see RoleBindingFieldResolvers.")
+		},
+		Name: "RoleBinding",
+	}
+}
+
+// describe RoleBinding's configuration; kept private to avoid unintentional tampering of configuration at runtime.
+var _ObjectTypeRoleBindingDesc = graphql.ObjectDesc{
+	Config: _ObjectTypeRoleBindingConfigFn,
+	FieldHandlers: map[string]graphql.FieldHandler{
+		"id":       _ObjTypeRoleBindingIDHandler,
+		"metadata": _ObjTypeRoleBindingMetadataHandler,
+		"roleRef":  _ObjTypeRoleBindingRoleRefHandler,
+		"subjects": _ObjTypeRoleBindingSubjectsHandler,
+		"toJSON":   _ObjTypeRoleBindingToJSONHandler,
 	},
 }
 
@@ -539,7 +1017,7 @@ func (_ SubjectAliases) Name(p graphql.ResolveParams) (string, error) {
 	return ret, err
 }
 
-// SubjectType self descriptive
+// SubjectType Subjects holds references to a role.
 var SubjectType = graphql.NewType("Subject", graphql.ObjectKind)
 
 // RegisterSubject registers Subject object type with given service.
@@ -566,7 +1044,7 @@ func _ObjTypeSubjectNameHandler(impl interface{}) graphql1.FieldResolveFn {
 
 func _ObjectTypeSubjectConfigFn() graphql1.ObjectConfig {
 	return graphql1.ObjectConfig{
-		Description: "self descriptive",
+		Description: "Subjects holds references to a role.",
 		Fields: graphql1.Fields{
 			"kind": &graphql1.Field{
 				Args:              graphql1.FieldConfigArgument{},
@@ -602,300 +1080,5 @@ var _ObjectTypeSubjectDesc = graphql.ObjectDesc{
 	FieldHandlers: map[string]graphql.FieldHandler{
 		"kind": _ObjTypeSubjectKindHandler,
 		"name": _ObjTypeSubjectNameHandler,
-	},
-}
-
-//
-// ClusterRoleBindingFieldResolvers represents a collection of methods whose products represent the
-// response values of the 'ClusterRoleBinding' type.
-type ClusterRoleBindingFieldResolvers interface {
-	// Subjects implements response to request for 'subjects' field.
-	Subjects(p graphql.ResolveParams) (interface{}, error)
-
-	// RoleRef implements response to request for 'roleRef' field.
-	RoleRef(p graphql.ResolveParams) (interface{}, error)
-
-	// Name implements response to request for 'name' field.
-	Name(p graphql.ResolveParams) (string, error)
-}
-
-// ClusterRoleBindingAliases implements all methods on ClusterRoleBindingFieldResolvers interface by using reflection to
-// match name of field to a field on the given value. Intent is reduce friction
-// of writing new resolvers by removing all the instances where you would simply
-// have the resolvers method return a field.
-type ClusterRoleBindingAliases struct{}
-
-// Subjects implements response to request for 'subjects' field.
-func (_ ClusterRoleBindingAliases) Subjects(p graphql.ResolveParams) (interface{}, error) {
-	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	return val, err
-}
-
-// RoleRef implements response to request for 'roleRef' field.
-func (_ ClusterRoleBindingAliases) RoleRef(p graphql.ResolveParams) (interface{}, error) {
-	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	return val, err
-}
-
-// Name implements response to request for 'name' field.
-func (_ ClusterRoleBindingAliases) Name(p graphql.ResolveParams) (string, error) {
-	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret, ok := val.(string)
-	if err != nil {
-		return ret, err
-	}
-	if !ok {
-		return ret, errors.New("unable to coerce value for field 'name'")
-	}
-	return ret, err
-}
-
-/*
-ClusterRoleBindingType ClusterRoleBinding grants the permissions defined in a ClusterRole referenced
-to a user or a set of users
-*/
-var ClusterRoleBindingType = graphql.NewType("ClusterRoleBinding", graphql.ObjectKind)
-
-// RegisterClusterRoleBinding registers ClusterRoleBinding object type with given service.
-func RegisterClusterRoleBinding(svc *graphql.Service, impl ClusterRoleBindingFieldResolvers) {
-	svc.RegisterObject(_ObjectTypeClusterRoleBindingDesc, impl)
-}
-func _ObjTypeClusterRoleBindingSubjectsHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(interface {
-		Subjects(p graphql.ResolveParams) (interface{}, error)
-	})
-	return func(frp graphql1.ResolveParams) (interface{}, error) {
-		return resolver.Subjects(frp)
-	}
-}
-
-func _ObjTypeClusterRoleBindingRoleRefHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(interface {
-		RoleRef(p graphql.ResolveParams) (interface{}, error)
-	})
-	return func(frp graphql1.ResolveParams) (interface{}, error) {
-		return resolver.RoleRef(frp)
-	}
-}
-
-func _ObjTypeClusterRoleBindingNameHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(interface {
-		Name(p graphql.ResolveParams) (string, error)
-	})
-	return func(frp graphql1.ResolveParams) (interface{}, error) {
-		return resolver.Name(frp)
-	}
-}
-
-func _ObjectTypeClusterRoleBindingConfigFn() graphql1.ObjectConfig {
-	return graphql1.ObjectConfig{
-		Description: "ClusterRoleBinding grants the permissions defined in a ClusterRole referenced\nto a user or a set of users",
-		Fields: graphql1.Fields{
-			"name": &graphql1.Field{
-				Args:              graphql1.FieldConfigArgument{},
-				DeprecationReason: "",
-				Description:       "Name of the ClusterRoleBinding",
-				Name:              "name",
-				Type:              graphql1.NewNonNull(graphql1.String),
-			},
-			"roleRef": &graphql1.Field{
-				Args:              graphql1.FieldConfigArgument{},
-				DeprecationReason: "",
-				Description:       "RoleRef references a ClusterRole in the current namespace",
-				Name:              "roleRef",
-				Type:              graphql.OutputType("RoleRef"),
-			},
-			"subjects": &graphql1.Field{
-				Args:              graphql1.FieldConfigArgument{},
-				DeprecationReason: "",
-				Description:       "Subjects holds references to the objects the ClusterRole applies to",
-				Name:              "subjects",
-				Type:              graphql1.NewList(graphql1.NewNonNull(graphql.OutputType("Subject"))),
-			},
-		},
-		Interfaces: []*graphql1.Interface{},
-		IsTypeOf: func(_ graphql1.IsTypeOfParams) bool {
-			// NOTE:
-			// Panic by default. Intent is that when Service is invoked, values of
-			// these fields are updated with instantiated resolvers. If these
-			// defaults are called it is most certainly programmer err.
-			// If you're see this comment then: 'Whoops! Sorry, my bad.'
-			panic("Unimplemented; see ClusterRoleBindingFieldResolvers.")
-		},
-		Name: "ClusterRoleBinding",
-	}
-}
-
-// describe ClusterRoleBinding's configuration; kept private to avoid unintentional tampering of configuration at runtime.
-var _ObjectTypeClusterRoleBindingDesc = graphql.ObjectDesc{
-	Config: _ObjectTypeClusterRoleBindingConfigFn,
-	FieldHandlers: map[string]graphql.FieldHandler{
-		"name":     _ObjTypeClusterRoleBindingNameHandler,
-		"roleRef":  _ObjTypeClusterRoleBindingRoleRefHandler,
-		"subjects": _ObjTypeClusterRoleBindingSubjectsHandler,
-	},
-}
-
-//
-// RoleBindingFieldResolvers represents a collection of methods whose products represent the
-// response values of the 'RoleBinding' type.
-type RoleBindingFieldResolvers interface {
-	// Subjects implements response to request for 'subjects' field.
-	Subjects(p graphql.ResolveParams) (interface{}, error)
-
-	// RoleRef implements response to request for 'roleRef' field.
-	RoleRef(p graphql.ResolveParams) (interface{}, error)
-
-	// Namespace implements response to request for 'namespace' field.
-	Namespace(p graphql.ResolveParams) (string, error)
-
-	// Name implements response to request for 'name' field.
-	Name(p graphql.ResolveParams) (string, error)
-}
-
-// RoleBindingAliases implements all methods on RoleBindingFieldResolvers interface by using reflection to
-// match name of field to a field on the given value. Intent is reduce friction
-// of writing new resolvers by removing all the instances where you would simply
-// have the resolvers method return a field.
-type RoleBindingAliases struct{}
-
-// Subjects implements response to request for 'subjects' field.
-func (_ RoleBindingAliases) Subjects(p graphql.ResolveParams) (interface{}, error) {
-	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	return val, err
-}
-
-// RoleRef implements response to request for 'roleRef' field.
-func (_ RoleBindingAliases) RoleRef(p graphql.ResolveParams) (interface{}, error) {
-	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	return val, err
-}
-
-// Namespace implements response to request for 'namespace' field.
-func (_ RoleBindingAliases) Namespace(p graphql.ResolveParams) (string, error) {
-	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret, ok := val.(string)
-	if err != nil {
-		return ret, err
-	}
-	if !ok {
-		return ret, errors.New("unable to coerce value for field 'namespace'")
-	}
-	return ret, err
-}
-
-// Name implements response to request for 'name' field.
-func (_ RoleBindingAliases) Name(p graphql.ResolveParams) (string, error) {
-	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret, ok := val.(string)
-	if err != nil {
-		return ret, err
-	}
-	if !ok {
-		return ret, errors.New("unable to coerce value for field 'name'")
-	}
-	return ret, err
-}
-
-/*
-RoleBindingType RoleBinding grants the permissions defined in a Role referenced to a user or
-a set of users
-*/
-var RoleBindingType = graphql.NewType("RoleBinding", graphql.ObjectKind)
-
-// RegisterRoleBinding registers RoleBinding object type with given service.
-func RegisterRoleBinding(svc *graphql.Service, impl RoleBindingFieldResolvers) {
-	svc.RegisterObject(_ObjectTypeRoleBindingDesc, impl)
-}
-func _ObjTypeRoleBindingSubjectsHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(interface {
-		Subjects(p graphql.ResolveParams) (interface{}, error)
-	})
-	return func(frp graphql1.ResolveParams) (interface{}, error) {
-		return resolver.Subjects(frp)
-	}
-}
-
-func _ObjTypeRoleBindingRoleRefHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(interface {
-		RoleRef(p graphql.ResolveParams) (interface{}, error)
-	})
-	return func(frp graphql1.ResolveParams) (interface{}, error) {
-		return resolver.RoleRef(frp)
-	}
-}
-
-func _ObjTypeRoleBindingNamespaceHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(interface {
-		Namespace(p graphql.ResolveParams) (string, error)
-	})
-	return func(frp graphql1.ResolveParams) (interface{}, error) {
-		return resolver.Namespace(frp)
-	}
-}
-
-func _ObjTypeRoleBindingNameHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(interface {
-		Name(p graphql.ResolveParams) (string, error)
-	})
-	return func(frp graphql1.ResolveParams) (interface{}, error) {
-		return resolver.Name(frp)
-	}
-}
-
-func _ObjectTypeRoleBindingConfigFn() graphql1.ObjectConfig {
-	return graphql1.ObjectConfig{
-		Description: "RoleBinding grants the permissions defined in a Role referenced to a user or\na set of users",
-		Fields: graphql1.Fields{
-			"name": &graphql1.Field{
-				Args:              graphql1.FieldConfigArgument{},
-				DeprecationReason: "",
-				Description:       "Name of the RoleBinding",
-				Name:              "name",
-				Type:              graphql1.NewNonNull(graphql1.String),
-			},
-			"namespace": &graphql1.Field{
-				Args:              graphql1.FieldConfigArgument{},
-				DeprecationReason: "",
-				Description:       "Namespace of the RoleBinding",
-				Name:              "namespace",
-				Type:              graphql1.NewNonNull(graphql1.String),
-			},
-			"roleRef": &graphql1.Field{
-				Args:              graphql1.FieldConfigArgument{},
-				DeprecationReason: "",
-				Description:       "RoleRef references a Role in the current namespace",
-				Name:              "roleRef",
-				Type:              graphql.OutputType("RoleRef"),
-			},
-			"subjects": &graphql1.Field{
-				Args:              graphql1.FieldConfigArgument{},
-				DeprecationReason: "",
-				Description:       "Subjects holds references to the objects the Role applies to",
-				Name:              "subjects",
-				Type:              graphql1.NewList(graphql1.NewNonNull(graphql.OutputType("Subject"))),
-			},
-		},
-		Interfaces: []*graphql1.Interface{},
-		IsTypeOf: func(_ graphql1.IsTypeOfParams) bool {
-			// NOTE:
-			// Panic by default. Intent is that when Service is invoked, values of
-			// these fields are updated with instantiated resolvers. If these
-			// defaults are called it is most certainly programmer err.
-			// If you're see this comment then: 'Whoops! Sorry, my bad.'
-			panic("Unimplemented; see RoleBindingFieldResolvers.")
-		},
-		Name: "RoleBinding",
-	}
-}
-
-// describe RoleBinding's configuration; kept private to avoid unintentional tampering of configuration at runtime.
-var _ObjectTypeRoleBindingDesc = graphql.ObjectDesc{
-	Config: _ObjectTypeRoleBindingConfigFn,
-	FieldHandlers: map[string]graphql.FieldHandler{
-		"name":      _ObjTypeRoleBindingNameHandler,
-		"namespace": _ObjTypeRoleBindingNamespaceHandler,
-		"roleRef":   _ObjTypeRoleBindingRoleRefHandler,
-		"subjects":  _ObjTypeRoleBindingSubjectsHandler,
 	},
 }
