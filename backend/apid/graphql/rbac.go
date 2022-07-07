@@ -7,20 +7,46 @@ import (
 	"github.com/sensu/sensu-go/graphql"
 )
 
-var _ schema.RuleFieldResolvers = (*ruleImpl)(nil)
+var _ schema.ClusterRoleFieldResolvers = (*roleImpl)(nil)
+var _ schema.ClusterRoleBindingFieldResolvers = (*roleBindingImpl)(nil)
 var _ schema.RoleFieldResolvers = (*roleImpl)(nil)
+var _ schema.RoleBindingFieldResolvers = (*roleBindingImpl)(nil)
 
 //
-// Implement RuleFieldResolvers
+// Implement ClusterRoleFieldResolvers
 //
 
-type ruleImpl struct {
-	schema.RuleAliases
+type clusterRoleImpl struct {
+	schema.RoleAliases
+}
+
+// ID implements response to request for 'id' field.
+func (*clusterRoleImpl) ID(p graphql.ResolveParams) (string, error) {
+	return globalid.ClusterRoleTranslator.EncodeToString(p.Context, p.Source), nil
 }
 
 // IsTypeOf is used to determine if a given value is associated with the type
-func (*ruleImpl) IsTypeOf(s interface{}, p graphql.IsTypeOfParams) bool {
-	_, ok := s.(corev2.Rule)
+func (*clusterRoleImpl) IsTypeOf(s interface{}, p graphql.IsTypeOfParams) bool {
+	_, ok := s.(*corev2.ClusterRole)
+	return ok
+}
+
+//
+// Implement ClusterRoleBindingFieldResolvers
+//
+
+type clusterRoleBindingImpl struct {
+	schema.RoleBindingAliases
+}
+
+// ID implements response to request for 'id' field.
+func (*clusterRoleBindingImpl) ID(p graphql.ResolveParams) (string, error) {
+	return globalid.ClusterRoleBindingTranslator.EncodeToString(p.Context, p.Source), nil
+}
+
+// IsTypeOf is used to determine if a given value is associated with the type
+func (*clusterRoleBindingImpl) IsTypeOf(s interface{}, p graphql.IsTypeOfParams) bool {
+	_, ok := s.(*corev2.ClusterRoleBinding)
 	return ok
 }
 
@@ -40,5 +66,24 @@ func (*roleImpl) ID(p graphql.ResolveParams) (string, error) {
 // IsTypeOf is used to determine if a given value is associated with the type
 func (*roleImpl) IsTypeOf(s interface{}, p graphql.IsTypeOfParams) bool {
 	_, ok := s.(*corev2.Role)
+	return ok
+}
+
+//
+// Implement RoleBindingFieldResolvers
+//
+
+type roleBindingImpl struct {
+	schema.RoleBindingAliases
+}
+
+// ID implements response to request for 'id' field.
+func (*roleBindingImpl) ID(p graphql.ResolveParams) (string, error) {
+	return globalid.RoleBindingTranslator.EncodeToString(p.Context, p.Source), nil
+}
+
+// IsTypeOf is used to determine if a given value is associated with the type
+func (*roleBindingImpl) IsTypeOf(s interface{}, p graphql.IsTypeOfParams) bool {
+	_, ok := s.(*corev2.RoleBinding)
 	return ok
 }

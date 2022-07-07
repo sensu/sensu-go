@@ -162,10 +162,10 @@ func NewService(cfg ServiceConfig) (*Service, error) {
 	schema.RegisterTimeWindowTimeRange(svc, &schema.TimeWindowTimeRangeAliases{})
 
 	// Register RBAC types
-	schema.RegisterClusterRole(svc, &schema.ClusterRoleAliases{})
-	schema.RegisterClusterRoleBinding(svc, &schema.ClusterRoleBindingAliases{})
-	schema.RegisterRole(svc, &schema.RoleAliases{})
-	schema.RegisterRoleBinding(svc, &schema.RoleBindingAliases{})
+	schema.RegisterClusterRole(svc, &clusterRoleImpl{})
+	schema.RegisterClusterRoleBinding(svc, &clusterRoleBindingImpl{})
+	schema.RegisterRole(svc, &roleImpl{})
+	schema.RegisterRoleBinding(svc, &roleBindingImpl{})
 	schema.RegisterRoleRef(svc, &schema.RoleRefAliases{})
 	schema.RegisterRule(svc, &schema.RuleAliases{})
 	schema.RegisterSubject(svc, &schema.SubjectAliases{})
