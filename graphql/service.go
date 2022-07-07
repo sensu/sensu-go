@@ -8,6 +8,7 @@ import (
 	"github.com/graphql-go/graphql/gqlerrors"
 	"github.com/graphql-go/graphql/language/parser"
 	"github.com/graphql-go/graphql/language/source"
+	"github.com/sirupsen/logrus"
 )
 
 // Service describes the whole of a GraphQL schema, validation, and execution.
@@ -88,6 +89,7 @@ func (service *Service) RegisterObject(t ObjectDesc, impl interface{}) {
 		if typeResolver, ok := impl.(isTypeOfResolver); ok {
 			cfg.IsTypeOf = newIsTypeOfFn(typeResolver)
 		}
+		logrus.Warnf("%s: %T", cfg.Name, cfg.IsTypeOf)
 
 		for _, ext := range service.types.extensionsForType(cfg.Name) {
 			extObjCfg := ext.(graphql.ObjectConfig)
