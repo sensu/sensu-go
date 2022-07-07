@@ -5,6 +5,7 @@ import (
 	"github.com/sensu/sensu-go/backend/apid/graphql/globalid"
 	"github.com/sensu/sensu-go/backend/apid/graphql/schema"
 	"github.com/sensu/sensu-go/graphql"
+	"github.com/sensu/sensu-go/types"
 )
 
 //
@@ -28,6 +29,11 @@ func (*clusterRoleImpl) IsTypeOf(s interface{}, p graphql.IsTypeOfParams) bool {
 	return ok
 }
 
+// ToJSON implements response to request for 'toJSON' field.
+func (*clusterRoleImpl) ToJSON(p graphql.ResolveParams) (interface{}, error) {
+	return types.WrapResource(p.Source.(corev2.Resource)), nil
+}
+
 //
 // Implement ClusterRoleBindingFieldResolvers
 //
@@ -47,6 +53,11 @@ func (*clusterRoleBindingImpl) ID(p graphql.ResolveParams) (string, error) {
 func (*clusterRoleBindingImpl) IsTypeOf(s interface{}, p graphql.IsTypeOfParams) bool {
 	_, ok := s.(*corev2.ClusterRoleBinding)
 	return ok
+}
+
+// ToJSON implements response to request for 'toJSON' field.
+func (*clusterRoleBindingImpl) ToJSON(p graphql.ResolveParams) (interface{}, error) {
+	return types.WrapResource(p.Source.(corev2.Resource)), nil
 }
 
 //
@@ -70,6 +81,11 @@ func (*roleImpl) IsTypeOf(s interface{}, p graphql.IsTypeOfParams) bool {
 	return ok
 }
 
+// ToJSON implements response to request for 'toJSON' field.
+func (*roleImpl) ToJSON(p graphql.ResolveParams) (interface{}, error) {
+	return types.WrapResource(p.Source.(corev2.Resource)), nil
+}
+
 //
 // Implement RoleBindingFieldResolvers
 //
@@ -89,4 +105,9 @@ func (*roleBindingImpl) ID(p graphql.ResolveParams) (string, error) {
 func (*roleBindingImpl) IsTypeOf(s interface{}, p graphql.IsTypeOfParams) bool {
 	_, ok := s.(*corev2.RoleBinding)
 	return ok
+}
+
+// ToJSON implements response to request for 'toJSON' field.
+func (*roleBindingImpl) ToJSON(p graphql.ResolveParams) (interface{}, error) {
+	return types.WrapResource(p.Source.(corev2.Resource)), nil
 }
