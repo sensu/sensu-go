@@ -67,6 +67,7 @@ func (*roleImpl) ID(p graphql.ResolveParams) (string, error) {
 // IsTypeOf is used to determine if a given value is associated with the type
 func (*roleImpl) IsTypeOf(s interface{}, p graphql.IsTypeOfParams) bool {
 	_, ok := s.(*corev2.Role)
+	logger.Warnf("T: %T, OK: %s", s, ok)
 	return ok
 }
 
