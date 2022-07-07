@@ -7,17 +7,14 @@ import (
 	"github.com/sensu/sensu-go/graphql"
 )
 
-var _ schema.ClusterRoleFieldResolvers = (*roleImpl)(nil)
-var _ schema.ClusterRoleBindingFieldResolvers = (*roleBindingImpl)(nil)
-var _ schema.RoleFieldResolvers = (*roleImpl)(nil)
-var _ schema.RoleBindingFieldResolvers = (*roleBindingImpl)(nil)
-
 //
 // Implement ClusterRoleFieldResolvers
 //
 
+var _ schema.ClusterRoleFieldResolvers = (*clusterRoleImpl)(nil)
+
 type clusterRoleImpl struct {
-	schema.RoleAliases
+	schema.ClusterRoleAliases
 }
 
 // ID implements response to request for 'id' field.
@@ -35,8 +32,10 @@ func (*clusterRoleImpl) IsTypeOf(s interface{}, p graphql.IsTypeOfParams) bool {
 // Implement ClusterRoleBindingFieldResolvers
 //
 
+var _ schema.ClusterRoleBindingFieldResolvers = (*clusterRoleBindingImpl)(nil)
+
 type clusterRoleBindingImpl struct {
-	schema.RoleBindingAliases
+	schema.ClusterRoleBindingAliases
 }
 
 // ID implements response to request for 'id' field.
@@ -53,6 +52,8 @@ func (*clusterRoleBindingImpl) IsTypeOf(s interface{}, p graphql.IsTypeOfParams)
 //
 // Implement RoleFieldResolvers
 //
+
+var _ schema.RoleFieldResolvers = (*roleImpl)(nil)
 
 type roleImpl struct {
 	schema.RoleAliases
@@ -72,6 +73,8 @@ func (*roleImpl) IsTypeOf(s interface{}, p graphql.IsTypeOfParams) bool {
 //
 // Implement RoleBindingFieldResolvers
 //
+
+var _ schema.RoleBindingFieldResolvers = (*roleBindingImpl)(nil)
 
 type roleBindingImpl struct {
 	schema.RoleBindingAliases
