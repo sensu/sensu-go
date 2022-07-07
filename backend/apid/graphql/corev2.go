@@ -24,8 +24,6 @@ func (*corev2PipelineImpl) ToJSON(p graphql.ResolveParams) (interface{}, error) 
 
 // IsTypeOf is used to determine if a given value is associated with the type
 func (*corev2PipelineImpl) IsTypeOf(s interface{}, p graphql.IsTypeOfParams) bool {
-	_, sk := s.(*corev2.Role)
-	logger.Warnf("CoreV2Pipeline#isTypeOf(): %T (%s)", s, sk)
 	_, ok := s.(*corev2.Pipeline)
 	return ok
 }

@@ -8,7 +8,6 @@ import (
 	"github.com/graphql-go/graphql/gqlerrors"
 	"github.com/graphql-go/graphql/language/parser"
 	"github.com/graphql-go/graphql/language/source"
-	"github.com/sirupsen/logrus"
 )
 
 // Service describes the whole of a GraphQL schema, validation, and execution.
@@ -97,8 +96,6 @@ func (service *Service) RegisterObject(t ObjectDesc, impl interface{}) {
 
 		cfg.Fields = fieldsThunk(m, fields)
 		cfg.Interfaces = interfacesThunk(m, cfg.Interfaces)
-
-		logrus.Warnf("%s: [%T]: %#v", cfg.Name, cfg.IsTypeOf, cfg.IsTypeOf)
 		return graphql.NewObject(cfg)
 	}
 	service.types.addType(cfg.Name, ObjectKind, registrar)
