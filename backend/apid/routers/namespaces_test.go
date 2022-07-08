@@ -58,7 +58,7 @@ func TestNamespacesRouter(t *testing.T) {
 	authorizer.On("Authorize", mock.Anything, mock.Anything).Return(true, nil)
 
 	s2 := new(mockstore.V2MockStore)
-	s2.On("List", mock.Anything, mock.Anything).Return(wrap.List{}, nil)
+	s2.On("List", mock.Anything, mock.Anything, mock.Anything).Return(wrap.List{}, nil)
 
 	router := NewNamespacesRouter(s, s, authorizer, s2)
 	parentRouter := mux.NewRouter().PathPrefix(corev2.URLPrefix).Subrouter()
@@ -122,7 +122,7 @@ func TestNamespaceRouterList(t *testing.T) {
 
 	auth := &rbac.Authorizer{Store: s}
 	s2 := new(mockstore.V2MockStore)
-	s2.On("List", mock.Anything, mock.Anything).Return(wrap.List{}, nil)
+	s2.On("List", mock.Anything, mock.Anything, mock.Anything).Return(wrap.List{}, nil)
 	router := NewNamespacesRouter(s, s, auth, s2)
 	pred := &store.SelectionPredicate{Limit: 1}
 	got, err := router.list(ctx, pred)

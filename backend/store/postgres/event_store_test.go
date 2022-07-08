@@ -42,7 +42,7 @@ func testWithPostgresEventStore(t *testing.T, fn func(store.EventStore)) {
 	}
 	defer dropAll(context.Background(), dbName, pgURL)
 	db.Close()
-	db, err = pgxpool.Connect(ctx, fmt.Sprintf("dbname=%s ", dbName)+pgURL)
+	db, err = pgxpool.Connect(ctx, fmt.Sprintf("%s dbname=%s ", pgURL, dbName))
 	if err != nil {
 		t.Fatal(err)
 	}

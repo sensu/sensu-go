@@ -35,7 +35,7 @@ func TestHandlers_GetV3Resource(t *testing.T) {
 			name:    "store ErrNotFound",
 			urlVars: map[string]string{"id": "foo"},
 			storeFunc: func(s *mockstore.V2MockStore) {
-				s.On("Get", mock.Anything).
+				s.On("Get", mock.Anything, mock.Anything).
 					Return((storev2.Wrapper)(nil), &store.ErrNotFound{})
 			},
 			wantErr: true,
@@ -44,7 +44,7 @@ func TestHandlers_GetV3Resource(t *testing.T) {
 			name:    "store ErrInternal",
 			urlVars: map[string]string{"id": "foo"},
 			storeFunc: func(s *mockstore.V2MockStore) {
-				s.On("Get", mock.Anything).
+				s.On("Get", mock.Anything, mock.Anything).
 					Return((storev2.Wrapper)(nil), &store.ErrInternal{})
 			},
 			wantErr: true,
@@ -53,7 +53,7 @@ func TestHandlers_GetV3Resource(t *testing.T) {
 			name:    "successful get",
 			urlVars: map[string]string{"id": "foo"},
 			storeFunc: func(s *mockstore.V2MockStore) {
-				s.On("Get", mock.Anything).
+				s.On("Get", mock.Anything, mock.Anything).
 					Return(wrapper, nil)
 			},
 			want: barResource,

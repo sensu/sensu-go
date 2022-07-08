@@ -41,7 +41,7 @@ func TestHandlers_UpdateResourceV3(t *testing.T) {
 			name: "store err, not valid",
 			body: marshal(t, fixture.V3Resource{Metadata: corev2.NewObjectMetaP("", "")}),
 			storeFunc: func(s *mockstore.V2MockStore) {
-				s.On("CreateOrUpdate", mock.Anything, mock.Anything).
+				s.On("CreateOrUpdate", mock.Anything, mock.Anything, mock.Anything).
 					Return(&store.ErrNotValid{Err: errors.New("error")})
 			},
 			wantErr: true,
@@ -50,7 +50,7 @@ func TestHandlers_UpdateResourceV3(t *testing.T) {
 			name: "store err, default",
 			body: marshal(t, fixture.V3Resource{Metadata: corev2.NewObjectMetaP("", "")}),
 			storeFunc: func(s *mockstore.V2MockStore) {
-				s.On("CreateOrUpdate", mock.Anything, mock.Anything).
+				s.On("CreateOrUpdate", mock.Anything, mock.Anything, mock.Anything).
 					Return(&store.ErrInternal{})
 			},
 			wantErr: true,
@@ -59,7 +59,7 @@ func TestHandlers_UpdateResourceV3(t *testing.T) {
 			name: "successful create",
 			body: marshal(t, fixture.V3Resource{Metadata: corev2.NewObjectMetaP("", "")}),
 			storeFunc: func(s *mockstore.V2MockStore) {
-				s.On("CreateOrUpdate", mock.Anything, mock.Anything).
+				s.On("CreateOrUpdate", mock.Anything, mock.Anything, mock.Anything).
 					Return(nil)
 			},
 		},
@@ -100,7 +100,7 @@ func TestCreatedByUpdateV3(t *testing.T) {
 		StoreV2:    store,
 	}
 
-	store.On("CreateOrUpdate", mock.Anything, mock.Anything).Return(nil)
+	store.On("CreateOrUpdate", mock.Anything, mock.Anything, mock.Anything).Return(nil)
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodPut, "/", bytes.NewReader(body))
 	assert.NoError(t, err)

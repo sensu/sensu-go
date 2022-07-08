@@ -40,7 +40,7 @@ func withPostgres(t testing.TB, fn func(context.Context, *pgxpool.Pool, string))
 	}
 	defer dropAll(ctx, dbName, pgURL)
 	db.Close()
-	dsn := fmt.Sprintf("dbname=%s ", dbName) + pgURL
+	dsn := fmt.Sprintf("%s dbname=%s ", pgURL, dbName)
 	db, err = pgxpool.Connect(ctx, dsn)
 	if err != nil {
 		t.Fatal(err)
@@ -76,7 +76,7 @@ func withInitialPostgres(t testing.TB, fn func(context.Context, *pgxpool.Pool)) 
 	}
 	defer dropAll(ctx, dbName, pgURL)
 	db.Close()
-	db, err = pgxpool.Connect(ctx, fmt.Sprintf("dbname=%s ", dbName)+pgURL)
+	db, err = pgxpool.Connect(ctx, fmt.Sprintf("%s dbname=%s ", pgURL, dbName))
 	if err != nil {
 		t.Fatal(err)
 	}

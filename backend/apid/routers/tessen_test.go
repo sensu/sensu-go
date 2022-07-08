@@ -42,7 +42,7 @@ func TestPutTessen(t *testing.T) {
 
 	client := new(http.Client)
 
-	controller.On("CreateOrUpdate", mock.Anything, mock.Anything).Return(nil)
+	controller.On("CreateOrUpdate", mock.Anything, mock.Anything, mock.Anything).Return(nil)
 	b, _ := json.Marshal(corev2.DefaultTessenConfig())
 	body := bytes.NewReader(b)
 	endpoint := "/" + corev2.TessenResource
@@ -58,7 +58,7 @@ func TestPutTessen(t *testing.T) {
 		t.Fatalf("bad status: %d (%q)", resp.StatusCode, string(body))
 	}
 
-	controller.AssertCalled(t, "CreateOrUpdate", mock.Anything, mock.Anything)
+	controller.AssertCalled(t, "CreateOrUpdate", mock.Anything, mock.Anything, mock.Anything)
 }
 
 func TestGetTessen(t *testing.T) {

@@ -2,13 +2,10 @@ package postgres
 
 import (
 	"bytes"
-	"encoding/json"
 	"errors"
 	"fmt"
-	"strings"
 	"text/template"
 
-	"github.com/lib/pq"
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/selector"
 	"github.com/sensu/sensu-go/backend/store"
@@ -25,15 +22,6 @@ ORDER BY ({{ .Ordering }}) {{ .OrderingDirection }}
 {{ .LimitClause }}
 {{ .OffsetClause }}
 ;`))
-
-var eventFieldKeys = map[string]struct{}{}
-
-func init() {
-	fields := corev2.EventFields(corev2.FixtureEvent("entity", "check"))
-	for k := range fields {
-		eventFieldKeys[k] = struct{}{}
-	}
-}
 
 type getEventTmplData struct {
 	NamespaceCond     string
@@ -117,7 +105,8 @@ func getTemplateData(namespace, entity, check string, s *selector.Selector, pred
 		args = append(args, check)
 	}
 	if s != nil && len(s.Operations) > 0 {
-		sc, sargs, err := getSelectorCond(&ctr, s)
+		builder := NewEventSelectorSQLBuilder(s)
+		sc, sargs, err := builder.GetSelectorCond(&ctr)
 		if err != nil {
 			return data, nil, err
 		}
@@ -164,168 +153,4 @@ func getTemplateData(namespace, entity, check string, s *selector.Selector, pred
 		args = append(args, offset)
 	}
 	return data, args, nil
-}
-
-func getSelectorCond(ctr *argCounter, s *selector.Selector) (string, []interface{}, error) {
-	vars := make([]interface{}, 0, 4)
-	conds := make([]string, 0, 4)
-	inclusions := map[string]string{}
-	exclusions := map[string]string{}
-	for _, op := range s.Operations {
-		switch op.Operator {
-		case selector.DoubleEqualSignOperator, selector.NotEqualOperator, selector.MatchesOperator:
-			if len(op.RValues) != 1 {
-				return "", nil, fmt.Errorf("invalid operator: %v", op)
-			}
-		}
-		switch op.Operator {
-		case selector.InOperator:
-			cond, vr := inOperatorMatch(ctr, op)
-			conds = append(conds, cond)
-			vars = append(vars, vr...)
-		case selector.DoubleEqualSignOperator:
-			if op.OperationType == selector.OperationTypeLabelSelector {
-				cond, vr := inOperatorMatch(ctr, op)
-				conds = append(conds, cond)
-				vars = append(vars, vr...)
-			} else {
-				inclusions[op.LValue] = op.RValues[0]
-			}
-		case selector.NotInOperator:
-			cond, vr := notInOperatorMatch(ctr, op)
-			conds = append(conds, cond)
-			vars = append(vars, vr...)
-		case selector.NotEqualOperator:
-			if op.OperationType == selector.OperationTypeLabelSelector {
-				cond, vr := notInOperatorMatch(ctr, op)
-				conds = append(conds, cond)
-				vars = append(vars, vr...)
-			} else {
-				exclusions[op.LValue] = op.RValues[0]
-			}
-		case selector.MatchesOperator:
-			cond, vr := matchOperator(ctr, op)
-			conds = append(conds, cond)
-			vars = append(vars, vr...)
-		default:
-			return "", nil, fmt.Errorf("unsupported operator: %s", op.Operator)
-		}
-	}
-
-	cnds, vrs := formatSelectorConds(ctr, inclusions, exclusions)
-	conds = append(conds, cnds...)
-	vars = append(vars, vrs...)
-
-	return strings.Join(conds, " AND "), vars, nil
-}
-
-func setRegexp(rvalues []string) string {
-	var builder strings.Builder
-	_ = builder.WriteByte('(')
-
-	for i, value := range rvalues {
-		if i != 0 {
-			_ = builder.WriteByte('|')
-		}
-		_ = builder.WriteByte('(')
-		_, _ = builder.Write([]byte("(^|,)"))
-		_, _ = builder.WriteString(value)
-		_, _ = builder.Write([]byte("($|,)"))
-		_ = builder.WriteByte(')')
-	}
-
-	_ = builder.WriteByte(')')
-
-	return builder.String()
-}
-
-// inOperatorMatch tries to match the behaviour of the event filter selector API.
-// it is therefore quite complex and has four distinct cases that need to be
-// accounted for. refer to ./backend/apid/filters/selector for more information.
-func inOperatorMatch(ctr *argCounter, op selector.Operation) (string, []interface{}) {
-	if len(op.RValues) == 0 {
-		return "false", nil
-	}
-	if _, ok := eventFieldKeys[op.LValue]; ok {
-		// event.entity.name in [foo, bar]
-		selectorArg := ctr.Next()
-		matchArg := ctr.Next()
-		query := fmt.Sprintf("selectors ? $%d AND selectors->>$%d ~ $%d", selectorArg, selectorArg, matchArg)
-		return query, []interface{}{op.LValue, setRegexp(op.RValues)}
-	} else if strings.HasPrefix(op.LValue, "labels.") || op.OperationType == selector.OperationTypeLabelSelector && !strings.HasPrefix(op.RValues[0], "labels.") {
-		// labels.foo in [foo, bar]
-		if !strings.HasPrefix(op.LValue, "labels.") {
-			op.LValue = fmt.Sprintf("labels.%s", op.LValue)
-		}
-		keyArg := ctr.Next()
-		matchArg := ctr.Next()
-		queryFragment := "(selectors ? (%s || $%d) AND selectors->>(%s || $%d) ~ $%d)"
-		fragments := make([]string, 0, 3)
-		for _, prefix := range []string{"event.", "event.entity.", "event.check."} {
-			pfx := pq.QuoteLiteral(prefix)
-			fragments = append(fragments, fmt.Sprintf(queryFragment, pfx, keyArg, pfx, keyArg, matchArg))
-		}
-		query := strings.Join(fragments, " OR ")
-		return query, []interface{}{op.LValue, setRegexp(op.RValues)}
-	} else if strings.HasPrefix(op.RValues[0], "labels.") {
-		// foo in labels.foobars
-		keyArg := ctr.Next()
-		matchArg := ctr.Next()
-		queryFragment := "(selectors ? (%s || $%d) AND selectors->>(%s || $%d) ~ $%d)"
-		fragments := make([]string, 0, 3)
-		for _, prefix := range []string{"event.", "event.entity.", "event.check."} {
-			pfx := pq.QuoteLiteral(prefix)
-			fragments = append(fragments, fmt.Sprintf(queryFragment, pfx, keyArg, pfx, keyArg, matchArg))
-		}
-		query := strings.Join(fragments, " OR ")
-		return query, []interface{}{op.RValues[0], setRegexp([]string{op.LValue})}
-	} else {
-		// foo in event.check.subscriptions
-		selectorArg := ctr.Next()
-		matchArg := ctr.Next()
-		query := fmt.Sprintf("selectors ? $%d AND selectors->>$%d ~ $%d", selectorArg, selectorArg, matchArg)
-		return query, []interface{}{op.RValues[0], setRegexp([]string{op.LValue})}
-	}
-}
-
-func notInOperatorMatch(ctr *argCounter, op selector.Operation) (string, []interface{}) {
-	query, values := inOperatorMatch(ctr, op)
-	query = fmt.Sprintf("NOT (%s)", query)
-	return query, values
-}
-
-func matchOperator(ctr *argCounter, op selector.Operation) (string, []interface{}) {
-	if len(op.RValues) != 1 {
-		panic(fmt.Sprintf("rvalue len = %d != 1", len(op.RValues)))
-	}
-	if op.OperationType != selector.OperationTypeLabelSelector {
-		query := fmt.Sprintf("selectors->>$%d ~ $%d", ctr.Next(), ctr.Next())
-		return query, []interface{}{op.LValue, op.RValues[0]}
-	}
-	keyArg := ctr.Next()
-	matchArg := ctr.Next()
-	queryFragment := "selectors ? (%s || $%d) AND selectors->>(%s || $%d) ~ $%d"
-	fragments := make([]string, 0, 3)
-	for _, prefix := range []string{"event.", "event.entity.", "event.check."} {
-		pfx := pq.QuoteLiteral(prefix)
-		fragments = append(fragments, fmt.Sprintf(queryFragment, pfx, keyArg, pfx, keyArg, matchArg))
-	}
-	query := strings.Join(fragments, " OR ")
-	return query, []interface{}{op.LValue, op.RValues}
-}
-
-func formatSelectorConds(ctr *argCounter, inclusions, exclusions map[string]string) ([]string, []interface{}) {
-	conds := make([]string, 0, 2)
-	vars := make([]interface{}, 0, 2)
-	if len(inclusions) > 0 {
-		conds = append(conds, fmt.Sprintf("selectors @> $%d", ctr.Next()))
-		b, _ := json.Marshal(inclusions)
-		vars = append(vars, b)
-	}
-	if len(exclusions) > 0 {
-		conds = append(conds, fmt.Sprintf("NOT selectors @> $%d", ctr.Next()))
-		b, _ := json.Marshal(exclusions)
-		vars = append(vars, b)
-	}
-	return conds, vars
 }

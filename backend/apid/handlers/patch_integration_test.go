@@ -138,12 +138,12 @@ func TestHandlers_PatchResource(t *testing.T) {
 			storeInit: func(t *testing.T, s1 *etcdstore.Store, s2 *etcdstorev2.Store) {
 				ctx := store.NamespaceContext(context.Background(), "default")
 				entity := corev3.FixtureEntityConfig("testentity")
-				req := storev2.NewResourceRequestFromResource(ctx, entity)
+				req := storev2.NewResourceRequestFromResource(entity)
 				wrapper, err := storev2.WrapResource(entity)
 				if err != nil {
 					t.Fatal(err)
 				}
-				if err := s2.CreateOrUpdate(req, wrapper); err != nil {
+				if err := s2.CreateOrUpdate(ctx, req, wrapper); err != nil {
 					t.Fatal(err)
 				}
 			},
@@ -162,12 +162,12 @@ func TestHandlers_PatchResource(t *testing.T) {
 			storeInit: func(t *testing.T, s1 *etcdstore.Store, s2 *etcdstorev2.Store) {
 				ctx := store.NamespaceContext(context.Background(), "default")
 				entity := corev3.FixtureEntityConfig("testentity")
-				req := storev2.NewResourceRequestFromResource(ctx, entity)
+				req := storev2.NewResourceRequestFromResource(entity)
 				wrapper, err := storev2.WrapResource(entity)
 				if err != nil {
 					t.Fatal(err)
 				}
-				if err := s2.CreateOrUpdate(req, wrapper); err != nil {
+				if err := s2.CreateOrUpdate(ctx, req, wrapper); err != nil {
 					t.Fatal(err)
 				}
 			},
@@ -184,12 +184,12 @@ func TestHandlers_PatchResource(t *testing.T) {
 			storeInit: func(t *testing.T, s1 *etcdstore.Store, s2 *etcdstorev2.Store) {
 				ctx := store.NamespaceContext(context.Background(), "default")
 				entity := corev3.FixtureEntityConfig("testentity")
-				req := storev2.NewResourceRequestFromResource(ctx, entity)
+				req := storev2.NewResourceRequestFromResource(entity)
 				wrapper, err := storev2.WrapResource(entity)
 				if err != nil {
 					t.Fatal(err)
 				}
-				if err := s2.CreateOrUpdate(req, wrapper); err != nil {
+				if err := s2.CreateOrUpdate(ctx, req, wrapper); err != nil {
 					t.Fatal(err)
 				}
 			},

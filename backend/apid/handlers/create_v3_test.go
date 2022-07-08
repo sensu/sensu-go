@@ -43,7 +43,7 @@ func TestHandlers_CreateV3Resource(t *testing.T) {
 			name: "store err, already exists",
 			body: marshal(t, fixture.V3Resource{Metadata: &corev2.ObjectMeta{}}),
 			storeFunc: func(s *mockstore.V2MockStore) {
-				s.On("CreateIfNotExists", mock.Anything, mock.Anything).
+				s.On("CreateIfNotExists", mock.Anything, mock.Anything, mock.Anything).
 					Return(&store.ErrAlreadyExists{})
 			},
 			wantErr: true,
@@ -52,7 +52,7 @@ func TestHandlers_CreateV3Resource(t *testing.T) {
 			name: "store err, not valid",
 			body: marshal(t, fixture.V3Resource{Metadata: &corev2.ObjectMeta{}}),
 			storeFunc: func(s *mockstore.V2MockStore) {
-				s.On("CreateIfNotExists", mock.Anything, mock.Anything).
+				s.On("CreateIfNotExists", mock.Anything, mock.Anything, mock.Anything).
 					Return(&store.ErrNotValid{Err: errors.New("error")})
 			},
 			wantErr: true,
@@ -61,7 +61,7 @@ func TestHandlers_CreateV3Resource(t *testing.T) {
 			name: "store err, default",
 			body: marshal(t, fixture.V3Resource{Metadata: &corev2.ObjectMeta{}}),
 			storeFunc: func(s *mockstore.V2MockStore) {
-				s.On("CreateIfNotExists", mock.Anything, mock.Anything).
+				s.On("CreateIfNotExists", mock.Anything, mock.Anything, mock.Anything).
 					Return(&store.ErrInternal{})
 			},
 			wantErr: true,
@@ -70,7 +70,7 @@ func TestHandlers_CreateV3Resource(t *testing.T) {
 			name: "successful create",
 			body: marshal(t, fixture.V3Resource{Metadata: &corev2.ObjectMeta{}}),
 			storeFunc: func(s *mockstore.V2MockStore) {
-				s.On("CreateIfNotExists", mock.Anything, mock.Anything).
+				s.On("CreateIfNotExists", mock.Anything, mock.Anything, mock.Anything).
 					Return(nil)
 			},
 		},
@@ -111,7 +111,7 @@ func TestV3CreatedByCreate(t *testing.T) {
 		StoreV2:    store,
 	}
 
-	store.On("CreateIfNotExists", mock.Anything, mock.Anything).Return(nil)
+	store.On("CreateIfNotExists", mock.Anything, mock.Anything, mock.Anything).Return(nil)
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, "/", bytes.NewReader(body))
 	assert.NoError(t, err)

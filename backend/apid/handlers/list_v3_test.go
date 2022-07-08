@@ -28,7 +28,7 @@ func TestHandlers_ListV3Resources(t *testing.T) {
 		{
 			name: "store err",
 			storeFunc: func(s *mockstore.V2MockStore) {
-				s.On("List", mock.Anything, mock.Anything).
+				s.On("List", mock.Anything, mock.Anything, mock.Anything).
 					Return((storev2.WrapList)(nil), &store.ErrInternal{})
 			},
 			want:    []corev3.Resource(nil),
@@ -37,7 +37,7 @@ func TestHandlers_ListV3Resources(t *testing.T) {
 		{
 			name: "sucessful list",
 			storeFunc: func(s *mockstore.V2MockStore) {
-				s.On("List", mock.Anything, mock.Anything).
+				s.On("List", mock.Anything, mock.Anything, mock.Anything).
 					Return(storev2.WrapList(wrap.List{wrapper.(*wrap.Wrapper)}), nil)
 			},
 			want: []corev3.Resource{corev3.Resource(barResource)},

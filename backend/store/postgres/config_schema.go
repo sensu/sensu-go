@@ -54,6 +54,7 @@ const GetConfigQuery = `SELECT id, labels, annotations, resource, created_at, up
 const ListConfigQueryTmpl = `
     SELECT id, labels, annotations, resource, created_at, updated_at FROM configuration
 	    WHERE api_version=$1 AND api_type=$2 AND namespace=$3 AND NOT isfinite(deleted_at)
+        {{if ne .SelectorSQL ""}}AND {{.SelectorSQL}}{{end}}
         ORDER BY namespace, name ASC
 	    {{if (gt .Limit 0)}} LIMIT {{.Limit}} {{end}} OFFSET {{ .Offset }};`
 
