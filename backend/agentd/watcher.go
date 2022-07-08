@@ -19,7 +19,6 @@ import (
 // over the bus as store.WatchEventEntityConfig
 func GetEntityConfigWatcher(ctx context.Context, client *clientv3.Client) <-chan store.WatchEventEntityConfig {
 	key := etcdstorev2.StoreKey(storev2.ResourceRequest{
-		Context:   ctx,
 		StoreName: new(corev3.EntityConfig).StoreName(),
 	})
 	w := etcdstore.Watch(ctx, client, key, true)

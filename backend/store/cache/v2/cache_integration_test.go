@@ -36,12 +36,12 @@ func TestEntityCacheIntegration(t *testing.T) {
 
 	// Add namespace resource
 	namespace := corev2.FixtureNamespace("default")
-	req := storev2.NewResourceRequestFromV2Resource(ctx, namespace)
+	req := storev2.NewResourceRequestFromV2Resource(namespace)
 	wrapper, err := wrap.V2Resource(namespace)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if err := store.CreateOrUpdate(req, wrapper); err != nil {
+	if err := store.CreateOrUpdate(ctx, req, wrapper); err != nil {
 		t.Fatal(err)
 	}
 
@@ -53,12 +53,12 @@ func TestEntityCacheIntegration(t *testing.T) {
 		fixture.Metadata.Name = fmt.Sprintf("%d", i)
 		fixture.EntityClass = corev2.EntityProxyClass
 		fixtures = append(fixtures, getCacheValue(fixture, true))
-		req = storev2.NewResourceRequestFromResource(ctx, fixture)
+		req = storev2.NewResourceRequestFromResource(fixture)
 		wrapper, err := storev2.WrapResource(fixture)
 		if err != nil {
 			t.Fatal(err)
 		}
-		if err := store.CreateOrUpdate(req, wrapper); err != nil {
+		if err := store.CreateOrUpdate(ctx, req, wrapper); err != nil {
 			t.Fatal(err)
 		}
 	}
@@ -67,12 +67,12 @@ func TestEntityCacheIntegration(t *testing.T) {
 
 	// Include some entities from a non-default namespace
 	namespace = corev2.FixtureNamespace("other")
-	req = storev2.NewResourceRequestFromV2Resource(ctx, namespace)
+	req = storev2.NewResourceRequestFromV2Resource(namespace)
 	wrapper, err = wrap.V2Resource(namespace)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if err := store.CreateOrUpdate(req, wrapper); err != nil {
+	if err := store.CreateOrUpdate(ctx, req, wrapper); err != nil {
 		t.Fatal(err)
 	}
 	for i := 0; i < 3; i++ {
@@ -81,12 +81,12 @@ func TestEntityCacheIntegration(t *testing.T) {
 		fixture.Metadata.Namespace = "other"
 		fixture.EntityClass = corev2.EntityProxyClass
 		otherFixtures = append(otherFixtures, getCacheValue(fixture, true))
-		req = storev2.NewResourceRequestFromResource(ctx, fixture)
+		req = storev2.NewResourceRequestFromResource(fixture)
 		wrapper, err := storev2.WrapResource(fixture)
 		if err != nil {
 			t.Fatal(err)
 		}
-		if err := store.CreateOrUpdate(req, wrapper); err != nil {
+		if err := store.CreateOrUpdate(ctx, req, wrapper); err != nil {
 			t.Fatal(err)
 		}
 	}
@@ -115,12 +115,12 @@ func TestEntityCacheIntegration(t *testing.T) {
 
 	newEntity := corev3.FixtureEntityConfig("new")
 	newEntity.EntityClass = corev2.EntityProxyClass
-	req = storev2.NewResourceRequestFromResource(ctx, newEntity)
+	req = storev2.NewResourceRequestFromResource(newEntity)
 	entWrapper, err := storev2.WrapResource(newEntity)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if err := store.CreateOrUpdate(req, entWrapper); err != nil {
+	if err := store.CreateOrUpdate(ctx, req, entWrapper); err != nil {
 		t.Fatal(err)
 	}
 	<-watcher
@@ -131,8 +131,8 @@ func TestEntityCacheIntegration(t *testing.T) {
 		t.Errorf("bad entity: got %s, want %s", got.Resource.GetMetadata().Name, want.Resource.GetMetadata().Name)
 	}
 
-	req = storev2.NewResourceRequestFromResource(ctx, newEntity)
-	if err := store.Delete(req); err != nil {
+	req = storev2.NewResourceRequestFromResource(newEntity)
+	if err := store.Delete(ctx, req); err != nil {
 		t.Fatal(err)
 	}
 

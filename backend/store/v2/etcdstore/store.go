@@ -1,6 +1,7 @@
 package etcdstore
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"path"
@@ -87,7 +88,7 @@ func NewStore(client *clientv3.Client) *Store {
 	return store
 }
 
-func (s *Store) CreateOrUpdate(req storev2.ResourceRequest, wrapper storev2.Wrapper) error {
+func (s *Store) CreateOrUpdate(ctx context.Context, req storev2.ResourceRequest, wrapper storev2.Wrapper) error {
 	key := StoreKey(req)
 	if err := req.Validate(); err != nil {
 		return &store.ErrNotValid{Err: err}
@@ -108,10 +109,10 @@ func (s *Store) CreateOrUpdate(req storev2.ResourceRequest, wrapper storev2.Wrap
 	)
 	op := clientv3.OpPut(key, string(msg))
 
-	return kvc.Txn(req.Context, s.client, comparator, op)
+	return kvc.Txn(ctx, s.client, comparator, op)
 }
 
-func (s *Store) Patch(req storev2.ResourceRequest, wrapper storev2.Wrapper, patcher patch.Patcher, conditions *store.ETagCondition) error {
+func (s *Store) Patch(ctx context.Context, req storev2.ResourceRequest, wrapper storev2.Wrapper, patcher patch.Patcher, conditions *store.ETagCondition) error {
 	if err := req.Validate(); err != nil {
 		return &store.ErrNotValid{Err: err}
 	}
@@ -125,7 +126,7 @@ func (s *Store) Patch(req storev2.ResourceRequest, wrapper storev2.Wrapper, patc
 
 	// Get the stored resource along with the etcd response so we can use the
 	// revision later to ensure the resource wasn't modified in the mean time
-	resp, err := s.GetWithResponse(req)
+	resp, err := s.GetWithResponse(ctx, req)
 	if err != nil {
 		return err
 	}
@@ -195,10 +196,10 @@ func (s *Store) Patch(req storev2.ResourceRequest, wrapper storev2.Wrapper, patc
 		kvc.KeyHasValue(key, value),
 	}
 
-	return s.Update(req, w, comparisons...)
+	return s.Update(ctx, req, w, comparisons...)
 }
 
-func (s *Store) UpdateIfExists(req storev2.ResourceRequest, wrapper storev2.Wrapper) error {
+func (s *Store) UpdateIfExists(ctx context.Context, req storev2.ResourceRequest, wrapper storev2.Wrapper) error {
 	w, ok := wrapper.(*wrap.Wrapper)
 	if !ok {
 		return &store.ErrNotValid{Err: fmt.Errorf("etcdstore only works with wrap.Wrapper, not %T", wrapper)}
@@ -209,10 +210,10 @@ func (s *Store) UpdateIfExists(req storev2.ResourceRequest, wrapper storev2.Wrap
 		kvc.KeyIsFound(key),
 	}
 
-	return s.Update(req, w, comparisons...)
+	return s.Update(ctx, req, w, comparisons...)
 }
 
-func (s *Store) Update(req storev2.ResourceRequest, wrapper storev2.Wrapper, comparisons ...kvc.Predicate) error {
+func (s *Store) Update(ctx context.Context, req storev2.ResourceRequest, wrapper storev2.Wrapper, comparisons ...kvc.Predicate) error {
 	w, ok := wrapper.(*wrap.Wrapper)
 	if !ok {
 		return &store.ErrNotValid{Err: fmt.Errorf("etcdstore only works with wrap.Wrapper, not %T", wrapper)}
@@ -230,10 +231,10 @@ func (s *Store) Update(req storev2.ResourceRequest, wrapper storev2.Wrapper, com
 	comparator := kvc.Comparisons(comparisons...)
 	op := clientv3.OpPut(key, string(msg))
 
-	return kvc.Txn(req.Context, s.client, comparator, op)
+	return kvc.Txn(ctx, s.client, comparator, op)
 }
 
-func (s *Store) CreateIfNotExists(req storev2.ResourceRequest, wrapper storev2.Wrapper) error {
+func (s *Store) CreateIfNotExists(ctx context.Context, req storev2.ResourceRequest, wrapper storev2.Wrapper) error {
 	w, ok := wrapper.(*wrap.Wrapper)
 	if !ok {
 		return &store.ErrNotValid{Err: fmt.Errorf("etcdstore only works with wrap.Wrapper, not %T", wrapper)}
@@ -254,12 +255,12 @@ func (s *Store) CreateIfNotExists(req storev2.ResourceRequest, wrapper storev2.W
 	)
 	op := clientv3.OpPut(key, string(msg))
 
-	return kvc.Txn(req.Context, s.client, comparator, op)
+	return kvc.Txn(ctx, s.client, comparator, op)
 }
 
-func (s *Store) Get(req storev2.ResourceRequest) (storev2.Wrapper, error) {
+func (s *Store) Get(ctx context.Context, req storev2.ResourceRequest) (storev2.Wrapper, error) {
 	key := StoreKey(req)
-	resp, err := s.GetWithResponse(req)
+	resp, err := s.GetWithResponse(ctx, req)
 	if err != nil {
 		return nil, err
 	}
@@ -271,12 +272,11 @@ func (s *Store) Get(req storev2.ResourceRequest) (storev2.Wrapper, error) {
 	return &wrapper, nil
 }
 
-func (s *Store) GetWithResponse(req storev2.ResourceRequest) (*clientv3.GetResponse, error) {
+func (s *Store) GetWithResponse(ctx context.Context, req storev2.ResourceRequest) (*clientv3.GetResponse, error) {
 	key := StoreKey(req)
 	if err := req.Validate(); err != nil {
 		return nil, &store.ErrNotValid{Err: err}
 	}
-	ctx := req.Context
 	var resp *clientv3.GetResponse
 	err := kvc.Backoff(ctx).Retry(func(n int) (done bool, err error) {
 		resp, err = s.client.Get(ctx, key, clientv3.WithLimit(1), clientv3.WithSerializable())
@@ -292,7 +292,7 @@ func (s *Store) GetWithResponse(req storev2.ResourceRequest) (*clientv3.GetRespo
 	return resp, nil
 }
 
-func (s *Store) Delete(req storev2.ResourceRequest) error {
+func (s *Store) Delete(ctx context.Context, req storev2.ResourceRequest) error {
 	key := StoreKey(req)
 	if err := req.Validate(); err != nil {
 		return &store.ErrNotValid{Err: err}
@@ -303,10 +303,10 @@ func (s *Store) Delete(req storev2.ResourceRequest) error {
 	)
 	op := clientv3.OpDelete(key)
 
-	return kvc.Txn(req.Context, s.client, comparator, op)
+	return kvc.Txn(ctx, s.client, comparator, op)
 }
 
-func (s *Store) List(req storev2.ResourceRequest, pred *store.SelectionPredicate) (storev2.WrapList, error) {
+func (s *Store) List(ctx context.Context, req storev2.ResourceRequest, pred *store.SelectionPredicate) (storev2.WrapList, error) {
 	// For any list request, the name must be zeroed out so that the key can
 	// be correctly generated.
 	req.Name = ""
@@ -314,7 +314,6 @@ func (s *Store) List(req storev2.ResourceRequest, pred *store.SelectionPredicate
 	if err := req.Validate(); err != nil {
 		return nil, &store.ErrNotValid{Err: err}
 	}
-	ctx := req.Context
 	if pred == nil {
 		pred = &store.SelectionPredicate{}
 	}
@@ -368,12 +367,11 @@ func (s *Store) List(req storev2.ResourceRequest, pred *store.SelectionPredicate
 	return result, nil
 }
 
-func (s *Store) Exists(req storev2.ResourceRequest) (bool, error) {
+func (s *Store) Exists(ctx context.Context, req storev2.ResourceRequest) (bool, error) {
 	key := StoreKey(req)
 	if err := req.Validate(); err != nil {
 		return false, &store.ErrNotValid{Err: err}
 	}
-	ctx := req.Context
 	var resp *clientv3.GetResponse
 	err := kvc.Backoff(ctx).Retry(func(n int) (done bool, err error) {
 		resp, err = s.client.Get(ctx, key, clientv3.WithLimit(1), clientv3.WithSerializable(), clientv3.WithCountOnly())

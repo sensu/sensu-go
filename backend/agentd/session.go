@@ -360,14 +360,14 @@ func (s *Session) sender() {
 				)
 
 				// Update the entity in the store
-				configReq := storev2.NewResourceRequestFromResource(s.ctx, watchEvent.Entity)
+				configReq := storev2.NewResourceRequestFromResource(watchEvent.Entity)
 				wrapper, err := storev2.WrapResource(watchEvent.Entity)
 				if err != nil {
 					lager.WithError(err).Error("could not wrap the entity config")
 					continue
 				}
 
-				if err := s.storev2.CreateOrUpdate(configReq, wrapper); err != nil {
+				if err := s.storev2.CreateOrUpdate(s.ctx, configReq, wrapper); err != nil {
 					sessionErrorCounter.WithLabelValues(err.Error()).Inc()
 					lager.WithError(err).Error("could not update the entity config")
 				}
@@ -487,8 +487,16 @@ func (s *Session) Start() (err error) {
 	s.entityConfig.subscriptions <- subscription
 
 	// Determine if the entity already exists
-	req := storev2.NewResourceRequest(s.ctx, s.cfg.Namespace, s.cfg.AgentName, (&corev3.EntityConfig{}).StoreName())
-	wrapper, err := s.storev2.Get(req)
+	entityConfig := corev3.EntityConfig{}
+	typeMeta := entityConfig.GetTypeMeta()
+	req := storev2.ResourceRequest{
+		Type:       typeMeta.Type,
+		APIVersion: typeMeta.APIVersion,
+		Namespace:  s.cfg.Namespace,
+		Name:       s.cfg.AgentName,
+		StoreName:  entityConfig.StoreName(),
+	}
+	wrapper, err := s.storev2.Get(s.ctx, req)
 	if err != nil {
 		// We do not want to send an error if the entity config does not exist
 		if _, ok := err.(*store.ErrNotFound); !ok {

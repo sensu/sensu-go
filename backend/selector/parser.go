@@ -5,15 +5,15 @@ import "fmt"
 type Operator string
 
 const (
-	// doubleEqualSignOpeator represents ==
+	// DoubleEqualSignOperator represents ==
 	DoubleEqualSignOperator Operator = "=="
-	// notEqualOperator represents !=
+	// NotEqualOperator represents !=
 	NotEqualOperator Operator = "!="
-	// inOperator represents in
+	// InOperator represents in
 	InOperator Operator = "in"
-	// notInOperator represents notin
+	// NotInOperator represents notin
 	NotInOperator Operator = "notin"
-	// matchesOperator represents matches
+	// MatchesOperator represents matches
 	MatchesOperator Operator = "matches"
 )
 

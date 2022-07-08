@@ -413,8 +413,8 @@ func TestFetchNamespace(t *testing.T) {
 			}
 			wrapList := wrap.List{wrappedResourceTemplate.(*wrap.Wrapper)}
 			s2 := new(mockstore.V2MockStore)
-			s2.On("CreateOrUpdate", mock.Anything, mock.Anything).Return(nil)
-			s2.On("List", mock.Anything, mock.Anything).Return(wrapList, nil)
+			s2.On("CreateOrUpdate", mock.Anything, mock.Anything, mock.Anything).Return(nil)
+			s2.On("List", mock.Anything, mock.Anything, mock.Anything).Return(wrapList, nil)
 
 			auth := &rbac.Authorizer{Store: store}
 			client := NewNamespaceClient(store, store, auth, s2)
@@ -799,8 +799,8 @@ func TestNamespaceList(t *testing.T) {
 			}
 			wrapList := wrap.List{wrappedResourceTemplate.(*wrap.Wrapper)}
 			s2 := new(mockstore.V2MockStore)
-			s2.On("CreateOrUpdate", mock.Anything, mock.Anything).Return(nil)
-			s2.On("List", mock.Anything, mock.Anything).Return(wrapList, nil)
+			s2.On("CreateOrUpdate", mock.Anything, mock.Anything, mock.Anything).Return(nil)
+			s2.On("List", mock.Anything, mock.Anything, mock.Anything).Return(wrapList, nil)
 
 			ctx := contextWithUser(defaultContext(), test.Attrs.User.Username, test.Attrs.User.Groups)
 
@@ -895,8 +895,8 @@ func TestNamespaceCreateSideEffects(t *testing.T) {
 	}
 	wrapList := wrap.List{wrappedResourceTemplate.(*wrap.Wrapper)}
 	s2 := new(mockstore.V2MockStore)
-	s2.On("CreateOrUpdate", mock.Anything, mock.Anything).Return(nil)
-	s2.On("List", mock.Anything, mock.Anything).Return(wrapList, nil)
+	s2.On("CreateOrUpdate", mock.Anything, mock.Anything, mock.Anything).Return(nil)
+	s2.On("List", mock.Anything, mock.Anything, mock.Anything).Return(wrapList, nil)
 
 	ctx := contextWithUser(context.Background(), "cluster-admin", []string{"cluster-admins"})
 
@@ -968,8 +968,8 @@ func TestNamespaceCreateSideEffects(t *testing.T) {
 	s.AssertNumberOfCalls(t, "DeleteNamespace", 1)
 	s.AssertCalled(t, "DeleteNamespace", mock.Anything, namespace.Name)
 
-	s2.AssertCalled(t, "List", mock.Anything, mock.Anything)
-	s2.AssertCalled(t, "CreateOrUpdate", mock.Anything, mock.Anything)
+	s2.AssertCalled(t, "List", mock.Anything, mock.Anything, mock.Anything)
+	s2.AssertCalled(t, "CreateOrUpdate", mock.Anything, mock.Anything, mock.Anything)
 }
 
 func TestNamespaceUpdateSideEffects(t *testing.T) {
@@ -1029,8 +1029,8 @@ func TestNamespaceUpdateSideEffects(t *testing.T) {
 	}
 	wrapList := wrap.List{wrappedResourceTemplate.(*wrap.Wrapper)}
 	s2 := new(mockstore.V2MockStore)
-	s2.On("CreateOrUpdate", mock.Anything, mock.Anything).Return(nil)
-	s2.On("List", mock.Anything, mock.Anything).Return(wrapList, nil)
+	s2.On("CreateOrUpdate", mock.Anything, mock.Anything, mock.Anything).Return(nil)
+	s2.On("List", mock.Anything, mock.Anything, mock.Anything).Return(wrapList, nil)
 
 	ctx := contextWithUser(context.Background(), "cluster-admin", []string{"cluster-admins"})
 
@@ -1101,6 +1101,6 @@ func TestNamespaceUpdateSideEffects(t *testing.T) {
 	s.AssertNumberOfCalls(t, "DeleteNamespace", 1)
 	s.AssertCalled(t, "DeleteNamespace", mock.Anything, namespace.Name)
 
-	s2.AssertCalled(t, "List", mock.Anything, mock.Anything)
-	s2.AssertCalled(t, "CreateOrUpdate", mock.Anything, mock.Anything)
+	s2.AssertCalled(t, "List", mock.Anything, mock.Anything, mock.Anything)
+	s2.AssertCalled(t, "CreateOrUpdate", mock.Anything, mock.Anything, mock.Anything)
 }

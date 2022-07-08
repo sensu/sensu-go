@@ -1,6 +1,7 @@
 package v2_test
 
 import (
+	"context"
 	"errors"
 	"testing"
 
@@ -13,10 +14,10 @@ import (
 func TestProxyCreateOrUpdate(t *testing.T) {
 	s := new(storetest.Store)
 	want := errors.New("expected")
-	s.On("CreateOrUpdate", mock.Anything, mock.Anything).Return(want)
+	s.On("CreateOrUpdate", mock.Anything, mock.Anything, mock.Anything).Return(want)
 	var proxy storev2.Proxy
 	proxy.UpdateStore(s)
-	got := proxy.CreateOrUpdate(storev2.ResourceRequest{}, nil)
+	got := proxy.CreateOrUpdate(context.Background(), storev2.ResourceRequest{}, nil)
 	if got != want {
 		t.Fatal(got)
 	}
@@ -25,10 +26,10 @@ func TestProxyCreateOrUpdate(t *testing.T) {
 func TestProxyUpdateIfExists(t *testing.T) {
 	s := new(storetest.Store)
 	want := errors.New("expected")
-	s.On("UpdateIfExists", mock.Anything, mock.Anything).Return(want)
+	s.On("UpdateIfExists", mock.Anything, mock.Anything, mock.Anything).Return(want)
 	var proxy storev2.Proxy
 	proxy.UpdateStore(s)
-	got := proxy.UpdateIfExists(storev2.ResourceRequest{}, nil)
+	got := proxy.UpdateIfExists(context.Background(), storev2.ResourceRequest{}, nil)
 	if got != want {
 		t.Fatal(got)
 	}
@@ -37,10 +38,10 @@ func TestProxyUpdateIfExists(t *testing.T) {
 func TestProxyCreateIfNotExists(t *testing.T) {
 	s := new(storetest.Store)
 	want := errors.New("expected")
-	s.On("CreateIfNotExists", mock.Anything, mock.Anything).Return(want)
+	s.On("CreateIfNotExists", mock.Anything, mock.Anything, mock.Anything).Return(want)
 	var proxy storev2.Proxy
 	proxy.UpdateStore(s)
-	got := proxy.CreateIfNotExists(storev2.ResourceRequest{}, nil)
+	got := proxy.CreateIfNotExists(context.Background(), storev2.ResourceRequest{}, nil)
 	if got != want {
 		t.Fatal(got)
 	}
@@ -49,10 +50,10 @@ func TestProxyCreateIfNotExists(t *testing.T) {
 func TestProxyGet(t *testing.T) {
 	s := new(storetest.Store)
 	want := errors.New("expected")
-	s.On("Get", mock.Anything, mock.Anything).Return((storev2.Wrapper)(nil), want)
+	s.On("Get", mock.Anything, mock.Anything, mock.Anything).Return((storev2.Wrapper)(nil), want)
 	var proxy storev2.Proxy
 	proxy.UpdateStore(s)
-	_, got := proxy.Get(storev2.ResourceRequest{})
+	_, got := proxy.Get(context.Background(), storev2.ResourceRequest{})
 	if got != want {
 		t.Fatal(got)
 	}
@@ -61,10 +62,10 @@ func TestProxyGet(t *testing.T) {
 func TestProxyDelete(t *testing.T) {
 	s := new(storetest.Store)
 	want := errors.New("expected")
-	s.On("Delete", mock.Anything).Return(want)
+	s.On("Delete", mock.Anything, mock.Anything).Return(want)
 	var proxy storev2.Proxy
 	proxy.UpdateStore(s)
-	got := proxy.Delete(storev2.ResourceRequest{})
+	got := proxy.Delete(context.Background(), storev2.ResourceRequest{})
 	if got != want {
 		t.Fatal(got)
 	}
@@ -73,10 +74,10 @@ func TestProxyDelete(t *testing.T) {
 func TestProxyList(t *testing.T) {
 	s := new(storetest.Store)
 	want := errors.New("expected")
-	s.On("List", mock.Anything, mock.Anything).Return(make(wrap.List, 0), want)
+	s.On("List", mock.Anything, mock.Anything, mock.Anything).Return(make(wrap.List, 0), want)
 	var proxy storev2.Proxy
 	proxy.UpdateStore(s)
-	_, got := proxy.List(storev2.ResourceRequest{}, nil)
+	_, got := proxy.List(context.Background(), storev2.ResourceRequest{}, nil)
 	if got != want {
 		t.Fatal(got)
 	}
@@ -85,10 +86,10 @@ func TestProxyList(t *testing.T) {
 func TestProxyExists(t *testing.T) {
 	s := new(storetest.Store)
 	want := errors.New("expected")
-	s.On("Exists", mock.Anything, mock.Anything).Return(false, want)
+	s.On("Exists", mock.Anything, mock.Anything, mock.Anything).Return(false, want)
 	var proxy storev2.Proxy
 	proxy.UpdateStore(s)
-	_, got := proxy.Exists(storev2.ResourceRequest{})
+	_, got := proxy.Exists(context.Background(), storev2.ResourceRequest{})
 	if got != want {
 		t.Fatal(got)
 	}
@@ -97,10 +98,10 @@ func TestProxyExists(t *testing.T) {
 func TestProxyPatch(t *testing.T) {
 	s := new(storetest.Store)
 	want := errors.New("expected")
-	s.On("Patch", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(want)
+	s.On("Patch", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(want)
 	var proxy storev2.Proxy
 	proxy.UpdateStore(s)
-	got := proxy.Patch(storev2.ResourceRequest{}, nil, nil, nil)
+	got := proxy.Patch(context.Background(), storev2.ResourceRequest{}, nil, nil, nil)
 	if got != want {
 		t.Fatal(got)
 	}

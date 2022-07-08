@@ -1,6 +1,7 @@
 package postgres
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -13,6 +14,7 @@ import (
 	"github.com/jackc/pgx/v4/pgxpool"
 	v2 "github.com/sensu/sensu-go/api/core/v2"
 	v3 "github.com/sensu/sensu-go/api/core/v3"
+	"github.com/sensu/sensu-go/backend/selector"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/backend/store/patch"
 	storev2 "github.com/sensu/sensu-go/backend/store/v2"
@@ -39,13 +41,19 @@ type DBResource struct {
 	deletedAt   time.Time
 }
 
+type listTemplateValues struct {
+	Limit       int64
+	Offset      int64
+	SelectorSQL string
+}
+
 func NewConfigStore(db *pgxpool.Pool) *ConfigStore {
 	return &ConfigStore{
 		db: db,
 	}
 }
 
-func (s *ConfigStore) CreateOrUpdate(request storev2.ResourceRequest, wrapper storev2.Wrapper) error {
+func (s *ConfigStore) CreateOrUpdate(ctx context.Context, request storev2.ResourceRequest, wrapper storev2.Wrapper) error {
 	if err := request.Validate(); err != nil {
 		return &store.ErrNotValid{Err: err}
 	}
@@ -57,7 +65,7 @@ func (s *ConfigStore) CreateOrUpdate(request storev2.ResourceRequest, wrapper st
 
 	args := []interface{}{typeMeta.APIVersion, typeMeta.Type, meta.Namespace, meta.Name, jsonLabels, bytesAnnotations, jsonResource}
 
-	tags, err := s.db.Exec(request.Context, CreateOrUpdateConfigQuery, args...)
+	tags, err := s.db.Exec(ctx, CreateOrUpdateConfigQuery, args...)
 	if err != nil {
 		return err
 	}
@@ -68,7 +76,7 @@ func (s *ConfigStore) CreateOrUpdate(request storev2.ResourceRequest, wrapper st
 	return nil
 }
 
-func (s *ConfigStore) UpdateIfExists(request storev2.ResourceRequest, wrapper storev2.Wrapper) error {
+func (s *ConfigStore) UpdateIfExists(ctx context.Context, request storev2.ResourceRequest, wrapper storev2.Wrapper) error {
 	if err := request.Validate(); err != nil {
 		return &store.ErrNotValid{Err: err}
 	}
@@ -80,7 +88,7 @@ func (s *ConfigStore) UpdateIfExists(request storev2.ResourceRequest, wrapper st
 
 	args := []interface{}{jsonLabels, bytesAnnotations, jsonResource, typeMeta.APIVersion, typeMeta.Type, meta.Namespace, meta.Name}
 
-	tags, err := s.db.Exec(request.Context, UpdateIfExistsConfigQuery, args...)
+	tags, err := s.db.Exec(ctx, UpdateIfExistsConfigQuery, args...)
 	if err != nil {
 		return err
 	}
@@ -91,7 +99,7 @@ func (s *ConfigStore) UpdateIfExists(request storev2.ResourceRequest, wrapper st
 	return nil
 }
 
-func (s *ConfigStore) CreateIfNotExists(request storev2.ResourceRequest, wrapper storev2.Wrapper) error {
+func (s *ConfigStore) CreateIfNotExists(ctx context.Context, request storev2.ResourceRequest, wrapper storev2.Wrapper) error {
 	if err := request.Validate(); err != nil {
 		return &store.ErrNotValid{Err: err}
 	}
@@ -103,7 +111,7 @@ func (s *ConfigStore) CreateIfNotExists(request storev2.ResourceRequest, wrapper
 
 	args := []interface{}{typeMeta.APIVersion, typeMeta.Type, meta.Namespace, meta.Name, jsonLabels, bytesAnnotations, jsonResource}
 
-	tags, err := s.db.Exec(request.Context, CreateConfigIfNotExistsQuery, args...)
+	tags, err := s.db.Exec(ctx, CreateConfigIfNotExistsQuery, args...)
 	if err != nil {
 		if pgErr, ok := err.(*pgconn.PgError); ok && pgErr.Code == pgUniqueViolationCode {
 			return &store.ErrAlreadyExists{Key: fmt.Sprintf("%s.%s/%s/%s", typeMeta.APIVersion, typeMeta.Type, request.Namespace, request.Name)}
@@ -117,65 +125,59 @@ func (s *ConfigStore) CreateIfNotExists(request storev2.ResourceRequest, wrapper
 	return nil
 }
 
-func (s *ConfigStore) Get(request storev2.ResourceRequest) (storev2.Wrapper, error) {
+func (s *ConfigStore) Get(ctx context.Context, request storev2.ResourceRequest) (storev2.Wrapper, error) {
 	if err := request.Validate(); err != nil {
 		return nil, &store.ErrNotValid{Err: err}
 	}
-	if request.TypeMeta == nil {
-		return nil, &store.ErrNotValid{Err: errors.New("type meta is missing")}
-	}
 
-	args := []interface{}{request.TypeMeta.APIVersion, request.TypeMeta.Type, request.Namespace, request.Name}
+	args := []interface{}{request.APIVersion, request.Type, request.Namespace, request.Name}
 
-	row := s.db.QueryRow(request.Context, GetConfigQuery, args...)
+	row := s.db.QueryRow(ctx, GetConfigQuery, args...)
 	result := DBResource{}
 
 	if err := row.Scan(&result.id, &result.labels, &result.annotations, &result.resource, &result.createdAt, &result.updatedAt); err != nil {
 		if err == pgx.ErrNoRows {
-			return nil, &store.ErrNotFound{Key: fmt.Sprintf("%s.%s/%s/%s", request.TypeMeta.APIVersion, request.TypeMeta.Type, request.Namespace, request.Name)}
+			return nil, &store.ErrNotFound{Key: fmt.Sprintf("%s.%s/%s/%s", request.APIVersion, request.Type, request.Namespace, request.Name)}
 		}
 		return nil, err
 	}
 
 	return &wrap.Wrapper{
-		TypeMeta:    request.TypeMeta,
+		TypeMeta:    &v2.TypeMeta{APIVersion: request.APIVersion, Type: request.Type},
 		Encoding:    wrap.Encoding_json,
 		Compression: 0,
 		Value:       []byte(result.resource),
 	}, nil
 }
 
-func (s *ConfigStore) Delete(request storev2.ResourceRequest) error {
+func (s *ConfigStore) Delete(ctx context.Context, request storev2.ResourceRequest) error {
 	if err := request.Validate(); err != nil {
 		return &store.ErrNotValid{Err: err}
 	}
-	if request.TypeMeta == nil {
-		return &store.ErrNotValid{Err: errors.New("type meta is missing")}
-	}
 
-	args := []interface{}{request.TypeMeta.APIVersion, request.TypeMeta.Type, request.Namespace, request.Name}
+	args := []interface{}{request.APIVersion, request.Type, request.Namespace, request.Name}
 
-	cmdTag, err := s.db.Exec(request.Context, DeleteConfigQuery, args...)
+	cmdTag, err := s.db.Exec(ctx, DeleteConfigQuery, args...)
 	if err != nil {
 		return err
 	}
 
 	if cmdTag.RowsAffected() == 0 {
-		return &store.ErrNotFound{Key: fmt.Sprintf("%s.%s/%s/%s", request.TypeMeta.APIVersion, request.TypeMeta.Type, request.Namespace, request.Name)}
+		return &store.ErrNotFound{Key: fmt.Sprintf("%s.%s/%s/%s", request.APIVersion, request.Type, request.Namespace, request.Name)}
 	}
 
 	return nil
 }
 
-func (s *ConfigStore) List(request storev2.ResourceRequest, predicate *store.SelectionPredicate) (storev2.WrapList, error) {
+func (s *ConfigStore) List(ctx context.Context, request storev2.ResourceRequest, predicate *store.SelectionPredicate) (storev2.WrapList, error) {
 	if err := request.Validate(); err != nil {
 		return nil, &store.ErrNotValid{Err: err}
 	}
-	if request.TypeMeta == nil {
-		return nil, &store.ErrNotValid{Err: errors.New("type meta is missing")}
-	}
 
-	//selector := selector.SelectorFromContext(request.Context)
+	selectorSQL, selectorArgs, err := getSelectorSQL(ctx)
+	if err != nil {
+		return nil, &store.ErrNotValid{Err: err}
+	}
 
 	tmpl, err := template.New("listResourceQuery").Parse(ListConfigQueryTmpl)
 	if err != nil {
@@ -185,14 +187,20 @@ func (s *ConfigStore) List(request storev2.ResourceRequest, predicate *store.Sel
 	if predicate == nil {
 		predicate = &store.SelectionPredicate{}
 	}
-	if err := tmpl.Execute(&queryBuilder, predicate); err != nil {
+	templValues := listTemplateValues{
+		Limit:       predicate.Limit,
+		Offset:      predicate.Offset,
+		SelectorSQL: strings.TrimSpace(selectorSQL),
+	}
+	if err := tmpl.Execute(&queryBuilder, templValues); err != nil {
 		return nil, err
 	}
 
-	args := []interface{}{request.TypeMeta.APIVersion, request.TypeMeta.Type, request.Namespace}
+	args := []interface{}{request.APIVersion, request.Type, request.Namespace}
+	args = append(args, selectorArgs...)
 
 	query := queryBuilder.String()
-	rows, err := s.db.Query(request.Context, query, args...)
+	rows, err := s.db.Query(ctx, query, args...)
 	if err != nil {
 		return nil, err
 	}
@@ -207,7 +215,7 @@ func (s *ConfigStore) List(request storev2.ResourceRequest, predicate *store.Sel
 		}
 
 		wrapped := wrap.Wrapper{
-			TypeMeta:    request.TypeMeta,
+			TypeMeta:    &v2.TypeMeta{APIVersion: request.APIVersion, Type: request.Type},
 			Encoding:    wrap.Encoding_json,
 			Compression: wrap.Compression_none,
 			Value:       []byte(dbResource.resource),
@@ -218,17 +226,14 @@ func (s *ConfigStore) List(request storev2.ResourceRequest, predicate *store.Sel
 	return wrapList, nil
 }
 
-func (s *ConfigStore) Exists(request storev2.ResourceRequest) (bool, error) {
+func (s *ConfigStore) Exists(ctx context.Context, request storev2.ResourceRequest) (bool, error) {
 	if err := request.Validate(); err != nil {
 		return false, &store.ErrNotValid{Err: err}
 	}
-	if request.TypeMeta == nil {
-		return false, &store.ErrNotValid{Err: errors.New("type meta is missing")}
-	}
 
-	args := []interface{}{request.TypeMeta.APIVersion, request.TypeMeta.Type, request.Namespace, request.Name}
+	args := []interface{}{request.APIVersion, request.Type, request.Namespace, request.Name}
 
-	row := s.db.QueryRow(request.Context, ExistsConfigQuery, args...)
+	row := s.db.QueryRow(ctx, ExistsConfigQuery, args...)
 
 	var count int
 	if err := row.Scan(&count); err != nil {
@@ -238,7 +243,7 @@ func (s *ConfigStore) Exists(request storev2.ResourceRequest) (bool, error) {
 	return count > 0, nil
 }
 
-func (s *ConfigStore) Patch(request storev2.ResourceRequest, wrapper storev2.Wrapper, patcher patch.Patcher, condition *store.ETagCondition) error {
+func (s *ConfigStore) Patch(ctx context.Context, request storev2.ResourceRequest, wrapper storev2.Wrapper, patcher patch.Patcher, condition *store.ETagCondition) error {
 	if err := request.Validate(); err != nil {
 		return &store.ErrNotValid{Err: err}
 	}
@@ -278,7 +283,7 @@ func (s *ConfigStore) Patch(request storev2.ResourceRequest, wrapper storev2.Wra
 	}
 	*w = *wrappedPatch
 
-	return s.UpdateIfExists(request, w)
+	return s.UpdateIfExists(ctx, request, w)
 }
 
 func labelsToJSON(labels map[string]string) (string, error) {
@@ -340,4 +345,16 @@ func extractResourceData(wrapper storev2.Wrapper) (typeMeta v2.TypeMeta, meta *v
 // singular resource, or collection of resources, in a namespace.
 func storeKey(req storev2.ResourceRequest) string {
 	return store.NewKeyBuilder(req.StoreName).WithNamespace(req.Namespace).Build(req.Name)
+}
+
+func getSelectorSQL(ctx context.Context) (string, []interface{}, error) {
+	ctxSelector := selector.SelectorFromContext(ctx)
+
+	if ctxSelector != nil && len(ctxSelector.Operations) > 0 {
+		argCounter := argCounter{value: 3}
+		builder := NewConfigSelectorSQLBuilder(ctxSelector)
+		return builder.GetSelectorCond(&argCounter)
+	}
+
+	return "", nil, nil
 }

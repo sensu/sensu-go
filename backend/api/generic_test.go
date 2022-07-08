@@ -44,11 +44,11 @@ func defaultV2ResourceStore() storev2.Interface {
 	if err != nil {
 		panic(err)
 	}
-	store.On("Get", mock.Anything).Return(wrappedResource, nil)
-	store.On("List", mock.Anything, mock.Anything).Return(wrap.List{wrappedResource.(*wrap.Wrapper)}, nil)
-	store.On("CreateIfNotExists", mock.Anything, mock.Anything).Return(nil)
-	store.On("CreateOrUpdate", mock.Anything, mock.Anything).Return(nil)
-	store.On("Delete", mock.Anything).Return(nil)
+	store.On("Get", mock.Anything, mock.Anything).Return(wrappedResource, nil)
+	store.On("List", mock.Anything, mock.Anything, mock.Anything).Return(wrap.List{wrappedResource.(*wrap.Wrapper)}, nil)
+	store.On("CreateIfNotExists", mock.Anything, mock.Anything, mock.Anything).Return(nil)
+	store.On("CreateOrUpdate", mock.Anything, mock.Anything, mock.Anything).Return(nil)
+	store.On("Delete", mock.Anything, mock.Anything).Return(nil)
 	return store
 }
 

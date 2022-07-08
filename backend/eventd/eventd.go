@@ -676,9 +676,9 @@ func (e *Eventd) dead(key string, prev liveness.State, leader bool) (bury bool) 
 	// The entity has been deleted, and so there is no reason to track check
 	// TTL for it anymore.
 	config := corev3.NewEntityConfig(namespace, entity)
-	req := storev2.NewResourceRequestFromResource(ctx, config)
+	req := storev2.NewResourceRequestFromResource(config)
 
-	_, err = e.store.Get(req)
+	_, err = e.store.Get(ctx, req)
 	if _, ok := err.(*store.ErrNotFound); ok {
 		return true
 	} else if err != nil {

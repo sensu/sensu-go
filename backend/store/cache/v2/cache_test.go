@@ -118,12 +118,12 @@ func TestResourceRebuild(t *testing.T) {
 
 	// Add namespace resource
 	namespace := corev2.FixtureNamespace("default")
-	req := storev2.NewResourceRequestFromV2Resource(ctx, namespace)
+	req := storev2.NewResourceRequestFromV2Resource(namespace)
 	wrapper, err := wrap.V2Resource(namespace)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if err := store.CreateOrUpdate(req, wrapper); err != nil {
+	if err := store.CreateOrUpdate(ctx, req, wrapper); err != nil {
 		t.Fatal(err)
 	}
 
@@ -135,12 +135,12 @@ func TestResourceRebuild(t *testing.T) {
 
 	// Resource added to a new namespace
 	foo := corev3.FixtureEntityConfig("foo")
-	req = storev2.NewResourceRequestFromResource(ctx, foo)
+	req = storev2.NewResourceRequestFromResource(foo)
 	fooWrapper, err := storev2.WrapResource(foo)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if err := store.CreateOrUpdate(req, fooWrapper); err != nil {
+	if err := store.CreateOrUpdate(ctx, req, fooWrapper); err != nil {
 		t.Fatal(err)
 	}
 	if updates, err := cacher.rebuild(ctx); err != nil {
@@ -153,12 +153,12 @@ func TestResourceRebuild(t *testing.T) {
 
 	// Resource added to an existing namespace
 	bar := corev3.FixtureEntityConfig("bar")
-	req = storev2.NewResourceRequestFromResource(ctx, bar)
+	req = storev2.NewResourceRequestFromResource(bar)
 	barWrapper, err := storev2.WrapResource(bar)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if err := store.CreateOrUpdate(req, barWrapper); err != nil {
+	if err := store.CreateOrUpdate(ctx, req, barWrapper); err != nil {
 		t.Fatal(err)
 	}
 	if updates, err := cacher.rebuild(ctx); err != nil {
@@ -171,12 +171,12 @@ func TestResourceRebuild(t *testing.T) {
 
 	// Resource updated
 	bar.User = "acme"
-	req = storev2.NewResourceRequestFromResource(ctx, bar)
+	req = storev2.NewResourceRequestFromResource(bar)
 	barWrapper, err = storev2.WrapResource(bar)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if err := store.CreateOrUpdate(req, barWrapper); err != nil {
+	if err := store.CreateOrUpdate(ctx, req, barWrapper); err != nil {
 		t.Fatal(err)
 	}
 	if updates, err := cacher.rebuild(ctx); err != nil {
@@ -188,8 +188,8 @@ func TestResourceRebuild(t *testing.T) {
 	assert.Equal(t, int64(2), cacher.Count())
 
 	// Resource deleted
-	req = storev2.NewResourceRequestFromResource(ctx, bar)
-	if err := store.Delete(req); err != nil {
+	req = storev2.NewResourceRequestFromResource(bar)
+	if err := store.Delete(ctx, req); err != nil {
 		t.Fatal(err)
 	}
 	if updates, err := cacher.rebuild(ctx); err != nil {

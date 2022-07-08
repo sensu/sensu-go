@@ -161,7 +161,7 @@ func TestSession_sender(t *testing.T) {
 			},
 			storeFunc: func(store *storetest.Store, wg *sync.WaitGroup) {
 				wg.Add(1)
-				store.On("CreateOrUpdate", mock.Anything, mock.Anything).Run(func(args mock.Arguments) {
+				store.On("CreateOrUpdate", mock.Anything, mock.Anything, mock.Anything).Run(func(args mock.Arguments) {
 					// Close the wait channel once we receive the storev2 request
 					wg.Done()
 				}).Return(nil)
@@ -352,7 +352,7 @@ func TestSession_Start(t *testing.T) {
 				conn.On("Close").Return(nil)
 			},
 			storeFunc: func(s *storetest.Store, wg *sync.WaitGroup) {
-				s.On("Get", mock.Anything).Return(&wrap.Wrapper{}, &store.ErrNotFound{})
+				s.On("Get", mock.Anything, mock.Anything).Return(&wrap.Wrapper{}, &store.ErrNotFound{})
 			},
 		},
 		{
@@ -378,7 +378,7 @@ func TestSession_Start(t *testing.T) {
 				if err != nil {
 					t.Fatal(err)
 				}
-				s.On("Get", mock.Anything).Return(wrappedConfig, nil)
+				s.On("Get", mock.Anything, mock.Anything).Return(wrappedConfig, nil)
 			},
 		},
 		{
@@ -389,7 +389,7 @@ func TestSession_Start(t *testing.T) {
 				conn.On("Close").Return(nil)
 			},
 			storeFunc: func(s *storetest.Store, wg *sync.WaitGroup) {
-				s.On("Get", mock.Anything).Return(&wrap.Wrapper{}, errors.New("fatal error"))
+				s.On("Get", mock.Anything, mock.Anything).Return(&wrap.Wrapper{}, errors.New("fatal error"))
 			},
 			wantErr: true,
 		},

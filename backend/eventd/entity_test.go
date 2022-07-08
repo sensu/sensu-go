@@ -1,7 +1,6 @@
 package eventd
 
 import (
-	"context"
 	"errors"
 	"reflect"
 	"testing"
@@ -38,9 +37,9 @@ func TestCreateProxyEntity(t *testing.T) {
 				state := corev3.FixtureEntityState("foo")
 				config := corev3.FixtureEntityConfig("foo")
 
-				stateReq := storev2.NewResourceRequestFromResource(context.Background(), state)
+				stateReq := storev2.NewResourceRequestFromResource(state)
 				stateReq.UsePostgres = true
-				configReq := storev2.NewResourceRequestFromResource(context.Background(), config)
+				configReq := storev2.NewResourceRequestFromResource(config)
 
 				wConfig, err := storev2.WrapResource(config)
 				if err != nil {
@@ -52,8 +51,8 @@ func TestCreateProxyEntity(t *testing.T) {
 					t.Fatal(err)
 				}
 
-				s.On("Get", stateReq).Return(wState, nil)
-				s.On("Get", configReq).Return(wConfig, nil)
+				s.On("Get", mock.Anything, stateReq).Return(wState, nil)
+				s.On("Get", mock.Anything, configReq).Return(wConfig, nil)
 			},
 			wantEntityName: "foo",
 		},
@@ -76,24 +75,24 @@ func TestCreateProxyEntity(t *testing.T) {
 			},
 			storeFunc: func(s *storetest.Store, e *corev2.Event) {
 				_, state := corev3.V2EntityToV3(e.Entity)
-				stateReq := storev2.NewResourceRequestFromResource(context.Background(), state)
+				stateReq := storev2.NewResourceRequestFromResource(state)
 				stateReq.UsePostgres = true
 
 				config := corev3.FixtureEntityConfig("foo")
-				configReq := storev2.NewResourceRequestFromResource(context.Background(), config)
+				configReq := storev2.NewResourceRequestFromResource(config)
 
-				s.On("Get", mock.AnythingOfType("v2.ResourceRequest")).
+				s.On("Get", mock.Anything, mock.AnythingOfType("v2.ResourceRequest")).
 					Return(nilWrapper, &store.ErrNotFound{})
 
 				// Assert that CreateOrUpdate() was called with the expected
 				// request and wrapper
-				s.On("CreateOrUpdate", stateReq, mock.Anything).Return(nil)
+				s.On("CreateOrUpdate", mock.Anything, stateReq, mock.Anything).Return(nil)
 
 				// Assert that CreateIfNotExists() was called with the expected
 				// request and wrapper type
 				// TODO(ccressent): can we do something more strict with the
 				// matching?
-				s.On("CreateIfNotExists", configReq, mock.Anything).Return(nil)
+				s.On("CreateIfNotExists", mock.Anything, configReq, mock.Anything).Return(nil)
 			},
 			wantEntity: &corev2.Entity{
 				ObjectMeta: corev2.ObjectMeta{
@@ -114,9 +113,9 @@ func TestCreateProxyEntity(t *testing.T) {
 			event: corev2.FixtureEvent("foo", "check-cpu"),
 			storeFunc: func(s *storetest.Store, _ *corev2.Event) {
 				config := corev3.FixtureEntityConfig("foo")
-				configReq := storev2.NewResourceRequestFromResource(context.Background(), config)
+				configReq := storev2.NewResourceRequestFromResource(config)
 
-				s.On("Get", configReq).Return(nilWrapper, errors.New("error"))
+				s.On("Get", mock.Anything, configReq).Return(nilWrapper, errors.New("error"))
 			},
 			wantEntityName: "foo",
 			wantErr:        true,
@@ -139,9 +138,9 @@ func TestCreateProxyEntity(t *testing.T) {
 				state := corev3.FixtureEntityState("bar")
 				config := corev3.FixtureEntityConfig("bar")
 
-				stateReq := storev2.NewResourceRequestFromResource(context.Background(), state)
+				stateReq := storev2.NewResourceRequestFromResource(state)
 				stateReq.UsePostgres = true
-				configReq := storev2.NewResourceRequestFromResource(context.Background(), config)
+				configReq := storev2.NewResourceRequestFromResource(config)
 
 				wState, err := storev2.WrapResource(state)
 				if err != nil {
@@ -153,8 +152,8 @@ func TestCreateProxyEntity(t *testing.T) {
 					t.Fatal(err)
 				}
 
-				s.On("Get", stateReq).Return(wState, nil)
-				s.On("Get", configReq).Return(wConfig, nil)
+				s.On("Get", mock.Anything, stateReq).Return(wState, nil)
+				s.On("Get", mock.Anything, configReq).Return(wConfig, nil)
 			},
 			wantEntityName: "bar",
 		},
@@ -176,21 +175,21 @@ func TestCreateProxyEntity(t *testing.T) {
 				state := corev3.NewEntityState("default", "bar")
 				config := corev3.FixtureEntityConfig("bar")
 
-				configReq := storev2.NewResourceRequestFromResource(context.Background(), config)
-				stateReq := storev2.NewResourceRequestFromResource(context.Background(), state)
+				configReq := storev2.NewResourceRequestFromResource(config)
+				stateReq := storev2.NewResourceRequestFromResource(state)
 				stateReq.UsePostgres = true
 
-				s.On("Get", configReq).Return(nilWrapper, &store.ErrNotFound{})
+				s.On("Get", mock.Anything, configReq).Return(nilWrapper, &store.ErrNotFound{})
 
 				// Assert that CreateOrUpdate() was called with the expected
 				// request and wrapper
-				s.On("CreateOrUpdate", stateReq, mock.Anything).Return(nil)
+				s.On("CreateOrUpdate", mock.Anything, stateReq, mock.Anything).Return(nil)
 
 				// Assert that CreateIfNotExists() was called with the expected
 				// request and wrapper type
 				// TODO(ccressent): can we do something more strict with the
 				// matching?
-				s.On("CreateIfNotExists", configReq, mock.Anything).Return(nil)
+				s.On("CreateIfNotExists", mock.Anything, configReq, mock.Anything).Return(nil)
 			},
 			wantEntityName: "bar",
 		},
@@ -211,16 +210,16 @@ func TestCreateProxyEntity(t *testing.T) {
 			storeFunc: func(s *storetest.Store, e *corev2.Event) {
 				e.Entity.ObjectMeta.Name = "bar"
 				_, state := corev3.V2EntityToV3(e.Entity)
-				stateReq := storev2.NewResourceRequestFromResource(context.Background(), state)
+				stateReq := storev2.NewResourceRequestFromResource(state)
 				stateReq.UsePostgres = true
 
 				config := corev3.FixtureEntityConfig("bar")
-				configReq := storev2.NewResourceRequestFromResource(context.Background(), config)
+				configReq := storev2.NewResourceRequestFromResource(config)
 
-				s.On("Get", configReq).
+				s.On("Get", mock.Anything, configReq).
 					Return(nilWrapper, &store.ErrNotFound{})
 
-				s.On("CreateOrUpdate", stateReq, mock.Anything).
+				s.On("CreateOrUpdate", mock.Anything, stateReq, mock.Anything).
 					Return(errors.New("error"))
 			},
 			wantEntityName: "bar",

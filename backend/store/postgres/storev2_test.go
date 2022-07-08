@@ -10,6 +10,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v4/pgxpool"
+	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	corev3 "github.com/sensu/sensu-go/api/core/v3"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/backend/store/patch"
@@ -39,7 +40,7 @@ func testWithPostgresStoreV2(t *testing.T, fn func(storev2.Interface)) {
 	}
 	defer dropAll(context.Background(), dbName, pgURL)
 	db.Close()
-	db, err = pgxpool.Connect(ctx, fmt.Sprintf("dbname=%s ", dbName)+pgURL)
+	db, err = pgxpool.Connect(ctx, fmt.Sprintf("%s dbname=%s ", pgURL, dbName))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -54,14 +55,14 @@ func TestStoreCreateOrUpdate(t *testing.T) {
 	testWithPostgresStoreV2(t, func(s storev2.Interface) {
 		fixture := corev3.FixtureEntityState("foo")
 		ctx := context.Background()
-		req := storev2.NewResourceRequestFromResource(ctx, fixture)
+		req := storev2.NewResourceRequestFromResource(fixture)
 		req.UsePostgres = true
 		wrapper := WrapEntityState(fixture)
-		if err := s.CreateOrUpdate(req, wrapper); err != nil {
+		if err := s.CreateOrUpdate(ctx, req, wrapper); err != nil {
 			t.Error(err)
 		}
 		// Repeating the call to the store should succeed
-		if err := s.CreateOrUpdate(req, wrapper); err != nil {
+		if err := s.CreateOrUpdate(ctx, req, wrapper); err != nil {
 			t.Error(err)
 		}
 		rows, err := s.(*StoreV2).db.Query(context.Background(), "SELECT * FROM entities")
@@ -83,22 +84,22 @@ func TestStoreUpdateIfExists(t *testing.T) {
 	testWithPostgresStoreV2(t, func(s storev2.Interface) {
 		fixture := corev3.FixtureEntityState("foo")
 		ctx := context.Background()
-		req := storev2.NewResourceRequestFromResource(ctx, fixture)
+		req := storev2.NewResourceRequestFromResource(fixture)
 		req.UsePostgres = true
 		wrapper := WrapEntityState(fixture)
 		// UpdateIfExists should fail
-		if err := s.UpdateIfExists(req, wrapper); err == nil {
+		if err := s.UpdateIfExists(ctx, req, wrapper); err == nil {
 			t.Error("expected non-nil error")
 		} else {
 			if _, ok := err.(*store.ErrNotFound); !ok {
 				t.Errorf("wrong error: %s", err)
 			}
 		}
-		if err := s.CreateOrUpdate(req, wrapper); err != nil {
+		if err := s.CreateOrUpdate(ctx, req, wrapper); err != nil {
 			t.Fatal(err)
 		}
 		// UpdateIfExists should succeed
-		if err := s.UpdateIfExists(req, wrapper); err != nil {
+		if err := s.UpdateIfExists(ctx, req, wrapper); err != nil {
 			t.Error(err)
 		}
 	})
@@ -108,21 +109,21 @@ func TestStoreCreateIfNotExists(t *testing.T) {
 	testWithPostgresStoreV2(t, func(s storev2.Interface) {
 		fixture := corev3.FixtureEntityState("foo")
 		ctx := context.Background()
-		req := storev2.NewResourceRequestFromResource(ctx, fixture)
+		req := storev2.NewResourceRequestFromResource(fixture)
 		req.UsePostgres = true
 		wrapper := WrapEntityState(fixture)
 		// CreateIfNotExists should succeed
-		if err := s.CreateIfNotExists(req, wrapper); err != nil {
+		if err := s.CreateIfNotExists(ctx, req, wrapper); err != nil {
 			t.Fatal(err)
 		}
 		// CreateIfNotExists should fail
-		if err := s.CreateIfNotExists(req, wrapper); err == nil {
+		if err := s.CreateIfNotExists(ctx, req, wrapper); err == nil {
 			t.Error("expected non-nil error")
 		} else if _, ok := err.(*store.ErrAlreadyExists); !ok {
 			t.Errorf("wrong error: %s", err)
 		}
 		// UpdateIfExists should succeed
-		if err := s.UpdateIfExists(req, wrapper); err != nil {
+		if err := s.UpdateIfExists(ctx, req, wrapper); err != nil {
 			t.Error(err)
 		}
 	})
@@ -132,14 +133,14 @@ func TestStoreGet(t *testing.T) {
 	testWithPostgresStoreV2(t, func(s storev2.Interface) {
 		fixture := corev3.FixtureEntityState("foo")
 		ctx := context.Background()
-		req := storev2.NewResourceRequestFromResource(ctx, fixture)
+		req := storev2.NewResourceRequestFromResource(fixture)
 		req.UsePostgres = true
 		wrapper := WrapEntityState(fixture)
 		// CreateIfNotExists should succeed
-		if err := s.CreateOrUpdate(req, wrapper); err != nil {
+		if err := s.CreateOrUpdate(ctx, req, wrapper); err != nil {
 			t.Fatal(err)
 		}
-		got, err := s.Get(req)
+		got, err := s.Get(ctx, req)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -153,22 +154,22 @@ func TestStoreDelete(t *testing.T) {
 	testWithPostgresStoreV2(t, func(s storev2.Interface) {
 		fixture := corev3.FixtureEntityState("foo")
 		ctx := context.Background()
-		req := storev2.NewResourceRequestFromResource(ctx, fixture)
+		req := storev2.NewResourceRequestFromResource(fixture)
 		req.UsePostgres = true
 		wrapper := WrapEntityState(fixture)
 		// CreateIfNotExists should succeed
-		if err := s.CreateIfNotExists(req, wrapper); err != nil {
+		if err := s.CreateIfNotExists(ctx, req, wrapper); err != nil {
 			t.Fatal(err)
 		}
-		if err := s.Delete(req); err != nil {
+		if err := s.Delete(ctx, req); err != nil {
 			t.Fatal(err)
 		}
-		if err := s.Delete(req); err == nil {
+		if err := s.Delete(ctx, req); err == nil {
 			t.Error("expected non-nil error")
 		} else if _, ok := err.(*store.ErrNotFound); !ok {
 			t.Errorf("expected ErrNotFound: got %s", err)
 		}
-		if _, err := s.Get(req); err == nil {
+		if _, err := s.Get(ctx, req); err == nil {
 			t.Error("expected non-nil error")
 		} else if _, ok := err.(*store.ErrNotFound); !ok {
 			t.Errorf("expected ErrNotFound: got %s", err)
@@ -182,19 +183,19 @@ func TestStoreList(t *testing.T) {
 			// create 10 resources
 			fixture := corev3.FixtureEntityState(fmt.Sprintf("foo-%d", i))
 			ctx := context.Background()
-			req := storev2.NewResourceRequestFromResource(ctx, fixture)
+			req := storev2.NewResourceRequestFromResource(fixture)
 			req.UsePostgres = true
 			wrapper := WrapEntityState(fixture)
-			if err := s.CreateIfNotExists(req, wrapper); err != nil {
+			if err := s.CreateIfNotExists(ctx, req, wrapper); err != nil {
 				t.Fatal(err)
 			}
 		}
 		ctx := context.Background()
-		req := storev2.NewResourceRequest(ctx, "default", "anything", new(corev3.EntityState).StoreName())
+		req := storev2.NewResourceRequest(corev2.TypeMeta{Type: "EntityConfig", APIVersion: "core/v3"}, "default", "anything", new(corev3.EntityState).StoreName())
 		req.UsePostgres = true
 		pred := &store.SelectionPredicate{Limit: 5}
 		// Test listing with limit of 5
-		list, err := s.List(req, pred)
+		list, err := s.List(ctx, req, pred)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -206,7 +207,7 @@ func TestStoreList(t *testing.T) {
 		}
 		// get the rest of the list
 		pred.Limit = 6
-		list, err = s.List(req, pred)
+		list, err = s.List(ctx, req, pred)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -219,7 +220,7 @@ func TestStoreList(t *testing.T) {
 		// Test listing from all namespaces
 		req.Namespace = ""
 		pred = &store.SelectionPredicate{Limit: 5}
-		list, err = s.List(req, pred)
+		list, err = s.List(ctx, req, pred)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -231,7 +232,7 @@ func TestStoreList(t *testing.T) {
 		}
 		pred.Limit = 6
 		// get the rest of the list
-		list, err = s.List(req, pred)
+		list, err = s.List(ctx, req, pred)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -245,7 +246,7 @@ func TestStoreList(t *testing.T) {
 		// Test listing in descending order
 		pred.Continue = ""
 		req.SortOrder = storev2.SortDescend
-		list, err = s.List(req, pred)
+		list, err = s.List(ctx, req, pred)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -262,7 +263,7 @@ func TestStoreList(t *testing.T) {
 		// Test listing in ascending order
 		pred.Continue = ""
 		req.SortOrder = storev2.SortAscend
-		list, err = s.List(req, pred)
+		list, err = s.List(ctx, req, pred)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -283,10 +284,10 @@ func TestStoreExists(t *testing.T) {
 	testWithPostgresStoreV2(t, func(s storev2.Interface) {
 		fixture := corev3.FixtureEntityState("foo")
 		ctx := context.Background()
-		req := storev2.NewResourceRequestFromResource(ctx, fixture)
+		req := storev2.NewResourceRequestFromResource(fixture)
 		req.UsePostgres = true
 		// Exists should return false
-		got, err := s.Exists(req)
+		got, err := s.Exists(ctx, req)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -297,10 +298,10 @@ func TestStoreExists(t *testing.T) {
 		// Create a resource under the default namespace
 		wrapper := WrapEntityState(fixture)
 		// CreateIfNotExists should succeed
-		if err := s.CreateIfNotExists(req, wrapper); err != nil {
+		if err := s.CreateIfNotExists(ctx, req, wrapper); err != nil {
 			t.Fatal(err)
 		}
-		got, err = s.Exists(req)
+		got, err = s.Exists(ctx, req)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -315,21 +316,21 @@ func TestStorePatch(t *testing.T) {
 	testWithPostgresStoreV2(t, func(s storev2.Interface) {
 		fixture := corev3.FixtureEntityState("foo")
 		ctx := context.Background()
-		req := storev2.NewResourceRequestFromResource(ctx, fixture)
+		req := storev2.NewResourceRequestFromResource(fixture)
 		req.UsePostgres = true
 		wrapper := WrapEntityState(fixture)
-		if err := s.CreateOrUpdate(req, wrapper); err != nil {
+		if err := s.CreateOrUpdate(ctx, req, wrapper); err != nil {
 			t.Error(err)
 		}
 		patcher := &patch.Merge{
 			MergePatch: []byte(`{"metadata":{"labels":{"food":"hummus"}}}`),
 		}
 
-		if err := s.Patch(req, wrapper, patcher, nil); err != nil {
+		if err := s.Patch(ctx, req, wrapper, patcher, nil); err != nil {
 			t.Fatal(err)
 		}
 
-		updatedWrapper, err := s.Get(req)
+		updatedWrapper, err := s.Get(ctx, req)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -353,11 +354,11 @@ func TestStoreGetMultiple(t *testing.T) {
 			// create 10 resources
 			fixture := corev3.FixtureEntityState(fmt.Sprintf("foo-%d", i))
 			ctx := context.Background()
-			req := storev2.NewResourceRequestFromResource(ctx, fixture)
+			req := storev2.NewResourceRequestFromResource(fixture)
 			reqs = append(reqs, req)
 			req.UsePostgres = true
 			wrapper := WrapEntityState(fixture)
-			if err := s.CreateIfNotExists(req, wrapper); err != nil {
+			if err := s.CreateIfNotExists(ctx, req, wrapper); err != nil {
 				t.Fatal(err)
 			}
 		}

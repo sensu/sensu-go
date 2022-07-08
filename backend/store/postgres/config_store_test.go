@@ -11,8 +11,8 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v4/pgxpool"
-	v2 "github.com/sensu/sensu-go/api/core/v2"
 	corev3 "github.com/sensu/sensu-go/api/core/v3"
+	"github.com/sensu/sensu-go/backend/selector"
 	"github.com/sensu/sensu-go/backend/store"
 	storev2 "github.com/sensu/sensu-go/backend/store/v2"
 	"github.com/sensu/sensu-go/backend/store/v2/wrap"
@@ -26,9 +26,6 @@ const (
 )
 
 func testWithPostgresConfigStore(t *testing.T, fn func(p storev2.Interface)) {
-
-	_ = os.Setenv("PG_URL", "user=4b6f0bad-b9e0-42f2-a62b-de1c087f426c password=70b1be6d-3c84-48d2-bcc7-d6ca45af4530 host=localhost port=5432 dbname=sensudb sslmode=disable")
-
 	t.Helper()
 	if testing.Short() {
 		t.Skip("skipping postgres test")
@@ -262,25 +259,151 @@ func TestConfigStore_List(t *testing.T) {
 	})
 }
 
+func TestConfigStore_List_WithSelectors(t *testing.T) {
+	testWithPostgresConfigStore(t, func(s storev2.Interface) {
+		for i := 0; i < 100; i++ {
+			toCreate := corev3.FixtureEntityConfig(fmt.Sprintf("%s%d", entityName, i))
+			toCreate.Metadata.Labels[fmt.Sprintf("label-mod-key-%d", i%3)] = "value"
+			toCreate.Metadata.Labels["label-mod-value"] = fmt.Sprintf("value-%d", i%3)
+			toCreate.Metadata.Labels["label-flat"] = fmt.Sprintf("value-%d", i)
+			toCreate.Metadata.Labels["label-const"] = "const-value"
+			toCreate.User = fmt.Sprintf("user-%d", (i+2)%3)
+
+			err := createIfNotExists(context.Background(), s, toCreate)
+			assert.NoError(t, err)
+		}
+
+		tests := []struct {
+			name                string
+			selektor            *selector.Selector
+			expectError         bool
+			expectedEntityCount int
+			expectedEntityNames []string
+		}{
+			{
+				name: "entity name label -in- selector",
+				selektor: &selector.Selector{
+					Operations: []selector.Operation{
+						{"label-flat", selector.InOperator, []string{"value-6", "value-22"}, selector.OperationTypeLabelSelector},
+						{"metadata.name", selector.InOperator, []string{entityName + "22", entityName + "45"}, selector.OperationTypeFieldSelector},
+					},
+				},
+				expectError:         false,
+				expectedEntityCount: 1,
+				expectedEntityNames: []string{entityName + "22"},
+			},
+			{
+				name: "entity name label -in- selector",
+				selektor: &selector.Selector{
+					Operations: []selector.Operation{
+						{"label-flat", selector.InOperator, []string{"value-6", "value-22"}, selector.OperationTypeLabelSelector},
+						{"metadata.name", selector.InOperator, []string{entityName + "22", entityName + "45"}, selector.OperationTypeFieldSelector},
+					},
+				},
+				expectError:         false,
+				expectedEntityCount: 1,
+				expectedEntityNames: []string{entityName + "22"},
+			},
+			{
+				name: "entity name label -in- selector",
+				selektor: &selector.Selector{
+					Operations: []selector.Operation{
+						{"label-flat", selector.InOperator, []string{"value-6", "value-22"}, selector.OperationTypeLabelSelector},
+					},
+				},
+				expectError:         false,
+				expectedEntityCount: 2,
+				expectedEntityNames: []string{entityName + "6", entityName + "22"},
+			},
+			{
+				name: "entity name field -in- selector",
+				selektor: &selector.Selector{
+					Operations: []selector.Operation{
+						{"metadata.name", selector.InOperator, []string{entityName + "6", entityName + "22"}, selector.OperationTypeFieldSelector},
+					},
+				},
+				expectError:         false,
+				expectedEntityCount: 2,
+				expectedEntityNames: []string{entityName + "6", entityName + "22"},
+			},
+			{
+				name: "entity name field -match- selector",
+				selektor: &selector.Selector{
+					Operations: []selector.Operation{
+						{"metadata.name", selector.MatchesOperator, []string{fmt.Sprintf("%s%d", entityName, 65)}, selector.OperationTypeFieldSelector},
+					},
+				},
+				expectError:         false,
+				expectedEntityCount: 1,
+				expectedEntityNames: []string{entityName + "65"},
+			},
+			{
+				name: "label -match- selector",
+				selektor: &selector.Selector{
+					Operations: []selector.Operation{
+						{"label-flat", selector.MatchesOperator, []string{"value-65"}, selector.OperationTypeLabelSelector},
+					},
+				},
+				expectError:         false,
+				expectedEntityCount: 1,
+				expectedEntityNames: []string{entityName + "65"},
+			},
+			{
+				name: "field and label -match- selectors",
+				selektor: &selector.Selector{
+					Operations: []selector.Operation{
+						{"metadata.name", selector.MatchesOperator, []string{entityName + "6"}, selector.OperationTypeFieldSelector},
+						{"label-mod-key-0", selector.MatchesOperator, []string{"value"}, selector.OperationTypeLabelSelector},
+					},
+				},
+				expectError:         false,
+				expectedEntityCount: 5,
+				expectedEntityNames: []string{entityName + "6", entityName + "60", entityName + "63", entityName + "66", entityName + "69"},
+			},
+		}
+
+		for _, test := range tests {
+			t.Run(test.name, func(t *testing.T) {
+				ctx := context.Background()
+				selCtx := selector.ContextWithSelector(ctx, test.selektor)
+				entities, err := listEntities(selCtx, s, defaultNamespace, &store.SelectionPredicate{})
+				if test.expectError {
+					assert.Error(t, err)
+				} else {
+					assert.NoError(t, err)
+				}
+				assert.Equal(t, test.expectedEntityCount, len(entities))
+				for _, name := range test.expectedEntityNames {
+					var found bool
+					for _, entity := range entities {
+						if entity.Metadata.Name == name {
+							found = true
+							break
+						}
+					}
+					assert.True(t, found, fmt.Sprintf("entity not found: %s", name))
+				}
+			})
+		}
+	})
+}
+
 func TestConfigStore_Patch(t *testing.T) {
 	testWithPostgresConfigStore(t, func(s storev2.Interface) {
 		toCreate := corev3.FixtureEntityConfig(entityName)
 		for i := 0; i < 4; i++ {
 			toCreate.Metadata.Labels[fmt.Sprintf("label-%d", i)] = fmt.Sprintf("labelValue-%d", i)
 		}
-
-		//err = createIfNotExists(ctx, s, toCreate)
-		//assert.NoError(t, err)
-
 	})
 }
 
 func createOrUpdateEntity(ctx context.Context, pgStore storev2.Interface, entity *corev3.EntityConfig) error {
 	req := storev2.ResourceRequest{
+		APIVersion:  entity.GetTypeMeta().APIVersion,
+		Type:        entity.GetTypeMeta().Type,
 		Namespace:   entity.Metadata.Namespace,
 		Name:        entity.Metadata.Name,
 		StoreName:   "entity_configs",
-		Context:     ctx,
 		SortOrder:   0,
 		UsePostgres: true,
 	}
@@ -290,15 +413,16 @@ func createOrUpdateEntity(ctx context.Context, pgStore storev2.Interface, entity
 		return err
 	}
 
-	return pgStore.CreateOrUpdate(req, wrapper)
+	return pgStore.CreateOrUpdate(ctx, req, wrapper)
 }
 
 func createIfNotExists(ctx context.Context, pgStore storev2.Interface, entity *corev3.EntityConfig) error {
 	req := storev2.ResourceRequest{
+		APIVersion:  entity.GetTypeMeta().APIVersion,
+		Type:        entity.GetTypeMeta().Type,
 		Namespace:   entity.Metadata.Namespace,
 		Name:        entity.Metadata.Name,
 		StoreName:   "entity_configs",
-		Context:     ctx,
 		SortOrder:   0,
 		UsePostgres: true,
 	}
@@ -308,21 +432,23 @@ func createIfNotExists(ctx context.Context, pgStore storev2.Interface, entity *c
 		return err
 	}
 
-	return pgStore.CreateIfNotExists(req, wrapper)
+	return pgStore.CreateIfNotExists(ctx, req, wrapper)
 }
 
 func listEntities(ctx context.Context, pgStore storev2.Interface, namespace string, predicate *store.SelectionPredicate) ([]*corev3.EntityConfig, error) {
+	entityConfig := corev3.EntityConfig{}
+	typeMeta := entityConfig.GetTypeMeta()
 	req := storev2.ResourceRequest{
 		Namespace:   namespace,
 		Name:        "",
 		StoreName:   "entity_configs",
-		TypeMeta:    &v2.TypeMeta{APIVersion: "core/v3", Type: "EntityConfig"},
-		Context:     ctx,
+		APIVersion:  typeMeta.APIVersion,
+		Type:        typeMeta.Type,
 		SortOrder:   0,
 		UsePostgres: true,
 	}
 
-	list, err := pgStore.List(req, predicate)
+	list, err := pgStore.List(ctx, req, predicate)
 	if err != nil {
 		return nil, err
 	}
@@ -345,17 +471,19 @@ func listEntities(ctx context.Context, pgStore storev2.Interface, namespace stri
 }
 
 func getEntity(ctx context.Context, pgStore storev2.Interface, namespace, name string) (*corev3.EntityConfig, error) {
+	entityConfig := corev3.EntityConfig{}
+	typeMeta := entityConfig.GetTypeMeta()
 	req := storev2.ResourceRequest{
 		Namespace:   namespace,
 		Name:        name,
 		StoreName:   "entity_configs",
-		TypeMeta:    &v2.TypeMeta{APIVersion: "core/v3", Type: "EntityConfig"},
-		Context:     ctx,
+		APIVersion:  typeMeta.APIVersion,
+		Type:        typeMeta.Type,
 		SortOrder:   0,
 		UsePostgres: true,
 	}
 
-	entityWrapper, err := pgStore.Get(req)
+	entityWrapper, err := pgStore.Get(ctx, req)
 	if err != nil {
 		return nil, err
 	}
@@ -374,39 +502,44 @@ func getEntity(ctx context.Context, pgStore storev2.Interface, namespace, name s
 }
 
 func deleteEntity(ctx context.Context, pgStore storev2.Interface, namespace, name string) error {
+	entityConfig := corev3.EntityConfig{}
+	typeMeta := entityConfig.GetTypeMeta()
 	req := storev2.ResourceRequest{
 		Namespace:   namespace,
 		Name:        name,
 		StoreName:   "entity_configs",
-		TypeMeta:    &v2.TypeMeta{APIVersion: "core/v3", Type: "EntityConfig"},
-		Context:     ctx,
+		APIVersion:  typeMeta.APIVersion,
+		Type:        typeMeta.Type,
 		SortOrder:   0,
 		UsePostgres: true,
 	}
 
-	return pgStore.Delete(req)
+	return pgStore.Delete(ctx, req)
 }
 
 func entityExists(ctx context.Context, pgStore storev2.Interface, namespace, name string) (bool, error) {
+	entityConfig := corev3.EntityConfig{}
+	typeMeta := entityConfig.GetTypeMeta()
 	req := storev2.ResourceRequest{
 		Namespace:   namespace,
 		Name:        name,
 		StoreName:   "entity_configs",
-		TypeMeta:    &v2.TypeMeta{APIVersion: "core/v3", Type: "EntityConfig"},
-		Context:     ctx,
+		APIVersion:  typeMeta.APIVersion,
+		Type:        typeMeta.Type,
 		SortOrder:   0,
 		UsePostgres: true,
 	}
 
-	return pgStore.Exists(req)
+	return pgStore.Exists(ctx, req)
 }
 
 func updateIfExists(ctx context.Context, pgStore storev2.Interface, entityConfig *corev3.EntityConfig) error {
 	req := storev2.ResourceRequest{
+		APIVersion:  entityConfig.GetTypeMeta().APIVersion,
+		Type:        entityConfig.GetTypeMeta().Type,
 		Namespace:   entityConfig.Metadata.Namespace,
 		Name:        entityConfig.Metadata.Name,
 		StoreName:   "entity_configs",
-		Context:     ctx,
 		SortOrder:   0,
 		UsePostgres: true,
 	}
@@ -416,7 +549,7 @@ func updateIfExists(ctx context.Context, pgStore storev2.Interface, entityConfig
 		return err
 	}
 
-	return pgStore.UpdateIfExists(req, wrapper)
+	return pgStore.UpdateIfExists(ctx, req, wrapper)
 }
 
 func wrapEntity(entity *corev3.EntityConfig) (*wrap.Wrapper, error) {
