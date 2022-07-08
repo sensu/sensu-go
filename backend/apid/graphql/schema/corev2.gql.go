@@ -14,9 +14,6 @@ type CoreV2PipelineExtensionOverridesFieldResolvers interface {
 	// ID implements response to request for 'id' field.
 	ID(p graphql.ResolveParams) (string, error)
 
-	// Metadata implements response to request for 'metadata' field.
-	Metadata(p graphql.ResolveParams) (interface{}, error)
-
 	// ToJSON implements response to request for 'toJSON' field.
 	ToJSON(p graphql.ResolveParams) (interface{}, error)
 }
@@ -32,15 +29,6 @@ func _ObjTypeCoreV2PipelineExtensionOverridesIDHandler(impl interface{}) graphql
 	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.ID(frp)
-	}
-}
-
-func _ObjTypeCoreV2PipelineExtensionOverridesMetadataHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(interface {
-		Metadata(p graphql.ResolveParams) (interface{}, error)
-	})
-	return func(frp graphql1.ResolveParams) (interface{}, error) {
-		return resolver.Metadata(frp)
 	}
 }
 
@@ -64,13 +52,6 @@ func _ObjectExtensionTypeCoreV2PipelineExtensionOverridesConfigFn() graphql1.Obj
 				Name:              "id",
 				Type:              graphql1.NewNonNull(graphql1.ID),
 			},
-			"metadata": &graphql1.Field{
-				Args:              graphql1.FieldConfigArgument{},
-				DeprecationReason: "",
-				Description:       "metadata contains name, namespace, labels and annotations of the record",
-				Name:              "metadata",
-				Type:              graphql.OutputType("ObjectMeta"),
-			},
 			"toJSON": &graphql1.Field{
 				Args:              graphql1.FieldConfigArgument{},
 				DeprecationReason: "",
@@ -90,9 +71,8 @@ func _ObjectExtensionTypeCoreV2PipelineExtensionOverridesConfigFn() graphql1.Obj
 var _ObjectExtensionTypeCoreV2PipelineExtensionOverridesDesc = graphql.ObjectDesc{
 	Config: _ObjectExtensionTypeCoreV2PipelineExtensionOverridesConfigFn,
 	FieldHandlers: map[string]graphql.FieldHandler{
-		"id":       _ObjTypeCoreV2PipelineExtensionOverridesIDHandler,
-		"metadata": _ObjTypeCoreV2PipelineExtensionOverridesMetadataHandler,
-		"toJSON":   _ObjTypeCoreV2PipelineExtensionOverridesToJSONHandler,
+		"id":     _ObjTypeCoreV2PipelineExtensionOverridesIDHandler,
+		"toJSON": _ObjTypeCoreV2PipelineExtensionOverridesToJSONHandler,
 	},
 }
 
@@ -102,9 +82,6 @@ var _ObjectExtensionTypeCoreV2PipelineExtensionOverridesDesc = graphql.ObjectDes
 type CoreV2RoleExtensionOverridesFieldResolvers interface {
 	// ID implements response to request for 'id' field.
 	ID(p graphql.ResolveParams) (string, error)
-
-	// Metadata implements response to request for 'metadata' field.
-	Metadata(p graphql.ResolveParams) (interface{}, error)
 
 	// ToJSON implements response to request for 'toJSON' field.
 	ToJSON(p graphql.ResolveParams) (interface{}, error)
@@ -121,15 +98,6 @@ func _ObjTypeCoreV2RoleExtensionOverridesIDHandler(impl interface{}) graphql1.Fi
 	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.ID(frp)
-	}
-}
-
-func _ObjTypeCoreV2RoleExtensionOverridesMetadataHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(interface {
-		Metadata(p graphql.ResolveParams) (interface{}, error)
-	})
-	return func(frp graphql1.ResolveParams) (interface{}, error) {
-		return resolver.Metadata(frp)
 	}
 }
 
@@ -153,13 +121,6 @@ func _ObjectExtensionTypeCoreV2RoleExtensionOverridesConfigFn() graphql1.ObjectC
 				Name:              "id",
 				Type:              graphql1.NewNonNull(graphql1.ID),
 			},
-			"metadata": &graphql1.Field{
-				Args:              graphql1.FieldConfigArgument{},
-				DeprecationReason: "",
-				Description:       "metadata contains name, namespace, labels and annotations of the record",
-				Name:              "metadata",
-				Type:              graphql.OutputType("ObjectMeta"),
-			},
 			"toJSON": &graphql1.Field{
 				Args:              graphql1.FieldConfigArgument{},
 				DeprecationReason: "",
@@ -179,9 +140,8 @@ func _ObjectExtensionTypeCoreV2RoleExtensionOverridesConfigFn() graphql1.ObjectC
 var _ObjectExtensionTypeCoreV2RoleExtensionOverridesDesc = graphql.ObjectDesc{
 	Config: _ObjectExtensionTypeCoreV2RoleExtensionOverridesConfigFn,
 	FieldHandlers: map[string]graphql.FieldHandler{
-		"id":       _ObjTypeCoreV2RoleExtensionOverridesIDHandler,
-		"metadata": _ObjTypeCoreV2RoleExtensionOverridesMetadataHandler,
-		"toJSON":   _ObjTypeCoreV2RoleExtensionOverridesToJSONHandler,
+		"id":     _ObjTypeCoreV2RoleExtensionOverridesIDHandler,
+		"toJSON": _ObjTypeCoreV2RoleExtensionOverridesToJSONHandler,
 	},
 }
 
@@ -191,9 +151,6 @@ var _ObjectExtensionTypeCoreV2RoleExtensionOverridesDesc = graphql.ObjectDesc{
 type CoreV2RoleBindingExtensionOverridesFieldResolvers interface {
 	// ID implements response to request for 'id' field.
 	ID(p graphql.ResolveParams) (string, error)
-
-	// Metadata implements response to request for 'metadata' field.
-	Metadata(p graphql.ResolveParams) (interface{}, error)
 
 	// ToJSON implements response to request for 'toJSON' field.
 	ToJSON(p graphql.ResolveParams) (interface{}, error)
@@ -210,15 +167,6 @@ func _ObjTypeCoreV2RoleBindingExtensionOverridesIDHandler(impl interface{}) grap
 	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.ID(frp)
-	}
-}
-
-func _ObjTypeCoreV2RoleBindingExtensionOverridesMetadataHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(interface {
-		Metadata(p graphql.ResolveParams) (interface{}, error)
-	})
-	return func(frp graphql1.ResolveParams) (interface{}, error) {
-		return resolver.Metadata(frp)
 	}
 }
 
@@ -242,13 +190,6 @@ func _ObjectExtensionTypeCoreV2RoleBindingExtensionOverridesConfigFn() graphql1.
 				Name:              "id",
 				Type:              graphql1.NewNonNull(graphql1.ID),
 			},
-			"metadata": &graphql1.Field{
-				Args:              graphql1.FieldConfigArgument{},
-				DeprecationReason: "",
-				Description:       "metadata contains name, namespace, labels and annotations of the record",
-				Name:              "metadata",
-				Type:              graphql.OutputType("ObjectMeta"),
-			},
 			"toJSON": &graphql1.Field{
 				Args:              graphql1.FieldConfigArgument{},
 				DeprecationReason: "",
@@ -268,9 +209,8 @@ func _ObjectExtensionTypeCoreV2RoleBindingExtensionOverridesConfigFn() graphql1.
 var _ObjectExtensionTypeCoreV2RoleBindingExtensionOverridesDesc = graphql.ObjectDesc{
 	Config: _ObjectExtensionTypeCoreV2RoleBindingExtensionOverridesConfigFn,
 	FieldHandlers: map[string]graphql.FieldHandler{
-		"id":       _ObjTypeCoreV2RoleBindingExtensionOverridesIDHandler,
-		"metadata": _ObjTypeCoreV2RoleBindingExtensionOverridesMetadataHandler,
-		"toJSON":   _ObjTypeCoreV2RoleBindingExtensionOverridesToJSONHandler,
+		"id":     _ObjTypeCoreV2RoleBindingExtensionOverridesIDHandler,
+		"toJSON": _ObjTypeCoreV2RoleBindingExtensionOverridesToJSONHandler,
 	},
 }
 
@@ -280,9 +220,6 @@ var _ObjectExtensionTypeCoreV2RoleBindingExtensionOverridesDesc = graphql.Object
 type CoreV2ClusterRoleExtensionOverridesFieldResolvers interface {
 	// ID implements response to request for 'id' field.
 	ID(p graphql.ResolveParams) (string, error)
-
-	// Metadata implements response to request for 'metadata' field.
-	Metadata(p graphql.ResolveParams) (interface{}, error)
 
 	// ToJSON implements response to request for 'toJSON' field.
 	ToJSON(p graphql.ResolveParams) (interface{}, error)
@@ -299,15 +236,6 @@ func _ObjTypeCoreV2ClusterRoleExtensionOverridesIDHandler(impl interface{}) grap
 	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.ID(frp)
-	}
-}
-
-func _ObjTypeCoreV2ClusterRoleExtensionOverridesMetadataHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(interface {
-		Metadata(p graphql.ResolveParams) (interface{}, error)
-	})
-	return func(frp graphql1.ResolveParams) (interface{}, error) {
-		return resolver.Metadata(frp)
 	}
 }
 
@@ -331,13 +259,6 @@ func _ObjectExtensionTypeCoreV2ClusterRoleExtensionOverridesConfigFn() graphql1.
 				Name:              "id",
 				Type:              graphql1.NewNonNull(graphql1.ID),
 			},
-			"metadata": &graphql1.Field{
-				Args:              graphql1.FieldConfigArgument{},
-				DeprecationReason: "",
-				Description:       "metadata contains name, namespace, labels and annotations of the record",
-				Name:              "metadata",
-				Type:              graphql.OutputType("ObjectMeta"),
-			},
 			"toJSON": &graphql1.Field{
 				Args:              graphql1.FieldConfigArgument{},
 				DeprecationReason: "",
@@ -357,9 +278,8 @@ func _ObjectExtensionTypeCoreV2ClusterRoleExtensionOverridesConfigFn() graphql1.
 var _ObjectExtensionTypeCoreV2ClusterRoleExtensionOverridesDesc = graphql.ObjectDesc{
 	Config: _ObjectExtensionTypeCoreV2ClusterRoleExtensionOverridesConfigFn,
 	FieldHandlers: map[string]graphql.FieldHandler{
-		"id":       _ObjTypeCoreV2ClusterRoleExtensionOverridesIDHandler,
-		"metadata": _ObjTypeCoreV2ClusterRoleExtensionOverridesMetadataHandler,
-		"toJSON":   _ObjTypeCoreV2ClusterRoleExtensionOverridesToJSONHandler,
+		"id":     _ObjTypeCoreV2ClusterRoleExtensionOverridesIDHandler,
+		"toJSON": _ObjTypeCoreV2ClusterRoleExtensionOverridesToJSONHandler,
 	},
 }
 
@@ -369,9 +289,6 @@ var _ObjectExtensionTypeCoreV2ClusterRoleExtensionOverridesDesc = graphql.Object
 type CoreV2ClusterRoleBindingExtensionOverridesFieldResolvers interface {
 	// ID implements response to request for 'id' field.
 	ID(p graphql.ResolveParams) (string, error)
-
-	// Metadata implements response to request for 'metadata' field.
-	Metadata(p graphql.ResolveParams) (interface{}, error)
 
 	// ToJSON implements response to request for 'toJSON' field.
 	ToJSON(p graphql.ResolveParams) (interface{}, error)
@@ -388,15 +305,6 @@ func _ObjTypeCoreV2ClusterRoleBindingExtensionOverridesIDHandler(impl interface{
 	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.ID(frp)
-	}
-}
-
-func _ObjTypeCoreV2ClusterRoleBindingExtensionOverridesMetadataHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(interface {
-		Metadata(p graphql.ResolveParams) (interface{}, error)
-	})
-	return func(frp graphql1.ResolveParams) (interface{}, error) {
-		return resolver.Metadata(frp)
 	}
 }
 
@@ -420,13 +328,6 @@ func _ObjectExtensionTypeCoreV2ClusterRoleBindingExtensionOverridesConfigFn() gr
 				Name:              "id",
 				Type:              graphql1.NewNonNull(graphql1.ID),
 			},
-			"metadata": &graphql1.Field{
-				Args:              graphql1.FieldConfigArgument{},
-				DeprecationReason: "",
-				Description:       "metadata contains name, namespace, labels and annotations of the record",
-				Name:              "metadata",
-				Type:              graphql.OutputType("ObjectMeta"),
-			},
 			"toJSON": &graphql1.Field{
 				Args:              graphql1.FieldConfigArgument{},
 				DeprecationReason: "",
@@ -446,8 +347,7 @@ func _ObjectExtensionTypeCoreV2ClusterRoleBindingExtensionOverridesConfigFn() gr
 var _ObjectExtensionTypeCoreV2ClusterRoleBindingExtensionOverridesDesc = graphql.ObjectDesc{
 	Config: _ObjectExtensionTypeCoreV2ClusterRoleBindingExtensionOverridesConfigFn,
 	FieldHandlers: map[string]graphql.FieldHandler{
-		"id":       _ObjTypeCoreV2ClusterRoleBindingExtensionOverridesIDHandler,
-		"metadata": _ObjTypeCoreV2ClusterRoleBindingExtensionOverridesMetadataHandler,
-		"toJSON":   _ObjTypeCoreV2ClusterRoleBindingExtensionOverridesToJSONHandler,
+		"id":     _ObjTypeCoreV2ClusterRoleBindingExtensionOverridesIDHandler,
+		"toJSON": _ObjTypeCoreV2ClusterRoleBindingExtensionOverridesToJSONHandler,
 	},
 }
