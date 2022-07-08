@@ -6,13 +6,8 @@ extend type CoreV2Pipeline  implements Node & Resource @named(suffix: "Overrides
   "Unique global identifier used to reference resource."
   id: ID!
 
-<<<<<<< HEAD
   # "metadata contains name, namespace, labels and annotations of the record"
   # metadata: ObjectMeta
-=======
-  "metadata contains name, namespace, labels and annotations of the record"
-  metadata: ObjectMeta
->>>>>>> db767b05 (leverage code generator more)
 
   """
   toJSON returns a REST API compatible representation of the resource. Handy for
@@ -29,13 +24,8 @@ extend type CoreV2Role implements Node & Resource @named(suffix: "Overrides") {
   "The globally unique identifier of the record"
   id: ID!
 
-<<<<<<< HEAD
   # "metadata contains name, namespace, labels and annotations of the record"
   # metadata: ObjectMeta
-=======
-  "metadata contains name, namespace, labels and annotations of the record"
-  metadata: ObjectMeta
->>>>>>> db767b05 (leverage code generator more)
 
   """
   toJSON returns a REST API compatible representation of the resource. Handy for
