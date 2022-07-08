@@ -1,6 +1,73 @@
+#
+# Pipeline
+#
+
 extend type CoreV2Pipeline  implements Node & Resource @named(suffix: "Overrides") {
   "Unique global identifier used to reference resource."
   id: ID!
+
+  "metadata contains name, namespace, labels and annotations of the record"
+  metadata: ObjectMeta
+
+  """
+  toJSON returns a REST API compatible representation of the resource. Handy for
+  sharing snippets that can then be imported with `sensuctl create`.
+  """
+  toJSON: JSON!
+}
+
+#
+# RBAC
+#
+
+extend type CoreV2Role implements Node & Resource @named(suffix: "Overrides") {
+  "The globally unique identifier of the record"
+  id: ID!
+
+  "metadata contains name, namespace, labels and annotations of the record"
+  metadata: ObjectMeta
+
+  """
+  toJSON returns a REST API compatible representation of the resource. Handy for
+  sharing snippets that can then be imported with `sensuctl create`.
+  """
+  toJSON: JSON!
+}
+
+extend type CoreV2RoleBinding implements Node & Resource @named(suffix: "Overrides") {
+  "The globally unique identifier of the record"
+  id: ID!
+
+  "metadata contains name, namespace, labels and annotations of the record"
+  metadata: ObjectMeta
+
+  """
+  toJSON returns a REST API compatible representation of the resource. Handy for
+  sharing snippets that can then be imported with `sensuctl create`.
+  """
+  toJSON: JSON!
+}
+
+extend type CoreV2ClusterRole implements Node & Resource @named(suffix: "Overrides") {
+  "The globally unique identifier of the record"
+  id: ID!
+
+  "metadata contains name, namespace, labels and annotations of the record"
+  metadata: ObjectMeta
+
+  """
+  toJSON returns a REST API compatible representation of the resource. Handy for
+  sharing snippets that can then be imported with `sensuctl create`.
+  """
+  toJSON: JSON!
+}
+
+extend type CoreV2ClusterRoleBinding implements Node & Resource @named(suffix: "Overrides") {
+  "The globally unique identifier of the record"
+  id: ID!
+
+  "metadata contains name, namespace, labels and annotations of the record"
+  metadata: ObjectMeta
 
   """
   toJSON returns a REST API compatible representation of the resource. Handy for

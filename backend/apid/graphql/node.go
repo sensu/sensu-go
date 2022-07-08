@@ -119,7 +119,7 @@ func registerMutatorNodeResolver(register relay.NodeRegister, client GenericClie
 
 func registerClusterRoleNodeResolver(register relay.NodeRegister, client RBACClient) {
 	register.RegisterResolver(relay.NodeResolver{
-		ObjectType: schema.ClusterRoleType,
+		ObjectType: schema.CoreV2ClusterRoleType,
 		Translator: globalid.ClusterRoleTranslator,
 		Resolve: func(p relay.NodeResolverParams) (interface{}, error) {
 			ctx := setContextFromComponents(p.Context, p.IDComponents)
@@ -133,7 +133,7 @@ func registerClusterRoleNodeResolver(register relay.NodeRegister, client RBACCli
 
 func registerClusterRoleBindingNodeResolver(register relay.NodeRegister, client RBACClient) {
 	register.RegisterResolver(relay.NodeResolver{
-		ObjectType: schema.ClusterRoleBindingType,
+		ObjectType: schema.CoreV2ClusterRoleBindingType,
 		Translator: globalid.ClusterRoleBindingTranslator,
 		Resolve: func(p relay.NodeResolverParams) (interface{}, error) {
 			ctx := setContextFromComponents(p.Context, p.IDComponents)
@@ -147,7 +147,7 @@ func registerClusterRoleBindingNodeResolver(register relay.NodeRegister, client 
 
 func registerRoleNodeResolver(register relay.NodeRegister, client RBACClient) {
 	register.RegisterResolver(relay.NodeResolver{
-		ObjectType: schema.RoleType,
+		ObjectType: schema.CoreV2RoleType,
 		Translator: globalid.RoleTranslator,
 		Resolve: func(p relay.NodeResolverParams) (interface{}, error) {
 			ctx := setContextFromComponents(p.Context, p.IDComponents)
@@ -161,7 +161,7 @@ func registerRoleNodeResolver(register relay.NodeRegister, client RBACClient) {
 
 func registerRoleBindingNodeResolver(register relay.NodeRegister, client RBACClient) {
 	register.RegisterResolver(relay.NodeResolver{
-		ObjectType: schema.RoleBindingType,
+		ObjectType: schema.CoreV2RoleBindingType,
 		Translator: globalid.RoleBindingTranslator,
 		Resolve: func(p relay.NodeResolverParams) (interface{}, error) {
 			ctx := setContextFromComponents(p.Context, p.IDComponents)
