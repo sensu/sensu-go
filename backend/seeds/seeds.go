@@ -107,12 +107,12 @@ func SeedInitialDataWithContext(ctx context.Context, s storev2.Interface) (err e
 
 func createResources(ctx context.Context, s storev2.Interface, resources []corev3.Resource) error {
 	for _, resource := range resources {
-		req := storev2.NewResourceRequestFromResource(ctx, resource)
+		req := storev2.NewResourceRequestFromResource(resource)
 		wrapper, err := storev2.WrapResource(resource)
 		if err != nil {
 			return err
 		}
-		if err := s.CreateIfNotExists(req, wrapper); err != nil {
+		if err := s.CreateIfNotExists(ctx, req, wrapper); err != nil {
 			return err
 		}
 	}
@@ -127,12 +127,12 @@ func setupDefaultNamespace(ctx context.Context, s storev2.Interface) error {
 			Annotations: make(map[string]string),
 		},
 	}
-	req := storev2.NewResourceRequestFromResource(ctx, namespace)
+	req := storev2.NewResourceRequestFromResource(namespace)
 	wrapper, err := storev2.WrapResource(namespace)
 	if err != nil {
 		return err
 	}
-	return s.CreateIfNotExists(req, wrapper)
+	return s.CreateIfNotExists(ctx, req, wrapper)
 }
 
 func setupClusterRoleBindings(ctx context.Context, s storev2.Interface) error {

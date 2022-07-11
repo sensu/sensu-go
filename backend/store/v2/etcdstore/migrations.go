@@ -43,9 +43,9 @@ func MigrateV2EntityToV3(ctx context.Context, client *clientv3.Client) error {
 			return response.Err
 		}
 		ctx := store.NamespaceContext(ctx, response.Entity.Namespace)
-		req := storev2.NewResourceRequestFromResource(ctx, response.Entity)
+		req := storev2.NewResourceRequestFromResource(response.Entity)
 		var wrapper storev2.Wrapper
-		if err := s.Update(req, wrapper); err != nil {
+		if err := s.Update(ctx, req, wrapper); err != nil {
 			return err
 		}
 		if err := deleteV2Entity(ctx, client, response.Entity); err != nil {
@@ -60,8 +60,9 @@ func MigrateV2EntityToV3(ctx context.Context, client *clientv3.Client) error {
 func MigrateAddPipelineDRoles(ctx context.Context, client *clientv3.Client) error {
 	s := NewStore(client)
 	namespaceStoreName := (&corev3.Namespace{}).StoreName()
-	req := storev2.NewResourceRequest(ctx, "", "*", namespaceStoreName)
-	wrapList, err := s.List(req, &store.SelectionPredicate{})
+	typeMeta := corev2.TypeMeta{Type: "Namespace", APIVersion: "core/v3"}
+	req := storev2.NewResourceRequest(typeMeta, "", "*", namespaceStoreName)
+	wrapList, err := s.List(ctx, req, &store.SelectionPredicate{})
 	if err != nil {
 		return err
 	}
@@ -103,12 +104,12 @@ func MigrateAddPipelineDRoles(ctx context.Context, client *clientv3.Client) erro
 			},
 		}
 		for _, resource := range resources {
-			resourceReq := storev2.NewResourceRequestFromResource(ctx, resource)
+			resourceReq := storev2.NewResourceRequestFromResource(resource)
 			wrapped, err := storev2.WrapResource(resource)
 			if err != nil {
 				return err
 			}
-			if err := s.CreateOrUpdate(resourceReq, wrapped); err != nil {
+			if err := s.CreateOrUpdate(ctx, resourceReq, wrapped); err != nil {
 				return err
 			}
 		}
@@ -118,11 +119,11 @@ func MigrateAddPipelineDRoles(ctx context.Context, client *clientv3.Client) erro
 
 func deleteV2Entity(ctx context.Context, client *clientv3.Client, entity *corev2.Entity) error {
 	s := NewStore(client)
-	req := storev2.NewResourceRequestFromResource(ctx, entity)
-	err := s.Delete(req)
+	req := storev2.NewResourceRequestFromResource(entity)
+	err := s.Delete(ctx, req)
 	if err != nil {
 		var errNotFound *store.ErrNotFound
-		if errors.As(err, errNotFound) {
+		if errors.As(err, &errNotFound) {
 			err = nil
 		}
 	}
@@ -142,8 +143,8 @@ func readPagedV2Entities(ctx context.Context, client *clientv3.Client) <-chan en
 		pred := &store.SelectionPredicate{Limit: 100}
 		for {
 			entities := []*corev2.Entity{}
-			req := storev2.NewResourceRequestFromResource(ctx, &corev2.Entity{})
-			wrapList, err := s.List(req, pred)
+			req := storev2.NewResourceRequestFromResource(&corev2.Entity{})
+			wrapList, err := s.List(ctx, req, pred)
 			if err != nil {
 				result <- entityOrError{Err: err}
 				close(result)

@@ -33,22 +33,27 @@ func TestSeedInitialDataWithContext(t *testing.T) {
 		require.NoError(t, err, "seeding process should be able to be run more than once without error")
 	}
 
+	// store names
 	userStoreName := (&corev2.User{}).StoreName()
 	namespaceStoreName := (&corev3.Namespace{}).StoreName()
 
+	// type metas
+	namespaceTypeMeta := corev2.TypeMeta{Type: "Namespace", APIVersion: "core/v3"}
+	userTypeMeta := corev2.TypeMeta{Type: "User", APIVersion: "core/v2"}
+
 	// ensure the default namespace is created
 	s.AssertCalled(t, "CreateIfNotExists",
-		storev2.NewResourceRequest(ctx, "", "default", namespaceStoreName),
+		storev2.NewResourceRequest(namespaceTypeMeta, "", "default", namespaceStoreName),
 		mock.Anything)
 
 	// ensure the admin user is created
 	s.AssertCalled(t, "CreateIfNotExists",
-		storev2.NewResourceRequest(ctx, "", "admin", userStoreName),
+		storev2.NewResourceRequest(userTypeMeta, "", "admin", userStoreName),
 		mock.Anything)
 
 	// ensure the agent user is created
 	s.AssertCalled(t, "CreateIfNotExists",
-		storev2.NewResourceRequest(ctx, "", "agent", userStoreName),
+		storev2.NewResourceRequest(userTypeMeta, "", "agent", userStoreName),
 		mock.Anything)
 
 	// ensure the cluster-admin cluster role is created
@@ -62,7 +67,7 @@ func TestSeedInitialDataWithContext(t *testing.T) {
 		},
 	}
 	s.AssertCalled(t, "CreateIfNotExists",
-		storev2.NewResourceRequestFromResource(ctx, clusterAdminClusterRole),
+		storev2.NewResourceRequestFromResource(clusterAdminClusterRole),
 		mock.Anything)
 
 	// ensure the admin cluster role is created
@@ -85,7 +90,7 @@ func TestSeedInitialDataWithContext(t *testing.T) {
 		},
 	}
 	s.AssertCalled(t, "CreateIfNotExists",
-		storev2.NewResourceRequestFromResource(ctx, adminClusterRole),
+		storev2.NewResourceRequestFromResource(adminClusterRole),
 		mock.Anything)
 
 	// ensure the edit cluster role is created
@@ -105,7 +110,7 @@ func TestSeedInitialDataWithContext(t *testing.T) {
 		},
 	}
 	s.AssertCalled(t, "CreateIfNotExists",
-		storev2.NewResourceRequestFromResource(ctx, editClusterRole),
+		storev2.NewResourceRequestFromResource(editClusterRole),
 		mock.Anything)
 
 	// ensure the view cluster role is created
@@ -121,7 +126,7 @@ func TestSeedInitialDataWithContext(t *testing.T) {
 		},
 	}
 	s.AssertCalled(t, "CreateIfNotExists",
-		storev2.NewResourceRequestFromResource(ctx, viewClusterRole),
+		storev2.NewResourceRequestFromResource(viewClusterRole),
 		mock.Anything)
 
 	// ensure the system:agent cluster role is created
@@ -135,7 +140,7 @@ func TestSeedInitialDataWithContext(t *testing.T) {
 		},
 	}
 	s.AssertCalled(t, "CreateIfNotExists",
-		storev2.NewResourceRequestFromResource(ctx, systemAgentClusterRole),
+		storev2.NewResourceRequestFromResource(systemAgentClusterRole),
 		mock.Anything)
 
 	// ensure the system:user cluster role is created
@@ -149,7 +154,7 @@ func TestSeedInitialDataWithContext(t *testing.T) {
 		},
 	}
 	s.AssertCalled(t, "CreateIfNotExists",
-		storev2.NewResourceRequestFromResource(ctx, systemUserClusterRole),
+		storev2.NewResourceRequestFromResource(systemUserClusterRole),
 		mock.Anything)
 
 	// ensure the cluster-admin cluster role binding is created
@@ -167,7 +172,7 @@ func TestSeedInitialDataWithContext(t *testing.T) {
 		},
 	}
 	s.AssertCalled(t, "CreateIfNotExists",
-		storev2.NewResourceRequestFromResource(ctx, clusterAdminClusterRoleBinding),
+		storev2.NewResourceRequestFromResource(clusterAdminClusterRoleBinding),
 		mock.Anything)
 
 	// ensure the system:agent cluster role binding is created
@@ -185,7 +190,7 @@ func TestSeedInitialDataWithContext(t *testing.T) {
 		},
 	}
 	s.AssertCalled(t, "CreateIfNotExists",
-		storev2.NewResourceRequestFromResource(ctx, systemAgentClusterRoleBinding),
+		storev2.NewResourceRequestFromResource(systemAgentClusterRoleBinding),
 		mock.Anything)
 
 	// ensure the system:user cluster role binding is created
@@ -203,6 +208,6 @@ func TestSeedInitialDataWithContext(t *testing.T) {
 		},
 	}
 	s.AssertCalled(t, "CreateIfNotExists",
-		storev2.NewResourceRequestFromResource(ctx, systemUserClusterRoleBinding),
+		storev2.NewResourceRequestFromResource(systemUserClusterRoleBinding),
 		mock.Anything)
 }
