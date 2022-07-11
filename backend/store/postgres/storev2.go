@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"path"
 	"time"
 
 	"github.com/jackc/pgconn"
@@ -12,6 +13,7 @@ import (
 	json "github.com/json-iterator/go"
 	corev3 "github.com/sensu/sensu-go/api/core/v3"
 	"github.com/sensu/sensu-go/backend/poll"
+	"github.com/sensu/sensu-go/backend/seeds"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/backend/store/patch"
 	storev2 "github.com/sensu/sensu-go/backend/store/v2"
@@ -983,6 +985,88 @@ func (s *StoreV2) watchLoop(ctx context.Context, req storev2.ResourceRequest, po
 			storev2.WatcherProviderPG,
 		).Add(float64(len(notifications)))
 	}
+}
+
+func (s *StoreV2) Initialize(ctx context.Context, fn storev2.InitializeFunc) error {
+	initialized, err := s.isInitialized(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to check if cluster has been initialized: %w", err)
+	}
+
+	if initialized {
+		logger.Info("store already initialized")
+		return seeds.ErrAlreadyInitialized
+	}
+
+	return fn(ctx)
+}
+
+func (s *StoreV2) isInitialized(ctx context.Context) (bool, error) {
+	return false, nil
+	// tx, err := s.db.Begin(ctx)
+	// if err != nil {
+	// 	return false, err
+	// }
+	// defer func() {
+	// 	if err := tx.Commit(ctx); err != nil && err != pgx.ErrTxClosed {
+	// 		logger.WithError(err).Error("error committing transaction for isInitialized()")
+	// 	}
+	// }()
+
+	// rows, err := tx.Query(ctx, query, args...)
+	// if err != nil {
+	// 	return nil, err
+	// }
+
+	// for rows.Next() {
+	// 	wrapper := s.lookupWrapper(reqs[0], op)
+
+	// 	if err := rows.Scan(wrapper.SQLParams()...); err != nil {
+	// 		if err == pgx.ErrNoRows {
+	// 			continue
+	// 		}
+	// 		return nil, &store.ErrInternal{Message: err.Error()}
+	// 	}
+
+	// 	key := requestKey{
+	// 		Namespace: namespace,
+	// 		Name:      wrapper.GetName(),
+	// 	}
+	// 	req, ok := keyedResourceRequests[key]
+	// 	if !ok {
+	// 		panic("keyedResourceRequests key does not exist")
+	// 	}
+
+	// 	wrappers[req] = wrapper
+	// }
+
+	// if err := tx.Commit(ctx); err != nil {
+	// 	return nil, fmt.Errorf("error committing transaction for GetMultiple()")
+	// }
+
+	// row := tx.QueryRow(req.Context, query, params...)
+	// var found bool
+	// err := row.Scan(&found)
+	// if err == nil {
+	// 	return found, nil
+	// }
+	// if err == pgx.ErrNoRows {
+	// 	return false, nil
+	// }
+	// return false, &store.ErrInternal{Message: err.Error()}
+
+	// return r.Count > 0, nil
+}
+
+func (s *StoreV2) flagAsInitialized(ctx context.Context) error {
+	_, err := s.client.Put(ctx, path.Join(store.Root, initializationKey), "1")
+	return err
+}
+
+// FlagAsInitialized - set .initialized key
+func (s *Store) flagAsInitialized(ctx context.Context) error {
+	_, err := s.client.Put(ctx, path.Join(store.Root, initializationKey), "1")
+	return err
 }
 
 func wrapWithPostgres(resource corev3.Resource, opts ...wrap.Option) (storev2.Wrapper, error) {

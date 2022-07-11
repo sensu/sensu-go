@@ -234,13 +234,12 @@ func (u *User) StoreName() string {
 	return "users"
 }
 
+// TODO: We may want to add metadata field to the User type.
 func (u *User) GetMetadata() *ObjectMeta {
-	return &ObjectMeta{
-		Namespace: "",
-		Name:      u.Username,
-	}
+	meta := u.GetObjectMeta()
+	return &meta
 }
 
 func (u *User) SetMetadata(meta *ObjectMeta) {
-	u.Username = meta.Name
+	u.SetObjectMeta(*meta)
 }

@@ -34,7 +34,7 @@ func testWithEtcdStores(t *testing.T, f func(*etcdstore.Store, *etcdstorev2.Stor
 	s1 := etcdstore.NewStore(client)
 	s2 := etcdstorev2.NewStore(client)
 
-	if err := seeds.SeedInitialDataWithContext(context.Background(), s1); err != nil {
+	if err := seeds.SeedInitialDataWithContext(context.Background(), s2); err != nil {
 		t.Fatalf("failed to seed initial etcd data: %v", err)
 	}
 

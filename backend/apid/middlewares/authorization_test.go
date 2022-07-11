@@ -15,14 +15,14 @@ import (
 	sensuJWT "github.com/sensu/sensu-go/backend/authentication/jwt"
 	"github.com/sensu/sensu-go/backend/authorization/rbac"
 	"github.com/sensu/sensu-go/backend/seeds"
-	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/backend/store/etcd/testutil"
+	storev2 "github.com/sensu/sensu-go/backend/store/v2"
 	"github.com/sensu/sensu-go/testing/mockstore"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
 
-func seedStore(t *testing.T, store store.Store) {
+func seedStore(t *testing.T, store storev2.Interface) {
 	t.Helper()
 
 	if err := seeds.SeedInitialDataWithContext(context.Background(), store); err != nil {

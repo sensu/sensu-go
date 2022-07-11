@@ -12,7 +12,8 @@ import (
 
 	"github.com/sensu/sensu-go/backend/etcd"
 	"github.com/sensu/sensu-go/backend/seeds"
-	etcdstore "github.com/sensu/sensu-go/backend/store/etcd"
+	etcdstorev1 "github.com/sensu/sensu-go/backend/store/etcd"
+	etcdstorev2 "github.com/sensu/sensu-go/backend/store/v2/etcdstore"
 	"github.com/sensu/sensu-go/testing/testutil"
 	"github.com/sensu/sensu-go/transport"
 	"github.com/sensu/sensu-go/types"
@@ -86,7 +87,7 @@ func TestBackendHTTPListener(t *testing.T) {
 				DevMode:                true,
 				DisablePlatformMetrics: true,
 				Store: StoreConfig{
-					EtcdConfigurationStore: etcdstore.Config{
+					EtcdConfigurationStore: etcdstorev1.Config{
 						URLs:          []string{clURL},
 						ClientTLSInfo: tlsInfo,
 						LogLevel:      "error",
@@ -109,7 +110,7 @@ func TestBackendHTTPListener(t *testing.T) {
 				t.Fatalf("failed to start backend: %s", err)
 			}
 
-			store := etcdstore.NewStore(client)
+			store := etcdstorev2.NewStore(client)
 			if err := seeds.SeedInitialDataWithContext(context.Background(), store); err != nil {
 				t.Fatal(err)
 			}

@@ -53,4 +53,25 @@ type Interface interface {
 	// Watch provides a channel for receiving updates to a particular resource
 	// or resource collection
 	Watch(context.Context, ResourceRequest) <-chan []WatchEvent
+
+	// Initialize
+	Initialize(context.Context, InitializeFunc) error
+}
+
+type InitializeFunc func(context.Context) error
+
+// Initializer provides methods to verify if a store is initialized
+type Initializer interface {
+	// Close closes the session to the store and unlock any mutex
+	Close(context.Context) error
+
+	// FlagAsInitialized marks the store as initialized
+	FlagAsInitialized(context.Context) error
+
+	// IsInitialized returns a boolean error that indicates if the store has been
+	// initialized or not
+	IsInitialized(context.Context) (bool, error)
+
+	// Lock locks a mutex to avoid competing writes
+	Lock(context.Context) error
 }

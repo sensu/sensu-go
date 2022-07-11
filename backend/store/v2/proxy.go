@@ -88,3 +88,10 @@ func (p *Proxy) Watch(ctx context.Context, req ResourceRequest) <-chan []WatchEv
 	defer p.mu.RUnlock()
 	return p.impl.Watch(ctx, req)
 }
+
+// Initialize
+func (p *Proxy) Initialize(ctx context.Context, fn InitializeFunc) error {
+	p.mu.RLock()
+	defer p.mu.RUnlock()
+	return p.impl.Initialize(ctx, fn)
+}

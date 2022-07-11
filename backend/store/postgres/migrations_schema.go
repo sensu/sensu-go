@@ -335,3 +335,13 @@ ALTER TABLE entity_states ADD COLUMN created_at timestamptz NOT NULL DEFAULT NOW
 ALTER TABLE entity_states ADD COLUMN updated_at timestamptz NOT NULL DEFAULT NOW();
 ALTER TABLE entity_states ADD COLUMN deleted_at timestamptz;
 `
+
+// Migration 16
+const addInitializedTable = `
+CREATE TABLE IF NOT EXISTS initialized (
+	initialized bool PRIMARY KEY,
+	created_at         timestamptz NOT NULL DEFAULT NOW(),
+	updated_at         timestamptz NOT NULL DEFAULT NOW(),
+	CONSTRAINT initialized_unique CHECK (initialized)
+);
+`

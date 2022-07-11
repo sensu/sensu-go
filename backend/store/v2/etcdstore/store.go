@@ -10,12 +10,15 @@ import (
 	"github.com/gogo/protobuf/proto"
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	corev3 "github.com/sensu/sensu-go/api/core/v3"
+	"github.com/sensu/sensu-go/backend/etcd"
+	"github.com/sensu/sensu-go/backend/seeds"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/backend/store/etcd/kvc"
 	"github.com/sensu/sensu-go/backend/store/patch"
 	storev2 "github.com/sensu/sensu-go/backend/store/v2"
 	"github.com/sensu/sensu-go/backend/store/v2/wrap"
 	clientv3 "go.etcd.io/etcd/client/v3"
+	"go.etcd.io/etcd/client/v3/concurrency"
 )
 
 var (
@@ -439,6 +442,90 @@ func (s *Store) DeleteNamespace(ctx context.Context, namespace string) error {
 	}
 	req := storev2.NewResourceRequest(corev2.TypeMeta{Type: "Namespace", APIVersion: "core/v2"}, "", namespace, "namespaces")
 	return s.Delete(ctx, req)
+}
+
+func (s *Store) Initialize(ctx context.Context, fn storev2.InitializeFunc) (fErr error) {
+	// Check that the store hasn't already been initialized
+	initialized, err := s.isInitialized(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to check if cluster has been initialized: %w", err)
+	}
+
+	if initialized {
+		logger.Info("store already initialized")
+		return seeds.ErrAlreadyInitialized
+	}
+
+	// Create a lease to associate with the lock
+	resp, err := s.client.Grant(ctx, 2)
+	etcd.LeaseOperationsCounter.WithLabelValues("init", etcd.LeaseOperationTypeGrant, etcd.LeaseStatusFor(err)).Inc()
+	if err != nil {
+		return fmt.Errorf("failed to create etcd lease: %w", err)
+	}
+
+	session, err := concurrency.NewSession(s.client, concurrency.WithLease(resp.ID))
+	etcd.LeaseOperationsCounter.WithLabelValues("init", etcd.LeaseOperationTypePut, etcd.LeaseStatusFor(err)).Inc()
+	if err != nil {
+		return fmt.Errorf("failed to start etcd session: %w", err)
+	}
+
+	mu := concurrency.NewMutex(session, initializationLockKey)
+
+	// Lock initialization key to avoid competing installations
+	if err := mu.Lock(ctx); err != nil {
+		return fmt.Errorf("failed to create initializer lock: %w", err)
+	}
+	defer func() {
+		if err := mu.Unlock(ctx); fErr == nil && err != nil {
+			fErr = fmt.Errorf("failed to unlock initializer mutex: %w", err)
+		}
+		if err := session.Close(); fErr == nil && err != nil {
+			fErr = fmt.Errorf("failed to close initializer session: %w", err)
+		}
+		<-session.Done()
+	}()
+
+	if s.client != nil {
+		// Migrate the cluster to the latest version
+		if err := MigrateDB(ctx, s.client, Migrations); err != nil {
+			logger.WithError(err).Error("error bringing the database to the latest version")
+			return fmt.Errorf("error bringing the database to the latest version: %w", err)
+		}
+		if len(EnterpriseMigrations) > 0 {
+			if err = MigrateEnterpriseDB(ctx, s.client, EnterpriseMigrations); err != nil {
+				logger.WithError(err).Error("error bringing the enterprise database to the latest version")
+				return
+			}
+		}
+	}
+
+	return fn(ctx)
+}
+
+// IsInitialized checks the state of the .initialized key
+func (s *Store) isInitialized(ctx context.Context) (bool, error) {
+	r, err := s.client.Get(ctx, path.Join(store.Root, initializationKey))
+	if err != nil {
+		return false, err
+	}
+
+	// if there is no result, test the fallback and return using same logic
+	if len(r.Kvs) == 0 {
+		fallback, err := s.client.Get(ctx, initializationKey)
+		if err != nil {
+			return false, err
+		} else {
+			return fallback.Count > 0, nil
+		}
+	}
+
+	return r.Count > 0, nil
+}
+
+// FlagAsInitialized - set .initialized key
+func (s *Store) flagAsInitialized(ctx context.Context) error {
+	_, err := s.client.Put(ctx, path.Join(store.Root, initializationKey), "1")
+	return err
 }
 
 func getSortOrder(order storev2.SortOrder) clientv3.SortOrder {
