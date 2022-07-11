@@ -4,10 +4,12 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"time"
 
 	"github.com/jackc/pgx/v4/pgxpool"
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	corev3 "github.com/sensu/sensu-go/api/core/v3"
+	"github.com/sensu/sensu-go/backend/poll"
 	"github.com/sensu/sensu-go/backend/store"
 	storev2 "github.com/sensu/sensu-go/backend/store/v2"
 	"github.com/sensu/sensu-go/backend/store/v2/etcdstore"
@@ -328,4 +330,62 @@ func (e *EntityStore) UpdateEntity(ctx context.Context, entity *corev2.Entity) e
 		return fmt.Errorf("error updating entity state: %w", err)
 	}
 	return nil
+}
+
+type entityConfigPoller struct {
+	db  *pgxpool.Pool
+	req storev2.ResourceRequest
+}
+
+func (e *entityConfigPoller) Now(ctx context.Context) (time.Time, error) {
+	var now time.Time
+	row := e.db.QueryRow(ctx, "SELECT NOW();")
+	if err := row.Scan(&now); err != nil {
+		return now, &store.ErrInternal{Message: err.Error()}
+	}
+	return now, nil
+}
+
+func (e *entityConfigPoller) Since(ctx context.Context, updatedSince time.Time) ([]poll.Row, error) {
+	wrapper := &EntityConfigWrapper{
+		Namespace: e.req.Namespace,
+		Name:      e.req.Name,
+		UpdatedAt: updatedSince,
+	}
+	queryParams := wrapper.SQLParams()
+	rows, rerr := e.db.Query(ctx, pollEntityConfigQuery, queryParams...)
+	if rerr != nil {
+		logger.Errorf("entity config since query failed with error %v", rerr)
+		return nil, &store.ErrInternal{Message: rerr.Error()}
+	}
+	defer rows.Close()
+	var since []poll.Row
+	for rows.Next() {
+		if err := rows.Scan(wrapper.SQLParams()...); err != nil {
+			return nil, &store.ErrInternal{Message: err.Error()}
+		}
+		if err := rows.Err(); err != nil {
+			return nil, &store.ErrInternal{Message: err.Error()}
+		}
+		id := fmt.Sprintf("%s/%s", wrapper.Namespace, wrapper.Name)
+		pollResult := poll.Row{
+			Id:        id,
+			Resource:  wrapper,
+			CreatedAt: wrapper.CreatedAt,
+			UpdatedAt: wrapper.UpdatedAt,
+		}
+		if wrapper.DeletedAt.Valid {
+			pollResult.DeletedAt = &wrapper.DeletedAt.Time
+		}
+		since = append(since, pollResult)
+	}
+	return since, nil
+}
+
+func newEntityConfigPoller(req storev2.ResourceRequest, pool *pgxpool.Pool) (poll.Table, error) {
+	return &entityConfigPoller{db: pool, req: req}, nil
+}
+
+func init() {
+	registerWatchStoreOverride(entityConfigStoreName, newEntityConfigPoller)
 }
