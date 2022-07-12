@@ -33,7 +33,7 @@ func TestCounterWatcherIntegration(t *testing.T) {
 		}
 
 		// Component under test - use watcher to keep counterState in sync with db
-		watcherUnderTest := NewStoreV2(pool, nil)
+		watcherUnderTest := NewStoreV2(pool)
 		watcherUnderTest.watchInterval = time.Millisecond * 10
 		watcherUnderTest.watchTxnWindow = TxnWindow
 

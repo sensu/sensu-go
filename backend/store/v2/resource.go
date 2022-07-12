@@ -57,13 +57,12 @@ var WrapResource = func(resource corev3.Resource, opts ...wrap.Option) (Wrapper,
 
 // ResourceRequest contains all the information necessary to query a store.
 type ResourceRequest struct {
-	Type        string
-	APIVersion  string
-	Namespace   string
-	Name        string
-	StoreName   string
-	SortOrder   SortOrder
-	UsePostgres bool
+	Type       string
+	APIVersion string
+	Namespace  string
+	Name       string
+	StoreName  string
+	SortOrder  SortOrder
 }
 
 // NewResourceRequestFromResource creates a ResourceRequest from a resource.

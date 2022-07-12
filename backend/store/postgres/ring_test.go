@@ -39,8 +39,8 @@ func TestAdd(t *testing.T) {
 		}
 		defer func() { _ = ring.Close() }()
 
-		namespaceStore := NewNamespaceStore(db, nil)
-		entityStore := NewEntityStore(db, nil)
+		namespaceStore := NewNamespaceStore(db)
+		entityStore := NewEntityStore(db)
 
 		ctx, cancel := context.WithCancel(context.Background())
 		defer cancel()
@@ -81,8 +81,8 @@ func TestRemove(t *testing.T) {
 		}
 		defer func() { _ = ring.Close() }()
 
-		namespaceStore := NewNamespaceStore(db, nil)
-		entityStore := NewEntityStore(db, nil)
+		namespaceStore := NewNamespaceStore(db)
+		entityStore := NewEntityStore(db)
 
 		ctx, cancel := context.WithCancel(context.Background())
 		defer cancel()
@@ -123,8 +123,8 @@ func TestAddRemoveIsEmpty(t *testing.T) {
 		}
 		defer func() { _ = ring.Close() }()
 
-		namespaceStore := NewNamespaceStore(db, nil)
-		entityStore := NewEntityStore(db, nil)
+		namespaceStore := NewNamespaceStore(db)
+		entityStore := NewEntityStore(db)
 
 		ctx, cancel := context.WithCancel(context.Background())
 		defer cancel()
@@ -171,8 +171,8 @@ func TestWatchTrigger(t *testing.T) {
 		}
 		defer func() { _ = ring.Close() }()
 
-		namespaceStore := NewNamespaceStore(db, nil)
-		entityStore := NewEntityStore(db, nil)
+		namespaceStore := NewNamespaceStore(db)
+		entityStore := NewEntityStore(db)
 
 		ctx, cancel := context.WithCancel(context.Background())
 		defer cancel()
@@ -228,8 +228,8 @@ func TestRingOrdering(t *testing.T) {
 		}
 		defer func() { _ = ring.Close() }()
 
-		namespaceStore := NewNamespaceStore(db, nil)
-		entityStore := NewEntityStore(db, nil)
+		namespaceStore := NewNamespaceStore(db)
+		entityStore := NewEntityStore(db)
 
 		ctx, cancel := context.WithCancel(context.Background())
 		defer cancel()
@@ -298,8 +298,8 @@ func TestConcurrentRingOrdering(t *testing.T) {
 		}
 		defer func() { _ = ring.Close() }()
 
-		namespaceStore := NewNamespaceStore(db, nil)
-		entityStore := NewEntityStore(db, nil)
+		namespaceStore := NewNamespaceStore(db)
+		entityStore := NewEntityStore(db)
 
 		ctx, cancel := context.WithCancel(context.Background())
 		defer cancel()
@@ -405,8 +405,8 @@ func eventTest(t *testing.T, want []ringv2.Event) {
 		}
 		t.Cleanup(func() { _ = ring.Close() })
 
-		namespaceStore := NewNamespaceStore(db, nil)
-		entityStore := NewEntityStore(db, nil)
+		namespaceStore := NewNamespaceStore(db)
+		entityStore := NewEntityStore(db)
 
 		ctx, cancel := context.WithCancel(context.Background())
 		t.Cleanup(cancel)
@@ -496,8 +496,8 @@ func TestWatchAfterAdd(t *testing.T) {
 		}
 		defer func() { _ = ring.Close() }()
 
-		namespaceStore := NewNamespaceStore(db, nil)
-		entityStore := NewEntityStore(db, nil)
+		namespaceStore := NewNamespaceStore(db)
+		entityStore := NewEntityStore(db)
 
 		ctx, cancel := context.WithCancel(context.Background())
 		defer cancel()
@@ -548,8 +548,8 @@ func TestMultipleItems(t *testing.T) {
 		}
 		defer func() { _ = ring.Close() }()
 
-		namespaceStore := NewNamespaceStore(db, nil)
-		entityStore := NewEntityStore(db, nil)
+		namespaceStore := NewNamespaceStore(db)
+		entityStore := NewEntityStore(db)
 
 		ctx, cancel := context.WithCancel(context.Background())
 		defer cancel()
@@ -615,8 +615,8 @@ func TestRequestGreaterThanLenItems(t *testing.T) {
 		}
 		defer func() { _ = ring.Close() }()
 
-		namespaceStore := NewNamespaceStore(db, nil)
-		entityStore := NewEntityStore(db, nil)
+		namespaceStore := NewNamespaceStore(db)
+		entityStore := NewEntityStore(db)
 
 		ctx, cancel := context.WithCancel(context.Background())
 		defer cancel()
@@ -682,8 +682,8 @@ func TestChannelNameTooLong(t *testing.T) {
 		}
 		defer func() { _ = ring.Close() }()
 
-		namespaceStore := NewNamespaceStore(db, nil)
-		entityStore := NewEntityStore(db, nil)
+		namespaceStore := NewNamespaceStore(db)
+		entityStore := NewEntityStore(db)
 
 		ctx, cancel := context.WithCancel(context.Background())
 		defer cancel()

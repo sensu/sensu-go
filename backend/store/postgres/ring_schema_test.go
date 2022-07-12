@@ -20,8 +20,8 @@ func init() {
 func TestInsertEntityQuery(t *testing.T) {
 	t.Parallel()
 	withPostgres(t, func(ctx context.Context, db *pgxpool.Pool, dsn string) {
-		namespaceStore := NewNamespaceStore(db, nil)
-		entityStore := NewEntityStore(db, nil)
+		namespaceStore := NewNamespaceStore(db)
+		entityStore := NewEntityStore(db)
 		entityNames := []string{
 			"mulder",
 			"scully",
@@ -51,8 +51,8 @@ func TestInsertEntityQuery(t *testing.T) {
 func TestInsertRingQuery(t *testing.T) {
 	t.Parallel()
 	withPostgres(t, func(ctx context.Context, db *pgxpool.Pool, dsn string) {
-		namespaceStore := NewNamespaceStore(db, nil)
-		entityStore := NewEntityStore(db, nil)
+		namespaceStore := NewNamespaceStore(db)
+		entityStore := NewEntityStore(db)
 		rings := []string{
 			"diamond",
 			"iron",
@@ -83,8 +83,8 @@ func TestInsertRingQuery(t *testing.T) {
 func TestInsertRingEntitiesQuery(t *testing.T) {
 	t.Parallel()
 	withPostgres(t, func(ctx context.Context, db *pgxpool.Pool, dsn string) {
-		namespaceStore := NewNamespaceStore(db, nil)
-		entityStore := NewEntityStore(db, nil)
+		namespaceStore := NewNamespaceStore(db)
+		entityStore := NewEntityStore(db)
 		entityNames := []string{
 			"mulder",
 			"scully",
@@ -152,8 +152,8 @@ func TestInsertRingEntitiesQuery(t *testing.T) {
 func TestInsertRingSubscriberQuery(t *testing.T) {
 	t.Parallel()
 	withPostgres(t, func(ctx context.Context, db *pgxpool.Pool, dsn string) {
-		namespaceStore := NewNamespaceStore(db, nil)
-		entityStore := NewEntityStore(db, nil)
+		namespaceStore := NewNamespaceStore(db)
+		entityStore := NewEntityStore(db)
 		entityNames := []string{
 			"mulder",
 			"scully",
@@ -211,8 +211,8 @@ func TestInsertRingSubscriberQuery(t *testing.T) {
 func TestUpdateRingSubscriberQuery(t *testing.T) {
 	t.Parallel()
 	withPostgres(t, func(ctx context.Context, db *pgxpool.Pool, dsn string) {
-		namespaceStore := NewNamespaceStore(db, nil)
-		entityStore := NewEntityStore(db, nil)
+		namespaceStore := NewNamespaceStore(db)
+		entityStore := NewEntityStore(db)
 		entityNames := []string{
 			"mulder",
 			"scully",
@@ -341,8 +341,8 @@ func TestUpdateRingSubscriberQuery(t *testing.T) {
 func TestUpdateRingSubscriberQueryWithSubsequentEntityInsert(t *testing.T) {
 	t.Parallel()
 	withPostgres(t, func(ctx context.Context, db *pgxpool.Pool, dsn string) {
-		namespaceStore := NewNamespaceStore(db, nil)
-		entityStore := NewEntityStore(db, nil)
+		namespaceStore := NewNamespaceStore(db)
+		entityStore := NewEntityStore(db)
 		entityNames := []string{
 			"mulder",
 			"scully",
@@ -422,8 +422,8 @@ func TestUpdateRingSubscriberQueryWithSubsequentEntityInsert(t *testing.T) {
 func TestGetRingEntitiesQuery(t *testing.T) {
 	t.Parallel()
 	withPostgres(t, func(ctx context.Context, db *pgxpool.Pool, dsn string) {
-		namespaceStore := NewNamespaceStore(db, nil)
-		entityStore := NewEntityStore(db, nil)
+		namespaceStore := NewNamespaceStore(db)
+		entityStore := NewEntityStore(db)
 		entityNames := []string{
 			"mulder",
 			"scully",
@@ -550,8 +550,8 @@ func TestGetRingEntitiesQuery(t *testing.T) {
 func TestGetRingLengthQuery(t *testing.T) {
 	t.Parallel()
 	withPostgres(t, func(ctx context.Context, db *pgxpool.Pool, dsn string) {
-		namespaceStore := NewNamespaceStore(db, nil)
-		entityStore := NewEntityStore(db, nil)
+		namespaceStore := NewNamespaceStore(db)
+		entityStore := NewEntityStore(db)
 		entityNames := []string{
 			"mulder",
 			"scully",
@@ -612,8 +612,8 @@ func TestGetRingLengthQuery(t *testing.T) {
 func TestDeleteRingEntityQuery(t *testing.T) {
 	t.Parallel()
 	withPostgres(t, func(ctx context.Context, db *pgxpool.Pool, dsn string) {
-		namespaceStore := NewNamespaceStore(db, nil)
-		entityStore := NewEntityStore(db, nil)
+		namespaceStore := NewNamespaceStore(db)
+		entityStore := NewEntityStore(db)
 		entityNames := []string{
 			"mulder",
 			"scully",

@@ -140,8 +140,8 @@ func testWithPostgresStore(tb testing.TB, fn func(store.Store)) {
 			tb.Fatal(err)
 		}
 
-		namespaceStore := NewNamespaceStore(db, client)
-		entityStore := NewEntityStore(db, client)
+		namespaceStore := NewNamespaceStore(db)
+		entityStore := NewEntityStore(db)
 
 		pgStore := Store{
 			EventStore:     eventStore,
@@ -158,7 +158,7 @@ func testWithPostgresStoreV2(tb testing.TB, fn func(storev2.Interface)) {
 	tb.Helper()
 
 	withPostgres(tb, func(ctx context.Context, db *pgxpool.Pool, dsn string) {
-		fn(NewStoreV2(db, nil))
+		fn(NewStoreV2(db))
 	})
 }
 
@@ -167,7 +167,6 @@ func createNamespace(tb testing.TB, s storev2.Interface, name string) {
 	ctx := context.Background()
 	namespace := corev3.FixtureNamespace(name)
 	req := storev2.NewResourceRequestFromResource(namespace)
-	req.UsePostgres = true
 	wrapper := WrapNamespace(namespace)
 	if err := s.CreateOrUpdate(ctx, req, wrapper); err != nil {
 		tb.Error(err)
@@ -179,7 +178,6 @@ func createEntityConfig(tb testing.TB, s storev2.Interface, name string) {
 	ctx := context.Background()
 	cfg := corev3.FixtureEntityConfig(name)
 	req := storev2.NewResourceRequestFromResource(cfg)
-	req.UsePostgres = true
 	wrapper := WrapEntityConfig(cfg)
 	if err := s.CreateOrUpdate(ctx, req, wrapper); err != nil {
 		tb.Error(err)
@@ -191,7 +189,6 @@ func createEntityState(tb testing.TB, s storev2.Interface, name string) {
 	ctx := context.Background()
 	state := corev3.FixtureEntityState(name)
 	req := storev2.NewResourceRequestFromResource(state)
-	req.UsePostgres = true
 	wrapper := WrapEntityState(state)
 	if err := s.CreateOrUpdate(ctx, req, wrapper); err != nil {
 		tb.Error(err)

@@ -19,21 +19,18 @@ import (
 	"github.com/sensu/sensu-go/backend/store/v2/etcdstore"
 	"github.com/sensu/sensu-go/backend/store/v2/wrap"
 	"github.com/sensu/sensu-go/util/retry"
-	clientv3 "go.etcd.io/etcd/client/v3"
 )
 
 type StoreV2 struct {
-	db          *pgxpool.Pool
-	etcdStoreV2 storev2.Interface
+	db *pgxpool.Pool
 
 	watchInterval  time.Duration
 	watchTxnWindow time.Duration
 }
 
-func NewStoreV2(pg *pgxpool.Pool, client *clientv3.Client) *StoreV2 {
+func NewStoreV2(pg *pgxpool.Pool) *StoreV2 {
 	return &StoreV2{
-		db:          pg,
-		etcdStoreV2: etcdstore.NewStore(client),
+		db: pg,
 	}
 }
 
@@ -235,9 +232,6 @@ func (s *StoreV2) CreateOrUpdate(ctx context.Context, req storev2.ResourceReques
 		fErr = newStoreV2Error("CreateOrUpdate", req.StoreName, fErr)
 	}()
 
-	if !req.UsePostgres {
-		return s.etcdStoreV2.CreateOrUpdate(ctx, req, wrapper)
-	}
 	pwrap, ok := wrapper.(wrapperWithParams)
 	if !ok {
 		return &store.ErrNotValid{Err: fmt.Errorf("bad wrapper type for postgres: %T", wrapper)}
@@ -262,9 +256,6 @@ func (s *StoreV2) UpdateIfExists(ctx context.Context, req storev2.ResourceReques
 		fErr = newStoreV2Error("UpdateIfExists", req.StoreName, fErr)
 	}()
 
-	if !req.UsePostgres {
-		return s.etcdStoreV2.UpdateIfExists(ctx, req, wrapper)
-	}
 	pwrap, ok := wrapper.(wrapperWithParams)
 	if !ok {
 		return &store.ErrNotValid{Err: fmt.Errorf("bad wrapper type for postgres: %T", wrapper)}
@@ -300,9 +291,6 @@ func (s *StoreV2) CreateIfNotExists(ctx context.Context, req storev2.ResourceReq
 		fErr = newStoreV2Error("CreateIfNotExists", req.StoreName, fErr)
 	}()
 
-	if !req.UsePostgres {
-		return s.etcdStoreV2.CreateIfNotExists(ctx, req, wrapper)
-	}
 	pwrap, ok := wrapper.(wrapperWithParams)
 	if !ok {
 		return &store.ErrNotValid{Err: fmt.Errorf("bad wrapper type for postgres: %T", wrapper)}
@@ -334,9 +322,6 @@ func (s *StoreV2) Get(ctx context.Context, req storev2.ResourceRequest) (fWrappe
 		fErr = newStoreV2Error("Get", req.StoreName, fErr)
 	}()
 
-	if !req.UsePostgres {
-		return s.etcdStoreV2.Get(ctx, req)
-	}
 	op := getQ
 	query, ok := s.lookupQuery(req, op)
 	if !ok {
@@ -457,10 +442,6 @@ func (s *StoreV2) Delete(ctx context.Context, req storev2.ResourceRequest) (fErr
 		fErr = newStoreV2Error("Delete", req.StoreName, fErr)
 	}()
 
-	if !req.UsePostgres {
-		return s.etcdStoreV2.Delete(ctx, req)
-	}
-
 	query, ok := s.lookupQuery(req, deleteQ)
 	if !ok {
 		return errNoQuery(req.StoreName)
@@ -485,10 +466,6 @@ func (s *StoreV2) HardDelete(ctx context.Context, req storev2.ResourceRequest) (
 	defer func() {
 		fErr = newStoreV2Error("HardDelete", req.StoreName, fErr)
 	}()
-
-	if !req.UsePostgres {
-		return s.etcdStoreV2.Delete(ctx, req)
-	}
 
 	query, ok := s.lookupQuery(req, hardDeleteQ)
 	if !ok {
@@ -655,9 +632,6 @@ func (s *StoreV2) List(ctx context.Context, req storev2.ResourceRequest, pred *s
 		fErr = newStoreV2Error("List", req.StoreName, fErr)
 	}()
 
-	if !req.UsePostgres {
-		return s.etcdStoreV2.List(ctx, req, pred)
-	}
 	op := listQ
 	query, ok := s.lookupQuery(req, op)
 	if !ok {
@@ -710,10 +684,6 @@ func (s *StoreV2) Exists(ctx context.Context, req storev2.ResourceRequest) (fExi
 	defer func() {
 		fErr = newStoreV2Error("Exists", req.StoreName, fErr)
 	}()
-
-	if !req.UsePostgres {
-		return s.etcdStoreV2.Exists(ctx, req)
-	}
 
 	query, ok := s.lookupQuery(req, existsQ)
 	if !ok {
@@ -769,10 +739,6 @@ func (s *StoreV2) Patch(ctx context.Context, req storev2.ResourceRequest, w stor
 	defer func() {
 		fErr = newStoreV2Error("Patch", req.StoreName, fErr)
 	}()
-
-	if !req.UsePostgres {
-		return s.etcdStoreV2.Patch(ctx, req, w, patcher, conditions)
-	}
 
 	if err := req.Validate(); err != nil {
 		return &store.ErrNotValid{Err: err}

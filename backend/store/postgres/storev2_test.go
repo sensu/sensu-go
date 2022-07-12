@@ -34,7 +34,6 @@ func TestStoreCreateOrUpdate(t *testing.T) {
 			args: func() args {
 				cfg := corev3.FixtureEntityConfig("foo")
 				req := storev2.NewResourceRequestFromResource(cfg)
-				req.UsePostgres = true
 				return args{
 					req:     req,
 					wrapper: WrapEntityConfig(cfg),
@@ -51,7 +50,6 @@ func TestStoreCreateOrUpdate(t *testing.T) {
 			args: func() args {
 				state := corev3.FixtureEntityState("foo")
 				req := storev2.NewResourceRequestFromResource(state)
-				req.UsePostgres = true
 				return args{
 					req:     req,
 					wrapper: WrapEntityState(state),
@@ -69,7 +67,6 @@ func TestStoreCreateOrUpdate(t *testing.T) {
 			args: func() args {
 				ns := corev3.FixtureNamespace("foo")
 				req := storev2.NewResourceRequestFromResource(ns)
-				req.UsePostgres = true
 				return args{
 					req:     req,
 					wrapper: WrapNamespace(ns),
@@ -126,7 +123,6 @@ func TestStoreUpdateIfExists(t *testing.T) {
 			args: func() args {
 				cfg := corev3.FixtureEntityConfig("foo")
 				req := storev2.NewResourceRequestFromResource(cfg)
-				req.UsePostgres = true
 				return args{
 					req:     req,
 					wrapper: WrapEntityConfig(cfg),
@@ -141,7 +137,6 @@ func TestStoreUpdateIfExists(t *testing.T) {
 			args: func() args {
 				state := corev3.FixtureEntityState("foo")
 				req := storev2.NewResourceRequestFromResource(state)
-				req.UsePostgres = true
 				return args{
 					req:     req,
 					wrapper: WrapEntityState(state),
@@ -157,7 +152,6 @@ func TestStoreUpdateIfExists(t *testing.T) {
 			args: func() args {
 				ns := corev3.FixtureNamespace("bar")
 				req := storev2.NewResourceRequestFromResource(ns)
-				req.UsePostgres = true
 				return args{
 					req:     req,
 					wrapper: WrapNamespace(ns),
@@ -210,7 +204,6 @@ func TestStoreCreateIfNotExists(t *testing.T) {
 			args: func() args {
 				cfg := corev3.FixtureEntityConfig("foo")
 				req := storev2.NewResourceRequestFromResource(cfg)
-				req.UsePostgres = true
 				return args{
 					req:     req,
 					wrapper: WrapEntityConfig(cfg),
@@ -225,7 +218,6 @@ func TestStoreCreateIfNotExists(t *testing.T) {
 			args: func() args {
 				state := corev3.FixtureEntityState("foo")
 				req := storev2.NewResourceRequestFromResource(state)
-				req.UsePostgres = true
 				return args{
 					req:     req,
 					wrapper: WrapEntityState(state),
@@ -241,7 +233,6 @@ func TestStoreCreateIfNotExists(t *testing.T) {
 			args: func() args {
 				ns := corev3.FixtureNamespace("bar")
 				req := storev2.NewResourceRequestFromResource(ns)
-				req.UsePostgres = true
 				return args{
 					req:     req,
 					wrapper: WrapNamespace(ns),
@@ -297,7 +288,6 @@ func TestStoreGet(t *testing.T) {
 			args: func() args {
 				cfg := corev3.FixtureEntityConfig("foo")
 				req := storev2.NewResourceRequestFromResource(cfg)
-				req.UsePostgres = true
 				return args{
 					req: req,
 				}
@@ -321,7 +311,6 @@ func TestStoreGet(t *testing.T) {
 			args: func() args {
 				state := corev3.FixtureEntityState("foo")
 				req := storev2.NewResourceRequestFromResource(state)
-				req.UsePostgres = true
 				return args{
 					req: req,
 				}
@@ -347,7 +336,6 @@ func TestStoreGet(t *testing.T) {
 			args: func() args {
 				ns := corev3.FixtureNamespace("foo")
 				req := storev2.NewResourceRequestFromResource(ns)
-				req.UsePostgres = true
 				return args{
 					req: req,
 				}
@@ -411,7 +399,6 @@ func TestStoreDelete(t *testing.T) {
 			args: func() args {
 				cfg := corev3.FixtureEntityConfig("foo")
 				req := storev2.NewResourceRequestFromResource(cfg)
-				req.UsePostgres = true
 				return args{
 					req:     req,
 					wrapper: WrapEntityConfig(cfg),
@@ -426,7 +413,6 @@ func TestStoreDelete(t *testing.T) {
 			args: func() args {
 				state := corev3.FixtureEntityState("foo")
 				req := storev2.NewResourceRequestFromResource(state)
-				req.UsePostgres = true
 				return args{
 					req:     req,
 					wrapper: WrapEntityState(state),
@@ -442,7 +428,6 @@ func TestStoreDelete(t *testing.T) {
 			args: func() args {
 				ns := corev3.FixtureNamespace("bar")
 				req := storev2.NewResourceRequestFromResource(ns)
-				req.UsePostgres = true
 				return args{
 					req:     req,
 					wrapper: WrapNamespace(ns),
@@ -493,7 +478,6 @@ func TestStoreHardDelete(t *testing.T) {
 			args: func() args {
 				cfg := corev3.FixtureEntityConfig("foo")
 				req := storev2.NewResourceRequestFromResource(cfg)
-				req.UsePostgres = true
 				return args{
 					req:     req,
 					wrapper: WrapEntityConfig(cfg),
@@ -508,7 +492,6 @@ func TestStoreHardDelete(t *testing.T) {
 			args: func() args {
 				state := corev3.FixtureEntityState("foo")
 				req := storev2.NewResourceRequestFromResource(state)
-				req.UsePostgres = true
 				return args{
 					req:     req,
 					wrapper: WrapEntityState(state),
@@ -524,7 +507,6 @@ func TestStoreHardDelete(t *testing.T) {
 			args: func() args {
 				ns := corev3.FixtureNamespace("bar")
 				req := storev2.NewResourceRequestFromResource(ns)
-				req.UsePostgres = true
 				return args{
 					req:     req,
 					wrapper: WrapNamespace(ns),
@@ -575,7 +557,6 @@ func TestStoreList(t *testing.T) {
 			args: func() args {
 				typeMeta := corev2.TypeMeta{Type: "EntityConfig", APIVersion: "core/v3"}
 				req := storev2.NewResourceRequest(typeMeta, "default", "anything", entityConfigStoreName)
-				req.UsePostgres = true
 				pred := &store.SelectionPredicate{Limit: 5}
 				return args{
 					req:  req,
@@ -595,7 +576,6 @@ func TestStoreList(t *testing.T) {
 			args: func() args {
 				typeMeta := corev2.TypeMeta{Type: "EntityState", APIVersion: "core/v3"}
 				req := storev2.NewResourceRequest(typeMeta, "default", "anything", entityStateStoreName)
-				req.UsePostgres = true
 				pred := &store.SelectionPredicate{Limit: 5}
 				return args{
 					req:  req,
@@ -616,7 +596,6 @@ func TestStoreList(t *testing.T) {
 			args: func() args {
 				typeMeta := corev2.TypeMeta{Type: "Namespace", APIVersion: "core/v3"}
 				req := storev2.NewResourceRequest(typeMeta, "", "anything", namespaceStoreName)
-				req.UsePostgres = true
 				pred := &store.SelectionPredicate{Limit: 5}
 				return args{
 					req:  req,
@@ -748,7 +727,6 @@ func TestStoreExists(t *testing.T) {
 			args: func() args {
 				cfg := corev3.FixtureEntityConfig("foo")
 				req := storev2.NewResourceRequestFromResource(cfg)
-				req.UsePostgres = true
 				return args{
 					req:     req,
 					wrapper: WrapEntityConfig(cfg),
@@ -763,7 +741,6 @@ func TestStoreExists(t *testing.T) {
 			args: func() args {
 				state := corev3.FixtureEntityState("foo")
 				req := storev2.NewResourceRequestFromResource(state)
-				req.UsePostgres = true
 				return args{
 					req:     req,
 					wrapper: WrapEntityState(state),
@@ -779,7 +756,6 @@ func TestStoreExists(t *testing.T) {
 			args: func() args {
 				ns := corev3.FixtureNamespace("bar")
 				req := storev2.NewResourceRequestFromResource(ns)
-				req.UsePostgres = true
 				return args{
 					req:     req,
 					wrapper: WrapNamespace(ns),
@@ -835,7 +811,6 @@ func TestStorePatch(t *testing.T) {
 			args: func() args {
 				cfg := corev3.FixtureEntityConfig("foo")
 				req := storev2.NewResourceRequestFromResource(cfg)
-				req.UsePostgres = true
 				return args{
 					req:     req,
 					wrapper: WrapEntityConfig(cfg),
@@ -853,7 +828,6 @@ func TestStorePatch(t *testing.T) {
 			args: func() args {
 				state := corev3.FixtureEntityState("foo")
 				req := storev2.NewResourceRequestFromResource(state)
-				req.UsePostgres = true
 				return args{
 					req:     req,
 					wrapper: WrapEntityState(state),
@@ -872,7 +846,6 @@ func TestStorePatch(t *testing.T) {
 			args: func() args {
 				ns := corev3.FixtureNamespace("bar")
 				req := storev2.NewResourceRequestFromResource(ns)
-				req.UsePostgres = true
 				return args{
 					req:     req,
 					wrapper: WrapNamespace(ns),
@@ -934,7 +907,6 @@ func TestStoreGetMultiple(t *testing.T) {
 			args: func() args {
 				cfg := corev3.FixtureEntityConfig("foo")
 				req := storev2.NewResourceRequestFromResource(cfg)
-				req.UsePostgres = true
 				return args{
 					req:     req,
 					wrapper: WrapEntityConfig(cfg),
@@ -947,7 +919,6 @@ func TestStoreGetMultiple(t *testing.T) {
 					entityName := fmt.Sprintf("foo-%d", i)
 					cfg := corev3.FixtureEntityConfig(entityName)
 					req := storev2.NewResourceRequestFromResource(cfg)
-					req.UsePostgres = true
 					reqs = append(reqs, req)
 					createEntityConfig(t, s, entityName)
 				}
@@ -972,7 +943,6 @@ func TestStoreGetMultiple(t *testing.T) {
 			args: func() args {
 				state := corev3.FixtureEntityState("foo")
 				req := storev2.NewResourceRequestFromResource(state)
-				req.UsePostgres = true
 				return args{
 					req:     req,
 					wrapper: WrapEntityState(state),
@@ -985,7 +955,6 @@ func TestStoreGetMultiple(t *testing.T) {
 					entityName := fmt.Sprintf("foo-%d", i)
 					state := corev3.FixtureEntityState(entityName)
 					req := storev2.NewResourceRequestFromResource(state)
-					req.UsePostgres = true
 					reqs = append(reqs, req)
 					createEntityConfig(t, s, entityName)
 					createEntityState(t, s, entityName)
@@ -1011,7 +980,6 @@ func TestStoreGetMultiple(t *testing.T) {
 			args: func() args {
 				ns := corev3.FixtureNamespace("bar")
 				req := storev2.NewResourceRequestFromResource(ns)
-				req.UsePostgres = true
 				return args{
 					req:     req,
 					wrapper: WrapNamespace(ns),
@@ -1023,7 +991,6 @@ func TestStoreGetMultiple(t *testing.T) {
 					namespaceName := fmt.Sprintf("foo-%d", i)
 					namespace := corev3.FixtureNamespace(namespaceName)
 					req := storev2.NewResourceRequestFromResource(namespace)
-					req.UsePostgres = true
 					reqs = append(reqs, req)
 					createNamespace(t, s, namespaceName)
 				}
@@ -1128,7 +1095,6 @@ func TestWatchEntityConfig(t *testing.T) {
 		}
 
 		delReq := storev2.NewResourceRequestFromResource(&entityConfig)
-		delReq.UsePostgres = true
 		if err := s.Delete(ctx, delReq); err != nil {
 			t.Fatalf("could not delete entity config: %v", err)
 		}
@@ -1164,7 +1130,6 @@ func TestInitialize(t *testing.T) {
 			require.NoError(t, err)
 
 			req := storev2.NewResourceRequestFromResource(namespace)
-			req.UsePostgres = true
 
 			return s.CreateIfNotExists(ctx, req, wrapper)
 		})
@@ -1172,7 +1137,6 @@ func TestInitialize(t *testing.T) {
 
 		var namespace corev3.Namespace
 		req := storev2.NewResourceRequestFromResource(corev3.NewNamespace("foo"))
-		req.UsePostgres = true
 
 		wrapper, err := s.Get(ctx, req)
 		require.NoError(t, err)

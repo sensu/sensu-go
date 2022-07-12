@@ -10,16 +10,15 @@ import (
 	"github.com/sensu/sensu-go/backend/store"
 	storev2 "github.com/sensu/sensu-go/backend/store/v2"
 	"github.com/sensu/sensu-go/backend/store/v2/etcdstore"
-	clientv3 "go.etcd.io/etcd/client/v3"
 )
 
 type NamespaceStore struct {
 	store *StoreV2
 }
 
-func NewNamespaceStore(db *pgxpool.Pool, client *clientv3.Client) *NamespaceStore {
+func NewNamespaceStore(db *pgxpool.Pool) *NamespaceStore {
 	return &NamespaceStore{
-		store: NewStoreV2(db, client),
+		store: NewStoreV2(db),
 	}
 }
 
@@ -27,7 +26,6 @@ func NewNamespaceStore(db *pgxpool.Pool, client *clientv3.Client) *NamespaceStor
 func (e *NamespaceStore) CreateNamespace(ctx context.Context, n *corev2.Namespace) error {
 	namespace := corev3.V2NamespaceToV3(n)
 	req := storev2.NewResourceRequestFromResource(namespace)
-	req.UsePostgres = true
 	wrappedNamespace, err := storev2.WrapResource(namespace)
 	if err != nil {
 		return &store.ErrEncode{Err: err}
@@ -46,8 +44,6 @@ func (e *NamespaceStore) DeleteNamespace(ctx context.Context, name string) error
 	}
 
 	req := storev2.NewResourceRequestFromResource(namespace)
-	req.UsePostgres = true
-
 	if err := e.store.Delete(ctx, req); err != nil {
 		var e *store.ErrNotFound
 		if !errors.As(err, &e) {
@@ -71,10 +67,9 @@ func (e *NamespaceStore) DeleteNamespaceByName(ctx context.Context, name string)
 func (e *NamespaceStore) GetNamespaces(ctx context.Context, pred *store.SelectionPredicate) ([]*corev3.Namespace, error) {
 	// Fetch the namespaces with the selection predicate
 	req := storev2.ResourceRequest{
-		Type:        "Namespace",
-		APIVersion:  "core/v3",
-		StoreName:   new(corev3.Namespace).StoreName(),
-		UsePostgres: true,
+		Type:       "Namespace",
+		APIVersion: "core/v3",
+		StoreName:  new(corev3.Namespace).StoreName(),
 	}
 	if pred.Ordering == corev3.NamespaceSortName {
 		req.SortOrder = storev2.SortAscend
@@ -102,7 +97,6 @@ func (e *NamespaceStore) GetNamespace(ctx context.Context, name string) (*corev2
 	}
 	namespace := corev3.NewNamespace(name)
 	req := storev2.NewResourceRequestFromResource(namespace)
-	req.UsePostgres = true
 	wrapper, err := e.store.Get(ctx, req)
 	if err != nil {
 		var e *store.ErrNotFound
@@ -130,7 +124,6 @@ func (e *NamespaceStore) GetNamespaceByName(ctx context.Context, name string) (*
 		},
 	}
 	req := storev2.NewResourceRequestFromResource(namespace)
-	req.UsePostgres = true
 	wrapper, err := e.store.Get(ctx, req)
 	if err != nil {
 		var e *store.ErrNotFound
@@ -154,7 +147,6 @@ func (e *NamespaceStore) ListNamespaces(ctx context.Context, pred *store.Selecti
 func (e *NamespaceStore) UpdateNamespace(ctx context.Context, n *corev2.Namespace) error {
 	namespace := corev3.V2NamespaceToV3(n)
 	req := storev2.NewResourceRequestFromResource(namespace)
-	req.UsePostgres = true
 	wrappedNamespace, err := storev2.WrapResource(namespace)
 	if err != nil {
 		return &store.ErrEncode{Err: err}
