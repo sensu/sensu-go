@@ -25,7 +25,11 @@ var (
 	_ storev2.Interface = new(Store)
 )
 
-const namespaceIndexStoreName = "internal/storev2/namespaces"
+const (
+	initializationLockKey   = ".initialized.lock"
+	initializationKey       = ".initialized"
+	namespaceIndexStoreName = "internal/storev2/namespaces"
+)
 
 // ComputeContinueToken calculates a continue token based on the given resource.
 // The resource can be a core/v2 or a core/v3 resource.
