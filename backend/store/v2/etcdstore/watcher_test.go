@@ -9,7 +9,6 @@ import (
 	"github.com/google/go-cmp/cmp"
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	corev3 "github.com/sensu/sensu-go/api/core/v3"
-	"github.com/sensu/sensu-go/backend/etcd"
 	oldstore "github.com/sensu/sensu-go/backend/store/etcd"
 	storev2 "github.com/sensu/sensu-go/backend/store/v2"
 	"github.com/sensu/sensu-go/backend/store/v2/etcdstore"
@@ -196,21 +195,4 @@ func testCheckStoppedWatcher(t *testing.T, w <-chan []storev2.WatchEvent) {
 	case <-time.After(timeout * time.Second):
 		t.Fatalf("timeout after waiting %d for resultChan", timeout)
 	}
-}
-
-func testWithEtcdClient(t *testing.T, f func(storev2.Interface, *clientv3.Client)) {
-	e, cleanup := etcd.NewTestEtcd(t)
-	defer cleanup()
-
-	client := e.NewEmbeddedClient()
-
-	s := etcdstore.NewStore(client)
-	oldStore := oldstore.NewStore(client)
-	ns := &corev2.Namespace{Name: "default"}
-
-	if err := oldStore.CreateNamespace(context.Background(), ns); err != nil {
-		t.Fatal(err)
-	}
-
-	f(s, client)
 }

@@ -23,6 +23,9 @@ type WrapList interface {
 
 // Interface specifies the interface of a v2 store.
 type Interface interface {
+	// NamespaceStore provides an interface for creating & deleting namespaces.
+	NamespaceStore
+
 	// CreateOrUpdate creates or updates the wrapped resource.
 	CreateOrUpdate(context.Context, ResourceRequest, Wrapper) error
 
@@ -58,4 +61,15 @@ type Interface interface {
 	Initialize(context.Context, InitializeFunc) error
 }
 
+// NamespaceStore provides an interface for creating & deleting namespaces.
+type NamespaceStore interface {
+	// CreateNamespace persists a corev3.Namespace resource.
+	CreateNamespace(context.Context, *corev3.Namespace) error
+
+	// DeleteNamespace deletes the corresponding corev3.Namespace resource and
+	// cleans up any store resources from that namespace.
+	DeleteNamespace(context.Context, string) error
+}
+
+// Initialize sets up a cluster with the default resources & config.
 type InitializeFunc func(context.Context) error

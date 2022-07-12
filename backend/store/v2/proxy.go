@@ -4,6 +4,7 @@ import (
 	"context"
 	"sync"
 
+	corev3 "github.com/sensu/sensu-go/api/core/v3"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/backend/store/patch"
 )
@@ -89,7 +90,22 @@ func (p *Proxy) Watch(ctx context.Context, req ResourceRequest) <-chan []WatchEv
 	return p.impl.Watch(ctx, req)
 }
 
-// Initialize
+// CreateNamespace persists a corev3.Namespace resource.
+func (p *Proxy) CreateNamespace(ctx context.Context, ns *corev3.Namespace) error {
+	p.mu.RLock()
+	defer p.mu.RUnlock()
+	return p.impl.CreateNamespace(ctx, ns)
+}
+
+// DeleteNamespace deletes the corresponding corev3.Namespace resource and
+// cleans up any store resources from that namespace.
+func (p *Proxy) DeleteNamespace(ctx context.Context, name string) error {
+	p.mu.RLock()
+	defer p.mu.RUnlock()
+	return p.impl.DeleteNamespace(ctx, name)
+}
+
+// Initialize sets up a cluster with the default resources & config.
 func (p *Proxy) Initialize(ctx context.Context, fn InitializeFunc) error {
 	p.mu.RLock()
 	defer p.mu.RUnlock()

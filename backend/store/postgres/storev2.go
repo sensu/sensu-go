@@ -952,6 +952,14 @@ func (s *StoreV2) watchLoop(ctx context.Context, req storev2.ResourceRequest, po
 	}
 }
 
+func (s *StoreV2) CreateNamespace(ctx context.Context, ns *corev3.Namespace) error {
+	return nil
+}
+
+func (s *StoreV2) DeleteNamespace(ctx context.Context, name string) error {
+	return nil
+}
+
 func (s *StoreV2) Initialize(ctx context.Context, fn storev2.InitializeFunc) error {
 	tx, err := s.db.Begin(ctx)
 	if err != nil {
