@@ -11,7 +11,6 @@ import (
 
 func (h Handlers) ListV3Resources(ctx context.Context, pred *store.SelectionPredicate) ([]corev3.Resource, error) {
 	req := storev2.NewResourceRequestFromResource(h.V3Resource)
-
 	req.Namespace = corev2.ContextNamespace(ctx)
 
 	list, err := h.StoreV2.List(ctx, req, pred)

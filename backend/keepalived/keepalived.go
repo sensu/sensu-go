@@ -710,10 +710,6 @@ func (k *Keepalived) handleUpdate(e *corev2.Event) error {
 	}
 
 	req := storev2.NewResourceRequestFromResource(entityState)
-
-	// use postgres, if available (enterprise only, entity state only)
-	req.UsePostgres = true
-
 	if err := k.storev2.CreateOrUpdate(k.ctx, req, wrapper); err != nil {
 		logger.WithError(err).Error("error updating entity state in store")
 		return err

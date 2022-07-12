@@ -10,16 +10,25 @@ import (
 	"github.com/gogo/protobuf/proto"
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	corev3 "github.com/sensu/sensu-go/api/core/v3"
+	"github.com/sensu/sensu-go/backend/etcd"
+	"github.com/sensu/sensu-go/backend/seeds"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/backend/store/etcd/kvc"
 	"github.com/sensu/sensu-go/backend/store/patch"
 	storev2 "github.com/sensu/sensu-go/backend/store/v2"
 	"github.com/sensu/sensu-go/backend/store/v2/wrap"
 	clientv3 "go.etcd.io/etcd/client/v3"
+	"go.etcd.io/etcd/client/v3/concurrency"
 )
 
 var (
 	_ storev2.Interface = new(Store)
+)
+
+const (
+	initializationLockKey   = ".initialized.lock"
+	initializationKey       = ".initialized"
+	namespaceIndexStoreName = "internal/storev2/namespaces"
 )
 
 // ComputeContinueToken calculates a continue token based on the given resource.
@@ -107,9 +116,15 @@ func (s *Store) CreateOrUpdate(ctx context.Context, req storev2.ResourceRequest,
 	comparator := kvc.Comparisons(
 		kvc.NamespaceExists(req.Namespace),
 	)
-	op := clientv3.OpPut(key, string(msg))
+	ops := []clientv3.Op{
+		clientv3.OpPut(key, string(msg)),
+	}
+	if req.Namespace != "" {
+		namespaceOp := clientv3.OpPut(namespaceIndexKey(req.Namespace, key), "")
+		ops = append(ops, namespaceOp)
+	}
 
-	return kvc.Txn(ctx, s.client, comparator, op)
+	return kvc.Txn(ctx, s.client, comparator, ops...)
 }
 
 func (s *Store) Patch(ctx context.Context, req storev2.ResourceRequest, wrapper storev2.Wrapper, patcher patch.Patcher, conditions *store.ETagCondition) error {
@@ -253,9 +268,15 @@ func (s *Store) CreateIfNotExists(ctx context.Context, req storev2.ResourceReque
 		kvc.NamespaceExists(req.Namespace),
 		kvc.KeyIsNotFound(key),
 	)
-	op := clientv3.OpPut(key, string(msg))
+	ops := []clientv3.Op{
+		clientv3.OpPut(key, string(msg)),
+	}
+	if req.Namespace != "" {
+		namespaceOp := clientv3.OpPut(namespaceIndexKey(req.Namespace, key), "")
+		ops = append(ops, namespaceOp)
+	}
 
-	return kvc.Txn(ctx, s.client, comparator, op)
+	return kvc.Txn(ctx, s.client, comparator, ops...)
 }
 
 func (s *Store) Get(ctx context.Context, req storev2.ResourceRequest) (storev2.Wrapper, error) {
@@ -301,9 +322,15 @@ func (s *Store) Delete(ctx context.Context, req storev2.ResourceRequest) error {
 	comparator := kvc.Comparisons(
 		kvc.KeyIsFound(key),
 	)
-	op := clientv3.OpDelete(key)
+	ops := []clientv3.Op{
+		clientv3.OpDelete(key),
+	}
+	if req.Namespace != "" {
+		namespaceOp := clientv3.OpDelete(namespaceIndexKey(req.Namespace, key))
+		ops = append(ops, namespaceOp)
+	}
 
-	return kvc.Txn(ctx, s.client, comparator, op)
+	return kvc.Txn(ctx, s.client, comparator, ops...)
 }
 
 func (s *Store) List(ctx context.Context, req storev2.ResourceRequest, pred *store.SelectionPredicate) (storev2.WrapList, error) {
@@ -383,6 +410,128 @@ func (s *Store) Exists(ctx context.Context, req storev2.ResourceRequest) (bool, 
 	return resp.Count > 0, nil
 }
 
+func (s *Store) CreateNamespace(ctx context.Context, namespace *corev3.Namespace) error {
+	wrapped, err := wrap.Resource(namespace)
+	if err != nil {
+		return &store.ErrNotValid{Err: fmt.Errorf("etcdstore could not wrap namespace resource: %v", err)}
+	}
+
+	key := store.NewKeyBuilder(namespace.StoreName()).Build(namespace.Metadata.Name)
+	msg, err := proto.Marshal(wrapped)
+	if err != nil {
+		return &store.ErrEncode{Key: key, Err: err}
+	}
+
+	comparator := kvc.Comparisons(
+		kvc.KeyIsNotFound(key),
+		kvc.NamespaceExists(""),
+	)
+	op := clientv3.OpPut(key, string(msg))
+
+	return kvc.Txn(ctx, s.client, comparator, op)
+}
+
+func (s *Store) DeleteNamespace(ctx context.Context, namespace string) error {
+	key := store.NewKeyBuilder(namespaceIndexStoreName).Build(namespace)
+	var resp *clientv3.GetResponse
+	err := kvc.Backoff(ctx).Retry(func(n int) (done bool, err error) {
+		resp, err = s.client.Get(ctx, key, clientv3.WithPrefix(), clientv3.WithCountOnly())
+		return kvc.RetryRequest(n, err)
+	})
+	if err != nil {
+		return err
+	}
+	if resp.Count > 0 {
+		return fmt.Errorf("cannot delete namespace %s: namespace not empty", namespace)
+	}
+	req := storev2.NewResourceRequest(corev2.TypeMeta{Type: "Namespace", APIVersion: "core/v2"}, "", namespace, "namespaces")
+	return s.Delete(ctx, req)
+}
+
+func (s *Store) Initialize(ctx context.Context, fn storev2.InitializeFunc) (fErr error) {
+	// Check that the store hasn't already been initialized
+	initialized, err := s.isInitialized(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to check if cluster has been initialized: %w", err)
+	}
+
+	if initialized {
+		logger.Info("store already initialized")
+		return seeds.ErrAlreadyInitialized
+	}
+
+	// Create a lease to associate with the lock
+	resp, err := s.client.Grant(ctx, 2)
+	etcd.LeaseOperationsCounter.WithLabelValues("init", etcd.LeaseOperationTypeGrant, etcd.LeaseStatusFor(err)).Inc()
+	if err != nil {
+		return fmt.Errorf("failed to create etcd lease: %w", err)
+	}
+
+	session, err := concurrency.NewSession(s.client, concurrency.WithLease(resp.ID))
+	etcd.LeaseOperationsCounter.WithLabelValues("init", etcd.LeaseOperationTypePut, etcd.LeaseStatusFor(err)).Inc()
+	if err != nil {
+		return fmt.Errorf("failed to start etcd session: %w", err)
+	}
+
+	mu := concurrency.NewMutex(session, initializationLockKey)
+
+	// Lock initialization key to avoid competing installations
+	if err := mu.Lock(ctx); err != nil {
+		return fmt.Errorf("failed to create initializer lock: %w", err)
+	}
+	defer func() {
+		if err := mu.Unlock(ctx); fErr == nil && err != nil {
+			fErr = fmt.Errorf("failed to unlock initializer mutex: %w", err)
+		}
+		if err := session.Close(); fErr == nil && err != nil {
+			fErr = fmt.Errorf("failed to close initializer session: %w", err)
+		}
+		<-session.Done()
+	}()
+
+	if s.client != nil {
+		// Migrate the cluster to the latest version
+		if err := MigrateDB(ctx, s.client, Migrations); err != nil {
+			logger.WithError(err).Error("error bringing the database to the latest version")
+			return fmt.Errorf("error bringing the database to the latest version: %w", err)
+		}
+		if len(EnterpriseMigrations) > 0 {
+			if err = MigrateEnterpriseDB(ctx, s.client, EnterpriseMigrations); err != nil {
+				logger.WithError(err).Error("error bringing the enterprise database to the latest version")
+				return
+			}
+		}
+	}
+
+	return fn(ctx)
+}
+
+// IsInitialized checks the state of the .initialized key
+func (s *Store) isInitialized(ctx context.Context) (bool, error) {
+	r, err := s.client.Get(ctx, path.Join(store.Root, initializationKey))
+	if err != nil {
+		return false, err
+	}
+
+	// if there is no result, test the fallback and return using same logic
+	if len(r.Kvs) == 0 {
+		fallback, err := s.client.Get(ctx, initializationKey)
+		if err != nil {
+			return false, err
+		} else {
+			return fallback.Count > 0, nil
+		}
+	}
+
+	return r.Count > 0, nil
+}
+
+// FlagAsInitialized - set .initialized key
+func (s *Store) flagAsInitialized(ctx context.Context) error {
+	_, err := s.client.Put(ctx, path.Join(store.Root, initializationKey), "1")
+	return err
+}
+
 func getSortOrder(order storev2.SortOrder) clientv3.SortOrder {
 	switch order {
 	case storev2.SortAscend:
@@ -391,4 +540,8 @@ func getSortOrder(order storev2.SortOrder) clientv3.SortOrder {
 		return clientv3.SortDescend
 	}
 	return clientv3.SortNone
+}
+
+func namespaceIndexKey(namespace, key string) string {
+	return store.NewKeyBuilder(namespaceIndexStoreName).WithNamespace(namespace).Build(key)
 }

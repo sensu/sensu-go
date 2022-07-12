@@ -263,7 +263,7 @@ func (r *Ring) doProduce(ctx context.Context, sub ringv2.Subscription) ringv2.Ev
 
 func (r *Ring) Remove(ctx context.Context, value string) error {
 	if ctx.Value(ringv2.DeleteEntityContextKey) != nil {
-		_, err := r.db.Exec(ctx, deleteEntityQuery, r.namespace, value)
+		_, err := r.db.Exec(ctx, deleteEntityStateQuery, r.namespace, value)
 		return err
 	}
 	_, err := r.db.Exec(ctx, deleteRingEntityQuery, r.namespace, r.path, value)
@@ -286,7 +286,7 @@ func (r *Ring) Add(ctx context.Context, value string, keepalive int64) (err erro
 		}
 	}()
 	dur := time.Duration(keepalive) * time.Second
-	if _, err := tx.Exec(ctx, insertEntityQuery, r.namespace, value, dur.String()); err != nil {
+	if _, err := tx.Exec(ctx, updateEntityStateExpiresAtQuery, r.namespace, value, dur.String()); err != nil {
 		return err
 	}
 	if _, err := tx.Exec(ctx, insertRingEntityQuery, r.namespace, value, r.path); err != nil {

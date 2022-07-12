@@ -10,6 +10,7 @@ import (
 
 	"github.com/jackc/pgx/v4/pgxpool"
 	"github.com/lib/pq"
+	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/ringv2"
 )
 
@@ -38,10 +39,22 @@ func TestAdd(t *testing.T) {
 		}
 		defer func() { _ = ring.Close() }()
 
+		namespaceStore := NewNamespaceStore(db)
+		entityStore := NewEntityStore(db)
+
 		ctx, cancel := context.WithCancel(context.Background())
 		defer cancel()
 
-		if err := ring.Add(ctx, "foo", 600); err != nil {
+		entityName := "foo"
+		entity := corev2.FixtureEntity(entityName)
+		namespace := corev2.FixtureNamespace(entity.Namespace)
+		if err := namespaceStore.UpdateNamespace(ctx, namespace); err != nil {
+			t.Fatal(err)
+		}
+		if err := entityStore.UpdateEntity(ctx, entity); err != nil {
+			t.Fatal(err)
+		}
+		if err := ring.Add(ctx, entityName, 600); err != nil {
 			t.Fatal(err)
 		}
 	})
@@ -68,14 +81,26 @@ func TestRemove(t *testing.T) {
 		}
 		defer func() { _ = ring.Close() }()
 
+		namespaceStore := NewNamespaceStore(db)
+		entityStore := NewEntityStore(db)
+
 		ctx, cancel := context.WithCancel(context.Background())
 		defer cancel()
 
-		if err := ring.Add(ctx, "foo", 600); err != nil {
+		entityName := "foo"
+		entity := corev2.FixtureEntity(entityName)
+		namespace := corev2.FixtureNamespace(entity.Namespace)
+		if err := namespaceStore.UpdateNamespace(ctx, namespace); err != nil {
+			t.Fatal(err)
+		}
+		if err := entityStore.UpdateEntity(ctx, entity); err != nil {
+			t.Fatal(err)
+		}
+		if err := ring.Add(ctx, entityName, 600); err != nil {
 			t.Fatal(err)
 		}
 
-		if err := ring.Remove(ctx, "foo"); err != nil {
+		if err := ring.Remove(ctx, entityName); err != nil {
 			t.Fatal(err)
 		}
 	})
@@ -98,14 +123,26 @@ func TestAddRemoveIsEmpty(t *testing.T) {
 		}
 		defer func() { _ = ring.Close() }()
 
+		namespaceStore := NewNamespaceStore(db)
+		entityStore := NewEntityStore(db)
+
 		ctx, cancel := context.WithCancel(context.Background())
 		defer cancel()
 
-		if err := ring.Add(ctx, "foo", 600); err != nil {
+		entityName := "foo"
+		entity := corev2.FixtureEntity(entityName)
+		namespace := corev2.FixtureNamespace(entity.Namespace)
+		if err := namespaceStore.UpdateNamespace(ctx, namespace); err != nil {
+			t.Fatal(err)
+		}
+		if err := entityStore.UpdateEntity(ctx, entity); err != nil {
+			t.Fatal(err)
+		}
+		if err := ring.Add(ctx, entityName, 600); err != nil {
 			t.Fatal(err)
 		}
 
-		if err := ring.Remove(context.TODO(), "foo"); err != nil {
+		if err := ring.Remove(context.Background(), entityName); err != nil {
 			t.Fatal(err)
 		}
 
@@ -133,6 +170,10 @@ func TestWatchTrigger(t *testing.T) {
 			t.Fatal(err)
 		}
 		defer func() { _ = ring.Close() }()
+
+		namespaceStore := NewNamespaceStore(db)
+		entityStore := NewEntityStore(db)
+
 		ctx, cancel := context.WithCancel(context.Background())
 		defer cancel()
 
@@ -143,7 +184,16 @@ func TestWatchTrigger(t *testing.T) {
 		}
 		wc := ring.Subscribe(ctx, sub)
 
-		if err := ring.Add(ctx, "foo", 600); err != nil {
+		entityName := "foo"
+		entity := corev2.FixtureEntity(entityName)
+		namespace := corev2.FixtureNamespace(entity.Namespace)
+		if err := namespaceStore.UpdateNamespace(ctx, namespace); err != nil {
+			t.Fatal(err)
+		}
+		if err := entityStore.UpdateEntity(ctx, entity); err != nil {
+			t.Fatal(err)
+		}
+		if err := ring.Add(ctx, entityName, 600); err != nil {
 			t.Fatal(err)
 		}
 
@@ -153,7 +203,7 @@ func TestWatchTrigger(t *testing.T) {
 		got := <-wc
 		want := ringv2.Event{
 			Type:   ringv2.EventTrigger,
-			Values: []string{"foo"},
+			Values: []string{entityName},
 		}
 		if !reflect.DeepEqual(got, want) {
 			t.Fatalf("bad event: got %v, want %v", got, want)
@@ -177,6 +227,10 @@ func TestRingOrdering(t *testing.T) {
 			t.Fatal(err)
 		}
 		defer func() { _ = ring.Close() }()
+
+		namespaceStore := NewNamespaceStore(db)
+		entityStore := NewEntityStore(db)
+
 		ctx, cancel := context.WithCancel(context.Background())
 		defer cancel()
 
@@ -191,6 +245,14 @@ func TestRingOrdering(t *testing.T) {
 		}
 
 		for _, item := range items {
+			entity := corev2.FixtureEntity(item)
+			namespace := corev2.FixtureNamespace(entity.Namespace)
+			if err := namespaceStore.UpdateNamespace(ctx, namespace); err != nil {
+				t.Fatal(err)
+			}
+			if err := entityStore.UpdateEntity(ctx, entity); err != nil {
+				t.Fatal(err)
+			}
 			if err := ring.Add(ctx, item, 600); err != nil {
 				t.Fatal(err)
 			}
@@ -236,6 +298,9 @@ func TestConcurrentRingOrdering(t *testing.T) {
 		}
 		defer func() { _ = ring.Close() }()
 
+		namespaceStore := NewNamespaceStore(db)
+		entityStore := NewEntityStore(db)
+
 		ctx, cancel := context.WithCancel(context.Background())
 		defer cancel()
 
@@ -244,6 +309,14 @@ func TestConcurrentRingOrdering(t *testing.T) {
 		}
 
 		for _, item := range items {
+			entity := corev2.FixtureEntity(item)
+			namespace := corev2.FixtureNamespace(entity.Namespace)
+			if err := namespaceStore.UpdateNamespace(ctx, namespace); err != nil {
+				t.Fatal(err)
+			}
+			if err := entityStore.UpdateEntity(ctx, entity); err != nil {
+				t.Fatal(err)
+			}
 			if err := ring.Add(ctx, item, 600); err != nil {
 				t.Fatal(err)
 			}
@@ -323,17 +396,20 @@ func eventTest(t *testing.T, want []ringv2.Event) {
 				t.Fatal(err)
 			}
 		})
-		defer func() { _ = listener.UnlistenAll() }()
-		defer func() { _ = listener.Close() }()
+		t.Cleanup(func() { _ = listener.UnlistenAll() })
+		t.Cleanup(func() { _ = listener.Close() })
 		bus := NewBus(ctx, listener)
 		ring, err := NewRing(db, bus, ringName(t.Name()))
 		if err != nil {
 			t.Fatal(err)
 		}
-		defer func() { _ = ring.Close() }()
+		t.Cleanup(func() { _ = ring.Close() })
+
+		namespaceStore := NewNamespaceStore(db)
+		entityStore := NewEntityStore(db)
 
 		ctx, cancel := context.WithCancel(context.Background())
-		defer cancel()
+		t.Cleanup(cancel)
 
 		sub := ringv2.Subscription{
 			Name:             "test",
@@ -347,6 +423,14 @@ func eventTest(t *testing.T, want []ringv2.Event) {
 		for _, event := range want {
 			switch event.Type {
 			case ringv2.EventAdd:
+				entity := corev2.FixtureEntity(event.Values[0])
+				namespace := corev2.FixtureNamespace(entity.Namespace)
+				if err := namespaceStore.UpdateNamespace(ctx, namespace); err != nil {
+					t.Fatal(err)
+				}
+				if err := entityStore.UpdateEntity(ctx, entity); err != nil {
+					t.Fatal(err)
+				}
 				if err := ring.Add(ctx, event.Values[0], 600); err != nil {
 					t.Fatal(err)
 				}
@@ -412,10 +496,22 @@ func TestWatchAfterAdd(t *testing.T) {
 		}
 		defer func() { _ = ring.Close() }()
 
+		namespaceStore := NewNamespaceStore(db)
+		entityStore := NewEntityStore(db)
+
 		ctx, cancel := context.WithCancel(context.Background())
 		defer cancel()
 
-		if err := ring.Add(ctx, "fowley", 600); err != nil {
+		entityName := "fowley"
+		entity := corev2.FixtureEntity(entityName)
+		namespace := corev2.FixtureNamespace(entity.Namespace)
+		if err := namespaceStore.UpdateNamespace(ctx, namespace); err != nil {
+			t.Fatal(err)
+		}
+		if err := entityStore.UpdateEntity(ctx, entity); err != nil {
+			t.Fatal(err)
+		}
+		if err := ring.Add(ctx, entityName, 600); err != nil {
 			t.Fatal(err)
 		}
 
@@ -427,7 +523,7 @@ func TestWatchAfterAdd(t *testing.T) {
 		wc := ring.Subscribe(ctx, sub)
 
 		got := <-wc
-		want := ringv2.Event{Type: ringv2.EventTrigger, Values: []string{"fowley"}}
+		want := ringv2.Event{Type: ringv2.EventTrigger, Values: []string{entityName}}
 
 		if !reflect.DeepEqual(got, want) {
 			t.Fatalf("bad event: got %v, want %v", got, want)
@@ -452,6 +548,9 @@ func TestMultipleItems(t *testing.T) {
 		}
 		defer func() { _ = ring.Close() }()
 
+		namespaceStore := NewNamespaceStore(db)
+		entityStore := NewEntityStore(db)
+
 		ctx, cancel := context.WithCancel(context.Background())
 		defer cancel()
 
@@ -464,6 +563,14 @@ func TestMultipleItems(t *testing.T) {
 		items := []string{"byers", "frohike", "mulder", "scully", "skinner"}
 
 		for _, item := range items {
+			entity := corev2.FixtureEntity(item)
+			namespace := corev2.FixtureNamespace(entity.Namespace)
+			if err := namespaceStore.UpdateNamespace(ctx, namespace); err != nil {
+				t.Fatal(err)
+			}
+			if err := entityStore.UpdateEntity(ctx, entity); err != nil {
+				t.Fatal(err)
+			}
 			if err := ring.Add(ctx, item, 600); err != nil {
 				t.Fatal(err)
 			}
@@ -508,6 +615,9 @@ func TestRequestGreaterThanLenItems(t *testing.T) {
 		}
 		defer func() { _ = ring.Close() }()
 
+		namespaceStore := NewNamespaceStore(db)
+		entityStore := NewEntityStore(db)
+
 		ctx, cancel := context.WithCancel(context.Background())
 		defer cancel()
 
@@ -520,6 +630,14 @@ func TestRequestGreaterThanLenItems(t *testing.T) {
 		items := []string{"byers", "frohike"}
 
 		for _, item := range items {
+			entity := corev2.FixtureEntity(item)
+			namespace := corev2.FixtureNamespace(entity.Namespace)
+			if err := namespaceStore.UpdateNamespace(ctx, namespace); err != nil {
+				t.Fatal(err)
+			}
+			if err := entityStore.UpdateEntity(ctx, entity); err != nil {
+				t.Fatal(err)
+			}
 			if err := ring.Add(ctx, item, 600); err != nil {
 				t.Fatal(err)
 			}
@@ -564,6 +682,9 @@ func TestChannelNameTooLong(t *testing.T) {
 		}
 		defer func() { _ = ring.Close() }()
 
+		namespaceStore := NewNamespaceStore(db)
+		entityStore := NewEntityStore(db)
+
 		ctx, cancel := context.WithCancel(context.Background())
 		defer cancel()
 
@@ -576,6 +697,14 @@ func TestChannelNameTooLong(t *testing.T) {
 		items := []string{"byers", "frohike"}
 
 		for _, item := range items {
+			entity := corev2.FixtureEntity(item)
+			namespace := corev2.FixtureNamespace(entity.Namespace)
+			if err := namespaceStore.UpdateNamespace(ctx, namespace); err != nil {
+				t.Fatal(err)
+			}
+			if err := entityStore.UpdateEntity(ctx, entity); err != nil {
+				t.Fatal(err)
+			}
 			if err := ring.Add(ctx, item, 600); err != nil {
 				t.Fatal(err)
 			}

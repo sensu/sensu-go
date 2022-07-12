@@ -3,139 +3,16 @@ package postgres
 import (
 	"bytes"
 	"context"
-	"database/sql"
 	"fmt"
 	"os"
 	"reflect"
-	"strings"
 	"testing"
 
-	"github.com/google/uuid"
 	"github.com/jackc/pgx/v4/pgxpool"
 	"github.com/lib/pq"
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/store"
 )
-
-func withPostgres(t testing.TB, fn func(context.Context, *pgxpool.Pool, string)) {
-	t.Helper()
-	if testing.Short() {
-		t.Skip("skipping postgres test")
-		return
-	}
-	pgURL := os.Getenv("PG_URL")
-	if pgURL == "" {
-		t.Skip("skipping postgres test")
-		return
-	}
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-	db, err := pgxpool.Connect(ctx, pgURL)
-	if err != nil {
-		t.Fatal(err)
-	}
-	dbName := "sensu" + strings.ReplaceAll(uuid.New().String(), "-", "")
-	if _, err := db.Exec(ctx, fmt.Sprintf("CREATE DATABASE %s;", dbName)); err != nil {
-		t.Fatal(err)
-	}
-	defer dropAll(ctx, dbName, pgURL)
-	db.Close()
-	dsn := fmt.Sprintf("%s dbname=%s ", pgURL, dbName)
-	db, err = pgxpool.Connect(ctx, dsn)
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer db.Close()
-	if err := upgrade(ctx, db); err != nil {
-		t.Fatal(err)
-	}
-	fn(ctx, db, dsn)
-}
-
-// only applies the very first schema migration which creates the schema
-func withInitialPostgres(t testing.TB, fn func(context.Context, *pgxpool.Pool)) {
-	t.Helper()
-	if testing.Short() {
-		t.Skip("skipping postgres test")
-		return
-	}
-	pgURL := os.Getenv("PG_URL")
-	if pgURL == "" {
-		t.Skip("skipping postgres test")
-		return
-	}
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-	db, err := pgxpool.Connect(ctx, pgURL)
-	if err != nil {
-		t.Fatal(err)
-	}
-	dbName := "sensu" + strings.ReplaceAll(uuid.New().String(), "-", "")
-	if _, err := db.Exec(ctx, fmt.Sprintf("CREATE DATABASE %s;", dbName)); err != nil {
-		t.Fatal(err)
-	}
-	defer dropAll(ctx, dbName, pgURL)
-	db.Close()
-	db, err = pgxpool.Connect(ctx, fmt.Sprintf("%s dbname=%s ", pgURL, dbName))
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer db.Close()
-	if err := upgradeMigration(ctx, db, 0); err != nil {
-		t.Fatal(err)
-	}
-	fn(ctx, db)
-}
-
-func upgradeMigration(ctx context.Context, db *pgxpool.Pool, migration int) (err error) {
-	tx, berr := db.Begin(ctx)
-	if berr != nil {
-		return err
-	}
-	defer func() {
-		if err == nil {
-			err = tx.Commit(ctx)
-		}
-		if err != nil {
-			if err := tx.Rollback(ctx); err != nil {
-				panic(err)
-			}
-		}
-	}()
-	if err := migrations[migration](tx); err != nil {
-		return err
-	}
-	return nil
-}
-
-func upgrade(ctx context.Context, db *pgxpool.Pool) (err error) {
-	tx, berr := db.Begin(ctx)
-	if berr != nil {
-		return err
-	}
-	defer func() {
-		if err == nil {
-			err = tx.Commit(ctx)
-		}
-		if err != nil {
-			_ = tx.Rollback(ctx)
-		}
-	}()
-	for i, migration := range migrations {
-		if err := migration(tx); err != nil {
-			return fmt.Errorf("migration %d: %s", i, err)
-		}
-	}
-	return nil
-}
-
-func dropAll(ctx context.Context, dbName, pgURL string) {
-	db, err := sql.Open("postgres", pgURL)
-	if err != nil {
-		panic(err)
-	}
-	_, _ = db.ExecContext(ctx, fmt.Sprintf("DROP DATABASE %s;", dbName))
-}
 
 func TestUpdateEvents(t *testing.T) {
 	withPostgres(t, func(ctx context.Context, db *pgxpool.Pool, dsn string) {

@@ -46,9 +46,6 @@ func createProxyEntity(event *corev2.Event, s storev2.Interface) (fErr error) {
 	configReq := storev2.NewResourceRequestFromResource(config)
 	stateReq := storev2.NewResourceRequestFromResource(state)
 
-	// Use postgres when available (enterprise only, entity state only)
-	stateReq.UsePostgres = true
-
 	var (
 		wState, wConfig storev2.Wrapper
 		err             error

@@ -29,6 +29,8 @@ var typeMap = map[string]interface{}{
 	"entity_config":     &EntityConfig{},
 	"EntityState":       &EntityState{},
 	"entity_state":      &EntityState{},
+	"Namespace":         &Namespace{},
+	"namespace":         &Namespace{},
 	"ResourceTemplate":  &ResourceTemplate{},
 	"resource_template": &ResourceTemplate{},
 }

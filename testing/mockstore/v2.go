@@ -2,11 +2,13 @@ package mockstore
 
 import (
 	"context"
+	"errors"
+	"reflect"
 
+	corev3 "github.com/sensu/sensu-go/api/core/v3"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/backend/store/patch"
 	storev2 "github.com/sensu/sensu-go/backend/store/v2"
-	"github.com/sensu/sensu-go/backend/store/v2/wrap"
 	"github.com/stretchr/testify/mock"
 )
 
@@ -38,7 +40,7 @@ func (v *V2MockStore) Delete(ctx context.Context, req storev2.ResourceRequest) e
 
 func (v *V2MockStore) List(ctx context.Context, req storev2.ResourceRequest, pred *store.SelectionPredicate) (storev2.WrapList, error) {
 	args := v.Called(ctx, req, pred)
-	list, _ := args.Get(0).(wrap.List)
+	list, _ := args.Get(0).(storev2.WrapList)
 	return list, args.Error(1)
 }
 
@@ -49,4 +51,64 @@ func (v *V2MockStore) Exists(ctx context.Context, req storev2.ResourceRequest) (
 
 func (v *V2MockStore) Patch(ctx context.Context, req storev2.ResourceRequest, w storev2.Wrapper, patcher patch.Patcher, cond *store.ETagCondition) error {
 	return v.Called(ctx, req, w, patcher, cond).Error(0)
+}
+
+func (v *V2MockStore) Watch(ctx context.Context, req storev2.ResourceRequest) <-chan []storev2.WatchEvent {
+	args := v.Called(ctx, req)
+	return args.Get(0).(<-chan []storev2.WatchEvent)
+}
+
+func (v *V2MockStore) CreateNamespace(ctx context.Context, ns *corev3.Namespace) error {
+	args := v.Called(ctx, ns)
+	return args.Error(1)
+}
+
+func (v *V2MockStore) DeleteNamespace(ctx context.Context, name string) error {
+	args := v.Called(ctx, name)
+	return args.Error(1)
+}
+
+func (v *V2MockStore) Initialize(ctx context.Context, fn storev2.InitializeFunc) error {
+	args := v.Called(ctx, fn)
+	return args.Error(1)
+}
+
+type WrapList[T corev3.Resource] []T
+
+func (w WrapList[T]) Unwrap() ([]corev3.Resource, error) {
+	result := make([]corev3.Resource, 0)
+	for _, resource := range w {
+		result = append(result, resource)
+	}
+	return result, nil
+}
+
+func (w WrapList[T]) UnwrapInto(target interface{}) error {
+	list, ok := target.(*[]T)
+	if !ok {
+		return errors.New("bad target")
+	}
+	*list = w
+	return nil
+}
+
+func (w WrapList[T]) Len() int {
+	return len(w)
+}
+
+type Wrapper[T corev3.Resource] struct {
+	Value T
+}
+
+func (w Wrapper[T]) Unwrap() (corev3.Resource, error) {
+	return w.Value, nil
+}
+
+func (w Wrapper[T]) UnwrapInto(target interface{}) error {
+	val, ok := target.(T)
+	if !ok {
+		panic("bad target")
+	}
+	reflect.ValueOf(val).Elem().Set(reflect.ValueOf(w.Value).Elem())
+	return nil
 }

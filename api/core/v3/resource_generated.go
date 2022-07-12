@@ -105,8 +105,14 @@ func (e *EntityConfig) Validate() error {
 	}
 	var iface interface{} = e
 	if resource, ok := iface.(Resource); ok {
-		if err := ValidateMetadata(resource.GetMetadata()); err != nil {
+		meta := resource.GetMetadata()
+		if err := ValidateMetadata(meta); err != nil {
 			return fmt.Errorf("invalid EntityConfig: %s", err)
+		}
+		if gr, ok := iface.(GlobalResource); ok && gr.IsGlobalResource() {
+			if err := ValidateGlobalMetadata(meta); err != nil {
+				return fmt.Errorf("invalid EntityConfig: %s", err)
+			}
 		}
 	}
 	if validator, ok := iface.(validator); ok {
@@ -211,8 +217,14 @@ func (e *EntityState) Validate() error {
 	}
 	var iface interface{} = e
 	if resource, ok := iface.(Resource); ok {
-		if err := ValidateMetadata(resource.GetMetadata()); err != nil {
+		meta := resource.GetMetadata()
+		if err := ValidateMetadata(meta); err != nil {
 			return fmt.Errorf("invalid EntityState: %s", err)
+		}
+		if gr, ok := iface.(GlobalResource); ok && gr.IsGlobalResource() {
+			if err := ValidateGlobalMetadata(meta); err != nil {
+				return fmt.Errorf("invalid EntityState: %s", err)
+			}
 		}
 	}
 	if validator, ok := iface.(validator); ok {
@@ -253,6 +265,118 @@ func (e *EntityState) GetTypeMeta() corev2.TypeMeta {
 	return corev2.TypeMeta{
 		APIVersion: "core/v3",
 		Type:       "EntityState",
+	}
+}
+
+// SetMetadata sets the provided metadata on the type. If the type does not
+// have any metadata, nothing will happen.
+func (n *Namespace) SetMetadata(meta *corev2.ObjectMeta) {
+	// The function has to use reflection, since not all of the generated types
+	// will have metadata.
+	value := reflect.Indirect(reflect.ValueOf(n))
+	field := value.FieldByName("Metadata")
+	if !field.CanSet() {
+		return
+	}
+	field.Set(reflect.ValueOf(meta))
+}
+
+// StoreName returns the store name for Namespace. It will be
+// overridden if there is a method for Namespace called "storeName".
+func (n *Namespace) StoreName() string {
+	var iface interface{} = n
+	if prefixer, ok := iface.(storeNamer); ok {
+		return prefixer.storeName()
+	}
+	return "namespaces"
+}
+
+// RBACName returns the RBAC name for Namespace. It will be overridden if
+// there is a method for Namespace called "rbacName".
+func (n *Namespace) RBACName() string {
+	var iface interface{} = n
+	if namer, ok := iface.(rbacNamer); ok {
+		return namer.rbacName()
+	}
+	return "namespaces"
+}
+
+// URIPath returns the URI path for Namespace. It will be overridden if
+// there is a method for Namespace called uriPath.
+func (n *Namespace) URIPath() string {
+	var iface interface{} = n
+	if pather, ok := iface.(uriPather); ok {
+		return pather.uriPath()
+	}
+	metaer, ok := iface.(getMetadataer)
+	if !ok {
+		return ""
+	}
+	meta := metaer.GetMetadata()
+	if meta == nil {
+		return uriPath("namespaces", "", "")
+	}
+	return uriPath("namespaces", meta.Namespace, meta.Name)
+}
+
+// Validate validates the Namespace. If the Namespace has metadata,
+// it will be validated via ValidateMetadata. If there is a method for
+// Namespace called validate, then it will be used to cooperatively
+// validate the Namespace.
+func (n *Namespace) Validate() error {
+	if n == nil {
+		return errors.New("nil Namespace")
+	}
+	var iface interface{} = n
+	if resource, ok := iface.(Resource); ok {
+		meta := resource.GetMetadata()
+		if err := ValidateMetadata(meta); err != nil {
+			return fmt.Errorf("invalid Namespace: %s", err)
+		}
+		if gr, ok := iface.(GlobalResource); ok && gr.IsGlobalResource() {
+			if err := ValidateGlobalMetadata(meta); err != nil {
+				return fmt.Errorf("invalid Namespace: %s", err)
+			}
+		}
+	}
+	if validator, ok := iface.(validator); ok {
+		if err := validator.validate(); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// UnmarshalJSON is provided in order to ensure that metadata labels and
+// annotations are never nil.
+func (n *Namespace) UnmarshalJSON(msg []byte) error {
+	type Clone Namespace
+	var clone Clone
+	if err := json.Unmarshal(msg, &clone); err != nil {
+		return err
+	}
+	*n = *(*Namespace)(&clone)
+	var iface interface{} = n
+	var meta *corev2.ObjectMeta
+	if metaer, ok := iface.(getMetadataer); ok {
+		meta = metaer.GetMetadata()
+	}
+	if meta != nil {
+		if meta.Labels == nil {
+			meta.Labels = make(map[string]string)
+		}
+		if meta.Annotations == nil {
+			meta.Annotations = make(map[string]string)
+		}
+	}
+	return nil
+}
+
+// GetTypeMeta gets the type metadata for a Namespace.
+func (n *Namespace) GetTypeMeta() corev2.TypeMeta {
+	return corev2.TypeMeta{
+		APIVersion: "core/v3",
+		Type:       "Namespace",
 	}
 }
 
@@ -317,8 +441,14 @@ func (r *ResourceTemplate) Validate() error {
 	}
 	var iface interface{} = r
 	if resource, ok := iface.(Resource); ok {
-		if err := ValidateMetadata(resource.GetMetadata()); err != nil {
+		meta := resource.GetMetadata()
+		if err := ValidateMetadata(meta); err != nil {
 			return fmt.Errorf("invalid ResourceTemplate: %s", err)
+		}
+		if gr, ok := iface.(GlobalResource); ok && gr.IsGlobalResource() {
+			if err := ValidateGlobalMetadata(meta); err != nil {
+				return fmt.Errorf("invalid ResourceTemplate: %s", err)
+			}
 		}
 	}
 	if validator, ok := iface.(validator); ok {

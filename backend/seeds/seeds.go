@@ -7,11 +7,10 @@ import (
 	"time"
 
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
+	corev3 "github.com/sensu/sensu-go/api/core/v3"
 	"github.com/sensu/sensu-go/backend/authentication/bcrypt"
-	storev1 "github.com/sensu/sensu-go/backend/store"
-	"github.com/sensu/sensu-go/backend/store/etcd"
-	"github.com/sensu/sensu-go/types"
-	clientv3 "go.etcd.io/etcd/client/v3"
+	"github.com/sensu/sensu-go/backend/store"
+	storev2 "github.com/sensu/sensu-go/backend/store/v2"
 )
 
 type Config struct {
@@ -28,247 +27,221 @@ type Config struct {
 
 var ErrAlreadyInitialized = errors.New("sensu-backend already initialized")
 
-// SeedCluster seeds the cluster according to the provided config.
-func SeedCluster(ctx context.Context, store storev1.Store, client *clientv3.Client, config Config) (fErr error) {
+func seedCluster(ctx context.Context, s storev2.Interface, config Config) func(context.Context) error {
 	logger := logger.WithField("component", "backend.seeds")
-
-	initializer, err := store.NewInitializer(ctx)
-	if err != nil {
-		return fmt.Errorf("failed to create seed initializer: %w", err)
-	}
-
-	// Lock initialization key to avoid competing installations
-	if err = initializer.Lock(ctx); err != nil {
-		return fmt.Errorf("failed to create initializer lock: %w", err)
-	}
-	defer func() {
-		if err := initializer.Close(ctx); fErr == nil && err != nil {
-			fErr = fmt.Errorf("failed to close initializer: %w", err)
-		}
-	}()
-
-	// Check that the store hasn't already been initialized
-	initialized, err := initializer.IsInitialized(ctx)
-	if err != nil {
-		return fmt.Errorf("failed to check if cluster has been initialized: %w", err)
-	}
-
-	if initialized {
-		logger.Info("store already initialized")
-		return ErrAlreadyInitialized
-	}
-
 	logger.Info("seeding etcd store with initial data")
 
-	// Create the default namespace
-	if err := setupDefaultNamespace(ctx, store); err != nil {
-		switch err := err.(type) {
-		case *storev1.ErrAlreadyExists:
-			logger.Warn("default namespace already exists")
-		default:
-			msg := "unable to setup default namespace"
-			logger.WithError(err).Error(msg)
-			return fmt.Errorf("%s: %w", msg, err)
-		}
-	}
-
-	// Create the admin user
-	if err := setupAdminUser(ctx, store, config.AdminUsername, config.AdminPassword, config.AdminAPIKey); err != nil {
-		switch err := err.(type) {
-		case *storev1.ErrAlreadyExists:
-			logger.Warn("admin user already exists")
-		default:
-			msg := "could not initialize the admin user"
-			logger.WithError(err).Error(msg)
-			return fmt.Errorf("%s: %w", msg, err)
-		}
-	}
-
-	// Create the agent user
-	if err := setupAgentUser(ctx, store, "agent", "P@ssw0rd!"); err != nil {
-		switch err := err.(type) {
-		case *storev1.ErrAlreadyExists:
-			logger.Warn("agent user already exists")
-		default:
-			msg := "could not initialize the agent user"
-			logger.WithError(err).Error(msg)
-			return fmt.Errorf("%s: %w", msg, err)
-		}
-	}
-
-	// Create the default ClusterRoles
-	if err := setupClusterRoles(ctx, store); err != nil {
-		switch err := err.(type) {
-		case *storev1.ErrAlreadyExists:
-			logger.Warn("default ClusterRoles and Roles already exist")
-		default:
-			msg := "could not initialize the default ClusterRoles and Roles"
-			logger.WithError(err).Error(msg)
-			return fmt.Errorf("%s: %w", msg, err)
-		}
-	}
-
-	// Create the default ClusterRoleBindings
-	if err := setupClusterRoleBindings(ctx, store); err != nil {
-		switch err := err.(type) {
-		case *storev1.ErrAlreadyExists:
-			logger.Warn("default ClusterRoleBindings already exist")
-		default:
-			msg := "could not initialize the default ClusterRoleBindings"
-			logger.WithError(err).Error(msg)
-			return fmt.Errorf("%s: %w", msg, err)
-		}
-	}
-
-	if client != nil {
-		// Migrate the cluster to the latest version
-		if err := etcd.MigrateDB(ctx, client, etcd.Migrations); err != nil {
-			logger.WithError(err).Error("error bringing the database to the latest version")
-			return fmt.Errorf("error bringing the database to the latest version: %w", err)
-		}
-		if len(etcd.EnterpriseMigrations) > 0 {
-			if err = etcd.MigrateEnterpriseDB(ctx, client, etcd.EnterpriseMigrations); err != nil {
-				logger.WithError(err).Error("error bringing the enterprise database to the latest version")
-				return
+	return func(context.Context) error {
+		// Create the default namespace
+		if err := setupDefaultNamespace(ctx, s); err != nil {
+			var alreadyExists *store.ErrAlreadyExists
+			if !errors.As(err, &alreadyExists) {
+				msg := "unable to setup default namespace"
+				logger.WithError(err).Error(msg)
+				return fmt.Errorf("%s: %w", msg, err)
 			}
+			logger.Warn("default namespace already exists")
 		}
-	}
 
-	// Set initialized flag
-	return initializer.FlagAsInitialized(ctx)
+		// Create the admin user
+		if err := setupAdminUser(ctx, s, config.AdminUsername, config.AdminPassword, config.AdminAPIKey); err != nil {
+			var alreadyExists *store.ErrAlreadyExists
+			if !errors.As(err, &alreadyExists) {
+				msg := "could not initialize the admin user"
+				logger.WithError(err).Error(msg)
+				return fmt.Errorf("%s: %w", msg, err)
+			}
+			logger.Warn("admin user already exists")
+		}
+
+		// Create the agent user
+		if err := setupAgentUser(ctx, s, "agent", "P@ssw0rd!"); err != nil {
+			var alreadyExists *store.ErrAlreadyExists
+			if !errors.As(err, &alreadyExists) {
+				msg := "could not initialize the agent user"
+				logger.WithError(err).Error(msg)
+				return fmt.Errorf("%s: %w", msg, err)
+			}
+			logger.Warn("agent user already exists")
+		}
+
+		// Create the default ClusterRoles
+		if err := setupClusterRoles(ctx, s); err != nil {
+			var alreadyExists *store.ErrAlreadyExists
+			if !errors.As(err, &alreadyExists) {
+				msg := "could not initialize the default ClusterRoles and Roles"
+				logger.WithError(err).Error(msg)
+				return fmt.Errorf("%s: %w", msg, err)
+			}
+			logger.Warn("default ClusterRoles and Roles already exist")
+		}
+
+		// Create the default ClusterRoleBindings
+		if err := setupClusterRoleBindings(ctx, s); err != nil {
+			var alreadyExists *store.ErrAlreadyExists
+			if !errors.As(err, &alreadyExists) {
+				msg := "could not initialize the default ClusterRoleBindings"
+				logger.WithError(err).Error(msg)
+				return fmt.Errorf("%s: %w", msg, err)
+			}
+			logger.Warn("default ClusterRoleBindings already exist")
+		}
+		return nil
+	}
+}
+
+// SeedCluster seeds the cluster according to the provided config.
+func SeedCluster(ctx context.Context, s storev2.Interface, config Config) (fErr error) {
+	return s.Initialize(ctx, seedCluster(ctx, s, config))
 }
 
 // SeedInitialDataWithContext is like SeedInitialData except it takes an existing
 // context.
-func SeedInitialDataWithContext(ctx context.Context, store storev1.Store) (err error) {
+func SeedInitialDataWithContext(ctx context.Context, s storev2.Interface) (err error) {
 	config := Config{
 		AdminUsername: "admin",
 		AdminPassword: "P@ssw0rd!",
 	}
-	return SeedCluster(ctx, store, nil, config)
+	return SeedCluster(ctx, s, config)
 }
 
-func setupDefaultNamespace(ctx context.Context, store storev1.Store) error {
-	return store.CreateNamespace(
-		ctx,
-		&types.Namespace{
-			Name: "default",
-		})
+func createResources(ctx context.Context, s storev2.Interface, resources []corev3.Resource) error {
+	for _, resource := range resources {
+		req := storev2.NewResourceRequestFromResource(resource)
+		wrapper, err := storev2.WrapResource(resource)
+		if err != nil {
+			return err
+		}
+		if err := s.CreateIfNotExists(ctx, req, wrapper); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
-func setupClusterRoleBindings(ctx context.Context, store storev1.Store) error {
+func setupDefaultNamespace(ctx context.Context, s storev2.Interface) error {
+	namespace := &corev3.Namespace{
+		Metadata: &corev2.ObjectMeta{
+			Name:        "default",
+			Labels:      make(map[string]string),
+			Annotations: make(map[string]string),
+		},
+	}
+	req := storev2.NewResourceRequestFromResource(namespace)
+	wrapper, err := storev2.WrapResource(namespace)
+	if err != nil {
+		return err
+	}
+	return s.CreateIfNotExists(ctx, req, wrapper)
+}
+
+func setupClusterRoleBindings(ctx context.Context, s storev2.Interface) error {
 	// The cluster-admin ClusterRoleBinding grants permission found in the
 	// cluster-admin ClusterRole to any user belonging to the cluster-admins group
-	clusterAdmin := &types.ClusterRoleBinding{
+	clusterAdmin := &corev2.ClusterRoleBinding{
 		ObjectMeta: corev2.NewObjectMeta("cluster-admin", ""),
-		RoleRef: types.RoleRef{
+		RoleRef: corev2.RoleRef{
 			Type: "ClusterRole",
 			Name: "cluster-admin",
 		},
-		Subjects: []types.Subject{
-			types.Subject{
+		Subjects: []corev2.Subject{
+			{
 				Type: "Group",
 				Name: "cluster-admins",
 			},
 		},
 	}
-	if err := store.CreateClusterRoleBinding(ctx, clusterAdmin); err != nil {
-		return err
-	}
 
 	// The system:agent ClusterRoleBinding grants permission found in the
 	// system-agent ClusterRole to any agents belonging to the system:agents group
-	systemAgent := &types.ClusterRoleBinding{
+	systemAgent := &corev2.ClusterRoleBinding{
 		ObjectMeta: corev2.NewObjectMeta("system:agent", ""),
-		RoleRef: types.RoleRef{
+		RoleRef: corev2.RoleRef{
 			Type: "ClusterRole",
 			Name: "system:agent",
 		},
-		Subjects: []types.Subject{
-			types.Subject{
+		Subjects: []corev2.Subject{
+			{
 				Type: "Group",
 				Name: "system:agents",
 			},
 		},
 	}
-	if err := store.CreateClusterRoleBinding(ctx, systemAgent); err != nil {
-		return err
-	}
 
 	// The system:user ClusterRoleBinding grants permission found in the
 	// system:user ClusterRole to any user belonging to the system:users group
-	systemUser := &types.ClusterRoleBinding{
+	systemUser := &corev2.ClusterRoleBinding{
 		ObjectMeta: corev2.NewObjectMeta("system:user", ""),
-		RoleRef: types.RoleRef{
+		RoleRef: corev2.RoleRef{
 			Type: "ClusterRole",
 			Name: "system:user",
 		},
-		Subjects: []types.Subject{
-			types.Subject{
+		Subjects: []corev2.Subject{
+			{
 				Type: "Group",
 				Name: "system:users",
 			},
 		},
 	}
-	return store.CreateClusterRoleBinding(ctx, systemUser)
+
+	resources := []corev3.Resource{
+		clusterAdmin,
+		systemAgent,
+		systemUser,
+	}
+	return createResources(ctx, s, resources)
 }
 
-func setupClusterRoles(ctx context.Context, store storev1.Store) error {
+func setupClusterRoles(ctx context.Context, s storev2.Interface) error {
 	// The cluster-admin ClusterRole gives access to perform any action on any
 	// resource. When used in a ClusterRoleBinding, it gives full control over
 	// every resource in the cluster and in all namespaces. When used in a
 	// RoleBinding, it gives full control over every resource in the rolebinding's
 	// namespace, including the namespace itself
-	clusterAdmin := &types.ClusterRole{
+	clusterAdmin := &corev2.ClusterRole{
 		ObjectMeta: corev2.NewObjectMeta("cluster-admin", ""),
-		Rules: []types.Rule{
-			types.Rule{
-				Verbs:     []string{types.VerbAll},
-				Resources: []string{types.ResourceAll},
+		Rules: []corev2.Rule{
+			{
+				Verbs:     []string{corev2.VerbAll},
+				Resources: []string{corev2.ResourceAll},
 			},
 		},
-	}
-	if err := store.CreateClusterRole(ctx, clusterAdmin); err != nil {
-		return err
 	}
 
 	// The admin ClusterRole is intended to be used within a namespace using a
 	// RoleBinding. It gives full access to most resources, including the ability
 	// to create Roles and RoleBindings within the namespace but does not allow
 	// write access to the namespace itself
-	admin := &types.ClusterRole{
+	admin := &corev2.ClusterRole{
 		ObjectMeta: corev2.NewObjectMeta("admin", ""),
-		Rules: []types.Rule{
-			types.Rule{
-				Verbs: []string{types.VerbAll},
-				Resources: append(types.CommonCoreResources, []string{
+		Rules: []corev2.Rule{
+			{
+				Verbs: []string{corev2.VerbAll},
+				Resources: append(corev2.CommonCoreResources, []string{
 					"roles",
 					"rolebindings",
 				}...),
 			},
-			types.Rule{
+			{
 				Verbs: []string{"get", "list"},
 				Resources: []string{
 					"namespaces",
 				},
 			},
 		},
-	}
-	if err := store.CreateClusterRole(ctx, admin); err != nil {
-		return err
 	}
 
 	// The edit ClusterRole is intended to be used within a namespace using a
 	// RoleBinding. It allows read/write access to most objects in a namespace. It
 	// does not allow viewing or modifying roles or rolebindings.
-	edit := &types.ClusterRole{
+	edit := &corev2.ClusterRole{
 		ObjectMeta: corev2.NewObjectMeta("edit", ""),
-		Rules: []types.Rule{
-			types.Rule{
-				Verbs:     []string{types.VerbAll},
-				Resources: types.CommonCoreResources,
+		Rules: []corev2.Rule{
+			{
+				Verbs:     []string{corev2.VerbAll},
+				Resources: corev2.CommonCoreResources,
 			},
-			types.Rule{
+			{
 				Verbs: []string{"get", "list"},
 				Resources: []string{
 					"namespaces",
@@ -276,75 +249,77 @@ func setupClusterRoles(ctx context.Context, store storev1.Store) error {
 			},
 		},
 	}
-	if err := store.CreateClusterRole(ctx, edit); err != nil {
-		return err
-	}
 
 	// The view ClusterRole is intended to be used within a namespace using a
 	// RoleBinding. It allows read-only access to see most objects in a namespace.
 	// It does not allow viewing roles or rolebindings.
-	view := &types.ClusterRole{
+	view := &corev2.ClusterRole{
 		ObjectMeta: corev2.NewObjectMeta("view", ""),
-		Rules: []types.Rule{
-			types.Rule{
+		Rules: []corev2.Rule{
+			{
 				Verbs: []string{"get", "list"},
-				Resources: append(types.CommonCoreResources, []string{
+				Resources: append(corev2.CommonCoreResources, []string{
 					"namespaces",
 				}...),
 			},
 		},
 	}
-	if err := store.CreateClusterRole(ctx, view); err != nil {
-		return err
-	}
 
 	// The systemAgent ClusterRole is used by Sensu agents and should not be
 	// modified by the users. Modification to this ClusterRole can result in
 	// non-functional Sensu agents.
-	systemAgent := &types.ClusterRole{
+	systemAgent := &corev2.ClusterRole{
 		ObjectMeta: corev2.NewObjectMeta("system:agent", ""),
-		Rules: []types.Rule{
-			types.Rule{
-				Verbs:     []string{types.VerbAll},
+		Rules: []corev2.Rule{
+			{
+				Verbs:     []string{corev2.VerbAll},
 				Resources: []string{"events"},
 			},
 		},
-	}
-	if err := store.CreateClusterRole(ctx, systemAgent); err != nil {
-		return err
 	}
 
 	// The systemUser ClusterRole is used by local users and should not be
 	// modified by the users. Modification to his ClusterRole can result in
 	// non-functional Sensu users. It allows users to view themselves and change
 	// their own password
-	systemUser := &types.ClusterRole{
+	systemUser := &corev2.ClusterRole{
 		ObjectMeta: corev2.NewObjectMeta("system:user", ""),
-		Rules: []types.Rule{
-			types.Rule{
+		Rules: []corev2.Rule{
+			{
 				Verbs:     []string{"get", "update"},
-				Resources: []string{types.LocalSelfUserResource},
+				Resources: []string{corev2.LocalSelfUserResource},
 			},
 		},
 	}
-	return store.CreateClusterRole(ctx, systemUser)
+
+	resources := []corev3.Resource{
+		clusterAdmin,
+		admin,
+		edit,
+		view,
+		systemAgent,
+		systemUser,
+	}
+
+	return createResources(ctx, s, resources)
 }
 
-func setupAdminUser(ctx context.Context, store storev1.Store, username, password, apiKey string) error {
+func setupAdminUser(ctx context.Context, s storev2.Interface, username, password, apiKey string) error {
 	hash, err := bcrypt.HashPassword(password)
 	if err != nil {
 		return err
 	}
 
-	admin := &types.User{
+	resources := []corev3.Resource{}
+
+	admin := &corev2.User{
 		Username:     username,
 		Password:     hash,
 		PasswordHash: hash,
 		Groups:       []string{"cluster-admins"},
 	}
-	if err := store.CreateUser(ctx, admin); err != nil {
-		return err
-	}
+	resources = append(resources, admin)
+
 	if apiKey != "" {
 		key := &corev2.APIKey{
 			ObjectMeta: corev2.ObjectMeta{
@@ -354,24 +329,26 @@ func setupAdminUser(ctx context.Context, store storev1.Store, username, password
 			Username:  username,
 			CreatedAt: time.Now().Unix(),
 		}
-		if err := store.CreateResource(ctx, key); err != nil {
-			return err
-		}
+		resources = append(resources, key)
 	}
-	return nil
+
+	return createResources(ctx, s, resources)
 }
 
-func setupAgentUser(ctx context.Context, store storev1.Store, username, password string) error {
+func setupAgentUser(ctx context.Context, s storev2.Interface, username, password string) error {
 	hash, err := bcrypt.HashPassword("P@ssw0rd!")
 	if err != nil {
 		return err
 	}
 
-	agent := &types.User{
+	agent := &corev2.User{
 		Username:     username,
 		Password:     hash,
 		PasswordHash: hash,
 		Groups:       []string{"system:agents"},
 	}
-	return store.CreateUser(ctx, agent)
+
+	return createResources(ctx, s, []corev3.Resource{
+		agent,
+	})
 }

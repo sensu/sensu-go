@@ -2,18 +2,11 @@ package postgres
 
 import (
 	"context"
-	"fmt"
-	"os"
-	"strings"
 	"testing"
 
-	"github.com/google/uuid"
-	"github.com/jackc/pgx/v4/pgxpool"
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	corev3 "github.com/sensu/sensu-go/api/core/v3"
-	"github.com/sensu/sensu-go/backend/etcd"
 	"github.com/sensu/sensu-go/backend/store"
-	etcdstore "github.com/sensu/sensu-go/backend/store/etcd"
 	storev2 "github.com/sensu/sensu-go/backend/store/v2"
 	"github.com/sensu/sensu-go/types"
 )
@@ -28,67 +21,8 @@ func init() {
 	storev2.WrapResource = wrapper.WrapResource
 }
 
-func testWithStore(t testing.TB, fn func(store.Store)) {
-	t.Helper()
-	if testing.Short() {
-		t.Skip("skipping postgres test")
-		return
-	}
-	pgURL := os.Getenv("PG_URL")
-	if pgURL == "" {
-		t.Skip("skipping postgres test")
-		return
-	}
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-	db, err := pgxpool.Connect(ctx, pgURL)
-	if err != nil {
-		t.Fatal(err)
-	}
-	dbName := "sensu" + strings.ReplaceAll(uuid.New().String(), "-", "")
-	if _, err := db.Exec(ctx, fmt.Sprintf("CREATE DATABASE %s;", dbName)); err != nil {
-		t.Fatal(err)
-	}
-	defer dropAll(context.Background(), dbName, pgURL)
-	db.Close()
-	db, err = pgxpool.Connect(ctx, fmt.Sprintf("%s dbname=%s ", pgURL, dbName))
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer db.Close()
-	if err := upgrade(ctx, db); err != nil {
-		t.Fatal(err)
-	}
-	eventStore, err := NewEventStore(db, nil, Config{
-		DSN: pgURL,
-	}, 100)
-	if err != nil {
-		t.Fatal(err)
-	}
-	e, cleanup := etcd.NewTestEtcd(t)
-	defer cleanup()
-
-	client := e.NewEmbeddedClient()
-
-	etcdStore := etcdstore.NewStore(client)
-
-	if err := etcdStore.CreateNamespace(context.Background(), corev2.FixtureNamespace("default")); err != nil {
-		t.Fatal(err)
-	}
-
-	entityStore := NewEntityStore(db, client)
-
-	pgStore := Store{
-		EventStore:  eventStore,
-		EntityStore: entityStore,
-		Store:       etcdStore,
-	}
-
-	fn(pgStore)
-}
-
 func TestEntityStorage(t *testing.T) {
-	testWithStore(t, func(s store.Store) {
+	testWithPostgresStore(t, func(s store.Store) {
 		entity := types.FixtureEntity("entity")
 		ctx := context.WithValue(context.Background(), types.NamespaceKey, entity.Namespace)
 		pred := &store.SelectionPredicate{}
@@ -105,6 +39,10 @@ func TestEntityStorage(t *testing.T) {
 			t.Errorf("bad pred.Continue: got %q, want %q", got, want)
 		}
 
+		namespace := corev2.FixtureNamespace(entity.Namespace)
+		if err := s.UpdateNamespace(ctx, namespace); err != nil {
+			t.Fatal(err)
+		}
 		if err := s.UpdateEntity(ctx, entity); err != nil {
 			t.Fatal(err)
 		}
@@ -140,7 +78,7 @@ func TestEntityStorage(t *testing.T) {
 			t.Fatal(err)
 		}
 		if retrieved != nil {
-			t.Fatal("want nil")
+			t.Fatalf("want nil, got %v", retrieved)
 		}
 
 		// Nonexistent entity deletion should return no error.
@@ -148,7 +86,7 @@ func TestEntityStorage(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		// Updating an enity in a nonexistent namespace should not work
+		// Updating an entity in a nonexistent namespace should not work
 		entity.Namespace = "missing"
 		if err = s.UpdateEntity(ctx, entity); err == nil {
 			t.Errorf("expected non-nil error")
@@ -196,9 +134,9 @@ func TestEntityIterationNoPanicMismatched(t *testing.T) {
 		*corev3.FixtureEntityConfig("c"),
 	}
 	states := map[uniqueResource]*corev3.EntityState{
-		uniqueResource{Name: "a", Namespace: "default"}: corev3.FixtureEntityState("a"),
-		uniqueResource{Name: "b", Namespace: "default"}: corev3.FixtureEntityState("b"),
-		uniqueResource{Name: "c", Namespace: "default"}: corev3.FixtureEntityState("c"),
+		{Name: "a", Namespace: "default"}: corev3.FixtureEntityState("a"),
+		{Name: "b", Namespace: "default"}: corev3.FixtureEntityState("b"),
+		{Name: "c", Namespace: "default"}: corev3.FixtureEntityState("c"),
 	}
 	if _, err := entitiesFromConfigsAndStates(configs, states); err != nil {
 		t.Fatal(err)
@@ -206,7 +144,7 @@ func TestEntityIterationNoPanicMismatched(t *testing.T) {
 }
 
 func TestEntityCreateOrUpdateMultipleAddresses(t *testing.T) {
-	testWithStore(t, func(s store.Store) {
+	testWithPostgresStore(t, func(s store.Store) {
 		entity := types.FixtureEntity("entity")
 		ctx := context.WithValue(context.Background(), types.NamespaceKey, entity.Namespace)
 		entity.System.Network = corev2.Network{
@@ -224,6 +162,10 @@ func TestEntityCreateOrUpdateMultipleAddresses(t *testing.T) {
 			},
 		}
 		entity.System.Network.Interfaces[0].Addresses = append(entity.System.Network.Interfaces[0].Addresses, "1.1.1.1")
+		namespace := corev2.FixtureNamespace(entity.Namespace)
+		if err := s.UpdateNamespace(ctx, namespace); err != nil {
+			t.Fatal(err)
+		}
 		if err := s.UpdateEntity(ctx, entity); err != nil {
 			t.Fatal(err)
 		}

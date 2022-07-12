@@ -309,7 +309,7 @@ func Initialize(ctx context.Context, etcdConfigClient *clientv3.Client, pgConfig
 	// Initialize the secrets provider manager
 	b.SecretsProviderManager = secrets.NewProviderManager(br)
 
-	auth := &rbac.Authorizer{Store: b.Store}
+	auth := &rbac.Authorizer{Store: b.ConfigStoreV2}
 
 	// Initialize pipelined
 	pipelineDaemon, err := pipelined.New(pipelined.Config{
@@ -425,7 +425,7 @@ func Initialize(ctx context.Context, etcdConfigClient *clientv3.Client, pgConfig
 	}
 
 	// Start the entity config watcher, so agentd sessions are notified of updates
-	entityConfigWatcher := agentd.GetEntityConfigWatcher(ctx, etcdConfigClient)
+	entityConfigWatcher := agentd.GetEntityConfigWatcher(ctx, b.StoreV2)
 
 	// Prepare the etcd etcdConfigClient TLS config
 	etcdClientTLSInfo := (transport.TLSInfo)(config.Store.EtcdConfigurationStore.ClientTLSInfo)
@@ -464,26 +464,26 @@ func Initialize(ctx context.Context, etcdConfigClient *clientv3.Client, pgConfig
 
 	var clusterVersion string
 
-	//if !config.DevMode {
-	//	// get cluster version from first available etcd endpoint
-	//	endpoints := etcdConfigClient.Endpoints()
-	//	for _, ep := range endpoints {
-	//		status, err := etcdConfigClient.Status(ctx, ep)
-	//		if err != nil {
-	//			logger.WithError(err).Error("error getting etcd cluster version info")
-	//			continue
-	//		}
-	//		clusterVersion = status.Version
-	//		break
-	//	}
-	//} else {
-	status, err := etcdConfigClient.Status(ctx, "http://127.0.0.1:2379")
-	if err != nil {
-		logger.WithError(err).Error("error getting etcd cluster info")
+	if !config.DevMode {
+		// get cluster version from first available etcd endpoint
+		endpoints := etcdConfigClient.Endpoints()
+		for _, ep := range endpoints {
+			status, err := etcdConfigClient.Status(ctx, ep)
+			if err != nil {
+				logger.WithError(err).Error("error getting etcd cluster version info")
+				continue
+			}
+			clusterVersion = status.Version
+			break
+		}
 	} else {
-		clusterVersion = status.Version
+		status, err := etcdConfigClient.Status(ctx, "http://127.0.0.1:2379")
+		if err != nil {
+			logger.WithError(err).Error("error getting etcd cluster info")
+		} else {
+			clusterVersion = status.Version
+		}
 	}
-	//}
 
 	// Load the JWT key pair
 	if err := jwt.LoadKeyPair(viper.GetString(FlagJWTPrivateKeyFile), viper.GetString(FlagJWTPublicKeyFile)); err != nil {
@@ -559,16 +559,15 @@ func Initialize(ctx context.Context, etcdConfigClient *clientv3.Client, pgConfig
 
 	// Initialize agentd
 	agent, err := agentd.New(agentd.Config{
-		Host:                config.AgentHost,
-		Port:                config.AgentPort,
-		Bus:                 bus,
-		Store:               b.Store,
-		TLS:                 config.AgentTLSOptions,
-		RingPool:            b.RingPool,
-		WriteTimeout:        config.AgentWriteTimeout,
-		Client:              etcdConfigClient,
-		Watcher:             entityConfigWatcher,
-		EtcdClientTLSConfig: b.EtcdClientTLSConfig,
+		Host:         config.AgentHost,
+		Port:         config.AgentPort,
+		Bus:          bus,
+		Store:        b.StoreV2,
+		TLS:          config.AgentTLSOptions,
+		RingPool:     b.RingPool,
+		WriteTimeout: config.AgentWriteTimeout,
+		Watcher:      entityConfigWatcher,
+		HealthRouter: b.HealthRouter,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("error initializing %s: %s", agent.Name(), err)

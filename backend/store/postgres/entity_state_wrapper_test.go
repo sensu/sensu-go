@@ -9,19 +9,20 @@ import (
 	corev3 "github.com/sensu/sensu-go/api/core/v3"
 )
 
-func TestEntityWrapperSQLParams(t *testing.T) {
-	want := len(new(EntityWrapper).SQLParams())
-	got := reflect.ValueOf(EntityWrapper{}).NumField()
+func TestEntityStateWrapperSQLParams(t *testing.T) {
+	wrapper := new(EntityStateWrapper)
+	want := len(wrapper.SQLParams())
+	got := reflect.ValueOf(*wrapper).NumField()
 	if got > want {
-		t.Errorf("field added to EntityWrapper but not SQLParams: got %d, want %d", got, want)
+		t.Errorf("field added to EntityStateWrapper but not SQLParams: got %d, want %d", got, want)
 	}
 	if got < want {
-		t.Errorf("field removed from EntityWrapper, but not SQLParams: got %d, want %d", got, want)
+		t.Errorf("field removed from EntityStateWrapper, but not SQLParams: got %d, want %d", got, want)
 	}
 }
 
-func TestEntityWrapperUnwrap(t *testing.T) {
-	wrapper := EntityWrapper{
+func TestEntityStateWrapperUnwrap(t *testing.T) {
+	wrapper := EntityStateWrapper{
 		Namespace:         "default",
 		Name:              "name",
 		LastSeen:          time.Now().Unix(),
@@ -56,13 +57,13 @@ func TestEntityWrapperUnwrap(t *testing.T) {
 		Annotations: map[string]string{"anno": "t8n"},
 	}
 	if got, want := entity.Metadata, wantMeta; !reflect.DeepEqual(got, want) {
-		t.Errorf("bad Metadata: got %v, want %v", got, want)
+		t.Errorf("bad metadata: got %v, want %v", got, want)
 	}
 	if got, want := entity.LastSeen, wrapper.LastSeen; got != want {
-		t.Errorf("bad LastSeen: got %v, want %v", got, want)
+		t.Errorf("bad last_seen: got %v, want %v", got, want)
 	}
 	if got, want := entity.SensuAgentVersion, "10.9.8"; got != want {
-		t.Errorf("bad SensuAgentVersion: got %v, want %v", got, want)
+		t.Errorf("bad sensu_agent_version: got %v, want %v", got, want)
 	}
 	wantSystem := corev2.System{
 		Hostname:       "localhost",
@@ -85,23 +86,23 @@ func TestEntityWrapperUnwrap(t *testing.T) {
 		},
 	}
 	if got, want := entity.System, wantSystem; !reflect.DeepEqual(got, want) {
-		t.Errorf("bad System: got %v, want %v", got, want)
+		t.Errorf("bad system: got %v, want %v", got, want)
 	}
 }
 
-func TestEntityWrapperWrapUnwrap(t *testing.T) {
-	entity := corev3.FixtureEntityState("testent")
+func TestEntityStateWrapperWrapUnwrap(t *testing.T) {
+	state := corev3.FixtureEntityState("testent")
 	// processes not supported
-	entity.System.Processes = nil
-	got := WrapEntityState(entity)
-	entityCopy, err := got.Unwrap()
+	state.System.Processes = nil
+	got := WrapEntityState(state)
+	resource, err := got.Unwrap()
 	if err != nil {
 		t.Fatal(err)
 	}
-	if err := entityCopy.Validate(); err != nil {
+	if err := resource.Validate(); err != nil {
 		t.Fatal(err)
 	}
-	if !reflect.DeepEqual(entity, entityCopy) {
-		t.Errorf("wrap/unwrap cycle yielded different results: got %#v, want %#v", entityCopy, entity)
+	if !reflect.DeepEqual(state, resource) {
+		t.Errorf("wrap/unwrap cycle yielded different results: got %#v, want %#v", resource, state)
 	}
 }

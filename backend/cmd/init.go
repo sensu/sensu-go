@@ -8,12 +8,14 @@ import (
 	"time"
 
 	"github.com/AlecAivazis/survey/v2"
+	"github.com/jackc/pgx/v4/pgxpool"
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend"
 	"github.com/sensu/sensu-go/backend/etcd"
 	"github.com/sensu/sensu-go/backend/seeds"
-	etcdstore "github.com/sensu/sensu-go/backend/store/etcd"
+	etcdstorev1 "github.com/sensu/sensu-go/backend/store/etcd"
 	"github.com/sensu/sensu-go/backend/store/postgres"
+	etcdstorev2 "github.com/sensu/sensu-go/backend/store/v2/etcdstore"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"go.etcd.io/etcd/client/pkg/v3/transport"
@@ -34,6 +36,10 @@ const (
 )
 
 var errEtcdEndpointUnreachable = errors.New("etcd endpoint could not be reached")
+
+// SeedFunc represents the signature of a seed function, used
+// to seed the backend store
+type SeedFunc func(context.Context, *clientv3.Client, *pgxpool.Pool, *backend.Config) (*backend.Backend, error)
 
 type initConfig struct {
 	backend.Config
@@ -103,7 +109,18 @@ func InitCommand() *cobra.Command {
 				return setupErr
 			}
 
+			devMode := viper.GetBool(flagDevMode)
+			configStore := viper.GetString(flagConfigStore)
+			if devMode {
+				configStore = "dev"
+			}
+
+			if configStore == "postgres" {
+				return errors.New("postgres config store not supported yet")
+			}
+
 			cfg := &backend.Config{
+				DevMode: devMode,
 				Store: backend.StoreConfig{
 					ConfigurationStore: viper.GetString(flagConfigStore),
 					PostgresConfigurationStore: postgres.Config{
@@ -112,7 +129,7 @@ func InitCommand() *cobra.Command {
 					PostgresStateStore: postgres.Config{
 						DSN: viper.GetString(flagPGStateStoreDSN),
 					},
-					EtcdConfigurationStore: etcdstore.Config{
+					EtcdConfigurationStore: etcdstorev1.Config{
 						ClientTLSInfo: etcd.TLSInfo{
 							CertFile:       viper.GetString(flagEtcdConfigStoreCertFile),
 							KeyFile:        viper.GetString(flagEtcdConfigStoreKeyFile),
@@ -126,6 +143,10 @@ func InitCommand() *cobra.Command {
 						UseEmbeddedClient: viper.GetBool(flagDevMode),
 					},
 				},
+			}
+
+			if cfg.Store.ConfigurationStore != "etcd" && anyConfig(cfg.Store.EtcdConfigurationStore) {
+				return errors.New("etcd configuration specified, but config-store is not etcd")
 			}
 
 			// Sensu APIs TLS config
@@ -282,8 +303,8 @@ func initializeStore(clientConfig clientv3.Config, initConfig initConfig, endpoi
 	}
 
 	// The endpoint did not return any error, therefore we can proceed
-	store := etcdstore.NewStore(client)
-	if err := seeds.SeedCluster(ctx, store, client, initConfig.SeedConfig); err != nil {
+	store := etcdstorev2.NewStore(client)
+	if err := seeds.SeedCluster(ctx, store, seeds.Config{}); err != nil {
 		if errors.Is(err, seeds.ErrAlreadyInitialized) {
 			return err
 		}

@@ -14,6 +14,11 @@ removed.
 to dangling references when using an older Sensu database with 7.x, if the
 software is upgraded when there are active keepalive failures.
 - Etcd client configuration options have changed.
+- Entity configuration can now be stored in PostgreSQL. Existing entity
+configuration will not be migrated from Etcd.
+- Namespaces can now be stored in PostgreSQL. Existing namespaces will not be
+migrated from Etcd.
+- PostgreSQL >= 9.6 is now required.
 
 ### Added
 - Developer mode can now be enabled with the --dev flag.

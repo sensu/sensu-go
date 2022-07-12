@@ -13,6 +13,7 @@ type Store struct {
 	store.Store
 	store.EventStore
 	store.EntityStore
+	store.NamespaceStore
 }
 
 func (s Store) DeleteEventByEntityCheck(ctx context.Context, entity, check string) error {
@@ -61,4 +62,24 @@ func (s Store) CountEvents(ctx context.Context, pred *store.SelectionPredicate) 
 
 func (s Store) EventStoreSupportsFiltering(ctx context.Context) bool {
 	return s.EventStore.EventStoreSupportsFiltering(ctx)
+}
+
+func (s Store) CreateNamespace(ctx context.Context, namespace *corev2.Namespace) error {
+	return s.NamespaceStore.CreateNamespace(ctx, namespace)
+}
+
+func (s Store) DeleteNamespace(ctx context.Context, name string) error {
+	return s.NamespaceStore.DeleteNamespace(ctx, name)
+}
+
+func (s Store) GetNamespace(ctx context.Context, name string) (*corev2.Namespace, error) {
+	return s.NamespaceStore.GetNamespace(ctx, name)
+}
+
+func (s Store) ListNamespaces(ctx context.Context, pred *store.SelectionPredicate) ([]*corev2.Namespace, error) {
+	return s.NamespaceStore.ListNamespaces(ctx, pred)
+}
+
+func (s Store) UpdateNamespace(ctx context.Context, namespace *corev2.Namespace) error {
+	return s.NamespaceStore.UpdateNamespace(ctx, namespace)
 }
