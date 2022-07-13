@@ -206,7 +206,7 @@ func initPGStateStore(ctx context.Context, b *Backend, client *clientv3.Client, 
 	}
 	b.EventStore = eventStore
 
-	entityStore := postgres.NewEntityStore(db, client)
+	entityStore := postgres.NewEntityStore(db)
 
 	pgStore := postgres.Store{
 		EventStore:  eventStore,
@@ -216,7 +216,7 @@ func initPGStateStore(ctx context.Context, b *Backend, client *clientv3.Client, 
 
 	b.Store = pgStore
 
-	b.StoreV2 = postgres.NewStoreV2(db, client)
+	b.StoreV2 = postgres.NewStoreV2(db)
 
 	// Create the ring pool for round-robin functionality
 	// Set up new postgres ringpool
