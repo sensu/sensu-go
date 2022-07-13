@@ -32,4 +32,9 @@ type Asset implements Node & Namespaced & Resource {
   sharing snippets that can then be imported with `sensuctl create`.
   """
   toJSON: JSON!
+
+  """
+  Builds defines a collection of assets that this asset can install as a dependency for a check, handler, mutator, etc. .
+  """
+  builds: [CoreV2AssetBuild!]!
 }

@@ -1,5 +1,31 @@
 # automatically generated file, do not edit!
 
+"""
+AssetBuild defines an individual asset that an asset can install as a
+dependency for a check, handler, mutator, etc.
+"""
+type CoreV2AssetBuild {
+  
+  """URL is the location of the asset"""
+  url: String!
+  
+  """Sha512 is the SHA-512 checksum of the asset"""
+  sha512: String!
+  
+  """
+  Filters are a collection of sensu queries, used by the system to
+  determine if the asset should be installed. If more than one filter is
+  present the queries are joined by the "AND" operator.
+  """
+  filters: [String!]!
+  
+  """
+  Headers is a collection of key/value string pairs used as HTTP headers
+  for asset retrieval.
+  """
+  headers: JSON!
+}
+
 """Pipeline represents a named collection of pipeline workflows."""
 type CoreV2Pipeline {
   
