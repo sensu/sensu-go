@@ -53,6 +53,14 @@ func NewConfigStore(db *pgxpool.Pool) *ConfigStore {
 	}
 }
 
+func (s *ConfigStore) Initialize(ctx context.Context, fn storev2.InitializeFunc) error {
+	return nil
+}
+
+func (s *ConfigStore) Watch(ctx context.Context, req storev2.ResourceRequest) <-chan []storev2.WatchEvent {
+	return nil
+}
+
 func (s *ConfigStore) CreateOrUpdate(ctx context.Context, request storev2.ResourceRequest, wrapper storev2.Wrapper) error {
 	if err := request.Validate(); err != nil {
 		return &store.ErrNotValid{Err: err}
@@ -284,6 +292,14 @@ func (s *ConfigStore) Patch(ctx context.Context, request storev2.ResourceRequest
 	*w = *wrappedPatch
 
 	return s.UpdateIfExists(ctx, request, w)
+}
+
+func (s *ConfigStore) CreateNamespace(ctx context.Context, ns *v3.Namespace) error {
+	return nil
+}
+
+func (s *ConfigStore) DeleteNamespace(ctx context.Context, name string) error {
+	return nil
 }
 
 func labelsToJSON(labels map[string]string) (string, error) {
