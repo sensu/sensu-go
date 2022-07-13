@@ -317,7 +317,7 @@ func (s *StoreV2) CreateIfNotExists(ctx context.Context, req storev2.ResourceReq
 	return nil
 }
 
-func (s *StoreV2) Get(req storev2.ResourceRequest) (fWrapper storev2.Wrapper, fErr error) {
+func (s *StoreV2) Get(ctx context.Context, req storev2.ResourceRequest) (fWrapper storev2.Wrapper, fErr error) {
 	defer func() {
 		fErr = newStoreV2Error("Get", req.StoreName, fErr)
 	}()
@@ -477,35 +477,6 @@ func (s *StoreV2) HardDelete(ctx context.Context, req storev2.ResourceRequest) (
 	}
 	params = append(params, req.Name)
 	result, err := s.db.Exec(ctx, query, params...)
-	if err != nil {
-		return &store.ErrInternal{Message: err.Error()}
-	}
-	affected := result.RowsAffected()
-	if affected < 1 {
-		return &store.ErrNotFound{Key: fmt.Sprintf("%s.%s", req.Namespace, req.Name)}
-	}
-	return nil
-}
-
-func (s *StoreV2) HardDelete(req storev2.ResourceRequest) (fErr error) {
-	defer func() {
-		fErr = newStoreV2Error("HardDelete", req.StoreName, fErr)
-	}()
-
-	if !req.UsePostgres {
-		return s.etcdStoreV2.Delete(req)
-	}
-
-	query, ok := s.lookupQuery(req, hardDeleteQ)
-	if !ok {
-		return errNoQuery(req.StoreName)
-	}
-	params := []interface{}{}
-	if req.StoreName != namespaceStoreName {
-		params = append(params, req.Namespace)
-	}
-	params = append(params, req.Name)
-	result, err := s.db.Exec(req.Context, query, params...)
 	if err != nil {
 		return &store.ErrInternal{Message: err.Error()}
 	}
@@ -744,33 +715,6 @@ func (s *StoreV2) HardDeleted(ctx context.Context, req storev2.ResourceRequest) 
 	query, ok := s.lookupQuery(req, op)
 	if !ok {
 		return false, errNoQuery(req.StoreName)
-	}
-
-	params := []interface{}{}
-	if req.StoreName != namespaceStoreName {
-		params = append(params, req.Namespace)
-	}
-	params = append(params, req.Name)
-
-	row := s.db.QueryRow(req.Context, query, params...)
-	var found bool
-	err := row.Scan(&found)
-	if err == nil {
-		return found, nil
-	}
-	if err == pgx.ErrNoRows {
-		return false, nil
-	}
-	return false, &store.ErrInternal{Message: err.Error()}
-}
-
-func (s *StoreV2) Patch(req storev2.ResourceRequest, w storev2.Wrapper, patcher patch.Patcher, conditions *store.ETagCondition) (fErr error) {
-	defer func() {
-		fErr = newStoreV2Error("Patch", req.StoreName, fErr)
-	}()
-
-	if !req.UsePostgres {
-		return s.etcdStoreV2.Patch(req, w, patcher, conditions)
 	}
 
 	params := []interface{}{}

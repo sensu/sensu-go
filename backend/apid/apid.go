@@ -171,7 +171,7 @@ func CoreSubrouter(router *mux.Router, cfg Config) *mux.Router {
 		middlewares.Authentication{Store: cfg.Store},
 		middlewares.SimpleLogger{},
 		middlewares.AuthorizationAttributes{},
-		middlewares.Authorization{Authorizer: &rbac.Authorizer{Store: cfg.ConfigStoreV2}},
+		middlewares.Authorization{Authorizer: &rbac.Authorizer{Store: cfg.Store}},
 		middlewares.LimitRequest{Limit: cfg.RequestLimit},
 		middlewares.Pagination{},
 	)
@@ -207,7 +207,7 @@ func EntityLimitedCoreSubrouter(router *mux.Router, cfg Config) *mux.Router {
 		middlewares.Authentication{Store: cfg.Store},
 		middlewares.SimpleLogger{},
 		middlewares.AuthorizationAttributes{},
-		middlewares.Authorization{Authorizer: &rbac.Authorizer{Store: cfg.ConfigStoreV2}},
+		middlewares.Authorization{Authorizer: &rbac.Authorizer{Store: cfg.Store}},
 		middlewares.LimitRequest{Limit: cfg.RequestLimit},
 		middlewares.Pagination{},
 	)

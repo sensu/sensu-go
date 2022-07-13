@@ -45,7 +45,7 @@ func testWithPostgresConfigStore(t *testing.T, fn func(p storev2.Interface)) {
 	_, err = db.Exec(ctx, fmt.Sprintf("CREATE DATABASE %s;", dbName))
 	require.NoError(t, err)
 
-	defer dropAll(context.Background(), dbName, pgURL)
+	defer dropAll(t, dbName, pgURL)
 	db.Close()
 
 	testURL := fmt.Sprintf("%s dbname=%s ", pgURL, dbName)
@@ -399,13 +399,12 @@ func TestConfigStore_Patch(t *testing.T) {
 
 func createOrUpdateEntity(ctx context.Context, pgStore storev2.Interface, entity *corev3.EntityConfig) error {
 	req := storev2.ResourceRequest{
-		APIVersion:  entity.GetTypeMeta().APIVersion,
-		Type:        entity.GetTypeMeta().Type,
-		Namespace:   entity.Metadata.Namespace,
-		Name:        entity.Metadata.Name,
-		StoreName:   "entity_configs",
-		SortOrder:   0,
-		UsePostgres: true,
+		APIVersion: entity.GetTypeMeta().APIVersion,
+		Type:       entity.GetTypeMeta().Type,
+		Namespace:  entity.Metadata.Namespace,
+		Name:       entity.Metadata.Name,
+		StoreName:  "entity_configs",
+		SortOrder:  0,
 	}
 
 	wrapper, err := wrapEntity(entity)
@@ -418,13 +417,12 @@ func createOrUpdateEntity(ctx context.Context, pgStore storev2.Interface, entity
 
 func createIfNotExists(ctx context.Context, pgStore storev2.Interface, entity *corev3.EntityConfig) error {
 	req := storev2.ResourceRequest{
-		APIVersion:  entity.GetTypeMeta().APIVersion,
-		Type:        entity.GetTypeMeta().Type,
-		Namespace:   entity.Metadata.Namespace,
-		Name:        entity.Metadata.Name,
-		StoreName:   "entity_configs",
-		SortOrder:   0,
-		UsePostgres: true,
+		APIVersion: entity.GetTypeMeta().APIVersion,
+		Type:       entity.GetTypeMeta().Type,
+		Namespace:  entity.Metadata.Namespace,
+		Name:       entity.Metadata.Name,
+		StoreName:  "entity_configs",
+		SortOrder:  0,
 	}
 
 	wrapper, err := wrapEntity(entity)
@@ -439,13 +437,12 @@ func listEntities(ctx context.Context, pgStore storev2.Interface, namespace stri
 	entityConfig := corev3.EntityConfig{}
 	typeMeta := entityConfig.GetTypeMeta()
 	req := storev2.ResourceRequest{
-		Namespace:   namespace,
-		Name:        "",
-		StoreName:   "entity_configs",
-		APIVersion:  typeMeta.APIVersion,
-		Type:        typeMeta.Type,
-		SortOrder:   0,
-		UsePostgres: true,
+		Namespace:  namespace,
+		Name:       "",
+		StoreName:  "entity_configs",
+		APIVersion: typeMeta.APIVersion,
+		Type:       typeMeta.Type,
+		SortOrder:  0,
 	}
 
 	list, err := pgStore.List(ctx, req, predicate)
@@ -474,13 +471,12 @@ func getEntity(ctx context.Context, pgStore storev2.Interface, namespace, name s
 	entityConfig := corev3.EntityConfig{}
 	typeMeta := entityConfig.GetTypeMeta()
 	req := storev2.ResourceRequest{
-		Namespace:   namespace,
-		Name:        name,
-		StoreName:   "entity_configs",
-		APIVersion:  typeMeta.APIVersion,
-		Type:        typeMeta.Type,
-		SortOrder:   0,
-		UsePostgres: true,
+		Namespace:  namespace,
+		Name:       name,
+		StoreName:  "entity_configs",
+		APIVersion: typeMeta.APIVersion,
+		Type:       typeMeta.Type,
+		SortOrder:  0,
 	}
 
 	entityWrapper, err := pgStore.Get(ctx, req)
@@ -505,13 +501,12 @@ func deleteEntity(ctx context.Context, pgStore storev2.Interface, namespace, nam
 	entityConfig := corev3.EntityConfig{}
 	typeMeta := entityConfig.GetTypeMeta()
 	req := storev2.ResourceRequest{
-		Namespace:   namespace,
-		Name:        name,
-		StoreName:   "entity_configs",
-		APIVersion:  typeMeta.APIVersion,
-		Type:        typeMeta.Type,
-		SortOrder:   0,
-		UsePostgres: true,
+		Namespace:  namespace,
+		Name:       name,
+		StoreName:  "entity_configs",
+		APIVersion: typeMeta.APIVersion,
+		Type:       typeMeta.Type,
+		SortOrder:  0,
 	}
 
 	return pgStore.Delete(ctx, req)
@@ -521,13 +516,12 @@ func entityExists(ctx context.Context, pgStore storev2.Interface, namespace, nam
 	entityConfig := corev3.EntityConfig{}
 	typeMeta := entityConfig.GetTypeMeta()
 	req := storev2.ResourceRequest{
-		Namespace:   namespace,
-		Name:        name,
-		StoreName:   "entity_configs",
-		APIVersion:  typeMeta.APIVersion,
-		Type:        typeMeta.Type,
-		SortOrder:   0,
-		UsePostgres: true,
+		Namespace:  namespace,
+		Name:       name,
+		StoreName:  "entity_configs",
+		APIVersion: typeMeta.APIVersion,
+		Type:       typeMeta.Type,
+		SortOrder:  0,
 	}
 
 	return pgStore.Exists(ctx, req)
@@ -535,13 +529,12 @@ func entityExists(ctx context.Context, pgStore storev2.Interface, namespace, nam
 
 func updateIfExists(ctx context.Context, pgStore storev2.Interface, entityConfig *corev3.EntityConfig) error {
 	req := storev2.ResourceRequest{
-		APIVersion:  entityConfig.GetTypeMeta().APIVersion,
-		Type:        entityConfig.GetTypeMeta().Type,
-		Namespace:   entityConfig.Metadata.Namespace,
-		Name:        entityConfig.Metadata.Name,
-		StoreName:   "entity_configs",
-		SortOrder:   0,
-		UsePostgres: true,
+		APIVersion: entityConfig.GetTypeMeta().APIVersion,
+		Type:       entityConfig.GetTypeMeta().Type,
+		Namespace:  entityConfig.Metadata.Namespace,
+		Name:       entityConfig.Metadata.Name,
+		StoreName:  "entity_configs",
+		SortOrder:  0,
 	}
 
 	wrapper, err := wrapEntity(entityConfig)

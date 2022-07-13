@@ -535,94 +535,6 @@ func TestStoreHardDelete(t *testing.T) {
 				if err != nil {
 					t.Fatal(err)
 				}
-				exists, err := s.(*StoreV2).Exists(tt.args.req)
-				if err != nil {
-					t.Fatal(err)
-				}
-				require.False(t, exists)
-			})
-		})
-	}
-}
-
-func TestStoreHardDelete(t *testing.T) {
-	type args struct {
-		req     storev2.ResourceRequest
-		wrapper storev2.Wrapper
-	}
-	tests := []struct {
-		name       string
-		args       args
-		beforeHook func(*testing.T, storev2.Interface)
-	}{
-		{
-			name: "an entity config can be hard deleted",
-			args: func() args {
-				ctx := context.Background()
-				cfg := corev3.FixtureEntityConfig("foo")
-				req := storev2.NewResourceRequestFromResource(ctx, cfg)
-				req.UsePostgres = true
-				return args{
-					req:     req,
-					wrapper: WrapEntityConfig(cfg),
-				}
-			}(),
-			beforeHook: func(t *testing.T, s storev2.Interface) {
-				createNamespace(t, s, "default")
-			},
-		},
-		{
-			name: "an entity state can be hard deleted",
-			args: func() args {
-				ctx := context.Background()
-				state := corev3.FixtureEntityState("foo")
-				req := storev2.NewResourceRequestFromResource(ctx, state)
-				req.UsePostgres = true
-				return args{
-					req:     req,
-					wrapper: WrapEntityState(state),
-				}
-			}(),
-			beforeHook: func(t *testing.T, s storev2.Interface) {
-				createNamespace(t, s, "default")
-				createEntityConfig(t, s, "foo")
-			},
-		},
-		{
-			name: "a namespace can be hard deleted",
-			args: func() args {
-				ctx := context.Background()
-				ns := corev3.FixtureNamespace("bar")
-				req := storev2.NewResourceRequestFromResource(ctx, ns)
-				req.UsePostgres = true
-				return args{
-					req:     req,
-					wrapper: WrapNamespace(ns),
-				}
-			}(),
-			beforeHook: func(t *testing.T, s storev2.Interface) {
-				createNamespace(t, s, "default")
-			},
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			testWithPostgresStoreV2(t, func(s storev2.Interface) {
-				if tt.beforeHook != nil {
-					tt.beforeHook(t, s)
-				}
-
-				// CreateIfNotExists should succeed
-				if err := s.CreateIfNotExists(tt.args.req, tt.args.wrapper); err != nil {
-					t.Fatal(err)
-				}
-				if err := s.(*StoreV2).HardDelete(tt.args.req); err != nil {
-					t.Fatal(err)
-				}
-				exists, err := s.(*StoreV2).Exists(tt.args.req)
-				if err != nil {
-					t.Fatal(err)
-				}
 				require.False(t, exists)
 			})
 		})
@@ -1001,7 +913,6 @@ func TestStoreGetMultiple(t *testing.T) {
 			}(),
 			reqs: func(t *testing.T, s storev2.Interface) []storev2.ResourceRequest {
 				createNamespace(t, s, "default")
-				ctx := context.Background()
 				reqs := make([]storev2.ResourceRequest, 0)
 				for i := 0; i < 10; i++ {
 					entityName := fmt.Sprintf("foo-%d", i)
@@ -1038,7 +949,6 @@ func TestStoreGetMultiple(t *testing.T) {
 			}(),
 			reqs: func(t *testing.T, s storev2.Interface) []storev2.ResourceRequest {
 				createNamespace(t, s, "default")
-				ctx := context.Background()
 				reqs := make([]storev2.ResourceRequest, 0)
 				for i := 0; i < 10; i++ {
 					entityName := fmt.Sprintf("foo-%d", i)
