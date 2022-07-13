@@ -30,10 +30,10 @@ type GraphQLRouter struct {
 
 // Mount the GraphQLRouter to a parent Router
 func (r *GraphQLRouter) Mount(parent *mux.Router) {
-	parent.HandleFunc("/graphql", actionHandler(r.query)).Methods(http.MethodPost)
+	parent.HandleFunc("/graphql", r.query).Methods(http.MethodPost)
 }
 
-func (r *GraphQLRouter) query(req *http.Request) (interface{}, error) {
+func (r *GraphQLRouter) query(w http.ResponseWriter, req *http.Request) {
 	timeout := r.Timeout
 	if timeout == 0 {
 		timeout = graphqlDefaultTimeout
@@ -47,7 +47,8 @@ func (r *GraphQLRouter) query(req *http.Request) (interface{}, error) {
 	// Parse request body
 	var reqBody interface{}
 	if err := json.NewDecoder(req.Body).Decode(&reqBody); err != nil {
-		return nil, err
+		WriteError(w, err)
+		return
 	}
 
 	// If list parse each operation
@@ -64,7 +65,7 @@ func (r *GraphQLRouter) query(req *http.Request) (interface{}, error) {
 	case map[string]interface{}:
 		ops = append(ops, reqBody)
 	default:
-		return nil, errors.New("received unexpected request body")
+		WriteError(w, errors.New("received unexpected response body"))
 	}
 
 	claims := jwt.GetClaimsFromContext(req.Context())
@@ -106,10 +107,12 @@ func (r *GraphQLRouter) query(req *http.Request) (interface{}, error) {
 	}
 
 	if timedOut {
-		return results, actions.NewErrorf(actions.DeadlineExceeded)
+		WriteError(w, actions.NewErrorf(actions.DeadlineExceeded))
+		return
 	}
 	if receivedList {
-		return results, nil
+		RespondWith(w, req, results)
+	} else {
+		RespondWith(w, req, results[0])
 	}
-	return results[0], nil
 }

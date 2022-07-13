@@ -40,11 +40,11 @@ func TestHttpApiChecksAdhocRequest(t *testing.T) {
 		testutil.ContextWithNamespace("default"),
 	)
 
-	store := &mockstore.MockStore{}
+	store := &mockstore.V2MockStore{}
 	queue := &mockqueue.MockQueue{}
 	adhocRequest := corev2.FixtureAdhocRequest("check1", []string{"subscription1", "subscription2"})
 	checkConfig := corev2.FixtureCheckConfig("check1")
-	store.On("GetCheckConfigByName", mock.Anything, "check1").Return(checkConfig, nil)
+	store.On("Get", mock.Anything, mock.Anything).Return(mockstore.Wrapper[*corev2.CheckConfig]{Value: checkConfig}, nil)
 	queue.On("Enqueue", mock.Anything, mock.Anything).Return(nil)
 	getter := &mockqueue.Getter{}
 	getter.On("GetQueue", mock.Anything).Return(queue)
@@ -70,7 +70,7 @@ func TestHttpApiChecksAdhocRequest(t *testing.T) {
 
 func TestChecksRouter(t *testing.T) {
 	// Setup the router
-	s := &mockstore.MockStore{}
+	s := &mockstore.V2MockStore{}
 	router := ChecksRouter{handlers: handlers.Handlers{
 		Resource: &corev2.CheckConfig{},
 		Store:    s,
@@ -84,7 +84,7 @@ func TestChecksRouter(t *testing.T) {
 	tests := []routerTestCase{}
 	tests = append(tests, getTestCases(fixture)...)
 	tests = append(tests, listTestCases(empty)...)
-	tests = append(tests, createTestCases(empty)...)
+	tests = append(tests, createTestCases(fixture)...)
 	tests = append(tests, updateTestCases(fixture)...)
 	tests = append(tests, deleteTestCases(fixture)...)
 	for _, tt := range tests {

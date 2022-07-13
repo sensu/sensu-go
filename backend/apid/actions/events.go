@@ -9,6 +9,7 @@ import (
 	"github.com/sensu/sensu-go/backend/store"
 
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
+	corev3 "github.com/sensu/sensu-go/api/core/v3"
 )
 
 const deletedEventSentinel = -1
@@ -28,7 +29,7 @@ func NewEventController(store store.EventStore, bus messaging.MessageBus) EventC
 }
 
 // List returns resources available to the viewer filter by given params.
-func (a EventController) List(ctx context.Context, pred *store.SelectionPredicate) ([]corev2.Resource, error) {
+func (a EventController) List(ctx context.Context, pred *store.SelectionPredicate) ([]corev3.Resource, error) {
 	var results []*corev2.Event
 	var err error
 
@@ -43,9 +44,9 @@ func (a EventController) List(ctx context.Context, pred *store.SelectionPredicat
 		return nil, NewError(InternalErr, err)
 	}
 
-	resources := make([]corev2.Resource, len(results))
+	resources := make([]corev3.Resource, len(results))
 	for i, v := range results {
-		resources[i] = corev2.Resource(v)
+		resources[i] = corev3.Resource(v)
 	}
 
 	return resources, nil

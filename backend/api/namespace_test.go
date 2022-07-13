@@ -926,14 +926,12 @@ func TestNamespaceCreateSideEffects(t *testing.T) {
 	s.AssertNumberOfCalls(t, "CreateOrUpdate", 3)
 
 	s.On("Delete", mock.Anything, mock.Anything).Return(nil)
-	s.On("DeleteNamespace", mock.Anything, mock.Anything).Return(nil)
 
 	if err := client.DeleteNamespace(ctx, namespace.Metadata.Name); err != nil {
 		t.Fatal(err)
 	}
 
-	s.AssertNumberOfCalls(t, "Delete", 2)
-	s.AssertNumberOfCalls(t, "DeleteNamespace", 1)
+	s.AssertNumberOfCalls(t, "Delete", 3)
 }
 
 func TestNamespaceUpdateSideEffects(t *testing.T) {
@@ -1006,12 +1004,10 @@ func TestNamespaceUpdateSideEffects(t *testing.T) {
 	s.AssertNumberOfCalls(t, "CreateOrUpdate", 4)
 
 	s.On("Delete", mock.Anything, mock.Anything).Return(nil)
-	s.On("DeleteNamespace", mock.Anything, mock.Anything).Return(nil)
 
 	if err := client.DeleteNamespace(ctx, namespace.Metadata.Name); err != nil {
 		t.Fatal(err)
 	}
 
-	s.AssertNumberOfCalls(t, "Delete", 2)
-	s.AssertNumberOfCalls(t, "DeleteNamespace", 1)
+	s.AssertNumberOfCalls(t, "Delete", 3)
 }

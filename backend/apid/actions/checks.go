@@ -7,6 +7,7 @@ import (
 
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/store"
+	storev2 "github.com/sensu/sensu-go/backend/store/v2"
 	"github.com/sensu/sensu-go/types"
 	utilstrings "github.com/sensu/sensu-go/util/strings"
 )
@@ -17,12 +18,12 @@ var (
 
 // CheckController exposes actions which a viewer can perform.
 type CheckController struct {
-	store      store.CheckConfigStore
+	store      storev2.Interface
 	checkQueue types.Queue
 }
 
 // NewCheckController returns new CheckController
-func NewCheckController(store store.CheckConfigStore, getter types.QueueGetter) CheckController {
+func NewCheckController(store storev2.Interface, getter types.QueueGetter) CheckController {
 	return CheckController{
 		store:      store,
 		checkQueue: getter.GetQueue(adhocQueueName),
@@ -33,16 +34,24 @@ func NewCheckController(store store.CheckConfigStore, getter types.QueueGetter) 
 // viewer.
 func (a CheckController) Find(ctx context.Context, name string) (*corev2.CheckConfig, error) {
 	// Fetch from store
-	result, serr := a.store.GetCheckConfigByName(ctx, name)
-
-	if serr != nil {
-		return nil, NewError(InternalErr, serr)
+	var check corev2.CheckConfig
+	check.Name = name
+	check.Namespace = corev2.ContextNamespace(ctx)
+	req := storev2.NewResourceRequestFromResource(&check)
+	wrapper, err := a.store.Get(ctx, req)
+	if err != nil {
+		if _, ok := err.(*store.ErrNotFound); ok {
+			return nil, NewErrorf(NotFound)
+		} else {
+			return nil, NewError(InternalErr, err)
+		}
 	}
-	if result == nil {
-		return nil, NewErrorf(NotFound)
+
+	if err := wrapper.UnwrapInto(&check); err != nil {
+		return nil, NewError(InternalErr, err)
 	}
 
-	return result, nil
+	return &check, nil
 }
 
 // AddCheckHook adds an association between a hook and a check
@@ -96,19 +105,13 @@ func (a CheckController) RemoveCheckHook(ctx context.Context, checkName string, 
 	})
 }
 
-func (a CheckController) findCheckConfig(ctx context.Context, name string) (*corev2.CheckConfig, error) {
-	result, serr := a.store.GetCheckConfigByName(ctx, name)
-	if serr != nil {
-		return nil, NewError(InternalErr, serr)
-	} else if result == nil {
-		return nil, NewErrorf(NotFound)
-	}
-
-	return result, nil
-}
-
 func (a CheckController) updateCheckConfig(ctx context.Context, check *corev2.CheckConfig) error {
-	if err := a.store.UpdateCheckConfig(ctx, check); err != nil {
+	req := storev2.NewResourceRequestFromResource(check)
+	wrapper, err := storev2.WrapResource(check)
+	if err != nil {
+		return NewError(InternalErr, err)
+	}
+	if err := a.store.CreateOrUpdate(ctx, req, wrapper); err != nil {
 		return NewError(InternalErr, err)
 	}
 
@@ -121,9 +124,9 @@ func (a CheckController) findAndUpdateCheckConfig(
 	configureFn func(*corev2.CheckConfig) error,
 ) error {
 	// Find
-	check, serr := a.findCheckConfig(ctx, name)
-	if serr != nil {
-		return serr
+	check, err := a.Find(ctx, name)
+	if err != nil {
+		return err
 	}
 
 	// Configure

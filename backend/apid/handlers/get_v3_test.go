@@ -67,14 +67,14 @@ func TestHandlers_GetV3Resource(t *testing.T) {
 			}
 
 			h := Handlers{
-				V3Resource: &fixture.V3Resource{},
-				StoreV2:    store,
+				Resource: &fixture.V3Resource{},
+				Store:    store,
 			}
 
 			r, _ := http.NewRequest(http.MethodGet, "/", nil)
 			r = mux.SetURLVars(r, tt.urlVars)
 
-			got, err := h.GetV3Resource(r)
+			got, err := h.GetResource(r)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("Handlers.GetResource() error = %v, wantErr %v", err, tt.wantErr)
 				return

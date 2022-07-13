@@ -3,7 +3,6 @@ package handlers
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -33,7 +32,7 @@ const (
 var acceptedContentTypes = []string{mergePatchContentType}
 
 // PatchResource patches a given resource, using the request body as the patch
-func (h Handlers) PatchResource(r *http.Request) (interface{}, error) {
+func (h Handlers) PatchResource(r *http.Request) (corev3.Resource, error) {
 	// Read the request body
 	body, err := ioutil.ReadAll(r.Body)
 	if err != nil {
@@ -84,26 +83,26 @@ func (h Handlers) PatchResource(r *http.Request) (interface{}, error) {
 		return nil, actions.NewError(actions.InvalidArgument, err)
 	}
 
-	if h.Resource != nil {
-		return h.patchV2Resource(r.Context(), body, name, patcher, conditions)
-	} else if h.V3Resource != nil {
-		return h.patchV3Resource(r.Context(), body, name, namespace, patcher, conditions)
-	}
-
-	return nil, actions.NewError(actions.InvalidArgument, errors.New("no resource available"))
+	return h.patchV3Resource(r.Context(), body, name, namespace, patcher, conditions)
 }
 
-func (h Handlers) patchV2Resource(ctx context.Context, body []byte, name string, patcher patch.Patcher, conditions *store.ETagCondition) (interface{}, error) {
+func (h Handlers) patchV2Resource(ctx context.Context, body []byte, name string, patcher patch.Patcher, conditions *store.ETagCondition) (corev3.Resource, error) {
 	payload := reflect.New(reflect.TypeOf(h.Resource).Elem())
 	if err := json.Unmarshal(body, payload.Interface()); err != nil {
 		return nil, actions.NewError(actions.InvalidArgument, err)
 	}
-	resource, ok := payload.Interface().(corev2.Resource)
+	resource, ok := payload.Interface().(corev3.Resource)
 	if !ok {
 		return nil, actions.NewErrorf(actions.InvalidArgument)
 	}
 
-	if err := h.Store.PatchResource(ctx, resource, name, patcher, conditions); err != nil {
+	req := storev2.NewResourceRequestFromResource(resource)
+	wrapper, err := storev2.WrapResource(resource)
+	if err != nil {
+		return nil, actions.NewErrorf(actions.InvalidArgument)
+	}
+
+	if err := h.Store.Patch(ctx, req, wrapper, patcher, conditions); err != nil {
 		switch err := err.(type) {
 		case *store.ErrNotFound:
 			return nil, actions.NewError(actions.NotFound, err)
@@ -119,11 +118,12 @@ func (h Handlers) patchV2Resource(ctx context.Context, body []byte, name string,
 	return resource, nil
 }
 
-func (h Handlers) patchV3Resource(ctx context.Context, body []byte, name, namespace string, patcher patch.Patcher, conditions *store.ETagCondition) (interface{}, error) {
-	payload := reflect.New(reflect.TypeOf(h.V3Resource).Elem())
+func (h Handlers) patchV3Resource(ctx context.Context, body []byte, name, namespace string, patcher patch.Patcher, conditions *store.ETagCondition) (corev3.Resource, error) {
+	payload := reflect.New(reflect.TypeOf(h.Resource).Elem())
 	if err := json.Unmarshal(body, payload.Interface()); err != nil {
 		return nil, actions.NewError(actions.InvalidArgument, err)
 	}
+
 	resource, ok := payload.Interface().(corev3.Resource)
 	if !ok {
 		return nil, actions.NewErrorf(actions.InvalidArgument)
@@ -138,7 +138,7 @@ func (h Handlers) patchV3Resource(ctx context.Context, body []byte, name, namesp
 		return nil, actions.NewError(actions.InvalidArgument, err)
 	}
 
-	if err := h.StoreV2.Patch(ctx, req, w, patcher, conditions); err != nil {
+	if err := h.Store.Patch(ctx, req, w, patcher, conditions); err != nil {
 		switch err := err.(type) {
 		case *store.ErrNotFound:
 			return nil, actions.NewError(actions.NotFound, err)

@@ -243,3 +243,18 @@ func (u *User) GetMetadata() *ObjectMeta {
 func (u *User) SetMetadata(meta *ObjectMeta) {
 	u.SetObjectMeta(*meta)
 }
+
+func (t *TessenConfig) StoreName() string {
+	return "tessen_configs"
+}
+
+func (t *TessenConfig) GetMetadata() *ObjectMeta {
+	return &ObjectMeta{
+		Namespace: "",
+		Name:      "tessen_config",
+	}
+}
+
+func (t *TessenConfig) SetMetadata(meta *ObjectMeta) {
+	// no-op
+}

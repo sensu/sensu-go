@@ -4,7 +4,7 @@ import (
 	"github.com/gorilla/mux"
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/apid/handlers"
-	"github.com/sensu/sensu-go/backend/store"
+	storev2 "github.com/sensu/sensu-go/backend/store/v2"
 )
 
 // AssetsRouter handles requests for /assets
@@ -13,7 +13,7 @@ type AssetsRouter struct {
 }
 
 // NewAssetRouter instantiates new router for controlling asset resources
-func NewAssetRouter(store store.ResourceStore) *AssetsRouter {
+func NewAssetRouter(store storev2.Interface) *AssetsRouter {
 	return &AssetsRouter{
 		handlers: handlers.Handlers{
 			Resource: &corev2.Asset{},

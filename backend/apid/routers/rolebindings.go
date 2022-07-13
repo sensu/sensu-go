@@ -4,7 +4,7 @@ import (
 	"github.com/gorilla/mux"
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/apid/handlers"
-	"github.com/sensu/sensu-go/backend/store"
+	storev2 "github.com/sensu/sensu-go/backend/store/v2"
 )
 
 // RoleBindingsRouter handles requests for RoleBindings.
@@ -13,7 +13,7 @@ type RoleBindingsRouter struct {
 }
 
 // NewRoleBindingsRouter instantiates a new router for RoleBindings.
-func NewRoleBindingsRouter(store store.ResourceStore) *RoleBindingsRouter {
+func NewRoleBindingsRouter(store storev2.Interface) *RoleBindingsRouter {
 	return &RoleBindingsRouter{
 		handlers: handlers.Handlers{
 			Resource: &corev2.RoleBinding{},

@@ -3,38 +3,51 @@ package actions
 import (
 	"context"
 	"errors"
+	"fmt"
 
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
+	corev3 "github.com/sensu/sensu-go/api/core/v3"
 	"github.com/sensu/sensu-go/backend/authentication/bcrypt"
 	"github.com/sensu/sensu-go/backend/store"
+	storev2 "github.com/sensu/sensu-go/backend/store/v2"
 )
 
 // UserController exposes actions in which a viewer can perform.
 type UserController struct {
-	store store.UserStore
+	store storev2.Interface
 }
 
 // NewUserController returns new UserController
-func NewUserController(store store.Store) UserController {
+func NewUserController(store storev2.Interface) UserController {
 	return UserController{
 		store: store,
 	}
 }
 
 // List returns resources available to the viewer filter by given params.
-func (a UserController) List(ctx context.Context, pred *store.SelectionPredicate) ([]corev2.Resource, error) {
+func (a UserController) List(ctx context.Context, pred *store.SelectionPredicate) ([]corev3.Resource, error) {
 	// Fetch from store
-	users, err := a.store.GetAllUsers(pred)
+	req := storev2.NewResourceRequestFromResource(new(corev2.User))
+	var users []*corev2.User
+	list, err := a.store.List(ctx, req, nil)
 	if err != nil {
+		switch err := err.(type) {
+		case *store.ErrNotFound:
+			return nil, NewErrorf(NotFound)
+		default:
+			return nil, NewError(InternalErr, err)
+		}
+	}
+	if err := list.UnwrapInto(&users); err != nil {
 		return nil, NewError(InternalErr, err)
 	}
 
-	resources := make([]corev2.Resource, len(users))
+	resources := make([]corev3.Resource, len(users))
 	for i, user := range users {
 		// Obfuscate the password hashes for now
 		user.Password = ""
 		user.PasswordHash = ""
-		resources[i] = corev2.Resource(user)
+		resources[i] = corev3.Resource(user)
 	}
 
 	return resources, nil
@@ -61,14 +74,20 @@ func (a UserController) Get(ctx context.Context, name string) (*corev2.User, err
 
 // Create creates a new user. It returns an error if the user already exists.
 func (a UserController) Create(ctx context.Context, user *corev2.User) error {
-	// Check for existing
-	if e, err := a.store.GetUser(ctx, user.Username); err != nil {
-		return NewError(InternalErr, err)
-	} else if e != nil {
-		return NewErrorf(AlreadyExistsErr)
+	req := storev2.NewResourceRequestFromResource(user)
+	wrapper, err := storev2.WrapResource(user)
+	if err != nil {
+		return NewError(InvalidArgument, err)
 	}
-
-	return a.CreateOrReplace(ctx, user)
+	if err := a.store.CreateIfNotExists(ctx, req, wrapper); err != nil {
+		switch err := err.(type) {
+		case *store.ErrAlreadyExists:
+			return NewErrorf(AlreadyExistsErr)
+		default:
+			return NewError(InternalErr, err)
+		}
+	}
+	return nil
 }
 
 // CreateOrReplace creates or replaces a user.
@@ -109,10 +128,14 @@ func (a UserController) CreateOrReplace(ctx context.Context, user *corev2.User) 
 	user.Password = user.PasswordHash
 
 	// Persist
-	if err := a.store.UpdateUser(user); err != nil {
+	req := storev2.NewResourceRequestFromResource(user)
+	wrapper, err := storev2.WrapResource(user)
+	if err != nil {
+		return NewError(InvalidArgument, err)
+	}
+	if err := a.store.CreateOrUpdate(ctx, req, wrapper); err != nil {
 		return NewError(InternalErr, err)
 	}
-
 	return nil
 }
 
@@ -129,10 +152,21 @@ func (a UserController) Disable(ctx context.Context, name string) error {
 	}
 
 	user.Disabled = true
-	if err := a.store.UpdateUser(user); err != nil {
-		return NewError(InternalErr, err)
+
+	req := storev2.NewResourceRequestFromResource(user)
+	wrapper, err := storev2.WrapResource(user)
+	if err != nil {
+		return NewError(InvalidArgument, err)
 	}
 
+	if err := a.store.UpdateIfExists(ctx, req, wrapper); err != nil {
+		switch err.(type) {
+		case *store.ErrAlreadyExists:
+			return NewError(AlreadyExistsErr, err)
+		default:
+			return NewError(InternalErr, err)
+		}
+	}
 	return nil
 }
 
@@ -197,21 +231,39 @@ func (a UserController) RemoveAllGroups(ctx context.Context, username string) er
 }
 
 func (a UserController) findUser(ctx context.Context, name string) (*corev2.User, error) {
-	result, serr := a.store.GetUser(ctx, name)
-	if serr != nil {
-		return nil, NewError(InternalErr, serr)
-	} else if result == nil {
-		return nil, NewErrorf(NotFound)
+	user := &corev2.User{
+		Username: name,
 	}
-
-	return result, nil
+	req := storev2.NewResourceRequestFromResource(user)
+	wrapper, err := a.store.Get(ctx, req)
+	if err != nil {
+		switch err := err.(type) {
+		case *store.ErrNotFound:
+			return nil, NewErrorf(NotFound)
+		default:
+			return nil, NewError(InternalErr, err)
+		}
+	}
+	if err := wrapper.UnwrapInto(user); err != nil {
+		return nil, NewError(InternalErr, err)
+	}
+	return user, nil
 }
 
 func (a UserController) updateUser(ctx context.Context, user *corev2.User) error {
-	if err := a.store.UpdateUser(user); err != nil {
-		return NewError(InternalErr, err)
+	req := storev2.NewResourceRequestFromResource(user)
+	wrapper, err := storev2.WrapResource(user)
+	if err != nil {
+		return err
 	}
-
+	if err := a.store.CreateOrUpdate(ctx, req, wrapper); err != nil {
+		switch err := err.(type) {
+		case *store.ErrNotFound:
+			return NewErrorf(NotFound)
+		default:
+			return NewError(InternalErr, err)
+		}
+	}
 	return nil
 }
 
@@ -237,5 +289,24 @@ func (a UserController) findAndUpdateUser(
 
 // AuthenticateUser attempts to authenticate an internal user
 func (a UserController) AuthenticateUser(ctx context.Context, username, password string) (*corev2.User, error) {
-	return a.store.AuthenticateUser(ctx, username, password)
+	user, err := a.findUser(ctx, username)
+	if err != nil {
+		return nil, err
+	}
+	if user.Disabled {
+		return nil, &store.ErrNotValid{Err: fmt.Errorf("user %s is disabled", username)}
+	}
+
+	// Check if we have an explicitly hashed password, otherwise fallback to the
+	// password field for backward compatiblility
+	passwordHash := user.PasswordHash
+	if passwordHash == "" {
+		passwordHash = user.Password
+	}
+	ok := bcrypt.CheckPassword(passwordHash, password)
+	if !ok {
+		return nil, &store.ErrNotValid{Err: fmt.Errorf("wrong password for user %s", username)}
+	}
+
+	return user, nil
 }

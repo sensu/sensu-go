@@ -60,14 +60,14 @@ func TestHandlers_DeleteV3Resource(t *testing.T) {
 			}
 
 			h := Handlers{
-				V3Resource: &fixture.V3Resource{},
-				StoreV2:    store,
+				Resource: &fixture.V3Resource{},
+				Store:    store,
 			}
 
 			r, _ := http.NewRequest(http.MethodDelete, "/", nil)
 			r = mux.SetURLVars(r, tt.urlVars)
 
-			_, err := h.DeleteV3Resource(r)
+			_, err := h.DeleteResource(r)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("Handlers.DeleteResource() error = %v, wantErr %v", err, tt.wantErr)
 				return

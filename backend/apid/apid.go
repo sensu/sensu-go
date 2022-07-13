@@ -15,8 +15,11 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	clientv3 "go.etcd.io/etcd/client/v3"
 
+	corev3 "github.com/sensu/sensu-go/api/core/v3"
+	"github.com/sensu/sensu-go/backend/api"
 	"github.com/sensu/sensu-go/backend/apid/actions"
 	"github.com/sensu/sensu-go/backend/apid/graphql"
+	"github.com/sensu/sensu-go/backend/apid/handlers"
 	"github.com/sensu/sensu-go/backend/apid/middlewares"
 	"github.com/sensu/sensu-go/backend/apid/routers"
 	"github.com/sensu/sensu-go/backend/authentication"
@@ -41,10 +44,10 @@ type APId struct {
 	wg                  *sync.WaitGroup
 	errChan             chan error
 	bus                 messaging.MessageBus
-	store               store.Store
-	storev2             storev2.Interface
-	configStoreV2       storev2.Interface
+	store               storev2.Interface
 	eventStore          store.EventStore
+	entityStore         store.EntityStore
+	silencedStore       store.SilencedStore
 	queueGetter         types.QueueGetter
 	tls                 *types.TLSOptions
 	cluster             clientv3.Cluster
@@ -62,10 +65,10 @@ type Config struct {
 	WriteTimeout        time.Duration
 	URL                 string
 	Bus                 messaging.MessageBus
-	Store               store.Store
-	Storev2             storev2.Interface
-	ConfigStoreV2       storev2.Interface
+	Store               storev2.Interface
 	EventStore          store.EventStore
+	EntityStore         store.EntityStore
+	SilencedStore       store.SilencedStore
 	QueueGetter         types.QueueGetter
 	TLS                 *types.TLSOptions
 	Cluster             clientv3.Cluster
@@ -80,9 +83,9 @@ type Config struct {
 func New(c Config, opts ...Option) (*APId, error) {
 	a := &APId{
 		store:               c.Store,
-		storev2:             c.Storev2,
-		configStoreV2:       c.ConfigStoreV2,
 		eventStore:          c.EventStore,
+		entityStore:         c.EntityStore,
+		silencedStore:       c.SilencedStore,
 		queueGetter:         c.QueueGetter,
 		tls:                 c.TLS,
 		bus:                 c.Bus,
@@ -153,7 +156,7 @@ func AuthenticationSubrouter(router *mux.Router, cfg Config) *mux.Router {
 	)
 
 	mountRouters(subrouter,
-		routers.NewAuthenticationRouter(cfg.Store, cfg.Authenticator),
+		routers.NewAuthenticationRouter(cfg.Authenticator),
 	)
 
 	return subrouter
@@ -179,16 +182,15 @@ func CoreSubrouter(router *mux.Router, cfg Config) *mux.Router {
 		routers.NewChecksRouter(cfg.Store, cfg.QueueGetter),
 		routers.NewClusterRolesRouter(cfg.Store),
 		routers.NewClusterRoleBindingsRouter(cfg.Store),
-		routers.NewClusterRouter(actions.NewClusterController(cfg.Cluster, cfg.Store)),
 		routers.NewEventFiltersRouter(cfg.Store),
 		routers.NewHandlersRouter(cfg.Store),
 		routers.NewHooksRouter(cfg.Store),
 		routers.NewMutatorsRouter(cfg.Store),
-		routers.NewNamespacesRouter(cfg.Store, cfg.Store, &rbac.Authorizer{Store: cfg.ConfigStoreV2}, cfg.Storev2),
+		routers.NewNamespacesRouter(api.NewNamespaceClient(cfg.Store, &rbac.Authorizer{Store: cfg.Store}), handlers.Handlers{Resource: new(corev3.Namespace), Store: cfg.Store}),
 		routers.NewPipelinesRouter(cfg.Store),
 		routers.NewRolesRouter(cfg.Store),
 		routers.NewRoleBindingsRouter(cfg.Store),
-		routers.NewSilencedRouter(cfg.Store),
+		routers.NewSilencedRouter(cfg.SilencedStore, cfg.Store),
 		routers.NewTessenRouter(actions.NewTessenController(cfg.Store, cfg.Bus)),
 		routers.NewUsersRouter(cfg.Store),
 	)
@@ -211,7 +213,7 @@ func EntityLimitedCoreSubrouter(router *mux.Router, cfg Config) *mux.Router {
 	)
 	mountRouters(
 		subrouter,
-		routers.NewEntitiesRouter(cfg.Store, cfg.Storev2, cfg.EventStore),
+		routers.NewEntitiesRouter(cfg.Store, cfg.EntityStore, cfg.EventStore),
 		routers.NewEventsRouter(cfg.EventStore, cfg.Bus),
 	)
 

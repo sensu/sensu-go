@@ -8,13 +8,15 @@ import (
 
 	"github.com/gorilla/mux"
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
+	corev3 "github.com/sensu/sensu-go/api/core/v3"
 	"github.com/sensu/sensu-go/backend/apid/actions"
 	"github.com/sensu/sensu-go/backend/store"
+	storev2 "github.com/sensu/sensu-go/backend/store/v2"
 )
 
 // UserController represents the controller needs of the UsersRouter.
 type UserController interface {
-	List(ctx context.Context, pred *store.SelectionPredicate) ([]corev2.Resource, error)
+	List(ctx context.Context, pred *store.SelectionPredicate) ([]corev3.Resource, error)
 	Get(ctx context.Context, name string) (*corev2.User, error)
 	Create(ctx context.Context, user *corev2.User) error
 	CreateOrReplace(ctx context.Context, user *corev2.User) error
@@ -32,7 +34,7 @@ type UsersRouter struct {
 }
 
 // NewUsersRouter instantiates new router for controlling user resources
-func NewUsersRouter(store store.Store) *UsersRouter {
+func NewUsersRouter(store storev2.Interface) *UsersRouter {
 	return &UsersRouter{
 		controller: actions.NewUserController(store),
 	}
@@ -61,7 +63,7 @@ func (r *UsersRouter) Mount(parent *mux.Router) {
 	routes.Path("{id}/{subresource:reset_password}", r.resetPassword).Methods(http.MethodPut)
 }
 
-func (r *UsersRouter) get(req *http.Request) (interface{}, error) {
+func (r *UsersRouter) get(req *http.Request) (corev3.Resource, error) {
 	params := mux.Vars(req)
 	id, err := url.PathUnescape(params["id"])
 	if err != nil {
@@ -76,7 +78,7 @@ func (r *UsersRouter) get(req *http.Request) (interface{}, error) {
 	return user, err
 }
 
-func (r *UsersRouter) create(req *http.Request) (interface{}, error) {
+func (r *UsersRouter) create(req *http.Request) (corev3.Resource, error) {
 	user := &corev2.User{}
 	if err := UnmarshalBody(req, user); err != nil {
 		return nil, actions.NewError(actions.InvalidArgument, err)
@@ -86,7 +88,7 @@ func (r *UsersRouter) create(req *http.Request) (interface{}, error) {
 	return nil, err
 }
 
-func (r *UsersRouter) createOrReplace(req *http.Request) (interface{}, error) {
+func (r *UsersRouter) createOrReplace(req *http.Request) (corev3.Resource, error) {
 	user := &corev2.User{}
 	if err := UnmarshalBody(req, user); err != nil {
 		return nil, actions.NewError(actions.InvalidArgument, err)
@@ -106,7 +108,7 @@ func (r *UsersRouter) createOrReplace(req *http.Request) (interface{}, error) {
 	return nil, err
 }
 
-func (r *UsersRouter) disable(req *http.Request) (interface{}, error) {
+func (r *UsersRouter) disable(req *http.Request) (corev3.Resource, error) {
 	params := mux.Vars(req)
 	id, err := url.PathUnescape(params["id"])
 	if err != nil {
@@ -116,7 +118,7 @@ func (r *UsersRouter) disable(req *http.Request) (interface{}, error) {
 	return nil, err
 }
 
-func (r *UsersRouter) reinstate(req *http.Request) (interface{}, error) {
+func (r *UsersRouter) reinstate(req *http.Request) (corev3.Resource, error) {
 	params := mux.Vars(req)
 	id, err := url.PathUnescape(params["id"])
 	if err != nil {
@@ -127,7 +129,7 @@ func (r *UsersRouter) reinstate(req *http.Request) (interface{}, error) {
 }
 
 // updatePassword updates a user password by requiring the current password
-func (r *UsersRouter) updatePassword(req *http.Request) (interface{}, error) {
+func (r *UsersRouter) updatePassword(req *http.Request) (corev3.Resource, error) {
 	params := map[string]string{}
 	if err := UnmarshalBody(req, &params); err != nil {
 		return nil, err
@@ -154,7 +156,7 @@ func (r *UsersRouter) updatePassword(req *http.Request) (interface{}, error) {
 }
 
 // resetPassword updates a user password without any kind of verification
-func (r *UsersRouter) resetPassword(req *http.Request) (interface{}, error) {
+func (r *UsersRouter) resetPassword(req *http.Request) (corev3.Resource, error) {
 	params := map[string]string{}
 	if err := UnmarshalBody(req, &params); err != nil {
 		return nil, err
@@ -176,7 +178,7 @@ func (r *UsersRouter) resetPassword(req *http.Request) (interface{}, error) {
 	return nil, err
 }
 
-func (r *UsersRouter) addGroup(req *http.Request) (interface{}, error) {
+func (r *UsersRouter) addGroup(req *http.Request) (corev3.Resource, error) {
 	params := mux.Vars(req)
 	id, err := url.PathUnescape(params["id"])
 	if err != nil {
@@ -192,7 +194,7 @@ func (r *UsersRouter) addGroup(req *http.Request) (interface{}, error) {
 	return nil, err
 }
 
-func (r *UsersRouter) removeGroup(req *http.Request) (interface{}, error) {
+func (r *UsersRouter) removeGroup(req *http.Request) (corev3.Resource, error) {
 	params := mux.Vars(req)
 	id, err := url.PathUnescape(params["id"])
 	if err != nil {
@@ -208,7 +210,7 @@ func (r *UsersRouter) removeGroup(req *http.Request) (interface{}, error) {
 	return nil, err
 }
 
-func (r *UsersRouter) removeAllGroups(req *http.Request) (interface{}, error) {
+func (r *UsersRouter) removeAllGroups(req *http.Request) (corev3.Resource, error) {
 	params := mux.Vars(req)
 	id, err := url.PathUnescape(params["id"])
 	if err != nil {

@@ -8,6 +8,7 @@ import (
 
 	"github.com/gorilla/mux"
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
+	corev3 "github.com/sensu/sensu-go/api/core/v3"
 	"github.com/sensu/sensu-go/backend/apid/actions"
 	"github.com/sensu/sensu-go/backend/apid/handlers"
 	"github.com/sensu/sensu-go/backend/messaging"
@@ -24,7 +25,7 @@ type eventController interface {
 	CreateOrReplace(ctx context.Context, check *corev2.Event) error
 	Delete(ctx context.Context, entity, check string) error
 	Get(ctx context.Context, entity, check string) (*corev2.Event, error)
-	List(ctx context.Context, pred *store.SelectionPredicate) ([]corev2.Resource, error)
+	List(ctx context.Context, pred *store.SelectionPredicate) ([]corev3.Resource, error)
 }
 
 // NewEventsRouter instantiates new events controller
@@ -54,7 +55,7 @@ func (r *EventsRouter) Mount(parent *mux.Router) {
 		listerHandler(r.controller.List, corev2.EventFields)).Methods(http.MethodGet)
 }
 
-func (r *EventsRouter) get(req *http.Request) (interface{}, error) {
+func (r *EventsRouter) get(req *http.Request) (corev3.Resource, error) {
 	params := actions.QueryParams(mux.Vars(req))
 	entity := url.PathEscape(params["entity"])
 	check := url.PathEscape(params["check"])
@@ -62,14 +63,14 @@ func (r *EventsRouter) get(req *http.Request) (interface{}, error) {
 	return record, err
 }
 
-func (r *EventsRouter) delete(req *http.Request) (interface{}, error) {
+func (r *EventsRouter) delete(req *http.Request) (corev3.Resource, error) {
 	params := actions.QueryParams(mux.Vars(req))
 	entity := url.PathEscape(params["entity"])
 	check := url.PathEscape(params["check"])
 	return nil, r.controller.Delete(req.Context(), entity, check)
 }
 
-func (r *EventsRouter) create(req *http.Request) (interface{}, error) {
+func (r *EventsRouter) create(req *http.Request) (corev3.Resource, error) {
 	event := &corev2.Event{}
 	if err := UnmarshalBody(req, event); err != nil {
 		return nil, actions.NewError(actions.InvalidArgument, err)
@@ -84,7 +85,7 @@ func (r *EventsRouter) create(req *http.Request) (interface{}, error) {
 	return nil, err
 }
 
-func (r *EventsRouter) createOrReplace(req *http.Request) (interface{}, error) {
+func (r *EventsRouter) createOrReplace(req *http.Request) (corev3.Resource, error) {
 	event := &corev2.Event{}
 	if err := UnmarshalBody(req, event); err != nil {
 		return nil, actions.NewError(actions.InvalidArgument, err)

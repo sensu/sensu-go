@@ -406,7 +406,8 @@ func (a *NamespaceClient) DeleteNamespace(ctx context.Context, name string) erro
 	// don't want to delete namespace objects as if they were independent
 	// objects: we want to make sure that a namespace is logically "empty"
 	// before we remove it for good.
-	if err := a.store.DeleteNamespace(ctx, name); err != nil {
+	req := storev2.NewResourceRequestFromResource(&corev3.Namespace{Metadata: &corev2.ObjectMeta{Name: name}})
+	if err := a.store.Delete(ctx, req); err != nil {
 		return err
 	}
 

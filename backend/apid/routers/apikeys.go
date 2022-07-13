@@ -2,6 +2,7 @@ package routers
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -14,16 +15,21 @@ import (
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/apid/handlers"
 	"github.com/sensu/sensu-go/backend/store"
+	storev2 "github.com/sensu/sensu-go/backend/store/v2"
 )
 
 // APIKeysRouter handles requests for /apikeys.
 type APIKeysRouter struct {
 	handlers handlers.Handlers
-	store    store.Store
+	store    storev2.Interface
+}
+
+type userFetcher interface {
+	FetchUser(ctx context.Context, user string) (*corev2.User, error)
 }
 
 // NewAPIKeysRouter instantiates new router for controlling apikeys resources.
-func NewAPIKeysRouter(store store.Store) *APIKeysRouter {
+func NewAPIKeysRouter(store storev2.Interface) *APIKeysRouter {
 	return &APIKeysRouter{
 		handlers: handlers.Handlers{
 			Resource: &corev2.APIKey{},
@@ -55,12 +61,16 @@ func (r *APIKeysRouter) create(w http.ResponseWriter, req *http.Request) {
 	}
 
 	// validate that the user exists
-	if user, err := r.store.GetUser(req.Context(), apikey.Username); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	} else if user == nil {
-		http.Error(w, errors.New("user does not exist").Error(), http.StatusBadRequest)
-		return
+	user := &corev2.User{Username: apikey.Username}
+	storeReq := storev2.NewResourceRequestFromResource(user)
+	if _, err := r.store.Get(req.Context(), storeReq); err != nil {
+		if _, ok := err.(*store.ErrNotFound); ok {
+			http.Error(w, errors.New("user does not exist").Error(), http.StatusBadRequest)
+			return
+		} else {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
 	}
 
 	// set/overwrite the key id and created_at time

@@ -8,35 +8,36 @@ import (
 
 	"github.com/gorilla/mux"
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
-	"github.com/sensu/sensu-go/backend/api"
+	corev3 "github.com/sensu/sensu-go/api/core/v3"
 	"github.com/sensu/sensu-go/backend/apid/actions"
 	"github.com/sensu/sensu-go/backend/apid/handlers"
 	"github.com/sensu/sensu-go/backend/authentication/jwt"
-	"github.com/sensu/sensu-go/backend/authorization"
 	"github.com/sensu/sensu-go/backend/store"
-	storev2 "github.com/sensu/sensu-go/backend/store/v2"
 )
+
+type NamespaceClient interface {
+	ListNamespaces(context.Context, *store.SelectionPredicate) ([]*corev3.Namespace, error)
+	CreateNamespace(context.Context, *corev3.Namespace) error
+	UpdateNamespace(context.Context, *corev3.Namespace) error
+	DeleteNamespace(context.Context, string) error
+	FetchNamespace(context.Context, string) (*corev3.Namespace, error)
+}
+
+type NamespacePatcher interface {
+	PatchResource(*http.Request) (corev3.Resource, error)
+}
 
 // NamespacesRouter handles requests for /namespaces
 type NamespacesRouter struct {
-	handlers       handlers.Handlers
-	store          store.ResourceStore
-	storev2        storev2.Interface
-	namespaceStore store.NamespaceStore
-	auth           authorization.Authorizer
+	client  NamespaceClient
+	patcher NamespacePatcher
 }
 
 // NewNamespacesRouter instantiates new router for controlling check resources
-func NewNamespacesRouter(store store.ResourceStore, namespaceStore store.NamespaceStore, auth authorization.Authorizer, storev2 storev2.Interface) *NamespacesRouter {
+func NewNamespacesRouter(client NamespaceClient, patcher NamespacePatcher) *NamespacesRouter {
 	return &NamespacesRouter{
-		store:          store,
-		namespaceStore: namespaceStore,
-		auth:           auth,
-		handlers: handlers.Handlers{
-			Resource: &corev2.Namespace{},
-			Store:    store,
-		},
-		storev2: storev2,
+		client:  client,
+		patcher: patcher,
 	}
 }
 
@@ -48,36 +49,55 @@ func (r *NamespacesRouter) Mount(parent *mux.Router) {
 	}
 
 	routes.Del(r.delete)
-	routes.Get(r.handlers.GetResource)
+	routes.Get(r.get)
 	routes.List(r.list, corev2.NamespaceFields)
 	routes.Post(r.create)
-	routes.Patch(r.handlers.PatchResource)
+	routes.Patch(r.patcher.PatchResource)
 	routes.Put(r.update)
 }
 
-func (r *NamespacesRouter) list(ctx context.Context, pred *store.SelectionPredicate) ([]corev2.Resource, error) {
-	client := api.NewNamespaceClient(r.store, r.namespaceStore, r.auth, r.storev2)
-	namespaces, err := client.ListNamespaces(ctx, pred)
+func (r *NamespacesRouter) get(req *http.Request) (corev3.Resource, error) {
+	params := mux.Vars(req)
+	name, err := url.PathUnescape(params["id"])
+	if err != nil {
+		return nil, actions.NewError(actions.InvalidArgument, err)
+	}
+	ns, err := r.client.FetchNamespace(req.Context(), name)
+	if err != nil {
+		switch err := err.(type) {
+		case *store.ErrNotFound:
+			return nil, actions.NewErrorf(actions.NotFound)
+		case *store.ErrNotValid:
+			return nil, actions.NewError(actions.InvalidArgument, err)
+		default:
+			return nil, actions.NewError(actions.InternalErr, err)
+		}
+	}
+	return ns, nil
+}
+
+func (r *NamespacesRouter) list(ctx context.Context, pred *store.SelectionPredicate) ([]corev3.Resource, error) {
+	namespaces, err := r.client.ListNamespaces(ctx, pred)
 	if err != nil {
 		return nil, err
 	}
-	result := make([]corev2.Resource, len(namespaces))
+	result := make([]corev3.Resource, len(namespaces))
 	for i := range namespaces {
 		result[i] = namespaces[i]
 	}
 	return result, nil
 }
 
-func (r *NamespacesRouter) create(req *http.Request) (interface{}, error) {
+func (r *NamespacesRouter) create(req *http.Request) (corev3.Resource, error) {
 	ctx := req.Context()
-	var ns corev2.Namespace
+	var ns corev3.Namespace
 	if err := json.NewDecoder(req.Body).Decode(&ns); err != nil {
 		return nil, actions.NewError(actions.InvalidArgument, err)
 	}
-	meta := ns.GetObjectMeta()
+	meta := ns.GetMetadata()
 	if claims := jwt.GetClaimsFromContext(ctx); claims != nil {
 		meta.CreatedBy = claims.StandardClaims.Subject
-		ns.SetObjectMeta(meta)
+		ns.Metadata = meta
 	}
 	if err := handlers.CheckMeta(&ns, mux.Vars(req), "id"); err != nil {
 		return nil, actions.NewError(actions.InvalidArgument, err)
@@ -85,8 +105,7 @@ func (r *NamespacesRouter) create(req *http.Request) (interface{}, error) {
 	if err := ns.Validate(); err != nil {
 		return nil, actions.NewError(actions.InvalidArgument, err)
 	}
-	client := api.NewNamespaceClient(r.store, r.namespaceStore, r.auth, r.storev2)
-	if err := client.CreateNamespace(ctx, &ns); err != nil {
+	if err := r.client.CreateNamespace(ctx, &ns); err != nil {
 		switch err := err.(type) {
 		case *store.ErrAlreadyExists:
 			return nil, actions.NewErrorf(actions.AlreadyExistsErr)
@@ -99,16 +118,16 @@ func (r *NamespacesRouter) create(req *http.Request) (interface{}, error) {
 	return nil, nil
 }
 
-func (r *NamespacesRouter) update(req *http.Request) (interface{}, error) {
+func (r *NamespacesRouter) update(req *http.Request) (corev3.Resource, error) {
 	ctx := req.Context()
-	var ns corev2.Namespace
+	var ns corev3.Namespace
 	if err := json.NewDecoder(req.Body).Decode(&ns); err != nil {
 		return nil, actions.NewError(actions.InvalidArgument, err)
 	}
-	meta := ns.GetObjectMeta()
+	meta := ns.GetMetadata()
 	if claims := jwt.GetClaimsFromContext(ctx); claims != nil {
 		meta.CreatedBy = claims.StandardClaims.Subject
-		ns.SetObjectMeta(meta)
+		ns.Metadata = meta
 	}
 	if err := handlers.CheckMeta(&ns, mux.Vars(req), "id"); err != nil {
 		return nil, actions.NewError(actions.InvalidArgument, err)
@@ -116,8 +135,7 @@ func (r *NamespacesRouter) update(req *http.Request) (interface{}, error) {
 	if err := ns.Validate(); err != nil {
 		return nil, actions.NewError(actions.InvalidArgument, err)
 	}
-	client := api.NewNamespaceClient(r.store, r.namespaceStore, r.auth, r.storev2)
-	if err := client.UpdateNamespace(ctx, &ns); err != nil {
+	if err := r.client.UpdateNamespace(ctx, &ns); err != nil {
 		switch err := err.(type) {
 		case *store.ErrNotValid:
 			return nil, actions.NewError(actions.InvalidArgument, err)
@@ -128,15 +146,14 @@ func (r *NamespacesRouter) update(req *http.Request) (interface{}, error) {
 	return nil, nil
 }
 
-func (r *NamespacesRouter) delete(req *http.Request) (interface{}, error) {
+func (r *NamespacesRouter) delete(req *http.Request) (corev3.Resource, error) {
 	params := mux.Vars(req)
 	name, err := url.PathUnescape(params["id"])
 	if err != nil {
 		return nil, actions.NewError(actions.InvalidArgument, err)
 	}
 
-	client := api.NewNamespaceClient(r.store, r.namespaceStore, r.auth, r.storev2)
-	if err := client.DeleteNamespace(req.Context(), name); err != nil {
+	if err := r.client.DeleteNamespace(req.Context(), name); err != nil {
 		switch err := err.(type) {
 		case *store.ErrNotFound:
 			return nil, actions.NewErrorf(actions.NotFound)

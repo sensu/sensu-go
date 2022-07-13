@@ -4,7 +4,7 @@ import (
 	"github.com/gorilla/mux"
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/apid/handlers"
-	"github.com/sensu/sensu-go/backend/store"
+	storev2 "github.com/sensu/sensu-go/backend/store/v2"
 )
 
 // HandlersRouter handles requests for /handlers
@@ -13,7 +13,7 @@ type HandlersRouter struct {
 }
 
 // NewHandlersRouter instantiates new router for controlling handler resources
-func NewHandlersRouter(store store.ResourceStore) *HandlersRouter {
+func NewHandlersRouter(store storev2.Interface) *HandlersRouter {
 	return &HandlersRouter{
 		handlers: handlers.Handlers{
 			Resource: &corev2.Handler{},

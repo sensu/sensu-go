@@ -2,14 +2,13 @@ package middlewares
 
 import (
 	"context"
-	"fmt"
 	"net/http"
 	"strings"
 
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/apid/actions"
 	"github.com/sensu/sensu-go/backend/authentication/jwt"
-	"github.com/sensu/sensu-go/backend/store"
+	storev2 "github.com/sensu/sensu-go/backend/store/v2"
 )
 
 // Authentication is a HTTP middleware that enforces authentication
@@ -17,7 +16,7 @@ type Authentication struct {
 	// IgnoreUnauthorized configures the middleware to continue the handler chain
 	// in the case where an access token was not present.
 	IgnoreUnauthorized bool
-	Store              store.Store
+	Store              storev2.Interface
 }
 
 // Then middleware
@@ -74,7 +73,7 @@ func (a Authentication) Then(next http.Handler) http.Handler {
 	})
 }
 
-func extractAPIKeyClaims(ctx context.Context, key string, store store.Store) (*corev2.Claims, error) {
+func extractAPIKeyClaims(ctx context.Context, key string, store storev2.Interface) (*corev2.Claims, error) {
 	var claims *corev2.Claims
 	// retrieve the APIKey based on the key provided
 	apiKey := &corev2.APIKey{
@@ -82,20 +81,27 @@ func extractAPIKeyClaims(ctx context.Context, key string, store store.Store) (*c
 			Name: key,
 		},
 	}
-	if err := store.GetResource(context.Background(), apiKey.Name, apiKey); err != nil {
-		return claims, err
+	req := storev2.NewResourceRequestFromResource(apiKey)
+	wrapper, err := store.Get(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+	if err := wrapper.UnwrapInto(apiKey); err != nil {
+		return nil, err
 	}
 
-	// retrieve the sensu user associated with the key provided
-	user, err := store.GetUser(ctx, apiKey.Username)
-	if err != nil {
-		return claims, err
+	user := &corev2.User{
+		Username: apiKey.Username,
 	}
-	// this shouldn't happen because user validation happens at key generation,
-	// but in the event a user is deleted after a key has been generated,
-	// the key should not pass authentication
-	if user == nil {
-		return claims, fmt.Errorf("user %s not found", apiKey.Username)
+
+	req = storev2.NewResourceRequestFromResource(user)
+	wrapper, err = store.Get(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := wrapper.UnwrapInto(user); err != nil {
+		return nil, err
 	}
 
 	// inject the username and groups into standard jwt claims
