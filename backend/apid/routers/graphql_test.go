@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"net/http"
+	"net/http/httptest"
 	"testing"
 
 	"github.com/graphql-go/graphql/testutil"
@@ -38,9 +39,12 @@ func TestHttpGraphQLRequest(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	_, err = router.query(req)
-	if err != nil {
-		t.Fatal(err)
+	writer := httptest.NewRecorder()
+
+	router.query(writer, req)
+
+	if writer.Result().StatusCode < 200 || writer.Result().StatusCode >= 400 {
+		t.Error("response failed")
 	}
 }
 
@@ -67,8 +71,11 @@ func TestHttpGraphQLBatchRequest(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	_, err = router.query(req)
-	if err != nil {
-		t.Fatal(err)
+	writer := httptest.NewRecorder()
+
+	router.query(writer, req)
+
+	if writer.Result().StatusCode < 200 || writer.Result().StatusCode >= 400 {
+		t.Error("response failed")
 	}
 }

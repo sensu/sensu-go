@@ -22,23 +22,30 @@ type ruleVisitor interface {
 
 // NamespaceClient is an API client for namespaces.
 type NamespaceClient struct {
-	client         GenericClient
-	namespaceStore store.NamespaceStore
-	roleClient     GenericClient
-	bindingClient  GenericClient
-	storev2        storev2.Interface
-	auth           authorization.Authorizer
+	client        GenericClient
+	roleClient    GenericClient
+	bindingClient GenericClient
+	store         storev2.Interface
+	auth          authorization.Authorizer
+}
+
+func namespaceRequest(ctx context.Context, name string) storev2.ResourceRequest {
+	return storev2.NewResourceRequestFromResource(&corev3.Namespace{
+		Metadata: &corev2.ObjectMeta{
+			Name: name,
+		},
+	})
 }
 
 // NewNamespaceClient creates a new NamespaceClient, given a store and authorizer.
-func NewNamespaceClient(store store.ResourceStore, namespaceStore store.NamespaceStore, auth authorization.Authorizer, storev2 storev2.Interface) *NamespaceClient {
+func NewNamespaceClient(store storev2.Interface, auth authorization.Authorizer) *NamespaceClient {
 	return &NamespaceClient{
 		client: GenericClient{
-			Kind:       &corev2.Namespace{},
+			Kind:       &corev3.Namespace{},
 			Store:      store,
 			Auth:       auth,
 			APIGroup:   "core",
-			APIVersion: "v2",
+			APIVersion: "v3",
 		},
 		roleClient: GenericClient{
 			Kind:       &corev2.Role{},
@@ -54,17 +61,16 @@ func NewNamespaceClient(store store.ResourceStore, namespaceStore store.Namespac
 			APIGroup:   "core",
 			APIVersion: "v2",
 		},
-		auth:           auth,
-		namespaceStore: namespaceStore,
-		storev2:        storev2,
+		store: store,
+		auth:  auth,
 	}
 }
 
 // ListNamespaces fetches a list of the namespace resources that are authorized
 // by the supplied credentials. This may include implicit access via resources
 // that are in a namespace that the credentials are authorized to get.
-func (a *NamespaceClient) ListNamespaces(ctx context.Context, pred *store.SelectionPredicate) ([]*corev2.Namespace, error) {
-	var resources, namespaces []*corev2.Namespace
+func (a *NamespaceClient) ListNamespaces(ctx context.Context, pred *store.SelectionPredicate) ([]*corev3.Namespace, error) {
+	var resources, namespaces []*corev3.Namespace
 
 	visitor, ok := a.auth.(ruleVisitor)
 	if !ok {
@@ -73,12 +79,17 @@ func (a *NamespaceClient) ListNamespaces(ctx context.Context, pred *store.Select
 		}
 		return namespaces, nil
 	}
-	if err := a.client.Store.ListResources(ctx, a.client.Kind.StorePrefix(), &resources, pred); err != nil {
+	req := namespaceRequest(ctx, "")
+	list, err := a.client.Store.List(ctx, req, pred)
+	if err != nil {
 		return nil, err
 	}
-	namespaceMap := make(map[string]*corev2.Namespace, len(resources))
+	if err := list.UnwrapInto(&resources); err != nil {
+		return nil, err
+	}
+	namespaceMap := make(map[string]*corev3.Namespace, len(resources))
 	for _, namespace := range resources {
-		namespaceMap[namespace.Name] = namespace
+		namespaceMap[namespace.Metadata.Name] = namespace
 	}
 
 	attrs := &authorization.Attributes{
@@ -132,7 +143,7 @@ func (a *NamespaceClient) ListNamespaces(ctx context.Context, pred *store.Select
 			// specified, determine if it matches this current namespace
 			for name, namespace := range namespaceMap {
 				if rule.ResourceNameMatches(name) {
-					logger.Debugf("namespace %s explicitly authorized by the binding %s", namespace.Name, binding.GetObjectMeta().Name)
+					logger.Debugf("namespace %s explicitly authorized by the binding %s", namespace.Metadata.Name, binding.GetObjectMeta().Name)
 					namespaces = append(namespaces, namespace)
 					delete(namespaceMap, name)
 				}
@@ -157,7 +168,7 @@ func (a *NamespaceClient) ListNamespaces(ctx context.Context, pred *store.Select
 		// Determine if this RoleBinding matches the namespace
 		bindingNamespace := binding.GetObjectMeta().Namespace
 		if namespace, ok := namespaceMap[bindingNamespace]; ok {
-			logger.Debugf("namespace %s implicitly authorized by the binding %s", namespace.Name, binding.GetObjectMeta().Name)
+			logger.Debugf("namespace %s implicitly authorized by the binding %s", namespace.Metadata.Name, binding.GetObjectMeta().Name)
 			namespaces = append(namespaces, namespace)
 			delete(namespaceMap, bindingNamespace)
 		}
@@ -178,17 +189,14 @@ func (a *NamespaceClient) ListNamespaces(ctx context.Context, pred *store.Select
 }
 
 // FetchNamespace fetches a namespace resource from the backend, if authorized.
-func (a *NamespaceClient) FetchNamespace(ctx context.Context, name string) (*corev2.Namespace, error) {
-	var namespace corev2.Namespace
+func (a *NamespaceClient) FetchNamespace(ctx context.Context, name string) (*corev3.Namespace, error) {
 	visitor, ok := a.auth.(ruleVisitor)
 	if !ok {
-		if err := a.client.Get(ctx, name, &namespace); err != nil {
+		var ns corev3.Namespace
+		if err := a.client.Get(ctx, name, &ns); err != nil {
 			return nil, err
 		}
-		return &namespace, nil
-	}
-	if err := a.client.Store.GetResource(ctx, name, &namespace); err != nil {
-		return nil, err
+		return &ns, nil
 	}
 
 	attrs := &authorization.Attributes{
@@ -279,7 +287,17 @@ func (a *NamespaceClient) FetchNamespace(ctx context.Context, name string) (*cor
 		return nil, authorization.ErrUnauthorized
 	}
 
-	return &namespace, nil
+	req := namespaceRequest(ctx, name)
+	wrapper, err := a.store.Get(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+	var ns corev3.Namespace
+	if err := wrapper.UnwrapInto(&ns); err != nil {
+		return nil, err
+	}
+
+	return &ns, nil
 }
 
 func (a *NamespaceClient) createRoleAndBinding(ctx context.Context, namespace string) error {
@@ -318,23 +336,23 @@ func (a *NamespaceClient) createRoleAndBinding(ctx context.Context, namespace st
 }
 
 // CreateNamespace creates a namespace resource, if authorized.
-func (a *NamespaceClient) CreateNamespace(ctx context.Context, namespace *corev2.Namespace) error {
+func (a *NamespaceClient) CreateNamespace(ctx context.Context, namespace *corev3.Namespace) error {
 	if err := a.client.Create(ctx, namespace); err != nil {
 		return err
 	}
-	if err := a.createResourceTemplates(ctx, namespace.Name); err != nil {
+	if err := a.createResourceTemplates(ctx, namespace.Metadata.Name); err != nil {
 		return err
 	}
-	return a.createRoleAndBinding(ctx, namespace.Name)
+	return a.createRoleAndBinding(ctx, namespace.Metadata.Name)
 }
 
 func (a *NamespaceClient) createResourceTemplates(ctx context.Context, namespace string) error {
 	req := storev2.NewResourceRequestFromResource(new(corev3.ResourceTemplate))
-	list, err := a.storev2.List(ctx, req, nil)
+	list, err := a.store.List(ctx, req, nil)
 	if err != nil {
 		return err
 	}
-	var templates []corev3.ResourceTemplate
+	var templates []*corev3.ResourceTemplate
 	if err := list.UnwrapInto(&templates); err != nil {
 		return err
 	}
@@ -351,7 +369,7 @@ func (a *NamespaceClient) createResourceTemplates(ctx context.Context, namespace
 		if err != nil {
 			return err
 		}
-		if err := a.storev2.CreateOrUpdate(ctx, req, wrapper); err != nil {
+		if err := a.store.CreateOrUpdate(ctx, req, wrapper); err != nil {
 			return err
 		}
 	}
@@ -359,14 +377,14 @@ func (a *NamespaceClient) createResourceTemplates(ctx context.Context, namespace
 }
 
 // UpdateNamespace updates a namespace resource, if authorized.
-func (a *NamespaceClient) UpdateNamespace(ctx context.Context, namespace *corev2.Namespace) error {
+func (a *NamespaceClient) UpdateNamespace(ctx context.Context, namespace *corev3.Namespace) error {
 	if err := a.client.Update(ctx, namespace); err != nil {
 		return err
 	}
-	if err := a.createResourceTemplates(ctx, namespace.Name); err != nil {
+	if err := a.createResourceTemplates(ctx, namespace.Metadata.Name); err != nil {
 		return err
 	}
-	return a.createRoleAndBinding(ctx, namespace.Name)
+	return a.createRoleAndBinding(ctx, namespace.Metadata.Name)
 }
 
 // DeleteNamespace deletes a namespace.
@@ -388,11 +406,8 @@ func (a *NamespaceClient) DeleteNamespace(ctx context.Context, name string) erro
 	// don't want to delete namespace objects as if they were independent
 	// objects: we want to make sure that a namespace is logically "empty"
 	// before we remove it for good.
-	//
-	// Since we don't have a good abstraction for these types of custom logic in
-	// the generic client and store yet, we reach straight to the
-	// NamespaceStore, which already has this logic implemented.
-	if err := a.namespaceStore.DeleteNamespace(ctx, name); err != nil {
+	req := storev2.NewResourceRequestFromResource(&corev3.Namespace{Metadata: &corev2.ObjectMeta{Name: name}})
+	if err := a.store.Delete(ctx, req); err != nil {
 		return err
 	}
 

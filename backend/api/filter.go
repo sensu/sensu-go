@@ -6,6 +6,7 @@ import (
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/authorization"
 	"github.com/sensu/sensu-go/backend/store"
+	storev2 "github.com/sensu/sensu-go/backend/store/v2"
 )
 
 // EventFilterClient is an API client for event filters.
@@ -16,7 +17,7 @@ type EventFilterClient struct {
 
 // NewEventFilterClient creates a new EventFilterClient, given a store and
 // authorizer.
-func NewEventFilterClient(store store.ResourceStore, auth authorization.Authorizer) *EventFilterClient {
+func NewEventFilterClient(store storev2.Interface, auth authorization.Authorizer) *EventFilterClient {
 	return &EventFilterClient{
 		client: GenericClient{
 			Store:      store,

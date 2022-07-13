@@ -10,20 +10,18 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/sensu/sensu-go/backend/api"
 	"github.com/sensu/sensu-go/backend/authentication"
-	"github.com/sensu/sensu-go/backend/store"
 
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 )
 
 // AuthenticationRouter handles authentication related requests
 type AuthenticationRouter struct {
-	store         store.Store
 	authenticator *authentication.Authenticator
 }
 
 // NewAuthenticationRouter instantiates new router.
-func NewAuthenticationRouter(store store.Store, authenticator *authentication.Authenticator) *AuthenticationRouter {
-	return &AuthenticationRouter{store: store, authenticator: authenticator}
+func NewAuthenticationRouter(authenticator *authentication.Authenticator) *AuthenticationRouter {
+	return &AuthenticationRouter{authenticator: authenticator}
 }
 
 // Mount the authentication routes on given mux.Router.

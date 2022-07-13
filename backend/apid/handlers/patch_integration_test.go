@@ -13,7 +13,6 @@ import (
 	"github.com/sensu/sensu-go/backend/etcd"
 	"github.com/sensu/sensu-go/backend/seeds"
 	"github.com/sensu/sensu-go/backend/store"
-	etcdstore "github.com/sensu/sensu-go/backend/store/etcd"
 	storev2 "github.com/sensu/sensu-go/backend/store/v2"
 	etcdstorev2 "github.com/sensu/sensu-go/backend/store/v2/etcdstore"
 	"github.com/sirupsen/logrus"
@@ -23,7 +22,7 @@ type comparable interface {
 	Equal(interface{}) bool
 }
 
-func testWithEtcdStores(t *testing.T, f func(*etcdstore.Store, *etcdstorev2.Store)) {
+func testWithEtcdStore(t *testing.T, f func(*etcdstorev2.Store)) {
 	logrus.SetLevel(logrus.ErrorLevel)
 
 	e, cleanup := etcd.NewTestEtcd(t)
@@ -31,14 +30,13 @@ func testWithEtcdStores(t *testing.T, f func(*etcdstore.Store, *etcdstorev2.Stor
 
 	client := e.NewEmbeddedClient()
 
-	s1 := etcdstore.NewStore(client)
 	s2 := etcdstorev2.NewStore(client)
 
 	if err := seeds.SeedInitialDataWithContext(context.Background(), s2); err != nil {
 		t.Fatalf("failed to seed initial etcd data: %v", err)
 	}
 
-	f(s1, s2)
+	f(s2)
 }
 
 func patchRequest(target, namespace, id, body string) *http.Request {
@@ -56,8 +54,7 @@ func patchRequest(target, namespace, id, body string) *http.Request {
 
 func TestHandlers_PatchResource(t *testing.T) {
 	type fields struct {
-		Resource   corev2.Resource
-		V3Resource corev3.Resource
+		Resource corev3.Resource
 	}
 	type args struct {
 		r *http.Request
@@ -66,7 +63,7 @@ func TestHandlers_PatchResource(t *testing.T) {
 		name      string
 		fields    fields
 		args      args
-		storeInit func(*testing.T, *etcdstore.Store, *etcdstorev2.Store)
+		storeInit func(*testing.T, *etcdstorev2.Store)
 		want      interface{}
 		wantErr   bool
 	}{
@@ -78,10 +75,15 @@ func TestHandlers_PatchResource(t *testing.T) {
 			args: args{
 				r: patchRequest("/", "default", "testcheck", `{"invalid": ["windows"]}`),
 			},
-			storeInit: func(t *testing.T, s1 *etcdstore.Store, s2 *etcdstorev2.Store) {
+			storeInit: func(t *testing.T, s2 *etcdstorev2.Store) {
 				ctx := store.NamespaceContext(context.Background(), "default")
 				check := corev2.FixtureCheckConfig("testcheck")
-				if err := s1.UpdateCheckConfig(ctx, check); err != nil {
+				req := storev2.NewResourceRequestFromResource(check)
+				wrapper, err := storev2.WrapResource(check)
+				if err != nil {
+					t.Fatal(err)
+				}
+				if err := s2.CreateOrUpdate(ctx, req, wrapper); err != nil {
 					t.Fatal(err)
 				}
 			},
@@ -97,10 +99,15 @@ func TestHandlers_PatchResource(t *testing.T) {
 			args: args{
 				r: patchRequest("/", "default", "testcheck", `{"subscriptions": 3}`),
 			},
-			storeInit: func(t *testing.T, s1 *etcdstore.Store, s2 *etcdstorev2.Store) {
+			storeInit: func(t *testing.T, s2 *etcdstorev2.Store) {
 				ctx := store.NamespaceContext(context.Background(), "default")
 				check := corev2.FixtureCheckConfig("testcheck")
-				if err := s1.UpdateCheckConfig(ctx, check); err != nil {
+				req := storev2.NewResourceRequestFromResource(check)
+				wrapper, err := storev2.WrapResource(check)
+				if err != nil {
+					t.Fatal(err)
+				}
+				if err := s2.CreateOrUpdate(ctx, req, wrapper); err != nil {
 					t.Fatal(err)
 				}
 			},
@@ -114,10 +121,15 @@ func TestHandlers_PatchResource(t *testing.T) {
 			args: args{
 				r: patchRequest("/", "default", "testcheck", `{"subscriptions": ["windows"]}`),
 			},
-			storeInit: func(t *testing.T, s1 *etcdstore.Store, s2 *etcdstorev2.Store) {
+			storeInit: func(t *testing.T, s2 *etcdstorev2.Store) {
 				ctx := store.NamespaceContext(context.Background(), "default")
 				check := corev2.FixtureCheckConfig("testcheck")
-				if err := s1.UpdateCheckConfig(ctx, check); err != nil {
+				req := storev2.NewResourceRequestFromResource(check)
+				wrapper, err := storev2.WrapResource(check)
+				if err != nil {
+					t.Fatal(err)
+				}
+				if err := s2.CreateOrUpdate(ctx, req, wrapper); err != nil {
 					t.Fatal(err)
 				}
 			},
@@ -130,12 +142,12 @@ func TestHandlers_PatchResource(t *testing.T) {
 		{
 			name: "succeeds & ignores non-existent field for a V3 resource",
 			fields: fields{
-				V3Resource: &corev3.EntityConfig{},
+				Resource: &corev3.EntityConfig{},
 			},
 			args: args{
 				r: patchRequest("/", "default", "testentity", `{"invalid":["windows"]}`),
 			},
-			storeInit: func(t *testing.T, s1 *etcdstore.Store, s2 *etcdstorev2.Store) {
+			storeInit: func(t *testing.T, s2 *etcdstorev2.Store) {
 				ctx := store.NamespaceContext(context.Background(), "default")
 				entity := corev3.FixtureEntityConfig("testentity")
 				req := storev2.NewResourceRequestFromResource(entity)
@@ -154,12 +166,12 @@ func TestHandlers_PatchResource(t *testing.T) {
 		{
 			name: "errors when field has invalid type for a V3 resource",
 			fields: fields{
-				V3Resource: &corev3.EntityConfig{},
+				Resource: &corev3.EntityConfig{},
 			},
 			args: args{
 				r: patchRequest("/", "default", "testentity", `{"subscriptions":3}`),
 			},
-			storeInit: func(t *testing.T, s1 *etcdstore.Store, s2 *etcdstorev2.Store) {
+			storeInit: func(t *testing.T, s2 *etcdstorev2.Store) {
 				ctx := store.NamespaceContext(context.Background(), "default")
 				entity := corev3.FixtureEntityConfig("testentity")
 				req := storev2.NewResourceRequestFromResource(entity)
@@ -176,12 +188,12 @@ func TestHandlers_PatchResource(t *testing.T) {
 		{
 			name: "succeeds when body has valid field for a V3 resource",
 			fields: fields{
-				V3Resource: &corev3.EntityConfig{},
+				Resource: &corev3.EntityConfig{},
 			},
 			args: args{
 				r: patchRequest("/", "default", "testentity", `{"subscriptions":["windows"]}`),
 			},
-			storeInit: func(t *testing.T, s1 *etcdstore.Store, s2 *etcdstorev2.Store) {
+			storeInit: func(t *testing.T, s2 *etcdstorev2.Store) {
 				ctx := store.NamespaceContext(context.Background(), "default")
 				entity := corev3.FixtureEntityConfig("testentity")
 				req := storev2.NewResourceRequestFromResource(entity)
@@ -202,15 +214,13 @@ func TestHandlers_PatchResource(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			testWithEtcdStores(t, func(s1 *etcdstore.Store, s2 *etcdstorev2.Store) {
+			testWithEtcdStore(t, func(store *etcdstorev2.Store) {
 				if tt.storeInit != nil {
-					tt.storeInit(t, s1, s2)
+					tt.storeInit(t, store)
 				}
 				h := Handlers{
-					Resource:   tt.fields.Resource,
-					V3Resource: tt.fields.V3Resource,
-					Store:      s1,
-					StoreV2:    s2,
+					Resource: tt.fields.Resource,
+					Store:    store,
 				}
 				got, err := h.PatchResource(tt.args.r)
 				if (err != nil) != tt.wantErr {

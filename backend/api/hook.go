@@ -6,6 +6,7 @@ import (
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/authorization"
 	"github.com/sensu/sensu-go/backend/store"
+	storev2 "github.com/sensu/sensu-go/backend/store/v2"
 )
 
 // HookConfigClient is an API client for check hooks.
@@ -15,7 +16,7 @@ type HookConfigClient struct {
 }
 
 // NewHookConfigClient creates a new HookConfigClient, given a store and authorizer.
-func NewHookConfigClient(store store.ResourceStore, auth authorization.Authorizer) *HookConfigClient {
+func NewHookConfigClient(store storev2.Interface, auth authorization.Authorizer) *HookConfigClient {
 	return &HookConfigClient{
 		client: GenericClient{
 			Kind:       &corev2.HookConfig{},

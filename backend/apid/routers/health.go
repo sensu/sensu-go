@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"net/http"
+	"strconv"
 	"sync"
 	"time"
 
@@ -11,6 +12,8 @@ import (
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/store"
 )
+
+const defaultTimeout = 3
 
 // HealthController represents the controller needs of the HealthRouter
 type HealthController interface {
@@ -33,6 +36,14 @@ func NewHealthRouter(ctrl HealthController) *HealthRouter {
 // Mount the HealthRouter to a parent Router
 func (r *HealthRouter) Mount(parent *mux.Router) {
 	parent.HandleFunc("/health", r.health).Methods(http.MethodGet)
+}
+
+func parseTimeout(req *http.Request) (int, error) {
+	val := req.FormValue("timeout")
+	if len(val) == 0 {
+		return defaultTimeout, nil
+	}
+	return strconv.Atoi(val)
 }
 
 func (r *HealthRouter) health(w http.ResponseWriter, req *http.Request) {

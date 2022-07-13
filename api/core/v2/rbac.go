@@ -496,3 +496,11 @@ func validateVerbs(verbs []string) error {
 
 	return nil
 }
+
+func (c *ClusterRoleBinding) IsGlobalResource() bool {
+	return true
+}
+
+func (c *ClusterRole) IsGlobalResource() bool {
+	return true
+}

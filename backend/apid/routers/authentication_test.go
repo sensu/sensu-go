@@ -116,7 +116,7 @@ func authenticationRouter(store realStore.Store) *AuthenticationRouter {
 	authenticator := &authentication.Authenticator{}
 	provider := &basic.Provider{Store: store, ObjectMeta: corev2.ObjectMeta{Name: basic.Type}}
 	authenticator.AddProvider(provider)
-	return &AuthenticationRouter{store: store, authenticator: authenticator}
+	return &AuthenticationRouter{authenticator: authenticator}
 }
 
 func processRequest(router Router, req *http.Request) *httptest.ResponseRecorder {

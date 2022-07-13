@@ -6,12 +6,13 @@ import (
 
 	"github.com/gorilla/mux"
 
+	corev3 "github.com/sensu/sensu-go/api/core/v3"
 	"github.com/sensu/sensu-go/backend/apid/actions"
 	"github.com/sensu/sensu-go/backend/store"
 	storev2 "github.com/sensu/sensu-go/backend/store/v2"
 )
 
-func (h Handlers) DeleteV3Resource(r *http.Request) (interface{}, error) {
+func (h Handlers) DeleteResource(r *http.Request) (corev3.Resource, error) {
 	params := mux.Vars(r)
 	name, err := url.PathUnescape(params["id"])
 	if err != nil {
@@ -21,11 +22,11 @@ func (h Handlers) DeleteV3Resource(r *http.Request) (interface{}, error) {
 	ctx := r.Context()
 	namespace := store.NewNamespaceFromContext(ctx)
 
-	req := storev2.NewResourceRequestFromResource(h.V3Resource)
+	req := storev2.NewResourceRequestFromResource(h.Resource)
 	req.Namespace = namespace
 	req.Name = name
 
-	if err := h.StoreV2.Delete(ctx, req); err != nil {
+	if err := h.Store.Delete(ctx, req); err != nil {
 		switch err := err.(type) {
 		case *store.ErrNotFound:
 			return nil, actions.NewErrorf(actions.NotFound)

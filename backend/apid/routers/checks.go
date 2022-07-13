@@ -10,9 +10,10 @@ import (
 
 	"github.com/gorilla/mux"
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
+	corev3 "github.com/sensu/sensu-go/api/core/v3"
 	"github.com/sensu/sensu-go/backend/apid/actions"
 	"github.com/sensu/sensu-go/backend/apid/handlers"
-	"github.com/sensu/sensu-go/backend/store"
+	storev2 "github.com/sensu/sensu-go/backend/store/v2"
 	"github.com/sensu/sensu-go/types"
 )
 
@@ -30,7 +31,7 @@ type ChecksRouter struct {
 }
 
 // NewChecksRouter instantiates new router for controlling check resources
-func NewChecksRouter(store store.Store, getter types.QueueGetter) *ChecksRouter {
+func NewChecksRouter(store storev2.Interface, getter types.QueueGetter) *ChecksRouter {
 	return &ChecksRouter{
 		controller: actions.NewCheckController(store, getter),
 		handlers: handlers.Handlers{
@@ -63,7 +64,7 @@ func (r *ChecksRouter) Mount(parent *mux.Router) {
 	parent.HandleFunc(path.Join(routes.PathPrefix, "{id}/execute"), r.adhocRequest).Methods(http.MethodPost)
 }
 
-func (r *ChecksRouter) addCheckHook(req *http.Request) (interface{}, error) {
+func (r *ChecksRouter) addCheckHook(req *http.Request) (corev3.Resource, error) {
 	cfg := corev2.HookList{}
 	if err := UnmarshalBody(req, &cfg); err != nil {
 		return nil, err
@@ -79,7 +80,7 @@ func (r *ChecksRouter) addCheckHook(req *http.Request) (interface{}, error) {
 	return nil, err
 }
 
-func (r *ChecksRouter) removeCheckHook(req *http.Request) (interface{}, error) {
+func (r *ChecksRouter) removeCheckHook(req *http.Request) (corev3.Resource, error) {
 	params := mux.Vars(req)
 	id, err := url.PathUnescape(params["id"])
 	if err != nil {

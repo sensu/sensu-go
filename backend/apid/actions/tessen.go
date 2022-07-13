@@ -4,17 +4,18 @@ import (
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/messaging"
 	"github.com/sensu/sensu-go/backend/store"
+	storev2 "github.com/sensu/sensu-go/backend/store/v2"
 	"golang.org/x/net/context"
 )
 
 // TessenController exposes actions which a viewer can perform
 type TessenController struct {
-	store store.TessenConfigStore
+	store storev2.Interface
 	bus   messaging.MessageBus
 }
 
 // NewTessenController returns a new TessenController
-func NewTessenController(store store.TessenConfigStore, bus messaging.MessageBus) TessenController {
+func NewTessenController(store storev2.Interface, bus messaging.MessageBus) TessenController {
 	return TessenController{
 		store: store,
 		bus:   bus,
@@ -23,7 +24,12 @@ func NewTessenController(store store.TessenConfigStore, bus messaging.MessageBus
 
 // CreateOrUpdate creates or updates the tessen configuration
 func (c TessenController) CreateOrUpdate(ctx context.Context, config *corev2.TessenConfig) error {
-	if err := c.store.CreateOrUpdateTessenConfig(ctx, config); err != nil {
+	req := storev2.NewResourceRequestFromResource(config)
+	wrapper, err := storev2.WrapResource(config)
+	if err != nil {
+		return err
+	}
+	if err := c.store.CreateOrUpdate(ctx, req, wrapper); err != nil {
 		switch err := err.(type) {
 		case *store.ErrNotValid:
 			return NewErrorf(InvalidArgument)
@@ -42,7 +48,9 @@ func (c TessenController) CreateOrUpdate(ctx context.Context, config *corev2.Tes
 
 // Get gets the tessen configuration
 func (c TessenController) Get(ctx context.Context) (*corev2.TessenConfig, error) {
-	config, err := c.store.GetTessenConfig(ctx)
+	var config corev2.TessenConfig
+	req := storev2.NewResourceRequestFromResource(&config)
+	wrapper, err := c.store.Get(ctx, req)
 	if err != nil {
 		switch err := err.(type) {
 		case *store.ErrNotFound:
@@ -51,8 +59,11 @@ func (c TessenController) Get(ctx context.Context) (*corev2.TessenConfig, error)
 			return nil, NewError(InternalErr, err)
 		}
 	}
+	if err := wrapper.UnwrapInto(&config); err != nil {
+		return nil, NewError(InternalErr, err)
+	}
 
-	return config, nil
+	return &config, nil
 }
 
 // TessenMetricController exposes actions which a viewer can perform

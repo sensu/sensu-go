@@ -16,7 +16,7 @@ import (
 func TestNewTessenController(t *testing.T) {
 	assert := assert.New(t)
 
-	store := &mockstore.MockStore{}
+	store := &mockstore.V2MockStore{}
 	bus := &mockbus.MockBus{}
 	actions := NewTessenController(store, bus)
 
@@ -67,7 +67,7 @@ func TestCreateOrUpdateTessenConfig(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		store := &mockstore.MockStore{}
+		store := &mockstore.V2MockStore{}
 		bus := &mockbus.MockBus{}
 		actions := NewTessenController(store, bus)
 
@@ -75,7 +75,7 @@ func TestCreateOrUpdateTessenConfig(t *testing.T) {
 			assert := assert.New(t)
 
 			store.
-				On("CreateOrUpdateTessenConfig", mock.Anything, mock.Anything).
+				On("CreateOrUpdate", mock.Anything, mock.Anything, mock.Anything).
 				Return(tc.storeErr)
 
 			bus.On("Publish", mock.Anything, mock.Anything).Return(tc.busErr)
@@ -128,16 +128,20 @@ func TestGetTessenConfig(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		store := &mockstore.MockStore{}
+		store := &mockstore.V2MockStore{}
 		bus := &mockbus.MockBus{}
 		actions := NewTessenController(store, bus)
 
 		t.Run(tc.name, func(t *testing.T) {
 			assert := assert.New(t)
 
-			store.
-				On("GetTessenConfig", mock.Anything, mock.Anything).
-				Return(tc.expectedResult, tc.storeErr)
+			if tc.expectedResult != nil {
+				store.
+					On("Get", mock.Anything, mock.Anything).
+					Return(mockstore.Wrapper[*corev2.TessenConfig]{Value: tc.expectedResult}, tc.storeErr)
+			} else {
+				store.On("Get", mock.Anything, mock.Anything).Return(nil, tc.storeErr)
+			}
 
 			result, err := actions.Get(tc.ctx)
 

@@ -5,6 +5,7 @@ import (
 	"errors"
 	"testing"
 
+	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/testing/mockstore"
 	"github.com/sensu/sensu-go/testing/testutil"
@@ -16,7 +17,7 @@ import (
 func TestNewUserController(t *testing.T) {
 	assert := assert.New(t)
 
-	store := &mockstore.MockStore{}
+	store := &mockstore.V2MockStore{}
 	actions := NewUserController(store)
 
 	assert.NotNil(actions)
@@ -64,18 +65,17 @@ func TestUserList(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		s := &mockstore.MockStore{}
+		s := &mockstore.V2MockStore{}
 		actions := NewUserController(s)
 
 		t.Run(tc.name, func(t *testing.T) {
 			assert := assert.New(t)
 
 			// Mock store methods
-			pred := &store.SelectionPredicate{}
-			s.On("GetAllUsers", pred).Return(tc.records, tc.storeErr)
+			s.On("List", mock.Anything, mock.Anything, mock.Anything).Return(mockstore.WrapList[*corev2.User](tc.records), tc.storeErr)
 
 			// Exec Query
-			results, err := actions.List(tc.ctx, pred)
+			results, err := actions.List(tc.ctx, new(store.SelectionPredicate))
 
 			// Assert
 			assert.EqualValues(tc.expectedErr, err)
@@ -104,6 +104,7 @@ func TestUserGet(t *testing.T) {
 			argument:        "",
 			expected:        false,
 			expectedErrCode: NotFound,
+			storeErr:        &store.ErrNotFound{},
 		},
 		{
 			name:         "Found",
@@ -126,20 +127,25 @@ func TestUserGet(t *testing.T) {
 			argument:        "user1",
 			expected:        false,
 			expectedErrCode: NotFound,
+			storeErr:        &store.ErrNotFound{},
 		},
 	}
 
 	for _, tc := range testCases {
-		store := &mockstore.MockStore{}
+		store := &mockstore.V2MockStore{}
 		actions := NewUserController(store)
 
 		t.Run(tc.name, func(t *testing.T) {
 			assert := assert.New(t)
 
 			// Mock store methods
-			store.
-				On("GetUser", mock.Anything, tc.argument).
-				Return(tc.storedRecord, tc.storeErr)
+			if tc.storedRecord != nil {
+				store.
+					On("Get", mock.Anything, mock.Anything).
+					Return(mockstore.Wrapper[*corev2.User]{Value: tc.storedRecord}, tc.storeErr)
+			} else {
+				store.On("Get", mock.Anything, mock.Anything).Return(nil, tc.storeErr)
+			}
 
 			// Exec Query
 			result, err := actions.Get(tc.ctx, tc.argument)
@@ -203,17 +209,17 @@ func TestUserCreateOrReplace(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		store := &mockstore.MockStore{}
+		store := &mockstore.V2MockStore{}
 		actions := NewUserController(store)
 
 		t.Run(tc.name, func(t *testing.T) {
 			assert := assert.New(t)
 
 			// Mock store methods
-			store.On("UpdateUser", mock.Anything).Return(tc.createErr)
+			store.On("CreateOrUpdate", mock.Anything, mock.Anything, mock.Anything).Return(tc.createErr)
 			store.
-				On("GetUser", mock.Anything, mock.Anything).
-				Return(tc.fetchResult, tc.fetchErr)
+				On("Get", mock.Anything, mock.Anything).
+				Return(mockstore.Wrapper[*corev2.User]{Value: tc.fetchResult}, tc.fetchErr)
 
 			// Exec Query
 			err := actions.CreateOrReplace(tc.ctx, tc.argument)
@@ -263,6 +269,7 @@ func TestUserCreate(t *testing.T) {
 			fetchResult:     types.FixtureUser("user1"),
 			expectedErr:     true,
 			expectedErrCode: AlreadyExistsErr,
+			createErr:       &store.ErrAlreadyExists{},
 		},
 		{
 			name:            "store Err on Create",
@@ -282,17 +289,19 @@ func TestUserCreate(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		store := &mockstore.MockStore{}
-		actions := NewUserController(store)
+		sto := &mockstore.V2MockStore{}
+		actions := NewUserController(sto)
 
 		t.Run(tc.name, func(t *testing.T) {
 			assert := assert.New(t)
 
 			// Mock store methods
-			store.On("UpdateUser", mock.Anything).Return(tc.createErr)
-			store.
-				On("GetUser", mock.Anything, mock.Anything).
-				Return(tc.fetchResult, tc.fetchErr)
+			sto.On("CreateIfNotExists", mock.Anything, mock.Anything, mock.Anything).Return(tc.createErr)
+			if tc.fetchResult != nil {
+				sto.On("Get", mock.Anything, mock.Anything).Return(mockstore.Wrapper[*corev2.User]{Value: tc.fetchResult}, tc.fetchErr)
+			} else {
+				sto.On("Get", mock.Anything, mock.Anything).Return(nil, &store.ErrNotFound{})
+			}
 
 			// Exec Query
 			err := actions.Create(tc.ctx, tc.argument)
@@ -341,6 +350,7 @@ func TestUserDisable(t *testing.T) {
 			fetchResult:     nil,
 			expectedErr:     true,
 			expectedErrCode: NotFound,
+			fetchErr:        &store.ErrNotFound{},
 		},
 		{
 			name:            "store Err on Update",
@@ -354,7 +364,7 @@ func TestUserDisable(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		store := &mockstore.MockStore{}
+		store := &mockstore.V2MockStore{}
 		actions := NewUserController(store)
 
 		t.Run(tc.name, func(t *testing.T) {
@@ -362,11 +372,11 @@ func TestUserDisable(t *testing.T) {
 
 			// Mock store methods
 			store.
-				On("UpdateUser", tc.fetchResult).
+				On("UpdateIfExists", mock.Anything, mock.Anything, mock.Anything).
 				Return(tc.updateErr)
 			store.
-				On("GetUser", mock.Anything, mock.Anything).
-				Return(tc.fetchResult, tc.fetchErr)
+				On("Get", mock.Anything, mock.Anything).
+				Return(mockstore.Wrapper[*corev2.User]{Value: tc.fetchResult}, tc.fetchErr)
 
 			// Exec Query
 			err := actions.Disable(tc.ctx, tc.argument)
@@ -421,6 +431,7 @@ func TestUserEnable(t *testing.T) {
 			fetchResult:     nil,
 			expectedErr:     true,
 			expectedErrCode: NotFound,
+			fetchErr:        &store.ErrNotFound{},
 		},
 		{
 			name:            "store Err on Update",
@@ -434,15 +445,15 @@ func TestUserEnable(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		store := &mockstore.MockStore{}
+		store := &mockstore.V2MockStore{}
 		actions := NewUserController(store)
 
 		t.Run(tc.name, func(t *testing.T) {
 			// Mock store methods
-			store.On("UpdateUser", mock.Anything).Return(tc.updateErr).Once()
+			store.On("CreateOrUpdate", mock.Anything, mock.Anything, mock.Anything).Return(tc.updateErr).Once()
 			store.
-				On("GetUser", mock.Anything, mock.Anything).
-				Return(tc.fetchResult, tc.fetchErr)
+				On("Get", mock.Anything, mock.Anything).
+				Return(mockstore.Wrapper[*corev2.User]{Value: tc.fetchResult}, tc.fetchErr)
 
 			// Exec Query
 			err := actions.Enable(tc.ctx, tc.argument)

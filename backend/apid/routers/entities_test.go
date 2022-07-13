@@ -6,8 +6,8 @@ import (
 
 	"github.com/gorilla/mux"
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
+	corev3 "github.com/sensu/sensu-go/api/core/v3"
 	"github.com/sensu/sensu-go/backend/store"
-	"github.com/sensu/sensu-go/backend/store/v2/storetest"
 	"github.com/sensu/sensu-go/testing/mockstore"
 	"github.com/stretchr/testify/mock"
 )
@@ -21,9 +21,9 @@ func (m *mockEntitiesController) Find(ctx context.Context, id string) (*corev2.E
 	return args.Get(0).(*corev2.Entity), args.Error(1)
 }
 
-func (m *mockEntitiesController) List(ctx context.Context, pred *store.SelectionPredicate) ([]corev2.Resource, error) {
+func (m *mockEntitiesController) List(ctx context.Context, pred *store.SelectionPredicate) ([]corev3.Resource, error) {
 	args := m.Called(ctx, pred)
-	return args.Get(0).([]corev2.Resource), args.Error(1)
+	return args.Get(0).([]corev3.Resource), args.Error(1)
 }
 
 func (m *mockEntitiesController) Create(ctx context.Context, entity corev2.Entity) error {
@@ -40,16 +40,18 @@ func TestEntitiesRouter(t *testing.T) {
 	// Setup the router
 	controller := new(mockEntitiesController)
 	controller.On("Find", mock.Anything, mock.Anything).Return(corev2.FixtureEntity("foo"), nil)
-	controller.On("List", mock.Anything, mock.Anything).Return([]corev2.Resource{corev2.FixtureEntity("foo")}, nil)
+	controller.On("List", mock.Anything, mock.Anything).Return([]corev3.Resource{corev2.FixtureEntity("foo")}, nil)
 	controller.On("Create", mock.Anything, mock.Anything).Return(nil)
 	controller.On("CreateOrReplace", mock.Anything, mock.Anything).Return(nil)
-	s := new(mockstore.MockStore)
-	s.On("GetEventsByEntity", mock.Anything, "foo", mock.Anything).Return([]*corev2.Event{corev2.FixtureEvent("foo", "bar")}, nil)
-	s.On("DeleteEventByEntityCheck", mock.Anything, "foo", "bar").Return(nil)
-	s.On("DeleteEntityByName", mock.Anything, "foo").Return(nil)
-	s.On("GetEntityByName", mock.Anything, "foo").Return(corev2.FixtureEntity("foo"), nil)
-	s2 := new(storetest.Store)
-	router := NewEntitiesRouter(s, s2, s)
+	s := new(mockstore.V2MockStore)
+	s.On("Delete", mock.Anything, mock.Anything).Return(nil)
+	entityStore := new(mockstore.MockStore)
+	entityStore.On("GetEntityByName", mock.Anything, mock.Anything).Return(corev2.FixtureEntity("foo"), nil)
+	entityStore.On("DeleteEntityByName", mock.Anything, mock.Anything).Return(nil)
+	eventStore := new(mockstore.MockStore)
+	eventStore.On("GetEventsByEntity", mock.Anything, mock.Anything, mock.Anything).Return([]*corev2.Event{corev2.FixtureEvent("foo", "bar")}, nil)
+	eventStore.On("DeleteEventByEntityCheck", mock.Anything, mock.Anything, mock.Anything).Return(nil)
+	router := NewEntitiesRouter(s, entityStore, eventStore)
 	router.controller = controller
 	parentRouter := mux.NewRouter().PathPrefix(corev2.URLPrefix).Subrouter()
 	router.Mount(parentRouter)

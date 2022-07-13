@@ -4,7 +4,7 @@ import (
 	"github.com/gorilla/mux"
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/apid/handlers"
-	"github.com/sensu/sensu-go/backend/store"
+	storev2 "github.com/sensu/sensu-go/backend/store/v2"
 )
 
 // ClusterRolesRouter handles requests for ClusterRoles.
@@ -13,7 +13,7 @@ type ClusterRolesRouter struct {
 }
 
 // NewClusterRolesRouter instantiates a new router for ClusterRoles.
-func NewClusterRolesRouter(store store.ResourceStore) *ClusterRolesRouter {
+func NewClusterRolesRouter(store storev2.Interface) *ClusterRolesRouter {
 	return &ClusterRolesRouter{
 		handlers: handlers.Handlers{
 			Resource: &corev2.ClusterRole{},

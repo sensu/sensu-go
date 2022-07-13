@@ -51,11 +51,11 @@ func TestHandlers_ListV3Resources(t *testing.T) {
 			}
 
 			h := Handlers{
-				V3Resource: &fixture.V3Resource{},
-				StoreV2:    s,
+				Resource: &fixture.V3Resource{},
+				Store:    s,
 			}
 
-			got, err := h.ListV3Resources(context.Background(), &store.SelectionPredicate{})
+			got, err := h.ListResources(context.Background(), &store.SelectionPredicate{})
 			if (err != nil) != tt.wantErr {
 				t.Errorf("Handlers.ListResources() error = %v, wantErr %v", err, tt.wantErr)
 				return

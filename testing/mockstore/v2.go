@@ -109,6 +109,8 @@ func (w Wrapper[T]) UnwrapInto(target interface{}) error {
 	if !ok {
 		panic("bad target")
 	}
-	reflect.ValueOf(val).Elem().Set(reflect.ValueOf(w.Value).Elem())
+	if !reflect.ValueOf(w.Value).IsZero() {
+		reflect.ValueOf(val).Elem().Set(reflect.ValueOf(w.Value).Elem())
+	}
 	return nil
 }

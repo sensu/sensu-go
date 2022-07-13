@@ -40,14 +40,14 @@ func (c EntityController) Find(ctx context.Context, id string) (*corev2.Entity, 
 }
 
 // List returns resources available to the viewer.
-func (c EntityController) List(ctx context.Context, pred *store.SelectionPredicate) ([]corev2.Resource, error) {
+func (c EntityController) List(ctx context.Context, pred *store.SelectionPredicate) ([]corev3.Resource, error) {
 	// Fetch from store
 	results, err := c.store.GetEntities(ctx, pred)
 	if err != nil {
 		return nil, NewError(InternalErr, err)
 	}
 
-	resources := make([]corev2.Resource, len(results))
+	resources := make([]corev3.Resource, len(results))
 	for i, v := range results {
 		resources[i] = v
 	}

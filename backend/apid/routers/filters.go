@@ -4,7 +4,7 @@ import (
 	"github.com/gorilla/mux"
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/apid/handlers"
-	"github.com/sensu/sensu-go/backend/store"
+	storev2 "github.com/sensu/sensu-go/backend/store/v2"
 )
 
 // EventFiltersRouter handles /filters requests.
@@ -13,7 +13,7 @@ type EventFiltersRouter struct {
 }
 
 // NewEventFiltersRouter creates a new EventFiltersRouter.
-func NewEventFiltersRouter(store store.ResourceStore) *EventFiltersRouter {
+func NewEventFiltersRouter(store storev2.Interface) *EventFiltersRouter {
 	return &EventFiltersRouter{
 		handlers: handlers.Handlers{
 			Resource: &corev2.EventFilter{},

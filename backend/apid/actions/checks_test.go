@@ -4,6 +4,7 @@ import (
 	"context"
 	"testing"
 
+	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/queue"
 	"github.com/sensu/sensu-go/testing/mockqueue"
 	"github.com/sensu/sensu-go/testing/mockstore"
@@ -16,7 +17,7 @@ import (
 func TestNewCheckController(t *testing.T) {
 	assert := assert.New(t)
 
-	store := &mockstore.MockStore{}
+	store := &mockstore.V2MockStore{}
 	actions := NewCheckController(store, queue.NewMemoryGetter())
 
 	assert.NotNil(actions)
@@ -55,7 +56,7 @@ func TestCheckAdhoc(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		store := &mockstore.MockStore{}
+		store := &mockstore.V2MockStore{}
 		queue := &mockqueue.MockQueue{}
 		getter := &mockqueue.Getter{}
 		getter.On("GetQueue", mock.Anything).Return(queue)
@@ -66,8 +67,8 @@ func TestCheckAdhoc(t *testing.T) {
 
 			// Mock store methods
 			store.
-				On("GetCheckConfigByName", mock.Anything, mock.Anything).
-				Return(tc.fetchResult, tc.fetchErr)
+				On("Get", mock.Anything, mock.Anything).
+				Return(mockstore.Wrapper[*corev2.CheckConfig]{Value: tc.fetchResult}, tc.fetchErr)
 			queue.
 				On("Enqueue", mock.Anything, mock.Anything).
 				Return(tc.queueErr)
