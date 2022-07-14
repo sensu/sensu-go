@@ -51,6 +51,16 @@ func (e *ErrNamespaceMissing) Error() string {
 	return fmt.Sprintf("the namespace %s does not exist", e.Namespace)
 }
 
+// ErrNamespaceNotEmpty is returned when trying to delete a namespace that still
+// has resources within it.
+type ErrNamespaceNotEmpty struct {
+	Namespace string
+}
+
+func (e *ErrNamespaceNotEmpty) Error() string {
+	return fmt.Sprintf("cannot delete namespace %s: namespace not empty", e.Namespace)
+}
+
 // ErrNotFound is returned when a key is not found in the store
 type ErrNotFound struct {
 	Key string

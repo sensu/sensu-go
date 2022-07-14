@@ -34,8 +34,9 @@ SET
 `
 
 const createIfNotExistsNamespaceQuery = `
--- This query inserts rows into the namespaces table. By design, it
--- errors when a namespace with the same name already exists.
+-- This query creates a new namespace, or updates it if it exists and has been
+-- soft deleted. By design, it errors when a namespace with the same name
+-- already exists and has not been soft deleted.
 --
 WITH ignored AS (
 	SELECT
@@ -43,15 +44,20 @@ WITH ignored AS (
 		$5::timestamptz,
 		$6::timestamptz,
 		$7::timestamptz
-), namespace AS (
-	INSERT INTO namespaces (
-		name,
-		selectors,
-		annotations
-	) VALUES ( $1, $2, $3 )
-	RETURNING id
+), upsert AS (
+	UPDATE namespaces
+	SET
+		selectors = $2,
+		annotations = $3,
+		deleted_at = NULL
+	WHERE
+		name = $1 AND
+		namespaces.deleted_at IS NOT NULL
+	RETURNING *
 )
-SELECT namespace.id FROM namespace
+INSERT INTO namespaces (name, selectors, annotations, deleted_at)
+SELECT $1, $2, $3, NULL
+WHERE NOT EXISTS (SELECT * FROM upsert)
 `
 
 const updateIfExistsNamespaceQuery = `
@@ -64,14 +70,12 @@ WITH ignored AS (
 		$6::timestamptz,
 		$7::timestamptz
 ), namespace AS (
-	SELECT id FROM namespaces
-	WHERE name = $1
+	SELECT id FROM namespaces WHERE name = $1
 ), upd AS (
 	UPDATE namespaces
 	SET
 		selectors = $2,
-		annotations = $3,
-		deleted_at = NULL
+		annotations = $3
 	FROM namespace
 	WHERE namespace.id = namespaces.id
 )
@@ -185,4 +189,20 @@ SELECT true FROM namespaces
 WHERE
 	name = $1 AND
 	deleted_at IS NULL;
+`
+
+const isEmptyNamespaceQuery = `
+-- This query determines if a namespace is empty or not.
+--
+WITH namespace AS (
+	SELECT id FROM namespaces WHERE name = $1
+), entity_configs AS (
+	SELECT COUNT(*) FROM entity_configs, namespace WHERE entity_configs.namespace_id = namespace.id
+), entity_states AS (
+	SELECT COUNT(*) FROM entity_states, namespace WHERE entity_states.namespace_id = namespace.id
+)
+SELECT
+	entity_configs.count + entity_states.count AS count
+FROM entity_configs, entity_states, namespace
+WHERE namespace.id IS NOT NULL;
 `

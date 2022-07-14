@@ -442,7 +442,7 @@ func (s *Store) DeleteNamespace(ctx context.Context, namespace string) error {
 		return err
 	}
 	if resp.Count > 0 {
-		return fmt.Errorf("cannot delete namespace %s: namespace not empty", namespace)
+		return &store.ErrNamespaceNotEmpty{Namespace: namespace}
 	}
 	req := storev2.NewResourceRequest(corev2.TypeMeta{Type: "Namespace", APIVersion: "core/v2"}, "", namespace, "namespaces")
 	return s.Delete(ctx, req)

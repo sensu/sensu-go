@@ -2,157 +2,332 @@ package postgres
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
+	"fmt"
 
+	"github.com/jackc/pgconn"
+	"github.com/jackc/pgx/v4"
 	"github.com/jackc/pgx/v4/pgxpool"
-	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	corev3 "github.com/sensu/sensu-go/api/core/v3"
 	"github.com/sensu/sensu-go/backend/store"
-	storev2 "github.com/sensu/sensu-go/backend/store/v2"
-	"github.com/sensu/sensu-go/backend/store/v2/etcdstore"
+	"github.com/sensu/sensu-go/backend/store/patch"
+)
+
+var (
+	namespaceStoreName        = new(corev3.Namespace).StoreName()
+	namespaceUniqueConstraint = "namespace_unique"
 )
 
 type NamespaceStore struct {
-	store *StoreV2
+	db *pgxpool.Pool
 }
 
 func NewNamespaceStore(db *pgxpool.Pool) *NamespaceStore {
 	return &NamespaceStore{
-		store: NewStoreV2(db),
+		db: db,
 	}
 }
 
-// CreateNamespace creates a namespace using the given namespace struct.
-func (e *NamespaceStore) CreateNamespace(ctx context.Context, n *corev2.Namespace) error {
-	namespace := corev3.V2NamespaceToV3(n)
-	req := storev2.NewResourceRequestFromResource(namespace)
-	wrappedNamespace, err := storev2.WrapResource(namespace)
-	if err != nil {
-		return &store.ErrEncode{Err: err}
+// Create creates a namespace using the given namespace struct.
+func (s *NamespaceStore) CreateIfNotExists(ctx context.Context, namespace *corev3.Namespace) error {
+	if err := namespace.Validate(); err != nil {
+		return &store.ErrNotValid{Err: err}
 	}
-	if err := e.store.CreateIfNotExists(ctx, req, wrappedNamespace); err != nil {
-		return err
+
+	wrapper := WrapNamespace(namespace).(*NamespaceWrapper)
+	params := wrapper.SQLParams()
+
+	if _, err := s.db.Exec(ctx, createIfNotExistsNamespaceQuery, params...); err != nil {
+		pgError, ok := err.(*pgconn.PgError)
+		if ok {
+			switch pgError.ConstraintName {
+			case namespaceUniqueConstraint:
+				return &store.ErrAlreadyExists{
+					Key: fmt.Sprintf("%s", namespace.Metadata.Name),
+				}
+			}
+		}
+		return &store.ErrInternal{Message: err.Error()}
 	}
+
 	return nil
 }
 
-// DeleteNamespace deletes a namespace using the given namespace name.
-func (e *NamespaceStore) DeleteNamespace(ctx context.Context, name string) error {
+// CreateOrUpdate creates a namespace or updates it if it already exists.
+func (s *NamespaceStore) CreateOrUpdate(ctx context.Context, namespace *corev3.Namespace) error {
+	if err := namespace.Validate(); err != nil {
+		return &store.ErrNotValid{Err: err}
+	}
+
+	wrapper := WrapNamespace(namespace).(*NamespaceWrapper)
+	params := wrapper.SQLParams()
+
+	if _, err := s.db.Exec(ctx, createOrUpdateNamespaceQuery, params...); err != nil {
+		return &store.ErrInternal{Message: err.Error()}
+	}
+
+	return nil
+}
+
+// Delete soft deletes a namespace using the given namespace name.
+func (s *NamespaceStore) Delete(ctx context.Context, name string) error {
 	namespace := corev3.NewNamespace(name)
 	if err := namespace.Validate(); err != nil {
 		return &store.ErrNotValid{Err: err}
 	}
 
-	req := storev2.NewResourceRequestFromResource(namespace)
-	if err := e.store.Delete(ctx, req); err != nil {
-		var e *store.ErrNotFound
-		if !errors.As(err, &e) {
-			return err
-		}
+	empty, err := s.isEmpty(ctx, name)
+	if err != nil {
+		return err
+	}
+	if !empty {
+		return &store.ErrNamespaceNotEmpty{Namespace: name}
+	}
+
+	result, err := s.db.Exec(ctx, deleteNamespaceQuery, name)
+	if err != nil {
+		return &store.ErrInternal{Message: err.Error()}
+	}
+	affected := result.RowsAffected()
+	if affected < 1 {
+		return &store.ErrNotFound{Key: fmt.Sprintf("%s", name)}
 	}
 	return nil
 }
 
-// DeleteNamespaceByName deletes a namespace using the given name.
-func (e *NamespaceStore) DeleteNamespaceByName(ctx context.Context, name string) error {
-	if name == "" {
-		return &store.ErrNotValid{Err: errors.New("must specify name")}
+// Exists determines if a namespace exists.
+func (s *NamespaceStore) Exists(ctx context.Context, name string) (bool, error) {
+	row := s.db.QueryRow(ctx, existsNamespaceQuery, name)
+	var found bool
+	err := row.Scan(&found)
+	if err == nil {
+		return found, nil
 	}
-
-	return e.DeleteNamespace(ctx, name)
+	if err == pgx.ErrNoRows {
+		return false, nil
+	}
+	return false, &store.ErrInternal{Message: err.Error()}
 }
 
-// GetNamespaces returns all namespaces. A nil slice with no error is returned
-// if none were found.
-func (e *NamespaceStore) GetNamespaces(ctx context.Context, pred *store.SelectionPredicate) ([]*corev3.Namespace, error) {
-	// Fetch the namespaces with the selection predicate
-	req := storev2.ResourceRequest{
-		Type:       "Namespace",
-		APIVersion: "core/v3",
-		StoreName:  new(corev3.Namespace).StoreName(),
-	}
-	if pred.Ordering == corev3.NamespaceSortName {
-		req.SortOrder = storev2.SortAscend
-		if pred.Descending {
-			req.SortOrder = storev2.SortDescend
-		}
+// Get retrieves a namespace by a given name.
+func (s *NamespaceStore) Get(ctx context.Context, name string) (*corev3.Namespace, error) {
+	if name == "" {
+		return nil, &store.ErrNotValid{Err: errors.New("must specify name")}
 	}
 
-	wNamespaces, err := e.store.List(ctx, req, pred)
+	row := s.db.QueryRow(ctx, getNamespaceQuery, name)
+	wrapper := &NamespaceWrapper{}
+	if err := row.Scan(wrapper.SQLParams()...); err != nil {
+		if err == pgx.ErrNoRows {
+			return nil, &store.ErrNotFound{Key: fmt.Sprintf("%s", name)}
+		}
+		return nil, &store.ErrInternal{Message: err.Error()}
+	}
+
+	var namespace corev3.Namespace
+	if err := wrapper.unwrapIntoNamespace(&namespace); err != nil {
+		return nil, &store.ErrInternal{Message: err.Error()}
+	}
+
+	return &namespace, nil
+}
+
+// HardDelete hard deletes a namespace using the given namespace name.
+func (s *NamespaceStore) HardDelete(ctx context.Context, name string) error {
+	namespace := corev3.NewNamespace(name)
+	if err := namespace.Validate(); err != nil {
+		return &store.ErrNotValid{Err: err}
+	}
+
+	empty, err := s.isEmpty(ctx, name)
+	if err != nil {
+		return err
+	}
+	if !empty {
+		return &store.ErrNamespaceNotEmpty{Namespace: name}
+	}
+
+	result, err := s.db.Exec(ctx, hardDeleteNamespaceQuery, name)
+	if err != nil {
+		return &store.ErrInternal{Message: err.Error()}
+	}
+	affected := result.RowsAffected()
+	if affected < 1 {
+		return &store.ErrNotFound{Key: fmt.Sprintf("%s", name)}
+	}
+	return nil
+}
+
+// HardDeleted determines if a namespace has been hard deleted.
+func (s *NamespaceStore) HardDeleted(ctx context.Context, name string) (bool, error) {
+	row := s.db.QueryRow(ctx, hardDeletedNamespaceQuery, name)
+	var deleted bool
+	if err := row.Scan(&deleted); err != nil {
+		if err == pgx.ErrNoRows {
+			return false, nil
+		}
+		return false, &store.ErrInternal{Message: err.Error()}
+	}
+	return deleted, nil
+}
+
+// List returns all namespaces. A nil slice with no error is returned if none
+// were found.
+func (s *NamespaceStore) List(ctx context.Context, pred *store.SelectionPredicate) ([]*corev3.Namespace, error) {
+	query := listNamespaceQuery
+	if pred != nil && pred.Descending {
+		query = listNamespaceDescQuery
+	}
+
+	limit, offset, err := getLimitAndOffset(pred)
 	if err != nil {
 		return nil, err
 	}
 
-	namespaces := make([]*corev3.Namespace, wNamespaces.Len())
-	if err := wNamespaces.UnwrapInto(&namespaces); err != nil {
-		return nil, &store.ErrDecode{Err: err, Key: etcdstore.StoreKey(req)}
+	rows, rerr := s.db.Query(ctx, query, limit, offset)
+	if rerr != nil {
+		return nil, &store.ErrInternal{Message: rerr.Error()}
+	}
+	defer rows.Close()
+
+	namespaces := []*corev3.Namespace{}
+	var rowCount int64
+	for rows.Next() {
+		rowCount++
+		wrapper := &NamespaceWrapper{}
+		if err := rows.Scan(wrapper.SQLParams()...); err != nil {
+			return nil, &store.ErrInternal{Message: err.Error()}
+		}
+		if err := rows.Err(); err != nil {
+			return nil, &store.ErrInternal{Message: err.Error()}
+		}
+		namespace := &corev3.Namespace{}
+		if err := wrapper.unwrapIntoNamespace(namespace); err != nil {
+			return nil, &store.ErrInternal{Message: err.Error()}
+		}
+		namespaces = append(namespaces, namespace)
+	}
+	if pred != nil {
+		if rowCount < pred.Limit {
+			pred.Continue = ""
+		}
 	}
 
 	return namespaces, nil
 }
 
-func (e *NamespaceStore) GetNamespace(ctx context.Context, name string) (*corev2.Namespace, error) {
-	if name == "" {
-		return nil, &store.ErrNotValid{Err: errors.New("must specify name")}
+func (s *NamespaceStore) Patch(ctx context.Context, name string, patcher patch.Patcher, conditions *store.ETagCondition) (fErr error) {
+	tx, txerr := s.db.Begin(ctx)
+	if txerr != nil {
+		return &store.ErrInternal{Message: txerr.Error()}
 	}
-	namespace := corev3.NewNamespace(name)
-	req := storev2.NewResourceRequestFromResource(namespace)
-	wrapper, err := e.store.Get(ctx, req)
-	if err != nil {
-		var e *store.ErrNotFound
-		if errors.As(err, &e) {
-			return nil, nil
+	defer func() {
+		if fErr == nil {
+			fErr = tx.Commit(ctx)
+			return
 		}
-		return nil, err
-	}
-
-	if err := wrapper.UnwrapInto(namespace); err != nil {
-		return nil, err
-	}
-	return corev3.V3NamespaceToV2(namespace), nil
-}
-
-// GetNamespaceByName returns a namespace using the given name. The resulting
-// namespace config is nil if none was found.
-func (e *NamespaceStore) GetNamespaceByName(ctx context.Context, name string) (*corev3.Namespace, error) {
-	if name == "" {
-		return nil, &store.ErrNotValid{Err: errors.New("must specify name")}
-	}
-	namespace := &corev3.Namespace{
-		Metadata: &corev2.ObjectMeta{
-			Name: name,
-		},
-	}
-	req := storev2.NewResourceRequestFromResource(namespace)
-	wrapper, err := e.store.Get(ctx, req)
-	if err != nil {
-		var e *store.ErrNotFound
-		if errors.As(err, &e) {
-			return nil, nil
+		if txerr := tx.Rollback(ctx); txerr != nil {
+			fErr = txerr
 		}
-		return nil, err
+	}()
+
+	wrapper := &NamespaceWrapper{}
+	row := tx.QueryRow(ctx, getNamespaceQuery, name)
+	if err := row.Scan(wrapper.SQLParams()...); err != nil {
+		if err == pgx.ErrNoRows {
+			return &store.ErrNotFound{Key: fmt.Sprintf("%s", name)}
+		}
+		return &store.ErrInternal{Message: err.Error()}
 	}
 
-	if err := wrapper.UnwrapInto(namespace); err != nil {
-		return nil, err
+	namespace := corev3.Namespace{}
+	if err := wrapper.unwrapIntoNamespace(&namespace); err != nil {
+		return &store.ErrDecode{Key: namespaceStoreKey(name), Err: err}
 	}
-	return namespace, nil
-}
 
-func (e *NamespaceStore) ListNamespaces(ctx context.Context, pred *store.SelectionPredicate) ([]*corev2.Namespace, error) {
-	return nil, nil
-}
-
-// UpdateNamespace creates or updates a given namespace.
-func (e *NamespaceStore) UpdateNamespace(ctx context.Context, n *corev2.Namespace) error {
-	namespace := corev3.V2NamespaceToV3(n)
-	req := storev2.NewResourceRequestFromResource(namespace)
-	wrappedNamespace, err := storev2.WrapResource(namespace)
+	// Now determine the etag for the stored resource
+	etag, err := store.ETag(namespace)
 	if err != nil {
-		return &store.ErrEncode{Err: err}
-	}
-	if err := e.store.CreateOrUpdate(ctx, req, wrappedNamespace); err != nil {
 		return err
 	}
+
+	if conditions != nil {
+		if !store.CheckIfMatch(conditions.IfMatch, etag) {
+			return &store.ErrPreconditionFailed{Key: namespaceStoreKey(name)}
+		}
+		if !store.CheckIfNoneMatch(conditions.IfNoneMatch, etag) {
+			return &store.ErrPreconditionFailed{Key: namespaceStoreKey(name)}
+		}
+	}
+
+	// Encode the stored resource to the JSON format
+	originalJSON, err := json.Marshal(namespace)
+	if err != nil {
+		return err
+	}
+
+	// Apply the patch to our original document (stored resource)
+	patchedResource, err := patcher.Patch(originalJSON)
+	if err != nil {
+		return err
+	}
+
+	// Decode the resulting JSON document back into our resource
+	if err := json.Unmarshal(patchedResource, &namespace); err != nil {
+		return err
+	}
+
+	// Validate the resource
+	if err := namespace.Validate(); err != nil {
+		return err
+	}
+
+	// Patch the resource
+	patchedWrapper := WrapNamespace(&namespace).(*NamespaceWrapper)
+	params := patchedWrapper.SQLParams()
+
+	if _, err := tx.Exec(ctx, createOrUpdateNamespaceQuery, params...); err != nil {
+		return &store.ErrInternal{Message: err.Error()}
+	}
+
 	return nil
+}
+
+// UpdateIfExists updates a given namespace.
+func (s *NamespaceStore) UpdateIfExists(ctx context.Context, namespace *corev3.Namespace) error {
+	wrapper := WrapNamespace(namespace).(*NamespaceWrapper)
+	params := wrapper.SQLParams()
+
+	rows, err := s.db.Query(ctx, updateIfExistsNamespaceQuery, params...)
+	if err != nil {
+		return &store.ErrInternal{Message: err.Error()}
+	}
+	defer rows.Close()
+
+	rowCount := 0
+	for rows.Next() {
+		rowCount++
+	}
+	if rowCount == 0 {
+		return &store.ErrNotFound{Key: fmt.Sprintf("%s", namespace.Metadata.Name)}
+	}
+
+	return nil
+}
+
+func (s *NamespaceStore) isEmpty(ctx context.Context, name string) (bool, error) {
+	var count int64
+	row := s.db.QueryRow(ctx, isEmptyNamespaceQuery, name)
+	if err := row.Scan(&count); err != nil {
+		if err == pgx.ErrNoRows {
+			return false, &store.ErrNotFound{Key: namespaceStoreKey(name)}
+		}
+		return false, &store.ErrInternal{Message: err.Error()}
+	}
+	return count == 0, nil
+}
+
+func namespaceStoreKey(name string) string {
+	return store.NewKeyBuilder(namespaceStoreName).Build(name)
 }

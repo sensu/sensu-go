@@ -4,11 +4,11 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"strings"
 	"testing"
 	"time"
 
 	"github.com/go-test/deep"
+	"github.com/jackc/pgx/v4/pgxpool"
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	corev3 "github.com/sensu/sensu-go/api/core/v3"
 	"github.com/sensu/sensu-go/backend/store"
@@ -61,19 +61,6 @@ func TestStoreCreateOrUpdate(t *testing.T) {
 				createEntityConfig(t, s, "foo")
 			},
 			want: 1,
-		},
-		{
-			name: "namespaces can be created and updated",
-			args: func() args {
-				ns := corev3.FixtureNamespace("foo")
-				req := storev2.NewResourceRequestFromResource(ns)
-				return args{
-					req:     req,
-					wrapper: WrapNamespace(ns),
-				}
-			}(),
-			verifyQuery: fmt.Sprintf("SELECT * FROM %s", namespaceStoreName),
-			want:        1,
 		},
 	}
 	for _, tt := range tests {
@@ -146,17 +133,6 @@ func TestStoreUpdateIfExists(t *testing.T) {
 				createEntityConfig(t, s, "foo")
 			},
 		},
-		{
-			name: "namespaces can be updated if one exists",
-			args: func() args {
-				ns := corev3.FixtureNamespace("bar")
-				req := storev2.NewResourceRequestFromResource(ns)
-				return args{
-					req:     req,
-					wrapper: WrapNamespace(ns),
-				}
-			}(),
-		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -226,17 +202,6 @@ func TestStoreCreateIfNotExists(t *testing.T) {
 				createNamespace(t, s, "default")
 				createEntityConfig(t, s, "foo")
 			},
-		},
-		{
-			name: "namespaces can be created if one does not exist",
-			args: func() args {
-				ns := corev3.FixtureNamespace("bar")
-				req := storev2.NewResourceRequestFromResource(ns)
-				return args{
-					req:     req,
-					wrapper: WrapNamespace(ns),
-				}
-			}(),
 		},
 	}
 	for _, tt := range tests {
@@ -330,27 +295,6 @@ func TestStoreGet(t *testing.T) {
 				return wrapper
 			}(),
 		},
-		{
-			name: "a namespace can be retrieved",
-			args: func() args {
-				ns := corev3.FixtureNamespace("foo")
-				req := storev2.NewResourceRequestFromResource(ns)
-				return args{
-					req: req,
-				}
-			}(),
-			beforeHook: func(t *testing.T, s storev2.Interface) {
-				createNamespace(t, s, "foo")
-			},
-			want: func() wrapperWithStatus {
-				ns := corev3.FixtureNamespace("foo")
-				wrapper := WrapNamespace(ns).(*NamespaceWrapper)
-				wrapper.ID = 1
-				wrapper.CreatedAt = time.Now()
-				wrapper.UpdatedAt = time.Now()
-				return wrapper
-			}(),
-		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -422,20 +366,6 @@ func TestStoreDelete(t *testing.T) {
 				createEntityConfig(t, s, "foo")
 			},
 		},
-		{
-			name: "a namespace can be soft deleted",
-			args: func() args {
-				ns := corev3.FixtureNamespace("bar")
-				req := storev2.NewResourceRequestFromResource(ns)
-				return args{
-					req:     req,
-					wrapper: WrapNamespace(ns),
-				}
-			}(),
-			beforeHook: func(t *testing.T, s storev2.Interface) {
-				createNamespace(t, s, "default")
-			},
-		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -499,20 +429,6 @@ func TestStoreHardDelete(t *testing.T) {
 			beforeHook: func(t *testing.T, s storev2.Interface) {
 				createNamespace(t, s, "default")
 				createEntityConfig(t, s, "foo")
-			},
-		},
-		{
-			name: "a namespace can be hard deleted",
-			args: func() args {
-				ns := corev3.FixtureNamespace("bar")
-				req := storev2.NewResourceRequestFromResource(ns)
-				return args{
-					req:     req,
-					wrapper: WrapNamespace(ns),
-				}
-			}(),
-			beforeHook: func(t *testing.T, s storev2.Interface) {
-				createNamespace(t, s, "default")
 			},
 		},
 	}
@@ -587,24 +503,6 @@ func TestStoreList(t *testing.T) {
 					entityName := fmt.Sprintf("foo-%d", i)
 					createEntityConfig(t, s, entityName)
 					createEntityState(t, s, entityName)
-				}
-			},
-		},
-		{
-			name: "namespaces can be listed",
-			args: func() args {
-				typeMeta := corev2.TypeMeta{Type: "Namespace", APIVersion: "core/v3"}
-				req := storev2.NewResourceRequest(typeMeta, "", "anything", namespaceStoreName)
-				pred := &store.SelectionPredicate{Limit: 5}
-				return args{
-					req:  req,
-					pred: pred,
-				}
-			}(),
-			beforeHook: func(t *testing.T, s storev2.Interface) {
-				for i := 0; i < 10; i++ {
-					namespaceName := fmt.Sprintf("foo-%d", i)
-					createNamespace(t, s, namespaceName)
 				}
 			},
 		},
@@ -750,17 +648,6 @@ func TestStoreExists(t *testing.T) {
 				createEntityConfig(t, s, "foo")
 			},
 		},
-		{
-			name: "can check if a namespace exists",
-			args: func() args {
-				ns := corev3.FixtureNamespace("bar")
-				req := storev2.NewResourceRequestFromResource(ns)
-				return args{
-					req:     req,
-					wrapper: WrapNamespace(ns),
-				}
-			}(),
-		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -838,23 +725,6 @@ func TestStorePatch(t *testing.T) {
 			beforeHook: func(t *testing.T, s storev2.Interface) {
 				createNamespace(t, s, "default")
 				createEntityConfig(t, s, "foo")
-			},
-		},
-		{
-			name: "a namespace can be patched",
-			args: func() args {
-				ns := corev3.FixtureNamespace("bar")
-				req := storev2.NewResourceRequestFromResource(ns)
-				return args{
-					req:     req,
-					wrapper: WrapNamespace(ns),
-					patcher: &patch.Merge{
-						MergePatch: []byte(`{"metadata":{"labels":{"food":"hummus"}}}`),
-					},
-				}
-			}(),
-			beforeHook: func(t *testing.T, s storev2.Interface) {
-				createNamespace(t, s, "default")
 			},
 		},
 	}
@@ -974,44 +844,6 @@ func TestStoreGetMultiple(t *testing.T) {
 				}
 			},
 		},
-		{
-			name: "multiple namespaces can be retrieved",
-			args: func() args {
-				ns := corev3.FixtureNamespace("bar")
-				req := storev2.NewResourceRequestFromResource(ns)
-				return args{
-					req:     req,
-					wrapper: WrapNamespace(ns),
-				}
-			}(),
-			reqs: func(t *testing.T, s storev2.Interface) []storev2.ResourceRequest {
-				reqs := make([]storev2.ResourceRequest, 0)
-				for i := 0; i < 10; i++ {
-					namespaceName := fmt.Sprintf("foo-%d", i)
-					namespace := corev3.FixtureNamespace(namespaceName)
-					req := storev2.NewResourceRequestFromResource(namespace)
-					reqs = append(reqs, req)
-					createNamespace(t, s, namespaceName)
-				}
-				return reqs
-			},
-			test: func(t *testing.T, wrapper storev2.Wrapper) {
-				var namespace corev3.Namespace
-				if err := wrapper.UnwrapInto(&namespace); err != nil {
-					t.Error(err)
-				}
-
-				if got, want := len(namespace.Metadata.Labels), 0; got != want {
-					t.Errorf("wrong number of labels, got = %v, want = %v", got, want)
-				}
-				if got, want := len(namespace.Metadata.Annotations), 0; got != want {
-					t.Errorf("wrong number of annotations, got = %v, want = %v", got, want)
-				}
-				if got, want := namespace.Metadata.Name, "foo-"; !strings.Contains(got, want) {
-					t.Errorf("wrong namespace name, got = %v, want name to contain = %v", got, want)
-				}
-			},
-		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -1120,28 +952,17 @@ func TestWatchEntityConfig(t *testing.T) {
 }
 
 func TestInitialize(t *testing.T) {
-	testWithPostgresStoreV2(t, func(s storev2.Interface) {
-		ctx := context.Background()
+	withPostgres(t, func(ctx context.Context, db *pgxpool.Pool, dsn string) {
+		s := NewStoreV2(db)
 
 		iErr := s.Initialize(ctx, func(ctx context.Context) error {
-			namespace := corev3.NewNamespace("foo")
-			wrapper, err := storev2.WrapResource(namespace)
-			require.NoError(t, err)
-
-			req := storev2.NewResourceRequestFromResource(namespace)
-
-			return s.CreateIfNotExists(ctx, req, wrapper)
+			return s.CreateNamespace(ctx, corev3.NewNamespace("foo"))
 		})
 		require.NoError(t, iErr)
 
-		var namespace corev3.Namespace
-		req := storev2.NewResourceRequestFromResource(corev3.NewNamespace("foo"))
-
-		wrapper, err := s.Get(ctx, req)
+		namespaceStore := NewNamespaceStore(db)
+		namespace, err := namespaceStore.Get(ctx, "foo")
 		require.NoError(t, err)
-
-		wErr := wrapper.UnwrapInto(&namespace)
-		require.NoError(t, wErr)
 		require.Equal(t, "foo", namespace.Metadata.Name)
 	})
 }

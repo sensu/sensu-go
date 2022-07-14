@@ -54,7 +54,6 @@ const (
 var (
 	entityConfigStoreName = new(corev3.EntityConfig).StoreName()
 	entityStateStoreName  = new(corev3.EntityState).StoreName()
-	namespaceStoreName    = new(corev3.Namespace).StoreName()
 )
 
 type wrapperWithParams interface {
@@ -112,8 +111,6 @@ func (s *StoreV2) lookupWrapper(req storev2.ResourceRequest, op crudOp) namedWra
 		return &EntityConfigWrapper{}
 	case entityStateStoreName:
 		return &EntityStateWrapper{}
-	case namespaceStoreName:
-		return &NamespaceWrapper{}
 	default:
 		msg := fmt.Sprintf("no wrapper type defined for store: %s", storeName)
 		panic(msg)
@@ -183,36 +180,6 @@ func (s *StoreV2) lookupQuery(req storev2.ResourceRequest, op crudOp) (string, b
 			return hardDeletedEntityStateQuery, true
 		case patchQ:
 			return patchEntityStateQuery, true
-		default:
-			return "", false
-		}
-	case namespaceStoreName:
-		switch op {
-		case createOrUpdateQ:
-			return createOrUpdateNamespaceQuery, true
-		case updateIfExistsQ:
-			return updateIfExistsNamespaceQuery, true
-		case createIfNotExistsQ:
-			return createIfNotExistsNamespaceQuery, true
-		case getQ:
-			return getNamespaceQuery, true
-		case getMultipleQ:
-			return getNamespacesQuery, true
-		case deleteQ:
-			return deleteNamespaceQuery, true
-		case hardDeleteQ:
-			return hardDeleteNamespaceQuery, true
-		case listQ, listAllQ:
-			switch ordering {
-			case storev2.SortDescend:
-				return listNamespaceDescQuery, true
-			default:
-				return listNamespaceQuery, true
-			}
-		case existsQ:
-			return existsNamespaceQuery, true
-		case hardDeletedQ:
-			return hardDeletedNamespaceQuery, true
 		default:
 			return "", false
 		}
@@ -307,7 +274,7 @@ func (s *StoreV2) CreateIfNotExists(ctx context.Context, req storev2.ResourceReq
 		pgError, ok := err.(*pgconn.PgError)
 		if ok {
 			switch pgError.ConstraintName {
-			case "entity_config_unique", "entity_state_unique", "namespace_unique":
+			case "entity_config_unique", "entity_state_unique":
 				return &store.ErrAlreadyExists{Key: fmt.Sprintf("%s/%s", req.Namespace, req.Name)}
 			}
 		}
@@ -328,13 +295,7 @@ func (s *StoreV2) Get(ctx context.Context, req storev2.ResourceRequest) (fWrappe
 		return nil, errNoQuery(req.StoreName)
 	}
 
-	params := []interface{}{}
-	if req.StoreName != namespaceStoreName {
-		params = append(params, req.Namespace)
-	}
-	params = append(params, req.Name)
-
-	row := s.db.QueryRow(ctx, query, params...)
+	row := s.db.QueryRow(ctx, query, req.Namespace, req.Name)
 	wrapper := s.lookupWrapper(req, op)
 	if err := row.Scan(wrapper.SQLParams()...); err != nil {
 		if err == pgx.ErrNoRows {
@@ -396,13 +357,7 @@ func (s *StoreV2) GetMultiple(ctx context.Context, reqs []storev2.ResourceReques
 			return nil, errNoQuery(storeName)
 		}
 
-		args := []interface{}{}
-		if storeName != namespaceStoreName {
-			args = append(args, namespace)
-		}
-		args = append(args, resourceNames)
-
-		rows, err := tx.Query(ctx, query, args...)
+		rows, err := tx.Query(ctx, query, namespace, resourceNames)
 		if err != nil {
 			return nil, err
 		}
@@ -446,12 +401,8 @@ func (s *StoreV2) Delete(ctx context.Context, req storev2.ResourceRequest) (fErr
 	if !ok {
 		return errNoQuery(req.StoreName)
 	}
-	params := []interface{}{}
-	if req.StoreName != namespaceStoreName {
-		params = append(params, req.Namespace)
-	}
-	params = append(params, req.Name)
-	result, err := s.db.Exec(ctx, query, params...)
+
+	result, err := s.db.Exec(ctx, query, req.Namespace, req.Name)
 	if err != nil {
 		return &store.ErrInternal{Message: err.Error()}
 	}
@@ -471,12 +422,8 @@ func (s *StoreV2) HardDelete(ctx context.Context, req storev2.ResourceRequest) (
 	if !ok {
 		return errNoQuery(req.StoreName)
 	}
-	params := []interface{}{}
-	if req.StoreName != namespaceStoreName {
-		params = append(params, req.Namespace)
-	}
-	params = append(params, req.Name)
-	result, err := s.db.Exec(ctx, query, params...)
+
+	result, err := s.db.Exec(ctx, query, req.Namespace, req.Name)
 	if err != nil {
 		return &store.ErrInternal{Message: err.Error()}
 	}
@@ -485,146 +432,6 @@ func (s *StoreV2) HardDelete(ctx context.Context, req storev2.ResourceRequest) (
 		return &store.ErrNotFound{Key: fmt.Sprintf("%s.%s", req.Namespace, req.Name)}
 	}
 	return nil
-}
-
-type WrapList []storev2.Wrapper
-
-func (w WrapList) Unwrap() ([]corev3.Resource, error) {
-	result := make([]corev3.Resource, len(w))
-	return result, w.UnwrapInto(&result)
-}
-
-func (w WrapList) UnwrapInto(dest interface{}) error {
-	switch list := dest.(type) {
-	case *[]corev3.EntityConfig:
-		return w.unwrapIntoEntityConfigList(list)
-	case *[]*corev3.EntityConfig:
-		return w.unwrapIntoEntityConfigPointerList(list)
-	case *[]corev3.EntityState:
-		return w.unwrapIntoEntityStateList(list)
-	case *[]*corev3.EntityState:
-		return w.unwrapIntoEntityStatePointerList(list)
-	case *[]corev3.Namespace:
-		return w.unwrapIntoNamespaceList(list)
-	case *[]*corev3.Namespace:
-		return w.unwrapIntoNamespacePointerList(list)
-	case *[]corev3.Resource:
-		return w.unwrapIntoResourceList(list)
-	default:
-		return fmt.Errorf("can't unwrap list into %T", dest)
-	}
-}
-
-func (w WrapList) unwrapIntoEntityConfigList(list *[]corev3.EntityConfig) error {
-	if len(*list) != len(w) {
-		*list = make([]corev3.EntityConfig, len(w))
-	}
-	for i, cfg := range w {
-		ptr := &((*list)[i])
-		if err := cfg.UnwrapInto(ptr); err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-func (w WrapList) unwrapIntoEntityConfigPointerList(list *[]*corev3.EntityConfig) error {
-	if len(*list) != len(w) {
-		*list = make([]*corev3.EntityConfig, len(w))
-	}
-	for i, cfg := range w {
-		ptr := (*list)[i]
-		if ptr == nil {
-			ptr = new(corev3.EntityConfig)
-			(*list)[i] = ptr
-		}
-		if err := cfg.UnwrapInto(ptr); err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-func (w WrapList) unwrapIntoEntityStateList(list *[]corev3.EntityState) error {
-	if len(*list) != len(w) {
-		*list = make([]corev3.EntityState, len(w))
-	}
-	for i, state := range w {
-		ptr := &((*list)[i])
-		if err := state.UnwrapInto(ptr); err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-func (w WrapList) unwrapIntoEntityStatePointerList(list *[]*corev3.EntityState) error {
-	if len(*list) != len(w) {
-		*list = make([]*corev3.EntityState, len(w))
-	}
-	for i, state := range w {
-		ptr := (*list)[i]
-		if ptr == nil {
-			ptr = new(corev3.EntityState)
-			(*list)[i] = ptr
-		}
-		if err := state.UnwrapInto(ptr); err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-func (w WrapList) unwrapIntoNamespaceList(list *[]corev3.Namespace) error {
-	if len(*list) != len(w) {
-		*list = make([]corev3.Namespace, len(w))
-	}
-	for i, namespace := range w {
-		ptr := &((*list)[i])
-		if err := namespace.UnwrapInto(ptr); err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-func (w WrapList) unwrapIntoNamespacePointerList(list *[]*corev3.Namespace) error {
-	if len(*list) != len(w) {
-		*list = make([]*corev3.Namespace, len(w))
-	}
-	for i, namespace := range w {
-		ptr := (*list)[i]
-		if ptr == nil {
-			ptr = new(corev3.Namespace)
-			(*list)[i] = ptr
-		}
-		if err := namespace.UnwrapInto(ptr); err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-// TODO: make this work generically
-func (w WrapList) unwrapIntoResourceList(list *[]corev3.Resource) error {
-	if len(*list) != len(w) {
-		*list = make([]corev3.Resource, len(w))
-	}
-	for i, resource := range w {
-		ptr := (*list)[i]
-		if ptr == nil {
-			ptr = new(corev3.EntityState)
-			(*list)[i] = ptr
-		}
-		if err := resource.UnwrapInto(ptr); err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-func (w WrapList) Len() int {
-	return len(w)
 }
 
 func (s *StoreV2) List(ctx context.Context, req storev2.ResourceRequest, pred *store.SelectionPredicate) (list storev2.WrapList, fErr error) {
@@ -642,19 +449,13 @@ func (s *StoreV2) List(ctx context.Context, req storev2.ResourceRequest, pred *s
 		return nil, err
 	}
 
-	params := []interface{}{}
-	if req.StoreName != namespaceStoreName {
-		var namespace sql.NullString
-		if req.Namespace != "" {
-			namespace.String = req.Namespace
-			namespace.Valid = true
-		}
-		params = append(params, namespace)
+	var namespace sql.NullString
+	if req.Namespace != "" {
+		namespace.String = req.Namespace
+		namespace.Valid = true
 	}
-	params = append(params, limit)
-	params = append(params, offset)
 
-	rows, rerr := s.db.Query(ctx, query, params...)
+	rows, rerr := s.db.Query(ctx, query, namespace, limit, offset)
 	if rerr != nil {
 		return nil, &store.ErrInternal{Message: rerr.Error()}
 	}
@@ -689,12 +490,8 @@ func (s *StoreV2) Exists(ctx context.Context, req storev2.ResourceRequest) (fExi
 	if !ok {
 		return false, errNoQuery(req.StoreName)
 	}
-	params := []interface{}{}
-	if req.StoreName != namespaceStoreName {
-		params = append(params, req.Namespace)
-	}
-	params = append(params, req.Name)
-	row := s.db.QueryRow(ctx, query, params...)
+
+	row := s.db.QueryRow(ctx, query, req.Namespace, req.Name)
 	var found bool
 	err := row.Scan(&found)
 	if err == nil {
@@ -717,13 +514,7 @@ func (s *StoreV2) HardDeleted(ctx context.Context, req storev2.ResourceRequest) 
 		return false, errNoQuery(req.StoreName)
 	}
 
-	params := []interface{}{}
-	if req.StoreName != namespaceStoreName {
-		params = append(params, req.Namespace)
-	}
-	params = append(params, req.Name)
-
-	row := s.db.QueryRow(ctx, query, params...)
+	row := s.db.QueryRow(ctx, query, req.Namespace, req.Name)
 	var found bool
 	err := row.Scan(&found)
 	if err == nil {
@@ -750,12 +541,6 @@ func (s *StoreV2) Patch(ctx context.Context, req storev2.ResourceRequest, w stor
 		return errNoQuery(req.StoreName)
 	}
 
-	params := []interface{}{}
-	if req.StoreName != namespaceStoreName {
-		params = append(params, req.Namespace)
-	}
-	params = append(params, req.Name)
-
 	originalWrapper := s.lookupWrapper(req, op)
 
 	tx, txerr := s.db.Begin(ctx)
@@ -772,7 +557,7 @@ func (s *StoreV2) Patch(ctx context.Context, req storev2.ResourceRequest, w stor
 		}
 	}()
 
-	row := tx.QueryRow(ctx, query, params...)
+	row := tx.QueryRow(ctx, query, req.Namespace, req.Name)
 	if err := row.Scan(originalWrapper.SQLParams()...); err != nil {
 		if err == pgx.ErrNoRows {
 			return &store.ErrNotFound{Key: fmt.Sprintf("%s.%s", req.Namespace, req.Name)}
@@ -952,12 +737,12 @@ func (s *StoreV2) watchLoop(ctx context.Context, req storev2.ResourceRequest, po
 	}
 }
 
-func (s *StoreV2) CreateNamespace(ctx context.Context, ns *corev3.Namespace) error {
-	return nil
+func (s *StoreV2) CreateNamespace(ctx context.Context, namespace *corev3.Namespace) error {
+	return NewNamespaceStore(s.db).CreateIfNotExists(ctx, namespace)
 }
 
 func (s *StoreV2) DeleteNamespace(ctx context.Context, name string) error {
-	return nil
+	return NewNamespaceStore(s.db).Delete(ctx, name)
 }
 
 func (s *StoreV2) Initialize(ctx context.Context, fn storev2.InitializeFunc) error {
@@ -1011,8 +796,6 @@ func wrapWithPostgres(resource corev3.Resource, opts ...wrap.Option) (storev2.Wr
 		return WrapEntityConfig(value), nil
 	case *corev3.EntityState:
 		return WrapEntityState(value), nil
-	case *corev3.Namespace:
-		return WrapNamespace(value), nil
 	default:
 		return storev2.WrapResource(resource, opts...)
 	}

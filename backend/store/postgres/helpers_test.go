@@ -52,7 +52,11 @@ func withMigratedPostgres(tb testing.TB, fn poolWithDSNFunc, migrations []migrat
 	require.NoError(tb, err)
 	tb.Cleanup(initialDB.Close)
 
-	dbName := "sensu" + strings.ReplaceAll(uuid.New().String(), "-", "")
+	id, err := uuid.NewRandom()
+	if err != nil {
+		tb.Error(err)
+	}
+	dbName := "sensu" + strings.ReplaceAll(id.String(), "-", "")
 	if _, err := initialDB.Exec(ctx, fmt.Sprintf("CREATE DATABASE %s;", dbName)); err != nil {
 		tb.Error(err)
 	}
@@ -140,13 +144,14 @@ func testWithPostgresStore(tb testing.TB, fn func(store.Store)) {
 			tb.Fatal(err)
 		}
 
-		namespaceStore := NewNamespaceStore(db)
 		entityStore := NewEntityStore(db)
+		namespaceStore := NewNamespaceStore(db)
+		namespaceStoreV1 := NewNamespaceStoreV1(namespaceStore)
 
 		pgStore := Store{
 			EventStore:     eventStore,
 			EntityStore:    entityStore,
-			NamespaceStore: namespaceStore,
+			NamespaceStore: namespaceStoreV1,
 			Store:          etcdStore,
 		}
 		fn(pgStore)
@@ -166,9 +171,15 @@ func createNamespace(tb testing.TB, s storev2.Interface, name string) {
 	tb.Helper()
 	ctx := context.Background()
 	namespace := corev3.FixtureNamespace(name)
-	req := storev2.NewResourceRequestFromResource(namespace)
-	wrapper := WrapNamespace(namespace)
-	if err := s.CreateOrUpdate(ctx, req, wrapper); err != nil {
+	if err := s.CreateNamespace(ctx, namespace); err != nil {
+		tb.Error(err)
+	}
+}
+
+func deleteNamespace(tb testing.TB, s storev2.Interface, name string) {
+	tb.Helper()
+	ctx := context.Background()
+	if err := s.DeleteNamespace(ctx, name); err != nil {
 		tb.Error(err)
 	}
 }

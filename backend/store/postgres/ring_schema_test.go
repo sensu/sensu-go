@@ -10,6 +10,7 @@ import (
 	"github.com/jackc/pgx/v4"
 	"github.com/jackc/pgx/v4/pgxpool"
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
+	corev3 "github.com/sensu/sensu-go/api/core/v3"
 	"github.com/sirupsen/logrus"
 )
 
@@ -33,8 +34,8 @@ func TestInsertEntityQuery(t *testing.T) {
 		}
 		for _, entityName := range entityNames {
 			entity := corev2.FixtureEntity(entityName)
-			namespace := corev2.FixtureNamespace(entity.Namespace)
-			if err := namespaceStore.UpdateNamespace(ctx, namespace); err != nil {
+			namespace := corev3.FixtureNamespace(entity.Namespace)
+			if err := namespaceStore.CreateOrUpdate(ctx, namespace); err != nil {
 				t.Fatal(err)
 			}
 			if err := entityStore.UpdateEntity(ctx, entity); err != nil {
@@ -60,8 +61,8 @@ func TestInsertRingQuery(t *testing.T) {
 		}
 		for _, ring := range rings {
 			entity := corev2.FixtureEntity(ring)
-			namespace := corev2.FixtureNamespace(entity.Namespace)
-			if err := namespaceStore.UpdateNamespace(ctx, namespace); err != nil {
+			namespace := corev3.FixtureNamespace(entity.Namespace)
+			if err := namespaceStore.CreateOrUpdate(ctx, namespace); err != nil {
 				t.Fatal(err)
 			}
 			if err := entityStore.UpdateEntity(ctx, entity); err != nil {
@@ -96,8 +97,8 @@ func TestInsertRingEntitiesQuery(t *testing.T) {
 		}
 		for _, entityName := range entityNames {
 			entity := corev2.FixtureEntity(entityName)
-			namespace := corev2.FixtureNamespace(entity.Namespace)
-			if err := namespaceStore.UpdateNamespace(ctx, namespace); err != nil {
+			namespace := corev3.FixtureNamespace(entity.Namespace)
+			if err := namespaceStore.CreateOrUpdate(ctx, namespace); err != nil {
 				t.Fatal(err)
 			}
 			if err := entityStore.UpdateEntity(ctx, entity); err != nil {
@@ -170,8 +171,8 @@ func TestInsertRingSubscriberQuery(t *testing.T) {
 		}
 		for _, entityName := range entityNames {
 			entity := corev2.FixtureEntity(entityName)
-			namespace := corev2.FixtureNamespace(entity.Namespace)
-			if err := namespaceStore.UpdateNamespace(ctx, namespace); err != nil {
+			namespace := corev3.FixtureNamespace(entity.Namespace)
+			if err := namespaceStore.CreateOrUpdate(ctx, namespace); err != nil {
 				t.Fatal(err)
 			}
 			if err := entityStore.UpdateEntity(ctx, entity); err != nil {
@@ -229,8 +230,8 @@ func TestUpdateRingSubscriberQuery(t *testing.T) {
 		}
 		for _, entityName := range entityNames {
 			entity := corev2.FixtureEntity(entityName)
-			namespace := corev2.FixtureNamespace(entity.Namespace)
-			if err := namespaceStore.UpdateNamespace(ctx, namespace); err != nil {
+			namespace := corev3.FixtureNamespace(entity.Namespace)
+			if err := namespaceStore.CreateOrUpdate(ctx, namespace); err != nil {
 				t.Fatal(err)
 			}
 			if err := entityStore.UpdateEntity(ctx, entity); err != nil {
@@ -359,8 +360,8 @@ func TestUpdateRingSubscriberQueryWithSubsequentEntityInsert(t *testing.T) {
 		}
 		for _, entityName := range entityNames {
 			entity := corev2.FixtureEntity(entityName)
-			namespace := corev2.FixtureNamespace(entity.Namespace)
-			if err := namespaceStore.UpdateNamespace(ctx, namespace); err != nil {
+			namespace := corev3.FixtureNamespace(entity.Namespace)
+			if err := namespaceStore.CreateOrUpdate(ctx, namespace); err != nil {
 				t.Fatal(err)
 			}
 			if err := entityStore.UpdateEntity(ctx, entity); err != nil {
@@ -440,8 +441,8 @@ func TestGetRingEntitiesQuery(t *testing.T) {
 		}
 		for _, entityName := range entityNames {
 			entity := corev2.FixtureEntity(entityName)
-			namespace := corev2.FixtureNamespace(entity.Namespace)
-			if err := namespaceStore.UpdateNamespace(ctx, namespace); err != nil {
+			namespace := corev3.FixtureNamespace(entity.Namespace)
+			if err := namespaceStore.CreateOrUpdate(ctx, namespace); err != nil {
 				t.Fatal(err)
 			}
 			if err := entityStore.UpdateEntity(ctx, entity); err != nil {
@@ -568,8 +569,8 @@ func TestGetRingLengthQuery(t *testing.T) {
 		}
 		for _, entityName := range entityNames {
 			entity := corev2.FixtureEntity(entityName)
-			namespace := corev2.FixtureNamespace(entity.Namespace)
-			if err := namespaceStore.UpdateNamespace(ctx, namespace); err != nil {
+			namespace := corev3.FixtureNamespace(entity.Namespace)
+			if err := namespaceStore.CreateOrUpdate(ctx, namespace); err != nil {
 				t.Fatal(err)
 			}
 			if err := entityStore.UpdateEntity(ctx, entity); err != nil {
@@ -630,8 +631,8 @@ func TestDeleteRingEntityQuery(t *testing.T) {
 		}
 		for _, entityName := range entityNames {
 			entity := corev2.FixtureEntity(entityName)
-			namespace := corev2.FixtureNamespace(entity.Namespace)
-			if err := namespaceStore.UpdateNamespace(ctx, namespace); err != nil {
+			namespace := corev3.FixtureNamespace(entity.Namespace)
+			if err := namespaceStore.CreateOrUpdate(ctx, namespace); err != nil {
 				t.Fatal(err)
 			}
 			if err := entityStore.UpdateEntity(ctx, entity); err != nil {

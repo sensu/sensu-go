@@ -11,6 +11,7 @@ import (
 	"github.com/jackc/pgx/v4/pgxpool"
 	"github.com/lib/pq"
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
+	corev3 "github.com/sensu/sensu-go/api/core/v3"
 	"github.com/sensu/sensu-go/backend/ringv2"
 )
 
@@ -47,8 +48,8 @@ func TestAdd(t *testing.T) {
 
 		entityName := "foo"
 		entity := corev2.FixtureEntity(entityName)
-		namespace := corev2.FixtureNamespace(entity.Namespace)
-		if err := namespaceStore.UpdateNamespace(ctx, namespace); err != nil {
+		namespace := corev3.FixtureNamespace(entity.Namespace)
+		if err := namespaceStore.CreateOrUpdate(ctx, namespace); err != nil {
 			t.Fatal(err)
 		}
 		if err := entityStore.UpdateEntity(ctx, entity); err != nil {
@@ -89,8 +90,8 @@ func TestRemove(t *testing.T) {
 
 		entityName := "foo"
 		entity := corev2.FixtureEntity(entityName)
-		namespace := corev2.FixtureNamespace(entity.Namespace)
-		if err := namespaceStore.UpdateNamespace(ctx, namespace); err != nil {
+		namespace := corev3.FixtureNamespace(entity.Namespace)
+		if err := namespaceStore.CreateOrUpdate(ctx, namespace); err != nil {
 			t.Fatal(err)
 		}
 		if err := entityStore.UpdateEntity(ctx, entity); err != nil {
@@ -131,8 +132,8 @@ func TestAddRemoveIsEmpty(t *testing.T) {
 
 		entityName := "foo"
 		entity := corev2.FixtureEntity(entityName)
-		namespace := corev2.FixtureNamespace(entity.Namespace)
-		if err := namespaceStore.UpdateNamespace(ctx, namespace); err != nil {
+		namespace := corev3.FixtureNamespace(entity.Namespace)
+		if err := namespaceStore.CreateOrUpdate(ctx, namespace); err != nil {
 			t.Fatal(err)
 		}
 		if err := entityStore.UpdateEntity(ctx, entity); err != nil {
@@ -186,8 +187,8 @@ func TestWatchTrigger(t *testing.T) {
 
 		entityName := "foo"
 		entity := corev2.FixtureEntity(entityName)
-		namespace := corev2.FixtureNamespace(entity.Namespace)
-		if err := namespaceStore.UpdateNamespace(ctx, namespace); err != nil {
+		namespace := corev3.FixtureNamespace(entity.Namespace)
+		if err := namespaceStore.CreateOrUpdate(ctx, namespace); err != nil {
 			t.Fatal(err)
 		}
 		if err := entityStore.UpdateEntity(ctx, entity); err != nil {
@@ -246,8 +247,8 @@ func TestRingOrdering(t *testing.T) {
 
 		for _, item := range items {
 			entity := corev2.FixtureEntity(item)
-			namespace := corev2.FixtureNamespace(entity.Namespace)
-			if err := namespaceStore.UpdateNamespace(ctx, namespace); err != nil {
+			namespace := corev3.FixtureNamespace(entity.Namespace)
+			if err := namespaceStore.CreateOrUpdate(ctx, namespace); err != nil {
 				t.Fatal(err)
 			}
 			if err := entityStore.UpdateEntity(ctx, entity); err != nil {
@@ -310,8 +311,8 @@ func TestConcurrentRingOrdering(t *testing.T) {
 
 		for _, item := range items {
 			entity := corev2.FixtureEntity(item)
-			namespace := corev2.FixtureNamespace(entity.Namespace)
-			if err := namespaceStore.UpdateNamespace(ctx, namespace); err != nil {
+			namespace := corev3.FixtureNamespace(entity.Namespace)
+			if err := namespaceStore.CreateOrUpdate(ctx, namespace); err != nil {
 				t.Fatal(err)
 			}
 			if err := entityStore.UpdateEntity(ctx, entity); err != nil {
@@ -424,8 +425,8 @@ func eventTest(t *testing.T, want []ringv2.Event) {
 			switch event.Type {
 			case ringv2.EventAdd:
 				entity := corev2.FixtureEntity(event.Values[0])
-				namespace := corev2.FixtureNamespace(entity.Namespace)
-				if err := namespaceStore.UpdateNamespace(ctx, namespace); err != nil {
+				namespace := corev3.FixtureNamespace(entity.Namespace)
+				if err := namespaceStore.CreateOrUpdate(ctx, namespace); err != nil {
 					t.Fatal(err)
 				}
 				if err := entityStore.UpdateEntity(ctx, entity); err != nil {
@@ -504,8 +505,8 @@ func TestWatchAfterAdd(t *testing.T) {
 
 		entityName := "fowley"
 		entity := corev2.FixtureEntity(entityName)
-		namespace := corev2.FixtureNamespace(entity.Namespace)
-		if err := namespaceStore.UpdateNamespace(ctx, namespace); err != nil {
+		namespace := corev3.FixtureNamespace(entity.Namespace)
+		if err := namespaceStore.CreateOrUpdate(ctx, namespace); err != nil {
 			t.Fatal(err)
 		}
 		if err := entityStore.UpdateEntity(ctx, entity); err != nil {
@@ -564,8 +565,8 @@ func TestMultipleItems(t *testing.T) {
 
 		for _, item := range items {
 			entity := corev2.FixtureEntity(item)
-			namespace := corev2.FixtureNamespace(entity.Namespace)
-			if err := namespaceStore.UpdateNamespace(ctx, namespace); err != nil {
+			namespace := corev3.FixtureNamespace(entity.Namespace)
+			if err := namespaceStore.CreateOrUpdate(ctx, namespace); err != nil {
 				t.Fatal(err)
 			}
 			if err := entityStore.UpdateEntity(ctx, entity); err != nil {
@@ -631,8 +632,8 @@ func TestRequestGreaterThanLenItems(t *testing.T) {
 
 		for _, item := range items {
 			entity := corev2.FixtureEntity(item)
-			namespace := corev2.FixtureNamespace(entity.Namespace)
-			if err := namespaceStore.UpdateNamespace(ctx, namespace); err != nil {
+			namespace := corev3.FixtureNamespace(entity.Namespace)
+			if err := namespaceStore.CreateOrUpdate(ctx, namespace); err != nil {
 				t.Fatal(err)
 			}
 			if err := entityStore.UpdateEntity(ctx, entity); err != nil {
@@ -698,8 +699,9 @@ func TestChannelNameTooLong(t *testing.T) {
 
 		for _, item := range items {
 			entity := corev2.FixtureEntity(item)
-			namespace := corev2.FixtureNamespace(entity.Namespace)
-			if err := namespaceStore.UpdateNamespace(ctx, namespace); err != nil {
+			namespace := corev3.FixtureNamespace(entity.Namespace)
+			fmt.Println(entity.Namespace)
+			if err := namespaceStore.CreateOrUpdate(ctx, namespace); err != nil {
 				t.Fatal(err)
 			}
 			if err := entityStore.UpdateEntity(ctx, entity); err != nil {
