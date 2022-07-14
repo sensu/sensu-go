@@ -28,6 +28,7 @@ func fixtureTestResource(name string) *testResource {
 
 func TestCreateNamespace(t *testing.T) {
 	testWithEtcdStore(t, func(s *etcdstore.Store) {
+		namespaceStore := s.NamespaceStore()
 		ns := &corev3.Namespace{
 			Metadata: &corev2.ObjectMeta{
 				Name:        "testing-ns",
@@ -36,12 +37,12 @@ func TestCreateNamespace(t *testing.T) {
 			},
 		}
 		ctx := context.Background()
-		if err := s.CreateNamespace(ctx, ns); err != nil {
+		if err := namespaceStore.CreateIfNotExists(ctx, ns); err != nil {
 			t.Fatalf("could not create namespace: %v", err)
 		}
 
 		// Cannot recreate namespace
-		if err := s.CreateNamespace(ctx, &corev3.Namespace{Metadata: corev2.NewObjectMetaP("testing-ns", "")}); err == nil {
+		if err := namespaceStore.CreateIfNotExists(ctx, &corev3.Namespace{Metadata: corev2.NewObjectMetaP("testing-ns", "")}); err == nil {
 			t.Errorf("expected error creating namesapce that already exists")
 		}
 
@@ -59,8 +60,10 @@ func TestCreateNamespace(t *testing.T) {
 		}
 	})
 }
+
 func TestDeleteNamespace(t *testing.T) {
 	testWithEtcdStore(t, func(s *etcdstore.Store) {
+		namespaceStore := s.NamespaceStore()
 		ns := &corev3.Namespace{
 			Metadata: &corev2.ObjectMeta{
 				Name:        "testing-ns",
@@ -69,7 +72,7 @@ func TestDeleteNamespace(t *testing.T) {
 			},
 		}
 		ctx := context.Background()
-		if err := s.CreateNamespace(ctx, ns); err != nil {
+		if err := namespaceStore.CreateIfNotExists(ctx, ns); err != nil {
 			t.Fatalf("could not create namespace: %v", err)
 		}
 
@@ -86,7 +89,7 @@ func TestDeleteNamespace(t *testing.T) {
 		}
 
 		// cannot delete namesapce with existing resources
-		if err := s.DeleteNamespace(ctx, "testing-ns"); err == nil {
+		if err := namespaceStore.Delete(ctx, "testing-ns"); err == nil {
 			t.Errorf("should not be allowed to delete namesapce with resources")
 		}
 
@@ -96,7 +99,7 @@ func TestDeleteNamespace(t *testing.T) {
 		}
 
 		// can delete empty namespace
-		if err := s.DeleteNamespace(ctx, "testing-ns"); err != nil {
+		if err := namespaceStore.Delete(ctx, "testing-ns"); err != nil {
 			t.Errorf("expected to delete empty namespace: %v", err)
 		}
 	})

@@ -954,13 +954,13 @@ func TestWatchEntityConfig(t *testing.T) {
 func TestInitialize(t *testing.T) {
 	withPostgres(t, func(ctx context.Context, db *pgxpool.Pool, dsn string) {
 		s := NewStoreV2(db)
+		namespaceStore := s.NamespaceStore()
 
 		iErr := s.Initialize(ctx, func(ctx context.Context) error {
-			return s.CreateNamespace(ctx, corev3.NewNamespace("foo"))
+			return namespaceStore.CreateIfNotExists(ctx, corev3.NewNamespace("foo"))
 		})
 		require.NoError(t, iErr)
 
-		namespaceStore := NewNamespaceStore(db)
 		namespace, err := namespaceStore.Get(ctx, "foo")
 		require.NoError(t, err)
 		require.Equal(t, "foo", namespace.Metadata.Name)

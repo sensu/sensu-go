@@ -410,42 +410,8 @@ func (s *Store) Exists(ctx context.Context, req storev2.ResourceRequest) (bool, 
 	return resp.Count > 0, nil
 }
 
-func (s *Store) CreateNamespace(ctx context.Context, namespace *corev3.Namespace) error {
-	wrapped, err := wrap.Resource(namespace)
-	if err != nil {
-		return &store.ErrNotValid{Err: fmt.Errorf("etcdstore could not wrap namespace resource: %v", err)}
-	}
-
-	key := store.NewKeyBuilder(namespace.StoreName()).Build(namespace.Metadata.Name)
-	msg, err := proto.Marshal(wrapped)
-	if err != nil {
-		return &store.ErrEncode{Key: key, Err: err}
-	}
-
-	comparator := kvc.Comparisons(
-		kvc.KeyIsNotFound(key),
-		kvc.NamespaceExists(""),
-	)
-	op := clientv3.OpPut(key, string(msg))
-
-	return kvc.Txn(ctx, s.client, comparator, op)
-}
-
-func (s *Store) DeleteNamespace(ctx context.Context, namespace string) error {
-	key := store.NewKeyBuilder(namespaceIndexStoreName).Build(namespace)
-	var resp *clientv3.GetResponse
-	err := kvc.Backoff(ctx).Retry(func(n int) (done bool, err error) {
-		resp, err = s.client.Get(ctx, key, clientv3.WithPrefix(), clientv3.WithCountOnly())
-		return kvc.RetryRequest(n, err)
-	})
-	if err != nil {
-		return err
-	}
-	if resp.Count > 0 {
-		return &store.ErrNamespaceNotEmpty{Namespace: namespace}
-	}
-	req := storev2.NewResourceRequest(corev2.TypeMeta{Type: "Namespace", APIVersion: "core/v2"}, "", namespace, "namespaces")
-	return s.Delete(ctx, req)
+func (s *Store) NamespaceStore() storev2.NamespaceStore {
+	return NewNamespaceStore(s.client)
 }
 
 func (s *Store) Initialize(ctx context.Context, fn storev2.InitializeFunc) (fErr error) {

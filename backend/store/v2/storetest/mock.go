@@ -3,7 +3,6 @@ package storetest
 import (
 	"context"
 
-	corev3 "github.com/sensu/sensu-go/api/core/v3"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/backend/store/patch"
 	storev2 "github.com/sensu/sensu-go/backend/store/v2"
@@ -61,8 +60,8 @@ func (s *Store) Watch(ctx context.Context, req storev2.ResourceRequest) <-chan [
 	return s.Called(ctx, req).Get(0).(<-chan []storev2.WatchEvent)
 }
 
-func (s *Store) CreateNamespace(ctx context.Context, ns *corev3.Namespace) error {
-	return s.Called(ctx, ns).Error(0)
+func (s *Store) NamespaceStore() storev2.NamespaceStore {
+	return s.Called().Get(0).(storev2.NamespaceStore)
 }
 
 func (s *Store) DeleteNamespace(ctx context.Context, name string) error {

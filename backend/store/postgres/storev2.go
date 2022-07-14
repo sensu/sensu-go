@@ -737,12 +737,8 @@ func (s *StoreV2) watchLoop(ctx context.Context, req storev2.ResourceRequest, po
 	}
 }
 
-func (s *StoreV2) CreateNamespace(ctx context.Context, namespace *corev3.Namespace) error {
-	return NewNamespaceStore(s.db).CreateIfNotExists(ctx, namespace)
-}
-
-func (s *StoreV2) DeleteNamespace(ctx context.Context, name string) error {
-	return NewNamespaceStore(s.db).Delete(ctx, name)
+func (s *StoreV2) NamespaceStore() storev2.NamespaceStore {
+	return NewNamespaceStore(s.db)
 }
 
 func (s *StoreV2) Initialize(ctx context.Context, fn storev2.InitializeFunc) error {

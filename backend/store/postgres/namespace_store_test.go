@@ -697,7 +697,7 @@ func TestNamespaceStore_isEmpty(t *testing.T) {
 				s := &NamespaceStore{
 					db: db,
 				}
-				got, err := s.isEmpty(tt.args.ctx, tt.args.name)
+				got, err := s.IsEmpty(tt.args.ctx, tt.args.name)
 				if (err != nil) != tt.wantErr {
 					t.Errorf("NamespaceStore.isEmpty() error = %v, wantErr %v", err, tt.wantErr)
 					return

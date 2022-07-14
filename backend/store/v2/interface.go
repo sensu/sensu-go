@@ -23,8 +23,8 @@ type WrapList interface {
 
 // Interface specifies the interface of a v2 store.
 type Interface interface {
-	// NamespaceStore provides an interface for creating & deleting namespaces.
-	NamespaceStore
+	// NamespaceStore returns a NamespaceStore.
+	NamespaceStore() NamespaceStore
 
 	// CreateOrUpdate creates or updates the wrapped resource.
 	CreateOrUpdate(context.Context, ResourceRequest, Wrapper) error
@@ -61,14 +61,38 @@ type Interface interface {
 	Initialize(context.Context, InitializeFunc) error
 }
 
-// NamespaceStore provides an interface for creating & deleting namespaces.
+// NamespaceStore provides an interface for interacting with namespaces.
 type NamespaceStore interface {
-	// CreateNamespace persists a corev3.Namespace resource.
-	CreateNamespace(context.Context, *corev3.Namespace) error
+	// CreateOrUpdate creates or updates a corev3.Namespace resource.
+	CreateOrUpdate(context.Context, *corev3.Namespace) error
 
-	// DeleteNamespace deletes the corresponding corev3.Namespace resource and
-	// cleans up any store resources from that namespace.
-	DeleteNamespace(context.Context, string) error
+	// UpdateIfExists updates the corev3.Namespace resource, but only if it
+	// already exists in the store.
+	UpdateIfExists(context.Context, *corev3.Namespace) error
+
+	// CreateIfNotExists writes the corev3.Namespace resource to the store, but
+	// only if it does not already exist.
+	CreateIfNotExists(context.Context, *corev3.Namespace) error
+
+	// Get gets a corev3.Namespace from the store.
+	Get(context.Context, string) (*corev3.Namespace, error)
+
+	// Delete deletes the corresponding corev3.Namespace resource. It will
+	// return an error of the namespace is not empty.
+	Delete(context.Context, string) error
+
+	// List lists all corev3.Namespace resources.
+	List(context.Context, *store.SelectionPredicate) ([]*corev3.Namespace, error)
+
+	// Exists returns true if the corev3.Namespace with the provided name exists.
+	Exists(context.Context, string) (bool, error)
+
+	// Patch patches the corev3.Namespace resource with the provided name.
+	Patch(context.Context, string, patch.Patcher, *store.ETagCondition) error
+
+	// IsEmpty returns whether the corev3.Namespace with the provided name
+	// is empty or if it contains other resources.
+	IsEmpty(context.Context, string) (bool, error)
 }
 
 // Initialize sets up a cluster with the default resources & config.

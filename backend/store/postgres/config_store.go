@@ -294,12 +294,8 @@ func (s *ConfigStore) Patch(ctx context.Context, request storev2.ResourceRequest
 	return s.UpdateIfExists(ctx, request, w)
 }
 
-func (s *ConfigStore) CreateNamespace(ctx context.Context, ns *v3.Namespace) error {
-	return nil
-}
-
-func (s *ConfigStore) DeleteNamespace(ctx context.Context, name string) error {
-	return nil
+func (s *ConfigStore) NamespaceStore() storev2.NamespaceStore {
+	return NewNamespaceStore(s.db)
 }
 
 func labelsToJSON(labels map[string]string) (string, error) {

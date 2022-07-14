@@ -58,14 +58,9 @@ func (v *V2MockStore) Watch(ctx context.Context, req storev2.ResourceRequest) <-
 	return args.Get(0).(<-chan []storev2.WatchEvent)
 }
 
-func (v *V2MockStore) CreateNamespace(ctx context.Context, ns *corev3.Namespace) error {
-	args := v.Called(ctx, ns)
-	return args.Error(1)
-}
-
-func (v *V2MockStore) DeleteNamespace(ctx context.Context, name string) error {
-	args := v.Called(ctx, name)
-	return args.Error(1)
+func (v *V2MockStore) NamespaceStore() storev2.NamespaceStore {
+	args := v.Called()
+	return args.Get(0).(storev2.NamespaceStore)
 }
 
 func (v *V2MockStore) Initialize(ctx context.Context, fn storev2.InitializeFunc) error {

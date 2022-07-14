@@ -72,7 +72,7 @@ func (s *NamespaceStore) CreateOrUpdate(ctx context.Context, namespace *corev3.N
 
 // Delete soft deletes a namespace using the given namespace name.
 func (s *NamespaceStore) Delete(ctx context.Context, name string) error {
-	empty, err := s.isEmpty(ctx, name)
+	empty, err := s.IsEmpty(ctx, name)
 	if err != nil {
 		return err
 	}
@@ -130,7 +130,7 @@ func (s *NamespaceStore) Get(ctx context.Context, name string) (*corev3.Namespac
 
 // HardDelete hard deletes a namespace using the given namespace name.
 func (s *NamespaceStore) HardDelete(ctx context.Context, name string) error {
-	empty, err := s.isEmpty(ctx, name)
+	empty, err := s.IsEmpty(ctx, name)
 	if err != nil {
 		return err
 	}
@@ -306,7 +306,7 @@ func (s *NamespaceStore) UpdateIfExists(ctx context.Context, namespace *corev3.N
 	return nil
 }
 
-func (s *NamespaceStore) isEmpty(ctx context.Context, name string) (bool, error) {
+func (s *NamespaceStore) IsEmpty(ctx context.Context, name string) (bool, error) {
 	var count int64
 	row := s.db.QueryRow(ctx, isEmptyNamespaceQuery, name)
 	if err := row.Scan(&count); err != nil {

@@ -171,7 +171,7 @@ func createNamespace(tb testing.TB, s storev2.Interface, name string) {
 	tb.Helper()
 	ctx := context.Background()
 	namespace := corev3.FixtureNamespace(name)
-	if err := s.CreateNamespace(ctx, namespace); err != nil {
+	if err := s.NamespaceStore().CreateIfNotExists(ctx, namespace); err != nil {
 		tb.Error(err)
 	}
 }
@@ -179,7 +179,7 @@ func createNamespace(tb testing.TB, s storev2.Interface, name string) {
 func deleteNamespace(tb testing.TB, s storev2.Interface, name string) {
 	tb.Helper()
 	ctx := context.Background()
-	if err := s.DeleteNamespace(ctx, name); err != nil {
+	if err := s.NamespaceStore().Delete(ctx, name); err != nil {
 		tb.Error(err)
 	}
 }
