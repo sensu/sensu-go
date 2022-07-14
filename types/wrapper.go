@@ -262,10 +262,8 @@ type tmGetter interface {
 func WrapResource(r Resource) Wrapper {
 	var tm TypeMeta
 	if getter, ok := r.(tmGetter); ok {
-		fmt.Println("tmGetter")
 		tm = getter.GetTypeMeta()
 	} else {
-		fmt.Println("not tmGetter")
 		typ := reflect.Indirect(reflect.ValueOf(r)).Type()
 		tm = TypeMeta{
 			Type:       typ.Name(),
