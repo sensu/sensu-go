@@ -72,11 +72,6 @@ func (s *NamespaceStore) CreateOrUpdate(ctx context.Context, namespace *corev3.N
 
 // Delete soft deletes a namespace using the given namespace name.
 func (s *NamespaceStore) Delete(ctx context.Context, name string) error {
-	namespace := corev3.NewNamespace(name)
-	if err := namespace.Validate(); err != nil {
-		return &store.ErrNotValid{Err: err}
-	}
-
 	empty, err := s.isEmpty(ctx, name)
 	if err != nil {
 		return err
@@ -135,11 +130,6 @@ func (s *NamespaceStore) Get(ctx context.Context, name string) (*corev3.Namespac
 
 // HardDelete hard deletes a namespace using the given namespace name.
 func (s *NamespaceStore) HardDelete(ctx context.Context, name string) error {
-	namespace := corev3.NewNamespace(name)
-	if err := namespace.Validate(); err != nil {
-		return &store.ErrNotValid{Err: err}
-	}
-
 	empty, err := s.isEmpty(ctx, name)
 	if err != nil {
 		return err
