@@ -5,12 +5,10 @@ import (
 	"encoding/json"
 	"errors"
 	"os"
-	"time"
 
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/asset"
 	"github.com/sensu/sensu-go/backend/secrets"
-	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/command"
 	"github.com/sensu/sensu-go/util/environment"
 	"github.com/sirupsen/logrus"
@@ -29,8 +27,6 @@ type PipeAdapter struct {
 	AssetGetter            asset.Getter
 	Executor               command.Executor
 	SecretsProviderManager *secrets.ProviderManager
-	Store                  store.Store
-	StoreTimeout           time.Duration
 }
 
 // Name returns the name of the mutator adapter.

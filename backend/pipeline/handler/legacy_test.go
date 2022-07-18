@@ -19,6 +19,7 @@ import (
 	"github.com/sensu/sensu-go/backend/licensing"
 	"github.com/sensu/sensu-go/backend/secrets"
 	"github.com/sensu/sensu-go/backend/store"
+	storev2 "github.com/sensu/sensu-go/backend/store/v2"
 	"github.com/sensu/sensu-go/command"
 	"github.com/sensu/sensu-go/testing/mockassetgetter"
 	"github.com/sensu/sensu-go/testing/mockexecutor"
@@ -37,8 +38,8 @@ func init() {
 
 func TestNilHandlerBug_GH4584(t *testing.T) {
 	// tests to make sure Handle() doesn't panic when the handler is not found.
-	mockStore := new(mockstore.MockStore)
-	mockStore.On("GetHandlerByName", mock.Anything, mock.Anything).Return((*corev2.Handler)(nil), nil)
+	mockStore := new(mockstore.V2MockStore)
+	mockStore.On("Get", mock.Anything, mock.Anything).Return(nil, &store.ErrNotFound{})
 	adapter := &LegacyAdapter{
 		Store: mockStore,
 	}
@@ -78,7 +79,7 @@ func TestLegacyAdapter_CanHandle(t *testing.T) {
 		Executor               command.Executor
 		LicenseGetter          licensing.Getter
 		SecretsProviderManager *secrets.ProviderManager
-		Store                  store.Store
+		Store                  storev2.Interface
 		StoreTimeout           time.Duration
 	}
 	type args struct {
@@ -134,7 +135,7 @@ func TestLegacyAdapter_Handle(t *testing.T) {
 		Executor               command.Executor
 		LicenseGetter          licensing.Getter
 		SecretsProviderManager secrets.ProviderManagerer
-		Store                  store.Store
+		Store                  storev2.Interface
 		StoreTimeout           time.Duration
 	}
 	type args struct {
@@ -163,11 +164,11 @@ func TestLegacyAdapter_Handle(t *testing.T) {
 				}(),
 			},
 			fields: fields{
-				Store: func() store.Store {
+				Store: func() storev2.Interface {
 					var handler *corev2.Handler
 					err := errors.New("not found")
-					stor := &mockstore.MockStore{}
-					stor.On("GetHandlerByName", mock.Anything, "handler1").Return(handler, err)
+					stor := &mockstore.V2MockStore{}
+					stor.On("Get", mock.Anything, mock.Anything).Return(mockstore.Wrapper[*corev2.Handler]{Value: handler}, err)
 					return stor
 				}(),
 			},
@@ -193,10 +194,10 @@ func TestLegacyAdapter_Handle(t *testing.T) {
 					manager.On("SubSecrets", mock.Anything, mock.Anything).Return(secrets, errors.New("secrets error"))
 					return manager
 				}(),
-				Store: func() store.Store {
+				Store: func() storev2.Interface {
 					handler := corev2.FixtureHandler("handler1")
-					stor := &mockstore.MockStore{}
-					stor.On("GetHandlerByName", mock.Anything, "handler1").Return(handler, nil)
+					stor := &mockstore.V2MockStore{}
+					stor.On("Get", mock.Anything, mock.Anything).Return(mockstore.Wrapper[*corev2.Handler]{Value: handler}, nil)
 					return stor
 				}(),
 			},
@@ -233,7 +234,7 @@ func TestLegacyAdapter_pipeHandler(t *testing.T) {
 		Executor               command.Executor
 		LicenseGetter          licensing.Getter
 		SecretsProviderManager secrets.ProviderManagerer
-		Store                  store.Store
+		Store                  storev2.Interface
 		StoreTimeout           time.Duration
 	}
 	type args struct {
@@ -387,11 +388,10 @@ func TestLegacyAdapter_pipeHandler(t *testing.T) {
 					})
 					return ex
 				}(),
-				Store: func() store.Store {
+				Store: func() storev2.Interface {
 					asset := corev2.FixtureAsset("asset1")
-					stor := &mockstore.MockStore{}
-					stor.On("GetAssetByName", mock.Anything, "asset1").
-						Return(asset, nil)
+					stor := &mockstore.V2MockStore{}
+					stor.On("Get", mock.Anything, mock.Anything).Return(mockstore.Wrapper[*corev2.Asset]{Value: asset}, nil)
 					return stor
 				}(),
 			},
