@@ -253,7 +253,8 @@ func Initialize(ctx context.Context, etcdConfigClient *clientv3.Client, pgConfig
 		b.ConfigStoreV2 = postgres.NewConfigStore(pgConfigDB)
 	}
 
-	if _, err := b.Store.GetClusterID(ctx); err != nil {
+	var clusterID string
+	if clusterID, err = b.Store.GetClusterID(ctx); err != nil {
 		return nil, err
 	}
 
@@ -546,11 +547,12 @@ func Initialize(ctx context.Context, etcdConfigClient *clientv3.Client, pgConfig
 	tessen, err := tessend.New(
 		ctx,
 		tessend.Config{
-			Store:      b.Store,
+			Store:      b.StoreV2,
 			EventStore: b.EventStore,
 			RingPool:   b.RingPool,
 			Client:     etcdConfigClient,
 			Bus:        bus,
+			ClusterID:  clusterID,
 		})
 	if err != nil {
 		return nil, fmt.Errorf("error initializing %s: %s", tessen.Name(), err)
