@@ -44,7 +44,7 @@ func (s *NamespaceStore) CreateIfNotExists(ctx context.Context, namespace *corev
 			switch pgError.ConstraintName {
 			case namespaceUniqueConstraint:
 				return &store.ErrAlreadyExists{
-					Key: fmt.Sprintf("%s", namespace.Metadata.Name),
+					Key: namespaceStoreKey(namespace.Metadata.Name),
 				}
 			}
 		}
@@ -72,6 +72,10 @@ func (s *NamespaceStore) CreateOrUpdate(ctx context.Context, namespace *corev3.N
 
 // Delete soft deletes a namespace using the given namespace name.
 func (s *NamespaceStore) Delete(ctx context.Context, name string) error {
+	if name == "" {
+		return &store.ErrNotValid{Err: errors.New("must specify name")}
+	}
+
 	empty, err := s.IsEmpty(ctx, name)
 	if err != nil {
 		return err
@@ -86,13 +90,17 @@ func (s *NamespaceStore) Delete(ctx context.Context, name string) error {
 	}
 	affected := result.RowsAffected()
 	if affected < 1 {
-		return &store.ErrNotFound{Key: fmt.Sprintf("%s", name)}
+		return &store.ErrNotFound{Key: namespaceStoreKey(name)}
 	}
 	return nil
 }
 
 // Exists determines if a namespace exists.
 func (s *NamespaceStore) Exists(ctx context.Context, name string) (bool, error) {
+	if name == "" {
+		return false, &store.ErrNotValid{Err: errors.New("must specify name")}
+	}
+
 	row := s.db.QueryRow(ctx, existsNamespaceQuery, name)
 	var found bool
 	err := row.Scan(&found)
@@ -115,7 +123,7 @@ func (s *NamespaceStore) Get(ctx context.Context, name string) (*corev3.Namespac
 	wrapper := &NamespaceWrapper{}
 	if err := row.Scan(wrapper.SQLParams()...); err != nil {
 		if err == pgx.ErrNoRows {
-			return nil, &store.ErrNotFound{Key: fmt.Sprintf("%s", name)}
+			return nil, &store.ErrNotFound{Key: namespaceStoreKey(name)}
 		}
 		return nil, &store.ErrInternal{Message: err.Error()}
 	}
@@ -130,6 +138,10 @@ func (s *NamespaceStore) Get(ctx context.Context, name string) (*corev3.Namespac
 
 // HardDelete hard deletes a namespace using the given namespace name.
 func (s *NamespaceStore) HardDelete(ctx context.Context, name string) error {
+	if name == "" {
+		return &store.ErrNotValid{Err: errors.New("must specify name")}
+	}
+
 	empty, err := s.IsEmpty(ctx, name)
 	if err != nil {
 		return err
@@ -144,13 +156,17 @@ func (s *NamespaceStore) HardDelete(ctx context.Context, name string) error {
 	}
 	affected := result.RowsAffected()
 	if affected < 1 {
-		return &store.ErrNotFound{Key: fmt.Sprintf("%s", name)}
+		return &store.ErrNotFound{Key: namespaceStoreKey(name)}
 	}
 	return nil
 }
 
 // HardDeleted determines if a namespace has been hard deleted.
 func (s *NamespaceStore) HardDeleted(ctx context.Context, name string) (bool, error) {
+	if name == "" {
+		return false, &store.ErrNotValid{Err: errors.New("must specify name")}
+	}
+
 	row := s.db.QueryRow(ctx, hardDeletedNamespaceQuery, name)
 	var deleted bool
 	if err := row.Scan(&deleted); err != nil {
@@ -208,6 +224,10 @@ func (s *NamespaceStore) List(ctx context.Context, pred *store.SelectionPredicat
 }
 
 func (s *NamespaceStore) Patch(ctx context.Context, name string, patcher patch.Patcher, conditions *store.ETagCondition) (fErr error) {
+	if name == "" {
+		return &store.ErrNotValid{Err: errors.New("must specify name")}
+	}
+
 	tx, txerr := s.db.Begin(ctx)
 	if txerr != nil {
 		return &store.ErrInternal{Message: txerr.Error()}
@@ -226,7 +246,7 @@ func (s *NamespaceStore) Patch(ctx context.Context, name string, patcher patch.P
 	row := tx.QueryRow(ctx, getNamespaceQuery, name)
 	if err := row.Scan(wrapper.SQLParams()...); err != nil {
 		if err == pgx.ErrNoRows {
-			return &store.ErrNotFound{Key: fmt.Sprintf("%s", name)}
+			return &store.ErrNotFound{Key: namespaceStoreKey(name)}
 		}
 		return &store.ErrInternal{Message: err.Error()}
 	}
@@ -300,13 +320,17 @@ func (s *NamespaceStore) UpdateIfExists(ctx context.Context, namespace *corev3.N
 		rowCount++
 	}
 	if rowCount == 0 {
-		return &store.ErrNotFound{Key: fmt.Sprintf("%s", namespace.Metadata.Name)}
+		return &store.ErrNotFound{Key: namespaceStoreKey(namespace.Metadata.Name)}
 	}
 
 	return nil
 }
 
 func (s *NamespaceStore) IsEmpty(ctx context.Context, name string) (bool, error) {
+	if name == "" {
+		return false, &store.ErrNotValid{Err: errors.New("must specify name")}
+	}
+
 	var count int64
 	row := s.db.QueryRow(ctx, isEmptyNamespaceQuery, name)
 	if err := row.Scan(&count); err != nil {
@@ -319,5 +343,5 @@ func (s *NamespaceStore) IsEmpty(ctx context.Context, name string) (bool, error)
 }
 
 func namespaceStoreKey(name string) string {
-	return store.NewKeyBuilder(namespaceStoreName).Build(name)
+	return fmt.Sprintf("%s(name)=(%s)", entityConfigStoreName, name)
 }

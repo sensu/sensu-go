@@ -63,6 +63,11 @@ func (v *V2MockStore) NamespaceStore() storev2.NamespaceStore {
 	return args.Get(0).(storev2.NamespaceStore)
 }
 
+func (v *V2MockStore) EntityConfigStore() storev2.EntityConfigStore {
+	args := v.Called()
+	return args.Get(0).(storev2.EntityConfigStore)
+}
+
 func (v *V2MockStore) Initialize(ctx context.Context, fn storev2.InitializeFunc) error {
 	args := v.Called(ctx, fn)
 	return args.Error(1)

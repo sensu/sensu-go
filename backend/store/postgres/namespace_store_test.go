@@ -12,6 +12,7 @@ import (
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/backend/store/patch"
 	storev2 "github.com/sensu/sensu-go/backend/store/v2"
+	"github.com/stretchr/testify/require"
 )
 
 func TestNamespaceStore_CreateIfNotExists(t *testing.T) {
@@ -81,6 +82,7 @@ func TestNamespaceStore_CreateOrUpdate(t *testing.T) {
 		name       string
 		args       args
 		beforeHook func(*testing.T, storev2.Interface)
+		afterHook  func(*testing.T, storev2.Interface)
 		wantErr    bool
 	}{
 		{
@@ -91,32 +93,49 @@ func TestNamespaceStore_CreateOrUpdate(t *testing.T) {
 					namespace: corev3.FixtureNamespace("foo"),
 				}
 			}(),
-			//verifyQuery: fmt.Sprintf("SELECT * FROM %s", namespaceStoreName),
-			//want:        1,
+			afterHook: func(t *testing.T, s storev2.Interface) {
+				ctx := context.Background()
+				namespace, err := s.NamespaceStore().Get(ctx, "foo")
+				require.NoError(t, err)
+				require.Equal(t, "foo", namespace.Metadata.Name)
+			},
 		},
 		{
 			name: "updates when namespace exists",
 			args: func() args {
 				return args{
-					ctx:       context.Background(),
-					namespace: corev3.FixtureNamespace("foo"),
+					ctx: context.Background(),
+					namespace: func() *corev3.Namespace {
+						namespace := corev3.FixtureNamespace("foo")
+						namespace.Metadata.Annotations["updated"] = "true"
+						return namespace
+					}(),
 				}
 			}(),
-			//verifyQuery: fmt.Sprintf("SELECT * FROM %s", namespaceStoreName),
-			//want:        1,
+			afterHook: func(t *testing.T, s storev2.Interface) {
+				ctx := context.Background()
+				namespace, err := s.NamespaceStore().Get(ctx, "foo")
+				require.NoError(t, err)
+				require.Equal(t, "foo", namespace.Metadata.Name)
+				require.Equal(t, "true", namespace.Metadata.Annotations["updated"])
+			},
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			withPostgres(t, func(ctx context.Context, db *pgxpool.Pool, dsn string) {
+				stor := NewStoreV2(db)
 				if tt.beforeHook != nil {
-					tt.beforeHook(t, NewStoreV2(db))
+					tt.beforeHook(t, stor)
 				}
 				s := &NamespaceStore{
 					db: db,
 				}
 				if err := s.CreateOrUpdate(tt.args.ctx, tt.args.namespace); (err != nil) != tt.wantErr {
 					t.Errorf("NamespaceStore.CreateOrUpdate() error = %v, wantErr %v", err, tt.wantErr)
+				}
+				if tt.afterHook != nil {
+					tt.afterHook(t, stor)
 				}
 			})
 		})
@@ -275,13 +294,16 @@ func TestNamespaceStore_Get(t *testing.T) {
 			beforeHook: func(t *testing.T, s storev2.Interface) {
 				createNamespace(t, s, "foo")
 			},
-			want: corev3.NewNamespace("foo"),
-			// ns := corev3.FixtureNamespace("foo")
-			// wrapper := WrapNamespace(ns).(*NamespaceWrapper)
-			// wrapper.ID = 1
-			// wrapper.CreatedAt = time.Now()
-			// wrapper.UpdatedAt = time.Now()
-			// return wrapper
+			want: func() *corev3.Namespace {
+				namespace := corev3.NewNamespace("foo")
+				// TODO: uncomment after ID, CreatedAt, UpdatedAt & DeletedAt
+				// are added to corev3.Namespace.
+				//
+				// namespace.ID = 1
+				// namespace.CreatedAt = time.Now()
+				// namespace.UpdatedAt = time.Now()
+				return namespace
+			}(),
 		},
 	}
 	for _, tt := range tests {
@@ -298,6 +320,20 @@ func TestNamespaceStore_Get(t *testing.T) {
 					t.Errorf("NamespaceStore.Get() error = %v, wantErr %v", err, tt.wantErr)
 					return
 				}
+
+				// TODO: uncomment after ID, CreatedAt, UpdatedAt & DeletedAt
+				// are added to corev3.Namespace.
+				//
+				// createdAtDelta := time.Since(tt.want.CreatedAt) / 2
+				// wantCreatedAt := time.Now().Add(-createdAtDelta)
+				// require.WithinDuration(t, wantCreatedAt, got.CreatedAt, createdAtDelta)
+				// got.CreatedAt = tt.want.CreatedAt
+
+				// updatedAtDelta := time.Since(tt.want.UpdatedAt) / 2
+				// wantUpdatedAt := time.Now().Add(-updatedAtDelta)
+				// require.WithinDuration(t, wantUpdatedAt, got.UpdatedAt, updatedAtDelta)
+				// got.UpdatedAt = tt.want.UpdatedAt
+
 				if !reflect.DeepEqual(got, tt.want) {
 					t.Errorf("NamespaceStore.Get() = %v, want %v", got, tt.want)
 				}
@@ -683,7 +719,7 @@ func TestNamespaceStore_isEmpty(t *testing.T) {
 			},
 			beforeHook: func(t *testing.T, s storev2.Interface) {
 				createNamespace(t, s, "default")
-				createEntityConfig(t, s, "foo")
+				createEntityConfig(t, s, "default", "foo")
 			},
 			want: false,
 		},

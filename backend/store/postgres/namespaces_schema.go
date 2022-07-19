@@ -55,8 +55,8 @@ WITH ignored AS (
 		namespaces.deleted_at IS NOT NULL
 	RETURNING *
 )
-INSERT INTO namespaces (name, selectors, annotations, deleted_at)
-SELECT $1, $2, $3, NULL
+INSERT INTO namespaces (name, selectors, annotations)
+SELECT $1, $2, $3
 WHERE NOT EXISTS (SELECT * FROM upsert)
 `
 

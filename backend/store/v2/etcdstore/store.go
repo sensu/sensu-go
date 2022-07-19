@@ -414,6 +414,10 @@ func (s *Store) NamespaceStore() storev2.NamespaceStore {
 	return NewNamespaceStore(s.client)
 }
 
+func (s *Store) EntityConfigStore() storev2.EntityConfigStore {
+	return NewEntityConfigStore(s.client)
+}
+
 func (s *Store) Initialize(ctx context.Context, fn storev2.InitializeFunc) (fErr error) {
 	// Check that the store hasn't already been initialized
 	initialized, err := s.isInitialized(ctx)

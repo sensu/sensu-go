@@ -17,36 +17,38 @@ import (
 )
 
 type EntityStore struct {
-	store *StoreV2
+	store             *StoreV2
+	entityConfigStore *EntityConfigStore
 }
 
 func NewEntityStore(db *pgxpool.Pool) *EntityStore {
 	return &EntityStore{
-		store: NewStoreV2(db),
+		store:             NewStoreV2(db),
+		entityConfigStore: NewEntityConfigStore(db),
 	}
 }
 
 // DeleteEntity deletes an entity using the given entity struct.
-func (e *EntityStore) DeleteEntity(ctx context.Context, entity *corev2.Entity) error {
+func (s *EntityStore) DeleteEntity(ctx context.Context, entity *corev2.Entity) error {
 	if err := entity.Validate(); err != nil {
 		return &store.ErrNotValid{Err: err}
 	}
-	state := &corev3.EntityState{
-		Metadata: &entity.ObjectMeta,
-	}
-	config := &corev3.EntityConfig{
-		Metadata: &entity.ObjectMeta,
-	}
-	stateReq := storev2.NewResourceRequestFromResource(state)
-	configReq := storev2.NewResourceRequestFromResource(config)
 
-	if err := e.store.Delete(ctx, configReq); err != nil {
+	namespace := entity.GetNamespace()
+	name := entity.GetName()
+
+	if err := s.entityConfigStore.Delete(ctx, namespace, name); err != nil {
 		var e *store.ErrNotFound
 		if !errors.As(err, &e) {
 			return err
 		}
 	}
-	if err := e.store.Delete(ctx, stateReq); err != nil {
+
+	state := &corev3.EntityState{
+		Metadata: &entity.ObjectMeta,
+	}
+	stateReq := storev2.NewResourceRequestFromResource(state)
+	if err := s.store.Delete(ctx, stateReq); err != nil {
 		var e *store.ErrNotFound
 		if !errors.As(err, &e) {
 			return err
@@ -99,31 +101,18 @@ type uniqueResource struct {
 
 // GetEntities returns all entities in the given ctx's namespace. A nil slice
 // with no error is returned if none were found.
-func (e *EntityStore) GetEntities(ctx context.Context, pred *store.SelectionPredicate) ([]*corev2.Entity, error) {
+func (s *EntityStore) GetEntities(ctx context.Context, pred *store.SelectionPredicate) ([]*corev2.Entity, error) {
 	namespace := corev2.ContextNamespace(ctx)
 
 	// Fetch the entity configs with the selection predicate
-	var ec corev3.EntityConfig
-	configReq := storev2.ResourceRequest{
-		Namespace:  namespace,
-		Type:       "EntityConfig",
-		APIVersion: "core/v3",
-		StoreName:  ec.StoreName(),
-	}
-	if pred.Ordering == corev2.EntitySortName {
-		configReq.SortOrder = storev2.SortAscend
-		if pred.Descending {
-			configReq.SortOrder = storev2.SortDescend
-		}
-	}
-
-	wConfigs, err := e.store.List(ctx, configReq, pred)
+	configPtrs, err := s.entityConfigStore.List(ctx, namespace, pred)
 	if err != nil {
 		return nil, err
 	}
-	configs := make([]corev3.EntityConfig, wConfigs.Len())
-	if err := wConfigs.UnwrapInto(&configs); err != nil {
-		return nil, &store.ErrDecode{Err: err, Key: etcdstore.StoreKey(configReq)}
+
+	configs := []corev3.EntityConfig{}
+	for _, configPtr := range configPtrs {
+		configs = append(configs, *configPtr)
 	}
 
 	// Fetch the entity states for each entity with an entity config
@@ -138,7 +127,7 @@ func (e *EntityStore) GetEntities(ctx context.Context, pred *store.SelectionPred
 		}
 		stateRequests = append(stateRequests, req)
 	}
-	wStates, err := e.store.GetMultiple(ctx, stateRequests)
+	wStates, err := s.store.GetMultiple(ctx, stateRequests)
 	if err != nil {
 		return nil, err
 	}
@@ -198,18 +187,13 @@ func entityFromConfigOnly(config *corev3.EntityConfig) *corev2.Entity {
 // GetEntityConfigByName returns an entity config using the given name and the
 // namespace stored in ctx. The resulting entity config is nil if none was
 // found.
-func (e *EntityStore) GetEntityConfigByName(ctx context.Context, name string) (*corev3.EntityConfig, error) {
+func (s *EntityStore) GetEntityConfigByName(ctx context.Context, name string) (*corev3.EntityConfig, error) {
 	if name == "" {
 		return nil, &store.ErrNotValid{Err: errors.New("must specify name")}
 	}
-	cfg := &corev3.EntityConfig{
-		Metadata: &corev2.ObjectMeta{
-			Name:      name,
-			Namespace: corev2.ContextNamespace(ctx),
-		},
-	}
-	req := storev2.NewResourceRequestFromResource(cfg)
-	wrapper, err := e.store.Get(ctx, req)
+	namespace := corev2.ContextNamespace(ctx)
+
+	config, err := s.entityConfigStore.Get(ctx, namespace, name)
 	if err != nil {
 		var e *store.ErrNotFound
 		if errors.As(err, &e) {
@@ -217,11 +201,7 @@ func (e *EntityStore) GetEntityConfigByName(ctx context.Context, name string) (*
 		}
 		return nil, err
 	}
-
-	if err := wrapper.UnwrapInto(cfg); err != nil {
-		return nil, err
-	}
-	return cfg, nil
+	return config, nil
 }
 
 // GetEntityStateByName returns an entity state using the given name and the
@@ -274,16 +254,11 @@ func (e *EntityStore) GetEntityByName(ctx context.Context, name string) (*corev2
 }
 
 // UpdateEntityConfig creates or updates a given entity config.
-func (e *EntityStore) UpdateEntityConfig(ctx context.Context, cfg *corev3.EntityConfig) error {
+func (s *EntityStore) UpdateEntityConfig(ctx context.Context, cfg *corev3.EntityConfig) error {
 	if cfg.Metadata.Namespace == "" {
 		cfg.Metadata.Namespace = corev2.ContextNamespace(ctx)
 	}
-	req := storev2.NewResourceRequestFromResource(cfg)
-	wrappedConfig, err := storev2.WrapResource(cfg)
-	if err != nil {
-		return &store.ErrEncode{Err: err}
-	}
-	if err := e.store.CreateOrUpdate(ctx, req, wrappedConfig); err != nil {
+	if err := s.entityConfigStore.CreateOrUpdate(ctx, cfg); err != nil {
 		return err
 	}
 	return nil

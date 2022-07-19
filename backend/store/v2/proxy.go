@@ -96,6 +96,13 @@ func (p *Proxy) NamespaceStore() NamespaceStore {
 	return p.impl.NamespaceStore()
 }
 
+// EntityConfigStore returns an EntityConfigStore.
+func (p *Proxy) EntityConfigStore() EntityConfigStore {
+	p.mu.RLock()
+	defer p.mu.RUnlock()
+	return p.impl.EntityConfigStore()
+}
+
 // Initialize sets up a cluster with the default resources & config.
 func (p *Proxy) Initialize(ctx context.Context, fn InitializeFunc) error {
 	p.mu.RLock()

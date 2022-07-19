@@ -52,8 +52,7 @@ const (
 )
 
 var (
-	entityConfigStoreName = new(corev3.EntityConfig).StoreName()
-	entityStateStoreName  = new(corev3.EntityState).StoreName()
+	entityStateStoreName = new(corev3.EntityState).StoreName()
 )
 
 type wrapperWithParams interface {
@@ -107,8 +106,6 @@ func newStoreV2Error(method, storeName string, err error) error {
 func (s *StoreV2) lookupWrapper(req storev2.ResourceRequest, op crudOp) namedWrapperWithParams {
 	storeName := req.StoreName
 	switch storeName {
-	case entityConfigStoreName:
-		return &EntityConfigWrapper{}
 	case entityStateStoreName:
 		return &EntityStateWrapper{}
 	default:
@@ -121,36 +118,6 @@ func (s *StoreV2) lookupQuery(req storev2.ResourceRequest, op crudOp) (string, b
 	storeName := req.StoreName
 	ordering := req.SortOrder
 	switch storeName {
-	case entityConfigStoreName:
-		switch op {
-		case createOrUpdateQ:
-			return createOrUpdateEntityConfigQuery, true
-		case updateIfExistsQ:
-			return updateIfExistsEntityConfigQuery, true
-		case createIfNotExistsQ:
-			return createIfNotExistsEntityConfigQuery, true
-		case getQ:
-			return getEntityConfigQuery, true
-		case getMultipleQ:
-			return getEntityConfigsQuery, true
-		case deleteQ:
-			return deleteEntityConfigQuery, true
-		case hardDeleteQ:
-			return hardDeleteEntityConfigQuery, true
-		case listQ, listAllQ:
-			switch ordering {
-			case storev2.SortDescend:
-				return listEntityConfigDescQuery, true
-			default:
-				return listEntityConfigQuery, true
-			}
-		case existsQ:
-			return existsEntityConfigQuery, true
-		case hardDeletedQ:
-			return hardDeletedEntityConfigQuery, true
-		default:
-			return "", false
-		}
 	case entityStateStoreName:
 		switch op {
 		case createOrUpdateQ:
@@ -274,7 +241,7 @@ func (s *StoreV2) CreateIfNotExists(ctx context.Context, req storev2.ResourceReq
 		pgError, ok := err.(*pgconn.PgError)
 		if ok {
 			switch pgError.ConstraintName {
-			case "entity_config_unique", "entity_state_unique":
+			case "entity_state_unique":
 				return &store.ErrAlreadyExists{Key: fmt.Sprintf("%s/%s", req.Namespace, req.Name)}
 			}
 		}
@@ -741,6 +708,10 @@ func (s *StoreV2) NamespaceStore() storev2.NamespaceStore {
 	return NewNamespaceStore(s.db)
 }
 
+func (s *StoreV2) EntityConfigStore() storev2.EntityConfigStore {
+	return NewEntityConfigStore(s.db)
+}
+
 func (s *StoreV2) Initialize(ctx context.Context, fn storev2.InitializeFunc) error {
 	tx, err := s.db.Begin(ctx)
 	if err != nil {
@@ -788,8 +759,6 @@ func (s *StoreV2) flagAsInitialized(ctx context.Context, tx pgx.Tx) error {
 
 func wrapWithPostgres(resource corev3.Resource, opts ...wrap.Option) (storev2.Wrapper, error) {
 	switch value := resource.(type) {
-	case *corev3.EntityConfig:
-		return WrapEntityConfig(value), nil
 	case *corev3.EntityState:
 		return WrapEntityState(value), nil
 	default:

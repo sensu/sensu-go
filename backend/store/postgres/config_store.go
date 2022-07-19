@@ -298,6 +298,10 @@ func (s *ConfigStore) NamespaceStore() storev2.NamespaceStore {
 	return NewNamespaceStore(s.db)
 }
 
+func (s *ConfigStore) EntityConfigStore() storev2.EntityConfigStore {
+	return NewEntityConfigStore(s.db)
+}
+
 func labelsToJSON(labels map[string]string) (string, error) {
 	if labels == nil || len(labels) == 0 {
 		return "{}", nil

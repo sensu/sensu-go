@@ -2,7 +2,6 @@ package postgres
 
 import (
 	"context"
-	"database/sql"
 	"fmt"
 	"os"
 	"strings"
@@ -23,12 +22,34 @@ import (
 type poolWithDSNFunc func(ctx context.Context, db *pgxpool.Pool, dsn string)
 
 func dropAll(tb testing.TB, dbName, pgURL string) {
-	db, err := sql.Open("postgres", pgURL)
+	db, err := pgxpool.Connect(context.Background(), pgURL)
 	if err != nil {
 		tb.Fatalf("error opening database: %v", err)
 	}
+	tb.Cleanup(func() {
+		db.Close()
+	})
+
+	// revoke new connections to the database
+	revokeQ := fmt.Sprintf("REVOKE CONNECT ON DATABASE %s FROM public;", dbName)
+	if _, err := db.Exec(context.Background(), revokeQ); err != nil {
+		tb.Fatalf("error cleaning up database \"%s\", revoke new connections: %v", dbName, err)
+	}
+
+	// kill connections to the database
+	rawKillQ := `
+SELECT pid, pg_terminate_backend(pid)
+FROM pg_stat_activity
+WHERE datname = '%s' AND pid <> pg_backend_pid();
+`
+	killQ := fmt.Sprintf(rawKillQ, dbName)
+	if _, err := db.Exec(context.Background(), killQ); err != nil {
+		tb.Fatalf("error cleaning up database \"%s\", kill connections: %v", dbName, err)
+	}
+
+	// drop the database
 	dropQ := fmt.Sprintf("DROP DATABASE %s;", dbName)
-	if _, err := db.ExecContext(context.Background(), dropQ); err != nil {
+	if _, err := db.Exec(context.Background(), dropQ); err != nil {
 		tb.Fatalf("error cleaning up database \"%s\": %v", dbName, err)
 	}
 }
@@ -184,13 +205,20 @@ func deleteNamespace(tb testing.TB, s storev2.Interface, name string) {
 	}
 }
 
-func createEntityConfig(tb testing.TB, s storev2.Interface, name string) {
+func createEntityConfig(tb testing.TB, s storev2.Interface, namespace, name string) {
 	tb.Helper()
 	ctx := context.Background()
 	cfg := corev3.FixtureEntityConfig(name)
-	req := storev2.NewResourceRequestFromResource(cfg)
-	wrapper := WrapEntityConfig(cfg)
-	if err := s.CreateOrUpdate(ctx, req, wrapper); err != nil {
+	cfg.Metadata.Namespace = namespace
+	if err := s.EntityConfigStore().CreateIfNotExists(ctx, cfg); err != nil {
+		tb.Error(err)
+	}
+}
+
+func deleteEntityConfig(tb testing.TB, s storev2.Interface, namespace, name string) {
+	tb.Helper()
+	ctx := context.Background()
+	if err := s.EntityConfigStore().Delete(ctx, namespace, name); err != nil {
 		tb.Error(err)
 	}
 }
@@ -201,7 +229,7 @@ func createEntityState(tb testing.TB, s storev2.Interface, name string) {
 	state := corev3.FixtureEntityState(name)
 	req := storev2.NewResourceRequestFromResource(state)
 	wrapper := WrapEntityState(state)
-	if err := s.CreateOrUpdate(ctx, req, wrapper); err != nil {
+	if err := s.CreateIfNotExists(ctx, req, wrapper); err != nil {
 		tb.Error(err)
 	}
 }

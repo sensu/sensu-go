@@ -26,6 +26,9 @@ type Interface interface {
 	// NamespaceStore returns a NamespaceStore.
 	NamespaceStore() NamespaceStore
 
+	// EntityConfigStore returns an EntityConfigStore.
+	EntityConfigStore() EntityConfigStore
+
 	// CreateOrUpdate creates or updates the wrapped resource.
 	CreateOrUpdate(context.Context, ResourceRequest, Wrapper) error
 
@@ -77,8 +80,8 @@ type NamespaceStore interface {
 	// Get gets a corev3.Namespace from the store.
 	Get(context.Context, string) (*corev3.Namespace, error)
 
-	// Delete deletes the corresponding corev3.Namespace resource. It will
-	// return an error of the namespace is not empty.
+	// Delete deletes the corev3.Namespace, from the store, corresponding with
+	// the given name. It will return an error of the namespace is not empty.
 	Delete(context.Context, string) error
 
 	// List lists all corev3.Namespace resources.
@@ -93,6 +96,38 @@ type NamespaceStore interface {
 	// IsEmpty returns whether the corev3.Namespace with the provided name
 	// is empty or if it contains other resources.
 	IsEmpty(context.Context, string) (bool, error)
+}
+
+// EntityConfigStore provides an interface for interacting with entity configs.
+type EntityConfigStore interface {
+	// CreateOrUpdate creates or updates a corev3.EntityConfig resource.
+	CreateOrUpdate(context.Context, *corev3.EntityConfig) error
+
+	// UpdateIfExists updates the corev3.EntityConfig resource, but only if it
+	// already exists in the store.
+	UpdateIfExists(context.Context, *corev3.EntityConfig) error
+
+	// CreateIfNotExists writes the corev3.EntityConfig resource to the store, but
+	// only if it does not already exist.
+	CreateIfNotExists(context.Context, *corev3.EntityConfig) error
+
+	// Get gets a corev3.EntityConfig from the store.
+	Get(context.Context, string, string) (*corev3.EntityConfig, error)
+
+	// Delete deletes the corev3.EntityConfig, from the store, corresponding
+	// with the given namespace and name.
+	Delete(context.Context, string, string) error
+
+	// List lists all corev3.EntityConfig resources.
+	List(context.Context, string, *store.SelectionPredicate) ([]*corev3.EntityConfig, error)
+
+	// Exists returns true if the corev3.EntityConfig exists for the provided
+	// namespace and name.
+	Exists(context.Context, string, string) (bool, error)
+
+	// Patch patches the corev3.EntityConfig resource with the provided
+	// namespace and name.
+	Patch(context.Context, string, string, patch.Patcher, *store.ETagCondition) error
 }
 
 // Initialize sets up a cluster with the default resources & config.

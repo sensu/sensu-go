@@ -66,9 +66,9 @@ SET
 `
 
 const createIfNotExistsEntityConfigQuery = `
--- This query inserts rows into the entity_configs table. By design, it
--- errors when an entity with the same namespace and name already
--- exists.
+-- This query creates a new entity config, or updates it if it exists and has
+-- been soft deleted. By design, it errors when an entity config with the same
+-- name already exists and has not been soft deleted.
 --
 WITH ignored AS (
 	SELECT
@@ -79,26 +79,44 @@ WITH ignored AS (
 ), namespace AS (
 	SELECT COALESCE (
 		NULLIF($14, 0),
-		(SELECT id FROM namespaces WHERE name = $1)
+		(SELECT id FROM namespaces WHERE name = $1 AND deleted_at IS NULL)
 	) AS id
-), config AS (
-	INSERT INTO entity_configs (
-		namespace_id,
-		name,
-		selectors,
-		annotations,
-		created_by,
-		entity_class,
-		sensu_user,
-		subscriptions,
-		deregister,
-		deregistration,
-		keepalive_handlers,
-		redact
-	) VALUES ( (SELECT id FROM namespace), $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12 )
-	RETURNING id
+), upsert AS (
+	UPDATE entity_configs
+	SET
+		selectors = $3,
+		annotations = $4,
+		created_by = $5,
+		entity_class = $6,
+		sensu_user = $7,
+		subscriptions = $8,
+		deregister = $9,
+		deregistration = $10,
+		keepalive_handlers = $11,
+		redact = $12,
+		deleted_at = NULL
+	WHERE
+		name = $2 AND
+		namespace_id = (SELECT id FROM namespace WHERE id IS NOT NULL) AND
+		entity_configs.deleted_at IS NOT NULL
+	RETURNING *
 )
-SELECT config.id FROM config
+INSERT INTO entity_configs (
+	namespace_id,
+	name,
+	selectors,
+	annotations,
+	created_by,
+	entity_class,
+	sensu_user,
+	subscriptions,
+	deregister,
+	deregistration,
+	keepalive_handlers,
+	redact
+)
+SELECT (SELECT id FROM namespace), $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12
+WHERE NOT EXISTS (SELECT * FROM upsert)
 `
 
 const updateIfExistsEntityConfigQuery = `

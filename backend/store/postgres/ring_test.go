@@ -27,24 +27,24 @@ func TestAdd(t *testing.T) {
 				t.Fatal(err)
 			}
 		})
-		defer func() {
+		t.Cleanup(func() {
 			_ = listener.UnlistenAll()
-		}()
-		defer func() {
 			_ = listener.Close()
-		}()
+		})
 		bus := NewBus(ctx, listener)
 		ring, err := NewRing(db, bus, ringName(t.Name()))
 		if err != nil {
 			t.Fatal(err)
 		}
-		defer func() { _ = ring.Close() }()
+		t.Cleanup(func() {
+			_ = ring.Close()
+		})
 
 		namespaceStore := NewNamespaceStore(db)
 		entityStore := NewEntityStore(db)
 
 		ctx, cancel := context.WithCancel(context.Background())
-		defer cancel()
+		t.Cleanup(cancel)
 
 		entityName := "foo"
 		entity := corev2.FixtureEntity(entityName)
@@ -69,24 +69,24 @@ func TestRemove(t *testing.T) {
 				t.Fatal(err)
 			}
 		})
-		defer func() {
+		t.Cleanup(func() {
 			_ = listener.UnlistenAll()
-		}()
-		defer func() {
 			_ = listener.Close()
-		}()
+		})
 		bus := NewBus(ctx, listener)
 		ring, err := NewRing(db, bus, ringName(t.Name()))
 		if err != nil {
 			t.Fatal(err)
 		}
-		defer func() { _ = ring.Close() }()
+		t.Cleanup(func() {
+			_ = ring.Close()
+		})
 
 		namespaceStore := NewNamespaceStore(db)
 		entityStore := NewEntityStore(db)
 
 		ctx, cancel := context.WithCancel(context.Background())
-		defer cancel()
+		t.Cleanup(cancel)
 
 		entityName := "foo"
 		entity := corev2.FixtureEntity(entityName)
@@ -115,20 +115,24 @@ func TestAddRemoveIsEmpty(t *testing.T) {
 				t.Fatal(err)
 			}
 		})
-		defer func() { _ = listener.UnlistenAll() }()
-		defer func() { _ = listener.Close() }()
+		t.Cleanup(func() {
+			_ = listener.UnlistenAll()
+			_ = listener.Close()
+		})
 		bus := NewBus(ctx, listener)
 		ring, err := NewRing(db, bus, ringName(t.Name()))
 		if err != nil {
 			t.Fatal(err)
 		}
-		defer func() { _ = ring.Close() }()
+		t.Cleanup(func() {
+			_ = ring.Close()
+		})
 
 		namespaceStore := NewNamespaceStore(db)
 		entityStore := NewEntityStore(db)
 
 		ctx, cancel := context.WithCancel(context.Background())
-		defer cancel()
+		t.Cleanup(cancel)
 
 		entityName := "foo"
 		entity := corev2.FixtureEntity(entityName)
@@ -163,20 +167,24 @@ func TestWatchTrigger(t *testing.T) {
 				t.Fatal(err)
 			}
 		})
-		defer func() { _ = listener.UnlistenAll() }()
-		defer func() { _ = listener.Close() }()
+		t.Cleanup(func() {
+			_ = listener.UnlistenAll()
+			_ = listener.Close()
+		})
 		bus := NewBus(ctx, listener)
 		ring, err := NewRing(db, bus, ringName(t.Name()))
 		if err != nil {
 			t.Fatal(err)
 		}
-		defer func() { _ = ring.Close() }()
+		t.Cleanup(func() {
+			_ = ring.Close()
+		})
 
 		namespaceStore := NewNamespaceStore(db)
 		entityStore := NewEntityStore(db)
 
 		ctx, cancel := context.WithCancel(context.Background())
-		defer cancel()
+		t.Cleanup(cancel)
 
 		sub := ringv2.Subscription{
 			Name:             "test",
@@ -220,20 +228,24 @@ func TestRingOrdering(t *testing.T) {
 				t.Fatal(err)
 			}
 		})
-		defer func() { _ = listener.UnlistenAll() }()
-		defer func() { _ = listener.Close() }()
+		t.Cleanup(func() {
+			_ = listener.UnlistenAll()
+			_ = listener.Close()
+		})
 		bus := NewBus(ctx, listener)
 		ring, err := NewRing(db, bus, ringName(t.Name()))
 		if err != nil {
 			t.Fatal(err)
 		}
-		defer func() { _ = ring.Close() }()
+		t.Cleanup(func() {
+			_ = ring.Close()
+		})
 
 		namespaceStore := NewNamespaceStore(db)
 		entityStore := NewEntityStore(db)
 
 		ctx, cancel := context.WithCancel(context.Background())
-		defer cancel()
+		t.Cleanup(cancel)
 
 		sub := ringv2.Subscription{
 			Name:             "test",
@@ -290,20 +302,24 @@ func TestConcurrentRingOrdering(t *testing.T) {
 				t.Fatal(err)
 			}
 		})
-		defer func() { _ = listener.UnlistenAll() }()
-		defer func() { _ = listener.Close() }()
+		t.Cleanup(func() {
+			_ = listener.UnlistenAll()
+			_ = listener.Close()
+		})
 		bus := NewBus(ctx, listener)
 		ring, err := NewRing(db, bus, ringName(t.Name()))
 		if err != nil {
 			t.Fatal(err)
 		}
-		defer func() { _ = ring.Close() }()
+		t.Cleanup(func() {
+			_ = ring.Close()
+		})
 
 		namespaceStore := NewNamespaceStore(db)
 		entityStore := NewEntityStore(db)
 
 		ctx, cancel := context.WithCancel(context.Background())
-		defer cancel()
+		t.Cleanup(cancel)
 
 		items := []string{
 			"mulder", "scully", "skinner",
@@ -397,8 +413,10 @@ func eventTest(t *testing.T, want []ringv2.Event) {
 				t.Fatal(err)
 			}
 		})
-		t.Cleanup(func() { _ = listener.UnlistenAll() })
-		t.Cleanup(func() { _ = listener.Close() })
+		t.Cleanup(func() {
+			_ = listener.UnlistenAll()
+			_ = listener.Close()
+		})
 		bus := NewBus(ctx, listener)
 		ring, err := NewRing(db, bus, ringName(t.Name()))
 		if err != nil {
@@ -488,20 +506,24 @@ func TestWatchAfterAdd(t *testing.T) {
 				t.Fatal(err)
 			}
 		})
-		defer func() { _ = listener.UnlistenAll() }()
-		defer func() { _ = listener.Close() }()
+		t.Cleanup(func() {
+			_ = listener.UnlistenAll()
+			_ = listener.Close()
+		})
 		bus := NewBus(ctx, listener)
 		ring, err := NewRing(db, bus, ringName(t.Name()))
 		if err != nil {
 			t.Fatal(err)
 		}
-		defer func() { _ = ring.Close() }()
+		t.Cleanup(func() {
+			_ = ring.Close()
+		})
 
 		namespaceStore := NewNamespaceStore(db)
 		entityStore := NewEntityStore(db)
 
 		ctx, cancel := context.WithCancel(context.Background())
-		defer cancel()
+		t.Cleanup(cancel)
 
 		entityName := "fowley"
 		entity := corev2.FixtureEntity(entityName)
@@ -540,20 +562,24 @@ func TestMultipleItems(t *testing.T) {
 				t.Fatal(err)
 			}
 		})
-		defer func() { _ = listener.UnlistenAll() }()
-		defer func() { _ = listener.Close() }()
+		t.Cleanup(func() {
+			_ = listener.UnlistenAll()
+			_ = listener.Close()
+		})
 		bus := NewBus(ctx, listener)
 		ring, err := NewRing(db, bus, ringName(t.Name()))
 		if err != nil {
 			t.Fatal(err)
 		}
-		defer func() { _ = ring.Close() }()
+		t.Cleanup(func() {
+			_ = ring.Close()
+		})
 
 		namespaceStore := NewNamespaceStore(db)
 		entityStore := NewEntityStore(db)
 
 		ctx, cancel := context.WithCancel(context.Background())
-		defer cancel()
+		t.Cleanup(cancel)
 
 		sub := ringv2.Subscription{
 			Name:             "test",
@@ -607,20 +633,24 @@ func TestRequestGreaterThanLenItems(t *testing.T) {
 				t.Fatal(err)
 			}
 		})
-		defer func() { _ = listener.UnlistenAll() }()
-		defer func() { _ = listener.Close() }()
+		t.Cleanup(func() {
+			_ = listener.UnlistenAll()
+			_ = listener.Close()
+		})
 		bus := NewBus(ctx, listener)
 		ring, err := NewRing(db, bus, ringName(t.Name()))
 		if err != nil {
 			t.Fatal(err)
 		}
-		defer func() { _ = ring.Close() }()
+		t.Cleanup(func() {
+			_ = ring.Close()
+		})
 
 		namespaceStore := NewNamespaceStore(db)
 		entityStore := NewEntityStore(db)
 
 		ctx, cancel := context.WithCancel(context.Background())
-		defer cancel()
+		t.Cleanup(cancel)
 
 		sub := ringv2.Subscription{
 			Name:             "test",
@@ -674,20 +704,24 @@ func TestChannelNameTooLong(t *testing.T) {
 				t.Fatal(err)
 			}
 		})
-		defer func() { _ = listener.UnlistenAll() }()
-		defer func() { _ = listener.Close() }()
+		t.Cleanup(func() {
+			_ = listener.UnlistenAll()
+			_ = listener.Close()
+		})
 		bus := NewBus(ctx, listener)
 		ring, err := NewRing(db, bus, ringName(t.Name()))
 		if err != nil {
 			t.Fatal(err)
 		}
-		defer func() { _ = ring.Close() }()
+		t.Cleanup(func() {
+			_ = ring.Close()
+		})
 
 		namespaceStore := NewNamespaceStore(db)
 		entityStore := NewEntityStore(db)
 
 		ctx, cancel := context.WithCancel(context.Background())
-		defer cancel()
+		t.Cleanup(cancel)
 
 		sub := ringv2.Subscription{
 			Name:             "extremely long test that has way too many characters in it, seriously, way too many",
@@ -700,7 +734,6 @@ func TestChannelNameTooLong(t *testing.T) {
 		for _, item := range items {
 			entity := corev2.FixtureEntity(item)
 			namespace := corev3.FixtureNamespace(entity.Namespace)
-			fmt.Println(entity.Namespace)
 			if err := namespaceStore.CreateOrUpdate(ctx, namespace); err != nil {
 				t.Fatal(err)
 			}

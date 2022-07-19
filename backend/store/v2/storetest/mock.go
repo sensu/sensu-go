@@ -64,8 +64,8 @@ func (s *Store) NamespaceStore() storev2.NamespaceStore {
 	return s.Called().Get(0).(storev2.NamespaceStore)
 }
 
-func (s *Store) DeleteNamespace(ctx context.Context, name string) error {
-	return s.Called(ctx, name).Error(0)
+func (s *Store) EntityConfigStore() storev2.EntityConfigStore {
+	return s.Called().Get(0).(storev2.EntityConfigStore)
 }
 
 func (s *Store) Initialize(ctx context.Context, fn storev2.InitializeFunc) error {

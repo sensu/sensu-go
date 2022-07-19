@@ -30,22 +30,6 @@ func TestStoreCreateOrUpdate(t *testing.T) {
 		want        int
 	}{
 		{
-			name: "entity configs can be created and updated",
-			args: func() args {
-				cfg := corev3.FixtureEntityConfig("foo")
-				req := storev2.NewResourceRequestFromResource(cfg)
-				return args{
-					req:     req,
-					wrapper: WrapEntityConfig(cfg),
-				}
-			}(),
-			verifyQuery: fmt.Sprintf("SELECT * FROM %s", entityConfigStoreName),
-			beforeHook: func(t *testing.T, s storev2.Interface) {
-				createNamespace(t, s, "default")
-			},
-			want: 1,
-		},
-		{
 			name: "entity states can be created and updated",
 			args: func() args {
 				state := corev3.FixtureEntityState("foo")
@@ -58,7 +42,7 @@ func TestStoreCreateOrUpdate(t *testing.T) {
 			verifyQuery: fmt.Sprintf("SELECT * FROM %s", entityStateStoreName),
 			beforeHook: func(t *testing.T, s storev2.Interface) {
 				createNamespace(t, s, "default")
-				createEntityConfig(t, s, "foo")
+				createEntityConfig(t, s, "default", "foo")
 			},
 			want: 1,
 		},
@@ -105,20 +89,6 @@ func TestStoreUpdateIfExists(t *testing.T) {
 		beforeHook func(*testing.T, storev2.Interface)
 	}{
 		{
-			name: "entity configs can be updated if one exists",
-			args: func() args {
-				cfg := corev3.FixtureEntityConfig("foo")
-				req := storev2.NewResourceRequestFromResource(cfg)
-				return args{
-					req:     req,
-					wrapper: WrapEntityConfig(cfg),
-				}
-			}(),
-			beforeHook: func(t *testing.T, s storev2.Interface) {
-				createNamespace(t, s, "default")
-			},
-		},
-		{
 			name: "entity states can be updated if one exists",
 			args: func() args {
 				state := corev3.FixtureEntityState("foo")
@@ -130,7 +100,7 @@ func TestStoreUpdateIfExists(t *testing.T) {
 			}(),
 			beforeHook: func(t *testing.T, s storev2.Interface) {
 				createNamespace(t, s, "default")
-				createEntityConfig(t, s, "foo")
+				createEntityConfig(t, s, "default", "foo")
 			},
 		},
 	}
@@ -175,20 +145,6 @@ func TestStoreCreateIfNotExists(t *testing.T) {
 		beforeHook func(*testing.T, storev2.Interface)
 	}{
 		{
-			name: "entity configs can be created if one does not exist",
-			args: func() args {
-				cfg := corev3.FixtureEntityConfig("foo")
-				req := storev2.NewResourceRequestFromResource(cfg)
-				return args{
-					req:     req,
-					wrapper: WrapEntityConfig(cfg),
-				}
-			}(),
-			beforeHook: func(t *testing.T, s storev2.Interface) {
-				createNamespace(t, s, "default")
-			},
-		},
-		{
 			name: "entity states can be created if one does not exist",
 			args: func() args {
 				state := corev3.FixtureEntityState("foo")
@@ -200,7 +156,7 @@ func TestStoreCreateIfNotExists(t *testing.T) {
 			}(),
 			beforeHook: func(t *testing.T, s storev2.Interface) {
 				createNamespace(t, s, "default")
-				createEntityConfig(t, s, "foo")
+				createEntityConfig(t, s, "default", "foo")
 			},
 		},
 	}
@@ -248,29 +204,6 @@ func TestStoreGet(t *testing.T) {
 		want       wrapperWithStatus
 	}{
 		{
-			name: "an entity config can be retrieved",
-			args: func() args {
-				cfg := corev3.FixtureEntityConfig("foo")
-				req := storev2.NewResourceRequestFromResource(cfg)
-				return args{
-					req: req,
-				}
-			}(),
-			beforeHook: func(t *testing.T, s storev2.Interface) {
-				createNamespace(t, s, "default")
-				createEntityConfig(t, s, "foo")
-			},
-			want: func() wrapperWithStatus {
-				cfg := corev3.FixtureEntityConfig("foo")
-				wrapper := WrapEntityConfig(cfg).(*EntityConfigWrapper)
-				wrapper.ID = 1
-				wrapper.NamespaceID = 1
-				wrapper.CreatedAt = time.Now()
-				wrapper.UpdatedAt = time.Now()
-				return wrapper
-			}(),
-		},
-		{
 			name: "an entity state can be retrieved",
 			args: func() args {
 				state := corev3.FixtureEntityState("foo")
@@ -281,7 +214,7 @@ func TestStoreGet(t *testing.T) {
 			}(),
 			beforeHook: func(t *testing.T, s storev2.Interface) {
 				createNamespace(t, s, "default")
-				createEntityConfig(t, s, "foo")
+				createEntityConfig(t, s, "default", "foo")
 				createEntityState(t, s, "foo")
 			},
 			want: func() wrapperWithStatus {
@@ -338,20 +271,6 @@ func TestStoreDelete(t *testing.T) {
 		beforeHook func(*testing.T, storev2.Interface)
 	}{
 		{
-			name: "an entity config can be soft deleted",
-			args: func() args {
-				cfg := corev3.FixtureEntityConfig("foo")
-				req := storev2.NewResourceRequestFromResource(cfg)
-				return args{
-					req:     req,
-					wrapper: WrapEntityConfig(cfg),
-				}
-			}(),
-			beforeHook: func(t *testing.T, s storev2.Interface) {
-				createNamespace(t, s, "default")
-			},
-		},
-		{
 			name: "an entity state can be soft deleted",
 			args: func() args {
 				state := corev3.FixtureEntityState("foo")
@@ -363,7 +282,7 @@ func TestStoreDelete(t *testing.T) {
 			}(),
 			beforeHook: func(t *testing.T, s storev2.Interface) {
 				createNamespace(t, s, "default")
-				createEntityConfig(t, s, "foo")
+				createEntityConfig(t, s, "default", "foo")
 			},
 		},
 	}
@@ -403,20 +322,6 @@ func TestStoreHardDelete(t *testing.T) {
 		beforeHook func(*testing.T, storev2.Interface)
 	}{
 		{
-			name: "an entity config can be hard deleted",
-			args: func() args {
-				cfg := corev3.FixtureEntityConfig("foo")
-				req := storev2.NewResourceRequestFromResource(cfg)
-				return args{
-					req:     req,
-					wrapper: WrapEntityConfig(cfg),
-				}
-			}(),
-			beforeHook: func(t *testing.T, s storev2.Interface) {
-				createNamespace(t, s, "default")
-			},
-		},
-		{
 			name: "an entity state can be hard deleted",
 			args: func() args {
 				state := corev3.FixtureEntityState("foo")
@@ -428,7 +333,7 @@ func TestStoreHardDelete(t *testing.T) {
 			}(),
 			beforeHook: func(t *testing.T, s storev2.Interface) {
 				createNamespace(t, s, "default")
-				createEntityConfig(t, s, "foo")
+				createEntityConfig(t, s, "default", "foo")
 			},
 		},
 	}
@@ -468,25 +373,6 @@ func TestStoreList(t *testing.T) {
 		beforeHook func(*testing.T, storev2.Interface)
 	}{
 		{
-			name: "entity configs can be listed",
-			args: func() args {
-				typeMeta := corev2.TypeMeta{Type: "EntityConfig", APIVersion: "core/v3"}
-				req := storev2.NewResourceRequest(typeMeta, "default", "anything", entityConfigStoreName)
-				pred := &store.SelectionPredicate{Limit: 5}
-				return args{
-					req:  req,
-					pred: pred,
-				}
-			}(),
-			beforeHook: func(t *testing.T, s storev2.Interface) {
-				createNamespace(t, s, "default")
-				for i := 0; i < 10; i++ {
-					entityName := fmt.Sprintf("foo-%d", i)
-					createEntityConfig(t, s, entityName)
-				}
-			},
-		},
-		{
 			name: "entity states can be listed",
 			args: func() args {
 				typeMeta := corev2.TypeMeta{Type: "EntityState", APIVersion: "core/v3"}
@@ -501,7 +387,7 @@ func TestStoreList(t *testing.T) {
 				createNamespace(t, s, "default")
 				for i := 0; i < 10; i++ {
 					entityName := fmt.Sprintf("foo-%d", i)
-					createEntityConfig(t, s, entityName)
+					createEntityConfig(t, s, "default", entityName)
 					createEntityState(t, s, entityName)
 				}
 			},
@@ -620,20 +506,6 @@ func TestStoreExists(t *testing.T) {
 		beforeHook func(*testing.T, storev2.Interface)
 	}{
 		{
-			name: "can check if an entity config exists",
-			args: func() args {
-				cfg := corev3.FixtureEntityConfig("foo")
-				req := storev2.NewResourceRequestFromResource(cfg)
-				return args{
-					req:     req,
-					wrapper: WrapEntityConfig(cfg),
-				}
-			}(),
-			beforeHook: func(t *testing.T, s storev2.Interface) {
-				createNamespace(t, s, "default")
-			},
-		},
-		{
 			name: "can check if an entity state exists",
 			args: func() args {
 				state := corev3.FixtureEntityState("foo")
@@ -645,7 +517,7 @@ func TestStoreExists(t *testing.T) {
 			}(),
 			beforeHook: func(t *testing.T, s storev2.Interface) {
 				createNamespace(t, s, "default")
-				createEntityConfig(t, s, "foo")
+				createEntityConfig(t, s, "default", "foo")
 			},
 		},
 	}
@@ -693,23 +565,6 @@ func TestStorePatch(t *testing.T) {
 		beforeHook func(*testing.T, storev2.Interface)
 	}{
 		{
-			name: "an entity config can be patched",
-			args: func() args {
-				cfg := corev3.FixtureEntityConfig("foo")
-				req := storev2.NewResourceRequestFromResource(cfg)
-				return args{
-					req:     req,
-					wrapper: WrapEntityConfig(cfg),
-					patcher: &patch.Merge{
-						MergePatch: []byte(`{"metadata":{"labels":{"food":"hummus"}}}`),
-					},
-				}
-			}(),
-			beforeHook: func(t *testing.T, s storev2.Interface) {
-				createNamespace(t, s, "default")
-			},
-		},
-		{
 			name: "an entity state can be patched",
 			args: func() args {
 				state := corev3.FixtureEntityState("foo")
@@ -724,7 +579,7 @@ func TestStorePatch(t *testing.T) {
 			}(),
 			beforeHook: func(t *testing.T, s storev2.Interface) {
 				createNamespace(t, s, "default")
-				createEntityConfig(t, s, "foo")
+				createEntityConfig(t, s, "default", "foo")
 			},
 		},
 	}
@@ -772,42 +627,6 @@ func TestStoreGetMultiple(t *testing.T) {
 		test func(*testing.T, storev2.Wrapper)
 	}{
 		{
-			name: "multiple entity configs can be retrieved",
-			args: func() args {
-				cfg := corev3.FixtureEntityConfig("foo")
-				req := storev2.NewResourceRequestFromResource(cfg)
-				return args{
-					req:     req,
-					wrapper: WrapEntityConfig(cfg),
-				}
-			}(),
-			reqs: func(t *testing.T, s storev2.Interface) []storev2.ResourceRequest {
-				createNamespace(t, s, "default")
-				reqs := make([]storev2.ResourceRequest, 0)
-				for i := 0; i < 10; i++ {
-					entityName := fmt.Sprintf("foo-%d", i)
-					cfg := corev3.FixtureEntityConfig(entityName)
-					req := storev2.NewResourceRequestFromResource(cfg)
-					reqs = append(reqs, req)
-					createEntityConfig(t, s, entityName)
-				}
-				return reqs
-			},
-			test: func(t *testing.T, wrapper storev2.Wrapper) {
-				var cfg corev3.EntityConfig
-				if err := wrapper.UnwrapInto(&cfg); err != nil {
-					t.Error(err)
-				}
-
-				if got, want := len(cfg.Subscriptions), 2; got != want {
-					t.Errorf("wrong number of subscriptions, got = %v, want %v", got, want)
-				}
-				if got, want := len(cfg.KeepaliveHandlers), 1; got != want {
-					t.Errorf("wrong number of keepalive handlers, got = %v, want %v", got, want)
-				}
-			},
-		},
-		{
 			name: "multiple entity states can be retrieved",
 			args: func() args {
 				state := corev3.FixtureEntityState("foo")
@@ -825,7 +644,7 @@ func TestStoreGetMultiple(t *testing.T) {
 					state := corev3.FixtureEntityState(entityName)
 					req := storev2.NewResourceRequestFromResource(state)
 					reqs = append(reqs, req)
-					createEntityConfig(t, s, entityName)
+					createEntityConfig(t, s, "default", entityName)
 					createEntityState(t, s, entityName)
 				}
 				return reqs
@@ -900,7 +719,7 @@ func TestWatchEntityConfig(t *testing.T) {
 		}
 
 		createNamespace(t, s, "default")
-		createEntityConfig(t, s, "foo")
+		createEntityConfig(t, s, "default", "foo")
 
 		var entityConfig corev3.EntityConfig
 		select {
@@ -925,10 +744,9 @@ func TestWatchEntityConfig(t *testing.T) {
 			t.Fatalf("expected entity change notification but timed out")
 		}
 
-		delReq := storev2.NewResourceRequestFromResource(&entityConfig)
-		if err := s.Delete(ctx, delReq); err != nil {
-			t.Fatalf("could not delete entity config: %v", err)
-		}
+		namespace := entityConfig.Metadata.Namespace
+		name := entityConfig.Metadata.Name
+		deleteEntityConfig(t, s, namespace, name)
 
 		select {
 		case watchEvents, ok := <-watchChannel:
