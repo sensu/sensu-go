@@ -31,7 +31,7 @@ func ValidateGlobalMetadata(meta *corev2.ObjectMeta) error {
 	}
 	if meta.Namespace != "" {
 		return fmt.Errorf(
-			"global resources must have empty namesapce: got %s",
+			"global resources must have empty namespace: got %s",
 			meta.Namespace,
 		)
 	}
