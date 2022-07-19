@@ -22,3 +22,18 @@ func ValidateMetadata(meta *corev2.ObjectMeta) error {
 	}
 	return nil
 }
+
+// ValidateGlobalMetadata validates ObjectMeta for global (unnamespaced)
+// resources. To be used on Resources implementing GlobalResource
+func ValidateGlobalMetadata(meta *corev2.ObjectMeta) error {
+	if meta == nil {
+		return errors.New("nil metadata")
+	}
+	if meta.Namespace != "" {
+		return fmt.Errorf(
+			"global resources must have empty namespace: got %s",
+			meta.Namespace,
+		)
+	}
+	return nil
+}
