@@ -10,6 +10,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/store"
+	storev2 "github.com/sensu/sensu-go/backend/store/v2"
 	metricspkg "github.com/sensu/sensu-go/metrics"
 	"github.com/sirupsen/logrus"
 )
@@ -113,7 +114,7 @@ type HandlerMap map[string]*corev2.Handler
 
 // AdapterV1 is a pipeline adapter that can run a pipeline for corev2.Events.
 type AdapterV1 struct {
-	Store           store.Store
+	Store           storev2.Interface
 	StoreTimeout    time.Duration
 	FilterAdapters  []FilterAdapter
 	MutatorAdapters []MutatorAdapter
@@ -254,15 +255,9 @@ func (a *AdapterV1) getPipelineFromStore(ctx context.Context, ref *corev2.Resour
 	tctx, cancel := context.WithTimeout(ctx, a.StoreTimeout)
 	defer cancel()
 
-	pipeline, err := a.Store.GetPipelineByName(tctx, ref.Name)
-	if err != nil {
-		return nil, err
-	}
-	if pipeline == nil {
-		return nil, errors.New("pipeline does not exist")
-	}
-
-	return pipeline, nil
+	store := storev2.NewGenericStore[*corev2.Pipeline](a.Store)
+	id := storev2.ID{Namespace: corev2.ContextNamespace(ctx), Name: ref.Name}
+	return store.Get(tctx, id)
 }
 
 // generateLegacyPipeline will build an event pipeline with a pipeline
@@ -280,7 +275,7 @@ func (a *AdapterV1) generateLegacyPipeline(ctx context.Context, event *corev2.Ev
 		legacyHandlerNames = append(legacyHandlerNames, event.Metrics.Handlers...)
 	}
 
-	handlers, err := a.expandHandlers(ctx, legacyHandlerNames, 1)
+	handlers, err := a.expandHandlers(ctx, event.Entity.Namespace, legacyHandlerNames, 1)
 	if err != nil {
 		return nil, err
 	}
@@ -313,7 +308,7 @@ func (a *AdapterV1) generateLegacyPipeline(ctx context.Context, event *corev2.Ev
 // expandHandlers turns a list of Sensu handler names into a list of
 // handlers, while expanding handler sets with support for some
 // nesting. Handlers are fetched from etcd.
-func (a *AdapterV1) expandHandlers(ctx context.Context, handlers []string, level int) (HandlerMap, error) {
+func (a *AdapterV1) expandHandlers(ctx context.Context, namespace string, handlers []string, level int) (HandlerMap, error) {
 	if level > 3 {
 		return nil, errors.New("handler sets cannot be deeply nested")
 	}
@@ -321,42 +316,43 @@ func (a *AdapterV1) expandHandlers(ctx context.Context, handlers []string, level
 	expandedHandlers := HandlerMap{}
 
 	// Prepare log entry
-	namespace := corev2.ContextNamespace(ctx)
 	fields := logrus.Fields{
 		"namespace": namespace,
 	}
 
+	hstore := storev2.NewGenericStore[*corev2.Handler](a.Store)
+
 	for _, handlerName := range handlers {
 		tctx, cancel := context.WithTimeout(ctx, a.StoreTimeout)
-		handler, err := a.Store.GetHandlerByName(tctx, handlerName)
+		id := storev2.ID{Namespace: namespace, Name: handlerName}
+		handler, err := hstore.Get(tctx, id)
 		cancel()
 
 		// Add handler name to log entry
 		fields["handler"] = handlerName
 
-		if handler == nil {
-			if err != nil {
-				(logger.
-					WithFields(fields).
-					WithError(err).
-					Error("failed to retrieve a handler"))
-				if _, ok := err.(*store.ErrInternal); ok {
-					// Fatal error
-					return nil, err
+		if err != nil {
+			if _, ok := err.(*store.ErrNotFound); ok {
+				if level > 1 {
+					logger.WithFields(fields).Error("set handler specified a handler that does not exist")
+				} else {
+					logger.WithFields(fields).Info("handler does not exist, will be ignored")
 				}
 				continue
 			}
-
-			if level > 1 {
-				logger.WithFields(fields).Error("set handler specified a handler that does not exist")
-			} else {
-				logger.WithFields(fields).Info("handler does not exist, will be ignored")
+			(logger.
+				WithFields(fields).
+				WithError(err).
+				Error("failed to retrieve a handler"))
+			if _, ok := err.(*store.ErrInternal); ok {
+				// Fatal error
+				return nil, err
 			}
 			continue
 		}
 
 		if handler.Type == "set" {
-			setHandlers, err := a.expandHandlers(ctx, handler.Handlers, level+1)
+			setHandlers, err := a.expandHandlers(ctx, namespace, handler.Handlers, level+1)
 			if err != nil {
 				logger.
 					WithFields(fields).

@@ -14,6 +14,7 @@ import (
 	"github.com/sensu/sensu-go/backend/pipeline/handler"
 	"github.com/sensu/sensu-go/backend/pipeline/mutator"
 	"github.com/sensu/sensu-go/backend/store"
+	storev2 "github.com/sensu/sensu-go/backend/store/v2"
 	"github.com/sensu/sensu-go/command"
 	"github.com/sensu/sensu-go/testing/mockexecutor"
 	"github.com/sensu/sensu-go/testing/mockstore"
@@ -36,7 +37,7 @@ func TestAdapterV1_Name(t *testing.T) {
 
 func TestAdapterV1_CanRun(t *testing.T) {
 	type fields struct {
-		Store           store.Store
+		Store           storev2.Interface
 		StoreTimeout    time.Duration
 		FilterAdapters  []FilterAdapter
 		MutatorAdapters []MutatorAdapter
@@ -90,7 +91,7 @@ func TestAdapterV1_CanRun(t *testing.T) {
 
 func TestAdapterV1_Run(t *testing.T) {
 	type fields struct {
-		Store           store.Store
+		Store           storev2.Interface
 		StoreTimeout    time.Duration
 		FilterAdapters  []FilterAdapter
 		MutatorAdapters []MutatorAdapter
@@ -125,11 +126,10 @@ func TestAdapterV1_Run(t *testing.T) {
 				resource: corev2.FixtureEvent("entity1", "check1"),
 			},
 			fields: fields{
-				Store: func() store.Store {
-					var pipeline *corev2.Pipeline
+				Store: func() storev2.Interface {
 					err := &store.ErrInternal{Message: "etcd timeout"}
-					stor := &mockstore.MockStore{}
-					stor.On("GetPipelineByName", mock.Anything, "pipeline1").Return(pipeline, err)
+					stor := &mockstore.V2MockStore{}
+					stor.On("Get", mock.Anything, mock.Anything).Return(nil, err)
 					return stor
 				}(),
 			},
@@ -144,15 +144,14 @@ func TestAdapterV1_Run(t *testing.T) {
 				resource: corev2.FixtureEvent("entity1", "check1"),
 			},
 			fields: fields{
-				Store: func() store.Store {
-					var pipeline *corev2.Pipeline
-					stor := &mockstore.MockStore{}
-					stor.On("GetPipelineByName", mock.Anything, "pipeline1").Return(pipeline, nil)
+				Store: func() storev2.Interface {
+					stor := &mockstore.V2MockStore{}
+					stor.On("Get", mock.Anything, mock.Anything).Return(nil, &store.ErrNotFound{})
 					return stor
 				}(),
 			},
 			wantErr:    true,
-			wantErrMsg: "pipeline does not exist",
+			wantErrMsg: "key  not found",
 		},
 		{
 			name: "returns error when pipeline has no workflows",
@@ -162,13 +161,13 @@ func TestAdapterV1_Run(t *testing.T) {
 				resource: corev2.FixtureEvent("entity1", "check1"),
 			},
 			fields: fields{
-				Store: func() store.Store {
+				Store: func() storev2.Interface {
 					pipeline := &corev2.Pipeline{
 						ObjectMeta: corev2.NewObjectMeta("pipeline1", "default"),
 						Workflows:  []*corev2.PipelineWorkflow{},
 					}
-					stor := &mockstore.MockStore{}
-					stor.On("GetPipelineByName", mock.Anything, pipeline.GetName()).Return(pipeline, nil)
+					stor := &mockstore.V2MockStore{}
+					stor.On("Get", mock.Anything, mock.Anything).Return(mockstore.Wrapper[*corev2.Pipeline]{Value: pipeline}, nil)
 					return stor
 				}(),
 			},
@@ -184,18 +183,16 @@ func TestAdapterV1_Run(t *testing.T) {
 			},
 			fields: fields{
 				FilterAdapters: func() []FilterAdapter {
-					var nilFilter *corev2.EventFilter
 					err := &store.ErrInternal{Message: "etcd timeout"}
-					stor := &mockstore.MockStore{}
-					stor.On("GetEventFilterByName", mock.Anything, mock.Anything).
-						Return(nilFilter, err)
+					stor := &mockstore.V2MockStore{}
+					stor.On("Get", mock.Anything, mock.Anything).Return(nil, err)
 					return []FilterAdapter{
 						&filter.LegacyAdapter{
 							Store: stor,
 						},
 					}
 				}(),
-				Store: func() store.Store {
+				Store: func() storev2.Interface {
 					pipeline := &corev2.Pipeline{
 						ObjectMeta: corev2.NewObjectMeta("pipeline1", "default"),
 						Workflows: []*corev2.PipelineWorkflow{
@@ -209,8 +206,8 @@ func TestAdapterV1_Run(t *testing.T) {
 							},
 						},
 					}
-					stor := &mockstore.MockStore{}
-					stor.On("GetPipelineByName", mock.Anything, pipeline.GetName()).Return(pipeline, nil)
+					stor := &mockstore.V2MockStore{}
+					stor.On("Get", mock.Anything, mock.Anything).Return(mockstore.Wrapper[*corev2.Pipeline]{Value: pipeline}, nil)
 					return stor
 				}(),
 			},
@@ -230,7 +227,7 @@ func TestAdapterV1_Run(t *testing.T) {
 						&filter.HasMetricsAdapter{},
 					}
 				}(),
-				Store: func() store.Store {
+				Store: func() storev2.Interface {
 					pipeline := &corev2.Pipeline{
 						ObjectMeta: corev2.NewObjectMeta("pipeline1", "default"),
 						Workflows: []*corev2.PipelineWorkflow{
@@ -244,8 +241,8 @@ func TestAdapterV1_Run(t *testing.T) {
 							},
 						},
 					}
-					stor := &mockstore.MockStore{}
-					stor.On("GetPipelineByName", mock.Anything, pipeline.GetName()).Return(pipeline, nil)
+					stor := &mockstore.V2MockStore{}
+					stor.On("Get", mock.Anything, mock.Anything).Return(mockstore.Wrapper[*corev2.Pipeline]{Value: pipeline}, nil)
 					return stor
 				}(),
 			},
@@ -260,18 +257,16 @@ func TestAdapterV1_Run(t *testing.T) {
 			},
 			fields: fields{
 				MutatorAdapters: func() []MutatorAdapter {
-					var nilMutator *corev2.Mutator
 					err := &store.ErrInternal{Message: "etcd timeout"}
-					stor := &mockstore.MockStore{}
-					stor.On("GetMutatorByName", mock.Anything, mock.Anything).
-						Return(nilMutator, err)
+					stor := &mockstore.V2MockStore{}
+					stor.On("Get", mock.Anything, mock.Anything).Return(nil, err)
 					return []MutatorAdapter{
 						&mutator.LegacyAdapter{
 							Store: stor,
 						},
 					}
 				}(),
-				Store: func() store.Store {
+				Store: func() storev2.Interface {
 					pipeline := &corev2.Pipeline{
 						ObjectMeta: corev2.NewObjectMeta("pipeline1", "default"),
 						Workflows: []*corev2.PipelineWorkflow{
@@ -285,8 +280,8 @@ func TestAdapterV1_Run(t *testing.T) {
 							},
 						},
 					}
-					stor := &mockstore.MockStore{}
-					stor.On("GetPipelineByName", mock.Anything, pipeline.GetName()).Return(pipeline, nil)
+					stor := &mockstore.V2MockStore{}
+					stor.On("Get", mock.Anything, mock.Anything).Return(mockstore.Wrapper[*corev2.Pipeline]{Value: pipeline}, nil)
 					return stor
 				}(),
 			},
@@ -305,11 +300,9 @@ func TestAdapterV1_Run(t *testing.T) {
 					&mutator.JSONAdapter{},
 				},
 				HandlerAdapters: func() []HandlerAdapter {
-					var nilHandler *corev2.Handler
 					err := &store.ErrInternal{Message: "etcd timeout"}
-					stor := &mockstore.MockStore{}
-					stor.On("GetHandlerByName", mock.Anything, mock.Anything).
-						Return(nilHandler, err)
+					stor := &mockstore.V2MockStore{}
+					stor.On("Get", mock.Anything, mock.Anything).Return(nil, err)
 					ex := &mockexecutor.MockExecutor{}
 					execution := command.FixtureExecutionResponse(0, "foo")
 					ex.Return(execution, nil)
@@ -320,7 +313,7 @@ func TestAdapterV1_Run(t *testing.T) {
 						},
 					}
 				}(),
-				Store: func() store.Store {
+				Store: func() storev2.Interface {
 					pipeline := &corev2.Pipeline{
 						ObjectMeta: corev2.NewObjectMeta("pipeline1", "default"),
 						Workflows: []*corev2.PipelineWorkflow{
@@ -334,8 +327,8 @@ func TestAdapterV1_Run(t *testing.T) {
 							},
 						},
 					}
-					stor := &mockstore.MockStore{}
-					stor.On("GetPipelineByName", mock.Anything, pipeline.GetName()).Return(pipeline, nil)
+					stor := &mockstore.V2MockStore{}
+					stor.On("Get", mock.Anything, mock.Anything).Return(mockstore.Wrapper[*corev2.Pipeline]{Value: pipeline}, nil)
 					return stor
 				}(),
 			},
@@ -355,8 +348,8 @@ func TestAdapterV1_Run(t *testing.T) {
 				},
 				HandlerAdapters: func() []HandlerAdapter {
 					storedHandler := corev2.FixtureHandler("handler1")
-					stor := &mockstore.MockStore{}
-					stor.On("GetHandlerByName", mock.Anything, storedHandler.GetName()).Return(storedHandler, nil)
+					stor := &mockstore.V2MockStore{}
+					stor.On("Get", mock.Anything, mock.Anything).Return(mockstore.Wrapper[*corev2.Handler]{Value: storedHandler}, nil)
 					ex := &mockexecutor.MockExecutor{}
 					execution := command.FixtureExecutionResponse(0, "foo")
 					ex.Return(execution, nil)
@@ -367,7 +360,7 @@ func TestAdapterV1_Run(t *testing.T) {
 						},
 					}
 				}(),
-				Store: func() store.Store {
+				Store: func() storev2.Interface {
 					pipeline := &corev2.Pipeline{
 						ObjectMeta: corev2.NewObjectMeta("pipeline1", "default"),
 						Workflows: []*corev2.PipelineWorkflow{
@@ -383,8 +376,8 @@ func TestAdapterV1_Run(t *testing.T) {
 							},
 						},
 					}
-					stor := &mockstore.MockStore{}
-					stor.On("GetPipelineByName", mock.Anything, pipeline.GetName()).Return(pipeline, nil)
+					stor := &mockstore.V2MockStore{}
+					stor.On("Get", mock.Anything, mock.Anything).Return(mockstore.Wrapper[*corev2.Pipeline]{Value: pipeline}, nil)
 					return stor
 				}(),
 			},
@@ -461,7 +454,7 @@ func TestHandlerDoesNotRunAfterFilterContextCancelled(t *testing.T) {
 	handlerAdapters := []HandlerAdapter{
 		failIfRunHandlerAdapter{T: t},
 	}
-	stor := func() store.Store {
+	stor := func() storev2.Interface {
 		pipeline := &corev2.Pipeline{
 			ObjectMeta: corev2.NewObjectMeta("pipeline1", "default"),
 			Workflows: []*corev2.PipelineWorkflow{
@@ -482,8 +475,8 @@ func TestHandlerDoesNotRunAfterFilterContextCancelled(t *testing.T) {
 				},
 			},
 		}
-		stor := &mockstore.MockStore{}
-		stor.On("GetPipelineByName", mock.Anything, mock.Anything).Return(pipeline, nil)
+		stor := &mockstore.V2MockStore{}
+		stor.On("Get", mock.Anything, mock.Anything).Return(mockstore.Wrapper[*corev2.Pipeline]{Value: pipeline}, nil)
 		return stor
 	}()
 	a := &AdapterV1{
@@ -508,7 +501,7 @@ func TestHandlerDoesNotRunAfterFilterContextCancelled(t *testing.T) {
 
 func TestAdapterV1_resolvePipelineReference(t *testing.T) {
 	type fields struct {
-		Store           store.Store
+		Store           storev2.Interface
 		StoreTimeout    time.Duration
 		FilterAdapters  []FilterAdapter
 		MutatorAdapters []MutatorAdapter
@@ -559,14 +552,13 @@ func TestAdapterV1_resolvePipelineReference(t *testing.T) {
 				}(),
 			},
 			fields: fields{
-				Store: func() store.Store {
+				Store: func() storev2.Interface {
 					pipeline := &corev2.Pipeline{
 						ObjectMeta: corev2.NewObjectMeta("pipeline1", "default"),
 						Workflows:  []*corev2.PipelineWorkflow{},
 					}
-					stor := &mockstore.MockStore{}
-					stor.On("GetPipelineByName", mock.Anything, pipeline.GetName()).
-						Return(pipeline, nil)
+					stor := &mockstore.V2MockStore{}
+					stor.On("Get", mock.Anything, mock.Anything).Return(mockstore.Wrapper[*corev2.Pipeline]{Value: pipeline}, nil)
 					return stor
 				}(),
 			},
@@ -602,7 +594,7 @@ func TestAdapterV1_resolvePipelineReference(t *testing.T) {
 
 func TestAdapterV1_getPipelineFromStore(t *testing.T) {
 	type fields struct {
-		Store           store.Store
+		Store           storev2.Interface
 		StoreTimeout    time.Duration
 		FilterAdapters  []FilterAdapter
 		MutatorAdapters []MutatorAdapter
@@ -629,11 +621,9 @@ func TestAdapterV1_getPipelineFromStore(t *testing.T) {
 				},
 			},
 			fields: fields{
-				Store: func() store.Store {
-					var pipeline *corev2.Pipeline
-					stor := &mockstore.MockStore{}
-					stor.On("GetPipelineByName", mock.Anything, "pipeline1").
-						Return(pipeline, errors.New("store error"))
+				Store: func() storev2.Interface {
+					stor := &mockstore.V2MockStore{}
+					stor.On("Get", mock.Anything, mock.Anything).Return(nil, errors.New("store error"))
 					return stor
 				}(),
 			},
@@ -641,7 +631,7 @@ func TestAdapterV1_getPipelineFromStore(t *testing.T) {
 			wantErrMsg: "store error",
 		},
 		{
-			name: "returns an error if the pipeline is nil",
+			name: "returns an error if the pipeline is not found",
 			args: args{
 				ctx: context.WithValue(context.Background(), corev2.NamespaceKey, "default"),
 				ref: &corev2.ResourceReference{
@@ -649,16 +639,14 @@ func TestAdapterV1_getPipelineFromStore(t *testing.T) {
 				},
 			},
 			fields: fields{
-				Store: func() store.Store {
-					var pipeline *corev2.Pipeline
-					stor := &mockstore.MockStore{}
-					stor.On("GetPipelineByName", mock.Anything, "pipeline1").
-						Return(pipeline, nil)
+				Store: func() storev2.Interface {
+					stor := &mockstore.V2MockStore{}
+					stor.On("Get", mock.Anything, mock.Anything).Return(nil, &store.ErrNotFound{})
 					return stor
 				}(),
 			},
 			wantErr:    true,
-			wantErrMsg: "pipeline does not exist",
+			wantErrMsg: "key  not found",
 		},
 		{
 			name: "returns a pipeline when successful",
@@ -669,13 +657,12 @@ func TestAdapterV1_getPipelineFromStore(t *testing.T) {
 				},
 			},
 			fields: fields{
-				Store: func() store.Store {
+				Store: func() storev2.Interface {
 					pipeline := &corev2.Pipeline{
 						ObjectMeta: corev2.NewObjectMeta("pipeline1", "default"),
 					}
-					stor := &mockstore.MockStore{}
-					stor.On("GetPipelineByName", mock.Anything, "pipeline1").
-						Return(pipeline, nil)
+					stor := &mockstore.V2MockStore{}
+					stor.On("Get", mock.Anything, mock.Anything).Return(mockstore.Wrapper[*corev2.Pipeline]{Value: pipeline}, nil)
 					return stor
 				}(),
 			},
@@ -714,7 +701,7 @@ func TestAdapterV1_getPipelineFromStore(t *testing.T) {
 
 func TestAdapterV1_generateLegacyPipeline(t *testing.T) {
 	type fields struct {
-		Store           store.Store
+		Store           storev2.Interface
 		StoreTimeout    time.Duration
 		FilterAdapters  []FilterAdapter
 		MutatorAdapters []MutatorAdapter
@@ -742,11 +729,10 @@ func TestAdapterV1_generateLegacyPipeline(t *testing.T) {
 				}(),
 			},
 			fields: fields{
-				Store: func() store.Store {
+				Store: func() storev2.Interface {
 					handler := corev2.FixtureHandler("handler1")
-					stor := &mockstore.MockStore{}
-					stor.On("GetHandlerByName", mock.Anything, handler.GetName()).
-						Return(handler, nil)
+					stor := &mockstore.V2MockStore{}
+					stor.On("Get", mock.Anything, mock.Anything).Return(mockstore.Wrapper[*corev2.Handler]{Value: handler}, nil)
 					return stor
 				}(),
 			},
@@ -775,11 +761,10 @@ func TestAdapterV1_generateLegacyPipeline(t *testing.T) {
 				}(),
 			},
 			fields: fields{
-				Store: func() store.Store {
+				Store: func() storev2.Interface {
 					handler := corev2.FixtureHandler("handler1")
-					stor := &mockstore.MockStore{}
-					stor.On("GetHandlerByName", mock.Anything, handler.GetName()).
-						Return(handler, nil)
+					stor := &mockstore.V2MockStore{}
+					stor.On("Get", mock.Anything, mock.Anything).Return(mockstore.Wrapper[*corev2.Handler]{Value: handler}, nil)
 					return stor
 				}(),
 			},
@@ -809,14 +794,14 @@ func TestAdapterV1_generateLegacyPipeline(t *testing.T) {
 				}(),
 			},
 			fields: fields{
-				Store: func() store.Store {
+				Store: func() storev2.Interface {
 					checkHandler := corev2.FixtureHandler("checkhandler")
 					metricsHandler := corev2.FixtureHandler("metricshandler")
-					stor := &mockstore.MockStore{}
-					stor.On("GetHandlerByName", mock.Anything, checkHandler.GetName()).
-						Return(checkHandler, nil)
-					stor.On("GetHandlerByName", mock.Anything, metricsHandler.GetName()).
-						Return(metricsHandler, nil)
+					checkReq := storev2.NewResourceRequestFromResource(checkHandler)
+					metricsReq := storev2.NewResourceRequestFromResource(metricsHandler)
+					stor := &mockstore.V2MockStore{}
+					stor.On("Get", mock.Anything, checkReq).Return(mockstore.Wrapper[*corev2.Handler]{Value: checkHandler}, nil)
+					stor.On("Get", mock.Anything, metricsReq).Return(mockstore.Wrapper[*corev2.Handler]{Value: metricsHandler}, nil)
 					return stor
 				}(),
 			},
@@ -866,8 +851,6 @@ func TestAdapterV1_generateLegacyPipeline(t *testing.T) {
 
 func TestAdapterV1_expandHandlers(t *testing.T) {
 	var (
-		nilHandler *corev2.Handler
-
 		pipeHandler = func() *corev2.Handler {
 			return corev2.FixtureHandler("pipeHandler")
 		}
@@ -897,7 +880,7 @@ func TestAdapterV1_expandHandlers(t *testing.T) {
 		}
 	)
 	type fields struct {
-		Store           store.Store
+		Store           storev2.Interface
 		StoreTimeout    time.Duration
 		FilterAdapters  []FilterAdapter
 		MutatorAdapters []MutatorAdapter
@@ -923,10 +906,9 @@ func TestAdapterV1_expandHandlers(t *testing.T) {
 				handlers: []string{"pipeHandler"},
 			},
 			fields: fields{
-				Store: func() store.Store {
-					stor := &mockstore.MockStore{}
-					stor.On("GetHandlerByName", mock.Anything, "pipeHandler").
-						Return(pipeHandler(), nil)
+				Store: func() storev2.Interface {
+					stor := &mockstore.V2MockStore{}
+					stor.On("Get", mock.Anything, mock.Anything).Return(mockstore.Wrapper[*corev2.Handler]{Value: pipeHandler()}, nil)
 					return stor
 				}(),
 			},
@@ -941,10 +923,9 @@ func TestAdapterV1_expandHandlers(t *testing.T) {
 				handlers: []string{"pipeHandler"},
 			},
 			fields: fields{
-				Store: func() store.Store {
-					stor := &mockstore.MockStore{}
-					stor.On("GetHandlerByName", mock.Anything, "pipeHandler").
-						Return(nilHandler, &store.ErrInternal{Message: "etcd timeout"})
+				Store: func() storev2.Interface {
+					stor := &mockstore.V2MockStore{}
+					stor.On("Get", mock.Anything, mock.Anything).Return(nil, &store.ErrInternal{Message: "etcd timeout"})
 					return stor
 				}(),
 			},
@@ -958,10 +939,9 @@ func TestAdapterV1_expandHandlers(t *testing.T) {
 				handlers: []string{"pipeHandler"},
 			},
 			fields: fields{
-				Store: func() store.Store {
-					stor := &mockstore.MockStore{}
-					stor.On("GetHandlerByName", mock.Anything, "pipeHandler").
-						Return(nilHandler, errors.New("error"))
+				Store: func() storev2.Interface {
+					stor := &mockstore.V2MockStore{}
+					stor.On("Get", mock.Anything, mock.Anything).Return(nil, errors.New("error"))
 					return stor
 				}(),
 			},
@@ -974,12 +954,12 @@ func TestAdapterV1_expandHandlers(t *testing.T) {
 				handlers: []string{"setHandler"},
 			},
 			fields: fields{
-				Store: func() store.Store {
-					stor := &mockstore.MockStore{}
-					stor.On("GetHandlerByName", mock.Anything, "setHandler").
-						Return(setHandler(), nil)
-					stor.On("GetHandlerByName", mock.Anything, "pipeHandler").
-						Return(pipeHandler(), nil)
+				Store: func() storev2.Interface {
+					stor := &mockstore.V2MockStore{}
+					setReq := storev2.NewResourceRequestFromResource(setHandler())
+					pipeReq := storev2.NewResourceRequestFromResource(pipeHandler())
+					stor.On("Get", mock.Anything, setReq).Return(mockstore.Wrapper[*corev2.Handler]{Value: setHandler()}, nil)
+					stor.On("Get", mock.Anything, pipeReq).Return(mockstore.Wrapper[*corev2.Handler]{Value: pipeHandler()}, nil)
 					return stor
 				}(),
 			},
@@ -994,10 +974,9 @@ func TestAdapterV1_expandHandlers(t *testing.T) {
 				handlers: []string{"recursiveLoopHandler"},
 			},
 			fields: fields{
-				Store: func() store.Store {
-					stor := &mockstore.MockStore{}
-					stor.On("GetHandlerByName", mock.Anything, "recursiveLoopHandler").
-						Return(recursiveLoopHandler(), nil)
+				Store: func() storev2.Interface {
+					stor := &mockstore.V2MockStore{}
+					stor.On("Get", mock.Anything, mock.Anything).Return(mockstore.Wrapper[*corev2.Handler]{Value: recursiveLoopHandler()}, nil)
 					return stor
 				}(),
 			},
@@ -1010,12 +989,16 @@ func TestAdapterV1_expandHandlers(t *testing.T) {
 				handlers: []string{"recursiveLoopHandler", "nestedHandler"},
 			},
 			fields: fields{
-				Store: func() store.Store {
-					stor := &mockstore.MockStore{}
-					stor.On("GetHandlerByName", mock.Anything, "recursiveLoopHandler").Return(recursiveLoopHandler(), nil)
-					stor.On("GetHandlerByName", mock.Anything, "nestedHandler").Return(nestedHandler(), nil)
-					stor.On("GetHandlerByName", mock.Anything, "setHandler").Return(setHandler(), nil)
-					stor.On("GetHandlerByName", mock.Anything, "pipeHandler").Return(pipeHandler(), nil)
+				Store: func() storev2.Interface {
+					stor := &mockstore.V2MockStore{}
+					recReq := storev2.NewResourceRequestFromResource(recursiveLoopHandler())
+					nestReq := storev2.NewResourceRequestFromResource(nestedHandler())
+					setReq := storev2.NewResourceRequestFromResource(setHandler())
+					pipeReq := storev2.NewResourceRequestFromResource(pipeHandler())
+					stor.On("Get", mock.Anything, recReq).Return(mockstore.Wrapper[*corev2.Handler]{Value: recursiveLoopHandler()}, nil)
+					stor.On("Get", mock.Anything, nestReq).Return(mockstore.Wrapper[*corev2.Handler]{Value: nestedHandler()}, nil)
+					stor.On("Get", mock.Anything, setReq).Return(mockstore.Wrapper[*corev2.Handler]{Value: setHandler()}, nil)
+					stor.On("Get", mock.Anything, pipeReq).Return(mockstore.Wrapper[*corev2.Handler]{Value: pipeHandler()}, nil)
 					return stor
 				}(),
 			},
@@ -1033,7 +1016,7 @@ func TestAdapterV1_expandHandlers(t *testing.T) {
 				MutatorAdapters: tt.fields.MutatorAdapters,
 				HandlerAdapters: tt.fields.HandlerAdapters,
 			}
-			got, err := a.expandHandlers(tt.args.ctx, tt.args.handlers, tt.args.level)
+			got, err := a.expandHandlers(tt.args.ctx, "default", tt.args.handlers, tt.args.level)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("AdapterV1.expandHandlers() error = %v, wantErr %v", err, tt.wantErr)
 				return

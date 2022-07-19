@@ -13,6 +13,7 @@ import (
 	"github.com/sensu/sensu-go/backend/licensing"
 	"github.com/sensu/sensu-go/backend/secrets"
 	"github.com/sensu/sensu-go/backend/store"
+	storev2 "github.com/sensu/sensu-go/backend/store/v2"
 	"github.com/sensu/sensu-go/command"
 	"github.com/sensu/sensu-go/util/environment"
 	utillogging "github.com/sensu/sensu-go/util/logging"
@@ -34,7 +35,7 @@ type LegacyAdapter struct {
 	Executor               command.Executor
 	LicenseGetter          licensing.Getter
 	SecretsProviderManager secrets.ProviderManagerer
-	Store                  store.Store
+	Store                  storev2.Interface
 	StoreTimeout           time.Duration
 }
 
@@ -62,15 +63,16 @@ func (l *LegacyAdapter) Handle(ctx context.Context, ref *corev2.ResourceReferenc
 	fields["handler"] = ref.Name
 
 	tctx, cancel := context.WithTimeout(ctx, l.StoreTimeout)
-	handler, err := l.Store.GetHandlerByName(tctx, ref.Name)
+	hstore := storev2.NewGenericStore[*corev2.Handler](l.Store)
+	handler, err := hstore.Get(tctx, storev2.ID{Namespace: event.Entity.Namespace, Name: ref.Name})
 	cancel()
 	if err != nil {
+		if _, ok := err.(*store.ErrNotFound); ok {
+			logger.WithFields(fields).
+				Error("handler not found, skipping handler execution")
+			return nil
+		}
 		return fmt.Errorf("failed to fetch handler from store: %v", err)
-	}
-	if handler == nil {
-		logger.WithFields(fields).
-			Error("handler not found, skipping handler execution")
-		return nil
 	}
 
 	switch handler.Type {

@@ -5,58 +5,67 @@ import (
 	"errors"
 	"testing"
 
+	corev2 "github.com/sensu/sensu-go/api/core/v2"
+	"github.com/sensu/sensu-go/backend/store"
+	storev2 "github.com/sensu/sensu-go/backend/store/v2"
 	"github.com/sensu/sensu-go/testing/mockstore"
-	"github.com/sensu/sensu-go/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
 
 func TestGetAssets(t *testing.T) {
-	asset1 := types.FixtureAsset("asset1")
+	asset1 := corev2.FixtureAsset("asset1")
 	asset1.URL = "https://localhost/asset1.zip"
-	asset2 := types.FixtureAsset("asset2")
+	asset2 := corev2.FixtureAsset("asset2")
 	asset2.URL = "https://localhost/asset2.zip"
-	asset3 := types.FixtureAsset("asset3")
+	asset3 := corev2.FixtureAsset("asset3")
 	asset3.URL = "https://localhost/asset3.zip"
 
 	testCases := []struct {
 		name           string
 		assetList      []string
-		expectedAssets []types.Asset
+		expectedAssets []corev2.Asset
 	}{
 		{
 			name:           "found all assets",
 			assetList:      []string{"asset1", "asset2", "asset3"},
-			expectedAssets: []types.Asset{*asset1, *asset2, *asset3},
+			expectedAssets: []corev2.Asset{*asset1, *asset2, *asset3},
 		},
 		{
 			name:           "empty asset list",
 			assetList:      []string{},
-			expectedAssets: []types.Asset{},
+			expectedAssets: []corev2.Asset{},
 		},
 		{
 			name:           "asset not found",
 			assetList:      []string{"foo", "asset1"},
-			expectedAssets: []types.Asset{*asset1},
+			expectedAssets: []corev2.Asset{*asset1},
 		},
 		{
 			name:           "error on store",
 			assetList:      []string{"bar", "asset1"},
-			expectedAssets: []types.Asset{*asset1},
+			expectedAssets: []corev2.Asset{*asset1},
 		},
 	}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			var nilAsset *types.Asset
-			store := &mockstore.MockStore{}
-			store.On("GetAssetByName", mock.Anything, "asset1").Return(asset1, nil)
-			store.On("GetAssetByName", mock.Anything, "asset2").Return(asset2, nil)
-			store.On("GetAssetByName", mock.Anything, "asset3").Return(asset3, nil)
-			store.On("GetAssetByName", mock.Anything, "foo").Return(nilAsset, nil)
-			store.On("GetAssetByName", mock.Anything, "bar").Return(nilAsset, errors.New("error"))
+			a1req := storev2.NewResourceRequestFromResource(asset1)
+			a2req := storev2.NewResourceRequestFromResource(asset2)
+			a3req := storev2.NewResourceRequestFromResource(asset3)
+			a4req := storev2.NewResourceRequestFromResource(asset3)
+			a4req.Name = "foo"
+			a5req := storev2.NewResourceRequestFromResource(asset3)
+			a5req.Name = "bar"
+			sto := &mockstore.V2MockStore{}
+			sto.On("Get", mock.Anything, a1req).Return(mockstore.Wrapper[*corev2.Asset]{Value: asset1}, nil)
+			sto.On("Get", mock.Anything, a2req).Return(mockstore.Wrapper[*corev2.Asset]{Value: asset2}, nil)
+			sto.On("Get", mock.Anything, a3req).Return(mockstore.Wrapper[*corev2.Asset]{Value: asset3}, nil)
+			sto.On("Get", mock.Anything, a4req).Return(nil, &store.ErrNotFound{})
+			sto.On("Get", mock.Anything, a5req).Return(nil, errors.New("error"))
 
-			assets := GetAssets(context.Background(), store, tc.assetList)
+			ctx := store.NamespaceContext(context.Background(), "default")
+			assets := GetAssets(ctx, sto, tc.assetList)
 			assert.EqualValues(t, tc.expectedAssets, assets)
 		})
 	}

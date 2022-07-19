@@ -12,7 +12,6 @@ import (
 	"github.com/robertkrimen/otto"
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/asset"
-	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/js"
 	"github.com/sirupsen/logrus"
 )
@@ -29,9 +28,7 @@ var (
 // JavascriptAdapter is a mutator adapter which mutates an event using
 // javascript.
 type JavascriptAdapter struct {
-	AssetGetter  asset.Getter
-	Store        store.Store
-	StoreTimeout time.Duration
+	AssetGetter asset.Getter
 }
 
 // Name returns the name of the mutator adapter.
