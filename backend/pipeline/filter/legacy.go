@@ -3,13 +3,13 @@ package filter
 import (
 	"context"
 	"errors"
-	"fmt"
 	"time"
 
 	"github.com/robertkrimen/otto"
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/asset"
 	"github.com/sensu/sensu-go/backend/store"
+	storev2 "github.com/sensu/sensu-go/backend/store/v2"
 	"github.com/sensu/sensu-go/js"
 	"github.com/sensu/sensu-go/types/dynamic"
 )
@@ -38,7 +38,7 @@ var (
 // core.v2/EventFilter type.
 type LegacyAdapter struct {
 	AssetGetter  asset.Getter
-	Store        store.Store
+	Store        storev2.Interface
 	StoreTimeout time.Duration
 }
 
@@ -71,18 +71,15 @@ func (l *LegacyAdapter) Filter(ctx context.Context, ref *corev2.ResourceReferenc
 	fields["pipeline_workflow"] = corev2.ContextPipelineWorkflow(ctx)
 
 	// Retrieve the filter from the store with its name
+	fstore := storev2.NewGenericStore[*corev2.EventFilter](l.Store)
 	ctx = context.WithValue(ctx, corev2.NamespaceKey, event.Entity.Namespace)
 	tctx, cancel := context.WithTimeout(ctx, l.StoreTimeout)
 
-	filter, err := l.Store.GetEventFilterByName(tctx, ref.Name)
+	filter, err := fstore.Get(tctx, storev2.ID{Namespace: event.Entity.Namespace, Name: ref.Name})
 	cancel()
 	if err != nil {
 		logger.WithFields(fields).WithError(err).Warning(errCouldNotRetrieveFilter.Error())
 		return false, err
-	}
-	if filter == nil {
-		logger.WithFields(fields).WithError(err).Warning(errCouldNotRetrieveFilter.Error())
-		return false, fmt.Errorf(errCouldNotRetrieveFilter.Error())
 	}
 
 	// Execute the filter, evaluating each of its

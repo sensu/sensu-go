@@ -22,6 +22,7 @@ import (
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/backend/store/etcd"
 	"github.com/sensu/sensu-go/backend/store/provider"
+	storev2 "github.com/sensu/sensu-go/backend/store/v2"
 	"github.com/sensu/sensu-go/version"
 	"github.com/sirupsen/logrus"
 	clientv3 "go.etcd.io/etcd/client/v3"
@@ -78,7 +79,7 @@ var (
 // Tessend is the tessen daemon.
 type Tessend struct {
 	interval          uint32
-	store             store.Store
+	store             storev2.Interface
 	eventStore        store.EventStore
 	ctx               context.Context
 	cancel            context.CancelFunc
@@ -88,6 +89,7 @@ type Tessend struct {
 	client            *clientv3.Client
 	url               string
 	backendID         string
+	clusterID         string
 	bus               messaging.MessageBus
 	messageChan       chan interface{}
 	subscription      []messaging.Subscription
@@ -102,23 +104,25 @@ type Option func(*Tessend) error
 
 // Config configures Tessend.
 type Config struct {
-	Store      store.Store
+	Store      storev2.Interface
 	EventStore store.EventStore
 	RingPool   *ringv2.RingPool
 	Client     *clientv3.Client
 	Bus        messaging.MessageBus
+	ClusterID  string
 }
 
 // New creates a new TessenD.
 func New(ctx context.Context, c Config, opts ...Option) (*Tessend, error) {
 	t := &Tessend{
-		interval:    corev2.DefaultTessenInterval,
 		store:       c.Store,
+		interval:    corev2.DefaultTessenInterval,
 		eventStore:  c.EventStore,
 		client:      c.Client,
 		errChan:     make(chan error, 1),
 		url:         tessenURL,
 		backendID:   uuid.New().String(),
+		clusterID:   c.ClusterID,
 		bus:         c.Bus,
 		messageChan: make(chan interface{}, 1),
 		duration:    perResourceDuration,
@@ -153,17 +157,27 @@ func (t *Tessend) getEventStore() string {
 
 // Start the Tessen daemon.
 func (t *Tessend) Start() error {
-	tessen, err := t.store.GetTessenConfig(t.ctx)
+	req := storev2.NewResourceRequestFromV2Resource(&corev2.TessenConfig{})
+	var tessen corev2.TessenConfig
+	tessenWrapper, err := t.store.Get(t.ctx, req)
 	// create the default tessen config if one does not already exist
-	if err != nil || tessen == nil {
-		tessen = corev2.DefaultTessenConfig()
-		err = t.store.CreateOrUpdateTessenConfig(t.ctx, tessen)
+	if err != nil {
+		tessen = *corev2.DefaultTessenConfig()
+		var wErr error
+		tessenWrapper, wErr = storev2.WrapResource(&tessen)
+		if wErr != nil {
+			return fmt.Errorf("failed to wrap DefaultTessenConfig: %v", wErr)
+		}
+		err = t.store.CreateOrUpdate(t.ctx, req, tessenWrapper)
 		if err != nil {
 			// log the error and continue with the default config
 			logger.WithError(err).Error("unable to update tessen store")
 		}
 	}
-	t.config = tessen
+	if err := tessenWrapper.UnwrapInto(&tessen); err != nil {
+		logger.WithError(err).Error("could not unwrap tessen resource")
+	}
+	t.config = &tessen
 
 	if err := t.ctx.Err(); err != nil {
 		return err
@@ -300,16 +314,18 @@ func (t *Tessend) startMessageHandler() {
 
 // startWatcher watches the TessenConfig store for changes to the opt-out configuration.
 func (t *Tessend) startWatcher() {
-	watchChan := t.store.GetTessenConfigWatcher(t.ctx)
+	req := storev2.NewResourceRequestFromV2Resource(&corev2.TessenConfig{})
+	watchChan := t.store.Watch(t.ctx, req)
 	for {
 		select {
 		case watchEvent, ok := <-watchChan:
 			if !ok {
 				// The watchChan has closed. Restart the watcher.
-				watchChan = t.store.GetTessenConfigWatcher(t.ctx)
+				logger.Info("restarting tessend watcher")
+				watchChan = t.store.Watch(t.ctx, req)
 				continue
 			}
-			t.handleWatchEvent(watchEvent)
+			t.handleWatchEvents(watchEvent)
 		case <-t.ctx.Done():
 			return
 		}
@@ -317,23 +333,35 @@ func (t *Tessend) startWatcher() {
 }
 
 // handleWatchEvent issues an interrupt if a change to the stored TessenConfig has been detected.
-func (t *Tessend) handleWatchEvent(watchEvent store.WatchEventTessenConfig) {
-	tessen := watchEvent.TessenConfig
-
-	if tessen == nil {
-		logger.Error("nil config received from tessen config watcher")
+func (t *Tessend) handleWatchEvents(watchEvents []storev2.WatchEvent) {
+	if len(watchEvents) == 0 {
 		return
 	}
 
-	switch watchEvent.Action {
-	case store.WatchCreate:
+	// tessend should be receiving watch events about a single resource, so batched change events
+	// are unlikely to occur. If they do, we likely only want to update our state to reflect the most recent
+	// state of the resource.
+	if len(watchEvents) > 1 {
+		logger.Warnf("tessend received suspect batch containing %d watch events. Only handling last event.", len(watchEvents))
+	}
+	watchEvent := watchEvents[len(watchEvents)-1]
+	tessen := &corev2.TessenConfig{}
+	if watchEvent.Err != nil {
+		logger.WithError(watchEvent.Err).Warn("tessend recieved event with error status")
+		return
+	}
+	if err := watchEvent.Value.UnwrapInto(tessen); err != nil {
+		logger.WithError(watchEvent.Err).Warn("tessend recieved event not containing tessen config")
+		return
+	}
+	switch watchEvent.Type {
+	case storev2.WatchCreate:
 		logger.WithField("opt-out", tessen.OptOut).Debug("tessen configuration created")
-	case store.WatchUpdate:
+	case storev2.WatchUpdate:
 		logger.WithField("opt-out", tessen.OptOut).Debug("tessen configuration updated")
-	case store.WatchDelete:
+	case storev2.WatchDelete:
 		logger.WithField("opt-out", tessen.OptOut).Debug("tessen configuration deleted")
 	}
-
 	t.config = tessen
 	t.interrupt <- t.config
 }
@@ -600,15 +628,9 @@ func (t *Tessend) collectAndSend() {
 // getDataPayload retrieves cluster, version, and license information
 // and returns the populated data payload.
 func (t *Tessend) getDataPayload() *Data {
-	// collect cluster id
-	clusterID, err := t.store.GetClusterID(t.ctx)
-	if err != nil {
-		logger.WithError(err).Error("unable to retrieve cluster id")
-	}
-
 	// collect license information
 	wrapper := &Wrapper{}
-	err = etcd.Get(t.ctx, t.client, licenseStorePath, wrapper)
+	err := etcd.Get(t.ctx, t.client, licenseStorePath, wrapper)
 	if err != nil {
 		logger.WithError(err).Debug("unable to retrieve license")
 	}
@@ -616,7 +638,7 @@ func (t *Tessend) getDataPayload() *Data {
 	// populate data payload
 	data := &Data{
 		Cluster: Cluster{
-			ID:           clusterID,
+			ID:           t.clusterID,
 			Distribution: Distribution,
 			Version:      version.Semver(),
 			License:      wrapper.Value.License,
@@ -691,7 +713,7 @@ func (t *Tessend) getTessenConfigMetrics(now int64, tessen *corev2.TessenConfig,
 		Value:     1,
 		Timestamp: now,
 		Tags: []*corev2.MetricTag{
-			&corev2.MetricTag{
+			{
 				Name:  "opt_out",
 				Value: strconv.FormatBool(tessen.OptOut),
 			},
