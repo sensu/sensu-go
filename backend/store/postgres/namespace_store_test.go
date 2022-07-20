@@ -342,6 +342,92 @@ func TestNamespaceStore_Get(t *testing.T) {
 	}
 }
 
+func TestNamespaceStore_GetMultiple(t *testing.T) {
+	type args struct {
+		ctx       context.Context
+		resources []string
+	}
+	tests := []struct {
+		name       string
+		args       args
+		beforeHook func(*testing.T, storev2.Interface)
+		want       uniqueNamespaces
+		wantErr    bool
+	}{
+		{
+			name: "succeeds when no requested namespaces exist",
+			args: args{
+				ctx:       context.Background(),
+				resources: []string{"default", "ops"},
+			},
+			want: uniqueNamespaces{},
+		},
+		{
+			name: "succeeds when all namespaces are soft deleted",
+			args: args{
+				ctx:       context.Background(),
+				resources: []string{"default", "ops"},
+			},
+			beforeHook: func(t *testing.T, s storev2.Interface) {
+				createNamespace(t, s, "default")
+				createNamespace(t, s, "ops")
+				deleteNamespace(t, s, "default")
+				deleteNamespace(t, s, "ops")
+			},
+			want: uniqueNamespaces{},
+		},
+		{
+			name: "succeeds when some namespaces are soft deleted",
+			args: args{
+				ctx:       context.Background(),
+				resources: []string{"default", "ops"},
+			},
+			beforeHook: func(t *testing.T, s storev2.Interface) {
+				createNamespace(t, s, "default")
+				createNamespace(t, s, "ops")
+				deleteNamespace(t, s, "default")
+			},
+			want: uniqueNamespaces{
+				uniqueResource{Name: "ops"}: corev3.FixtureNamespace("ops"),
+			},
+		},
+		{
+			name: "succeeds when all entity namespaces exists",
+			args: args{
+				ctx:       context.Background(),
+				resources: []string{"default", "ops"},
+			},
+			beforeHook: func(t *testing.T, s storev2.Interface) {
+				createNamespace(t, s, "default")
+				createNamespace(t, s, "ops")
+			},
+			want: uniqueNamespaces{
+				uniqueResource{Name: "default"}: corev3.FixtureNamespace("default"),
+				uniqueResource{Name: "ops"}:     corev3.FixtureNamespace("ops"),
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			withPostgres(t, func(ctx context.Context, db *pgxpool.Pool, dsn string) {
+				if tt.beforeHook != nil {
+					tt.beforeHook(t, NewStoreV2(db))
+				}
+				s := &NamespaceStore{
+					db: db,
+				}
+				got, err := s.GetMultiple(tt.args.ctx, tt.args.resources)
+				if (err != nil) != tt.wantErr {
+					t.Errorf("NamespaceStore.GetMultiple() error = %v, wantErr %v", err, tt.wantErr)
+				}
+				if diff := deep.Equal(got, tt.want); diff != nil {
+					t.Errorf("NamespaceStore.GetMultiple() got differs from want: %v", diff)
+				}
+			})
+		})
+	}
+}
+
 func TestNamespaceStore_HardDelete(t *testing.T) {
 	type args struct {
 		ctx  context.Context
@@ -542,7 +628,7 @@ func TestNamespaceStore_List(t *testing.T) {
 					return
 				}
 				if diff := deep.Equal(got, tt.want); len(diff) > 0 {
-					t.Errorf("NamespaceStore.List() mismatch: %v", diff)
+					t.Errorf("NamespaceStore.List() got differs from want: %v", diff)
 				}
 				// if !reflect.DeepEqual(got, tt.want) {
 				// 	t.Errorf("NamespaceStore.List() = %v, want %v", got, tt.want)
@@ -745,42 +831,3 @@ func TestNamespaceStore_isEmpty(t *testing.T) {
 		})
 	}
 }
-
-// {
-// 			name: "multiple namespaces can be retrieved",
-// 			args: func() args {
-// 				ns := corev3.FixtureNamespace("bar")
-// 				req := storev2.NewResourceRequestFromResource(ns)
-// 				return args{
-// 					req:     req,
-// 					wrapper: WrapNamespace(ns),
-// 				}
-// 			}(),
-// 			reqs: func(t *testing.T, s storev2.Interface) []storev2.ResourceRequest {
-// 				reqs := make([]storev2.ResourceRequest, 0)
-// 				for i := 0; i < 10; i++ {
-// 					namespaceName := fmt.Sprintf("foo-%d", i)
-// 					namespace := corev3.FixtureNamespace(namespaceName)
-// 					req := storev2.NewResourceRequestFromResource(namespace)
-// 					reqs = append(reqs, req)
-// 					createNamespace(t, s, namespaceName)
-// 				}
-// 				return reqs
-// 			},
-// 			test: func(t *testing.T, wrapper storev2.Wrapper) {
-// 				var namespace corev3.Namespace
-// 				if err := wrapper.UnwrapInto(&namespace); err != nil {
-// 					t.Error(err)
-// 				}
-
-// 				if got, want := len(namespace.Metadata.Labels), 0; got != want {
-// 					t.Errorf("wrong number of labels, got = %v, want = %v", got, want)
-// 				}
-// 				if got, want := len(namespace.Metadata.Annotations), 0; got != want {
-// 					t.Errorf("wrong number of annotations, got = %v, want = %v", got, want)
-// 				}
-// 				if got, want := namespace.Metadata.Name, "foo-"; !strings.Contains(got, want) {
-// 					t.Errorf("wrong namespace name, got = %v, want name to contain = %v", got, want)
-// 				}
-// 			},
-// 		},

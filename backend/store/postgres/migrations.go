@@ -65,45 +65,50 @@ var migrations = []migration.Migrator{
 	},
 	// Migration 8
 	func(tx migration.LimitedTx) error {
-		_, err := tx.Exec(context.Background(), migrateRefreshUpdatedAtProcedure)
+		_, err := tx.Exec(context.Background(), migrateDropEntitiesNetworkUnique)
 		return err
 	},
 	// Migration 9
 	func(tx migration.LimitedTx) error {
-		_, err := tx.Exec(context.Background(), migrateRenameEntitiesTable)
+		_, err := tx.Exec(context.Background(), migrateRefreshUpdatedAtProcedure)
 		return err
 	},
 	// Migration 10
 	func(tx migration.LimitedTx) error {
-		_, err := tx.Exec(context.Background(), migrateRenameEntityStateUniqueConstraint)
+		_, err := tx.Exec(context.Background(), migrateRenameEntitiesTable)
 		return err
 	},
 	// Migration 11
 	func(tx migration.LimitedTx) error {
-		_, err := tx.Exec(context.Background(), entityConfigSchema)
+		_, err := tx.Exec(context.Background(), migrateRenameEntityStateUniqueConstraint)
 		return err
 	},
 	// Migration 12
 	func(tx migration.LimitedTx) error {
-		_, err := tx.Exec(context.Background(), migrateAddEntityConfigIdToEntityState)
+		_, err := tx.Exec(context.Background(), entityConfigSchema)
 		return err
 	},
 	// Migration 13
 	func(tx migration.LimitedTx) error {
-		_, err := tx.Exec(context.Background(), namespaceSchema)
+		_, err := tx.Exec(context.Background(), migrateAddEntityConfigIdToEntityState)
 		return err
 	},
 	// Migration 14
 	func(tx migration.LimitedTx) error {
-		_, err := tx.Exec(context.Background(), addNamespaceForeignKeys)
+		_, err := tx.Exec(context.Background(), namespaceSchema)
 		return err
 	},
 	// Migration 15
 	func(tx migration.LimitedTx) error {
-		_, err := tx.Exec(context.Background(), addTimestampColumns)
+		_, err := tx.Exec(context.Background(), addNamespaceForeignKeys)
 		return err
 	},
 	// Migration 16
+	func(tx migration.LimitedTx) error {
+		_, err := tx.Exec(context.Background(), addTimestampColumns)
+		return err
+	},
+	// Migration 17
 	func(tx migration.LimitedTx) error {
 		_, err := tx.Exec(context.Background(), addInitializedTable)
 		return err

@@ -68,6 +68,10 @@ func (s *Store) EntityConfigStore() storev2.EntityConfigStore {
 	return s.Called().Get(0).(storev2.EntityConfigStore)
 }
 
+func (s *Store) EntityStateStore() storev2.EntityStateStore {
+	return s.Called().Get(0).(storev2.EntityStateStore)
+}
+
 func (s *Store) Initialize(ctx context.Context, fn storev2.InitializeFunc) error {
 	args := s.Called(ctx, fn)
 	return args.Error(0)

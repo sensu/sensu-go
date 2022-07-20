@@ -29,6 +29,9 @@ type Interface interface {
 	// EntityConfigStore returns an EntityConfigStore.
 	EntityConfigStore() EntityConfigStore
 
+	// EntityStateStore returns an EntityStateStore.
+	EntityStateStore() EntityStateStore
+
 	// CreateOrUpdate creates or updates the wrapped resource.
 	CreateOrUpdate(context.Context, ResourceRequest, Wrapper) error
 
@@ -126,6 +129,38 @@ type EntityConfigStore interface {
 	Exists(context.Context, string, string) (bool, error)
 
 	// Patch patches the corev3.EntityConfig resource with the provided
+	// namespace and name.
+	Patch(context.Context, string, string, patch.Patcher, *store.ETagCondition) error
+}
+
+// EntityStateStore provides an interface for interacting with entity states.
+type EntityStateStore interface {
+	// CreateOrUpdate creates or updates a corev3.EntityState resource.
+	CreateOrUpdate(context.Context, *corev3.EntityState) error
+
+	// UpdateIfExists updates the corev3.EntityState resource, but only if it
+	// already exists in the store.
+	UpdateIfExists(context.Context, *corev3.EntityState) error
+
+	// CreateIfNotExists writes the corev3.EntityState resource to the store, but
+	// only if it does not already exist.
+	CreateIfNotExists(context.Context, *corev3.EntityState) error
+
+	// Get gets a corev3.EntityState from the store.
+	Get(context.Context, string, string) (*corev3.EntityState, error)
+
+	// Delete deletes the corev3.EntityState, from the store, corresponding
+	// with the given namespace and name.
+	Delete(context.Context, string, string) error
+
+	// List lists all corev3.EntityState resources.
+	List(context.Context, string, *store.SelectionPredicate) ([]*corev3.EntityState, error)
+
+	// Exists returns true if the corev3.EntityState exists for the provided
+	// namespace and name.
+	Exists(context.Context, string, string) (bool, error)
+
+	// Patch patches the corev3.EntityState resource with the provided
 	// namespace and name.
 	Patch(context.Context, string, string, patch.Patcher, *store.ETagCondition) error
 }

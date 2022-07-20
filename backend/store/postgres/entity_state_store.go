@@ -16,42 +16,42 @@ import (
 )
 
 var (
-	entityConfigStoreName        = new(corev3.EntityConfig).StoreName()
-	entityConfigUniqueConstraint = "entity_config_unique"
+	entityStateStoreName        = new(corev3.EntityState).StoreName()
+	entityStateUniqueConstraint = "entity_state_unique"
 )
 
-type namespacedEntityConfigs map[string][]*corev3.EntityConfig
+type namespacedEntityStates map[string][]*corev3.EntityState
 
-type uniqueEntityConfigs map[uniqueResource]*corev3.EntityConfig
+type uniqueEntityStates map[uniqueResource]*corev3.EntityState
 
-type EntityConfigStore struct {
+type EntityStateStore struct {
 	db *pgxpool.Pool
 }
 
-func NewEntityConfigStore(db *pgxpool.Pool) *EntityConfigStore {
-	return &EntityConfigStore{
+func NewEntityStateStore(db *pgxpool.Pool) *EntityStateStore {
+	return &EntityStateStore{
 		db: db,
 	}
 }
 
-// Create creates an entity config using the given entity config struct.
-func (s *EntityConfigStore) CreateIfNotExists(ctx context.Context, config *corev3.EntityConfig) error {
-	if err := config.Validate(); err != nil {
+// Create creates an entity state using the given entity state struct.
+func (s *EntityStateStore) CreateIfNotExists(ctx context.Context, state *corev3.EntityState) error {
+	if err := state.Validate(); err != nil {
 		return &store.ErrNotValid{Err: err}
 	}
 
-	namespace := config.Metadata.Namespace
-	name := config.Metadata.Name
-	wrapper := WrapEntityConfig(config).(*EntityConfigWrapper)
+	namespace := state.Metadata.Namespace
+	name := state.Metadata.Name
+	wrapper := WrapEntityState(state).(*EntityStateWrapper)
 	params := wrapper.SQLParams()
 
-	if _, err := s.db.Exec(ctx, createIfNotExistsEntityConfigQuery, params...); err != nil {
+	if _, err := s.db.Exec(ctx, createIfNotExistsEntityStateQuery, params...); err != nil {
 		pgError, ok := err.(*pgconn.PgError)
 		if ok {
 			switch pgError.ConstraintName {
-			case entityConfigUniqueConstraint:
+			case entityStateUniqueConstraint:
 				return &store.ErrAlreadyExists{
-					Key: entityConfigStoreKey(namespace, name),
+					Key: entityStateStoreKey(namespace, name),
 				}
 			}
 		}
@@ -61,24 +61,24 @@ func (s *EntityConfigStore) CreateIfNotExists(ctx context.Context, config *corev
 	return nil
 }
 
-// CreateOrUpdate creates an entity config or updates it if it already exists.
-func (s *EntityConfigStore) CreateOrUpdate(ctx context.Context, config *corev3.EntityConfig) error {
-	if err := config.Validate(); err != nil {
+// CreateOrUpdate creates an entity state or updates it if it already exists.
+func (s *EntityStateStore) CreateOrUpdate(ctx context.Context, state *corev3.EntityState) error {
+	if err := state.Validate(); err != nil {
 		return &store.ErrNotValid{Err: err}
 	}
 
-	wrapper := WrapEntityConfig(config).(*EntityConfigWrapper)
+	wrapper := WrapEntityState(state).(*EntityStateWrapper)
 	params := wrapper.SQLParams()
 
-	if _, err := s.db.Exec(ctx, createOrUpdateEntityConfigQuery, params...); err != nil {
+	if _, err := s.db.Exec(ctx, createOrUpdateEntityStateQuery, params...); err != nil {
 		return &store.ErrInternal{Message: err.Error()}
 	}
 
 	return nil
 }
 
-// Delete soft deletes an entity config using the given namespace & name.
-func (s *EntityConfigStore) Delete(ctx context.Context, namespace, name string) error {
+// Delete soft deletes an entity state using the given namespace & name.
+func (s *EntityStateStore) Delete(ctx context.Context, namespace, name string) error {
 	if namespace == "" {
 		return &store.ErrNotValid{Err: errors.New("must specify namespace")}
 	}
@@ -86,19 +86,19 @@ func (s *EntityConfigStore) Delete(ctx context.Context, namespace, name string) 
 		return &store.ErrNotValid{Err: errors.New("must specify name")}
 	}
 
-	result, err := s.db.Exec(ctx, deleteEntityConfigQuery, namespace, name)
+	result, err := s.db.Exec(ctx, deleteEntityStateQuery, namespace, name)
 	if err != nil {
 		return &store.ErrInternal{Message: err.Error()}
 	}
 	affected := result.RowsAffected()
 	if affected < 1 {
-		return &store.ErrNotFound{Key: entityConfigStoreKey(namespace, name)}
+		return &store.ErrNotFound{Key: entityStateStoreKey(namespace, name)}
 	}
 	return nil
 }
 
-// Exists determines if an entity config exists.
-func (s *EntityConfigStore) Exists(ctx context.Context, namespace, name string) (bool, error) {
+// Exists determines if an entity state exists.
+func (s *EntityStateStore) Exists(ctx context.Context, namespace, name string) (bool, error) {
 	if namespace == "" {
 		return false, &store.ErrNotValid{Err: errors.New("must specify namespace")}
 	}
@@ -106,7 +106,7 @@ func (s *EntityConfigStore) Exists(ctx context.Context, namespace, name string) 
 		return false, &store.ErrNotValid{Err: errors.New("must specify name")}
 	}
 
-	row := s.db.QueryRow(ctx, existsEntityConfigQuery, namespace, name)
+	row := s.db.QueryRow(ctx, existsEntityStateQuery, namespace, name)
 	var found bool
 	err := row.Scan(&found)
 	if err == nil {
@@ -118,8 +118,8 @@ func (s *EntityConfigStore) Exists(ctx context.Context, namespace, name string) 
 	return false, &store.ErrInternal{Message: err.Error()}
 }
 
-// Get retrieves an entity config by a given namespace & name.
-func (s *EntityConfigStore) Get(ctx context.Context, namespace, name string) (*corev3.EntityConfig, error) {
+// Get retrieves an entity state by a given namespace & name.
+func (s *EntityStateStore) Get(ctx context.Context, namespace, name string) (*corev3.EntityState, error) {
 	if namespace == "" {
 		return nil, &store.ErrNotValid{Err: errors.New("must specify namespace")}
 	}
@@ -127,26 +127,26 @@ func (s *EntityConfigStore) Get(ctx context.Context, namespace, name string) (*c
 		return nil, &store.ErrNotValid{Err: errors.New("must specify name")}
 	}
 
-	row := s.db.QueryRow(ctx, getEntityConfigQuery, namespace, name)
-	wrapper := &EntityConfigWrapper{}
+	row := s.db.QueryRow(ctx, getEntityStateQuery, namespace, name)
+	wrapper := &EntityStateWrapper{}
 	if err := row.Scan(wrapper.SQLParams()...); err != nil {
 		if err == pgx.ErrNoRows {
-			return nil, &store.ErrNotFound{Key: entityConfigStoreKey(namespace, name)}
+			return nil, &store.ErrNotFound{Key: entityStateStoreKey(namespace, name)}
 		}
 		return nil, &store.ErrInternal{Message: err.Error()}
 	}
 
-	var config corev3.EntityConfig
-	if err := wrapper.unwrapIntoEntityConfig(&config); err != nil {
+	var state corev3.EntityState
+	if err := wrapper.unwrapIntoEntityState(&state); err != nil {
 		return nil, &store.ErrInternal{Message: err.Error()}
 	}
 
-	return &config, nil
+	return &state, nil
 }
 
-// GetMultiple retrieves multiple entity configs for a given mapping of namespace
+// GetMultiple retrieves multiple entity states for a given mapping of namespace
 // and names.
-func (s *EntityConfigStore) GetMultiple(ctx context.Context, resources namespacedResourceNames) (uniqueEntityConfigs, error) {
+func (s *EntityStateStore) GetMultiple(ctx context.Context, resources namespacedResourceNames) (uniqueEntityStates, error) {
 	if len(resources) == 0 {
 		return nil, nil
 	}
@@ -161,15 +161,15 @@ func (s *EntityConfigStore) GetMultiple(ctx context.Context, resources namespace
 		}
 	}()
 
-	configs := uniqueEntityConfigs{}
+	states := uniqueEntityStates{}
 	for namespace, resourceNames := range resources {
-		rows, err := tx.Query(ctx, getEntityConfigsQuery, namespace, resourceNames)
+		rows, err := tx.Query(ctx, getEntityStatesQuery, namespace, resourceNames)
 		if err != nil {
 			return nil, err
 		}
 
 		for rows.Next() {
-			wrapper := &EntityConfigWrapper{}
+			wrapper := &EntityStateWrapper{}
 			if err := rows.Scan(wrapper.SQLParams()...); err != nil {
 				if err == pgx.ErrNoRows {
 					continue
@@ -177,16 +177,16 @@ func (s *EntityConfigStore) GetMultiple(ctx context.Context, resources namespace
 				return nil, &store.ErrInternal{Message: err.Error()}
 			}
 
-			config := &corev3.EntityConfig{}
-			if err := wrapper.unwrapIntoEntityConfig(config); err != nil {
+			state := &corev3.EntityState{}
+			if err := wrapper.unwrapIntoEntityState(state); err != nil {
 				return nil, &store.ErrInternal{Message: err.Error()}
 			}
 
 			key := uniqueResource{
-				Name:      config.Metadata.Name,
+				Name:      state.Metadata.Name,
 				Namespace: namespace,
 			}
-			configs[key] = config
+			states[key] = state
 		}
 	}
 
@@ -194,11 +194,11 @@ func (s *EntityConfigStore) GetMultiple(ctx context.Context, resources namespace
 		return nil, fmt.Errorf("error committing transaction for GetMultiple()")
 	}
 
-	return configs, nil
+	return states, nil
 }
 
-// HardDelete hard deletes an entity config using the given namespace & name.
-func (s *EntityConfigStore) HardDelete(ctx context.Context, namespace, name string) error {
+// HardDelete hard deletes an entity state using the given namespace & name.
+func (s *EntityStateStore) HardDelete(ctx context.Context, namespace, name string) error {
 	if namespace == "" {
 		return &store.ErrNotValid{Err: errors.New("must specify namespace")}
 	}
@@ -206,19 +206,19 @@ func (s *EntityConfigStore) HardDelete(ctx context.Context, namespace, name stri
 		return &store.ErrNotValid{Err: errors.New("must specify name")}
 	}
 
-	result, err := s.db.Exec(ctx, hardDeleteEntityConfigQuery, namespace, name)
+	result, err := s.db.Exec(ctx, hardDeleteEntityStateQuery, namespace, name)
 	if err != nil {
 		return &store.ErrInternal{Message: err.Error()}
 	}
 	affected := result.RowsAffected()
 	if affected < 1 {
-		return &store.ErrNotFound{Key: entityConfigStoreKey(namespace, name)}
+		return &store.ErrNotFound{Key: entityStateStoreKey(namespace, name)}
 	}
 	return nil
 }
 
-// HardDeleted determines if an entity config has been hard deleted.
-func (s *EntityConfigStore) HardDeleted(ctx context.Context, namespace, name string) (bool, error) {
+// HardDeleted determines if an entity state has been hard deleted.
+func (s *EntityStateStore) HardDeleted(ctx context.Context, namespace, name string) (bool, error) {
 	if namespace == "" {
 		return false, &store.ErrNotValid{Err: errors.New("must specify namespace")}
 	}
@@ -226,7 +226,7 @@ func (s *EntityConfigStore) HardDeleted(ctx context.Context, namespace, name str
 		return false, &store.ErrNotValid{Err: errors.New("must specify name")}
 	}
 
-	row := s.db.QueryRow(ctx, hardDeletedEntityConfigQuery, namespace, name)
+	row := s.db.QueryRow(ctx, hardDeletedEntityStateQuery, namespace, name)
 	var deleted bool
 	if err := row.Scan(&deleted); err != nil {
 		if err == pgx.ErrNoRows {
@@ -237,12 +237,12 @@ func (s *EntityConfigStore) HardDeleted(ctx context.Context, namespace, name str
 	return deleted, nil
 }
 
-// List returns all entity configs. A nil slice with no error is returned if
+// List returns all entity states. A nil slice with no error is returned if
 // none were found.
-func (s *EntityConfigStore) List(ctx context.Context, namespace string, pred *store.SelectionPredicate) ([]*corev3.EntityConfig, error) {
-	query := listEntityConfigQuery
+func (s *EntityStateStore) List(ctx context.Context, namespace string, pred *store.SelectionPredicate) ([]*corev3.EntityState, error) {
+	query := listEntityStateQuery
 	if pred != nil && pred.Descending {
-		query = listEntityConfigDescQuery
+		query = listEntityStateDescQuery
 	}
 
 	limit, offset, err := getLimitAndOffset(pred)
@@ -262,22 +262,22 @@ func (s *EntityConfigStore) List(ctx context.Context, namespace string, pred *st
 	}
 	defer rows.Close()
 
-	var configs []*corev3.EntityConfig
+	var states []*corev3.EntityState
 	var rowCount int64
 	for rows.Next() {
 		rowCount++
-		wrapper := &EntityConfigWrapper{}
+		wrapper := &EntityStateWrapper{}
 		if err := rows.Scan(wrapper.SQLParams()...); err != nil {
 			return nil, &store.ErrInternal{Message: err.Error()}
 		}
 		if err := rows.Err(); err != nil {
 			return nil, &store.ErrInternal{Message: err.Error()}
 		}
-		config := &corev3.EntityConfig{}
-		if err := wrapper.unwrapIntoEntityConfig(config); err != nil {
+		state := &corev3.EntityState{}
+		if err := wrapper.unwrapIntoEntityState(state); err != nil {
 			return nil, &store.ErrInternal{Message: err.Error()}
 		}
-		configs = append(configs, config)
+		states = append(states, state)
 	}
 	if pred != nil {
 		if rowCount < pred.Limit {
@@ -285,10 +285,10 @@ func (s *EntityConfigStore) List(ctx context.Context, namespace string, pred *st
 		}
 	}
 
-	return configs, nil
+	return states, nil
 }
 
-func (s *EntityConfigStore) Patch(ctx context.Context, namespace, name string, patcher patch.Patcher, conditions *store.ETagCondition) (fErr error) {
+func (s *EntityStateStore) Patch(ctx context.Context, namespace, name string, patcher patch.Patcher, conditions *store.ETagCondition) (fErr error) {
 	if namespace == "" {
 		return &store.ErrNotValid{Err: errors.New("must specify namespace")}
 	}
@@ -310,37 +310,37 @@ func (s *EntityConfigStore) Patch(ctx context.Context, namespace, name string, p
 		}
 	}()
 
-	wrapper := &EntityConfigWrapper{}
-	row := tx.QueryRow(ctx, getEntityConfigQuery, namespace, name)
+	wrapper := &EntityStateWrapper{}
+	row := tx.QueryRow(ctx, getEntityStateQuery, namespace, name)
 	if err := row.Scan(wrapper.SQLParams()...); err != nil {
 		if err == pgx.ErrNoRows {
-			return &store.ErrNotFound{Key: entityConfigStoreKey(namespace, name)}
+			return &store.ErrNotFound{Key: entityStateStoreKey(namespace, name)}
 		}
 		return &store.ErrInternal{Message: err.Error()}
 	}
 
-	config := corev3.EntityConfig{}
-	if err := wrapper.unwrapIntoEntityConfig(&config); err != nil {
-		return &store.ErrDecode{Key: entityConfigStoreKey(namespace, name), Err: err}
+	state := corev3.EntityState{}
+	if err := wrapper.unwrapIntoEntityState(&state); err != nil {
+		return &store.ErrDecode{Key: entityStateStoreKey(namespace, name), Err: err}
 	}
 
 	// Now determine the etag for the stored resource
-	etag, err := store.ETag(config)
+	etag, err := store.ETag(state)
 	if err != nil {
 		return err
 	}
 
 	if conditions != nil {
 		if !store.CheckIfMatch(conditions.IfMatch, etag) {
-			return &store.ErrPreconditionFailed{Key: entityConfigStoreKey(namespace, name)}
+			return &store.ErrPreconditionFailed{Key: entityStateStoreKey(namespace, name)}
 		}
 		if !store.CheckIfNoneMatch(conditions.IfNoneMatch, etag) {
-			return &store.ErrPreconditionFailed{Key: entityConfigStoreKey(namespace, name)}
+			return &store.ErrPreconditionFailed{Key: entityStateStoreKey(namespace, name)}
 		}
 	}
 
 	// Encode the stored resource to the JSON format
-	originalJSON, err := json.Marshal(config)
+	originalJSON, err := json.Marshal(state)
 	if err != nil {
 		return err
 	}
@@ -352,34 +352,34 @@ func (s *EntityConfigStore) Patch(ctx context.Context, namespace, name string, p
 	}
 
 	// Decode the resulting JSON document back into our resource
-	if err := json.Unmarshal(patchedResource, &config); err != nil {
+	if err := json.Unmarshal(patchedResource, &state); err != nil {
 		return err
 	}
 
 	// Validate the resource
-	if err := config.Validate(); err != nil {
+	if err := state.Validate(); err != nil {
 		return err
 	}
 
 	// Patch the resource
-	patchedWrapper := WrapEntityConfig(&config).(*EntityConfigWrapper)
+	patchedWrapper := WrapEntityState(&state).(*EntityStateWrapper)
 	params := patchedWrapper.SQLParams()
 
-	if _, err := tx.Exec(ctx, createOrUpdateEntityConfigQuery, params...); err != nil {
+	if _, err := tx.Exec(ctx, createOrUpdateEntityStateQuery, params...); err != nil {
 		return &store.ErrInternal{Message: err.Error()}
 	}
 
 	return nil
 }
 
-// UpdateIfExists updates a given entity config.
-func (s *EntityConfigStore) UpdateIfExists(ctx context.Context, config *corev3.EntityConfig) error {
-	namespace := config.Metadata.Namespace
-	name := config.Metadata.Name
-	wrapper := WrapEntityConfig(config).(*EntityConfigWrapper)
+// UpdateIfExists updates a given entity state.
+func (s *EntityStateStore) UpdateIfExists(ctx context.Context, state *corev3.EntityState) error {
+	namespace := state.Metadata.Namespace
+	name := state.Metadata.Name
+	wrapper := WrapEntityState(state).(*EntityStateWrapper)
 	params := wrapper.SQLParams()
 
-	rows, err := s.db.Query(ctx, updateIfExistsEntityConfigQuery, params...)
+	rows, err := s.db.Query(ctx, updateIfExistsEntityStateQuery, params...)
 	if err != nil {
 		return &store.ErrInternal{Message: err.Error()}
 	}
@@ -390,12 +390,12 @@ func (s *EntityConfigStore) UpdateIfExists(ctx context.Context, config *corev3.E
 		rowCount++
 	}
 	if rowCount == 0 {
-		return &store.ErrNotFound{Key: entityConfigStoreKey(namespace, name)}
+		return &store.ErrNotFound{Key: entityStateStoreKey(namespace, name)}
 	}
 
 	return nil
 }
 
-func entityConfigStoreKey(namespace, name string) string {
-	return fmt.Sprintf("%s(namespace, name)=(%s, %s)", entityConfigStoreName, namespace, name)
+func entityStateStoreKey(namespace, name string) string {
+	return fmt.Sprintf("%s(namespace, name)=(%s, %s)", entityStateStoreName, namespace, name)
 }

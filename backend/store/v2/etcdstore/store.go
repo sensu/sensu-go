@@ -418,6 +418,10 @@ func (s *Store) EntityConfigStore() storev2.EntityConfigStore {
 	return NewEntityConfigStore(s.client)
 }
 
+func (s *Store) EntityStateStore() storev2.EntityStateStore {
+	return NewEntityStateStore(s.client)
+}
+
 func (s *Store) Initialize(ctx context.Context, fn storev2.InitializeFunc) (fErr error) {
 	// Check that the store hasn't already been initialized
 	initialized, err := s.isInitialized(ctx)

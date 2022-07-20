@@ -34,7 +34,7 @@ WITH ignored AS (
 ), namespace AS (
 	SELECT COALESCE (
 		NULLIF($23, 0),
-		(SELECT id FROM namespaces WHERE name = $1)
+		(SELECT id FROM namespaces WHERE name = $1 AND deleted_at IS NULL)
 	) AS id
 ), config AS (
 	SELECT COALESCE (
@@ -42,7 +42,8 @@ WITH ignored AS (
 		(SELECT id FROM entity_configs
 			WHERE
 				namespace_id = (SELECT id FROM namespace) AND
-				name = $2
+				name = $2 AND
+				deleted_at IS NULL
 		)) AS id
 ), state AS (
 	INSERT INTO entity_states (
@@ -52,8 +53,7 @@ WITH ignored AS (
 		expires_at,
 		last_seen,
 		selectors,
-		annotations,
-		deleted_at
+		annotations
 	)
 	VALUES (
 		(SELECT id FROM config),
@@ -62,8 +62,7 @@ WITH ignored AS (
 		now(),
 		$3,
 		$4,
-		$5,
-		NULL
+		$5
 	)
 	ON CONFLICT ( namespace_id, name )
 	DO UPDATE SET
@@ -91,193 +90,14 @@ WITH ignored AS (
 	FROM state
 ), networks AS (
 	SELECT
-	nics.name AS name,
-	nics.mac AS mac,
-	nics.addresses AS addresses
+		nics.name AS name,
+		nics.mac AS mac,
+		nics.addresses AS addresses
 	FROM UNNEST(
 		cast($19 AS text[]),
 		cast($20 AS text[]),
 		cast($21 AS jsonb[])
 	) AS nics ( name, mac, addresses )
-),
-sys_update AS (
-	-- Insert or update the entity's system object.
-	INSERT INTO entities_systems SELECT * FROM system
-	ON CONFLICT (entity_id) DO UPDATE SET (
-		hostname,
-		os,
-		platform,
-		platform_family,
-		platform_version,
-		arch,
-		arm_version,
-		libc_type,
-		vm_system,
-		vm_role,
-		cloud_provider,
-		float_type,
-		sensu_agent_version
-	) = (
-	-- Update the system if it exists already.
-		SELECT
-			hostname,
-			os,
-			platform,
-			platform_family,
-			platform_version,
-			arch,
-			arm_version,
-			libc_type,
-			vm_system,
-			vm_role,
-			cloud_provider,
-			float_type,
-			sensu_agent_version
-		FROM system
-	)
-), del AS (
-	-- Delete the networks that are not in the current set.
-	DELETE FROM entities_networks
-	USING state, networks
-	WHERE entity_id = state.id
-	AND ( entities_networks.name, entities_networks.mac, entities_networks.addresses ) NOT IN (SELECT * FROM networks)
-)
--- Insert the networks that are new in the current set.
-INSERT INTO entities_networks
-SELECT state.id, networks.name, networks.mac, networks.addresses
-FROM state, networks
-ON CONFLICT ( entity_id, name, mac, addresses ) DO NOTHING
-`
-
-const createIfNotExistsEntityStateQuery = `
--- This query inserts rows into the entity_states table. By design, it
--- errors when an entity with the same namespace and name already
--- exists.
---
-WITH ignored AS (
-	SELECT
-		$22::bigint,
-		$25::timestamptz,
-		$26::timestamptz,
-		$27::timestamptz
-), namespace AS (
-	SELECT COALESCE (
-		NULLIF($23, 0),
-		(SELECT id FROM namespaces WHERE name = $1)
-	) AS id
-), config AS (
-	SELECT COALESCE (
-		NULLIF($24, 0),
-		(SELECT id FROM entity_configs
-			WHERE
-				namespace_id = (SELECT id FROM namespace) AND
-				name = $2
-		)) AS id
-), state AS (
-	INSERT INTO entity_states (
-		entity_config_id,
-		namespace_id,
-		name,
-		expires_at,
-		last_seen,
-		selectors,
-		annotations
-	)
-	VALUES (
-		(SELECT id FROM config),
-		(SELECT id FROM namespace),
-		$2,
-		now(),
-		$3,
-		$4,
-		$5
-)
-	RETURNING id
-), system AS (
-	INSERT INTO entities_systems
-	SELECT
-	state.id,
-	$6::text,
-	$7::text,
-	$8::text,
-	$9::text,
-	$10::text,
-	$11::text,
-	$12::integer, -- TODO(eric): is this a bug? Doesn't work without the cast.
-	$13::text,
-	$14::text,
-	$15::text,
-	$16::text,
-	$17::text,
-	$18::text
-	FROM state
-)
-INSERT INTO entities_networks
-SELECT
-state.id,
-nics.name,
-nics.mac,
-nics.addresses
-FROM state, UNNEST(
-	cast($19 AS text[]),
-	cast($20 AS text[]),
-	cast($21 AS jsonb[])
-)
-AS nics ( name, mac, addresses )
-`
-
-const updateIfExistsEntityStateQuery = `
--- This query updates the entity state, but only if it exists.
---
-WITH ignored AS (
-	SELECT
-		$22::bigint,
-		$23::bigint,
-		$24::bigint,
-		$25::timestamptz,
-		$26::timestamptz,
-		$27::timestamptz
-), namespace AS (
-	SELECT id FROM namespaces
-	WHERE namespaces.name = $1
-), state AS (
-	SELECT id FROM entity_states
-	WHERE
-		entity_states.namespace_id = (SELECT id FROM namespace) AND
-		entity_states.name = $2
-), upd AS (
-	UPDATE entity_states
-	SET last_seen = $3, selectors = $4, annotations = $5, deleted_at = NULL
-	FROM state
-	WHERE state.id = entity_states.id
-), system AS (
-	SELECT
-	state.id AS entity_id,
-	$6::text AS hostname,
-	$7::text AS os,
-	$8::text AS platform,
-	$9::text AS platform_family,
-	$10::text AS platform_version,
-	$11::text AS arch,
-	$12::integer AS arm_version, -- TODO(eric): is this a bug? Doesn't work without the cast.
-	$13::text AS libc_type,
-	$14::text AS vm_system,
-	$15::text AS vm_role,
-	$16::text AS cloud_provider,
-	$17::text AS float_type,
-	$18::text AS sensu_agent_version
-	FROM state
-), networks AS (
-	SELECT
-	nics.name AS name,
-	nics.mac AS mac,
-	nics.addresses AS addresses
-	FROM UNNEST(
-		cast($19 AS text[]),
-		cast($20 AS text[]),
-		cast($21 AS jsonb[])
-	)
-	AS nics ( name, mac, addresses )
 ), sys_update AS (
 	-- Insert or update the entity's system object.
 	INSERT INTO entities_systems SELECT * FROM system
@@ -314,17 +134,250 @@ WITH ignored AS (
 		FROM system
 	)
 ), del AS (
+	-- Clear networks belonging to the current entity.
+	DELETE FROM entities_networks
+	USING state, networks
+	WHERE entity_id = state.id
+)
+-- Insert the networks from the current set.
+INSERT INTO entities_networks
+SELECT DISTINCT state.id, networks.name, networks.mac, networks.addresses
+FROM state, networks
+`
+
+const createIfNotExistsEntityStateQuery = `
+-- This query creates a new entity state, or updates it if it exists and has
+-- been soft deleted. By design, it errors when an entity state with the same
+-- name already exists and has not been soft deleted.
+--
+WITH ignored AS (
+	SELECT
+		$22::bigint,
+		$25::timestamptz,
+		$26::timestamptz,
+		$27::timestamptz
+), namespace AS (
+	SELECT COALESCE (
+		NULLIF($23, 0),
+		(SELECT id FROM namespaces WHERE name = $1 AND deleted_at IS NULL)
+	) AS id
+), config AS (
+	SELECT COALESCE (
+		NULLIF($24, 0),
+		(SELECT id FROM entity_configs
+			WHERE
+				namespace_id = (SELECT id FROM namespace) AND
+				name = $2 AND
+				deleted_at IS NULL
+		)) AS id
+), upsert AS (
+	UPDATE entity_states SET
+		last_seen = $3,
+		selectors = $4,
+		annotations = $5,
+		deleted_at = NULL
+	WHERE
+		name = $2 AND
+		namespace_id = (SELECT id FROM namespace) AND
+		entity_config_id = (SELECT id FROM config) AND
+		entity_states.deleted_at IS NOT NULL
+	RETURNING *
+), state AS (
+	INSERT INTO entity_states (
+		entity_config_id,
+		namespace_id,
+		name,
+		expires_at,
+		last_seen,
+		selectors,
+		annotations
+	)
+	SELECT
+		(SELECT id FROM config),
+		(SELECT id FROM namespace),
+		$2,
+		now(),
+		$3,
+		$4,
+		$5
+	WHERE NOT EXISTS (SELECT * FROM upsert)
+	RETURNING id
+), system AS (
+	SELECT
+		state.id AS entity_id,
+		$6::text AS hostname,
+		$7::text AS os,
+		$8::text AS platform,
+		$9::text AS platform_family,
+		$10::text AS platform_version,
+		$11::text AS arch,
+		$12::integer AS arm_version, -- TODO(eric): is this a bug? Doesn't work without the cast.
+		$13::text AS libc_type,
+		$14::text AS vm_system,
+		$15::text AS vm_role,
+		$16::text AS cloud_provider,
+		$17::text AS float_type,
+		$18::text AS sensu_agent_version
+	FROM state
+), networks AS (
+	SELECT
+		nics.name AS name,
+		nics.mac AS mac,
+		nics.addresses AS addresses
+	FROM UNNEST(
+		cast($19 AS text[]),
+		cast($20 AS text[]),
+		cast($21 AS jsonb[])
+	) AS nics ( name, mac, addresses )
+), sys_update AS (
+	-- Insert or update the entity's system object.
+	INSERT INTO entities_systems SELECT * FROM system
+	ON CONFLICT (entity_id) DO UPDATE SET (
+		hostname,
+		os,
+		platform,
+		platform_family,
+		platform_version,
+		arch,
+		arm_version,
+		libc_type,
+		vm_system,
+		vm_role,
+		cloud_provider,
+		float_type,
+		sensu_agent_version
+	) = (
+	-- Update the system if it exists already.
+		SELECT
+			hostname,
+			os,
+			platform,
+			platform_family,
+			platform_version,
+			arch,
+			arm_version,
+			libc_type,
+			vm_system,
+			vm_role,
+			cloud_provider,
+			float_type,
+			sensu_agent_version
+		FROM system
+	)
+), del AS (
+	-- Clear networks belonging to the current entity.
+	DELETE FROM entities_networks
+	USING state, networks
+	WHERE entity_id = state.id
+)
+-- Insert the networks from the current set.
+INSERT INTO entities_networks
+SELECT DISTINCT state.id, networks.name, networks.mac, networks.addresses
+FROM state, networks
+`
+
+const updateIfExistsEntityStateQuery = `
+-- This query updates the entity state, but only if it exists.
+--
+WITH ignored AS (
+	SELECT
+		$22::bigint,
+		$23::bigint,
+		$24::bigint,
+		$25::timestamptz,
+		$26::timestamptz,
+		$27::timestamptz
+), namespace AS (
+	SELECT id FROM namespaces
+	WHERE namespaces.name = $1 AND deleted_at IS NULL
+), state AS (
+	SELECT id FROM entity_states
+	WHERE
+		entity_states.namespace_id = (SELECT id FROM namespace) AND
+		entity_states.name = $2
+), upd AS (
+	UPDATE entity_states
+	SET
+		last_seen = $3,
+		selectors = $4,
+		annotations = $5,
+		deleted_at = NULL
+	FROM state
+	WHERE state.id = entity_states.id
+), system AS (
+	SELECT
+		state.id AS entity_id,
+		$6::text AS hostname,
+		$7::text AS os,
+		$8::text AS platform,
+		$9::text AS platform_family,
+		$10::text AS platform_version,
+		$11::text AS arch,
+		$12::integer AS arm_version, -- TODO(eric): is this a bug? Doesn't work without the cast.
+		$13::text AS libc_type,
+		$14::text AS vm_system,
+		$15::text AS vm_role,
+		$16::text AS cloud_provider,
+		$17::text AS float_type,
+		$18::text AS sensu_agent_version
+	FROM state
+), networks AS (
+	SELECT
+		nics.name AS name,
+		nics.mac AS mac,
+		nics.addresses AS addresses
+		FROM UNNEST(
+			cast($19 AS text[]),
+			cast($20 AS text[]),
+			cast($21 AS jsonb[])
+		)
+	AS nics ( name, mac, addresses )
+), sys_update AS (
+	-- Insert or update the entity's system object.
+	INSERT INTO entities_systems
+	SELECT * FROM system
+	ON CONFLICT (entity_id) DO UPDATE SET (
+		hostname,
+		os,
+		platform,
+		platform_family,
+		platform_version,
+		arch,
+		arm_version,
+		libc_type,
+		vm_system,
+		vm_role,
+		cloud_provider,
+		float_type,
+		sensu_agent_version
+	) = (
+	-- Update the system if it exists already.
+		SELECT
+			hostname,
+			os,
+			platform,
+			platform_family,
+			platform_version,
+			arch,
+			arm_version,
+			libc_type,
+			vm_system,
+			vm_role,
+			cloud_provider,
+			float_type,
+			sensu_agent_version
+		FROM system
+	)
+), del AS (
 	-- Delete the networks that are not in the current set.
 	DELETE FROM entities_networks
 	USING state, networks
 	WHERE entity_id = state.id
-	AND ( entities_networks.name, entities_networks.mac, entities_networks.addresses ) NOT IN (SELECT * FROM networks)
 ), ins AS (
 	-- Insert the networks that are new in the current set.
 	INSERT INTO entities_networks
-	SELECT state.id, networks.name, networks.mac, networks.addresses
+	SELECT DISTINCT state.id, networks.name, networks.mac, networks.addresses
 	FROM state, networks
-	ON CONFLICT ( entity_id, name, mac, addresses ) DO NOTHING
 )
 SELECT * FROM state;
 `
@@ -385,7 +438,7 @@ const getEntityStatesQuery = `
 --
 WITH namespace AS (
 	SELECT id, name FROM namespaces
-	WHERE namespaces.name = $1
+	WHERE name = $1 AND deleted_at IS NULL
 ), state AS (
 	SELECT entity_states.id AS id
 	FROM entity_states
@@ -490,16 +543,35 @@ const listEntityStateQuery = `
 --
 WITH namespace AS (
 	SELECT id, name FROM namespaces
-	WHERE namespaces.name = $1 OR $1 IS NULL
+	WHERE name = $1 OR $1 IS NULL AND deleted_at IS NULL
 ), network AS (
 	SELECT
-		entity_states.id as entity_id,
+		entity_states.id AS entity_id,
 		array_agg(entities_networks.name) AS names,
 		array_agg(entities_networks.mac) AS macs,
 		array_agg(entities_networks.addresses) AS addresses
-	FROM entities_networks, entity_states
-	WHERE entity_states.namespace_id = (SELECT id FROM namespace) OR $1 IS NULL
+	FROM entities_networks
+	LEFT OUTER JOIN entity_states ON entity_states.id = entities_networks.entity_id
+	WHERE entity_states.namespace_id = (SELECT id FROM namespace)
 	GROUP BY entity_states.id
+), system AS (
+	SELECT
+		entity_states.id AS entity_id,
+		entities_systems.hostname,
+		entities_systems.os,
+		entities_systems.platform,
+		entities_systems.platform_family,
+		entities_systems.platform_version,
+		entities_systems.arch,
+		entities_systems.arm_version,
+		entities_systems.libc_type,
+		entities_systems.vm_system,
+		entities_systems.vm_role,
+		entities_systems.cloud_provider,
+		entities_systems.float_type,
+		entities_systems.sensu_agent_version
+	FROM entities_systems LEFT OUTER JOIN entity_states ON entity_states.id = entities_systems.entity_id
+	WHERE entity_states.namespace_id = (SELECT id FROM namespace)
 )
 SELECT 
 	namespace.name,
@@ -507,19 +579,19 @@ SELECT
 	entity_states.last_seen,
 	entity_states.selectors,
 	entity_states.annotations,
-	entities_systems.hostname,
-	entities_systems.os,
-	entities_systems.platform,
-	entities_systems.platform_family,
-	entities_systems.platform_version,
-	entities_systems.arch,
-	entities_systems.arm_version,
-	entities_systems.libc_type,
-	entities_systems.vm_system,
-	entities_systems.vm_role,
-	entities_systems.cloud_provider,
-	entities_systems.float_type,
-	entities_systems.sensu_agent_version,
+	system.hostname,
+	system.os,
+	system.platform,
+	system.platform_family,
+	system.platform_version,
+	system.arch,
+	system.arm_version,
+	system.libc_type,
+	system.vm_system,
+	system.vm_role,
+	system.cloud_provider,
+	system.float_type,
+	system.sensu_agent_version,
 	network.names,
 	network.macs,
 	network.addresses::text[],
@@ -529,50 +601,69 @@ SELECT
 	entity_states.created_at,
 	entity_states.updated_at,
 	entity_states.deleted_at
-FROM entity_states LEFT OUTER JOIN entities_systems ON entity_states.id = entities_systems.entity_id, network, namespace
-WHERE
-	network.entity_id = entity_states.id AND
-	entity_states.deleted_at IS NULL
+FROM entity_states
+LEFT OUTER JOIN namespace ON entity_states.namespace_id = namespace.id
+LEFT OUTER JOIN system ON entity_states.id = system.entity_id
+LEFT OUTER JOIN network ON entity_states.id = network.entity_id
 ORDER BY ( namespace.name, entity_states.name ) ASC
 LIMIT $2
 OFFSET $3
 `
 
 const listEntityStateDescQuery = `
--- This query lists entities from a given namespace.
+-- This query lists entity states from a given namespace.
 --
 WITH namespace AS (
 	SELECT id, name FROM namespaces
-	WHERE namespaces.name = $1 OR $1 IS NULL
+	WHERE name = $1 OR $1 IS NULL AND deleted_at IS NULL
 ), network AS (
 	SELECT
-		entity_states.id as entity_id,
+		entity_states.id AS entity_id,
 		array_agg(entities_networks.name) AS names,
 		array_agg(entities_networks.mac) AS macs,
 		array_agg(entities_networks.addresses) AS addresses
-	FROM entities_networks, entity_states
-	WHERE entity_states.namespace_id = (SELECT id FROM namespace) OR $1 IS NULL
+	FROM entities_networks
+	LEFT OUTER JOIN entity_states ON entity_states.id = entities_networks.entity_id
+	WHERE entity_states.namespace_id = (SELECT id FROM namespace)
 	GROUP BY entity_states.id
+), system AS (
+	SELECT
+		entity_states.id AS entity_id,
+		entities_systems.hostname,
+		entities_systems.os,
+		entities_systems.platform,
+		entities_systems.platform_family,
+		entities_systems.platform_version,
+		entities_systems.arch,
+		entities_systems.arm_version,
+		entities_systems.libc_type,
+		entities_systems.vm_system,
+		entities_systems.vm_role,
+		entities_systems.cloud_provider,
+		entities_systems.float_type,
+		entities_systems.sensu_agent_version
+	FROM entities_systems LEFT OUTER JOIN entity_states ON entity_states.id = entities_systems.entity_id
+	WHERE entity_states.namespace_id = (SELECT id FROM namespace)
 )
-SELECT 
+SELECT
 	namespace.name,
 	entity_states.name,
 	entity_states.last_seen,
 	entity_states.selectors,
 	entity_states.annotations,
-	entities_systems.hostname,
-	entities_systems.os,
-	entities_systems.platform,
-	entities_systems.platform_family,
-	entities_systems.platform_version,
-	entities_systems.arch,
-	entities_systems.arm_version,
-	entities_systems.libc_type,
-	entities_systems.vm_system,
-	entities_systems.vm_role,
-	entities_systems.cloud_provider,
-	entities_systems.float_type,
-	entities_systems.sensu_agent_version,
+	system.hostname,
+	system.os,
+	system.platform,
+	system.platform_family,
+	system.platform_version,
+	system.arch,
+	system.arm_version,
+	system.libc_type,
+	system.vm_system,
+	system.vm_role,
+	system.cloud_provider,
+	system.float_type,
+	system.sensu_agent_version,
 	network.names,
 	network.macs,
 	network.addresses::text[],
@@ -582,10 +673,10 @@ SELECT
 	entity_states.created_at,
 	entity_states.updated_at,
 	entity_states.deleted_at
-FROM entity_states LEFT OUTER JOIN entities_systems ON entity_states.id = entities_systems.entity_id, network, namespace
-WHERE
-	network.entity_id = entity_states.id AND
-	entity_states.deleted_at IS NULL
+FROM entity_states
+LEFT OUTER JOIN namespace ON entity_states.namespace_id = namespace.id
+LEFT OUTER JOIN system ON entity_states.id = system.entity_id
+LEFT OUTER JOIN network ON entity_states.id = network.entity_id
 ORDER BY ( namespace.name, entity_states.name ) DESC
 LIMIT $2
 OFFSET $3

@@ -19,6 +19,8 @@ var (
 	namespaceUniqueConstraint = "namespace_unique"
 )
 
+type uniqueNamespaces map[uniqueResource]*corev3.Namespace
+
 type NamespaceStore struct {
 	db *pgxpool.Pool
 }
@@ -134,6 +136,56 @@ func (s *NamespaceStore) Get(ctx context.Context, name string) (*corev3.Namespac
 	}
 
 	return &namespace, nil
+}
+
+// GetMultiple retrieves multiple namespaces for a given list of names.
+func (s *NamespaceStore) GetMultiple(ctx context.Context, resources []string) (uniqueNamespaces, error) {
+	if len(resources) == 0 {
+		return nil, nil
+	}
+
+	tx, err := s.db.Begin(ctx)
+	if err != nil {
+		return nil, err
+	}
+	defer func() {
+		if err := tx.Commit(ctx); err != nil && err != pgx.ErrTxClosed {
+			logger.WithError(err).Error("error committing transaction for GetMultiple()")
+		}
+	}()
+
+	namespaces := uniqueNamespaces{}
+	rows, err := tx.Query(ctx, getNamespacesQuery, resources)
+	if err != nil {
+		return nil, err
+	}
+
+	for rows.Next() {
+		wrapper := &NamespaceWrapper{}
+		if err := rows.Scan(wrapper.SQLParams()...); err != nil {
+			if err == pgx.ErrNoRows {
+				continue
+			}
+			return nil, &store.ErrInternal{Message: err.Error()}
+		}
+
+		namespace := &corev3.Namespace{}
+		if err := wrapper.unwrapIntoNamespace(namespace); err != nil {
+			return nil, &store.ErrInternal{Message: err.Error()}
+		}
+
+		key := uniqueResource{
+			Name:      namespace.Metadata.Name,
+			Namespace: "",
+		}
+		namespaces[key] = namespace
+	}
+
+	if err := tx.Commit(ctx); err != nil {
+		return nil, fmt.Errorf("error committing transaction for GetMultiple()")
+	}
+
+	return namespaces, nil
 }
 
 // HardDelete hard deletes a namespace using the given namespace name.

@@ -103,6 +103,13 @@ func (p *Proxy) EntityConfigStore() EntityConfigStore {
 	return p.impl.EntityConfigStore()
 }
 
+// EntityStateStore returns an EntityStateStore.
+func (p *Proxy) EntityStateStore() EntityStateStore {
+	p.mu.RLock()
+	defer p.mu.RUnlock()
+	return p.impl.EntityStateStore()
+}
+
 // Initialize sets up a cluster with the default resources & config.
 func (p *Proxy) Initialize(ctx context.Context, fn InitializeFunc) error {
 	p.mu.RLock()

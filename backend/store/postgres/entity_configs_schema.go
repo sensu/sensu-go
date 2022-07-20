@@ -31,7 +31,7 @@ WITH ignored AS (
 ), namespace AS (
 	SELECT COALESCE (
 		NULLIF($14, 0),
-		(SELECT id FROM namespaces WHERE name = $1)
+		(SELECT id FROM namespaces WHERE name = $1 AND deleted_at IS NULL)
 	) AS id
 )
 INSERT INTO entity_configs (
@@ -48,7 +48,10 @@ INSERT INTO entity_configs (
 	keepalive_handlers,
 	redact,
 	deleted_at
-) VALUES ( (SELECT id FROM namespace), $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, NULL )
+) VALUES (
+	(SELECT id FROM namespace),
+	$2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, NULL
+)
 ON CONFLICT ( namespace_id, name )
 DO UPDATE
 SET
@@ -97,7 +100,7 @@ WITH ignored AS (
 		deleted_at = NULL
 	WHERE
 		name = $2 AND
-		namespace_id = (SELECT id FROM namespace WHERE id IS NOT NULL) AND
+		namespace_id = (SELECT id FROM namespace) AND
 		entity_configs.deleted_at IS NOT NULL
 	RETURNING *
 )
@@ -131,11 +134,13 @@ WITH ignored AS (
 ), namespace AS (
 	SELECT COALESCE (
 		NULLIF($14, 0),
-		(SELECT id FROM namespaces WHERE name = $1)
+		(SELECT id FROM namespaces WHERE name = $1 AND deleted_at IS NULL)
 	) AS id
 ), config AS (
 	SELECT id FROM entity_configs
-	WHERE namespace_id = (SELECT id FROM namespace) AND name = $2
+	WHERE
+		namespace_id = (SELECT id FROM namespace) AND
+		name = $2
 ), upd AS (
 	UPDATE entity_configs
 	SET
@@ -210,6 +215,7 @@ FROM entity_configs
 LEFT OUTER JOIN namespaces ON namespaces.id = entity_configs.namespace_id
 WHERE
 	namespaces.name = $1 AND
+	namespaces.deleted_at IS NULL AND
 	entity_configs.name IN (SELECT unnest($2::text[])) AND
 	entity_configs.deleted_at IS NULL
 `
@@ -288,6 +294,7 @@ FROM entity_configs
 LEFT OUTER JOIN namespaces ON entity_configs.namespace_id = namespaces.id
 WHERE
 	namespaces.name = $1 OR $1 IS NULL AND
+	namespaces.deleted_at IS NULL AND
 	entity_configs.deleted_at IS NULL
 ORDER BY ( namespaces.name, entity_configs.name ) ASC
 LIMIT $2

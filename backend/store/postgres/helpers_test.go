@@ -223,13 +223,20 @@ func deleteEntityConfig(tb testing.TB, s storev2.Interface, namespace, name stri
 	}
 }
 
-func createEntityState(tb testing.TB, s storev2.Interface, name string) {
+func createEntityState(tb testing.TB, s storev2.Interface, namespace, name string) {
 	tb.Helper()
 	ctx := context.Background()
-	state := corev3.FixtureEntityState(name)
-	req := storev2.NewResourceRequestFromResource(state)
-	wrapper := WrapEntityState(state)
-	if err := s.CreateIfNotExists(ctx, req, wrapper); err != nil {
+	cfg := corev3.FixtureEntityState(name)
+	cfg.Metadata.Namespace = namespace
+	if err := s.EntityStateStore().CreateIfNotExists(ctx, cfg); err != nil {
+		tb.Error(err)
+	}
+}
+
+func deleteEntityState(tb testing.TB, s storev2.Interface, namespace, name string) {
+	tb.Helper()
+	ctx := context.Background()
+	if err := s.EntityStateStore().Delete(ctx, namespace, name); err != nil {
 		tb.Error(err)
 	}
 }

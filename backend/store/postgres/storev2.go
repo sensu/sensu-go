@@ -51,10 +51,6 @@ const (
 	hardDeletedQ       crudOp = 11
 )
 
-var (
-	entityStateStoreName = new(corev3.EntityState).StoreName()
-)
-
 type wrapperWithParams interface {
 	storev2.Wrapper
 	SQLParams() []any
@@ -74,6 +70,8 @@ type wrapperWithStatus interface {
 	SetUpdatedAt(time.Time)
 	SetDeletedAt(sql.NullTime)
 }
+
+type namespacedResourceNames map[string][]string
 
 type resourceRequestWrapperMap map[storev2.ResourceRequest]storev2.Wrapper
 
@@ -106,8 +104,6 @@ func newStoreV2Error(method, storeName string, err error) error {
 func (s *StoreV2) lookupWrapper(req storev2.ResourceRequest, op crudOp) namedWrapperWithParams {
 	storeName := req.StoreName
 	switch storeName {
-	case entityStateStoreName:
-		return &EntityStateWrapper{}
 	default:
 		msg := fmt.Sprintf("no wrapper type defined for store: %s", storeName)
 		panic(msg)
@@ -116,40 +112,8 @@ func (s *StoreV2) lookupWrapper(req storev2.ResourceRequest, op crudOp) namedWra
 
 func (s *StoreV2) lookupQuery(req storev2.ResourceRequest, op crudOp) (string, bool) {
 	storeName := req.StoreName
-	ordering := req.SortOrder
+	//ordering := req.SortOrder
 	switch storeName {
-	case entityStateStoreName:
-		switch op {
-		case createOrUpdateQ:
-			return createOrUpdateEntityStateQuery, true
-		case updateIfExistsQ:
-			return updateIfExistsEntityStateQuery, true
-		case createIfNotExistsQ:
-			return createIfNotExistsEntityStateQuery, true
-		case getQ:
-			return getEntityStateQuery, true
-		case getMultipleQ:
-			return getEntityStatesQuery, true
-		case deleteQ:
-			return deleteEntityStateQuery, true
-		case hardDeleteQ:
-			return hardDeleteEntityStateQuery, true
-		case listQ, listAllQ:
-			switch ordering {
-			case storev2.SortDescend:
-				return listEntityStateDescQuery, true
-			default:
-				return listEntityStateQuery, true
-			}
-		case existsQ:
-			return existsEntityStateQuery, true
-		case hardDeletedQ:
-			return hardDeletedEntityStateQuery, true
-		case patchQ:
-			return patchEntityStateQuery, true
-		default:
-			return "", false
-		}
 	default:
 		return "", false
 	}
@@ -710,6 +674,10 @@ func (s *StoreV2) NamespaceStore() storev2.NamespaceStore {
 
 func (s *StoreV2) EntityConfigStore() storev2.EntityConfigStore {
 	return NewEntityConfigStore(s.db)
+}
+
+func (s *StoreV2) EntityStateStore() storev2.EntityStateStore {
+	return NewEntityStateStore(s.db)
 }
 
 func (s *StoreV2) Initialize(ctx context.Context, fn storev2.InitializeFunc) error {
