@@ -1,12 +1,12 @@
 version: 2.1
 
 orbs:
-  go: circleci/go@1.1.2
+  go: circleci/go@1.7.1
 
 parameters:
   go_version:
     type: string
-    default: "1.17.6"
+    default: "1.17.12"
 
 sensu_go_build_env: &sensu_go_build_env
   docker:
