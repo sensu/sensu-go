@@ -38,8 +38,8 @@ func (d *Deregistration) Deregister(entity *corev2.Entity) error {
 	tctx, cancel := context.WithTimeout(ctx, d.StoreTimeout)
 	defer cancel()
 
-	rr := storev2.NewResourceRequestFromV2Resource(tctx, entity)
-	if err := d.EntityStore.Delete(rr); err != nil {
+	rr := storev2.NewResourceRequestFromV2Resource(entity)
+	if err := d.EntityStore.Delete(tctx, rr); err != nil {
 		return fmt.Errorf("error deleting entity in store: %s", err)
 	}
 

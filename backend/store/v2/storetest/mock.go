@@ -3,13 +3,17 @@ package storetest
 import (
 	"context"
 
+	"github.com/stretchr/testify/mock"
+
+	corev2 "github.com/sensu/sensu-go/api/core/v2"
+	corev3 "github.com/sensu/sensu-go/api/core/v3"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/backend/store/patch"
 	storev2 "github.com/sensu/sensu-go/backend/store/v2"
-	"github.com/stretchr/testify/mock"
 )
 
 var _ storev2.Interface = new(Store)
+var _ storev2.KeepaliveStore = new(KeepaliveStore)
 
 type Store struct {
 	mock.Mock
@@ -74,5 +78,24 @@ func (s *Store) EntityStateStore() storev2.EntityStateStore {
 
 func (s *Store) Initialize(ctx context.Context, fn storev2.InitializeFunc) error {
 	args := s.Called(ctx, fn)
+	return args.Error(0)
+}
+
+type KeepaliveStore struct {
+	mock.Mock
+}
+
+func (s *KeepaliveStore) DeleteFailingKeepalive(ctx context.Context, entityConfig *corev3.EntityConfig) error {
+	args := s.Called(ctx, entityConfig)
+	return args.Error(0)
+}
+
+func (s *KeepaliveStore) GetFailingKeepalives(ctx context.Context) ([]*corev2.KeepaliveRecord, error) {
+	args := s.Called(ctx)
+	return args.Get(0).([]*corev2.KeepaliveRecord), args.Error(1)
+}
+
+func (s *KeepaliveStore) UpdateFailingKeepalive(ctx context.Context, entityConfig *corev3.EntityConfig, expiration int64) error {
+	args := s.Called(ctx, entityConfig, expiration)
 	return args.Error(0)
 }

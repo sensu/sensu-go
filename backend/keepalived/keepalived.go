@@ -62,6 +62,7 @@ type Keepalived struct {
 	workerCount           int
 	store                 storev2.Interface
 	eventStore            store.EventStore
+	keepaliveStore        storev2.KeepaliveStore
 	deregistrationHandler string
 	mu                    *sync.Mutex
 	wg                    *sync.WaitGroup
@@ -84,6 +85,7 @@ type Config struct {
 	Client                clientv3.KV
 	Store                 storev2.Interface
 	EventStore            store.EventStore
+	KeepaliveStore        storev2.KeepaliveStore
 	Bus                   messaging.MessageBus
 	LivenessFactory       liveness.Factory
 	DeregistrationHandler string
@@ -120,6 +122,7 @@ func New(c Config, opts ...Option) (*Keepalived, error) {
 		client:                c.Client,
 		store:                 c.Store,
 		eventStore:            c.EventStore,
+		keepaliveStore:        c.KeepaliveStore,
 		bus:                   c.Bus,
 		deregistrationHandler: c.DeregistrationHandler,
 		livenessFactory:       c.LivenessFactory,
@@ -191,8 +194,7 @@ func (k *Keepalived) initFromStore(ctx context.Context) error {
 	// For which clients were we previously alerting?
 	tctx, cancel := context.WithTimeout(ctx, k.storeTimeout)
 	defer cancel()
-	// TODO(ccressent): we need some form of "state store" to deal with this
-	keepalives, err := k.store.GetFailingKeepalives(tctx)
+	keepalives, err := k.keepaliveStore.GetFailingKeepalives(tctx)
 	if err != nil {
 		return err
 	}
@@ -633,8 +635,7 @@ func (k *Keepalived) dead(key string, prev liveness.State, leader bool) bool {
 
 	expiration := time.Now().Unix() + int64(event.Check.Timeout)
 
-	// TODO(ccressent): we need some form of "state store" to deal with this
-	if err := k.store.UpdateFailingKeepalive(ctx, event.Entity, expiration); err != nil {
+	if err := k.keepaliveStore.UpdateFailingKeepalive(ctx, &entityConfig, expiration); err != nil {
 		lager.WithError(err).Error("error updating keepalive")
 		return false
 	}
@@ -674,8 +675,8 @@ func (k *Keepalived) handleUpdate(e *corev2.Event) error {
 	entity := e.Entity
 
 	ctx := corev2.SetContextFromResource(context.Background(), entity)
-	// TODO(ccressent): we need some form of "state store" to deal with this
-	if err := k.store.DeleteFailingKeepalive(ctx, e.Entity); err != nil {
+	entityConfig, _ := corev3.V2EntityToV3(e.Entity)
+	if err := k.keepaliveStore.DeleteFailingKeepalive(ctx, entityConfig); err != nil {
 		// Warning: do not wrap this error
 		return err
 	}

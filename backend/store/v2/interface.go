@@ -3,6 +3,7 @@ package v2
 import (
 	"context"
 
+	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	corev3 "github.com/sensu/sensu-go/api/core/v3"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/backend/store/patch"
@@ -163,6 +164,21 @@ type EntityStateStore interface {
 	// Patch patches the corev3.EntityState resource with the provided
 	// namespace and name.
 	Patch(context.Context, string, string, patch.Patcher, *store.ETagCondition) error
+}
+
+// KeepaliveStore provides an interface for interacting with keepalives.
+type KeepaliveStore interface {
+	// DeleteFailingKeepalive deletes a failing keepalive record for a given entity.
+	DeleteFailingKeepalive(ctx context.Context, entityConfig *corev3.EntityConfig) error
+
+	// GetFailingKeepalives returns a slice of failing keepalives.
+	// TODO: create a corev3.KeepaliveRecord type so we can remove the
+	// dependency on corev2
+	GetFailingKeepalives(ctx context.Context) ([]*corev2.KeepaliveRecord, error)
+
+	// UpdateFailingKeepalive updates the given entity keepalive with the given expiration
+	// in unix timestamp format
+	UpdateFailingKeepalive(ctx context.Context, entityConfig *corev3.EntityConfig, expiration int64) error
 }
 
 // Initialize sets up a cluster with the default resources & config.
