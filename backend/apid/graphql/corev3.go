@@ -59,12 +59,6 @@ func (*corev3EntityStateImpl) ToJSON(p graphql.ResolveParams) (interface{}, erro
 	return types.WrapResource(p.Source.(types.Resource)), nil
 }
 
-// IsTypeOf is used to determine if a given value is associated with the type
-func (*corev3EntityStateImpl) IsTypeOf(s interface{}, p graphql.IsTypeOfParams) bool {
-	_, ok := s.(*corev3.EntityState)
-	return ok
-}
-
 // State implements response to request for 'state' field.
 func (i *corev3EntityStateImpl) Config(p graphql.ResolveParams) (interface{}, error) {
 	state := p.Source.(*corev3.EntityState)
@@ -75,4 +69,10 @@ func (i *corev3EntityStateImpl) Config(p graphql.ResolveParams) (interface{}, er
 		return nil, nil
 	}
 	return val.Resource, err
+}
+
+// IsTypeOf is used to determine if a given value is associated with the type
+func (*corev3EntityStateImpl) IsTypeOf(s interface{}, p graphql.IsTypeOfParams) bool {
+	_, ok := s.(*corev3.EntityState)
+	return ok
 }
