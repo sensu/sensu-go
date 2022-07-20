@@ -72,7 +72,7 @@ func (i *corev3EntityStateImpl) Config(p graphql.ResolveParams) (interface{}, er
 }
 
 // IsTypeOf is used to determine if a given value is associated with the type
-func (*corev3EntityStateImpl) IsTypeOf(s interface{}, p graphql.IsTypeOfParams) bool {
+func (i *corev3EntityStateImpl) IsTypeOf(s interface{}, p graphql.IsTypeOfParams) bool {
 	_, ok := s.(*corev3.EntityState)
 	return ok
 }
