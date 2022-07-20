@@ -151,6 +151,41 @@ type CoreV2RoleBinding {
   metadata: ObjectMeta!
 }
 
+"""RoleRef maps groups to Roles or ClusterRoles."""
+type CoreV2RoleRef {
+  
+  """Type of role being referenced."""
+  type: String!
+  
+  """Name of the resource being referenced"""
+  name: String!
+}
+
+"""Rule holds information that describes an action that can be taken"""
+type CoreV2Rule {
+  
+  """
+  Verbs is a list of verbs that apply to all of the listed resources for
+  this rule. These include "get", "list", "watch", "create", "update",
+  "delete".
+  TODO: add support for "patch" (this is expensive and should be delayed
+  until a further release). TODO: add support for "watch" (via websockets)
+  """
+  verbs: [String!]!
+  
+  """
+  Resources is a list of resources that this rule applies to. "*"
+  represents all resources.
+  """
+  resources: [String!]!
+  
+  """
+  ResourceNames is an optional list of resource names that the rule applies
+  to.
+  """
+  resource_names: [String!]!
+}
+
 """A Secret is a secret specification."""
 type CoreV2Secret {
   
