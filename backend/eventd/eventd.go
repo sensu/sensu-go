@@ -677,11 +677,11 @@ func (e *Eventd) dead(key string, prev liveness.State, leader bool) (bury bool) 
 	req := storev2.NewResourceRequestFromResource(config)
 
 	_, err = e.store.Get(ctx, req)
-	if _, ok := err.(*storev2.ErrNotFound); ok {
+	if _, ok := err.(*store.ErrNotFound); ok {
 		return true
 	} else if err != nil {
 		lager.WithError(err).Error("check ttl: error retrieving entity")
-		if _, ok := err.(*storev2.ErrInternal); ok {
+		if _, ok := err.(*store.ErrInternal); ok {
 			// Fatal error
 			select {
 			case e.errChan <- err:
@@ -706,7 +706,7 @@ func (e *Eventd) dead(key string, prev liveness.State, leader bool) (bury bool) 
 	event, err := e.eventStore.GetEventByEntityCheck(ctx, entity, check)
 	if err != nil {
 		lager.WithError(err).Error("check ttl: error retrieving event")
-		if _, ok := err.(*storev2.ErrInternal); ok {
+		if _, ok := err.(*store.ErrInternal); ok {
 			// Fatal error
 			select {
 			case e.errChan <- err:
@@ -759,7 +759,7 @@ func (e *Eventd) handleFailure(ctx context.Context, event *corev2.Event) error {
 	}
 	updatedEvent, _, err := e.eventStore.UpdateEvent(ctx, failedCheckEvent)
 	if err != nil {
-		if _, ok := err.(*storev2.ErrInternal); ok {
+		if _, ok := err.(*store.ErrInternal); ok {
 			// Fatal error
 			select {
 			case e.errChan <- err:
@@ -782,7 +782,7 @@ func (e *Eventd) createFailedCheckEvent(ctx context.Context, event *corev2.Event
 		ctx, event.Entity.Name, event.Check.Name,
 	)
 	if err != nil {
-		if _, ok := err.(*storev2.ErrInternal); ok {
+		if _, ok := err.(*store.ErrInternal); ok {
 			// Fatal error
 			select {
 			case e.errChan <- err:

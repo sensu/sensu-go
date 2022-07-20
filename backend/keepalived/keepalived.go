@@ -290,7 +290,7 @@ func (k *Keepalived) processKeepalives(ctx context.Context) {
 				err := switches.BuryAndRevokeLease(tctx, id)
 				cancel()
 				if err != nil {
-					if _, ok := err.(*storev2.ErrInternal); ok {
+					if _, ok := err.(*store.ErrInternal); ok {
 						// Fatal error
 						select {
 						case k.errChan <- err:
@@ -307,7 +307,7 @@ func (k *Keepalived) processKeepalives(ctx context.Context) {
 
 			if err := k.handleEntityRegistration(entity, event); err != nil {
 				logger.WithError(err).Error("error handling entity registration")
-				if _, ok := err.(*storev2.ErrInternal); ok {
+				if _, ok := err.(*store.ErrInternal); ok {
 					// Fatal error
 					select {
 					case k.errChan <- err:
@@ -329,7 +329,7 @@ func (k *Keepalived) processKeepalives(ctx context.Context) {
 			cancel()
 			if err != nil {
 				logger.WithError(err).Errorf("error on switch %q", id)
-				if _, ok := err.(*storev2.ErrInternal); ok {
+				if _, ok := err.(*store.ErrInternal); ok {
 					// Fatal error
 					select {
 					case k.errChan <- err:
@@ -342,7 +342,7 @@ func (k *Keepalived) processKeepalives(ctx context.Context) {
 
 			if err := k.handleUpdate(event); err != nil {
 				logger.WithError(err).Error("error updating event")
-				if _, ok := err.(*storev2.ErrInternal); ok {
+				if _, ok := err.(*store.ErrInternal); ok {
 					// Fatal error
 					select {
 					case k.errChan <- err:
@@ -381,7 +381,7 @@ func (k *Keepalived) handleEntityRegistration(entity *corev2.Entity, event *core
 	exists := true
 	wrappedEntityConfig, err := k.store.Get(tctx, req)
 	if err != nil {
-		if _, ok := err.(*storev2.ErrNotFound); !ok {
+		if _, ok := err.(*store.ErrNotFound); !ok {
 			logger.WithError(err).Error("error while checking if entity exists")
 			return err
 		}
@@ -432,7 +432,7 @@ func (k *Keepalived) handleEntityRegistration(entity *corev2.Entity, event *core
 	if err := k.store.CreateIfNotExists(tctx, req, wrapper); err == nil {
 		event := createRegistrationEvent(entity)
 		return k.bus.Publish(messaging.TopicEvent, event)
-	} else if _, ok := err.(*storev2.ErrAlreadyExists); ok {
+	} else if _, ok := err.(*store.ErrAlreadyExists); ok {
 		logger.WithError(err).Warn("received a check event before entity registration")
 		return nil
 	} else {
@@ -568,7 +568,7 @@ func (k *Keepalived) dead(key string, prev liveness.State, leader bool) bool {
 	req := storev2.NewResourceRequestFromResource(cfg)
 	wrapper, err := k.store.Get(ctx, req)
 	if err != nil {
-		if _, ok := err.(*storev2.ErrNotFound); ok {
+		if _, ok := err.(*store.ErrNotFound); ok {
 			// The entity has been deleted, there is no longer a need to track
 			// keepalives for it.
 			lager.Debug("nil entity")
