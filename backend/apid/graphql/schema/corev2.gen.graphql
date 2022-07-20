@@ -50,6 +50,30 @@ type CoreV2ClusterRoleBinding {
   metadata: ObjectMeta!
 }
 
+"""Deregistration contains configuration for Sensu entity de-registration."""
+type CoreV2Deregistration {
+  handler: String!
+}
+
+"""
+Network contains information about the system network interfaces
+that the Agent process is running on, used for additional Entity
+context.
+"""
+type CoreV2Network {
+  interfaces: [CoreV2NetworkInterface!]!
+}
+
+"""
+NetworkInterface contains information about a system network
+interface.
+"""
+type CoreV2NetworkInterface {
+  name: String!
+  mac: String!
+  addresses: [String!]!
+}
+
 """Pipeline represents a named collection of pipeline workflows."""
 type CoreV2Pipeline {
   
@@ -83,6 +107,11 @@ type CoreV2PipelineWorkflow {
   
   """Handler contains a reference to a resource to use as an event handler."""
   handler: CoreV2ResourceReference
+}
+
+"""Process contains information about a local process."""
+type CoreV2Process {
+  name: String!
 }
 
 """ResourceReference represents a reference to another resource."""
@@ -122,41 +151,6 @@ type CoreV2RoleBinding {
   metadata: ObjectMeta!
 }
 
-"""RoleRef maps groups to Roles or ClusterRoles."""
-type CoreV2RoleRef {
-  
-  """Type of role being referenced."""
-  type: String!
-  
-  """Name of the resource being referenced"""
-  name: String!
-}
-
-"""Rule holds information that describes an action that can be taken"""
-type CoreV2Rule {
-  
-  """
-  Verbs is a list of verbs that apply to all of the listed resources for
-  this rule. These include "get", "list", "watch", "create", "update",
-  "delete".
-  TODO: add support for "patch" (this is expensive and should be delayed
-  until a further release). TODO: add support for "watch" (via websockets)
-  """
-  verbs: [String!]!
-  
-  """
-  Resources is a list of resources that this rule applies to. "*"
-  represents all resources.
-  """
-  resources: [String!]!
-  
-  """
-  ResourceNames is an optional list of resource names that the rule applies
-  to.
-  """
-  resource_names: [String!]!
-}
-
 """A Secret is a secret specification."""
 type CoreV2Secret {
   
@@ -174,4 +168,38 @@ type CoreV2Subject {
   
   """Name of the referenced object"""
   name: String!
+}
+
+"""
+System contains information about the system that the Agent process
+is running on, used for additional Entity context.
+"""
+type CoreV2System {
+  hostname: String!
+  os: String!
+  platform: String!
+  platform_family: String!
+  platform_version: String!
+  network: CoreV2Network!
+  arch: String!
+  arm_version: Int!
+  
+  """
+  LibCType indicates the type of libc the agent has access to (glibc, musl,
+  etc)
+  """
+  libc_type: String!
+  
+  """VMSystem indicates the VM system of the agent (kvm, vbox, etc)"""
+  vm_system: String!
+  
+  """VMRole indicates the VM role of the agent (host/guest)"""
+  vm_role: String!
+  
+  """CloudProvider indicates the public cloud the agent is running on."""
+  cloud_provider: String!
+  float_type: String!
+  
+  """Processes contains information about the local processes on the agent."""
+  processes: [CoreV2Process]!
 }
