@@ -118,11 +118,6 @@ func getEntityComponent(ctx context.Context, client GenericClient, meta *corev2.
 	return nil, err
 }
 
-func getCoreV2Entity(ctx context.Context, client EntityClient, meta *corev2.ObjectMeta) (interface{}, error) {
-	ctx = contextWithNamespace(ctx, meta.Namespace)
-	return client.FetchEntity(ctx, meta.Name)
-}
-
 type corev3EntityStateImpl struct {
 	schema.CoreV3EntityStateAliases
 }
