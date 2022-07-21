@@ -3,6 +3,7 @@ package graphql
 import (
 	"context"
 	"errors"
+	"reflect"
 
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	corev3 "github.com/sensu/sensu-go/api/core/v3"
@@ -49,6 +50,9 @@ func (i *corev3EntityConfigExtImpl) State(p graphql.ResolveParams) (interface{},
 	obj := p.Source.(*corev3.EntityConfig)
 	val := corev3.V2ResourceProxy{Resource: &corev3.EntityState{}}
 	err := getEntityComponent(p.Context, i.client, obj.Metadata, &val)
+	if reflect.ValueOf(val.Resource).IsNil() {
+		return nil, err
+	}
 	return val.Resource, err
 }
 
@@ -86,6 +90,9 @@ func (i *corev3EntityStateExtImpl) Config(p graphql.ResolveParams) (interface{},
 	obj := p.Source.(*corev3.EntityState)
 	val := corev3.V2ResourceProxy{Resource: &corev3.EntityConfig{}}
 	err := getEntityComponent(p.Context, i.client, obj.Metadata, &val)
+	if reflect.ValueOf(val.Resource).IsNil() {
+		return nil, err
+	}
 	return val.Resource, err
 }
 
