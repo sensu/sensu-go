@@ -2,7 +2,6 @@ package graphql
 
 import (
 	"context"
-	"errors"
 
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	corev3 "github.com/sensu/sensu-go/api/core/v3"
@@ -95,10 +94,12 @@ func getEntityComponent(ctx context.Context, client GenericClient, meta *corev2.
 	}
 	ctx = contextWithNamespace(ctx, meta.Name)
 	proxy := &corev3.V2ResourceProxy{Resource: val}
-	if err := client.Get(ctx, meta.Name, proxy); err != nil && errors.Is(err, &store.ErrNotFound{}) {
+	if err = client.Get(ctx, meta.Name, proxy); err == nil {
+		return proxy.Resource, err
+	} else if _, ok := err.(*store.ErrNotFound); ok {
 		return nil, nil
 	}
-	return proxy.Resource, err
+	return nil, err
 }
 
 type corev3EntityStateImpl struct {
