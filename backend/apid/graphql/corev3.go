@@ -6,10 +6,26 @@ import (
 	corev3 "github.com/sensu/sensu-go/api/core/v3"
 	"github.com/sensu/sensu-go/backend/apid/graphql/globalid"
 	"github.com/sensu/sensu-go/backend/apid/graphql/schema"
+	util_api "github.com/sensu/sensu-go/backend/apid/graphql/util/api"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/graphql"
-	"github.com/sensu/sensu-go/types"
 )
+
+//
+// Constants
+//
+
+var (
+	// EntityCoreV3ConfigGlobalID can be used to produce a global id
+	GlobalIDCoreV3EntityConfig = globalid.NewGenericTranslator(&corev3.EntityConfig{}, "")
+
+	// EntityCoreV3StateGlobalID can be used to produce a global id
+	GlobalIDCoreV3EntityState = globalid.NewGenericTranslator(&corev3.EntityState{}, "")
+)
+
+//
+// EntityConfig
+//
 
 type corev3EntityConfigExtImpl struct {
 	schema.CoreV3EntityConfigAliases
@@ -18,12 +34,12 @@ type corev3EntityConfigExtImpl struct {
 
 // ID implements response to request for 'id' field.
 func (i *corev3EntityConfigExtImpl) ID(p graphql.ResolveParams) (string, error) {
-	return globalid.PipelineTranslator.EncodeToString(p.Context, p.Source), nil
+	return GlobalIDCoreV3EntityConfig.EncodeToString(p.Context, p.Source), nil
 }
 
 // ToJSON implements response to request for 'toJSON' field.
 func (i *corev3EntityConfigExtImpl) ToJSON(p graphql.ResolveParams) (interface{}, error) {
-	return types.WrapResource(p.Source.(types.Resource)), nil
+	return util_api.WrapResource(p.Source), nil
 }
 
 // State implements response to request for 'state' field.
@@ -48,6 +64,10 @@ func (*corev3EntityConfigImpl) IsTypeOf(s interface{}, p graphql.IsTypeOfParams)
 	return ok
 }
 
+//
+// EntityState
+//
+
 type corev3EntityStateExtImpl struct {
 	schema.CoreV3EntityStateAliases
 	client GenericClient
@@ -55,12 +75,12 @@ type corev3EntityStateExtImpl struct {
 
 // ID implements response to request for 'id' field.
 func (*corev3EntityStateExtImpl) ID(p graphql.ResolveParams) (string, error) {
-	return globalid.PipelineTranslator.EncodeToString(p.Context, p.Source), nil
+	return GlobalIDCoreV3EntityState.EncodeToString(p.Context, p.Source), nil
 }
 
 // ToJSON implements response to request for 'toJSON' field.
 func (*corev3EntityStateExtImpl) ToJSON(p graphql.ResolveParams) (interface{}, error) {
-	return types.WrapResource(p.Source.(types.Resource)), nil
+	return util_api.WrapResource(p.Source), nil
 }
 
 // State implements response to request for 'state' field.
@@ -83,4 +103,9 @@ type corev3EntityStateImpl struct {
 func (*corev3EntityStateImpl) IsTypeOf(s interface{}, p graphql.IsTypeOfParams) bool {
 	_, ok := s.(*corev3.EntityState)
 	return ok
+}
+
+func init() {
+	globalid.RegisterTranslator(GlobalIDCoreV3EntityConfig)
+	globalid.RegisterTranslator(GlobalIDCoreV3EntityState)
 }

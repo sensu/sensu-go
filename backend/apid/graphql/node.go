@@ -27,6 +27,22 @@ func registerNodeResolvers(register relay.NodeRegister, cfg ServiceConfig) {
 	registerRoleBindingNodeResolver(register, cfg.RBACClient)
 	registerUserNodeResolver(register, cfg.UserClient)
 	registerSilencedNodeResolver(register, cfg.SilencedClient)
+	register.RegisterResolver(relay.NodeResolver{
+		Translator: GlobalIDCoreV3EntityConfig,
+		ObjectType: schema.CoreV3EntityConfigType,
+		Resolve: util_relay.MakeNodeResolver(
+			cfg.GenericClient,
+			corev2.TypeMeta{Type: "EntityConfig", APIVersion: "core/v3"},
+		),
+	})
+	register.RegisterResolver(relay.NodeResolver{
+		Translator: GlobalIDCoreV3EntityState,
+		ObjectType: schema.CoreV3EntityStateType,
+		Resolve: util_relay.MakeNodeResolver(
+			cfg.GenericClient,
+			corev2.TypeMeta{Type: "EntityState", APIVersion: "core/v3"},
+		),
+	})
 }
 
 // assets
