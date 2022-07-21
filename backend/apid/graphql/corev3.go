@@ -47,9 +47,8 @@ func (i *corev3EntityConfigExtImpl) ToJSON(p graphql.ResolveParams) (interface{}
 // State implements response to request for 'state' field.
 func (i *corev3EntityConfigExtImpl) State(p graphql.ResolveParams) (interface{}, error) {
 	obj := p.Source.(*corev3.EntityConfig)
-	val := corev3.V2ResourceProxy{Resource: &corev3.EntityState{}}
-	err := getEntityComponent(p.Context, i.client, obj.Metadata, &val)
-	return val.Resource, err
+	val := corev3.EntityState{}
+	return getEntityComponent(p.Context, i.client, obj.Metadata, &val)
 }
 
 type corev3EntityConfigImpl struct {
@@ -84,22 +83,22 @@ func (*corev3EntityStateExtImpl) ToJSON(p graphql.ResolveParams) (interface{}, e
 // State implements response to request for 'state' field.
 func (i *corev3EntityStateExtImpl) Config(p graphql.ResolveParams) (interface{}, error) {
 	obj := p.Source.(*corev3.EntityState)
-	val := corev3.V2ResourceProxy{Resource: &corev3.EntityConfig{}}
-	err := getEntityComponent(p.Context, i.client, obj.Metadata, &val)
-	return val.Resource, err
+	val := corev3.EntityConfig{}
+	return getEntityComponent(p.Context, i.client, obj.Metadata, &val)
 }
 
-func getEntityComponent(ctx context.Context, client GenericClient, meta *corev2.ObjectMeta, val corev2.Resource) error {
+func getEntityComponent(ctx context.Context, client GenericClient, meta *corev2.ObjectMeta, val corev3.Resource) (interface{}, error) {
 	wrapper := util_api.WrapResource(val)
 	err := client.SetTypeMeta(wrapper.TypeMeta)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	ctx = contextWithNamespace(ctx, meta.Name)
-	if err := client.Get(ctx, meta.Name, val); err != nil && errors.Is(err, &store.ErrNotFound{}) {
-		return nil
+	proxy := &corev3.V2ResourceProxy{Resource: val}
+	if err := client.Get(ctx, meta.Name, proxy); err != nil && errors.Is(err, &store.ErrNotFound{}) {
+		return nil, nil
 	}
-	return err
+	return proxy.Resource, err
 }
 
 type corev3EntityStateImpl struct {
