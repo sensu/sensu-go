@@ -92,7 +92,7 @@ func getEntityComponent(ctx context.Context, client GenericClient, meta *corev2.
 	if err != nil {
 		return nil, err
 	}
-	ctx = contextWithNamespace(ctx, meta.Name)
+	ctx = contextWithNamespace(ctx, meta.Namespace)
 	proxy := &corev3.V2ResourceProxy{Resource: val}
 	if err = client.Get(ctx, meta.Name, proxy); err == nil {
 		return proxy.Resource, err
