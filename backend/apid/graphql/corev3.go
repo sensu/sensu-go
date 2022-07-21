@@ -1,8 +1,10 @@
 package graphql
 
 import (
+	"context"
 	"errors"
 
+	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	corev3 "github.com/sensu/sensu-go/api/core/v3"
 	"github.com/sensu/sensu-go/backend/apid/graphql/globalid"
 	"github.com/sensu/sensu-go/backend/apid/graphql/schema"
@@ -44,13 +46,9 @@ func (i *corev3EntityConfigExtImpl) ToJSON(p graphql.ResolveParams) (interface{}
 
 // State implements response to request for 'state' field.
 func (i *corev3EntityConfigExtImpl) State(p graphql.ResolveParams) (interface{}, error) {
-	cfg := p.Source.(*corev3.EntityConfig)
-	ctx := contextWithNamespace(p.Context, cfg.Metadata.Name)
-	val := &corev3.V2ResourceProxy{Resource: &corev3.EntityState{}}
-	err := i.client.Get(ctx, cfg.Metadata.Name, val)
-	if errors.Is(err, &store.ErrNotFound{}) {
-		return nil, nil
-	}
+	obj := p.Source.(*corev3.EntityConfig)
+	val := corev3.V2ResourceProxy{Resource: &corev3.EntityState{}}
+	err := getEntityComponent(p.Context, i.client, obj.Metadata, &val)
 	return val.Resource, err
 }
 
@@ -85,14 +83,23 @@ func (*corev3EntityStateExtImpl) ToJSON(p graphql.ResolveParams) (interface{}, e
 
 // State implements response to request for 'state' field.
 func (i *corev3EntityStateExtImpl) Config(p graphql.ResolveParams) (interface{}, error) {
-	state := p.Source.(*corev3.EntityState)
-	ctx := contextWithNamespace(p.Context, state.Metadata.Name)
-	val := &corev3.V2ResourceProxy{Resource: &corev3.EntityState{}}
-	err := i.client.Get(ctx, state.Metadata.Name, val)
-	if errors.Is(err, &store.ErrNotFound{}) {
-		return nil, nil
-	}
+	obj := p.Source.(*corev3.EntityState)
+	val := corev3.V2ResourceProxy{Resource: &corev3.EntityConfig{}}
+	err := getEntityComponent(p.Context, i.client, obj.Metadata, &val)
 	return val.Resource, err
+}
+
+func getEntityComponent(ctx context.Context, client GenericClient, meta *corev2.ObjectMeta, val corev2.Resource) error {
+	wrapper := util_api.WrapResource(val)
+	err := client.SetTypeMeta(wrapper.TypeMeta)
+	if err != nil {
+		return err
+	}
+	ctx = contextWithNamespace(ctx, meta.Name)
+	if err := client.Get(ctx, meta.Name, val); errors.Is(err, &store.ErrNotFound{}) {
+		return nil
+	}
+	return err
 }
 
 type corev3EntityStateImpl struct {
