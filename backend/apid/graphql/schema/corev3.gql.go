@@ -19,6 +19,9 @@ type CoreV3EntityConfigExtensionOverridesFieldResolvers interface {
 
 	// State implements response to request for 'state' field.
 	State(p graphql.ResolveParams) (interface{}, error)
+
+	// ToCoreV2Entity implements response to request for 'toCoreV2Entity' field.
+	ToCoreV2Entity(p graphql.ResolveParams) (interface{}, error)
 }
 
 // RegisterCoreV3EntityConfigExtensionOverrides registers CoreV3EntityConfigExtensionOverrides object type with given service.
@@ -53,6 +56,15 @@ func _ObjTypeCoreV3EntityConfigExtensionOverridesStateHandler(impl interface{}) 
 	}
 }
 
+func _ObjTypeCoreV3EntityConfigExtensionOverridesToCoreV2EntityHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(interface {
+		ToCoreV2Entity(p graphql.ResolveParams) (interface{}, error)
+	})
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.ToCoreV2Entity(frp)
+	}
+}
+
 func _ObjectExtensionTypeCoreV3EntityConfigExtensionOverridesConfigFn() graphql1.ObjectConfig {
 	return graphql1.ObjectConfig{
 		Description: "",
@@ -70,6 +82,13 @@ func _ObjectExtensionTypeCoreV3EntityConfigExtensionOverridesConfigFn() graphql1
 				Description:       "Corresponding entity state, if applicable.",
 				Name:              "state",
 				Type:              graphql.OutputType("CoreV3EntityState"),
+			},
+			"toCoreV2Entity": &graphql1.Field{
+				Args:              graphql1.FieldConfigArgument{},
+				DeprecationReason: "",
+				Description:       "Represented as core/v2 Entity.",
+				Name:              "toCoreV2Entity",
+				Type:              graphql.OutputType("Entity"),
 			},
 			"toJSON": &graphql1.Field{
 				Args:              graphql1.FieldConfigArgument{},
@@ -90,9 +109,10 @@ func _ObjectExtensionTypeCoreV3EntityConfigExtensionOverridesConfigFn() graphql1
 var _ObjectExtensionTypeCoreV3EntityConfigExtensionOverridesDesc = graphql.ObjectDesc{
 	Config: _ObjectExtensionTypeCoreV3EntityConfigExtensionOverridesConfigFn,
 	FieldHandlers: map[string]graphql.FieldHandler{
-		"id":     _ObjTypeCoreV3EntityConfigExtensionOverridesIDHandler,
-		"state":  _ObjTypeCoreV3EntityConfigExtensionOverridesStateHandler,
-		"toJSON": _ObjTypeCoreV3EntityConfigExtensionOverridesToJSONHandler,
+		"id":             _ObjTypeCoreV3EntityConfigExtensionOverridesIDHandler,
+		"state":          _ObjTypeCoreV3EntityConfigExtensionOverridesStateHandler,
+		"toCoreV2Entity": _ObjTypeCoreV3EntityConfigExtensionOverridesToCoreV2EntityHandler,
+		"toJSON":         _ObjTypeCoreV3EntityConfigExtensionOverridesToJSONHandler,
 	},
 }
 
@@ -108,6 +128,9 @@ type CoreV3EntityStateExtensionOverridesFieldResolvers interface {
 
 	// Config implements response to request for 'config' field.
 	Config(p graphql.ResolveParams) (interface{}, error)
+
+	// ToCoreV2Entity implements response to request for 'toCoreV2Entity' field.
+	ToCoreV2Entity(p graphql.ResolveParams) (interface{}, error)
 }
 
 // RegisterCoreV3EntityStateExtensionOverrides registers CoreV3EntityStateExtensionOverrides object type with given service.
@@ -142,6 +165,15 @@ func _ObjTypeCoreV3EntityStateExtensionOverridesConfigHandler(impl interface{}) 
 	}
 }
 
+func _ObjTypeCoreV3EntityStateExtensionOverridesToCoreV2EntityHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(interface {
+		ToCoreV2Entity(p graphql.ResolveParams) (interface{}, error)
+	})
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.ToCoreV2Entity(frp)
+	}
+}
+
 func _ObjectExtensionTypeCoreV3EntityStateExtensionOverridesConfigFn() graphql1.ObjectConfig {
 	return graphql1.ObjectConfig{
 		Description: "",
@@ -159,6 +191,13 @@ func _ObjectExtensionTypeCoreV3EntityStateExtensionOverridesConfigFn() graphql1.
 				Description:       "Unique global identifier used to reference resource.",
 				Name:              "id",
 				Type:              graphql1.NewNonNull(graphql1.ID),
+			},
+			"toCoreV2Entity": &graphql1.Field{
+				Args:              graphql1.FieldConfigArgument{},
+				DeprecationReason: "",
+				Description:       "Represented as core/v2 Entity.",
+				Name:              "toCoreV2Entity",
+				Type:              graphql.OutputType("Entity"),
 			},
 			"toJSON": &graphql1.Field{
 				Args:              graphql1.FieldConfigArgument{},
@@ -179,8 +218,9 @@ func _ObjectExtensionTypeCoreV3EntityStateExtensionOverridesConfigFn() graphql1.
 var _ObjectExtensionTypeCoreV3EntityStateExtensionOverridesDesc = graphql.ObjectDesc{
 	Config: _ObjectExtensionTypeCoreV3EntityStateExtensionOverridesConfigFn,
 	FieldHandlers: map[string]graphql.FieldHandler{
-		"config": _ObjTypeCoreV3EntityStateExtensionOverridesConfigHandler,
-		"id":     _ObjTypeCoreV3EntityStateExtensionOverridesIDHandler,
-		"toJSON": _ObjTypeCoreV3EntityStateExtensionOverridesToJSONHandler,
+		"config":         _ObjTypeCoreV3EntityStateExtensionOverridesConfigHandler,
+		"id":             _ObjTypeCoreV3EntityStateExtensionOverridesIDHandler,
+		"toCoreV2Entity": _ObjTypeCoreV3EntityStateExtensionOverridesToCoreV2EntityHandler,
+		"toJSON":         _ObjTypeCoreV3EntityStateExtensionOverridesToJSONHandler,
 	},
 }

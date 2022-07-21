@@ -12,6 +12,11 @@ extend type CoreV3EntityConfig implements Node & Resource @named(suffix: "Overri
   Corresponding entity state, if applicable.
   """
   state: CoreV3EntityState
+
+  """
+  Represented as core/v2 Entity.
+  """
+  toCoreV2Entity: Entity
 }
 
 extend type CoreV3EntityState implements Node & Resource @named(suffix: "Overrides") {
@@ -28,4 +33,9 @@ extend type CoreV3EntityState implements Node & Resource @named(suffix: "Overrid
   Corresponding entity config, if applicable.
   """
   config: CoreV3EntityConfig
+
+  """
+  Represented as core/v2 Entity.
+  """
+  toCoreV2Entity: Entity
 }

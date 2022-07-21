@@ -30,7 +30,8 @@ var (
 
 type corev3EntityConfigExtImpl struct {
 	schema.CoreV3EntityConfigAliases
-	client GenericClient
+	client       GenericClient
+	entityClient EntityClient
 }
 
 // ID implements response to request for 'id' field.
@@ -50,6 +51,13 @@ func (i *corev3EntityConfigExtImpl) State(p graphql.ResolveParams) (interface{},
 	return getEntityComponent(p.Context, i.client, obj.Metadata, &val)
 }
 
+// ToCoreV2Entity implements response to request for 'toCoreV2Entity' field.
+func (i *corev3EntityConfigExtImpl) ToCoreV2Entity(p graphql.ResolveParams) (interface{}, error) {
+	obj := p.Source.(interface{ GetMetadata() *corev2.ObjectMeta })
+	ctx := contextWithNamespace(p.Context, obj.GetMetadata().Namespace)
+	return i.entityClient.FetchEntity(ctx, obj.GetMetadata().Name)
+}
+
 type corev3EntityConfigImpl struct {
 	schema.CoreV3EntityConfigAliases
 }
@@ -66,7 +74,8 @@ func (*corev3EntityConfigImpl) IsTypeOf(s interface{}, p graphql.IsTypeOfParams)
 
 type corev3EntityStateExtImpl struct {
 	schema.CoreV3EntityStateAliases
-	client GenericClient
+	client       GenericClient
+	entityClient EntityClient
 }
 
 // ID implements response to request for 'id' field.
@@ -86,6 +95,13 @@ func (i *corev3EntityStateExtImpl) Config(p graphql.ResolveParams) (interface{},
 	return getEntityComponent(p.Context, i.client, obj.Metadata, &val)
 }
 
+// ToCoreV2Entity implements response to request for 'toCoreV2Entity' field.
+func (i *corev3EntityStateExtImpl) ToCoreV2Entity(p graphql.ResolveParams) (interface{}, error) {
+	obj := p.Source.(interface{ GetMetadata() *corev2.ObjectMeta })
+	ctx := contextWithNamespace(p.Context, obj.GetMetadata().Namespace)
+	return i.entityClient.FetchEntity(ctx, obj.GetMetadata().Name)
+}
+
 func getEntityComponent(ctx context.Context, client GenericClient, meta *corev2.ObjectMeta, val corev3.Resource) (interface{}, error) {
 	wrapper := util_api.WrapResource(val)
 	err := client.SetTypeMeta(wrapper.TypeMeta)
@@ -100,6 +116,11 @@ func getEntityComponent(ctx context.Context, client GenericClient, meta *corev2.
 		return nil, nil
 	}
 	return nil, err
+}
+
+func getCoreV2Entity(ctx context.Context, client EntityClient, meta *corev2.ObjectMeta) (interface{}, error) {
+	ctx = contextWithNamespace(ctx, meta.Namespace)
+	return client.FetchEntity(ctx, meta.Name)
 }
 
 type corev3EntityStateImpl struct {
