@@ -233,8 +233,7 @@ type isTypeOfResolver interface {
 	IsTypeOf(interface{}, IsTypeOfParams) bool
 }
 
-func newIsTypeOfFn(impl interface{}) graphql.IsTypeOfFn {
-	resolver := impl.(isTypeOfResolver)
+func newIsTypeOfFn(resolver isTypeOfResolver) graphql.IsTypeOfFn {
 	return func(p graphql.IsTypeOfParams) bool {
 		return resolver.IsTypeOf(p.Value, p)
 	}

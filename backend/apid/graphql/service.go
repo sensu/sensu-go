@@ -162,13 +162,17 @@ func NewService(cfg ServiceConfig) (*Service, error) {
 	schema.RegisterTimeWindowTimeRange(svc, &schema.TimeWindowTimeRangeAliases{})
 
 	// Register RBAC types
-	schema.RegisterClusterRole(svc, &schema.ClusterRoleAliases{})
-	schema.RegisterClusterRoleBinding(svc, &schema.ClusterRoleBindingAliases{})
-	schema.RegisterRole(svc, &schema.RoleAliases{})
-	schema.RegisterRoleBinding(svc, &schema.RoleBindingAliases{})
-	schema.RegisterRoleRef(svc, &schema.RoleRefAliases{})
-	schema.RegisterRule(svc, &schema.RuleAliases{})
-	schema.RegisterSubject(svc, &schema.SubjectAliases{})
+	schema.RegisterCoreV2ClusterRole(svc, &clusterRoleImpl{})
+	schema.RegisterCoreV2ClusterRoleExtensionOverrides(svc, &clusterRoleImpl{})
+	schema.RegisterCoreV2ClusterRoleBinding(svc, &clusterRoleBindingImpl{})
+	schema.RegisterCoreV2ClusterRoleBindingExtensionOverrides(svc, &clusterRoleBindingImpl{})
+	schema.RegisterCoreV2Role(svc, &roleImpl{})
+	schema.RegisterCoreV2RoleExtensionOverrides(svc, &roleImpl{})
+	schema.RegisterCoreV2RoleBinding(svc, &roleBindingImpl{})
+	schema.RegisterCoreV2RoleBindingExtensionOverrides(svc, &roleBindingImpl{})
+	schema.RegisterCoreV2RoleRef(svc, &schema.CoreV2RoleRefAliases{})
+	schema.RegisterCoreV2Rule(svc, &schema.CoreV2RuleAliases{})
+	schema.RegisterCoreV2Subject(svc, &schema.CoreV2SubjectAliases{})
 
 	// Register user types
 	schema.RegisterUser(svc, &userImpl{})

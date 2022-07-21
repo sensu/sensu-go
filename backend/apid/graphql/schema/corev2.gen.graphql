@@ -26,6 +26,30 @@ type CoreV2AssetBuild {
   headers: JSON!
 }
 
+"""ClusterRole applies to all namespaces within a cluster."""
+type CoreV2ClusterRole {
+  rules: [CoreV2Rule!]!
+  
+  """Metadata contains name, namespace, labels and annotations"""
+  metadata: ObjectMeta!
+}
+
+"""
+ClusterRoleBinding grants the permissions defined in a ClusterRole referenced
+to a user or a set of users
+"""
+type CoreV2ClusterRoleBinding {
+  
+  """Subjects holds references to the objects the ClusterRole applies to"""
+  subjects: [CoreV2Subject!]!
+  
+  """RoleRef references a ClusterRole in the current namespace"""
+  role_ref: CoreV2RoleRef!
+  
+  """Metadata contains name, namespace, labels and annotations"""
+  metadata: ObjectMeta!
+}
+
 """Pipeline represents a named collection of pipeline workflows."""
 type CoreV2Pipeline {
   
@@ -74,6 +98,65 @@ type CoreV2ResourceReference {
   api_version: String!
 }
 
+"""Role applies only to a single namespace."""
+type CoreV2Role {
+  rules: [CoreV2Rule!]!
+  
+  """Metadata contains name, namespace, labels and annotations"""
+  metadata: ObjectMeta!
+}
+
+"""
+RoleBinding grants the permissions defined in a Role referenced to a user or
+a set of users
+"""
+type CoreV2RoleBinding {
+  
+  """Subjects holds references to the objects the Role applies to"""
+  subjects: [CoreV2Subject!]!
+  
+  """RoleRef references a Role in the current namespace"""
+  role_ref: CoreV2RoleRef!
+  
+  """Metadata contains name, namespace, labels and annotations"""
+  metadata: ObjectMeta!
+}
+
+"""RoleRef maps groups to Roles or ClusterRoles."""
+type CoreV2RoleRef {
+  
+  """Type of role being referenced."""
+  type: String!
+  
+  """Name of the resource being referenced"""
+  name: String!
+}
+
+"""Rule holds information that describes an action that can be taken"""
+type CoreV2Rule {
+  
+  """
+  Verbs is a list of verbs that apply to all of the listed resources for
+  this rule. These include "get", "list", "watch", "create", "update",
+  "delete".
+  TODO: add support for "patch" (this is expensive and should be delayed
+  until a further release). TODO: add support for "watch" (via websockets)
+  """
+  verbs: [String!]!
+  
+  """
+  Resources is a list of resources that this rule applies to. "*"
+  represents all resources.
+  """
+  resources: [String!]!
+  
+  """
+  ResourceNames is an optional list of resource names that the rule applies
+  to.
+  """
+  resource_names: [String!]!
+}
+
 """A Secret is a secret specification."""
 type CoreV2Secret {
   
@@ -82,4 +165,13 @@ type CoreV2Secret {
   
   """Secret is the name of the Sensu secret resource."""
   secret: String!
+}
+
+type CoreV2Subject {
+  
+  """Type of object referenced (user or group)"""
+  type: String!
+  
+  """Name of the referenced object"""
+  name: String!
 }
