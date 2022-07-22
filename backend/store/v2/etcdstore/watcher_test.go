@@ -96,7 +96,7 @@ func TestWatchRetry(t *testing.T) {
 
 	client := c.Client(0)
 	s := etcdstore.NewStore(client)
-	oldStore := oldstore.NewStore(client)
+	oldStore := oldstore.NewStore(client, "")
 
 	ns := &corev2.Namespace{Name: "default"}
 
@@ -207,7 +207,7 @@ func testWithEtcdClient(t *testing.T, f func(storev2.Interface, *clientv3.Client
 	client := e.NewEmbeddedClient()
 
 	s := etcdstore.NewStore(client)
-	oldStore := oldstore.NewStore(client)
+	oldStore := oldstore.NewStore(client, "")
 	ns := &corev2.Namespace{Name: "default"}
 
 	if err := oldStore.CreateNamespace(context.Background(), ns); err != nil {
