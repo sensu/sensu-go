@@ -46,8 +46,6 @@ func TestPipeAdapter_CanMutate(t *testing.T) {
 		AssetGetter            asset.Getter
 		Executor               command.Executor
 		SecretsProviderManager *secrets.ProviderManager
-		Store                  store.Store
-		StoreTimeout           time.Duration
 	}
 	type args struct {
 		ref *corev2.ResourceReference
@@ -69,8 +67,6 @@ func TestPipeAdapter_CanMutate(t *testing.T) {
 				AssetGetter:            tt.fields.AssetGetter,
 				Executor:               tt.fields.Executor,
 				SecretsProviderManager: tt.fields.SecretsProviderManager,
-				Store:                  tt.fields.Store,
-				StoreTimeout:           tt.fields.StoreTimeout,
 			}
 			if got := p.CanMutate(tt.args.ref); got != tt.want {
 				t.Errorf("PipeAdapter.CanMutate() = %v, want %v", got, tt.want)
@@ -110,8 +106,6 @@ func TestPipeAdapter_Mutate(t *testing.T) {
 				AssetGetter:            tt.fields.AssetGetter,
 				Executor:               tt.fields.Executor,
 				SecretsProviderManager: tt.fields.SecretsProviderManager,
-				Store:                  tt.fields.Store,
-				StoreTimeout:           tt.fields.StoreTimeout,
 			}
 			got, err := p.Mutate(tt.args.ctx, tt.args.ref, tt.args.event)
 			if (err != nil) != tt.wantErr {
@@ -154,8 +148,6 @@ func TestPipeAdapter_run(t *testing.T) {
 				AssetGetter:            tt.fields.AssetGetter,
 				Executor:               tt.fields.Executor,
 				SecretsProviderManager: tt.fields.SecretsProviderManager,
-				Store:                  tt.fields.Store,
-				StoreTimeout:           tt.fields.StoreTimeout,
 			}
 			got, err := p.run(tt.args.ctx, tt.args.mutator, tt.args.event, tt.args.assets)
 			if (err != nil) != tt.wantErr {
