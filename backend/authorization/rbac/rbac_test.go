@@ -16,13 +16,14 @@ import (
 func TestAuthorize(t *testing.T) {
 	type storeFunc func(*mockstore.V2MockStore)
 	ctx := store.NamespaceContext(context.Background(), "acme")
+
 	var crb corev2.ClusterRoleBinding
 	clusterRoleBindingListRequest := storev2.NewResourceRequestFromResource(&crb)
-	clusterRoleBindingListRequest.Namespace = "acme"
-	var rb corev2.RoleBinding
 
+	var rb corev2.RoleBinding
 	roleBindingListRequest := storev2.NewResourceRequestFromResource(&rb)
 	roleBindingListRequest.Namespace = "acme"
+
 	tests := []struct {
 		name      string
 		attrs     *authorization.Attributes
@@ -451,10 +452,32 @@ func TestVisitRulesFor(t *testing.T) {
 		Store: stor,
 	}
 	ctx := store.NamespaceContext(context.Background(), "acme")
-	clusterRoleBindingListRequest := storev2.NewResourceRequest(corev2.TypeMeta{Type: "ClusterRoleBinding", APIVersion: "core/v2"}, "acme", "", new(corev2.ClusterRoleBinding).StoreName())
-	roleBindingListRequest := storev2.NewResourceRequest(corev2.TypeMeta{Type: "RoleBinding", APIVersion: "core/v2"}, "acme", "", new(corev2.RoleBinding).StoreName())
-	roleRequest := storev2.NewResourceRequest(corev2.TypeMeta{Type: "Role", APIVersion: "core/v2"}, "acme", "admin", new(corev2.Role).StoreName())
-	clusterRoleRequest := storev2.NewResourceRequest(corev2.TypeMeta{Type: "ClusterRole", APIVersion: "core/v2"}, "acme", "admin", new(corev2.ClusterRole).StoreName())
+
+	// Namespace should be empty as ClusterRoleBinding is a cluster-wide resource.
+	clusterRoleBindingListRequest := storev2.NewResourceRequest(
+		corev2.TypeMeta{APIVersion: "core/v2", Type: "ClusterRoleBinding"},
+		"",
+		"",
+		new(corev2.ClusterRoleBinding).StoreName())
+
+	roleBindingListRequest := storev2.NewResourceRequest(
+		corev2.TypeMeta{APIVersion: "core/v2", Type: "RoleBinding"},
+		"acme",
+		"",
+		new(corev2.RoleBinding).StoreName())
+
+	roleRequest := storev2.NewResourceRequest(
+		corev2.TypeMeta{APIVersion: "core/v2", Type: "Role"},
+		"acme",
+		"admin",
+		new(corev2.Role).StoreName())
+
+	// Namespace should be empty as ClusterRole is a cluster-wide resource.
+	clusterRoleRequest := storev2.NewResourceRequest(
+		corev2.TypeMeta{APIVersion: "core/v2", Type: "ClusterRole"},
+		"",
+		"admin",
+		new(corev2.ClusterRole).StoreName())
 
 	stor.On("List", mock.Anything, clusterRoleBindingListRequest, mock.Anything).
 		Return(mockstore.WrapList[*corev2.ClusterRoleBinding]{{
