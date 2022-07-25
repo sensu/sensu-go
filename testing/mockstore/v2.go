@@ -48,3 +48,8 @@ func (v *V2MockStore) Exists(req storev2.ResourceRequest) (bool, error) {
 func (v *V2MockStore) Patch(req storev2.ResourceRequest, w storev2.Wrapper, patcher patch.Patcher, cond *store.ETagCondition) error {
 	return v.Called(req, w, patcher, cond).Error(0)
 }
+
+func (v *V2MockStore) Watch(req storev2.ResourceRequest) <-chan []storev2.WatchEvent {
+	args := v.Called(req)
+	return args.Get(0).(<-chan []storev2.WatchEvent)
+}
