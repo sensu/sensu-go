@@ -10,6 +10,7 @@ import (
 	"github.com/sensu/sensu-go/asset"
 	"github.com/sensu/sensu-go/backend/secrets"
 	"github.com/sensu/sensu-go/backend/store"
+	storev2 "github.com/sensu/sensu-go/backend/store/v2"
 	"github.com/sensu/sensu-go/command"
 	"github.com/sensu/sensu-go/testing/mockstore"
 	"github.com/stretchr/testify/assert"
@@ -30,7 +31,7 @@ func TestLegacyAdapter_CanMutate(t *testing.T) {
 		AssetGetter            asset.Getter
 		Executor               command.Executor
 		SecretsProviderManager *secrets.ProviderManager
-		Store                  store.Store
+		Store                  storev2.Interface
 		StoreTimeout           time.Duration
 	}
 	type args struct {
@@ -107,7 +108,7 @@ func TestLegacyAdapter_Mutate(t *testing.T) {
 		AssetGetter            asset.Getter
 		Executor               command.Executor
 		SecretsProviderManager *secrets.ProviderManager
-		Store                  store.Store
+		Store                  storev2.Interface
 		StoreTimeout           time.Duration
 	}
 	type args struct {
@@ -125,10 +126,10 @@ func TestLegacyAdapter_Mutate(t *testing.T) {
 		{
 			name: "can mutate using a pipe mutator",
 			fields: fields{
-				Store: func() store.Store {
+				Store: func() storev2.Interface {
 					mutator := corev2.FakeMutatorCommand("cat")
-					stor := &mockstore.MockStore{}
-					stor.On("GetMutatorByName", mock.Anything, mock.Anything).Return(mutator, nil)
+					stor := &mockstore.V2MockStore{}
+					stor.On("Get", mock.Anything, mock.Anything).Return(mockstore.Wrapper[*corev2.Mutator]{Value: mutator}, nil)
 					return stor
 				}(),
 				Executor: command.NewExecutor(),
@@ -151,9 +152,9 @@ func TestLegacyAdapter_Mutate(t *testing.T) {
 		{
 			name: "returns an error when a mutator cannot be found in the store (GH2784)",
 			fields: fields{
-				Store: func() store.Store {
-					stor := &mockstore.MockStore{}
-					stor.On("GetMutatorByName", mock.Anything, mock.Anything).Return((*corev2.Mutator)(nil), nil)
+				Store: func() storev2.Interface {
+					stor := &mockstore.V2MockStore{}
+					stor.On("Get", mock.Anything, mock.Anything).Return(nil, &store.ErrNotFound{})
 					return stor
 				}(),
 				Executor: command.NewExecutor(),
