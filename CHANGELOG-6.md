@@ -15,6 +15,10 @@ be marked as global resources.
 ### Changed
 - Upgraded CI Go version to 1.17.12
 
+### Fixed
+- Fixed a bug where sensu-backend could crash if the BackendIDGetter
+encounters etcd client unavailability.
+
 ## [6.7.3] - 2022-07-07
 
 ### Changed
