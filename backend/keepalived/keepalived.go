@@ -634,7 +634,7 @@ func (k *Keepalived) dead(key string, prev liveness.State, leader bool) bool {
 	}
 	event.Check.Output = fmt.Sprintf("No keepalive sent from %s for %v seconds (>= %v)", event.Entity.Name, timeSinceLastSeen, timeout)
 
-	if err := k.bus.Publish(messaging.TopicEventRaw, event); err != nil {
+	if err := k.bus.Publish(messaging.TopicKeepaliveRaw, event); err != nil {
 		lager.WithError(err).Error("error publishing event")
 		return false
 	}
@@ -737,5 +737,5 @@ func (k *Keepalived) handleUpdate(e *corev2.Event) error {
 		}
 	}
 
-	return k.bus.Publish(messaging.TopicEventRaw, event)
+	return k.bus.Publish(messaging.TopicKeepaliveRaw, event)
 }
