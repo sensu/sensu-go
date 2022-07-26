@@ -5,16 +5,20 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
+	corev3 "github.com/sensu/sensu-go/api/core/v3"
 	"github.com/sensu/sensu-go/backend/etcd"
 	"github.com/sensu/sensu-go/backend/liveness"
 	"github.com/sensu/sensu-go/backend/messaging"
 	"github.com/sensu/sensu-go/backend/seeds"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/backend/store/etcd/testutil"
+	storev2 "github.com/sensu/sensu-go/backend/store/v2"
 	etcdstorev2 "github.com/sensu/sensu-go/backend/store/v2/etcdstore"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
+	"github.com/sensu/sensu-go/backend/store/v2/wrap"
 )
 
 func TestKeepaliveMonitor(t *testing.T) {
@@ -46,17 +50,25 @@ func TestKeepaliveMonitor(t *testing.T) {
 	entity := corev2.FixtureEntity("entity1")
 	ctx := store.NamespaceContext(context.Background(), entity.Namespace)
 
-	store, err := testutil.NewStoreInstance()
+	eventStore, err := testutil.NewStoreInstance()
 	if err != nil {
 		assert.FailNow(t, err.Error())
 	}
-	storev2 := etcdstorev2.NewStore(store.Client)
+	store := etcdstorev2.NewStore(eventStore.Client)
+	keepaliveStore := storev2.NewLegacyKeepaliveStore(eventStore)
 
 	if err := seeds.SeedInitialDataWithContext(context.Background(), store); err != nil {
 		assert.FailNow(t, err.Error())
 	}
 
-	if err := store.UpdateEntity(ctx, entity); err != nil {
+	entityConfig, _ := corev3.V2EntityToV3(entity)
+	wrappedEntityConfig, err := wrap.Resource(entityConfig)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	req := storev2.NewResourceRequestFromResource(entityConfig)
+	if err := store.CreateOrUpdate(context.Background(), req, wrappedEntityConfig); err != nil {
 		t.Fatal(err)
 	}
 
@@ -74,7 +86,7 @@ func TestKeepaliveMonitor(t *testing.T) {
 		Timestamp: time.Now().Unix(),
 	}
 
-	if _, _, err := store.UpdateEvent(ctx, keepalive); err != nil {
+	if _, _, err := eventStore.UpdateEvent(ctx, keepalive); err != nil {
 		t.Fatal(err)
 	}
 
@@ -82,14 +94,14 @@ func TestKeepaliveMonitor(t *testing.T) {
 
 	k, err := New(Config{
 		Store:           store,
-		EventStore:      store,
-		StoreV2:         storev2,
+		EventStore:      eventStore,
+		KeepaliveStore:  keepaliveStore,
 		Bus:             bus,
 		LivenessFactory: factory,
 		BufferSize:      1,
 		WorkerCount:     1,
 		StoreTimeout:    time.Minute,
-		Client:          store.Client,
+		Client:          eventStore.Client,
 	})
 	require.NoError(t, err)
 
@@ -124,8 +136,14 @@ func TestKeepaliveMonitor(t *testing.T) {
 
 	// Make the entity ephemeral, so that the absence of keepalives leads to its
 	// deregistration and no keepalive failure events.
-	entity.Deregister = true
-	if err := store.UpdateEntity(ctx, entity); err != nil {
+	entityConfig.Deregister = true
+
+	wrappedEntityConfig, err = wrap.Resource(entityConfig)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if err := store.CreateOrUpdate(context.Background(), req, wrappedEntityConfig); err != nil {
 		t.Fatal(err)
 	}
 
@@ -139,7 +157,7 @@ func TestKeepaliveMonitor(t *testing.T) {
 	}
 
 	// Check that the entity has indeed been deregistered
-	result, err := store.GetEntityByName(ctx, entity.Name)
+	result, err := eventStore.GetEntityByName(ctx, entity.Name)
 	if err != nil {
 		t.Fatal(err)
 	}

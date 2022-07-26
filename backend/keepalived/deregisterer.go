@@ -6,7 +6,9 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
+	corev3 "github.com/sensu/sensu-go/api/core/v3"
 	"github.com/sensu/sensu-go/backend/messaging"
 	"github.com/sensu/sensu-go/backend/silenced"
 	"github.com/sensu/sensu-go/backend/store"
@@ -38,7 +40,8 @@ func (d *Deregistration) Deregister(entity *corev2.Entity) error {
 	tctx, cancel := context.WithTimeout(ctx, d.StoreTimeout)
 	defer cancel()
 
-	rr := storev2.NewResourceRequestFromV2Resource(entity)
+	entityConfig, _ := corev3.V2EntityToV3(entity)
+	rr := storev2.NewResourceRequestFromResource(entityConfig)
 	if err := d.EntityStore.Delete(tctx, rr); err != nil {
 		return fmt.Errorf("error deleting entity in store: %s", err)
 	}

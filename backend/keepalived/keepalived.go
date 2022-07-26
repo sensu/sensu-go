@@ -571,7 +571,7 @@ func (k *Keepalived) dead(key string, prev liveness.State, leader bool) bool {
 		if _, ok := err.(*store.ErrNotFound); ok {
 			// The entity has been deleted, there is no longer a need to track
 			// keepalives for it.
-			lager.Debug("nil entity")
+			lager.Debug("entity not found")
 			return true
 		}
 		lager.WithError(err).Error("error while reading entity_config")

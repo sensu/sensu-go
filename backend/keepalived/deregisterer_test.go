@@ -35,7 +35,7 @@ func TestDeregister(t *testing.T) {
 	check := types.FixtureCheck("check")
 	event := types.FixtureEvent(entity.Name, check.Name)
 
-	mockStore.On("Delete", mock.Anything, entity).Return(nil)
+	mockStore.On("Delete", mock.Anything, mock.Anything).Return(nil)
 
 	mockEventStore.On("GetEventsByEntity", mock.Anything, entity.Name, &store.SelectionPredicate{}).Return([]*types.Event{event}, nil)
 	mockEventStore.On("DeleteEventByEntityCheck", mock.Anything, entity.Name, check.Name).Return(nil)
@@ -73,7 +73,7 @@ func TestDeregistrationHandler(t *testing.T) {
 		},
 	)
 
-	mockStore.On("Delete", mock.Anything, entity).Return(nil)
+	mockStore.On("Delete", mock.Anything, mock.Anything).Return(nil)
 
 	mockEventStore.On("GetEventsByEntity", mock.Anything, entity.Name, &store.SelectionPredicate{}).Return([]*types.Event{}, nil)
 	mockEventStore.On("DeleteEventByEntityCheck", mock.Anything, entity.Name, check.Name).Return(nil)

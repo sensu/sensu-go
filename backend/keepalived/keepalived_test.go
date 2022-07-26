@@ -225,7 +225,7 @@ func TestEventProcessing(t *testing.T) {
 		return req.StoreName == new(corev3.EntityState).StoreName()
 	}), mock.Anything).Return(nil)
 
-	test.KeepaliveStore.On("DeleteFailingKeepalive", mock.Anything, event.Entity).Return(nil)
+	test.KeepaliveStore.On("DeleteFailingKeepalive", mock.Anything, mock.Anything).Return(nil)
 
 	test.Keepalived.keepaliveChan <- event
 	assert.NoError(t, test.Keepalived.Stop())
