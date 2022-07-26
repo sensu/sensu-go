@@ -2,6 +2,7 @@ package postgres
 
 import (
 	"context"
+	"database/sql"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -12,22 +13,26 @@ import (
 	"github.com/jackc/pgconn"
 	"github.com/jackc/pgx/v4"
 	"github.com/jackc/pgx/v4/pgxpool"
-	v2 "github.com/sensu/sensu-go/api/core/v2"
-	v3 "github.com/sensu/sensu-go/api/core/v3"
+	corev2 "github.com/sensu/sensu-go/api/core/v2"
+	corev3 "github.com/sensu/sensu-go/api/core/v3"
+	"github.com/sensu/sensu-go/backend/poll"
 	"github.com/sensu/sensu-go/backend/selector"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/backend/store/patch"
 	storev2 "github.com/sensu/sensu-go/backend/store/v2"
 	"github.com/sensu/sensu-go/backend/store/v2/wrap"
+	log "github.com/sirupsen/logrus"
 )
 
 const pgUniqueViolationCode = "23505"
 
 type ConfigStore struct {
-	db *pgxpool.Pool
+	db             *pgxpool.Pool
+	watchInterval  time.Duration
+	watchTxnWindow time.Duration
 }
 
-type DBResource struct {
+type configRecord struct {
 	id          int64
 	apiVersion  string
 	apiType     string
@@ -36,15 +41,19 @@ type DBResource struct {
 	labels      string
 	annotations []byte
 	resource    string
-	createdAt   time.Time
-	updatedAt   time.Time
-	deletedAt   time.Time
+	createdAt   sql.NullTime
+	updatedAt   sql.NullTime
+	deletedAt   sql.NullTime
 }
 
 type listTemplateValues struct {
 	Limit       int64
 	Offset      int64
 	SelectorSQL string
+}
+
+func init() {
+	registerWatchConfigStoreOverride(newConfigurationPoller)
 }
 
 func NewConfigStore(db *pgxpool.Pool) *ConfigStore {
@@ -57,8 +66,16 @@ func (s *ConfigStore) Initialize(ctx context.Context, fn storev2.InitializeFunc)
 	return nil
 }
 
+func (s *ConfigStore) GetPgxPool() *pgxpool.Pool {
+	return s.db
+}
+
 func (s *ConfigStore) Watch(ctx context.Context, req storev2.ResourceRequest) <-chan []storev2.WatchEvent {
-	return nil
+	if req.APIVersion == "" || req.Type == "" {
+		log.Debug("")
+		return nil
+	}
+	return NewWatcher(s, s.watchInterval, s.watchTxnWindow).WatchConfig(ctx, req)
 }
 
 func (s *ConfigStore) CreateOrUpdate(ctx context.Context, request storev2.ResourceRequest, wrapper storev2.Wrapper) error {
@@ -141,7 +158,7 @@ func (s *ConfigStore) Get(ctx context.Context, request storev2.ResourceRequest) 
 	args := []interface{}{request.APIVersion, request.Type, request.Namespace, request.Name}
 
 	row := s.db.QueryRow(ctx, GetConfigQuery, args...)
-	result := DBResource{}
+	var result configRecord
 
 	if err := row.Scan(&result.id, &result.labels, &result.annotations, &result.resource, &result.createdAt, &result.updatedAt); err != nil {
 		if err == pgx.ErrNoRows {
@@ -151,7 +168,7 @@ func (s *ConfigStore) Get(ctx context.Context, request storev2.ResourceRequest) 
 	}
 
 	return &wrap.Wrapper{
-		TypeMeta:    &v2.TypeMeta{APIVersion: request.APIVersion, Type: request.Type},
+		TypeMeta:    &corev2.TypeMeta{APIVersion: request.APIVersion, Type: request.Type},
 		Encoding:    wrap.Encoding_json,
 		Compression: 0,
 		Value:       []byte(result.resource),
@@ -216,14 +233,14 @@ func (s *ConfigStore) List(ctx context.Context, request storev2.ResourceRequest,
 
 	wrapList := make(wrap.List, 0)
 	for rows.Next() {
-		var dbResource DBResource
+		var dbResource configRecord
 		err := rows.Scan(&dbResource.id, &dbResource.labels, &dbResource.annotations, &dbResource.resource, &dbResource.createdAt, &dbResource.updatedAt)
 		if err != nil {
 			return nil, err
 		}
 
 		wrapped := wrap.Wrapper{
-			TypeMeta:    &v2.TypeMeta{APIVersion: request.APIVersion, Type: request.Type},
+			TypeMeta:    &corev2.TypeMeta{APIVersion: request.APIVersion, Type: request.Type},
 			Encoding:    wrap.Encoding_json,
 			Compression: wrap.Compression_none,
 			Value:       []byte(dbResource.resource),
@@ -280,8 +297,8 @@ func (s *ConfigStore) Patch(ctx context.Context, request storev2.ResourceRequest
 
 	// Special case for entities; we need to make sure we keep the per-entity
 	// subscription
-	if e, ok := resource.(*v3.EntityConfig); ok {
-		e.Subscriptions = v2.AddEntitySubscription(e.Metadata.Name, e.Subscriptions)
+	if e, ok := resource.(*corev3.EntityConfig); ok {
+		e.Subscriptions = corev2.AddEntitySubscription(e.Metadata.Name, e.Subscriptions)
 	}
 
 	// Re-wrap the resource
@@ -327,7 +344,7 @@ func annotationsToBytes(annotations map[string]string) ([]byte, error) {
 	return json.Marshal(annotations)
 }
 
-func extractResourceData(wrapper storev2.Wrapper) (typeMeta v2.TypeMeta, meta *v2.ObjectMeta, jsonLabels string,
+func extractResourceData(wrapper storev2.Wrapper) (typeMeta corev2.TypeMeta, meta *corev2.ObjectMeta, jsonLabels string,
 	bytesAnnotations, jsonResource []byte, err error) {
 	res, err := wrapper.Unwrap()
 	//res, err := wrapper.UnwrapRaw()
@@ -335,9 +352,9 @@ func extractResourceData(wrapper storev2.Wrapper) (typeMeta v2.TypeMeta, meta *v
 		return
 	}
 
-	if resV3, ok := res.(v3.Resource); ok {
+	if resV3, ok := res.(corev3.Resource); ok {
 		meta = resV3.GetMetadata()
-	} else if resV2, ok := res.(v2.Resource); ok {
+	} else if resV2, ok := res.(corev2.Resource); ok {
 		objectMeta := resV2.GetObjectMeta()
 		meta = &objectMeta
 	}
@@ -355,7 +372,7 @@ func extractResourceData(wrapper storev2.Wrapper) (typeMeta v2.TypeMeta, meta *v
 		return
 	}
 
-	resProxy := v3.V2ResourceProxy{Resource: res}
+	resProxy := corev3.V2ResourceProxy{Resource: res}
 	typeMeta = resProxy.GetTypeMeta()
 
 	return
@@ -377,4 +394,60 @@ func getSelectorSQL(ctx context.Context) (string, []interface{}, error) {
 	}
 
 	return "", nil, nil
+}
+
+type configurationPoller struct {
+	db  *pgxpool.Pool
+	req storev2.ResourceRequest
+}
+
+func (e *configurationPoller) Now(ctx context.Context) (time.Time, error) {
+	var now time.Time
+	row := e.db.QueryRow(ctx, "SELECT NOW();")
+	if err := row.Scan(&now); err != nil {
+		return now, &store.ErrInternal{Message: err.Error()}
+	}
+	return now, nil
+}
+
+func (e *configurationPoller) Since(ctx context.Context, updatedSince time.Time) ([]poll.Row, error) {
+	queryParams := []interface{}{&e.req.APIVersion, &e.req.Type, &updatedSince}
+	rows, err := e.db.Query(ctx, ConfigNotificationQuery, queryParams...)
+	if err != nil {
+		logger.Errorf("entity config since query failed with error %v", err)
+		return nil, &store.ErrInternal{Message: err.Error()}
+	}
+	defer rows.Close()
+	var since []poll.Row
+	for rows.Next() {
+		var record configRecord
+		if err := rows.Scan(&record.id, &record.apiVersion, &record.apiType, &record.namespace, &record.name,
+			&record.resource, &record.createdAt, &record.updatedAt, &record.deletedAt); err != nil {
+			return nil, &store.ErrInternal{Message: err.Error()}
+		}
+		if err := rows.Err(); err != nil {
+			return nil, &store.ErrInternal{Message: err.Error()}
+		}
+		id := fmt.Sprintf("%s/%s", record.namespace, record.name)
+		pollResult := poll.Row{
+			Id: id,
+			Resource: &wrap.Wrapper{
+				TypeMeta:    &corev2.TypeMeta{APIVersion: e.req.APIVersion, Type: e.req.Type},
+				Encoding:    wrap.Encoding_json,
+				Compression: wrap.Compression_none,
+				Value:       []byte(record.resource),
+			},
+			CreatedAt: record.createdAt.Time,
+			UpdatedAt: record.updatedAt.Time,
+		}
+		if record.deletedAt.Valid {
+			pollResult.DeletedAt = &record.deletedAt.Time
+		}
+		since = append(since, pollResult)
+	}
+	return since, nil
+}
+
+func newConfigurationPoller(req storev2.ResourceRequest, pool *pgxpool.Pool) (poll.Table, error) {
+	return &configurationPoller{db: pool, req: req}, nil
 }

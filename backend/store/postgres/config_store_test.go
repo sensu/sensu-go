@@ -8,6 +8,7 @@ import (
 	"os"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v4/pgxpool"
@@ -393,6 +394,70 @@ func TestConfigStore_Patch(t *testing.T) {
 		toCreate := corev3.FixtureEntityConfig(entityName)
 		for i := 0; i < 4; i++ {
 			toCreate.Metadata.Labels[fmt.Sprintf("label-%d", i)] = fmt.Sprintf("labelValue-%d", i)
+		}
+	})
+}
+
+func TestConfigStore_Watch(t *testing.T) {
+	testWithPostgresConfigStore(t, func(s storev2.Interface) {
+		stor, ok := s.(*ConfigStore)
+		require.True(t, ok, "expected config store")
+
+		stor.watchInterval = time.Millisecond * 10
+		stor.watchTxnWindow = time.Second
+
+		ctx := context.Background()
+		entity := corev3.FixtureEntityConfig("my-entity")
+		watchReq := storev2.ResourceRequest{
+			APIVersion: entity.GetTypeMeta().APIVersion,
+			Type:       entity.GetTypeMeta().Type,
+		}
+		watchChannel := s.Watch(ctx, watchReq)
+		select {
+		case record, ok := <-watchChannel:
+			t.Errorf("expected watch channel to be empty. Got %v, %v", record, ok)
+		default:
+			// OK
+		}
+
+		// create notification
+		err := createOrUpdateEntity(ctx, s, entity)
+		require.NoError(t, err)
+		select {
+		case watchEvents, ok := <-watchChannel:
+			require.True(t, ok, "watcher closed unexpectedly")
+			require.Equal(t, 1, len(watchEvents))
+			assert.Equal(t, storev2.WatchCreate, watchEvents[0].Type)
+
+		case <-time.After(5 * time.Second):
+			t.Fatalf("no watch event received before timeout")
+		}
+
+		// update notification
+		entity.Metadata.Labels["new-label"] = "new-value"
+		err = createOrUpdateEntity(ctx, s, entity)
+		require.NoError(t, err)
+		select {
+		case watchEvents, ok := <-watchChannel:
+			require.True(t, ok, "watcher closed unexpectedly")
+			require.Equal(t, 1, len(watchEvents))
+			assert.Equal(t, storev2.WatchUpdate, watchEvents[0].Type)
+
+		case <-time.After(5 * time.Second):
+			t.Fatalf("no watch event received before timeout")
+		}
+
+		// delete notification
+		err = deleteEntity(ctx, s, entity.Metadata.Namespace, entity.Metadata.Name)
+		require.NoError(t, err)
+		select {
+		case watchEvents, ok := <-watchChannel:
+			require.True(t, ok, "watcher closed unexpectedly")
+			require.Equal(t, 1, len(watchEvents))
+			assert.Equal(t, storev2.WatchDelete, watchEvents[0].Type)
+
+		case <-time.After(5 * time.Second):
+			t.Fatalf("no watch event received before timeout")
 		}
 	})
 }
