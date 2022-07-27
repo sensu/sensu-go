@@ -10,6 +10,7 @@ import (
 	corev3 "github.com/sensu/sensu-go/api/core/v3"
 	"github.com/sensu/sensu-go/backend/store"
 	storev2 "github.com/sensu/sensu-go/backend/store/v2"
+	"github.com/sensu/sensu-go/backend/store/v2/wrap"
 	clientv3 "go.etcd.io/etcd/client/v3"
 )
 
@@ -42,12 +43,27 @@ func MigrateV2EntityToV3(ctx context.Context, client *clientv3.Client) error {
 		if response.Err != nil {
 			return response.Err
 		}
-		ctx := store.NamespaceContext(ctx, response.Entity.Namespace)
-		req := storev2.NewResourceRequestFromResource(response.Entity)
-		var wrapper storev2.Wrapper
-		if err := s.Update(ctx, req, wrapper); err != nil {
+
+		entityConfig, entityState := corev3.V2EntityToV3(response.Entity)
+		entityConfigReq := storev2.NewResourceRequestFromResource(entityConfig)
+		entityStateReq := storev2.NewResourceRequestFromResource(entityState)
+
+		wrappedEntityConfig, err := wrap.Resource(entityConfig)
+		if err != nil {
 			return err
 		}
+		if err := s.Update(ctx, entityConfigReq, wrappedEntityConfig); err != nil {
+			return err
+		}
+
+		wrappedEntityState, err := wrap.Resource(entityState)
+		if err != nil {
+			return err
+		}
+		if err := s.Update(ctx, entityStateReq, wrappedEntityState); err != nil {
+			return err
+		}
+
 		if err := deleteV2Entity(ctx, client, response.Entity); err != nil {
 			return err
 		}
@@ -150,7 +166,7 @@ func readPagedV2Entities(ctx context.Context, client *clientv3.Client) <-chan en
 				close(result)
 				return
 			}
-			if err := wrapList.UnwrapInto(entities); err != nil {
+			if err := wrapList.UnwrapInto(&entities); err != nil {
 				result <- entityOrError{Err: err}
 				close(result)
 				return
