@@ -8,8 +8,8 @@ import (
 	"github.com/sensu/sensu-go/backend/messaging"
 	"github.com/sensu/sensu-go/backend/ringv2"
 	"github.com/sensu/sensu-go/backend/secrets"
-	"github.com/sensu/sensu-go/backend/store"
 	cachev2 "github.com/sensu/sensu-go/backend/store/cache/v2"
+	storev2 "github.com/sensu/sensu-go/backend/store/v2"
 	"github.com/sensu/sensu-go/types"
 	"go.etcd.io/etcd/client/v3"
 )
@@ -47,7 +47,7 @@ var (
 // Schedulerd handles scheduling check requests for each check's
 // configured interval and publishing to the message bus.
 type Schedulerd struct {
-	store                  store.Store
+	store                  storev2.Interface
 	queueGetter            types.QueueGetter
 	bus                    messaging.MessageBus
 	checkWatcher           *CheckWatcher
@@ -65,7 +65,7 @@ type Option func(*Schedulerd) error
 
 // Config configures Schedulerd.
 type Config struct {
-	Store                  store.Store
+	Store                  storev2.Interface
 	QueueGetter            types.QueueGetter
 	RingPool               *ringv2.RingPool
 	Bus                    messaging.MessageBus
@@ -84,7 +84,7 @@ func New(ctx context.Context, c Config, opts ...Option) (*Schedulerd, error) {
 		secretsProviderManager: c.SecretsProviderManager,
 	}
 	s.ctx, s.cancel = context.WithCancel(ctx)
-	cache, err := cachev2.New(s.ctx, c.Client, &corev3.EntityConfig{}, true)
+	cache, err := cachev2.New(s.ctx, c.Store, &corev3.EntityConfig{}, true)
 	if err != nil {
 		return nil, err
 	}

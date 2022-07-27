@@ -4,12 +4,16 @@ import (
 	"context"
 	"testing"
 
-	"github.com/sensu/sensu-go/backend/messaging"
-	"github.com/sensu/sensu-go/backend/queue"
-	"github.com/sensu/sensu-go/backend/store/etcd/testutil"
-	"github.com/sensu/sensu-go/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	corev2 "github.com/sensu/sensu-go/api/core/v2"
+	corev3 "github.com/sensu/sensu-go/api/core/v3"
+	"github.com/sensu/sensu-go/backend/messaging"
+	"github.com/sensu/sensu-go/backend/queue"
+	storev2 "github.com/sensu/sensu-go/backend/store/v2"
+	"github.com/sensu/sensu-go/backend/store/v2/etcdstore/testutil"
+	"github.com/sensu/sensu-go/backend/store/v2/wrap"
 )
 
 func TestSchedulerd(t *testing.T) {
@@ -28,7 +32,7 @@ func TestSchedulerd(t *testing.T) {
 	defer st.Teardown()
 
 	// Mock a default namespace
-	require.NoError(t, st.CreateNamespace(context.Background(), types.FixtureNamespace("default")))
+	require.NoError(t, st.NamespaceStore().CreateOrUpdate(context.Background(), corev3.FixtureNamespace("default")))
 
 	schedulerd, err := New(context.Background(), Config{
 		Store:       st,
@@ -47,13 +51,17 @@ func TestSchedulerd(t *testing.T) {
 		assert.FailNow(t, "could not subscribe", err)
 	}
 
-	check := types.FixtureCheckConfig("check_name")
-	ctx := context.WithValue(context.Background(), types.NamespaceKey, check.Namespace)
-
+	check := corev2.FixtureCheckConfig("check_name")
 	assert.NoError(t, check.Validate())
-	assert.NoError(t, st.UpdateCheckConfig(ctx, check))
 
-	require.NoError(t, st.DeleteCheckConfigByName(ctx, check.Name))
+	req := storev2.NewResourceRequestFromResource(check)
+	wrappedCheck, err := wrap.Resource(check)
+	if err != nil {
+		assert.FailNow(t, "could not create check", err)
+	}
+
+	assert.NoError(t, st.CreateOrUpdate(context.Background(), req, wrappedCheck))
+	assert.NoError(t, st.Delete(context.Background(), req))
 
 	assert.NoError(t, sub.Cancel())
 	close(tsub.ch)
@@ -62,7 +70,7 @@ func TestSchedulerd(t *testing.T) {
 	assert.NoError(t, bus.Stop())
 
 	for msg := range tsub.ch {
-		result, ok := msg.(*types.CheckConfig)
+		result, ok := msg.(*corev2.CheckConfig)
 		assert.True(t, ok)
 		assert.EqualValues(t, check, result)
 	}

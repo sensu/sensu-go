@@ -11,12 +11,13 @@ import (
 	"github.com/sensu/sensu-go/backend/secrets"
 	"github.com/sensu/sensu-go/backend/store"
 	cachev2 "github.com/sensu/sensu-go/backend/store/cache/v2"
+	storev2 "github.com/sensu/sensu-go/backend/store/v2"
 )
 
 // CheckWatcher manages all the check schedulers
 type CheckWatcher struct {
 	items                  map[string]Scheduler
-	store                  store.Store
+	store                  storev2.Interface
 	bus                    messaging.MessageBus
 	mu                     sync.Mutex
 	ctx                    context.Context
@@ -26,7 +27,7 @@ type CheckWatcher struct {
 }
 
 // NewCheckWatcher creates a new ScheduleManager.
-func NewCheckWatcher(ctx context.Context, msgBus messaging.MessageBus, store store.Store, pool *ringv2.RingPool, cache *cachev2.Resource, secretsProviderManager *secrets.ProviderManager) *CheckWatcher {
+func NewCheckWatcher(ctx context.Context, msgBus messaging.MessageBus, store storev2.Interface, pool *ringv2.RingPool, cache *cachev2.Resource, secretsProviderManager *secrets.ProviderManager) *CheckWatcher {
 	watcher := &CheckWatcher{
 		store:                  store,
 		items:                  make(map[string]Scheduler),
@@ -86,9 +87,13 @@ func (c *CheckWatcher) startScheduler(check *corev2.CheckConfig) error {
 
 // Start starts the CheckWatcher.
 func (c *CheckWatcher) Start() error {
-	// for each check
-	checkConfigs, err := c.store.GetCheckConfigs(c.ctx, &store.SelectionPredicate{})
+	checkConfigs := []*corev2.CheckConfig{}
+	req := storev2.NewResourceRequestFromResource(&corev2.CheckConfig{})
+	list, err := c.store.List(context.TODO(), req, &store.SelectionPredicate{})
 	if err != nil {
+		return err
+	}
+	if err := list.UnwrapInto(&checkConfigs); err != nil {
 		return err
 	}
 
@@ -107,12 +112,14 @@ func (c *CheckWatcher) Start() error {
 }
 
 func (c *CheckWatcher) startWatcher() {
-	watchChan := c.store.GetCheckConfigWatcher(c.ctx)
+	watchChan := c.store.Watch(c.ctx, storev2.NewResourceRequestFromResource(&corev2.CheckConfig{}))
 	for {
 		select {
-		case watchEvent, ok := <-watchChan:
+		case watchEvents, ok := <-watchChan:
 			if ok {
-				c.handleWatchEvent(watchEvent)
+				for _, watchEvent := range watchEvents {
+					c.handleWatchEvent(watchEvent)
+				}
 			}
 		case <-c.ctx.Done():
 			c.mu.Lock()
@@ -127,11 +134,16 @@ func (c *CheckWatcher) startWatcher() {
 	}
 }
 
-func (c *CheckWatcher) handleWatchEvent(watchEvent store.WatchEventCheckConfig) {
-	check := watchEvent.CheckConfig
+func (c *CheckWatcher) handleWatchEvent(watchEvent storev2.WatchEvent) {
+	// TODO(ccressent): is there a better way to check types?
+	if watchEvent.Key.Type != "CheckConfig" {
+		logger.Error("check watcher received wrong type")
+		return
+	}
 
-	if check == nil {
-		logger.Error("nil check config received from check config watcher")
+	check := &corev2.CheckConfig{}
+	if err := watchEvent.Value.UnwrapInto(check); err != nil {
+		logger.WithError(err).Error("could not unwrap watch event value")
 		return
 	}
 
@@ -140,13 +152,13 @@ func (c *CheckWatcher) handleWatchEvent(watchEvent store.WatchEventCheckConfig) 
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
-	switch watchEvent.Action {
-	case store.WatchCreate:
+	switch watchEvent.Type {
+	case storev2.WatchCreate:
 		// we need to spin up a new CheckScheduler for the newly created check
 		if err := c.startScheduler(check); err != nil {
 			logger.WithError(err).Error("unable to start check scheduler")
 		}
-	case store.WatchUpdate:
+	case storev2.WatchUpdate:
 		// Interrupt the check scheduler, causing the check to execute and the timer to be reset.
 		logger.Info("check configs updated")
 		sched, ok := c.items[key]
@@ -170,7 +182,7 @@ func (c *CheckWatcher) handleWatchEvent(watchEvent store.WatchEventCheckConfig) 
 				logger.WithError(err).Error("unable to start check scheduler")
 			}
 		}
-	case store.WatchDelete:
+	case storev2.WatchDelete:
 		// Call stop on the scheduler.
 		sched, ok := c.items[key]
 		if ok {

@@ -4,19 +4,20 @@ import (
 	"context"
 	"sync"
 
+	"github.com/sirupsen/logrus"
+
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/messaging"
 	"github.com/sensu/sensu-go/backend/secrets"
-	"github.com/sensu/sensu-go/backend/store"
 	cachev2 "github.com/sensu/sensu-go/backend/store/cache/v2"
-	"github.com/sirupsen/logrus"
+	storev2 "github.com/sensu/sensu-go/backend/store/v2"
 )
 
 // IntervalScheduler schedules checks to be executed on a timer
 type IntervalScheduler struct {
 	lastIntervalState      uint32
 	check                  *corev2.CheckConfig
-	store                  store.Store
+	store                  storev2.Interface
 	bus                    messaging.MessageBus
 	logger                 *logrus.Entry
 	ctx                    context.Context
@@ -28,7 +29,7 @@ type IntervalScheduler struct {
 }
 
 // NewIntervalScheduler initializes an IntervalScheduler
-func NewIntervalScheduler(ctx context.Context, store store.Store, bus messaging.MessageBus, check *corev2.CheckConfig, cache *cachev2.Resource, secretsProviderManager *secrets.ProviderManager) *IntervalScheduler {
+func NewIntervalScheduler(ctx context.Context, store storev2.Interface, bus messaging.MessageBus, check *corev2.CheckConfig, cache *cachev2.Resource, secretsProviderManager *secrets.ProviderManager) *IntervalScheduler {
 	sched := &IntervalScheduler{
 		store:             store,
 		bus:               bus,

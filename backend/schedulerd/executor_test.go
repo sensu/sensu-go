@@ -7,15 +7,16 @@ import (
 	"sync"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	corev3 "github.com/sensu/sensu-go/api/core/v3"
 	"github.com/sensu/sensu-go/backend/messaging"
 	"github.com/sensu/sensu-go/backend/queue"
 	"github.com/sensu/sensu-go/backend/secrets"
 	cachev2 "github.com/sensu/sensu-go/backend/store/cache/v2"
-	"github.com/sensu/sensu-go/backend/store/etcd/testutil"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
+	"github.com/sensu/sensu-go/backend/store/v2/etcdstore/testutil"
 )
 
 func TestAdhocExecutor(t *testing.T) {

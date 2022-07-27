@@ -2,7 +2,6 @@ package mockstore
 
 import (
 	"context"
-	"errors"
 	"reflect"
 
 	corev3 "github.com/sensu/sensu-go/api/core/v3"
@@ -91,7 +90,7 @@ func (w WrapList[T]) Unwrap() ([]corev3.Resource, error) {
 func (w WrapList[T]) UnwrapInto(target interface{}) error {
 	list, ok := target.(*[]T)
 	if !ok {
-		return errors.New("bad target")
+		panic("bad target")
 	}
 	*list = w
 	return nil

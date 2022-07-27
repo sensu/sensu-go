@@ -7,16 +7,19 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
+
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/messaging"
 	"github.com/sensu/sensu-go/backend/queue"
 	"github.com/sensu/sensu-go/backend/secrets"
 	"github.com/sensu/sensu-go/backend/store"
 	cachev2 "github.com/sensu/sensu-go/backend/store/cache/v2"
+	"github.com/sensu/sensu-go/backend/store/v2/storetest"
+	"github.com/sensu/sensu-go/backend/store/v2/wrap"
 	"github.com/sensu/sensu-go/testing/mockstore"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
-	"github.com/stretchr/testify/require"
 )
 
 type TestIntervalScheduler struct {
@@ -65,10 +68,18 @@ func newIntervalScheduler(ctx context.Context, t *testing.T, executor string) *T
 	hook := request.Hooks[0]
 	scheduler.check = request.Config
 	scheduler.check.Interval = 1
-	s := &mockstore.MockStore{}
-	s.On("GetAssets", mock.Anything, &store.SelectionPredicate{}).Return([]*corev2.Asset{&asset}, nil)
-	s.On("GetHookConfigs", mock.Anything, &store.SelectionPredicate{}).Return([]*corev2.HookConfig{&hook}, nil)
-	s.On("GetCheckConfigByName", mock.Anything, mock.Anything).Return(scheduler.check, nil)
+	s := &storetest.Store{}
+
+	s.On("List", mock.Anything, mock.MatchedBy(isAssetResourceRequest), &store.SelectionPredicate{}).
+		Return(mockstore.WrapList[*corev2.Asset]{&asset}, nil)
+
+	s.On("List", mock.Anything, mock.MatchedBy(isHookResourceRequest), &store.SelectionPredicate{}).
+		Return(mockstore.WrapList[*corev2.HookConfig]{&hook}, nil)
+
+	wrappedCheck, err := wrap.Resource(scheduler.check)
+	require.NoError(t, err)
+	s.On("Get", mock.Anything, mock.MatchedBy(isCheckResourceRequest)).
+		Return(wrappedCheck, nil)
 
 	bus, err := messaging.NewWizardBus(messaging.WizardBusConfig{})
 	require.NoError(t, err)
@@ -101,12 +112,20 @@ func newCronScheduler(ctx context.Context, t *testing.T, executor string) *TestC
 	asset := request.Assets[0]
 	hook := request.Hooks[0]
 	scheduler.check = request.Config
-	scheduler.check.Interval = 1
+	scheduler.check.Interval = 0
 	scheduler.check.Cron = "* * * * *"
-	s := &mockstore.MockStore{}
-	s.On("GetAssets", mock.Anything, &store.SelectionPredicate{}).Return([]*corev2.Asset{&asset}, nil)
-	s.On("GetHookConfigs", mock.Anything, &store.SelectionPredicate{}).Return([]*corev2.HookConfig{&hook}, nil)
-	s.On("GetCheckConfigByName", mock.Anything, mock.Anything).Return(scheduler.check, nil)
+	s := &storetest.Store{}
+
+	s.On("List", mock.Anything, mock.MatchedBy(isAssetResourceRequest), &store.SelectionPredicate{}).
+		Return(mockstore.WrapList[*corev2.Asset]{&asset}, nil)
+
+	s.On("List", mock.Anything, mock.MatchedBy(isHookResourceRequest), &store.SelectionPredicate{}).
+		Return(mockstore.WrapList[*corev2.HookConfig]{&hook}, nil)
+
+	wrappedCheck, err := wrap.Resource(scheduler.check)
+	require.NoError(t, err)
+	s.On("Get", mock.Anything, mock.MatchedBy(isCheckResourceRequest)).
+		Return(wrappedCheck, nil)
 
 	bus, err := messaging.NewWizardBus(messaging.WizardBusConfig{})
 	require.NoError(t, err)
