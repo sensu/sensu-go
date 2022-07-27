@@ -5,7 +5,7 @@ import (
 	time "github.com/echlebek/timeproxy"
 )
 
-var mockTime = crock.NewTime(time.Unix(0, 0))
+var mockTime = crock.NewTime(time.Unix(42, 0))
 
 func init() {
 	mockTime.Resolution = time.Millisecond

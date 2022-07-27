@@ -7,15 +7,17 @@ import (
 	"strings"
 
 	time "github.com/echlebek/timeproxy"
+	"github.com/sirupsen/logrus"
+
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	corev3 "github.com/sensu/sensu-go/api/core/v3"
 	"github.com/sensu/sensu-go/backend/messaging"
 	"github.com/sensu/sensu-go/backend/secrets"
+	"github.com/sensu/sensu-go/backend/store"
 	cachev2 "github.com/sensu/sensu-go/backend/store/cache/v2"
 	storev2 "github.com/sensu/sensu-go/backend/store/v2"
 	"github.com/sensu/sensu-go/types"
 	stringsutil "github.com/sensu/sensu-go/util/strings"
-	"github.com/sirupsen/logrus"
 )
 
 var (
@@ -388,9 +390,13 @@ func buildRequest(check *corev2.CheckConfig, s storev2.Interface, secretsProvide
 		)
 	}
 
-	// Replace with storev2.List()
-	assets, err := s.GetAssets(ctx, &store.SelectionPredicate{})
+	assets := []*corev2.Asset{}
+	req := storev2.NewResourceRequestFromResource(&corev2.Asset{ObjectMeta: corev2.NewObjectMeta("", check.Namespace)})
+	list, err := s.List(ctx, req, &store.SelectionPredicate{})
 	if err != nil {
+		return nil, err
+	}
+	if err := list.UnwrapInto(&assets); err != nil {
 		return nil, err
 	}
 
@@ -417,9 +423,13 @@ func buildRequest(check *corev2.CheckConfig, s storev2.Interface, secretsProvide
 	// the check in the first place.
 	if len(check.CheckHooks) != 0 {
 		// Explode hooks; get hooks & filter out those that are irrelevant
-		// Replace with storev2.List()
-		hooks, err := s.GetHookConfigs(ctx, &store.SelectionPredicate{})
+		hooks := []*corev2.HookConfig{}
+		req := storev2.NewResourceRequestFromV2Resource(&corev2.HookConfig{ObjectMeta: corev2.NewObjectMeta("", check.Namespace)})
+		list, err := s.List(ctx, req, &store.SelectionPredicate{})
 		if err != nil {
+			return nil, err
+		}
+		if err := list.UnwrapInto(&hooks); err != nil {
 			return nil, err
 		}
 

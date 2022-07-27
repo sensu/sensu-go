@@ -4,12 +4,13 @@ import (
 	"context"
 	"sync"
 
+	"github.com/sirupsen/logrus"
+
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/messaging"
 	"github.com/sensu/sensu-go/backend/secrets"
 	cachev2 "github.com/sensu/sensu-go/backend/store/cache/v2"
 	storev2 "github.com/sensu/sensu-go/backend/store/v2"
-	"github.com/sirupsen/logrus"
 )
 
 // IntervalScheduler schedules checks to be executed on a timer

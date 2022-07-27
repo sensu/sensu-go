@@ -4,18 +4,21 @@ import (
 	"context"
 	"testing"
 
+	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
+
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/messaging"
 	"github.com/sensu/sensu-go/backend/secrets"
 	"github.com/sensu/sensu-go/backend/store"
 	cachev2 "github.com/sensu/sensu-go/backend/store/cache/v2"
+	storev2 "github.com/sensu/sensu-go/backend/store/v2"
+	"github.com/sensu/sensu-go/backend/store/v2/storetest"
 	"github.com/sensu/sensu-go/testing/mockstore"
-	"github.com/stretchr/testify/mock"
-	"github.com/stretchr/testify/require"
 )
 
 func TestCheckWatcherSmoke(t *testing.T) {
-	st := &mockstore.MockStore{}
+	st := &storetest.Store{}
 
 	bus, err := messaging.NewWizardBus(messaging.WizardBusConfig{})
 	require.NoError(t, err)
@@ -29,14 +32,12 @@ func TestCheckWatcherSmoke(t *testing.T) {
 
 	checkA := corev2.FixtureCheckConfig("a")
 	checkB := corev2.FixtureCheckConfig("b")
-	st.On("GetCheckConfigs", mock.Anything, &store.SelectionPredicate{}).Return([]*corev2.CheckConfig{checkA, checkB}, nil)
-	st.On("GetCheckConfigByName", mock.Anything, "a").Return(checkA, nil)
-	st.On("GetCheckConfigByName", mock.Anything, "b").Return(checkB, nil)
-	st.On("GetAssets", mock.Anything, &store.SelectionPredicate{}).Return([]*corev2.Asset{}, nil)
-	st.On("GetHookConfigs", mock.Anything, &store.SelectionPredicate{}).Return([]*corev2.HookConfig{}, nil)
 
-	watcherChan := make(chan store.WatchEventCheckConfig)
-	st.On("GetCheckConfigWatcher", mock.Anything).Return((<-chan store.WatchEventCheckConfig)(watcherChan), nil)
+	st.On("List", mock.Anything, mock.MatchedBy(isCheckResourceRequest), &store.SelectionPredicate{}).
+		Return(mockstore.WrapList[*corev2.CheckConfig]{checkA, checkB}, nil)
+
+	watcherChan := make(chan []storev2.WatchEvent)
+	st.On("Watch", mock.Anything, mock.Anything).Return((<-chan []storev2.WatchEvent)(watcherChan), nil)
 
 	pm := secrets.NewProviderManager(&mockEventReceiver{})
 	watcher := NewCheckWatcher(ctx, bus, st, nil, &cachev2.Resource{}, pm)
@@ -44,24 +45,46 @@ func TestCheckWatcherSmoke(t *testing.T) {
 
 	checkAA := corev2.FixtureCheckConfig("a")
 	checkAA.Interval = 5
-	watcherChan <- store.WatchEventCheckConfig{
-		CheckConfig: checkAA,
-		Action:      store.WatchUpdate,
+	reqCheckAA := storev2.NewResourceRequestFromResource(checkAA)
+	wrappedCheckAA, err := storev2.WrapResource(checkAA)
+	require.NoError(t, err)
+
+	checkBB := corev2.FixtureCheckConfig("b")
+	checkBB.Interval = 0
+	checkBB.Cron = "* * * * *"
+	reqCheckBB := storev2.NewResourceRequestFromResource(checkBB)
+	wrappedCheckBB, err := storev2.WrapResource(checkBB)
+	require.NoError(t, err)
+
+	watcherChan <- []storev2.WatchEvent{
+		{
+			Type:  storev2.WatchUpdate,
+			Key:   reqCheckAA,
+			Value: wrappedCheckAA,
+		},
 	}
 
-	checkB.Cron = "* * * * *"
-	watcherChan <- store.WatchEventCheckConfig{
-		CheckConfig: checkB,
-		Action:      store.WatchUpdate,
+	watcherChan <- []storev2.WatchEvent{
+		{
+			Type:  storev2.WatchUpdate,
+			Key:   reqCheckBB,
+			Value: wrappedCheckBB,
+		},
 	}
 
-	watcherChan <- store.WatchEventCheckConfig{
-		CheckConfig: checkAA,
-		Action:      store.WatchDelete,
+	watcherChan <- []storev2.WatchEvent{
+		{
+			Type:  storev2.WatchDelete,
+			Key:   reqCheckAA,
+			Value: wrappedCheckAA,
+		},
 	}
 
-	watcherChan <- store.WatchEventCheckConfig{
-		CheckConfig: checkB,
-		Action:      store.WatchCreate,
+	watcherChan <- []storev2.WatchEvent{
+		{
+			Type:  storev2.WatchCreate,
+			Key:   reqCheckBB,
+			Value: wrappedCheckBB,
+		},
 	}
 }

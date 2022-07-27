@@ -84,7 +84,7 @@ func New(ctx context.Context, c Config, opts ...Option) (*Schedulerd, error) {
 		secretsProviderManager: c.SecretsProviderManager,
 	}
 	s.ctx, s.cancel = context.WithCancel(ctx)
-	cache, err := cachev2.New(s.ctx, c.Client, &corev3.EntityConfig{}, true)
+	cache, err := cachev2.New(s.ctx, c.Store, &corev3.EntityConfig{}, true)
 	if err != nil {
 		return nil, err
 	}
