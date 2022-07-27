@@ -77,9 +77,9 @@ func TestEventHandling(t *testing.T) {
 	require.NoError(t, err)
 	require.NoError(t, bus.Start())
 
-	mockEntityStore := &storetest.Store{}
-	mockStore := &mockstore.MockStore{}
-	e := newEventd(mockEntityStore, mockStore, bus, newFakeFactory(&fakeSwitchSet{}))
+	store := &storetest.Store{}
+	eventStore := &mockstore.MockStore{}
+	e := newEventd(store, eventStore, bus, newFakeFactory(&fakeSwitchSet{}))
 
 	require.NoError(t, e.Start())
 	require.NoError(t, bus.Publish(messaging.TopicEventRaw, nil))
@@ -92,11 +92,11 @@ func TestEventHandling(t *testing.T) {
 	require.NoError(t, bus.Publish(messaging.TopicEventRaw, badEvent))
 
 	event := corev2.FixtureEvent("entity", "check")
-	addMockEntityV2(t, mockEntityStore, event.Entity)
+	addMockEntityV2(t, store, event.Entity)
 
 	var nilEvent *corev2.Event
 	// no previous event.
-	mockStore.On(
+	eventStore.On(
 		"GetEventByEntityCheck",
 		mock.Anything,
 		"entity",
@@ -105,24 +105,14 @@ func TestEventHandling(t *testing.T) {
 	event.Check.Occurrences = 1
 	event.Check.State = corev2.EventPassingState
 	event.Check.LastOK = event.Timestamp
-	mockStore.On("UpdateEvent", mock.Anything).Return(event, nilEvent, nil)
-
-	// No silenced entries
-	mockStore.On(
-		"GetSilencedEntriesBySubscription",
-		mock.Anything,
-	).Return([]*corev2.Silenced{}, nil)
-	mockStore.On(
-		"GetSilencedEntriesByCheckName",
-		mock.Anything,
-	).Return([]*corev2.Silenced{}, nil)
+	eventStore.On("UpdateEvent", mock.Anything).Return(event, nilEvent, nil)
 
 	require.NoError(t, bus.Publish(messaging.TopicEventRaw, event))
 
 	err = e.Stop()
 	assert.NoError(t, err)
 
-	mockStore.AssertCalled(t, "UpdateEvent", mock.Anything)
+	eventStore.AssertCalled(t, "UpdateEvent", mock.Anything)
 
 	assert.Equal(t, int64(1), event.Check.Occurrences)
 
@@ -137,9 +127,9 @@ func TestEventMonitor(t *testing.T) {
 	require.NoError(t, err)
 	require.NoError(t, bus.Start())
 
-	mockEntityStore := &storetest.Store{}
-	mockStore := &mockstore.MockStore{}
-	e := newEventd(mockEntityStore, mockStore, bus, newFakeFactory(&fakeSwitchSet{}))
+	store := &storetest.Store{}
+	eventStore := &mockstore.MockStore{}
+	e := newEventd(store, eventStore, bus, newFakeFactory(&fakeSwitchSet{}))
 
 	require.NoError(t, e.Start())
 	require.NoError(t, bus.Publish(messaging.TopicEventRaw, nil))
@@ -147,28 +137,18 @@ func TestEventMonitor(t *testing.T) {
 	event := corev2.FixtureEvent("entity", "check")
 	event.Check.Ttl = 90
 
-	addMockEntityV2(t, mockEntityStore, event.Entity)
+	addMockEntityV2(t, store, event.Entity)
 
 	var nilEvent *corev2.Event
 	// no previous event.
-	mockStore.On(
+	eventStore.On(
 		"GetEventByEntityCheck",
 		mock.Anything,
 		"entity",
 		"check",
 	).Return(nilEvent, nil)
 	event.Check.State = corev2.EventPassingState
-	mockStore.On("UpdateEvent", mock.Anything).Return(event, nilEvent, nil)
-
-	// No silenced entries
-	mockStore.On(
-		"GetSilencedEntriesBySubscription",
-		mock.Anything,
-	).Return([]*corev2.Silenced{}, nil)
-	mockStore.On(
-		"GetSilencedEntriesByCheckName",
-		mock.Anything,
-	).Return([]*corev2.Silenced{}, nil)
+	eventStore.On("UpdateEvent", mock.Anything).Return(event, nilEvent, nil)
 
 	require.NoError(t, bus.Publish(messaging.TopicEventRaw, event))
 
@@ -289,10 +269,6 @@ func TestCheckTTL(t *testing.T) {
 
 			eventStore.On("GetEventByEntityCheck", mock.Anything, "entity", "check").
 				Return(tt.previousEvent, tt.previousEventErr)
-			eventStore.On("GetSilencedEntriesBySubscription", mock.Anything, mock.Anything).
-				Return([]*corev2.Silenced{}, nil)
-			eventStore.On("GetSilencedEntriesByCheckName", mock.Anything, mock.Anything).
-				Return([]*corev2.Silenced{}, nil)
 			eventStore.On("UpdateEvent", mock.Anything, mock.Anything).Return(tt.msg, mockEvent, nil)
 
 			if _, err := e.handleMessage(tt.msg); (err != nil) != tt.wantErr {

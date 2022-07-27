@@ -15,7 +15,6 @@ import (
 
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	corev3 "github.com/sensu/sensu-go/api/core/v3"
-	"github.com/sensu/sensu-go/backend/keepalived"
 	"github.com/sensu/sensu-go/backend/liveness"
 	"github.com/sensu/sensu-go/backend/messaging"
 	"github.com/sensu/sensu-go/backend/silenced"
@@ -693,6 +692,8 @@ func (e *Eventd) dead(key string, prev liveness.State, leader bool) (bury bool) 
 		return false
 	}
 
+	// TODO(ccressent): this should be replaced with a call to the Keepalive
+	// store once implemented
 	keepalive, err := e.eventStore.GetEventByEntityCheck(ctx, entity, "keepalive")
 	if err != nil {
 		lager.WithError(err).Error("check ttl: error retrieving keepalive event")
@@ -748,7 +749,7 @@ func parseKey(key string) (namespace, check, entity string, err error) {
 func (e *Eventd) handleFailure(ctx context.Context, event *corev2.Event) error {
 	// don't update the event with ttl output for keepalives,
 	// there is a different mechanism for that
-	if event.Check.Name == keepalived.KeepaliveCheckName {
+	if event.Check.Name == corev2.KeepaliveCheckName {
 		return nil
 	}
 
