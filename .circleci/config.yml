@@ -37,6 +37,7 @@ jobs:
               echo "$replaces"
               exit 1
             fi
+
   test:
     <<: *sensu_go_build_env
     <<: *sensu_go_test_env
@@ -45,8 +46,17 @@ jobs:
       - go/mod-download-cached
 
       # Run tests
-      - run: ./build.sh unit
-      - run: ./build.sh integration
+      - run: >-
+          gotestsum --junitfile /tmp/junit/unit-tests.xml --
+          -timeout=60s -race $(go list ./... |
+          egrep -v '(testing|vendor|scripts)')
+      - run: >-
+          gotestsum --junitfile /tmp/junit/integration-tests.xml --
+          -timeout=180s -tags=integration $(go list ./... |
+          egrep -v '(testing|vendor|scripts)')
+
+      - store_test_results:
+          path: /tmp/junit
 
   test-module:
     parameters:

@@ -53,7 +53,7 @@ func (opts *hookOpts) withFlags(flags *pflag.FlagSet) {
 	}
 }
 
-func (opts *hookOpts) administerQuestionnaire(editing bool) error {
+func (opts *hookOpts) administerQuestionnaire(editing bool, askOpts ...survey.AskOpt) error {
 	var qs = []*survey.Question{}
 
 	if !editing {
@@ -110,7 +110,7 @@ func (opts *hookOpts) administerQuestionnaire(editing bool) error {
 		},
 	}...)
 
-	return survey.Ask(qs, opts)
+	return survey.Ask(qs, opts, askOpts...)
 }
 
 func (opts *hookOpts) Copy(hook *types.HookConfig) {

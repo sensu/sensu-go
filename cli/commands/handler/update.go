@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/AlecAivazis/survey/v2"
 	"github.com/sensu/sensu-go/cli"
 	"github.com/spf13/cobra"
 )
@@ -31,7 +32,10 @@ func UpdateCommand(cli *cli.SensuCli) *cobra.Command {
 			opts := newHandlerOpts()
 			opts.withHandler(handler)
 
-			if err := opts.administerQuestionnaire(true); err != nil {
+			askOpts := []survey.AskOpt{
+				survey.WithStdio(cli.InFile, cli.OutFile, cli.ErrFile),
+			}
+			if err := opts.administerQuestionnaire(true, askOpts...); err != nil {
 				return err
 			}
 

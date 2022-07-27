@@ -4,6 +4,7 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/sensu/sensu-go/cli"
 	client "github.com/sensu/sensu-go/cli/client/testing"
 	test "github.com/sensu/sensu-go/cli/commands/testing"
 	"github.com/stretchr/testify/assert"
@@ -71,10 +72,11 @@ func TestDeleteCommandRunEClosureWithServerErr(t *testing.T) {
 func TestDeleteCommandRunEFailConfirm(t *testing.T) {
 	assert := assert.New(t)
 
-	cli := test.NewMockCLI()
-	cmd := RevokeCommand(cli)
-	out, err := test.RunCmd(cmd, []string{"my-api-key"})
+	test.WithMockCLI(t, func(cli *cli.SensuCli) {
+		cmd := RevokeCommand(cli)
+		output, err := test.RunCmdWithOutFile(cmd, []string{"my-api-key"}, cli.OutFile)
 
-	require.NoError(t, err)
-	assert.Contains(out, "Canceled")
+		require.NoError(t, err)
+		assert.Contains(output, "Canceled")
+	})
 }

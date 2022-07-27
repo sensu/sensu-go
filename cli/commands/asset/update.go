@@ -33,7 +33,10 @@ func UpdateCommand(cli *cli.SensuCli) *cobra.Command {
 			// Administer questionnaire
 			opts := newAssetOptions()
 			opts.copyFrom(asset)
-			if err := opts.administerQuestionnaire(); err != nil {
+			askOpts := []survey.AskOpt{
+				survey.WithStdio(cli.InFile, cli.OutFile, cli.ErrFile),
+			}
+			if err := opts.administerQuestionnaire(askOpts...); err != nil {
 				return err
 			}
 
@@ -76,7 +79,7 @@ func (opts *assetOptions) copyTo(a *types.Asset) {
 	a.Sha512 = opts.Sha512
 }
 
-func (opts *assetOptions) administerQuestionnaire() error {
+func (opts *assetOptions) administerQuestionnaire(askOpts ...survey.AskOpt) error {
 	var qs = []*survey.Question{
 		{
 			Name:     "url",
@@ -90,5 +93,5 @@ func (opts *assetOptions) administerQuestionnaire() error {
 		},
 	}
 
-	return survey.Ask(qs, opts)
+	return survey.Ask(qs, opts, askOpts...)
 }

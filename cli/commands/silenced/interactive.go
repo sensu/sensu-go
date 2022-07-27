@@ -64,7 +64,7 @@ func (o *silencedOpts) withFlags(flags *pflag.FlagSet) {
 	}
 }
 
-func (o *silencedOpts) administerQuestionnaire(editing bool) error {
+func (o *silencedOpts) administerQuestionnaire(editing bool, askOpts ...survey.AskOpt) error {
 	var qs []*survey.Question
 
 	if !editing {
@@ -134,7 +134,7 @@ func (o *silencedOpts) administerQuestionnaire(editing bool) error {
 			},
 		}}...)
 
-	if err := survey.Ask(qs, o); err != nil && err != io.EOF {
+	if err := survey.Ask(qs, o, askOpts...); err != nil && err != io.EOF {
 		return err
 	}
 	return nil
@@ -145,7 +145,7 @@ type silencedName struct {
 	Check        string
 }
 
-func askName(help string) (string, error) {
+func askName(help string, askOpts ...survey.AskOpt) (string, error) {
 	questions := []*survey.Question{
 		{
 			Name: "Subscription",
@@ -164,7 +164,7 @@ func askName(help string) (string, error) {
 	}
 
 	var name silencedName
-	if err := survey.Ask(questions, &name); err != nil {
+	if err := survey.Ask(questions, &name, askOpts...); err != nil {
 		return "", err
 	}
 	return types.SilencedName(name.Subscription, name.Check)

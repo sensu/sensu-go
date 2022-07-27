@@ -50,7 +50,7 @@ func (opts *mutatorOpts) withFlags(flags *pflag.FlagSet) {
 	}
 }
 
-func (opts *mutatorOpts) administerQuestionnaire(editing bool) error {
+func (opts *mutatorOpts) administerQuestionnaire(editing bool, askOpts ...survey.AskOpt) error {
 	var qs []*survey.Question
 	if !editing {
 		qs = append(qs, []*survey.Question{
@@ -117,7 +117,7 @@ func (opts *mutatorOpts) administerQuestionnaire(editing bool) error {
 		},
 	}...)
 
-	return survey.Ask(qs, opts)
+	return survey.Ask(qs, opts, askOpts...)
 }
 
 func (opts *mutatorOpts) Copy(mutator *types.Mutator) {
