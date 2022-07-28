@@ -7,17 +7,23 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
 
+### Changed
+- Eventd now prioritizes keepalive events over other events in order to
+mitigate the potential of keepalive event creation storms and mass agent
+disconnects.
+
 ### Added
 - GlobalResource interface in core/v3 allows core/v3 resources to
 be marked as global resources.
-## [6.7.4] - 2022-07-12
-
-### Changed
-- Upgraded CI Go version to 1.17.12
 
 ### Fixed
 - Fixed a bug where sensu-backend could crash if the BackendIDGetter
 encounters etcd client unavailability.
+
+## [6.7.4] - 2022-07-12
+
+### Changed
+- Upgraded CI Go version to 1.17.12
 
 ## [6.7.3] - 2022-07-07
 
