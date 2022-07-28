@@ -650,11 +650,6 @@ func (s *Session) handleEvent(_ context.Context, payload []byte) error {
 		} else {
 			eventBytesSummary.WithLabelValues(metrics.EventTypeLabelCheck).Observe(float64(len(payload)))
 		}
-		// TODO (ck) Should these be going through keepalived (TopicKeepalive)
-		// or straight to eventd (TopicKeepaliveRaw)?
-		if event.Check.Name == corev2.KeepaliveCheckName {
-			return s.bus.Publish(messaging.TopicKeepaliveRaw, event)
-		}
 	} else if event.HasMetrics() {
 		eventBytesSummary.WithLabelValues(metrics.EventTypeLabelMetrics).Observe(float64(len(payload)))
 	}
