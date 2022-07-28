@@ -15,6 +15,7 @@ import (
 	corev3 "github.com/sensu/sensu-go/api/core/v3"
 	"github.com/sensu/sensu-go/backend/messaging"
 	"github.com/sensu/sensu-go/backend/store"
+	cachev2 "github.com/sensu/sensu-go/backend/store/cache/v2"
 	storev2 "github.com/sensu/sensu-go/backend/store/v2"
 	"github.com/sensu/sensu-go/backend/store/v2/storetest"
 	"github.com/sensu/sensu-go/backend/store/v2/wrap"
@@ -42,15 +43,18 @@ func TestGoodSessionConfigProto(t *testing.T) {
 		"acme",
 	).Return(&corev2.Namespace{}, nil)
 
+	cache := cachev2.NewFromResources(nil, false)
+
 	cfg := SessionConfig{
-		AgentName:     "testing",
-		Namespace:     "acme",
-		Subscriptions: []string{"testing"},
-		Conn:          conn,
-		Bus:           bus,
-		Store:         st,
-		Unmarshal:     proto.Unmarshal,
-		Marshal:       proto.Marshal,
+		AgentName:         "testing",
+		Namespace:         "acme",
+		Subscriptions:     []string{"testing"},
+		Conn:              conn,
+		Bus:               bus,
+		Store:             st,
+		EntityConfigCache: cache,
+		Unmarshal:         proto.Unmarshal,
+		Marshal:           proto.Marshal,
 	}
 	session, err := NewSession(context.Background(), cfg)
 	assert.NotNil(t, session)
@@ -381,18 +385,6 @@ func TestSession_Start(t *testing.T) {
 				s.On("Get", mock.Anything).Return(wrappedConfig, nil)
 			},
 		},
-		{
-			name: "store err is handled",
-			connFunc: func(conn *mocktransport.MockTransport, wg *sync.WaitGroup) {
-				conn.On("Receive").After(100*time.Millisecond).Return(&transport.Message{}, nil)
-				conn.On("Closed").Return(true)
-				conn.On("Close").Return(nil)
-			},
-			storeFunc: func(s *storetest.Store, wg *sync.WaitGroup) {
-				s.On("Get", mock.Anything).Return(&wrap.Wrapper{}, errors.New("fatal error"))
-			},
-			wantErr: true,
-		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -410,6 +402,7 @@ func TestSession_Start(t *testing.T) {
 			if tt.storeFunc != nil {
 				tt.storeFunc(storev2, wg)
 			}
+			cache := cachev2.NewFromResources(nil, false)
 
 			// Mock our bus
 			bus, err := messaging.NewWizardBus(messaging.WizardBusConfig{})
@@ -421,14 +414,15 @@ func TestSession_Start(t *testing.T) {
 			}
 
 			cfg := SessionConfig{
-				AgentName: "testing",
-				Namespace: "default",
-				Conn:      conn,
-				Bus:       bus,
-				Store:     st,
-				Storev2:   storev2,
-				Unmarshal: agent.UnmarshalJSON,
-				Marshal:   agent.MarshalJSON,
+				AgentName:         "testing",
+				Namespace:         "default",
+				Conn:              conn,
+				Bus:               bus,
+				Store:             st,
+				Storev2:           storev2,
+				EntityConfigCache: cache,
+				Unmarshal:         agent.UnmarshalJSON,
+				Marshal:           agent.MarshalJSON,
 			}
 			session, err := NewSession(context.Background(), cfg)
 			if err != nil {

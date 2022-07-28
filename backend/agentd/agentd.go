@@ -19,6 +19,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/sensu/sensu-go/agent"
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
+	corev3 "github.com/sensu/sensu-go/api/core/v3"
 	"github.com/sensu/sensu-go/backend/apid/actions"
 	"github.com/sensu/sensu-go/backend/apid/middlewares"
 	"github.com/sensu/sensu-go/backend/apid/routers"
@@ -30,6 +31,7 @@ import (
 	"github.com/sensu/sensu-go/backend/ringv2"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/backend/store/cache"
+	cachev2 "github.com/sensu/sensu-go/backend/store/cache/v2"
 	storev2 "github.com/sensu/sensu-go/backend/store/v2"
 	"github.com/sensu/sensu-go/backend/store/v2/etcdstore"
 	"github.com/sensu/sensu-go/transport"
@@ -98,6 +100,7 @@ type Agentd struct {
 	cancel              context.CancelFunc
 	writeTimeout        int
 	namespaceCache      *cache.Resource
+	entityConfigCache   *cachev2.Resource
 	watcher             <-chan store.WatchEventEntityConfig
 	client              *clientv3.Client
 	etcdClientTLSConfig *tls.Config
@@ -196,6 +199,10 @@ func New(c Config, opts ...Option) (*Agentd, error) {
 	}
 
 	a.namespaceCache, err = cache.New(ctx, c.Client, &corev2.Namespace{}, false)
+	if err != nil {
+		return nil, err
+	}
+	a.entityConfigCache, err = cachev2.New(ctx, c.Client, &corev3.EntityConfig{}, false)
 	if err != nil {
 		return nil, err
 	}

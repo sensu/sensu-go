@@ -18,6 +18,7 @@ import (
 	"github.com/sensu/sensu-go/backend/metrics"
 	"github.com/sensu/sensu-go/backend/ringv2"
 	"github.com/sensu/sensu-go/backend/store"
+	cachev2 "github.com/sensu/sensu-go/backend/store/cache/v2"
 	storev2 "github.com/sensu/sensu-go/backend/store/v2"
 	"github.com/sensu/sensu-go/handler"
 	"github.com/sensu/sensu-go/transport"
@@ -80,23 +81,24 @@ var (
 // bus to the agent from other daemons. It handles transport handshaking and
 // transport channel multiplexing/demultiplexing.
 type Session struct {
-	cfg              SessionConfig
-	conn             transport.Transport
-	store            store.EntityStore
-	storev2          storev2.Interface
-	handler          *handler.MessageHandler
-	wg               *sync.WaitGroup
-	stopWG           sync.WaitGroup
-	checkChannel     chan interface{}
-	bus              messaging.MessageBus
-	ringPool         *ringv2.RingPool
-	ctx              context.Context
-	cancel           context.CancelFunc
-	marshal          agent.MarshalFunc
-	unmarshal        agent.UnmarshalFunc
-	entityConfig     *entityConfig
-	mu               sync.Mutex
-	subscriptionsMap map[string]subscription
+	cfg               SessionConfig
+	conn              transport.Transport
+	store             store.EntityStore
+	storev2           storev2.Interface
+	entityConfigCache *cachev2.Resource
+	handler           *handler.MessageHandler
+	wg                *sync.WaitGroup
+	stopWG            sync.WaitGroup
+	checkChannel      chan interface{}
+	bus               messaging.MessageBus
+	ringPool          *ringv2.RingPool
+	ctx               context.Context
+	cancel            context.CancelFunc
+	marshal           agent.MarshalFunc
+	unmarshal         agent.UnmarshalFunc
+	entityConfig      *entityConfig
+	mu                sync.Mutex
+	subscriptionsMap  map[string]subscription
 }
 
 // subscription is used to abstract a message.Subscription and therefore allow
@@ -136,11 +138,12 @@ type SessionConfig struct {
 	Subscriptions []string
 	WriteTimeout  int
 
-	Bus      messaging.MessageBus
-	Conn     transport.Transport
-	RingPool *ringv2.RingPool
-	Store    store.Store
-	Storev2  storev2.Interface
+	Bus               messaging.MessageBus
+	Conn              transport.Transport
+	RingPool          *ringv2.RingPool
+	Store             store.Store
+	Storev2           storev2.Interface
+	EntityConfigCache *cachev2.Resource
 
 	Marshal   agent.MarshalFunc
 	Unmarshal agent.UnmarshalFunc
@@ -180,19 +183,20 @@ func NewSession(ctx context.Context, cfg SessionConfig) (*Session, error) {
 	ctx, cancel := context.WithCancel(ctx)
 
 	s := &Session{
-		conn:             cfg.Conn,
-		cfg:              cfg,
-		wg:               &sync.WaitGroup{},
-		checkChannel:     make(chan interface{}, 100),
-		store:            cfg.Store,
-		storev2:          cfg.Storev2,
-		bus:              cfg.Bus,
-		subscriptionsMap: map[string]subscription{},
-		ctx:              ctx,
-		cancel:           cancel,
-		ringPool:         cfg.RingPool,
-		unmarshal:        cfg.Unmarshal,
-		marshal:          cfg.Marshal,
+		conn:              cfg.Conn,
+		cfg:               cfg,
+		wg:                &sync.WaitGroup{},
+		checkChannel:      make(chan interface{}, 100),
+		store:             cfg.Store,
+		storev2:           cfg.Storev2,
+		entityConfigCache: cfg.EntityConfigCache,
+		bus:               cfg.Bus,
+		subscriptionsMap:  map[string]subscription{},
+		ctx:               ctx,
+		cancel:            cancel,
+		ringPool:          cfg.RingPool,
+		unmarshal:         cfg.Unmarshal,
+		marshal:           cfg.Marshal,
 		entityConfig: &entityConfig{
 			subscriptions:  make(chan messaging.Subscription, 1),
 			updatesChannel: make(chan interface{}, 10),
@@ -443,6 +447,30 @@ func (s *Session) sender() {
 	}
 }
 
+func (s *Session) findEntityConfig(ctx context.Context, namespace, name string) *corev3.EntityConfig {
+	for _, value := range s.entityConfigCache.Get(namespace) {
+		if value.Resource.GetMetadata().Name == name {
+			cached, ok := value.Resource.(*corev3.EntityConfig)
+			if !ok {
+				logger.Errorf("agent session got unexpected type from entity config cache: %v", value.Resource)
+				return nil
+			}
+			// construct deep copy of cached entity config
+			// to avoid side effects
+			var entityConfig corev3.EntityConfig
+			entityConfig = *cached
+			entityConfig.Metadata = &corev2.ObjectMeta{}
+			*(entityConfig.Metadata) = *cached.Metadata
+			var emptyList []string
+			entityConfig.KeepaliveHandlers = append(emptyList, cached.KeepaliveHandlers...)
+			entityConfig.Redact = append(emptyList, cached.Redact...)
+			entityConfig.Subscriptions = append(emptyList, cached.Subscriptions...)
+			return &entityConfig
+		}
+	}
+	return nil
+}
+
 // Start a Session.
 // 1. Start sender
 // 2. Start receiver
@@ -487,14 +515,8 @@ func (s *Session) Start() (err error) {
 	s.entityConfig.subscriptions <- subscription
 
 	// Determine if the entity already exists
-	req := storev2.NewResourceRequest(s.ctx, s.cfg.Namespace, s.cfg.AgentName, (&corev3.EntityConfig{}).StoreName())
-	wrapper, err := s.storev2.Get(req)
-	if err != nil {
-		// We do not want to send an error if the entity config does not exist
-		if _, ok := err.(*store.ErrNotFound); !ok {
-			lager.WithError(err).Error("error querying the entity config")
-			return err
-		}
+	entityConfig := s.findEntityConfig(s.ctx, s.cfg.Namespace, s.cfg.AgentName)
+	if entityConfig == nil {
 		lager.Debug("no entity config found")
 
 		// Indicate to the agent that this entity does not exist
@@ -517,24 +539,17 @@ func (s *Session) Start() (err error) {
 		// subscriptions
 		lager.Debug("an entity config was found")
 
-		var storedEntityConfig corev3.EntityConfig
-		err = wrapper.UnwrapInto(&storedEntityConfig)
-		if err != nil {
-			lager.WithError(err).Error("error unwrapping entity config")
-			return err
-		}
-
 		// Remove the managed_by label if the value is sensu-agent, in case the
 		// entity is no longer managed by its agent
-		if storedEntityConfig.Metadata.Labels[corev2.ManagedByLabel] == "sensu-agent" {
-			delete(storedEntityConfig.Metadata.Labels, corev2.ManagedByLabel)
+		if entityConfig.Metadata.Labels[corev2.ManagedByLabel] == "sensu-agent" {
+			delete(entityConfig.Metadata.Labels, corev2.ManagedByLabel)
 		}
 
 		// Send back this entity config to the agent so it uses that rather than
 		// its local config for its events
 		watchEvent := &store.WatchEventEntityConfig{
 			Action: store.WatchUpdate,
-			Entity: &storedEntityConfig,
+			Entity: entityConfig,
 		}
 		err = s.bus.Publish(messaging.EntityConfigTopic(s.cfg.Namespace, s.cfg.AgentName), watchEvent)
 		if err != nil {
@@ -544,7 +559,7 @@ func (s *Session) Start() (err error) {
 
 		// Update the session subscriptions so it uses the stored subscriptions
 		s.mu.Lock()
-		s.cfg.Subscriptions = storedEntityConfig.Subscriptions
+		s.cfg.Subscriptions = entityConfig.Subscriptions
 		s.mu.Unlock()
 	}
 
