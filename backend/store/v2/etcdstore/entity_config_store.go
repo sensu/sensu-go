@@ -35,7 +35,9 @@ func (s *EntityConfigStore) CreateIfNotExists(ctx context.Context, config *corev
 		return &store.ErrNotValid{Err: err}
 	}
 
-	key := store.NewKeyBuilder(config.StoreName()).Build(config.Metadata.Name)
+	key := store.NewKeyBuilder(config.StoreName()).
+		WithNamespace(config.Metadata.Namespace).
+		Build(config.Metadata.Name)
 
 	comparator := kvc.Comparisons(
 		kvc.KeyIsNotFound(key),
