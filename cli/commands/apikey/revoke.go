@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/AlecAivazis/survey/v2"
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/cli"
 	"github.com/sensu/sensu-go/cli/commands/helpers"
@@ -24,8 +25,11 @@ func RevokeCommand(cli *cli.SensuCli) *cobra.Command {
 
 			name := args[0]
 			if skipConfirm, _ := cmd.Flags().GetBool("skip-confirm"); !skipConfirm {
-				if confirmed := helpers.ConfirmDeleteResource(name, "apikey"); !confirmed {
-					fmt.Fprintln(cmd.OutOrStdout(), "Canceled")
+				opts := []survey.AskOpt{
+					survey.WithStdio(cli.InFile, cli.OutFile, cli.ErrFile),
+				}
+				if confirmed := helpers.ConfirmDeleteResourceWithOpts(name, "apikey", opts...); !confirmed {
+					fmt.Fprintln(cli.OutFile, "Canceled")
 					return nil
 				}
 			}
@@ -46,6 +50,10 @@ func RevokeCommand(cli *cli.SensuCli) *cobra.Command {
 	}
 
 	cmd.Flags().Bool("skip-confirm", false, "skip interactive confirmation prompt")
+
+	cmd.SetIn(cli.InFile)
+	cmd.SetOutput(cli.OutFile)
+	cmd.SetErr(cli.ErrFile)
 
 	return cmd
 }

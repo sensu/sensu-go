@@ -22,10 +22,12 @@ const TypeError = "TypeError"
 // SensuCli is an instance of the Sensu command line client;
 // encapsulates API client, logger & general configuration.
 type SensuCli struct {
-	Config config.Config
-	Client client.APIClient
-	Logger *logrus.Entry
-	InFile *os.File
+	Config  config.Config
+	Client  client.APIClient
+	Logger  *logrus.Entry
+	InFile  *os.File
+	OutFile *os.File
+	ErrFile *os.File
 }
 
 // New SensuCLI given persistent flags from command
@@ -58,9 +60,11 @@ func New(flags *pflag.FlagSet) *SensuCli {
 	cliClient.SetTLSClientConfig(&tlsConfig)
 
 	return &SensuCli{
-		Client: cliClient,
-		Config: conf,
-		Logger: logger,
-		InFile: os.Stdin,
+		Client:  cliClient,
+		Config:  conf,
+		Logger:  logger,
+		InFile:  os.Stdin,
+		OutFile: os.Stdout,
+		ErrFile: os.Stderr,
 	}
 }

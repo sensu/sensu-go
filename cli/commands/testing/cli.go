@@ -4,6 +4,7 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
+	"testing"
 
 	"github.com/sensu/sensu-go/cli"
 	"github.com/sensu/sensu-go/cli/client"
@@ -21,6 +22,50 @@ func NewCLI() *cli.SensuCli {
 	return cli
 }
 
+func WithMockCLI(tb testing.TB, fn func(cli *cli.SensuCli)) {
+	tb.Helper()
+
+	config := &clientmock.MockConfig{}
+	client := &clientmock.MockClient{}
+
+	// Set defaults ...
+	config.On("Namespace").Return("default")
+
+	// Create temporary files for stdin, stdout & stderr to make it easier to
+	// interact with io.
+	stdin, err := ioutil.TempFile(os.TempDir(), "sensu-cli-")
+	if err != nil {
+		tb.Fatal("Error creating stdin file: ", stdin.Name())
+	}
+	defer func() {
+		_ = os.Remove(stdin.Name())
+	}()
+
+	stdout, err := ioutil.TempFile(os.TempDir(), "sensu-cli-")
+	if err != nil {
+		tb.Fatal("Error creating stdout file: ", stdout.Name())
+	}
+	defer func() {
+		_ = os.Remove(stdout.Name())
+	}()
+
+	stderr, err := ioutil.TempFile(os.TempDir(), "sensu-cli-")
+	if err != nil {
+		tb.Fatal("Error creating stderr file: ", stderr.Name())
+	}
+	defer func() {
+		_ = os.Remove(stderr.Name())
+	}()
+
+	fn(&cli.SensuCli{
+		Client:  client,
+		Config:  config,
+		InFile:  stdin,
+		OutFile: stdout,
+		ErrFile: stderr,
+	})
+}
+
 // NewMockCLI return SensuCLI instance w/ mocked values
 func NewMockCLI() *cli.SensuCli {
 	config := &clientmock.MockConfig{}
@@ -29,10 +74,38 @@ func NewMockCLI() *cli.SensuCli {
 	// Set defaults ...
 	config.On("Namespace").Return("default")
 
+	// Create temporary files for stdin, stdout & stderr to make it easier to
+	// interact with io.
+	stdin, err := ioutil.TempFile(os.TempDir(), "sensu-cli-")
+	if err != nil {
+		log.Panic("Error creating stdin file: ", stdin.Name())
+	}
+	defer func() {
+		_ = os.Remove(stdin.Name())
+	}()
+
+	stdout, err := ioutil.TempFile(os.TempDir(), "sensu-cli-")
+	if err != nil {
+		log.Panic("Error creating stdout file: ", stdout.Name())
+	}
+	defer func() {
+		_ = os.Remove(stdout.Name())
+	}()
+
+	stderr, err := ioutil.TempFile(os.TempDir(), "sensu-cli-")
+	if err != nil {
+		log.Panic("Error creating stderr file: ", stderr.Name())
+	}
+	defer func() {
+		_ = os.Remove(stderr.Name())
+	}()
+
 	return &cli.SensuCli{
-		Client: client,
-		Config: config,
-		InFile: os.Stdin,
+		Client:  client,
+		Config:  config,
+		InFile:  stdin,
+		OutFile: stdout,
+		ErrFile: stderr,
 	}
 }
 
@@ -52,17 +125,21 @@ func SimpleSensuCLI(apiClient client.APIClient) *cli.SensuCli {
 func RunCmd(cmd *cobra.Command, args []string) (string, error) {
 	var err error
 
-	// So that we can capture output we reassign cmd.output
 	tmpFile, err := ioutil.TempFile(os.TempDir(), "sensu-cli-")
 	if err != nil {
-		log.Panic("Error creating tmpFile: ", tmpFile.Name())
+		log.Panic("Error creating tmp file: ", tmpFile.Name())
 	}
-
 	defer func() {
 		_ = os.Remove(tmpFile.Name())
 	}()
 
-	cmd.SetOutput(tmpFile)
+	return RunCmdWithOutFile(cmd, args, tmpFile)
+}
+
+func RunCmdWithOutFile(cmd *cobra.Command, args []string, outFile *os.File) (string, error) {
+	var err error
+
+	cmd.SetOutput(outFile)
 
 	// Run given command
 	if cmd.Run != nil {
@@ -72,10 +149,10 @@ func RunCmd(cmd *cobra.Command, args []string) (string, error) {
 	}
 
 	// Close the file so that we can read from it
-	_ = tmpFile.Close()
+	_ = outFile.Close()
 
 	// Store the contents of the reader as a string
-	bytes, _ := ioutil.ReadFile(tmpFile.Name())
+	bytes, _ := ioutil.ReadFile(outFile.Name())
 
 	return string(bytes), err
 }

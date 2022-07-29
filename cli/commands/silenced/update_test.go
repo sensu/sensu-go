@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/sensu/sensu-go/cli"
 	client "github.com/sensu/sensu-go/cli/client/testing"
 	test "github.com/sensu/sensu-go/cli/commands/testing"
 	"github.com/sensu/sensu-go/types"
@@ -36,28 +37,28 @@ func TestUpdateCommand(t *testing.T) {
 		)
 		t.Run(testName, func(t *testing.T) {
 			silenced := types.FixtureSilenced("foo:bar")
-			cli := test.NewMockCLI()
+			test.WithMockCLI(t, func(cli *cli.SensuCli) {
+				client := cli.Client.(*client.MockClient)
+				client.On(
+					"FetchSilenced",
+					name,
+				).Return(silenced, tc.fetchResponse)
 
-			client := cli.Client.(*client.MockClient)
-			client.On(
-				"FetchSilenced",
-				name,
-			).Return(silenced, tc.fetchResponse)
+				client.On(
+					"UpdateSilenced",
+					mock.Anything,
+				).Return(tc.updateResponse)
 
-			client.On(
-				"UpdateSilenced",
-				mock.Anything,
-			).Return(tc.updateResponse)
+				cmd := UpdateCommand(cli)
+				out, err := test.RunCmdWithOutFile(cmd, tc.args, cli.OutFile)
+				if tc.expectError {
+					assert.Error(t, err)
+				} else {
+					assert.NoError(t, err)
+				}
 
-			cmd := UpdateCommand(cli)
-			out, err := test.RunCmd(cmd, tc.args)
-			if tc.expectError {
-				assert.Error(t, err)
-			} else {
-				assert.NoError(t, err)
-			}
-
-			assert.Regexp(t, tc.expectedOutput, out)
+				assert.Regexp(t, tc.expectedOutput, out)
+			})
 		})
 	}
 }
