@@ -144,6 +144,25 @@ var SelectedMetrics = []string{
 	"graphql_duration_seconds_count",
 }
 
+const (
+	RestartCount        = "sensu_go_backend_restart_count"
+	DaemonStartDuration = "sensu_go_backend_daemon_start_seconds"
+	DaemonName          = "daemon"
+)
+
+var (
+	sensuGoRestartCount = prometheus.NewCounter(prometheus.CounterOpts{
+		Name: RestartCount,
+	})
+	sensuGoDaemonStart = prometheus.NewGaugeVec(prometheus.GaugeOpts{
+		Name: DaemonStartDuration,
+	}, []string{DaemonName})
+)
+
+func init() {
+	prometheus.MustRegister(sensuGoRestartCount, sensuGoDaemonStart)
+}
+
 // Backend represents the backend server, which is used to hold the datastore
 // and coordinating the daemons
 type Backend struct {
@@ -692,7 +711,10 @@ func (b *Backend) runOnce() error {
 	// Loop across the daemons in order to start them, then add them to our groups
 	for _, d := range b.Daemons {
 		logger.Infof("starting daemon: %s", d.Name())
-		if err := d.Start(); err != nil {
+		start := time.Now()
+		err := d.Start()
+		sensuGoDaemonStart.WithLabelValues(d.Name()).Set(float64(time.Since(start)) / float64(time.Second))
+		if err != nil {
 			_ = sg.Stop()
 			return ErrStartup{Err: err, Name: d.Name()}
 		}
@@ -824,6 +846,7 @@ func (b *Backend) RunWithInitializer(initialize func(context.Context, *Config) (
 		if err != nil {
 			return true, err
 		}
+		sensuGoRestartCount.Inc()
 		return false, nil
 	})
 
