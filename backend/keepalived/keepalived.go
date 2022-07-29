@@ -165,11 +165,6 @@ func (k *Keepalived) Start() error {
 	}
 
 	k.subscription = sub
-	if err := k.initFromStore(context.Background()); err != nil {
-		_ = sub.Cancel()
-		return err
-	}
-
 	k.startWorkers()
 
 	return nil
@@ -195,59 +190,6 @@ func (k *Keepalived) Err() <-chan error {
 // Name returns the daemon name
 func (k *Keepalived) Name() string {
 	return "keepalived"
-}
-
-func (k *Keepalived) initFromStore(ctx context.Context) error {
-	// For which clients were we previously alerting?
-	tctx, cancel := context.WithTimeout(ctx, k.storeTimeout)
-	defer cancel()
-	keepalives, err := k.store.GetFailingKeepalives(tctx)
-	if err != nil {
-		return err
-	}
-
-	switches := k.livenessFactory(k.Name(), k.dead, k.alive, logger)
-
-	for _, keepalive := range keepalives {
-		entityCtx := context.WithValue(ctx, corev2.NamespaceKey, keepalive.Namespace)
-		tctx, cancel := context.WithTimeout(entityCtx, k.storeTimeout)
-		defer cancel()
-		event, err := k.eventStore.GetEventByEntityCheck(tctx, keepalive.Name, "keepalive")
-		if err != nil {
-			return err
-		}
-
-		id := path.Join(keepalive.Namespace, keepalive.Name)
-
-		// if there's no event, the entity was deregistered/deleted.
-		if event == nil {
-			tctx, cancel := context.WithTimeout(entityCtx, k.storeTimeout)
-			defer cancel()
-			if err := switches.BuryAndRevokeLease(tctx, id); err != nil {
-				return err
-			}
-			continue
-		}
-
-		if !event.HasCheck() {
-			logger.WithFields(logrus.Fields{"event": event}).Error("keepalive event malformed")
-			continue
-		}
-
-		// if another backend picked it up, it will be passing.
-		if event.Check.Status == 0 {
-			continue
-		}
-
-		ttl := int64(event.Check.Timeout)
-		tctx, cancel = context.WithTimeout(entityCtx, k.storeTimeout)
-		defer cancel()
-		if err := switches.Dead(tctx, id, ttl); err != nil {
-			return fmt.Errorf("error initializing keepalive %q: %s", id, err)
-		}
-	}
-
-	return nil
 }
 
 func (k *Keepalived) startWorkers() {
@@ -639,13 +581,6 @@ func (k *Keepalived) dead(key string, prev liveness.State, leader bool) bool {
 		return false
 	}
 
-	expiration := time.Now().Unix() + int64(event.Check.Timeout)
-
-	if err := k.store.UpdateFailingKeepalive(ctx, event.Entity, expiration); err != nil {
-		lager.WithError(err).Error("error updating keepalive")
-		return false
-	}
-
 	if event.Entity.EntityClass != corev2.EntityAgentClass {
 		return false
 	}
@@ -679,12 +614,6 @@ func parseKey(key string) (namespace, name string, err error) {
 // to the message bus.
 func (k *Keepalived) handleUpdate(e *corev2.Event) error {
 	entity := e.Entity
-
-	ctx := corev2.SetContextFromResource(context.Background(), entity)
-	if err := k.store.DeleteFailingKeepalive(ctx, e.Entity); err != nil {
-		// Warning: do not wrap this error
-		return err
-	}
 
 	entity.LastSeen = e.Timestamp
 	_, entityState := corev3.V2EntityToV3(entity)
@@ -721,7 +650,7 @@ func (k *Keepalived) handleUpdate(e *corev2.Event) error {
 				// This should never happen but guards against a crash
 				e.Check.Timeout = corev2.DefaultKeepaliveTimeout
 			}
-			tctx, cancel := context.WithTimeout(ctx, k.storeTimeout)
+			tctx, cancel := context.WithTimeout(k.ctx, k.storeTimeout)
 			defer cancel()
 			lager := logger.WithFields(logrus.Fields{
 				"entity":       entity.Name,
