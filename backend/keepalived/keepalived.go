@@ -75,22 +75,24 @@ const deletedEventSentinel = -1
 // Keepalived is responsible for monitoring keepalive events and recording
 // keepalives for entities.
 type Keepalived struct {
-	bus                   messaging.MessageBus
-	workerCount           int
-	store                 store.Store
-	storev2               storev2.Interface
-	eventStore            store.EventStore
-	deregistrationHandler string
-	mu                    *sync.Mutex
-	wg                    *sync.WaitGroup
-	keepaliveChan         chan interface{}
-	subscription          messaging.Subscription
-	errChan               chan error
-	livenessFactory       liveness.Factory
-	ringPool              *ringv2.RingPool
-	ctx                   context.Context
-	cancel                context.CancelFunc
-	storeTimeout          time.Duration
+	bus                    messaging.MessageBus
+	workerCount            int
+	store                  store.Store
+	storev2                storev2.Interface
+	eventStore             store.EventStore
+	deregistrationHandler  string
+	mu                     *sync.Mutex
+	wg                     *sync.WaitGroup
+	keepaliveChan          chan interface{}
+	subscription           messaging.Subscription
+	errChan                chan error
+	livenessFactory        liveness.Factory
+	ringPool               *ringv2.RingPool
+	ctx                    context.Context
+	cancel                 context.CancelFunc
+	storeTimeout           time.Duration
+	reconstructionPeriod   time.Duration
+	minReconstructInterval time.Duration
 }
 
 // Option is a functional option.
@@ -128,20 +130,22 @@ func New(c Config, opts ...Option) (*Keepalived, error) {
 	ctx, cancel := context.WithCancel(context.Background())
 
 	k := &Keepalived{
-		store:                 c.Store,
-		storev2:               c.StoreV2,
-		eventStore:            c.EventStore,
-		bus:                   c.Bus,
-		deregistrationHandler: c.DeregistrationHandler,
-		livenessFactory:       c.LivenessFactory,
-		keepaliveChan:         make(chan interface{}, c.BufferSize),
-		workerCount:           c.WorkerCount,
-		mu:                    &sync.Mutex{},
-		errChan:               make(chan error, 1),
-		ringPool:              c.RingPool,
-		ctx:                   ctx,
-		cancel:                cancel,
-		storeTimeout:          c.StoreTimeout,
+		store:                  c.Store,
+		storev2:                c.StoreV2,
+		eventStore:             c.EventStore,
+		bus:                    c.Bus,
+		deregistrationHandler:  c.DeregistrationHandler,
+		livenessFactory:        c.LivenessFactory,
+		keepaliveChan:          make(chan interface{}, c.BufferSize),
+		workerCount:            c.WorkerCount,
+		mu:                     &sync.Mutex{},
+		errChan:                make(chan error, 1),
+		ringPool:               c.RingPool,
+		ctx:                    ctx,
+		cancel:                 cancel,
+		storeTimeout:           c.StoreTimeout,
+		reconstructionPeriod:   time.Second * 120,
+		minReconstructInterval: time.Millisecond * 100,
 	}
 	for _, o := range opts {
 		if err := o(k); err != nil {
@@ -208,6 +212,16 @@ func (k *Keepalived) initFromStore(ctx context.Context) error {
 
 	switches := k.livenessFactory(k.Name(), k.dead, k.alive, logger)
 
+	potentialKeepalives := len(keepalives)
+	recustructionInterval := float64(k.reconstructionPeriod) / float64(potentialKeepalives)
+	if recustructionInterval > float64(k.minReconstructInterval) {
+		recustructionInterval = float64(k.minReconstructInterval)
+	}
+	logger.Warnf("keepalived startup. Reconstructing %d keepalives over %d seconds",
+		potentialKeepalives,
+		k.reconstructionPeriod/time.Second,
+	)
+
 	for _, keepalive := range keepalives {
 		entityCtx := context.WithValue(ctx, corev2.NamespaceKey, keepalive.Namespace)
 		tctx, cancel := context.WithTimeout(entityCtx, k.storeTimeout)
@@ -237,6 +251,12 @@ func (k *Keepalived) initFromStore(ctx context.Context) error {
 		// if another backend picked it up, it will be passing.
 		if event.Check.Status == 0 {
 			continue
+		}
+
+		select {
+		case <-time.After(time.Duration(recustructionInterval)):
+		case <-ctx.Done():
+			return ctx.Err()
 		}
 
 		ttl := int64(event.Check.Timeout)
