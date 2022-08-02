@@ -52,11 +52,18 @@ const GetConfigQuery = `SELECT id, labels, annotations, resource, created_at, up
 	WHERE api_version=$1 AND api_type=$2 AND namespace=$3 AND name=$4 AND NOT isfinite(deleted_at);`
 
 const ListConfigQueryTmpl = `
-    SELECT id, labels, annotations, resource, created_at, updated_at FROM configuration
-	    WHERE api_version=$1 AND api_type=$2 AND namespace=$3 AND NOT isfinite(deleted_at)
+    SELECT id, labels, annotations, resource, created_at, updated_at
+    FROM configuration
+	WHERE api_version=$1 AND api_type=$2 AND namespace=$3 AND NOT isfinite(deleted_at)
         {{if ne .SelectorSQL ""}}AND {{.SelectorSQL}}{{end}}
-        ORDER BY namespace, name ASC
-	    {{if (gt .Limit 0)}} LIMIT {{.Limit}} {{end}} OFFSET {{ .Offset }};`
+    ORDER BY namespace, name ASC
+    {{if (gt .Limit 0)}} LIMIT {{.Limit}} {{end}} OFFSET {{ .Offset }};`
 
 const UpdateIfExistsConfigQuery = `UPDATE configuration SET labels=$1, annotations=$2, resource=$3
     WHERE api_version=$4 AND api_type=$5 AND namespace=$6 AND name=$7 AND NOT isfinite(deleted_at);`
+
+const ConfigNotificationQuery = `
+    SELECT id, api_version, api_type, namespace, name, resource, created_at, updated_at,
+        CASE WHEN isfinite(deleted_at) THEN deleted_at ELSE NULL END AS deleted_at
+    FROM Configuration
+    WHERE api_version=$1 AND api_type=$2 AND (updated_at > $3 OR created_at > $3 OR (isfinite(deleted_at) AND deleted_at > $3));`

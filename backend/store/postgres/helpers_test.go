@@ -87,7 +87,7 @@ func withMigratedPostgres(tb testing.TB, fn poolWithDSNFunc, migrations []migrat
 	initialDB.Close()
 
 	// connect to postgres again to run migrations
-	dsn := fmt.Sprintf("dbname=%s ", dbName) + pgURL
+	dsn := fmt.Sprintf("%s dbname=%s", pgURL, dbName)
 	cfg, err := pgxpool.ParseConfig(dsn)
 	require.NoError(tb, err)
 

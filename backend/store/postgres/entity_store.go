@@ -231,7 +231,3 @@ func (e *entityConfigPoller) Since(ctx context.Context, updatedSince time.Time) 
 func newEntityConfigPoller(req storev2.ResourceRequest, pool *pgxpool.Pool) (poll.Table, error) {
 	return &entityConfigPoller{db: pool, req: req}, nil
 }
-
-func init() {
-	registerWatchStoreOverride(entityConfigStoreName, newEntityConfigPoller)
-}

@@ -18,7 +18,6 @@ import (
 	storev2 "github.com/sensu/sensu-go/backend/store/v2"
 	"github.com/sensu/sensu-go/backend/store/v2/etcdstore"
 	"github.com/sensu/sensu-go/backend/store/v2/wrap"
-	"github.com/sensu/sensu-go/util/retry"
 )
 
 type StoreV2 struct {
@@ -560,112 +559,16 @@ func (s *StoreV2) Patch(ctx context.Context, req storev2.ResourceRequest, w stor
 	return nil
 }
 
-func (s *StoreV2) Watch(ctx context.Context, req storev2.ResourceRequest) <-chan []storev2.WatchEvent {
-	eventChan := make(chan []storev2.WatchEvent, 32)
-
-	var table poll.Table
-
-	tableFactory, ok := getWatchStoreOverride(req.StoreName)
-	if !ok {
-		// assume configuration store?
-		tableFactory = func(storev2.ResourceRequest, *pgxpool.Pool) (poll.Table, error) {
-			return nil, fmt.Errorf("default watcher not yet implemented")
-		}
+func (s *StoreV2) GetPoller(req storev2.ResourceRequest) (poll.Table, error) {
+	if req.StoreName == entityConfigStoreName {
+		return newEntityConfigPoller(req, s.db)
+	} else {
+		return nil, fmt.Errorf("unsupported store %s", req.StoreName)
 	}
-	table, err := tableFactory(req, s.db)
-	if err != nil {
-		panic(fmt.Errorf("could not create watcher for request %v: %v", req, err))
-	}
-
-	interval, txnWindow := s.watchInterval, s.watchTxnWindow
-	if interval <= 0 {
-		interval = time.Second
-	}
-	if txnWindow <= 0 {
-		txnWindow = 5 * time.Second
-	}
-	poller := &poll.Poller{
-		Interval:  interval,
-		TxnWindow: txnWindow,
-		Table:     table,
-	}
-
-	backoff := retry.ExponentialBackoff{
-		Ctx: ctx,
-	}
-	err = backoff.Retry(func(retry int) (bool, error) {
-		if err := poller.Initialize(ctx); err != nil {
-			logger.Errorf("watcher initialize polling error on retry %d: %v", retry, err)
-			return false, err
-		}
-		return true, nil
-	})
-	if err != nil {
-		logger.Errorf("watcher failed to start: %v", err)
-		close(eventChan)
-		return eventChan
-	}
-
-	go s.watchLoop(ctx, req, poller, eventChan)
-	return eventChan
 }
 
-func (s *StoreV2) watchLoop(ctx context.Context, req storev2.ResourceRequest, poller *poll.Poller, watchChan chan []storev2.WatchEvent) {
-	defer close(watchChan)
-	for {
-		changes, err := poller.Next(ctx)
-		if err != nil {
-			if ctx.Err() != nil {
-				return
-			}
-			logger.Error(err)
-		}
-		if len(changes) == 0 {
-			continue
-		}
-		notifications := make([]storev2.WatchEvent, len(changes))
-		for i, change := range changes {
-			wrapper, ok := change.Resource.(storev2.Wrapper)
-			if !ok {
-				// Poller table must return Resource of type Wrapper.
-				panic("postgres store watcher resource is not storev2.Wrapper")
-			}
-			notifications[i].Value = wrapper
-			r, err := notifications[i].Value.Unwrap()
-			if err != nil {
-				notifications[i].Err = err
-			}
-			if r != nil {
-				meta := r.GetMetadata()
-				notifications[i].Key = storev2.ResourceRequest{
-					Namespace: meta.Namespace,
-					Name:      meta.Name,
-					StoreName: r.StoreName(),
-				}
-			}
-			switch change.Change {
-			case poll.Create:
-				notifications[i].Type = storev2.WatchCreate
-			case poll.Update:
-				notifications[i].Type = storev2.WatchUpdate
-			case poll.Delete:
-				notifications[i].Type = storev2.WatchDelete
-			}
-		}
-		var status string
-		select {
-		case watchChan <- notifications:
-			status = storev2.WatchEventsStatusHandled
-		default:
-			status = storev2.WatchEventsStatusDropped
-		}
-		storev2.WatchEventsProcessed.WithLabelValues(
-			status,
-			req.StoreName,
-			req.Namespace,
-			storev2.WatcherProviderPG,
-		).Add(float64(len(notifications)))
-	}
+func (s *StoreV2) Watch(ctx context.Context, req storev2.ResourceRequest) <-chan []storev2.WatchEvent {
+	return NewWatcher(s, s.watchInterval, s.watchTxnWindow).Watch(ctx, req)
 }
 
 func (s *StoreV2) NamespaceStore() storev2.NamespaceStore {

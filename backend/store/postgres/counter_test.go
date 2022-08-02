@@ -94,11 +94,20 @@ func counterResolver(name string) (interface{}, error) {
 
 func init() {
 	types.RegisterResolver("counter_fixture/v2", counterResolver)
+}
 
-	registerWatchStoreOverride("testing::counter", func(req storev2.ResourceRequest, db *pgxpool.Pool) (poll.Table, error) {
-		return &counterIndex{db: db}, nil
-	})
+type counterStore struct {
+	db             *pgxpool.Pool
+	watchInterval  time.Duration
+	watchTxnWindow time.Duration
+}
 
+func (cs *counterStore) GetPoller(req storev2.ResourceRequest) (poll.Table, error) {
+	return &counterIndex{db: cs.db}, nil
+}
+
+func (cs *counterStore) Watch(ctx context.Context, req storev2.ResourceRequest) <-chan []storev2.WatchEvent {
+	return NewWatcher(cs, cs.watchInterval, cs.watchTxnWindow).Watch(ctx, req)
 }
 
 // counterIndex implements poll.Table for counter resources

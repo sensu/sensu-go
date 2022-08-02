@@ -34,7 +34,7 @@ func NewEntityConfigStore(db *pgxpool.Pool) *EntityConfigStore {
 	}
 }
 
-// Create creates an entity config using the given entity config struct.
+// CreateIfNotExists creates an entity config using the given entity config struct.
 func (s *EntityConfigStore) CreateIfNotExists(ctx context.Context, config *corev3.EntityConfig) error {
 	if err := config.Validate(); err != nil {
 		return &store.ErrNotValid{Err: err}
