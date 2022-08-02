@@ -52,10 +52,6 @@ type listTemplateValues struct {
 	SelectorSQL string
 }
 
-func init() {
-	registerWatchConfigStoreOverride(newConfigurationPoller)
-}
-
 func NewConfigStore(db *pgxpool.Pool) *ConfigStore {
 	return &ConfigStore{
 		db: db,
@@ -66,8 +62,8 @@ func (s *ConfigStore) Initialize(ctx context.Context, fn storev2.InitializeFunc)
 	return nil
 }
 
-func (s *ConfigStore) GetPgxPool() *pgxpool.Pool {
-	return s.db
+func (s *ConfigStore) GetPoller(req storev2.ResourceRequest) (poll.Table, error) {
+	return newConfigurationPoller(req, s.db)
 }
 
 func (s *ConfigStore) Watch(ctx context.Context, req storev2.ResourceRequest) <-chan []storev2.WatchEvent {
@@ -75,7 +71,7 @@ func (s *ConfigStore) Watch(ctx context.Context, req storev2.ResourceRequest) <-
 		log.Debug("")
 		return nil
 	}
-	return NewWatcher(s, s.watchInterval, s.watchTxnWindow).WatchConfig(ctx, req)
+	return NewWatcher(s, s.watchInterval, s.watchTxnWindow).Watch(ctx, req)
 }
 
 func (s *ConfigStore) CreateOrUpdate(ctx context.Context, request storev2.ResourceRequest, wrapper storev2.Wrapper) error {

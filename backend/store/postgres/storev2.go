@@ -11,6 +11,7 @@ import (
 	"github.com/jackc/pgx/v4/pgxpool"
 	json "github.com/json-iterator/go"
 	corev3 "github.com/sensu/sensu-go/api/core/v3"
+	"github.com/sensu/sensu-go/backend/poll"
 	"github.com/sensu/sensu-go/backend/seeds"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/backend/store/patch"
@@ -558,8 +559,12 @@ func (s *StoreV2) Patch(ctx context.Context, req storev2.ResourceRequest, w stor
 	return nil
 }
 
-func (s *StoreV2) GetPgxPool() *pgxpool.Pool {
-	return s.db
+func (s *StoreV2) GetPoller(req storev2.ResourceRequest) (poll.Table, error) {
+	if req.StoreName == entityConfigStoreName {
+		return newEntityConfigPoller(req, s.db)
+	} else {
+		return nil, fmt.Errorf("unsupported store %s", req.StoreName)
+	}
 }
 
 func (s *StoreV2) Watch(ctx context.Context, req storev2.ResourceRequest) <-chan []storev2.WatchEvent {
