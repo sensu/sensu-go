@@ -80,6 +80,7 @@ func newKeepalivedTest(t *testing.T) *keepalivedTest {
 		StoreTimeout:    time.Second,
 	})
 	require.NoError(t, err)
+	k.reconstructionPeriod = 0
 	test := &keepalivedTest{
 		MessageBus:   bus,
 		Store:        store,
