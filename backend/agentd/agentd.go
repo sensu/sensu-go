@@ -369,21 +369,22 @@ func (a *Agentd) webSocketHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	cfg := SessionConfig{
-		AgentAddr:      r.RemoteAddr,
-		AgentName:      r.Header.Get(transport.HeaderKeyAgentName),
-		Namespace:      r.Header.Get(transport.HeaderKeyNamespace),
-		User:           r.Header.Get(transport.HeaderKeyUser),
-		Subscriptions:  strings.Split(r.Header.Get(transport.HeaderKeySubscriptions), ","),
-		RingPool:       a.ringPool,
-		ContentType:    contentType,
-		WriteTimeout:   a.writeTimeout,
-		Bus:            a.bus,
-		Conn:           transport.NewTransport(conn),
-		Store:          a.store,
-		Storev2:        a.storev2,
-		Marshal:        marshal,
-		Unmarshal:      unmarshal,
-		BurialReceiver: NewBurialReceiver(),
+		AgentAddr:         r.RemoteAddr,
+		AgentName:         r.Header.Get(transport.HeaderKeyAgentName),
+		Namespace:         r.Header.Get(transport.HeaderKeyNamespace),
+		User:              r.Header.Get(transport.HeaderKeyUser),
+		Subscriptions:     strings.Split(r.Header.Get(transport.HeaderKeySubscriptions), ","),
+		RingPool:          a.ringPool,
+		ContentType:       contentType,
+		WriteTimeout:      a.writeTimeout,
+		Bus:               a.bus,
+		Conn:              transport.NewTransport(conn),
+		Store:             a.store,
+		Storev2:           a.storev2,
+		EntityConfigCache: a.entityConfigCache,
+		Marshal:           marshal,
+		Unmarshal:         unmarshal,
+		BurialReceiver:    NewBurialReceiver(),
 	}
 
 	cfg.Subscriptions = corev2.AddEntitySubscription(cfg.AgentName, cfg.Subscriptions)
