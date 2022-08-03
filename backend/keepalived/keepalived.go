@@ -296,7 +296,7 @@ func (k *Keepalived) startWorkers() {
 func (k *Keepalived) processKeepalives(ctx context.Context) {
 	defer k.wg.Done()
 
-	switches := k.livenessFactory(k.Name(), k.alive, k.dead, logger)
+	switches := k.livenessFactory(k.Name(), k.dead, k.alive, logger)
 
 	for {
 		select {
