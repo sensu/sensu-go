@@ -15,6 +15,8 @@ disconnects.
 ### Added
 - GlobalResource interface in core/v3 allows core/v3 resources to
 be marked as global resources.
+- `sensu_go_backend_restart_count` and `sensu_go_backend_daemon_start_seconds`
+metrics added to help diagnose startup issues.
 
 ### Fixed
 - Fixed a bug where sensu-backend could crash if the BackendIDGetter
