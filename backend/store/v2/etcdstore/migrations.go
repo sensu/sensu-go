@@ -42,12 +42,20 @@ func MigrateV2EntityToV3(ctx context.Context, client *clientv3.Client) error {
 		if response.Err != nil {
 			return response.Err
 		}
-		ctx := store.NamespaceContext(ctx, response.Entity.Namespace)
-		req := storev2.NewResourceRequestFromResource(response.Entity)
-		var wrapper storev2.Wrapper
-		if err := s.Update(ctx, req, wrapper); err != nil {
+
+		cfgStore := s.EntityConfigStore()
+		stateStore := s.EntityStateStore()
+
+		entityConfig, entityState := corev3.V2EntityToV3(response.Entity)
+
+		if err := cfgStore.CreateOrUpdate(ctx, entityConfig); err != nil {
 			return err
 		}
+
+		if err := stateStore.CreateOrUpdate(ctx, entityState); err != nil {
+			return err
+		}
+
 		if err := deleteV2Entity(ctx, client, response.Entity); err != nil {
 			return err
 		}
@@ -150,7 +158,7 @@ func readPagedV2Entities(ctx context.Context, client *clientv3.Client) <-chan en
 				close(result)
 				return
 			}
-			if err := wrapList.UnwrapInto(entities); err != nil {
+			if err := wrapList.UnwrapInto(&entities); err != nil {
 				result <- entityOrError{Err: err}
 				close(result)
 				return

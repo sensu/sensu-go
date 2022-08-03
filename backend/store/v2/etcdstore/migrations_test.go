@@ -6,12 +6,14 @@ import (
 	"fmt"
 	"testing"
 
+	clientv3 "go.etcd.io/etcd/client/v3"
+
 	"github.com/gogo/protobuf/proto"
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
+	corev3 "github.com/sensu/sensu-go/api/core/v3"
 	"github.com/sensu/sensu-go/backend/store"
 	storev2 "github.com/sensu/sensu-go/backend/store/v2"
 	"github.com/sensu/sensu-go/backend/store/v2/etcdstore"
-	clientv3 "go.etcd.io/etcd/client/v3"
 )
 
 func testMigration(ctx context.Context, client *clientv3.Client) error {
@@ -162,29 +164,56 @@ func TestUpgradeV2Entities(t *testing.T) {
 		if err := etcdstore.MigrateDB(ctx, client, migrations); err != nil {
 			t.Fatal(err)
 		}
-		var got []*corev2.Entity
-		req := storev2.NewResourceRequestFromResource(&corev2.Entity{})
-		wrapped, err := s.List(ctx, req, nil)
+
+		// Retrieve all the newly created EntityConfig following the V2 -> V3
+		// migration
+		var entityConfigs []*corev3.EntityConfig
+		req := storev2.NewResourceRequestFromResource(&corev3.EntityConfig{})
+		list, err := s.List(ctx, req, nil)
 		if err != nil {
 			t.Fatal(err)
 		}
-		if err := wrapped.UnwrapInto(&entities); err != nil {
+		if err := list.UnwrapInto(&entityConfigs); err != nil {
 			t.Fatal(err)
 		}
-		if want := entities; !equalEntities(got, want) {
-			t.Errorf("bad entities: got %v, want %v", got, want)
+
+		// For each EntityConfig, get its associated EntityState and combine
+		// them into a v2.Entity
+		var got []*corev2.Entity
+		for _, entityConfig := range entityConfigs {
+			entityState := &corev3.EntityState{Metadata: entityConfig.Metadata}
+			stateReq := storev2.NewResourceRequestFromResource(entityState)
+
+			wrappedState, err := s.Get(context.Background(), stateReq)
+			if err != nil {
+				t.Fatal(err)
+			}
+			wrappedState.UnwrapInto(entityState)
+
+			v2Entity, err := corev3.V3EntityToV2(entityConfig, entityState)
+			if err != nil {
+				t.Fatal(err)
+			}
+			got = append(got, v2Entity)
+		}
+
+		// Those recreated v2.Entity should be exactly the same as the ones we
+		// originally had in the database
+		want := entities
+		if len(got) != len(want) {
+			t.Errorf("got %d entities, want %d", len(got), len(want))
+		}
+		for i, entity := range got {
+			if !equalEntity(entity, want[i]) {
+				t.Errorf("bad entity: got %v, want %v", entity, want[i])
+			}
 		}
 	})
 }
 
-func equalEntities(got, want []*corev2.Entity) bool {
-	if len(got) != len(want) {
+func equalEntity(got, want *corev2.Entity) bool {
+	if !proto.Equal(got, want) {
 		return false
-	}
-	for i := range got {
-		if !proto.Equal(got[i], want[i]) {
-			return false
-		}
 	}
 	return true
 }

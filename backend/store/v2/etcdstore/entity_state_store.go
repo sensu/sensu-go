@@ -35,7 +35,9 @@ func (s *EntityStateStore) CreateIfNotExists(ctx context.Context, state *corev3.
 		return &store.ErrNotValid{Err: err}
 	}
 
-	key := store.NewKeyBuilder(state.StoreName()).Build(state.Metadata.Name)
+	key := store.NewKeyBuilder(state.StoreName()).
+		WithNamespace(state.Metadata.Namespace).
+		Build(state.Metadata.Name)
 
 	comparator := kvc.Comparisons(
 		kvc.KeyIsNotFound(key),
@@ -51,7 +53,9 @@ func (s *EntityStateStore) CreateOrUpdate(ctx context.Context, state *corev3.Ent
 		return &store.ErrNotValid{Err: err}
 	}
 
-	key := store.NewKeyBuilder(state.StoreName()).Build(state.Metadata.Name)
+	key := store.NewKeyBuilder(state.StoreName()).
+		WithNamespace(state.Metadata.Namespace).
+		Build(state.Metadata.Name)
 
 	comparator := kvc.Comparisons(
 		kvc.NamespaceExists(""),
