@@ -16,9 +16,7 @@ import (
 	"github.com/sensu/sensu-go/backend/messaging"
 	"github.com/sensu/sensu-go/backend/store"
 	cachev2 "github.com/sensu/sensu-go/backend/store/cache/v2"
-	storev2 "github.com/sensu/sensu-go/backend/store/v2"
 	"github.com/sensu/sensu-go/backend/store/v2/storetest"
-	"github.com/sensu/sensu-go/backend/store/v2/wrap"
 	"github.com/sensu/sensu-go/handler"
 	"github.com/sensu/sensu-go/testing/mockbus"
 	"github.com/sensu/sensu-go/testing/mockstore"
@@ -333,13 +331,13 @@ func TestSession_Start(t *testing.T) {
 	type storeFunc func(*storetest.Store, *sync.WaitGroup)
 
 	tests := []struct {
-		name      string
-		connFunc  connFunc
-		storeFunc storeFunc
-		wantErr   bool
+		name     string
+		connFunc connFunc
+		cache    *cachev2.Resource
+		wantErr  bool
 	}{
 		{
-			name: "a new entity receives an entity config with EntityNotFound",
+			name: "a new entity receives an entity config when no cache hit",
 			connFunc: func(conn *mocktransport.MockTransport, wg *sync.WaitGroup) {
 				conn.On("Receive").After(100*time.Millisecond).Return(&transport.Message{}, nil)
 				conn.On("Closed").Return(true)
@@ -355,9 +353,7 @@ func TestSession_Start(t *testing.T) {
 				}).Return(nil)
 				conn.On("Close").Return(nil)
 			},
-			storeFunc: func(s *storetest.Store, wg *sync.WaitGroup) {
-				s.On("Get", mock.Anything).Return(&wrap.Wrapper{}, &store.ErrNotFound{})
-			},
+			cache: cachev2.NewFromResources(nil, false),
 		},
 		{
 			name: "an existing entity receives its stored entity config",
@@ -376,14 +372,7 @@ func TestSession_Start(t *testing.T) {
 				}).Return(nil)
 				conn.On("Close").Return(nil)
 			},
-			storeFunc: func(s *storetest.Store, wg *sync.WaitGroup) {
-				cfg := corev3.FixtureEntityConfig("testing")
-				wrappedConfig, err := storev2.WrapResource(cfg)
-				if err != nil {
-					t.Fatal(err)
-				}
-				s.On("Get", mock.Anything).Return(wrappedConfig, nil)
-			},
+			cache: cachev2.NewFromResources([]corev3.Resource{corev3.FixtureEntityConfig("testing")}, false),
 		},
 	}
 	for _, tt := range tests {
@@ -395,14 +384,6 @@ func TestSession_Start(t *testing.T) {
 			if tt.connFunc != nil {
 				tt.connFunc(conn, wg)
 			}
-
-			// Mock our store
-			st := &mockstore.MockStore{}
-			storev2 := &storetest.Store{}
-			if tt.storeFunc != nil {
-				tt.storeFunc(storev2, wg)
-			}
-			cache := cachev2.NewFromResources(nil, false)
 
 			// Mock our bus
 			bus, err := messaging.NewWizardBus(messaging.WizardBusConfig{})
@@ -418,9 +399,7 @@ func TestSession_Start(t *testing.T) {
 				Namespace:         "default",
 				Conn:              conn,
 				Bus:               bus,
-				Store:             st,
-				Storev2:           storev2,
-				EntityConfigCache: cache,
+				EntityConfigCache: tt.cache,
 				Unmarshal:         agent.UnmarshalJSON,
 				Marshal:           agent.MarshalJSON,
 			}
