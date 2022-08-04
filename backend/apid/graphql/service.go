@@ -28,6 +28,7 @@ type ServiceConfig struct {
 	EntityClient       EntityClient
 	EventClient        EventClient
 	EventFilterClient  EventFilterClient
+	GetBackendEntity   func() (interface{ GetMetadata() *corev2.Metadata }, error)
 	HandlerClient      HandlerClient
 	HealthController   EtcdHealthController
 	MutatorClient      MutatorClient

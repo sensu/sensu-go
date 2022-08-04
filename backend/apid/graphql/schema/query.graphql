@@ -3,6 +3,11 @@ The query root of Sensu's GraphQL interface.
 """
 type Query {
   """
+  Responder is what backend responded to the query.
+  """
+  responder: BackendEntity
+
+  """
   Current viewer.
   """
   viewer: Viewer

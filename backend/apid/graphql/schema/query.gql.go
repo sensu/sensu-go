@@ -179,6 +179,9 @@ type QueryWrappedNodeFieldResolverParams struct {
 // QueryFieldResolvers represents a collection of methods whose products represent the
 // response values of the 'Query' type.
 type QueryFieldResolvers interface {
+	// Responder implements response to request for 'responder' field.
+	Responder(p graphql.ResolveParams) (interface{}, error)
+
 	// Viewer implements response to request for 'viewer' field.
 	Viewer(p graphql.ResolveParams) (interface{}, error)
 
@@ -227,6 +230,12 @@ type QueryFieldResolvers interface {
 // of writing new resolvers by removing all the instances where you would simply
 // have the resolvers method return a field.
 type QueryAliases struct{}
+
+// Responder implements response to request for 'responder' field.
+func (_ QueryAliases) Responder(p graphql.ResolveParams) (interface{}, error) {
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	return val, err
+}
 
 // Viewer implements response to request for 'viewer' field.
 func (_ QueryAliases) Viewer(p graphql.ResolveParams) (interface{}, error) {
@@ -319,6 +328,15 @@ var QueryType = graphql.NewType("Query", graphql.ObjectKind)
 func RegisterQuery(svc *graphql.Service, impl QueryFieldResolvers) {
 	svc.RegisterObject(_ObjectTypeQueryDesc, impl)
 }
+func _ObjTypeQueryResponderHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(interface {
+		Responder(p graphql.ResolveParams) (interface{}, error)
+	})
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Responder(frp)
+	}
+}
+
 func _ObjTypeQueryViewerHandler(impl interface{}) graphql1.FieldResolveFn {
 	resolver := impl.(interface {
 		Viewer(p graphql.ResolveParams) (interface{}, error)
@@ -653,6 +671,13 @@ func _ObjectTypeQueryConfigFn() graphql1.ObjectConfig {
 				Name:              "node",
 				Type:              graphql.OutputType("Node"),
 			},
+			"responder": &graphql1.Field{
+				Args:              graphql1.FieldConfigArgument{},
+				DeprecationReason: "",
+				Description:       "Responder is what backend responded to the query.",
+				Name:              "responder",
+				Type:              graphql.OutputType("BackendEntity"),
+			},
 			"suggest": &graphql1.Field{
 				Args: graphql1.FieldConfigArgument{
 					"filters": &graphql1.ArgumentConfig{
@@ -741,6 +766,7 @@ var _ObjectTypeQueryDesc = graphql.ObjectDesc{
 		"mutator":     _ObjTypeQueryMutatorHandler,
 		"namespace":   _ObjTypeQueryNamespaceHandler,
 		"node":        _ObjTypeQueryNodeHandler,
+		"responder":   _ObjTypeQueryResponderHandler,
 		"suggest":     _ObjTypeQuerySuggestHandler,
 		"versions":    _ObjTypeQueryVersionsHandler,
 		"viewer":      _ObjTypeQueryViewerHandler,
