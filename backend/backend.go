@@ -648,6 +648,7 @@ func Initialize(ctx context.Context, config *Config) (*Backend, error) {
 		TLS:                 config.AgentTLSOptions,
 		RingPool:            b.RingPool,
 		WriteTimeout:        config.AgentWriteTimeout,
+		ServeWaitTime:       config.AgentServeWaitTime,
 		Client:              b.Client,
 		Watcher:             entityConfigWatcher,
 		EtcdClientTLSConfig: b.EtcdClientTLSConfig,

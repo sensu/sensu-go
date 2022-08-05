@@ -22,6 +22,10 @@ var AgentLimiterMiddleware mux.MiddlewareFunc
 // headers if the entity limit has been reached.
 var EntityLimiterMiddleware mux.MiddlewareFunc
 
+// EntityLimiterMiddleware represents the middleware used to mark the service
+// as temporarily unavailable until startup has completed.
+var AwaitStartupMiddleware mux.MiddlewareFunc
+
 // authenticate is the abstraction layer required to be able to change at
 // runtime the actual function assigned to AuthenticationMiddleware above
 func authenticate(next http.Handler) http.Handler {
@@ -32,6 +36,12 @@ func authenticate(next http.Handler) http.Handler {
 // runtime the actual function assigned to AuthenticationMiddleware above
 func authorize(next http.Handler) http.Handler {
 	return AuthorizationMiddleware(next)
+}
+
+// awaitStartup is the abstraction layer required to be able to change at
+// runtime the actual function assigned to AwaitStartupMiddleware above
+func awaitStartup(next http.Handler) http.Handler {
+	return AwaitStartupMiddleware(next)
 }
 
 // agentLimit is the abstraction layer required to be able to change at
