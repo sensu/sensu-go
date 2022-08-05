@@ -9,6 +9,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
+	"sync/atomic"
 	"testing"
 
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
@@ -34,25 +35,36 @@ func TestAgentdMiddlewares(t *testing.T) {
 		agentName    string
 		username     string
 		group        string
+		isReady      bool
 		storeErr     error
 		expectedCode int
 	}{
 		{
+			description:  "Not ready",
+			isReady:      false,
+			namespace:    "test-rbac",
+			username:     "authorized-user",
+			group:        "group-test-rbac",
+			expectedCode: http.StatusServiceUnavailable,
+		}, {
 			description:  "Authorized request",
 			namespace:    "test-rbac",
 			username:     "authorized-user",
 			group:        "group-test-rbac",
+			isReady:      true,
 			expectedCode: http.StatusOK,
 		}, {
 			description:  "Unauthorized request",
 			namespace:    "super-secret",
 			username:     "unauthorized-user",
+			isReady:      true,
 			expectedCode: http.StatusForbidden,
 		}, {
 			description:  "Invalid user",
 			namespace:    "test-rbac",
 			username:     "nonexistent-user",
 			storeErr:     fmt.Errorf("user not found"),
+			isReady:      true,
 			expectedCode: http.StatusUnauthorized,
 		},
 	}
@@ -97,8 +109,9 @@ func TestAgentdMiddlewares(t *testing.T) {
 					Resources: []string{"events"},
 				},
 			}}, nil)
-		agentd := &Agentd{store: stor}
-		server := httptest.NewServer(agentd.AuthenticationMiddleware(agentd.AuthorizationMiddleware(testHandler)))
+		agentd := &Agentd{store: stor, ready: &atomic.Value{}}
+		agentd.ready.Store(tc.isReady)
+		server := httptest.NewServer(agentd.AwaitStartupMiddleware(agentd.AuthenticationMiddleware(agentd.AuthorizationMiddleware(testHandler))))
 		defer server.Close()
 		req, _ := http.NewRequest(http.MethodPost, server.URL, bytes.NewBuffer([]byte{}))
 		req.SetBasicAuth(tc.username, "password")
