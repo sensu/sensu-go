@@ -67,7 +67,7 @@ func TestAgentdMiddlewares(t *testing.T) {
 			if rr.StoreName == storeName && rr.Name == name {
 				switch rr.StoreName {
 				case "cluster_roles", "cluster_role_bindings":
-					// There resources are not namespaced so we ignore the
+					// These resources are not namespaced so we ignore the
 					// Namespace field altogether.
 					return true
 
