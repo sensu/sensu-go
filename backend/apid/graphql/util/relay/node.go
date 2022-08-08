@@ -4,16 +4,16 @@ import (
 	"context"
 
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
+	corev3 "github.com/sensu/sensu-go/api/core/v3"
 	"github.com/sensu/sensu-go/backend/apid/graphql/globalid"
 	"github.com/sensu/sensu-go/backend/apid/graphql/relay"
 	util_api "github.com/sensu/sensu-go/backend/apid/graphql/util/api"
 	"github.com/sensu/sensu-go/types"
-	"github.com/sensu/sensu-go/types/compat"
 )
 
 type Fetcher interface {
 	SetTypeMeta(corev2.TypeMeta) error
-	Get(context.Context, string, corev2.Resource) error
+	Get(context.Context, string, corev3.Resource) error
 }
 
 // MakeNodeResolver instatiates a new node resolver given a generic client and
@@ -27,7 +27,9 @@ func MakeNodeResolver(client Fetcher, tm corev2.TypeMeta) func(relay.NodeResolve
 		if err != nil {
 			return nil, err
 		}
-		r := compat.V2Resource(raw)
+		// TODO(ccressent): I'm really not sure I can assume that raw can always
+		// be assumed to meet the corev3.Resource interface...
+		r := raw.(corev3.Resource)
 		err = client.Get(p.Context, p.IDComponents.UniqueComponent(), r)
 		return util_api.UnwrapGetResult(util_api.UnwrapResource(r), err)
 	}

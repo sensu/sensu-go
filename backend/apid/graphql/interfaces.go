@@ -5,6 +5,7 @@ import (
 
 	dto "github.com/prometheus/client_model/go"
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
+	corev3 "github.com/sensu/sensu-go/api/core/v3"
 	"github.com/sensu/sensu-go/backend/api"
 	"github.com/sensu/sensu-go/backend/store"
 )
@@ -77,10 +78,10 @@ type SilencedClient interface {
 }
 
 type NamespaceClient interface {
-	ListNamespaces(ctx context.Context, pred *store.SelectionPredicate) ([]*corev2.Namespace, error)
-	FetchNamespace(ctx context.Context, name string) (*corev2.Namespace, error)
-	CreateNamespace(ctx context.Context, namespace *corev2.Namespace) error
-	UpdateNamespace(ctx context.Context, namespace *corev2.Namespace) error
+	ListNamespaces(ctx context.Context, pred *store.SelectionPredicate) ([]*corev3.Namespace, error)
+	FetchNamespace(ctx context.Context, name string) (*corev3.Namespace, error)
+	CreateNamespace(ctx context.Context, namespace *corev3.Namespace) error
+	UpdateNamespace(ctx context.Context, namespace *corev3.Namespace) error
 }
 
 type HookClient interface {
@@ -122,10 +123,10 @@ type RBACClient interface {
 
 type GenericClient interface {
 	SetTypeMeta(meta corev2.TypeMeta) error
-	Create(ctx context.Context, value corev2.Resource) error
-	Update(ctx context.Context, value corev2.Resource) error
+	Create(ctx context.Context, value corev3.Resource) error
+	Update(ctx context.Context, value corev3.Resource) error
 	Delete(ctx context.Context, name string) error
-	Get(ctx context.Context, name string, val corev2.Resource) error
+	Get(ctx context.Context, name string, val corev3.Resource) error
 	List(ctx context.Context, resources interface{}, pred *store.SelectionPredicate) error
 	Authorize(ctx context.Context, verb api.RBACVerb, name string) error
 }

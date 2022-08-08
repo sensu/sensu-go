@@ -39,7 +39,6 @@ func retryConnect(t *testing.T, address string) {
 }
 
 func TestBackendHTTPListener(t *testing.T) {
-	// tt = Test Table
 	tt := []struct {
 		name       string
 		httpScheme string
@@ -53,7 +52,6 @@ func TestBackendHTTPListener(t *testing.T) {
 			TrustedCAFile:      "../util/ssl/ca.pem",
 			InsecureSkipVerify: false}},
 	}
-	// tc = Test Case
 	for _, tc := range tt {
 		t.Run(tc.name, func(t *testing.T) {
 			dataPath, remove := testutil.TempDir(t)

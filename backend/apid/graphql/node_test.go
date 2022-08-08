@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
+	corev3 "github.com/sensu/sensu-go/api/core/v3"
 	"github.com/sensu/sensu-go/backend/apid/graphql/globalid"
 	"github.com/sensu/sensu-go/backend/apid/graphql/relay"
 	"github.com/sensu/sensu-go/graphql"
@@ -186,7 +187,7 @@ func TestNodeResolvers(t *testing.T) {
 		{
 			name: "namespaces",
 			setupNode: func() interface{} {
-				return corev2.FixtureNamespace("sensu")
+				return corev3.FixtureNamespace("sensu")
 			},
 			setupID: func(r interface{}) string {
 				return globalid.NamespaceTranslator.EncodeToString(context.Background(), r)

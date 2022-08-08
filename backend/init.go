@@ -9,6 +9,11 @@ import (
 
 	"github.com/jackc/pgx/v4/pgxpool"
 	"github.com/prometheus/client_golang/prometheus"
+	"github.com/spf13/viper"
+	"go.etcd.io/etcd/client/pkg/v3/transport"
+	clientv3 "go.etcd.io/etcd/client/v3"
+	"golang.org/x/time/rate"
+
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/asset"
 	"github.com/sensu/sensu-go/backend/agentd"
@@ -37,10 +42,6 @@ import (
 	"github.com/sensu/sensu-go/backend/secrets"
 	"github.com/sensu/sensu-go/backend/tessend"
 	"github.com/sensu/sensu-go/command"
-	"github.com/spf13/viper"
-	"go.etcd.io/etcd/client/pkg/v3/transport"
-	clientv3 "go.etcd.io/etcd/client/v3"
-	"golang.org/x/time/rate"
 )
 
 func InitializeStore(ctx context.Context, client *clientv3.Client, db *pgxpool.Pool, config *Config) (*Backend, error) {
@@ -104,7 +105,7 @@ func InitializeStore(ctx context.Context, client *clientv3.Client, db *pgxpool.P
 	}
 
 	// Create sensu-system namespace and backend entity
-	br := resource.New(b.Store, b.Store, bus)
+	br := resource.New(b.StoreV2, bus)
 	if err := br.EnsureBackendResources(ctx); err != nil {
 		return nil, fmt.Errorf("error creating system namespace and backend entity: %s", err.Error())
 	}
@@ -112,7 +113,7 @@ func InitializeStore(ctx context.Context, client *clientv3.Client, db *pgxpool.P
 	// Initialize the secrets provider manager
 	b.SecretsProviderManager = secrets.NewProviderManager(br)
 
-	auth := &rbac.Authorizer{Store: b.Store}
+	auth := &rbac.Authorizer{Store: b.StoreV2}
 
 	// Initialize pipelined
 	pipelineDaemon, err := pipelined.New(pipelined.Config{
@@ -127,14 +128,14 @@ func InitializeStore(ctx context.Context, client *clientv3.Client, db *pgxpool.P
 	// Initialize PipelineAdapterV1
 	storeTimeout := 2 * time.Minute
 	b.PipelineAdapterV1 = pipeline.AdapterV1{
-		Store:        b.Store,
+		Store:        b.StoreV2,
 		StoreTimeout: storeTimeout,
 	}
 
 	// Initialize PipelineAdapterV1 filter adapters
 	legacyFilterAdapter := &filter.LegacyAdapter{
 		AssetGetter:  assetGetter,
-		Store:        b.Store,
+		Store:        b.StoreV2,
 		StoreTimeout: storeTimeout,
 	}
 	hasMetricsFilterAdapter := &filter.HasMetricsAdapter{}
@@ -153,7 +154,7 @@ func InitializeStore(ctx context.Context, client *clientv3.Client, db *pgxpool.P
 		AssetGetter:            assetGetter,
 		Executor:               command.NewExecutor(),
 		SecretsProviderManager: b.SecretsProviderManager,
-		Store:                  b.Store,
+		Store:                  b.StoreV2,
 		StoreTimeout:           storeTimeout,
 	}
 	onlyCheckOutputMutatorAdapter := &mutator.OnlyCheckOutputAdapter{}
@@ -171,7 +172,7 @@ func InitializeStore(ctx context.Context, client *clientv3.Client, db *pgxpool.P
 		Executor:               command.NewExecutor(),
 		LicenseGetter:          b.LicenseGetter,
 		SecretsProviderManager: b.SecretsProviderManager,
-		Store:                  b.Store,
+		Store:                  b.StoreV2,
 		StoreTimeout:           storeTimeout,
 	}
 
@@ -209,7 +210,7 @@ func InitializeStore(ctx context.Context, client *clientv3.Client, db *pgxpool.P
 	scheduler, err := schedulerd.New(
 		ctx,
 		schedulerd.Config{
-			Store:                  b.Store,
+			Store:                  b.StoreV2,
 			Bus:                    bus,
 			QueueGetter:            queueGetter,
 			RingPool:               b.RingPool,
@@ -228,7 +229,7 @@ func InitializeStore(ctx context.Context, client *clientv3.Client, db *pgxpool.P
 	}
 
 	// Start the entity config watcher, so agentd sessions are notified of updates
-	entityConfigWatcher := agentd.GetEntityConfigWatcher(ctx, client)
+	entityConfigWatcher := agentd.GetEntityConfigWatcher(ctx, b.StoreV2)
 
 	// Prepare the etcd client TLS config
 	etcdClientTLSInfo := (transport.TLSInfo)(config.Store.EtcdConfigurationStore.ClientTLSInfo)
@@ -243,9 +244,9 @@ func InitializeStore(ctx context.Context, client *clientv3.Client, db *pgxpool.P
 		Client:                client,
 		DeregistrationHandler: config.DeregistrationHandler,
 		Bus:                   bus,
-		Store:                 b.Store,
-		StoreV2:               b.StoreV2,
+		Store:                 b.StoreV2,
 		EventStore:            b.EventStore,
+		KeepaliveStore:        b.KeepaliveStore,
 		LivenessFactory:       liveness.EtcdFactory(ctx, client),
 		RingPool:              b.RingPool,
 		BufferSize:            viper.GetInt(FlagKeepalivedBufferSize),
@@ -298,22 +299,22 @@ func InitializeStore(ctx context.Context, client *clientv3.Client, db *pgxpool.P
 
 	// Initialize GraphQL service
 	b.GraphQLService, err = graphql.NewService(graphql.ServiceConfig{
-		AssetClient:       api.NewAssetClient(b.Store, auth),
-		CheckClient:       api.NewCheckClient(b.Store, actions.NewCheckController(b.Store, queueGetter), auth),
+		AssetClient:       api.NewAssetClient(b.StoreV2, auth),
+		CheckClient:       api.NewCheckClient(b.Store, actions.NewCheckController(b.StoreV2, queueGetter), auth),
 		EntityClient:      api.NewEntityClient(b.Store, b.StoreV2, b.Store, auth),
 		EventClient:       api.NewEventClient(b.Store, auth, bus),
-		EventFilterClient: api.NewEventFilterClient(b.Store, auth),
-		HandlerClient:     api.NewHandlerClient(b.Store, auth),
+		EventFilterClient: api.NewEventFilterClient(b.StoreV2, auth),
+		HandlerClient:     api.NewHandlerClient(b.StoreV2, auth),
 		HealthController:  actions.NewHealthController(b.Store, client.Cluster, etcdClientTLSConfig),
-		MutatorClient:     api.NewMutatorClient(b.Store, auth),
+		MutatorClient:     api.NewMutatorClient(b.StoreV2, auth),
 		SilencedClient:    api.NewSilencedClient(b.Store, auth),
-		NamespaceClient:   api.NewNamespaceClient(b.Store, b.Store, auth, b.StoreV2),
-		HookClient:        api.NewHookConfigClient(b.Store, auth),
-		UserClient:        api.NewUserClient(b.Store, auth),
-		RBACClient:        api.NewRBACClient(b.Store, auth),
+		NamespaceClient:   api.NewNamespaceClient(b.StoreV2, auth),
+		HookClient:        api.NewHookConfigClient(b.StoreV2, auth),
+		UserClient:        api.NewUserClient(b.StoreV2, auth),
+		RBACClient:        api.NewRBACClient(b.StoreV2, auth),
 		VersionController: actions.NewVersionController(clusterVersion),
 		MetricGatherer:    prometheus.DefaultGatherer,
-		GenericClient:     &api.GenericClient{Store: b.Store, Auth: auth},
+		GenericClient:     &api.GenericClient{Store: b.StoreV2, Auth: auth},
 	})
 	if err != nil {
 		return nil, fmt.Errorf("error initializing graphql.Service: %s", err)
@@ -326,8 +327,7 @@ func InitializeStore(ctx context.Context, client *clientv3.Client, db *pgxpool.P
 		WriteTimeout:        config.APIWriteTimeout,
 		URL:                 config.APIURL,
 		Bus:                 bus,
-		Store:               b.Store,
-		Storev2:             b.StoreV2,
+		Store:               b.StoreV2,
 		EventStore:          b.EventStore,
 		QueueGetter:         queueGetter,
 		TLS:                 config.TLS,
@@ -348,7 +348,7 @@ func InitializeStore(ctx context.Context, client *clientv3.Client, db *pgxpool.P
 	tessen, err := tessend.New(
 		ctx,
 		tessend.Config{
-			Store:      b.Store,
+			Store:      b.StoreV2,
 			EventStore: b.EventStore,
 			RingPool:   b.RingPool,
 			Client:     client,
@@ -361,16 +361,16 @@ func InitializeStore(ctx context.Context, client *clientv3.Client, db *pgxpool.P
 
 	// Initialize agentd
 	agent, err := agentd.New(agentd.Config{
-		Host:                config.AgentHost,
-		Port:                config.AgentPort,
-		Bus:                 bus,
-		Store:               b.Store,
-		TLS:                 config.AgentTLSOptions,
-		RingPool:            b.RingPool,
-		WriteTimeout:        config.AgentWriteTimeout,
-		Client:              client,
-		Watcher:             entityConfigWatcher,
-		EtcdClientTLSConfig: b.EtcdClientTLSConfig,
+		Host:          config.AgentHost,
+		Port:          config.AgentPort,
+		Bus:           bus,
+		Store:         b.StoreV2,
+		TLS:           config.AgentTLSOptions,
+		RingPool:      b.RingPool,
+		WriteTimeout:  config.AgentWriteTimeout,
+		Watcher:       entityConfigWatcher,
+		HealthRouter:  b.HealthRouter,
+		Authenticator: authenticator,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("error initializing %s: %s", agent.Name(), err)

@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
+	corev3 "github.com/sensu/sensu-go/api/core/v3"
 	"github.com/sensu/sensu-go/backend/apid/graphql/globalid"
 	"github.com/sensu/sensu-go/backend/apid/graphql/relay"
 	"github.com/stretchr/testify/mock"
@@ -20,7 +21,7 @@ func (c *MockFetcher) SetTypeMeta(meta corev2.TypeMeta) error {
 	return c.Called(meta).Error(0)
 }
 
-func (c *MockFetcher) Get(ctx context.Context, name string, val corev2.Resource) error {
+func (c *MockFetcher) Get(ctx context.Context, name string, val corev3.Resource) error {
 	return c.Called(ctx, name, val).Error(0)
 }
 

@@ -63,12 +63,20 @@ func TestAgentdMiddlewares(t *testing.T) {
 			if !ok {
 				return false
 			}
-			if rr.StoreName != storeName ||
-				rr.Namespace != namespace ||
-				rr.Name != name {
-				return false
+
+			if rr.StoreName == storeName && rr.Name == name {
+				switch rr.StoreName {
+				case "cluster_roles", "cluster_role_bindings":
+					// These resources are not namespaced so we ignore the
+					// Namespace field altogether.
+					return true
+
+				default:
+					return rr.Namespace == namespace
+				}
 			}
-			return true
+
+			return false
 		}
 	}
 
