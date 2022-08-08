@@ -162,6 +162,7 @@ type Backend struct {
 	StoreV2                storev2.Interface
 	ConfigStoreV2          storev2.Interface
 	EventStore             store.EventStore
+	KeepaliveStore         storev2.KeepaliveStore
 	RingPool               *ringv2.RingPool
 	GraphQLService         *graphql.Service
 	SecretsProviderManager *secrets.ProviderManager
@@ -194,6 +195,7 @@ func initDevModeStateStore(_ context.Context, b *Backend, client *clientv3.Clien
 	b.Store = etcdstore.NewStore(client)
 	b.StoreV2 = etcdstorev2.NewStore(client)
 	b.ConfigStoreV2 = b.StoreV2
+	b.KeepaliveStore = storev2.NewLegacyKeepaliveStore(b.Store)
 	b.RingPool = ringv2.NewRingPool(func(path string) ringv2.Interface {
 		return ringv2.New(client, path)
 	})
@@ -217,6 +219,8 @@ func initPGStateStore(ctx context.Context, b *Backend, client *clientv3.Client, 
 	b.Store = pgStore
 
 	b.StoreV2 = postgres.NewStoreV2(db)
+
+	b.KeepaliveStore = storev2.NewLegacyKeepaliveStore(pgStore)
 
 	// Create the ring pool for round-robin functionality
 	// Set up new postgres ringpool
@@ -302,7 +306,7 @@ func Initialize(ctx context.Context, etcdConfigClient *clientv3.Client, pgConfig
 	}
 
 	// Create sensu-system namespace and backend entity
-	br := resource.New(b.Store, b.Store, bus)
+	br := resource.New(b.StoreV2, bus)
 	if err := br.EnsureBackendResources(ctx); err != nil {
 		return nil, fmt.Errorf("error creating system namespace and backend entity: %s", err.Error())
 	}
@@ -325,14 +329,14 @@ func Initialize(ctx context.Context, etcdConfigClient *clientv3.Client, pgConfig
 	// Initialize PipelineAdapterV1
 	storeTimeout := 2 * time.Minute
 	b.PipelineAdapterV1 = pipeline.AdapterV1{
-		Store:        b.Store,
+		Store:        b.StoreV2,
 		StoreTimeout: storeTimeout,
 	}
 
 	// Initialize PipelineAdapterV1 filter adapters
 	legacyFilterAdapter := &filter.LegacyAdapter{
 		AssetGetter:  assetGetter,
-		Store:        b.Store,
+		Store:        b.StoreV2,
 		StoreTimeout: storeTimeout,
 	}
 	hasMetricsFilterAdapter := &filter.HasMetricsAdapter{}
@@ -351,7 +355,7 @@ func Initialize(ctx context.Context, etcdConfigClient *clientv3.Client, pgConfig
 		AssetGetter:            assetGetter,
 		Executor:               command.NewExecutor(),
 		SecretsProviderManager: b.SecretsProviderManager,
-		Store:                  b.Store,
+		Store:                  b.StoreV2,
 		StoreTimeout:           storeTimeout,
 	}
 	onlyCheckOutputMutatorAdapter := &mutator.OnlyCheckOutputAdapter{}
@@ -369,7 +373,7 @@ func Initialize(ctx context.Context, etcdConfigClient *clientv3.Client, pgConfig
 		Executor:               command.NewExecutor(),
 		LicenseGetter:          b.LicenseGetter,
 		SecretsProviderManager: b.SecretsProviderManager,
-		Store:                  b.Store,
+		Store:                  b.StoreV2,
 		StoreTimeout:           storeTimeout,
 	}
 
@@ -407,7 +411,7 @@ func Initialize(ctx context.Context, etcdConfigClient *clientv3.Client, pgConfig
 	scheduler, err := schedulerd.New(
 		ctx,
 		schedulerd.Config{
-			Store:                  b.Store,
+			Store:                  b.StoreV2,
 			Bus:                    bus,
 			QueueGetter:            queueGetter,
 			RingPool:               b.RingPool,
@@ -441,9 +445,9 @@ func Initialize(ctx context.Context, etcdConfigClient *clientv3.Client, pgConfig
 		Client:                etcdConfigClient,
 		DeregistrationHandler: config.DeregistrationHandler,
 		Bus:                   bus,
-		Store:                 b.Store,
-		StoreV2:               b.StoreV2,
+		Store:                 b.StoreV2,
 		EventStore:            b.EventStore,
+		KeepaliveStore:        b.KeepaliveStore,
 		LivenessFactory:       liveness.EtcdFactory(ctx, etcdConfigClient),
 		RingPool:              b.RingPool,
 		BufferSize:            viper.GetInt(FlagKeepalivedBufferSize),
@@ -496,22 +500,22 @@ func Initialize(ctx context.Context, etcdConfigClient *clientv3.Client, pgConfig
 
 	// Initialize GraphQL service
 	b.GraphQLService, err = graphql.NewService(graphql.ServiceConfig{
-		AssetClient:       api.NewAssetClient(b.Store, auth),
-		CheckClient:       api.NewCheckClient(b.Store, actions.NewCheckController(b.Store, queueGetter), auth),
+		AssetClient:       api.NewAssetClient(b.StoreV2, auth),
+		CheckClient:       api.NewCheckClient(b.Store, actions.NewCheckController(b.StoreV2, queueGetter), auth),
 		EntityClient:      api.NewEntityClient(b.Store, b.StoreV2, b.Store, auth),
 		EventClient:       api.NewEventClient(b.Store, auth, bus),
-		EventFilterClient: api.NewEventFilterClient(b.Store, auth),
-		HandlerClient:     api.NewHandlerClient(b.Store, auth),
+		EventFilterClient: api.NewEventFilterClient(b.StoreV2, auth),
+		HandlerClient:     api.NewHandlerClient(b.StoreV2, auth),
 		HealthController:  actions.NewHealthController(b.Store, etcdConfigClient.Cluster, etcdClientTLSConfig),
-		MutatorClient:     api.NewMutatorClient(b.Store, auth),
+		MutatorClient:     api.NewMutatorClient(b.StoreV2, auth),
 		SilencedClient:    api.NewSilencedClient(b.Store, auth),
-		NamespaceClient:   api.NewNamespaceClient(b.Store, b.Store, auth, b.StoreV2),
-		HookClient:        api.NewHookConfigClient(b.Store, auth),
-		UserClient:        api.NewUserClient(b.Store, auth),
-		RBACClient:        api.NewRBACClient(b.Store, auth),
+		NamespaceClient:   api.NewNamespaceClient(b.StoreV2, auth),
+		HookClient:        api.NewHookConfigClient(b.StoreV2, auth),
+		UserClient:        api.NewUserClient(b.StoreV2, auth),
+		RBACClient:        api.NewRBACClient(b.StoreV2, auth),
 		VersionController: actions.NewVersionController(clusterVersion),
 		MetricGatherer:    prometheus.DefaultGatherer,
-		GenericClient:     &api.GenericClient{Store: b.Store, Auth: auth},
+		GenericClient:     &api.GenericClient{Store: b.StoreV2, Auth: auth},
 	})
 	if err != nil {
 		return nil, fmt.Errorf("error initializing graphql.Service: %s", err)
@@ -524,9 +528,7 @@ func Initialize(ctx context.Context, etcdConfigClient *clientv3.Client, pgConfig
 		WriteTimeout:        config.APIWriteTimeout,
 		URL:                 config.APIURL,
 		Bus:                 bus,
-		Store:               b.Store,
-		Storev2:             b.StoreV2,
-		ConfigStoreV2:       b.ConfigStoreV2,
+		Store:               b.StoreV2,
 		EventStore:          b.EventStore,
 		QueueGetter:         queueGetter,
 		TLS:                 config.TLS,
@@ -561,15 +563,16 @@ func Initialize(ctx context.Context, etcdConfigClient *clientv3.Client, pgConfig
 
 	// Initialize agentd
 	agent, err := agentd.New(agentd.Config{
-		Host:         config.AgentHost,
-		Port:         config.AgentPort,
-		Bus:          bus,
-		Store:        b.StoreV2,
-		TLS:          config.AgentTLSOptions,
-		RingPool:     b.RingPool,
-		WriteTimeout: config.AgentWriteTimeout,
-		Watcher:      entityConfigWatcher,
-		HealthRouter: b.HealthRouter,
+		Host:          config.AgentHost,
+		Port:          config.AgentPort,
+		Bus:           bus,
+		Store:         b.StoreV2,
+		TLS:           config.AgentTLSOptions,
+		RingPool:      b.RingPool,
+		WriteTimeout:  config.AgentWriteTimeout,
+		Watcher:       entityConfigWatcher,
+		HealthRouter:  b.HealthRouter,
+		Authenticator: authenticator,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("error initializing %s: %s", agent.Name(), err)

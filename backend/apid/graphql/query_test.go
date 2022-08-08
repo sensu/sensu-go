@@ -8,6 +8,7 @@ import (
 
 	dto "github.com/prometheus/client_model/go"
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
+	corev3 "github.com/sensu/sensu-go/api/core/v3"
 	"github.com/sensu/sensu-go/backend/apid/graphql/schema"
 	"github.com/sensu/sensu-go/graphql"
 	"github.com/stretchr/testify/assert"
@@ -52,12 +53,12 @@ func TestQueryTypeNamespaceField(t *testing.T) {
 	cfg := ServiceConfig{NamespaceClient: client}
 	impl := queryImpl{svc: cfg}
 
-	nsp := corev2.FixtureNamespace("sensu")
+	nsp := corev3.FixtureNamespace("sensu")
 	params := schema.QueryNamespaceFieldResolverParams{ResolveParams: graphql.ResolveParams{Context: context.Background()}}
-	params.Args.Name = nsp.Name
+	params.Args.Name = nsp.Metadata.Name
 
 	// Success
-	client.On("FetchNamespace", mock.Anything, nsp.Name).Return(nsp, nil).Once()
+	client.On("FetchNamespace", mock.Anything, nsp.Metadata.Name).Return(nsp, nil).Once()
 	res, err := impl.Namespace(params)
 	require.NoError(t, err)
 	assert.NotEmpty(t, res)

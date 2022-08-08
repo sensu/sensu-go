@@ -1,69 +1,17 @@
 package resource
 
 import (
-	"context"
 	"errors"
 	"testing"
 	"time"
 
-	corev2 "github.com/sensu/sensu-go/api/core/v2"
-	"github.com/sensu/sensu-go/backend/messaging"
-	"github.com/sensu/sensu-go/backend/store"
-	"github.com/sensu/sensu-go/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+
+	corev2 "github.com/sensu/sensu-go/api/core/v2"
+	"github.com/sensu/sensu-go/backend/messaging"
+	"github.com/sensu/sensu-go/backend/store/v2/storetest"
 )
-
-type mockEntityStore struct {
-	mock.Mock
-}
-
-func (m *mockEntityStore) DeleteEntity(_ context.Context, _ *types.Entity) error {
-	panic("should not be called")
-}
-
-func (m *mockEntityStore) DeleteEntityByName(_ context.Context, _ string) error {
-	panic("should not be called")
-}
-
-func (m *mockEntityStore) GetEntities(_ context.Context, _ *store.SelectionPredicate) ([]*types.Entity, error) {
-	panic("should not be called")
-}
-
-func (m *mockEntityStore) GetEntityByName(_ context.Context, _ string) (*types.Entity, error) {
-	panic("should not be called")
-}
-
-func (m *mockEntityStore) UpdateEntity(ctx context.Context, entity *types.Entity) error {
-	args := m.Called(ctx, entity)
-	return args.Error(0)
-}
-
-type mockNamespaceStore struct {
-	mock.Mock
-}
-
-func (m *mockNamespaceStore) CreateNamespace(ctx context.Context, namespace *types.Namespace) error {
-	args := m.Called(ctx, namespace)
-	return args.Error(0)
-}
-
-func (m *mockNamespaceStore) DeleteNamespace(_ context.Context, _ string) error {
-	panic("should not be called")
-}
-
-func (m *mockNamespaceStore) ListNamespaces(_ context.Context, _ *store.SelectionPredicate) ([]*types.Namespace, error) {
-	panic("should not be called")
-}
-
-func (m *mockNamespaceStore) GetNamespace(ctx context.Context, name string) (*types.Namespace, error) {
-	args := m.Called(ctx, name)
-	return args.Get(0).(*types.Namespace), args.Error(1)
-}
-
-func (m *mockNamespaceStore) UpdateNamespace(_ context.Context, _ *types.Namespace) error {
-	panic("should not be called")
-}
 
 type mockMessageBus struct {
 	mock.Mock
@@ -100,11 +48,10 @@ func (m *mockMessageBus) Publish(topic string, message interface{}) error {
 }
 
 func TestBackendResource_GenerateBackendEvent(t *testing.T) {
-	mes := &mockEntityStore{}
-	mns := &mockNamespaceStore{}
+	store := &storetest.Store{}
 	mmb := &mockMessageBus{published: []*corev2.Event{}}
 
-	br := New(mns, mes, mmb)
+	br := New(store, mmb)
 	br.backendEntity, _ = getEntity()
 	br.repeatIntervalSec = 2
 

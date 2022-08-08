@@ -65,6 +65,7 @@ func MigrateV2EntityToV3(ctx context.Context, client *clientv3.Client) error {
 
 // In Sensu 6.0, whenever we create a namespace, we create a role and role binding
 // for pipelined.
+// TODO(ccressent): create a test for this migration
 func MigrateAddPipelineDRoles(ctx context.Context, client *clientv3.Client) error {
 	s := NewStore(client)
 	namespaceStoreName := (&corev3.Namespace{}).StoreName()
@@ -75,7 +76,7 @@ func MigrateAddPipelineDRoles(ctx context.Context, client *clientv3.Client) erro
 		return err
 	}
 	var namespaces []*corev3.Namespace
-	if err := wrapList.UnwrapInto(namespaces); err != nil {
+	if err := wrapList.UnwrapInto(&namespaces); err != nil {
 		return err
 	}
 	const pipelineRoleName = "system:pipeline"
