@@ -50,6 +50,7 @@ const (
 	flagAPIRequestLimit       = "api-request-limit"
 	flagAPIURL                = "api-url"
 	flagAPIWriteTimeout       = "api-write-timeout"
+	flagAPIServeWaitTime      = "api-serve-wait-time"
 	flagAssetsRateLimit       = "assets-rate-limit"
 	flagAssetsBurstLimit      = "assets-burst-limit"
 	flagDashboardHost         = "dashboard-host"
@@ -227,6 +228,7 @@ func StartCommand(initialize InitializeFunc) *cobra.Command {
 				APIRequestLimit:       viper.GetInt64(flagAPIRequestLimit),
 				APIURL:                viper.GetString(flagAPIURL),
 				APIWriteTimeout:       viper.GetDuration(flagAPIWriteTimeout),
+				APIServeWaitTime:      viper.GetDuration(flagAPIServeWaitTime),
 				AssetsRateLimit:       rate.Limit(viper.GetFloat64(flagAssetsRateLimit)),
 				AssetsBurstLimit:      viper.GetInt(flagAssetsBurstLimit),
 				DashboardHost:         viper.GetString(flagDashboardHost),
@@ -528,6 +530,7 @@ func flagSet(server bool) *pflag.FlagSet {
 		flagSet.Int64(flagAPIRequestLimit, viper.GetInt64(flagAPIRequestLimit), "maximum API request body size, in bytes")
 		flagSet.String(flagAPIURL, viper.GetString(flagAPIURL), "url of the api to connect to")
 		flagSet.Duration(flagAPIWriteTimeout, viper.GetDuration(flagAPIWriteTimeout), "maximum duration before timing out writes of responses")
+		flagSet.Duration(flagAPIServeWaitTime, viper.GetDuration(flagAPIServeWaitTime), "wait time before serving API requests on startup")
 		flagSet.Float64(flagAssetsRateLimit, viper.GetFloat64(flagAssetsRateLimit), "maximum number of assets fetched per second")
 		flagSet.Int(flagAssetsBurstLimit, viper.GetInt(flagAssetsBurstLimit), "asset fetch burst limit")
 		flagSet.String(flagDashboardHost, viper.GetString(flagDashboardHost), "dashboard listener host")
