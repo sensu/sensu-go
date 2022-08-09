@@ -120,6 +120,7 @@ func New(c Config, opts ...Option) (*APId, error) {
 	authSubrouter := AuthenticationSubrouter(router, c)
 	a.CoreSubrouter = CoreSubrouter(router, c)
 	a.EntityLimitedCoreSubrouter = EntityLimitedCoreSubrouter(router, c)
+	readySubrouter := ReadySubrouter(router, c)
 
 	awaitMiddleware := &middlewares.AwaitStartupMiddleware{
 		RetryAfterSeconds: int(c.ServeWaitTime / time.Second),
@@ -132,6 +133,7 @@ func New(c Config, opts ...Option) (*APId, error) {
 	authSubrouter.Use(a.ReadyMiddleware.Then)
 	a.CoreSubrouter.Use(a.ReadyMiddleware.Then)
 	a.EntityLimitedCoreSubrouter.Use(a.ReadyMiddleware.Then)
+	readySubrouter.Use(a.ReadyMiddleware.Then)
 
 	a.HTTPServer = &http.Server{
 		Addr:         c.ListenAddress,
@@ -290,6 +292,18 @@ func PublicSubrouter(router *mux.Router, cfg Config) *mux.Router {
 
 	subrouter.Handle("/metrics", promhttp.Handler())
 
+	return subrouter
+}
+
+func ReadySubrouter(router *mux.Router, cfg Config) *mux.Router {
+	subrouter := NewSubrouter(
+		router.NewRoute(),
+		middlewares.SimpleLogger{},
+		middlewares.LimitRequest{Limit: cfg.RequestLimit},
+	)
+	mountRouters(subrouter,
+		&routers.ReadyRouter{},
+	)
 	return subrouter
 }
 
