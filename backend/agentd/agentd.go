@@ -102,8 +102,8 @@ type Agentd struct {
 	client              *clientv3.Client
 	etcdClientTLSConfig *tls.Config
 	healthRouter        *routers.HealthRouter
-	ready               *atomic.Value
 	serveWaitTime       time.Duration
+	ready               func()
 }
 
 // Config configures an Agentd.
@@ -135,7 +135,6 @@ func New(c Config, opts ...Option) (*Agentd, error) {
 		tls:                 c.TLS,
 		stopping:            make(chan struct{}, 1),
 		running:             &atomic.Value{},
-		ready:               &atomic.Value{},
 		wg:                  &sync.WaitGroup{},
 		errChan:             make(chan error, 1),
 		ringPool:            c.RingPool,
@@ -155,13 +154,17 @@ func New(c Config, opts ...Option) (*Agentd, error) {
 		return nil, err
 	}
 
+	awaitStart := &middlewares.AwaitStartupMiddleware{
+		ResponseText: "agentd temporarily unavailable during startup",
+	}
+	a.ready = awaitStart.Ready
+
 	// Configure the middlewares used by agentd's HTTP server by assigning them to
 	// public variables so they can be overriden from the enterprise codebase
 	AuthenticationMiddleware = a.AuthenticationMiddleware
 	AuthorizationMiddleware = a.AuthorizationMiddleware
 	AgentLimiterMiddleware = a.AgentLimiterMiddleware
 	EntityLimiterMiddleware = a.EntityLimiterMiddleware
-	AwaitStartupMiddleware = a.AwaitStartupMiddleware
 
 	// Initialize a mux router that indirectly uses our middlewares defined above.
 	// We can't directly use them because mux will keep a copy of the middleware
@@ -176,7 +179,7 @@ func New(c Config, opts ...Option) (*Agentd, error) {
 
 	route := router.NewRoute().Subrouter()
 	route.HandleFunc("/", a.webSocketHandler)
-	route.Use(awaitStartup, agentLimit, authenticate, authorize)
+	route.Use(awaitStart.Then, agentLimit, authenticate, authorize)
 
 	a.httpServer = &http.Server{
 		Addr:         fmt.Sprintf("%s:%d", a.Host, a.Port),
@@ -217,9 +220,7 @@ func (a *Agentd) Start() error {
 		return fmt.Errorf("failed to start agentd: %s", err)
 	}
 
-	a.ready.Store(true)
 	if a.serveWaitTime > 0 {
-		a.ready.Store(false)
 		logger.Warnf("agentd waiting %s before accepting traffic", a.serveWaitTime)
 		timer := time.After(a.serveWaitTime)
 		go func() {
@@ -228,10 +229,12 @@ func (a *Agentd) Start() error {
 			case <-a.ctx.Done():
 				return
 			case <-timer:
+				a.ready()
+				logger.Warn("agentd now ready to accept traffic")
 			}
-			a.ready.Store(true)
-			logger.Warn("agentd now ready to accept traffic")
 		}()
+	} else {
+		a.ready()
 	}
 
 	a.wg.Add(1)
@@ -543,17 +546,6 @@ func (a *Agentd) AgentLimiterMiddleware(next http.Handler) http.Handler {
 // HTTP session. It will be overwritten by an enterprise middleware.
 func (a *Agentd) EntityLimiterMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		next.ServeHTTP(w, r)
-	})
-}
-
-func (a *Agentd) AwaitStartupMiddleware(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if !a.ready.Load().(bool) {
-			logger.Info("agentd temporarily unavailable during startup")
-			http.Error(w, http.StatusText(http.StatusServiceUnavailable), http.StatusServiceUnavailable)
-			return
-		}
 		next.ServeHTTP(w, r)
 	})
 }

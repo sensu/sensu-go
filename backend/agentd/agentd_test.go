@@ -9,11 +9,11 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
-	"sync/atomic"
 	"testing"
 
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	corev3 "github.com/sensu/sensu-go/api/core/v3"
+	"github.com/sensu/sensu-go/backend/apid/middlewares"
 	"github.com/sensu/sensu-go/backend/etcd"
 	"github.com/sensu/sensu-go/backend/store"
 	etcdstore "github.com/sensu/sensu-go/backend/store/etcd"
@@ -109,9 +109,12 @@ func TestAgentdMiddlewares(t *testing.T) {
 					Resources: []string{"events"},
 				},
 			}}, nil)
-		agentd := &Agentd{store: stor, ready: &atomic.Value{}}
-		agentd.ready.Store(tc.isReady)
-		server := httptest.NewServer(agentd.AwaitStartupMiddleware(agentd.AuthenticationMiddleware(agentd.AuthorizationMiddleware(testHandler))))
+		agentd := &Agentd{store: stor}
+		readyMiddleware := &middlewares.AwaitStartupMiddleware{}
+		if tc.isReady {
+			readyMiddleware.Ready()
+		}
+		server := httptest.NewServer(readyMiddleware.Then(agentd.AuthenticationMiddleware(agentd.AuthorizationMiddleware(testHandler))))
 		defer server.Close()
 		req, _ := http.NewRequest(http.MethodPost, server.URL, bytes.NewBuffer([]byte{}))
 		req.SetBasicAuth(tc.username, "password")
