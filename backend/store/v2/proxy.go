@@ -79,11 +79,3 @@ func (p *Proxy) Patch(req ResourceRequest, wrapper Wrapper, patcher patch.Patche
 	defer p.mu.RUnlock()
 	return p.impl.Patch(req, wrapper, patcher, cond)
 }
-
-// Watch sets up a watcher that responds to updates to the given key or
-// keyspace indicated by the ResourceRequest.
-func (p *Proxy) Watch(req ResourceRequest) <-chan []WatchEvent {
-	p.mu.RLock()
-	defer p.mu.RUnlock()
-	return p.impl.Watch(req)
-}
