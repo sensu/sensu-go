@@ -181,6 +181,10 @@ func New(c Config, opts ...Option) (*Agentd, error) {
 	route.HandleFunc("/", a.webSocketHandler)
 	route.Use(awaitStart.Then, agentLimit, authenticate, authorize)
 
+	readySubRouter := router.NewRoute().Subrouter()
+	new(routers.ReadyRouter).Mount(readySubRouter)
+	readySubRouter.Use(awaitStart.Then)
+
 	a.httpServer = &http.Server{
 		Addr:         fmt.Sprintf("%s:%d", a.Host, a.Port),
 		Handler:      router,
