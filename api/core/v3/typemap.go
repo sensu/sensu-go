@@ -33,6 +33,8 @@ var typeMap = map[string]interface{}{
 	"namespace":         &Namespace{},
 	"ResourceTemplate":  &ResourceTemplate{},
 	"resource_template": &ResourceTemplate{},
+	"SymmetricKey":      &SymmetricKey{},
+	"symmetric_key":     &SymmetricKey{},
 }
 
 // rbacMap is like typemap, but its keys are RBAC names, and its values are

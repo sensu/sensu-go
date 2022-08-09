@@ -375,6 +375,98 @@ func TestResolveV2ResourceResourceTemplate(t *testing.T) {
 	}
 }
 
+func TestResolveSymmetricKey(t *testing.T) {
+	var value interface{} = new(SymmetricKey)
+	if _, ok := value.(Resource); ok {
+		resource, err := ResolveResource("SymmetricKey")
+		if err != nil {
+			t.Fatal(err)
+		}
+		meta := resource.GetMetadata()
+		if meta == nil {
+			t.Fatal("nil metadata")
+		}
+		if meta.Labels == nil {
+			t.Error("nil metadata")
+		}
+		if meta.Annotations == nil {
+			t.Error("nil annotations")
+		}
+		return
+	}
+	_, err := ResolveResource("SymmetricKey")
+	if err == nil {
+		t.Fatal("expected non-nil error")
+	}
+	if got, want := err.Error(), `"SymmetricKey" is not a Resource`; got != want {
+		t.Fatalf("unexpected error: %s", err)
+	}
+}
+
+func TestResolveSymmetricKeyByRBACName(t *testing.T) {
+	value := new(SymmetricKey)
+	var iface interface{} = value
+	resource, err := ResolveResourceByRBACName(value.RBACName())
+	if _, ok := iface.(Resource); ok {
+		if err != nil {
+			t.Fatal(err)
+		}
+		meta := resource.GetMetadata()
+		if meta == nil {
+			t.Fatal("nil metadata")
+		}
+		if meta.Labels == nil {
+			t.Error("nil labels")
+		}
+		if meta.Annotations == nil {
+			t.Errorf("nil annotations")
+		}
+	} else {
+		if err == nil {
+			t.Fatal("expected non-nil error")
+		}
+	}
+}
+
+func TestResolveSymmetricKeyByStoreName(t *testing.T) {
+	value := new(SymmetricKey)
+	var iface interface{} = value
+	resource, err := ResolveResourceByStoreName(value.StoreName())
+	if _, ok := iface.(Resource); ok {
+		if err != nil {
+			t.Fatal(err)
+		}
+		meta := resource.GetMetadata()
+		if meta == nil {
+			t.Fatal("nil metadata")
+		}
+		if meta.Labels == nil {
+			t.Error("nil labels")
+		}
+		if meta.Annotations == nil {
+			t.Errorf("nil annotations")
+		}
+	} else {
+		if err == nil {
+			t.Fatal("expected non-nil error")
+		}
+	}
+}
+
+func TestResolveV2ResourceSymmetricKey(t *testing.T) {
+	v2Resource, err := ResolveV2Resource("SymmetricKey")
+	if err != nil {
+		t.Fatal(err)
+	}
+	v3Resource, err := ResolveResource("SymmetricKey")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got, want := v2Resource.(*V2ResourceProxy).Resource, v3Resource; !reflect.DeepEqual(got, want) {
+		t.Fatalf("bad resource: got %v, want %v", got, want)
+	}
+}
+
 func TestResolveNotExists(t *testing.T) {
 	_, err := ResolveResource("!#$@$%@#$")
 	if err == nil {
