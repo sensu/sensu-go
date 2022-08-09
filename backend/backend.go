@@ -603,6 +603,7 @@ func Initialize(ctx context.Context, config *Config) (*Backend, error) {
 		ListenAddress:       config.APIListenAddress,
 		RequestLimit:        config.APIRequestLimit,
 		WriteTimeout:        config.APIWriteTimeout,
+		ServeWaitTime:       config.APIServeWaitTime,
 		URL:                 config.APIURL,
 		Bus:                 bus,
 		Store:               b.Store,

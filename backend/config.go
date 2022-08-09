@@ -61,6 +61,7 @@ type Config struct {
 	APIRequestLimit  int64
 	APIURL           string
 	APIWriteTimeout  time.Duration
+	APIServeWaitTime time.Duration
 
 	// AssetsRateLimit is the maximum number of assets per second that will be fetched.
 	AssetsRateLimit rate.Limit
