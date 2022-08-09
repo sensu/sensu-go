@@ -19,6 +19,10 @@ be marked as global resources.
 for a period of time after startup.
 - Added `/ready` endpoint to the sensu-go API. Returns 200 when the API is ready
 to serve traffic.
+- Added `--agent-serve-wait-time` backend flag to delay accepting agent
+connections for a period of time after startup.
+- Added `/ready` endpoint to the agent listener. Returns 200 when the listener
+is ready to accept agent connections.
 
 ### Fixed
 - Fixed a bug where sensu-backend could crash if the BackendIDGetter
