@@ -15,6 +15,10 @@ disconnects.
 ### Added
 - GlobalResource interface in core/v3 allows core/v3 resources to
 be marked as global resources.
+- Added `--api-serve-wait-time` backend flag to delay serving API requests
+for a period of time after startup.
+- Added `/ready` endpoint to the sensu-go API. Returns 200 when the API is ready
+to serve traffic.
 
 ### Fixed
 - Fixed a bug where sensu-backend could crash if the BackendIDGetter
