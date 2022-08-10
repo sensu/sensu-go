@@ -7,6 +7,7 @@ replace (
 	github.com/sensu/sensu-go/api/core/v3 => ./api/core/v3
 	github.com/sensu/sensu-go/backend/store/v2 => ./backend/store/v2
 	github.com/sensu/sensu-go/types => ./types
+	github.com/graphql-go/graphql => github.com/jamesdphillips/graphql v0.8.2
 )
 
 require (
@@ -82,5 +83,3 @@ require (
 	gopkg.in/h2non/filetype.v1 v1.0.3
 	gopkg.in/yaml.v2 v2.4.0
 )
-
-replace github.com/graphql-go/graphql => github.com/jamesdphillips/graphql v0.8.2
