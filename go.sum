@@ -194,8 +194,6 @@ github.com/gorilla/websocket v1.4.2 h1:+/TMaTYc4QFitKJxsQ7Yye35DkWvkdLcvGKqM+x0U
 github.com/gorilla/websocket v1.4.2/go.mod h1:YR8l580nyteQvAITg2hZ9XVh4b55+EU/adAjf1fMHhE=
 github.com/graph-gophers/dataloader v0.0.0-20180104184831-78139374585c h1:94S+uoVVMpQAEOrqGjCDyUdML4dJDkh6aC4MYmXECg4=
 github.com/graph-gophers/dataloader v0.0.0-20180104184831-78139374585c/go.mod h1:jk4jk0c5ZISbKaMe8WsVopGB5/15GvGHMdMdPtwlRp4=
-github.com/graphql-go/graphql v0.7.10-0.20200426202700-116f19d099aa h1:4anOZ2o/OTkxszIWihRKw3GvHEtGvcxBpPReF/WbXJQ=
-github.com/graphql-go/graphql v0.7.10-0.20200426202700-116f19d099aa/go.mod h1:k6yrAYQaSP59DC5UVxbgxESlmVyojThKdORUqGDGmrI=
 github.com/grpc-ecosystem/go-grpc-middleware v1.0.0/go.mod h1:FiyG127CGDf3tlThmgyCl78X/SZQqEOJBCDaAfeWzPs=
 github.com/grpc-ecosystem/go-grpc-middleware v1.3.0 h1:+9834+KizmvFV7pXQGSXQTsaWhq2GjuNUt0aUU0YBYw=
 github.com/grpc-ecosystem/go-grpc-middleware v1.3.0/go.mod h1:z0ButlSOZa5vEBq9m2m2hlwIgKw+rp3sdCBRoJY+30Y=
@@ -242,6 +240,8 @@ github.com/ipfs/go-log v1.0.4 h1:6nLQdX4W8P9yZZFH7mO+X/PzjN8Laozm/lMJ6esdgzY=
 github.com/ipfs/go-log v1.0.4/go.mod h1:oDCg2FkjogeFOhqqb+N39l2RpTNPL6F/StPkB3kPgcs=
 github.com/ipfs/go-log/v2 v2.0.5 h1:fL4YI+1g5V/b1Yxr1qAiXTMg1H8z9vx/VmJxBuQMHvU=
 github.com/ipfs/go-log/v2 v2.0.5/go.mod h1:eZs4Xt4ZUJQFM3DlanGhy7TkwwawCZcSByscwkWG+dw=
+github.com/jamesdphillips/graphql v0.8.2 h1:/wM4I7FF9/X3cBqKv8PjfjXSx2FVwxmhr2y9l2JL9rc=
+github.com/jamesdphillips/graphql v0.8.2/go.mod h1:nKiHzRM0qopJEwCITUuIsxk9PlVlwIiiI8pnJEhordQ=
 github.com/jbenet/go-reuseport v0.0.0-20180416043609-15a1cd37f050 h1:bfBi3IYMggKaHTwDr42m05AYbG/OQpo21oCQWuNelCg=
 github.com/jbenet/go-reuseport v0.0.0-20180416043609-15a1cd37f050/go.mod h1:hry/Nwg2mFor95Ql+X52uC4zdrZsdH8a0noOj8BLt9g=
 github.com/jessevdk/go-flags v1.4.0/go.mod h1:4FA24M0QyGHXBuZZK/XkWh8h0e1EYbRYJSGM75WSRxI=

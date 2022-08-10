@@ -82,3 +82,5 @@ require (
 	gopkg.in/h2non/filetype.v1 v1.0.3
 	gopkg.in/yaml.v2 v2.4.0
 )
+
+replace github.com/graphql-go/graphql => github.com/jamesdphillips/graphql v0.8.2
