@@ -342,6 +342,9 @@ func ResolveRaw(apiVersion string, typename string) (interface{}, error) {
 	apiGroup, reqVer := ParseAPIVersion(apiVersion)
 	foundVer, ok := availableModules[apiGroup]
 	if ok {
+		if foundVer == "(devel)" {
+			foundVer = reqVer
+		}
 		if semverGreater(reqVer, foundVer) {
 			return nil, fmt.Errorf("requested version was %s, but only %s is available", reqVer, foundVer)
 		}
