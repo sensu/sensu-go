@@ -7,22 +7,23 @@ import (
 
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/authentication"
+	"github.com/sensu/sensu-go/backend/authentication/bcrypt"
 	"github.com/sensu/sensu-go/backend/authentication/jwt"
 	"github.com/sensu/sensu-go/backend/authentication/providers/basic"
-	"github.com/sensu/sensu-go/backend/store"
+	storev2 "github.com/sensu/sensu-go/backend/store/v2"
 	"github.com/sensu/sensu-go/testing/mockstore"
 	"github.com/stretchr/testify/mock"
 )
 
-func defaultAuth(store store.Store) *authentication.Authenticator {
+func defaultAuth(store storev2.Interface) *authentication.Authenticator {
 	auth := &authentication.Authenticator{}
 	provider := &basic.Provider{Store: store, ObjectMeta: corev2.ObjectMeta{Name: basic.Type}}
 	auth.AddProvider(provider)
 	return auth
 }
 
-func defaultStore() store.Store {
-	return &mockstore.MockStore{}
+func defaultStore() storev2.Interface {
+	return &mockstore.V2MockStore{}
 }
 
 func contextWithClaims(claims *corev2.Claims) context.Context {
@@ -38,8 +39,8 @@ func TestCreateAccessToken(t *testing.T) {
 		Name          string
 		Username      string
 		Password      string
-		Store         func() store.Store
-		Authenticator func(store.Store) *authentication.Authenticator
+		Store         func() storev2.Interface
+		Authenticator func(storev2.Interface) *authentication.Authenticator
 		Context       func() context.Context
 		WantError     bool
 		Error         error
@@ -56,10 +57,10 @@ func TestCreateAccessToken(t *testing.T) {
 			Name:     "invalid credentials",
 			Username: "foo",
 			Password: "P@ssw0rd!",
-			Store: func() store.Store {
+			Store: func() storev2.Interface {
 				user := corev2.FixtureUser("foo")
-				store := &mockstore.MockStore{}
-				store.On("AuthenticateUser", mock.Anything, "foo", "P@ssw0rd!").Return(user, errors.New("error"))
+				store := &mockstore.V2MockStore{}
+				store.On("Get", mock.Anything, mock.Anything).Return(mockstore.Wrapper[*corev2.User]{Value: user}, nil)
 				return store
 			},
 			Authenticator: defaultAuth,
@@ -72,10 +73,11 @@ func TestCreateAccessToken(t *testing.T) {
 			Username: "foo",
 			Password: "P@ssw0rd!",
 			Context:  context.Background,
-			Store: func() store.Store {
-				store := &mockstore.MockStore{}
+			Store: func() storev2.Interface {
+				store := &mockstore.V2MockStore{}
 				user := corev2.FixtureUser("foo")
-				store.On("AuthenticateUser", mock.Anything, "foo", "P@ssw0rd!").Return(user, nil)
+				user.PasswordHash, _ = bcrypt.HashPassword("P@ssw0rd!")
+				store.On("Get", mock.Anything, mock.Anything).Return(mockstore.Wrapper[*corev2.User]{Value: user}, nil)
 				return store
 			},
 			Authenticator: defaultAuth,
@@ -112,8 +114,8 @@ func TestTestCreds(t *testing.T) {
 		Name          string
 		Username      string
 		Password      string
-		Store         func() store.Store
-		Authenticator func(store.Store) *authentication.Authenticator
+		Store         func() storev2.Interface
+		Authenticator func(storev2.Interface) *authentication.Authenticator
 		Context       func() context.Context
 		WantError     bool
 		Error         error
@@ -130,10 +132,9 @@ func TestTestCreds(t *testing.T) {
 			Name:     "bubble up authentication error",
 			Username: "foo",
 			Password: "P@ssw0rd!",
-			Store: func() store.Store {
-				s := &mockstore.MockStore{}
-				user := corev2.FixtureUser("foo")
-				s.On("AuthenticateUser", mock.Anything, "foo", "P@ssw0rd!").Return(user, mockError)
+			Store: func() storev2.Interface {
+				s := &mockstore.V2MockStore{}
+				s.On("Get", mock.Anything, mock.Anything).Return(nil, mockError)
 				return s
 			},
 			Authenticator: defaultAuth,
@@ -146,10 +147,11 @@ func TestTestCreds(t *testing.T) {
 			Username: "foo",
 			Password: "P@ssw0rd!",
 			Context:  context.Background,
-			Store: func() store.Store {
-				s := &mockstore.MockStore{}
+			Store: func() storev2.Interface {
+				s := &mockstore.V2MockStore{}
 				user := corev2.FixtureUser("foo")
-				s.On("AuthenticateUser", mock.Anything, "foo", "P@ssw0rd!").Return(user, nil)
+				user.Password, _ = bcrypt.HashPassword("P@ssw0rd!")
+				s.On("Get", mock.Anything, mock.Anything).Return(mockstore.Wrapper[*corev2.User]{Value: user}, nil)
 				return s
 			},
 			Authenticator: defaultAuth,
@@ -175,20 +177,18 @@ func TestTestCreds(t *testing.T) {
 func TestRefreshAccessToken(t *testing.T) {
 	tests := []struct {
 		Name          string
-		Store         func() store.Store
-		Authenticator func(store.Store) *authentication.Authenticator
+		Store         func() storev2.Interface
+		Authenticator func(storev2.Interface) *authentication.Authenticator
 		Context       func(*corev2.Claims) context.Context
 		WantError     bool
 		Error         error
 	}{
 		{
 			Name: "success",
-			Store: func() store.Store {
-				st := &mockstore.MockStore{}
+			Store: func() storev2.Interface {
+				st := &mockstore.V2MockStore{}
 				user := &corev2.User{Username: "foo"}
-				st.On("GetUser",
-					mock.AnythingOfType("*context.valueCtx"), mock.AnythingOfType("string"),
-				).Return(user, nil)
+				st.On("Get", mock.Anything, mock.Anything).Return(mockstore.Wrapper[*corev2.User]{Value: user}, nil)
 				return st
 			},
 			Authenticator: defaultAuth,

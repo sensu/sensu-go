@@ -463,7 +463,7 @@ func Initialize(ctx context.Context, etcdConfigClient *clientv3.Client, pgConfig
 	authenticator := &authentication.Authenticator{}
 	provider := &basic.Provider{
 		ObjectMeta: corev2.ObjectMeta{Name: basic.Type},
-		Store:      b.Store,
+		Store:      b.StoreV2,
 	}
 	authenticator.AddProvider(provider)
 

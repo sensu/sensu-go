@@ -25,6 +25,8 @@ const (
 	IssuerURLKey key = iota
 )
 
+const Name = "jwt"
+
 var (
 	defaultExpiration = time.Minute * 5
 	secret            []byte
