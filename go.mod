@@ -7,6 +7,7 @@ replace (
 	github.com/sensu/sensu-go/api/core/v3 => ./api/core/v3
 	github.com/sensu/sensu-go/backend/store/v2 => ./backend/store/v2
 	github.com/sensu/sensu-go/types => ./types
+	github.com/graphql-go/graphql => github.com/jamesdphillips/graphql v0.8.2
 )
 
 require (
