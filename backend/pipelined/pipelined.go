@@ -248,11 +248,14 @@ func (p *Pipelined) handleMessage(ctx context.Context, msg interface{}) (hadPipe
 						return true, err
 					}
 					skipPipelineErr := fmt.Errorf("%w, skipping execution of pipeline", err)
-					if _, ok := err.(*pipeline.ErrNoWorkflows); ok {
-						if fields["check_name"] != "keepalive" {
-							// only warn about empty pipelines if it's not a keepalive.
-							// this reduces log spam.
-							logger.WithFields(fields).Warn(skipPipelineErr)
+					if _, ok := err.(pipeline.ErrMisconfiguredPipeline); ok {
+						if fields["check_name"] == "keepalive" {
+							// supress logging for keepalive events to debug.
+							// default "keepalive" handler is added to keepalive events
+							// which frequently generates log noise.
+							logger.WithFields(fields).Debug(skipPipelineErr)
+						} else {
+							logger.WithFields(fields).Info(skipPipelineErr)
 						}
 					} else {
 						logger.WithFields(fields).Error(skipPipelineErr)
