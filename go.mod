@@ -78,7 +78,7 @@ require (
 
 require (
 	github.com/coreos/go-systemd v0.0.0-20190719114852-fd7a80b32e1f // indirect
-	github.com/google/go-cmp v0.5.8
+	github.com/google/go-cmp v0.5.8 // indirect
 	github.com/kr/pty v1.1.8 // indirect
 	golang.org/x/text v0.3.7 // indirect
 )
