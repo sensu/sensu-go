@@ -108,7 +108,7 @@ func (b *BackendIDGetter) getLease(ctx context.Context) (int64, <-chan *clientv3
 		resp, err := b.client.Grant(ctx, backendIDLeasePeriod)
 		LeaseOperationsCounter.WithLabelValues("sensu-etcd", LeaseOperationTypeGrant, LeaseStatusFor(err)).Inc()
 		if err != nil {
-			return false, err
+			return kvc.RetryRequest(n, err)
 		}
 		leaseID := resp.ID
 		id = int64(leaseID)
@@ -119,17 +119,13 @@ func (b *BackendIDGetter) getLease(ctx context.Context) (int64, <-chan *clientv3
 		_, err = b.client.Put(b.ctx, key, value, clientv3.WithLease(leaseID))
 		LeaseOperationsCounter.WithLabelValues("sensu-etcd", LeaseOperationTypePut, LeaseStatusFor(err)).Inc()
 		if err != nil {
-			return false, err
+			return kvc.RetryRequest(n, err)
 		}
 
 		// Keep the lease alive
 		ch, err = b.client.KeepAlive(b.ctx, leaseID)
 		LeaseOperationsCounter.WithLabelValues("sensu-etcd", LeaseOperationTypeKeepalive, LeaseStatusFor(err)).Inc()
-		if err != nil {
-			return false, err
-		}
-
-		return true, nil
+		return kvc.RetryRequest(n, err)
 	})
 
 	if err != nil {

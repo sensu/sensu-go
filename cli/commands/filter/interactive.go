@@ -21,7 +21,7 @@ func newFilterOpts() *filterOpts {
 	return &filterOpts{}
 }
 
-func (opts *filterOpts) administerQuestionnaire(editing bool) error {
+func (opts *filterOpts) administerQuestionnaire(editing bool, askOpts ...survey.AskOpt) error {
 	var qs = []*survey.Question{}
 
 	if !editing {
@@ -72,7 +72,7 @@ func (opts *filterOpts) administerQuestionnaire(editing bool) error {
 		},
 	}...)
 
-	return survey.Ask(qs, opts)
+	return survey.Ask(qs, opts, askOpts...)
 }
 
 func (opts *filterOpts) Copy(filter *types.EventFilter) {

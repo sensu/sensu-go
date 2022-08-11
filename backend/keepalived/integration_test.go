@@ -38,7 +38,7 @@ func TestKeepaliveMonitor(t *testing.T) {
 	tsub := testSubscriber{
 		ch: eventChan,
 	}
-	subscription, err := bus.Subscribe(messaging.TopicEventRaw, "testSubscriber", tsub)
+	subscription, err := bus.Subscribe(messaging.TopicKeepaliveRaw, "testSubscriber", tsub)
 	if err != nil {
 		assert.FailNow(t, "failed to subscribe to message bus topic event raw")
 	}

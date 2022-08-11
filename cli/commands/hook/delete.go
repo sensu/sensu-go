@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/AlecAivazis/survey/v2"
 	"github.com/sensu/sensu-go/cli"
 	"github.com/sensu/sensu-go/cli/commands/helpers"
 	"github.com/spf13/cobra"
@@ -26,7 +27,10 @@ func DeleteCommand(cli *cli.SensuCli) *cobra.Command {
 			namespace := cli.Config.Namespace()
 
 			if skipConfirm, _ := cmd.Flags().GetBool("skip-confirm"); !skipConfirm {
-				if confirmed := helpers.ConfirmDeleteResource(name, "hook"); !confirmed {
+				opts := []survey.AskOpt{
+					survey.WithStdio(cli.InFile, cli.OutFile, cli.ErrFile),
+				}
+				if confirmed := helpers.ConfirmDeleteResourceWithOpts(name, "hook", opts...); !confirmed {
 					fmt.Fprintln(cmd.OutOrStdout(), "Canceled")
 					return nil
 				}

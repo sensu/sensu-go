@@ -27,6 +27,10 @@ import (
 	"github.com/sensu/sensu-go/types"
 )
 
+const apidStartupErrorMsg = `API unavailable during startup.
+See api-serve-wait-time settings.
+`
+
 // APId is the backend HTTP API.
 type APId struct {
 	Authenticator              *authentication.Authenticator
@@ -35,6 +39,7 @@ type APId struct {
 	EntityLimitedCoreSubrouter *mux.Router
 	GraphQLSubrouter           *mux.Router
 	RequestLimit               int64
+	ReadyMiddleware            middlewares.HTTPMiddleware
 
 	stopping            chan struct{}
 	running             *atomic.Value
@@ -49,6 +54,9 @@ type APId struct {
 	cluster             clientv3.Cluster
 	etcdClientTLSConfig *tls.Config
 	clusterVersion      string
+
+	serveWaitTime time.Duration
+	ready         func()
 }
 
 // Option is a functional option.
@@ -59,6 +67,7 @@ type Config struct {
 	ListenAddress       string
 	RequestLimit        int64
 	WriteTimeout        time.Duration
+	ServeWaitTime       time.Duration
 	URL                 string
 	Bus                 messaging.MessageBus
 	Store               store.Store
@@ -92,6 +101,7 @@ func New(c Config, opts ...Option) (*APId, error) {
 		Authenticator:       c.Authenticator,
 		clusterVersion:      c.ClusterVersion,
 		RequestLimit:        c.RequestLimit,
+		serveWaitTime:       c.ServeWaitTime,
 	}
 
 	// prepare TLS config
@@ -107,9 +117,23 @@ func New(c Config, opts ...Option) (*APId, error) {
 	router := NewRouter()
 	_ = PublicSubrouter(router, c)
 	a.GraphQLSubrouter = GraphQLSubrouter(router, c)
-	_ = AuthenticationSubrouter(router, c)
+	authSubrouter := AuthenticationSubrouter(router, c)
 	a.CoreSubrouter = CoreSubrouter(router, c)
 	a.EntityLimitedCoreSubrouter = EntityLimitedCoreSubrouter(router, c)
+	readySubrouter := ReadySubrouter(router, c)
+
+	awaitMiddleware := &middlewares.AwaitStartupMiddleware{
+		RetryAfterSeconds: int(c.ServeWaitTime / time.Second),
+		ResponseText:      apidStartupErrorMsg,
+	}
+	a.ReadyMiddleware = awaitMiddleware
+	a.ready = awaitMiddleware.Ready
+
+	a.GraphQLSubrouter.Use(a.ReadyMiddleware.Then)
+	authSubrouter.Use(a.ReadyMiddleware.Then)
+	a.CoreSubrouter.Use(a.ReadyMiddleware.Then)
+	a.EntityLimitedCoreSubrouter.Use(a.ReadyMiddleware.Then)
+	readySubrouter.Use(a.ReadyMiddleware.Then)
 
 	a.HTTPServer = &http.Server{
 		Addr:         c.ListenAddress,
@@ -271,6 +295,18 @@ func PublicSubrouter(router *mux.Router, cfg Config) *mux.Router {
 	return subrouter
 }
 
+func ReadySubrouter(router *mux.Router, cfg Config) *mux.Router {
+	subrouter := NewSubrouter(
+		router.NewRoute(),
+		middlewares.SimpleLogger{},
+		middlewares.LimitRequest{Limit: cfg.RequestLimit},
+	)
+	mountRouters(subrouter,
+		&routers.ReadyRouter{},
+	)
+	return subrouter
+}
+
 func notFoundHandler(w http.ResponseWriter, req *http.Request) {
 	w.WriteHeader(http.StatusNotFound)
 	resp := map[string]interface{}{
@@ -281,6 +317,21 @@ func notFoundHandler(w http.ResponseWriter, req *http.Request) {
 
 // Start APId.
 func (a *APId) Start() error {
+
+	if a.serveWaitTime <= 0 {
+		a.ready()
+	} else {
+		logger.Warnf("starting apid as temporarily unavailable for: %s", a.serveWaitTime)
+		go func() {
+			select {
+			case <-time.After(a.serveWaitTime):
+				a.ready()
+				logger.Warn("apid is now available")
+			case <-a.stopping:
+			}
+		}()
+	}
+
 	logger.Warn("starting apid on address: ", a.HTTPServer.Addr)
 	ln, err := net.Listen("tcp", a.HTTPServer.Addr)
 	if err != nil {

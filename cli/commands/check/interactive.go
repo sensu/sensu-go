@@ -91,7 +91,7 @@ func (opts *checkOpts) withFlags(flags *pflag.FlagSet) {
 	}
 }
 
-func (opts *checkOpts) administerQuestionnaire(editing bool) error {
+func (opts *checkOpts) administerQuestionnaire(editing bool, askOpts ...survey.AskOpt) error {
 	var qs = []*survey.Question{}
 
 	if !editing {
@@ -269,7 +269,7 @@ func (opts *checkOpts) administerQuestionnaire(editing bool) error {
 		},
 	}...)
 
-	return survey.Ask(qs, opts)
+	return survey.Ask(qs, opts, askOpts...)
 }
 
 func (opts *checkOpts) Copy(check *types.CheckConfig) {

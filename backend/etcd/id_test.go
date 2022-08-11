@@ -2,11 +2,13 @@ package etcd
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"sync"
 	"testing"
+	"time"
 
-	"go.etcd.io/etcd/client/v3"
+	clientv3 "go.etcd.io/etcd/client/v3"
 )
 
 type mockBackendIDGetterClient struct {
@@ -62,5 +64,23 @@ func TestBackendIDGetter(t *testing.T) {
 	got := getter.GetBackendID()
 	if want := int64(1234); got != want {
 		t.Fatalf("bad backend id: got %d, want %d", got, want)
+	}
+}
+
+func TestBackendIDGetterRetires(t *testing.T) {
+	client := newMockBackendIDGetterClient()
+	client.grantErr = errors.New("etcdserver: too many requests")
+	// assert that NewBackendIDGetter blocks retrying getting a lease
+	newBackendID := make(chan struct{})
+	go func() {
+		NewBackendIDGetter(context.TODO(), client)
+		close(newBackendID)
+	}()
+
+	select {
+	case <-newBackendID:
+		t.Errorf("did not expect NewBackendIDGetter to finish")
+	case <-time.After(time.Millisecond * 500):
+		// OKAY
 	}
 }

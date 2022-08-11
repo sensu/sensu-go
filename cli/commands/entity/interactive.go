@@ -29,7 +29,7 @@ func (opts *entityOpts) withFlags(flags *pflag.FlagSet) {
 	}
 }
 
-func (opts *entityOpts) administerQuestionnaire(editing bool) error {
+func (opts *entityOpts) administerQuestionnaire(editing bool, askOpts ...survey.AskOpt) error {
 	var qs = []*survey.Question{}
 
 	if !editing {
@@ -73,7 +73,7 @@ func (opts *entityOpts) administerQuestionnaire(editing bool) error {
 		},
 	}...)
 
-	return survey.Ask(qs, opts)
+	return survey.Ask(qs, opts, askOpts...)
 }
 
 func (opts *entityOpts) copy(entity *types.Entity) {

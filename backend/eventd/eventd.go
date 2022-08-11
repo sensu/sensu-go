@@ -207,6 +207,7 @@ type Eventd struct {
 	eventChan           chan interface{}
 	keepaliveChan       chan interface{}
 	subscription        messaging.Subscription
+	keepaliveSub        messaging.Subscription
 	errChan             chan error
 	mu                  *sync.Mutex
 	shutdownChan        chan struct{}
@@ -340,6 +341,13 @@ func (e *Eventd) Start() error {
 	e.wg.Add(e.workerCount)
 	sub, err := e.bus.Subscribe(messaging.TopicEventRaw, "eventd", e)
 	e.subscription = sub
+	if err != nil {
+		return err
+	}
+
+	subscriber := messaging.ChanSubscriber(e.keepaliveChan)
+	kSub, err := e.bus.Subscribe(messaging.TopicKeepaliveRaw, "eventd", subscriber)
+	e.keepaliveSub = kSub
 	if err != nil {
 		return err
 	}
@@ -812,10 +820,14 @@ func (e *Eventd) createFailedCheckEvent(ctx context.Context, event *corev2.Event
 func (e *Eventd) Stop() error {
 	logger.Info("shutting down eventd")
 	if err := e.subscription.Cancel(); err != nil {
-		logger.WithError(err).Error("unable to unsubscribe from message bus")
+		logger.WithError(err).Error("unable to unsubscribe from event message bus")
+	}
+	if err := e.keepaliveSub.Cancel(); err != nil {
+		logger.WithError(err).Error("unable to unsubscribe from keepalive message bus")
 	}
 	e.cancel()
 	close(e.eventChan)
+	close(e.keepaliveChan)
 	close(e.shutdownChan)
 	e.wg.Wait()
 	if e.Logger != nil {

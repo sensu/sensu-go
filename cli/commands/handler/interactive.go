@@ -71,27 +71,26 @@ func (opts *handlerOpts) withFlags(flags *pflag.FlagSet) {
 	}
 }
 
-func (opts *handlerOpts) administerQuestionnaire(editing bool) error {
-
-	if err := opts.queryForBaseParameters(editing); err != nil {
+func (opts *handlerOpts) administerQuestionnaire(editing bool, askOpts ...survey.AskOpt) error {
+	if err := opts.queryForBaseParameters(editing, askOpts...); err != nil {
 		return err
 	}
 
 	switch opts.Type {
 	case types.HandlerPipeType:
-		return opts.queryForCommand()
+		return opts.queryForCommand(askOpts...)
 	case types.HandlerTCPType:
 		fallthrough
 	case types.HandlerUDPType:
-		return opts.queryForSocket()
+		return opts.queryForSocket(askOpts...)
 	case types.HandlerSetType:
-		return opts.queryForHandlers()
+		return opts.queryForHandlers(askOpts...)
 	}
 
 	return nil
 }
 
-func (opts *handlerOpts) queryForBaseParameters(editing bool) error {
+func (opts *handlerOpts) queryForBaseParameters(editing bool, askOpts ...survey.AskOpt) error {
 	var qs []*survey.Question
 
 	if !editing {
@@ -164,10 +163,10 @@ func (opts *handlerOpts) queryForBaseParameters(editing bool) error {
 		},
 	}...)
 
-	return survey.Ask(qs, opts)
+	return survey.Ask(qs, opts, askOpts...)
 }
 
-func (opts *handlerOpts) queryForCommand() error {
+func (opts *handlerOpts) queryForCommand(askOpts ...survey.AskOpt) error {
 	var qs = []*survey.Question{
 		{
 			Name: "command",
@@ -179,10 +178,10 @@ func (opts *handlerOpts) queryForCommand() error {
 		},
 	}
 
-	return survey.Ask(qs, opts)
+	return survey.Ask(qs, opts, askOpts...)
 }
 
-func (opts *handlerOpts) queryForHandlers() error {
+func (opts *handlerOpts) queryForHandlers(askOpts ...survey.AskOpt) error {
 	var qs = []*survey.Question{
 		{
 			Name: "handlers",
@@ -195,10 +194,10 @@ func (opts *handlerOpts) queryForHandlers() error {
 		},
 	}
 
-	return survey.Ask(qs, opts)
+	return survey.Ask(qs, opts, askOpts...)
 }
 
-func (opts *handlerOpts) queryForSocket() error {
+func (opts *handlerOpts) queryForSocket(askOpts ...survey.AskOpt) error {
 	var qs = []*survey.Question{
 		{
 			Name: "socketHost",
@@ -218,7 +217,7 @@ func (opts *handlerOpts) queryForSocket() error {
 		},
 	}
 
-	return survey.Ask(qs, opts)
+	return survey.Ask(qs, opts, askOpts...)
 }
 
 func (opts *handlerOpts) Copy(handler *types.Handler) {

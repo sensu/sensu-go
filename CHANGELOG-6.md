@@ -7,9 +7,28 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
 
+### Changed
+- Eventd now prioritizes keepalive events over other events in order to
+mitigate the potential of keepalive event creation storms and mass agent
+disconnects.
+
 ### Added
 - GlobalResource interface in core/v3 allows core/v3 resources to
 be marked as global resources.
+- Added `--api-serve-wait-time` backend flag to delay serving API requests
+for a period of time after startup.
+- Added `/ready` endpoint to the sensu-go API. Returns 200 when the API is ready
+to serve traffic.
+
+### Fixed
+- Fixed a bug where sensu-backend could crash if the BackendIDGetter
+encounters etcd client unavailability.
+
+## [6.7.5] - 2022-08-10
+
+### Security
+- Updated the package graphql-go/graphql to address [CVE-2022-37315](https://nvd.nist.gov/vuln/detail/CVE-2022-37315)
+
 ## [6.7.4] - 2022-07-12
 
 ### Changed

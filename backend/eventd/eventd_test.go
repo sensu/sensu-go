@@ -61,6 +61,7 @@ func newEventd(store storev2.Interface, eventStore store.Store, bus messaging.Me
 		errChan:         make(chan error, 1),
 		shutdownChan:    make(chan struct{}, 1),
 		eventChan:       make(chan interface{}, 100),
+		keepaliveChan:   make(chan interface{}, 100),
 		wg:              &sync.WaitGroup{},
 		mu:              &sync.Mutex{},
 		Logger:          NoopLogger{},

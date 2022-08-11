@@ -8,10 +8,22 @@ import (
 )
 
 // ConfirmDelete confirm a deletion operation before it is completed.
-func ConfirmDelete(name string) bool {
+func ConfirmDelete(name string, opts ...survey.AskOpt) bool {
 	confirm := &ConfirmDestructiveOp{
-		Type: "resource",
-		Op:   "delete",
+		Type:    "resource",
+		Op:      "delete",
+		AskOpts: opts,
+	}
+	ok, _ := confirm.Ask(name)
+	return ok
+}
+
+// ConfirmDelete confirm a deletion operation before it is completed.
+func ConfirmDeleteWithOpts(name string, opts ...survey.AskOpt) bool {
+	confirm := &ConfirmDestructiveOp{
+		Type:    "resource",
+		Op:      "delete",
+		AskOpts: opts,
 	}
 	ok, _ := confirm.Ask(name)
 	return ok
@@ -19,9 +31,16 @@ func ConfirmDelete(name string) bool {
 
 // ConfirmDeleteResource confirm a deletion operation before it is completed.
 func ConfirmDeleteResource(name string, resourceType string) bool {
+	return ConfirmDeleteResourceWithOpts(name, resourceType, nil)
+}
+
+// ConfirmDeleteResourceWithOpts confirm a deletion operation before it is
+// completed. It accepts a list of survey.AskOpt for customizing behaviour.
+func ConfirmDeleteResourceWithOpts(name string, resourceType string, opts ...survey.AskOpt) bool {
 	confirm := &ConfirmDestructiveOp{
-		Type: fmt.Sprintf("%s resource", resourceType),
-		Op:   "delete",
+		Type:    fmt.Sprintf("%s resource", resourceType),
+		Op:      "delete",
+		AskOpts: opts,
 	}
 	ok, _ := confirm.Ask(name)
 	return ok
@@ -29,8 +48,9 @@ func ConfirmDeleteResource(name string, resourceType string) bool {
 
 // ConfirmDestructiveOp presents prompt for a destructive operation.
 type ConfirmDestructiveOp struct {
-	Type string
-	Op   string
+	Type    string
+	Op      string
+	AskOpts []survey.AskOpt
 }
 
 // Ask presents prompt confirming a destructive operation.
@@ -44,6 +64,7 @@ func (c *ConfirmDestructiveOp) Ask(name string) (bool, error) {
 	confirm := &Confirm{
 		Message: question,
 		Default: false,
+		AskOpts: c.AskOpts,
 	}
 	return confirm.Ask()
 }
@@ -52,6 +73,7 @@ func (c *ConfirmDestructiveOp) Ask(name string) (bool, error) {
 type Confirm struct {
 	Message string
 	Default bool
+	AskOpts []survey.AskOpt
 }
 
 // Ask executes confirmation of operation
@@ -62,8 +84,7 @@ func (c *Confirm) Ask() (bool, error) {
 	}
 
 	confirmation := false
-	err := survey.AskOne(prompt, &confirmation, nil)
-	if err != nil {
+	if err := survey.AskOne(prompt, &confirmation, c.AskOpts...); err != nil {
 		return false, err
 	}
 
