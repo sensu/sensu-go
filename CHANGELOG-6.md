@@ -5,10 +5,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic
 Versioning](http://semver.org/spec/v2.0.0.html).
 
-## [6.7.5] - 2022-08-10
-
-### Security
-- Updated the package graphql-go/graphql to address [CVE-2022-37315](https://nvd.nist.gov/vuln/detail/CVE-2022-37315)
+## Unreleased
 
 ### Changed
 - Eventd now prioritizes keepalive events over other events in order to
@@ -26,6 +23,11 @@ to serve traffic.
 ### Fixed
 - Fixed a bug where sensu-backend could crash if the BackendIDGetter
 encounters etcd client unavailability.
+
+## [6.7.5] - 2022-08-10
+
+### Security
+- Updated the package graphql-go/graphql to address [CVE-2022-37315](https://nvd.nist.gov/vuln/detail/CVE-2022-37315)
 
 ## [6.7.4] - 2022-07-12
 

@@ -2,14 +2,6 @@ module github.com/sensu/sensu-go
 
 go 1.16
 
-replace (
-	github.com/sensu/sensu-go/api/core/v2 => ./api/core/v2
-	github.com/sensu/sensu-go/api/core/v3 => ./api/core/v3
-	github.com/sensu/sensu-go/backend/store/v2 => ./backend/store/v2
-	github.com/sensu/sensu-go/types => ./types
-	github.com/graphql-go/graphql => github.com/jamesdphillips/graphql v0.8.2
-)
-
 require (
 	github.com/AlecAivazis/survey/v2 v2.2.14
 	github.com/ash2k/stager v0.0.0-20170622123058-6e9c7b0eacd4 // indirect
@@ -90,3 +82,5 @@ require (
 	github.com/kr/pty v1.1.8 // indirect
 	golang.org/x/text v0.3.7 // indirect
 )
+
+replace github.com/graphql-go/graphql => github.com/jamesdphillips/graphql v0.8.2
