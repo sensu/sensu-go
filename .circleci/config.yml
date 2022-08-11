@@ -115,7 +115,6 @@ workflows:
       - test-module:
           name: types
           path: types
-      - assert-no-replace
   build:
     jobs:
       # darwin/amd64
