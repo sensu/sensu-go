@@ -1541,12 +1541,6 @@ var _ObjectTypeProcessDesc = graphql.ObjectDesc{
 type BackendEntityFieldResolvers interface {
 	// Meta implements response to request for 'meta' field.
 	Meta(p graphql.ResolveParams) (interface{}, error)
-
-	// Config implements response to request for 'config' field.
-	Config(p graphql.ResolveParams) (interface{}, error)
-
-	// State implements response to request for 'state' field.
-	State(p graphql.ResolveParams) (interface{}, error)
 }
 
 // BackendEntityAliases implements all methods on BackendEntityFieldResolvers interface by using reflection to
@@ -1557,18 +1551,6 @@ type BackendEntityAliases struct{}
 
 // Meta implements response to request for 'meta' field.
 func (_ BackendEntityAliases) Meta(p graphql.ResolveParams) (interface{}, error) {
-	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	return val, err
-}
-
-// Config implements response to request for 'config' field.
-func (_ BackendEntityAliases) Config(p graphql.ResolveParams) (interface{}, error) {
-	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	return val, err
-}
-
-// State implements response to request for 'state' field.
-func (_ BackendEntityAliases) State(p graphql.ResolveParams) (interface{}, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
 	return val, err
 }
@@ -1589,50 +1571,16 @@ func _ObjTypeBackendEntityMetaHandler(impl interface{}) graphql1.FieldResolveFn 
 	}
 }
 
-func _ObjTypeBackendEntityConfigHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(interface {
-		Config(p graphql.ResolveParams) (interface{}, error)
-	})
-	return func(frp graphql1.ResolveParams) (interface{}, error) {
-		return resolver.Config(frp)
-	}
-}
-
-func _ObjTypeBackendEntityStateHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(interface {
-		State(p graphql.ResolveParams) (interface{}, error)
-	})
-	return func(frp graphql1.ResolveParams) (interface{}, error) {
-		return resolver.State(frp)
-	}
-}
-
 func _ObjectTypeBackendEntityConfigFn() graphql1.ObjectConfig {
 	return graphql1.ObjectConfig{
 		Description: "BackendEntity contains information about a particular backend.",
-		Fields: graphql1.Fields{
-			"config": &graphql1.Field{
-				Args:              graphql1.FieldConfigArgument{},
-				DeprecationReason: "",
-				Description:       "self descriptive",
-				Name:              "config",
-				Type:              graphql.OutputType("CoreV3EntityConfig"),
-			},
-			"meta": &graphql1.Field{
-				Args:              graphql1.FieldConfigArgument{},
-				DeprecationReason: "",
-				Description:       "self descriptive",
-				Name:              "meta",
-				Type:              graphql.OutputType("ObjectMeta"),
-			},
-			"state": &graphql1.Field{
-				Args:              graphql1.FieldConfigArgument{},
-				DeprecationReason: "",
-				Description:       "self descriptive",
-				Name:              "state",
-				Type:              graphql.OutputType("CoreV3EntityState"),
-			},
-		},
+		Fields: graphql1.Fields{"meta": &graphql1.Field{
+			Args:              graphql1.FieldConfigArgument{},
+			DeprecationReason: "",
+			Description:       "self descriptive",
+			Name:              "meta",
+			Type:              graphql.OutputType("ObjectMeta"),
+		}},
 		Interfaces: []*graphql1.Interface{},
 		IsTypeOf: func(_ graphql1.IsTypeOfParams) bool {
 			// NOTE:
@@ -1648,12 +1596,8 @@ func _ObjectTypeBackendEntityConfigFn() graphql1.ObjectConfig {
 
 // describe BackendEntity's configuration; kept private to avoid unintentional tampering of configuration at runtime.
 var _ObjectTypeBackendEntityDesc = graphql.ObjectDesc{
-	Config: _ObjectTypeBackendEntityConfigFn,
-	FieldHandlers: map[string]graphql.FieldHandler{
-		"config": _ObjTypeBackendEntityConfigHandler,
-		"meta":   _ObjTypeBackendEntityMetaHandler,
-		"state":  _ObjTypeBackendEntityStateHandler,
-	},
+	Config:        _ObjectTypeBackendEntityConfigFn,
+	FieldHandlers: map[string]graphql.FieldHandler{"meta": _ObjTypeBackendEntityMetaHandler},
 }
 
 //

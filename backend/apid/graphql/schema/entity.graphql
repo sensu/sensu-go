@@ -139,8 +139,9 @@ BackendEntity contains information about a particular backend.
 """
 type BackendEntity {
   meta: ObjectMeta
-  config: CoreV3EntityConfig
-  state: CoreV3EntityState
+  # TODO: implement these
+  # config: CoreV3EntityConfig
+  # state: CoreV3EntityState
 }
 
 """
