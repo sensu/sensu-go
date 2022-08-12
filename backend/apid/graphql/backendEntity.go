@@ -5,9 +5,7 @@ import (
 	"github.com/sensu/sensu-go/graphql"
 )
 
-type backendEntityImpl struct {
-	svc ServiceConfig
-}
+type backendEntityImpl struct{}
 
 func (b *backendEntityImpl) Meta(p graphql.ResolveParams) (interface{}, error) {
 	v := p.Source.(interface{ GetMetadata() *corev2.ObjectMeta })
