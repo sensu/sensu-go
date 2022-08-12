@@ -37,6 +37,11 @@ type queryImpl struct {
 	svc          ServiceConfig
 }
 
+// Responder implements response to a request for the 'responder' field.
+func (r *queryImpl) Responder(p graphql.ResolveParams) (interface{}, error) {
+	return r.svc.GetBackendEntity()
+}
+
 // Viewer implements response to request for 'viewer' field.
 func (r *queryImpl) Viewer(p graphql.ResolveParams) (interface{}, error) {
 	return struct{}{}, nil

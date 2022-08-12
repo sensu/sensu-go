@@ -8,6 +8,7 @@ import (
 
 	dto "github.com/prometheus/client_model/go"
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
+	corev3 "github.com/sensu/sensu-go/api/core/v3"
 	"github.com/sensu/sensu-go/backend/apid/graphql/schema"
 	"github.com/sensu/sensu-go/graphql"
 	"github.com/stretchr/testify/assert"
@@ -227,6 +228,52 @@ func Test_queryImpl_Metrics(t *testing.T) {
 			}
 			if !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("queryImpl.Metrics() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func Test_queryImpl_Responder(t *testing.T) {
+	tests := []struct {
+		name       string
+		gatherResp corev3.Resource
+		gatherErr  error
+		params     graphql.ResolveParams
+		want       interface{}
+		wantErr    bool
+	}{
+		{
+			name:       "returns backend entity",
+			gatherResp: corev3.FixtureEntityConfig("backend"),
+			gatherErr:  nil,
+			want:       corev3.FixtureEntityConfig("backend"),
+			wantErr:    false,
+		},
+		{
+			name:       "returns an error",
+			gatherResp: corev3.FixtureEntityConfig("backend"),
+			gatherErr:  errors.New("Error"),
+			want:       corev3.FixtureEntityConfig("backend"),
+			wantErr:    true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mock := func() (interface{ GetMetadata() *corev2.ObjectMeta }, error) {
+				return tt.gatherResp, tt.gatherErr
+			}
+			r := &queryImpl{
+				svc: ServiceConfig{
+					GetBackendEntity: mock,
+				},
+			}
+			got, err := r.Responder(tt.params)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("queryImpl.Responder() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("queryImpl.Responder() = %v, want %v", got, tt.want)
 			}
 		})
 	}
