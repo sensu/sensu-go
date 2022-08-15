@@ -90,10 +90,10 @@ func TestCreateAccessToken(t *testing.T) {
 			authn := NewAuthenticationClient(test.Authenticator(store))
 			tokens, err := authn.CreateAccessToken(test.Context(), test.Username, test.Password)
 			if test.WantError && err == nil {
-				t.Fatal("want error, got nil")
 				if test.Error != nil && test.Error != err {
-					t.Fatalf("bad error: got %v, want %v", err, test.Error)
+					t.Errorf("bad error: got %v, want %v", err, test.Error)
 				}
+				t.Fatal("want error, got nil")
 			}
 			if !test.WantError && err != nil {
 				t.Fatal(err)

@@ -2,6 +2,8 @@ module github.com/sensu/sensu-go
 
 go 1.18
 
+replace github.com/graphql-go/graphql => github.com/jamesdphillips/graphql-go v0.8.2
+
 require (
 	github.com/AlecAivazis/survey/v2 v2.2.14
 	github.com/atlassian/gostatsd v0.0.0-20180514010436-af796620006e
@@ -24,7 +26,7 @@ require (
 	github.com/gorilla/mux v1.8.0
 	github.com/gorilla/websocket v1.4.2
 	github.com/graph-gophers/dataloader v0.0.0-20180104184831-78139374585c
-	github.com/graphql-go/graphql v0.7.10-0.20200426202700-116f19d099aa
+	github.com/graphql-go/graphql v0.8.0
 	github.com/hashicorp/go-version v1.2.0
 	github.com/influxdata/line-protocol v0.0.0-20210311194329-9aa0e372d097
 	github.com/jackc/pgconn v1.12.1
