@@ -156,7 +156,7 @@ func AuthenticationSubrouter(router *mux.Router, cfg Config) *mux.Router {
 	)
 
 	mountRouters(subrouter,
-		routers.NewAuthenticationRouter(cfg.Authenticator),
+		routers.NewAuthenticationRouter(api.NewAuthenticationClient(cfg.Authenticator)),
 	)
 
 	return subrouter

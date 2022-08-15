@@ -262,7 +262,7 @@ func InitializeStore(ctx context.Context, client *clientv3.Client, db *pgxpool.P
 	authenticator := &authentication.Authenticator{}
 	provider := &basic.Provider{
 		ObjectMeta: corev2.ObjectMeta{Name: basic.Type},
-		Store:      b.Store,
+		Store:      b.StoreV2,
 	}
 	authenticator.AddProvider(provider)
 

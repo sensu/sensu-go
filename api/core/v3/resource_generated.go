@@ -491,3 +491,115 @@ func (r *ResourceTemplate) GetTypeMeta() corev2.TypeMeta {
 		Type:       "ResourceTemplate",
 	}
 }
+
+// SetMetadata sets the provided metadata on the type. If the type does not
+// have any metadata, nothing will happen.
+func (s *SymmetricKey) SetMetadata(meta *corev2.ObjectMeta) {
+	// The function has to use reflection, since not all of the generated types
+	// will have metadata.
+	value := reflect.Indirect(reflect.ValueOf(s))
+	field := value.FieldByName("Metadata")
+	if !field.CanSet() {
+		return
+	}
+	field.Set(reflect.ValueOf(meta))
+}
+
+// StoreName returns the store name for SymmetricKey. It will be
+// overridden if there is a method for SymmetricKey called "storeName".
+func (s *SymmetricKey) StoreName() string {
+	var iface interface{} = s
+	if prefixer, ok := iface.(storeNamer); ok {
+		return prefixer.storeName()
+	}
+	return "symmetric_keys"
+}
+
+// RBACName returns the RBAC name for SymmetricKey. It will be overridden if
+// there is a method for SymmetricKey called "rbacName".
+func (s *SymmetricKey) RBACName() string {
+	var iface interface{} = s
+	if namer, ok := iface.(rbacNamer); ok {
+		return namer.rbacName()
+	}
+	return "symmetric_keys"
+}
+
+// URIPath returns the URI path for SymmetricKey. It will be overridden if
+// there is a method for SymmetricKey called uriPath.
+func (s *SymmetricKey) URIPath() string {
+	var iface interface{} = s
+	if pather, ok := iface.(uriPather); ok {
+		return pather.uriPath()
+	}
+	metaer, ok := iface.(getMetadataer)
+	if !ok {
+		return ""
+	}
+	meta := metaer.GetMetadata()
+	if meta == nil {
+		return uriPath("symmetric-keys", "", "")
+	}
+	return uriPath("symmetric-keys", meta.Namespace, meta.Name)
+}
+
+// Validate validates the SymmetricKey. If the SymmetricKey has metadata,
+// it will be validated via ValidateMetadata. If there is a method for
+// SymmetricKey called validate, then it will be used to cooperatively
+// validate the SymmetricKey.
+func (s *SymmetricKey) Validate() error {
+	if s == nil {
+		return errors.New("nil SymmetricKey")
+	}
+	var iface interface{} = s
+	if resource, ok := iface.(Resource); ok {
+		meta := resource.GetMetadata()
+		if err := ValidateMetadata(meta); err != nil {
+			return fmt.Errorf("invalid SymmetricKey: %s", err)
+		}
+		if gr, ok := iface.(GlobalResource); ok && gr.IsGlobalResource() {
+			if err := ValidateGlobalMetadata(meta); err != nil {
+				return fmt.Errorf("invalid SymmetricKey: %s", err)
+			}
+		}
+	}
+	if validator, ok := iface.(validator); ok {
+		if err := validator.validate(); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// UnmarshalJSON is provided in order to ensure that metadata labels and
+// annotations are never nil.
+func (s *SymmetricKey) UnmarshalJSON(msg []byte) error {
+	type Clone SymmetricKey
+	var clone Clone
+	if err := json.Unmarshal(msg, &clone); err != nil {
+		return err
+	}
+	*s = *(*SymmetricKey)(&clone)
+	var iface interface{} = s
+	var meta *corev2.ObjectMeta
+	if metaer, ok := iface.(getMetadataer); ok {
+		meta = metaer.GetMetadata()
+	}
+	if meta != nil {
+		if meta.Labels == nil {
+			meta.Labels = make(map[string]string)
+		}
+		if meta.Annotations == nil {
+			meta.Annotations = make(map[string]string)
+		}
+	}
+	return nil
+}
+
+// GetTypeMeta gets the type metadata for a SymmetricKey.
+func (s *SymmetricKey) GetTypeMeta() corev2.TypeMeta {
+	return corev2.TypeMeta{
+		APIVersion: "core/v3",
+		Type:       "SymmetricKey",
+	}
+}
