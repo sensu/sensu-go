@@ -51,10 +51,11 @@ type Config struct {
 	CacheDir string
 
 	// Agentd Configuration
-	AgentHost         string
-	AgentPort         int
-	AgentTLSOptions   *corev2.TLSOptions
-	AgentWriteTimeout int
+	AgentHost          string
+	AgentPort          int
+	AgentTLSOptions    *corev2.TLSOptions
+	AgentWriteTimeout  int
+	AgentServeWaitTime time.Duration
 
 	// Apid Configuration
 	APIListenAddress string

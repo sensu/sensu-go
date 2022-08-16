@@ -102,6 +102,8 @@ type Agentd struct {
 	client              *clientv3.Client
 	etcdClientTLSConfig *tls.Config
 	healthRouter        *routers.HealthRouter
+	serveWaitTime       time.Duration
+	ready               func()
 }
 
 // Config configures an Agentd.
@@ -113,6 +115,7 @@ type Config struct {
 	TLS                 *corev2.TLSOptions
 	RingPool            *ringv2.RingPool
 	WriteTimeout        int
+	ServeWaitTime       time.Duration
 	Client              *clientv3.Client
 	EtcdClientTLSConfig *tls.Config
 	Watcher             <-chan store.WatchEventEntityConfig
@@ -142,6 +145,7 @@ func New(c Config, opts ...Option) (*Agentd, error) {
 		watcher:             c.Watcher,
 		client:              c.Client,
 		etcdClientTLSConfig: c.EtcdClientTLSConfig,
+		serveWaitTime:       c.ServeWaitTime,
 	}
 
 	// prepare server TLS config
@@ -149,6 +153,11 @@ func New(c Config, opts ...Option) (*Agentd, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	awaitStart := &middlewares.AwaitStartupMiddleware{
+		ResponseText: "agentd temporarily unavailable during startup",
+	}
+	a.ready = awaitStart.Ready
 
 	// Configure the middlewares used by agentd's HTTP server by assigning them to
 	// public variables so they can be overriden from the enterprise codebase
@@ -170,7 +179,11 @@ func New(c Config, opts ...Option) (*Agentd, error) {
 
 	route := router.NewRoute().Subrouter()
 	route.HandleFunc("/", a.webSocketHandler)
-	route.Use(agentLimit, authenticate, authorize)
+	route.Use(awaitStart.Then, agentLimit, authenticate, authorize)
+
+	readySubRouter := router.NewRoute().Subrouter()
+	new(routers.ReadyRouter).Mount(readySubRouter)
+	readySubRouter.Use(awaitStart.Then)
 
 	a.httpServer = &http.Server{
 		Addr:         fmt.Sprintf("%s:%d", a.Host, a.Port),
@@ -209,6 +222,23 @@ func (a *Agentd) Start() error {
 	ln, err := net.Listen("tcp", a.httpServer.Addr)
 	if err != nil {
 		return fmt.Errorf("failed to start agentd: %s", err)
+	}
+
+	if a.serveWaitTime > 0 {
+		logger.Warnf("agentd waiting %s before accepting traffic", a.serveWaitTime)
+		timer := time.After(a.serveWaitTime)
+		go func() {
+			// wait for wait listen time to expire or stop signal
+			select {
+			case <-a.ctx.Done():
+				return
+			case <-timer:
+				a.ready()
+				logger.Warn("agentd now ready to accept traffic")
+			}
+		}()
+	} else {
+		a.ready()
 	}
 
 	a.wg.Add(1)
