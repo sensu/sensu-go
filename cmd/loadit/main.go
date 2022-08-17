@@ -36,6 +36,7 @@ var (
 	flagPassword          = flag.String("password", agent.DefaultPassword, "password to authenticate with server")
 	flagBaseEntityName    = flag.String("base-entity-name", "test-host", "base entity name to prepend with count number")
 	flagMaxSessionLength  = flag.Duration("max-session-length", 0*time.Second, "maximum amount of time after which the agent will reconnect to one of the configured backends (no maximum by default)")
+	flagDeregister        = flag.Bool("deregister", true, "should loadit entities automatically deregister. defaults true")
 )
 
 func main() {
@@ -71,7 +72,7 @@ func main() {
 		cfg.API.Port = agent.DefaultAPIPort
 		cfg.CacheDir = os.DevNull
 		cfg.DisableAssets = true
-		cfg.Deregister = true
+		cfg.Deregister = bool(*flagDeregister)
 		cfg.DeregistrationHandler = ""
 		cfg.DisableAPI = true
 		cfg.DisableSockets = true
