@@ -135,6 +135,16 @@ type Process {
 }
 
 """
+BackendEntity contains information about a particular backend.
+"""
+type BackendEntity {
+  meta: ObjectMeta
+  # TODO: implement these
+  # config: CoreV3EntityConfig
+  # state: CoreV3EntityState
+}
+
+"""
 Network contains information about the system network interfaces
 that the Agent process is running on, used for additional Entity
 context.

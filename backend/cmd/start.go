@@ -46,6 +46,7 @@ const (
 	flagConfigFile            = "config-file"
 	flagAgentHost             = "agent-host"
 	flagAgentPort             = "agent-port"
+	flagAgentServeWaitTime    = "agent-serve-wait-time"
 	flagAPIListenAddress      = "api-listen-address"
 	flagAPIRequestLimit       = "api-request-limit"
 	flagAPIURL                = "api-url"
@@ -224,6 +225,7 @@ func StartCommand(initialize InitializeFunc) *cobra.Command {
 				AgentHost:             viper.GetString(flagAgentHost),
 				AgentPort:             viper.GetInt(flagAgentPort),
 				AgentWriteTimeout:     viper.GetInt(backend.FlagAgentWriteTimeout),
+				AgentServeWaitTime:    viper.GetDuration(flagAgentServeWaitTime),
 				APIListenAddress:      viper.GetString(flagAPIListenAddress),
 				APIRequestLimit:       viper.GetInt64(flagAPIRequestLimit),
 				APIURL:                viper.GetString(flagAPIURL),
@@ -526,6 +528,7 @@ func flagSet(server bool) *pflag.FlagSet {
 		// Main Flags
 		flagSet.String(flagAgentHost, viper.GetString(flagAgentHost), "agent listener host")
 		flagSet.Int(flagAgentPort, viper.GetInt(flagAgentPort), "agent listener port")
+		flagSet.Duration(flagAgentServeWaitTime, viper.GetDuration(flagAgentServeWaitTime), "wait time before accepting agent connections on startup")
 		flagSet.String(flagAPIListenAddress, viper.GetString(flagAPIListenAddress), "address to listen on for api traffic")
 		flagSet.Int64(flagAPIRequestLimit, viper.GetInt64(flagAPIRequestLimit), "maximum API request body size, in bytes")
 		flagSet.String(flagAPIURL, viper.GetString(flagAPIURL), "url of the api to connect to")

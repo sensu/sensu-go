@@ -3,6 +3,7 @@ package graphql
 import (
 	"context"
 
+	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/apid/graphql/relay"
 	"github.com/sensu/sensu-go/backend/apid/graphql/schema"
 	"github.com/sensu/sensu-go/cli/client"
@@ -28,6 +29,7 @@ type ServiceConfig struct {
 	EntityClient       EntityClient
 	EventClient        EventClient
 	EventFilterClient  EventFilterClient
+	GetBackendEntity   func() (interface{ GetMetadata() *corev2.ObjectMeta }, error)
 	HandlerClient      HandlerClient
 	HealthController   EtcdHealthController
 	MutatorClient      MutatorClient
@@ -66,6 +68,7 @@ func NewService(cfg ServiceConfig) (*Service, error) {
 
 	// Register types
 	schema.RegisterAsset(svc, &assetImpl{})
+	schema.RegisterBackendEntity(svc, &backendEntityImpl{})
 	schema.RegisterCoreV2AssetBuild(svc, &schema.CoreV2AssetBuildAliases{})
 	schema.RegisterCoreV2Deregistration(svc, &schema.CoreV2DeregistrationAliases{})
 	schema.RegisterCoreV2Network(svc, &schema.CoreV2NetworkAliases{})

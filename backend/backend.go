@@ -582,6 +582,9 @@ func Initialize(ctx context.Context, config *Config) (*Backend, error) {
 		EntityClient:      api.NewEntityClient(b.Store, b.StoreV2, b.Store, auth),
 		EventClient:       api.NewEventClient(b.Store, auth, bus),
 		EventFilterClient: api.NewEventFilterClient(b.Store, auth),
+		GetBackendEntity: func() (interface{ GetMetadata() *corev2.ObjectMeta }, error) {
+			return &CoreV3MetaAdapter{In: b.getBackendEntity(config)}, nil
+		},
 		HandlerClient:     api.NewHandlerClient(b.Store, auth),
 		HealthController:  actions.NewHealthController(b.Store, b.Client.Cluster, etcdClientTLSConfig),
 		MutatorClient:     api.NewMutatorClient(b.Store, auth),
@@ -648,6 +651,7 @@ func Initialize(ctx context.Context, config *Config) (*Backend, error) {
 		TLS:                 config.AgentTLSOptions,
 		RingPool:            b.RingPool,
 		WriteTimeout:        config.AgentWriteTimeout,
+		ServeWaitTime:       config.AgentServeWaitTime,
 		Client:              b.Client,
 		Watcher:             entityConfigWatcher,
 		EtcdClientTLSConfig: b.EtcdClientTLSConfig,
@@ -967,4 +971,15 @@ func getSystemInfo() corev2.System {
 		logger.WithError(err).Error("error getting system info")
 	}
 	return info
+}
+
+// CoreV3MetaAdapter adapts corev2 meta to corev3
+type CoreV3MetaAdapter struct {
+	In corev2.Resource
+}
+
+// GetMetadata implements the corev3 resource metadata field
+func (a *CoreV3MetaAdapter) GetMetadata() *corev2.ObjectMeta {
+	v := a.In.GetObjectMeta()
+	return &v
 }
