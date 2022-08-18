@@ -148,9 +148,9 @@ func (r *checkImpl) LastOK(p graphql.ResolveParams) (*time.Time, error) {
 }
 
 // Issued implements response to request for 'issued' field.
-func (r *checkImpl) Issued(p graphql.ResolveParams) (time.Time, error) {
+func (r *checkImpl) Issued(p graphql.ResolveParams) (*time.Time, error) {
 	c := p.Source.(*corev2.Check)
-	return time.Unix(c.Issued, 0), nil
+	return convertTs(c.Issued), nil
 }
 
 // History implements response to request for 'history' field.

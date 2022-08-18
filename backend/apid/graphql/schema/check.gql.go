@@ -985,7 +985,7 @@ type CheckFieldResolvers interface {
 	History(p CheckHistoryFieldResolverParams) (interface{}, error)
 
 	// Issued implements response to request for 'issued' field.
-	Issued(p graphql.ResolveParams) (time.Time, error)
+	Issued(p graphql.ResolveParams) (*time.Time, error)
 
 	// Output implements response to request for 'output' field.
 	Output(p CheckOutputFieldResolverParams) (string, error)
@@ -1293,9 +1293,9 @@ func (_ CheckAliases) History(p CheckHistoryFieldResolverParams) (interface{}, e
 }
 
 // Issued implements response to request for 'issued' field.
-func (_ CheckAliases) Issued(p graphql.ResolveParams) (time.Time, error) {
+func (_ CheckAliases) Issued(p graphql.ResolveParams) (*time.Time, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret, ok := val.(time.Time)
+	ret, ok := val.(*time.Time)
 	if err != nil {
 		return ret, err
 	}
@@ -1693,7 +1693,7 @@ func _ObjTypeCheckHistoryHandler(impl interface{}) graphql1.FieldResolveFn {
 
 func _ObjTypeCheckIssuedHandler(impl interface{}) graphql1.FieldResolveFn {
 	resolver := impl.(interface {
-		Issued(p graphql.ResolveParams) (time.Time, error)
+		Issued(p graphql.ResolveParams) (*time.Time, error)
 	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.Issued(frp)
@@ -1929,7 +1929,7 @@ func _ObjectTypeCheckConfigFn() graphql1.ObjectConfig {
 				DeprecationReason: "",
 				Description:       "Issued describes the time in which the check request was issued",
 				Name:              "issued",
-				Type:              graphql1.NewNonNull(graphql1.DateTime),
+				Type:              graphql1.DateTime,
 			},
 			"lastOK": &graphql1.Field{
 				Args:              graphql1.FieldConfigArgument{},

@@ -202,7 +202,7 @@ type Check implements Silenceable & Resource {
   history(first: Int = 21): [CheckHistory]!
 
   "Issued describes the time in which the check request was issued"
-  issued: DateTime!
+  issued: DateTime
 
   "Output from the execution of Command"
   output(first: Int, last: Int): String!
