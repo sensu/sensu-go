@@ -389,6 +389,20 @@ func TestTimeWindowRepeated_InDayTimeRange(t *testing.T) {
 			"2022-03-15T10:00:00-04:00", // tuesday
 			time.Tuesday,
 			false,
+		}, {
+			"beginning of day",
+			"2022-03-22T00:00:00+00:00",
+			"2022-03-22T23:59:59+00:00",
+			"2022-03-22T00:00:00+00:00",
+			time.Tuesday,
+			true,
+		}, {
+			"very end of day",
+			"2022-03-22T09:00:00+00:00",
+			"2022-03-22T23:59:59+00:00",
+			"2022-03-22T23:59:59+00:00",
+			time.Tuesday,
+			true,
 		},
 	}
 
