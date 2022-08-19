@@ -285,6 +285,12 @@ func (a *AdapterV1) generateLegacyPipeline(ctx context.Context, event *corev2.Ev
 		return nil, err
 	}
 
+	if len(handlers) < 1 {
+		return nil, &errNoLegacyHandlers{
+			Msg: fmt.Sprintf("none of %s exist", legacyHandlerNames),
+		}
+	}
+
 	pipeline := &corev2.Pipeline{
 		ObjectMeta: corev2.ObjectMeta{
 			Name:      LegacyPipelineName,

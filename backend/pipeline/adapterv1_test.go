@@ -535,16 +535,61 @@ func TestAdapterV1_resolvePipelineReference(t *testing.T) {
 				},
 				event: func() *corev2.Event {
 					event := corev2.FixtureEvent("entity1", "check1")
+					event.Check.Handlers = []string{"myhandler"}
 					return event
+				}(),
+			},
+			fields: fields{
+				Store: func() store.Store {
+					handler := &corev2.Handler{
+						ObjectMeta: corev2.NewObjectMeta("myhandler", "default"),
+					}
+					stor := &mockstore.MockStore{}
+					stor.On("GetHandlerByName", mock.Anything, handler.GetName()).
+						Return(handler, nil)
+					return stor
 				}(),
 			},
 			want: func() *corev2.Pipeline {
 				pipeline := &corev2.Pipeline{
 					ObjectMeta: corev2.NewObjectMeta("legacy-pipeline", "default"),
-					Workflows:  []*corev2.PipelineWorkflow{},
+					Workflows: []*corev2.PipelineWorkflow{
+						{
+							Name: "legacy-pipeline-workflow-myhandler",
+							Handler: &corev2.ResourceReference{
+								Type:       "Handler",
+								APIVersion: "core/v2",
+								Name:       "myhandler",
+							},
+						},
+					},
 				}
 				return pipeline
 			}(),
+		},
+		{
+			name: "returns error when ref name is legacy-pipeline but no handlers exist",
+			args: args{
+				ctx: context.WithValue(context.Background(), corev2.NamespaceKey, "default"),
+				ref: &corev2.ResourceReference{
+					Name: "legacy-pipeline",
+				},
+				event: func() *corev2.Event {
+					event := corev2.FixtureEvent("entity1", "check1")
+					event.Check.Handlers = []string{"myhandler"}
+					return event
+				}(),
+			},
+			fields: fields{
+				Store: func() store.Store {
+					var missingHandler *corev2.Handler
+					stor := &mockstore.MockStore{}
+					stor.On("GetHandlerByName", mock.Anything, mock.Anything).
+						Return(missingHandler, nil)
+					return stor
+				}(),
+			},
+			wantErr: true,
 		},
 		{
 			name: "returns a stored pipeline if the ref name is not legacy-pipeline",

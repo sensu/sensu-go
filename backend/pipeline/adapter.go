@@ -2,6 +2,7 @@ package pipeline
 
 import (
 	"context"
+	"fmt"
 
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 )
@@ -14,9 +15,28 @@ type Adapter interface {
 	Run(context.Context, *corev2.ResourceReference, interface{}) error
 }
 
+// ErrMisconfiguredPipeline interface implemented by errors that indicate
+// a misconfigured pipeline that cannot be executed.
+type ErrMisconfiguredPipeline interface {
+	MisconfiguredPipeline()
+}
+
 // ErrNoWorkflows is returned when a pipeline has no workflows
 type ErrNoWorkflows struct{}
 
 func (e *ErrNoWorkflows) Error() string {
 	return "pipeline has no workflows"
 }
+
+func (e *ErrNoWorkflows) MisconfiguredPipeline() {}
+
+// ErrNoLegacyHandlers is returned when no legacy handlers exist
+type errNoLegacyHandlers struct {
+	Msg string
+}
+
+func (e *errNoLegacyHandlers) Error() string {
+	return fmt.Sprintf("legacy pipeline found no existing handlers: %s", e.Msg)
+}
+
+func (e *errNoLegacyHandlers) MisconfiguredPipeline() {}
