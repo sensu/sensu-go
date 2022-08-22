@@ -186,20 +186,4 @@ func TestResourceUniqueness(t *testing.T) {
 	if got, want := len(types), len(typeMap)/2; got != want {
 		t.Fatalf("bad number of types: got %d, want %d", got, want)
 	}
-	rbacNames := make(map[string]bool)
-	for _, v := range types {
-		if name := v.RBACName(); rbacNames[name] {
-			t.Errorf("duplicate rbac name: %s", name)
-		} else {
-			rbacNames[name] = true
-		}
-	}
-	storeNames := make(map[string]bool)
-	for _, v := range types {
-		if name := v.StoreName(); storeNames[name] {
-			t.Errorf("duplicate store suffix: %s", name)
-		} else {
-			storeNames[name] = true
-		}
-	}
 }

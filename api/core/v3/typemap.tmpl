@@ -15,10 +15,8 @@ func init() {
 	for _, v := range typeMap {
 		if r, ok := v.(Resource); ok {
 			rbacMap[r.RBACName()] = r
+			storeMap[r.StoreName()] = r
 		}
-	}
-	for _, v := range rbacMap {
-		storeMap[v.StoreName()] = v
 	}
 	types.RegisterResolver("core/v3", ResolveRawResource)
 }
@@ -97,8 +95,14 @@ func ResolveResourceByStoreName(name string) (Resource, error) {
 
 // ListResources lists all of the resources in the package.
 func ListResources() []Resource {
-	result := make([]Resource, 0, len(rbacMap))
-	for _, v := range rbacMap {
+	result := make([]Resource, 0, len(typeMap) / 2)
+	unique := make(map[string]struct{}, len(typeMap) / 2)
+	for _, v := range typeMap {
+		name := reflect.ValueOf(v).Elem().Type().Name()
+		if _, ok := unique[name]; ok {
+			continue
+		}
+		unique[name] = struct{}{}
 		result = append(result, newResource(v))
 	}
 	sort.Slice(result, func(i, j int) bool {

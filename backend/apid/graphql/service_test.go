@@ -23,6 +23,14 @@ func TestNewService(t *testing.T) {
 	assert.NotEmpty(t, svc)
 }
 
+// a smoke test to ensure that the service generation is idempotent
+func TestServiceRegenerate(t *testing.T) {
+	svc, err := NewService(ServiceConfig{})
+	require.NoError(t, err)
+	err = svc.Target.Regenerate()
+	assert.NoError(t, err)
+}
+
 func TestInitHooks(t *testing.T) {
 	flag := false
 	rollback := addHook(func(svc *graphql.Service, cfg ServiceConfig) {
