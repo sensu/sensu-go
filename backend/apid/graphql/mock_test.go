@@ -134,6 +134,9 @@ func (c *MockEntityClient) UpdateEntity(ctx context.Context, entity *corev2.Enti
 
 func (c *MockEntityClient) FetchEntity(ctx context.Context, name string) (*corev2.Entity, error) {
 	args := c.Called(ctx, name)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
 	return args.Get(0).(*corev2.Entity), args.Error(1)
 }
 

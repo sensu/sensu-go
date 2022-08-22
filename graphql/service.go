@@ -343,9 +343,24 @@ func mergeObjectConfig(a, b *graphql.ObjectConfig) {
 	af := a.Fields.(graphql.Fields)
 	bf := b.Fields.(graphql.Fields)
 	for n, f := range bf {
-		af[n] = f
+		copy := *f
+		af[n] = &copy
 	}
-	ai := a.Interfaces.([]*graphql.Interface)
-	bi := b.Interfaces.([]*graphql.Interface)
-	a.Interfaces = append(ai, bi...)
+	// merge any missing interfaces
+	ias := a.Interfaces.([]*graphql.Interface)
+	ibs := b.Interfaces.([]*graphql.Interface)
+	for _, ib := range ibs {
+		var ok bool
+		for _, ia := range ias {
+			if ia.PrivateName != ib.PrivateName {
+				continue
+			}
+			ok = true
+			break
+		}
+		if !ok {
+			ias = append(ias, Interface(ib.PrivateName))
+		}
+	}
+	a.Interfaces = ias
 }

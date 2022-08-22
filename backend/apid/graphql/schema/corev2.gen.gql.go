@@ -180,6 +180,511 @@ var _ObjectTypeCoreV2AssetBuildDesc = graphql.ObjectDesc{
 }
 
 //
+// CoreV2ClusterRoleFieldResolvers represents a collection of methods whose products represent the
+// response values of the 'CoreV2ClusterRole' type.
+type CoreV2ClusterRoleFieldResolvers interface {
+	// Rules implements response to request for 'rules' field.
+	Rules(p graphql.ResolveParams) (interface{}, error)
+
+	// Metadata implements response to request for 'metadata' field.
+	Metadata(p graphql.ResolveParams) (interface{}, error)
+}
+
+// CoreV2ClusterRoleAliases implements all methods on CoreV2ClusterRoleFieldResolvers interface by using reflection to
+// match name of field to a field on the given value. Intent is reduce friction
+// of writing new resolvers by removing all the instances where you would simply
+// have the resolvers method return a field.
+type CoreV2ClusterRoleAliases struct{}
+
+// Rules implements response to request for 'rules' field.
+func (_ CoreV2ClusterRoleAliases) Rules(p graphql.ResolveParams) (interface{}, error) {
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	return val, err
+}
+
+// Metadata implements response to request for 'metadata' field.
+func (_ CoreV2ClusterRoleAliases) Metadata(p graphql.ResolveParams) (interface{}, error) {
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	return val, err
+}
+
+// CoreV2ClusterRoleType ClusterRole applies to all namespaces within a cluster.
+var CoreV2ClusterRoleType = graphql.NewType("CoreV2ClusterRole", graphql.ObjectKind)
+
+// RegisterCoreV2ClusterRole registers CoreV2ClusterRole object type with given service.
+func RegisterCoreV2ClusterRole(svc *graphql.Service, impl CoreV2ClusterRoleFieldResolvers) {
+	svc.RegisterObject(_ObjectTypeCoreV2ClusterRoleDesc, impl)
+}
+func _ObjTypeCoreV2ClusterRoleRulesHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(interface {
+		Rules(p graphql.ResolveParams) (interface{}, error)
+	})
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Rules(frp)
+	}
+}
+
+func _ObjTypeCoreV2ClusterRoleMetadataHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(interface {
+		Metadata(p graphql.ResolveParams) (interface{}, error)
+	})
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Metadata(frp)
+	}
+}
+
+func _ObjectTypeCoreV2ClusterRoleConfigFn() graphql1.ObjectConfig {
+	return graphql1.ObjectConfig{
+		Description: "ClusterRole applies to all namespaces within a cluster.",
+		Fields: graphql1.Fields{
+			"metadata": &graphql1.Field{
+				Args:              graphql1.FieldConfigArgument{},
+				DeprecationReason: "",
+				Description:       "Metadata contains name, namespace, labels and annotations",
+				Name:              "metadata",
+				Type:              graphql1.NewNonNull(graphql.OutputType("ObjectMeta")),
+			},
+			"rules": &graphql1.Field{
+				Args:              graphql1.FieldConfigArgument{},
+				DeprecationReason: "",
+				Description:       "self descriptive",
+				Name:              "rules",
+				Type:              graphql1.NewNonNull(graphql1.NewList(graphql1.NewNonNull(graphql.OutputType("CoreV2Rule")))),
+			},
+		},
+		Interfaces: []*graphql1.Interface{},
+		IsTypeOf: func(_ graphql1.IsTypeOfParams) bool {
+			// NOTE:
+			// Panic by default. Intent is that when Service is invoked, values of
+			// these fields are updated with instantiated resolvers. If these
+			// defaults are called it is most certainly programmer err.
+			// If you're see this comment then: 'Whoops! Sorry, my bad.'
+			panic("Unimplemented; see CoreV2ClusterRoleFieldResolvers.")
+		},
+		Name: "CoreV2ClusterRole",
+	}
+}
+
+// describe CoreV2ClusterRole's configuration; kept private to avoid unintentional tampering of configuration at runtime.
+var _ObjectTypeCoreV2ClusterRoleDesc = graphql.ObjectDesc{
+	Config: _ObjectTypeCoreV2ClusterRoleConfigFn,
+	FieldHandlers: map[string]graphql.FieldHandler{
+		"metadata": _ObjTypeCoreV2ClusterRoleMetadataHandler,
+		"rules":    _ObjTypeCoreV2ClusterRoleRulesHandler,
+	},
+}
+
+//
+// CoreV2ClusterRoleBindingFieldResolvers represents a collection of methods whose products represent the
+// response values of the 'CoreV2ClusterRoleBinding' type.
+type CoreV2ClusterRoleBindingFieldResolvers interface {
+	// Subjects implements response to request for 'subjects' field.
+	Subjects(p graphql.ResolveParams) (interface{}, error)
+
+	// Role_ref implements response to request for 'role_ref' field.
+	Role_ref(p graphql.ResolveParams) (interface{}, error)
+
+	// Metadata implements response to request for 'metadata' field.
+	Metadata(p graphql.ResolveParams) (interface{}, error)
+}
+
+// CoreV2ClusterRoleBindingAliases implements all methods on CoreV2ClusterRoleBindingFieldResolvers interface by using reflection to
+// match name of field to a field on the given value. Intent is reduce friction
+// of writing new resolvers by removing all the instances where you would simply
+// have the resolvers method return a field.
+type CoreV2ClusterRoleBindingAliases struct{}
+
+// Subjects implements response to request for 'subjects' field.
+func (_ CoreV2ClusterRoleBindingAliases) Subjects(p graphql.ResolveParams) (interface{}, error) {
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	return val, err
+}
+
+// Role_ref implements response to request for 'role_ref' field.
+func (_ CoreV2ClusterRoleBindingAliases) Role_ref(p graphql.ResolveParams) (interface{}, error) {
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	return val, err
+}
+
+// Metadata implements response to request for 'metadata' field.
+func (_ CoreV2ClusterRoleBindingAliases) Metadata(p graphql.ResolveParams) (interface{}, error) {
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	return val, err
+}
+
+/*
+CoreV2ClusterRoleBindingType ClusterRoleBinding grants the permissions defined in a ClusterRole referenced
+to a user or a set of users
+*/
+var CoreV2ClusterRoleBindingType = graphql.NewType("CoreV2ClusterRoleBinding", graphql.ObjectKind)
+
+// RegisterCoreV2ClusterRoleBinding registers CoreV2ClusterRoleBinding object type with given service.
+func RegisterCoreV2ClusterRoleBinding(svc *graphql.Service, impl CoreV2ClusterRoleBindingFieldResolvers) {
+	svc.RegisterObject(_ObjectTypeCoreV2ClusterRoleBindingDesc, impl)
+}
+func _ObjTypeCoreV2ClusterRoleBindingSubjectsHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(interface {
+		Subjects(p graphql.ResolveParams) (interface{}, error)
+	})
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Subjects(frp)
+	}
+}
+
+func _ObjTypeCoreV2ClusterRoleBindingRole_refHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(interface {
+		Role_ref(p graphql.ResolveParams) (interface{}, error)
+	})
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Role_ref(frp)
+	}
+}
+
+func _ObjTypeCoreV2ClusterRoleBindingMetadataHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(interface {
+		Metadata(p graphql.ResolveParams) (interface{}, error)
+	})
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Metadata(frp)
+	}
+}
+
+func _ObjectTypeCoreV2ClusterRoleBindingConfigFn() graphql1.ObjectConfig {
+	return graphql1.ObjectConfig{
+		Description: "ClusterRoleBinding grants the permissions defined in a ClusterRole referenced\nto a user or a set of users",
+		Fields: graphql1.Fields{
+			"metadata": &graphql1.Field{
+				Args:              graphql1.FieldConfigArgument{},
+				DeprecationReason: "",
+				Description:       "Metadata contains name, namespace, labels and annotations",
+				Name:              "metadata",
+				Type:              graphql1.NewNonNull(graphql.OutputType("ObjectMeta")),
+			},
+			"role_ref": &graphql1.Field{
+				Args:              graphql1.FieldConfigArgument{},
+				DeprecationReason: "",
+				Description:       "RoleRef references a ClusterRole in the current namespace",
+				Name:              "role_ref",
+				Type:              graphql1.NewNonNull(graphql.OutputType("CoreV2RoleRef")),
+			},
+			"subjects": &graphql1.Field{
+				Args:              graphql1.FieldConfigArgument{},
+				DeprecationReason: "",
+				Description:       "Subjects holds references to the objects the ClusterRole applies to",
+				Name:              "subjects",
+				Type:              graphql1.NewNonNull(graphql1.NewList(graphql1.NewNonNull(graphql.OutputType("CoreV2Subject")))),
+			},
+		},
+		Interfaces: []*graphql1.Interface{},
+		IsTypeOf: func(_ graphql1.IsTypeOfParams) bool {
+			// NOTE:
+			// Panic by default. Intent is that when Service is invoked, values of
+			// these fields are updated with instantiated resolvers. If these
+			// defaults are called it is most certainly programmer err.
+			// If you're see this comment then: 'Whoops! Sorry, my bad.'
+			panic("Unimplemented; see CoreV2ClusterRoleBindingFieldResolvers.")
+		},
+		Name: "CoreV2ClusterRoleBinding",
+	}
+}
+
+// describe CoreV2ClusterRoleBinding's configuration; kept private to avoid unintentional tampering of configuration at runtime.
+var _ObjectTypeCoreV2ClusterRoleBindingDesc = graphql.ObjectDesc{
+	Config: _ObjectTypeCoreV2ClusterRoleBindingConfigFn,
+	FieldHandlers: map[string]graphql.FieldHandler{
+		"metadata": _ObjTypeCoreV2ClusterRoleBindingMetadataHandler,
+		"role_ref": _ObjTypeCoreV2ClusterRoleBindingRole_refHandler,
+		"subjects": _ObjTypeCoreV2ClusterRoleBindingSubjectsHandler,
+	},
+}
+
+//
+// CoreV2DeregistrationFieldResolvers represents a collection of methods whose products represent the
+// response values of the 'CoreV2Deregistration' type.
+type CoreV2DeregistrationFieldResolvers interface {
+	// Handler implements response to request for 'handler' field.
+	Handler(p graphql.ResolveParams) (string, error)
+}
+
+// CoreV2DeregistrationAliases implements all methods on CoreV2DeregistrationFieldResolvers interface by using reflection to
+// match name of field to a field on the given value. Intent is reduce friction
+// of writing new resolvers by removing all the instances where you would simply
+// have the resolvers method return a field.
+type CoreV2DeregistrationAliases struct{}
+
+// Handler implements response to request for 'handler' field.
+func (_ CoreV2DeregistrationAliases) Handler(p graphql.ResolveParams) (string, error) {
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	ret, ok := val.(string)
+	if err != nil {
+		return ret, err
+	}
+	if !ok {
+		return ret, errors.New("unable to coerce value for field 'handler'")
+	}
+	return ret, err
+}
+
+// CoreV2DeregistrationType Deregistration contains configuration for Sensu entity de-registration.
+var CoreV2DeregistrationType = graphql.NewType("CoreV2Deregistration", graphql.ObjectKind)
+
+// RegisterCoreV2Deregistration registers CoreV2Deregistration object type with given service.
+func RegisterCoreV2Deregistration(svc *graphql.Service, impl CoreV2DeregistrationFieldResolvers) {
+	svc.RegisterObject(_ObjectTypeCoreV2DeregistrationDesc, impl)
+}
+func _ObjTypeCoreV2DeregistrationHandlerHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(interface {
+		Handler(p graphql.ResolveParams) (string, error)
+	})
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Handler(frp)
+	}
+}
+
+func _ObjectTypeCoreV2DeregistrationConfigFn() graphql1.ObjectConfig {
+	return graphql1.ObjectConfig{
+		Description: "Deregistration contains configuration for Sensu entity de-registration.",
+		Fields: graphql1.Fields{"handler": &graphql1.Field{
+			Args:              graphql1.FieldConfigArgument{},
+			DeprecationReason: "",
+			Description:       "self descriptive",
+			Name:              "handler",
+			Type:              graphql1.NewNonNull(graphql1.String),
+		}},
+		Interfaces: []*graphql1.Interface{},
+		IsTypeOf: func(_ graphql1.IsTypeOfParams) bool {
+			// NOTE:
+			// Panic by default. Intent is that when Service is invoked, values of
+			// these fields are updated with instantiated resolvers. If these
+			// defaults are called it is most certainly programmer err.
+			// If you're see this comment then: 'Whoops! Sorry, my bad.'
+			panic("Unimplemented; see CoreV2DeregistrationFieldResolvers.")
+		},
+		Name: "CoreV2Deregistration",
+	}
+}
+
+// describe CoreV2Deregistration's configuration; kept private to avoid unintentional tampering of configuration at runtime.
+var _ObjectTypeCoreV2DeregistrationDesc = graphql.ObjectDesc{
+	Config:        _ObjectTypeCoreV2DeregistrationConfigFn,
+	FieldHandlers: map[string]graphql.FieldHandler{"handler": _ObjTypeCoreV2DeregistrationHandlerHandler},
+}
+
+//
+// CoreV2NetworkFieldResolvers represents a collection of methods whose products represent the
+// response values of the 'CoreV2Network' type.
+type CoreV2NetworkFieldResolvers interface {
+	// Interfaces implements response to request for 'interfaces' field.
+	Interfaces(p graphql.ResolveParams) (interface{}, error)
+}
+
+// CoreV2NetworkAliases implements all methods on CoreV2NetworkFieldResolvers interface by using reflection to
+// match name of field to a field on the given value. Intent is reduce friction
+// of writing new resolvers by removing all the instances where you would simply
+// have the resolvers method return a field.
+type CoreV2NetworkAliases struct{}
+
+// Interfaces implements response to request for 'interfaces' field.
+func (_ CoreV2NetworkAliases) Interfaces(p graphql.ResolveParams) (interface{}, error) {
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	return val, err
+}
+
+/*
+CoreV2NetworkType Network contains information about the system network interfaces
+that the Agent process is running on, used for additional Entity
+context.
+*/
+var CoreV2NetworkType = graphql.NewType("CoreV2Network", graphql.ObjectKind)
+
+// RegisterCoreV2Network registers CoreV2Network object type with given service.
+func RegisterCoreV2Network(svc *graphql.Service, impl CoreV2NetworkFieldResolvers) {
+	svc.RegisterObject(_ObjectTypeCoreV2NetworkDesc, impl)
+}
+func _ObjTypeCoreV2NetworkInterfacesHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(interface {
+		Interfaces(p graphql.ResolveParams) (interface{}, error)
+	})
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Interfaces(frp)
+	}
+}
+
+func _ObjectTypeCoreV2NetworkConfigFn() graphql1.ObjectConfig {
+	return graphql1.ObjectConfig{
+		Description: "Network contains information about the system network interfaces\nthat the Agent process is running on, used for additional Entity\ncontext.",
+		Fields: graphql1.Fields{"interfaces": &graphql1.Field{
+			Args:              graphql1.FieldConfigArgument{},
+			DeprecationReason: "",
+			Description:       "self descriptive",
+			Name:              "interfaces",
+			Type:              graphql1.NewNonNull(graphql1.NewList(graphql1.NewNonNull(graphql.OutputType("CoreV2NetworkInterface")))),
+		}},
+		Interfaces: []*graphql1.Interface{},
+		IsTypeOf: func(_ graphql1.IsTypeOfParams) bool {
+			// NOTE:
+			// Panic by default. Intent is that when Service is invoked, values of
+			// these fields are updated with instantiated resolvers. If these
+			// defaults are called it is most certainly programmer err.
+			// If you're see this comment then: 'Whoops! Sorry, my bad.'
+			panic("Unimplemented; see CoreV2NetworkFieldResolvers.")
+		},
+		Name: "CoreV2Network",
+	}
+}
+
+// describe CoreV2Network's configuration; kept private to avoid unintentional tampering of configuration at runtime.
+var _ObjectTypeCoreV2NetworkDesc = graphql.ObjectDesc{
+	Config:        _ObjectTypeCoreV2NetworkConfigFn,
+	FieldHandlers: map[string]graphql.FieldHandler{"interfaces": _ObjTypeCoreV2NetworkInterfacesHandler},
+}
+
+//
+// CoreV2NetworkInterfaceFieldResolvers represents a collection of methods whose products represent the
+// response values of the 'CoreV2NetworkInterface' type.
+type CoreV2NetworkInterfaceFieldResolvers interface {
+	// Name implements response to request for 'name' field.
+	Name(p graphql.ResolveParams) (string, error)
+
+	// Mac implements response to request for 'mac' field.
+	Mac(p graphql.ResolveParams) (string, error)
+
+	// Addresses implements response to request for 'addresses' field.
+	Addresses(p graphql.ResolveParams) ([]string, error)
+}
+
+// CoreV2NetworkInterfaceAliases implements all methods on CoreV2NetworkInterfaceFieldResolvers interface by using reflection to
+// match name of field to a field on the given value. Intent is reduce friction
+// of writing new resolvers by removing all the instances where you would simply
+// have the resolvers method return a field.
+type CoreV2NetworkInterfaceAliases struct{}
+
+// Name implements response to request for 'name' field.
+func (_ CoreV2NetworkInterfaceAliases) Name(p graphql.ResolveParams) (string, error) {
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	ret, ok := val.(string)
+	if err != nil {
+		return ret, err
+	}
+	if !ok {
+		return ret, errors.New("unable to coerce value for field 'name'")
+	}
+	return ret, err
+}
+
+// Mac implements response to request for 'mac' field.
+func (_ CoreV2NetworkInterfaceAliases) Mac(p graphql.ResolveParams) (string, error) {
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	ret, ok := val.(string)
+	if err != nil {
+		return ret, err
+	}
+	if !ok {
+		return ret, errors.New("unable to coerce value for field 'mac'")
+	}
+	return ret, err
+}
+
+// Addresses implements response to request for 'addresses' field.
+func (_ CoreV2NetworkInterfaceAliases) Addresses(p graphql.ResolveParams) ([]string, error) {
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	ret, ok := val.([]string)
+	if err != nil {
+		return ret, err
+	}
+	if !ok {
+		return ret, errors.New("unable to coerce value for field 'addresses'")
+	}
+	return ret, err
+}
+
+/*
+CoreV2NetworkInterfaceType NetworkInterface contains information about a system network
+interface.
+*/
+var CoreV2NetworkInterfaceType = graphql.NewType("CoreV2NetworkInterface", graphql.ObjectKind)
+
+// RegisterCoreV2NetworkInterface registers CoreV2NetworkInterface object type with given service.
+func RegisterCoreV2NetworkInterface(svc *graphql.Service, impl CoreV2NetworkInterfaceFieldResolvers) {
+	svc.RegisterObject(_ObjectTypeCoreV2NetworkInterfaceDesc, impl)
+}
+func _ObjTypeCoreV2NetworkInterfaceNameHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(interface {
+		Name(p graphql.ResolveParams) (string, error)
+	})
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Name(frp)
+	}
+}
+
+func _ObjTypeCoreV2NetworkInterfaceMacHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(interface {
+		Mac(p graphql.ResolveParams) (string, error)
+	})
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Mac(frp)
+	}
+}
+
+func _ObjTypeCoreV2NetworkInterfaceAddressesHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(interface {
+		Addresses(p graphql.ResolveParams) ([]string, error)
+	})
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Addresses(frp)
+	}
+}
+
+func _ObjectTypeCoreV2NetworkInterfaceConfigFn() graphql1.ObjectConfig {
+	return graphql1.ObjectConfig{
+		Description: "NetworkInterface contains information about a system network\ninterface.",
+		Fields: graphql1.Fields{
+			"addresses": &graphql1.Field{
+				Args:              graphql1.FieldConfigArgument{},
+				DeprecationReason: "",
+				Description:       "self descriptive",
+				Name:              "addresses",
+				Type:              graphql1.NewNonNull(graphql1.NewList(graphql1.NewNonNull(graphql1.String))),
+			},
+			"mac": &graphql1.Field{
+				Args:              graphql1.FieldConfigArgument{},
+				DeprecationReason: "",
+				Description:       "self descriptive",
+				Name:              "mac",
+				Type:              graphql1.NewNonNull(graphql1.String),
+			},
+			"name": &graphql1.Field{
+				Args:              graphql1.FieldConfigArgument{},
+				DeprecationReason: "",
+				Description:       "self descriptive",
+				Name:              "name",
+				Type:              graphql1.NewNonNull(graphql1.String),
+			},
+		},
+		Interfaces: []*graphql1.Interface{},
+		IsTypeOf: func(_ graphql1.IsTypeOfParams) bool {
+			// NOTE:
+			// Panic by default. Intent is that when Service is invoked, values of
+			// these fields are updated with instantiated resolvers. If these
+			// defaults are called it is most certainly programmer err.
+			// If you're see this comment then: 'Whoops! Sorry, my bad.'
+			panic("Unimplemented; see CoreV2NetworkInterfaceFieldResolvers.")
+		},
+		Name: "CoreV2NetworkInterface",
+	}
+}
+
+// describe CoreV2NetworkInterface's configuration; kept private to avoid unintentional tampering of configuration at runtime.
+var _ObjectTypeCoreV2NetworkInterfaceDesc = graphql.ObjectDesc{
+	Config: _ObjectTypeCoreV2NetworkInterfaceConfigFn,
+	FieldHandlers: map[string]graphql.FieldHandler{
+		"addresses": _ObjTypeCoreV2NetworkInterfaceAddressesHandler,
+		"mac":       _ObjTypeCoreV2NetworkInterfaceMacHandler,
+		"name":      _ObjTypeCoreV2NetworkInterfaceNameHandler,
+	},
+}
+
+//
 // CoreV2PipelineFieldResolvers represents a collection of methods whose products represent the
 // response values of the 'CoreV2Pipeline' type.
 type CoreV2PipelineFieldResolvers interface {
@@ -432,6 +937,78 @@ var _ObjectTypeCoreV2PipelineWorkflowDesc = graphql.ObjectDesc{
 }
 
 //
+// CoreV2ProcessFieldResolvers represents a collection of methods whose products represent the
+// response values of the 'CoreV2Process' type.
+type CoreV2ProcessFieldResolvers interface {
+	// Name implements response to request for 'name' field.
+	Name(p graphql.ResolveParams) (string, error)
+}
+
+// CoreV2ProcessAliases implements all methods on CoreV2ProcessFieldResolvers interface by using reflection to
+// match name of field to a field on the given value. Intent is reduce friction
+// of writing new resolvers by removing all the instances where you would simply
+// have the resolvers method return a field.
+type CoreV2ProcessAliases struct{}
+
+// Name implements response to request for 'name' field.
+func (_ CoreV2ProcessAliases) Name(p graphql.ResolveParams) (string, error) {
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	ret, ok := val.(string)
+	if err != nil {
+		return ret, err
+	}
+	if !ok {
+		return ret, errors.New("unable to coerce value for field 'name'")
+	}
+	return ret, err
+}
+
+// CoreV2ProcessType Process contains information about a local process.
+var CoreV2ProcessType = graphql.NewType("CoreV2Process", graphql.ObjectKind)
+
+// RegisterCoreV2Process registers CoreV2Process object type with given service.
+func RegisterCoreV2Process(svc *graphql.Service, impl CoreV2ProcessFieldResolvers) {
+	svc.RegisterObject(_ObjectTypeCoreV2ProcessDesc, impl)
+}
+func _ObjTypeCoreV2ProcessNameHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(interface {
+		Name(p graphql.ResolveParams) (string, error)
+	})
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Name(frp)
+	}
+}
+
+func _ObjectTypeCoreV2ProcessConfigFn() graphql1.ObjectConfig {
+	return graphql1.ObjectConfig{
+		Description: "Process contains information about a local process.",
+		Fields: graphql1.Fields{"name": &graphql1.Field{
+			Args:              graphql1.FieldConfigArgument{},
+			DeprecationReason: "",
+			Description:       "self descriptive",
+			Name:              "name",
+			Type:              graphql1.NewNonNull(graphql1.String),
+		}},
+		Interfaces: []*graphql1.Interface{},
+		IsTypeOf: func(_ graphql1.IsTypeOfParams) bool {
+			// NOTE:
+			// Panic by default. Intent is that when Service is invoked, values of
+			// these fields are updated with instantiated resolvers. If these
+			// defaults are called it is most certainly programmer err.
+			// If you're see this comment then: 'Whoops! Sorry, my bad.'
+			panic("Unimplemented; see CoreV2ProcessFieldResolvers.")
+		},
+		Name: "CoreV2Process",
+	}
+}
+
+// describe CoreV2Process's configuration; kept private to avoid unintentional tampering of configuration at runtime.
+var _ObjectTypeCoreV2ProcessDesc = graphql.ObjectDesc{
+	Config:        _ObjectTypeCoreV2ProcessConfigFn,
+	FieldHandlers: map[string]graphql.FieldHandler{"name": _ObjTypeCoreV2ProcessNameHandler},
+}
+
+//
 // CoreV2ResourceReferenceFieldResolvers represents a collection of methods whose products represent the
 // response values of the 'CoreV2ResourceReference' type.
 type CoreV2ResourceReferenceFieldResolvers interface {
@@ -574,6 +1151,476 @@ var _ObjectTypeCoreV2ResourceReferenceDesc = graphql.ObjectDesc{
 }
 
 //
+// CoreV2RoleFieldResolvers represents a collection of methods whose products represent the
+// response values of the 'CoreV2Role' type.
+type CoreV2RoleFieldResolvers interface {
+	// Rules implements response to request for 'rules' field.
+	Rules(p graphql.ResolveParams) (interface{}, error)
+
+	// Metadata implements response to request for 'metadata' field.
+	Metadata(p graphql.ResolveParams) (interface{}, error)
+}
+
+// CoreV2RoleAliases implements all methods on CoreV2RoleFieldResolvers interface by using reflection to
+// match name of field to a field on the given value. Intent is reduce friction
+// of writing new resolvers by removing all the instances where you would simply
+// have the resolvers method return a field.
+type CoreV2RoleAliases struct{}
+
+// Rules implements response to request for 'rules' field.
+func (_ CoreV2RoleAliases) Rules(p graphql.ResolveParams) (interface{}, error) {
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	return val, err
+}
+
+// Metadata implements response to request for 'metadata' field.
+func (_ CoreV2RoleAliases) Metadata(p graphql.ResolveParams) (interface{}, error) {
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	return val, err
+}
+
+// CoreV2RoleType Role applies only to a single namespace.
+var CoreV2RoleType = graphql.NewType("CoreV2Role", graphql.ObjectKind)
+
+// RegisterCoreV2Role registers CoreV2Role object type with given service.
+func RegisterCoreV2Role(svc *graphql.Service, impl CoreV2RoleFieldResolvers) {
+	svc.RegisterObject(_ObjectTypeCoreV2RoleDesc, impl)
+}
+func _ObjTypeCoreV2RoleRulesHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(interface {
+		Rules(p graphql.ResolveParams) (interface{}, error)
+	})
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Rules(frp)
+	}
+}
+
+func _ObjTypeCoreV2RoleMetadataHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(interface {
+		Metadata(p graphql.ResolveParams) (interface{}, error)
+	})
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Metadata(frp)
+	}
+}
+
+func _ObjectTypeCoreV2RoleConfigFn() graphql1.ObjectConfig {
+	return graphql1.ObjectConfig{
+		Description: "Role applies only to a single namespace.",
+		Fields: graphql1.Fields{
+			"metadata": &graphql1.Field{
+				Args:              graphql1.FieldConfigArgument{},
+				DeprecationReason: "",
+				Description:       "Metadata contains name, namespace, labels and annotations",
+				Name:              "metadata",
+				Type:              graphql1.NewNonNull(graphql.OutputType("ObjectMeta")),
+			},
+			"rules": &graphql1.Field{
+				Args:              graphql1.FieldConfigArgument{},
+				DeprecationReason: "",
+				Description:       "self descriptive",
+				Name:              "rules",
+				Type:              graphql1.NewNonNull(graphql1.NewList(graphql1.NewNonNull(graphql.OutputType("CoreV2Rule")))),
+			},
+		},
+		Interfaces: []*graphql1.Interface{},
+		IsTypeOf: func(_ graphql1.IsTypeOfParams) bool {
+			// NOTE:
+			// Panic by default. Intent is that when Service is invoked, values of
+			// these fields are updated with instantiated resolvers. If these
+			// defaults are called it is most certainly programmer err.
+			// If you're see this comment then: 'Whoops! Sorry, my bad.'
+			panic("Unimplemented; see CoreV2RoleFieldResolvers.")
+		},
+		Name: "CoreV2Role",
+	}
+}
+
+// describe CoreV2Role's configuration; kept private to avoid unintentional tampering of configuration at runtime.
+var _ObjectTypeCoreV2RoleDesc = graphql.ObjectDesc{
+	Config: _ObjectTypeCoreV2RoleConfigFn,
+	FieldHandlers: map[string]graphql.FieldHandler{
+		"metadata": _ObjTypeCoreV2RoleMetadataHandler,
+		"rules":    _ObjTypeCoreV2RoleRulesHandler,
+	},
+}
+
+//
+// CoreV2RoleBindingFieldResolvers represents a collection of methods whose products represent the
+// response values of the 'CoreV2RoleBinding' type.
+type CoreV2RoleBindingFieldResolvers interface {
+	// Subjects implements response to request for 'subjects' field.
+	Subjects(p graphql.ResolveParams) (interface{}, error)
+
+	// Role_ref implements response to request for 'role_ref' field.
+	Role_ref(p graphql.ResolveParams) (interface{}, error)
+
+	// Metadata implements response to request for 'metadata' field.
+	Metadata(p graphql.ResolveParams) (interface{}, error)
+}
+
+// CoreV2RoleBindingAliases implements all methods on CoreV2RoleBindingFieldResolvers interface by using reflection to
+// match name of field to a field on the given value. Intent is reduce friction
+// of writing new resolvers by removing all the instances where you would simply
+// have the resolvers method return a field.
+type CoreV2RoleBindingAliases struct{}
+
+// Subjects implements response to request for 'subjects' field.
+func (_ CoreV2RoleBindingAliases) Subjects(p graphql.ResolveParams) (interface{}, error) {
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	return val, err
+}
+
+// Role_ref implements response to request for 'role_ref' field.
+func (_ CoreV2RoleBindingAliases) Role_ref(p graphql.ResolveParams) (interface{}, error) {
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	return val, err
+}
+
+// Metadata implements response to request for 'metadata' field.
+func (_ CoreV2RoleBindingAliases) Metadata(p graphql.ResolveParams) (interface{}, error) {
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	return val, err
+}
+
+/*
+CoreV2RoleBindingType RoleBinding grants the permissions defined in a Role referenced to a user or
+a set of users
+*/
+var CoreV2RoleBindingType = graphql.NewType("CoreV2RoleBinding", graphql.ObjectKind)
+
+// RegisterCoreV2RoleBinding registers CoreV2RoleBinding object type with given service.
+func RegisterCoreV2RoleBinding(svc *graphql.Service, impl CoreV2RoleBindingFieldResolvers) {
+	svc.RegisterObject(_ObjectTypeCoreV2RoleBindingDesc, impl)
+}
+func _ObjTypeCoreV2RoleBindingSubjectsHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(interface {
+		Subjects(p graphql.ResolveParams) (interface{}, error)
+	})
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Subjects(frp)
+	}
+}
+
+func _ObjTypeCoreV2RoleBindingRole_refHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(interface {
+		Role_ref(p graphql.ResolveParams) (interface{}, error)
+	})
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Role_ref(frp)
+	}
+}
+
+func _ObjTypeCoreV2RoleBindingMetadataHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(interface {
+		Metadata(p graphql.ResolveParams) (interface{}, error)
+	})
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Metadata(frp)
+	}
+}
+
+func _ObjectTypeCoreV2RoleBindingConfigFn() graphql1.ObjectConfig {
+	return graphql1.ObjectConfig{
+		Description: "RoleBinding grants the permissions defined in a Role referenced to a user or\na set of users",
+		Fields: graphql1.Fields{
+			"metadata": &graphql1.Field{
+				Args:              graphql1.FieldConfigArgument{},
+				DeprecationReason: "",
+				Description:       "Metadata contains name, namespace, labels and annotations",
+				Name:              "metadata",
+				Type:              graphql1.NewNonNull(graphql.OutputType("ObjectMeta")),
+			},
+			"role_ref": &graphql1.Field{
+				Args:              graphql1.FieldConfigArgument{},
+				DeprecationReason: "",
+				Description:       "RoleRef references a Role in the current namespace",
+				Name:              "role_ref",
+				Type:              graphql1.NewNonNull(graphql.OutputType("CoreV2RoleRef")),
+			},
+			"subjects": &graphql1.Field{
+				Args:              graphql1.FieldConfigArgument{},
+				DeprecationReason: "",
+				Description:       "Subjects holds references to the objects the Role applies to",
+				Name:              "subjects",
+				Type:              graphql1.NewNonNull(graphql1.NewList(graphql1.NewNonNull(graphql.OutputType("CoreV2Subject")))),
+			},
+		},
+		Interfaces: []*graphql1.Interface{},
+		IsTypeOf: func(_ graphql1.IsTypeOfParams) bool {
+			// NOTE:
+			// Panic by default. Intent is that when Service is invoked, values of
+			// these fields are updated with instantiated resolvers. If these
+			// defaults are called it is most certainly programmer err.
+			// If you're see this comment then: 'Whoops! Sorry, my bad.'
+			panic("Unimplemented; see CoreV2RoleBindingFieldResolvers.")
+		},
+		Name: "CoreV2RoleBinding",
+	}
+}
+
+// describe CoreV2RoleBinding's configuration; kept private to avoid unintentional tampering of configuration at runtime.
+var _ObjectTypeCoreV2RoleBindingDesc = graphql.ObjectDesc{
+	Config: _ObjectTypeCoreV2RoleBindingConfigFn,
+	FieldHandlers: map[string]graphql.FieldHandler{
+		"metadata": _ObjTypeCoreV2RoleBindingMetadataHandler,
+		"role_ref": _ObjTypeCoreV2RoleBindingRole_refHandler,
+		"subjects": _ObjTypeCoreV2RoleBindingSubjectsHandler,
+	},
+}
+
+//
+// CoreV2RoleRefFieldResolvers represents a collection of methods whose products represent the
+// response values of the 'CoreV2RoleRef' type.
+type CoreV2RoleRefFieldResolvers interface {
+	// Type implements response to request for 'type' field.
+	Type(p graphql.ResolveParams) (string, error)
+
+	// Name implements response to request for 'name' field.
+	Name(p graphql.ResolveParams) (string, error)
+}
+
+// CoreV2RoleRefAliases implements all methods on CoreV2RoleRefFieldResolvers interface by using reflection to
+// match name of field to a field on the given value. Intent is reduce friction
+// of writing new resolvers by removing all the instances where you would simply
+// have the resolvers method return a field.
+type CoreV2RoleRefAliases struct{}
+
+// Type implements response to request for 'type' field.
+func (_ CoreV2RoleRefAliases) Type(p graphql.ResolveParams) (string, error) {
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	ret, ok := val.(string)
+	if err != nil {
+		return ret, err
+	}
+	if !ok {
+		return ret, errors.New("unable to coerce value for field 'type'")
+	}
+	return ret, err
+}
+
+// Name implements response to request for 'name' field.
+func (_ CoreV2RoleRefAliases) Name(p graphql.ResolveParams) (string, error) {
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	ret, ok := val.(string)
+	if err != nil {
+		return ret, err
+	}
+	if !ok {
+		return ret, errors.New("unable to coerce value for field 'name'")
+	}
+	return ret, err
+}
+
+// CoreV2RoleRefType RoleRef maps groups to Roles or ClusterRoles.
+var CoreV2RoleRefType = graphql.NewType("CoreV2RoleRef", graphql.ObjectKind)
+
+// RegisterCoreV2RoleRef registers CoreV2RoleRef object type with given service.
+func RegisterCoreV2RoleRef(svc *graphql.Service, impl CoreV2RoleRefFieldResolvers) {
+	svc.RegisterObject(_ObjectTypeCoreV2RoleRefDesc, impl)
+}
+func _ObjTypeCoreV2RoleRefTypeHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(interface {
+		Type(p graphql.ResolveParams) (string, error)
+	})
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Type(frp)
+	}
+}
+
+func _ObjTypeCoreV2RoleRefNameHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(interface {
+		Name(p graphql.ResolveParams) (string, error)
+	})
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Name(frp)
+	}
+}
+
+func _ObjectTypeCoreV2RoleRefConfigFn() graphql1.ObjectConfig {
+	return graphql1.ObjectConfig{
+		Description: "RoleRef maps groups to Roles or ClusterRoles.",
+		Fields: graphql1.Fields{
+			"name": &graphql1.Field{
+				Args:              graphql1.FieldConfigArgument{},
+				DeprecationReason: "",
+				Description:       "Name of the resource being referenced",
+				Name:              "name",
+				Type:              graphql1.NewNonNull(graphql1.String),
+			},
+			"type": &graphql1.Field{
+				Args:              graphql1.FieldConfigArgument{},
+				DeprecationReason: "",
+				Description:       "Type of role being referenced.",
+				Name:              "type",
+				Type:              graphql1.NewNonNull(graphql1.String),
+			},
+		},
+		Interfaces: []*graphql1.Interface{},
+		IsTypeOf: func(_ graphql1.IsTypeOfParams) bool {
+			// NOTE:
+			// Panic by default. Intent is that when Service is invoked, values of
+			// these fields are updated with instantiated resolvers. If these
+			// defaults are called it is most certainly programmer err.
+			// If you're see this comment then: 'Whoops! Sorry, my bad.'
+			panic("Unimplemented; see CoreV2RoleRefFieldResolvers.")
+		},
+		Name: "CoreV2RoleRef",
+	}
+}
+
+// describe CoreV2RoleRef's configuration; kept private to avoid unintentional tampering of configuration at runtime.
+var _ObjectTypeCoreV2RoleRefDesc = graphql.ObjectDesc{
+	Config: _ObjectTypeCoreV2RoleRefConfigFn,
+	FieldHandlers: map[string]graphql.FieldHandler{
+		"name": _ObjTypeCoreV2RoleRefNameHandler,
+		"type": _ObjTypeCoreV2RoleRefTypeHandler,
+	},
+}
+
+//
+// CoreV2RuleFieldResolvers represents a collection of methods whose products represent the
+// response values of the 'CoreV2Rule' type.
+type CoreV2RuleFieldResolvers interface {
+	// Verbs implements response to request for 'verbs' field.
+	Verbs(p graphql.ResolveParams) ([]string, error)
+
+	// Resources implements response to request for 'resources' field.
+	Resources(p graphql.ResolveParams) ([]string, error)
+
+	// Resource_names implements response to request for 'resource_names' field.
+	Resource_names(p graphql.ResolveParams) ([]string, error)
+}
+
+// CoreV2RuleAliases implements all methods on CoreV2RuleFieldResolvers interface by using reflection to
+// match name of field to a field on the given value. Intent is reduce friction
+// of writing new resolvers by removing all the instances where you would simply
+// have the resolvers method return a field.
+type CoreV2RuleAliases struct{}
+
+// Verbs implements response to request for 'verbs' field.
+func (_ CoreV2RuleAliases) Verbs(p graphql.ResolveParams) ([]string, error) {
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	ret, ok := val.([]string)
+	if err != nil {
+		return ret, err
+	}
+	if !ok {
+		return ret, errors.New("unable to coerce value for field 'verbs'")
+	}
+	return ret, err
+}
+
+// Resources implements response to request for 'resources' field.
+func (_ CoreV2RuleAliases) Resources(p graphql.ResolveParams) ([]string, error) {
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	ret, ok := val.([]string)
+	if err != nil {
+		return ret, err
+	}
+	if !ok {
+		return ret, errors.New("unable to coerce value for field 'resources'")
+	}
+	return ret, err
+}
+
+// Resource_names implements response to request for 'resource_names' field.
+func (_ CoreV2RuleAliases) Resource_names(p graphql.ResolveParams) ([]string, error) {
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	ret, ok := val.([]string)
+	if err != nil {
+		return ret, err
+	}
+	if !ok {
+		return ret, errors.New("unable to coerce value for field 'resource_names'")
+	}
+	return ret, err
+}
+
+// CoreV2RuleType Rule holds information that describes an action that can be taken
+var CoreV2RuleType = graphql.NewType("CoreV2Rule", graphql.ObjectKind)
+
+// RegisterCoreV2Rule registers CoreV2Rule object type with given service.
+func RegisterCoreV2Rule(svc *graphql.Service, impl CoreV2RuleFieldResolvers) {
+	svc.RegisterObject(_ObjectTypeCoreV2RuleDesc, impl)
+}
+func _ObjTypeCoreV2RuleVerbsHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(interface {
+		Verbs(p graphql.ResolveParams) ([]string, error)
+	})
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Verbs(frp)
+	}
+}
+
+func _ObjTypeCoreV2RuleResourcesHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(interface {
+		Resources(p graphql.ResolveParams) ([]string, error)
+	})
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Resources(frp)
+	}
+}
+
+func _ObjTypeCoreV2RuleResource_namesHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(interface {
+		Resource_names(p graphql.ResolveParams) ([]string, error)
+	})
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Resource_names(frp)
+	}
+}
+
+func _ObjectTypeCoreV2RuleConfigFn() graphql1.ObjectConfig {
+	return graphql1.ObjectConfig{
+		Description: "Rule holds information that describes an action that can be taken",
+		Fields: graphql1.Fields{
+			"resource_names": &graphql1.Field{
+				Args:              graphql1.FieldConfigArgument{},
+				DeprecationReason: "",
+				Description:       "ResourceNames is an optional list of resource names that the rule applies\nto.",
+				Name:              "resource_names",
+				Type:              graphql1.NewNonNull(graphql1.NewList(graphql1.NewNonNull(graphql1.String))),
+			},
+			"resources": &graphql1.Field{
+				Args:              graphql1.FieldConfigArgument{},
+				DeprecationReason: "",
+				Description:       "Resources is a list of resources that this rule applies to. \"*\"\nrepresents all resources.",
+				Name:              "resources",
+				Type:              graphql1.NewNonNull(graphql1.NewList(graphql1.NewNonNull(graphql1.String))),
+			},
+			"verbs": &graphql1.Field{
+				Args:              graphql1.FieldConfigArgument{},
+				DeprecationReason: "",
+				Description:       "Verbs is a list of verbs that apply to all of the listed resources for\nthis rule. These include \"get\", \"list\", \"watch\", \"create\", \"update\",\n\"delete\".\nTODO: add support for \"patch\" (this is expensive and should be delayed\nuntil a further release). TODO: add support for \"watch\" (via websockets)",
+				Name:              "verbs",
+				Type:              graphql1.NewNonNull(graphql1.NewList(graphql1.NewNonNull(graphql1.String))),
+			},
+		},
+		Interfaces: []*graphql1.Interface{},
+		IsTypeOf: func(_ graphql1.IsTypeOfParams) bool {
+			// NOTE:
+			// Panic by default. Intent is that when Service is invoked, values of
+			// these fields are updated with instantiated resolvers. If these
+			// defaults are called it is most certainly programmer err.
+			// If you're see this comment then: 'Whoops! Sorry, my bad.'
+			panic("Unimplemented; see CoreV2RuleFieldResolvers.")
+		},
+		Name: "CoreV2Rule",
+	}
+}
+
+// describe CoreV2Rule's configuration; kept private to avoid unintentional tampering of configuration at runtime.
+var _ObjectTypeCoreV2RuleDesc = graphql.ObjectDesc{
+	Config: _ObjectTypeCoreV2RuleConfigFn,
+	FieldHandlers: map[string]graphql.FieldHandler{
+		"resource_names": _ObjTypeCoreV2RuleResource_namesHandler,
+		"resources":      _ObjTypeCoreV2RuleResourcesHandler,
+		"verbs":          _ObjTypeCoreV2RuleVerbsHandler,
+	},
+}
+
+//
 // CoreV2SecretFieldResolvers represents a collection of methods whose products represent the
 // response values of the 'CoreV2Secret' type.
 type CoreV2SecretFieldResolvers interface {
@@ -679,5 +1726,608 @@ var _ObjectTypeCoreV2SecretDesc = graphql.ObjectDesc{
 	FieldHandlers: map[string]graphql.FieldHandler{
 		"name":   _ObjTypeCoreV2SecretNameHandler,
 		"secret": _ObjTypeCoreV2SecretSecretHandler,
+	},
+}
+
+//
+// CoreV2SubjectFieldResolvers represents a collection of methods whose products represent the
+// response values of the 'CoreV2Subject' type.
+type CoreV2SubjectFieldResolvers interface {
+	// Type implements response to request for 'type' field.
+	Type(p graphql.ResolveParams) (string, error)
+
+	// Name implements response to request for 'name' field.
+	Name(p graphql.ResolveParams) (string, error)
+}
+
+// CoreV2SubjectAliases implements all methods on CoreV2SubjectFieldResolvers interface by using reflection to
+// match name of field to a field on the given value. Intent is reduce friction
+// of writing new resolvers by removing all the instances where you would simply
+// have the resolvers method return a field.
+type CoreV2SubjectAliases struct{}
+
+// Type implements response to request for 'type' field.
+func (_ CoreV2SubjectAliases) Type(p graphql.ResolveParams) (string, error) {
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	ret, ok := val.(string)
+	if err != nil {
+		return ret, err
+	}
+	if !ok {
+		return ret, errors.New("unable to coerce value for field 'type'")
+	}
+	return ret, err
+}
+
+// Name implements response to request for 'name' field.
+func (_ CoreV2SubjectAliases) Name(p graphql.ResolveParams) (string, error) {
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	ret, ok := val.(string)
+	if err != nil {
+		return ret, err
+	}
+	if !ok {
+		return ret, errors.New("unable to coerce value for field 'name'")
+	}
+	return ret, err
+}
+
+// CoreV2SubjectType self descriptive
+var CoreV2SubjectType = graphql.NewType("CoreV2Subject", graphql.ObjectKind)
+
+// RegisterCoreV2Subject registers CoreV2Subject object type with given service.
+func RegisterCoreV2Subject(svc *graphql.Service, impl CoreV2SubjectFieldResolvers) {
+	svc.RegisterObject(_ObjectTypeCoreV2SubjectDesc, impl)
+}
+func _ObjTypeCoreV2SubjectTypeHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(interface {
+		Type(p graphql.ResolveParams) (string, error)
+	})
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Type(frp)
+	}
+}
+
+func _ObjTypeCoreV2SubjectNameHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(interface {
+		Name(p graphql.ResolveParams) (string, error)
+	})
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Name(frp)
+	}
+}
+
+func _ObjectTypeCoreV2SubjectConfigFn() graphql1.ObjectConfig {
+	return graphql1.ObjectConfig{
+		Description: "self descriptive",
+		Fields: graphql1.Fields{
+			"name": &graphql1.Field{
+				Args:              graphql1.FieldConfigArgument{},
+				DeprecationReason: "",
+				Description:       "Name of the referenced object",
+				Name:              "name",
+				Type:              graphql1.NewNonNull(graphql1.String),
+			},
+			"type": &graphql1.Field{
+				Args:              graphql1.FieldConfigArgument{},
+				DeprecationReason: "",
+				Description:       "Type of object referenced (user or group)",
+				Name:              "type",
+				Type:              graphql1.NewNonNull(graphql1.String),
+			},
+		},
+		Interfaces: []*graphql1.Interface{},
+		IsTypeOf: func(_ graphql1.IsTypeOfParams) bool {
+			// NOTE:
+			// Panic by default. Intent is that when Service is invoked, values of
+			// these fields are updated with instantiated resolvers. If these
+			// defaults are called it is most certainly programmer err.
+			// If you're see this comment then: 'Whoops! Sorry, my bad.'
+			panic("Unimplemented; see CoreV2SubjectFieldResolvers.")
+		},
+		Name: "CoreV2Subject",
+	}
+}
+
+// describe CoreV2Subject's configuration; kept private to avoid unintentional tampering of configuration at runtime.
+var _ObjectTypeCoreV2SubjectDesc = graphql.ObjectDesc{
+	Config: _ObjectTypeCoreV2SubjectConfigFn,
+	FieldHandlers: map[string]graphql.FieldHandler{
+		"name": _ObjTypeCoreV2SubjectNameHandler,
+		"type": _ObjTypeCoreV2SubjectTypeHandler,
+	},
+}
+
+//
+// CoreV2SystemFieldResolvers represents a collection of methods whose products represent the
+// response values of the 'CoreV2System' type.
+type CoreV2SystemFieldResolvers interface {
+	// Hostname implements response to request for 'hostname' field.
+	Hostname(p graphql.ResolveParams) (string, error)
+
+	// Os implements response to request for 'os' field.
+	Os(p graphql.ResolveParams) (string, error)
+
+	// Platform implements response to request for 'platform' field.
+	Platform(p graphql.ResolveParams) (string, error)
+
+	// Platform_family implements response to request for 'platform_family' field.
+	Platform_family(p graphql.ResolveParams) (string, error)
+
+	// Platform_version implements response to request for 'platform_version' field.
+	Platform_version(p graphql.ResolveParams) (string, error)
+
+	// Network implements response to request for 'network' field.
+	Network(p graphql.ResolveParams) (interface{}, error)
+
+	// Arch implements response to request for 'arch' field.
+	Arch(p graphql.ResolveParams) (string, error)
+
+	// Arm_version implements response to request for 'arm_version' field.
+	Arm_version(p graphql.ResolveParams) (int, error)
+
+	// Libc_type implements response to request for 'libc_type' field.
+	Libc_type(p graphql.ResolveParams) (string, error)
+
+	// Vm_system implements response to request for 'vm_system' field.
+	Vm_system(p graphql.ResolveParams) (string, error)
+
+	// Vm_role implements response to request for 'vm_role' field.
+	Vm_role(p graphql.ResolveParams) (string, error)
+
+	// Cloud_provider implements response to request for 'cloud_provider' field.
+	Cloud_provider(p graphql.ResolveParams) (string, error)
+
+	// Float_type implements response to request for 'float_type' field.
+	Float_type(p graphql.ResolveParams) (string, error)
+
+	// Processes implements response to request for 'processes' field.
+	Processes(p graphql.ResolveParams) (interface{}, error)
+}
+
+// CoreV2SystemAliases implements all methods on CoreV2SystemFieldResolvers interface by using reflection to
+// match name of field to a field on the given value. Intent is reduce friction
+// of writing new resolvers by removing all the instances where you would simply
+// have the resolvers method return a field.
+type CoreV2SystemAliases struct{}
+
+// Hostname implements response to request for 'hostname' field.
+func (_ CoreV2SystemAliases) Hostname(p graphql.ResolveParams) (string, error) {
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	ret, ok := val.(string)
+	if err != nil {
+		return ret, err
+	}
+	if !ok {
+		return ret, errors.New("unable to coerce value for field 'hostname'")
+	}
+	return ret, err
+}
+
+// Os implements response to request for 'os' field.
+func (_ CoreV2SystemAliases) Os(p graphql.ResolveParams) (string, error) {
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	ret, ok := val.(string)
+	if err != nil {
+		return ret, err
+	}
+	if !ok {
+		return ret, errors.New("unable to coerce value for field 'os'")
+	}
+	return ret, err
+}
+
+// Platform implements response to request for 'platform' field.
+func (_ CoreV2SystemAliases) Platform(p graphql.ResolveParams) (string, error) {
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	ret, ok := val.(string)
+	if err != nil {
+		return ret, err
+	}
+	if !ok {
+		return ret, errors.New("unable to coerce value for field 'platform'")
+	}
+	return ret, err
+}
+
+// Platform_family implements response to request for 'platform_family' field.
+func (_ CoreV2SystemAliases) Platform_family(p graphql.ResolveParams) (string, error) {
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	ret, ok := val.(string)
+	if err != nil {
+		return ret, err
+	}
+	if !ok {
+		return ret, errors.New("unable to coerce value for field 'platform_family'")
+	}
+	return ret, err
+}
+
+// Platform_version implements response to request for 'platform_version' field.
+func (_ CoreV2SystemAliases) Platform_version(p graphql.ResolveParams) (string, error) {
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	ret, ok := val.(string)
+	if err != nil {
+		return ret, err
+	}
+	if !ok {
+		return ret, errors.New("unable to coerce value for field 'platform_version'")
+	}
+	return ret, err
+}
+
+// Network implements response to request for 'network' field.
+func (_ CoreV2SystemAliases) Network(p graphql.ResolveParams) (interface{}, error) {
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	return val, err
+}
+
+// Arch implements response to request for 'arch' field.
+func (_ CoreV2SystemAliases) Arch(p graphql.ResolveParams) (string, error) {
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	ret, ok := val.(string)
+	if err != nil {
+		return ret, err
+	}
+	if !ok {
+		return ret, errors.New("unable to coerce value for field 'arch'")
+	}
+	return ret, err
+}
+
+// Arm_version implements response to request for 'arm_version' field.
+func (_ CoreV2SystemAliases) Arm_version(p graphql.ResolveParams) (int, error) {
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	ret, ok := graphql1.Int.ParseValue(val).(int)
+	if err != nil {
+		return ret, err
+	}
+	if !ok {
+		return ret, errors.New("unable to coerce value for field 'arm_version'")
+	}
+	return ret, err
+}
+
+// Libc_type implements response to request for 'libc_type' field.
+func (_ CoreV2SystemAliases) Libc_type(p graphql.ResolveParams) (string, error) {
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	ret, ok := val.(string)
+	if err != nil {
+		return ret, err
+	}
+	if !ok {
+		return ret, errors.New("unable to coerce value for field 'libc_type'")
+	}
+	return ret, err
+}
+
+// Vm_system implements response to request for 'vm_system' field.
+func (_ CoreV2SystemAliases) Vm_system(p graphql.ResolveParams) (string, error) {
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	ret, ok := val.(string)
+	if err != nil {
+		return ret, err
+	}
+	if !ok {
+		return ret, errors.New("unable to coerce value for field 'vm_system'")
+	}
+	return ret, err
+}
+
+// Vm_role implements response to request for 'vm_role' field.
+func (_ CoreV2SystemAliases) Vm_role(p graphql.ResolveParams) (string, error) {
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	ret, ok := val.(string)
+	if err != nil {
+		return ret, err
+	}
+	if !ok {
+		return ret, errors.New("unable to coerce value for field 'vm_role'")
+	}
+	return ret, err
+}
+
+// Cloud_provider implements response to request for 'cloud_provider' field.
+func (_ CoreV2SystemAliases) Cloud_provider(p graphql.ResolveParams) (string, error) {
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	ret, ok := val.(string)
+	if err != nil {
+		return ret, err
+	}
+	if !ok {
+		return ret, errors.New("unable to coerce value for field 'cloud_provider'")
+	}
+	return ret, err
+}
+
+// Float_type implements response to request for 'float_type' field.
+func (_ CoreV2SystemAliases) Float_type(p graphql.ResolveParams) (string, error) {
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	ret, ok := val.(string)
+	if err != nil {
+		return ret, err
+	}
+	if !ok {
+		return ret, errors.New("unable to coerce value for field 'float_type'")
+	}
+	return ret, err
+}
+
+// Processes implements response to request for 'processes' field.
+func (_ CoreV2SystemAliases) Processes(p graphql.ResolveParams) (interface{}, error) {
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	return val, err
+}
+
+/*
+CoreV2SystemType System contains information about the system that the Agent process
+is running on, used for additional Entity context.
+*/
+var CoreV2SystemType = graphql.NewType("CoreV2System", graphql.ObjectKind)
+
+// RegisterCoreV2System registers CoreV2System object type with given service.
+func RegisterCoreV2System(svc *graphql.Service, impl CoreV2SystemFieldResolvers) {
+	svc.RegisterObject(_ObjectTypeCoreV2SystemDesc, impl)
+}
+func _ObjTypeCoreV2SystemHostnameHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(interface {
+		Hostname(p graphql.ResolveParams) (string, error)
+	})
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Hostname(frp)
+	}
+}
+
+func _ObjTypeCoreV2SystemOsHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(interface {
+		Os(p graphql.ResolveParams) (string, error)
+	})
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Os(frp)
+	}
+}
+
+func _ObjTypeCoreV2SystemPlatformHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(interface {
+		Platform(p graphql.ResolveParams) (string, error)
+	})
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Platform(frp)
+	}
+}
+
+func _ObjTypeCoreV2SystemPlatform_familyHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(interface {
+		Platform_family(p graphql.ResolveParams) (string, error)
+	})
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Platform_family(frp)
+	}
+}
+
+func _ObjTypeCoreV2SystemPlatform_versionHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(interface {
+		Platform_version(p graphql.ResolveParams) (string, error)
+	})
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Platform_version(frp)
+	}
+}
+
+func _ObjTypeCoreV2SystemNetworkHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(interface {
+		Network(p graphql.ResolveParams) (interface{}, error)
+	})
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Network(frp)
+	}
+}
+
+func _ObjTypeCoreV2SystemArchHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(interface {
+		Arch(p graphql.ResolveParams) (string, error)
+	})
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Arch(frp)
+	}
+}
+
+func _ObjTypeCoreV2SystemArm_versionHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(interface {
+		Arm_version(p graphql.ResolveParams) (int, error)
+	})
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Arm_version(frp)
+	}
+}
+
+func _ObjTypeCoreV2SystemLibc_typeHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(interface {
+		Libc_type(p graphql.ResolveParams) (string, error)
+	})
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Libc_type(frp)
+	}
+}
+
+func _ObjTypeCoreV2SystemVm_systemHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(interface {
+		Vm_system(p graphql.ResolveParams) (string, error)
+	})
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Vm_system(frp)
+	}
+}
+
+func _ObjTypeCoreV2SystemVm_roleHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(interface {
+		Vm_role(p graphql.ResolveParams) (string, error)
+	})
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Vm_role(frp)
+	}
+}
+
+func _ObjTypeCoreV2SystemCloud_providerHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(interface {
+		Cloud_provider(p graphql.ResolveParams) (string, error)
+	})
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Cloud_provider(frp)
+	}
+}
+
+func _ObjTypeCoreV2SystemFloat_typeHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(interface {
+		Float_type(p graphql.ResolveParams) (string, error)
+	})
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Float_type(frp)
+	}
+}
+
+func _ObjTypeCoreV2SystemProcessesHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(interface {
+		Processes(p graphql.ResolveParams) (interface{}, error)
+	})
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Processes(frp)
+	}
+}
+
+func _ObjectTypeCoreV2SystemConfigFn() graphql1.ObjectConfig {
+	return graphql1.ObjectConfig{
+		Description: "System contains information about the system that the Agent process\nis running on, used for additional Entity context.",
+		Fields: graphql1.Fields{
+			"arch": &graphql1.Field{
+				Args:              graphql1.FieldConfigArgument{},
+				DeprecationReason: "",
+				Description:       "self descriptive",
+				Name:              "arch",
+				Type:              graphql1.NewNonNull(graphql1.String),
+			},
+			"arm_version": &graphql1.Field{
+				Args:              graphql1.FieldConfigArgument{},
+				DeprecationReason: "",
+				Description:       "self descriptive",
+				Name:              "arm_version",
+				Type:              graphql1.NewNonNull(graphql1.Int),
+			},
+			"cloud_provider": &graphql1.Field{
+				Args:              graphql1.FieldConfigArgument{},
+				DeprecationReason: "",
+				Description:       "CloudProvider indicates the public cloud the agent is running on.",
+				Name:              "cloud_provider",
+				Type:              graphql1.NewNonNull(graphql1.String),
+			},
+			"float_type": &graphql1.Field{
+				Args:              graphql1.FieldConfigArgument{},
+				DeprecationReason: "",
+				Description:       "self descriptive",
+				Name:              "float_type",
+				Type:              graphql1.NewNonNull(graphql1.String),
+			},
+			"hostname": &graphql1.Field{
+				Args:              graphql1.FieldConfigArgument{},
+				DeprecationReason: "",
+				Description:       "self descriptive",
+				Name:              "hostname",
+				Type:              graphql1.NewNonNull(graphql1.String),
+			},
+			"libc_type": &graphql1.Field{
+				Args:              graphql1.FieldConfigArgument{},
+				DeprecationReason: "",
+				Description:       "LibCType indicates the type of libc the agent has access to (glibc, musl,\netc)",
+				Name:              "libc_type",
+				Type:              graphql1.NewNonNull(graphql1.String),
+			},
+			"network": &graphql1.Field{
+				Args:              graphql1.FieldConfigArgument{},
+				DeprecationReason: "",
+				Description:       "self descriptive",
+				Name:              "network",
+				Type:              graphql1.NewNonNull(graphql.OutputType("CoreV2Network")),
+			},
+			"os": &graphql1.Field{
+				Args:              graphql1.FieldConfigArgument{},
+				DeprecationReason: "",
+				Description:       "self descriptive",
+				Name:              "os",
+				Type:              graphql1.NewNonNull(graphql1.String),
+			},
+			"platform": &graphql1.Field{
+				Args:              graphql1.FieldConfigArgument{},
+				DeprecationReason: "",
+				Description:       "self descriptive",
+				Name:              "platform",
+				Type:              graphql1.NewNonNull(graphql1.String),
+			},
+			"platform_family": &graphql1.Field{
+				Args:              graphql1.FieldConfigArgument{},
+				DeprecationReason: "",
+				Description:       "self descriptive",
+				Name:              "platform_family",
+				Type:              graphql1.NewNonNull(graphql1.String),
+			},
+			"platform_version": &graphql1.Field{
+				Args:              graphql1.FieldConfigArgument{},
+				DeprecationReason: "",
+				Description:       "self descriptive",
+				Name:              "platform_version",
+				Type:              graphql1.NewNonNull(graphql1.String),
+			},
+			"processes": &graphql1.Field{
+				Args:              graphql1.FieldConfigArgument{},
+				DeprecationReason: "",
+				Description:       "Processes contains information about the local processes on the agent.",
+				Name:              "processes",
+				Type:              graphql1.NewNonNull(graphql1.NewList(graphql.OutputType("CoreV2Process"))),
+			},
+			"vm_role": &graphql1.Field{
+				Args:              graphql1.FieldConfigArgument{},
+				DeprecationReason: "",
+				Description:       "VMRole indicates the VM role of the agent (host/guest)",
+				Name:              "vm_role",
+				Type:              graphql1.NewNonNull(graphql1.String),
+			},
+			"vm_system": &graphql1.Field{
+				Args:              graphql1.FieldConfigArgument{},
+				DeprecationReason: "",
+				Description:       "VMSystem indicates the VM system of the agent (kvm, vbox, etc)",
+				Name:              "vm_system",
+				Type:              graphql1.NewNonNull(graphql1.String),
+			},
+		},
+		Interfaces: []*graphql1.Interface{},
+		IsTypeOf: func(_ graphql1.IsTypeOfParams) bool {
+			// NOTE:
+			// Panic by default. Intent is that when Service is invoked, values of
+			// these fields are updated with instantiated resolvers. If these
+			// defaults are called it is most certainly programmer err.
+			// If you're see this comment then: 'Whoops! Sorry, my bad.'
+			panic("Unimplemented; see CoreV2SystemFieldResolvers.")
+		},
+		Name: "CoreV2System",
+	}
+}
+
+// describe CoreV2System's configuration; kept private to avoid unintentional tampering of configuration at runtime.
+var _ObjectTypeCoreV2SystemDesc = graphql.ObjectDesc{
+	Config: _ObjectTypeCoreV2SystemConfigFn,
+	FieldHandlers: map[string]graphql.FieldHandler{
+		"arch":             _ObjTypeCoreV2SystemArchHandler,
+		"arm_version":      _ObjTypeCoreV2SystemArm_versionHandler,
+		"cloud_provider":   _ObjTypeCoreV2SystemCloud_providerHandler,
+		"float_type":       _ObjTypeCoreV2SystemFloat_typeHandler,
+		"hostname":         _ObjTypeCoreV2SystemHostnameHandler,
+		"libc_type":        _ObjTypeCoreV2SystemLibc_typeHandler,
+		"network":          _ObjTypeCoreV2SystemNetworkHandler,
+		"os":               _ObjTypeCoreV2SystemOsHandler,
+		"platform":         _ObjTypeCoreV2SystemPlatformHandler,
+		"platform_family":  _ObjTypeCoreV2SystemPlatform_familyHandler,
+		"platform_version": _ObjTypeCoreV2SystemPlatform_versionHandler,
+		"processes":        _ObjTypeCoreV2SystemProcessesHandler,
+		"vm_role":          _ObjTypeCoreV2SystemVm_roleHandler,
+		"vm_system":        _ObjTypeCoreV2SystemVm_systemHandler,
 	},
 }

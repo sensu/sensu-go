@@ -174,6 +174,12 @@ func (g *GenericClient) list(ctx context.Context, resources interface{}, pred *s
 	if gr, ok := g.Kind.(corev3.GlobalResource); !ok || !gr.IsGlobalResource() {
 		req.Namespace = corev2.ContextNamespace(ctx)
 	}
+	if pred != nil && pred.Ordering == "NAME" {
+		req.SortOrder = storev2.SortAscend
+		if pred.Descending {
+			req.SortOrder = storev2.SortDescend
+		}
+	}
 	list, err := g.Store.List(ctx, req, pred)
 	if err != nil {
 		return err
