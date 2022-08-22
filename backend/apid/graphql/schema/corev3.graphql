@@ -1,0 +1,41 @@
+extend type CoreV3EntityConfig implements Node & Resource @named(suffix: "Overrides") {
+  "Unique global identifier used to reference resource."
+  id: ID!
+
+  """
+  toJSON returns a REST API compatible representation of the resource. Handy for
+  sharing snippets that can then be imported with `sensuctl create`.
+  """
+  toJSON: JSON!
+
+  """
+  Corresponding entity state, if applicable.
+  """
+  state: CoreV3EntityState
+
+  """
+  Represented as core/v2 Entity.
+  """
+  toCoreV2Entity: Entity
+}
+
+extend type CoreV3EntityState implements Node & Resource @named(suffix: "Overrides") {
+  "Unique global identifier used to reference resource."
+  id: ID!
+
+  """
+  toJSON returns a REST API compatible representation of the resource. Handy for
+  sharing snippets that can then be imported with `sensuctl create`.
+  """
+  toJSON: JSON!
+
+  """
+  Corresponding entity config, if applicable.
+  """
+  config: CoreV3EntityConfig
+
+  """
+  Represented as core/v2 Entity.
+  """
+  toCoreV2Entity: Entity
+}

@@ -192,6 +192,12 @@ func (g *GenericClient) list(ctx context.Context, resources interface{}, pred *s
 			StoreName: g.Kind.StorePrefix(),
 			Context:   ctx,
 		}
+		if pred != nil && pred.Ordering == "NAME" {
+			req.SortOrder = storev2.SortAscend
+			if pred.Descending {
+				req.SortOrder = storev2.SortDescend
+			}
+		}
 		list, err := g.StoreV2.List(req, pred)
 		if err != nil {
 			return err

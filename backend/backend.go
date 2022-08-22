@@ -595,7 +595,7 @@ func Initialize(ctx context.Context, config *Config) (*Backend, error) {
 		RBACClient:        api.NewRBACClient(b.Store, auth),
 		VersionController: actions.NewVersionController(clusterVersion),
 		MetricGatherer:    prometheus.DefaultGatherer,
-		GenericClient:     &api.GenericClient{Store: b.Store, Auth: auth},
+		GenericClient:     &api.GenericClient{Store: b.Store, StoreV2: b.StoreV2, Auth: auth},
 	})
 	if err != nil {
 		return nil, fmt.Errorf("error initializing graphql.Service: %s", err)
