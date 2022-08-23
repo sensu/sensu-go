@@ -6,6 +6,7 @@ import (
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/authorization"
 	"github.com/sensu/sensu-go/backend/store"
+	storev2 "github.com/sensu/sensu-go/backend/store/v2"
 )
 
 // CheckController represents the controller needs of the ChecksRouter.
@@ -17,14 +18,14 @@ type CheckController interface {
 
 // CheckClient is an API client for check configuration.
 type CheckClient struct {
-	store      store.CheckConfigStore
+	store      storev2.Interface
 	controller CheckController
 	auth       authorization.Authorizer
 }
 
 // NewCheckClient creates a new CheckClient, given a store, a controller, and
 // an authorizer.
-func NewCheckClient(store store.Store, controller CheckController, auth authorization.Authorizer) *CheckClient {
+func NewCheckClient(store storev2.Interface, controller CheckController, auth authorization.Authorizer) *CheckClient {
 	return &CheckClient{store: store, controller: controller, auth: auth}
 }
 
@@ -35,7 +36,8 @@ func (c *CheckClient) CreateCheck(ctx context.Context, check *corev2.CheckConfig
 		return err
 	}
 	setCreatedBy(ctx, check)
-	return c.store.UpdateCheckConfig(ctx, check)
+	store := storev2.NewGenericStore[*corev2.CheckConfig](c.store)
+	return store.CreateOrUpdate(ctx, check)
 }
 
 // UpdateCheck updates a check, if authorized.
@@ -45,7 +47,8 @@ func (c *CheckClient) UpdateCheck(ctx context.Context, check *corev2.CheckConfig
 		return err
 	}
 	setCreatedBy(ctx, check)
-	return c.store.UpdateCheckConfig(ctx, check)
+	store := storev2.NewGenericStore[*corev2.CheckConfig](c.store)
+	return store.CreateOrUpdate(ctx, check)
 }
 
 // DeleteCheck deletes a check, if authorized.
@@ -54,7 +57,8 @@ func (c *CheckClient) DeleteCheck(ctx context.Context, name string) error {
 	if err := authorize(ctx, c.auth, attrs); err != nil {
 		return err
 	}
-	return c.store.DeleteCheckConfigByName(ctx, name)
+	store := storev2.NewGenericStore[*corev2.CheckConfig](c.store)
+	return store.Delete(ctx, storev2.ID{Namespace: corev2.ContextNamespace(ctx), Name: name})
 }
 
 // ExecuteCheck queues an ahoc check request, if authorized.
@@ -72,7 +76,8 @@ func (c *CheckClient) FetchCheck(ctx context.Context, name string) (*corev2.Chec
 	if err := authorize(ctx, c.auth, attrs); err != nil {
 		return nil, err
 	}
-	return c.store.GetCheckConfigByName(ctx, name)
+	store := storev2.NewGenericStore[*corev2.CheckConfig](c.store)
+	return store.Get(ctx, storev2.ID{Namespace: corev2.ContextNamespace(ctx), Name: name})
 }
 
 // ListChecks lists all checks in a namespace, if authorized.
@@ -85,7 +90,16 @@ func (c *CheckClient) ListChecks(ctx context.Context) ([]*corev2.CheckConfig, er
 		Continue: corev2.PageContinueFromContext(ctx),
 		Limit:    int64(corev2.PageSizeFromContext(ctx)),
 	}
-	return c.store.GetCheckConfigs(ctx, pred)
+	store := storev2.NewGenericStore[*corev2.CheckConfig](c.store)
+	list, err := store.List(ctx, storev2.ID{Namespace: corev2.ContextNamespace(ctx)}, pred)
+	if err != nil {
+		return nil, err
+	}
+	ptrs := make([]*corev2.CheckConfig, len(list))
+	for i := range list {
+		ptrs[i] = &list[i]
+	}
+	return ptrs, nil
 }
 
 func checkListAttributes(ctx context.Context) *authorization.Attributes {

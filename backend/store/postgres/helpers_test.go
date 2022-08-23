@@ -184,7 +184,7 @@ func testWithPostgresStoreV2(tb testing.TB, fn func(storev2.Interface)) {
 	tb.Helper()
 
 	withPostgres(tb, func(ctx context.Context, db *pgxpool.Pool, dsn string) {
-		fn(NewStoreV2(db))
+		fn(NewConfigStore(db))
 	})
 }
 

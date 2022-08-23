@@ -463,46 +463,46 @@ func (s *StoreProxy) UpdateRole(ctx context.Context, role *types.Role) error {
 	return s.do().UpdateRole(ctx, role)
 }
 
-// DeleteSilencedEntryByName deletes an entry using the given id.
-func (s *StoreProxy) DeleteSilencedEntryByName(ctx context.Context, id ...string) error {
-	return s.do().DeleteSilencedEntryByName(ctx, id...)
+// DeleteSilenceByName deletes an entry using the given id.
+func (s *StoreProxy) DeleteSilences(ctx context.Context, namespace string, id []string) error {
+	return s.do().DeleteSilences(ctx, namespace, id)
 }
 
 // GetSilencedEntries returns all entries. A nil slice with no error is
 // returned if none were found.
-func (s *StoreProxy) GetSilencedEntries(ctx context.Context) ([]*types.Silenced, error) {
-	return s.do().GetSilencedEntries(ctx)
+func (s *StoreProxy) GetSilences(ctx context.Context, namespace string) ([]*types.Silenced, error) {
+	return s.do().GetSilences(ctx, namespace)
 }
 
-// GetSilencedEntriesByCheckName returns all entries for the given check
+// GetSilencesByCheck returns all entries for the given check
+// within the namespace. A nil slice with no error is
+// returned if none were found.
+func (s *StoreProxy) GetSilencesByCheck(ctx context.Context, namespace, check string) ([]*types.Silenced, error) {
+	return s.do().GetSilencesByCheck(ctx, namespace, check)
+}
+
+// GetSilencesBySubscription returns all entries for the given subscription
 // within the ctx's namespace. A nil slice with no error is
 // returned if none were found.
-func (s *StoreProxy) GetSilencedEntriesByCheckName(ctx context.Context, check string) ([]*types.Silenced, error) {
-	return s.do().GetSilencedEntriesByCheckName(ctx, check)
+func (s *StoreProxy) GetSilencesBySubscription(ctx context.Context, namespace string, subscriptions []string) ([]*types.Silenced, error) {
+	return s.do().GetSilencesBySubscription(ctx, namespace, subscriptions)
 }
 
-// GetSilencedEntriesByCheckName returns all entries for the given subscription
-// within the ctx's namespace. A nil slice with no error is
-// returned if none were found.
-func (s *StoreProxy) GetSilencedEntriesBySubscription(ctx context.Context, subscriptions ...string) ([]*types.Silenced, error) {
-	return s.do().GetSilencedEntriesBySubscription(ctx, subscriptions...)
-}
-
-// GetSilencedEntryByName returns an entry using the given id and the
+// GetSilencesByName returns an entry using the given id and the
 // namespace stored in ctx. The resulting entry is nil if
 // none was found.
-func (s *StoreProxy) GetSilencedEntryByName(ctx context.Context, id string) (*types.Silenced, error) {
-	return s.do().GetSilencedEntryByName(ctx, id)
+func (s *StoreProxy) GetSilenceByName(ctx context.Context, namespace, id string) (*types.Silenced, error) {
+	return s.do().GetSilenceByName(ctx, namespace, id)
 }
 
 // UpdateHandler creates or updates a given entry.
-func (s *StoreProxy) UpdateSilencedEntry(ctx context.Context, entry *types.Silenced) error {
-	return s.do().UpdateSilencedEntry(ctx, entry)
+func (s *StoreProxy) UpdateSilence(ctx context.Context, entry *types.Silenced) error {
+	return s.do().UpdateSilence(ctx, entry)
 }
 
 // GetSilencedEntriesByName gets all the named silenced entries.
-func (s *StoreProxy) GetSilencedEntriesByName(ctx context.Context, id ...string) ([]*types.Silenced, error) {
-	return s.do().GetSilencedEntriesByName(ctx, id...)
+func (s *StoreProxy) GetSilencesByName(ctx context.Context, namespace string, id []string) ([]*types.Silenced, error) {
+	return s.do().GetSilencesByName(ctx, namespace, id)
 }
 
 // CreateOrUpdateTessenConfig creates or updates the tessen configuration

@@ -113,6 +113,11 @@ var migrations = []migration.Migrator{
 		_, err := tx.Exec(context.Background(), addInitializedTable)
 		return err
 	},
+	// Migration 18
+	func(tx migration.LimitedTx) error {
+		_, err := tx.Exec(context.Background(), addSilencesTable)
+		return err
+	},
 }
 
 type eventRecord struct {

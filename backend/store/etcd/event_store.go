@@ -391,13 +391,13 @@ func updateOccurrences(check *corev2.Check) {
 	}
 }
 
-func handleExpireOnResolveEntries(ctx context.Context, event *corev2.Event, st store.Store) error {
+func handleExpireOnResolveEntries(ctx context.Context, event *corev2.Event, st store.SilenceStore) error {
 	// Make sure we have a check and that the event is a resolution
 	if !event.HasCheck() || !event.IsResolution() {
 		return nil
 	}
 
-	entries, err := st.GetSilencedEntriesByName(ctx, event.Check.Silenced...)
+	entries, err := st.GetSilencesByName(ctx, corev2.ContextNamespace(ctx), event.Check.Silenced)
 	if err != nil {
 		return err
 	}
@@ -411,7 +411,7 @@ func handleExpireOnResolveEntries(ctx context.Context, event *corev2.Event, st s
 		}
 	}
 
-	if err := st.DeleteSilencedEntryByName(ctx, toDelete...); err != nil {
+	if err := st.DeleteSilences(ctx, event.Entity.Namespace, toDelete); err != nil {
 		return err
 	}
 	event.Check.Silenced = toRetain

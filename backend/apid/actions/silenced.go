@@ -12,11 +12,11 @@ import (
 
 // SilencedController exposes actions in which a viewer can perform.
 type SilencedController struct {
-	Store store.SilencedStore
+	Store store.SilenceStore
 }
 
 // NewSilencedController returns new SilencedController
-func NewSilencedController(store store.SilencedStore) SilencedController {
+func NewSilencedController(store store.SilenceStore) SilencedController {
 	return SilencedController{
 		Store: store,
 	}
@@ -25,13 +25,14 @@ func NewSilencedController(store store.SilencedStore) SilencedController {
 // List returns resources available to the viewer.
 func (c SilencedController) List(ctx context.Context, sub, check string) ([]*corev2.Silenced, error) {
 	var results []*types.Silenced
+	namespace := corev2.ContextNamespace(ctx)
 	var serr error
 	if sub != "" {
-		results, serr = c.Store.GetSilencedEntriesBySubscription(ctx, sub)
+		results, serr = c.Store.GetSilencesBySubscription(ctx, namespace, []string{sub})
 	} else if check != "" {
-		results, serr = c.Store.GetSilencedEntriesByCheckName(ctx, check)
+		results, serr = c.Store.GetSilencesByCheck(ctx, namespace, check)
 	} else {
-		results, serr = c.Store.GetSilencedEntries(ctx)
+		results, serr = c.Store.GetSilences(ctx, namespace)
 	}
 	if serr != nil {
 		return nil, NewError(InternalErr, serr)
@@ -45,6 +46,8 @@ func (c SilencedController) Create(ctx context.Context, entry *corev2.Silenced) 
 	// Prepare the silenced entry for storage
 	entry.Prepare(ctx)
 
+	namespace := corev2.ContextNamespace(ctx)
+
 	// Validate the silenced entry
 	if err := entry.Validate(); err != nil {
 		return NewError(InvalidArgument, err)
@@ -55,14 +58,14 @@ func (c SilencedController) Create(ctx context.Context, entry *corev2.Silenced) 
 	}
 
 	// Check for existing
-	if e, serr := c.Store.GetSilencedEntryByName(ctx, entry.Name); serr != nil {
+	if e, serr := c.Store.GetSilenceByName(ctx, namespace, entry.Name); serr != nil {
 		return NewError(InternalErr, serr)
 	} else if e != nil {
 		return NewErrorf(AlreadyExistsErr)
 	}
 
 	// Persist
-	if err := c.Store.UpdateSilencedEntry(ctx, entry); err != nil {
+	if err := c.Store.UpdateSilence(ctx, entry); err != nil {
 		return NewError(InternalErr, err)
 	}
 
@@ -84,7 +87,7 @@ func (c SilencedController) CreateOrReplace(ctx context.Context, entry *corev2.S
 	}
 
 	// Persist
-	if err := c.Store.UpdateSilencedEntry(ctx, entry); err != nil {
+	if err := c.Store.UpdateSilence(ctx, entry); err != nil {
 		return NewError(InternalErr, err)
 	}
 
@@ -92,7 +95,7 @@ func (c SilencedController) CreateOrReplace(ctx context.Context, entry *corev2.S
 }
 
 func (c SilencedController) Get(ctx context.Context, name string) (*corev2.Silenced, error) {
-	entry, err := c.Store.GetSilencedEntryByName(ctx, name)
+	entry, err := c.Store.GetSilenceByName(ctx, corev2.ContextNamespace(ctx), name)
 	if err != nil {
 		return nil, NewError(InternalErr, err)
 	}

@@ -14,6 +14,46 @@ type Store struct {
 	store.EventStore
 	store.EntityStore
 	store.NamespaceStore
+	store.SilenceStore
+}
+
+// DeleteSilences deletes all silences matching the given names.
+func (s Store) DeleteSilences(ctx context.Context, namespace string, names []string) error {
+	return s.SilenceStore.DeleteSilences(ctx, namespace, names)
+}
+
+// GetSilences returns all silences in the namespace. A nil slice with no error is
+// returned if none were found.
+func (s Store) GetSilences(ctx context.Context, namespace string) ([]*corev2.Silenced, error) {
+	return s.SilenceStore.GetSilences(ctx, namespace)
+}
+
+// GetSilencedsByCheck returns all silences for the given check . A nil
+// slice with no error is returned if none were found.
+func (s Store) GetSilencesByCheck(ctx context.Context, namespace, check string) ([]*corev2.Silenced, error) {
+	return s.SilenceStore.GetSilencesByCheck(ctx, namespace, check)
+}
+
+// GetSilencedEntriesBySubscription returns all entries for the given
+// subscription. A nil slice with no error is returned if none were found.
+func (s Store) GetSilencesBySubscription(ctx context.Context, namespace string, subscriptions []string) ([]*corev2.Silenced, error) {
+	return s.GetSilencesBySubscription(ctx, namespace, subscriptions)
+}
+
+// GetSilenceByName returns an entry using the given namespace and name. An
+// error is returned if the entry is not found.
+func (s Store) GetSilenceByName(ctx context.Context, namespace, name string) (*corev2.Silenced, error) {
+	return s.GetSilenceByName(ctx, namespace, name)
+}
+
+// UpdateSilence creates or updates a given silence.
+func (s Store) UpdateSilence(ctx context.Context, silence *corev2.Silenced) error {
+	return s.UpdateSilence(ctx, silence)
+}
+
+// GetSilencesByName gets all the named silence entries.
+func (s Store) GetSilencesByName(ctx context.Context, namespace string, names []string) ([]*corev2.Silenced, error) {
+	return s.GetSilencesByName(ctx, namespace, names)
 }
 
 func (s Store) DeleteEventByEntityCheck(ctx context.Context, entity, check string) error {

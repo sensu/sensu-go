@@ -9,7 +9,6 @@ import (
 	time "github.com/echlebek/timeproxy"
 	jwt "github.com/golang-jwt/jwt/v4"
 	v2 "github.com/sensu/sensu-go/api/core/v2"
-	"github.com/sensu/sensu-go/testing/mockstore"
 	"github.com/sensu/sensu-go/types"
 	"github.com/stretchr/testify/assert"
 )
@@ -73,27 +72,6 @@ func TestExtractBearerToken(t *testing.T) {
 	token = ExtractBearerToken(r)
 
 	assert.NotEmpty(t, token)
-}
-
-func TestInitSecret(t *testing.T) {
-	secret = nil
-	store := &mockstore.MockStore{}
-	store.On("GetJWTSecret").Return("foo", nil)
-
-	err := InitSecret(store)
-	assert.NoError(t, err)
-	assert.NotEqual(t, nil, secret)
-}
-
-func TestInitSecretEtcdError(t *testing.T) {
-	secret = nil
-	store := &mockstore.MockStore{}
-	store.On("GetJWTSecret").Return("", fmt.Errorf(""))
-	store.On("CreateJWTSecret").Return(fmt.Errorf(""))
-
-	err := InitSecret(store)
-	assert.Error(t, err)
-	assert.Equal(t, []byte(nil), secret)
 }
 
 func TestRefreshToken(t *testing.T) {

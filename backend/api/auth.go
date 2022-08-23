@@ -3,7 +3,6 @@ package api
 import (
 	"context"
 
-	"github.com/sensu/sensu-go/backend/authentication/jwt"
 	"github.com/sensu/sensu-go/backend/authorization"
 	"github.com/sensu/sensu-go/types"
 )
@@ -12,7 +11,7 @@ import (
 // attrs.
 func addAuthUser(ctx context.Context, attrs *authorization.Attributes) error {
 	// Get the claims from the request context
-	claims := jwt.GetClaimsFromContext(ctx)
+	claims := GetClaimsFromContext(ctx)
 	if claims == nil {
 		return authorization.ErrNoClaims
 	}

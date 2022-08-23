@@ -98,9 +98,9 @@ func TestSilencedQuery(t *testing.T) {
 			assert := assert.New(t)
 
 			// Mock store methods
-			store.On("GetSilencedEntriesBySubscription", tc.ctx).Return(tc.storeRecords, tc.storeErr).Once()
-			store.On("GetSilencedEntriesByCheckName", tc.ctx).Return(tc.storeRecords, tc.storeErr).Once()
-			store.On("GetSilencedEntries", tc.ctx).Return(tc.storeRecords, tc.storeErr).Once()
+			store.On("GetSilencesBySubscription", tc.ctx, mock.Anything, mock.Anything).Return(tc.storeRecords, tc.storeErr).Once()
+			store.On("GetSilencesByCheck", tc.ctx, mock.Anything, mock.Anything).Return(tc.storeRecords, tc.storeErr).Once()
+			store.On("GetSilences", tc.ctx, mock.Anything).Return(tc.storeRecords, tc.storeErr).Once()
 
 			// Exec Query
 			results, err := actions.List(tc.ctx, tc.params["subscription"], tc.params["check"])
@@ -177,10 +177,10 @@ func TestSilencedCreateOrReplace(t *testing.T) {
 
 			// Mock store methods
 			store.
-				On("GetSilencedEntryByName", mock.Anything, mock.Anything).
+				On("GetSilenceByName", mock.Anything, mock.Anything, mock.Anything).
 				Return(tc.fetchResult, tc.fetchErr)
 			store.
-				On("UpdateSilencedEntry", mock.Anything, mock.Anything).
+				On("UpdateSilence", mock.Anything, mock.Anything).
 				Return(tc.createErr).
 				Run(func(args mock.Arguments) {
 					if tc.expectedCreator != "" {
@@ -299,10 +299,10 @@ func TestSilencedCreate(t *testing.T) {
 
 			// Mock store methods
 			store.
-				On("GetSilencedEntryByName", mock.Anything, mock.Anything).
+				On("GetSilenceByName", mock.Anything, mock.Anything, mock.Anything).
 				Return(tc.fetchResult, tc.fetchErr)
 			store.
-				On("UpdateSilencedEntry", mock.Anything, mock.Anything).
+				On("UpdateSilence", mock.Anything, mock.Anything, mock.Anything).
 				Return(tc.createErr).
 				Run(func(args mock.Arguments) {
 					if tc.expectedCreator != "" {
@@ -343,8 +343,8 @@ func TestSilencedCreatedBy(t *testing.T) {
 	actions := NewSilencedController(store)
 
 	var s *corev2.Silenced
-	store.On("UpdateSilencedEntry", mock.Anything, mock.Anything, mock.Anything).Return(nil)
-	store.On("GetSilencedEntryByName", mock.Anything, mock.Anything).Return(s, nil)
+	store.On("UpdateSilence", mock.Anything, mock.Anything).Return(nil)
+	store.On("GetSilenceByName", mock.Anything, mock.Anything, mock.Anything).Return(s, nil)
 
 	err = actions.Create(ctx, silenced)
 	assert.NoError(t, err)
