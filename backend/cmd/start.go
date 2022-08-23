@@ -327,7 +327,7 @@ func StartCommand(initialize InitializeFunc) *cobra.Command {
 			}
 			defer func() { _ = etcdConfigClient.Close() }()
 			if cfg.Store.ConfigurationStore == "postgres" {
-				pgConfigDB, err := newPostgresPool(ctx, cfg.Store.PostgresConfigurationStore.DSN, false)
+				pgConfigDB, err = newPostgresPool(ctx, cfg.Store.PostgresConfigurationStore.DSN, false)
 				if err != nil {
 					return err
 				}
