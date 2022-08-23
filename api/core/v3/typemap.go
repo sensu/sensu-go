@@ -25,6 +25,8 @@ func init() {
 
 // typeMap is used to dynamically look up data types from strings.
 var typeMap = map[string]interface{}{
+	"ClusterConfig":     &ClusterConfig{},
+	"cluster_config":    &ClusterConfig{},
 	"EntityConfig":      &EntityConfig{},
 	"entity_config":     &EntityConfig{},
 	"EntityState":       &EntityState{},

@@ -29,7 +29,7 @@ type silencedController interface {
 }
 
 // NewSilencedRouter instantiates new router for controlling user resources
-func NewSilencedRouter(store store.SilencedStore, storev2 storev2.Interface) *SilencedRouter {
+func NewSilencedRouter(store store.SilenceStore, storev2 storev2.Interface) *SilencedRouter {
 	return &SilencedRouter{
 		controller: actions.NewSilencedController(store),
 		handlers: handlers.Handlers{

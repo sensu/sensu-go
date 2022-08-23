@@ -44,11 +44,13 @@ func partitionStrings(data []string, partitionSize int) [][]string {
 	return result
 }
 
-// DeleteSilencedEntryByName deletes one or more silenced entries by name
-func (s *Store) DeleteSilencedEntryByName(ctx context.Context, silencedNames ...string) error {
+// DeleteSilences deletes one or more silenced entries by name
+func (s *Store) DeleteSilences(ctx context.Context, namespace string, silencedNames []string) error {
 	if len(silencedNames) == 0 {
 		return nil
 	}
+
+	ctx = store.NamespaceContext(ctx, namespace)
 
 	partitions := partitionStrings(silencedNames, maxTxnOps)
 	for _, partition := range partitions {
@@ -69,7 +71,7 @@ func (s *Store) DeleteSilencedEntryByName(ctx context.Context, silencedNames ...
 }
 
 // GetSilencedEntries gets all silenced entries.
-func (s *Store) GetSilencedEntries(ctx context.Context) ([]*corev2.Silenced, error) {
+func (s *Store) GetSilences(ctx context.Context, namespace string) ([]*corev2.Silenced, error) {
 	var resp *clientv3.GetResponse
 	err := kvc.Backoff(ctx).Retry(func(n int) (done bool, err error) {
 		resp, err = s.client.Get(ctx, GetSilencedPath(ctx, ""), clientv3.WithPrefix())
@@ -78,7 +80,7 @@ func (s *Store) GetSilencedEntries(ctx context.Context) ([]*corev2.Silenced, err
 	if err != nil {
 		return nil, err
 	}
-	silencedArray, err := s.arraySilencedEntries(ctx, resp)
+	silencedArray, err := s.arraySilencedEntries(ctx, namespace, resp)
 	if err != nil {
 		return nil, err
 	}
@@ -86,7 +88,7 @@ func (s *Store) GetSilencedEntries(ctx context.Context) ([]*corev2.Silenced, err
 }
 
 // GetSilencedEntriesBySubscription gets all silenced entries that match a set of subscriptions.
-func (s *Store) GetSilencedEntriesBySubscription(ctx context.Context, subscriptions ...string) ([]*corev2.Silenced, error) {
+func (s *Store) GetSilencesBySubscription(ctx context.Context, namespace string, subscriptions []string) ([]*corev2.Silenced, error) {
 	if len(subscriptions) == 0 {
 		return nil, &store.ErrNotValid{Err: errors.New("couldn't get silenced entries: must specify at least one subscription")}
 	}
@@ -107,7 +109,7 @@ func (s *Store) GetSilencedEntriesBySubscription(ctx context.Context, subscripti
 			return nil, err
 		}
 
-		entries, err := s.arrayTxnSilencedEntries(ctx, resp)
+		entries, err := s.arrayTxnSilencedEntries(ctx, namespace, resp)
 		if err != nil {
 			return result, err
 		}
@@ -118,10 +120,11 @@ func (s *Store) GetSilencedEntriesBySubscription(ctx context.Context, subscripti
 }
 
 // GetSilencedEntriesByCheckName gets all silenced entries that match a check name.
-func (s *Store) GetSilencedEntriesByCheckName(ctx context.Context, checkName string) ([]*corev2.Silenced, error) {
+func (s *Store) GetSilencesByCheck(ctx context.Context, namespace, checkName string) ([]*corev2.Silenced, error) {
 	if checkName == "" {
 		return nil, &store.ErrNotValid{Err: errors.New("must specify check name")}
 	}
+	ctx = store.NamespaceContext(ctx, namespace)
 	var resp *clientv3.GetResponse
 	err := kvc.Backoff(ctx).Retry(func(n int) (done bool, err error) {
 		resp, err = s.client.Get(ctx, GetSilencedPath(ctx, ""), clientv3.WithPrefix())
@@ -149,7 +152,7 @@ func (s *Store) GetSilencedEntriesByCheckName(ctx context.Context, checkName str
 }
 
 // GetSilencedEntryByName gets a silenced entry by name.
-func (s *Store) GetSilencedEntryByName(ctx context.Context, name string) (*corev2.Silenced, error) {
+func (s *Store) GetSilenceByName(ctx context.Context, namespace, name string) (*corev2.Silenced, error) {
 	if name == "" {
 		return nil, &store.ErrNotValid{Err: errors.New("must specify name")}
 	}
@@ -162,7 +165,7 @@ func (s *Store) GetSilencedEntryByName(ctx context.Context, name string) (*corev
 	if err != nil {
 		return nil, err
 	}
-	silencedArray, err := s.arraySilencedEntries(ctx, resp)
+	silencedArray, err := s.arraySilencedEntries(ctx, namespace, resp)
 	if err != nil {
 		return nil, err
 	}
@@ -174,7 +177,7 @@ func (s *Store) GetSilencedEntryByName(ctx context.Context, name string) (*corev
 }
 
 // GetSilencedEntriesByName gets the named silenced entries.
-func (s *Store) GetSilencedEntriesByName(ctx context.Context, names ...string) ([]*corev2.Silenced, error) {
+func (s *Store) GetSilencesByName(ctx context.Context, namespace string, names []string) ([]*corev2.Silenced, error) {
 	if len(names) == 0 {
 		return nil, nil
 	}
@@ -193,7 +196,7 @@ func (s *Store) GetSilencedEntriesByName(ctx context.Context, names ...string) (
 		if err != nil {
 			return nil, err
 		}
-		entries, err := s.arrayTxnSilencedEntries(ctx, resp)
+		entries, err := s.arrayTxnSilencedEntries(ctx, namespace, resp)
 		if err != nil {
 			return nil, err
 		}
@@ -203,10 +206,12 @@ func (s *Store) GetSilencedEntriesByName(ctx context.Context, names ...string) (
 }
 
 // UpdateSilencedEntry updates a Silenced.
-func (s *Store) UpdateSilencedEntry(ctx context.Context, silenced *corev2.Silenced) error {
+func (s *Store) UpdateSilence(ctx context.Context, silenced *corev2.Silenced) error {
 	if err := silenced.Validate(); err != nil {
 		return &store.ErrNotValid{Err: err}
 	}
+
+	ctx = store.NamespaceContext(ctx, silenced.Namespace)
 
 	if silenced.ExpireAt == 0 && silenced.Expire > 0 {
 		start := time.Now()
@@ -241,7 +246,7 @@ func (s *Store) UpdateSilencedEntry(ctx context.Context, silenced *corev2.Silenc
 // return them as an array
 //
 // if all is true, then arraySilencedEntries will also return expired entries
-func (s *Store) arraySilencedEntries(ctx context.Context, resp *clientv3.GetResponse) ([]*corev2.Silenced, error) {
+func (s *Store) arraySilencedEntries(ctx context.Context, namespace string, resp *clientv3.GetResponse) ([]*corev2.Silenced, error) {
 	if len(resp.Kvs) == 0 {
 		return []*corev2.Silenced{}, nil
 	}
@@ -282,14 +287,14 @@ func (s *Store) arraySilencedEntries(ctx context.Context, resp *clientv3.GetResp
 	}
 	if len(rejects) > 0 {
 		logger.Infof("deleting %d expired silenced entries", len(rejects))
-		if err := s.DeleteSilencedEntryByName(ctx, rejects...); err != nil {
+		if err := s.DeleteSilences(ctx, namespace, rejects); err != nil {
 			logger.WithError(err).Error("error deleting expired silenced entries")
 		}
 	}
 	return result, nil
 }
 
-func (s *Store) arrayTxnSilencedEntries(ctx context.Context, resp *clientv3.TxnResponse) ([]*corev2.Silenced, error) {
+func (s *Store) arrayTxnSilencedEntries(ctx context.Context, namespace string, resp *clientv3.TxnResponse) ([]*corev2.Silenced, error) {
 	results := []*corev2.Silenced{}
 	rejects := []string{}
 	for _, resp := range resp.Responses {
@@ -329,7 +334,7 @@ func (s *Store) arrayTxnSilencedEntries(ctx context.Context, resp *clientv3.TxnR
 	}
 	if len(rejects) > 0 {
 		logger.Infof("deleting %d expired silenced entries", len(rejects))
-		if err := s.DeleteSilencedEntryByName(ctx, rejects...); err != nil {
+		if err := s.DeleteSilences(ctx, namespace, rejects); err != nil {
 			logger.WithError(err).Error("error deleting expired silenced entries")
 		}
 	}

@@ -379,3 +379,20 @@ CREATE TABLE IF NOT EXISTS initialized (
 	CONSTRAINT initialized_unique CHECK (initialized)
 );
 `
+
+// Migration 18
+const addSilencesTable = `
+CREATE TABLE IF NOT EXISTS silences (
+	id           bigserial PRIMARY KEY,
+	namespace    bigint REFERENCES namespaces (id) ON DELETE CASCADE,
+	name         text NOT NULL,
+	labels       jsonb,
+	annotations  bytea,
+	subscription text,
+	check_name   text,
+	reason       text,
+	expire_on_resolve bool,
+	begin        bigint NOT NULL,
+	expire_at    bigint,
+	UNIQUE (namespace, name)
+);`

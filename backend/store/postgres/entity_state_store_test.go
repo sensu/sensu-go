@@ -112,7 +112,7 @@ func TestEntityStateStore_CreateIfNotExists(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			withPostgres(t, func(ctx context.Context, db *pgxpool.Pool, dsn string) {
 				if tt.beforeHook != nil {
-					tt.beforeHook(t, NewStoreV2(db))
+					tt.beforeHook(t, NewConfigStore(db))
 				}
 				s := &EntityStateStore{
 					db: db,
@@ -237,7 +237,7 @@ func TestEntityStateStore_CreateOrUpdate(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			withPostgres(t, func(ctx context.Context, db *pgxpool.Pool, dsn string) {
-				stor := NewStoreV2(db)
+				stor := NewConfigStore(db)
 				if tt.beforeHook != nil {
 					tt.beforeHook(t, stor)
 				}
@@ -333,7 +333,7 @@ func TestEntityStateStore_Delete(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			withPostgres(t, func(ctx context.Context, db *pgxpool.Pool, dsn string) {
 				if tt.beforeHook != nil {
-					tt.beforeHook(t, NewStoreV2(db))
+					tt.beforeHook(t, NewConfigStore(db))
 				}
 				s := &EntityStateStore{
 					db: db,
@@ -449,7 +449,7 @@ func TestEntityStateStore_Exists(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			withPostgres(t, func(ctx context.Context, db *pgxpool.Pool, dsn string) {
 				if tt.beforeHook != nil {
-					tt.beforeHook(t, NewStoreV2(db))
+					tt.beforeHook(t, NewConfigStore(db))
 				}
 				s := &EntityStateStore{
 					db: db,
@@ -586,7 +586,7 @@ func TestEntityStateStore_Get(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			withPostgres(t, func(ctx context.Context, db *pgxpool.Pool, dsn string) {
 				if tt.beforeHook != nil {
-					tt.beforeHook(t, NewStoreV2(db))
+					tt.beforeHook(t, NewConfigStore(db))
 				}
 				s := &EntityStateStore{
 					db: db,
@@ -829,7 +829,7 @@ func TestEntityStateStore_GetMultiple(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			withPostgres(t, func(ctx context.Context, db *pgxpool.Pool, dsn string) {
 				if tt.beforeHook != nil {
-					tt.beforeHook(t, NewStoreV2(db))
+					tt.beforeHook(t, NewConfigStore(db))
 				}
 				s := &EntityStateStore{
 					db: db,
@@ -951,7 +951,7 @@ func TestEntityStateStore_HardDelete(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			withPostgres(t, func(ctx context.Context, db *pgxpool.Pool, dsn string) {
 				if tt.beforeHook != nil {
-					tt.beforeHook(t, NewStoreV2(db))
+					tt.beforeHook(t, NewConfigStore(db))
 				}
 				s := &EntityStateStore{
 					db: db,
@@ -1072,7 +1072,7 @@ func TestEntityStateStore_HardDeleted(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			withPostgres(t, func(ctx context.Context, db *pgxpool.Pool, dsn string) {
 				if tt.beforeHook != nil {
-					tt.beforeHook(t, NewStoreV2(db))
+					tt.beforeHook(t, NewConfigStore(db))
 				}
 				s := &EntityStateStore{
 					db: db,
@@ -1194,7 +1194,7 @@ func TestEntityStateStore_List(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			withPostgres(t, func(ctx context.Context, db *pgxpool.Pool, dsn string) {
 				if tt.beforeHook != nil {
-					tt.beforeHook(t, NewStoreV2(db))
+					tt.beforeHook(t, NewConfigStore(db))
 				}
 				s := &EntityStateStore{
 					db: db,
@@ -1341,7 +1341,7 @@ func TestEntityStateStore_Patch(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			withPostgres(t, func(ctx context.Context, db *pgxpool.Pool, dsn string) {
 				if tt.beforeHook != nil {
-					tt.beforeHook(t, NewStoreV2(db))
+					tt.beforeHook(t, NewConfigStore(db))
 				}
 				s := &EntityStateStore{
 					db: db,
@@ -1451,7 +1451,7 @@ func TestEntityStateStore_UpdateIfExists(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			withPostgres(t, func(ctx context.Context, db *pgxpool.Pool, dsn string) {
 				if tt.beforeHook != nil {
-					tt.beforeHook(t, NewStoreV2(db))
+					tt.beforeHook(t, NewConfigStore(db))
 				}
 				s := &EntityStateStore{
 					db: db,

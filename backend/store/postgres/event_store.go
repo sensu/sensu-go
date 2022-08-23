@@ -19,6 +19,33 @@ import (
 	coreEtcdStore "github.com/sensu/sensu-go/backend/store/etcd"
 )
 
+type SilenceStoreI interface {
+	// DeleteSilences deletes all silences matching the given names.
+	DeleteSilences(ctx context.Context, namespace string, names []string) error
+
+	// GetSilences returns all silences in the namespace. A nil slice with no error is
+	// returned if none were found.
+	GetSilences(ctx context.Context, namespace string) ([]*corev2.Silenced, error)
+
+	// GetSilencedsByCheck returns all silences for the given check . A nil
+	// slice with no error is returned if none were found.
+	GetSilencesByCheck(ctx context.Context, namespace, check string) ([]*corev2.Silenced, error)
+
+	// GetSilencedEntriesBySubscription returns all entries for the given
+	// subscription. A nil slice with no error is returned if none were found.
+	GetSilencesBySubscription(ctx context.Context, namespace string, subscriptions []string) ([]*corev2.Silenced, error)
+
+	// GetSilenceByName returns an entry using the given namespace and name. An
+	// error is returned if the entry is not found.
+	GetSilenceByName(ctx context.Context, namespace, name string) (*corev2.Silenced, error)
+
+	// UpdateSilence creates or updates a given silence.
+	UpdateSilence(ctx context.Context, silence *corev2.Silenced) error
+
+	// GetSilencesByName gets all the named silence entries.
+	GetSilencesByName(ctx context.Context, namespace string, names []string) ([]*corev2.Silenced, error)
+}
+
 // Type is the type of a postgres store provider.
 const Type = "postgres"
 
@@ -30,7 +57,7 @@ var (
 
 type EventStore struct {
 	db             *pgxpool.Pool
-	coreStore      store.Store
+	silenceStore   SilenceStoreI
 	postgresConfig Config
 	batcher        *EventBatcher
 }
@@ -98,7 +125,7 @@ func totalStateChange(check *corev2.Check) uint32 {
 // NewEventStore creates a NewEventStore. It prepares several queries for
 // future use. If there is a non-nil error, it is due to query preparation
 // failing.
-func NewEventStore(db *pgxpool.Pool, coreStore store.Store, pg Config, producers int) (*EventStore, error) {
+func NewEventStore(db *pgxpool.Pool, sStore SilenceStoreI, pg Config, producers int) (*EventStore, error) {
 	// TODO add these options to postgres.Config
 	//workers := pg.BatchWorkers
 	//if workers == 0 {
@@ -131,7 +158,7 @@ func NewEventStore(db *pgxpool.Pool, coreStore store.Store, pg Config, producers
 	}
 	store := &EventStore{
 		db:             db,
-		coreStore:      coreStore,
+		silenceStore:   sStore,
 		postgresConfig: pg,
 		batcher:        batcher,
 	}
@@ -543,7 +570,7 @@ func (e *EventStore) handleExpireOnResolveEntries(ctx context.Context, event *co
 		return nil
 	}
 
-	entries, err := e.coreStore.GetSilencedEntriesByName(ctx, event.Check.Silenced...)
+	entries, err := e.silenceStore.GetSilencesByName(ctx, event.Entity.Namespace, event.Check.Silenced)
 	if err != nil {
 		// Do not wrap this error, it needs to have its type inspected
 		return err
@@ -558,7 +585,7 @@ func (e *EventStore) handleExpireOnResolveEntries(ctx context.Context, event *co
 		}
 	}
 
-	if err := e.coreStore.DeleteSilencedEntryByName(ctx, toDelete...); err != nil {
+	if err := e.silenceStore.DeleteSilences(ctx, event.Entity.Namespace, toDelete); err != nil {
 		return fmt.Errorf("couldn't resolve silences: %s", err)
 	}
 

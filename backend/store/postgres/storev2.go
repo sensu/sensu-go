@@ -27,12 +27,6 @@ type StoreV2 struct {
 	watchTxnWindow time.Duration
 }
 
-func NewStoreV2(pg *pgxpool.Pool) *StoreV2 {
-	return &StoreV2{
-		db: pg,
-	}
-}
-
 type crudOp int
 
 const (

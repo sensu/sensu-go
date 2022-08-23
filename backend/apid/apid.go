@@ -47,7 +47,7 @@ type APId struct {
 	store               storev2.Interface
 	eventStore          store.EventStore
 	entityStore         store.EntityStore
-	silencedStore       store.SilencedStore
+	silencedStore       store.SilenceStore
 	queueGetter         types.QueueGetter
 	tls                 *types.TLSOptions
 	cluster             clientv3.Cluster
@@ -68,7 +68,7 @@ type Config struct {
 	Store               storev2.Interface
 	EventStore          store.EventStore
 	EntityStore         store.EntityStore
-	SilencedStore       store.SilencedStore
+	SilencedStore       store.SilenceStore
 	QueueGetter         types.QueueGetter
 	TLS                 *types.TLSOptions
 	Cluster             clientv3.Cluster
