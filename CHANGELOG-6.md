@@ -14,6 +14,10 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 ### Added
 - Agent websocket connection logging includes backend entity name.
 
+### Changed
+- Keepalive reconstruction no longer blocks backend startup. Instead runs
+gradually in the background.
+
 ## [6.8.0] - 2022-08-24
 
 ### Changed
