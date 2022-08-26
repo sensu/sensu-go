@@ -219,7 +219,7 @@ func TestLegacyAdapter_Filter(t *testing.T) {
 			wantErr: false,
 		},
 		{
-			name: "deny filters allow events that only match some expressions",
+			name: "deny filters deny events that only match some expressions",
 			args: newArgs(),
 			fields: fields{
 				Store: func() store.Store {
@@ -232,7 +232,7 @@ func TestLegacyAdapter_Filter(t *testing.T) {
 					return stor
 				}(),
 			},
-			want:    false,
+			want:    true,
 			wantErr: false,
 		},
 	}
@@ -267,6 +267,55 @@ func Test_evaluateEventFilter(t *testing.T) {
 		args args
 		want bool
 	}{
+		{
+			name: "inclusive filter expressions are AND'd",
+			args: args{
+				ctx:   context.Background(),
+				event: corev2.FixtureEvent("entity1", "my-check"),
+				filter: func() *corev2.EventFilter {
+					filter := &corev2.EventFilter{
+						ObjectMeta: corev2.ObjectMeta{
+							Name: "inclusive-filter",
+						},
+						Action: corev2.EventFilterActionAllow,
+						Expressions: []string{
+							"event.check.name != 'check-foo'",
+							"event.check.name != 'check-bar'",
+							"event.check.name != 'check-baz'",
+						},
+					}
+					return filter
+				}(),
+			},
+			// The event should not be filtered, since the AND combination of
+			// the filter expressions is true and this is an inclusive "Allow"
+			// filter
+			want: false,
+		},
+		{
+			name: "exclusive filter expressions are OR'd",
+			args: args{
+				ctx:   context.Background(),
+				event: corev2.FixtureEvent("entity1", "check-bar"),
+				filter: func() *corev2.EventFilter {
+					filter := &corev2.EventFilter{
+						ObjectMeta: corev2.ObjectMeta{
+							Name: "exclusive-filter",
+						},
+						Action: corev2.EventFilterActionDeny,
+						Expressions: []string{
+							"event.check.name == 'check-foo'",
+							"event.check.name == 'check-bar'",
+							"event.check.name == 'check-baz'",
+						},
+					}
+					return filter
+				}(),
+			},
+			// The event should be filtered, since the OR combination of the
+			// filter expressions is true and this in an exclusive "Deny" filter
+			want: true,
+		},
 		{
 			name: "returns false when an event is within a time window with action allow",
 			args: args{
