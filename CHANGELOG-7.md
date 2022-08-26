@@ -28,6 +28,10 @@ migrated from Etcd.
 - GlobalResource interface in core/v3 allows core/v3 resources to
 be marked as global resources.
 
+### Fixed
+- Fixed an issue where multi-expression exclusive "Deny" filters were not
+  evaluated as described in the documentation.
+
 ### Changed
 - Changed parameters for `sensuctl cluster-role create` to be plural
 - Deregistration events are now silenced if a silenced entry exists matching the
