@@ -655,6 +655,7 @@ func Initialize(ctx context.Context, config *Config) (*Backend, error) {
 		Client:              b.Client,
 		Watcher:             entityConfigWatcher,
 		EtcdClientTLSConfig: b.EtcdClientTLSConfig,
+		BackendEntity:       backendEntity,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("error initializing %s: %s", agent.Name(), err)

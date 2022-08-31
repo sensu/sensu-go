@@ -777,8 +777,13 @@ func (a *Agent) connectWithBackoff(ctx context.Context) (transport.Transport, er
 			logger.WithError(err).Error("reconnection attempt failed")
 			return false, nil
 		}
+		backendID := respHeader.Get("Backend-ID")
 
-		logger.Info("successfully connected")
+		fields := logrus.Fields{
+			"backend-id":  backendID,
+			"backend-url": backendURL,
+		}
+		logger.WithFields(fields).Info("successfully connected")
 
 		conn = c
 

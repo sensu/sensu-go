@@ -104,6 +104,7 @@ type Agentd struct {
 	healthRouter        *routers.HealthRouter
 	serveWaitTime       time.Duration
 	ready               func()
+	backendEntity       *corev2.Entity
 }
 
 // Config configures an Agentd.
@@ -119,6 +120,7 @@ type Config struct {
 	Client              *clientv3.Client
 	EtcdClientTLSConfig *tls.Config
 	Watcher             <-chan store.WatchEventEntityConfig
+	BackendEntity       *corev2.Entity
 }
 
 // Option is a functional option.
@@ -146,6 +148,7 @@ func New(c Config, opts ...Option) (*Agentd, error) {
 		client:              c.Client,
 		etcdClientTLSConfig: c.EtcdClientTLSConfig,
 		serveWaitTime:       c.ServeWaitTime,
+		backendEntity:       c.BackendEntity,
 	}
 
 	// prepare server TLS config
@@ -350,6 +353,7 @@ func (a *Agentd) webSocketHandler(w http.ResponseWriter, r *http.Request) {
 	})
 
 	responseHeader := make(http.Header)
+	responseHeader.Add("Backend-ID", a.backendEntity.Name)
 	responseHeader.Add("Accept", agent.ProtobufSerializationHeader)
 	lager.WithField("header", fmt.Sprintf("Accept: %s", agent.ProtobufSerializationHeader)).Debug("setting header")
 	responseHeader.Add("Accept", agent.JSONSerializationHeader)
