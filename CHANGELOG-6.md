@@ -11,6 +11,9 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 - Fixed an issue where multi-expression exclusive "Deny" filters were not
   evaluated as described in the documentation.
 
+### Added
+- Agent websocket connection logging includes backend entity name.
+
 ## [6.8.0] - 2022-08-24
 
 ### Changed
