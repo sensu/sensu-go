@@ -32,6 +32,7 @@ import (
 	"github.com/sensu/sensu-go/cli/commands/silenced"
 	"github.com/sensu/sensu-go/cli/commands/tessen"
 	"github.com/sensu/sensu-go/cli/commands/user"
+	"github.com/sensu/sensu-go/cli/commands/vet"
 	"github.com/spf13/cobra"
 )
 
@@ -70,6 +71,7 @@ func AddCommands(rootCmd *cobra.Command, cli *cli.SensuCli) {
 		dump.Command(cli),
 		command.HelpCommand(cli),
 		describetype.Command(cli),
+		vet.Command(cli),
 	)
 
 	for _, cmd := range rootCmd.Commands() {

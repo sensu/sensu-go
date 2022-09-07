@@ -11,7 +11,7 @@ require (
 	github.com/dustin/go-humanize v1.0.0
 	github.com/echlebek/crock v1.0.1
 	github.com/echlebek/timeproxy v1.0.0
-	github.com/emicklei/proto v1.1.0
+	github.com/emicklei/proto v1.6.15
 	github.com/evanphx/json-patch/v5 v5.1.0
 	github.com/frankban/quicktest v1.7.2 // indirect
 	github.com/ghodss/yaml v1.0.0
@@ -20,7 +20,7 @@ require (
 	github.com/golang-jwt/jwt/v4 v4.0.0
 	github.com/golang/protobuf v1.5.2
 	github.com/golang/snappy v0.0.4
-	github.com/google/uuid v1.1.2
+	github.com/google/uuid v1.2.0
 	github.com/gorilla/mux v1.8.0
 	github.com/gorilla/websocket v1.4.2
 	github.com/graph-gophers/dataloader v0.0.0-20180104184831-78139374585c
@@ -52,7 +52,7 @@ require (
 	github.com/sensu/sensu-go/types v0.10.0
 	github.com/shirou/gopsutil/v3 v3.21.12
 	github.com/sirupsen/logrus v1.7.0
-	github.com/spf13/cobra v1.1.3
+	github.com/spf13/cobra v1.4.0
 	github.com/spf13/pflag v1.0.5
 	github.com/spf13/viper v1.7.0
 	github.com/stretchr/objx v0.2.0 // indirect
@@ -77,10 +77,10 @@ require (
 )
 
 require (
+	cuelang.org/go v0.4.3
 	github.com/coreos/go-systemd v0.0.0-20190719114852-fd7a80b32e1f // indirect
 	github.com/google/go-cmp v0.5.8 // indirect
 	github.com/kr/pty v1.1.8 // indirect
-	golang.org/x/text v0.3.7 // indirect
 )
 
 replace github.com/graphql-go/graphql => github.com/jamesdphillips/graphql v0.8.2
