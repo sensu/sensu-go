@@ -275,12 +275,21 @@ func TestTimeWindowRepeated_InWindows(t *testing.T) {
 	assert.NotNil(t, location)
 }
 
+func parseTime(t *testing.T, s string) time.Time {
+	ts, err := time.Parse(time.RFC3339, s)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return ts
+}
+
 func TestTimeWindowRepeated_InDayTimeRange(t *testing.T) {
+
 	tests := []struct {
 		name           string
 		beginTime      string
 		endTime        string
-		actualTime     string
+		actualTime     time.Time
 		weekday        time.Weekday
 		expectedResult bool
 	}{
@@ -288,107 +297,121 @@ func TestTimeWindowRepeated_InDayTimeRange(t *testing.T) {
 			"simple positive",
 			"2022-03-22T09:00:00+00:00", // tuesday
 			"2022-03-22T11:00:00+00:00",
-			"2022-03-22T10:00:00+00:00",
+			parseTime(t, "2022-03-22T10:00:00+00:00"),
 			time.Tuesday,
 			true,
 		}, {
 			"simple negative lower hour",
 			"2022-03-22T09:00:00+00:00",
 			"2022-03-22T11:00:00+00:00",
-			"2022-03-22T08:00:00+00:00",
+			parseTime(t, "2022-03-22T08:00:00+00:00"),
 			time.Tuesday,
 			false,
 		}, {
 			"simple negative higher hour",
 			"2022-03-22T09:00:00+00:00",
 			"2022-03-22T11:00:00+00:00",
-			"2022-03-22T13:00:00+00:00",
+			parseTime(t, "2022-03-22T13:00:00+00:00"),
 			time.Tuesday,
 			false,
 		}, {
 			"simple negative lower minutes",
 			"2022-03-22T09:00:00+00:00",
 			"2022-03-22T11:00:00+00:00",
-			"2022-03-22T08:59:00+00:00",
+			parseTime(t, "2022-03-22T08:59:00+00:00"),
 			time.Tuesday,
 			false,
 		}, {
 			"simple negative higher minutes",
 			"2022-03-22T09:00:00+00:00",
 			"2022-03-22T11:00:00+00:00",
-			"2022-03-22T11:01:00+00:00",
+			parseTime(t, "2022-03-22T11:01:00+00:00"),
 			time.Tuesday,
 			false,
 		}, {
 			"simple negative lower seconds",
 			"2022-03-22T09:00:00+00:00",
 			"2022-03-22T11:00:00+00:00",
-			"2022-03-22T08:59:59+00:00",
+			parseTime(t, "2022-03-22T08:59:59+00:00"),
 			time.Tuesday,
 			false,
 		}, {
 			"simple negative higher seconds",
 			"2022-03-22T09:00:00+00:00",
 			"2022-03-22T11:00:00+00:00",
-			"2022-03-22T11:00:01+00:00",
+			parseTime(t, "2022-03-22T11:00:01+00:00"),
 			time.Tuesday,
 			false,
 		}, {
 			"simple negative different day before",
 			"2022-03-22T09:00:00+00:00",
 			"2022-03-22T11:00:00+00:00",
-			"2022-03-21T10:00:00+00:00", // monday
+			parseTime(t, "2022-03-21T10:00:00+00:00"), // monday
 			time.Tuesday,
 			false,
 		}, {
 			"simple negative different day after",
 			"2022-03-22T09:00:00+00:00",
 			"2022-03-22T11:00:00+00:00",
-			"2022-03-23T10:00:00+00:00", // wednesday
+			parseTime(t, "2022-03-23T10:00:00+00:00"), // wednesday
 			time.Tuesday,
 			false,
 		}, {
 			"positive next week",
 			"2022-03-22T09:00:00-07:00",
 			"2022-03-22T11:00:00-07:00",
-			"2022-03-29T10:00:00-07:00", // wednesday
+			parseTime(t, "2022-03-29T10:00:00-07:00"), // wednesday
 			time.Tuesday,
 			true,
 		}, {
 			"negative next week before",
 			"2022-03-22T09:00:00-07:00",
 			"2022-03-22T11:00:00-07:00",
-			"2022-03-27T10:00:00-07:00", // wednesday
+			parseTime(t, "2022-03-27T10:00:00-07:00"), // wednesday
 			time.Tuesday,
 			false,
 		}, {
 			"negative next week after",
 			"2022-03-22T09:00:00-07:00",
 			"2022-03-22T11:00:00-07:00",
-			"2022-03-30T10:00:00-07:00", // wednesday
+			parseTime(t, "2022-03-30T10:00:00-07:00"), // wednesday
 			time.Tuesday,
 			false,
 		}, {
 			"positive next week different time offset",
 			"2022-03-22T09:00:00+00:00",
 			"2022-03-22T11:00:00+00:00",
-			"2022-03-29T06:00:00-04:00", // wednesday
+			parseTime(t, "2022-03-29T06:00:00-04:00"), // wednesday
 			time.Tuesday,
 			true,
 		}, {
 			"positive multi days",
 			"2022-03-22T09:00:00+00:00",
 			"2022-03-24T11:00:00+00:00",
-			"2022-03-30T06:00:00-04:00", // wednesday
+			parseTime(t, "2022-03-30T06:00:00-04:00"), // wednesday
 			time.Tuesday,
 			true,
 		}, {
 			"negative previous week",
 			"2022-03-22T09:00:00-04:00",
 			"2022-03-22T11:00:00-04:00",
-			"2022-03-15T10:00:00-04:00", // tuesday
+			parseTime(t, "2022-03-15T10:00:00-04:00"), // tuesday
 			time.Tuesday,
 			false,
+		}, {
+			"GH-4847 lower bound day time range",
+			"2022-03-22T09:00:00+00:00",
+			"2022-03-22T11:00:00+00:00",
+			parseTime(t, "2022-03-22T09:00:00+00:00"),
+			time.Tuesday,
+			true,
+		}, {
+			"GH-4847 upper bound day time range",
+			"2022-03-22T09:00:00+00:00",
+			"2022-03-22T11:00:00+00:00",
+			parseTime(t, "2022-03-22T11:00:01+00:00").Add(-1 * time.Nanosecond),
+			time.Tuesday,
+			true,
 		},
 	}
 
@@ -399,10 +422,7 @@ func TestTimeWindowRepeated_InDayTimeRange(t *testing.T) {
 				End:   test.endTime,
 			}
 
-			actualTime, err := time.Parse(time.RFC3339, test.actualTime)
-			require.NoError(t, err)
-
-			assert.Equal(t, test.expectedResult, window.inDayTimeRange(actualTime, test.weekday))
+			assert.Equal(t, test.expectedResult, window.inDayTimeRange(test.actualTime, test.weekday))
 		})
 	}
 }
@@ -412,51 +432,63 @@ func TestTimeWindowRepeated_InTimeRange(t *testing.T) {
 		name           string
 		beginTime      string
 		endTime        string
-		actualTime     string
+		actualTime     time.Time
 		expectedResult bool
 	}{
 		{
 			"simple positive",
 			"2022-03-22T09:00:00+00:00", // tuesday
 			"2022-03-22T11:00:00+00:00",
-			"2022-03-22T10:00:00+00:00",
+			parseTime(t, "2022-03-22T10:00:00+00:00"),
 			true,
 		}, {
 			"negative before valid times",
 			"2022-03-22T09:00:00-07:00", // tuesday
 			"2022-03-22T11:00:00-07:00",
-			"2022-01-12T10:00:00-07:00",
+			parseTime(t, "2022-01-12T10:00:00-07:00"),
 			false,
 		}, {
 			"simple negative before",
 			"2022-03-22T09:00:00+00:00", // tuesday
 			"2022-03-22T11:00:00+00:00",
-			"2022-03-22T08:00:00+00:00",
+			parseTime(t, "2022-03-22T08:00:00+00:00"),
 			false,
 		}, {
 			"simple negative after",
 			"2022-03-22T09:00:00+00:00", // tuesday
 			"2022-03-22T11:00:00+00:00",
-			"2022-03-22T11:05:00+00:00",
+			parseTime(t, "2022-03-22T11:05:00+00:00"),
 			false,
 		}, {
 			"positive after different day",
 			"2022-03-22T09:00:00-07:00", // tuesday
 			"2022-03-22T11:00:00-07:00",
-			"2023-01-12T10:00:00-07:00",
+			parseTime(t, "2023-01-12T10:00:00-07:00"),
 			true,
 		}, {
 			"negative before different day",
 			"2022-03-22T09:00:00-07:00", // tuesday
 			"2022-03-22T11:00:00-07:00",
-			"2021-01-12T12:00:00-07:00",
+			parseTime(t, "2021-01-12T12:00:00-07:00"),
 			false,
 		}, {
 			"negative after different day",
 			"2022-03-22T09:00:00-07:00", // tuesday
 			"2022-03-22T11:00:00-07:00",
-			"2023-01-12T08:59:59-07:00",
+			parseTime(t, "2023-01-12T08:59:59-07:00"),
 			false,
+		}, {
+			"GH-4847 lower bound time range",
+			"2022-03-22T09:00:00+00:00", // tuesday
+			"2022-03-22T11:00:00+00:00",
+			parseTime(t, "2022-03-22T09:00:00+00:00"),
+			true,
+		}, {
+			"GH-4847 upper bound time range",
+			"2022-03-22T09:00:00+00:00", // tuesday
+			"2022-03-22T11:00:00+00:00",
+			parseTime(t, "2022-03-22T11:00:01+00:00").Add(-1 * time.Nanosecond),
+			true,
 		},
 	}
 
@@ -467,10 +499,7 @@ func TestTimeWindowRepeated_InTimeRange(t *testing.T) {
 				End:   test.endTime,
 			}
 
-			actualTime, err := time.ParseInLocation(time.RFC3339, test.actualTime, time.UTC)
-			require.NoError(t, err)
-
-			assert.Equal(t, test.expectedResult, window.inTimeRange(actualTime))
+			assert.Equal(t, test.expectedResult, window.inTimeRange(test.actualTime))
 		})
 	}
 }

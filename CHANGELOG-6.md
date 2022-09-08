@@ -6,6 +6,77 @@ and this project adheres to [Semantic
 Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+## Unreleased
+
+### Changed
+- Check subdues are now evaluated on a half open interval such that there
+should be no unintended gaps between overlapping subdues.
+
+## [6.8.0] - 2022-08-24
+
+### Changed
+- Eventd now prioritizes keepalive events over other events in order to
+mitigate the potential of keepalive event creation storms and mass agent
+disconnects.
+
+### Added
+- GlobalResource interface in core/v3 allows core/v3 resources to
+be marked as global resources.
+- Added `--api-serve-wait-time` backend flag to delay serving API requests
+for a period of time after startup.
+- Added `/ready` endpoint to the sensu-go API. Returns 200 when the API is ready
+to serve traffic.
+- Added `--agent-serve-wait-time` backend flag to delay accepting agent
+connections for a period of time after startup.
+- Added `/ready` endpoint to the agent listener. Returns 200 when the listener
+is ready to accept agent connections.
+
+### Fixed
+- Fixed a bug where sensu-backend could crash if the BackendIDGetter
+encounters etcd client unavailability.
+
+## [6.7.5] - 2022-08-10
+
+### Security
+- Updated the package graphql-go/graphql to address [CVE-2022-37315](https://nvd.nist.gov/vuln/detail/CVE-2022-37315)
+
+## [6.7.4] - 2022-07-12
+
+### Changed
+- Upgraded CI Go version to 1.17.12
+
+## [6.7.3] - 2022-07-07
+
+### Changed
+- Agents will no longer execute check requests with equal or older issued
+timestamps than the issued timestamp for the last executed check request with
+the same check name.
+
+## [6.7.2] - 2022-05-12
+
+### Added
+- Added the `etcd-unsafe-no-fsync` backend configuration option,
+making it possible to run a sensu-backend with an embedded etcd node
+for testing and development without placing lots of load on the file
+system.
+
+### Fixed
+- Print the correct round robin scheduler source (etcd or postgres).
+
+### Changed
+- Upgraded etcd version from 3.5.2 to 3.5.4.
+
+## [6.7.1] - 2022-04-28
+
+### Changed
+- Cron scheduler now logs that it is stopping before it begins the process of
+stopping.
+
+### Fixed
+- Fixed several data races in schedulerd.
+- Mitigate a data race in agentd sessions.
+
+## [6.7.0] - 2022-04-21
 
 ### Added
 - Automatically create system namespace and backend entities.
