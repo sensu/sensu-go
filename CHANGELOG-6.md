@@ -5,6 +5,12 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic
 Versioning](http://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+
+### Changed
+- Check subdues are now evaluated on a half open interval such that there
+should be no unintended gaps between overlapping subdues.
+
 ## [6.8.0] - 2022-08-24
 
 ### Changed
