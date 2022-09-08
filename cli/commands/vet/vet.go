@@ -2,9 +2,11 @@ package vet
 
 import (
 	"bytes"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"net/url"
+	"os"
 	"reflect"
 
 	"cuelang.org/go/cue/cuecontext"
@@ -13,7 +15,7 @@ import (
 	"github.com/sensu/sensu-go/cli"
 	"github.com/sensu/sensu-go/cli/client"
 	"github.com/sensu/sensu-go/cli/commands/flags"
-	shelpers "github.com/sensu/sensu-go/cli/commands/helpers"
+	"github.com/sensu/sensu-go/cli/commands/helpers"
 	"github.com/sensu/sensu-go/cli/resource"
 	"github.com/sensu/sensu-go/types"
 	"github.com/sensu/sensu-go/types/compat"
@@ -41,7 +43,7 @@ func Command(cli *cli.SensuCli) *cobra.Command {
 	}
 
 	_ = cmd.Flags().StringP("spec", "s", "{}", "spec for resources to follow")
-	shelpers.AddAllNamespace(cmd.Flags())
+	helpers.AddAllNamespace(cmd.Flags())
 	return cmd
 }
 
@@ -58,53 +60,73 @@ func execute(cli *cli.SensuCli) func(*cobra.Command, []string) error {
 			return err
 		}
 
-		req := requests[0]
-		ok, err := cmd.Flags().GetBool(flags.AllNamespaces)
-		if err != nil {
-			return err
-		}
-		if ok {
-			req.SetNamespace(corev2.NamespaceTypeAll)
-		} else {
-			req.SetNamespace(cli.Config.Namespace())
-		}
+		var vetErrors []vetErr
 
-		var val reflect.Value
-		if proxy, ok := req.(*corev3.V2ResourceProxy); ok {
-			val = reflect.New(reflect.SliceOf(reflect.TypeOf(proxy.Resource)))
-		} else {
-			val = reflect.New(reflect.SliceOf(reflect.TypeOf(req)))
-		}
-		err = cli.Client.List(
-			fmt.Sprintf("%s?types=%s", req.URIPath(), url.QueryEscape(types.WrapResource(req).Type)),
-			val.Interface(), &client.ListOptions{
-				ChunkSize: ChunkSize,
-			}, nil)
-		if err != nil {
-			// We want to ignore non-nil errors that are a result of
-			// resources not existing, or features being licensed.
-			return fmt.Errorf("API error: %s", err)
-		}
-		val = reflect.Indirect(val)
-		if val.Len() == 0 {
-			return nil
-		}
+		for _, resourceReq := range requests {
+			ok, err := cmd.Flags().GetBool(flags.AllNamespaces)
+			if err != nil {
+				return err
+			}
+			if ok {
+				resourceReq.SetNamespace(corev2.NamespaceTypeAll)
+			} else {
+				resourceReq.SetNamespace(cli.Config.Namespace())
+			}
+			var resourceSlice reflect.Value
+			if proxy, ok := resourceReq.(*corev3.V2ResourceProxy); ok {
+				resourceSlice = reflect.New(reflect.SliceOf(reflect.TypeOf(proxy.Resource)))
+			} else {
+				resourceSlice = reflect.New(reflect.SliceOf(reflect.TypeOf(resourceReq)))
+			}
+			err = cli.Client.List(
+				fmt.Sprintf("%s?types=%s", resourceReq.URIPath(), url.QueryEscape(types.WrapResource(resourceReq).Type)),
+				resourceSlice.Interface(), &client.ListOptions{
+					ChunkSize: ChunkSize,
+				}, nil)
+			if err != nil {
+				// We want to ignore non-nil errors that are a result of
+				// resources not existing, or features being licensed.
+				return fmt.Errorf("API error: %s", err)
+			}
 
-		resources := make([]corev2.Resource, val.Len())
-		for i := range resources {
-			resources[i] = compat.V2Resource(val.Index(i).Interface())
-		}
+			resourceSlice = reflect.Indirect(resourceSlice)
+			if resourceSlice.Len() == 0 {
+				continue
+			}
+			ctx := cuecontext.New()
+			constraint := ctx.CompileString(resourceSpec)
+			for i := 0; i < resourceSlice.Len(); i++ {
+				resource := compat.V2Resource(resourceSlice.Index(i).Interface())
+				resourceJson := bytes.Buffer{}
+				helpers.PrintJSON(resource, &resourceJson)
+				if cerr := constraint.Err(); cerr != nil {
+					return cerr
+				}
+				cueval := ctx.CompileString(resourceJson.String())
+				if cErr := constraint.Subsume(cueval); cErr != nil {
+					wrapper := types.WrapResource(resource)
+					vetErrors = append(vetErrors, vetErr{Error: cErr.Error(), Resource: corev2.ResourceReference{
+						Name:       resource.GetObjectMeta().Name,
+						Type:       wrapper.Type,
+						APIVersion: wrapper.APIVersion,
+					}})
+				}
+			}
 
-		buf := bytes.Buffer{}
-		shelpers.PrintJSON(resources, &buf)
-
-		ctx := cuecontext.New()
-		constraint := ctx.CompileString(fmt.Sprintf("[...#resource]\n#resource: {...} & %s", resourceSpec))
-		if cerr := constraint.Err(); cerr != nil {
-			return cerr
 		}
-		cv := ctx.CompileBytes(buf.Bytes())
-		return constraint.Subsume(cv)
+		if len(vetErrors) > 0 {
+			encoder := json.NewEncoder(os.Stderr)
+			if err := encoder.Encode(vetErrors); err != nil {
+				panic(err)
+			}
+			os.Exit(2)
+		}
+		return nil
 
 	}
+}
+
+type vetErr struct {
+	Error    string
+	Resource corev2.ResourceReference
 }
