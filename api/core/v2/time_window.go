@@ -257,8 +257,9 @@ func (t *TimeWindowRepeated) inAbsoluteTimeRange(actualTime time.Time) bool {
 	if err != nil {
 		return false
 	}
+	endTime = endTime.Add(time.Second)
 
-	return actualTime.After(beginTime) && actualTime.Before(endTime)
+	return !actualTime.Before(beginTime) && actualTime.Before(endTime)
 }
 
 func (t *TimeWindowRepeated) inDayTimeRange(actualTime time.Time, weekday time.Weekday) bool {
@@ -284,9 +285,10 @@ func (t *TimeWindowRepeated) inDayTimeRange(actualTime time.Time, weekday time.W
 	thisWeekBegin = thisWeekBegin.AddDate(0, 0, dayOffset)
 
 	thisWeekEnd := thisWeekBegin.Add(duration)
+	thisWeekEnd = thisWeekEnd.Add(time.Second)
 	thisWeekEnd.In(beginTime.Location())
 
-	return actualTime.After(thisWeekBegin) && actualTime.Before(thisWeekEnd)
+	return !actualTime.Before(thisWeekBegin) && actualTime.Before(thisWeekEnd)
 }
 
 func (t *TimeWindowRepeated) inTimeRange(actualTime time.Time) bool {
@@ -310,8 +312,9 @@ func (t *TimeWindowRepeated) inTimeRange(actualTime time.Time) bool {
 	todayBegin := time.Date(actualTime.Year(), actualTime.Month(), actualTime.Day(), beginHour, beginMin, beginSec, 0, beginTime.Location())
 	todayEnd := todayBegin.Add(duration)
 	todayEnd = todayEnd.In(beginTime.Location())
+	todayEnd = todayEnd.Add(time.Second)
 
-	return actualTime.After(todayBegin) && actualTime.Before(todayEnd)
+	return !actualTime.Before(todayBegin) && actualTime.Before(todayEnd)
 }
 
 func (t *TimeWindowRepeated) inWeekdayTimeRange(actualTime time.Time) bool {
