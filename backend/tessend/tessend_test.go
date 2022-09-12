@@ -13,7 +13,7 @@ import (
 	"github.com/sensu/sensu-go/backend/etcd"
 	"github.com/sensu/sensu-go/backend/messaging"
 	"github.com/sensu/sensu-go/backend/ringv2"
-	"github.com/sensu/sensu-go/backend/store"
+	storev2 "github.com/sensu/sensu-go/backend/store/v2"
 	"github.com/sensu/sensu-go/testing/mockstore"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -32,12 +32,11 @@ func newTessendTest(t *testing.T) *Tessend {
 	client := e.NewEmbeddedClient()
 	defer client.Close()
 
-	s := &mockstore.MockStore{}
-	ch := make(<-chan store.WatchEventTessenConfig)
-	s.On("CreateOrUpdateTessenConfig", mock.Anything, mock.Anything).Return(fmt.Errorf("foo"))
-	s.On("GetTessenConfig", mock.Anything, mock.Anything).Return(corev2.DefaultTessenConfig(), fmt.Errorf("foo"))
-	s.On("GetTessenConfigWatcher", mock.Anything).Return(ch)
-	s.On("GetClusterID", mock.Anything).Return("foo", fmt.Errorf("foo"))
+	s := &mockstore.V2MockStore{}
+	ch := make(<-chan []storev2.WatchEvent)
+	s.On("Get", mock.Anything, mock.Anything).Return(nil, fmt.Errorf("foo"))
+	s.On("CreateOrUpdate", mock.Anything, mock.Anything, mock.Anything).Return(fmt.Errorf("foo"))
+	s.On("Watch", mock.Anything, mock.Anything).Return(ch)
 
 	tessend, err := New(
 		context.Background(),

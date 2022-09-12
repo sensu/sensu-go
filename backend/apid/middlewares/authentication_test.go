@@ -9,6 +9,8 @@ import (
 
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/authentication/jwt"
+	"github.com/sensu/sensu-go/backend/store"
+	storev2 "github.com/sensu/sensu-go/backend/store/v2"
 	"github.com/sensu/sensu-go/testing/mockstore"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -76,7 +78,7 @@ func TestMiddlewareIgnoreUnauthorized(t *testing.T) {
 }
 
 func TestMiddlewareValidAPIKey(t *testing.T) {
-	store := &mockstore.MockStore{}
+	store := &mockstore.V2MockStore{}
 	mware := Authentication{
 		Store: store,
 	}
@@ -84,8 +86,11 @@ func TestMiddlewareValidAPIKey(t *testing.T) {
 	defer server.Close()
 
 	key := corev2.FixtureAPIKey("174373d0-4aff-41d8-aa5f-084dfcad7dc7", "admin")
-	store.On("GetResource", mock.Anything, mock.Anything, mock.Anything).Return(nil)
-	store.On("GetUser", mock.Anything, mock.Anything).Return(&corev2.User{}, nil)
+	keyReq := storev2.NewResourceRequestFromResource(key)
+	user := &corev2.User{Username: "admin"}
+	userReq := storev2.NewResourceRequestFromResource(user)
+	store.On("Get", mock.Anything, keyReq).Return(mockstore.Wrapper[*corev2.APIKey]{Value: key}, nil)
+	store.On("Get", mock.Anything, userReq).Return(mockstore.Wrapper[*corev2.User]{Value: user}, nil)
 
 	client := &http.Client{}
 	req, _ := http.NewRequest("GET", server.URL, nil)
@@ -96,7 +101,7 @@ func TestMiddlewareValidAPIKey(t *testing.T) {
 }
 
 func TestMiddlewareInvalidAPIKey(t *testing.T) {
-	store := &mockstore.MockStore{}
+	store := &mockstore.V2MockStore{}
 	mware := Authentication{
 		Store: store,
 	}
@@ -104,7 +109,7 @@ func TestMiddlewareInvalidAPIKey(t *testing.T) {
 	defer server.Close()
 
 	key := corev2.FixtureAPIKey("174373d0-4aff-41d8-aa5f-084dfcad7dc7", "admin")
-	store.On("GetResource", mock.Anything, mock.Anything, mock.Anything).Return(errors.New("err"))
+	store.On("Get", mock.Anything, mock.Anything).Return(nil, errors.New("err"))
 
 	client := &http.Client{}
 	req, _ := http.NewRequest("GET", server.URL, nil)
@@ -115,7 +120,7 @@ func TestMiddlewareInvalidAPIKey(t *testing.T) {
 }
 
 func TestMiddlewareInvalidUserAPIKey(t *testing.T) {
-	store := &mockstore.MockStore{}
+	store := &mockstore.V2MockStore{}
 	mware := Authentication{
 		Store: store,
 	}
@@ -123,8 +128,11 @@ func TestMiddlewareInvalidUserAPIKey(t *testing.T) {
 	defer server.Close()
 
 	key := corev2.FixtureAPIKey("174373d0-4aff-41d8-aa5f-084dfcad7dc7", "admin")
-	store.On("GetResource", mock.Anything, mock.Anything, mock.Anything).Return(nil)
-	store.On("GetUser", mock.Anything, mock.Anything).Return(&corev2.User{}, errors.New("err"))
+	keyReq := storev2.NewResourceRequestFromResource(key)
+	user := &corev2.User{Username: "admin"}
+	userReq := storev2.NewResourceRequestFromResource(user)
+	store.On("Get", mock.Anything, keyReq).Return(mockstore.Wrapper[*corev2.APIKey]{Value: key}, nil)
+	store.On("Get", mock.Anything, userReq).Return(nil, errors.New("err"))
 
 	client := &http.Client{}
 	req, _ := http.NewRequest("GET", server.URL, nil)
@@ -135,17 +143,19 @@ func TestMiddlewareInvalidUserAPIKey(t *testing.T) {
 }
 
 func TestMiddlewareNoUserAPIKey(t *testing.T) {
-	var user *corev2.User
-	store := &mockstore.MockStore{}
+	st := &mockstore.V2MockStore{}
 	mware := Authentication{
-		Store: store,
+		Store: st,
 	}
 	server := httptest.NewServer(mware.Then(testHandler()))
 	defer server.Close()
 
 	key := corev2.FixtureAPIKey("174373d0-4aff-41d8-aa5f-084dfcad7dc7", "admin")
-	store.On("GetResource", mock.Anything, mock.Anything, mock.Anything).Return(nil)
-	store.On("GetUser", mock.Anything, mock.Anything).Return(user, nil)
+	keyReq := storev2.NewResourceRequestFromResource(key)
+	user := &corev2.User{Username: "admin"}
+	userReq := storev2.NewResourceRequestFromResource(user)
+	st.On("Get", mock.Anything, keyReq).Return(nil, &store.ErrNotFound{})
+	st.On("Get", mock.Anything, userReq).Return(mockstore.Wrapper[*corev2.User]{Value: user}, nil)
 
 	client := &http.Client{}
 	req, _ := http.NewRequest("GET", server.URL, nil)

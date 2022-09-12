@@ -158,9 +158,11 @@ var SelectedMetrics = []string{
 // and coordinating the daemons
 type Backend struct {
 	Daemons                []daemon.Daemon
-	Store                  store.Store
-	StoreV2                storev2.Interface
+	ConfigStore            storev2.Interface
+	EntityStore            store.EntityStore
 	EventStore             store.EventStore
+	SilenceStore           store.SilenceStore
+	KeepaliveStore         storev2.KeepaliveStore
 	RingPool               *ringv2.RingPool
 	GraphQLService         *graphql.Service
 	SecretsProviderManager *secrets.ProviderManager
@@ -189,33 +191,37 @@ func errorReporter(event pq.ListenerEventType, err error) {
 	}
 }
 
-func initDevModeStateStore(ctx context.Context, b *Backend, client *clientv3.Client, config *Config) {
-	b.Store = etcdstore.NewStore(client)
-	b.StoreV2 = etcdstorev2.NewStore(client)
+func initDevModeStateStore(_ context.Context, b *Backend, client *clientv3.Client, _ *Config) {
+	store := etcdstore.NewStore(client)
+	b.ConfigStore = etcdstorev2.NewStore(client)
+	b.KeepaliveStore = storev2.NewLegacyKeepaliveStore(store)
+	b.EntityStore = store
+	b.SilenceStore = store
 	b.RingPool = ringv2.NewRingPool(func(path string) ringv2.Interface {
 		return ringv2.New(client, path)
 	})
 }
 
 func initPGStateStore(ctx context.Context, b *Backend, client *clientv3.Client, db *pgxpool.Pool, config *Config) error {
-	eventStore, err := postgres.NewEventStore(db, b.Store, b.Cfg.Store.PostgresStateStore, 20)
+	eventStore, err := postgres.NewEventStore(db, postgres.NewSilenceStore(db), b.Cfg.Store.PostgresStateStore, 20)
 	if err != nil {
 		return err
 	}
 	b.EventStore = eventStore
 
-	entityStore := postgres.NewEntityStore(db, client)
+	entityStore := postgres.NewEntityStore(db)
+	b.EntityStore = entityStore
+
+	b.SilenceStore = postgres.NewSilenceStore(db)
 
 	pgStore := postgres.Store{
-		EventStore:  eventStore,
-		EntityStore: entityStore,
-		Store:       etcdstore.NewStore(client),
+		EventStore:   eventStore,
+		EntityStore:  entityStore,
+		SilenceStore: b.SilenceStore,
 	}
 
-	b.Store = pgStore
-
-	pgStoreV2 := postgres.NewStoreV2(db, client)
-	b.StoreV2 = pgStoreV2
+	b.KeepaliveStore = storev2.NewLegacyKeepaliveStore(pgStore)
+	b.EntityStore = entityStore
 
 	// Create the ring pool for round-robin functionality
 	// Set up new postgres ringpool
@@ -238,34 +244,38 @@ func initPGStateStore(ctx context.Context, b *Backend, client *clientv3.Client, 
 // configuring etcd and establishing a list of daemons, which constitute our
 // backend. The daemons will later be started according to their position in the
 // b.Daemons list, and stopped in reverse order
-func Initialize(ctx context.Context, client *clientv3.Client, db *pgxpool.Pool, config *Config) (*Backend, error) {
+func Initialize(ctx context.Context, etcdConfigClient *clientv3.Client, pgConfigDB *pgxpool.Pool, pgStateDB *pgxpool.Pool, config *Config) (*Backend, error) {
 	var err error
 	// Initialize a Backend struct
 	b := &Backend{Cfg: config}
 
 	if config.DevMode {
-		initDevModeStateStore(ctx, b, client, config)
+		initDevModeStateStore(ctx, b, etcdConfigClient, config)
 	} else {
-		if err := initPGStateStore(ctx, b, client, db, config); err != nil {
+		if err := initPGStateStore(ctx, b, etcdConfigClient, pgStateDB, config); err != nil {
 			return nil, err
 		}
+		b.ConfigStore = postgres.NewConfigStore(pgConfigDB)
 	}
 
-	if _, err := b.Store.GetClusterID(ctx); err != nil {
+	var clusterID string
+	if clusterID, err = GetClusterID(ctx, b.ConfigStore); err != nil {
 		return nil, err
 	}
 
-	// Initialize the JWT secret. This method is idempotent and needs to be ran
-	// at every startup so the JWT signatures remain valid
-	if err := jwt.InitSecret(b.Store); err != nil {
+	jwtClient := api.JWT{Store: b.ConfigStore}
+	jwtSecret, err := jwtClient.GetSecret(ctx)
+	if err != nil {
 		return nil, err
 	}
+	// TODO: don't use global variables
+	jwt.SetSecret(jwtSecret)
 
-	backendID := etcd.NewBackendIDGetter(ctx, client)
+	backendID := etcd.NewBackendIDGetter(ctx, etcdConfigClient)
 	b.Daemons = append(b.Daemons, backendID)
 
 	// Initialize an etcd getter
-	queueGetter := queue.EtcdGetter{Client: client, BackendIDGetter: backendID}
+	queueGetter := queue.EtcdGetter{Client: etcdConfigClient, BackendIDGetter: backendID}
 
 	// Initialize the LicenseGetter
 	b.LicenseGetter = config.LicenseGetter
@@ -299,7 +309,7 @@ func Initialize(ctx context.Context, client *clientv3.Client, db *pgxpool.Pool, 
 	}
 
 	// Create sensu-system namespace and backend entity
-	br := resource.New(b.Store, b.Store, bus)
+	br := resource.New(b.ConfigStore, bus)
 	if err := br.EnsureBackendResources(ctx); err != nil {
 		return nil, fmt.Errorf("error creating system namespace and backend entity: %s", err.Error())
 	}
@@ -307,7 +317,7 @@ func Initialize(ctx context.Context, client *clientv3.Client, db *pgxpool.Pool, 
 	// Initialize the secrets provider manager
 	b.SecretsProviderManager = secrets.NewProviderManager(br)
 
-	auth := &rbac.Authorizer{Store: b.Store}
+	auth := &rbac.Authorizer{Store: b.ConfigStore}
 
 	// Initialize pipelined
 	pipelineDaemon, err := pipelined.New(pipelined.Config{
@@ -322,14 +332,14 @@ func Initialize(ctx context.Context, client *clientv3.Client, db *pgxpool.Pool, 
 	// Initialize PipelineAdapterV1
 	storeTimeout := 2 * time.Minute
 	b.PipelineAdapterV1 = pipeline.AdapterV1{
-		Store:        b.Store,
+		Store:        b.ConfigStore,
 		StoreTimeout: storeTimeout,
 	}
 
 	// Initialize PipelineAdapterV1 filter adapters
 	legacyFilterAdapter := &filter.LegacyAdapter{
 		AssetGetter:  assetGetter,
-		Store:        b.Store,
+		Store:        b.ConfigStore,
 		StoreTimeout: storeTimeout,
 	}
 	hasMetricsFilterAdapter := &filter.HasMetricsAdapter{}
@@ -348,7 +358,7 @@ func Initialize(ctx context.Context, client *clientv3.Client, db *pgxpool.Pool, 
 		AssetGetter:            assetGetter,
 		Executor:               command.NewExecutor(),
 		SecretsProviderManager: b.SecretsProviderManager,
-		Store:                  b.Store,
+		Store:                  b.ConfigStore,
 		StoreTimeout:           storeTimeout,
 	}
 	onlyCheckOutputMutatorAdapter := &mutator.OnlyCheckOutputAdapter{}
@@ -366,7 +376,7 @@ func Initialize(ctx context.Context, client *clientv3.Client, db *pgxpool.Pool, 
 		Executor:               command.NewExecutor(),
 		LicenseGetter:          b.LicenseGetter,
 		SecretsProviderManager: b.SecretsProviderManager,
-		Store:                  b.Store,
+		Store:                  b.ConfigStore,
 		StoreTimeout:           storeTimeout,
 	}
 
@@ -381,11 +391,11 @@ func Initialize(ctx context.Context, client *clientv3.Client, db *pgxpool.Pool, 
 	event, err := eventd.New(
 		ctx,
 		eventd.Config{
-			Store:               b.StoreV2,
+			Store:               b.ConfigStore,
 			EventStore:          b.EventStore,
 			Bus:                 bus,
-			LivenessFactory:     liveness.EtcdFactory(ctx, client),
-			Client:              client,
+			LivenessFactory:     liveness.EtcdFactory(ctx, etcdConfigClient),
+			Client:              etcdConfigClient,
 			BufferSize:          viper.GetInt(FlagEventdBufferSize),
 			WorkerCount:         viper.GetInt(FlagEventdWorkers),
 			StoreTimeout:        2 * time.Minute,
@@ -404,11 +414,11 @@ func Initialize(ctx context.Context, client *clientv3.Client, db *pgxpool.Pool, 
 	scheduler, err := schedulerd.New(
 		ctx,
 		schedulerd.Config{
-			Store:                  b.Store,
+			Store:                  b.ConfigStore,
 			Bus:                    bus,
 			QueueGetter:            queueGetter,
 			RingPool:               b.RingPool,
-			Client:                 client,
+			Client:                 etcdConfigClient,
 			SecretsProviderManager: b.SecretsProviderManager,
 		})
 	if err != nil {
@@ -423,9 +433,9 @@ func Initialize(ctx context.Context, client *clientv3.Client, db *pgxpool.Pool, 
 	}
 
 	// Start the entity config watcher, so agentd sessions are notified of updates
-	entityConfigWatcher := agentd.GetEntityConfigWatcher(ctx, client)
+	entityConfigWatcher := agentd.GetEntityConfigWatcher(ctx, b.ConfigStore)
 
-	// Prepare the etcd client TLS config
+	// Prepare the etcd etcdConfigClient TLS config
 	etcdClientTLSInfo := (transport.TLSInfo)(config.Store.EtcdConfigurationStore.ClientTLSInfo)
 	etcdClientTLSConfig, err := etcdClientTLSInfo.ClientConfig()
 	if err != nil {
@@ -435,13 +445,13 @@ func Initialize(ctx context.Context, client *clientv3.Client, db *pgxpool.Pool, 
 
 	// Initialize keepalived
 	keepalive, err := keepalived.New(keepalived.Config{
-		Client:                client,
+		Client:                etcdConfigClient,
 		DeregistrationHandler: config.DeregistrationHandler,
 		Bus:                   bus,
-		Store:                 b.Store,
-		StoreV2:               b.StoreV2,
+		Store:                 b.ConfigStore,
 		EventStore:            b.EventStore,
-		LivenessFactory:       liveness.EtcdFactory(ctx, client),
+		KeepaliveStore:        b.KeepaliveStore,
+		LivenessFactory:       liveness.EtcdFactory(ctx, etcdConfigClient),
 		RingPool:              b.RingPool,
 		BufferSize:            viper.GetInt(FlagKeepalivedBufferSize),
 		WorkerCount:           viper.GetInt(FlagKeepalivedWorkers),
@@ -456,7 +466,7 @@ func Initialize(ctx context.Context, client *clientv3.Client, db *pgxpool.Pool, 
 	authenticator := &authentication.Authenticator{}
 	provider := &basic.Provider{
 		ObjectMeta: corev2.ObjectMeta{Name: basic.Type},
-		Store:      b.Store,
+		Store:      b.ConfigStore,
 	}
 	authenticator.AddProvider(provider)
 
@@ -464,9 +474,9 @@ func Initialize(ctx context.Context, client *clientv3.Client, db *pgxpool.Pool, 
 
 	if !config.DevMode {
 		// get cluster version from first available etcd endpoint
-		endpoints := client.Endpoints()
+		endpoints := etcdConfigClient.Endpoints()
 		for _, ep := range endpoints {
-			status, err := client.Status(ctx, ep)
+			status, err := etcdConfigClient.Status(ctx, ep)
 			if err != nil {
 				logger.WithError(err).Error("error getting etcd cluster version info")
 				continue
@@ -475,7 +485,7 @@ func Initialize(ctx context.Context, client *clientv3.Client, db *pgxpool.Pool, 
 			break
 		}
 	} else {
-		status, err := client.Status(ctx, "http://127.0.0.1:2379")
+		status, err := etcdConfigClient.Status(ctx, "http://127.0.0.1:2379")
 		if err != nil {
 			logger.WithError(err).Error("error getting etcd cluster info")
 		} else {
@@ -489,26 +499,26 @@ func Initialize(ctx context.Context, client *clientv3.Client, db *pgxpool.Pool, 
 	}
 
 	// Initialize the health router
-	b.HealthRouter = routers.NewHealthRouter(actions.NewHealthController(b.Store, client.Cluster, b.EtcdClientTLSConfig))
+	b.HealthRouter = routers.NewHealthRouter(actions.HealthController{})
 
 	// Initialize GraphQL service
 	b.GraphQLService, err = graphql.NewService(graphql.ServiceConfig{
-		AssetClient:       api.NewAssetClient(b.Store, auth),
-		CheckClient:       api.NewCheckClient(b.Store, actions.NewCheckController(b.Store, queueGetter), auth),
-		EntityClient:      api.NewEntityClient(b.Store, b.StoreV2, b.Store, auth),
-		EventClient:       api.NewEventClient(b.Store, auth, bus),
-		EventFilterClient: api.NewEventFilterClient(b.Store, auth),
-		HandlerClient:     api.NewHandlerClient(b.Store, auth),
-		HealthController:  actions.NewHealthController(b.Store, client.Cluster, etcdClientTLSConfig),
-		MutatorClient:     api.NewMutatorClient(b.Store, auth),
-		SilencedClient:    api.NewSilencedClient(b.Store, auth),
-		NamespaceClient:   api.NewNamespaceClient(b.Store, b.Store, auth, b.StoreV2),
-		HookClient:        api.NewHookConfigClient(b.Store, auth),
-		UserClient:        api.NewUserClient(b.Store, auth),
-		RBACClient:        api.NewRBACClient(b.Store, auth),
+		AssetClient:       api.NewAssetClient(b.ConfigStore, auth),
+		CheckClient:       api.NewCheckClient(b.ConfigStore, actions.NewCheckController(b.ConfigStore, queueGetter), auth),
+		EntityClient:      api.NewEntityClient(b.EntityStore, b.ConfigStore, b.EventStore, auth),
+		EventClient:       api.NewEventClient(b.EventStore, auth, bus),
+		EventFilterClient: api.NewEventFilterClient(b.ConfigStore, auth),
+		HandlerClient:     api.NewHandlerClient(b.ConfigStore, auth),
+		HealthController:  actions.HealthController{},
+		MutatorClient:     api.NewMutatorClient(b.ConfigStore, auth),
+		SilencedClient:    api.NewSilencedClient(b.SilenceStore, auth),
+		NamespaceClient:   api.NewNamespaceClient(b.ConfigStore, auth),
+		HookClient:        api.NewHookConfigClient(b.ConfigStore, auth),
+		UserClient:        api.NewUserClient(b.ConfigStore, auth),
+		RBACClient:        api.NewRBACClient(b.ConfigStore, auth),
 		VersionController: actions.NewVersionController(clusterVersion),
 		MetricGatherer:    prometheus.DefaultGatherer,
-		GenericClient:     &api.GenericClient{Store: b.Store, Auth: auth},
+		GenericClient:     &api.GenericClient{Store: b.ConfigStore, Auth: auth},
 	})
 	if err != nil {
 		return nil, fmt.Errorf("error initializing graphql.Service: %s", err)
@@ -521,12 +531,11 @@ func Initialize(ctx context.Context, client *clientv3.Client, db *pgxpool.Pool, 
 		WriteTimeout:        config.APIWriteTimeout,
 		URL:                 config.APIURL,
 		Bus:                 bus,
-		Store:               b.Store,
-		Storev2:             b.StoreV2,
+		Store:               b.ConfigStore,
 		EventStore:          b.EventStore,
 		QueueGetter:         queueGetter,
 		TLS:                 config.TLS,
-		Cluster:             client.Cluster,
+		Cluster:             etcdConfigClient.Cluster,
 		EtcdClientTLSConfig: etcdClientTLSConfig,
 		Authenticator:       authenticator,
 		ClusterVersion:      clusterVersion,
@@ -543,11 +552,12 @@ func Initialize(ctx context.Context, client *clientv3.Client, db *pgxpool.Pool, 
 	tessen, err := tessend.New(
 		ctx,
 		tessend.Config{
-			Store:      b.Store,
+			Store:      b.ConfigStore,
 			EventStore: b.EventStore,
 			RingPool:   b.RingPool,
-			Client:     client,
+			Client:     etcdConfigClient,
 			Bus:        bus,
+			ClusterID:  clusterID,
 		})
 	if err != nil {
 		return nil, fmt.Errorf("error initializing %s: %s", tessen.Name(), err)
@@ -556,16 +566,16 @@ func Initialize(ctx context.Context, client *clientv3.Client, db *pgxpool.Pool, 
 
 	// Initialize agentd
 	agent, err := agentd.New(agentd.Config{
-		Host:                config.AgentHost,
-		Port:                config.AgentPort,
-		Bus:                 bus,
-		Store:               b.Store,
-		TLS:                 config.AgentTLSOptions,
-		RingPool:            b.RingPool,
-		WriteTimeout:        config.AgentWriteTimeout,
-		Client:              client,
-		Watcher:             entityConfigWatcher,
-		EtcdClientTLSConfig: b.EtcdClientTLSConfig,
+		Host:          config.AgentHost,
+		Port:          config.AgentPort,
+		Bus:           bus,
+		Store:         b.ConfigStore,
+		TLS:           config.AgentTLSOptions,
+		RingPool:      b.RingPool,
+		WriteTimeout:  config.AgentWriteTimeout,
+		Watcher:       entityConfigWatcher,
+		HealthRouter:  b.HealthRouter,
+		Authenticator: authenticator,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("error initializing %s: %s", agent.Name(), err)
@@ -720,13 +730,13 @@ type errGroup struct {
 
 func (e *errGroup) Go(ctx context.Context) {
 	e.wg.Add(len(e.daemons))
-	for _, daemon := range e.daemons {
-		daemon := daemon
+	for _, d := range e.daemons {
+		d := d
 		go func() {
 			defer e.wg.Done()
 			select {
-			case err := <-daemon.Err():
-				err = fmt.Errorf("error from %s: %s", daemon.Name(), err)
+			case err := <-d.Err():
+				err = fmt.Errorf("error from %s: %s", d.Name(), err)
 				select {
 				case e.out <- err:
 				case <-ctx.Done():

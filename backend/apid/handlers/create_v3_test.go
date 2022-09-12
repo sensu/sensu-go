@@ -17,7 +17,7 @@ import (
 	"github.com/stretchr/testify/mock"
 )
 
-func TestHandlers_CreateV3Resource(t *testing.T) {
+func TestHandlers_CreateResource(t *testing.T) {
 	tests := []struct {
 		name      string
 		body      []byte
@@ -43,7 +43,7 @@ func TestHandlers_CreateV3Resource(t *testing.T) {
 			name: "store err, already exists",
 			body: marshal(t, fixture.V3Resource{Metadata: &corev2.ObjectMeta{}}),
 			storeFunc: func(s *mockstore.V2MockStore) {
-				s.On("CreateIfNotExists", mock.Anything, mock.Anything).
+				s.On("CreateIfNotExists", mock.Anything, mock.Anything, mock.Anything).
 					Return(&store.ErrAlreadyExists{})
 			},
 			wantErr: true,
@@ -52,7 +52,7 @@ func TestHandlers_CreateV3Resource(t *testing.T) {
 			name: "store err, not valid",
 			body: marshal(t, fixture.V3Resource{Metadata: &corev2.ObjectMeta{}}),
 			storeFunc: func(s *mockstore.V2MockStore) {
-				s.On("CreateIfNotExists", mock.Anything, mock.Anything).
+				s.On("CreateIfNotExists", mock.Anything, mock.Anything, mock.Anything).
 					Return(&store.ErrNotValid{Err: errors.New("error")})
 			},
 			wantErr: true,
@@ -61,7 +61,7 @@ func TestHandlers_CreateV3Resource(t *testing.T) {
 			name: "store err, default",
 			body: marshal(t, fixture.V3Resource{Metadata: &corev2.ObjectMeta{}}),
 			storeFunc: func(s *mockstore.V2MockStore) {
-				s.On("CreateIfNotExists", mock.Anything, mock.Anything).
+				s.On("CreateIfNotExists", mock.Anything, mock.Anything, mock.Anything).
 					Return(&store.ErrInternal{})
 			},
 			wantErr: true,
@@ -70,7 +70,7 @@ func TestHandlers_CreateV3Resource(t *testing.T) {
 			name: "successful create",
 			body: marshal(t, fixture.V3Resource{Metadata: &corev2.ObjectMeta{}}),
 			storeFunc: func(s *mockstore.V2MockStore) {
-				s.On("CreateIfNotExists", mock.Anything, mock.Anything).
+				s.On("CreateIfNotExists", mock.Anything, mock.Anything, mock.Anything).
 					Return(nil)
 			},
 		},
@@ -83,16 +83,16 @@ func TestHandlers_CreateV3Resource(t *testing.T) {
 			}
 
 			h := Handlers{
-				V3Resource: &fixture.V3Resource{},
-				StoreV2:    store,
+				Resource: &fixture.V3Resource{},
+				Store:    store,
 			}
 
 			r, _ := http.NewRequest(http.MethodPost, "/", bytes.NewReader(tt.body))
 			r = mux.SetURLVars(r, tt.urlVars)
 
-			_, err := h.CreateV3Resource(r)
+			_, err := h.CreateResource(r)
 			if (err != nil) != tt.wantErr {
-				t.Errorf("Handlers.CreateV3Resource() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("Handlers.CreateResource() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
 		})
@@ -107,15 +107,15 @@ func TestV3CreatedByCreate(t *testing.T) {
 
 	store := &mockstore.V2MockStore{}
 	h := Handlers{
-		V3Resource: &fixture.V3Resource{},
-		StoreV2:    store,
+		Resource: &fixture.V3Resource{},
+		Store:    store,
 	}
 
-	store.On("CreateIfNotExists", mock.Anything, mock.Anything).Return(nil)
+	store.On("CreateIfNotExists", mock.Anything, mock.Anything, mock.Anything).Return(nil)
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, "/", bytes.NewReader(body))
 	assert.NoError(t, err)
 
-	_, err = h.CreateV3Resource(req)
+	_, err = h.CreateResource(req)
 	assert.NoError(t, err)
 }

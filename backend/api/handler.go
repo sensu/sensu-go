@@ -6,6 +6,7 @@ import (
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/authorization"
 	"github.com/sensu/sensu-go/backend/store"
+	storev2 "github.com/sensu/sensu-go/backend/store/v2"
 )
 
 // HandlerClient is an API client for handlers.
@@ -15,7 +16,7 @@ type HandlerClient struct {
 }
 
 // NewHandlerClient creates a new HandlerClient, given a store and authorizer.
-func NewHandlerClient(store store.ResourceStore, auth authorization.Authorizer) *HandlerClient {
+func NewHandlerClient(store storev2.Interface, auth authorization.Authorizer) *HandlerClient {
 	return &HandlerClient{
 		client: GenericClient{
 			Kind:       &corev2.Handler{},

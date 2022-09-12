@@ -6,6 +6,7 @@ import (
 
 	"github.com/gorilla/mux"
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
+	corev3 "github.com/sensu/sensu-go/api/core/v3"
 )
 
 // TessenController represents the controller needs of the TessenRouter.
@@ -37,7 +38,7 @@ func (r *TessenRouter) Mount(parent *mux.Router) {
 	routes.Path("", r.createOrUpdate).Methods(http.MethodPut)
 }
 
-func (r *TessenRouter) createOrUpdate(req *http.Request) (interface{}, error) {
+func (r *TessenRouter) createOrUpdate(req *http.Request) (corev3.Resource, error) {
 	obj := &corev2.TessenConfig{}
 	if err := UnmarshalBody(req, &obj); err != nil {
 		return nil, err
@@ -47,7 +48,7 @@ func (r *TessenRouter) createOrUpdate(req *http.Request) (interface{}, error) {
 	return obj, err
 }
 
-func (r *TessenRouter) get(req *http.Request) (interface{}, error) {
+func (r *TessenRouter) get(req *http.Request) (corev3.Resource, error) {
 	obj, err := r.controller.Get(req.Context())
 	return obj, err
 }
@@ -79,12 +80,12 @@ func (r *TessenMetricRouter) Mount(parent *mux.Router) {
 	routes.Path("", r.publish).Methods(http.MethodPost)
 }
 
-func (r *TessenMetricRouter) publish(req *http.Request) (interface{}, error) {
+func (r *TessenMetricRouter) publish(req *http.Request) (corev3.Resource, error) {
 	obj := []corev2.MetricPoint{}
 	if err := UnmarshalBody(req, &obj); err != nil {
 		return nil, err
 	}
 
 	err := r.controller.Publish(req.Context(), obj)
-	return obj, err
+	return nil, err
 }

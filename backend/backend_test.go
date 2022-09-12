@@ -12,7 +12,8 @@ import (
 
 	"github.com/sensu/sensu-go/backend/etcd"
 	"github.com/sensu/sensu-go/backend/seeds"
-	etcdstore "github.com/sensu/sensu-go/backend/store/etcd"
+	etcdstorev1 "github.com/sensu/sensu-go/backend/store/etcd"
+	etcdstorev2 "github.com/sensu/sensu-go/backend/store/v2/etcdstore"
 	"github.com/sensu/sensu-go/testing/testutil"
 	"github.com/sensu/sensu-go/transport"
 	"github.com/sensu/sensu-go/types"
@@ -38,7 +39,6 @@ func retryConnect(t *testing.T, address string) {
 }
 
 func TestBackendHTTPListener(t *testing.T) {
-	// tt = Test Table
 	tt := []struct {
 		name       string
 		httpScheme string
@@ -52,7 +52,6 @@ func TestBackendHTTPListener(t *testing.T) {
 			TrustedCAFile:      "../util/ssl/ca.pem",
 			InsecureSkipVerify: false}},
 	}
-	// tc = Test Case
 	for _, tc := range tt {
 		t.Run(tc.name, func(t *testing.T) {
 			dataPath, remove := testutil.TempDir(t)
@@ -86,7 +85,7 @@ func TestBackendHTTPListener(t *testing.T) {
 				DevMode:                true,
 				DisablePlatformMetrics: true,
 				Store: StoreConfig{
-					EtcdConfigurationStore: etcdstore.Config{
+					EtcdConfigurationStore: etcdstorev1.Config{
 						URLs:          []string{clURL},
 						ClientTLSInfo: tlsInfo,
 						LogLevel:      "error",
@@ -101,15 +100,15 @@ func TestBackendHTTPListener(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			defer client.Close()
+			defer func() { _ = client.Close() }()
 
 			// note that the pg db is nil, which is fine when DevMode is enabled
-			b, err := Initialize(ctx, client, nil, cfg)
+			b, err := Initialize(ctx, client, nil, nil, cfg)
 			if err != nil {
 				t.Fatalf("failed to start backend: %s", err)
 			}
 
-			store := etcdstore.NewStore(client)
+			store := etcdstorev2.NewStore(client)
 			if err := seeds.SeedInitialDataWithContext(context.Background(), store); err != nil {
 				t.Fatal(err)
 			}

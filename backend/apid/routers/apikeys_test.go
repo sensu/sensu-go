@@ -9,14 +9,15 @@ import (
 
 	"github.com/gorilla/mux"
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
+	"github.com/sensu/sensu-go/backend/store"
+	storev2 "github.com/sensu/sensu-go/backend/store/v2"
 	"github.com/sensu/sensu-go/testing/mockstore"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
 
 func TestAPIKeysRouter(t *testing.T) {
-	s := &mockstore.MockStore{}
-	s.On("GetUser", mock.Anything, mock.Anything).Return(corev2.FixtureUser("admin"), nil)
+	s := &mockstore.V2MockStore{}
 	router := NewAPIKeysRouter(s)
 	parentRouter := mux.NewRouter().PathPrefix(corev2.URLPrefix).Subrouter()
 	router.Mount(parentRouter)
@@ -34,9 +35,9 @@ func TestAPIKeysRouter(t *testing.T) {
 }
 
 func TestPostAPIKey(t *testing.T) {
-	s := &mockstore.MockStore{}
-	s.On("CreateResource", mock.Anything, mock.Anything).Return(nil, nil)
-	s.On("GetUser", mock.Anything, mock.Anything).Return(corev2.FixtureUser("admin"), nil)
+	s := &mockstore.V2MockStore{}
+	s.On("CreateIfNotExists", mock.Anything, mock.Anything, mock.Anything).Return(nil)
+	s.On("Get", mock.Anything, mock.Anything).Return(mockstore.Wrapper[*corev2.User]{Value: corev2.FixtureUser("admin")}, nil)
 	router := NewAPIKeysRouter(s)
 	parentRouter := mux.NewRouter()
 	router.Mount(parentRouter)
@@ -64,10 +65,12 @@ func TestPostAPIKey(t *testing.T) {
 }
 
 func TestPostAPIKeyInvalidUser(t *testing.T) {
-	s := &mockstore.MockStore{}
-	var user *corev2.User
-	s.On("CreateResource", mock.Anything, mock.Anything).Return(nil, nil)
-	s.On("GetUser", mock.Anything, mock.Anything).Return(user, nil)
+	s := &mockstore.V2MockStore{}
+	var user corev2.User
+	user.Username = "admin"
+	s.On("Create", mock.Anything, mock.Anything, mock.Anything).Return(nil)
+	userReq := storev2.NewResourceRequestFromResource(&user)
+	s.On("Get", mock.Anything, userReq).Return(nil, &store.ErrNotFound{})
 	router := NewAPIKeysRouter(s)
 	parentRouter := mux.NewRouter()
 	router.Mount(parentRouter)

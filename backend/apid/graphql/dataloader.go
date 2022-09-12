@@ -8,6 +8,7 @@ import (
 
 	"github.com/graph-gophers/dataloader"
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
+	corev3 "github.com/sensu/sensu-go/api/core/v3"
 	"github.com/sensu/sensu-go/backend/authorization"
 	"github.com/sensu/sensu-go/backend/store"
 )
@@ -329,15 +330,15 @@ func loadNamespacesBatchFn(c NamespaceClient) dataloader.BatchFunc {
 	}
 }
 
-func loadNamespaces(ctx context.Context) ([]*corev2.Namespace, error) {
-	var records []*corev2.Namespace
+func loadNamespaces(ctx context.Context) ([]*corev3.Namespace, error) {
+	var records []*corev3.Namespace
 	loader, err := getLoader(ctx, namespacesLoaderKey)
 	if err != nil {
 		return records, err
 	}
 
 	results, err := loader.Load(ctx, dataloader.StringKey("*"))()
-	records, ok := results.([]*corev2.Namespace)
+	records, ok := results.([]*corev3.Namespace)
 	if err == nil && !ok {
 		err = fmt.Errorf("namespace loader: %s", errUnexpectedLoaderResult)
 	}

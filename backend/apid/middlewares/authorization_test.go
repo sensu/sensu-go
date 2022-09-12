@@ -12,17 +12,19 @@ import (
 
 	"github.com/gorilla/mux"
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
+	corev3 "github.com/sensu/sensu-go/api/core/v3"
 	sensuJWT "github.com/sensu/sensu-go/backend/authentication/jwt"
 	"github.com/sensu/sensu-go/backend/authorization/rbac"
 	"github.com/sensu/sensu-go/backend/seeds"
 	"github.com/sensu/sensu-go/backend/store"
-	"github.com/sensu/sensu-go/backend/store/etcd/testutil"
+	storev2 "github.com/sensu/sensu-go/backend/store/v2"
+	"github.com/sensu/sensu-go/backend/store/v2/etcdstore/testutil"
 	"github.com/sensu/sensu-go/testing/mockstore"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
 
-func seedStore(t *testing.T, store store.Store) {
+func seedStore(t *testing.T, store storev2.Interface) {
 	t.Helper()
 
 	if err := seeds.SeedInitialDataWithContext(context.Background(), store); err != nil {
@@ -45,9 +47,6 @@ func seedStore(t *testing.T, store store.Store) {
 			},
 		},
 	}
-	if err := store.CreateClusterRoleBinding(context.Background(), localAdmins); err != nil {
-		t.Fatalf("Could not add the admin ClusterRoleBinding: %s", err)
-	}
 
 	admins := &corev2.RoleBinding{
 		ObjectMeta: corev2.NewObjectMeta("admin", "default"),
@@ -61,9 +60,6 @@ func seedStore(t *testing.T, store store.Store) {
 				Name: "admins",
 			},
 		},
-	}
-	if err := store.CreateRoleBinding(context.Background(), admins); err != nil {
-		t.Fatalf("Could not add the admin RoleBinding: %s", err)
 	}
 
 	editors := &corev2.RoleBinding{
@@ -79,9 +75,6 @@ func seedStore(t *testing.T, store store.Store) {
 			},
 		},
 	}
-	if err := store.CreateRoleBinding(context.Background(), editors); err != nil {
-		t.Fatalf("Could not add the edit RoleBinding: %s", err)
-	}
 
 	viewers := &corev2.RoleBinding{
 		ObjectMeta: corev2.NewObjectMeta("view", "default"),
@@ -96,9 +89,6 @@ func seedStore(t *testing.T, store store.Store) {
 			},
 		},
 	}
-	if err := store.CreateRoleBinding(context.Background(), viewers); err != nil {
-		t.Fatalf("Could not add the view RoleBinding: %s", err)
-	}
 
 	fooViewerRole := &corev2.Role{
 		ObjectMeta: corev2.NewObjectMeta("foo-viewer", "default"),
@@ -109,9 +99,6 @@ func seedStore(t *testing.T, store store.Store) {
 				ResourceNames: []string{"foo"},
 			},
 		},
-	}
-	if err := store.CreateRole(context.Background(), fooViewerRole); err != nil {
-		t.Fatalf("Could not add the foo-viewer Role: %s", err)
 	}
 
 	fooViewerRoleBinding := &corev2.RoleBinding{
@@ -127,9 +114,6 @@ func seedStore(t *testing.T, store store.Store) {
 			},
 		},
 	}
-	if err := store.CreateRoleBinding(context.Background(), fooViewerRoleBinding); err != nil {
-		t.Fatalf("Could not add the foo-viewer RoleBinding: %s", err)
-	}
 
 	rwRoleBinding := &corev2.RoleBinding{
 		ObjectMeta: corev2.NewObjectMeta("rw", "default"),
@@ -144,9 +128,6 @@ func seedStore(t *testing.T, store store.Store) {
 			},
 		},
 	}
-	if err := store.CreateRoleBinding(context.Background(), rwRoleBinding); err != nil {
-		t.Fatalf("Could not add the rw RoleBinding: %s", err)
-	}
 
 	rwRole := &corev2.Role{
 		ObjectMeta: corev2.NewObjectMeta("rw", "default"),
@@ -157,8 +138,27 @@ func seedStore(t *testing.T, store store.Store) {
 			},
 		},
 	}
-	if err := store.CreateRole(context.Background(), rwRole); err != nil {
-		t.Fatalf("Could not add the rw Role: %s", err)
+
+	resources := []corev3.Resource{
+		localAdmins,
+		admins,
+		editors,
+		viewers,
+		fooViewerRole,
+		fooViewerRoleBinding,
+		rwRoleBinding,
+		rwRole,
+	}
+
+	for i, resource := range resources {
+		req := storev2.NewResourceRequestFromResource(resource)
+		wrapper, err := storev2.WrapResource(resource)
+		if err != nil {
+			t.Fatalf("error wrapping resource %d: %s", i, err)
+		}
+		if err := store.CreateIfNotExists(context.Background(), req, wrapper); err != nil {
+			t.Fatalf("error creating resource %d: %s", i, err)
+		}
 	}
 }
 
@@ -643,11 +643,15 @@ func getFaultyRoleBinding() *corev2.RoleBinding {
 }
 
 func TestRoleNotFound_GH4268(t *testing.T) {
-	store := new(mockstore.MockStore)
+	st := new(mockstore.V2MockStore)
 	faultyRoleBindings := []*corev2.RoleBinding{getFaultyRoleBinding()}
-	store.On("ListRoleBindings", mock.Anything, mock.Anything).Return(faultyRoleBindings, nil)
-	store.On("ListClusterRoleBindings", mock.Anything, mock.Anything).Return([]*corev2.ClusterRoleBinding{}, nil)
-	store.On("GetRole", mock.Anything, mock.Anything).Return((*corev2.Role)(nil), nil)
+	rb := &corev2.RoleBinding{}
+	rb.Namespace = "default"
+	rbListReq := storev2.NewResourceRequestFromResource(rb)
+	st.On("List", mock.Anything, rbListReq, mock.Anything).Return(mockstore.WrapList[*corev2.RoleBinding](faultyRoleBindings), nil)
+	crbListReq := storev2.NewResourceRequestFromResource(new(corev2.ClusterRoleBinding))
+	st.On("List", mock.Anything, crbListReq, mock.Anything).Return(mockstore.WrapList[*corev2.ClusterRoleBinding](nil), nil)
+	st.On("Get", mock.Anything, mock.Anything).Return(nil, &store.ErrNotFound{})
 
 	// testHandler is a catch-all handler that returns 200 OK
 	testHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
@@ -671,7 +675,7 @@ func TestRoleNotFound_GH4268(t *testing.T) {
 	// Prepare our middlewares
 	namespaceMiddleware := Namespace{}
 	attributesMiddleware := AuthorizationAttributes{}
-	authorizationMiddleware := Authorization{Authorizer: &rbac.Authorizer{Store: store}}
+	authorizationMiddleware := Authorization{Authorizer: &rbac.Authorizer{Store: st}}
 
 	// Prepare the router
 	router := mux.NewRouter()

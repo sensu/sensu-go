@@ -10,19 +10,26 @@ import (
 	"github.com/gogo/protobuf/proto"
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	corev3 "github.com/sensu/sensu-go/api/core/v3"
+	"github.com/sensu/sensu-go/backend/etcd"
+	"github.com/sensu/sensu-go/backend/seeds"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/backend/store/etcd/kvc"
 	"github.com/sensu/sensu-go/backend/store/patch"
 	storev2 "github.com/sensu/sensu-go/backend/store/v2"
 	"github.com/sensu/sensu-go/backend/store/v2/wrap"
 	clientv3 "go.etcd.io/etcd/client/v3"
+	"go.etcd.io/etcd/client/v3/concurrency"
 )
 
 var (
 	_ storev2.Interface = new(Store)
 )
 
-const namespaceIndexStoreName = "internal/storev2/namespaces"
+const (
+	initializationLockKey   = ".initialized.lock"
+	initializationKey       = ".initialized"
+	namespaceIndexStoreName = "internal/storev2/namespaces"
+)
 
 // ComputeContinueToken calculates a continue token based on the given resource.
 // The resource can be a core/v2 or a core/v3 resource.
@@ -90,7 +97,7 @@ func NewStore(client *clientv3.Client) *Store {
 	return store
 }
 
-func (s *Store) CreateOrUpdate(req storev2.ResourceRequest, wrapper storev2.Wrapper) error {
+func (s *Store) CreateOrUpdate(ctx context.Context, req storev2.ResourceRequest, wrapper storev2.Wrapper) error {
 	key := StoreKey(req)
 	if err := req.Validate(); err != nil {
 		return &store.ErrNotValid{Err: err}
@@ -117,10 +124,10 @@ func (s *Store) CreateOrUpdate(req storev2.ResourceRequest, wrapper storev2.Wrap
 		ops = append(ops, namespaceOp)
 	}
 
-	return kvc.Txn(req.Context, s.client, comparator, ops...)
+	return kvc.Txn(ctx, s.client, comparator, ops...)
 }
 
-func (s *Store) Patch(req storev2.ResourceRequest, wrapper storev2.Wrapper, patcher patch.Patcher, conditions *store.ETagCondition) error {
+func (s *Store) Patch(ctx context.Context, req storev2.ResourceRequest, wrapper storev2.Wrapper, patcher patch.Patcher, conditions *store.ETagCondition) error {
 	if err := req.Validate(); err != nil {
 		return &store.ErrNotValid{Err: err}
 	}
@@ -134,7 +141,7 @@ func (s *Store) Patch(req storev2.ResourceRequest, wrapper storev2.Wrapper, patc
 
 	// Get the stored resource along with the etcd response so we can use the
 	// revision later to ensure the resource wasn't modified in the mean time
-	resp, err := s.GetWithResponse(req)
+	resp, err := s.GetWithResponse(ctx, req)
 	if err != nil {
 		return err
 	}
@@ -204,10 +211,10 @@ func (s *Store) Patch(req storev2.ResourceRequest, wrapper storev2.Wrapper, patc
 		kvc.KeyHasValue(key, value),
 	}
 
-	return s.Update(req, w, comparisons...)
+	return s.Update(ctx, req, w, comparisons...)
 }
 
-func (s *Store) UpdateIfExists(req storev2.ResourceRequest, wrapper storev2.Wrapper) error {
+func (s *Store) UpdateIfExists(ctx context.Context, req storev2.ResourceRequest, wrapper storev2.Wrapper) error {
 	w, ok := wrapper.(*wrap.Wrapper)
 	if !ok {
 		return &store.ErrNotValid{Err: fmt.Errorf("etcdstore only works with wrap.Wrapper, not %T", wrapper)}
@@ -218,10 +225,10 @@ func (s *Store) UpdateIfExists(req storev2.ResourceRequest, wrapper storev2.Wrap
 		kvc.KeyIsFound(key),
 	}
 
-	return s.Update(req, w, comparisons...)
+	return s.Update(ctx, req, w, comparisons...)
 }
 
-func (s *Store) Update(req storev2.ResourceRequest, wrapper storev2.Wrapper, comparisons ...kvc.Predicate) error {
+func (s *Store) Update(ctx context.Context, req storev2.ResourceRequest, wrapper storev2.Wrapper, comparisons ...kvc.Predicate) error {
 	w, ok := wrapper.(*wrap.Wrapper)
 	if !ok {
 		return &store.ErrNotValid{Err: fmt.Errorf("etcdstore only works with wrap.Wrapper, not %T", wrapper)}
@@ -239,10 +246,10 @@ func (s *Store) Update(req storev2.ResourceRequest, wrapper storev2.Wrapper, com
 	comparator := kvc.Comparisons(comparisons...)
 	op := clientv3.OpPut(key, string(msg))
 
-	return kvc.Txn(req.Context, s.client, comparator, op)
+	return kvc.Txn(ctx, s.client, comparator, op)
 }
 
-func (s *Store) CreateIfNotExists(req storev2.ResourceRequest, wrapper storev2.Wrapper) error {
+func (s *Store) CreateIfNotExists(ctx context.Context, req storev2.ResourceRequest, wrapper storev2.Wrapper) error {
 	w, ok := wrapper.(*wrap.Wrapper)
 	if !ok {
 		return &store.ErrNotValid{Err: fmt.Errorf("etcdstore only works with wrap.Wrapper, not %T", wrapper)}
@@ -269,12 +276,12 @@ func (s *Store) CreateIfNotExists(req storev2.ResourceRequest, wrapper storev2.W
 		ops = append(ops, namespaceOp)
 	}
 
-	return kvc.Txn(req.Context, s.client, comparator, ops...)
+	return kvc.Txn(ctx, s.client, comparator, ops...)
 }
 
-func (s *Store) Get(req storev2.ResourceRequest) (storev2.Wrapper, error) {
+func (s *Store) Get(ctx context.Context, req storev2.ResourceRequest) (storev2.Wrapper, error) {
 	key := StoreKey(req)
-	resp, err := s.GetWithResponse(req)
+	resp, err := s.GetWithResponse(ctx, req)
 	if err != nil {
 		return nil, err
 	}
@@ -286,12 +293,11 @@ func (s *Store) Get(req storev2.ResourceRequest) (storev2.Wrapper, error) {
 	return &wrapper, nil
 }
 
-func (s *Store) GetWithResponse(req storev2.ResourceRequest) (*clientv3.GetResponse, error) {
+func (s *Store) GetWithResponse(ctx context.Context, req storev2.ResourceRequest) (*clientv3.GetResponse, error) {
 	key := StoreKey(req)
 	if err := req.Validate(); err != nil {
 		return nil, &store.ErrNotValid{Err: err}
 	}
-	ctx := req.Context
 	var resp *clientv3.GetResponse
 	err := kvc.Backoff(ctx).Retry(func(n int) (done bool, err error) {
 		resp, err = s.client.Get(ctx, key, clientv3.WithLimit(1), clientv3.WithSerializable())
@@ -307,7 +313,7 @@ func (s *Store) GetWithResponse(req storev2.ResourceRequest) (*clientv3.GetRespo
 	return resp, nil
 }
 
-func (s *Store) Delete(req storev2.ResourceRequest) error {
+func (s *Store) Delete(ctx context.Context, req storev2.ResourceRequest) error {
 	key := StoreKey(req)
 	if err := req.Validate(); err != nil {
 		return &store.ErrNotValid{Err: err}
@@ -324,10 +330,10 @@ func (s *Store) Delete(req storev2.ResourceRequest) error {
 		ops = append(ops, namespaceOp)
 	}
 
-	return kvc.Txn(req.Context, s.client, comparator, ops...)
+	return kvc.Txn(ctx, s.client, comparator, ops...)
 }
 
-func (s *Store) List(req storev2.ResourceRequest, pred *store.SelectionPredicate) (storev2.WrapList, error) {
+func (s *Store) List(ctx context.Context, req storev2.ResourceRequest, pred *store.SelectionPredicate) (storev2.WrapList, error) {
 	// For any list request, the name must be zeroed out so that the key can
 	// be correctly generated.
 	req.Name = ""
@@ -335,7 +341,6 @@ func (s *Store) List(req storev2.ResourceRequest, pred *store.SelectionPredicate
 	if err := req.Validate(); err != nil {
 		return nil, &store.ErrNotValid{Err: err}
 	}
-	ctx := req.Context
 	if pred == nil {
 		pred = &store.SelectionPredicate{}
 	}
@@ -389,12 +394,11 @@ func (s *Store) List(req storev2.ResourceRequest, pred *store.SelectionPredicate
 	return result, nil
 }
 
-func (s *Store) Exists(req storev2.ResourceRequest) (bool, error) {
+func (s *Store) Exists(ctx context.Context, req storev2.ResourceRequest) (bool, error) {
 	key := StoreKey(req)
 	if err := req.Validate(); err != nil {
 		return false, &store.ErrNotValid{Err: err}
 	}
-	ctx := req.Context
 	var resp *clientv3.GetResponse
 	err := kvc.Backoff(ctx).Retry(func(n int) (done bool, err error) {
 		resp, err = s.client.Get(ctx, key, clientv3.WithLimit(1), clientv3.WithSerializable(), clientv3.WithCountOnly())
@@ -406,42 +410,100 @@ func (s *Store) Exists(req storev2.ResourceRequest) (bool, error) {
 	return resp.Count > 0, nil
 }
 
-func (s *Store) CreateNamespace(ctx context.Context, namespace *corev3.Namespace) error {
-	wrapped, err := wrap.Resource(namespace)
-	if err != nil {
-		return &store.ErrNotValid{Err: fmt.Errorf("etcdstore could not wrap namespace resource: %v", err)}
-	}
-
-	key := store.NewKeyBuilder(namespace.StoreName()).Build(namespace.Metadata.Name)
-	msg, err := proto.Marshal(wrapped)
-	if err != nil {
-		return &store.ErrEncode{Key: key, Err: err}
-	}
-
-	comparator := kvc.Comparisons(
-		kvc.KeyIsNotFound(key),
-		kvc.NamespaceExists(""),
-	)
-	op := clientv3.OpPut(key, string(msg))
-
-	return kvc.Txn(ctx, s.client, comparator, op)
+func (s *Store) NamespaceStore() storev2.NamespaceStore {
+	return NewNamespaceStore(s.client)
 }
 
-func (s *Store) DeleteNamespace(ctx context.Context, namespace string) error {
-	key := store.NewKeyBuilder(namespaceIndexStoreName).Build(namespace)
-	var resp *clientv3.GetResponse
-	err := kvc.Backoff(ctx).Retry(func(n int) (done bool, err error) {
-		resp, err = s.client.Get(ctx, key, clientv3.WithPrefix(), clientv3.WithCountOnly())
-		return kvc.RetryRequest(n, err)
-	})
+func (s *Store) EntityConfigStore() storev2.EntityConfigStore {
+	return NewEntityConfigStore(s.client)
+}
+
+func (s *Store) EntityStateStore() storev2.EntityStateStore {
+	return NewEntityStateStore(s.client)
+}
+
+func (s *Store) Initialize(ctx context.Context, fn storev2.InitializeFunc) (fErr error) {
+	// Check that the store hasn't already been initialized
+	initialized, err := s.isInitialized(ctx)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to check if cluster has been initialized: %w", err)
 	}
-	if resp.Count > 0 {
-		return fmt.Errorf("cannot delete namespace %s: namespace not empty", namespace)
+
+	if initialized {
+		logger.Info("store already initialized")
+		return seeds.ErrAlreadyInitialized
 	}
-	req := storev2.NewResourceRequest(ctx, "", namespace, "namespaces")
-	return s.Delete(req)
+
+	// Create a lease to associate with the lock
+	resp, err := s.client.Grant(ctx, 2)
+	etcd.LeaseOperationsCounter.WithLabelValues("init", etcd.LeaseOperationTypeGrant, etcd.LeaseStatusFor(err)).Inc()
+	if err != nil {
+		return fmt.Errorf("failed to create etcd lease: %w", err)
+	}
+
+	session, err := concurrency.NewSession(s.client, concurrency.WithLease(resp.ID))
+	etcd.LeaseOperationsCounter.WithLabelValues("init", etcd.LeaseOperationTypePut, etcd.LeaseStatusFor(err)).Inc()
+	if err != nil {
+		return fmt.Errorf("failed to start etcd session: %w", err)
+	}
+
+	mu := concurrency.NewMutex(session, initializationLockKey)
+
+	// Lock initialization key to avoid competing installations
+	if err := mu.Lock(ctx); err != nil {
+		return fmt.Errorf("failed to create initializer lock: %w", err)
+	}
+	defer func() {
+		if err := mu.Unlock(ctx); fErr == nil && err != nil {
+			fErr = fmt.Errorf("failed to unlock initializer mutex: %w", err)
+		}
+		if err := session.Close(); fErr == nil && err != nil {
+			fErr = fmt.Errorf("failed to close initializer session: %w", err)
+		}
+		<-session.Done()
+	}()
+
+	if s.client != nil {
+		// Migrate the cluster to the latest version
+		if err := MigrateDB(ctx, s.client, Migrations); err != nil {
+			logger.WithError(err).Error("error bringing the database to the latest version")
+			return fmt.Errorf("error bringing the database to the latest version: %w", err)
+		}
+		if len(EnterpriseMigrations) > 0 {
+			if err = MigrateEnterpriseDB(ctx, s.client, EnterpriseMigrations); err != nil {
+				logger.WithError(err).Error("error bringing the enterprise database to the latest version")
+				return
+			}
+		}
+	}
+
+	return fn(ctx)
+}
+
+// IsInitialized checks the state of the .initialized key
+func (s *Store) isInitialized(ctx context.Context) (bool, error) {
+	r, err := s.client.Get(ctx, path.Join(store.Root, initializationKey))
+	if err != nil {
+		return false, err
+	}
+
+	// if there is no result, test the fallback and return using same logic
+	if len(r.Kvs) == 0 {
+		fallback, err := s.client.Get(ctx, initializationKey)
+		if err != nil {
+			return false, err
+		} else {
+			return fallback.Count > 0, nil
+		}
+	}
+
+	return r.Count > 0, nil
+}
+
+// FlagAsInitialized - set .initialized key
+func (s *Store) flagAsInitialized(ctx context.Context) error {
+	_, err := s.client.Put(ctx, path.Join(store.Root, initializationKey), "1")
+	return err
 }
 
 func getSortOrder(order storev2.SortOrder) clientv3.SortOrder {

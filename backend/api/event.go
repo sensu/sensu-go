@@ -5,7 +5,6 @@ import (
 	"fmt"
 
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
-	"github.com/sensu/sensu-go/backend/authentication/jwt"
 	"github.com/sensu/sensu-go/backend/authorization"
 	"github.com/sensu/sensu-go/backend/messaging"
 	"github.com/sensu/sensu-go/backend/store"
@@ -52,7 +51,7 @@ func (e *EventClient) UpdateEvent(ctx context.Context, event *corev2.Event) erro
 	if err := authorize(ctx, e.auth, attrs); err != nil {
 		return err
 	}
-	if claims := jwt.GetClaimsFromContext(ctx); claims != nil {
+	if claims := GetClaimsFromContext(ctx); claims != nil {
 		event.CreatedBy = claims.StandardClaims.Subject
 		event.Check.CreatedBy = claims.StandardClaims.Subject
 		event.Entity.CreatedBy = claims.StandardClaims.Subject

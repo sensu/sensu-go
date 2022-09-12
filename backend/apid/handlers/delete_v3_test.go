@@ -29,7 +29,7 @@ func TestHandlers_DeleteV3Resource(t *testing.T) {
 			name:    "store ErrNotFound",
 			urlVars: map[string]string{"id": "foo"},
 			storeFunc: func(s *mockstore.V2MockStore) {
-				s.On("Delete", mock.Anything).
+				s.On("Delete", mock.Anything, mock.Anything).
 					Return(&store.ErrNotFound{})
 			},
 			wantErr: true,
@@ -38,7 +38,7 @@ func TestHandlers_DeleteV3Resource(t *testing.T) {
 			name:    "store ErrInternal",
 			urlVars: map[string]string{"id": "foo"},
 			storeFunc: func(s *mockstore.V2MockStore) {
-				s.On("Delete", mock.Anything).
+				s.On("Delete", mock.Anything, mock.Anything).
 					Return(&store.ErrInternal{})
 			},
 			wantErr: true,
@@ -47,7 +47,7 @@ func TestHandlers_DeleteV3Resource(t *testing.T) {
 			name:    "successful delete",
 			urlVars: map[string]string{"id": "foo"},
 			storeFunc: func(s *mockstore.V2MockStore) {
-				s.On("Delete", mock.Anything).
+				s.On("Delete", mock.Anything, mock.Anything).
 					Return(nil)
 			},
 		},
@@ -60,14 +60,14 @@ func TestHandlers_DeleteV3Resource(t *testing.T) {
 			}
 
 			h := Handlers{
-				V3Resource: &fixture.V3Resource{},
-				StoreV2:    store,
+				Resource: &fixture.V3Resource{},
+				Store:    store,
 			}
 
 			r, _ := http.NewRequest(http.MethodDelete, "/", nil)
 			r = mux.SetURLVars(r, tt.urlVars)
 
-			_, err := h.DeleteV3Resource(r)
+			_, err := h.DeleteResource(r)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("Handlers.DeleteResource() error = %v, wantErr %v", err, tt.wantErr)
 				return

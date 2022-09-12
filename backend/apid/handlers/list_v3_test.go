@@ -28,7 +28,7 @@ func TestHandlers_ListV3Resources(t *testing.T) {
 		{
 			name: "store err",
 			storeFunc: func(s *mockstore.V2MockStore) {
-				s.On("List", mock.Anything, mock.Anything).
+				s.On("List", mock.Anything, mock.Anything, mock.Anything).
 					Return((storev2.WrapList)(nil), &store.ErrInternal{})
 			},
 			want:    []corev3.Resource(nil),
@@ -37,7 +37,7 @@ func TestHandlers_ListV3Resources(t *testing.T) {
 		{
 			name: "sucessful list",
 			storeFunc: func(s *mockstore.V2MockStore) {
-				s.On("List", mock.Anything, mock.Anything).
+				s.On("List", mock.Anything, mock.Anything, mock.Anything).
 					Return(storev2.WrapList(wrap.List{wrapper.(*wrap.Wrapper)}), nil)
 			},
 			want: []corev3.Resource{corev3.Resource(barResource)},
@@ -51,11 +51,11 @@ func TestHandlers_ListV3Resources(t *testing.T) {
 			}
 
 			h := Handlers{
-				V3Resource: &fixture.V3Resource{},
-				StoreV2:    s,
+				Resource: &fixture.V3Resource{},
+				Store:    s,
 			}
 
-			got, err := h.ListV3Resources(context.Background(), &store.SelectionPredicate{})
+			got, err := h.ListResources(context.Background(), &store.SelectionPredicate{})
 			if (err != nil) != tt.wantErr {
 				t.Errorf("Handlers.ListResources() error = %v, wantErr %v", err, tt.wantErr)
 				return

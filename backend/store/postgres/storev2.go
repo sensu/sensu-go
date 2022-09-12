@@ -12,28 +12,19 @@ import (
 	json "github.com/json-iterator/go"
 	corev3 "github.com/sensu/sensu-go/api/core/v3"
 	"github.com/sensu/sensu-go/backend/poll"
+	"github.com/sensu/sensu-go/backend/seeds"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/backend/store/patch"
 	storev2 "github.com/sensu/sensu-go/backend/store/v2"
 	"github.com/sensu/sensu-go/backend/store/v2/etcdstore"
 	"github.com/sensu/sensu-go/backend/store/v2/wrap"
-	"github.com/sensu/sensu-go/util/retry"
-	clientv3 "go.etcd.io/etcd/client/v3"
 )
 
 type StoreV2 struct {
-	db          *pgxpool.Pool
-	etcdStoreV2 storev2.Interface
+	db *pgxpool.Pool
 
 	watchInterval  time.Duration
 	watchTxnWindow time.Duration
-}
-
-func NewStoreV2(pg *pgxpool.Pool, client *clientv3.Client) *StoreV2 {
-	return &StoreV2{
-		db:          pg,
-		etcdStoreV2: etcdstore.NewStore(client),
-	}
 }
 
 type crudOp int
@@ -51,12 +42,6 @@ const (
 	getMultipleQ       crudOp = 9
 	hardDeleteQ        crudOp = 10
 	hardDeletedQ       crudOp = 11
-)
-
-var (
-	entityConfigStoreName = new(corev3.EntityConfig).StoreName()
-	entityStateStoreName  = new(corev3.EntityState).StoreName()
-	namespaceStoreName    = new(corev3.Namespace).StoreName()
 )
 
 type wrapperWithParams interface {
@@ -78,6 +63,8 @@ type wrapperWithStatus interface {
 	SetUpdatedAt(time.Time)
 	SetDeletedAt(sql.NullTime)
 }
+
+type namespacedResourceNames map[string][]string
 
 type resourceRequestWrapperMap map[storev2.ResourceRequest]storev2.Wrapper
 
@@ -110,12 +97,6 @@ func newStoreV2Error(method, storeName string, err error) error {
 func (s *StoreV2) lookupWrapper(req storev2.ResourceRequest, op crudOp) namedWrapperWithParams {
 	storeName := req.StoreName
 	switch storeName {
-	case entityConfigStoreName:
-		return &EntityConfigWrapper{}
-	case entityStateStoreName:
-		return &EntityStateWrapper{}
-	case namespaceStoreName:
-		return &NamespaceWrapper{}
 	default:
 		msg := fmt.Sprintf("no wrapper type defined for store: %s", storeName)
 		panic(msg)
@@ -124,100 +105,8 @@ func (s *StoreV2) lookupWrapper(req storev2.ResourceRequest, op crudOp) namedWra
 
 func (s *StoreV2) lookupQuery(req storev2.ResourceRequest, op crudOp) (string, bool) {
 	storeName := req.StoreName
-	ordering := req.SortOrder
+	//ordering := req.SortOrder
 	switch storeName {
-	case entityConfigStoreName:
-		switch op {
-		case createOrUpdateQ:
-			return createOrUpdateEntityConfigQuery, true
-		case updateIfExistsQ:
-			return updateIfExistsEntityConfigQuery, true
-		case createIfNotExistsQ:
-			return createIfNotExistsEntityConfigQuery, true
-		case getQ:
-			return getEntityConfigQuery, true
-		case getMultipleQ:
-			return getEntityConfigsQuery, true
-		case deleteQ:
-			return deleteEntityConfigQuery, true
-		case hardDeleteQ:
-			return hardDeleteEntityConfigQuery, true
-		case listQ, listAllQ:
-			switch ordering {
-			case storev2.SortDescend:
-				return listEntityConfigDescQuery, true
-			default:
-				return listEntityConfigQuery, true
-			}
-		case existsQ:
-			return existsEntityConfigQuery, true
-		case hardDeletedQ:
-			return hardDeletedEntityConfigQuery, true
-		default:
-			return "", false
-		}
-	case entityStateStoreName:
-		switch op {
-		case createOrUpdateQ:
-			return createOrUpdateEntityStateQuery, true
-		case updateIfExistsQ:
-			return updateIfExistsEntityStateQuery, true
-		case createIfNotExistsQ:
-			return createIfNotExistsEntityStateQuery, true
-		case getQ:
-			return getEntityStateQuery, true
-		case getMultipleQ:
-			return getEntityStatesQuery, true
-		case deleteQ:
-			return deleteEntityStateQuery, true
-		case hardDeleteQ:
-			return hardDeleteEntityStateQuery, true
-		case listQ, listAllQ:
-			switch ordering {
-			case storev2.SortDescend:
-				return listEntityStateDescQuery, true
-			default:
-				return listEntityStateQuery, true
-			}
-		case existsQ:
-			return existsEntityStateQuery, true
-		case hardDeletedQ:
-			return hardDeletedEntityStateQuery, true
-		case patchQ:
-			return patchEntityStateQuery, true
-		default:
-			return "", false
-		}
-	case namespaceStoreName:
-		switch op {
-		case createOrUpdateQ:
-			return createOrUpdateNamespaceQuery, true
-		case updateIfExistsQ:
-			return updateIfExistsNamespaceQuery, true
-		case createIfNotExistsQ:
-			return createIfNotExistsNamespaceQuery, true
-		case getQ:
-			return getNamespaceQuery, true
-		case getMultipleQ:
-			return getNamespacesQuery, true
-		case deleteQ:
-			return deleteNamespaceQuery, true
-		case hardDeleteQ:
-			return hardDeleteNamespaceQuery, true
-		case listQ, listAllQ:
-			switch ordering {
-			case storev2.SortDescend:
-				return listNamespaceDescQuery, true
-			default:
-				return listNamespaceQuery, true
-			}
-		case existsQ:
-			return existsNamespaceQuery, true
-		case hardDeletedQ:
-			return hardDeletedNamespaceQuery, true
-		default:
-			return "", false
-		}
 	default:
 		return "", false
 	}
@@ -229,14 +118,11 @@ func errNoQuery(storeName string) error {
 	}
 }
 
-func (s *StoreV2) CreateOrUpdate(req storev2.ResourceRequest, wrapper storev2.Wrapper) (fErr error) {
+func (s *StoreV2) CreateOrUpdate(ctx context.Context, req storev2.ResourceRequest, wrapper storev2.Wrapper) (fErr error) {
 	defer func() {
 		fErr = newStoreV2Error("CreateOrUpdate", req.StoreName, fErr)
 	}()
 
-	if !req.UsePostgres {
-		return s.etcdStoreV2.CreateOrUpdate(req, wrapper)
-	}
 	pwrap, ok := wrapper.(wrapperWithParams)
 	if !ok {
 		return &store.ErrNotValid{Err: fmt.Errorf("bad wrapper type for postgres: %T", wrapper)}
@@ -249,21 +135,18 @@ func (s *StoreV2) CreateOrUpdate(req storev2.ResourceRequest, wrapper storev2.Wr
 
 	params := pwrap.SQLParams()
 
-	if _, err := s.db.Exec(req.Context, query, params...); err != nil {
+	if _, err := s.db.Exec(ctx, query, params...); err != nil {
 		return &store.ErrInternal{Message: err.Error()}
 	}
 
 	return nil
 }
 
-func (s *StoreV2) UpdateIfExists(req storev2.ResourceRequest, wrapper storev2.Wrapper) (fErr error) {
+func (s *StoreV2) UpdateIfExists(ctx context.Context, req storev2.ResourceRequest, wrapper storev2.Wrapper) (fErr error) {
 	defer func() {
 		fErr = newStoreV2Error("UpdateIfExists", req.StoreName, fErr)
 	}()
 
-	if !req.UsePostgres {
-		return s.etcdStoreV2.UpdateIfExists(req, wrapper)
-	}
 	pwrap, ok := wrapper.(wrapperWithParams)
 	if !ok {
 		return &store.ErrNotValid{Err: fmt.Errorf("bad wrapper type for postgres: %T", wrapper)}
@@ -276,7 +159,7 @@ func (s *StoreV2) UpdateIfExists(req storev2.ResourceRequest, wrapper storev2.Wr
 
 	params := pwrap.SQLParams()
 
-	rows, err := s.db.Query(req.Context, query, params...)
+	rows, err := s.db.Query(ctx, query, params...)
 	if err != nil {
 		return &store.ErrInternal{Message: err.Error()}
 	}
@@ -294,14 +177,11 @@ func (s *StoreV2) UpdateIfExists(req storev2.ResourceRequest, wrapper storev2.Wr
 	return nil
 }
 
-func (s *StoreV2) CreateIfNotExists(req storev2.ResourceRequest, wrapper storev2.Wrapper) (fErr error) {
+func (s *StoreV2) CreateIfNotExists(ctx context.Context, req storev2.ResourceRequest, wrapper storev2.Wrapper) (fErr error) {
 	defer func() {
 		fErr = newStoreV2Error("CreateIfNotExists", req.StoreName, fErr)
 	}()
 
-	if !req.UsePostgres {
-		return s.etcdStoreV2.CreateIfNotExists(req, wrapper)
-	}
 	pwrap, ok := wrapper.(wrapperWithParams)
 	if !ok {
 		return &store.ErrNotValid{Err: fmt.Errorf("bad wrapper type for postgres: %T", wrapper)}
@@ -314,11 +194,11 @@ func (s *StoreV2) CreateIfNotExists(req storev2.ResourceRequest, wrapper storev2
 
 	params := pwrap.SQLParams()
 
-	if _, err := s.db.Exec(req.Context, query, params...); err != nil {
+	if _, err := s.db.Exec(ctx, query, params...); err != nil {
 		pgError, ok := err.(*pgconn.PgError)
 		if ok {
 			switch pgError.ConstraintName {
-			case "entity_config_unique", "entity_state_unique", "namespace_unique":
+			case "entity_state_unique":
 				return &store.ErrAlreadyExists{Key: fmt.Sprintf("%s/%s", req.Namespace, req.Name)}
 			}
 		}
@@ -328,27 +208,18 @@ func (s *StoreV2) CreateIfNotExists(req storev2.ResourceRequest, wrapper storev2
 	return nil
 }
 
-func (s *StoreV2) Get(req storev2.ResourceRequest) (fWrapper storev2.Wrapper, fErr error) {
+func (s *StoreV2) Get(ctx context.Context, req storev2.ResourceRequest) (fWrapper storev2.Wrapper, fErr error) {
 	defer func() {
 		fErr = newStoreV2Error("Get", req.StoreName, fErr)
 	}()
 
-	if !req.UsePostgres {
-		return s.etcdStoreV2.Get(req)
-	}
 	op := getQ
 	query, ok := s.lookupQuery(req, op)
 	if !ok {
 		return nil, errNoQuery(req.StoreName)
 	}
 
-	params := []interface{}{}
-	if req.StoreName != namespaceStoreName {
-		params = append(params, req.Namespace)
-	}
-	params = append(params, req.Name)
-
-	row := s.db.QueryRow(req.Context, query, params...)
+	row := s.db.QueryRow(ctx, query, req.Namespace, req.Name)
 	wrapper := s.lookupWrapper(req, op)
 	if err := row.Scan(wrapper.SQLParams()...); err != nil {
 		if err == pgx.ErrNoRows {
@@ -410,13 +281,7 @@ func (s *StoreV2) GetMultiple(ctx context.Context, reqs []storev2.ResourceReques
 			return nil, errNoQuery(storeName)
 		}
 
-		args := []interface{}{}
-		if storeName != namespaceStoreName {
-			args = append(args, namespace)
-		}
-		args = append(args, resourceNames)
-
-		rows, err := tx.Query(ctx, query, args...)
+		rows, err := tx.Query(ctx, query, namespace, resourceNames)
 		if err != nil {
 			return nil, err
 		}
@@ -451,25 +316,17 @@ func (s *StoreV2) GetMultiple(ctx context.Context, reqs []storev2.ResourceReques
 	return wrappers, nil
 }
 
-func (s *StoreV2) Delete(req storev2.ResourceRequest) (fErr error) {
+func (s *StoreV2) Delete(ctx context.Context, req storev2.ResourceRequest) (fErr error) {
 	defer func() {
 		fErr = newStoreV2Error("Delete", req.StoreName, fErr)
 	}()
-
-	if !req.UsePostgres {
-		return s.etcdStoreV2.Delete(req)
-	}
 
 	query, ok := s.lookupQuery(req, deleteQ)
 	if !ok {
 		return errNoQuery(req.StoreName)
 	}
-	params := []interface{}{}
-	if req.StoreName != namespaceStoreName {
-		params = append(params, req.Namespace)
-	}
-	params = append(params, req.Name)
-	result, err := s.db.Exec(req.Context, query, params...)
+
+	result, err := s.db.Exec(ctx, query, req.Namespace, req.Name)
 	if err != nil {
 		return &store.ErrInternal{Message: err.Error()}
 	}
@@ -480,25 +337,17 @@ func (s *StoreV2) Delete(req storev2.ResourceRequest) (fErr error) {
 	return nil
 }
 
-func (s *StoreV2) HardDelete(req storev2.ResourceRequest) (fErr error) {
+func (s *StoreV2) HardDelete(ctx context.Context, req storev2.ResourceRequest) (fErr error) {
 	defer func() {
 		fErr = newStoreV2Error("HardDelete", req.StoreName, fErr)
 	}()
-
-	if !req.UsePostgres {
-		return s.etcdStoreV2.Delete(req)
-	}
 
 	query, ok := s.lookupQuery(req, hardDeleteQ)
 	if !ok {
 		return errNoQuery(req.StoreName)
 	}
-	params := []interface{}{}
-	if req.StoreName != namespaceStoreName {
-		params = append(params, req.Namespace)
-	}
-	params = append(params, req.Name)
-	result, err := s.db.Exec(req.Context, query, params...)
+
+	result, err := s.db.Exec(ctx, query, req.Namespace, req.Name)
 	if err != nil {
 		return &store.ErrInternal{Message: err.Error()}
 	}
@@ -509,154 +358,11 @@ func (s *StoreV2) HardDelete(req storev2.ResourceRequest) (fErr error) {
 	return nil
 }
 
-type WrapList []storev2.Wrapper
-
-func (w WrapList) Unwrap() ([]corev3.Resource, error) {
-	result := make([]corev3.Resource, len(w))
-	return result, w.UnwrapInto(&result)
-}
-
-func (w WrapList) UnwrapInto(dest interface{}) error {
-	switch list := dest.(type) {
-	case *[]corev3.EntityConfig:
-		return w.unwrapIntoEntityConfigList(list)
-	case *[]*corev3.EntityConfig:
-		return w.unwrapIntoEntityConfigPointerList(list)
-	case *[]corev3.EntityState:
-		return w.unwrapIntoEntityStateList(list)
-	case *[]*corev3.EntityState:
-		return w.unwrapIntoEntityStatePointerList(list)
-	case *[]corev3.Namespace:
-		return w.unwrapIntoNamespaceList(list)
-	case *[]*corev3.Namespace:
-		return w.unwrapIntoNamespacePointerList(list)
-	case *[]corev3.Resource:
-		return w.unwrapIntoResourceList(list)
-	default:
-		return fmt.Errorf("can't unwrap list into %T", dest)
-	}
-}
-
-func (w WrapList) unwrapIntoEntityConfigList(list *[]corev3.EntityConfig) error {
-	if len(*list) != len(w) {
-		*list = make([]corev3.EntityConfig, len(w))
-	}
-	for i, cfg := range w {
-		ptr := &((*list)[i])
-		if err := cfg.UnwrapInto(ptr); err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-func (w WrapList) unwrapIntoEntityConfigPointerList(list *[]*corev3.EntityConfig) error {
-	if len(*list) != len(w) {
-		*list = make([]*corev3.EntityConfig, len(w))
-	}
-	for i, cfg := range w {
-		ptr := (*list)[i]
-		if ptr == nil {
-			ptr = new(corev3.EntityConfig)
-			(*list)[i] = ptr
-		}
-		if err := cfg.UnwrapInto(ptr); err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-func (w WrapList) unwrapIntoEntityStateList(list *[]corev3.EntityState) error {
-	if len(*list) != len(w) {
-		*list = make([]corev3.EntityState, len(w))
-	}
-	for i, state := range w {
-		ptr := &((*list)[i])
-		if err := state.UnwrapInto(ptr); err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-func (w WrapList) unwrapIntoEntityStatePointerList(list *[]*corev3.EntityState) error {
-	if len(*list) != len(w) {
-		*list = make([]*corev3.EntityState, len(w))
-	}
-	for i, state := range w {
-		ptr := (*list)[i]
-		if ptr == nil {
-			ptr = new(corev3.EntityState)
-			(*list)[i] = ptr
-		}
-		if err := state.UnwrapInto(ptr); err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-func (w WrapList) unwrapIntoNamespaceList(list *[]corev3.Namespace) error {
-	if len(*list) != len(w) {
-		*list = make([]corev3.Namespace, len(w))
-	}
-	for i, namespace := range w {
-		ptr := &((*list)[i])
-		if err := namespace.UnwrapInto(ptr); err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-func (w WrapList) unwrapIntoNamespacePointerList(list *[]*corev3.Namespace) error {
-	if len(*list) != len(w) {
-		*list = make([]*corev3.Namespace, len(w))
-	}
-	for i, namespace := range w {
-		ptr := (*list)[i]
-		if ptr == nil {
-			ptr = new(corev3.Namespace)
-			(*list)[i] = ptr
-		}
-		if err := namespace.UnwrapInto(ptr); err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-// TODO: make this work generically
-func (w WrapList) unwrapIntoResourceList(list *[]corev3.Resource) error {
-	if len(*list) != len(w) {
-		*list = make([]corev3.Resource, len(w))
-	}
-	for i, resource := range w {
-		ptr := (*list)[i]
-		if ptr == nil {
-			ptr = new(corev3.EntityState)
-			(*list)[i] = ptr
-		}
-		if err := resource.UnwrapInto(ptr); err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-func (w WrapList) Len() int {
-	return len(w)
-}
-
-func (s *StoreV2) List(req storev2.ResourceRequest, pred *store.SelectionPredicate) (list storev2.WrapList, fErr error) {
+func (s *StoreV2) List(ctx context.Context, req storev2.ResourceRequest, pred *store.SelectionPredicate) (list storev2.WrapList, fErr error) {
 	defer func() {
 		fErr = newStoreV2Error("List", req.StoreName, fErr)
 	}()
 
-	if !req.UsePostgres {
-		return s.etcdStoreV2.List(req, pred)
-	}
 	op := listQ
 	query, ok := s.lookupQuery(req, op)
 	if !ok {
@@ -667,19 +373,13 @@ func (s *StoreV2) List(req storev2.ResourceRequest, pred *store.SelectionPredica
 		return nil, err
 	}
 
-	params := []interface{}{}
-	if req.StoreName != namespaceStoreName {
-		var namespace sql.NullString
-		if req.Namespace != "" {
-			namespace.String = req.Namespace
-			namespace.Valid = true
-		}
-		params = append(params, namespace)
+	var namespace sql.NullString
+	if req.Namespace != "" {
+		namespace.String = req.Namespace
+		namespace.Valid = true
 	}
-	params = append(params, limit)
-	params = append(params, offset)
 
-	rows, rerr := s.db.Query(req.Context, query, params...)
+	rows, rerr := s.db.Query(ctx, query, namespace, limit, offset)
 	if rerr != nil {
 		return nil, &store.ErrInternal{Message: rerr.Error()}
 	}
@@ -705,25 +405,17 @@ func (s *StoreV2) List(req storev2.ResourceRequest, pred *store.SelectionPredica
 	return wrapList, nil
 }
 
-func (s *StoreV2) Exists(req storev2.ResourceRequest) (fExists bool, fErr error) {
+func (s *StoreV2) Exists(ctx context.Context, req storev2.ResourceRequest) (fExists bool, fErr error) {
 	defer func() {
 		fErr = newStoreV2Error("Exists", req.StoreName, fErr)
 	}()
-
-	if !req.UsePostgres {
-		return s.etcdStoreV2.Exists(req)
-	}
 
 	query, ok := s.lookupQuery(req, existsQ)
 	if !ok {
 		return false, errNoQuery(req.StoreName)
 	}
-	params := []interface{}{}
-	if req.StoreName != namespaceStoreName {
-		params = append(params, req.Namespace)
-	}
-	params = append(params, req.Name)
-	row := s.db.QueryRow(req.Context, query, params...)
+
+	row := s.db.QueryRow(ctx, query, req.Namespace, req.Name)
 	var found bool
 	err := row.Scan(&found)
 	if err == nil {
@@ -735,7 +427,7 @@ func (s *StoreV2) Exists(req storev2.ResourceRequest) (fExists bool, fErr error)
 	return false, &store.ErrInternal{Message: err.Error()}
 }
 
-func (s *StoreV2) HardDeleted(req storev2.ResourceRequest) (fDeleted bool, fErr error) {
+func (s *StoreV2) HardDeleted(ctx context.Context, req storev2.ResourceRequest) (fDeleted bool, fErr error) {
 	defer func() {
 		fErr = newStoreV2Error("HardDeleted", req.StoreName, fErr)
 	}()
@@ -746,13 +438,7 @@ func (s *StoreV2) HardDeleted(req storev2.ResourceRequest) (fDeleted bool, fErr 
 		return false, errNoQuery(req.StoreName)
 	}
 
-	params := []interface{}{}
-	if req.StoreName != namespaceStoreName {
-		params = append(params, req.Namespace)
-	}
-	params = append(params, req.Name)
-
-	row := s.db.QueryRow(req.Context, query, params...)
+	row := s.db.QueryRow(ctx, query, req.Namespace, req.Name)
 	var found bool
 	err := row.Scan(&found)
 	if err == nil {
@@ -764,14 +450,10 @@ func (s *StoreV2) HardDeleted(req storev2.ResourceRequest) (fDeleted bool, fErr 
 	return false, &store.ErrInternal{Message: err.Error()}
 }
 
-func (s *StoreV2) Patch(req storev2.ResourceRequest, w storev2.Wrapper, patcher patch.Patcher, conditions *store.ETagCondition) (fErr error) {
+func (s *StoreV2) Patch(ctx context.Context, req storev2.ResourceRequest, w storev2.Wrapper, patcher patch.Patcher, conditions *store.ETagCondition) (fErr error) {
 	defer func() {
 		fErr = newStoreV2Error("Patch", req.StoreName, fErr)
 	}()
-
-	if !req.UsePostgres {
-		return s.etcdStoreV2.Patch(req, w, patcher, conditions)
-	}
 
 	if err := req.Validate(); err != nil {
 		return &store.ErrNotValid{Err: err}
@@ -783,29 +465,23 @@ func (s *StoreV2) Patch(req storev2.ResourceRequest, w storev2.Wrapper, patcher 
 		return errNoQuery(req.StoreName)
 	}
 
-	params := []interface{}{}
-	if req.StoreName != namespaceStoreName {
-		params = append(params, req.Namespace)
-	}
-	params = append(params, req.Name)
-
 	originalWrapper := s.lookupWrapper(req, op)
 
-	tx, txerr := s.db.Begin(req.Context)
-	if fErr != nil {
+	tx, txerr := s.db.Begin(ctx)
+	if txerr != nil {
 		return &store.ErrInternal{Message: txerr.Error()}
 	}
 	defer func() {
 		if fErr == nil {
-			fErr = tx.Commit(req.Context)
+			fErr = tx.Commit(ctx)
 			return
 		}
-		if txerr := tx.Rollback(req.Context); txerr != nil {
+		if txerr := tx.Rollback(ctx); txerr != nil {
 			fErr = txerr
 		}
 	}()
 
-	row := tx.QueryRow(req.Context, query, params...)
+	row := tx.QueryRow(ctx, query, req.Namespace, req.Name)
 	if err := row.Scan(originalWrapper.SQLParams()...); err != nil {
 		if err == pgx.ErrNoRows {
 			return &store.ErrNotFound{Key: fmt.Sprintf("%s.%s", req.Namespace, req.Name)}
@@ -870,129 +546,86 @@ func (s *StoreV2) Patch(req storev2.ResourceRequest, w storev2.Wrapper, patcher 
 		return errNoQuery(req.StoreName)
 	}
 
-	if _, err := tx.Exec(req.Context, query, pwrap.SQLParams()...); err != nil {
+	if _, err := tx.Exec(ctx, query, pwrap.SQLParams()...); err != nil {
 		return &store.ErrInternal{Message: err.Error()}
 	}
 
 	return nil
 }
 
-func (s *StoreV2) Watch(ctx context.Context, req storev2.ResourceRequest) <-chan []storev2.WatchEvent {
-	eventChan := make(chan []storev2.WatchEvent, 32)
-
-	var table poll.Table
-
-	tableFactory, ok := getWatchStoreOverride(req.StoreName)
-	if !ok {
-		// assume configuration store?
-		tableFactory = func(storev2.ResourceRequest, *pgxpool.Pool) (poll.Table, error) {
-			return nil, fmt.Errorf("default watcher not yet implemented")
-		}
+func (s *StoreV2) GetPoller(req storev2.ResourceRequest) (poll.Table, error) {
+	if req.StoreName == entityConfigStoreName {
+		return newEntityConfigPoller(req, s.db)
+	} else {
+		return nil, fmt.Errorf("unsupported store %s", req.StoreName)
 	}
-	table, err := tableFactory(req, s.db)
-	if err != nil {
-		panic(fmt.Errorf("could not create watcher for request %v: %v", req, err))
-	}
-
-	interval, txnWindow := s.watchInterval, s.watchTxnWindow
-	if interval <= 0 {
-		interval = time.Second
-	}
-	if txnWindow <= 0 {
-		txnWindow = 5 * time.Second
-	}
-	poller := &poll.Poller{
-		Interval:  interval,
-		TxnWindow: txnWindow,
-		Table:     table,
-	}
-
-	backoff := retry.ExponentialBackoff{
-		Ctx: ctx,
-	}
-	err = backoff.Retry(func(retry int) (bool, error) {
-		if err := poller.Initialize(ctx); err != nil {
-			logger.Errorf("watcher initialize polling error on retry %d: %v", retry, err)
-			return false, err
-		}
-		return true, nil
-	})
-	if err != nil {
-		logger.Errorf("watcher failed to start: %v", err)
-		close(eventChan)
-		return eventChan
-	}
-
-	go s.watchLoop(ctx, req, poller, eventChan)
-	return eventChan
 }
 
-func (s *StoreV2) watchLoop(ctx context.Context, req storev2.ResourceRequest, poller *poll.Poller, watchChan chan []storev2.WatchEvent) {
-	defer close(watchChan)
-	for {
-		changes, err := poller.Next(ctx)
-		if err != nil {
-			if ctx.Err() != nil {
-				return
-			}
-			logger.Error(err)
-		}
-		if len(changes) == 0 {
-			continue
-		}
-		notifications := make([]storev2.WatchEvent, len(changes))
-		for i, change := range changes {
-			wrapper, ok := change.Resource.(storev2.Wrapper)
-			if !ok {
-				// Poller table must return Resource of type Wrapper.
-				panic("postgres store watcher resource is not storev2.Wrapper")
-			}
-			notifications[i].Value = wrapper
-			r, err := notifications[i].Value.Unwrap()
-			if err != nil {
-				notifications[i].Err = err
-			}
-			if r != nil {
-				meta := r.GetMetadata()
-				notifications[i].Key = storev2.ResourceRequest{
-					Namespace: meta.Namespace,
-					Name:      meta.Name,
-					StoreName: r.StoreName(),
-				}
-			}
-			switch change.Change {
-			case poll.Create:
-				notifications[i].Type = storev2.WatchCreate
-			case poll.Update:
-				notifications[i].Type = storev2.WatchUpdate
-			case poll.Delete:
-				notifications[i].Type = storev2.WatchDelete
-			}
-		}
-		var status string
-		select {
-		case watchChan <- notifications:
-			status = storev2.WatchEventsStatusHandled
-		default:
-			status = storev2.WatchEventsStatusDropped
-		}
-		storev2.WatchEventsProcessed.WithLabelValues(
-			status,
-			req.StoreName,
-			req.Namespace,
-			storev2.WatcherProviderPG,
-		).Add(float64(len(notifications)))
+func (s *StoreV2) Watch(ctx context.Context, req storev2.ResourceRequest) <-chan []storev2.WatchEvent {
+	return NewWatcher(s, s.watchInterval, s.watchTxnWindow).Watch(ctx, req)
+}
+
+func (s *StoreV2) NamespaceStore() storev2.NamespaceStore {
+	return NewNamespaceStore(s.db)
+}
+
+func (s *StoreV2) EntityConfigStore() storev2.EntityConfigStore {
+	return NewEntityConfigStore(s.db)
+}
+
+func (s *StoreV2) EntityStateStore() storev2.EntityStateStore {
+	return NewEntityStateStore(s.db)
+}
+
+func (s *StoreV2) Initialize(ctx context.Context, fn storev2.InitializeFunc) error {
+	tx, err := s.db.Begin(ctx)
+	if err != nil {
+		return err
 	}
+	defer func() {
+		if err := tx.Commit(ctx); err != nil && err != pgx.ErrTxClosed {
+			logger.WithError(err).Error("error committing transaction for Initialize()")
+		}
+	}()
+
+	initialized, err := s.isInitialized(ctx, tx)
+	if err != nil {
+		return fmt.Errorf("failed to check if cluster has been initialized: %w", err)
+	}
+	if initialized {
+		logger.Info("store already initialized")
+		return seeds.ErrAlreadyInitialized
+	}
+
+	if err := fn(ctx); err != nil {
+		return err
+	}
+	return s.flagAsInitialized(ctx, tx)
+}
+
+func (s *StoreV2) isInitialized(ctx context.Context, tx pgx.Tx) (bool, error) {
+	var found bool
+	row := tx.QueryRow(ctx, isInitializedQuery)
+	if err := row.Scan(&found); err != nil {
+		if err == pgx.ErrNoRows {
+			return false, nil
+		}
+		return false, &store.ErrInternal{Message: err.Error()}
+	}
+	return found, nil
+}
+
+func (s *StoreV2) flagAsInitialized(ctx context.Context, tx pgx.Tx) error {
+	if _, err := s.db.Exec(ctx, flagAsInitializedQuery); err != nil {
+		return &store.ErrInternal{Message: err.Error()}
+	}
+	return nil
 }
 
 func wrapWithPostgres(resource corev3.Resource, opts ...wrap.Option) (storev2.Wrapper, error) {
 	switch value := resource.(type) {
-	case *corev3.EntityConfig:
-		return WrapEntityConfig(value), nil
 	case *corev3.EntityState:
 		return WrapEntityState(value), nil
-	case *corev3.Namespace:
-		return WrapNamespace(value), nil
 	default:
 		return storev2.WrapResource(resource, opts...)
 	}

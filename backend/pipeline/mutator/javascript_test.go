@@ -62,9 +62,7 @@ func TestJavascriptAdapter_CanMutate(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			j := &JavascriptAdapter{
-				AssetGetter:  tt.fields.AssetGetter,
-				Store:        tt.fields.Store,
-				StoreTimeout: tt.fields.StoreTimeout,
+				AssetGetter: tt.fields.AssetGetter,
 			}
 			if got := j.CanMutate(tt.args.ref); got != tt.want {
 				t.Errorf("JavascriptAdapter.CanMutate() = %v, want %v", got, tt.want)
@@ -99,9 +97,7 @@ func TestJavascriptAdapter_Mutate(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			j := &JavascriptAdapter{
-				AssetGetter:  tt.fields.AssetGetter,
-				Store:        tt.fields.Store,
-				StoreTimeout: tt.fields.StoreTimeout,
+				AssetGetter: tt.fields.AssetGetter,
 			}
 			got, err := j.Mutate(tt.args.ctx, tt.args.ref, tt.args.event)
 			if (err != nil) != tt.wantErr {
@@ -266,9 +262,7 @@ func TestJavascriptAdapter_run(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			j := &JavascriptAdapter{
-				AssetGetter:  tt.fields.AssetGetter,
-				Store:        tt.fields.Store,
-				StoreTimeout: tt.fields.StoreTimeout,
+				AssetGetter: tt.fields.AssetGetter,
 			}
 			got, err := j.run(tt.args.ctx, tt.args.mutator, tt.args.event, tt.args.assets)
 			if (err != nil) != tt.wantErr {

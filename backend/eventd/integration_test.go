@@ -4,16 +4,18 @@ import (
 	"context"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/etcd"
 	"github.com/sensu/sensu-go/backend/liveness"
 	"github.com/sensu/sensu-go/backend/messaging"
 	"github.com/sensu/sensu-go/backend/seeds"
 	"github.com/sensu/sensu-go/backend/store/etcd/testutil"
+	storev2 "github.com/sensu/sensu-go/backend/store/v2"
 	"github.com/sensu/sensu-go/backend/store/v2/etcdstore"
-	otherTestutil "github.com/sensu/sensu-go/testing/testutil"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
+	"github.com/sensu/sensu-go/backend/store/v2/wrap"
 )
 
 type testReceiver struct {
@@ -49,17 +51,17 @@ func TestEventdMonitor(t *testing.T) {
 		assert.FailNow(t, "failed to subscribe to message bus topic event")
 	}
 
-	store, err := testutil.NewStoreInstance()
+	eventStore, err := testutil.NewStoreInstance()
 	if err != nil {
 		assert.FailNow(t, err.Error())
 	}
-	storev2 := etcdstore.NewStore(store.Client)
+	store := etcdstore.NewStore(eventStore.Client)
 
 	if err := seeds.SeedInitialDataWithContext(context.Background(), store); err != nil {
 		assert.FailNow(t, err.Error())
 	}
 
-	e := newEventd(storev2, store, bus, livenessFactory)
+	e := newEventd(store, eventStore, bus, livenessFactory)
 
 	if err := e.Start(); err != nil {
 		assert.FailNow(t, err.Error())
@@ -69,9 +71,13 @@ func TestEventdMonitor(t *testing.T) {
 	event.Check.Interval = 1
 	event.Check.Ttl = 5
 
-	ctx := otherTestutil.ContextWithNamespace("default")(context.Background())
+	wrappedEntity, err := wrap.V2Resource(event.Entity)
+	if err != nil {
+		t.Fatal(err)
+	}
 
-	if err := store.UpdateEntity(ctx, event.Entity); err != nil {
+	req := storev2.NewResourceRequestFromV2Resource(event.Entity)
+	if err := store.CreateOrUpdate(context.Background(), req, wrappedEntity); err != nil {
 		t.Fatal(err)
 	}
 

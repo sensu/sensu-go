@@ -12,7 +12,7 @@ import (
 	storev2 "github.com/sensu/sensu-go/backend/store/v2"
 )
 
-func (h Handlers) GetV3Resource(r *http.Request) (corev3.Resource, error) {
+func (h Handlers) GetResource(r *http.Request) (corev3.Resource, error) {
 	params := mux.Vars(r)
 	name, err := url.PathUnescape(params["id"])
 	if err != nil {
@@ -21,10 +21,12 @@ func (h Handlers) GetV3Resource(r *http.Request) (corev3.Resource, error) {
 
 	ctx := r.Context()
 	namespace := store.NewNamespaceFromContext(ctx)
-	storeName := h.V3Resource.StoreName()
 
-	req := storev2.NewResourceRequest(ctx, namespace, name, storeName)
-	w, err := h.StoreV2.Get(req)
+	req := storev2.NewResourceRequestFromResource(h.Resource)
+	req.Namespace = namespace
+	req.Name = name
+
+	w, err := h.Store.Get(ctx, req)
 	if err != nil {
 		switch err := err.(type) {
 		case *store.ErrNotFound:

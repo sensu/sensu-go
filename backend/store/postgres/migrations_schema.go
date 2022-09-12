@@ -190,6 +190,18 @@ CREATE INDEX ON entities_networks ( entity_id );
 `
 
 // Migration 8
+const migrateDropEntitiesNetworkUnique = `
+-- This migration drops the unique constraint on the entities_networks table
+-- which can exceed the btree index row size (implicitly created to enforce
+-- the unique constraint) when many addresses are configured on an interface.
+--
+-- The application will now be responsible for ensuring entities_networks table
+-- hygiene.
+--
+ALTER TABLE entities_networks DROP CONSTRAINT entities_networks_entity_id_name_mac_addresses_key;
+`
+
+// Migration 9
 const migrateRefreshUpdatedAtProcedure = `
 -- This is a procedure that can be used to set the "updated_at" column to the
 -- current time on a given table. It is intended to be used with update triggers
@@ -204,21 +216,21 @@ END;
 $$ language 'plpgsql';
 `
 
-// Migration 9
+// Migration 10
 const migrateRenameEntitiesTable = `
 -- This is a migration that renames the entities table to entity_states.
 --
 ALTER TABLE entities RENAME TO entity_states;
 `
 
-// Migration 10
+// Migration 11
 const migrateRenameEntityStateUniqueConstraint = `
 -- This is a migration that renames the uniqueness constraint to
 -- entity_state_unique for the entity_states table.
 ALTER TABLE entity_states RENAME CONSTRAINT entities_namespace_name_key TO entity_state_unique;
 `
 
-// Migration 11
+// Migration 12
 const entityConfigSchema = `
 -- namespace column replaced by namespace_id in migration 14
 --
@@ -247,16 +259,30 @@ CREATE TRIGGER refresh_entity_configs_updated_at BEFORE UPDATE
 	refresh_updated_at_column();
 `
 
-// Migration 12
+// Migration 13
 const migrateAddEntityConfigIdToEntityState = `
--- This is a migration that adds an entity config foreign key to the
--- entity_states table.
---
+-- Add entity_config_id column to entity_states table
+ALTER TABLE entity_states ADD COLUMN entity_config_id bigint;
+
+-- Set entity_config_id to the id of the matching entity config
+UPDATE entity_states
+SET entity_config_id = entity_configs.id
+FROM entity_configs
+WHERE entity_configs.name = entity_states.name;
+
+-- Add foreign key constraint to entity_states table
 ALTER TABLE entity_states
-ADD COLUMN entity_config_id bigint NOT NULL REFERENCES entity_configs (id) ON DELETE CASCADE;
+ADD FOREIGN KEY (entity_config_id) REFERENCES entity_configs (id)
+ON DELETE CASCADE;
+
+-- Cleanup entity states with no entity_config_id
+DELETE FROM entity_states WHERE entity_config_id IS NULL;
+
+-- Require value for entity_config_id column
+ALTER TABLE entity_states ALTER COLUMN entity_config_id SET NOT NULL;
 `
 
-// Migration 13
+// Migration 14
 const namespaceSchema = `
 CREATE TABLE IF NOT EXISTS namespaces (
 	id                 bigserial PRIMARY KEY,
@@ -274,7 +300,7 @@ CREATE TRIGGER refresh_namespaces_updated_at BEFORE UPDATE
 	refresh_updated_at_column();
 `
 
-// Migration 14
+// Migration 15
 const addNamespaceForeignKeys = `
 -- Add unique namespaces across existing tables to the new namespaces table
 INSERT INTO namespaces (name)
@@ -327,11 +353,46 @@ DROP INDEX entities_name_idx;
 -- Drop old namespace columns
 ALTER TABLE entity_configs DROP COLUMN namespace;
 ALTER TABLE entity_states DROP COLUMN namespace;
+
+-- Cleanup rows with no namespace_id
+DELETE FROM entity_configs WHERE namespace_id IS NULL;
+DELETE FROM entity_states WHERE namespace_id IS NULL;
+
+-- Require value for namespace_id columns
+ALTER TABLE entity_configs ALTER COLUMN namespace_id SET NOT NULL;
+ALTER TABLE entity_states ALTER COLUMN namespace_id SET NOT NULL;
 `
 
-// Migration 15
+// Migration 16
 const addTimestampColumns = `
 ALTER TABLE entity_states ADD COLUMN created_at timestamptz NOT NULL DEFAULT NOW();
 ALTER TABLE entity_states ADD COLUMN updated_at timestamptz NOT NULL DEFAULT NOW();
 ALTER TABLE entity_states ADD COLUMN deleted_at timestamptz;
 `
+
+// Migration 17
+const addInitializedTable = `
+CREATE TABLE IF NOT EXISTS initialized (
+	initialized bool PRIMARY KEY,
+	created_at         timestamptz NOT NULL DEFAULT NOW(),
+	updated_at         timestamptz NOT NULL DEFAULT NOW(),
+	CONSTRAINT initialized_unique CHECK (initialized)
+);
+`
+
+// Migration 18
+const addSilencesTable = `
+CREATE TABLE IF NOT EXISTS silences (
+	id           bigserial PRIMARY KEY,
+	namespace    bigint REFERENCES namespaces (id) ON DELETE CASCADE,
+	name         text NOT NULL,
+	labels       jsonb,
+	annotations  bytea,
+	subscription text,
+	check_name   text,
+	reason       text,
+	expire_on_resolve bool,
+	begin        bigint NOT NULL,
+	expire_at    bigint,
+	UNIQUE (namespace, name)
+);`

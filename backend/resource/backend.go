@@ -7,10 +7,12 @@ import (
 
 	"github.com/google/uuid"
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
+	corev3 "github.com/sensu/sensu-go/api/core/v3"
 	"github.com/sensu/sensu-go/backend/messaging"
 	"github.com/sensu/sensu-go/backend/store"
+	storev2 "github.com/sensu/sensu-go/backend/store/v2"
+	"github.com/sensu/sensu-go/backend/store/v2/wrap"
 	"github.com/sensu/sensu-go/system"
-	"github.com/sensu/sensu-go/types"
 )
 
 type eventInfo struct {
@@ -19,8 +21,7 @@ type eventInfo struct {
 }
 
 type BackendResource struct {
-	nsStore           store.NamespaceStore
-	entityStore       store.EntityStore
+	store             storev2.Interface
 	bus               messaging.MessageBus
 	backendEntity     *corev2.Entity
 	lastEvents        map[string]*eventInfo
@@ -35,10 +36,9 @@ const (
 	systemNamespaceName = "sensu-system"
 )
 
-func New(nsStore store.NamespaceStore, entityStore store.EntityStore, bus messaging.MessageBus) *BackendResource {
+func New(store storev2.Interface, bus messaging.MessageBus) *BackendResource {
 	return &BackendResource{
-		nsStore:           nsStore,
-		entityStore:       entityStore,
+		store:             store,
 		bus:               bus,
 		lastEvents:        map[string]*eventInfo{},
 		repeatIntervalSec: int64(30),
@@ -46,24 +46,40 @@ func New(nsStore store.NamespaceStore, entityStore store.EntityStore, bus messag
 }
 
 func (br *BackendResource) EnsureBackendResources(ctx context.Context) error {
-	ns, err := br.nsStore.GetNamespace(ctx, systemNamespaceName)
-	if err != nil {
-		return err
-	}
-
-	if ns == nil {
-		err = br.nsStore.CreateNamespace(ctx, &types.Namespace{Name: systemNamespaceName})
+	nsStore := br.store.NamespaceStore()
+	_, err := nsStore.Get(ctx, systemNamespaceName)
+	switch err.(type) {
+	case *store.ErrNotFound:
+		err = nsStore.CreateIfNotExists(ctx, corev3.NewNamespace(systemNamespaceName))
 		if err != nil {
 			return err
 		}
+
+	default:
+		return err
 	}
 
 	backendEntity, err := getEntity()
 	if err != nil {
 		return err
 	}
-	err = br.entityStore.UpdateEntity(ctx, backendEntity)
+
+	backendEntityConfig, backendEntityState := corev3.V2EntityToV3(backendEntity)
+	backendEntityConfigReq := storev2.NewResourceRequestFromResource(backendEntityConfig)
+	wrappedBackendEntityConfig, err := wrap.Resource(backendEntityConfig)
 	if err != nil {
+		return err
+	}
+	if err := br.store.CreateOrUpdate(ctx, backendEntityConfigReq, wrappedBackendEntityConfig); err != nil {
+		return err
+	}
+
+	backendEntityStateReq := storev2.NewResourceRequestFromResource(backendEntityState)
+	wrappedBackendEntityState, err := wrap.Resource(backendEntityState)
+	if err != nil {
+		return err
+	}
+	if err := br.store.CreateOrUpdate(ctx, backendEntityStateReq, wrappedBackendEntityState); err != nil {
 		return err
 	}
 

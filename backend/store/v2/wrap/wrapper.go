@@ -192,7 +192,7 @@ func wrap(r interface{}, opts ...Option) (*Wrapper, error) {
 	return wrapWithoutValidation(r, opts...)
 }
 
-// Unwrap unmarshals the wrapper's value into a resource, according to the
+// Unwrap unmarshalls the wrapper's value into a resource, according to the
 // configuration of the wrapper. The unwrapped data structure will have
 // its labels and annotations set to non-nil empty slices, if they are nil.
 func (w *Wrapper) Unwrap() (corev3.Resource, error) {
@@ -289,6 +289,15 @@ func (l List) UnwrapInto(ptr interface{}) error {
 	// Assume that encoding and compression are the same throughout the range
 	encoding := l[0].Encoding
 	compression := l[0].Compression
+	// special case for *[]corev3.Resource
+	if list, ok := ptr.(*[]corev3.Resource); ok {
+		values, err := l.Unwrap()
+		if err != nil {
+			return err
+		}
+		*list = values
+		return nil
+	}
 	// Make sure the interface is a pointer, and that the element at this address
 	// is a slice.
 	v := reflect.ValueOf(ptr)

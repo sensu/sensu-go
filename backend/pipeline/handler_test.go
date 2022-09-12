@@ -7,14 +7,14 @@ import (
 	"time"
 
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
-	"github.com/sensu/sensu-go/backend/store"
+	storev2 "github.com/sensu/sensu-go/backend/store/v2"
 	"github.com/sensu/sensu-go/testing/mockpipeline"
 	"github.com/stretchr/testify/mock"
 )
 
 func TestAdapterV1_processHandler(t *testing.T) {
 	type fields struct {
-		Store           store.Store
+		Store           storev2.Interface
 		StoreTimeout    time.Duration
 		FilterAdapters  []FilterAdapter
 		MutatorAdapters []MutatorAdapter
@@ -110,7 +110,7 @@ func TestAdapterV1_processHandler(t *testing.T) {
 
 func TestAdapterV1_getHandlerAdapterForResource(t *testing.T) {
 	type fields struct {
-		Store           store.Store
+		Store           storev2.Interface
 		StoreTimeout    time.Duration
 		FilterAdapters  []FilterAdapter
 		MutatorAdapters []MutatorAdapter

@@ -10,6 +10,7 @@ import (
 
 	"github.com/gorilla/mux"
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
+	corev3 "github.com/sensu/sensu-go/api/core/v3"
 	"github.com/sensu/sensu-go/backend/apid/middlewares"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/stretchr/testify/assert"
@@ -20,16 +21,16 @@ type mockGenericController struct {
 	mock.Mock
 }
 
-func (m *mockGenericController) List(ctx context.Context, pred *store.SelectionPredicate) ([]corev2.Resource, error) {
+func (m *mockGenericController) List(ctx context.Context, pred *store.SelectionPredicate) ([]corev3.Resource, error) {
 	args := m.Called(ctx, pred)
-	return args.Get(0).([]corev2.Resource), args.Error(1)
+	return args.Get(0).([]corev3.Resource), args.Error(1)
 }
 
 func TestList(t *testing.T) {
 	tests := []struct {
 		name                   string
 		path                   string
-		results                []corev2.Resource
+		results                []corev3.Resource
 		controllerErr          error
 		continueToken          string
 		expectedContinueHeader string
@@ -40,7 +41,7 @@ func TestList(t *testing.T) {
 		{
 			name:           "list without pagination",
 			path:           "/foo",
-			results:        []corev2.Resource{corev2.FixtureCheck("check-cpu")},
+			results:        []corev3.Resource{corev2.FixtureCheck("check-cpu")},
 			expectedLen:    1,
 			expectedPred:   &store.SelectionPredicate{},
 			expectedStatus: http.StatusOK,
@@ -48,7 +49,7 @@ func TestList(t *testing.T) {
 		{
 			name:           "list with subcollection but without pagination",
 			path:           "/foo/bar",
-			results:        []corev2.Resource{corev2.FixtureCheck("check-cpu")},
+			results:        []corev3.Resource{corev2.FixtureCheck("check-cpu")},
 			expectedLen:    1,
 			expectedPred:   &store.SelectionPredicate{Subcollection: "bar"},
 			expectedStatus: http.StatusOK,
@@ -63,7 +64,7 @@ func TestList(t *testing.T) {
 		{
 			name:                   "continue token",
 			path:                   "/foo",
-			results:                []corev2.Resource{corev2.FixtureCheck("check-cpu")},
+			results:                []corev3.Resource{corev2.FixtureCheck("check-cpu")},
 			continueToken:          "bar",
 			expectedLen:            1,
 			expectedPred:           &store.SelectionPredicate{},

@@ -4,7 +4,7 @@ import (
 	"github.com/gorilla/mux"
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/apid/handlers"
-	"github.com/sensu/sensu-go/backend/store"
+	storev2 "github.com/sensu/sensu-go/backend/store/v2"
 )
 
 // MutatorsRouter handles /mutators requests.
@@ -13,7 +13,7 @@ type MutatorsRouter struct {
 }
 
 // NewMutatorsRouter creates a new MutatorsRouter.
-func NewMutatorsRouter(store store.ResourceStore) *MutatorsRouter {
+func NewMutatorsRouter(store storev2.Interface) *MutatorsRouter {
 	return &MutatorsRouter{
 		handlers: handlers.Handlers{
 			Resource: &corev2.Mutator{},

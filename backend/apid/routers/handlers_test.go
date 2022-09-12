@@ -10,7 +10,7 @@ import (
 
 func TestHandlersRouter(t *testing.T) {
 	// Setup the router
-	s := &mockstore.MockStore{}
+	s := &mockstore.V2MockStore{}
 	router := NewHandlersRouter(s)
 	parentRouter := mux.NewRouter().PathPrefix(corev2.URLPrefix).Subrouter()
 	router.Mount(parentRouter)
@@ -21,7 +21,7 @@ func TestHandlersRouter(t *testing.T) {
 	tests := []routerTestCase{}
 	tests = append(tests, getTestCases(fixture)...)
 	tests = append(tests, listTestCases(empty)...)
-	tests = append(tests, createTestCases(empty)...)
+	tests = append(tests, createTestCases(fixture)...)
 	tests = append(tests, updateTestCases(fixture)...)
 	tests = append(tests, deleteTestCases(fixture)...)
 	for _, tt := range tests {

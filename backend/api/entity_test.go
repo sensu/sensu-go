@@ -541,7 +541,7 @@ func TestUpdateEntity(t *testing.T) {
 			},
 			Storev2: func() storev2.Interface {
 				s := new(storetest.Store)
-				s.On("CreateOrUpdate", mock.Anything, mock.Anything).Return(nil)
+				s.On("CreateOrUpdate", mock.Anything, mock.Anything, mock.Anything).Return(nil)
 				return s
 			},
 			EventStore: func() store.EventStore {

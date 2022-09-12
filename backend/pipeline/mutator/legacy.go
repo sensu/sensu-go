@@ -8,7 +8,7 @@ import (
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/asset"
 	"github.com/sensu/sensu-go/backend/secrets"
-	"github.com/sensu/sensu-go/backend/store"
+	storev2 "github.com/sensu/sensu-go/backend/store/v2"
 	"github.com/sensu/sensu-go/command"
 	utillogging "github.com/sensu/sensu-go/util/logging"
 )
@@ -35,7 +35,7 @@ type LegacyAdapter struct {
 	AssetGetter            asset.Getter
 	Executor               command.Executor
 	SecretsProviderManager *secrets.ProviderManager
-	Store                  store.Store
+	Store                  storev2.Interface
 	StoreTimeout           time.Duration
 }
 
@@ -70,7 +70,9 @@ func (l *LegacyAdapter) Mutate(ctx context.Context, ref *corev2.ResourceReferenc
 	ctx = context.WithValue(ctx, corev2.NamespaceKey, event.Entity.Namespace)
 	tctx, cancel := context.WithTimeout(ctx, l.StoreTimeout)
 
-	mutator, err := l.Store.GetMutatorByName(tctx, ref.Name)
+	mstore := storev2.NewGenericStore[*corev2.Mutator](l.Store)
+	id := storev2.ID{Namespace: event.Entity.Namespace, Name: ref.Name}
+	mutator, err := mstore.Get(tctx, id)
 	cancel()
 	if err != nil {
 		// Warning: do not wrap this error
@@ -102,15 +104,11 @@ func (l *LegacyAdapter) Mutate(ctx context.Context, ref *corev2.ResourceReferenc
 			AssetGetter:            l.AssetGetter,
 			Executor:               l.Executor,
 			SecretsProviderManager: l.SecretsProviderManager,
-			Store:                  l.Store,
-			StoreTimeout:           l.StoreTimeout,
 		}
 		eventData, err = pipeMutator.run(ctx, mutator, event, assets)
 	} else if mutator.Type == corev2.JavascriptMutator {
 		javascriptMutator := JavascriptAdapter{
-			AssetGetter:  l.AssetGetter,
-			Store:        l.Store,
-			StoreTimeout: l.StoreTimeout,
+			AssetGetter: l.AssetGetter,
 		}
 		eventData, err = javascriptMutator.run(ctx, mutator, event, assets)
 	}

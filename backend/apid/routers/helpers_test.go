@@ -8,18 +8,20 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"net/url"
-	"reflect"
+	"path"
 	"strings"
 	"testing"
 
 	"github.com/gorilla/mux"
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
+	corev3 "github.com/sensu/sensu-go/api/core/v3"
 	"github.com/sensu/sensu-go/backend/store"
+	storev2 "github.com/sensu/sensu-go/backend/store/v2"
 	"github.com/sensu/sensu-go/testing/mockstore"
 	"github.com/stretchr/testify/mock"
 )
 
-type storeFunc func(*mockstore.MockStore)
+type storeFunc func(*mockstore.V2MockStore)
 
 type routerTestCase struct {
 	name           string
@@ -30,7 +32,19 @@ type routerTestCase struct {
 	wantStatusCode int
 }
 
-func run(t *testing.T, tt routerTestCase, router *mux.Router, store *mockstore.MockStore) bool {
+func clone(r corev3.Resource) corev3.Resource {
+	wrapper, err := storev2.WrapResource(r)
+	if err != nil {
+		panic(err)
+	}
+	resource, err := wrapper.Unwrap()
+	if err != nil {
+		panic(err)
+	}
+	return resource
+}
+
+func run(t *testing.T, tt routerTestCase, router *mux.Router, store *mockstore.V2MockStore) bool {
 	t.Helper()
 	return t.Run(tt.name, func(t *testing.T) {
 		// Only start the HTTP server here to prevent data races in tests
@@ -67,7 +81,7 @@ func run(t *testing.T, tt routerTestCase, router *mux.Router, store *mockstore.M
 }
 
 // Get
-var getTestCases = func(resource corev2.Resource) []routerTestCase {
+func getTestCases(resource corev3.Resource) []routerTestCase {
 	return []routerTestCase{
 		getResourceNotFoundTestCase(resource),
 		getResourceStoreErrTestCase(resource),
@@ -75,51 +89,42 @@ var getTestCases = func(resource corev2.Resource) []routerTestCase {
 	}
 }
 
-var getResourceNotFoundTestCase = func(resource corev2.Resource) routerTestCase {
-	name := resource.GetObjectMeta().Name
-	typ := reflect.TypeOf(resource).String()
-
+func getResourceNotFoundTestCase(resource corev3.Resource) routerTestCase {
 	return routerTestCase{
 		name:   "it returns 404 if a resource is not found",
 		method: http.MethodGet,
 		path:   resource.URIPath(),
-		storeFunc: func(s *mockstore.MockStore) {
-			s.On("GetResource", mock.Anything, name, mock.AnythingOfType(typ)).
-				Return(&store.ErrNotFound{}).
+		storeFunc: func(s *mockstore.V2MockStore) {
+			s.On("Get", mock.Anything, mock.Anything).
+				Return(nil, &store.ErrNotFound{}).
 				Once()
 		},
 		wantStatusCode: http.StatusNotFound,
 	}
 }
 
-var getResourceStoreErrTestCase = func(resource corev2.Resource) routerTestCase {
-	name := resource.GetObjectMeta().Name
-	typ := reflect.TypeOf(resource).String()
-
+func getResourceStoreErrTestCase(resource corev3.Resource) routerTestCase {
 	return routerTestCase{
 		name:   "it returns 500 if the store encounters an error while retrieving a resource",
 		method: http.MethodGet,
 		path:   resource.URIPath(),
-		storeFunc: func(s *mockstore.MockStore) {
-			s.On("GetResource", mock.Anything, name, mock.AnythingOfType(typ)).
-				Return(&store.ErrInternal{}).
+		storeFunc: func(s *mockstore.V2MockStore) {
+			s.On("Get", mock.Anything, mock.Anything).
+				Return(nil, &store.ErrInternal{}).
 				Once()
 		},
 		wantStatusCode: http.StatusInternalServerError,
 	}
 }
 
-var getResourceSuccessTestCase = func(resource corev2.Resource) routerTestCase {
-	name := resource.GetObjectMeta().Name
-	typ := reflect.TypeOf(resource).String()
-
+func getResourceSuccessTestCase(resource corev3.Resource) routerTestCase {
 	return routerTestCase{
 		name:   "it retrieves a check config",
 		method: http.MethodGet,
 		path:   resource.URIPath(),
-		storeFunc: func(s *mockstore.MockStore) {
-			s.On("GetResource", mock.Anything, name, mock.AnythingOfType(typ)).
-				Return(nil).
+		storeFunc: func(s *mockstore.V2MockStore) {
+			s.On("Get", mock.Anything, mock.Anything).
+				Return(mockstore.Wrapper[*corev2.CheckConfig]{Value: corev2.FixtureCheckConfig("check")}, nil).
 				Once()
 		},
 		wantStatusCode: http.StatusOK,
@@ -127,57 +132,43 @@ var getResourceSuccessTestCase = func(resource corev2.Resource) routerTestCase {
 }
 
 // List
-var listTestCases = func(resource corev2.Resource) []routerTestCase {
+func listTestCases(resource corev3.Resource) []routerTestCase {
 	return []routerTestCase{
 		listResourcesStoreErrTestCase(resource),
 		listResourcesSuccessTestCase(resource),
-		listResourcesAcrossNamespacesTestCase(resource),
 	}
 }
 
-var listResourcesStoreErrTestCase = func(resource corev2.Resource) routerTestCase {
-	resource.SetNamespace("default")
-	typ := reflect.TypeOf(resource).String()
+func listResourcesStoreErrTestCase(resource corev3.Resource) routerTestCase {
+	if _, ok := resource.(corev3.GlobalResource); !ok {
+		resource.GetMetadata().Namespace = "default"
+	}
 
 	return routerTestCase{
 		name:   "it returns 500 if the store encounters an error while listing resources",
 		method: http.MethodGet,
 		path:   resource.URIPath(),
-		storeFunc: func(s *mockstore.MockStore) {
-			s.On("ListResources", mock.Anything, resource.StorePrefix(), mock.AnythingOfType("*[]"+typ), mock.AnythingOfType("*store.SelectionPredicate")).
-				Return(&store.ErrInternal{}).
+		storeFunc: func(s *mockstore.V2MockStore) {
+			s.On("List", mock.Anything, mock.Anything, mock.Anything).
+				Return(nil, &store.ErrInternal{}).
 				Once()
 		},
 		wantStatusCode: http.StatusInternalServerError,
 	}
 }
 
-var listResourcesSuccessTestCase = func(resource corev2.Resource) routerTestCase {
-	resource.SetNamespace("default")
-	typ := reflect.TypeOf(resource).String()
+func listResourcesSuccessTestCase(resource corev3.Resource) routerTestCase {
+	if _, ok := resource.(corev3.GlobalResource); !ok {
+		resource.GetMetadata().Namespace = "default"
+	}
 
 	return routerTestCase{
 		name:   "it lists resources",
 		method: http.MethodGet,
 		path:   resource.URIPath(),
-		storeFunc: func(s *mockstore.MockStore) {
-			s.On("ListResources", mock.Anything, resource.StorePrefix(), mock.AnythingOfType("*[]"+typ), mock.AnythingOfType("*store.SelectionPredicate")).
-				Return(nil).
-				Once()
-		},
-		wantStatusCode: http.StatusOK,
-	}
-}
-
-var listResourcesAcrossNamespacesTestCase = func(resource corev2.Resource) routerTestCase {
-	typ := reflect.TypeOf(resource).String()
-	return routerTestCase{
-		name:   "it lists resources across namespaces",
-		method: http.MethodGet,
-		path:   resource.URIPath(),
-		storeFunc: func(s *mockstore.MockStore) {
-			s.On("ListResources", mock.Anything, resource.StorePrefix(), mock.AnythingOfType("*[]"+typ), mock.AnythingOfType("*store.SelectionPredicate")).
-				Return(nil).
+		storeFunc: func(s *mockstore.V2MockStore) {
+			s.On("List", mock.Anything, mock.Anything, mock.Anything).
+				Return(mockstore.WrapList[*corev2.CheckConfig]{corev2.FixtureCheckConfig("check")}, nil).
 				Once()
 		},
 		wantStatusCode: http.StatusOK,
@@ -185,7 +176,7 @@ var listResourcesAcrossNamespacesTestCase = func(resource corev2.Resource) route
 }
 
 // Create
-var createTestCases = func(resource corev2.Resource) []routerTestCase {
+func createTestCases(resource corev3.Resource) []routerTestCase {
 	return []routerTestCase{
 		createResourceInvalidPayloadTestCase(resource),
 		createResourceInvalidMetaTestCase(resource),
@@ -196,8 +187,13 @@ var createTestCases = func(resource corev2.Resource) []routerTestCase {
 	}
 }
 
-var createResourceInvalidPayloadTestCase = func(resource corev2.Resource) routerTestCase {
-	resource.SetNamespace("default")
+func createResourceInvalidPayloadTestCase(resource corev3.Resource) routerTestCase {
+	resource = clone(resource)
+
+	if _, ok := resource.(corev3.GlobalResource); !ok {
+		resource.GetMetadata().Namespace = "default"
+	}
+	resource.GetMetadata().Name = ""
 
 	return routerTestCase{
 		name:           "it returns 400 if the request payload to create is invalid",
@@ -208,8 +204,11 @@ var createResourceInvalidPayloadTestCase = func(resource corev2.Resource) router
 	}
 }
 
-var createResourceInvalidMetaTestCase = func(resource corev2.Resource) routerTestCase {
-	resource.SetNamespace("default")
+func createResourceInvalidMetaTestCase(resource corev3.Resource) routerTestCase {
+	resource = clone(resource)
+	if _, ok := resource.(corev3.GlobalResource); !ok {
+		resource.GetMetadata().Namespace = "default"
+	}
 
 	// Do not test this on global resources because it will fail
 	if !strings.Contains(resource.URIPath(), "namespaces/default") {
@@ -219,27 +218,31 @@ var createResourceInvalidMetaTestCase = func(resource corev2.Resource) routerTes
 	return routerTestCase{
 		name:           "it returns 400 if the resource metadata to create does not match the request path",
 		method:         http.MethodPost,
-		path:           resource.URIPath(),
+		path:           path.Dir(resource.URIPath()),
 		body:           []byte(`{"metadata": {"namespace":"acme"}}`),
 		wantStatusCode: http.StatusBadRequest,
 	}
 }
 
-var createResourceAlreadyExistsTestCase = func(resource corev2.Resource) routerTestCase {
+func createResourceAlreadyExistsTestCase(resource corev3.Resource) routerTestCase {
 	// Deep copy the given resource so we can modify it without affecting other
 	// test cases
-	r := reflect.New(reflect.ValueOf(resource).Elem().Type()).Interface().(corev2.Resource)
-	r.SetObjectMeta(corev2.ObjectMeta{Name: "createResourceAlreadyExistsTestCase", Namespace: "default"})
+	r := clone(resource)
+	namespace := "default"
+	if _, ok := r.(corev3.GlobalResource); ok {
+		namespace = ""
+	}
+	r.SetMetadata(&corev2.ObjectMeta{Name: "createResourceAlreadyExistsTestCase", Namespace: namespace})
 
 	body := marshal(r)
 
 	return routerTestCase{
 		name:   "it returns 409 if the resource to create already exists",
 		method: http.MethodPost,
-		path:   resource.URIPath(),
+		path:   path.Dir(resource.URIPath()),
 		body:   body,
-		storeFunc: func(s *mockstore.MockStore) {
-			s.On("CreateResource", mock.Anything, r).
+		storeFunc: func(s *mockstore.V2MockStore) {
+			s.On("CreateIfNotExists", mock.Anything, mock.Anything, mock.Anything).
 				Return(&store.ErrAlreadyExists{}).
 				Once()
 		},
@@ -247,21 +250,25 @@ var createResourceAlreadyExistsTestCase = func(resource corev2.Resource) routerT
 	}
 }
 
-var createResourceInvalidTestCase = func(resource corev2.Resource) routerTestCase {
+func createResourceInvalidTestCase(resource corev3.Resource) routerTestCase {
 	// Deep copy the given resource so we can modify it without affecting other
 	// test cases
-	r := reflect.New(reflect.ValueOf(resource).Elem().Type()).Interface().(corev2.Resource)
-	r.SetObjectMeta(corev2.ObjectMeta{Name: "createResourceInvalidTestCase", Namespace: "default"})
+	r := clone(resource)
+	namespace := "default"
+	if _, ok := r.(corev3.GlobalResource); ok {
+		namespace = ""
+	}
+	r.SetMetadata(&corev2.ObjectMeta{Name: "createResourceInvalidTestCase", Namespace: namespace})
 
 	body := marshal(r)
 
 	return routerTestCase{
 		name:   "it returns 400 if the resource to create is invalid",
 		method: http.MethodPost,
-		path:   resource.URIPath(),
+		path:   path.Dir(resource.URIPath()),
 		body:   body,
-		storeFunc: func(s *mockstore.MockStore) {
-			s.On("CreateResource", mock.Anything, r).
+		storeFunc: func(s *mockstore.V2MockStore) {
+			s.On("CreateIfNotExists", mock.Anything, mock.Anything, mock.Anything).
 				Return(&store.ErrNotValid{Err: errors.New("createResourceInvalidTestCase")}).
 				Once()
 		},
@@ -269,21 +276,25 @@ var createResourceInvalidTestCase = func(resource corev2.Resource) routerTestCas
 	}
 }
 
-var createResourceStoreErrTestCase = func(resource corev2.Resource) routerTestCase {
+func createResourceStoreErrTestCase(resource corev3.Resource) routerTestCase {
 	// Deep copy the given resource so we can modify it without affecting other
 	// test cases
-	r := reflect.New(reflect.ValueOf(resource).Elem().Type()).Interface().(corev2.Resource)
-	r.SetObjectMeta(corev2.ObjectMeta{Name: "createResourceStoreErrTestCase", Namespace: "default"})
+	r := clone(resource)
+	namespace := "default"
+	if _, ok := r.(corev3.GlobalResource); ok {
+		namespace = ""
+	}
+	r.SetMetadata(&corev2.ObjectMeta{Name: "createResourceStoreErrTestCase", Namespace: namespace})
 
 	body := marshal(r)
 
 	return routerTestCase{
 		name:   "it returns 500 if the store returns an error while creating",
 		method: http.MethodPost,
-		path:   resource.URIPath(),
+		path:   path.Dir(resource.URIPath()),
 		body:   body,
-		storeFunc: func(s *mockstore.MockStore) {
-			s.On("CreateResource", mock.Anything, r).
+		storeFunc: func(s *mockstore.V2MockStore) {
+			s.On("CreateIfNotExists", mock.Anything, mock.Anything, mock.Anything).
 				Return(&store.ErrInternal{}).
 				Once()
 		},
@@ -291,21 +302,25 @@ var createResourceStoreErrTestCase = func(resource corev2.Resource) routerTestCa
 	}
 }
 
-var createResourceSuccessTestCase = func(resource corev2.Resource) routerTestCase {
+func createResourceSuccessTestCase(resource corev3.Resource) routerTestCase {
 	// Deep copy the given resource so we can modify it without affecting other
 	// test cases
-	r := reflect.New(reflect.ValueOf(resource).Elem().Type()).Interface().(corev2.Resource)
-	r.SetObjectMeta(corev2.ObjectMeta{Name: "createResourceSuccessTestCase", Namespace: "default"})
+	r := clone(resource)
+	namespace := "default"
+	if _, ok := r.(corev3.GlobalResource); ok {
+		namespace = ""
+	}
+	r.SetMetadata(&corev2.ObjectMeta{Name: "createResourceSuccessTestCase", Namespace: namespace})
 
 	body := marshal(r)
 
 	return routerTestCase{
 		name:   "it returns 201 if the resource was created",
 		method: http.MethodPost,
-		path:   resource.URIPath(),
+		path:   path.Dir(resource.URIPath()),
 		body:   body,
-		storeFunc: func(s *mockstore.MockStore) {
-			s.On("CreateResource", mock.Anything, r).
+		storeFunc: func(s *mockstore.V2MockStore) {
+			s.On("CreateIfNotExists", mock.Anything, mock.Anything, mock.Anything).
 				Return(nil).
 				Once()
 		},
@@ -314,7 +329,7 @@ var createResourceSuccessTestCase = func(resource corev2.Resource) routerTestCas
 }
 
 // Update
-var updateTestCases = func(resource corev2.Resource) []routerTestCase {
+func updateTestCases(resource corev3.Resource) []routerTestCase {
 	return []routerTestCase{
 		updateResourceInvalidPayloadTestCase(resource),
 		updateResourceInvalidMetaTestCase(resource),
@@ -324,7 +339,7 @@ var updateTestCases = func(resource corev2.Resource) []routerTestCase {
 	}
 }
 
-var updateResourceInvalidPayloadTestCase = func(resource corev2.Resource) routerTestCase {
+func updateResourceInvalidPayloadTestCase(resource corev3.Resource) routerTestCase {
 	return routerTestCase{
 		name:           "it returns 400 if the request payload to update is invalid",
 		method:         http.MethodPut,
@@ -334,8 +349,10 @@ var updateResourceInvalidPayloadTestCase = func(resource corev2.Resource) router
 	}
 }
 
-var updateResourceInvalidMetaTestCase = func(resource corev2.Resource) routerTestCase {
-	resource.SetNamespace("acme")
+func updateResourceInvalidMetaTestCase(resource corev3.Resource) routerTestCase {
+	if _, ok := resource.(corev3.GlobalResource); !ok {
+		resource.GetMetadata().Namespace = "acme"
+	}
 
 	return routerTestCase{
 		name:           "it returns 400 if the resource metadata to update does not match the request path",
@@ -346,16 +363,15 @@ var updateResourceInvalidMetaTestCase = func(resource corev2.Resource) routerTes
 	}
 }
 
-var updateResourceInvalidTestCase = func(resource corev2.Resource) routerTestCase {
-	typ := reflect.TypeOf(resource).String()
+func updateResourceInvalidTestCase(resource corev3.Resource) routerTestCase {
 
 	return routerTestCase{
 		name:   "it returns 400 if the resource to update is invalid",
 		method: http.MethodPut,
 		path:   resource.URIPath(),
 		body:   marshal(resource),
-		storeFunc: func(s *mockstore.MockStore) {
-			s.On("CreateOrUpdateResource", mock.Anything, mock.AnythingOfType(typ)).
+		storeFunc: func(s *mockstore.V2MockStore) {
+			s.On("CreateOrUpdate", mock.Anything, mock.Anything, mock.Anything).
 				Return(&store.ErrNotValid{Err: errors.New("error")}).
 				Once()
 		},
@@ -363,16 +379,15 @@ var updateResourceInvalidTestCase = func(resource corev2.Resource) routerTestCas
 	}
 }
 
-var updateResourceStoreErrTestCase = func(resource corev2.Resource) routerTestCase {
-	typ := reflect.TypeOf(resource).String()
+func updateResourceStoreErrTestCase(resource corev3.Resource) routerTestCase {
 
 	return routerTestCase{
 		name:   "it returns 500 if the store returns an error while updating",
 		method: http.MethodPut,
 		path:   resource.URIPath(),
 		body:   marshal(resource),
-		storeFunc: func(s *mockstore.MockStore) {
-			s.On("CreateOrUpdateResource", mock.Anything, mock.AnythingOfType(typ)).
+		storeFunc: func(s *mockstore.V2MockStore) {
+			s.On("CreateOrUpdate", mock.Anything, mock.Anything, mock.Anything).
 				Return(&store.ErrInternal{}).
 				Once()
 		},
@@ -380,16 +395,15 @@ var updateResourceStoreErrTestCase = func(resource corev2.Resource) routerTestCa
 	}
 }
 
-var updateResourceSuccessTestCase = func(resource corev2.Resource) routerTestCase {
-	typ := reflect.TypeOf(resource).String()
+func updateResourceSuccessTestCase(resource corev3.Resource) routerTestCase {
 
 	return routerTestCase{
 		name:   "it returns 201 if the resource was updated",
 		method: http.MethodPut,
 		path:   resource.URIPath(),
 		body:   marshal(resource),
-		storeFunc: func(s *mockstore.MockStore) {
-			s.On("CreateOrUpdateResource", mock.Anything, mock.AnythingOfType(typ)).
+		storeFunc: func(s *mockstore.V2MockStore) {
+			s.On("CreateOrUpdate", mock.Anything, mock.Anything, mock.Anything).
 				Return(nil).
 				Once()
 		},
@@ -398,7 +412,7 @@ var updateResourceSuccessTestCase = func(resource corev2.Resource) routerTestCas
 }
 
 // Delete
-var deleteTestCases = func(resource corev2.Resource) []routerTestCase {
+func deleteTestCases(resource corev3.Resource) []routerTestCase {
 	return []routerTestCase{
 		deleteResourceInvalidPathTestCase(resource),
 		deleteResourceNotFoundTestCase(resource),
@@ -407,7 +421,7 @@ var deleteTestCases = func(resource corev2.Resource) []routerTestCase {
 	}
 }
 
-var deleteResourceInvalidPathTestCase = func(resource corev2.Resource) routerTestCase {
+func deleteResourceInvalidPathTestCase(resource corev3.Resource) routerTestCase {
 	return routerTestCase{
 		name:           "it returns 400 if the resource ID to delete is invalid",
 		method:         http.MethodDelete,
@@ -416,17 +430,17 @@ var deleteResourceInvalidPathTestCase = func(resource corev2.Resource) routerTes
 	}
 }
 
-var deleteResourceNotFoundTestCase = func(resource corev2.Resource) routerTestCase {
+func deleteResourceNotFoundTestCase(resource corev3.Resource) routerTestCase {
 	return routerTestCase{
 		name:   "it returns 404 if the resource to delete does not exist",
 		method: http.MethodDelete,
 		path:   resource.URIPath(),
 		body:   []byte(`{"metadata": {"namespace":"default","name":"foo"}}`),
-		storeFunc: func(s *mockstore.MockStore) {
-			s.On("DeleteResource", mock.Anything, resource.StorePrefix(), resource.GetObjectMeta().Name).
+		storeFunc: func(s *mockstore.V2MockStore) {
+			s.On("Delete", mock.Anything, mock.Anything).
 				Return(&store.ErrNotFound{}).
 				Once()
-			s.On("DeleteNamespace", mock.Anything, resource.GetObjectMeta().Name).
+			s.On("DeleteNamespace", mock.Anything, mock.Anything).
 				Return(&store.ErrNotFound{}).
 				Once()
 		},
@@ -434,17 +448,17 @@ var deleteResourceNotFoundTestCase = func(resource corev2.Resource) routerTestCa
 	}
 }
 
-var deleteResourceStoreErrTestCase = func(resource corev2.Resource) routerTestCase {
+func deleteResourceStoreErrTestCase(resource corev3.Resource) routerTestCase {
 	return routerTestCase{
 		name:   "it returns 500 if the store returns an error while deleting",
 		method: http.MethodDelete,
 		path:   resource.URIPath(),
 		body:   []byte(`{"metadata": {"namespace":"default","name":"foo"}}`),
-		storeFunc: func(s *mockstore.MockStore) {
-			s.On("DeleteResource", mock.Anything, resource.StorePrefix(), resource.GetObjectMeta().Name).
+		storeFunc: func(s *mockstore.V2MockStore) {
+			s.On("Delete", mock.Anything, mock.Anything).
 				Return(&store.ErrInternal{}).
 				Once()
-			s.On("DeleteNamespace", mock.Anything, resource.GetObjectMeta().Name).
+			s.On("DeleteNamespace", mock.Anything, mock.Anything).
 				Return(&store.ErrInternal{}).
 				Once()
 		},
@@ -452,17 +466,17 @@ var deleteResourceStoreErrTestCase = func(resource corev2.Resource) routerTestCa
 	}
 }
 
-var deleteResourceSuccessTestCase = func(resource corev2.Resource) routerTestCase {
+func deleteResourceSuccessTestCase(resource corev3.Resource) routerTestCase {
 	return routerTestCase{
 		name:   "it returns 204 if the resource was deleted",
 		method: http.MethodDelete,
 		path:   resource.URIPath(),
 		body:   []byte(`{"metadata": {"namespace":"default","name":"foo"}}`),
-		storeFunc: func(s *mockstore.MockStore) {
-			s.On("DeleteResource", mock.Anything, resource.StorePrefix(), resource.GetObjectMeta().Name).
+		storeFunc: func(s *mockstore.V2MockStore) {
+			s.On("Delete", mock.Anything, mock.Anything).
 				Return(nil).
 				Once()
-			s.On("DeleteNamespace", mock.Anything, resource.GetObjectMeta().Name).
+			s.On("DeleteNamespace", mock.Anything, mock.Anything).
 				Return(nil).
 				Once()
 		},

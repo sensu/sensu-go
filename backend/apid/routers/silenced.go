@@ -7,9 +7,11 @@ import (
 
 	"github.com/gorilla/mux"
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
+	corev3 "github.com/sensu/sensu-go/api/core/v3"
 	"github.com/sensu/sensu-go/backend/apid/actions"
 	"github.com/sensu/sensu-go/backend/apid/handlers"
 	"github.com/sensu/sensu-go/backend/store"
+	storev2 "github.com/sensu/sensu-go/backend/store/v2"
 )
 
 // SilencedRouter handles requests for /users
@@ -27,12 +29,12 @@ type silencedController interface {
 }
 
 // NewSilencedRouter instantiates new router for controlling user resources
-func NewSilencedRouter(store store.Store) *SilencedRouter {
+func NewSilencedRouter(store store.SilenceStore, storev2 storev2.Interface) *SilencedRouter {
 	return &SilencedRouter{
 		controller: actions.NewSilencedController(store),
 		handlers: handlers.Handlers{
 			Resource: &corev2.Silenced{},
-			Store:    store,
+			Store:    storev2,
 		},
 	}
 }
@@ -58,7 +60,7 @@ func (r *SilencedRouter) Mount(parent *mux.Router) {
 	routes.Router.HandleFunc(routes.PathPrefix+"/checks/{check}", listHandler(r.list)).Methods(http.MethodGet)
 }
 
-func (r *SilencedRouter) get(req *http.Request) (interface{}, error) {
+func (r *SilencedRouter) get(req *http.Request) (corev3.Resource, error) {
 	id, err := url.PathUnescape(mux.Vars(req)["id"])
 	if err != nil {
 		return nil, actions.NewError(actions.InvalidArgument, err)
@@ -66,7 +68,7 @@ func (r *SilencedRouter) get(req *http.Request) (interface{}, error) {
 	return r.controller.Get(req.Context(), id)
 }
 
-func (r *SilencedRouter) create(req *http.Request) (interface{}, error) {
+func (r *SilencedRouter) create(req *http.Request) (corev3.Resource, error) {
 	entry := &corev2.Silenced{}
 	if err := UnmarshalBody(req, entry); err != nil {
 		return nil, actions.NewError(actions.InvalidArgument, err)
@@ -80,7 +82,7 @@ func (r *SilencedRouter) create(req *http.Request) (interface{}, error) {
 	return nil, err
 }
 
-func (r *SilencedRouter) createOrReplace(req *http.Request) (interface{}, error) {
+func (r *SilencedRouter) createOrReplace(req *http.Request) (corev3.Resource, error) {
 	entry := &corev2.Silenced{}
 	if err := UnmarshalBody(req, entry); err != nil {
 		return nil, actions.NewError(actions.InvalidArgument, err)
@@ -94,19 +96,27 @@ func (r *SilencedRouter) createOrReplace(req *http.Request) (interface{}, error)
 	return nil, err
 }
 
-func (r *SilencedRouter) listr(ctx context.Context, pred *store.SelectionPredicate) ([]corev2.Resource, error) {
+func (r *SilencedRouter) listr(ctx context.Context, pred *store.SelectionPredicate) ([]corev3.Resource, error) {
 	entries, err := r.controller.List(ctx, "", "")
 	if err != nil {
 		return nil, err
 	}
-	result := make([]corev2.Resource, 0, len(entries))
+	result := make([]corev3.Resource, 0, len(entries))
 	for _, e := range entries {
 		result = append(result, e)
 	}
 	return result, nil
 }
 
-func (r *SilencedRouter) list(w http.ResponseWriter, req *http.Request) (interface{}, error) {
+func (r *SilencedRouter) list(w http.ResponseWriter, req *http.Request) ([]corev3.Resource, error) {
 	params := mux.Vars(req)
-	return r.controller.List(req.Context(), params["subscription"], params["check"])
+	entries, err := r.controller.List(req.Context(), params["subscription"], params["check"])
+	if err != nil {
+		return nil, err
+	}
+	result := make([]corev3.Resource, 0, len(entries))
+	for _, resource := range entries {
+		result = append(result, resource)
+	}
+	return result, nil
 }

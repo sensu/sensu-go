@@ -26,9 +26,8 @@ const (
 
 // GenericClient is a generic API client that uses the ResourceStore.
 type GenericClient struct {
-	Kind       corev2.Resource
-	Store      store.ResourceStore
-	StoreV2    storev2.Interface
+	Kind       corev3.Resource
+	Store      storev2.Interface
 	Auth       authorization.Authorizer
 	APIGroup   string
 	APIVersion string
@@ -38,8 +37,7 @@ func (g GenericClient) validateConfig() error {
 	if g.Kind == nil {
 		return errors.New("nil Kind")
 	}
-	_, v3Resource := g.Kind.(*corev3.V2ResourceProxy)
-	if g.Store == nil && (g.StoreV2 == nil && v3Resource) {
+	if g.Store == nil {
 		return errors.New("nil store")
 	}
 	if g.Auth == nil {
@@ -51,29 +49,27 @@ func (g GenericClient) validateConfig() error {
 	return nil
 }
 
-func (g *GenericClient) createResource(ctx context.Context, value corev2.Resource) error {
-	if value, ok := value.(*corev3.V2ResourceProxy); ok {
-		resource := value.Resource
-		req := storev2.NewResourceRequestFromResource(ctx, resource)
+func (g *GenericClient) createResource(ctx context.Context, value corev3.Resource) error {
+	req := storev2.NewResourceRequestFromResource(value)
+	if gr, ok := g.Kind.(corev3.GlobalResource); !ok || !gr.IsGlobalResource() {
 		req.Namespace = corev2.ContextNamespace(ctx)
-		wrapper, err := storev2.WrapResource(resource)
-		if err != nil {
-			return err
-		}
-		return g.StoreV2.CreateIfNotExists(req, wrapper)
 	}
-	return g.Store.CreateResource(ctx, value)
+	wrapper, err := storev2.WrapResource(value)
+	if err != nil {
+		return err
+	}
+	return g.Store.CreateIfNotExists(ctx, req, wrapper)
 }
 
 // Create creates a resource, if authorized
-func (g *GenericClient) Create(ctx context.Context, value corev2.Resource) error {
+func (g *GenericClient) Create(ctx context.Context, value corev3.Resource) error {
 	if err := g.validateConfig(); err != nil {
 		return err
 	}
 	if err := value.Validate(); err != nil {
 		return err
 	}
-	if err := g.Authorize(ctx, "create", value.GetObjectMeta().Name); err != nil {
+	if err := g.Authorize(ctx, "create", value.GetMetadata().Name); err != nil {
 		return err
 	}
 	setCreatedBy(ctx, value)
@@ -94,39 +90,35 @@ func (g *GenericClient) SetTypeMeta(meta corev2.TypeMeta) error {
 		return fmt.Errorf("error (SetTypeMeta): %s", err)
 	}
 	switch kind := kind.(type) {
-	case corev2.Resource:
-		g.Kind = kind
 	case corev3.Resource:
-		g.Kind = corev3.V3ToV2Resource(kind)
+		g.Kind = kind
 	default:
 		return fmt.Errorf("%T is not a sensu resource", kind)
 	}
 	return nil
 }
 
-func (g *GenericClient) updateResource(ctx context.Context, value corev2.Resource) error {
-	if value, ok := value.(*corev3.V2ResourceProxy); ok {
-		resource := value.Resource
-		req := storev2.NewResourceRequestFromResource(ctx, resource)
+func (g *GenericClient) updateResource(ctx context.Context, value corev3.Resource) error {
+	req := storev2.NewResourceRequestFromResource(value)
+	if gr, ok := g.Kind.(corev3.GlobalResource); !ok || !gr.IsGlobalResource() {
 		req.Namespace = corev2.ContextNamespace(ctx)
-		wrapper, err := storev2.WrapResource(resource)
-		if err != nil {
-			return err
-		}
-		return g.StoreV2.CreateOrUpdate(req, wrapper)
 	}
-	return g.Store.CreateOrUpdateResource(ctx, value)
+	wrapper, err := storev2.WrapResource(value)
+	if err != nil {
+		return err
+	}
+	return g.Store.CreateOrUpdate(ctx, req, wrapper)
 }
 
 // Update creates or updates a resource, if authorized
-func (g *GenericClient) Update(ctx context.Context, value corev2.Resource) error {
+func (g *GenericClient) Update(ctx context.Context, value corev3.Resource) error {
 	if err := g.validateConfig(); err != nil {
 		return err
 	}
 	if err := value.Validate(); err != nil {
 		return err
 	}
-	if err := g.Authorize(ctx, "update", value.GetObjectMeta().Name); err != nil {
+	if err := g.Authorize(ctx, "update", value.GetMetadata().Name); err != nil {
 		return err
 	}
 	setCreatedBy(ctx, value)
@@ -134,16 +126,12 @@ func (g *GenericClient) Update(ctx context.Context, value corev2.Resource) error
 }
 
 func (g *GenericClient) deleteResource(ctx context.Context, name string) error {
-	if _, ok := g.Kind.(*corev3.V2ResourceProxy); ok {
-		req := storev2.ResourceRequest{
-			Namespace: corev2.ContextNamespace(ctx),
-			Name:      name,
-			StoreName: g.Kind.StorePrefix(),
-			Context:   ctx,
-		}
-		return g.StoreV2.Delete(req)
+	req := storev2.NewResourceRequestFromResource(g.Kind)
+	if gr, ok := g.Kind.(corev3.GlobalResource); !ok || !gr.IsGlobalResource() {
+		req.Namespace = corev2.ContextNamespace(ctx)
 	}
-	return g.Store.DeleteResource(ctx, g.Kind.StorePrefix(), name)
+	req.Name = name
+	return g.Store.Delete(ctx, req)
 }
 
 // Delete deletes a resource, if authorized
@@ -157,25 +145,21 @@ func (g *GenericClient) Delete(ctx context.Context, name string) error {
 	return g.deleteResource(ctx, name)
 }
 
-func (g *GenericClient) getResource(ctx context.Context, name string, value corev2.Resource) error {
-	if value, ok := value.(*corev3.V2ResourceProxy); ok {
-		req := storev2.ResourceRequest{
-			Namespace: corev2.ContextNamespace(ctx),
-			Name:      name,
-			StoreName: value.StorePrefix(),
-			Context:   ctx,
-		}
-		wrapper, err := g.StoreV2.Get(req)
-		if err != nil {
-			return err
-		}
-		return wrapper.UnwrapInto(value.Resource)
+func (g *GenericClient) getResource(ctx context.Context, name string, value corev3.Resource) error {
+	req := storev2.NewResourceRequestFromResource(g.Kind)
+	if gr, ok := g.Kind.(corev3.GlobalResource); !ok || !gr.IsGlobalResource() {
+		req.Namespace = corev2.ContextNamespace(ctx)
 	}
-	return g.Store.GetResource(ctx, name, value)
+	req.Name = name
+	wrapper, err := g.Store.Get(ctx, req)
+	if err != nil {
+		return err
+	}
+	return wrapper.UnwrapInto(value)
 }
 
 // Get gets a resource, if authorized
-func (g *GenericClient) Get(ctx context.Context, name string, val corev2.Resource) error {
+func (g *GenericClient) Get(ctx context.Context, name string, val corev3.Resource) error {
 	if err := g.validateConfig(); err != nil {
 		return err
 	}
@@ -186,31 +170,15 @@ func (g *GenericClient) Get(ctx context.Context, name string, val corev2.Resourc
 }
 
 func (g *GenericClient) list(ctx context.Context, resources interface{}, pred *store.SelectionPredicate) error {
-	if _, ok := g.Kind.(*corev3.V2ResourceProxy); ok {
-		req := storev2.ResourceRequest{
-			Namespace: corev2.ContextNamespace(ctx),
-			StoreName: g.Kind.StorePrefix(),
-			Context:   ctx,
-		}
-		list, err := g.StoreV2.List(req, pred)
-		if err != nil {
-			return err
-		}
-		if resourceList, ok := resources.(*[]corev2.Resource); ok {
-			values, err := list.Unwrap()
-			if err != nil {
-				return err
-			}
-			v2values := make([]corev2.Resource, len(values))
-			for i := range values {
-				v2values[i] = corev3.V3ToV2Resource(values[i])
-			}
-			*resourceList = v2values
-			return nil
-		}
-		return list.UnwrapInto(resources)
+	req := storev2.NewResourceRequestFromResource(g.Kind)
+	if gr, ok := g.Kind.(corev3.GlobalResource); !ok || !gr.IsGlobalResource() {
+		req.Namespace = corev2.ContextNamespace(ctx)
 	}
-	return g.Store.ListResources(ctx, g.Kind.StorePrefix(), resources, pred)
+	list, err := g.Store.List(ctx, req, pred)
+	if err != nil {
+		return err
+	}
+	return list.UnwrapInto(resources)
 }
 
 // List lists all resources within a namespace, according to a selection

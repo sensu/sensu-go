@@ -6,6 +6,7 @@ import (
 	"net/url"
 
 	"github.com/gorilla/mux"
+	corev3 "github.com/sensu/sensu-go/api/core/v3"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sirupsen/logrus"
 )
@@ -15,7 +16,7 @@ type EntityDeleter struct {
 	EventStore  store.EventStore
 }
 
-func (d EntityDeleter) Delete(req *http.Request) (interface{}, error) {
+func (d EntityDeleter) Delete(req *http.Request) (corev3.Resource, error) {
 	params := mux.Vars(req)
 	entityName, err := url.PathUnescape(params["id"])
 	if err != nil {

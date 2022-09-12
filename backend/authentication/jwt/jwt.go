@@ -13,7 +13,6 @@ import (
 	time "github.com/echlebek/timeproxy"
 	jwt "github.com/golang-jwt/jwt/v4"
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
-	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/types"
 	utilbytes "github.com/sensu/sensu-go/util/bytes"
 )
@@ -24,6 +23,8 @@ const (
 	// IssuerURLKey specifies the URL on which the JWT is issued
 	IssuerURLKey key = iota
 )
+
+const Name = "jwt"
 
 var (
 	defaultExpiration = time.Minute * 5
@@ -181,17 +182,9 @@ func LoadKeyPair(privatePath, publicPath string) error {
 	return nil
 }
 
-// InitSecret initializes and retrieves the secret for our signing tokens
-func InitSecret(store store.Store) error {
-	// Retrieve the secret
-	if s, err := store.GetJWTSecret(); err != nil {
-		return err
-	} else {
-		// Set the secret so it's available accross the package
-		secret = s
-	}
-
-	return nil
+// SetSecret does something incredibly dirty - sets a global variable.
+func SetSecret(s []byte) {
+	secret = s
 }
 
 // parseToken takes a signed token and parse it to verify its integrity

@@ -8,11 +8,11 @@ import (
 
 	"github.com/mitchellh/mapstructure"
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
+	corev3 "github.com/sensu/sensu-go/api/core/v3"
 	"github.com/sensu/sensu-go/backend/apid/graphql/globalid"
 	"github.com/sensu/sensu-go/backend/apid/graphql/schema"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/types"
-	"github.com/sensu/sensu-go/types/compat"
 )
 
 var _ schema.MutationFieldResolvers = (*mutationsImpl)(nil)
@@ -54,8 +54,10 @@ func (r *mutationsImpl) PutWrapped(p schema.MutationPutWrappedFieldResolverParam
 		return nil, err
 	}
 
-	resource := compat.V2Resource(ret.Value)
-	namespace := resource.GetObjectMeta().Namespace
+	// TODO(ccressent): I'm really not sure I can assume that ret.Value can
+	// always be assumed to meet the corev3.Resource interface...
+	resource := ret.Value.(corev3.Resource)
+	namespace := resource.GetMetadata().Namespace
 
 	ctx := store.NamespaceContext(p.Context, namespace)
 

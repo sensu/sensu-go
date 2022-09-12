@@ -23,7 +23,7 @@ executors:
         auth:
           username: $DOCKER_USERNAME
           password: $DOCKER_PASSWORD
-      - image: cimg/postgres:9.6
+      - image: cimg/postgres:10.17
         auth:
           username: $DOCKER_USERNAME
           password: $DOCKER_PASSWORD

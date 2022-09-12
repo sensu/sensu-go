@@ -10,7 +10,7 @@ import (
 
 func TestEventFiltersRouter(t *testing.T) {
 	// Setup the router
-	s := &mockstore.MockStore{}
+	s := &mockstore.V2MockStore{}
 	router := NewEventFiltersRouter(s)
 	parentRouter := mux.NewRouter().PathPrefix(corev2.URLPrefix).Subrouter()
 	router.Mount(parentRouter)
@@ -21,7 +21,7 @@ func TestEventFiltersRouter(t *testing.T) {
 	tests := []routerTestCase{}
 	tests = append(tests, getTestCases(fixture)...)
 	tests = append(tests, listTestCases(empty)...)
-	tests = append(tests, createTestCases(empty)...)
+	tests = append(tests, createTestCases(fixture)...)
 	tests = append(tests, updateTestCases(fixture)...)
 	tests = append(tests, deleteTestCases(fixture)...)
 	for _, tt := range tests {

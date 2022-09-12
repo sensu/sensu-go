@@ -11,7 +11,6 @@ import (
 	"github.com/sensu/sensu-go/backend/authorization/rbac"
 	"github.com/sensu/sensu-go/backend/store"
 	storev2 "github.com/sensu/sensu-go/backend/store/v2"
-	"github.com/sensu/sensu-go/backend/store/v2/wrap"
 	"github.com/sensu/sensu-go/testing/mockstore"
 	"github.com/stretchr/testify/mock"
 
@@ -378,46 +377,55 @@ func TestFetchNamespace(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			store := new(mockstore.MockStore)
-			store.On("ListClusterRoles", mock.Anything, mock.Anything).Return(tt.clusterRoles, nil)
-			store.On("ListClusterRoleBindings", mock.Anything, mock.Anything).Return(tt.clusterRoleBindings, nil)
-			store.On("ListRoles", mock.Anything, mock.Anything).Return(tt.roles, nil)
-			store.On("ListRoleBindings", mock.Anything, mock.Anything).Return(tt.roleBindings, nil)
-			store.On("GetResource", mock.Anything, mock.AnythingOfType("string"), mock.Anything).Run(func(args mock.Arguments) {
-				resource := args[2].(*corev2.Namespace)
-				*resource = *corev2.FixtureNamespace("dev")
-			}).Return(nil)
-			setupGetClusterRoleAndGetRole(store, tt.clusterRoles, tt.roles)
+			var (
+				ctx                            = store.NamespaceContext(context.Background(), tt.namespace)
+				listClusterRolesRequest        = storev2.NewResourceRequest(corev2.TypeMeta{APIVersion: "core/v2", Type: "ClusterRole"}, "", "", new(corev2.ClusterRole).StoreName())
+				listClusterRoleBindingsRequest = storev2.NewResourceRequest(corev2.TypeMeta{APIVersion: "core/v2", Type: "ClusterRoleBinding"}, "", "", new(corev2.ClusterRoleBinding).StoreName())
+				listRolesRequest               = storev2.NewResourceRequest(corev2.TypeMeta{APIVersion: "core/v2", Type: "Role"}, tt.namespace, "", new(corev2.Role).StoreName())
+				listRoleBindingsRequest        = storev2.NewResourceRequest(corev2.TypeMeta{APIVersion: "core/v2", Type: "RoleBinding"}, tt.namespace, "", new(corev2.RoleBinding).StoreName())
+				getNamespaceRequest            = storev2.NewResourceRequest(corev2.TypeMeta{APIVersion: "core/v3", Type: "Namespace"}, "", tt.namespace, new(corev3.Namespace).StoreName())
+				listResourceTemplatesRequest   = storev2.NewResourceRequest(corev2.TypeMeta{APIVersion: "core/v3", Type: "ResourceTemplate"}, "", "", new(corev3.ResourceTemplate).StoreName())
+			)
 
-			ctx := contextWithUser(defaultContext(), tt.attrs.User.Username, tt.attrs.User.Groups)
+			clusterRolesList := mockstore.WrapList[*corev2.ClusterRole](tt.clusterRoles)
+			clusterRoleBindingsList := mockstore.WrapList[*corev2.ClusterRoleBinding](tt.clusterRoleBindings)
+			rolesList := mockstore.WrapList[*corev2.Role](tt.roles)
+			roleBindingsList := mockstore.WrapList[*corev2.RoleBinding](tt.roleBindings)
+			devNamespace := mockstore.Wrapper[*corev3.Namespace]{Value: corev3.FixtureNamespace(tt.namespace)}
 
 			entityCfg := corev3.FixtureEntityConfig("foobar")
 			// set templated namespace
 			entityCfg.Metadata.Namespace = "{{ .Namespace }}"
 			tmplEntityConfig, _ := json.Marshal(entityCfg)
 
-			resourceTemplate := &corev3.ResourceTemplate{
-				Metadata: &corev2.ObjectMeta{
-					Namespace:   "default",
-					Name:        "tmpl-entity-config",
-					Labels:      make(map[string]string),
-					Annotations: make(map[string]string),
+			resourceTemplateList := mockstore.WrapList[*corev3.ResourceTemplate]{
+				&corev3.ResourceTemplate{
+					Metadata: &corev2.ObjectMeta{
+						Namespace:   "default",
+						Name:        "tmpl-entity-config",
+						Labels:      make(map[string]string),
+						Annotations: make(map[string]string),
+					},
+					APIVersion: "core/v3",
+					Type:       "EntityConfig",
+					Template:   string(tmplEntityConfig),
 				},
-				APIVersion: "core/v3",
-				Type:       "EntityConfig",
-				Template:   string(tmplEntityConfig),
 			}
-			wrappedResourceTemplate, err := storev2.WrapResource(resourceTemplate)
-			if err != nil {
-				t.Fatal(err)
-			}
-			wrapList := wrap.List{wrappedResourceTemplate.(*wrap.Wrapper)}
-			s2 := new(mockstore.V2MockStore)
-			s2.On("CreateOrUpdate", mock.Anything, mock.Anything).Return(nil)
-			s2.On("List", mock.Anything, mock.Anything).Return(wrapList, nil)
+
+			store := new(mockstore.V2MockStore)
+			store.On("List", mock.Anything, listClusterRolesRequest, mock.Anything).Return(clusterRolesList, nil)
+			store.On("List", mock.Anything, listClusterRoleBindingsRequest, mock.Anything).Return(clusterRoleBindingsList, nil)
+			store.On("List", mock.Anything, listRolesRequest, mock.Anything).Return(rolesList, nil)
+			store.On("List", mock.Anything, listRoleBindingsRequest, mock.Anything).Return(roleBindingsList, nil)
+			store.On("Get", mock.Anything, getNamespaceRequest).Return(devNamespace, nil)
+			store.On("List", mock.Anything, listResourceTemplatesRequest, mock.Anything).Return(resourceTemplateList, nil)
+
+			setupGetClusterRoleAndGetRole(ctx, store, tt.clusterRoles, tt.roles)
+
+			ctx = contextWithUser(ctx, tt.attrs.User.Username, tt.attrs.User.Groups)
 
 			auth := &rbac.Authorizer{Store: store}
-			client := NewNamespaceClient(store, store, auth, s2)
+			client := NewNamespaceClient(store, auth)
 
 			got, err := client.FetchNamespace(ctx, tt.namespace)
 			if (err != nil) != tt.wantErr {
@@ -433,13 +441,13 @@ func TestFetchNamespace(t *testing.T) {
 }
 
 func TestNamespaceList(t *testing.T) {
-	namespaces := []*corev2.Namespace{
-		corev2.FixtureNamespace("a"),
-		corev2.FixtureNamespace("b"),
-		corev2.FixtureNamespace("c"),
-		corev2.FixtureNamespace("d"),
-		corev2.FixtureNamespace("e"),
-		corev2.FixtureNamespace("f"),
+	namespaces := []*corev3.Namespace{
+		corev3.FixtureNamespace("a"),
+		corev3.FixtureNamespace("b"),
+		corev3.FixtureNamespace("c"),
+		corev3.FixtureNamespace("d"),
+		corev3.FixtureNamespace("e"),
+		corev3.FixtureNamespace("f"),
 	}
 	tests := []struct {
 		Name                string
@@ -448,8 +456,8 @@ func TestNamespaceList(t *testing.T) {
 		ClusterRoleBindings []*corev2.ClusterRoleBinding
 		Roles               []*corev2.Role
 		RoleBindings        []*corev2.RoleBinding
-		AllNamespaces       []*corev2.Namespace
-		ExpNamespaces       []*corev2.Namespace
+		AllNamespaces       []*corev3.Namespace
+		ExpNamespaces       []*corev3.Namespace
 		WantErr             bool
 	}{
 		{
@@ -580,7 +588,7 @@ func TestNamespaceList(t *testing.T) {
 				},
 			},
 			AllNamespaces: namespaces,
-			ExpNamespaces: []*corev2.Namespace{
+			ExpNamespaces: []*corev3.Namespace{
 				namespaces[0],
 				namespaces[2],
 				namespaces[4],
@@ -672,7 +680,7 @@ func TestNamespaceList(t *testing.T) {
 				},
 			},
 			AllNamespaces: namespaces,
-			ExpNamespaces: []*corev2.Namespace{
+			ExpNamespaces: []*corev3.Namespace{
 				namespaces[0],
 			},
 		},
@@ -716,7 +724,7 @@ func TestNamespaceList(t *testing.T) {
 				},
 			},
 			AllNamespaces: namespaces,
-			ExpNamespaces: []*corev2.Namespace{
+			ExpNamespaces: []*corev3.Namespace{
 				namespaces[0],
 			},
 		},
@@ -758,7 +766,7 @@ func TestNamespaceList(t *testing.T) {
 				},
 			},
 			AllNamespaces: namespaces,
-			ExpNamespaces: []*corev2.Namespace{
+			ExpNamespaces: []*corev3.Namespace{
 				namespaces[0],
 			},
 			WantErr: false,
@@ -767,45 +775,50 @@ func TestNamespaceList(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.Name, func(t *testing.T) {
-			s := new(mockstore.MockStore)
-			s.On("ListClusterRoles", mock.Anything, mock.Anything).Return(test.ClusterRoles, nil)
-			s.On("ListClusterRoleBindings", mock.Anything, mock.Anything).Return(test.ClusterRoleBindings, nil)
-			s.On("ListRoles", mock.Anything, mock.Anything).Return(test.Roles, nil)
-			s.On("ListRoleBindings", mock.Anything, mock.Anything).Return(test.RoleBindings, nil)
-			s.On("ListResources", mock.Anything, corev2.NamespacesResource, mock.Anything, mock.Anything).Run(func(args mock.Arguments) {
-				resources := args[2].(*[]*corev2.Namespace)
-				*resources = append(*resources, test.AllNamespaces...)
-			}).Return(nil)
-			setupGetClusterRoleAndGetRole(s, test.ClusterRoles, test.Roles)
+			var (
+				ctx                            = contextWithUser(defaultContext(), test.Attrs.User.Username, test.Attrs.User.Groups)
+				listClusterRolesRequest        = storev2.NewResourceRequest(corev2.TypeMeta{APIVersion: "core/v2", Type: "ClusterRole"}, "", "", new(corev2.ClusterRole).StoreName())
+				listClusterRoleBindingsRequest = storev2.NewResourceRequest(corev2.TypeMeta{APIVersion: "core/v2", Type: "ClusterRoleBinding"}, "", "", new(corev2.ClusterRoleBinding).StoreName())
+				listRolesRequest               = storev2.NewResourceRequest(corev2.TypeMeta{APIVersion: "core/v2", Type: "Role"}, "default", "", new(corev2.Role).StoreName())
+				listRoleBindingsRequest        = storev2.NewResourceRequest(corev2.TypeMeta{APIVersion: "core/v2", Type: "RoleBinding"}, "default", "", new(corev2.RoleBinding).StoreName())
+				listNamespacesRequest          = storev2.NewResourceRequest(corev2.TypeMeta{APIVersion: "core/v3", Type: "Namespace"}, "", "", new(corev3.Namespace).StoreName())
+				listResourceTemplatesRequest   = storev2.NewResourceRequest(corev2.TypeMeta{APIVersion: "core/v3", Type: "ResourceTemplate"}, "default", "", new(corev3.ResourceTemplate).StoreName())
+			)
+
+			clusterRolesList := mockstore.WrapList[*corev2.ClusterRole](test.ClusterRoles)
+			clusterRoleBindingsList := mockstore.WrapList[*corev2.ClusterRoleBinding](test.ClusterRoleBindings)
+			rolesList := mockstore.WrapList[*corev2.Role](test.Roles)
+			roleBindingsList := mockstore.WrapList[*corev2.RoleBinding](test.RoleBindings)
+			namespaceList := mockstore.WrapList[*corev3.Namespace](test.AllNamespaces)
 
 			entityCfg := corev3.FixtureEntityConfig("foobar")
 			entityCfg.Metadata.Namespace = "{{ .Namespace }}" // templated namespace
 			tmplEntityConfig, _ := json.Marshal(entityCfg)
-
-			resourceTemplate := &corev3.ResourceTemplate{
-				Metadata: &corev2.ObjectMeta{
-					Namespace:   "default",
-					Name:        "tmpl-entity-config",
-					Labels:      make(map[string]string),
-					Annotations: make(map[string]string),
+			resourceTemplateList := mockstore.WrapList[*corev3.ResourceTemplate]{
+				&corev3.ResourceTemplate{
+					Metadata: &corev2.ObjectMeta{
+						Namespace:   "default",
+						Name:        "tmpl-entity-config",
+						Labels:      make(map[string]string),
+						Annotations: make(map[string]string),
+					},
+					APIVersion: "core/v3",
+					Type:       "EntityConfig",
+					Template:   string(tmplEntityConfig),
 				},
-				APIVersion: "core/v3",
-				Type:       "EntityConfig",
-				Template:   string(tmplEntityConfig),
 			}
-			wrappedResourceTemplate, err := storev2.WrapResource(resourceTemplate)
-			if err != nil {
-				t.Fatal(err)
-			}
-			wrapList := wrap.List{wrappedResourceTemplate.(*wrap.Wrapper)}
-			s2 := new(mockstore.V2MockStore)
-			s2.On("CreateOrUpdate", mock.Anything, mock.Anything).Return(nil)
-			s2.On("List", mock.Anything, mock.Anything).Return(wrapList, nil)
 
-			ctx := contextWithUser(defaultContext(), test.Attrs.User.Username, test.Attrs.User.Groups)
+			s := new(mockstore.V2MockStore)
+			s.On("List", mock.Anything, listRoleBindingsRequest, mock.Anything).Return(roleBindingsList, nil)
+			s.On("List", mock.Anything, listClusterRoleBindingsRequest, mock.Anything).Return(clusterRoleBindingsList, nil)
+			s.On("List", mock.Anything, listClusterRolesRequest, mock.Anything).Return(clusterRolesList, nil)
+			s.On("List", mock.Anything, listRolesRequest, mock.Anything).Return(rolesList, nil)
+			s.On("List", mock.Anything, listNamespacesRequest, mock.Anything).Return(namespaceList, nil)
+			s.On("List", mock.Anything, listResourceTemplatesRequest, mock.Anything).Return(resourceTemplateList, nil)
+			setupGetClusterRoleAndGetRole(ctx, s, test.ClusterRoles, test.Roles)
 
 			auth := &rbac.Authorizer{Store: s}
-			client := NewNamespaceClient(s, s, auth, s2)
+			client := NewNamespaceClient(s, auth)
 
 			got, err := client.ListNamespaces(ctx, &store.SelectionPredicate{})
 			if (err != nil) != test.WantErr {
@@ -822,26 +835,28 @@ func TestNamespaceList(t *testing.T) {
 	}
 }
 
-func setupGetClusterRoleAndGetRole(store *mockstore.MockStore, clusterRoles []*corev2.ClusterRole, roles []*corev2.Role) {
+func setupGetClusterRoleAndGetRole(ctx context.Context, store *mockstore.V2MockStore, clusterRoles []*corev2.ClusterRole, roles []*corev2.Role) {
 	for _, role := range clusterRoles {
-		store.On("GetClusterRole", mock.Anything, role.Name).Return(role, nil)
+		req := storev2.NewResourceRequestFromResource(role)
+		store.On("Get", mock.Anything, req).Return(mockstore.Wrapper[*corev2.ClusterRole]{Value: role}, nil)
 	}
 
 	for _, role := range roles {
-		store.On("GetRole", mock.Anything, role.Name).Return(role, nil)
+		req := storev2.NewResourceRequestFromResource(role)
+		store.On("Get", mock.Anything, req).Return(mockstore.Wrapper[*corev2.Role]{Value: role}, nil)
 	}
 }
 
-func sortFunc(namespaces []*corev2.Namespace) func(i, j int) bool {
+func sortFunc(namespaces []*corev3.Namespace) func(i, j int) bool {
 	return func(i, j int) bool {
-		return namespaces[i].Name < namespaces[j].Name
+		return namespaces[i].Metadata.Name < namespaces[j].Metadata.Name
 	}
 }
 
 func TestNamespaceCreateSideEffects(t *testing.T) {
 	clusterRoles := []*corev2.ClusterRole{
 		{
-			ObjectMeta: corev2.NewObjectMeta("cluster-admin", "cluster-admin"),
+			ObjectMeta: corev2.NewObjectMeta("cluster-admin", ""),
 			Rules: []corev2.Rule{
 				{
 					Verbs:     []string{corev2.VerbAll},
@@ -862,17 +877,9 @@ func TestNamespaceCreateSideEffects(t *testing.T) {
 				Type: "ClusterRole",
 				Name: "cluster-admin",
 			},
-			ObjectMeta: corev2.NewObjectMeta("cluster-admin", "cluster-admin"),
+			ObjectMeta: corev2.NewObjectMeta("cluster-admin", ""),
 		},
 	}
-	s := new(mockstore.MockStore)
-	s.On("ListClusterRoles", mock.Anything, mock.Anything).Return(clusterRoles, nil)
-	s.On("ListClusterRoleBindings", mock.Anything, mock.Anything).Return(clusterRoleBindings, nil)
-	s.On("ListRoles", mock.Anything, mock.Anything).Return(([]*corev2.Role)(nil), nil)
-	s.On("ListRoleBindings", mock.Anything, mock.Anything).Return(([]*corev2.RoleBinding)(nil), nil)
-	s.On("CreateResource", mock.Anything, mock.Anything).Return(nil)
-	s.On("CreateOrUpdateResource", mock.Anything, mock.Anything).Return(nil)
-	setupGetClusterRoleAndGetRole(s, clusterRoles, nil)
 
 	entityCfg := corev3.FixtureEntityConfig("bar")
 	entityCfg.Metadata.Namespace = "{{ .Namespace }}"
@@ -889,93 +896,48 @@ func TestNamespaceCreateSideEffects(t *testing.T) {
 		Type:       "EntityConfig",
 		Template:   string(tmplEntityConfig),
 	}
-	wrappedResourceTemplate, err := storev2.WrapResource(resourceTemplate)
-	if err != nil {
-		t.Fatal(err)
-	}
-	wrapList := wrap.List{wrappedResourceTemplate.(*wrap.Wrapper)}
-	s2 := new(mockstore.V2MockStore)
-	s2.On("CreateOrUpdate", mock.Anything, mock.Anything).Return(nil)
-	s2.On("List", mock.Anything, mock.Anything).Return(wrapList, nil)
+	ctx := defaultContext()
+	listClusterRolesRequest := storev2.NewResourceRequest(corev2.TypeMeta{APIVersion: "core/v2", Type: "ClusterRole"}, "", "", new(corev2.ClusterRole).StoreName())
+	listClusterRoleBindingsRequest := storev2.NewResourceRequest(corev2.TypeMeta{APIVersion: "core/v2", Type: "ClusterRoleBinding"}, "", "", new(corev2.ClusterRoleBinding).StoreName())
+	listRolesRequest := storev2.NewResourceRequest(corev2.TypeMeta{APIVersion: "core/v2", Type: "Role"}, "default", "", new(corev2.Role).StoreName())
+	listRoleBindingsRequest := storev2.NewResourceRequest(corev2.TypeMeta{APIVersion: "core/v2", Type: "RoleBinding"}, "default", "", new(corev2.RoleBinding).StoreName())
+	listResourceTemplatesRequest := storev2.NewResourceRequest(corev2.TypeMeta{APIVersion: "core/v3", Type: "ResourceTemplate"}, "", "", new(corev3.ResourceTemplate).StoreName())
+	s := new(mockstore.V2MockStore)
+	s.On("List", mock.Anything, listClusterRolesRequest, mock.Anything).Return(mockstore.WrapList[*corev2.ClusterRole](clusterRoles), nil)
+	s.On("List", mock.Anything, listClusterRoleBindingsRequest, mock.Anything).Return(mockstore.WrapList[*corev2.ClusterRoleBinding](clusterRoleBindings), nil)
+	s.On("List", mock.Anything, listRolesRequest, mock.Anything).Return(mockstore.WrapList[*corev2.Role]{}, nil)
+	s.On("List", mock.Anything, listRoleBindingsRequest, mock.Anything).Return(mockstore.WrapList[*corev2.RoleBinding]{}, nil)
+	s.On("List", mock.Anything, listResourceTemplatesRequest, mock.Anything).Return(mockstore.WrapList[*corev3.ResourceTemplate]{resourceTemplate}, nil)
+	s.On("CreateIfNotExists", mock.Anything, mock.Anything, mock.Anything).Return(nil)
+	s.On("CreateOrUpdate", mock.Anything, mock.Anything, mock.Anything).Return(nil)
+	setupGetClusterRoleAndGetRole(ctx, s, clusterRoles, nil)
 
-	ctx := contextWithUser(context.Background(), "cluster-admin", []string{"cluster-admins"})
+	ctx = contextWithUser(ctx, "cluster-admin", []string{"cluster-admins"})
 
 	auth := &rbac.Authorizer{Store: s}
-	client := NewNamespaceClient(s, s, auth, s2)
+	client := NewNamespaceClient(s, auth)
 
-	namespace := &corev2.Namespace{Name: "test_namespace"}
+	namespace := corev3.FixtureNamespace("test_namespace")
 	if err := client.CreateNamespace(ctx, namespace); err != nil {
 		t.Fatal(err)
 	}
 
-	expRole := &corev2.Role{
-		ObjectMeta: corev2.ObjectMeta{
-			Namespace: "test_namespace",
-			Name:      pipelineRoleName,
-			CreatedBy: "cluster-admin",
-		},
-		Rules: []corev2.Rule{
-			{
-				Verbs:     []string{"get", "list"},
-				Resources: []string{new(corev2.Event).RBACName()},
-			},
-		},
-	}
-	expBinding := &corev2.RoleBinding{
-		Subjects: []corev2.Subject{
-			{
-				Type: corev2.GroupType,
-				Name: pipelineRoleName,
-			},
-		},
-		RoleRef: corev2.RoleRef{
-			Name: pipelineRoleName,
-			Type: "Role",
-		},
-		ObjectMeta: corev2.ObjectMeta{
-			Name:      pipelineRoleName,
-			Namespace: "test_namespace",
-			CreatedBy: "cluster-admin",
-		},
-	}
-	s.AssertNumberOfCalls(t, "CreateResource", 1)
-	s.AssertNumberOfCalls(t, "CreateOrUpdateResource", 2)
-	s.AssertCalled(t, "CreateOrUpdateResource", mock.Anything, expRole)
-	s.AssertCalled(t, "CreateOrUpdateResource", mock.Anything, expBinding)
+	s.AssertNumberOfCalls(t, "CreateIfNotExists", 1)
+	s.AssertNumberOfCalls(t, "CreateOrUpdate", 3)
 
-	s.On("DeleteResource", mock.Anything, expBinding.StorePrefix(), pipelineRoleName).Run(func(args mock.Arguments) {
-		ctx := args[0].(context.Context)
-		if ns := corev2.ContextNamespace(ctx); ns != namespace.Name {
-			t.Fatalf("expected namespace %q, got %q", namespace.Name, ns)
-		}
-	}).Return(nil)
-	s.On("DeleteResource", mock.Anything, expRole.StorePrefix(), pipelineRoleName).Run(func(args mock.Arguments) {
-		ctx := args[0].(context.Context)
-		if ns := corev2.ContextNamespace(ctx); ns != namespace.Name {
-			t.Fatalf("expected namespace %q, got %q", namespace.Name, ns)
-		}
-	}).Return(nil)
-	s.On("DeleteNamespace", mock.Anything, namespace.Name).Return(nil)
+	s.On("Delete", mock.Anything, mock.Anything).Return(nil)
 
-	if err := client.DeleteNamespace(ctx, namespace.Name); err != nil {
+	if err := client.DeleteNamespace(ctx, namespace.Metadata.Name); err != nil {
 		t.Fatal(err)
 	}
 
-	s.AssertNumberOfCalls(t, "DeleteResource", 2)
-	s.AssertCalled(t, "DeleteResource", mock.Anything, expRole.StorePrefix(), pipelineRoleName)
-	s.AssertCalled(t, "DeleteResource", mock.Anything, expBinding.StorePrefix(), pipelineRoleName)
-
-	s.AssertNumberOfCalls(t, "DeleteNamespace", 1)
-	s.AssertCalled(t, "DeleteNamespace", mock.Anything, namespace.Name)
-
-	s2.AssertCalled(t, "List", mock.Anything, mock.Anything)
-	s2.AssertCalled(t, "CreateOrUpdate", mock.Anything, mock.Anything)
+	s.AssertNumberOfCalls(t, "Delete", 3)
 }
 
 func TestNamespaceUpdateSideEffects(t *testing.T) {
 	clusterRoles := []*corev2.ClusterRole{
 		{
-			ObjectMeta: corev2.NewObjectMeta("cluster-admin", "cluster-admin"),
+			ObjectMeta: corev2.NewObjectMeta("cluster-admin", ""),
 			Rules: []corev2.Rule{
 				{
 					Verbs:     []string{corev2.VerbAll},
@@ -996,25 +958,15 @@ func TestNamespaceUpdateSideEffects(t *testing.T) {
 				Type: "ClusterRole",
 				Name: "cluster-admin",
 			},
-			ObjectMeta: corev2.NewObjectMeta("cluster-admin", "cluster-admin"),
+			ObjectMeta: corev2.NewObjectMeta("cluster-admin", ""),
 		},
 	}
-	s := new(mockstore.MockStore)
-	s.On("ListClusterRoles", mock.Anything, mock.Anything).Return(clusterRoles, nil)
-	s.On("ListClusterRoleBindings", mock.Anything, mock.Anything).Return(clusterRoleBindings, nil)
-	s.On("ListRoles", mock.Anything, mock.Anything).Return(([]*corev2.Role)(nil), nil)
-	s.On("ListRoleBindings", mock.Anything, mock.Anything).Return(([]*corev2.RoleBinding)(nil), nil)
-	s.On("CreateResource", mock.Anything, mock.Anything).Return(nil)
-	s.On("CreateOrUpdateResource", mock.Anything, mock.Anything).Return(nil)
-	setupGetClusterRoleAndGetRole(s, clusterRoles, nil)
-
 	entityCfg := corev3.FixtureEntityConfig("bar")
 	entityCfg.Metadata.Namespace = "{{ .Namespace }}"
 	tmplEntityConfig, _ := json.Marshal(entityCfg)
 
 	resourceTemplate := &corev3.ResourceTemplate{
 		Metadata: &corev2.ObjectMeta{
-			Namespace:   "default",
 			Name:        "tmpl-entity-config",
 			Labels:      make(map[string]string),
 			Annotations: make(map[string]string),
@@ -1023,84 +975,39 @@ func TestNamespaceUpdateSideEffects(t *testing.T) {
 		Type:       "EntityConfig",
 		Template:   string(tmplEntityConfig),
 	}
-	wrappedResourceTemplate, err := storev2.WrapResource(resourceTemplate)
-	if err != nil {
-		t.Fatal(err)
-	}
-	wrapList := wrap.List{wrappedResourceTemplate.(*wrap.Wrapper)}
-	s2 := new(mockstore.V2MockStore)
-	s2.On("CreateOrUpdate", mock.Anything, mock.Anything).Return(nil)
-	s2.On("List", mock.Anything, mock.Anything).Return(wrapList, nil)
+	ctx := defaultContext()
+	listClusterRolesRequest := storev2.NewResourceRequest(corev2.TypeMeta{APIVersion: "core/v2", Type: "ClusterRole"}, "", "", new(corev2.ClusterRole).StoreName())
+	listClusterRoleBindingsRequest := storev2.NewResourceRequest(corev2.TypeMeta{APIVersion: "core/v2", Type: "ClusterRoleBinding"}, "", "", new(corev2.ClusterRoleBinding).StoreName())
+	listRolesRequest := storev2.NewResourceRequest(corev2.TypeMeta{APIVersion: "core/v2", Type: "Role"}, "default", "", new(corev2.Role).StoreName())
+	listRoleBindingsRequest := storev2.NewResourceRequest(corev2.TypeMeta{APIVersion: "core/v2", Type: "RoleBinding"}, "default", "", new(corev2.RoleBinding).StoreName())
+	listResourceTemplatesRequest := storev2.NewResourceRequest(corev2.TypeMeta{APIVersion: "core/v3", Type: "ResourceTemplate"}, "", "", new(corev3.ResourceTemplate).StoreName())
+	s := new(mockstore.V2MockStore)
+	s.On("List", mock.Anything, listClusterRolesRequest, mock.Anything).Return(mockstore.WrapList[*corev2.ClusterRole](clusterRoles), nil)
+	s.On("List", mock.Anything, listClusterRoleBindingsRequest, mock.Anything).Return(mockstore.WrapList[*corev2.ClusterRoleBinding](clusterRoleBindings), nil)
+	s.On("List", mock.Anything, listRolesRequest, mock.Anything).Return(mockstore.WrapList[*corev2.Role]{}, nil)
+	s.On("List", mock.Anything, listRoleBindingsRequest, mock.Anything).Return(mockstore.WrapList[*corev2.RoleBinding]{}, nil)
+	s.On("List", mock.Anything, listResourceTemplatesRequest, mock.Anything).Return(mockstore.WrapList[*corev3.ResourceTemplate]{resourceTemplate}, nil)
+	s.On("CreateIfNotExists", mock.Anything, mock.Anything, mock.Anything).Return(nil)
+	s.On("CreateOrUpdate", mock.Anything, mock.Anything, mock.Anything).Return(nil)
+	setupGetClusterRoleAndGetRole(ctx, s, clusterRoles, nil)
 
-	ctx := contextWithUser(context.Background(), "cluster-admin", []string{"cluster-admins"})
+	ctx = contextWithUser(ctx, "cluster-admin", []string{"cluster-admins"})
 
 	auth := &rbac.Authorizer{Store: s}
-	client := NewNamespaceClient(s, s, auth, s2)
+	client := NewNamespaceClient(s, auth)
 
-	namespace := &corev2.Namespace{Name: "test_namespace"}
+	namespace := corev3.FixtureNamespace("test_namespace")
 	if err := client.UpdateNamespace(ctx, namespace); err != nil {
 		t.Fatal(err)
 	}
 
-	expRole := &corev2.Role{
-		ObjectMeta: corev2.ObjectMeta{
-			Namespace: "test_namespace",
-			Name:      pipelineRoleName,
-			CreatedBy: "cluster-admin",
-		},
-		Rules: []corev2.Rule{
-			{
-				Verbs:     []string{"get", "list"},
-				Resources: []string{new(corev2.Event).RBACName()},
-			},
-		},
-	}
-	expBinding := &corev2.RoleBinding{
-		Subjects: []corev2.Subject{
-			{
-				Type: corev2.GroupType,
-				Name: pipelineRoleName,
-			},
-		},
-		RoleRef: corev2.RoleRef{
-			Name: pipelineRoleName,
-			Type: "Role",
-		},
-		ObjectMeta: corev2.ObjectMeta{
-			Name:      pipelineRoleName,
-			Namespace: "test_namespace",
-			CreatedBy: "cluster-admin",
-		},
-	}
-	s.AssertNumberOfCalls(t, "CreateOrUpdateResource", 3)
-	s.AssertCalled(t, "CreateOrUpdateResource", mock.Anything, expRole)
-	s.AssertCalled(t, "CreateOrUpdateResource", mock.Anything, expBinding)
+	s.AssertNumberOfCalls(t, "CreateOrUpdate", 4)
 
-	s.On("DeleteResource", mock.Anything, expBinding.StorePrefix(), pipelineRoleName).Run(func(args mock.Arguments) {
-		ctx := args[0].(context.Context)
-		if ns := corev2.ContextNamespace(ctx); ns != namespace.Name {
-			t.Fatalf("expected namespace %q, got %q", namespace.Name, ns)
-		}
-	}).Return(nil)
-	s.On("DeleteResource", mock.Anything, expRole.StorePrefix(), pipelineRoleName).Run(func(args mock.Arguments) {
-		ctx := args[0].(context.Context)
-		if ns := corev2.ContextNamespace(ctx); ns != namespace.Name {
-			t.Fatalf("expected namespace %q, got %q", namespace.Name, ns)
-		}
-	}).Return(nil)
-	s.On("DeleteNamespace", mock.Anything, namespace.Name).Return(nil)
+	s.On("Delete", mock.Anything, mock.Anything).Return(nil)
 
-	if err := client.DeleteNamespace(ctx, namespace.Name); err != nil {
+	if err := client.DeleteNamespace(ctx, namespace.Metadata.Name); err != nil {
 		t.Fatal(err)
 	}
 
-	s.AssertNumberOfCalls(t, "DeleteResource", 2)
-	s.AssertCalled(t, "DeleteResource", mock.Anything, expRole.StorePrefix(), pipelineRoleName)
-	s.AssertCalled(t, "DeleteResource", mock.Anything, expBinding.StorePrefix(), pipelineRoleName)
-
-	s.AssertNumberOfCalls(t, "DeleteNamespace", 1)
-	s.AssertCalled(t, "DeleteNamespace", mock.Anything, namespace.Name)
-
-	s2.AssertCalled(t, "List", mock.Anything, mock.Anything)
-	s2.AssertCalled(t, "CreateOrUpdate", mock.Anything, mock.Anything)
+	s.AssertNumberOfCalls(t, "Delete", 3)
 }

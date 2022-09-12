@@ -229,3 +229,32 @@ func (s *Silenced) GetMetadata() *ObjectMeta {
 func (s *Silenced) SetMetadata(meta *ObjectMeta) {
 	s.ObjectMeta = *meta
 }
+
+func (u *User) StoreName() string {
+	return "users"
+}
+
+// TODO: We may want to add metadata field to the User type.
+func (u *User) GetMetadata() *ObjectMeta {
+	meta := u.GetObjectMeta()
+	return &meta
+}
+
+func (u *User) SetMetadata(meta *ObjectMeta) {
+	u.SetObjectMeta(*meta)
+}
+
+func (t *TessenConfig) StoreName() string {
+	return "tessen_configs"
+}
+
+func (t *TessenConfig) GetMetadata() *ObjectMeta {
+	return &ObjectMeta{
+		Namespace: "",
+		Name:      "tessen_config",
+	}
+}
+
+func (t *TessenConfig) SetMetadata(meta *ObjectMeta) {
+	// no-op
+}

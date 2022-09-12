@@ -4,7 +4,7 @@ import (
 	"github.com/gorilla/mux"
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/apid/handlers"
-	"github.com/sensu/sensu-go/backend/store"
+	storev2 "github.com/sensu/sensu-go/backend/store/v2"
 )
 
 // RolesRouter handles requests for Roles.
@@ -13,7 +13,7 @@ type RolesRouter struct {
 }
 
 // NewRolesRouter instantiates a new router for Roles.
-func NewRolesRouter(store store.ResourceStore) *RolesRouter {
+func NewRolesRouter(store storev2.Interface) *RolesRouter {
 	return &RolesRouter{
 		handlers: handlers.Handlers{
 			Resource: &corev2.Role{},

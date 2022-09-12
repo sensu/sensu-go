@@ -1,8 +1,6 @@
 package v2
 
 import (
-	"context"
-	"reflect"
 	"testing"
 
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
@@ -55,11 +53,7 @@ func fixtureTestResource(name string) *testResource {
 }
 
 func TestNewResourceRequest(t *testing.T) {
-	ctx := context.Background()
-	req := NewResourceRequest(ctx, "default", "foo", "checks")
-	if got, want := req.Context, ctx; !reflect.DeepEqual(got, want) {
-		t.Errorf("bad ctx: got %v, want %v", got, want)
-	}
+	req := NewResourceRequest(corev2.TypeMeta{Type: "CheckConfig", APIVersion: "core/v2"}, "default", "foo", "checks")
 	if got, want := req.Namespace, "default"; got != want {
 		t.Errorf("bad namespace: got %s, want %s", got, want)
 	}
@@ -73,11 +67,7 @@ func TestNewResourceRequest(t *testing.T) {
 
 func TestNewResourceRequestFromResource(t *testing.T) {
 	resource := fixtureTestResource("foo")
-	ctx := context.Background()
-	req := NewResourceRequestFromResource(ctx, resource)
-	if got, want := req.Context, ctx; !reflect.DeepEqual(got, want) {
-		t.Errorf("bad context: got %v, want %v", got, want)
-	}
+	req := NewResourceRequestFromResource(resource)
 	if got, want := req.Name, resource.GetMetadata().GetName(); got != want {
 		t.Errorf("bad name: got %s, want %s", got, want)
 	}
@@ -86,5 +76,8 @@ func TestNewResourceRequestFromResource(t *testing.T) {
 	}
 	if got, want := req.StoreName, resource.StoreName(); got != want {
 		t.Errorf("bad store name: got %s, want %s", got, want)
+	}
+	if got, want := req.Type, "testResource"; got != want {
+		t.Errorf("bad type metadata: got %v, want %v", got, want)
 	}
 }

@@ -5,6 +5,7 @@ import (
 
 	dto "github.com/prometheus/client_model/go"
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
+	corev3 "github.com/sensu/sensu-go/api/core/v3"
 	"github.com/sensu/sensu-go/backend/api"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/stretchr/testify/mock"
@@ -207,7 +208,7 @@ type MockGenericClient struct {
 	mock.Mock
 }
 
-func (c *MockGenericClient) Create(ctx context.Context, value corev2.Resource) error {
+func (c *MockGenericClient) Create(ctx context.Context, value corev3.Resource) error {
 	return c.Called(ctx, value).Error(0)
 }
 
@@ -215,7 +216,7 @@ func (c *MockGenericClient) SetTypeMeta(meta corev2.TypeMeta) error {
 	return c.Called(meta).Error(0)
 }
 
-func (c *MockGenericClient) Update(ctx context.Context, value corev2.Resource) error {
+func (c *MockGenericClient) Update(ctx context.Context, value corev3.Resource) error {
 	return c.Called(ctx, value).Error(0)
 }
 
@@ -223,7 +224,7 @@ func (c *MockGenericClient) Delete(ctx context.Context, name string) error {
 	return c.Called(ctx, name).Error(0)
 }
 
-func (c *MockGenericClient) Get(ctx context.Context, name string, val corev2.Resource) error {
+func (c *MockGenericClient) Get(ctx context.Context, name string, val corev3.Resource) error {
 	return c.Called(ctx, name, val).Error(0)
 }
 
@@ -265,21 +266,21 @@ type MockNamespaceClient struct {
 	mock.Mock
 }
 
-func (c *MockNamespaceClient) ListNamespaces(ctx context.Context, pred *store.SelectionPredicate) ([]*corev2.Namespace, error) {
+func (c *MockNamespaceClient) ListNamespaces(ctx context.Context, pred *store.SelectionPredicate) ([]*corev3.Namespace, error) {
 	args := c.Called(ctx, pred)
-	return args.Get(0).([]*corev2.Namespace), args.Error(1)
+	return args.Get(0).([]*corev3.Namespace), args.Error(1)
 }
 
-func (c *MockNamespaceClient) FetchNamespace(ctx context.Context, name string) (*corev2.Namespace, error) {
+func (c *MockNamespaceClient) FetchNamespace(ctx context.Context, name string) (*corev3.Namespace, error) {
 	args := c.Called(ctx, name)
-	return args.Get(0).(*corev2.Namespace), args.Error(1)
+	return args.Get(0).(*corev3.Namespace), args.Error(1)
 }
 
-func (c *MockNamespaceClient) CreateNamespace(ctx context.Context, namespace *corev2.Namespace) error {
+func (c *MockNamespaceClient) CreateNamespace(ctx context.Context, namespace *corev3.Namespace) error {
 	return c.Called(ctx, namespace).Error(0)
 }
 
-func (c *MockNamespaceClient) UpdateNamespace(ctx context.Context, namespace *corev2.Namespace) error {
+func (c *MockNamespaceClient) UpdateNamespace(ctx context.Context, namespace *corev3.Namespace) error {
 	return c.Called(ctx, namespace).Error(0)
 }
 

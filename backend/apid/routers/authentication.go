@@ -8,22 +8,25 @@ import (
 	"github.com/sensu/sensu-go/backend/authentication/jwt"
 
 	"github.com/gorilla/mux"
-	"github.com/sensu/sensu-go/backend/api"
-	"github.com/sensu/sensu-go/backend/authentication"
-	"github.com/sensu/sensu-go/backend/store"
 
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 )
 
+type AuthenticationClient interface {
+	CreateAccessToken(ctx context.Context, username, password string) (*corev2.Tokens, error)
+	TestCreds(ctx context.Context, username, password string) error
+	Logout(context.Context) error
+	RefreshAccessToken(context.Context) (*corev2.Tokens, error)
+}
+
 // AuthenticationRouter handles authentication related requests
 type AuthenticationRouter struct {
-	store         store.Store
-	authenticator *authentication.Authenticator
+	authenticator AuthenticationClient
 }
 
 // NewAuthenticationRouter instantiates new router.
-func NewAuthenticationRouter(store store.Store, authenticator *authentication.Authenticator) *AuthenticationRouter {
-	return &AuthenticationRouter{store: store, authenticator: authenticator}
+func NewAuthenticationRouter(authenticator AuthenticationClient) *AuthenticationRouter {
+	return &AuthenticationRouter{authenticator: authenticator}
 }
 
 // Mount the authentication routes on given mux.Router.
@@ -47,7 +50,7 @@ func (a *AuthenticationRouter) login(w http.ResponseWriter, r *http.Request) {
 	// issuer URL
 	ctx := context.WithValue(r.Context(), jwt.IssuerURLKey, issuerURL(r))
 
-	client := api.NewAuthenticationClient(a.authenticator)
+	client := a.authenticator
 	tokens, err := client.CreateAccessToken(ctx, username, password)
 	if err != nil {
 		if err == corev2.ErrUnauthorized {
@@ -76,7 +79,7 @@ func (a *AuthenticationRouter) test(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	client := api.NewAuthenticationClient(a.authenticator)
+	client := a.authenticator
 	err := client.TestCreds(r.Context(), username, password)
 	if err == nil {
 		return
@@ -90,7 +93,7 @@ func (a *AuthenticationRouter) test(w http.ResponseWriter, r *http.Request) {
 
 // logout handles the logout flow
 func (a *AuthenticationRouter) logout(w http.ResponseWriter, r *http.Request) {
-	client := api.NewAuthenticationClient(a.authenticator)
+	client := a.authenticator
 	if err := client.Logout(r.Context()); err == nil {
 		return
 	}
@@ -100,7 +103,7 @@ func (a *AuthenticationRouter) logout(w http.ResponseWriter, r *http.Request) {
 
 // token handles logic for issuing new access tokens
 func (a *AuthenticationRouter) token(w http.ResponseWriter, r *http.Request) {
-	client := api.NewAuthenticationClient(a.authenticator)
+	client := a.authenticator
 
 	// Determine the URL that serves this request so it can be later used as the
 	// issuer URL

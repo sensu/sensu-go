@@ -56,8 +56,8 @@ func (s *Store) DeleteEntity(ctx context.Context, e *corev2.Entity) error {
 	config := &corev3.EntityConfig{
 		Metadata: &e.ObjectMeta,
 	}
-	stateReq := storev2.NewResourceRequestFromResource(ctx, state)
-	configReq := storev2.NewResourceRequestFromResource(ctx, config)
+	stateReq := storev2.NewResourceRequestFromResource(state)
+	configReq := storev2.NewResourceRequestFromResource(config)
 	stateKey := etcdstore.StoreKey(stateReq)
 	configKey := etcdstore.StoreKey(configReq)
 
@@ -88,8 +88,8 @@ func (s *Store) DeleteEntityByName(ctx context.Context, name string) error {
 			Namespace: corev2.ContextNamespace(ctx),
 		},
 	}
-	stateReq := storev2.NewResourceRequestFromResource(ctx, state)
-	configReq := storev2.NewResourceRequestFromResource(ctx, config)
+	stateReq := storev2.NewResourceRequestFromResource(state)
+	configReq := storev2.NewResourceRequestFromResource(config)
 	stateKey := etcdstore.StoreKey(stateReq)
 	configKey := etcdstore.StoreKey(configReq)
 
@@ -122,8 +122,8 @@ func (s *Store) GetEntityByName(ctx context.Context, name string) (*corev2.Entit
 			Namespace: corev2.ContextNamespace(ctx),
 		},
 	}
-	stateReq := storev2.NewResourceRequestFromResource(ctx, state)
-	configReq := storev2.NewResourceRequestFromResource(ctx, config)
+	stateReq := storev2.NewResourceRequestFromResource(state)
+	configReq := storev2.NewResourceRequestFromResource(config)
 	stateKey := etcdstore.StoreKey(stateReq)
 	configKey := etcdstore.StoreKey(configReq)
 	ops := []clientv3.Op{
@@ -178,14 +178,16 @@ func (s *Store) GetEntities(ctx context.Context, pred *store.SelectionPredicate)
 	v2store := etcdstore.NewStore(s.client)
 	namespace := corev2.ContextNamespace(ctx)
 	stateReq := storev2.ResourceRequest{
-		Namespace: namespace,
-		Context:   ctx,
-		StoreName: new(corev3.EntityState).StoreName(),
+		Type:       "EntityState",
+		APIVersion: "core/v3",
+		Namespace:  namespace,
+		StoreName:  new(corev3.EntityState).StoreName(),
 	}
 	configReq := storev2.ResourceRequest{
-		Namespace: namespace,
-		Context:   ctx,
-		StoreName: new(corev3.EntityConfig).StoreName(),
+		Namespace:  namespace,
+		Type:       "EntityConfig",
+		APIVersion: "core/v3",
+		StoreName:  new(corev3.EntityConfig).StoreName(),
 	}
 	statePred := new(store.SelectionPredicate)
 	configPred := new(store.SelectionPredicate)
@@ -211,11 +213,11 @@ func (s *Store) GetEntities(ctx context.Context, pred *store.SelectionPredicate)
 			configReq.SortOrder = dir
 		}
 	}
-	stateList, err := v2store.List(stateReq, statePred)
+	stateList, err := v2store.List(ctx, stateReq, statePred)
 	if err != nil {
 		return nil, err
 	}
-	configList, err := v2store.List(configReq, configPred)
+	configList, err := v2store.List(ctx, configReq, configPred)
 	if err != nil {
 		return nil, err
 	}
@@ -287,8 +289,8 @@ func (s *Store) UpdateEntity(ctx context.Context, e *corev2.Entity) error {
 	cfg, state := corev3.V2EntityToV3(e)
 	cfg.Metadata.Namespace = namespace
 	state.Metadata.Namespace = namespace
-	stateReq := storev2.NewResourceRequestFromResource(ctx, state)
-	configReq := storev2.NewResourceRequestFromResource(ctx, cfg)
+	stateReq := storev2.NewResourceRequestFromResource(state)
+	configReq := storev2.NewResourceRequestFromResource(cfg)
 	stateKey := etcdstore.StoreKey(stateReq)
 	configKey := etcdstore.StoreKey(configReq)
 	wrappedState, err := wrap.Resource(state)

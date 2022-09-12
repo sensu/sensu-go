@@ -5,6 +5,7 @@ import (
 
 	"github.com/sensu/sensu-go/backend/authorization"
 	"github.com/sensu/sensu-go/backend/store"
+	storev2 "github.com/sensu/sensu-go/backend/store/v2"
 
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 )
@@ -16,7 +17,7 @@ type AssetClient struct {
 }
 
 // NewAssetClient creates a new AssetClient, given a store and an authorizer.
-func NewAssetClient(store store.ResourceStore, auth authorization.Authorizer) *AssetClient {
+func NewAssetClient(store storev2.Interface, auth authorization.Authorizer) *AssetClient {
 	return &AssetClient{
 		client: GenericClient{
 			Store:      store,

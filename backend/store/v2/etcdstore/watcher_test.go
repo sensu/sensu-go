@@ -9,7 +9,6 @@ import (
 	"github.com/google/go-cmp/cmp"
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	corev3 "github.com/sensu/sensu-go/api/core/v3"
-	"github.com/sensu/sensu-go/backend/etcd"
 	oldstore "github.com/sensu/sensu-go/backend/store/etcd"
 	storev2 "github.com/sensu/sensu-go/backend/store/v2"
 	"github.com/sensu/sensu-go/backend/store/v2/etcdstore"
@@ -32,8 +31,8 @@ func TestWatch(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	req := storev2.NewResourceRequestFromResource(context.Background(), foo)
-	req2 := storev2.NewResourceRequestFromResource(context.Background(), bar)
+	req := storev2.NewResourceRequestFromResource(foo)
+	req2 := storev2.NewResourceRequestFromResource(bar)
 
 	testWithEtcdClient(t, func(s storev2.Interface, client *clientv3.Client) {
 		tests := []struct {
@@ -45,7 +44,7 @@ func TestWatch(t *testing.T) {
 			{
 				name: "resource is created",
 				storeFunc: func(ctx context.Context, s storev2.Interface) {
-					if err := s.CreateOrUpdate(req, wrapper); err != nil {
+					if err := s.CreateOrUpdate(ctx, req, wrapper); err != nil {
 						t.Fatal(err)
 					}
 				},
@@ -55,7 +54,7 @@ func TestWatch(t *testing.T) {
 			{
 				name: "resource is updated",
 				storeFunc: func(ctx context.Context, s storev2.Interface) {
-					if err := s.CreateOrUpdate(req2, wrapper2); err != nil {
+					if err := s.CreateOrUpdate(ctx, req2, wrapper2); err != nil {
 						t.Fatal(err)
 					}
 				},
@@ -67,8 +66,6 @@ func TestWatch(t *testing.T) {
 			t.Run(tt.name, func(t *testing.T) {
 				ctx, cancel := context.WithCancel(context.Background())
 				defer cancel()
-
-				req.Context = ctx
 
 				w := s.Watch(ctx, req)
 
@@ -106,7 +103,7 @@ func TestWatchRetry(t *testing.T) {
 
 	// Create resource
 	foo := corev3.FixtureEntityConfig("foo")
-	req := storev2.NewResourceRequestFromResource(ctx, foo)
+	req := storev2.NewResourceRequestFromResource(foo)
 	wrapper, err := storev2.WrapResource(foo)
 	if err != nil {
 		t.Fatal(err)
@@ -117,7 +114,7 @@ func TestWatchRetry(t *testing.T) {
 	wg.Add(1)
 	go testCheckResult(t, w, storev2.WatchCreate, foo, &wg)
 	time.Sleep(time.Second)
-	if err := s.CreateOrUpdate(req, wrapper); err != nil {
+	if err := s.CreateOrUpdate(ctx, req, wrapper); err != nil {
 		t.Fatal(err)
 	}
 	wg.Wait()
@@ -140,7 +137,7 @@ func TestWatchRetry(t *testing.T) {
 	wg2.Add(1)
 	go testCheckResult(t, w, storev2.WatchUpdate, foo, &wg2)
 	time.Sleep(time.Second)
-	if err := s.CreateOrUpdate(req, wrapper); err != nil {
+	if err := s.CreateOrUpdate(ctx, req, wrapper); err != nil {
 		t.Fatal(err)
 	}
 	wg2.Wait()
@@ -198,21 +195,4 @@ func testCheckStoppedWatcher(t *testing.T, w <-chan []storev2.WatchEvent) {
 	case <-time.After(timeout * time.Second):
 		t.Fatalf("timeout after waiting %d for resultChan", timeout)
 	}
-}
-
-func testWithEtcdClient(t *testing.T, f func(storev2.Interface, *clientv3.Client)) {
-	e, cleanup := etcd.NewTestEtcd(t)
-	defer cleanup()
-
-	client := e.NewEmbeddedClient()
-
-	s := etcdstore.NewStore(client)
-	oldStore := oldstore.NewStore(client)
-	ns := &corev2.Namespace{Name: "default"}
-
-	if err := oldStore.CreateNamespace(context.Background(), ns); err != nil {
-		t.Fatal(err)
-	}
-
-	f(s, client)
 }

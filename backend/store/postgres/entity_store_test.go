@@ -23,7 +23,7 @@ func init() {
 
 func TestEntityStorage(t *testing.T) {
 	testWithPostgresStore(t, func(s store.Store) {
-		entity := types.FixtureEntity("entity")
+		entity := corev2.FixtureEntity("entity")
 		ctx := context.WithValue(context.Background(), types.NamespaceKey, entity.Namespace)
 		pred := &store.SelectionPredicate{}
 
@@ -95,12 +95,12 @@ func TestEntityStorage(t *testing.T) {
 }
 
 func TestEntityIteration(t *testing.T) {
-	configs := []corev3.EntityConfig{
-		*corev3.FixtureEntityConfig("a"),
-		*corev3.FixtureEntityConfig("b"),
-		*corev3.FixtureEntityConfig("c"),
-		*corev3.FixtureEntityConfig("d"),
-		*corev3.FixtureEntityConfig("e"),
+	configs := []*corev3.EntityConfig{
+		corev3.FixtureEntityConfig("a"),
+		corev3.FixtureEntityConfig("b"),
+		corev3.FixtureEntityConfig("c"),
+		corev3.FixtureEntityConfig("d"),
+		corev3.FixtureEntityConfig("e"),
 	}
 	states := map[uniqueResource]*corev3.EntityState{
 		uniqueResource{Name: "b", Namespace: "default"}: corev3.FixtureEntityState("b"),
@@ -129,9 +129,9 @@ func TestEntityIteration(t *testing.T) {
 }
 
 func TestEntityIterationNoPanicMismatched(t *testing.T) {
-	configs := []corev3.EntityConfig{
-		*corev3.FixtureEntityConfig("b"),
-		*corev3.FixtureEntityConfig("c"),
+	configs := []*corev3.EntityConfig{
+		corev3.FixtureEntityConfig("b"),
+		corev3.FixtureEntityConfig("c"),
 	}
 	states := map[uniqueResource]*corev3.EntityState{
 		{Name: "a", Namespace: "default"}: corev3.FixtureEntityState("a"),

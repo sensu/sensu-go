@@ -34,10 +34,11 @@ func TestCounterWatcherIntegration(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		// Component under test - use watcher to keep counterState in sync with db
-		watcherUnderTest := NewStoreV2(pool, nil)
-		watcherUnderTest.watchInterval = time.Millisecond * 10
-		watcherUnderTest.watchTxnWindow = TxnWindow
+		watcherUnderTest := &counterStore{
+			db:             pool,
+			watchInterval:  time.Millisecond * 10,
+			watchTxnWindow: TxnWindow,
+		}
 
 		watchCtx, watchCancel := context.WithCancel(ctx)
 		defer watchCancel()
@@ -127,7 +128,7 @@ func generateCountersTraffic(ctx context.Context, pool *pgxpool.Pool, workers in
 	return done
 }
 
-func watchState(t *testing.T, ctx context.Context, w *StoreV2, state map[int64]int64) <-chan struct{} {
+func watchState(t *testing.T, ctx context.Context, w *counterStore, state map[int64]int64) <-chan struct{} {
 	t.Helper()
 
 	done := make(chan struct{})

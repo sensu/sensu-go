@@ -4,7 +4,7 @@ import (
 	"github.com/gorilla/mux"
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/apid/handlers"
-	"github.com/sensu/sensu-go/backend/store"
+	storev2 "github.com/sensu/sensu-go/backend/store/v2"
 )
 
 // PipelinesRouter handles requests for /pipelines
@@ -13,7 +13,7 @@ type PipelinesRouter struct {
 }
 
 // NewPipelineRouter instantiates new router for controlling pipeline resources
-func NewPipelinesRouter(store store.ResourceStore) *PipelinesRouter {
+func NewPipelinesRouter(store storev2.Interface) *PipelinesRouter {
 	return &PipelinesRouter{
 		handlers: handlers.Handlers{
 			Resource: &corev2.Pipeline{},

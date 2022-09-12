@@ -2,16 +2,15 @@ package resource
 
 import (
 	"bytes"
-	"fmt"
 	"io"
 	"os"
 	"strings"
 	"testing"
 
+	"github.com/go-test/deep"
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/types"
 	"github.com/sensu/sensu-go/types/compat"
-	"github.com/stretchr/testify/assert"
 )
 
 func TestValidate(t *testing.T) {
@@ -116,151 +115,157 @@ func TestParse(t *testing.T) {
 		yamlError                 = "%$^apiVersion: core/v2\ntype: Handler\nmetadata:\n  namespace: default\n  name: email\nspec:\n  type: pipe\n  command: sensu-email-handler \n    -u USERNAME -p PASSWORD\n  timeout: 10\n  filters:\n  - is_incident\n  - not_silenced\n  - state_change_only\n  runtime_assets:\n  - email-handler\n"
 	)
 
-	var (
-		checkConfigWrapper = &types.Wrapper{
-			ObjectMeta: corev2.ObjectMeta{Name: "foo"},
-			TypeMeta: corev2.TypeMeta{
-				Type:       "CheckConfig",
-				APIVersion: "core/v2",
+	checkConfigWrapper := &types.Wrapper{
+		ObjectMeta: corev2.ObjectMeta{
+			Name: "foo",
+		},
+		TypeMeta: corev2.TypeMeta{
+			Type:       "CheckConfig",
+			APIVersion: "core/v2",
+		},
+		Value: &corev2.CheckConfig{
+			ObjectMeta: corev2.ObjectMeta{
+				Name:        "foo",
+				Labels:      map[string]string{},
+				Annotations: map[string]string{},
 			},
-			Value: &corev2.CheckConfig{
-				ObjectMeta: corev2.ObjectMeta{Name: "foo"},
-				Command:    "echo foo",
-				Interval:   100,
-			},
-		}
+			Command:  "echo foo",
+			Interval: 100,
+		},
+	}
 
-		handlerWrapper = &types.Wrapper{
-			ObjectMeta: corev2.ObjectMeta{Name: "email", Namespace: "default"},
-			TypeMeta: corev2.TypeMeta{
-				Type:       "Handler",
-				APIVersion: "core/v2",
+	handlerWrapper := &types.Wrapper{
+		ObjectMeta: corev2.ObjectMeta{
+			Namespace: "default",
+			Name:      "email",
+		},
+		TypeMeta: corev2.TypeMeta{
+			Type:       "Handler",
+			APIVersion: "core/v2",
+		},
+		Value: &corev2.Handler{
+			ObjectMeta: corev2.ObjectMeta{
+				Namespace:   "default",
+				Name:        "email",
+				Labels:      map[string]string{},
+				Annotations: map[string]string{},
 			},
-			Value: &corev2.Handler{
-				ObjectMeta:    corev2.ObjectMeta{Name: "email", Namespace: "default"},
-				Type:          "pipe",
-				Command:       "sensu-email-handler -u USERNAME -p PASSWORD",
-				Timeout:       10,
-				Filters:       []string{"is_incident", "not_silenced", "state_change_only"},
-				RuntimeAssets: []string{"email-handler"},
-			},
-		}
+			Type:          "pipe",
+			Command:       "sensu-email-handler -u USERNAME -p PASSWORD",
+			Timeout:       10,
+			Filters:       []string{"is_incident", "not_silenced", "state_change_only"},
+			RuntimeAssets: []string{"email-handler"},
+		},
+	}
 
-		eventFilterWrapper = &types.Wrapper{
-			ObjectMeta: corev2.ObjectMeta{Name: "filter_minimum", Namespace: "default"},
-			TypeMeta: corev2.TypeMeta{
-				Type:       "EventFilter",
-				APIVersion: "core/v2",
+	eventFilterWrapper := &types.Wrapper{
+		ObjectMeta: corev2.ObjectMeta{
+			Namespace: "default",
+			Name:      "filter_minimum",
+		},
+		TypeMeta: corev2.TypeMeta{
+			Type:       "EventFilter",
+			APIVersion: "core/v2",
+		},
+		Value: &corev2.EventFilter{
+			ObjectMeta: corev2.ObjectMeta{
+				Namespace:   "default",
+				Name:        "filter_minimum",
+				Labels:      map[string]string{},
+				Annotations: map[string]string{},
 			},
-			Value: &corev2.EventFilter{
-				ObjectMeta:  corev2.ObjectMeta{Name: "filter_minimum", Namespace: "default"},
-				Action:      "allow",
-				Expressions: []string{"event.check.occurrences == 1"},
-			},
-		}
+			Action:      "allow",
+			Expressions: []string{"event.check.occurrences == 1"},
+		},
+	}
 
-		testUnits = []struct {
-			name             string
-			fileContent      string
-			expectedWrappers []*types.Wrapper
-			expectedError    error
-		}{
-			{
-				name:             "should parse a single unix formatted json resource",
-				fileContent:      jsonUnix,
-				expectedWrappers: []*types.Wrapper{eventFilterWrapper},
-				expectedError:    nil,
-			},
-			{
-				name:             "should parse a single windows formatted json resource",
-				fileContent:      jsonWindows,
-				expectedWrappers: []*types.Wrapper{eventFilterWrapper},
-				expectedError:    nil,
-			},
-			{
-				name:             "should parse a single unix formatted yaml resource",
-				fileContent:      yamlUnixSingle,
-				expectedWrappers: []*types.Wrapper{handlerWrapper},
-				expectedError:    nil,
-			},
-			{
-				name:             "should parse a single windows formatted yaml resource",
-				fileContent:      yamlWindowsSingle,
-				expectedWrappers: []*types.Wrapper{handlerWrapper},
-				expectedError:    nil,
-			},
-			{
-				name:             "should parse a single unix formatted yaml resource prefixed with ---",
-				fileContent:      yamlUnixSinglePrefixed,
-				expectedWrappers: []*types.Wrapper{handlerWrapper},
-				expectedError:    nil,
-			},
-			{
-				name:             "should parse a single windows formatted yaml resource prefixed with ---",
-				fileContent:      yamlWindowsSinglePrefixed,
-				expectedWrappers: []*types.Wrapper{handlerWrapper},
-				expectedError:    nil,
-			},
-			{
-				name:             "should parse multiple unix formatted yaml resources",
-				fileContent:      yamlUnixMulti,
-				expectedWrappers: []*types.Wrapper{checkConfigWrapper, handlerWrapper},
-				expectedError:    nil,
-			},
-			{
-				name:             "should parse multiple windows formatted yaml resources",
-				fileContent:      yamlWindowsMulti,
-				expectedWrappers: []*types.Wrapper{checkConfigWrapper, handlerWrapper},
-				expectedError:    nil,
-			},
-			{
-				name:             "should parse multiple unix formatted yaml resources prefixed with ---",
-				fileContent:      yamlUnixMultiPrefixed,
-				expectedWrappers: []*types.Wrapper{checkConfigWrapper, handlerWrapper},
-				expectedError:    nil,
-			},
-			{
-				name:             "should parse multiple windows formatted yaml resources prefixed with ---",
-				fileContent:      yamlWindowsMultiPrefixed,
-				expectedWrappers: []*types.Wrapper{checkConfigWrapper, handlerWrapper},
-				expectedError:    nil,
-			},
-			{
-				name:             "should return an error when parsing a badly formatted json file",
-				fileContent:      jsonError,
-				expectedWrappers: nil,
-				expectedError:    fmt.Errorf("too many errors"),
-			},
-			{
-				name:             "should return an error when parsing a badly formatted yaml file",
-				fileContent:      yamlError,
-				expectedWrappers: nil,
-				expectedError:    fmt.Errorf("error parsing resources: yaml: could not find expected directive name"),
-			},
-		}
-	)
+	tests := []struct {
+		name        string
+		fileContent string
+		want        []*types.Wrapper
+		wantErr     bool
+		wantErrMsg  string
+	}{
+		{
+			name:        "should parse a single unix formatted json resource",
+			fileContent: jsonUnix,
+			want:        []*types.Wrapper{eventFilterWrapper},
+		},
+		{
+			name:        "should parse a single windows formatted json resource",
+			fileContent: jsonWindows,
+			want:        []*types.Wrapper{eventFilterWrapper},
+		},
+		{
+			name:        "should parse a single unix formatted yaml resource",
+			fileContent: yamlUnixSingle,
+			want:        []*types.Wrapper{handlerWrapper},
+		},
+		{
+			name:        "should parse a single windows formatted yaml resource",
+			fileContent: yamlWindowsSingle,
+			want:        []*types.Wrapper{handlerWrapper},
+		},
+		{
+			name:        "should parse a single unix formatted yaml resource prefixed with ---",
+			fileContent: yamlUnixSinglePrefixed,
+			want:        []*types.Wrapper{handlerWrapper},
+		},
+		{
+			name:        "should parse a single windows formatted yaml resource prefixed with ---",
+			fileContent: yamlWindowsSinglePrefixed,
+			want:        []*types.Wrapper{handlerWrapper},
+		},
+		{
+			name:        "should parse multiple unix formatted yaml resources",
+			fileContent: yamlUnixMulti,
+			want:        []*types.Wrapper{checkConfigWrapper, handlerWrapper},
+		},
+		{
+			name:        "should parse multiple windows formatted yaml resources",
+			fileContent: yamlWindowsMulti,
+			want:        []*types.Wrapper{checkConfigWrapper, handlerWrapper},
+		},
+		{
+			name:        "should parse multiple unix formatted yaml resources prefixed with ---",
+			fileContent: yamlUnixMultiPrefixed,
+			want:        []*types.Wrapper{checkConfigWrapper, handlerWrapper},
+		},
+		{
+			name:        "should parse multiple windows formatted yaml resources prefixed with ---",
+			fileContent: yamlWindowsMultiPrefixed,
+			want:        []*types.Wrapper{checkConfigWrapper, handlerWrapper},
+		},
+		{
+			name:        "should return an error when parsing a badly formatted json file",
+			fileContent: jsonError,
+			wantErr:     true,
+			wantErrMsg:  "too many errors",
+		},
+		{
+			name:        "should return an error when parsing a badly formatted yaml file",
+			fileContent: yamlError,
+			wantErr:     true,
+			wantErrMsg:  "error parsing resources: yaml: could not find expected directive name",
+		},
+	}
 
-	for _, testUnit := range testUnits {
-		stringReader := strings.NewReader(testUnit.fileContent)
-		wrappers, err := Parse(stringReader)
-
-		if testUnit.expectedError != nil {
-			if assert.Errorf(t, err, "missing error when processing '%s'", testUnit.name) {
-				assert.Equal(t, testUnit.expectedError, err, "invalid error when processing %s", testUnit.name)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			stringReader := strings.NewReader(tt.fileContent)
+			got, err := Parse(stringReader)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("Parse() error = %v, wantErr %v", err, tt.wantErr)
+				return
 			}
-			assert.Equal(t, 0, len(wrappers),
-				"there should be no wrapper when processing '%s'", testUnit.name)
-			continue
-		} else {
-			if !assert.Nil(t, err, "unexpected error when processing '%s': %v", testUnit.name, err) {
-				continue
+			if err != nil && tt.wantErrMsg != err.Error() {
+				t.Errorf("Parse() error msg = %v, wantErrMsg %v", err.Error(), tt.wantErrMsg)
+				return
 			}
-		}
 
-		if !assert.Equal(t, len(testUnit.expectedWrappers), len(wrappers),
-			"wrong number of resources parsed when processing '%s'", testUnit.name) {
-			continue
-		}
-		assert.Equal(t, testUnit.expectedWrappers, wrappers, "wrappers should be equal when processing '%s'", testUnit.name)
+			if diff := deep.Equal(got, tt.want); diff != nil {
+				t.Errorf("Parse() got differs from want: %v", diff)
+			}
+		})
 	}
 }

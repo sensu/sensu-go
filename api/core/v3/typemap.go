@@ -25,6 +25,8 @@ func init() {
 
 // typeMap is used to dynamically look up data types from strings.
 var typeMap = map[string]interface{}{
+	"ClusterConfig":     &ClusterConfig{},
+	"cluster_config":    &ClusterConfig{},
 	"EntityConfig":      &EntityConfig{},
 	"entity_config":     &EntityConfig{},
 	"EntityState":       &EntityState{},
@@ -33,6 +35,8 @@ var typeMap = map[string]interface{}{
 	"namespace":         &Namespace{},
 	"ResourceTemplate":  &ResourceTemplate{},
 	"resource_template": &ResourceTemplate{},
+	"SymmetricKey":      &SymmetricKey{},
+	"symmetric_key":     &SymmetricKey{},
 }
 
 // rbacMap is like typemap, but its keys are RBAC names, and its values are

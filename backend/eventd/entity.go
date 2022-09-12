@@ -43,18 +43,15 @@ func createProxyEntity(event *corev2.Event, s storev2.Interface) (fErr error) {
 	state := corev3.NewEntityState(namespace, entityName)
 	config := corev3.NewEntityConfig(namespace, entityName)
 
-	configReq := storev2.NewResourceRequestFromResource(context.Background(), config)
-	stateReq := storev2.NewResourceRequestFromResource(context.Background(), state)
-
-	// Use postgres when available (enterprise only, entity state only)
-	stateReq.UsePostgres = true
+	configReq := storev2.NewResourceRequestFromResource(config)
+	stateReq := storev2.NewResourceRequestFromResource(state)
 
 	var (
 		wState, wConfig storev2.Wrapper
 		err             error
 	)
 
-	wConfig, err = s.Get(configReq)
+	wConfig, err = s.Get(context.Background(), configReq)
 	if err == nil {
 		if err := wConfig.UnwrapInto(config); err != nil {
 			return err
@@ -62,7 +59,7 @@ func createProxyEntity(event *corev2.Event, s storev2.Interface) (fErr error) {
 
 		// Since the entity config exists, we fetch its associated state in
 		// order to create a fully formed corev2.Entity for the event.
-		wState, err = s.Get(stateReq)
+		wState, err = s.Get(context.Background(), stateReq)
 		if err != nil {
 			switch err.(type) {
 			case *store.ErrNotFound:
@@ -83,7 +80,7 @@ func createProxyEntity(event *corev2.Event, s storev2.Interface) (fErr error) {
 				if err != nil {
 					return err
 				}
-				if err := s.CreateOrUpdate(stateReq, wState); err != nil {
+				if err := s.CreateOrUpdate(context.Background(), stateReq, wState); err != nil {
 					return err
 				}
 			default:
@@ -118,7 +115,7 @@ func createProxyEntity(event *corev2.Event, s storev2.Interface) (fErr error) {
 			if err != nil {
 				return err
 			}
-			if err := s.CreateOrUpdate(stateReq, wState); err != nil {
+			if err := s.CreateOrUpdate(context.Background(), stateReq, wState); err != nil {
 				return err
 			}
 
@@ -132,7 +129,7 @@ func createProxyEntity(event *corev2.Event, s storev2.Interface) (fErr error) {
 			if err != nil {
 				return err
 			}
-			if err := s.CreateIfNotExists(configReq, wConfig); err != nil {
+			if err := s.CreateIfNotExists(context.Background(), configReq, wConfig); err != nil {
 				return err
 			}
 		default:

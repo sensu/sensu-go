@@ -1,8 +1,10 @@
 package v2
 
 import (
-	"context"
 	"errors"
+	"path"
+	"reflect"
+	"strings"
 
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	corev3 "github.com/sensu/sensu-go/api/core/v3"
@@ -17,6 +19,36 @@ const (
 	SortDescend
 )
 
+// tmGetter is useful for types that want to explicitly provide their TypeMeta
+type tmGetter interface {
+	GetTypeMeta() corev2.TypeMeta
+}
+
+func getTypeMeta(r interface{}) corev2.TypeMeta {
+	var tm corev2.TypeMeta
+	if getter, ok := r.(tmGetter); ok {
+		tm = getter.GetTypeMeta()
+	} else {
+		typ := reflect.Indirect(reflect.ValueOf(r)).Type()
+		tm = corev2.TypeMeta{
+			Type:       typ.Name(),
+			APIVersion: apiVersion(typ.PkgPath()),
+		}
+	}
+	return tm
+}
+
+func apiVersion(version string) string {
+	parts := strings.Split(version, "/")
+	if len(parts) == 0 {
+		return ""
+	}
+	if len(parts) == 1 {
+		return parts[0]
+	}
+	return path.Join(parts[len(parts)-2], parts[len(parts)-1])
+}
+
 // WrapResource is made variable, for the purpose of swapping it out for another
 // implementation.
 var WrapResource = func(resource corev3.Resource, opts ...wrap.Option) (Wrapper, error) {
@@ -25,45 +57,50 @@ var WrapResource = func(resource corev3.Resource, opts ...wrap.Option) (Wrapper,
 
 // ResourceRequest contains all the information necessary to query a store.
 type ResourceRequest struct {
-	Namespace   string
-	Name        string
-	StoreName   string
-	Context     context.Context
-	SortOrder   SortOrder
-	UsePostgres bool
+	Type       string
+	APIVersion string
+	Namespace  string
+	Name       string
+	StoreName  string
+	SortOrder  SortOrder
 }
 
 // NewResourceRequestFromResource creates a ResourceRequest from a resource.
-func NewResourceRequestFromResource(ctx context.Context, r corev3.Resource) ResourceRequest {
+func NewResourceRequestFromResource(r corev3.Resource) ResourceRequest {
 	meta := r.GetMetadata()
 	if meta == nil {
 		meta = &corev2.ObjectMeta{}
 	}
+	tm := getTypeMeta(r)
 	return ResourceRequest{
-		Namespace: meta.Namespace,
-		Name:      meta.Name,
-		StoreName: r.StoreName(),
-		Context:   ctx,
+		Type:       tm.Type,
+		APIVersion: tm.APIVersion,
+		Namespace:  meta.Namespace,
+		Name:       meta.Name,
+		StoreName:  r.StoreName(),
 	}
 }
 
 // NewResourceRequest creates a resource request.
-func NewResourceRequest(ctx context.Context, namespace, name, storeName string) ResourceRequest {
+func NewResourceRequest(meta corev2.TypeMeta, namespace, name, storeName string) ResourceRequest {
 	return ResourceRequest{
-		Namespace: namespace,
-		Name:      name,
-		StoreName: storeName,
-		Context:   ctx,
+		Type:       meta.Type,
+		APIVersion: meta.APIVersion,
+		Namespace:  namespace,
+		Name:       name,
+		StoreName:  storeName,
 	}
 }
 
-func NewResourceRequestFromV2Resource(ctx context.Context, r corev2.Resource) ResourceRequest {
+func NewResourceRequestFromV2Resource(r corev2.Resource) ResourceRequest {
 	meta := r.GetObjectMeta()
+	tm := getTypeMeta(r)
 	return ResourceRequest{
-		Namespace: meta.Namespace,
-		Name:      meta.Name,
-		StoreName: r.StorePrefix(),
-		Context:   ctx,
+		Type:       tm.Type,
+		APIVersion: tm.APIVersion,
+		Namespace:  meta.Namespace,
+		Name:       meta.Name,
+		StoreName:  r.StorePrefix(),
 	}
 }
 
@@ -71,8 +108,8 @@ func (r ResourceRequest) Validate() error {
 	if r.StoreName == "" {
 		return errors.New("invalid resource request: missing store name")
 	}
-	if r.Context == nil {
-		return errors.New("invalid resource request: nil context")
+	if r.APIVersion == "" || r.Type == "" {
+		return errors.New("invalid resource request: empty type metadata")
 	}
 	return nil
 }

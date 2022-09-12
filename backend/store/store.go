@@ -51,6 +51,16 @@ func (e *ErrNamespaceMissing) Error() string {
 	return fmt.Sprintf("the namespace %s does not exist", e.Namespace)
 }
 
+// ErrNamespaceNotEmpty is returned when trying to delete a namespace that still
+// has resources within it.
+type ErrNamespaceNotEmpty struct {
+	Namespace string
+}
+
+func (e *ErrNamespaceNotEmpty) Error() string {
+	return fmt.Sprintf("cannot delete namespace %s: namespace not empty", e.Namespace)
+}
+
 // ErrNotFound is returned when a key is not found in the store
 type ErrNotFound struct {
 	Key string
@@ -214,9 +224,9 @@ type Store interface {
 	// RoleBindingStore provides an interface for managing role bindings
 	RoleBindingStore
 
-	// SilencedStore provides an interface for managing silenced entries,
+	// SilenceStore provides an interface for managing silenced entries,
 	// consisting of entities, subscriptions and/or checks
-	SilencedStore
+	SilenceStore
 
 	// TessenConfigStore provides an interface for managing the tessen configuration
 	TessenConfigStore
@@ -580,34 +590,31 @@ type RoleStore interface {
 
 // SilencedStore provides methods for managing silenced entries,
 // consisting of entities, subscriptions and/or checks
-type SilencedStore interface {
-	// DeleteSilencedEntryByName deletes an entry using the given id.
-	DeleteSilencedEntryByName(ctx context.Context, id ...string) error
+type SilenceStore interface {
+	// DeleteSilences deletes all silences matching the given names.
+	DeleteSilences(ctx context.Context, namespace string, names []string) error
 
-	// GetSilencedEntries returns all entries. A nil slice with no error is
+	// GetSilences returns all silences in the namespace. A nil slice with no error is
 	// returned if none were found.
-	GetSilencedEntries(ctx context.Context) ([]*types.Silenced, error)
+	GetSilences(ctx context.Context, namespace string) ([]*corev2.Silenced, error)
 
-	// GetSilencedEntriesByCheckName returns all entries for the given check
-	// within the ctx's namespace. A nil slice with no error is
-	// returned if none were found.
-	GetSilencedEntriesByCheckName(ctx context.Context, check string) ([]*types.Silenced, error)
+	// GetSilencedsByCheck returns all silences for the given check . A nil
+	// slice with no error is returned if none were found.
+	GetSilencesByCheck(ctx context.Context, namespace, check string) ([]*corev2.Silenced, error)
 
-	// GetSilencedEntriesBySubscription returns all entries for the given subscription
-	// within the ctx's namespace. A nil slice with no error is
-	// returned if none were found.
-	GetSilencedEntriesBySubscription(ctx context.Context, subscriptions ...string) ([]*types.Silenced, error)
+	// GetSilencedEntriesBySubscription returns all entries for the given
+	// subscription. A nil slice with no error is returned if none were found.
+	GetSilencesBySubscription(ctx context.Context, namespace string, subscriptions []string) ([]*corev2.Silenced, error)
 
-	// GetSilencedEntryByName returns an entry using the given id and the
-	// namespace stored in ctx. The resulting entry is nil if
-	// none was found.
-	GetSilencedEntryByName(ctx context.Context, id string) (*types.Silenced, error)
+	// GetSilenceByName returns an entry using the given namespace and name. An
+	// error is returned if the entry is not found.
+	GetSilenceByName(ctx context.Context, namespace, name string) (*corev2.Silenced, error)
 
-	// UpdateSilencedEntry creates or updates a given entry.
-	UpdateSilencedEntry(ctx context.Context, entry *types.Silenced) error
+	// UpdateSilence creates or updates a given silence.
+	UpdateSilence(ctx context.Context, silence *corev2.Silenced) error
 
-	// GetSilencedEntriesByName gets all the named silenced entries.
-	GetSilencedEntriesByName(ctx context.Context, id ...string) ([]*types.Silenced, error)
+	// GetSilencesByName gets all the named silence entries.
+	GetSilencesByName(ctx context.Context, namespace string, names []string) ([]*corev2.Silenced, error)
 }
 
 // TessenConfigStore provides methods for managing the Tessen configuration

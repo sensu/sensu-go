@@ -209,6 +209,13 @@ func (t *testResource2) Validate() error {
 	return nil
 }
 
+func (t *testResource2) GetTypeMeta() corev2.TypeMeta {
+	return corev2.TypeMeta{
+		Type:       "testResource2",
+		APIVersion: "wrap_test/v2",
+	}
+}
+
 func fixtureTestResource2(name string) *testResource2 {
 	return &testResource2{
 		Metadata: &corev2.ObjectMeta{

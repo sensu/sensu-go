@@ -685,13 +685,15 @@ func TestHandleExpireOnResolveEntries(t *testing.T) {
 			mockStore := &mockstore.MockStore{}
 
 			mockStore.On(
-				"GetSilencedEntriesByName",
+				"GetSilencesByName",
+				mock.Anything,
 				mock.Anything,
 				mock.Anything,
 			).Return([]*corev2.Silenced{tc.silencedEntry}, nil)
 
 			mockStore.On(
-				"DeleteSilencedEntryByName",
+				"DeleteSilences",
+				mock.Anything,
 				mock.Anything,
 				mock.Anything,
 			).Return(nil)

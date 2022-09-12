@@ -41,7 +41,7 @@ func TestHandlers_UpdateResourceV3(t *testing.T) {
 			name: "store err, not valid",
 			body: marshal(t, fixture.V3Resource{Metadata: corev2.NewObjectMetaP("", "")}),
 			storeFunc: func(s *mockstore.V2MockStore) {
-				s.On("CreateOrUpdate", mock.Anything, mock.Anything).
+				s.On("CreateOrUpdate", mock.Anything, mock.Anything, mock.Anything).
 					Return(&store.ErrNotValid{Err: errors.New("error")})
 			},
 			wantErr: true,
@@ -50,7 +50,7 @@ func TestHandlers_UpdateResourceV3(t *testing.T) {
 			name: "store err, default",
 			body: marshal(t, fixture.V3Resource{Metadata: corev2.NewObjectMetaP("", "")}),
 			storeFunc: func(s *mockstore.V2MockStore) {
-				s.On("CreateOrUpdate", mock.Anything, mock.Anything).
+				s.On("CreateOrUpdate", mock.Anything, mock.Anything, mock.Anything).
 					Return(&store.ErrInternal{})
 			},
 			wantErr: true,
@@ -59,7 +59,7 @@ func TestHandlers_UpdateResourceV3(t *testing.T) {
 			name: "successful create",
 			body: marshal(t, fixture.V3Resource{Metadata: corev2.NewObjectMetaP("", "")}),
 			storeFunc: func(s *mockstore.V2MockStore) {
-				s.On("CreateOrUpdate", mock.Anything, mock.Anything).
+				s.On("CreateOrUpdate", mock.Anything, mock.Anything, mock.Anything).
 					Return(nil)
 			},
 		},
@@ -72,14 +72,14 @@ func TestHandlers_UpdateResourceV3(t *testing.T) {
 			}
 
 			h := Handlers{
-				V3Resource: &fixture.V3Resource{},
-				StoreV2:    store,
+				Resource: &fixture.V3Resource{},
+				Store:    store,
 			}
 
 			r, _ := http.NewRequest(http.MethodPut, "/", bytes.NewReader(tt.body))
 			r = mux.SetURLVars(r, tt.urlVars)
 
-			_, err := h.CreateOrUpdateV3Resource(r)
+			_, err := h.CreateOrUpdateResource(r)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("Handlers.CreateOrUpdateV3Resource() error = %v, wantErr %v", err, tt.wantErr)
 				return
@@ -96,15 +96,15 @@ func TestCreatedByUpdateV3(t *testing.T) {
 
 	store := &mockstore.V2MockStore{}
 	h := Handlers{
-		V3Resource: &fixture.V3Resource{},
-		StoreV2:    store,
+		Resource: &fixture.V3Resource{},
+		Store:    store,
 	}
 
-	store.On("CreateOrUpdate", mock.Anything, mock.Anything).Return(nil)
+	store.On("CreateOrUpdate", mock.Anything, mock.Anything, mock.Anything).Return(nil)
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodPut, "/", bytes.NewReader(body))
 	assert.NoError(t, err)
 
-	_, err = h.CreateOrUpdateV3Resource(req)
+	_, err = h.CreateOrUpdateResource(req)
 	assert.NoError(t, err)
 }

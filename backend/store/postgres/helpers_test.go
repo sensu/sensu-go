@@ -2,7 +2,6 @@ package postgres
 
 import (
 	"context"
-	"database/sql"
 	"fmt"
 	"os"
 	"strings"
@@ -23,12 +22,34 @@ import (
 type poolWithDSNFunc func(ctx context.Context, db *pgxpool.Pool, dsn string)
 
 func dropAll(tb testing.TB, dbName, pgURL string) {
-	db, err := sql.Open("postgres", pgURL)
+	db, err := pgxpool.Connect(context.Background(), pgURL)
 	if err != nil {
 		tb.Fatalf("error opening database: %v", err)
 	}
+	tb.Cleanup(func() {
+		db.Close()
+	})
+
+	// revoke new connections to the database
+	revokeQ := fmt.Sprintf("REVOKE CONNECT ON DATABASE %s FROM public;", dbName)
+	if _, err := db.Exec(context.Background(), revokeQ); err != nil {
+		tb.Fatalf("error cleaning up database \"%s\", revoke new connections: %v", dbName, err)
+	}
+
+	// kill connections to the database
+	rawKillQ := `
+SELECT pid, pg_terminate_backend(pid)
+FROM pg_stat_activity
+WHERE datname = '%s' AND pid <> pg_backend_pid();
+`
+	killQ := fmt.Sprintf(rawKillQ, dbName)
+	if _, err := db.Exec(context.Background(), killQ); err != nil {
+		tb.Fatalf("error cleaning up database \"%s\", kill connections: %v", dbName, err)
+	}
+
+	// drop the database
 	dropQ := fmt.Sprintf("DROP DATABASE %s;", dbName)
-	if _, err := db.ExecContext(context.Background(), dropQ); err != nil {
+	if _, err := db.Exec(context.Background(), dropQ); err != nil {
 		tb.Fatalf("error cleaning up database \"%s\": %v", dbName, err)
 	}
 }
@@ -52,7 +73,11 @@ func withMigratedPostgres(tb testing.TB, fn poolWithDSNFunc, migrations []migrat
 	require.NoError(tb, err)
 	tb.Cleanup(initialDB.Close)
 
-	dbName := "sensu" + strings.ReplaceAll(uuid.New().String(), "-", "")
+	id, err := uuid.NewRandom()
+	if err != nil {
+		tb.Error(err)
+	}
+	dbName := "sensu" + strings.ReplaceAll(id.String(), "-", "")
 	if _, err := initialDB.Exec(ctx, fmt.Sprintf("CREATE DATABASE %s;", dbName)); err != nil {
 		tb.Error(err)
 	}
@@ -62,7 +87,7 @@ func withMigratedPostgres(tb testing.TB, fn poolWithDSNFunc, migrations []migrat
 	initialDB.Close()
 
 	// connect to postgres again to run migrations
-	dsn := fmt.Sprintf("dbname=%s ", dbName) + pgURL
+	dsn := fmt.Sprintf("%s dbname=%s", pgURL, dbName)
 	cfg, err := pgxpool.ParseConfig(dsn)
 	require.NoError(tb, err)
 
@@ -140,13 +165,14 @@ func testWithPostgresStore(tb testing.TB, fn func(store.Store)) {
 			tb.Fatal(err)
 		}
 
-		namespaceStore := NewNamespaceStore(db, client)
-		entityStore := NewEntityStore(db, client)
+		entityStore := NewEntityStore(db)
+		namespaceStore := NewNamespaceStore(db)
+		namespaceStoreV1 := NewNamespaceStoreV1(namespaceStore)
 
 		pgStore := Store{
 			EventStore:     eventStore,
 			EntityStore:    entityStore,
-			NamespaceStore: namespaceStore,
+			NamespaceStore: namespaceStoreV1,
 			Store:          etcdStore,
 		}
 		fn(pgStore)
@@ -158,7 +184,7 @@ func testWithPostgresStoreV2(tb testing.TB, fn func(storev2.Interface)) {
 	tb.Helper()
 
 	withPostgres(tb, func(ctx context.Context, db *pgxpool.Pool, dsn string) {
-		fn(NewStoreV2(db, nil))
+		fn(NewConfigStore(db))
 	})
 }
 
@@ -166,34 +192,51 @@ func createNamespace(tb testing.TB, s storev2.Interface, name string) {
 	tb.Helper()
 	ctx := context.Background()
 	namespace := corev3.FixtureNamespace(name)
-	req := storev2.NewResourceRequestFromResource(ctx, namespace)
-	req.UsePostgres = true
-	wrapper := WrapNamespace(namespace)
-	if err := s.CreateOrUpdate(req, wrapper); err != nil {
+	if err := s.NamespaceStore().CreateIfNotExists(ctx, namespace); err != nil {
 		tb.Error(err)
 	}
 }
 
-func createEntityConfig(tb testing.TB, s storev2.Interface, name string) {
+func deleteNamespace(tb testing.TB, s storev2.Interface, name string) {
+	tb.Helper()
+	ctx := context.Background()
+	if err := s.NamespaceStore().Delete(ctx, name); err != nil {
+		tb.Error(err)
+	}
+}
+
+func createEntityConfig(tb testing.TB, s storev2.Interface, namespace, name string) {
 	tb.Helper()
 	ctx := context.Background()
 	cfg := corev3.FixtureEntityConfig(name)
-	req := storev2.NewResourceRequestFromResource(ctx, cfg)
-	req.UsePostgres = true
-	wrapper := WrapEntityConfig(cfg)
-	if err := s.CreateOrUpdate(req, wrapper); err != nil {
+	cfg.Metadata.Namespace = namespace
+	if err := s.EntityConfigStore().CreateIfNotExists(ctx, cfg); err != nil {
 		tb.Error(err)
 	}
 }
 
-func createEntityState(tb testing.TB, s storev2.Interface, name string) {
+func deleteEntityConfig(tb testing.TB, s storev2.Interface, namespace, name string) {
 	tb.Helper()
 	ctx := context.Background()
-	state := corev3.FixtureEntityState(name)
-	req := storev2.NewResourceRequestFromResource(ctx, state)
-	req.UsePostgres = true
-	wrapper := WrapEntityState(state)
-	if err := s.CreateOrUpdate(req, wrapper); err != nil {
+	if err := s.EntityConfigStore().Delete(ctx, namespace, name); err != nil {
+		tb.Error(err)
+	}
+}
+
+func createEntityState(tb testing.TB, s storev2.Interface, namespace, name string) {
+	tb.Helper()
+	ctx := context.Background()
+	cfg := corev3.FixtureEntityState(name)
+	cfg.Metadata.Namespace = namespace
+	if err := s.EntityStateStore().CreateIfNotExists(ctx, cfg); err != nil {
+		tb.Error(err)
+	}
+}
+
+func deleteEntityState(tb testing.TB, s storev2.Interface, namespace, name string) {
+	tb.Helper()
+	ctx := context.Background()
+	if err := s.EntityStateStore().Delete(ctx, namespace, name); err != nil {
 		tb.Error(err)
 	}
 }

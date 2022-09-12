@@ -322,12 +322,12 @@ func semverGreater(s1, s2 string) bool {
 	s1Ver, err := semver.ParseTolerant(s1)
 	if err != nil {
 		// semver should be validated before being passed here
-		panic(err)
+		return false
 	}
 	s2Ver, err := semver.ParseTolerant(s2)
 	if err != nil {
 		// semver should be validated before being passed here
-		panic(err)
+		return false
 	}
 	return s1Ver.GT(s2Ver)
 }

@@ -10,6 +10,7 @@ import (
 	"github.com/jackc/pgx/v4"
 	"github.com/jackc/pgx/v4/pgxpool"
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
+	corev3 "github.com/sensu/sensu-go/api/core/v3"
 	"github.com/sirupsen/logrus"
 )
 
@@ -20,21 +21,21 @@ func init() {
 func TestInsertEntityQuery(t *testing.T) {
 	t.Parallel()
 	withPostgres(t, func(ctx context.Context, db *pgxpool.Pool, dsn string) {
-		namespaceStore := NewNamespaceStore(db, nil)
-		entityStore := NewEntityStore(db, nil)
+		namespaceStore := NewNamespaceStore(db)
+		entityStore := NewEntityStore(db)
 		entityNames := []string{
 			"mulder",
 			"scully",
 			"skinner",
 			"spender",
-			"alien bounty hunter",
-			"smoking man",
-			"teenage vampire",
+			"alien_bounty_hunter",
+			"smoking_man",
+			"teenage_vampire",
 		}
 		for _, entityName := range entityNames {
 			entity := corev2.FixtureEntity(entityName)
-			namespace := corev2.FixtureNamespace(entity.Namespace)
-			if err := namespaceStore.UpdateNamespace(ctx, namespace); err != nil {
+			namespace := corev3.FixtureNamespace(entity.Namespace)
+			if err := namespaceStore.CreateOrUpdate(ctx, namespace); err != nil {
 				t.Fatal(err)
 			}
 			if err := entityStore.UpdateEntity(ctx, entity); err != nil {
@@ -51,8 +52,8 @@ func TestInsertEntityQuery(t *testing.T) {
 func TestInsertRingQuery(t *testing.T) {
 	t.Parallel()
 	withPostgres(t, func(ctx context.Context, db *pgxpool.Pool, dsn string) {
-		namespaceStore := NewNamespaceStore(db, nil)
-		entityStore := NewEntityStore(db, nil)
+		namespaceStore := NewNamespaceStore(db)
+		entityStore := NewEntityStore(db)
 		rings := []string{
 			"diamond",
 			"iron",
@@ -60,8 +61,8 @@ func TestInsertRingQuery(t *testing.T) {
 		}
 		for _, ring := range rings {
 			entity := corev2.FixtureEntity(ring)
-			namespace := corev2.FixtureNamespace(entity.Namespace)
-			if err := namespaceStore.UpdateNamespace(ctx, namespace); err != nil {
+			namespace := corev3.FixtureNamespace(entity.Namespace)
+			if err := namespaceStore.CreateOrUpdate(ctx, namespace); err != nil {
 				t.Fatal(err)
 			}
 			if err := entityStore.UpdateEntity(ctx, entity); err != nil {
@@ -83,21 +84,21 @@ func TestInsertRingQuery(t *testing.T) {
 func TestInsertRingEntitiesQuery(t *testing.T) {
 	t.Parallel()
 	withPostgres(t, func(ctx context.Context, db *pgxpool.Pool, dsn string) {
-		namespaceStore := NewNamespaceStore(db, nil)
-		entityStore := NewEntityStore(db, nil)
+		namespaceStore := NewNamespaceStore(db)
+		entityStore := NewEntityStore(db)
 		entityNames := []string{
 			"mulder",
 			"scully",
 			"skinner",
 			"spender",
-			"alien bounty hunter",
-			"smoking man",
-			"teenage vampire",
+			"alien_bounty_hunter",
+			"smoking_man",
+			"teenage_vampire",
 		}
 		for _, entityName := range entityNames {
 			entity := corev2.FixtureEntity(entityName)
-			namespace := corev2.FixtureNamespace(entity.Namespace)
-			if err := namespaceStore.UpdateNamespace(ctx, namespace); err != nil {
+			namespace := corev3.FixtureNamespace(entity.Namespace)
+			if err := namespaceStore.CreateOrUpdate(ctx, namespace); err != nil {
 				t.Fatal(err)
 			}
 			if err := entityStore.UpdateEntity(ctx, entity); err != nil {
@@ -132,7 +133,7 @@ func TestInsertRingEntitiesQuery(t *testing.T) {
 		}
 		// We should get errors if the ring doesn't exist
 		for _, entityName := range entityNames {
-			row := db.QueryRow(ctx, insertRingEntityQuery, "default", entityName, "does not exist")
+			row := db.QueryRow(ctx, insertRingEntityQuery, "default", entityName, "does_not_exist")
 			var inserted bool
 			if err := row.Scan(&inserted); err != pgx.ErrNoRows && err.Error() != pgx.ErrNoRows.Error() {
 				t.Fatalf("expected pgx.ErrNoRows, got %q (%T)", err, err)
@@ -140,7 +141,7 @@ func TestInsertRingEntitiesQuery(t *testing.T) {
 		}
 		// We should get errors if the member doesn't exist
 		for _, ring := range rings {
-			row := db.QueryRow(ctx, insertRingEntityQuery, "default", "does not exist", ring)
+			row := db.QueryRow(ctx, insertRingEntityQuery, "default", "does_not_exist", ring)
 			var inserted bool
 			if err := row.Scan(&inserted); err != pgx.ErrNoRows && err.Error() != pgx.ErrNoRows.Error() {
 				t.Fatalf("expected pgx.ErrNoRows, got %q (%T)", err, err)
@@ -152,16 +153,16 @@ func TestInsertRingEntitiesQuery(t *testing.T) {
 func TestInsertRingSubscriberQuery(t *testing.T) {
 	t.Parallel()
 	withPostgres(t, func(ctx context.Context, db *pgxpool.Pool, dsn string) {
-		namespaceStore := NewNamespaceStore(db, nil)
-		entityStore := NewEntityStore(db, nil)
+		namespaceStore := NewNamespaceStore(db)
+		entityStore := NewEntityStore(db)
 		entityNames := []string{
 			"mulder",
 			"scully",
 			"skinner",
 			"spender",
-			"alien bounty hunter",
-			"smoking man",
-			"teenage vampire",
+			"alien_bounty_hunter",
+			"smoking_man",
+			"teenage_vampire",
 		}
 		rings := []string{
 			"diamond",
@@ -170,8 +171,8 @@ func TestInsertRingSubscriberQuery(t *testing.T) {
 		}
 		for _, entityName := range entityNames {
 			entity := corev2.FixtureEntity(entityName)
-			namespace := corev2.FixtureNamespace(entity.Namespace)
-			if err := namespaceStore.UpdateNamespace(ctx, namespace); err != nil {
+			namespace := corev3.FixtureNamespace(entity.Namespace)
+			if err := namespaceStore.CreateOrUpdate(ctx, namespace); err != nil {
 				t.Fatal(err)
 			}
 			if err := entityStore.UpdateEntity(ctx, entity); err != nil {
@@ -195,13 +196,13 @@ func TestInsertRingSubscriberQuery(t *testing.T) {
 				}
 			}
 		}
-		row := db.QueryRow(ctx, insertRingSubscriberQuery, "diamond", "my subscriber")
+		row := db.QueryRow(ctx, insertRingSubscriberQuery, "diamond", "my_subscriber")
 		var inserted bool
 		if err := row.Scan(&inserted); err != nil {
 			t.Fatal(err)
 		}
 		// second insert should do nothing
-		row = db.QueryRow(ctx, insertRingSubscriberQuery, "diamond", "my subscriber")
+		row = db.QueryRow(ctx, insertRingSubscriberQuery, "diamond", "my_subscriber")
 		if err := row.Scan(&inserted); err != pgx.ErrNoRows && err.Error() != pgx.ErrNoRows.Error() {
 			t.Fatalf("wanted pgx.ErrNoRows, got %#v", err)
 		}
@@ -211,16 +212,16 @@ func TestInsertRingSubscriberQuery(t *testing.T) {
 func TestUpdateRingSubscriberQuery(t *testing.T) {
 	t.Parallel()
 	withPostgres(t, func(ctx context.Context, db *pgxpool.Pool, dsn string) {
-		namespaceStore := NewNamespaceStore(db, nil)
-		entityStore := NewEntityStore(db, nil)
+		namespaceStore := NewNamespaceStore(db)
+		entityStore := NewEntityStore(db)
 		entityNames := []string{
 			"mulder",
 			"scully",
 			"skinner",
 			"spender",
-			"alien bounty hunter",
-			"smoking man",
-			"teenage vampire",
+			"alien_bounty_hunter",
+			"smoking_man",
+			"teenage_vampire",
 		}
 		rings := []string{
 			"diamond",
@@ -229,8 +230,8 @@ func TestUpdateRingSubscriberQuery(t *testing.T) {
 		}
 		for _, entityName := range entityNames {
 			entity := corev2.FixtureEntity(entityName)
-			namespace := corev2.FixtureNamespace(entity.Namespace)
-			if err := namespaceStore.UpdateNamespace(ctx, namespace); err != nil {
+			namespace := corev3.FixtureNamespace(entity.Namespace)
+			if err := namespaceStore.CreateOrUpdate(ctx, namespace); err != nil {
 				t.Fatal(err)
 			}
 			if err := entityStore.UpdateEntity(ctx, entity); err != nil {
@@ -270,16 +271,16 @@ func TestUpdateRingSubscriberQuery(t *testing.T) {
 				}
 			}
 		}
-		row := db.QueryRow(ctx, insertRingSubscriberQuery, "diamond", "my subscriber")
+		row := db.QueryRow(ctx, insertRingSubscriberQuery, "diamond", "my_subscriber")
 		var inserted bool
 		if err := row.Scan(&inserted); err != nil {
 			t.Fatal(err)
 		}
-		row = db.QueryRow(ctx, insertRingSubscriberQuery, "diamond", "other subscriber")
+		row = db.QueryRow(ctx, insertRingSubscriberQuery, "diamond", "other_subscriber")
 		if err := row.Scan(&inserted); err != nil {
 			t.Fatal(err)
 		}
-		row = db.QueryRow(ctx, updateRingSubscribersQuery, "diamond", "my subscriber", 0, "0s")
+		row = db.QueryRow(ctx, updateRingSubscribersQuery, "diamond", "my_subscriber", 0, "0s")
 		var entity string
 		if err := row.Scan(&entity); err != nil {
 			t.Fatal(err)
@@ -288,7 +289,7 @@ func TestUpdateRingSubscriberQuery(t *testing.T) {
 		if got, want := entity, "mulder"; got != want {
 			t.Errorf("bad entity: got %q, want %q", got, want)
 		}
-		row = db.QueryRow(ctx, `SELECT entity_states.name FROM entity_states, ring_subscribers WHERE entity_states.id = ring_subscribers.pointer AND ring_subscribers.name = 'my subscriber'`)
+		row = db.QueryRow(ctx, `SELECT entity_states.name FROM entity_states, ring_subscribers WHERE entity_states.id = ring_subscribers.pointer AND ring_subscribers.name = 'my_subscriber'`)
 		var pointer string
 		if err := row.Scan(&pointer); err != nil {
 			t.Fatal(err)
@@ -297,42 +298,42 @@ func TestUpdateRingSubscriberQuery(t *testing.T) {
 			t.Errorf("bad pointer: got %q, want %q", got, want)
 		}
 		pointer = ""
-		row = db.QueryRow(ctx, `SELECT entity_states.name FROM entity_states, ring_subscribers WHERE ring_subscribers.name = 'other subscriber' AND entity_states.id = ring_subscribers.pointer`)
+		row = db.QueryRow(ctx, `SELECT entity_states.name FROM entity_states, ring_subscribers WHERE ring_subscribers.name = 'other_subscriber' AND entity_states.id = ring_subscribers.pointer`)
 		if err := row.Scan(&pointer); err != nil {
 			t.Fatal(err)
 		}
-		if got, want := pointer, "alien bounty hunter"; got != want {
+		if got, want := pointer, "alien_bounty_hunter"; got != want {
 			t.Errorf("bad pointer: got %q, want %q", got, want)
 		}
 		pointer = ""
 		// Iterate a few entities at a time
-		row = db.QueryRow(ctx, updateRingSubscribersQuery, "diamond", "my subscriber", 2, "0s")
+		row = db.QueryRow(ctx, updateRingSubscribersQuery, "diamond", "my_subscriber", 2, "0s")
 		if err := row.Scan(&pointer); err != nil {
 			t.Fatal(err)
 		}
-		if got, want := pointer, "smoking man"; got != want {
+		if got, want := pointer, "smoking_man"; got != want {
 			t.Errorf("bad pointer: got %q, want %q", got, want)
 		}
-		row = db.QueryRow(ctx, `SELECT entity_states.name FROM entity_states, ring_subscribers WHERE entity_states.id = ring_subscribers.pointer AND ring_subscribers.name = 'my subscriber'`)
+		row = db.QueryRow(ctx, `SELECT entity_states.name FROM entity_states, ring_subscribers WHERE entity_states.id = ring_subscribers.pointer AND ring_subscribers.name = 'my_subscriber'`)
 		if err := row.Scan(&pointer); err != nil {
 			t.Fatal(err)
 		}
-		if got, want := pointer, "smoking man"; got != want {
+		if got, want := pointer, "smoking_man"; got != want {
 			t.Errorf("bad pointer: got %q, want %q", got, want)
 		}
 		// Pointer should wrap around at the end
-		row = db.QueryRow(ctx, updateRingSubscribersQuery, "diamond", "my subscriber", 1, "0s")
+		row = db.QueryRow(ctx, updateRingSubscribersQuery, "diamond", "my_subscriber", 1, "0s")
 		if err := row.Scan(&pointer); err != nil {
 			t.Fatal(err)
 		}
-		if got, want := pointer, "teenage vampire"; got != want {
+		if got, want := pointer, "teenage_vampire"; got != want {
 			t.Errorf("bad pointer: got %q, want %q", got, want)
 		}
-		row = db.QueryRow(ctx, `SELECT entity_states.name FROM entity_states, ring_subscribers WHERE entity_states.id = ring_subscribers.pointer AND ring_subscribers.name = 'my subscriber'`)
+		row = db.QueryRow(ctx, `SELECT entity_states.name FROM entity_states, ring_subscribers WHERE entity_states.id = ring_subscribers.pointer AND ring_subscribers.name = 'my_subscriber'`)
 		if err := row.Scan(&pointer); err != nil {
 			t.Fatal(err)
 		}
-		if got, want := pointer, "teenage vampire"; got != want {
+		if got, want := pointer, "teenage_vampire"; got != want {
 			t.Errorf("bad pointer: got %q, want %q", got, want)
 		}
 	})
@@ -341,16 +342,16 @@ func TestUpdateRingSubscriberQuery(t *testing.T) {
 func TestUpdateRingSubscriberQueryWithSubsequentEntityInsert(t *testing.T) {
 	t.Parallel()
 	withPostgres(t, func(ctx context.Context, db *pgxpool.Pool, dsn string) {
-		namespaceStore := NewNamespaceStore(db, nil)
-		entityStore := NewEntityStore(db, nil)
+		namespaceStore := NewNamespaceStore(db)
+		entityStore := NewEntityStore(db)
 		entityNames := []string{
 			"mulder",
 			"scully",
 			"skinner",
 			"spender",
-			"alien bounty hunter",
-			"smoking man",
-			"teenage vampire",
+			"alien_bounty_hunter",
+			"smoking_man",
+			"teenage_vampire",
 		}
 		rings := []string{
 			"diamond",
@@ -359,8 +360,8 @@ func TestUpdateRingSubscriberQueryWithSubsequentEntityInsert(t *testing.T) {
 		}
 		for _, entityName := range entityNames {
 			entity := corev2.FixtureEntity(entityName)
-			namespace := corev2.FixtureNamespace(entity.Namespace)
-			if err := namespaceStore.UpdateNamespace(ctx, namespace); err != nil {
+			namespace := corev3.FixtureNamespace(entity.Namespace)
+			if err := namespaceStore.CreateOrUpdate(ctx, namespace); err != nil {
 				t.Fatal(err)
 			}
 			if err := entityStore.UpdateEntity(ctx, entity); err != nil {
@@ -372,7 +373,7 @@ func TestUpdateRingSubscriberQueryWithSubsequentEntityInsert(t *testing.T) {
 				t.Fatal(err)
 			}
 		}
-		row := db.QueryRow(ctx, insertRingSubscriberQuery, "diamond", "my subscriber")
+		row := db.QueryRow(ctx, insertRingSubscriberQuery, "diamond", "my_subscriber")
 		var inserted bool
 		if err := row.Scan(&inserted); err != nil {
 			t.Fatal(err)
@@ -401,11 +402,11 @@ func TestUpdateRingSubscriberQueryWithSubsequentEntityInsert(t *testing.T) {
 			}
 		}
 		var entity string
-		row = db.QueryRow(ctx, updateRingSubscribersQuery, "diamond", "my subscriber", 0, "1s")
+		row = db.QueryRow(ctx, updateRingSubscribersQuery, "diamond", "my_subscriber", 0, "1s")
 		if err := row.Scan(&entity); err != nil {
 			t.Fatal(err)
 		}
-		if got, want := entity, "alien bounty hunter"; got != want {
+		if got, want := entity, "alien_bounty_hunter"; got != want {
 			t.Errorf("bad entity: got %q, want %q", got, want)
 		}
 		row = db.QueryRow(ctx, "SELECT pointer FROM ring_subscribers")
@@ -422,16 +423,16 @@ func TestUpdateRingSubscriberQueryWithSubsequentEntityInsert(t *testing.T) {
 func TestGetRingEntitiesQuery(t *testing.T) {
 	t.Parallel()
 	withPostgres(t, func(ctx context.Context, db *pgxpool.Pool, dsn string) {
-		namespaceStore := NewNamespaceStore(db, nil)
-		entityStore := NewEntityStore(db, nil)
+		namespaceStore := NewNamespaceStore(db)
+		entityStore := NewEntityStore(db)
 		entityNames := []string{
 			"mulder",
 			"scully",
 			"skinner",
 			"spender",
-			"alien bounty hunter",
-			"smoking man",
-			"teenage vampire",
+			"alien_bounty_hunter",
+			"smoking_man",
+			"teenage_vampire",
 		}
 		rings := []string{
 			"diamond",
@@ -440,8 +441,8 @@ func TestGetRingEntitiesQuery(t *testing.T) {
 		}
 		for _, entityName := range entityNames {
 			entity := corev2.FixtureEntity(entityName)
-			namespace := corev2.FixtureNamespace(entity.Namespace)
-			if err := namespaceStore.UpdateNamespace(ctx, namespace); err != nil {
+			namespace := corev3.FixtureNamespace(entity.Namespace)
+			if err := namespaceStore.CreateOrUpdate(ctx, namespace); err != nil {
 				t.Fatal(err)
 			}
 			if err := entityStore.UpdateEntity(ctx, entity); err != nil {
@@ -465,7 +466,7 @@ func TestGetRingEntitiesQuery(t *testing.T) {
 				}
 			}
 		}
-		row := db.QueryRow(ctx, insertRingSubscriberQuery, "diamond", "my subscriber")
+		row := db.QueryRow(ctx, insertRingSubscriberQuery, "diamond", "my_subscriber")
 		var inserted bool
 		if err := row.Scan(&inserted); err != nil {
 			t.Fatal(err)
@@ -475,14 +476,14 @@ func TestGetRingEntitiesQuery(t *testing.T) {
 		if err := row.Scan(&entity); err != nil {
 			t.Fatal(err)
 		}
-		if got, want := entity, "alien bounty hunter"; got != want {
+		if got, want := entity, "alien_bounty_hunter"; got != want {
 			t.Errorf("bad entity: got %q, want %q", got, want)
 		}
-		rows, err := db.Query(ctx, getRingEntitiesQuery, "diamond", "my subscriber", 2)
+		rows, err := db.Query(ctx, getRingEntitiesQuery, "diamond", "my_subscriber", 2)
 		if err != nil {
 			t.Fatal(err)
 		}
-		want := []string{"alien bounty hunter", "mulder"}
+		want := []string{"alien_bounty_hunter", "mulder"}
 		got := []string{}
 		for rows.Next() {
 			var entity string
@@ -494,7 +495,7 @@ func TestGetRingEntitiesQuery(t *testing.T) {
 		if !reflect.DeepEqual(got, want) {
 			t.Errorf("bad entities: got %v, want %v", got, want)
 		}
-		row = db.QueryRow(ctx, updateRingSubscribersQuery, "diamond", "my subscriber", 0, "0s")
+		row = db.QueryRow(ctx, updateRingSubscribersQuery, "diamond", "my_subscriber", 0, "0s")
 		if err := row.Scan(&entity); err != nil {
 			t.Fatal(err)
 		}
@@ -508,7 +509,7 @@ func TestGetRingEntitiesQuery(t *testing.T) {
 		if got, want := entity, "mulder"; got != want {
 			t.Errorf("bad entity: got %q, want %q", got, want)
 		}
-		rows, err = db.Query(ctx, getRingEntitiesQuery, "diamond", "my subscriber", 2)
+		rows, err = db.Query(ctx, getRingEntitiesQuery, "diamond", "my_subscriber", 2)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -524,16 +525,16 @@ func TestGetRingEntitiesQuery(t *testing.T) {
 		if !reflect.DeepEqual(got, want) {
 			t.Errorf("bad entities: got %v, want %v", got, want)
 		}
-		if _, err := db.Exec(ctx, updateRingSubscribersQuery, "diamond", "my subscriber", 1, "0s"); err != nil {
+		if _, err := db.Exec(ctx, updateRingSubscribersQuery, "diamond", "my_subscriber", 1, "0s"); err != nil {
 			t.Fatal(err)
 		}
 		// demonstrate wrap-around
-		rows, err = db.Query(ctx, getRingEntitiesQuery, "diamond", "my subscriber", 7)
+		rows, err = db.Query(ctx, getRingEntitiesQuery, "diamond", "my_subscriber", 7)
 		if err != nil {
 			t.Fatal(err)
 		}
 		got = nil
-		want = []string{"skinner", "smoking man", "spender", "teenage vampire", "alien bounty hunter", "mulder", "scully"}
+		want = []string{"skinner", "smoking_man", "spender", "teenage_vampire", "alien_bounty_hunter", "mulder", "scully"}
 		for rows.Next() {
 			var entity string
 			if err := rows.Scan(&entity); err != nil {
@@ -550,16 +551,16 @@ func TestGetRingEntitiesQuery(t *testing.T) {
 func TestGetRingLengthQuery(t *testing.T) {
 	t.Parallel()
 	withPostgres(t, func(ctx context.Context, db *pgxpool.Pool, dsn string) {
-		namespaceStore := NewNamespaceStore(db, nil)
-		entityStore := NewEntityStore(db, nil)
+		namespaceStore := NewNamespaceStore(db)
+		entityStore := NewEntityStore(db)
 		entityNames := []string{
 			"mulder",
 			"scully",
 			"skinner",
 			"spender",
-			"alien bounty hunter",
-			"smoking man",
-			"teenage vampire",
+			"alien_bounty_hunter",
+			"smoking_man",
+			"teenage_vampire",
 		}
 		rings := []string{
 			"diamond",
@@ -568,8 +569,8 @@ func TestGetRingLengthQuery(t *testing.T) {
 		}
 		for _, entityName := range entityNames {
 			entity := corev2.FixtureEntity(entityName)
-			namespace := corev2.FixtureNamespace(entity.Namespace)
-			if err := namespaceStore.UpdateNamespace(ctx, namespace); err != nil {
+			namespace := corev3.FixtureNamespace(entity.Namespace)
+			if err := namespaceStore.CreateOrUpdate(ctx, namespace); err != nil {
 				t.Fatal(err)
 			}
 			if err := entityStore.UpdateEntity(ctx, entity); err != nil {
@@ -593,7 +594,7 @@ func TestGetRingLengthQuery(t *testing.T) {
 				}
 			}
 		}
-		row := db.QueryRow(ctx, insertRingSubscriberQuery, "diamond", "my subscriber")
+		row := db.QueryRow(ctx, insertRingSubscriberQuery, "diamond", "my_subscriber")
 		var inserted bool
 		if err := row.Scan(&inserted); err != nil {
 			t.Fatal(err)
@@ -612,16 +613,16 @@ func TestGetRingLengthQuery(t *testing.T) {
 func TestDeleteRingEntityQuery(t *testing.T) {
 	t.Parallel()
 	withPostgres(t, func(ctx context.Context, db *pgxpool.Pool, dsn string) {
-		namespaceStore := NewNamespaceStore(db, nil)
-		entityStore := NewEntityStore(db, nil)
+		namespaceStore := NewNamespaceStore(db)
+		entityStore := NewEntityStore(db)
 		entityNames := []string{
 			"mulder",
 			"scully",
 			"skinner",
 			"spender",
-			"alien bounty hunter",
-			"smoking man",
-			"teenage vampire",
+			"alien_bounty_hunter",
+			"smoking_man",
+			"teenage_vampire",
 		}
 		rings := []string{
 			"diamond",
@@ -630,8 +631,8 @@ func TestDeleteRingEntityQuery(t *testing.T) {
 		}
 		for _, entityName := range entityNames {
 			entity := corev2.FixtureEntity(entityName)
-			namespace := corev2.FixtureNamespace(entity.Namespace)
-			if err := namespaceStore.UpdateNamespace(ctx, namespace); err != nil {
+			namespace := corev3.FixtureNamespace(entity.Namespace)
+			if err := namespaceStore.CreateOrUpdate(ctx, namespace); err != nil {
 				t.Fatal(err)
 			}
 			if err := entityStore.UpdateEntity(ctx, entity); err != nil {
@@ -655,12 +656,12 @@ func TestDeleteRingEntityQuery(t *testing.T) {
 				}
 			}
 		}
-		row := db.QueryRow(ctx, insertRingSubscriberQuery, "diamond", "my subscriber")
+		row := db.QueryRow(ctx, insertRingSubscriberQuery, "diamond", "my_subscriber")
 		var inserted bool
 		if err := row.Scan(&inserted); err != nil {
 			t.Fatal(err)
 		}
-		if _, err := db.Exec(ctx, deleteRingEntityQuery, "default", "diamond", "teenage vampire"); err != nil {
+		if _, err := db.Exec(ctx, deleteRingEntityQuery, "default", "diamond", "teenage_vampire"); err != nil {
 			t.Fatal(err)
 		}
 		row = db.QueryRow(ctx, getRingLengthQuery, "diamond")

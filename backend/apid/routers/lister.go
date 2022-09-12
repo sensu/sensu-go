@@ -8,12 +8,13 @@ import (
 
 	"github.com/gorilla/mux"
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
+	corev3 "github.com/sensu/sensu-go/api/core/v3"
 	"github.com/sensu/sensu-go/backend/apid/actions"
 	"github.com/sensu/sensu-go/backend/store"
 )
 
 // ListControllerFunc represents a generic controller for listing resources
-type ListControllerFunc func(ctx context.Context, pred *store.SelectionPredicate) ([]corev2.Resource, error)
+type ListControllerFunc func(ctx context.Context, pred *store.SelectionPredicate) ([]corev3.Resource, error)
 
 // FieldsFunc represents the function to retrieve fields about a given resource
 type FieldsFunc func(resource corev2.Resource) map[string]string

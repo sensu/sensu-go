@@ -24,26 +24,6 @@ import (
 )
 
 const (
-	// KeepaliveCheckName is the name of the check that is created when a
-	// keepalive timeout occurs.
-	// DEPRECATED, use core/v2
-	KeepaliveCheckName = "keepalive"
-
-	// KeepaliveHandlerName is the name of the handler that is executed when
-	// a keepalive timeout occurs.
-	// DEPRECATED, use core/v2
-	KeepaliveHandlerName = "keepalive"
-
-	// RegistrationCheckName is the name of the check that is created when an
-	// entity sends a keepalive and the entity does not yet exist in the store.
-	// DEPRECATED, use core/v2
-	RegistrationCheckName = "registration"
-
-	// RegistrationHandlerName is the name of the handler that is executed when
-	// a registration event is passed to pipelined.
-	// DEPRECATED, use core/v2
-	RegistrationHandlerName = "registration"
-
 	// KeepaliveCounterVec is the name of the prometheus metric that Sensu
 	// exports for counting keepalive events, both dead and alive.
 	KeepaliveCounterVec = "sensu_go_keepalives"
@@ -80,9 +60,9 @@ type Keepalived struct {
 	client                clientv3.KV
 	bus                   messaging.MessageBus
 	workerCount           int
-	store                 store.Store
-	storev2               storev2.Interface
+	store                 storev2.Interface
 	eventStore            store.EventStore
+	keepaliveStore        storev2.KeepaliveStore
 	deregistrationHandler string
 	mu                    *sync.Mutex
 	wg                    *sync.WaitGroup
@@ -103,9 +83,9 @@ type Option func(*Keepalived) error
 // Config configures Keepalived.
 type Config struct {
 	Client                clientv3.KV
-	Store                 store.Store
-	StoreV2               storev2.Interface
+	Store                 storev2.Interface
 	EventStore            store.EventStore
+	KeepaliveStore        storev2.KeepaliveStore
 	Bus                   messaging.MessageBus
 	LivenessFactory       liveness.Factory
 	DeregistrationHandler string
@@ -141,8 +121,8 @@ func New(c Config, opts ...Option) (*Keepalived, error) {
 	k := &Keepalived{
 		client:                c.Client,
 		store:                 c.Store,
-		storev2:               c.StoreV2,
 		eventStore:            c.EventStore,
+		keepaliveStore:        c.KeepaliveStore,
 		bus:                   c.Bus,
 		deregistrationHandler: c.DeregistrationHandler,
 		livenessFactory:       c.LivenessFactory,
@@ -214,7 +194,7 @@ func (k *Keepalived) initFromStore(ctx context.Context) error {
 	// For which clients were we previously alerting?
 	tctx, cancel := context.WithTimeout(ctx, k.storeTimeout)
 	defer cancel()
-	keepalives, err := k.store.GetFailingKeepalives(tctx)
+	keepalives, err := k.keepaliveStore.GetFailingKeepalives(tctx)
 	if err != nil {
 		return err
 	}
@@ -396,10 +376,10 @@ func (k *Keepalived) handleEntityRegistration(entity *corev2.Entity, event *core
 		return err
 	}
 
-	req := storev2.NewResourceRequestFromResource(tctx, config)
+	req := storev2.NewResourceRequestFromResource(config)
 
 	exists := true
-	wrappedEntityConfig, err := k.storev2.Get(req)
+	wrappedEntityConfig, err := k.store.Get(tctx, req)
 	if err != nil {
 		if _, ok := err.(*store.ErrNotFound); !ok {
 			logger.WithError(err).Error("error while checking if entity exists")
@@ -414,7 +394,7 @@ func (k *Keepalived) handleEntityRegistration(entity *corev2.Entity, event *core
 			// If this keepalive is the first one sent by an agent, we want to update
 			// the stored entity config to reflect the sent one
 			if event.Sequence == 1 {
-				if err := k.storev2.UpdateIfExists(req, wrapper); err != nil {
+				if err := k.store.UpdateIfExists(tctx, req, wrapper); err != nil {
 					logger.WithError(err).Error("could not update entity")
 					return err
 				}
@@ -439,7 +419,7 @@ func (k *Keepalived) handleEntityRegistration(entity *corev2.Entity, event *core
 				logger.WithError(err).Error("error wrapping entity config")
 				return err
 			}
-			if err := k.storev2.UpdateIfExists(req, wrapper); err != nil {
+			if err := k.store.UpdateIfExists(tctx, req, wrapper); err != nil {
 				logger.WithError(err).Error("could not update entity")
 				return err
 			}
@@ -449,7 +429,7 @@ func (k *Keepalived) handleEntityRegistration(entity *corev2.Entity, event *core
 
 	// The entity config does not exist so create it and publish a registration
 	// event
-	if err := k.storev2.CreateIfNotExists(req, wrapper); err == nil {
+	if err := k.store.CreateIfNotExists(tctx, req, wrapper); err == nil {
 		event := createRegistrationEvent(entity)
 		return k.bus.Publish(messaging.TopicEvent, event)
 	} else if _, ok := err.(*store.ErrAlreadyExists); ok {
@@ -585,13 +565,13 @@ func (k *Keepalived) dead(key string, prev liveness.State, leader bool) bool {
 	meta := corev2.NewObjectMeta(name, namespace)
 	cfg := &corev3.EntityConfig{Metadata: &meta}
 
-	req := storev2.NewResourceRequestFromResource(ctx, cfg)
-	wrapper, err := k.storev2.Get(req)
+	req := storev2.NewResourceRequestFromResource(cfg)
+	wrapper, err := k.store.Get(ctx, req)
 	if err != nil {
 		if _, ok := err.(*store.ErrNotFound); ok {
 			// The entity has been deleted, there is no longer a need to track
 			// keepalives for it.
-			lager.Debug("nil entity")
+			lager.Debug("entity not found")
 			return true
 		}
 		lager.WithError(err).Error("error while reading entity_config")
@@ -655,7 +635,7 @@ func (k *Keepalived) dead(key string, prev liveness.State, leader bool) bool {
 
 	expiration := time.Now().Unix() + int64(event.Check.Timeout)
 
-	if err := k.store.UpdateFailingKeepalive(ctx, event.Entity, expiration); err != nil {
+	if err := k.keepaliveStore.UpdateFailingKeepalive(ctx, &entityConfig, expiration); err != nil {
 		lager.WithError(err).Error("error updating keepalive")
 		return false
 	}
@@ -695,7 +675,8 @@ func (k *Keepalived) handleUpdate(e *corev2.Event) error {
 	entity := e.Entity
 
 	ctx := corev2.SetContextFromResource(context.Background(), entity)
-	if err := k.store.DeleteFailingKeepalive(ctx, e.Entity); err != nil {
+	entityConfig, _ := corev3.V2EntityToV3(e.Entity)
+	if err := k.keepaliveStore.DeleteFailingKeepalive(ctx, entityConfig); err != nil {
 		// Warning: do not wrap this error
 		return err
 	}
@@ -709,12 +690,8 @@ func (k *Keepalived) handleUpdate(e *corev2.Event) error {
 		return err
 	}
 
-	req := storev2.NewResourceRequestFromResource(k.ctx, entityState)
-
-	// use postgres, if available (enterprise only, entity state only)
-	req.UsePostgres = true
-
-	if err := k.storev2.CreateOrUpdate(req, wrapper); err != nil {
+	req := storev2.NewResourceRequestFromResource(entityState)
+	if err := k.store.CreateOrUpdate(k.ctx, req, wrapper); err != nil {
 		logger.WithError(err).Error("error updating entity state in store")
 		return err
 	}

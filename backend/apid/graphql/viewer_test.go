@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
+	corev3 "github.com/sensu/sensu-go/api/core/v3"
 	"github.com/sensu/sensu-go/backend/authentication/jwt"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/graphql"
@@ -46,7 +47,7 @@ func TestViewerTypeUserField(t *testing.T) {
 }
 
 func TestViewerTypeNamespacesField(t *testing.T) {
-	nsp := corev2.FixtureNamespace("sensu")
+	nsp := corev3.FixtureNamespace("sensu")
 	impl := viewerImpl{}
 	client := new(MockNamespaceClient)
 
@@ -55,7 +56,7 @@ func TestViewerTypeNamespacesField(t *testing.T) {
 	params.Context = contextWithLoadersNoCache(context.Background(), cfg)
 
 	// Success
-	client.On("ListNamespaces", mock.Anything, mock.Anything).Return([]*corev2.Namespace{nsp}, nil).Once()
+	client.On("ListNamespaces", mock.Anything, mock.Anything).Return([]*corev3.Namespace{nsp}, nil).Once()
 	res, err := impl.Namespaces(params)
 	require.NoError(t, err)
 	assert.NotEmpty(t, res)

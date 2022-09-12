@@ -8,12 +8,12 @@ import (
 
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/pipeline/filter"
-	"github.com/sensu/sensu-go/backend/store"
+	storev2 "github.com/sensu/sensu-go/backend/store/v2"
 )
 
 func TestAdapterV1_processFilters(t *testing.T) {
 	type fields struct {
-		Store           store.Store
+		Store           storev2.Interface
 		StoreTimeout    time.Duration
 		FilterAdapters  []FilterAdapter
 		MutatorAdapters []MutatorAdapter
@@ -160,7 +160,7 @@ func TestAdapterV1_processFilters(t *testing.T) {
 
 func TestAdapterV1_getFilterAdapterForResource(t *testing.T) {
 	type fields struct {
-		Store           store.Store
+		Store           storev2.Interface
 		StoreTimeout    time.Duration
 		FilterAdapters  []FilterAdapter
 		MutatorAdapters []MutatorAdapter

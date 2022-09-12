@@ -40,14 +40,14 @@ func (c EntityController) Find(ctx context.Context, id string) (*corev2.Entity, 
 }
 
 // List returns resources available to the viewer.
-func (c EntityController) List(ctx context.Context, pred *store.SelectionPredicate) ([]corev2.Resource, error) {
+func (c EntityController) List(ctx context.Context, pred *store.SelectionPredicate) ([]corev3.Resource, error) {
 	// Fetch from store
 	results, err := c.store.GetEntities(ctx, pred)
 	if err != nil {
 		return nil, NewError(InternalErr, err)
 	}
 
-	resources := make([]corev2.Resource, len(results))
+	resources := make([]corev3.Resource, len(results))
 	for i, v := range results {
 		resources[i] = v
 	}
@@ -121,14 +121,14 @@ func (c EntityController) CreateOrReplace(ctx context.Context, entity corev2.Ent
 		config, _ := corev3.V2EntityToV3(&entity)
 		// Ensure per-entity subscription does not get removed
 		config.Subscriptions = corev2.AddEntitySubscription(config.Metadata.Name, config.Subscriptions)
-		req := storev2.NewResourceRequestFromResource(ctx, config)
+		req := storev2.NewResourceRequestFromResource(config)
 
 		wConfig, err := storev2.WrapResource(config)
 		if err != nil {
 			return err
 		}
 
-		if err := c.storev2.CreateOrUpdate(req, wConfig); err != nil {
+		if err := c.storev2.CreateOrUpdate(ctx, req, wConfig); err != nil {
 			return err
 		}
 	}

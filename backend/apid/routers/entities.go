@@ -18,7 +18,8 @@ import (
 // EntitiesRouter handles requests for /entities
 type EntitiesRouter struct {
 	controller      EntityController
-	store           store.Store
+	store           storev2.Interface
+	entityStore     store.EntityStore
 	eventStore      store.EventStore
 	configSubrouter EntityConfigRouter
 }
@@ -29,22 +30,22 @@ type EntityConfigRouter struct {
 
 type EntityController interface {
 	Find(ctx context.Context, id string) (*corev2.Entity, error)
-	List(ctx context.Context, pred *store.SelectionPredicate) ([]corev2.Resource, error)
+	List(ctx context.Context, pred *store.SelectionPredicate) ([]corev3.Resource, error)
 	Create(ctx context.Context, entity corev2.Entity) error
 	CreateOrReplace(ctx context.Context, entity corev2.Entity) error
 }
 
 // NewEntitiesRouter instantiates new router for controlling entities resources
-func NewEntitiesRouter(store store.Store, storev2 storev2.Interface, events store.EventStore) *EntitiesRouter {
+func NewEntitiesRouter(store storev2.Interface, entities store.EntityStore, events store.EventStore) *EntitiesRouter {
 	return &EntitiesRouter{
-		controller: actions.NewEntityController(store, storev2),
-		store:      store,
-		eventStore: events,
+		controller:  actions.NewEntityController(entities, store),
+		store:       store,
+		entityStore: entities,
+		eventStore:  events,
 		configSubrouter: EntityConfigRouter{
 			handlers: handlers.Handlers{
-				V3Resource: &corev3.EntityConfig{},
-				Store:      store,
-				StoreV2:    storev2,
+				Resource: &corev3.EntityConfig{},
+				Store:    store,
 			},
 		},
 	}
@@ -58,7 +59,7 @@ func (r *EntitiesRouter) Mount(parent *mux.Router) {
 	}
 
 	deleter := actions.EntityDeleter{
-		EntityStore: r.store,
+		EntityStore: r.entityStore,
 		EventStore:  r.eventStore,
 	}
 
@@ -71,7 +72,7 @@ func (r *EntitiesRouter) Mount(parent *mux.Router) {
 	routes.Put(r.createOrReplace)
 }
 
-func (r *EntitiesRouter) find(req *http.Request) (interface{}, error) {
+func (r *EntitiesRouter) find(req *http.Request) (corev3.Resource, error) {
 	params := mux.Vars(req)
 	id, err := url.PathUnescape(params["id"])
 	if err != nil {
@@ -80,16 +81,16 @@ func (r *EntitiesRouter) find(req *http.Request) (interface{}, error) {
 	return r.controller.Find(req.Context(), id)
 }
 
-func (r *EntitiesRouter) create(req *http.Request) (interface{}, error) {
+func (r *EntitiesRouter) create(req *http.Request) (corev3.Resource, error) {
 	entity := corev2.Entity{}
 	if err := UnmarshalBody(req, &entity); err != nil {
 		return nil, err
 	}
 	err := r.controller.Create(req.Context(), entity)
-	return entity, err
+	return &entity, err
 }
 
-func (r *EntitiesRouter) createOrReplace(req *http.Request) (interface{}, error) {
+func (r *EntitiesRouter) createOrReplace(req *http.Request) (corev3.Resource, error) {
 	entity := corev2.Entity{}
 	if err := UnmarshalBody(req, &entity); err != nil {
 		return nil, err
@@ -99,5 +100,5 @@ func (r *EntitiesRouter) createOrReplace(req *http.Request) (interface{}, error)
 		return nil, actions.NewError(actions.AlreadyExistsErr, errors.New("entity is managed by its agent"))
 	}
 
-	return entity, r.controller.CreateOrReplace(req.Context(), entity)
+	return &entity, r.controller.CreateOrReplace(req.Context(), entity)
 }

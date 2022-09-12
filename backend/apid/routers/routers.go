@@ -170,9 +170,9 @@ func listHandler(fn listHandlerFunc) http.HandlerFunc {
 	}
 }
 
-type actionHandlerFunc func(r *http.Request) (interface{}, error)
+type actionHandlerFunc func(r *http.Request) (corev3.Resource, error)
 
-type listHandlerFunc func(w http.ResponseWriter, req *http.Request) (interface{}, error)
+type listHandlerFunc func(w http.ResponseWriter, req *http.Request) ([]corev3.Resource, error)
 
 //
 // ResourceRoute mounts resources in a convetional RESTful manner.
