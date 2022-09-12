@@ -415,7 +415,7 @@ func TestGenericClientStoreV2(t *testing.T) {
 						APIGroup:     "core",
 						APIVersion:   "v3",
 						Namespace:    "default",
-						Resource:     "entity_configs",
+						Resource:     "entities",
 						ResourceName: "default",
 						UserName:     "tom",
 						Verb:         "get",
@@ -424,7 +424,7 @@ func TestGenericClientStoreV2(t *testing.T) {
 						APIGroup:   "core",
 						APIVersion: "v3",
 						Namespace:  "default",
-						Resource:   "entity_configs",
+						Resource:   "entities",
 						UserName:   "tom",
 						Verb:       "list",
 					}: true,
@@ -450,7 +450,7 @@ func TestGenericClientStoreV2(t *testing.T) {
 						APIGroup:     "core",
 						APIVersion:   "v3",
 						Namespace:    "default",
-						Resource:     "entity_configs",
+						Resource:     "entities",
 						ResourceName: "default",
 						UserName:     "tom",
 						Verb:         "get",
@@ -459,7 +459,7 @@ func TestGenericClientStoreV2(t *testing.T) {
 						APIGroup:     "core",
 						APIVersion:   "v3",
 						Namespace:    "default",
-						Resource:     "entity_configs",
+						Resource:     "entities",
 						ResourceName: "default",
 						UserName:     "tom",
 						Verb:         "create",
@@ -468,7 +468,7 @@ func TestGenericClientStoreV2(t *testing.T) {
 						APIGroup:     "core",
 						APIVersion:   "v3",
 						Namespace:    "default",
-						Resource:     "entity_configs",
+						Resource:     "entities",
 						ResourceName: "default",
 						UserName:     "tom",
 						Verb:         "delete",
@@ -477,7 +477,7 @@ func TestGenericClientStoreV2(t *testing.T) {
 						APIGroup:     "core",
 						APIVersion:   "v3",
 						Namespace:    "default",
-						Resource:     "entity_configs",
+						Resource:     "entities",
 						ResourceName: "default",
 						UserName:     "tom",
 						Verb:         "update",
@@ -486,7 +486,7 @@ func TestGenericClientStoreV2(t *testing.T) {
 						APIGroup:   "core",
 						APIVersion: "v3",
 						Namespace:  "default",
-						Resource:   "entity_configs",
+						Resource:   "entities",
 						UserName:   "tom",
 						Verb:       "list",
 					}: true,
@@ -560,6 +560,100 @@ func TestGenericClientStoreV2(t *testing.T) {
 				}
 			}
 		})
+	}
+}
+
+func TestGenericClientStoreV2_sensu_enterprise_go_GH2484(t *testing.T) {
+	makeStore := func(entity *corev3.EntityConfig) storev2.Interface {
+		store := new(storetest.Store)
+		if entity == nil {
+			entity = corev3.FixtureEntityConfig("default")
+			entity.Redact = []string{"password"}
+			entity.Metadata.Labels["password"] = "test"
+			entity.Metadata.Labels["my_label"] = "test"
+		}
+		wrappedResource, err := storev2.WrapResource(entity)
+		if err != nil {
+			panic(err)
+		}
+		store.On("Get", mock.Anything).Return(wrappedResource, nil)
+		store.On("List", mock.Anything, mock.Anything).Return(wrap.List{wrappedResource.(*wrap.Wrapper)}, nil)
+		return store
+	}
+	v3AllAccess := func() authorization.Authorizer {
+		return &mockAuth{
+			attrs: map[authorization.AttributesKey]bool{
+				{
+					APIGroup:     "core",
+					APIVersion:   "v3",
+					Namespace:    "default",
+					Resource:     "entities",
+					ResourceName: "default",
+					UserName:     "tom",
+					Verb:         "get",
+				}: true,
+				{
+					APIGroup:     "core",
+					APIVersion:   "v3",
+					Namespace:    "default",
+					Resource:     "entities",
+					ResourceName: "default",
+					UserName:     "tom",
+					Verb:         "create",
+				}: true,
+				{
+					APIGroup:     "core",
+					APIVersion:   "v3",
+					Namespace:    "default",
+					Resource:     "entities",
+					ResourceName: "default",
+					UserName:     "tom",
+					Verb:         "delete",
+				}: true,
+				{
+					APIGroup:     "core",
+					APIVersion:   "v3",
+					Namespace:    "default",
+					Resource:     "entities",
+					ResourceName: "default",
+					UserName:     "tom",
+					Verb:         "update",
+				}: true,
+				{
+					APIGroup:   "core",
+					APIVersion: "v3",
+					Namespace:  "default",
+					Resource:   "entities",
+					UserName:   "tom",
+					Verb:       "list",
+				}: true,
+			},
+		}
+	}
+
+	ctx := contextWithUser(defaultContext(), "tom", nil)
+	client := defaultV2TestClient(makeStore(nil), v3AllAccess())
+	listVal := []corev2.Resource{}
+	if err := client.List(ctx, &listVal, &store.SelectionPredicate{}); err != nil {
+		t.Fatal(err)
+	}
+	if listVal[0].GetObjectMeta().Labels["password"] != corev2.Redacted {
+		t.Errorf("Labels['password'] = %s, got: %s", corev2.Redacted, listVal[0].GetObjectMeta().Labels["password"])
+	}
+	if listVal[0].GetObjectMeta().Labels["my_label"] != "test" {
+		t.Errorf("Labels['my_label'] = %s, got: %s", "test", listVal[0].GetObjectMeta().Labels["my_label"])
+	}
+
+	client = defaultV2TestClient(makeStore(nil), v3AllAccess())
+	getVal := corev3.V2ResourceProxy{Resource: &corev3.EntityConfig{}}
+	if err := client.Get(ctx, "default", &getVal); err != nil {
+		t.Fatal(err)
+	}
+	if getVal.GetObjectMeta().Labels["password"] != corev2.Redacted {
+		t.Errorf("Labels['password'] = %s, got: %s", corev2.Redacted, getVal.GetObjectMeta().Labels["password"])
+	}
+	if getVal.GetObjectMeta().Labels["my_label"] != "test" {
+		t.Errorf("Labels['my_label'] = %s, got: %s", "test", getVal.GetObjectMeta().Labels["my_label"])
 	}
 }
 
