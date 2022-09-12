@@ -7,9 +7,15 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
 
+## [6.8.1] - 2022-09-13
+
 ### Changed
 - Check subdues are now evaluated on a half open interval such that there
 should be no unintended gaps between overlapping subdues.
+
+### Security
+- Addresses issue where the entity list view would display values of redacted
+labels.
 
 ## [6.8.0] - 2022-08-24
 
