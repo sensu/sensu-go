@@ -19,6 +19,7 @@ require (
 	github.com/go-resty/resty/v2 v2.5.0
 	github.com/gogo/protobuf v1.3.2
 	github.com/golang-jwt/jwt/v4 v4.0.0
+	github.com/golang/mock v1.3.1
 	github.com/golang/protobuf v1.5.2
 	github.com/golang/snappy v0.0.4
 	github.com/google/go-cmp v0.5.8
@@ -45,9 +46,9 @@ require (
 	github.com/robertkrimen/otto v0.0.0-20191219234010-c382bd3c16ff
 	github.com/robfig/cron/v3 v3.0.1
 	github.com/sensu/lasr v1.2.1
-	github.com/sensu/sensu-go/api/core/v2 v2.15.0-alpha1
-	github.com/sensu/sensu-go/api/core/v3 v3.7.0-alpha3
-	github.com/sensu/sensu-go/types v0.11.0-alpha1
+	github.com/sensu/sensu-go/api/core/v2 v2.15.0
+	github.com/sensu/sensu-go/api/core/v3 v3.7.0
+	github.com/sensu/sensu-go/types v0.11.0
 	github.com/shirou/gopsutil/v3 v3.21.12
 	github.com/sirupsen/logrus v1.7.0
 	github.com/spf13/cobra v1.1.3

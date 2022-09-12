@@ -151,6 +151,7 @@ github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da h1:oI5xCqsCo564l
 github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da/go.mod h1:cIg4eruTrX1D+g88fzRXU5OdNfaM+9IcxsU14FzY7Hc=
 github.com/golang/mock v1.1.1/go.mod h1:oTYuIxOrZwtPieC+H1uAHpcLFnEyAGVDL/k47Jfbm0A=
 github.com/golang/mock v1.2.0/go.mod h1:oTYuIxOrZwtPieC+H1uAHpcLFnEyAGVDL/k47Jfbm0A=
+github.com/golang/mock v1.3.1 h1:qGJ6qTW+x6xX/my+8YUVl4WNpX9B7+/l2tRsHGZ7f2s=
 github.com/golang/mock v1.3.1/go.mod h1:sBzyDLLjw3U8JLTeZvSv8jJB+tU5PVekmnlKIyFUx0Y=
 github.com/golang/protobuf v1.2.0/go.mod h1:6lQm79b+lXiMfvg/cZm0SGofjICqVBUtrP5yJMmIC1U=
 github.com/golang/protobuf v1.3.1/go.mod h1:6lQm79b+lXiMfvg/cZm0SGofjICqVBUtrP5yJMmIC1U=
@@ -484,13 +485,19 @@ github.com/sensu/lasr v1.2.1/go.mod h1:VIMtIK67Bcef6dTfctRCBg8EY9M9TtCY9NEFT6Zw5
 github.com/sensu/sensu-go/api/core/v2 v2.14.0/go.mod h1:XCgUjY78ApTahizBz/pkc5KU17L/E5BexeZHkGDdTls=
 github.com/sensu/sensu-go/api/core/v2 v2.15.0-alpha1 h1:ULlSbeut2CXtFYQDamEZaqUPKspkhrv6JLyMLRddAGU=
 github.com/sensu/sensu-go/api/core/v2 v2.15.0-alpha1/go.mod h1:QxGKxqQv4rpweFrR4Jkp1tas3amGzAy0wO0fUwq0suU=
+github.com/sensu/sensu-go/api/core/v2 v2.15.0 h1:TdH4Iq2OfpVqoY3yVXpUVe2lMmC0Ksp9Dq3wpIELXRM=
+github.com/sensu/sensu-go/api/core/v2 v2.15.0/go.mod h1:QxGKxqQv4rpweFrR4Jkp1tas3amGzAy0wO0fUwq0suU=
 github.com/sensu/sensu-go/api/core/v3 v3.6.1/go.mod h1:aqNOkJxkrwRq+rPW47XtVWeb5Rk1K5adlCZGBW9nsvM=
 github.com/sensu/sensu-go/api/core/v3 v3.6.2/go.mod h1:aqNOkJxkrwRq+rPW47XtVWeb5Rk1K5adlCZGBW9nsvM=
 github.com/sensu/sensu-go/api/core/v3 v3.7.0-alpha3 h1:yVV8cOkrnzqz3hF9ctnP9ZWJ4iZZ79b9q3MiDI2O59o=
 github.com/sensu/sensu-go/api/core/v3 v3.7.0-alpha3/go.mod h1:X0mcDXOt2LCjuu0sCzXNdeeYbLq9QLtxKSpnsDybclg=
+github.com/sensu/sensu-go/api/core/v3 v3.7.0 h1:SgLar+4h3e7B8FveOHGshosmDxJhrP1ovh/1eNS11eM=
+github.com/sensu/sensu-go/api/core/v3 v3.7.0/go.mod h1:X0mcDXOt2LCjuu0sCzXNdeeYbLq9QLtxKSpnsDybclg=
 github.com/sensu/sensu-go/types v0.10.0/go.mod h1:vFZJ9TYBAjSPYtYt+82PpS9P6m73Vzr4O23lmJonzrA=
 github.com/sensu/sensu-go/types v0.11.0-alpha1 h1:cjxVdmR6qPBkM7e7znLUR79/rGnG0lIXBgdY605EJDU=
 github.com/sensu/sensu-go/types v0.11.0-alpha1/go.mod h1:fhgW3xlvkPFMZiT0IppHySeyN61ZTIKevgSPFSoaQEk=
+github.com/sensu/sensu-go/types v0.11.0 h1:jsVa/apRaJJEdk0Jl7ZUksiBkuEAjCZd/gSBWlrptJA=
+github.com/sensu/sensu-go/types v0.11.0/go.mod h1:fhgW3xlvkPFMZiT0IppHySeyN61ZTIKevgSPFSoaQEk=
 github.com/shirou/gopsutil/v3 v3.21.12 h1:VoGxEW2hpmz0Vt3wUvHIl9fquzYLNpVpgNNB7pGJimA=
 github.com/shirou/gopsutil/v3 v3.21.12/go.mod h1:BToYZVTlSVlfazpDDYFnsVZLaoRG+g8ufT6fPQLdJzA=
 github.com/shopspring/decimal v0.0.0-20180709203117-cd690d0c9e24/go.mod h1:M+9NzErvs504Cn4c5DxATwIqPbtswREoFCre64PpcG4=
