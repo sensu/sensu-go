@@ -39,13 +39,6 @@ func (i *corev3EntityConfigExtImpl) ID(p graphql.ResolveParams) (string, error) 
 	return GlobalIDCoreV3EntityConfig.EncodeToString(p.Context, p.Source), nil
 }
 
-// ID implements response to request for 'id' field.
-func (i *corev3EntityConfigExtImpl) Metadata(p graphql.ResolveParams) (interface{}, error) {
-	obj := p.Source.(*corev3.EntityConfig)
-	redacted := obj.ProduceRedacted()
-	return redacted.Metadata, nil
-}
-
 // ToJSON implements response to request for 'toJSON' field.
 func (i *corev3EntityConfigExtImpl) ToJSON(p graphql.ResolveParams) (interface{}, error) {
 	return util_api.WrapResource(p.Source), nil
