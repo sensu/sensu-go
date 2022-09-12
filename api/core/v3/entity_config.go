@@ -51,7 +51,7 @@ func redactMap(m map[string]string, redact []string) map[string]string {
 // ProduceRedacted redacts the entity according to the entity's Redact fields.
 // A redacted copy is returned. The copy contains pointers to the original's
 // memory, with different Labels and Annotations.
-func (e *EntityConfig) ProduceRedacted() *EntityConfig {
+func (e *EntityConfig) ProduceRedacted() Resource {
 	if e == nil {
 		return nil
 	}
