@@ -169,11 +169,13 @@ func (g *GenericClient) getResource(ctx context.Context, name string, value core
 		if err != nil {
 			return err
 		}
-		resource := value.Resource
-		if redacter, ok := resource.(corev3.Redacter); ok {
-			resource = redacter.ProduceRedacted()
+		if err := wrapper.UnwrapInto(value.Resource); err != nil {
+			return err
 		}
-		return wrapper.UnwrapInto(resource)
+		if redacter, ok := value.Resource.(corev3.Redacter); ok {
+			value.Resource = redacter.ProduceRedacted()
+		}
+		return err
 	}
 	return g.Store.GetResource(ctx, name, value)
 }
