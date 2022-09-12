@@ -155,7 +155,13 @@ func (g *GenericClient) getResource(ctx context.Context, name string, value core
 	if err != nil {
 		return err
 	}
-	return wrapper.UnwrapInto(value)
+	if err := wrapper.UnwrapInto(value); err != nil {
+		return err
+	}
+	if redacter, ok := value.(corev3.Redacter); ok {
+		value = redacter.ProduceRedacted()
+	}
+	return err
 }
 
 // Get gets a resource, if authorized
@@ -184,7 +190,16 @@ func (g *GenericClient) list(ctx context.Context, resources interface{}, pred *s
 	if err != nil {
 		return err
 	}
-	return list.UnwrapInto(resources)
+
+	if err := list.UnwrapInto(resources); err != nil {
+		return err
+	}
+	if redacters, ok := resources.([]corev3.Redacter); ok {
+		for i, redacter := range redacters {
+			redacters[i] = redacter.ProduceRedacted()
+		}
+	}
+	return nil
 }
 
 // List lists all resources within a namespace, according to a selection
