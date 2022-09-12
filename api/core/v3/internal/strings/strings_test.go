@@ -6,7 +6,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestFindInArray(t *testing.T) {
+func TestFoundInArray(t *testing.T) {
 	var array []string
 
 	found := FoundInArray("Foo", []string{})
