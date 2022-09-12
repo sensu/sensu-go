@@ -170,7 +170,7 @@ func (g *GenericClient) getResource(ctx context.Context, name string, value core
 			return err
 		}
 		resource := value.Resource
-		if redacter, ok := resource.(interface{ ProduceRedacted() corev3.Resource }); ok {
+		if redacter, ok := resource.(corev3.Redacter); ok {
 			resource = redacter.ProduceRedacted()
 		}
 		return wrapper.UnwrapInto(resource)
@@ -214,7 +214,7 @@ func (g *GenericClient) list(ctx context.Context, resources interface{}, pred *s
 			v2values := make([]corev2.Resource, len(values))
 			for i := range values {
 				resource := values[i]
-				if redacter, ok := resource.(interface{ ProduceRedacted() corev3.Resource }); ok {
+				if redacter, ok := resource.(corev3.Redacter); ok {
 					resource = redacter.ProduceRedacted()
 				}
 				v2values[i] = corev3.V3ToV2Resource(resource)
