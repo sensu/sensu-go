@@ -55,6 +55,58 @@ func Test_corev3_ID(t *testing.T) {
 	}
 }
 
+func Test_corev3_Metadata(t *testing.T) {
+	tests := []struct {
+		name     string
+		resolver interface {
+			Metadata(p graphql.ResolveParams) (interface{}, error)
+		}
+		in      interface{}
+		want    interface{}
+		wantErr bool
+	}{
+		{
+			name:     "corev3EntityConfigExtImpl",
+			resolver: &corev3EntityConfigExtImpl{},
+			in: func() *corev3.EntityConfig {
+				obj := corev3.FixtureEntityConfig("name")
+				obj.Metadata.Labels["my_label"] = "test"
+				obj.Metadata.Labels["password"] = "test"
+				return obj
+			}(),
+			want: func() *corev2.ObjectMeta {
+				obj := corev3.FixtureEntityConfig("name")
+				obj.Metadata.Labels["my_label"] = "test"
+				obj.Metadata.Labels["password"] = corev2.Redacted
+				return obj.Metadata
+			}(),
+			wantErr: false,
+		},
+		{
+			name:     "corev3EntityStateExtImpl",
+			resolver: &corev3EntityStateExtImpl{},
+			in:       corev3.FixtureEntityState("name"),
+			want: func() *corev2.ObjectMeta {
+				obj := corev3.FixtureEntityState("name")
+				return obj.Metadata
+			}(),
+			wantErr: false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(fmt.Sprintf("%T/%s", tt.resolver, tt.name), func(t *testing.T) {
+			got, err := tt.resolver.Metadata(graphql.ResolveParams{Context: context.Background(), Source: tt.in})
+			if (err != nil) != tt.wantErr {
+				t.Errorf("%s.Metadata() error = %v, wantErr %v", tt.name, err, tt.wantErr)
+				return
+			}
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("%s.Metadata() = %v, want %v", tt.name, got, tt.want)
+			}
+		})
+	}
+}
+
 func Test_corev3_ToJSON(t *testing.T) {
 	tests := []struct {
 		name     string
