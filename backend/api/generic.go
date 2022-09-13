@@ -169,7 +169,13 @@ func (g *GenericClient) getResource(ctx context.Context, name string, value core
 		if err != nil {
 			return err
 		}
-		return wrapper.UnwrapInto(value.Resource)
+		if err := wrapper.UnwrapInto(value.Resource); err != nil {
+			return err
+		}
+		if redacter, ok := value.Resource.(corev3.Redacter); ok {
+			value.Resource = redacter.ProduceRedacted()
+		}
+		return err
 	}
 	return g.Store.GetResource(ctx, name, value)
 }
@@ -209,7 +215,11 @@ func (g *GenericClient) list(ctx context.Context, resources interface{}, pred *s
 			}
 			v2values := make([]corev2.Resource, len(values))
 			for i := range values {
-				v2values[i] = corev3.V3ToV2Resource(values[i])
+				resource := values[i]
+				if redacter, ok := resource.(corev3.Redacter); ok {
+					resource = redacter.ProduceRedacted()
+				}
+				v2values[i] = corev3.V3ToV2Resource(resource)
 			}
 			*resourceList = v2values
 			return nil
