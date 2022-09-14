@@ -224,7 +224,7 @@ func (k *Keepalived) initFromStore(ctx context.Context) error {
 			tctx, cancel := context.WithTimeout(entityCtx, k.storeTimeout)
 			defer cancel()
 			if err := switches.BuryAndRevokeLease(tctx, id); err != nil {
-				return err
+				logger.WithError(err).WithField("keepalive", id).Error("error burying switch")
 			}
 			continue
 		}
@@ -243,7 +243,8 @@ func (k *Keepalived) initFromStore(ctx context.Context) error {
 		tctx, cancel = context.WithTimeout(entityCtx, k.storeTimeout)
 		defer cancel()
 		if err := switches.Dead(tctx, id, ttl); err != nil {
-			return fmt.Errorf("error initializing keepalive %q: %s", id, err)
+			logger.WithError(err).WithField("keepalive", id).Error("error initializing keepalive")
+			continue
 		}
 	}
 
