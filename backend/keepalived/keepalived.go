@@ -277,7 +277,7 @@ func (k *Keepalived) initFromStore(ctx context.Context) error {
 		tctx, cancel = context.WithTimeout(entityCtx, k.storeTimeout)
 		defer cancel()
 		if err := switches.Dead(tctx, id, ttl); err != nil {
-			return fmt.Errorf("error initializing keepalive %q: %s", id, err)
+			logger.WithFields(logrus.Fields{"event": event}).WithError(err).Warn("could not bury keepalive switch")
 		}
 	}
 	logger.Info("keepalived reconstruction complete")
