@@ -24,15 +24,6 @@ type WrapList interface {
 
 // Interface specifies the interface of a v2 store.
 type Interface interface {
-	// NamespaceStore returns a NamespaceStore.
-	NamespaceStore() NamespaceStore
-
-	// EntityConfigStore returns an EntityConfigStore.
-	EntityConfigStore() EntityConfigStore
-
-	// EntityStateStore returns an EntityStateStore.
-	EntityStateStore() EntityStateStore
-
 	// CreateOrUpdate creates or updates the wrapped resource.
 	CreateOrUpdate(context.Context, ResourceRequest, Wrapper) error
 

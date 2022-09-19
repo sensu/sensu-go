@@ -9,18 +9,14 @@ import (
 
 	"github.com/AlecAivazis/survey/v2"
 	"github.com/jackc/pgx/v4/pgxpool"
-	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend"
-	"github.com/sensu/sensu-go/backend/etcd"
 	"github.com/sensu/sensu-go/backend/seeds"
 	etcdstorev1 "github.com/sensu/sensu-go/backend/store/etcd"
 	"github.com/sensu/sensu-go/backend/store/postgres"
 	etcdstorev2 "github.com/sensu/sensu-go/backend/store/v2/etcdstore"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	"go.etcd.io/etcd/client/pkg/v3/transport"
 	clientv3 "go.etcd.io/etcd/client/v3"
-	"google.golang.org/grpc"
 )
 
 const (
@@ -110,19 +106,10 @@ func InitCommand() *cobra.Command {
 			}
 
 			devMode := viper.GetBool(flagDevMode)
-			configStore := viper.GetString(flagConfigStore)
-			if devMode {
-				configStore = "dev"
-			}
-
-			if configStore == "postgres" {
-				return errors.New("postgres config store not supported yet")
-			}
 
 			cfg := &backend.Config{
 				DevMode: devMode,
 				Store: backend.StoreConfig{
-					ConfigurationStore: viper.GetString(flagConfigStore),
 					PostgresConfigurationStore: postgres.Config{
 						DSN: viper.GetString(flagPGConfigStoreDSN),
 					},
@@ -130,16 +117,6 @@ func InitCommand() *cobra.Command {
 						DSN: viper.GetString(flagPGStateStoreDSN),
 					},
 					EtcdConfigurationStore: etcdstorev1.Config{
-						ClientTLSInfo: etcd.TLSInfo{
-							CertFile:       viper.GetString(flagEtcdConfigStoreCertFile),
-							KeyFile:        viper.GetString(flagEtcdConfigStoreKeyFile),
-							TrustedCAFile:  viper.GetString(flagEtcdConfigStoreCACert),
-							ClientCertAuth: viper.GetBool(flagEtcdConfigStoreClientCertAuth),
-						},
-						URLs:              viper.GetStringSlice(flagEtcdConfigStoreURLs),
-						Username:          viper.GetString(envEtcdConfigStoreUsername),
-						Password:          viper.GetString(envEtcdConfigStorePassword),
-						LogLevel:          viper.GetString(flagEtcdConfigStoreLogLevel),
 						UseEmbeddedClient: viper.GetBool(flagDevMode),
 					},
 				},
@@ -147,36 +124,6 @@ func InitCommand() *cobra.Command {
 
 			if cfg.Store.ConfigurationStore != "etcd" && anyConfig(cfg.Store.EtcdConfigurationStore) {
 				return errors.New("etcd configuration specified, but config-store is not etcd")
-			}
-
-			// Sensu APIs TLS config
-			certFile := viper.GetString(flagCertFile)
-			keyFile := viper.GetString(flagKeyFile)
-			insecureSkipTLSVerify := viper.GetBool(flagInsecureSkipTLSVerify)
-			trustedCAFile := viper.GetString(flagTrustedCAFile)
-
-			// Optional username/password auth
-			etcdClientUsername := viper.GetString(envEtcdConfigStoreUsername)
-			etcdClientPassword := viper.GetString(envEtcdConfigStorePassword)
-
-			if certFile != "" && keyFile != "" {
-				cfg.TLS = &corev2.TLSOptions{
-					CertFile:           certFile,
-					KeyFile:            keyFile,
-					TrustedCAFile:      trustedCAFile,
-					InsecureSkipVerify: insecureSkipTLSVerify,
-				}
-			} else if certFile != "" || keyFile != "" {
-				return fmt.Errorf(
-					"tls configuration error, both flags --%s & --%s are required",
-					flagCertFile, flagKeyFile)
-			}
-
-			// Convert the TLS config into etcd's transport.TLSInfo
-			tlsInfo := (transport.TLSInfo)(cfg.Store.EtcdConfigurationStore.ClientTLSInfo)
-			tlsConfig, err := tlsInfo.ClientConfig()
-			if err != nil {
-				return err
 			}
 
 			timeout := viper.GetDuration(flagTimeout)
@@ -193,8 +140,6 @@ func InitCommand() *cobra.Command {
 				},
 				Timeout: timeout,
 			}
-
-			wait := viper.GetBool(flagWait)
 
 			if viper.GetBool(flagInteractive) {
 				var opts initOpts
@@ -214,58 +159,17 @@ func InitCommand() *cobra.Command {
 				return err
 			}
 
-			clientURLs := viper.GetStringSlice(flagEtcdConfigStoreURLs)
-			if len(clientURLs) == 0 {
-				clientURLs = []string{"http://127.0.0.1:2379"}
-			}
-
-			// Make sure at least one of the provided endpoints is reachable. This is
-			// required to debug TLS errors because the seeding below will not print
-			// the latest connection error (see
-			// https://github.com/sensu/sensu-go/issues/3663)
-			var clientConfig clientv3.Config
-			for {
-				for _, url := range clientURLs {
-					logger.Infof("attempting to connect to etcd server: %s", url)
-
-					if etcdClientUsername != "" && etcdClientPassword != "" {
-						clientConfig = clientv3.Config{
-							Endpoints: []string{url},
-							Username:  etcdClientUsername,
-							Password:  etcdClientPassword,
-							TLS:       tlsConfig,
-							DialOptions: []grpc.DialOption{
-								grpc.WithReturnConnectionError(),
-								grpc.WithBlock(),
-							},
-						}
-					} else {
-						clientConfig = clientv3.Config{
-							Endpoints: []string{url},
-							TLS:       tlsConfig,
-							DialOptions: []grpc.DialOption{
-								grpc.WithReturnConnectionError(),
-								grpc.WithBlock(),
-							},
-						}
+			err := initializeStore(initConfig)
+			if err != nil {
+				if errors.Is(err, seeds.ErrAlreadyInitialized) {
+					if viper.GetBool(flagIgnoreAlreadyInitialized) {
+						return nil
 					}
-					err := initializeStore(clientConfig, initConfig, url)
-					if err != nil {
-						if errors.Is(err, seeds.ErrAlreadyInitialized) {
-							if viper.GetBool(flagIgnoreAlreadyInitialized) {
-								return nil
-							}
-							return err
-						}
-						logger.Error(err.Error())
-						continue
-					}
-					return nil
+					return err
 				}
-				if !wait {
-					return errors.New("no etcd endpoints are available or cluster is unhealthy")
-				}
+				logger.Error(err.Error())
 			}
+			return err
 		},
 	}
 
@@ -283,33 +187,32 @@ func InitCommand() *cobra.Command {
 	return cmd
 }
 
-func initializeStore(clientConfig clientv3.Config, initConfig initConfig, endpoint string) error {
-	ctx, cancel := context.WithTimeout(
-		clientv3.WithRequireLeader(context.Background()), initConfig.Timeout)
+func initializeStore(initConfig initConfig) error {
+	ctx, cancel := context.WithTimeout(context.Background(), initConfig.Timeout)
 	defer cancel()
 
-	clientConfig.Context = ctx
+	if initConfig.DevMode {
+		return initializeDevModeStore(ctx, initConfig)
+	}
 
-	client, err := clientv3.New(clientConfig)
+	return nil
+}
+
+func initializeDevModeStore(ctx context.Context, initConfig initConfig) error {
+	client, err := devModeClient(ctx, &initConfig.Config)
 	if err != nil {
-		return fmt.Errorf("error connecting to etcd endpoint: %w", err)
+		return err
 	}
 	defer func() { _ = client.Close() }()
 
-	// Check if etcd endpoint is reachable
-	if _, err := client.Status(ctx, endpoint); err != nil {
-		// Etcd's client interceptor will log the actual underlying error.
-		return errEtcdEndpointUnreachable
-	}
-
-	// The endpoint did not return any error, therefore we can proceed
 	store := etcdstorev2.NewStore(client)
-	if err := seeds.SeedCluster(ctx, store, seeds.Config{}); err != nil {
+	nsStore := etcdstorev2.NewNamespaceStore(client)
+
+	if err := seeds.SeedCluster(ctx, store, nsStore, initConfig.SeedConfig); err != nil {
 		if errors.Is(err, seeds.ErrAlreadyInitialized) {
 			return err
 		}
 		return fmt.Errorf("error seeding cluster, is cluster healthy? %w", err)
 	}
-
 	return nil
 }

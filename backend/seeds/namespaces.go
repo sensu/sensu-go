@@ -11,17 +11,15 @@ import (
 	storev2 "github.com/sensu/sensu-go/backend/store/v2"
 )
 
-func setupNamespaces(ctx context.Context, s storev2.Interface, config Config) error {
+func setupNamespaces(ctx context.Context, s storev2.NamespaceStore, config Config) error {
 	namespaces := []*corev3.Namespace{
 		defaultNamespace(),
 	}
 
-	nsStore := s.NamespaceStore()
-
 	for _, namespace := range namespaces {
 		name := namespace.Metadata.Name
 
-		if err := nsStore.CreateIfNotExists(ctx, namespace); err != nil {
+		if err := s.CreateIfNotExists(ctx, namespace); err != nil {
 			var alreadyExists *store.ErrAlreadyExists
 			if !errors.As(err, &alreadyExists) {
 				msg := fmt.Sprintf("could not initialize the %s namespace", name)

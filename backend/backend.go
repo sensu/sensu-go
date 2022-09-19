@@ -159,6 +159,9 @@ var SelectedMetrics = []string{
 type Backend struct {
 	Daemons                []daemon.Daemon
 	ConfigStore            storev2.Interface
+	NamespaceStore         storev2.NamespaceStore
+	EntityConfigStore      storev2.EntityConfigStore
+	EntityStateStore       storev2.EntityStateStore
 	EntityStore            store.EntityStore
 	EventStore             store.EventStore
 	SilenceStore           store.SilenceStore
@@ -194,8 +197,11 @@ func errorReporter(event pq.ListenerEventType, err error) {
 func initDevModeStateStore(_ context.Context, b *Backend, client *clientv3.Client, _ *Config) {
 	store := etcdstore.NewStore(client)
 	b.ConfigStore = etcdstorev2.NewStore(client)
-	b.KeepaliveStore = storev2.NewLegacyKeepaliveStore(store)
+	b.NamespaceStore = etcdstorev2.NewNamespaceStore(client)
+	b.EntityConfigStore = etcdstorev2.NewEntityConfigStore(client)
+	b.EntityStateStore = etcdstorev2.NewEntityStateStore(client)
 	b.EntityStore = store
+	b.KeepaliveStore = storev2.NewLegacyKeepaliveStore(store)
 	b.SilenceStore = store
 	b.RingPool = ringv2.NewRingPool(func(path string) ringv2.Interface {
 		return ringv2.New(client, path)
@@ -209,19 +215,19 @@ func initPGStateStore(ctx context.Context, b *Backend, client *clientv3.Client, 
 	}
 	b.EventStore = eventStore
 
-	entityStore := postgres.NewEntityStore(db)
-	b.EntityStore = entityStore
+	b.EntityConfigStore = postgres.NewEntityConfigStore(db)
+	b.EntityStateStore = postgres.NewEntityStateStore(db)
+	b.EntityStore = postgres.NewEntityStore(db)
 
 	b.SilenceStore = postgres.NewSilenceStore(db)
 
 	pgStore := postgres.Store{
 		EventStore:   eventStore,
-		EntityStore:  entityStore,
+		EntityStore:  b.EntityStore,
 		SilenceStore: b.SilenceStore,
 	}
 
 	b.KeepaliveStore = storev2.NewLegacyKeepaliveStore(pgStore)
-	b.EntityStore = entityStore
 
 	// Create the ring pool for round-robin functionality
 	// Set up new postgres ringpool
@@ -309,7 +315,7 @@ func Initialize(ctx context.Context, etcdConfigClient *clientv3.Client, pgConfig
 	}
 
 	// Create sensu-system namespace and backend entity
-	br := resource.New(b.ConfigStore, bus)
+	br := resource.New(b.NamespaceStore, b.EntityConfigStore, b.EntityStateStore, bus)
 	if err := br.EnsureBackendResources(ctx); err != nil {
 		return nil, fmt.Errorf("error creating system namespace and backend entity: %s", err.Error())
 	}
@@ -526,21 +532,19 @@ func Initialize(ctx context.Context, etcdConfigClient *clientv3.Client, pgConfig
 
 	// Initialize apid
 	b.APIDConfig = apid.Config{
-		ListenAddress:       config.APIListenAddress,
-		RequestLimit:        config.APIRequestLimit,
-		WriteTimeout:        config.APIWriteTimeout,
-		URL:                 config.APIURL,
-		Bus:                 bus,
-		Store:               b.ConfigStore,
-		EventStore:          b.EventStore,
-		QueueGetter:         queueGetter,
-		TLS:                 config.TLS,
-		Cluster:             etcdConfigClient.Cluster,
-		EtcdClientTLSConfig: etcdClientTLSConfig,
-		Authenticator:       authenticator,
-		ClusterVersion:      clusterVersion,
-		GraphQLService:      b.GraphQLService,
-		HealthRouter:        b.HealthRouter,
+		ListenAddress:  config.APIListenAddress,
+		RequestLimit:   config.APIRequestLimit,
+		WriteTimeout:   config.APIWriteTimeout,
+		URL:            config.APIURL,
+		Bus:            bus,
+		Store:          b.ConfigStore,
+		EventStore:     b.EventStore,
+		QueueGetter:    queueGetter,
+		TLS:            config.TLS,
+		Authenticator:  authenticator,
+		ClusterVersion: clusterVersion,
+		GraphQLService: b.GraphQLService,
+		HealthRouter:   b.HealthRouter,
 	}
 	newApi, err := apid.New(b.APIDConfig)
 	if err != nil {

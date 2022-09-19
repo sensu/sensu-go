@@ -18,16 +18,17 @@ import (
 	"github.com/sensu/sensu-go/backend/seeds"
 	"github.com/sensu/sensu-go/backend/store"
 	storev2 "github.com/sensu/sensu-go/backend/store/v2"
+	etcdstorev2 "github.com/sensu/sensu-go/backend/store/v2/etcdstore"
 	"github.com/sensu/sensu-go/backend/store/v2/etcdstore/testutil"
 	"github.com/sensu/sensu-go/testing/mockstore"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
 
-func seedStore(t *testing.T, store storev2.Interface) {
+func seedStore(t *testing.T, store storev2.Interface, nsStore storev2.NamespaceStore) {
 	t.Helper()
 
-	if err := seeds.SeedInitialDataWithContext(context.Background(), store); err != nil {
+	if err := seeds.SeedInitialDataWithContext(context.Background(), store, nsStore); err != nil {
 		t.Fatalf("Could not seed the backend: %s", err)
 	}
 
@@ -172,7 +173,7 @@ func TestAuthorization(t *testing.T) {
 	if err != nil {
 		t.Fatal("Could not initialize the store: ", err)
 	}
-	seedStore(t, store)
+	seedStore(t, store, etcdstorev2.NewNamespaceStore(store.Client))
 
 	cases := []struct {
 		description          string
