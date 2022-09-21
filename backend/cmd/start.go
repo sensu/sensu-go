@@ -326,10 +326,6 @@ func StartCommand(initialize InitializeFunc) *cobra.Command {
 	return cmd
 }
 
-func newClient(ctx context.Context, config *backend.Config) (*clientv3.Client, error) {
-	return devModeClient(ctx, config)
-}
-
 func newPostgresPool(ctx context.Context, dsn string, stateDB bool) (*pgxpool.Pool, error) {
 	pgxConfig, err := pgxpool.ParseConfig(dsn)
 	if err != nil {

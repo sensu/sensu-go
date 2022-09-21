@@ -54,16 +54,6 @@ type namedWrapperWithParams interface {
 	GetName() string
 }
 
-type wrapperWithStatus interface {
-	storev2.Wrapper
-	GetCreatedAt() time.Time
-	GetUpdatedAt() time.Time
-	GetDeletedAt() sql.NullTime
-	SetCreatedAt(time.Time)
-	SetUpdatedAt(time.Time)
-	SetDeletedAt(sql.NullTime)
-}
-
 type namespacedResourceNames map[string][]string
 
 type resourceRequestWrapperMap map[storev2.ResourceRequest]storev2.Wrapper

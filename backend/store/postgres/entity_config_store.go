@@ -20,8 +20,6 @@ var (
 	entityConfigUniqueConstraint = "entity_config_unique"
 )
 
-type namespacedEntityConfigs map[string][]*corev3.EntityConfig
-
 type uniqueEntityConfigs map[uniqueResource]*corev3.EntityConfig
 
 type EntityConfigStore struct {

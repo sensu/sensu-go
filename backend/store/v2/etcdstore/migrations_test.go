@@ -212,10 +212,7 @@ func TestUpgradeV2Entities(t *testing.T) {
 }
 
 func equalEntity(got, want *corev2.Entity) bool {
-	if !proto.Equal(got, want) {
-		return false
-	}
-	return true
+	return proto.Equal(got, want)
 }
 
 func TestMigrateEnterpriseDBBaseEnterprise(t *testing.T) {

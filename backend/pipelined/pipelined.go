@@ -27,8 +27,6 @@ const (
 )
 
 var (
-	defaultStoreTimeout = time.Minute
-
 	messageHandlerDuration = prometheus.NewSummaryVec(
 		prometheus.SummaryOpts{
 			Name:       MessageHandlerDuration,

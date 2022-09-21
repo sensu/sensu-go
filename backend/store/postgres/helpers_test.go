@@ -179,15 +179,6 @@ func testWithPostgresStore(tb testing.TB, fn func(store.Store)) {
 	})
 }
 
-// creates a database, runs all migrations & provides a StoreV2
-func testWithPostgresStoreV2(tb testing.TB, fn func(storev2.Interface)) {
-	tb.Helper()
-
-	withPostgres(tb, func(ctx context.Context, db *pgxpool.Pool, dsn string) {
-		fn(NewConfigStore(db))
-	})
-}
-
 func createNamespace(tb testing.TB, s storev2.NamespaceStore, name string) {
 	tb.Helper()
 	ctx := context.Background()

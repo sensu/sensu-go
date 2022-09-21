@@ -20,8 +20,6 @@ var (
 	entityStateUniqueConstraint = "entity_state_unique"
 )
 
-type namespacedEntityStates map[string][]*corev3.EntityState
-
 type uniqueEntityStates map[uniqueResource]*corev3.EntityState
 
 type EntityStateStore struct {

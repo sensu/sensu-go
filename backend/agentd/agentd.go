@@ -2,7 +2,6 @@ package agentd
 
 import (
 	"context"
-	"crypto/tls"
 	"errors"
 	"fmt"
 	"log"
@@ -82,23 +81,22 @@ type Agentd struct {
 	// Port is the port Agentd is running on.
 	Port int
 
-	stopping            chan struct{}
-	running             *atomic.Value
-	wg                  *sync.WaitGroup
-	errChan             chan error
-	httpServer          *http.Server
-	store               storev2.Interface
-	bus                 messaging.MessageBus
-	tls                 *corev2.TLSOptions
-	ringPool            *ringv2.RingPool
-	ctx                 context.Context
-	cancel              context.CancelFunc
-	writeTimeout        int
-	namespaceCache      *cachev2.Resource
-	watcher             <-chan []storev2.WatchEvent
-	etcdClientTLSConfig *tls.Config
-	healthRouter        routers.Router
-	authenticator       Authenticator
+	stopping       chan struct{}
+	running        *atomic.Value
+	wg             *sync.WaitGroup
+	errChan        chan error
+	httpServer     *http.Server
+	store          storev2.Interface
+	bus            messaging.MessageBus
+	tls            *corev2.TLSOptions
+	ringPool       *ringv2.RingPool
+	ctx            context.Context
+	cancel         context.CancelFunc
+	writeTimeout   int
+	namespaceCache *cachev2.Resource
+	watcher        <-chan []storev2.WatchEvent
+	healthRouter   routers.Router
+	authenticator  Authenticator
 }
 
 // Config configures an Agentd.

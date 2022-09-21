@@ -31,8 +31,6 @@ const (
 	flagInitAdminAPIKey          = "cluster-admin-api-key"
 )
 
-var errEtcdEndpointUnreachable = errors.New("etcd endpoint could not be reached")
-
 // SeedFunc represents the signature of a seed function, used
 // to seed the backend store
 type SeedFunc func(context.Context, *clientv3.Client, *pgxpool.Pool, *backend.Config) (*backend.Backend, error)
