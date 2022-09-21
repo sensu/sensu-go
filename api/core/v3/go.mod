@@ -5,8 +5,8 @@ go 1.18
 require (
 	github.com/gogo/protobuf v1.3.2
 	github.com/golang/protobuf v1.5.2
-	github.com/sensu/sensu-go/api/core/v2 v2.14.0
-	github.com/sensu/sensu-go/types v0.10.0
+	github.com/sensu/sensu-go/api/core/v2 v2.15.0
+	github.com/sensu/sensu-go/types v0.11.0
 )
 
 require (
