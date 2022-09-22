@@ -89,6 +89,7 @@ func newKeepalivedTest(t *testing.T, client mockclientv3.MockClientV3) *keepaliv
 		StoreTimeout:    time.Second,
 	})
 	require.NoError(t, err)
+	k.reconstructionPeriod = 0
 	test := &keepalivedTest{
 		MessageBus:     bus,
 		Store:          store,

@@ -75,6 +75,7 @@ type Keepalived struct {
 	cancel                context.CancelFunc
 	storeTimeout          time.Duration
 	silencedCache         cache.Cache
+	reconstructionPeriod  time.Duration
 }
 
 // Option is a functional option.
@@ -135,6 +136,7 @@ func New(c Config, opts ...Option) (*Keepalived, error) {
 		cancel:                cancel,
 		storeTimeout:          c.StoreTimeout,
 		silencedCache:         silencedCache,
+		reconstructionPeriod:  time.Second * 120,
 	}
 	for _, o := range opts {
 		if err := o(k); err != nil {
@@ -158,12 +160,10 @@ func (k *Keepalived) Start() error {
 	}
 
 	k.subscription = sub
-	if err := k.initFromStore(context.Background()); err != nil {
-		_ = sub.Cancel()
-		return err
-	}
 
+	k.wg = &sync.WaitGroup{}
 	k.startWorkers()
+	k.startReconstruction(context.Background())
 
 	return nil
 }
@@ -190,6 +190,25 @@ func (k *Keepalived) Name() string {
 	return "keepalived"
 }
 
+func (k *Keepalived) startReconstruction(ctx context.Context) {
+	k.wg.Add(1)
+	go func() {
+		defer k.wg.Done()
+		err := k.initFromStore(ctx)
+		if err != nil {
+			if _, ok := err.(*store.ErrInternal); ok {
+				// Fatal error
+				select {
+				case k.errChan <- err:
+				case <-ctx.Done():
+				}
+				return
+			}
+			logger.WithError(err).Error("failed to recover failing keepalives")
+		}
+	}()
+}
+
 func (k *Keepalived) initFromStore(ctx context.Context) error {
 	// For which clients were we previously alerting?
 	tctx, cancel := context.WithTimeout(ctx, k.storeTimeout)
@@ -201,7 +220,22 @@ func (k *Keepalived) initFromStore(ctx context.Context) error {
 
 	switches := k.livenessFactory(k.Name(), k.dead, k.alive, logger)
 
-	for _, keepalive := range keepalives {
+	potentialKeepalives := len(keepalives)
+	recustructionInterval := float64(k.reconstructionPeriod) / float64(potentialKeepalives)
+	logger.Infof("recovering %d failing keepalives over %d seconds",
+		potentialKeepalives,
+		k.reconstructionPeriod/time.Second,
+	)
+
+	for i, keepalive := range keepalives {
+		if i > 0 {
+			select {
+			case <-time.After(time.Duration(recustructionInterval)):
+			case <-ctx.Done():
+				return ctx.Err()
+			}
+		}
+
 		entityCtx := context.WithValue(ctx, corev2.NamespaceKey, keepalive.Namespace)
 		tctx, cancel := context.WithTimeout(entityCtx, k.storeTimeout)
 		defer cancel()
@@ -240,12 +274,12 @@ func (k *Keepalived) initFromStore(ctx context.Context) error {
 			continue
 		}
 	}
+	logger.Info("keepalived reconstruction complete")
 
 	return nil
 }
 
 func (k *Keepalived) startWorkers() {
-	k.wg = &sync.WaitGroup{}
 	k.wg.Add(k.workerCount)
 
 	for i := 0; i < k.workerCount; i++ {
@@ -256,7 +290,7 @@ func (k *Keepalived) startWorkers() {
 func (k *Keepalived) processKeepalives(ctx context.Context) {
 	defer k.wg.Done()
 
-	switches := k.livenessFactory(k.Name(), k.alive, k.dead, logger)
+	switches := k.livenessFactory(k.Name(), k.dead, k.alive, logger)
 
 	for {
 		select {
