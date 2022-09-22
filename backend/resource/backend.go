@@ -11,7 +11,6 @@ import (
 	"github.com/sensu/sensu-go/backend/messaging"
 	"github.com/sensu/sensu-go/backend/store"
 	storev2 "github.com/sensu/sensu-go/backend/store/v2"
-	"github.com/sensu/sensu-go/backend/store/v2/wrap"
 	"github.com/sensu/sensu-go/system"
 )
 
@@ -21,7 +20,9 @@ type eventInfo struct {
 }
 
 type BackendResource struct {
-	store             storev2.Interface
+	namespaceStore    storev2.NamespaceStore
+	entityConfigStore storev2.EntityConfigStore
+	entityStateStore  storev2.EntityStateStore
 	bus               messaging.MessageBus
 	backendEntity     *corev2.Entity
 	lastEvents        map[string]*eventInfo
@@ -36,25 +37,25 @@ const (
 	systemNamespaceName = "sensu-system"
 )
 
-func New(store storev2.Interface, bus messaging.MessageBus) *BackendResource {
+func New(ns storev2.NamespaceStore, entc storev2.EntityConfigStore, ents storev2.EntityStateStore, bus messaging.MessageBus) *BackendResource {
 	return &BackendResource{
-		store:             store,
+		namespaceStore:    ns,
+		entityConfigStore: entc,
+		entityStateStore:  ents,
 		bus:               bus,
 		lastEvents:        map[string]*eventInfo{},
 		repeatIntervalSec: int64(30),
 	}
 }
 
-func (br *BackendResource) EnsureBackendResources(ctx context.Context) error {
-	nsStore := br.store.NamespaceStore()
-	_, err := nsStore.Get(ctx, systemNamespaceName)
+func (b *BackendResource) EnsureBackendResources(ctx context.Context) error {
+	_, err := b.namespaceStore.Get(ctx, systemNamespaceName)
 	switch err.(type) {
 	case *store.ErrNotFound:
-		err = nsStore.CreateIfNotExists(ctx, corev3.NewNamespace(systemNamespaceName))
+		err = b.namespaceStore.CreateIfNotExists(ctx, corev3.NewNamespace(systemNamespaceName))
 		if err != nil {
 			return err
 		}
-
 	default:
 		return err
 	}
@@ -65,37 +66,31 @@ func (br *BackendResource) EnsureBackendResources(ctx context.Context) error {
 	}
 
 	backendEntityConfig, backendEntityState := corev3.V2EntityToV3(backendEntity)
-	backendEntityConfigReq := storev2.NewResourceRequestFromResource(backendEntityConfig)
-	wrappedBackendEntityConfig, err := wrap.Resource(backendEntityConfig)
 	if err != nil {
 		return err
 	}
-	if err := br.store.CreateOrUpdate(ctx, backendEntityConfigReq, wrappedBackendEntityConfig); err != nil {
+
+	if err := b.entityConfigStore.CreateOrUpdate(ctx, backendEntityConfig); err != nil {
 		return err
 	}
 
-	backendEntityStateReq := storev2.NewResourceRequestFromResource(backendEntityState)
-	wrappedBackendEntityState, err := wrap.Resource(backendEntityState)
-	if err != nil {
-		return err
-	}
-	if err := br.store.CreateOrUpdate(ctx, backendEntityStateReq, wrappedBackendEntityState); err != nil {
+	if err := b.entityStateStore.CreateOrUpdate(ctx, backendEntityState); err != nil {
 		return err
 	}
 
-	br.backendEntity = backendEntity
+	b.backendEntity = backendEntity
 
 	return nil
 }
 
-func (br *BackendResource) GenerateBackendEvent(component string, status uint32, output string) error {
-	if br.backendEntity == nil {
+func (b *BackendResource) GenerateBackendEvent(component string, status uint32, output string) error {
+	if b.backendEntity == nil {
 		return errors.New("backend entity doesn't exist")
 	}
 
 	now := time.Now().Unix()
-	if lastEvent, ok := br.lastEvents[component]; ok {
-		if lastEvent.status == status && now-lastEvent.timestampSec < br.repeatIntervalSec {
+	if lastEvent, ok := b.lastEvents[component]; ok {
+		if lastEvent.status == status && now-lastEvent.timestampSec < b.repeatIntervalSec {
 			return nil
 		}
 	}
@@ -103,7 +98,7 @@ func (br *BackendResource) GenerateBackendEvent(component string, status uint32,
 	id := uuid.New()
 	event := &corev2.Event{
 		Timestamp: now,
-		Entity:    br.backendEntity,
+		Entity:    b.backendEntity,
 		Check: &corev2.Check{
 			ObjectMeta: corev2.NewObjectMeta(component, systemNamespaceName),
 			Issued:     now,
@@ -114,9 +109,9 @@ func (br *BackendResource) GenerateBackendEvent(component string, status uint32,
 		ObjectMeta: corev2.NewObjectMeta("", systemNamespaceName),
 		ID:         id[:],
 	}
-	err := br.bus.Publish(messaging.TopicEventRaw, event)
+	err := b.bus.Publish(messaging.TopicEventRaw, event)
 	if err == nil {
-		br.lastEvents[component] = &eventInfo{
+		b.lastEvents[component] = &eventInfo{
 			status:       status,
 			timestampSec: now,
 		}

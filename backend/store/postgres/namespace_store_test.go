@@ -23,7 +23,7 @@ func TestNamespaceStore_CreateIfNotExists(t *testing.T) {
 	tests := []struct {
 		name       string
 		args       args
-		beforeHook func(*testing.T, storev2.Interface)
+		beforeHook func(*testing.T, storev2.NamespaceStore, storev2.EntityConfigStore)
 		wantErr    bool
 	}{
 		{
@@ -39,7 +39,7 @@ func TestNamespaceStore_CreateIfNotExists(t *testing.T) {
 				ctx:       context.Background(),
 				namespace: corev3.FixtureNamespace("bar"),
 			},
-			beforeHook: func(t *testing.T, s storev2.Interface) {
+			beforeHook: func(t *testing.T, s storev2.NamespaceStore, ec storev2.EntityConfigStore) {
 				createNamespace(t, s, "bar")
 				deleteNamespace(t, s, "bar")
 			},
@@ -50,7 +50,7 @@ func TestNamespaceStore_CreateIfNotExists(t *testing.T) {
 				ctx:       context.Background(),
 				namespace: corev3.FixtureNamespace("bar"),
 			},
-			beforeHook: func(t *testing.T, s storev2.Interface) {
+			beforeHook: func(t *testing.T, s storev2.NamespaceStore, ec storev2.EntityConfigStore) {
 				createNamespace(t, s, "bar")
 			},
 			wantErr: true,
@@ -60,7 +60,7 @@ func TestNamespaceStore_CreateIfNotExists(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			withPostgres(t, func(ctx context.Context, db *pgxpool.Pool, dsn string) {
 				if tt.beforeHook != nil {
-					tt.beforeHook(t, NewConfigStore(db))
+					tt.beforeHook(t, NewNamespaceStore(db), NewEntityConfigStore(db))
 				}
 				s := &NamespaceStore{
 					db: db,
@@ -81,8 +81,8 @@ func TestNamespaceStore_CreateOrUpdate(t *testing.T) {
 	tests := []struct {
 		name       string
 		args       args
-		beforeHook func(*testing.T, storev2.Interface)
-		afterHook  func(*testing.T, storev2.Interface)
+		beforeHook func(*testing.T, storev2.NamespaceStore, storev2.EntityConfigStore)
+		afterHook  func(*testing.T, storev2.NamespaceStore, storev2.EntityConfigStore)
 		wantErr    bool
 	}{
 		{
@@ -93,9 +93,9 @@ func TestNamespaceStore_CreateOrUpdate(t *testing.T) {
 					namespace: corev3.FixtureNamespace("foo"),
 				}
 			}(),
-			afterHook: func(t *testing.T, s storev2.Interface) {
+			afterHook: func(t *testing.T, s storev2.NamespaceStore, ec storev2.EntityConfigStore) {
 				ctx := context.Background()
-				namespace, err := s.NamespaceStore().Get(ctx, "foo")
+				namespace, err := s.Get(ctx, "foo")
 				require.NoError(t, err)
 				require.Equal(t, "foo", namespace.Metadata.Name)
 			},
@@ -112,9 +112,9 @@ func TestNamespaceStore_CreateOrUpdate(t *testing.T) {
 					}(),
 				}
 			}(),
-			afterHook: func(t *testing.T, s storev2.Interface) {
+			afterHook: func(t *testing.T, s storev2.NamespaceStore, ec storev2.EntityConfigStore) {
 				ctx := context.Background()
-				namespace, err := s.NamespaceStore().Get(ctx, "foo")
+				namespace, err := s.Get(ctx, "foo")
 				require.NoError(t, err)
 				require.Equal(t, "foo", namespace.Metadata.Name)
 				require.Equal(t, "true", namespace.Metadata.Annotations["updated"])
@@ -124,9 +124,8 @@ func TestNamespaceStore_CreateOrUpdate(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			withPostgres(t, func(ctx context.Context, db *pgxpool.Pool, dsn string) {
-				stor := NewConfigStore(db)
 				if tt.beforeHook != nil {
-					tt.beforeHook(t, stor)
+					tt.beforeHook(t, NewNamespaceStore(db), NewEntityConfigStore(db))
 				}
 				s := &NamespaceStore{
 					db: db,
@@ -135,7 +134,7 @@ func TestNamespaceStore_CreateOrUpdate(t *testing.T) {
 					t.Errorf("NamespaceStore.CreateOrUpdate() error = %v, wantErr %v", err, tt.wantErr)
 				}
 				if tt.afterHook != nil {
-					tt.afterHook(t, stor)
+					tt.afterHook(t, NewNamespaceStore(db), NewEntityConfigStore(db))
 				}
 			})
 		})
@@ -150,7 +149,7 @@ func TestNamespaceStore_Delete(t *testing.T) {
 	tests := []struct {
 		name       string
 		args       args
-		beforeHook func(*testing.T, storev2.Interface)
+		beforeHook func(*testing.T, storev2.NamespaceStore, storev2.EntityConfigStore)
 		wantErr    bool
 	}{
 		{
@@ -167,7 +166,7 @@ func TestNamespaceStore_Delete(t *testing.T) {
 				ctx:  context.Background(),
 				name: "bar",
 			},
-			beforeHook: func(t *testing.T, s storev2.Interface) {
+			beforeHook: func(t *testing.T, s storev2.NamespaceStore, ec storev2.EntityConfigStore) {
 				createNamespace(t, s, "bar")
 			},
 		},
@@ -176,7 +175,7 @@ func TestNamespaceStore_Delete(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			withPostgres(t, func(ctx context.Context, db *pgxpool.Pool, dsn string) {
 				if tt.beforeHook != nil {
-					tt.beforeHook(t, NewConfigStore(db))
+					tt.beforeHook(t, NewNamespaceStore(db), NewEntityConfigStore(db))
 				}
 				s := &NamespaceStore{
 					db: db,
@@ -197,7 +196,7 @@ func TestNamespaceStore_Exists(t *testing.T) {
 	tests := []struct {
 		name       string
 		args       args
-		beforeHook func(*testing.T, storev2.Interface)
+		beforeHook func(*testing.T, storev2.NamespaceStore, storev2.EntityConfigStore)
 		want       bool
 		wantErr    bool
 	}{
@@ -214,7 +213,7 @@ func TestNamespaceStore_Exists(t *testing.T) {
 				ctx:  context.Background(),
 				name: "bar",
 			},
-			beforeHook: func(t *testing.T, s storev2.Interface) {
+			beforeHook: func(t *testing.T, s storev2.NamespaceStore, ec storev2.EntityConfigStore) {
 				createNamespace(t, s, "bar")
 				deleteNamespace(t, s, "bar")
 			},
@@ -225,7 +224,7 @@ func TestNamespaceStore_Exists(t *testing.T) {
 				ctx:  context.Background(),
 				name: "bar",
 			},
-			beforeHook: func(t *testing.T, s storev2.Interface) {
+			beforeHook: func(t *testing.T, s storev2.NamespaceStore, ec storev2.EntityConfigStore) {
 				createNamespace(t, s, "bar")
 			},
 			want: true,
@@ -235,7 +234,7 @@ func TestNamespaceStore_Exists(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			withPostgres(t, func(ctx context.Context, db *pgxpool.Pool, dsn string) {
 				if tt.beforeHook != nil {
-					tt.beforeHook(t, NewConfigStore(db))
+					tt.beforeHook(t, NewNamespaceStore(db), NewEntityConfigStore(db))
 				}
 				s := &NamespaceStore{
 					db: db,
@@ -261,7 +260,7 @@ func TestNamespaceStore_Get(t *testing.T) {
 	tests := []struct {
 		name       string
 		args       args
-		beforeHook func(*testing.T, storev2.Interface)
+		beforeHook func(*testing.T, storev2.NamespaceStore, storev2.EntityConfigStore)
 		want       *corev3.Namespace
 		wantErr    bool
 	}{
@@ -279,7 +278,7 @@ func TestNamespaceStore_Get(t *testing.T) {
 				ctx:  context.Background(),
 				name: "foo",
 			},
-			beforeHook: func(t *testing.T, s storev2.Interface) {
+			beforeHook: func(t *testing.T, s storev2.NamespaceStore, ec storev2.EntityConfigStore) {
 				createNamespace(t, s, "foo")
 				deleteNamespace(t, s, "foo")
 			},
@@ -291,7 +290,7 @@ func TestNamespaceStore_Get(t *testing.T) {
 				ctx:  context.Background(),
 				name: "foo",
 			},
-			beforeHook: func(t *testing.T, s storev2.Interface) {
+			beforeHook: func(t *testing.T, s storev2.NamespaceStore, ec storev2.EntityConfigStore) {
 				createNamespace(t, s, "foo")
 			},
 			want: func() *corev3.Namespace {
@@ -310,7 +309,7 @@ func TestNamespaceStore_Get(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			withPostgres(t, func(ctx context.Context, db *pgxpool.Pool, dsn string) {
 				if tt.beforeHook != nil {
-					tt.beforeHook(t, NewConfigStore(db))
+					tt.beforeHook(t, NewNamespaceStore(db), NewEntityConfigStore(db))
 				}
 				s := &NamespaceStore{
 					db: db,
@@ -350,7 +349,7 @@ func TestNamespaceStore_GetMultiple(t *testing.T) {
 	tests := []struct {
 		name       string
 		args       args
-		beforeHook func(*testing.T, storev2.Interface)
+		beforeHook func(*testing.T, storev2.NamespaceStore, storev2.EntityConfigStore)
 		want       uniqueNamespaces
 		wantErr    bool
 	}{
@@ -368,7 +367,7 @@ func TestNamespaceStore_GetMultiple(t *testing.T) {
 				ctx:       context.Background(),
 				resources: []string{"default", "ops"},
 			},
-			beforeHook: func(t *testing.T, s storev2.Interface) {
+			beforeHook: func(t *testing.T, s storev2.NamespaceStore, ec storev2.EntityConfigStore) {
 				createNamespace(t, s, "default")
 				createNamespace(t, s, "ops")
 				deleteNamespace(t, s, "default")
@@ -382,7 +381,7 @@ func TestNamespaceStore_GetMultiple(t *testing.T) {
 				ctx:       context.Background(),
 				resources: []string{"default", "ops"},
 			},
-			beforeHook: func(t *testing.T, s storev2.Interface) {
+			beforeHook: func(t *testing.T, s storev2.NamespaceStore, ec storev2.EntityConfigStore) {
 				createNamespace(t, s, "default")
 				createNamespace(t, s, "ops")
 				deleteNamespace(t, s, "default")
@@ -397,7 +396,7 @@ func TestNamespaceStore_GetMultiple(t *testing.T) {
 				ctx:       context.Background(),
 				resources: []string{"default", "ops"},
 			},
-			beforeHook: func(t *testing.T, s storev2.Interface) {
+			beforeHook: func(t *testing.T, s storev2.NamespaceStore, ec storev2.EntityConfigStore) {
 				createNamespace(t, s, "default")
 				createNamespace(t, s, "ops")
 			},
@@ -411,7 +410,7 @@ func TestNamespaceStore_GetMultiple(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			withPostgres(t, func(ctx context.Context, db *pgxpool.Pool, dsn string) {
 				if tt.beforeHook != nil {
-					tt.beforeHook(t, NewConfigStore(db))
+					tt.beforeHook(t, NewNamespaceStore(db), NewEntityConfigStore(db))
 				}
 				s := &NamespaceStore{
 					db: db,
@@ -436,7 +435,7 @@ func TestNamespaceStore_HardDelete(t *testing.T) {
 	tests := []struct {
 		name       string
 		args       args
-		beforeHook func(*testing.T, storev2.Interface)
+		beforeHook func(*testing.T, storev2.NamespaceStore, storev2.EntityConfigStore)
 		wantErr    bool
 	}{
 		{
@@ -453,7 +452,7 @@ func TestNamespaceStore_HardDelete(t *testing.T) {
 				ctx:  context.Background(),
 				name: "bar",
 			},
-			beforeHook: func(t *testing.T, s storev2.Interface) {
+			beforeHook: func(t *testing.T, s storev2.NamespaceStore, ec storev2.EntityConfigStore) {
 				createNamespace(t, s, "bar")
 				deleteNamespace(t, s, "bar")
 			},
@@ -464,7 +463,7 @@ func TestNamespaceStore_HardDelete(t *testing.T) {
 				ctx:  context.Background(),
 				name: "bar",
 			},
-			beforeHook: func(t *testing.T, s storev2.Interface) {
+			beforeHook: func(t *testing.T, s storev2.NamespaceStore, ec storev2.EntityConfigStore) {
 				createNamespace(t, s, "bar")
 			},
 		},
@@ -473,7 +472,7 @@ func TestNamespaceStore_HardDelete(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			withPostgres(t, func(ctx context.Context, db *pgxpool.Pool, dsn string) {
 				if tt.beforeHook != nil {
-					tt.beforeHook(t, NewConfigStore(db))
+					tt.beforeHook(t, NewNamespaceStore(db), NewEntityConfigStore(db))
 				}
 				s := &NamespaceStore{
 					db: db,
@@ -494,7 +493,7 @@ func TestNamespaceStore_HardDeleted(t *testing.T) {
 	tests := []struct {
 		name       string
 		args       args
-		beforeHook func(*testing.T, storev2.Interface)
+		beforeHook func(*testing.T, storev2.NamespaceStore, storev2.EntityConfigStore)
 		want       bool
 		wantErr    bool
 	}{
@@ -512,7 +511,7 @@ func TestNamespaceStore_HardDeleted(t *testing.T) {
 				ctx:  context.Background(),
 				name: "bar",
 			},
-			beforeHook: func(t *testing.T, s storev2.Interface) {
+			beforeHook: func(t *testing.T, s storev2.NamespaceStore, ec storev2.EntityConfigStore) {
 				createNamespace(t, s, "bar")
 				deleteNamespace(t, s, "bar")
 			},
@@ -524,7 +523,7 @@ func TestNamespaceStore_HardDeleted(t *testing.T) {
 				ctx:  context.Background(),
 				name: "bar",
 			},
-			beforeHook: func(t *testing.T, s storev2.Interface) {
+			beforeHook: func(t *testing.T, s storev2.NamespaceStore, ec storev2.EntityConfigStore) {
 				createNamespace(t, s, "bar")
 			},
 			want: false,
@@ -534,7 +533,7 @@ func TestNamespaceStore_HardDeleted(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			withPostgres(t, func(ctx context.Context, db *pgxpool.Pool, dsn string) {
 				if tt.beforeHook != nil {
-					tt.beforeHook(t, NewConfigStore(db))
+					tt.beforeHook(t, NewNamespaceStore(db), NewEntityConfigStore(db))
 				}
 				s := &NamespaceStore{
 					db: db,
@@ -560,7 +559,7 @@ func TestNamespaceStore_List(t *testing.T) {
 	tests := []struct {
 		name       string
 		args       args
-		beforeHook func(*testing.T, storev2.Interface)
+		beforeHook func(*testing.T, storev2.NamespaceStore, storev2.EntityConfigStore)
 		want       []*corev3.Namespace
 		wantErr    bool
 	}{
@@ -576,7 +575,7 @@ func TestNamespaceStore_List(t *testing.T) {
 			args: args{
 				ctx: context.Background(),
 			},
-			beforeHook: func(t *testing.T, s storev2.Interface) {
+			beforeHook: func(t *testing.T, s storev2.NamespaceStore, ec storev2.EntityConfigStore) {
 				for i := 0; i < 10; i++ {
 					namespaceName := fmt.Sprintf("foo-%d", i)
 					createNamespace(t, s, namespaceName)
@@ -598,7 +597,7 @@ func TestNamespaceStore_List(t *testing.T) {
 				ctx:  context.Background(),
 				pred: &store.SelectionPredicate{Limit: 5},
 			},
-			beforeHook: func(t *testing.T, s storev2.Interface) {
+			beforeHook: func(t *testing.T, s storev2.NamespaceStore, ec storev2.EntityConfigStore) {
 				for i := 0; i < 10; i++ {
 					namespaceName := fmt.Sprintf("foo-%d", i)
 					createNamespace(t, s, namespaceName)
@@ -617,7 +616,7 @@ func TestNamespaceStore_List(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			withPostgres(t, func(ctx context.Context, db *pgxpool.Pool, dsn string) {
 				if tt.beforeHook != nil {
-					tt.beforeHook(t, NewConfigStore(db))
+					tt.beforeHook(t, NewNamespaceStore(db), NewEntityConfigStore(db))
 				}
 				s := &NamespaceStore{
 					db: db,
@@ -648,7 +647,7 @@ func TestNamespaceStore_Patch(t *testing.T) {
 	tests := []struct {
 		name       string
 		args       args
-		beforeHook func(*testing.T, storev2.Interface)
+		beforeHook func(*testing.T, storev2.NamespaceStore, storev2.EntityConfigStore)
 		wantErr    bool
 	}{
 		{
@@ -671,7 +670,7 @@ func TestNamespaceStore_Patch(t *testing.T) {
 					MergePatch: []byte(`{"metadata":{"labels":{"food":"hummus"}}}`),
 				},
 			},
-			beforeHook: func(t *testing.T, s storev2.Interface) {
+			beforeHook: func(t *testing.T, s storev2.NamespaceStore, ec storev2.EntityConfigStore) {
 				createNamespace(t, s, "bar")
 				deleteNamespace(t, s, "bar")
 			},
@@ -686,7 +685,7 @@ func TestNamespaceStore_Patch(t *testing.T) {
 					MergePatch: []byte(`{"metadata":{"labels":{"food":"hummus"}}}`),
 				},
 			},
-			beforeHook: func(t *testing.T, s storev2.Interface) {
+			beforeHook: func(t *testing.T, s storev2.NamespaceStore, ec storev2.EntityConfigStore) {
 				createNamespace(t, s, "bar")
 			},
 		},
@@ -695,7 +694,7 @@ func TestNamespaceStore_Patch(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			withPostgres(t, func(ctx context.Context, db *pgxpool.Pool, dsn string) {
 				if tt.beforeHook != nil {
-					tt.beforeHook(t, NewConfigStore(db))
+					tt.beforeHook(t, NewNamespaceStore(db), NewEntityConfigStore(db))
 				}
 				s := &NamespaceStore{
 					db: db,
@@ -716,7 +715,7 @@ func TestNamespaceStore_UpdateIfExists(t *testing.T) {
 	tests := []struct {
 		name       string
 		args       args
-		beforeHook func(*testing.T, storev2.Interface)
+		beforeHook func(*testing.T, storev2.NamespaceStore, storev2.EntityConfigStore)
 		wantErr    bool
 	}{
 		{
@@ -733,7 +732,7 @@ func TestNamespaceStore_UpdateIfExists(t *testing.T) {
 				ctx:       context.Background(),
 				namespace: corev3.FixtureNamespace("bar"),
 			},
-			beforeHook: func(t *testing.T, s storev2.Interface) {
+			beforeHook: func(t *testing.T, s storev2.NamespaceStore, ec storev2.EntityConfigStore) {
 				createNamespace(t, s, "bar")
 				deleteNamespace(t, s, "bar")
 			},
@@ -744,7 +743,7 @@ func TestNamespaceStore_UpdateIfExists(t *testing.T) {
 				ctx:       context.Background(),
 				namespace: corev3.FixtureNamespace("bar"),
 			},
-			beforeHook: func(t *testing.T, s storev2.Interface) {
+			beforeHook: func(t *testing.T, s storev2.NamespaceStore, ec storev2.EntityConfigStore) {
 				createNamespace(t, s, "bar")
 			},
 		},
@@ -753,7 +752,7 @@ func TestNamespaceStore_UpdateIfExists(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			withPostgres(t, func(ctx context.Context, db *pgxpool.Pool, dsn string) {
 				if tt.beforeHook != nil {
-					tt.beforeHook(t, NewConfigStore(db))
+					tt.beforeHook(t, NewNamespaceStore(db), NewEntityConfigStore(db))
 				}
 				s := &NamespaceStore{
 					db: db,
@@ -774,7 +773,7 @@ func TestNamespaceStore_isEmpty(t *testing.T) {
 	tests := []struct {
 		name       string
 		args       args
-		beforeHook func(*testing.T, storev2.Interface)
+		beforeHook func(*testing.T, storev2.NamespaceStore, storev2.EntityConfigStore)
 		want       bool
 		wantErr    bool
 	}{
@@ -792,7 +791,7 @@ func TestNamespaceStore_isEmpty(t *testing.T) {
 				ctx:  context.Background(),
 				name: "default",
 			},
-			beforeHook: func(t *testing.T, s storev2.Interface) {
+			beforeHook: func(t *testing.T, s storev2.NamespaceStore, ec storev2.EntityConfigStore) {
 				createNamespace(t, s, "default")
 			},
 			want: true,
@@ -803,9 +802,9 @@ func TestNamespaceStore_isEmpty(t *testing.T) {
 				ctx:  context.Background(),
 				name: "default",
 			},
-			beforeHook: func(t *testing.T, s storev2.Interface) {
+			beforeHook: func(t *testing.T, s storev2.NamespaceStore, ec storev2.EntityConfigStore) {
 				createNamespace(t, s, "default")
-				createEntityConfig(t, s, "default", "foo")
+				createEntityConfig(t, ec, "default", "foo")
 			},
 			want: false,
 		},
@@ -814,7 +813,7 @@ func TestNamespaceStore_isEmpty(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			withPostgres(t, func(ctx context.Context, db *pgxpool.Pool, dsn string) {
 				if tt.beforeHook != nil {
-					tt.beforeHook(t, NewConfigStore(db))
+					tt.beforeHook(t, NewNamespaceStore(db), NewEntityConfigStore(db))
 				}
 				s := &NamespaceStore{
 					db: db,

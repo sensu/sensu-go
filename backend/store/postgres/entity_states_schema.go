@@ -1,5 +1,7 @@
 package postgres
 
+//lint:file-ignore U1000 Unused queries are still useful
+
 const createOrUpdateEntityStateQuery = `
 -- This query creates a new entity state, or updates it if it already exists.
 --

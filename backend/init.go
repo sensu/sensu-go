@@ -107,7 +107,7 @@ func InitializeStore(ctx context.Context, client *clientv3.Client, db *pgxpool.P
 	}
 
 	// Create sensu-system namespace and backend entity
-	br := resource.New(b.ConfigStore, bus)
+	br := resource.New(b.NamespaceStore, b.EntityConfigStore, b.EntityStateStore, bus)
 	if err := br.EnsureBackendResources(ctx); err != nil {
 		return nil, fmt.Errorf("error creating system namespace and backend entity: %s", err.Error())
 	}
@@ -324,21 +324,19 @@ func InitializeStore(ctx context.Context, client *clientv3.Client, db *pgxpool.P
 
 	// Initialize apid
 	b.APIDConfig = apid.Config{
-		ListenAddress:       config.APIListenAddress,
-		RequestLimit:        config.APIRequestLimit,
-		WriteTimeout:        config.APIWriteTimeout,
-		URL:                 config.APIURL,
-		Bus:                 bus,
-		Store:               b.ConfigStore,
-		EventStore:          b.EventStore,
-		QueueGetter:         queueGetter,
-		TLS:                 config.TLS,
-		Cluster:             client.Cluster,
-		EtcdClientTLSConfig: etcdClientTLSConfig,
-		Authenticator:       authenticator,
-		ClusterVersion:      clusterVersion,
-		GraphQLService:      b.GraphQLService,
-		HealthRouter:        b.HealthRouter,
+		ListenAddress:  config.APIListenAddress,
+		RequestLimit:   config.APIRequestLimit,
+		WriteTimeout:   config.APIWriteTimeout,
+		URL:            config.APIURL,
+		Bus:            bus,
+		Store:          b.ConfigStore,
+		EventStore:     b.EventStore,
+		QueueGetter:    queueGetter,
+		TLS:            config.TLS,
+		Authenticator:  authenticator,
+		ClusterVersion: clusterVersion,
+		GraphQLService: b.GraphQLService,
+		HealthRouter:   b.HealthRouter,
 	}
 	newApi, err := apid.New(b.APIDConfig)
 	if err != nil {

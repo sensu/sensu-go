@@ -15,7 +15,6 @@ import (
 )
 
 var (
-	namespaceStoreName        = new(corev3.Namespace).StoreName()
 	namespaceUniqueConstraint = "namespace_unique"
 )
 

@@ -13,7 +13,6 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
-	clientv3 "go.etcd.io/etcd/client/v3"
 
 	corev3 "github.com/sensu/sensu-go/api/core/v3"
 	"github.com/sensu/sensu-go/backend/api"
@@ -39,20 +38,17 @@ type APId struct {
 	GraphQLSubrouter           *mux.Router
 	RequestLimit               int64
 
-	stopping            chan struct{}
-	running             *atomic.Value
-	wg                  *sync.WaitGroup
-	errChan             chan error
-	bus                 messaging.MessageBus
-	store               storev2.Interface
-	eventStore          store.EventStore
-	entityStore         store.EntityStore
-	silencedStore       store.SilenceStore
-	queueGetter         types.QueueGetter
-	tls                 *types.TLSOptions
-	cluster             clientv3.Cluster
-	etcdClientTLSConfig *tls.Config
-	clusterVersion      string
+	stopping      chan struct{}
+	running       *atomic.Value
+	wg            *sync.WaitGroup
+	errChan       chan error
+	bus           messaging.MessageBus
+	store         storev2.Interface
+	eventStore    store.EventStore
+	entityStore   store.EntityStore
+	silencedStore store.SilenceStore
+	queueGetter   types.QueueGetter
+	tls           *types.TLSOptions
 }
 
 // Option is a functional option.
@@ -60,44 +56,39 @@ type Option func(*APId) error
 
 // Config configures APId.
 type Config struct {
-	ListenAddress       string
-	RequestLimit        int64
-	WriteTimeout        time.Duration
-	URL                 string
-	Bus                 messaging.MessageBus
-	Store               storev2.Interface
-	EventStore          store.EventStore
-	EntityStore         store.EntityStore
-	SilencedStore       store.SilenceStore
-	QueueGetter         types.QueueGetter
-	TLS                 *types.TLSOptions
-	Cluster             clientv3.Cluster
-	EtcdClientTLSConfig *tls.Config
-	Authenticator       *authentication.Authenticator
-	ClusterVersion      string
-	GraphQLService      *graphql.Service
-	HealthRouter        *routers.HealthRouter
+	ListenAddress  string
+	RequestLimit   int64
+	WriteTimeout   time.Duration
+	URL            string
+	Bus            messaging.MessageBus
+	Store          storev2.Interface
+	EventStore     store.EventStore
+	EntityStore    store.EntityStore
+	SilencedStore  store.SilenceStore
+	QueueGetter    types.QueueGetter
+	TLS            *types.TLSOptions
+	Authenticator  *authentication.Authenticator
+	ClusterVersion string
+	GraphQLService *graphql.Service
+	HealthRouter   *routers.HealthRouter
 }
 
 // New creates a new APId.
 func New(c Config, opts ...Option) (*APId, error) {
 	a := &APId{
-		store:               c.Store,
-		eventStore:          c.EventStore,
-		entityStore:         c.EntityStore,
-		silencedStore:       c.SilencedStore,
-		queueGetter:         c.QueueGetter,
-		tls:                 c.TLS,
-		bus:                 c.Bus,
-		stopping:            make(chan struct{}, 1),
-		running:             &atomic.Value{},
-		wg:                  &sync.WaitGroup{},
-		errChan:             make(chan error, 1),
-		cluster:             c.Cluster,
-		etcdClientTLSConfig: c.EtcdClientTLSConfig,
-		Authenticator:       c.Authenticator,
-		clusterVersion:      c.ClusterVersion,
-		RequestLimit:        c.RequestLimit,
+		store:         c.Store,
+		eventStore:    c.EventStore,
+		entityStore:   c.EntityStore,
+		silencedStore: c.SilencedStore,
+		queueGetter:   c.QueueGetter,
+		tls:           c.TLS,
+		bus:           c.Bus,
+		stopping:      make(chan struct{}, 1),
+		running:       &atomic.Value{},
+		wg:            &sync.WaitGroup{},
+		errChan:       make(chan error, 1),
+		Authenticator: c.Authenticator,
+		RequestLimit:  c.RequestLimit,
 	}
 
 	// prepare TLS config

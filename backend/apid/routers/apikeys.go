@@ -2,7 +2,6 @@ package routers
 
 import (
 	"bytes"
-	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -22,10 +21,6 @@ import (
 type APIKeysRouter struct {
 	handlers handlers.Handlers
 	store    storev2.Interface
-}
-
-type userFetcher interface {
-	FetchUser(ctx context.Context, user string) (*corev2.User, error)
 }
 
 // NewAPIKeysRouter instantiates new router for controlling apikeys resources.

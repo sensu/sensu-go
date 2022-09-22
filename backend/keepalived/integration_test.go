@@ -55,9 +55,10 @@ func TestKeepaliveMonitor(t *testing.T) {
 		assert.FailNow(t, err.Error())
 	}
 	store := etcdstorev2.NewStore(eventStore.Client)
+	nsStore := etcdstorev2.NewNamespaceStore(eventStore.Client)
 	keepaliveStore := storev2.NewLegacyKeepaliveStore(eventStore)
 
-	if err := seeds.SeedInitialDataWithContext(context.Background(), store); err != nil {
+	if err := seeds.SeedInitialDataWithContext(context.Background(), store, nsStore); err != nil {
 		assert.FailNow(t, err.Error())
 	}
 

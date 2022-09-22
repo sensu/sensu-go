@@ -23,12 +23,12 @@ type Config struct {
 
 var ErrAlreadyInitialized = errors.New("sensu-backend already initialized")
 
-func seedCluster(ctx context.Context, s storev2.Interface, config Config) func(context.Context) error {
+func seedCluster(ctx context.Context, s storev2.Interface, nsStore storev2.NamespaceStore, config Config) func(context.Context) error {
 	logger := logger.WithField("component", "backend.seeds")
 	logger.Info("seeding etcd store with initial data")
 
 	return func(context.Context) error {
-		if err := setupNamespaces(ctx, s, config); err != nil {
+		if err := setupNamespaces(ctx, nsStore, config); err != nil {
 			return err
 		}
 		if err := setupUsers(ctx, s, config); err != nil {
@@ -58,18 +58,18 @@ func seedCluster(ctx context.Context, s storev2.Interface, config Config) func(c
 }
 
 // SeedCluster seeds the cluster according to the provided config.
-func SeedCluster(ctx context.Context, s storev2.Interface, config Config) (fErr error) {
-	return s.Initialize(ctx, seedCluster(ctx, s, config))
+func SeedCluster(ctx context.Context, s storev2.Interface, nsStore storev2.NamespaceStore, config Config) (fErr error) {
+	return s.Initialize(ctx, seedCluster(ctx, s, nsStore, config))
 }
 
 // SeedInitialDataWithContext is like SeedInitialData except it takes an existing
 // context.
-func SeedInitialDataWithContext(ctx context.Context, s storev2.Interface) (err error) {
+func SeedInitialDataWithContext(ctx context.Context, s storev2.Interface, nsStore storev2.NamespaceStore) (err error) {
 	config := Config{
 		AdminUsername: "admin",
 		AdminPassword: "P@ssw0rd!",
 	}
-	return SeedCluster(ctx, s, config)
+	return SeedCluster(ctx, s, nsStore, config)
 }
 
 func createResource[R storev2.Resource[T], T any](ctx context.Context, s storev2.Interface, resource R) error {

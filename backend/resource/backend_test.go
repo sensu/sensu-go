@@ -48,10 +48,12 @@ func (m *mockMessageBus) Publish(topic string, message interface{}) error {
 }
 
 func TestBackendResource_GenerateBackendEvent(t *testing.T) {
-	store := &storetest.Store{}
+	nsStore := &storetest.NamespaceStore{}
+	ecStore := &storetest.EntityConfigStore{}
+	esStore := &storetest.EntityStateStore{}
 	mmb := &mockMessageBus{published: []*corev2.Event{}}
 
-	br := New(store, mmb)
+	br := New(nsStore, ecStore, esStore, mmb)
 	br.backendEntity, _ = getEntity()
 	br.repeatIntervalSec = 2
 

@@ -179,64 +179,55 @@ func testWithPostgresStore(tb testing.TB, fn func(store.Store)) {
 	})
 }
 
-// creates a database, runs all migrations & provides a StoreV2
-func testWithPostgresStoreV2(tb testing.TB, fn func(storev2.Interface)) {
-	tb.Helper()
-
-	withPostgres(tb, func(ctx context.Context, db *pgxpool.Pool, dsn string) {
-		fn(NewConfigStore(db))
-	})
-}
-
-func createNamespace(tb testing.TB, s storev2.Interface, name string) {
+func createNamespace(tb testing.TB, s storev2.NamespaceStore, name string) {
 	tb.Helper()
 	ctx := context.Background()
 	namespace := corev3.FixtureNamespace(name)
-	if err := s.NamespaceStore().CreateIfNotExists(ctx, namespace); err != nil {
+	if err := s.CreateIfNotExists(ctx, namespace); err != nil {
 		tb.Error(err)
 	}
 }
 
-func deleteNamespace(tb testing.TB, s storev2.Interface, name string) {
+func deleteNamespace(tb testing.TB, s storev2.NamespaceStore, name string) {
 	tb.Helper()
 	ctx := context.Background()
-	if err := s.NamespaceStore().Delete(ctx, name); err != nil {
+	if err := s.Delete(ctx, name); err != nil {
 		tb.Error(err)
 	}
 }
 
-func createEntityConfig(tb testing.TB, s storev2.Interface, namespace, name string) {
+func createEntityConfig(tb testing.TB, s storev2.EntityConfigStore, namespace, name string) {
 	tb.Helper()
 	ctx := context.Background()
 	cfg := corev3.FixtureEntityConfig(name)
 	cfg.Metadata.Namespace = namespace
-	if err := s.EntityConfigStore().CreateIfNotExists(ctx, cfg); err != nil {
+	if err := s.CreateIfNotExists(ctx, cfg); err != nil {
 		tb.Error(err)
 	}
 }
 
-func deleteEntityConfig(tb testing.TB, s storev2.Interface, namespace, name string) {
+func deleteEntityConfig(tb testing.TB, s storev2.EntityConfigStore, namespace, name string) {
 	tb.Helper()
 	ctx := context.Background()
-	if err := s.EntityConfigStore().Delete(ctx, namespace, name); err != nil {
+	if err := s.Delete(ctx, namespace, name); err != nil {
 		tb.Error(err)
 	}
 }
 
-func createEntityState(tb testing.TB, s storev2.Interface, namespace, name string) {
+func createEntityState(tb testing.TB, s storev2.EntityStateStore, namespace, name string) {
 	tb.Helper()
 	ctx := context.Background()
 	cfg := corev3.FixtureEntityState(name)
 	cfg.Metadata.Namespace = namespace
-	if err := s.EntityStateStore().CreateIfNotExists(ctx, cfg); err != nil {
+	if err := s.CreateIfNotExists(ctx, cfg); err != nil {
 		tb.Error(err)
 	}
 }
 
-func deleteEntityState(tb testing.TB, s storev2.Interface, namespace, name string) {
+func deleteEntityState(tb testing.TB, s storev2.EntityStateStore, namespace, name string) {
 	tb.Helper()
 	ctx := context.Background()
-	if err := s.EntityStateStore().Delete(ctx, namespace, name); err != nil {
+	if err := s.Delete(ctx, namespace, name); err != nil {
 		tb.Error(err)
 	}
 }

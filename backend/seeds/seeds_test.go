@@ -26,12 +26,12 @@ func TestSeedInitialDataWithContext(t *testing.T) {
 	s := new(storetest.Store)
 	s.On("NamespaceStore").Return(nsStore)
 	s.On("CreateIfNotExists", mock.Anything, mock.Anything, mock.Anything).Return(nil)
-	s.On("Initialize", mock.Anything, mock.Anything).Return(seedCluster(ctx, s, config)(ctx))
+	s.On("Initialize", mock.Anything, mock.Anything).Return(seedCluster(ctx, s, nsStore, config)(ctx))
 
-	sErr := SeedInitialDataWithContext(ctx, s)
+	sErr := SeedInitialDataWithContext(ctx, s, nsStore)
 	require.NoError(t, sErr, "seeding process should not raise an error")
 
-	err := SeedInitialDataWithContext(ctx, s)
+	err := SeedInitialDataWithContext(ctx, s, nsStore)
 	if err != ErrAlreadyInitialized {
 		require.NoError(t, err, "seeding process should be able to be run more than once without error")
 	}

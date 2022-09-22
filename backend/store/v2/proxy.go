@@ -89,27 +89,6 @@ func (p *Proxy) Watch(ctx context.Context, req ResourceRequest) <-chan []WatchEv
 	return p.impl.Watch(ctx, req)
 }
 
-// NamespaceStore returns a NamespaceStore.
-func (p *Proxy) NamespaceStore() NamespaceStore {
-	p.mu.RLock()
-	defer p.mu.RUnlock()
-	return p.impl.NamespaceStore()
-}
-
-// EntityConfigStore returns an EntityConfigStore.
-func (p *Proxy) EntityConfigStore() EntityConfigStore {
-	p.mu.RLock()
-	defer p.mu.RUnlock()
-	return p.impl.EntityConfigStore()
-}
-
-// EntityStateStore returns an EntityStateStore.
-func (p *Proxy) EntityStateStore() EntityStateStore {
-	p.mu.RLock()
-	defer p.mu.RUnlock()
-	return p.impl.EntityStateStore()
-}
-
 // Initialize sets up a cluster with the default resources & config.
 func (p *Proxy) Initialize(ctx context.Context, fn InitializeFunc) error {
 	p.mu.RLock()

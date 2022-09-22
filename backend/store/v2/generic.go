@@ -97,7 +97,7 @@ func (g Generic[R, T]) List(ctx context.Context, id ID, pred *store.SelectionPre
 		return nil, err
 	}
 	wlen := wrapper.Len()
-	result := make([]T, wlen, wlen)
+	result := make([]T, wlen)
 	if err := wrapper.UnwrapInto(&result); err != nil {
 		return nil, err
 	}

@@ -282,6 +282,9 @@ func (s *ConfigStore) Patch(ctx context.Context, request storev2.ResourceRequest
 	}
 
 	patchedResource, err := patcher.Patch(w.Value)
+	if err != nil {
+		return err
+	}
 
 	if err := json.Unmarshal(patchedResource, resource); err != nil {
 		return err
@@ -320,7 +323,7 @@ func (s *ConfigStore) EntityStateStore() storev2.EntityStateStore {
 }
 
 func labelsToJSON(labels map[string]string) (string, error) {
-	if labels == nil || len(labels) == 0 {
+	if len(labels) == 0 {
 		return "{}", nil
 	}
 
@@ -333,7 +336,7 @@ func labelsToJSON(labels map[string]string) (string, error) {
 }
 
 func annotationsToBytes(annotations map[string]string) ([]byte, error) {
-	if annotations == nil || len(annotations) == 0 {
+	if len(annotations) == 0 {
 		return []byte("{}"), nil
 	}
 
@@ -343,17 +346,11 @@ func annotationsToBytes(annotations map[string]string) ([]byte, error) {
 func extractResourceData(wrapper storev2.Wrapper) (typeMeta corev2.TypeMeta, meta *corev2.ObjectMeta, jsonLabels string,
 	bytesAnnotations, jsonResource []byte, err error) {
 	res, err := wrapper.Unwrap()
-	//res, err := wrapper.UnwrapRaw()
 	if err != nil {
 		return
 	}
 
-	if resV3, ok := res.(corev3.Resource); ok {
-		meta = resV3.GetMetadata()
-	} else if resV2, ok := res.(corev2.Resource); ok {
-		objectMeta := resV2.GetObjectMeta()
-		meta = &objectMeta
-	}
+	meta = res.GetMetadata()
 
 	jsonLabels, err = labelsToJSON(meta.Labels)
 	if err != nil {

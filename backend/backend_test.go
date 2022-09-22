@@ -109,7 +109,8 @@ func TestBackendHTTPListener(t *testing.T) {
 			}
 
 			store := etcdstorev2.NewStore(client)
-			if err := seeds.SeedInitialDataWithContext(context.Background(), store); err != nil {
+			nsStore := etcdstorev2.NewNamespaceStore(client)
+			if err := seeds.SeedInitialDataWithContext(context.Background(), store, nsStore); err != nil {
 				t.Fatal(err)
 			}
 
