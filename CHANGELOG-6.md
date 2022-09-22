@@ -23,6 +23,10 @@ should be no unintended gaps between overlapping subdues.
 - Addresses issue where the entity list view would display values of redacted
 labels.
 
+### Changed
+- Keepalive reconstruction no longer blocks backend startup. Instead runs
+gradually in the background.
+
 ## [6.8.0] - 2022-08-24
 
 ### Changed
