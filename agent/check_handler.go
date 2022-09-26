@@ -36,6 +36,12 @@ var (
 	errOldCheckRequest = errors.New("check request is older than a previously received check request")
 )
 
+type checkExecutionError struct {
+	error
+	// Check Name
+	Check string
+}
+
 // handleCheck is the check message handler.
 // TODO(greg): At some point, we're going to need max parallelism.
 func (a *Agent) handleCheck(ctx context.Context, payload []byte) error {
@@ -52,16 +58,25 @@ func (a *Agent) handleCheck(ctx context.Context, payload []byte) error {
 	// previous executions of the check
 	lastIssued := a.getLastIssued(request)
 	if lastIssued > request.Issued {
-		return errOldCheckRequest
+		return checkExecutionError{
+			error: errOldCheckRequest,
+			Check: checkConfig.Name,
+		}
 	}
 	if lastIssued == request.Issued {
-		return errDupCheckRequest
+		return checkExecutionError{
+			error: errDupCheckRequest,
+			Check: checkConfig.Name,
+		}
 	}
 
 	// only schedule check execution if its not already in progress
 	// ** check hooks are part of a checks execution
 	if a.checkInProgress(request) {
-		return fmt.Errorf("check execution still in progress: %s", checkConfig.Name)
+		return checkExecutionError{
+			error: fmt.Errorf("check execution still in progress: %s", checkConfig.Name),
+			Check: checkConfig.Name,
+		}
 	}
 
 	sendFailure := func(err error) {
