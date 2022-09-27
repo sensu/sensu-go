@@ -7,6 +7,9 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
 
+### Changed
+- Agent logs now include check name when a check request is not executed.
+
 ## [6.8.1] - 2022-09-13
 
 ### Changed

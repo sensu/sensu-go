@@ -563,12 +563,17 @@ func (a *Agent) receiveLoop(ctx context.Context, cancel context.CancelFunc, conn
 			}).Info("message received")
 			err := a.handler.Handle(ctx, msg.Type, msg.Payload)
 			if err != nil {
-				switch err {
-				case errDupCheckRequest:
-					logger.WithError(err).Warn("error handling message")
-				default:
-					logger.WithError(err).Error("error handling message")
+				severity := logrus.ErrorLevel
+				logEntry := logger.WithError(err)
+				if checkErr, ok := err.(checkExecutionError); ok {
+					logEntry = logEntry.WithField(
+						"check", checkErr.Check,
+					)
+					if checkErr.error == errDupCheckRequest {
+						severity = logrus.WarnLevel
+					}
 				}
+				logEntry.Log(severity, "error handling message")
 			}
 		}(m)
 	}

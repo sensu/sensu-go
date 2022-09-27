@@ -395,12 +395,8 @@ github.com/sensu/lasr v1.2.1/go.mod h1:VIMtIK67Bcef6dTfctRCBg8EY9M9TtCY9NEFT6Zw5
 github.com/sensu/sensu-go/api/core/v2 v2.14.0 h1:z4JVqy7z6iFgMDUH0uc1Ns0bqLFKTpc5bi4Iw7qweks=
 github.com/sensu/sensu-go/api/core/v2 v2.14.0/go.mod h1:XCgUjY78ApTahizBz/pkc5KU17L/E5BexeZHkGDdTls=
 github.com/sensu/sensu-go/api/core/v3 v3.6.1/go.mod h1:aqNOkJxkrwRq+rPW47XtVWeb5Rk1K5adlCZGBW9nsvM=
-github.com/sensu/sensu-go/api/core/v3 v3.6.2 h1:NEkHcPxkaYwPlH4gG6kgvdvYLlwBBaswMHscA7X3V+4=
-github.com/sensu/sensu-go/api/core/v3 v3.6.2/go.mod h1:aqNOkJxkrwRq+rPW47XtVWeb5Rk1K5adlCZGBW9nsvM=
-github.com/sensu/sensu-go/api/core/v3 v3.6.3-0.20220912171820-366b64ed1a62 h1:PeP63bXXwwB586EjCb73jg0oqzE3Tg3aOH38g9qG58k=
-github.com/sensu/sensu-go/api/core/v3 v3.6.3-0.20220912171820-366b64ed1a62/go.mod h1:n2dhnBTovMrzmE1P0D7gvEbUG7TPH6hdtr7qvoPf/sY=
-github.com/sensu/sensu-go/api/core/v3 v3.6.3-0.20220912182551-a5a7db519e68 h1:t5AsMszceHgj4yGHflRi705L3mZbb15yi5pRJfiWmy8=
-github.com/sensu/sensu-go/api/core/v3 v3.6.3-0.20220912182551-a5a7db519e68/go.mod h1:n2dhnBTovMrzmE1P0D7gvEbUG7TPH6hdtr7qvoPf/sY=
+github.com/sensu/sensu-go/api/core/v3 v3.6.3-0.20220913191107-10ae2ae7d8cf h1:K1VrKHGwQ4UpOQmy2J6IFyv0u17OKTwWrfAGILClpbw=
+github.com/sensu/sensu-go/api/core/v3 v3.6.3-0.20220913191107-10ae2ae7d8cf/go.mod h1:n2dhnBTovMrzmE1P0D7gvEbUG7TPH6hdtr7qvoPf/sY=
 github.com/sensu/sensu-go/types v0.10.0 h1:sm+dLuqEEECVxjW5EfXkU5weGPwrg/Jymbm28HdQpl8=
 github.com/sensu/sensu-go/types v0.10.0/go.mod h1:vFZJ9TYBAjSPYtYt+82PpS9P6m73Vzr4O23lmJonzrA=
 github.com/shirou/gopsutil/v3 v3.21.12 h1:VoGxEW2hpmz0Vt3wUvHIl9fquzYLNpVpgNNB7pGJimA=
