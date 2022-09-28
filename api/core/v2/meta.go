@@ -4,6 +4,9 @@ const (
 	// ManagedByLabel is used to identify which client was used to create/update a
 	// resource
 	ManagedByLabel = "sensu.io/managed_by"
+	// OutputTruncatedBytesLabel is used to identify events where check output
+	// has been truncated
+	OutputTruncatedBytesLabel = "sensu.io/output_truncated_bytes"
 )
 
 type Comparison int
