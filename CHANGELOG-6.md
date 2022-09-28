@@ -10,6 +10,11 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 ### Changed
 - Agent logs now include check name when a check request is not executed.
 
+### Added
+- A sensu.io/output_truncated_bytes label is now applied to events when
+the check output has been truncated due to a check's max_output_size
+configuration.
+
 ## [6.8.1] - 2022-09-13
 
 ### Changed
