@@ -576,8 +576,8 @@ func TestGenericClientStoreV2_sensu_enterprise_go_GH2484(t *testing.T) {
 		if err != nil {
 			panic(err)
 		}
-		store.On("Get", mock.Anything).Return(wrappedResource, nil)
-		store.On("List", mock.Anything, mock.Anything).Return(wrap.List{wrappedResource.(*wrap.Wrapper)}, nil)
+		store.On("Get", mock.Anything, mock.Anything).Return(wrappedResource, nil)
+		store.On("List", mock.Anything, mock.Anything, mock.Anything).Return(wrap.List{wrappedResource.(*wrap.Wrapper)}, nil)
 		return store
 	}
 	v3AllAccess := func() authorization.Authorizer {
@@ -633,27 +633,27 @@ func TestGenericClientStoreV2_sensu_enterprise_go_GH2484(t *testing.T) {
 
 	ctx := contextWithUser(defaultContext(), "tom", nil)
 	client := defaultV2TestClient(makeStore(nil), v3AllAccess())
-	listVal := []corev2.Resource{}
+	listVal := []corev3.Resource{}
 	if err := client.List(ctx, &listVal, &store.SelectionPredicate{}); err != nil {
 		t.Fatal(err)
 	}
-	if listVal[0].GetObjectMeta().Labels["password"] != corev2.Redacted {
-		t.Errorf("Labels['password'] = %s, got: %s", corev2.Redacted, listVal[0].GetObjectMeta().Labels["password"])
+	if listVal[0].GetMetadata().Labels["password"] != corev2.Redacted {
+		t.Errorf("Labels['password'] = %s, got: %s", corev2.Redacted, listVal[0].GetMetadata().Labels["password"])
 	}
-	if listVal[0].GetObjectMeta().Labels["my_label"] != "test" {
-		t.Errorf("Labels['my_label'] = %s, got: %s", "test", listVal[0].GetObjectMeta().Labels["my_label"])
+	if listVal[0].GetMetadata().Labels["my_label"] != "test" {
+		t.Errorf("Labels['my_label'] = %s, got: %s", "test", listVal[0].GetMetadata().Labels["my_label"])
 	}
 
 	client = defaultV2TestClient(makeStore(nil), v3AllAccess())
-	getVal := corev3.V2ResourceProxy{Resource: &corev3.EntityConfig{}}
-	if err := client.Get(ctx, "default", &getVal); err != nil {
+	getVal := &corev3.EntityConfig{}
+	if err := client.Get(ctx, "default", getVal); err != nil {
 		t.Fatal(err)
 	}
-	if getVal.GetObjectMeta().Labels["password"] != corev2.Redacted {
-		t.Errorf("Labels['password'] = %s, got: %s", corev2.Redacted, getVal.GetObjectMeta().Labels["password"])
+	if getVal.GetMetadata().Labels["password"] != corev2.Redacted {
+		t.Errorf("Labels['password'] = %s, got: %s", corev2.Redacted, getVal.GetMetadata().Labels["password"])
 	}
-	if getVal.GetObjectMeta().Labels["my_label"] != "test" {
-		t.Errorf("Labels['my_label'] = %s, got: %s", "test", getVal.GetObjectMeta().Labels["my_label"])
+	if getVal.GetMetadata().Labels["my_label"] != "test" {
+		t.Errorf("Labels['my_label'] = %s, got: %s", "test", getVal.GetMetadata().Labels["my_label"])
 	}
 }
 
