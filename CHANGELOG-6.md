@@ -12,6 +12,15 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 - Check subdues are now evaluated on a half open interval such that there
 should be no unintended gaps between overlapping subdues.
 
+### Security
+- Addresses issue where the entity list view would display values of redacted
+labels.
+
+### Changed
+- Keepalive reconstruction no longer blocks backend startup. Instead runs
+gradually in the background.
+- Upgraded etcd version from 3.5.4 to 3.5.5.
+
 ## [6.8.0] - 2022-08-24
 
 ### Changed
