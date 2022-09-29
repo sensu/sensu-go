@@ -107,6 +107,8 @@ func UnwrapResource(r interface{}) interface{} {
 // WrapResource safely wraps the given resource in a type wrapper
 func WrapResource(r interface{}) types.Wrapper {
 	switch r := r.(type) {
+	case corev2.Resource:
+		return types.WrapResource(r)
 	case corev3.Resource: // maybe we move this into the compat package
 		var tm types.TypeMeta
 		if getter, ok := r.(interface{ GetTypeMeta() types.TypeMeta }); ok {
@@ -121,8 +123,6 @@ func WrapResource(r interface{}) types.Wrapper {
 			ObjectMeta: meta,
 			Value:      r,
 		}
-	case corev2.Resource:
-		return types.WrapResource(r)
 	case *types.Wrapper:
 		if r == nil {
 			return types.Wrapper{}
