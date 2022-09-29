@@ -26,6 +26,7 @@ labels.
 ### Changed
 - Keepalive reconstruction no longer blocks backend startup. Instead runs
 gradually in the background.
+- Upgraded etcd version from 3.5.4 to 3.5.5.
 
 ## [6.8.0] - 2022-08-24
 
