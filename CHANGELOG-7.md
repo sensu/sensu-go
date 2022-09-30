@@ -6,7 +6,6 @@ and this project adheres to [Semantic
 Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
-
 ### Breaking
 - Embedded etcd is no longer supported, all related configuration has been
 removed.
@@ -26,7 +25,9 @@ migrated from Etcd.
 - Added configuration store selector to sensu-backend.
 - Added postgresql state store.
 - GlobalResource interface in core/v3 allows core/v3 resources to
-be marked as global resources.
+  be marked as global resources.
+- The authentication module now logs successful (INFO) and unsuccessful (ERROR)
+  login attempts.
 
 ### Fixed
 - Fixed an issue where multi-expression exclusive "Deny" filters were not
