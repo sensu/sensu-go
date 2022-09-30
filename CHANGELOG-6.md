@@ -7,6 +7,11 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
 
+
+### Added
+- The authentication module now logs successful (INFO) and unsuccessful (ERROR)
+  login attempts.
+
 ### Fixed
 - Fixed an issue where multi-expression exclusive "Deny" filters were not
   evaluated as described in the documentation.

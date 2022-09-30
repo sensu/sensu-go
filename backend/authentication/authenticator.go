@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"sync"
 
+	"github.com/sirupsen/logrus"
+
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 )
 
@@ -33,11 +35,20 @@ func (a *Authenticator) Authenticate(ctx context.Context, username, password str
 			continue
 		}
 
+		logger.WithFields(logrus.Fields{
+			"subject":         claims.Subject,
+			"groups":          claims.Groups,
+			"provider_id":     claims.Provider.ProviderID,
+			"provider_type":   claims.Provider.ProviderType,
+			"provider_userid": claims.Provider.UserID,
+		}).Info("login successful")
 		return claims, nil
 	}
 
 	// TODO(palourde): We might want to return a more meaningful and actionnable
 	// error message, but we don't want to leak sensitive information.
+
+	logger.WithField("username", username).Error("authentication failed")
 	return nil, errors.New("authentication failed")
 }
 
