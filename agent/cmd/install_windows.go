@@ -11,6 +11,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"time"
 
 	"golang.org/x/sys/windows/svc"
 	"golang.org/x/sys/windows/svc/eventlog"
@@ -68,10 +69,24 @@ func installService(name, displayName, desc string, args ...string) error {
 		return err
 	}
 	defer s.Close()
+
+	// setup recovery actions (how to handle errors from the agent service)
+	recoveryActions := []mgr.RecoveryAction{
+		{
+			Type:  mgr.ServiceRestart,
+			Delay: 5 * time.Second,
+		},
+	}
+	if err := s.SetRecoveryActions(recoveryActions, 60); err != nil {
+		s.Delete()
+		return fmt.Errorf("SetRecoveryActions() failed: %w", err)
+	}
+
+	// setup eventlog
 	err = eventlog.InstallAsEventCreate(name, eventlog.Error|eventlog.Warning|eventlog.Info)
 	if err != nil {
 		s.Delete()
-		return fmt.Errorf("SetupEventLogSource() failed: %s", err)
+		return fmt.Errorf("SetupEventLogSource() failed: %w", err)
 	}
 
 	return s.Start(args...)
