@@ -8,6 +8,20 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 ## [Unreleased]
 ## Unreleased
 
+### Added
+- The authentication module now logs successful (INFO) and unsuccessful (ERROR)
+  login attempts.
+- Agent websocket connection logging includes backend entity name.
+
+### Changed
+- The Sensu Agent service now auto-restarts after failures on Windows.
+
+### Fixed
+- Fixed an issue where multi-expression exclusive "Deny" filters were not
+  evaluated as described in the documentation.
+
+## [6.8.1] - 2022-09-13
+
 ### Changed
 - Check subdues are now evaluated on a half open interval such that there
 should be no unintended gaps between overlapping subdues.
