@@ -27,12 +27,27 @@ func TestEventStorageMaxOutputSize(t *testing.T) {
 		if _, _, err := store.UpdateEvent(ctx, event); err != nil {
 			t.Fatal(err)
 		}
-		event, err := store.GetEventByEntityCheck(ctx, "entity1", "check1")
+		storedEvent, err := store.GetEventByEntityCheck(ctx, "entity1", "check1")
 		if err != nil {
 			t.Fatal(err)
 		}
-		if got, want := event.Check.Output, "VERY"; got != want {
-			t.Fatalf("bad check output: got %q, want %q", got, want)
+
+		// persisted event check output was truncated
+		if got, want := storedEvent.Check.Output, "VERY"; got != want {
+			t.Errorf("bad persisted check output: got %q, want %q", got, want)
+		}
+
+		// input event check output not mutated
+		if got, want := event.Check.Output, "VERY LONG"; got != want {
+			t.Errorf("input check output was modified: got %q, want %q", got, want)
+		}
+
+		if got, want := event.Labels[eventOutputTruncatedBytesLabel], "5"; got != want {
+			t.Errorf("bad input event label: got %q, want %q", got, want)
+		}
+
+		if got, want := storedEvent.Labels[eventOutputTruncatedBytesLabel], "5"; got != want {
+			t.Errorf("bad persisted event label: got %q, want %q", got, want)
 		}
 	})
 }

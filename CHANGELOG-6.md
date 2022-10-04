@@ -21,6 +21,11 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 - Fixed an issue where multi-expression exclusive "Deny" filters were not
   evaluated as described in the documentation.
 
+### Added
+- A sensu.io/output_truncated_bytes label is now applied to events when
+the check output has been truncated due to a check's max_output_size
+configuration.
+
 ## [6.8.1] - 2022-09-13
 
 ### Changed
