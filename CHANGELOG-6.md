@@ -5,7 +5,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic
 Versioning](http://semver.org/spec/v2.0.0.html).
 
-## [6.8.2] - 2022-10-05
+## [6.8.2] - 2022-10-06
 
 ### Changed
 - Agent logs now include check name when a check request is not executed.
