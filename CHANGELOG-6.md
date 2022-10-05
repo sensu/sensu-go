@@ -15,8 +15,8 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 - The authentication module now logs successful (INFO) and unsuccessful (ERROR)
   login attempts.
 - Agent websocket connection logging includes backend entity name.
-- A sensu.io/output_truncated_bytes label is now applied to events when
-the check output has been truncated due to a check's max_output_size
+- A sensu.io/output\_truncated\_bytes label is now applied to events when
+the check output has been truncated due to a check's max\_output\_size
 configuration.
 
 ### Fixed
