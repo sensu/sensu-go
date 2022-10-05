@@ -5,26 +5,23 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic
 Versioning](http://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## [6.8.2] - 2022-10-05
 
 ### Changed
 - Agent logs now include check name when a check request is not executed.
+- The Sensu Agent service now auto-restarts after failures on Windows.
+
 ### Added
 - The authentication module now logs successful (INFO) and unsuccessful (ERROR)
   login attempts.
 - Agent websocket connection logging includes backend entity name.
-
-### Changed
-- The Sensu Agent service now auto-restarts after failures on Windows.
+- A sensu.io/output_truncated_bytes label is now applied to events when
+the check output has been truncated due to a check's max_output_size
+configuration.
 
 ### Fixed
 - Fixed an issue where multi-expression exclusive "Deny" filters were not
   evaluated as described in the documentation.
-
-### Added
-- A sensu.io/output_truncated_bytes label is now applied to events when
-the check output has been truncated due to a check's max_output_size
-configuration.
 
 ## [6.8.1] - 2022-09-13
 
