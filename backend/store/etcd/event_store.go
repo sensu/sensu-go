@@ -31,6 +31,8 @@ const (
 	// EventBytesSummaryHelp is the help message for EventBytesSummary
 	// Prometheus metrics.
 	EventBytesSummaryHelp = "Distribution of event sizes, in bytes, received by the store on this backend"
+
+	eventOutputTruncatedBytesLabel = "sensu.io/output_truncated_bytes"
 )
 
 var (
@@ -285,14 +287,23 @@ func (s *Store) UpdateEvent(ctx context.Context, event *corev2.Event) (*corev2.E
 	}
 
 	// Truncate check output if the output is larger than MaxOutputSize
-	if size := event.Check.MaxOutputSize; size > 0 && int64(len(event.Check.Output)) > size {
+
+	maxSize := event.Check.MaxOutputSize
+	if truncated := int64(len(event.Check.Output)) - maxSize; maxSize > 0 && truncated > 0 {
 		// Taking pains to not modify our input, set a bound on the check
 		// output size.
 		newEvent := *persistEvent
 		persistEvent = &newEvent
 		check := *persistEvent.Check
-		check.Output = check.Output[:size]
+		check.Output = check.Output[:maxSize]
 		persistEvent.Check = &check
+
+		// Be bad and mutate the input event's labels.
+		if event.Labels == nil {
+			event.Labels = make(map[string]string)
+			persistEvent.Labels = event.Labels
+		}
+		event.Labels[eventOutputTruncatedBytesLabel] = fmt.Sprint(truncated)
 	}
 
 	if persistEvent.Timestamp == 0 {
