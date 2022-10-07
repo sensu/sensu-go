@@ -70,7 +70,10 @@ func withMigratedPostgres(tb testing.TB, fn poolWithDSNFunc, migrations []migrat
 
 	// connect to postgres to create the database for tests
 	initialDB, err := pgxpool.Connect(ctx, pgURL)
-	require.NoError(tb, err)
+	if err != nil {
+		tb.Error(err)
+		return
+	}
 	tb.Cleanup(initialDB.Close)
 
 	id, err := uuid.NewRandom()
@@ -80,6 +83,7 @@ func withMigratedPostgres(tb testing.TB, fn poolWithDSNFunc, migrations []migrat
 	dbName := "sensu" + strings.ReplaceAll(id.String(), "-", "")
 	if _, err := initialDB.Exec(ctx, fmt.Sprintf("CREATE DATABASE %s;", dbName)); err != nil {
 		tb.Error(err)
+		return
 	}
 	tb.Cleanup(func() {
 		dropAll(tb, dbName, pgURL)
@@ -89,11 +93,17 @@ func withMigratedPostgres(tb testing.TB, fn poolWithDSNFunc, migrations []migrat
 	// connect to postgres again to run migrations
 	dsn := fmt.Sprintf("%s dbname=%s", pgURL, dbName)
 	cfg, err := pgxpool.ParseConfig(dsn)
-	require.NoError(tb, err)
+	if err != nil {
+		tb.Error(err)
+		return
+	}
 
 	db, err := migration.Open(cfg, migrations)
-	require.NoError(tb, err)
-	tb.Cleanup(db.Close)
+	if err != nil {
+		tb.Error(err)
+		return
+	}
+	tb.Cleanup(func() { go db.Close() })
 
 	fn(ctx, db, dsn)
 }
