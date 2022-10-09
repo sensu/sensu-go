@@ -229,7 +229,7 @@ func (o *OPC) CheckIn(ctx context.Context, state store.OperatorState) error {
 		}
 		// insert case
 		result, err := tx.Exec(ctx, opcCheckInInsert, state.Namespace, state.Type,
-			state.Name, timeout, meta, ctlNamespace, ctlType, ctlName)
+			state.Name, timeout, state.Present, meta, ctlNamespace, ctlType, ctlName)
 		if err != nil {
 			rollback = true
 			return fmt.Errorf("couldn't insert operator record: %s", err)
@@ -240,7 +240,7 @@ func (o *OPC) CheckIn(ctx context.Context, state store.OperatorState) error {
 		return nil
 	}
 	// update case
-	_, err = tx.Exec(ctx, opcCheckInUpdate, id, timeout, state.Metadata, ctl.Namespace, ctlType, ctlName)
+	_, err = tx.Exec(ctx, opcCheckInUpdate, id, timeout, state.Present, state.Metadata, ctl.Namespace, ctlType, ctlName)
 	if err != nil {
 		return fmt.Errorf("couldn't update operator record: %s", err)
 	}

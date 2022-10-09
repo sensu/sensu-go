@@ -10,6 +10,7 @@ CREATE TABLE IF NOT EXISTS opc (
 	controller_type  integer DEFAULT 0,
 	last_update      bigint NOT NULL,
 	timeout_micro    bigint NOT NULL,
+	present          boolean NOT NULL,
 	metadata         jsonb NOT NULL DEFAULT '{}'::jsonb,
 	UNIQUE (namespace, operator_type, operator_name)
 );
@@ -44,10 +45,11 @@ const opcCheckInInsert = `
 -- $2 operator type (integer)
 -- $3 operator name (string)
 -- $4 time out microseconds (integer)
--- $5 metadata (json)
--- $6 controller_namespace (string)
--- $7 controller_type (integer)
--- $8 controller_name (string)
+-- $5 present (boolean)
+-- $6 metadata (json)
+-- $7 controller_namespace (string)
+-- $8 controller_type (integer)
+-- $9 controller_name (string)
 WITH ns AS (
 	(SELECT id AS id
 	FROM namespaces 
@@ -59,7 +61,7 @@ WITH ns AS (
 , ctlns AS (
 	(SELECT id AS id
 	FROM namespaces
-	WHERE namespaces.name = $6)
+	WHERE namespaces.name = $7)
 	UNION (SELECT null AS id)
 	ORDER BY id NULLS LAST
 	LIMIT 1
@@ -67,8 +69,8 @@ WITH ns AS (
 , ctl AS (
 	(SELECT opc.id AS id, opc.operator_type AS operator_type
 	FROM opc, ctlns
-	WHERE opc.operator_type = $7
-	  AND opc.operator_name = $8
+	WHERE opc.operator_type = $8
+	  AND opc.operator_name = $9
 	  AND (opc.namespace IS NULL OR opc.namespace = ctlns.id))
 	UNION (SELECT null AS id, NULL AS operator_type)
 	ORDER BY id NULLS LAST
@@ -82,6 +84,7 @@ INSERT INTO opc (
   , controller_type
   , last_update
   , timeout_micro
+  , present
   , metadata
 )
 SELECT ns.id AS namespace
@@ -91,35 +94,39 @@ SELECT ns.id AS namespace
 	 , ctl.operator_type AS operator_type
 	 , (EXTRACT(EPOCH FROM NOW()) * 1000000)::bigint AS last_update
 	 , $4 AS timeout_micro
-	 , $5 AS metadata
+	 , $5 AS present
+	 , $6 AS metadata
 FROM ns, ctl
 ;
 `
 
 const opcCheckInUpdate = `
--- $1 operator id
--- $2 check in timeout
--- $3 metadata
--- $4 controller namespace
--- $5 controller type
--- $6 controller name
+-- $1 operator id (bigint)
+-- $2 check in timeout (bigint micros)
+-- $3 present (boolean)
+-- $4 metadata (jsonb)
+-- $5 controller namespace (text)
+-- $6 controller type (int)
+-- $7 controller name (text)
 WITH ctl AS (
 	SELECT id AS id, operator_type AS operator_type
 	FROM opc
-	WHERE opc.namespace = $4
-	  AND opc.operator_type = $5
-	  AND opc.operator_name = $6
+	WHERE opc.namespace = $5
+	  AND opc.operator_type = $6
+	  AND opc.operator_name = $7
 )
 UPDATE opc SET (
     last_update
   , timeout_micro
+  , present
   , metadata
   , controller
   , controller_type
 ) = (
 	SELECT (EXTRACT(EPOCH FROM NOW()) * 1000000)::bigint AS last_update
 		 , $2::bigint
-         , $3::jsonb
+		 , $3::boolean
+         , $4::jsonb
          , ctl.id
          , ctl.operator_type
 	FROM ctl
@@ -157,7 +164,7 @@ const opcGetNotifications = `
 SELECT namespaces.name
 	 , opc.operator_type
 	 , opc.operator_name
-	 , opc.timeout_micro > (EXTRACT(EPOCH FROM NOW()) * 1000000)::bigint - opc.last_update
+	 , false -- present is always logically false here, and we use the same target params as the get queries
 	 , to_timestamp(opc.last_update::double precision / 1000000)
 	 , opc.timeout_micro * 1000 -- nanoseconds for Go time.Duration
 	 , opc.metadata
@@ -177,12 +184,14 @@ WHERE opc.operator_type = $1
 const opcUpdateNotifications = `
 -- opcUpdateNotifications resets the last_update column for all operators
 -- of a given type that are controlled by one of the controllers in the
--- provided set.
+-- provided set. It also sets present false. opcUpdateNotifications only
+-- applies to operators that have not checked in on time.
 --
 -- $1 array of controller IDs
 -- $2 operator type (int)
 UPDATE opc
 SET last_update = (EXTRACT(EPOCH FROM NOW()) * 1000000)::bigint
+  , present = false
 WHERE opc.controller = ANY(($1::bigint[]))
   AND opc.operator_type = $2
   AND timeout_micro < (EXTRACT(EPOCH FROM NOW()) * 1000000)::bigint - opc.last_update
@@ -217,7 +226,7 @@ const opcGetOperator = `
 SELECT COALESCE(namespaces.name, '')
      , opc.operator_type
      , opc.operator_name
-	 , opc.timeout_micro > (EXTRACT(EPOCH FROM NOW()) * 1000000)::bigint - opc.last_update
+	 , present
 	 , to_timestamp(opc.last_update::double precision / 1000000)
 	 , opc.timeout_micro * 1000 -- nanoseconds for Go time.Duration
 	 , opc.metadata
@@ -236,7 +245,7 @@ const opcGetOperatorByID = `
 SELECT COALESCE(namespaces.name, '')
      , opc.operator_type
      , opc.operator_name
-	 , opc.timeout_micro > (EXTRACT(EPOCH FROM NOW()) * 1000000)::bigint - opc.last_update
+	 , present
 	 , to_timestamp(opc.last_update::double precision / 1000000)
 	 , opc.timeout_micro * 1000 -- nanoseconds for Go time.Duration
 	 , opc.metadata

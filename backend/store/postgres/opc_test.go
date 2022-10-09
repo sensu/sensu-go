@@ -2,6 +2,7 @@ package postgres
 
 import (
 	"context"
+	"fmt"
 	"testing"
 	"time"
 
@@ -24,11 +25,13 @@ func TestOPCControllerMigrationTimedOut(t *testing.T) {
 			Type:           store.BackendOperator,
 			Name:           "backend1",
 			CheckInTimeout: time.Millisecond,
+			Present:        true,
 		}
 		backendState2 := store.OperatorState{
 			Type:           store.BackendOperator,
 			Name:           "backend2",
 			CheckInTimeout: time.Hour,
+			Present:        true,
 		}
 		agentState := store.OperatorState{
 			Namespace: "default",
@@ -40,6 +43,7 @@ func TestOPCControllerMigrationTimedOut(t *testing.T) {
 				Name:      "backend1",
 			},
 			CheckInTimeout: 100 * time.Millisecond,
+			Present:        true,
 		}
 		opc := NewOPC(db)
 		if err := opc.CheckIn(ctx, backendState1); err != nil {
@@ -69,8 +73,8 @@ func TestOPCControllerMigrationTimedOut(t *testing.T) {
 		if err != nil {
 			t.Error(err)
 		}
-		if bop.Present {
-			t.Error("backend1 present")
+		if !bop.Present {
+			t.Error("backend1 not present")
 		}
 
 		// drain the buffer in case it filled before backend1 became absent
@@ -122,11 +126,13 @@ func TestOPCControllerMigrationCheckOut(t *testing.T) {
 			Type:           store.BackendOperator,
 			Name:           "backend1",
 			CheckInTimeout: time.Hour,
+			Present:        true,
 		}
 		backendState2 := store.OperatorState{
 			Type:           store.BackendOperator,
 			Name:           "backend2",
 			CheckInTimeout: time.Hour,
+			Present:        true,
 		}
 		agentState := store.OperatorState{
 			Namespace: "default",
@@ -138,6 +144,7 @@ func TestOPCControllerMigrationCheckOut(t *testing.T) {
 				Name:      "backend1",
 			},
 			CheckInTimeout: 100 * time.Millisecond,
+			Present:        true,
 		}
 		opc := NewOPC(db)
 		if err := opc.CheckIn(ctx, backendState1); err != nil {
@@ -237,6 +244,7 @@ func TestOPCQueryOperator(t *testing.T) {
 			Type:           store.BackendOperator,
 			Name:           "backend1",
 			CheckInTimeout: time.Hour,
+			Present:        true,
 		}
 		agentState := store.OperatorState{
 			Namespace: "default",
@@ -248,6 +256,7 @@ func TestOPCQueryOperator(t *testing.T) {
 				Name:      "backend1",
 			},
 			CheckInTimeout: time.Millisecond * 100,
+			Present:        true,
 		}
 		opc := NewOPC(db)
 		if err := opc.CheckIn(ctx, backendState); err != nil {
@@ -274,6 +283,9 @@ func TestOPCQueryOperator(t *testing.T) {
 		if !cmp.Equal(got.CheckInTimeout, want.CheckInTimeout) {
 			t.Error("unequal check in timeout", got.CheckInTimeout, want.CheckInTimeout)
 		}
+		if !got.Present {
+			t.Error("operator is not present")
+		}
 		if !cmp.Equal(got.Controller, want.Controller) {
 			t.Error("unequal controller", cmp.Diff(got.Controller, want.Controller))
 		}
@@ -291,6 +303,7 @@ func TestOPCQueryControllerOperator(t *testing.T) {
 			Type:           store.BackendOperator,
 			Name:           "backend1",
 			CheckInTimeout: time.Hour,
+			Present:        true,
 		}
 		opc := NewOPC(db)
 		if err := opc.CheckIn(ctx, backendState); err != nil {
@@ -317,6 +330,9 @@ func TestOPCQueryControllerOperator(t *testing.T) {
 		if !cmp.Equal(got.Controller, want.Controller) {
 			t.Error("unequal controller", cmp.Diff(got.Controller, want.Controller))
 		}
+		if !got.Present {
+			t.Error("operator not present")
+		}
 	})
 }
 
@@ -331,6 +347,7 @@ func TestOPCIntegration(t *testing.T) {
 			Type:           store.BackendOperator,
 			Name:           "backend1",
 			CheckInTimeout: time.Hour,
+			Present:        true,
 		}
 		agentState := store.OperatorState{
 			Namespace: "default",
@@ -342,6 +359,7 @@ func TestOPCIntegration(t *testing.T) {
 				Name:      "backend1",
 			},
 			CheckInTimeout: time.Millisecond * 100,
+			Present:        true,
 		}
 		opc := NewOPC(db)
 		if err := opc.CheckIn(ctx, backendState); err != nil {
@@ -397,6 +415,15 @@ func TestOPCIntegration(t *testing.T) {
 			}
 			if got.Controller == nil {
 				t.Error("nil controller")
+			}
+			if got.Present {
+				t.Error("operator is present")
+
+				op, err := opc.QueryOperator(ctx, store.OperatorKey{Namespace: "default", Type: store.AgentOperator, Name: "agent1"})
+				if err != nil {
+					t.Error(err)
+				}
+				fmt.Println(op.Present)
 			}
 		}
 
