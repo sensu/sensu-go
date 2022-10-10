@@ -1,7 +1,7 @@
 package client
 
 import (
-	corev2 "github.com/sensu/sensu-go/api/core/v2"
+	corev2 "github.com/sensu/core/v2"
 )
 
 // ClusterRoleBindingsPath is the api path for cluster role bindings.
