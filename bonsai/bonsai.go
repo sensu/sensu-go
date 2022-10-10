@@ -7,7 +7,7 @@ import (
 	"strings"
 
 	goversion "github.com/hashicorp/go-version"
-	corev2 "github.com/sensu/sensu-go/api/core/v2"
+	corev2 "github.com/sensu/core/v2"
 )
 
 const (

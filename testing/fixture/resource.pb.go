@@ -7,7 +7,7 @@ import proto "github.com/golang/protobuf/proto"
 import fmt "fmt"
 import math "math"
 import _ "github.com/gogo/protobuf/gogoproto"
-import v2 "github.com/sensu/sensu-go/api/core/v2"
+import v2 "github.com/sensu/core/v2"
 
 import bytes "bytes"
 

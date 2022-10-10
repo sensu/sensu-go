@@ -9,7 +9,7 @@ import (
 
 	"github.com/dustin/go-humanize"
 	"github.com/prometheus/client_golang/prometheus"
-	corev2 "github.com/sensu/sensu-go/api/core/v2"
+	corev2 "github.com/sensu/core/v2"
 	metricspkg "github.com/sensu/sensu-go/metrics"
 	bolt "go.etcd.io/bbolt"
 	"golang.org/x/time/rate"

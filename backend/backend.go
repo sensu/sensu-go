@@ -20,7 +20,7 @@ import (
 	"golang.org/x/time/rate"
 	"google.golang.org/grpc"
 
-	corev2 "github.com/sensu/sensu-go/api/core/v2"
+	corev2 "github.com/sensu/core/v2"
 	"github.com/sensu/sensu-go/asset"
 	"github.com/sensu/sensu-go/backend/agentd"
 	"github.com/sensu/sensu-go/backend/api"

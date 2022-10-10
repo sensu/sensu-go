@@ -6,8 +6,8 @@ import (
 
 	time "github.com/echlebek/timeproxy"
 	cron "github.com/robfig/cron/v3"
-	corev2 "github.com/sensu/sensu-go/api/core/v2"
-	corev3 "github.com/sensu/sensu-go/api/core/v3"
+	corev2 "github.com/sensu/core/v2"
+	corev3 "github.com/sensu/core/v3"
 	cachev2 "github.com/sensu/sensu-go/backend/store/cache/v2"
 	"github.com/sensu/sensu-go/js"
 	"github.com/sensu/sensu-go/token"

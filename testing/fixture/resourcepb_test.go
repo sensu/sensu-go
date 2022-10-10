@@ -12,7 +12,7 @@ import proto "github.com/golang/protobuf/proto"
 import fmt "fmt"
 import math "math"
 import _ "github.com/gogo/protobuf/gogoproto"
-import _ "github.com/sensu/sensu-go/api/core/v2"
+import _ "github.com/sensu/core/v2"
 
 // Reference imports to suppress errors if they are not otherwise used.
 var _ = proto.Marshal

@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"strings"
 
-	corev2 "github.com/sensu/sensu-go/api/core/v2"
+	corev2 "github.com/sensu/core/v2"
 )
 
 // PostAPIKey sends a POST request with obj as the payload to the given path

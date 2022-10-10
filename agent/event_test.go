@@ -7,8 +7,8 @@ import (
 
 	time "github.com/echlebek/timeproxy"
 	"github.com/google/uuid"
-	corev2 "github.com/sensu/sensu-go/api/core/v2"
-	corev3 "github.com/sensu/sensu-go/api/core/v3"
+	corev2 "github.com/sensu/core/v2"
+	corev3 "github.com/sensu/core/v3"
 	corev1 "github.com/sensu/sensu-go/types/v1"
 )
 
