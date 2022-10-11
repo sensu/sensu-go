@@ -6,12 +6,12 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	corev3 "github.com/sensu/core/v3"
 	"github.com/sensu/sensu-go/backend/messaging"
+	"github.com/sensu/sensu-go/backend/queue"
 	"github.com/sensu/sensu-go/backend/ringv2"
 	"github.com/sensu/sensu-go/backend/secrets"
 	"github.com/sensu/sensu-go/backend/store"
 	cachev2 "github.com/sensu/sensu-go/backend/store/cache/v2"
-	"github.com/sensu/sensu-go/types"
-	"go.etcd.io/etcd/client/v3"
+	clientv3 "go.etcd.io/etcd/client/v3"
 )
 
 var (
@@ -48,7 +48,7 @@ var (
 // configured interval and publishing to the message bus.
 type Schedulerd struct {
 	store                  store.Store
-	queueGetter            types.QueueGetter
+	queueGetter            queue.QueueGetter
 	bus                    messaging.MessageBus
 	checkWatcher           *CheckWatcher
 	adhocRequestExecutor   *AdhocRequestExecutor
@@ -66,7 +66,7 @@ type Option func(*Schedulerd) error
 // Config configures Schedulerd.
 type Config struct {
 	Store                  store.Store
-	QueueGetter            types.QueueGetter
+	QueueGetter            queue.QueueGetter
 	RingPool               *ringv2.RingPool
 	Bus                    messaging.MessageBus
 	Client                 *clientv3.Client

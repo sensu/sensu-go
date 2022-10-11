@@ -8,7 +8,7 @@ import (
 
 	"github.com/sensu/sensu-go/cli"
 	"github.com/sensu/sensu-go/cli/commands/timeutil"
-	"github.com/sensu/sensu-go/types"
+	corev2 "github.com/sensu/core/v2"
 	"github.com/spf13/cobra"
 )
 
@@ -43,7 +43,7 @@ func SetSubdueCommand(cli *cli.SensuCli) *cobra.Command {
 			} else {
 				in = os.Stdin
 			}
-			var timeWindows types.TimeWindowWhen
+			var timeWindows corev2.TimeWindowWhen
 			if err := json.NewDecoder(in).Decode(&timeWindows); err != nil {
 				return err
 			}

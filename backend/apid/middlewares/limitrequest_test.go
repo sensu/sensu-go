@@ -8,15 +8,15 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/sensu/sensu-go/types"
+	corev2 "github.com/sensu/core/v2"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestMiddlewareLimits(t *testing.T) {
 	assert := assert.New(t)
 
-	goodCheck := &types.CheckConfig{
-		ObjectMeta: types.ObjectMeta{
+	goodCheck := &corev2.CheckConfig{
+		ObjectMeta: corev2.ObjectMeta{
 			Name:      "goodcheck",
 			Namespace: "default",
 		},
@@ -28,8 +28,8 @@ func TestMiddlewareLimits(t *testing.T) {
 
 	maxCheck := make([]byte, 600000)
 	rand.Read(maxCheck)
-	badCheck := &types.CheckConfig{
-		ObjectMeta: types.ObjectMeta{
+	badCheck := &corev2.CheckConfig{
+		ObjectMeta: corev2.ObjectMeta{
 			Name:      "badcheck",
 			Namespace: "default",
 		},
@@ -42,7 +42,7 @@ func TestMiddlewareLimits(t *testing.T) {
 	tests := []struct {
 		description  string
 		url          string
-		body         *types.CheckConfig
+		body         *corev2.CheckConfig
 		expectedCode int
 		limit        int64
 	}{

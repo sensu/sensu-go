@@ -9,15 +9,15 @@ import (
 
 	corev3 "github.com/sensu/core/v3"
 	"github.com/sensu/sensu-go/backend/store"
-	"github.com/sensu/sensu-go/types"
+	corev2 "github.com/sensu/core/v2"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 func TestEntityStorage(t *testing.T) {
 	testWithEtcd(t, func(s store.Store) {
-		entity := types.FixtureEntity("entity")
-		ctx := context.WithValue(context.Background(), types.NamespaceKey, entity.Namespace)
+		entity := corev2.FixtureEntity("entity")
+		ctx := context.WithValue(context.Background(), corev2.NamespaceKey, entity.Namespace)
 		pred := &store.SelectionPredicate{}
 
 		// We should receive an empty slice if no results were found

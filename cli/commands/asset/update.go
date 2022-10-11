@@ -6,7 +6,7 @@ import (
 
 	"github.com/AlecAivazis/survey/v2"
 	"github.com/sensu/sensu-go/cli"
-	"github.com/sensu/sensu-go/types"
+	corev2 "github.com/sensu/core/v2"
 	"github.com/spf13/cobra"
 )
 
@@ -69,12 +69,12 @@ func newAssetOptions() *assetOptions {
 	return &opts
 }
 
-func (opts *assetOptions) copyFrom(a *types.Asset) {
+func (opts *assetOptions) copyFrom(a *corev2.Asset) {
 	opts.URL = a.URL
 	opts.Sha512 = a.Sha512
 }
 
-func (opts *assetOptions) copyTo(a *types.Asset) {
+func (opts *assetOptions) copyTo(a *corev2.Asset) {
 	a.URL = opts.URL
 	a.Sha512 = opts.Sha512
 }

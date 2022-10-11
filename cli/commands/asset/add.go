@@ -12,7 +12,7 @@ import (
 
 	goversion "github.com/hashicorp/go-version"
 	"github.com/sensu/sensu-go/cli/resource"
-	"github.com/sensu/sensu-go/types/compat"
+	"github.com/sensu/sensu-go/compat"
 )
 
 var rename string

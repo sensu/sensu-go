@@ -12,7 +12,7 @@ import (
 
 	"github.com/sensu/sensu-go/asset"
 	"github.com/sensu/sensu-go/testing/testutil"
-	"github.com/sensu/sensu-go/types"
+	corev2 "github.com/sensu/core/v2"
 )
 
 type localFetcher struct{}
@@ -50,8 +50,8 @@ func TestBoltDBManager(t *testing.T) {
 		t.Fatalf("error reading fixture sha: %v", err)
 	}
 
-	fixtureAsset := &types.Asset{
-		ObjectMeta: types.ObjectMeta{
+	fixtureAsset := &corev2.Asset{
+		ObjectMeta: corev2.ObjectMeta{
 			Name:      "rubby-on-rails",
 			Namespace: "default",
 		},

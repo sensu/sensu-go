@@ -11,7 +11,7 @@ import (
 	"github.com/sensu/sensu-go/cli/commands/helpers"
 	"github.com/sensu/sensu-go/cli/elements/list"
 	"github.com/sensu/sensu-go/cli/elements/table"
-	"github.com/sensu/sensu-go/types"
+	corev2 "github.com/sensu/core/v2"
 	"github.com/spf13/cobra"
 )
 
@@ -47,16 +47,16 @@ func InfoCommand(cli *cli.SensuCli) *cobra.Command {
 }
 
 func printToList(v interface{}, writer io.Writer) error {
-	handler, ok := v.(*types.Handler)
+	handler, ok := v.(*corev2.Handler)
 	if !ok {
 		return fmt.Errorf("%t is not a Handler", v)
 	}
 	// Determine what will be executed based on the type
 	var execute string
 	switch handler.Type {
-	case types.HandlerTCPType:
+	case corev2.HandlerTCPType:
 		fallthrough
-	case types.HandlerUDPType:
+	case corev2.HandlerUDPType:
 		execute = fmt.Sprintf(
 			"%s %s://%s:%d",
 			table.TitleStyle("PUSH:"),
@@ -64,13 +64,13 @@ func printToList(v interface{}, writer io.Writer) error {
 			handler.Socket.Host,
 			handler.Socket.Port,
 		)
-	case types.HandlerPipeType:
+	case corev2.HandlerPipeType:
 		execute = fmt.Sprintf(
 			"%s  %s",
 			table.TitleStyle("RUN:"),
 			handler.Command,
 		)
-	case types.HandlerSetType:
+	case corev2.HandlerSetType:
 		execute = fmt.Sprintf(
 			"%s %s",
 			table.TitleStyle("CALL:"),

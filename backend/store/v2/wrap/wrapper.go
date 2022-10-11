@@ -13,7 +13,7 @@ import (
 	corev2 "github.com/sensu/core/v2"
 	corev3 "github.com/sensu/core/v3"
 	"github.com/sensu/sensu-go/backend/store"
-	"github.com/sensu/sensu-go/types"
+	"github.com/sensu/types"
 )
 
 //go:generate go run ../../../../scripts/check_protoc/main.go

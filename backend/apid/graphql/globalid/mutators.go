@@ -1,6 +1,6 @@
 package globalid
 
-import "github.com/sensu/sensu-go/types"
+import corev2 "github.com/sensu/core/v2"
 
 //
 // Mutators
@@ -14,7 +14,7 @@ var MutatorTranslator = commonTranslator{
 	encodeFunc: standardEncoder(mutatorName, "Name"),
 	decodeFunc: standardDecoder,
 	isResponsibleFunc: func(record interface{}) bool {
-		_, ok := record.(*types.Mutator)
+		_, ok := record.(*corev2.Mutator)
 		return ok
 	},
 }

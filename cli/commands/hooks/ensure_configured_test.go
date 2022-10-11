@@ -5,7 +5,7 @@ import (
 
 	clientMock "github.com/sensu/sensu-go/cli/client/testing"
 	cmdTesting "github.com/sensu/sensu-go/cli/commands/testing"
-	"github.com/sensu/sensu-go/types"
+	corev2 "github.com/sensu/core/v2"
 	"github.com/spf13/cobra"
 	"github.com/stretchr/testify/assert"
 )
@@ -23,13 +23,13 @@ func TestConfigurationPresent(t *testing.T) {
 		Annotations: map[string]string{},
 	}
 
-	validTokens := &types.Tokens{
+	validTokens := &corev2.Tokens{
 		Access:    "accesstoken",
 		ExpiresAt: 1617721168,
 		Refresh:   "refreshtoken",
 	}
 
-	invalidTokens := &types.Tokens{
+	invalidTokens := &corev2.Tokens{
 		Access:    "",
 		ExpiresAt: 1617721168,
 		Refresh:   "",
@@ -45,7 +45,7 @@ func TestConfigurationPresent(t *testing.T) {
 		cmd           *cobra.Command
 		apiKey        string
 		apiURL        string
-		tokens        *types.Tokens
+		tokens        *corev2.Tokens
 		errorExpected bool
 	}{
 		{

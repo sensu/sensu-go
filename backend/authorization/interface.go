@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 
-	"github.com/sensu/sensu-go/types"
+	corev2 "github.com/sensu/core/v2"
 )
 
 var ErrUnauthorized = errors.New("request unauthorized")
@@ -25,14 +25,14 @@ type Attributes struct {
 	Namespace    string
 	Resource     string
 	ResourceName string
-	User         types.User
+	User         corev2.User
 	Verb         string
 }
 
 // GetAttributes returns the authorization attributes stored in the given
 // context
 func GetAttributes(ctx context.Context) *Attributes {
-	if value := ctx.Value(types.AuthorizationAttributesKey); value != nil {
+	if value := ctx.Value(corev2.AuthorizationAttributesKey); value != nil {
 		return value.(*Attributes)
 	}
 	return nil
@@ -40,7 +40,7 @@ func GetAttributes(ctx context.Context) *Attributes {
 
 // SetAttributes stores the given attributes within the provided context
 func SetAttributes(ctx context.Context, attrs *Attributes) context.Context {
-	return context.WithValue(ctx, types.AuthorizationAttributesKey, attrs)
+	return context.WithValue(ctx, corev2.AuthorizationAttributesKey, attrs)
 }
 
 // AttributesKey is a convenience type for storing an attributes-like value

@@ -7,7 +7,7 @@ import (
 	corev2 "github.com/sensu/core/v2"
 	"github.com/sensu/sensu-go/backend/apid/graphql/globalid"
 	"github.com/sensu/sensu-go/backend/apid/graphql/schema"
-	"github.com/sensu/sensu-go/types"
+	"github.com/sensu/types"
 	"github.com/sensu/sensu-go/util/strings"
 )
 

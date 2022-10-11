@@ -3,7 +3,8 @@ package helpers
 import (
 	"io"
 
-	"github.com/sensu/sensu-go/types"
+	corev2 "github.com/sensu/core/v2"
+	"github.com/sensu/types"
 	yaml "gopkg.in/yaml.v2"
 )
 
@@ -16,7 +17,7 @@ func PrintYAML(v interface{}, w io.Writer) (err error) {
 			err = enc.Close()
 		}
 	}()
-	if resources, ok := v.([]types.Resource); ok {
+	if resources, ok := v.([]corev2.Resource); ok {
 		if len(resources) == 0 {
 			close = false
 			return nil
@@ -29,7 +30,7 @@ func PrintYAML(v interface{}, w io.Writer) (err error) {
 		}
 		return nil
 	}
-	if r, ok := v.(types.Resource); ok {
+	if r, ok := v.(corev2.Resource); ok {
 		v = types.WrapResource(r)
 	}
 

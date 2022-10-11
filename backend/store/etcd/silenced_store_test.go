@@ -9,18 +9,18 @@ import (
 	"time"
 
 	"github.com/sensu/sensu-go/backend/store"
-	"github.com/sensu/sensu-go/types"
+	corev2 "github.com/sensu/core/v2"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 func TestSilencedStorage(t *testing.T) {
 	testWithEtcd(t, func(store store.Store) {
-		silenced := types.FixtureSilenced("*:checkname")
+		silenced := corev2.FixtureSilenced("*:checkname")
 		silenced.Namespace = "default"
 		silenced.Subscription = "subscription"
 		silenced.Name = silenced.Subscription + ":" + silenced.Check
-		ctx := context.WithValue(context.Background(), types.NamespaceKey, silenced.Namespace)
+		ctx := context.WithValue(context.Background(), corev2.NamespaceKey, silenced.Namespace)
 
 		// We should receive an empty slice if no results were found
 		silencedEntries, err := store.GetSilencedEntries(ctx)
@@ -97,10 +97,10 @@ func TestSilencedStorage(t *testing.T) {
 
 func TestSilencedStorageWithExpire(t *testing.T) {
 	testWithEtcd(t, func(store store.Store) {
-		silenced := types.FixtureSilenced("subscription:checkname")
+		silenced := corev2.FixtureSilenced("subscription:checkname")
 		silenced.Namespace = "default"
 		silenced.Expire = 15
-		ctx := context.WithValue(context.Background(), types.NamespaceKey, silenced.Namespace)
+		ctx := context.WithValue(context.Background(), corev2.NamespaceKey, silenced.Namespace)
 
 		err := store.UpdateSilencedEntry(ctx, silenced)
 		if err != nil {
@@ -117,13 +117,13 @@ func TestSilencedStorageWithExpire(t *testing.T) {
 
 func TestSilencedStorageWithBegin(t *testing.T) {
 	testWithEtcd(t, func(store store.Store) {
-		silenced := types.FixtureSilenced("subscription:checkname")
+		silenced := corev2.FixtureSilenced("subscription:checkname")
 		silenced.Namespace = "default"
 		// set a begin time in the future
 		silenced.Begin = time.Date(1970, 01, 01, 01, 00, 00, 00, time.UTC).Unix()
 		// current time is before the start time
 		currentTime := time.Date(1970, 01, 01, 00, 00, 00, 00, time.UTC).Unix()
-		ctx := context.WithValue(context.Background(), types.NamespaceKey, silenced.Namespace)
+		ctx := context.WithValue(context.Background(), corev2.NamespaceKey, silenced.Namespace)
 
 		err := store.UpdateSilencedEntry(ctx, silenced)
 		if err != nil {
@@ -145,14 +145,14 @@ func TestSilencedStorageWithBegin(t *testing.T) {
 
 func TestSilencedStorageWithBeginAndExpire(t *testing.T) {
 	testWithEtcd(t, func(store store.Store) {
-		silenced := types.FixtureSilenced("subscription:checkname")
+		silenced := corev2.FixtureSilenced("subscription:checkname")
 		silenced.Namespace = "default"
 		silenced.Expire = 15
 		currentTime := time.Now().UTC().Unix()
 		// set a begin time in the future
 		silenced.Begin = currentTime + 3600
 		// current time is before the start time
-		ctx := context.WithValue(context.Background(), types.NamespaceKey, silenced.Namespace)
+		ctx := context.WithValue(context.Background(), corev2.NamespaceKey, silenced.Namespace)
 
 		err := store.UpdateSilencedEntry(ctx, silenced)
 		if err != nil {

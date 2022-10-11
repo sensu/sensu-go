@@ -5,7 +5,7 @@ import (
 
 	"github.com/AlecAivazis/survey/v2"
 	"github.com/sensu/sensu-go/cli/commands/helpers"
-	"github.com/sensu/sensu-go/types"
+	corev2 "github.com/sensu/core/v2"
 	"github.com/spf13/pflag"
 )
 
@@ -50,8 +50,8 @@ func (opts *filterOpts) administerQuestionnaire(editing bool, askOpts ...survey.
 			Name: "action",
 			Prompt: &survey.Select{
 				Message: "Action:",
-				Options: types.EventFilterAllActions,
-				Default: types.EventFilterAllActions[0],
+				Options: corev2.EventFilterAllActions,
+				Default: corev2.EventFilterAllActions[0],
 			},
 			Validate: survey.Required,
 		},
@@ -75,7 +75,7 @@ func (opts *filterOpts) administerQuestionnaire(editing bool, askOpts ...survey.
 	return survey.Ask(qs, opts, askOpts...)
 }
 
-func (opts *filterOpts) Copy(filter *types.EventFilter) {
+func (opts *filterOpts) Copy(filter *corev2.EventFilter) {
 	filter.Action = opts.Action
 	filter.Name = opts.Name
 	filter.Namespace = opts.Namespace
@@ -83,7 +83,7 @@ func (opts *filterOpts) Copy(filter *types.EventFilter) {
 	filter.RuntimeAssets = helpers.SafeSplitCSV(opts.RuntimeAssets)
 }
 
-func (opts *filterOpts) withFilter(filter *types.EventFilter) {
+func (opts *filterOpts) withFilter(filter *corev2.EventFilter) {
 	opts.Name = filter.Name
 	opts.Namespace = filter.Namespace
 	opts.Action = filter.Action

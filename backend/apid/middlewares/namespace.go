@@ -6,7 +6,7 @@ import (
 	"net/url"
 
 	"github.com/gorilla/mux"
-	"github.com/sensu/sensu-go/types"
+	corev2 "github.com/sensu/core/v2"
 )
 
 // Namespace retrieves the namespace passed as a query parameter and add it into
@@ -23,7 +23,7 @@ func (n Namespace) Then(next http.Handler) http.Handler {
 		namespace, err := url.PathUnescape(vars["namespace"])
 		if err == nil && namespace != "" {
 			// Inject the namespace into the context of the request
-			ctx = context.WithValue(ctx, types.NamespaceKey, namespace)
+			ctx = context.WithValue(ctx, corev2.NamespaceKey, namespace)
 		}
 
 		next.ServeHTTP(w, r.WithContext(ctx))

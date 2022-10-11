@@ -18,7 +18,7 @@ import (
 	etcdstore "github.com/sensu/sensu-go/backend/store/etcd"
 	"github.com/sensu/sensu-go/testing/testutil"
 	"github.com/sensu/sensu-go/transport"
-	"github.com/sensu/sensu-go/types"
+	"github.com/sensu/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

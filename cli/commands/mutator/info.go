@@ -10,7 +10,7 @@ import (
 	"github.com/sensu/sensu-go/cli"
 	"github.com/sensu/sensu-go/cli/commands/helpers"
 	"github.com/sensu/sensu-go/cli/elements/list"
-	"github.com/sensu/sensu-go/types"
+	corev2 "github.com/sensu/core/v2"
 	"github.com/spf13/cobra"
 )
 
@@ -46,7 +46,7 @@ func InfoCommand(cli *cli.SensuCli) *cobra.Command {
 }
 
 func printToList(v interface{}, writer io.Writer) error {
-	mutator, ok := v.(*types.Mutator)
+	mutator, ok := v.(*corev2.Mutator)
 	if !ok {
 		return fmt.Errorf("%t is not a Mutator", v)
 	}

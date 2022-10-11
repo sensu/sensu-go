@@ -13,7 +13,6 @@ import (
 	"github.com/sensu/sensu-go/backend/etcd"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/backend/store/etcd/kvc"
-	"github.com/sensu/sensu-go/types"
 	"go.etcd.io/etcd/api/v3/mvccpb"
 	clientv3 "go.etcd.io/etcd/client/v3"
 )
@@ -24,6 +23,34 @@ const (
 	inFlightPostfix = "inflight"
 	itemTimeout     = 60 * time.Second
 )
+
+// Queue is the interface of a queue. Queue's methods are atomic
+// and goroutine-safe.
+type Interface interface {
+	// Enqueue adds a new item to the queue. It returns any error that
+	// was encountered in doing so, or if the context is cancelled.
+	Enqueue(ctx context.Context, value string) error
+
+	// Dequeue gets an Item from the queue. It returns the Item and any
+	// error encountered, or if the context is cancelled.
+	Dequeue(ctx context.Context) (QueueItem, error)
+}
+
+// QueueItem represents an item retrieved from a Queue.
+type QueueItem interface {
+	// Value is the item's underlying value.
+	Value() string
+
+	// Ack acks the item. The item will no longer be stored.
+	Ack(context.Context) error
+
+	// Nack nacks the item. The item will return to the Queue.
+	Nack(context.Context) error
+}
+
+type QueueGetter interface {
+	GetQueue(path ...string) Interface
+}
 
 var (
 	queueKeyBuilder    = store.NewKeyBuilder(queuePrefix)
@@ -41,7 +68,7 @@ type EtcdGetter struct {
 }
 
 // GetQueue gets a new Queue.
-func (e EtcdGetter) GetQueue(path ...string) types.Queue {
+func (e EtcdGetter) GetQueue(path ...string) Interface {
 	return New(queueKeyBuilder.Build(path...), e.Client, e.BackendIDGetter)
 }
 
@@ -214,7 +241,7 @@ func (q *Queue) enqueueOps(backendIDs []string, value string) ([]clientv3.Cmp, [
 
 // Dequeue gets a value from the queue. It returns an error if the context
 // is cancelled, the deadline exceeded, or if the client encounters an error.
-func (q *Queue) Dequeue(ctx context.Context) (types.QueueItem, error) {
+func (q *Queue) Dequeue(ctx context.Context) (QueueItem, error) {
 	var response *clientv3.GetResponse
 	err := kvc.Backoff(ctx).Retry(func(n int) (done bool, err error) {
 		response, err = q.kv.Get(ctx, q.workPrefix(), clientv3.WithFirstKey()...)
@@ -253,7 +280,7 @@ func (q *Queue) Dequeue(ctx context.Context) (types.QueueItem, error) {
 	return q.Dequeue(ctx)
 }
 
-func (q *Queue) tryDelete(ctx context.Context, kv *mvccpb.KeyValue) (types.QueueItem, error) {
+func (q *Queue) tryDelete(ctx context.Context, kv *mvccpb.KeyValue) (*Item, error) {
 	key := string(kv.Key)
 
 	// generate a new key name

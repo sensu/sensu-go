@@ -7,9 +7,9 @@ import (
 	"strings"
 
 	"github.com/gorilla/mux"
+	corev2 "github.com/sensu/core/v2"
 	"github.com/sensu/sensu-go/backend/authentication/jwt"
 	"github.com/sensu/sensu-go/backend/authorization"
-	"github.com/sensu/sensu-go/types"
 )
 
 // AuthorizationAttributes is an HTTP middleware that populates a context for the
@@ -90,13 +90,13 @@ func (a AuthorizationAttributes) Then(next http.Handler) http.Handler {
 		if attrs.Resource == "users" && attrs.ResourceName == attrs.User.Username {
 			// Change the resource to LocalSelfUserResource if a user views itself
 			if attrs.Verb == "get" && vars["subresource"] == "" {
-				attrs.Resource = types.LocalSelfUserResource
+				attrs.Resource = corev2.LocalSelfUserResource
 			}
 
 			// Change the resource to LocalSelfUserResource if a user tries to change
 			// its own password
 			if attrs.Verb == "update" && vars["subresource"] == "password" {
-				attrs.Resource = types.LocalSelfUserResource
+				attrs.Resource = corev2.LocalSelfUserResource
 			}
 		}
 	})
@@ -126,7 +126,7 @@ func GetUser(ctx context.Context, attrs *authorization.Attributes) error {
 	}
 
 	// Add the user to our request info
-	attrs.User = types.User{
+	attrs.User = corev2.User{
 		Username: claims.Subject,
 		Groups:   claims.Groups,
 	}

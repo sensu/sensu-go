@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/sensu/sensu-go/types"
+	corev2 "github.com/sensu/core/v2"
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
@@ -94,7 +94,7 @@ func TestSaveTokens(t *testing.T) {
 
 	config := Load(flags, v)
 
-	tokens := &types.Tokens{Access: "foo"}
+	tokens := &corev2.Tokens{Access: "foo"}
 	_ = config.SaveTokens(tokens)
 	assert.Equal(t, tokens, config.Tokens())
 }
@@ -125,7 +125,7 @@ func TestSaveTokensWithAPIUrlFlag(t *testing.T) {
 
 	config := Load(flags, v)
 
-	tokens := &types.Tokens{Access: "foo"}
+	tokens := &corev2.Tokens{Access: "foo"}
 	require.NoError(t, config.SaveTokens(tokens))
 	assert.Equal(t, tokens, config.Tokens())
 

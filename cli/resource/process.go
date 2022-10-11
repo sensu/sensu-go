@@ -15,8 +15,8 @@ import (
 	corev2 "github.com/sensu/core/v2"
 	"github.com/sensu/sensu-go/cli"
 	"github.com/sensu/sensu-go/cli/client"
-	"github.com/sensu/sensu-go/types"
-	"github.com/sensu/sensu-go/types/compat"
+	"github.com/sensu/types"
+	"github.com/sensu/sensu-go/compat"
 )
 
 // Processor is an interface that processes resources through the API.

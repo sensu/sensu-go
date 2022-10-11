@@ -8,15 +8,15 @@ import (
 	"testing"
 
 	"github.com/sensu/sensu-go/backend/store"
-	"github.com/sensu/sensu-go/types"
+	corev2 "github.com/sensu/core/v2"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 func TestEventFilterStorage(t *testing.T) {
 	testWithEtcd(t, func(s store.Store) {
-		filter := types.FixtureEventFilter("filter1")
-		ctx := context.WithValue(context.Background(), types.NamespaceKey, filter.Namespace)
+		filter := corev2.FixtureEventFilter("filter1")
+		ctx := context.WithValue(context.Background(), corev2.NamespaceKey, filter.Namespace)
 
 		// We should receive an empty slice if no results were found
 		pred := &store.SelectionPredicate{}

@@ -11,7 +11,7 @@ import (
 	cachev2 "github.com/sensu/sensu-go/backend/store/cache/v2"
 	"github.com/sensu/sensu-go/js"
 	"github.com/sensu/sensu-go/token"
-	"github.com/sensu/sensu-go/types/dynamic"
+	"github.com/sensu/types/dynamic"
 )
 
 // matchEntities matches the provided list of entities to the entity attributes

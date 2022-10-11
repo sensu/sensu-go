@@ -6,7 +6,7 @@ import (
 
 	client "github.com/sensu/sensu-go/cli/client/testing"
 	test "github.com/sensu/sensu-go/cli/commands/testing"
-	"github.com/sensu/sensu-go/types"
+	corev2 "github.com/sensu/core/v2"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
@@ -36,7 +36,7 @@ func TestResolveCommand(t *testing.T) {
 			name,
 		)
 		t.Run(testName, func(t *testing.T) {
-			event := types.FixtureEvent("entity", "check")
+			event := corev2.FixtureEvent("entity", "check")
 			cli := test.NewMockCLI()
 
 			client := cli.Client.(*client.MockClient)

@@ -7,9 +7,10 @@ import (
 	"strings"
 	"testing"
 
+	corev2 "github.com/sensu/core/v2"
 	"github.com/sensu/sensu-go/cli/client/config"
 	"github.com/sensu/sensu-go/cli/elements/list"
-	"github.com/sensu/sensu-go/types"
+	"github.com/sensu/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -30,7 +31,7 @@ func TestPrintJSON(t *testing.T) {
 func TestPrintWrappedJSON(t *testing.T) {
 	assert := assert.New(t)
 
-	check := types.FixtureCheckConfig("check")
+	check := corev2.FixtureCheckConfig("check")
 	check.Command = "echo foo >> output.txt"
 
 	w := types.WrapResource(check)
@@ -45,8 +46,8 @@ func TestPrintWrappedJSON(t *testing.T) {
 func TestPrintWrappedJSONList(t *testing.T) {
 	assert := assert.New(t)
 
-	check1 := types.FixtureCheckConfig("check1")
-	check2 := types.FixtureCheckConfig("check2")
+	check1 := corev2.FixtureCheckConfig("check1")
+	check2 := corev2.FixtureCheckConfig("check2")
 
 	w1 := types.WrapResource(check1)
 	w2 := types.WrapResource(check2)
@@ -58,7 +59,7 @@ func TestPrintWrappedJSONList(t *testing.T) {
 
 	buf := new(bytes.Buffer)
 
-	require.NoError(t, PrintWrappedJSONList([]types.Resource{check1, check2}, buf))
+	require.NoError(t, PrintWrappedJSONList([]corev2.Resource{check1, check2}, buf))
 	// compare each string individually
 	output3 := strings.Split(buf.String(), "}\n{")
 	assert.JSONEq(string(output1), output3[0]+"}")
@@ -68,7 +69,7 @@ func TestPrintWrappedJSONList(t *testing.T) {
 func TestPrintFormatted(t *testing.T) {
 	assert := assert.New(t)
 
-	check := types.FixtureCheckConfig("check")
+	check := corev2.FixtureCheckConfig("check")
 
 	w := types.WrapResource(check)
 

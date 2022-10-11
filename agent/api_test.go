@@ -9,7 +9,7 @@ import (
 	"testing"
 
 	"github.com/gorilla/mux"
-	"github.com/sensu/sensu-go/types"
+	corev2 "github.com/sensu/core/v2"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -31,14 +31,14 @@ func TestAddEvent(t *testing.T) {
 		},
 		{
 			"with an event without an entity",
-			types.Event{
-				Check: types.FixtureCheck("check_foo"),
+			corev2.Event{
+				Check: corev2.FixtureCheck("check_foo"),
 			},
 			http.StatusAccepted,
 		},
 		{
 			"with a proper event",
-			types.FixtureEvent("foo", "check_foo"),
+			corev2.FixtureEvent("foo", "check_foo"),
 			http.StatusAccepted,
 		},
 	}

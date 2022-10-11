@@ -7,7 +7,7 @@ import (
 	time "github.com/echlebek/timeproxy"
 
 	"github.com/prometheus/common/model"
-	"github.com/sensu/sensu-go/types"
+	corev2 "github.com/sensu/core/v2"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -103,7 +103,7 @@ func TestParseProm(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.metric, func(t *testing.T) {
-			event := types.FixtureEvent("test", "test")
+			event := corev2.FixtureEvent("test", "test")
 			event.Check.Output = tc.metric
 			prom := ParseProm(event)
 			if !tc.timeInconclusive {
@@ -121,7 +121,7 @@ func TestParsePromTags(t *testing.T) {
 		metric           string
 		expectedFormat   PromList
 		timeInconclusive bool
-		outputMetricTags []*types.MetricTag
+		outputMetricTags []*corev2.MetricTag
 	}{
 		{
 			metric: "go_gc_duration_seconds{quantile=\"0\"} 3.3722e-05\n",
@@ -137,7 +137,7 @@ func TestParsePromTags(t *testing.T) {
 					Timestamp: model.TimeFromUnix(ts),
 				},
 			},
-			outputMetricTags: []*types.MetricTag{
+			outputMetricTags: []*corev2.MetricTag{
 				{
 					Name:  "instance",
 					Value: "hostname",
@@ -171,7 +171,7 @@ func TestParsePromTags(t *testing.T) {
 					Timestamp: model.TimeFromUnix(ts),
 				},
 			},
-			outputMetricTags: []*types.MetricTag{},
+			outputMetricTags: []*corev2.MetricTag{},
 		},
 		{
 			metric: "go_gc_duration_seconds{quantile=\"0\"} 3.3722e-05\n",
@@ -188,7 +188,7 @@ func TestParsePromTags(t *testing.T) {
 					Timestamp: model.TimeFromUnix(ts),
 				},
 			},
-			outputMetricTags: []*types.MetricTag{
+			outputMetricTags: []*corev2.MetricTag{
 				{
 					Name:  "foo",
 					Value: "bar",
@@ -203,7 +203,7 @@ func TestParsePromTags(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.metric, func(t *testing.T) {
-			event := types.FixtureEvent("test", "test")
+			event := corev2.FixtureEvent("test", "test")
 			event.Check.Output = tc.metric
 			event.Check.OutputMetricTags = tc.outputMetricTags
 			prom := ParseProm(event)
@@ -220,7 +220,7 @@ func TestTransformProm(t *testing.T) {
 
 	testCases := []struct {
 		metric         PromList
-		expectedFormat []*types.MetricPoint
+		expectedFormat []*corev2.MetricPoint
 	}{
 		{
 			metric: PromList{
@@ -233,12 +233,12 @@ func TestTransformProm(t *testing.T) {
 					Timestamp: model.TimeFromUnix(ts),
 				},
 			},
-			expectedFormat: []*types.MetricPoint{
+			expectedFormat: []*corev2.MetricPoint{
 				{
 					Name:      "go_gc_duration_seconds",
 					Value:     3.3722e-05,
 					Timestamp: ts,
-					Tags: []*types.MetricTag{
+					Tags: []*corev2.MetricTag{
 						{
 							Name:  "quantile",
 							Value: "0",
@@ -257,12 +257,12 @@ func TestTransformProm(t *testing.T) {
 					Timestamp: model.TimeFromUnix(ts),
 				},
 			},
-			expectedFormat: []*types.MetricPoint{
+			expectedFormat: []*corev2.MetricPoint{
 				{
 					Name:      "go_memstats_alloc_bytes_total",
 					Value:     4.095146016e+09,
 					Timestamp: ts,
-					Tags:      []*types.MetricTag{},
+					Tags:      []*corev2.MetricTag{},
 				},
 			},
 		},

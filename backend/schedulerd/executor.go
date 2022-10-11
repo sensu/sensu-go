@@ -10,10 +10,10 @@ import (
 	corev2 "github.com/sensu/core/v2"
 	corev3 "github.com/sensu/core/v3"
 	"github.com/sensu/sensu-go/backend/messaging"
+	"github.com/sensu/sensu-go/backend/queue"
 	"github.com/sensu/sensu-go/backend/secrets"
 	"github.com/sensu/sensu-go/backend/store"
 	cachev2 "github.com/sensu/sensu-go/backend/store/cache/v2"
-	"github.com/sensu/sensu-go/types"
 	stringsutil "github.com/sensu/sensu-go/util/strings"
 	"github.com/sirupsen/logrus"
 )
@@ -137,7 +137,7 @@ func hookIsRelevant(hook *corev2.HookConfig, check *corev2.CheckConfig) bool {
 // AdhocRequestExecutor takes new check requests from the adhoc queue and runs
 // them
 type AdhocRequestExecutor struct {
-	adhocQueue             types.Queue
+	adhocQueue             queue.Interface
 	store                  store.Store
 	bus                    messaging.MessageBus
 	ctx                    context.Context
@@ -148,7 +148,7 @@ type AdhocRequestExecutor struct {
 }
 
 // NewAdhocRequestExecutor returns a new AdhocRequestExecutor.
-func NewAdhocRequestExecutor(ctx context.Context, store store.Store, queue types.Queue, bus messaging.MessageBus, cache *cachev2.Resource, secretsProviderManager *secrets.ProviderManager) *AdhocRequestExecutor {
+func NewAdhocRequestExecutor(ctx context.Context, store store.Store, queue queue.Interface, bus messaging.MessageBus, cache *cachev2.Resource, secretsProviderManager *secrets.ProviderManager) *AdhocRequestExecutor {
 	ctx, cancel := context.WithCancel(ctx)
 	executor := &AdhocRequestExecutor{
 		adhocQueue:             queue,

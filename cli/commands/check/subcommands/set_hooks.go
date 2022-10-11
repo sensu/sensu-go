@@ -8,7 +8,7 @@ import (
 	"github.com/sensu/sensu-go/cli"
 	"github.com/sensu/sensu-go/cli/commands/flags"
 	"github.com/sensu/sensu-go/cli/commands/helpers"
-	"github.com/sensu/sensu-go/types"
+	corev2 "github.com/sensu/core/v2"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 )
@@ -57,7 +57,7 @@ func SetCheckHooksCommand(cli *cli.SensuCli) *cobra.Command {
 			}
 
 			// Instantiate check hook from input
-			checkHook := types.HookList{}
+			checkHook := corev2.HookList{}
 			opts.Copy(&checkHook)
 
 			// Ensure that the given checkHook is valid
@@ -121,7 +121,7 @@ func (opts *checkHookOpts) administerQuestionnaire() error {
 	return survey.Ask(qs, opts)
 }
 
-func (opts *checkHookOpts) Copy(checkHook *types.HookList) {
+func (opts *checkHookOpts) Copy(checkHook *corev2.HookList) {
 	checkHook.Type = opts.Type
 	checkHook.Hooks = helpers.SafeSplitCSV(opts.Hooks)
 }

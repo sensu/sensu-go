@@ -3,7 +3,7 @@ package store
 import (
 	"context"
 
-	"github.com/sensu/sensu-go/types"
+	corev2 "github.com/sensu/core/v2"
 )
 
 const (
@@ -16,7 +16,7 @@ const (
 
 // NewNamespaceFromContext creates a new Namespace from a context.
 func NewNamespaceFromContext(ctx context.Context) string {
-	if value := ctx.Value(types.NamespaceKey); value != nil {
+	if value := ctx.Value(corev2.NamespaceKey); value != nil {
 		return value.(string)
 	}
 	return ""
@@ -24,10 +24,10 @@ func NewNamespaceFromContext(ctx context.Context) string {
 
 // NamespaceContext returns a context populated with the provided namespace.
 func NamespaceContext(ctx context.Context, namespace string) context.Context {
-	return context.WithValue(ctx, types.NamespaceKey, namespace)
+	return context.WithValue(ctx, corev2.NamespaceKey, namespace)
 }
 
 // NewNamespaceFromResource creates a new Namespace from a MultitenantResource.
-func NewNamespaceFromResource(resource types.MultitenantResource) string {
+func NewNamespaceFromResource(resource corev2.MultitenantResource) string {
 	return resource.GetNamespace()
 }

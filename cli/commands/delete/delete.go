@@ -9,8 +9,8 @@ import (
 	"github.com/sensu/sensu-go/cli/client"
 	"github.com/sensu/sensu-go/cli/commands/helpers"
 	"github.com/sensu/sensu-go/cli/resource"
-	"github.com/sensu/sensu-go/types"
-	"github.com/sensu/sensu-go/types/compat"
+	"github.com/sensu/sensu-go/compat"
+	"github.com/sensu/types"
 	"github.com/spf13/cobra"
 )
 

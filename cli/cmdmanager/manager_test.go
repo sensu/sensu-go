@@ -19,7 +19,7 @@ import (
 	"github.com/sensu/sensu-go/bonsai"
 	"github.com/sensu/sensu-go/testing/mockassetgetter"
 	"github.com/sensu/sensu-go/testing/mockexecutor"
-	"github.com/sensu/sensu-go/types"
+	"github.com/sensu/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	bolt "go.etcd.io/bbolt"

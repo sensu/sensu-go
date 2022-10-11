@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	"github.com/sensu/sensu-go/testing/mockstore"
-	"github.com/sensu/sensu-go/types"
+	corev2 "github.com/sensu/core/v2"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -23,15 +23,15 @@ func TestNewHealthController(t *testing.T) {
 func TestGetClusterHealth(t *testing.T) {
 	testCases := []struct {
 		name     string
-		response *types.HealthResponse
+		response *corev2.HealthResponse
 	}{
 		{
 			name:     "Healthy cluster",
-			response: types.FixtureHealthResponse(true),
+			response: corev2.FixtureHealthResponse(true),
 		},
 		{
 			name:     "Unhealthy cluster",
-			response: types.FixtureHealthResponse(false),
+			response: corev2.FixtureHealthResponse(false),
 		},
 	}
 

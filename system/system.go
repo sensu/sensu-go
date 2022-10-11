@@ -16,7 +16,6 @@ import (
 	"sync"
 
 	corev2 "github.com/sensu/core/v2"
-	"github.com/sensu/sensu-go/types"
 	"github.com/shirou/gopsutil/v3/host"
 	shirounet "github.com/shirou/gopsutil/v3/net"
 )
@@ -32,13 +31,13 @@ type azureMetadata struct {
 
 // Info describes the local system, hostname, OS, platform, platform
 // family, platform version, and network interfaces.
-func Info() (types.System, error) {
+func Info() (corev2.System, error) {
 	info, err := host.Info()
 	if err != nil {
-		return types.System{}, err
+		return corev2.System{}, err
 	}
 
-	system := types.System{
+	system := corev2.System{
 		Arch:            runtime.GOARCH,
 		ARMVersion:      getARMVersion(),
 		FloatType:       gomips,
@@ -259,17 +258,17 @@ func dialAzure(ctx context.Context, wg *sync.WaitGroup) <-chan string {
 
 // NetworkInfo describes the local network interfaces, including their
 // names (e.g. eth0), MACs (if available), and addresses.
-func NetworkInfo() (types.Network, error) {
+func NetworkInfo() (corev2.Network, error) {
 	interfaces, err := shirounet.Interfaces()
 
-	network := types.Network{}
+	network := corev2.Network{}
 
 	if err != nil {
 		return network, err
 	}
 
 	for _, i := range interfaces {
-		nInterface := types.NetworkInterface{
+		nInterface := corev2.NetworkInterface{
 			Name: i.Name,
 			MAC:  i.HardwareAddr,
 		}

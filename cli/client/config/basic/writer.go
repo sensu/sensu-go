@@ -7,7 +7,7 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/sensu/sensu-go/types"
+	corev2 "github.com/sensu/core/v2"
 )
 
 // SaveAPIUrl saves the API URL into a configuration file
@@ -46,7 +46,7 @@ func (c *Config) SaveTimeout(timeout time.Duration) error {
 }
 
 // SaveTokens saves the JWT into a configuration file
-func (c *Config) SaveTokens(tokens *types.Tokens) error {
+func (c *Config) SaveTokens(tokens *corev2.Tokens) error {
 	// Update the configuration loaded in memory
 	c.Cluster.Tokens = tokens
 

@@ -1,6 +1,6 @@
 package globalid
 
-import "github.com/sensu/sensu-go/types"
+import corev2 "github.com/sensu/core/v2"
 
 //
 // Cluster Role Bindings
@@ -13,7 +13,7 @@ var ClusterRoleBindingTranslator = commonTranslator{
 	encodeFunc: standardEncoder(clusterRoleBindingName, "Name"),
 	decodeFunc: standardDecoder,
 	isResponsibleFunc: func(record interface{}) bool {
-		_, ok := record.(*types.ClusterRoleBinding)
+		_, ok := record.(*corev2.ClusterRoleBinding)
 		return ok
 	},
 }

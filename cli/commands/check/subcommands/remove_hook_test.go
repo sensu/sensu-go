@@ -6,7 +6,7 @@ import (
 
 	client "github.com/sensu/sensu-go/cli/client/testing"
 	test "github.com/sensu/sensu-go/cli/commands/testing"
-	"github.com/sensu/sensu-go/types"
+	corev2 "github.com/sensu/core/v2"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
@@ -40,7 +40,7 @@ func TestRemoveCheckHookCommandRunEClosureWithFlags(t *testing.T) {
 	cli := test.NewMockCLI()
 	client := cli.Client.(*client.MockClient)
 	client.On("RemoveCheckHook", mock.Anything, "non-zero", "hook1").Return(nil)
-	client.On("FetchCheck", "name").Return(types.FixtureCheckConfig("name"), nil)
+	client.On("FetchCheck", "name").Return(corev2.FixtureCheckConfig("name"), nil)
 
 	cmd := RemoveCheckHookCommand(cli)
 	out, err := test.RunCmd(cmd, []string{"name", "non-zero", "hook1"})
@@ -55,7 +55,7 @@ func TestRemoveCheckHookCommandRunEClosureWithServerErr(t *testing.T) {
 	cli := test.NewMockCLI()
 	client := cli.Client.(*client.MockClient)
 	client.On("RemoveCheckHook", mock.Anything, "non-zero", "hook1").Return(errors.New("oh noes"))
-	client.On("FetchCheck", "name").Return(types.FixtureCheckConfig("name"), nil)
+	client.On("FetchCheck", "name").Return(corev2.FixtureCheckConfig("name"), nil)
 
 	cmd := RemoveCheckHookCommand(cli)
 	out, err := test.RunCmd(cmd, []string{"name", "non-zero", "hook1"})

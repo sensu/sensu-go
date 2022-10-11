@@ -11,7 +11,7 @@ import (
 	corev2 "github.com/sensu/core/v2"
 	corev3 "github.com/sensu/core/v3"
 	"github.com/sensu/sensu-go/backend/store/v2/wrap"
-	"github.com/sensu/sensu-go/types"
+	"github.com/sensu/types"
 )
 
 func init() {

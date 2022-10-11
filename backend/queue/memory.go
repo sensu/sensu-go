@@ -5,8 +5,6 @@ import (
 	"strings"
 	"sync"
 	"time"
-
-	"github.com/sensu/sensu-go/types"
 )
 
 // NewMemoryGetter creates a new MemoryGetter.
@@ -20,7 +18,7 @@ type MemoryGetter struct {
 }
 
 // GetQueue gets a Memory queue.
-func (m *MemoryGetter) GetQueue(path ...string) types.Queue {
+func (m *MemoryGetter) GetQueue(path ...string) Interface {
 	key := strings.Join(path, "/")
 	q, ok := m.data[key]
 	if !ok {
@@ -70,7 +68,7 @@ func (m *MemoryItem) Nack(context.Context) error {
 }
 
 // Dequeue ...
-func (m *Memory) Dequeue(context.Context) (types.QueueItem, error) {
+func (m *Memory) Dequeue(context.Context) (QueueItem, error) {
 	// cheesy blocking algo
 	var val string
 	for {

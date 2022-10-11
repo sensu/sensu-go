@@ -8,8 +8,8 @@ import (
 
 	"github.com/sirupsen/logrus"
 
+	corev2 "github.com/sensu/core/v2"
 	"github.com/sensu/sensu-go/backend/authentication/jwt"
-	"github.com/sensu/sensu-go/types"
 )
 
 var (
@@ -58,7 +58,7 @@ func (m RefreshToken) Then(next http.Handler) http.Handler {
 		}
 
 		decoder := json.NewDecoder(r.Body)
-		payload := &types.Tokens{}
+		payload := &corev2.Tokens{}
 		err = decoder.Decode(payload)
 		if err != nil {
 			logger.WithError(err).Error("could not decode the refresh token")
@@ -93,9 +93,9 @@ func (m RefreshToken) Then(next http.Handler) http.Handler {
 			return
 		}
 
-		ctx := context.WithValue(r.Context(), types.AccessTokenClaims, accessClaims)
-		ctx = context.WithValue(ctx, types.RefreshTokenClaims, refreshClaims)
-		ctx = context.WithValue(ctx, types.RefreshTokenString, payload.Refresh)
+		ctx := context.WithValue(r.Context(), corev2.AccessTokenClaims, accessClaims)
+		ctx = context.WithValue(ctx, corev2.RefreshTokenClaims, refreshClaims)
+		ctx = context.WithValue(ctx, corev2.RefreshTokenString, payload.Refresh)
 
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})

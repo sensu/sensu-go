@@ -12,7 +12,7 @@ import (
 	client "github.com/sensu/sensu-go/cli/client/testing"
 	"github.com/sensu/sensu-go/cli/commands/root"
 	test "github.com/sensu/sensu-go/cli/commands/testing"
-	"github.com/sensu/sensu-go/types"
+	corev2 "github.com/sensu/core/v2"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -42,10 +42,10 @@ func TestCommandRunEClosureWithFlags(t *testing.T) {
 	mockConfig := cli.Config.(*client.MockConfig)
 	mockConfig.On("APIUrl").Return("http://127.0.0.1:8080")
 	mockConfig.On("SaveAPIUrl", mock.Anything).Return(nil)
-	mockClient.On("CreateAccessToken", mock.Anything, mock.Anything, mock.Anything).Return(&types.Tokens{}, nil)
+	mockClient.On("CreateAccessToken", mock.Anything, mock.Anything, mock.Anything).Return(&corev2.Tokens{}, nil)
 	mockConfig.On("SaveTokens", mock.Anything).Return(nil)
 	mockConfig.On("SaveFormat", mock.Anything).Return(nil)
-	mockClient.On("FetchUser", mock.Anything).Return(&types.User{}, nil)
+	mockClient.On("FetchUser", mock.Anything).Return(&corev2.User{}, nil)
 	mockConfig.On("SaveNamespace", mock.Anything).Return(nil)
 	mockConfig.On("SaveInsecureSkipTLSVerify", mock.Anything).Return(nil)
 	mockConfig.On("SaveTrustedCAFile", mock.Anything).Return(nil)

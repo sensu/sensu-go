@@ -8,14 +8,14 @@ import (
 	"testing"
 
 	"github.com/sensu/sensu-go/backend/store"
-	"github.com/sensu/sensu-go/types"
+	corev2 "github.com/sensu/core/v2"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestKeepaliveStorage(t *testing.T) {
 	testWithEtcd(t, func(store store.Store) {
-		entity := types.FixtureEntity("entity")
-		ctx := context.WithValue(context.Background(), types.NamespaceKey, entity.Namespace)
+		entity := corev2.FixtureEntity("entity")
+		ctx := context.WithValue(context.Background(), corev2.NamespaceKey, entity.Namespace)
 
 		err := store.UpdateFailingKeepalive(ctx, entity, 1)
 		assert.NoError(t, err)

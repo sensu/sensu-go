@@ -10,7 +10,6 @@ import (
 	"github.com/sensu/sensu-go/backend/messaging"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/system"
-	"github.com/sensu/sensu-go/types"
 )
 
 type eventInfo struct {
@@ -52,7 +51,7 @@ func (br *BackendResource) EnsureBackendResources(ctx context.Context) error {
 	}
 
 	if ns == nil {
-		err = br.nsStore.CreateNamespace(ctx, &types.Namespace{Name: systemNamespaceName})
+		err = br.nsStore.CreateNamespace(ctx, &corev2.Namespace{Name: systemNamespaceName})
 		if err != nil {
 			return err
 		}

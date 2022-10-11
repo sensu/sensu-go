@@ -9,15 +9,15 @@ import (
 	"testing"
 	"time"
 
+	corev2 "github.com/sensu/core/v2"
 	"github.com/sensu/sensu-go/transport"
-	"github.com/sensu/sensu-go/types"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestEnvVars(t *testing.T) {
-	checkConfig := types.FixtureCheckConfig("check")
+	checkConfig := corev2.FixtureCheckConfig("check")
 	checkConfig.EnvVars = []string{"FOO=BAR"}
-	request := &types.CheckRequest{Config: checkConfig, Issued: time.Now().Unix()}
+	request := &corev2.CheckRequest{Config: checkConfig, Issued: time.Now().Unix()}
 	checkConfig.Stdin = true
 	checkConfig.Command = "echo $FOO"
 
@@ -33,7 +33,7 @@ func TestEnvVars(t *testing.T) {
 	entity := agent.getAgentEntity()
 	agent.executeCheck(context.Background(), request, entity)
 	msg := <-ch
-	event := &types.Event{}
+	event := &corev2.Event{}
 	assert.NoError(t, json.Unmarshal(msg.Payload, event))
 	assert.NotZero(t, event.Timestamp)
 	assert.Equal(t, event.Check.Output, "BAR\n")

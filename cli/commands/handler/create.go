@@ -7,7 +7,7 @@ import (
 	"github.com/sensu/sensu-go/cli"
 	"github.com/sensu/sensu-go/cli/commands/flags"
 	"github.com/sensu/sensu-go/cli/commands/helpers"
-	"github.com/sensu/sensu-go/types"
+	corev2 "github.com/sensu/core/v2"
 	"github.com/spf13/cobra"
 )
 
@@ -40,7 +40,7 @@ func CreateCommand(cli *cli.SensuCli) *cobra.Command {
 				opts.withFlags(cmd.Flags())
 			}
 
-			handler := types.Handler{}
+			handler := corev2.Handler{}
 			opts.Copy(&handler)
 
 			if err := handler.Validate(); err != nil {

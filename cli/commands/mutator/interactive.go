@@ -6,7 +6,7 @@ import (
 
 	"github.com/AlecAivazis/survey/v2"
 	"github.com/sensu/sensu-go/cli/commands/helpers"
-	"github.com/sensu/sensu-go/types"
+	corev2 "github.com/sensu/core/v2"
 	"github.com/spf13/pflag"
 )
 
@@ -26,7 +26,7 @@ func newMutatorOpts() *mutatorOpts {
 	return &opts
 }
 
-func (opts *mutatorOpts) withMutator(mutator *types.Mutator) {
+func (opts *mutatorOpts) withMutator(mutator *corev2.Mutator) {
 	opts.Name = mutator.Name
 	opts.Namespace = mutator.Namespace
 	opts.Type = mutator.Type
@@ -120,7 +120,7 @@ func (opts *mutatorOpts) administerQuestionnaire(editing bool, askOpts ...survey
 	return survey.Ask(qs, opts, askOpts...)
 }
 
-func (opts *mutatorOpts) Copy(mutator *types.Mutator) {
+func (opts *mutatorOpts) Copy(mutator *corev2.Mutator) {
 	mutator.Name = opts.Name
 	mutator.Namespace = opts.Namespace
 	mutator.Type = opts.Type

@@ -13,7 +13,6 @@ import (
 	"github.com/sensu/sensu-go/backend/authentication/providers/basic"
 	realStore "github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/testing/mockstore"
-	"github.com/sensu/sensu-go/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
@@ -32,7 +31,7 @@ func TestLoginInvalidCredentials(t *testing.T) {
 	store := &mockstore.MockStore{}
 	a := authenticationRouter(store)
 
-	user := types.FixtureUser("foo")
+	user := corev2.FixtureUser("foo")
 	store.
 		On("AuthenticateUser", mock.Anything, "foo", "P@ssw0rd!").
 		Return(user, fmt.Errorf("error"))
@@ -48,7 +47,7 @@ func TestLoginSuccessful(t *testing.T) {
 	store := &mockstore.MockStore{}
 	a := authenticationRouter(store)
 
-	user := types.FixtureUser("foo")
+	user := corev2.FixtureUser("foo")
 	store.
 		On("AuthenticateUser", mock.Anything, "foo", "P@ssw0rd!").
 		Return(user, nil)
@@ -61,7 +60,7 @@ func TestLoginSuccessful(t *testing.T) {
 
 	// We should have the access token
 	body := res.Body.Bytes()
-	response := &types.Tokens{}
+	response := &corev2.Tokens{}
 	err := json.Unmarshal(body, &response)
 
 	assert.NoError(t, err)
@@ -84,7 +83,7 @@ func TestTestInvalidCredentials(t *testing.T) {
 	store := &mockstore.MockStore{}
 	a := authenticationRouter(store)
 
-	user := types.FixtureUser("foo")
+	user := corev2.FixtureUser("foo")
 	store.
 		On("AuthenticateUser", mock.Anything, "foo", "P@ssw0rd!").
 		Return(user, fmt.Errorf("error"))
@@ -100,7 +99,7 @@ func TestTestSuccessful(t *testing.T) {
 	store := &mockstore.MockStore{}
 	a := authenticationRouter(store)
 
-	user := types.FixtureUser("foo")
+	user := corev2.FixtureUser("foo")
 	store.
 		On("AuthenticateUser", mock.Anything, "foo", "P@ssw0rd!").
 		Return(user, nil)

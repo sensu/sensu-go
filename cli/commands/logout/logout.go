@@ -5,7 +5,7 @@ import (
 	"fmt"
 
 	"github.com/sensu/sensu-go/cli"
-	"github.com/sensu/sensu-go/types"
+	corev2 "github.com/sensu/core/v2"
 	"github.com/spf13/cobra"
 )
 
@@ -27,7 +27,7 @@ func Command(cli *cli.SensuCli) *cobra.Command {
 			}
 
 			// Remove the configured tokens from the local configuration file
-			if err := cli.Config.SaveTokens(&types.Tokens{}); err != nil {
+			if err := cli.Config.SaveTokens(&corev2.Tokens{}); err != nil {
 				return err
 			}
 

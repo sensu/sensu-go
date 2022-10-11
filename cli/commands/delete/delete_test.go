@@ -9,7 +9,7 @@ import (
 
 	"text/template"
 
-	"github.com/sensu/sensu-go/types"
+	corev2 "github.com/sensu/core/v2"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
@@ -32,9 +32,9 @@ func mustMarshal(t interface{}) string {
 }
 
 var (
-	fixtureCheck = types.FixtureCheck("foo")
-	fixtureAsset = types.FixtureAsset("bar")
-	fixtureHook  = types.FixtureHook("baz")
+	fixtureCheck = corev2.FixtureCheck("foo")
+	fixtureAsset = corev2.FixtureAsset("bar")
+	fixtureHook  = corev2.FixtureHook("baz")
 )
 
 var resources = struct {

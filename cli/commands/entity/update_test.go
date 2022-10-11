@@ -7,7 +7,7 @@ import (
 	"github.com/sensu/sensu-go/cli"
 	client "github.com/sensu/sensu-go/cli/client/testing"
 	test "github.com/sensu/sensu-go/cli/commands/testing"
-	"github.com/sensu/sensu-go/types"
+	corev2 "github.com/sensu/core/v2"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
@@ -37,7 +37,7 @@ func TestUpdateCommand(t *testing.T) {
 		)
 		t.Run(testName, func(t *testing.T) {
 			test.WithMockCLI(t, func(cli *cli.SensuCli) {
-				check := types.FixtureEntity("foo")
+				check := corev2.FixtureEntity("foo")
 
 				client := cli.Client.(*client.MockClient)
 				client.On(

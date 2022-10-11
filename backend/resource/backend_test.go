@@ -9,7 +9,6 @@ import (
 	corev2 "github.com/sensu/core/v2"
 	"github.com/sensu/sensu-go/backend/messaging"
 	"github.com/sensu/sensu-go/backend/store"
-	"github.com/sensu/sensu-go/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
@@ -18,7 +17,7 @@ type mockEntityStore struct {
 	mock.Mock
 }
 
-func (m *mockEntityStore) DeleteEntity(_ context.Context, _ *types.Entity) error {
+func (m *mockEntityStore) DeleteEntity(_ context.Context, _ *corev2.Entity) error {
 	panic("should not be called")
 }
 
@@ -26,15 +25,15 @@ func (m *mockEntityStore) DeleteEntityByName(_ context.Context, _ string) error 
 	panic("should not be called")
 }
 
-func (m *mockEntityStore) GetEntities(_ context.Context, _ *store.SelectionPredicate) ([]*types.Entity, error) {
+func (m *mockEntityStore) GetEntities(_ context.Context, _ *store.SelectionPredicate) ([]*corev2.Entity, error) {
 	panic("should not be called")
 }
 
-func (m *mockEntityStore) GetEntityByName(_ context.Context, _ string) (*types.Entity, error) {
+func (m *mockEntityStore) GetEntityByName(_ context.Context, _ string) (*corev2.Entity, error) {
 	panic("should not be called")
 }
 
-func (m *mockEntityStore) UpdateEntity(ctx context.Context, entity *types.Entity) error {
+func (m *mockEntityStore) UpdateEntity(ctx context.Context, entity *corev2.Entity) error {
 	args := m.Called(ctx, entity)
 	return args.Error(0)
 }
@@ -43,7 +42,7 @@ type mockNamespaceStore struct {
 	mock.Mock
 }
 
-func (m *mockNamespaceStore) CreateNamespace(ctx context.Context, namespace *types.Namespace) error {
+func (m *mockNamespaceStore) CreateNamespace(ctx context.Context, namespace *corev2.Namespace) error {
 	args := m.Called(ctx, namespace)
 	return args.Error(0)
 }
@@ -52,16 +51,16 @@ func (m *mockNamespaceStore) DeleteNamespace(_ context.Context, _ string) error 
 	panic("should not be called")
 }
 
-func (m *mockNamespaceStore) ListNamespaces(_ context.Context, _ *store.SelectionPredicate) ([]*types.Namespace, error) {
+func (m *mockNamespaceStore) ListNamespaces(_ context.Context, _ *store.SelectionPredicate) ([]*corev2.Namespace, error) {
 	panic("should not be called")
 }
 
-func (m *mockNamespaceStore) GetNamespace(ctx context.Context, name string) (*types.Namespace, error) {
+func (m *mockNamespaceStore) GetNamespace(ctx context.Context, name string) (*corev2.Namespace, error) {
 	args := m.Called(ctx, name)
-	return args.Get(0).(*types.Namespace), args.Error(1)
+	return args.Get(0).(*corev2.Namespace), args.Error(1)
 }
 
-func (m *mockNamespaceStore) UpdateNamespace(_ context.Context, _ *types.Namespace) error {
+func (m *mockNamespaceStore) UpdateNamespace(_ context.Context, _ *corev2.Namespace) error {
 	panic("should not be called")
 }
 

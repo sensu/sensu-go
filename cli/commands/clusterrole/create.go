@@ -7,7 +7,7 @@ import (
 	"github.com/sensu/core/v2"
 	"github.com/sensu/sensu-go/cli"
 	"github.com/sensu/sensu-go/cli/commands/helpers"
-	"github.com/sensu/sensu-go/types"
+	corev2 "github.com/sensu/core/v2"
 	"github.com/spf13/cobra"
 )
 
@@ -23,14 +23,14 @@ func CreateCommand(cli *cli.SensuCli) *cobra.Command {
 				return err
 			}
 
-			clusterRole := &types.ClusterRole{
+			clusterRole := &corev2.ClusterRole{
 				ObjectMeta: v2.ObjectMeta{
 					Name: args[0],
 				},
 			}
 
 			// Retrieve the rule from the flags
-			rule := types.Rule{}
+			rule := corev2.Rule{}
 
 			verbs, err := cmd.Flags().GetStringSlice("verb")
 			if err != nil {
@@ -57,7 +57,7 @@ func CreateCommand(cli *cli.SensuCli) *cobra.Command {
 			rule.ResourceNames = resourceNames
 
 			// Assign the rule to our cluster role and validate it
-			clusterRole.Rules = []types.Rule{rule}
+			clusterRole.Rules = []corev2.Rule{rule}
 			if err := clusterRole.Validate(); err != nil {
 				return err
 			}

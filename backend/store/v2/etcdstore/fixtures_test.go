@@ -10,7 +10,7 @@ import (
 	"github.com/sensu/sensu-go/backend/store"
 	etcdstore "github.com/sensu/sensu-go/backend/store/etcd"
 	etcdstorev2 "github.com/sensu/sensu-go/backend/store/v2/etcdstore"
-	"github.com/sensu/sensu-go/types"
+	"github.com/sensu/types"
 	"github.com/sirupsen/logrus"
 )
 

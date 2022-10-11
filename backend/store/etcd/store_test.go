@@ -14,7 +14,7 @@ import (
 	"github.com/sensu/sensu-go/backend/etcd"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/backend/store/etcd/kvc"
-	"github.com/sensu/sensu-go/types"
+	corev2 "github.com/sensu/core/v2"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.etcd.io/etcd/client/v3"
@@ -29,7 +29,7 @@ func testWithEtcd(t *testing.T, f func(store.Store)) {
 	s := NewStore(client, e.Name())
 
 	// Mock a default namespace
-	require.NoError(t, s.CreateNamespace(context.Background(), types.FixtureNamespace("default")))
+	require.NoError(t, s.CreateNamespace(context.Background(), corev2.FixtureNamespace("default")))
 
 	f(s)
 }
@@ -43,7 +43,7 @@ func testWithEtcdStore(t *testing.T, f func(*Store)) {
 	s := NewStore(client, e.Name())
 
 	// Mock a default namespace
-	require.NoError(t, s.CreateNamespace(context.Background(), types.FixtureNamespace("default")))
+	require.NoError(t, s.CreateNamespace(context.Background(), corev2.FixtureNamespace("default")))
 
 	f(s)
 }
@@ -57,7 +57,7 @@ func testWithEtcdClient(t *testing.T, f func(store.Store, *clientv3.Client)) {
 	s := NewStore(client, e.Name())
 
 	// Mock a default namespace
-	require.NoError(t, s.CreateNamespace(context.Background(), types.FixtureNamespace("default")))
+	require.NoError(t, s.CreateNamespace(context.Background(), corev2.FixtureNamespace("default")))
 
 	f(s, client)
 }
@@ -66,12 +66,12 @@ func TestCreate(t *testing.T) {
 	testWithEtcdStore(t, func(s *Store) {
 		// Creating a namespaced key that does not exist should work
 		obj := &GenericObject{}
-		ctx := context.WithValue(context.Background(), types.NamespaceKey, "default")
+		ctx := context.WithValue(context.Background(), corev2.NamespaceKey, "default")
 		err := Create(ctx, s.client, "/default/foo", "default", obj)
 		assert.NoError(t, err)
 
 		// Creating a wrapped resource should work
-		err = Create(ctx, s.client, "/default/bar", "default", types.Wrapper{Value: obj})
+		err = Create(ctx, s.client, "/default/bar", "default", corev2.Wrapper{Value: obj})
 		assert.NoError(t, err)
 
 		// Creating this same key should return an error that it already exist
@@ -84,7 +84,7 @@ func TestCreate(t *testing.T) {
 		}
 
 		// Creating a namespaced key in a missing namespace should return an error
-		ctx = context.WithValue(context.Background(), types.NamespaceKey, "acme")
+		ctx = context.WithValue(context.Background(), corev2.NamespaceKey, "acme")
 		err = Create(ctx, s.client, "/acme/foo", "acme", obj)
 		switch err := err.(type) {
 		case *store.ErrNamespaceMissing:
@@ -94,7 +94,7 @@ func TestCreate(t *testing.T) {
 		}
 
 		// We should also be able to create a global object
-		ctx = context.WithValue(context.Background(), types.NamespaceKey, "")
+		ctx = context.WithValue(context.Background(), corev2.NamespaceKey, "")
 		err = Create(ctx, s.client, "/foo", "", obj)
 		assert.NoError(t, err)
 
@@ -114,12 +114,12 @@ func TestCreateOrUpdate(t *testing.T) {
 	testWithEtcdStore(t, func(s *Store) {
 		// Creating a namespaced key that does not exist should work
 		obj := &GenericObject{Revision: 1}
-		ctx := context.WithValue(context.Background(), types.NamespaceKey, "default")
+		ctx := context.WithValue(context.Background(), corev2.NamespaceKey, "default")
 		err := CreateOrUpdate(ctx, s.client, "/default/foo", "default", obj)
 		assert.NoError(t, err)
 
 		// Creating a namespaced key in a missing namespace should return an error
-		ctx = context.WithValue(context.Background(), types.NamespaceKey, "acme")
+		ctx = context.WithValue(context.Background(), corev2.NamespaceKey, "acme")
 		err = CreateOrUpdate(ctx, s.client, "/acme/foo", "acme", obj)
 		switch err := err.(type) {
 		case *store.ErrNamespaceMissing:
@@ -139,7 +139,7 @@ func TestCreateOrUpdate(t *testing.T) {
 		assert.NotEqual(t, obj.Revision, result.Revision)
 
 		// We should also be able to create a global object
-		ctx = context.WithValue(context.Background(), types.NamespaceKey, "")
+		ctx = context.WithValue(context.Background(), corev2.NamespaceKey, "")
 		err = CreateOrUpdate(ctx, s.client, "/foo", "", obj)
 		assert.NoError(t, err)
 	})
@@ -148,7 +148,7 @@ func TestCreateOrUpdate(t *testing.T) {
 func TestDelete(t *testing.T) {
 	testWithEtcdStore(t, func(store *Store) {
 		// Deleting a non-existant key should fail
-		ctx := context.WithValue(context.Background(), types.NamespaceKey, "default")
+		ctx := context.WithValue(context.Background(), corev2.NamespaceKey, "default")
 		require.Error(t, Delete(ctx, store.client, "/default/foo"))
 
 		// Create it first
@@ -165,7 +165,7 @@ func TestGet(t *testing.T) {
 	testWithEtcdStore(t, func(store *Store) {
 		// Create a namespaced key
 		obj := &GenericObject{Revision: 1}
-		ctx := context.WithValue(context.Background(), types.NamespaceKey, "default")
+		ctx := context.WithValue(context.Background(), corev2.NamespaceKey, "default")
 		err := Create(ctx, store.client, "/default/foo", "default", obj)
 		assert.NoError(t, err)
 
@@ -177,7 +177,7 @@ func TestGet(t *testing.T) {
 
 		// Create a global key
 		obj2 := &GenericObject{Revision: 2}
-		ctx = context.WithValue(context.Background(), types.NamespaceKey, "")
+		ctx = context.WithValue(context.Background(), corev2.NamespaceKey, "")
 		err = Create(ctx, store.client, "/foo", "", obj2)
 		assert.NoError(t, err)
 
@@ -201,24 +201,24 @@ func getGenericObjectsPath(ctx context.Context, name string) string {
 func TestList(t *testing.T) {
 	testWithEtcdStore(t, func(s *Store) {
 		// Create new namespaces
-		require.NoError(t, s.CreateNamespace(context.Background(), types.FixtureNamespace("acme")))
-		require.NoError(t, s.CreateNamespace(context.Background(), types.FixtureNamespace("acme-devel")))
+		require.NoError(t, s.CreateNamespace(context.Background(), corev2.FixtureNamespace("acme")))
+		require.NoError(t, s.CreateNamespace(context.Background(), corev2.FixtureNamespace("acme-devel")))
 
 		// Create a bunch of keys everywhere
 		obj1 := &GenericObject{ObjectMeta: corev2.ObjectMeta{Name: "obj1", Namespace: "default"}}
-		ctx := context.WithValue(context.Background(), types.NamespaceKey, "default")
+		ctx := context.WithValue(context.Background(), corev2.NamespaceKey, "default")
 		require.NoError(t, Create(ctx, s.client, "/sensu.io/generic/default/obj1", "default", obj1))
 
 		// Let's encode a resources with JSON (instead of Protobuf) to ensure the
 		// List function supports both encoding format
 		obj2 := &GenericObject{ObjectMeta: corev2.ObjectMeta{Name: "obj2", Namespace: "acme"}}
-		ctx = context.WithValue(context.Background(), types.NamespaceKey, "acme")
+		ctx = context.WithValue(context.Background(), corev2.NamespaceKey, "acme")
 		bytes, _ := json.Marshal(obj2)
 		_, err := s.client.Put(ctx, "/sensu.io/generic/acme/obj2", string(bytes))
 		require.NoError(t, err)
 
 		obj3 := &GenericObject{ObjectMeta: corev2.ObjectMeta{Name: "obj3", Namespace: "acme"}}
-		ctx = context.WithValue(context.Background(), types.NamespaceKey, "acme")
+		ctx = context.WithValue(context.Background(), corev2.NamespaceKey, "acme")
 		require.NoError(t, Create(ctx, s.client, "/sensu.io/generic/acme/obj3", "acme", obj3))
 
 		// This object is required to test
@@ -226,13 +226,13 @@ func TestList(t *testing.T) {
 		// sure resources within a namespace, whose name contains an another
 		// namespace as a prefix, are not showing up (e.g. acme & acme-devel)
 		obj4 := &GenericObject{ObjectMeta: corev2.ObjectMeta{Name: "obj4", Namespace: "acme-devel"}}
-		ctx = context.WithValue(context.Background(), types.NamespaceKey, "acme-devel")
+		ctx = context.WithValue(context.Background(), corev2.NamespaceKey, "acme-devel")
 		require.NoError(t, Create(ctx, s.client, "/sensu.io/generic/acme-devel/obj4", "acme-devel", obj4))
 
 		// We should have 1 object when listing keys under the default namespace
 		list := []*GenericObject{}
 		pred := &store.SelectionPredicate{}
-		ctx = context.WithValue(context.Background(), types.NamespaceKey, "default")
+		ctx = context.WithValue(context.Background(), corev2.NamespaceKey, "default")
 		err = List(ctx, s.client, getGenericObjectsPath, &list, pred)
 		require.NoError(t, err)
 		assert.Len(t, list, 1)
@@ -244,7 +244,7 @@ func TestList(t *testing.T) {
 
 		// We should have 2 objects when listing keys under the acme namespace
 		list = []*GenericObject{}
-		ctx = context.WithValue(context.Background(), types.NamespaceKey, "acme")
+		ctx = context.WithValue(context.Background(), corev2.NamespaceKey, "acme")
 		err = List(ctx, s.client, getGenericObjectsPath, &list, pred)
 		require.NoError(t, err)
 		assert.Len(t, list, 2)
@@ -253,7 +253,7 @@ func TestList(t *testing.T) {
 		// We should have 1 object when listing keys under the acme-devel namespace
 		list = []*GenericObject{}
 		pred = &store.SelectionPredicate{}
-		ctx = context.WithValue(context.Background(), types.NamespaceKey, "acme-devel")
+		ctx = context.WithValue(context.Background(), corev2.NamespaceKey, "acme-devel")
 		err = List(ctx, s.client, getGenericObjectsPath, &list, pred)
 		require.NoError(t, err)
 		assert.Len(t, list, 1)
@@ -261,7 +261,7 @@ func TestList(t *testing.T) {
 
 		// We should have 4 objects when listing through all namespaces
 		list = []*GenericObject{}
-		ctx = context.WithValue(context.Background(), types.NamespaceKey, "")
+		ctx = context.WithValue(context.Background(), corev2.NamespaceKey, "")
 		err = List(ctx, s.client, getGenericObjectsPath, &list, pred)
 		require.NoError(t, err)
 		assert.Len(t, list, 4)
@@ -272,7 +272,7 @@ func TestList(t *testing.T) {
 func TestListPagination(t *testing.T) {
 	testWithEtcdStore(t, func(store *Store) {
 		// Create a "testing" namespace in the store
-		if err := store.CreateNamespace(context.Background(), types.FixtureNamespace("testing")); err != nil {
+		if err := store.CreateNamespace(context.Background(), corev2.FixtureNamespace("testing")); err != nil {
 			t.Fatal(err)
 		}
 
@@ -285,13 +285,13 @@ func TestListPagination(t *testing.T) {
 			objectName := fmt.Sprintf("%.2d", i)
 			object := &GenericObject{ObjectMeta: corev2.ObjectMeta{Name: objectName, Namespace: "default"}}
 
-			ctx := context.WithValue(context.Background(), types.NamespaceKey, "default")
+			ctx := context.WithValue(context.Background(), corev2.NamespaceKey, "default")
 			if err := Create(ctx, store.client, getGenericObjectPath(object), "default", object); err != nil {
 				t.Fatal(err)
 			}
 
 			object.Namespace = "testing"
-			ctx = context.WithValue(context.Background(), types.NamespaceKey, "testing")
+			ctx = context.WithValue(context.Background(), corev2.NamespaceKey, "testing")
 			if err := Create(ctx, store.client, getGenericObjectPath(object), "testing", object); err != nil {
 				t.Fatal(err)
 			}
@@ -382,7 +382,7 @@ func TestUpdate(t *testing.T) {
 	testWithEtcdStore(t, func(store *Store) {
 		// Updating a non-existent object should fail
 		obj := &GenericObject{Revision: 1}
-		ctx := context.WithValue(context.Background(), types.NamespaceKey, "default")
+		ctx := context.WithValue(context.Background(), corev2.NamespaceKey, "default")
 		require.Error(t, Update(ctx, store.client, "/default/foo", "default", obj))
 
 		// Create it first
@@ -432,35 +432,35 @@ func TestUpdateWithValue(t *testing.T) {
 func TestCount(t *testing.T) {
 	testWithEtcdStore(t, func(s *Store) {
 		// Create a second namespace
-		require.NoError(t, s.CreateNamespace(context.Background(), types.FixtureNamespace("acme")))
+		require.NoError(t, s.CreateNamespace(context.Background(), corev2.FixtureNamespace("acme")))
 
 		// Create a bunch of keys everywhere
 		obj1 := &GenericObject{ObjectMeta: corev2.ObjectMeta{Name: "obj1", Namespace: "default"}}
-		ctx := context.WithValue(context.Background(), types.NamespaceKey, "default")
+		ctx := context.WithValue(context.Background(), corev2.NamespaceKey, "default")
 		require.NoError(t, Create(ctx, s.client, "/sensu.io/generic/default/obj1", "default", obj1))
 
 		obj2 := &GenericObject{ObjectMeta: corev2.ObjectMeta{Name: "obj2", Namespace: "acme"}}
-		ctx = context.WithValue(context.Background(), types.NamespaceKey, "acme")
+		ctx = context.WithValue(context.Background(), corev2.NamespaceKey, "acme")
 		require.NoError(t, Create(ctx, s.client, "/sensu.io/generic/acme/obj2", "acme", obj2))
 
 		obj3 := &GenericObject{ObjectMeta: corev2.ObjectMeta{Name: "obj3", Namespace: "acme"}}
-		ctx = context.WithValue(context.Background(), types.NamespaceKey, "acme")
+		ctx = context.WithValue(context.Background(), corev2.NamespaceKey, "acme")
 		require.NoError(t, Create(ctx, s.client, "/sensu.io/generic/acme/obj3", "acme", obj3))
 
 		// We should have 1 object when listing keys under the default namespace
-		ctx = context.WithValue(context.Background(), types.NamespaceKey, "default")
+		ctx = context.WithValue(context.Background(), corev2.NamespaceKey, "default")
 		count, err := Count(ctx, s.client, getGenericObjectsPath(ctx, ""))
 		require.NoError(t, err)
 		assert.Equal(t, int64(1), count)
 
 		// We should have 2 objects when listing keys under the acme namespace
-		ctx = context.WithValue(context.Background(), types.NamespaceKey, "acme")
+		ctx = context.WithValue(context.Background(), corev2.NamespaceKey, "acme")
 		count, err = Count(ctx, s.client, getGenericObjectsPath(ctx, ""))
 		require.NoError(t, err)
 		assert.Equal(t, int64(2), count)
 
 		// We should have 3 objects when listing through all namespaces
-		ctx = context.WithValue(context.Background(), types.NamespaceKey, "")
+		ctx = context.WithValue(context.Background(), corev2.NamespaceKey, "")
 		count, err = Count(ctx, s.client, getGenericObjectsPath(ctx, ""))
 		require.NoError(t, err)
 		assert.Equal(t, int64(3), count)

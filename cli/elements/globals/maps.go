@@ -4,11 +4,11 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/sensu/sensu-go/types"
+	corev2 "github.com/sensu/core/v2"
 )
 
 // FormatHookLists formats the Check Hook struct into a string mapping
-func FormatHookLists(hookLists []types.HookList) string {
+func FormatHookLists(hookLists []corev2.HookList) string {
 	hooksString := []string{}
 	for _, hookList := range hookLists {
 		hookString := fmt.Sprintf("%s: [", hookList.Type)

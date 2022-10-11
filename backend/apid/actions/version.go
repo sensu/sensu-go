@@ -2,8 +2,8 @@ package actions
 
 import (
 	corev2 "github.com/sensu/core/v2"
-	"github.com/sensu/sensu-go/types"
 	"github.com/sensu/sensu-go/version"
+	"github.com/sensu/types"
 	etcdVersion "go.etcd.io/etcd/api/v3/version"
 	"golang.org/x/net/context"
 )

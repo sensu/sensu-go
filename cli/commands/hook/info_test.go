@@ -6,7 +6,7 @@ import (
 
 	client "github.com/sensu/sensu-go/cli/client/testing"
 	test "github.com/sensu/sensu-go/cli/commands/testing"
-	"github.com/sensu/sensu-go/types"
+	corev2 "github.com/sensu/core/v2"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -28,7 +28,7 @@ func TestInfoCommandRunEClosure(t *testing.T) {
 
 	cli := test.NewCLI()
 	client := cli.Client.(*client.MockClient)
-	client.On("FetchHook", "in").Return(types.FixtureHookConfig("name-one"), nil)
+	client.On("FetchHook", "in").Return(corev2.FixtureHookConfig("name-one"), nil)
 
 	cmd := InfoCommand(cli)
 	out, err := test.RunCmd(cmd, []string{"in"})
@@ -55,7 +55,7 @@ func TestInfoCommandRunEClosureWithTable(t *testing.T) {
 
 	cli := test.NewCLI()
 	client := cli.Client.(*client.MockClient)
-	client.On("FetchHook", "in").Return(types.FixtureHookConfig("name-one"), nil)
+	client.On("FetchHook", "in").Return(corev2.FixtureHookConfig("name-one"), nil)
 
 	cmd := InfoCommand(cli)
 	require.NoError(t, cmd.Flags().Set("format", "tabular"))
@@ -74,7 +74,7 @@ func TestInfoCommandRunEClosureWithErr(t *testing.T) {
 
 	cli := test.NewCLI()
 	client := cli.Client.(*client.MockClient)
-	client.On("FetchHook", "in").Return(&types.HookConfig{}, errors.New("my-err"))
+	client.On("FetchHook", "in").Return(&corev2.HookConfig{}, errors.New("my-err"))
 
 	cmd := InfoCommand(cli)
 	out, err := test.RunCmd(cmd, []string{"in"})

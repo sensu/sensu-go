@@ -11,7 +11,7 @@ import (
 	"github.com/sensu/sensu-go/backend/authorization/rbac"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/testing/mockstore"
-	"github.com/sensu/sensu-go/types/dynamic"
+	"github.com/sensu/types/dynamic"
 	"github.com/stretchr/testify/mock"
 )
 

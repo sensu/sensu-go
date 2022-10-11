@@ -9,7 +9,7 @@ import (
 	"github.com/sensu/sensu-go/cli"
 	"github.com/sensu/sensu-go/cli/commands/flags"
 	"github.com/sensu/sensu-go/cli/commands/helpers"
-	"github.com/sensu/sensu-go/types"
+	corev2 "github.com/sensu/core/v2"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 )
@@ -148,6 +148,6 @@ func (opts *passwordOpts) validate() error {
 		return errPasswordsDoNotMatch
 	}
 
-	user := types.User{Password: opts.New}
+	user := corev2.User{Password: opts.New}
 	return user.ValidatePassword()
 }

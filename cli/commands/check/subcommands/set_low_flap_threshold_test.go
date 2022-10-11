@@ -6,7 +6,7 @@ import (
 
 	client "github.com/sensu/sensu-go/cli/client/testing"
 	test "github.com/sensu/sensu-go/cli/commands/testing"
-	"github.com/sensu/sensu-go/types"
+	corev2 "github.com/sensu/core/v2"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
@@ -34,7 +34,7 @@ func TestSetLowFlapThresholdCommand(t *testing.T) {
 		}
 
 		t.Run(tc.testName, func(t *testing.T) {
-			check := types.FixtureCheckConfig("checky")
+			check := corev2.FixtureCheckConfig("checky")
 			check.LowFlapThreshold = 0
 			check.HighFlapThreshold = 0
 

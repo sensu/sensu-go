@@ -2,7 +2,7 @@ package namespace
 
 import (
 	"github.com/AlecAivazis/survey/v2"
-	"github.com/sensu/sensu-go/types"
+	corev2 "github.com/sensu/core/v2"
 )
 
 type namespaceOpts struct {
@@ -34,6 +34,6 @@ func (opts *namespaceOpts) administerQuestionnaire(editing bool) error {
 	return survey.Ask(qs, opts)
 }
 
-func (opts *namespaceOpts) Copy(namespace *types.Namespace) {
+func (opts *namespaceOpts) Copy(namespace *corev2.Namespace) {
 	namespace.Name = opts.Name
 }

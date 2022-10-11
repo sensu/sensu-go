@@ -9,7 +9,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/sensu/sensu-go/types"
+	corev2 "github.com/sensu/core/v2"
 	"github.com/sensu/sensu-go/util/environment"
 )
 
@@ -48,7 +48,7 @@ func (r RuntimeAssetSet) Scripts() (map[string]io.ReadCloser, error) {
 }
 
 // GetAll gets a list of assets with the provided getter.
-func GetAll(ctx context.Context, getter Getter, assets []types.Asset) (RuntimeAssetSet, error) {
+func GetAll(ctx context.Context, getter Getter, assets []corev2.Asset) (RuntimeAssetSet, error) {
 	runtimeAssets := make([]*RuntimeAsset, 0, len(assets))
 	for _, asset := range assets {
 		runtimeAsset, err := getter.Get(ctx, &asset)

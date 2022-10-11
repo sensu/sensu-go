@@ -11,7 +11,7 @@ import (
 
 	bolt "go.etcd.io/bbolt"
 
-	"github.com/sensu/sensu-go/types"
+	corev2 "github.com/sensu/core/v2"
 )
 
 type mockFetcher struct {
@@ -68,7 +68,7 @@ func TestGetExistingAsset(t *testing.T) {
 	path := "path"
 	sha := "sha"
 
-	a := &types.Asset{
+	a := &corev2.Asset{
 		Sha512: sha,
 	}
 	runtimeAsset := &RuntimeAsset{
@@ -127,7 +127,7 @@ func TestGetNonexistentAsset(t *testing.T) {
 		fetcher: &mockFetcher{false},
 	}
 
-	a := &types.Asset{
+	a := &corev2.Asset{
 		URL: "nonexistent.tar",
 	}
 
@@ -165,7 +165,7 @@ func TestGetInvalidAsset(t *testing.T) {
 		verifier: &mockVerifier{false},
 	}
 
-	a := &types.Asset{
+	a := &corev2.Asset{
 		URL: "",
 	}
 
@@ -204,7 +204,7 @@ func TestFailedExpand(t *testing.T) {
 		expander: &mockExpander{false},
 	}
 
-	a := &types.Asset{
+	a := &corev2.Asset{
 		URL: "",
 	}
 
@@ -243,8 +243,8 @@ func TestSuccessfulGetAsset(t *testing.T) {
 		expander: &mockExpander{true},
 	}
 
-	a := &types.Asset{
-		ObjectMeta: types.ObjectMeta{
+	a := &corev2.Asset{
+		ObjectMeta: corev2.ObjectMeta{
 			Name:      "asset",
 			Namespace: "default",
 		},

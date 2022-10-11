@@ -10,7 +10,6 @@ import (
 	"github.com/sensu/sensu-go/backend/authentication/bcrypt"
 	storev1 "github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/backend/store/etcd"
-	"github.com/sensu/sensu-go/types"
 	clientv3 "go.etcd.io/etcd/client/v3"
 )
 
@@ -159,7 +158,7 @@ func SeedInitialDataWithContext(ctx context.Context, store storev1.Store) (err e
 func setupDefaultNamespace(ctx context.Context, store storev1.Store) error {
 	return store.CreateNamespace(
 		ctx,
-		&types.Namespace{
+		&corev2.Namespace{
 			Name: "default",
 		})
 }
@@ -167,14 +166,14 @@ func setupDefaultNamespace(ctx context.Context, store storev1.Store) error {
 func setupClusterRoleBindings(ctx context.Context, store storev1.Store) error {
 	// The cluster-admin ClusterRoleBinding grants permission found in the
 	// cluster-admin ClusterRole to any user belonging to the cluster-admins group
-	clusterAdmin := &types.ClusterRoleBinding{
+	clusterAdmin := &corev2.ClusterRoleBinding{
 		ObjectMeta: corev2.NewObjectMeta("cluster-admin", ""),
-		RoleRef: types.RoleRef{
+		RoleRef: corev2.RoleRef{
 			Type: "ClusterRole",
 			Name: "cluster-admin",
 		},
-		Subjects: []types.Subject{
-			types.Subject{
+		Subjects: []corev2.Subject{
+			{
 				Type: "Group",
 				Name: "cluster-admins",
 			},
@@ -186,14 +185,14 @@ func setupClusterRoleBindings(ctx context.Context, store storev1.Store) error {
 
 	// The system:agent ClusterRoleBinding grants permission found in the
 	// system-agent ClusterRole to any agents belonging to the system:agents group
-	systemAgent := &types.ClusterRoleBinding{
+	systemAgent := &corev2.ClusterRoleBinding{
 		ObjectMeta: corev2.NewObjectMeta("system:agent", ""),
-		RoleRef: types.RoleRef{
+		RoleRef: corev2.RoleRef{
 			Type: "ClusterRole",
 			Name: "system:agent",
 		},
-		Subjects: []types.Subject{
-			types.Subject{
+		Subjects: []corev2.Subject{
+			{
 				Type: "Group",
 				Name: "system:agents",
 			},
@@ -205,14 +204,14 @@ func setupClusterRoleBindings(ctx context.Context, store storev1.Store) error {
 
 	// The system:user ClusterRoleBinding grants permission found in the
 	// system:user ClusterRole to any user belonging to the system:users group
-	systemUser := &types.ClusterRoleBinding{
+	systemUser := &corev2.ClusterRoleBinding{
 		ObjectMeta: corev2.NewObjectMeta("system:user", ""),
-		RoleRef: types.RoleRef{
+		RoleRef: corev2.RoleRef{
 			Type: "ClusterRole",
 			Name: "system:user",
 		},
-		Subjects: []types.Subject{
-			types.Subject{
+		Subjects: []corev2.Subject{
+			{
 				Type: "Group",
 				Name: "system:users",
 			},
@@ -227,12 +226,12 @@ func setupClusterRoles(ctx context.Context, store storev1.Store) error {
 	// every resource in the cluster and in all namespaces. When used in a
 	// RoleBinding, it gives full control over every resource in the rolebinding's
 	// namespace, including the namespace itself
-	clusterAdmin := &types.ClusterRole{
+	clusterAdmin := &corev2.ClusterRole{
 		ObjectMeta: corev2.NewObjectMeta("cluster-admin", ""),
-		Rules: []types.Rule{
-			types.Rule{
-				Verbs:     []string{types.VerbAll},
-				Resources: []string{types.ResourceAll},
+		Rules: []corev2.Rule{
+			{
+				Verbs:     []string{corev2.VerbAll},
+				Resources: []string{corev2.ResourceAll},
 			},
 		},
 	}
@@ -244,17 +243,17 @@ func setupClusterRoles(ctx context.Context, store storev1.Store) error {
 	// RoleBinding. It gives full access to most resources, including the ability
 	// to create Roles and RoleBindings within the namespace but does not allow
 	// write access to the namespace itself
-	admin := &types.ClusterRole{
+	admin := &corev2.ClusterRole{
 		ObjectMeta: corev2.NewObjectMeta("admin", ""),
-		Rules: []types.Rule{
-			types.Rule{
-				Verbs: []string{types.VerbAll},
-				Resources: append(types.CommonCoreResources, []string{
+		Rules: []corev2.Rule{
+			{
+				Verbs: []string{corev2.VerbAll},
+				Resources: append(corev2.CommonCoreResources, []string{
 					"roles",
 					"rolebindings",
 				}...),
 			},
-			types.Rule{
+			{
 				Verbs: []string{"get", "list"},
 				Resources: []string{
 					"namespaces",
@@ -269,14 +268,14 @@ func setupClusterRoles(ctx context.Context, store storev1.Store) error {
 	// The edit ClusterRole is intended to be used within a namespace using a
 	// RoleBinding. It allows read/write access to most objects in a namespace. It
 	// does not allow viewing or modifying roles or rolebindings.
-	edit := &types.ClusterRole{
+	edit := &corev2.ClusterRole{
 		ObjectMeta: corev2.NewObjectMeta("edit", ""),
-		Rules: []types.Rule{
-			types.Rule{
-				Verbs:     []string{types.VerbAll},
-				Resources: types.CommonCoreResources,
+		Rules: []corev2.Rule{
+			{
+				Verbs:     []string{corev2.VerbAll},
+				Resources: corev2.CommonCoreResources,
 			},
-			types.Rule{
+			{
 				Verbs: []string{"get", "list"},
 				Resources: []string{
 					"namespaces",
@@ -291,12 +290,12 @@ func setupClusterRoles(ctx context.Context, store storev1.Store) error {
 	// The view ClusterRole is intended to be used within a namespace using a
 	// RoleBinding. It allows read-only access to see most objects in a namespace.
 	// It does not allow viewing roles or rolebindings.
-	view := &types.ClusterRole{
+	view := &corev2.ClusterRole{
 		ObjectMeta: corev2.NewObjectMeta("view", ""),
-		Rules: []types.Rule{
-			types.Rule{
+		Rules: []corev2.Rule{
+			{
 				Verbs: []string{"get", "list"},
-				Resources: append(types.CommonCoreResources, []string{
+				Resources: append(corev2.CommonCoreResources, []string{
 					"namespaces",
 				}...),
 			},
@@ -309,11 +308,11 @@ func setupClusterRoles(ctx context.Context, store storev1.Store) error {
 	// The systemAgent ClusterRole is used by Sensu agents and should not be
 	// modified by the users. Modification to this ClusterRole can result in
 	// non-functional Sensu agents.
-	systemAgent := &types.ClusterRole{
+	systemAgent := &corev2.ClusterRole{
 		ObjectMeta: corev2.NewObjectMeta("system:agent", ""),
-		Rules: []types.Rule{
-			types.Rule{
-				Verbs:     []string{types.VerbAll},
+		Rules: []corev2.Rule{
+			{
+				Verbs:     []string{corev2.VerbAll},
 				Resources: []string{"events"},
 			},
 		},
@@ -326,12 +325,12 @@ func setupClusterRoles(ctx context.Context, store storev1.Store) error {
 	// modified by the users. Modification to his ClusterRole can result in
 	// non-functional Sensu users. It allows users to view themselves and change
 	// their own password
-	systemUser := &types.ClusterRole{
+	systemUser := &corev2.ClusterRole{
 		ObjectMeta: corev2.NewObjectMeta("system:user", ""),
-		Rules: []types.Rule{
-			types.Rule{
+		Rules: []corev2.Rule{
+			{
 				Verbs:     []string{"get", "update"},
-				Resources: []string{types.LocalSelfUserResource},
+				Resources: []string{corev2.LocalSelfUserResource},
 			},
 		},
 	}
@@ -344,7 +343,7 @@ func setupAdminUser(ctx context.Context, store storev1.Store, username, password
 		return err
 	}
 
-	admin := &types.User{
+	admin := &corev2.User{
 		Username:     username,
 		Password:     hash,
 		PasswordHash: hash,
@@ -375,7 +374,7 @@ func setupAgentUser(ctx context.Context, store storev1.Store, username, password
 		return err
 	}
 
-	agent := &types.User{
+	agent := &corev2.User{
 		Username:     username,
 		Password:     hash,
 		PasswordHash: hash,

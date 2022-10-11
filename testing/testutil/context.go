@@ -3,8 +3,8 @@ package testutil
 import (
 	"context"
 
+	corev2 "github.com/sensu/core/v2"
 	"github.com/sensu/sensu-go/backend/store"
-	"github.com/sensu/sensu-go/types"
 )
 
 // SetContextFn take context and return new context
@@ -28,7 +28,7 @@ func ApplyContext(ctx context.Context, fns ...SetContextFn) context.Context {
 // ContextWithNamespace returns new contextFn with namespace added.
 func ContextWithNamespace(namespace string) SetContextFn {
 	return func(ctx context.Context) context.Context {
-		ctx = context.WithValue(ctx, types.NamespaceKey, namespace)
+		ctx = context.WithValue(ctx, corev2.NamespaceKey, namespace)
 		return ctx
 	}
 }
@@ -37,6 +37,6 @@ func ContextWithNamespace(namespace string) SetContextFn {
 // context.
 func ContextWithStore(store store.Store) SetContextFn {
 	return func(ctx context.Context) context.Context {
-		return context.WithValue(ctx, types.StoreKey, store)
+		return context.WithValue(ctx, corev2.StoreKey, store)
 	}
 }

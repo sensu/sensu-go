@@ -47,7 +47,6 @@ require (
 	github.com/robertkrimen/otto v0.0.0-20221006114523-201ab5b34f52
 	github.com/robfig/cron/v3 v3.0.1
 	github.com/sensu/lasr v1.2.1
-	github.com/sensu/sensu-go/types v0.11.0
 	github.com/shirou/gopsutil/v3 v3.21.12
 	github.com/sirupsen/logrus v1.9.0
 	github.com/spf13/cobra v1.1.3
@@ -78,7 +77,8 @@ require (
 	github.com/go-test/deep v1.0.8
 	github.com/google/go-cmp v0.5.8 // indirect
 	github.com/kr/pty v1.1.8 // indirect
-	github.com/sensu/core v0.0.0-20221010162425-173160038a95
+	github.com/sensu/core v0.0.0-20221010204914-56d1c6fd7b3a
+	github.com/sensu/types v0.0.0-20221011154344-ab1adda7db4b
 	golang.org/x/text v0.3.7 // indirect
 )
 

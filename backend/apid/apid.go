@@ -15,6 +15,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	clientv3 "go.etcd.io/etcd/client/v3"
 
+	corev2 "github.com/sensu/core/v2"
 	"github.com/sensu/sensu-go/backend/apid/actions"
 	"github.com/sensu/sensu-go/backend/apid/graphql"
 	"github.com/sensu/sensu-go/backend/apid/middlewares"
@@ -22,9 +23,9 @@ import (
 	"github.com/sensu/sensu-go/backend/authentication"
 	"github.com/sensu/sensu-go/backend/authorization/rbac"
 	"github.com/sensu/sensu-go/backend/messaging"
+	"github.com/sensu/sensu-go/backend/queue"
 	"github.com/sensu/sensu-go/backend/store"
 	storev2 "github.com/sensu/sensu-go/backend/store/v2"
-	"github.com/sensu/sensu-go/types"
 )
 
 const apidStartupErrorMsg = `API unavailable during startup.
@@ -49,8 +50,8 @@ type APId struct {
 	store               store.Store
 	storev2             storev2.Interface
 	eventStore          store.EventStore
-	queueGetter         types.QueueGetter
-	tls                 *types.TLSOptions
+	queueGetter         queue.QueueGetter
+	tls                 *corev2.TLSOptions
 	cluster             clientv3.Cluster
 	etcdClientTLSConfig *tls.Config
 	clusterVersion      string
@@ -73,8 +74,8 @@ type Config struct {
 	Store               store.Store
 	Storev2             storev2.Interface
 	EventStore          store.EventStore
-	QueueGetter         types.QueueGetter
-	TLS                 *types.TLSOptions
+	QueueGetter         queue.QueueGetter
+	TLS                 *corev2.TLSOptions
 	Cluster             clientv3.Cluster
 	EtcdClientTLSConfig *tls.Config
 	Authenticator       *authentication.Authenticator

@@ -11,9 +11,9 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
+	corev2 "github.com/sensu/core/v2"
 	"github.com/sensu/lasr"
 	"github.com/sensu/sensu-go/transport"
-	"github.com/sensu/sensu-go/types"
 	"github.com/sensu/sensu-go/version"
 	"golang.org/x/time/rate"
 )
@@ -142,7 +142,7 @@ func (a *Agent) handleAPIQueue(ctx context.Context) {
 // addEvent accepts an event and send it to the backend over the event channel
 func addEvent(a *Agent) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		var event *types.Event
+		var event *corev2.Event
 
 		// Decode the provided event
 		err := json.NewDecoder(r.Body).Decode(&event)

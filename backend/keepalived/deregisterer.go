@@ -9,7 +9,6 @@ import (
 	corev2 "github.com/sensu/core/v2"
 	"github.com/sensu/sensu-go/backend/messaging"
 	"github.com/sensu/sensu-go/backend/store"
-	"github.com/sensu/sensu-go/types"
 )
 
 // A Deregisterer provides a mechanism for deregistering entities and
@@ -17,7 +16,7 @@ import (
 type Deregisterer interface {
 	// Deregister an entity and return an error if there was any problem during the
 	// deregistration process.
-	Deregister(e *types.Entity) error
+	Deregister(e *corev2.Entity) error
 }
 
 // Deregistration is an adapter for deregistering an entity from the store and
@@ -30,8 +29,8 @@ type Deregistration struct {
 }
 
 // Deregister an entity and all of its associated events.
-func (d *Deregistration) Deregister(entity *types.Entity) error {
-	ctx := context.WithValue(context.Background(), types.NamespaceKey, entity.Namespace)
+func (d *Deregistration) Deregister(entity *corev2.Entity) error {
+	ctx := context.WithValue(context.Background(), corev2.NamespaceKey, entity.Namespace)
 	tctx, cancel := context.WithTimeout(ctx, d.StoreTimeout)
 	defer cancel()
 
@@ -59,7 +58,7 @@ func (d *Deregistration) Deregister(entity *types.Entity) error {
 
 		event.Check.Output = "Resolving due to entity deregistering"
 		event.Check.Status = 0
-		event.Check.History = []types.CheckHistory{}
+		event.Check.History = []corev2.CheckHistory{}
 
 		if err := d.MessageBus.Publish(messaging.TopicEvent, event); err != nil {
 			return fmt.Errorf("error publishing deregistration event: %s", err)
@@ -67,7 +66,7 @@ func (d *Deregistration) Deregister(entity *types.Entity) error {
 	}
 
 	if entity.Deregistration.Handler != "" {
-		deregistrationCheck := &types.Check{
+		deregistrationCheck := &corev2.Check{
 			ObjectMeta:    corev2.NewObjectMeta("deregistration", entity.Namespace),
 			Interval:      1,
 			Subscriptions: []string{},
@@ -81,7 +80,7 @@ func (d *Deregistration) Deregister(entity *types.Entity) error {
 			return err
 		}
 
-		deregistrationEvent := &types.Event{
+		deregistrationEvent := &corev2.Event{
 			Entity:    entity,
 			Check:     deregistrationCheck,
 			ID:        id[:],

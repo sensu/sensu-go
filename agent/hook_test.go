@@ -11,7 +11,6 @@ import (
 	"github.com/sensu/sensu-go/testing/mockexecutor"
 
 	"github.com/sensu/sensu-go/transport"
-	"github.com/sensu/sensu-go/types"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -19,7 +18,7 @@ func TestExecuteHook(t *testing.T) {
 	assert := assert.New(t)
 	ctx := context.Background()
 
-	hookConfig := types.FixtureHookConfig("hook")
+	hookConfig := corev2.FixtureHookConfig("hook")
 	hookConfig.Stdin = true
 
 	config, cleanup := FixtureConfig()
@@ -35,9 +34,9 @@ func TestExecuteHook(t *testing.T) {
 	execution := command.FixtureExecutionResponse(0, "")
 	ex.Return(execution, nil)
 
-	evt := &types.Event{
-		Check: &types.Check{
-			ObjectMeta: types.ObjectMeta{
+	evt := &corev2.Event{
+		Check: &corev2.Check{
+			ObjectMeta: corev2.ObjectMeta{
 				Name: "check",
 			},
 		},
@@ -100,7 +99,7 @@ func TestPrepareHook(t *testing.T) {
 	}
 
 	// Invalid hook
-	hook := types.FixtureHookConfig("hook")
+	hook := corev2.FixtureHookConfig("hook")
 	hook.Command = ""
 	if err := agent.prepareHook(hook); err == nil {
 		t.Error("expected non-nil error")
@@ -115,37 +114,37 @@ func TestPrepareHook(t *testing.T) {
 
 func TestHookInList(t *testing.T) {
 	assert := assert.New(t)
-	hook1 := types.FixtureHook("hook1")
-	hook2 := types.FixtureHook("hook2")
+	hook1 := corev2.FixtureHook("hook1")
+	hook2 := corev2.FixtureHook("hook2")
 
 	testCases := []struct {
 		name     string
 		hookName string
-		hookList []*types.Hook
+		hookList []*corev2.Hook
 		expected bool
 	}{
 		{
 			name:     "Empty list",
 			hookName: "hook1",
-			hookList: []*types.Hook{},
+			hookList: []*corev2.Hook{},
 			expected: false,
 		},
 		{
 			name:     "Hook in populated list",
 			hookName: "hook1",
-			hookList: []*types.Hook{hook2, hook1},
+			hookList: []*corev2.Hook{hook2, hook1},
 			expected: true,
 		},
 		{
 			name:     "Hook not in populated list",
 			hookName: "hook1",
-			hookList: []*types.Hook{hook2, hook2},
+			hookList: []*corev2.Hook{hook2, hook2},
 			expected: false,
 		},
 		{
 			name:     "No hook name provided",
 			hookName: "",
-			hookList: []*types.Hook{hook1, hook2},
+			hookList: []*corev2.Hook{hook1, hook2},
 			expected: false,
 		},
 	}

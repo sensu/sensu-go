@@ -13,7 +13,7 @@ import (
 	corev2 "github.com/sensu/core/v2"
 	"github.com/sensu/sensu-go/backend/etcd"
 	store "github.com/sensu/sensu-go/backend/store/etcd"
-	"github.com/sensu/sensu-go/types"
+	"github.com/sensu/types"
 )
 
 var mockTime = crock.NewTime(time.Unix(0, 0))

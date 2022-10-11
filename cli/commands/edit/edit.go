@@ -19,8 +19,8 @@ import (
 	"github.com/sensu/sensu-go/cli/client/config"
 	"github.com/sensu/sensu-go/cli/commands/helpers"
 	"github.com/sensu/sensu-go/cli/resource"
-	"github.com/sensu/sensu-go/types"
-	"github.com/sensu/sensu-go/types/compat"
+	"github.com/sensu/sensu-go/compat"
+	"github.com/sensu/types"
 	"github.com/spf13/cobra"
 )
 
@@ -41,7 +41,7 @@ func extension(format string) string {
 }
 
 type lifter interface {
-	Lift() types.Resource
+	Lift() corev2.Resource
 }
 
 type namespaceFormat interface {
@@ -103,7 +103,7 @@ func dumpResource(client client, cfg namespaceFormat, typeName string, key []str
 	}
 
 	// Determine the expected type for the store response between a
-	// corev2.Resource & a types.Wrapper. We will assume that all resources
+	// corev2.Resource & a corev2.Wrapper. We will assume that all resources
 	// outside core/v2 are stored as wrapped value
 	var response interface{}
 	if types.ApiVersion(reflect.Indirect(reflect.ValueOf(requested)).Type().PkgPath()) == path.Join(corev2.APIGroupName, corev2.APIVersion) {
@@ -132,7 +132,7 @@ func dumpResource(client client, cfg namespaceFormat, typeName string, key []str
 	case "wrapped-json", "json":
 		return helpers.PrintWrappedJSON(resource, to)
 	default:
-		return helpers.PrintYAML([]types.Resource{resource}, to)
+		return helpers.PrintYAML([]corev2.Resource{resource}, to)
 	}
 }
 
@@ -172,7 +172,7 @@ func dumpBlank(cfg namespaceFormat, typeName string, to io.Writer) error {
 	case "wrapped-json", "json":
 		return helpers.PrintWrappedJSON(resource, to)
 	default:
-		return helpers.PrintYAML([]types.Resource{resource}, to)
+		return helpers.PrintYAML([]corev2.Resource{resource}, to)
 	}
 }
 

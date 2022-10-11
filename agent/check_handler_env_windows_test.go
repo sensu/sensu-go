@@ -10,7 +10,7 @@ import (
 	"time"
 
 	"github.com/sensu/sensu-go/transport"
-	"github.com/sensu/sensu-go/types"
+	"github.com/sensu/types"
 	"github.com/stretchr/testify/assert"
 )
 

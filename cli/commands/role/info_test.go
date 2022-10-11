@@ -6,7 +6,7 @@ import (
 
 	client "github.com/sensu/sensu-go/cli/client/testing"
 	test "github.com/sensu/sensu-go/cli/commands/testing"
-	"github.com/sensu/sensu-go/types"
+	corev2 "github.com/sensu/core/v2"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -34,7 +34,7 @@ func TestInfoCommandRunEWithError(t *testing.T) {
 
 	client := cli.Client.(*client.MockClient)
 	client.On("FetchRole", "abc").Return(
-		types.FixtureRole("abc", "default"),
+		corev2.FixtureRole("abc", "default"),
 		errors.New("sadfa"),
 	)
 
@@ -54,7 +54,7 @@ func TestInfoCommandRunEClosure(t *testing.T) {
 
 	client := cli.Client.(*client.MockClient)
 	client.On("FetchRole", "abc").Return(
-		types.FixtureRole("abc", "default"),
+		corev2.FixtureRole("abc", "default"),
 		nil,
 	)
 
@@ -71,7 +71,7 @@ func TestInfoCommandRunEJSON(t *testing.T) {
 
 	client := cli.Client.(*client.MockClient)
 	client.On("FetchRole", "abc").Return(
-		types.FixtureRole("abc", "default"),
+		corev2.FixtureRole("abc", "default"),
 		nil,
 	)
 

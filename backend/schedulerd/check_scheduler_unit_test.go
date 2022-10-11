@@ -3,13 +3,13 @@ package schedulerd
 import (
 	"testing"
 
-	"github.com/sensu/sensu-go/types"
+	corev2 "github.com/sensu/core/v2"
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestToggleIntervalSchedule(t *testing.T) {
-	check := types.FixtureCheckConfig("foobar")
+	check := corev2.FixtureCheckConfig("foobar")
 	sched := &IntervalScheduler{
 		check:             check,
 		lastIntervalState: check.Interval,
@@ -32,7 +32,7 @@ func TestToggleIntervalSchedule(t *testing.T) {
 }
 
 func TestToggleCronSchedule(t *testing.T) {
-	check := types.FixtureCheckConfig("foobar")
+	check := corev2.FixtureCheckConfig("foobar")
 	sched := &CronScheduler{
 		check:         check,
 		lastCronState: check.Cron,

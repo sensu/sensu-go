@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/sensu/sensu-go/backend/store"
-	"github.com/sensu/sensu-go/types"
+	corev2 "github.com/sensu/core/v2"
 )
 
 var (
@@ -12,7 +12,7 @@ var (
 	roleKeyBuilder  = store.NewKeyBuilder(rolesPathPrefix)
 )
 
-func getRolePath(role *types.Role) string {
+func getRolePath(role *corev2.Role) string {
 	return roleKeyBuilder.WithResource(role).Build(role.Name)
 }
 
@@ -22,7 +22,7 @@ func GetRolesPath(ctx context.Context, name string) string {
 }
 
 // CreateRole ...
-func (s *Store) CreateRole(ctx context.Context, role *types.Role) error {
+func (s *Store) CreateRole(ctx context.Context, role *corev2.Role) error {
 	if err := role.Validate(); err != nil {
 		return &store.ErrNotValid{Err: err}
 	}
@@ -30,7 +30,7 @@ func (s *Store) CreateRole(ctx context.Context, role *types.Role) error {
 }
 
 // CreateOrUpdateRole ...
-func (s *Store) CreateOrUpdateRole(ctx context.Context, role *types.Role) error {
+func (s *Store) CreateOrUpdateRole(ctx context.Context, role *corev2.Role) error {
 	if err := role.Validate(); err != nil {
 		return &store.ErrNotValid{Err: err}
 	}
@@ -43,21 +43,21 @@ func (s *Store) DeleteRole(ctx context.Context, name string) error {
 }
 
 // GetRole ...
-func (s *Store) GetRole(ctx context.Context, name string) (*types.Role, error) {
-	role := &types.Role{}
+func (s *Store) GetRole(ctx context.Context, name string) (*corev2.Role, error) {
+	role := &corev2.Role{}
 	err := Get(ctx, s.client, GetRolesPath(ctx, name), role)
 	return role, err
 }
 
 // ListRoles ...
-func (s *Store) ListRoles(ctx context.Context, pred *store.SelectionPredicate) ([]*types.Role, error) {
-	roles := []*types.Role{}
+func (s *Store) ListRoles(ctx context.Context, pred *store.SelectionPredicate) ([]*corev2.Role, error) {
+	roles := []*corev2.Role{}
 	err := List(ctx, s.client, GetRolesPath, &roles, pred)
 	return roles, err
 }
 
 // UpdateRole ...
-func (s *Store) UpdateRole(ctx context.Context, role *types.Role) error {
+func (s *Store) UpdateRole(ctx context.Context, role *corev2.Role) error {
 	if err := role.Validate(); err != nil {
 		return &store.ErrNotValid{Err: err}
 	}

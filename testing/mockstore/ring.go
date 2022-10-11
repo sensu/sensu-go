@@ -7,15 +7,13 @@ import (
 	"sort"
 	"sync"
 	"time"
-
-	"github.com/sensu/sensu-go/types"
 )
 
 var mu sync.Mutex
-var rings = make(map[string]types.Ring)
+var rings = make(map[string]*Ring)
 
 // GetRing ...
-func (s *MockStore) GetRing(parts ...string) types.Ring {
+func (s *MockStore) GetRing(parts ...string) *Ring {
 	mu.Lock()
 	defer mu.Unlock()
 	name := path.Join(parts...)
@@ -107,4 +105,10 @@ func (r *Ring) Peek(context.Context) (string, error) {
 	}
 	sort.Slice(keys, func(i, j int) bool { return keys[i] < keys[j] })
 	return r.data[keys[0]], nil
+}
+
+// RingGetter provides a way to get a Ring.
+type RingGetter interface {
+	// GetRing gets a named Ring.
+	GetRing(path ...string) Ring
 }

@@ -9,9 +9,9 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/stretchr/testify/assert"
 
+	corev2 "github.com/sensu/core/v2"
 	sensuJWT "github.com/sensu/sensu-go/backend/authentication/jwt"
 	"github.com/sensu/sensu-go/backend/authorization"
-	"github.com/sensu/sensu-go/types"
 )
 
 func TestAuthorizationAttributes(t *testing.T) {
@@ -108,7 +108,7 @@ func TestAuthorizationAttributes(t *testing.T) {
 				assert.NotNil(t, attrs)
 
 				// Inject our user in the expected attributes
-				tt.expected.User = types.User{Username: "admin"}
+				tt.expected.User = corev2.User{Username: "admin"}
 
 				assert.Equal(t, &tt.expected, attrs)
 			})
@@ -120,7 +120,7 @@ func TestAuthorizationAttributes(t *testing.T) {
 			if err != nil {
 				t.Fatal("Couldn't create request: ", err)
 			}
-			claims := types.Claims{StandardClaims: jwt.StandardClaims{Subject: "admin"}}
+			claims := corev2.Claims{StandardClaims: jwt.StandardClaims{Subject: "admin"}}
 			ctx := sensuJWT.SetClaimsIntoContext(r, &claims)
 
 			// Prepare the router
@@ -478,7 +478,7 @@ func TestLegacyAuthorizationAttributes(t *testing.T) {
 				APIGroup:     "core",
 				APIVersion:   "v2",
 				Namespace:    "",
-				Resource:     types.LocalSelfUserResource,
+				Resource:     corev2.LocalSelfUserResource,
 				ResourceName: "admin",
 				Verb:         "get",
 			},
@@ -504,7 +504,7 @@ func TestLegacyAuthorizationAttributes(t *testing.T) {
 				APIGroup:     "core",
 				APIVersion:   "v2",
 				Namespace:    "",
-				Resource:     types.LocalSelfUserResource,
+				Resource:     corev2.LocalSelfUserResource,
 				ResourceName: "admin",
 				Verb:         "update",
 			},
@@ -518,7 +518,7 @@ func TestLegacyAuthorizationAttributes(t *testing.T) {
 				assert.NotNil(t, attrs)
 
 				// Inject our user in the expected attributes
-				tt.expected.User = types.User{Username: "admin"}
+				tt.expected.User = corev2.User{Username: "admin"}
 
 				assert.Equal(t, &tt.expected, attrs)
 			})
@@ -531,7 +531,7 @@ func TestLegacyAuthorizationAttributes(t *testing.T) {
 			if err != nil {
 				t.Fatal("Couldn't create request: ", err)
 			}
-			claims := types.Claims{StandardClaims: jwt.StandardClaims{Subject: "admin"}}
+			claims := corev2.Claims{StandardClaims: jwt.StandardClaims{Subject: "admin"}}
 			ctx := sensuJWT.SetClaimsIntoContext(r, &claims)
 
 			// Prepare the router

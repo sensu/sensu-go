@@ -4,12 +4,12 @@ import (
 	"context"
 	"crypto/tls"
 
-	"github.com/sensu/sensu-go/types"
+	corev2 "github.com/sensu/core/v2"
 	"go.etcd.io/etcd/client/v3"
 )
 
 // GetClusterHealth ...
-func (s *MockStore) GetClusterHealth(ctx context.Context, cluster clientv3.Cluster, etcdClientTLSConfig *tls.Config) *types.HealthResponse {
+func (s *MockStore) GetClusterHealth(ctx context.Context, cluster clientv3.Cluster, etcdClientTLSConfig *tls.Config) *corev2.HealthResponse {
 	args := s.Called(ctx, cluster, etcdClientTLSConfig)
-	return args.Get(0).(*types.HealthResponse)
+	return args.Get(0).(*corev2.HealthResponse)
 }

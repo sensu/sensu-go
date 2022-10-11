@@ -5,7 +5,7 @@ import (
 
 	"github.com/go-resty/resty/v2"
 	corev2 "github.com/sensu/core/v2"
-	"github.com/sensu/sensu-go/types"
+	"github.com/sensu/types"
 	clientv3 "go.etcd.io/etcd/client/v3"
 )
 
@@ -223,7 +223,7 @@ type SilencedAPIClient interface {
 
 	// ListSilenceds lists all silenced entries, optionally constraining by
 	// subscription or check.
-	ListSilenceds(namespace, subscription, check string, options *ListOptions, header *http.Header) ([]types.Silenced, error)
+	ListSilenceds(namespace, subscription, check string, options *ListOptions, header *http.Header) ([]corev2.Silenced, error)
 
 	// FetchSilenced fetches the silenced entry by ID.
 	FetchSilenced(id string) (*corev2.Silenced, error)

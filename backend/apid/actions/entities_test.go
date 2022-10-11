@@ -13,7 +13,6 @@ import (
 	"github.com/sensu/sensu-go/backend/store/v2/storetest"
 	"github.com/sensu/sensu-go/testing/mockstore"
 	"github.com/sensu/sensu-go/testing/testutil"
-	"github.com/sensu/sensu-go/types"
 )
 
 func TestNewEntityController(t *testing.T) {
@@ -35,7 +34,7 @@ func TestEntityFind(t *testing.T) {
 	testCases := []struct {
 		name            string
 		ctx             context.Context
-		record          *types.Entity
+		record          *corev2.Entity
 		argument        string
 		expected        bool
 		expectedErrCode ErrCode
@@ -50,7 +49,7 @@ func TestEntityFind(t *testing.T) {
 		{
 			name:            "found",
 			ctx:             defaultCtx,
-			record:          types.FixtureEntity("entity1"),
+			record:          corev2.FixtureEntity("entity1"),
 			argument:        "entity1",
 			expected:        true,
 			expectedErrCode: 0,
@@ -100,7 +99,7 @@ func TestEntityList(t *testing.T) {
 	testCases := []struct {
 		name        string
 		ctx         context.Context
-		records     []*types.Entity
+		records     []*corev2.Entity
 		storeErr    error
 		expectedLen int
 		expectedErr error
@@ -108,7 +107,7 @@ func TestEntityList(t *testing.T) {
 		{
 			name:        "no results",
 			ctx:         defaultCtx,
-			records:     []*types.Entity{},
+			records:     []*corev2.Entity{},
 			expectedLen: 0,
 			storeErr:    nil,
 			expectedErr: nil,
@@ -116,9 +115,9 @@ func TestEntityList(t *testing.T) {
 		{
 			name: "with results",
 			ctx:  defaultCtx,
-			records: []*types.Entity{
-				types.FixtureEntity("entity1"),
-				types.FixtureEntity("entity2"),
+			records: []*corev2.Entity{
+				corev2.FixtureEntity("entity1"),
+				corev2.FixtureEntity("entity2"),
 			},
 			expectedLen: 2,
 			storeErr:    nil,
@@ -161,14 +160,14 @@ func TestEntityCreate(t *testing.T) {
 		testutil.ContextWithNamespace("default"),
 	)
 
-	badEntity := types.FixtureEntity("badentity")
+	badEntity := corev2.FixtureEntity("badentity")
 	badEntity.Name = ""
 
 	testCases := []struct {
 		name            string
 		ctx             context.Context
-		argument        *types.Entity
-		fetchResult     *types.Entity
+		argument        *corev2.Entity
+		fetchResult     *corev2.Entity
 		fetchErr        error
 		createErr       error
 		expectedErr     bool
@@ -177,7 +176,7 @@ func TestEntityCreate(t *testing.T) {
 		{
 			name:        "Created",
 			ctx:         defaultCtx,
-			argument:    types.FixtureEntity("foo"),
+			argument:    corev2.FixtureEntity("foo"),
 			fetchResult: nil,
 			fetchErr:    nil,
 			createErr:   nil,
@@ -186,7 +185,7 @@ func TestEntityCreate(t *testing.T) {
 		{
 			name:            "store err on Create",
 			ctx:             defaultCtx,
-			argument:        types.FixtureEntity("foo"),
+			argument:        corev2.FixtureEntity("foo"),
 			fetchResult:     nil,
 			fetchErr:        nil,
 			createErr:       errors.New("dunno"),
@@ -196,8 +195,8 @@ func TestEntityCreate(t *testing.T) {
 		{
 			name:            "store err on fetch",
 			ctx:             defaultCtx,
-			argument:        types.FixtureEntity("foo"),
-			fetchResult:     types.FixtureEntity("foo"),
+			argument:        corev2.FixtureEntity("foo"),
+			fetchResult:     corev2.FixtureEntity("foo"),
 			fetchErr:        errors.New("dunno"),
 			expectedErr:     true,
 			expectedErrCode: InternalErr,
@@ -263,7 +262,7 @@ func TestEntityCreateOrReplace(t *testing.T) {
 	testCases := []struct {
 		name            string
 		ctx             context.Context
-		argument        *types.Entity
+		argument        *corev2.Entity
 		exists          bool
 		createErr       error
 		expectedErr     bool

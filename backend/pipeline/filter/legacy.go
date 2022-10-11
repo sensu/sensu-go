@@ -11,7 +11,7 @@ import (
 	"github.com/sensu/sensu-go/asset"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/js"
-	"github.com/sensu/sensu-go/types/dynamic"
+	"github.com/sensu/types/dynamic"
 )
 
 const (

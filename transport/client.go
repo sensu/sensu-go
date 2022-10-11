@@ -10,14 +10,14 @@ import (
 	"time"
 
 	"github.com/gorilla/websocket"
-	"github.com/sensu/sensu-go/types"
+	corev2 "github.com/sensu/core/v2"
 )
 
 var ErrTooManyRequests = errors.New("too many requests")
 
 // connect establish the connection to a given websocket backend and returns it
 // along with any error encountered
-func connect(wsServerURL string, tlsOpts *types.TLSOptions, requestHeader http.Header, handshakeTimeout int) (*websocket.Conn, http.Header, error) {
+func connect(wsServerURL string, tlsOpts *corev2.TLSOptions, requestHeader http.Header, handshakeTimeout int) (*websocket.Conn, http.Header, error) {
 	// TODO(grep): configurable max sendq depth
 	u, err := url.Parse(wsServerURL)
 	if err != nil {
@@ -64,7 +64,7 @@ func connect(wsServerURL string, tlsOpts *types.TLSOptions, requestHeader http.H
 // Connect causes the transport Client to connect to a given websocket server.
 // Transport is a thin wrapper around a websocket connection that makes the
 // connection safe for concurrent use by multiple goroutines.
-func Connect(wsServerURL string, tlsOpts *types.TLSOptions, requestHeader http.Header, handshakeTimeout int) (Transport, http.Header, error) {
+func Connect(wsServerURL string, tlsOpts *corev2.TLSOptions, requestHeader http.Header, handshakeTimeout int) (Transport, http.Header, error) {
 	conn, resp, err := connect(wsServerURL, tlsOpts, requestHeader, handshakeTimeout)
 	if err != nil {
 		return nil, nil, err

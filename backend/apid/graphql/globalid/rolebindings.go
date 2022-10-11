@@ -1,6 +1,6 @@
 package globalid
 
-import "github.com/sensu/sensu-go/types"
+import corev2 "github.com/sensu/core/v2"
 
 //
 // Role Bindings
@@ -13,7 +13,7 @@ var RoleBindingTranslator = commonTranslator{
 	encodeFunc: standardEncoder(roleBindingName, "Name"),
 	decodeFunc: standardDecoder,
 	isResponsibleFunc: func(record interface{}) bool {
-		_, ok := record.(*types.RoleBinding)
+		_, ok := record.(*corev2.RoleBinding)
 		return ok
 	},
 }

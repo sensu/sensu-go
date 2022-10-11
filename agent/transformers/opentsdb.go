@@ -5,7 +5,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/sensu/sensu-go/types"
+	corev2 "github.com/sensu/core/v2"
 	"github.com/sirupsen/logrus"
 )
 
@@ -16,15 +16,15 @@ type OpenTSDBList []OpenTSDB
 type OpenTSDB struct {
 	Name      string
 	Value     float64
-	TagSet    []*types.MetricTag
+	TagSet    []*corev2.MetricTag
 	Timestamp int64
 }
 
 // Transform transforms metrics in OpenTSDB format to Sensu Metric Format
-func (o OpenTSDBList) Transform() []*types.MetricPoint {
-	var points []*types.MetricPoint
+func (o OpenTSDBList) Transform() []*corev2.MetricPoint {
+	var points []*corev2.MetricPoint
 	for _, metric := range o {
-		mp := &types.MetricPoint{
+		mp := &corev2.MetricPoint{
 			Name:      metric.Name,
 			Value:     metric.Value,
 			Timestamp: metric.Timestamp,
@@ -36,7 +36,7 @@ func (o OpenTSDBList) Transform() []*types.MetricPoint {
 }
 
 // ParseOpenTSDB parses OpenTSDB metrics into a list of OpenTSDB structs
-func ParseOpenTSDB(event *types.Event) OpenTSDBList {
+func ParseOpenTSDB(event *corev2.Event) OpenTSDBList {
 	var openTSDBList OpenTSDBList
 	fields := logrus.Fields{
 		"namespace": event.Check.Namespace,
@@ -84,7 +84,7 @@ OUTER:
 		// Create a OpenTSDB metric with what we have so far
 		o := OpenTSDB{
 			Name:      name,
-			TagSet:    []*types.MetricTag{},
+			TagSet:    []*corev2.MetricTag{},
 			Timestamp: timestamp,
 			Value:     value,
 		}
@@ -98,7 +98,7 @@ OUTER:
 				continue OUTER
 			}
 
-			tag := &types.MetricTag{
+			tag := &corev2.MetricTag{
 				Name:  t[0],
 				Value: t[1],
 			}

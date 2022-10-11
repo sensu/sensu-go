@@ -6,7 +6,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/sensu/sensu-go/types"
+	corev2 "github.com/sensu/core/v2"
 )
 
 const (
@@ -77,7 +77,7 @@ func HumanTimestamp(timestamp int64) string {
 
 // ConvertToUTC takes a TimeWindowRange and converts both the begin time and
 // end time of the window to UTC
-func ConvertToUTC(t *types.TimeWindowTimeRange) error {
+func ConvertToUTC(t *corev2.TimeWindowTimeRange) error {
 	begin, err := kitchenToTime(t.Begin)
 	if err != nil {
 		return err

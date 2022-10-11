@@ -13,8 +13,8 @@ import (
 
 	"github.com/ghodss/yaml"
 	corev2 "github.com/sensu/core/v2"
-	"github.com/sensu/sensu-go/types"
-	"github.com/sensu/sensu-go/types/compat"
+	"github.com/sensu/types"
+	"github.com/sensu/sensu-go/compat"
 )
 
 // Parse is a rather heroic function that will parse any number of valid

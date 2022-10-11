@@ -8,7 +8,7 @@ import (
 	"github.com/sensu/sensu-go/cli"
 	"github.com/sensu/sensu-go/cli/commands/flags"
 	"github.com/sensu/sensu-go/cli/commands/helpers"
-	"github.com/sensu/sensu-go/types"
+	corev2 "github.com/sensu/core/v2"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 )
@@ -53,7 +53,7 @@ func ExecuteCommand(cli *cli.SensuCli) *cobra.Command {
 			}
 
 			// Instantiate an adhoc request from the input
-			adhocRequest := &types.AdhocRequest{}
+			adhocRequest := &corev2.AdhocRequest{}
 			opts.Copy(adhocRequest)
 
 			// Add the current user as the creator
@@ -117,7 +117,7 @@ func (opts *executionOpts) administerQuestionnaire() error {
 	return survey.Ask(qs, opts)
 }
 
-func (opts *executionOpts) Copy(req *types.AdhocRequest) {
+func (opts *executionOpts) Copy(req *corev2.AdhocRequest) {
 	req.Name = opts.Name
 	req.Reason = opts.Reason
 	req.Subscriptions = helpers.SafeSplitCSV(opts.Subscriptions)

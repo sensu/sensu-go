@@ -9,12 +9,11 @@ import (
 	"strings"
 
 	"github.com/gogo/protobuf/proto"
+	corev2 "github.com/sensu/core/v2"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/backend/store/etcd/kvc"
-	"github.com/sensu/sensu-go/types"
+	"github.com/sensu/types"
 	clientv3 "go.etcd.io/etcd/client/v3"
-
-	corev2 "github.com/sensu/core/v2"
 )
 
 const (
@@ -319,13 +318,13 @@ func unmarshal(data []byte, v interface{}) error {
 }
 
 // marshal takes an interface and will attempt to marshal it. If the interface
-// can be asserted as types.Wrapper it will be marshaled with JSON, otherwise it
+// can be asserted as corev2.Wrapper it will be marshaled with JSON, otherwise it
 // will be marshaled with Protobuf.
 func marshal(v interface{}) (bytes []byte, err error) {
 	switch v.(type) {
 	case types.Wrapper:
 		// Supporting protobuf serialization for wrapped resources is not
-		// straightforward since the types.Wrapper struct holds an interface. We
+		// straightforward since the corev2.Wrapper struct holds an interface. We
 		// will just use JSON encoding for now since the all store functions support
 		// both for decoding.
 		bytes, err = json.Marshal(v)

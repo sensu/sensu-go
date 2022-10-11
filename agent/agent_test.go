@@ -17,7 +17,7 @@ import (
 	corev2 "github.com/sensu/core/v2"
 	sensutesting "github.com/sensu/sensu-go/testing"
 	"github.com/sensu/sensu-go/transport"
-	"github.com/sensu/sensu-go/types"
+	"github.com/sensu/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

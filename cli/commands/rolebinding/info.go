@@ -9,7 +9,7 @@ import (
 	"github.com/sensu/sensu-go/cli"
 	"github.com/sensu/sensu-go/cli/commands/helpers"
 	"github.com/sensu/sensu-go/cli/elements/list"
-	"github.com/sensu/sensu-go/types"
+	corev2 "github.com/sensu/core/v2"
 	"github.com/spf13/cobra"
 )
 
@@ -45,7 +45,7 @@ func InfoCommand(cli *cli.SensuCli) *cobra.Command {
 }
 
 func printToList(v interface{}, writer io.Writer) error {
-	roleBinding, ok := v.(*types.RoleBinding)
+	roleBinding, ok := v.(*corev2.RoleBinding)
 	if !ok {
 		return fmt.Errorf("%t is not a role binding", v)
 	}
@@ -55,9 +55,9 @@ func printToList(v interface{}, writer io.Writer) error {
 
 	for _, subject := range roleBinding.Subjects {
 		switch subject.Type {
-		case types.GroupType:
+		case corev2.GroupType:
 			groupNames = append(groupNames, subject.Name)
-		case types.UserType:
+		case corev2.UserType:
 			userNames = append(userNames, subject.Name)
 		}
 	}

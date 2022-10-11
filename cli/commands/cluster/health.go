@@ -8,7 +8,7 @@ import (
 	"github.com/sensu/sensu-go/cli"
 	"github.com/sensu/sensu-go/cli/commands/helpers"
 	"github.com/sensu/sensu-go/cli/elements/table"
-	"github.com/sensu/sensu-go/types"
+	corev2 "github.com/sensu/core/v2"
 	"github.com/spf13/cobra"
 	"go.etcd.io/etcd/api/v3/etcdserverpb"
 )
@@ -59,7 +59,7 @@ func printHealthToTable(result interface{}, w io.Writer) {
 			Title:       "ID",
 			ColumnStyle: table.PrimaryTextStyle,
 			CellTransformer: func(data interface{}) string {
-				clusterHealth, ok := data.(*types.ClusterHealth)
+				clusterHealth, ok := data.(*corev2.ClusterHealth)
 				if !ok {
 					return cli.TypeError
 				}
@@ -70,7 +70,7 @@ func printHealthToTable(result interface{}, w io.Writer) {
 			Title:       "Name",
 			ColumnStyle: table.PrimaryTextStyle,
 			CellTransformer: func(data interface{}) string {
-				clusterHealth, ok := data.(*types.ClusterHealth)
+				clusterHealth, ok := data.(*corev2.ClusterHealth)
 				if !ok {
 					return cli.TypeError
 				}
@@ -81,7 +81,7 @@ func printHealthToTable(result interface{}, w io.Writer) {
 			Title:       "Error",
 			ColumnStyle: table.PrimaryTextStyle,
 			CellTransformer: func(data interface{}) string {
-				clusterHealth, ok := data.(*types.ClusterHealth)
+				clusterHealth, ok := data.(*corev2.ClusterHealth)
 				if !ok {
 					return cli.TypeError
 				}
@@ -92,7 +92,7 @@ func printHealthToTable(result interface{}, w io.Writer) {
 			Title:       "Healthy",
 			ColumnStyle: table.PrimaryTextStyle,
 			CellTransformer: func(data interface{}) string {
-				clusterHealth, ok := data.(*types.ClusterHealth)
+				clusterHealth, ok := data.(*corev2.ClusterHealth)
 				if !ok {
 					return cli.TypeError
 				}

@@ -5,7 +5,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/sensu/sensu-go/types"
+	corev2 "github.com/sensu/core/v2"
 	"github.com/sirupsen/logrus"
 )
 
@@ -17,15 +17,15 @@ type Graphite struct {
 	Path      string
 	Value     float64
 	Timestamp int64
-	Tags      []*types.MetricTag
+	Tags      []*corev2.MetricTag
 }
 
 // Transform transforms a metric in graphite plain text format to Sensu Metric
 // Format
-func (g GraphiteList) Transform() []*types.MetricPoint {
-	var points []*types.MetricPoint
+func (g GraphiteList) Transform() []*corev2.MetricPoint {
+	var points []*corev2.MetricPoint
 	for _, graphite := range g {
-		mp := &types.MetricPoint{
+		mp := &corev2.MetricPoint{
 			Name:      graphite.Path,
 			Value:     graphite.Value,
 			Timestamp: graphite.Timestamp,
@@ -33,7 +33,7 @@ func (g GraphiteList) Transform() []*types.MetricPoint {
 		}
 
 		if mp.Tags == nil {
-			mp.Tags = []*types.MetricTag{}
+			mp.Tags = []*corev2.MetricTag{}
 		}
 
 		points = append(points, mp)
@@ -42,7 +42,7 @@ func (g GraphiteList) Transform() []*types.MetricPoint {
 }
 
 // ParseGraphite parses a graphite plain text string into a Graphite struct
-func ParseGraphite(event *types.Event) GraphiteList {
+func ParseGraphite(event *corev2.Event) GraphiteList {
 	var graphiteList GraphiteList
 	fields := logrus.Fields{
 		"namespace": event.Check.Namespace,

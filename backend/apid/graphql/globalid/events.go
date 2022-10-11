@@ -5,7 +5,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 
-	"github.com/sensu/sensu-go/types"
+	corev2 "github.com/sensu/core/v2"
 )
 
 //
@@ -65,11 +65,11 @@ var EventTranslator = commonTranslator{
 		return NewEventComponents(&c)
 	},
 	encodeFunc: func(ctx context.Context, record interface{}) Components {
-		event := record.(*types.Event)
+		event := record.(*corev2.Event)
 		return encodeEvent(ctx, event)
 	},
 	isResponsibleFunc: func(record interface{}) bool {
-		_, ok := record.(*types.Event)
+		_, ok := record.(*corev2.Event)
 		return ok
 	},
 }
@@ -83,7 +83,7 @@ func init() { RegisterTranslator(EventTranslator) }
 //   srn:events:myns:check/d2h5IGFyZSB5b3UgZGVjb2RpbmcgdGhpcz8hCg==
 //   srn:events:myns:metric/Y29vbC4gY29vbCBjb29sIGNvb2wuCg==
 //
-func encodeEvent(ctx context.Context, event *types.Event) *StandardComponents {
+func encodeEvent(ctx context.Context, event *corev2.Event) *StandardComponents {
 	components := Encode(ctx, event)
 	components.resource = eventName
 

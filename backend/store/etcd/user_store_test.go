@@ -14,7 +14,7 @@ import (
 
 	"github.com/sensu/sensu-go/backend/authentication/bcrypt"
 	"github.com/sensu/sensu-go/backend/store"
-	"github.com/sensu/sensu-go/types"
+	corev2 "github.com/sensu/core/v2"
 
 	corev2 "github.com/sensu/core/v2"
 )
@@ -36,7 +36,7 @@ func TestUserStorage(t *testing.T) {
 		assert.NoError(t, err)
 		assert.Empty(t, users)
 
-		user := types.FixtureUser("foo")
+		user := corev2.FixtureUser("foo")
 		user.PasswordHash = passwordDigest
 		err = s.CreateUser(ctx, user)
 		assert.NoError(t, err)
@@ -58,7 +58,7 @@ func TestUserStorage(t *testing.T) {
 		err = s.CreateUser(ctx, user)
 		assert.Error(t, err)
 
-		mockedUser := types.FixtureUser("bar")
+		mockedUser := corev2.FixtureUser("bar")
 		mockedUser.Password = passwordDigest
 		err = s.UpdateUser(mockedUser)
 		assert.NoError(t, err)
