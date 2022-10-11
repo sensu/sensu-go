@@ -1,8 +1,8 @@
 package compat
 
 import (
-	corev2 "github.com/sensu/sensu-go/api/core/v2"
-	corev3 "github.com/sensu/sensu-go/api/core/v3"
+	corev2 "github.com/sensu/core/v2"
+	corev3 "github.com/sensu/core/v3"
 )
 
 // URIPath gets the URIPath from either a core/v2 resource or a core/v3 resource.

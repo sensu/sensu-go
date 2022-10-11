@@ -11,7 +11,7 @@ import (
 	"sync"
 
 	"github.com/blang/semver/v4"
-	corev2 "github.com/sensu/sensu-go/api/core/v2"
+	corev2 "github.com/sensu/core/v2"
 )
 
 var ErrAPINotFound = errors.New("api not found")
