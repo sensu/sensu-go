@@ -39,7 +39,7 @@ func (m RefreshToken) Then(next http.Handler) http.Handler {
 		// it's expired
 		accessToken, err := jwt.ValidateExpiredToken(accessTokenString)
 		if err != nil {
-			logger.WithError(err).Error("access token is invalid")
+			Logger.WithError(err).Error("access token is invalid")
 			http.Error(w, "Request unauthorized", http.StatusUnauthorized)
 			return
 		}
@@ -47,7 +47,7 @@ func (m RefreshToken) Then(next http.Handler) http.Handler {
 		// Retrieve the claims for the access token
 		accessClaims, err := jwt.GetClaims(accessToken)
 		if err != nil {
-			logger.WithError(err).Error("could not parse the access token claims")
+			Logger.WithError(err).Error("could not parse the access token claims")
 			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
@@ -61,7 +61,7 @@ func (m RefreshToken) Then(next http.Handler) http.Handler {
 		payload := &types.Tokens{}
 		err = decoder.Decode(payload)
 		if err != nil {
-			logger.WithError(err).Error("could not decode the refresh token")
+			Logger.WithError(err).Error("could not decode the refresh token")
 			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
@@ -69,7 +69,7 @@ func (m RefreshToken) Then(next http.Handler) http.Handler {
 		// Now we want to validate the refresh token
 		refreshToken, err := jwt.ValidateToken(payload.Refresh)
 		if err != nil {
-			logger.WithError(err).Error("refresh token is invalid")
+			Logger.WithError(err).Error("refresh token is invalid")
 			http.Error(w, "Request unauthorized", http.StatusUnauthorized)
 			return
 		}
@@ -77,14 +77,14 @@ func (m RefreshToken) Then(next http.Handler) http.Handler {
 		// Retrieve the claims for the refresh token
 		refreshClaims, err := jwt.GetClaims(refreshToken)
 		if err != nil {
-			logger.WithError(err).Error("could not parse the refresh token claims")
+			Logger.WithError(err).Error("could not parse the refresh token claims")
 			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
 
 		// Make sure the refresh token belongs to the same user as the access token
 		if accessClaims.Subject == "" || accessClaims.Subject != refreshClaims.Subject {
-			logger.WithFields(logrus.Fields{
+			Logger.WithFields(logrus.Fields{
 				"user":          refreshClaims.Subject,
 				"access_token":  accessClaims.Subject,
 				"refresh_token": refreshClaims.Subject,

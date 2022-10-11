@@ -29,13 +29,13 @@ func (a *Authenticator) Authenticate(ctx context.Context, username, password str
 	for _, provider := range a.providers {
 		claims, err := provider.Authenticate(ctx, username, password)
 		if err != nil || claims == nil {
-			logger.WithError(err).Debugf(
+			Logger.WithError(err).Debugf(
 				"could not authenticate with provider %q", provider.Type(),
 			)
 			continue
 		}
 
-		logger.WithFields(logrus.Fields{
+		Logger.WithFields(logrus.Fields{
 			"subject":         claims.Subject,
 			"groups":          claims.Groups,
 			"provider_id":     claims.Provider.ProviderID,
@@ -48,7 +48,7 @@ func (a *Authenticator) Authenticate(ctx context.Context, username, password str
 	// TODO(palourde): We might want to return a more meaningful and actionnable
 	// error message, but we don't want to leak sensitive information.
 
-	logger.WithField("username", username).Error("authentication failed")
+	Logger.WithField("username", username).Error("authentication failed")
 	return nil, errors.New("authentication failed")
 }
 

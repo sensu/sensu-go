@@ -33,7 +33,7 @@ func (a Authentication) Then(next http.Handler) http.Handler {
 				headerString = strings.TrimPrefix(headerString, "Bearer ")
 				token, err := jwt.ValidateToken(headerString)
 				if err != nil {
-					logger.WithError(err).Warn("invalid token")
+					Logger.WithError(err).Warn("invalid token")
 					actionErr := actions.NewErrorf(actions.Unauthenticated, "invalid credentials")
 					SimpleLogger{}.Then(errorWriter{err: actionErr}.Then(next)).ServeHTTP(w, r.WithContext(ctx))
 					return
@@ -49,7 +49,7 @@ func (a Authentication) Then(next http.Handler) http.Handler {
 				headerString = strings.TrimPrefix(headerString, "Key ")
 				claims, err := extractAPIKeyClaims(ctx, headerString, a.Store)
 				if err != nil {
-					logger.WithError(err).Warn("invalid api key")
+					Logger.WithError(err).Warn("invalid api key")
 					actionErr := actions.NewErrorf(actions.Unauthenticated, "invalid credentials")
 					SimpleLogger{}.Then(errorWriter{err: actionErr}.Then(next)).ServeHTTP(w, r.WithContext(ctx))
 					return

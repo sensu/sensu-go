@@ -25,7 +25,7 @@ func (m *AwaitStartupMiddleware) Then(next http.Handler) http.Handler {
 		ready := m.isReady
 		m.mu.RUnlock()
 		if !ready {
-			logger.Info("apid temporarily unavailable during startup")
+			Logger.Info("apid temporarily unavailable during startup")
 			if m.RetryAfterSeconds > 0 {
 				w.Header().Set("Retry-After", fmt.Sprint(m.RetryAfterSeconds))
 			}

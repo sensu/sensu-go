@@ -205,11 +205,48 @@ func StartCommand(initialize InitializeFunc) *cobra.Command {
 				return setupErr
 			}
 
-			level, err := logrus.ParseLevel(viper.GetString(flagLogLevel))
-			if err != nil {
-				return err
+			getLogLevelMap := func(s string) map[string]string {
+				entries := strings.Split(s, ",")
+
+				m := make(map[string]string)
+				for _, e := range entries {
+					tokens := strings.Split(e, ":")
+
+					var k, v string
+					switch len(tokens) {
+					// There is no ':' in the entry, this is the global log
+					// level
+					case 1:
+						k = ""
+						v = strings.TrimSpace(tokens[0])
+
+					// This is a <component>:<log-level> entry
+					case 2:
+						k = strings.TrimSpace(tokens[0])
+						v = strings.TrimSpace(tokens[1])
+
+					default:
+						// TODO: error?
+					}
+
+					m[k] = v
+				}
+
+				return m
 			}
-			logrus.SetLevel(level)
+
+			logLevelString := viper.GetString(flagLogLevel)
+			logLevel := getLogLevelMap(logLevelString)
+
+			if logLevel[""] != "" {
+				globalLevel, err := logrus.ParseLevel(logLevel[""])
+				if err != nil {
+					return err
+				}
+				logrus.SetLevel(globalLevel)
+			} else {
+				// TODO: logrus.SetLevel() to some default level
+			}
 
 			// If no clustering options are provided, default to a static
 			// cluster 'defaultEtcdName=defaultEtcdPeerURL'.
@@ -241,6 +278,7 @@ func StartCommand(initialize InitializeFunc) *cobra.Command {
 				DeregistrationHandler: viper.GetString(flagDeregistrationHandler),
 				CacheDir:              viper.GetString(flagCacheDir),
 				StateDir:              viper.GetString(flagStateDir),
+				LogLevel:              logLevel,
 
 				EtcdAdvertiseClientURLs:        viper.GetStringSlice(flagEtcdAdvertiseClientURLs),
 				EtcdListenClientURLs:           viper.GetStringSlice(flagEtcdListenClientURLs),
@@ -325,16 +363,19 @@ func StartCommand(initialize InitializeFunc) *cobra.Command {
 			}
 
 			// Etcd log level
-			if cfg.EtcdLogLevel == "" {
-				switch level {
-				case logrus.TraceLevel:
-					cfg.EtcdLogLevel = "debug"
-				case logrus.WarnLevel:
-					cfg.EtcdLogLevel = "warn"
-				default:
-					cfg.EtcdLogLevel = level.String()
-				}
-			}
+			// This needs to be folded into the `--log-level` flag, with the
+			// `--etcd-log-level` flags becoming deprecated ways to set
+			// logLevel["etcd"] and logLevel["etcd-client"]
+			// if cfg.EtcdLogLevel == "" {
+			// 	switch level {
+			// 	case logrus.TraceLevel:
+			// 		cfg.EtcdLogLevel = "debug"
+			// 	case logrus.WarnLevel:
+			// 		cfg.EtcdLogLevel = "warn"
+			// 	default:
+			// 		cfg.EtcdLogLevel = level.String()
+			// 	}
+			// }
 
 			ctx, cancel := context.WithCancel(context.Background())
 			defer cancel()
@@ -549,6 +590,7 @@ func flagSet(server bool) *pflag.FlagSet {
 		flagSet.String(flagTrustedCAFile, viper.GetString(flagTrustedCAFile), "TLS CA certificate bundle in PEM format")
 		flagSet.Bool(flagInsecureSkipTLSVerify, viper.GetBool(flagInsecureSkipTLSVerify), "skip TLS verification (not recommended!)")
 		flagSet.Bool(flagDebug, false, "enable debugging and profiling features")
+		// TODO: Change the help message
 		flagSet.String(flagLogLevel, viper.GetString(flagLogLevel), "logging level [panic, fatal, error, warn, info, debug, trace]")
 		flagSet.Int(backend.FlagEventdWorkers, viper.GetInt(backend.FlagEventdWorkers), "number of workers spawned for processing incoming events")
 		flagSet.Int(backend.FlagEventdBufferSize, viper.GetInt(backend.FlagEventdBufferSize), "number of incoming events that can be buffered")
