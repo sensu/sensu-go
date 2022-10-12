@@ -77,6 +77,8 @@ github.com/sensu/core v0.0.0-20221010162425-173160038a95/go.mod h1:kohc9PS2v+yZA
 github.com/sensu/core v0.0.0-20221011173815-faee2af182d5/go.mod h1:JTAi8yuzJStFPSpWccpjyUjyhspH+N+pXJa0yTYvTMg=
 github.com/sensu/core v0.0.0-20221011223545-e5d7ad9277b8 h1:eVjH0m/bVZhOthSHrEDx02Lu2w8PMQrhGTujYnyxD0w=
 github.com/sensu/core v0.0.0-20221011223545-e5d7ad9277b8/go.mod h1:u7/rhi07HXZS2x/ehTr6NMvP4t7qyc/r9xX9kprXsHs=
+github.com/sensu/core/v2 v2.0.0-20221012153755-8b8951660eb1 h1:BTmL/wtdPxZT+5t3yUjIXybYjR/awQ1CZQNaN5TMLRc=
+github.com/sensu/core/v2 v2.0.0-20221012153755-8b8951660eb1/go.mod h1:vFoPc++U8m30t0fXKNGqOqHLOFr7VuqFc+Hkz+eTdmU=
 github.com/sensu/sensu-go/api/core/v2 v2.14.0/go.mod h1:XCgUjY78ApTahizBz/pkc5KU17L/E5BexeZHkGDdTls=
 github.com/sensu/sensu-go/api/core/v2 v2.15.0/go.mod h1:QxGKxqQv4rpweFrR4Jkp1tas3amGzAy0wO0fUwq0suU=
 github.com/sensu/sensu-go/api/core/v3 v3.6.1/go.mod h1:aqNOkJxkrwRq+rPW47XtVWeb5Rk1K5adlCZGBW9nsvM=
