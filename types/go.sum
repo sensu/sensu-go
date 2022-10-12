@@ -70,12 +70,11 @@ github.com/robertkrimen/otto v0.0.0-20221006114523-201ab5b34f52/go.mod h1:/mK7FZ
 github.com/robfig/cron/v3 v3.0.1 h1:WdRxkvbJztn8LMz/QEvLN5sBU+xKpSqwwUO1Pjr4qDs=
 github.com/robfig/cron/v3 v3.0.1/go.mod h1:eQICP3HwyT7UooqI/z+Ov+PtYAWygg1TEWWzGIFLtro=
 github.com/rogpeppe/fastuuid v1.2.0/go.mod h1:jVj6XXZzXRy/MSR5jhDC/2q6DgLz+nrA6LYCDYWNEvQ=
-github.com/sensu/core/v2 v2.0.0-20221012153755-8b8951660eb1/go.mod h1:vFoPc++U8m30t0fXKNGqOqHLOFr7VuqFc+Hkz+eTdmU=
 github.com/sensu/core/v2 v2.16.0-alpha1 h1:zI7LisUz5rtVap9N/LbH6+nU9spE7FC7sEBubJd1Bek=
 github.com/sensu/core/v2 v2.16.0-alpha1/go.mod h1:vFoPc++U8m30t0fXKNGqOqHLOFr7VuqFc+Hkz+eTdmU=
-github.com/sensu/core/v3 v3.8.0-alpha1 h1:TBWIV2J1QFEUuc7yd3GbB3lUYuYkhf0bCju2NAZoiTw=
-github.com/sensu/core/v3 v3.8.0-alpha1/go.mod h1:BQAieTfsVR+zvXeFc0A5G6fz3HXpouz385KBiZojLck=
-github.com/sensu/sensu-go/types v0.11.1-0.20221012154017-1f71cece1b97/go.mod h1:K1ZQa4f9QsRtygdXidTzgr9FGxlVqrJ4+blNefMNpNE=
+github.com/sensu/core/v3 v3.8.0-alpha1 h1:n3s/LqZ2QcSndMVm864IQidRwU0Gux5z/f7O3fZUM+E=
+github.com/sensu/core/v3 v3.8.0-alpha1/go.mod h1:qzwIrR7cbbhTp6F7RaziQAEvX+8tiYZT1v9qJZFVH4k=
+github.com/sensu/sensu-go/types v0.12.0-alpha1/go.mod h1:fHxLHZQQDpBv9ZLxvvab3w6aRXI88iJ8AqU4JQSzS0U=
 github.com/sirupsen/logrus v1.9.0 h1:trlNQbNUG3OdDrDil03MCb1H2o9nJ1x4/5LYw7byDE0=
 github.com/sirupsen/logrus v1.9.0/go.mod h1:naHLuLoDiP4jHNo9R0sCBMtWGeIprob74mVsIT4qYEQ=
 github.com/stretchr/objx v0.1.0/go.mod h1:HFkY916IF+rwdDfMAkV7OtwuqBVzrE8GR6GFx+wExME=
