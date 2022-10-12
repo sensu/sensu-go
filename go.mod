@@ -78,8 +78,8 @@ require (
 	github.com/google/go-cmp v0.5.8 // indirect
 	github.com/kr/pty v1.1.8 // indirect
 	github.com/sensu/core/v2 v2.16.0-alpha1
-	github.com/sensu/core/v3 v3.8.0-alpha1
-	github.com/sensu/sensu-go/types v0.12.0-alpha1
+	github.com/sensu/core/v3 v3.8.0-alpha2
+	github.com/sensu/sensu-go/types v0.12.0-alpha2
 	golang.org/x/text v0.3.7 // indirect
 )
 
