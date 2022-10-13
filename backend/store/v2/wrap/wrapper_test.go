@@ -10,13 +10,13 @@ import (
 
 	corev2 "github.com/sensu/core/v2"
 	corev3 "github.com/sensu/core/v3"
+	"github.com/sensu/sensu-api-tools/apis"
 	"github.com/sensu/sensu-go/backend/store/v2/wrap"
-	"github.com/sensu/sensu-go/types"
 )
 
 func init() {
-	types.RegisterResolver("wrap_test/v2", testResolver)
-	types.RegisterResolver("v2/wrap_test", testResolver)
+	apis.RegisterResolver("wrap_test/v2", testResolver)
+	apis.RegisterResolver("v2/wrap_test", testResolver)
 }
 
 func testResolver(name string) (interface{}, error) {

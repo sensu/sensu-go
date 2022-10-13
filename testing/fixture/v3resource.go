@@ -4,11 +4,11 @@ import (
 	"fmt"
 
 	corev2 "github.com/sensu/core/v2"
-	"github.com/sensu/sensu-go/types"
+	"github.com/sensu/sensu-api-tools/apis"
 )
 
 func init() {
-	types.RegisterResolver("testing/fixture", func(name string) (interface{}, error) {
+	apis.RegisterResolver("testing/fixture", func(name string) (interface{}, error) {
 		switch name {
 		case "V3Resource", "v3_resource":
 			return new(V3Resource), nil

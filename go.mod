@@ -79,7 +79,8 @@ require (
 	github.com/kr/pty v1.1.8 // indirect
 	github.com/sensu/core/v2 v2.16.0-alpha2
 	github.com/sensu/core/v3 v3.8.0-alpha3
-	github.com/sensu/sensu-go/types v0.12.0-alpha4
+	github.com/sensu/sensu-api-tools v0.0.0-20221013031257-5242d4a5ba34
+	github.com/sensu/sensu-go/types v0.12.0-alpha5
 	golang.org/x/text v0.3.7 // indirect
 )
 

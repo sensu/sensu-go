@@ -12,8 +12,8 @@ import (
 	"github.com/golang/snappy"
 	corev2 "github.com/sensu/core/v2"
 	corev3 "github.com/sensu/core/v3"
+	"github.com/sensu/sensu-api-tools/apis"
 	"github.com/sensu/sensu-go/backend/store"
-	"github.com/sensu/sensu-go/types"
 )
 
 //go:generate go run ../../../../scripts/check_protoc/main.go
@@ -158,7 +158,7 @@ func wrapWithoutValidation(r interface{}, opts ...Option) (*Wrapper, error) {
 		typ := reflect.Indirect(reflect.ValueOf(r)).Type()
 		tm = corev2.TypeMeta{
 			Type:       typ.Name(),
-			APIVersion: types.ApiVersion(typ.PkgPath()),
+			APIVersion: apis.ApiVersion(typ.PkgPath()),
 		}
 	}
 	w := Wrapper{
@@ -220,7 +220,7 @@ func (w *Wrapper) Unwrap() (corev3.Resource, error) {
 
 // UnwrapRaw is like Unwrap, but returns a raw interface{} value.
 func (w *Wrapper) UnwrapRaw() (interface{}, error) {
-	resource, err := types.ResolveRaw(w.TypeMeta.APIVersion, w.TypeMeta.Type)
+	resource, err := apis.Resolve(w.TypeMeta.APIVersion, w.TypeMeta.Type)
 	if err != nil {
 		return nil, err
 	}

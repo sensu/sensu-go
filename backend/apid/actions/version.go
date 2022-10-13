@@ -2,7 +2,7 @@ package actions
 
 import (
 	corev2 "github.com/sensu/core/v2"
-	"github.com/sensu/sensu-go/types"
+	"github.com/sensu/sensu-api-tools/apis"
 	"github.com/sensu/sensu-go/version"
 	etcdVersion "go.etcd.io/etcd/api/v3/version"
 	"golang.org/x/net/context"
@@ -28,6 +28,6 @@ func (v VersionController) GetVersion(ctx context.Context) *corev2.Version {
 			Cluster: v.clusterVersion,
 		},
 		SensuBackend: version.Semver(),
-		APIGroups:    types.APIModuleVersions(),
+		APIGroups:    apis.APIModuleVersions(),
 	}
 }
