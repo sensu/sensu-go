@@ -1,7 +1,6 @@
 package etcdstore_test
 
 import (
-	"errors"
 	"io/ioutil"
 	"testing"
 
@@ -49,17 +48,8 @@ func (t *testResource) GetTypeMeta() corev2.TypeMeta {
 	}
 }
 
-func fixtureResolver(name string) (interface{}, error) {
-	switch name {
-	case "testResource":
-		return &testResource{}, nil
-	default:
-		return nil, errors.New("type does not exist")
-	}
-}
-
 func init() {
-	apis.RegisterResolver("store/wrap_test", fixtureResolver)
+	apis.RegisterType("store/wrap_test", new(testResource))
 }
 
 func testWithEtcdStore(t testing.TB, f func(*etcdstorev2.Store)) {

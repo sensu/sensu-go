@@ -4,7 +4,9 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"path"
 	"reflect"
+	"strings"
 
 	//nolint:staticcheck // SA1004 Replacing this will take some planning.
 	"github.com/golang/protobuf/proto"
@@ -158,7 +160,7 @@ func wrapWithoutValidation(r interface{}, opts ...Option) (*Wrapper, error) {
 		typ := reflect.Indirect(reflect.ValueOf(r)).Type()
 		tm = corev2.TypeMeta{
 			Type:       typ.Name(),
-			APIVersion: apis.ApiVersion(typ.PkgPath()),
+			APIVersion: apiVersion(typ.PkgPath()),
 		}
 	}
 	w := Wrapper{
@@ -322,4 +324,15 @@ func (l List) UnwrapInto(ptr interface{}) error {
 		}
 	}
 	return nil
+}
+
+func apiVersion(version string) string {
+	parts := strings.Split(version, "/")
+	if len(parts) == 0 {
+		return ""
+	}
+	if len(parts) == 1 {
+		return parts[0]
+	}
+	return path.Join(parts[len(parts)-2], parts[len(parts)-1])
 }

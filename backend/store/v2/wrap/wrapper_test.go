@@ -2,7 +2,6 @@ package wrap_test
 
 import (
 	"encoding/json"
-	fmt "fmt"
 	"testing"
 
 	//nolint:staticcheck // SA1004 Replacing this will take some planning.
@@ -15,19 +14,10 @@ import (
 )
 
 func init() {
-	apis.RegisterResolver("wrap_test/v2", testResolver)
-	apis.RegisterResolver("v2/wrap_test", testResolver)
-}
-
-func testResolver(name string) (interface{}, error) {
-	switch name {
-	case "testResource":
-		return &testResource{}, nil
-	case "testResource2":
-		return &testResource2{}, nil
-	default:
-		return nil, fmt.Errorf("invalid resource: %s", name)
-	}
+	apis.RegisterType("wrap_test/v2", new(testResource))
+	apis.RegisterType("wrap_test/v2", new(testResource2))
+	apis.RegisterType("v2/wrap_test", new(testResource))
+	apis.RegisterType("v2/wrap_test", new(testResource2))
 }
 
 type testResource struct {

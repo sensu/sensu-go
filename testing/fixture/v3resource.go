@@ -8,14 +8,7 @@ import (
 )
 
 func init() {
-	apis.RegisterResolver("testing/fixture", func(name string) (interface{}, error) {
-		switch name {
-		case "V3Resource", "v3_resource":
-			return new(V3Resource), nil
-		default:
-			return nil, fmt.Errorf("invalid resource: %s", name)
-		}
-	})
+	apis.RegisterType("testing/fixture", new(V3Resource), apis.WithAlias("v3_resource"))
 }
 
 type V3Resource struct {
