@@ -22,6 +22,21 @@ type WrapList interface {
 	Len() int
 }
 
+// EntityConfigStoreGetter gets you an EntityConfigStore.
+type EntityConfigStoreGetter interface {
+	GetEntityConfigStore() EntityConfigStore
+}
+
+// EntityStateStoreGetter gets you an EntityStateStore.
+type EntityStateStoreGetter interface {
+	GetEntityStateStore() EntityStateStore
+}
+
+// NamespaceStoreGetter gets you a NamespaceStore.
+type NamespaceStoreGetter interface {
+	GetNamespaceStore() NamespaceStore
+}
+
 // Interface specifies the interface of a v2 store.
 type Interface interface {
 	// CreateOrUpdate creates or updates the wrapped resource.
