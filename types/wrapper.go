@@ -3,18 +3,14 @@ package types
 import (
 	"bytes"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"path"
 	"reflect"
 	"strings"
-	"sync"
 
-	"github.com/blang/semver/v4"
 	corev2 "github.com/sensu/core/v2"
+	apitools "github.com/sensu/sensu-api-tools"
 )
-
-var ErrAPINotFound = errors.New("api not found")
 
 // compatibility shim - can't import core/v3
 type corev3Resource interface {
@@ -64,13 +60,6 @@ type rawWrapper struct {
 	ObjectMeta ObjectMeta       `json:"metadata" yaml:"metadata"`
 	Value      *json.RawMessage `json:"spec" yaml:"spec"`
 }
-
-// PackageMap contains a list of packages with their Resource Resolver func
-var packageMap = map[string]interface{}{
-	"core/v2": corev2.ResolveResource,
-}
-
-var packageMapMu = &sync.RWMutex{}
 
 type lifter interface {
 	Lift() Resource
@@ -160,7 +149,7 @@ func (w *Wrapper) UnmarshalJSON(b []byte) error {
 
 	// Use the TypeMeta to resolve the type of the resource contained in the Value
 	// field as a *json.RawMessage
-	resource, err := ResolveRaw(w.TypeMeta.APIVersion, w.TypeMeta.Type)
+	resource, err := apitools.Resolve(w.TypeMeta.APIVersion, w.TypeMeta.Type)
 	if err != nil {
 		return fmt.Errorf("error parsing spec: %s", err)
 	}
@@ -275,88 +264,6 @@ func WrapResource(r Resource) Wrapper {
 		ObjectMeta: *getObjectMeta(r),
 		Value:      r,
 	}
-}
-
-// RegisterTypeResolver adds a package to packageMap with its resolver. Deprecated.
-func RegisterTypeResolver(key string, resolver func(string) (Resource, error)) {
-	packageMapMu.Lock()
-	defer packageMapMu.Unlock()
-	packageMap[key] = resolver
-}
-
-// RegisterResolver adds a package to packageMap with its resolver.
-func RegisterResolver(key string, resolver func(string) (interface{}, error)) {
-	packageMapMu.Lock()
-	defer packageMapMu.Unlock()
-	packageMap[key] = resolver
-}
-
-// ResolveType returns the Resource associated with the given package and type.
-func ResolveType(apiVersion string, typename string) (Resource, error) {
-	availableModules := APIModuleVersions()
-
-	// Guard read access to packageMap
-	packageMapMu.RLock()
-	defer packageMapMu.RUnlock()
-	apiGroup, reqVer := ParseAPIVersion(apiVersion)
-	foundVer, ok := availableModules[apiGroup]
-	if ok {
-		if semverGreater(reqVer, foundVer) {
-			return nil, fmt.Errorf("requested version was %s, but only %s is available", reqVer, foundVer)
-		}
-	}
-	resolver, ok := packageMap[apiGroup]
-	if !ok {
-		return nil, fmt.Errorf("invalid API version: %s", apiVersion)
-	}
-	switch resolver := resolver.(type) {
-	case func(string) (Resource, error):
-		v, err := resolver(typename)
-		return v, err
-	default:
-		return nil, fmt.Errorf("%s does not implement v2.Resource", apiVersion)
-	}
-}
-
-func semverGreater(s1, s2 string) bool {
-	s1Ver, err := semver.ParseTolerant(s1)
-	if err != nil {
-		// semver should be validated before being passed here
-		return false
-	}
-	s2Ver, err := semver.ParseTolerant(s2)
-	if err != nil {
-		// semver should be validated before being passed here
-		return false
-	}
-	return s1Ver.GT(s2Ver)
-}
-
-// ResolveRaw resolves the raw type for the requested type.
-func ResolveRaw(apiVersion string, typename string) (interface{}, error) {
-	availableModules := APIModuleVersions()
-
-	// Guard read access to packageMap
-	packageMapMu.RLock()
-	defer packageMapMu.RUnlock()
-	apiGroup, reqVer := ParseAPIVersion(apiVersion)
-	foundVer, ok := availableModules[apiGroup]
-	if ok {
-		if semverGreater(reqVer, foundVer) {
-			return nil, fmt.Errorf("requested version was %s, but only %s is available", reqVer, foundVer)
-		}
-	}
-	resolver, ok := packageMap[apiGroup]
-	if !ok {
-		return nil, ErrAPINotFound
-	}
-	switch resolver := resolver.(type) {
-	case func(string) (Resource, error):
-		return resolver(typename)
-	case func(string) (interface{}, error):
-		return resolver(typename)
-	}
-	return nil, fmt.Errorf("bad resolver: %T", resolver)
 }
 
 func ApiVersion(version string) string {
