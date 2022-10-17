@@ -58,6 +58,18 @@ func NewConfigStore(db *pgxpool.Pool) *ConfigStore {
 	}
 }
 
+func (c *ConfigStore) GetEntityConfigStore() storev2.EntityConfigStore {
+	return NewEntityConfigStore(c.db)
+}
+
+func (c *ConfigStore) GetEntityStateStore() storev2.EntityStateStore {
+	return NewEntityStateStore(c.db)
+}
+
+func (c *ConfigStore) GetNamespaceStore() storev2.NamespaceStore {
+	return NewNamespaceStore(c.db)
+}
+
 func (s *ConfigStore) Initialize(ctx context.Context, fn storev2.InitializeFunc) error {
 	return nil
 }
