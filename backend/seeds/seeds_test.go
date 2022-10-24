@@ -26,7 +26,7 @@ func TestSeedInitialDataWithContext(t *testing.T) {
 	s := new(storetest.Store)
 	s.On("NamespaceStore").Return(nsStore)
 	s.On("CreateIfNotExists", mock.Anything, mock.Anything, mock.Anything).Return(nil)
-	s.On("Initialize", mock.Anything, mock.Anything).Return(seedCluster(ctx, s, nsStore, config)(ctx))
+	s.On("Initialize", mock.Anything, mock.Anything).Return(seedCluster(config)(ctx, s, nsStore))
 
 	sErr := SeedInitialDataWithContext(ctx, s, nsStore)
 	require.NoError(t, sErr, "seeding process should not raise an error")

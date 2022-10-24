@@ -10,7 +10,6 @@ import (
 	"os"
 	"os/signal"
 	"path/filepath"
-	"reflect"
 	"runtime"
 	"strings"
 	"syscall"
@@ -26,7 +25,6 @@ import (
 	"github.com/sensu/sensu-go/asset"
 	"github.com/sensu/sensu-go/backend"
 	"github.com/sensu/sensu-go/backend/etcd"
-	etcdstore "github.com/sensu/sensu-go/backend/store/etcd"
 	"github.com/sensu/sensu-go/util/path"
 	stringsutil "github.com/sensu/sensu-go/util/strings"
 	"github.com/sirupsen/logrus"
@@ -148,11 +146,6 @@ var (
 // InitializeFunc represents the signature of an initialization function, used
 // to initialize the backend
 type InitializeFunc func(context.Context, *clientv3.Client, *pgxpool.Pool, *pgxpool.Pool, *backend.Config) (*backend.Backend, error)
-
-func anyConfig(cfg etcdstore.Config) bool {
-	var zero etcdstore.Config
-	return !reflect.DeepEqual(cfg, zero)
-}
 
 // StartCommand ...
 func StartCommand(initialize InitializeFunc) *cobra.Command {

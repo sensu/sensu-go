@@ -21,6 +21,7 @@ func setupUsers(ctx context.Context, s storev2.Interface, config Config) error {
 
 	for _, userFn := range userFns {
 		user, err := userFn()
+		fmt.Println(user, err)
 		if err != nil {
 			msg := "could not build user: %w"
 			logger.WithError(err).Error(msg)

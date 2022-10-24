@@ -78,7 +78,7 @@ func TestOPCControllerMigrationTimedOut(t *testing.T) {
 		}
 
 		// drain the buffer in case it filled before backend1 became absent
-		_ = <-notifications
+		<-notifications
 
 		if notes := <-notifications; len(notes) > 0 {
 			t.Error("shouldn't have got a notification")
@@ -195,7 +195,7 @@ func TestOPCControllerMigrationCheckOut(t *testing.T) {
 		}
 
 		// drain the buffer in case it filled before checkout
-		_ = <-notifications
+		<-notifications
 
 		if len(<-notifications) > 0 {
 			t.Error("shouldn't have got a notification")

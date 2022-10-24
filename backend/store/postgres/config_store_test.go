@@ -57,7 +57,7 @@ func testWithPostgresConfigStore(t *testing.T, fn func(p storev2.Interface)) {
 	require.NoError(t, err)
 	defer configDB.Close()
 
-	s := NewConfigStore(configDB)
+	s := NewConfigStore(configDB, nil)
 	fn(s)
 }
 

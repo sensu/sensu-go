@@ -43,9 +43,8 @@ FROM pg_stat_activity
 WHERE datname = '%s' AND pid <> pg_backend_pid();
 `
 	killQ := fmt.Sprintf(rawKillQ, dbName)
-	if _, err := db.Exec(context.Background(), killQ); err != nil {
-		tb.Fatalf("error cleaning up database \"%s\", kill connections: %v", dbName, err)
-	}
+	// this can have permissions errors for reasons unclear to me
+	_, _ = db.Exec(context.Background(), killQ)
 
 	// drop the database
 	dropQ := fmt.Sprintf("DROP DATABASE %s;", dbName)
@@ -115,6 +114,10 @@ func withPostgres(tb testing.TB, fn poolWithDSNFunc) {
 	withMigratedPostgres(tb, func(ctx context.Context, db *pgxpool.Pool, dsn string) {
 		fn(ctx, db, dsn)
 	}, migrations)
+}
+
+func WithPostgres(tb testing.TB, fn poolWithDSNFunc) {
+	withPostgres(tb, fn)
 }
 
 // creates a database & only applies the very first schema migration which

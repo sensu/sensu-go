@@ -12,7 +12,6 @@ import (
 
 	"github.com/jackc/pgconn"
 	"github.com/jackc/pgx/v4"
-	"github.com/jackc/pgx/v4/pgxpool"
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	corev3 "github.com/sensu/sensu-go/api/core/v3"
 	"github.com/sensu/sensu-go/backend/poll"
@@ -21,13 +20,20 @@ import (
 	"github.com/sensu/sensu-go/backend/store/patch"
 	storev2 "github.com/sensu/sensu-go/backend/store/v2"
 	"github.com/sensu/sensu-go/backend/store/v2/wrap"
-	log "github.com/sirupsen/logrus"
 )
 
 const pgUniqueViolationCode = "23505"
 
+type DBI interface {
+	Begin(context.Context) (pgx.Tx, error)
+	Query(context.Context, string, ...any) (pgx.Rows, error)
+	QueryRow(context.Context, string, ...any) pgx.Row
+	Exec(context.Context, string, ...any) (pgconn.CommandTag, error)
+}
+
 type ConfigStore struct {
-	db             *pgxpool.Pool
+	db             DBI
+	stateDB        DBI
 	watchInterval  time.Duration
 	watchTxnWindow time.Duration
 }
@@ -52,26 +58,39 @@ type listTemplateValues struct {
 	SelectorSQL string
 }
 
-func NewConfigStore(db *pgxpool.Pool) *ConfigStore {
+func NewConfigStore(configDB, stateDB DBI) *ConfigStore {
 	return &ConfigStore{
-		db: db,
+		db:      configDB,
+		stateDB: stateDB,
 	}
 }
 
 func (c *ConfigStore) GetEntityConfigStore() storev2.EntityConfigStore {
-	return NewEntityConfigStore(c.db)
+	return NewEntityConfigStore(c.stateDB)
 }
 
 func (c *ConfigStore) GetEntityStateStore() storev2.EntityStateStore {
-	return NewEntityStateStore(c.db)
+	return NewEntityStateStore(c.stateDB)
 }
 
 func (c *ConfigStore) GetNamespaceStore() storev2.NamespaceStore {
-	return NewNamespaceStore(c.db)
+	return NewNamespaceStore(c.stateDB)
 }
 
-func (s *ConfigStore) Initialize(ctx context.Context, fn storev2.InitializeFunc) error {
-	return nil
+func (s *ConfigStore) Initialize(ctx context.Context, fn storev2.InitializeFunc) (err error) {
+	configTx, cerr := s.db.Begin(ctx)
+	if cerr != nil {
+		return cerr
+	}
+	defer configTx.Commit(ctx)
+	stateTx, err := s.stateDB.Begin(ctx)
+	if err != nil {
+		return err
+	}
+	defer stateTx.Commit(ctx)
+	configStore := NewConfigStore(configTx, stateTx)
+	namespaceStore := NewNamespaceStore(stateTx)
+	return fn(ctx, configStore, namespaceStore)
 }
 
 func (s *ConfigStore) GetPoller(req storev2.ResourceRequest) (poll.Table, error) {
@@ -80,7 +99,6 @@ func (s *ConfigStore) GetPoller(req storev2.ResourceRequest) (poll.Table, error)
 
 func (s *ConfigStore) Watch(ctx context.Context, req storev2.ResourceRequest) <-chan []storev2.WatchEvent {
 	if req.APIVersion == "" || req.Type == "" {
-		log.Debug("")
 		return nil
 	}
 	return NewWatcher(s, s.watchInterval, s.watchTxnWindow).Watch(ctx, req)
@@ -402,7 +420,7 @@ func getSelectorSQL(ctx context.Context) (string, []interface{}, error) {
 }
 
 type configurationPoller struct {
-	db  *pgxpool.Pool
+	db  DBI
 	req storev2.ResourceRequest
 }
 
@@ -453,6 +471,6 @@ func (e *configurationPoller) Since(ctx context.Context, updatedSince time.Time)
 	return since, nil
 }
 
-func newConfigurationPoller(req storev2.ResourceRequest, pool *pgxpool.Pool) (poll.Table, error) {
-	return &configurationPoller{db: pool, req: req}, nil
+func newConfigurationPoller(req storev2.ResourceRequest, db DBI) (poll.Table, error) {
+	return &configurationPoller{db: db, req: req}, nil
 }

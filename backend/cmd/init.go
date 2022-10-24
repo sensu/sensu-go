@@ -8,15 +8,11 @@ import (
 	"time"
 
 	"github.com/AlecAivazis/survey/v2"
-	"github.com/jackc/pgx/v4/pgxpool"
 	"github.com/sensu/sensu-go/backend"
 	"github.com/sensu/sensu-go/backend/seeds"
-	etcdstorev1 "github.com/sensu/sensu-go/backend/store/etcd"
 	"github.com/sensu/sensu-go/backend/store/postgres"
-	etcdstorev2 "github.com/sensu/sensu-go/backend/store/v2/etcdstore"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	clientv3 "go.etcd.io/etcd/client/v3"
 )
 
 const (
@@ -30,10 +26,6 @@ const (
 	flagWait                     = "wait"
 	flagInitAdminAPIKey          = "cluster-admin-api-key"
 )
-
-// SeedFunc represents the signature of a seed function, used
-// to seed the backend store
-type SeedFunc func(context.Context, *clientv3.Client, *pgxpool.Pool, *backend.Config) (*backend.Backend, error)
 
 type initConfig struct {
 	backend.Config
@@ -103,10 +95,7 @@ func InitCommand() *cobra.Command {
 				return setupErr
 			}
 
-			devMode := viper.GetBool(flagDevMode)
-
 			cfg := &backend.Config{
-				DevMode: devMode,
 				Store: backend.StoreConfig{
 					PostgresConfigurationStore: postgres.Config{
 						DSN: viper.GetString(flagPGConfigStoreDSN),
@@ -114,14 +103,7 @@ func InitCommand() *cobra.Command {
 					PostgresStateStore: postgres.Config{
 						DSN: viper.GetString(flagPGStateStoreDSN),
 					},
-					EtcdConfigurationStore: etcdstorev1.Config{
-						UseEmbeddedClient: viper.GetBool(flagDevMode),
-					},
 				},
-			}
-
-			if cfg.Store.ConfigurationStore != "etcd" && anyConfig(cfg.Store.EtcdConfigurationStore) {
-				return errors.New("etcd configuration specified, but config-store is not etcd")
 			}
 
 			timeout := viper.GetDuration(flagTimeout)
@@ -185,32 +167,22 @@ func InitCommand() *cobra.Command {
 	return cmd
 }
 
-func initializeStore(initConfig initConfig) error {
-	ctx, cancel := context.WithTimeout(context.Background(), initConfig.Timeout)
+func initializeStore(cfg initConfig) error {
+	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
-
-	if initConfig.DevMode {
-		return initializeDevModeStore(ctx, initConfig)
-	}
-
-	return nil
-}
-
-func initializeDevModeStore(ctx context.Context, initConfig initConfig) error {
-	client, err := devModeClient(ctx, &initConfig.Config)
+	pgConfigDB, err := newPostgresPool(ctx, cfg.Store.PostgresConfigurationStore.DSN, false)
 	if err != nil {
 		return err
 	}
-	defer func() { _ = client.Close() }()
+	defer pgConfigDB.Close()
 
-	store := etcdstorev2.NewStore(client)
-	nsStore := etcdstorev2.NewNamespaceStore(client)
-
-	if err := seeds.SeedCluster(ctx, store, nsStore, initConfig.SeedConfig); err != nil {
-		if errors.Is(err, seeds.ErrAlreadyInitialized) {
-			return err
-		}
-		return fmt.Errorf("error seeding cluster, is cluster healthy? %w", err)
+	pgStateDB, err := newPostgresPool(ctx, cfg.Store.PostgresStateStore.DSN, true)
+	if err != nil {
+		return err
 	}
-	return nil
+	defer pgStateDB.Close()
+
+	configStore := postgres.NewConfigStore(pgConfigDB, pgStateDB)
+	namespaceStore := postgres.NewNamespaceStore(pgStateDB)
+	return seeds.SeedCluster(ctx, configStore, namespaceStore, cfg.SeedConfig)
 }
