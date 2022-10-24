@@ -75,6 +75,20 @@ func TestParseGraphite(t *testing.T) {
 			metric:         "metric.value 1 noon",
 			expectedFormat: GraphiteList(nil),
 		},
+		{
+			metric: "os.disk.used_bytes;GH=#4677;type=issue 2048 123456789",
+			expectedFormat: GraphiteList{
+				{
+					Path:      "os.disk.used_bytes",
+					Value:     2048,
+					Timestamp: 123456789,
+					Tags: []*types.MetricTag{
+						{Name: "GH", Value: "#4677"},
+						{Name: "type", Value: "issue"},
+					},
+				},
+			},
+		},
 	}
 
 	for _, tc := range testCases {
