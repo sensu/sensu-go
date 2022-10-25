@@ -12,6 +12,7 @@ import (
 	"github.com/golang/snappy"
 	corev2 "github.com/sensu/core/v2"
 	corev3 "github.com/sensu/core/v3"
+	apitools "github.com/sensu/sensu-api-tools"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/types"
 )
@@ -220,7 +221,7 @@ func (w *Wrapper) Unwrap() (corev3.Resource, error) {
 
 // UnwrapRaw is like Unwrap, but returns a raw interface{} value.
 func (w *Wrapper) UnwrapRaw() (interface{}, error) {
-	resource, err := types.ResolveRaw(w.TypeMeta.APIVersion, w.TypeMeta.Type)
+	resource, err := apitools.Resolve(w.TypeMeta.APIVersion, w.TypeMeta.Type)
 	if err != nil {
 		return nil, err
 	}
