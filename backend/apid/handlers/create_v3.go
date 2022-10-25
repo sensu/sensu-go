@@ -6,7 +6,7 @@ import (
 	"reflect"
 
 	"github.com/gorilla/mux"
-	corev3 "github.com/sensu/sensu-go/api/core/v3"
+	corev3 "github.com/sensu/core/v3"
 	"github.com/sensu/sensu-go/backend/apid/actions"
 	"github.com/sensu/sensu-go/backend/authentication/jwt"
 	"github.com/sensu/sensu-go/backend/store"

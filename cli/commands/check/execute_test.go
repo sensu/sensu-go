@@ -4,7 +4,7 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/sensu/sensu-go/api/core/v2"
+	"github.com/sensu/core/v2"
 	"github.com/sensu/sensu-go/backend/authentication/jwt"
 	clientmock "github.com/sensu/sensu-go/cli/client/testing"
 	test "github.com/sensu/sensu-go/cli/commands/testing"

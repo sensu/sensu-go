@@ -4,7 +4,7 @@ import (
 	"strconv"
 	"strings"
 
-	v2 "github.com/sensu/sensu-go/api/core/v2"
+	v2 "github.com/sensu/core/v2"
 )
 
 type BooleanMatcher func(v2.Resource, bool) bool

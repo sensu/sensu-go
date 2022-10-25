@@ -11,7 +11,7 @@ import (
 
 	"github.com/golang/mock/gomock"
 	"github.com/gorilla/mux"
-	corev3 "github.com/sensu/sensu-go/api/core/v3"
+	corev3 "github.com/sensu/core/v3"
 	"github.com/sensu/sensu-go/backend/api/mockapi"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/stretchr/testify/mock"

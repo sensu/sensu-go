@@ -12,7 +12,7 @@ import (
 	"time"
 
 	"github.com/jackc/pgx/v4/pgxpool"
-	v2 "github.com/sensu/sensu-go/api/core/v2"
+	v2 "github.com/sensu/core/v2"
 	"github.com/sensu/sensu-go/backend/poll"
 	storev2 "github.com/sensu/sensu-go/backend/store/v2"
 	"github.com/sensu/sensu-go/types"

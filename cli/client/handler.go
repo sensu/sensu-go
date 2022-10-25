@@ -3,7 +3,7 @@ package client
 import (
 	"encoding/json"
 
-	corev2 "github.com/sensu/sensu-go/api/core/v2"
+	corev2 "github.com/sensu/core/v2"
 )
 
 // HandlersPath is the api path for handlers.

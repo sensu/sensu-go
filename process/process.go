@@ -3,7 +3,7 @@ package process
 import (
 	"context"
 
-	corev2 "github.com/sensu/sensu-go/api/core/v2"
+	corev2 "github.com/sensu/core/v2"
 )
 
 // A Getter is responsible for getting the process info of an agent.

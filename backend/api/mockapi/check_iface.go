@@ -4,7 +4,7 @@ package mockapi
 
 import (
 	"context"
-	"github.com/sensu/sensu-go/api/core/v2"
+	"github.com/sensu/core/v2"
 )
 
 // CheckClient is an interface generated for "github.com/sensu/sensu-go/backend/api.CheckClient".

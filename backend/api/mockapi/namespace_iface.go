@@ -4,7 +4,7 @@ package mockapi
 
 import (
 	"context"
-	"github.com/sensu/sensu-go/api/core/v3"
+	"github.com/sensu/core/v3"
 	"github.com/sensu/sensu-go/backend/store"
 )
 

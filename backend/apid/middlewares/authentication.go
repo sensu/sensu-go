@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"strings"
 
-	corev2 "github.com/sensu/sensu-go/api/core/v2"
+	corev2 "github.com/sensu/core/v2"
 	"github.com/sensu/sensu-go/backend/apid/actions"
 	"github.com/sensu/sensu-go/backend/authentication/jwt"
 	storev2 "github.com/sensu/sensu-go/backend/store/v2"

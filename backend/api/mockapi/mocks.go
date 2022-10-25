@@ -9,8 +9,8 @@ import (
 	reflect "reflect"
 
 	gomock "github.com/golang/mock/gomock"
-	v2 "github.com/sensu/sensu-go/api/core/v2"
-	v3 "github.com/sensu/sensu-go/api/core/v3"
+	v2 "github.com/sensu/core/v2"
+	v3 "github.com/sensu/core/v3"
 	store "github.com/sensu/sensu-go/backend/store"
 )
 
