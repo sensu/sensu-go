@@ -2,6 +2,7 @@ package transformers
 
 import (
 	"bufio"
+	"fmt"
 	"strconv"
 	"strings"
 
@@ -64,7 +65,13 @@ func ParseGraphite(event *types.Event) GraphiteList {
 			continue
 		}
 
-		g.Path = args[0]
+		var err error
+		var tags []*types.MetricTag
+		g.Path, tags, err = parseSeries(args[0])
+		if err != nil {
+			logger.WithFields(fields).WithError(ErrMetricExtraction).Errorf("metric series name is invalid: %q %s", args[0], err)
+			continue
+		}
 
 		f, err := strconv.ParseFloat(args[1], 64)
 		if err != nil {
@@ -79,7 +86,7 @@ func ParseGraphite(event *types.Event) GraphiteList {
 			continue
 		}
 		g.Timestamp = i
-		g.Tags = event.Check.OutputMetricTags
+		g.Tags = append(event.Check.OutputMetricTags, tags...)
 		graphiteList = append(graphiteList, g)
 	}
 	if err := s.Err(); err != nil {
@@ -87,4 +94,21 @@ func ParseGraphite(event *types.Event) GraphiteList {
 	}
 
 	return graphiteList
+}
+
+func parseSeries(series string) (string, []*types.MetricTag, error) {
+	var tags []*types.MetricTag
+	parts := strings.Split(series, ";")
+	if len(parts) == 1 {
+		return series, tags, nil
+	}
+	for i := 1; i < len(parts); i++ {
+		tagTxt := parts[i]
+		tagParts := strings.Split(tagTxt, "=")
+		if len(tagParts) != 2 {
+			return parts[0], tags, fmt.Errorf("invalid graphite data tag format must be in form of name=value: %s", tagTxt)
+		}
+		tags = append(tags, &types.MetricTag{Name: tagParts[0], Value: tagParts[1]})
+	}
+	return parts[0], tags, nil
 }
