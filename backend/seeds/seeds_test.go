@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
+	"github.com/sensu/sensu-go/backend/store"
 	storev2 "github.com/sensu/sensu-go/backend/store/v2"
 	"github.com/sensu/sensu-go/backend/store/v2/storetest"
 	"github.com/stretchr/testify/mock"
@@ -22,6 +23,7 @@ func TestSeedInitialDataWithContext(t *testing.T) {
 	// Setup stores
 	nsStore := new(storetest.NamespaceStore)
 	nsStore.On("CreateIfNotExists", mock.Anything, mock.Anything).Return(nil)
+	nsStore.On("Get", mock.Anything, "default").Return(nil, new(store.ErrNotFound))
 
 	s := new(storetest.Store)
 	s.On("NamespaceStore").Return(nsStore)
