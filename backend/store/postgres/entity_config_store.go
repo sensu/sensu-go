@@ -9,11 +9,9 @@ import (
 
 	"github.com/jackc/pgconn"
 	"github.com/jackc/pgx/v4"
-	"github.com/jackc/pgx/v4/pgxpool"
 	corev3 "github.com/sensu/sensu-go/api/core/v3"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/backend/store/patch"
-	storev2 "github.com/sensu/sensu-go/backend/store/v2"
 )
 
 var (
@@ -24,28 +22,16 @@ var (
 type uniqueEntityConfigs map[uniqueResource]*corev3.EntityConfig
 
 type EntityConfigStore struct {
-	db *pgxpool.Pool
+	db DBI
 }
 
-func NewEntityConfigStore(db *pgxpool.Pool) *EntityConfigStore {
+func NewEntityConfigStore(db DBI) *EntityConfigStore {
 	return &EntityConfigStore{
 		db: db,
 	}
 }
 
-type wrapperWithParams interface {
-	storev2.Wrapper
-	SQLParams() []any
-}
-
-type namedWrapperWithParams interface {
-	wrapperWithParams
-	GetName() string
-}
-
 type namespacedResourceNames map[string][]string
-
-type resourceRequestWrapperMap map[storev2.ResourceRequest]storev2.Wrapper
 
 // CreateIfNotExists creates an entity config using the given entity config struct.
 func (s *EntityConfigStore) CreateIfNotExists(ctx context.Context, config *corev3.EntityConfig) error {

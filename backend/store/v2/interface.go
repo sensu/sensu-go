@@ -188,4 +188,4 @@ type KeepaliveStore interface {
 }
 
 // Initialize sets up a cluster with the default resources & config.
-type InitializeFunc func(context.Context) error
+type InitializeFunc func(context.Context, Interface, NamespaceStore) error

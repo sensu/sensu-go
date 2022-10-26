@@ -261,7 +261,7 @@ func Initialize(ctx context.Context, etcdConfigClient *clientv3.Client, pgConfig
 		if err := initPGStateStore(ctx, b, etcdConfigClient, pgStateDB, config); err != nil {
 			return nil, err
 		}
-		b.ConfigStore = postgres.NewConfigStore(pgConfigDB)
+		b.ConfigStore = postgres.NewConfigStore(pgConfigDB, pgStateDB)
 	}
 
 	var clusterID string

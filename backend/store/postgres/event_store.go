@@ -13,10 +13,8 @@ import (
 	"github.com/jackc/pgx/v4/pgxpool"
 	"github.com/lib/pq"
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
-	coreMetrics "github.com/sensu/sensu-go/backend/metrics"
 	"github.com/sensu/sensu-go/backend/selector"
 	"github.com/sensu/sensu-go/backend/store"
-	coreEtcdStore "github.com/sensu/sensu-go/backend/store/etcd"
 )
 
 type SilenceStoreI interface {
@@ -51,8 +49,6 @@ const Type = "postgres"
 
 var (
 	_ store.EventStore = &EventStore{}
-
-	eventBytesSummary = coreEtcdStore.EventBytesSummary
 )
 
 type EventStore struct {
@@ -390,7 +386,6 @@ func (e *EventStore) UpdateEvent(ctx context.Context, event *corev2.Event) (uEve
 	}
 
 	persistEvent := event
-	typeLabelValue := coreMetrics.EventTypeLabelCheck
 
 	if event.HasMetrics() {
 		// Taking pains to not modify our input, set metrics to nil so they are
@@ -404,7 +399,6 @@ func (e *EventStore) UpdateEvent(ctx context.Context, event *corev2.Event) (uEve
 		newEvent := *event
 		persistEvent = &newEvent
 		persistEvent.Metrics = nil
-		typeLabelValue = coreMetrics.EventTypeLabelCheckAndMetrics
 	}
 
 	// Truncate check output if the output is larger than MaxOutputSize
@@ -430,8 +424,6 @@ func (e *EventStore) UpdateEvent(ctx context.Context, event *corev2.Event) (uEve
 	if err != nil {
 		return nil, nil, &store.ErrEncode{Err: err}
 	}
-
-	eventBytesSummary.WithLabelValues(typeLabelValue).Observe(float64(len(b)))
 
 	updateCheckState(event.Check)
 	naiveCheckState := event.Check.State

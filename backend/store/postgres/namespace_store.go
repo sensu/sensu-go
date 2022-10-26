@@ -8,7 +8,6 @@ import (
 
 	"github.com/jackc/pgconn"
 	"github.com/jackc/pgx/v4"
-	"github.com/jackc/pgx/v4/pgxpool"
 	corev3 "github.com/sensu/sensu-go/api/core/v3"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/backend/store/patch"
@@ -21,10 +20,10 @@ var (
 type uniqueNamespaces map[uniqueResource]*corev3.Namespace
 
 type NamespaceStore struct {
-	db *pgxpool.Pool
+	db DBI
 }
 
-func NewNamespaceStore(db *pgxpool.Pool) *NamespaceStore {
+func NewNamespaceStore(db DBI) *NamespaceStore {
 	return &NamespaceStore{
 		db: db,
 	}

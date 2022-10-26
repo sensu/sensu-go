@@ -9,7 +9,6 @@ import (
 
 	"github.com/jackc/pgconn"
 	"github.com/jackc/pgx/v4"
-	"github.com/jackc/pgx/v4/pgxpool"
 	corev3 "github.com/sensu/sensu-go/api/core/v3"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/backend/store/patch"
@@ -23,10 +22,10 @@ var (
 type uniqueEntityStates map[uniqueResource]*corev3.EntityState
 
 type EntityStateStore struct {
-	db *pgxpool.Pool
+	db DBI
 }
 
-func NewEntityStateStore(db *pgxpool.Pool) *EntityStateStore {
+func NewEntityStateStore(db DBI) *EntityStateStore {
 	return &EntityStateStore{
 		db: db,
 	}

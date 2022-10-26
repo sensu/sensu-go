@@ -178,12 +178,12 @@ func (s *EntityStore) UpdateEntity(ctx context.Context, entity *corev2.Entity) e
 	return nil
 }
 
-type entityConfigPoller struct {
+type EntityConfigPoller struct {
 	db  *pgxpool.Pool
 	req storev2.ResourceRequest
 }
 
-func (e *entityConfigPoller) Now(ctx context.Context) (time.Time, error) {
+func (e *EntityConfigPoller) Now(ctx context.Context) (time.Time, error) {
 	var now time.Time
 	row := e.db.QueryRow(ctx, "SELECT NOW();")
 	if err := row.Scan(&now); err != nil {
@@ -192,7 +192,7 @@ func (e *entityConfigPoller) Now(ctx context.Context) (time.Time, error) {
 	return now, nil
 }
 
-func (e *entityConfigPoller) Since(ctx context.Context, updatedSince time.Time) ([]poll.Row, error) {
+func (e *EntityConfigPoller) Since(ctx context.Context, updatedSince time.Time) ([]poll.Row, error) {
 	wrapper := &EntityConfigWrapper{
 		Namespace: e.req.Namespace,
 		Name:      e.req.Name,
@@ -228,6 +228,6 @@ func (e *entityConfigPoller) Since(ctx context.Context, updatedSince time.Time) 
 	return since, nil
 }
 
-func newEntityConfigPoller(req storev2.ResourceRequest, pool *pgxpool.Pool) (poll.Table, error) {
-	return &entityConfigPoller{db: pool, req: req}, nil
+func NewEntityConfigPoller(req storev2.ResourceRequest, pool *pgxpool.Pool) (poll.Table, error) {
+	return &EntityConfigPoller{db: pool, req: req}, nil
 }
