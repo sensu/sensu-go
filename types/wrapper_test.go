@@ -1,12 +1,11 @@
 package types_test
 
 import (
-	"fmt"
 	"reflect"
 	"testing"
 
-	corev2 "github.com/sensu/sensu-go/api/core/v2"
-	corev3 "github.com/sensu/sensu-go/api/core/v3"
+	corev2 "github.com/sensu/core/v2"
+	corev3 "github.com/sensu/core/v3"
 	types "github.com/sensu/sensu-go/types"
 )
 
@@ -113,109 +112,5 @@ func TestWrapResourceObjectMeta(t *testing.T) {
 	wrapped := types.WrapResource(check)
 	if !reflect.DeepEqual(wrapped.ObjectMeta, check.ObjectMeta) {
 		t.Fatal("objectmeta not equal")
-	}
-}
-
-func TestResolveType(t *testing.T) {
-	testCases := []struct {
-		ApiVersion string
-		Type       string
-		ExpRet     interface{}
-		ExpErr     bool
-	}{
-		{
-			ApiVersion: "core/v2",
-			Type:       "asset",
-			ExpRet:     &corev2.Asset{},
-			ExpErr:     false,
-		},
-		{
-			ApiVersion: "non/existence",
-			Type:       "null",
-			ExpRet:     nil,
-			ExpErr:     true,
-		},
-		{
-			ApiVersion: "core/v2.2",
-			Type:       "asset",
-			ExpRet:     &corev2.Asset{},
-		},
-		{
-			ApiVersion: "core/v2.2.2",
-			Type:       "asset",
-			ExpRet:     &corev2.Asset{},
-		},
-		{
-			ApiVersion: "core/v2.1000.0",
-			Type:       "asset",
-			ExpErr:     true,
-		},
-	}
-
-	for _, tc := range testCases {
-		t.Run(fmt.Sprintf("%s/%s", tc.ApiVersion, tc.Type), func(t *testing.T) {
-			r, err := types.ResolveType(tc.ApiVersion, tc.Type)
-			if !reflect.DeepEqual(r, tc.ExpRet) {
-				t.Fatalf("unexpected type: got %T, want %T", r, tc.ExpRet)
-			}
-			if err != nil && !tc.ExpErr {
-				t.Fatalf("unexpected error: %v", err)
-			}
-			if err == nil && tc.ExpErr {
-				t.Fatal("expected an error")
-			}
-		})
-	}
-}
-
-func TestResolveRaw(t *testing.T) {
-	testCases := []struct {
-		ApiVersion string
-		Type       string
-		ExpRet     interface{}
-		ExpErr     bool
-	}{
-		{
-			ApiVersion: "core/v2",
-			Type:       "asset",
-			ExpRet:     &corev2.Asset{},
-			ExpErr:     false,
-		},
-		{
-			ApiVersion: "non/existence",
-			Type:       "null",
-			ExpRet:     nil,
-			ExpErr:     true,
-		},
-		{
-			ApiVersion: "core/v2.2",
-			Type:       "asset",
-			ExpRet:     &corev2.Asset{},
-		},
-		{
-			ApiVersion: "core/v2.2.2",
-			Type:       "asset",
-			ExpRet:     &corev2.Asset{},
-		},
-		{
-			ApiVersion: "core/v2.1000.0",
-			Type:       "asset",
-			ExpErr:     true,
-		},
-	}
-
-	for _, tc := range testCases {
-		t.Run(fmt.Sprintf("%s/%s", tc.ApiVersion, tc.Type), func(t *testing.T) {
-			r, err := types.ResolveRaw(tc.ApiVersion, tc.Type)
-			if !reflect.DeepEqual(r, tc.ExpRet) {
-				t.Fatal("unexpected type")
-			}
-			if err != nil && !tc.ExpErr {
-				t.Fatal(err)
-			}
-			if err == nil && tc.ExpErr {
-				t.Fatal("expected an error")
-			}
-		})
 	}
 }
