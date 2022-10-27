@@ -3,7 +3,7 @@ package secrets
 import (
 	"fmt"
 
-	corev2 "github.com/sensu/sensu-go/api/core/v2"
+	corev2 "github.com/sensu/core/v2"
 )
 
 // BrokenProvider is a sentinel provider that can be used in place of a real

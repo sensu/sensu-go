@@ -7,15 +7,14 @@ package postgres
 import (
 	"context"
 	"database/sql"
-	"errors"
 	"fmt"
 	"time"
 
 	"github.com/jackc/pgx/v4/pgxpool"
-	v2 "github.com/sensu/sensu-go/api/core/v2"
+	v2 "github.com/sensu/core/v2"
+	"github.com/sensu/sensu-api-tools"
 	"github.com/sensu/sensu-go/backend/poll"
 	storev2 "github.com/sensu/sensu-go/backend/store/v2"
-	"github.com/sensu/sensu-go/types"
 )
 
 const (
@@ -83,17 +82,8 @@ func (c *counter) GetTypeMeta() v2.TypeMeta {
 	}
 }
 
-func counterResolver(name string) (interface{}, error) {
-	switch name {
-	case "Counter":
-		return &counter{}, nil
-	default:
-		return nil, errors.New("type does not exist")
-	}
-}
-
 func init() {
-	types.RegisterResolver("counter_fixture/v2", counterResolver)
+	apitools.RegisterType("counter_fixture/v2", new(counter), apitools.WithAlias("Counter"))
 }
 
 type counterStore struct {

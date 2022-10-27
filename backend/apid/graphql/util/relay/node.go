@@ -3,12 +3,12 @@ package util_relay
 import (
 	"context"
 
-	corev2 "github.com/sensu/sensu-go/api/core/v2"
-	corev3 "github.com/sensu/sensu-go/api/core/v3"
+	corev2 "github.com/sensu/core/v2"
+	corev3 "github.com/sensu/core/v3"
+	apitools "github.com/sensu/sensu-api-tools"
 	"github.com/sensu/sensu-go/backend/apid/graphql/globalid"
 	"github.com/sensu/sensu-go/backend/apid/graphql/relay"
 	util_api "github.com/sensu/sensu-go/backend/apid/graphql/util/api"
-	"github.com/sensu/sensu-go/types"
 )
 
 type Fetcher interface {
@@ -23,7 +23,7 @@ func MakeNodeResolver(client Fetcher, tm corev2.TypeMeta) func(relay.NodeResolve
 		if err := client.SetTypeMeta(tm); err != nil {
 			return nil, err
 		}
-		raw, err := types.ResolveRaw(tm.APIVersion, tm.Type)
+		raw, err := apitools.Resolve(tm.APIVersion, tm.Type)
 		if err != nil {
 			return nil, err
 		}

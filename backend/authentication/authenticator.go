@@ -8,7 +8,7 @@ import (
 
 	"github.com/sirupsen/logrus"
 
-	corev2 "github.com/sensu/sensu-go/api/core/v2"
+	corev2 "github.com/sensu/core/v2"
 )
 
 // Authenticator contains the list of authentication providers

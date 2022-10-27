@@ -8,7 +8,7 @@ import (
 
 	"github.com/go-test/deep"
 	"github.com/jackc/pgx/v4/pgxpool"
-	corev3 "github.com/sensu/sensu-go/api/core/v3"
+	corev3 "github.com/sensu/core/v3"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/backend/store/patch"
 	storev2 "github.com/sensu/sensu-go/backend/store/v2"

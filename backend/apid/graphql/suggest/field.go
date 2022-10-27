@@ -1,7 +1,7 @@
 package suggest
 
 import (
-	v2 "github.com/sensu/sensu-go/api/core/v2"
+	v2 "github.com/sensu/core/v2"
 )
 
 var (

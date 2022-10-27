@@ -3,7 +3,7 @@ package v2
 import (
 	"testing"
 
-	corev2 "github.com/sensu/sensu-go/api/core/v2"
+	corev2 "github.com/sensu/core/v2"
 )
 
 type testResource struct {

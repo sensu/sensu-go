@@ -1,6 +1,6 @@
 package graphql
 
-import corev2 "github.com/sensu/sensu-go/api/core/v2"
+import corev2 "github.com/sensu/core/v2"
 
 // TODO: It would be more ideal to generate the functions in this package
 

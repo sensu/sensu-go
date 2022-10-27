@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	v3 "github.com/sensu/sensu-go/api/core/v3"
+	v3 "github.com/sensu/core/v3"
 	"github.com/sensu/sensu-go/backend/poll"
 	storev2 "github.com/sensu/sensu-go/backend/store/v2"
 	"github.com/sensu/sensu-go/util/retry"
