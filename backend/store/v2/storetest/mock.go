@@ -50,6 +50,11 @@ func (s *Store) List(ctx context.Context, req storev2.ResourceRequest, pred *sto
 	return args.Get(0).(storev2.WrapList), args.Error(1)
 }
 
+func (s *Store) Count(ctx context.Context, req storev2.ResourceRequest) (int, error) {
+	args := s.Called(ctx, req)
+	return args.Get(0).(int), args.Error(1)
+}
+
 func (s *Store) Exists(ctx context.Context, req storev2.ResourceRequest) (bool, error) {
 	args := s.Called(ctx, req)
 	return args.Get(0).(bool), args.Error(1)

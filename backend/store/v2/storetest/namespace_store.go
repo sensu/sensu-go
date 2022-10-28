@@ -52,6 +52,10 @@ func (s *NamespaceStore) List(ctx context.Context, pred *store.SelectionPredicat
 	return args.Get(0).([]*corev3.Namespace), args.Error(1)
 }
 
+func (s *NamespaceStore) Count(ctx context.Context) (int, error) {
+	args := s.Called(ctx)
+	return args.Get(0).(int), args.Error(1)
+}
 func (s *NamespaceStore) Patch(ctx context.Context, namespace string, patcher patch.Patcher, conditions *store.ETagCondition) error {
 	args := s.Called(ctx, namespace, patcher, conditions)
 	return args.Error(0)

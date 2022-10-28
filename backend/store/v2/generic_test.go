@@ -46,6 +46,10 @@ func (m *mockEntityConfigStore) List(ctx context.Context, namespace string, pred
 	args := m.Called(ctx, namespace, pred)
 	return args.Get(0).([]*corev3.EntityConfig), args.Error(1)
 }
+func (m *mockEntityConfigStore) Count(ctx context.Context, namespace string, entityClass string) (int, error) {
+	args := m.Called(ctx, namespace, entityClass)
+	return args.Get(0).(int), args.Error(1)
+}
 func (m *mockEntityConfigStore) Exists(ctx context.Context, namespace string, name string) (bool, error) {
 	args := m.Called(ctx, namespace, name)
 	return args.Get(0).(bool), args.Error(1)
@@ -88,6 +92,10 @@ func (m *mockEntityStateStore) List(ctx context.Context, namespace string, pred 
 	return args.Get(0).([]*corev3.EntityState), args.Error(1)
 }
 
+func (m *mockEntityStateStore) Count(ctx context.Context, namespace string) (int, error) {
+	args := m.Called(ctx, namespace)
+	return args.Get(0).(int), args.Error(1)
+}
 func (m *mockEntityStateStore) Exists(ctx context.Context, namespace string, name string) (bool, error) {
 	args := m.Called(ctx, namespace, name)
 	return args.Get(0).(bool), args.Error(1)
@@ -129,6 +137,11 @@ func (m *mockNamespaceStore) Delete(ctx context.Context, namespace string) error
 func (m *mockNamespaceStore) List(ctx context.Context, pred *store.SelectionPredicate) ([]*corev3.Namespace, error) {
 	args := m.Called(ctx, pred)
 	return args.Get(0).([]*corev3.Namespace), args.Error(1)
+}
+
+func (m *mockNamespaceStore) Count(ctx context.Context) (int, error) {
+	args := m.Called(ctx)
+	return args.Get(0).(int), args.Error(1)
 }
 
 func (m *mockNamespaceStore) Exists(ctx context.Context, namespace string) (bool, error) {

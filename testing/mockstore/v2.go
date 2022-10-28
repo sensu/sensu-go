@@ -43,6 +43,11 @@ func (v *V2MockStore) List(ctx context.Context, req storev2.ResourceRequest, pre
 	return list, args.Error(1)
 }
 
+func (v *V2MockStore) Count(ctx context.Context, req storev2.ResourceRequest) (int, error) {
+	args := v.Called(ctx, req)
+	return args.Get(0).(int), args.Error(1)
+}
+
 func (v *V2MockStore) Exists(ctx context.Context, req storev2.ResourceRequest) (bool, error) {
 	args := v.Called(ctx, req)
 	return args.Get(0).(bool), args.Error(1)
