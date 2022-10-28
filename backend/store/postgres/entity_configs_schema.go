@@ -332,6 +332,20 @@ LIMIT $2
 OFFSET $3
 `
 
+const countEntityConfigQuery = `
+-- This query counts entity configs from a given namespace and entity class.
+--
+SELECT
+	COUNT(*)
+FROM entity_configs
+LEFT OUTER JOIN namespaces ON entity_configs.namespace_id = namespaces.id
+WHERE
+	(namespaces.name = $1 OR $1 IS NULL) AND
+	(entity_configs.entity_class = $2 OR $2 IS NULL) AND
+	namespaces.deleted_at IS NULL AND
+	entity_configs.deleted_at IS NULL;
+`
+
 const existsEntityConfigQuery = `
 -- This query discovers if an entity config exists, without retrieving it.
 --

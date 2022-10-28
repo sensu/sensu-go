@@ -8,6 +8,7 @@ import (
 
 	"github.com/go-test/deep"
 	"github.com/jackc/pgx/v4/pgxpool"
+	corev2 "github.com/sensu/core/v2"
 	corev3 "github.com/sensu/core/v3"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/backend/store/patch"
@@ -973,6 +974,118 @@ func TestEntityConfigStore_List(t *testing.T) {
 				}
 				if diff := deep.Equal(got, tt.want); len(diff) > 0 {
 					t.Errorf("EntityConfigStore.List() got differs from want: %v", diff)
+				}
+			})
+		})
+	}
+}
+
+func TestEntityConfigStore_Count(t *testing.T) {
+	type args struct {
+		ctx         context.Context
+		namespace   string
+		entityClass string
+	}
+	tests := []struct {
+		name       string
+		args       args
+		beforeHook func(*testing.T, storev2.NamespaceStore, storev2.EntityConfigStore)
+		want       int
+		wantErr    bool
+	}{
+		{
+			name: "fails when namespace does not exist",
+			args: args{
+				ctx:       context.Background(),
+				namespace: "default",
+			},
+		},
+		{
+			name: "fails when namespace is soft deleted",
+			args: args{
+				ctx:       context.Background(),
+				namespace: "default",
+			},
+			beforeHook: func(t *testing.T, ns storev2.NamespaceStore, s storev2.EntityConfigStore) {
+				createNamespace(t, ns, "default")
+				deleteNamespace(t, ns, "default")
+			},
+		},
+		{
+			name: "succeeds when no entity configs exist",
+			args: args{
+				ctx:       context.Background(),
+				namespace: "default",
+			},
+			beforeHook: func(t *testing.T, ns storev2.NamespaceStore, s storev2.EntityConfigStore) {
+				createNamespace(t, ns, "default")
+			},
+			want: 0,
+		},
+		{
+			name: "succeeds when entity configs exist",
+			args: args{
+				ctx:       context.Background(),
+				namespace: "default",
+			},
+			beforeHook: func(t *testing.T, ns storev2.NamespaceStore, s storev2.EntityConfigStore) {
+				createNamespace(t, ns, "default")
+				for i := 0; i < 10; i++ {
+					entityName := fmt.Sprintf("foo-%d", i)
+					createEntityConfig(t, s, "default", entityName)
+				}
+			},
+			want: 10,
+		},
+		{
+			name: "succeeds when entity agent class is specified",
+			args: args{
+				ctx:         context.Background(),
+				namespace:   "default",
+				entityClass: corev2.EntityAgentClass,
+			},
+			beforeHook: func(t *testing.T, ns storev2.NamespaceStore, s storev2.EntityConfigStore) {
+				createNamespace(t, ns, "default")
+				for i := 0; i < 10; i++ {
+					entityName := fmt.Sprintf("foo-%d", i)
+					createEntityConfig(t, s, "default", entityName)
+				}
+			},
+			want: 10,
+		},
+		{
+			name: "succeeds when entity proxy class is specified",
+			args: args{
+				ctx:         context.Background(),
+				namespace:   "default",
+				entityClass: corev2.EntityProxyClass,
+			},
+			beforeHook: func(t *testing.T, ns storev2.NamespaceStore, s storev2.EntityConfigStore) {
+				createNamespace(t, ns, "default")
+				for i := 0; i < 10; i++ {
+					entityName := fmt.Sprintf("foo-%d", i)
+					createEntityConfig(t, s, "default", entityName)
+				}
+			},
+			want: 0,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			withPostgres(t, func(ctx context.Context, db *pgxpool.Pool, dsn string) {
+				if tt.beforeHook != nil {
+					tt.beforeHook(t, NewNamespaceStore(db), NewEntityConfigStore(db))
+				}
+				s := &EntityConfigStore{
+					db: db,
+				}
+				got, err := s.Count(tt.args.ctx, tt.args.namespace, tt.args.entityClass)
+				if (err != nil) != tt.wantErr {
+					t.Errorf("EntityConfigStore.Count() error = %v, wantErr %v", err, tt.wantErr)
+					return
+				}
+				if diff := deep.Equal(got, tt.want); len(diff) > 0 {
+					t.Errorf("EntityConfigStore.Count() got differs from want: %v", diff)
 				}
 			})
 		})
