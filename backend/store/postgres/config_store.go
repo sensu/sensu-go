@@ -277,6 +277,40 @@ func (s *ConfigStore) List(ctx context.Context, request storev2.ResourceRequest,
 	return wrapList, nil
 }
 
+func (s *ConfigStore) Count(ctx context.Context, request storev2.ResourceRequest) (int, error) {
+	if err := request.Validate(); err != nil {
+		return 0, &store.ErrNotValid{Err: err}
+	}
+
+	selectorSQL, selectorArgs, err := getSelectorSQL(ctx)
+	if err != nil {
+		return 0, &store.ErrNotValid{Err: err}
+	}
+
+	tmpl, err := template.New("countResourceQuery").Parse(CountConfigQueryTmpl)
+	if err != nil {
+		return 0, err
+	}
+	var queryBuilder strings.Builder
+	templValues := listTemplateValues{
+		SelectorSQL: strings.TrimSpace(selectorSQL),
+	}
+	if err := tmpl.Execute(&queryBuilder, templValues); err != nil {
+		return 0, err
+	}
+
+	args := []interface{}{request.APIVersion, request.Type, request.Namespace}
+	args = append(args, selectorArgs...)
+
+	query := queryBuilder.String()
+	row := s.db.QueryRow(ctx, query, args...)
+	var ct int
+	if err := row.Scan(&ct); err != nil {
+		return 0, err
+	}
+	return ct, nil
+}
+
 func (s *ConfigStore) Exists(ctx context.Context, request storev2.ResourceRequest) (bool, error) {
 	if err := request.Validate(); err != nil {
 		return false, &store.ErrNotValid{Err: err}

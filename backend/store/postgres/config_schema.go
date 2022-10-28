@@ -51,6 +51,12 @@ const ExistsConfigQuery = `SELECT count(*) AS total FROM configuration
 const GetConfigQuery = `SELECT id, labels, annotations, resource, created_at, updated_at FROM configuration
 	WHERE api_version=$1 AND api_type=$2 AND namespace=$3 AND name=$4 AND NOT isfinite(deleted_at);`
 
+const CountConfigQueryTmpl = `
+    SELECT count(*)
+    FROM configuration
+	WHERE api_version=$1 AND api_type=$2 AND namespace=$3 AND NOT isfinite(deleted_at)
+        {{if ne .SelectorSQL ""}}AND {{.SelectorSQL}}{{end}};`
+
 const ListConfigQueryTmpl = `
     SELECT id, labels, annotations, resource, created_at, updated_at
     FROM configuration
