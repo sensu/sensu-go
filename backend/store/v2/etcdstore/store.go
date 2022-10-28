@@ -3,6 +3,7 @@ package etcdstore
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"path"
 	"strings"
@@ -389,6 +390,10 @@ func (s *Store) List(ctx context.Context, req storev2.ResourceRequest, pred *sto
 		pred.Continue = ""
 	}
 	return result, nil
+}
+
+func (s *Store) Count(ctx context.Context, req storev2.ResourceRequest) (int, error) {
+	return -1, errors.New("not implemented")
 }
 
 func (s *Store) Exists(ctx context.Context, req storev2.ResourceRequest) (bool, error) {

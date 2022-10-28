@@ -113,6 +113,10 @@ func (s *EntityStateStore) List(ctx context.Context, namespace string, pred *sto
 	return states, nil
 }
 
+func (s *EntityStateStore) Count(ctx context.Context, namespace string) (int, error) {
+	return 0, nil
+}
+
 func (s *EntityStateStore) Patch(ctx context.Context, namespace, name string, patcher patch.Patcher, conditions *store.ETagCondition) error {
 	// Fetch the current entity state & wrap it
 	state, err := s.Get(ctx, namespace, name)

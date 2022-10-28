@@ -117,6 +117,10 @@ func (s *NamespaceStore) List(ctx context.Context, pred *store.SelectionPredicat
 	return namespaces, nil
 }
 
+func (s *NamespaceStore) Count(ctx context.Context) (int, error) {
+	return 0, nil
+}
+
 func (s *NamespaceStore) Patch(ctx context.Context, name string, patcher patch.Patcher, conditions *store.ETagCondition) error {
 	// Fetch the current namespace & wrap it
 	namespace, err := s.Get(ctx, name)

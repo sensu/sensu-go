@@ -67,6 +67,12 @@ func (p *Proxy) List(ctx context.Context, req ResourceRequest, pred *store.Selec
 	return p.impl.List(ctx, req, pred)
 }
 
+func (p *Proxy) Count(ctx context.Context, req ResourceRequest) (int, error) {
+	p.mu.RLock()
+	defer p.mu.RUnlock()
+	return p.impl.Count(ctx, req)
+}
+
 // Exists returns true if the resource indicated by the request exists
 func (p *Proxy) Exists(ctx context.Context, req ResourceRequest) (bool, error) {
 	p.mu.RLock()
