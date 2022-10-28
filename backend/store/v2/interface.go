@@ -60,6 +60,10 @@ type Interface interface {
 	// selection predicate.
 	List(context.Context, ResourceRequest, *store.SelectionPredicate) (WrapList, error)
 
+	// Count returns a count of all resources matching the set of constraints
+	// specified by the resource request.
+	Count(context.Context, ResourceRequest) (int, error)
+
 	// Exists returns true if the resource indicated by the request exists
 	Exists(context.Context, ResourceRequest) (bool, error)
 
@@ -97,6 +101,9 @@ type NamespaceStore interface {
 	// List lists all corev3.Namespace resources.
 	List(context.Context, *store.SelectionPredicate) ([]*corev3.Namespace, error)
 
+	// Count returns a count of all namespaces
+	Count(context.Context) (int, error)
+
 	// Exists returns true if the corev3.Namespace with the provided name exists.
 	Exists(context.Context, string) (bool, error)
 
@@ -131,6 +138,10 @@ type EntityConfigStore interface {
 	// List lists all corev3.EntityConfig resources.
 	List(context.Context, string, *store.SelectionPredicate) ([]*corev3.EntityConfig, error)
 
+	// Count returns a count of entites by namespace
+	// and optionally by entity class
+	Count(ctx context.Context, namespace, entityClass string) (int, error)
+
 	// Exists returns true if the corev3.EntityConfig exists for the provided
 	// namespace and name.
 	Exists(context.Context, string, string) (bool, error)
@@ -162,6 +173,9 @@ type EntityStateStore interface {
 
 	// List lists all corev3.EntityState resources.
 	List(context.Context, string, *store.SelectionPredicate) ([]*corev3.EntityState, error)
+
+	// Count returns a count of entity states by namespace
+	Count(context.Context, string) (int, error)
 
 	// Exists returns true if the corev3.EntityState exists for the provided
 	// namespace and name.
