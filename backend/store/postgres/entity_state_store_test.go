@@ -1211,6 +1211,89 @@ func TestEntityStateStore_List(t *testing.T) {
 	}
 }
 
+func TestEntityStateStore_Count(t *testing.T) {
+	type args struct {
+		ctx       context.Context
+		namespace string
+	}
+	tests := []struct {
+		name       string
+		args       args
+		beforeHook func(*testing.T, storev2.NamespaceStore, storev2.EntityConfigStore, storev2.EntityStateStore)
+		want       int
+		wantErr    bool
+	}{
+		{
+			name: "fails when namespace does not exist",
+			args: args{
+				ctx:       context.Background(),
+				namespace: "default",
+			},
+		},
+		{
+			name: "fails when namespace is soft deleted",
+			args: args{
+				ctx:       context.Background(),
+				namespace: "default",
+			},
+			beforeHook: func(t *testing.T, ns storev2.NamespaceStore, ec storev2.EntityConfigStore, s storev2.EntityStateStore) {
+				createNamespace(t, ns, "default")
+				deleteNamespace(t, ns, "default")
+			},
+		},
+		{
+			name: "succeeds when no entity states exist",
+			args: args{
+				ctx:       context.Background(),
+				namespace: "default",
+			},
+			beforeHook: func(t *testing.T, ns storev2.NamespaceStore, ec storev2.EntityConfigStore, s storev2.EntityStateStore) {
+				createNamespace(t, ns, "default")
+				for i := 0; i < 10; i++ {
+					entityName := fmt.Sprintf("foo-%d", i)
+					createEntityConfig(t, ec, "default", entityName)
+				}
+			},
+		},
+		{
+			name: "succeeds when entity states exist",
+			args: args{
+				ctx:       context.Background(),
+				namespace: "default",
+			},
+			beforeHook: func(t *testing.T, ns storev2.NamespaceStore, ec storev2.EntityConfigStore, s storev2.EntityStateStore) {
+				createNamespace(t, ns, "default")
+				for i := 0; i < 10; i++ {
+					entityName := fmt.Sprintf("foo-%d", i)
+					createEntityConfig(t, ec, "default", entityName)
+					createEntityState(t, s, "default", entityName)
+				}
+			},
+			want: 10,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			withPostgres(t, func(ctx context.Context, db *pgxpool.Pool, dsn string) {
+				if tt.beforeHook != nil {
+					tt.beforeHook(t, NewNamespaceStore(db), NewEntityConfigStore(db), NewEntityStateStore(db))
+				}
+				s := &EntityStateStore{
+					db: db,
+				}
+				got, err := s.Count(tt.args.ctx, tt.args.namespace)
+				if (err != nil) != tt.wantErr {
+					t.Errorf("EntityStateStore.Count() error = %v, wantErr %v", err, tt.wantErr)
+					return
+				}
+				if diff := deep.Equal(got, tt.want); diff != nil {
+					t.Errorf("EntityStateStore.Count() got differs from want: %v", diff)
+				}
+			})
+		})
+	}
+}
+
 func TestEntityStateStore_Patch(t *testing.T) {
 	type args struct {
 		ctx        context.Context
