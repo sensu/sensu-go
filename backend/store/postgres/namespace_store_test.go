@@ -637,6 +637,58 @@ func TestNamespaceStore_List(t *testing.T) {
 	}
 }
 
+func TestNamespaceStore_Count(t *testing.T) {
+	type args struct {
+		ctx context.Context
+	}
+	tests := []struct {
+		name       string
+		args       args
+		beforeHook func(*testing.T, storev2.NamespaceStore, storev2.EntityConfigStore)
+		want       int
+		wantErr    bool
+	}{
+		{
+			name: "succeeds when no namespaces exist",
+			args: args{
+				ctx: context.Background(),
+			},
+		},
+		{
+			name: "succeeds when namespaces exist",
+			args: args{
+				ctx: context.Background(),
+			},
+			beforeHook: func(t *testing.T, s storev2.NamespaceStore, ec storev2.EntityConfigStore) {
+				for i := 0; i < 10; i++ {
+					namespaceName := fmt.Sprintf("foo-%d", i)
+					createNamespace(t, s, namespaceName)
+				}
+			},
+			want: 10,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			withPostgres(t, func(ctx context.Context, db *pgxpool.Pool, dsn string) {
+				if tt.beforeHook != nil {
+					tt.beforeHook(t, NewNamespaceStore(db), NewEntityConfigStore(db))
+				}
+				s := &NamespaceStore{
+					db: db,
+				}
+				got, err := s.Count(tt.args.ctx)
+				if (err != nil) != tt.wantErr {
+					t.Errorf("NamespaceStore.Count() error = %v, wantErr %v", err, tt.wantErr)
+					return
+				}
+				if diff := deep.Equal(got, tt.want); len(diff) > 0 {
+					t.Errorf("NamespaceStore.Count() got differs from want: %v", diff)
+				}
+			})
+		})
+	}
+}
 func TestNamespaceStore_Patch(t *testing.T) {
 	type args struct {
 		ctx        context.Context
