@@ -322,6 +322,42 @@ func (g Generic[R, T]) List(ctx context.Context, id ID, pred *store.SelectionPre
 	return result, nil
 }
 
+func (g Generic[R, T]) trySpecializeCount(ctx context.Context, id ID) (int, error) {
+	switch any(*new(R)).(type) {
+	case *corev3.EntityConfig:
+		if getter, ok := g.Interface.(EntityConfigStoreGetter); ok {
+			return getter.GetEntityConfigStore().Count(ctx, id.Namespace, "")
+		}
+		return -1, errNoSpecialization
+	case *corev3.EntityState:
+		if getter, ok := g.Interface.(EntityStateStoreGetter); ok {
+			return getter.GetEntityStateStore().Count(ctx, id.Namespace)
+		}
+		return -1, errNoSpecialization
+	case *corev3.Namespace:
+		if getter, ok := g.Interface.(NamespaceStoreGetter); ok {
+			return getter.GetNamespaceStore().Count(ctx)
+		}
+		return -1, errNoSpecialization
+	default:
+		return -1, errNoSpecialization
+	}
+}
+
+func (g Generic[R, T]) Count(ctx context.Context, id ID) (int, error) {
+	if ct, err := g.trySpecializeCount(ctx, id); err != nil {
+		if err != errNoSpecialization {
+			return 0, err
+		}
+	} else {
+		return ct, nil
+	}
+	var r R
+	tm := getGenericTypeMeta[R, T]()
+	req := NewResourceRequest(tm, id.Namespace, "", r.StoreName())
+	return g.Interface.Count(ctx, req)
+}
+
 func (g Generic[R, T]) trySpecializeExists(ctx context.Context, id ID) (bool, error) {
 	switch any(new(T)).(type) {
 	case *corev3.EntityConfig:
