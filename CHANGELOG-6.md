@@ -5,7 +5,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic
 Versioning](http://semver.org/spec/v2.0.0.html).
 
-## [6.9.0] - 2022-10-31
+## [6.9.0] - 2022-11-01
 
 ### Added
 - Include support for handling metric tags in the graphite plaintext
