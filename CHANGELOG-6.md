@@ -10,10 +10,18 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 ### Added
 - Include support for handling metric tags in the graphite plaintext
   protocol. Agents now respect the new graphite tag specification.
+- Agent websocket connection logging includes backend entity name.
+- The authentication module now logs successful (INFO) and unsuccessful (ERROR)
+  login attempts.
 
 ### Changed
 - Keepalive reconstruction no longer blocks backend startup. Instead runs
-gradually in the background.
+  gradually in the background.
+- Upgraded etcd version from 3.5.4 to 3.5.5.
+
+### Fixed
+- Fixed an issue where multi-expression exclusive "Deny" filters were not
+  evaluated as described in the documentation.
 
 ## [6.8.2] - 2022-10-06
 
@@ -22,28 +30,9 @@ gradually in the background.
 - The Sensu Agent service now auto-restarts after failures on Windows.
 
 ### Added
-- The authentication module now logs successful (INFO) and unsuccessful (ERROR)
-  login attempts.
-- Agent websocket connection logging includes backend entity name.
 - A sensu.io/output\_truncated\_bytes label is now applied to events when
 the check output has been truncated due to a check's max\_output\_size
 configuration.
-
-### Fixed
-- Fixed an issue where multi-expression exclusive "Deny" filters were not
-  evaluated as described in the documentation.
-
-### Added
-- The authentication module now logs successful (INFO) and unsuccessful (ERROR)
-  login attempts.
-- Agent websocket connection logging includes backend entity name.
-
-### Changed
-- The Sensu Agent service now auto-restarts after failures on Windows.
-
-### Fixed
-- Fixed an issue where multi-expression exclusive "Deny" filters were not
-  evaluated as described in the documentation.
 
 ## [6.8.1] - 2022-09-13
 
@@ -54,9 +43,6 @@ should be no unintended gaps between overlapping subdues.
 ### Security
 - Addresses issue where the entity list view would display values of redacted
 labels.
-
-### Changed
-- Upgraded etcd version from 3.5.4 to 3.5.5.
 
 ## [6.8.0] - 2022-08-24
 
