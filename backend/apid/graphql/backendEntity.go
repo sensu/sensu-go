@@ -1,7 +1,7 @@
 package graphql
 
 import (
-	corev2 "github.com/sensu/sensu-go/api/core/v2"
+	corev2 "github.com/sensu/core/v2"
 	"github.com/sensu/sensu-go/graphql"
 )
 
