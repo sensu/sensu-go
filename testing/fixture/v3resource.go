@@ -4,11 +4,11 @@ import (
 	"fmt"
 
 	corev2 "github.com/sensu/core/v2"
-	"github.com/sensu/sensu-api-tools/apis"
+	apitools "github.com/sensu/sensu-api-tools"
 )
 
 func init() {
-	apis.RegisterType("testing/fixture", new(V3Resource), apis.WithAlias("v3_resource"))
+	apitools.RegisterType("testing/fixture", new(V3Resource), apitools.WithAlias("v3_resource"))
 }
 
 type V3Resource struct {

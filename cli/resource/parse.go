@@ -13,7 +13,7 @@ import (
 
 	"github.com/ghodss/yaml"
 	corev2 "github.com/sensu/core/v2"
-	"github.com/sensu/sensu-api-tools/apis"
+	apitools "github.com/sensu/sensu-api-tools"
 	"github.com/sensu/sensu-go/types"
 	"github.com/sensu/sensu-go/types/compat"
 )
@@ -95,7 +95,7 @@ func stripWrapperAndMaybeWarn(dec *json.Decoder, wrapper *types.Wrapper, count i
 	if msg == nil {
 		return
 	}
-	resource, err := apis.Resolve(wrapper.APIVersion, wrapper.Type)
+	resource, err := apitools.Resolve(wrapper.APIVersion, wrapper.Type)
 	if err != nil {
 		return
 	}

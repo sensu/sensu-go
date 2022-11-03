@@ -9,15 +9,15 @@ import (
 
 	corev2 "github.com/sensu/core/v2"
 	corev3 "github.com/sensu/core/v3"
-	"github.com/sensu/sensu-api-tools/apis"
+	apitools "github.com/sensu/sensu-api-tools"
 	"github.com/sensu/sensu-go/backend/store/v2/wrap"
 )
 
 func init() {
-	apis.RegisterType("wrap_test/v2", new(testResource))
-	apis.RegisterType("wrap_test/v2", new(testResource2))
-	apis.RegisterType("v2/wrap_test", new(testResource))
-	apis.RegisterType("v2/wrap_test", new(testResource2))
+	apitools.RegisterType("wrap_test/v2", new(testResource))
+	apitools.RegisterType("wrap_test/v2", new(testResource2))
+	apitools.RegisterType("v2/wrap_test", new(testResource))
+	apitools.RegisterType("v2/wrap_test", new(testResource2))
 }
 
 type testResource struct {

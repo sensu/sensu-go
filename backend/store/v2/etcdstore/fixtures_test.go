@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	corev2 "github.com/sensu/core/v2"
-	"github.com/sensu/sensu-api-tools/apis"
+	apitools "github.com/sensu/sensu-api-tools"
 	"github.com/sensu/sensu-go/backend/etcd"
 	"github.com/sensu/sensu-go/backend/store"
 	etcdstore "github.com/sensu/sensu-go/backend/store/etcd"
@@ -49,7 +49,7 @@ func (t *testResource) GetTypeMeta() corev2.TypeMeta {
 }
 
 func init() {
-	apis.RegisterType("store/wrap_test", new(testResource))
+	apitools.RegisterType("store/wrap_test", new(testResource))
 }
 
 func testWithEtcdStore(t testing.TB, f func(*etcdstorev2.Store)) {

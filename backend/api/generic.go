@@ -8,7 +8,7 @@ import (
 
 	corev2 "github.com/sensu/core/v2"
 	corev3 "github.com/sensu/core/v3"
-	"github.com/sensu/sensu-api-tools/apis"
+	apitools "github.com/sensu/sensu-api-tools"
 	"github.com/sensu/sensu-go/backend/authorization"
 	"github.com/sensu/sensu-go/backend/store"
 	storev2 "github.com/sensu/sensu-go/backend/store/v2"
@@ -89,7 +89,7 @@ func (g *GenericClient) SetTypeMeta(meta corev2.TypeMeta) error {
 	}
 	g.APIGroup = path.Dir(meta.APIVersion)
 	g.APIVersion = path.Base(meta.APIVersion)
-	kind, err := apis.Resolve(meta.APIVersion, meta.Type)
+	kind, err := apitools.Resolve(meta.APIVersion, meta.Type)
 	if err != nil {
 		return fmt.Errorf("error (SetTypeMeta): %s", err)
 	}

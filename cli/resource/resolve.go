@@ -7,7 +7,7 @@ import (
 	"strings"
 
 	corev2 "github.com/sensu/core/v2"
-	"github.com/sensu/sensu-api-tools/apis"
+	apitools "github.com/sensu/sensu-api-tools"
 	"github.com/sensu/sensu-go/types"
 	"github.com/sensu/sensu-go/types/compat"
 )
@@ -66,7 +66,7 @@ func Resolve(resource string) (corev2.Resource, error) {
 	if apiVersion == "" {
 		apiVersion = "core/v2"
 	}
-	value, err := apis.Resolve(apiVersion, typeName)
+	value, err := apitools.Resolve(apiVersion, typeName)
 	if err != nil {
 		return nil, err
 	}
