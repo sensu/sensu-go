@@ -4,18 +4,11 @@ import (
 	"fmt"
 
 	corev2 "github.com/sensu/core/v2"
-	"github.com/sensu/sensu-go/types"
+	apitools "github.com/sensu/sensu-api-tools"
 )
 
 func init() {
-	types.RegisterResolver("testing/fixture", func(name string) (interface{}, error) {
-		switch name {
-		case "V3Resource", "v3_resource":
-			return new(V3Resource), nil
-		default:
-			return nil, fmt.Errorf("invalid resource: %s", name)
-		}
-	})
+	apitools.RegisterType("testing/fixture", new(V3Resource), apitools.WithAlias("v3_resource"))
 }
 
 type V3Resource struct {

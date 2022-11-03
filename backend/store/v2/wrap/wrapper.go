@@ -4,7 +4,9 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"path"
 	"reflect"
+	"strings"
 
 	//nolint:staticcheck // SA1004 Replacing this will take some planning.
 	"github.com/golang/protobuf/proto"
@@ -12,8 +14,8 @@ import (
 	"github.com/golang/snappy"
 	corev2 "github.com/sensu/core/v2"
 	corev3 "github.com/sensu/core/v3"
+	apitools "github.com/sensu/sensu-api-tools"
 	"github.com/sensu/sensu-go/backend/store"
-	"github.com/sensu/sensu-go/types"
 )
 
 //go:generate go run ../../../../scripts/check_protoc/main.go
@@ -158,7 +160,7 @@ func wrapWithoutValidation(r interface{}, opts ...Option) (*Wrapper, error) {
 		typ := reflect.Indirect(reflect.ValueOf(r)).Type()
 		tm = corev2.TypeMeta{
 			Type:       typ.Name(),
-			APIVersion: types.ApiVersion(typ.PkgPath()),
+			APIVersion: apiVersion(typ.PkgPath()),
 		}
 	}
 	w := Wrapper{
@@ -220,7 +222,7 @@ func (w *Wrapper) Unwrap() (corev3.Resource, error) {
 
 // UnwrapRaw is like Unwrap, but returns a raw interface{} value.
 func (w *Wrapper) UnwrapRaw() (interface{}, error) {
-	resource, err := types.ResolveRaw(w.TypeMeta.APIVersion, w.TypeMeta.Type)
+	resource, err := apitools.Resolve(w.TypeMeta.APIVersion, w.TypeMeta.Type)
 	if err != nil {
 		return nil, err
 	}
@@ -322,4 +324,15 @@ func (l List) UnwrapInto(ptr interface{}) error {
 		}
 	}
 	return nil
+}
+
+func apiVersion(version string) string {
+	parts := strings.Split(version, "/")
+	if len(parts) == 0 {
+		return ""
+	}
+	if len(parts) == 1 {
+		return parts[0]
+	}
+	return path.Join(parts[len(parts)-2], parts[len(parts)-1])
 }
