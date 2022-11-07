@@ -208,7 +208,7 @@ func (service *Service) Do(ctx context.Context, p QueryParams) *Result {
 		Schema:  schema,
 		AST:     AST,
 		Args:    p.Variables,
-		Context: ctx,
+		Context: params.Context,
 	})
 }
 
