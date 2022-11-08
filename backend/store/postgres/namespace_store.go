@@ -273,6 +273,14 @@ func (s *NamespaceStore) List(ctx context.Context, pred *store.SelectionPredicat
 	return namespaces, nil
 }
 
+func (s *NamespaceStore) Count(ctx context.Context) (int, error) {
+	row := s.db.QueryRow(ctx, countNamespaceQuery)
+
+	var ct int
+	err := row.Scan(&ct)
+	return ct, err
+}
+
 func (s *NamespaceStore) Patch(ctx context.Context, name string, patcher patch.Patcher, conditions *store.ETagCondition) (fErr error) {
 	if name == "" {
 		return &store.ErrNotValid{Err: errors.New("must specify name")}

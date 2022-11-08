@@ -146,6 +146,15 @@ SELECT NOT EXISTS (
 );
 `
 
+const countNamespaceQuery = `
+-- This query lists all namespaces.
+--
+SELECT
+	count(*)
+FROM namespaces
+WHERE deleted_at IS NULL;
+`
+
 const listNamespaceQuery = `
 -- This query lists all namespaces.
 --

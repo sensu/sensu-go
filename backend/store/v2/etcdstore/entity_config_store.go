@@ -110,6 +110,9 @@ func (s *EntityConfigStore) List(ctx context.Context, namespace string, pred *st
 	}
 	return configs, nil
 }
+func (s *EntityConfigStore) Count(ctx context.Context, namespace, eClass string) (int, error) {
+	return 0, nil
+}
 
 func (s *EntityConfigStore) Patch(ctx context.Context, namespace, name string, patcher patch.Patcher, conditions *store.ETagCondition) error {
 	// Fetch the current entity config & wrap it

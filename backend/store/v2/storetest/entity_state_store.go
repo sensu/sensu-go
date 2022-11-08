@@ -52,6 +52,11 @@ func (s *EntityStateStore) List(ctx context.Context, namespace string, pred *sto
 	return args.Get(0).([]*corev3.EntityState), args.Error(1)
 }
 
+func (s *EntityStateStore) Count(ctx context.Context, namespace string) (int, error) {
+	args := s.Called(ctx, namespace)
+	return args.Get(0).(int), args.Error(1)
+}
+
 func (s *EntityStateStore) Patch(ctx context.Context, namespace, entity string, patcher patch.Patcher, conditions *store.ETagCondition) error {
 	args := s.Called(ctx, namespace, entity, patcher, conditions)
 	return args.Error(0)

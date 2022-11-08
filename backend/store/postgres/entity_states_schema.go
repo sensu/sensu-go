@@ -612,6 +612,38 @@ LIMIT $2
 OFFSET $3
 `
 
+const countEntityStateQuery = `
+-- This query counts entity states from a given namespace.
+--
+WITH namespace AS (
+	SELECT id, name FROM namespaces
+	WHERE name = $1 OR $1 IS NULL AND deleted_at IS NULL
+), system AS (
+	SELECT
+		entity_states.id AS entity_id,
+		entities_systems.hostname,
+		entities_systems.os,
+		entities_systems.platform,
+		entities_systems.platform_family,
+		entities_systems.platform_version,
+		entities_systems.arch,
+		entities_systems.arm_version,
+		entities_systems.libc_type,
+		entities_systems.vm_system,
+		entities_systems.vm_role,
+		entities_systems.cloud_provider,
+		entities_systems.float_type,
+		entities_systems.sensu_agent_version
+	FROM entities_systems LEFT OUTER JOIN entity_states ON entity_states.id = entities_systems.entity_id
+	WHERE entity_states.namespace_id = (SELECT id FROM namespace)
+)
+SELECT
+	COUNT(*)
+FROM entity_states
+LEFT OUTER JOIN namespace ON entity_states.namespace_id = namespace.id
+LEFT OUTER JOIN system ON entity_states.id = system.entity_id;
+`
+
 const listEntityStateDescQuery = `
 -- This query lists entity states from a given namespace.
 --

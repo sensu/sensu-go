@@ -285,6 +285,24 @@ func (s *EntityStateStore) List(ctx context.Context, namespace string, pred *sto
 	return states, nil
 }
 
+// Count returns the count of EntityStates in the namespace.
+func (s *EntityStateStore) Count(ctx context.Context, namespace string) (int, error) {
+	query := countEntityStateQuery
+
+	var sqlNamespace sql.NullString
+	if namespace != "" {
+		sqlNamespace.String = namespace
+		sqlNamespace.Valid = true
+	}
+
+	row := s.db.QueryRow(ctx, query, sqlNamespace)
+	var ct int
+	if err := row.Scan(&ct); err != nil {
+		return 0, err
+	}
+	return ct, nil
+}
+
 func (s *EntityStateStore) Patch(ctx context.Context, namespace, name string, patcher patch.Patcher, conditions *store.ETagCondition) (fErr error) {
 	if namespace == "" {
 		return &store.ErrNotValid{Err: errors.New("must specify namespace")}

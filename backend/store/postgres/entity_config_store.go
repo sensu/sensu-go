@@ -287,6 +287,28 @@ func (s *EntityConfigStore) List(ctx context.Context, namespace string, pred *st
 	return configs, nil
 }
 
+// Count returns the count of EntityConfigs found matching the namespace
+// and entity class provided.
+func (s *EntityConfigStore) Count(ctx context.Context, namespace, entityClass string) (int, error) {
+	var sqlNamespace sql.NullString
+	if namespace != "" {
+		sqlNamespace.String = namespace
+		sqlNamespace.Valid = true
+	}
+	var sqlEntityClass sql.NullString
+	if entityClass != "" {
+		sqlEntityClass.String = entityClass
+		sqlEntityClass.Valid = true
+	}
+
+	row := s.db.QueryRow(ctx, countEntityConfigQuery, sqlNamespace, sqlEntityClass)
+	var ct int
+	if err := row.Scan(&ct); err != nil {
+		return 0, err
+	}
+	return ct, nil
+}
+
 func (s *EntityConfigStore) Patch(ctx context.Context, namespace, name string, patcher patch.Patcher, conditions *store.ETagCondition) (fErr error) {
 	if namespace == "" {
 		return &store.ErrNotValid{Err: errors.New("must specify namespace")}

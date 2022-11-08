@@ -260,7 +260,7 @@ func TestConfigStore_List(t *testing.T) {
 	})
 }
 
-func TestConfigStore_List_WithSelectors(t *testing.T) {
+func TestConfigStore_WithSelectors(t *testing.T) {
 	testWithPostgresConfigStore(t, func(s storev2.Interface) {
 		for i := 0; i < 100; i++ {
 			toCreate := corev3.FixtureEntityConfig(fmt.Sprintf("%s%d", entityName, i))
@@ -373,7 +373,14 @@ func TestConfigStore_List_WithSelectors(t *testing.T) {
 				} else {
 					assert.NoError(t, err)
 				}
+				entityCount, err := countEntities(selCtx, s, defaultNamespace)
+				if test.expectError {
+					assert.Error(t, err)
+				} else {
+					assert.NoError(t, err)
+				}
 				assert.Equal(t, test.expectedEntityCount, len(entities))
+				assert.Equal(t, test.expectedEntityCount, entityCount)
 				for _, name := range test.expectedEntityNames {
 					var found bool
 					for _, entity := range entities {
@@ -386,6 +393,31 @@ func TestConfigStore_List_WithSelectors(t *testing.T) {
 				}
 			})
 		}
+	})
+}
+
+func TestConfigStore_Count(t *testing.T) {
+	testWithPostgresConfigStore(t, func(s storev2.Interface) {
+		ctx := context.Background()
+
+		entities, err := listEntities(ctx, s, defaultNamespace, &store.SelectionPredicate{})
+		assert.NoError(t, err)
+		assert.Equal(t, 0, len(entities))
+
+		toCreate := corev3.FixtureEntityConfig(entityName)
+		for i := 0; i < 4; i++ {
+			toCreate.Metadata.Labels[fmt.Sprintf("label-%d", i)] = fmt.Sprintf("labelValue-%d", i)
+		}
+
+		for i := 0; i < 100; i++ {
+			toCreate.Metadata.Name = fmt.Sprintf("%s%d__", entityName, i)
+			err := createIfNotExists(ctx, s, toCreate)
+			assert.NoError(t, err)
+		}
+
+		ct, err := countEntities(ctx, s, defaultNamespace)
+		assert.NoError(t, err)
+		assert.Equal(t, 100, ct)
 	})
 }
 
@@ -496,6 +528,19 @@ func createIfNotExists(ctx context.Context, pgStore storev2.Interface, entity *c
 	}
 
 	return pgStore.CreateIfNotExists(ctx, req, wrapper)
+}
+
+func countEntities(ctx context.Context, pgStore storev2.Interface, namespace string) (int, error) {
+	entityConfig := corev3.EntityConfig{}
+	typeMeta := entityConfig.GetTypeMeta()
+	req := storev2.ResourceRequest{
+		Namespace:  namespace,
+		StoreName:  "entity_configs",
+		APIVersion: typeMeta.APIVersion,
+		Type:       typeMeta.Type,
+	}
+
+	return pgStore.Count(ctx, req)
 }
 
 func listEntities(ctx context.Context, pgStore storev2.Interface, namespace string, predicate *store.SelectionPredicate) ([]*corev3.EntityConfig, error) {
