@@ -8,7 +8,7 @@ import (
 	"testing"
 
 	"github.com/sensu/sensu-go/agent"
-	corev2 "github.com/sensu/sensu-go/api/core/v2"
+	corev2 "github.com/sensu/core/v2"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )

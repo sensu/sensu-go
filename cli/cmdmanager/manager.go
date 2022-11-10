@@ -21,7 +21,7 @@ import (
 	sensupath "github.com/sensu/sensu-go/util/path"
 
 	goversion "github.com/hashicorp/go-version"
-	corev2 "github.com/sensu/sensu-go/api/core/v2"
+	corev2 "github.com/sensu/core/v2"
 	bolt "go.etcd.io/bbolt"
 )
 

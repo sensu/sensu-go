@@ -1,6 +1,6 @@
 package globalid
 
-import corev2 "github.com/sensu/sensu-go/api/core/v2"
+import corev2 "github.com/sensu/core/v2"
 
 var pipelineName = "corev2/pipeline"
 

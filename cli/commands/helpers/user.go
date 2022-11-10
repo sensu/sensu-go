@@ -2,7 +2,7 @@ package helpers
 
 import (
 	jwt "github.com/golang-jwt/jwt/v4"
-	corev2 "github.com/sensu/sensu-go/api/core/v2"
+	corev2 "github.com/sensu/core/v2"
 	"github.com/sensu/sensu-go/cli/client/config"
 )
 
