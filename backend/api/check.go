@@ -63,7 +63,7 @@ func (c *CheckClient) DeleteCheck(ctx context.Context, name string) error {
 
 // ExecuteCheck queues an ahoc check request, if authorized.
 func (c *CheckClient) ExecuteCheck(ctx context.Context, name string, req *corev2.AdhocRequest) error {
-	attrs := checkCreateAttributes(ctx, name)
+	attrs := checkExecuteAttributes(ctx, name)
 	if err := authorize(ctx, c.auth, attrs); err != nil {
 		return err
 	}
@@ -152,6 +152,17 @@ func checkDeleteAttributes(ctx context.Context, name string) *authorization.Attr
 		Namespace:    corev2.ContextNamespace(ctx),
 		Resource:     "checks",
 		Verb:         "delete",
+		ResourceName: name,
+	}
+}
+
+func checkExecuteAttributes(ctx context.Context, name string) *authorization.Attributes {
+	return &authorization.Attributes{
+		APIGroup:     "core",
+		APIVersion:   "v2",
+		Namespace:    corev2.ContextNamespace(ctx),
+		Resource:     "checks",
+		Verb:         "execute",
 		ResourceName: name,
 	}
 }

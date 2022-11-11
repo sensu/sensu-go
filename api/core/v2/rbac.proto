@@ -17,7 +17,7 @@ option (gogoproto.testgen_all) = true;
 message Rule {
   // Verbs is a list of verbs that apply to all of the listed resources for
   // this rule. These include "get", "list", "watch", "create", "update",
-  // "delete".
+  // "delete", "execute".
   // TODO: add support for "patch" (this is expensive and should be delayed
   // until a further release). TODO: add support for "watch" (via websockets)
   repeated string verbs = 1 [ (gogoproto.jsontag) = "verbs" ];

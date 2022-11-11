@@ -64,6 +64,7 @@ var allowedVerbs = []string{
 	"create",
 	"update",
 	"delete",
+	"execute",
 }
 
 // FixtureSubject creates a Subject for testing

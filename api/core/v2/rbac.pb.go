@@ -29,7 +29,7 @@ const _ = proto.ProtoPackageIsVersion3 // please upgrade the proto package
 type Rule struct {
 	// Verbs is a list of verbs that apply to all of the listed resources for
 	// this rule. These include "get", "list", "watch", "create", "update",
-	// "delete".
+	// "delete", "execute".
 	// TODO: add support for "patch" (this is expensive and should be delayed
 	// until a further release). TODO: add support for "watch" (via websockets)
 	Verbs []string `protobuf:"bytes,1,rep,name=verbs,proto3" json:"verbs"`
