@@ -114,6 +114,10 @@ func (s *EntityConfigStore) Count(ctx context.Context, namespace, eClass string)
 	return 0, nil
 }
 
+func (s *EntityConfigStore) Watch(context.Context, storev2.ResourceRequest) <-chan []storev2.WatchEvent {
+	return nil
+}
+
 func (s *EntityConfigStore) Patch(ctx context.Context, namespace, name string, patcher patch.Patcher, conditions *store.ETagCondition) error {
 	// Fetch the current entity config & wrap it
 	config, err := s.Get(ctx, namespace, name)

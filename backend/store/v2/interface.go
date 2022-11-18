@@ -149,6 +149,10 @@ type EntityConfigStore interface {
 	// Patch patches the corev3.EntityConfig resource with the provided
 	// namespace and name.
 	Patch(context.Context, string, string, patch.Patcher, *store.ETagCondition) error
+
+	// Watch provides a channel for receiving updates to a particular resource
+	// or resource collection
+	Watch(context.Context, ResourceRequest) <-chan []WatchEvent
 }
 
 // EntityStateStore provides an interface for interacting with entity states.
