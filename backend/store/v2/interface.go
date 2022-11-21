@@ -9,6 +9,16 @@ import (
 	"github.com/sensu/sensu-go/backend/store/patch"
 )
 
+// Interface provides access to the various stores that Sensu supports.
+type Interface interface {
+	ConfigStoreGetter
+	EntityConfigStoreGetter
+	EntityStateStoreGetter
+	NamespaceStoreGetter
+	EventStoreGetter
+	EntityStoreGetter
+}
+
 // Wrapper is an abstraction of a store wrapper.
 type Wrapper interface {
 	Unwrap() (corev3.Resource, error)
@@ -37,8 +47,23 @@ type NamespaceStoreGetter interface {
 	GetNamespaceStore() NamespaceStore
 }
 
-// Interface specifies the interface of a v2 store.
-type Interface interface {
+// ConfigStoreGetter gets you a ConfigStore.
+type ConfigStoreGetter interface {
+	GetConfigStore() ConfigStore
+}
+
+// EventStoreGetter gets you an EventStore.
+type EventStoreGetter interface {
+	GetEventStore() store.EventStore
+}
+
+// EntityStoreGetter gets you an EntityStore.
+type EntityStoreGetter interface {
+	GetEntityStore() store.EntityStore
+}
+
+// ConfigStore specifies the interface of a v2 store.
+type ConfigStore interface {
 	// CreateOrUpdate creates or updates the wrapped resource.
 	CreateOrUpdate(context.Context, ResourceRequest, Wrapper) error
 
@@ -149,6 +174,14 @@ type EntityConfigStore interface {
 	// Patch patches the corev3.EntityConfig resource with the provided
 	// namespace and name.
 	Patch(context.Context, string, string, patch.Patcher, *store.ETagCondition) error
+
+	// Watch creates a watcher for the key space defined by the namespace and name
+	// given. There are three possible modes. If namespace and name are blank, then
+	// the watcher watches all EntityConfigs in the system. If the namespace is
+	// supplied but the name is blank, the watcher watches all EntityConfigs in a
+	// particular namespace. If the namespace and name are both supplied, the watcher
+	// watches a single EntityConfig.
+	Watch(c context.Context, namespace, name string) <-chan []WatchEvent
 }
 
 // EntityStateStore provides an interface for interacting with entity states.
@@ -202,4 +235,16 @@ type KeepaliveStore interface {
 }
 
 // Initialize sets up a cluster with the default resources & config.
-type InitializeFunc func(context.Context, Interface, NamespaceStore) error
+type InitializeFunc func(context.Context, Interface) error
+
+type SilencesStore interface {
+	// GetSilences gets a list of silences belonging to the provided namespace.
+	GetSilences(ctx context.Context, namespace string) ([]*corev2.Silenced, error)
+
+	// GetSilencesByCheck gets a list of silences belonging to the provided namespace and check.
+	GetSilencesByCheck(ctx context.Context, namespace, check string) ([]*corev2.Silenced, error)
+	GetSilencesBySubscription(ctx context.Context, namespace string, subscriptions []string) ([]*corev2.Silenced, error)
+	GetSilenceByName(ctx context.Context, namespace, name string) (*corev2.Silenced, error)
+	UpdateSilence(ctx context.Context, si *corev2.Silenced) error
+	GetSilencesByName(ctx context.Context, namespace string, names []string) ([]*corev2.Silenced, error)
+}

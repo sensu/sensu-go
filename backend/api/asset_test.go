@@ -98,7 +98,9 @@ func TestListAssets(t *testing.T) {
 			},
 			Store: func() storev2.Interface {
 				store := new(mockstore.V2MockStore)
-				store.On("List", mock.Anything, mock.Anything, mock.Anything).Return(mockstore.WrapList[*corev2.Asset]{defaultAsset}, nil)
+				cs := new(mockstore.ConfigStore)
+				store.On("GetConfigStore").Return(cs)
+				cs.On("List", mock.Anything, mock.Anything, mock.Anything).Return(mockstore.WrapList[*corev2.Asset]{defaultAsset}, nil)
 				return store
 			},
 			Auth: func() authorization.Authorizer {
@@ -219,7 +221,9 @@ func TestGetAsset(t *testing.T) {
 			},
 			Store: func() storev2.Interface {
 				store := new(mockstore.V2MockStore)
-				store.On("Get", mock.Anything, mock.Anything).Return(mockstore.Wrapper[*corev2.Asset]{Value: defaultAsset}, nil)
+				cs := new(mockstore.ConfigStore)
+				store.On("GetConfigStore").Return(cs)
+				cs.On("Get", mock.Anything, mock.Anything).Return(mockstore.Wrapper[*corev2.Asset]{Value: defaultAsset}, nil)
 				return store
 			},
 			Auth: func() authorization.Authorizer {
@@ -340,7 +344,9 @@ func TestCreateAsset(t *testing.T) {
 			},
 			Store: func() storev2.Interface {
 				store := new(mockstore.V2MockStore)
-				store.On("CreateIfNotExists", mock.Anything, mock.Anything, mock.Anything).Return(nil)
+				cs := new(mockstore.ConfigStore)
+				store.On("GetConfigStore").Return(cs)
+				cs.On("CreateIfNotExists", mock.Anything, mock.Anything, mock.Anything).Return(nil)
 				return store
 			},
 			Auth: func() authorization.Authorizer {
@@ -457,7 +463,9 @@ func TestUpdateAsset(t *testing.T) {
 			},
 			Store: func() storev2.Interface {
 				store := new(mockstore.V2MockStore)
-				store.On("CreateOrUpdate", mock.Anything, mock.Anything, mock.Anything).Return(nil)
+				cs := new(mockstore.ConfigStore)
+				store.On("GetConfigStore").Return(cs)
+				cs.On("CreateOrUpdate", mock.Anything, mock.Anything, mock.Anything).Return(nil)
 				return store
 			},
 			Auth: func() authorization.Authorizer {

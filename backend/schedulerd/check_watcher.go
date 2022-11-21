@@ -10,7 +10,6 @@ import (
 	"github.com/sensu/sensu-go/backend/ringv2"
 	"github.com/sensu/sensu-go/backend/secrets"
 	"github.com/sensu/sensu-go/backend/store"
-	cachev2 "github.com/sensu/sensu-go/backend/store/cache/v2"
 	storev2 "github.com/sensu/sensu-go/backend/store/v2"
 )
 
@@ -22,12 +21,12 @@ type CheckWatcher struct {
 	mu                     sync.Mutex
 	ctx                    context.Context
 	ringPool               *ringv2.RingPool
-	entityCache            *cachev2.Resource
+	entityCache            EntityCache
 	secretsProviderManager *secrets.ProviderManager
 }
 
 // NewCheckWatcher creates a new ScheduleManager.
-func NewCheckWatcher(ctx context.Context, msgBus messaging.MessageBus, store storev2.Interface, pool *ringv2.RingPool, cache *cachev2.Resource, secretsProviderManager *secrets.ProviderManager) *CheckWatcher {
+func NewCheckWatcher(ctx context.Context, msgBus messaging.MessageBus, store storev2.Interface, pool *ringv2.RingPool, cache EntityCache, secretsProviderManager *secrets.ProviderManager) *CheckWatcher {
 	watcher := &CheckWatcher{
 		store:                  store,
 		items:                  make(map[string]Scheduler),
@@ -87,13 +86,9 @@ func (c *CheckWatcher) startScheduler(check *corev2.CheckConfig) error {
 
 // Start starts the CheckWatcher.
 func (c *CheckWatcher) Start() error {
-	checkConfigs := []*corev2.CheckConfig{}
-	req := storev2.NewResourceRequestFromResource(&corev2.CheckConfig{})
-	list, err := c.store.List(context.TODO(), req, &store.SelectionPredicate{})
+	cstore := storev2.NewGenericStore[*corev2.CheckConfig](c.store)
+	checkConfigs, err := cstore.List(context.TODO(), storev2.ID{}, &store.SelectionPredicate{})
 	if err != nil {
-		return err
-	}
-	if err := list.UnwrapInto(&checkConfigs); err != nil {
 		return err
 	}
 
@@ -112,7 +107,7 @@ func (c *CheckWatcher) Start() error {
 }
 
 func (c *CheckWatcher) startWatcher() {
-	watchChan := c.store.Watch(c.ctx, storev2.NewResourceRequestFromResource(&corev2.CheckConfig{}))
+	watchChan := c.store.GetConfigStore().Watch(c.ctx, storev2.NewResourceRequestFromResource(&corev2.CheckConfig{}))
 	for {
 		select {
 		case watchEvents, ok := <-watchChan:

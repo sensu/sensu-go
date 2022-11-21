@@ -22,7 +22,9 @@ func init() {
 }
 
 func TestEntityStorage(t *testing.T) {
-	testWithPostgresStore(t, func(s store.Store) {
+	testWithPostgresStore(t, func(str storev2.Interface) {
+		db := str.(*Store).db
+		s := NewEntityStore(db)
 		entity := corev2.FixtureEntity("entity")
 		ctx := context.WithValue(context.Background(), types.NamespaceKey, entity.Namespace)
 		pred := &store.SelectionPredicate{}
@@ -39,8 +41,8 @@ func TestEntityStorage(t *testing.T) {
 			t.Errorf("bad pred.Continue: got %q, want %q", got, want)
 		}
 
-		namespace := corev2.FixtureNamespace(entity.Namespace)
-		if err := s.UpdateNamespace(ctx, namespace); err != nil {
+		namespace := corev3.FixtureNamespace(entity.Namespace)
+		if err := str.GetNamespaceStore().CreateOrUpdate(ctx, namespace); err != nil {
 			t.Fatal(err)
 		}
 		if err := s.UpdateEntity(ctx, entity); err != nil {
@@ -144,7 +146,9 @@ func TestEntityIterationNoPanicMismatched(t *testing.T) {
 }
 
 func TestEntityCreateOrUpdateMultipleAddresses(t *testing.T) {
-	testWithPostgresStore(t, func(s store.Store) {
+	testWithPostgresStore(t, func(str storev2.Interface) {
+		db := str.(*Store).db
+		s := NewEntityStore(db)
 		entity := types.FixtureEntity("entity")
 		ctx := context.WithValue(context.Background(), types.NamespaceKey, entity.Namespace)
 		entity.System.Network = corev2.Network{
@@ -162,8 +166,8 @@ func TestEntityCreateOrUpdateMultipleAddresses(t *testing.T) {
 			},
 		}
 		entity.System.Network.Interfaces[0].Addresses = append(entity.System.Network.Interfaces[0].Addresses, "1.1.1.1")
-		namespace := corev2.FixtureNamespace(entity.Namespace)
-		if err := s.UpdateNamespace(ctx, namespace); err != nil {
+		namespace := corev3.FixtureNamespace(entity.Namespace)
+		if err := str.GetNamespaceStore().CreateOrUpdate(ctx, namespace); err != nil {
 			t.Fatal(err)
 		}
 		if err := s.UpdateEntity(ctx, entity); err != nil {

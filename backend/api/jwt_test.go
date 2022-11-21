@@ -11,8 +11,10 @@ import (
 
 func TestJWTGetSecretNotFoundCreateIfNotExists(t *testing.T) {
 	s := new(mockstore.V2MockStore)
-	s.On("Get", mock.Anything, mock.Anything).Return(nil, &store.ErrNotFound{})
-	s.On("CreateIfNotExists", mock.Anything, mock.Anything, mock.Anything).Return(nil)
+	cs := new(mockstore.ConfigStore)
+	s.On("GetConfigStore").Return(cs)
+	cs.On("Get", mock.Anything, mock.Anything).Return(nil, &store.ErrNotFound{})
+	cs.On("CreateIfNotExists", mock.Anything, mock.Anything, mock.Anything).Return(nil)
 	jwtclient := JWT{Store: s}
 	value, err := jwtclient.GetSecret(context.Background())
 	if err != nil {
@@ -21,6 +23,6 @@ func TestJWTGetSecretNotFoundCreateIfNotExists(t *testing.T) {
 	if got, want := len(value), 32; got != want {
 		t.Errorf("value len wrong: got %d, want %d", got, want)
 	}
-	s.AssertCalled(t, "Get", mock.Anything, mock.Anything)
-	s.AssertCalled(t, "CreateIfNotExists", mock.Anything, mock.Anything, mock.Anything)
+	cs.AssertCalled(t, "Get", mock.Anything, mock.Anything)
+	cs.AssertCalled(t, "CreateIfNotExists", mock.Anything, mock.Anything, mock.Anything)
 }

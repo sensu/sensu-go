@@ -122,7 +122,9 @@ func TestListChecks(t *testing.T) {
 				store := new(mockstore.V2MockStore)
 				wrapper, _ := wrap.Resource(defaultCheck)
 				list := wrap.List{wrapper}
-				store.On("List", mock.Anything, mock.Anything, mock.Anything).Return(list, nil)
+				cs := new(mockstore.ConfigStore)
+				store.On("GetConfigStore").Return(cs)
+				cs.On("List", mock.Anything, mock.Anything, mock.Anything).Return(list, nil)
 				return store
 			},
 			Auth: func() authorization.Authorizer {
@@ -257,7 +259,9 @@ func TestGetCheck(t *testing.T) {
 			},
 			Store: func() storev2.Interface {
 				store := new(mockstore.V2MockStore)
-				store.On("Get", mock.Anything, mock.Anything).Return(mockstore.Wrapper[*corev2.CheckConfig]{Value: defaultCheck}, nil)
+				cs := new(mockstore.ConfigStore)
+				store.On("GetConfigStore").Return(cs)
+				cs.On("Get", mock.Anything, mock.Anything).Return(mockstore.Wrapper[*corev2.CheckConfig]{Value: defaultCheck}, nil)
 				return store
 			},
 			Auth: func() authorization.Authorizer {
@@ -392,7 +396,9 @@ func TestCreateCheck(t *testing.T) {
 			},
 			Store: func() storev2.Interface {
 				store := new(mockstore.V2MockStore)
-				store.On("CreateOrUpdate", mock.Anything, mock.Anything, mock.Anything).Return(nil)
+				cs := new(mockstore.ConfigStore)
+				store.On("GetConfigStore").Return(cs)
+				cs.On("CreateOrUpdate", mock.Anything, mock.Anything, mock.Anything).Return(nil)
 				return store
 			},
 			Auth: func() authorization.Authorizer {
@@ -523,7 +529,9 @@ func TestUpdateCheck(t *testing.T) {
 			},
 			Store: func() storev2.Interface {
 				store := new(mockstore.V2MockStore)
-				store.On("CreateOrUpdate", mock.Anything, mock.Anything, mock.Anything).Return(nil)
+				cs := new(mockstore.ConfigStore)
+				store.On("GetConfigStore").Return(cs)
+				cs.On("CreateOrUpdate", mock.Anything, mock.Anything, mock.Anything).Return(nil)
 				return store
 			},
 			Auth: func() authorization.Authorizer {
@@ -654,7 +662,9 @@ func TestDeleteCheck(t *testing.T) {
 			},
 			Store: func() storev2.Interface {
 				store := new(mockstore.V2MockStore)
-				store.On("Delete", mock.Anything, mock.Anything).Return(nil)
+				cs := new(mockstore.ConfigStore)
+				store.On("GetConfigStore").Return(cs)
+				cs.On("Delete", mock.Anything, mock.Anything).Return(nil)
 				return store
 			},
 			Auth: func() authorization.Authorizer {

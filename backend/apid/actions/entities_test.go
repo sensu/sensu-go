@@ -10,22 +10,10 @@ import (
 
 	corev2 "github.com/sensu/core/v2"
 	"github.com/sensu/sensu-go/backend/store"
-	"github.com/sensu/sensu-go/backend/store/v2/storetest"
 	"github.com/sensu/sensu-go/testing/mockstore"
 	"github.com/sensu/sensu-go/testing/testutil"
 	"github.com/sensu/sensu-go/types"
 )
-
-func TestNewEntityController(t *testing.T) {
-	assert := assert.New(t)
-
-	store := &mockstore.MockStore{}
-	storev2 := &storetest.Store{}
-	actions := NewEntityController(store, storev2)
-
-	assert.NotNil(actions)
-	assert.Equal(store, actions.store)
-}
 
 func TestEntityFind(t *testing.T) {
 	defaultCtx := testutil.NewContext(
@@ -67,8 +55,11 @@ func TestEntityFind(t *testing.T) {
 
 	for _, tc := range testCases {
 		store := &mockstore.MockStore{}
-		storev2 := &storetest.Store{}
-		actions := NewEntityController(store, storev2)
+		storev2 := new(mockstore.V2MockStore)
+		storev2.On("GetEntityStore").Return(store)
+		cs := new(mockstore.ConfigStore)
+		storev2.On("GetConfigStore").Return(cs)
+		actions := NewEntityController(storev2)
 
 		t.Run(tc.name, func(t *testing.T) {
 			assert := assert.New(t)
@@ -136,8 +127,9 @@ func TestEntityList(t *testing.T) {
 
 	for _, tc := range testCases {
 		s := &mockstore.MockStore{}
-		s2 := &storetest.Store{}
-		actions := NewEntityController(s, s2)
+		s2 := new(mockstore.V2MockStore)
+		s2.On("GetEntityStore").Return(s)
+		actions := NewEntityController(s2)
 
 		t.Run(tc.name, func(t *testing.T) {
 			assert := assert.New(t)
@@ -214,8 +206,9 @@ func TestEntityCreate(t *testing.T) {
 
 	for _, tc := range testCases {
 		store := &mockstore.MockStore{}
-		storev2 := &storetest.Store{}
-		actions := NewEntityController(store, storev2)
+		storev2 := new(mockstore.V2MockStore)
+		storev2.On("GetEntityStore").Return(store)
+		actions := NewEntityController(storev2)
 
 		t.Run(tc.name, func(t *testing.T) {
 			assert := assert.New(t)
@@ -319,8 +312,13 @@ func TestEntityCreateOrReplace(t *testing.T) {
 
 	for _, tc := range testCases {
 		store := &mockstore.MockStore{}
-		storev2 := &storetest.Store{}
-		actions := NewEntityController(store, storev2)
+		storev2 := new(mockstore.V2MockStore)
+		cs := new(mockstore.ConfigStore)
+		ec := new(mockstore.EntityConfigStore)
+		storev2.On("GetConfigStore").Return(cs)
+		storev2.On("GetEntityConfigStore").Return(ec)
+		storev2.On("GetEntityStore").Return(store)
+		actions := NewEntityController(storev2)
 
 		t.Run(tc.name, func(t *testing.T) {
 			assert := assert.New(t)
@@ -330,7 +328,7 @@ func TestEntityCreateOrReplace(t *testing.T) {
 				On("UpdateEntity", mock.Anything, mock.Anything).
 				Return(tc.createErr)
 
-			storev2.
+			ec.
 				On("CreateOrUpdate", mock.Anything, mock.Anything, mock.Anything).
 				Return(tc.createErr)
 

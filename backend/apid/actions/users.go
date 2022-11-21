@@ -27,9 +27,8 @@ func NewUserController(store storev2.Interface) UserController {
 // List returns resources available to the viewer filter by given params.
 func (a UserController) List(ctx context.Context, pred *store.SelectionPredicate) ([]corev3.Resource, error) {
 	// Fetch from store
-	req := storev2.NewResourceRequestFromResource(new(corev2.User))
-	var users []*corev2.User
-	list, err := a.store.List(ctx, req, nil)
+	ustore := storev2.NewGenericStore[*corev2.User](a.store)
+	users, err := ustore.List(ctx, storev2.ID{Namespace: corev2.ContextNamespace(ctx)}, nil)
 	if err != nil {
 		switch err := err.(type) {
 		case *store.ErrNotFound:
@@ -37,9 +36,6 @@ func (a UserController) List(ctx context.Context, pred *store.SelectionPredicate
 		default:
 			return nil, NewError(InternalErr, err)
 		}
-	}
-	if err := list.UnwrapInto(&users); err != nil {
-		return nil, NewError(InternalErr, err)
 	}
 
 	resources := make([]corev3.Resource, len(users))
@@ -74,12 +70,12 @@ func (a UserController) Get(ctx context.Context, name string) (*corev2.User, err
 
 // Create creates a new user. It returns an error if the user already exists.
 func (a UserController) Create(ctx context.Context, user *corev2.User) error {
-	req := storev2.NewResourceRequestFromResource(user)
-	wrapper, err := storev2.WrapResource(user)
-	if err != nil {
+	// Validate
+	if err := user.Validate(); err != nil {
 		return NewError(InvalidArgument, err)
 	}
-	if err := a.store.CreateIfNotExists(ctx, req, wrapper); err != nil {
+	ustore := storev2.NewGenericStore[*corev2.User](a.store)
+	if err := ustore.CreateIfNotExists(ctx, user); err != nil {
 		switch err := err.(type) {
 		case *store.ErrAlreadyExists:
 			return NewErrorf(AlreadyExistsErr)
@@ -128,12 +124,8 @@ func (a UserController) CreateOrReplace(ctx context.Context, user *corev2.User) 
 	user.Password = user.PasswordHash
 
 	// Persist
-	req := storev2.NewResourceRequestFromResource(user)
-	wrapper, err := storev2.WrapResource(user)
-	if err != nil {
-		return NewError(InvalidArgument, err)
-	}
-	if err := a.store.CreateOrUpdate(ctx, req, wrapper); err != nil {
+	ustore := storev2.NewGenericStore[*corev2.User](a.store)
+	if err := ustore.CreateOrUpdate(ctx, user); err != nil {
 		return NewError(InternalErr, err)
 	}
 	return nil
@@ -153,13 +145,9 @@ func (a UserController) Disable(ctx context.Context, name string) error {
 
 	user.Disabled = true
 
-	req := storev2.NewResourceRequestFromResource(user)
-	wrapper, err := storev2.WrapResource(user)
-	if err != nil {
-		return NewError(InvalidArgument, err)
-	}
+	ustore := storev2.NewGenericStore[*corev2.User](a.store)
 
-	if err := a.store.UpdateIfExists(ctx, req, wrapper); err != nil {
+	if err := ustore.UpdateIfExists(ctx, user); err != nil {
 		switch err.(type) {
 		case *store.ErrAlreadyExists:
 			return NewError(AlreadyExistsErr, err)
@@ -231,11 +219,8 @@ func (a UserController) RemoveAllGroups(ctx context.Context, username string) er
 }
 
 func (a UserController) findUser(ctx context.Context, name string) (*corev2.User, error) {
-	user := &corev2.User{
-		Username: name,
-	}
-	req := storev2.NewResourceRequestFromResource(user)
-	wrapper, err := a.store.Get(ctx, req)
+	ustore := storev2.NewGenericStore[*corev2.User](a.store)
+	user, err := ustore.Get(ctx, storev2.ID{Namespace: corev2.ContextNamespace(ctx), Name: name})
 	if err != nil {
 		switch err := err.(type) {
 		case *store.ErrNotFound:
@@ -244,19 +229,12 @@ func (a UserController) findUser(ctx context.Context, name string) (*corev2.User
 			return nil, NewError(InternalErr, err)
 		}
 	}
-	if err := wrapper.UnwrapInto(user); err != nil {
-		return nil, NewError(InternalErr, err)
-	}
 	return user, nil
 }
 
 func (a UserController) updateUser(ctx context.Context, user *corev2.User) error {
-	req := storev2.NewResourceRequestFromResource(user)
-	wrapper, err := storev2.WrapResource(user)
-	if err != nil {
-		return err
-	}
-	if err := a.store.CreateOrUpdate(ctx, req, wrapper); err != nil {
+	ustore := storev2.NewGenericStore[*corev2.User](a.store)
+	if err := ustore.CreateOrUpdate(ctx, user); err != nil {
 		switch err := err.(type) {
 		case *store.ErrNotFound:
 			return NewErrorf(NotFound)

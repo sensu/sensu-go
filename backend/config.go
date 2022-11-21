@@ -5,21 +5,11 @@ import (
 
 	corev2 "github.com/sensu/core/v2"
 	"github.com/sensu/sensu-go/backend/licensing"
-	"github.com/sensu/sensu-go/backend/store/etcd"
 	"github.com/sensu/sensu-go/backend/store/postgres"
 	"golang.org/x/time/rate"
 )
 
 const (
-	// DefaultEtcdName is the default etcd member node name (single-node cluster only)
-	DefaultEtcdName = "default"
-
-	// DefaultEtcdClientURL is the default URL to listen for Etcd clients
-	DefaultEtcdClientURL = "http://127.0.0.1:2379"
-
-	// DefaultEtcdPeerURL is the default URL to listen for Etcd peers (single-node cluster only)
-	DefaultEtcdPeerURL = "http://127.0.0.1:2380"
-
 	// FlagEventdWorkers defines the number of workers for eventd
 	FlagEventdWorkers = "eventd-workers"
 	// FlagEventdBufferSize defines the buffer size for eventd
@@ -46,19 +36,9 @@ const (
 )
 
 type StoreConfig struct {
-	// ConfigurationStore specifies the selected configuration store to use (either "postgres", "etcd", or "dev")
-	ConfigurationStore string
-
-	// StateStore specifies the selected state store to use (either "postgres" or "dev")
-	StateStore string
-
 	// postgres.ConfigurationStore contains postgres configuration store details. It's only valid to set this when
 	// ConfigurationStore is set to be "postgres".
 	PostgresConfigurationStore postgres.Config
-
-	// EtcdConfigurationStore contains etcd configuration store details. It's only valid to set this when
-	// ConfigurationStore is set to be "etcd".
-	EtcdConfigurationStore etcd.Config
 
 	// PostgresStateStore contains postgres state store details. It's only valid to set this when
 	// StateStore is set to be "postgres".
@@ -104,9 +84,6 @@ type Config struct {
 
 	// Annotations are key-value pairs that users can provide to backend entities
 	Annotations map[string]string
-
-	// DevMode starts up a single-node embedded etcd server when enabled.
-	DevMode bool
 
 	TLS *corev2.TLSOptions
 

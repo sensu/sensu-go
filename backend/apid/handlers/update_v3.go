@@ -2,8 +2,8 @@ package handlers
 
 import (
 	"encoding/json"
+	"errors"
 	"net/http"
-	"reflect"
 
 	"github.com/gorilla/mux"
 	corev3 "github.com/sensu/core/v3"
@@ -15,34 +15,29 @@ import (
 
 // CreateOrUpdateResource creates or updates the resource given in the request
 // body, regardless of whether it already exists or not
-func (h Handlers) CreateOrUpdateResource(r *http.Request) (corev3.Resource, error) {
-	payload := reflect.New(reflect.TypeOf(h.Resource).Elem())
-	if err := json.NewDecoder(r.Body).Decode(payload.Interface()); err != nil {
+func (h Handlers[R, T]) CreateOrUpdateResource(r *http.Request) (corev3.Resource, error) {
+	var payload R
+	if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
 		return nil, actions.NewError(actions.InvalidArgument, err)
 	}
 
-	if err := CheckV3Meta(payload.Interface(), mux.Vars(r), "id"); err != nil {
+	meta := payload.GetMetadata()
+
+	if meta == nil {
+		return nil, actions.NewError(actions.InvalidArgument, errors.New("nil metadata"))
+	}
+
+	if err := checkMeta(*meta, mux.Vars(r), "id"); err != nil {
 		return nil, actions.NewError(actions.InvalidArgument, err)
 	}
-
-	resource, ok := payload.Interface().(corev3.Resource)
-	if !ok {
-		return nil, actions.NewErrorf(actions.InvalidArgument)
-	}
-
-	req := storev2.NewResourceRequestFromResource(resource)
-	meta := resource.GetMetadata()
 
 	if claims := jwt.GetClaimsFromContext(r.Context()); claims != nil {
 		meta.CreatedBy = claims.StandardClaims.Subject
 	}
 
-	wrapper, err := storev2.WrapResource(resource)
-	if err != nil {
-		return nil, actions.NewError(actions.InvalidArgument, err)
-	}
+	gstore := storev2.NewGenericStore[R](h.Store)
 
-	if err := h.Store.CreateOrUpdate(r.Context(), req, wrapper); err != nil {
+	if err := gstore.CreateOrUpdate(r.Context(), payload); err != nil {
 		switch err := err.(type) {
 		case *store.ErrNotValid:
 			return nil, actions.NewError(actions.InvalidArgument, err)

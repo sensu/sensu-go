@@ -37,16 +37,9 @@ func open(ctx context.Context, config *pgxpool.Config, retryForever bool, migrat
 	return db, nil
 }
 
-// OpenConfigDB opens a new postgresql database for configuration storage. If the function
+// Open opens a new postgresql database for storage. If the function
 // returns nil error, then the database will be upgraded to the latest schema
 // version, and will be ready to be used.
-func OpenConfigDB(ctx context.Context, config *pgxpool.Config, retryForever bool) (*pgxpool.Pool, error) {
-	return open(ctx, config, retryForever, configMigrations)
-}
-
-// OpenStateDB opens a new postgresql database for state storage. If the function
-// returns nil error, then the database will be upgraded to the latest schema
-// version, and will be ready to be used.
-func OpenStateDB(ctx context.Context, config *pgxpool.Config, retryForever bool) (*pgxpool.Pool, error) {
+func Open(ctx context.Context, config *pgxpool.Config, retryForever bool) (*pgxpool.Pool, error) {
 	return open(ctx, config, retryForever, migrations)
 }

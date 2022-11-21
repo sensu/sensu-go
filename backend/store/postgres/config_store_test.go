@@ -26,7 +26,7 @@ const (
 	entityName       = "__test-entity__"
 )
 
-func testWithPostgresConfigStore(t *testing.T, fn func(p storev2.Interface)) {
+func testWithPostgresConfigStore(t *testing.T, fn func(p storev2.ConfigStore)) {
 	t.Helper()
 	if testing.Short() {
 		t.Skip("skipping postgres test")
@@ -53,11 +53,11 @@ func testWithPostgresConfigStore(t *testing.T, fn func(p storev2.Interface)) {
 	pgxConfig, err := pgxpool.ParseConfig(testURL)
 	require.NoError(t, err)
 
-	configDB, err := OpenConfigDB(ctx, pgxConfig, false)
+	configDB, err := Open(ctx, pgxConfig, false)
 	require.NoError(t, err)
 	defer configDB.Close()
 
-	s := NewConfigStore(configDB, nil)
+	s := NewConfigStore(db)
 	fn(s)
 }
 
@@ -65,7 +65,7 @@ func TestConfigStore_CreateOrUpdate(t *testing.T) {
 	ec := &corev3.EntityConfig{}
 	ec.GetTypeMeta()
 
-	testWithPostgresConfigStore(t, func(s storev2.Interface) {
+	testWithPostgresConfigStore(t, func(s storev2.ConfigStore) {
 		ctx := context.Background()
 
 		entity, err := getEntity(ctx, s, "default", entityName)
@@ -99,7 +99,7 @@ func TestConfigStore_CreateOrUpdate(t *testing.T) {
 }
 
 func TestConfigStore_CreateIfNotExists(t *testing.T) {
-	testWithPostgresConfigStore(t, func(s storev2.Interface) {
+	testWithPostgresConfigStore(t, func(s storev2.ConfigStore) {
 		ctx := context.Background()
 
 		entity, err := getEntity(ctx, s, "default", entityName)
@@ -129,7 +129,7 @@ func TestConfigStore_CreateIfNotExists(t *testing.T) {
 }
 
 func TestConfigStore_UpdateIfExists(t *testing.T) {
-	testWithPostgresConfigStore(t, func(s storev2.Interface) {
+	testWithPostgresConfigStore(t, func(s storev2.ConfigStore) {
 		ctx := context.Background()
 
 		entity, err := getEntity(ctx, s, "default", entityName)
@@ -162,7 +162,7 @@ func TestConfigStore_UpdateIfExists(t *testing.T) {
 }
 
 func TestConfigStore_Delete(t *testing.T) {
-	testWithPostgresConfigStore(t, func(s storev2.Interface) {
+	testWithPostgresConfigStore(t, func(s storev2.ConfigStore) {
 		ctx := context.Background()
 
 		toCreate := corev3.FixtureEntityConfig(entityName)
@@ -186,7 +186,7 @@ func TestConfigStore_Delete(t *testing.T) {
 }
 
 func TestConfigStore_Exists(t *testing.T) {
-	testWithPostgresConfigStore(t, func(s storev2.Interface) {
+	testWithPostgresConfigStore(t, func(s storev2.ConfigStore) {
 		ctx := context.Background()
 
 		toCreate := corev3.FixtureEntityConfig(entityName)
@@ -208,7 +208,7 @@ func TestConfigStore_Exists(t *testing.T) {
 }
 
 func TestConfigStore_Get(t *testing.T) {
-	testWithPostgresConfigStore(t, func(s storev2.Interface) {
+	testWithPostgresConfigStore(t, func(s storev2.ConfigStore) {
 		ctx := context.Background()
 
 		entity, err := getEntity(ctx, s, "default", entityName)
@@ -232,7 +232,7 @@ func TestConfigStore_Get(t *testing.T) {
 }
 
 func TestConfigStore_List(t *testing.T) {
-	testWithPostgresConfigStore(t, func(s storev2.Interface) {
+	testWithPostgresConfigStore(t, func(s storev2.ConfigStore) {
 		ctx := context.Background()
 
 		entities, err := listEntities(ctx, s, defaultNamespace, &store.SelectionPredicate{})
@@ -260,8 +260,8 @@ func TestConfigStore_List(t *testing.T) {
 	})
 }
 
-func TestConfigStore_WithSelectors(t *testing.T) {
-	testWithPostgresConfigStore(t, func(s storev2.Interface) {
+func TestConfigStore_List_WithSelectors(t *testing.T) {
+	testWithPostgresConfigStore(t, func(s storev2.ConfigStore) {
 		for i := 0; i < 100; i++ {
 			toCreate := corev3.FixtureEntityConfig(fmt.Sprintf("%s%d", entityName, i))
 			toCreate.Metadata.Labels[fmt.Sprintf("label-mod-key-%d", i%3)] = "value"
@@ -422,7 +422,7 @@ func TestConfigStore_Count(t *testing.T) {
 }
 
 func TestConfigStore_Patch(t *testing.T) {
-	testWithPostgresConfigStore(t, func(s storev2.Interface) {
+	testWithPostgresConfigStore(t, func(s storev2.ConfigStore) {
 		toCreate := corev3.FixtureEntityConfig(entityName)
 		for i := 0; i < 4; i++ {
 			toCreate.Metadata.Labels[fmt.Sprintf("label-%d", i)] = fmt.Sprintf("labelValue-%d", i)
@@ -431,7 +431,7 @@ func TestConfigStore_Patch(t *testing.T) {
 }
 
 func TestConfigStore_Watch(t *testing.T) {
-	testWithPostgresConfigStore(t, func(s storev2.Interface) {
+	testWithPostgresConfigStore(t, func(s storev2.ConfigStore) {
 		stor, ok := s.(*ConfigStore)
 		require.True(t, ok, "expected config store")
 
@@ -494,7 +494,7 @@ func TestConfigStore_Watch(t *testing.T) {
 	})
 }
 
-func createOrUpdateEntity(ctx context.Context, pgStore storev2.Interface, entity *corev3.EntityConfig) error {
+func createOrUpdateEntity(ctx context.Context, pgStore storev2.ConfigStore, entity *corev3.EntityConfig) error {
 	req := storev2.ResourceRequest{
 		APIVersion: entity.GetTypeMeta().APIVersion,
 		Type:       entity.GetTypeMeta().Type,
@@ -512,7 +512,7 @@ func createOrUpdateEntity(ctx context.Context, pgStore storev2.Interface, entity
 	return pgStore.CreateOrUpdate(ctx, req, wrapper)
 }
 
-func createIfNotExists(ctx context.Context, pgStore storev2.Interface, entity *corev3.EntityConfig) error {
+func createIfNotExists(ctx context.Context, pgStore storev2.ConfigStore, entity *corev3.EntityConfig) error {
 	req := storev2.ResourceRequest{
 		APIVersion: entity.GetTypeMeta().APIVersion,
 		Type:       entity.GetTypeMeta().Type,
@@ -530,7 +530,7 @@ func createIfNotExists(ctx context.Context, pgStore storev2.Interface, entity *c
 	return pgStore.CreateIfNotExists(ctx, req, wrapper)
 }
 
-func countEntities(ctx context.Context, pgStore storev2.Interface, namespace string) (int, error) {
+func countEntities(ctx context.Context, pgStore storev2.ConfigStore, namespace string) (int, error) {
 	entityConfig := corev3.EntityConfig{}
 	typeMeta := entityConfig.GetTypeMeta()
 	req := storev2.ResourceRequest{
@@ -543,7 +543,7 @@ func countEntities(ctx context.Context, pgStore storev2.Interface, namespace str
 	return pgStore.Count(ctx, req)
 }
 
-func listEntities(ctx context.Context, pgStore storev2.Interface, namespace string, predicate *store.SelectionPredicate) ([]*corev3.EntityConfig, error) {
+func listEntities(ctx context.Context, pgStore storev2.ConfigStore, namespace string, predicate *store.SelectionPredicate) ([]*corev3.EntityConfig, error) {
 	entityConfig := corev3.EntityConfig{}
 	typeMeta := entityConfig.GetTypeMeta()
 	req := storev2.ResourceRequest{
@@ -577,7 +577,7 @@ func listEntities(ctx context.Context, pgStore storev2.Interface, namespace stri
 	return entities, nil
 }
 
-func getEntity(ctx context.Context, pgStore storev2.Interface, namespace, name string) (*corev3.EntityConfig, error) {
+func getEntity(ctx context.Context, pgStore storev2.ConfigStore, namespace, name string) (*corev3.EntityConfig, error) {
 	entityConfig := corev3.EntityConfig{}
 	typeMeta := entityConfig.GetTypeMeta()
 	req := storev2.ResourceRequest{
@@ -607,7 +607,7 @@ func getEntity(ctx context.Context, pgStore storev2.Interface, namespace, name s
 	return entity, nil
 }
 
-func deleteEntity(ctx context.Context, pgStore storev2.Interface, namespace, name string) error {
+func deleteEntity(ctx context.Context, pgStore storev2.ConfigStore, namespace, name string) error {
 	entityConfig := corev3.EntityConfig{}
 	typeMeta := entityConfig.GetTypeMeta()
 	req := storev2.ResourceRequest{
@@ -622,7 +622,7 @@ func deleteEntity(ctx context.Context, pgStore storev2.Interface, namespace, nam
 	return pgStore.Delete(ctx, req)
 }
 
-func entityExists(ctx context.Context, pgStore storev2.Interface, namespace, name string) (bool, error) {
+func entityExists(ctx context.Context, pgStore storev2.ConfigStore, namespace, name string) (bool, error) {
 	entityConfig := corev3.EntityConfig{}
 	typeMeta := entityConfig.GetTypeMeta()
 	req := storev2.ResourceRequest{
@@ -637,7 +637,7 @@ func entityExists(ctx context.Context, pgStore storev2.Interface, namespace, nam
 	return pgStore.Exists(ctx, req)
 }
 
-func updateIfExists(ctx context.Context, pgStore storev2.Interface, entityConfig *corev3.EntityConfig) error {
+func updateIfExists(ctx context.Context, pgStore storev2.ConfigStore, entityConfig *corev3.EntityConfig) error {
 	req := storev2.ResourceRequest{
 		APIVersion: entityConfig.GetTypeMeta().APIVersion,
 		Type:       entityConfig.GetTypeMeta().Type,

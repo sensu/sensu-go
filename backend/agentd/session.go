@@ -315,6 +315,8 @@ func (s *Session) sender() {
 		logger.Info("shutting down agent session: stopping sender")
 	}()
 
+	ecstore := storev2.NewGenericStore[*corev3.EntityConfig](s.storev2)
+
 	for {
 		var msg *transport.Message
 		select {
@@ -358,14 +360,7 @@ func (s *Session) sender() {
 				)
 
 				// Update the entity in the store
-				configReq := storev2.NewResourceRequestFromResource(entity)
-				wrapper, err := storev2.WrapResource(entity)
-				if err != nil {
-					lager.WithError(err).Error("could not wrap the entity config")
-					continue
-				}
-
-				if err := s.storev2.CreateOrUpdate(s.ctx, configReq, wrapper); err != nil {
+				if err := ecstore.CreateOrUpdate(s.ctx, entity); err != nil {
 					sessionErrorCounter.WithLabelValues(err.Error()).Inc()
 					lager.WithError(err).Error("could not update the entity config")
 				}
@@ -485,10 +480,9 @@ func (s *Session) Start() (err error) {
 	s.entityConfig.subscriptions <- subscription
 
 	// Determine if the entity already exists
-	tmp := &corev3.EntityConfig{}
+	ecstore := storev2.NewGenericStore[*corev3.EntityConfig](s.storev2)
 
-	req := storev2.NewResourceRequest(tmp.GetTypeMeta(), s.cfg.Namespace, s.cfg.AgentName, tmp.StoreName())
-	wrapper, err := s.storev2.Get(s.ctx, req)
+	storedEntityConfig, err := ecstore.Get(s.ctx, storev2.ID{Namespace: s.cfg.Namespace, Name: s.cfg.AgentName})
 	if err != nil {
 		// We do not want to send an error if the entity config does not exist
 		if _, ok := err.(*store.ErrNotFound); !ok {
@@ -515,14 +509,6 @@ func (s *Session) Start() (err error) {
 		// An entity config already exists, therefore we should use the stored
 		// entity subscriptions rather than what the agent provided us for the
 		// subscriptions
-		lager.Debug("an entity config was found")
-
-		var storedEntityConfig corev3.EntityConfig
-		err = wrapper.UnwrapInto(&storedEntityConfig)
-		if err != nil {
-			lager.WithError(err).Error("error unwrapping entity config")
-			return err
-		}
 
 		// Remove the managed_by label if the value is sensu-agent, in case the
 		// entity is no longer managed by its agent
@@ -530,7 +516,7 @@ func (s *Session) Start() (err error) {
 			delete(storedEntityConfig.Metadata.Labels, corev2.ManagedByLabel)
 		}
 
-		wrapper, err := storev2.WrapResource(&storedEntityConfig)
+		wrapper, err := storev2.WrapResource(storedEntityConfig)
 		if err != nil {
 			lager.WithError(err).Error("error wrapping entity config")
 			return err

@@ -73,6 +73,8 @@ func init() {
 	}
 }
 
+type NamespaceCache = *cachev2.Resource[*corev3.Namespace, corev3.Namespace]
+
 // Agentd is the backend HTTP API.
 type Agentd struct {
 	// Host is the hostname Agentd is running on.
@@ -93,7 +95,7 @@ type Agentd struct {
 	ctx            context.Context
 	cancel         context.CancelFunc
 	writeTimeout   int
-	namespaceCache *cachev2.Resource
+	namespaceCache NamespaceCache
 	watcher        <-chan []storev2.WatchEvent
 	healthRouter   routers.Router
 	authenticator  Authenticator
@@ -186,7 +188,7 @@ func New(c Config, opts ...Option) (*Agentd, error) {
 		}
 	}
 
-	a.namespaceCache, err = cachev2.New(ctx, c.Store, &corev3.Namespace{}, false)
+	a.namespaceCache, err = cachev2.New[*corev3.Namespace](ctx, c.Store, false)
 	if err != nil {
 		return nil, err
 	}

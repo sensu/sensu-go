@@ -27,17 +27,14 @@ type checkController interface {
 // ChecksRouter handles requests for /checks
 type ChecksRouter struct {
 	controller checkController
-	handlers   handlers.Handlers
+	store      storev2.Interface
 }
 
 // NewChecksRouter instantiates new router for controlling check resources
 func NewChecksRouter(store storev2.Interface, getter types.QueueGetter) *ChecksRouter {
 	return &ChecksRouter{
 		controller: actions.NewCheckController(store, getter),
-		handlers: handlers.Handlers{
-			Resource: &corev2.CheckConfig{},
-			Store:    store,
-		},
+		store:      store,
 	}
 }
 
@@ -48,13 +45,15 @@ func (r *ChecksRouter) Mount(parent *mux.Router) {
 		PathPrefix: "/namespaces/{namespace}/{resource:checks}",
 	}
 
-	routes.Del(r.handlers.DeleteResource)
-	routes.Get(r.handlers.GetResource)
-	routes.List(r.handlers.ListResources, corev2.CheckConfigFields)
-	routes.ListAllNamespaces(r.handlers.ListResources, "/{resource:checks}", corev2.CheckConfigFields)
-	routes.Patch(r.handlers.PatchResource)
-	routes.Post(r.handlers.CreateResource)
-	routes.Put(r.handlers.CreateOrUpdateResource)
+	handlers := handlers.NewHandlers[*corev2.CheckConfig](r.store)
+
+	routes.Del(handlers.DeleteResource)
+	routes.Get(handlers.GetResource)
+	routes.List(handlers.ListResources, corev2.CheckConfigFields)
+	routes.ListAllNamespaces(handlers.ListResources, "/{resource:checks}", corev2.CheckConfigFields)
+	routes.Patch(handlers.PatchResource)
+	routes.Post(handlers.CreateResource)
+	routes.Put(handlers.CreateOrUpdateResource)
 
 	// Custom
 	routes.Path("{id}/hooks/{type}", r.addCheckHook).Methods(http.MethodPut)

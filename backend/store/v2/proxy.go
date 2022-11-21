@@ -10,10 +10,10 @@ import (
 
 type Proxy struct {
 	mu   sync.RWMutex
-	impl Interface
+	impl ConfigStore
 }
 
-func (p *Proxy) UpdateStore(store Interface) {
+func (p *Proxy) UpdateStore(store ConfigStore) {
 	if store == p {
 		panic("UpdateStore called with itself as argument")
 	}

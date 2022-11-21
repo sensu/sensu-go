@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	corev2 "github.com/sensu/core/v2"
-	"github.com/sensu/sensu-go/backend/store/cache"
+	cachev2 "github.com/sensu/sensu-go/backend/store/cache/v2"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -13,13 +13,13 @@ func TestGetSilenced(t *testing.T) {
 	testCases := []struct {
 		name            string
 		event           *corev2.Event
-		silencedEntries []corev2.Resource
+		silencedEntries []*corev2.Silenced
 		expectedEntries []string
 	}{
 		{
 			name:  "Sets the silenced attribute of an event",
 			event: corev2.FixtureEvent("foo", "check_cpu"),
-			silencedEntries: []corev2.Resource{
+			silencedEntries: []*corev2.Silenced{
 				corev2.FixtureSilenced("entity:foo:check_cpu"),
 			},
 			expectedEntries: []string{"entity:foo:check_cpu"},
@@ -29,7 +29,7 @@ func TestGetSilenced(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			ctx := context.WithValue(context.Background(), corev2.NamespaceKey, "default")
-			c := cache.NewFromResources(tc.silencedEntries, false)
+			c := cachev2.NewFromResources(tc.silencedEntries, false)
 
 			GetSilenced(ctx, tc.event, c)
 			assert.Equal(t, tc.expectedEntries, tc.event.Check.Silenced)

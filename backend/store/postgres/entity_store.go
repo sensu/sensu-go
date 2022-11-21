@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/jackc/pgx/v4/pgxpool"
 	corev2 "github.com/sensu/core/v2"
 	corev3 "github.com/sensu/core/v3"
 	"github.com/sensu/sensu-go/backend/poll"
@@ -15,15 +14,37 @@ import (
 )
 
 type EntityStore struct {
-	entityConfigStore *EntityConfigStore
-	entityStateStore  *EntityStateStore
+	db DBI
 }
 
-func NewEntityStore(db *pgxpool.Pool) *EntityStore {
+func NewEntityStore(db DBI) *EntityStore {
 	return &EntityStore{
-		entityConfigStore: NewEntityConfigStore(db),
-		entityStateStore:  NewEntityStateStore(db),
+		db: db,
 	}
+}
+
+func prepareEntityStores(ctx context.Context, db DBI) (*EntityConfigStore, *EntityStateStore, func(*bool), error) {
+	tx, err := db.Begin(ctx)
+	if err != nil {
+		return nil, nil, nil, err
+	}
+
+	cleanup := func(rollback *bool) {
+		if rollback == nil {
+			tx.Rollback(ctx)
+			return
+		}
+		if *rollback {
+			tx.Rollback(ctx)
+		} else {
+			tx.Commit(ctx)
+		}
+	}
+
+	entityConfigStore := NewEntityConfigStore(tx)
+	entityStateStore := NewEntityStateStore(tx)
+
+	return entityConfigStore, entityStateStore, cleanup, nil
 }
 
 // DeleteEntity deletes an entity using the given entity struct.
@@ -35,16 +56,25 @@ func (s *EntityStore) DeleteEntity(ctx context.Context, entity *corev2.Entity) e
 	namespace := entity.GetNamespace()
 	name := entity.GetName()
 
-	if err := s.entityConfigStore.Delete(ctx, namespace, name); err != nil {
+	entityConfigStore, entityStateStore, cleanup, err := prepareEntityStores(ctx, s.db)
+	if err != nil {
+		return err
+	}
+	var rollback bool
+	defer cleanup(&rollback)
+
+	if err := entityConfigStore.Delete(ctx, namespace, name); err != nil {
 		var e *store.ErrNotFound
 		if !errors.As(err, &e) {
+			rollback = true
 			return err
 		}
 	}
 
-	if err := s.entityStateStore.Delete(ctx, namespace, name); err != nil {
+	if err := entityStateStore.Delete(ctx, namespace, name); err != nil {
 		var e *store.ErrNotFound
 		if !errors.As(err, &e) {
+			rollback = true
 			return err
 		}
 	}
@@ -75,9 +105,17 @@ type uniqueResource struct {
 func (s *EntityStore) GetEntities(ctx context.Context, pred *store.SelectionPredicate) ([]*corev2.Entity, error) {
 	namespace := corev2.ContextNamespace(ctx)
 
-	// Fetch the entity configs with the selection predicate
-	configs, err := s.entityConfigStore.List(ctx, namespace, pred)
+	entityConfigStore, entityStateStore, cleanup, err := prepareEntityStores(ctx, s.db)
 	if err != nil {
+		return nil, err
+	}
+	var rollback bool
+	defer cleanup(&rollback)
+
+	// Fetch the entity configs with the selection predicate
+	configs, err := entityConfigStore.List(ctx, namespace, pred)
+	if err != nil {
+		rollback = true
 		return nil, err
 	}
 
@@ -88,8 +126,9 @@ func (s *EntityStore) GetEntities(ctx context.Context, pred *store.SelectionPred
 	}
 
 	// Fetch the entity states using the list of namespaced entity names
-	states, err := s.entityStateStore.GetMultiple(ctx, resources)
+	states, err := entityStateStore.GetMultiple(ctx, resources)
 	if err != nil {
+		rollback = true
 		return nil, err
 	}
 
@@ -133,7 +172,14 @@ func (s *EntityStore) GetEntityByName(ctx context.Context, name string) (*corev2
 
 	namespace := corev2.ContextNamespace(ctx)
 
-	cfg, err := s.entityConfigStore.Get(ctx, namespace, name)
+	entityConfigStore, entityStateStore, cleanup, err := prepareEntityStores(ctx, s.db)
+	if err != nil {
+		return nil, err
+	}
+	var rollback bool
+	defer cleanup(&rollback)
+
+	cfg, err := entityConfigStore.Get(ctx, namespace, name)
 	if err != nil {
 		var errNotFound *store.ErrNotFound
 		if errors.As(err, &errNotFound) {
@@ -145,7 +191,7 @@ func (s *EntityStore) GetEntityByName(ctx context.Context, name string) (*corev2
 		return nil, nil
 	}
 
-	state, err := s.entityStateStore.Get(ctx, namespace, name)
+	state, err := entityStateStore.Get(ctx, namespace, name)
 	if err != nil {
 		var errNotFound *store.ErrNotFound
 		if errors.As(err, &errNotFound) {
@@ -169,17 +215,24 @@ func (s *EntityStore) UpdateEntity(ctx context.Context, entity *corev2.Entity) e
 
 	cfg, state := corev3.V2EntityToV3(entity)
 
-	if err := s.entityConfigStore.CreateOrUpdate(ctx, cfg); err != nil {
+	entityConfigStore, entityStateStore, cleanup, err := prepareEntityStores(ctx, s.db)
+	if err != nil {
+		return err
+	}
+	var rollback bool
+	defer cleanup(&rollback)
+
+	if err := entityConfigStore.CreateOrUpdate(ctx, cfg); err != nil {
 		return fmt.Errorf("error updating entity config: %w", err)
 	}
-	if err := s.entityStateStore.CreateOrUpdate(ctx, state); err != nil {
+	if err := entityStateStore.CreateOrUpdate(ctx, state); err != nil {
 		return fmt.Errorf("error updating entity state: %w", err)
 	}
 	return nil
 }
 
 type EntityConfigPoller struct {
-	db  *pgxpool.Pool
+	db  DBI
 	req storev2.ResourceRequest
 }
 
@@ -228,6 +281,6 @@ func (e *EntityConfigPoller) Since(ctx context.Context, updatedSince time.Time) 
 	return since, nil
 }
 
-func NewEntityConfigPoller(req storev2.ResourceRequest, pool *pgxpool.Pool) (poll.Table, error) {
-	return &EntityConfigPoller{db: pool, req: req}, nil
+func newEntityConfigPoller(req storev2.ResourceRequest, db DBI) (poll.Table, error) {
+	return &EntityConfigPoller{db: db, req: req}, nil
 }

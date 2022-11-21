@@ -93,9 +93,11 @@ func TestListRoles(t *testing.T) {
 			},
 			Store: func() storev2.Interface {
 				store := new(mockstore.V2MockStore)
+				cs := new(mockstore.ConfigStore)
+				store.On("GetConfigStore").Return(cs)
 				req := storev2.NewResourceRequestFromResource(new(corev2.Role))
 				req.Namespace = "default"
-				store.On("List", mock.Anything, req, mock.Anything).Return(mockstore.WrapList[*corev2.Role]{defaultRole}, nil)
+				cs.On("List", mock.Anything, req, mock.Anything).Return(mockstore.WrapList[*corev2.Role]{defaultRole}, nil)
 				return store
 			},
 			Auth: func() authorization.Authorizer {
@@ -216,7 +218,9 @@ func TestGetRole(t *testing.T) {
 			},
 			Store: func() storev2.Interface {
 				store := new(mockstore.V2MockStore)
-				store.On("Get", mock.Anything, storev2.NewResourceRequestFromResource(defaultRole)).Return(mockstore.Wrapper[*corev2.Role]{Value: defaultRole}, nil)
+				cs := new(mockstore.ConfigStore)
+				store.On("GetConfigStore").Return(cs)
+				cs.On("Get", mock.Anything, storev2.NewResourceRequestFromResource(defaultRole)).Return(mockstore.Wrapper[*corev2.Role]{Value: defaultRole}, nil)
 				return store
 			},
 			Auth: func() authorization.Authorizer {
@@ -337,7 +341,9 @@ func TestCreateRole(t *testing.T) {
 			},
 			Store: func() storev2.Interface {
 				store := new(mockstore.V2MockStore)
-				store.On("CreateIfNotExists", mock.Anything, mock.Anything, mock.Anything).Return(nil)
+				cs := new(mockstore.ConfigStore)
+				store.On("GetConfigStore").Return(cs)
+				cs.On("CreateIfNotExists", mock.Anything, mock.Anything, mock.Anything).Return(nil)
 				return store
 			},
 			Auth: func() authorization.Authorizer {
@@ -454,7 +460,9 @@ func TestUpdateRole(t *testing.T) {
 			},
 			Store: func() storev2.Interface {
 				store := new(mockstore.V2MockStore)
-				store.On("CreateOrUpdate", mock.Anything, mock.Anything, mock.Anything).Return(nil)
+				cs := new(mockstore.ConfigStore)
+				store.On("GetConfigStore").Return(cs)
+				cs.On("CreateOrUpdate", mock.Anything, mock.Anything, mock.Anything).Return(nil)
 				return store
 			},
 			Auth: func() authorization.Authorizer {
@@ -572,7 +580,9 @@ func TestDeleteRole(t *testing.T) {
 			},
 			Store: func() storev2.Interface {
 				store := new(mockstore.V2MockStore)
-				store.On("Delete", mock.Anything, mock.Anything).Return(nil)
+				cs := new(mockstore.ConfigStore)
+				store.On("GetConfigStore").Return(cs)
+				cs.On("Delete", mock.Anything, mock.Anything).Return(nil)
 				return store
 			},
 			Auth: func() authorization.Authorizer {
@@ -691,7 +701,9 @@ func TestListRoleBindings(t *testing.T) {
 			},
 			Store: func() storev2.Interface {
 				store := new(mockstore.V2MockStore)
-				store.On("List", mock.Anything, mock.Anything, mock.Anything).Return(mockstore.WrapList[*corev2.RoleBinding]{defaultRoleBinding}, nil)
+				cs := new(mockstore.ConfigStore)
+				store.On("GetConfigStore").Return(cs)
+				cs.On("List", mock.Anything, mock.Anything, mock.Anything).Return(mockstore.WrapList[*corev2.RoleBinding]{defaultRoleBinding}, nil)
 				return store
 			},
 			Auth: func() authorization.Authorizer {
@@ -812,7 +824,9 @@ func TestGetRoleBinding(t *testing.T) {
 			},
 			Store: func() storev2.Interface {
 				store := new(mockstore.V2MockStore)
-				store.On("Get", mock.Anything, storev2.NewResourceRequestFromResource(defaultRoleBinding)).Return(mockstore.Wrapper[*corev2.RoleBinding]{Value: defaultRoleBinding}, nil)
+				cs := new(mockstore.ConfigStore)
+				store.On("GetConfigStore").Return(cs)
+				cs.On("Get", mock.Anything, storev2.NewResourceRequestFromResource(defaultRoleBinding)).Return(mockstore.Wrapper[*corev2.RoleBinding]{Value: defaultRoleBinding}, nil)
 				return store
 			},
 			Auth: func() authorization.Authorizer {
@@ -933,7 +947,9 @@ func TestCreateRoleBinding(t *testing.T) {
 			},
 			Store: func() storev2.Interface {
 				store := new(mockstore.V2MockStore)
-				store.On("CreateIfNotExists", mock.Anything, mock.Anything, mock.Anything).Return(nil)
+				cs := new(mockstore.ConfigStore)
+				store.On("GetConfigStore").Return(cs)
+				cs.On("CreateIfNotExists", mock.Anything, mock.Anything, mock.Anything).Return(nil)
 				return store
 			},
 			Auth: func() authorization.Authorizer {
@@ -1050,7 +1066,9 @@ func TestUpdateRoleBinding(t *testing.T) {
 			},
 			Store: func() storev2.Interface {
 				store := new(mockstore.V2MockStore)
-				store.On("CreateOrUpdate", mock.Anything, mock.Anything, mock.Anything).Return(nil)
+				cs := new(mockstore.ConfigStore)
+				store.On("GetConfigStore").Return(cs)
+				cs.On("CreateOrUpdate", mock.Anything, mock.Anything, mock.Anything).Return(nil)
 				return store
 			},
 			Auth: func() authorization.Authorizer {
@@ -1168,7 +1186,9 @@ func TestDeleteRoleBinding(t *testing.T) {
 			},
 			Store: func() storev2.Interface {
 				store := new(mockstore.V2MockStore)
-				store.On("Delete", mock.Anything, mock.Anything).Return(nil)
+				cs := new(mockstore.ConfigStore)
+				store.On("GetConfigStore").Return(cs)
+				cs.On("Delete", mock.Anything, mock.Anything).Return(nil)
 				return store
 			},
 			Auth: func() authorization.Authorizer {
@@ -1287,7 +1307,9 @@ func TestListClusterRoles(t *testing.T) {
 			},
 			Store: func() storev2.Interface {
 				store := new(mockstore.V2MockStore)
-				store.On("List", mock.Anything, mock.Anything, mock.Anything).Return(mockstore.WrapList[*corev2.ClusterRole]{defaultClusterRole}, nil)
+				cs := new(mockstore.ConfigStore)
+				store.On("GetConfigStore").Return(cs)
+				cs.On("List", mock.Anything, mock.Anything, mock.Anything).Return(mockstore.WrapList[*corev2.ClusterRole]{defaultClusterRole}, nil)
 				return store
 			},
 			Auth: func() authorization.Authorizer {
@@ -1408,7 +1430,9 @@ func TestGetClusterRole(t *testing.T) {
 			},
 			Store: func() storev2.Interface {
 				store := new(mockstore.V2MockStore)
-				store.On("Get", mock.Anything, storev2.NewResourceRequestFromResource(defaultClusterRole)).Return(mockstore.Wrapper[*corev2.ClusterRole]{Value: defaultClusterRole}, nil)
+				cs := new(mockstore.ConfigStore)
+				store.On("GetConfigStore").Return(cs)
+				cs.On("Get", mock.Anything, storev2.NewResourceRequestFromResource(defaultClusterRole)).Return(mockstore.Wrapper[*corev2.ClusterRole]{Value: defaultClusterRole}, nil)
 				return store
 			},
 			Auth: func() authorization.Authorizer {
@@ -1529,7 +1553,9 @@ func TestCreateClusterRole(t *testing.T) {
 			},
 			Store: func() storev2.Interface {
 				store := new(mockstore.V2MockStore)
-				store.On("CreateIfNotExists", mock.Anything, mock.Anything, mock.Anything).Return(nil)
+				cs := new(mockstore.ConfigStore)
+				store.On("GetConfigStore").Return(cs)
+				cs.On("CreateIfNotExists", mock.Anything, mock.Anything, mock.Anything).Return(nil)
 				return store
 			},
 			Auth: func() authorization.Authorizer {
@@ -1646,7 +1672,9 @@ func TestUpdateClusterRole(t *testing.T) {
 			},
 			Store: func() storev2.Interface {
 				store := new(mockstore.V2MockStore)
-				store.On("CreateOrUpdate", mock.Anything, mock.Anything, mock.Anything).Return(nil)
+				cs := new(mockstore.ConfigStore)
+				store.On("GetConfigStore").Return(cs)
+				cs.On("CreateOrUpdate", mock.Anything, mock.Anything, mock.Anything).Return(nil)
 				return store
 			},
 			Auth: func() authorization.Authorizer {
@@ -1764,7 +1792,9 @@ func TestDeleteClusterRole(t *testing.T) {
 			},
 			Store: func() storev2.Interface {
 				store := new(mockstore.V2MockStore)
-				store.On("Delete", mock.Anything, mock.Anything).Return(nil)
+				cs := new(mockstore.ConfigStore)
+				store.On("GetConfigStore").Return(cs)
+				cs.On("Delete", mock.Anything, mock.Anything).Return(nil)
 				return store
 			},
 			Auth: func() authorization.Authorizer {
@@ -1883,7 +1913,9 @@ func TestListClusterRoleBindings(t *testing.T) {
 			},
 			Store: func() storev2.Interface {
 				store := new(mockstore.V2MockStore)
-				store.On("List", mock.Anything, mock.Anything, mock.Anything).Return(mockstore.WrapList[*corev2.ClusterRoleBinding]{defaultClusterRoleBinding}, nil)
+				cs := new(mockstore.ConfigStore)
+				store.On("GetConfigStore").Return(cs)
+				cs.On("List", mock.Anything, mock.Anything, mock.Anything).Return(mockstore.WrapList[*corev2.ClusterRoleBinding]{defaultClusterRoleBinding}, nil)
 				return store
 			},
 			Auth: func() authorization.Authorizer {
@@ -2004,7 +2036,9 @@ func TestGetClusterRoleBinding(t *testing.T) {
 			},
 			Store: func() storev2.Interface {
 				store := new(mockstore.V2MockStore)
-				store.On("Get", mock.Anything, storev2.NewResourceRequestFromResource(defaultClusterRoleBinding)).Return(mockstore.Wrapper[*corev2.ClusterRoleBinding]{Value: defaultClusterRoleBinding}, nil)
+				cs := new(mockstore.ConfigStore)
+				store.On("GetConfigStore").Return(cs)
+				cs.On("Get", mock.Anything, storev2.NewResourceRequestFromResource(defaultClusterRoleBinding)).Return(mockstore.Wrapper[*corev2.ClusterRoleBinding]{Value: defaultClusterRoleBinding}, nil)
 				return store
 			},
 			Auth: func() authorization.Authorizer {
@@ -2125,7 +2159,9 @@ func TestCreateClusterRoleBinding(t *testing.T) {
 			},
 			Store: func() storev2.Interface {
 				store := new(mockstore.V2MockStore)
-				store.On("CreateIfNotExists", mock.Anything, mock.Anything, mock.Anything).Return(nil)
+				cs := new(mockstore.ConfigStore)
+				store.On("GetConfigStore").Return(cs)
+				cs.On("CreateIfNotExists", mock.Anything, mock.Anything, mock.Anything).Return(nil)
 				return store
 			},
 			Auth: func() authorization.Authorizer {
@@ -2242,7 +2278,9 @@ func TestUpdateClusterRoleBinding(t *testing.T) {
 			},
 			Store: func() storev2.Interface {
 				store := new(mockstore.V2MockStore)
-				store.On("CreateOrUpdate", mock.Anything, mock.Anything, mock.Anything).Return(nil)
+				cs := new(mockstore.ConfigStore)
+				store.On("GetConfigStore").Return(cs)
+				cs.On("CreateOrUpdate", mock.Anything, mock.Anything, mock.Anything).Return(nil)
 				return store
 			},
 			Auth: func() authorization.Authorizer {
@@ -2360,7 +2398,9 @@ func TestDeleteClusterRoleBinding(t *testing.T) {
 			},
 			Store: func() storev2.Interface {
 				store := new(mockstore.V2MockStore)
-				store.On("Delete", mock.Anything, mock.Anything).Return(nil)
+				cs := new(mockstore.ConfigStore)
+				store.On("GetConfigStore").Return(cs)
+				cs.On("Delete", mock.Anything, mock.Anything).Return(nil)
 				return store
 			},
 			Auth: func() authorization.Authorizer {

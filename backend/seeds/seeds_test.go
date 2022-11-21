@@ -8,6 +8,7 @@ import (
 	"github.com/sensu/sensu-go/backend/store"
 	storev2 "github.com/sensu/sensu-go/backend/store/v2"
 	"github.com/sensu/sensu-go/backend/store/v2/storetest"
+	"github.com/sensu/sensu-go/testing/mockstore"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 )
@@ -25,10 +26,12 @@ func TestSeedInitialDataWithContext(t *testing.T) {
 	nsStore.On("CreateIfNotExists", mock.Anything, mock.Anything).Return(nil)
 	nsStore.On("Get", mock.Anything, "default").Return(nil, new(store.ErrNotFound))
 
-	s := new(storetest.Store)
-	s.On("NamespaceStore").Return(nsStore)
-	s.On("CreateIfNotExists", mock.Anything, mock.Anything, mock.Anything).Return(nil)
-	s.On("Initialize", mock.Anything, mock.Anything).Return(seedCluster(config)(ctx, s, nsStore))
+	s := new(mockstore.V2MockStore)
+	cs := new(mockstore.ConfigStore)
+	s.On("GetNamespaceStore").Return(nsStore)
+	s.On("GetConfigStore").Return(cs)
+	cs.On("CreateIfNotExists", mock.Anything, mock.Anything, mock.Anything).Return(nil)
+	cs.On("Initialize", mock.Anything, mock.Anything).Return(seedCluster(config)(ctx, s))
 
 	sErr := SeedInitialDataWithContext(ctx, s, nsStore)
 	require.NoError(t, sErr, "seeding process should not raise an error")
@@ -48,13 +51,13 @@ func TestSeedInitialDataWithContext(t *testing.T) {
 	nsStore.AssertCalled(t, "CreateIfNotExists", context.Background(), defaultNamespace())
 
 	// ensure the admin user is created
-	s.AssertCalled(t, "CreateIfNotExists",
+	cs.AssertCalled(t, "CreateIfNotExists",
 		context.Background(),
 		storev2.NewResourceRequest(userTypeMeta, "", "admin", userStoreName),
 		mock.Anything)
 
 	// ensure the agent user is created
-	s.AssertCalled(t, "CreateIfNotExists",
+	cs.AssertCalled(t, "CreateIfNotExists",
 		context.Background(),
 		storev2.NewResourceRequest(userTypeMeta, "", "agent", userStoreName),
 		mock.Anything)
@@ -69,7 +72,7 @@ func TestSeedInitialDataWithContext(t *testing.T) {
 			},
 		},
 	}
-	s.AssertCalled(t, "CreateIfNotExists",
+	cs.AssertCalled(t, "CreateIfNotExists",
 		context.Background(),
 		storev2.NewResourceRequestFromResource(clusterAdminClusterRole),
 		mock.Anything)
@@ -93,7 +96,7 @@ func TestSeedInitialDataWithContext(t *testing.T) {
 			},
 		},
 	}
-	s.AssertCalled(t, "CreateIfNotExists",
+	cs.AssertCalled(t, "CreateIfNotExists",
 		context.Background(),
 		storev2.NewResourceRequestFromResource(adminClusterRole),
 		mock.Anything)
@@ -114,7 +117,7 @@ func TestSeedInitialDataWithContext(t *testing.T) {
 			},
 		},
 	}
-	s.AssertCalled(t, "CreateIfNotExists",
+	cs.AssertCalled(t, "CreateIfNotExists",
 		context.Background(),
 		storev2.NewResourceRequestFromResource(editClusterRole),
 		mock.Anything)
@@ -131,7 +134,7 @@ func TestSeedInitialDataWithContext(t *testing.T) {
 			},
 		},
 	}
-	s.AssertCalled(t, "CreateIfNotExists",
+	cs.AssertCalled(t, "CreateIfNotExists",
 		context.Background(),
 		storev2.NewResourceRequestFromResource(viewClusterRole),
 		mock.Anything)
@@ -146,7 +149,7 @@ func TestSeedInitialDataWithContext(t *testing.T) {
 			},
 		},
 	}
-	s.AssertCalled(t, "CreateIfNotExists",
+	cs.AssertCalled(t, "CreateIfNotExists",
 		context.Background(),
 		storev2.NewResourceRequestFromResource(systemAgentClusterRole),
 		mock.Anything)
@@ -161,7 +164,7 @@ func TestSeedInitialDataWithContext(t *testing.T) {
 			},
 		},
 	}
-	s.AssertCalled(t, "CreateIfNotExists",
+	cs.AssertCalled(t, "CreateIfNotExists",
 		context.Background(),
 		storev2.NewResourceRequestFromResource(systemUserClusterRole),
 		mock.Anything)
@@ -180,7 +183,7 @@ func TestSeedInitialDataWithContext(t *testing.T) {
 			},
 		},
 	}
-	s.AssertCalled(t, "CreateIfNotExists",
+	cs.AssertCalled(t, "CreateIfNotExists",
 		context.Background(),
 		storev2.NewResourceRequestFromResource(clusterAdminClusterRoleBinding),
 		mock.Anything)
@@ -199,7 +202,7 @@ func TestSeedInitialDataWithContext(t *testing.T) {
 			},
 		},
 	}
-	s.AssertCalled(t, "CreateIfNotExists",
+	cs.AssertCalled(t, "CreateIfNotExists",
 		context.Background(),
 		storev2.NewResourceRequestFromResource(systemAgentClusterRoleBinding),
 		mock.Anything)
@@ -218,7 +221,7 @@ func TestSeedInitialDataWithContext(t *testing.T) {
 			},
 		},
 	}
-	s.AssertCalled(t, "CreateIfNotExists",
+	cs.AssertCalled(t, "CreateIfNotExists",
 		context.Background(),
 		storev2.NewResourceRequestFromResource(systemUserClusterRoleBinding),
 		mock.Anything)

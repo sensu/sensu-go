@@ -17,7 +17,7 @@ import (
 	"github.com/sensu/sensu-go/backend/messaging"
 	"github.com/sensu/sensu-go/backend/ringv2"
 	"github.com/sensu/sensu-go/backend/store"
-	"github.com/sensu/sensu-go/backend/store/cache"
+	cachev2 "github.com/sensu/sensu-go/backend/store/cache/v2"
 	storev2 "github.com/sensu/sensu-go/backend/store/v2"
 	"github.com/sirupsen/logrus"
 	clientv3 "go.etcd.io/etcd/client/v3"
@@ -74,7 +74,7 @@ type Keepalived struct {
 	ctx                   context.Context
 	cancel                context.CancelFunc
 	storeTimeout          time.Duration
-	silencedCache         cache.Cache
+	silencedCache         SilencedCache
 	reconstructionPeriod  time.Duration
 }
 
@@ -83,7 +83,6 @@ type Option func(*Keepalived) error
 
 // Config configures Keepalived.
 type Config struct {
-	Client                clientv3.KV
 	Store                 storev2.Interface
 	EventStore            store.EventStore
 	KeepaliveStore        storev2.KeepaliveStore
@@ -113,14 +112,13 @@ func New(c Config, opts ...Option) (*Keepalived, error) {
 
 	ctx, cancel := context.WithCancel(context.Background())
 
-	silencedCache, err := cache.New(ctx, c.Client, &corev2.Silenced{}, false)
+	silencedCache, err := cachev2.New[*corev2.Silenced](ctx, c.Store, false)
 	if err != nil {
 		cancel()
 		return nil, err
 	}
 
 	k := &Keepalived{
-		client:                c.Client,
 		store:                 c.Store,
 		eventStore:            c.EventStore,
 		keepaliveStore:        c.KeepaliveStore,
@@ -404,17 +402,12 @@ func (k *Keepalived) handleEntityRegistration(entity *corev2.Entity, event *core
 	tctx, cancel := context.WithTimeout(ctx, k.storeTimeout)
 	defer cancel()
 
-	config, _ := corev3.V2EntityToV3(entity)
-	wrapper, err := storev2.WrapResource(config)
-	if err != nil {
-		logger.WithError(err).Error("error wrapping entity config")
-		return err
-	}
+	ecstore := storev2.NewGenericStore[*corev3.EntityConfig](k.store)
 
-	req := storev2.NewResourceRequestFromResource(config)
+	config, _ := corev3.V2EntityToV3(entity)
 
 	exists := true
-	wrappedEntityConfig, err := k.store.Get(tctx, req)
+	storedEntityConfig, err := ecstore.Get(tctx, storev2.ID{Namespace: entity.Namespace, Name: entity.Name})
 	if err != nil {
 		if _, ok := err.(*store.ErrNotFound); !ok {
 			logger.WithError(err).Error("error while checking if entity exists")
@@ -429,7 +422,7 @@ func (k *Keepalived) handleEntityRegistration(entity *corev2.Entity, event *core
 			// If this keepalive is the first one sent by an agent, we want to update
 			// the stored entity config to reflect the sent one
 			if event.Sequence == 1 {
-				if err := k.store.UpdateIfExists(tctx, req, wrapper); err != nil {
+				if err := ecstore.UpdateIfExists(tctx, config); err != nil {
 					logger.WithError(err).Error("could not update entity")
 					return err
 				}
@@ -440,21 +433,10 @@ func (k *Keepalived) handleEntityRegistration(entity *corev2.Entity, event *core
 		// Determine if this entity was previously managed by its agent but it's no
 		// longer the case, in which case we need to reflect that in the stored
 		// entity config
-		var storedEntityConfig corev3.EntityConfig
-		err = wrappedEntityConfig.UnwrapInto(&storedEntityConfig)
-		if err != nil {
-			logger.WithError(err).Error("error unwrapping entity config")
-			return err
-		}
 		if storedEntityConfig.Metadata.Labels[corev2.ManagedByLabel] == "sensu-agent" {
 			// Remove the managed_by label and update the stored entity config
 			delete(storedEntityConfig.Metadata.Labels, corev2.ManagedByLabel)
-			wrapper, err = storev2.WrapResource(config)
-			if err != nil {
-				logger.WithError(err).Error("error wrapping entity config")
-				return err
-			}
-			if err := k.store.UpdateIfExists(tctx, req, wrapper); err != nil {
+			if err := ecstore.UpdateIfExists(tctx, storedEntityConfig); err != nil {
 				logger.WithError(err).Error("could not update entity")
 				return err
 			}
@@ -464,7 +446,7 @@ func (k *Keepalived) handleEntityRegistration(entity *corev2.Entity, event *core
 
 	// The entity config does not exist so create it and publish a registration
 	// event
-	if err := k.store.CreateIfNotExists(tctx, req, wrapper); err == nil {
+	if err := ecstore.CreateIfNotExists(tctx, config); err == nil {
 		event := createRegistrationEvent(entity)
 		return k.bus.Publish(messaging.TopicEvent, event)
 	} else if _, ok := err.(*store.ErrAlreadyExists); ok {
@@ -597,11 +579,9 @@ func (k *Keepalived) dead(key string, prev liveness.State, leader bool) bool {
 	}
 
 	ctx := store.NamespaceContext(k.ctx, namespace)
-	meta := corev2.NewObjectMeta(name, namespace)
-	cfg := &corev3.EntityConfig{Metadata: &meta}
 
-	req := storev2.NewResourceRequestFromResource(cfg)
-	wrapper, err := k.store.Get(ctx, req)
+	ecstore := storev2.NewGenericStore[*corev3.EntityConfig](k.store)
+	entityConfig, err := ecstore.Get(ctx, storev2.ID{Namespace: namespace, Name: name})
 	if err != nil {
 		if _, ok := err.(*store.ErrNotFound); ok {
 			// The entity has been deleted, there is no longer a need to track
@@ -613,13 +593,7 @@ func (k *Keepalived) dead(key string, prev liveness.State, leader bool) bool {
 		return false
 	}
 
-	var entityConfig corev3.EntityConfig
-	if err := wrapper.UnwrapInto(&entityConfig); err != nil {
-		lager.WithError(err).Error("error unwrapping entity_config")
-		return false
-	}
-
-	currentEvent, err := k.eventStore.GetEventByEntityCheck(ctx, name, "keepalive")
+	currentEvent, err := k.store.GetEventStore().GetEventByEntityCheck(ctx, name, "keepalive")
 	if err != nil {
 		lager.WithError(err).Error("error while reading event")
 		return false
@@ -632,8 +606,7 @@ func (k *Keepalived) dead(key string, prev liveness.State, leader bool) bool {
 
 	if entityConfig.Deregister {
 		deregisterer := &Deregistration{
-			EntityStore:   k.store,
-			EventStore:    k.eventStore,
+			Store:         k.store,
 			MessageBus:    k.bus,
 			SilencedCache: k.silencedCache,
 			StoreTimeout:  k.storeTimeout,
@@ -670,7 +643,7 @@ func (k *Keepalived) dead(key string, prev liveness.State, leader bool) bool {
 
 	expiration := time.Now().Unix() + int64(event.Check.Timeout)
 
-	if err := k.keepaliveStore.UpdateFailingKeepalive(ctx, &entityConfig, expiration); err != nil {
+	if err := k.keepaliveStore.UpdateFailingKeepalive(ctx, entityConfig, expiration); err != nil {
 		lager.WithError(err).Error("error updating keepalive")
 		return false
 	}
@@ -719,14 +692,8 @@ func (k *Keepalived) handleUpdate(e *corev2.Event) error {
 	entity.LastSeen = e.Timestamp
 	_, entityState := corev3.V2EntityToV3(entity)
 
-	wrapper, err := storev2.WrapResource(entityState)
-	if err != nil {
-		logger.WithError(err).Error("error wrapping entity state")
-		return err
-	}
-
-	req := storev2.NewResourceRequestFromResource(entityState)
-	if err := k.store.CreateOrUpdate(k.ctx, req, wrapper); err != nil {
+	esstore := storev2.NewGenericStore[*corev3.EntityState](k.store)
+	if err := esstore.CreateOrUpdate(k.ctx, entityState); err != nil {
 		logger.WithError(err).Error("error updating entity state in store")
 		return err
 	}

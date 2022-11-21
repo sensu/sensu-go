@@ -15,19 +15,19 @@ import (
 
 // EntityClient is an API client for entities.
 type EntityClient struct {
-	storev2     storev2.Interface
 	entityStore store.EntityStore
 	eventStore  store.EventStore
+	store       storev2.Interface
 	auth        authorization.Authorizer
 }
 
 // NewEntityClient creates a new EntityClient given a store, an event store and
 // an authorizer.
-func NewEntityClient(store store.EntityStore, storev2 storev2.Interface, eventStore store.EventStore, auth authorization.Authorizer) *EntityClient {
+func NewEntityClient(store storev2.Interface, auth authorization.Authorizer) *EntityClient {
 	return &EntityClient{
-		storev2:     storev2,
-		entityStore: store,
-		eventStore:  eventStore,
+		entityStore: store.GetEntityStore(),
+		eventStore:  store.GetEventStore(),
+		store:       store,
 		auth:        auth,
 	}
 }
@@ -105,16 +105,8 @@ func (e *EntityClient) UpdateEntity(ctx context.Context, entity *corev2.Entity) 
 		config, _ := corev3.V2EntityToV3(entity)
 		// Ensure per-entity subscription does not get removed
 		config.Subscriptions = corev2.AddEntitySubscription(config.Metadata.Name, config.Subscriptions)
-		req := storev2.NewResourceRequestFromResource(config)
-
-		wConfig, err := storev2.WrapResource(config)
-		if err != nil {
-			return err
-		}
-
-		if err := e.storev2.CreateOrUpdate(ctx, req, wConfig); err != nil {
-			return err
-		}
+		gstore := storev2.NewGenericStore[*corev3.EntityConfig](e.store)
+		return gstore.CreateOrUpdate(ctx, config)
 	}
 
 	return nil

@@ -18,7 +18,7 @@ import (
 )
 
 func TestHandlers_UpdateResourceV3(t *testing.T) {
-	type storeFunc func(*mockstore.V2MockStore)
+	type storeFunc func(*mockstore.ConfigStore)
 	tests := []struct {
 		name      string
 		body      []byte
@@ -40,7 +40,7 @@ func TestHandlers_UpdateResourceV3(t *testing.T) {
 		{
 			name: "store err, not valid",
 			body: marshal(t, fixture.V3Resource{Metadata: corev2.NewObjectMetaP("", "")}),
-			storeFunc: func(s *mockstore.V2MockStore) {
+			storeFunc: func(s *mockstore.ConfigStore) {
 				s.On("CreateOrUpdate", mock.Anything, mock.Anything, mock.Anything).
 					Return(&store.ErrNotValid{Err: errors.New("error")})
 			},
@@ -49,7 +49,7 @@ func TestHandlers_UpdateResourceV3(t *testing.T) {
 		{
 			name: "store err, default",
 			body: marshal(t, fixture.V3Resource{Metadata: corev2.NewObjectMetaP("", "")}),
-			storeFunc: func(s *mockstore.V2MockStore) {
+			storeFunc: func(s *mockstore.ConfigStore) {
 				s.On("CreateOrUpdate", mock.Anything, mock.Anything, mock.Anything).
 					Return(&store.ErrInternal{})
 			},
@@ -58,7 +58,7 @@ func TestHandlers_UpdateResourceV3(t *testing.T) {
 		{
 			name: "successful create",
 			body: marshal(t, fixture.V3Resource{Metadata: corev2.NewObjectMetaP("", "")}),
-			storeFunc: func(s *mockstore.V2MockStore) {
+			storeFunc: func(s *mockstore.ConfigStore) {
 				s.On("CreateOrUpdate", mock.Anything, mock.Anything, mock.Anything).
 					Return(nil)
 			},
@@ -67,14 +67,13 @@ func TestHandlers_UpdateResourceV3(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			store := &mockstore.V2MockStore{}
+			cs := new(mockstore.ConfigStore)
+			store.On("GetConfigStore").Return(cs)
 			if tt.storeFunc != nil {
-				tt.storeFunc(store)
+				tt.storeFunc(cs)
 			}
 
-			h := Handlers{
-				Resource: &fixture.V3Resource{},
-				Store:    store,
-			}
+			h := NewHandlers[*fixture.V3Resource](store)
 
 			r, _ := http.NewRequest(http.MethodPut, "/", bytes.NewReader(tt.body))
 			r = mux.SetURLVars(r, tt.urlVars)
@@ -95,12 +94,11 @@ func TestCreatedByUpdateV3(t *testing.T) {
 	body := marshal(t, fixture.V3Resource{Metadata: corev2.NewObjectMetaP("", "")})
 
 	store := &mockstore.V2MockStore{}
-	h := Handlers{
-		Resource: &fixture.V3Resource{},
-		Store:    store,
-	}
+	cs := new(mockstore.ConfigStore)
+	store.On("GetConfigStore").Return(cs)
+	h := NewHandlers[*fixture.V3Resource](store)
 
-	store.On("CreateOrUpdate", mock.Anything, mock.Anything, mock.Anything).Return(nil)
+	cs.On("CreateOrUpdate", mock.Anything, mock.Anything, mock.Anything).Return(nil)
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodPut, "/", bytes.NewReader(body))
 	assert.NoError(t, err)

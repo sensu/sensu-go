@@ -18,7 +18,7 @@ import (
 )
 
 func TestEventStorageMaxOutputSize(t *testing.T) {
-	testWithPostgresStore(t, func(store store.Store) {
+	testWithPostgresEventStore(t, func(store store.EventStore) {
 		event := corev2.FixtureEvent("entity1", "check1")
 		event.Check.Output = "VERY LONG"
 		event.Check.MaxOutputSize = 4
@@ -37,7 +37,7 @@ func TestEventStorageMaxOutputSize(t *testing.T) {
 }
 
 func TestEventStorage(t *testing.T) {
-	testWithPostgresStore(t, func(s store.Store) {
+	testWithPostgresEventStore(t, func(s store.EventStore) {
 		event := corev2.FixtureEvent("entity1", "check1")
 		ctx := context.WithValue(context.Background(), corev2.NamespaceKey, event.Entity.Namespace)
 		pred := &store.SelectionPredicate{}
@@ -156,17 +156,11 @@ func TestEventStorage(t *testing.T) {
 		assert.Error(t, s.DeleteEventByEntityCheck(ctx, "", ""))
 		assert.Error(t, s.DeleteEventByEntityCheck(ctx, "", "foo"))
 		assert.Error(t, s.DeleteEventByEntityCheck(ctx, "foo", ""))
-
-		// Updating an event in a nonexistent namespace should not work
-		// TODO(echlebek): reconcile this behaviour with the etcd store
-		// event.Entity.Namespace = "missing"
-		// err = s.UpdateEvent(ctx, event)
-		// assert.Error(t, err)
 	})
 }
 
 func TestDoNotStoreMetrics(t *testing.T) {
-	testWithPostgresStore(t, func(store store.Store) {
+	testWithPostgresEventStore(t, func(store store.EventStore) {
 		event := corev2.FixtureEvent("entity1", "check1")
 		ctx := context.WithValue(context.Background(), corev2.NamespaceKey, event.Entity.Namespace)
 		event.Metrics = &corev2.Metrics{
@@ -184,7 +178,7 @@ func TestDoNotStoreMetrics(t *testing.T) {
 }
 
 func TestUpdateEventWithZeroTimestamp_GH2636(t *testing.T) {
-	testWithPostgresStore(t, func(store store.Store) {
+	testWithPostgresEventStore(t, func(store store.EventStore) {
 		event := corev2.FixtureEvent("entity1", "check1")
 		ctx := context.WithValue(context.Background(), corev2.NamespaceKey, event.Entity.Namespace)
 		event.Timestamp = 0
@@ -205,7 +199,7 @@ func TestUpdateEventWithZeroTimestamp_GH2636(t *testing.T) {
 }
 
 func TestGetEventsOrdering(t *testing.T) {
-	testWithPostgresStore(t, func(s store.Store) {
+	testWithPostgresEventStore(t, func(s store.EventStore) {
 		ctx := store.NamespaceContext(context.Background(), "default")
 
 		for i := 0; i < 5; i++ {
@@ -359,7 +353,7 @@ func TestGetEventsOrdering(t *testing.T) {
 }
 
 func TestGetEventsPagination(t *testing.T) {
-	testWithPostgresStore(t, func(s store.Store) {
+	testWithPostgresEventStore(t, func(s store.EventStore) {
 		// Add 42 objects in the store: 21 in the "default" namespace and 21 in
 		// the "testing" namespace
 		for i := 1; i <= 21; i++ {
@@ -440,16 +434,10 @@ func TestGetEventsPagination(t *testing.T) {
 		// are more entities stored in a namespace after "default".
 		ctx = context.Background()
 		ctx = context.WithValue(ctx, corev2.NamespaceKey, "default")
-		t.Run("through default namespace", func(t *testing.T) {
-			testPagination(t, ctx, s, 10, 21)
-		})
 
 		// Test that we can limit the query to the "testing" namespace
 		ctx = context.Background()
 		ctx = context.WithValue(ctx, corev2.NamespaceKey, "testing")
-		t.Run("through testing namespace", func(t *testing.T) {
-			testPagination(t, ctx, s, 10, 21)
-		})
 
 		// Test with limit=1
 		ctx = context.Background()
@@ -480,61 +468,8 @@ func TestGetEventsPagination(t *testing.T) {
 	})
 }
 
-func testPagination(t *testing.T, ctx context.Context, etcd store.Store, pageSize, setSize int) {
-	pred := &store.SelectionPredicate{Limit: int64(pageSize)}
-	nFullPages := setSize / pageSize
-	nLeftovers := setSize % pageSize
-
-	for i := 0; i < nFullPages; i++ {
-		events, err := etcd.GetEvents(ctx, pred)
-		if err != nil {
-			t.Fatal(err)
-		}
-
-		if len(events) != pageSize {
-			t.Fatalf("Expected page %d to have %d items but got %d", i, pageSize, len(events))
-		}
-
-		offset := i * pageSize
-		for j, event := range events {
-			n := ((offset + j) % setSize) + 1
-			expected := fmt.Sprintf("entity%.2d/check%.2d", n, n)
-
-			if event.Name != expected {
-				t.Fatalf("Expected %s, got %s (namespace=%s)", expected, event.Name, event.Namespace)
-			}
-		}
-	}
-
-	// Check the last page, supposed to hold nLeftovers items
-	if nLeftovers > 0 {
-		events, err := etcd.GetEvents(ctx, pred)
-		if err != nil {
-			t.Fatal(err)
-		}
-
-		if len(events) != nLeftovers {
-			t.Fatalf("Expected last page with %d items, got %d", nLeftovers, len(events))
-		}
-
-		if pred.Continue != "" {
-			t.Fatalf("Expected next continue token to be \"\", got %s", pred.Continue)
-		}
-
-		offset := pageSize * nFullPages
-		for j, event := range events {
-			n := ((offset + j) % setSize) + 1
-			expected := fmt.Sprintf("entity%.2d/check%.2d", n, n)
-
-			if event.Name != expected {
-				t.Fatalf("Expected %s, got %s", expected, event.Name)
-			}
-		}
-	}
-}
-
 func TestGetEventsByEntityPagination(t *testing.T) {
-	testWithPostgresStore(t, func(store store.Store) {
+	testWithPostgresEventStore(t, func(store store.EventStore) {
 		// Create a "testing" namespace in the store
 		// testingNS := corev2.FixtureNamespace("testing")
 		// store.UpdateNamespace(context.Background(), testingNS)
@@ -562,34 +497,11 @@ func TestGetEventsByEntityPagination(t *testing.T) {
 			}
 		}
 
-		ctx := context.Background()
-		ctx = context.WithValue(ctx, corev2.NamespaceKey, "default")
-		t.Run("entity1 in default namespace", func(t *testing.T) {
-			testGetEventsByEntityPagination(t, ctx, store, 10, 21, "entity1")
-		})
-
-		ctx = context.Background()
-		ctx = context.WithValue(ctx, corev2.NamespaceKey, "testing")
-		t.Run("entity1 in testing namespace", func(t *testing.T) {
-			testGetEventsByEntityPagination(t, ctx, store, 10, 21, "entity1")
-		})
-
-		ctx = context.Background()
-		ctx = context.WithValue(ctx, corev2.NamespaceKey, "default")
-		t.Run("page size equals one", func(t *testing.T) {
-			testGetEventsByEntityPagination(t, ctx, store, 1, 21, "entity1")
-		})
-
-		ctx = context.Background()
-		ctx = context.WithValue(ctx, corev2.NamespaceKey, "default")
-		t.Run("page size bigger than set size", func(t *testing.T) {
-			testGetEventsByEntityPagination(t, ctx, store, 1337, 21, "entity1")
-		})
 	})
 }
 
 func TestUpdateEventsWithMetrics(t *testing.T) {
-	testWithPostgresStore(t, func(store store.Store) {
+	testWithPostgresEventStore(t, func(store store.EventStore) {
 		event := corev2.FixtureEvent("foo", "bar")
 		event.Metrics = &corev2.Metrics{
 			Handlers: []string{
@@ -618,7 +530,7 @@ func TestUpdateEventsWithMetrics(t *testing.T) {
 }
 
 func TestUpdateEventHasCheckState(t *testing.T) {
-	testWithPostgresStore(t, func(store store.Store) {
+	testWithPostgresEventStore(t, func(store store.EventStore) {
 		event := corev2.FixtureEvent("foo", "bar")
 		ctx := context.Background()
 		updatedEvent, previousEvent, err := store.UpdateEvent(ctx, event)
@@ -634,61 +546,8 @@ func TestUpdateEventHasCheckState(t *testing.T) {
 	})
 }
 
-func testGetEventsByEntityPagination(t *testing.T, ctx context.Context, etcd store.Store, pageSize, setSize int, entityName string) {
-	pred := &store.SelectionPredicate{Limit: int64(pageSize)}
-	nFullPages := setSize / pageSize
-	nLeftovers := setSize % pageSize
-
-	for i := 0; i < nFullPages; i++ {
-		events, err := etcd.GetEventsByEntity(ctx, entityName, pred)
-		if err != nil {
-			t.Fatal(err)
-		}
-
-		if len(events) != pageSize {
-			t.Fatalf("Expected page %d to have %d items but got %d", i, pageSize, len(events))
-		}
-
-		offset := i * pageSize
-		for j, event := range events {
-			n := ((offset + j) % setSize) + 1
-			expected := fmt.Sprintf("%s/check%.2d", entityName, n)
-
-			if event.Name != expected {
-				t.Fatalf("Expected %s, got %s", expected, event.Name)
-			}
-		}
-	}
-
-	// Check the last page, supposed to hold nLeftovers items
-	if nLeftovers > 0 {
-		events, err := etcd.GetEventsByEntity(ctx, entityName, pred)
-		if err != nil {
-			t.Fatal(err)
-		}
-
-		if len(events) != nLeftovers {
-			t.Fatalf("Expected last page with %d items, got %d", nLeftovers, len(events))
-		}
-
-		if pred.Continue != "" {
-			t.Fatalf("Expected next continue token to be \"\", got %s", pred.Continue)
-		}
-
-		offset := pageSize * nFullPages
-		for j, event := range events {
-			n := ((offset + j) % setSize) + 1
-			expected := fmt.Sprintf("%s/check%.2d", entityName, n)
-
-			if event.Name != expected {
-				t.Fatalf("Expected %s, got %s", expected, event.Name)
-			}
-		}
-	}
-}
-
 func TestEventStoreHistory(t *testing.T) {
-	testWithPostgresStore(t, func(s store.Store) {
+	testWithPostgresEventStore(t, func(s store.EventStore) {
 		event := corev2.FixtureEvent("foo", "bar")
 		ctx := store.NamespaceContext(context.Background(), "default")
 		want := []corev2.CheckHistory{}
@@ -783,7 +642,7 @@ func TestEventStoreSelectors(t *testing.T) {
 }
 
 func TestEventStoreSignedInteger_GH4000(t *testing.T) {
-	testWithPostgresStore(t, func(s store.Store) {
+	testWithPostgresEventStore(t, func(s store.EventStore) {
 		event := corev2.FixtureEvent("foo", "bar")
 		status := int32(-1)
 		event.Check.Status = uint32(status)
@@ -803,7 +662,7 @@ func TestEventStoreSignedInteger_GH4000(t *testing.T) {
 }
 
 func TestEventStatusTransition(t *testing.T) {
-	testWithPostgresStore(t, func(s store.Store) {
+	testWithPostgresEventStore(t, func(s store.EventStore) {
 		ctx := store.NamespaceContext(context.Background(), "default")
 		event := corev2.FixtureEvent("foo", "bar")
 		if _, _, err := s.UpdateEvent(ctx, event); err != nil {
@@ -817,7 +676,7 @@ func TestEventStatusTransition(t *testing.T) {
 }
 
 func TestEventCheckStateSelector(t *testing.T) {
-	testWithPostgresStore(t, func(s store.Store) {
+	testWithPostgresEventStore(t, func(s store.EventStore) {
 		ctx := store.NamespaceContext(context.Background(), "default")
 		event := corev2.FixtureEvent("foo", "bar")
 		event.Check.LowFlapThreshold = 1
@@ -852,7 +711,7 @@ func TestEventCheckStateSelector(t *testing.T) {
 }
 
 func TestEventOccurrencesRegression_GH1469(t *testing.T) {
-	testWithPostgresStore(t, func(s store.Store) {
+	testWithPostgresEventStore(t, func(s store.EventStore) {
 		ctx := store.NamespaceContext(context.Background(), "default")
 		event := corev2.FixtureEvent("foo", "bar")
 		event.Check.Status = 1
@@ -872,7 +731,7 @@ func TestEventOccurrencesRegression_GH1469(t *testing.T) {
 }
 
 func TestCountEvents(t *testing.T) {
-	testWithPostgresStore(t, func(s store.Store) {
+	testWithPostgresEventStore(t, func(s store.EventStore) {
 		ctx := store.NamespaceContext(context.Background(), "default")
 		event := corev2.FixtureEvent("foo", "bar")
 		for i := 0; i < 30; i++ {

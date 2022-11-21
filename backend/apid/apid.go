@@ -177,7 +177,7 @@ func CoreSubrouter(router *mux.Router, cfg Config) *mux.Router {
 		routers.NewHandlersRouter(cfg.Store),
 		routers.NewHooksRouter(cfg.Store),
 		routers.NewMutatorsRouter(cfg.Store),
-		routers.NewNamespacesRouter(api.NewNamespaceClient(cfg.Store, &rbac.Authorizer{Store: cfg.Store}), handlers.Handlers{Resource: new(corev3.Namespace), Store: cfg.Store}),
+		routers.NewNamespacesRouter(api.NewNamespaceClient(cfg.Store, &rbac.Authorizer{Store: cfg.Store}), handlers.NewHandlers[*corev3.Namespace](cfg.Store)),
 		routers.NewPipelinesRouter(cfg.Store),
 		routers.NewRolesRouter(cfg.Store),
 		routers.NewRoleBindingsRouter(cfg.Store),
@@ -204,7 +204,7 @@ func EntityLimitedCoreSubrouter(router *mux.Router, cfg Config) *mux.Router {
 	)
 	mountRouters(
 		subrouter,
-		routers.NewEntitiesRouter(cfg.Store, cfg.EntityStore, cfg.EventStore),
+		routers.NewEntitiesRouter(cfg.Store),
 		routers.NewEventsRouter(cfg.EventStore, cfg.Bus),
 	)
 

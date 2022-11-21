@@ -65,8 +65,10 @@ func TestUserList(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		s := &mockstore.V2MockStore{}
-		actions := NewUserController(s)
+		storev2 := new(mockstore.V2MockStore)
+		s := new(mockstore.ConfigStore)
+		storev2.On("GetConfigStore").Return(s)
+		actions := NewUserController(storev2)
 
 		t.Run(tc.name, func(t *testing.T) {
 			assert := assert.New(t)
@@ -132,8 +134,10 @@ func TestUserGet(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		store := &mockstore.V2MockStore{}
-		actions := NewUserController(store)
+		storev2 := new(mockstore.V2MockStore)
+		store := new(mockstore.ConfigStore)
+		storev2.On("GetConfigStore").Return(store)
+		actions := NewUserController(storev2)
 
 		t.Run(tc.name, func(t *testing.T) {
 			assert := assert.New(t)
@@ -209,8 +213,10 @@ func TestUserCreateOrReplace(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		store := &mockstore.V2MockStore{}
-		actions := NewUserController(store)
+		store := new(mockstore.ConfigStore)
+		storev2 := new(mockstore.V2MockStore)
+		storev2.On("GetConfigStore").Return(store)
+		actions := NewUserController(storev2)
 
 		t.Run(tc.name, func(t *testing.T) {
 			assert := assert.New(t)
@@ -289,8 +295,10 @@ func TestUserCreate(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		sto := &mockstore.V2MockStore{}
-		actions := NewUserController(sto)
+		storev2 := new(mockstore.V2MockStore)
+		sto := new(mockstore.ConfigStore)
+		storev2.On("GetConfigStore").Return(sto)
+		actions := NewUserController(storev2)
 
 		t.Run(tc.name, func(t *testing.T) {
 			assert := assert.New(t)
@@ -364,8 +372,10 @@ func TestUserDisable(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		store := &mockstore.V2MockStore{}
-		actions := NewUserController(store)
+		storev2 := new(mockstore.V2MockStore)
+		store := new(mockstore.ConfigStore)
+		storev2.On("GetConfigStore").Return(store)
+		actions := NewUserController(storev2)
 
 		t.Run(tc.name, func(t *testing.T) {
 			assert := assert.New(t)
@@ -445,8 +455,10 @@ func TestUserEnable(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		store := &mockstore.V2MockStore{}
-		actions := NewUserController(store)
+		storev2 := new(mockstore.V2MockStore)
+		store := new(mockstore.ConfigStore)
+		storev2.On("GetConfigStore").Return(store)
+		actions := NewUserController(storev2)
 
 		t.Run(tc.name, func(t *testing.T) {
 			// Mock store methods

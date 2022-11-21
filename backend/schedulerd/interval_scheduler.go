@@ -9,7 +9,6 @@ import (
 	corev2 "github.com/sensu/core/v2"
 	"github.com/sensu/sensu-go/backend/messaging"
 	"github.com/sensu/sensu-go/backend/secrets"
-	cachev2 "github.com/sensu/sensu-go/backend/store/cache/v2"
 	storev2 "github.com/sensu/sensu-go/backend/store/v2"
 )
 
@@ -23,13 +22,13 @@ type IntervalScheduler struct {
 	ctx                    context.Context
 	cancel                 context.CancelFunc
 	interrupt              chan *corev2.CheckConfig
-	entityCache            *cachev2.Resource
+	entityCache            EntityCache
 	secretsProviderManager *secrets.ProviderManager
 	stopWg                 sync.WaitGroup
 }
 
 // NewIntervalScheduler initializes an IntervalScheduler
-func NewIntervalScheduler(ctx context.Context, store storev2.Interface, bus messaging.MessageBus, check *corev2.CheckConfig, cache *cachev2.Resource, secretsProviderManager *secrets.ProviderManager) *IntervalScheduler {
+func NewIntervalScheduler(ctx context.Context, store storev2.Interface, bus messaging.MessageBus, check *corev2.CheckConfig, cache EntityCache, secretsProviderManager *secrets.ProviderManager) *IntervalScheduler {
 	sched := &IntervalScheduler{
 		store:             store,
 		bus:               bus,

@@ -21,13 +21,14 @@ func TestDeregister(t *testing.T) {
 	assert := assert.New(t)
 
 	mockStore := &mockstore.V2MockStore{}
-	mockEventStore := &mockstore.MockStore{}
+	es := &mockstore.MockStore{}
+	mockStore.On("GetEntityStore").Return(es)
+	mockStore.On("GetEventStore").Return(es)
 	mockBus := &mockbus.MockBus{}
 
 	adapter := &Deregistration{
-		EntityStore: mockStore,
-		EventStore:  mockEventStore,
-		MessageBus:  mockBus,
+		Store:      mockStore,
+		MessageBus: mockBus,
 	}
 
 	entity := types.FixtureEntity("entity")
@@ -35,10 +36,9 @@ func TestDeregister(t *testing.T) {
 	check := types.FixtureCheck("check")
 	event := types.FixtureEvent(entity.Name, check.Name)
 
-	mockStore.On("Delete", mock.Anything, mock.Anything).Return(nil)
-
-	mockEventStore.On("GetEventsByEntity", mock.Anything, entity.Name, &store.SelectionPredicate{}).Return([]*types.Event{event}, nil)
-	mockEventStore.On("DeleteEventByEntityCheck", mock.Anything, entity.Name, check.Name).Return(nil)
+	es.On("GetEventsByEntity", mock.Anything, entity.Name, &store.SelectionPredicate{}).Return([]*types.Event{event}, nil)
+	es.On("DeleteEventByEntityCheck", mock.Anything, entity.Name, check.Name).Return(nil)
+	es.On("DeleteEntityByName", mock.Anything, mock.Anything).Return(nil)
 
 	mockBus.On("Publish", mock.AnythingOfType("string"), mock.Anything).Return(nil)
 
@@ -49,13 +49,14 @@ func TestDeregistrationHandler(t *testing.T) {
 	assert := assert.New(t)
 
 	mockStore := &mockstore.V2MockStore{}
-	mockEventStore := &mockstore.MockStore{}
+	es := &mockstore.MockStore{}
+	mockStore.On("GetEventStore").Return(es)
+	mockStore.On("GetEntityStore").Return(es)
 	mockBus := &mockbus.MockBus{}
 	mockCache := &mockcache.MockCache{}
 
 	adapter := &Deregistration{
-		EntityStore:   mockStore,
-		EventStore:    mockEventStore,
+		Store:         mockStore,
 		MessageBus:    mockBus,
 		SilencedCache: mockCache,
 	}
@@ -73,10 +74,9 @@ func TestDeregistrationHandler(t *testing.T) {
 		},
 	)
 
-	mockStore.On("Delete", mock.Anything, mock.Anything).Return(nil)
-
-	mockEventStore.On("GetEventsByEntity", mock.Anything, entity.Name, &store.SelectionPredicate{}).Return([]*types.Event{}, nil)
-	mockEventStore.On("DeleteEventByEntityCheck", mock.Anything, entity.Name, check.Name).Return(nil)
+	es.On("GetEventsByEntity", mock.Anything, entity.Name, &store.SelectionPredicate{}).Return([]*types.Event{}, nil)
+	es.On("DeleteEventByEntityCheck", mock.Anything, entity.Name, check.Name).Return(nil)
+	es.On("DeleteEntityByName", mock.Anything, mock.Anything).Return(nil)
 
 	mockBus.On("Publish", messaging.TopicEvent, mock.Anything).Return(nil).Run(func(args mock.Arguments) {
 		event := args[1].(*types.Event)

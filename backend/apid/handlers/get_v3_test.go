@@ -22,7 +22,7 @@ func TestHandlers_GetV3Resource(t *testing.T) {
 	tests := []struct {
 		name      string
 		urlVars   map[string]string
-		storeFunc func(*mockstore.V2MockStore)
+		storeFunc func(*mockstore.ConfigStore)
 		want      interface{}
 		wantErr   bool
 	}{
@@ -34,7 +34,7 @@ func TestHandlers_GetV3Resource(t *testing.T) {
 		{
 			name:    "store ErrNotFound",
 			urlVars: map[string]string{"id": "foo"},
-			storeFunc: func(s *mockstore.V2MockStore) {
+			storeFunc: func(s *mockstore.ConfigStore) {
 				s.On("Get", mock.Anything, mock.Anything).
 					Return((storev2.Wrapper)(nil), &store.ErrNotFound{})
 			},
@@ -43,7 +43,7 @@ func TestHandlers_GetV3Resource(t *testing.T) {
 		{
 			name:    "store ErrInternal",
 			urlVars: map[string]string{"id": "foo"},
-			storeFunc: func(s *mockstore.V2MockStore) {
+			storeFunc: func(s *mockstore.ConfigStore) {
 				s.On("Get", mock.Anything, mock.Anything).
 					Return((storev2.Wrapper)(nil), &store.ErrInternal{})
 			},
@@ -52,7 +52,7 @@ func TestHandlers_GetV3Resource(t *testing.T) {
 		{
 			name:    "successful get",
 			urlVars: map[string]string{"id": "foo"},
-			storeFunc: func(s *mockstore.V2MockStore) {
+			storeFunc: func(s *mockstore.ConfigStore) {
 				s.On("Get", mock.Anything, mock.Anything).
 					Return(wrapper, nil)
 			},
@@ -62,14 +62,14 @@ func TestHandlers_GetV3Resource(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			store := &mockstore.V2MockStore{}
+			cs := new(mockstore.ConfigStore)
+			store.On("GetConfigStore").Return(cs)
+
 			if tt.storeFunc != nil {
-				tt.storeFunc(store)
+				tt.storeFunc(cs)
 			}
 
-			h := Handlers{
-				Resource: &fixture.V3Resource{},
-				Store:    store,
-			}
+			h := NewHandlers[*fixture.V3Resource](store)
 
 			r, _ := http.NewRequest(http.MethodGet, "/", nil)
 			r = mux.SetURLVars(r, tt.urlVars)

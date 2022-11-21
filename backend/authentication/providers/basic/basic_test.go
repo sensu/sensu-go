@@ -37,7 +37,9 @@ func TestProviderAuthenticate(t *testing.T) {
 			Name: "user not found",
 			Store: func() storev2.Interface {
 				s := new(mockstore.V2MockStore)
-				s.On("Get", mock.Anything, mock.Anything).Return(nil, &store.ErrNotFound{})
+				cs := new(mockstore.ConfigStore)
+				s.On("GetConfigStore").Return(cs)
+				cs.On("Get", mock.Anything, mock.Anything).Return(nil, &store.ErrNotFound{})
 				return s
 			}(),
 			Username: "eric",
@@ -52,7 +54,9 @@ func TestProviderAuthenticate(t *testing.T) {
 					Username: "eric",
 					Disabled: true,
 				}
-				s.On("Get", mock.Anything, mock.Anything).Return(mockstore.Wrapper[*corev2.User]{Value: user}, nil)
+				cs := new(mockstore.ConfigStore)
+				s.On("GetConfigStore").Return(cs)
+				cs.On("Get", mock.Anything, mock.Anything).Return(mockstore.Wrapper[*corev2.User]{Value: user}, nil)
 				return s
 			}(),
 			Username: "eric",
@@ -71,7 +75,9 @@ func TestProviderAuthenticate(t *testing.T) {
 					Username:     "eric",
 					PasswordHash: pw,
 				}
-				s.On("Get", mock.Anything, mock.Anything).Return(mockstore.Wrapper[*corev2.User]{Value: user}, nil)
+				cs := new(mockstore.ConfigStore)
+				s.On("GetConfigStore").Return(cs)
+				cs.On("Get", mock.Anything, mock.Anything).Return(mockstore.Wrapper[*corev2.User]{Value: user}, nil)
 				return s
 			}(),
 			Username: "eric",
@@ -90,7 +96,9 @@ func TestProviderAuthenticate(t *testing.T) {
 					Username:     "eric",
 					PasswordHash: pw,
 				}
-				s.On("Get", mock.Anything, mock.Anything).Return(mockstore.Wrapper[*corev2.User]{Value: user}, nil)
+				cs := new(mockstore.ConfigStore)
+				s.On("GetConfigStore").Return(cs)
+				cs.On("Get", mock.Anything, mock.Anything).Return(mockstore.Wrapper[*corev2.User]{Value: user}, nil)
 				return s
 			}(),
 			Username: "eric",
@@ -132,7 +140,9 @@ func TestProviderRefresh(t *testing.T) {
 			Name: "user not found",
 			Store: func() storev2.Interface {
 				s := new(mockstore.V2MockStore)
-				s.On("Get", mock.Anything, mock.Anything).Return(nil, &store.ErrNotFound{})
+				cs := new(mockstore.ConfigStore)
+				s.On("GetConfigStore").Return(cs)
+				cs.On("Get", mock.Anything, mock.Anything).Return(nil, &store.ErrNotFound{})
 				return s
 			}(),
 			Claims: &corev2.Claims{
@@ -155,7 +165,9 @@ func TestProviderRefresh(t *testing.T) {
 					Username: "eric",
 					Disabled: true,
 				}
-				s.On("Get", mock.Anything, mock.Anything).Return(mockstore.Wrapper[*corev2.User]{Value: user}, nil)
+				cs := new(mockstore.ConfigStore)
+				s.On("GetConfigStore").Return(cs)
+				cs.On("Get", mock.Anything, mock.Anything).Return(mockstore.Wrapper[*corev2.User]{Value: user}, nil)
 				return s
 			}(),
 			Error: true,
@@ -177,7 +189,9 @@ func TestProviderRefresh(t *testing.T) {
 					Username:     "eric",
 					PasswordHash: pw,
 				}
-				s.On("Get", mock.Anything, mock.Anything).Return(mockstore.Wrapper[*corev2.User]{Value: user}, nil)
+				cs := new(mockstore.ConfigStore)
+				s.On("GetConfigStore").Return(cs)
+				cs.On("Get", mock.Anything, mock.Anything).Return(mockstore.Wrapper[*corev2.User]{Value: user}, nil)
 				return s
 			}(),
 		},

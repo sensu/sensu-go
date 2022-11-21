@@ -81,11 +81,11 @@ func run(t *testing.T, tt routerTestCase, router *mux.Router, store *mockstore.V
 }
 
 // Get
-func getTestCases(resource corev3.Resource) []routerTestCase {
+func getTestCases[R storev2.Resource[T], T any](resource corev3.Resource) []routerTestCase {
 	return []routerTestCase{
 		getResourceNotFoundTestCase(resource),
 		getResourceStoreErrTestCase(resource),
-		getResourceSuccessTestCase(resource),
+		getResourceSuccessTestCase[R](resource),
 	}
 }
 
@@ -95,7 +95,8 @@ func getResourceNotFoundTestCase(resource corev3.Resource) routerTestCase {
 		method: http.MethodGet,
 		path:   resource.URIPath(),
 		storeFunc: func(s *mockstore.V2MockStore) {
-			s.On("Get", mock.Anything, mock.Anything).
+			cs := s.GetConfigStore().(*mockstore.ConfigStore)
+			cs.On("Get", mock.Anything, mock.Anything).
 				Return(nil, &store.ErrNotFound{}).
 				Once()
 		},
@@ -109,7 +110,8 @@ func getResourceStoreErrTestCase(resource corev3.Resource) routerTestCase {
 		method: http.MethodGet,
 		path:   resource.URIPath(),
 		storeFunc: func(s *mockstore.V2MockStore) {
-			s.On("Get", mock.Anything, mock.Anything).
+			cs := s.GetConfigStore().(*mockstore.ConfigStore)
+			cs.On("Get", mock.Anything, mock.Anything).
 				Return(nil, &store.ErrInternal{}).
 				Once()
 		},
@@ -117,14 +119,15 @@ func getResourceStoreErrTestCase(resource corev3.Resource) routerTestCase {
 	}
 }
 
-func getResourceSuccessTestCase(resource corev3.Resource) routerTestCase {
+func getResourceSuccessTestCase[R storev2.Resource[T], T any](resource corev3.Resource) routerTestCase {
 	return routerTestCase{
 		name:   "it retrieves a check config",
 		method: http.MethodGet,
 		path:   resource.URIPath(),
 		storeFunc: func(s *mockstore.V2MockStore) {
-			s.On("Get", mock.Anything, mock.Anything).
-				Return(mockstore.Wrapper[*corev2.CheckConfig]{Value: corev2.FixtureCheckConfig("check")}, nil).
+			cs := s.GetConfigStore().(*mockstore.ConfigStore)
+			cs.On("Get", mock.Anything, mock.Anything).
+				Return(mockstore.Wrapper[R]{resource.(R)}, nil).
 				Once()
 		},
 		wantStatusCode: http.StatusOK,
@@ -132,10 +135,10 @@ func getResourceSuccessTestCase(resource corev3.Resource) routerTestCase {
 }
 
 // List
-func listTestCases(resource corev3.Resource) []routerTestCase {
+func listTestCases[R storev2.Resource[T], T any](resource corev3.Resource) []routerTestCase {
 	return []routerTestCase{
 		listResourcesStoreErrTestCase(resource),
-		listResourcesSuccessTestCase(resource),
+		listResourcesSuccessTestCase[R](resource),
 	}
 }
 
@@ -149,7 +152,8 @@ func listResourcesStoreErrTestCase(resource corev3.Resource) routerTestCase {
 		method: http.MethodGet,
 		path:   resource.URIPath(),
 		storeFunc: func(s *mockstore.V2MockStore) {
-			s.On("List", mock.Anything, mock.Anything, mock.Anything).
+			cs := s.GetConfigStore().(*mockstore.ConfigStore)
+			cs.On("List", mock.Anything, mock.Anything, mock.Anything).
 				Return(nil, &store.ErrInternal{}).
 				Once()
 		},
@@ -157,7 +161,7 @@ func listResourcesStoreErrTestCase(resource corev3.Resource) routerTestCase {
 	}
 }
 
-func listResourcesSuccessTestCase(resource corev3.Resource) routerTestCase {
+func listResourcesSuccessTestCase[R storev2.Resource[T], T any](resource corev3.Resource) routerTestCase {
 	if _, ok := resource.(corev3.GlobalResource); !ok {
 		resource.GetMetadata().Namespace = "default"
 	}
@@ -167,8 +171,9 @@ func listResourcesSuccessTestCase(resource corev3.Resource) routerTestCase {
 		method: http.MethodGet,
 		path:   resource.URIPath(),
 		storeFunc: func(s *mockstore.V2MockStore) {
-			s.On("List", mock.Anything, mock.Anything, mock.Anything).
-				Return(mockstore.WrapList[*corev2.CheckConfig]{corev2.FixtureCheckConfig("check")}, nil).
+			cs := s.GetConfigStore().(*mockstore.ConfigStore)
+			cs.On("List", mock.Anything, mock.Anything, mock.Anything).
+				Return(mockstore.WrapList[R]{resource.(R)}, nil).
 				Once()
 		},
 		wantStatusCode: http.StatusOK,
@@ -242,7 +247,8 @@ func createResourceAlreadyExistsTestCase(resource corev3.Resource) routerTestCas
 		path:   path.Dir(resource.URIPath()),
 		body:   body,
 		storeFunc: func(s *mockstore.V2MockStore) {
-			s.On("CreateIfNotExists", mock.Anything, mock.Anything, mock.Anything).
+			cs := s.GetConfigStore().(*mockstore.ConfigStore)
+			cs.On("CreateIfNotExists", mock.Anything, mock.Anything, mock.Anything).
 				Return(&store.ErrAlreadyExists{}).
 				Once()
 		},
@@ -268,7 +274,8 @@ func createResourceInvalidTestCase(resource corev3.Resource) routerTestCase {
 		path:   path.Dir(resource.URIPath()),
 		body:   body,
 		storeFunc: func(s *mockstore.V2MockStore) {
-			s.On("CreateIfNotExists", mock.Anything, mock.Anything, mock.Anything).
+			cs := s.GetConfigStore().(*mockstore.ConfigStore)
+			cs.On("CreateIfNotExists", mock.Anything, mock.Anything, mock.Anything).
 				Return(&store.ErrNotValid{Err: errors.New("createResourceInvalidTestCase")}).
 				Once()
 		},
@@ -294,7 +301,8 @@ func createResourceStoreErrTestCase(resource corev3.Resource) routerTestCase {
 		path:   path.Dir(resource.URIPath()),
 		body:   body,
 		storeFunc: func(s *mockstore.V2MockStore) {
-			s.On("CreateIfNotExists", mock.Anything, mock.Anything, mock.Anything).
+			cs := s.GetConfigStore().(*mockstore.ConfigStore)
+			cs.On("CreateIfNotExists", mock.Anything, mock.Anything, mock.Anything).
 				Return(&store.ErrInternal{}).
 				Once()
 		},
@@ -320,7 +328,8 @@ func createResourceSuccessTestCase(resource corev3.Resource) routerTestCase {
 		path:   path.Dir(resource.URIPath()),
 		body:   body,
 		storeFunc: func(s *mockstore.V2MockStore) {
-			s.On("CreateIfNotExists", mock.Anything, mock.Anything, mock.Anything).
+			cs := s.GetConfigStore().(*mockstore.ConfigStore)
+			cs.On("CreateIfNotExists", mock.Anything, mock.Anything, mock.Anything).
 				Return(nil).
 				Once()
 		},
@@ -371,7 +380,8 @@ func updateResourceInvalidTestCase(resource corev3.Resource) routerTestCase {
 		path:   resource.URIPath(),
 		body:   marshal(resource),
 		storeFunc: func(s *mockstore.V2MockStore) {
-			s.On("CreateOrUpdate", mock.Anything, mock.Anything, mock.Anything).
+			cs := s.GetConfigStore().(*mockstore.ConfigStore)
+			cs.On("CreateOrUpdate", mock.Anything, mock.Anything, mock.Anything).
 				Return(&store.ErrNotValid{Err: errors.New("error")}).
 				Once()
 		},
@@ -387,7 +397,8 @@ func updateResourceStoreErrTestCase(resource corev3.Resource) routerTestCase {
 		path:   resource.URIPath(),
 		body:   marshal(resource),
 		storeFunc: func(s *mockstore.V2MockStore) {
-			s.On("CreateOrUpdate", mock.Anything, mock.Anything, mock.Anything).
+			cs := s.GetConfigStore().(*mockstore.ConfigStore)
+			cs.On("CreateOrUpdate", mock.Anything, mock.Anything, mock.Anything).
 				Return(&store.ErrInternal{}).
 				Once()
 		},
@@ -403,7 +414,8 @@ func updateResourceSuccessTestCase(resource corev3.Resource) routerTestCase {
 		path:   resource.URIPath(),
 		body:   marshal(resource),
 		storeFunc: func(s *mockstore.V2MockStore) {
-			s.On("CreateOrUpdate", mock.Anything, mock.Anything, mock.Anything).
+			cs := s.GetConfigStore().(*mockstore.ConfigStore)
+			cs.On("CreateOrUpdate", mock.Anything, mock.Anything, mock.Anything).
 				Return(nil).
 				Once()
 		},
@@ -437,10 +449,11 @@ func deleteResourceNotFoundTestCase(resource corev3.Resource) routerTestCase {
 		path:   resource.URIPath(),
 		body:   []byte(`{"metadata": {"namespace":"default","name":"foo"}}`),
 		storeFunc: func(s *mockstore.V2MockStore) {
-			s.On("Delete", mock.Anything, mock.Anything).
+			cs := s.GetConfigStore().(*mockstore.ConfigStore)
+			cs.On("Delete", mock.Anything, mock.Anything).
 				Return(&store.ErrNotFound{}).
 				Once()
-			s.On("DeleteNamespace", mock.Anything, mock.Anything).
+			cs.On("DeleteNamespace", mock.Anything, mock.Anything).
 				Return(&store.ErrNotFound{}).
 				Once()
 		},
@@ -455,10 +468,11 @@ func deleteResourceStoreErrTestCase(resource corev3.Resource) routerTestCase {
 		path:   resource.URIPath(),
 		body:   []byte(`{"metadata": {"namespace":"default","name":"foo"}}`),
 		storeFunc: func(s *mockstore.V2MockStore) {
-			s.On("Delete", mock.Anything, mock.Anything).
+			cs := s.GetConfigStore().(*mockstore.ConfigStore)
+			cs.On("Delete", mock.Anything, mock.Anything).
 				Return(&store.ErrInternal{}).
 				Once()
-			s.On("DeleteNamespace", mock.Anything, mock.Anything).
+			cs.On("DeleteNamespace", mock.Anything, mock.Anything).
 				Return(&store.ErrInternal{}).
 				Once()
 		},
@@ -473,10 +487,11 @@ func deleteResourceSuccessTestCase(resource corev3.Resource) routerTestCase {
 		path:   resource.URIPath(),
 		body:   []byte(`{"metadata": {"namespace":"default","name":"foo"}}`),
 		storeFunc: func(s *mockstore.V2MockStore) {
-			s.On("Delete", mock.Anything, mock.Anything).
+			cs := s.GetConfigStore().(*mockstore.ConfigStore)
+			cs.On("Delete", mock.Anything, mock.Anything).
 				Return(nil).
 				Once()
-			s.On("DeleteNamespace", mock.Anything, mock.Anything).
+			cs.On("DeleteNamespace", mock.Anything, mock.Anything).
 				Return(nil).
 				Once()
 		},

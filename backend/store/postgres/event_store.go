@@ -52,10 +52,9 @@ var (
 )
 
 type EventStore struct {
-	db             *pgxpool.Pool
-	silenceStore   SilenceStoreI
-	postgresConfig Config
-	batcher        *EventBatcher
+	db           DBI
+	silenceStore SilenceStoreI
+	batcher      *EventBatcher
 }
 
 // isFlapping determines if the check is flapping, based on the TotalStateChange
@@ -153,10 +152,9 @@ func NewEventStore(db *pgxpool.Pool, sStore SilenceStoreI, pg Config, producers 
 		return nil, fmt.Errorf("couldn't create query batcher: %s", err)
 	}
 	store := &EventStore{
-		db:             db,
-		silenceStore:   sStore,
-		postgresConfig: pg,
-		batcher:        batcher,
+		db:           db,
+		silenceStore: sStore,
+		batcher:      batcher,
 	}
 	return store, nil
 }
@@ -552,7 +550,9 @@ func (e *EventStore) GetKeepaliveGaugesByNamespace(ctx context.Context) (map[str
 
 // Close closes the underlying db and releases any associated resources.
 func (e *EventStore) Close() (err error) {
-	e.db.Close()
+	if closer, ok := e.db.(interface{ Close() }); ok {
+		closer.Close()
+	}
 	return nil
 }
 

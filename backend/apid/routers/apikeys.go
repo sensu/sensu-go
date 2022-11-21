@@ -19,17 +19,12 @@ import (
 
 // APIKeysRouter handles requests for /apikeys.
 type APIKeysRouter struct {
-	handlers handlers.Handlers
-	store    storev2.Interface
+	store storev2.Interface
 }
 
 // NewAPIKeysRouter instantiates new router for controlling apikeys resources.
 func NewAPIKeysRouter(store storev2.Interface) *APIKeysRouter {
 	return &APIKeysRouter{
-		handlers: handlers.Handlers{
-			Resource: &corev2.APIKey{},
-			Store:    store,
-		},
 		store: store,
 	}
 }
@@ -41,11 +36,13 @@ func (r *APIKeysRouter) Mount(parent *mux.Router) {
 		PathPrefix: "/{resource:apikeys}",
 	}
 
-	routes.Del(r.handlers.DeleteResource)
-	routes.Get(r.handlers.GetResource)
-	routes.List(r.handlers.ListResources, corev2.APIKeyFields)
+	handlers := handlers.NewHandlers[*corev2.APIKey](r.store)
+
+	routes.Del(handlers.DeleteResource)
+	routes.Get(handlers.GetResource)
+	routes.List(handlers.ListResources, corev2.APIKeyFields)
 	parent.HandleFunc(routes.PathPrefix, r.create).Methods(http.MethodPost)
-	routes.Patch(r.handlers.PatchResource)
+	routes.Patch(handlers.PatchResource)
 }
 
 func (r *APIKeysRouter) create(w http.ResponseWriter, req *http.Request) {
@@ -58,7 +55,7 @@ func (r *APIKeysRouter) create(w http.ResponseWriter, req *http.Request) {
 	// validate that the user exists
 	user := &corev2.User{Username: apikey.Username}
 	storeReq := storev2.NewResourceRequestFromResource(user)
-	if _, err := r.store.Get(req.Context(), storeReq); err != nil {
+	if _, err := r.store.GetConfigStore().Get(req.Context(), storeReq); err != nil {
 		if _, ok := err.(*store.ErrNotFound); ok {
 			http.Error(w, errors.New("user does not exist").Error(), http.StatusBadRequest)
 			return
@@ -83,7 +80,9 @@ func (r *APIKeysRouter) create(w http.ResponseWriter, req *http.Request) {
 	}
 	req.Body = ioutil.NopCloser(bytes.NewBuffer(newBytes))
 
-	_, err = r.handlers.CreateResource(req)
+	handlers := handlers.NewHandlers[*corev2.APIKey](r.store)
+
+	_, err = handlers.CreateResource(req)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return

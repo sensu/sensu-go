@@ -17,7 +17,7 @@ import (
 // SilencedRouter handles requests for /users
 type SilencedRouter struct {
 	controller silencedController
-	handlers   handlers.Handlers
+	store      storev2.Interface
 }
 
 // silencedController represents the controller needs of the SilencedRouter.
@@ -32,10 +32,7 @@ type silencedController interface {
 func NewSilencedRouter(store store.SilenceStore, storev2 storev2.Interface) *SilencedRouter {
 	return &SilencedRouter{
 		controller: actions.NewSilencedController(store),
-		handlers: handlers.Handlers{
-			Resource: &corev2.Silenced{},
-			Store:    storev2,
-		},
+		store:      storev2,
 	}
 }
 
@@ -46,7 +43,9 @@ func (r *SilencedRouter) Mount(parent *mux.Router) {
 		PathPrefix: "/namespaces/{namespace}/{resource:silenced}",
 	}
 
-	routes.Del(r.handlers.DeleteResource)
+	handlers := handlers.NewHandlers[*corev2.Silenced](r.store)
+
+	routes.Del(handlers.DeleteResource)
 	routes.Get(r.get)
 	routes.Post(r.create)
 	routes.Put(r.createOrReplace)

@@ -11,7 +11,7 @@ import (
 	cachev2 "github.com/sensu/sensu-go/backend/store/cache/v2"
 	storev2 "github.com/sensu/sensu-go/backend/store/v2"
 	"github.com/sensu/sensu-go/types"
-	"go.etcd.io/etcd/client/v3"
+	clientv3 "go.etcd.io/etcd/client/v3"
 )
 
 var (
@@ -56,7 +56,7 @@ type Schedulerd struct {
 	cancel                 context.CancelFunc
 	errChan                chan error
 	ringPool               *ringv2.RingPool
-	entityCache            *cachev2.Resource
+	entityCache            EntityCache
 	secretsProviderManager *secrets.ProviderManager
 }
 
@@ -84,7 +84,7 @@ func New(ctx context.Context, c Config, opts ...Option) (*Schedulerd, error) {
 		secretsProviderManager: c.SecretsProviderManager,
 	}
 	s.ctx, s.cancel = context.WithCancel(ctx)
-	cache, err := cachev2.New(s.ctx, c.Store, &corev3.EntityConfig{}, true)
+	cache, err := cachev2.New[*corev3.EntityConfig](s.ctx, c.Store, true)
 	if err != nil {
 		return nil, err
 	}

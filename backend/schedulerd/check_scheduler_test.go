@@ -12,12 +12,12 @@ import (
 	"github.com/stretchr/testify/require"
 
 	corev2 "github.com/sensu/core/v2"
+	corev3 "github.com/sensu/core/v3"
 	"github.com/sensu/sensu-go/backend/messaging"
 	"github.com/sensu/sensu-go/backend/queue"
 	"github.com/sensu/sensu-go/backend/secrets"
 	"github.com/sensu/sensu-go/backend/store"
 	cachev2 "github.com/sensu/sensu-go/backend/store/cache/v2"
-	"github.com/sensu/sensu-go/backend/store/v2/storetest"
 	"github.com/sensu/sensu-go/backend/store/v2/wrap"
 	"github.com/sensu/sensu-go/testing/mockstore"
 )
@@ -68,7 +68,7 @@ func newIntervalScheduler(ctx context.Context, t *testing.T, executor string) *T
 	hook := request.Hooks[0]
 	scheduler.check = request.Config
 	scheduler.check.Interval = 1
-	s := &storetest.Store{}
+	s := &mockstore.V2MockStore{}
 
 	s.On("List", mock.Anything, mock.MatchedBy(isAssetResourceRequest), &store.SelectionPredicate{}).
 		Return(mockstore.WrapList[*corev2.Asset]{&asset}, nil)
@@ -86,15 +86,19 @@ func newIntervalScheduler(ctx context.Context, t *testing.T, executor string) *T
 	scheduler.msgBus = bus
 	pm := secrets.NewProviderManager(&mockEventReceiver{})
 
-	scheduler.scheduler = NewIntervalScheduler(ctx, s, scheduler.msgBus, scheduler.check, &cachev2.Resource{}, pm)
+	cache, err := cachev2.New[*corev3.EntityConfig](ctx, s, true)
+	if err != nil {
+		t.Fatal(err)
+	}
+	scheduler.scheduler = NewIntervalScheduler(ctx, s, scheduler.msgBus, scheduler.check, cache, pm)
 
 	assert.NoError(scheduler.msgBus.Start())
 
 	switch executor {
 	case "adhoc":
-		scheduler.exec = NewAdhocRequestExecutor(ctx, s, &queue.Memory{}, scheduler.msgBus, &cachev2.Resource{}, pm)
+		scheduler.exec = NewAdhocRequestExecutor(ctx, s, &queue.Memory{}, scheduler.msgBus, cache, pm)
 	default:
-		scheduler.exec = NewCheckExecutor(scheduler.msgBus, "default", s, &cachev2.Resource{}, pm)
+		scheduler.exec = NewCheckExecutor(scheduler.msgBus, "default", s, cache, pm)
 	}
 
 	return scheduler
@@ -114,7 +118,7 @@ func newCronScheduler(ctx context.Context, t *testing.T, executor string) *TestC
 	scheduler.check = request.Config
 	scheduler.check.Interval = 0
 	scheduler.check.Cron = "* * * * *"
-	s := &storetest.Store{}
+	s := &mockstore.V2MockStore{}
 
 	s.On("List", mock.Anything, mock.MatchedBy(isAssetResourceRequest), &store.SelectionPredicate{}).
 		Return(mockstore.WrapList[*corev2.Asset]{&asset}, nil)
@@ -132,15 +136,19 @@ func newCronScheduler(ctx context.Context, t *testing.T, executor string) *TestC
 	scheduler.msgBus = bus
 	pm := secrets.NewProviderManager(&mockEventReceiver{})
 
-	scheduler.scheduler = NewCronScheduler(ctx, s, scheduler.msgBus, scheduler.check, &cachev2.Resource{}, pm)
+	cache, err := cachev2.New[*corev3.EntityConfig](ctx, s, true)
+	if err != nil {
+		t.Fatal(err)
+	}
+	scheduler.scheduler = NewCronScheduler(ctx, s, scheduler.msgBus, scheduler.check, cache, pm)
 
 	assert.NoError(scheduler.msgBus.Start())
 
 	switch executor {
 	case "adhoc":
-		scheduler.exec = NewAdhocRequestExecutor(ctx, s, &queue.Memory{}, scheduler.msgBus, &cachev2.Resource{}, pm)
+		scheduler.exec = NewAdhocRequestExecutor(ctx, s, &queue.Memory{}, scheduler.msgBus, cache, pm)
 	default:
-		scheduler.exec = NewCheckExecutor(scheduler.msgBus, "default", s, &cachev2.Resource{}, pm)
+		scheduler.exec = NewCheckExecutor(scheduler.msgBus, "default", s, cache, pm)
 	}
 
 	return scheduler

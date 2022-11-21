@@ -4,22 +4,16 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"path"
-	"strings"
 	"sync"
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/sirupsen/logrus"
-	clientv3 "go.etcd.io/etcd/client/v3"
 
 	corev2 "github.com/sensu/core/v2"
 	corev3 "github.com/sensu/core/v3"
-	"github.com/sensu/sensu-go/backend/liveness"
 	"github.com/sensu/sensu-go/backend/messaging"
-	"github.com/sensu/sensu-go/backend/silenced"
 	"github.com/sensu/sensu-go/backend/store"
-	"github.com/sensu/sensu-go/backend/store/cache"
 	storev2 "github.com/sensu/sensu-go/backend/store/v2"
 	metricspkg "github.com/sensu/sensu-go/metrics"
 	utillogging "github.com/sensu/sensu-go/util/logging"
@@ -84,18 +78,6 @@ const (
 	// BusPublishDuration is the name of the prometheus summary vec used to
 	// track average latencies of publishing to the bus.
 	BusPublishDuration = "sensu_go_eventd_bus_publish_duration"
-
-	// LivenessFactoryDuration is the name of the prometheus summary vec used to
-	// track average latencies of calls to the liveness factory.
-	LivenessFactoryDuration = "sensu_go_eventd_liveness_factory_duration"
-
-	// SwitchesAliveDuration is the name of the prometheus summary vec used to
-	// track average latencies of calls to switches.Alive.
-	SwitchesAliveDuration = "sensu_go_eventd_switches_alive_duration"
-
-	// SwitchesBuryDuration is the name of the prometheus summary vec used to
-	// track average latencies of calls to switches.Bury.
-	SwitchesBuryDuration = "sensu_go_eventd_switches_bury_duration"
 
 	// defaultStoreTimeout is the store timeout used if the backend did not configure one
 	defaultStoreTimeout = time.Minute
@@ -165,32 +147,6 @@ var (
 		},
 		[]string{metricspkg.StatusLabelName, metricspkg.EventTypeLabelName},
 	)
-
-	livenessFactoryDuration = prometheus.NewSummary(
-		prometheus.SummaryOpts{
-			Name:       LivenessFactoryDuration,
-			Help:       "liveness factory latency distribution in eventd",
-			Objectives: map[float64]float64{0.5: 0.05, 0.9: 0.01, 0.99: 0.001},
-		},
-	)
-
-	switchesAliveDuration = prometheus.NewSummaryVec(
-		prometheus.SummaryOpts{
-			Name:       SwitchesAliveDuration,
-			Help:       "switches.Alive() latency distribution in eventd",
-			Objectives: map[float64]float64{0.5: 0.05, 0.9: 0.01, 0.99: 0.001},
-		},
-		[]string{metricspkg.StatusLabelName},
-	)
-
-	switchesBuryDuration = prometheus.NewSummaryVec(
-		prometheus.SummaryOpts{
-			Name:       SwitchesBuryDuration,
-			Help:       "switches.Bury() latency distribution in eventd",
-			Objectives: map[float64]float64{0.5: 0.05, 0.9: 0.01, 0.99: 0.001},
-		},
-		[]string{metricspkg.StatusLabelName},
-	)
 )
 
 const deletedEventSentinel = -1
@@ -203,7 +159,6 @@ type Eventd struct {
 	eventStore          store.EventStore
 	bus                 messaging.MessageBus
 	workerCount         int
-	livenessFactory     liveness.Factory
 	eventChan           chan interface{}
 	keepaliveChan       chan interface{}
 	subscription        messaging.Subscription
@@ -212,18 +167,14 @@ type Eventd struct {
 	shutdownChan        chan struct{}
 	wg                  *sync.WaitGroup
 	Logger              Logger
-	silencedCache       cache.Cache
 	storeTimeout        time.Duration
 	logPath             string
 	logBufferSize       int
 	logBufferWait       time.Duration
 	logParallelEncoders bool
-}
-
-// DEPRECATED: use cache.Cache instead
-// Cache interfaces the cache.Resource struct for easier testing
-type Cache interface {
-	Get(namespace string) []cache.Value
+	operatorConcierge   store.OperatorConcierge
+	operatorMonitor     store.OperatorMonitor
+	operatorQueryer     store.OperatorQueryer
 }
 
 // Option is a functional option.
@@ -234,8 +185,6 @@ type Config struct {
 	Store               storev2.Interface
 	EventStore          store.EventStore
 	Bus                 messaging.MessageBus
-	LivenessFactory     liveness.Factory
-	Client              *clientv3.Client
 	BufferSize          int
 	WorkerCount         int
 	StoreTimeout        time.Duration
@@ -243,6 +192,9 @@ type Config struct {
 	LogBufferSize       int
 	LogBufferWait       time.Duration
 	LogParallelEncoders bool
+	OperatorConcierge   store.OperatorConcierge
+	OperatorMonitor     store.OperatorMonitor
+	OperatorQueryer     store.OperatorQueryer
 }
 
 // New creates a new Eventd.
@@ -265,7 +217,6 @@ func New(ctx context.Context, c Config, opts ...Option) (*Eventd, error) {
 		eventStore:          c.EventStore,
 		bus:                 c.Bus,
 		workerCount:         c.WorkerCount,
-		livenessFactory:     c.LivenessFactory,
 		errChan:             make(chan error, 1),
 		shutdownChan:        make(chan struct{}, 1),
 		eventChan:           make(chan interface{}, c.BufferSize),
@@ -278,14 +229,11 @@ func New(ctx context.Context, c Config, opts ...Option) (*Eventd, error) {
 		logBufferWait:       c.LogBufferWait,
 		logParallelEncoders: c.LogParallelEncoders,
 		Logger:              NoopLogger{},
+		operatorConcierge:   c.OperatorConcierge,
+		operatorMonitor:     c.OperatorMonitor,
 	}
 
 	e.ctx, e.cancel = context.WithCancel(ctx)
-	silencedCache, err := cache.New(e.ctx, c.Client, &corev2.Silenced{}, false)
-	if err != nil {
-		return nil, err
-	}
-	e.silencedCache = silencedCache
 
 	for _, o := range opts {
 		if err := o(e); err != nil {
@@ -324,9 +272,6 @@ func New(ctx context.Context, c Config, opts ...Option) (*Eventd, error) {
 	_ = prometheus.Register(createProxyEntityDuration)
 	_ = prometheus.Register(updateEventDuration)
 	_ = prometheus.Register(busPublishDuration)
-	_ = prometheus.Register(livenessFactoryDuration)
-	_ = prometheus.Register(switchesAliveDuration)
-	_ = prometheus.Register(switchesBuryDuration)
 
 	return e, nil
 }
@@ -440,17 +385,6 @@ func (e *Eventd) startHandlers() {
 	}
 }
 
-// eventKey creates a key to identify the event for liveness monitoring
-func eventKey(event *corev2.Event) string {
-	// Typically we want the entity name to be the thing we monitor, but if
-	// it's a round robin check, and there is no proxy entity, then use
-	// the check name instead.
-	if event.Check.RoundRobin && event.Entity.EntityClass != corev2.EntityProxyClass {
-		return path.Join(event.Check.Namespace, event.Check.Name)
-	}
-	return path.Join(event.Entity.Namespace, event.Check.Name, event.Entity.Name)
-}
-
 func (e *Eventd) publishEventWithDuration(event *corev2.Event) (fErr error) {
 	begin := time.Now()
 	defer func() {
@@ -550,10 +484,11 @@ func (e *Eventd) handleMessage(msg interface{}) (fEvent *corev2.Event, fErr erro
 	}
 
 	// Add any silenced subscriptions to the event
-	silenced.GetSilenced(ctx, event, e.silencedCache)
-	if len(event.Check.Silenced) > 0 {
-		event.Check.IsSilenced = true
-	}
+	// TODO(eric)
+	//silenced.GetSilenced(ctx, event, e.silencedCache)
+	//if len(event.Check.Silenced) > 0 {
+	//	event.Check.IsSilenced = true
+	//}
 
 	// Merge the new event with the stored event if a match is found
 	event, prevEvent, err := e.updateEventWithDuration(ctx, event)
@@ -564,28 +499,26 @@ func (e *Eventd) handleMessage(msg interface{}) (fEvent *corev2.Event, fErr erro
 
 	e.Logger.Println(event)
 
-	livenessFactoryTimer := prometheus.NewTimer(livenessFactoryDuration)
-	switches := e.livenessFactory("eventd", e.dead, e.alive, logger)
-	livenessFactoryTimer.ObserveDuration()
-	switchKey := eventKey(event)
+	ostate := store.OperatorState{
+		Namespace: event.Check.Namespace,
+		Name:      event.Check.Name,
+		Type:      store.CheckOperator,
+		Controller: &store.OperatorKey{
+			Type:      store.AgentOperator,
+			Namespace: event.Entity.Namespace,
+			Name:      event.Entity.Name,
+		},
+		Present: true,
+	}
 
 	if event.Check.Name == corev2.KeepaliveCheckName {
 		goto NOTTL
 	}
 
 	if event.Check.Ttl > 0 {
-		// Reset the switch
-		timeout := int64(event.Check.Ttl)
+		// Check in the operator
 		var err error
-		aliveTimer := prometheus.NewTimer(prometheus.ObserverFunc(func(v float64) {
-			status := metricspkg.StatusLabelSuccess
-			if err != nil {
-				status = metricspkg.StatusLabelError
-			}
-			switchesAliveDuration.WithLabelValues(status).Observe(v * float64(1000))
-		}))
-		err = switches.Alive(ctx, switchKey, timeout)
-		aliveTimer.ObserveDuration()
+		err = e.operatorConcierge.CheckIn(ctx, ostate)
 		if err != nil {
 			EventsProcessed.WithLabelValues(EventsProcessedLabelError, EventsProcessedTypeLabelCheck).Inc()
 			return event, err
@@ -594,19 +527,11 @@ func (e *Eventd) handleMessage(msg interface{}) (fEvent *corev2.Event, fErr erro
 		// The check TTL has been disabled, there is no longer a need to track it
 		logger.Debug("check ttl disabled")
 		var err error
-		buryTimer := prometheus.NewTimer(prometheus.ObserverFunc(func(v float64) {
-			status := metricspkg.StatusLabelSuccess
-			if err != nil {
-				status = metricspkg.StatusLabelError
-			}
-			switchesBuryDuration.WithLabelValues(status).Observe(v * float64(1000))
-		}))
-		err = switches.Bury(ctx, switchKey)
-		buryTimer.ObserveDuration()
+		err = e.operatorConcierge.CheckOut(ctx, store.OperatorKey{Namespace: ostate.Namespace, Name: ostate.Name, Type: ostate.Type})
 		if err != nil {
 			// It's better to publish the event even if this fails, so
 			// don't return the error here.
-			logger.WithError(err).Error("error burying switch")
+			logger.WithError(err).Error("error on operator checkout")
 		}
 	}
 
@@ -617,96 +542,55 @@ NOTTL:
 	return event, e.publishEventWithDuration(event)
 }
 
-func (e *Eventd) alive(key string, prev liveness.State, leader bool) (bury bool) {
+func (e *Eventd) handleCheckTTLNotification(ctx context.Context, state store.OperatorState) error {
 	lager := logger.WithFields(logrus.Fields{
-		"status":          liveness.Alive.String(),
-		"previous_status": prev.String()})
-
-	namespace, check, entity, err := parseKey(key)
-	if err != nil {
-		lager.Error(err)
-		return false
-	}
+		"status": "absent",
+	})
 
 	lager = lager.WithFields(logrus.Fields{
-		"check":     check,
-		"entity":    entity,
-		"namespace": namespace})
-
-	lager.Info("check TTL reset")
-
-	return false
-}
-
-func (e *Eventd) dead(key string, prev liveness.State, leader bool) (bury bool) {
-	if e.ctx.Err() != nil {
-		return false
-	}
-	lager := logger.WithFields(logrus.Fields{
-		"status":          liveness.Dead.String(),
-		"previous_status": prev.String()})
-
-	namespace, check, entity, err := parseKey(key)
-	if err != nil {
-		lager.Error(err)
-		return false
-	}
-
-	lager = lager.WithFields(logrus.Fields{
-		"check":     check,
-		"entity":    entity,
-		"namespace": namespace})
+		"check":     state.Name,
+		"entity":    state.Controller.Name,
+		"namespace": state.Namespace})
 
 	lager.Warn("check TTL expired")
 
 	// NOTE: To support check TTL for round robin scheduling, load all events
 	// here, filter by check, and update all events involved in the round robin
-	if entity == "" {
+	if state.Controller == nil {
 		lager.Error("round robin check ttl not supported")
-		return true
+		return e.operatorConcierge.CheckOut(ctx, store.OperatorKey{Namespace: state.Namespace, Name: state.Name, Type: state.Type})
 	}
 
-	ctx := store.NamespaceContext(context.Background(), namespace)
-	// TODO(eric): make this configurable? Or dynamic based on some property?
-	// 120s seems like a reasonable, it not somewhat large, timeout for check TTL processing.
-	ctx, cancel := context.WithTimeout(ctx, e.storeTimeout)
+	ctx = store.NamespaceContext(context.Background(), state.Namespace)
+	// the operation has to succeed at least before the next timeout occurs
+	ctx, cancel := context.WithTimeout(ctx, state.CheckInTimeout)
 	defer cancel()
 
-	// The entity has been deleted, and so there is no reason to track check
-	// TTL for it anymore.
-	config := corev3.NewEntityConfig(namespace, entity)
-	req := storev2.NewResourceRequestFromResource(config)
+	entityConfigStore := storev2.NewGenericStore[*corev3.EntityConfig](e.store)
 
-	_, err = e.store.Get(ctx, req)
+	_, err := entityConfigStore.Get(ctx, storev2.ID{Namespace: state.Namespace, Name: state.Name})
 	if _, ok := err.(*store.ErrNotFound); ok {
-		return true
+		return e.operatorConcierge.CheckOut(ctx, store.OperatorKey{Namespace: state.Namespace, Name: state.Name, Type: state.Type})
 	} else if err != nil {
 		lager.WithError(err).Error("check ttl: error retrieving entity")
-		if _, ok := err.(*store.ErrInternal); ok {
-			// Fatal error
-			select {
-			case e.errChan <- err:
-			case <-e.ctx.Done():
-			}
-		}
-		return false
+		return err
 	}
 
-	// TODO(ccressent): this should be replaced with a call to the Keepalive
-	// store once implemented
-	keepalive, err := e.eventStore.GetEventByEntityCheck(ctx, entity, "keepalive")
+	agentOperator, err := e.operatorQueryer.QueryOperator(ctx, *state.Controller)
 	if err != nil {
-		lager.WithError(err).Error("check ttl: error retrieving keepalive event")
-		return false
+		if _, ok := err.(*store.ErrNotFound); ok {
+			// the agent no longer exists
+			return nil
+		}
+		return err
+	}
+	if !agentOperator.Present {
+		// the agent is not present, and so we don't want to track check TTL
+		// until it returns.
+		return e.operatorConcierge.CheckOut(ctx, store.OperatorKey{Namespace: state.Namespace, Name: state.Name, Type: state.Type})
 	}
 
-	if keepalive != nil && keepalive.Check.Status > 0 {
-		// The keepalive is failing. We don't want to also alert for check TTL,
-		// or keep track of check TTL until the entity returns to life.
-		return true
-	}
-
-	event, err := e.eventStore.GetEventByEntityCheck(ctx, entity, check)
+	event, err := e.eventStore.GetEventByEntityCheck(ctx, state.Controller.Name, state.Name)
 	if err != nil {
 		lager.WithError(err).Error("check ttl: error retrieving event")
 		if _, ok := err.(*store.ErrInternal); ok {
@@ -716,32 +600,20 @@ func (e *Eventd) dead(key string, prev liveness.State, leader bool) (bury bool) 
 			case <-e.ctx.Done():
 			}
 		}
-		return false
+		return err
 	}
 
 	if event == nil {
 		// The user deleted the check event but not the entity
-		return true
+		return e.operatorConcierge.CheckOut(ctx, store.OperatorKey{Namespace: state.Namespace, Name: state.Name, Type: state.Type})
 	}
 
-	if leader {
-		if err := e.handleFailure(ctx, event); err != nil {
-			lager.WithError(err).Error("can't handle check TTL failure")
-		}
+	if err := e.handleFailure(ctx, event); err != nil {
+		return err
+		lager.WithError(err).Error("can't handle check TTL failure")
 	}
 
-	return false
-}
-
-func parseKey(key string) (namespace, check, entity string, err error) {
-	parts := strings.Split(key, "/")
-	if len(parts) == 2 {
-		return parts[0], parts[1], "", nil
-	}
-	if len(parts) == 3 {
-		return parts[0], parts[1], parts[2], nil
-	}
-	return "", "", "", errors.New("bad key")
+	return nil
 }
 
 // handleFailure creates a check event with a warn status and publishes it to

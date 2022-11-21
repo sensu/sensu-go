@@ -15,8 +15,6 @@ import (
 	"syscall"
 	"time"
 
-	clientv3 "go.etcd.io/etcd/client/v3"
-
 	"github.com/jackc/pgx/v4/pgxpool"
 	"github.com/sensu/sensu-go/backend/apid/middlewares"
 	"github.com/sensu/sensu-go/backend/store/postgres"
@@ -24,7 +22,6 @@ import (
 	corev2 "github.com/sensu/core/v2"
 	"github.com/sensu/sensu-go/asset"
 	"github.com/sensu/sensu-go/backend"
-	"github.com/sensu/sensu-go/backend/etcd"
 	"github.com/sensu/sensu-go/util/path"
 	stringsutil "github.com/sensu/sensu-go/util/strings"
 	"github.com/sirupsen/logrus"
@@ -145,7 +142,7 @@ var (
 
 // InitializeFunc represents the signature of an initialization function, used
 // to initialize the backend
-type InitializeFunc func(context.Context, *clientv3.Client, *pgxpool.Pool, *pgxpool.Pool, *backend.Config) (*backend.Backend, error)
+type InitializeFunc func(context.Context, postgres.DBI, *backend.Config) (*backend.Backend, error)
 
 // StartCommand ...
 func StartCommand(initialize InitializeFunc) *cobra.Command {
@@ -263,34 +260,17 @@ func StartCommand(initialize InitializeFunc) *cobra.Command {
 				)
 			}
 
-			var pgConfigDB, pgStateDB *pgxpool.Pool
-			var etcdClient *clientv3.Client
+			var pgDB *pgxpool.Pool
 
 			ctx, cancel := context.WithCancel(context.Background())
 
-			if devMode {
-				ctx, cancel := context.WithCancel(context.Background())
-				defer cancel()
-				etcdClient, err = devModeClient(ctx, cfg)
-				if err != nil {
-					return err
-				}
-				defer func() { _ = etcdClient.Close() }()
-			} else {
-				pgConfigDB, err = newPostgresPool(ctx, cfg.Store.PostgresConfigurationStore.DSN, false)
-				if err != nil {
-					return err
-				}
-				defer pgConfigDB.Close()
-
-				pgStateDB, err = newPostgresPool(ctx, cfg.Store.PostgresStateStore.DSN, true)
-				if err != nil {
-					return err
-				}
-				defer pgStateDB.Close()
+			pgDB, err = newPostgresPool(ctx, cfg.Store.PostgresConfigurationStore.DSN, false)
+			if err != nil {
+				return err
 			}
+			defer pgDB.Close()
 
-			sensuBackend, err := initialize(ctx, etcdClient, pgConfigDB, pgStateDB, cfg)
+			sensuBackend, err := initialize(ctx, pgDB, cfg)
 			if err != nil {
 				return err
 			}
@@ -336,45 +316,6 @@ func newPostgresPool(ctx context.Context, dsn string, stateDB bool) (*pgxpool.Po
 		return nil, err
 	}
 	return db, nil
-}
-
-func devModeClient(ctx context.Context, config *backend.Config) (*clientv3.Client, error) {
-	// Initialize and start etcd, because we'll need to provide an etcd client to
-	// the Wizard bus, which requires etcd to be started.
-	cfg := etcd.NewConfig()
-	cfg.DataDir = config.StateDir
-	if urls := config.Store.EtcdConfigurationStore.URLs; len(urls) > 0 {
-		cfg.ListenClientURLs = urls
-	} else {
-		cfg.ListenClientURLs = []string{"http://127.0.0.1:2379"}
-	}
-	cfg.ListenPeerURLs = []string{"http://127.0.0.1:0"}
-	cfg.InitialCluster = "dev=http://127.0.0.1:0"
-	cfg.InitialClusterState = "new"
-	cfg.InitialAdvertisePeerURLs = cfg.ListenPeerURLs
-	cfg.AdvertiseClientURLs = cfg.ListenClientURLs
-	cfg.Name = "dev"
-	cfg.LogLevel = config.LogLevel
-	cfg.ClientLogLevel = config.Store.EtcdConfigurationStore.LogLevel
-
-	// Start etcd
-	e, err := etcd.NewEtcd(cfg)
-	if err != nil {
-		return nil, fmt.Errorf("error starting etcd: %s", err)
-	}
-	go func() {
-		<-ctx.Done()
-		if err := e.Shutdown(); err != nil {
-			logger.Error(err)
-		}
-	}()
-
-	// Create an etcd client
-	client := e.NewEmbeddedClientWithContext(ctx)
-	if _, err := client.Get(ctx, "/sensu.io"); err != nil {
-		return nil, err
-	}
-	return client, nil
 }
 
 func handleConfig(cmd *cobra.Command, arguments []string, server bool) error {

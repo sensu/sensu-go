@@ -167,12 +167,14 @@ func TestGenericStoreCreateOrUpdate(t *testing.T) {
 		Name:       "foo",
 		StoreName:  "check_configs",
 	}
-	sv2.On("CreateOrUpdate", mock.Anything, req, mock.Anything).Return(nil)
+	cfgstore := new(mockstore.ConfigStore)
+	cfgstore.On("CreateOrUpdate", mock.Anything, req, mock.Anything).Return(nil)
+	sv2.On("GetConfigStore").Return(cfgstore)
 	store := storev2.NewGenericStore[*corev2.CheckConfig](sv2)
 	if err := store.CreateOrUpdate(context.Background(), corev2.FixtureCheckConfig("foo")); err != nil {
 		t.Fatal(err)
 	}
-	sv2.AssertCalled(t, "CreateOrUpdate", mock.Anything, req, mock.Anything)
+	cfgstore.AssertCalled(t, "CreateOrUpdate", mock.Anything, req, mock.Anything)
 }
 
 func TestGenericStoreCreateOrUpdateEntityConfig(t *testing.T) {
@@ -220,12 +222,14 @@ func TestGenericStoreUpdateIfExists(t *testing.T) {
 		Name:       "foo",
 		StoreName:  "check_configs",
 	}
-	sv2.On("UpdateIfExists", mock.Anything, req, mock.Anything).Return(nil)
+	cfgstore := new(mockstore.ConfigStore)
+	cfgstore.On("UpdateIfExists", mock.Anything, req, mock.Anything).Return(nil)
+	sv2.On("GetConfigStore").Return(cfgstore)
 	store := storev2.NewGenericStore[*corev2.CheckConfig](sv2)
 	if err := store.UpdateIfExists(context.Background(), corev2.FixtureCheckConfig("foo")); err != nil {
 		t.Fatal(err)
 	}
-	sv2.AssertCalled(t, "UpdateIfExists", mock.Anything, req, mock.Anything)
+	cfgstore.AssertCalled(t, "UpdateIfExists", mock.Anything, req, mock.Anything)
 }
 
 func TestGenericStoreUpdateIfExistsEntityConfig(t *testing.T) {
@@ -273,12 +277,14 @@ func TestGenericStoreCreateIfNotExists(t *testing.T) {
 		Name:       "foo",
 		StoreName:  "check_configs",
 	}
-	sv2.On("CreateIfNotExists", mock.Anything, req, mock.Anything).Return(nil)
+	cfgstore := new(mockstore.ConfigStore)
+	cfgstore.On("CreateIfNotExists", mock.Anything, req, mock.Anything).Return(nil)
+	sv2.On("GetConfigStore").Return(cfgstore)
 	store := storev2.NewGenericStore[*corev2.CheckConfig](sv2)
 	if err := store.CreateIfNotExists(context.Background(), corev2.FixtureCheckConfig("foo")); err != nil {
 		t.Fatal(err)
 	}
-	sv2.AssertCalled(t, "CreateIfNotExists", mock.Anything, req, mock.Anything)
+	cfgstore.AssertCalled(t, "CreateIfNotExists", mock.Anything, req, mock.Anything)
 }
 
 func TestGenericStoreCreateIfNotExistsEntityConfig(t *testing.T) {
@@ -326,7 +332,9 @@ func TestGenericStoreGet(t *testing.T) {
 		Name:       "foo",
 		StoreName:  "check_configs",
 	}
-	sv2.On("Get", mock.Anything, req).Return(mockstore.Wrapper[*corev2.CheckConfig]{Value: corev2.FixtureCheckConfig("foo")}, nil)
+	cfgstore := new(mockstore.ConfigStore)
+	cfgstore.On("Get", mock.Anything, req).Return(mockstore.Wrapper[*corev2.CheckConfig]{Value: corev2.FixtureCheckConfig("foo")}, nil)
+	sv2.On("GetConfigStore").Return(cfgstore)
 	store := storev2.NewGenericStore[*corev2.CheckConfig](sv2)
 	check, err := store.Get(context.Background(), storev2.ID{Namespace: "default", Name: "foo"})
 	if err != nil {
@@ -338,7 +346,7 @@ func TestGenericStoreGet(t *testing.T) {
 	if got, want := check.Interval, uint32(60); got != want {
 		t.Fatalf("wrong check interval: got %d, want %d", got, want)
 	}
-	sv2.AssertCalled(t, "Get", mock.Anything, req)
+	cfgstore.AssertCalled(t, "Get", mock.Anything, req)
 }
 
 func TestGenericStoreGetEntityConfig(t *testing.T) {
@@ -386,12 +394,14 @@ func TestGenericStoreDelete(t *testing.T) {
 		Name:       "foo",
 		StoreName:  "check_configs",
 	}
-	sv2.On("Delete", mock.Anything, req).Return(nil)
+	cfgstore := new(mockstore.ConfigStore)
+	cfgstore.On("Delete", mock.Anything, req).Return(nil)
+	sv2.On("GetConfigStore").Return(cfgstore)
 	store := storev2.NewGenericStore[*corev2.CheckConfig](sv2)
 	if err := store.Delete(context.Background(), storev2.ID{Namespace: "default", Name: "foo"}); err != nil {
 		t.Fatal(err)
 	}
-	sv2.AssertCalled(t, "Delete", mock.Anything, req)
+	cfgstore.AssertCalled(t, "Delete", mock.Anything, req)
 }
 
 func TestGenericStoreDeleteEntityConfig(t *testing.T) {
@@ -441,7 +451,9 @@ func TestGenericStoreList(t *testing.T) {
 	}
 	wrapper, _ := wrap.Resource(corev2.FixtureCheckConfig("foo"))
 	wrapList := wrap.List{wrapper}
-	sv2.On("List", mock.Anything, req, mock.Anything).Return(wrapList, nil)
+	cfgstore := new(mockstore.ConfigStore)
+	cfgstore.On("List", mock.Anything, req, mock.Anything).Return(wrapList, nil)
+	sv2.On("GetConfigStore").Return(cfgstore)
 	store := storev2.NewGenericStore[*corev2.CheckConfig](sv2)
 	checks, err := store.List(context.Background(), storev2.ID{Namespace: "default", Name: "foo"}, nil)
 	if err != nil {
@@ -453,7 +465,7 @@ func TestGenericStoreList(t *testing.T) {
 	if got, want := checks[0].Interval, uint32(60); got != want {
 		t.Fatalf("wrong check interval: got %d, want %d", got, want)
 	}
-	sv2.AssertCalled(t, "List", mock.Anything, req, mock.Anything)
+	cfgstore.AssertCalled(t, "List", mock.Anything, req, mock.Anything)
 }
 
 func TestGenericStoreListEntityConfig(t *testing.T) {
@@ -494,12 +506,14 @@ func TestGenericStoreListNamespace(t *testing.T) {
 
 func TestGenericStorePatch(t *testing.T) {
 	sv2 := new(mockstore.V2MockStore)
-	sv2.On("Patch", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
+	cfgstore := new(mockstore.ConfigStore)
+	cfgstore.On("Patch", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
+	sv2.On("GetConfigStore").Return(cfgstore)
 	store := storev2.NewGenericStore[*corev2.CheckConfig](sv2)
 	if err := store.Patch(context.Background(), corev2.FixtureCheckConfig("foo"), nil, nil); err != nil {
 		t.Fatal(err)
 	}
-	sv2.AssertCalled(t, "Patch", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything)
+	cfgstore.AssertCalled(t, "Patch", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything)
 }
 
 func TestGenericStorePatchEntityConfig(t *testing.T) {

@@ -15,11 +15,10 @@ import (
 	corev3 "github.com/sensu/core/v3"
 	"github.com/sensu/sensu-go/backend/liveness"
 	"github.com/sensu/sensu-go/backend/messaging"
+	"github.com/sensu/sensu-go/backend/store"
 	stor "github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/backend/store/cache"
-	storv2 "github.com/sensu/sensu-go/backend/store/v2"
 	"github.com/sensu/sensu-go/backend/store/v2/storetest"
-	"github.com/sensu/sensu-go/backend/store/v2/wrap"
 	"github.com/sensu/sensu-go/testing/mockclientv3"
 	"github.com/sensu/sensu-go/testing/mockstore"
 )
@@ -31,7 +30,7 @@ type mockDeregisterer struct {
 type keepalivedTest struct {
 	Keepalived     *Keepalived
 	MessageBus     messaging.MessageBus
-	Store          *storetest.Store
+	Store          *mockstore.V2MockStore
 	EventStore     *mockstore.MockStore
 	KeepaliveStore *storetest.KeepaliveStore
 	Deregisterer   *mockDeregisterer
@@ -71,8 +70,16 @@ func fakeFactory(name string, dead, alive liveness.EventFunc, logger logrus.Fiel
 }
 
 func newKeepalivedTest(t *testing.T, client mockclientv3.MockClientV3) *keepalivedTest {
-	store := &storetest.Store{}
+	store := new(mockstore.V2MockStore)
 	eventStore := &mockstore.MockStore{}
+	ec := new(mockstore.EntityConfigStore)
+	es := new(mockstore.EntityStateStore)
+	store.On("GetEventStore").Return(eventStore)
+	store.On("GetEntityStore").Return(eventStore)
+	store.On("GetEntityConfigStore").Return(ec)
+	store.On("GetEntityStateStore").Return(es)
+	ec.On("CreateOrUpdate", mock.Anything, mock.Anything).Return(nil)
+	es.On("CreateOrUpdate", mock.Anything, mock.Anything).Return(nil)
 	keepaliveStore := &storetest.KeepaliveStore{}
 	deregisterer := &mockDeregisterer{}
 	bus, err := messaging.NewWizardBus(messaging.WizardBusConfig{})
@@ -222,10 +229,7 @@ func TestEventProcessing(t *testing.T) {
 	event := corev2.FixtureEvent("entity", "keepalive")
 	event.Check.Status = 1
 
-	test.Store.On("CreateOrUpdate", mock.Anything, mock.MatchedBy(func(req storv2.ResourceRequest) bool {
-		return req.StoreName == new(corev3.EntityState).StoreName()
-	}), mock.Anything).Return(nil)
-
+	test.EventStore.On("CreateOrUpdate", mock.Anything, mock.Anything).Return(nil)
 	test.KeepaliveStore.On("DeleteFailingKeepalive", mock.Anything, mock.Anything).Return(nil)
 
 	test.Keepalived.keepaliveChan <- event
@@ -241,7 +245,7 @@ func (t testSubscriber) Receiver() chan<- interface{} {
 }
 
 func TestProcessRegistration(t *testing.T) {
-	type assertionFunc func(*storetest.Store)
+	type assertionFunc func(*mockstore.V2MockStore)
 
 	newEntityWithClass := func(class string) *corev2.Entity {
 		entity := corev2.FixtureEntity("agent1")
@@ -249,12 +253,10 @@ func TestProcessRegistration(t *testing.T) {
 		return entity
 	}
 
-	newEntityConfigWithClass := func(class string) storv2.Wrapper {
+	newEntityConfigWithClass := func(class string) *corev3.EntityConfig {
 		entity := corev3.FixtureEntityConfig("agent1")
 		entity.EntityClass = class
-		e, err := storv2.WrapResource(entity)
-		require.NoError(t, err)
-		return e
+		return entity
 	}
 
 	newAgentManagedEntity := func(class string) *corev2.Entity {
@@ -266,15 +268,13 @@ func TestProcessRegistration(t *testing.T) {
 		return entity
 	}
 
-	newAgentManagedEntityConfig := func(class string) storv2.Wrapper {
+	newAgentManagedEntityConfig := func(class string) *corev3.EntityConfig {
 		entity := corev3.FixtureEntityConfig("agent1")
 		entity.EntityClass = class
 		entity.Metadata.Labels = map[string]string{
 			corev2.ManagedByLabel: "sensu-agent",
 		}
-		e, err := storv2.WrapResource(entity)
-		require.NoError(t, err)
-		return e
+		return entity
 	}
 
 	firstSequenceEvent := &corev2.Event{Sequence: 1}
@@ -283,7 +283,7 @@ func TestProcessRegistration(t *testing.T) {
 		name                   string
 		entity                 *corev2.Entity
 		event                  *corev2.Event
-		storeEntity            storv2.Wrapper
+		storeEntity            *corev3.EntityConfig
 		expectedEventLen       int
 		storeGetErr            error
 		storeCreateOrUpdateErr error
@@ -325,8 +325,8 @@ func TestProcessRegistration(t *testing.T) {
 			storeEntity:      newAgentManagedEntityConfig("agent"),
 			event:            new(corev2.Event),
 			expectedEventLen: 0,
-			assertionFunc: func(store *storetest.Store) {
-				store.AssertCalled(t, "UpdateIfExists", mock.Anything, mock.Anything, mock.Anything)
+			assertionFunc: func(store *mockstore.V2MockStore) {
+				store.GetEntityConfigStore().(*mockstore.EntityConfigStore).AssertCalled(t, "UpdateIfExists", mock.Anything, mock.Anything)
 			},
 		},
 	}
@@ -337,7 +337,7 @@ func TestProcessRegistration(t *testing.T) {
 			require.NoError(t, err)
 			require.NoError(t, messageBus.Start())
 
-			store := &storetest.Store{}
+			store := &mockstore.V2MockStore{}
 
 			tsubEvent := testSubscriber{
 				ch: make(chan interface{}, 1),
@@ -361,9 +361,16 @@ func TestProcessRegistration(t *testing.T) {
 			})
 			require.NoError(t, err)
 
-			store.On("CreateIfNotExists", mock.Anything, mock.Anything, mock.Anything).Return(tc.storeCreateOrUpdateErr)
-			store.On("UpdateIfExists", mock.Anything, mock.Anything, mock.Anything).Return(tc.storeCreateOrUpdateErr)
-			store.On("Get", mock.Anything, mock.Anything).Return(tc.storeEntity, tc.storeGetErr)
+			ec := new(mockstore.EntityConfigStore)
+			es := new(mockstore.EntityStateStore)
+			store.On("GetEntityConfigStore").Return(ec)
+			store.On("GetEntityStateStore").Return(es)
+
+			ec.On("CreateIfNotExists", mock.Anything, mock.Anything).Return(tc.storeCreateOrUpdateErr)
+			es.On("CreateIfNotExists", mock.Anything, mock.Anything).Return(tc.storeCreateOrUpdateErr)
+			ec.On("UpdateIfExists", mock.Anything, mock.Anything, mock.Anything).Return(tc.storeCreateOrUpdateErr)
+			es.On("UpdateIfExists", mock.Anything, mock.Anything, mock.Anything).Return(tc.storeCreateOrUpdateErr)
+			ec.On("Get", mock.Anything, mock.Anything, mock.Anything).Return(tc.storeEntity, tc.storeGetErr)
 			err = keepalived.handleEntityRegistration(tc.entity, tc.event)
 			require.NoError(t, err)
 
@@ -421,10 +428,10 @@ func TestDeadCallbackNoEntity(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	store := &storetest.Store{}
-	store.On("Get", mock.Anything, mock.MatchedBy(func(req storv2.ResourceRequest) bool {
-		return req.StoreName == new(corev3.EntityConfig).StoreName()
-	})).Return((storv2.Wrapper)(nil), &stor.ErrNotFound{Key: "foo"})
+	stor := &mockstore.V2MockStore{}
+	ec := new(mockstore.EntityConfigStore)
+	stor.On("GetEntityConfigStore").Return(ec)
+	ec.On("Get", mock.Anything, mock.Anything, mock.Anything).Return((*corev3.EntityConfig)(nil), &store.ErrNotFound{Key: "foo"})
 
 	eventStore := &mockstore.MockStore{}
 	eventStore.On("GetEventByEntityCheck", mock.Anything, mock.Anything, mock.Anything).Return((*corev2.Event)(nil), nil)
@@ -439,7 +446,7 @@ func TestDeadCallbackNoEntity(t *testing.T) {
 
 	keepalived, err := New(Config{
 		Client:          client,
-		Store:           store,
+		Store:           stor,
 		EventStore:      eventStore,
 		KeepaliveStore:  keepaliveStore,
 		Bus:             messageBus,
@@ -472,21 +479,15 @@ func TestDeadCallbackNoEvent(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	wrapper, err := storv2.WrapResource(
-		corev3.FixtureEntityConfig("entity1"),
-		[]wrap.Option{wrap.CompressNone, wrap.EncodeJSON}...)
-	require.NoError(t, err)
-
-	store := &storetest.Store{}
-	store.On("Get", mock.Anything, mock.MatchedBy(func(req storv2.ResourceRequest) bool {
-		return req.StoreName == new(corev3.EntityConfig).StoreName()
-	})).Return(wrapper, nil)
-	store.On("Get", mock.Anything, mock.MatchedBy(func(req storv2.ResourceRequest) bool {
-		return req.StoreName == new(corev2.Event).StorePrefix()
-	})).Return((*wrap.Wrapper)(nil), &stor.ErrNotFound{Key: "foo"})
+	store := &mockstore.V2MockStore{}
+	ec := new(mockstore.EntityConfigStore)
+	store.On("GetEntityConfigStore").Return(ec)
+	ec.On("Get", mock.Anything, mock.Anything, mock.Anything).Return(corev3.FixtureEntityConfig("entity1"), nil)
 
 	eventStore := &mockstore.MockStore{}
 	eventStore.On("GetEventByEntityCheck", mock.Anything, mock.Anything, mock.Anything).Return((*corev2.Event)(nil), nil)
+
+	store.On("GetEventStore").Return(eventStore)
 
 	keepaliveStore := &storetest.KeepaliveStore{}
 	keepaliveStore.On("UpdateFailingKeepalive", mock.Anything, mock.Anything, mock.Anything).Return(nil)

@@ -12,15 +12,13 @@ import (
 
 // EntityController exposes actions in which a viewer can perform.
 type EntityController struct {
-	store   store.EntityStore
-	storev2 storev2.Interface
+	store storev2.Interface
 }
 
 // NewEntityController returns new EntityController
-func NewEntityController(store store.EntityStore, storev2 storev2.Interface) EntityController {
+func NewEntityController(store storev2.Interface) EntityController {
 	return EntityController{
-		store:   store,
-		storev2: storev2,
+		store: store,
 	}
 }
 
@@ -28,7 +26,7 @@ func NewEntityController(store store.EntityStore, storev2 storev2.Interface) Ent
 // viewer.
 func (c EntityController) Find(ctx context.Context, id string) (*corev2.Entity, error) {
 	// Fetch from store
-	result, serr := c.store.GetEntityByName(ctx, id)
+	result, serr := c.store.GetEntityStore().GetEntityByName(ctx, id)
 	if serr != nil {
 		return nil, NewError(InternalErr, serr)
 	}
@@ -42,7 +40,7 @@ func (c EntityController) Find(ctx context.Context, id string) (*corev2.Entity, 
 // List returns resources available to the viewer.
 func (c EntityController) List(ctx context.Context, pred *store.SelectionPredicate) ([]corev3.Resource, error) {
 	// Fetch from store
-	results, err := c.store.GetEntities(ctx, pred)
+	results, err := c.store.GetEntityStore().GetEntities(ctx, pred)
 	if err != nil {
 		return nil, NewError(InternalErr, err)
 	}
@@ -58,7 +56,7 @@ func (c EntityController) List(ctx context.Context, pred *store.SelectionPredica
 // Create instatiates, validates and persists new resource if viewer has access.
 func (c EntityController) Create(ctx context.Context, entity corev2.Entity) error {
 	// Check for an already existing resource
-	if e, err := c.store.GetEntityByName(ctx, entity.Name); err != nil {
+	if e, err := c.store.GetEntityStore().GetEntityByName(ctx, entity.Name); err != nil {
 		return NewError(InternalErr, err)
 	} else if e != nil {
 		return NewErrorf(AlreadyExistsErr)
@@ -70,7 +68,7 @@ func (c EntityController) Create(ctx context.Context, entity corev2.Entity) erro
 	}
 
 	// Persist the resource in the store
-	if err := c.store.UpdateEntity(ctx, &entity); err != nil {
+	if err := c.store.GetEntityStore().UpdateEntity(ctx, &entity); err != nil {
 		return NewError(InternalErr, err)
 	}
 	return nil
@@ -94,19 +92,19 @@ func (c EntityController) CreateOrReplace(ctx context.Context, entity corev2.Ent
 	//
 	// See sensu-go#3896.
 	if entity.EntityClass == corev2.EntityProxyClass {
-		if serr := c.store.UpdateEntity(ctx, &entity); serr != nil {
+		if serr := c.store.GetEntityStore().UpdateEntity(ctx, &entity); serr != nil {
 			return NewError(InternalErr, serr)
 		}
 	} else {
 		// Determine if the entity already exists
-		e, err := c.store.GetEntityByName(ctx, entity.Name)
+		e, err := c.store.GetEntityStore().GetEntityByName(ctx, entity.Name)
 		if err != nil {
 			return NewError(InternalErr, err)
 		}
 
 		// If the entity does not exist, we should just create it with the v1 store
 		if e == nil {
-			if err := c.store.UpdateEntity(ctx, &entity); err != nil {
+			if err := c.store.GetEntityStore().UpdateEntity(ctx, &entity); err != nil {
 				return NewError(InternalErr, err)
 			}
 			return nil
@@ -121,14 +119,8 @@ func (c EntityController) CreateOrReplace(ctx context.Context, entity corev2.Ent
 		config, _ := corev3.V2EntityToV3(&entity)
 		// Ensure per-entity subscription does not get removed
 		config.Subscriptions = corev2.AddEntitySubscription(config.Metadata.Name, config.Subscriptions)
-		req := storev2.NewResourceRequestFromResource(config)
 
-		wConfig, err := storev2.WrapResource(config)
-		if err != nil {
-			return err
-		}
-
-		if err := c.storev2.CreateOrUpdate(ctx, req, wConfig); err != nil {
+		if err := c.store.GetEntityConfigStore().CreateOrUpdate(ctx, config); err != nil {
 			return err
 		}
 	}

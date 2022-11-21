@@ -12,7 +12,7 @@ import (
 	storev2 "github.com/sensu/sensu-go/backend/store/v2"
 )
 
-func (h Handlers) DeleteResource(r *http.Request) (corev3.Resource, error) {
+func (h Handlers[R, T]) DeleteResource(r *http.Request) (corev3.Resource, error) {
 	params := mux.Vars(r)
 	name, err := url.PathUnescape(params["id"])
 	if err != nil {
@@ -22,11 +22,9 @@ func (h Handlers) DeleteResource(r *http.Request) (corev3.Resource, error) {
 	ctx := r.Context()
 	namespace := store.NewNamespaceFromContext(ctx)
 
-	req := storev2.NewResourceRequestFromResource(h.Resource)
-	req.Namespace = namespace
-	req.Name = name
+	gstore := storev2.NewGenericStore[R](h.Store)
 
-	if err := h.Store.Delete(ctx, req); err != nil {
+	if err := gstore.Delete(ctx, storev2.ID{Namespace: namespace, Name: name}); err != nil {
 		switch err := err.(type) {
 		case *store.ErrNotFound:
 			return nil, actions.NewErrorf(actions.NotFound)

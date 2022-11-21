@@ -14,7 +14,6 @@ import (
 	"github.com/sensu/sensu-go/backend/messaging"
 	"github.com/sensu/sensu-go/backend/secrets"
 	"github.com/sensu/sensu-go/backend/store"
-	cachev2 "github.com/sensu/sensu-go/backend/store/cache/v2"
 	storev2 "github.com/sensu/sensu-go/backend/store/v2"
 	"github.com/sensu/sensu-go/types"
 	stringsutil "github.com/sensu/sensu-go/util/strings"
@@ -27,7 +26,7 @@ var (
 // Executor executes scheduled or adhoc checks
 type Executor interface {
 	processCheck(ctx context.Context, check *corev2.CheckConfig) error
-	getEntities(ctx context.Context) ([]cachev2.Value, error)
+	getEntities(ctx context.Context) ([]EntityCacheValue, error)
 	publishProxyCheckRequests(entities []*corev3.EntityConfig, check *corev2.CheckConfig) error
 	execute(check *corev2.CheckConfig) error
 	buildRequest(check *corev2.CheckConfig) (*corev2.CheckRequest, error)
@@ -38,12 +37,12 @@ type CheckExecutor struct {
 	bus                    messaging.MessageBus
 	store                  storev2.Interface
 	namespace              string
-	entityCache            *cachev2.Resource
+	entityCache            EntityCache
 	secretsProviderManager *secrets.ProviderManager
 }
 
 // NewCheckExecutor creates a new check executor
-func NewCheckExecutor(bus messaging.MessageBus, namespace string, store storev2.Interface, cache *cachev2.Resource, secretsProviderManager *secrets.ProviderManager) *CheckExecutor {
+func NewCheckExecutor(bus messaging.MessageBus, namespace string, store storev2.Interface, cache EntityCache, secretsProviderManager *secrets.ProviderManager) *CheckExecutor {
 	return &CheckExecutor{bus: bus, namespace: namespace, store: store, entityCache: cache, secretsProviderManager: secretsProviderManager}
 }
 
@@ -53,7 +52,7 @@ func (c *CheckExecutor) processCheck(ctx context.Context, check *corev2.CheckCon
 	return processCheck(ctx, c, check)
 }
 
-func (c *CheckExecutor) getEntities(ctx context.Context) ([]cachev2.Value, error) {
+func (c *CheckExecutor) getEntities(ctx context.Context) ([]EntityCacheValue, error) {
 	return c.entityCache.Get(store.NewNamespaceFromContext(ctx)), nil
 }
 
@@ -145,12 +144,12 @@ type AdhocRequestExecutor struct {
 	ctx                    context.Context
 	cancel                 context.CancelFunc
 	listenQueueErr         chan error
-	entityCache            *cachev2.Resource
+	entityCache            EntityCache
 	secretsProviderManager *secrets.ProviderManager
 }
 
 // NewAdhocRequestExecutor returns a new AdhocRequestExecutor.
-func NewAdhocRequestExecutor(ctx context.Context, store storev2.Interface, queue types.Queue, bus messaging.MessageBus, cache *cachev2.Resource, secretsProviderManager *secrets.ProviderManager) *AdhocRequestExecutor {
+func NewAdhocRequestExecutor(ctx context.Context, store storev2.Interface, queue types.Queue, bus messaging.MessageBus, cache EntityCache, secretsProviderManager *secrets.ProviderManager) *AdhocRequestExecutor {
 	ctx, cancel := context.WithCancel(ctx)
 	executor := &AdhocRequestExecutor{
 		adhocQueue:             queue,
@@ -232,7 +231,7 @@ func (a *AdhocRequestExecutor) processCheck(ctx context.Context, check *corev2.C
 	return processCheck(ctx, a, check)
 }
 
-func (a *AdhocRequestExecutor) getEntities(ctx context.Context) ([]cachev2.Value, error) {
+func (a *AdhocRequestExecutor) getEntities(ctx context.Context) ([]EntityCacheValue, error) {
 	return a.entityCache.Get(store.NewNamespaceFromContext(ctx)), nil
 }
 
@@ -390,13 +389,10 @@ func buildRequest(check *corev2.CheckConfig, s storev2.Interface, secretsProvide
 		)
 	}
 
+	astore := storev2.NewGenericStore[*corev2.Asset](s)
 	assets := []*corev2.Asset{}
-	req := storev2.NewResourceRequestFromResource(&corev2.Asset{ObjectMeta: corev2.NewObjectMeta("", check.Namespace)})
-	list, err := s.List(ctx, req, &store.SelectionPredicate{})
+	assets, err := astore.List(ctx, storev2.ID{Namespace: check.Namespace}, &store.SelectionPredicate{})
 	if err != nil {
-		return nil, err
-	}
-	if err := list.UnwrapInto(&assets); err != nil {
 		return nil, err
 	}
 
@@ -423,13 +419,9 @@ func buildRequest(check *corev2.CheckConfig, s storev2.Interface, secretsProvide
 	// the check in the first place.
 	if len(check.CheckHooks) != 0 {
 		// Explode hooks; get hooks & filter out those that are irrelevant
-		hooks := []*corev2.HookConfig{}
-		req := storev2.NewResourceRequestFromV2Resource(&corev2.HookConfig{ObjectMeta: corev2.NewObjectMeta("", check.Namespace)})
-		list, err := s.List(ctx, req, &store.SelectionPredicate{})
+		hstore := storev2.NewGenericStore[*corev2.HookConfig](s)
+		hooks, err := hstore.List(ctx, storev2.ID{Namespace: check.Namespace}, nil)
 		if err != nil {
-			return nil, err
-		}
-		if err := list.UnwrapInto(&hooks); err != nil {
 			return nil, err
 		}
 

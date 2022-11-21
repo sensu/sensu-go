@@ -19,13 +19,11 @@ import (
 type EntitiesRouter struct {
 	controller      EntityController
 	store           storev2.Interface
-	entityStore     store.EntityStore
-	eventStore      store.EventStore
 	configSubrouter EntityConfigRouter
 }
 
 type EntityConfigRouter struct {
-	handlers handlers.Handlers
+	store storev2.Interface
 }
 
 type EntityController interface {
@@ -36,17 +34,12 @@ type EntityController interface {
 }
 
 // NewEntitiesRouter instantiates new router for controlling entities resources
-func NewEntitiesRouter(store storev2.Interface, entities store.EntityStore, events store.EventStore) *EntitiesRouter {
+func NewEntitiesRouter(store storev2.Interface) *EntitiesRouter {
 	return &EntitiesRouter{
-		controller:  actions.NewEntityController(entities, store),
-		store:       store,
-		entityStore: entities,
-		eventStore:  events,
+		controller: actions.NewEntityController(store),
+		store:      store,
 		configSubrouter: EntityConfigRouter{
-			handlers: handlers.Handlers{
-				Resource: &corev3.EntityConfig{},
-				Store:    store,
-			},
+			store: store,
 		},
 	}
 }
@@ -59,15 +52,17 @@ func (r *EntitiesRouter) Mount(parent *mux.Router) {
 	}
 
 	deleter := actions.EntityDeleter{
-		EntityStore: r.entityStore,
-		EventStore:  r.eventStore,
+		EntityStore: r.store.GetEntityStore(),
+		EventStore:  r.store.GetEventStore(),
 	}
+
+	ecHandlers := handlers.NewHandlers[*corev3.EntityConfig](r.store)
 
 	routes.Del(deleter.Delete)
 	routes.Get(r.find)
 	routes.List(r.controller.List, corev2.EntityFields)
 	routes.ListAllNamespaces(r.controller.List, "/{resource:entities}", corev2.EntityFields)
-	routes.Patch(r.configSubrouter.handlers.PatchResource)
+	routes.Patch(ecHandlers.PatchResource)
 	routes.Post(r.create)
 	routes.Put(r.createOrReplace)
 }

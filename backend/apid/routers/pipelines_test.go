@@ -10,6 +10,8 @@ import (
 
 func TestPipelinesRouter(t *testing.T) {
 	s := &mockstore.V2MockStore{}
+	cs := new(mockstore.ConfigStore)
+	s.On("GetConfigStore").Return(cs)
 	router := NewPipelinesRouter(s)
 	parentRouter := mux.NewRouter().PathPrefix(corev2.URLPrefix).Subrouter()
 	router.Mount(parentRouter)
@@ -18,8 +20,8 @@ func TestPipelinesRouter(t *testing.T) {
 	fixture := corev2.FixturePipeline("foo", "default")
 
 	tests := []routerTestCase{}
-	tests = append(tests, getTestCases(fixture)...)
-	tests = append(tests, listTestCases(empty)...)
+	tests = append(tests, getTestCases[*corev2.Pipeline](fixture)...)
+	tests = append(tests, listTestCases[*corev2.Pipeline](empty)...)
 	tests = append(tests, createTestCases(fixture)...)
 	tests = append(tests, updateTestCases(fixture)...)
 	tests = append(tests, deleteTestCases(fixture)...)

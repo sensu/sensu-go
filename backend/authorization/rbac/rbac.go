@@ -52,16 +52,9 @@ type RuleVisitFunc func(RoleBinding, corev2.Rule, error) (terminate bool)
 func (a *Authorizer) VisitRulesFor(ctx context.Context, attrs *authorization.Attributes, visitor RuleVisitFunc) {
 	namespace := corev2.ContextNamespace(ctx)
 	var empty = corev2.Rule{}
-	var crb corev2.ClusterRoleBinding
-	req := storev2.NewResourceRequestFromResource(&crb)
-	list, err := a.Store.List(ctx, req, nil)
+	crbStore := storev2.NewGenericStore[*corev2.ClusterRoleBinding](a.Store)
+	clusterRoleBindings, err := crbStore.List(ctx, storev2.ID{}, nil)
 	if err != nil {
-		if !visitor(nil, empty, err) {
-			return
-		}
-	}
-	var clusterRoleBindings []*corev2.ClusterRoleBinding
-	if err := list.UnwrapInto(&clusterRoleBindings); err != nil {
 		if !visitor(nil, empty, err) {
 			return
 		}
@@ -90,17 +83,9 @@ func (a *Authorizer) VisitRulesFor(ctx context.Context, attrs *authorization.Att
 		return
 	}
 
-	var rb corev2.RoleBinding
-	req = storev2.NewResourceRequestFromResource(&rb)
-	req.Namespace = namespace
-	list, err = a.Store.List(ctx, req, &store.SelectionPredicate{})
+	rbStore := storev2.NewGenericStore[*corev2.RoleBinding](a.Store)
+	roleBindings, err := rbStore.List(ctx, storev2.ID{Namespace: namespace}, nil)
 	if err != nil {
-		if !visitor(nil, empty, err) {
-			return
-		}
-	}
-	var roleBindings []*corev2.RoleBinding
-	if err := list.UnwrapInto(&roleBindings); err != nil {
 		if !visitor(nil, empty, err) {
 			return
 		}
@@ -195,39 +180,23 @@ func (a *Authorizer) Authorize(ctx context.Context, attrs *authorization.Attribu
 func (a *Authorizer) getRoleReferenceRules(ctx context.Context, namespace string, roleRef corev2.RoleRef) ([]corev2.Rule, error) {
 	switch roleRef.Type {
 	case "Role":
-		var role corev2.Role
-		req := storev2.NewResourceRequestFromResource(&role)
-		req.Namespace = namespace
-		req.Name = roleRef.Name
+		rStore := storev2.NewGenericStore[*corev2.Role](a.Store)
 
-		wrapper, err := a.Store.Get(ctx, req)
+		role, err := rStore.Get(ctx, storev2.ID{Namespace: namespace, Name: roleRef.Name})
 		if _, ok := err.(*store.ErrNotFound); ok {
 			return nil, ErrRoleNotFound{Role: roleRef.Name, Cluster: false}
 		} else if err != nil {
 			return nil, fmt.Errorf("could not retrieve the role %s: %s", roleRef.Name, err)
-		} else if wrapper == nil {
-			return nil, &store.ErrNotFound{Key: "?"}
-		}
-		if err := wrapper.UnwrapInto(&role); err != nil {
-			return nil, err
 		}
 		return role.Rules, nil
 
 	case "ClusterRole":
-		var role corev2.ClusterRole
-		req := storev2.NewResourceRequestFromResource(&role)
-		req.Name = roleRef.Name
-		wrapper, err := a.Store.Get(ctx, req)
+		crStore := storev2.NewGenericStore[*corev2.ClusterRole](a.Store)
+		clusterRole, err := crStore.Get(ctx, storev2.ID{Namespace: "", Name: roleRef.Name})
 		if _, ok := err.(*store.ErrNotFound); ok {
 			return nil, ErrRoleNotFound{Role: roleRef.Name, Cluster: true}
 		} else if err != nil {
 			return nil, fmt.Errorf("could not retrieve the ClusterRole %s: %s", roleRef.Name, err.Error())
-		} else if wrapper == nil {
-			return nil, &store.ErrNotFound{Key: "?"}
-		}
-		var clusterRole corev2.ClusterRole
-		if err := wrapper.UnwrapInto(&clusterRole); err != nil {
-			return nil, err
 		}
 		return clusterRole.Rules, nil
 

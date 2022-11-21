@@ -10,7 +10,6 @@ import (
 	"github.com/sensu/sensu-go/backend/messaging"
 	"github.com/sensu/sensu-go/backend/ringv2"
 	"github.com/sensu/sensu-go/backend/secrets"
-	cachev2 "github.com/sensu/sensu-go/backend/store/cache/v2"
 	storev2 "github.com/sensu/sensu-go/backend/store/v2"
 	"github.com/sirupsen/logrus"
 )
@@ -42,14 +41,14 @@ type RoundRobinIntervalScheduler struct {
 	ringPool               *ringv2.RingPool
 	executor               *CheckExecutor
 	cancels                map[string]ringCancel
-	entityCache            *cachev2.Resource
+	entityCache            EntityCache
 	mu                     sync.Mutex
 	proxyEntities          []*corev3.EntityConfig
 	stopWg                 sync.WaitGroup
 }
 
 // NewRoundRobinIntervalScheduler initializes a RoundRobinIntervalScheduler
-func NewRoundRobinIntervalScheduler(ctx context.Context, store storev2.Interface, bus messaging.MessageBus, pool *ringv2.RingPool, check *corev2.CheckConfig, cache *cachev2.Resource, secretsProviderManager *secrets.ProviderManager) *RoundRobinIntervalScheduler {
+func NewRoundRobinIntervalScheduler(ctx context.Context, store storev2.Interface, bus messaging.MessageBus, pool *ringv2.RingPool, check *corev2.CheckConfig, cache EntityCache, secretsProviderManager *secrets.ProviderManager) *RoundRobinIntervalScheduler {
 	sched := &RoundRobinIntervalScheduler{
 		store:             store,
 		bus:               bus,

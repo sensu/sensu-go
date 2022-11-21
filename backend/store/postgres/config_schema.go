@@ -34,8 +34,17 @@ CREATE TRIGGER configuration_updated_at BEFORE UPDATE
     refresh_updated_at_column();
 `
 
-const CreateConfigIfNotExistsQuery = `INSERT INTO configuration (api_version, api_type, namespace, name, labels, annotations, resource)
-    VALUES ($1, $2, $3, $4, $5, $6, $7);`
+const CreateConfigIfNotExistsQuery = `
+INSERT INTO configuration ( api_version
+						  , api_type
+						  , namespace
+						  , name
+						  , labels
+						  , annotations
+						  , resource
+)
+VALUES ($1, $2, $3, $4, $5, $6, $7)
+ON CONFLICT DO NOTHING;`
 
 const CreateOrUpdateConfigQuery = `INSERT INTO configuration (api_version, api_type, namespace, name, labels, annotations, resource)
     VALUES ($1, $2, $3, $4, $5, $6, $7)

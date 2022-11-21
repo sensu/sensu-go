@@ -34,11 +34,8 @@ func NewCheckController(store storev2.Interface, getter types.QueueGetter) Check
 // viewer.
 func (a CheckController) Find(ctx context.Context, name string) (*corev2.CheckConfig, error) {
 	// Fetch from store
-	var check corev2.CheckConfig
-	check.Name = name
-	check.Namespace = corev2.ContextNamespace(ctx)
-	req := storev2.NewResourceRequestFromResource(&check)
-	wrapper, err := a.store.Get(ctx, req)
+	cstore := storev2.NewGenericStore[*corev2.CheckConfig](a.store)
+	check, err := cstore.Get(ctx, storev2.ID{Namespace: corev2.ContextNamespace(ctx), Name: name})
 	if err != nil {
 		if _, ok := err.(*store.ErrNotFound); ok {
 			return nil, NewErrorf(NotFound)
@@ -47,11 +44,7 @@ func (a CheckController) Find(ctx context.Context, name string) (*corev2.CheckCo
 		}
 	}
 
-	if err := wrapper.UnwrapInto(&check); err != nil {
-		return nil, NewError(InternalErr, err)
-	}
-
-	return &check, nil
+	return check, nil
 }
 
 // AddCheckHook adds an association between a hook and a check
@@ -105,19 +98,6 @@ func (a CheckController) RemoveCheckHook(ctx context.Context, checkName string, 
 	})
 }
 
-func (a CheckController) updateCheckConfig(ctx context.Context, check *corev2.CheckConfig) error {
-	req := storev2.NewResourceRequestFromResource(check)
-	wrapper, err := storev2.WrapResource(check)
-	if err != nil {
-		return NewError(InternalErr, err)
-	}
-	if err := a.store.CreateOrUpdate(ctx, req, wrapper); err != nil {
-		return NewError(InternalErr, err)
-	}
-
-	return nil
-}
-
 func (a CheckController) findAndUpdateCheckConfig(
 	ctx context.Context,
 	name string,
@@ -140,7 +120,8 @@ func (a CheckController) findAndUpdateCheckConfig(
 	}
 
 	// Update
-	return a.updateCheckConfig(ctx, check)
+	cstore := storev2.NewGenericStore[*corev2.CheckConfig](a.store)
+	return cstore.CreateOrUpdate(ctx, check)
 }
 
 // QueueAdhocRequest takes a check request and adds it to the queue for
