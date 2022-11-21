@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"reflect"
 
+	corev2 "github.com/sensu/core/v2"
 	corev3 "github.com/sensu/core/v3"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/backend/store/patch"
@@ -38,6 +39,10 @@ func (v *V2MockStore) GetEventStore() store.EventStore {
 
 func (v *V2MockStore) GetEntityStore() store.EntityStore {
 	return v.Called().Get(0).(store.EntityStore)
+}
+
+func (v *V2MockStore) GetSilencesStore() storev2.SilencesStore {
+	return v.Called().Get(0).(storev2.SilencesStore)
 }
 
 type ConfigStore struct {
@@ -294,4 +299,42 @@ func (n *NamespaceStore) Patch(ctx context.Context, ns string, p patch.Patcher, 
 func (n *NamespaceStore) IsEmpty(ctx context.Context, ns string) (bool, error) {
 	args := n.Called(ctx, ns)
 	return args.Bool(0), args.Error(1)
+}
+
+type SilencesStore struct {
+	mock.Mock
+}
+
+func (s *SilencesStore) GetSilences(ctx context.Context, namespace string) ([]*corev2.Silenced, error) {
+	args := s.Called(ctx, namespace)
+	return args.Get(0).([]*corev2.Silenced), args.Error(1)
+
+}
+
+func (s *SilencesStore) GetSilencesByCheck(ctx context.Context, namespace, check string) ([]*corev2.Silenced, error) {
+	args := s.Called(ctx, namespace, check)
+	return args.Get(0).([]*corev2.Silenced), args.Error(1)
+}
+
+func (s *SilencesStore) GetSilencesBySubscription(ctx context.Context, namespace string, subscriptions []string) ([]*corev2.Silenced, error) {
+	args := s.Called(ctx, namespace, subscriptions)
+	return args.Get(0).([]*corev2.Silenced), args.Error(1)
+}
+
+func (s *SilencesStore) GetSilenceByName(ctx context.Context, namespace, name string) (*corev2.Silenced, error) {
+	args := s.Called(ctx, namespace, name)
+	return args.Get(0).(*corev2.Silenced), args.Error(1)
+}
+
+func (s *SilencesStore) UpdateSilence(ctx context.Context, si *corev2.Silenced) error {
+	return s.Called(ctx, si).Error(0)
+}
+
+func (s *SilencesStore) GetSilencesByName(ctx context.Context, namespace string, names []string) ([]*corev2.Silenced, error) {
+	args := s.Called(ctx, namespace, names)
+	return args.Get(0).([]*corev2.Silenced), args.Error(1)
+}
+
+func (s *SilencesStore) DeleteSilences(ctx context.Context, namespace string, names []string) error {
+	return s.Called(ctx, namespace, names).Error(0)
 }

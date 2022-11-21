@@ -61,7 +61,6 @@ const (
 	flagDashboardWriteTimeout = "dashboard-write-timeout"
 	flagDeregistrationHandler = "deregistration-handler"
 	flagCacheDir              = "cache-dir"
-	flagStateDir              = "state-dir"
 	flagCertFile              = "cert-file"
 	flagKeyFile               = "key-file"
 	flagTrustedCAFile         = "trusted-ca-file"
@@ -165,8 +164,6 @@ func StartCommand(initialize InitializeFunc) *cobra.Command {
 			}
 			logrus.SetLevel(level)
 
-			devMode := viper.GetBool(flagDevMode)
-
 			cfg := &backend.Config{
 				AgentHost:             viper.GetString(flagAgentHost),
 				AgentPort:             viper.GetInt(flagAgentPort),
@@ -184,9 +181,7 @@ func StartCommand(initialize InitializeFunc) *cobra.Command {
 				DashboardWriteTimeout: viper.GetDuration(flagDashboardWriteTimeout),
 				DeregistrationHandler: viper.GetString(flagDeregistrationHandler),
 				CacheDir:              viper.GetString(flagCacheDir),
-				StateDir:              viper.GetString(flagStateDir),
 
-				DevMode:                        devMode,
 				Labels:                         viper.GetStringMapString(flagLabels),
 				Annotations:                    viper.GetStringMapString(flagAnnotations),
 				DisablePlatformMetrics:         viper.GetBool(flagDisablePlatformMetrics),
@@ -207,22 +202,8 @@ func StartCommand(initialize InitializeFunc) *cobra.Command {
 				},
 			}
 
-			if cfg.DevMode && cfg.CacheDir == "" {
-				var err error
-				cfg.CacheDir, err = os.MkdirTemp("", "sensu-cache")
-				if err != nil {
-					return err
-				}
-			} else if cfg.CacheDir == "" {
+			if cfg.CacheDir == "" {
 				return errors.New("cache dir not set")
-			}
-
-			if cfg.DevMode && cfg.StateDir == "" {
-				var err error
-				cfg.StateDir, err = os.MkdirTemp("", "sensu-state")
-				if err != nil {
-					return err
-				}
 			}
 
 			if flag := cmd.Flags().Lookup(flagLabels); flag != nil && flag.Changed {
@@ -264,7 +245,7 @@ func StartCommand(initialize InitializeFunc) *cobra.Command {
 
 			ctx, cancel := context.WithCancel(context.Background())
 
-			pgDB, err = newPostgresPool(ctx, cfg.Store.PostgresConfigurationStore.DSN, false)
+			pgDB, err = newPostgresPool(ctx, cfg.Store.PostgresConfigurationStore.DSN)
 			if err != nil {
 				return err
 			}
@@ -299,19 +280,14 @@ func StartCommand(initialize InitializeFunc) *cobra.Command {
 	return cmd
 }
 
-func newPostgresPool(ctx context.Context, dsn string, stateDB bool) (*pgxpool.Pool, error) {
+func newPostgresPool(ctx context.Context, dsn string) (*pgxpool.Pool, error) {
 	pgxConfig, err := pgxpool.ParseConfig(dsn)
 	if err != nil {
 		return nil, err
 	}
 
 	// Create the event store, which runs on top of postgres
-	var db *pgxpool.Pool
-	if stateDB {
-		db, err = postgres.OpenStateDB(ctx, pgxConfig, true)
-	} else {
-		db, err = postgres.OpenConfigDB(ctx, pgxConfig, true)
-	}
+	db, err := postgres.Open(ctx, pgxConfig, true)
 	if err != nil {
 		return nil, err
 	}
@@ -449,7 +425,6 @@ func flagSet(server bool) *pflag.FlagSet {
 		flagSet.Duration(flagDashboardWriteTimeout, viper.GetDuration(flagDashboardWriteTimeout), "maximum duration before timing out writes of responses")
 		flagSet.String(flagDeregistrationHandler, viper.GetString(flagDeregistrationHandler), "default deregistration handler")
 		flagSet.String(flagCacheDir, viper.GetString(flagCacheDir), "path to store cached data")
-		flagSet.StringP(flagStateDir, "d", viper.GetString(flagStateDir), "path to sensu state storage")
 		flagSet.String(flagCertFile, viper.GetString(flagCertFile), "TLS certificate in PEM format")
 		flagSet.String(flagKeyFile, viper.GetString(flagKeyFile), "TLS certificate key in PEM format")
 		flagSet.String(flagTrustedCAFile, viper.GetString(flagTrustedCAFile), "TLS CA certificate bundle in PEM format")

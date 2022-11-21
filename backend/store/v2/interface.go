@@ -17,6 +17,7 @@ type Interface interface {
 	NamespaceStoreGetter
 	EventStoreGetter
 	EntityStoreGetter
+	SilencesStoreGetter
 }
 
 // Wrapper is an abstraction of a store wrapper.
@@ -60,6 +61,11 @@ type EventStoreGetter interface {
 // EntityStoreGetter gets you an EntityStore.
 type EntityStoreGetter interface {
 	GetEntityStore() store.EntityStore
+}
+
+// SilencesStoreGetter gets you a SilencesStore
+type SilencesStoreGetter interface {
+	GetSilencesStore() SilencesStore
 }
 
 // ConfigStore specifies the interface of a v2 store.
@@ -243,8 +249,20 @@ type SilencesStore interface {
 
 	// GetSilencesByCheck gets a list of silences belonging to the provided namespace and check.
 	GetSilencesByCheck(ctx context.Context, namespace, check string) ([]*corev2.Silenced, error)
+
+	// GetSilencesBySubscription gets a list of silences belonging to the provided namespace and matching
+	// the subscriptions provided.
 	GetSilencesBySubscription(ctx context.Context, namespace string, subscriptions []string) ([]*corev2.Silenced, error)
+
+	// GetSilenceByName gets an individual silence by name
 	GetSilenceByName(ctx context.Context, namespace, name string) (*corev2.Silenced, error)
+
+	// UpdateSilence updates a silence
 	UpdateSilence(ctx context.Context, si *corev2.Silenced) error
+
+	// GetSilencesByName gets a list of silences matching the provided names
 	GetSilencesByName(ctx context.Context, namespace string, names []string) ([]*corev2.Silenced, error)
+
+	// DeleteSilences deletes one or more named silences
+	DeleteSilences(ctx context.Context, namespace string, names []string) error
 }

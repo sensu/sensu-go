@@ -82,6 +82,10 @@ func (s *Store) GetEntityStore() store.EntityStore {
 	}
 }
 
+func (s *Store) GetSilencesStore() storev2.SilencesStore {
+	return &SilenceStore{db: s.db}
+}
+
 const pgUniqueViolationCode = "23505"
 
 type DBI interface {

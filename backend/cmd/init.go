@@ -170,19 +170,14 @@ func InitCommand() *cobra.Command {
 func initializeStore(cfg initConfig) error {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
-	pgConfigDB, err := newPostgresPool(ctx, cfg.Store.PostgresConfigurationStore.DSN, false)
+	pgdb, err := newPostgresPool(ctx, cfg.Store.PostgresConfigurationStore.DSN)
 	if err != nil {
 		return err
 	}
-	defer pgConfigDB.Close()
+	defer pgdb.Close()
 
-	pgStateDB, err := newPostgresPool(ctx, cfg.Store.PostgresStateStore.DSN, true)
-	if err != nil {
-		return err
-	}
-	defer pgStateDB.Close()
-
-	configStore := postgres.NewConfigStore(pgConfigDB, pgStateDB)
-	namespaceStore := postgres.NewNamespaceStore(pgStateDB)
-	return seeds.SeedCluster(ctx, configStore, namespaceStore, cfg.SeedConfig)
+	store := postgres.NewStore(postgres.StoreConfig{
+		DB: pgdb,
+	})
+	return seeds.SeedCluster(ctx, store, cfg.SeedConfig)
 }

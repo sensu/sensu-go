@@ -10,7 +10,7 @@ import (
 	storev2 "github.com/sensu/sensu-go/backend/store/v2"
 )
 
-func GetClusterID(ctx context.Context, s storev2.ConfigStore) (string, error) {
+func GetClusterID(ctx context.Context, s storev2.Interface) (string, error) {
 	// first try to create a new cluster ID
 	clusterID := uuid.New().String()
 	clusterConfig := &corev3.ClusterConfig{

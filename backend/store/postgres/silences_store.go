@@ -10,7 +10,7 @@ import (
 )
 
 type SilenceStore struct {
-	db *pgxpool.Pool
+	db DBI
 }
 
 func NewSilenceStore(db *pgxpool.Pool) *SilenceStore {

@@ -9,7 +9,6 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/jackc/pgx/v4/pgxpool"
 	"github.com/lib/pq"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/sensu/sensu-go/backend/resource"
@@ -157,7 +156,7 @@ func errorReporter(event pq.ListenerEventType, err error) {
 // Initialize instantiates a Backend struct with the provided config, which creates
 // a list of daemons. The daemons will be started according to their position in the
 // b.Daemons list, and stopped in reverse order
-func Initialize(ctx context.Context, pgdb *pgxpool.Pool, config *Config) (*Backend, error) {
+func Initialize(ctx context.Context, pgdb postgres.DBI, config *Config) (*Backend, error) {
 	var err error
 	// Initialize a Backend struct
 	b := &Backend{Cfg: config}
@@ -377,7 +376,7 @@ func Initialize(ctx context.Context, pgdb *pgxpool.Pool, config *Config) (*Backe
 		HandlerClient:     api.NewHandlerClient(b.Store, auth),
 		HealthController:  actions.HealthController{},
 		MutatorClient:     api.NewMutatorClient(b.Store, auth),
-		SilencedClient:    api.NewSilencedClient(b.Store.GetSilenceStore(), auth),
+		SilencedClient:    api.NewSilencedClient(b.Store.GetSilencesStore(), auth),
 		NamespaceClient:   api.NewNamespaceClient(b.Store, auth),
 		HookClient:        api.NewHookConfigClient(b.Store, auth),
 		UserClient:        api.NewUserClient(b.Store, auth),
@@ -397,8 +396,7 @@ func Initialize(ctx context.Context, pgdb *pgxpool.Pool, config *Config) (*Backe
 		WriteTimeout:   config.APIWriteTimeout,
 		URL:            config.APIURL,
 		Bus:            bus,
-		Store:          b.ConfigStore,
-		EventStore:     b.EventStore,
+		Store:          b.Store,
 		TLS:            config.TLS,
 		Authenticator:  authenticator,
 		ClusterVersion: clusterVersion,
@@ -433,7 +431,7 @@ func Initialize(ctx context.Context, pgdb *pgxpool.Pool, config *Config) (*Backe
 		Host:          config.AgentHost,
 		Port:          config.AgentPort,
 		Bus:           bus,
-		Store:         b.ConfigStore,
+		Store:         b.Store,
 		TLS:           config.AgentTLSOptions,
 		WriteTimeout:  config.AgentWriteTimeout,
 		Watcher:       entityConfigWatcher,

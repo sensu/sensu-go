@@ -8,14 +8,13 @@ import (
 	"github.com/google/uuid"
 
 	corev2 "github.com/sensu/core/v2"
+	corev3 "github.com/sensu/core/v3"
 	"github.com/sensu/sensu-go/backend/messaging"
 	"github.com/sensu/sensu-go/backend/silenced"
 	"github.com/sensu/sensu-go/backend/store"
 	cachev2 "github.com/sensu/sensu-go/backend/store/cache/v2"
 	storev2 "github.com/sensu/sensu-go/backend/store/v2"
 )
-
-type SilencedCache *cachev2.Resource[*corev2.Silenced, corev2.Silenced]
 
 // A Deregisterer provides a mechanism for deregistering entities and
 // notifying the rest of the backend when a deregistration occurs.
@@ -25,12 +24,14 @@ type Deregisterer interface {
 	Deregister(e *corev2.Entity) error
 }
 
+type SilencesCache *cachev2.Resource[*corev2.Silenced, corev2.Silenced]
+
 // Deregistration is an adapter for deregistering an entity from the store and
 // publishing a deregistration event to WizardBus.
 type Deregistration struct {
 	Store         storev2.Interface
 	MessageBus    messaging.MessageBus
-	SilencedCache SilencedCache
+	SilencedCache SilencesCache
 	StoreTimeout  time.Duration
 }
 
@@ -40,7 +41,8 @@ func (d *Deregistration) Deregister(entity *corev2.Entity) error {
 	tctx, cancel := context.WithTimeout(ctx, d.StoreTimeout)
 	defer cancel()
 
-	if err := d.Store.GetEntityStore().DeleteEntityByName(tctx, entity.Name); err != nil {
+	ecstore := storev2.NewGenericStore[*corev3.EntityConfig](d.Store)
+	if err := ecstore.Delete(tctx, storev2.ID{Namespace: entity.Namespace, Name: entity.Name}); err != nil {
 		return fmt.Errorf("error deleting entity in store: %s", err)
 	}
 

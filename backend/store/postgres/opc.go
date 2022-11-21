@@ -7,15 +7,14 @@ import (
 	"time"
 
 	"github.com/jackc/pgx/v4"
-	"github.com/jackc/pgx/v4/pgxpool"
 	"github.com/sensu/sensu-go/backend/store"
 )
 
 type OPC struct {
-	db *pgxpool.Pool
+	db DBI
 }
 
-func NewOPC(db *pgxpool.Pool) *OPC {
+func NewOPC(db DBI) *OPC {
 	return &OPC{db: db}
 }
 
