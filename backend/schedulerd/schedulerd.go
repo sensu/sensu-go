@@ -2,15 +2,17 @@ package schedulerd
 
 import (
 	"context"
+	"strings"
 
+	time "github.com/echlebek/timeproxy"
 	"github.com/prometheus/client_golang/prometheus"
+	corev2 "github.com/sensu/core/v2"
 	corev3 "github.com/sensu/core/v3"
 	"github.com/sensu/sensu-go/backend/messaging"
 	"github.com/sensu/sensu-go/backend/ringv2"
 	"github.com/sensu/sensu-go/backend/secrets"
 	cachev2 "github.com/sensu/sensu-go/backend/store/cache/v2"
 	storev2 "github.com/sensu/sensu-go/backend/store/v2"
-	"github.com/sensu/sensu-go/types"
 )
 
 var (
@@ -41,45 +43,56 @@ var (
 			Help: "Number of active round robin cron check schedulers on this backend.",
 		},
 		[]string{"namespace"})
+	schedRefreshDuration = prometheus.NewHistogram(
+		prometheus.HistogramOpts{
+			Name:    "sensu_go_schedulerd_refresh_duration",
+			Help:    "Duration of schedulerd's refresh opration in seconds",
+			Buckets: []float64{0.005, 0.01, 0.1, 0.25, 0.5, 1, 2.5, 5, 10},
+		},
+	)
 )
 
 // Schedulerd handles scheduling check requests for each check's
 // configured interval and publishing to the message bus.
 type Schedulerd struct {
+	refreshInterval        time.Duration
 	store                  storev2.Interface
-	queueGetter            types.QueueGetter
 	bus                    messaging.MessageBus
-	checkWatcher           *CheckWatcher
-	adhocRequestExecutor   *AdhocRequestExecutor
 	ctx                    context.Context
 	cancel                 context.CancelFunc
 	errChan                chan error
 	ringPool               *ringv2.RingPool
 	entityCache            EntityCache
 	secretsProviderManager *secrets.ProviderManager
-}
 
-// Option is a functional option.
-type Option func(*Schedulerd) error
+	checks     namespacedChecks
+	schedulers map[string]Scheduler
+}
 
 // Config configures Schedulerd.
 type Config struct {
 	Store                  storev2.Interface
-	QueueGetter            types.QueueGetter
 	RingPool               *ringv2.RingPool
 	Bus                    messaging.MessageBus
 	SecretsProviderManager *secrets.ProviderManager
+	RefreshInterval        time.Duration
 }
 
 // New creates a new Schedulerd.
-func New(ctx context.Context, c Config, opts ...Option) (*Schedulerd, error) {
+func New(ctx context.Context, c Config) (*Schedulerd, error) {
 	s := &Schedulerd{
+		refreshInterval:        c.RefreshInterval,
 		store:                  c.Store,
-		queueGetter:            c.QueueGetter,
 		bus:                    c.Bus,
 		errChan:                make(chan error, 1),
 		ringPool:               c.RingPool,
 		secretsProviderManager: c.SecretsProviderManager,
+
+		checks:     make(namespacedChecks),
+		schedulers: make(map[string]Scheduler),
+	}
+	if s.refreshInterval <= 0 {
+		s.refreshInterval = time.Second * 5
 	}
 	s.ctx, s.cancel = context.WithCancel(ctx)
 	cache, err := cachev2.New[*corev3.EntityConfig](s.ctx, c.Store, true)
@@ -87,15 +100,7 @@ func New(ctx context.Context, c Config, opts ...Option) (*Schedulerd, error) {
 		return nil, err
 	}
 	s.entityCache = cache
-	s.checkWatcher = NewCheckWatcher(s.ctx, c.Bus, c.Store, c.RingPool, cache, s.secretsProviderManager)
-	// FIXME(eric): make adhoc scheduling work again
-	// s.adhocRequestExecutor = NewAdhocRequestExecutor(s.ctx, s.store, s.queueGetter.GetQueue(adhocQueueName), s.bus, s.entityCache, s.secretsProviderManager)
 
-	for _, o := range opts {
-		if err := o(s); err != nil {
-			return nil, err
-		}
-	}
 	return s, nil
 }
 
@@ -105,7 +110,101 @@ func (s *Schedulerd) Start() error {
 	_ = prometheus.Register(cronCounter)
 	_ = prometheus.Register(rrIntervalCounter)
 	_ = prometheus.Register(rrCronCounter)
-	return s.checkWatcher.Start()
+	_ = prometheus.Register(schedRefreshDuration)
+	return s.start()
+}
+
+// start initializes schedulerd and begins polling for scheduling state changes
+func (s *Schedulerd) start() error {
+	if err := s.refresh(); err != nil {
+		return err
+	}
+	go func() {
+		tick := time.NewTicker(s.refreshInterval)
+		for {
+			select {
+			case <-s.ctx.Done():
+				return
+			case <-tick.C:
+				if err := s.refresh(); err != nil {
+					logger.WithError(err).Error("error refreshing scheduler")
+				}
+			}
+		}
+	}()
+	return nil
+}
+
+// refresh the desired scheduler state
+func (s *Schedulerd) refresh() error {
+	timer := prometheus.NewTimer(schedRefreshDuration)
+	defer timer.ObserveDuration()
+	checkStore := storev2.NewGenericStore[*corev2.CheckConfig](s.store)
+	next, err := checkStore.List(s.ctx, corev2.ObjectMeta{}, nil)
+	if err != nil {
+		return err
+	}
+	added, changed, removed := s.checks.Update(next)
+	for _, check := range added {
+		// Guard against updates while the daemon is shutting down
+		if err := s.ctx.Err(); err != nil {
+			return err
+		}
+
+		// Guard against creating a duplicate scheduler; schedulers are able to update
+		// their internal state with any changes that occur to their associated check.
+		// likely obsolete now that we've migrated off etcd watchers
+		key := concatUniqueKey(check.Name, check.Namespace)
+		if existing := s.schedulers[key]; existing != nil {
+			if existing.Type() == GetSchedulerType(check) {
+				logger.Error("scheduler already exists")
+				return nil
+			}
+			if err := existing.Stop(); err != nil {
+				return err
+			}
+		}
+
+		var scheduler Scheduler
+
+		switch GetSchedulerType(check) {
+		case IntervalType:
+			scheduler = NewIntervalScheduler(s.ctx, check, s.makeExecutor(check.Namespace))
+		case CronType:
+			scheduler = NewCronScheduler(s.ctx, check, s.makeExecutor(check.Namespace))
+		case RoundRobinIntervalType:
+			scheduler = NewRoundRobinIntervalScheduler(s.ctx, check, s.makeExecutor(check.Namespace), s.ringPool, s.entityCache)
+		case RoundRobinCronType:
+			scheduler = NewRoundRobinCronScheduler(s.ctx, check, s.makeExecutor(check.Namespace), s.ringPool, s.entityCache)
+		default:
+			logger.Error("bad scheduler type, falling back to interval scheduler")
+			scheduler = NewIntervalScheduler(s.ctx, check, s.makeExecutor(check.Namespace))
+		}
+
+		// Start scheduling check
+		scheduler.Start()
+
+		// Register new check scheduler
+		s.schedulers[key] = scheduler
+	}
+
+	for _, check := range changed {
+		key := concatUniqueKey(check.Name, check.Namespace)
+		s.schedulers[key].Interrupt(check)
+	}
+	for _, check := range removed {
+		key := concatUniqueKey(check.Name, check.Namespace)
+		if err := s.schedulers[key].Stop(); err != nil {
+			logger.WithError(err).Error("unexpected error stopping scheduler")
+		}
+		delete(s.schedulers, key)
+	}
+	return nil
+
+}
+
+func (s *Schedulerd) makeExecutor(namespace string) *CheckExecutor {
+	return NewCheckExecutor(s.bus, namespace, s.store, s.entityCache, s.secretsProviderManager)
 }
 
 // Stop the scheduler daemon.
@@ -123,4 +222,8 @@ func (s *Schedulerd) Err() <-chan error {
 // Name returns the daemon name
 func (s *Schedulerd) Name() string {
 	return "schedulerd"
+}
+
+func concatUniqueKey(args ...string) string {
+	return strings.Join(args, "-")
 }

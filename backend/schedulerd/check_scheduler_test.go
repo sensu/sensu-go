@@ -14,17 +14,14 @@ import (
 	corev2 "github.com/sensu/core/v2"
 	corev3 "github.com/sensu/core/v3"
 	"github.com/sensu/sensu-go/backend/messaging"
-	"github.com/sensu/sensu-go/backend/queue"
 	"github.com/sensu/sensu-go/backend/secrets"
-	"github.com/sensu/sensu-go/backend/store"
 	cachev2 "github.com/sensu/sensu-go/backend/store/cache/v2"
-	"github.com/sensu/sensu-go/backend/store/v2/wrap"
 	"github.com/sensu/sensu-go/testing/mockstore"
 )
 
 type TestIntervalScheduler struct {
 	check     *corev2.CheckConfig
-	exec      Executor
+	exec      *CheckExecutor
 	msgBus    *messaging.WizardBus
 	scheduler *IntervalScheduler
 	channel   chan interface{}
@@ -36,7 +33,7 @@ func (tcs *TestIntervalScheduler) Receiver() chan<- interface{} {
 
 type TestCronScheduler struct {
 	check     *corev2.CheckConfig
-	exec      Executor
+	exec      *CheckExecutor
 	msgBus    *messaging.WizardBus
 	scheduler *CronScheduler
 	channel   chan interface{}
@@ -68,23 +65,18 @@ func newIntervalScheduler(ctx context.Context, t *testing.T, executor string) *T
 	hook := request.Hooks[0]
 	scheduler.check = request.Config
 	scheduler.check.Interval = 1
-	s := &mockstore.V2MockStore{}
-	cs := new(mockstore.ConfigStore)
-	s.On("GetConfigStore").Return(cs)
-	ecstore := new(mockstore.EntityConfigStore)
-	ecstore.On("List", mock.Anything, mock.Anything, mock.Anything).Return(([]*corev3.EntityConfig)(nil), nil)
-	s.On("GetEntityConfigStore").Return(ecstore)
-
-	cs.On("List", mock.Anything, mock.MatchedBy(isAssetResourceRequest), &store.SelectionPredicate{}).
+	es := &mockstore.EntityConfigStore{}
+	es.On("List", mock.Anything, mock.Anything, mock.Anything).Return([]*corev3.EntityConfig{}, nil)
+	cs := &mockstore.ConfigStore{}
+	cs.On("List", mock.Anything, mock.MatchedBy(isAssetResourceRequest), mock.Anything).
 		Return(mockstore.WrapList[*corev2.Asset]{&asset}, nil)
 
-	cs.On("List", mock.Anything, mock.MatchedBy(isHookResourceRequest), &store.SelectionPredicate{}).
+	cs.On("List", mock.Anything, mock.MatchedBy(isHookResourceRequest), mock.Anything).
 		Return(mockstore.WrapList[*corev2.HookConfig]{&hook}, nil)
 
-	wrappedCheck, err := wrap.Resource(scheduler.check)
-	require.NoError(t, err)
-	cs.On("Get", mock.Anything, mock.MatchedBy(isCheckResourceRequest)).
-		Return(wrappedCheck, nil)
+	s := &mockstore.V2MockStore{}
+	s.On("GetConfigStore").Return(cs)
+	s.On("GetEntityConfigStore").Return(es)
 
 	bus, err := messaging.NewWizardBus(messaging.WizardBusConfig{})
 	require.NoError(t, err)
@@ -95,16 +87,11 @@ func newIntervalScheduler(ctx context.Context, t *testing.T, executor string) *T
 	if err != nil {
 		t.Fatal(err)
 	}
-	scheduler.scheduler = NewIntervalScheduler(ctx, s, scheduler.msgBus, scheduler.check, cache, pm)
+	exec := NewCheckExecutor(scheduler.msgBus, "default", s, cache, pm)
+	scheduler.scheduler = NewIntervalScheduler(ctx, scheduler.check, exec)
+	scheduler.exec = exec
 
 	assert.NoError(scheduler.msgBus.Start())
-
-	switch executor {
-	case "adhoc":
-		scheduler.exec = NewAdhocRequestExecutor(ctx, s, &queue.Memory{}, scheduler.msgBus, cache, pm)
-	default:
-		scheduler.exec = NewCheckExecutor(scheduler.msgBus, "default", s, cache, pm)
-	}
 
 	return scheduler
 }
@@ -123,24 +110,18 @@ func newCronScheduler(ctx context.Context, t *testing.T, executor string) *TestC
 	scheduler.check = request.Config
 	scheduler.check.Interval = 0
 	scheduler.check.Cron = "* * * * *"
-	s := &mockstore.V2MockStore{}
-	cs := new(mockstore.ConfigStore)
-	s.On("GetConfigStore").Return(cs)
-	ecstore := new(mockstore.EntityConfigStore)
-	ecstore.On("List", mock.Anything, mock.Anything, mock.Anything).Return(([]*corev3.EntityConfig)(nil), nil)
-	s.On("GetEntityConfigStore").Return(ecstore)
-
-	cs.On("List", mock.Anything, mock.MatchedBy(isAssetResourceRequest), &store.SelectionPredicate{}).
+	es := &mockstore.EntityConfigStore{}
+	es.On("List", mock.Anything, mock.Anything, mock.Anything).Return([]*corev3.EntityConfig{}, nil)
+	cs := &mockstore.ConfigStore{}
+	cs.On("List", mock.Anything, mock.MatchedBy(isAssetResourceRequest), mock.Anything).
 		Return(mockstore.WrapList[*corev2.Asset]{&asset}, nil)
 
-	cs.On("List", mock.Anything, mock.MatchedBy(isHookResourceRequest), &store.SelectionPredicate{}).
+	cs.On("List", mock.Anything, mock.MatchedBy(isHookResourceRequest), mock.Anything).
 		Return(mockstore.WrapList[*corev2.HookConfig]{&hook}, nil)
 
-	wrappedCheck, err := wrap.Resource(scheduler.check)
-	require.NoError(t, err)
-	cs.On("Get", mock.Anything, mock.MatchedBy(isCheckResourceRequest)).
-		Return(wrappedCheck, nil)
-
+	s := &mockstore.V2MockStore{}
+	s.On("GetConfigStore").Return(cs)
+	s.On("GetEntityConfigStore").Return(es)
 	bus, err := messaging.NewWizardBus(messaging.WizardBusConfig{})
 	require.NoError(t, err)
 	scheduler.msgBus = bus
@@ -150,22 +131,17 @@ func newCronScheduler(ctx context.Context, t *testing.T, executor string) *TestC
 	if err != nil {
 		t.Fatal(err)
 	}
-	scheduler.scheduler = NewCronScheduler(ctx, s, scheduler.msgBus, scheduler.check, cache, pm)
+	exec := NewCheckExecutor(scheduler.msgBus, "default", s, cache, pm)
+	scheduler.scheduler = NewCronScheduler(ctx, scheduler.check, exec)
 
 	assert.NoError(scheduler.msgBus.Start())
 
-	switch executor {
-	case "adhoc":
-		scheduler.exec = NewAdhocRequestExecutor(ctx, s, &queue.Memory{}, scheduler.msgBus, cache, pm)
-	default:
-		scheduler.exec = NewCheckExecutor(scheduler.msgBus, "default", s, cache, pm)
-	}
+	scheduler.exec = NewCheckExecutor(scheduler.msgBus, "default", s, cache, pm)
 
 	return scheduler
 }
 
 func TestIntervalScheduling(t *testing.T) {
-	t.Skip("skip")
 	assert := assert.New(t)
 
 	// Start a scheduler
@@ -206,7 +182,6 @@ func TestIntervalScheduling(t *testing.T) {
 }
 
 func TestCheckSubdueInterval(t *testing.T) {
-	t.Skip("skip")
 	assert := assert.New(t)
 
 	// Start a scheduler
@@ -254,7 +229,6 @@ func TestCheckSubdueInterval(t *testing.T) {
 }
 
 func TestCronScheduling(t *testing.T) {
-	t.Skip("skip")
 	assert := assert.New(t)
 
 	// Start a scheduler
@@ -300,7 +274,6 @@ func TestCronScheduling(t *testing.T) {
 }
 
 func TestCheckSubdueCron(t *testing.T) {
-	t.Skip("skip")
 	assert := assert.New(t)
 
 	// Start a scheduler

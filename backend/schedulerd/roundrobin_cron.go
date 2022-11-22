@@ -6,10 +6,7 @@ import (
 
 	corev2 "github.com/sensu/core/v2"
 	corev3 "github.com/sensu/core/v3"
-	"github.com/sensu/sensu-go/backend/messaging"
 	"github.com/sensu/sensu-go/backend/ringv2"
-	"github.com/sensu/sensu-go/backend/secrets"
-	storev2 "github.com/sensu/sensu-go/backend/store/v2"
 	"github.com/sirupsen/logrus"
 )
 
@@ -19,8 +16,6 @@ type RoundRobinCronScheduler struct {
 	lastCronState string
 	lastScheduler string
 	check         *corev2.CheckConfig
-	store         storev2.Interface
-	bus           messaging.MessageBus
 	logger        *logrus.Entry
 	ctx           context.Context
 	cancel        context.CancelFunc
@@ -35,10 +30,8 @@ type RoundRobinCronScheduler struct {
 }
 
 // NewRoundRobinCronScheduler creates a new RoundRobinCronScheduler.
-func NewRoundRobinCronScheduler(ctx context.Context, store storev2.Interface, bus messaging.MessageBus, pool *ringv2.RingPool, check *corev2.CheckConfig, cache EntityCache, secretsProviderManager *secrets.ProviderManager) *RoundRobinCronScheduler {
+func NewRoundRobinCronScheduler(ctx context.Context, check *corev2.CheckConfig, executor *CheckExecutor, pool *ringv2.RingPool, entityCache EntityCache) *RoundRobinCronScheduler {
 	sched := &RoundRobinCronScheduler{
-		store:         store,
-		bus:           bus,
 		check:         check,
 		lastCronState: check.Cron,
 		interrupt:     make(chan *corev2.CheckConfig),
@@ -50,8 +43,8 @@ func NewRoundRobinCronScheduler(ctx context.Context, store storev2.Interface, bu
 		}),
 		ringPool:    pool,
 		cancels:     make(map[string]ringCancel),
-		executor:    NewCheckExecutor(bus, check.Namespace, store, cache, secretsProviderManager),
-		entityCache: cache,
+		executor:    executor,
+		entityCache: entityCache,
 	}
 	sched.ctx, sched.cancel = context.WithCancel(ctx)
 	sched.ctx = corev2.SetContextFromResource(sched.ctx, check)
@@ -159,7 +152,6 @@ func (s *RoundRobinCronScheduler) updateRings() {
 		s.logger.WithField("ring", key).Debug("creating new ring watcher")
 
 		// Create a new watcher
-		ctx, cancel := context.WithCancel(s.ctx)
 		sub := ringv2.Subscription{
 			Name:             s.check.Name,
 			Items:            agentEntitiesRequest,
@@ -170,6 +162,7 @@ func (s *RoundRobinCronScheduler) updateRings() {
 			s.logger.WithField("check", s.check.Name).WithError(err).Error("error scheduling round-robin check")
 			continue
 		}
+		ctx, cancel := context.WithCancel(s.ctx)
 		wc := s.ringPool.Get(key).Subscribe(ctx, sub)
 		wg := new(sync.WaitGroup)
 		wg.Add(1)
