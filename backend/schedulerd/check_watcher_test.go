@@ -18,6 +18,7 @@ import (
 )
 
 func TestCheckWatcherSmoke(t *testing.T) {
+	t.Skip("skip")
 	st := &mockstore.V2MockStore{}
 
 	bus, err := messaging.NewWizardBus(messaging.WizardBusConfig{})

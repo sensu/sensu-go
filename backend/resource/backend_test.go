@@ -10,7 +10,7 @@ import (
 
 	corev2 "github.com/sensu/core/v2"
 	"github.com/sensu/sensu-go/backend/messaging"
-	"github.com/sensu/sensu-go/backend/store/v2/storetest"
+	"github.com/sensu/sensu-go/testing/mockstore"
 )
 
 type mockMessageBus struct {
@@ -48,9 +48,9 @@ func (m *mockMessageBus) Publish(topic string, message interface{}) error {
 }
 
 func TestBackendResource_GenerateBackendEvent(t *testing.T) {
-	nsStore := &storetest.NamespaceStore{}
-	ecStore := &storetest.EntityConfigStore{}
-	esStore := &storetest.EntityStateStore{}
+	nsStore := &mockstore.NamespaceStore{}
+	ecStore := &mockstore.EntityConfigStore{}
+	esStore := &mockstore.EntityStateStore{}
 	mmb := &mockMessageBus{published: []*corev2.Event{}}
 
 	br := New(nsStore, ecStore, esStore, mmb)

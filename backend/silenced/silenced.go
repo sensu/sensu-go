@@ -18,10 +18,14 @@ func AddToSilencedBy(id string, ids []string) []string {
 	return ids
 }
 
+type SilencesCache interface {
+	Get(namespace string) []cachev2.Value[*corev2.Silenced, corev2.Silenced]
+}
+
 // GetSilenced retrieves all silenced entries for a given event, using the
 // entity subscription, the check subscription and the check name while
 // supporting wildcard silenced entries (e.g. subscription:*)
-func GetSilenced(ctx context.Context, event *corev2.Event, cache *cachev2.Resource[*corev2.Silenced, corev2.Silenced]) {
+func GetSilenced(ctx context.Context, event *corev2.Event, cache SilencesCache) {
 	if !event.HasCheck() {
 		return
 	}

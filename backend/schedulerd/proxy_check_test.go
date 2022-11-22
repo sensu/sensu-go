@@ -40,37 +40,37 @@ func TestMatchEntities(t *testing.T) {
 	tests := []struct {
 		name             string
 		entityAttributes []string
-		entities         []corev3.Resource
+		entities         []*corev3.EntityConfig
 		want             []*corev3.EntityConfig
 	}{
 		{
 			name:             "standard string attribute",
 			entityAttributes: []string{`entity.name == "entity1"`},
-			entities:         []corev3.Resource{entity1, entity2, entity3},
+			entities:         []*corev3.EntityConfig{entity1, entity2, entity3},
 			want:             []*corev3.EntityConfig{entity1},
 		},
 		{
 			name:             "standard bool attribute",
 			entityAttributes: []string{`entity.deregister == true`},
-			entities:         []corev3.Resource{entity1, entity2, entity3},
+			entities:         []*corev3.EntityConfig{entity1, entity2, entity3},
 			want:             []*corev3.EntityConfig{entity2},
 		},
 		{
 			name:             "nested standard attribute",
 			entityAttributes: []string{`entity.metadata.name == "entity1"`},
-			entities:         []corev3.Resource{entity1, entity2, entity3},
+			entities:         []*corev3.EntityConfig{entity1, entity2, entity3},
 			want:             []*corev3.EntityConfig{entity1},
 		},
 		{
 			name:             "multiple matches",
 			entityAttributes: []string{`entity.entity_class == "proxy"`},
-			entities:         []corev3.Resource{entity1, entity2, entity3},
+			entities:         []*corev3.EntityConfig{entity1, entity2, entity3},
 			want:             []*corev3.EntityConfig{entity1, entity2},
 		},
 		{
 			name:             "invalid expression",
 			entityAttributes: []string{`foo &&`},
-			entities:         []corev3.Resource{entity1, entity2, entity3},
+			entities:         []*corev3.EntityConfig{entity1, entity2, entity3},
 		},
 		{
 			name: "multiple entity attributes",
@@ -78,7 +78,7 @@ func TestMatchEntities(t *testing.T) {
 				`entity.entity_class == "proxy"`,
 				`entity.metadata.labels.proxy_type == "sensor"`,
 			},
-			entities: []corev3.Resource{entity1, entity2, entity3},
+			entities: []*corev3.EntityConfig{entity1, entity2, entity3},
 			want:     []*corev3.EntityConfig{entity2},
 		},
 	}
@@ -160,7 +160,7 @@ func BenchmarkMatchEntities1000(b *testing.B) {
 	// non-matching expression to avoid short-circuiting behaviour
 	expression := "entity.system.arch == 'amd65'"
 
-	entities := make([]corev3.Resource, 100)
+	entities := make([]*corev3.EntityConfig, 100)
 	expressions := make([]string, 10)
 
 	for i := range entities {

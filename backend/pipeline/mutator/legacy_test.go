@@ -129,7 +129,9 @@ func TestLegacyAdapter_Mutate(t *testing.T) {
 				Store: func() storev2.Interface {
 					mutator := corev2.FakeMutatorCommand("cat")
 					stor := &mockstore.V2MockStore{}
-					stor.On("Get", mock.Anything, mock.Anything).Return(mockstore.Wrapper[*corev2.Mutator]{Value: mutator}, nil)
+					cs := new(mockstore.ConfigStore)
+					stor.On("GetConfigStore").Return(cs)
+					cs.On("Get", mock.Anything, mock.Anything).Return(mockstore.Wrapper[*corev2.Mutator]{Value: mutator}, nil)
 					return stor
 				}(),
 				Executor: command.NewExecutor(),
@@ -154,7 +156,9 @@ func TestLegacyAdapter_Mutate(t *testing.T) {
 			fields: fields{
 				Store: func() storev2.Interface {
 					stor := &mockstore.V2MockStore{}
-					stor.On("Get", mock.Anything, mock.Anything).Return(nil, &store.ErrNotFound{})
+					cs := new(mockstore.ConfigStore)
+					stor.On("GetConfigStore").Return(cs)
+					cs.On("Get", mock.Anything, mock.Anything).Return(nil, &store.ErrNotFound{})
 					return stor
 				}(),
 				Executor: command.NewExecutor(),

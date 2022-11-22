@@ -25,9 +25,8 @@ func TestDeregister(t *testing.T) {
 	mockBus := &mockbus.MockBus{}
 
 	adapter := &Deregistration{
-		EntityStore: mockStore,
-		EventStore:  mockEventStore,
-		MessageBus:  mockBus,
+		Store:      mockStore,
+		MessageBus: mockBus,
 	}
 
 	entity := types.FixtureEntity("entity")
@@ -35,7 +34,11 @@ func TestDeregister(t *testing.T) {
 	check := types.FixtureCheck("check")
 	event := types.FixtureEvent(entity.Name, check.Name)
 
-	mockStore.On("Delete", mock.Anything, mock.Anything).Return(nil)
+	ecstore := new(mockstore.EntityConfigStore)
+	mockStore.On("GetEntityConfigStore").Return(ecstore)
+	mockStore.On("GetEventStore").Return(mockEventStore)
+
+	ecstore.On("Delete", mock.Anything, mock.Anything, mock.Anything).Return(nil)
 
 	mockEventStore.On("GetEventsByEntity", mock.Anything, entity.Name, &store.SelectionPredicate{}).Return([]*types.Event{event}, nil)
 	mockEventStore.On("DeleteEventByEntityCheck", mock.Anything, entity.Name, check.Name).Return(nil)
@@ -50,12 +53,15 @@ func TestDeregistrationHandler(t *testing.T) {
 
 	mockStore := &mockstore.V2MockStore{}
 	mockEventStore := &mockstore.MockStore{}
+	ecstore := new(mockstore.EntityConfigStore)
+	mockStore.On("GetEventStore").Return(mockEventStore)
+	mockStore.On("GetEntityConfigStore").Return(ecstore)
+
 	mockBus := &mockbus.MockBus{}
 	mockCache := &mockcache.MockCache{}
 
 	adapter := &Deregistration{
-		EntityStore:   mockStore,
-		EventStore:    mockEventStore,
+		Store:         mockStore,
 		MessageBus:    mockBus,
 		SilencedCache: mockCache,
 	}
@@ -68,12 +74,12 @@ func TestDeregistrationHandler(t *testing.T) {
 	check := types.FixtureCheck("check")
 
 	mockCache.On("Get", "default").Once().Return(
-		[]cachev2.Value{
+		[]cachev2.Value[*corev2.Silenced, corev2.Silenced]{
 			{Resource: corev2.FixtureSilenced("*:deregistration")},
 		},
 	)
 
-	mockStore.On("Delete", mock.Anything, mock.Anything).Return(nil)
+	ecstore.On("Delete", mock.Anything, mock.Anything, mock.Anything).Return(nil)
 
 	mockEventStore.On("GetEventsByEntity", mock.Anything, entity.Name, &store.SelectionPredicate{}).Return([]*types.Event{}, nil)
 	mockEventStore.On("DeleteEventByEntityCheck", mock.Anything, entity.Name, check.Name).Return(nil)

@@ -24,7 +24,9 @@ type Deregisterer interface {
 	Deregister(e *corev2.Entity) error
 }
 
-type SilencesCache *cachev2.Resource[*corev2.Silenced, corev2.Silenced]
+type SilencesCache interface {
+	Get(namespace string) []cachev2.Value[*corev2.Silenced, corev2.Silenced]
+}
 
 // Deregistration is an adapter for deregistering an entity from the store and
 // publishing a deregistration event to WizardBus.

@@ -129,7 +129,9 @@ func TestAdapterV1_Run(t *testing.T) {
 				Store: func() storev2.Interface {
 					err := &store.ErrInternal{Message: "etcd timeout"}
 					stor := &mockstore.V2MockStore{}
-					stor.On("Get", mock.Anything, mock.Anything).Return(nil, err)
+					cs := new(mockstore.ConfigStore)
+					stor.On("GetConfigStore").Return(cs)
+					cs.On("Get", mock.Anything, mock.Anything).Return(nil, err)
 					return stor
 				}(),
 			},
@@ -146,7 +148,9 @@ func TestAdapterV1_Run(t *testing.T) {
 			fields: fields{
 				Store: func() storev2.Interface {
 					stor := &mockstore.V2MockStore{}
-					stor.On("Get", mock.Anything, mock.Anything).Return(nil, &store.ErrNotFound{})
+					cs := new(mockstore.ConfigStore)
+					stor.On("GetConfigStore").Return(cs)
+					cs.On("Get", mock.Anything, mock.Anything).Return(nil, &store.ErrNotFound{})
 					return stor
 				}(),
 			},
@@ -167,7 +171,9 @@ func TestAdapterV1_Run(t *testing.T) {
 						Workflows:  []*corev2.PipelineWorkflow{},
 					}
 					stor := &mockstore.V2MockStore{}
-					stor.On("Get", mock.Anything, mock.Anything).Return(mockstore.Wrapper[*corev2.Pipeline]{Value: pipeline}, nil)
+					cs := new(mockstore.ConfigStore)
+					stor.On("GetConfigStore").Return(cs)
+					cs.On("Get", mock.Anything, mock.Anything).Return(mockstore.Wrapper[*corev2.Pipeline]{Value: pipeline}, nil)
 					return stor
 				}(),
 			},
@@ -185,7 +191,9 @@ func TestAdapterV1_Run(t *testing.T) {
 				FilterAdapters: func() []FilterAdapter {
 					err := &store.ErrInternal{Message: "etcd timeout"}
 					stor := &mockstore.V2MockStore{}
-					stor.On("Get", mock.Anything, mock.Anything).Return(nil, err)
+					cs := new(mockstore.ConfigStore)
+					stor.On("GetConfigStore").Return(cs)
+					cs.On("Get", mock.Anything, mock.Anything).Return(nil, err)
 					return []FilterAdapter{
 						&filter.LegacyAdapter{
 							Store: stor,
@@ -207,7 +215,9 @@ func TestAdapterV1_Run(t *testing.T) {
 						},
 					}
 					stor := &mockstore.V2MockStore{}
-					stor.On("Get", mock.Anything, mock.Anything).Return(mockstore.Wrapper[*corev2.Pipeline]{Value: pipeline}, nil)
+					cs := new(mockstore.ConfigStore)
+					stor.On("GetConfigStore").Return(cs)
+					cs.On("Get", mock.Anything, mock.Anything).Return(mockstore.Wrapper[*corev2.Pipeline]{Value: pipeline}, nil)
 					return stor
 				}(),
 			},
@@ -242,7 +252,9 @@ func TestAdapterV1_Run(t *testing.T) {
 						},
 					}
 					stor := &mockstore.V2MockStore{}
-					stor.On("Get", mock.Anything, mock.Anything).Return(mockstore.Wrapper[*corev2.Pipeline]{Value: pipeline}, nil)
+					cs := new(mockstore.ConfigStore)
+					stor.On("GetConfigStore").Return(cs)
+					cs.On("Get", mock.Anything, mock.Anything).Return(mockstore.Wrapper[*corev2.Pipeline]{Value: pipeline}, nil)
 					return stor
 				}(),
 			},
@@ -259,7 +271,9 @@ func TestAdapterV1_Run(t *testing.T) {
 				MutatorAdapters: func() []MutatorAdapter {
 					err := &store.ErrInternal{Message: "etcd timeout"}
 					stor := &mockstore.V2MockStore{}
-					stor.On("Get", mock.Anything, mock.Anything).Return(nil, err)
+					cs := new(mockstore.ConfigStore)
+					stor.On("GetConfigStore").Return(cs)
+					cs.On("Get", mock.Anything, mock.Anything).Return(nil, err)
 					return []MutatorAdapter{
 						&mutator.LegacyAdapter{
 							Store: stor,
@@ -281,7 +295,9 @@ func TestAdapterV1_Run(t *testing.T) {
 						},
 					}
 					stor := &mockstore.V2MockStore{}
-					stor.On("Get", mock.Anything, mock.Anything).Return(mockstore.Wrapper[*corev2.Pipeline]{Value: pipeline}, nil)
+					cs := new(mockstore.ConfigStore)
+					stor.On("GetConfigStore").Return(cs)
+					cs.On("Get", mock.Anything, mock.Anything).Return(mockstore.Wrapper[*corev2.Pipeline]{Value: pipeline}, nil)
 					return stor
 				}(),
 			},
@@ -302,7 +318,9 @@ func TestAdapterV1_Run(t *testing.T) {
 				HandlerAdapters: func() []HandlerAdapter {
 					err := &store.ErrInternal{Message: "etcd timeout"}
 					stor := &mockstore.V2MockStore{}
-					stor.On("Get", mock.Anything, mock.Anything).Return(nil, err)
+					cs := new(mockstore.ConfigStore)
+					stor.On("GetConfigStore").Return(cs)
+					cs.On("Get", mock.Anything, mock.Anything).Return(nil, err)
 					ex := &mockexecutor.MockExecutor{}
 					execution := command.FixtureExecutionResponse(0, "foo")
 					ex.Return(execution, nil)
@@ -328,7 +346,9 @@ func TestAdapterV1_Run(t *testing.T) {
 						},
 					}
 					stor := &mockstore.V2MockStore{}
-					stor.On("Get", mock.Anything, mock.Anything).Return(mockstore.Wrapper[*corev2.Pipeline]{Value: pipeline}, nil)
+					cs := new(mockstore.ConfigStore)
+					stor.On("GetConfigStore").Return(cs)
+					cs.On("Get", mock.Anything, mock.Anything).Return(mockstore.Wrapper[*corev2.Pipeline]{Value: pipeline}, nil)
 					return stor
 				}(),
 			},
@@ -349,7 +369,9 @@ func TestAdapterV1_Run(t *testing.T) {
 				HandlerAdapters: func() []HandlerAdapter {
 					storedHandler := corev2.FixtureHandler("handler1")
 					stor := &mockstore.V2MockStore{}
-					stor.On("Get", mock.Anything, mock.Anything).Return(mockstore.Wrapper[*corev2.Handler]{Value: storedHandler}, nil)
+					cs := new(mockstore.ConfigStore)
+					stor.On("GetConfigStore").Return(cs)
+					cs.On("Get", mock.Anything, mock.Anything).Return(mockstore.Wrapper[*corev2.Handler]{Value: storedHandler}, nil)
 					ex := &mockexecutor.MockExecutor{}
 					execution := command.FixtureExecutionResponse(0, "foo")
 					ex.Return(execution, nil)
@@ -377,7 +399,9 @@ func TestAdapterV1_Run(t *testing.T) {
 						},
 					}
 					stor := &mockstore.V2MockStore{}
-					stor.On("Get", mock.Anything, mock.Anything).Return(mockstore.Wrapper[*corev2.Pipeline]{Value: pipeline}, nil)
+					cs := new(mockstore.ConfigStore)
+					stor.On("GetConfigStore").Return(cs)
+					cs.On("Get", mock.Anything, mock.Anything).Return(mockstore.Wrapper[*corev2.Pipeline]{Value: pipeline}, nil)
 					return stor
 				}(),
 			},
@@ -476,7 +500,9 @@ func TestHandlerDoesNotRunAfterFilterContextCancelled(t *testing.T) {
 			},
 		}
 		stor := &mockstore.V2MockStore{}
-		stor.On("Get", mock.Anything, mock.Anything).Return(mockstore.Wrapper[*corev2.Pipeline]{Value: pipeline}, nil)
+		cs := new(mockstore.ConfigStore)
+		stor.On("GetConfigStore").Return(cs)
+		cs.On("Get", mock.Anything, mock.Anything).Return(mockstore.Wrapper[*corev2.Pipeline]{Value: pipeline}, nil)
 		return stor
 	}()
 	a := &AdapterV1{
@@ -558,7 +584,9 @@ func TestAdapterV1_resolvePipelineReference(t *testing.T) {
 						Workflows:  []*corev2.PipelineWorkflow{},
 					}
 					stor := &mockstore.V2MockStore{}
-					stor.On("Get", mock.Anything, mock.Anything).Return(mockstore.Wrapper[*corev2.Pipeline]{Value: pipeline}, nil)
+					cs := new(mockstore.ConfigStore)
+					stor.On("GetConfigStore").Return(cs)
+					cs.On("Get", mock.Anything, mock.Anything).Return(mockstore.Wrapper[*corev2.Pipeline]{Value: pipeline}, nil)
 					return stor
 				}(),
 			},
@@ -623,7 +651,9 @@ func TestAdapterV1_getPipelineFromStore(t *testing.T) {
 			fields: fields{
 				Store: func() storev2.Interface {
 					stor := &mockstore.V2MockStore{}
-					stor.On("Get", mock.Anything, mock.Anything).Return(nil, errors.New("store error"))
+					cs := new(mockstore.ConfigStore)
+					stor.On("GetConfigStore").Return(cs)
+					cs.On("Get", mock.Anything, mock.Anything).Return(nil, errors.New("store error"))
 					return stor
 				}(),
 			},
@@ -641,7 +671,9 @@ func TestAdapterV1_getPipelineFromStore(t *testing.T) {
 			fields: fields{
 				Store: func() storev2.Interface {
 					stor := &mockstore.V2MockStore{}
-					stor.On("Get", mock.Anything, mock.Anything).Return(nil, &store.ErrNotFound{})
+					cs := new(mockstore.ConfigStore)
+					stor.On("GetConfigStore").Return(cs)
+					cs.On("Get", mock.Anything, mock.Anything).Return(nil, &store.ErrNotFound{})
 					return stor
 				}(),
 			},
@@ -662,7 +694,9 @@ func TestAdapterV1_getPipelineFromStore(t *testing.T) {
 						ObjectMeta: corev2.NewObjectMeta("pipeline1", "default"),
 					}
 					stor := &mockstore.V2MockStore{}
-					stor.On("Get", mock.Anything, mock.Anything).Return(mockstore.Wrapper[*corev2.Pipeline]{Value: pipeline}, nil)
+					cs := new(mockstore.ConfigStore)
+					stor.On("GetConfigStore").Return(cs)
+					cs.On("Get", mock.Anything, mock.Anything).Return(mockstore.Wrapper[*corev2.Pipeline]{Value: pipeline}, nil)
 					return stor
 				}(),
 			},
@@ -732,7 +766,9 @@ func TestAdapterV1_generateLegacyPipeline(t *testing.T) {
 				Store: func() storev2.Interface {
 					handler := corev2.FixtureHandler("handler1")
 					stor := &mockstore.V2MockStore{}
-					stor.On("Get", mock.Anything, mock.Anything).Return(mockstore.Wrapper[*corev2.Handler]{Value: handler}, nil)
+					cs := new(mockstore.ConfigStore)
+					stor.On("GetConfigStore").Return(cs)
+					cs.On("Get", mock.Anything, mock.Anything).Return(mockstore.Wrapper[*corev2.Handler]{Value: handler}, nil)
 					return stor
 				}(),
 			},
@@ -764,7 +800,9 @@ func TestAdapterV1_generateLegacyPipeline(t *testing.T) {
 				Store: func() storev2.Interface {
 					handler := corev2.FixtureHandler("handler1")
 					stor := &mockstore.V2MockStore{}
-					stor.On("Get", mock.Anything, mock.Anything).Return(mockstore.Wrapper[*corev2.Handler]{Value: handler}, nil)
+					cs := new(mockstore.ConfigStore)
+					stor.On("GetConfigStore").Return(cs)
+					cs.On("Get", mock.Anything, mock.Anything).Return(mockstore.Wrapper[*corev2.Handler]{Value: handler}, nil)
 					return stor
 				}(),
 			},
@@ -800,8 +838,10 @@ func TestAdapterV1_generateLegacyPipeline(t *testing.T) {
 					checkReq := storev2.NewResourceRequestFromResource(checkHandler)
 					metricsReq := storev2.NewResourceRequestFromResource(metricsHandler)
 					stor := &mockstore.V2MockStore{}
-					stor.On("Get", mock.Anything, checkReq).Return(mockstore.Wrapper[*corev2.Handler]{Value: checkHandler}, nil)
-					stor.On("Get", mock.Anything, metricsReq).Return(mockstore.Wrapper[*corev2.Handler]{Value: metricsHandler}, nil)
+					cs := new(mockstore.ConfigStore)
+					stor.On("GetConfigStore").Return(cs)
+					cs.On("Get", mock.Anything, checkReq).Return(mockstore.Wrapper[*corev2.Handler]{Value: checkHandler}, nil)
+					cs.On("Get", mock.Anything, metricsReq).Return(mockstore.Wrapper[*corev2.Handler]{Value: metricsHandler}, nil)
 					return stor
 				}(),
 			},
@@ -908,7 +948,9 @@ func TestAdapterV1_expandHandlers(t *testing.T) {
 			fields: fields{
 				Store: func() storev2.Interface {
 					stor := &mockstore.V2MockStore{}
-					stor.On("Get", mock.Anything, mock.Anything).Return(mockstore.Wrapper[*corev2.Handler]{Value: pipeHandler()}, nil)
+					cs := new(mockstore.ConfigStore)
+					stor.On("GetConfigStore").Return(cs)
+					cs.On("Get", mock.Anything, mock.Anything).Return(mockstore.Wrapper[*corev2.Handler]{Value: pipeHandler()}, nil)
 					return stor
 				}(),
 			},
@@ -925,7 +967,9 @@ func TestAdapterV1_expandHandlers(t *testing.T) {
 			fields: fields{
 				Store: func() storev2.Interface {
 					stor := &mockstore.V2MockStore{}
-					stor.On("Get", mock.Anything, mock.Anything).Return(nil, &store.ErrInternal{Message: "etcd timeout"})
+					cs := new(mockstore.ConfigStore)
+					stor.On("GetConfigStore").Return(cs)
+					cs.On("Get", mock.Anything, mock.Anything).Return(nil, &store.ErrInternal{Message: "etcd timeout"})
 					return stor
 				}(),
 			},
@@ -941,7 +985,9 @@ func TestAdapterV1_expandHandlers(t *testing.T) {
 			fields: fields{
 				Store: func() storev2.Interface {
 					stor := &mockstore.V2MockStore{}
-					stor.On("Get", mock.Anything, mock.Anything).Return(nil, errors.New("error"))
+					cs := new(mockstore.ConfigStore)
+					stor.On("GetConfigStore").Return(cs)
+					cs.On("Get", mock.Anything, mock.Anything).Return(nil, errors.New("error"))
 					return stor
 				}(),
 			},
@@ -958,8 +1004,10 @@ func TestAdapterV1_expandHandlers(t *testing.T) {
 					stor := &mockstore.V2MockStore{}
 					setReq := storev2.NewResourceRequestFromResource(setHandler())
 					pipeReq := storev2.NewResourceRequestFromResource(pipeHandler())
-					stor.On("Get", mock.Anything, setReq).Return(mockstore.Wrapper[*corev2.Handler]{Value: setHandler()}, nil)
-					stor.On("Get", mock.Anything, pipeReq).Return(mockstore.Wrapper[*corev2.Handler]{Value: pipeHandler()}, nil)
+					cs := new(mockstore.ConfigStore)
+					stor.On("GetConfigStore").Return(cs)
+					cs.On("Get", mock.Anything, setReq).Return(mockstore.Wrapper[*corev2.Handler]{Value: setHandler()}, nil)
+					cs.On("Get", mock.Anything, pipeReq).Return(mockstore.Wrapper[*corev2.Handler]{Value: pipeHandler()}, nil)
 					return stor
 				}(),
 			},
@@ -976,7 +1024,9 @@ func TestAdapterV1_expandHandlers(t *testing.T) {
 			fields: fields{
 				Store: func() storev2.Interface {
 					stor := &mockstore.V2MockStore{}
-					stor.On("Get", mock.Anything, mock.Anything).Return(mockstore.Wrapper[*corev2.Handler]{Value: recursiveLoopHandler()}, nil)
+					cs := new(mockstore.ConfigStore)
+					stor.On("GetConfigStore").Return(cs)
+					cs.On("Get", mock.Anything, mock.Anything).Return(mockstore.Wrapper[*corev2.Handler]{Value: recursiveLoopHandler()}, nil)
 					return stor
 				}(),
 			},
@@ -995,10 +1045,12 @@ func TestAdapterV1_expandHandlers(t *testing.T) {
 					nestReq := storev2.NewResourceRequestFromResource(nestedHandler())
 					setReq := storev2.NewResourceRequestFromResource(setHandler())
 					pipeReq := storev2.NewResourceRequestFromResource(pipeHandler())
-					stor.On("Get", mock.Anything, recReq).Return(mockstore.Wrapper[*corev2.Handler]{Value: recursiveLoopHandler()}, nil)
-					stor.On("Get", mock.Anything, nestReq).Return(mockstore.Wrapper[*corev2.Handler]{Value: nestedHandler()}, nil)
-					stor.On("Get", mock.Anything, setReq).Return(mockstore.Wrapper[*corev2.Handler]{Value: setHandler()}, nil)
-					stor.On("Get", mock.Anything, pipeReq).Return(mockstore.Wrapper[*corev2.Handler]{Value: pipeHandler()}, nil)
+					cs := new(mockstore.ConfigStore)
+					stor.On("GetConfigStore").Return(cs)
+					cs.On("Get", mock.Anything, recReq).Return(mockstore.Wrapper[*corev2.Handler]{Value: recursiveLoopHandler()}, nil)
+					cs.On("Get", mock.Anything, nestReq).Return(mockstore.Wrapper[*corev2.Handler]{Value: nestedHandler()}, nil)
+					cs.On("Get", mock.Anything, setReq).Return(mockstore.Wrapper[*corev2.Handler]{Value: setHandler()}, nil)
+					cs.On("Get", mock.Anything, pipeReq).Return(mockstore.Wrapper[*corev2.Handler]{Value: pipeHandler()}, nil)
 					return stor
 				}(),
 			},

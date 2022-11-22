@@ -58,11 +58,13 @@ func TestGetAssets(t *testing.T) {
 			a5req := storev2.NewResourceRequestFromResource(asset3)
 			a5req.Name = "bar"
 			sto := &mockstore.V2MockStore{}
-			sto.On("Get", mock.Anything, a1req).Return(mockstore.Wrapper[*corev2.Asset]{Value: asset1}, nil)
-			sto.On("Get", mock.Anything, a2req).Return(mockstore.Wrapper[*corev2.Asset]{Value: asset2}, nil)
-			sto.On("Get", mock.Anything, a3req).Return(mockstore.Wrapper[*corev2.Asset]{Value: asset3}, nil)
-			sto.On("Get", mock.Anything, a4req).Return(nil, &store.ErrNotFound{})
-			sto.On("Get", mock.Anything, a5req).Return(nil, errors.New("error"))
+			cs := new(mockstore.ConfigStore)
+			sto.On("GetConfigStore").Return(cs)
+			cs.On("Get", mock.Anything, a1req).Return(mockstore.Wrapper[*corev2.Asset]{Value: asset1}, nil)
+			cs.On("Get", mock.Anything, a2req).Return(mockstore.Wrapper[*corev2.Asset]{Value: asset2}, nil)
+			cs.On("Get", mock.Anything, a3req).Return(mockstore.Wrapper[*corev2.Asset]{Value: asset3}, nil)
+			cs.On("Get", mock.Anything, a4req).Return(nil, &store.ErrNotFound{})
+			cs.On("Get", mock.Anything, a5req).Return(nil, errors.New("error"))
 
 			ctx := store.NamespaceContext(context.Background(), "default")
 			assets := GetAssets(ctx, sto, tc.assetList)

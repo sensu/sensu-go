@@ -3,7 +3,6 @@ package agentd
 import (
 	"bytes"
 	"context"
-	"errors"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
@@ -11,12 +10,8 @@ import (
 
 	corev2 "github.com/sensu/core/v2"
 	corev3 "github.com/sensu/core/v3"
-	"github.com/sensu/sensu-go/backend/apid/routers"
-	"github.com/sensu/sensu-go/backend/etcd"
 	storev2 "github.com/sensu/sensu-go/backend/store/v2"
-	"github.com/sensu/sensu-go/backend/store/v2/etcdstore"
 	"github.com/sensu/sensu-go/backend/store/v2/wrap"
-	"github.com/sensu/sensu-go/testing/mockbus"
 	"github.com/sensu/sensu-go/testing/mockstore"
 	"github.com/sensu/sensu-go/transport"
 	"github.com/stretchr/testify/assert"
@@ -85,7 +80,9 @@ func TestAgentdMiddlewares(t *testing.T) {
 		claims := corev2.FixtureClaims(tc.username, []string{"default", tc.group})
 		authenticator.On("Authenticate", mock.Anything, tc.username, "password").Return(claims, tc.authenErr)
 		stor := &mockstore.V2MockStore{}
-		stor.On("List", mock.Anything, mock.MatchedBy(resourceRequestMatcher("cluster_role_bindings", tc.namespace, "")), mock.Anything).
+		cstore := new(mockstore.ConfigStore)
+		stor.On("GetConfigStore").Return(cstore)
+		cstore.On("List", mock.Anything, mock.MatchedBy(resourceRequestMatcher("cluster_role_bindings", tc.namespace, "")), mock.Anything).
 			Return(mockstore.WrapList[*corev2.ClusterRoleBinding](
 				[]*corev2.ClusterRoleBinding{{
 					RoleRef: corev2.RoleRef{
@@ -100,7 +97,7 @@ func TestAgentdMiddlewares(t *testing.T) {
 					},
 				}}), nil)
 
-		stor.On("List", mock.Anything, mock.MatchedBy(resourceRequestMatcher("role_bindings", tc.namespace, "")), mock.Anything).
+		cstore.On("List", mock.Anything, mock.MatchedBy(resourceRequestMatcher("role_bindings", tc.namespace, "")), mock.Anything).
 			Return(mockstore.WrapList[*corev2.RoleBinding](
 				[]*corev2.RoleBinding{{
 					RoleRef: corev2.RoleRef{
@@ -115,7 +112,7 @@ func TestAgentdMiddlewares(t *testing.T) {
 						Namespace: "test-rbac",
 					},
 				}}), nil)
-		stor.On("Get", mock.Anything, mock.MatchedBy(resourceRequestMatcher("cluster_roles", tc.namespace, "admin")), mock.Anything).
+		cstore.On("Get", mock.Anything, mock.MatchedBy(resourceRequestMatcher("cluster_roles", tc.namespace, "admin")), mock.Anything).
 			Return(wrapResource(t,
 				&corev2.ClusterRole{
 					ObjectMeta: corev2.NewObjectMeta("group-test-rbac", ""),
@@ -137,70 +134,6 @@ func TestAgentdMiddlewares(t *testing.T) {
 		res, err := http.DefaultClient.Do(req)
 		assert.NoError(err)
 		assert.Equal(tc.expectedCode, res.StatusCode, tc.description)
-	}
-}
-
-func TestRunWatcher(t *testing.T) {
-	type busFunc func(*mockbus.MockBus)
-
-	tests := []struct {
-		name       string
-		busFunc    busFunc
-		watchEvent []storev2.WatchEvent
-	}{
-		{
-			name: "bus error",
-			watchEvent: []storev2.WatchEvent{
-				{
-					Type:  storev2.WatchCreate,
-					Value: wrapResource(t, corev3.FixtureEntityConfig("foo")),
-				},
-			},
-			busFunc: func(bus *mockbus.MockBus) {
-				bus.On("Publish", mock.Anything, mock.Anything).Once().Return(errors.New("error"))
-			},
-		},
-		{
-			name: "watch events are successfully published to the bus",
-			watchEvent: []storev2.WatchEvent{
-				{
-					Type:  storev2.WatchCreate,
-					Value: wrapResource(t, corev3.FixtureEntityConfig("foo")),
-				},
-			},
-			busFunc: func(bus *mockbus.MockBus) {
-				bus.On("Publish", mock.Anything, mock.Anything).Once().Return(nil)
-			},
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			watcher := make(chan []storev2.WatchEvent)
-
-			// Mock the bus
-			bus := &mockbus.MockBus{}
-			if tt.busFunc != nil {
-				tt.busFunc(bus)
-			}
-
-			e, cleanup := etcd.NewTestEtcd(t)
-			defer cleanup()
-			client := e.NewEmbeddedClient()
-			defer func() { _ = client.Close() }()
-			stor := etcdstore.NewStore(client)
-
-			agent, err := New(Config{
-				Bus:          bus,
-				Watcher:      watcher,
-				Store:        stor,
-				HealthRouter: routers.NewHealthRouter(nil),
-			})
-			assert.NoError(t, err)
-
-			go agent.runWatcher()
-
-			watcher <- tt.watchEvent
-		})
 	}
 }
 

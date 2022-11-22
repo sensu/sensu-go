@@ -16,8 +16,6 @@ import (
 	"github.com/sensu/sensu-go/backend/messaging"
 	"github.com/sensu/sensu-go/backend/store"
 	storev2 "github.com/sensu/sensu-go/backend/store/v2"
-	"github.com/sensu/sensu-go/backend/store/v2/storetest"
-	"github.com/sensu/sensu-go/backend/store/v2/wrap"
 	"github.com/sensu/sensu-go/handler"
 	"github.com/sensu/sensu-go/testing/mockbus"
 	"github.com/sensu/sensu-go/testing/mockstore"
@@ -36,11 +34,13 @@ func TestGoodSessionConfigProto(t *testing.T) {
 	require.NoError(t, bus.Start())
 
 	st := &mockstore.MockStore{}
-	st.On(
-		"GetNamespace",
+	ns := new(mockstore.NamespaceStore)
+	ns.On(
+		"Get",
 		mock.Anything,
 		"acme",
-	).Return(&corev2.Namespace{}, nil)
+	).Return(&corev3.Namespace{}, nil)
+	st.On("GetNamespaceStore").Return(ns)
 
 	cfg := SessionConfig{
 		AgentName:     "testing",
@@ -77,7 +77,7 @@ func TestMakeEntitySwitchBurialEvent(t *testing.T) {
 func TestSession_sender(t *testing.T) {
 	type busFunc func(*messaging.WizardBus, *sync.WaitGroup)
 	type connFunc func(*mocktransport.MockTransport, *sync.WaitGroup)
-	type storeFunc func(*storetest.Store, *sync.WaitGroup)
+	type storeFunc func(*mockstore.V2MockStore, *sync.WaitGroup)
 
 	tests := []struct {
 		name          string
@@ -158,12 +158,14 @@ func TestSession_sender(t *testing.T) {
 				}
 				publishWatchEvent(t, bus, e)
 			},
-			storeFunc: func(store *storetest.Store, wg *sync.WaitGroup) {
+			storeFunc: func(store *mockstore.V2MockStore, wg *sync.WaitGroup) {
 				wg.Add(1)
-				store.On("CreateOrUpdate", mock.Anything, mock.Anything, mock.Anything).Run(func(args mock.Arguments) {
+				ecstore := new(mockstore.EntityConfigStore)
+				ecstore.On("CreateOrUpdate", mock.Anything, mock.Anything, mock.Anything).Run(func(args mock.Arguments) {
 					// Close the wait channel once we receive the storev2 request
 					wg.Done()
 				}).Return(nil)
+				store.On("GetEntityConfigStore").Return(ecstore)
 			},
 		},
 		{
@@ -260,7 +262,7 @@ func TestSession_sender(t *testing.T) {
 			}
 
 			// Mock our store
-			storev2 := &storetest.Store{}
+			storev2 := &mockstore.V2MockStore{}
 			if tt.storeFunc != nil {
 				tt.storeFunc(storev2, wg)
 			}
@@ -323,7 +325,7 @@ func TestSession_sender(t *testing.T) {
 
 func TestSession_Start(t *testing.T) {
 	type connFunc func(*mocktransport.MockTransport, *sync.WaitGroup)
-	type storeFunc func(*storetest.Store, *sync.WaitGroup)
+	type storeFunc func(*mockstore.V2MockStore, *sync.WaitGroup)
 
 	tests := []struct {
 		name      string
@@ -348,8 +350,10 @@ func TestSession_Start(t *testing.T) {
 				}).Return(nil)
 				conn.On("Close").Return(nil)
 			},
-			storeFunc: func(s *storetest.Store, wg *sync.WaitGroup) {
-				s.On("Get", mock.Anything, mock.Anything).Return(&wrap.Wrapper{}, &store.ErrNotFound{})
+			storeFunc: func(s *mockstore.V2MockStore, wg *sync.WaitGroup) {
+				ecstore := new(mockstore.EntityConfigStore)
+				ecstore.On("Get", mock.Anything, mock.Anything, mock.Anything).Return((*corev3.EntityConfig)(nil), &store.ErrNotFound{})
+				s.On("GetEntityConfigStore").Return(ecstore)
 			},
 		},
 		{
@@ -369,13 +373,10 @@ func TestSession_Start(t *testing.T) {
 				}).Return(nil)
 				conn.On("Close").Return(nil)
 			},
-			storeFunc: func(s *storetest.Store, wg *sync.WaitGroup) {
-				cfg := corev3.FixtureEntityConfig("testing")
-				wrappedConfig, err := storev2.WrapResource(cfg)
-				if err != nil {
-					t.Fatal(err)
-				}
-				s.On("Get", mock.Anything, mock.Anything).Return(wrappedConfig, nil)
+			storeFunc: func(s *mockstore.V2MockStore, wg *sync.WaitGroup) {
+				ecstore := new(mockstore.EntityConfigStore)
+				ecstore.On("Get", mock.Anything, mock.Anything, mock.Anything).Return(corev3.FixtureEntityConfig("testing"), nil)
+				s.On("GetEntityConfigStore").Return(ecstore)
 			},
 		},
 		{
@@ -385,8 +386,10 @@ func TestSession_Start(t *testing.T) {
 				conn.On("Closed").Return(true)
 				conn.On("Close").Return(nil)
 			},
-			storeFunc: func(s *storetest.Store, wg *sync.WaitGroup) {
-				s.On("Get", mock.Anything, mock.Anything).Return(&wrap.Wrapper{}, errors.New("fatal error"))
+			storeFunc: func(s *mockstore.V2MockStore, wg *sync.WaitGroup) {
+				ecstore := new(mockstore.EntityConfigStore)
+				ecstore.On("Get", mock.Anything, mock.Anything, mock.Anything).Return((*corev3.EntityConfig)(nil), errors.New("fatal"))
+				s.On("GetEntityConfigStore").Return(ecstore)
 			},
 			wantErr: true,
 		},
@@ -402,7 +405,7 @@ func TestSession_Start(t *testing.T) {
 			}
 
 			// Mock our store
-			storev2 := &storetest.Store{}
+			storev2 := &mockstore.V2MockStore{}
 			if tt.storeFunc != nil {
 				tt.storeFunc(storev2, wg)
 			}

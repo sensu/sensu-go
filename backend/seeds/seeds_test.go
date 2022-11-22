@@ -5,9 +5,9 @@ import (
 	"testing"
 
 	corev2 "github.com/sensu/core/v2"
+	corev3 "github.com/sensu/core/v3"
 	"github.com/sensu/sensu-go/backend/store"
 	storev2 "github.com/sensu/sensu-go/backend/store/v2"
-	"github.com/sensu/sensu-go/backend/store/v2/storetest"
 	"github.com/sensu/sensu-go/testing/mockstore"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -22,9 +22,9 @@ func TestSeedInitialDataWithContext(t *testing.T) {
 	}
 
 	// Setup stores
-	nsStore := new(storetest.NamespaceStore)
+	nsStore := new(mockstore.NamespaceStore)
 	nsStore.On("CreateIfNotExists", mock.Anything, mock.Anything).Return(nil)
-	nsStore.On("Get", mock.Anything, "default").Return(nil, new(store.ErrNotFound))
+	nsStore.On("Get", mock.Anything, "default").Return((*corev3.Namespace)(nil), new(store.ErrNotFound))
 
 	s := new(mockstore.V2MockStore)
 	cs := new(mockstore.ConfigStore)
@@ -33,10 +33,10 @@ func TestSeedInitialDataWithContext(t *testing.T) {
 	cs.On("CreateIfNotExists", mock.Anything, mock.Anything, mock.Anything).Return(nil)
 	cs.On("Initialize", mock.Anything, mock.Anything).Return(seedCluster(config)(ctx, s))
 
-	sErr := SeedInitialDataWithContext(ctx, s, nsStore)
+	sErr := SeedInitialDataWithContext(ctx, s)
 	require.NoError(t, sErr, "seeding process should not raise an error")
 
-	err := SeedInitialDataWithContext(ctx, s, nsStore)
+	err := SeedInitialDataWithContext(ctx, s)
 	if err != ErrAlreadyInitialized {
 		require.NoError(t, err, "seeding process should be able to be run more than once without error")
 	}
