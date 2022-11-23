@@ -2,7 +2,6 @@ package store
 
 import (
 	"context"
-	"crypto/tls"
 	"sync"
 	"time"
 
@@ -10,7 +9,6 @@ import (
 	"github.com/sensu/sensu-go/backend/store/patch"
 	"github.com/sensu/sensu-go/backend/store/provider"
 	"github.com/sensu/sensu-go/types"
-	clientv3 "go.etcd.io/etcd/client/v3"
 )
 
 var _ Store = new(StoreProxy)
@@ -305,9 +303,6 @@ func (s *StoreProxy) GetHandlerByName(ctx context.Context, name string) (*types.
 // UpdateHandler creates or updates a given handler.
 func (s *StoreProxy) UpdateHandler(ctx context.Context, handler *types.Handler) error {
 	return s.do().UpdateHandler(ctx, handler)
-}
-func (s *StoreProxy) GetClusterHealth(ctx context.Context, cluster clientv3.Cluster, etcdClientTLSConfig *tls.Config) *types.HealthResponse {
-	return s.do().GetClusterHealth(ctx, cluster, etcdClientTLSConfig)
 }
 
 // DeleteFailingKeepalive deletes a failing keepalive record for a given entity.

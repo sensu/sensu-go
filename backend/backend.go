@@ -456,7 +456,7 @@ func (b *Backend) Run(ctx context.Context) error {
 
 	defer eg.WaitStop()
 
-	// crash the stopgroup after a hard-coded timeout, when etcd is not embedded.
+	// crash the stopgroup after a hard-coded timeout
 	sg := &stopGroup{crashOnTimeout: true, waitTime: 30 * time.Second}
 
 	// Loop across the daemons in order to start them, then add them to our groups

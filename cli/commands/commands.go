@@ -5,7 +5,6 @@ import (
 	"github.com/sensu/sensu-go/cli/commands/apikey"
 	"github.com/sensu/sensu-go/cli/commands/asset"
 	"github.com/sensu/sensu-go/cli/commands/check"
-	"github.com/sensu/sensu-go/cli/commands/cluster"
 	"github.com/sensu/sensu-go/cli/commands/clusterrole"
 	"github.com/sensu/sensu-go/cli/commands/clusterrolebinding"
 	"github.com/sensu/sensu-go/cli/commands/command"
@@ -64,7 +63,6 @@ func AddCommands(rootCmd *cobra.Command, cli *cli.SensuCli) {
 		silenced.HelpCommand(cli),
 		create.CreateCommand(cli),
 		delete.DeleteCommand(cli),
-		cluster.HelpCommand(cli),
 		edit.Command(cli),
 		tessen.HelpCommand(cli),
 		dump.Command(cli),

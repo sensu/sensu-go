@@ -8,14 +8,12 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
-	clientv3 "go.etcd.io/etcd/client/v3"
 
 	corev2 "github.com/sensu/core/v2"
 	corev3 "github.com/sensu/core/v3"
 	"github.com/sensu/sensu-go/backend/messaging"
 	"github.com/sensu/sensu-go/backend/store"
 	stor "github.com/sensu/sensu-go/backend/store"
-	"github.com/sensu/sensu-go/testing/mockclientv3"
 	"github.com/sensu/sensu-go/testing/mockstore"
 )
 
@@ -229,11 +227,6 @@ func TestStartStop(t *testing.T) {
 }
 
 func TestEventProcessing(t *testing.T) {
-	client := mockclientv3.MockClientV3{}
-	getResp := &clientv3.GetResponse{}
-	client.On("Get", mock.Anything, "/sensu.io/silenced/", mock.Anything).
-		Return(getResp, nil)
-
 	test := newKeepalivedTest(t)
 	test.KeepaliveStore.On("GetFailingKeepalives", mock.Anything).Return([]*corev2.KeepaliveRecord{}, nil)
 	require.NoError(t, test.Keepalived.Start())
@@ -356,11 +349,6 @@ func TestProcessRegistration(t *testing.T) {
 			}
 			subscriptionEvent, err := messageBus.Subscribe(messaging.TopicEvent, "testSubscriberEvent", tsubEvent)
 			require.NoError(t, err)
-
-			client := mockclientv3.MockClientV3{}
-			getResp := &clientv3.GetResponse{}
-			client.On("Get", mock.Anything, "/sensu.io/silenced/", mock.Anything).
-				Return(getResp, nil)
 
 			keepalived, err := New(Config{
 				Store:        store,

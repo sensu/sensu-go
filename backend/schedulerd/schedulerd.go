@@ -11,7 +11,6 @@ import (
 	cachev2 "github.com/sensu/sensu-go/backend/store/cache/v2"
 	storev2 "github.com/sensu/sensu-go/backend/store/v2"
 	"github.com/sensu/sensu-go/types"
-	clientv3 "go.etcd.io/etcd/client/v3"
 )
 
 var (
@@ -69,7 +68,6 @@ type Config struct {
 	QueueGetter            types.QueueGetter
 	RingPool               *ringv2.RingPool
 	Bus                    messaging.MessageBus
-	Client                 *clientv3.Client
 	SecretsProviderManager *secrets.ProviderManager
 }
 

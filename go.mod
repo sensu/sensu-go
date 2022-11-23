@@ -31,7 +31,6 @@ require (
 	github.com/graphql-go/graphql v0.8.0
 	github.com/hashicorp/go-version v1.2.0
 	github.com/influxdata/line-protocol v0.0.0-20210311194329-9aa0e372d097
-	github.com/jackc/pgconn v1.13.0
 	github.com/jackc/pgx/v5 v5.1.1
 	github.com/lib/pq v1.10.5
 	github.com/mgutz/ansi v0.0.0-20170206155736-9520e82c474b
@@ -59,7 +58,6 @@ require (
 	github.com/willf/pad v0.0.0-20160331131008-b3d780601022
 	go.etcd.io/bbolt v1.3.6
 	go.etcd.io/etcd/api/v3 v3.5.5
-	go.etcd.io/etcd/client/v3 v3.5.5
 	go.uber.org/atomic v1.10.0
 	golang.org/x/crypto v0.0.0-20220829220503-c86fa9a7ed90
 	golang.org/x/net v0.0.0-20220722155237-a158d28d115b
@@ -75,7 +73,6 @@ require (
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/cespare/xxhash/v2 v2.1.1 // indirect
 	github.com/coreos/go-semver v0.3.0 // indirect
-	github.com/coreos/go-systemd/v22 v22.3.2 // indirect
 	github.com/creack/pty v1.1.11 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/dsnet/compress v0.0.1 // indirect
@@ -88,20 +85,14 @@ require (
 	github.com/inconshreveable/mousetrap v1.0.0 // indirect
 	github.com/ipfs/go-log v1.0.4 // indirect
 	github.com/ipfs/go-log/v2 v2.0.5 // indirect
-	github.com/jackc/chunkreader/v2 v2.0.1 // indirect
-	github.com/jackc/pgio v1.0.0 // indirect
 	github.com/jackc/pgpassfile v1.0.0 // indirect
-	github.com/jackc/pgproto3/v2 v2.3.1 // indirect
 	github.com/jackc/pgservicefile v0.0.0-20200714003250-2b9c44734f2b // indirect
-	github.com/jackc/pgtype v1.12.0 // indirect
-	github.com/jackc/pgx/v4 v4.17.2 // indirect
-	github.com/jackc/puddle v1.3.0 // indirect
 	github.com/jackc/puddle/v2 v2.1.2 // indirect
 	github.com/jbenet/go-reuseport v0.0.0-20180416043609-15a1cd37f050 // indirect
 	github.com/kballard/go-shellquote v0.0.0-20180428030007-95032a82bc51 // indirect
 	github.com/klauspost/compress v1.9.2 // indirect
 	github.com/klauspost/pgzip v1.2.1 // indirect
-	github.com/kr/text v0.2.0 // indirect
+	github.com/kr/pty v1.1.8 // indirect
 	github.com/libp2p/go-reuseport v0.0.0-20180416043609-15a1cd37f050 // indirect
 	github.com/libp2p/go-sockaddr v0.1.0 // indirect
 	github.com/lufia/plan9stats v0.0.0-20211012122336-39d0f177ccd0 // indirect
@@ -129,7 +120,6 @@ require (
 	github.com/ulikunitz/xz v0.5.10 // indirect
 	github.com/xi2/xz v0.0.0-20171230120015-48954b6210f8 // indirect
 	github.com/yusufpapurcu/wmi v1.2.2 // indirect
-	go.etcd.io/etcd/client/pkg/v3 v3.5.5 // indirect
 	go.uber.org/multierr v1.6.0 // indirect
 	go.uber.org/zap v1.17.0 // indirect
 	golang.org/x/sync v0.0.0-20220923202941-7f9b1623fab7 // indirect
