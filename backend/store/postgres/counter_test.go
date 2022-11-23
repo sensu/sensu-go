@@ -10,9 +10,9 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/jackc/pgx/v4/pgxpool"
+	"github.com/jackc/pgx/v5/pgxpool"
 	v2 "github.com/sensu/core/v2"
-	"github.com/sensu/sensu-api-tools"
+	apitools "github.com/sensu/sensu-api-tools"
 	"github.com/sensu/sensu-go/backend/poll"
 	storev2 "github.com/sensu/sensu-go/backend/store/v2"
 )

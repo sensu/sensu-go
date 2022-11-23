@@ -9,8 +9,8 @@ import (
 	"time"
 
 	"github.com/gogo/protobuf/proto"
-	pgxv4 "github.com/jackc/pgx/v4"
-	"github.com/jackc/pgx/v4/pgxpool"
+	pgxv5 "github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/lib/pq"
 	corev2 "github.com/sensu/core/v2"
 	"github.com/sensu/sensu-go/backend/selector"
@@ -189,7 +189,7 @@ func getHistory(tsArray, statusArray pq.Int64Array, historyIndex int64) ([]corev
 	return result, nil
 }
 
-func scanEvents(rows pgxv4.Rows, pred *store.SelectionPredicate) ([]*corev2.Event, error) {
+func scanEvents(rows pgxv5.Rows, pred *store.SelectionPredicate) ([]*corev2.Event, error) {
 	var (
 		tsArray, statusArray pq.Int64Array
 		historyIndex         int64
@@ -485,7 +485,7 @@ func (e *EventStore) UpdateEvent(ctx context.Context, event *corev2.Event) (uEve
 	return event, nil, nil
 }
 
-func scanCounts(rows pgxv4.Rows) (map[string]EventGauges, error) {
+func scanCounts(rows pgxv5.Rows) (map[string]EventGauges, error) {
 	gauges := map[string]EventGauges{}
 
 	for rows.Next() {

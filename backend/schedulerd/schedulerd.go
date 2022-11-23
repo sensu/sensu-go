@@ -90,7 +90,8 @@ func New(ctx context.Context, c Config, opts ...Option) (*Schedulerd, error) {
 	}
 	s.entityCache = cache
 	s.checkWatcher = NewCheckWatcher(s.ctx, c.Bus, c.Store, c.RingPool, cache, s.secretsProviderManager)
-	s.adhocRequestExecutor = NewAdhocRequestExecutor(s.ctx, s.store, s.queueGetter.GetQueue(adhocQueueName), s.bus, s.entityCache, s.secretsProviderManager)
+	// FIXME(eric): make adhoc scheduling work again
+	// s.adhocRequestExecutor = NewAdhocRequestExecutor(s.ctx, s.store, s.queueGetter.GetQueue(adhocQueueName), s.bus, s.entityCache, s.secretsProviderManager)
 
 	for _, o := range opts {
 		if err := o(s); err != nil {

@@ -11,14 +11,13 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/jackc/pgx/v4/pgxpool"
+	"github.com/jackc/pgx/v5/pgxpool"
 	corev3 "github.com/sensu/core/v3"
 	"github.com/sensu/sensu-go/backend/selector"
 	"github.com/sensu/sensu-go/backend/store"
 	storev2 "github.com/sensu/sensu-go/backend/store/v2"
 	"github.com/sensu/sensu-go/backend/store/v2/wrap"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 const (
@@ -40,21 +39,33 @@ func testWithPostgresConfigStore(t *testing.T, fn func(p storev2.ConfigStore)) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 	db, err := pgxpool.Connect(ctx, pgURL)
-	require.NoError(t, err)
+	if err != nil {
+		t.Error(err)
+		return
+	}
 
 	dbName := "sensuconfigdb" + strings.ReplaceAll(uuid.New().String(), "-", "")
 	_, err = db.Exec(ctx, fmt.Sprintf("CREATE DATABASE %s;", dbName))
-	require.NoError(t, err)
+	if err != nil {
+		t.Error(err)
+		return
+	}
 
 	defer dropAll(t, dbName, pgURL)
 	db.Close()
 
 	testURL := fmt.Sprintf("%s dbname=%s ", pgURL, dbName)
 	pgxConfig, err := pgxpool.ParseConfig(testURL)
-	require.NoError(t, err)
+	if err != nil {
+		t.Error(err)
+		return
+	}
 
-	configDB, err := Open(ctx, pgxConfig, false)
-	require.NoError(t, err)
+	configDB, err := Open(ctx, pgxConfig, true)
+	if err != nil {
+		t.Error(err)
+		return
+	}
 	defer configDB.Close()
 
 	s := NewConfigStore(db)
@@ -433,7 +444,10 @@ func TestConfigStore_Patch(t *testing.T) {
 func TestConfigStore_Watch(t *testing.T) {
 	testWithPostgresConfigStore(t, func(s storev2.ConfigStore) {
 		stor, ok := s.(*ConfigStore)
-		require.True(t, ok, "expected config store")
+		if !ok {
+			t.Error("expected config store")
+			return
+		}
 
 		stor.watchInterval = time.Millisecond * 10
 		stor.watchTxnWindow = time.Second
@@ -454,11 +468,20 @@ func TestConfigStore_Watch(t *testing.T) {
 
 		// create notification
 		err := createOrUpdateEntity(ctx, s, entity)
-		require.NoError(t, err)
+		if err != nil {
+			t.Error(err)
+			return
+		}
 		select {
 		case watchEvents, ok := <-watchChannel:
-			require.True(t, ok, "watcher closed unexpectedly")
-			require.Equal(t, 1, len(watchEvents))
+			if !ok {
+				t.Error("watcher closed unexpectedly")
+				return
+			}
+			if len(watchEvents) != 1 {
+				t.Error("expected 1 watch event")
+				return
+			}
 			assert.Equal(t, storev2.WatchCreate, watchEvents[0].Type)
 
 		case <-time.After(5 * time.Second):
@@ -468,11 +491,20 @@ func TestConfigStore_Watch(t *testing.T) {
 		// update notification
 		entity.Metadata.Labels["new-label"] = "new-value"
 		err = createOrUpdateEntity(ctx, s, entity)
-		require.NoError(t, err)
+		if err != nil {
+			t.Error(err)
+			return
+		}
 		select {
 		case watchEvents, ok := <-watchChannel:
-			require.True(t, ok, "watcher closed unexpectedly")
-			require.Equal(t, 1, len(watchEvents))
+			if !ok {
+				t.Error("watcher closed unexpectedly")
+				return
+			}
+			if len(watchEvents) != 1 {
+				t.Error("expected 1 watch event")
+				return
+			}
 			assert.Equal(t, storev2.WatchUpdate, watchEvents[0].Type)
 
 		case <-time.After(5 * time.Second):
@@ -481,11 +513,24 @@ func TestConfigStore_Watch(t *testing.T) {
 
 		// delete notification
 		err = deleteEntity(ctx, s, entity.Metadata.Namespace, entity.Metadata.Name)
-		require.NoError(t, err)
+		if err != nil {
+			t.Error(err)
+			return
+		}
+		if err != nil {
+			t.Error(err)
+			return
+		}
 		select {
 		case watchEvents, ok := <-watchChannel:
-			require.True(t, ok, "watcher closed unexpectedly")
-			require.Equal(t, 1, len(watchEvents))
+			if !ok {
+				t.Error("watcher closed unexpectedly")
+				return
+			}
+			if len(watchEvents) != 1 {
+				t.Error("expected 1 watch event")
+				return
+			}
 			assert.Equal(t, storev2.WatchDelete, watchEvents[0].Type)
 
 		case <-time.After(5 * time.Second):

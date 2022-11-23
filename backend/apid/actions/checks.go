@@ -25,8 +25,9 @@ type CheckController struct {
 // NewCheckController returns new CheckController
 func NewCheckController(store storev2.Interface, getter types.QueueGetter) CheckController {
 	return CheckController{
-		store:      store,
-		checkQueue: getter.GetQueue(adhocQueueName),
+		store: store,
+		// FIXME(eric): make adhoc scheduling work again
+		// checkQueue: getter.GetQueue(adhocQueueName),
 	}
 }
 

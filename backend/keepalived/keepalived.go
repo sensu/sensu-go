@@ -299,7 +299,7 @@ func (k *Keepalived) processKeepalives(ctx context.Context) {
 			err := k.operatorConcierge.CheckIn(tctx, state)
 			cancel()
 			if err != nil {
-				logger.WithError(err).Errorf("error on switch %q", id)
+				logger.WithError(err).Errorf("error checking-in entity %q", id)
 				if _, ok := err.(*store.ErrInternal); ok {
 					// Fatal error
 					select {

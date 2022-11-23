@@ -9,7 +9,7 @@ import (
 
 	"github.com/echlebek/migration"
 	"github.com/google/uuid"
-	"github.com/jackc/pgx/v4/pgxpool"
+	"github.com/jackc/pgx/v5/pgxpool"
 	corev2 "github.com/sensu/core/v2"
 	corev3 "github.com/sensu/core/v3"
 	"github.com/sensu/sensu-go/backend/store"
@@ -19,7 +19,7 @@ import (
 type poolWithDSNFunc func(ctx context.Context, db *pgxpool.Pool, dsn string)
 
 func dropAll(tb testing.TB, dbName, pgURL string) {
-	db, err := pgxpool.Connect(context.Background(), pgURL)
+	db, err := pgxpool.New(context.Background(), pgURL)
 	if err != nil {
 		tb.Fatalf("error opening database: %v", err)
 	}
@@ -65,7 +65,7 @@ func withMigratedPostgres(tb testing.TB, fn poolWithDSNFunc, migrations []migrat
 	tb.Cleanup(cancel)
 
 	// connect to postgres to create the database for tests
-	initialDB, err := pgxpool.Connect(ctx, pgURL)
+	initialDB, err := pgxpool.New(ctx, pgURL)
 	if err != nil {
 		tb.Error(err)
 		return
