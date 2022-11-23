@@ -35,6 +35,7 @@ func (m *mockCheckController) QueueAdhocRequest(ctx context.Context, check strin
 }
 
 func TestHttpApiChecksAdhocRequest(t *testing.T) {
+	t.Skip("skip")
 	defaultCtx := testutil.NewContext(
 		testutil.ContextWithNamespace("default"),
 	)
