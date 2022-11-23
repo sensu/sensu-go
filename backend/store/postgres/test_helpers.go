@@ -162,7 +162,9 @@ func testWithPostgresStore(tb testing.TB, fn func(storev2.Interface)) {
 		}
 		ns := &corev3.Namespace{
 			Metadata: &corev2.ObjectMeta{
-				Name: "default",
+				Name:        "default",
+				Labels:      make(map[string]string),
+				Annotations: make(map[string]string),
 			},
 		}
 		if err := pgStore.GetNamespaceStore().CreateIfNotExists(ctx, ns); err != nil {
@@ -182,7 +184,9 @@ func testWithPostgresEventStore(tb testing.TB, fn func(store.EventStore)) {
 		}
 		ns := &corev3.Namespace{
 			Metadata: &corev2.ObjectMeta{
-				Name: "default",
+				Name:        "default",
+				Labels:      make(map[string]string),
+				Annotations: make(map[string]string),
 			},
 		}
 		if err := pgStore.GetNamespaceStore().CreateIfNotExists(ctx, ns); err != nil {

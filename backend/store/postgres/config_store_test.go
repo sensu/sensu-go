@@ -5,12 +5,9 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"os"
-	"strings"
 	"testing"
 	"time"
 
-	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
 	corev3 "github.com/sensu/core/v3"
 	"github.com/sensu/sensu-go/backend/selector"
@@ -25,51 +22,12 @@ const (
 	entityName       = "__test-entity__"
 )
 
-func testWithPostgresConfigStore(t *testing.T, fn func(p storev2.ConfigStore)) {
+func testWithPostgresConfigStore(t testing.TB, fn func(p storev2.ConfigStore)) {
 	t.Helper()
-	if testing.Short() {
-		t.Skip("skipping postgres test")
-		return
-	}
-	pgURL := os.Getenv("PG_URL")
-	if pgURL == "" {
-		t.Skip("skipping postgres test")
-		return
-	}
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-	db, err := pgxpool.New(ctx, pgURL)
-	if err != nil {
-		t.Error(err)
-		return
-	}
-
-	dbName := "sensuconfigdb" + strings.ReplaceAll(uuid.New().String(), "-", "")
-	_, err = db.Exec(ctx, fmt.Sprintf("CREATE DATABASE %s;", dbName))
-	if err != nil {
-		t.Error(err)
-		return
-	}
-
-	defer dropAll(t, dbName, pgURL)
-	db.Close()
-
-	testURL := fmt.Sprintf("%s dbname=%s ", pgURL, dbName)
-	pgxConfig, err := pgxpool.ParseConfig(testURL)
-	if err != nil {
-		t.Error(err)
-		return
-	}
-
-	configDB, err := Open(ctx, pgxConfig, true)
-	if err != nil {
-		t.Error(err)
-		return
-	}
-	defer configDB.Close()
-
-	s := NewConfigStore(db)
-	fn(s)
+	withPostgres(t, func(ctx context.Context, db *pgxpool.Pool, dsn string) {
+		s := NewConfigStore(db)
+		fn(s)
+	})
 }
 
 func TestConfigStore_CreateOrUpdate(t *testing.T) {
