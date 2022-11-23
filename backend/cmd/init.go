@@ -97,11 +97,8 @@ func InitCommand() *cobra.Command {
 
 			cfg := &backend.Config{
 				Store: backend.StoreConfig{
-					PostgresConfigurationStore: postgres.Config{
-						DSN: viper.GetString(flagPGConfigStoreDSN),
-					},
-					PostgresStateStore: postgres.Config{
-						DSN: viper.GetString(flagPGStateStoreDSN),
+					PostgresStore: postgres.Config{
+						DSN: viper.GetString(flagPGDSN),
 					},
 				},
 			}
@@ -160,7 +157,6 @@ func InitCommand() *cobra.Command {
 	cmd.Flags().String(flagTimeout, defaultTimeout, "duration to wait before a connection attempt to etcd is considered failed (must be >= 1s)")
 	cmd.Flags().Bool(flagWait, false, "continuously retry to establish a connection to etcd until it is successful")
 	cmd.Flags().String(flagInitAdminAPIKey, "", "cluster admin API key")
-	cmd.Flags().Bool(flagDevMode, viper.GetBool(flagDevMode), "sensu-backend is running in dev mode")
 
 	setupErr = handleConfig(cmd, os.Args[1:], false)
 
@@ -170,7 +166,7 @@ func InitCommand() *cobra.Command {
 func initializeStore(cfg initConfig) error {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
-	pgdb, err := newPostgresPool(ctx, cfg.Store.PostgresConfigurationStore.DSN)
+	pgdb, err := newPostgresPool(ctx, cfg.Store.PostgresStore.DSN)
 	if err != nil {
 		return err
 	}

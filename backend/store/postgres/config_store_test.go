@@ -397,7 +397,7 @@ func TestConfigStore_List_WithSelectors(t *testing.T) {
 }
 
 func TestConfigStore_Count(t *testing.T) {
-	testWithPostgresConfigStore(t, func(s storev2.Interface) {
+	testWithPostgresConfigStore(t, func(s storev2.ConfigStore) {
 		ctx := context.Background()
 
 		entities, err := listEntities(ctx, s, defaultNamespace, &store.SelectionPredicate{})

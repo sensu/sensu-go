@@ -69,13 +69,9 @@ const (
 	flagLogLevel              = "log-level"
 	flagLabels                = "labels"
 	flagAnnotations           = "annotations"
-	flagDevMode               = "dev"
 
-	// Postgres config store
-	flagPGConfigStoreDSN = "pg-config-store-dsn"
-
-	// Postgres state store
-	flagPGStateStoreDSN = "pg-state-store-dsn"
+	// Postgres store
+	flagPGDSN = "pg-dsn"
 
 	// Metric logging flags
 	flagDisablePlatformMetrics         = "disable-platform-metrics"
@@ -113,14 +109,8 @@ Available Commands:{{range .Commands}}{{if (or .IsAvailableCommand (eq .Name "he
 General Flags:
 {{ $flags := categoryFlags "" .LocalFlags }}{{ $flags.FlagUsages | trimTrailingWhitespaces}}
 
-Store Flags:
-{{ $storeFlags := categoryFlags "store" .LocalFlags }}{{ $storeFlags.FlagUsages | trimTrailingWhitespaces}}
-
-Postgresql State Store Flags:
-{{ $pgstateflags := categoryFlags "pgstate" .LocalFlags }}{{ $pgstateflags.FlagUsages | trimTrailingWhitespaces }}
-
-Postgresql Configuration Store Flags:
-{{ $pgcfgflags := categoryFlags "pgconfig" .LocalFlags }}{{ $pgcfgflags.FlagUsages | trimTrailingWhitespaces }}
+Postgresql Store Flags:
+{{ $pgcfgflags := categoryFlags "store" .LocalFlags }}{{ $pgcfgflags.FlagUsages | trimTrailingWhitespaces }}
 
 Global Flags:
 {{.InheritedFlags.FlagUsages | trimTrailingWhitespaces}}{{end}}{{if .HasHelpSubCommands}}
@@ -193,11 +183,8 @@ func StartCommand(initialize InitializeFunc) *cobra.Command {
 				EventLogParallelEncoders:       viper.GetBool(flagEventLogParallelEncoders),
 
 				Store: backend.StoreConfig{
-					PostgresStateStore: postgres.Config{
-						DSN: viper.GetString(flagPGStateStoreDSN),
-					},
-					PostgresConfigurationStore: postgres.Config{
-						DSN: viper.GetString(flagPGConfigStoreDSN),
+					PostgresStore: postgres.Config{
+						DSN: viper.GetString(flagPGDSN),
 					},
 				},
 			}
@@ -245,7 +232,7 @@ func StartCommand(initialize InitializeFunc) *cobra.Command {
 
 			ctx, cancel := context.WithCancel(context.Background())
 
-			pgDB, err = newPostgresPool(ctx, cfg.Store.PostgresConfigurationStore.DSN)
+			pgDB, err = newPostgresPool(ctx, cfg.Store.PostgresStore.DSN)
 			if err != nil {
 				return err
 			}
@@ -402,11 +389,8 @@ func flagSet(server bool) *pflag.FlagSet {
 	configFileDescription := fmt.Sprintf("path to sensu-backend config file (default %q)", configFileDefaultLocation)
 	flagSet.StringP(flagConfigFile, "c", "", configFileDescription)
 
-	flagSet.String(flagPGConfigStoreDSN, viper.GetString(flagPGConfigStoreDSN), "postgresql configuration store DSN")
-	_ = flagSet.SetAnnotation(flagPGConfigStoreDSN, "categories", []string{"pgconfig"})
-
-	flagSet.String(flagPGStateStoreDSN, viper.GetString(flagPGStateStoreDSN), "postgresql state store DSN")
-	_ = flagSet.SetAnnotation(flagPGStateStoreDSN, "categories", []string{"pgstate"})
+	flagSet.String(flagPGDSN, viper.GetString(flagPGDSN), "postgresql store DSN")
+	_ = flagSet.SetAnnotation(flagPGDSN, "categories", []string{"store"})
 
 	if server {
 		// Main Flags
@@ -445,9 +429,6 @@ func flagSet(server bool) *pflag.FlagSet {
 		flagSet.Bool(flagDisablePlatformMetrics, viper.GetBool(flagDisablePlatformMetrics), "disable platform metrics logging")
 		flagSet.Duration(flagPlatformMetricsLoggingInterval, viper.GetDuration(flagPlatformMetricsLoggingInterval), "platform metrics logging interval")
 		flagSet.String(flagPlatformMetricsLogFile, viper.GetString(flagPlatformMetricsLogFile), "platform metrics log file path")
-
-		flagSet.Bool(flagDevMode, viper.GetBool(flagDevMode), "start sensu-backend in single-node developer mode, no external dependencies required")
-		_ = flagSet.SetAnnotation(flagDevMode, "categories", []string{"store"})
 
 		_ = flagSet.String(flagEventLogFile, "", "path to the event log file")
 		_ = flagSet.Bool(flagEventLogParallelEncoders, false, "use parallel JSON encoding for the event log")

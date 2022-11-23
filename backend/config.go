@@ -36,13 +36,8 @@ const (
 )
 
 type StoreConfig struct {
-	// postgres.ConfigurationStore contains postgres configuration store details. It's only valid to set this when
-	// ConfigurationStore is set to be "postgres".
-	PostgresConfigurationStore postgres.Config
-
-	// PostgresStateStore contains postgres state store details. It's only valid to set this when
-	// StateStore is set to be "postgres".
-	PostgresStateStore postgres.Config
+	// PostgresStore contains postgres configuration store details.
+	PostgresStore postgres.Config
 }
 
 // Config specifies a Backend configuration.
