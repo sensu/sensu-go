@@ -38,7 +38,7 @@ func testWithPostgresConfigStore(t *testing.T, fn func(p storev2.ConfigStore)) {
 	}
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
-	db, err := pgxpool.Connect(ctx, pgURL)
+	db, err := pgxpool.New(ctx, pgURL)
 	if err != nil {
 		t.Error(err)
 		return
