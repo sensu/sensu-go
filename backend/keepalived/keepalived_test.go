@@ -13,7 +13,6 @@ import (
 	corev3 "github.com/sensu/core/v3"
 	"github.com/sensu/sensu-go/backend/messaging"
 	"github.com/sensu/sensu-go/backend/store"
-	stor "github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/testing/mockstore"
 )
 
@@ -301,19 +300,19 @@ func TestProcessRegistration(t *testing.T) {
 			storeEntity:            newEntityConfigWithClass("agent"),
 			event:                  new(corev2.Event),
 			expectedEventLen:       0,
-			storeCreateOrUpdateErr: &stor.ErrAlreadyExists{},
+			storeCreateOrUpdateErr: &store.ErrAlreadyExists{},
 		},
 		{
 			name:             "Non-Registered Entity",
 			entity:           newEntityWithClass("agent"),
-			storeGetErr:      &stor.ErrNotFound{},
+			storeGetErr:      &store.ErrNotFound{},
 			event:            new(corev2.Event),
 			expectedEventLen: 1,
 		},
 		{
 			name:             "agent-managed entity is registered",
 			entity:           newAgentManagedEntity("agent"),
-			storeGetErr:      &stor.ErrNotFound{},
+			storeGetErr:      &store.ErrNotFound{},
 			event:            firstSequenceEvent,
 			expectedEventLen: 1,
 		},

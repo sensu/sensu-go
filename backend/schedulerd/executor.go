@@ -390,7 +390,6 @@ func buildRequest(check *corev2.CheckConfig, s storev2.Interface, secretsProvide
 	}
 
 	astore := storev2.NewGenericStore[*corev2.Asset](s)
-	assets := []*corev2.Asset{}
 	assets, err := astore.List(ctx, storev2.ID{Namespace: check.Namespace}, &store.SelectionPredicate{})
 	if err != nil {
 		return nil, err

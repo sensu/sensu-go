@@ -242,9 +242,7 @@ func (g *GenericClient) list(ctx context.Context, resources interface{}, pred *s
 				*resources = append(*resources, *v)
 			}
 		case *[]*corev3.EntityConfig:
-			for _, v := range list {
-				*resources = append(*resources, v)
-			}
+			*resources = append(*resources, list...)
 		case *[]corev3.Resource:
 			for _, v := range list {
 				*resources = append(*resources, v)

@@ -429,16 +429,6 @@ func TestGetEventsPagination(t *testing.T) {
 			}
 		}
 
-		// Test that we can limit the query to the "default" namespace
-		// This is to make sure that the don't "escape" the namespace when there
-		// are more entities stored in a namespace after "default".
-		ctx = context.Background()
-		ctx = context.WithValue(ctx, corev2.NamespaceKey, "default")
-
-		// Test that we can limit the query to the "testing" namespace
-		ctx = context.Background()
-		ctx = context.WithValue(ctx, corev2.NamespaceKey, "testing")
-
 		// Test with limit=1
 		ctx = context.Background()
 		pred = &store.SelectionPredicate{Limit: 1}

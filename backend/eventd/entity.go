@@ -44,11 +44,8 @@ func createProxyEntity(event *corev2.Event, s storev2.Interface) (fErr error) {
 	esstore := s.GetEntityStateStore()
 
 	state := corev3.NewEntityState(namespace, entityName)
-	config := corev3.NewEntityConfig(namespace, entityName)
 
-	var err error
-
-	config, err = ecstore.Get(context.Background(), namespace, entityName)
+	config, err := ecstore.Get(context.Background(), namespace, entityName)
 	if err == nil {
 		// Since the entity config exists, we fetch its associated state in
 		// order to create a fully formed corev2.Entity for the event.
@@ -73,6 +70,7 @@ func createProxyEntity(event *corev2.Event, s storev2.Interface) (fErr error) {
 			}
 		}
 	} else if err != nil {
+		config = corev3.NewEntityConfig(namespace, entityName)
 		switch err.(type) {
 		case *store.ErrNotFound:
 			// If the entity does not exist, create a proxy entity

@@ -517,18 +517,13 @@ func (e *Eventd) handleMessage(msg interface{}) (fEvent *corev2.Event, fErr erro
 
 	if event.Check.Ttl > 0 {
 		// Check in the operator
-		var err error
-		err = e.operatorConcierge.CheckIn(ctx, ostate)
-		if err != nil {
+		if err := e.operatorConcierge.CheckIn(ctx, ostate); err != nil {
 			EventsProcessed.WithLabelValues(EventsProcessedLabelError, EventsProcessedTypeLabelCheck).Inc()
 			return event, err
 		}
 	} else if (prevEvent != nil && prevEvent.Check.Ttl > 0) || event.Check.Ttl == deletedEventSentinel {
 		// The check TTL has been disabled, there is no longer a need to track it
-		logger.Debug("check ttl disabled")
-		var err error
-		err = e.operatorConcierge.CheckOut(ctx, store.OperatorKey{Namespace: ostate.Namespace, Name: ostate.Name, Type: ostate.Type})
-		if err != nil {
+		if err := e.operatorConcierge.CheckOut(ctx, store.OperatorKey{Namespace: ostate.Namespace, Name: ostate.Name, Type: ostate.Type}); err != nil {
 			// It's better to publish the event even if this fails, so
 			// don't return the error here.
 			logger.WithError(err).Error("error on operator checkout")
