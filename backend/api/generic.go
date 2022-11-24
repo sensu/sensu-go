@@ -1,5 +1,7 @@
 package api
 
+//lint:file-ignore S1011 staticcheck bug?
+
 import (
 	"context"
 	"errors"
