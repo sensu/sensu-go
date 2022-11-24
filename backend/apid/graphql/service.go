@@ -146,6 +146,13 @@ func NewService(cfg ServiceConfig) (*Service, error) {
 	schema.RegisterHandlerConnection(svc, &schema.HandlerConnectionAliases{})
 	schema.RegisterHandlerSocket(svc, &handlerSocketImpl{})
 
+	// Register health types
+	schema.RegisterClusterHealth(svc, &clusterHealthImpl{healthController: cfg.HealthController})
+	schema.RegisterEtcdAlarmMember(svc, &etcdAlarmMemberImpl{})
+	schema.RegisterEtcdAlarmType(svc)
+	schema.RegisterEtcdClusterHealth(svc, &etcdClusterHealthImpl{})
+	schema.RegisterEtcdClusterMemberHealth(svc, &etcdClusterMemberHealthImpl{})
+
 	// Register metrics
 	schema.RegisterBucketMetric(svc, &schema.BucketMetricAliases{})
 	schema.RegisterCounterMetric(svc, &counterMetricImpl{})
