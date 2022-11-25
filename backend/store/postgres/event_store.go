@@ -10,7 +10,6 @@ import (
 
 	"github.com/gogo/protobuf/proto"
 	pgxv5 "github.com/jackc/pgx/v5"
-	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/lib/pq"
 	corev2 "github.com/sensu/core/v2"
 	"github.com/sensu/sensu-go/backend/selector"
@@ -120,7 +119,7 @@ func totalStateChange(check *corev2.Check) uint32 {
 // NewEventStore creates a NewEventStore. It prepares several queries for
 // future use. If there is a non-nil error, it is due to query preparation
 // failing.
-func NewEventStore(db *pgxpool.Pool, sStore SilenceStoreI, pg Config, producers int) (*EventStore, error) {
+func NewEventStore(db DBI, sStore SilenceStoreI, pg Config, producers int) (*EventStore, error) {
 	// TODO add these options to postgres.Config
 	//workers := pg.BatchWorkers
 	//if workers == 0 {

@@ -156,7 +156,6 @@ type Eventd struct {
 	ctx                 context.Context
 	cancel              context.CancelFunc
 	store               storev2.Interface
-	eventStore          store.EventStore
 	bus                 messaging.MessageBus
 	workerCount         int
 	eventChan           chan interface{}
@@ -183,7 +182,6 @@ type Option func(*Eventd) error
 // Config configures Eventd
 type Config struct {
 	Store               storev2.Interface
-	EventStore          store.EventStore
 	Bus                 messaging.MessageBus
 	BufferSize          int
 	WorkerCount         int
@@ -214,7 +212,6 @@ func New(ctx context.Context, c Config, opts ...Option) (*Eventd, error) {
 
 	e := &Eventd{
 		store:               c.Store,
-		eventStore:          c.EventStore,
 		bus:                 c.Bus,
 		workerCount:         c.WorkerCount,
 		errChan:             make(chan error, 1),
@@ -418,7 +415,8 @@ func (e *Eventd) updateEventWithDuration(ctx context.Context, event *corev2.Even
 			Observe(float64(duration) / float64(time.Millisecond))
 	}()
 
-	return e.eventStore.UpdateEvent(ctx, event)
+	es := e.store.GetEventStore()
+	return es.UpdateEvent(ctx, event)
 }
 
 func (e *Eventd) handleMessage(msg interface{}) (fEvent *corev2.Event, fErr error) {
@@ -585,7 +583,8 @@ func (e *Eventd) handleCheckTTLNotification(ctx context.Context, state store.Ope
 		return e.operatorConcierge.CheckOut(ctx, store.OperatorKey{Namespace: state.Namespace, Name: state.Name, Type: state.Type})
 	}
 
-	event, err := e.eventStore.GetEventByEntityCheck(ctx, state.Controller.Name, state.Name)
+	es := e.store.GetEventStore()
+	event, err := es.GetEventByEntityCheck(ctx, state.Controller.Name, state.Name)
 	if err != nil {
 		lager.WithError(err).Error("check ttl: error retrieving event")
 		if _, ok := err.(*store.ErrInternal); ok {
@@ -627,7 +626,8 @@ func (e *Eventd) handleFailure(ctx context.Context, event *corev2.Event) error {
 	if err != nil {
 		return err
 	}
-	updatedEvent, _, err := e.eventStore.UpdateEvent(ctx, failedCheckEvent)
+	es := e.store.GetEventStore()
+	updatedEvent, _, err := es.UpdateEvent(ctx, failedCheckEvent)
 	if err != nil {
 		if _, ok := err.(*store.ErrInternal); ok {
 			// Fatal error
@@ -648,7 +648,8 @@ func (e *Eventd) createFailedCheckEvent(ctx context.Context, event *corev2.Event
 		return nil, errors.New("event does not contain a check")
 	}
 
-	event, err := e.eventStore.GetEventByEntityCheck(
+	es := e.store.GetEventStore()
+	event, err := es.GetEventByEntityCheck(
 		ctx, event.Entity.Name, event.Check.Name,
 	)
 	if err != nil {

@@ -70,9 +70,8 @@ func (s *Store) GetNamespaceStore() storev2.NamespaceStore {
 
 // legacy
 func (s *Store) GetEventStore() store.EventStore {
-	return &EventStore{
-		db: s.db,
-	}
+	store, _ := NewEventStore(s.db, s.GetSilencesStore(), Config{}, 20)
+	return store
 }
 
 // legacy
@@ -93,6 +92,7 @@ type DBI interface {
 	Query(context.Context, string, ...any) (pgx.Rows, error)
 	QueryRow(context.Context, string, ...any) pgx.Row
 	Exec(context.Context, string, ...any) (pgconn.CommandTag, error)
+	SendBatch(ctx context.Context, b *pgx.Batch) (br pgx.BatchResults)
 }
 
 type ConfigStore struct {
