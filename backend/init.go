@@ -278,7 +278,6 @@ func InitializeStore(ctx context.Context, db *pgxpool.Pool, config *Config) (*Ba
 		Authenticator:  authenticator,
 		ClusterVersion: "no version",
 		GraphQLService: b.GraphQLService,
-		HealthRouter:   b.HealthRouter,
 	}
 	newApi, err := apid.New(b.APIDConfig)
 	if err != nil {

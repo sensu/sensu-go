@@ -221,7 +221,6 @@ func (o *OPC) CheckIn(ctx context.Context, state store.OperatorState) error {
 	row := tx.QueryRow(ctx, getOperatorID, state.Namespace, state.Type, state.Name)
 	var id int64
 	timeout := int64(state.CheckInTimeout / time.Microsecond)
-	fmt.Println("timeout", timeout)
 	if err := row.Scan(&id); err != nil {
 		if err != pgx.ErrNoRows {
 			rollback = true
@@ -239,9 +238,7 @@ func (o *OPC) CheckIn(ctx context.Context, state store.OperatorState) error {
 		}
 		return nil
 	}
-	fmt.Println("updating", id)
 	// update case
-	fmt.Println("update params", id, timeout, state.Present, state.Metadata, ctlNamespace, ctlType, ctlName)
 	_, err = tx.Exec(ctx, opcCheckInUpdate, id, timeout, state.Present, state.Metadata, ctlNamespace, ctlType, ctlName)
 	if err != nil {
 		return fmt.Errorf("couldn't update operator record: %s", err)

@@ -401,7 +401,6 @@ func Initialize(ctx context.Context, pgdb postgres.DBI, config *Config) (*Backen
 		Authenticator:  authenticator,
 		ClusterVersion: clusterVersion,
 		GraphQLService: b.GraphQLService,
-		HealthRouter:   b.HealthRouter,
 	}
 	newApi, err := apid.New(b.APIDConfig)
 	if err != nil {

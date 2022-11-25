@@ -2,7 +2,6 @@ package postgres
 
 import (
 	"context"
-	"fmt"
 	"testing"
 	"time"
 
@@ -423,7 +422,6 @@ func TestOPCIntegration(t *testing.T) {
 				if err != nil {
 					t.Error(err)
 				}
-				fmt.Println(op.Present)
 			}
 		}
 
