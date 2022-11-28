@@ -24,13 +24,13 @@ WITH ns AS (
 	(SELECT id AS id
 	FROM namespaces 
 	WHERE namespaces.name = $1)
-	UNION (SELECT null AS id)
+	UNION (SELECT NULL AS id)
 	ORDER BY id NULLS LAST
 	LIMIT 1
 )
 SELECT opc.id FROM opc, ns
 WHERE
-	opc.namespace = ns.id
+	opc.namespace = ns.id OR opc.namespace IS NULL
 	AND opc.operator_type = $2
 	AND opc.operator_name = $3
 LIMIT 1
@@ -113,11 +113,14 @@ WITH ctl AS (
 		SELECT namespaces.id AS nsid
 		FROM namespaces
 		WHERE namespaces.name = $5
+		UNION
+		SELECT NULL AS nsid
+		ORDER BY nsid NULLS LAST
 		LIMIT 1
 	)
 	SELECT id AS id, operator_type AS operator_type
 	FROM opc, ctl_namespace
-	WHERE opc.namespace = ctl_namespace.nsid
+	WHERE opc.namespace = ctl_namespace.nsid OR opc.namespace IS NULL
 	  AND opc.operator_type = $6
 	  AND opc.operator_name = $7
 	UNION

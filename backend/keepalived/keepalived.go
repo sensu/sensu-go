@@ -3,6 +3,7 @@ package keepalived
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"os"
 	"path"
@@ -51,7 +52,7 @@ func init() {
 	var err error
 	hostname, err = os.Hostname()
 	if err != nil {
-		hostname = "default"
+		panic(err)
 	}
 }
 
@@ -65,7 +66,6 @@ type Keepalived struct {
 	bus                   messaging.MessageBus
 	workerCount           int
 	store                 storev2.Interface
-	eventStore            store.EventStore
 	deregistrationHandler string
 	mu                    *sync.Mutex
 	wg                    *sync.WaitGroup
@@ -115,7 +115,6 @@ func New(c Config, opts ...Option) (*Keepalived, error) {
 
 	k := &Keepalived{
 		store:                 c.Store,
-		eventStore:            c.EventStore,
 		bus:                   c.Bus,
 		deregistrationHandler: c.DeregistrationHandler,
 		keepaliveChan:         make(chan interface{}, c.BufferSize),
@@ -242,6 +241,11 @@ func (k *Keepalived) processKeepalives(ctx context.Context) {
 				continue
 			}
 
+			if event.Check == nil {
+				logger.Error("keepalive event has no check")
+				continue
+			}
+
 			id := path.Join(entity.Namespace, entity.Name)
 
 			if event.Timestamp == deletedEventSentinel {
@@ -277,14 +281,18 @@ func (k *Keepalived) processKeepalives(ctx context.Context) {
 				}
 			}
 
-			// Retrieve the keepalive timeout or use a default value in case an older
-			// agent version was used, since entity.KeepaliveTimeout no longer exist
-			ttl := time.Duration(corev2.DefaultKeepaliveTimeout) * time.Second
-			if event.Check != nil && event.Check.Timeout != 0 {
-				ttl = time.Duration(event.Check.Timeout) * time.Second
-			}
+			warning := int(event.Check.Timeout)
+			critical := int(event.Check.Ttl)
+			interval := int(event.Check.Interval)
+			ttl := time.Duration(warning) * time.Second
 
 			tctx, cancel := context.WithTimeout(ctx, k.storeTimeout)
+			agentMeta := agentMetadata{
+				Warning:  warning,
+				Critical: critical,
+				Interval: interval,
+			}
+			metadata, _ := json.Marshal(agentMeta)
 			state := store.OperatorState{
 				Namespace:      entity.Namespace,
 				Name:           entity.Name,
@@ -295,6 +303,7 @@ func (k *Keepalived) processKeepalives(ctx context.Context) {
 					Name: hostname,
 					Type: store.BackendOperator,
 				},
+				Metadata: (*json.RawMessage)(&metadata),
 			}
 			err := k.operatorConcierge.CheckIn(tctx, state)
 			cancel()
@@ -481,9 +490,10 @@ type Metadata struct {
 func (k *Keepalived) handleNotification(ctx context.Context, state store.OperatorState) error {
 	KeepalivesProcessed.WithLabelValues(KeepaliveCounterLabelDead).Inc()
 	lager := logger.WithFields(logrus.Fields{
-		"present":   false,
-		"entity":    state.Name,
-		"namespace": state.Namespace,
+		"present":       false,
+		"entity":        state.Name,
+		"operator_type": state.Type.String(),
+		"namespace":     state.Namespace,
 	})
 
 	lager.Warn("keepalive timed out")
@@ -500,7 +510,8 @@ func (k *Keepalived) handleNotification(ctx context.Context, state store.Operato
 		}
 		return err
 	}
-	currentEvent, err := k.eventStore.GetEventByEntityCheck(ctx, state.Name, "keepalive")
+	ctx = store.NamespaceContext(ctx, state.Namespace)
+	currentEvent, err := k.store.GetEventStore().GetEventByEntityCheck(ctx, state.Name, "keepalive")
 	if err != nil {
 		lager.WithError(err).Error("error while reading event")
 		return err
@@ -585,13 +596,44 @@ func (k *Keepalived) handleNotification(ctx context.Context, state store.Operato
 	return nil
 }
 
+type agentMetadata struct {
+	Warning  int `json:"w"`
+	Critical int `json:"c"`
+	Interval int `json:"i"`
+}
+
 // handleUpdate sets the entity's last seen time and publishes an OK check event
 // to the message bus.
 func (k *Keepalived) handleUpdate(e *corev2.Event) error {
+	if e.Check == nil {
+		return errors.New("no check in keepalive event")
+	}
 	entity := e.Entity
 
+	warning := int(e.Check.Timeout)
+	critical := int(e.Check.Ttl)
+	interval := int(e.Check.Interval)
+	ttl := time.Duration(warning) * time.Second
+
 	ctx := corev2.SetContextFromResource(context.Background(), entity)
-	state := store.OperatorState{Namespace: e.Entity.Namespace, Name: e.Entity.Name, Type: store.AgentOperator}
+	agentMeta := agentMetadata{
+		Warning:  warning,
+		Critical: critical,
+		Interval: interval,
+	}
+	metadata, _ := json.Marshal(agentMeta)
+	state := store.OperatorState{
+		Namespace: e.Entity.Namespace,
+		Name:      e.Entity.Name,
+		Type:      store.AgentOperator,
+		Controller: &store.OperatorKey{
+			Name: hostname,
+			Type: store.BackendOperator,
+		},
+		CheckInTimeout: ttl,
+		Present:        true,
+		Metadata:       (*json.RawMessage)(&metadata),
+	}
 	if err := k.operatorConcierge.CheckIn(ctx, state); err != nil {
 		// Warning: do not wrap this error
 		return err

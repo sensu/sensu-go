@@ -287,6 +287,8 @@ func Initialize(ctx context.Context, pgdb postgres.DBI, config *Config) (*Backen
 
 	pgOPC := postgres.NewOPC(pgdb)
 
+	go CheckInLoop(ctx, pgOPC)
+
 	// Initialize eventd
 	event, err := eventd.New(
 		ctx,

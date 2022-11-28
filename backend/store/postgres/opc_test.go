@@ -418,7 +418,7 @@ func TestOPCIntegration(t *testing.T) {
 			if got.Present {
 				t.Error("operator is present")
 
-				op, err := opc.QueryOperator(ctx, store.OperatorKey{Namespace: "default", Type: store.AgentOperator, Name: "agent1"})
+				_, err := opc.QueryOperator(ctx, store.OperatorKey{Namespace: "default", Type: store.AgentOperator, Name: "agent1"})
 				if err != nil {
 					t.Error(err)
 				}
