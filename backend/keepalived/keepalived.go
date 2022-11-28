@@ -472,19 +472,17 @@ func createRegistrationEvent(entity *corev2.Entity) *corev2.Event {
 
 func (k *Keepalived) alive(state store.OperatorState) {
 	KeepalivesProcessed.WithLabelValues(KeepaliveCounterLabelAlive).Inc()
-	lager := logger.WithFields(logrus.Fields{
-		"present":   true,
-		"entity":    state.Name,
-		"namespace": state.Namespace,
-	})
 
-	lager.Debug("entity is alive")
-}
+	if logrus.GetLevel() == logrus.DebugLevel {
+		// avoid unnecessary allocations here
+		lager := logger.WithFields(logrus.Fields{
+			"present":   true,
+			"entity":    state.Name,
+			"namespace": state.Namespace,
+		})
 
-type Metadata struct {
-	WarningTimeout  int64 `json:"warn"`
-	CriticalTimeout int64 `json:"crit"`
-	Interval        int64 `json:"intr"`
+		lager.Debug("entity is alive")
+	}
 }
 
 func (k *Keepalived) handleNotification(ctx context.Context, state store.OperatorState) error {
@@ -558,7 +556,7 @@ func (k *Keepalived) handleNotification(ctx context.Context, state store.Operato
 		return err
 	}
 
-	var meta Metadata
+	var meta agentMetadata
 	if err := json.Unmarshal(*state.Metadata, &meta); err != nil {
 		lager.WithError(err).Error("error reading state metadata")
 		return err
