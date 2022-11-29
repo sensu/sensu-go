@@ -2,7 +2,6 @@ package agentd
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"log"
 	"net"
@@ -16,9 +15,9 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/gorilla/websocket"
 	"github.com/prometheus/client_golang/prometheus"
-	"github.com/sensu/sensu-go/agent"
 	corev2 "github.com/sensu/core/v2"
 	corev3 "github.com/sensu/core/v3"
+	"github.com/sensu/sensu-go/agent"
 	"github.com/sensu/sensu-go/backend/apid/middlewares"
 	"github.com/sensu/sensu-go/backend/apid/routers"
 	"github.com/sensu/sensu-go/backend/authentication/jwt"
@@ -255,15 +254,13 @@ func (a *Agentd) runWatcher() {
 
 func (a *Agentd) handleEvent(event storev2.WatchEvent) error {
 	changeEvent := entityChange{
-		Type:         event.Type,
-		EntityConfig: new(corev3.EntityConfig),
+		Type: event.Type,
 	}
 
-	if event.Value == nil {
-		return errors.New("nil entity received from entity config watcher")
-	}
+	var err error
 
-	if err := event.Value.UnwrapInto(changeEvent.EntityConfig); err != nil {
+	changeEvent.EntityConfig, err = storev2.ReadEventValue[*corev3.EntityConfig](event)
+	if err != nil {
 		return err
 	}
 
@@ -367,20 +364,19 @@ func (a *Agentd) webSocketHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	cfg := SessionConfig{
-		AgentAddr:      r.RemoteAddr,
-		AgentName:      r.Header.Get(transport.HeaderKeyAgentName),
-		Namespace:      r.Header.Get(transport.HeaderKeyNamespace),
-		User:           r.Header.Get(transport.HeaderKeyUser),
-		Subscriptions:  strings.Split(r.Header.Get(transport.HeaderKeySubscriptions), ","),
-		RingPool:       a.ringPool,
-		ContentType:    contentType,
-		WriteTimeout:   a.writeTimeout,
-		Bus:            a.bus,
-		Conn:           transport.NewTransport(conn),
-		Storev2:        a.store,
-		Marshal:        marshal,
-		Unmarshal:      unmarshal,
-		BurialReceiver: NewBurialReceiver(),
+		AgentAddr:     r.RemoteAddr,
+		AgentName:     r.Header.Get(transport.HeaderKeyAgentName),
+		Namespace:     r.Header.Get(transport.HeaderKeyNamespace),
+		User:          r.Header.Get(transport.HeaderKeyUser),
+		Subscriptions: strings.Split(r.Header.Get(transport.HeaderKeySubscriptions), ","),
+		RingPool:      a.ringPool,
+		ContentType:   contentType,
+		WriteTimeout:  a.writeTimeout,
+		Bus:           a.bus,
+		Conn:          transport.NewTransport(conn),
+		Storev2:       a.store,
+		Marshal:       marshal,
+		Unmarshal:     unmarshal,
 	}
 
 	cfg.Subscriptions = corev2.AddEntitySubscription(cfg.AgentName, cfg.Subscriptions)
@@ -529,4 +525,9 @@ func (a *Agentd) EntityLimiterMiddleware(next http.Handler) http.Handler {
 
 type Authenticator interface {
 	Authenticate(ctx context.Context, username, password string) (*corev2.Claims, error)
+}
+
+type entityChange struct {
+	Type         storev2.WatchActionType
+	EntityConfig *corev3.EntityConfig
 }

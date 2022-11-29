@@ -1,6 +1,8 @@
 package v2
 
 import (
+	"fmt"
+
 	"github.com/prometheus/client_golang/prometheus"
 )
 
@@ -20,6 +22,21 @@ const (
 
 // WatchActionType indicates what type of change was made to an object in the store.
 type WatchActionType int
+
+func ReadEventValue[R Resource[T], T any](w WatchEvent) (R, error) {
+	if w.Err != nil {
+		return nil, w.Err
+	}
+	if w.Value == nil {
+		return nil, nil
+	}
+	val := new(T)
+	fmt.Println("val", val)
+	if err := w.Value.UnwrapInto(val); err != nil {
+		return nil, err
+	}
+	return val, nil
+}
 
 // WatchEvent represents an event of a watched resource
 type WatchEvent struct {

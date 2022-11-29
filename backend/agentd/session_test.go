@@ -10,9 +10,9 @@ import (
 	"time"
 
 	"github.com/gogo/protobuf/proto"
-	"github.com/sensu/sensu-go/agent"
 	corev2 "github.com/sensu/core/v2"
 	corev3 "github.com/sensu/core/v3"
+	"github.com/sensu/sensu-go/agent"
 	"github.com/sensu/sensu-go/backend/messaging"
 	"github.com/sensu/sensu-go/backend/store"
 	storev2 "github.com/sensu/sensu-go/backend/store/v2"
@@ -54,24 +54,6 @@ func TestGoodSessionConfigProto(t *testing.T) {
 	session, err := NewSession(context.Background(), cfg)
 	assert.NotNil(t, session)
 	assert.NoError(t, err)
-}
-
-func TestMakeEntitySwitchBurialEvent(t *testing.T) {
-	cfg := SessionConfig{
-		Namespace:     "default",
-		AgentName:     "entity",
-		Subscriptions: []string{"default"},
-	}
-	event := makeEntitySwitchBurialEvent(cfg)
-	if err := event.Validate(); err != nil {
-		t.Fatal(err)
-	}
-	if err := event.Entity.Validate(); err != nil {
-		t.Fatal(err)
-	}
-	if got, want := event.Timestamp, int64(deletedEventSentinel); got != want {
-		t.Errorf("bad timestamp: got %d, want %d", got, want)
-	}
 }
 
 func TestSession_sender(t *testing.T) {
@@ -463,9 +445,19 @@ func TestSession_Start(t *testing.T) {
 func publishWatchEvent(t *testing.T, bus *messaging.WizardBus, event *entityChange) {
 	t.Helper()
 
+	wrapper, err := storev2.WrapResource(event.EntityConfig)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	we := storev2.WatchEvent{
+		Type:  event.Type,
+		Value: wrapper,
+	}
+
 	if err := bus.Publish(messaging.EntityConfigTopic(
 		event.EntityConfig.Metadata.Namespace, event.EntityConfig.Metadata.Name,
-	), event); err != nil {
+	), &we); err != nil {
 		t.Fatal(err)
 	}
 }

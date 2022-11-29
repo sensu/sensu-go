@@ -11,9 +11,9 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/prometheus/client_golang/prometheus"
-	"github.com/sensu/sensu-go/agent"
 	corev2 "github.com/sensu/core/v2"
 	corev3 "github.com/sensu/core/v3"
+	"github.com/sensu/sensu-go/agent"
 	"github.com/sensu/sensu-go/backend/messaging"
 	"github.com/sensu/sensu-go/backend/metrics"
 	"github.com/sensu/sensu-go/backend/ringv2"
@@ -142,25 +142,6 @@ type SessionConfig struct {
 
 	Marshal   agent.MarshalFunc
 	Unmarshal agent.UnmarshalFunc
-
-	// BurialReceiver is used to detect when the previous switch associated
-	// with the session has been buried. Necessary when running parallel keepalived
-	// workers.
-	BurialReceiver *BurialReceiver
-}
-
-type BurialReceiver struct {
-	ch chan interface{}
-}
-
-func NewBurialReceiver() *BurialReceiver {
-	return &BurialReceiver{
-		ch: make(chan interface{}, 1),
-	}
-}
-
-func (b *BurialReceiver) Receiver() chan<- interface{} {
-	return b.ch
 }
 
 // NewSession creates a new Session object given the triple of a transport
@@ -196,62 +177,8 @@ func NewSession(ctx context.Context, cfg SessionConfig) (*Session, error) {
 		},
 	}
 
-	// Optionally subscribe to burial notifications
-	if cfg.BurialReceiver != nil {
-		topic := messaging.BurialTopic(cfg.Namespace, cfg.AgentName)
-		subscription, err := s.bus.Subscribe(topic, cfg.AgentName, cfg.BurialReceiver)
-		if err != nil {
-			return nil, err
-		}
-		defer func() {
-			_ = subscription.Cancel()
-		}()
-	}
-
-	if err := s.bus.Publish(messaging.TopicKeepalive, makeEntitySwitchBurialEvent(cfg)); err != nil {
-		return nil, err
-	}
-
-	// wait for indication that the burial has been processed
-	if cfg.BurialReceiver != nil {
-		select {
-		case <-cfg.BurialReceiver.ch:
-		case <-time.After(time.Minute):
-			return nil, errors.New("session could not be established after 60s, giving up")
-		}
-	}
-
 	s.handler = newSessionHandler(s)
 	return s, nil
-}
-
-// When the session is created, it will send this event to keepalived, ensuring
-// that any previously existing switch is buried. This is necessary to make
-// sure that the switch is properly recreated if the timeouts have changed.
-//
-// Keepalived checks for deletedEventSentinel, so that other components can
-// message to it that a particular entity's switch can be buried.
-func makeEntitySwitchBurialEvent(cfg SessionConfig) *corev2.Event {
-	return &corev2.Event{
-		ObjectMeta: corev2.ObjectMeta{
-			Namespace: cfg.Namespace,
-		},
-		Entity: &corev2.Entity{
-			ObjectMeta: corev2.ObjectMeta{
-				Namespace: cfg.Namespace,
-				Name:      cfg.AgentName,
-			},
-			Subscriptions: cfg.Subscriptions,
-			EntityClass:   corev2.EntityAgentClass,
-		},
-		Check: &corev2.Check{
-			ObjectMeta: corev2.ObjectMeta{
-				Namespace: cfg.Namespace,
-				Name:      corev2.KeepaliveCheckName,
-			},
-		},
-		Timestamp: deletedEventSentinel,
-	}
 }
 
 // Receiver returns the check channel for the session.
@@ -321,8 +248,8 @@ func (s *Session) sender() {
 		var msg *transport.Message
 		select {
 		case e := <-s.entityConfig.updatesChannel:
-			watchEvent, ok := e.(*entityChange)
-			if !ok {
+			watchEvent, ok := e.(*storev2.WatchEvent)
+			if !ok || watchEvent == nil {
 				logger.Errorf("session received unexpected struct: %T", e)
 				continue
 			}
@@ -337,12 +264,16 @@ func (s *Session) sender() {
 				continue
 			}
 
-			if watchEvent.EntityConfig == nil {
+			entity, err := storev2.ReadEventValue[*corev3.EntityConfig](*watchEvent)
+			if err != nil {
+				logger.Error(err)
+				continue
+			}
+			if entity == nil {
 				logger.Error("session received nil entity in watch event")
 				continue
 			}
 
-			entity := watchEvent.EntityConfig
 			lager := logger.WithFields(logrus.Fields{
 				"action":    watchEvent.Type.String(),
 				"entity":    entity.Metadata.Name,
@@ -804,9 +735,4 @@ func sortSubscriptions(subscriptions []string) []string {
 	sortedSubscriptions := append(subscriptions[:0:0], subscriptions...)
 	sort.Strings(sortedSubscriptions)
 	return sortedSubscriptions
-}
-
-type entityChange struct {
-	Type         storev2.WatchActionType
-	EntityConfig *corev3.EntityConfig
 }
