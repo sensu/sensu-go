@@ -7,7 +7,6 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/url"
-	"reflect"
 	"strings"
 
 	"github.com/gorilla/mux"
@@ -17,7 +16,6 @@ import (
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/backend/store/patch"
 	storev2 "github.com/sensu/sensu-go/backend/store/v2"
-	"github.com/sensu/sensu-go/backend/store/v2/wrap"
 )
 
 const (
@@ -32,7 +30,7 @@ const (
 var acceptedContentTypes = []string{mergePatchContentType}
 
 // PatchResource patches a given resource, using the request body as the patch
-func (h Handlers) PatchResource(r *http.Request) (corev3.Resource, error) {
+func (h Handlers[R, T]) PatchResource(r *http.Request) (corev3.Resource, error) {
 	// Read the request body
 	body, err := ioutil.ReadAll(r.Body)
 	if err != nil {
@@ -86,27 +84,15 @@ func (h Handlers) PatchResource(r *http.Request) (corev3.Resource, error) {
 	return h.patchV3Resource(r.Context(), body, name, namespace, patcher, conditions)
 }
 
-func (h Handlers) patchV3Resource(ctx context.Context, body []byte, name, namespace string, patcher patch.Patcher, conditions *store.ETagCondition) (corev3.Resource, error) {
-	payload := reflect.New(reflect.TypeOf(h.Resource).Elem())
-	if err := json.Unmarshal(body, payload.Interface()); err != nil {
+func (h Handlers[R, T]) patchV3Resource(ctx context.Context, body []byte, name, namespace string, patcher patch.Patcher, etag *store.ETagCondition) (corev3.Resource, error) {
+	var payload R
+	if err := json.Unmarshal(body, &payload); err != nil {
 		return nil, actions.NewError(actions.InvalidArgument, err)
 	}
 
-	resource, ok := payload.Interface().(corev3.Resource)
-	if !ok {
-		return nil, actions.NewErrorf(actions.InvalidArgument)
-	}
+	gstore := storev2.NewGenericStore[R](h.Store)
 
-	req := storev2.NewResourceRequestFromResource(resource)
-	req.Namespace = namespace
-	req.Name = name
-
-	w, err := wrap.ResourceWithoutValidation(resource)
-	if err != nil {
-		return nil, actions.NewError(actions.InvalidArgument, err)
-	}
-
-	if err := h.Store.Patch(ctx, req, w, patcher, conditions); err != nil {
+	if err := gstore.Patch(ctx, payload, patcher, etag); err != nil {
 		switch err := err.(type) {
 		case *store.ErrNotFound:
 			return nil, actions.NewError(actions.NotFound, err)
@@ -119,13 +105,7 @@ func (h Handlers) patchV3Resource(ctx context.Context, body []byte, name, namesp
 		}
 	}
 
-	// Unwrap the updated resource
-	resource, err = w.Unwrap()
-	if err != nil {
-		return nil, actions.NewError(actions.InternalErr, err)
-	}
-
-	return resource, nil
+	return nil, nil
 }
 
 func validatePatch(data []byte, vars map[string]string) error {

@@ -9,16 +9,13 @@ import (
 
 // ClusterRolesRouter handles requests for ClusterRoles.
 type ClusterRolesRouter struct {
-	handlers handlers.Handlers
+	store storev2.Interface
 }
 
 // NewClusterRolesRouter instantiates a new router for ClusterRoles.
 func NewClusterRolesRouter(store storev2.Interface) *ClusterRolesRouter {
 	return &ClusterRolesRouter{
-		handlers: handlers.Handlers{
-			Resource: &corev2.ClusterRole{},
-			Store:    store,
-		},
+		store: store,
 	}
 }
 
@@ -29,10 +26,12 @@ func (r *ClusterRolesRouter) Mount(parent *mux.Router) {
 		PathPrefix: "/{resource:clusterroles}",
 	}
 
-	routes.Del(r.handlers.DeleteResource)
-	routes.Get(r.handlers.GetResource)
-	routes.List(r.handlers.ListResources, corev2.ClusterRoleFields)
-	routes.Patch(r.handlers.PatchResource)
-	routes.Post(r.handlers.CreateResource)
-	routes.Put(r.handlers.CreateOrUpdateResource)
+	handlers := handlers.NewHandlers[*corev2.ClusterRole](r.store)
+
+	routes.Del(handlers.DeleteResource)
+	routes.Get(handlers.GetResource)
+	routes.List(handlers.ListResources, corev2.ClusterRoleFields)
+	routes.Patch(handlers.PatchResource)
+	routes.Post(handlers.CreateResource)
+	routes.Put(handlers.CreateOrUpdateResource)
 }

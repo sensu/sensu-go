@@ -8,7 +8,7 @@ import (
 	"testing"
 
 	"github.com/golang-jwt/jwt/v4"
-	"github.com/jackc/pgx/v4/pgxpool"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/sirupsen/logrus"
 
 	"github.com/gorilla/mux"
@@ -26,10 +26,10 @@ import (
 	"github.com/stretchr/testify/mock"
 )
 
-func seedStore(t *testing.T, store storev2.Interface, nsStore storev2.NamespaceStore) {
+func seedStore(t *testing.T, store storev2.Interface) {
 	t.Helper()
 
-	if err := seeds.SeedInitialDataWithContext(context.Background(), store, nsStore); err != nil {
+	if err := seeds.SeedInitialDataWithContext(context.Background(), store); err != nil {
 		t.Fatalf("Could not seed the backend: %s", err)
 	}
 
@@ -158,7 +158,7 @@ func seedStore(t *testing.T, store storev2.Interface, nsStore storev2.NamespaceS
 		if err != nil {
 			t.Fatalf("error wrapping resource %d: %s", i, err)
 		}
-		if err := store.CreateIfNotExists(context.Background(), req, wrapper); err != nil {
+		if err := store.GetConfigStore().CreateIfNotExists(context.Background(), req, wrapper); err != nil {
 			t.Fatalf("error creating resource %d: %s", i, err)
 		}
 	}
@@ -571,59 +571,59 @@ func TestAuthorization(t *testing.T) {
 		},
 	}
 	postgres.WithPostgres(t, func(ctx context.Context, configDB *pgxpool.Pool, dsn string) {
-		postgres.WithPostgres(t, func(ctx context.Context, stateDB *pgxpool.Pool, dsn string) {
-			configStore := postgres.NewConfigStore(configDB, stateDB)
-			namespaceStore := postgres.NewNamespaceStore(stateDB)
-			seedStore(t, configStore, namespaceStore)
+		cfg := postgres.StoreConfig{
+			DB: configDB,
+		}
+		store := postgres.NewStore(cfg)
+		seedStore(t, store)
 
-			for _, tt := range cases {
-				t.Run(tt.description, func(t *testing.T) {
-					// testHandler is a catch-all handler that returns 200 OK
-					testHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
+		for _, tt := range cases {
+			t.Run(tt.description, func(t *testing.T) {
+				// testHandler is a catch-all handler that returns 200 OK
+				testHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
 
-					// Prepare our HTTP server
-					w := httptest.NewRecorder()
+				// Prepare our HTTP server
+				w := httptest.NewRecorder()
 
-					// Prepare the request
-					r, err := http.NewRequest(tt.method, tt.url, nil)
-					if err != nil {
-						t.Fatal("Couldn't create request: ", err)
-					}
+				// Prepare the request
+				r, err := http.NewRequest(tt.method, tt.url, nil)
+				if err != nil {
+					t.Fatal("Couldn't create request: ", err)
+				}
 
-					// Inject the claims into the request context
-					claims := corev2.Claims{
-						StandardClaims: jwt.StandardClaims{Subject: "foo"},
-						Groups:         []string{tt.group},
-					}
-					ctx := sensuJWT.SetClaimsIntoContext(r, &claims)
+				// Inject the claims into the request context
+				claims := corev2.Claims{
+					StandardClaims: jwt.StandardClaims{Subject: "foo"},
+					Groups:         []string{tt.group},
+				}
+				ctx := sensuJWT.SetClaimsIntoContext(r, &claims)
 
-					// Prepare our middlewares
-					namespaceMiddleware := middlewares.Namespace{}
-					attributesMiddleware := tt.attributesMiddleware
-					authorizationMiddleware := middlewares.Authorization{Authorizer: &rbac.Authorizer{Store: configStore}}
+				// Prepare our middlewares
+				namespaceMiddleware := middlewares.Namespace{}
+				attributesMiddleware := tt.attributesMiddleware
+				authorizationMiddleware := middlewares.Authorization{Authorizer: &rbac.Authorizer{Store: store}}
 
-					// Prepare the router
-					router := mux.NewRouter()
-					router.PathPrefix("/api/{group}/{version}/{resource:users}/{id}/{subresource}").Handler(testHandler)
-					router.PathPrefix("/api/{group}/{version}/namespaces/{namespace}/{resource}/{id}").Handler(testHandler)
-					router.PathPrefix("/api/{group}/{version}/namespaces/{namespace}/{resource}").Handler(testHandler)
-					router.PathPrefix("/api/{group}/{version}/{resource}/{id}").Handler(testHandler)
-					router.PathPrefix("/api/{group}/{version}/{resource}").Handler(testHandler)
-					router.PathPrefix("/api/{group}/{version}/{resource:namespaces}/{id}").Handler(testHandler)
-					router.PathPrefix("/api/{group}/{version}/{resource:namespaces}").Handler(testHandler)
-					router.PathPrefix("/api/{group}/{version}/{resource:users}/{id}").Handler(testHandler)
-					router.PathPrefix("/").Handler(testHandler) // catch all for legacy routes
-					router.Use(namespaceMiddleware.Then, attributesMiddleware.Then, authorizationMiddleware.Then)
+				// Prepare the router
+				router := mux.NewRouter()
+				router.PathPrefix("/api/{group}/{version}/{resource:users}/{id}/{subresource}").Handler(testHandler)
+				router.PathPrefix("/api/{group}/{version}/namespaces/{namespace}/{resource}/{id}").Handler(testHandler)
+				router.PathPrefix("/api/{group}/{version}/namespaces/{namespace}/{resource}").Handler(testHandler)
+				router.PathPrefix("/api/{group}/{version}/{resource}/{id}").Handler(testHandler)
+				router.PathPrefix("/api/{group}/{version}/{resource}").Handler(testHandler)
+				router.PathPrefix("/api/{group}/{version}/{resource:namespaces}/{id}").Handler(testHandler)
+				router.PathPrefix("/api/{group}/{version}/{resource:namespaces}").Handler(testHandler)
+				router.PathPrefix("/api/{group}/{version}/{resource:users}/{id}").Handler(testHandler)
+				router.PathPrefix("/").Handler(testHandler) // catch all for legacy routes
+				router.Use(namespaceMiddleware.Then, attributesMiddleware.Then, authorizationMiddleware.Then)
 
-					// Serve the request
-					router.ServeHTTP(w, r.WithContext(ctx))
-					assert.Equal(t, tt.expectedCode, w.Code)
-					if w.Body.Len() != 0 {
-						t.Logf("Response body: %s", w.Body.String())
-					}
-				})
-			}
-		})
+				// Serve the request
+				router.ServeHTTP(w, r.WithContext(ctx))
+				assert.Equal(t, tt.expectedCode, w.Code)
+				if w.Body.Len() != 0 {
+					t.Logf("Response body: %s", w.Body.String())
+				}
+			})
+		}
 	})
 
 }
@@ -649,14 +649,16 @@ func getFaultyRoleBinding() *corev2.RoleBinding {
 
 func TestRoleNotFound_GH4268(t *testing.T) {
 	st := new(mockstore.V2MockStore)
+	cs := new(mockstore.ConfigStore)
+	st.On("GetConfigStore").Return(cs)
 	faultyRoleBindings := []*corev2.RoleBinding{getFaultyRoleBinding()}
 	rb := &corev2.RoleBinding{}
 	rb.Namespace = "default"
 	rbListReq := storev2.NewResourceRequestFromResource(rb)
-	st.On("List", mock.Anything, rbListReq, mock.Anything).Return(mockstore.WrapList[*corev2.RoleBinding](faultyRoleBindings), nil)
+	cs.On("List", mock.Anything, rbListReq, mock.Anything).Return(mockstore.WrapList[*corev2.RoleBinding](faultyRoleBindings), nil)
 	crbListReq := storev2.NewResourceRequestFromResource(new(corev2.ClusterRoleBinding))
-	st.On("List", mock.Anything, crbListReq, mock.Anything).Return(mockstore.WrapList[*corev2.ClusterRoleBinding](nil), nil)
-	st.On("Get", mock.Anything, mock.Anything).Return(nil, &store.ErrNotFound{})
+	cs.On("List", mock.Anything, crbListReq, mock.Anything).Return(mockstore.WrapList[*corev2.ClusterRoleBinding](nil), nil)
+	cs.On("Get", mock.Anything, mock.Anything).Return(nil, &store.ErrNotFound{})
 
 	// testHandler is a catch-all handler that returns 200 OK
 	testHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})

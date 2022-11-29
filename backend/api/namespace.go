@@ -79,12 +79,9 @@ func (a *NamespaceClient) ListNamespaces(ctx context.Context, pred *store.Select
 		}
 		return namespaces, nil
 	}
-	req := namespaceRequest(ctx, "")
-	list, err := a.client.Store.List(ctx, req, pred)
+	gstore := storev2.NewGenericStore[*corev3.Namespace](a.client.Store)
+	resources, err := gstore.List(ctx, storev2.ID{}, pred)
 	if err != nil {
-		return nil, err
-	}
-	if err := list.UnwrapInto(&resources); err != nil {
 		return nil, err
 	}
 	namespaceMap := make(map[string]*corev3.Namespace, len(resources))
@@ -287,17 +284,13 @@ func (a *NamespaceClient) FetchNamespace(ctx context.Context, name string) (*cor
 		return nil, authorization.ErrUnauthorized
 	}
 
-	req := namespaceRequest(ctx, name)
-	wrapper, err := a.store.Get(ctx, req)
+	gstore := storev2.NewGenericStore[*corev3.Namespace](a.client.Store)
+	ns, err := gstore.Get(ctx, storev2.ID{Name: name})
 	if err != nil {
 		return nil, err
 	}
-	var ns corev3.Namespace
-	if err := wrapper.UnwrapInto(&ns); err != nil {
-		return nil, err
-	}
 
-	return &ns, nil
+	return ns, nil
 }
 
 func (a *NamespaceClient) createRoleAndBinding(ctx context.Context, namespace string) error {
@@ -348,7 +341,7 @@ func (a *NamespaceClient) CreateNamespace(ctx context.Context, namespace *corev3
 
 func (a *NamespaceClient) createResourceTemplates(ctx context.Context, namespace string) error {
 	req := storev2.NewResourceRequestFromResource(new(corev3.ResourceTemplate))
-	list, err := a.store.List(ctx, req, nil)
+	list, err := a.store.GetConfigStore().List(ctx, req, nil)
 	if err != nil {
 		return err
 	}
@@ -369,7 +362,7 @@ func (a *NamespaceClient) createResourceTemplates(ctx context.Context, namespace
 		if err != nil {
 			return err
 		}
-		if err := a.store.CreateOrUpdate(ctx, req, wrapper); err != nil {
+		if err := a.store.GetConfigStore().CreateOrUpdate(ctx, req, wrapper); err != nil {
 			return err
 		}
 	}
@@ -406,8 +399,7 @@ func (a *NamespaceClient) DeleteNamespace(ctx context.Context, name string) erro
 	// don't want to delete namespace objects as if they were independent
 	// objects: we want to make sure that a namespace is logically "empty"
 	// before we remove it for good.
-	req := storev2.NewResourceRequestFromResource(&corev3.Namespace{Metadata: &corev2.ObjectMeta{Name: name}})
-	if err := a.store.Delete(ctx, req); err != nil {
+	if err := a.store.GetNamespaceStore().Delete(ctx, name); err != nil {
 		return err
 	}
 

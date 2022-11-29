@@ -7,11 +7,13 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/jackc/pgconn"
-	"github.com/jackc/pgx/v4"
+	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgconn"
 	corev3 "github.com/sensu/core/v3"
+	"github.com/sensu/sensu-go/backend/poll"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/backend/store/patch"
+	storev2 "github.com/sensu/sensu-go/backend/store/v2"
 )
 
 var (
@@ -419,4 +421,19 @@ func (s *EntityConfigStore) UpdateIfExists(ctx context.Context, config *corev3.E
 
 func entityConfigStoreKey(namespace, name string) string {
 	return fmt.Sprintf("%s(namespace, name)=(%s, %s)", entityConfigStoreName, namespace, name)
+}
+
+func (s *EntityConfigStore) Watch(ctx context.Context, namespace, name string) <-chan []storev2.WatchEvent {
+	req := storev2.ResourceRequest{
+		Namespace:  namespace,
+		Name:       name,
+		APIVersion: "core/v3",
+		Type:       "EntityConfig",
+		StoreName:  "entity_configs",
+	}
+	return NewWatcher(s, 0, 0).Watch(ctx, req)
+}
+
+func (s *EntityConfigStore) GetPoller(req storev2.ResourceRequest) (poll.Table, error) {
+	return newEntityConfigPoller(req, s.db)
 }

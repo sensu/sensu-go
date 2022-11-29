@@ -13,7 +13,6 @@ import (
 	"github.com/sensu/sensu-go/backend/authorization/rbac"
 	"github.com/sensu/sensu-go/backend/store"
 	storev2 "github.com/sensu/sensu-go/backend/store/v2"
-	"github.com/sensu/sensu-go/backend/store/v2/storetest"
 	"github.com/sensu/sensu-go/testing/mockstore"
 )
 
@@ -138,11 +137,12 @@ func TestListEntities(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.Name, func(t *testing.T) {
 			ctx := test.Ctx()
-			storev1 := test.Store()
-			storev2 := &storetest.Store{}
+			str := new(mockstore.V2MockStore)
 			eventStore := test.EventStore()
+			str.On("GetEventStore").Return(eventStore)
+			str.On("GetEntityStore").Return(test.Store())
 			auth := test.Auth()
-			client := NewEntityClient(storev1, storev2, eventStore, auth)
+			client := NewEntityClient(str, auth)
 			entities, err := client.ListEntities(ctx, &store.SelectionPredicate{})
 			if err != nil && !test.ExpErr {
 				t.Fatal(err)
@@ -280,10 +280,12 @@ func TestGetEntity(t *testing.T) {
 		t.Run(test.Name, func(t *testing.T) {
 			ctx := test.Ctx()
 			store := test.Store()
-			storev2 := &storetest.Store{}
 			eventStore := test.EventStore()
+			str := new(mockstore.V2MockStore)
+			str.On("GetEventStore").Return(eventStore)
+			str.On("GetEntityStore").Return(store)
 			auth := test.Auth()
-			client := NewEntityClient(store, storev2, eventStore, auth)
+			client := NewEntityClient(str, auth)
 			entities, err := client.FetchEntity(ctx, "default")
 			if err != nil && !test.ExpErr {
 				t.Fatal(err)
@@ -418,11 +420,13 @@ func TestCreateEntity(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.Name, func(t *testing.T) {
 			ctx := test.Ctx()
+			str := new(mockstore.V2MockStore)
 			store := test.Store()
-			storev2 := &storetest.Store{}
 			eventStore := test.EventStore()
+			str.On("GetEntityStore").Return(store)
+			str.On("GetEventStore").Return(eventStore)
 			auth := test.Auth()
-			client := NewEntityClient(store, storev2, eventStore, auth)
+			client := NewEntityClient(str, auth)
 			err := client.CreateEntity(ctx, defaultEntity)
 			if err != nil && !test.ExpErr {
 				t.Fatal(err)
@@ -436,13 +440,14 @@ func TestCreateEntity(t *testing.T) {
 
 func TestUpdateEntity(t *testing.T) {
 	tests := []struct {
-		Name       string
-		Ctx        func() context.Context
-		Store      func() store.Store
-		Storev2    func() storev2.Interface
-		EventStore func() store.EventStore
-		Auth       func() authorization.Authorizer
-		ExpErr     bool
+		Name              string
+		Ctx               func() context.Context
+		Store             func() store.Store
+		Storev2           func() storev2.Interface
+		EventStore        func() store.EventStore
+		EntityConfigStore func() storev2.EntityConfigStore
+		Auth              func() authorization.Authorizer
+		ExpErr            bool
 	}{
 		{
 			Name: "no auth",
@@ -451,8 +456,13 @@ func TestUpdateEntity(t *testing.T) {
 				store := new(mockstore.MockStore)
 				return store
 			},
+			EntityConfigStore: func() storev2.EntityConfigStore {
+				s := new(mockstore.EntityConfigStore)
+				s.On("CreateOrUpdate", mock.Anything, mock.Anything).Return(nil)
+				return s
+			},
 			Storev2: func() storev2.Interface {
-				return new(storetest.Store)
+				return new(mockstore.V2MockStore)
 			},
 			EventStore: func() store.EventStore {
 				store := new(mockstore.MockStore)
@@ -471,8 +481,13 @@ func TestUpdateEntity(t *testing.T) {
 			Store: func() store.Store {
 				return new(mockstore.MockStore)
 			},
+			EntityConfigStore: func() storev2.EntityConfigStore {
+				s := new(mockstore.EntityConfigStore)
+				s.On("CreateOrUpdate", mock.Anything, mock.Anything).Return(nil)
+				return s
+			},
 			Storev2: func() storev2.Interface {
-				return new(storetest.Store)
+				return new(mockstore.V2MockStore)
 			},
 			EventStore: func() store.EventStore {
 				store := new(mockstore.MockStore)
@@ -504,8 +519,13 @@ func TestUpdateEntity(t *testing.T) {
 			Store: func() store.Store {
 				return new(mockstore.MockStore)
 			},
+			EntityConfigStore: func() storev2.EntityConfigStore {
+				s := new(mockstore.EntityConfigStore)
+				s.On("CreateOrUpdate", mock.Anything, mock.Anything).Return(nil)
+				return s
+			},
 			Storev2: func() storev2.Interface {
-				return new(storetest.Store)
+				return new(mockstore.V2MockStore)
 			},
 			EventStore: func() store.EventStore {
 				store := new(mockstore.MockStore)
@@ -539,8 +559,13 @@ func TestUpdateEntity(t *testing.T) {
 				store.On("UpdateEntity", mock.Anything, defaultEntity).Return(nil)
 				return store
 			},
+			EntityConfigStore: func() storev2.EntityConfigStore {
+				s := new(mockstore.EntityConfigStore)
+				s.On("CreateOrUpdate", mock.Anything, mock.Anything).Return(nil)
+				return s
+			},
 			Storev2: func() storev2.Interface {
-				s := new(storetest.Store)
+				s := new(mockstore.V2MockStore)
 				s.On("CreateOrUpdate", mock.Anything, mock.Anything, mock.Anything).Return(nil)
 				return s
 			},
@@ -570,10 +595,13 @@ func TestUpdateEntity(t *testing.T) {
 		t.Run("agent entity/"+test.Name, func(t *testing.T) {
 			ctx := test.Ctx()
 			store := test.Store()
-			storev2 := test.Storev2()
+			storev2 := test.Storev2().(*mockstore.V2MockStore)
 			eventStore := test.EventStore()
+			storev2.On("GetEntityStore").Return(store)
+			storev2.On("GetEventStore").Return(eventStore)
+			storev2.On("GetEntityConfigStore").Return(test.EntityConfigStore())
 			auth := test.Auth()
-			client := NewEntityClient(store, storev2, eventStore, auth)
+			client := NewEntityClient(storev2, auth)
 
 			defaultEntity.EntityClass = corev2.EntityAgentClass
 			err := client.UpdateEntity(ctx, defaultEntity)
@@ -584,16 +612,16 @@ func TestUpdateEntity(t *testing.T) {
 			if err == nil && test.ExpErr {
 				t.Fatal("expected non-nil error")
 			}
-
-			mock.AssertExpectationsForObjects(t, storev2)
 		})
 		t.Run("proxy entity/"+test.Name, func(t *testing.T) {
 			ctx := test.Ctx()
 			store := test.Store()
-			storev2 := test.Storev2()
+			storev2 := test.Storev2().(*mockstore.V2MockStore)
 			eventStore := test.EventStore()
+			storev2.On("GetEntityStore").Return(store)
+			storev2.On("GetEventStore").Return(eventStore)
 			auth := test.Auth()
-			client := NewEntityClient(store, storev2, eventStore, auth)
+			client := NewEntityClient(storev2, auth)
 
 			defaultEntity.EntityClass = corev2.EntityProxyClass
 			err := client.UpdateEntity(ctx, defaultEntity)
@@ -604,8 +632,6 @@ func TestUpdateEntity(t *testing.T) {
 			if err == nil && test.ExpErr {
 				t.Fatal("expected non-nil error")
 			}
-
-			mock.AssertExpectationsForObjects(t, store)
 		})
 	}
 }
@@ -833,10 +859,12 @@ func TestDeleteEntity(t *testing.T) {
 		t.Run(test.Name, func(t *testing.T) {
 			ctx := test.Ctx()
 			store := test.Store()
-			storev2 := &storetest.Store{}
+			storev2 := &mockstore.V2MockStore{}
 			eventStore := test.EventStore()
+			storev2.On("GetEntityStore").Return(store)
+			storev2.On("GetEventStore").Return(eventStore)
 			auth := test.Auth()
-			client := NewEntityClient(store, storev2, eventStore, auth)
+			client := NewEntityClient(storev2, auth)
 			err := client.DeleteEntity(ctx, "default")
 			if err != nil && !test.ExpErr {
 				t.Fatal(err)

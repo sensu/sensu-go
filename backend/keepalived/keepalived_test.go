@@ -5,102 +5,123 @@ import (
 	"testing"
 	"time"
 
-	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
-	clientv3 "go.etcd.io/etcd/client/v3"
 
 	corev2 "github.com/sensu/core/v2"
 	corev3 "github.com/sensu/core/v3"
-	"github.com/sensu/sensu-go/backend/liveness"
 	"github.com/sensu/sensu-go/backend/messaging"
-	stor "github.com/sensu/sensu-go/backend/store"
-	"github.com/sensu/sensu-go/backend/store/cache"
-	storv2 "github.com/sensu/sensu-go/backend/store/v2"
-	"github.com/sensu/sensu-go/backend/store/v2/storetest"
-	"github.com/sensu/sensu-go/backend/store/v2/wrap"
-	"github.com/sensu/sensu-go/testing/mockclientv3"
+	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/testing/mockstore"
 )
+
+type KeepaliveStore struct {
+	mock.Mock
+}
+
+func (s *KeepaliveStore) DeleteFailingKeepalive(ctx context.Context, entityConfig *corev3.EntityConfig) error {
+	args := s.Called(ctx, entityConfig)
+	return args.Error(0)
+}
+
+func (s *KeepaliveStore) GetFailingKeepalives(ctx context.Context) ([]*corev2.KeepaliveRecord, error) {
+	args := s.Called(ctx)
+	return args.Get(0).([]*corev2.KeepaliveRecord), args.Error(1)
+}
+
+func (s *KeepaliveStore) UpdateFailingKeepalive(ctx context.Context, entityConfig *corev3.EntityConfig, expiration int64) error {
+	args := s.Called(ctx, entityConfig, expiration)
+	return args.Error(0)
+}
 
 type mockDeregisterer struct {
 	mock.Mock
 }
 
+type mockOperatorMonitor struct {
+	mock.Mock
+}
+
+func (m *mockOperatorMonitor) MonitorOperators(ctx context.Context, req store.MonitorOperatorsRequest) <-chan []store.OperatorState {
+	return m.Called(ctx, req).Get(0).(<-chan []store.OperatorState)
+}
+
+type mockOperatorConcierge struct {
+	mock.Mock
+}
+
+func (m *mockOperatorConcierge) CheckIn(ctx context.Context, state store.OperatorState) error {
+	return m.Called(ctx, state).Error(0)
+}
+
+func (m *mockOperatorConcierge) CheckOut(ctx context.Context, key store.OperatorKey) error {
+	return m.Called(ctx, key).Error(0)
+}
+
 type keepalivedTest struct {
-	Keepalived     *Keepalived
-	MessageBus     messaging.MessageBus
-	Store          *storetest.Store
-	EventStore     *mockstore.MockStore
-	KeepaliveStore *storetest.KeepaliveStore
-	Deregisterer   *mockDeregisterer
-	receiver       chan interface{}
-	SilencedCache  cache.Cache
-	Client         mockclientv3.MockClientV3
+	Keepalived        *Keepalived
+	MessageBus        messaging.MessageBus
+	Store             *mockstore.V2MockStore
+	EventStore        *mockstore.MockStore
+	KeepaliveStore    *KeepaliveStore
+	Deregisterer      *mockDeregisterer
+	receiver          chan interface{}
+	SilencedCache     SilencesCache
+	OperatorMonitor   *mockOperatorMonitor
+	OperatorConcierge *mockOperatorConcierge
 }
 
 func (k *keepalivedTest) Receiver() chan<- interface{} {
 	return k.receiver
 }
 
-type fakeLivenessInterface struct {
-}
-
-func (fakeLivenessInterface) Alive(context.Context, string, int64) error {
-	return nil
-}
-
-func (fakeLivenessInterface) Dead(context.Context, string, int64) error {
-	return nil
-}
-
-func (fakeLivenessInterface) Bury(context.Context, string) error {
-	return nil
-}
-
-func (fakeLivenessInterface) BuryAndRevokeLease(context.Context, string) error {
-	return nil
-}
-
-// type assertion
-var _ liveness.Interface = fakeLivenessInterface{}
-
-func fakeFactory(name string, dead, alive liveness.EventFunc, logger logrus.FieldLogger) liveness.Interface {
-	return fakeLivenessInterface{}
-}
-
-func newKeepalivedTest(t *testing.T, client mockclientv3.MockClientV3) *keepalivedTest {
-	store := &storetest.Store{}
+func newKeepalivedTest(t *testing.T) *keepalivedTest {
+	stor := new(mockstore.V2MockStore)
 	eventStore := &mockstore.MockStore{}
-	keepaliveStore := &storetest.KeepaliveStore{}
+	ec := new(mockstore.EntityConfigStore)
+	es := new(mockstore.EntityStateStore)
+	stor.On("GetEventStore").Return(eventStore)
+	stor.On("GetEntityStore").Return(eventStore)
+	stor.On("GetEntityConfigStore").Return(ec)
+	stor.On("GetEntityStateStore").Return(es)
+	ec.On("CreateOrUpdate", mock.Anything, mock.Anything).Return(nil)
+	es.On("CreateOrUpdate", mock.Anything, mock.Anything).Return(nil)
+	keepaliveStore := &KeepaliveStore{}
 	deregisterer := &mockDeregisterer{}
-	bus, err := messaging.NewWizardBus(messaging.WizardBusConfig{})
-	require.NoError(t, err)
+	bus, _ := messaging.NewWizardBus(messaging.WizardBusConfig{})
+	operatorMonitor := new(mockOperatorMonitor)
+	operatorMonitor.On("MonitorOperators", mock.Anything, mock.Anything).Return(make(<-chan []store.OperatorState))
+	operatorConcierge := new(mockOperatorConcierge)
+	operatorConcierge.On("CheckIn", mock.Anything, mock.Anything).Return(nil)
 	k, err := New(Config{
-		Client:          client,
-		Store:           store,
-		EventStore:      eventStore,
-		KeepaliveStore:  keepaliveStore,
-		Bus:             bus,
-		LivenessFactory: fakeFactory,
-		BufferSize:      1,
-		WorkerCount:     1,
-		StoreTimeout:    time.Second,
+		Store:             stor,
+		EventStore:        eventStore,
+		Bus:               bus,
+		BufferSize:        1,
+		WorkerCount:       1,
+		StoreTimeout:      time.Second,
+		OperatorMonitor:   operatorMonitor,
+		OperatorConcierge: operatorConcierge,
 	})
-	require.NoError(t, err)
+	if err != nil {
+		panic(err)
+	}
 	k.reconstructionPeriod = 0
 	test := &keepalivedTest{
-		MessageBus:     bus,
-		Store:          store,
-		EventStore:     eventStore,
-		KeepaliveStore: keepaliveStore,
-		Deregisterer:   deregisterer,
-		Keepalived:     k,
-		receiver:       make(chan interface{}),
-		Client:         client,
+		MessageBus:        bus,
+		Store:             stor,
+		EventStore:        eventStore,
+		KeepaliveStore:    keepaliveStore,
+		Deregisterer:      deregisterer,
+		Keepalived:        k,
+		receiver:          make(chan interface{}),
+		OperatorMonitor:   operatorMonitor,
+		OperatorConcierge: operatorConcierge,
 	}
-	require.NoError(t, test.MessageBus.Start())
+	if err := test.MessageBus.Start(); err != nil {
+		panic(err)
+	}
 	return test
 }
 
@@ -178,12 +199,7 @@ func TestStartStop(t *testing.T) {
 
 	for _, tc := range tt {
 		t.Run(tc.name, func(t *testing.T) {
-			client := mockclientv3.MockClientV3{}
-			getResp := &clientv3.GetResponse{}
-			client.On("Get", mock.Anything, "/sensu.io/silenced/", mock.Anything).
-				Return(getResp, nil)
-
-			test := newKeepalivedTest(t, client)
+			test := newKeepalivedTest(t)
 			defer test.Dispose(t)
 
 			k := test.Keepalived
@@ -210,22 +226,14 @@ func TestStartStop(t *testing.T) {
 }
 
 func TestEventProcessing(t *testing.T) {
-	client := mockclientv3.MockClientV3{}
-	getResp := &clientv3.GetResponse{}
-	client.On("Get", mock.Anything, "/sensu.io/silenced/", mock.Anything).
-		Return(getResp, nil)
-
-	test := newKeepalivedTest(t, client)
+	test := newKeepalivedTest(t)
 	test.KeepaliveStore.On("GetFailingKeepalives", mock.Anything).Return([]*corev2.KeepaliveRecord{}, nil)
 	require.NoError(t, test.Keepalived.Start())
 
 	event := corev2.FixtureEvent("entity", "keepalive")
 	event.Check.Status = 1
 
-	test.Store.On("CreateOrUpdate", mock.Anything, mock.MatchedBy(func(req storv2.ResourceRequest) bool {
-		return req.StoreName == new(corev3.EntityState).StoreName()
-	}), mock.Anything).Return(nil)
-
+	test.EventStore.On("CreateOrUpdate", mock.Anything, mock.Anything).Return(nil)
 	test.KeepaliveStore.On("DeleteFailingKeepalive", mock.Anything, mock.Anything).Return(nil)
 
 	test.Keepalived.keepaliveChan <- event
@@ -241,7 +249,7 @@ func (t testSubscriber) Receiver() chan<- interface{} {
 }
 
 func TestProcessRegistration(t *testing.T) {
-	type assertionFunc func(*storetest.Store)
+	type assertionFunc func(*mockstore.V2MockStore)
 
 	newEntityWithClass := func(class string) *corev2.Entity {
 		entity := corev2.FixtureEntity("agent1")
@@ -249,12 +257,10 @@ func TestProcessRegistration(t *testing.T) {
 		return entity
 	}
 
-	newEntityConfigWithClass := func(class string) storv2.Wrapper {
+	newEntityConfigWithClass := func(class string) *corev3.EntityConfig {
 		entity := corev3.FixtureEntityConfig("agent1")
 		entity.EntityClass = class
-		e, err := storv2.WrapResource(entity)
-		require.NoError(t, err)
-		return e
+		return entity
 	}
 
 	newAgentManagedEntity := func(class string) *corev2.Entity {
@@ -266,15 +272,13 @@ func TestProcessRegistration(t *testing.T) {
 		return entity
 	}
 
-	newAgentManagedEntityConfig := func(class string) storv2.Wrapper {
+	newAgentManagedEntityConfig := func(class string) *corev3.EntityConfig {
 		entity := corev3.FixtureEntityConfig("agent1")
 		entity.EntityClass = class
 		entity.Metadata.Labels = map[string]string{
 			corev2.ManagedByLabel: "sensu-agent",
 		}
-		e, err := storv2.WrapResource(entity)
-		require.NoError(t, err)
-		return e
+		return entity
 	}
 
 	firstSequenceEvent := &corev2.Event{Sequence: 1}
@@ -283,7 +287,7 @@ func TestProcessRegistration(t *testing.T) {
 		name                   string
 		entity                 *corev2.Entity
 		event                  *corev2.Event
-		storeEntity            storv2.Wrapper
+		storeEntity            *corev3.EntityConfig
 		expectedEventLen       int
 		storeGetErr            error
 		storeCreateOrUpdateErr error
@@ -296,19 +300,19 @@ func TestProcessRegistration(t *testing.T) {
 			storeEntity:            newEntityConfigWithClass("agent"),
 			event:                  new(corev2.Event),
 			expectedEventLen:       0,
-			storeCreateOrUpdateErr: &stor.ErrAlreadyExists{},
+			storeCreateOrUpdateErr: &store.ErrAlreadyExists{},
 		},
 		{
 			name:             "Non-Registered Entity",
 			entity:           newEntityWithClass("agent"),
-			storeGetErr:      &stor.ErrNotFound{},
+			storeGetErr:      &store.ErrNotFound{},
 			event:            new(corev2.Event),
 			expectedEventLen: 1,
 		},
 		{
 			name:             "agent-managed entity is registered",
 			entity:           newAgentManagedEntity("agent"),
-			storeGetErr:      &stor.ErrNotFound{},
+			storeGetErr:      &store.ErrNotFound{},
 			event:            firstSequenceEvent,
 			expectedEventLen: 1,
 		},
@@ -325,8 +329,8 @@ func TestProcessRegistration(t *testing.T) {
 			storeEntity:      newAgentManagedEntityConfig("agent"),
 			event:            new(corev2.Event),
 			expectedEventLen: 0,
-			assertionFunc: func(store *storetest.Store) {
-				store.AssertCalled(t, "UpdateIfExists", mock.Anything, mock.Anything, mock.Anything)
+			assertionFunc: func(store *mockstore.V2MockStore) {
+				store.GetEntityConfigStore().(*mockstore.EntityConfigStore).AssertCalled(t, "UpdateIfExists", mock.Anything, mock.Anything)
 			},
 		},
 	}
@@ -337,7 +341,7 @@ func TestProcessRegistration(t *testing.T) {
 			require.NoError(t, err)
 			require.NoError(t, messageBus.Start())
 
-			store := &storetest.Store{}
+			store := &mockstore.V2MockStore{}
 
 			tsubEvent := testSubscriber{
 				ch: make(chan interface{}, 1),
@@ -345,25 +349,25 @@ func TestProcessRegistration(t *testing.T) {
 			subscriptionEvent, err := messageBus.Subscribe(messaging.TopicEvent, "testSubscriberEvent", tsubEvent)
 			require.NoError(t, err)
 
-			client := mockclientv3.MockClientV3{}
-			getResp := &clientv3.GetResponse{}
-			client.On("Get", mock.Anything, "/sensu.io/silenced/", mock.Anything).
-				Return(getResp, nil)
-
 			keepalived, err := New(Config{
-				Client:          client,
-				Store:           store,
-				Bus:             messageBus,
-				LivenessFactory: fakeFactory,
-				WorkerCount:     1,
-				BufferSize:      1,
-				StoreTimeout:    time.Minute,
+				Store:        store,
+				Bus:          messageBus,
+				WorkerCount:  1,
+				BufferSize:   1,
+				StoreTimeout: time.Minute,
 			})
 			require.NoError(t, err)
 
-			store.On("CreateIfNotExists", mock.Anything, mock.Anything, mock.Anything).Return(tc.storeCreateOrUpdateErr)
-			store.On("UpdateIfExists", mock.Anything, mock.Anything, mock.Anything).Return(tc.storeCreateOrUpdateErr)
-			store.On("Get", mock.Anything, mock.Anything).Return(tc.storeEntity, tc.storeGetErr)
+			ec := new(mockstore.EntityConfigStore)
+			es := new(mockstore.EntityStateStore)
+			store.On("GetEntityConfigStore").Return(ec)
+			store.On("GetEntityStateStore").Return(es)
+
+			ec.On("CreateIfNotExists", mock.Anything, mock.Anything).Return(tc.storeCreateOrUpdateErr)
+			es.On("CreateIfNotExists", mock.Anything, mock.Anything).Return(tc.storeCreateOrUpdateErr)
+			ec.On("UpdateIfExists", mock.Anything, mock.Anything, mock.Anything).Return(tc.storeCreateOrUpdateErr)
+			es.On("UpdateIfExists", mock.Anything, mock.Anything, mock.Anything).Return(tc.storeCreateOrUpdateErr)
+			ec.On("Get", mock.Anything, mock.Anything, mock.Anything).Return(tc.storeEntity, tc.storeGetErr)
 			err = keepalived.handleEntityRegistration(tc.entity, tc.event)
 			require.NoError(t, err)
 
@@ -404,115 +408,4 @@ func TestCreateRegistrationEvent(t *testing.T) {
 	assert.Equal(t, uint32(1), keepaliveEvent.Check.Status)
 	assert.Equal(t, "default", keepaliveEvent.Check.Namespace)
 	assert.Equal(t, "default", keepaliveEvent.ObjectMeta.Namespace)
-}
-
-func TestDeadCallbackNoEntity(t *testing.T) {
-	messageBus, err := messaging.NewWizardBus(messaging.WizardBusConfig{})
-	if err != nil {
-		t.Fatal(err)
-	}
-	if err := messageBus.Start(); err != nil {
-		t.Fatal(err)
-	}
-	tsub := testSubscriber{
-		ch: make(chan interface{}, 1),
-	}
-	if _, err := messageBus.Subscribe(messaging.TopicEvent, "testSubscriber", tsub); err != nil {
-		t.Fatal(err)
-	}
-
-	store := &storetest.Store{}
-	store.On("Get", mock.Anything, mock.MatchedBy(func(req storv2.ResourceRequest) bool {
-		return req.StoreName == new(corev3.EntityConfig).StoreName()
-	})).Return((storv2.Wrapper)(nil), &stor.ErrNotFound{Key: "foo"})
-
-	eventStore := &mockstore.MockStore{}
-	eventStore.On("GetEventByEntityCheck", mock.Anything, mock.Anything, mock.Anything).Return((*corev2.Event)(nil), nil)
-
-	keepaliveStore := &storetest.KeepaliveStore{}
-	keepaliveStore.On("UpdateFailingKeepalive", mock.Anything, mock.Anything, mock.Anything).Return(nil)
-
-	client := mockclientv3.MockClientV3{}
-	getResp := &clientv3.GetResponse{}
-	client.On("Get", mock.Anything, "/sensu.io/silenced/", mock.Anything).
-		Return(getResp, nil)
-
-	keepalived, err := New(Config{
-		Client:          client,
-		Store:           store,
-		EventStore:      eventStore,
-		KeepaliveStore:  keepaliveStore,
-		Bus:             messageBus,
-		LivenessFactory: fakeFactory,
-		WorkerCount:     1,
-		BufferSize:      1,
-		StoreTimeout:    time.Minute,
-	})
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	if got, want := keepalived.dead("default/testSubscriber", liveness.Alive, true), true; got != want {
-		t.Fatalf("got bury: %v, want bury: %v", got, want)
-	}
-}
-
-func TestDeadCallbackNoEvent(t *testing.T) {
-	messageBus, err := messaging.NewWizardBus(messaging.WizardBusConfig{})
-	if err != nil {
-		t.Fatal(err)
-	}
-	if err := messageBus.Start(); err != nil {
-		t.Fatal(err)
-	}
-	tsub := testSubscriber{
-		ch: make(chan interface{}, 1),
-	}
-	if _, err := messageBus.Subscribe(messaging.TopicEvent, "testSubscriber", tsub); err != nil {
-		t.Fatal(err)
-	}
-
-	wrapper, err := storv2.WrapResource(
-		corev3.FixtureEntityConfig("entity1"),
-		[]wrap.Option{wrap.CompressNone, wrap.EncodeJSON}...)
-	require.NoError(t, err)
-
-	store := &storetest.Store{}
-	store.On("Get", mock.Anything, mock.MatchedBy(func(req storv2.ResourceRequest) bool {
-		return req.StoreName == new(corev3.EntityConfig).StoreName()
-	})).Return(wrapper, nil)
-	store.On("Get", mock.Anything, mock.MatchedBy(func(req storv2.ResourceRequest) bool {
-		return req.StoreName == new(corev2.Event).StorePrefix()
-	})).Return((*wrap.Wrapper)(nil), &stor.ErrNotFound{Key: "foo"})
-
-	eventStore := &mockstore.MockStore{}
-	eventStore.On("GetEventByEntityCheck", mock.Anything, mock.Anything, mock.Anything).Return((*corev2.Event)(nil), nil)
-
-	keepaliveStore := &storetest.KeepaliveStore{}
-	keepaliveStore.On("UpdateFailingKeepalive", mock.Anything, mock.Anything, mock.Anything).Return(nil)
-
-	client := mockclientv3.MockClientV3{}
-	getResp := &clientv3.GetResponse{}
-	client.On("Get", mock.Anything, "/sensu.io/silenced/", mock.Anything).
-		Return(getResp, nil)
-
-	keepalived, err := New(Config{
-		Client:          client,
-		Store:           store,
-		EventStore:      eventStore,
-		KeepaliveStore:  keepaliveStore,
-		Bus:             messageBus,
-		LivenessFactory: fakeFactory,
-		WorkerCount:     1,
-		BufferSize:      1,
-		StoreTimeout:    time.Minute,
-	})
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	// The switch should be buried since the event is nil
-	if got, want := keepalived.dead("default/testSubscriber", liveness.Alive, true), true; got != want {
-		t.Fatalf("got bury: %v, want bury: %v", got, want)
-	}
 }

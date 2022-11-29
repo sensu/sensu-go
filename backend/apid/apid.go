@@ -24,7 +24,6 @@ import (
 	"github.com/sensu/sensu-go/backend/authentication"
 	"github.com/sensu/sensu-go/backend/authorization/rbac"
 	"github.com/sensu/sensu-go/backend/messaging"
-	"github.com/sensu/sensu-go/backend/store"
 	storev2 "github.com/sensu/sensu-go/backend/store/v2"
 	"github.com/sensu/sensu-go/types"
 )
@@ -38,17 +37,14 @@ type APId struct {
 	GraphQLSubrouter           *mux.Router
 	RequestLimit               int64
 
-	stopping      chan struct{}
-	running       *atomic.Value
-	wg            *sync.WaitGroup
-	errChan       chan error
-	bus           messaging.MessageBus
-	store         storev2.Interface
-	eventStore    store.EventStore
-	entityStore   store.EntityStore
-	silencedStore store.SilenceStore
-	queueGetter   types.QueueGetter
-	tls           *types.TLSOptions
+	stopping    chan struct{}
+	running     *atomic.Value
+	wg          *sync.WaitGroup
+	errChan     chan error
+	bus         messaging.MessageBus
+	store       storev2.Interface
+	queueGetter types.QueueGetter
+	tls         *types.TLSOptions
 }
 
 // Option is a functional option.
@@ -62,25 +58,16 @@ type Config struct {
 	URL            string
 	Bus            messaging.MessageBus
 	Store          storev2.Interface
-	EventStore     store.EventStore
-	EntityStore    store.EntityStore
-	SilencedStore  store.SilenceStore
-	QueueGetter    types.QueueGetter
 	TLS            *types.TLSOptions
 	Authenticator  *authentication.Authenticator
 	ClusterVersion string
 	GraphQLService *graphql.Service
-	HealthRouter   *routers.HealthRouter
 }
 
 // New creates a new APId.
 func New(c Config, opts ...Option) (*APId, error) {
 	a := &APId{
 		store:         c.Store,
-		eventStore:    c.EventStore,
-		entityStore:   c.EntityStore,
-		silencedStore: c.SilencedStore,
-		queueGetter:   c.QueueGetter,
 		tls:           c.TLS,
 		bus:           c.Bus,
 		stopping:      make(chan struct{}, 1),
@@ -170,18 +157,18 @@ func CoreSubrouter(router *mux.Router, cfg Config) *mux.Router {
 		subrouter,
 		routers.NewAssetRouter(cfg.Store),
 		routers.NewAPIKeysRouter(cfg.Store),
-		routers.NewChecksRouter(cfg.Store, cfg.QueueGetter),
+		routers.NewChecksRouter(cfg.Store, nil),
 		routers.NewClusterRolesRouter(cfg.Store),
 		routers.NewClusterRoleBindingsRouter(cfg.Store),
 		routers.NewEventFiltersRouter(cfg.Store),
 		routers.NewHandlersRouter(cfg.Store),
 		routers.NewHooksRouter(cfg.Store),
 		routers.NewMutatorsRouter(cfg.Store),
-		routers.NewNamespacesRouter(api.NewNamespaceClient(cfg.Store, &rbac.Authorizer{Store: cfg.Store}), handlers.Handlers{Resource: new(corev3.Namespace), Store: cfg.Store}),
+		routers.NewNamespacesRouter(api.NewNamespaceClient(cfg.Store, &rbac.Authorizer{Store: cfg.Store}), handlers.NewHandlers[*corev3.Namespace](cfg.Store)),
 		routers.NewPipelinesRouter(cfg.Store),
 		routers.NewRolesRouter(cfg.Store),
 		routers.NewRoleBindingsRouter(cfg.Store),
-		routers.NewSilencedRouter(cfg.SilencedStore, cfg.Store),
+		routers.NewSilencedRouter(cfg.Store),
 		routers.NewTessenRouter(actions.NewTessenController(cfg.Store, cfg.Bus)),
 		routers.NewUsersRouter(cfg.Store),
 	)
@@ -204,8 +191,8 @@ func EntityLimitedCoreSubrouter(router *mux.Router, cfg Config) *mux.Router {
 	)
 	mountRouters(
 		subrouter,
-		routers.NewEntitiesRouter(cfg.Store, cfg.EntityStore, cfg.EventStore),
-		routers.NewEventsRouter(cfg.EventStore, cfg.Bus),
+		routers.NewEntitiesRouter(cfg.Store),
+		routers.NewEventsRouter(cfg.Store, cfg.Bus),
 	)
 
 	return subrouter
@@ -257,7 +244,6 @@ func PublicSubrouter(router *mux.Router, cfg Config) *mux.Router {
 	)
 
 	mountRouters(subrouter,
-		cfg.HealthRouter,
 		routers.NewVersionRouter(actions.NewVersionController(cfg.ClusterVersion)),
 		routers.NewTessenMetricRouter(actions.NewTessenMetricController(cfg.Bus)),
 	)

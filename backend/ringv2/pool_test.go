@@ -1,37 +1,36 @@
 package ringv2
 
 import (
-	"reflect"
+	"context"
 	"testing"
 
-	"github.com/sensu/sensu-go/backend/etcd"
+	"github.com/stretchr/testify/mock"
 )
 
-func TestPool(t *testing.T) {
-	t.Parallel()
+type MockRing struct {
+	mock.Mock
+}
 
-	e, cleanup := etcd.NewTestEtcd(t)
-	defer cleanup()
+func (m *MockRing) Subscribe(ctx context.Context, sub Subscription) <-chan Event {
+	return m.Called(ctx, sub).Get(0).(<-chan Event)
+}
 
-	client := e.NewEmbeddedClient()
-	defer client.Close()
+func (m *MockRing) Remove(ctx context.Context, value string) error {
+	return m.Called(ctx, value).Error(0)
+}
 
-	pool := NewPool(client)
+func (m *MockRing) Add(ctx context.Context, value string, keepalive int64) error {
+	return m.Called(ctx, value, keepalive).Error(0)
+}
 
-	fooRing := pool.Get("foo")
-
-	if got, want := pool.Get("foo"), fooRing; !reflect.DeepEqual(got, want) {
-		t.Fatal("rings should be equal")
-	}
-
-	if got, want := pool.Get("bar"), fooRing; reflect.DeepEqual(got, want) {
-		t.Fatal("rings should not be equal")
-	}
+func (m *MockRing) IsEmpty(ctx context.Context) (bool, error) {
+	args := m.Called(ctx)
+	return args.Bool(0), args.Error(1)
 }
 
 func TestPoolSetNewFunc(t *testing.T) {
 	pool := NewRingPool(func(path string) Interface {
-		return new(Ring)
+		return new(MockRing)
 	})
 	fooRing := pool.Get("foo")
 

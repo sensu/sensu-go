@@ -2,12 +2,11 @@ package postgres
 
 import (
 	"context"
-	"fmt"
 	"testing"
 	"time"
 
 	"github.com/google/go-cmp/cmp"
-	"github.com/jackc/pgx/v4/pgxpool"
+	"github.com/jackc/pgx/v5/pgxpool"
 	corev3 "github.com/sensu/core/v3"
 	"github.com/sensu/sensu-go/backend/store"
 )
@@ -419,11 +418,10 @@ func TestOPCIntegration(t *testing.T) {
 			if got.Present {
 				t.Error("operator is present")
 
-				op, err := opc.QueryOperator(ctx, store.OperatorKey{Namespace: "default", Type: store.AgentOperator, Name: "agent1"})
+				_, err := opc.QueryOperator(ctx, store.OperatorKey{Namespace: "default", Type: store.AgentOperator, Name: "agent1"})
 				if err != nil {
 					t.Error(err)
 				}
-				fmt.Println(op.Present)
 			}
 		}
 

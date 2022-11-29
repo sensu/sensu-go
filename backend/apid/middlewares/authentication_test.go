@@ -79,6 +79,8 @@ func TestMiddlewareIgnoreUnauthorized(t *testing.T) {
 
 func TestMiddlewareValidAPIKey(t *testing.T) {
 	store := &mockstore.V2MockStore{}
+	cs := new(mockstore.ConfigStore)
+	store.On("GetConfigStore").Return(cs)
 	mware := Authentication{
 		Store: store,
 	}
@@ -89,8 +91,8 @@ func TestMiddlewareValidAPIKey(t *testing.T) {
 	keyReq := storev2.NewResourceRequestFromResource(key)
 	user := &corev2.User{Username: "admin"}
 	userReq := storev2.NewResourceRequestFromResource(user)
-	store.On("Get", mock.Anything, keyReq).Return(mockstore.Wrapper[*corev2.APIKey]{Value: key}, nil)
-	store.On("Get", mock.Anything, userReq).Return(mockstore.Wrapper[*corev2.User]{Value: user}, nil)
+	cs.On("Get", mock.Anything, keyReq).Return(mockstore.Wrapper[*corev2.APIKey]{Value: key}, nil)
+	cs.On("Get", mock.Anything, userReq).Return(mockstore.Wrapper[*corev2.User]{Value: user}, nil)
 
 	client := &http.Client{}
 	req, _ := http.NewRequest("GET", server.URL, nil)
@@ -102,6 +104,8 @@ func TestMiddlewareValidAPIKey(t *testing.T) {
 
 func TestMiddlewareInvalidAPIKey(t *testing.T) {
 	store := &mockstore.V2MockStore{}
+	cs := new(mockstore.ConfigStore)
+	store.On("GetConfigStore").Return(cs)
 	mware := Authentication{
 		Store: store,
 	}
@@ -109,7 +113,7 @@ func TestMiddlewareInvalidAPIKey(t *testing.T) {
 	defer server.Close()
 
 	key := corev2.FixtureAPIKey("174373d0-4aff-41d8-aa5f-084dfcad7dc7", "admin")
-	store.On("Get", mock.Anything, mock.Anything).Return(nil, errors.New("err"))
+	cs.On("Get", mock.Anything, mock.Anything).Return(nil, errors.New("err"))
 
 	client := &http.Client{}
 	req, _ := http.NewRequest("GET", server.URL, nil)
@@ -121,6 +125,8 @@ func TestMiddlewareInvalidAPIKey(t *testing.T) {
 
 func TestMiddlewareInvalidUserAPIKey(t *testing.T) {
 	store := &mockstore.V2MockStore{}
+	cs := new(mockstore.ConfigStore)
+	store.On("GetConfigStore").Return(cs)
 	mware := Authentication{
 		Store: store,
 	}
@@ -131,8 +137,8 @@ func TestMiddlewareInvalidUserAPIKey(t *testing.T) {
 	keyReq := storev2.NewResourceRequestFromResource(key)
 	user := &corev2.User{Username: "admin"}
 	userReq := storev2.NewResourceRequestFromResource(user)
-	store.On("Get", mock.Anything, keyReq).Return(mockstore.Wrapper[*corev2.APIKey]{Value: key}, nil)
-	store.On("Get", mock.Anything, userReq).Return(nil, errors.New("err"))
+	cs.On("Get", mock.Anything, keyReq).Return(mockstore.Wrapper[*corev2.APIKey]{Value: key}, nil)
+	cs.On("Get", mock.Anything, userReq).Return(nil, errors.New("err"))
 
 	client := &http.Client{}
 	req, _ := http.NewRequest("GET", server.URL, nil)
@@ -144,6 +150,8 @@ func TestMiddlewareInvalidUserAPIKey(t *testing.T) {
 
 func TestMiddlewareNoUserAPIKey(t *testing.T) {
 	st := &mockstore.V2MockStore{}
+	cs := new(mockstore.ConfigStore)
+	st.On("GetConfigStore").Return(cs)
 	mware := Authentication{
 		Store: st,
 	}
@@ -154,8 +162,8 @@ func TestMiddlewareNoUserAPIKey(t *testing.T) {
 	keyReq := storev2.NewResourceRequestFromResource(key)
 	user := &corev2.User{Username: "admin"}
 	userReq := storev2.NewResourceRequestFromResource(user)
-	st.On("Get", mock.Anything, keyReq).Return(nil, &store.ErrNotFound{})
-	st.On("Get", mock.Anything, userReq).Return(mockstore.Wrapper[*corev2.User]{Value: user}, nil)
+	cs.On("Get", mock.Anything, keyReq).Return(nil, &store.ErrNotFound{})
+	cs.On("Get", mock.Anything, userReq).Return(mockstore.Wrapper[*corev2.User]{Value: user}, nil)
 
 	client := &http.Client{}
 	req, _ := http.NewRequest("GET", server.URL, nil)

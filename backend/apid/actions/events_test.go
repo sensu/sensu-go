@@ -15,18 +15,6 @@ import (
 	"github.com/stretchr/testify/mock"
 )
 
-func TestNewEventController(t *testing.T) {
-	assert := assert.New(t)
-
-	store := &mockstore.MockStore{}
-	bus := &mockbus.MockBus{}
-	eventController := NewEventController(store, bus)
-
-	assert.NotNil(eventController)
-	assert.Equal(store, eventController.store)
-	assert.Equal(bus, eventController.bus)
-}
-
 func TestEventList(t *testing.T) {
 	defaultCtx := context.Background()
 
@@ -82,8 +70,10 @@ func TestEventList(t *testing.T) {
 
 	for _, tc := range testCases {
 		s := &mockstore.MockStore{}
+		sv2 := new(mockstore.V2MockStore)
+		sv2.On("GetEventStore").Return(s)
 		bus := &mockbus.MockBus{}
-		eventController := NewEventController(s, bus)
+		eventController := NewEventController(sv2, bus)
 
 		t.Run(tc.name, func(t *testing.T) {
 			assert := assert.New(t)
@@ -159,8 +149,10 @@ func TestEventFind(t *testing.T) {
 
 	for _, tc := range testCases {
 		store := &mockstore.MockStore{}
+		sv2 := new(mockstore.V2MockStore)
+		sv2.On("GetEventStore").Return(store)
 		bus := &mockbus.MockBus{}
-		eventController := NewEventController(store, bus)
+		eventController := NewEventController(sv2, bus)
 
 		t.Run(tc.name, func(t *testing.T) {
 			assert := assert.New(t)
@@ -232,8 +224,10 @@ func TestEventDestroy(t *testing.T) {
 
 	for _, tc := range testCases {
 		store := &mockstore.MockStore{}
+		sv2 := new(mockstore.V2MockStore)
+		sv2.On("GetEventStore").Return(store)
 		bus := &mockbus.MockBus{}
-		eventController := NewEventController(store, bus)
+		eventController := NewEventController(sv2, bus)
 
 		t.Run(tc.name, func(t *testing.T) {
 			assert := assert.New(t)
@@ -321,8 +315,10 @@ func TestEventCreateOrReplace(t *testing.T) {
 
 	for _, tc := range testCases {
 		store := &mockstore.MockStore{}
+		sv2 := new(mockstore.V2MockStore)
+		sv2.On("GetEventStore").Return(store)
 		bus := &mockbus.MockBus{}
-		actions := NewEventController(store, bus)
+		actions := NewEventController(sv2, bus)
 
 		t.Run(tc.name, func(t *testing.T) {
 			assert := assert.New(t)
@@ -365,8 +361,10 @@ func TestEventCreatedBy(t *testing.T) {
 	event := corev2.FixtureEvent("entity1", "check1")
 
 	store := &mockstore.MockStore{}
+	sv2 := new(mockstore.V2MockStore)
+	sv2.On("GetEventStore").Return(store)
 	bus := &mockbus.MockBus{}
-	actions := NewEventController(store, bus)
+	actions := NewEventController(sv2, bus)
 
 	store.On("GetEventByEntityCheck", mock.Anything, mock.Anything, mock.Anything).Return(event, nil)
 	bus.On("Publish", mock.Anything, mock.Anything).Return(nil)

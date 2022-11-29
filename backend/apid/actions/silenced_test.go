@@ -15,16 +15,6 @@ import (
 	"github.com/stretchr/testify/mock"
 )
 
-func TestNewSilencedController(t *testing.T) {
-	assert := assert.New(t)
-
-	store := &mockstore.MockStore{}
-	actions := NewSilencedController(store)
-
-	assert.NotNil(actions)
-	assert.Equal(store, actions.Store)
-}
-
 func TestSilencedQuery(t *testing.T) {
 	defaultCtx := context.Background()
 
@@ -92,7 +82,9 @@ func TestSilencedQuery(t *testing.T) {
 
 	for _, tc := range testCases {
 		store := &mockstore.MockStore{}
-		actions := NewSilencedController(store)
+		sv2 := new(mockstore.V2MockStore)
+		sv2.On("GetSilencesStore").Return(store)
+		actions := NewSilencedController(sv2)
 
 		t.Run(tc.name, func(t *testing.T) {
 			assert := assert.New(t)
@@ -170,7 +162,9 @@ func TestSilencedCreateOrReplace(t *testing.T) {
 
 	for _, tc := range testCases {
 		store := &mockstore.MockStore{}
-		actions := NewSilencedController(store)
+		sv2 := new(mockstore.V2MockStore)
+		sv2.On("GetSilencesStore").Return(store)
+		actions := NewSilencedController(sv2)
 
 		t.Run(tc.name, func(t *testing.T) {
 			assert := assert.New(t)
@@ -292,7 +286,9 @@ func TestSilencedCreate(t *testing.T) {
 
 	for _, tc := range testCases {
 		store := &mockstore.MockStore{}
-		actions := NewSilencedController(store)
+		sv2 := new(mockstore.V2MockStore)
+		sv2.On("GetSilencesStore").Return(store)
+		actions := NewSilencedController(sv2)
 
 		t.Run(tc.name, func(t *testing.T) {
 			assert := assert.New(t)
@@ -340,7 +336,9 @@ func TestSilencedCreatedBy(t *testing.T) {
 	silenced := corev2.FixtureSilenced("silenced1:*")
 
 	store := &mockstore.MockStore{}
-	actions := NewSilencedController(store)
+	sv2 := new(mockstore.V2MockStore)
+	sv2.On("GetSilencesStore").Return(store)
+	actions := NewSilencedController(sv2)
 
 	var s *corev2.Silenced
 	store.On("UpdateSilence", mock.Anything, mock.Anything).Return(nil)

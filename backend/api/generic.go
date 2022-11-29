@@ -1,5 +1,7 @@
 package api
 
+//lint:file-ignore S1011 staticcheck bug?
+
 import (
 	"context"
 	"errors"
@@ -50,6 +52,14 @@ func (g GenericClient) validateConfig() error {
 }
 
 func (g *GenericClient) createResource(ctx context.Context, value corev3.Resource) error {
+	switch value := value.(type) {
+	case *corev3.EntityConfig:
+		return g.Store.GetEntityConfigStore().CreateIfNotExists(ctx, value)
+	case *corev3.EntityState:
+		return g.Store.GetEntityStateStore().CreateIfNotExists(ctx, value)
+	case *corev3.Namespace:
+		return g.Store.GetNamespaceStore().CreateIfNotExists(ctx, value)
+	}
 	req := storev2.NewResourceRequestFromResource(value)
 	if gr, ok := g.Kind.(corev3.GlobalResource); !ok || !gr.IsGlobalResource() {
 		req.Namespace = corev2.ContextNamespace(ctx)
@@ -58,7 +68,7 @@ func (g *GenericClient) createResource(ctx context.Context, value corev3.Resourc
 	if err != nil {
 		return err
 	}
-	return g.Store.CreateIfNotExists(ctx, req, wrapper)
+	return g.Store.GetConfigStore().CreateIfNotExists(ctx, req, wrapper)
 }
 
 // Create creates a resource, if authorized
@@ -99,6 +109,14 @@ func (g *GenericClient) SetTypeMeta(meta corev2.TypeMeta) error {
 }
 
 func (g *GenericClient) updateResource(ctx context.Context, value corev3.Resource) error {
+	switch value := value.(type) {
+	case *corev3.EntityConfig:
+		return g.Store.GetEntityConfigStore().CreateOrUpdate(ctx, value)
+	case *corev3.EntityState:
+		return g.Store.GetEntityStateStore().CreateOrUpdate(ctx, value)
+	case *corev3.Namespace:
+		return g.Store.GetNamespaceStore().CreateOrUpdate(ctx, value)
+	}
 	req := storev2.NewResourceRequestFromResource(value)
 	if gr, ok := g.Kind.(corev3.GlobalResource); !ok || !gr.IsGlobalResource() {
 		req.Namespace = corev2.ContextNamespace(ctx)
@@ -107,7 +125,7 @@ func (g *GenericClient) updateResource(ctx context.Context, value corev3.Resourc
 	if err != nil {
 		return err
 	}
-	return g.Store.CreateOrUpdate(ctx, req, wrapper)
+	return g.Store.GetConfigStore().CreateOrUpdate(ctx, req, wrapper)
 }
 
 // Update creates or updates a resource, if authorized
@@ -131,7 +149,15 @@ func (g *GenericClient) deleteResource(ctx context.Context, name string) error {
 		req.Namespace = corev2.ContextNamespace(ctx)
 	}
 	req.Name = name
-	return g.Store.Delete(ctx, req)
+	switch g.Kind.(type) {
+	case *corev3.EntityConfig:
+		return g.Store.GetEntityConfigStore().Delete(ctx, req.Namespace, req.Name)
+	case *corev3.EntityState:
+		return g.Store.GetEntityStateStore().Delete(ctx, req.Namespace, req.Name)
+	case *corev3.Namespace:
+		return g.Store.GetNamespaceStore().Delete(ctx, req.Name)
+	}
+	return g.Store.GetConfigStore().Delete(ctx, req)
 }
 
 // Delete deletes a resource, if authorized
@@ -151,7 +177,27 @@ func (g *GenericClient) getResource(ctx context.Context, name string, value core
 		req.Namespace = corev2.ContextNamespace(ctx)
 	}
 	req.Name = name
-	wrapper, err := g.Store.Get(ctx, req)
+	switch value := value.(type) {
+	case *corev3.EntityConfig:
+		val, err := g.Store.GetEntityConfigStore().Get(ctx, req.Namespace, req.Name)
+		if err == nil {
+			*value = *val
+		}
+		return err
+	case *corev3.EntityState:
+		val, err := g.Store.GetEntityStateStore().Get(ctx, req.Namespace, req.Name)
+		if err == nil {
+			*value = *val
+		}
+		return err
+	case *corev3.Namespace:
+		val, err := g.Store.GetNamespaceStore().Get(ctx, req.Name)
+		if err == nil {
+			*value = *val
+		}
+		return err
+	}
+	wrapper, err := g.Store.GetConfigStore().Get(ctx, req)
 	if err != nil {
 		return err
 	}
@@ -186,7 +232,67 @@ func (g *GenericClient) list(ctx context.Context, resources interface{}, pred *s
 			req.SortOrder = storev2.SortDescend
 		}
 	}
-	list, err := g.Store.List(ctx, req, pred)
+	switch g.Kind.(type) {
+	case *corev3.EntityConfig:
+		list, err := g.Store.GetEntityConfigStore().List(ctx, req.Namespace, pred)
+		if err != nil {
+			return err
+		}
+		switch resources := resources.(type) {
+		case *[]corev3.EntityConfig:
+			for _, v := range list {
+				*resources = append(*resources, *v)
+			}
+		case *[]*corev3.EntityConfig:
+			*resources = append(*resources, list...)
+		case *[]corev3.Resource:
+			for _, v := range list {
+				*resources = append(*resources, v)
+			}
+		}
+		return nil
+	case *corev3.EntityState:
+		list, err := g.Store.GetEntityStateStore().List(ctx, req.Namespace, pred)
+		if err != nil {
+			return err
+		}
+		switch resources := resources.(type) {
+		case *[]corev3.EntityState:
+			for _, v := range list {
+				*resources = append(*resources, *v)
+			}
+		case *[]*corev3.EntityState:
+			for _, v := range list {
+				*resources = append(*resources, v)
+			}
+		case *[]corev3.Resource:
+			for _, v := range list {
+				*resources = append(*resources, v)
+			}
+		}
+		return nil
+	case *corev3.Namespace:
+		list, err := g.Store.GetNamespaceStore().List(ctx, pred)
+		if err != nil {
+			return err
+		}
+		switch resources := resources.(type) {
+		case *[]corev3.Namespace:
+			for _, v := range list {
+				*resources = append(*resources, *v)
+			}
+		case *[]*corev3.Namespace:
+			for _, v := range list {
+				*resources = append(*resources, v)
+			}
+		case *[]corev3.Resource:
+			for _, v := range list {
+				*resources = append(*resources, v)
+			}
+		}
+		return nil
+	}
+	list, err := g.Store.GetConfigStore().List(ctx, req, pred)
 	if err != nil {
 		return err
 	}

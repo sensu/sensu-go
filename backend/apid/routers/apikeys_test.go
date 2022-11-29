@@ -18,6 +18,8 @@ import (
 
 func TestAPIKeysRouter(t *testing.T) {
 	s := &mockstore.V2MockStore{}
+	cs := new(mockstore.ConfigStore)
+	s.On("GetConfigStore").Return(cs)
 	router := NewAPIKeysRouter(s)
 	parentRouter := mux.NewRouter().PathPrefix(corev2.URLPrefix).Subrouter()
 	router.Mount(parentRouter)
@@ -26,8 +28,8 @@ func TestAPIKeysRouter(t *testing.T) {
 	fixture := corev2.FixtureAPIKey("226f9e06-9d54-45c6-a9f6-4206bfa7ccf6", "bar")
 
 	tests := []routerTestCase{}
-	tests = append(tests, getTestCases(fixture)...)
-	tests = append(tests, listTestCases(empty)...)
+	tests = append(tests, getTestCases[*corev2.APIKey](fixture)...)
+	tests = append(tests, listTestCases[*corev2.APIKey](empty)...)
 	tests = append(tests, deleteTestCases(fixture)...)
 	for _, tt := range tests {
 		run(t, tt, parentRouter, s)
@@ -36,8 +38,10 @@ func TestAPIKeysRouter(t *testing.T) {
 
 func TestPostAPIKey(t *testing.T) {
 	s := &mockstore.V2MockStore{}
-	s.On("CreateIfNotExists", mock.Anything, mock.Anything, mock.Anything).Return(nil)
-	s.On("Get", mock.Anything, mock.Anything).Return(mockstore.Wrapper[*corev2.User]{Value: corev2.FixtureUser("admin")}, nil)
+	cs := new(mockstore.ConfigStore)
+	s.On("GetConfigStore").Return(cs)
+	cs.On("CreateIfNotExists", mock.Anything, mock.Anything, mock.Anything).Return(nil)
+	cs.On("Get", mock.Anything, mock.Anything).Return(mockstore.Wrapper[*corev2.User]{Value: corev2.FixtureUser("admin")}, nil)
 	router := NewAPIKeysRouter(s)
 	parentRouter := mux.NewRouter()
 	router.Mount(parentRouter)
@@ -66,11 +70,13 @@ func TestPostAPIKey(t *testing.T) {
 
 func TestPostAPIKeyInvalidUser(t *testing.T) {
 	s := &mockstore.V2MockStore{}
+	cs := new(mockstore.ConfigStore)
+	s.On("GetConfigStore").Return(cs)
 	var user corev2.User
 	user.Username = "admin"
-	s.On("Create", mock.Anything, mock.Anything, mock.Anything).Return(nil)
+	cs.On("Create", mock.Anything, mock.Anything, mock.Anything).Return(nil)
 	userReq := storev2.NewResourceRequestFromResource(&user)
-	s.On("Get", mock.Anything, userReq).Return(nil, &store.ErrNotFound{})
+	cs.On("Get", mock.Anything, userReq).Return(nil, &store.ErrNotFound{})
 	router := NewAPIKeysRouter(s)
 	parentRouter := mux.NewRouter()
 	router.Mount(parentRouter)

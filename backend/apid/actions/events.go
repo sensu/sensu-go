@@ -7,6 +7,7 @@ import (
 	"github.com/sensu/sensu-go/backend/authentication/jwt"
 	"github.com/sensu/sensu-go/backend/messaging"
 	"github.com/sensu/sensu-go/backend/store"
+	storev2 "github.com/sensu/sensu-go/backend/store/v2"
 
 	corev2 "github.com/sensu/core/v2"
 	corev3 "github.com/sensu/core/v3"
@@ -21,9 +22,9 @@ type EventController struct {
 }
 
 // NewEventController returns new EventController
-func NewEventController(store store.EventStore, bus messaging.MessageBus) EventController {
+func NewEventController(store storev2.Interface, bus messaging.MessageBus) EventController {
 	return EventController{
-		store: store,
+		store: store.GetEventStore(),
 		bus:   bus,
 	}
 }

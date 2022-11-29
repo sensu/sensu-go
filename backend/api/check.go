@@ -91,15 +91,7 @@ func (c *CheckClient) ListChecks(ctx context.Context) ([]*corev2.CheckConfig, er
 		Limit:    int64(corev2.PageSizeFromContext(ctx)),
 	}
 	store := storev2.NewGenericStore[*corev2.CheckConfig](c.store)
-	list, err := store.List(ctx, storev2.ID{Namespace: corev2.ContextNamespace(ctx)}, pred)
-	if err != nil {
-		return nil, err
-	}
-	ptrs := make([]*corev2.CheckConfig, len(list))
-	for i := range list {
-		ptrs[i] = &list[i]
-	}
-	return ptrs, nil
+	return store.List(ctx, storev2.ID{Namespace: corev2.ContextNamespace(ctx)}, pred)
 }
 
 func checkListAttributes(ctx context.Context) *authorization.Attributes {

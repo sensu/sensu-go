@@ -40,26 +40,16 @@ func createProxyEntity(event *corev2.Event, s storev2.Interface) (fErr error) {
 	//NOTE(ccressent): there is no timeout for this operation?
 	entityMeta := corev2.NewObjectMeta(entityName, namespace)
 
+	ecstore := s.GetEntityConfigStore()
+	esstore := s.GetEntityStateStore()
+
 	state := corev3.NewEntityState(namespace, entityName)
-	config := corev3.NewEntityConfig(namespace, entityName)
 
-	configReq := storev2.NewResourceRequestFromResource(config)
-	stateReq := storev2.NewResourceRequestFromResource(state)
-
-	var (
-		wState, wConfig storev2.Wrapper
-		err             error
-	)
-
-	wConfig, err = s.Get(context.Background(), configReq)
+	config, err := ecstore.Get(context.Background(), namespace, entityName)
 	if err == nil {
-		if err := wConfig.UnwrapInto(config); err != nil {
-			return err
-		}
-
 		// Since the entity config exists, we fetch its associated state in
 		// order to create a fully formed corev2.Entity for the event.
-		wState, err = s.Get(context.Background(), stateReq)
+		state, err = esstore.Get(context.Background(), namespace, entityName)
 		if err != nil {
 			switch err.(type) {
 			case *store.ErrNotFound:
@@ -72,26 +62,15 @@ func createProxyEntity(event *corev2.Event, s storev2.Interface) (fErr error) {
 
 				state.Metadata.CreatedBy = event.CreatedBy
 
-				// Wrap and store the new entity's state. We use CreateOrUpdate()
-				// because we want to overwrite any existing EntityState that could
-				// have been left behind due to a failed operation or failure to
-				// clean up old state.
-				wState, err = storev2.WrapResource(state)
-				if err != nil {
-					return err
-				}
-				if err := s.CreateOrUpdate(context.Background(), stateReq, wState); err != nil {
+				if err := esstore.CreateOrUpdate(context.Background(), state); err != nil {
 					return err
 				}
 			default:
 				return err
 			}
 		}
-
-		if err := wState.UnwrapInto(state); err != nil {
-			return err
-		}
 	} else if err != nil {
+		config = corev3.NewEntityConfig(namespace, entityName)
 		switch err.(type) {
 		case *store.ErrNotFound:
 			// If the entity does not exist, create a proxy entity
@@ -107,29 +86,21 @@ func createProxyEntity(event *corev2.Event, s storev2.Interface) (fErr error) {
 
 			state.Metadata.CreatedBy = event.CreatedBy
 
-			// Wrap and store the new entity's state. We use CreateOrUpdate()
+			// Store the new entity's state. We use CreateOrUpdate()
 			// because we want to overwrite any existing EntityState that could
 			// have been left behind due to a failed operation or failure to
 			// clean up old state.
-			wState, err := storev2.WrapResource(state)
-			if err != nil {
-				return err
-			}
-			if err := s.CreateOrUpdate(context.Background(), stateReq, wState); err != nil {
+			if err := esstore.CreateOrUpdate(context.Background(), state); err != nil {
 				return err
 			}
 
 			config.EntityClass = corev2.EntityProxyClass
 			config.Subscriptions = append(config.Subscriptions, corev2.GetEntitySubscription(entityName))
 
-			// Wrap and store the new entity's configuration. We use
+			// Store the new entity's configuration. We use
 			// CreateIfNotExists() to assert that this EntityConfig is indeed
 			// brand new.
-			wConfig, err := storev2.WrapResource(config)
-			if err != nil {
-				return err
-			}
-			if err := s.CreateIfNotExists(context.Background(), configReq, wConfig); err != nil {
+			if err := ecstore.CreateIfNotExists(context.Background(), config); err != nil {
 				return err
 			}
 		default:

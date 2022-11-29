@@ -15,16 +15,13 @@ import (
 	"syscall"
 	"time"
 
-	clientv3 "go.etcd.io/etcd/client/v3"
-
-	"github.com/jackc/pgx/v4/pgxpool"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/sensu/sensu-go/backend/apid/middlewares"
 	"github.com/sensu/sensu-go/backend/store/postgres"
 
 	corev2 "github.com/sensu/core/v2"
 	"github.com/sensu/sensu-go/asset"
 	"github.com/sensu/sensu-go/backend"
-	"github.com/sensu/sensu-go/backend/etcd"
 	"github.com/sensu/sensu-go/util/path"
 	stringsutil "github.com/sensu/sensu-go/util/strings"
 	"github.com/sirupsen/logrus"
@@ -64,7 +61,6 @@ const (
 	flagDashboardWriteTimeout = "dashboard-write-timeout"
 	flagDeregistrationHandler = "deregistration-handler"
 	flagCacheDir              = "cache-dir"
-	flagStateDir              = "state-dir"
 	flagCertFile              = "cert-file"
 	flagKeyFile               = "key-file"
 	flagTrustedCAFile         = "trusted-ca-file"
@@ -73,13 +69,9 @@ const (
 	flagLogLevel              = "log-level"
 	flagLabels                = "labels"
 	flagAnnotations           = "annotations"
-	flagDevMode               = "dev"
 
-	// Postgres config store
-	flagPGConfigStoreDSN = "pg-config-store-dsn"
-
-	// Postgres state store
-	flagPGStateStoreDSN = "pg-state-store-dsn"
+	// Postgres store
+	flagPGDSN = "pg-dsn"
 
 	// Metric logging flags
 	flagDisablePlatformMetrics         = "disable-platform-metrics"
@@ -117,14 +109,8 @@ Available Commands:{{range .Commands}}{{if (or .IsAvailableCommand (eq .Name "he
 General Flags:
 {{ $flags := categoryFlags "" .LocalFlags }}{{ $flags.FlagUsages | trimTrailingWhitespaces}}
 
-Store Flags:
-{{ $storeFlags := categoryFlags "store" .LocalFlags }}{{ $storeFlags.FlagUsages | trimTrailingWhitespaces}}
-
-Postgresql State Store Flags:
-{{ $pgstateflags := categoryFlags "pgstate" .LocalFlags }}{{ $pgstateflags.FlagUsages | trimTrailingWhitespaces }}
-
-Postgresql Configuration Store Flags:
-{{ $pgcfgflags := categoryFlags "pgconfig" .LocalFlags }}{{ $pgcfgflags.FlagUsages | trimTrailingWhitespaces }}
+Postgresql Store Flags:
+{{ $pgcfgflags := categoryFlags "store" .LocalFlags }}{{ $pgcfgflags.FlagUsages | trimTrailingWhitespaces }}
 
 Global Flags:
 {{.InheritedFlags.FlagUsages | trimTrailingWhitespaces}}{{end}}{{if .HasHelpSubCommands}}
@@ -145,7 +131,7 @@ var (
 
 // InitializeFunc represents the signature of an initialization function, used
 // to initialize the backend
-type InitializeFunc func(context.Context, *clientv3.Client, *pgxpool.Pool, *pgxpool.Pool, *backend.Config) (*backend.Backend, error)
+type InitializeFunc func(context.Context, postgres.DBI, *backend.Config) (*backend.Backend, error)
 
 // StartCommand ...
 func StartCommand(initialize InitializeFunc) *cobra.Command {
@@ -168,8 +154,6 @@ func StartCommand(initialize InitializeFunc) *cobra.Command {
 			}
 			logrus.SetLevel(level)
 
-			devMode := viper.GetBool(flagDevMode)
-
 			cfg := &backend.Config{
 				AgentHost:             viper.GetString(flagAgentHost),
 				AgentPort:             viper.GetInt(flagAgentPort),
@@ -187,9 +171,7 @@ func StartCommand(initialize InitializeFunc) *cobra.Command {
 				DashboardWriteTimeout: viper.GetDuration(flagDashboardWriteTimeout),
 				DeregistrationHandler: viper.GetString(flagDeregistrationHandler),
 				CacheDir:              viper.GetString(flagCacheDir),
-				StateDir:              viper.GetString(flagStateDir),
 
-				DevMode:                        devMode,
 				Labels:                         viper.GetStringMapString(flagLabels),
 				Annotations:                    viper.GetStringMapString(flagAnnotations),
 				DisablePlatformMetrics:         viper.GetBool(flagDisablePlatformMetrics),
@@ -201,31 +183,14 @@ func StartCommand(initialize InitializeFunc) *cobra.Command {
 				EventLogParallelEncoders:       viper.GetBool(flagEventLogParallelEncoders),
 
 				Store: backend.StoreConfig{
-					PostgresStateStore: postgres.Config{
-						DSN: viper.GetString(flagPGStateStoreDSN),
-					},
-					PostgresConfigurationStore: postgres.Config{
-						DSN: viper.GetString(flagPGConfigStoreDSN),
+					PostgresStore: postgres.Config{
+						DSN: viper.GetString(flagPGDSN),
 					},
 				},
 			}
 
-			if cfg.DevMode && cfg.CacheDir == "" {
-				var err error
-				cfg.CacheDir, err = os.MkdirTemp("", "sensu-cache")
-				if err != nil {
-					return err
-				}
-			} else if cfg.CacheDir == "" {
+			if cfg.CacheDir == "" {
 				return errors.New("cache dir not set")
-			}
-
-			if cfg.DevMode && cfg.StateDir == "" {
-				var err error
-				cfg.StateDir, err = os.MkdirTemp("", "sensu-state")
-				if err != nil {
-					return err
-				}
 			}
 
 			if flag := cmd.Flags().Lookup(flagLabels); flag != nil && flag.Changed {
@@ -263,34 +228,17 @@ func StartCommand(initialize InitializeFunc) *cobra.Command {
 				)
 			}
 
-			var pgConfigDB, pgStateDB *pgxpool.Pool
-			var etcdClient *clientv3.Client
+			var pgDB *pgxpool.Pool
 
 			ctx, cancel := context.WithCancel(context.Background())
 
-			if devMode {
-				ctx, cancel := context.WithCancel(context.Background())
-				defer cancel()
-				etcdClient, err = devModeClient(ctx, cfg)
-				if err != nil {
-					return err
-				}
-				defer func() { _ = etcdClient.Close() }()
-			} else {
-				pgConfigDB, err = newPostgresPool(ctx, cfg.Store.PostgresConfigurationStore.DSN, false)
-				if err != nil {
-					return err
-				}
-				defer pgConfigDB.Close()
-
-				pgStateDB, err = newPostgresPool(ctx, cfg.Store.PostgresStateStore.DSN, true)
-				if err != nil {
-					return err
-				}
-				defer pgStateDB.Close()
+			pgDB, err = newPostgresPool(ctx, cfg.Store.PostgresStore.DSN)
+			if err != nil {
+				return err
 			}
+			defer pgDB.Close()
 
-			sensuBackend, err := initialize(ctx, etcdClient, pgConfigDB, pgStateDB, cfg)
+			sensuBackend, err := initialize(ctx, pgDB, cfg)
 			if err != nil {
 				return err
 			}
@@ -319,62 +267,18 @@ func StartCommand(initialize InitializeFunc) *cobra.Command {
 	return cmd
 }
 
-func newPostgresPool(ctx context.Context, dsn string, stateDB bool) (*pgxpool.Pool, error) {
+func newPostgresPool(ctx context.Context, dsn string) (*pgxpool.Pool, error) {
 	pgxConfig, err := pgxpool.ParseConfig(dsn)
 	if err != nil {
 		return nil, err
 	}
 
 	// Create the event store, which runs on top of postgres
-	var db *pgxpool.Pool
-	if stateDB {
-		db, err = postgres.OpenStateDB(ctx, pgxConfig, true)
-	} else {
-		db, err = postgres.OpenConfigDB(ctx, pgxConfig, true)
-	}
+	db, err := postgres.Open(ctx, pgxConfig, true)
 	if err != nil {
 		return nil, err
 	}
 	return db, nil
-}
-
-func devModeClient(ctx context.Context, config *backend.Config) (*clientv3.Client, error) {
-	// Initialize and start etcd, because we'll need to provide an etcd client to
-	// the Wizard bus, which requires etcd to be started.
-	cfg := etcd.NewConfig()
-	cfg.DataDir = config.StateDir
-	if urls := config.Store.EtcdConfigurationStore.URLs; len(urls) > 0 {
-		cfg.ListenClientURLs = urls
-	} else {
-		cfg.ListenClientURLs = []string{"http://127.0.0.1:2379"}
-	}
-	cfg.ListenPeerURLs = []string{"http://127.0.0.1:0"}
-	cfg.InitialCluster = "dev=http://127.0.0.1:0"
-	cfg.InitialClusterState = "new"
-	cfg.InitialAdvertisePeerURLs = cfg.ListenPeerURLs
-	cfg.AdvertiseClientURLs = cfg.ListenClientURLs
-	cfg.Name = "dev"
-	cfg.LogLevel = config.LogLevel
-	cfg.ClientLogLevel = config.Store.EtcdConfigurationStore.LogLevel
-
-	// Start etcd
-	e, err := etcd.NewEtcd(cfg)
-	if err != nil {
-		return nil, fmt.Errorf("error starting etcd: %s", err)
-	}
-	go func() {
-		<-ctx.Done()
-		if err := e.Shutdown(); err != nil {
-			logger.Error(err)
-		}
-	}()
-
-	// Create an etcd client
-	client := e.NewEmbeddedClientWithContext(ctx)
-	if _, err := client.Get(ctx, "/sensu.io"); err != nil {
-		return nil, err
-	}
-	return client, nil
 }
 
 func handleConfig(cmd *cobra.Command, arguments []string, server bool) error {
@@ -485,11 +389,8 @@ func flagSet(server bool) *pflag.FlagSet {
 	configFileDescription := fmt.Sprintf("path to sensu-backend config file (default %q)", configFileDefaultLocation)
 	flagSet.StringP(flagConfigFile, "c", "", configFileDescription)
 
-	flagSet.String(flagPGConfigStoreDSN, viper.GetString(flagPGConfigStoreDSN), "postgresql configuration store DSN")
-	_ = flagSet.SetAnnotation(flagPGConfigStoreDSN, "categories", []string{"pgconfig"})
-
-	flagSet.String(flagPGStateStoreDSN, viper.GetString(flagPGStateStoreDSN), "postgresql state store DSN")
-	_ = flagSet.SetAnnotation(flagPGStateStoreDSN, "categories", []string{"pgstate"})
+	flagSet.String(flagPGDSN, viper.GetString(flagPGDSN), "postgresql store DSN")
+	_ = flagSet.SetAnnotation(flagPGDSN, "categories", []string{"store"})
 
 	if server {
 		// Main Flags
@@ -508,7 +409,6 @@ func flagSet(server bool) *pflag.FlagSet {
 		flagSet.Duration(flagDashboardWriteTimeout, viper.GetDuration(flagDashboardWriteTimeout), "maximum duration before timing out writes of responses")
 		flagSet.String(flagDeregistrationHandler, viper.GetString(flagDeregistrationHandler), "default deregistration handler")
 		flagSet.String(flagCacheDir, viper.GetString(flagCacheDir), "path to store cached data")
-		flagSet.StringP(flagStateDir, "d", viper.GetString(flagStateDir), "path to sensu state storage")
 		flagSet.String(flagCertFile, viper.GetString(flagCertFile), "TLS certificate in PEM format")
 		flagSet.String(flagKeyFile, viper.GetString(flagKeyFile), "TLS certificate key in PEM format")
 		flagSet.String(flagTrustedCAFile, viper.GetString(flagTrustedCAFile), "TLS CA certificate bundle in PEM format")
@@ -529,9 +429,6 @@ func flagSet(server bool) *pflag.FlagSet {
 		flagSet.Bool(flagDisablePlatformMetrics, viper.GetBool(flagDisablePlatformMetrics), "disable platform metrics logging")
 		flagSet.Duration(flagPlatformMetricsLoggingInterval, viper.GetDuration(flagPlatformMetricsLoggingInterval), "platform metrics logging interval")
 		flagSet.String(flagPlatformMetricsLogFile, viper.GetString(flagPlatformMetricsLogFile), "platform metrics log file path")
-
-		flagSet.Bool(flagDevMode, viper.GetBool(flagDevMode), "start sensu-backend in single-node developer mode, no external dependencies required")
-		_ = flagSet.SetAnnotation(flagDevMode, "categories", []string{"store"})
 
 		_ = flagSet.String(flagEventLogFile, "", "path to the event log file")
 		_ = flagSet.Bool(flagEventLogParallelEncoders, false, "use parallel JSON encoding for the event log")

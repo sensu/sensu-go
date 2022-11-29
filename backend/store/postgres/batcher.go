@@ -6,7 +6,7 @@ import (
 	"sync"
 	"time"
 
-	pgxv4 "github.com/jackc/pgx/v4"
+	pgxv5 "github.com/jackc/pgx/v5"
 	"github.com/prometheus/client_golang/prometheus"
 )
 
@@ -57,7 +57,7 @@ type EventBatcher struct {
 
 // DB is the storage interface for the batcher.
 type DB interface {
-	SendBatch(context.Context, *pgxv4.Batch) pgxv4.BatchResults
+	SendBatch(context.Context, *pgxv5.Batch) pgxv5.BatchResults
 }
 
 type BatchConfig struct {
@@ -123,7 +123,7 @@ func uniqueAppend(buffer []*workItem, work *workItem) (result []*workItem, ok bo
 }
 
 func (e *EventBatcher) worker(ctx context.Context, batchSize int) {
-	batch := &pgxv4.Batch{}
+	batch := &pgxv5.Batch{}
 	works := make([]*workItem, 0, batchSize)
 	ticker := time.NewTicker(BatchTTL)
 	defer ticker.Stop()
@@ -147,7 +147,7 @@ func (e *EventBatcher) worker(ctx context.Context, batchSize int) {
 				e.executeBatch(ctx, batch, works)
 
 				// it's time for a new batch
-				batch = &pgxv4.Batch{}
+				batch = &pgxv5.Batch{}
 				works = works[:0]
 
 				lastExec = time.Now()
@@ -157,7 +157,7 @@ func (e *EventBatcher) worker(ctx context.Context, batchSize int) {
 				e.executeBatch(ctx, batch, works)
 
 				// it's time for a new batch
-				batch = &pgxv4.Batch{}
+				batch = &pgxv5.Batch{}
 				works = works[:0]
 
 				lastExec = time.Now()
@@ -178,7 +178,7 @@ func fillErrors(work []*workItem, err error, seen map[int]struct{}) {
 	}
 }
 
-func (e *EventBatcher) executeBatch(ctx context.Context, batch *pgxv4.Batch, work []*workItem) {
+func (e *EventBatcher) executeBatch(ctx context.Context, batch *pgxv5.Batch, work []*workItem) {
 	if batch.Len() == 0 {
 		return
 	}

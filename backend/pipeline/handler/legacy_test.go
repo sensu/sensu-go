@@ -39,7 +39,9 @@ func init() {
 func TestNilHandlerBug_GH4584(t *testing.T) {
 	// tests to make sure Handle() doesn't panic when the handler is not found.
 	mockStore := new(mockstore.V2MockStore)
-	mockStore.On("Get", mock.Anything, mock.Anything).Return(nil, &store.ErrNotFound{})
+	cs := new(mockstore.ConfigStore)
+	mockStore.On("GetConfigStore").Return(cs)
+	cs.On("Get", mock.Anything, mock.Anything).Return(nil, &store.ErrNotFound{})
 	adapter := &LegacyAdapter{
 		Store: mockStore,
 	}
@@ -168,7 +170,9 @@ func TestLegacyAdapter_Handle(t *testing.T) {
 					var handler *corev2.Handler
 					err := errors.New("not found")
 					stor := &mockstore.V2MockStore{}
-					stor.On("Get", mock.Anything, mock.Anything).Return(mockstore.Wrapper[*corev2.Handler]{Value: handler}, err)
+					cs := new(mockstore.ConfigStore)
+					stor.On("GetConfigStore").Return(cs)
+					cs.On("Get", mock.Anything, mock.Anything).Return(mockstore.Wrapper[*corev2.Handler]{Value: handler}, err)
 					return stor
 				}(),
 			},
@@ -197,7 +201,9 @@ func TestLegacyAdapter_Handle(t *testing.T) {
 				Store: func() storev2.Interface {
 					handler := corev2.FixtureHandler("handler1")
 					stor := &mockstore.V2MockStore{}
-					stor.On("Get", mock.Anything, mock.Anything).Return(mockstore.Wrapper[*corev2.Handler]{Value: handler}, nil)
+					cs := new(mockstore.ConfigStore)
+					stor.On("GetConfigStore").Return(cs)
+					cs.On("Get", mock.Anything, mock.Anything).Return(mockstore.Wrapper[*corev2.Handler]{Value: handler}, nil)
 					return stor
 				}(),
 			},
@@ -391,7 +397,9 @@ func TestLegacyAdapter_pipeHandler(t *testing.T) {
 				Store: func() storev2.Interface {
 					asset := corev2.FixtureAsset("asset1")
 					stor := &mockstore.V2MockStore{}
-					stor.On("Get", mock.Anything, mock.Anything).Return(mockstore.Wrapper[*corev2.Asset]{Value: asset}, nil)
+					cs := new(mockstore.ConfigStore)
+					stor.On("GetConfigStore").Return(cs)
+					cs.On("Get", mock.Anything, mock.Anything).Return(mockstore.Wrapper[*corev2.Asset]{Value: asset}, nil)
 					return stor
 				}(),
 			},

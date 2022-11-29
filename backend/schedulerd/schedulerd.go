@@ -11,7 +11,6 @@ import (
 	cachev2 "github.com/sensu/sensu-go/backend/store/cache/v2"
 	storev2 "github.com/sensu/sensu-go/backend/store/v2"
 	"github.com/sensu/sensu-go/types"
-	"go.etcd.io/etcd/client/v3"
 )
 
 var (
@@ -56,7 +55,7 @@ type Schedulerd struct {
 	cancel                 context.CancelFunc
 	errChan                chan error
 	ringPool               *ringv2.RingPool
-	entityCache            *cachev2.Resource
+	entityCache            EntityCache
 	secretsProviderManager *secrets.ProviderManager
 }
 
@@ -69,7 +68,6 @@ type Config struct {
 	QueueGetter            types.QueueGetter
 	RingPool               *ringv2.RingPool
 	Bus                    messaging.MessageBus
-	Client                 *clientv3.Client
 	SecretsProviderManager *secrets.ProviderManager
 }
 
@@ -84,13 +82,14 @@ func New(ctx context.Context, c Config, opts ...Option) (*Schedulerd, error) {
 		secretsProviderManager: c.SecretsProviderManager,
 	}
 	s.ctx, s.cancel = context.WithCancel(ctx)
-	cache, err := cachev2.New(s.ctx, c.Store, &corev3.EntityConfig{}, true)
+	cache, err := cachev2.New[*corev3.EntityConfig](s.ctx, c.Store, true)
 	if err != nil {
 		return nil, err
 	}
 	s.entityCache = cache
 	s.checkWatcher = NewCheckWatcher(s.ctx, c.Bus, c.Store, c.RingPool, cache, s.secretsProviderManager)
-	s.adhocRequestExecutor = NewAdhocRequestExecutor(s.ctx, s.store, s.queueGetter.GetQueue(adhocQueueName), s.bus, s.entityCache, s.secretsProviderManager)
+	// FIXME(eric): make adhoc scheduling work again
+	// s.adhocRequestExecutor = NewAdhocRequestExecutor(s.ctx, s.store, s.queueGetter.GetQueue(adhocQueueName), s.bus, s.entityCache, s.secretsProviderManager)
 
 	for _, o := range opts {
 		if err := o(s); err != nil {

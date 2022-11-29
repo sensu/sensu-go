@@ -12,7 +12,7 @@ import (
 	"github.com/sensu/sensu-go/backend/messaging"
 	"github.com/sensu/sensu-go/backend/silenced"
 	"github.com/sensu/sensu-go/backend/store"
-	"github.com/sensu/sensu-go/backend/store/cache"
+	cachev2 "github.com/sensu/sensu-go/backend/store/cache/v2"
 	storev2 "github.com/sensu/sensu-go/backend/store/v2"
 )
 
@@ -24,13 +24,16 @@ type Deregisterer interface {
 	Deregister(e *corev2.Entity) error
 }
 
+type SilencesCache interface {
+	Get(namespace string) []cachev2.Value[*corev2.Silenced, corev2.Silenced]
+}
+
 // Deregistration is an adapter for deregistering an entity from the store and
 // publishing a deregistration event to WizardBus.
 type Deregistration struct {
-	EntityStore   storev2.Interface
-	EventStore    store.EventStore
+	Store         storev2.Interface
 	MessageBus    messaging.MessageBus
-	SilencedCache cache.Cache
+	SilencedCache SilencesCache
 	StoreTimeout  time.Duration
 }
 
@@ -40,13 +43,12 @@ func (d *Deregistration) Deregister(entity *corev2.Entity) error {
 	tctx, cancel := context.WithTimeout(ctx, d.StoreTimeout)
 	defer cancel()
 
-	entityConfig, _ := corev3.V2EntityToV3(entity)
-	rr := storev2.NewResourceRequestFromResource(entityConfig)
-	if err := d.EntityStore.Delete(tctx, rr); err != nil {
+	ecstore := storev2.NewGenericStore[*corev3.EntityConfig](d.Store)
+	if err := ecstore.Delete(tctx, storev2.ID{Namespace: entity.Namespace, Name: entity.Name}); err != nil {
 		return fmt.Errorf("error deleting entity in store: %s", err)
 	}
 
-	events, err := d.EventStore.GetEventsByEntity(ctx, entity.Name, &store.SelectionPredicate{})
+	events, err := d.Store.GetEventStore().GetEventsByEntity(ctx, entity.Name, &store.SelectionPredicate{})
 	if err != nil {
 		return fmt.Errorf("error fetching events for entity: %s", err)
 	}
@@ -58,7 +60,7 @@ func (d *Deregistration) Deregister(entity *corev2.Entity) error {
 
 		tctx, cancel := context.WithTimeout(ctx, d.StoreTimeout)
 		defer cancel()
-		if err := d.EventStore.DeleteEventByEntityCheck(
+		if err := d.Store.GetEventStore().DeleteEventByEntityCheck(
 			tctx, entity.Name, event.Check.Name,
 		); err != nil {
 			return fmt.Errorf("error deleting event for entity: %s", err)

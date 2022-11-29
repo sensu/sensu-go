@@ -6,16 +6,15 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/jackc/pgx/v4"
-	"github.com/jackc/pgx/v4/pgxpool"
+	"github.com/jackc/pgx/v5"
 	"github.com/sensu/sensu-go/backend/store"
 )
 
 type OPC struct {
-	db *pgxpool.Pool
+	db DBI
 }
 
-func NewOPC(db *pgxpool.Pool) *OPC {
+func NewOPC(db DBI) *OPC {
 	return &OPC{db: db}
 }
 
@@ -240,7 +239,7 @@ func (o *OPC) CheckIn(ctx context.Context, state store.OperatorState) error {
 		return nil
 	}
 	// update case
-	_, err = tx.Exec(ctx, opcCheckInUpdate, id, timeout, state.Present, state.Metadata, ctl.Namespace, ctlType, ctlName)
+	_, err = tx.Exec(ctx, opcCheckInUpdate, id, timeout, state.Present, state.Metadata, ctlNamespace, ctlType, ctlName)
 	if err != nil {
 		return fmt.Errorf("couldn't update operator record: %s", err)
 	}

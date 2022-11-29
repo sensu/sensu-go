@@ -24,12 +24,8 @@ func NewTessenController(store storev2.Interface, bus messaging.MessageBus) Tess
 
 // CreateOrUpdate creates or updates the tessen configuration
 func (c TessenController) CreateOrUpdate(ctx context.Context, config *corev2.TessenConfig) error {
-	req := storev2.NewResourceRequestFromResource(config)
-	wrapper, err := storev2.WrapResource(config)
-	if err != nil {
-		return err
-	}
-	if err := c.store.CreateOrUpdate(ctx, req, wrapper); err != nil {
+	tstore := storev2.NewGenericStore[*corev2.TessenConfig](c.store)
+	if err := tstore.CreateOrUpdate(ctx, config); err != nil {
 		switch err := err.(type) {
 		case *store.ErrNotValid:
 			return NewErrorf(InvalidArgument)
@@ -48,9 +44,9 @@ func (c TessenController) CreateOrUpdate(ctx context.Context, config *corev2.Tes
 
 // Get gets the tessen configuration
 func (c TessenController) Get(ctx context.Context) (*corev2.TessenConfig, error) {
-	var config corev2.TessenConfig
-	req := storev2.NewResourceRequestFromResource(&config)
-	wrapper, err := c.store.Get(ctx, req)
+	tstore := storev2.NewGenericStore[*corev2.TessenConfig](c.store)
+	// tessen resource does not have a name or namespace
+	config, err := tstore.Get(ctx, storev2.ID{})
 	if err != nil {
 		switch err := err.(type) {
 		case *store.ErrNotFound:
@@ -59,11 +55,8 @@ func (c TessenController) Get(ctx context.Context) (*corev2.TessenConfig, error)
 			return nil, NewError(InternalErr, err)
 		}
 	}
-	if err := wrapper.UnwrapInto(&config); err != nil {
-		return nil, NewError(InternalErr, err)
-	}
 
-	return &config, nil
+	return config, nil
 }
 
 // TessenMetricController exposes actions which a viewer can perform

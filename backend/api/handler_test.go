@@ -93,7 +93,9 @@ func TestListHandlers(t *testing.T) {
 			},
 			Store: func() storev2.Interface {
 				store := new(mockstore.V2MockStore)
-				store.On("List", mock.Anything, mock.Anything, mock.Anything).Return(mockstore.WrapList[*corev2.Handler]{defaultHandler}, nil)
+				cs := new(mockstore.ConfigStore)
+				store.On("GetConfigStore").Return(cs)
+				cs.On("List", mock.Anything, mock.Anything, mock.Anything).Return(mockstore.WrapList[*corev2.Handler]{defaultHandler}, nil)
 				return store
 			},
 			Auth: func() authorization.Authorizer {
@@ -214,7 +216,9 @@ func TestGetHandler(t *testing.T) {
 			},
 			Store: func() storev2.Interface {
 				store := new(mockstore.V2MockStore)
-				store.On("Get", mock.Anything, mock.Anything).Return(mockstore.Wrapper[*corev2.Handler]{Value: defaultHandler}, nil)
+				cs := new(mockstore.ConfigStore)
+				store.On("GetConfigStore").Return(cs)
+				cs.On("Get", mock.Anything, mock.Anything).Return(mockstore.Wrapper[*corev2.Handler]{Value: defaultHandler}, nil)
 				return store
 			},
 			Auth: func() authorization.Authorizer {
@@ -335,7 +339,9 @@ func TestCreateHandler(t *testing.T) {
 			},
 			Store: func() storev2.Interface {
 				store := new(mockstore.V2MockStore)
-				store.On("CreateIfNotExists", mock.Anything, mock.Anything, mock.Anything).Return(nil)
+				cs := new(mockstore.ConfigStore)
+				store.On("GetConfigStore").Return(cs)
+				cs.On("CreateIfNotExists", mock.Anything, mock.Anything, mock.Anything).Return(nil)
 				return store
 			},
 			Auth: func() authorization.Authorizer {
@@ -452,7 +458,9 @@ func TestUpdateHandler(t *testing.T) {
 			},
 			Store: func() storev2.Interface {
 				store := new(mockstore.V2MockStore)
-				store.On("CreateOrUpdate", mock.Anything, mock.Anything, mock.Anything).Return(nil)
+				cs := new(mockstore.ConfigStore)
+				store.On("GetConfigStore").Return(cs)
+				cs.On("CreateOrUpdate", mock.Anything, mock.Anything, mock.Anything).Return(nil)
 				return store
 			},
 			Auth: func() authorization.Authorizer {
@@ -570,7 +578,9 @@ func TestDeleteHandler(t *testing.T) {
 			},
 			Store: func() storev2.Interface {
 				store := new(mockstore.V2MockStore)
-				store.On("Delete", mock.Anything, mock.Anything).Return(nil)
+				cs := new(mockstore.ConfigStore)
+				store.On("GetConfigStore").Return(cs)
+				cs.On("Delete", mock.Anything, mock.Anything).Return(nil)
 				return store
 			},
 			Auth: func() authorization.Authorizer {

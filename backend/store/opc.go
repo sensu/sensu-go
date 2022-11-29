@@ -13,6 +13,32 @@ import (
 // operator called "ketchup".
 type OperatorType int
 
+func (o OperatorType) String() string {
+	switch int(o) {
+	case 1:
+		return "agent"
+	case 2:
+		return "backend"
+	case 3:
+		return "check"
+	}
+	return "null"
+}
+
+const (
+	// NullOperator is a non-existent operator type.
+	NullOperator OperatorType = 0
+
+	// AgentOperator is the operator type for agent entities.
+	AgentOperator OperatorType = 1
+
+	// BackendOperator is the operator type for backend entities.
+	BackendOperator OperatorType = 2
+
+	// CheckOperator is the operator type for check TTLs functionality.
+	CheckOperator OperatorType = 3
+)
+
 // OperatorKey holds the key fields of an operator, for identifying a unique
 // operator by namespace, type and name.
 type OperatorKey struct {
@@ -58,20 +84,6 @@ type OperatorState struct {
 	// structure, so it is kept as an encoded json.RawMessage.
 	Metadata *json.RawMessage
 }
-
-const (
-	// NullOperator is a non-existent operator type.
-	NullOperator OperatorType = 0
-
-	// AgentOperator is the operator type for agent entities.
-	AgentOperator OperatorType = 1
-
-	// BackendOperator is the operator type for backend entities.
-	BackendOperator OperatorType = 2
-
-	// CheckOperator is the operator type for check TTLs functionality.
-	CheckOperator OperatorType = 3
-)
 
 // MonitorOperatorsRequest is a request to watch a specific operator space
 // for updates, whether those updates are generated as repeated absence alerts

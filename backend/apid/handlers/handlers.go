@@ -6,14 +6,18 @@ import (
 	"net/url"
 
 	corev2 "github.com/sensu/core/v2"
-	corev3 "github.com/sensu/core/v3"
 	storev2 "github.com/sensu/sensu-go/backend/store/v2"
 )
 
 // Handlers represents the HTTP handlers for CRUD operations on resources
-type Handlers struct {
-	Resource corev3.Resource
-	Store    storev2.Interface
+type Handlers[R storev2.Resource[T], T any] struct {
+	Store storev2.Interface
+}
+
+func NewHandlers[R storev2.Resource[T], T any](store storev2.Interface) Handlers[R, T] {
+	return Handlers[R, T]{
+		Store: store,
+	}
 }
 
 func checkMeta(meta corev2.ObjectMeta, vars map[string]string, idVar string) error {

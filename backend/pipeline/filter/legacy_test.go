@@ -153,7 +153,9 @@ func TestLegacyAdapter_Filter(t *testing.T) {
 				Store: func() storev2.Interface {
 					filter := newFilter(corev2.EventFilterActionAllow, []string{`event.check.output == "unmatched"`})
 					stor := &mockstore.V2MockStore{}
-					stor.On("Get", mock.Anything, mock.Anything).Return(mockstore.Wrapper[*corev2.EventFilter]{Value: filter}, nil)
+					cs := new(mockstore.ConfigStore)
+					stor.On("GetConfigStore").Return(cs)
+					cs.On("Get", mock.Anything, mock.Anything).Return(mockstore.Wrapper[*corev2.EventFilter]{Value: filter}, nil)
 					return stor
 				}(),
 			},
@@ -167,7 +169,9 @@ func TestLegacyAdapter_Filter(t *testing.T) {
 				Store: func() storev2.Interface {
 					filter := newFilter(corev2.EventFilterActionAllow, []string{`event.check.output == "matched"`})
 					stor := &mockstore.V2MockStore{}
-					stor.On("Get", mock.Anything, mock.Anything).Return(mockstore.Wrapper[*corev2.EventFilter]{Value: filter}, nil)
+					cs := new(mockstore.ConfigStore)
+					stor.On("GetConfigStore").Return(cs)
+					cs.On("Get", mock.Anything, mock.Anything).Return(mockstore.Wrapper[*corev2.EventFilter]{Value: filter}, nil)
 					return stor
 				}(),
 			},
@@ -184,7 +188,9 @@ func TestLegacyAdapter_Filter(t *testing.T) {
 						`event.check.output == "unmatched"`,
 					})
 					stor := &mockstore.V2MockStore{}
-					stor.On("Get", mock.Anything, mock.Anything).Return(mockstore.Wrapper[*corev2.EventFilter]{Value: filter}, nil)
+					cs := new(mockstore.ConfigStore)
+					stor.On("GetConfigStore").Return(cs)
+					cs.On("Get", mock.Anything, mock.Anything).Return(mockstore.Wrapper[*corev2.EventFilter]{Value: filter}, nil)
 					return stor
 				}(),
 			},
@@ -198,7 +204,9 @@ func TestLegacyAdapter_Filter(t *testing.T) {
 				Store: func() storev2.Interface {
 					filter := newFilter(corev2.EventFilterActionDeny, []string{`event.check.output == "unmatched"`})
 					stor := &mockstore.V2MockStore{}
-					stor.On("Get", mock.Anything, mock.Anything).Return(mockstore.Wrapper[*corev2.EventFilter]{Value: filter}, nil)
+					cs := new(mockstore.ConfigStore)
+					stor.On("GetConfigStore").Return(cs)
+					cs.On("Get", mock.Anything, mock.Anything).Return(mockstore.Wrapper[*corev2.EventFilter]{Value: filter}, nil)
 					return stor
 				}(),
 			},
@@ -212,7 +220,9 @@ func TestLegacyAdapter_Filter(t *testing.T) {
 				Store: func() storev2.Interface {
 					filter := newFilter(corev2.EventFilterActionDeny, []string{`event.check.output == "matched"`})
 					stor := &mockstore.V2MockStore{}
-					stor.On("Get", mock.Anything, mock.Anything).Return(mockstore.Wrapper[*corev2.EventFilter]{Value: filter}, nil)
+					cs := new(mockstore.ConfigStore)
+					stor.On("GetConfigStore").Return(cs)
+					cs.On("Get", mock.Anything, mock.Anything).Return(mockstore.Wrapper[*corev2.EventFilter]{Value: filter}, nil)
 					return stor
 				}(),
 			},
@@ -229,7 +239,9 @@ func TestLegacyAdapter_Filter(t *testing.T) {
 						`event.check.output == "matched"`,
 					})
 					stor := &mockstore.V2MockStore{}
-					stor.On("Get", mock.Anything, mock.Anything).Return(mockstore.Wrapper[*corev2.EventFilter]{Value: filter}, nil)
+					cs := new(mockstore.ConfigStore)
+					stor.On("GetConfigStore").Return(cs)
+					cs.On("Get", mock.Anything, mock.Anything).Return(mockstore.Wrapper[*corev2.EventFilter]{Value: filter}, nil)
 					return stor
 				}(),
 			},
@@ -437,6 +449,9 @@ func Test_evaluateEventFilter(t *testing.T) {
 func TestJavascriptStoreAccess(t *testing.T) {
 	st := new(mockstore.MockStore)
 	sv2 := new(mockstore.V2MockStore)
+	cs := new(mockstore.ConfigStore)
+	sv2.On("GetConfigStore").Return(cs)
+	sv2.On("GetEventStore").Return(st)
 	pipelineRoleBinding := &corev2.RoleBinding{
 		Subjects: []corev2.Subject{
 			{
@@ -481,10 +496,10 @@ func TestJavascriptStoreAccess(t *testing.T) {
 	clusterRoleReq := storev2.NewResourceRequestFromResource(new(corev2.ClusterRole))
 	clusterRoleReq.Name = "system:pipeline"
 
-	sv2.On("List", mock.Anything, crbListReq, mock.Anything).Return(mockstore.WrapList[*corev2.ClusterRoleBinding]{}, nil)
-	sv2.On("List", mock.Anything, rbListReq, mock.Anything).Return(mockstore.WrapList[*corev2.RoleBinding]{pipelineRoleBinding}, nil)
-	sv2.On("Get", mock.Anything, roleReq).Return(mockstore.Wrapper[*corev2.Role]{Value: pipelineRole}, nil)
-	sv2.On("Get", mock.Anything, clusterRoleReq).Return(nil, &store.ErrNotFound{})
+	cs.On("List", mock.Anything, crbListReq, mock.Anything).Return(mockstore.WrapList[*corev2.ClusterRoleBinding]{}, nil)
+	cs.On("List", mock.Anything, rbListReq, mock.Anything).Return(mockstore.WrapList[*corev2.RoleBinding]{pipelineRoleBinding}, nil)
+	cs.On("Get", mock.Anything, roleReq).Return(mockstore.Wrapper[*corev2.Role]{Value: pipelineRole}, nil)
+	cs.On("Get", mock.Anything, clusterRoleReq).Return(nil, &store.ErrNotFound{})
 
 	st.On("GetEventByEntityCheck", mock.Anything, "entity", "check").Return(event, nil)
 	st.On("GetEventByEntityCheck", mock.Anything, mock.Anything, mock.Anything).Return((*corev2.Event)(nil), nil)

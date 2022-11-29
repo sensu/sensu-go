@@ -7,6 +7,7 @@ import (
 	corev2 "github.com/sensu/core/v2"
 	"github.com/sensu/sensu-go/backend/authentication/jwt"
 	"github.com/sensu/sensu-go/backend/store"
+	storev2 "github.com/sensu/sensu-go/backend/store/v2"
 	"github.com/sensu/sensu-go/types"
 )
 
@@ -16,9 +17,9 @@ type SilencedController struct {
 }
 
 // NewSilencedController returns new SilencedController
-func NewSilencedController(store store.SilenceStore) SilencedController {
+func NewSilencedController(store storev2.Interface) SilencedController {
 	return SilencedController{
-		Store: store,
+		Store: store.GetSilencesStore(),
 	}
 }
 

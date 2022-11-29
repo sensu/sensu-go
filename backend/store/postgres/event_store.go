@@ -9,8 +9,7 @@ import (
 	"time"
 
 	"github.com/gogo/protobuf/proto"
-	pgxv4 "github.com/jackc/pgx/v4"
-	"github.com/jackc/pgx/v4/pgxpool"
+	pgxv5 "github.com/jackc/pgx/v5"
 	"github.com/lib/pq"
 	corev2 "github.com/sensu/core/v2"
 	"github.com/sensu/sensu-go/backend/selector"
@@ -52,10 +51,9 @@ var (
 )
 
 type EventStore struct {
-	db             *pgxpool.Pool
-	silenceStore   SilenceStoreI
-	postgresConfig Config
-	batcher        *EventBatcher
+	db           DBI
+	silenceStore SilenceStoreI
+	batcher      *EventBatcher
 }
 
 // isFlapping determines if the check is flapping, based on the TotalStateChange
@@ -121,7 +119,7 @@ func totalStateChange(check *corev2.Check) uint32 {
 // NewEventStore creates a NewEventStore. It prepares several queries for
 // future use. If there is a non-nil error, it is due to query preparation
 // failing.
-func NewEventStore(db *pgxpool.Pool, sStore SilenceStoreI, pg Config, producers int) (*EventStore, error) {
+func NewEventStore(db DBI, sStore SilenceStoreI, pg Config, producers int) (*EventStore, error) {
 	// TODO add these options to postgres.Config
 	//workers := pg.BatchWorkers
 	//if workers == 0 {
@@ -153,10 +151,9 @@ func NewEventStore(db *pgxpool.Pool, sStore SilenceStoreI, pg Config, producers 
 		return nil, fmt.Errorf("couldn't create query batcher: %s", err)
 	}
 	store := &EventStore{
-		db:             db,
-		silenceStore:   sStore,
-		postgresConfig: pg,
-		batcher:        batcher,
+		db:           db,
+		silenceStore: sStore,
+		batcher:      batcher,
 	}
 	return store, nil
 }
@@ -191,7 +188,7 @@ func getHistory(tsArray, statusArray pq.Int64Array, historyIndex int64) ([]corev
 	return result, nil
 }
 
-func scanEvents(rows pgxv4.Rows, pred *store.SelectionPredicate) ([]*corev2.Event, error) {
+func scanEvents(rows pgxv5.Rows, pred *store.SelectionPredicate) ([]*corev2.Event, error) {
 	var (
 		tsArray, statusArray pq.Int64Array
 		historyIndex         int64
@@ -487,7 +484,7 @@ func (e *EventStore) UpdateEvent(ctx context.Context, event *corev2.Event) (uEve
 	return event, nil, nil
 }
 
-func scanCounts(rows pgxv4.Rows) (map[string]EventGauges, error) {
+func scanCounts(rows pgxv5.Rows) (map[string]EventGauges, error) {
 	gauges := map[string]EventGauges{}
 
 	for rows.Next() {
@@ -552,7 +549,9 @@ func (e *EventStore) GetKeepaliveGaugesByNamespace(ctx context.Context) (map[str
 
 // Close closes the underlying db and releases any associated resources.
 func (e *EventStore) Close() (err error) {
-	e.db.Close()
+	if closer, ok := e.db.(interface{ Close() }); ok {
+		closer.Close()
+	}
 	return nil
 }
 

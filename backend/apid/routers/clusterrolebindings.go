@@ -9,16 +9,13 @@ import (
 
 // ClusterRoleBindingsRouter handles requests for ClusterRoleBindings.
 type ClusterRoleBindingsRouter struct {
-	handlers handlers.Handlers
+	store storev2.Interface
 }
 
 // NewClusterRoleBindingsRouter instantiates a new router for ClusterRoleBindings.
 func NewClusterRoleBindingsRouter(store storev2.Interface) *ClusterRoleBindingsRouter {
 	return &ClusterRoleBindingsRouter{
-		handlers: handlers.Handlers{
-			Resource: &corev2.ClusterRoleBinding{},
-			Store:    store,
-		},
+		store: store,
 	}
 }
 
@@ -29,10 +26,12 @@ func (r *ClusterRoleBindingsRouter) Mount(parent *mux.Router) {
 		PathPrefix: "/{resource:clusterrolebindings}",
 	}
 
-	routes.Del(r.handlers.DeleteResource)
-	routes.Get(r.handlers.GetResource)
-	routes.List(r.handlers.ListResources, corev2.ClusterRoleBindingFields)
-	routes.Patch(r.handlers.PatchResource)
-	routes.Post(r.handlers.CreateResource)
-	routes.Put(r.handlers.CreateOrUpdateResource)
+	handlers := handlers.NewHandlers[*corev2.ClusterRoleBinding](r.store)
+
+	routes.Del(handlers.DeleteResource)
+	routes.Get(handlers.GetResource)
+	routes.List(handlers.ListResources, corev2.ClusterRoleBindingFields)
+	routes.Patch(handlers.PatchResource)
+	routes.Post(handlers.CreateResource)
+	routes.Put(handlers.CreateOrUpdateResource)
 }

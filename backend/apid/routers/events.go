@@ -13,6 +13,7 @@ import (
 	"github.com/sensu/sensu-go/backend/apid/handlers"
 	"github.com/sensu/sensu-go/backend/messaging"
 	"github.com/sensu/sensu-go/backend/store"
+	storev2 "github.com/sensu/sensu-go/backend/store/v2"
 )
 
 // EventsRouter handles requests for /events
@@ -29,7 +30,7 @@ type eventController interface {
 }
 
 // NewEventsRouter instantiates new events controller
-func NewEventsRouter(store store.EventStore, bus messaging.MessageBus) *EventsRouter {
+func NewEventsRouter(store storev2.Interface, bus messaging.MessageBus) *EventsRouter {
 	return &EventsRouter{
 		controller: actions.NewEventController(store, bus),
 	}

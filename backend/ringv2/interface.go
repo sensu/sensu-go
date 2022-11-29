@@ -3,9 +3,72 @@ package ringv2
 import (
 	"context"
 	"errors"
+	"strings"
 
 	"github.com/robfig/cron/v3"
+	"github.com/sensu/sensu-go/backend/store"
 )
+
+type deleteEntityContextKeyT struct{}
+
+// DeleteEntityContextKey can be set to tell the ring implementation to delete
+// the entity as well as the entity's ring association. Does not currently apply
+// to the etcd-based ring.
+var DeleteEntityContextKey = deleteEntityContextKeyT{}
+
+// DeleteEntityContext modifies a context with a value that can inform ring
+// implementations that deleting the entity is desired as well as deleting
+// the ring association. Does not currently apply to the etcd-based ring.
+func DeleteEntityContext(ctx context.Context) context.Context {
+	return context.WithValue(ctx, DeleteEntityContextKey, struct{}{})
+}
+
+// Event represents an event that occurred in a ring. The event can originate
+// from any ring client.
+type Event struct {
+	// Type is the type of the event.
+	Type EventType
+
+	// Values are the ring items associated with the event. For trigger events,
+	// the length of Values will be equal to the results per interval.
+	Values []string
+
+	// Err is any error that occurred while processing the event.
+	Err error
+}
+
+// EventType is an enum that describes the type of event received by watchers.
+type EventType int
+
+const (
+	// EventError is a message sent when a ring processing error occurs.
+	EventError EventType = iota
+	// EventAdd is a message sent when an item is added to the ring.
+	EventAdd
+	// EventRemove is a message sent when an item is removed from the ring.
+	EventRemove
+	// EventTrigger is a message sent when a ring item has moved from the front of the queue to the back.
+	EventTrigger
+	// EventClosing is a message sent when the ring is closing due to context cancellation.
+	EventClosing
+)
+
+func (e EventType) String() string {
+	switch e {
+	case EventAdd:
+		return "EventAdd"
+	case EventRemove:
+		return "EventRemove"
+	case EventTrigger:
+		return "EventTrigger"
+	case EventError:
+		return "EventError"
+	case EventClosing:
+		return "EventClosing"
+	default:
+		return "INVALID"
+	}
+}
 
 // Interface is the interface of a round-robin ring.
 type Interface interface {
@@ -68,4 +131,18 @@ func (r Subscription) Validate() error {
 		}
 	}
 	return nil
+}
+
+// Path returns the canonical path to a ring.
+func Path(namespace, subscription string) string {
+	return store.NewKeyBuilder("rings").WithNamespace(namespace).Build(subscription)
+}
+
+// UnPath parses a path created by Path.
+func UnPath(key string) (namespace, subscription string, err error) {
+	parts := strings.Split(key, "/")
+	if len(parts) < 5 {
+		return "", "", errors.New("invalid ring key")
+	}
+	return parts[3], parts[4], nil
 }

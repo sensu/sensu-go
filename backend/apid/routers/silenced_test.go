@@ -19,8 +19,11 @@ import (
 func TestSilencedRouter(t *testing.T) {
 	// Setup the router
 	s := &mockstore.V2MockStore{}
+	cs := new(mockstore.ConfigStore)
+	s.On("GetConfigStore").Return(cs)
 	silenced := &mockstore.MockStore{}
-	router := NewSilencedRouter(silenced, s)
+	s.On("GetSilencesStore").Return(silenced)
+	router := NewSilencedRouter(s)
 	parentRouter := mux.NewRouter().PathPrefix(corev2.URLPrefix).Subrouter()
 	router.Mount(parentRouter)
 

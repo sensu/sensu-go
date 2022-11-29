@@ -82,7 +82,7 @@ func extractAPIKeyClaims(ctx context.Context, key string, store storev2.Interfac
 		},
 	}
 	req := storev2.NewResourceRequestFromResource(apiKey)
-	wrapper, err := store.Get(ctx, req)
+	wrapper, err := store.GetConfigStore().Get(ctx, req)
 	if err != nil {
 		return nil, err
 	}
@@ -95,7 +95,7 @@ func extractAPIKeyClaims(ctx context.Context, key string, store storev2.Interfac
 	}
 
 	req = storev2.NewResourceRequestFromResource(user)
-	wrapper, err = store.Get(ctx, req)
+	wrapper, err = store.GetConfigStore().Get(ctx, req)
 	if err != nil {
 		return nil, err
 	}

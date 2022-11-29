@@ -60,7 +60,9 @@ func TestCreateAccessToken(t *testing.T) {
 			Store: func() storev2.Interface {
 				user := corev2.FixtureUser("foo")
 				store := &mockstore.V2MockStore{}
-				store.On("Get", mock.Anything, mock.Anything).Return(mockstore.Wrapper[*corev2.User]{Value: user}, nil)
+				cs := new(mockstore.ConfigStore)
+				store.On("GetConfigStore").Return(cs)
+				cs.On("Get", mock.Anything, mock.Anything).Return(mockstore.Wrapper[*corev2.User]{Value: user}, nil)
 				return store
 			},
 			Authenticator: defaultAuth,
@@ -77,7 +79,9 @@ func TestCreateAccessToken(t *testing.T) {
 				store := &mockstore.V2MockStore{}
 				user := corev2.FixtureUser("foo")
 				user.PasswordHash, _ = bcrypt.HashPassword("P@ssw0rd!")
-				store.On("Get", mock.Anything, mock.Anything).Return(mockstore.Wrapper[*corev2.User]{Value: user}, nil)
+				cs := new(mockstore.ConfigStore)
+				store.On("GetConfigStore").Return(cs)
+				cs.On("Get", mock.Anything, mock.Anything).Return(mockstore.Wrapper[*corev2.User]{Value: user}, nil)
 				return store
 			},
 			Authenticator: defaultAuth,
@@ -134,7 +138,9 @@ func TestTestCreds(t *testing.T) {
 			Password: "P@ssw0rd!",
 			Store: func() storev2.Interface {
 				s := &mockstore.V2MockStore{}
-				s.On("Get", mock.Anything, mock.Anything).Return(nil, mockError)
+				cs := new(mockstore.ConfigStore)
+				s.On("GetConfigStore").Return(cs)
+				cs.On("Get", mock.Anything, mock.Anything).Return(nil, mockError)
 				return s
 			},
 			Authenticator: defaultAuth,
@@ -151,7 +157,9 @@ func TestTestCreds(t *testing.T) {
 				s := &mockstore.V2MockStore{}
 				user := corev2.FixtureUser("foo")
 				user.Password, _ = bcrypt.HashPassword("P@ssw0rd!")
-				s.On("Get", mock.Anything, mock.Anything).Return(mockstore.Wrapper[*corev2.User]{Value: user}, nil)
+				cs := new(mockstore.ConfigStore)
+				s.On("GetConfigStore").Return(cs)
+				cs.On("Get", mock.Anything, mock.Anything).Return(mockstore.Wrapper[*corev2.User]{Value: user}, nil)
 				return s
 			},
 			Authenticator: defaultAuth,
@@ -188,7 +196,9 @@ func TestRefreshAccessToken(t *testing.T) {
 			Store: func() storev2.Interface {
 				st := &mockstore.V2MockStore{}
 				user := &corev2.User{Username: "foo"}
-				st.On("Get", mock.Anything, mock.Anything).Return(mockstore.Wrapper[*corev2.User]{Value: user}, nil)
+				cs := new(mockstore.ConfigStore)
+				st.On("GetConfigStore").Return(cs)
+				cs.On("Get", mock.Anything, mock.Anything).Return(mockstore.Wrapper[*corev2.User]{Value: user}, nil)
 				return st
 			},
 			Authenticator: defaultAuth,

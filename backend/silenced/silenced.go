@@ -5,7 +5,7 @@ import (
 	"time"
 
 	corev2 "github.com/sensu/core/v2"
-	"github.com/sensu/sensu-go/backend/store/cache"
+	cachev2 "github.com/sensu/sensu-go/backend/store/cache/v2"
 	stringsutil "github.com/sensu/sensu-go/util/strings"
 )
 
@@ -18,18 +18,22 @@ func AddToSilencedBy(id string, ids []string) []string {
 	return ids
 }
 
+type SilencesCache interface {
+	Get(namespace string) []cachev2.Value[*corev2.Silenced, corev2.Silenced]
+}
+
 // GetSilenced retrieves all silenced entries for a given event, using the
 // entity subscription, the check subscription and the check name while
 // supporting wildcard silenced entries (e.g. subscription:*)
-func GetSilenced(ctx context.Context, event *corev2.Event, cache cache.Cache) {
+func GetSilenced(ctx context.Context, event *corev2.Event, cache SilencesCache) {
 	if !event.HasCheck() {
 		return
 	}
 
-	resources := cache.Get(event.Check.Namespace)
-	entries := make([]*corev2.Silenced, 0, len(resources))
-	for _, resource := range resources {
-		silenced := resource.Resource.(*corev2.Silenced)
+	cacheEntries := cache.Get(event.Check.Namespace)
+	entries := make([]*corev2.Silenced, 0, len(cacheEntries))
+	for _, entry := range cacheEntries {
+		silenced := entry.Resource
 		if silenced.ExpireAt > 0 && time.Unix(silenced.ExpireAt, 0).Before(time.Now()) {
 			// the entry has expired, and is just a stale cache member
 			continue

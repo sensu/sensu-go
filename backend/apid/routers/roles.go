@@ -9,16 +9,13 @@ import (
 
 // RolesRouter handles requests for Roles.
 type RolesRouter struct {
-	handlers handlers.Handlers
+	store storev2.Interface
 }
 
 // NewRolesRouter instantiates a new router for Roles.
 func NewRolesRouter(store storev2.Interface) *RolesRouter {
 	return &RolesRouter{
-		handlers: handlers.Handlers{
-			Resource: &corev2.Role{},
-			Store:    store,
-		},
+		store: store,
 	}
 }
 
@@ -29,11 +26,13 @@ func (r *RolesRouter) Mount(parent *mux.Router) {
 		PathPrefix: "/namespaces/{namespace}/{resource:roles}",
 	}
 
-	routes.Del(r.handlers.DeleteResource)
-	routes.Get(r.handlers.GetResource)
-	routes.List(r.handlers.ListResources, corev2.RoleFields)
-	routes.ListAllNamespaces(r.handlers.ListResources, "/{resource:roles}", corev2.RoleFields)
-	routes.Patch(r.handlers.PatchResource)
-	routes.Post(r.handlers.CreateResource)
-	routes.Put(r.handlers.CreateOrUpdateResource)
+	handlers := handlers.NewHandlers[*corev2.Role](r.store)
+
+	routes.Del(handlers.DeleteResource)
+	routes.Get(handlers.GetResource)
+	routes.List(handlers.ListResources, corev2.RoleFields)
+	routes.ListAllNamespaces(handlers.ListResources, "/{resource:roles}", corev2.RoleFields)
+	routes.Patch(handlers.PatchResource)
+	routes.Post(handlers.CreateResource)
+	routes.Put(handlers.CreateOrUpdateResource)
 }

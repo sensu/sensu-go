@@ -2,8 +2,8 @@ package handlers
 
 import (
 	"encoding/json"
+	"errors"
 	"net/http"
-	"reflect"
 
 	"github.com/gorilla/mux"
 	corev3 "github.com/sensu/core/v3"
@@ -15,33 +15,27 @@ import (
 
 // CreateV3Resource creates the resource given in the request body but only if it
 // does not already exist
-func (h Handlers) CreateResource(r *http.Request) (asdf corev3.Resource, fdsa error) {
-	payload := reflect.New(reflect.TypeOf(h.Resource).Elem())
-	if err := json.NewDecoder(r.Body).Decode(payload.Interface()); err != nil {
+func (h Handlers[R, T]) CreateResource(r *http.Request) (corev3.Resource, error) {
+	var payload R
+	if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
 		return nil, actions.NewError(actions.InvalidArgument, err)
 	}
 
-	if err := CheckV3Meta(payload.Interface(), mux.Vars(r), "id"); err != nil {
+	meta := payload.GetMetadata()
+	if meta == nil {
+		return nil, actions.NewError(actions.InvalidArgument, errors.New("nil metadata"))
+	}
+	if err := checkMeta(*meta, mux.Vars(r), "id"); err != nil {
 		return nil, actions.NewError(actions.InvalidArgument, err)
 	}
 
-	resource, ok := payload.Interface().(corev3.Resource)
-	if !ok {
-		return nil, actions.NewErrorf(actions.InvalidArgument)
-	}
-
-	meta := resource.GetMetadata()
 	if claims := jwt.GetClaimsFromContext(r.Context()); claims != nil {
 		meta.CreatedBy = claims.StandardClaims.Subject
 	}
 
-	req := storev2.NewResourceRequestFromResource(resource)
-	wrapper, err := storev2.WrapResource(resource)
-	if err != nil {
-		return nil, actions.NewError(actions.InvalidArgument, err)
-	}
+	gstore := storev2.NewGenericStore[R](h.Store)
 
-	if err := h.Store.CreateIfNotExists(r.Context(), req, wrapper); err != nil {
+	if err := gstore.CreateIfNotExists(r.Context(), payload); err != nil {
 		switch err := err.(type) {
 		case *store.ErrAlreadyExists:
 			return nil, actions.NewErrorf(actions.AlreadyExistsErr)

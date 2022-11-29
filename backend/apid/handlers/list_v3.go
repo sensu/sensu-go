@@ -9,13 +9,19 @@ import (
 	storev2 "github.com/sensu/sensu-go/backend/store/v2"
 )
 
-func (h Handlers) ListResources(ctx context.Context, pred *store.SelectionPredicate) ([]corev3.Resource, error) {
-	req := storev2.NewResourceRequestFromResource(h.Resource)
-	req.Namespace = corev2.ContextNamespace(ctx)
+func (h Handlers[R, T]) ListResources(ctx context.Context, pred *store.SelectionPredicate) ([]corev3.Resource, error) {
+	namespace := corev2.ContextNamespace(ctx)
+	gstore := storev2.NewGenericStore[R](h.Store)
 
-	list, err := h.Store.List(ctx, req, pred)
+	list, err := gstore.List(ctx, storev2.ID{Namespace: namespace}, pred)
 	if err != nil {
 		return nil, err
 	}
-	return list.Unwrap()
+
+	result := make([]corev3.Resource, len(list))
+	for i := range list {
+		var r R = list[i]
+		result[i] = r
+	}
+	return result, nil
 }

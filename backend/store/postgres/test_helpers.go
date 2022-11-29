@@ -9,20 +9,17 @@ import (
 
 	"github.com/echlebek/migration"
 	"github.com/google/uuid"
-	"github.com/jackc/pgx/v4/pgxpool"
+	"github.com/jackc/pgx/v5/pgxpool"
 	corev2 "github.com/sensu/core/v2"
 	corev3 "github.com/sensu/core/v3"
-	"github.com/sensu/sensu-go/backend/etcd"
 	"github.com/sensu/sensu-go/backend/store"
-	etcdstore "github.com/sensu/sensu-go/backend/store/etcd"
 	storev2 "github.com/sensu/sensu-go/backend/store/v2"
-	"github.com/stretchr/testify/require"
 )
 
 type poolWithDSNFunc func(ctx context.Context, db *pgxpool.Pool, dsn string)
 
 func dropAll(tb testing.TB, dbName, pgURL string) {
-	db, err := pgxpool.Connect(context.Background(), pgURL)
+	db, err := pgxpool.New(context.Background(), pgURL)
 	if err != nil {
 		tb.Fatalf("error opening database: %v", err)
 	}
@@ -68,7 +65,7 @@ func withMigratedPostgres(tb testing.TB, fn poolWithDSNFunc, migrations []migrat
 	tb.Cleanup(cancel)
 
 	// connect to postgres to create the database for tests
-	initialDB, err := pgxpool.Connect(ctx, pgURL)
+	initialDB, err := pgxpool.New(ctx, pgURL)
 	if err != nil {
 		tb.Error(err)
 		return
@@ -156,39 +153,56 @@ func upgradeMigration(ctx context.Context, db *pgxpool.Pool, migration int) (err
 }
 
 // creates a database, runs all migrations & provides a StoreV1
-func testWithPostgresStore(tb testing.TB, fn func(store.Store)) {
+func testWithPostgresStore(tb testing.TB, fn func(storev2.Interface)) {
 	tb.Helper()
 
 	withPostgres(tb, func(ctx context.Context, db *pgxpool.Pool, dsn string) {
+		pgStore := &Store{
+			db: db,
+		}
+		ns := &corev3.Namespace{
+			Metadata: &corev2.ObjectMeta{
+				Name:        "default",
+				Labels:      make(map[string]string),
+				Annotations: make(map[string]string),
+			},
+		}
+		if err := pgStore.GetNamespaceStore().CreateIfNotExists(ctx, ns); err != nil {
+			tb.Error(err)
+			return
+		}
+		fn(pgStore)
+	})
+}
+
+func testWithPostgresEventStore(tb testing.TB, fn func(store.EventStore)) {
+	tb.Helper()
+
+	withPostgres(tb, func(ctx context.Context, db *pgxpool.Pool, dsn string) {
+		pgStore := &Store{
+			db: db,
+		}
+		ns := &corev3.Namespace{
+			Metadata: &corev2.ObjectMeta{
+				Name:        "default",
+				Labels:      make(map[string]string),
+				Annotations: make(map[string]string),
+			},
+		}
+		if err := pgStore.GetNamespaceStore().CreateIfNotExists(ctx, ns); err != nil {
+			tb.Error(err)
+			return
+		}
 		eventStore, err := NewEventStore(db, nil, Config{
 			DSN: dsn,
 		}, 100)
-		require.NoError(tb, err)
 
-		e, cleanup := etcd.NewTestEtcd(tb)
-		tb.Cleanup(cleanup)
-
-		client := e.NewEmbeddedClient()
-		etcdStore := etcdstore.NewStore(client)
-
-		if err := etcdStore.CreateNamespace(
-			context.Background(),
-			corev2.FixtureNamespace("default"),
-		); err != nil {
-			tb.Fatal(err)
+		if err != nil {
+			tb.Error(err)
+			return
 		}
 
-		entityStore := NewEntityStore(db)
-		namespaceStore := NewNamespaceStore(db)
-		namespaceStoreV1 := NewNamespaceStoreV1(namespaceStore)
-
-		pgStore := Store{
-			EventStore:     eventStore,
-			EntityStore:    entityStore,
-			NamespaceStore: namespaceStoreV1,
-			Store:          etcdStore,
-		}
-		fn(pgStore)
+		fn(eventStore)
 	})
 }
 

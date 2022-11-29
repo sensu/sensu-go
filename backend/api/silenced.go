@@ -7,11 +7,12 @@ import (
 	corev2 "github.com/sensu/core/v2"
 	"github.com/sensu/sensu-go/backend/authorization"
 	"github.com/sensu/sensu-go/backend/store"
+	storev2 "github.com/sensu/sensu-go/backend/store/v2"
 )
 
 // SilencedClient is an API client for silencing checks.
 type SilencedClient struct {
-	store store.SilenceStore
+	store storev2.SilencesStore
 	auth  authorization.Authorizer
 }
 

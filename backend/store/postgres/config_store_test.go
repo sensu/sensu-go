@@ -5,20 +5,16 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"os"
-	"strings"
 	"testing"
 	"time"
 
-	"github.com/google/uuid"
-	"github.com/jackc/pgx/v4/pgxpool"
+	"github.com/jackc/pgx/v5/pgxpool"
 	corev3 "github.com/sensu/core/v3"
 	"github.com/sensu/sensu-go/backend/selector"
 	"github.com/sensu/sensu-go/backend/store"
 	storev2 "github.com/sensu/sensu-go/backend/store/v2"
 	"github.com/sensu/sensu-go/backend/store/v2/wrap"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 const (
@@ -26,46 +22,19 @@ const (
 	entityName       = "__test-entity__"
 )
 
-func testWithPostgresConfigStore(t *testing.T, fn func(p storev2.Interface)) {
+func testWithPostgresConfigStore(t testing.TB, fn func(p storev2.ConfigStore)) {
 	t.Helper()
-	if testing.Short() {
-		t.Skip("skipping postgres test")
-		return
-	}
-	pgURL := os.Getenv("PG_URL")
-	if pgURL == "" {
-		t.Skip("skipping postgres test")
-		return
-	}
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-	db, err := pgxpool.Connect(ctx, pgURL)
-	require.NoError(t, err)
-
-	dbName := "sensuconfigdb" + strings.ReplaceAll(uuid.New().String(), "-", "")
-	_, err = db.Exec(ctx, fmt.Sprintf("CREATE DATABASE %s;", dbName))
-	require.NoError(t, err)
-
-	defer dropAll(t, dbName, pgURL)
-	db.Close()
-
-	testURL := fmt.Sprintf("%s dbname=%s ", pgURL, dbName)
-	pgxConfig, err := pgxpool.ParseConfig(testURL)
-	require.NoError(t, err)
-
-	configDB, err := OpenConfigDB(ctx, pgxConfig, false)
-	require.NoError(t, err)
-	defer configDB.Close()
-
-	s := NewConfigStore(configDB, nil)
-	fn(s)
+	withPostgres(t, func(ctx context.Context, db *pgxpool.Pool, dsn string) {
+		s := NewConfigStore(db)
+		fn(s)
+	})
 }
 
 func TestConfigStore_CreateOrUpdate(t *testing.T) {
 	ec := &corev3.EntityConfig{}
 	ec.GetTypeMeta()
 
-	testWithPostgresConfigStore(t, func(s storev2.Interface) {
+	testWithPostgresConfigStore(t, func(s storev2.ConfigStore) {
 		ctx := context.Background()
 
 		entity, err := getEntity(ctx, s, "default", entityName)
@@ -99,7 +68,7 @@ func TestConfigStore_CreateOrUpdate(t *testing.T) {
 }
 
 func TestConfigStore_CreateIfNotExists(t *testing.T) {
-	testWithPostgresConfigStore(t, func(s storev2.Interface) {
+	testWithPostgresConfigStore(t, func(s storev2.ConfigStore) {
 		ctx := context.Background()
 
 		entity, err := getEntity(ctx, s, "default", entityName)
@@ -129,7 +98,7 @@ func TestConfigStore_CreateIfNotExists(t *testing.T) {
 }
 
 func TestConfigStore_UpdateIfExists(t *testing.T) {
-	testWithPostgresConfigStore(t, func(s storev2.Interface) {
+	testWithPostgresConfigStore(t, func(s storev2.ConfigStore) {
 		ctx := context.Background()
 
 		entity, err := getEntity(ctx, s, "default", entityName)
@@ -162,7 +131,7 @@ func TestConfigStore_UpdateIfExists(t *testing.T) {
 }
 
 func TestConfigStore_Delete(t *testing.T) {
-	testWithPostgresConfigStore(t, func(s storev2.Interface) {
+	testWithPostgresConfigStore(t, func(s storev2.ConfigStore) {
 		ctx := context.Background()
 
 		toCreate := corev3.FixtureEntityConfig(entityName)
@@ -186,7 +155,7 @@ func TestConfigStore_Delete(t *testing.T) {
 }
 
 func TestConfigStore_Exists(t *testing.T) {
-	testWithPostgresConfigStore(t, func(s storev2.Interface) {
+	testWithPostgresConfigStore(t, func(s storev2.ConfigStore) {
 		ctx := context.Background()
 
 		toCreate := corev3.FixtureEntityConfig(entityName)
@@ -208,7 +177,7 @@ func TestConfigStore_Exists(t *testing.T) {
 }
 
 func TestConfigStore_Get(t *testing.T) {
-	testWithPostgresConfigStore(t, func(s storev2.Interface) {
+	testWithPostgresConfigStore(t, func(s storev2.ConfigStore) {
 		ctx := context.Background()
 
 		entity, err := getEntity(ctx, s, "default", entityName)
@@ -232,7 +201,7 @@ func TestConfigStore_Get(t *testing.T) {
 }
 
 func TestConfigStore_List(t *testing.T) {
-	testWithPostgresConfigStore(t, func(s storev2.Interface) {
+	testWithPostgresConfigStore(t, func(s storev2.ConfigStore) {
 		ctx := context.Background()
 
 		entities, err := listEntities(ctx, s, defaultNamespace, &store.SelectionPredicate{})
@@ -260,8 +229,8 @@ func TestConfigStore_List(t *testing.T) {
 	})
 }
 
-func TestConfigStore_WithSelectors(t *testing.T) {
-	testWithPostgresConfigStore(t, func(s storev2.Interface) {
+func TestConfigStore_List_WithSelectors(t *testing.T) {
+	testWithPostgresConfigStore(t, func(s storev2.ConfigStore) {
 		for i := 0; i < 100; i++ {
 			toCreate := corev3.FixtureEntityConfig(fmt.Sprintf("%s%d", entityName, i))
 			toCreate.Metadata.Labels[fmt.Sprintf("label-mod-key-%d", i%3)] = "value"
@@ -397,7 +366,7 @@ func TestConfigStore_WithSelectors(t *testing.T) {
 }
 
 func TestConfigStore_Count(t *testing.T) {
-	testWithPostgresConfigStore(t, func(s storev2.Interface) {
+	testWithPostgresConfigStore(t, func(s storev2.ConfigStore) {
 		ctx := context.Background()
 
 		entities, err := listEntities(ctx, s, defaultNamespace, &store.SelectionPredicate{})
@@ -422,7 +391,7 @@ func TestConfigStore_Count(t *testing.T) {
 }
 
 func TestConfigStore_Patch(t *testing.T) {
-	testWithPostgresConfigStore(t, func(s storev2.Interface) {
+	testWithPostgresConfigStore(t, func(s storev2.ConfigStore) {
 		toCreate := corev3.FixtureEntityConfig(entityName)
 		for i := 0; i < 4; i++ {
 			toCreate.Metadata.Labels[fmt.Sprintf("label-%d", i)] = fmt.Sprintf("labelValue-%d", i)
@@ -431,9 +400,12 @@ func TestConfigStore_Patch(t *testing.T) {
 }
 
 func TestConfigStore_Watch(t *testing.T) {
-	testWithPostgresConfigStore(t, func(s storev2.Interface) {
+	testWithPostgresConfigStore(t, func(s storev2.ConfigStore) {
 		stor, ok := s.(*ConfigStore)
-		require.True(t, ok, "expected config store")
+		if !ok {
+			t.Error("expected config store")
+			return
+		}
 
 		stor.watchInterval = time.Millisecond * 10
 		stor.watchTxnWindow = time.Second
@@ -454,11 +426,20 @@ func TestConfigStore_Watch(t *testing.T) {
 
 		// create notification
 		err := createOrUpdateEntity(ctx, s, entity)
-		require.NoError(t, err)
+		if err != nil {
+			t.Error(err)
+			return
+		}
 		select {
 		case watchEvents, ok := <-watchChannel:
-			require.True(t, ok, "watcher closed unexpectedly")
-			require.Equal(t, 1, len(watchEvents))
+			if !ok {
+				t.Error("watcher closed unexpectedly")
+				return
+			}
+			if len(watchEvents) != 1 {
+				t.Error("expected 1 watch event")
+				return
+			}
 			assert.Equal(t, storev2.WatchCreate, watchEvents[0].Type)
 
 		case <-time.After(5 * time.Second):
@@ -468,11 +449,20 @@ func TestConfigStore_Watch(t *testing.T) {
 		// update notification
 		entity.Metadata.Labels["new-label"] = "new-value"
 		err = createOrUpdateEntity(ctx, s, entity)
-		require.NoError(t, err)
+		if err != nil {
+			t.Error(err)
+			return
+		}
 		select {
 		case watchEvents, ok := <-watchChannel:
-			require.True(t, ok, "watcher closed unexpectedly")
-			require.Equal(t, 1, len(watchEvents))
+			if !ok {
+				t.Error("watcher closed unexpectedly")
+				return
+			}
+			if len(watchEvents) != 1 {
+				t.Error("expected 1 watch event")
+				return
+			}
 			assert.Equal(t, storev2.WatchUpdate, watchEvents[0].Type)
 
 		case <-time.After(5 * time.Second):
@@ -481,11 +471,24 @@ func TestConfigStore_Watch(t *testing.T) {
 
 		// delete notification
 		err = deleteEntity(ctx, s, entity.Metadata.Namespace, entity.Metadata.Name)
-		require.NoError(t, err)
+		if err != nil {
+			t.Error(err)
+			return
+		}
+		if err != nil {
+			t.Error(err)
+			return
+		}
 		select {
 		case watchEvents, ok := <-watchChannel:
-			require.True(t, ok, "watcher closed unexpectedly")
-			require.Equal(t, 1, len(watchEvents))
+			if !ok {
+				t.Error("watcher closed unexpectedly")
+				return
+			}
+			if len(watchEvents) != 1 {
+				t.Error("expected 1 watch event")
+				return
+			}
 			assert.Equal(t, storev2.WatchDelete, watchEvents[0].Type)
 
 		case <-time.After(5 * time.Second):
@@ -494,7 +497,7 @@ func TestConfigStore_Watch(t *testing.T) {
 	})
 }
 
-func createOrUpdateEntity(ctx context.Context, pgStore storev2.Interface, entity *corev3.EntityConfig) error {
+func createOrUpdateEntity(ctx context.Context, pgStore storev2.ConfigStore, entity *corev3.EntityConfig) error {
 	req := storev2.ResourceRequest{
 		APIVersion: entity.GetTypeMeta().APIVersion,
 		Type:       entity.GetTypeMeta().Type,
@@ -512,7 +515,7 @@ func createOrUpdateEntity(ctx context.Context, pgStore storev2.Interface, entity
 	return pgStore.CreateOrUpdate(ctx, req, wrapper)
 }
 
-func createIfNotExists(ctx context.Context, pgStore storev2.Interface, entity *corev3.EntityConfig) error {
+func createIfNotExists(ctx context.Context, pgStore storev2.ConfigStore, entity *corev3.EntityConfig) error {
 	req := storev2.ResourceRequest{
 		APIVersion: entity.GetTypeMeta().APIVersion,
 		Type:       entity.GetTypeMeta().Type,
@@ -530,7 +533,7 @@ func createIfNotExists(ctx context.Context, pgStore storev2.Interface, entity *c
 	return pgStore.CreateIfNotExists(ctx, req, wrapper)
 }
 
-func countEntities(ctx context.Context, pgStore storev2.Interface, namespace string) (int, error) {
+func countEntities(ctx context.Context, pgStore storev2.ConfigStore, namespace string) (int, error) {
 	entityConfig := corev3.EntityConfig{}
 	typeMeta := entityConfig.GetTypeMeta()
 	req := storev2.ResourceRequest{
@@ -543,7 +546,7 @@ func countEntities(ctx context.Context, pgStore storev2.Interface, namespace str
 	return pgStore.Count(ctx, req)
 }
 
-func listEntities(ctx context.Context, pgStore storev2.Interface, namespace string, predicate *store.SelectionPredicate) ([]*corev3.EntityConfig, error) {
+func listEntities(ctx context.Context, pgStore storev2.ConfigStore, namespace string, predicate *store.SelectionPredicate) ([]*corev3.EntityConfig, error) {
 	entityConfig := corev3.EntityConfig{}
 	typeMeta := entityConfig.GetTypeMeta()
 	req := storev2.ResourceRequest{
@@ -577,7 +580,7 @@ func listEntities(ctx context.Context, pgStore storev2.Interface, namespace stri
 	return entities, nil
 }
 
-func getEntity(ctx context.Context, pgStore storev2.Interface, namespace, name string) (*corev3.EntityConfig, error) {
+func getEntity(ctx context.Context, pgStore storev2.ConfigStore, namespace, name string) (*corev3.EntityConfig, error) {
 	entityConfig := corev3.EntityConfig{}
 	typeMeta := entityConfig.GetTypeMeta()
 	req := storev2.ResourceRequest{
@@ -607,7 +610,7 @@ func getEntity(ctx context.Context, pgStore storev2.Interface, namespace, name s
 	return entity, nil
 }
 
-func deleteEntity(ctx context.Context, pgStore storev2.Interface, namespace, name string) error {
+func deleteEntity(ctx context.Context, pgStore storev2.ConfigStore, namespace, name string) error {
 	entityConfig := corev3.EntityConfig{}
 	typeMeta := entityConfig.GetTypeMeta()
 	req := storev2.ResourceRequest{
@@ -622,7 +625,7 @@ func deleteEntity(ctx context.Context, pgStore storev2.Interface, namespace, nam
 	return pgStore.Delete(ctx, req)
 }
 
-func entityExists(ctx context.Context, pgStore storev2.Interface, namespace, name string) (bool, error) {
+func entityExists(ctx context.Context, pgStore storev2.ConfigStore, namespace, name string) (bool, error) {
 	entityConfig := corev3.EntityConfig{}
 	typeMeta := entityConfig.GetTypeMeta()
 	req := storev2.ResourceRequest{
@@ -637,7 +640,7 @@ func entityExists(ctx context.Context, pgStore storev2.Interface, namespace, nam
 	return pgStore.Exists(ctx, req)
 }
 
-func updateIfExists(ctx context.Context, pgStore storev2.Interface, entityConfig *corev3.EntityConfig) error {
+func updateIfExists(ctx context.Context, pgStore storev2.ConfigStore, entityConfig *corev3.EntityConfig) error {
 	req := storev2.ResourceRequest{
 		APIVersion: entityConfig.GetTypeMeta().APIVersion,
 		Type:       entityConfig.GetTypeMeta().Type,
