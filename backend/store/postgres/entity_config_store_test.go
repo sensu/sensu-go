@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"reflect"
+	"sort"
 	"testing"
 
 	"github.com/go-test/deep"
@@ -957,6 +958,37 @@ func TestEntityConfigStore_List(t *testing.T) {
 				corev3.FixtureEntityConfig("foo-4"),
 			},
 		},
+		{
+			name: "queries across all namespaces",
+			args: args{
+				ctx:       context.Background(),
+				namespace: "",
+			},
+			beforeHook: func(t *testing.T, ns storev2.NamespaceStore, s storev2.EntityConfigStore) {
+				createNamespace(t, ns, "ns0")
+				createNamespace(t, ns, "ns1")
+				createNamespace(t, ns, "ns2")
+				for i := 0; i < 9; i++ {
+					entityName := fmt.Sprintf("foo-%d", i)
+					createEntityConfig(t, s, fmt.Sprintf("ns%d", i%3), entityName)
+				}
+			},
+			want: func() []*corev3.EntityConfig {
+				want := make([]*corev3.EntityConfig, 9)
+				for i := range want {
+					entityName := fmt.Sprintf("foo-%d", i)
+					want[i] = corev3.FixtureEntityConfig(entityName)
+					want[i].Metadata.Namespace = fmt.Sprintf("ns%d", i%3)
+				}
+				sort.Slice(want, func(i, j int) bool {
+					if want[i].Metadata.Namespace == want[j].Metadata.Namespace {
+						return want[i].Metadata.Name < want[j].Metadata.Name
+					}
+					return want[i].Metadata.Namespace < want[j].Metadata.Namespace
+				})
+				return want
+			}(),
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -1052,6 +1084,23 @@ func TestEntityConfigStore_Count(t *testing.T) {
 				}
 			},
 			want: 10,
+		},
+		{
+			name: "succeeds when namespace is unspecified",
+			args: args{
+				ctx:       context.Background(),
+				namespace: "",
+			},
+			beforeHook: func(t *testing.T, ns storev2.NamespaceStore, s storev2.EntityConfigStore) {
+				createNamespace(t, ns, "ns0")
+				createNamespace(t, ns, "ns1")
+				createNamespace(t, ns, "ns2")
+				for i := 0; i < 9; i++ {
+					entityName := fmt.Sprintf("foo-%d", i)
+					createEntityConfig(t, s, fmt.Sprintf("ns%d", i%3), entityName)
+				}
+			},
+			want: 9,
 		},
 		{
 			name: "succeeds when entity proxy class is specified",

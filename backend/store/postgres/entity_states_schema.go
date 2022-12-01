@@ -554,7 +554,7 @@ WITH namespace AS (
 		array_agg(entities_networks.addresses) AS addresses
 	FROM entities_networks
 	LEFT OUTER JOIN entity_states ON entity_states.id = entities_networks.entity_id
-	WHERE entity_states.namespace_id = (SELECT id FROM namespace)
+	JOIN namespace ON entity_states.namespace_id = namespace.id
 	GROUP BY entity_states.id
 ), system AS (
 	SELECT
@@ -573,7 +573,7 @@ WITH namespace AS (
 		entities_systems.float_type,
 		entities_systems.sensu_agent_version
 	FROM entities_systems LEFT OUTER JOIN entity_states ON entity_states.id = entities_systems.entity_id
-	WHERE entity_states.namespace_id = (SELECT id FROM namespace)
+	JOIN namespace ON entity_states.namespace_id = namespace.id
 )
 SELECT 
 	namespace.name,
@@ -635,7 +635,7 @@ WITH namespace AS (
 		entities_systems.float_type,
 		entities_systems.sensu_agent_version
 	FROM entities_systems LEFT OUTER JOIN entity_states ON entity_states.id = entities_systems.entity_id
-	WHERE entity_states.namespace_id = (SELECT id FROM namespace)
+	JOIN namespace ON entity_states.namespace_id = namespace.id
 )
 SELECT
 	COUNT(*)
@@ -658,7 +658,7 @@ WITH namespace AS (
 		array_agg(entities_networks.addresses) AS addresses
 	FROM entities_networks
 	LEFT OUTER JOIN entity_states ON entity_states.id = entities_networks.entity_id
-	WHERE entity_states.namespace_id = (SELECT id FROM namespace)
+	JOIN namespace ON entity_states.namespace_id = namespace.id
 	GROUP BY entity_states.id
 ), system AS (
 	SELECT
@@ -677,7 +677,7 @@ WITH namespace AS (
 		entities_systems.float_type,
 		entities_systems.sensu_agent_version
 	FROM entities_systems LEFT OUTER JOIN entity_states ON entity_states.id = entities_systems.entity_id
-	WHERE entity_states.namespace_id = (SELECT id FROM namespace)
+	JOIN namespace ON entity_states.namespace_id = namespace.id
 )
 SELECT
 	namespace.name,

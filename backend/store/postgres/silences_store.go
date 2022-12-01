@@ -39,10 +39,9 @@ SELECT
 	silences.begin,
 	silences.expire_at
 FROM
-	silences, namespaces
-WHERE
-	silences.namespace = namespaces.id
-	AND namespaces.name = $1;
+	silences
+	JOIN namespaces ON silences.namespace = namespaces.id
+	WHERE namespaces.name = $1 OR $1 = '';
 `
 
 type scanFunc func(...interface{}) error

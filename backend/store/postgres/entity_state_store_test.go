@@ -1188,6 +1188,41 @@ func TestEntityStateStore_List(t *testing.T) {
 				return states
 			}(),
 		},
+		{
+			name: "succeeds when namespace is unspecified",
+			args: args{
+				ctx:       context.Background(),
+				namespace: "",
+			},
+			beforeHook: func(t *testing.T, ns storev2.NamespaceStore, ec storev2.EntityConfigStore, s storev2.EntityStateStore) {
+				createNamespace(t, ns, "ns0")
+				createNamespace(t, ns, "ns1")
+				createNamespace(t, ns, "ns2")
+				for i := 0; i < 9; i++ {
+					entityName := fmt.Sprintf("foo-%d", i)
+					createEntityConfig(t, ec, fmt.Sprintf("ns%d", i%3), entityName)
+					createEntityState(t, s, fmt.Sprintf("ns%d", i%3), entityName)
+				}
+			},
+			want: func() []*corev3.EntityState {
+				states := []*corev3.EntityState{
+					corev3.FixtureEntityState("foo-0"),
+					corev3.FixtureEntityState("foo-3"),
+					corev3.FixtureEntityState("foo-6"),
+					corev3.FixtureEntityState("foo-1"),
+					corev3.FixtureEntityState("foo-4"),
+					corev3.FixtureEntityState("foo-7"),
+					corev3.FixtureEntityState("foo-2"),
+					corev3.FixtureEntityState("foo-5"),
+					corev3.FixtureEntityState("foo-8"),
+				}
+				for i, state := range states {
+					state.GetMetadata().Namespace = fmt.Sprintf("ns%d", i/3)
+					state.System.Processes = nil
+				}
+				return states
+			}(),
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -1270,6 +1305,23 @@ func TestEntityStateStore_Count(t *testing.T) {
 				}
 			},
 			want: 10,
+		},
+		{
+			name: "succeeds when namespace is unspecified",
+			args: args{
+				ctx: context.Background(),
+			},
+			beforeHook: func(t *testing.T, ns storev2.NamespaceStore, ec storev2.EntityConfigStore, s storev2.EntityStateStore) {
+				createNamespace(t, ns, "ns0")
+				createNamespace(t, ns, "ns1")
+				createNamespace(t, ns, "ns2")
+				for i := 0; i < 9; i++ {
+					entityName := fmt.Sprintf("foo-%d", i)
+					createEntityConfig(t, ec, fmt.Sprintf("ns%d", i%3), entityName)
+					createEntityState(t, s, fmt.Sprintf("ns%d", i%3), entityName)
+				}
+			},
+			want: 9,
 		},
 	}
 	for _, tt := range tests {

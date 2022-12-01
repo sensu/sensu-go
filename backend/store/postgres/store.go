@@ -118,6 +118,7 @@ type configRecord struct {
 type listTemplateValues struct {
 	Limit       int64
 	Offset      int64
+	Namespaced  bool
 	SelectorSQL string
 }
 
@@ -297,6 +298,7 @@ func (s *ConfigStore) List(ctx context.Context, request storev2.ResourceRequest,
 		Limit:       predicate.Limit,
 		Offset:      predicate.Offset,
 		SelectorSQL: strings.TrimSpace(selectorSQL),
+		Namespaced:  request.Namespace != "",
 	}
 	if err := tmpl.Execute(&queryBuilder, templValues); err != nil {
 		return nil, err
@@ -412,6 +414,7 @@ func (s *ConfigStore) Count(ctx context.Context, request storev2.ResourceRequest
 	var queryBuilder strings.Builder
 	templValues := listTemplateValues{
 		SelectorSQL: strings.TrimSpace(selectorSQL),
+		Namespaced:  request.Namespace != "",
 	}
 	if err := tmpl.Execute(&queryBuilder, templValues); err != nil {
 		return 0, err
