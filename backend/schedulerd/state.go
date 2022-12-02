@@ -58,7 +58,7 @@ func (sp *checkSet) Update(next []*corev2.CheckConfig) ([]*corev2.CheckConfig, [
 	for len(p) > 0 && len(n) > 0 {
 		if p[0].Name == n[0].Name {
 			if !p[0].Equal(n[0]) {
-				changed = append(changed, p[0])
+				changed = append(changed, n[0])
 			}
 			p, n = p[1:], n[1:]
 			continue

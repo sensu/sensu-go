@@ -40,7 +40,7 @@ func TestNamespaceSet(t *testing.T) {
 		AinA_1, BinA,
 	})
 	assert.Equal(t, []*corev2.CheckConfig(nil), added, "expected no additions")
-	assert.Equal(t, []*corev2.CheckConfig{AinA}, changed, "expected check A in namespace A to have changed")
+	assert.Equal(t, []*corev2.CheckConfig{AinA_1}, changed, "expected check A in namespace A to have changed")
 	assert.Equal(t, []*corev2.CheckConfig(nil), removed, "expected no deletions")
 
 	added, changed, removed = set.Update([]*corev2.CheckConfig{

@@ -2,6 +2,7 @@ package schedulerd
 
 import (
 	"context"
+	"fmt"
 	"strings"
 
 	time "github.com/echlebek/timeproxy"
@@ -145,7 +146,12 @@ func (s *Schedulerd) refresh() error {
 		return err
 	}
 	added, changed, removed := s.checks.Update(next)
-	for _, check := range added {
+
+	checksAdded := make([]string, len(added))
+	checksChanged := make([]string, len(changed))
+	checksRemoved := make([]string, len(removed))
+	for i, check := range added {
+		checksAdded[i] = fmt.Sprintf("%s/%s", check.Namespace, check.Name)
 		// Guard against updates while the daemon is shutting down
 		if err := s.ctx.Err(); err != nil {
 			return err
@@ -187,17 +193,29 @@ func (s *Schedulerd) refresh() error {
 		// Register new check scheduler
 		s.schedulers[key] = scheduler
 	}
+	if len(checksAdded) > 0 {
+		logger.WithField("added", checksAdded).Info("added new checks to schedule")
+	}
 
-	for _, check := range changed {
+	for i, check := range changed {
+		checksChanged[i] = fmt.Sprintf("%s/%s", check.Namespace, check.Name)
 		key := concatUniqueKey(check.Name, check.Namespace)
 		s.schedulers[key].Interrupt(check)
 	}
-	for _, check := range removed {
+	if len(checksChanged) > 0 {
+		logger.WithField("changed", checksChanged).Info("updated schedule with new check configuration")
+	}
+
+	for i, check := range removed {
+		checksRemoved[i] = fmt.Sprintf("%s/%s", check.Namespace, check.Name)
 		key := concatUniqueKey(check.Name, check.Namespace)
 		if err := s.schedulers[key].Stop(); err != nil {
 			logger.WithError(err).Error("unexpected error stopping scheduler")
 		}
 		delete(s.schedulers, key)
+	}
+	if len(checksRemoved) > 0 {
+		logger.WithField("removed", checksRemoved).Info("removed checks from schedule")
 	}
 	return nil
 
