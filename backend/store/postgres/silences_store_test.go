@@ -27,7 +27,6 @@ func testWithSilenceStore(t testing.TB, fn func(*SilenceStore, *NamespaceStore))
 			},
 		}
 		if err := nsStore.CreateIfNotExists(ctx, namespace); err != nil {
-			panic(err)
 			t.Fatal(err)
 		}
 
@@ -78,14 +77,28 @@ func TestSilenceStoreCreateOrUpdate(t *testing.T) {
 }
 
 func TestSilenceStoreGetSilences(t *testing.T) {
-	want := []*corev2.Silenced{
+	wantDefault := []*corev2.Silenced{
 		corev2.FixtureSilenced("foo:bar"),
 		corev2.FixtureSilenced("bar:baz"),
 		corev2.FixtureSilenced("baz:foo"),
 	}
+	wantNS1 := []*corev2.Silenced{
+		corev2.FixtureSilenced("foo:bar"),
+		corev2.FixtureSilenced("bar:baz"),
+	}
+	for i := range wantNS1 {
+		wantNS1[i].Namespace = "ns1"
+	}
+
 	ctx := context.Background()
 	testWithSilenceStore(t, func(sstore *SilenceStore, nsStore *NamespaceStore) {
-		for _, silence := range want {
+		createNamespace(t, nsStore, "ns1")
+		for _, silence := range wantDefault {
+			if err := sstore.UpdateSilence(ctx, silence); err != nil {
+				t.Fatal(err)
+			}
+		}
+		for _, silence := range wantNS1 {
 			if err := sstore.UpdateSilence(ctx, silence); err != nil {
 				t.Fatal(err)
 			}
@@ -94,8 +107,16 @@ func TestSilenceStoreGetSilences(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		if !cmp.Equal(got, want) {
-			t.Errorf("silences not equal: got %v", cmp.Diff(got, want))
+		if !cmp.Equal(got, wantDefault) {
+			t.Errorf("silences not equal: got %v", cmp.Diff(got, wantDefault))
+		}
+		got, err = sstore.GetSilences(ctx, "")
+		if err != nil {
+			t.Fatal(err)
+		}
+		wantAll := append(wantDefault, wantNS1...)
+		if !cmp.Equal(got, wantAll) {
+			t.Errorf("silences not equal: got %v", cmp.Diff(got, wantAll))
 		}
 		got, err = sstore.GetSilences(ctx, "alsdkjf")
 		if err != nil {

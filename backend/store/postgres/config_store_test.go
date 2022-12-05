@@ -219,6 +219,13 @@ func TestConfigStore_List(t *testing.T) {
 			assert.NoError(t, err)
 		}
 
+		for i := 0; i < 10; i++ {
+			toCreate.Metadata.Name = entityName
+			toCreate.Metadata.Namespace = fmt.Sprintf("ns%d", i)
+			err := createIfNotExists(ctx, s, toCreate)
+			assert.NoError(t, err)
+		}
+
 		entities, err = listEntities(ctx, s, defaultNamespace, &store.SelectionPredicate{})
 		assert.NoError(t, err)
 		assert.Equal(t, 100, len(entities))
@@ -226,6 +233,10 @@ func TestConfigStore_List(t *testing.T) {
 		entities, err = listEntities(ctx, s, defaultNamespace, &store.SelectionPredicate{Limit: 20})
 		assert.NoError(t, err)
 		assert.Equal(t, 20, len(entities))
+
+		entities, err = listEntities(ctx, s, "", &store.SelectionPredicate{})
+		assert.NoError(t, err)
+		assert.Equal(t, 110, len(entities))
 	})
 }
 
@@ -384,9 +395,20 @@ func TestConfigStore_Count(t *testing.T) {
 			assert.NoError(t, err)
 		}
 
+		for i := 0; i < 10; i++ {
+			toCreate.Metadata.Name = entityName
+			toCreate.Metadata.Namespace = fmt.Sprintf("ns%d", i)
+			err := createIfNotExists(ctx, s, toCreate)
+			assert.NoError(t, err)
+		}
+
 		ct, err := countEntities(ctx, s, defaultNamespace)
 		assert.NoError(t, err)
 		assert.Equal(t, 100, ct)
+
+		ct, err = countEntities(ctx, s, "")
+		assert.NoError(t, err)
+		assert.Equal(t, 110, ct)
 	})
 }
 

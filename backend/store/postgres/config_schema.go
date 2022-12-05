@@ -61,15 +61,19 @@ const GetConfigQuery = `SELECT id, labels, annotations, resource, created_at, up
 	WHERE api_version=$1 AND api_type=$2 AND namespace=$3 AND name=$4 AND NOT isfinite(deleted_at);`
 
 const CountConfigQueryTmpl = `
+	{{if not .Namespaced}} WITH ignored as (SELECT $3::text) {{end}}
     SELECT count(*)
     FROM configuration
-	WHERE api_version=$1 AND api_type=$2 AND namespace=$3 AND NOT isfinite(deleted_at)
+	WHERE api_version=$1 AND api_type=$2 AND NOT isfinite(deleted_at)
+        {{if .Namespaced}} AND namespace=$3 {{end}}
         {{if ne .SelectorSQL ""}}AND {{.SelectorSQL}}{{end}};`
 
 const ListConfigQueryTmpl = `
+	{{if not .Namespaced}} WITH ignored as (SELECT $3::text) {{end}}
     SELECT id, labels, annotations, resource, created_at, updated_at
     FROM configuration
-	WHERE api_version=$1 AND api_type=$2 AND namespace=$3 AND NOT isfinite(deleted_at)
+	WHERE api_version=$1 AND api_type=$2 AND NOT isfinite(deleted_at)
+        {{if .Namespaced}} AND namespace=$3 {{end}}
         {{if ne .SelectorSQL ""}}AND {{.SelectorSQL}}{{end}}
     ORDER BY namespace, name ASC
     {{if (gt .Limit 0)}} LIMIT {{.Limit}} {{end}} OFFSET {{ .Offset }};`
