@@ -15,7 +15,6 @@ import (
 )
 
 func TestPublishProxyCheckRequest(t *testing.T) {
-	t.Skip("skip")
 	t.Parallel()
 
 	assert := assert.New(t)
@@ -75,7 +74,6 @@ func TestPublishProxyCheckRequest(t *testing.T) {
 }
 
 func TestPublishProxyCheckRequestsInterval(t *testing.T) {
-	t.Skip("skip")
 	t.Parallel()
 
 	assert := assert.New(t)
@@ -129,7 +127,6 @@ func TestPublishProxyCheckRequestsInterval(t *testing.T) {
 }
 
 func TestPublishProxyCheckRequestsCron(t *testing.T) {
-	t.Skip("skip")
 	t.Parallel()
 
 	assert := assert.New(t)
@@ -182,7 +179,6 @@ func TestPublishProxyCheckRequestsCron(t *testing.T) {
 }
 
 func TestCheckBuildRequestInterval(t *testing.T) {
-	t.Skip("skip")
 	t.Parallel()
 
 	assert := assert.New(t)
@@ -218,7 +214,6 @@ func TestCheckBuildRequestInterval(t *testing.T) {
 }
 
 func TestCheckBuildRequestCron(t *testing.T) {
-	t.Skip("skip")
 	t.Parallel()
 
 	assert := assert.New(t)
@@ -227,43 +222,6 @@ func TestCheckBuildRequestCron(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 	scheduler := newCronScheduler(ctx, t, "check")
-
-	check := scheduler.check
-	check.Cron = "* * * * *"
-
-	request, err := scheduler.exec.buildRequest(check)
-	require.NoError(t, err)
-	assert.NotNil(request)
-	assert.NotNil(request.Config)
-	assert.NotNil(request.Assets)
-	assert.NotEmpty(request.Assets)
-	assert.Len(request.Assets, 1)
-	assert.NotNil(request.Hooks)
-	assert.NotEmpty(request.Hooks)
-	assert.Len(request.Hooks, 1)
-
-	check.RuntimeAssets = []string{}
-	check.CheckHooks = []corev2.HookList{}
-	request, err = scheduler.exec.buildRequest(check)
-	require.NoError(t, err)
-	assert.NotNil(request)
-	assert.NotNil(request.Config)
-	assert.Empty(request.Assets)
-	assert.Empty(request.Hooks)
-
-	assert.NoError(scheduler.msgBus.Stop())
-}
-
-func TestCheckBuildRequestAdhoc_GH2201(t *testing.T) {
-	t.Skip("skip")
-	t.Parallel()
-
-	assert := assert.New(t)
-
-	// Start a scheduler
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-	scheduler := newIntervalScheduler(ctx, t, "adhoc")
 
 	check := scheduler.check
 	check.Cron = "* * * * *"

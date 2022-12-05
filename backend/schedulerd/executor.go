@@ -2,7 +2,6 @@ package schedulerd
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"strings"
 
@@ -15,22 +14,8 @@ import (
 	"github.com/sensu/sensu-go/backend/secrets"
 	"github.com/sensu/sensu-go/backend/store"
 	storev2 "github.com/sensu/sensu-go/backend/store/v2"
-	"github.com/sensu/sensu-go/types"
 	stringsutil "github.com/sensu/sensu-go/util/strings"
 )
-
-var (
-	adhocQueueName = "adhocRequest"
-)
-
-// Executor executes scheduled or adhoc checks
-type Executor interface {
-	processCheck(ctx context.Context, check *corev2.CheckConfig) error
-	getEntities(ctx context.Context) ([]EntityCacheValue, error)
-	publishProxyCheckRequests(entities []*corev3.EntityConfig, check *corev2.CheckConfig) error
-	execute(check *corev2.CheckConfig) error
-	buildRequest(check *corev2.CheckConfig) (*corev2.CheckRequest, error)
-}
 
 // CheckExecutor executes scheduled checks in the check scheduler
 type CheckExecutor struct {
@@ -135,137 +120,7 @@ func hookIsRelevant(hook *corev2.HookConfig, check *corev2.CheckConfig) bool {
 	return false
 }
 
-// AdhocRequestExecutor takes new check requests from the adhoc queue and runs
-// them
-type AdhocRequestExecutor struct {
-	adhocQueue             types.Queue
-	store                  storev2.Interface
-	bus                    messaging.MessageBus
-	ctx                    context.Context
-	cancel                 context.CancelFunc
-	listenQueueErr         chan error
-	entityCache            EntityCache
-	secretsProviderManager *secrets.ProviderManager
-}
-
-// NewAdhocRequestExecutor returns a new AdhocRequestExecutor.
-func NewAdhocRequestExecutor(ctx context.Context, store storev2.Interface, queue types.Queue, bus messaging.MessageBus, cache EntityCache, secretsProviderManager *secrets.ProviderManager) *AdhocRequestExecutor {
-	ctx, cancel := context.WithCancel(ctx)
-	executor := &AdhocRequestExecutor{
-		adhocQueue:             queue,
-		store:                  store,
-		bus:                    bus,
-		ctx:                    ctx,
-		cancel:                 cancel,
-		entityCache:            cache,
-		secretsProviderManager: secretsProviderManager,
-	}
-	go executor.listenQueue(ctx)
-	return executor
-}
-
-// Stop calls the context cancel function to stop the AdhocRequestExecutor.
-func (a *AdhocRequestExecutor) Stop() {
-	a.cancel()
-}
-
-func (a *AdhocRequestExecutor) listenQueue(ctx context.Context) {
-	for {
-		// listen to the queue, unmarshal value into a check request, and execute it
-		item, err := a.adhocQueue.Dequeue(ctx)
-		if err != nil {
-			select {
-			case a.listenQueueErr <- err:
-			case <-ctx.Done():
-				return
-			}
-			continue
-		}
-		var check corev2.CheckConfig
-		if err := json.NewDecoder(strings.NewReader(item.Value())).Decode(&check); err != nil {
-			err = fmt.Errorf("unable to process invalid check: %s", err)
-			select {
-			case a.listenQueueErr <- err:
-			case <-ctx.Done():
-				return
-			}
-			if ackErr := item.Ack(ctx); ackErr != nil {
-				select {
-				case a.listenQueueErr <- err:
-				case <-ctx.Done():
-					return
-				}
-			}
-			continue
-		}
-
-		if err = a.processCheck(ctx, &check); err != nil {
-			select {
-			case a.listenQueueErr <- err:
-			case <-ctx.Done():
-				return
-			}
-			if nackErr := item.Nack(ctx); nackErr != nil {
-				select {
-				case a.listenQueueErr <- err:
-				case <-ctx.Done():
-					return
-				}
-			}
-			continue
-		}
-		if err = item.Ack(ctx); err != nil {
-			select {
-			case a.listenQueueErr <- err:
-			case <-ctx.Done():
-				return
-			}
-			continue
-		}
-	}
-}
-
-// processCheck processes a check by publishing its proxy requests (if any)
-// and publishing the check itself
-func (a *AdhocRequestExecutor) processCheck(ctx context.Context, check *corev2.CheckConfig) error {
-	return processCheck(ctx, a, check)
-}
-
-func (a *AdhocRequestExecutor) getEntities(ctx context.Context) ([]EntityCacheValue, error) {
-	return a.entityCache.Get(store.NewNamespaceFromContext(ctx)), nil
-}
-
-func (a *AdhocRequestExecutor) publishProxyCheckRequests(entities []*corev3.EntityConfig, check *corev2.CheckConfig) error {
-	return publishProxyCheckRequests(a, entities, check)
-}
-
-func (a *AdhocRequestExecutor) execute(check *corev2.CheckConfig) error {
-	var err error
-	request, err := a.buildRequest(check)
-	if err != nil {
-		return err
-	}
-
-	for _, sub := range check.Subscriptions {
-		topic := messaging.SubscriptionTopic(check.Namespace, sub)
-		logger.WithFields(logrus.Fields{
-			"check": check.Name,
-			"topic": topic,
-		}).Debug("sending check request")
-
-		if pubErr := a.bus.Publish(topic, request); pubErr != nil {
-			logger.WithError(pubErr).Error("error publishing check request")
-			err = pubErr
-		}
-	}
-	return err
-}
-
-func (a *AdhocRequestExecutor) buildRequest(check *corev2.CheckConfig) (*corev2.CheckRequest, error) {
-	return buildRequest(check, a.store, a.secretsProviderManager)
-}
-
-func publishProxyCheckRequests(e Executor, entities []*corev3.EntityConfig, check *corev2.CheckConfig) error {
+func publishProxyCheckRequests(e *CheckExecutor, entities []*corev3.EntityConfig, check *corev2.CheckConfig) error {
 	var splay time.Duration
 	if check.ProxyRequests.Splay {
 		var err error
@@ -294,7 +149,7 @@ func publishProxyCheckRequests(e Executor, entities []*corev3.EntityConfig, chec
 	return nil
 }
 
-func processCheck(ctx context.Context, executor Executor, check *corev2.CheckConfig) error {
+func processCheck(ctx context.Context, executor *CheckExecutor, check *corev2.CheckConfig) error {
 	fields := logrus.Fields{
 		"check":     check.Name,
 		"namespace": check.Namespace,
