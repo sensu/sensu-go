@@ -20,9 +20,7 @@ func (s namespacedChecks) Update(next []*corev2.CheckConfig) ([]*corev2.CheckCon
 	for ns := range s {
 		if _, ok := byNamespace[ns]; !ok {
 			// removed namespace
-			for _, check := range s[ns].set {
-				removed = append(removed, check)
-			}
+			removed = append(removed, s[ns].set...)
 			delete(s, ns)
 		}
 	}

@@ -64,6 +64,7 @@ func TestSchedulerd(t *testing.T) {
 		ch: discoC,
 	}
 	discoSub, err := bus.Subscribe(messaging.SubscriptionTopic("default", "disco"), "testing", discoS)
+	require.NoError(t, err)
 	defer func() {
 		assert.NoError(t, discoSub.Cancel())
 	}()
