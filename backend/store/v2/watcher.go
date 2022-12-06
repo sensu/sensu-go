@@ -1,8 +1,6 @@
 package v2
 
 import (
-	"fmt"
-
 	"github.com/prometheus/client_golang/prometheus"
 )
 
@@ -31,7 +29,6 @@ func ReadEventValue[R Resource[T], T any](w WatchEvent) (R, error) {
 		return nil, nil
 	}
 	val := new(T)
-	fmt.Println("val", val)
 	if err := w.Value.UnwrapInto(val); err != nil {
 		return nil, err
 	}

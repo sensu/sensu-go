@@ -437,3 +437,127 @@ func TestOPCIntegration(t *testing.T) {
 
 	})
 }
+
+func TestOPCMicromanage(t *testing.T) {
+	withPostgres(t, func(ctx context.Context, db *pgxpool.Pool, dsn string) {
+		nsStore := NewNamespaceStore(db)
+		ns := corev3.FixtureNamespace("default")
+		if err := nsStore.CreateIfNotExists(ctx, ns); err != nil {
+			t.Fatal(err)
+		}
+		backendState := store.OperatorState{
+			Type:           store.BackendOperator,
+			Name:           "backend1",
+			CheckInTimeout: time.Hour,
+			Present:        true,
+		}
+		agentStateA := store.OperatorState{
+			Namespace: "default",
+			Type:      store.AgentOperator,
+			Name:      "agent1",
+			Controller: &store.OperatorKey{
+				Namespace: "",
+				Type:      store.BackendOperator,
+				Name:      "backend1",
+			},
+			CheckInTimeout: time.Millisecond * 100,
+			Present:        true,
+		}
+		agentStateB := store.OperatorState{
+			Namespace: "default",
+			Type:      store.AgentOperator,
+			Name:      "agent2",
+			Controller: &store.OperatorKey{
+				Namespace: "",
+				Type:      store.BackendOperator,
+				Name:      "backend1",
+			},
+			CheckInTimeout: time.Millisecond * 100,
+			Present:        true,
+		}
+		checkStateA := store.OperatorState{
+			Namespace: "default",
+			Type:      store.CheckOperator,
+			Name:      "check1",
+			Controller: &store.OperatorKey{
+				Namespace: "default",
+				Type:      store.AgentOperator,
+				Name:      "agent1",
+			},
+		}
+		checkStateB := store.OperatorState{
+			Namespace: "default",
+			Type:      store.CheckOperator,
+			Name:      "check2",
+			Controller: &store.OperatorKey{
+				Namespace: "default",
+				Type:      store.AgentOperator,
+				Name:      "agent1",
+			},
+			CheckInTimeout: time.Millisecond * 100,
+			Present:        true,
+		}
+		checkStateC := store.OperatorState{
+			Namespace: "default",
+			Type:      store.CheckOperator,
+			Name:      "check2",
+			Controller: &store.OperatorKey{
+				Namespace: "default",
+				Type:      store.AgentOperator,
+				Name:      "agent2",
+			},
+			CheckInTimeout: time.Millisecond * 100,
+			Present:        true,
+		}
+		opc := NewOPC(db)
+		states := []store.OperatorState{
+			backendState,
+			agentStateA,
+			agentStateB,
+			checkStateA,
+			checkStateB,
+			checkStateC,
+		}
+		for _, state := range states {
+			if err := opc.CheckIn(ctx, state); err != nil {
+				t.Fatal(err)
+			}
+		}
+
+		time.Sleep(100 * time.Millisecond)
+
+		req := store.MonitorOperatorsRequest{
+			Type:           store.CheckOperator,
+			ControllerType: store.BackendOperator,
+			ControllerName: "backend1",
+			Every:          100 * time.Millisecond,
+			Micromanage:    true,
+			ErrorHandler: func(err error) {
+				// can get closed pool error here due to a race between the test
+				// terminating and the pool closing, so don't handle errors
+			},
+		}
+		notifications := opc.MonitorOperators(ctx, req)
+
+		for i := 0; i < 2; i++ {
+			// run the loop twice to show that we get repeated notifications
+			opStates := <-notifications
+
+			if len(opStates) == 0 {
+				// this can happen when the polling interval is out of phase
+				// with the check in timeout multiple
+				continue
+			}
+
+			if got, want := len(opStates), 3; got != want {
+				t.Errorf("got %d op states, want %d", got, want)
+			}
+
+			for _, state := range opStates {
+				if got, want := state.Type, store.CheckOperator; got != want {
+					t.Errorf("bad state type: got %s, want %s", got, want)
+				}
+			}
+		}
+	})
+}
