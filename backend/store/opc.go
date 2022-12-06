@@ -85,6 +85,15 @@ type OperatorState struct {
 	Metadata *json.RawMessage
 }
 
+// Key gets the OperatorKey information from the OperatorState.
+func (o OperatorState) Key() OperatorKey {
+	return OperatorKey{
+		Namespace: o.Namespace,
+		Name:      o.Name,
+		Type:      o.Type,
+	}
+}
+
 // MonitorOperatorsRequest is a request to watch a specific operator space
 // for updates, whether those updates are generated as repeated absence alerts
 // or check ins. The OPC will send all error encountered for each poll to the
@@ -119,6 +128,13 @@ type MonitorOperatorsRequest struct {
 	// ErrorHandler is a function tha handles any errors generated in the
 	// monitoring process.
 	ErrorHandler func(error)
+
+	// If Micromanage is set, then the monitoring request applies to all of the
+	// grandchildren controllees instead of the controllees of the operator.
+	// That is, the set of monitored operators will be equal to the union of
+	// all of the sets of the controlled operators that are controlled by the
+	// specified operator.
+	Micromanage bool
 }
 
 // OperatorMonitor monitors operators for updates or missed check-ins.

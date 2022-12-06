@@ -292,6 +292,7 @@ func (e *Eventd) Start() error {
 	}
 
 	e.startHandlers()
+	go e.monitorCheckTTLs(e.ctx)
 
 	return nil
 }
@@ -503,10 +504,11 @@ func (e *Eventd) handleMessage(msg interface{}) (fEvent *corev2.Event, fErr erro
 		Type:      store.CheckOperator,
 		Controller: &store.OperatorKey{
 			Type:      store.AgentOperator,
-			Namespace: event.Entity.Namespace,
 			Name:      event.Entity.Name,
+			Namespace: event.Entity.Namespace,
 		},
-		Present: true,
+		Present:        true,
+		CheckInTimeout: time.Duration(event.Check.Ttl) * time.Second,
 	}
 
 	if event.Check.Name == corev2.KeepaliveCheckName {
@@ -561,26 +563,12 @@ func (e *Eventd) handleCheckTTLNotification(ctx context.Context, state store.Ope
 
 	entityConfigStore := storev2.NewGenericStore[*corev3.EntityConfig](e.store)
 
-	_, err := entityConfigStore.Get(ctx, storev2.ID{Namespace: state.Namespace, Name: state.Name})
+	_, err := entityConfigStore.Get(ctx, storev2.ID{Namespace: state.Controller.Namespace, Name: state.Controller.Name})
 	if _, ok := err.(*store.ErrNotFound); ok {
 		return e.operatorConcierge.CheckOut(ctx, store.OperatorKey{Namespace: state.Namespace, Name: state.Name, Type: state.Type})
 	} else if err != nil {
 		lager.WithError(err).Error("check ttl: error retrieving entity")
 		return err
-	}
-
-	agentOperator, err := e.operatorQueryer.QueryOperator(ctx, *state.Controller)
-	if err != nil {
-		if _, ok := err.(*store.ErrNotFound); ok {
-			// the agent no longer exists
-			return nil
-		}
-		return err
-	}
-	if !agentOperator.Present {
-		// the agent is not present, and so we don't want to track check TTL
-		// until it returns.
-		return e.operatorConcierge.CheckOut(ctx, store.OperatorKey{Namespace: state.Namespace, Name: state.Name, Type: state.Type})
 	}
 
 	es := e.store.GetEventStore()

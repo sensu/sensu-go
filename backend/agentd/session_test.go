@@ -60,6 +60,7 @@ func TestSession_sender(t *testing.T) {
 	type busFunc func(*messaging.WizardBus, *sync.WaitGroup)
 	type connFunc func(*mocktransport.MockTransport, *sync.WaitGroup)
 	type storeFunc func(*mockstore.V2MockStore, *sync.WaitGroup)
+	fixWrapper, _ := storev2.WrapResource(corev3.FixtureEntityConfig("testing"))
 
 	tests := []struct {
 		name          string
@@ -84,9 +85,9 @@ func TestSession_sender(t *testing.T) {
 				}).Return(nil)
 			},
 			busFunc: func(bus *messaging.WizardBus, wg *sync.WaitGroup) {
-				e := &entityChange{
-					Type:         storev2.WatchUpdate,
-					EntityConfig: corev3.FixtureEntityConfig("testing"),
+				e := &storev2.WatchEvent{
+					Type:  storev2.WatchUpdate,
+					Value: fixWrapper,
 				}
 				publishWatchEvent(t, bus, e)
 			},
@@ -98,9 +99,9 @@ func TestSession_sender(t *testing.T) {
 				conn.On("Close").Return(nil)
 			},
 			busFunc: func(bus *messaging.WizardBus, wg *sync.WaitGroup) {
-				e := &entityChange{
-					Type:         storev2.WatchDelete,
-					EntityConfig: corev3.FixtureEntityConfig("testing"),
+				e := &storev2.WatchEvent{
+					Type:  storev2.WatchUpdate,
+					Value: fixWrapper,
 				}
 				publishWatchEvent(t, bus, e)
 			},
@@ -113,41 +114,20 @@ func TestSession_sender(t *testing.T) {
 				conn.On("Send", mock.Anything).Once().Return(transport.ClosedError{})
 			},
 			busFunc: func(bus *messaging.WizardBus, wg *sync.WaitGroup) {
-				e := &entityChange{
-					Type:         storev2.WatchUnknown,
-					EntityConfig: corev3.FixtureEntityConfig("testing"),
+				e := &storev2.WatchEvent{
+					Type:  storev2.WatchUpdate,
+					Value: fixWrapper,
 				}
 				publishWatchEvent(t, bus, e)
 
 				// publish a second valid events, which will trigger the Send() method
 				// of our transport, which will mock a closed connection that should
 				// only be called once
-				e = &entityChange{
-					Type:         storev2.WatchCreate,
-					EntityConfig: corev3.FixtureEntityConfig("testing"),
+				e = &storev2.WatchEvent{
+					Type:  storev2.WatchUpdate,
+					Value: fixWrapper,
 				}
 				publishWatchEvent(t, bus, e)
-			},
-		},
-		{
-			name: "invalid class entities are reset to the agent class",
-			busFunc: func(bus *messaging.WizardBus, wg *sync.WaitGroup) {
-				entity := corev3.FixtureEntityConfig("testing")
-				entity.EntityClass = corev2.EntityProxyClass
-				e := &entityChange{
-					Type:         storev2.WatchUpdate,
-					EntityConfig: entity,
-				}
-				publishWatchEvent(t, bus, e)
-			},
-			storeFunc: func(store *mockstore.V2MockStore, wg *sync.WaitGroup) {
-				wg.Add(1)
-				ecstore := new(mockstore.EntityConfigStore)
-				ecstore.On("CreateOrUpdate", mock.Anything, mock.Anything, mock.Anything).Run(func(args mock.Arguments) {
-					// Close the wait channel once we receive the storev2 request
-					wg.Done()
-				}).Return(nil)
-				store.On("GetEntityConfigStore").Return(ecstore)
 			},
 		},
 		{
@@ -182,9 +162,9 @@ func TestSession_sender(t *testing.T) {
 				}).Return(nil)
 			},
 			busFunc: func(bus *messaging.WizardBus, wg *sync.WaitGroup) {
-				e := &entityChange{
-					Type:         storev2.WatchUpdate,
-					EntityConfig: corev3.FixtureEntityConfig("testing"),
+				e := &storev2.WatchEvent{
+					Type:  storev2.WatchUpdate,
+					Value: fixWrapper,
 				}
 				publishWatchEvent(t, bus, e)
 
@@ -217,9 +197,9 @@ func TestSession_sender(t *testing.T) {
 				}).Return(nil)
 			},
 			busFunc: func(bus *messaging.WizardBus, wg *sync.WaitGroup) {
-				e := &entityChange{
-					Type:         storev2.WatchUpdate,
-					EntityConfig: corev3.FixtureEntityConfig("testing"),
+				e := &storev2.WatchEvent{
+					Type:  storev2.WatchUpdate,
+					Value: fixWrapper,
 				}
 				publishWatchEvent(t, bus, e)
 
@@ -281,6 +261,7 @@ func TestSession_sender(t *testing.T) {
 				t.Fatal(err)
 			}
 
+			conn.On("Send", mock.Anything).Return(nil)
 			go session.sender()
 
 			// Send our watch events over the wizard bus
@@ -442,22 +423,12 @@ func TestSession_Start(t *testing.T) {
 	}
 }
 
-func publishWatchEvent(t *testing.T, bus *messaging.WizardBus, event *entityChange) {
+func publishWatchEvent(t *testing.T, bus *messaging.WizardBus, event *storev2.WatchEvent) {
 	t.Helper()
 
-	wrapper, err := storev2.WrapResource(event.EntityConfig)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	we := storev2.WatchEvent{
-		Type:  event.Type,
-		Value: wrapper,
-	}
-
 	if err := bus.Publish(messaging.EntityConfigTopic(
-		event.EntityConfig.Metadata.Namespace, event.EntityConfig.Metadata.Name,
-	), &we); err != nil {
+		"default", "testing",
+	), event); err != nil {
 		t.Fatal(err)
 	}
 }

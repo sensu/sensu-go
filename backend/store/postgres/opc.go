@@ -152,7 +152,13 @@ func (c *controllerGetter) GetController(ctx context.Context, id sql.NullInt64) 
 
 func (o *OPC) getMonitorResults(ctx context.Context, tx pgx.Tx, req store.MonitorOperatorsRequest) ([]store.OperatorState, map[sql.NullInt64]struct{}, error) {
 	results := make([]store.OperatorState, 0)
-	rows, err := tx.Query(ctx, opcGetNotifications, req.Type, req.ControllerName, req.ControllerType, req.ControllerNamespace)
+	var rows pgx.Rows
+	var err error
+	if req.Micromanage {
+		rows, err = tx.Query(ctx, opcGetGrandchildNotifications, req.Type, req.ControllerName, req.ControllerType, req.ControllerNamespace)
+	} else {
+		rows, err = tx.Query(ctx, opcGetNotifications, req.Type, req.ControllerName, req.ControllerType, req.ControllerNamespace)
+	}
 	if err != nil {
 		if err == pgx.ErrNoRows {
 			return nil, nil, nil
@@ -239,9 +245,12 @@ func (o *OPC) CheckIn(ctx context.Context, state store.OperatorState) error {
 		return nil
 	}
 	// update case
-	_, err = tx.Exec(ctx, opcCheckInUpdate, id, timeout, state.Present, state.Metadata, ctlNamespace, ctlType, ctlName)
+	result, err := tx.Exec(ctx, opcCheckInUpdate, id, timeout, state.Present, state.Metadata, ctlNamespace, ctlType, ctlName)
 	if err != nil {
 		return fmt.Errorf("couldn't update operator record: %s", err)
+	}
+	if result.RowsAffected() != 1 {
+		return fmt.Errorf("%s: wrong number of rows inserted: want 1, got %d", state.Name, result.RowsAffected())
 	}
 	return nil
 }

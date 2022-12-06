@@ -30,7 +30,7 @@ WITH ns AS (
 )
 SELECT opc.id FROM opc, ns
 WHERE
-	opc.namespace = ns.id OR opc.namespace IS NULL
+	(($1 != '' AND opc.namespace = ns.id) OR (opc.namespace IS NULL AND $1 = ''))
 	AND opc.operator_type = $2
 	AND opc.operator_name = $3
 LIMIT 1
@@ -194,6 +194,40 @@ WHERE opc.operator_type = $1
 ;
 `
 
+const opcGetGrandchildNotifications = `
+-- opcGetGrandchildNotifications gets all of the notifications that are ready for a given
+-- type of operator's grandchildren. Operators have notifications ready when they have not
+-- checked in for longer than their timeout_micro.
+--
+-- $1: operator type
+-- $2: controller name
+-- $3: controller type
+-- $4: controller namespace
+WITH children AS (
+	SELECT opc.id AS id
+	FROM opc
+	   LEFT OUTER JOIN namespaces ON opc.namespace = namespaces.id
+	   LEFT OUTER JOIN opc AS controller_opc ON opc.controller = controller_opc.id
+	   LEFT OUTER JOIN namespaces AS controller_namespaces ON controller_opc.namespace = namespaces.id
+	WHERE (controller_opc.operator_name = $2 OR (controller_opc.operator_name IS NULL AND $2 = ''))
+      AND (controller_opc.operator_type = $3 OR (controller_opc.operator_type IS NULL AND $3 = 0))
+      AND (controller_namespaces.name = $4 OR (controller_opc.namespace IS NULL AND $4 = ''))
+)
+SELECT namespaces.name
+	 , opc.operator_type
+	 , opc.operator_name
+	 , false -- present is always logically false here, and we use the same target params as the get queries
+	 , to_timestamp(opc.last_update::double precision / 1000000)
+	 , opc.timeout_micro * 1000 -- nanoseconds for Go time.Duration
+	 , opc.metadata
+	 , opc.controller
+FROM opc, namespaces, children
+WHERE opc.operator_type = $1
+  AND opc.timeout_micro < (EXTRACT(EPOCH FROM NOW()) * 1000000)::bigint - opc.last_update
+  AND namespaces.id = opc.namespace
+  AND opc.controller = children.id
+`
+
 const opcUpdateNotifications = `
 -- opcUpdateNotifications resets the last_update column for all operators
 -- of a given type that are controlled by one of the controllers in the
@@ -220,6 +254,7 @@ UPDATE opc
 SET controller = (
 	SELECT copc.id AS controller FROM opc AS copc
 	WHERE copc.operator_type = opc.controller_type
+	  AND copc.id != opc.id
 	  AND copc.timeout_micro > (EXTRACT(EPOCH FROM NOW()) * 1000000)::bigint - copc.last_update
 	ORDER BY random()
 	LIMIT 1

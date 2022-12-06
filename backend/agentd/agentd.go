@@ -253,19 +253,8 @@ func (a *Agentd) runWatcher() {
 }
 
 func (a *Agentd) handleEvent(event storev2.WatchEvent) error {
-	changeEvent := entityChange{
-		Type: event.Type,
-	}
-
-	var err error
-
-	changeEvent.EntityConfig, err = storev2.ReadEventValue[*corev3.EntityConfig](event)
-	if err != nil {
-		return err
-	}
-
 	topic := messaging.EntityConfigTopic(event.Key.Namespace, event.Key.Name)
-	if err := a.bus.Publish(topic, &changeEvent); err != nil {
+	if err := a.bus.Publish(topic, event); err != nil {
 		logger.WithField("topic", topic).WithError(err).
 			Error("unable to publish an entity config update to the bus")
 		return err
@@ -525,9 +514,4 @@ func (a *Agentd) EntityLimiterMiddleware(next http.Handler) http.Handler {
 
 type Authenticator interface {
 	Authenticate(ctx context.Context, username, password string) (*corev2.Claims, error)
-}
-
-type entityChange struct {
-	Type         storev2.WatchActionType
-	EntityConfig *corev3.EntityConfig
 }
