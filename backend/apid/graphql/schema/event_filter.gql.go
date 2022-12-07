@@ -8,7 +8,6 @@ import (
 	graphql "github.com/sensu/sensu-go/graphql"
 )
 
-//
 // EventFilterFieldResolvers represents a collection of methods whose products represent the
 // response values of the 'EventFilter' type.
 type EventFilterFieldResolvers interface {
@@ -344,7 +343,6 @@ type _EnumTypeEventFilterActionValues struct {
 	DENY EventFilterAction
 }
 
-//
 // EventFilterConnectionFieldResolvers represents a collection of methods whose products represent the
 // response values of the 'EventFilterConnection' type.
 type EventFilterConnectionFieldResolvers interface {
