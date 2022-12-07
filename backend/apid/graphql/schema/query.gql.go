@@ -175,7 +175,6 @@ type QueryWrappedNodeFieldResolverParams struct {
 	Args QueryWrappedNodeFieldResolverArgs
 }
 
-//
 // QueryFieldResolvers represents a collection of methods whose products represent the
 // response values of the 'Query' type.
 type QueryFieldResolvers interface {

@@ -11,9 +11,9 @@ import (
 /*
 JSONType ... JSON The JSON type describes any arbitrary JSON compatible data.
 
-- Roughly equilevant to `union JSON = Int | Float | String | Boolean` however
-  can also be a map or list of arbitrary length.
-- Despite looking like an an object it's fields **cannot** be selected.
+  - Roughly equilevant to `union JSON = Int | Float | String | Boolean` however
+    can also be a map or list of arbitrary length.
+  - Despite looking like an an object it's fields **cannot** be selected.
 */
 var JSONType = graphql.NewType("JSON", graphql.ScalarKind)
 

@@ -7,7 +7,6 @@ import (
 	graphql "github.com/sensu/sensu-go/graphql"
 )
 
-//
 // CoreV2PipelineExtensionOverridesFieldResolvers represents a collection of methods whose products represent the
 // response values of the 'CoreV2PipelineExtensionOverrides' type.
 type CoreV2PipelineExtensionOverridesFieldResolvers interface {
@@ -76,7 +75,6 @@ var _ObjectExtensionTypeCoreV2PipelineExtensionOverridesDesc = graphql.ObjectDes
 	},
 }
 
-//
 // CoreV2RoleExtensionOverridesFieldResolvers represents a collection of methods whose products represent the
 // response values of the 'CoreV2RoleExtensionOverrides' type.
 type CoreV2RoleExtensionOverridesFieldResolvers interface {
@@ -145,7 +143,6 @@ var _ObjectExtensionTypeCoreV2RoleExtensionOverridesDesc = graphql.ObjectDesc{
 	},
 }
 
-//
 // CoreV2RoleBindingExtensionOverridesFieldResolvers represents a collection of methods whose products represent the
 // response values of the 'CoreV2RoleBindingExtensionOverrides' type.
 type CoreV2RoleBindingExtensionOverridesFieldResolvers interface {
@@ -214,7 +211,6 @@ var _ObjectExtensionTypeCoreV2RoleBindingExtensionOverridesDesc = graphql.Object
 	},
 }
 
-//
 // CoreV2ClusterRoleExtensionOverridesFieldResolvers represents a collection of methods whose products represent the
 // response values of the 'CoreV2ClusterRoleExtensionOverrides' type.
 type CoreV2ClusterRoleExtensionOverridesFieldResolvers interface {
@@ -283,7 +279,6 @@ var _ObjectExtensionTypeCoreV2ClusterRoleExtensionOverridesDesc = graphql.Object
 	},
 }
 
-//
 // CoreV2ClusterRoleBindingExtensionOverridesFieldResolvers represents a collection of methods whose products represent the
 // response values of the 'CoreV2ClusterRoleBindingExtensionOverrides' type.
 type CoreV2ClusterRoleBindingExtensionOverridesFieldResolvers interface {

@@ -9,7 +9,6 @@ import (
 	graphql "github.com/sensu/sensu-go/graphql"
 )
 
-//
 // EtcdClusterMemberHealthFieldResolvers represents a collection of methods whose products represent the
 // response values of the 'EtcdClusterMemberHealth' type.
 type EtcdClusterMemberHealthFieldResolvers interface {
@@ -184,7 +183,6 @@ var _ObjectTypeEtcdClusterMemberHealthDesc = graphql.ObjectDesc{
 	},
 }
 
-//
 // EtcdClusterHealthFieldResolvers represents a collection of methods whose products represent the
 // response values of the 'EtcdClusterHealth' type.
 type EtcdClusterHealthFieldResolvers interface {
@@ -279,7 +277,6 @@ var _ObjectTypeEtcdClusterHealthDesc = graphql.ObjectDesc{
 	},
 }
 
-//
 // EtcdAlarmMemberFieldResolvers represents a collection of methods whose products represent the
 // response values of the 'EtcdAlarmMember' type.
 type EtcdAlarmMemberFieldResolvers interface {
@@ -454,7 +451,6 @@ type ClusterHealthEtcdFieldResolverParams struct {
 	Args ClusterHealthEtcdFieldResolverArgs
 }
 
-//
 // ClusterHealthFieldResolvers represents a collection of methods whose products represent the
 // response values of the 'ClusterHealth' type.
 type ClusterHealthFieldResolvers interface {
