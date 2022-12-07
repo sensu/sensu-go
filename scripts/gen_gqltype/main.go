@@ -46,7 +46,19 @@ func main() {
 	if *types != "" {
 		validTypes = gostrings.Split(*types, ",")
 	}
-	structs, err := discoverStructs(*pkgPath)
+
+	srcDir := *pkgPath
+	// check if exists, otherwise attempt to downlaod go module source
+	if _, err := os.Stat(*pkgPath); err != nil {
+		dir, cleanup, modErr := WithGoModuleSource(*pkgPath)
+		if modErr != nil {
+			log.Fatalf("could not find package source %v\n", modErr)
+		}
+		defer cleanup()
+		log.Printf("go module source cloned to %s\n", dir)
+		srcDir = dir
+	}
+	structs, err := discoverStructs(srcDir)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -54,7 +66,7 @@ func main() {
 	if !*noPkg {
 		prefix = pathToPackageName(*pkgPath)
 	}
-	imports, err := discoverImports(*pkgPath)
+	imports, err := discoverImports(srcDir)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -311,7 +323,8 @@ func pathToPackageName(path string) (prefix string) {
 	if len(segs) == 1 {
 		return gostrings.Title(segs[0])
 	}
-	segs = segs[1:] // snip: module
+	// todo (ck) idk man.
+	// segs = segs[1:] // snip: module
 	for _, p := range segs[max(len(segs)-2, 0):] {
 		prefix += gostrings.Title(p)
 	}
