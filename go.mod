@@ -81,6 +81,7 @@ require (
 	github.com/sensu/core/v3 v3.8.0-alpha6
 	github.com/sensu/sensu-api-tools v0.0.0-20221025205055-db03ae2f8099
 	github.com/sensu/sensu-go/types v0.12.0-alpha6
+	golang.org/x/mod v0.4.2
 	golang.org/x/text v0.3.7 // indirect
 	golang.org/x/tools v0.1.2
 )

@@ -16,6 +16,7 @@ import (
 	gqlkind "github.com/graphql-go/graphql/language/kinds"
 	gqlprinter "github.com/graphql-go/graphql/language/printer"
 	"github.com/sensu/sensu-go/util/strings"
+	"golang.org/x/mod/semver"
 )
 
 //
@@ -27,7 +28,7 @@ import (
 //
 
 var (
-	pkgPath   = flag.String("pkg-path", "", "path to target package")
+	pkgPath   = flag.String("pkg-path", "", "path to target package; may be a path to the source or a go import path from a required module")
 	output    = flag.String("o", "", "path to output file")
 	types     = flag.String("types", "", "comma separated list of types to export; optional")
 	noPkg     = flag.Bool("no-pkg", false, "by default types are prefix'd with its package name; use this flag to diable this behaviour")
@@ -49,6 +50,7 @@ func main() {
 
 	srcDir := *pkgPath
 	// check if exists, otherwise attempt to downlaod go module source
+
 	if _, err := os.Stat(*pkgPath); err != nil {
 		dir, cleanup, modErr := WithGoModuleSource(*pkgPath)
 		if modErr != nil {
@@ -323,19 +325,15 @@ func pathToPackageName(path string) (prefix string) {
 	if len(segs) == 1 {
 		return gostrings.Title(segs[0])
 	}
-	// todo (ck) idk man.
-	// segs = segs[1:] // snip: module
-	for _, p := range segs[max(len(segs)-2, 0):] {
-		prefix += gostrings.Title(p)
+
+	// prefix is package name
+	// unless it is versioned i.e. core/v2
+	packageName := segs[len(segs)-1]
+	prefix = gostrings.Title(packageName)
+	if semver.IsValid(packageName) && len(segs) > 1 {
+		prefix = gostrings.Title(segs[len(segs)-2]) + prefix
 	}
 	return
-}
-
-func max(a, b int) int {
-	if a > b {
-		return a
-	}
-	return b
 }
 
 // https://github.com/asaskevich/govalidator/blob/3153c74/utils.go#L101

@@ -29,6 +29,7 @@ func WithGoModuleSource(packagePath string) (string, func(), error) {
 	cleanup := noop
 
 	cmd := exec.Command("go", "mod", "edit", "-json")
+
 	var stdout bytes.Buffer
 	cmd.Stdout = &stdout
 	if err := cmd.Run(); err != nil {
