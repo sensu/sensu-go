@@ -79,7 +79,7 @@ func (a *NamespaceClient) ListNamespaces(ctx context.Context, pred *store.Select
 		}
 		return namespaces, nil
 	}
-	gstore := storev2.NewGenericStore[*corev3.Namespace](a.client.Store)
+	gstore := storev2.Of[*corev3.Namespace](a.client.Store)
 	resources, err := gstore.List(ctx, storev2.ID{}, pred)
 	if err != nil {
 		return nil, err
@@ -284,7 +284,7 @@ func (a *NamespaceClient) FetchNamespace(ctx context.Context, name string) (*cor
 		return nil, authorization.ErrUnauthorized
 	}
 
-	gstore := storev2.NewGenericStore[*corev3.Namespace](a.client.Store)
+	gstore := storev2.Of[*corev3.Namespace](a.client.Store)
 	ns, err := gstore.Get(ctx, storev2.ID{Name: name})
 	if err != nil {
 		return nil, err

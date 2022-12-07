@@ -30,7 +30,7 @@ type Generic[R Resource[T], T any] struct {
 	Interface Interface
 }
 
-func NewGenericStore[R Resource[T], T any](face Interface) Generic[R, T] {
+func Of[R Resource[T], T any](face Interface) Generic[R, T] {
 	return Generic[R, T]{Interface: face}
 }
 

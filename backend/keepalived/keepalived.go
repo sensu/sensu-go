@@ -352,7 +352,7 @@ func (k *Keepalived) handleEntityRegistration(entity *corev2.Entity, event *core
 	config, _ := corev3.V2EntityToV3(entity)
 
 	exists := true
-	entityConfigStore := storev2.NewGenericStore[*corev3.EntityConfig](k.store)
+	entityConfigStore := storev2.Of[*corev3.EntityConfig](k.store)
 	storedEntityConfig, err := entityConfigStore.Get(tctx, storev2.ID{Namespace: entity.Namespace, Name: entity.Name})
 	if err != nil {
 		if _, ok := err.(*store.ErrNotFound); !ok {
@@ -498,7 +498,7 @@ func (k *Keepalived) handleNotification(ctx context.Context, state store.Operato
 
 	key := store.OperatorKey{Namespace: state.Namespace, Name: state.Name, Type: store.AgentOperator}
 
-	entityStore := storev2.NewGenericStore[*corev3.EntityConfig](k.store)
+	entityStore := storev2.Of[*corev3.EntityConfig](k.store)
 	entityConfig, err := entityStore.Get(ctx, storev2.ID{Namespace: state.Namespace, Name: state.Name})
 	if err != nil {
 		if _, ok := err.(*store.ErrNotFound); ok {
@@ -640,7 +640,7 @@ func (k *Keepalived) handleUpdate(e *corev2.Event) error {
 	entity.LastSeen = e.Timestamp
 	_, entityState := corev3.V2EntityToV3(entity)
 
-	entityStateStore := storev2.NewGenericStore[*corev3.EntityState](k.store)
+	entityStateStore := storev2.Of[*corev3.EntityState](k.store)
 
 	if err := entityStateStore.CreateOrUpdate(k.ctx, entityState); err != nil {
 		logger.WithError(err).Error("error updating entity state in store")

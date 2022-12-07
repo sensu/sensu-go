@@ -27,7 +27,7 @@ func NewUserController(store storev2.Interface) UserController {
 // List returns resources available to the viewer filter by given params.
 func (a UserController) List(ctx context.Context, pred *store.SelectionPredicate) ([]corev3.Resource, error) {
 	// Fetch from store
-	ustore := storev2.NewGenericStore[*corev2.User](a.store)
+	ustore := storev2.Of[*corev2.User](a.store)
 	users, err := ustore.List(ctx, storev2.ID{Namespace: corev2.ContextNamespace(ctx)}, nil)
 	if err != nil {
 		switch err := err.(type) {
@@ -74,7 +74,7 @@ func (a UserController) Create(ctx context.Context, user *corev2.User) error {
 	if err := user.Validate(); err != nil {
 		return NewError(InvalidArgument, err)
 	}
-	ustore := storev2.NewGenericStore[*corev2.User](a.store)
+	ustore := storev2.Of[*corev2.User](a.store)
 	if err := ustore.CreateIfNotExists(ctx, user); err != nil {
 		switch err := err.(type) {
 		case *store.ErrAlreadyExists:
@@ -124,7 +124,7 @@ func (a UserController) CreateOrReplace(ctx context.Context, user *corev2.User) 
 	user.Password = user.PasswordHash
 
 	// Persist
-	ustore := storev2.NewGenericStore[*corev2.User](a.store)
+	ustore := storev2.Of[*corev2.User](a.store)
 	if err := ustore.CreateOrUpdate(ctx, user); err != nil {
 		return NewError(InternalErr, err)
 	}
@@ -145,7 +145,7 @@ func (a UserController) Disable(ctx context.Context, name string) error {
 
 	user.Disabled = true
 
-	ustore := storev2.NewGenericStore[*corev2.User](a.store)
+	ustore := storev2.Of[*corev2.User](a.store)
 
 	if err := ustore.UpdateIfExists(ctx, user); err != nil {
 		switch err.(type) {
@@ -219,7 +219,7 @@ func (a UserController) RemoveAllGroups(ctx context.Context, username string) er
 }
 
 func (a UserController) findUser(ctx context.Context, name string) (*corev2.User, error) {
-	ustore := storev2.NewGenericStore[*corev2.User](a.store)
+	ustore := storev2.Of[*corev2.User](a.store)
 	user, err := ustore.Get(ctx, storev2.ID{Namespace: corev2.ContextNamespace(ctx), Name: name})
 	if err != nil {
 		switch err := err.(type) {
@@ -233,7 +233,7 @@ func (a UserController) findUser(ctx context.Context, name string) (*corev2.User
 }
 
 func (a UserController) updateUser(ctx context.Context, user *corev2.User) error {
-	ustore := storev2.NewGenericStore[*corev2.User](a.store)
+	ustore := storev2.Of[*corev2.User](a.store)
 	if err := ustore.CreateOrUpdate(ctx, user); err != nil {
 		switch err := err.(type) {
 		case *store.ErrNotFound:

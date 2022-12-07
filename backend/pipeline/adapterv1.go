@@ -255,7 +255,7 @@ func (a *AdapterV1) getPipelineFromStore(ctx context.Context, ref *corev2.Resour
 	tctx, cancel := context.WithTimeout(ctx, a.StoreTimeout)
 	defer cancel()
 
-	store := storev2.NewGenericStore[*corev2.Pipeline](a.Store)
+	store := storev2.Of[*corev2.Pipeline](a.Store)
 	id := storev2.ID{Namespace: corev2.ContextNamespace(ctx), Name: ref.Name}
 	return store.Get(tctx, id)
 }
@@ -320,7 +320,7 @@ func (a *AdapterV1) expandHandlers(ctx context.Context, namespace string, handle
 		"namespace": namespace,
 	}
 
-	hstore := storev2.NewGenericStore[*corev2.Handler](a.Store)
+	hstore := storev2.Of[*corev2.Handler](a.Store)
 
 	for _, handlerName := range handlers {
 		tctx, cancel := context.WithTimeout(ctx, a.StoreTimeout)

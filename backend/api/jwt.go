@@ -18,7 +18,7 @@ type JWT struct {
 }
 
 func (j JWT) GetSecret(ctx context.Context) ([]byte, error) {
-	keystore := storev2.NewGenericStore[*corev3.SymmetricKey](j.Store)
+	keystore := storev2.Of[*corev3.SymmetricKey](j.Store)
 	key, err := keystore.Get(ctx, storev2.ID{Name: JWTName})
 	if err != nil {
 		if _, ok := err.(*store.ErrNotFound); ok {

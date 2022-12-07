@@ -24,7 +24,7 @@ func NewTessenController(store storev2.Interface, bus messaging.MessageBus) Tess
 
 // CreateOrUpdate creates or updates the tessen configuration
 func (c TessenController) CreateOrUpdate(ctx context.Context, config *corev2.TessenConfig) error {
-	tstore := storev2.NewGenericStore[*corev2.TessenConfig](c.store)
+	tstore := storev2.Of[*corev2.TessenConfig](c.store)
 	if err := tstore.CreateOrUpdate(ctx, config); err != nil {
 		switch err := err.(type) {
 		case *store.ErrNotValid:
@@ -44,7 +44,7 @@ func (c TessenController) CreateOrUpdate(ctx context.Context, config *corev2.Tes
 
 // Get gets the tessen configuration
 func (c TessenController) Get(ctx context.Context) (*corev2.TessenConfig, error) {
-	tstore := storev2.NewGenericStore[*corev2.TessenConfig](c.store)
+	tstore := storev2.Of[*corev2.TessenConfig](c.store)
 	// tessen resource does not have a name or namespace
 	config, err := tstore.Get(ctx, storev2.ID{})
 	if err != nil {

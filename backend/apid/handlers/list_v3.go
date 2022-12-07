@@ -11,7 +11,7 @@ import (
 
 func (h Handlers[R, T]) ListResources(ctx context.Context, pred *store.SelectionPredicate) ([]corev3.Resource, error) {
 	namespace := corev2.ContextNamespace(ctx)
-	gstore := storev2.NewGenericStore[R](h.Store)
+	gstore := storev2.Of[R](h.Store)
 
 	list, err := gstore.List(ctx, storev2.ID{Namespace: namespace}, pred)
 	if err != nil {

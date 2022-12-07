@@ -22,7 +22,7 @@ func (h Handlers[R, T]) GetResource(r *http.Request) (corev3.Resource, error) {
 	ctx := r.Context()
 	namespace := store.NewNamespaceFromContext(ctx)
 
-	gstore := storev2.NewGenericStore[R](h.Store)
+	gstore := storev2.Of[R](h.Store)
 
 	result, err := gstore.Get(ctx, storev2.ID{Namespace: namespace, Name: name})
 	if err != nil {

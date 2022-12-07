@@ -90,7 +90,7 @@ func (h Handlers[R, T]) patchV3Resource(ctx context.Context, body []byte, name, 
 		return nil, actions.NewError(actions.InvalidArgument, err)
 	}
 
-	gstore := storev2.NewGenericStore[R](h.Store)
+	gstore := storev2.Of[R](h.Store)
 
 	if err := gstore.Patch(ctx, payload, patcher, etag); err != nil {
 		switch err := err.(type) {

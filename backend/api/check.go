@@ -36,7 +36,7 @@ func (c *CheckClient) CreateCheck(ctx context.Context, check *corev2.CheckConfig
 		return err
 	}
 	setCreatedBy(ctx, check)
-	store := storev2.NewGenericStore[*corev2.CheckConfig](c.store)
+	store := storev2.Of[*corev2.CheckConfig](c.store)
 	return store.CreateOrUpdate(ctx, check)
 }
 
@@ -47,7 +47,7 @@ func (c *CheckClient) UpdateCheck(ctx context.Context, check *corev2.CheckConfig
 		return err
 	}
 	setCreatedBy(ctx, check)
-	store := storev2.NewGenericStore[*corev2.CheckConfig](c.store)
+	store := storev2.Of[*corev2.CheckConfig](c.store)
 	return store.CreateOrUpdate(ctx, check)
 }
 
@@ -57,7 +57,7 @@ func (c *CheckClient) DeleteCheck(ctx context.Context, name string) error {
 	if err := authorize(ctx, c.auth, attrs); err != nil {
 		return err
 	}
-	store := storev2.NewGenericStore[*corev2.CheckConfig](c.store)
+	store := storev2.Of[*corev2.CheckConfig](c.store)
 	return store.Delete(ctx, storev2.ID{Namespace: corev2.ContextNamespace(ctx), Name: name})
 }
 
@@ -76,7 +76,7 @@ func (c *CheckClient) FetchCheck(ctx context.Context, name string) (*corev2.Chec
 	if err := authorize(ctx, c.auth, attrs); err != nil {
 		return nil, err
 	}
-	store := storev2.NewGenericStore[*corev2.CheckConfig](c.store)
+	store := storev2.Of[*corev2.CheckConfig](c.store)
 	return store.Get(ctx, storev2.ID{Namespace: corev2.ContextNamespace(ctx), Name: name})
 }
 
@@ -90,7 +90,7 @@ func (c *CheckClient) ListChecks(ctx context.Context) ([]*corev2.CheckConfig, er
 		Continue: corev2.PageContinueFromContext(ctx),
 		Limit:    int64(corev2.PageSizeFromContext(ctx)),
 	}
-	store := storev2.NewGenericStore[*corev2.CheckConfig](c.store)
+	store := storev2.Of[*corev2.CheckConfig](c.store)
 	return store.List(ctx, storev2.ID{Namespace: corev2.ContextNamespace(ctx)}, pred)
 }
 
