@@ -9,7 +9,6 @@ import (
 	time "time"
 )
 
-//
 // VersionsFieldResolvers represents a collection of methods whose products represent the
 // response values of the 'Versions' type.
 type VersionsFieldResolvers interface {
@@ -104,7 +103,6 @@ var _ObjectTypeVersionsDesc = graphql.ObjectDesc{
 	},
 }
 
-//
 // EtcdVersionsFieldResolvers represents a collection of methods whose products represent the
 // response values of the 'EtcdVersions' type.
 type EtcdVersionsFieldResolvers interface {
@@ -213,7 +211,6 @@ var _ObjectTypeEtcdVersionsDesc = graphql.ObjectDesc{
 	},
 }
 
-//
 // SensuBackendVersionFieldResolvers represents a collection of methods whose products represent the
 // response values of the 'SensuBackendVersion' type.
 type SensuBackendVersionFieldResolvers interface {

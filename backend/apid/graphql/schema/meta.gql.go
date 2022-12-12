@@ -8,7 +8,6 @@ import (
 	graphql "github.com/sensu/sensu-go/graphql"
 )
 
-//
 // KVPairStringFieldResolvers represents a collection of methods whose products represent the
 // response values of the 'KVPairString' type.
 type KVPairStringFieldResolvers interface {
@@ -120,7 +119,6 @@ var _ObjectTypeKVPairStringDesc = graphql.ObjectDesc{
 	},
 }
 
-//
 // ObjectMetaFieldResolvers represents a collection of methods whose products represent the
 // response values of the 'ObjectMeta' type.
 type ObjectMetaFieldResolvers interface {

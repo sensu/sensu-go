@@ -8,7 +8,6 @@ import (
 	graphql "github.com/sensu/sensu-go/graphql"
 )
 
-//
 // CoreV3EntityConfigFieldResolvers represents a collection of methods whose products represent the
 // response values of the 'CoreV3EntityConfig' type.
 type CoreV3EntityConfigFieldResolvers interface {
@@ -301,7 +300,6 @@ var _ObjectTypeCoreV3EntityConfigDesc = graphql.ObjectDesc{
 	},
 }
 
-//
 // CoreV3EntityStateFieldResolvers represents a collection of methods whose products represent the
 // response values of the 'CoreV3EntityState' type.
 type CoreV3EntityStateFieldResolvers interface {

@@ -8,7 +8,6 @@ import (
 	graphql "github.com/sensu/sensu-go/graphql"
 )
 
-//
 // HandlerFieldResolvers represents a collection of methods whose products represent the
 // response values of the 'Handler' type.
 type HandlerFieldResolvers interface {
@@ -448,7 +447,6 @@ var _ObjectTypeHandlerDesc = graphql.ObjectDesc{
 	},
 }
 
-//
 // HandlerSocketFieldResolvers represents a collection of methods whose products represent the
 // response values of the 'HandlerSocket' type.
 type HandlerSocketFieldResolvers interface {
@@ -557,7 +555,6 @@ var _ObjectTypeHandlerSocketDesc = graphql.ObjectDesc{
 	},
 }
 
-//
 // HandlerConnectionFieldResolvers represents a collection of methods whose products represent the
 // response values of the 'HandlerConnection' type.
 type HandlerConnectionFieldResolvers interface {

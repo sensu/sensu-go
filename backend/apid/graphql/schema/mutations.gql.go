@@ -158,7 +158,6 @@ type MutationDeleteSilenceFieldResolverParams struct {
 	Args MutationDeleteSilenceFieldResolverArgs
 }
 
-//
 // MutationFieldResolvers represents a collection of methods whose products represent the
 // response values of the 'Mutation' type.
 type MutationFieldResolvers interface {
@@ -663,7 +662,6 @@ var _ObjectTypeMutationDesc = graphql.ObjectDesc{
 	},
 }
 
-//
 // PutWrappedPayloadFieldResolvers represents a collection of methods whose products represent the
 // response values of the 'PutWrappedPayload' type.
 type PutWrappedPayloadFieldResolvers interface {
@@ -758,7 +756,6 @@ var _ObjectTypePutWrappedPayloadDesc = graphql.ObjectDesc{
 	},
 }
 
-//
 // DeleteRecordPayloadFieldResolvers represents a collection of methods whose products represent the
 // response values of the 'DeleteRecordPayload' type.
 type DeleteRecordPayloadFieldResolvers interface {
@@ -1027,7 +1024,6 @@ func _InputTypeCreateCheckInputConfigFn() graphql1.InputObjectConfig {
 // describe CreateCheckInput's configuration; kept private to avoid unintentional tampering of configuration at runtime.
 var _InputTypeCreateCheckInputDesc = graphql.InputDesc{Config: _InputTypeCreateCheckInputConfigFn}
 
-//
 // CreateCheckPayloadFieldResolvers represents a collection of methods whose products represent the
 // response values of the 'CreateCheckPayload' type.
 type CreateCheckPayloadFieldResolvers interface {
@@ -1170,7 +1166,6 @@ func _InputTypeUpdateCheckInputConfigFn() graphql1.InputObjectConfig {
 // describe UpdateCheckInput's configuration; kept private to avoid unintentional tampering of configuration at runtime.
 var _InputTypeUpdateCheckInputDesc = graphql.InputDesc{Config: _InputTypeUpdateCheckInputConfigFn}
 
-//
 // UpdateCheckPayloadFieldResolvers represents a collection of methods whose products represent the
 // response values of the 'UpdateCheckPayload' type.
 type UpdateCheckPayloadFieldResolvers interface {
@@ -1321,7 +1316,6 @@ func _InputTypeExecuteCheckInputConfigFn() graphql1.InputObjectConfig {
 // describe ExecuteCheckInput's configuration; kept private to avoid unintentional tampering of configuration at runtime.
 var _InputTypeExecuteCheckInputDesc = graphql.InputDesc{Config: _InputTypeExecuteCheckInputConfigFn}
 
-//
 // ExecuteCheckPayloadFieldResolvers represents a collection of methods whose products represent the
 // response values of the 'ExecuteCheckPayload' type.
 type ExecuteCheckPayloadFieldResolvers interface {
@@ -1465,7 +1459,6 @@ func _InputTypeResolveEventInputConfigFn() graphql1.InputObjectConfig {
 // describe ResolveEventInput's configuration; kept private to avoid unintentional tampering of configuration at runtime.
 var _InputTypeResolveEventInputDesc = graphql.InputDesc{Config: _InputTypeResolveEventInputConfigFn}
 
-//
 // ResolveEventPayloadFieldResolvers represents a collection of methods whose products represent the
 // response values of the 'ResolveEventPayload' type.
 type ResolveEventPayloadFieldResolvers interface {
@@ -1683,7 +1676,6 @@ func _InputTypeSilenceInputsConfigFn() graphql1.InputObjectConfig {
 // describe SilenceInputs's configuration; kept private to avoid unintentional tampering of configuration at runtime.
 var _InputTypeSilenceInputsDesc = graphql.InputDesc{Config: _InputTypeSilenceInputsConfigFn}
 
-//
 // CreateSilencePayloadFieldResolvers represents a collection of methods whose products represent the
 // response values of the 'CreateSilencePayload' type.
 type CreateSilencePayloadFieldResolvers interface {

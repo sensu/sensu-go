@@ -9,7 +9,6 @@ import (
 	time "time"
 )
 
-//
 // EventFieldResolvers represents a collection of methods whose products represent the
 // response values of the 'Event' type.
 type EventFieldResolvers interface {
@@ -509,7 +508,6 @@ var _ObjectTypeEventDesc = graphql.ObjectDesc{
 	},
 }
 
-//
 // EventConnectionFieldResolvers represents a collection of methods whose products represent the
 // response values of the 'EventConnection' type.
 type EventConnectionFieldResolvers interface {

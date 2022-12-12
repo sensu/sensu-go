@@ -63,10 +63,12 @@ require (
 	go.etcd.io/etcd/tests/v3 v3.5.5
 	go.uber.org/atomic v1.7.0
 	go.uber.org/zap v1.17.0
-	golang.org/x/crypto v0.0.0-20220411220226-7b82a4e95df4
-	golang.org/x/net v0.0.0-20211112202133-69e39bad7dc2
-	golang.org/x/sys v0.0.0-20220715151400-c0bba94af5f8
+	golang.org/x/crypto v0.3.0
+	golang.org/x/mod v0.7.0
+	golang.org/x/net v0.3.0
+	golang.org/x/sys v0.3.0
 	golang.org/x/time v0.0.0-20210220033141-f8bda1e9f3ba
+	golang.org/x/tools v0.4.0
 	google.golang.org/grpc v1.41.0
 	gopkg.in/h2non/filetype.v1 v1.0.3
 	gopkg.in/yaml.v2 v2.4.0
@@ -81,7 +83,6 @@ require (
 	github.com/sensu/core/v3 v3.8.0-alpha6
 	github.com/sensu/sensu-api-tools v0.0.0-20221025205055-db03ae2f8099
 	github.com/sensu/sensu-go/types v0.12.0-alpha6
-	golang.org/x/text v0.3.7 // indirect
 )
 
 replace github.com/graphql-go/graphql => github.com/jamesdphillips/graphql v0.8.2
