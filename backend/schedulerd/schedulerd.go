@@ -140,7 +140,7 @@ func (s *Schedulerd) start() error {
 func (s *Schedulerd) refresh() error {
 	timer := prometheus.NewTimer(schedRefreshDuration)
 	defer timer.ObserveDuration()
-	checkStore := storev2.NewGenericStore[*corev2.CheckConfig](s.store)
+	checkStore := storev2.Of[*corev2.CheckConfig](s.store)
 	next, err := checkStore.List(s.ctx, corev2.ObjectMeta{}, nil)
 	if err != nil {
 		return err

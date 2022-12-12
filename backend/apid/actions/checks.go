@@ -35,7 +35,7 @@ func NewCheckController(store storev2.Interface, getter types.QueueGetter) Check
 // viewer.
 func (a CheckController) Find(ctx context.Context, name string) (*corev2.CheckConfig, error) {
 	// Fetch from store
-	cstore := storev2.NewGenericStore[*corev2.CheckConfig](a.store)
+	cstore := storev2.Of[*corev2.CheckConfig](a.store)
 	check, err := cstore.Get(ctx, storev2.ID{Namespace: corev2.ContextNamespace(ctx), Name: name})
 	if err != nil {
 		if _, ok := err.(*store.ErrNotFound); ok {
@@ -121,7 +121,7 @@ func (a CheckController) findAndUpdateCheckConfig(
 	}
 
 	// Update
-	cstore := storev2.NewGenericStore[*corev2.CheckConfig](a.store)
+	cstore := storev2.Of[*corev2.CheckConfig](a.store)
 	return cstore.CreateOrUpdate(ctx, check)
 }
 

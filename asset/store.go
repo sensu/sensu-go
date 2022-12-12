@@ -12,7 +12,7 @@ import (
 func GetAssets(ctx context.Context, s storev2.Interface, assetList []string) []corev2.Asset {
 	assets := make([]corev2.Asset, 0, len(assetList))
 
-	astore := storev2.NewGenericStore[*corev2.Asset](s)
+	astore := storev2.Of[*corev2.Asset](s)
 
 	for _, assetName := range assetList {
 		id := storev2.ID{Namespace: corev2.ContextNamespace(ctx), Name: assetName}

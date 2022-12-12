@@ -33,7 +33,7 @@ func (p *Provider) Authenticate(ctx context.Context, username, password string) 
 		return nil, ErrEmptyUsernamePassword
 	}
 
-	userstore := storev2.NewGenericStore[*corev2.User](p.Store)
+	userstore := storev2.Of[*corev2.User](p.Store)
 
 	user, err := userstore.Get(ctx, storev2.ID{Name: username})
 	if err != nil {
@@ -68,7 +68,7 @@ func (p *Provider) Authenticate(ctx context.Context, username, password string) 
 
 // Refresh the claims of a user
 func (p *Provider) Refresh(ctx context.Context, claims *corev2.Claims) (*corev2.Claims, error) {
-	userstore := storev2.NewGenericStore[*corev2.User](p.Store)
+	userstore := storev2.Of[*corev2.User](p.Store)
 	user, err := userstore.Get(ctx, storev2.ID{Name: claims.Provider.UserID})
 	if err != nil {
 		return nil, err

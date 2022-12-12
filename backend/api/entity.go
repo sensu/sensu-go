@@ -105,7 +105,7 @@ func (e *EntityClient) UpdateEntity(ctx context.Context, entity *corev2.Entity) 
 		config, _ := corev3.V2EntityToV3(entity)
 		// Ensure per-entity subscription does not get removed
 		config.Subscriptions = corev2.AddEntitySubscription(config.Metadata.Name, config.Subscriptions)
-		gstore := storev2.NewGenericStore[*corev3.EntityConfig](e.store)
+		gstore := storev2.Of[*corev3.EntityConfig](e.store)
 		return gstore.CreateOrUpdate(ctx, config)
 	}
 

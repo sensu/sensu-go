@@ -561,7 +561,7 @@ func (e *Eventd) handleCheckTTLNotification(ctx context.Context, state store.Ope
 	ctx, cancel := context.WithTimeout(ctx, state.CheckInTimeout)
 	defer cancel()
 
-	entityConfigStore := storev2.NewGenericStore[*corev3.EntityConfig](e.store)
+	entityConfigStore := storev2.Of[*corev3.EntityConfig](e.store)
 
 	_, err := entityConfigStore.Get(ctx, storev2.ID{Namespace: state.Controller.Namespace, Name: state.Controller.Name})
 	if _, ok := err.(*store.ErrNotFound); ok {

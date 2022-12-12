@@ -71,6 +71,6 @@ func SeedInitialDataWithContext(ctx context.Context, s storev2.Interface) (err e
 }
 
 func createResource[R storev2.Resource[T], T any](ctx context.Context, s storev2.Interface, resource R) error {
-	resourceStore := storev2.NewGenericStore[R](s)
+	resourceStore := storev2.Of[R](s)
 	return resourceStore.CreateIfNotExists(ctx, resource)
 }

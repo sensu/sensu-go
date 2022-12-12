@@ -70,7 +70,7 @@ func (l *LegacyAdapter) Mutate(ctx context.Context, ref *corev2.ResourceReferenc
 	ctx = context.WithValue(ctx, corev2.NamespaceKey, event.Entity.Namespace)
 	tctx, cancel := context.WithTimeout(ctx, l.StoreTimeout)
 
-	mstore := storev2.NewGenericStore[*corev2.Mutator](l.Store)
+	mstore := storev2.Of[*corev2.Mutator](l.Store)
 	id := storev2.ID{Namespace: event.Entity.Namespace, Name: ref.Name}
 	mutator, err := mstore.Get(tctx, id)
 	cancel()

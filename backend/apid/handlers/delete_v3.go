@@ -22,7 +22,7 @@ func (h Handlers[R, T]) DeleteResource(r *http.Request) (corev3.Resource, error)
 	ctx := r.Context()
 	namespace := store.NewNamespaceFromContext(ctx)
 
-	gstore := storev2.NewGenericStore[R](h.Store)
+	gstore := storev2.Of[R](h.Store)
 
 	if err := gstore.Delete(ctx, storev2.ID{Namespace: namespace, Name: name}); err != nil {
 		switch err := err.(type) {

@@ -71,7 +71,7 @@ func (l *LegacyAdapter) Filter(ctx context.Context, ref *corev2.ResourceReferenc
 	fields["pipeline_workflow"] = corev2.ContextPipelineWorkflow(ctx)
 
 	// Retrieve the filter from the store with its name
-	fstore := storev2.NewGenericStore[*corev2.EventFilter](l.Store)
+	fstore := storev2.Of[*corev2.EventFilter](l.Store)
 	ctx = context.WithValue(ctx, corev2.NamespaceKey, event.Entity.Namespace)
 	tctx, cancel := context.WithTimeout(ctx, l.StoreTimeout)
 

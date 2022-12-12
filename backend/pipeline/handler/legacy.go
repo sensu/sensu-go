@@ -63,7 +63,7 @@ func (l *LegacyAdapter) Handle(ctx context.Context, ref *corev2.ResourceReferenc
 	fields["handler"] = ref.Name
 
 	tctx, cancel := context.WithTimeout(ctx, l.StoreTimeout)
-	hstore := storev2.NewGenericStore[*corev2.Handler](l.Store)
+	hstore := storev2.Of[*corev2.Handler](l.Store)
 	handler, err := hstore.Get(tctx, storev2.ID{Namespace: event.Entity.Namespace, Name: ref.Name})
 	cancel()
 	if err != nil {

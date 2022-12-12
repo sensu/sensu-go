@@ -100,7 +100,7 @@ type Resource[R storev2.Resource[T], T any] struct {
 // New creates a new resource cache. It retrieves all resources from the
 // store on creation.
 func New[R storev2.Resource[T], T any](ctx context.Context, store storev2.Interface, synthesize bool) (*Resource[R, T], error) {
-	gstore := storev2.NewGenericStore[R, T](store)
+	gstore := storev2.Of[R, T](store)
 	resources, err := gstore.List(ctx, storev2.ID{}, nil)
 	if err != nil {
 		return nil, err
@@ -215,7 +215,7 @@ func (r *Resource[R, T]) start(ctx context.Context) {
 // rebuild the cache using the store as the source of truth
 func (r *Resource[R, T]) rebuild(ctx context.Context) (bool, error) {
 	logger.Debugf("rebuilding the cache for resource type %T", *new(T))
-	gstore := storev2.NewGenericStore[R, T](r.store)
+	gstore := storev2.Of[R, T](r.store)
 	resources, err := gstore.List(ctx, storev2.ID{}, nil)
 	if err != nil {
 		return false, err

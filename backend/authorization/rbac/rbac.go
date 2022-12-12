@@ -52,7 +52,7 @@ type RuleVisitFunc func(RoleBinding, corev2.Rule, error) (terminate bool)
 func (a *Authorizer) VisitRulesFor(ctx context.Context, attrs *authorization.Attributes, visitor RuleVisitFunc) {
 	namespace := corev2.ContextNamespace(ctx)
 	var empty = corev2.Rule{}
-	crbStore := storev2.NewGenericStore[*corev2.ClusterRoleBinding](a.Store)
+	crbStore := storev2.Of[*corev2.ClusterRoleBinding](a.Store)
 	clusterRoleBindings, err := crbStore.List(ctx, storev2.ID{}, nil)
 	if err != nil {
 		if !visitor(nil, empty, err) {
@@ -83,7 +83,7 @@ func (a *Authorizer) VisitRulesFor(ctx context.Context, attrs *authorization.Att
 		return
 	}
 
-	rbStore := storev2.NewGenericStore[*corev2.RoleBinding](a.Store)
+	rbStore := storev2.Of[*corev2.RoleBinding](a.Store)
 	roleBindings, err := rbStore.List(ctx, storev2.ID{Namespace: namespace}, nil)
 	if err != nil {
 		if !visitor(nil, empty, err) {
@@ -180,7 +180,7 @@ func (a *Authorizer) Authorize(ctx context.Context, attrs *authorization.Attribu
 func (a *Authorizer) getRoleReferenceRules(ctx context.Context, namespace string, roleRef corev2.RoleRef) ([]corev2.Rule, error) {
 	switch roleRef.Type {
 	case "Role":
-		rStore := storev2.NewGenericStore[*corev2.Role](a.Store)
+		rStore := storev2.Of[*corev2.Role](a.Store)
 
 		role, err := rStore.Get(ctx, storev2.ID{Namespace: namespace, Name: roleRef.Name})
 		if _, ok := err.(*store.ErrNotFound); ok {
@@ -191,7 +191,7 @@ func (a *Authorizer) getRoleReferenceRules(ctx context.Context, namespace string
 		return role.Rules, nil
 
 	case "ClusterRole":
-		crStore := storev2.NewGenericStore[*corev2.ClusterRole](a.Store)
+		crStore := storev2.Of[*corev2.ClusterRole](a.Store)
 		clusterRole, err := crStore.Get(ctx, storev2.ID{Namespace: "", Name: roleRef.Name})
 		if _, ok := err.(*store.ErrNotFound); ok {
 			return nil, ErrRoleNotFound{Role: roleRef.Name, Cluster: true}

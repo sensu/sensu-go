@@ -242,7 +242,7 @@ func (s *Session) sender() {
 		logger.Info("shutting down agent session: stopping sender")
 	}()
 
-	ecstore := storev2.NewGenericStore[*corev3.EntityConfig](s.storev2)
+	ecstore := storev2.Of[*corev3.EntityConfig](s.storev2)
 
 	for {
 		var msg *transport.Message
@@ -411,7 +411,7 @@ func (s *Session) Start() (err error) {
 	s.entityConfig.subscriptions <- subscription
 
 	// Determine if the entity already exists
-	ecstore := storev2.NewGenericStore[*corev3.EntityConfig](s.storev2)
+	ecstore := storev2.Of[*corev3.EntityConfig](s.storev2)
 
 	storedEntityConfig, err := ecstore.Get(s.ctx, storev2.ID{Namespace: s.cfg.Namespace, Name: s.cfg.AgentName})
 	if err != nil {

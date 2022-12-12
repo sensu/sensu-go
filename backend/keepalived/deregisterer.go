@@ -43,7 +43,7 @@ func (d *Deregistration) Deregister(entity *corev2.Entity) error {
 	tctx, cancel := context.WithTimeout(ctx, d.StoreTimeout)
 	defer cancel()
 
-	ecstore := storev2.NewGenericStore[*corev3.EntityConfig](d.Store)
+	ecstore := storev2.Of[*corev3.EntityConfig](d.Store)
 	if err := ecstore.Delete(tctx, storev2.ID{Namespace: entity.Namespace, Name: entity.Name}); err != nil {
 		return fmt.Errorf("error deleting entity in store: %s", err)
 	}

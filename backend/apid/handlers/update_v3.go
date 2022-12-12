@@ -35,7 +35,7 @@ func (h Handlers[R, T]) CreateOrUpdateResource(r *http.Request) (corev3.Resource
 		meta.CreatedBy = claims.StandardClaims.Subject
 	}
 
-	gstore := storev2.NewGenericStore[R](h.Store)
+	gstore := storev2.Of[R](h.Store)
 
 	if err := gstore.CreateOrUpdate(r.Context(), payload); err != nil {
 		switch err := err.(type) {

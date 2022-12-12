@@ -20,7 +20,7 @@ func GetClusterID(ctx context.Context, s storev2.Interface) (string, error) {
 			Annotations: map[string]string{},
 		},
 	}
-	ccStore := storev2.NewGenericStore[*corev3.ClusterConfig](s)
+	ccStore := storev2.Of[*corev3.ClusterConfig](s)
 	err := ccStore.CreateIfNotExists(ctx, clusterConfig)
 	if err == nil {
 		return clusterID, nil

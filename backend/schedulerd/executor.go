@@ -244,7 +244,7 @@ func buildRequest(check *corev2.CheckConfig, s storev2.Interface, secretsProvide
 		)
 	}
 
-	astore := storev2.NewGenericStore[*corev2.Asset](s)
+	astore := storev2.Of[*corev2.Asset](s)
 	assets, err := astore.List(ctx, storev2.ID{Namespace: check.Namespace}, &store.SelectionPredicate{})
 	if err != nil {
 		return nil, err
@@ -273,7 +273,7 @@ func buildRequest(check *corev2.CheckConfig, s storev2.Interface, secretsProvide
 	// the check in the first place.
 	if len(check.CheckHooks) != 0 {
 		// Explode hooks; get hooks & filter out those that are irrelevant
-		hstore := storev2.NewGenericStore[*corev2.HookConfig](s)
+		hstore := storev2.Of[*corev2.HookConfig](s)
 		hooks, err := hstore.List(ctx, storev2.ID{Namespace: check.Namespace}, nil)
 		if err != nil {
 			return nil, err
