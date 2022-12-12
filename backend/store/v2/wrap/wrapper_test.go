@@ -8,15 +8,17 @@ import (
 	//nolint:staticcheck // SA1004 Replacing this will take some planning.
 	"github.com/golang/protobuf/proto"
 
-	corev2 "github.com/sensu/sensu-go/api/core/v2"
-	corev3 "github.com/sensu/sensu-go/api/core/v3"
+	corev2 "github.com/sensu/core/v2"
+	corev3 "github.com/sensu/core/v3"
+	apitools "github.com/sensu/sensu-api-tools"
 	"github.com/sensu/sensu-go/backend/store/v2/wrap"
-	"github.com/sensu/sensu-go/types"
 )
 
 func init() {
-	types.RegisterResolver("wrap_test/v2", testResolver)
-	types.RegisterResolver("v2/wrap_test", testResolver)
+	apitools.RegisterType("wrap_test/v2", &testResource{})
+	apitools.RegisterType("wrap_test/v2", &testResource2{})
+	apitools.RegisterType("v2/wrap_test", &testResource{})
+	apitools.RegisterType("v2/wrap_test", &testResource2{})
 }
 
 func testResolver(name string) (interface{}, error) {

@@ -5,7 +5,7 @@ import (
 
 	"github.com/echlebek/migration"
 	"github.com/gogo/protobuf/proto"
-	corev2 "github.com/sensu/sensu-go/api/core/v2"
+	corev2 "github.com/sensu/core/v2"
 )
 
 // migrations are a log of database migrations for the event store.

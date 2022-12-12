@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/AlecAivazis/survey/v2"
-	corev2 "github.com/sensu/sensu-go/api/core/v2"
+	corev2 "github.com/sensu/core/v2"
 	"github.com/sensu/sensu-go/backend"
 	"github.com/sensu/sensu-go/backend/etcd"
 	"github.com/sensu/sensu-go/backend/seeds"

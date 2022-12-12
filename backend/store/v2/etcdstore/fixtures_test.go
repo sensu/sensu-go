@@ -5,12 +5,12 @@ import (
 	"io/ioutil"
 	"testing"
 
-	corev2 "github.com/sensu/sensu-go/api/core/v2"
+	corev2 "github.com/sensu/core/v2"
+	apitools "github.com/sensu/sensu-api-tools"
 	"github.com/sensu/sensu-go/backend/etcd"
 	"github.com/sensu/sensu-go/backend/store"
 	etcdstore "github.com/sensu/sensu-go/backend/store/etcd"
 	etcdstorev2 "github.com/sensu/sensu-go/backend/store/v2/etcdstore"
-	"github.com/sensu/sensu-go/types"
 	"github.com/sirupsen/logrus"
 )
 
@@ -59,7 +59,7 @@ func fixtureResolver(name string) (interface{}, error) {
 }
 
 func init() {
-	types.RegisterResolver("store/wrap_test", fixtureResolver)
+	apitools.RegisterType("store/wrap_test", &testResource{})
 }
 
 func testWithEtcdStore(t testing.TB, f func(*etcdstorev2.Store)) {

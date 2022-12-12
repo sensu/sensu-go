@@ -1,6 +1,6 @@
 package schedulerd
 
-import corev2 "github.com/sensu/sensu-go/api/core/v2"
+import corev2 "github.com/sensu/core/v2"
 
 // Scheduler is a check scheduler. It is responsible for determining the
 // scheduling interval of a check, given a particular configuration.

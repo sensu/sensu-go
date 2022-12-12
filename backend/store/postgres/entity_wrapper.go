@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"strings"
 
-	corev2 "github.com/sensu/sensu-go/api/core/v2"
-	corev3 "github.com/sensu/sensu-go/api/core/v3"
+	corev2 "github.com/sensu/core/v2"
+	corev3 "github.com/sensu/core/v3"
 	storev2 "github.com/sensu/sensu-go/backend/store/v2"
 )
 

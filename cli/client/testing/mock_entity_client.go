@@ -1,7 +1,7 @@
 package testing
 
 import (
-	corev2 "github.com/sensu/sensu-go/api/core/v2"
+	corev2 "github.com/sensu/core/v2"
 )
 
 // FetchEntity for use with mock lib

@@ -3,7 +3,7 @@ package actions
 import (
 	"crypto/tls"
 
-	corev2 "github.com/sensu/sensu-go/api/core/v2"
+	corev2 "github.com/sensu/core/v2"
 	"github.com/sensu/sensu-go/backend/store"
 	"go.etcd.io/etcd/client/v3"
 	"golang.org/x/net/context"

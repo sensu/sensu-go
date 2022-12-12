@@ -4,7 +4,7 @@ import (
 	"context"
 
 	time "github.com/echlebek/timeproxy"
-	corev3 "github.com/sensu/sensu-go/api/core/v3"
+	corev3 "github.com/sensu/core/v3"
 )
 
 func (a *Agent) handleEntityConfig(ctx context.Context, payload []byte) error {

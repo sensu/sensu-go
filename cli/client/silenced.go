@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 
-	corev2 "github.com/sensu/sensu-go/api/core/v2"
+	corev2 "github.com/sensu/core/v2"
 )
 
 var silencedPath = createNSBasePath(coreAPIGroup, coreAPIVersion, "silenced")

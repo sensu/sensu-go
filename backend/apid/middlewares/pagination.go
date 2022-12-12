@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"strconv"
 
-	corev2 "github.com/sensu/sensu-go/api/core/v2"
+	corev2 "github.com/sensu/core/v2"
 )
 
 // Pagination retrieves the "limit" and "continue" query parameters and add them
