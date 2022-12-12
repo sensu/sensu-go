@@ -21,6 +21,7 @@ import (
 	"github.com/jackc/pgx/v4/pgxpool"
 	"github.com/sensu/sensu-go/backend/apid/middlewares"
 	"github.com/sensu/sensu-go/backend/store/postgres"
+	"go.etcd.io/etcd/client/pkg/v3/logutil"
 	"go.etcd.io/etcd/client/pkg/v3/transport"
 	"google.golang.org/grpc"
 
@@ -412,7 +413,7 @@ func newClient(ctx context.Context, config *backend.Config) (*clientv3.Client, e
 	}
 
 	// Set etcd client log level
-	logConfig := clientv3.CreateDefaultZapLoggerConfig()
+	logConfig := logutil.DefaultZapLoggerConfig
 	logConfig.Level.SetLevel(etcd.LogLevelToZap(config.Store.EtcdConfigurationStore.LogLevel))
 	clientv3Config.LogConfig = &logConfig
 

@@ -322,7 +322,8 @@ func (e *Etcd) NewClientContext(ctx context.Context) (*clientv3.Client, error) {
 	}
 
 	// Set etcd client log level
-	logConfig := clientv3.CreateDefaultZapLoggerConfig()
+
+	logConfig := logutil.DefaultZapLoggerConfig
 	logConfig.Level.SetLevel(LogLevelToZap(e.cfg.ClientLogLevel))
 
 	return clientv3.New(clientv3.Config{
@@ -348,7 +349,7 @@ func (e *Etcd) NewEmbeddedClient() *clientv3.Client {
 // Based on https://github.com/etcd-io/etcd/blob/v3.4.16/etcdserver/api/v3client/v3client.go#L30.
 func (e *Etcd) NewEmbeddedClientWithContext(ctx context.Context) *clientv3.Client {
 	// Set etcd client log level
-	logConfig := clientv3.CreateDefaultZapLoggerConfig()
+	logConfig := logutil.DefaultZapLoggerConfig
 	logConfig.Level.SetLevel(LogLevelToZap(e.cfg.ClientLogLevel))
 	clientLogger, err := logConfig.Build()
 	if err != nil {
