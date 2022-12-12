@@ -119,7 +119,6 @@ type _EnumTypeMetricKindValues struct {
 	HISTOGRAM MetricKind
 }
 
-//
 // QuantileMetricFieldResolvers represents a collection of methods whose products represent the
 // response values of the 'QuantileMetric' type.
 type QuantileMetricFieldResolvers interface {
@@ -228,7 +227,6 @@ var _ObjectTypeQuantileMetricDesc = graphql.ObjectDesc{
 	},
 }
 
-//
 // BucketMetricFieldResolvers represents a collection of methods whose products represent the
 // response values of the 'BucketMetric' type.
 type BucketMetricFieldResolvers interface {
@@ -337,7 +335,6 @@ var _ObjectTypeBucketMetricDesc = graphql.ObjectDesc{
 	},
 }
 
-//
 // CounterMetricFieldResolvers represents a collection of methods whose products represent the
 // response values of the 'CounterMetric' type.
 type CounterMetricFieldResolvers interface {
@@ -473,7 +470,6 @@ var _ObjectTypeCounterMetricDesc = graphql.ObjectDesc{
 	},
 }
 
-//
 // GaugeMetricFieldResolvers represents a collection of methods whose products represent the
 // response values of the 'GaugeMetric' type.
 type GaugeMetricFieldResolvers interface {
@@ -609,7 +605,6 @@ var _ObjectTypeGaugeMetricDesc = graphql.ObjectDesc{
 	},
 }
 
-//
 // SummaryMetricFieldResolvers represents a collection of methods whose products represent the
 // response values of the 'SummaryMetric' type.
 type SummaryMetricFieldResolvers interface {
@@ -804,7 +799,6 @@ var _ObjectTypeSummaryMetricDesc = graphql.ObjectDesc{
 	},
 }
 
-//
 // UntypedMetricFieldResolvers represents a collection of methods whose products represent the
 // response values of the 'UntypedMetric' type.
 type UntypedMetricFieldResolvers interface {
@@ -940,7 +934,6 @@ var _ObjectTypeUntypedMetricDesc = graphql.ObjectDesc{
 	},
 }
 
-//
 // HistogramMetricFieldResolvers represents a collection of methods whose products represent the
 // response values of the 'HistogramMetric' type.
 type HistogramMetricFieldResolvers interface {
@@ -1135,7 +1128,6 @@ var _ObjectTypeHistogramMetricDesc = graphql.ObjectDesc{
 	},
 }
 
-//
 // MetricFamilyFieldResolvers represents a collection of methods whose products represent the
 // response values of the 'MetricFamily' type.
 type MetricFamilyFieldResolvers interface {

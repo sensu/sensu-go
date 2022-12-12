@@ -8,7 +8,6 @@ import (
 	graphql "github.com/sensu/sensu-go/graphql"
 )
 
-//
 // MutatorFieldResolvers represents a collection of methods whose products represent the
 // response values of the 'Mutator' type.
 type MutatorFieldResolvers interface {
@@ -370,7 +369,6 @@ var _ObjectTypeMutatorDesc = graphql.ObjectDesc{
 	},
 }
 
-//
 // MutatorConnectionFieldResolvers represents a collection of methods whose products represent the
 // response values of the 'MutatorConnection' type.
 type MutatorConnectionFieldResolvers interface {

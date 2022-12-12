@@ -52,7 +52,6 @@ func _InterfaceTypeErrorConfigFn() graphql1.InterfaceConfig {
 // describe Error's configuration; kept private to avoid unintentional tampering of configuration at runtime.
 var _InterfaceTypeErrorDesc = graphql.InterfaceDesc{Config: _InterfaceTypeErrorConfigFn}
 
-//
 // StandardErrorFieldResolvers represents a collection of methods whose products represent the
 // response values of the 'StandardError' type.
 type StandardErrorFieldResolvers interface {

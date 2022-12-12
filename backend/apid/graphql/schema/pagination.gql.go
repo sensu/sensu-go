@@ -8,7 +8,6 @@ import (
 	graphql "github.com/sensu/sensu-go/graphql"
 )
 
-//
 // OffsetPageInfoFieldResolvers represents a collection of methods whose products represent the
 // response values of the 'OffsetPageInfo' type.
 type OffsetPageInfoFieldResolvers interface {

@@ -7,7 +7,6 @@ import (
 	graphql "github.com/sensu/sensu-go/graphql"
 )
 
-//
 // CoreV3EntityConfigExtensionOverridesFieldResolvers represents a collection of methods whose products represent the
 // response values of the 'CoreV3EntityConfigExtensionOverrides' type.
 type CoreV3EntityConfigExtensionOverridesFieldResolvers interface {
@@ -116,7 +115,6 @@ var _ObjectExtensionTypeCoreV3EntityConfigExtensionOverridesDesc = graphql.Objec
 	},
 }
 
-//
 // CoreV3EntityStateExtensionOverridesFieldResolvers represents a collection of methods whose products represent the
 // response values of the 'CoreV3EntityStateExtensionOverrides' type.
 type CoreV3EntityStateExtensionOverridesFieldResolvers interface {

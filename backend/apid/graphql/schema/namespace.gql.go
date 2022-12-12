@@ -204,7 +204,6 @@ type NamespaceSilencesFieldResolverParams struct {
 	Args NamespaceSilencesFieldResolverArgs
 }
 
-//
 // NamespaceFieldResolvers represents a collection of methods whose products represent the
 // response values of the 'Namespace' type.
 type NamespaceFieldResolvers interface {

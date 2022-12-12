@@ -8,7 +8,6 @@ import (
 	graphql "github.com/sensu/sensu-go/graphql"
 )
 
-//
 // TimeWindowWhenFieldResolvers represents a collection of methods whose products represent the
 // response values of the 'TimeWindowWhen' type.
 type TimeWindowWhenFieldResolvers interface {
@@ -73,7 +72,6 @@ var _ObjectTypeTimeWindowWhenDesc = graphql.ObjectDesc{
 	FieldHandlers: map[string]graphql.FieldHandler{"days": _ObjTypeTimeWindowWhenDaysHandler},
 }
 
-//
 // TimeWindowDaysFieldResolvers represents a collection of methods whose products represent the
 // response values of the 'TimeWindowDays' type.
 type TimeWindowDaysFieldResolvers interface {
@@ -324,7 +322,6 @@ var _ObjectTypeTimeWindowDaysDesc = graphql.ObjectDesc{
 	},
 }
 
-//
 // TimeWindowTimeRangeFieldResolvers represents a collection of methods whose products represent the
 // response values of the 'TimeWindowTimeRange' type.
 type TimeWindowTimeRangeFieldResolvers interface {

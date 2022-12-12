@@ -8,7 +8,6 @@ import (
 	graphql "github.com/sensu/sensu-go/graphql"
 )
 
-//
 // RuleFieldResolvers represents a collection of methods whose products represent the
 // response values of the 'Rule' type.
 type RuleFieldResolvers interface {
@@ -150,7 +149,6 @@ var _ObjectTypeRuleDesc = graphql.ObjectDesc{
 	},
 }
 
-//
 // ClusterRoleFieldResolvers represents a collection of methods whose products represent the
 // response values of the 'ClusterRole' type.
 type ClusterRoleFieldResolvers interface {
@@ -252,7 +250,6 @@ var _ObjectTypeClusterRoleDesc = graphql.ObjectDesc{
 	},
 }
 
-//
 // RoleFieldResolvers represents a collection of methods whose products represent the
 // response values of the 'Role' type.
 type RoleFieldResolvers interface {
@@ -387,7 +384,6 @@ var _ObjectTypeRoleDesc = graphql.ObjectDesc{
 	},
 }
 
-//
 // RoleRefFieldResolvers represents a collection of methods whose products represent the
 // response values of the 'RoleRef' type.
 type RoleRefFieldResolvers interface {
@@ -496,7 +492,6 @@ var _ObjectTypeRoleRefDesc = graphql.ObjectDesc{
 	},
 }
 
-//
 // SubjectFieldResolvers represents a collection of methods whose products represent the
 // response values of the 'Subject' type.
 type SubjectFieldResolvers interface {
@@ -605,7 +600,6 @@ var _ObjectTypeSubjectDesc = graphql.ObjectDesc{
 	},
 }
 
-//
 // ClusterRoleBindingFieldResolvers represents a collection of methods whose products represent the
 // response values of the 'ClusterRoleBinding' type.
 type ClusterRoleBindingFieldResolvers interface {
@@ -736,7 +730,6 @@ var _ObjectTypeClusterRoleBindingDesc = graphql.ObjectDesc{
 	},
 }
 
-//
 // RoleBindingFieldResolvers represents a collection of methods whose products represent the
 // response values of the 'RoleBinding' type.
 type RoleBindingFieldResolvers interface {

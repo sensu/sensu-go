@@ -8,7 +8,6 @@ import (
 	graphql "github.com/sensu/sensu-go/graphql"
 )
 
-//
 // CoreV2AssetBuildFieldResolvers represents a collection of methods whose products represent the
 // response values of the 'CoreV2AssetBuild' type.
 type CoreV2AssetBuildFieldResolvers interface {
@@ -179,7 +178,6 @@ var _ObjectTypeCoreV2AssetBuildDesc = graphql.ObjectDesc{
 	},
 }
 
-//
 // CoreV2ClusterRoleFieldResolvers represents a collection of methods whose products represent the
 // response values of the 'CoreV2ClusterRole' type.
 type CoreV2ClusterRoleFieldResolvers interface {
@@ -274,7 +272,6 @@ var _ObjectTypeCoreV2ClusterRoleDesc = graphql.ObjectDesc{
 	},
 }
 
-//
 // CoreV2ClusterRoleBindingFieldResolvers represents a collection of methods whose products represent the
 // response values of the 'CoreV2ClusterRoleBinding' type.
 type CoreV2ClusterRoleBindingFieldResolvers interface {
@@ -398,7 +395,6 @@ var _ObjectTypeCoreV2ClusterRoleBindingDesc = graphql.ObjectDesc{
 	},
 }
 
-//
 // CoreV2DeregistrationFieldResolvers represents a collection of methods whose products represent the
 // response values of the 'CoreV2Deregistration' type.
 type CoreV2DeregistrationFieldResolvers interface {
@@ -470,7 +466,6 @@ var _ObjectTypeCoreV2DeregistrationDesc = graphql.ObjectDesc{
 	FieldHandlers: map[string]graphql.FieldHandler{"handler": _ObjTypeCoreV2DeregistrationHandlerHandler},
 }
 
-//
 // CoreV2NetworkFieldResolvers represents a collection of methods whose products represent the
 // response values of the 'CoreV2Network' type.
 type CoreV2NetworkFieldResolvers interface {
@@ -539,7 +534,6 @@ var _ObjectTypeCoreV2NetworkDesc = graphql.ObjectDesc{
 	FieldHandlers: map[string]graphql.FieldHandler{"interfaces": _ObjTypeCoreV2NetworkInterfacesHandler},
 }
 
-//
 // CoreV2NetworkInterfaceFieldResolvers represents a collection of methods whose products represent the
 // response values of the 'CoreV2NetworkInterface' type.
 type CoreV2NetworkInterfaceFieldResolvers interface {
@@ -684,7 +678,6 @@ var _ObjectTypeCoreV2NetworkInterfaceDesc = graphql.ObjectDesc{
 	},
 }
 
-//
 // CoreV2PipelineFieldResolvers represents a collection of methods whose products represent the
 // response values of the 'CoreV2Pipeline' type.
 type CoreV2PipelineFieldResolvers interface {
@@ -779,7 +772,6 @@ var _ObjectTypeCoreV2PipelineDesc = graphql.ObjectDesc{
 	},
 }
 
-//
 // CoreV2PipelineWorkflowFieldResolvers represents a collection of methods whose products represent the
 // response values of the 'CoreV2PipelineWorkflow' type.
 type CoreV2PipelineWorkflowFieldResolvers interface {
@@ -936,7 +928,6 @@ var _ObjectTypeCoreV2PipelineWorkflowDesc = graphql.ObjectDesc{
 	},
 }
 
-//
 // CoreV2ProcessFieldResolvers represents a collection of methods whose products represent the
 // response values of the 'CoreV2Process' type.
 type CoreV2ProcessFieldResolvers interface {
@@ -1008,7 +999,6 @@ var _ObjectTypeCoreV2ProcessDesc = graphql.ObjectDesc{
 	FieldHandlers: map[string]graphql.FieldHandler{"name": _ObjTypeCoreV2ProcessNameHandler},
 }
 
-//
 // CoreV2ResourceReferenceFieldResolvers represents a collection of methods whose products represent the
 // response values of the 'CoreV2ResourceReference' type.
 type CoreV2ResourceReferenceFieldResolvers interface {
@@ -1150,7 +1140,6 @@ var _ObjectTypeCoreV2ResourceReferenceDesc = graphql.ObjectDesc{
 	},
 }
 
-//
 // CoreV2RoleFieldResolvers represents a collection of methods whose products represent the
 // response values of the 'CoreV2Role' type.
 type CoreV2RoleFieldResolvers interface {
@@ -1245,7 +1234,6 @@ var _ObjectTypeCoreV2RoleDesc = graphql.ObjectDesc{
 	},
 }
 
-//
 // CoreV2RoleBindingFieldResolvers represents a collection of methods whose products represent the
 // response values of the 'CoreV2RoleBinding' type.
 type CoreV2RoleBindingFieldResolvers interface {
@@ -1369,7 +1357,6 @@ var _ObjectTypeCoreV2RoleBindingDesc = graphql.ObjectDesc{
 	},
 }
 
-//
 // CoreV2RoleRefFieldResolvers represents a collection of methods whose products represent the
 // response values of the 'CoreV2RoleRef' type.
 type CoreV2RoleRefFieldResolvers interface {
@@ -1478,7 +1465,6 @@ var _ObjectTypeCoreV2RoleRefDesc = graphql.ObjectDesc{
 	},
 }
 
-//
 // CoreV2RuleFieldResolvers represents a collection of methods whose products represent the
 // response values of the 'CoreV2Rule' type.
 type CoreV2RuleFieldResolvers interface {
@@ -1620,7 +1606,6 @@ var _ObjectTypeCoreV2RuleDesc = graphql.ObjectDesc{
 	},
 }
 
-//
 // CoreV2SecretFieldResolvers represents a collection of methods whose products represent the
 // response values of the 'CoreV2Secret' type.
 type CoreV2SecretFieldResolvers interface {
@@ -1729,7 +1714,6 @@ var _ObjectTypeCoreV2SecretDesc = graphql.ObjectDesc{
 	},
 }
 
-//
 // CoreV2SubjectFieldResolvers represents a collection of methods whose products represent the
 // response values of the 'CoreV2Subject' type.
 type CoreV2SubjectFieldResolvers interface {
@@ -1838,7 +1822,6 @@ var _ObjectTypeCoreV2SubjectDesc = graphql.ObjectDesc{
 	},
 }
 
-//
 // CoreV2SystemFieldResolvers represents a collection of methods whose products represent the
 // response values of the 'CoreV2System' type.
 type CoreV2SystemFieldResolvers interface {

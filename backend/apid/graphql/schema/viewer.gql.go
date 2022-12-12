@@ -7,7 +7,6 @@ import (
 	graphql "github.com/sensu/sensu-go/graphql"
 )
 
-//
 // ViewerFieldResolvers represents a collection of methods whose products represent the
 // response values of the 'Viewer' type.
 type ViewerFieldResolvers interface {

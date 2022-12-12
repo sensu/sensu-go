@@ -10,7 +10,6 @@ import (
 	time "time"
 )
 
-//
 // CheckConfigFieldResolvers represents a collection of methods whose products represent the
 // response values of the 'CheckConfig' type.
 type CheckConfigFieldResolvers interface {
@@ -908,7 +907,6 @@ type CheckOutputFieldResolverParams struct {
 	Args CheckOutputFieldResolverArgs
 }
 
-//
 // CheckFieldResolvers represents a collection of methods whose products represent the
 // response values of the 'Check' type.
 type CheckFieldResolvers interface {
@@ -2184,7 +2182,6 @@ var _ObjectTypeCheckDesc = graphql.ObjectDesc{
 	},
 }
 
-//
 // CheckHistoryFieldResolvers represents a collection of methods whose products represent the
 // response values of the 'CheckHistory' type.
 type CheckHistoryFieldResolvers interface {
@@ -2286,7 +2283,6 @@ var _ObjectTypeCheckHistoryDesc = graphql.ObjectDesc{
 	},
 }
 
-//
 // ProxyRequestsFieldResolvers represents a collection of methods whose products represent the
 // response values of the 'ProxyRequests' type.
 type ProxyRequestsFieldResolvers interface {
@@ -2421,7 +2417,6 @@ var _ObjectTypeProxyRequestsDesc = graphql.ObjectDesc{
 	},
 }
 
-//
 // CheckConfigConnectionFieldResolvers represents a collection of methods whose products represent the
 // response values of the 'CheckConfigConnection' type.
 type CheckConfigConnectionFieldResolvers interface {

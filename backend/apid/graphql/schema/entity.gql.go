@@ -46,7 +46,6 @@ type EntityEventsFieldResolverParams struct {
 	Args EntityEventsFieldResolverArgs
 }
 
-//
 // EntityFieldResolvers represents a collection of methods whose products represent the
 // response values of the 'Entity' type.
 type EntityFieldResolvers interface {
@@ -701,7 +700,6 @@ var _ObjectTypeEntityDesc = graphql.ObjectDesc{
 	},
 }
 
-//
 // SystemFieldResolvers represents a collection of methods whose products represent the
 // response values of the 'System' type.
 type SystemFieldResolvers interface {
@@ -1195,7 +1193,6 @@ var _ObjectTypeSystemDesc = graphql.ObjectDesc{
 	},
 }
 
-//
 // ProcessFieldResolvers represents a collection of methods whose products represent the
 // response values of the 'Process' type.
 type ProcessFieldResolvers interface {
@@ -1535,7 +1532,6 @@ var _ObjectTypeProcessDesc = graphql.ObjectDesc{
 	},
 }
 
-//
 // NetworkFieldResolvers represents a collection of methods whose products represent the
 // response values of the 'Network' type.
 type NetworkFieldResolvers interface {
@@ -1604,7 +1600,6 @@ var _ObjectTypeNetworkDesc = graphql.ObjectDesc{
 	FieldHandlers: map[string]graphql.FieldHandler{"interfaces": _ObjTypeNetworkInterfacesHandler},
 }
 
-//
 // NetworkInterfaceFieldResolvers represents a collection of methods whose products represent the
 // response values of the 'NetworkInterface' type.
 type NetworkInterfaceFieldResolvers interface {
@@ -1749,7 +1744,6 @@ var _ObjectTypeNetworkInterfaceDesc = graphql.ObjectDesc{
 	},
 }
 
-//
 // DeregistrationFieldResolvers represents a collection of methods whose products represent the
 // response values of the 'Deregistration' type.
 type DeregistrationFieldResolvers interface {
@@ -1821,7 +1815,6 @@ var _ObjectTypeDeregistrationDesc = graphql.ObjectDesc{
 	FieldHandlers: map[string]graphql.FieldHandler{"handler": _ObjTypeDeregistrationHandlerHandler},
 }
 
-//
 // EntityConnectionFieldResolvers represents a collection of methods whose products represent the
 // response values of the 'EntityConnection' type.
 type EntityConnectionFieldResolvers interface {
