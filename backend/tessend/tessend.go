@@ -15,6 +15,8 @@ import (
 
 	"github.com/google/uuid"
 	dto "github.com/prometheus/client_model/go"
+	"github.com/sirupsen/logrus"
+
 	corev2 "github.com/sensu/core/v2"
 	"github.com/sensu/sensu-go/backend/eventd"
 	"github.com/sensu/sensu-go/backend/licensing"
@@ -24,8 +26,11 @@ import (
 	"github.com/sensu/sensu-go/backend/store/provider"
 	storev2 "github.com/sensu/sensu-go/backend/store/v2"
 	"github.com/sensu/sensu-go/version"
-	"github.com/sirupsen/logrus"
 )
+
+var logger = logrus.WithFields(logrus.Fields{
+	"component": "tessend",
+})
 
 // TODO:
 // - Remove unused constants
@@ -162,7 +167,7 @@ func (t *Tessend) getEventStore() string {
 func (t *Tessend) Start() error {
 	req := storev2.NewResourceRequestFromV2Resource(&corev2.TessenConfig{})
 	var tessen corev2.TessenConfig
-	tessenWrapper, err := t.store.Get(t.ctx, req)
+	tessenWrapper, err := t.store.GetConfigStore().Get(t.ctx, req)
 	// create the default tessen config if one does not already exist
 	if err != nil {
 		tessen = *corev2.DefaultTessenConfig()
@@ -171,7 +176,7 @@ func (t *Tessend) Start() error {
 		if wErr != nil {
 			return fmt.Errorf("failed to wrap DefaultTessenConfig: %v", wErr)
 		}
-		err = t.store.CreateOrUpdate(t.ctx, req, tessenWrapper)
+		err = t.store.GetConfigStore().CreateOrUpdate(t.ctx, req, tessenWrapper)
 		if err != nil {
 			// log the error and continue with the default config
 			logger.WithError(err).Error("unable to update tessen store")
@@ -326,14 +331,14 @@ func (t *Tessend) startMessageHandler() {
 // startWatcher watches the TessenConfig store for changes to the opt-out configuration.
 func (t *Tessend) startWatcher() {
 	req := storev2.NewResourceRequestFromV2Resource(&corev2.TessenConfig{})
-	watchChan := t.store.Watch(t.ctx, req)
+	watchChan := t.store.GetConfigStore().Watch(t.ctx, req)
 	for {
 		select {
 		case watchEvent, ok := <-watchChan:
 			if !ok {
 				// The watchChan has closed. Restart the watcher.
 				logger.Info("restarting tessend watcher")
-				watchChan = t.store.Watch(t.ctx, req)
+				watchChan = t.store.GetConfigStore().Watch(t.ctx, req)
 				continue
 			}
 			t.handleWatchEvents(watchEvent)
@@ -700,7 +705,7 @@ func (t *Tessend) getPerResourceMetrics(now int64, data *Data) error {
 			return t.ctx.Err()
 		case <-ticker.C:
 		}
-		count, err := t.store.Count(t.ctx, storev2.NewResourceRequestFromV2Resource(resource))
+		count, err := t.store.GetConfigStore().Count(t.ctx, storev2.NewResourceRequestFromV2Resource(resource))
 		if err != nil {
 			return err
 		}
