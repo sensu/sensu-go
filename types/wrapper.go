@@ -62,7 +62,7 @@ type rawWrapper struct {
 }
 
 type lifter interface {
-	Lift() Resource
+	Lift() corev3Resource
 }
 
 // toMap produces a map from a struct by serializing it to JSON and then
