@@ -207,7 +207,8 @@ V3RESOURCE:
 	w.ObjectMeta = *innerMeta
 
 	// Set the inner ObjectMeta
-	if r, ok := resource.(corev3Resource); ok {
+	license := w.Type == "LicenseFile"
+	if r, ok := resource.(corev3Resource); ok && !license {
 		if innerMeta.Labels == nil {
 			innerMeta.Labels = make(map[string]string)
 		}
