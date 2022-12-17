@@ -7,6 +7,17 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 ## Unreleased
+## [Unrealased]
+
+### Added
+- Adding a flag at agent level to avoid collecting system.networks property in the agent entity state
+
+## [6.9.1] - 2022-12-01
+
+### Changed
+- Allow Graphql Middleware Init funcs to add to Context
+
+## [6.9.0] - 2022-11-01
 
 ### Added
 - The authentication module now logs successful (INFO) and unsuccessful (ERROR)
