@@ -53,11 +53,6 @@ func Info() (types.System, error) {
 		system.Hostname = defaultHostname
 	}
 
-	network, err := NetworkInfo()
-	if err == nil {
-		system.Network = network
-	}
-
 	vmSystem, vmRole, err := host.Virtualization()
 	if err == nil {
 		system.VMSystem = vmSystem
