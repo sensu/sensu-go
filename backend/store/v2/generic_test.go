@@ -551,3 +551,84 @@ func TestGenericStorePatchNamespace(t *testing.T) {
 	}
 	nsStore.AssertCalled(t, "Patch", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything)
 }
+
+func TestGenericStoreWatch(t *testing.T) {
+	eventIn := make(chan []storev2.WatchEvent, 2)
+	var in <-chan []storev2.WatchEvent = eventIn
+	sv2 := new(mockstore.V2MockStore)
+	cfgstore := new(mockstore.ConfigStore)
+	cfgstore.On("Watch", mock.Anything, mock.Anything).Return(in)
+	sv2.On("GetConfigStore").Return(cfgstore)
+	store := storev2.Of[*corev2.CheckConfig](sv2)
+	_ = store.Watch(context.Background(), corev2.NewObjectMeta("", "default"))
+	cfgstore.AssertCalled(t, "Watch", mock.Anything, storev2.ResourceRequest{
+		Type:       "CheckConfig",
+		APIVersion: "core/v2",
+		Namespace:  "default",
+		StoreName:  "check_configs",
+	})
+}
+
+func TestGenericStoreWatchEntityConfig(t *testing.T) {
+	eventIn := make(chan []storev2.WatchEvent, 2)
+	var in <-chan []storev2.WatchEvent = eventIn
+	sv2 := new(mockstore.V2MockStore)
+	entConfigStore := new(mockstore.EntityConfigStore)
+	entConfigStore.On("Watch", mock.Anything, "myentity", "myns").Return(in)
+	sv2.On("GetEntityConfigStore").Return(entConfigStore)
+
+	store := storev2.Of[*corev3.EntityConfig](sv2)
+	events := store.Watch(context.Background(), corev2.NewObjectMeta("myentity", "myns"))
+	entConfigStore.AssertCalled(t, "Watch", mock.Anything, "myentity", "myns")
+	eventIn <- []storev2.WatchEvent{
+		{
+			Type:  storev2.WatchCreate,
+			Value: mockstore.Wrapper[*corev3.EntityConfig]{Value: corev3.FixtureEntityConfig("myentity")},
+		}, {
+			Type:  storev2.WatchUpdate,
+			Value: mockstore.Wrapper[*corev3.EntityConfig]{Value: corev3.FixtureEntityConfig("myentity")},
+		},
+	}
+	eventIn <- []storev2.WatchEvent{
+		{
+			Type:  storev2.WatchDelete,
+			Value: mockstore.Wrapper[*corev3.EntityConfig]{Value: corev3.FixtureEntityConfig("myentity")},
+		},
+	}
+
+	first := <-events
+	if len(first) != 2 {
+		t.Fatalf("expected two updates")
+	}
+	if got, want := first[0].Type, storev2.WatchCreate; got != want {
+		t.Errorf("expected %v but got %v", want, got)
+	}
+	if got, want := first[0].Value, corev3.FixtureEntityConfig("myentity"); !got.Equal(want) {
+		t.Errorf("expected %v but got %v", want, got)
+	}
+	if got, want := first[1].Type, storev2.WatchUpdate; got != want {
+		t.Errorf("expected %v but got %v", want, got)
+	}
+	second := <-events
+	if len(second) != 1 {
+		t.Fatalf("expected one more update")
+	}
+	if got, want := second[0].Type, storev2.WatchDelete; got != want {
+		t.Errorf("expected %v but got %v", want, got)
+	}
+}
+
+func TestGenericStoreWatchNamespace(t *testing.T) {
+	sv2 := new(mockstore.V2MockStore)
+	store := storev2.Of[*corev3.Namespace](sv2)
+
+	events := store.Watch(context.Background(), corev2.NewObjectMeta("", ""))
+	got := <-events
+	if len(got) != 1 || got[0].Err == nil {
+		t.Errorf("expected error from unsupported watch resource")
+	}
+	_, ok := <-events
+	if ok {
+		t.Errorf("expected watch channel to be closed")
+	}
+}
