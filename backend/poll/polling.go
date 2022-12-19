@@ -133,9 +133,12 @@ func merge(rows []Row, cache map[string]Row) []Row {
 			results = append(results, row)
 			continue
 		}
+		isDeleted := row.DeletedAt != nil
+		wasDeleted := prev.DeletedAt != nil
 		if row.UpdatedAt != prev.UpdatedAt ||
 			row.CreatedAt != prev.CreatedAt ||
-			row.DeletedAt != prev.DeletedAt {
+			isDeleted != wasDeleted ||
+			(isDeleted && wasDeleted && !row.DeletedAt.Equal(*prev.DeletedAt)) {
 			results = append(results, row)
 			continue
 		}

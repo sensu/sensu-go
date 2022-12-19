@@ -543,7 +543,7 @@ func (e *configurationPoller) Since(ctx context.Context, updatedSince time.Time)
 		if err := rows.Err(); err != nil {
 			return nil, &store.ErrInternal{Message: err.Error()}
 		}
-		id := fmt.Sprintf("%s/%s", record.namespace, record.name)
+		id := fmt.Sprint(record.id)
 		pollResult := poll.Row{
 			Id: id,
 			Resource: &wrap.Wrapper{
