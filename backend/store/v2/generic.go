@@ -3,6 +3,7 @@ package v2
 import (
 	"context"
 	"errors"
+	"fmt"
 	"reflect"
 
 	corev2 "github.com/sensu/core/v2"
@@ -447,4 +448,80 @@ func getGenericTypeMeta[R Resource[T], T any]() corev2.TypeMeta {
 		}
 	}
 	return tm
+}
+
+func (g Generic[R, T]) CanWatch() bool {
+	switch any(new(T)).(type) {
+	case *corev3.EntityState,
+		*corev3.Namespace,
+		*corev2.Entity,
+		*corev2.Event,
+		*corev2.Silenced:
+		return false
+	default:
+		return true
+	}
+}
+
+type GenericEvent[R any] struct {
+	Type          WatchActionType
+	Key           corev2.ObjectMeta
+	Value         R
+	PreviousValue R
+	Err           error
+}
+
+func (g Generic[R, T]) Watch(ctx context.Context, id ID) <-chan []GenericEvent[R] {
+	if !g.CanWatch() {
+		panic(fmt.Sprintf("Watch not supported for %T", g))
+	}
+
+	switch any(new(T)).(type) {
+	case *corev3.EntityConfig:
+		return nil
+	default:
+		var r R
+		tm := getGenericTypeMeta[R]()
+		req := NewResourceRequest(tm, id.Namespace, id.Name, r.StoreName())
+		watch := g.Interface.GetConfigStore().Watch(ctx, req)
+		out := make(chan []GenericEvent[R], cap(watch))
+		go func() {
+			for {
+				select {
+				case <-ctx.Done():
+					return
+				case e, ok := <-watch:
+					if !ok {
+						close(out)
+						return
+					}
+					events := make([]GenericEvent[R], len(e))
+					for i, event := range e {
+						key := corev2.ObjectMeta{
+							Name:      event.Key.Name,
+							Namespace: event.Key.Namespace,
+						}
+						var resource, prev T
+						if event.Value != nil {
+							event.Value.UnwrapInto(&resource)
+						}
+						if event.PreviousValue != nil {
+							event.PreviousValue.UnwrapInto(&prev)
+						}
+
+						events[i] = GenericEvent[R]{
+							Type:          event.Type,
+							Key:           key,
+							Value:         &resource,
+							PreviousValue: &prev,
+							Err:           event.Err,
+						}
+					}
+					out <- events
+				}
+			}
+		}()
+		return out
+	}
+
 }
