@@ -27,6 +27,18 @@ type Provider struct {
 	corev2.ObjectMeta `json:"metadata"`
 }
 
+func (p *Provider) GetMetadata() *corev2.ObjectMeta {
+	return &p.ObjectMeta
+}
+
+func (p *Provider) SetMetadata(m *corev2.ObjectMeta) {
+	p.ObjectMeta = *m
+}
+
+func (p *Provider) StoreName() string {
+	return ""
+}
+
 // Authenticate a user, with the provided credentials, against the Sensu store
 func (p *Provider) Authenticate(ctx context.Context, username, password string) (*corev2.Claims, error) {
 	if username == "" || password == "" {
