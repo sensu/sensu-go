@@ -3,6 +3,7 @@ package v2
 import (
 	"context"
 	"errors"
+	"fmt"
 	"reflect"
 
 	corev2 "github.com/sensu/core/v2"
@@ -45,7 +46,10 @@ func prepare(resource corev3.Resource) (ResourceRequest, Wrapper, error) {
 	return req, wrapper, err
 }
 
-var errNoSpecialization = errors.New("no specialization available")
+var (
+	errNoSpecialization   = errors.New("no specialization available")
+	errUnsupportedForType = errors.New("method not supported for type")
+)
 
 func (g Generic[R, T]) trySpecializeCreateOrUpdate(ctx context.Context, resource R) error {
 	switch value := any(resource).(type) {
@@ -447,4 +451,91 @@ func getGenericTypeMeta[R Resource[T], T any]() corev2.TypeMeta {
 		}
 	}
 	return tm
+}
+
+func (g Generic[R, T]) trySpecializeWatch(ctx context.Context, id ID) (<-chan []WatchEvent, error) {
+	switch any(new(T)).(type) {
+	case *corev3.EntityConfig:
+		watch := g.Interface.GetEntityConfigStore().Watch(ctx, id.Name, id.Namespace)
+		return watch, nil
+	case *corev3.EntityState,
+		*corev3.Namespace,
+		*corev2.Entity,
+		*corev2.Event,
+		*corev2.Silenced:
+		return nil, fmt.Errorf("%w: %T", errUnsupportedForType, new(T))
+	}
+	return nil, errNoSpecialization
+
+}
+
+func (g Generic[R, T]) Watch(ctx context.Context, id ID) <-chan []GenericEvent[R] {
+	watch, err := g.trySpecializeWatch(ctx, id)
+	if err != nil {
+		if err != errNoSpecialization {
+			errEvent := make(chan []GenericEvent[R], 1)
+			errEvent <- []GenericEvent[R]{{Err: err}}
+			close(errEvent)
+			return errEvent
+		}
+	} else {
+		return wrapWatch[R](ctx, watch)
+	}
+
+	var r R
+	tm := getGenericTypeMeta[R]()
+	req := NewResourceRequest(tm, id.Namespace, id.Name, r.StoreName())
+	watch = g.Interface.GetConfigStore().Watch(ctx, req)
+	return wrapWatch[R](ctx, watch)
+
+}
+
+type GenericEvent[R any] struct {
+	Type          WatchActionType
+	Key           corev2.ObjectMeta
+	Value         R
+	PreviousValue R
+	Err           error
+}
+
+func wrapWatch[R Resource[T], T any](ctx context.Context, in <-chan []WatchEvent) <-chan []GenericEvent[R] {
+	out := make(chan []GenericEvent[R], cap(in))
+	go func() {
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case e, ok := <-in:
+				if !ok {
+					close(out)
+					return
+				}
+				events := make([]GenericEvent[R], len(e))
+				for i, event := range e {
+					key := corev2.ObjectMeta{
+						Name:      event.Key.Name,
+						Namespace: event.Key.Namespace,
+					}
+					var resource, prev T
+					if event.Value != nil {
+						event.Value.UnwrapInto(&resource)
+					}
+					if event.PreviousValue != nil {
+						event.PreviousValue.UnwrapInto(&prev)
+					}
+
+					events[i] = GenericEvent[R]{
+						Type:          event.Type,
+						Key:           key,
+						Value:         &resource,
+						PreviousValue: &prev,
+						Err:           event.Err,
+					}
+				}
+				out <- events
+			}
+		}
+	}()
+
+	return out
 }
