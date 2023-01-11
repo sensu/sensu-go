@@ -49,6 +49,20 @@ type CommandPlugin struct {
 	Asset corev2.Asset `json:"asset"`
 }
 
+func (p *CommandPlugin) GetMetadata() *corev2.ObjectMeta {
+	return &corev2.ObjectMeta{
+		Name:        p.Alias,
+		Labels:      make(map[string]string),
+		Annotations: make(map[string]string),
+	}
+}
+
+func (p *CommandPlugin) SetMetadata(*corev2.ObjectMeta) {}
+
+func (p *CommandPlugin) StoreName() string {
+	return ""
+}
+
 func (p *CommandPlugin) GetObjectMeta() corev2.ObjectMeta {
 	return corev2.ObjectMeta{Name: p.Alias}
 }

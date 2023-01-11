@@ -7,15 +7,15 @@ import (
 	"strings"
 
 	corev2 "github.com/sensu/core/v2"
+	corev3 "github.com/sensu/core/v3"
 	apitools "github.com/sensu/sensu-api-tools"
 	"github.com/sensu/sensu-go/types"
-	"github.com/sensu/sensu-go/types/compat"
 )
 
 var (
 	// All is all the core resource types and associated sensuctl verbs (non-namespaced resources are intentionally ordered first).
-	All = []corev2.Resource{
-		&corev2.Namespace{},
+	All = []corev3.Resource{
+		&corev3.Namespace{},
 		&corev2.ClusterRole{},
 		&corev2.ClusterRoleBinding{},
 		&corev2.User{},
@@ -36,24 +36,26 @@ var (
 	}
 
 	// synonyms provides user-friendly resource synonyms like checks, entities
-	synonyms = map[string]corev2.Resource{}
+	synonyms = map[string]corev3.Resource{}
 )
 
 func init() {
 	for _, resource := range All {
 		synonyms[resource.RBACName()] = resource
 	}
+	synonyms["namespace"] = All[0]
 }
 
 type lifter interface {
-	Lift() corev2.Resource
+	Lift() corev3.Resource
 }
 
 var resourceRE = regexp.MustCompile(`(\w+\/v\d+\.)?(\w+)`)
 
 // Resolve resolves a named resource to an empty concrete type.
-// The value is boxed within a corev2.Resource interface value.
-func Resolve(resource string) (corev2.Resource, error) {
+// The value is boxed within a corev3.Resource interface value.
+func Resolve(resource string) (corev3.Resource, error) {
+	fmt.Println("resource", resource)
 	if resource, ok := synonyms[resource]; ok {
 		return resource, nil
 	}
@@ -63,14 +65,18 @@ func Resolve(resource string) (corev2.Resource, error) {
 	}
 	apiVersion := strings.TrimSuffix(matches[1], ".")
 	typeName := matches[2]
-	if apiVersion == "" {
+	if apiVersion == "" && strings.ToLower(typeName) != "namespace" {
 		apiVersion = "core/v2"
+	} else if apiVersion == "" && strings.ToLower(typeName) == "namespace" {
+		// Special case for core/v3.Namespace
+		apiVersion = "core/v3"
 	}
+	fmt.Println(apiVersion, typeName)
 	value, err := apitools.Resolve(apiVersion, typeName)
 	if err != nil {
 		return nil, err
 	}
-	return compat.V2Resource(value), nil
+	return value.(corev3.Resource), nil
 }
 
 func dedupTypes(arg string) []string {
@@ -92,16 +98,16 @@ func dedupTypes(arg string) []string {
 }
 
 // GetResourceRequests gets the resources based on the input.
-func GetResourceRequests(actionSpec string, resources []corev2.Resource) ([]corev2.Resource, error) {
+func GetResourceRequests(actionSpec string, resources []corev3.Resource) ([]corev3.Resource, error) {
 	// parse the comma separated resource types and match against the defined actions
 	if actionSpec == "all" {
 		return resources, nil
 	}
 	if actionSpec == "" {
 		// There were no specs, return an empty slice
-		return []corev2.Resource{}, nil
+		return []corev3.Resource{}, nil
 	}
-	var actions []corev2.Resource
+	var actions []corev3.Resource
 	// deduplicate requested resources
 	types := dedupTypes(actionSpec)
 
@@ -121,8 +127,8 @@ func GetResourceRequests(actionSpec string, resources []corev2.Resource) ([]core
 
 // TrimResources removes all of the resources in the second slice from the
 // first slice, if they are in there.
-func TrimResources(resources []corev2.Resource, toRemove []corev2.Resource) []corev2.Resource {
-	result := make([]corev2.Resource, 0, len(resources))
+func TrimResources(resources []corev3.Resource, toRemove []corev3.Resource) []corev3.Resource {
+	result := make([]corev3.Resource, 0, len(resources))
 	for _, resource := range resources {
 		var found bool
 		for _, remove := range toRemove {
@@ -139,7 +145,7 @@ func TrimResources(resources []corev2.Resource, toRemove []corev2.Resource) []co
 }
 
 // WrapResources takes a list of resources and returns a list of wrappers.
-func WrapResources(resources []corev2.Resource) []types.Wrapper {
+func WrapResources(resources []corev3.Resource) []types.Wrapper {
 	wrapped := []types.Wrapper{}
 	for _, resource := range resources {
 		wrapped = append(wrapped, types.WrapResource(resource))

@@ -248,7 +248,7 @@ type tmGetter interface {
 
 // WrapResource wraps a Resource in a Wrapper that contains TypeMeta and
 // ObjectMeta.
-func WrapResource(r Resource) Wrapper {
+func WrapResource(r interface{}) Wrapper {
 	var tm TypeMeta
 	if getter, ok := r.(tmGetter); ok {
 		tm = getter.GetTypeMeta()

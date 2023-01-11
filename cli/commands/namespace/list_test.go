@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"testing"
 
-	corev2 "github.com/sensu/core/v2"
+	corev3 "github.com/sensu/core/v3"
 	client "github.com/sensu/sensu-go/cli/client/testing"
 	"github.com/sensu/sensu-go/cli/commands/helpers"
 	test "github.com/sensu/sensu-go/cli/commands/testing"
@@ -30,13 +30,13 @@ func TestListCommandRunEClosure(t *testing.T) {
 
 	cli := test.NewCLI()
 	client := cli.Client.(*client.MockClient)
-	resources := []corev2.Namespace{}
+	resources := []corev3.Namespace{}
 	client.On("List", mock.Anything, &resources, mock.Anything, mock.Anything).Return(nil).Run(
 		func(args mock.Arguments) {
-			resources := args[1].(*[]corev2.Namespace)
-			*resources = []corev2.Namespace{
-				*corev2.FixtureNamespace("one"),
-				*corev2.FixtureNamespace("two"),
+			resources := args[1].(*[]corev3.Namespace)
+			*resources = []corev3.Namespace{
+				*corev3.FixtureNamespace("one"),
+				*corev3.FixtureNamespace("two"),
 			}
 		},
 	)
@@ -54,7 +54,7 @@ func TestListCommandRunEClosureWithErr(t *testing.T) {
 
 	cli := test.NewCLI()
 	client := cli.Client.(*client.MockClient)
-	resources := []corev2.Namespace{}
+	resources := []corev3.Namespace{}
 	client.On("List", mock.Anything, &resources, mock.Anything, mock.Anything).Return(errors.New("fire"))
 
 	cmd := ListCommand(cli)
@@ -74,11 +74,11 @@ func TestListCommandRunEClosureWithHeader(t *testing.T) {
 
 	client := cli.Client.(*client.MockClient)
 	var header http.Header
-	resources := []corev2.Namespace{}
+	resources := []corev3.Namespace{}
 	client.On("List", mock.Anything, &resources, mock.Anything, &header).Return(nil).Run(
 		func(args mock.Arguments) {
-			resources := args[1].(*[]corev2.Namespace)
-			*resources = []corev2.Namespace{}
+			resources := args[1].(*[]corev3.Namespace)
+			*resources = []corev3.Namespace{}
 			header := args[3].(*http.Header)
 			*header = make(http.Header)
 			header.Add(helpers.HeaderWarning, "E_TOO_MANY_ENTITIES")

@@ -164,6 +164,16 @@ func (o *OutdatedAsset) GetObjectMeta() corev2.ObjectMeta {
 	return corev2.ObjectMeta{}
 }
 
+func (o *OutdatedAsset) GetMetadata() *corev2.ObjectMeta {
+	return &corev2.ObjectMeta{}
+}
+
+func (o *OutdatedAsset) SetMetadata(*corev2.ObjectMeta) {}
+
+func (o *OutdatedAsset) StoreName() string {
+	return ""
+}
+
 // SetObjectMeta is just a no-op to satisfy the Resource interface
 func (o *OutdatedAsset) SetObjectMeta(meta corev2.ObjectMeta) {
 	// no-op

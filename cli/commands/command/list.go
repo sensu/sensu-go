@@ -9,6 +9,7 @@ import (
 	"path"
 
 	corev2 "github.com/sensu/core/v2"
+	corev3 "github.com/sensu/core/v3"
 	"github.com/sensu/sensu-go/cli"
 	"github.com/sensu/sensu-go/cli/cmdmanager"
 	"github.com/sensu/sensu-go/cli/commands/helpers"
@@ -51,7 +52,7 @@ func listCommandExecute(cli *cli.SensuCli) func(cmd *cobra.Command, args []strin
 		var header http.Header
 
 		// Print the results based on the user preferences
-		resources := []corev2.Resource{}
+		resources := []corev3.Resource{}
 		var resultsWithBuilds []interface{}
 		for i := range commandPlugins {
 			if len(commandPlugins[i].Asset.Builds) > 0 {
