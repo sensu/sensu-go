@@ -6,6 +6,7 @@ import (
 	"strconv"
 
 	corev2 "github.com/sensu/core/v2"
+	corev3 "github.com/sensu/core/v3"
 	"github.com/sensu/sensu-go/cli"
 	"github.com/sensu/sensu-go/cli/client"
 	"github.com/sensu/sensu-go/cli/commands/helpers"
@@ -35,7 +36,7 @@ func ListCommand(cli *cli.SensuCli) *cobra.Command {
 			}
 
 			// Print the results based on the user preferences
-			resources := []corev2.Resource{}
+			resources := []corev3.Resource{}
 			for i := range results {
 				resources = append(resources, &results[i])
 			}

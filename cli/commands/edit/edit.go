@@ -15,6 +15,7 @@ import (
 	"strings"
 
 	corev2 "github.com/sensu/core/v2"
+	corev3 "github.com/sensu/core/v3"
 	"github.com/sensu/sensu-go/cli"
 	"github.com/sensu/sensu-go/cli/client/config"
 	"github.com/sensu/sensu-go/cli/commands/helpers"
@@ -41,7 +42,7 @@ func extension(format string) string {
 }
 
 type lifter interface {
-	Lift() types.Resource
+	Lift() corev3.Resource
 }
 
 type namespaceFormat interface {
@@ -85,7 +86,7 @@ func dumpResource(client client, cfg namespaceFormat, typeName string, key []str
 		if len(key) != 1 {
 			return errors.New("resource name missing")
 		}
-		requested.SetObjectMeta(corev2.ObjectMeta{
+		requested.SetMetadata(&corev2.ObjectMeta{
 			Namespace: cfg.Namespace(),
 			Name:      key[0],
 		})
@@ -93,7 +94,7 @@ func dumpResource(client client, cfg namespaceFormat, typeName string, key []str
 		if len(key) != 1 {
 			return errors.New("resource name missing")
 		}
-		requested.SetObjectMeta(corev2.ObjectMeta{
+		requested.SetMetadata(&corev2.ObjectMeta{
 			Namespace: cfg.Namespace(),
 			Name:      key[0],
 		})
@@ -103,10 +104,12 @@ func dumpResource(client client, cfg namespaceFormat, typeName string, key []str
 	}
 
 	// Determine the expected type for the store response between a
-	// corev2.Resource & a types.Wrapper. We will assume that all resources
+	// corev3.Resource & a types.Wrapper. We will assume that all resources
 	// outside core/v2 are stored as wrapped value
 	var response interface{}
 	if types.ApiVersion(reflect.Indirect(reflect.ValueOf(requested)).Type().PkgPath()) == path.Join(corev2.APIGroupName, corev2.APIVersion) {
+		response, _ = resource.Resolve(typeName)
+	} else if types.ApiVersion(reflect.Indirect(reflect.ValueOf(requested)).Type().PkgPath()) == path.Join("core", "v3") {
 		response, _ = resource.Resolve(typeName)
 	} else {
 		response = &types.Wrapper{}
@@ -117,12 +120,12 @@ func dumpResource(client client, cfg namespaceFormat, typeName string, key []str
 	}
 
 	// Retrieve the concrete resource value from the response
-	var resource corev2.Resource
+	var resource corev3.Resource
 	switch r := response.(type) {
-	case corev2.Resource:
+	case corev3.Resource:
 		resource = r
 	case *types.Wrapper:
-		resource = compat.V2Resource(r.Value)
+		resource = r.Value.(corev3.Resource)
 	default:
 		return fmt.Errorf("unexpected response type %T. Make sure the resource type is valid", response)
 	}
@@ -132,7 +135,7 @@ func dumpResource(client client, cfg namespaceFormat, typeName string, key []str
 	case "wrapped-json", "json":
 		return helpers.PrintWrappedJSON(resource, to)
 	default:
-		return helpers.PrintYAML([]types.Resource{resource}, to)
+		return helpers.PrintYAML([]corev3.Resource{resource}, to)
 	}
 }
 
@@ -156,11 +159,11 @@ func dumpBlank(cfg namespaceFormat, typeName string, to io.Writer) error {
 	case *corev2.Check:
 		// Special case here takes care of the check naming boondoggle
 		resource = &corev2.CheckConfig{}
-		resource.SetObjectMeta(corev2.ObjectMeta{
+		resource.SetMetadata(&corev2.ObjectMeta{
 			Namespace: cfg.Namespace(),
 		})
 	default:
-		resource.SetObjectMeta(corev2.ObjectMeta{
+		resource.SetMetadata(&corev2.ObjectMeta{
 			Namespace: cfg.Namespace(),
 		})
 	}
@@ -172,7 +175,7 @@ func dumpBlank(cfg namespaceFormat, typeName string, to io.Writer) error {
 	case "wrapped-json", "json":
 		return helpers.PrintWrappedJSON(resource, to)
 	default:
-		return helpers.PrintYAML([]types.Resource{resource}, to)
+		return helpers.PrintYAML([]corev3.Resource{resource}, to)
 	}
 }
 

@@ -5,7 +5,7 @@ import (
 	"io"
 	"net/http"
 
-	corev2 "github.com/sensu/core/v2"
+	corev3 "github.com/sensu/core/v3"
 	"github.com/sensu/sensu-go/cli"
 	"github.com/sensu/sensu-go/cli/client"
 	"github.com/sensu/sensu-go/cli/commands/helpers"
@@ -33,14 +33,14 @@ func ListCommand(cli *cli.SensuCli) *cobra.Command {
 
 			// Fetch namespaces from API
 			var header http.Header
-			results := []corev2.Namespace{}
+			results := []corev3.Namespace{}
 			err = cli.Client.List(client.NamespacesPath(), &results, &opts, &header)
 			if err != nil {
 				return err
 			}
 
 			// Print the results based on the user preferences
-			resources := []corev2.Resource{}
+			resources := []corev3.Resource{}
 			for i := range results {
 				resources = append(resources, &results[i])
 			}
@@ -62,11 +62,11 @@ func printToTable(results interface{}, writer io.Writer) {
 			Title:       "Name",
 			ColumnStyle: table.PrimaryTextStyle,
 			CellTransformer: func(data interface{}) string {
-				namespace, ok := data.(corev2.Namespace)
+				namespace, ok := data.(corev3.Namespace)
 				if !ok {
 					return cli.TypeError
 				}
-				return namespace.Name
+				return namespace.Metadata.Name
 			},
 		},
 	})

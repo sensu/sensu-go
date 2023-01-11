@@ -8,6 +8,7 @@ import (
 
 	goversion "github.com/hashicorp/go-version"
 	corev2 "github.com/sensu/core/v2"
+	corev3 "github.com/sensu/core/v3"
 	"github.com/sensu/sensu-go/bonsai"
 	"github.com/sensu/sensu-go/cli"
 	"github.com/sensu/sensu-go/cli/client"
@@ -70,7 +71,7 @@ func outdatedCommandExecute(cli *cli.SensuCli) func(cmd *cobra.Command, args []s
 		}
 
 		// Print the results based on user preferences
-		resources := []corev2.Resource{}
+		resources := []corev3.Resource{}
 		for _, outdatedAsset := range outdatedAssets {
 			resources = append(resources, &outdatedAsset)
 		}

@@ -6,7 +6,7 @@ import (
 	"io"
 	"strconv"
 
-	corev2 "github.com/sensu/core/v2"
+	corev3 "github.com/sensu/core/v3"
 	"github.com/sensu/sensu-go/cli"
 	"github.com/sensu/sensu-go/cli/client/config"
 	"github.com/sensu/sensu-go/cli/commands/helpers"
@@ -70,7 +70,7 @@ func execute(cli *cli.SensuCli) func(*cobra.Command, []string) error {
 
 			// Short names are only supported for core/v2 resources
 			shortName := ""
-			if wrapped.APIVersion == "core/v2" {
+			if wrapped.APIVersion == "core/v2" || wrapped.APIVersion == "core/v3" {
 				shortName = resource.RBACName()
 			}
 
@@ -107,9 +107,12 @@ func getFormat(cli *cli.SensuCli, cmd *cobra.Command) string {
 // isNamespaced is a hack to determine whether a resource is global or
 // namespaced, by relying on the SetNamespace method, which is a no-op for
 // global resources, and inspecting the resulting namespace
-func isNamespaced(r corev2.Resource) bool {
-	r.SetNamespace("~sensu")
-	return r.GetObjectMeta().Namespace == "~sensu"
+func isNamespaced(r corev3.Resource) bool {
+	gr, ok := r.(corev3.GlobalResource)
+	if !ok {
+		return true
+	}
+	return !gr.IsGlobalResource()
 }
 
 func printToTable(results interface{}, writer io.Writer) {

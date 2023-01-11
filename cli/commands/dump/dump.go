@@ -18,7 +18,6 @@ import (
 	"github.com/sensu/sensu-go/cli/commands/helpers"
 	"github.com/sensu/sensu-go/cli/resource"
 	"github.com/sensu/sensu-go/types"
-	"github.com/sensu/sensu-go/types/compat"
 	"github.com/spf13/cobra"
 )
 
@@ -158,9 +157,9 @@ func execute(cli *cli.SensuCli) func(*cobra.Command, []string) error {
 				return err
 			}
 			if ok {
-				req.SetNamespace(corev2.NamespaceTypeAll)
+				req.GetMetadata().Namespace = corev2.NamespaceTypeAll
 			} else {
-				req.SetNamespace(cli.Config.Namespace())
+				req.GetMetadata().Namespace = cli.Config.Namespace()
 			}
 
 			var val reflect.Value
@@ -193,9 +192,9 @@ func execute(cli *cli.SensuCli) func(*cobra.Command, []string) error {
 				continue
 			}
 
-			resources := make([]corev2.Resource, val.Len())
+			resources := make([]corev3.Resource, val.Len())
 			for i := range resources {
-				resources[i] = compat.V2Resource(val.Index(i).Interface())
+				resources[i] = val.Index(i).Interface().(corev3.Resource)
 			}
 
 			switch format {

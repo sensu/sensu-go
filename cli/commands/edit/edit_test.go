@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	corev2 "github.com/sensu/core/v2"
+	corev3 "github.com/sensu/core/v3"
 	"gopkg.in/yaml.v2"
 )
 
@@ -33,8 +34,8 @@ func (t testClient) Get(_ string, val interface{}) error {
 		return t.err
 	}
 	switch v := val.(type) {
-	case *corev2.Namespace:
-		*v = *(corev2.FixtureNamespace("default"))
+	case *corev3.Namespace:
+		*v = *(corev3.FixtureNamespace("default"))
 	case *corev2.ClusterRole:
 		*v = *(corev2.FixtureClusterRole("default"))
 	case *corev2.ClusterRoleBinding:

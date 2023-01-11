@@ -1,17 +1,17 @@
 package testing
 
 import (
-	corev2 "github.com/sensu/core/v2"
+	corev3 "github.com/sensu/core/v3"
 )
 
 // CreateNamespace for use with mock lib
-func (c *MockClient) CreateNamespace(namespace *corev2.Namespace) error {
+func (c *MockClient) CreateNamespace(namespace *corev3.Namespace) error {
 	args := c.Called(namespace)
 	return args.Error(0)
 }
 
 // UpdateNamespace for use with mock lib
-func (c *MockClient) UpdateNamespace(namespace *corev2.Namespace) error {
+func (c *MockClient) UpdateNamespace(namespace *corev3.Namespace) error {
 	args := c.Called(namespace)
 	return args.Error(0)
 }
@@ -23,7 +23,7 @@ func (c *MockClient) DeleteNamespace(namespace string) error {
 }
 
 // FetchNamespace for use with mock lib
-func (c *MockClient) FetchNamespace(namespace string) (*corev2.Namespace, error) {
+func (c *MockClient) FetchNamespace(namespace string) (*corev3.Namespace, error) {
 	args := c.Called(namespace)
-	return args.Get(0).(*corev2.Namespace), args.Error(1)
+	return args.Get(0).(*corev3.Namespace), args.Error(1)
 }

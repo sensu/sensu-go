@@ -7,6 +7,7 @@ import (
 	"strings"
 	"testing"
 
+	corev3 "github.com/sensu/core/v3"
 	"github.com/sensu/sensu-go/cli/client/config"
 	"github.com/sensu/sensu-go/cli/elements/list"
 	"github.com/sensu/sensu-go/types"
@@ -58,7 +59,7 @@ func TestPrintWrappedJSONList(t *testing.T) {
 
 	buf := new(bytes.Buffer)
 
-	require.NoError(t, PrintWrappedJSONList([]types.Resource{check1, check2}, buf))
+	require.NoError(t, PrintWrappedJSONList([]corev3.Resource{check1, check2}, buf))
 	// compare each string individually
 	output3 := strings.Split(buf.String(), "}\n{")
 	assert.JSONEq(string(output1), output3[0]+"}")

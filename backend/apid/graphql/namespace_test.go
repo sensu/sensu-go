@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	corev2 "github.com/sensu/core/v2"
+	corev3 "github.com/sensu/core/v3"
 	"github.com/sensu/sensu-go/backend/apid/graphql/schema"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/graphql"
@@ -26,7 +27,7 @@ func TestNamespaceTypeCheckConfigsField(t *testing.T) {
 	params := schema.NamespaceChecksFieldResolverParams{ResolveParams: graphql.ResolveParams{Context: context.Background()}}
 	cfg := ServiceConfig{CheckClient: checkClient}
 	params.Context = contextWithLoadersNoCache(context.Background(), cfg)
-	params.Source = corev2.FixtureNamespace("default")
+	params.Source = corev3.FixtureNamespace("default")
 	params.Args.Limit = 20
 
 	// Success
@@ -51,7 +52,7 @@ func TestNamespaceTypeEntitiesField(t *testing.T) {
 
 	params := schema.NamespaceEntitiesFieldResolverParams{ResolveParams: graphql.ResolveParams{Context: context.Background()}}
 	params.Context = context.Background()
-	params.Source = corev2.FixtureNamespace("default")
+	params.Source = corev3.FixtureNamespace("default")
 	params.Args.Limit = 2
 
 	// Success
@@ -166,7 +167,7 @@ func TestNamespaceTypeEventsField(t *testing.T) {
 
 	params := schema.NamespaceEventsFieldResolverParams{}
 	params.Context = context.Background()
-	params.Source = corev2.FixtureNamespace("default")
+	params.Source = corev3.FixtureNamespace("default")
 	params.Args.Limit = 20
 
 	// Success
@@ -299,7 +300,7 @@ func TestNamespaceTypeEventsFieldWithStoreFiltering(t *testing.T) {
 				Args:          tc.args,
 			}
 			params.Context = context.Background()
-			params.Source = corev2.FixtureNamespace("default")
+			params.Source = corev3.FixtureNamespace("default")
 
 			res, err := impl.Events(params)
 
@@ -332,7 +333,7 @@ func TestNamespaceTypeEventFiltersField(t *testing.T) {
 	params := schema.NamespaceEventFiltersFieldResolverParams{ResolveParams: graphql.ResolveParams{Context: context.Background()}}
 	cfg := ServiceConfig{EventFilterClient: client}
 	params.Context = contextWithLoadersNoCache(context.Background(), cfg)
-	params.Source = corev2.FixtureNamespace("default")
+	params.Source = corev3.FixtureNamespace("default")
 	params.Args.Limit = 20
 
 	// Success
@@ -360,7 +361,7 @@ func TestNamespaceTypeHandlersField(t *testing.T) {
 	params := schema.NamespaceHandlersFieldResolverParams{ResolveParams: graphql.ResolveParams{Context: context.Background()}}
 	cfg := ServiceConfig{HandlerClient: client}
 	params.Context = contextWithLoadersNoCache(context.Background(), cfg)
-	params.Source = corev2.FixtureNamespace("default")
+	params.Source = corev3.FixtureNamespace("default")
 	params.Args.Limit = 10
 
 	// Success
@@ -392,7 +393,7 @@ func TestNamespaceTypeMutatorsField(t *testing.T) {
 	params := schema.NamespaceMutatorsFieldResolverParams{ResolveParams: graphql.ResolveParams{Context: context.Background()}}
 	cfg := ServiceConfig{MutatorClient: client}
 	params.Context = contextWithLoadersNoCache(context.Background(), cfg)
-	params.Source = corev2.FixtureNamespace("default")
+	params.Source = corev3.FixtureNamespace("default")
 	params.Args.Limit = 10
 
 	// Success
@@ -423,7 +424,7 @@ func TestNamespaceTypeSilencesField(t *testing.T) {
 	cfg := ServiceConfig{SilencedClient: client}
 	params := schema.NamespaceSilencesFieldResolverParams{ResolveParams: graphql.ResolveParams{Context: context.Background()}}
 	params.Context = contextWithLoadersNoCache(context.Background(), cfg)
-	params.Source = corev2.FixtureNamespace("xxx")
+	params.Source = corev3.FixtureNamespace("xxx")
 
 	// Success
 	res, err := impl.Silences(params)

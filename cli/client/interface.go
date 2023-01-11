@@ -5,6 +5,7 @@ import (
 
 	"github.com/go-resty/resty/v2"
 	corev2 "github.com/sensu/core/v2"
+	corev3 "github.com/sensu/core/v3"
 	"github.com/sensu/sensu-go/types"
 )
 
@@ -171,10 +172,10 @@ type MutatorAPIClient interface {
 
 // NamespaceAPIClient client methods for namespaces
 type NamespaceAPIClient interface {
-	CreateNamespace(*corev2.Namespace) error
-	UpdateNamespace(*corev2.Namespace) error
+	CreateNamespace(*corev3.Namespace) error
+	UpdateNamespace(*corev3.Namespace) error
 	DeleteNamespace(string) error
-	FetchNamespace(string) (*corev2.Namespace, error)
+	FetchNamespace(string) (*corev3.Namespace, error)
 }
 
 // PipelineAPIClient client methods for pipelines
