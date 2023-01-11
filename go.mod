@@ -48,7 +48,7 @@ require (
 	github.com/sensu/core/v3 v3.8.0-alpha7
 	github.com/sensu/lasr v1.2.1
 	github.com/sensu/sensu-api-tools v0.0.0-20221025205055-db03ae2f8099
-	github.com/sensu/sensu-go/types v0.12.0-alpha6
+	github.com/sensu/sensu-go/types v0.12.0-alpha7
 	github.com/shirou/gopsutil/v3 v3.21.12
 	github.com/sirupsen/logrus v1.9.0
 	github.com/spf13/cobra v1.1.3
