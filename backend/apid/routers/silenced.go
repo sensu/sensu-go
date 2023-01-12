@@ -49,8 +49,8 @@ func (r *SilencedRouter) Mount(parent *mux.Router) {
 	routes.Get(r.get)
 	routes.Post(r.create)
 	routes.Put(r.createOrReplace)
-	routes.List(r.listr, corev2.SilencedFields)
-	routes.ListAllNamespaces(r.listr, "/{resource:silenced}", corev2.SilencedFields)
+	routes.List(r.listr, corev3.SilencedFields)
+	routes.ListAllNamespaces(r.listr, "/{resource:silenced}", corev3.SilencedFields)
 
 	// Custom routes for listing by subscription and checks for a specific
 	// namespace, in addition to all namespaces for checks.

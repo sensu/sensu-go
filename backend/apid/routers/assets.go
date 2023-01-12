@@ -3,6 +3,7 @@ package routers
 import (
 	"github.com/gorilla/mux"
 	corev2 "github.com/sensu/core/v2"
+	corev3 "github.com/sensu/core/v3"
 	"github.com/sensu/sensu-go/backend/apid/handlers"
 	storev2 "github.com/sensu/sensu-go/backend/store/v2"
 )
@@ -29,8 +30,8 @@ func (r *AssetsRouter) Mount(parent *mux.Router) {
 	handlers := handlers.NewHandlers[*corev2.Asset](r.store)
 
 	routes.Get(handlers.GetResource)
-	routes.List(handlers.ListResources, corev2.AssetFields)
-	routes.ListAllNamespaces(handlers.ListResources, "/{resource:assets}", corev2.AssetFields)
+	routes.List(handlers.ListResources, corev3.AssetFields)
+	routes.ListAllNamespaces(handlers.ListResources, "/{resource:assets}", corev3.AssetFields)
 	routes.Patch(handlers.PatchResource)
 	routes.Post(handlers.CreateResource)
 	routes.Put(handlers.CreateOrUpdateResource)

@@ -3,6 +3,7 @@ package routers
 import (
 	"github.com/gorilla/mux"
 	corev2 "github.com/sensu/core/v2"
+	corev3 "github.com/sensu/core/v3"
 	"github.com/sensu/sensu-go/backend/apid/handlers"
 	storev2 "github.com/sensu/sensu-go/backend/store/v2"
 )
@@ -29,8 +30,8 @@ func (r *PipelinesRouter) Mount(parent *mux.Router) {
 	handlers := handlers.NewHandlers[*corev2.Pipeline](r.store)
 
 	routes.Get(handlers.GetResource)
-	routes.List(handlers.ListResources, corev2.PipelineFields)
-	routes.ListAllNamespaces(handlers.ListResources, "/{resource:pipelines}", corev2.PipelineFields)
+	routes.List(handlers.ListResources, corev3.PipelineFields)
+	routes.ListAllNamespaces(handlers.ListResources, "/{resource:pipelines}", corev3.PipelineFields)
 	routes.Patch(handlers.PatchResource)
 	routes.Post(handlers.CreateResource)
 	routes.Put(handlers.CreateOrUpdateResource)
