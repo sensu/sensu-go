@@ -4,13 +4,14 @@ import (
 	"testing"
 
 	v2 "github.com/sensu/core/v2"
+	corev3 "github.com/sensu/core/v3"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 func TestString(t *testing.T) {
-	fn := func(res v2.Resource, name string) bool {
-		return res.GetObjectMeta().Name == name
+	fn := func(res corev3.Resource, name string) bool {
+		return res.GetMetadata().Name == name
 	}
 
 	f := String(fn)

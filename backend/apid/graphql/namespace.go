@@ -67,7 +67,7 @@ func (r *namespaceImpl) Checks(p schema.NamespaceChecksFieldResolverParams) (int
 	}
 
 	// filter
-	matches, err := filter.Compile(p.Args.Filters, CheckFilters(), corev2.CheckConfigFields)
+	matches, err := filter.Compile(p.Args.Filters, CheckFilters(), corev3.CheckConfigFields)
 	if err != nil {
 		return res, err
 	}
@@ -103,7 +103,7 @@ func (r *namespaceImpl) EventFilters(p schema.NamespaceEventFiltersFieldResolver
 	}
 
 	// filter
-	matches, err := filter.Compile(p.Args.Filters, EventFilterFilters(), corev2.EventFilterFields)
+	matches, err := filter.Compile(p.Args.Filters, EventFilterFilters(), corev3.EventFilterFields)
 	if err != nil {
 		return res, err
 	}
@@ -139,7 +139,7 @@ func (r *namespaceImpl) Handlers(p schema.NamespaceHandlersFieldResolverParams) 
 	}
 
 	// filter
-	matches, err := filter.Compile(p.Args.Filters, HandlerFilters(), corev2.HandlerFields)
+	matches, err := filter.Compile(p.Args.Filters, HandlerFilters(), corev3.HandlerFields)
 	if err != nil {
 		return res, err
 	}
@@ -175,7 +175,7 @@ func (r *namespaceImpl) Mutators(p schema.NamespaceMutatorsFieldResolverParams) 
 	}
 
 	// filter
-	matches, err := filter.Compile(p.Args.Filters, MutatorFilters(), corev2.MutatorFields)
+	matches, err := filter.Compile(p.Args.Filters, MutatorFilters(), corev3.MutatorFields)
 	if err != nil {
 		return res, err
 	}
@@ -211,7 +211,7 @@ func (r *namespaceImpl) Silences(p schema.NamespaceSilencesFieldResolverParams) 
 	}
 
 	// filter
-	matches, err := filter.Compile(p.Args.Filters, SilenceFilters(), corev2.SilencedFields)
+	matches, err := filter.Compile(p.Args.Filters, SilenceFilters(), corev3.SilencedFields)
 	if err != nil {
 		return res, err
 	}
@@ -276,7 +276,7 @@ CONTINUE:
 	}
 
 	// filter
-	matchFn, err := filter.Compile(p.Args.Filters, EntityFilters(), corev2.EntityFields)
+	matchFn, err := filter.Compile(p.Args.Filters, EntityFilters(), corev3.EntityFields)
 	if err != nil {
 		return res, err
 	}
@@ -398,7 +398,7 @@ func (r *namespaceImpl) Events(p schema.NamespaceEventsFieldResolverParams) (int
 	}
 
 	// filter
-	matches, err := filter.Compile(p.Args.Filters, EventFilters(), corev2.EventFields)
+	matches, err := filter.Compile(p.Args.Filters, EventFilters(), corev3.EventFields)
 	if err != nil {
 		return res, err
 	}

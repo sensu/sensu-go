@@ -2,6 +2,7 @@ package graphql
 
 import (
 	v2 "github.com/sensu/core/v2"
+	corev3 "github.com/sensu/core/v3"
 	"github.com/sensu/sensu-go/backend/apid/graphql/globalid"
 	"github.com/sensu/sensu-go/backend/apid/graphql/schema"
 	"github.com/sensu/sensu-go/graphql"
@@ -25,5 +26,5 @@ func (*assetImpl) IsTypeOf(s interface{}, p graphql.IsTypeOfParams) bool {
 
 // ToJSON implements response to request for 'toJSON' field.
 func (*assetImpl) ToJSON(p graphql.ResolveParams) (interface{}, error) {
-	return types.WrapResource(p.Source.(v2.Resource)), nil
+	return types.WrapResource(p.Source.(corev3.Resource)), nil
 }

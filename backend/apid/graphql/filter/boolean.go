@@ -4,10 +4,10 @@ import (
 	"strconv"
 	"strings"
 
-	v2 "github.com/sensu/core/v2"
+	corev3 "github.com/sensu/core/v3"
 )
 
-type BooleanMatcher func(v2.Resource, bool) bool
+type BooleanMatcher func(corev3.Resource, bool) bool
 
 func Boolean(fn BooleanMatcher) Filter {
 	return func(val string, _ FieldsFunc) (Matcher, error) {
@@ -16,7 +16,7 @@ func Boolean(fn BooleanMatcher) Filter {
 			return nil, err
 		}
 
-		return func(res v2.Resource) bool {
+		return func(res corev3.Resource) bool {
 			return fn(res, v)
 		}, nil
 	}
