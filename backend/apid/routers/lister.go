@@ -17,7 +17,7 @@ import (
 type ListControllerFunc func(ctx context.Context, pred *store.SelectionPredicate) ([]corev3.Resource, error)
 
 // FieldsFunc represents the function to retrieve fields about a given resource
-type FieldsFunc func(resource corev2.Resource) map[string]string
+type FieldsFunc func(resource corev3.Resource) map[string]string
 
 // listerFunc represents the function signature of a Lister
 type listerFunc func(ListControllerFunc, FieldsFunc) http.HandlerFunc

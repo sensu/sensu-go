@@ -7,7 +7,6 @@ import (
 	"net/url"
 
 	"github.com/gorilla/mux"
-	corev2 "github.com/sensu/core/v2"
 	corev3 "github.com/sensu/core/v3"
 	"github.com/sensu/sensu-go/backend/apid/actions"
 	"github.com/sensu/sensu-go/backend/apid/handlers"
@@ -50,7 +49,7 @@ func (r *NamespacesRouter) Mount(parent *mux.Router) {
 
 	routes.Del(r.delete)
 	routes.Get(r.get)
-	routes.List(r.list, corev2.NamespaceFields)
+	routes.List(r.list, corev3.NamespaceFields)
 	routes.Post(r.create)
 	routes.Patch(r.patcher.PatchResource)
 	routes.Put(r.update)

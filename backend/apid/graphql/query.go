@@ -10,6 +10,7 @@ import (
 
 	dto "github.com/prometheus/client_model/go"
 	corev2 "github.com/sensu/core/v2"
+	corev3 "github.com/sensu/core/v3"
 	apitools "github.com/sensu/sensu-api-tools"
 	"github.com/sensu/sensu-go/backend/apid/graphql/filter"
 	"github.com/sensu/sensu-go/backend/apid/graphql/relay"
@@ -143,7 +144,7 @@ func (r *queryImpl) Suggest(p schema.QuerySuggestFieldResolverParams) (interface
 	}
 
 	// if given one or more filters, configure a matcher
-	var matches filter.Matcher = func(corev2.Resource) bool { return true }
+	var matches filter.Matcher = func(corev3.Resource) bool { return true }
 	if len(p.Args.Filters) > 0 {
 		matches, err = filter.Compile(p.Args.Filters, GlobalFilters, res.FilterFunc)
 		if err != nil {
@@ -163,7 +164,7 @@ func (r *queryImpl) Suggest(p schema.QuerySuggestFieldResolverParams) (interface
 				break
 			}
 		}
-		s := objs.Elem().Index(i).Interface().(corev2.Resource)
+		s := objs.Elem().Index(i).Interface().(corev3.Resource)
 		if !matches(s) {
 			continue
 		}

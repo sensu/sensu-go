@@ -3,6 +3,7 @@ package routers
 import (
 	"github.com/gorilla/mux"
 	corev2 "github.com/sensu/core/v2"
+	corev3 "github.com/sensu/core/v3"
 	"github.com/sensu/sensu-go/backend/apid/handlers"
 	storev2 "github.com/sensu/sensu-go/backend/store/v2"
 )
@@ -30,8 +31,8 @@ func (r *RoleBindingsRouter) Mount(parent *mux.Router) {
 
 	routes.Del(handlers.DeleteResource)
 	routes.Get(handlers.GetResource)
-	routes.List(handlers.ListResources, corev2.RoleBindingFields)
-	routes.ListAllNamespaces(handlers.ListResources, "/{resource:rolebindings}", corev2.RoleBindingFields)
+	routes.List(handlers.ListResources, corev3.RoleBindingFields)
+	routes.ListAllNamespaces(handlers.ListResources, "/{resource:rolebindings}", corev3.RoleBindingFields)
 	routes.Patch(handlers.PatchResource)
 	routes.Post(handlers.CreateResource)
 	routes.Put(handlers.CreateOrUpdateResource)

@@ -6,6 +6,7 @@ import (
 	"time"
 
 	corev2 "github.com/sensu/core/v2"
+	corev3 "github.com/sensu/core/v3"
 	"github.com/sensu/sensu-go/backend/apid/graphql/filter"
 	"github.com/sensu/sensu-go/backend/apid/graphql/globalid"
 	"github.com/sensu/sensu-go/backend/apid/graphql/schema"
@@ -58,7 +59,7 @@ func (r *entityImpl) Events(p schema.EntityEventsFieldResolverParams) (interface
 	}
 
 	// filter
-	matches, err := filter.Compile(p.Args.Filters, EventFilters(), corev2.EventFields)
+	matches, err := filter.Compile(p.Args.Filters, EventFilters(), corev3.EventFields)
 	if err != nil {
 		return []interface{}{}, err
 	}
@@ -173,7 +174,7 @@ func (*entityImpl) IsTypeOf(s interface{}, p graphql.IsTypeOfParams) bool {
 
 // ToJSON implements response to request for 'toJSON' field.
 func (*entityImpl) ToJSON(p graphql.ResolveParams) (interface{}, error) {
-	return types.WrapResource(p.Source.(corev2.Resource)), nil
+	return types.WrapResource(p.Source.(corev3.Resource)), nil
 }
 
 //

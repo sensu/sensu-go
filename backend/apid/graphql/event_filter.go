@@ -5,6 +5,7 @@ import (
 	gostrings "strings"
 
 	corev2 "github.com/sensu/core/v2"
+	corev3 "github.com/sensu/core/v3"
 	"github.com/sensu/sensu-go/backend/apid/graphql/globalid"
 	"github.com/sensu/sensu-go/backend/apid/graphql/schema"
 	"github.com/sensu/sensu-go/graphql"
@@ -45,7 +46,7 @@ func (*eventFilterImpl) Action(p graphql.ResolveParams) (schema.EventFilterActio
 
 // ToJSON implements response to request for 'toJSON' field.
 func (*eventFilterImpl) ToJSON(p graphql.ResolveParams) (interface{}, error) {
-	return types.WrapResource(p.Source.(corev2.Resource)), nil
+	return types.WrapResource(p.Source.(corev3.Resource)), nil
 }
 
 // RuntimeAssets implements response to request for 'runtimeAssets' field.

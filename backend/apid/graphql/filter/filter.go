@@ -4,7 +4,7 @@ import (
 	"errors"
 	"strings"
 
-	v2 "github.com/sensu/core/v2"
+	corev3 "github.com/sensu/core/v3"
 )
 
 var (
@@ -20,13 +20,13 @@ var (
 )
 
 // Match a given resource
-type Matcher func(v2.Resource) bool
+type Matcher func(corev3.Resource) bool
 
 // Filter configures a new Matcher given a statement and a fields func.
 type Filter func(string, FieldsFunc) (Matcher, error)
 
 // FieldsFunc represents the function to retrieve fields about a given resource
-type FieldsFunc func(resource v2.Resource) map[string]string
+type FieldsFunc func(resource corev3.Resource) map[string]string
 
 const (
 	// separator character used to separate the key and value
@@ -53,7 +53,7 @@ func Compile(statements []string, filters map[string]Filter, fieldsFn FieldsFunc
 		matchers = append(matchers, matcher)
 	}
 
-	return func(res v2.Resource) bool {
+	return func(res corev3.Resource) bool {
 		for _, matches := range matchers {
 			if !matches(res) {
 				return false

@@ -60,8 +60,8 @@ func (r *EntitiesRouter) Mount(parent *mux.Router) {
 
 	routes.Del(deleter.Delete)
 	routes.Get(r.find)
-	routes.List(r.controller.List, corev2.EntityFields)
-	routes.ListAllNamespaces(r.controller.List, "/{resource:entities}", corev2.EntityFields)
+	routes.List(r.controller.List, corev3.EntityFields)
+	routes.ListAllNamespaces(r.controller.List, "/{resource:entities}", corev3.EntityFields)
 	routes.Patch(ecHandlers.PatchResource)
 	routes.Post(r.create)
 	routes.Put(r.createOrReplace)

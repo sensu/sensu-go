@@ -46,7 +46,7 @@ func (r *UsersRouter) Mount(parent *mux.Router) {
 		Router:     parent,
 		PathPrefix: "/{resource:users}",
 	}
-	routes.List(r.controller.List, corev2.UserFields)
+	routes.List(r.controller.List, corev3.UserFields)
 	routes.Get(r.get)
 	routes.Post(r.create)
 	routes.Del(r.disable)

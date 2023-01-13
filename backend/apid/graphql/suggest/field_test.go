@@ -5,13 +5,14 @@ import (
 	"testing"
 
 	v2 "github.com/sensu/core/v2"
+	corev3 "github.com/sensu/core/v3"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestCustomFieldMatches(t *testing.T) {
 	field := CustomField{
 		Name: "my-field",
-		FieldFunc: func(v2.Resource) []string {
+		FieldFunc: func(corev3.Resource) []string {
 			return []string{"test"}
 		},
 	}
@@ -37,7 +38,7 @@ func TestCustomFieldValue(t *testing.T) {
 	check := v2.FixtureCheckConfig("check")
 	field := CustomField{
 		Name: "my-field",
-		FieldFunc: func(res v2.Resource) []string {
+		FieldFunc: func(res corev3.Resource) []string {
 			return res.(*v2.CheckConfig).Subscriptions
 		},
 	}
@@ -49,7 +50,7 @@ func TestCustomFieldValue(t *testing.T) {
 func TestMapFieldMatches(t *testing.T) {
 	field := MapField{
 		Name: "a/b",
-		FieldFunc: func(v2.Resource) map[string]string {
+		FieldFunc: func(corev3.Resource) map[string]string {
 			return map[string]string{}
 		},
 	}
@@ -78,7 +79,7 @@ func TestMapFieldValues(t *testing.T) {
 	check := v2.FixtureCheckConfig("check")
 	field := MapField{
 		Name: "a/b",
-		FieldFunc: func(v2.Resource) map[string]string {
+		FieldFunc: func(corev3.Resource) map[string]string {
 			return map[string]string{
 				"a": "b",
 				"c": "d",

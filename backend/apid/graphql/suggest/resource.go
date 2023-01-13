@@ -1,13 +1,13 @@
 package suggest
 
-import corev2 "github.com/sensu/core/v2"
+import corev3 "github.com/sensu/core/v3"
 
 // Resource represents a Sensu resource
 type Resource struct {
 	Group      string
 	Name       string
 	Fields     []Field
-	FilterFunc func(corev2.Resource) map[string]string
+	FilterFunc func(corev3.Resource) map[string]string
 }
 
 // LookupField uses given ref to find the appropriate field.

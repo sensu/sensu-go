@@ -44,8 +44,8 @@ func (r *EventsRouter) Mount(parent *mux.Router) {
 	}
 
 	routes.Post(r.create)
-	routes.List(r.controller.List, corev2.EventFields)
-	routes.ListAllNamespaces(r.controller.List, "/{resource:events}", corev2.EventFields)
+	routes.List(r.controller.List, corev3.EventFields)
+	routes.ListAllNamespaces(r.controller.List, "/{resource:events}", corev3.EventFields)
 	routes.Path("{entity}/{check}", r.get).Methods(http.MethodGet)
 	routes.Path("{entity}/{check}", r.delete).Methods(http.MethodDelete)
 	routes.Path("{entity}/{check}", r.createOrReplace).Methods(http.MethodPost, http.MethodPut)
@@ -53,7 +53,7 @@ func (r *EventsRouter) Mount(parent *mux.Router) {
 	// Additionaly allow a subcollection to be specified when listing events,
 	// which correspond to the entity name here
 	parent.HandleFunc(path.Join(routes.PathPrefix, "{subcollection}"),
-		listerHandler(r.controller.List, corev2.EventFields)).Methods(http.MethodGet)
+		listerHandler(r.controller.List, corev3.EventFields)).Methods(http.MethodGet)
 }
 
 func (r *EventsRouter) get(req *http.Request) (corev3.Resource, error) {
