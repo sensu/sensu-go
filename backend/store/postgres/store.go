@@ -281,10 +281,11 @@ func (s *ConfigStore) List(ctx context.Context, request storev2.ResourceRequest,
 		return nil, &store.ErrNotValid{Err: err}
 	}
 
-	selectorSQL, selectorArgs, err := getSelectorSQL(ctx)
-	if err != nil {
-		return nil, &store.ErrNotValid{Err: err}
-	}
+	//TODO(eric): implement selectors
+	//selectorSQL, selectorArgs, err := getSelectorSQL(ctx)
+	//if err != nil {
+	//	return nil, &store.ErrNotValid{Err: err}
+	//}
 
 	tmpl, err := template.New("listResourceQuery").Parse(ListConfigQueryTmpl)
 	if err != nil {
@@ -295,17 +296,17 @@ func (s *ConfigStore) List(ctx context.Context, request storev2.ResourceRequest,
 		predicate = &store.SelectionPredicate{}
 	}
 	templValues := listTemplateValues{
-		Limit:       predicate.Limit,
-		Offset:      predicate.Offset,
-		SelectorSQL: strings.TrimSpace(selectorSQL),
-		Namespaced:  request.Namespace != "",
+		Limit:  predicate.Limit,
+		Offset: predicate.Offset,
+		//SelectorSQL: strings.TrimSpace(selectorSQL),
+		Namespaced: request.Namespace != "",
 	}
 	if err := tmpl.Execute(&queryBuilder, templValues); err != nil {
 		return nil, err
 	}
 
 	args := []interface{}{request.APIVersion, request.Type, request.Namespace}
-	args = append(args, selectorArgs...)
+	// args = append(args, selectorArgs...)
 
 	query := queryBuilder.String()
 	rows, err := s.db.Query(ctx, query, args...)

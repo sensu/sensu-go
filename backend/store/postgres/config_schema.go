@@ -74,7 +74,7 @@ const ListConfigQueryTmpl = `
     FROM configuration
 	WHERE api_version=$1 AND api_type=$2 AND NOT isfinite(deleted_at)
         {{if .Namespaced}} AND namespace=$3 {{end}}
-        -- {{if ne .SelectorSQL ""}}AND {{.SelectorSQL}}{{end}}
+        {{if ne .SelectorSQL ""}}AND {{.SelectorSQL}}{{end}}
     ORDER BY namespace, name ASC
     {{if (gt .Limit 0)}} LIMIT {{.Limit}} {{end}} OFFSET {{ .Offset }};`
 
