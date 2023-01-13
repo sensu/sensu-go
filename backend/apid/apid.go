@@ -33,6 +33,7 @@ type APId struct {
 	Authenticator              *authentication.Authenticator
 	HTTPServer                 *http.Server
 	CoreSubrouter              *mux.Router
+	CoreV3Subrouter            *mux.Router
 	EntityLimitedCoreSubrouter *mux.Router
 	GraphQLSubrouter           *mux.Router
 	RequestLimit               int64
@@ -93,6 +94,7 @@ func New(c Config, opts ...Option) (*APId, error) {
 	a.GraphQLSubrouter = GraphQLSubrouter(router, c)
 	_ = AuthenticationSubrouter(router, c)
 	a.CoreSubrouter = CoreSubrouter(router, c)
+	a.CoreV3Subrouter = CoreV3Subrouter(router, c)
 	a.EntityLimitedCoreSubrouter = EntityLimitedCoreSubrouter(router, c)
 
 	a.HTTPServer = &http.Server{
@@ -164,7 +166,6 @@ func CoreSubrouter(router *mux.Router, cfg Config) *mux.Router {
 		routers.NewHandlersRouter(cfg.Store),
 		routers.NewHooksRouter(cfg.Store),
 		routers.NewMutatorsRouter(cfg.Store),
-		routers.NewNamespacesRouter(api.NewNamespaceClient(cfg.Store, &rbac.Authorizer{Store: cfg.Store}), handlers.NewHandlers[*corev3.Namespace](cfg.Store)),
 		routers.NewPipelinesRouter(cfg.Store),
 		routers.NewRolesRouter(cfg.Store),
 		routers.NewRoleBindingsRouter(cfg.Store),
@@ -173,6 +174,24 @@ func CoreSubrouter(router *mux.Router, cfg Config) *mux.Router {
 		routers.NewUsersRouter(cfg.Store),
 	)
 
+	return subrouter
+}
+
+func CoreV3Subrouter(router *mux.Router, cfg Config) *mux.Router {
+	subrouter := NewSubrouter(
+		router.PathPrefix("/api/{group:core}/{version:v3}/"),
+		middlewares.Namespace{},
+		middlewares.Authentication{Store: cfg.Store},
+		middlewares.SimpleLogger{},
+		middlewares.AuthorizationAttributes{},
+		middlewares.Authorization{Authorizer: &rbac.Authorizer{Store: cfg.Store}},
+		middlewares.LimitRequest{Limit: cfg.RequestLimit},
+		middlewares.Pagination{},
+	)
+	mountRouters(
+		subrouter,
+		routers.NewNamespacesRouter(api.NewNamespaceClient(cfg.Store, &rbac.Authorizer{Store: cfg.Store}), handlers.NewHandlers[*corev3.Namespace](cfg.Store)),
+	)
 	return subrouter
 }
 
