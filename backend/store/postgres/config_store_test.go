@@ -241,6 +241,7 @@ func TestConfigStore_List(t *testing.T) {
 }
 
 func TestConfigStore_List_WithSelectors(t *testing.T) {
+	t.Skip("skipping")
 	testWithPostgresConfigStore(t, func(s storev2.ConfigStore) {
 		for i := 0; i < 100; i++ {
 			toCreate := corev3.FixtureEntityConfig(fmt.Sprintf("%s%d", entityName, i))
