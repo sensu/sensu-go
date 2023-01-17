@@ -207,12 +207,12 @@ func (s *SelectorSQLBuilder) formatSelectorConds(ctr *argCounter, inclusions, ex
 	conds := make([]string, 0, 2)
 	vars := make([]interface{}, 0, 2)
 	if len(inclusions) > 0 {
-		conds = append(conds, fmt.Sprintf("selectors @> $%d", ctr.Next()))
+		conds = append(conds, fmt.Sprintf("%s @> $%d", s.selectorColumn, ctr.Next()))
 		b, _ := json.Marshal(inclusions)
 		vars = append(vars, b)
 	}
 	if len(exclusions) > 0 {
-		conds = append(conds, fmt.Sprintf("NOT selectors @> $%d", ctr.Next()))
+		conds = append(conds, fmt.Sprintf("NOT %s @> $%d", s.selectorColumn, ctr.Next()))
 		b, _ := json.Marshal(exclusions)
 		vars = append(vars, b)
 	}

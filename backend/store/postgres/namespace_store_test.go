@@ -611,6 +611,26 @@ func TestNamespaceStore_List(t *testing.T) {
 				corev3.FixtureNamespace("foo-4"),
 			},
 		},
+		{
+			name: "succeeds when ordered desc",
+			args: args{
+				ctx:  context.Background(),
+				pred: &store.SelectionPredicate{Descending: true, Limit: 5},
+			},
+			beforeHook: func(t *testing.T, s storev2.NamespaceStore, ec storev2.EntityConfigStore) {
+				for i := 0; i < 10; i++ {
+					namespaceName := fmt.Sprintf("foo-%d", i)
+					createNamespace(t, s, namespaceName)
+				}
+			},
+			want: []*corev3.Namespace{
+				corev3.FixtureNamespace("foo-9"),
+				corev3.FixtureNamespace("foo-8"),
+				corev3.FixtureNamespace("foo-7"),
+				corev3.FixtureNamespace("foo-6"),
+				corev3.FixtureNamespace("foo-5"),
+			},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
