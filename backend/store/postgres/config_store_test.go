@@ -353,6 +353,21 @@ func TestConfigStore_List_WithSelectors(t *testing.T) {
 				expectedEntityCount: 1,
 				expectedEntityNames: []string{entityName + "1"},
 			},
+			{
+				name: "field and label -match-, equals, and not equals selectors",
+				selektor: &selector.Selector{
+					Operations: []selector.Operation{
+						{"metadata.name", selector.MatchesOperator, []string{entityName + "6"}, selector.OperationTypeFieldSelector},
+						{"label-mod-key-0", selector.MatchesOperator, []string{"value"}, selector.OperationTypeLabelSelector},
+						{"label-flat", selector.NotEqualOperator, []string{"value-6"}, selector.OperationTypeLabelSelector},
+						{"user", selector.DoubleEqualSignOperator, []string{"user-2"}, selector.OperationTypeFieldSelector},
+						{"user", selector.NotEqualOperator, []string{"user-1"}, selector.OperationTypeFieldSelector},
+					},
+				},
+				expectError:         false,
+				expectedEntityCount: 4,
+				expectedEntityNames: []string{entityName + "60", entityName + "63", entityName + "66", entityName + "69"},
+			},
 		}
 
 		for _, test := range tests {
