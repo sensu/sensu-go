@@ -230,9 +230,20 @@ func TestConfigStore_List(t *testing.T) {
 		assert.NoError(t, err)
 		assert.Equal(t, 100, len(entities))
 
-		entities, err = listEntities(ctx, s, defaultNamespace, &store.SelectionPredicate{Limit: 20})
-		assert.NoError(t, err)
-		assert.Equal(t, 20, len(entities))
+		t.Run("With Pagination", func(t *testing.T) {
+			predicate := &store.SelectionPredicate{Limit: 45}
+
+			entities, err = listEntities(ctx, s, defaultNamespace, predicate)
+			assert.NoError(t, err)
+			assert.Equal(t, 45, len(entities))
+			entities, err = listEntities(ctx, s, defaultNamespace, predicate)
+			assert.NoError(t, err)
+			assert.Equal(t, 45, len(entities))
+			entities, err = listEntities(ctx, s, defaultNamespace, predicate)
+			assert.NoError(t, err)
+			assert.Equal(t, 10, len(entities))
+			assert.Equal(t, "", predicate.Continue)
+		})
 
 		entities, err = listEntities(ctx, s, "", &store.SelectionPredicate{})
 		assert.NoError(t, err)
@@ -374,7 +385,7 @@ func TestConfigStore_List_WithSelectors(t *testing.T) {
 			t.Run(test.name, func(t *testing.T) {
 				ctx := context.Background()
 				selCtx := selector.ContextWithSelector(ctx, test.selektor)
-				entities, err := listEntities(selCtx, s, defaultNamespace, &store.SelectionPredicate{})
+				entities, err := listEntities(selCtx, s, "", &store.SelectionPredicate{})
 				if test.expectError {
 					assert.Error(t, err)
 				} else {
