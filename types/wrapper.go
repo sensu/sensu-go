@@ -26,7 +26,11 @@ func getObjectMeta(value interface{}) *corev2.ObjectMeta {
 		meta := value.GetObjectMeta()
 		return &meta
 	case corev3Resource:
-		return value.GetMetadata()
+		meta := value.GetMetadata()
+		if meta != nil {
+			return meta
+		}
+		return &corev2.ObjectMeta{}
 	}
 	// impossible unless the type resolver is broken. fatal error.
 	panic("got neither corev2 resource nor corev3 resource")
