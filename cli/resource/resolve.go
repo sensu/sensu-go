@@ -44,6 +44,7 @@ func init() {
 		synonyms[resource.RBACName()] = resource
 	}
 	synonyms["namespace"] = All[0]
+	synonyms["namespaces"] = All[0]
 }
 
 type lifter interface {
