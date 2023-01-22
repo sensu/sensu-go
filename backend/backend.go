@@ -649,7 +649,7 @@ func getDefaultBackendID() string {
 
 // getSystemInfo returns the system info of the backend
 func getSystemInfo() corev2.System {
-	info, err := system.Info()
+	info, err := system.Info(true)
 	if err != nil {
 		logger.WithError(err).Error("error getting system info")
 	}
