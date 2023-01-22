@@ -79,7 +79,7 @@ func (p *CommandPlugin) SetObjectMeta(meta corev2.ObjectMeta) {
 
 func getEntity() (*corev2.Entity, error) {
 	// create an entity for using with command asset filtering
-	systemInfo, err := system.Info()
+	systemInfo, err := system.Info(true)
 	if err != nil {
 		return nil, err
 	}
