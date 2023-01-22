@@ -32,7 +32,7 @@ type azureMetadata struct {
 
 // Info describes the local system, hostname, OS, platform, platform
 // family, platform version, and network interfaces.
-func Info() (types.System, error) {
+func Info(includeNetworks bool) (types.System, error) {
 	info, err := host.Info()
 	if err != nil {
 		return types.System{}, err
@@ -51,6 +51,12 @@ func Info() (types.System, error) {
 
 	if system.Hostname == "" {
 		system.Hostname = defaultHostname
+	}
+	if includeNetworks {
+		network, err := NetworkInfo()
+		if err == nil {
+			system.Network = network
+		}
 	}
 
 	vmSystem, vmRole, err := host.Virtualization()
