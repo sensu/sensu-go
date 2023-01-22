@@ -253,15 +253,9 @@ func (a *Agent) RefreshSystemInfo(ctx context.Context) error {
 	var info corev2.System
 	var err error
 
-	info, err = system.Info()
+	info, err = system.Info(!a.config.StripNetworks)
 	if err != nil {
 		return err
-	}
-	if !a.config.StripNetworks {
-		network, err := system.NetworkInfo()
-		if err == nil {
-			info.Network = network
-		}
 	}
 
 	if a.config.DetectCloudProvider {
