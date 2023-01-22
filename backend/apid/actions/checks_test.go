@@ -18,7 +18,7 @@ func TestNewCheckController(t *testing.T) {
 	assert := assert.New(t)
 
 	store := &mockstore.V2MockStore{}
-	actions := NewCheckController(store, queue.NewMemoryGetter())
+	actions := NewCheckController(store, queue.NewMemoryClient())
 
 	assert.NotNil(actions)
 	assert.Equal(store, actions.store)
@@ -61,9 +61,7 @@ func TestCheckAdhoc(t *testing.T) {
 		cs := new(mockstore.ConfigStore)
 		store.On("GetConfigStore").Return(cs)
 		queue := &mockqueue.MockQueue{}
-		getter := &mockqueue.Getter{}
-		getter.On("GetQueue", mock.Anything).Return(queue)
-		actions := NewCheckController(store, getter)
+		actions := NewCheckController(store, queue)
 
 		t.Run(tc.name, func(t *testing.T) {
 			assert := assert.New(t)
