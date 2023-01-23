@@ -694,7 +694,7 @@ func (t *Tessend) getPerResourceMetrics(now int64, data *Data) error {
 	data.Metrics.Points = append(data.Metrics.Points, t.getEntityClassMetrics(now)...)
 
 	// loop through the resource map and collect the count of each
-	// resource every 5 seconds to distribute the load on etcd
+	// resource at the configured interval
 	resourceMetricsMu.RLock()
 	defer resourceMetricsMu.RUnlock()
 	ticker := time.NewTicker(t.duration)
