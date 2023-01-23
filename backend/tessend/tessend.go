@@ -32,10 +32,6 @@ var logger = logrus.WithFields(logrus.Fields{
 	"component": "tessend",
 })
 
-// TODO:
-// - Remove unused constants
-// - Remove unused code (ring stuff?)
-
 const (
 	// componentName identifies Tessend as the component/daemon implemented in this
 	// package.

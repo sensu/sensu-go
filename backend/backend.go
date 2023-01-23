@@ -38,10 +38,12 @@ import (
 	"github.com/sensu/sensu-go/backend/pipeline/handler"
 	"github.com/sensu/sensu-go/backend/pipeline/mutator"
 	"github.com/sensu/sensu-go/backend/pipelined"
+	"github.com/sensu/sensu-go/backend/ringv2"
 	"github.com/sensu/sensu-go/backend/schedulerd"
 	"github.com/sensu/sensu-go/backend/secrets"
 	"github.com/sensu/sensu-go/backend/store/postgres"
 	storev2 "github.com/sensu/sensu-go/backend/store/v2"
+	"github.com/sensu/sensu-go/backend/tessend"
 	"github.com/sensu/sensu-go/command"
 	"github.com/sensu/sensu-go/metrics"
 	"github.com/sensu/sensu-go/system"
@@ -411,21 +413,36 @@ func Initialize(ctx context.Context, pgdb postgres.DBI, config *Config) (*Backen
 	b.Daemons = append(b.Daemons, newApi)
 
 	// Initialize tessend
-	// TODO(eric): add support for non-etcd tessend
-	// tessen, err := tessend.New(
-	// 	ctx,
-	// 	tessend.Config{
-	// 		Store:      b.ConfigStore,
-	// 		EventStore: b.EventStore,
-	// 		RingPool:   b.RingPool,
-	// 		Client:     etcdConfigClient,
-	// 		Bus:        bus,
-	// 		ClusterID:  clusterID,
-	// 	})
-	// if err != nil {
-	// 	return nil, fmt.Errorf("error initializing %s: %s", tessen.Name(), err)
-	// }
-	// b.Daemons = append(b.Daemons, tessen)
+	pgDSN := b.Cfg.Store.PostgresStore.DSN
+	listener := pq.NewListener(pgDSN, time.Second, time.Minute, errorReporter)
+	pgBus := postgres.NewBus(ctx, listener)
+
+	ringPool := ringv2.NewRingPool(func(path string) ringv2.Interface {
+		ring, err := postgres.NewRing(pgdb, pgBus, path)
+		if err != nil {
+			logger.WithError(err).Error("error creating tessen ring")
+		}
+		return ring
+	})
+
+	var clusterID string
+	if clusterID, err = GetClusterID(ctx, b.Store); err != nil {
+		return nil, err
+	}
+
+	tessen, err := tessend.New(
+		ctx,
+		tessend.Config{
+			Store:      b.Store,
+			EventStore: b.Store.GetEventStore(),
+			RingPool:   ringPool,
+			Bus:        bus,
+			ClusterID:  clusterID,
+		})
+	if err != nil {
+		return nil, fmt.Errorf("error initializing %s: %s", tessen.Name(), err)
+	}
+	b.Daemons = append(b.Daemons, tessen)
 
 	// Initialize agentd
 	agent, err := agentd.New(agentd.Config{
