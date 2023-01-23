@@ -25,6 +25,7 @@ func TestOPCQuerySyntax(t *testing.T) {
 			opcUpdateNotifications,
 			opcReassignAbsentControllers,
 			opcGetOperator,
+			opcListOperators,
 			opcGetOperatorByID,
 		}
 		for i := range queries {

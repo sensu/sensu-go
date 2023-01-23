@@ -22,7 +22,7 @@ const getOperatorID = `
 -- $3 operator name (string)
 WITH ns AS (
 	(SELECT id AS id
-	FROM namespaces 
+	FROM namespaces
 	WHERE namespaces.name = $1)
 	UNION (SELECT NULL AS id)
 	ORDER BY id NULLS LAST
@@ -52,7 +52,7 @@ const opcCheckInInsert = `
 -- $9 controller_name (string)
 WITH ns AS (
 	(SELECT id AS id
-	FROM namespaces 
+	FROM namespaces
 	WHERE namespaces.name = $1)
 	UNION (SELECT null AS id)
 	ORDER BY id NULLS LAST
@@ -151,7 +151,7 @@ WHERE id = $1
 const opcCheckOut = `
 WITH ns AS (
 	(SELECT id AS id
-	FROM namespaces 
+	FROM namespaces
 	WHERE namespaces.name = $1)
 	UNION (SELECT null AS id)
 	ORDER BY id NULLS LAST
@@ -283,6 +283,27 @@ FROM opc LEFT OUTER JOIN namespaces ON opc.namespace = namespaces.id
 WHERE ($1 = '' OR namespaces.name = $1)
   AND opc.operator_type = $2
   AND opc.operator_name = $3
+;
+`
+
+const opcListOperators = `
+-- opcGetOperator gets an operator by namespace, type and name.
+--
+-- $1: namespace (text)
+-- $2: operator type (int)
+-- $3: operator name (text)
+SELECT COALESCE(namespaces.name, '')
+     , opc.operator_type
+     , opc.operator_name
+	 , present
+	 , to_timestamp(opc.last_update::double precision / 1000000)
+	 , opc.timeout_micro * 1000 -- nanoseconds for Go time.Duration
+	 , opc.metadata
+	 , opc.controller
+FROM opc LEFT OUTER JOIN namespaces ON opc.namespace = namespaces.id
+WHERE ($1 = '' OR namespaces.name = $1)
+  AND ($2 = 0 OR opc.operator_type = $2)
+  AND ($3 = '' OR opc.operator_name = $3)
 ;
 `
 

@@ -16,6 +16,11 @@ func (o *OPC) QueryOperator(ctx context.Context, key store.OperatorKey) (store.O
 	return args.Get(0).(store.OperatorState), args.Error(1)
 }
 
+func (o *OPC) ListOperators(ctx context.Context, key store.OperatorKey) ([]store.OperatorState, error) {
+	args := o.Called(ctx, key)
+	return args.Get(0).([]store.OperatorState), args.Error(1)
+}
+
 func (o *OPC) MonitorOperators(ctx context.Context, req store.MonitorOperatorsRequest) <-chan []store.OperatorState {
 	args := o.Called(ctx, req)
 	return args.Get(0).(<-chan []store.OperatorState)
