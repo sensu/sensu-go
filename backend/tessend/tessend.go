@@ -209,14 +209,20 @@ func (t *Tessend) Stop() error {
 	defer func() {
 		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer cancel()
+
 		key := ringv2.Path("global", "backends")
 		ring := t.ringPool.Get(key)
-		ctx = ringv2.DeleteEntityContext(ctx)
-		if err := ring.Remove(ctx, t.backendID); err != nil {
-			logger.WithField("key", t.backendID).WithError(err).Error("error removing key from the ring")
+		if ring != nil {
+			ctx = ringv2.DeleteEntityContext(ctx)
+			if err := ring.Remove(ctx, t.backendID); err != nil {
+				logger.WithField("key", t.backendID).WithError(err).Error("error removing key from the ring")
+			} else {
+				logger.WithField("key", t.backendID).Debug("removed a key from the ring")
+			}
 		} else {
-			logger.WithField("key", t.backendID).Debug("removed a key from the ring")
+			logger.WithField("function", "watchRing").WithField("key", key).Error("ring pool returned a nil ring for the given key")
 		}
+
 		for _, sub := range t.subscription {
 			if err := sub.Cancel(); err != nil {
 				logger.WithError(err).Error("unable to unsubscribe from message bus")
@@ -397,10 +403,14 @@ func (t *Tessend) startRingUpdates() {
 func (t *Tessend) updateRing() {
 	key := ringv2.Path("global", "backends")
 	ring := t.ringPool.Get(key)
-	if err := ring.Add(t.ctx, t.backendID, ringBackendKeepalive); err != nil {
-		logger.WithField("key", t.backendID).WithError(err).Error("error adding key to the ring")
+	if ring != nil {
+		if err := ring.Add(t.ctx, t.backendID, ringBackendKeepalive); err != nil {
+			logger.WithField("key", t.backendID).WithError(err).Error("error adding key to the ring")
+		} else {
+			logger.WithField("key", t.backendID).Debug("added a key to the ring")
+		}
 	} else {
-		logger.WithField("key", t.backendID).Debug("added a key to the ring")
+		logger.WithField("function", "watchRing").WithField("key", key).Error("ring pool returned a nil ring for the given key")
 	}
 }
 
@@ -409,16 +419,20 @@ func (t *Tessend) updateRing() {
 func (t *Tessend) watchRing(ctx context.Context, tessen *corev2.TessenConfig, wg *sync.WaitGroup) {
 	key := ringv2.Path("global", "backends")
 	ring := t.ringPool.Get(key)
-	sub := ringv2.Subscription{
-		Name:             "tessen",
-		Items:            1,
-		IntervalSchedule: int(t.interval),
+	if ring != nil {
+		sub := ringv2.Subscription{
+			Name:             "tessen",
+			Items:            1,
+			IntervalSchedule: int(t.interval),
+		}
+		wc := ring.Subscribe(ctx, sub)
+		go func() {
+			t.handleEvents(ctx, tessen, wc)
+			defer wg.Done()
+		}()
+	} else {
+		logger.WithField("function", "watchRing").WithField("key", key).Error("ring pool returned a nil ring for the given key")
 	}
-	wc := ring.Subscribe(ctx, sub)
-	go func() {
-		t.handleEvents(ctx, tessen, wc)
-		defer wg.Done()
-	}()
 }
 
 // handleEvents logs different ring events and triggers tessen to run if applicable.
