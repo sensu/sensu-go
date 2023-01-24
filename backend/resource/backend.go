@@ -110,7 +110,7 @@ func (br *BackendResource) GenerateBackendEvent(component string, status uint32,
 }
 
 func getEntity() (*corev2.Entity, error) {
-	systemInfo, err := system.Info()
+	systemInfo, err := system.Info(true)
 	if err != nil {
 		return nil, err
 	}

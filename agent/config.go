@@ -223,6 +223,10 @@ type Config struct {
 	// MaxSessionLength is the maximum duration after which the agent will
 	// reconnect to one of the backends.
 	MaxSessionLength time.Duration
+
+	// StripNetworks is a boolean to specify if we need to strip network
+	// information from the agent entity state
+	StripNetworks bool
 }
 
 // StatsdServerConfig contains the statsd server configuration
