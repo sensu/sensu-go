@@ -288,7 +288,7 @@ func Initialize(ctx context.Context, pgdb postgres.DBI, config *Config) (*Backen
 
 	pgOPC := postgres.NewOPC(pgdb)
 
-	go CheckInLoop(ctx, pgOPC)
+	go CheckInLoop(ctx, b.Cfg.Name, pgOPC)
 
 	// Initialize eventd
 	event, err := eventd.New(
@@ -315,7 +315,7 @@ func Initialize(ctx context.Context, pgdb postgres.DBI, config *Config) (*Backen
 
 	// Initialize work queue
 	pgQueue := postgres.NewQueue(pgdb)
-	workQueue := queue.NewClusteredQueue(pgQueue, pgOPC)
+	workQueue := queue.NewClusteredQueue(pgQueue, b.Cfg.Name, pgOPC)
 
 	// Initialize schedulerd
 	scheduler, err := schedulerd.New(

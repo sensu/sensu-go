@@ -3,7 +3,6 @@ package queue
 import (
 	"context"
 	"fmt"
-	"os"
 	"path"
 	"time"
 
@@ -57,14 +56,16 @@ type Reservation interface {
 // each backend, and Reserves only from queueName/{{this backendID}}
 type ClusteredQueue struct {
 	// client underlying queue implementation
-	client     Client
-	opcQueryer store.OperatorQueryer
+	client      Client
+	backendName string
+	opcQueryer  store.OperatorQueryer
 }
 
-func NewClusteredQueue(client Client, opc store.OperatorQueryer) *ClusteredQueue {
+func NewClusteredQueue(client Client, backendName string, opc store.OperatorQueryer) *ClusteredQueue {
 	return &ClusteredQueue{
-		client:     client,
-		opcQueryer: opc,
+		client:      client,
+		backendName: backendName,
+		opcQueryer:  opc,
 	}
 }
 
@@ -86,12 +87,7 @@ func (q *ClusteredQueue) Enqueue(ctx context.Context, item Item) error {
 
 // Reserve Item from "{{queue}}/{{backend id}}"
 func (q *ClusteredQueue) Reserve(ctx context.Context, queue string) (Reservation, error) {
-	return q.client.Reserve(ctx, path.Join(queue, q.getBackendID()))
-}
-
-func (q *ClusteredQueue) getBackendID() string {
-	hostname, _ := os.Hostname()
-	return hostname
+	return q.client.Reserve(ctx, path.Join(queue, q.backendName))
 }
 
 func (q *ClusteredQueue) getAllBackendIDs(ctx context.Context) ([]string, error) {
