@@ -21,14 +21,14 @@ import (
 type CheckExecutor struct {
 	bus                    messaging.MessageBus
 	store                  storev2.Interface
-	namespace              string
 	entityCache            EntityCache
 	secretsProviderManager *secrets.ProviderManager
+	force                  bool
 }
 
 // NewCheckExecutor creates a new check executor
-func NewCheckExecutor(bus messaging.MessageBus, namespace string, store storev2.Interface, cache EntityCache, secretsProviderManager *secrets.ProviderManager) *CheckExecutor {
-	return &CheckExecutor{bus: bus, namespace: namespace, store: store, entityCache: cache, secretsProviderManager: secretsProviderManager}
+func NewCheckExecutor(bus messaging.MessageBus, store storev2.Interface, cache EntityCache, secretsProviderManager *secrets.ProviderManager) *CheckExecutor {
+	return &CheckExecutor{bus: bus, store: store, entityCache: cache, secretsProviderManager: secretsProviderManager}
 }
 
 // ProcessCheck processes a check by publishing its proxy requests (if any)
@@ -47,7 +47,7 @@ func (c *CheckExecutor) publishProxyCheckRequests(entities []*corev3.EntityConfi
 
 func (c *CheckExecutor) execute(check *corev2.CheckConfig) error {
 	// Ensure the check is configured to publish check requests
-	if !check.Publish {
+	if !c.force && !check.Publish {
 		return nil
 	}
 

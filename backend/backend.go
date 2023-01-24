@@ -11,6 +11,7 @@ import (
 
 	"github.com/lib/pq"
 	"github.com/prometheus/client_golang/prometheus"
+	"github.com/sensu/sensu-go/backend/queue"
 	"github.com/sensu/sensu-go/backend/resource"
 	"github.com/spf13/viper"
 	"golang.org/x/time/rate"
@@ -312,6 +313,10 @@ func Initialize(ctx context.Context, pgdb postgres.DBI, config *Config) (*Backen
 	}
 	b.Daemons = append(b.Daemons, event)
 
+	// Initialize work queue
+	pgQueue := postgres.NewQueue(pgdb)
+	workQueue := queue.NewClusteredQueue(pgQueue, pgOPC)
+
 	// Initialize schedulerd
 	scheduler, err := schedulerd.New(
 		ctx,
@@ -319,6 +324,7 @@ func Initialize(ctx context.Context, pgdb postgres.DBI, config *Config) (*Backen
 			Store:                  b.Store,
 			Bus:                    bus,
 			SecretsProviderManager: b.SecretsProviderManager,
+			Queue:                  workQueue,
 		})
 	if err != nil {
 		return nil, fmt.Errorf("error initializing %s: %s", scheduler.Name(), err)
@@ -371,7 +377,7 @@ func Initialize(ctx context.Context, pgdb postgres.DBI, config *Config) (*Backen
 	// Initialize GraphQL service
 	b.GraphQLService, err = graphql.NewService(graphql.ServiceConfig{
 		AssetClient:       api.NewAssetClient(b.Store, auth),
-		CheckClient:       api.NewCheckClient(b.Store, actions.NewCheckController(b.Store, nil), auth),
+		CheckClient:       api.NewCheckClient(b.Store, actions.NewCheckController(b.Store, workQueue), auth),
 		EntityClient:      api.NewEntityClient(b.Store, auth),
 		EventClient:       api.NewEventClient(b.Store.GetEventStore(), auth, bus),
 		EventFilterClient: api.NewEventFilterClient(b.Store, auth),
@@ -403,6 +409,7 @@ func Initialize(ctx context.Context, pgdb postgres.DBI, config *Config) (*Backen
 		Authenticator:  authenticator,
 		ClusterVersion: clusterVersion,
 		GraphQLService: b.GraphQLService,
+		Queue:          workQueue,
 	}
 	newApi, err := apid.New(b.APIDConfig)
 	if err != nil {

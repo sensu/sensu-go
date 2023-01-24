@@ -24,6 +24,7 @@ import (
 	"github.com/sensu/sensu-go/backend/authentication"
 	"github.com/sensu/sensu-go/backend/authorization/rbac"
 	"github.com/sensu/sensu-go/backend/messaging"
+	"github.com/sensu/sensu-go/backend/queue"
 	storev2 "github.com/sensu/sensu-go/backend/store/v2"
 	"github.com/sensu/sensu-go/types"
 )
@@ -38,14 +39,13 @@ type APId struct {
 	GraphQLSubrouter           *mux.Router
 	RequestLimit               int64
 
-	stopping    chan struct{}
-	running     *atomic.Value
-	wg          *sync.WaitGroup
-	errChan     chan error
-	bus         messaging.MessageBus
-	store       storev2.Interface
-	queueGetter types.QueueGetter
-	tls         *types.TLSOptions
+	stopping chan struct{}
+	running  *atomic.Value
+	wg       *sync.WaitGroup
+	errChan  chan error
+	bus      messaging.MessageBus
+	store    storev2.Interface
+	tls      *types.TLSOptions
 }
 
 // Option is a functional option.
@@ -63,6 +63,7 @@ type Config struct {
 	Authenticator  *authentication.Authenticator
 	ClusterVersion string
 	GraphQLService *graphql.Service
+	Queue          queue.Client
 }
 
 // New creates a new APId.
@@ -159,7 +160,7 @@ func CoreSubrouter(router *mux.Router, cfg Config) *mux.Router {
 		subrouter,
 		routers.NewAssetRouter(cfg.Store),
 		routers.NewAPIKeysRouter(cfg.Store),
-		routers.NewChecksRouter(cfg.Store, nil),
+		routers.NewChecksRouter(cfg.Store, cfg.Queue),
 		routers.NewClusterRolesRouter(cfg.Store),
 		routers.NewClusterRoleBindingsRouter(cfg.Store),
 		routers.NewEventFiltersRouter(cfg.Store),
