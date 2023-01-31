@@ -87,7 +87,7 @@ func newIntervalScheduler(ctx context.Context, t *testing.T, executor string) *T
 	if err != nil {
 		t.Fatal(err)
 	}
-	exec := NewCheckExecutor(scheduler.msgBus, "default", s, cache, pm)
+	exec := NewCheckExecutor(scheduler.msgBus, s, cache, pm)
 	scheduler.scheduler = NewIntervalScheduler(ctx, scheduler.check, exec)
 	scheduler.exec = exec
 
@@ -131,12 +131,12 @@ func newCronScheduler(ctx context.Context, t *testing.T, executor string) *TestC
 	if err != nil {
 		t.Fatal(err)
 	}
-	exec := NewCheckExecutor(scheduler.msgBus, "default", s, cache, pm)
+	exec := NewCheckExecutor(scheduler.msgBus, s, cache, pm)
 	scheduler.scheduler = NewCronScheduler(ctx, scheduler.check, exec)
 
 	assert.NoError(scheduler.msgBus.Start())
 
-	scheduler.exec = NewCheckExecutor(scheduler.msgBus, "default", s, cache, pm)
+	scheduler.exec = NewCheckExecutor(scheduler.msgBus, s, cache, pm)
 
 	return scheduler
 }

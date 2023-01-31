@@ -55,27 +55,30 @@ type Reservation interface {
 // Given a queueName, ClusteredQueue Enqueues to queueName/{{backendID}} for
 // each backend, and Reserves only from queueName/{{this backendID}}
 type ClusteredQueue struct {
-	// Client underlying queue implementation
-	Client Client
-	// GetBackendID gets the current backend process's id.
-	// TODO(ck): just hostname per backend/opc.go?
-	GetBackendID func() string
-	// GetAllBackendIDs returns the set of currently present backends.
-	// TODO(ck): Find source for this. The OPC table makes sense as a source of
-	// truth for this, but we need more flexible query mechanism.
-	GetAllBackendIDs func(context.Context) ([]string, error)
+	// client underlying queue implementation
+	client      Client
+	backendName string
+	opcQueryer  store.OperatorQueryer
+}
+
+func NewClusteredQueue(client Client, backendName string, opc store.OperatorQueryer) *ClusteredQueue {
+	return &ClusteredQueue{
+		client:      client,
+		backendName: backendName,
+		opcQueryer:  opc,
+	}
 }
 
 // Enqueue Item to "{{item.Queue}}/{{backend id}}" for each backend id
 func (q *ClusteredQueue) Enqueue(ctx context.Context, item Item) error {
-	backendIDs, err := q.GetAllBackendIDs(ctx)
+	backendIDs, err := q.getAllBackendIDs(ctx)
 	if err != nil {
 		return fmt.Errorf("error getting backend IDs: %w", err)
 	}
 	baseQueue := item.Queue
 	for _, id := range backendIDs {
 		item.Queue = path.Join(baseQueue, id)
-		if err := q.Client.Enqueue(ctx, item); err != nil {
+		if err := q.client.Enqueue(ctx, item); err != nil {
 			return fmt.Errorf("error enqueuing item to queue %s: %w", item.Queue, err)
 		}
 	}
@@ -84,5 +87,21 @@ func (q *ClusteredQueue) Enqueue(ctx context.Context, item Item) error {
 
 // Reserve Item from "{{queue}}/{{backend id}}"
 func (q *ClusteredQueue) Reserve(ctx context.Context, queue string) (Reservation, error) {
-	return q.Client.Reserve(ctx, path.Join(queue, q.GetBackendID()))
+	return q.client.Reserve(ctx, path.Join(queue, q.backendName))
+}
+
+func (q *ClusteredQueue) getAllBackendIDs(ctx context.Context) ([]string, error) {
+	operators, err := q.opcQueryer.ListOperators(ctx, store.OperatorKey{
+		Type: store.BackendOperator,
+	})
+	if err != nil {
+		return nil, err
+	}
+	ids := make([]string, 0, len(operators))
+	for _, op := range operators {
+		if op.Present {
+			ids = append(ids, op.Name)
+		}
+	}
+	return ids, nil
 }

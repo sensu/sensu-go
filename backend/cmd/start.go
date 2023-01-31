@@ -69,6 +69,7 @@ const (
 	flagLogLevel              = "log-level"
 	flagLabels                = "labels"
 	flagAnnotations           = "annotations"
+	flagName                  = "name"
 
 	// Postgres store
 	flagPGDSN = "pg-dsn"
@@ -171,6 +172,7 @@ func StartCommand(initialize InitializeFunc) *cobra.Command {
 				DashboardWriteTimeout: viper.GetDuration(flagDashboardWriteTimeout),
 				DeregistrationHandler: viper.GetString(flagDeregistrationHandler),
 				CacheDir:              viper.GetString(flagCacheDir),
+				Name:                  viper.GetString(flagName),
 
 				Labels:                         viper.GetStringMapString(flagLabels),
 				Annotations:                    viper.GetStringMapString(flagAnnotations),
@@ -343,6 +345,14 @@ func handleConfig(cmd *cobra.Command, arguments []string, server bool) error {
 		viper.SetDefault(flagEventLogBufferSize, 100000)
 		viper.SetDefault(flagEventLogFile, "")
 		viper.SetDefault(flagEventLogParallelEncoders, false)
+
+		backendName, err := os.Hostname()
+		if err != nil {
+			// According to `man gethostname`, this should never happen, unless
+			// there is a bug in Go's use of gethostname
+			panic(err)
+		}
+		viper.SetDefault(flagName, backendName)
 	}
 
 	// Merge in flag set so that it appears in command usage
@@ -394,6 +404,7 @@ func flagSet(server bool) *pflag.FlagSet {
 
 	if server {
 		// Main Flags
+		flagSet.String(flagName, viper.GetString(flagName), "backend name")
 		flagSet.String(flagAgentHost, viper.GetString(flagAgentHost), "agent listener host")
 		flagSet.Int(flagAgentPort, viper.GetInt(flagAgentPort), "agent listener port")
 		flagSet.String(flagAPIListenAddress, viper.GetString(flagAPIListenAddress), "address to listen on for api traffic")
