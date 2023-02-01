@@ -18,6 +18,7 @@ import (
 	"github.com/sirupsen/logrus"
 
 	corev2 "github.com/sensu/core/v2"
+	corev3 "github.com/sensu/core/v3"
 	"github.com/sensu/sensu-go/backend/eventd"
 	"github.com/sensu/sensu-go/backend/licensing"
 	"github.com/sensu/sensu-go/backend/messaging"
@@ -70,13 +71,17 @@ var (
 		"handler_count":              &corev2.Handler{},
 		"hook_count":                 &corev2.HookConfig{},
 		"mutator_count":              &corev2.Mutator{},
-		"namespace_count":            &corev2.Namespace{},
 		"role_count":                 &corev2.Role{},
 		"role_binding_count":         &corev2.RoleBinding{},
 		"silenced_count":             &corev2.Silenced{},
 		"user_count":                 &corev2.User{},
 	}
 	resourceMetricsMu = &sync.RWMutex{}
+
+	v3ResourceMetrics = map[string]corev3.Resource{
+		"namespace_count": &corev3.Namespace{},
+	}
+	v3ResourceMetricsMu = &sync.RWMutex{}
 )
 
 // Tessend is the tessen daemon.
@@ -730,6 +735,32 @@ func (t *Tessend) getPerResourceMetrics(now int64, data *Data) error {
 		logMetric(mp)
 		data.Metrics.Points = append(data.Metrics.Points, mp)
 	}
+
+	v3ResourceMetricsMu.RLock()
+	defer v3ResourceMetricsMu.RUnlock()
+	for metricName, resource := range v3ResourceMetrics {
+		select {
+		case <-t.ctx.Done():
+			return t.ctx.Err()
+		case <-ticker.C:
+		}
+
+		count, err := t.store.GetConfigStore().Count(t.ctx, storev2.NewResourceRequestFromResource(resource))
+		if err != nil {
+			return err
+		}
+
+		mp = &corev2.MetricPoint{
+			Name:      metricName,
+			Value:     float64(count),
+			Timestamp: now,
+		}
+		appendInternalTag(mp)
+		appendStoreConfig(mp, t.GetStoreConfig())
+		logMetric(mp)
+		data.Metrics.Points = append(data.Metrics.Points, mp)
+	}
+
 	return nil
 }
 
