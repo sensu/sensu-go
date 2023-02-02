@@ -189,9 +189,13 @@ func (s *Schedulerd) refresh() error {
 		case CronType:
 			scheduler = NewCronScheduler(s.ctx, check, s.makeExecutor())
 		case RoundRobinIntervalType:
-			scheduler = NewRoundRobinIntervalScheduler(s.ctx, check, s.makeExecutor(), s.ringPool, s.entityCache)
+			//TODO(ck): plug in new round robin impl
+			//scheduler = NewRoundRobinIntervalScheduler(s.ctx, check, s.makeExecutor(), s.ringPool, s.entityCache)
+			scheduler = NewIntervalScheduler(s.ctx, check, s.makeExecutor())
 		case RoundRobinCronType:
-			scheduler = NewRoundRobinCronScheduler(s.ctx, check, s.makeExecutor(), s.ringPool, s.entityCache)
+			//TODO(ck): plug in new round robin impl
+			//scheduler = NewRoundRobinCronScheduler(s.ctx, check, s.makeExecutor(), s.ringPool, s.entityCache)
+			scheduler = NewCronScheduler(s.ctx, check, s.makeExecutor())
 		default:
 			logger.Error("bad scheduler type, falling back to interval scheduler")
 			scheduler = NewIntervalScheduler(s.ctx, check, s.makeExecutor())
