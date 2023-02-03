@@ -9,6 +9,7 @@ import (
 	time "time"
 )
 
+//
 // SilencedFieldResolvers represents a collection of methods whose products represent the
 // response values of the 'Silenced' type.
 type SilencedFieldResolvers interface {
@@ -536,6 +537,7 @@ func _InterfaceTypeSilenceableConfigFn() graphql1.InterfaceConfig {
 // describe Silenceable's configuration; kept private to avoid unintentional tampering of configuration at runtime.
 var _InterfaceTypeSilenceableDesc = graphql.InterfaceDesc{Config: _InterfaceTypeSilenceableConfigFn}
 
+//
 // SilencedConnectionFieldResolvers represents a collection of methods whose products represent the
 // response values of the 'SilencedConnection' type.
 type SilencedConnectionFieldResolvers interface {
@@ -635,10 +637,12 @@ type SilencesListOrder string
 
 // SilencesListOrders holds enum values
 var SilencesListOrders = _EnumTypeSilencesListOrderValues{
-	BEGIN:      "BEGIN",
-	BEGIN_DESC: "BEGIN_DESC",
-	ID:         "ID",
-	ID_DESC:    "ID_DESC",
+	BEGIN:          "BEGIN",
+	BEGIN_DESC:     "BEGIN_DESC",
+	EXPIRE_AT:      "EXPIRE_AT",
+	EXPIRE_AT_DESC: "EXPIRE_AT_DESC",
+	ID:             "ID",
+	ID_DESC:        "ID_DESC",
 }
 
 // SilencesListOrderType Describes ways in which a list of silences can be ordered.
@@ -662,6 +666,16 @@ func _EnumTypeSilencesListOrderConfigFn() graphql1.EnumConfig {
 				DeprecationReason: "",
 				Description:       "self descriptive",
 				Value:             "BEGIN_DESC",
+			},
+			"EXPIRE_AT": &graphql1.EnumValueConfig{
+				DeprecationReason: "",
+				Description:       "self descriptive",
+				Value:             "EXPIRE_AT",
+			},
+			"EXPIRE_AT_DESC": &graphql1.EnumValueConfig{
+				DeprecationReason: "",
+				Description:       "self descriptive",
+				Value:             "EXPIRE_AT_DESC",
 			},
 			"ID": &graphql1.EnumValueConfig{
 				DeprecationReason: "",
@@ -689,4 +703,8 @@ type _EnumTypeSilencesListOrderValues struct {
 	BEGIN SilencesListOrder
 	// BEGIN_DESC - self descriptive
 	BEGIN_DESC SilencesListOrder
+	// EXPIRE_AT - self descriptive
+	EXPIRE_AT SilencesListOrder
+	// EXPIRE_AT_DESC - self descriptive
+	EXPIRE_AT_DESC SilencesListOrder
 }

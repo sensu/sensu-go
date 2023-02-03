@@ -69,4 +69,6 @@ enum SilencesListOrder {
   ID_DESC
   BEGIN
   BEGIN_DESC
+  EXPIRE_AT
+  EXPIRE_AT_DESC
 }

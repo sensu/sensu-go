@@ -227,6 +227,10 @@ func (r *namespaceImpl) Silences(p schema.NamespaceSilencesFieldResolverParams) 
 		sort.Sort(sort.Reverse(corev2.SortSilencedByBegin(filteredResults)))
 	case schema.SilencesListOrders.BEGIN:
 		sort.Sort(corev2.SortSilencedByBegin(filteredResults))
+	case schema.SilencesListOrders.EXPIRE_AT_DESC:
+		sort.Sort(sort.Reverse(corev2.SortSilencedByExpireAt(filteredResults)))
+	case schema.SilencesListOrders.EXPIRE_AT:
+		sort.Sort(corev2.SortSilencedByExpireAt(filteredResults))
 	case schema.SilencesListOrders.ID_DESC:
 		sort.Sort(sort.Reverse(corev2.SortSilencedByName(filteredResults)))
 	case schema.SilencesListOrders.ID:

@@ -10,6 +10,7 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ### Added
 - Adding a flag at agent level to avoid collecting system.networks property in the agent entity state
+- Added silences sorting by expiration to GraphQL service
 
 ## [6.9.1] - 2022-12-01
 
