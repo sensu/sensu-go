@@ -1,4 +1,5 @@
 # Changelog
+
 All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
@@ -7,6 +8,17 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 ## Unreleased
+## [Unrealased]
+
+### Added
+- Adding a flag at agent level to avoid collecting system.networks property in the agent entity state
+
+## [6.9.1] - 2022-12-01
+
+### Changed
+- Allow Graphql Middleware Init funcs to add to Context
+
+## [6.9.0] - 2022-11-01
 
 ### Added
 - The authentication module now logs successful (INFO) and unsuccessful (ERROR)

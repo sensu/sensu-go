@@ -48,9 +48,7 @@ func TestHttpApiChecksAdhocRequest(t *testing.T) {
 	checkConfig := corev2.FixtureCheckConfig("check1")
 	cs.On("Get", mock.Anything, mock.Anything).Return(mockstore.Wrapper[*corev2.CheckConfig]{Value: checkConfig}, nil)
 	queue.On("Enqueue", mock.Anything, mock.Anything).Return(nil)
-	getter := &mockqueue.Getter{}
-	getter.On("GetQueue", mock.Anything).Return(queue)
-	checkController := actions.NewCheckController(store, getter)
+	checkController := actions.NewCheckController(store, queue)
 	c := &ChecksRouter{controller: checkController}
 	payload, _ := json.Marshal(adhocRequest)
 

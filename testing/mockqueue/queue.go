@@ -3,7 +3,7 @@ package mockqueue
 import (
 	"context"
 
-	"github.com/sensu/sensu-go/types"
+	"github.com/sensu/sensu-go/backend/queue"
 	"github.com/stretchr/testify/mock"
 )
 
@@ -13,28 +13,29 @@ type MockQueue struct {
 }
 
 // Enqueue ...
-func (m *MockQueue) Enqueue(ctx context.Context, value string) error {
+func (m *MockQueue) Enqueue(ctx context.Context, value queue.Item) error {
 	args := m.Called(ctx, value)
 	return args.Error(0)
 }
 
-// Dequeue ...
-func (m *MockQueue) Dequeue(ctx context.Context) (types.QueueItem, error) {
-	args := m.Called(ctx)
-	return args.Get(0).(types.QueueItem), args.Error(1)
+// Reserve ...
+func (m *MockQueue) Reserve(ctx context.Context, name string) (queue.Reservation, error) {
+	args := m.Called(ctx, name)
+	return args.Get(0).(queue.Reservation), args.Error(1)
 }
 
-// Getter ...
-type Getter struct {
+type MockReservation struct {
 	mock.Mock
 }
 
-// GetQueue ...
-func (g *Getter) GetQueue(path ...string) types.Queue {
-	ifaceArgs := make([]interface{}, len(path))
-	for i := range path {
-		ifaceArgs[i] = path[i]
-	}
-	args := g.Called(ifaceArgs...)
-	return args.Get(0).(types.Queue)
+func (m *MockReservation) Item() queue.Item {
+	return m.Called().Get(0).(queue.Item)
+}
+
+func (m *MockReservation) Ack(ctx context.Context) error {
+	return m.Called(ctx).Error(0)
+}
+
+func (m *MockReservation) Nack(ctx context.Context) error {
+	return m.Called(ctx).Error(0)
 }

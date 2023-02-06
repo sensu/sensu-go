@@ -45,6 +45,7 @@ type Config struct {
 	// Backend Configuration
 	StateDir string
 	CacheDir string
+	Name     string
 
 	// Agentd Configuration
 	AgentHost         string

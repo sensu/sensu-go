@@ -2,90 +2,81 @@ package queue
 
 import (
 	"context"
-	"strings"
 	"sync"
 	"time"
-
-	"github.com/sensu/sensu-go/types"
 )
 
-// NewMemoryGetter creates a new MemoryGetter.
-func NewMemoryGetter() *MemoryGetter {
-	return &MemoryGetter{data: make(map[string]*Memory)}
-}
-
-// MemoryGetter is a types.QueueGetter.
-type MemoryGetter struct {
-	data map[string]*Memory
-}
-
-// GetQueue gets a Memory queue.
-func (m *MemoryGetter) GetQueue(path ...string) types.Queue {
-	key := strings.Join(path, "/")
-	q, ok := m.data[key]
-	if !ok {
-		q = &Memory{}
-		m.data[key] = q
-	}
-	return q
-}
-
-// Memory is an implementation of types.Queue in memory, provided
+// NewMemoryClient returns an in memory Client implementation
 // for testing purposes.
-type Memory struct {
-	data []string
+func NewMemoryClient() Client {
+	return &memory{
+		data:         make(map[string][]Item),
+		pollDuration: time.Second,
+	}
+}
+
+// memory is an implementation of the queue Client interface.
+// Provided for testing purposes.
+type memory struct {
+	data map[string][]Item
+	ctr  int64
 	sync.Mutex
+	pollDuration time.Duration
 }
 
 // Enqueue ...
-func (m *Memory) Enqueue(_ context.Context, val string) error {
+func (m *memory) Enqueue(_ context.Context, val Item) error {
 	m.Lock()
 	defer m.Unlock()
-	m.data = append(m.data, val)
+	m.data[val.Queue] = append(m.data[val.Queue], val)
 	return nil
 }
 
-// MemoryItem is an item from MemoryQueue.
-type MemoryItem struct {
-	value string
-	q     *Memory
+// memoryItem is an item from MemoryQueue.
+type memoryItem struct {
+	value Item
+	q     *memory
 }
 
 // Value ...
-func (m *MemoryItem) Value() string {
+func (m *memoryItem) Item() Item {
 	return m.value
 }
 
 // Ack ...
-func (m *MemoryItem) Ack(context.Context) error {
+func (m *memoryItem) Ack(context.Context) error {
 	return nil
 }
 
 // Nack ...
-func (m *MemoryItem) Nack(context.Context) error {
+func (m *memoryItem) Nack(context.Context) error {
 	m.q.Lock()
 	defer m.q.Unlock()
-	m.q.data = append(m.q.data, m.value)
+	m.q.data[m.value.Queue] = append(m.q.data[m.value.Queue], m.value)
 	return nil
 }
 
-// Dequeue ...
-func (m *Memory) Dequeue(context.Context) (types.QueueItem, error) {
+// Reserve ...
+func (m *memory) Reserve(ctx context.Context, queue string) (Reservation, error) {
 	// cheesy blocking algo
-	var val string
+	var val Item
 	for {
 		m.Lock()
-		if len(m.data) == 0 {
+		if len(m.data[queue]) == 0 {
 			m.Unlock()
-			time.Sleep(time.Second)
-			continue
+			select {
+			case <-ctx.Done():
+				return nil, ctx.Err()
+			case <-time.After(m.pollDuration):
+				continue
+			}
 		}
-		val = m.data[0]
-		m.data = m.data[1:]
+		val = m.data[queue][0]
+		m.data[queue] = m.data[queue][1:]
 		m.Unlock()
 		break
 	}
-	return &MemoryItem{
+	return &memoryItem{
 		q:     m,
 		value: val,
 	}, nil

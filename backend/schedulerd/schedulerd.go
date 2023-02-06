@@ -10,11 +10,14 @@ import (
 	corev2 "github.com/sensu/core/v2"
 	corev3 "github.com/sensu/core/v3"
 	"github.com/sensu/sensu-go/backend/messaging"
+	"github.com/sensu/sensu-go/backend/queue"
 	"github.com/sensu/sensu-go/backend/ringv2"
 	"github.com/sensu/sensu-go/backend/secrets"
 	cachev2 "github.com/sensu/sensu-go/backend/store/cache/v2"
 	storev2 "github.com/sensu/sensu-go/backend/store/v2"
 )
+
+const adhocQueueName = "adhocRequest"
 
 var (
 	intervalCounter = prometheus.NewGaugeVec(
@@ -65,9 +68,11 @@ type Schedulerd struct {
 	ringPool               *ringv2.RingPool
 	entityCache            EntityCache
 	secretsProviderManager *secrets.ProviderManager
+	queue                  queue.Client
 
-	checks     namespacedChecks
-	schedulers map[string]Scheduler
+	checks         namespacedChecks
+	schedulers     map[string]Scheduler
+	adhocScheduler *AdhocScheduler
 }
 
 // Config configures Schedulerd.
@@ -77,6 +82,7 @@ type Config struct {
 	Bus                    messaging.MessageBus
 	SecretsProviderManager *secrets.ProviderManager
 	RefreshInterval        time.Duration
+	Queue                  queue.Client
 }
 
 // New creates a new Schedulerd.
@@ -88,6 +94,7 @@ func New(ctx context.Context, c Config) (*Schedulerd, error) {
 		errChan:                make(chan error, 1),
 		ringPool:               c.RingPool,
 		secretsProviderManager: c.SecretsProviderManager,
+		queue:                  c.Queue,
 
 		checks:     make(namespacedChecks),
 		schedulers: make(map[string]Scheduler),
@@ -117,6 +124,8 @@ func (s *Schedulerd) Start() error {
 
 // start initializes schedulerd and begins polling for scheduling state changes
 func (s *Schedulerd) start() error {
+	s.adhocScheduler = NewAdhocScheduler(s.ctx, s.queue, s.makeExecutor())
+	s.adhocScheduler.Start()
 	if err := s.refresh(); err != nil {
 		return err
 	}
@@ -133,6 +142,7 @@ func (s *Schedulerd) start() error {
 			}
 		}
 	}()
+
 	return nil
 }
 
@@ -175,16 +185,20 @@ func (s *Schedulerd) refresh() error {
 
 		switch GetSchedulerType(check) {
 		case IntervalType:
-			scheduler = NewIntervalScheduler(s.ctx, check, s.makeExecutor(check.Namespace))
+			scheduler = NewIntervalScheduler(s.ctx, check, s.makeExecutor())
 		case CronType:
-			scheduler = NewCronScheduler(s.ctx, check, s.makeExecutor(check.Namespace))
+			scheduler = NewCronScheduler(s.ctx, check, s.makeExecutor())
 		case RoundRobinIntervalType:
-			scheduler = NewRoundRobinIntervalScheduler(s.ctx, check, s.makeExecutor(check.Namespace), s.ringPool, s.entityCache)
+			//TODO(ck): plug in new round robin impl
+			//scheduler = NewRoundRobinIntervalScheduler(s.ctx, check, s.makeExecutor(), s.ringPool, s.entityCache)
+			scheduler = NewIntervalScheduler(s.ctx, check, s.makeExecutor())
 		case RoundRobinCronType:
-			scheduler = NewRoundRobinCronScheduler(s.ctx, check, s.makeExecutor(check.Namespace), s.ringPool, s.entityCache)
+			//TODO(ck): plug in new round robin impl
+			//scheduler = NewRoundRobinCronScheduler(s.ctx, check, s.makeExecutor(), s.ringPool, s.entityCache)
+			scheduler = NewCronScheduler(s.ctx, check, s.makeExecutor())
 		default:
 			logger.Error("bad scheduler type, falling back to interval scheduler")
-			scheduler = NewIntervalScheduler(s.ctx, check, s.makeExecutor(check.Namespace))
+			scheduler = NewIntervalScheduler(s.ctx, check, s.makeExecutor())
 		}
 
 		// Start scheduling check
@@ -221,14 +235,15 @@ func (s *Schedulerd) refresh() error {
 
 }
 
-func (s *Schedulerd) makeExecutor(namespace string) *CheckExecutor {
-	return NewCheckExecutor(s.bus, namespace, s.store, s.entityCache, s.secretsProviderManager)
+func (s *Schedulerd) makeExecutor() *CheckExecutor {
+	return NewCheckExecutor(s.bus, s.store, s.entityCache, s.secretsProviderManager)
 }
 
 // Stop the scheduler daemon.
 func (s *Schedulerd) Stop() error {
 	s.cancel()
 	close(s.errChan)
+	s.adhocScheduler.Stop()
 	return nil
 }
 

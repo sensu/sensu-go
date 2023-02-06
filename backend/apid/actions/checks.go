@@ -6,9 +6,9 @@ import (
 	"context"
 
 	corev2 "github.com/sensu/core/v2"
+	"github.com/sensu/sensu-go/backend/queue"
 	"github.com/sensu/sensu-go/backend/store"
 	storev2 "github.com/sensu/sensu-go/backend/store/v2"
-	"github.com/sensu/sensu-go/types"
 	utilstrings "github.com/sensu/sensu-go/util/strings"
 )
 
@@ -19,15 +19,14 @@ var (
 // CheckController exposes actions which a viewer can perform.
 type CheckController struct {
 	store      storev2.Interface
-	checkQueue types.Queue
+	checkQueue queue.Client
 }
 
 // NewCheckController returns new CheckController
-func NewCheckController(store storev2.Interface, getter types.QueueGetter) CheckController {
+func NewCheckController(store storev2.Interface, queue queue.Client) CheckController {
 	return CheckController{
-		store: store,
-		// FIXME(eric): make adhoc scheduling work again
-		// checkQueue: getter.GetQueue(adhocQueueName),
+		store:      store,
+		checkQueue: queue,
 	}
 }
 
@@ -147,6 +146,9 @@ func (a CheckController) QueueAdhocRequest(ctx context.Context, name string, adh
 	if err != nil {
 		return err
 	}
-	err = a.checkQueue.Enqueue(ctx, string(marshaledCheck))
+	err = a.checkQueue.Enqueue(ctx, queue.Item{
+		Queue: adhocQueueName,
+		Value: marshaledCheck,
+	})
 	return err
 }

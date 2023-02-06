@@ -8,17 +8,29 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 ## [Unreleased]
 ### Breaking
 - Etcd is no longer supported. All persistent data is now stored in postgresql.
-- PostgreSQL >= 9.6 is now required.
+- The enterprise postgresql event store is no longer supported. Events are now
+  stored in a different format in postgresql, and postgresql is configured with
+  the command line or configuration file (--pg-dsn). Additional environment
+  variables are supported, see the libpq documentation for details.
+- core/v2.Namespace is no longer supported. Users must use core/v3.Namespace,
+which now allows for the addition of labels and annotations.
 
 ### Added
-- Developer mode can now be enabled with the --dev flag.
 - Added sensu-backend configuration for postgresql.
-- Added configuration store selector to sensu-backend.
-- Added postgresql state store.
+- Added configuration store selectors to sensu-backend, previously an enterprise
+  feature.
+- Added postgresql support for storing all state and configuration.
 - GlobalResource interface in core/v3 allows core/v3 resources to
   be marked as global resources.
 - The authentication module now logs successful (INFO) and unsuccessful (ERROR)
   login attempts.
+- Added a redesigned keepalive system which does not rely on asynchronous
+  notification. Unlike the old system, it is much more resilient in the face of
+  mass outages. This system also underpins the redesigned round robin scheduling
+  system.
+- Added a flag to sensu-agent to prevent the collection of network host
+  information. This information can be quite lengthy and can reduce the overall
+  system performance if agent entities grow to be too large.
 
 ### Fixed
 - Fixed an issue where multi-expression exclusive "Deny" filters were not
@@ -28,9 +40,8 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 - Changed parameters for `sensuctl cluster-role create` to be plural
 - Deregistration events are now silenced if a silenced entry exists matching the
 entity subscriptions and/or a check named `deregistration`.
-- Upgraded Go version from 1.17.1 to 1.18.1.
-- Changed sensu-backend etcd configuration options.
-- Upgraded etcd version from 3.5.2 to 3.5.4.
+- Upgraded Go version to 1.19.5. Old Go versions are not supported.
 
 ### Removed
 - Removed sensu-backend upgrade command. May make an appearance again in later versions.
+- Removed support for older, unsupported postgresql versions.

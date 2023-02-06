@@ -286,6 +286,11 @@ func (s *ConfigStore) List(ctx context.Context, request storev2.ResourceRequest,
 		return nil, &store.ErrNotValid{Err: err}
 	}
 
+	limit, offset, err := getLimitAndOffset(predicate)
+	if err != nil {
+		return nil, err
+	}
+
 	tmpl, err := template.New("listResourceQuery").Parse(ListConfigQueryTmpl)
 	if err != nil {
 		return nil, err
@@ -294,11 +299,14 @@ func (s *ConfigStore) List(ctx context.Context, request storev2.ResourceRequest,
 	if predicate == nil {
 		predicate = &store.SelectionPredicate{}
 	}
+
 	templValues := listTemplateValues{
-		Limit:       predicate.Limit,
-		Offset:      predicate.Offset,
+		Offset:      offset,
 		SelectorSQL: strings.TrimSpace(selectorSQL),
 		Namespaced:  request.Namespace != "",
+	}
+	if limit.Valid {
+		templValues.Limit = limit.Int64
 	}
 	if err := tmpl.Execute(&queryBuilder, templValues); err != nil {
 		return nil, err
@@ -329,6 +337,11 @@ func (s *ConfigStore) List(ctx context.Context, request storev2.ResourceRequest,
 			Value:       []byte(dbResource.resource),
 		}
 		wrapList = append(wrapList, &wrapped)
+	}
+	if predicate != nil {
+		if int64(len(wrapList)) < predicate.Limit {
+			predicate.Continue = ""
+		}
 	}
 
 	return wrapList, nil

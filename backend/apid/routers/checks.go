@@ -13,8 +13,8 @@ import (
 	corev3 "github.com/sensu/core/v3"
 	"github.com/sensu/sensu-go/backend/apid/actions"
 	"github.com/sensu/sensu-go/backend/apid/handlers"
+	"github.com/sensu/sensu-go/backend/queue"
 	storev2 "github.com/sensu/sensu-go/backend/store/v2"
-	"github.com/sensu/sensu-go/types"
 )
 
 // checkController represents the controller needs of the ChecksRouter.
@@ -31,9 +31,9 @@ type ChecksRouter struct {
 }
 
 // NewChecksRouter instantiates new router for controlling check resources
-func NewChecksRouter(store storev2.Interface, getter types.QueueGetter) *ChecksRouter {
+func NewChecksRouter(store storev2.Interface, queue queue.Client) *ChecksRouter {
 	return &ChecksRouter{
-		controller: actions.NewCheckController(store, getter),
+		controller: actions.NewCheckController(store, queue),
 		store:      store,
 	}
 }

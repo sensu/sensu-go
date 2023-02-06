@@ -2,6 +2,7 @@ package postgres
 
 import (
 	"context"
+	"sort"
 	"testing"
 	"time"
 
@@ -335,6 +336,126 @@ func TestOPCQueryControllerOperator(t *testing.T) {
 	})
 }
 
+func TestOPCListOperators(t *testing.T) {
+	withPostgres(t, func(ctx context.Context, db *pgxpool.Pool, dsn string) {
+		nsStore := NewNamespaceStore(db)
+		ns := corev3.FixtureNamespace("default")
+		if err := nsStore.CreateIfNotExists(ctx, ns); err != nil {
+			t.Fatal(err)
+		}
+		ns = corev3.FixtureNamespace("staging")
+		if err := nsStore.CreateIfNotExists(ctx, ns); err != nil {
+			t.Fatal(err)
+		}
+
+		ordered := func(ops []store.OperatorState) []store.OperatorState {
+			sort.Slice(ops, func(i, j int) bool {
+				if ops[i].Name == ops[j].Name {
+					if ops[i].Namespace == ops[j].Namespace {
+						return ops[i].Type < ops[j].Type
+					}
+					return ops[i].Namespace < ops[j].Namespace
+				}
+				return ops[i].Name < ops[j].Name
+			})
+			return ops
+		}
+
+		backends := []store.OperatorState{
+			{
+				Type:           store.BackendOperator,
+				Name:           "backend1",
+				CheckInTimeout: time.Hour,
+				Present:        true,
+			}, {
+				Type:           store.BackendOperator,
+				Name:           "backend2",
+				CheckInTimeout: time.Hour,
+				Present:        true,
+			}, {
+				Type:           store.BackendOperator,
+				Name:           "backend3",
+				CheckInTimeout: time.Hour,
+				Present:        true,
+			},
+		}
+		agents := []store.OperatorState{
+			{
+				Type:           store.AgentOperator,
+				Name:           "agent1",
+				CheckInTimeout: time.Millisecond * 100,
+				Present:        true,
+			}, {
+				Type:           store.AgentOperator,
+				Name:           "agent2",
+				CheckInTimeout: time.Millisecond * 100,
+				Present:        true,
+			},
+		}
+		checks := []store.OperatorState{
+			{
+				Namespace:      "default",
+				Type:           store.CheckOperator,
+				Name:           "mycheck",
+				CheckInTimeout: time.Millisecond * 100,
+				Present:        false,
+			}, {
+				Namespace:      "staging",
+				Type:           store.CheckOperator,
+				Name:           "mycheck",
+				CheckInTimeout: time.Millisecond * 100,
+				Present:        false,
+			},
+		}
+
+		operators := append(backends, agents...)
+		operators = append(operators, checks...)
+		ordered(operators)
+
+		opc := NewOPC(db)
+
+		for _, op := range operators {
+			if err := opc.CheckIn(ctx, op); err != nil {
+				t.Fatal(err)
+			}
+		}
+
+		allOperators, err := opc.ListOperators(ctx, store.OperatorKey{})
+		if err != nil {
+			t.Fatal(err)
+		}
+		ordered(allOperators)
+		expected := operators
+		if !cmp.Equal(allOperators, expected, _cmpIgnoreDynamicOperatorState()) {
+			t.Error("unexpected result for all operators", cmp.Diff(allOperators, expected))
+		}
+
+		backendOperators, err := opc.ListOperators(ctx, store.OperatorKey{
+			Type: store.BackendOperator,
+		})
+		if err != nil {
+			t.Fatal(err)
+		}
+		ordered(backendOperators)
+		expected = backends
+		if !cmp.Equal(backendOperators, expected, _cmpIgnoreDynamicOperatorState()) {
+			t.Error("unexpected backend operators", cmp.Diff(backendOperators, expected))
+		}
+
+		stagingOperators, err := opc.ListOperators(ctx, store.OperatorKey{
+			Namespace: "staging",
+		})
+		if err != nil {
+			t.Fatal(err)
+		}
+		expected = checks[1:]
+		if !cmp.Equal(stagingOperators, expected, _cmpIgnoreDynamicOperatorState()) {
+			t.Error("unexpected staging operators", cmp.Diff(stagingOperators, expected))
+		}
+
+	})
+}
+
 func TestOPCIntegration(t *testing.T) {
 	withPostgres(t, func(ctx context.Context, db *pgxpool.Pool, dsn string) {
 		nsStore := NewNamespaceStore(db)
@@ -560,4 +681,11 @@ func TestOPCMicromanage(t *testing.T) {
 			}
 		}
 	})
+}
+
+func _cmpIgnoreDynamicOperatorState() cmp.Option {
+	return cmp.FilterPath(func(path cmp.Path) bool {
+		fieldName := path.Last().String()
+		return fieldName == ".LastUpdate" || fieldName == ".Metadata"
+	}, cmp.Ignore())
 }

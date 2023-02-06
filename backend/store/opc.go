@@ -147,6 +147,7 @@ type OperatorMonitor interface {
 // OperatorQueryer lets users query for operators.
 type OperatorQueryer interface {
 	QueryOperator(context.Context, OperatorKey) (OperatorState, error)
+	ListOperators(context.Context, OperatorKey) ([]OperatorState, error)
 }
 
 // OperatorConcierge is responsible for checking operators in and out.

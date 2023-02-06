@@ -290,3 +290,23 @@ func (o *OPC) QueryOperator(ctx context.Context, key store.OperatorKey) (store.O
 	}
 	return store.OperatorState(operator), nil
 }
+
+func (o *OPC) ListOperators(ctx context.Context, key store.OperatorKey) ([]store.OperatorState, error) {
+	var operators []store.OperatorState
+	rows, err := o.db.Query(ctx, opcListOperators, key.Namespace, key.Type, key.Name)
+	if err != nil {
+		return operators, &store.ErrInternal{Message: fmt.Sprintf("could not get operators: %s", err)}
+	}
+	defer rows.Close()
+	for rows.Next() {
+		var operator postgresOpState
+		if err := rows.Scan(operator.SQLParams(new(sql.NullInt64))...); err != nil {
+			return nil, &store.ErrInternal{Message: fmt.Sprintf("error reading operator state: %s", err)}
+		}
+		operators = append(operators, store.OperatorState(operator))
+	}
+	if err := rows.Err(); err != nil {
+		return nil, &store.ErrInternal{Message: fmt.Sprintf("error reading operator states: %s", err)}
+	}
+	return operators, nil
+}

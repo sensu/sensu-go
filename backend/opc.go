@@ -2,19 +2,12 @@ package backend
 
 import (
 	"context"
-	"os"
 	"time"
 
 	"github.com/sensu/sensu-go/backend/store"
 )
 
-func CheckInLoop(ctx context.Context, opc store.OperatorConcierge) {
-	backendName, err := os.Hostname()
-	if err != nil {
-		// According to `man gethostname`, this should never happen, unless
-		// there is a bug in Go's use of gethostname
-		panic(err)
-	}
+func CheckInLoop(ctx context.Context, backendName string, opc store.OperatorConcierge) {
 	ticker := time.NewTicker(time.Second)
 	defer ticker.Stop()
 	state := store.OperatorState{
