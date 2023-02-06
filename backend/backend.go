@@ -438,6 +438,7 @@ func Initialize(ctx context.Context, pgdb postgres.DBI, config *Config) (*Backen
 			RingPool:   ringPool,
 			Bus:        bus,
 			ClusterID:  clusterID,
+			OPCQueryer: pgOPC,
 		})
 	if err != nil {
 		return nil, fmt.Errorf("error initializing %s: %s", tessen.Name(), err)

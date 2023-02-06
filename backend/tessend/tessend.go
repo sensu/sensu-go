@@ -106,6 +106,7 @@ type Tessend struct {
 	config            *corev2.TessenConfig
 	EntityClassCounts func() map[string]int
 	licenseGetter     licensing.Getter
+	opcQueryer        store.OperatorQueryer
 }
 
 // Option is a functional option.
@@ -118,6 +119,7 @@ type Config struct {
 	RingPool   *ringv2.RingPool
 	Bus        messaging.MessageBus
 	ClusterID  string
+	OPCQueryer store.OperatorQueryer
 }
 
 // New creates a new TessenD.
@@ -136,6 +138,7 @@ func New(ctx context.Context, c Config, opts ...Option) (*Tessend, error) {
 		duration:      perResourceDuration,
 		AllowOptOut:   true,
 		licenseGetter: &licensing.DummyGetter{},
+		opcQueryer:    c.OPCQueryer,
 	}
 	t.ctx, t.cancel = context.WithCancel(ctx)
 	t.interrupt = make(chan *corev2.TessenConfig, 1)
@@ -674,30 +677,29 @@ func (t *Tessend) getDataPayload() *Data {
 	return data
 }
 
+func (t *Tessend) getClusterBackendsCount() (int, error) {
+	backendStates, err := t.opcQueryer.ListOperators(t.ctx, store.OperatorKey{
+		Type: store.BackendOperator,
+	})
+	if err != nil {
+		return 0, err
+	}
+	return len(backendStates), nil
+}
+
 // getPerResourceMetrics populates the data payload with the total number of each resource.
 func (t *Tessend) getPerResourceMetrics(now int64, data *Data) error {
-	var backendCount float64
-
 	// collect backend count
-
-	// TODO: This needs to be replaced with something else, that maybe we don't
-	// even have yet. Eric mentioned using the Operator Presence Control data,
-	// for which we don't really have an abstraction yet.
-
-	// cluster, err := t.client.Cluster.MemberList(t.ctx)
-	// if err != nil {
-	// 	logger.WithError(err).Error("unable to retrieve backend count")
-	// 	return err
-	// }
-	// if cluster != nil {
-	// 	backendCount = float64(len(cluster.Members))
-	// }
-	backendCount = 0
+	backendCount, err := t.getClusterBackendsCount()
+	if err != nil {
+		logger.WithError(err).Error("unable to retrieve backend count")
+		return err
+	}
 
 	// populate data payload
 	mp := &corev2.MetricPoint{
 		Name:      "backend_count",
-		Value:     backendCount,
+		Value:     float64(backendCount),
 		Timestamp: now,
 	}
 	appendInternalTag(mp)
