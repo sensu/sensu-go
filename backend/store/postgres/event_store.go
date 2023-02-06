@@ -9,8 +9,8 @@ import (
 	"time"
 
 	"github.com/gogo/protobuf/proto"
-	pgxv5 "github.com/jackc/pgx/v5"
-	"github.com/lib/pq"
+	"github.com/golang/snappy"
+	"github.com/jackc/pgx/v5"
 	corev2 "github.com/sensu/core/v2"
 	"github.com/sensu/sensu-go/backend/selector"
 	"github.com/sensu/sensu-go/backend/store"
@@ -53,7 +53,6 @@ var (
 type EventStore struct {
 	db           DBI
 	silenceStore SilenceStoreI
-	batcher      *EventBatcher
 }
 
 // isFlapping determines if the check is flapping, based on the TotalStateChange
@@ -119,41 +118,10 @@ func totalStateChange(check *corev2.Check) uint32 {
 // NewEventStore creates a NewEventStore. It prepares several queries for
 // future use. If there is a non-nil error, it is due to query preparation
 // failing.
-func NewEventStore(db DBI, sStore SilenceStoreI, pg Config, producers int) (*EventStore, error) {
-	// TODO add these options to postgres.Config
-	//workers := pg.BatchWorkers
-	//if workers == 0 {
-	//	workers = pg.PoolSize * 2
-	//	if workers == 0 {
-	//		workers = producers
-	//	}
-	//}
-	//if workers > producers {
-	//	workers = producers
-	//}
-	//bufSize := pg.BatchBuffer
-	//if bufSize == 0 {
-	//	bufSize = DefaultBatchBufferSize
-	//}
-	//batchSize := pg.BatchSize
-	//if batchSize == 0 {
-	//	batchSize = 1
-	//}
-	cfg := BatchConfig{
-		BufferSize: DefaultBatchBufferSize,
-		BatchSize:  1,
-		Consumers:  20,
-		Producers:  20,
-		DB:         db,
-	}
-	batcher, err := NewEventBatcher(context.Background(), cfg)
-	if err != nil {
-		return nil, fmt.Errorf("couldn't create query batcher: %s", err)
-	}
+func NewEventStore(db DBI, sStore SilenceStoreI, pg Config) (*EventStore, error) {
 	store := &EventStore{
 		db:           db,
 		silenceStore: sStore,
-		batcher:      batcher,
 	}
 	return store, nil
 }
@@ -166,59 +134,27 @@ func getNamespace(ctx context.Context) (string, error) {
 	}
 }
 
-func getHistory(tsArray, statusArray pq.Int64Array, historyIndex int64) ([]corev2.CheckHistory, error) {
-	if len(tsArray) != len(statusArray) {
-		return nil, &store.ErrNotValid{Err: errors.New("timestamp array and status array lengths differ")}
-	}
-	if len(tsArray) > 21 {
-		return nil, &store.ErrNotValid{Err: errors.New("history too long")}
-	}
-	result := make([]corev2.CheckHistory, len(tsArray))
-	for i := range result {
-		result[i].Status = uint32(statusArray[i])
-		result[i].Executed = tsArray[i]
-	}
-	if len(result) == 21 {
-		// The maximum history length has been reached and history has wrapped
-		// around.
-		//
-		// Postgres array indices are 1-based, so subtract 1 from historyIndex.
-		result = append(result[historyIndex-1:], result[:historyIndex-1]...)
-	}
-	return result, nil
-}
-
-func scanEvents(rows pgxv5.Rows, pred *store.SelectionPredicate) ([]*corev2.Event, error) {
+func scanEvents(rows pgx.Rows, pred *store.SelectionPredicate) ([]*corev2.Event, error) {
 	var (
-		tsArray, statusArray pq.Int64Array
-		historyIndex         int64
-		lastOK               int64
-		occurrences          int64
-		occurrencesWatermark int64
-		serialized           []byte
+		serialized []byte
 	)
 	events := []*corev2.Event{}
 	i := int64(0)
 	for rows.Next() {
-		if err := rows.Scan(&lastOK, &occurrences, &occurrencesWatermark, &tsArray, &statusArray, &historyIndex, &serialized); err != nil {
+		if err := rows.Scan(&serialized); err != nil {
 			return nil, &store.ErrNotValid{Err: fmt.Errorf("error reading events: %s", err)}
 		}
 		var event corev2.Event
-		if err := proto.Unmarshal(serialized, &event); err != nil {
+		decompressed, err := snappy.Decode(nil, serialized)
+		if err != nil {
+			return nil, &store.ErrNotValid{Err: err}
+		}
+		if err := proto.Unmarshal(decompressed, &event); err != nil {
 			return nil, &store.ErrDecode{Err: fmt.Errorf("error reading events: %s", err)}
 		}
 		if event.Check == nil {
 			return nil, &store.ErrNotValid{Err: errors.New("nil check")}
 		}
-		history, err := getHistory(tsArray, statusArray, historyIndex)
-		if err != nil {
-			return nil, err
-		}
-		event.Check.History = history
-		event.Check.LastOK = lastOK
-		event.Check.Occurrences = occurrences
-		event.Check.OccurrencesWatermark = occurrencesWatermark
-		updateCheckState(event.Check)
 		events = append(events, &event)
 		i++
 	}
@@ -255,7 +191,7 @@ func (e *EventStore) DeleteEventByEntityCheck(ctx context.Context, entity, check
 	if entity == "" || check == "" {
 		return &store.ErrNotValid{Err: errors.New("must specify entity and check name")}
 	}
-	if _, err := e.db.Exec(ctx, DeleteEventQuery, ns, entity, check); err != nil {
+	if _, err := e.db.Exec(ctx, deleteEvent, ns, entity, check); err != nil {
 		return &store.ErrInternal{Message: fmt.Sprintf("couldn't delete event: %s", err)}
 	}
 	return nil
@@ -329,7 +265,7 @@ func (e *EventStore) GetEventByEntityCheck(ctx context.Context, entity, check st
 	if entity == "" || check == "" {
 		return nil, &store.ErrNotValid{Err: errors.New("must specify entity and check name")}
 	}
-	rows, err := e.db.Query(ctx, GetEventByEntityCheckQuery, ns, entity, check)
+	rows, err := e.db.Query(ctx, getEventByEntityCheck, ns, entity, check)
 	if err != nil {
 		return nil, &store.ErrInternal{Message: fmt.Sprintf("couldn't get event: %s", err)}
 	}
@@ -366,9 +302,6 @@ func marshalSelectors(event *corev2.Event) []byte {
 
 // UpdateEvent updates the event in the store, returns the fully updated event,
 // and the previous event, along with any error encountered.
-//
-// CONSUMERS BEWARE: The previous event will not be fully spec'd, and is
-// mostly returned so that eventd can consult the event.Check.Ttl field.
 func (e *EventStore) UpdateEvent(ctx context.Context, event *corev2.Event) (uEvent, pEvent *corev2.Event, eErr error) {
 	if event == nil || event.Check == nil {
 		return nil, nil, errors.New("event has no check")
@@ -415,76 +348,103 @@ func (e *EventStore) UpdateEvent(ctx context.Context, event *corev2.Event) (uEve
 		persistEvent.Timestamp = time.Now().Unix()
 	}
 
-	ns := persistEvent.Entity.Namespace
+	var prevEvent *corev2.Event
+
+	if !store.IsNoMergeEventContext(ctx) {
+		row := e.db.QueryRow(ctx, getEventByEntityCheck, event.Entity.Namespace, event.Entity.Name, event.Check.Name)
+		var prevSerialized []byte
+		if err := row.Scan(&prevSerialized); err != nil {
+			if err != pgx.ErrNoRows {
+				return nil, nil, &store.ErrInternal{Message: err.Error()}
+			}
+		} else {
+			decompressed, err := snappy.Decode(nil, prevSerialized)
+			if err != nil {
+				return nil, nil, &store.ErrNotValid{Err: err}
+			}
+			var pe corev2.Event
+			if err := proto.Unmarshal(decompressed, &pe); err != nil {
+				return nil, nil, &store.ErrNotValid{Err: err}
+			}
+			prevEvent = &pe
+		}
+	}
+
+	updateEventHistory(event, prevEvent)
+
+	updateOccurrences(event.Check)
+
+	selectors := marshalSelectors(event)
 
 	b, err := proto.Marshal(persistEvent)
 	if err != nil {
 		return nil, nil, &store.ErrEncode{Err: err}
 	}
 
-	updateCheckState(event.Check)
-	naiveCheckState := event.Check.State
-	selectors := marshalSelectors(event)
-
-	args := EventArgs{
-		Namespace:  ns,
-		Entity:     event.Entity.Name,
-		Check:      event.Check.Name,
-		LastOK:     event.Check.Executed,
-		Status:     int32(event.Check.Status),
-		Serialized: b,
-		Selectors:  selectors,
-	}
-
-	row, err := e.batcher.Do(args)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	if row.LastOK > 0 {
-		event.Check.LastOK = row.LastOK
-	}
-	event.Check.Occurrences = row.Occurrences
-	event.Check.OccurrencesWatermark = row.OccurrencesWatermark
-
-	history, err := getHistory(row.HistoryTS, row.HistoryStatus, row.HistoryIndex)
-	if err != nil {
-		return nil, nil, &store.ErrNotValid{Err: fmt.Errorf("couldn't update event: %s", err)}
-	}
-	event.Check.History = history
-
-	// Handle expire on resolve silenced entries
-	if err = e.handleExpireOnResolveEntries(ctx, event); err != nil {
-		return nil, nil, err
-	}
+	serialized := snappy.Encode(nil, b)
 
 	updateCheckState(event.Check)
 
-	if event.Check.State != naiveCheckState {
-		// HACK ALERT
-		// The check state is flapping, but we didn't know that before getting
-		// the history. We'll need to go and update the store again to reflect that.
-		// This is an uncommon case, so it's worth losing a little extra performance
-		// here in order to make the common case faster and simpler.
-		selectors := marshalSelectors(event)
-		if _, err := e.db.Exec(ctx, UpdateEventOnlyQuery, b, selectors, event.Entity.Namespace, event.Entity.Name, event.Check.Name); err != nil {
-			return nil, nil, &store.ErrInternal{Message: fmt.Sprintf("couldn't update event: %s", err)}
+	row := e.db.QueryRow(ctx, createOrUpdateEvent, event.Entity.Namespace, event.Entity.Name, event.Check.Name, selectors, serialized)
+	var result int64
+	if err := row.Scan(&result); err != nil {
+		if err == pgx.ErrNoRows {
+			// the namespace doesn't exist
+			return nil, nil, &store.ErrNamespaceMissing{Namespace: event.Entity.Namespace}
 		}
+		return nil, nil, &store.ErrInternal{Message: err.Error()}
 	}
 
-	var prevEvent corev2.Event
-
-	if len(row.PreviousSerialized) > 0 {
-		if err := proto.Unmarshal(row.PreviousSerialized, &prevEvent); err != nil {
-			return nil, nil, &store.ErrDecode{Err: fmt.Errorf("couldn't update event: %s", err)}
-		}
-		return event, &prevEvent, nil
-	}
-
-	return event, nil, nil
+	return event, prevEvent, nil
 }
 
-func scanCounts(rows pgxv5.Rows) (map[string]EventGauges, error) {
+func updateOccurrences(check *corev2.Check) {
+	if check == nil {
+		return
+	}
+
+	historyLen := len(check.History)
+	if historyLen > 1 && check.History[historyLen-1].Status == check.History[historyLen-2].Status {
+		// 1. Occurrences should always be incremented if the current Check status is the same as the previous status (this includes events with the Check status of OK)
+		check.Occurrences++
+	} else {
+		// 2. Occurrences should always reset to 1 if the current Check status is different than the previous status
+		check.Occurrences = 1
+	}
+
+	if historyLen > 1 && check.History[historyLen-1].Status != 0 && check.History[historyLen-2].Status == 0 {
+		// 3. OccurrencesWatermark only resets on the a first non OK Check status (it does not get reset going between warning, critical, unknown)
+		check.OccurrencesWatermark = 1
+	} else if check.Occurrences <= check.OccurrencesWatermark {
+		// 4. OccurrencesWatermark should remain the same when occurrences is less than or equal to the watermark
+		return
+	} else {
+		// 5. OccurrencesWatermark should be incremented if conditions 3 and 4 have not been met.
+		check.OccurrencesWatermark++
+	}
+}
+
+// updateCheckHistory takes two events and merges the check result history of
+// the second event into the first event.
+func updateEventHistory(event *corev2.Event, prevEvent *corev2.Event) error {
+	if prevEvent != nil {
+		if !prevEvent.HasCheck() {
+			return errors.New("invalid previous event")
+		}
+		event.Check.MergeWith(prevEvent.Check)
+	} else {
+		// If there was no previous check, we still need to set State and LastOK.
+		event.Check.State = corev2.EventFailingState
+		if event.Check.Status == 0 {
+			event.Check.LastOK = event.Check.Executed
+			event.Check.State = corev2.EventPassingState
+		}
+		event.Check.MergeWith(event.Check)
+	}
+	return nil
+}
+
+func scanCounts(rows pgx.Rows) (map[string]EventGauges, error) {
 	gauges := map[string]EventGauges{}
 
 	for rows.Next() {
@@ -552,46 +512,6 @@ func (e *EventStore) Close() (err error) {
 	if closer, ok := e.db.(interface{ Close() }); ok {
 		closer.Close()
 	}
-	return nil
-}
-
-func (e *EventStore) handleExpireOnResolveEntries(ctx context.Context, event *corev2.Event) error {
-	// Make sure we have a check and that the event is a resolution
-	if !event.HasCheck() || !event.IsResolution() || len(event.Check.Silenced) == 0 {
-		return nil
-	}
-
-	entries, err := e.silenceStore.GetSilencesByName(ctx, event.Entity.Namespace, event.Check.Silenced)
-	if err != nil {
-		// Do not wrap this error, it needs to have its type inspected
-		return err
-	}
-	toDelete := []string{}
-	toRetain := []string{}
-	for _, entry := range entries {
-		if entry.ExpireOnResolve {
-			toDelete = append(toDelete, entry.Name)
-		} else {
-			toRetain = append(toRetain, entry.Name)
-		}
-	}
-
-	if err := e.silenceStore.DeleteSilences(ctx, event.Entity.Namespace, toDelete); err != nil {
-		return fmt.Errorf("couldn't resolve silences: %s", err)
-	}
-
-	if len(event.Check.Silenced) != len(toRetain) {
-		event.Check.Silenced = toRetain
-		serialized, err := proto.Marshal(event)
-		if err != nil {
-			return &store.ErrEncode{Err: fmt.Errorf("couldn't resolve silences: %s", err)}
-		}
-		selectors := marshalSelectors(event)
-		if _, err := e.db.Exec(ctx, UpdateEventOnlyQuery, serialized, selectors, event.Entity.Namespace, event.Entity.Name, event.Check.Name); err != nil {
-			return &store.ErrInternal{Message: fmt.Sprintf("couldn't resolve silences: %s", err)}
-		}
-	}
-
 	return nil
 }
 

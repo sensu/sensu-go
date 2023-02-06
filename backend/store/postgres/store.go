@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+	"sync"
 	"text/template"
 	"time"
 
@@ -17,13 +18,16 @@ import (
 	"github.com/sensu/sensu-go/backend/poll"
 	"github.com/sensu/sensu-go/backend/selector"
 	"github.com/sensu/sensu-go/backend/store"
+	"github.com/sensu/sensu-go/backend/store/memory"
 	"github.com/sensu/sensu-go/backend/store/patch"
 	storev2 "github.com/sensu/sensu-go/backend/store/v2"
 	"github.com/sensu/sensu-go/backend/store/v2/wrap"
+	"golang.org/x/time/rate"
 )
 
 type StoreConfig struct {
 	DB             DBI
+	MaxTPS         int
 	WatchInterval  time.Duration
 	WatchTxnWindow time.Duration
 }
@@ -33,6 +37,7 @@ func NewStore(cfg StoreConfig) *Store {
 		db:             cfg.DB,
 		watchInterval:  cfg.WatchInterval,
 		watchTxnWindow: cfg.WatchTxnWindow,
+		maxTPS:         cfg.MaxTPS,
 	}
 }
 
@@ -40,6 +45,9 @@ type Store struct {
 	db             DBI
 	watchInterval  time.Duration
 	watchTxnWindow time.Duration
+	eventStore     store.EventStore
+	maxTPS         int
+	once           sync.Once
 }
 
 func (s *Store) GetConfigStore() storev2.ConfigStore {
@@ -70,8 +78,20 @@ func (s *Store) GetNamespaceStore() storev2.NamespaceStore {
 
 // legacy
 func (s *Store) GetEventStore() store.EventStore {
-	store, _ := NewEventStore(s.db, s.GetSilencesStore(), Config{}, 20)
-	return store
+	s.once.Do(func() {
+		sstore := s.GetSilencesStore()
+		eventStore, _ := NewEventStore(s.db, sstore, Config{})
+		cfg := memory.EventStoreConfig{
+			BackingStore:    eventStore,
+			FlushInterval:   time.Second,
+			EventWriteLimit: rate.Limit(s.maxTPS),
+			SilenceStore:    sstore,
+		}
+		memstore := memory.NewEventStore(cfg)
+		memstore.Go(context.Background())
+		s.eventStore = memstore
+	})
+	return s.eventStore
 }
 
 // legacy

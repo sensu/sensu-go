@@ -1,5 +1,6 @@
 package postgres
 
 type Config struct {
-	DSN string
+	DSN    string
+	MaxTPS int
 }

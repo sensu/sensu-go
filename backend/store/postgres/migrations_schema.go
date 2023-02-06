@@ -396,3 +396,17 @@ CREATE TABLE IF NOT EXISTS silences (
 	expire_at    bigint,
 	UNIQUE (namespace, name)
 );`
+
+// Migration 22
+const recreateEventsTable = `
+DROP TABLE events;
+CREATE TABLE events (
+	id                  bigserial     PRIMARY KEY,
+	namespace           bigint        REFERENCES namespaces (id) ON DELETE CASCADE,
+	entity_name        	text          NOT NULL,
+	check_name         	text          NOT NULL,
+	selectors           jsonb         NOT NULL,
+	serialized          bytea         NOT NULL,
+	UNIQUE ( namespace, check_name, entity_name )
+);
+`

@@ -11,8 +11,15 @@ import (
 	"github.com/sensu/sensu-go/backend/store"
 )
 
-var getEventTmpl = template.Must(template.New("GetEvents").Parse(`SELECT last_ok, occurrences, occurrences_wm, history_ts, history_status, history_index, serialized
+var getEventTmpl = template.Must(template.New("GetEvents").Parse(`
+WITH ns AS (
+	SELECT id FROM namespaces
+	WHERE namespaces.name = $1
+)
+SELECT serialized
 FROM events
+FULL OUTER JOIN ns
+ON events.namespace = ns.id
 WHERE
 {{ .NamespaceCond }}
 AND {{ .EntityCond }}
@@ -34,8 +41,15 @@ type getEventTmplData struct {
 	OffsetClause      string
 }
 
-var countEventsTmpl = template.Must(template.New("CountEvents").Parse(`SELECT count(*)
+var countEventsTmpl = template.Must(template.New("CountEvents").Parse(`
+WITH ns AS (
+	SELECT id FROM namespaces
+	WHERE name = $1
+)
+SELECT count(*)
 FROM events
+FULL OUTER JOIN ns
+ON events.namespace = ns.id
 WHERE
 {{ .NamespaceCond }}
 AND {{ .EntityCond }}
@@ -88,20 +102,18 @@ func getTemplateData(namespace, entity, check string, s *selector.Selector, pred
 		EntityCond:    "true",
 		CheckCond:     "true",
 		SelectorCond:  "true",
-		Ordering:      "sensu_namespace, sensu_entity, sensu_check",
+		Ordering:      "namespace, entity_name, check_name",
 	}
 	var ctr argCounter
 	args := make([]interface{}, 0, 4)
-	if namespace != "" {
-		data.NamespaceCond = fmt.Sprintf("sensu_namespace = $%d", ctr.Next())
-		args = append(args, namespace)
-	}
+	data.NamespaceCond = fmt.Sprintf("(namespace = ns.id OR $%d = '')", ctr.Next())
+	args = append(args, namespace)
 	if entity != "" {
-		data.EntityCond = fmt.Sprintf("sensu_entity = $%d", ctr.Next())
+		data.EntityCond = fmt.Sprintf("entity_name = $%d", ctr.Next())
 		args = append(args, entity)
 	}
 	if check != "" {
-		data.CheckCond = fmt.Sprintf("sensu_check = $%d", ctr.Next())
+		data.CheckCond = fmt.Sprintf("check_name = $%d", ctr.Next())
 		args = append(args, check)
 	}
 	if s != nil && len(s.Operations) > 0 {
@@ -120,16 +132,16 @@ func getTemplateData(namespace, entity, check string, s *selector.Selector, pred
 			break
 
 		case corev2.EventSortEntity:
-			data.Ordering = "sensu_entity"
+			data.Ordering = "entity_name"
 
 		case corev2.EventSortLastOk:
-			data.Ordering = "last_ok"
+			data.Ordering = "(selectors ->> 'event.check.last_ok')::INTEGER"
 
 		case corev2.EventSortSeverity:
-			data.Ordering = "CASE WHEN status = 0 THEN 3 WHEN status = 1 THEN 1 WHEN status = 2 THEN 0 ELSE 2 END"
+			data.Ordering = "CASE WHEN selectors ->> 'event.check.status' = '0' THEN 3 WHEN selectors ->> 'event.check.status' = '1' THEN 1 WHEN selectors ->> 'event.check.status' = '2' THEN 0 ELSE 2 END"
 
 		case corev2.EventSortTimestamp:
-			data.Ordering = "history_ts[CASE WHEN history_index - 1 > 0 THEN history_index - 1 ELSE array_length(history_ts, 1)::INTEGER END]"
+			data.Ordering = "(selectors ->> 'event.timestamp')::INTEGER"
 
 		default:
 			return data, nil, errors.New("unknown ordering requested")

@@ -72,7 +72,8 @@ const (
 	flagName                  = "name"
 
 	// Postgres store
-	flagPGDSN = "pg-dsn"
+	flagPGDSN    = "pg-dsn"     // postgresql connection string
+	flagPGMaxTPS = "pg-max-tps" // postgresql maximum transactions per second cap
 
 	// Metric logging flags
 	flagDisablePlatformMetrics         = "disable-platform-metrics"
@@ -186,7 +187,8 @@ func StartCommand(initialize InitializeFunc) *cobra.Command {
 
 				Store: backend.StoreConfig{
 					PostgresStore: postgres.Config{
-						DSN: viper.GetString(flagPGDSN),
+						DSN:    viper.GetString(flagPGDSN),
+						MaxTPS: viper.GetInt(flagPGMaxTPS),
 					},
 				},
 			}
@@ -345,6 +347,7 @@ func handleConfig(cmd *cobra.Command, arguments []string, server bool) error {
 		viper.SetDefault(flagEventLogBufferSize, 100000)
 		viper.SetDefault(flagEventLogFile, "")
 		viper.SetDefault(flagEventLogParallelEncoders, false)
+		viper.SetDefault(flagPGMaxTPS, 1000)
 
 		backendName, err := os.Hostname()
 		if err != nil {
@@ -401,6 +404,9 @@ func flagSet(server bool) *pflag.FlagSet {
 
 	flagSet.String(flagPGDSN, viper.GetString(flagPGDSN), "postgresql store DSN")
 	_ = flagSet.SetAnnotation(flagPGDSN, "categories", []string{"store"})
+
+	flagSet.Int(flagPGMaxTPS, viper.GetInt(flagPGMaxTPS), "postgresql max transactions per second")
+	_ = flagSet.SetAnnotation(flagPGMaxTPS, "categories", []string{"store"})
 
 	if server {
 		// Main Flags
