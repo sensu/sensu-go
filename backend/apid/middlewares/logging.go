@@ -16,7 +16,7 @@ type SimpleLogger struct{}
 
 // Then middleware
 func (m SimpleLogger) Then(next http.Handler) http.Handler {
-	if logger.Logger.Level < logrus.InfoLevel {
+	if Logger.Logger.Level < logrus.InfoLevel {
 		return next
 	}
 
@@ -32,7 +32,7 @@ func (m SimpleLogger) Then(next http.Handler) http.Handler {
 		}
 
 		duration := float64(time.Since(start)) / float64(time.Millisecond)
-		logEntry := logger.WithFields(logrus.Fields{
+		logEntry := Logger.WithFields(logrus.Fields{
 			"duration": fmt.Sprintf("%.3fms", duration),
 			"status":   writerWithCapture.Status(),
 			"size":     writerWithCapture.Size(),

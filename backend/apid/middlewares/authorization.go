@@ -51,7 +51,7 @@ func (a Authorization) Then(next http.Handler) http.Handler {
 				))
 				return
 			}
-			logger.WithError(err).Warning("unexpected error occurred during authorization")
+			Logger.WithError(err).Warning("unexpected error occurred during authorization")
 			writeErr(w, actions.NewErrorf(
 				actions.InternalErr,
 				"unexpected error occurred during authorization",

@@ -36,7 +36,7 @@ func writeErr(w http.ResponseWriter, err error) {
 
 	errJSON, err := json.Marshal(errRes)
 	if err != nil {
-		logger.WithError(err).Error("unable to marshal error")
+		Logger.WithError(err).Error("unable to marshal error")
 	}
 
 	w.WriteHeader(st)

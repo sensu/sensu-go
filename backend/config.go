@@ -114,7 +114,10 @@ type Config struct {
 
 	TLS *corev2.TLSOptions
 
-	LogLevel           string
+	// LogLevel maps a component name to its log level. The "" key interpreted
+	// as the global, default level. This could/should even be
+	// map[string]logrus.Level
+	LogLevel           map[string]string
 	EtcdLogLevel       string
 	EtcdClientLogLevel string
 

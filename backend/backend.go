@@ -13,6 +13,7 @@ import (
 
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/sensu/sensu-go/backend/resource"
+	"github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 	"go.etcd.io/etcd/client/pkg/v3/logutil"
 	"go.etcd.io/etcd/client/pkg/v3/transport"
@@ -27,6 +28,7 @@ import (
 	"github.com/sensu/sensu-go/backend/apid"
 	"github.com/sensu/sensu-go/backend/apid/actions"
 	"github.com/sensu/sensu-go/backend/apid/graphql"
+	"github.com/sensu/sensu-go/backend/apid/middlewares"
 	"github.com/sensu/sensu-go/backend/apid/routers"
 	"github.com/sensu/sensu-go/backend/authentication"
 	"github.com/sensu/sensu-go/backend/authentication/jwt"
@@ -319,6 +321,36 @@ func Initialize(ctx context.Context, config *Config) (*Backend, error) {
 	b.Client, err = newClient(b.RunContext(), config, b)
 	if err != nil {
 		return nil, err
+	}
+
+	// Somewhere in this function, we parse the log level string and set the
+	// logging level on individual module loggers accordingly
+	for facility, level := range config.LogLevel {
+		level, err := logrus.ParseLevel(level)
+		if err != nil {
+			return nil, err
+		}
+
+		switch facility {
+		// This is the global level, for anything that's doesn't have a
+		// dedicated module logger
+		case "":
+			logrus.SetLevel(level)
+
+		// Some modules, like apid, have submodules with independent loggers.
+		// Some, like the middleware submodule, claim  to be the "apid"
+		// component. Others are their own component.
+		case "apid":
+			apid.Logger.Logger.SetLevel(level)
+			middlewares.Logger.Logger.SetLevel(level)
+		case "apid.graphql":
+			// apidGraphqlImport.Logger.Logger.SetLevel(level)
+		case "apid.router":
+			// apidRouterImport.Logger.Logger.SetLevel(level)
+
+		case "authentication":
+			authentication.Logger.Logger.SetLevel(level)
+		}
 	}
 
 	// Create the store, which lives on top of etcd

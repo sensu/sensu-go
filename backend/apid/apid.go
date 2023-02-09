@@ -321,18 +321,18 @@ func (a *APId) Start() error {
 	if a.serveWaitTime <= 0 {
 		a.ready()
 	} else {
-		logger.Warnf("starting apid as temporarily unavailable for: %s", a.serveWaitTime)
+		Logger.Warnf("starting apid as temporarily unavailable for: %s", a.serveWaitTime)
 		go func() {
 			select {
 			case <-time.After(a.serveWaitTime):
 				a.ready()
-				logger.Warn("apid is now available")
+				Logger.Warn("apid is now available")
 			case <-a.stopping:
 			}
 		}()
 	}
 
-	logger.Warn("starting apid on address: ", a.HTTPServer.Addr)
+	Logger.Warn("starting apid on address: ", a.HTTPServer.Addr)
 	ln, err := net.Listen("tcp", a.HTTPServer.Addr)
 	if err != nil {
 		return fmt.Errorf("failed to start apid: %s", err)
@@ -361,9 +361,9 @@ func (a *APId) Start() error {
 func (a *APId) Stop() error {
 	if err := a.HTTPServer.Shutdown(context.TODO()); err != nil {
 		// failure/timeout shutting down the server gracefully
-		logger.Error("failed to shutdown http server gracefully - forcing shutdown")
+		Logger.Error("failed to shutdown http server gracefully - forcing shutdown")
 		if closeErr := a.HTTPServer.Close(); closeErr != nil {
-			logger.Error("failed to shutdown http server forcefully")
+			Logger.Error("failed to shutdown http server forcefully")
 		}
 	}
 
