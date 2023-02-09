@@ -106,4 +106,35 @@ func TestSynchronizedExecutor(t *testing.T) {
 			t.Error("expected other handlers to begin running")
 		}
 	})
+
+	t.Run("handles lost lock", func(t *testing.T) {
+		withPostgres(t, func(ctx context.Context, db *pgxpool.Pool, dsn string) {
+			// set up a connection with idle_in_transaction_session_timeout set
+			// low enough to boot our executor's lock
+			conn, _ := db.Acquire(ctx)
+			conn.Exec(ctx, "SET SESSION idle_in_transaction_session_timeout = '50ms'")
+
+			executor := SynchronizedExecutor{
+				DB:              conn,
+				CheckinInterval: time.Millisecond * 250,
+			}
+			hasLock, lostLock := make(chan struct{}), make(chan struct{})
+			actualErr := executor.Execute(ctx, store.Mutex(1), func(ctx context.Context) error {
+				close(hasLock)
+				<-ctx.Done()
+				close(lostLock)
+				return nil
+			})
+
+			if actualErr != nil {
+				t.Errorf("expected Execute to lose lock, and signal the handler to shutdown gracefully. %v", actualErr)
+			}
+			if _, ok := <-hasLock; ok {
+				t.Fatal("expected to acquire lock")
+			}
+			if _, ok := <-lostLock; ok {
+				t.Fatal("expected to have recieved cancel signal")
+			}
+		})
+	})
 }

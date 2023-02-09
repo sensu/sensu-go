@@ -53,13 +53,13 @@ func (se *SynchronizedExecutor) Execute(ctx context.Context, mux store.Mutex, ha
 func (se *SynchronizedExecutor) handle(ctx context.Context, conn DBI, mux store.Mutex, handler store.MutexHandler) error {
 	handleCtx, cancel := context.WithCancel(ctx)
 
-	var checkinErr error
 	var wg sync.WaitGroup
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
 		if err := se.checkin(handleCtx, conn, mux); err != nil {
-			checkinErr = err
+			logger.WithError(err).
+				Errorf("unexpected error holding mutex lock. considering mutex lost. %d", mux)
 		}
 		cancel()
 	}()
@@ -67,9 +67,6 @@ func (se *SynchronizedExecutor) handle(ctx context.Context, conn DBI, mux store.
 	err := handler(handleCtx)
 	cancel()
 	wg.Wait()
-	if err == nil {
-		err = checkinErr
-	}
 	return err
 }
 
