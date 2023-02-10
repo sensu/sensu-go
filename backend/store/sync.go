@@ -13,7 +13,7 @@ type Mutex int64
 const (
 	// BitmaskMutexOSS bitmask for sensu-go mutexes.
 	BitmaskMutexOSS Mutex = 0
-	// BitmaskMutexOSS bitmask for mutexes in the enterprise build.
+	// BitmaskMutexEE bitmask for mutexes in the enterprise build.
 	BitmaskMutexEE Mutex = 0xee << 32
 )
 

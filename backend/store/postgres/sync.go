@@ -8,6 +8,7 @@ import (
 
 	"github.com/jackc/pgx/v5"
 	"github.com/sensu/sensu-go/backend/store"
+	"github.com/sensu/sensu-go/util/retry"
 )
 
 // SynchronizedExecutor functions as a postgresql advisory lock based mutex.
@@ -20,34 +21,30 @@ type SynchronizedExecutor struct {
 // Execute blocks until the Mutex can be locked, executes the handler function,
 // then unlocks the Mutex. Implemented with postgresql advisory locks.
 func (se *SynchronizedExecutor) Execute(ctx context.Context, mux store.Mutex, handler store.MutexHandler) error {
-	var next time.Time
-	for {
-		now := time.Now()
-		if next.After(now) {
-			select {
-			case <-ctx.Done():
-				return nil
-			case <-time.After(next.Sub(now)):
-			}
-		}
+	backoff := retry.ExponentialBackoff{
+		Ctx:                  ctx,
+		InitialDelayInterval: se.CheckinInterval / 4,
+		MaxDelayInterval:     se.CheckinInterval,
+	}
+	return backoff.Retry(func(_ int) (bool, error) {
 		tx, err := se.tryLock(ctx, mux)
 		if err != nil {
 			logger.WithError(err).Errorf("error trying to lock mutex: %d", mux)
-			continue
+			return false, nil
 		}
-		if tx != nil {
-			defer func() {
-				if err := tx.Rollback(ctx); err != nil {
-					if !errors.Is(err, pgx.ErrTxClosed) {
-						logger.WithError(err).
-							Errorf("unexpected error rolling back transaction holding mutex lock. %d", mux)
-					}
+		if tx == nil {
+			return false, nil
+		}
+		defer func() {
+			if err := tx.Commit(ctx); err != nil {
+				if !errors.Is(err, pgx.ErrTxClosed) {
+					logger.WithError(err).
+						Errorf("unexpected error committing transaction holding mutex lock. %d", mux)
 				}
-			}()
-			return se.handle(ctx, tx, mux, handler)
-		}
-		next = time.Now().Add(se.CheckinInterval)
-	}
+			}
+		}()
+		return true, se.handle(ctx, tx, mux, handler)
+	})
 }
 
 func (se *SynchronizedExecutor) handle(ctx context.Context, conn DBI, mux store.Mutex, handler store.MutexHandler) error {
@@ -77,7 +74,7 @@ func (se *SynchronizedExecutor) tryLock(ctx context.Context, mux store.Mutex) (p
 	}
 	locked, err := lockMux(ctx, tx, mux)
 	if !locked || err != nil {
-		_ = tx.Rollback(ctx)
+		_ = tx.Commit(ctx)
 		return nil, err
 	}
 
