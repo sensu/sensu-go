@@ -253,6 +253,7 @@ func GraphQLSubrouter(router *mux.Router, cfg Config) *mux.Router {
 		// https://github.com/graphql/graphiql
 		// https://graphql.org/learn/introspection/
 		middlewares.Authentication{IgnoreUnauthorized: true, Store: cfg.Store},
+		middlewares.LimitUnauthedRequest{Limit: cfg.RequestLimit},
 		middlewares.SimpleLogger{},
 	)
 
