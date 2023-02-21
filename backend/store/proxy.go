@@ -65,8 +65,8 @@ func (s *StoreProxy) UpdateEvent(ctx context.Context, event *corev2.Event) (old,
 	return s.do().UpdateEvent(ctx, event)
 }
 
-// CountEvents counts the events in a namespace. The namespace is psecified as
-// part of the context. In the enterprise prodcut, filtering is also taken into
+// CountEvents counts the events in a namespace. The namespace is specified as
+// part of the context. In the enterprise product, filtering is also taken into
 // account.
 func (s *StoreProxy) CountEvents(ctx context.Context, pred *SelectionPredicate) (int64, error) {
 	return s.do().CountEvents(ctx, pred)
