@@ -14,7 +14,15 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+	"golang.org/x/time/rate"
 )
+
+// it's like corev2.FixtureEvent but the entity class is agent
+func fixtureEvent(entity, check string) *corev2.Event {
+	event := corev2.FixtureEvent(entity, check)
+	event.Entity.EntityClass = corev2.EntityAgentClass
+	return event
+}
 
 // mock.On always appends, so if we want to replace a method, have to do something else.
 // Do not use this in a concurrent setting.
@@ -31,8 +39,8 @@ func On(mock *mock.Mock, method string, args ...interface{}) *mock.Call {
 func TestMemoryWriteTo(t *testing.T) {
 	store := new(mockstore.MockStore)
 	On(&store.Mock, "UpdateEvent", mock.Anything, mock.Anything).Return((*corev2.Event)(nil), (*corev2.Event)(nil), nil)
-	db := newMemoryDB()
-	event := corev2.FixtureEvent("entity", "check")
+	db := newMemoryDB(rate.NewLimiter(1000, 1000))
+	event := fixtureEvent("entity", "check")
 	eventBytes, err := proto.Marshal(event)
 	if err != nil {
 		t.Fatal(err)
@@ -70,14 +78,16 @@ func readEvent(db *memorydb, namespace, entity, check string) *corev2.Event {
 func TestEventStorageMaxOutputSize(t *testing.T) {
 	ms := new(mockstore.MockStore)
 	config := EventStoreConfig{
-		BackingStore:  ms,
-		FlushInterval: 10 * time.Second,
-		SilenceStore:  new(mockstore.MockStore),
+		BackingStore:    ms,
+		FlushInterval:   10 * time.Second,
+		SilenceStore:    new(mockstore.MockStore),
+		EventWriteLimit: 1000,
 	}
 	s := NewEventStore(config)
-	event := corev2.FixtureEvent("entity1", "check1")
+	event := fixtureEvent("entity1", "check1")
 	event.Check.Output = "VERY LONG"
 	event.Check.MaxOutputSize = 4
+	event.Entity.EntityClass = corev2.EntityAgentClass
 	ctx := context.WithValue(context.Background(), corev2.NamespaceKey, event.Entity.Namespace)
 	On(&ms.Mock, "GetEventByEntityCheck", mock.Anything, "entity1", "check1").Return((*corev2.Event)(nil), &store.ErrNotFound{})
 	On(&ms.Mock, "UpdateEvent", mock.Anything, mock.Anything).Return((*corev2.Event)(nil), (*corev2.Event)(nil), nil)
@@ -98,12 +108,13 @@ func TestEventStorageMaxOutputSize(t *testing.T) {
 func TestEventStorage(t *testing.T) {
 	ms := new(mockstore.MockStore)
 	config := EventStoreConfig{
-		BackingStore:  ms,
-		FlushInterval: 10 * time.Second,
-		SilenceStore:  new(mockstore.MockStore),
+		BackingStore:    ms,
+		FlushInterval:   10 * time.Second,
+		SilenceStore:    new(mockstore.MockStore),
+		EventWriteLimit: 1000,
 	}
 	s := NewEventStore(config)
-	event := corev2.FixtureEvent("entity1", "check1")
+	event := fixtureEvent("entity1", "check1")
 	ctx := context.WithValue(context.Background(), corev2.NamespaceKey, event.Entity.Namespace)
 	pred := &store.SelectionPredicate{}
 
@@ -132,7 +143,6 @@ func TestEventStorage(t *testing.T) {
 	require.NoError(t, err)
 
 	ms.AssertCalled(t, "GetEventByEntityCheck", mock.Anything, mock.Anything, mock.Anything)
-	ms.AssertCalled(t, "UpdateEvent", mock.Anything, mock.Anything)
 
 	// Set state to passing, as we expect the store to handle this for us
 	event.Check.State = corev2.EventPassingState
@@ -189,12 +199,13 @@ func TestEventStorage(t *testing.T) {
 func TestDoNotStoreMetrics(t *testing.T) {
 	ms := new(mockstore.MockStore)
 	config := EventStoreConfig{
-		BackingStore:  ms,
-		FlushInterval: 10 * time.Second,
-		SilenceStore:  new(mockstore.MockStore),
+		BackingStore:    ms,
+		FlushInterval:   10 * time.Second,
+		SilenceStore:    new(mockstore.MockStore),
+		EventWriteLimit: 1000,
 	}
 	s := NewEventStore(config)
-	event := corev2.FixtureEvent("entity1", "check1")
+	event := fixtureEvent("entity1", "check1")
 	ctx := context.WithValue(context.Background(), corev2.NamespaceKey, event.Entity.Namespace)
 	event.Metrics = &corev2.Metrics{
 		Handlers: []string{"metrix"},
@@ -204,7 +215,6 @@ func TestDoNotStoreMetrics(t *testing.T) {
 	if _, _, err := s.UpdateEvent(ctx, event); err != nil {
 		t.Fatal(err)
 	}
-	ms.AssertCalled(t, "UpdateEvent", mock.Anything, mock.Anything)
 	if got := readEvent(s.db, "default", "entity1", "check1"); got.HasMetrics() {
 		t.Error("event has metrics but should not")
 	}
@@ -213,12 +223,13 @@ func TestDoNotStoreMetrics(t *testing.T) {
 func TestUpdateEventHasCheckState(t *testing.T) {
 	ms := new(mockstore.MockStore)
 	config := EventStoreConfig{
-		BackingStore:  ms,
-		FlushInterval: 10 * time.Second,
-		SilenceStore:  new(mockstore.MockStore),
+		BackingStore:    ms,
+		FlushInterval:   10 * time.Second,
+		SilenceStore:    new(mockstore.MockStore),
+		EventWriteLimit: 1000,
 	}
 	s := NewEventStore(config)
-	event := corev2.FixtureEvent("foo", "bar")
+	event := fixtureEvent("foo", "bar")
 	ctx := context.Background()
 	ms.On("GetEventByEntityCheck", mock.Anything, mock.Anything, mock.Anything).Return((*corev2.Event)(nil), &store.ErrNotFound{})
 	ms.On("UpdateEvent", mock.Anything, mock.Anything).Return((*corev2.Event)(nil), (*corev2.Event)(nil), nil)

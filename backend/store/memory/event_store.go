@@ -16,11 +16,14 @@ import (
 )
 
 type memorydb struct {
-	data sync.Map
+	limiter *rate.Limiter
+	data    sync.Map
 }
 
-func newMemoryDB() *memorydb {
-	return &memorydb{}
+func newMemoryDB(limiter *rate.Limiter) *memorydb {
+	return &memorydb{
+		limiter: limiter,
+	}
 }
 
 type eventEntry struct {
@@ -93,6 +96,10 @@ func (m *memorydb) WriteTo(ctx context.Context, s store.EventStore) error {
 			// developer error, fatal
 			panic(err)
 		}
+		if err := m.limiter.Wait(ctx); err != nil {
+			// context cancellation
+			return false
+		}
 		_, _, storeErr = s.UpdateEvent(ctx, &event)
 		if storeErr != nil {
 			return false
@@ -120,13 +127,14 @@ type EventStoreConfig struct {
 }
 
 func NewEventStore(config EventStoreConfig) *EventStore {
+	limiter := rate.NewLimiter(config.EventWriteLimit, int(config.EventWriteLimit)/10)
 	return &EventStore{
 		backingStore:      config.BackingStore,
 		flushInterval:     config.FlushInterval,
-		db:                newMemoryDB(),
+		db:                newMemoryDB(limiter),
 		silenceStore:      config.SilenceStore,
 		flushC:            make(chan struct{}),
-		eventWriteLimiter: rate.NewLimiter(config.EventWriteLimit, int(config.EventWriteLimit/10)),
+		eventWriteLimiter: limiter,
 	}
 }
 
@@ -201,6 +209,13 @@ func updateOccurrences(check *corev2.Check) {
 }
 
 func (e *EventStore) UpdateEvent(ctx context.Context, event *corev2.Event) (*corev2.Event, *corev2.Event, error) {
+	if event.Entity.EntityClass != corev2.EntityAgentClass {
+		// no memory storage for events where an agent is not bound to this instance.
+		if err := e.eventWriteLimiter.Wait(ctx); err != nil {
+			return nil, nil, err
+		}
+		return e.backingStore.UpdateEvent(ctx, event)
+	}
 	entry := e.db.ReadEntry(event.Entity.Namespace, event.Entity.Name, event.Check.Name)
 	entry.Mu.Lock()
 	defer entry.Mu.Unlock()
@@ -283,9 +298,12 @@ func (e *EventStore) UpdateEvent(ctx context.Context, event *corev2.Event) (*cor
 	entry.EventBytes = compressedEventBytes
 	entry.Dirty = true
 
-	if event.IsResolution() || event.Entity.EntityClass != corev2.EntityAgentClass {
+	if event.IsResolution() {
 		// Need to persist to storage as a UX concern
 		ctx = store.NoMergeEventContext(ctx)
+		if err := e.eventWriteLimiter.Wait(ctx); err != nil {
+			return nil, nil, err
+		}
 		if _, _, err := e.backingStore.UpdateEvent(ctx, event); err != nil {
 			return nil, nil, err
 		}
