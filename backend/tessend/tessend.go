@@ -59,29 +59,50 @@ const (
 )
 
 var (
-	// resourceMetrics maps the metric name to a resource type
-	resourceMetrics = map[string]corev2.Resource{
+	// configStoreResourceMetrics maps metric names to resources in the config
+	// store.
+	configStoreResourceMetrics = map[string]corev2.Resource{
 		"asset_count":                &corev2.Asset{},
 		"check_count":                &corev2.CheckConfig{},
 		"cluster_role_count":         &corev2.ClusterRole{},
 		"cluster_role_binding_count": &corev2.ClusterRoleBinding{},
-		"entity_count":               &corev2.Entity{},
-		"event_count":                &corev2.Event{},
 		"filter_count":               &corev2.EventFilter{},
 		"handler_count":              &corev2.Handler{},
 		"hook_count":                 &corev2.HookConfig{},
 		"mutator_count":              &corev2.Mutator{},
 		"role_count":                 &corev2.Role{},
 		"role_binding_count":         &corev2.RoleBinding{},
-		"silenced_count":             &corev2.Silenced{},
 		"user_count":                 &corev2.User{},
 	}
-	resourceMetricsMu = &sync.RWMutex{}
+	configStoreResourceMetricsMu = &sync.RWMutex{}
 
-	v3ResourceMetrics = map[string]corev3.Resource{
+	// entityConfigStoreResourceMetrics maps metric names to resources in the event
+	// store.
+	entityConfigStoreResourceMetrics = map[string]corev3.Resource{
+		"entity_count": &corev2.Entity{},
+	}
+	entityConfigStoreResourceMetricsMu = &sync.RWMutex{}
+
+	// eventStoreResourceMetrics maps metric names to resources in the event
+	// store.
+	eventStoreResourceMetrics = map[string]corev3.Resource{
+		"event_count": &corev2.Event{},
+	}
+	eventStoreResourceMetricsMu = &sync.RWMutex{}
+
+	// namespaceStoreResourceMetrics maps metric names to resources in the
+	// namespace store.
+	namespaceStoreResourceMetrics = map[string]corev3.Resource{
 		"namespace_count": &corev3.Namespace{},
 	}
-	v3ResourceMetricsMu = &sync.RWMutex{}
+	namespaceStoreResourceMetricsMu = &sync.RWMutex{}
+
+	// silencesStoreResourceMetrics maps metric names to resources in the
+	// silences store.
+	silencesStoreResourceMetrics = map[string]corev3.Resource{
+		"silenced_count": &corev2.Silenced{},
+	}
+	silencesStoreResourceMetricsMu = &sync.RWMutex{}
 )
 
 // Tessend is the tessen daemon.
@@ -687,6 +708,19 @@ func (t *Tessend) getClusterBackendsCount() (int, error) {
 	return len(backendStates), nil
 }
 
+func (t *Tessend) prepareMetricPoint(name string, value float64, timestamp int64) *corev2.MetricPoint {
+	point := &corev2.MetricPoint{
+		Name:      name,
+		Value:     value,
+		Timestamp: timestamp,
+	}
+	appendInternalTag(point)
+	appendStoreConfig(point, t.GetStoreConfig())
+	logMetric(point)
+
+	return point
+}
+
 // getPerResourceMetrics populates the data payload with the total number of each resource.
 func (t *Tessend) getPerResourceMetrics(now int64, data *Data) error {
 	// collect backend count
@@ -696,15 +730,7 @@ func (t *Tessend) getPerResourceMetrics(now int64, data *Data) error {
 		return err
 	}
 
-	// populate data payload
-	mp := &corev2.MetricPoint{
-		Name:      "backend_count",
-		Value:     float64(backendCount),
-		Timestamp: now,
-	}
-	appendInternalTag(mp)
-	appendStoreConfig(mp, t.GetStoreConfig())
-	logMetric(mp)
+	mp := t.prepareMetricPoint("backend_count", float64(backendCount), now)
 	data.Metrics.Points = append(data.Metrics.Points, mp)
 
 	// loop through the entity class counts
@@ -712,11 +738,12 @@ func (t *Tessend) getPerResourceMetrics(now int64, data *Data) error {
 
 	// loop through the resource map and collect the count of each
 	// resource at the configured interval
-	resourceMetricsMu.RLock()
-	defer resourceMetricsMu.RUnlock()
 	ticker := time.NewTicker(t.duration)
 	defer ticker.Stop()
-	for metricName, resource := range resourceMetrics {
+
+	configStoreResourceMetricsMu.RLock()
+	defer configStoreResourceMetricsMu.RUnlock()
+	for metricName, resource := range configStoreResourceMetrics {
 		select {
 		case <-t.ctx.Done():
 			return t.ctx.Err()
@@ -727,39 +754,88 @@ func (t *Tessend) getPerResourceMetrics(now int64, data *Data) error {
 			return err
 		}
 
-		mp = &corev2.MetricPoint{
-			Name:      metricName,
-			Value:     float64(count),
-			Timestamp: now,
-		}
-		appendInternalTag(mp)
-		appendStoreConfig(mp, t.GetStoreConfig())
-		logMetric(mp)
+		mp := t.prepareMetricPoint(metricName, float64(count), now)
 		data.Metrics.Points = append(data.Metrics.Points, mp)
 	}
 
-	v3ResourceMetricsMu.RLock()
-	defer v3ResourceMetricsMu.RUnlock()
-	for metricName, resource := range v3ResourceMetrics {
+	entityConfigStoreResourceMetricsMu.RLock()
+	defer entityConfigStoreResourceMetricsMu.RUnlock()
+	namespaces, err := t.store.GetNamespaceStore().List(t.ctx, &store.SelectionPredicate{})
+	for _, namespace := range namespaces {
+		var metricName = ""
+		var totalEntities = 0
+
+		for metricName = range entityConfigStoreResourceMetrics {
+			select {
+			case <-t.ctx.Done():
+				return t.ctx.Err()
+			case <-ticker.C:
+			}
+
+			count, err := t.store.GetEntityConfigStore().Count(t.ctx, namespace.Metadata.Name, "")
+			if err != nil {
+				return err
+			}
+			totalEntities += count
+		}
+
+		mp := t.prepareMetricPoint(metricName, float64(totalEntities), now)
+		data.Metrics.Points = append(data.Metrics.Points, mp)
+	}
+
+	eventStoreResourceMetricsMu.RLock()
+	defer eventStoreResourceMetricsMu.RUnlock()
+	for metricName := range eventStoreResourceMetrics {
 		select {
 		case <-t.ctx.Done():
 			return t.ctx.Err()
 		case <-ticker.C:
 		}
 
-		count, err := t.store.GetConfigStore().Count(t.ctx, storev2.NewResourceRequestFromResource(resource))
+		ctx := context.WithValue(t.ctx, corev2.NamespaceKey, corev2.NamespaceTypeAll)
+		count, err := t.store.GetEventStore().CountEvents(ctx, &store.SelectionPredicate{})
 		if err != nil {
 			return err
 		}
 
-		mp = &corev2.MetricPoint{
-			Name:      metricName,
-			Value:     float64(count),
-			Timestamp: now,
+		mp := t.prepareMetricPoint(metricName, float64(count), now)
+		data.Metrics.Points = append(data.Metrics.Points, mp)
+	}
+
+	namespaceStoreResourceMetricsMu.RLock()
+	defer namespaceStoreResourceMetricsMu.RUnlock()
+	for metricName := range namespaceStoreResourceMetrics {
+		select {
+		case <-t.ctx.Done():
+			return t.ctx.Err()
+		case <-ticker.C:
 		}
-		appendInternalTag(mp)
-		appendStoreConfig(mp, t.GetStoreConfig())
-		logMetric(mp)
+
+		count, err := t.store.GetNamespaceStore().Count(t.ctx)
+		if err != nil {
+			return err
+		}
+
+		mp := t.prepareMetricPoint(metricName, float64(count), now)
+		data.Metrics.Points = append(data.Metrics.Points, mp)
+	}
+
+	silencesStoreResourceMetricsMu.RLock()
+	defer silencesStoreResourceMetricsMu.RUnlock()
+	for metricName := range silencesStoreResourceMetrics {
+		select {
+		case <-t.ctx.Done():
+			return t.ctx.Err()
+		case <-ticker.C:
+		}
+
+		silences, err := t.store.GetSilencesStore().GetSilences(t.ctx, "")
+		if err != nil {
+			return err
+		}
+		count := len(silences)
+
+		mp := t.prepareMetricPoint(metricName, float64(count), now)
 		data.Metrics.Points = append(data.Metrics.Points, mp)
 	}
 
@@ -840,9 +916,9 @@ func appendInternalTag(m *corev2.MetricPoint) {
 
 // RegisterResourceMetric adds a resource metric to be reported by Tessen.
 func RegisterResourceMetric(key string, resource corev2.Resource) {
-	resourceMetricsMu.Lock()
-	defer resourceMetricsMu.Unlock()
-	resourceMetrics[key] = resource
+	configStoreResourceMetricsMu.Lock()
+	defer configStoreResourceMetricsMu.Unlock()
+	configStoreResourceMetrics[key] = resource
 }
 
 func appendStoreConfig(m *corev2.MetricPoint, c StoreConfig) {
