@@ -761,6 +761,10 @@ func (t *Tessend) getPerResourceMetrics(now int64, data *Data) error {
 	entityConfigStoreResourceMetricsMu.RLock()
 	defer entityConfigStoreResourceMetricsMu.RUnlock()
 	namespaces, err := t.store.GetNamespaceStore().List(t.ctx, &store.SelectionPredicate{})
+	if err != nil {
+		return err
+	}
+
 	for _, namespace := range namespaces {
 		var metricName = ""
 		var totalEntities = 0
