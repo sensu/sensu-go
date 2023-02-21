@@ -1,11 +1,12 @@
 package actions
 
 import (
+	"context"
+
 	corev2 "github.com/sensu/core/v2"
 	"github.com/sensu/sensu-go/backend/messaging"
 	"github.com/sensu/sensu-go/backend/store"
 	storev2 "github.com/sensu/sensu-go/backend/store/v2"
-	"golang.org/x/net/context"
 )
 
 // TessenController exposes actions which a viewer can perform

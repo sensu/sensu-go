@@ -1,10 +1,11 @@
 package actions
 
 import (
+	"context"
+
 	corev2 "github.com/sensu/core/v2"
 	apitools "github.com/sensu/sensu-api-tools"
 	"github.com/sensu/sensu-go/version"
-	"golang.org/x/net/context"
 )
 
 // VersionController exposes actions which a viewer can perform

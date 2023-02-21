@@ -1,8 +1,9 @@
 package actions
 
 import (
+	"context"
+
 	corev2 "github.com/sensu/core/v2"
-	"golang.org/x/net/context"
 )
 
 // HealthController exposes actions which a viewer can perform
