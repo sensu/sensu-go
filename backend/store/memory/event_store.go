@@ -11,13 +11,15 @@ import (
 	"github.com/golang/protobuf/proto"
 	"github.com/golang/snappy"
 	corev2 "github.com/sensu/core/v2"
+	"github.com/sensu/sensu-go/backend/messaging"
 	"github.com/sensu/sensu-go/backend/store"
 	"golang.org/x/time/rate"
 )
 
 type memorydb struct {
-	limiter *rate.Limiter
-	data    sync.Map
+	limiter   *rate.Limiter
+	data      sync.Map
+	evictions sync.Map
 }
 
 func newMemoryDB(limiter *rate.Limiter) *memorydb {
@@ -81,33 +83,60 @@ func (m *memorydb) WriteTo(ctx context.Context, s store.EventStore) error {
 	ctx = store.NoMergeEventContext(ctx)
 	m.data.Range(func(key, value any) bool {
 		entry := value.(*eventEntry)
-		entry.Mu.Lock()
-		defer entry.Mu.Unlock()
-		if !entry.Dirty {
-			return true
-		}
-		eventBytes, err := snappy.Decode(nil, entry.EventBytes)
-		if err != nil {
-			// developer error, fatal
-			panic(err)
-		}
-		var event corev2.Event
-		if err := proto.Unmarshal(eventBytes, &event); err != nil {
-			// developer error, fatal
-			panic(err)
-		}
-		if err := m.limiter.Wait(ctx); err != nil {
-			// context cancellation
+		if err := m.writeEntry(ctx, s, key, entry); err != nil {
+			storeErr = err
 			return false
 		}
-		_, _, storeErr = s.UpdateEvent(ctx, &event)
-		if storeErr != nil {
-			return false
-		}
-		entry.Dirty = false
 		return true
 	})
 	return storeErr
+}
+
+func (m *memorydb) writeEntry(ctx context.Context, s store.EventStore, key any, entry *eventEntry) error {
+	entry.Mu.Lock()
+	defer entry.Mu.Unlock()
+	eventBytes, err := snappy.Decode(nil, entry.EventBytes)
+	if err != nil {
+		// developer error, fatal
+		panic(err)
+	}
+	var event corev2.Event
+	if err := proto.Unmarshal(eventBytes, &event); err != nil {
+		// developer error, fatal
+		panic(err)
+	}
+	defer func() {
+		ekey := strings.Join([]string{event.Entity.Namespace, event.Entity.Name}, "\n")
+		_, ok := m.evictions.LoadAndDelete(ekey)
+		if ok {
+			m.data.Delete(key)
+		}
+	}()
+	if !entry.Dirty {
+		return nil
+	}
+	if err := m.limiter.Wait(ctx); err != nil {
+		// context cancellation
+		return err
+	}
+	if _, _, err := s.UpdateEvent(ctx, &event); err != nil {
+		return err
+	}
+	entry.Dirty = false
+	return nil
+}
+
+func (m *memorydb) NotifyAgentState(state messaging.AgentNotification) {
+	key := strings.Join([]string{state.Namespace, state.Name}, "\n")
+	if state.Connected {
+		// if there is a pending eviction and we connected again, simply
+		// remove the eviction to debounce the system.
+		m.evictions.Delete(key)
+	} else {
+		// the agent has disconnected, and so we should purge all its entries
+		// from the event cache.
+		m.evictions.Store(key, struct{}{})
+	}
 }
 
 type EventStore struct {
@@ -117,6 +146,8 @@ type EventStore struct {
 	db                *memorydb
 	silenceStore      SilenceStoreI
 	flushC            chan struct{}
+	agentConnState    messaging.ChanSubscriber
+	bus               messaging.MessageBus
 }
 
 type EventStoreConfig struct {
@@ -124,6 +155,7 @@ type EventStoreConfig struct {
 	FlushInterval   time.Duration
 	EventWriteLimit rate.Limit
 	SilenceStore    SilenceStoreI
+	Bus             messaging.MessageBus
 }
 
 func NewEventStore(config EventStoreConfig) *EventStore {
@@ -135,14 +167,22 @@ func NewEventStore(config EventStoreConfig) *EventStore {
 		silenceStore:      config.SilenceStore,
 		flushC:            make(chan struct{}),
 		eventWriteLimiter: limiter,
+		agentConnState:    make(messaging.ChanSubscriber),
+		bus:               config.Bus,
 	}
 }
 
-func (e *EventStore) Go(ctx context.Context) {
-	go e.writeLoop(ctx)
+func (e *EventStore) Start(ctx context.Context) error {
+	sub, err := e.bus.Subscribe(messaging.TopicAgentConnectionState, "eventstore", e.agentConnState)
+	if err != nil {
+		return err
+	}
+	go e.writeLoop(ctx, sub)
+	return nil
 }
 
-func (e *EventStore) writeLoop(ctx context.Context) {
+func (e *EventStore) writeLoop(ctx context.Context, sub messaging.Subscription) {
+	defer sub.Cancel()
 	ticker := time.NewTicker(e.flushInterval)
 	defer func() {
 		ticker.Stop()
@@ -155,6 +195,9 @@ func (e *EventStore) writeLoop(ctx context.Context) {
 			e.db.WriteTo(ctx, e.backingStore)
 		case <-ticker.C:
 			e.db.WriteTo(ctx, e.backingStore)
+		case message := <-e.agentConnState:
+			notification := message.(messaging.AgentNotification)
+			e.db.NotifyAgentState(notification)
 		}
 	}
 }

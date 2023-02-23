@@ -15,6 +15,7 @@ import (
 	"github.com/jackc/pgx/v5/pgconn"
 	corev2 "github.com/sensu/core/v2"
 	corev3 "github.com/sensu/core/v3"
+	"github.com/sensu/sensu-go/backend/messaging"
 	"github.com/sensu/sensu-go/backend/poll"
 	"github.com/sensu/sensu-go/backend/selector"
 	"github.com/sensu/sensu-go/backend/store"
@@ -30,6 +31,7 @@ type StoreConfig struct {
 	MaxTPS         int
 	WatchInterval  time.Duration
 	WatchTxnWindow time.Duration
+	Bus            messaging.MessageBus
 }
 
 func NewStore(cfg StoreConfig) *Store {
@@ -38,6 +40,7 @@ func NewStore(cfg StoreConfig) *Store {
 		watchInterval:  cfg.WatchInterval,
 		watchTxnWindow: cfg.WatchTxnWindow,
 		maxTPS:         cfg.MaxTPS,
+		bus:            cfg.Bus,
 	}
 }
 
@@ -48,6 +51,7 @@ type Store struct {
 	eventStore     store.EventStore
 	maxTPS         int
 	once           sync.Once
+	bus            messaging.MessageBus
 }
 
 func (s *Store) GetConfigStore() storev2.ConfigStore {
@@ -86,9 +90,10 @@ func (s *Store) GetEventStore() store.EventStore {
 			FlushInterval:   time.Second,
 			EventWriteLimit: rate.Limit(s.maxTPS),
 			SilenceStore:    sstore,
+			Bus:             s.bus,
 		}
 		memstore := memory.NewEventStore(cfg)
-		memstore.Go(context.Background())
+		memstore.Start(context.Background())
 		s.eventStore = memstore
 	})
 	return s.eventStore

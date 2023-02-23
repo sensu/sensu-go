@@ -396,8 +396,18 @@ func (s *Session) Start() (err error) {
 		"namespace": s.cfg.Namespace,
 	})
 
+	topic := messaging.TopicAgentConnectionState
+	err = s.bus.Publish(topic, messaging.AgentNotification{
+		Namespace: s.cfg.Namespace,
+		Name:      s.cfg.AgentName,
+		Connected: true,
+	})
+	if err != nil {
+		lager.WithError(err).Error("error sending agent connect notification")
+	}
+
 	// Subscribe the agent to its entity_config topic
-	topic := messaging.EntityConfigTopic(s.cfg.Namespace, s.cfg.AgentName)
+	topic = messaging.EntityConfigTopic(s.cfg.Namespace, s.cfg.AgentName)
 	lager.WithField("topic", topic).Debug("subscribing to topic")
 	// Get a unique name for the agent, which will be used as the consumer of the
 	// bus, in order to avoid problems with an agent reconnecting before its
@@ -504,6 +514,16 @@ func (s *Session) stop() {
 	defer close(s.checkChannel)
 
 	sessionCounter.WithLabelValues(s.cfg.Namespace).Dec()
+
+	topic := messaging.TopicAgentConnectionState
+	err := s.bus.Publish(topic, messaging.AgentNotification{
+		Namespace: s.cfg.Namespace,
+		Name:      s.cfg.AgentName,
+		Connected: false,
+	})
+	if err != nil {
+		logger.WithError(err).Error("error sending agent disconnect notification")
+	}
 
 	// Gracefully wait for the send and receiver to exit, but force the websocket
 	// connection to close itself after the grace period
