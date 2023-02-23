@@ -27,31 +27,34 @@ import (
 )
 
 type StoreConfig struct {
-	DB             DBI
-	MaxTPS         int
-	WatchInterval  time.Duration
-	WatchTxnWindow time.Duration
-	Bus            messaging.MessageBus
+	DB                DBI
+	MaxTPS            int
+	WatchInterval     time.Duration
+	WatchTxnWindow    time.Duration
+	Bus               messaging.MessageBus
+	DisableEventCache bool
 }
 
 func NewStore(cfg StoreConfig) *Store {
 	return &Store{
-		db:             cfg.DB,
-		watchInterval:  cfg.WatchInterval,
-		watchTxnWindow: cfg.WatchTxnWindow,
-		maxTPS:         cfg.MaxTPS,
-		bus:            cfg.Bus,
+		db:                cfg.DB,
+		watchInterval:     cfg.WatchInterval,
+		watchTxnWindow:    cfg.WatchTxnWindow,
+		maxTPS:            cfg.MaxTPS,
+		bus:               cfg.Bus,
+		disableEventCache: cfg.DisableEventCache,
 	}
 }
 
 type Store struct {
-	db             DBI
-	watchInterval  time.Duration
-	watchTxnWindow time.Duration
-	eventStore     store.EventStore
-	maxTPS         int
-	once           sync.Once
-	bus            messaging.MessageBus
+	db                DBI
+	watchInterval     time.Duration
+	watchTxnWindow    time.Duration
+	eventStore        store.EventStore
+	maxTPS            int
+	once              sync.Once
+	bus               messaging.MessageBus
+	disableEventCache bool
 }
 
 func (s *Store) GetConfigStore() storev2.ConfigStore {
@@ -85,6 +88,10 @@ func (s *Store) GetEventStore() store.EventStore {
 	s.once.Do(func() {
 		sstore := s.GetSilencesStore()
 		eventStore, _ := NewEventStore(s.db, sstore, Config{})
+		if s.disableEventCache {
+			s.eventStore = eventStore
+			return
+		}
 		cfg := memory.EventStoreConfig{
 			BackingStore:    eventStore,
 			FlushInterval:   time.Second,

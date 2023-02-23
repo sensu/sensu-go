@@ -171,11 +171,12 @@ func Initialize(ctx context.Context, pgdb postgres.DBI, config *Config) (*Backen
 	b.Daemons = append(b.Daemons, bus)
 
 	b.Store = postgres.NewStore(postgres.StoreConfig{
-		DB:             pgdb,
-		WatchInterval:  time.Second,
-		WatchTxnWindow: 5 * time.Second,
-		Bus:            bus,
-		MaxTPS:         config.Store.PostgresStore.MaxTPS,
+		DB:                pgdb,
+		WatchInterval:     time.Second,
+		WatchTxnWindow:    5 * time.Second,
+		Bus:               bus,
+		MaxTPS:            config.Store.PostgresStore.MaxTPS,
+		DisableEventCache: config.Store.PostgresStore.DisableEventCache,
 	})
 
 	jwtClient := api.JWT{Store: b.Store}

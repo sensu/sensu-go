@@ -72,8 +72,9 @@ const (
 	flagName                  = "name"
 
 	// Postgres store
-	flagPGDSN    = "pg-dsn"     // postgresql connection string
-	flagPGMaxTPS = "pg-max-tps" // postgresql maximum transactions per second cap
+	flagPGDSN                = "pg-dsn"                  // postgresql connection string
+	flagEventCacheWriteLimit = "event-cache-write-limit" // maximum number of tps that event cache will write
+	flagDisableEventCache    = "disable-event-cache"     // don't cache events, always write through to postgresql
 
 	// Metric logging flags
 	flagDisablePlatformMetrics         = "disable-platform-metrics"
@@ -187,8 +188,9 @@ func StartCommand(initialize InitializeFunc) *cobra.Command {
 
 				Store: backend.StoreConfig{
 					PostgresStore: postgres.Config{
-						DSN:    viper.GetString(flagPGDSN),
-						MaxTPS: viper.GetInt(flagPGMaxTPS),
+						DSN:               viper.GetString(flagPGDSN),
+						MaxTPS:            viper.GetInt(flagEventCacheWriteLimit),
+						DisableEventCache: viper.GetBool(flagDisableEventCache),
 					},
 				},
 			}
@@ -347,7 +349,8 @@ func handleConfig(cmd *cobra.Command, arguments []string, server bool) error {
 		viper.SetDefault(flagEventLogBufferSize, 100000)
 		viper.SetDefault(flagEventLogFile, "")
 		viper.SetDefault(flagEventLogParallelEncoders, false)
-		viper.SetDefault(flagPGMaxTPS, 1000)
+		viper.SetDefault(flagEventCacheWriteLimit, 1000)
+		viper.SetDefault(flagDisableEventCache, false)
 
 		backendName, err := os.Hostname()
 		if err != nil {
@@ -405,8 +408,11 @@ func flagSet(server bool) *pflag.FlagSet {
 	flagSet.String(flagPGDSN, viper.GetString(flagPGDSN), "postgresql store DSN")
 	_ = flagSet.SetAnnotation(flagPGDSN, "categories", []string{"store"})
 
-	flagSet.Int(flagPGMaxTPS, viper.GetInt(flagPGMaxTPS), "postgresql max transactions per second")
-	_ = flagSet.SetAnnotation(flagPGMaxTPS, "categories", []string{"store"})
+	flagSet.Int(flagEventCacheWriteLimit, viper.GetInt(flagEventCacheWriteLimit), "events per second to flush from the event cache to postgresql")
+	_ = flagSet.SetAnnotation(flagEventCacheWriteLimit, "categories", []string{"store"})
+
+	flagSet.Bool(flagDisableEventCache, viper.GetBool(flagDisableEventCache), "disable caching events, write events directly to postgresql")
+	_ = flagSet.SetAnnotation(flagDisableEventCache, "categories", []string{"store"})
 
 	if server {
 		// Main Flags
