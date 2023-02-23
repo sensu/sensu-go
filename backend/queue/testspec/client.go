@@ -2,6 +2,7 @@ package testspec
 
 import (
 	"context"
+	"errors"
 	"math/rand"
 	"sort"
 	"sync"
@@ -57,10 +58,11 @@ func runIntegrationSuite(t *testing.T, ctx context.Context, clientUnderTest queu
 
 		res, err := q.Reserve(rCtx, "test-queue")
 		if err != nil {
-			if err == rCtx.Err() {
+			if errors.Is(err, rCtx.Err()) {
 				return
 			}
 			t.Errorf("unexpected reservation error: %v", err)
+			return
 		}
 		jitter := time.Duration(20 * rand.Float64())
 		time.Sleep(time.Millisecond * jitter)
