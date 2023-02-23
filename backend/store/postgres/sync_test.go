@@ -24,57 +24,56 @@ func TestSynchronizedExecutor(t *testing.T) {
 		assert.EqualError(t, err, "error B")
 
 		// test concurrent executions of different mutexes
-		step := make(chan struct{}, 1)
-		go executor.Execute(ctx, store.Mutex(333), func(ctx context.Context) error {
-			<-step
+
+		MuxA := store.Mutex(333)
+		MuxB := store.Mutex(222)
+
+		cMuxAContinue := make(chan struct{}, 1)
+		cMuxABlocked := make(chan struct{})
+
+		go executor.Execute(ctx, MuxA, func(ctx context.Context) error {
+			close(cMuxABlocked)
+			<-cMuxAContinue
 			return nil
 		})
 
-		done := make(chan struct{})
-		go executor.Execute(ctx, store.Mutex(222), func(ctx context.Context) error {
-			close(done)
+		assertClosedWithTimeout(t, cMuxABlocked, time.Millisecond*100, "expected execution to be triggered")
+
+		cMuxBDone := make(chan struct{})
+		go executor.Execute(ctx, MuxB, func(ctx context.Context) error {
+			close(cMuxBDone)
 			return nil
 		})
 
-		select {
-		case <-done:
-			// OK
-		case <-time.After(time.Millisecond * 100):
-			t.Error("expected concurrent executions of different mutexes")
-		}
+		assertClosedWithTimeout(t, cMuxBDone, time.Millisecond*100, "expected concurrent executions of different mutexes")
 
 		// test concurrent executions of the same mutex
-		done = make(chan struct{})
+		cMuxASecondInvocation := make(chan struct{})
 		go executor.Execute(ctx, store.Mutex(333), func(ctx context.Context) error {
-			close(done)
+			close(cMuxASecondInvocation)
 			return nil
 		})
 
 		select {
-		case <-done:
+		case <-cMuxASecondInvocation:
 			t.Error("expected concurrent execution of busy mutex to block")
 		case <-time.After(time.Millisecond * 100):
 			// OK
 		}
 
 		// unblock first execution
-		step <- struct{}{}
-		select {
-		case <-done:
-			// OK
-		case <-time.After(time.Millisecond * 100):
-			t.Error("expected the second handler to take over after the first completed")
-		}
+		cMuxAContinue <- struct{}{}
+		assertClosedWithTimeout(t, cMuxASecondInvocation, time.Millisecond*100, "expected the second handler to take over after the first completed")
 
-		isLocked := make(chan struct{})
+		cMuxABlocked = make(chan struct{})
 		// test many queued executions
 		// heuristic to ensure many executors do not exhaust the connection pool
 		go executor.Execute(ctx, store.Mutex(333), func(ctx context.Context) error {
-			close(isLocked)
-			<-step
+			close(cMuxABlocked)
+			<-cMuxAContinue
 			return nil
 		})
-		<-isLocked
+		<-cMuxABlocked
 
 		results := make(chan error, 1)
 		for i := 0; i < 256; i++ {
@@ -84,15 +83,15 @@ func TestSynchronizedExecutor(t *testing.T) {
 		}
 
 		select {
-		case <-results:
-			t.Error("expected handlers to await lock")
+		case unexpectedErr := <-results:
+			t.Errorf("expected handlers to await lock. Unexpected %v", unexpectedErr)
 		case <-time.After(time.Millisecond * 100):
 		}
-		step <- struct{}{}
+		cMuxAContinue <- struct{}{}
 
 		// see that mutex begins to be claimed by other executors.
 		// only 10 because 256*CheckInInterval is a long time.
-		done = make(chan struct{})
+		done := make(chan struct{})
 		go func() {
 			for i := 0; i < 10; i++ {
 				<-results
@@ -100,11 +99,7 @@ func TestSynchronizedExecutor(t *testing.T) {
 			close(done)
 		}()
 
-		select {
-		case <-done:
-		case <-time.After(time.Millisecond * 200):
-			t.Error("expected other handlers to begin running")
-		}
+		assertClosedWithTimeout(t, done, time.Millisecond*200, "expected other handlers to begin running")
 	})
 
 	t.Run("handles lost lock", func(t *testing.T) {
@@ -137,4 +132,12 @@ func TestSynchronizedExecutor(t *testing.T) {
 			}
 		})
 	})
+}
+func assertClosedWithTimeout(t *testing.T, c chan struct{}, d time.Duration, msg string) {
+	select {
+	case <-c:
+		// OK
+	case <-time.After(d):
+		t.Error(msg)
+	}
 }
