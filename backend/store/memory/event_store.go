@@ -407,3 +407,24 @@ func (e *EventStore) CountEvents(ctx context.Context, pred *store.SelectionPredi
 func (e *EventStore) EventStoreSupportsFiltering(ctx context.Context) bool {
 	return true
 }
+
+type gaugesGetter interface {
+	GetEventGaugesByNamespace(ctx context.Context) (map[string]store.EventGauges, error)
+	GetKeepaliveGaugesByNamespace(ctx context.Context) (map[string]store.KeepaliveGauges, error)
+}
+
+func (e *EventStore) GetEventGaugesByNamespace(ctx context.Context) (map[string]store.EventGauges, error) {
+	getter, ok := e.backingStore.(gaugesGetter)
+	if !ok {
+		return nil, errors.New("event gauges not supported")
+	}
+	return getter.GetEventGaugesByNamespace(ctx)
+}
+
+func (e *EventStore) GetKeepaliveGaugesByNamespace(ctx context.Context) (map[string]store.KeepaliveGauges, error) {
+	getter, ok := e.backingStore.(gaugesGetter)
+	if !ok {
+		return nil, errors.New("event gauges not supported")
+	}
+	return getter.GetKeepaliveGaugesByNamespace(ctx)
+}
