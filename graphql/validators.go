@@ -9,7 +9,7 @@ import (
 )
 
 const (
-	MaxQueryNodeDepth = 8
+	MaxQueryNodeDepth = 5
 )
 
 func reportError(context *graphql.ValidationContext, message string, nodes []ast.Node) (string, interface{}) {
@@ -17,6 +17,7 @@ func reportError(context *graphql.ValidationContext, message string, nodes []ast
 	return visitor.ActionNoChange, nil
 }
 
+// validate max depth of a GraphQL query with a depthLimit
 func validateMaxDepth(context *graphql.ValidationContext, node ast.Node, currentDepth int, depthLimit int) int {
 	// end recursion early if error reported
 	if errors := context.Errors(); len(errors) > 0 {
