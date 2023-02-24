@@ -75,23 +75,51 @@ func validateMaxDepth(context *graphql.ValidationContext, node ast.Node, current
 	return 0
 }
 
-func ProvideMaxDepthRule(ctx *graphql.ValidationContext) *graphql.ValidationRuleInstance {
-
-	visitorOpts := &visitor.VisitorOptions{
+func (rule *maxDepthRule) maxDepthVisitorOptions() *visitor.VisitorOptions {
+	return &visitor.VisitorOptions{
 		KindFuncMap: map[string]visitor.NamedVisitFuncs{
 			kinds.OperationDefinition: {
 				Kind: func(p visitor.VisitFuncParams) (string, interface{}) {
 					node := p.Node.(ast.Node)
 					if node != nil {
-						validateMaxDepth(ctx, node, 0, MaxQueryNodeDepth)
+						validateMaxDepth(rule.context, node, 0, rule.depthLimit)
 					}
 					return visitor.ActionNoChange, nil
 				},
 			},
 		},
 	}
+}
 
-	return &graphql.ValidationRuleInstance{
-		VisitorOpts: visitorOpts,
+type maxDepthRule struct {
+	context    *graphql.ValidationContext
+	depthLimit int
+}
+
+func newMaxDepthRule(context *graphql.ValidationContext, depthLimit int) *maxDepthRule {
+	return &maxDepthRule{
+		context:    context,
+		depthLimit: depthLimit,
 	}
+}
+
+func MaxDepthRule(depthLimit int) graphql.ValidationRuleFn {
+	rule := &maxDepthRule{
+		depthLimit: depthLimit,
+	}
+	return rule.validateRule
+}
+
+func (r *maxDepthRule) validateRule(context *graphql.ValidationContext) *graphql.ValidationRuleInstance {
+	rule := newMaxDepthRule(context, r.depthLimit)
+	return &graphql.ValidationRuleInstance{VisitorOpts: rule.maxDepthVisitorOptions()}
+}
+
+type UnauthedValidatorOpts struct {
+	DepthLimit int
+}
+
+func ProvideUnauthedValidators(opts UnauthedValidatorOpts) []graphql.ValidationRuleFn {
+	rules := []graphql.ValidationRuleFn{MaxDepthRule(opts.DepthLimit)}
+	return rules
 }
