@@ -7,8 +7,9 @@ import (
 	"github.com/graphql-go/graphql/testutil"
 )
 
-func TestValidateMaxDepth(t *testing.T) {
-	testutil.ExpectPassesRule(t, ProvideMaxDepthRule, `
+// use graphql-go testutil to confirm validator provided correctly
+func TestMaxDepthRule(t *testing.T) {
+	testutil.ExpectPassesRule(t, MaxDepthRule(5), `
 	query MyQuery {
 		forwardTo(cluster: "~") {
 			forwardTo(cluster: "~") {
@@ -21,11 +22,12 @@ func TestValidateMaxDepth(t *testing.T) {
 		}
 	}`)
 
-	// NOTE: the graphql-go testutil requires a line and column in the query document
-	// 	of the error node. The query is formatted this way to easily find the `healthy`
-	// 	node which breaks the max depth rule
-	testutil.ExpectFailsRule(t, ProvideMaxDepthRule, `query MyQuery {forwardTo(cluster: "~") {forwardTo(cluster: "~") {forwardTo(cluster: "~") {forwardTo(cluster: "~") {health {postgresql {
-healthy # <-- this node is at depth six, breaking the max depth of 5 rule
-		}}}}}}}`,
-		[]gqlerrors.FormattedError{testutil.RuleError("Max depth exceeded", 2, 1)})
+	testutil.ExpectFailsRule(t, MaxDepthRule(1), `
+		query MyQuery {   # depth 0
+			health {        # depth 1
+				healthy				# depth 2 <-- exceeds max depth of 1
+			}
+		}`,
+		// `healthy` node which breaks rule is on line 4, column 5 of the query document
+		[]gqlerrors.FormattedError{testutil.RuleError("Max depth exceeded", 4, 5)})
 }
