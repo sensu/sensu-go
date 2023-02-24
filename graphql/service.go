@@ -159,6 +159,7 @@ func (service *Service) Middleware() []Middleware {
 
 // QueryParams describe parameters of a GraphQL query.
 type QueryParams struct {
+	IsAuthed       bool
 	OperationName  string
 	Query          string
 	RootObject     map[string]interface{}
@@ -191,6 +192,14 @@ func (service *Service) Do(ctx context.Context, p QueryParams) *Result {
 	parseFinishFn(err)
 	if err != nil {
 		return &graphql.Result{Errors: gqlerrors.FormatErrors(err)}
+	}
+
+	if !p.IsAuthed {
+		rules := []graphql.ValidationRuleFn{ProvideMaxDepthRule}
+		validationResult := graphql.ValidateDocument(&schema, AST, rules)
+		if !validationResult.IsValid {
+			return &graphql.Result{Errors: validationResult.Errors}
+		}
 	}
 
 	// validate document
