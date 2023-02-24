@@ -196,7 +196,7 @@ func (service *Service) Do(ctx context.Context, p QueryParams) *Result {
 
 	// run validators for unauthorized requests
 	if !p.IsAuthed {
-		rules := ProvideUnauthedValidators(UnauthedValidatorOpts{DepthLimit: 5})
+		rules := UnauthedValidators()
 		validationResult := graphql.ValidateDocument(&schema, AST, rules)
 		if !validationResult.IsValid {
 			return &graphql.Result{Errors: validationResult.Errors}
