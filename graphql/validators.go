@@ -8,6 +8,10 @@ import (
 	"github.com/graphql-go/graphql/language/visitor"
 )
 
+const (
+	MaxQueryNodeDepth = 8
+)
+
 func reportError(context *graphql.ValidationContext, message string, nodes []ast.Node) (string, interface{}) {
 	context.ReportError(gqlerrors.NewError(message, nodes, "", nil, []int{}, nil))
 	return visitor.ActionNoChange, nil
@@ -78,7 +82,7 @@ func ProvideMaxDepthRule(ctx *graphql.ValidationContext) *graphql.ValidationRule
 				Kind: func(p visitor.VisitFuncParams) (string, interface{}) {
 					node := p.Node.(ast.Node)
 					if node != nil {
-						validateMaxDepth(ctx, node, 0, 8)
+						validateMaxDepth(ctx, node, 0, MaxQueryNodeDepth)
 					}
 					return visitor.ActionNoChange, nil
 				},
