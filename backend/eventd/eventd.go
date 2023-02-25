@@ -318,7 +318,7 @@ func (e *Eventd) startHandlers() {
 					for msg := range e.eventChan {
 						if _, err := e.handleMessage(msg); err != nil {
 							logger := withEventFields(msg, logger)
-							logger.WithError(err).Error("error handling event")
+							logger.WithError(err).Error("error handling event from event channel while shutting down")
 						}
 					}
 					return
@@ -348,7 +348,7 @@ func (e *Eventd) startHandlers() {
 							}
 							if _, err := e.handleMessage(keepMsg); err != nil {
 								logger := withEventFields(msg, logger)
-								logger.WithError(err).Error("error handling event")
+								logger.WithError(err).Error("error handling event from keepalive channel")
 							}
 						default:
 							goto DRAINED
@@ -357,7 +357,7 @@ func (e *Eventd) startHandlers() {
 				DRAINED:
 					if _, err := e.handleMessage(msg); err != nil {
 						logger := withEventFields(msg, logger)
-						logger.WithError(err).Error("error handling event")
+						logger.WithError(err).Error("error handling event from event channel")
 					}
 					eventHandlersBusy.WithLabelValues().Dec()
 				case msg, ok := <-e.keepaliveChan:
@@ -374,7 +374,7 @@ func (e *Eventd) startHandlers() {
 					}
 					if _, err := e.handleMessage(msg); err != nil {
 						logger := withEventFields(msg, logger)
-						logger.WithError(err).Error("error handling event")
+						logger.WithError(err).Error("error handling event from keepalive channel")
 					}
 					eventHandlersBusy.WithLabelValues().Dec()
 				}

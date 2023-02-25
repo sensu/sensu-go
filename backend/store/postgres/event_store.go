@@ -385,6 +385,7 @@ func (e *EventStore) UpdateEvent(ctx context.Context, event *corev2.Event) (uEve
 
 	updateCheckState(event.Check)
 
+	fmt.Println(event.Entity.Namespace, event.Entity.Name, event.Check.Name, selectors, serialized)
 	row := e.db.QueryRow(ctx, createOrUpdateEvent, event.Entity.Namespace, event.Entity.Name, event.Check.Name, selectors, serialized)
 	var result int64
 	if err := row.Scan(&result); err != nil {
@@ -392,6 +393,7 @@ func (e *EventStore) UpdateEvent(ctx context.Context, event *corev2.Event) (uEve
 			// the namespace doesn't exist
 			return nil, nil, &store.ErrNamespaceMissing{Namespace: event.Entity.Namespace}
 		}
+		panic(err)
 		return nil, nil, &store.ErrInternal{Message: err.Error()}
 	}
 
@@ -486,7 +488,7 @@ func scanCounts(rows pgx.Rows) (map[string]store.EventGauges, error) {
 // GetEventGaugesByNamespace queries the store and returns a map of EventGauge
 // data, indexed by namespace.
 func (e *EventStore) GetEventGaugesByNamespace(ctx context.Context) (map[string]store.EventGauges, error) {
-	rows, err := e.db.Query(ctx, GetEventCountsByNamespaceQuery)
+	rows, err := e.db.Query(ctx, getEventCountsByNamespaceQuery)
 	if err != nil {
 		return nil, &store.ErrInternal{Message: fmt.Sprintf("couldn't get event gauges: %s", err)}
 	}
@@ -498,7 +500,7 @@ func (e *EventStore) GetEventGaugesByNamespace(ctx context.Context) (map[string]
 // GetKeepaliveGaugesByNamespace queries the store and returns a map of
 // KeepaliveGauge data, indexed by namespace.
 func (e *EventStore) GetKeepaliveGaugesByNamespace(ctx context.Context) (map[string]store.KeepaliveGauges, error) {
-	rows, err := e.db.Query(ctx, GetKeepaliveCountsByNamespaceQuery)
+	rows, err := e.db.Query(ctx, getKeepaliveCountsByNamespaceQuery)
 	if err != nil {
 		return nil, &store.ErrInternal{Message: fmt.Sprintf("couldn't get keepalive gauges: %s", err)}
 	}

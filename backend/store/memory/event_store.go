@@ -95,6 +95,10 @@ func (m *memorydb) WriteTo(ctx context.Context, s store.EventStore) error {
 func (m *memorydb) writeEntry(ctx context.Context, s store.EventStore, key any, entry *eventEntry) error {
 	entry.Mu.Lock()
 	defer entry.Mu.Unlock()
+	if len(entry.EventBytes) == 0 {
+		// Can occur when the entry has recently been stored as an empty entry
+		return nil
+	}
 	eventBytes, err := snappy.Decode(nil, entry.EventBytes)
 	if err != nil {
 		// developer error, fatal
