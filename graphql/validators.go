@@ -14,6 +14,7 @@ const (
 
 type maxDepthRule struct {
 	context    *graphql.ValidationContext
+	depth      int
 	depthLimit int
 }
 
@@ -22,10 +23,15 @@ func UnauthedValidators() []graphql.ValidationRuleFn {
 	return rules
 }
 
-func MaxDepthRule(depthLimit int) graphql.ValidationRuleFn {
+func newMaxDepthRule(depthLimit int) *maxDepthRule {
 	rule := &maxDepthRule{
 		depthLimit: depthLimit,
 	}
+	return rule
+}
+
+func MaxDepthRule(depthLimit int) graphql.ValidationRuleFn {
+	rule := newMaxDepthRule(depthLimit)
 	return rule.maxDepthRuleWithContext
 }
 
@@ -44,7 +50,8 @@ func (rule *maxDepthRule) maxDepthVisitorOptions() *visitor.VisitorOptions {
 				Kind: func(p visitor.VisitFuncParams) (string, interface{}) {
 					node := p.Node.(ast.Node)
 					if node != nil {
-						validateMaxDepth(rule.context, node, 1, rule.depthLimit, nil)
+						maxDepth := validateMaxDepth(rule.context, node, 1, rule.depthLimit, nil)
+						rule.depth = maxDepth
 					}
 					return visitor.ActionNoChange, nil
 				},
