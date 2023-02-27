@@ -11,14 +11,16 @@ import (
 
 	"github.com/jackc/pgx/v5/pgxpool"
 	corev2 "github.com/sensu/core/v2"
+	corev3 "github.com/sensu/core/v3"
 	"github.com/sensu/sensu-go/backend/selector"
 	"github.com/sensu/sensu-go/backend/store"
+	storev2 "github.com/sensu/sensu-go/backend/store/v2"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 func TestEventStorageMaxOutputSize(t *testing.T) {
-	testWithPostgresEventStore(t, func(store store.EventStore) {
+	testWithPostgresEventStore(t, func(store store.EventStore, sv2 storev2.Interface) {
 		event := corev2.FixtureEvent("entity1", "check1")
 		event.Check.Output = "VERY LONG"
 		event.Check.MaxOutputSize = 4
@@ -37,7 +39,7 @@ func TestEventStorageMaxOutputSize(t *testing.T) {
 }
 
 func TestEventStorage(t *testing.T) {
-	testWithPostgresEventStore(t, func(s store.EventStore) {
+	testWithPostgresEventStore(t, func(s store.EventStore, sv2 storev2.Interface) {
 		event := corev2.FixtureEvent("entity1", "check1")
 		ctx := context.WithValue(context.Background(), corev2.NamespaceKey, event.Entity.Namespace)
 		pred := &store.SelectionPredicate{}
@@ -83,6 +85,30 @@ func TestEventStorage(t *testing.T) {
 		require.Empty(t, pred.Continue)
 		if got, want := events[0].Check, event.Check; !reflect.DeepEqual(got, want) {
 			t.Errorf("bad event: got %v, want %v", got, want)
+		}
+
+		acme := &corev3.Namespace{
+			Metadata: &corev2.ObjectMeta{
+				Name:        "acme",
+				Labels:      make(map[string]string),
+				Annotations: make(map[string]string),
+			},
+		}
+
+		acmeDevel := &corev3.Namespace{
+			Metadata: &corev2.ObjectMeta{
+				Name:        "acme-devel",
+				Labels:      make(map[string]string),
+				Annotations: make(map[string]string),
+			},
+		}
+
+		if err := sv2.GetNamespaceStore().CreateOrUpdate(ctx, acme); err != nil {
+			t.Fatal(err)
+		}
+
+		if err := sv2.GetNamespaceStore().CreateOrUpdate(ctx, acmeDevel); err != nil {
+			t.Fatal(err)
 		}
 
 		// Add an event in the acme namespace
@@ -160,7 +186,7 @@ func TestEventStorage(t *testing.T) {
 }
 
 func TestDoNotStoreMetrics(t *testing.T) {
-	testWithPostgresEventStore(t, func(store store.EventStore) {
+	testWithPostgresEventStore(t, func(store store.EventStore, sv2 storev2.Interface) {
 		event := corev2.FixtureEvent("entity1", "check1")
 		ctx := context.WithValue(context.Background(), corev2.NamespaceKey, event.Entity.Namespace)
 		event.Metrics = &corev2.Metrics{
@@ -178,7 +204,7 @@ func TestDoNotStoreMetrics(t *testing.T) {
 }
 
 func TestUpdateEventWithZeroTimestamp_GH2636(t *testing.T) {
-	testWithPostgresEventStore(t, func(store store.EventStore) {
+	testWithPostgresEventStore(t, func(store store.EventStore, sv2 storev2.Interface) {
 		event := corev2.FixtureEvent("entity1", "check1")
 		ctx := context.WithValue(context.Background(), corev2.NamespaceKey, event.Entity.Namespace)
 		event.Timestamp = 0
@@ -199,7 +225,7 @@ func TestUpdateEventWithZeroTimestamp_GH2636(t *testing.T) {
 }
 
 func TestGetEventsOrdering(t *testing.T) {
-	testWithPostgresEventStore(t, func(s store.EventStore) {
+	testWithPostgresEventStore(t, func(s store.EventStore, sv2 storev2.Interface) {
 		ctx := store.NamespaceContext(context.Background(), "default")
 
 		for i := 0; i < 5; i++ {
@@ -353,7 +379,7 @@ func TestGetEventsOrdering(t *testing.T) {
 }
 
 func TestGetEventsPagination(t *testing.T) {
-	testWithPostgresEventStore(t, func(s store.EventStore) {
+	testWithPostgresEventStore(t, func(s store.EventStore, sv2 storev2.Interface) {
 		// Add 42 objects in the store: 21 in the "default" namespace and 21 in
 		// the "testing" namespace
 		for i := 1; i <= 21; i++ {
@@ -372,6 +398,18 @@ func TestGetEventsPagination(t *testing.T) {
 
 			event.Namespace = "testing"
 			event.Entity.Namespace = "testing"
+
+			testingns := &corev3.Namespace{
+				Metadata: &corev2.ObjectMeta{
+					Name:        "testing",
+					Labels:      make(map[string]string),
+					Annotations: make(map[string]string),
+				},
+			}
+
+			if err := sv2.GetNamespaceStore().CreateOrUpdate(context.Background(), testingns); err != nil {
+				t.Fatal(err)
+			}
 
 			if _, _, err := s.UpdateEvent(context.Background(), event); err != nil {
 				t.Fatal(err)
@@ -459,13 +497,24 @@ func TestGetEventsPagination(t *testing.T) {
 }
 
 func TestGetEventsByEntityPagination(t *testing.T) {
-	testWithPostgresEventStore(t, func(store store.EventStore) {
+	testWithPostgresEventStore(t, func(store store.EventStore, sv2 storev2.Interface) {
 		// Create a "testing" namespace in the store
 		// testingNS := corev2.FixtureNamespace("testing")
 		// store.UpdateNamespace(context.Background(), testingNS)
 
 		// Add 42 objects in the store: 21 checks for entity1 in the "default"
 		// namespace and 21 checks for "entity1" in the "testing" namespace
+		testingns := &corev3.Namespace{
+			Metadata: &corev2.ObjectMeta{
+				Name:        "testing",
+				Labels:      make(map[string]string),
+				Annotations: make(map[string]string),
+			},
+		}
+
+		if err := sv2.GetNamespaceStore().CreateOrUpdate(context.Background(), testingns); err != nil {
+			t.Fatal(err)
+		}
 		for i := 1; i <= 21; i++ {
 			// We force the entity and check number to be 2 digits
 			// "wide" in order to have a "natural" order: 01, 02, ...
@@ -491,7 +540,7 @@ func TestGetEventsByEntityPagination(t *testing.T) {
 }
 
 func TestUpdateEventsWithMetrics(t *testing.T) {
-	testWithPostgresEventStore(t, func(store store.EventStore) {
+	testWithPostgresEventStore(t, func(store store.EventStore, sv2 storev2.Interface) {
 		event := corev2.FixtureEvent("foo", "bar")
 		event.Metrics = &corev2.Metrics{
 			Handlers: []string{
@@ -520,7 +569,7 @@ func TestUpdateEventsWithMetrics(t *testing.T) {
 }
 
 func TestUpdateEventHasCheckState(t *testing.T) {
-	testWithPostgresEventStore(t, func(store store.EventStore) {
+	testWithPostgresEventStore(t, func(store store.EventStore, sv2 storev2.Interface) {
 		event := corev2.FixtureEvent("foo", "bar")
 		ctx := context.Background()
 		updatedEvent, previousEvent, err := store.UpdateEvent(ctx, event)
@@ -537,7 +586,7 @@ func TestUpdateEventHasCheckState(t *testing.T) {
 }
 
 func TestEventStoreHistory(t *testing.T) {
-	testWithPostgresEventStore(t, func(s store.EventStore) {
+	testWithPostgresEventStore(t, func(s store.EventStore, sv2 storev2.Interface) {
 		event := corev2.FixtureEvent("foo", "bar")
 		ctx := store.NamespaceContext(context.Background(), "default")
 		want := []corev2.CheckHistory{}
@@ -578,8 +627,21 @@ func TestEventStoreSelectors(t *testing.T) {
 	withPostgres(t, func(ctx context.Context, db *pgxpool.Pool, dsn string) {
 		st, err := NewEventStore(db, nil, Config{
 			DSN: pgURL,
-		}, 1)
+		})
 		if err != nil {
+			t.Fatal(err)
+		}
+		sv2 := NewStore(StoreConfig{
+			DB: db,
+		})
+		ns := &corev3.Namespace{
+			Metadata: &corev2.ObjectMeta{
+				Name:        "default",
+				Labels:      make(map[string]string),
+				Annotations: make(map[string]string),
+			},
+		}
+		if err := sv2.GetNamespaceStore().CreateOrUpdate(ctx, ns); err != nil {
 			t.Fatal(err)
 		}
 		event := corev2.FixtureEvent("foo", "bar")
@@ -632,7 +694,7 @@ func TestEventStoreSelectors(t *testing.T) {
 }
 
 func TestEventStoreSignedInteger_GH4000(t *testing.T) {
-	testWithPostgresEventStore(t, func(s store.EventStore) {
+	testWithPostgresEventStore(t, func(s store.EventStore, sv2 storev2.Interface) {
 		event := corev2.FixtureEvent("foo", "bar")
 		status := int32(-1)
 		event.Check.Status = uint32(status)
@@ -652,7 +714,7 @@ func TestEventStoreSignedInteger_GH4000(t *testing.T) {
 }
 
 func TestEventStatusTransition(t *testing.T) {
-	testWithPostgresEventStore(t, func(s store.EventStore) {
+	testWithPostgresEventStore(t, func(s store.EventStore, sv2 storev2.Interface) {
 		ctx := store.NamespaceContext(context.Background(), "default")
 		event := corev2.FixtureEvent("foo", "bar")
 		if _, _, err := s.UpdateEvent(ctx, event); err != nil {
@@ -666,7 +728,7 @@ func TestEventStatusTransition(t *testing.T) {
 }
 
 func TestEventCheckStateSelector(t *testing.T) {
-	testWithPostgresEventStore(t, func(s store.EventStore) {
+	testWithPostgresEventStore(t, func(s store.EventStore, sv2 storev2.Interface) {
 		ctx := store.NamespaceContext(context.Background(), "default")
 		event := corev2.FixtureEvent("foo", "bar")
 		event.Check.LowFlapThreshold = 1
@@ -701,7 +763,7 @@ func TestEventCheckStateSelector(t *testing.T) {
 }
 
 func TestEventOccurrencesRegression_GH1469(t *testing.T) {
-	testWithPostgresEventStore(t, func(s store.EventStore) {
+	testWithPostgresEventStore(t, func(s store.EventStore, sv2 storev2.Interface) {
 		ctx := store.NamespaceContext(context.Background(), "default")
 		event := corev2.FixtureEvent("foo", "bar")
 		event.Check.Status = 1
@@ -721,7 +783,7 @@ func TestEventOccurrencesRegression_GH1469(t *testing.T) {
 }
 
 func TestCountEvents(t *testing.T) {
-	testWithPostgresEventStore(t, func(s store.EventStore) {
+	testWithPostgresEventStore(t, func(s store.EventStore, sv2 storev2.Interface) {
 		ctx := store.NamespaceContext(context.Background(), "default")
 		event := corev2.FixtureEvent("foo", "bar")
 		for i := 0; i < 30; i++ {
@@ -755,6 +817,16 @@ func TestCountEvents(t *testing.T) {
 		}
 		if got, want := count, int64(1); got != want {
 			t.Errorf("bad count: got %d, want %d", got, want)
+		}
+		foobarNS := &corev3.Namespace{
+			Metadata: &corev2.ObjectMeta{
+				Name:        "foobar",
+				Labels:      make(map[string]string),
+				Annotations: make(map[string]string),
+			},
+		}
+		if err := sv2.GetNamespaceStore().CreateOrUpdate(context.Background(), foobarNS); err != nil {
+			t.Fatal(err)
 		}
 		ctx = store.NamespaceContext(context.Background(), "foobar")
 		event.Entity.Namespace = "foobar"

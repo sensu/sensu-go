@@ -38,6 +38,11 @@ const (
 	// allows eventd to process keepalives at a higher priority than
 	// regular events.
 	TopicKeepaliveRaw = "sensu:keepalive-raw"
+
+	// TopicAgentConnectionState is a topic that provides updates about agent
+	// connectedness. agentd will send notifications about agents that connect
+	// and disconnect on this channel.
+	TopicAgentConnectionState = "sensu:agent-conn"
 )
 
 var (

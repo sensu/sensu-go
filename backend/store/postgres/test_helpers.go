@@ -175,7 +175,7 @@ func testWithPostgresStore(tb testing.TB, fn func(storev2.Interface)) {
 	})
 }
 
-func testWithPostgresEventStore(tb testing.TB, fn func(store.EventStore)) {
+func testWithPostgresEventStore(tb testing.TB, fn func(store.EventStore, storev2.Interface)) {
 	tb.Helper()
 
 	withPostgres(tb, func(ctx context.Context, db *pgxpool.Pool, dsn string) {
@@ -195,14 +195,14 @@ func testWithPostgresEventStore(tb testing.TB, fn func(store.EventStore)) {
 		}
 		eventStore, err := NewEventStore(db, nil, Config{
 			DSN: dsn,
-		}, 100)
+		})
 
 		if err != nil {
 			tb.Error(err)
 			return
 		}
 
-		fn(eventStore)
+		fn(eventStore, pgStore)
 	})
 }
 

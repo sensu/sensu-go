@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+	"sync"
 	"text/template"
 	"time"
 
@@ -14,32 +15,46 @@ import (
 	"github.com/jackc/pgx/v5/pgconn"
 	corev2 "github.com/sensu/core/v2"
 	corev3 "github.com/sensu/core/v3"
+	"github.com/sensu/sensu-go/backend/messaging"
 	"github.com/sensu/sensu-go/backend/poll"
 	"github.com/sensu/sensu-go/backend/selector"
 	"github.com/sensu/sensu-go/backend/store"
+	"github.com/sensu/sensu-go/backend/store/memory"
 	"github.com/sensu/sensu-go/backend/store/patch"
 	storev2 "github.com/sensu/sensu-go/backend/store/v2"
 	"github.com/sensu/sensu-go/backend/store/v2/wrap"
+	"golang.org/x/time/rate"
 )
 
 type StoreConfig struct {
-	DB             DBI
-	WatchInterval  time.Duration
-	WatchTxnWindow time.Duration
+	DB                DBI
+	MaxTPS            int
+	WatchInterval     time.Duration
+	WatchTxnWindow    time.Duration
+	Bus               messaging.MessageBus
+	DisableEventCache bool
 }
 
 func NewStore(cfg StoreConfig) *Store {
 	return &Store{
-		db:             cfg.DB,
-		watchInterval:  cfg.WatchInterval,
-		watchTxnWindow: cfg.WatchTxnWindow,
+		db:                cfg.DB,
+		watchInterval:     cfg.WatchInterval,
+		watchTxnWindow:    cfg.WatchTxnWindow,
+		maxTPS:            cfg.MaxTPS,
+		bus:               cfg.Bus,
+		disableEventCache: cfg.DisableEventCache,
 	}
 }
 
 type Store struct {
-	db             DBI
-	watchInterval  time.Duration
-	watchTxnWindow time.Duration
+	db                DBI
+	watchInterval     time.Duration
+	watchTxnWindow    time.Duration
+	eventStore        store.EventStore
+	maxTPS            int
+	once              sync.Once
+	bus               messaging.MessageBus
+	disableEventCache bool
 }
 
 func (s *Store) GetConfigStore() storev2.ConfigStore {
@@ -70,8 +85,25 @@ func (s *Store) GetNamespaceStore() storev2.NamespaceStore {
 
 // legacy
 func (s *Store) GetEventStore() store.EventStore {
-	store, _ := NewEventStore(s.db, s.GetSilencesStore(), Config{}, 20)
-	return store
+	s.once.Do(func() {
+		sstore := s.GetSilencesStore()
+		eventStore, _ := NewEventStore(s.db, sstore, Config{})
+		if s.disableEventCache {
+			s.eventStore = eventStore
+			return
+		}
+		cfg := memory.EventStoreConfig{
+			BackingStore:    eventStore,
+			FlushInterval:   time.Second,
+			EventWriteLimit: rate.Limit(s.maxTPS),
+			SilenceStore:    sstore,
+			Bus:             s.bus,
+		}
+		memstore := memory.NewEventStore(cfg)
+		memstore.Start(context.Background())
+		s.eventStore = memstore
+	})
+	return s.eventStore
 }
 
 // legacy

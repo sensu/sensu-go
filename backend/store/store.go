@@ -659,3 +659,13 @@ type Initializer interface {
 	// Lock locks a mutex to avoid competing writes
 	Lock(context.Context) error
 }
+
+type noMergeEventKey struct{}
+
+func NoMergeEventContext(ctx context.Context) context.Context {
+	return context.WithValue(ctx, noMergeEventKey{}, struct{}{})
+}
+
+func IsNoMergeEventContext(ctx context.Context) bool {
+	return ctx.Value(noMergeEventKey{}) != nil
+}

@@ -1,4 +1,4 @@
-package postgres
+package store
 
 // EventGauges are gauge metrics about the events stored in Sensu.
 type EventGauges struct {

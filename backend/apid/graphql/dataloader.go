@@ -422,11 +422,11 @@ func handleListErr(err error) error {
 // Permission denied.
 func handleFetchResult(resource interface{}, err error) (interface{}, error) {
 	if err == authorization.ErrUnauthorized || err == authorization.ErrNoClaims {
-		logger.WithError(err).Warn("couldn't access resource")
+		logger.WithError(err).WithField("resource", fmt.Sprintf("%T", resource)).Warn("couldn't access resource")
 		return nil, nil
 	}
 	if _, ok := err.(*store.ErrNotFound); ok {
-		logger.WithError(err).Warn("couldn't access resource")
+		logger.WithError(err).WithField("resource", fmt.Sprintf("%T", resource)).Warn("couldn't access resource")
 		return nil, nil
 	}
 	if err != nil {

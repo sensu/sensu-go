@@ -162,10 +162,21 @@ func Initialize(ctx context.Context, pgdb postgres.DBI, config *Config) (*Backen
 	// Initialize a Backend struct
 	b := &Backend{Cfg: config}
 
+	// Initialize the bus
+	bus, err := messaging.NewWizardBus(messaging.WizardBusConfig{})
+	if err != nil {
+		return nil, fmt.Errorf("error initializing %s: %s", bus.Name(), err)
+	}
+	b.Bus = bus
+	b.Daemons = append(b.Daemons, bus)
+
 	b.Store = postgres.NewStore(postgres.StoreConfig{
-		DB:             pgdb,
-		WatchInterval:  time.Second,
-		WatchTxnWindow: 5 * time.Second,
+		DB:                pgdb,
+		WatchInterval:     time.Second,
+		WatchTxnWindow:    5 * time.Second,
+		Bus:               bus,
+		MaxTPS:            config.Store.PostgresStore.MaxTPS,
+		DisableEventCache: config.Store.PostgresStore.DisableEventCache,
 	})
 
 	jwtClient := api.JWT{Store: b.Store}
@@ -178,14 +189,6 @@ func Initialize(ctx context.Context, pgdb postgres.DBI, config *Config) (*Backen
 
 	// Initialize the LicenseGetter
 	b.LicenseGetter = config.LicenseGetter
-
-	// Initialize the bus
-	bus, err := messaging.NewWizardBus(messaging.WizardBusConfig{})
-	if err != nil {
-		return nil, fmt.Errorf("error initializing %s: %s", bus.Name(), err)
-	}
-	b.Bus = bus
-	b.Daemons = append(b.Daemons, bus)
 
 	// Publish all SIGHUP signals to wizard bus until the provided context is cancelled
 	messaging.MultiplexSignal(ctx, bus, syscall.SIGHUP)

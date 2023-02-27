@@ -1,10 +1,8 @@
 package messaging
 
 import (
-	"errors"
 	"strings"
 	"sync"
-	"sync/atomic"
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
@@ -49,7 +47,6 @@ func init() {
 // message types over a single topic, however, as we do not want to introduce
 // a dependency on reflection to determine the type of the received interface{}.
 type WizardBus struct {
-	running atomic.Value
 	topics  sync.Map
 	errchan chan error
 }
@@ -77,14 +74,11 @@ func NewWizardBus(cfg WizardBusConfig, opts ...WizardOption) (*WizardBus, error)
 
 // Start ...
 func (b *WizardBus) Start() error {
-	b.running.Store(true)
 	return nil
 }
 
 // Stop ...
 func (b *WizardBus) Stop() error {
-	b.running.Store(false)
-	close(b.errchan)
 	b.topics.Range(func(_, value interface{}) bool {
 		value.(*wizardTopic).Close()
 		return true
@@ -132,10 +126,6 @@ func (b *WizardBus) createTopic(topic string) *wizardTopic {
 // detected by the Golang race detector, this is not always the case and is
 // only exacerbated by the fact that we test each package individually.
 func (b *WizardBus) Subscribe(topic string, consumer string, sub Subscriber) (Subscription, error) {
-	if !b.running.Load().(bool) {
-		return Subscription{}, errors.New("bus no longer running")
-	}
-
 	var t *wizardTopic
 	value, ok := b.topics.Load(topic)
 	if !ok || value.(*wizardTopic).IsClosed() {
@@ -166,9 +156,6 @@ func (b *WizardBus) Publish(topic string, msg interface{}) error {
 		duration := time.Since(then)
 		messagePublishedDurations.WithLabelValues(genericTopic).Observe(float64(duration) / float64(time.Millisecond))
 	}()
-	if running := b.running.Load(); running == nil || !running.(bool) {
-		return errors.New("bus no longer running")
-	}
 
 	value, ok := b.topics.Load(topic)
 	if ok {

@@ -133,6 +133,11 @@ var migrations = []migration.Migrator{
 		_, err := tx.Exec(context.Background(), queueSchema)
 		return err
 	},
+	// Migration 22
+	func(tx migration.LimitedTx) error {
+		_, err := tx.Exec(context.Background(), recreateEventsTable)
+		return err
+	},
 }
 
 type eventRecord struct {
