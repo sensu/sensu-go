@@ -224,6 +224,9 @@ func newClient(ctx context.Context, config *Config, backend *Backend) (*clientv3
 		// Set etcd client log level
 		logConfig := logutil.DefaultZapLoggerConfig
 		logConfig.Level.SetLevel(etcd.LogLevelToZap(config.EtcdClientLogLevel))
+		if config.EtcdLogPrecisionTime {
+			logConfig.EncoderConfig.EncodeTime = etcd.PrecisionTimeEncoder
+		}
 		clientv3Config.LogConfig = &logConfig
 
 		// Don't start up an embedded etcd, return a client that connects to an
@@ -252,6 +255,7 @@ func newClient(ctx context.Context, config *Config, backend *Backend) (*clientv3
 	cfg.DiscoverySrv = config.EtcdDiscoverySrv
 	cfg.Name = config.EtcdName
 	cfg.LogLevel = config.EtcdLogLevel
+	cfg.LogPrecisionTime = config.EtcdLogPrecisionTime
 	cfg.ClientLogLevel = config.EtcdClientLogLevel
 
 	// Heartbeat interval

@@ -68,6 +68,7 @@ const (
 	flagInsecureSkipTLSVerify = "insecure-skip-tls-verify"
 	flagDebug                 = "debug"
 	flagLogLevel              = "log-level"
+	flagLogPrecisionTime      = "log-precision-time"
 	flagLabels                = "labels"
 	flagAnnotations           = "annotations"
 
@@ -141,6 +142,8 @@ const (
 	// URLs to advertise to the rest of the cluster
 	defaultEtcdAdvertiseClientURL = "http://localhost:2379"
 
+	timestampFormatPrecision = "2006-01-02T15:04:05.999Z07:00"
+
 	// Start command usage template
 	startUsageTemplate = `Usage:{{if .Runnable}}
   {{.UseLine}}{{end}}{{if .HasAvailableSubCommands}}
@@ -211,6 +214,16 @@ func StartCommand(initialize InitializeFunc) *cobra.Command {
 			}
 			logrus.SetLevel(level)
 
+			if precisionTime := viper.GetBool(flagLogPrecisionTime); precisionTime {
+				formatter := logrus.StandardLogger().Formatter
+				var copy logrus.JSONFormatter
+				if orig, ok := formatter.(*logrus.JSONFormatter); ok {
+					copy = *orig
+					copy.TimestampFormat = timestampFormatPrecision
+					logrus.SetFormatter(&copy)
+				}
+			}
+
 			// If no clustering options are provided, default to a static
 			// cluster 'defaultEtcdName=defaultEtcdPeerURL'.
 			initialCluster := viper.GetString(flagEtcdInitialCluster)
@@ -259,6 +272,7 @@ func StartCommand(initialize InitializeFunc) *cobra.Command {
 				EtcdHeartbeatInterval:          viper.GetUint(flagEtcdHeartbeatInterval),
 				EtcdElectionTimeout:            viper.GetUint(flagEtcdElectionTimeout),
 				EtcdLogLevel:                   viper.GetString(flagEtcdLogLevel),
+				EtcdLogPrecisionTime:           viper.GetBool(flagLogPrecisionTime),
 				EtcdClientLogLevel:             viper.GetString(flagEtcdClientLogLevel),
 				EtcdClientUsername:             viper.GetString(envEtcdClientUsername),
 				EtcdClientPassword:             viper.GetString(envEtcdClientPassword),
@@ -550,6 +564,7 @@ func flagSet(server bool) *pflag.FlagSet {
 		flagSet.Bool(flagInsecureSkipTLSVerify, viper.GetBool(flagInsecureSkipTLSVerify), "skip TLS verification (not recommended!)")
 		flagSet.Bool(flagDebug, false, "enable debugging and profiling features")
 		flagSet.String(flagLogLevel, viper.GetString(flagLogLevel), "logging level [panic, fatal, error, warn, info, debug, trace]")
+		flagSet.Bool(flagLogPrecisionTime, false, "use precision timestamps in logging output")
 		flagSet.Int(backend.FlagEventdWorkers, viper.GetInt(backend.FlagEventdWorkers), "number of workers spawned for processing incoming events")
 		flagSet.Int(backend.FlagEventdBufferSize, viper.GetInt(backend.FlagEventdBufferSize), "number of incoming events that can be buffered")
 		flagSet.Int(backend.FlagKeepalivedWorkers, viper.GetInt(backend.FlagKeepalivedWorkers), "number of workers spawned for processing incoming keepalives")
