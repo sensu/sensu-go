@@ -72,9 +72,10 @@ func testMaxDepthError(t *testing.T, query string, depthLimit int) *maxDepthRule
 }
 
 func TestMaxDepth(t *testing.T) {
-	testDepth(t, `query MyQuery {   # depth 0
-		postgres {                    # depth 1
-			healthy				              # depth 2
+	testDepth(t, `
+	query MyQuery {   # depth 0
+		postgres {      # depth 1
+			healthy				# depth 2
 		}
 	}`, 5, 2)
 }
@@ -118,10 +119,56 @@ func TestMaxDepthInlineFragment(t *testing.T) {
 	}`, 5, 2)
 }
 
+func TestMaxDepthInlineFragmentNested(t *testing.T) {
+	testDepth(t, `
+	query MyQuery {     # depth 0
+		pet {             # depth 1
+			breed				    # depth 2
+			children {      # depth 2
+				... on Pet {  # depth 3
+					name        # depth 3
+				} 
+			}
+		}
+	}`, 5, 3)
+}
+
 func TestMaxDepthFail(t *testing.T) {
 	testMaxDepthError(t, `query MyQuery {    # depth 0
 		postgres {                             # depth 1
 			healthy				                       # depth 2 <-- max depth reached here
 		}
 	}`, 1)
+}
+
+func TestMaxDepthFailWithFragment(t *testing.T) {
+	testMaxDepthError(t, `
+	query MyQuery {   # depth 0
+		pet {           # depth 1
+			breed				  # depth 2
+			children {
+				...dog 			# depth 3
+			}
+		}
+	}
+	fragment dog on Pet {
+		name           # depth 3
+		owner {
+			name         # depth 4 <-- max depth reached here
+		}
+	}`, 3)
+}
+
+func TestMaxDepthFailWithNestedInlineFragment(t *testing.T) {
+	testMaxDepthError(t, `
+	query MyQuery {     # depth 0
+		pet {             # depth 1
+			breed				    # depth 2
+			children {      # depth 2
+				... on Pet {  # depth 3
+					name        # depth 3
+				} 
+			}
+		}
+	}`, 2)
 }
