@@ -18,21 +18,23 @@ type maxDepthRule struct {
 	depthLimit int
 }
 
+// These GraphQL validators will be run on unauthed requests
 func UnauthedValidators() []graphql.ValidationRuleFn {
 	rules := []graphql.ValidationRuleFn{MaxDepthRule(MaxQueryNodeDepth)}
 	return rules
 }
 
+func MaxDepthRule(depthLimit int) graphql.ValidationRuleFn {
+	rule := newMaxDepthRule(depthLimit)
+	return rule.maxDepthRuleWithContext
+}
+
+// provide MaxDepthRule with depth limit
 func newMaxDepthRule(depthLimit int) *maxDepthRule {
 	rule := &maxDepthRule{
 		depthLimit: depthLimit,
 	}
 	return rule
-}
-
-func MaxDepthRule(depthLimit int) graphql.ValidationRuleFn {
-	rule := newMaxDepthRule(depthLimit)
-	return rule.maxDepthRuleWithContext
 }
 
 func (r *maxDepthRule) maxDepthRuleWithContext(context *graphql.ValidationContext) *graphql.ValidationRuleInstance {
