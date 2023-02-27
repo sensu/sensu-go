@@ -385,7 +385,6 @@ func (e *EventStore) UpdateEvent(ctx context.Context, event *corev2.Event) (uEve
 
 	updateCheckState(event.Check)
 
-	fmt.Println(event.Entity.Namespace, event.Entity.Name, event.Check.Name, selectors, serialized)
 	row := e.db.QueryRow(ctx, createOrUpdateEvent, event.Entity.Namespace, event.Entity.Name, event.Check.Name, selectors, serialized)
 	var result int64
 	if err := row.Scan(&result); err != nil {
