@@ -102,9 +102,9 @@ type Config struct {
 	MaxRequestBytes   uint
 	QuotaBackendBytes int64
 
-	LogLevel         string
-	ClientLogLevel   string
-	LogPrecisionTime bool
+	LogLevel           string
+	ClientLogLevel     string
+	LogTimestampLayout string
 
 	UnsafeNoFsync bool
 }
@@ -277,8 +277,9 @@ func NewEtcd(config *Config) (*Etcd, error) {
 		logutil.DefaultZapLoggerConfig.Level.SetLevel(LogLevelToZap(config.LogLevel))
 	}
 
-	if config.LogPrecisionTime {
-		logutil.DefaultZapLoggerConfig.EncoderConfig.EncodeTime = PrecisionTimeEncoder
+	if config.LogTimestampLayout != "" {
+		encoder := zapcore.TimeEncoderOfLayout(config.LogTimestampLayout)
+		logutil.DefaultZapLoggerConfig.EncoderConfig.EncodeTime = encoder
 	}
 
 	// Unsafe options.
