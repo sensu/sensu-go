@@ -29,7 +29,7 @@ func (se *SynchronizedExecutor) Execute(ctx context.Context, mux store.Mutex, ha
 	return backoff.Retry(func(_ int) (bool, error) {
 		tx, err := se.tryLock(ctx, mux)
 		if err != nil {
-			logger.WithError(err).Errorf("error trying to lock mutex: %d", mux)
+			logger.WithError(err).Errorf("error trying to lock mutex: %x", mux)
 			return false, nil
 		}
 		if tx == nil {
@@ -37,9 +37,9 @@ func (se *SynchronizedExecutor) Execute(ctx context.Context, mux store.Mutex, ha
 		}
 		defer func() {
 			if err := tx.Commit(ctx); err != nil {
-				if !errors.Is(err, pgx.ErrTxClosed) {
+				if !errors.Is(err, pgx.ErrTxClosed) && !errors.Is(err, ctx.Err()) {
 					logger.WithError(err).
-						Errorf("unexpected error committing transaction holding mutex lock. %d", mux)
+						Errorf("unexpected error committing transaction holding mutex lock. %x", mux)
 				}
 			}
 		}()
@@ -55,8 +55,11 @@ func (se *SynchronizedExecutor) handle(ctx context.Context, conn DBI, mux store.
 	go func() {
 		defer wg.Done()
 		if err := se.checkin(handleCtx, conn, mux); err != nil {
+			if errors.Is(err, handleCtx.Err()) {
+				return
+			}
 			logger.WithError(err).
-				Errorf("unexpected error holding mutex lock. considering mutex lost. %d", mux)
+				Errorf("unexpected error holding mutex lock. considering mutex lost. %x", mux)
 		}
 		cancel()
 	}()
@@ -88,12 +91,11 @@ func (se *SynchronizedExecutor) checkin(ctx context.Context, conn DBI, mux store
 	for {
 		select {
 		case <-ctx.Done():
-			return nil
+			return ctx.Err()
 		case <-time.After(se.CheckinInterval):
 		}
 
 		if _, err := lockMux(ctx, conn, mux); err != nil {
-			logger.WithError(err).Error("error renewing lock")
 			return err
 		}
 	}
