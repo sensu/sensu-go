@@ -2,27 +2,16 @@ package eventd
 
 import (
 	"context"
-	"os"
 	"time"
 
 	"github.com/sensu/sensu-go/backend/store"
 )
 
-var hostname string
-
-func init() {
-	var err error
-	hostname, err = os.Hostname()
-	if err != nil {
-		panic(err)
-	}
-}
-
 func (e *Eventd) monitorCheckTTLs(ctx context.Context) {
 	req := store.MonitorOperatorsRequest{
 		Type:           store.CheckOperator,
 		ControllerType: store.BackendOperator,
-		ControllerName: hostname,
+		ControllerName: e.backendName,
 		Micromanage:    true,
 		Every:          time.Second,
 		ErrorHandler: func(err error) {

@@ -4,7 +4,6 @@ import (
 	"context"
 	"crypto/tls"
 	"fmt"
-	"os"
 	"sync"
 	"syscall"
 	"time"
@@ -309,6 +308,7 @@ func Initialize(ctx context.Context, pgdb postgres.DBI, config *Config) (*Backen
 			OperatorConcierge:   pgOPC,
 			OperatorMonitor:     pgOPC,
 			OperatorQueryer:     pgOPC,
+			BackendName:         b.Cfg.Name,
 		},
 	)
 	if err != nil {
@@ -353,6 +353,7 @@ func Initialize(ctx context.Context, pgdb postgres.DBI, config *Config) (*Backen
 		StoreTimeout:          2 * time.Minute,
 		OperatorConcierge:     pgOPC,
 		OperatorMonitor:       pgOPC,
+		BackendName:           b.Cfg.Name,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("error initializing %s: %s", keepalive.Name(), err)
@@ -508,7 +509,7 @@ func (b *Backend) Run(ctx context.Context) error {
 				Gatherer:    prometheus.DefaultGatherer,
 				ErrLogger:   logger,
 				Select:      SelectedMetrics,
-				ExtraLabels: map[string]string{"backend": getDefaultBackendID()},
+				ExtraLabels: map[string]string{"backend": b.Cfg.Name},
 			})
 			if err != nil {
 				logger.WithError(err).Error("unable to start the platform metrics bridge")
@@ -632,7 +633,7 @@ func (b *Backend) getBackendEntity(config *Config) *corev2.Entity {
 		EntityClass: corev2.EntityBackendClass,
 		System:      getSystemInfo(),
 		ObjectMeta: corev2.ObjectMeta{
-			Name:        getDefaultBackendID(),
+			Name:        config.Name,
 			Labels:      b.Cfg.Labels,
 			Annotations: b.Cfg.Annotations,
 		},
@@ -645,16 +646,6 @@ func (b *Backend) getBackendEntity(config *Config) *corev2.Entity {
 	}
 
 	return entity
-}
-
-// getDefaultBackendID returns the default backend ID
-func getDefaultBackendID() string {
-	defaultBackendID, err := os.Hostname()
-	if err != nil {
-		logger.WithError(err).Error("error getting hostname")
-		defaultBackendID = "unidentified-sensu-backend"
-	}
-	return defaultBackendID
 }
 
 // getSystemInfo returns the system info of the backend

@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"os"
 	"path"
 	"sync"
 	"time"
@@ -48,17 +47,9 @@ func init() {
 	KeepalivesProcessed.WithLabelValues(KeepaliveCounterLabelAlive)
 	KeepalivesProcessed.WithLabelValues(KeepaliveCounterLabelDead)
 	_ = prometheus.Register(KeepalivesProcessed)
-
-	var err error
-	hostname, err = os.Hostname()
-	if err != nil {
-		panic(err)
-	}
 }
 
 const deletedEventSentinel = -1
-
-var hostname string
 
 // Keepalived is responsible for monitoring keepalive events and recording
 // keepalives for entities.
@@ -78,6 +69,7 @@ type Keepalived struct {
 	reconstructionPeriod  time.Duration
 	operatorConcierge     store.OperatorConcierge
 	operatorMonitor       store.OperatorMonitor
+	backendName           string
 }
 
 // Option is a functional option.
@@ -94,6 +86,7 @@ type Config struct {
 	StoreTimeout          time.Duration
 	OperatorConcierge     store.OperatorConcierge
 	OperatorMonitor       store.OperatorMonitor
+	BackendName           string
 }
 
 // New creates a new Keepalived.
@@ -127,6 +120,7 @@ func New(c Config, opts ...Option) (*Keepalived, error) {
 		reconstructionPeriod:  time.Second * 120,
 		operatorConcierge:     c.OperatorConcierge,
 		operatorMonitor:       c.OperatorMonitor,
+		backendName:           c.BackendName,
 	}
 	for _, o := range opts {
 		if err := o(k); err != nil {
@@ -162,7 +156,7 @@ func (k *Keepalived) monitorOperators(ctx context.Context) {
 	req := store.MonitorOperatorsRequest{
 		Type:           store.AgentOperator,
 		ControllerType: store.BackendOperator,
-		ControllerName: hostname,
+		ControllerName: k.backendName,
 		Every:          time.Second,
 		ErrorHandler: func(err error) {
 			logger.WithError(err).Error("error monitoring agent keepalives")
@@ -300,7 +294,7 @@ func (k *Keepalived) processKeepalives(ctx context.Context) {
 				CheckInTimeout: ttl,
 				Present:        true,
 				Controller: &store.OperatorKey{
-					Name: hostname,
+					Name: k.backendName,
 					Type: store.BackendOperator,
 				},
 				Metadata: (*json.RawMessage)(&metadata),
@@ -625,7 +619,7 @@ func (k *Keepalived) handleUpdate(e *corev2.Event) error {
 		Name:      e.Entity.Name,
 		Type:      store.AgentOperator,
 		Controller: &store.OperatorKey{
-			Name: hostname,
+			Name: k.backendName,
 			Type: store.BackendOperator,
 		},
 		CheckInTimeout: ttl,
