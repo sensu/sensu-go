@@ -128,6 +128,43 @@ func TestSilenceStoreGetSilences(t *testing.T) {
 	})
 }
 
+func TestSilenceStoreDelete(t *testing.T) {
+	wantDefault := []*corev2.Silenced{
+		corev2.FixtureSilenced("foo:bar"),
+		corev2.FixtureSilenced("bar:baz"),
+		corev2.FixtureSilenced("baz:foo"),
+	}
+
+	ctx := context.Background()
+	testWithSilenceStore(t, func(sstore *SilenceStore, nsStore *NamespaceStore) {
+		for _, silence := range wantDefault {
+			if err := sstore.UpdateSilence(ctx, silence); err != nil {
+				t.Fatal(err)
+			}
+		}
+		got, err := sstore.GetSilences(ctx, "default")
+		if err != nil {
+			t.Fatal(err)
+		}
+		if !cmp.Equal(got, wantDefault) {
+			t.Fatalf("silences not equal: got %v", cmp.Diff(got, wantDefault))
+		}
+
+		err = sstore.DeleteSilences(ctx, "default", []string{"foo:bar", "bar:baz"})
+		if err != nil {
+			t.Error("unexpected delete silences error", err)
+		}
+
+		got, err = sstore.GetSilences(ctx, "default")
+		if err != nil {
+			t.Fatal(err)
+		}
+		if !cmp.Equal(got, wantDefault[2:]) {
+			t.Errorf("silences not equal: got %v", cmp.Diff(got, wantDefault[2:]))
+		}
+
+	})
+}
 func TestSilenceStoreGetSilencesByCheck(t *testing.T) {
 	silences := []*corev2.Silenced{
 		corev2.FixtureSilenced("foo:bar"),

@@ -18,16 +18,19 @@ func NewSilenceStore(db *pgxpool.Pool) *SilenceStore {
 }
 
 const deleteSilencesQuery = `
-DELETE FROM silences WHERE namespace = $1 AND name IN ($2::text[]);
+WITH ns AS (
+	SELECT id FROM namespaces where name = $1 AND deleted_at IS NULL
+)
+DELETE FROM silences WHERE namespace = (select id from ns) AND name = ANY($2);
 `
 
 func (s *SilenceStore) DeleteSilences(ctx context.Context, namespace string, names []string) error {
-	_, err := s.db.Exec(ctx, deleteSilencesQuery)
+	_, err := s.db.Exec(ctx, deleteSilencesQuery, namespace, names)
 	return err
 }
 
 const getSilencesQuery = `
-SELECT 
+SELECT
 	namespaces.name,
 	silences.name,
 	silences.labels,
@@ -89,7 +92,7 @@ func (s *SilenceStore) GetSilences(ctx context.Context, namespace string) ([]*co
 }
 
 const getSilencesByCheckQuery = `
-SELECT 
+SELECT
 	namespaces.name,
 	silences.name,
 	silences.labels,
@@ -132,7 +135,7 @@ const getSilencesBySubscriptionQuery = `
 WITH subscriptions AS (
 	SELECT UNNEST($2::text[]) AS subscription
 )
-SELECT 
+SELECT
 	namespaces.name,
 	silences.name,
 	silences.labels,
@@ -172,7 +175,7 @@ func (s *SilenceStore) GetSilencesBySubscription(ctx context.Context, namespace 
 }
 
 const getSilenceByNameQuery = `
-SELECT 
+SELECT
 	namespaces.name,
 	silences.name,
 	silences.labels,
@@ -217,7 +220,7 @@ INSERT INTO silences (
 	expire_at
 ) SELECT ns.id, $2, $3, $4, $5, $6, $7, $8, $9, $10 FROM ns
 ON CONFLICT ( namespace, name ) DO UPDATE
-SET ( 
+SET (
 	labels,
 	annotations,
 	subscription,
@@ -227,7 +230,7 @@ SET (
 	begin,
 	expire_at
 ) = (
-	$3, 
+	$3,
 	$4,
 	$5,
 	$6,
@@ -270,7 +273,7 @@ const getSilencesByNameQuery = `
 WITH names AS (
 	SELECT UNNEST($2::text[]) AS name
 )
-SELECT 
+SELECT
 	namespaces.name,
 	silences.name,
 	silences.labels,
