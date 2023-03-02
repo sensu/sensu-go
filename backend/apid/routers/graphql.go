@@ -83,6 +83,7 @@ func (r *GraphQLRouter) query(req *http.Request) (interface{}, error) {
 			Query:          query,
 			Variables:      queryVars,
 			SkipValidation: skipValidate,
+			IsAuthed:       claims != nil,
 		})
 		results = append(results, map[string]interface{}{
 			"data":   result.Data,
