@@ -174,6 +174,7 @@ type Eventd struct {
 	operatorConcierge   store.OperatorConcierge
 	operatorMonitor     store.OperatorMonitor
 	operatorQueryer     store.OperatorQueryer
+	backendName         string
 }
 
 // Option is a functional option.
@@ -193,6 +194,7 @@ type Config struct {
 	OperatorConcierge   store.OperatorConcierge
 	OperatorMonitor     store.OperatorMonitor
 	OperatorQueryer     store.OperatorQueryer
+	BackendName         string
 }
 
 // New creates a new Eventd.
@@ -228,6 +230,7 @@ func New(ctx context.Context, c Config, opts ...Option) (*Eventd, error) {
 		Logger:              NoopLogger{},
 		operatorConcierge:   c.OperatorConcierge,
 		operatorMonitor:     c.OperatorMonitor,
+		backendName:         c.BackendName,
 	}
 
 	e.ctx, e.cancel = context.WithCancel(ctx)
