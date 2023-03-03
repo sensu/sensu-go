@@ -17,6 +17,7 @@ import (
 	"go.etcd.io/etcd/client/pkg/v3/logutil"
 	"go.etcd.io/etcd/client/pkg/v3/transport"
 	clientv3 "go.etcd.io/etcd/client/v3"
+	"go.uber.org/zap/zapcore"
 	"golang.org/x/time/rate"
 	"google.golang.org/grpc"
 
@@ -224,6 +225,9 @@ func newClient(ctx context.Context, config *Config, backend *Backend) (*clientv3
 		// Set etcd client log level
 		logConfig := logutil.DefaultZapLoggerConfig
 		logConfig.Level.SetLevel(etcd.LogLevelToZap(config.EtcdClientLogLevel))
+		if config.EtcdLogTimestampLayout != "" {
+			logConfig.EncoderConfig.EncodeTime = zapcore.TimeEncoderOfLayout(config.EtcdLogTimestampLayout)
+		}
 		clientv3Config.LogConfig = &logConfig
 
 		// Don't start up an embedded etcd, return a client that connects to an
@@ -252,6 +256,7 @@ func newClient(ctx context.Context, config *Config, backend *Backend) (*clientv3
 	cfg.DiscoverySrv = config.EtcdDiscoverySrv
 	cfg.Name = config.EtcdName
 	cfg.LogLevel = config.EtcdLogLevel
+	cfg.LogTimestampLayout = config.EtcdLogTimestampLayout
 	cfg.ClientLogLevel = config.EtcdClientLogLevel
 
 	// Heartbeat interval

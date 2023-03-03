@@ -114,9 +114,10 @@ type Config struct {
 
 	TLS *corev2.TLSOptions
 
-	LogLevel           string
-	EtcdLogLevel       string
-	EtcdClientLogLevel string
+	LogLevel               string
+	EtcdLogTimestampLayout string
+	EtcdLogLevel           string
+	EtcdClientLogLevel     string
 
 	// Etcd unsafe configuration
 	EtcdUnsafeNoFsync bool
