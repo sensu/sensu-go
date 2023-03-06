@@ -53,7 +53,7 @@ func (r *EventsRouter) Mount(parent *mux.Router) {
 	// Additionaly allow a subcollection to be specified when listing events,
 	// which correspond to the entity name here
 	parent.HandleFunc(path.Join(routes.PathPrefix, "{subcollection}"),
-		listerHandler(r.controller.List, corev3.EventFields)).Methods(http.MethodGet)
+		WrapList(r.controller.List, corev3.EventFields)).Methods(http.MethodGet)
 }
 
 func (r *EventsRouter) get(req *http.Request) (corev3.Resource, error) {
