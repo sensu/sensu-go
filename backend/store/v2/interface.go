@@ -169,8 +169,8 @@ type EntityConfigStore interface {
 	// List lists all corev3.EntityConfig resources.
 	List(context.Context, string, *store.SelectionPredicate) ([]*corev3.EntityConfig, error)
 
-	// Count returns a count of entites by namespace
-	// and optionally by entity class
+	// Count returns a count of entities by namespace and optionally by entity
+	// class
 	Count(ctx context.Context, namespace, entityClass string) (int, error)
 
 	// Exists returns true if the corev3.EntityConfig exists for the provided

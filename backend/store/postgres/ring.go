@@ -9,14 +9,13 @@ import (
 	"time"
 
 	"github.com/jackc/pgx/v5"
-	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/robfig/cron/v3"
 	"github.com/sensu/sensu-go/backend/ringv2"
 	"github.com/sirupsen/logrus"
 )
 
 type Ring struct {
-	db        *pgxpool.Pool
+	db        DBI
 	namespace string
 	name      string
 	path      string
@@ -37,7 +36,7 @@ func unPath(key string) (namespace, subscription string, err error) {
 	return parts[3], parts[4], nil
 }
 
-func NewRing(db *pgxpool.Pool, bus *Bus, path string) (*Ring, error) {
+func NewRing(db DBI, bus *Bus, path string) (*Ring, error) {
 	ring := Ring{
 		db:   db,
 		path: path,
