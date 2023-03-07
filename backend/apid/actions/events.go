@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/google/uuid"
+	"github.com/sensu/sensu-go/backend/apid/request"
 	"github.com/sensu/sensu-go/backend/authentication/jwt"
 	"github.com/sensu/sensu-go/backend/messaging"
 	"github.com/sensu/sensu-go/backend/store"
@@ -33,6 +34,11 @@ func NewEventController(store storev2.Interface, bus messaging.MessageBus) Event
 func (a EventController) List(ctx context.Context, pred *store.SelectionPredicate) ([]corev3.Resource, error) {
 	var results []*corev2.Event
 	var err error
+
+	// propogate selector from request context
+	if sel := request.SelectorFromContext(ctx); sel != nil {
+		ctx = storev2.EventContextWithSelector(ctx, sel)
+	}
 
 	// Fetch from store
 	if pred.Subcollection != "" {

@@ -13,6 +13,7 @@ import (
 	"github.com/sensu/sensu-go/backend/apid/actions"
 	"github.com/sensu/sensu-go/backend/apid/filters/fields"
 	"github.com/sensu/sensu-go/backend/apid/filters/labels"
+	"github.com/sensu/sensu-go/backend/apid/request"
 	"github.com/sensu/sensu-go/backend/selector"
 	"github.com/sensu/sensu-go/backend/store"
 )
@@ -68,7 +69,7 @@ func WrapList(list ListControllerFunc, fieldsFunc FieldsFunc) http.HandlerFunc {
 		resources := []corev3.Resource{}
 
 		ctx := r.Context()
-		ctx = selector.ContextWithSelector(ctx, selector.Merge(labelSelector, fieldSelector))
+		ctx = request.ContextWithSelector(ctx, selector.Merge(labelSelector, fieldSelector))
 		r = r.WithContext(ctx)
 	StoreLoop:
 		for {

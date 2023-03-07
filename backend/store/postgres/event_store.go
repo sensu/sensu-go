@@ -12,8 +12,8 @@ import (
 	"github.com/golang/snappy"
 	"github.com/jackc/pgx/v5"
 	corev2 "github.com/sensu/core/v2"
-	"github.com/sensu/sensu-go/backend/selector"
 	"github.com/sensu/sensu-go/backend/store"
+	storev2 "github.com/sensu/sensu-go/backend/store/v2"
 )
 
 type SilenceStoreI interface {
@@ -223,7 +223,7 @@ func (e *EventStore) GetEvents(ctx context.Context, pred *store.SelectionPredica
 	if ns == corev2.NamespaceTypeAll {
 		ns = ""
 	}
-	query, args, err := CreateGetEventsQuery(ns, "", "", selector.SelectorFromContext(ctx), pred)
+	query, args, err := CreateGetEventsQuery(ns, "", "", storev2.EventSelectorFromContext(ctx), pred)
 	if err != nil {
 		return nil, &store.ErrNotValid{Err: err}
 	}
@@ -244,7 +244,7 @@ func (e *EventStore) GetEventsByEntity(ctx context.Context, entity string, pred 
 	if entity == "" {
 		return nil, &store.ErrNotValid{Err: errors.New("couldn't get events: must specify entity")}
 	}
-	query, args, err := CreateGetEventsQuery(ns, entity, "", selector.SelectorFromContext(ctx), pred)
+	query, args, err := CreateGetEventsQuery(ns, entity, "", storev2.EventSelectorFromContext(ctx), pred)
 	if err != nil {
 		return nil, &store.ErrNotValid{Err: err}
 	}
@@ -521,7 +521,7 @@ func (e *EventStore) CountEvents(ctx context.Context, pred *store.SelectionPredi
 	if ns == corev2.NamespaceTypeAll {
 		ns = ""
 	}
-	query, args, err := CreateCountEventsQuery(ns, selector.SelectorFromContext(ctx), pred)
+	query, args, err := CreateCountEventsQuery(ns, storev2.EventSelectorFromContext(ctx), pred)
 	if err != nil {
 		return 0, &store.ErrNotValid{Err: err}
 	}
