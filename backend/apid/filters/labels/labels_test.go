@@ -7,7 +7,6 @@ import (
 	corev2 "github.com/sensu/core/v2"
 	"github.com/sensu/sensu-go/backend/selector"
 	"github.com/sensu/sensu-go/types"
-	coreTypes "github.com/sensu/sensu-go/types"
 )
 
 type foo struct{}
@@ -64,9 +63,9 @@ func TestFilter(t *testing.T) {
 		},
 		{
 			name:             "wrapped resources",
-			resources:        []*coreTypes.Wrapper{&resource3W, &resource4W},
+			resources:        []*types.Wrapper{&resource3W, &resource4W},
 			mockSelectorFunc: mockSelectorReturn,
-			want:             []*coreTypes.Wrapper{&resource3W},
+			want:             []*types.Wrapper{&resource3W},
 		},
 		{
 			name:             "unknown type",
