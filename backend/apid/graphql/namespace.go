@@ -9,6 +9,7 @@ import (
 	"github.com/sensu/sensu-go/backend/apid/graphql/globalid"
 	"github.com/sensu/sensu-go/backend/apid/graphql/schema"
 	"github.com/sensu/sensu-go/backend/store"
+	storev2 "github.com/sensu/sensu-go/backend/store/v2"
 	"github.com/sensu/sensu-go/graphql"
 )
 
@@ -358,6 +359,11 @@ func (r *namespaceImpl) eventsWithInStoreFiltering(p schema.NamespaceEventsField
 	nsp := p.Source.(*corev3.Namespace)
 
 	ctx := store.NamespaceContext(p.Context, nsp.Metadata.Name)
+
+	selector := parseEventFilters(p.Args.Filters)
+	if selector != nil {
+		ctx = storev2.EventContextWithSelector(ctx, selector)
+	}
 
 	ordering, direction := listEventsOrdering(p.Args.OrderBy)
 	pred := &store.SelectionPredicate{
