@@ -400,12 +400,12 @@ github.com/ryanuber/columnize v0.0.0-20160712163229-9b3edd62028f/go.mod h1:sm1tb
 github.com/schollz/progressbar/v2 v2.13.2/go.mod h1:6YZjqdthH6SCZKv2rqGryrxPtfmRB/DWZxSMfCXPyD8=
 github.com/sean-/seed v0.0.0-20170313163322-e2103e2c3529/go.mod h1:DxrIzT+xaE7yg65j358z/aeFdxmN0P9QXhEzd20vsDc=
 github.com/sensu/core/v2 v2.16.0-alpha1/go.mod h1:vFoPc++U8m30t0fXKNGqOqHLOFr7VuqFc+Hkz+eTdmU=
-github.com/sensu/core/v2 v2.16.0-alpha6 h1:6WTEevm2tQEgCx50IL4aXomAXQip7s6kX4xR3uNVYlI=
 github.com/sensu/core/v2 v2.16.0-alpha6/go.mod h1:2etWGsa+nx5G2Q3CKiSJY9kSg8VhCgGzgp1VyxbC6U8=
-github.com/sensu/core/v2 v2.16.1 h1:lYicLM1PXq5Zwj5h7akXMFXvWcja12qMLzKsJr3qM4Q=
-github.com/sensu/core/v2 v2.16.1/go.mod h1:2etWGsa+nx5G2Q3CKiSJY9kSg8VhCgGzgp1VyxbC6U8=
-github.com/sensu/core/v3 v3.8.0-alpha6 h1:ywO14aIHippeIAe2HBHrPhSdyBMs1pQtjvkYaHmEwGw=
+github.com/sensu/core/v2 v2.17.0 h1:f8apafxkAqvnFTOMnlTFdFbDrmuW9/MC5lgvgC8UmWs=
+github.com/sensu/core/v2 v2.17.0/go.mod h1:2etWGsa+nx5G2Q3CKiSJY9kSg8VhCgGzgp1VyxbC6U8=
 github.com/sensu/core/v3 v3.8.0-alpha6/go.mod h1:HUrsxGfeUSvd+iU5ROGgfBchv3eYjhS3Apz6XzNB8Gg=
+github.com/sensu/core/v3 v3.8.1 h1:RhSlvUUOmIR2SF3AqtjVvowSLgRVAaAKAh1SOQRDx5E=
+github.com/sensu/core/v3 v3.8.1/go.mod h1:pxfUL8YOhebsaE2SUBov/gsUUqIzkeLM61yFpTeavhs=
 github.com/sensu/lasr v1.2.1 h1:4H1QfOrPkwYHMFE5qAI6GwKEFkcI1YRyjjWidz1MihQ=
 github.com/sensu/lasr v1.2.1/go.mod h1:VIMtIK67Bcef6dTfctRCBg8EY9M9TtCY9NEFT6Zw5xQ=
 github.com/sensu/sensu-api-tools v0.0.0-20221025205055-db03ae2f8099 h1:FJUWcuFiTdEn2N0bGnxOaEUDCxIQqRhwERadacNCnXA=
