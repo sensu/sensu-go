@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/jackc/pgx/v5/pgxpool"
+	corev2 "github.com/sensu/core/v2"
 	corev3 "github.com/sensu/core/v3"
 	"github.com/sensu/sensu-go/backend/selector"
 	"github.com/sensu/sensu-go/backend/store"
@@ -264,6 +265,10 @@ func TestConfigStore_List_WithSelectors(t *testing.T) {
 			err := createIfNotExists(context.Background(), s, toCreate)
 			assert.NoError(t, err)
 		}
+		tm := corev2.TypeMeta{
+			APIVersion: "core/v3",
+			Type:       "EntityConfig",
+		}
 
 		tests := []struct {
 			name                string
@@ -384,7 +389,7 @@ func TestConfigStore_List_WithSelectors(t *testing.T) {
 		for _, test := range tests {
 			t.Run(test.name, func(t *testing.T) {
 				ctx := context.Background()
-				selCtx := selector.ContextWithSelector(ctx, test.selektor)
+				selCtx := storev2.ContextWithSelector(ctx, tm, test.selektor)
 				entities, err := listEntities(selCtx, s, "", &store.SelectionPredicate{})
 				if test.expectError {
 					assert.Error(t, err)
