@@ -17,7 +17,6 @@ import (
 	corev3 "github.com/sensu/core/v3"
 	"github.com/sensu/sensu-go/backend/messaging"
 	"github.com/sensu/sensu-go/backend/poll"
-	"github.com/sensu/sensu-go/backend/selector"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/backend/store/memory"
 	"github.com/sensu/sensu-go/backend/store/patch"
@@ -313,7 +312,7 @@ func (s *ConfigStore) List(ctx context.Context, request storev2.ResourceRequest,
 		return nil, &store.ErrNotValid{Err: err}
 	}
 
-	selectorSQL, selectorArgs, err := getSelectorSQL(ctx)
+	selectorSQL, selectorArgs, err := getSelectorSQL(ctx, request.APIVersion, request.Type)
 	if err != nil {
 		return nil, &store.ErrNotValid{Err: err}
 	}
@@ -447,7 +446,7 @@ func (s *ConfigStore) Count(ctx context.Context, request storev2.ResourceRequest
 		return 0, &store.ErrNotValid{Err: err}
 	}
 
-	selectorSQL, selectorArgs, err := getSelectorSQL(ctx)
+	selectorSQL, selectorArgs, err := getSelectorSQL(ctx, request.APIVersion, request.Type)
 	if err != nil {
 		return 0, &store.ErrNotValid{Err: err}
 	}
@@ -544,8 +543,8 @@ func storeKey(req storev2.ResourceRequest) string {
 	return store.NewKeyBuilder(req.StoreName).WithNamespace(req.Namespace).Build(req.Name)
 }
 
-func getSelectorSQL(ctx context.Context) (string, []interface{}, error) {
-	ctxSelector := selector.SelectorFromContext(ctx)
+func getSelectorSQL(ctx context.Context, apiVersion, typeName string) (string, []interface{}, error) {
+	ctxSelector := storev2.SelectorFromContext(ctx, corev2.TypeMeta{APIVersion: apiVersion, Type: typeName})
 
 	if ctxSelector != nil && len(ctxSelector.Operations) > 0 {
 		argCounter := argCounter{value: 3}

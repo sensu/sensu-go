@@ -1,6 +1,10 @@
-package selector
+package request
 
-import "context"
+import (
+	"context"
+
+	"github.com/sensu/sensu-go/backend/selector"
+)
 
 type selectorContextKey struct{}
 
@@ -10,16 +14,16 @@ var SelectorContextKey selectorContextKey
 
 // ContextWithSelector returns a new context, with the selector stored as a
 // value.
-func ContextWithSelector(ctx context.Context, selector *Selector) context.Context {
+func ContextWithSelector(ctx context.Context, selector *selector.Selector) context.Context {
 	return context.WithValue(ctx, SelectorContextKey, selector)
 }
 
 // SelectorFromContext extracts the selector stored as a context value, if it
 // exists.
-func SelectorFromContext(ctx context.Context) *Selector {
+func SelectorFromContext(ctx context.Context) *selector.Selector {
 	val := ctx.Value(SelectorContextKey)
 	if val == nil {
 		return nil
 	}
-	return val.(*Selector)
+	return val.(*selector.Selector)
 }

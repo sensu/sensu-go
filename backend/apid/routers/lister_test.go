@@ -93,10 +93,10 @@ func TestList(t *testing.T) {
 			w := httptest.NewRecorder()
 
 			router := mux.NewRouter()
-			router.PathPrefix("/foo/{subcollection}").HandlerFunc(List(controller.List,
+			router.PathPrefix("/foo/{subcollection}").HandlerFunc(WrapList(controller.List,
 				func(r corev3.Resource) map[string]string { return map[string]string{} },
 			))
-			router.PathPrefix("/foo").HandlerFunc(List(controller.List,
+			router.PathPrefix("/foo").HandlerFunc(WrapList(controller.List,
 				func(r corev3.Resource) map[string]string { return map[string]string{} },
 			))
 			middleware := middlewares.Pagination{}

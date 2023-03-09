@@ -751,7 +751,7 @@ func TestEventCheckStateSelector(t *testing.T) {
 				},
 			},
 		}
-		ctx = selector.ContextWithSelector(context.Background(), selektor)
+		ctx = storev2.EventContextWithSelector(context.Background(), selektor)
 		events, err := s.GetEvents(ctx, &store.SelectionPredicate{})
 		if err != nil {
 			t.Fatal(err)
@@ -810,7 +810,7 @@ func TestCountEvents(t *testing.T) {
 				},
 			},
 		}
-		selCtx := selector.ContextWithSelector(context.Background(), selektor)
+		selCtx := storev2.EventContextWithSelector(context.Background(), selektor)
 		count, err = s.CountEvents(selCtx, nil)
 		if err != nil {
 			t.Fatal(err)
