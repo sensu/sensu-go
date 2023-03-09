@@ -254,7 +254,7 @@ func (a *Agentd) runWatcher() {
 
 func (a *Agentd) handleEvent(event storev2.WatchEvent) error {
 	topic := messaging.EntityConfigTopic(event.Key.Namespace, event.Key.Name)
-	if err := a.bus.Publish(topic, event); err != nil {
+	if err := a.bus.Publish(topic, &event); err != nil {
 		logger.WithField("topic", topic).WithError(err).
 			Error("unable to publish an entity config update to the bus")
 		return err
