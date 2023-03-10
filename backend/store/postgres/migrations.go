@@ -138,6 +138,15 @@ var migrations = []migration.Migrator{
 		_, err := tx.Exec(context.Background(), recreateEventsTable)
 		return err
 	},
+	// Migration 23
+	func(tx migration.LimitedTx) error {
+		_, err := tx.Exec(context.Background(), "CREATE INDEX ON opc ( controller )")
+		if err != nil {
+			return err
+		}
+		_, err = tx.Exec(context.Background(), "CREATE INDEX ON opc ( controller_type )")
+		return err
+	},
 }
 
 type eventRecord struct {

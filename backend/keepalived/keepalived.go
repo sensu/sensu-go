@@ -157,7 +157,7 @@ func (k *Keepalived) monitorOperators(ctx context.Context) {
 		Type:           store.AgentOperator,
 		ControllerType: store.BackendOperator,
 		ControllerName: k.backendName,
-		Every:          time.Second,
+		Every:          10 * time.Second,
 		ErrorHandler: func(err error) {
 			logger.WithError(err).Error("error monitoring agent keepalives")
 		},
