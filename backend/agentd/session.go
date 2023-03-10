@@ -2,6 +2,7 @@ package agentd
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"sort"
@@ -19,6 +20,7 @@ import (
 	"github.com/sensu/sensu-go/backend/ringv2"
 	"github.com/sensu/sensu-go/backend/store"
 	storev2 "github.com/sensu/sensu-go/backend/store/v2"
+	"github.com/sensu/sensu-go/backend/store/v2/wrap"
 	"github.com/sensu/sensu-go/handler"
 	"github.com/sensu/sensu-go/transport"
 	"github.com/sirupsen/logrus"
@@ -434,11 +436,19 @@ func (s *Session) Start() (err error) {
 
 		// Indicate to the agent that this entity does not exist
 		meta := corev2.NewObjectMeta(corev3.EntityNotFound, s.cfg.Namespace)
-		watchEvent := &store.WatchEventEntityConfig{
-			Action: store.WatchCreate,
-			Entity: &corev3.EntityConfig{
-				Metadata:    &meta,
-				EntityClass: corev2.EntityAgentClass,
+		emptyConfig := corev3.EntityConfig{
+			Metadata:    &meta,
+			EntityClass: corev2.EntityAgentClass,
+		}
+		tm := emptyConfig.GetTypeMeta()
+		emptyCfgJson, _ := json.Marshal(emptyConfig)
+		watchEvent := &storev2.WatchEvent{
+			Type: storev2.WatchCreate,
+			Value: &wrap.Wrapper{
+				TypeMeta:    &tm,
+				Encoding:    wrap.Encoding_json,
+				Compression: wrap.Compression_none,
+				Value:       emptyCfgJson,
 			},
 		}
 		err = s.bus.Publish(messaging.EntityConfigTopic(s.cfg.Namespace, s.cfg.AgentName), watchEvent)
