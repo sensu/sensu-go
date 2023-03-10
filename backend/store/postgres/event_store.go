@@ -392,7 +392,6 @@ func (e *EventStore) UpdateEvent(ctx context.Context, event *corev2.Event) (uEve
 			// the namespace doesn't exist
 			return nil, nil, &store.ErrNamespaceMissing{Namespace: event.Entity.Namespace}
 		}
-		panic(err)
 		return nil, nil, &store.ErrInternal{Message: err.Error()}
 	}
 
