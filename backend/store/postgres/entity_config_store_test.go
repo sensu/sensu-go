@@ -937,6 +937,38 @@ func TestEntityConfigStore_List(t *testing.T) {
 			}(),
 		},
 		{
+			name: "excludes deleted entity configs",
+			args: args{
+				ctx:       context.Background(),
+				namespace: "default",
+			},
+			beforeHook: func(t *testing.T, ns storev2.NamespaceStore, s storev2.EntityConfigStore) {
+				createNamespace(t, ns, "default")
+				for i := 0; i < 10; i++ {
+					entityName := fmt.Sprintf("foo-%d", i)
+					createEntityConfig(t, s, "default", entityName)
+					if i%2 == 0 {
+						if err := s.Delete(context.TODO(), "default", entityName); err != nil {
+							t.Fatal(err)
+						}
+					}
+				}
+
+			},
+			want: func() []*corev3.EntityConfig {
+				configs := []*corev3.EntityConfig{}
+				for i := 0; i < 10; i++ {
+					if i%2 == 0 {
+						continue
+					}
+					entityName := fmt.Sprintf("foo-%d", i)
+					config := corev3.FixtureEntityConfig(entityName)
+					configs = append(configs, config)
+				}
+				return configs
+			}(),
+		},
+		{
 			name: "succeeds when limit set and entity configs exist",
 			args: args{
 				ctx:       context.Background(),
