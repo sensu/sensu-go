@@ -223,7 +223,7 @@ func TestConfigStore_List(t *testing.T) {
 			err := createIfNotExists(ctx, s, toCreate)
 			assert.NoError(t, err)
 		}
-		toCreate.Name = fmt.Sprintf("__to_delete__")
+		toCreate.Name = "__to_delete__"
 		err = createIfNotExists(ctx, s, toCreate)
 		assert.NoError(t, err)
 		err = deleteAsset(ctx, s, "default", "__to_delete__")
