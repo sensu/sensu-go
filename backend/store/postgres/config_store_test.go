@@ -91,6 +91,14 @@ func TestConfigStore_CreateIfNotExists(t *testing.T) {
 		err = createIfNotExists(ctx, s, toCreate)
 		assert.Error(t, err)
 		assert.IsType(t, &store.ErrAlreadyExists{}, err)
+
+		// CreateIfNotExists will replace deleted resources
+		if err := deleteAsset(ctx, s, "default", assetName); err != nil {
+			t.Fatal(err)
+		}
+		err = createIfNotExists(ctx, s, toCreate)
+		assert.NoError(t, err)
+
 	})
 }
 
@@ -215,6 +223,11 @@ func TestConfigStore_List(t *testing.T) {
 			err := createIfNotExists(ctx, s, toCreate)
 			assert.NoError(t, err)
 		}
+		toCreate.Name = fmt.Sprintf("__to_delete__")
+		err = createIfNotExists(ctx, s, toCreate)
+		assert.NoError(t, err)
+		err = deleteAsset(ctx, s, "default", "__to_delete__")
+		assert.NoError(t, err)
 
 		for i := 0; i < 10; i++ {
 			toCreate.Name = assetName
