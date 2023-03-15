@@ -56,7 +56,6 @@ var resourceRE = regexp.MustCompile(`(\w+\/v\d+\.)?(\w+)`)
 // Resolve resolves a named resource to an empty concrete type.
 // The value is boxed within a corev3.Resource interface value.
 func Resolve(resource string) (corev3.Resource, error) {
-	fmt.Println("resource", resource)
 	if resource, ok := synonyms[resource]; ok {
 		return resource, nil
 	}
@@ -72,7 +71,6 @@ func Resolve(resource string) (corev3.Resource, error) {
 		// Special case for core/v3.Namespace
 		apiVersion = "core/v3"
 	}
-	fmt.Println(apiVersion, typeName)
 	value, err := apitools.Resolve(apiVersion, typeName)
 	if err != nil {
 		return nil, err
