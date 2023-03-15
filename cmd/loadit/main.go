@@ -37,6 +37,7 @@ var (
 	flagBaseEntityName    = flag.String("base-entity-name", "test-host", "base entity name to prepend with count number")
 	flagMaxSessionLength  = flag.Duration("max-session-length", 0*time.Second, "maximum amount of time after which the agent will reconnect to one of the configured backends (no maximum by default)")
 	flagDeregister        = flag.Bool("deregister", true, "should loadit entities automatically deregister. defaults true")
+	flagHandshakeTimeout  = flag.Int("backend-handshake-timeout", 45, "timeout for exchanging handshake with backend")
 )
 
 func main() {
@@ -95,6 +96,7 @@ func main() {
 		cfg.BackendHeartbeatTimeout = 300
 		cfg.PrometheusBinding = *flagPromBinding
 		cfg.MaxSessionLength = *flagMaxSessionLength
+		cfg.BackendHandshakeTimeout = *flagHandshakeTimeout
 
 		agent, err := agent.NewAgent(cfg)
 		if err != nil {
