@@ -175,3 +175,42 @@ func TestEntityCreateOrUpdateMultipleAddresses(t *testing.T) {
 		}
 	})
 }
+
+func TestEntityDeleteByName(t *testing.T) {
+	testWithPostgresStore(t, func(str storev2.Interface) {
+		db := str.(*Store).db
+		s := NewEntityStore(db)
+		entity := corev2.FixtureEntity("entity")
+		ctx := context.WithValue(context.Background(), types.NamespaceKey, entity.Namespace)
+
+		namespace := corev3.FixtureNamespace(entity.Namespace)
+		if err := str.GetNamespaceStore().CreateOrUpdate(ctx, namespace); err != nil {
+			t.Fatal(err)
+		}
+		if err := s.UpdateEntity(ctx, entity); err != nil {
+			t.Fatal(err)
+		}
+
+		if err := s.DeleteEntityByName(ctx, "entity"); err != nil {
+			t.Error("error deleting entity by name", err)
+		}
+
+		// ensure entitiy is deleted
+		pred := &store.SelectionPredicate{}
+		entities, err := s.GetEntities(ctx, pred)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if len(entities) > 0 {
+			t.Errorf("unexpected entities: %v", entities)
+		}
+		pred.Descending = true
+		entities, err = s.GetEntities(ctx, pred)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if len(entities) > 0 {
+			t.Errorf("unexpected entities descending: %v", entities)
+		}
+	})
+}

@@ -55,7 +55,22 @@ func (s *EntityStore) DeleteEntity(ctx context.Context, entity *corev2.Entity) e
 
 	namespace := entity.GetNamespace()
 	name := entity.GetName()
+	return s.deleteEntity(ctx, name, namespace)
+}
 
+// DeleteEntityByName deletes an entity using the given name and the
+// namespace stored in ctx.
+func (s *EntityStore) DeleteEntityByName(ctx context.Context, name string) error {
+	if name == "" {
+		return &store.ErrNotValid{Err: errors.New("must specify name")}
+	}
+
+	return s.deleteEntity(ctx, name, corev2.ContextNamespace(ctx))
+}
+
+// DeleteEntityByName deletes an entity using the given name and the
+// namespace stored in ctx.
+func (s *EntityStore) deleteEntity(ctx context.Context, name, namespace string) error {
 	entityConfigStore, entityStateStore, cleanup, err := prepareEntityStores(ctx, s.db)
 	if err != nil {
 		return err
@@ -80,19 +95,6 @@ func (s *EntityStore) DeleteEntity(ctx context.Context, entity *corev2.Entity) e
 	}
 
 	return nil
-}
-
-// DeleteEntityByName deletes an entity using the given name and the
-// namespace stored in ctx.
-func (s *EntityStore) DeleteEntityByName(ctx context.Context, name string) error {
-	if name == "" {
-		return &store.ErrNotValid{Err: errors.New("must specify name")}
-	}
-
-	meta := corev2.NewObjectMeta(name, corev2.ContextNamespace(ctx))
-	entity := corev2.NewEntity(meta)
-
-	return s.DeleteEntity(ctx, entity)
 }
 
 type uniqueResource struct {
