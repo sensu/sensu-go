@@ -9,7 +9,7 @@ import (
 )
 
 const (
-	MaxQueryNodeDepth = 5
+	MaxQueryDepthLimit = 10
 )
 
 type maxDepthRule struct {
@@ -18,10 +18,9 @@ type maxDepthRule struct {
 	depthLimit int
 }
 
-// These GraphQL validators will be run on unauthed requests
-func UnauthedValidators() []graphql.ValidationRuleFn {
-	rules := []graphql.ValidationRuleFn{MaxDepthRule(MaxQueryNodeDepth)}
-	return rules
+func Validators() []graphql.ValidationRuleFn {
+	customRules := []graphql.ValidationRuleFn{MaxDepthRule(MaxQueryDepthLimit)}
+	return append(graphql.SpecifiedRules, customRules...)
 }
 
 func MaxDepthRule(depthLimit int) graphql.ValidationRuleFn {
