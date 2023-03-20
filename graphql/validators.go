@@ -9,7 +9,7 @@ import (
 )
 
 const (
-	MaxQueryDepthLimit = 10
+	MaxQueryDepthLimit = 15
 )
 
 type maxDepthRule struct {
@@ -18,9 +18,8 @@ type maxDepthRule struct {
 	depthLimit int
 }
 
-func Validators() []graphql.ValidationRuleFn {
-	customRules := []graphql.ValidationRuleFn{MaxDepthRule(MaxQueryDepthLimit)}
-	return append(graphql.SpecifiedRules, customRules...)
+func MandatoryValidators() []graphql.ValidationRuleFn {
+	return []graphql.ValidationRuleFn{MaxDepthRule(MaxQueryDepthLimit)}
 }
 
 func MaxDepthRule(depthLimit int) graphql.ValidationRuleFn {

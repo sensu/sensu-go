@@ -194,11 +194,17 @@ func (service *Service) Do(ctx context.Context, p QueryParams) *Result {
 		return &graphql.Result{Errors: gqlerrors.FormatErrors(err)}
 	}
 
-	// validate document
+	// run mandatory (un-skippable) validators
+	rules := MandatoryValidators()
+	validationResult := graphql.ValidateDocument(&schema, AST, rules)
+	if !validationResult.IsValid {
+		return &graphql.Result{Errors: validationResult.Errors}
+	}
+
+	// run built-in validators e.g. schema type validation
 	if !p.SkipValidation {
 		validationFinishFn := MiddlewareHandleValidationDidStart(service, &params)
-		rules := Validators()
-		validationResult := graphql.ValidateDocument(&schema, AST, rules)
+		validationResult := graphql.ValidateDocument(&schema, AST, nil)
 		validationFinishFn(validationResult.Errors)
 		if !validationResult.IsValid {
 			return &graphql.Result{Errors: validationResult.Errors}
