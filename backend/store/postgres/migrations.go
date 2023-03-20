@@ -147,6 +147,15 @@ var migrations = []migration.Migrator{
 		_, err = tx.Exec(context.Background(), "CREATE INDEX ON opc ( controller_type )")
 		return err
 	},
+	// Migration 24
+	func(tx migration.LimitedTx) error {
+		_, err := tx.Exec(context.Background(), "CREATE INDEX ON configuration ( updated_at );")
+		if err != nil {
+			return err
+		}
+		_, err = tx.Exec(context.Background(), "CREATE INDEX ON entity_configs ( updated_at );")
+		return err
+	},
 }
 
 type eventRecord struct {
