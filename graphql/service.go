@@ -193,16 +193,14 @@ func (service *Service) Do(ctx context.Context, p QueryParams) *Result {
 		return &graphql.Result{Errors: gqlerrors.FormatErrors(err)}
 	}
 
-	// run validators for unauthorized requests
-	if !p.IsAuthed {
-		rules := UnauthedValidators()
-		validationResult := graphql.ValidateDocument(&schema, AST, rules)
-		if !validationResult.IsValid {
-			return &graphql.Result{Errors: validationResult.Errors}
-		}
+	// run mandatory (un-skippable) validators
+	rules := MandatoryValidators()
+	validationResult := graphql.ValidateDocument(&schema, AST, rules)
+	if !validationResult.IsValid {
+		return &graphql.Result{Errors: validationResult.Errors}
 	}
 
-	// validate document
+	// run built-in validators e.g. schema type validation
 	if !p.SkipValidation {
 		validationFinishFn := MiddlewareHandleValidationDidStart(service, &params)
 		validationResult := graphql.ValidateDocument(&schema, AST, nil)
