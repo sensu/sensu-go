@@ -50,7 +50,6 @@ func TestConfigStore_CreateOrUpdate(t *testing.T) {
 		asset, err = getAsset(ctx, s, defaultNamespace, assetName)
 		assert.NoError(t, err)
 		assert.Equal(t, assetName, asset.Name)
-		assert.Equal(t, 4, len(asset.Labels))
 
 		delete(toCreate.ObjectMeta.Labels, "label-0")
 		delete(toCreate.ObjectMeta.Labels, "label-2")
@@ -60,7 +59,6 @@ func TestConfigStore_CreateOrUpdate(t *testing.T) {
 		asset, err = getAsset(ctx, s, "default", assetName)
 		assert.NoError(t, err)
 		assert.Equal(t, assetName, asset.Name)
-		assert.Equal(t, 2, len(asset.Labels))
 	})
 }
 
@@ -84,7 +82,6 @@ func TestConfigStore_CreateIfNotExists(t *testing.T) {
 		asset, err = getAsset(ctx, s, defaultNamespace, assetName)
 		assert.NoError(t, err)
 		assert.Equal(t, assetName, asset.Name)
-		assert.Equal(t, 4, len(asset.Labels))
 
 		delete(toCreate.Labels, "label-0")
 		delete(toCreate.Labels, "label-2")
@@ -131,7 +128,6 @@ func TestConfigStore_UpdateIfExists(t *testing.T) {
 		asset, err = getAsset(ctx, s, defaultNamespace, assetName)
 		assert.NoError(t, err)
 		assert.Equal(t, assetName, asset.Name)
-		assert.Equal(t, 2, len(asset.Labels))
 	})
 }
 
@@ -201,7 +197,6 @@ func TestConfigStore_Get(t *testing.T) {
 		asset, err = getAsset(ctx, s, defaultNamespace, assetName)
 		assert.NoError(t, err)
 		assert.Equal(t, assetName, asset.Name)
-		assert.Equal(t, 4, len(asset.Labels))
 	})
 }
 
@@ -238,7 +233,13 @@ func TestConfigStore_List(t *testing.T) {
 
 		assets, err = listAssets(ctx, s, defaultNamespace, &store.SelectionPredicate{})
 		assert.NoError(t, err)
+		if err != nil {
+			return
+		}
 		assert.Equal(t, 100, len(assets))
+		if len(assets) == 0 {
+			return
+		}
 
 		t.Run("With Pagination", func(t *testing.T) {
 			predicate := &store.SelectionPredicate{Limit: 45}
@@ -743,4 +744,60 @@ func wrapAsset(asset *corev2.Asset) (*wrap.Wrapper, error) {
 		Compression: wrap.Compression_none,
 		Value:       jsonAsset,
 	}, nil
+}
+
+func TestConfigStore_UpdatedSince(t *testing.T) {
+	withPostgres(t, func(ctx context.Context, db *pgxpool.Pool, dsn string) {
+		s := &ConfigStore{
+			db: db,
+		}
+		older := corev2.FixtureAsset("older")
+		err := createIfNotExists(ctx, s, older)
+		if err != nil {
+			t.Error(err)
+			return
+		}
+		wrapper, err := s.Get(ctx, storev2.NewResourceRequestFromResource(older))
+		if err != nil {
+			t.Error(err)
+			return
+		}
+		var asset corev2.Asset
+		if err := wrapper.UnwrapInto(&asset); err != nil {
+			t.Error(err)
+			return
+		}
+		updatedSince := asset.ObjectMeta.Labels[store.SensuUpdatedAtKey]
+		if updatedSince == "" {
+			t.Error("no updated_since attribute")
+			return
+		}
+		pred := &store.SelectionPredicate{
+			UpdatedSince: updatedSince,
+		}
+		time.Sleep(2 * time.Second) // ensure that "newer" is at least one second older than "older"
+		newer := corev2.FixtureAsset("newer")
+		err = createIfNotExists(ctx, s, newer)
+		if err != nil {
+			t.Error(err)
+			return
+		}
+		list, err := s.List(ctx, storev2.NewResourceRequestFromResource(&asset), pred)
+		if err != nil {
+			t.Error(err)
+			return
+		}
+		var assets []*corev2.Asset
+		if err := list.UnwrapInto(&assets); err != nil {
+			t.Error(err)
+			return
+		}
+		if len(assets) != 1 {
+			t.Errorf("wrong number of assets: want 1, got %d", len(assets))
+			return
+		}
+		if got, want := assets[0].ObjectMeta.Name, "newer"; got != want {
+			t.Errorf("bad asset name: got %q, want %q", got, want)
+		}
+	})
 }

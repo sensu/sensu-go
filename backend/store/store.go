@@ -10,6 +10,12 @@ import (
 	"github.com/sensu/sensu-go/types"
 )
 
+const (
+	SensuCreatedAtKey = "sensu.io/created_at"
+	SensuUpdatedAtKey = "sensu.io/updated_at"
+	SensuDeletedAtKey = "sensu.io/deleted_at"
+)
+
 // ErrAlreadyExists is returned when an object already exists
 type ErrAlreadyExists struct {
 	Key string
@@ -117,6 +123,10 @@ type SelectionPredicate struct {
 	Ordering string
 	// Descending indicates the sort direction is in descending order.
 	Descending bool
+	// UpdatedSince selects only items that have been updated since this timestamp
+	UpdatedSince string
+	// IncludeDeletes selects items that were previously soft-deleted
+	IncludeDeletes bool
 }
 
 // A WatchEventCheckConfig contains the modified store object and the action

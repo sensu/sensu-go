@@ -293,8 +293,9 @@ SELECT
 FROM entity_configs
 LEFT OUTER JOIN namespaces ON entity_configs.namespace_id = namespaces.id
 WHERE
-	entity_configs.deleted_at IS NULL AND
-	(namespaces.name = $1 OR $1 IS NULL)
+	($4 OR entity_configs.deleted_at IS NULL) AND
+	(namespaces.name = $1 OR $1 IS NULL) AND
+	entity_configs.updated_at > $5
 ORDER BY ( namespaces.name, entity_configs.name ) ASC
 LIMIT $2
 OFFSET $3
@@ -324,8 +325,9 @@ SELECT
 FROM entity_configs
 LEFT OUTER JOIN namespaces ON namespaces.id = entity_configs.namespace_id
 WHERE
-	entity_configs.deleted_at IS NULL AND
-	(namespaces.name = $1 OR $1 IS NULL)
+	($4 OR entity_configs.deleted_at IS NULL) AND
+	(namespaces.name = $1 OR $1 IS NULL) AND
+	entity_configs.updated_at > $5
 ORDER BY ( namespaces.name, entity_configs.name ) DESC
 LIMIT $2
 OFFSET $3

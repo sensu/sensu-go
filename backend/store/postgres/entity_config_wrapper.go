@@ -9,6 +9,7 @@ import (
 
 	corev2 "github.com/sensu/core/v2"
 	corev3 "github.com/sensu/core/v3"
+	"github.com/sensu/sensu-go/backend/store"
 	storev2 "github.com/sensu/sensu-go/backend/store/v2"
 )
 
@@ -102,6 +103,14 @@ func WrapEntityConfig(cfg *corev3.EntityConfig) storev2.Wrapper {
 	return wrapper
 }
 
+func mustMarshalText(t time.Time) string {
+	b, err := t.MarshalText()
+	if err != nil {
+		panic(err)
+	}
+	return string(b)
+}
+
 func (e *EntityConfigWrapper) unwrapIntoEntityConfig(cfg *corev3.EntityConfig) error {
 	cfg.Metadata = &corev2.ObjectMeta{
 		Namespace:   e.Namespace,
@@ -109,6 +118,16 @@ func (e *EntityConfigWrapper) unwrapIntoEntityConfig(cfg *corev3.EntityConfig) e
 		Labels:      make(map[string]string),
 		Annotations: make(map[string]string),
 		CreatedBy:   e.CreatedBy,
+	}
+
+	if !e.CreatedAt.IsZero() {
+		cfg.Metadata.Labels[store.SensuCreatedAtKey] = mustMarshalText(e.CreatedAt)
+	}
+	if !e.UpdatedAt.IsZero() {
+		cfg.Metadata.Labels[store.SensuUpdatedAtKey] = mustMarshalText(e.UpdatedAt)
+	}
+	if e.DeletedAt.Valid && !e.DeletedAt.Time.IsZero() {
+		cfg.Metadata.Labels[store.SensuDeletedAtKey] = mustMarshalText(e.DeletedAt.Time)
 	}
 	selectors := make(map[string]string)
 	if err := json.Unmarshal(e.Selectors, &selectors); err != nil {
