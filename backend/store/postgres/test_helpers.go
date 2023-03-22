@@ -110,7 +110,7 @@ func withPostgres(tb testing.TB, fn poolWithDSNFunc) {
 
 	withMigratedPostgres(tb, func(ctx context.Context, db *pgxpool.Pool, dsn string) {
 		fn(ctx, db, dsn)
-	}, migrations)
+	}, Migrations)
 }
 
 func WithPostgres(tb testing.TB, fn poolWithDSNFunc) {
@@ -123,7 +123,7 @@ func withInitialPostgres(tb testing.TB, fn func(context.Context, *pgxpool.Pool))
 	tb.Helper()
 
 	migrations := []migration.Migrator{
-		migrations[0],
+		Migrations[0],
 	}
 
 	withMigratedPostgres(tb, func(ctx context.Context, db *pgxpool.Pool, dsn string) {
@@ -146,7 +146,7 @@ func upgradeMigration(ctx context.Context, db *pgxpool.Pool, migration int) (err
 			}
 		}
 	}()
-	if err := migrations[migration](tx); err != nil {
+	if err := Migrations[migration](tx); err != nil {
 		return err
 	}
 	return nil

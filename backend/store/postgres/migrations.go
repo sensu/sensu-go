@@ -19,7 +19,7 @@ import (
 //
 // Add new migrations by adding to the migrations slice. Do not disturb the
 // ordering of existing migrations!
-var migrations = []migration.Migrator{
+var Migrations = []migration.Migrator{
 	// Migration 0
 	func(tx migration.LimitedTx) error {
 		_, err := tx.Exec(context.Background(), EventsDDL)
