@@ -19,7 +19,7 @@ import (
 //
 // Add new migrations by adding to the migrations slice. Do not disturb the
 // ordering of existing migrations!
-var migrations = []migration.Migrator{
+var Migrations = []migration.Migrator{
 	// Migration 0
 	func(tx migration.LimitedTx) error {
 		_, err := tx.Exec(context.Background(), EventsDDL)
@@ -145,6 +145,15 @@ var migrations = []migration.Migrator{
 			return err
 		}
 		_, err = tx.Exec(context.Background(), "CREATE INDEX ON opc ( controller_type )")
+		return err
+	},
+	// Migration 24
+	func(tx migration.LimitedTx) error {
+		_, err := tx.Exec(context.Background(), "CREATE INDEX ON configuration ( updated_at );")
+		if err != nil {
+			return err
+		}
+		_, err = tx.Exec(context.Background(), "CREATE INDEX ON entity_configs ( updated_at );")
 		return err
 	},
 }

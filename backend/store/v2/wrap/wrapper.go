@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"reflect"
+	"time"
 
 	//nolint:staticcheck // SA1004 Replacing this will take some planning.
 	"github.com/golang/protobuf/proto"
@@ -17,10 +18,103 @@ import (
 	"github.com/sensu/sensu-go/types"
 )
 
-//go:generate go run ../../../../scripts/check_protoc/main.go
-//go:generate go build -o $GOPATH/bin/protoc-gen-gofast github.com/gogo/protobuf/protoc-gen-gofast
-//go:generate -command protoc protoc --plugin $GOPATH/bin/protoc-gen-gofast --gofast_out=plugins:$GOPATH/src -I=$GOPATH/pkg/mod -I=$GOPATH/pkg/mod/github.com/gogo/protobuf@v1.3.1/protobuf -I=$GOPATH/src
-//go:generate protoc github.com/sensu/sensu-go/backend/store/v2/wrap/wrapper.proto
+// Encoding is the serialization encoding of the wrapped value.
+type Encoding int32
+
+const (
+	Encoding_json     Encoding = 0
+	Encoding_protobuf Encoding = 1
+)
+
+var Encoding_name = map[int32]string{
+	0: "json",
+	1: "protobuf",
+}
+
+var Encoding_value = map[string]int32{
+	"json":     0,
+	"protobuf": 1,
+}
+
+func (x Encoding) String() string {
+	return Encoding_name[int32(x)]
+}
+
+// Compression is the compression algorithm used to compress the wrapped
+// value.
+type Compression int32
+
+const (
+	Compression_none   Compression = 0
+	Compression_snappy Compression = 1
+)
+
+var Compression_name = map[int32]string{
+	0: "none",
+	1: "snappy",
+}
+
+var Compression_value = map[string]int32{
+	"none":   0,
+	"snappy": 1,
+}
+
+func (x Compression) String() string {
+	return Compression_name[int32(x)]
+}
+
+// Wrapper represents a serialized resource for storage purposes.
+type Wrapper struct {
+	// TypeMeta contains the type and the API version of the resource.
+	TypeMeta *corev2.TypeMeta `json:"TypeMeta,omitempty"`
+
+	// Encoding is the type of serialization used.
+	Encoding Encoding `json:"encoding,omitempty"`
+
+	// Compression is the type of compression used.
+	Compression Compression `json:"compression,omitempty"`
+
+	// Value contains the encoded resource value
+	Value []byte `json:"value,omitempty"`
+
+	// CreatedAt is the time at which the resource was created
+	CreatedAt time.Time
+
+	// UpdatedAt is the time the resource was most recently updated
+	UpdatedAt time.Time
+
+	// DeletedAt is the time the resource was deleted. If it is the zero value,
+	// then the resource was not deleted.
+	DeletedAt time.Time
+}
+
+func (m *Wrapper) GetTypeMeta() *corev2.TypeMeta {
+	if m != nil {
+		return m.TypeMeta
+	}
+	return nil
+}
+
+func (m *Wrapper) GetEncoding() Encoding {
+	if m != nil {
+		return m.Encoding
+	}
+	return Encoding_json
+}
+
+func (m *Wrapper) GetCompression() Compression {
+	if m != nil {
+		return m.Compression
+	}
+	return Compression_none
+}
+
+func (m *Wrapper) GetValue() []byte {
+	if m != nil {
+		return m.Value
+	}
+	return nil
+}
 
 // tmGetter is useful for types that want to explicitly provide their
 // TypeMeta - this is useful for lifters.
@@ -216,6 +310,16 @@ func (w *Wrapper) Unwrap() (corev3.Resource, error) {
 	if meta.Annotations == nil {
 		meta.Annotations = make(map[string]string)
 	}
+
+	createdAt, _ := w.CreatedAt.MarshalText()
+	meta.Labels[store.SensuCreatedAtKey] = string(createdAt)
+	updatedAt, _ := w.UpdatedAt.MarshalText()
+	meta.Labels[store.SensuUpdatedAtKey] = string(updatedAt)
+
+	if !w.DeletedAt.IsZero() {
+		deletedAt, _ := w.DeletedAt.MarshalText()
+		meta.Labels[store.SensuDeletedAtKey] = string(deletedAt)
+	}
 	return resource, nil
 }
 
@@ -256,6 +360,15 @@ func (w *Wrapper) UnwrapInto(p interface{}) error {
 		if meta.Annotations == nil {
 			meta.Annotations = make(map[string]string)
 		}
+		createdAt, _ := w.CreatedAt.MarshalText()
+		meta.Labels[store.SensuCreatedAtKey] = string(createdAt)
+		updatedAt, _ := w.UpdatedAt.MarshalText()
+		meta.Labels[store.SensuUpdatedAtKey] = string(updatedAt)
+
+		if !w.DeletedAt.IsZero() {
+			deletedAt, _ := w.DeletedAt.MarshalText()
+			meta.Labels[store.SensuDeletedAtKey] = string(deletedAt)
+		}
 	}
 	return nil
 }
@@ -287,9 +400,6 @@ func (l List) UnwrapInto(ptr interface{}) error {
 		// if there are no elements to work on, modify nothing
 		return nil
 	}
-	// Assume that encoding and compression are the same throughout the range
-	encoding := l[0].Encoding
-	compression := l[0].Compression
 	// special case for *[]corev3.Resource
 	if list, ok := ptr.(*[]corev3.Resource); ok {
 		values, err := l.Unwrap()
@@ -316,10 +426,6 @@ func (l List) UnwrapInto(ptr interface{}) error {
 		v.SetLen(v.Cap())
 	}
 	for i, w := range l {
-		value, err := compression.Decompress(w.Value)
-		if err != nil {
-			return err
-		}
 		elt := v.Index(i)
 		if elt.Kind() != reflect.Ptr {
 			elt = elt.Addr()
@@ -327,7 +433,7 @@ func (l List) UnwrapInto(ptr interface{}) error {
 		if elt.IsNil() {
 			elt.Set(reflect.New(elt.Type().Elem()))
 		}
-		if err := encoding.Decode(value, elt.Interface()); err != nil {
+		if err := w.UnwrapInto(elt.Interface()); err != nil {
 			return err
 		}
 	}

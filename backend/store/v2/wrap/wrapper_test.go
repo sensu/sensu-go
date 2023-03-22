@@ -10,6 +10,7 @@ import (
 	corev2 "github.com/sensu/core/v2"
 	corev3 "github.com/sensu/core/v3"
 	apitools "github.com/sensu/sensu-api-tools"
+	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/backend/store/v2/wrap"
 )
 
@@ -82,6 +83,11 @@ func TestWrapResourceSimple(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	meta := unwrapped.GetMetadata()
+	// delete these to facilitate comparison
+	delete(meta.Labels, store.SensuCreatedAtKey)
+	delete(meta.Labels, store.SensuUpdatedAtKey)
+	delete(meta.Labels, store.SensuDeletedAtKey)
 	if got, want := unwrapped.GetMetadata(), resource.GetMetadata(); !proto.Equal(got, want) {
 		t.Errorf("bad resource: got %#v, want %#v", got, want)
 	}
@@ -164,6 +170,11 @@ func TestWrapResourceOptions(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
+			meta := resource.GetMetadata()
+			// delete these to facilitate comparison
+			delete(meta.Labels, store.SensuCreatedAtKey)
+			delete(meta.Labels, store.SensuUpdatedAtKey)
+			delete(meta.Labels, store.SensuDeletedAtKey)
 			if got, want := resource.GetMetadata(), test.Resource.GetMetadata(); !proto.Equal(got, want) {
 				t.Errorf("bad resource: got %v, want %v", got, want)
 			}

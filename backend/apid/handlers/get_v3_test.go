@@ -61,15 +61,15 @@ func TestHandlers_GetV3Resource(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			store := &mockstore.V2MockStore{}
+			sto := &mockstore.V2MockStore{}
 			cs := new(mockstore.ConfigStore)
-			store.On("GetConfigStore").Return(cs)
+			sto.On("GetConfigStore").Return(cs)
 
 			if tt.storeFunc != nil {
 				tt.storeFunc(cs)
 			}
 
-			h := NewHandlers[*fixture.V3Resource](store)
+			h := NewHandlers[*fixture.V3Resource](sto)
 
 			r, _ := http.NewRequest(http.MethodGet, "/", nil)
 			r = mux.SetURLVars(r, tt.urlVars)
@@ -78,6 +78,14 @@ func TestHandlers_GetV3Resource(t *testing.T) {
 			if (err != nil) != tt.wantErr {
 				t.Errorf("Handlers.GetResource() error = %v, wantErr %v", err, tt.wantErr)
 				return
+			}
+
+			if got != nil {
+				meta := got.GetMetadata()
+				// delete these to facilitate comparison
+				delete(meta.Labels, store.SensuCreatedAtKey)
+				delete(meta.Labels, store.SensuUpdatedAtKey)
+				delete(meta.Labels, store.SensuDeletedAtKey)
 			}
 
 			if !reflect.DeepEqual(got, tt.want) {

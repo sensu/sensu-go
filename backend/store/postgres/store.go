@@ -285,6 +285,8 @@ func (s *ConfigStore) Get(ctx context.Context, request storev2.ResourceRequest) 
 		Encoding:    wrap.Encoding_json,
 		Compression: 0,
 		Value:       []byte(result.resource),
+		CreatedAt:   result.createdAt.Time,
+		UpdatedAt:   result.updatedAt.Time,
 	}, nil
 }
 
@@ -307,17 +309,17 @@ func (s *ConfigStore) Delete(ctx context.Context, request storev2.ResourceReques
 	return nil
 }
 
-func (s *ConfigStore) List(ctx context.Context, request storev2.ResourceRequest, predicate *store.SelectionPredicate) (storev2.WrapList, error) {
+func (s *ConfigStore) List(ctx context.Context, request storev2.ResourceRequest, pred *store.SelectionPredicate) (storev2.WrapList, error) {
 	if err := request.Validate(); err != nil {
 		return nil, &store.ErrNotValid{Err: err}
 	}
 
-	selectorSQL, selectorArgs, err := getSelectorSQL(ctx, request.APIVersion, request.Type)
+	selectorSQL, selectorArgs, err := getSelectorSQL(ctx, request.APIVersion, request.Type, 5)
 	if err != nil {
 		return nil, &store.ErrNotValid{Err: err}
 	}
 
-	limit, offset, err := getLimitAndOffset(predicate)
+	limit, offset, err := getLimitAndOffset(pred)
 	if err != nil {
 		return nil, err
 	}
@@ -327,8 +329,8 @@ func (s *ConfigStore) List(ctx context.Context, request storev2.ResourceRequest,
 		return nil, err
 	}
 	var queryBuilder strings.Builder
-	if predicate == nil {
-		predicate = &store.SelectionPredicate{}
+	if pred == nil {
+		pred = &store.SelectionPredicate{}
 	}
 
 	templValues := listTemplateValues{
@@ -343,7 +345,16 @@ func (s *ConfigStore) List(ctx context.Context, request storev2.ResourceRequest,
 		return nil, err
 	}
 
-	args := []interface{}{request.APIVersion, request.Type, request.Namespace}
+	if pred.UpdatedSince == "" {
+		pred.UpdatedSince = beginningOfTime
+	}
+
+	var updatedSince time.Time
+	if err := updatedSince.UnmarshalText([]byte(pred.UpdatedSince)); err != nil {
+		return nil, &store.ErrNotValid{Err: fmt.Errorf("bad UpdatedSince time: %s", err)}
+	}
+
+	args := []interface{}{request.APIVersion, request.Type, request.Namespace, updatedSince, pred.IncludeDeletes}
 	args = append(args, selectorArgs...)
 
 	query := queryBuilder.String()
@@ -355,8 +366,8 @@ func (s *ConfigStore) List(ctx context.Context, request storev2.ResourceRequest,
 
 	wrapList := make(wrap.List, 0)
 	for rows.Next() {
-		var dbResource configRecord
-		err := rows.Scan(&dbResource.id, &dbResource.labels, &dbResource.annotations, &dbResource.resource, &dbResource.createdAt, &dbResource.updatedAt)
+		var rec configRecord
+		err := rows.Scan(&rec.id, &rec.labels, &rec.annotations, &rec.resource, &rec.createdAt, &rec.updatedAt, &rec.deletedAt)
 		if err != nil {
 			return nil, err
 		}
@@ -365,13 +376,16 @@ func (s *ConfigStore) List(ctx context.Context, request storev2.ResourceRequest,
 			TypeMeta:    &corev2.TypeMeta{APIVersion: request.APIVersion, Type: request.Type},
 			Encoding:    wrap.Encoding_json,
 			Compression: wrap.Compression_none,
-			Value:       []byte(dbResource.resource),
+			Value:       []byte(rec.resource),
+			CreatedAt:   rec.createdAt.Time,
+			UpdatedAt:   rec.updatedAt.Time,
+			DeletedAt:   rec.deletedAt.Time,
 		}
 		wrapList = append(wrapList, &wrapped)
 	}
-	if predicate != nil {
-		if int64(len(wrapList)) < predicate.Limit {
-			predicate.Continue = ""
+	if pred != nil {
+		if int64(len(wrapList)) < pred.Limit {
+			pred.Continue = ""
 		}
 	}
 
@@ -446,7 +460,7 @@ func (s *ConfigStore) Count(ctx context.Context, request storev2.ResourceRequest
 		return 0, &store.ErrNotValid{Err: err}
 	}
 
-	selectorSQL, selectorArgs, err := getSelectorSQL(ctx, request.APIVersion, request.Type)
+	selectorSQL, selectorArgs, err := getSelectorSQL(ctx, request.APIVersion, request.Type, 3)
 	if err != nil {
 		return 0, &store.ErrNotValid{Err: err}
 	}
@@ -543,11 +557,11 @@ func storeKey(req storev2.ResourceRequest) string {
 	return store.NewKeyBuilder(req.StoreName).WithNamespace(req.Namespace).Build(req.Name)
 }
 
-func getSelectorSQL(ctx context.Context, apiVersion, typeName string) (string, []interface{}, error) {
+func getSelectorSQL(ctx context.Context, apiVersion, typeName string, nargs int) (string, []interface{}, error) {
 	ctxSelector := storev2.SelectorFromContext(ctx, corev2.TypeMeta{APIVersion: apiVersion, Type: typeName})
 
 	if ctxSelector != nil && len(ctxSelector.Operations) > 0 {
-		argCounter := argCounter{value: 3}
+		argCounter := argCounter{value: nargs}
 		builder := NewConfigSelectorSQLBuilder(ctxSelector)
 		return builder.GetSelectorCond(&argCounter)
 	}

@@ -6,6 +6,7 @@ import (
 	"reflect"
 	"sort"
 	"testing"
+	"time"
 
 	"github.com/go-test/deep"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -445,12 +446,6 @@ func TestEntityConfigStore_Get(t *testing.T) {
 			want: func() *corev3.EntityConfig {
 				config := corev3.FixtureEntityConfig("foo")
 				config.Metadata.Namespace = "default"
-				// TODO: uncomment after ID, CreatedAt, UpdatedAt & DeletedAt
-				// are added to corev3.EntityConfig.
-				//
-				// config.ID = 1
-				// config.CreatedAt = time.Now()
-				// config.UpdatedAt = time.Now()
 				return config
 			}(),
 		},
@@ -470,18 +465,11 @@ func TestEntityConfigStore_Get(t *testing.T) {
 					return
 				}
 
-				// TODO: uncomment after ID, CreatedAt, UpdatedAt & DeletedAt
-				// are added to corev3.EntityConfig.
-				//
-				// createdAtDelta := time.Since(tt.want.CreatedAt) / 2
-				// wantCreatedAt := time.Now().Add(-createdAtDelta)
-				// require.WithinDuration(t, wantCreatedAt, got.CreatedAt, createdAtDelta)
-				// got.CreatedAt = tt.want.CreatedAt
-
-				// updatedAtDelta := time.Since(tt.want.UpdatedAt) / 2
-				// wantUpdatedAt := time.Now().Add(-updatedAtDelta)
-				// require.WithinDuration(t, wantUpdatedAt, got.UpdatedAt, updatedAtDelta)
-				// got.UpdatedAt = tt.want.UpdatedAt
+				if got != nil {
+					// delete some of the metadata keys we can't easily predict for comparison
+					delete(got.Metadata.Labels, store.SensuUpdatedAtKey)
+					delete(got.Metadata.Labels, store.SensuCreatedAtKey)
+				}
 
 				if !reflect.DeepEqual(got, tt.want) {
 					t.Errorf("EntityConfigStore.Get() = %v, want %v", got, tt.want)
@@ -674,6 +662,12 @@ func TestEntityConfigStore_GetMultiple(t *testing.T) {
 				got, err := s.GetMultiple(tt.args.ctx, tt.args.resources)
 				if (err != nil) != tt.wantErr {
 					t.Errorf("EntityConfigStore.GetMultiple() error = %v, wantErr %v", err, tt.wantErr)
+				}
+
+				for _, g := range got {
+					// delete some of the metadata keys we can't easily predict for comparison
+					delete(g.Metadata.Labels, store.SensuUpdatedAtKey)
+					delete(g.Metadata.Labels, store.SensuCreatedAtKey)
 				}
 				if diff := deep.Equal(got, tt.want); diff != nil {
 					t.Errorf("EntityConfigStore.GetMultiple() got differs from want: %v", diff)
@@ -1036,12 +1030,90 @@ func TestEntityConfigStore_List(t *testing.T) {
 					t.Errorf("EntityConfigStore.List() error = %v, wantErr %v", err, tt.wantErr)
 					return
 				}
+				for _, g := range got {
+					// delete some of the metadata keys we can't easily predict for comparison
+					delete(g.Metadata.Labels, store.SensuUpdatedAtKey)
+					delete(g.Metadata.Labels, store.SensuCreatedAtKey)
+				}
 				if diff := deep.Equal(got, tt.want); len(diff) > 0 {
 					t.Errorf("EntityConfigStore.List() got differs from want: %v", diff)
 				}
 			})
 		})
 	}
+}
+
+func TestEntityConfigStore_UpdatedSince(t *testing.T) {
+	withPostgres(t, func(ctx context.Context, db *pgxpool.Pool, dsn string) {
+		s := &EntityConfigStore{
+			db: db,
+		}
+		ns := &NamespaceStore{
+			db: db,
+		}
+		createNamespace(t, ns, "default")
+		createEntityConfig(t, s, "default", "older")
+		entity, err := s.Get(ctx, "default", "older")
+		if err != nil {
+			t.Error(err)
+			return
+		}
+		updatedSince := entity.Metadata.Labels[store.SensuUpdatedAtKey]
+		if updatedSince == "" {
+			t.Error("no updated_since attribute")
+			return
+		}
+		pred := &store.SelectionPredicate{
+			UpdatedSince: updatedSince,
+		}
+		time.Sleep(2 * time.Second) // ensure that "newer" is at least one second older than "older"
+		createEntityConfig(t, s, "default", "newer")
+		entities, err := s.List(ctx, "default", pred)
+		if err != nil {
+			t.Error(err)
+			return
+		}
+		if len(entities) != 1 {
+			t.Errorf("wrong number of entities: want 1, got %d", len(entities))
+			return
+		}
+		if got, want := entities[0].Metadata.Name, "newer"; got != want {
+			t.Errorf("bad entity name: got %q, want %q", got, want)
+		}
+	})
+}
+
+func TestEntityConfigStoreDeletedAt(t *testing.T) {
+	withPostgres(t, func(ctx context.Context, db *pgxpool.Pool, dsn string) {
+		s := &EntityConfigStore{
+			db: db,
+		}
+		ns := &NamespaceStore{
+			db: db,
+		}
+		createNamespace(t, ns, "default")
+		createEntityConfig(t, s, "default", "todelete")
+		if err := s.Delete(ctx, "default", "todelete"); err != nil {
+			t.Error(err)
+			return
+		}
+		pred := &store.SelectionPredicate{
+			IncludeDeletes: true,
+		}
+		entities, err := s.List(ctx, "default", pred)
+		if err != nil {
+			t.Error(err)
+			return
+		}
+		if len(entities) != 1 {
+			t.Errorf("wrong number of entities: want 1, got %d", len(entities))
+			return
+		}
+		if got, want := entities[0].Metadata.Name, "todelete"; got != want {
+			t.Errorf("bad entity name: got %q, want %q", got, want)
+		}
+	})
+
 }
 
 func TestEntityConfigStore_Count(t *testing.T) {

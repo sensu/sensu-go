@@ -41,5 +41,5 @@ func open(ctx context.Context, config *pgxpool.Config, retryForever bool, migrat
 // returns nil error, then the database will be upgraded to the latest schema
 // version, and will be ready to be used.
 func Open(ctx context.Context, config *pgxpool.Config, retryForever bool) (*pgxpool.Pool, error) {
-	return open(ctx, config, retryForever, migrations)
+	return open(ctx, config, retryForever, Migrations)
 }

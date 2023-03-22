@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"time"
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
@@ -34,6 +35,8 @@ func NewEntityConfigStore(db DBI) *EntityConfigStore {
 }
 
 type namespacedResourceNames map[string][]string
+
+const beginningOfTime = "0001-01-01T00:00:00Z"
 
 // CreateIfNotExists creates an entity config using the given entity config struct.
 func (s *EntityConfigStore) CreateIfNotExists(ctx context.Context, config *corev3.EntityConfig) error {
@@ -241,9 +244,21 @@ func (s *EntityConfigStore) HardDeleted(ctx context.Context, namespace, name str
 // List returns all entity configs. A nil slice with no error is returned if
 // none were found.
 func (s *EntityConfigStore) List(ctx context.Context, namespace string, pred *store.SelectionPredicate) ([]*corev3.EntityConfig, error) {
+	if pred == nil {
+		pred = &store.SelectionPredicate{}
+	}
 	query := listEntityConfigQuery
-	if pred != nil && pred.Descending {
+	if pred.Descending {
 		query = listEntityConfigDescQuery
+	}
+
+	if pred.UpdatedSince == "" {
+		pred.UpdatedSince = beginningOfTime
+	}
+
+	var updatedSince time.Time
+	if err := updatedSince.UnmarshalText([]byte(pred.UpdatedSince)); err != nil {
+		return nil, &store.ErrNotValid{Err: fmt.Errorf("bad UpdatedSince time: %s", err)}
 	}
 
 	limit, offset, err := getLimitAndOffset(pred)
@@ -257,7 +272,7 @@ func (s *EntityConfigStore) List(ctx context.Context, namespace string, pred *st
 		sqlNamespace.Valid = true
 	}
 
-	rows, rerr := s.db.Query(ctx, query, sqlNamespace, limit, offset)
+	rows, rerr := s.db.Query(ctx, query, sqlNamespace, limit, offset, pred.IncludeDeletes, updatedSince)
 	if rerr != nil {
 		return nil, &store.ErrInternal{Message: rerr.Error()}
 	}

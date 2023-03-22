@@ -16,29 +16,28 @@ func fixtureEntity(namespace, name string) *corev3.EntityConfig {
 }
 
 func TestCacheGet(t *testing.T) {
+	cachevalues, _ := buildCache([]*corev3.EntityConfig{
+		fixtureEntity("a", "1"),
+		fixtureEntity("a", "2"),
+		fixtureEntity("a", "3"),
+		fixtureEntity("a", "4"),
+		fixtureEntity("a", "5"),
+		fixtureEntity("a", "6"),
+		fixtureEntity("b", "1"),
+		fixtureEntity("b", "2"),
+		fixtureEntity("b", "3"),
+		fixtureEntity("b", "4"),
+		fixtureEntity("b", "5"),
+		fixtureEntity("b", "6"),
+		fixtureEntity("c", "1"),
+		fixtureEntity("c", "2"),
+		fixtureEntity("c", "3"),
+		fixtureEntity("c", "4"),
+		fixtureEntity("c", "5"),
+		fixtureEntity("c", "6"),
+	}, true)
 	cache := Resource[*corev3.EntityConfig, corev3.EntityConfig]{
-		cache: buildCache([]*corev3.EntityConfig{
-			fixtureEntity("a", "1"),
-			fixtureEntity("a", "2"),
-			fixtureEntity("a", "3"),
-			fixtureEntity("a", "4"),
-			fixtureEntity("a", "5"),
-			fixtureEntity("a", "6"),
-			fixtureEntity("b", "1"),
-			fixtureEntity("b", "2"),
-			fixtureEntity("b", "3"),
-			fixtureEntity("b", "4"),
-			fixtureEntity("b", "5"),
-			fixtureEntity("b", "6"),
-			fixtureEntity("c", "1"),
-			fixtureEntity("c", "2"),
-			fixtureEntity("c", "3"),
-			fixtureEntity("c", "4"),
-			fixtureEntity("c", "5"),
-			fixtureEntity("c", "6"),
-		},
-			true,
-		),
+		cache: cachevalues,
 	}
 	want := []Value[*corev3.EntityConfig, corev3.EntityConfig]{
 		{Resource: fixtureEntity("b", "1"), Synth: dynamic.Synthesize(fixtureEntity("b", "1"))},
@@ -55,20 +54,19 @@ func TestCacheGet(t *testing.T) {
 }
 
 func TestCacheGetAll(t *testing.T) {
+	values, _ := buildCache([]*corev3.EntityConfig{
+		fixtureEntity("a", "1"),
+		fixtureEntity("a", "2"),
+		fixtureEntity("b", "1"),
+		fixtureEntity("b", "2"),
+		fixtureEntity("b", "3"),
+		fixtureEntity("c", "1"),
+		fixtureEntity("c", "2"),
+		fixtureEntity("c", "3"),
+		fixtureEntity("c", "4"),
+	}, false)
 	cache := Resource[*corev3.EntityConfig, corev3.EntityConfig]{
-		cache: buildCache([]*corev3.EntityConfig{
-			fixtureEntity("a", "1"),
-			fixtureEntity("a", "2"),
-			fixtureEntity("b", "1"),
-			fixtureEntity("b", "2"),
-			fixtureEntity("b", "3"),
-			fixtureEntity("c", "1"),
-			fixtureEntity("c", "2"),
-			fixtureEntity("c", "3"),
-			fixtureEntity("c", "4"),
-		},
-			false,
-		),
+		cache: values,
 	}
 	got := cache.GetAll()
 	assert.Equal(t, 9, len(got))
@@ -94,7 +92,7 @@ func TestBuildCache(t *testing.T) {
 	resource3 := corev3.FixtureEntityConfig("resource3")
 	resource3.Metadata.Namespace = "acme"
 
-	cache := buildCache([]*corev3.EntityConfig{resource1, resource2, resource3}, false)
+	cache, _ := buildCache([]*corev3.EntityConfig{resource1, resource2, resource3}, false)
 
 	assert.Len(t, cache["acme"], 1)
 	assert.Len(t, cache["default"], 2)

@@ -70,9 +70,10 @@ const CountConfigQueryTmpl = `
 
 const ListConfigQueryTmpl = `
 	{{if not .Namespaced}} WITH ignored as (SELECT $3::text) {{end}}
-    SELECT id, labels, annotations, resource, created_at, updated_at
+    SELECT id, labels, annotations, resource, created_at, updated_at, NULLIF(deleted_at, '-infinity')
     FROM configuration
-	WHERE api_version=$1 AND api_type=$2 AND NOT isfinite(deleted_at)
+	WHERE api_version=$1 AND api_type=$2 AND ($5 OR NOT isfinite(deleted_at))
+		AND updated_at > $4
         {{if .Namespaced}} AND namespace=$3 {{end}}
         {{if ne .SelectorSQL ""}}AND {{.SelectorSQL}}{{end}}
     ORDER BY namespace, name ASC
