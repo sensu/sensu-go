@@ -262,20 +262,21 @@ func (e *EntityConfigPoller) Since(ctx context.Context, updatedSince time.Time) 
 	defer rows.Close()
 	var since []poll.Row
 	for rows.Next() {
-		if err := rows.Scan(wrapper.SQLParams()...); err != nil {
+		var resultW EntityConfigWrapper
+		if err := rows.Scan(resultW.SQLParams()...); err != nil {
 			return nil, &store.ErrInternal{Message: err.Error()}
 		}
 		if err := rows.Err(); err != nil {
 			return nil, &store.ErrInternal{Message: err.Error()}
 		}
-		id := fmt.Sprintf("%s/%s", wrapper.Namespace, wrapper.Name)
+		id := fmt.Sprintf("%s/%s", resultW.Namespace, resultW.Name)
 		pollResult := poll.Row{
 			Id:        id,
-			Resource:  wrapper,
-			CreatedAt: wrapper.CreatedAt,
-			UpdatedAt: wrapper.UpdatedAt,
+			Resource:  &resultW,
+			CreatedAt: resultW.CreatedAt,
+			UpdatedAt: resultW.UpdatedAt,
 		}
-		if wrapper.DeletedAt.Valid {
+		if resultW.DeletedAt.Valid {
 			pollResult.DeletedAt = &wrapper.DeletedAt.Time
 		}
 		since = append(since, pollResult)
