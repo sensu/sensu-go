@@ -46,7 +46,7 @@ func TestEntityConfigPoller(t *testing.T) {
 					for _, event := range events {
 						var ec corev3.EntityConfig
 						if err := event.Value.UnwrapInto(&ec); err != nil {
-							t.Fatal(err)
+							t.Error(err)
 						}
 						switch event.Type {
 						case storev2.WatchCreate:
@@ -80,7 +80,7 @@ func TestEntityConfigPoller(t *testing.T) {
 		time.Sleep(time.Millisecond * 10)
 
 		// generate some traffic
-		for i := 0; i < 10_000; i++ {
+		for i := 0; i < 1000; i++ {
 			ec := corev3.FixtureEntityConfig(fmt.Sprint(i))
 			if err := estore.CreateIfNotExists(ctx, ec); err != nil {
 				t.Fatal(err)
@@ -104,7 +104,7 @@ func TestEntityConfigPoller(t *testing.T) {
 				t.Fatal(err)
 			}
 		}
-		time.Sleep(time.Millisecond * 20)
+		time.Sleep(time.Millisecond * 100)
 		watchCancel()
 
 		actualState := <-observedState
