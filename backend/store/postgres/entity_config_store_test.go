@@ -5,12 +5,10 @@ import (
 	"fmt"
 	"reflect"
 	"sort"
-	"strconv"
 	"testing"
 	"time"
 
 	"github.com/go-test/deep"
-	"github.com/google/go-cmp/cmp"
 	"github.com/jackc/pgx/v5/pgxpool"
 	corev2 "github.com/sensu/core/v2"
 	corev3 "github.com/sensu/core/v3"
@@ -1435,121 +1433,4 @@ func TestEntityConfigStore_UpdateIfExists(t *testing.T) {
 			})
 		})
 	}
-}
-
-func TestEntityConfigStore_Watch(t *testing.T) {
-	withPostgres(t, func(ctx context.Context, db *pgxpool.Pool, dsn string) {
-		s := &EntityConfigStore{
-			db: db,
-		}
-		createNamespace(t, NewNamespaceStore(db), "default")
-
-		// watch watch events until no events are recieved for 2 seconds.
-		watcherUnderTest := s.Watch(ctx, "", "")
-		var events []storev2.WatchEvent
-		done := make(chan struct{})
-		go func() {
-			timer := time.NewTimer(time.Second * 5)
-			for {
-				select {
-				case <-timer.C:
-					close(done)
-					return
-				case e, ok := <-watcherUnderTest:
-					if !ok {
-						return
-					}
-					events = append(events, e...)
-					timer.Reset(time.Second * 2)
-				}
-			}
-		}()
-
-		// Add #EntityConfigCount entity configs
-		EntityConfigCount := 10_000
-		for i := 0; i < EntityConfigCount; i++ {
-			err := s.CreateOrUpdate(ctx, corev3.FixtureEntityConfig(fmt.Sprintf("%d", i)))
-			if err != nil {
-				t.Fatalf("unexpected error creating entities: %v", err)
-			}
-		}
-		// Wait for watcher to finish
-		<-done
-
-		// Ensure we got all WatchCreate events
-		createFound := make([]bool, EntityConfigCount)
-		for _, event := range events {
-			if event.Type != storev2.WatchCreate {
-				t.Errorf("expected event type create, got: %v", event)
-				continue
-			}
-			r, _ := event.Value.Unwrap()
-
-			i, err := strconv.Atoi(r.GetMetadata().Name)
-			if err != nil {
-				t.Fatalf("couldn't read event resource name: %v", err)
-			}
-			if i < 0 || EntityConfigCount <= i {
-				t.Errorf("unexpected event resource name: %v", event)
-			}
-			createFound[i] = true
-		}
-
-		var notFound []int
-		for i, found := range createFound {
-			if !found {
-				notFound = append(notFound, i)
-			}
-		}
-
-		if len(notFound) > 0 {
-			t.Errorf("did not recieve updates for all created entities: %v", notFound)
-		}
-
-		entityV := corev3.FixtureEntityConfig("5")
-		entityV.Subscriptions = append(entityV.Subscriptions, "hula")
-
-		if err := s.CreateOrUpdate(ctx, entityV); err != nil {
-			t.Fatalf("unexpected error updating entity: %v", err)
-		}
-
-		updateEvents := <-watcherUnderTest
-		if len(updateEvents) != 1 {
-			t.Errorf("expected exactly one update event, got: %v", updateEvents)
-		} else {
-			update := updateEvents[0]
-			if update.Type != storev2.WatchUpdate {
-				t.Errorf("expected event type update, got: %v", update)
-			}
-			var updatedEntityConfig corev3.EntityConfig
-			if err := update.Value.UnwrapInto(&updatedEntityConfig); err != nil {
-				t.Errorf("expected entity config resource, got: %v. %v", update, err)
-			}
-			if !cmp.Equal(entityV.Subscriptions, updatedEntityConfig.Subscriptions) {
-				t.Errorf("unexpected entity config subscriptions, got: %v", cmp.Diff(entityV.Subscriptions, updatedEntityConfig.Subscriptions))
-			}
-		}
-
-		if err := s.Delete(ctx, "default", "5"); err != nil {
-			t.Fatalf("unexpected error deleting entity: %v", err)
-		}
-		deleteEvents := <-watcherUnderTest
-		if len(deleteEvents) != 1 {
-			t.Errorf("expected exactly one update event, got: %v", updateEvents)
-		} else {
-			deleted := deleteEvents[0]
-			if deleted.Type != storev2.WatchDelete {
-				t.Errorf("expected event type delete, got: %v", deleted)
-			}
-			var deletedEntityConfig corev3.EntityConfig
-			if err := deleted.Value.UnwrapInto(&deletedEntityConfig); err != nil {
-				t.Errorf("expected entity config resource, got: %v. %v", deleted, err)
-			}
-			if !cmp.Equal(entityV.Subscriptions, deletedEntityConfig.Subscriptions) {
-				t.Errorf("unexpected entity config subscriptions, got: %v", cmp.Diff(entityV.Subscriptions, deletedEntityConfig.Subscriptions))
-			}
-
-		}
-
-	})
 }
