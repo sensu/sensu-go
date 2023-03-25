@@ -602,35 +602,6 @@ func (k *Keepalived) handleUpdate(e *corev2.Event) error {
 	}
 	entity := e.Entity
 
-	warning := int(e.Check.Timeout)
-	critical := int(e.Check.Ttl)
-	interval := int(e.Check.Interval)
-	ttl := time.Duration(warning) * time.Second
-
-	ctx := corev2.SetContextFromResource(context.Background(), entity)
-	agentMeta := agentMetadata{
-		Warning:  warning,
-		Critical: critical,
-		Interval: interval,
-	}
-	metadata, _ := json.Marshal(agentMeta)
-	state := store.OperatorState{
-		Namespace: e.Entity.Namespace,
-		Name:      e.Entity.Name,
-		Type:      store.AgentOperator,
-		Controller: &store.OperatorKey{
-			Name: k.backendName,
-			Type: store.BackendOperator,
-		},
-		CheckInTimeout: ttl,
-		Present:        true,
-		Metadata:       (*json.RawMessage)(&metadata),
-	}
-	if err := k.operatorConcierge.CheckIn(ctx, state); err != nil {
-		// Warning: do not wrap this error
-		return err
-	}
-
 	entity.LastSeen = e.Timestamp
 	_, entityState := corev3.V2EntityToV3(entity)
 
