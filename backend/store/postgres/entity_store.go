@@ -4,13 +4,10 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"time"
 
 	corev2 "github.com/sensu/core/v2"
 	corev3 "github.com/sensu/core/v3"
-	"github.com/sensu/sensu-go/backend/poll"
 	"github.com/sensu/sensu-go/backend/store"
-	storev2 "github.com/sensu/sensu-go/backend/store/v2"
 )
 
 type EntityStore struct {
@@ -231,58 +228,4 @@ func (s *EntityStore) UpdateEntity(ctx context.Context, entity *corev2.Entity) e
 		return fmt.Errorf("error updating entity state: %w", err)
 	}
 	return nil
-}
-
-type EntityConfigPoller struct {
-	db  DBI
-	req storev2.ResourceRequest
-}
-
-func (e *EntityConfigPoller) Now(ctx context.Context) (time.Time, error) {
-	var now time.Time
-	row := e.db.QueryRow(ctx, "SELECT NOW();")
-	if err := row.Scan(&now); err != nil {
-		return now, &store.ErrInternal{Message: err.Error()}
-	}
-	return now, nil
-}
-
-func (e *EntityConfigPoller) Since(ctx context.Context, updatedSince time.Time) ([]poll.Row, error) {
-	wrapper := &EntityConfigWrapper{
-		Namespace: e.req.Namespace,
-		Name:      e.req.Name,
-		UpdatedAt: updatedSince,
-	}
-	queryParams := wrapper.SQLParams()
-	rows, rerr := e.db.Query(ctx, pollEntityConfigQuery, queryParams...)
-	if rerr != nil {
-		logger.Errorf("entity config since query failed with error %v", rerr)
-		return nil, &store.ErrInternal{Message: rerr.Error()}
-	}
-	defer rows.Close()
-	var since []poll.Row
-	for rows.Next() {
-		if err := rows.Scan(wrapper.SQLParams()...); err != nil {
-			return nil, &store.ErrInternal{Message: err.Error()}
-		}
-		if err := rows.Err(); err != nil {
-			return nil, &store.ErrInternal{Message: err.Error()}
-		}
-		id := fmt.Sprintf("%s/%s", wrapper.Namespace, wrapper.Name)
-		pollResult := poll.Row{
-			Id:        id,
-			Resource:  wrapper,
-			CreatedAt: wrapper.CreatedAt,
-			UpdatedAt: wrapper.UpdatedAt,
-		}
-		if wrapper.DeletedAt.Valid {
-			pollResult.DeletedAt = &wrapper.DeletedAt.Time
-		}
-		since = append(since, pollResult)
-	}
-	return since, nil
-}
-
-func newEntityConfigPoller(req storev2.ResourceRequest, db DBI) (poll.Table, error) {
-	return &EntityConfigPoller{db: db, req: req}, nil
 }
