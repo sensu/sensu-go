@@ -120,7 +120,7 @@ WITH ctl AS (
 	)
 	SELECT id AS id, operator_type AS operator_type
 	FROM opc, ctl_namespace
-	WHERE opc.namespace = ctl_namespace.nsid OR opc.namespace IS NULL
+	WHERE (opc.namespace = ctl_namespace.nsid OR opc.namespace IS NULL)
 	  AND opc.operator_type = $6
 	  AND opc.operator_name = $7
 	UNION
