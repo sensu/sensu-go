@@ -5,13 +5,14 @@ import (
 	"net/http"
 
 	corev2 "github.com/sensu/core/v2"
+	"github.com/sensu/sensu-go/types"
 )
 
 var silencedPath = createNSBasePath(coreAPIGroup, coreAPIVersion, "silenced")
 
 // CreateSilenced creates a new silenced  entry.
 func (client *RestClient) CreateSilenced(silenced *corev2.Silenced) error {
-	b, err := json.Marshal(silenced)
+	b, err := json.Marshal(types.WrapResource(silenced))
 	if err != nil {
 		return err
 	}
@@ -66,8 +67,12 @@ func (client *RestClient) ListSilenceds(namespace, sub, check string, options *L
 		return nil, UnmarshalError(resp)
 	}
 
-	var result []corev2.Silenced
-	err = json.Unmarshal(resp.Body(), &result)
+	var wrappers []types.Wrapper
+	err = json.Unmarshal(resp.Body(), &wrappers)
+	result := make([]corev2.Silenced, len(wrappers))
+	for i, wrapper := range wrappers {
+		result[i] = *wrapper.Value.(*corev2.Silenced)
+	}
 	return result, err
 }
 
@@ -81,13 +86,14 @@ func (client *RestClient) FetchSilenced(name string) (*corev2.Silenced, error) {
 	if resp.StatusCode() >= 400 {
 		return nil, UnmarshalError(resp)
 	}
-	var result corev2.Silenced
-	return &result, json.Unmarshal(resp.Body(), &result)
+	var wrapper types.Wrapper
+	err = json.Unmarshal(resp.Body(), &wrapper)
+	return wrapper.Value.(*corev2.Silenced), err
 }
 
 // UpdateSilenced updates a silenced entry from configured Sensu instance
 func (client *RestClient) UpdateSilenced(s *corev2.Silenced) error {
-	b, err := json.Marshal(s)
+	b, err := json.Marshal(types.WrapResource(s))
 	if err != nil {
 		return err
 	}

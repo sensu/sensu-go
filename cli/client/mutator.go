@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 
 	corev2 "github.com/sensu/core/v2"
+	"github.com/sensu/sensu-go/types"
 )
 
 // MutatorsPath is the api path for mutators.
@@ -11,7 +12,7 @@ var MutatorsPath = createNSBasePath(coreAPIGroup, coreAPIVersion, "mutators")
 
 // CreateMutator creates new mutator on the configured Sensu instance
 func (client *RestClient) CreateMutator(mutator *corev2.Mutator) (err error) {
-	bytes, err := json.Marshal(mutator)
+	bytes, err := json.Marshal(types.WrapResource(mutator))
 	if err != nil {
 		return err
 	}
@@ -36,25 +37,24 @@ func (client *RestClient) DeleteMutator(namespace, name string) (err error) {
 
 // FetchMutator fetches a specific handler from the configured Sensu instance
 func (client *RestClient) FetchMutator(name string) (*corev2.Mutator, error) {
-	var mutator *corev2.Mutator
-
 	path := MutatorsPath(client.config.Namespace(), name)
 	res, err := client.R().Get(path)
 	if err != nil {
-		return mutator, err
+		return nil, err
 	}
 
 	if res.StatusCode() >= 400 {
-		return mutator, UnmarshalError(res)
+		return nil, UnmarshalError(res)
 	}
 
-	err = json.Unmarshal(res.Body(), &mutator)
-	return mutator, err
+	var wrapper types.Wrapper
+	err = json.Unmarshal(res.Body(), &wrapper)
+	return wrapper.Value.(*corev2.Mutator), err
 }
 
 // UpdateMutator updates a given mutator on a configured Sensu instance
 func (client *RestClient) UpdateMutator(mutator *corev2.Mutator) (err error) {
-	bytes, err := json.Marshal(mutator)
+	bytes, err := json.Marshal(types.WrapResource(mutator))
 	if err != nil {
 		return err
 	}

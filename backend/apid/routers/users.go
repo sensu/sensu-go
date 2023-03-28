@@ -2,6 +2,7 @@ package routers
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -10,6 +11,7 @@ import (
 	corev2 "github.com/sensu/core/v2"
 	corev3 "github.com/sensu/core/v3"
 	"github.com/sensu/sensu-go/backend/apid/actions"
+	"github.com/sensu/sensu-go/backend/apid/request"
 	"github.com/sensu/sensu-go/backend/store"
 	storev2 "github.com/sensu/sensu-go/backend/store/v2"
 )
@@ -79,18 +81,18 @@ func (r *UsersRouter) get(req *http.Request) (corev3.Resource, error) {
 }
 
 func (r *UsersRouter) create(req *http.Request) (corev3.Resource, error) {
-	user := &corev2.User{}
-	if err := UnmarshalBody(req, user); err != nil {
+	user, err := request.Resource[*corev2.User](req)
+	if err != nil {
 		return nil, actions.NewError(actions.InvalidArgument, err)
 	}
 
-	err := r.controller.Create(req.Context(), user)
+	err = r.controller.Create(req.Context(), user)
 	return nil, err
 }
 
 func (r *UsersRouter) createOrReplace(req *http.Request) (corev3.Resource, error) {
-	user := &corev2.User{}
-	if err := UnmarshalBody(req, user); err != nil {
+	user, err := request.Resource[*corev2.User](req)
+	if err != nil {
 		return nil, actions.NewError(actions.InvalidArgument, err)
 	}
 
@@ -104,7 +106,7 @@ func (r *UsersRouter) createOrReplace(req *http.Request) (corev3.Resource, error
 			))
 	}
 
-	err := r.controller.CreateOrReplace(req.Context(), user)
+	err = r.controller.CreateOrReplace(req.Context(), user)
 	return nil, err
 }
 
@@ -130,9 +132,9 @@ func (r *UsersRouter) reinstate(req *http.Request) (corev3.Resource, error) {
 
 // updatePassword updates a user password by requiring the current password
 func (r *UsersRouter) updatePassword(req *http.Request) (corev3.Resource, error) {
-	params := map[string]string{}
-	if err := UnmarshalBody(req, &params); err != nil {
-		return nil, err
+	params := make(map[string]string)
+	if err := json.NewDecoder(req.Body).Decode(&params); err != nil {
+		return nil, actions.NewError(actions.InvalidArgument, err)
 	}
 
 	vars := mux.Vars(req)
@@ -157,9 +159,9 @@ func (r *UsersRouter) updatePassword(req *http.Request) (corev3.Resource, error)
 
 // resetPassword updates a user password without any kind of verification
 func (r *UsersRouter) resetPassword(req *http.Request) (corev3.Resource, error) {
-	params := map[string]string{}
-	if err := UnmarshalBody(req, &params); err != nil {
-		return nil, err
+	params := make(map[string]string)
+	if err := json.NewDecoder(req.Body).Decode(&params); err != nil {
+		return nil, actions.NewError(actions.InvalidArgument, err)
 	}
 
 	vars := mux.Vars(req)

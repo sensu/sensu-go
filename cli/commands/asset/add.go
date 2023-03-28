@@ -8,10 +8,10 @@ import (
 
 	"github.com/sensu/sensu-go/bonsai"
 	"github.com/sensu/sensu-go/cli"
+	"github.com/sensu/sensu-go/cli/resource"
 	"github.com/spf13/cobra"
 
 	goversion "github.com/hashicorp/go-version"
-	"github.com/sensu/sensu-go/cli/resource"
 	"github.com/sensu/sensu-go/types/compat"
 )
 
@@ -94,6 +94,7 @@ func addCommandExecute(cli *cli.SensuCli) func(cmd *cobra.Command, args []string
 			} else {
 				meta.Name = assetPath
 			}
+			resources[i].ObjectMeta = *meta
 			compat.SetObjectMeta(resources[i].Value, meta)
 		}
 		processor := resource.NewPutter()

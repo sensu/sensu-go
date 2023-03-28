@@ -33,13 +33,13 @@ func TestHandlers_UpdateResourceV3(t *testing.T) {
 		},
 		{
 			name:    "invalid resource meta",
-			body:    marshal(t, fixture.V3Resource{Metadata: corev2.NewObjectMetaP("foo", "acme")}),
+			body:    marshal(t, &fixture.V3Resource{Metadata: corev2.NewObjectMetaP("foo", "acme")}),
 			urlVars: map[string]string{"id": "bar", "namespace": "acme"},
 			wantErr: true,
 		},
 		{
 			name: "store err, not valid",
-			body: marshal(t, fixture.V3Resource{Metadata: corev2.NewObjectMetaP("", "")}),
+			body: marshal(t, &fixture.V3Resource{Metadata: corev2.NewObjectMetaP("", "")}),
 			storeFunc: func(s *mockstore.ConfigStore) {
 				s.On("CreateOrUpdate", mock.Anything, mock.Anything, mock.Anything).
 					Return(&store.ErrNotValid{Err: errors.New("error")})
@@ -48,7 +48,7 @@ func TestHandlers_UpdateResourceV3(t *testing.T) {
 		},
 		{
 			name: "store err, default",
-			body: marshal(t, fixture.V3Resource{Metadata: corev2.NewObjectMetaP("", "")}),
+			body: marshal(t, &fixture.V3Resource{Metadata: corev2.NewObjectMetaP("", "")}),
 			storeFunc: func(s *mockstore.ConfigStore) {
 				s.On("CreateOrUpdate", mock.Anything, mock.Anything, mock.Anything).
 					Return(&store.ErrInternal{})
@@ -57,7 +57,7 @@ func TestHandlers_UpdateResourceV3(t *testing.T) {
 		},
 		{
 			name: "successful create",
-			body: marshal(t, fixture.V3Resource{Metadata: corev2.NewObjectMetaP("", "")}),
+			body: marshal(t, &fixture.V3Resource{Metadata: corev2.NewObjectMetaP("", "")}),
 			storeFunc: func(s *mockstore.ConfigStore) {
 				s.On("CreateOrUpdate", mock.Anything, mock.Anything, mock.Anything).
 					Return(nil)
@@ -91,7 +91,7 @@ func TestCreatedByUpdateV3(t *testing.T) {
 	claims, err := jwt.NewClaims(&corev2.User{Username: "admin"})
 	assert.NoError(t, err)
 	ctx := context.WithValue(context.Background(), corev2.ClaimsKey, claims)
-	body := marshal(t, fixture.V3Resource{Metadata: corev2.NewObjectMetaP("", "")})
+	body := marshal(t, &fixture.V3Resource{Metadata: corev2.NewObjectMetaP("", "")})
 
 	store := &mockstore.V2MockStore{}
 	cs := new(mockstore.ConfigStore)

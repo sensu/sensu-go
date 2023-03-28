@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/go-resty/resty/v2"
+	corev3 "github.com/sensu/core/v3"
 	"github.com/sensu/sensu-go/cli/client"
 	"github.com/sensu/sensu-go/types"
 )
@@ -27,7 +28,7 @@ func (c *MockClient) List(path string, objs interface{}, options *client.ListOpt
 }
 
 // Post ...
-func (c *MockClient) Post(path string, obj interface{}) error {
+func (c *MockClient) Post(path string, obj corev3.Resource) error {
 	args := c.Called(path, obj)
 	return args.Error(0)
 }

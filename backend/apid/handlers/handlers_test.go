@@ -5,7 +5,9 @@ import (
 	"testing"
 
 	corev2 "github.com/sensu/core/v2"
+	corev3 "github.com/sensu/core/v3"
 	"github.com/sensu/sensu-go/testing/fixture"
+	"github.com/sensu/sensu-go/types"
 )
 
 func TestCheckMeta(t *testing.T) {
@@ -42,9 +44,9 @@ func TestCheckMeta(t *testing.T) {
 	}
 }
 
-func marshal(t *testing.T, v interface{}) []byte {
+func marshal(t *testing.T, v corev3.Resource) []byte {
 	t.Helper()
-	bytes, err := json.Marshal(v)
+	bytes, err := json.Marshal(types.WrapResource(v))
 	if err != nil {
 		t.Fatal(err)
 	}

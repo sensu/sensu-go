@@ -97,7 +97,7 @@ func TestSilencedRouterCustomRoutes(t *testing.T) {
 			name:   "it returns 500 if the store returns an error while creating a silenced entry",
 			method: http.MethodPost,
 			path:   empty.URIPath(),
-			body:   marshal(fixture),
+			body:   marshalWrapped(fixture),
 			controllerFunc: func(c *mockSilencedController) {
 				c.On("Create", mock.Anything, mock.Anything).
 					Return(actions.NewErrorf(actions.InternalErr)).
@@ -109,7 +109,7 @@ func TestSilencedRouterCustomRoutes(t *testing.T) {
 			name:   "it returns 201 when an event is successfully created",
 			method: http.MethodPost,
 			path:   empty.URIPath(),
-			body:   marshal(fixture),
+			body:   marshalWrapped(fixture),
 			controllerFunc: func(c *mockSilencedController) {
 				c.On("Create", mock.Anything, mock.Anything).
 					Return(nil).
@@ -135,7 +135,7 @@ func TestSilencedRouterCustomRoutes(t *testing.T) {
 			name:   "it returns 500 if the store returns an error while updating a silenced entry",
 			method: http.MethodPut,
 			path:   fixture.URIPath(),
-			body:   marshal(fixture),
+			body:   marshalWrapped(fixture),
 			controllerFunc: func(c *mockSilencedController) {
 				c.On("CreateOrReplace", mock.Anything, mock.Anything).
 					Return(actions.NewErrorf(actions.InternalErr)).
@@ -147,7 +147,7 @@ func TestSilencedRouterCustomRoutes(t *testing.T) {
 			name:   "it returns 201 when a silenced entry is successfully updated",
 			method: http.MethodPut,
 			path:   fixture.URIPath(),
-			body:   marshal(fixture),
+			body:   marshalWrapped(fixture),
 			controllerFunc: func(c *mockSilencedController) {
 				c.On("CreateOrReplace", mock.Anything, mock.Anything).
 					Return(nil).

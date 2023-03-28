@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 
 	corev3 "github.com/sensu/core/v3"
+	"github.com/sensu/sensu-go/types"
 )
 
 // NamespacesPath is the api path for namespaces.
@@ -11,7 +12,7 @@ var NamespacesPath = CreateBasePath("core", "v3", "namespaces")
 
 // CreateNamespace creates new namespace on configured Sensu instance
 func (client *RestClient) CreateNamespace(namespace *corev3.Namespace) error {
-	bytes, err := json.Marshal(namespace)
+	bytes, err := json.Marshal(types.WrapResource(namespace))
 	if err != nil {
 		return err
 	}
@@ -32,7 +33,7 @@ func (client *RestClient) CreateNamespace(namespace *corev3.Namespace) error {
 
 // UpdateNamespace updates given namespace on a configured Sensu instance
 func (client *RestClient) UpdateNamespace(namespace *corev3.Namespace) error {
-	bytes, err := json.Marshal(namespace)
+	bytes, err := json.Marshal(types.WrapResource(namespace))
 	if err != nil {
 		return err
 	}
@@ -57,18 +58,17 @@ func (client *RestClient) DeleteNamespace(namespace string) error {
 
 // FetchNamespace fetches an namespace by name
 func (client *RestClient) FetchNamespace(namespaceName string) (*corev3.Namespace, error) {
-	var namespace *corev3.Namespace
-
 	path := NamespacesPath(namespaceName)
 	res, err := client.R().Get(path)
 	if err != nil {
-		return namespace, err
+		return nil, err
 	}
 
 	if res.StatusCode() >= 400 {
-		return namespace, UnmarshalError(res)
+		return nil, UnmarshalError(res)
 	}
 
-	err = json.Unmarshal(res.Body(), &namespace)
-	return namespace, err
+	var wrapper types.Wrapper
+	err = json.Unmarshal(res.Body(), &wrapper)
+	return wrapper.Value.(*corev3.Namespace), err
 }

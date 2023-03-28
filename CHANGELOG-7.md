@@ -15,6 +15,7 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 - core/v2.Namespace is no longer supported. Users must use core/v3.Namespace,
 which now allows for the addition of labels and annotations.
 - API keys can no longer be retrieved from the database.
+- The REST APIs now use the wrapped resource format.
 
 ### Added
 - Added sensu-backend configuration for postgresql.

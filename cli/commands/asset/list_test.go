@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"net/http"
+	"strings"
 	"testing"
 
 	corev2 "github.com/sensu/core/v2"
@@ -237,6 +238,11 @@ func TestListBuildsWithJSON(t *testing.T) {
 
 	// Make sure the asset's builds have *not* been seperated into several assets
 	output := []map[string]interface{}{}
-	_ = json.Unmarshal([]byte(out), &output)
+	dec := json.NewDecoder(strings.NewReader(out))
+	for dec.More() {
+		var r map[string]interface{}
+		dec.Decode(&r)
+		output = append(output, r)
+	}
 	assert.Len(output, 1)
 }

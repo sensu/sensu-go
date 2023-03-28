@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 
 	corev2 "github.com/sensu/core/v2"
+	"github.com/sensu/sensu-go/types"
 )
 
 // PipelinesPath is the api path for pipelines.
@@ -11,8 +12,6 @@ var PipelinesPath = createNSBasePath(coreAPIGroup, coreAPIVersion, "pipelines")
 
 // FetchPipeline fetches a specific pipeline
 func (client *RestClient) FetchPipeline(name string) (*corev2.Pipeline, error) {
-	var pipeline *corev2.Pipeline
-
 	path := PipelinesPath(client.config.Namespace(), name)
 	res, err := client.R().Get(path)
 	if err != nil {
@@ -23,8 +22,9 @@ func (client *RestClient) FetchPipeline(name string) (*corev2.Pipeline, error) {
 		return nil, UnmarshalError(res)
 	}
 
-	err = json.Unmarshal(res.Body(), &pipeline)
-	return pipeline, err
+	var wrapper types.Wrapper
+	err = json.Unmarshal(res.Body(), &wrapper)
+	return wrapper.Value.(*corev2.Pipeline), err
 }
 
 // DeletePipeline deletes a pipeline.
@@ -34,7 +34,7 @@ func (client *RestClient) DeletePipeline(namespace, name string) error {
 
 // UpdatePipeline updates a pipeline.
 func (client *RestClient) UpdatePipeline(pipeline *corev2.Pipeline) error {
-	bytes, err := json.Marshal(pipeline)
+	bytes, err := json.Marshal(types.WrapResource(pipeline))
 	if err != nil {
 		return err
 	}
@@ -54,7 +54,7 @@ func (client *RestClient) UpdatePipeline(pipeline *corev2.Pipeline) error {
 
 // CreatePipeline creates a new pipeline
 func (client *RestClient) CreatePipeline(pipeline *corev2.Pipeline) (err error) {
-	bytes, err := json.Marshal(pipeline)
+	bytes, err := json.Marshal(types.WrapResource(pipeline))
 	if err != nil {
 		return err
 	}

@@ -85,7 +85,7 @@ func (client *RestClient) List(path string, objs interface{}, options *ListOptio
 				// This case is for when the API returns a slice of wrapped resources,
 				// but we've passed in unwrapped resources to be filled.
 				for _, wrapper := range slice {
-					o.Set(reflect.Append(o, reflect.ValueOf(wrapper.Value)))
+					o.Set(reflect.Append(o, reflect.ValueOf(wrapper.Value).Elem()))
 				}
 			} else if err := json.Unmarshal(body, &wrapper); err == nil {
 				// This case is for when the API returns a single wrapped value, but we've
@@ -122,8 +122,9 @@ func (client *RestClient) List(path string, objs interface{}, options *ListOptio
 }
 
 // Post sends a POST request with obj as the payload to the given path
-func (client *RestClient) Post(path string, obj interface{}) error {
-	res, err := client.R().SetBody(obj).Post(path)
+func (client *RestClient) Post(path string, resource corev3.Resource) error {
+	wrapper := types.WrapResource(resource)
+	res, err := client.R().SetBody(wrapper).Post(path)
 	if err != nil {
 		return err
 	}
@@ -174,15 +175,7 @@ func (client *RestClient) PutResource(r types.Wrapper) error {
 		path = value.URIPath()
 	}
 
-	// Determine if we should send the wrapped resource or only the resource
-	// itself
-	var bytes []byte
-	var err error
-	if r.APIVersion == "core/v2" {
-		bytes, err = json.Marshal(r.Value)
-	} else {
-		bytes, err = json.Marshal(r)
-	}
+	bytes, err := json.Marshal(r)
 	if err != nil {
 		return err
 	}

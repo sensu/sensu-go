@@ -11,6 +11,7 @@ import (
 	corev3 "github.com/sensu/core/v3"
 	"github.com/sensu/sensu-go/backend/apid/actions"
 	"github.com/sensu/sensu-go/backend/apid/handlers"
+	"github.com/sensu/sensu-go/backend/apid/request"
 	"github.com/sensu/sensu-go/backend/store"
 	storev2 "github.com/sensu/sensu-go/backend/store/v2"
 )
@@ -77,17 +78,17 @@ func (r *EntitiesRouter) find(req *http.Request) (corev3.Resource, error) {
 }
 
 func (r *EntitiesRouter) create(req *http.Request) (corev3.Resource, error) {
-	entity := corev2.Entity{}
-	if err := UnmarshalBody(req, &entity); err != nil {
+	entity, err := request.Resource[*corev2.Entity](req)
+	if err != nil {
 		return nil, err
 	}
-	err := r.controller.Create(req.Context(), entity)
-	return &entity, err
+	err = r.controller.Create(req.Context(), *entity)
+	return entity, err
 }
 
 func (r *EntitiesRouter) createOrReplace(req *http.Request) (corev3.Resource, error) {
-	entity := corev2.Entity{}
-	if err := UnmarshalBody(req, &entity); err != nil {
+	entity, err := request.Resource[*corev2.Entity](req)
+	if err != nil {
 		return nil, err
 	}
 
@@ -95,5 +96,5 @@ func (r *EntitiesRouter) createOrReplace(req *http.Request) (corev3.Resource, er
 		return nil, actions.NewError(actions.AlreadyExistsErr, errors.New("entity is managed by its agent"))
 	}
 
-	return &entity, r.controller.CreateOrReplace(req.Context(), entity)
+	return entity, r.controller.CreateOrReplace(req.Context(), *entity)
 }

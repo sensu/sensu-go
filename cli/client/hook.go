@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 
 	corev2 "github.com/sensu/core/v2"
+	"github.com/sensu/sensu-go/types"
 )
 
 // HooksPath is the api path for hooks.
@@ -11,7 +12,7 @@ var HooksPath = createNSBasePath(coreAPIGroup, coreAPIVersion, "hooks")
 
 // CreateHook creates new hook on configured Sensu instance
 func (client *RestClient) CreateHook(hook *corev2.HookConfig) (err error) {
-	bytes, err := json.Marshal(hook)
+	bytes, err := json.Marshal(types.WrapResource(hook))
 	if err != nil {
 		return err
 	}
@@ -31,7 +32,7 @@ func (client *RestClient) CreateHook(hook *corev2.HookConfig) (err error) {
 
 // UpdateHook updates given hook on configured Sensu instance
 func (client *RestClient) UpdateHook(hook *corev2.HookConfig) (err error) {
-	bytes, err := json.Marshal(hook)
+	bytes, err := json.Marshal(types.WrapResource(hook))
 	if err != nil {
 		return err
 	}
@@ -56,8 +57,6 @@ func (client *RestClient) DeleteHook(namespace, name string) error {
 
 // FetchHook fetches a specific hook
 func (client *RestClient) FetchHook(name string) (*corev2.HookConfig, error) {
-	var hook *corev2.HookConfig
-
 	path := HooksPath(client.config.Namespace(), name)
 	res, err := client.R().Get(path)
 	if err != nil {
@@ -68,6 +67,7 @@ func (client *RestClient) FetchHook(name string) (*corev2.HookConfig, error) {
 		return nil, UnmarshalError(res)
 	}
 
-	err = json.Unmarshal(res.Body(), &hook)
-	return hook, err
+	var wrapper types.Wrapper
+	err = json.Unmarshal(res.Body(), &wrapper)
+	return wrapper.Value.(*corev2.HookConfig), err
 }

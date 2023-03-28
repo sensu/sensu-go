@@ -2,6 +2,7 @@ package client
 
 import (
 	corev2 "github.com/sensu/core/v2"
+	"github.com/sensu/sensu-go/types"
 )
 
 // ClusterRolesPath is the api path for cluster roles.
@@ -19,9 +20,9 @@ func (client *RestClient) DeleteClusterRole(name string) error {
 
 // FetchClusterRole with the given name
 func (client *RestClient) FetchClusterRole(name string) (*corev2.ClusterRole, error) {
-	clusterRole := &corev2.ClusterRole{}
-	if err := client.Get(ClusterRolesPath(name), clusterRole); err != nil {
+	var wrapper types.Wrapper
+	if err := client.Get(ClusterRolesPath(name), &wrapper); err != nil {
 		return nil, err
 	}
-	return clusterRole, nil
+	return wrapper.Value.(*corev2.ClusterRole), nil
 }

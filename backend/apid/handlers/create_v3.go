@@ -1,13 +1,13 @@
 package handlers
 
 import (
-	"encoding/json"
 	"errors"
 	"net/http"
 
 	"github.com/gorilla/mux"
 	corev3 "github.com/sensu/core/v3"
 	"github.com/sensu/sensu-go/backend/apid/actions"
+	"github.com/sensu/sensu-go/backend/apid/request"
 	"github.com/sensu/sensu-go/backend/authentication/jwt"
 	"github.com/sensu/sensu-go/backend/store"
 	storev2 "github.com/sensu/sensu-go/backend/store/v2"
@@ -16,8 +16,8 @@ import (
 // CreateV3Resource creates the resource given in the request body but only if it
 // does not already exist
 func (h Handlers[R, T]) CreateResource(r *http.Request) (corev3.Resource, error) {
-	var payload R
-	if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
+	payload, err := request.Resource[R](r)
+	if err != nil {
 		return nil, actions.NewError(actions.InvalidArgument, err)
 	}
 

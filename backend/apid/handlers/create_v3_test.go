@@ -32,7 +32,7 @@ func TestHandlers_CreateResource(t *testing.T) {
 		},
 		{
 			name: "invalid resource meta",
-			body: marshal(t, fixture.V3Resource{Metadata: &corev2.ObjectMeta{
+			body: marshal(t, &fixture.V3Resource{Metadata: &corev2.ObjectMeta{
 				Name:      "foo",
 				Namespace: "acme",
 			}}),
@@ -41,7 +41,7 @@ func TestHandlers_CreateResource(t *testing.T) {
 		},
 		{
 			name: "store err, already exists",
-			body: marshal(t, fixture.V3Resource{Metadata: &corev2.ObjectMeta{}}),
+			body: marshal(t, &fixture.V3Resource{Metadata: &corev2.ObjectMeta{}}),
 			storeFunc: func(s *mockstore.ConfigStore) {
 				s.On("CreateIfNotExists", mock.Anything, mock.Anything, mock.Anything).
 					Return(&store.ErrAlreadyExists{})
@@ -50,7 +50,7 @@ func TestHandlers_CreateResource(t *testing.T) {
 		},
 		{
 			name: "store err, not valid",
-			body: marshal(t, fixture.V3Resource{Metadata: &corev2.ObjectMeta{}}),
+			body: marshal(t, &fixture.V3Resource{Metadata: &corev2.ObjectMeta{}}),
 			storeFunc: func(s *mockstore.ConfigStore) {
 				s.On("CreateIfNotExists", mock.Anything, mock.Anything, mock.Anything).
 					Return(&store.ErrNotValid{Err: errors.New("error")})
@@ -59,7 +59,7 @@ func TestHandlers_CreateResource(t *testing.T) {
 		},
 		{
 			name: "store err, default",
-			body: marshal(t, fixture.V3Resource{Metadata: &corev2.ObjectMeta{}}),
+			body: marshal(t, &fixture.V3Resource{Metadata: &corev2.ObjectMeta{}}),
 			storeFunc: func(s *mockstore.ConfigStore) {
 				s.On("CreateIfNotExists", mock.Anything, mock.Anything, mock.Anything).
 					Return(&store.ErrInternal{})
@@ -68,7 +68,7 @@ func TestHandlers_CreateResource(t *testing.T) {
 		},
 		{
 			name: "successful create",
-			body: marshal(t, fixture.V3Resource{Metadata: &corev2.ObjectMeta{}}),
+			body: marshal(t, &fixture.V3Resource{Metadata: &corev2.ObjectMeta{}}),
 			storeFunc: func(s *mockstore.ConfigStore) {
 				s.On("CreateIfNotExists", mock.Anything, mock.Anything, mock.Anything).
 					Return(nil)
@@ -102,7 +102,7 @@ func TestV3CreatedByCreate(t *testing.T) {
 	claims, err := jwt.NewClaims(&corev2.User{Username: "admin"})
 	assert.NoError(t, err)
 	ctx := context.WithValue(context.Background(), corev2.ClaimsKey, claims)
-	body := marshal(t, fixture.V3Resource{Metadata: &corev2.ObjectMeta{}})
+	body := marshal(t, &fixture.V3Resource{Metadata: &corev2.ObjectMeta{}})
 
 	store := &mockstore.V2MockStore{}
 	cs := new(mockstore.ConfigStore)

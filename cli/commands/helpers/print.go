@@ -39,12 +39,10 @@ func Print(cmd *cobra.Command, format string, printTable printTableFunc, objects
 	}
 	switch format {
 	case config.FormatJSON:
-		return PrintJSON(v, cmd.OutOrStdout())
-	case config.FormatWrappedJSON:
 		if objects == nil {
 			return PrintJSON(v, cmd.OutOrStdout())
 		}
-		return PrintWrappedJSONList(objects, cmd.OutOrStdout())
+		return PrintResourceListJSON(objects, cmd.OutOrStdout())
 	case config.FormatYAML:
 		if objects == nil {
 			return PrintYAML(v, cmd.OutOrStdout())
@@ -65,13 +63,11 @@ func PrintFormatted(flag string, format string, v interface{}, w io.Writer, prin
 	}
 	switch format {
 	case config.FormatJSON:
-		return PrintJSON(v, w)
-	case config.FormatWrappedJSON:
 		r, ok := v.(corev3.Resource)
 		if !ok {
 			return fmt.Errorf("%t is not a Resource", v)
 		}
-		return PrintWrappedJSON(r, w)
+		return PrintResourceJSON(r, w)
 	case config.FormatYAML:
 		return PrintYAML(v, w)
 	default:
@@ -87,7 +83,7 @@ func PrintTitle(flag string, format string, title string, w io.Writer) error {
 	}
 	// checking the formats exclusively to cover invalid formats
 	// that get defaulted to tabular
-	if format != config.FormatJSON && format != config.FormatWrappedJSON && format != config.FormatYAML {
+	if format != config.FormatJSON && format != config.FormatYAML {
 		cfg := &list.Config{
 			Title: title,
 		}

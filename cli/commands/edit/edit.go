@@ -9,8 +9,6 @@ import (
 	"io/ioutil"
 	"os"
 	"os/exec"
-	"path"
-	"reflect"
 	"runtime"
 	"strings"
 
@@ -34,7 +32,7 @@ const (
 
 func extension(format string) string {
 	switch format {
-	case config.FormatJSON, config.FormatWrappedJSON:
+	case config.FormatJSON:
 		return "json"
 	default:
 		return "yaml"
@@ -103,37 +101,19 @@ func dumpResource(client client, cfg namespaceFormat, typeName string, key []str
 		requested = lifter.Lift()
 	}
 
-	// Determine the expected type for the store response between a
-	// corev3.Resource & a types.Wrapper. We will assume that all resources
-	// outside core/v2 are stored as wrapped value
-	var response interface{}
-	if types.ApiVersion(reflect.Indirect(reflect.ValueOf(requested)).Type().PkgPath()) == path.Join(corev2.APIGroupName, corev2.APIVersion) {
-		response, _ = resource.Resolve(typeName)
-	} else if types.ApiVersion(reflect.Indirect(reflect.ValueOf(requested)).Type().PkgPath()) == path.Join("core", "v3") {
-		response, _ = resource.Resolve(typeName)
-	} else {
-		response = &types.Wrapper{}
-	}
+	response := &types.Wrapper{}
 
-	if err := client.Get(requested.URIPath(), &response); err != nil {
+	if err := client.Get(requested.URIPath(), response); err != nil {
 		return err
 	}
 
 	// Retrieve the concrete resource value from the response
-	var resource corev3.Resource
-	switch r := response.(type) {
-	case corev3.Resource:
-		resource = r
-	case *types.Wrapper:
-		resource = r.Value.(corev3.Resource)
-	default:
-		return fmt.Errorf("unexpected response type %T. Make sure the resource type is valid", response)
-	}
+	resource := response.Value.(corev3.Resource)
 
 	format := cfg.Format()
 	switch format {
-	case "wrapped-json", "json":
-		return helpers.PrintWrappedJSON(resource, to)
+	case "json":
+		return helpers.PrintResourceJSON(resource, to)
 	default:
 		return helpers.PrintYAML([]corev3.Resource{resource}, to)
 	}
@@ -172,8 +152,8 @@ func dumpBlank(cfg namespaceFormat, typeName string, to io.Writer) error {
 	}
 	format := cfg.Format()
 	switch format {
-	case "wrapped-json", "json":
-		return helpers.PrintWrappedJSON(resource, to)
+	case "json":
+		return helpers.PrintResourceJSON(resource, to)
 	default:
 		return helpers.PrintYAML([]corev3.Resource{resource}, to)
 	}

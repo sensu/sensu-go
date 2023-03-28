@@ -2,11 +2,13 @@ package routers
 
 import (
 	"context"
+	"encoding/json"
 	"net/http"
 
 	"github.com/gorilla/mux"
 	corev2 "github.com/sensu/core/v2"
 	corev3 "github.com/sensu/core/v3"
+	"github.com/sensu/sensu-go/backend/apid/request"
 )
 
 // TessenController represents the controller needs of the TessenRouter.
@@ -39,12 +41,12 @@ func (r *TessenRouter) Mount(parent *mux.Router) {
 }
 
 func (r *TessenRouter) createOrUpdate(req *http.Request) (corev3.Resource, error) {
-	obj := &corev2.TessenConfig{}
-	if err := UnmarshalBody(req, &obj); err != nil {
+	obj, err := request.Resource[*corev2.TessenConfig](req)
+	if err != nil {
 		return nil, err
 	}
 
-	err := r.controller.CreateOrUpdate(req.Context(), obj)
+	err = r.controller.CreateOrUpdate(req.Context(), obj)
 	return obj, err
 }
 
@@ -81,8 +83,8 @@ func (r *TessenMetricRouter) Mount(parent *mux.Router) {
 }
 
 func (r *TessenMetricRouter) publish(req *http.Request) (corev3.Resource, error) {
-	obj := []corev2.MetricPoint{}
-	if err := UnmarshalBody(req, &obj); err != nil {
+	var obj []corev2.MetricPoint
+	if err := json.NewDecoder(req.Body).Decode(&obj); err != nil {
 		return nil, err
 	}
 

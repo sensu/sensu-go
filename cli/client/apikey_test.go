@@ -69,19 +69,27 @@ func TestListAPIKeys(t *testing.T) {
 		assert.Equal(t, r.Method, http.MethodGet)
 		assert.NotEmpty(t, r.Header["Authorization"])
 		_, _ = w.Write([]byte(`[{
-"metadata": {
+  "type": "APIKey",
+  "api_version": "core/v2",
+  "metadata": {
     "name": "83abef1e-e7d7-4beb-91fc-79ad90084d5b",
     "created_by": "admin"
   },
-  "username": "user1",
-  "created_at": 1570640363
+  "spec": {
+    "username": "user1",
+    "created_at": 1570640363
+  }
 },{
-"metadata": {
+  "type": "APIKey",
+  "api_version": "core/v2",
+  "metadata": {
     "name": "83abef1e-e7d7-4beb-91fc-79ad90084d5p",
     "created_by": "admin"
   },
-  "username": "user2",
-  "created_at": 1570640370
+  "spec": {
+    "username": "user2",
+    "created_at": 1570640370
+  }
 }]`))
 	}
 	server := httptest.NewServer(http.HandlerFunc(testHandler))

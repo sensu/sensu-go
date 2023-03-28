@@ -112,7 +112,7 @@ func TestChecksRouterCustomRoutes(t *testing.T) {
 			name:   "it adds a check hook to a check",
 			method: http.MethodPut,
 			path:   "/namespaces/default/checks/check1/hooks/non-zero",
-			body:   marshal(corev2.FixtureHookList("hook1")),
+			body:   marshalRaw(corev2.FixtureHookList("hook1")),
 			controllerFunc: func(c *mockCheckController) {
 				c.On("AddCheckHook", mock.Anything, "check1", mock.AnythingOfType("v2.HookList")).Return(nil)
 			},

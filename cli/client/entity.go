@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 
 	corev2 "github.com/sensu/core/v2"
+	"github.com/sensu/sensu-go/types"
 )
 
 // EntitiesPath is the api path for entities.
@@ -16,25 +17,24 @@ func (client *RestClient) DeleteEntity(namespace, name string) (err error) {
 
 // FetchEntity fetches a specific entity
 func (client *RestClient) FetchEntity(name string) (*corev2.Entity, error) {
-	var entity *corev2.Entity
-
 	path := EntitiesPath(client.config.Namespace(), name)
 	res, err := client.R().Get(path)
 	if err != nil {
-		return entity, err
+		return nil, err
 	}
 
 	if res.StatusCode() >= 400 {
-		return entity, UnmarshalError(res)
+		return nil, UnmarshalError(res)
 	}
 
-	err = json.Unmarshal(res.Body(), &entity)
-	return entity, err
+	var warpper types.Wrapper
+	err = json.Unmarshal(res.Body(), &warpper)
+	return warpper.Value.(*corev2.Entity), err
 }
 
 // UpdateEntity updates given entity on configured Sensu instance
 func (client *RestClient) UpdateEntity(entity *corev2.Entity) (err error) {
-	bytes, err := json.Marshal(entity)
+	bytes, err := json.Marshal(types.WrapResource(entity))
 	if err != nil {
 		return err
 	}
@@ -54,7 +54,7 @@ func (client *RestClient) UpdateEntity(entity *corev2.Entity) (err error) {
 
 // CreateEntity creates a new entity
 func (client *RestClient) CreateEntity(entity *corev2.Entity) (err error) {
-	bytes, err := json.Marshal(entity)
+	bytes, err := json.Marshal(types.WrapResource(entity))
 	if err != nil {
 		return err
 	}

@@ -31,11 +31,11 @@ func PrintJSON(r interface{}, io io.Writer) error {
 	return err
 }
 
-// PrintWrappedJSON takes a record(s) and Resource, converts the record to
+// PrintResourceJSON takes a record(s) and Resource, converts the record to
 // human-readable JSON (pretty-prints), wraps that JSON using types.Wrapper, and
 // then prints the result to the given writer. Unescapes any &, <, or >
 // characters it finds.
-func PrintWrappedJSON(r corev3.Resource, wr io.Writer) error {
+func PrintResourceJSON(r corev3.Resource, wr io.Writer) error {
 	w := types.WrapResource(r)
 
 	buf := new(bytes.Buffer)
@@ -52,13 +52,13 @@ func PrintWrappedJSON(r corev3.Resource, wr io.Writer) error {
 	return err
 }
 
-// PrintWrappedJSONList takes a resource list and an io.Writer, converts the
+// PrintResourceListJSON takes a resource list and an io.Writer, converts the
 // record to human-readable JSON (pretty-prints), wraps that JSON using
 // types.Wrapper, and then prints the result to the given writer. Unescapes
 // any &, <, or > characters it finds.
-func PrintWrappedJSONList(r []corev3.Resource, io io.Writer) error {
+func PrintResourceListJSON(r []corev3.Resource, io io.Writer) error {
 	for _, res := range r {
-		err := PrintWrappedJSON(res, io)
+		err := PrintResourceJSON(res, io)
 		if err != nil {
 			return err
 		}

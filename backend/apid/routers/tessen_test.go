@@ -43,7 +43,7 @@ func TestPutTessen(t *testing.T) {
 	client := new(http.Client)
 
 	controller.On("CreateOrUpdate", mock.Anything, mock.Anything, mock.Anything).Return(nil)
-	b, _ := json.Marshal(corev2.DefaultTessenConfig())
+	b := marshalWrapped(corev2.DefaultTessenConfig())
 	body := bytes.NewReader(b)
 	endpoint := "/" + corev2.TessenResource
 	req := newRequest(t, http.MethodPut, server.URL+endpoint, body)
@@ -110,7 +110,7 @@ func TestPostTessenMetrics(t *testing.T) {
 
 	controller.On("Publish", mock.Anything, mock.Anything).Return(nil)
 	b, _ := json.Marshal([]corev2.MetricPoint{
-		corev2.MetricPoint{
+		{
 			Name:  "metric",
 			Value: 1,
 		},

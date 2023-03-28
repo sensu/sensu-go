@@ -145,7 +145,7 @@ func TestUsersRouter(t *testing.T) {
 			name:   "it returns 400 if the user to create is not valid",
 			method: http.MethodPost,
 			path:   empty.URIPath(),
-			body:   marshal(fixture),
+			body:   marshalWrapped(fixture),
 			controllerFunc: func(c *mockUserController) {
 				c.On("Create", mock.Anything, mock.Anything).
 					Return(actions.NewErrorf(actions.InvalidArgument)).
@@ -157,7 +157,7 @@ func TestUsersRouter(t *testing.T) {
 			name:   "it returns 500 if the store returns an error while creating a user",
 			method: http.MethodPost,
 			path:   empty.URIPath(),
-			body:   marshal(fixture),
+			body:   marshalWrapped(fixture),
 			controllerFunc: func(c *mockUserController) {
 				c.On("Create", mock.Anything, mock.Anything).
 					Return(actions.NewErrorf(actions.InternalErr)).
@@ -169,7 +169,7 @@ func TestUsersRouter(t *testing.T) {
 			name:   "it returns 201 when a user is successfully created",
 			method: http.MethodPost,
 			path:   empty.URIPath(),
-			body:   marshal(fixture),
+			body:   marshalWrapped(fixture),
 			controllerFunc: func(c *mockUserController) {
 				c.On("Create", mock.Anything, mock.Anything).
 					Return(nil).
@@ -195,7 +195,7 @@ func TestUsersRouter(t *testing.T) {
 			name:   "it returns 500 if the store returns an error while updating a user",
 			method: http.MethodPut,
 			path:   fixture.URIPath(),
-			body:   marshal(fixture),
+			body:   marshalWrapped(fixture),
 			controllerFunc: func(c *mockUserController) {
 				c.On("CreateOrReplace", mock.Anything, mock.Anything).
 					Return(actions.NewErrorf(actions.InternalErr)).
@@ -207,7 +207,7 @@ func TestUsersRouter(t *testing.T) {
 			name:   "it returns 201 when an event is successfully updated",
 			method: http.MethodPut,
 			path:   fixture.URIPath(),
-			body:   marshal(fixture),
+			body:   marshalWrapped(fixture),
 			controllerFunc: func(c *mockUserController) {
 				c.On("CreateOrReplace", mock.Anything, mock.Anything).
 					Return(nil).
