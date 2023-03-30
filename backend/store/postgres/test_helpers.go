@@ -258,3 +258,13 @@ func deleteEntityState(tb testing.TB, s storev2.EntityStateStore, namespace, nam
 		tb.Error(err)
 	}
 }
+
+// purgeIndeterminateStoreLabels clears out labels set on resources by the
+// store implementation that are indeterminate. ex: created_at
+func purgeIndeterminateStoreLabels(r corev3.Resource) {
+	meta := r.GetMetadata()
+	delete(meta.Labels, store.SensuCreatedAtKey)
+	delete(meta.Labels, store.SensuDeletedAtKey)
+	delete(meta.Labels, store.SensuUpdatedAtKey)
+	r.SetMetadata(meta)
+}

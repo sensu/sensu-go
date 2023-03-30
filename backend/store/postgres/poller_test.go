@@ -2,16 +2,16 @@ package postgres
 
 import (
 	"context"
-	"fmt"
 	"sort"
 	"testing"
 	"time"
 
-	"github.com/google/go-cmp/cmp"
 	"github.com/jackc/pgx/v5/pgxpool"
 	corev3 "github.com/sensu/core/v3"
 	"github.com/sensu/sensu-go/backend/store"
 	storev2 "github.com/sensu/sensu-go/backend/store/v2"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestEntityConfigPoller(t *testing.T) {
@@ -27,100 +27,72 @@ func TestEntityConfigPoller(t *testing.T) {
 			t.Fatalf("unexpected non-empty entities: %v", iState)
 		}
 
-		watcherUnderTest := NewWatcher(estore, time.Millisecond*10, time.Millisecond*1500)
-
-		// watch updates
+		watcherUnderTest := NewWatcher(estore, time.Millisecond*100, time.Millisecond*1500)
 		watchCtx, watchCancel := context.WithCancel(ctx)
-		observedState := make(chan []*corev3.EntityConfig)
-		go func() {
-			req := storev2.ResourceRequest{
-				APIVersion: "core/v3",
-				Type:       "EntityConfig",
-				StoreName:  "entity_configs",
-			}
-			watchEvents := watcherUnderTest.Watch(watchCtx, req)
-			state := map[string]*corev3.EntityConfig{}
-			for {
-				select {
-				case events := <-watchEvents:
-					for _, event := range events {
-						var ec corev3.EntityConfig
-						if err := event.Value.UnwrapInto(&ec); err != nil {
-							t.Error(err)
-						}
-						switch event.Type {
-						case storev2.WatchCreate:
-							if _, ok := state[ec.Metadata.Name]; ok {
-								t.Errorf("unexpected double create: %v", event)
-							}
-							state[ec.Metadata.Name] = &ec
-						case storev2.WatchUpdate:
-							if _, ok := state[ec.Metadata.Name]; !ok {
-								t.Errorf("unexpected update before create: %v", event)
-							}
-							state[ec.Metadata.Name] = &ec
-						case storev2.WatchDelete:
-							if _, ok := state[ec.Metadata.Name]; !ok {
-								t.Errorf("unexpected delete: %v", event)
-							}
-							delete(state, ec.Metadata.Name)
-						}
-					}
-				case <-watchCtx.Done():
-					finalState := make([]*corev3.EntityConfig, 0, len(state))
-					for _, e := range state {
-						finalState = append(finalState, e)
-					}
-					observedState <- finalState
-					return
-				}
-			}
-		}()
-		// wait for watcher to start up
-		time.Sleep(time.Millisecond * 10)
+		req := storev2.ResourceRequest{
+			APIVersion: "core/v3",
+			Type:       "EntityConfig",
+			StoreName:  "entity_configs",
+		}
+		defer watchCancel()
+		watchEvents := watcherUnderTest.Watch(watchCtx, req)
 
-		// generate some traffic
-		for i := 0; i < 1000; i++ {
-			ec := corev3.FixtureEntityConfig(fmt.Sprint(i))
-			if err := estore.CreateIfNotExists(ctx, ec); err != nil {
-				t.Fatal(err)
-			}
-		}
-		for i := 0; i < 1000; i++ {
-			if i%2 == 0 {
-				continue
-			}
-			ec := corev3.FixtureEntityConfig(fmt.Sprint(i))
-			ec.Metadata.Labels["foo"] = "bar"
-			if err := estore.UpdateIfExists(ctx, ec); err != nil {
-				t.Fatal(err)
-			}
-		}
-		for i := 0; i < 1000; i++ {
-			if i%10 == 0 {
-				continue
-			}
-			if err := estore.Delete(ctx, "default", fmt.Sprint(i)); err != nil {
-				t.Fatal(err)
-			}
-		}
-		time.Sleep(time.Millisecond * 100)
-		watchCancel()
+		e1 := corev3.FixtureEntityConfig("test-1")
 
-		actualState := <-observedState
+		// create
+		require.NoError(t, estore.CreateIfNotExists(ctx, e1))
 
-		sort.Slice(actualState, func(i, j int) bool {
-			return actualState[i].Metadata.Name < actualState[j].Metadata.Name
-		})
-		expectedState, err := estore.List(ctx, "", &store.SelectionPredicate{})
-		if err != nil {
-			t.Fatal(err)
+		actualEvents := <-watchEvents
+		require.Equal(t, 1, len(actualEvents))
+		actualEvent := actualEvents[0]
+		assert.Equal(t, storev2.WatchCreate, actualEvent.Type)
+		value := &corev3.EntityConfig{}
+		assert.NoError(t, actualEvent.Value.UnwrapInto(value))
+		purgeIndeterminateStoreLabels(value)
+		assert.Equal(t, e1, value)
+
+		// update
+		e1.Subscriptions = append(e1.Subscriptions, "testingpoller")
+		require.NoError(t, estore.UpdateIfExists(ctx, e1))
+
+		actualEvents = <-watchEvents
+		require.Equal(t, 1, len(actualEvents))
+		actualEvent = actualEvents[0]
+		assert.Equal(t, storev2.WatchUpdate, actualEvent.Type)
+		assert.NoError(t, actualEvent.Value.UnwrapInto(value))
+		purgeIndeterminateStoreLabels(value)
+		assert.Equal(t, e1, value)
+
+		// delete
+		require.NoError(t, estore.Delete(ctx, "default", "test-1"))
+
+		actualEvents = <-watchEvents
+		require.Equal(t, 1, len(actualEvents))
+		actualEvent = actualEvents[0]
+		assert.Equal(t, storev2.WatchDelete, actualEvent.Type)
+		assert.NoError(t, actualEvent.Value.UnwrapInto(value))
+		purgeIndeterminateStoreLabels(value)
+		assert.Equal(t, e1, value)
+
+		// create multiple
+		e2 := corev3.FixtureEntityConfig("test-2")
+		require.NoError(t, estore.CreateIfNotExists(ctx, e1))
+		require.NoError(t, estore.CreateIfNotExists(ctx, e2))
+
+		twoEvents := make([]storev2.WatchEvent, 0, 2)
+		for len(twoEvents) < 2 {
+			twoEvents = append(twoEvents, <-watchEvents...)
 		}
-		sort.Slice(expectedState, func(i, j int) bool {
-			return expectedState[i].Metadata.Name < expectedState[j].Metadata.Name
-		})
-		if !cmp.Equal(expectedState, actualState) {
-			t.Errorf("expected database and local state with watcher to match: %v", cmp.Diff(expectedState, actualState))
-		}
+		assert.Equal(t, 2, len(twoEvents))
+
+		sort.Slice(twoEvents, func(i, j int) bool { return twoEvents[i].Key.Name < twoEvents[j].Key.Name })
+		actual1, actual2 := &corev3.EntityConfig{}, &corev3.EntityConfig{}
+		twoEvents[0].Value.UnwrapInto(actual1)
+		twoEvents[1].Value.UnwrapInto(actual2)
+
+		purgeIndeterminateStoreLabels(actual1)
+		purgeIndeterminateStoreLabels(actual2)
+		assert.Equal(t, e1, actual1)
+		assert.Equal(t, e2, actual2)
 	})
 }
