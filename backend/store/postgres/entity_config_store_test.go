@@ -466,9 +466,7 @@ func TestEntityConfigStore_Get(t *testing.T) {
 				}
 
 				if got != nil {
-					// delete some of the metadata keys we can't easily predict for comparison
-					delete(got.Metadata.Labels, store.SensuUpdatedAtKey)
-					delete(got.Metadata.Labels, store.SensuCreatedAtKey)
+					purgeIndeterminateStoreLabels(got)
 				}
 
 				if !reflect.DeepEqual(got, tt.want) {
@@ -665,9 +663,7 @@ func TestEntityConfigStore_GetMultiple(t *testing.T) {
 				}
 
 				for _, g := range got {
-					// delete some of the metadata keys we can't easily predict for comparison
-					delete(g.Metadata.Labels, store.SensuUpdatedAtKey)
-					delete(g.Metadata.Labels, store.SensuCreatedAtKey)
+					purgeIndeterminateStoreLabels(g)
 				}
 				if diff := deep.Equal(got, tt.want); diff != nil {
 					t.Errorf("EntityConfigStore.GetMultiple() got differs from want: %v", diff)
@@ -1031,9 +1027,7 @@ func TestEntityConfigStore_List(t *testing.T) {
 					return
 				}
 				for _, g := range got {
-					// delete some of the metadata keys we can't easily predict for comparison
-					delete(g.Metadata.Labels, store.SensuUpdatedAtKey)
-					delete(g.Metadata.Labels, store.SensuCreatedAtKey)
+					purgeIndeterminateStoreLabels(g)
 				}
 				if diff := deep.Equal(got, tt.want); len(diff) > 0 {
 					t.Errorf("EntityConfigStore.List() got differs from want: %v", diff)
