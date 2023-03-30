@@ -52,7 +52,7 @@ type APIClient interface {
 // APIKeyClient exposes client methods for api keys.
 type APIKeyClient interface {
 	// PostAPIKey creates an api key and returns the location header.
-	PostAPIKey(path string, obj interface{}) (string, error)
+	PostAPIKey(path string, obj interface{}) (corev2.APIKeyResponse, error)
 }
 
 // GenericClient exposes generic resource methods.

@@ -2,11 +2,13 @@ package middlewares
 
 import (
 	"context"
+	"errors"
 	"net/http"
 	"strings"
 
 	corev2 "github.com/sensu/core/v2"
 	"github.com/sensu/sensu-go/backend/apid/actions"
+	"github.com/sensu/sensu-go/backend/authentication/bcrypt"
 	"github.com/sensu/sensu-go/backend/authentication/jwt"
 	storev2 "github.com/sensu/sensu-go/backend/store/v2"
 )
@@ -75,43 +77,32 @@ func (a Authentication) Then(next http.Handler) http.Handler {
 
 func extractAPIKeyClaims(ctx context.Context, key string, store storev2.Interface) (*corev2.Claims, error) {
 	var claims *corev2.Claims
-	// retrieve the APIKey based on the key provided
-	apiKey := &corev2.APIKey{
-		ObjectMeta: corev2.ObjectMeta{
-			Name: key,
-		},
-	}
-	req := storev2.NewResourceRequestFromResource(apiKey)
-	wrapper, err := store.GetConfigStore().Get(ctx, req)
-	if err != nil {
-		return nil, err
-	}
-	if err := wrapper.UnwrapInto(apiKey); err != nil {
-		return nil, err
-	}
-
-	user := &corev2.User{
-		Username: apiKey.Username,
-	}
-
-	req = storev2.NewResourceRequestFromResource(user)
-	wrapper, err = store.GetConfigStore().Get(ctx, req)
+	keyStore := storev2.Of[*corev2.APIKey](store)
+	apiKeys, err := keyStore.List(ctx, storev2.ID{}, nil)
 	if err != nil {
 		return nil, err
 	}
 
-	if err := wrapper.UnwrapInto(user); err != nil {
-		return nil, err
+	for _, apiKey := range apiKeys {
+		if bcrypt.CheckPassword(string(apiKey.Hash), key) {
+			userStore := storev2.Of[*corev2.User](store)
+			user, err := userStore.Get(ctx, storev2.ID{Name: apiKey.Username})
+			if err != nil {
+				return nil, err
+			}
+
+			// inject the username and groups into standard jwt claims
+			claims = &corev2.Claims{
+				StandardClaims: corev2.StandardClaims(user.Username),
+				Groups:         user.Groups,
+				APIKey:         true,
+			}
+
+			return claims, nil
+		}
 	}
 
-	// inject the username and groups into standard jwt claims
-	claims = &corev2.Claims{
-		StandardClaims: corev2.StandardClaims(user.Username),
-		Groups:         user.Groups,
-		APIKey:         true,
-	}
-
-	return claims, nil
+	return nil, errors.New("API key rejected")
 }
 
 type errorWriter struct {

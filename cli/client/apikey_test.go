@@ -17,7 +17,7 @@ func TestCreateAPIKey(t *testing.T) {
 		assert.NotEmpty(t, r.Header["Authorization"])
 
 		w.Header().Set("Content-Type", "application/json")
-		_, _ = w.Write([]byte(`83abef1e-e7d7-4beb-91fc-79ad90084d5b`))
+		_, _ = w.Write([]byte(`{"key":"83abef1e-e7d7-4beb-91fc-79ad90084d5b","name":"myapikey"}`))
 	}
 	server := httptest.NewServer(http.HandlerFunc(testHandler))
 	defer server.Close()
@@ -30,7 +30,7 @@ func TestCreateAPIKey(t *testing.T) {
 	mockConfig.On("Tokens").Return(&corev2.Tokens{Access: "foo"})
 	mockConfig.On("APIKey").Return("")
 
-	apikey, err := client.CreateAPIKey("user1")
+	apikey, err := client.CreateAPIKey("myapikey", "user1", []byte("SDLKFJLSDKJFLSDKJFLSDJKF"))
 	assert.NoError(t, err)
 	assert.NotNil(t, apikey)
 }

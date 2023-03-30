@@ -12,6 +12,7 @@ require (
 	github.com/dustin/go-humanize v1.0.0
 	github.com/echlebek/crock v1.0.1
 	github.com/echlebek/migration v0.2.1
+	github.com/echlebek/pet v0.1.1
 	github.com/echlebek/timeproxy v1.0.0
 	github.com/emicklei/proto v1.1.0
 	github.com/evanphx/json-patch/v5 v5.1.0
@@ -44,8 +45,8 @@ require (
 	github.com/prometheus/common v0.26.0
 	github.com/robertkrimen/otto v0.0.0-20221006114523-201ab5b34f52
 	github.com/robfig/cron/v3 v3.0.1
-	github.com/sensu/core/v2 v2.17.0
-	github.com/sensu/core/v3 v3.8.0-beta4
+	github.com/sensu/core/v2 v2.18.0
+	github.com/sensu/core/v3 v3.8.1
 	github.com/sensu/lasr v1.2.1
 	github.com/sensu/sensu-api-tools v0.0.0-20221025205055-db03ae2f8099
 	github.com/sensu/sensu-go/types v0.12.0-alpha7

@@ -14,6 +14,7 @@ Versioning](http://semver.org/spec/v2.0.0.html).
   variables are supported, see the libpq documentation for details.
 - core/v2.Namespace is no longer supported. Users must use core/v3.Namespace,
 which now allows for the addition of labels and annotations.
+- API keys can no longer be retrieved from the database.
 
 ### Added
 - Added sensu-backend configuration for postgresql.
@@ -31,16 +32,19 @@ which now allows for the addition of labels and annotations.
 - Added a flag to sensu-agent to prevent the collection of network host
   information. This information can be quite lengthy and can reduce the overall
   system performance if agent entities grow to be too large.
+- API keys can now be created with sensuctl create.
 
 ### Fixed
 - Fixed an issue where multi-expression exclusive "Deny" filters were not
   evaluated as described in the documentation.
+- API keys are now securely stored in the database.
 
 ### Changed
 - Changed parameters for `sensuctl cluster-role create` to be plural
 - Deregistration events are now silenced if a silenced entry exists matching the
 entity subscriptions and/or a check named `deregistration`.
 - Upgraded Go version to 1.19.5. Old Go versions are not supported.
+- The sensuctl api-key grant command now returns additional information.
 
 ### Removed
 - Removed sensu-backend upgrade command. May make an appearance again in later versions.
