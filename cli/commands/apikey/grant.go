@@ -25,12 +25,14 @@ func GrantCommand(cli *cli.SensuCli) *cobra.Command {
 				Username: args[0],
 			}
 
-			location, err := cli.Client.PostAPIKey(apikey.URIPath(), apikey)
+			response, err := cli.Client.PostAPIKey(apikey.URIPath(), apikey)
 			if err != nil {
 				return err
 			}
 
-			fmt.Fprintf(cmd.OutOrStdout(), "Created: %s\n", location)
+			fmt.Fprintf(cmd.OutOrStdout(), "Granted a new API key. Save this key as it will not be retrievable later!\n")
+			fmt.Fprintf(cmd.OutOrStdout(), "Name: %s\n", response.Name)
+			fmt.Fprintf(cmd.OutOrStdout(), "Key:  %s\n", response.Key)
 			return nil
 		},
 	}

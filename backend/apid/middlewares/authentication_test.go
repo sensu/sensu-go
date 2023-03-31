@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	corev2 "github.com/sensu/core/v2"
+	"github.com/sensu/sensu-go/backend/authentication/bcrypt"
 	"github.com/sensu/sensu-go/backend/authentication/jwt"
 	"github.com/sensu/sensu-go/backend/store"
 	storev2 "github.com/sensu/sensu-go/backend/store/v2"
@@ -87,16 +88,28 @@ func TestMiddlewareValidAPIKey(t *testing.T) {
 	server := httptest.NewServer(mware.Then(testHandler()))
 	defer server.Close()
 
-	key := corev2.FixtureAPIKey("174373d0-4aff-41d8-aa5f-084dfcad7dc7", "admin")
+	secret := "174373d0-4aff-41d8-aa5f-084dfcad7dc7"
+	hash, err := bcrypt.HashPassword(secret)
+	if err != nil {
+		t.Fatal(err)
+	}
+	key := &corev2.APIKey{
+		ObjectMeta: corev2.ObjectMeta{
+			Name: "foobar",
+		},
+		Username: "admin",
+		Hash:     []byte(hash),
+	}
 	keyReq := storev2.NewResourceRequestFromResource(key)
 	user := &corev2.User{Username: "admin"}
 	userReq := storev2.NewResourceRequestFromResource(user)
 	cs.On("Get", mock.Anything, keyReq).Return(mockstore.Wrapper[*corev2.APIKey]{Value: key}, nil)
 	cs.On("Get", mock.Anything, userReq).Return(mockstore.Wrapper[*corev2.User]{Value: user}, nil)
+	cs.On("List", mock.Anything, mock.Anything, mock.Anything).Return(mockstore.WrapList[*corev2.APIKey]{key}, nil)
 
 	client := &http.Client{}
 	req, _ := http.NewRequest("GET", server.URL, nil)
-	req.Header.Add("Authorization", fmt.Sprintf("Key %s", key.Name))
+	req.Header.Add("Authorization", fmt.Sprintf("Key %s", secret))
 	res, err := client.Do(req)
 	assert.NoError(t, err)
 	assert.Equal(t, http.StatusOK, res.StatusCode)
@@ -114,6 +127,7 @@ func TestMiddlewareInvalidAPIKey(t *testing.T) {
 
 	key := corev2.FixtureAPIKey("174373d0-4aff-41d8-aa5f-084dfcad7dc7", "admin")
 	cs.On("Get", mock.Anything, mock.Anything).Return(nil, errors.New("err"))
+	cs.On("List", mock.Anything, mock.Anything, mock.Anything).Return(mockstore.WrapList[*corev2.APIKey]{}, errors.New("err"))
 
 	client := &http.Client{}
 	req, _ := http.NewRequest("GET", server.URL, nil)
@@ -139,6 +153,7 @@ func TestMiddlewareInvalidUserAPIKey(t *testing.T) {
 	userReq := storev2.NewResourceRequestFromResource(user)
 	cs.On("Get", mock.Anything, keyReq).Return(mockstore.Wrapper[*corev2.APIKey]{Value: key}, nil)
 	cs.On("Get", mock.Anything, userReq).Return(nil, errors.New("err"))
+	cs.On("List", mock.Anything, mock.Anything, mock.Anything).Return(mockstore.WrapList[*corev2.APIKey]{key}, nil)
 
 	client := &http.Client{}
 	req, _ := http.NewRequest("GET", server.URL, nil)
@@ -163,6 +178,7 @@ func TestMiddlewareNoUserAPIKey(t *testing.T) {
 	user := &corev2.User{Username: "admin"}
 	userReq := storev2.NewResourceRequestFromResource(user)
 	cs.On("Get", mock.Anything, keyReq).Return(nil, &store.ErrNotFound{})
+	cs.On("List", mock.Anything, mock.Anything, mock.Anything).Return(mockstore.WrapList[*corev2.APIKey]{}, nil)
 	cs.On("Get", mock.Anything, userReq).Return(mockstore.Wrapper[*corev2.User]{Value: user}, nil)
 
 	client := &http.Client{}

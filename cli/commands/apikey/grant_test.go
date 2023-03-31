@@ -4,6 +4,7 @@ import (
 	"errors"
 	"testing"
 
+	corev2 "github.com/sensu/core/v2"
 	client "github.com/sensu/sensu-go/cli/client/testing"
 	test "github.com/sensu/sensu-go/cli/commands/testing"
 	"github.com/stretchr/testify/assert"
@@ -28,7 +29,7 @@ func TestGrantCommandWithoutArgs(t *testing.T) {
 
 	cli := test.NewMockCLI()
 	client := cli.Client.(*client.MockClient)
-	client.On("PostAPIKey", mock.Anything, mock.Anything).Return("", nil)
+	client.On("PostAPIKey", mock.Anything, mock.Anything).Return(corev2.APIKeyResponse{}, nil)
 
 	cmd := GrantCommand(cli)
 	out, err := test.RunCmd(cmd, []string{})
@@ -42,20 +43,20 @@ func TestGrantCommandWithArgs(t *testing.T) {
 
 	cli := test.NewMockCLI()
 	client := cli.Client.(*client.MockClient)
-	client.On("PostAPIKey", mock.Anything, mock.Anything).Return("location", nil)
+	client.On("PostAPIKey", mock.Anything, mock.Anything).Return(corev2.APIKeyResponse{Name: "mykey", Key: "keystuff"}, nil)
 
 	cmd := GrantCommand(cli)
 	out, err := test.RunCmd(cmd, []string{"user1"})
 
 	require.NoError(t, err)
-	assert.Regexp("Created: location", out)
+	assert.Regexp("Key:  keystuff", out)
 }
 func TestGrantCommandServerError(t *testing.T) {
 	assert := assert.New(t)
 
 	cli := test.NewMockCLI()
 	client := cli.Client.(*client.MockClient)
-	client.On("PostAPIKey", mock.Anything, mock.Anything).Return("", errors.New("err"))
+	client.On("PostAPIKey", mock.Anything, mock.Anything).Return(corev2.APIKeyResponse{}, errors.New("err"))
 
 	cmd := GrantCommand(cli)
 	out, err := test.RunCmd(cmd, []string{"user1"})
