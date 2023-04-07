@@ -42,6 +42,7 @@ instead, it is represented underneath the "spec" object.
   information. This information can be quite lengthy and can reduce the overall
   system performance if agent entities grow to be too large.
 - API keys can now be created with sensuctl create.
+- Added threshold annotation even when OK status
 
 ### Fixed
 - Fixed an issue where multi-expression exclusive "Deny" filters were not
