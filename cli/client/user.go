@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 
 	corev2 "github.com/sensu/core/v2"
+	"github.com/sensu/sensu-go/types"
 )
 
 // UsersPath is the api path for users.
@@ -27,7 +28,7 @@ func (client *RestClient) AddGroupToUser(username, group string) error {
 // CreateUser creates new check on configured Sensu instance
 func (client *RestClient) CreateUser(user *corev2.User) error {
 	path := UsersPath("")
-	res, err := client.R().SetBody(user).Post(path)
+	res, err := client.R().SetBody(types.WrapResource(user)).Post(path)
 	if err != nil {
 		return err
 	}
@@ -57,7 +58,6 @@ func (client *RestClient) DisableUser(username string) error {
 
 // FetchUser retrieve the given user
 func (client *RestClient) FetchUser(username string) (*corev2.User, error) {
-	user := &corev2.User{}
 	path := UsersPath(username)
 	res, err := client.R().Get(path)
 
@@ -69,8 +69,9 @@ func (client *RestClient) FetchUser(username string) (*corev2.User, error) {
 		return nil, UnmarshalError(res)
 	}
 
-	err = json.Unmarshal(res.Body(), user)
-	return user, err
+	var wrapper types.Wrapper
+	err = json.Unmarshal(res.Body(), &wrapper)
+	return wrapper.Value.(*corev2.User), err
 }
 
 // ReinstateUser reinstates a disabled user on configured Sensu instance

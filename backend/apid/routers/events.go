@@ -11,6 +11,7 @@ import (
 	corev3 "github.com/sensu/core/v3"
 	"github.com/sensu/sensu-go/backend/apid/actions"
 	"github.com/sensu/sensu-go/backend/apid/handlers"
+	"github.com/sensu/sensu-go/backend/apid/request"
 	"github.com/sensu/sensu-go/backend/messaging"
 	"github.com/sensu/sensu-go/backend/store"
 	storev2 "github.com/sensu/sensu-go/backend/store/v2"
@@ -72,8 +73,8 @@ func (r *EventsRouter) delete(req *http.Request) (corev3.Resource, error) {
 }
 
 func (r *EventsRouter) create(req *http.Request) (corev3.Resource, error) {
-	event := &corev2.Event{}
-	if err := UnmarshalBody(req, event); err != nil {
+	event, err := request.Resource[*corev2.Event](req)
+	if err != nil {
 		return nil, actions.NewError(actions.InvalidArgument, err)
 	}
 
@@ -82,13 +83,13 @@ func (r *EventsRouter) create(req *http.Request) (corev3.Resource, error) {
 		return nil, err
 	}
 
-	err := r.controller.CreateOrReplace(req.Context(), event)
+	err = r.controller.CreateOrReplace(req.Context(), event)
 	return nil, err
 }
 
 func (r *EventsRouter) createOrReplace(req *http.Request) (corev3.Resource, error) {
-	event := &corev2.Event{}
-	if err := UnmarshalBody(req, event); err != nil {
+	event, err := request.Resource[*corev2.Event](req)
+	if err != nil {
 		return nil, actions.NewError(actions.InvalidArgument, err)
 	}
 
@@ -97,7 +98,7 @@ func (r *EventsRouter) createOrReplace(req *http.Request) (corev3.Resource, erro
 		return nil, err
 	}
 
-	err := r.controller.CreateOrReplace(req.Context(), event)
+	err = r.controller.CreateOrReplace(req.Context(), event)
 	return nil, err
 }
 

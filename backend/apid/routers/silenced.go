@@ -10,6 +10,7 @@ import (
 	corev3 "github.com/sensu/core/v3"
 	"github.com/sensu/sensu-go/backend/apid/actions"
 	"github.com/sensu/sensu-go/backend/apid/handlers"
+	"github.com/sensu/sensu-go/backend/apid/request"
 	"github.com/sensu/sensu-go/backend/store"
 	storev2 "github.com/sensu/sensu-go/backend/store/v2"
 )
@@ -68,8 +69,8 @@ func (r *SilencedRouter) get(req *http.Request) (corev3.Resource, error) {
 }
 
 func (r *SilencedRouter) create(req *http.Request) (corev3.Resource, error) {
-	entry := &corev2.Silenced{}
-	if err := UnmarshalBody(req, entry); err != nil {
+	entry, err := request.Resource[*corev2.Silenced](req)
+	if err != nil {
 		return nil, actions.NewError(actions.InvalidArgument, err)
 	}
 
@@ -77,13 +78,13 @@ func (r *SilencedRouter) create(req *http.Request) (corev3.Resource, error) {
 		return nil, actions.NewError(actions.InvalidArgument, err)
 	}
 
-	err := r.controller.Create(req.Context(), entry)
+	err = r.controller.Create(req.Context(), entry)
 	return nil, err
 }
 
 func (r *SilencedRouter) createOrReplace(req *http.Request) (corev3.Resource, error) {
-	entry := &corev2.Silenced{}
-	if err := UnmarshalBody(req, entry); err != nil {
+	entry, err := request.Resource[*corev2.Silenced](req)
+	if err != nil {
 		return nil, actions.NewError(actions.InvalidArgument, err)
 	}
 
@@ -91,7 +92,7 @@ func (r *SilencedRouter) createOrReplace(req *http.Request) (corev3.Resource, er
 		return nil, actions.NewError(actions.InvalidArgument, err)
 	}
 
-	err := r.controller.CreateOrReplace(req.Context(), entry)
+	err = r.controller.CreateOrReplace(req.Context(), entry)
 	return nil, err
 }
 

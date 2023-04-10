@@ -13,6 +13,7 @@ import (
 	corev3 "github.com/sensu/core/v3"
 	"github.com/sensu/sensu-go/backend/apid/actions"
 	"github.com/sensu/sensu-go/backend/apid/handlers"
+	"github.com/sensu/sensu-go/backend/apid/request"
 	"github.com/sensu/sensu-go/backend/queue"
 	storev2 "github.com/sensu/sensu-go/backend/store/v2"
 )
@@ -64,9 +65,9 @@ func (r *ChecksRouter) Mount(parent *mux.Router) {
 }
 
 func (r *ChecksRouter) addCheckHook(req *http.Request) (corev3.Resource, error) {
-	cfg := corev2.HookList{}
-	if err := UnmarshalBody(req, &cfg); err != nil {
-		return nil, err
+	var cfg corev2.HookList
+	if err := json.NewDecoder(req.Body).Decode(&cfg); err != nil {
+		return nil, actions.NewError(actions.InvalidArgument, err)
 	}
 
 	params := mux.Vars(req)
@@ -98,8 +99,8 @@ func (r *ChecksRouter) removeCheckHook(req *http.Request) (corev3.Resource, erro
 }
 
 func (r *ChecksRouter) adhocRequest(w http.ResponseWriter, req *http.Request) {
-	adhocReq := corev2.AdhocRequest{}
-	if err := UnmarshalBody(req, &adhocReq); err != nil {
+	adhocReq, err := request.Resource[*corev2.AdhocRequest](req)
+	if err != nil {
 		WriteError(w, err)
 		return
 	}
@@ -109,7 +110,7 @@ func (r *ChecksRouter) adhocRequest(w http.ResponseWriter, req *http.Request) {
 		WriteError(w, err)
 		return
 	}
-	if err := r.controller.QueueAdhocRequest(req.Context(), id, &adhocReq); err != nil {
+	if err := r.controller.QueueAdhocRequest(req.Context(), id, adhocReq); err != nil {
 		WriteError(w, err)
 		return
 	}

@@ -5,10 +5,12 @@ import (
 	"encoding/json"
 	"fmt"
 	"reflect"
+	"strings"
 	"testing"
 
 	corev2 "github.com/sensu/core/v2"
 	corev3 "github.com/sensu/core/v3"
+	"github.com/sensu/sensu-go/types"
 	"gopkg.in/yaml.v2"
 )
 
@@ -29,43 +31,53 @@ type testClient struct {
 	err error
 }
 
-func (t testClient) Get(_ string, val interface{}) error {
+func (t testClient) Get(uri string, val interface{}) error {
 	if t.err != nil {
 		return t.err
 	}
-	switch v := val.(type) {
-	case *corev3.Namespace:
-		*v = *(corev3.FixtureNamespace("default"))
-	case *corev2.ClusterRole:
-		*v = *(corev2.FixtureClusterRole("default"))
-	case *corev2.ClusterRoleBinding:
-		*v = *(corev2.FixtureClusterRoleBinding("default"))
-	case *corev2.User:
-		*v = *(corev2.FixtureUser("default"))
-	case *corev2.TessenConfig:
-	case *corev2.Asset:
-		*v = *(corev2.FixtureAsset("default"))
-	case *corev2.CheckConfig:
-		*v = *(corev2.FixtureCheckConfig("default"))
-	case *corev2.Entity:
-		*v = *(corev2.FixtureEntity("default"))
-	case *corev2.Event:
-		*v = *(corev2.FixtureEvent("default", "default"))
-	case *corev2.EventFilter:
-		*v = *(corev2.FixtureEventFilter("default"))
-	case *corev2.Handler:
-		*v = *(corev2.FixtureHandler("default"))
-	case *corev2.Hook:
-		*v = *(corev2.FixtureHook("default"))
-	case *corev2.Mutator:
-		*v = *(corev2.FixtureMutator("default"))
-	case *corev2.Role:
-		*v = *(corev2.FixtureRole("default", "default"))
-	case *corev2.RoleBinding:
-		*v = *(corev2.FixtureRoleBinding("default", "default"))
-	case *corev2.Silenced:
-		*v = *(corev2.FixtureSilenced("default"))
+	w, ok := val.(*types.Wrapper)
+	if !ok {
+		panic(val)
 	}
+	switch {
+	case strings.Contains(uri, "clusterroles"):
+		*w = types.WrapResource(corev2.FixtureClusterRole("default"))
+	case strings.Contains(uri, "/clusterrolebindings"):
+		*w = types.WrapResource(corev2.FixtureClusterRoleBinding("default"))
+	case strings.Contains(uri, "/users"):
+		*w = types.WrapResource(corev2.FixtureUser("default"))
+	case strings.Contains(uri, "/assets"):
+		*w = types.WrapResource(corev2.FixtureAsset("default"))
+	case strings.Contains(uri, "/entities"):
+		*w = types.WrapResource(corev2.FixtureEntity("default"))
+	case strings.Contains(uri, "/events"):
+		*w = types.WrapResource(corev2.FixtureEvent("default", "default"))
+	case strings.Contains(uri, "/eventfilters"):
+		*w = types.WrapResource(corev2.FixtureEventFilter("default"))
+	case strings.Contains(uri, "/handlers"):
+		*w = types.WrapResource(corev2.FixtureHandler("default"))
+	case strings.Contains(uri, "/hooks"):
+		*w = types.WrapResource(corev2.FixtureHook("default"))
+	case strings.Contains(uri, "/mutators"):
+		*w = types.WrapResource(corev2.FixtureMutator("default"))
+	case strings.Contains(uri, "/roles"):
+		*w = types.WrapResource(corev2.FixtureRole("default", "default"))
+	case strings.Contains(uri, "/rolebindings"):
+		*w = types.WrapResource(corev2.FixtureRoleBinding("default", "default"))
+	case strings.Contains(uri, "/silenced"):
+		*w = types.WrapResource(corev2.FixtureSilenced("default:default"))
+	case strings.Contains(uri, "/checks"):
+		*w = types.WrapResource(corev2.FixtureCheckConfig("default"))
+	case strings.Contains(uri, "/filters"):
+		*w = types.WrapResource(corev2.FixtureEventFilter("default"))
+	case strings.HasPrefix(uri, "api/core/v3/namespaces"):
+		fallthrough
+	case strings.HasPrefix(uri, "/api/core/v3/namespaces"):
+		*w = types.WrapResource(corev3.FixtureNamespace("default"))
+	default:
+		panic(uri)
+	}
+
 	return nil
 }
 

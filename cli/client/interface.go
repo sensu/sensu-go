@@ -64,7 +64,7 @@ type GenericClient interface {
 	// List retrieves all keys with the given path prefix and stores them into objs
 	List(path string, objs interface{}, options *ListOptions, header *http.Header) error
 	// Post creates the given obj at the specified path
-	Post(path string, obj interface{}) error
+	Post(path string, obj corev3.Resource) error
 	// Put creates the given obj at the specified path
 	Put(path string, obj interface{}) error
 	// PostWithResponse creates the given obj at the specified path, returning the response

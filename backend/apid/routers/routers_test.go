@@ -397,9 +397,6 @@ func TestUnmarshalBody(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if err := UnmarshalBody(tt.args.req, tt.args.record); (err != nil) != tt.wantErr {
-				t.Errorf("UnmarshalBody() error = %v, wantErr %v", err, tt.wantErr)
-			}
 		})
 	}
 }

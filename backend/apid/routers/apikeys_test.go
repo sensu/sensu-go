@@ -12,6 +12,7 @@ import (
 	"github.com/sensu/sensu-go/backend/store"
 	storev2 "github.com/sensu/sensu-go/backend/store/v2"
 	"github.com/sensu/sensu-go/testing/mockstore"
+	"github.com/sensu/sensu-go/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
@@ -50,7 +51,7 @@ func TestPostAPIKey(t *testing.T) {
 
 	// Prepare the HTTP request
 	fixture := corev2.FixtureAPIKey("226f9e06-9d54-45c6-a9f6-4206bfa7ccf6", "admin")
-	payload, err := json.Marshal(fixture)
+	payload, err := json.Marshal(types.WrapResource(fixture))
 	assert.NoError(t, err)
 	client := new(http.Client)
 	req, err := http.NewRequest(http.MethodPost, server.URL+"/apikeys", bytes.NewReader(payload))
@@ -85,7 +86,7 @@ func TestPostAPIKeyInvalidUser(t *testing.T) {
 
 	// Prepare the HTTP request
 	fixture := corev2.FixtureAPIKey("226f9e06-9d54-45c6-a9f6-4206bfa7ccf6", "admin")
-	payload, err := json.Marshal(fixture)
+	payload, err := json.Marshal(types.WrapResource(fixture))
 	assert.NoError(t, err)
 	client := new(http.Client)
 	req, err := http.NewRequest(http.MethodPost, server.URL+"/apikeys", bytes.NewReader(payload))

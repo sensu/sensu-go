@@ -5,6 +5,7 @@ import (
 	"time"
 
 	corev2 "github.com/sensu/core/v2"
+	"github.com/sensu/sensu-go/types"
 )
 
 // EventsPath is the api path for events.
@@ -12,8 +13,6 @@ var EventsPath = createNSBasePath(coreAPIGroup, coreAPIVersion, "events")
 
 // FetchEvent fetches a specific event
 func (client *RestClient) FetchEvent(entity, check string) (*corev2.Event, error) {
-	var event *corev2.Event
-
 	path := EventsPath(client.config.Namespace(), entity, check)
 	res, err := client.R().Get(path)
 	if err != nil {
@@ -24,8 +23,9 @@ func (client *RestClient) FetchEvent(entity, check string) (*corev2.Event, error
 		return nil, UnmarshalError(res)
 	}
 
-	err = json.Unmarshal(res.Body(), &event)
-	return event, err
+	var wrapper types.Wrapper
+	err = json.Unmarshal(res.Body(), &wrapper)
+	return wrapper.Value.(*corev2.Event), err
 }
 
 // DeleteEvent deletes an event.
@@ -35,7 +35,7 @@ func (client *RestClient) DeleteEvent(namespace, entity, check string) error {
 
 // UpdateEvent updates an event.
 func (client *RestClient) UpdateEvent(event *corev2.Event) error {
-	bytes, err := json.Marshal(event)
+	bytes, err := json.Marshal(types.WrapResource(event))
 	if err != nil {
 		return err
 	}

@@ -17,9 +17,11 @@ import (
 	corev3 "github.com/sensu/core/v3"
 	"github.com/sensu/sensu-go/backend/apid/actions"
 	"github.com/sensu/sensu-go/backend/apid/handlers"
+	"github.com/sensu/sensu-go/backend/apid/request"
 	"github.com/sensu/sensu-go/backend/authentication/bcrypt"
 	"github.com/sensu/sensu-go/backend/store"
 	storev2 "github.com/sensu/sensu-go/backend/store/v2"
+	"github.com/sensu/sensu-go/types"
 )
 
 // APIKeysRouter handles requests for /apikeys.
@@ -51,8 +53,8 @@ func (r *APIKeysRouter) Mount(parent *mux.Router) {
 }
 
 func (r *APIKeysRouter) create(w http.ResponseWriter, req *http.Request) {
-	apikey := &corev2.APIKey{}
-	if err := UnmarshalBody(req, apikey); err != nil {
+	apikey, err := request.Resource[*corev2.APIKey](req)
+	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -96,7 +98,7 @@ func (r *APIKeysRouter) create(w http.ResponseWriter, req *http.Request) {
 
 MARSHAL:
 
-	newBytes, err := json.Marshal(apikey)
+	newBytes, err := json.Marshal(types.WrapResource(apikey))
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return

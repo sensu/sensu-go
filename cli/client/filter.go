@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 
 	corev2 "github.com/sensu/core/v2"
+	"github.com/sensu/sensu-go/types"
 )
 
 // FiltersPath is the api path for filters.
@@ -11,7 +12,7 @@ var FiltersPath = createNSBasePath(coreAPIGroup, coreAPIVersion, "filters")
 
 // CreateFilter creates a new filter on configured Sensu instance
 func (client *RestClient) CreateFilter(filter *corev2.EventFilter) (err error) {
-	bytes, err := json.Marshal(filter)
+	bytes, err := json.Marshal(types.WrapResource(filter))
 	if err != nil {
 		return err
 	}
@@ -36,8 +37,6 @@ func (client *RestClient) DeleteFilter(namespace, name string) error {
 
 // FetchFilter fetches a specific check
 func (client *RestClient) FetchFilter(name string) (*corev2.EventFilter, error) {
-	var filter *corev2.EventFilter
-
 	path := FiltersPath(client.config.Namespace(), name)
 	res, err := client.R().Get(path)
 	if err != nil {
@@ -48,13 +47,14 @@ func (client *RestClient) FetchFilter(name string) (*corev2.EventFilter, error) 
 		return nil, UnmarshalError(res)
 	}
 
-	err = json.Unmarshal(res.Body(), &filter)
-	return filter, err
+	var wrapper types.Wrapper
+	err = json.Unmarshal(res.Body(), &wrapper)
+	return wrapper.Value.(*corev2.EventFilter), err
 }
 
 // UpdateFilter updates an existing filter with fields from a new one.
 func (client *RestClient) UpdateFilter(f *corev2.EventFilter) error {
-	b, err := json.Marshal(f)
+	b, err := json.Marshal(types.WrapResource(f))
 	if err != nil {
 		return err
 	}

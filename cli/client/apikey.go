@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	corev2 "github.com/sensu/core/v2"
+	"github.com/sensu/sensu-go/types"
 )
 
 // PostAPIKey sends a POST request with obj as the payload to the given path
@@ -12,7 +13,8 @@ import (
 func (client *RestClient) PostAPIKey(path string, obj interface{}) (corev2.APIKeyResponse, error) {
 	var response corev2.APIKeyResponse
 
-	res, err := client.R().SetBody(obj).Post(path)
+	w := types.WrapResource(obj)
+	res, err := client.R().SetBody(w).Post(path)
 	if err != nil {
 		return response, err
 	}
@@ -68,8 +70,15 @@ func (client *RestClient) ListAPIKeys(options *ListOptions, header *http.Header)
 		return nil, UnmarshalError(resp)
 	}
 
-	var result []corev2.APIKey
-	err = json.Unmarshal(resp.Body(), &result)
+	var wrapped []types.Wrapper
+	err = json.Unmarshal(resp.Body(), &wrapped)
+	if err != nil {
+		return nil, err
+	}
+	result := make([]corev2.APIKey, len(wrapped))
+	for i := range wrapped {
+		result[i] = *wrapped[i].Value.(*corev2.APIKey)
+	}
 	return result, err
 }
 

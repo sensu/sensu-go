@@ -122,7 +122,7 @@ func TestEventsRouter(t *testing.T) {
 			name:   "it returns 400 if the event to create is not valid",
 			method: http.MethodPost,
 			path:   empty.URIPath(),
-			body:   marshal(fixture),
+			body:   marshalWrapped(fixture),
 			controllerFunc: func(c *mockEventController) {
 				c.On("CreateOrReplace", mock.Anything, mock.Anything).
 					Return(actions.NewErrorf(actions.InvalidArgument)).
@@ -134,7 +134,7 @@ func TestEventsRouter(t *testing.T) {
 			name:   "it returns 500 if the store returns an error while creating an event",
 			method: http.MethodPost,
 			path:   empty.URIPath(),
-			body:   marshal(fixture),
+			body:   marshalWrapped(fixture),
 			controllerFunc: func(c *mockEventController) {
 				c.On("CreateOrReplace", mock.Anything, mock.Anything).
 					Return(actions.NewErrorf(actions.InternalErr)).
@@ -146,7 +146,7 @@ func TestEventsRouter(t *testing.T) {
 			name:   "it returns 201 when an event is successfully created",
 			method: http.MethodPost,
 			path:   empty.URIPath(),
-			body:   marshal(fixture),
+			body:   marshalWrapped(fixture),
 			controllerFunc: func(c *mockEventController) {
 				c.On("CreateOrReplace", mock.Anything, mock.Anything).
 					Return(nil).
@@ -182,7 +182,7 @@ func TestEventsRouter(t *testing.T) {
 			name:   "it returns 400 if the event to update is not valid",
 			method: http.MethodPut,
 			path:   fixture.URIPath(),
-			body:   marshal(fixture),
+			body:   marshalWrapped(fixture),
 			controllerFunc: func(c *mockEventController) {
 				c.On("CreateOrReplace", mock.Anything, mock.Anything).
 					Return(actions.NewErrorf(actions.InvalidArgument)).
@@ -194,7 +194,7 @@ func TestEventsRouter(t *testing.T) {
 			name:   "it returns 500 if the store returns an error while updating an event",
 			method: http.MethodPut,
 			path:   fixture.URIPath(),
-			body:   marshal(fixture),
+			body:   marshalWrapped(fixture),
 			controllerFunc: func(c *mockEventController) {
 				c.On("CreateOrReplace", mock.Anything, mock.Anything).
 					Return(actions.NewErrorf(actions.InternalErr)).
@@ -206,7 +206,7 @@ func TestEventsRouter(t *testing.T) {
 			name:   "it returns 201 when an event is successfully updated",
 			method: http.MethodPut,
 			path:   fixture.URIPath(),
-			body:   marshal(fixture),
+			body:   marshalWrapped(fixture),
 			controllerFunc: func(c *mockEventController) {
 				c.On("CreateOrReplace", mock.Anything, mock.Anything).
 					Return(nil).
@@ -218,7 +218,7 @@ func TestEventsRouter(t *testing.T) {
 			name:   "it returns 201 when an event does not provide a namespace (using url namespace)",
 			method: http.MethodPut,
 			path:   fixture.URIPath(),
-			body:   marshal(fixture_wo_namespace),
+			body:   marshalWrapped(fixture_wo_namespace),
 			controllerFunc: func(c *mockEventController) {
 				c.On("CreateOrReplace", mock.Anything, mock.Anything).
 					Return(nil).
@@ -282,7 +282,7 @@ func TestEventsRouter(t *testing.T) {
 			name:   "it returns 400 if the event to update is invalid (post)",
 			method: http.MethodPost,
 			path:   fixture.URIPath(),
-			body:   marshal(fixture),
+			body:   marshalWrapped(fixture),
 			controllerFunc: func(c *mockEventController) {
 				c.On("CreateOrReplace", mock.Anything, mock.Anything).
 					Return(actions.NewErrorf(actions.InvalidArgument)).
@@ -294,7 +294,7 @@ func TestEventsRouter(t *testing.T) {
 			name:   "it returns 500 if the store returns an error while updating an event (post)",
 			method: http.MethodPost,
 			path:   fixture.URIPath(),
-			body:   marshal(fixture),
+			body:   marshalWrapped(fixture),
 			controllerFunc: func(c *mockEventController) {
 				c.On("CreateOrReplace", mock.Anything, mock.Anything).
 					Return(actions.NewErrorf(actions.InternalErr)).
@@ -306,7 +306,7 @@ func TestEventsRouter(t *testing.T) {
 			name:   "it returns 201 when an event is successfully updated (post)",
 			method: http.MethodPost,
 			path:   fixture.URIPath(),
-			body:   marshal(fixture),
+			body:   marshalWrapped(fixture),
 			controllerFunc: func(c *mockEventController) {
 				c.On("CreateOrReplace", mock.Anything, mock.Anything).
 					Return(nil).

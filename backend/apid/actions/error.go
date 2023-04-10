@@ -52,6 +52,9 @@ const (
 	// the operation has completed successfully. For example, a successful
 	// response from a server could have been delayed long
 	DeadlineExceeded
+
+	// Gone indicates that an API that was once supported but no longer is.
+	Gone
 )
 
 // Default error messages if not message is provided.
@@ -65,6 +68,7 @@ var standardErrorMessages = map[ErrCode]string{
 	PaymentRequired:    "license required",
 	PreconditionFailed: "precondition failed",
 	DeadlineExceeded:   "deadline exceeded",
+	Gone:               "this action is no longer supported",
 }
 
 // Error describes an issue that ocurred while performing the action.

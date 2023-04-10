@@ -4,12 +4,14 @@ import (
 	"encoding/json"
 	"errors"
 	"net/http"
+	"strings"
 	"testing"
 
 	corev2 "github.com/sensu/core/v2"
 	client "github.com/sensu/sensu-go/cli/client/testing"
 	"github.com/sensu/sensu-go/cli/commands/helpers"
 	test "github.com/sensu/sensu-go/cli/commands/testing"
+	"github.com/sensu/sensu-go/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -107,7 +109,9 @@ func TestListCommandRunEClosureWithJSONOutput(t *testing.T) {
 		*corev2.FixtureUser("user2"),
 	}
 
-	expected, err := json.Marshal(testUsers)
+	wrapped := []types.Wrapper{types.WrapResource(&testUsers[0]), types.WrapResource(&testUsers[1])}
+
+	expected, err := json.Marshal(wrapped)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -127,14 +131,7 @@ func TestListCommandRunEClosureWithJSONOutput(t *testing.T) {
 
 	assert.NoError(err)
 	assert.NotEmpty(out)
-	assert.JSONEq(string(expected), out)
-}
-
-func TestListCommandRunEClosureWithWrappedJSONOutput(t *testing.T) {
-	// User does not meet the Resource interface (no ObjectMeta), so the
-	// "wrapped-json" output for it should be the exact same as the "json"
-	// output.
-	TestListCommandRunEClosureWithJSONOutput(t)
+	assertLDJSONEqual(t, expected, out)
 }
 
 func TestListCommandRunEClosureWithYAMLOutput(t *testing.T) {
@@ -196,4 +193,23 @@ func TestListCommandRunEClosureWithHeader(t *testing.T) {
 	assert.Nil(err)
 	assert.Contains(out, "E_TOO_MANY_ENTITIES")
 	assert.Contains(out, "==")
+}
+
+func assertLDJSONEqual(t *testing.T, expected []byte, ldActual string) {
+	var got, want []interface{}
+
+	if err := json.Unmarshal(expected, &got); err != nil {
+		t.Errorf("error reading expected json input")
+	}
+	dec := json.NewDecoder(strings.NewReader(ldActual))
+	for dec.More() {
+		var tmp interface{}
+		if err := dec.Decode(&tmp); err != nil {
+			t.Errorf("error loading json document: %v", err)
+			return
+		}
+		want = append(want, tmp)
+	}
+
+	assert.Equal(t, got, want)
 }

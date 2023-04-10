@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	corev2 "github.com/sensu/core/v2"
+	"github.com/sensu/sensu-go/types"
 )
 
 // AssetsPath is the api path for assets.
@@ -24,13 +25,14 @@ func (client *RestClient) FetchAsset(name string) (*corev2.Asset, error) {
 		return &asset, UnmarshalError(res)
 	}
 
-	err = json.Unmarshal(res.Body(), &asset)
-	return &asset, err
+	var wrapper types.Wrapper
+	err = json.Unmarshal(res.Body(), &wrapper)
+	return wrapper.Value.(*corev2.Asset), err
 }
 
 // CreateAsset creates an asset resource from the backend
 func (client *RestClient) CreateAsset(asset *corev2.Asset) error {
-	bytes, err := json.Marshal(asset)
+	bytes, err := json.Marshal(types.WrapResource(asset))
 	if err != nil {
 		return err
 	}
@@ -54,7 +56,7 @@ func (client *RestClient) CreateAsset(asset *corev2.Asset) error {
 
 // UpdateAsset updates an asset resource from the backend
 func (client *RestClient) UpdateAsset(asset *corev2.Asset) (err error) {
-	bytes, err := json.Marshal(asset)
+	bytes, err := json.Marshal(types.WrapResource(asset))
 	if err != nil {
 		return err
 	}

@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	corev2 "github.com/sensu/core/v2"
+	"github.com/sensu/sensu-go/types"
 )
 
 // ChecksPath is the api path for checks.
@@ -12,7 +13,7 @@ var ChecksPath = createNSBasePath(coreAPIGroup, coreAPIVersion, "checks")
 
 // CreateCheck creates new check on configured Sensu instance
 func (client *RestClient) CreateCheck(check *corev2.CheckConfig) (err error) {
-	bytes, err := json.Marshal(check)
+	bytes, err := json.Marshal(types.WrapResource(check))
 	if err != nil {
 		return err
 	}
@@ -32,7 +33,7 @@ func (client *RestClient) CreateCheck(check *corev2.CheckConfig) (err error) {
 
 // UpdateCheck updates given check on configured Sensu instance
 func (client *RestClient) UpdateCheck(check *corev2.CheckConfig) (err error) {
-	bytes, err := json.Marshal(check)
+	bytes, err := json.Marshal(types.WrapResource(check))
 	if err != nil {
 		return err
 	}
@@ -57,7 +58,7 @@ func (client *RestClient) DeleteCheck(namespace, name string) error {
 
 // ExecuteCheck sends an execution request with the provided adhoc request
 func (client *RestClient) ExecuteCheck(req *corev2.AdhocRequest) error {
-	bytes, err := json.Marshal(req)
+	bytes, err := json.Marshal(types.WrapResource(req))
 	if err != nil {
 		return err
 	}
@@ -78,8 +79,6 @@ func (client *RestClient) ExecuteCheck(req *corev2.AdhocRequest) error {
 
 // FetchCheck fetches a specific check
 func (client *RestClient) FetchCheck(name string) (*corev2.CheckConfig, error) {
-	var check *corev2.CheckConfig
-
 	path := ChecksPath(client.config.Namespace(), name)
 	res, err := client.R().Get(path)
 	if err != nil {
@@ -90,14 +89,15 @@ func (client *RestClient) FetchCheck(name string) (*corev2.CheckConfig, error) {
 		return nil, UnmarshalError(res)
 	}
 
-	err = json.Unmarshal(res.Body(), &check)
-	return check, err
+	var wrapper types.Wrapper
+	err = json.Unmarshal(res.Body(), &wrapper)
+	return wrapper.Value.(*corev2.CheckConfig), err
 }
 
 // AddCheckHook associates an existing hook with an existing check
 func (client *RestClient) AddCheckHook(check *corev2.CheckConfig, checkHook *corev2.HookList) error {
 	path := ChecksPath(check.Namespace, check.Name, "hooks", checkHook.Type)
-	res, err := client.R().SetBody(checkHook).Put(path)
+	res, err := client.R().SetBody(types.WrapResource(checkHook)).Put(path)
 	if err != nil {
 		return err
 	}

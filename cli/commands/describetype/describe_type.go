@@ -46,7 +46,7 @@ func Command(cli *cli.SensuCli) *cobra.Command {
 	}
 
 	format := cli.Config.Format()
-	_ = cmd.Flags().StringP("format", "", format, fmt.Sprintf(`format of data returned ("%s"|"%s")`, config.FormatWrappedJSON, config.FormatYAML))
+	_ = cmd.Flags().StringP("format", "", format, fmt.Sprintf(`format of data returned ("%s"|"%s")`, config.FormatJSON, config.FormatYAML))
 
 	return cmd
 }
@@ -84,7 +84,7 @@ func execute(cli *cli.SensuCli) func(*cobra.Command, []string) error {
 			resources = append(resources, r)
 		}
 		switch getFormat(cli, cmd) {
-		case config.FormatJSON, config.FormatWrappedJSON:
+		case config.FormatJSON:
 			return helpers.PrintJSON(resources, cmd.OutOrStdout())
 		case config.FormatYAML:
 			return helpers.PrintYAML(resources, cmd.OutOrStdout())

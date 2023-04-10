@@ -46,6 +46,17 @@ func RespondWith(w http.ResponseWriter, r *http.Request, resources interface{}) 
 		return
 	}
 
+	switch r := resources.(type) {
+	case corev3.Resource:
+		resources = types.WrapResource(r)
+	case []corev3.Resource:
+		wrapList := make([]types.Wrapper, len(r))
+		for i := range r {
+			wrapList[i] = types.WrapResource(r[i])
+		}
+		resources = wrapList
+	}
+
 	// Marshal
 	bytes, err := json.Marshal(resources)
 	if err != nil {
@@ -119,6 +130,8 @@ func HTTPStatusFromCode(code actions.ErrCode) int {
 		return http.StatusPreconditionFailed
 	case actions.DeadlineExceeded:
 		return http.StatusGatewayTimeout
+	case actions.Gone:
+		return http.StatusGone
 	}
 
 	logger.WithField("code", code).Error("unknown error code")
@@ -237,16 +250,4 @@ func (r *ResourceRoute) Path(p string, fn actionHandlerFunc) *mux.Route {
 
 func handleAction(router *mux.Router, path string, fn actionHandlerFunc) *mux.Route {
 	return router.HandleFunc(path, actionHandler(fn))
-}
-
-// UnmarshalBody decodes the request body
-func UnmarshalBody(req *http.Request, record interface{}) error {
-	err := json.NewDecoder(req.Body).Decode(&record)
-	if err != nil {
-		logger.WithError(err).Error("unable to read request body")
-		return err
-	}
-	// TODO: Support other types of requests other than JSON?
-
-	return nil
 }

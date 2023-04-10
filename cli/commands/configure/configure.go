@@ -179,7 +179,6 @@ func AskForDefaultFormat(c config.Config) *survey.Question {
 			Options: []string{
 				config.FormatTabular,
 				config.FormatYAML,
-				config.FormatWrappedJSON,
 				config.FormatJSON,
 			},
 			Default: format,

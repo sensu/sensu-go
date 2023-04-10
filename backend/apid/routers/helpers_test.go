@@ -18,6 +18,7 @@ import (
 	"github.com/sensu/sensu-go/backend/store"
 	storev2 "github.com/sensu/sensu-go/backend/store/v2"
 	"github.com/sensu/sensu-go/testing/mockstore"
+	"github.com/sensu/sensu-go/types"
 	"github.com/stretchr/testify/mock"
 )
 
@@ -239,7 +240,7 @@ func createResourceAlreadyExistsTestCase(resource corev3.Resource) routerTestCas
 	}
 	r.SetMetadata(&corev2.ObjectMeta{Name: "createResourceAlreadyExistsTestCase", Namespace: namespace})
 
-	body := marshal(r)
+	body := marshalWrapped(r)
 
 	return routerTestCase{
 		name:   "it returns 409 if the resource to create already exists",
@@ -266,7 +267,7 @@ func createResourceInvalidTestCase(resource corev3.Resource) routerTestCase {
 	}
 	r.SetMetadata(&corev2.ObjectMeta{Name: "createResourceInvalidTestCase", Namespace: namespace})
 
-	body := marshal(r)
+	body := marshalWrapped(r)
 
 	return routerTestCase{
 		name:   "it returns 400 if the resource to create is invalid",
@@ -293,7 +294,7 @@ func createResourceStoreErrTestCase(resource corev3.Resource) routerTestCase {
 	}
 	r.SetMetadata(&corev2.ObjectMeta{Name: "createResourceStoreErrTestCase", Namespace: namespace})
 
-	body := marshal(r)
+	body := marshalWrapped(r)
 
 	return routerTestCase{
 		name:   "it returns 500 if the store returns an error while creating",
@@ -320,7 +321,7 @@ func createResourceSuccessTestCase(resource corev3.Resource) routerTestCase {
 	}
 	r.SetMetadata(&corev2.ObjectMeta{Name: "createResourceSuccessTestCase", Namespace: namespace})
 
-	body := marshal(r)
+	body := marshalWrapped(r)
 
 	return routerTestCase{
 		name:   "it returns 201 if the resource was created",
@@ -378,7 +379,7 @@ func updateResourceInvalidTestCase(resource corev3.Resource) routerTestCase {
 		name:   "it returns 400 if the resource to update is invalid",
 		method: http.MethodPut,
 		path:   resource.URIPath(),
-		body:   marshal(resource),
+		body:   marshalWrapped(resource),
 		storeFunc: func(s *mockstore.V2MockStore) {
 			cs := s.GetConfigStore().(*mockstore.ConfigStore)
 			cs.On("CreateOrUpdate", mock.Anything, mock.Anything, mock.Anything).
@@ -395,7 +396,7 @@ func updateResourceStoreErrTestCase(resource corev3.Resource) routerTestCase {
 		name:   "it returns 500 if the store returns an error while updating",
 		method: http.MethodPut,
 		path:   resource.URIPath(),
-		body:   marshal(resource),
+		body:   marshalWrapped(resource),
 		storeFunc: func(s *mockstore.V2MockStore) {
 			cs := s.GetConfigStore().(*mockstore.ConfigStore)
 			cs.On("CreateOrUpdate", mock.Anything, mock.Anything, mock.Anything).
@@ -412,7 +413,7 @@ func updateResourceSuccessTestCase(resource corev3.Resource) routerTestCase {
 		name:   "it returns 201 if the resource was updated",
 		method: http.MethodPut,
 		path:   resource.URIPath(),
-		body:   marshal(resource),
+		body:   marshalWrapped(resource),
 		storeFunc: func(s *mockstore.V2MockStore) {
 			cs := s.GetConfigStore().(*mockstore.ConfigStore)
 			cs.On("CreateOrUpdate", mock.Anything, mock.Anything, mock.Anything).
@@ -499,7 +500,12 @@ func deleteResourceSuccessTestCase(resource corev3.Resource) routerTestCase {
 	}
 }
 
-func marshal(v interface{}) []byte {
+func marshalWrapped(v corev3.Resource) []byte {
+	bytes, _ := json.Marshal(types.WrapResource(v))
+	return bytes
+}
+
+func marshalRaw(v any) []byte {
 	bytes, _ := json.Marshal(v)
 	return bytes
 }

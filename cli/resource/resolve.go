@@ -15,7 +15,7 @@ import (
 var (
 	// All is all the core resource types and associated sensuctl verbs (non-namespaced resources are intentionally ordered first).
 	All = []corev3.Resource{
-		&corev3.Namespace{},
+		&corev3.Namespace{Metadata: &corev2.ObjectMeta{}},
 		&corev2.ClusterRole{},
 		&corev2.ClusterRoleBinding{},
 		&corev2.User{},
