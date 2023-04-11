@@ -3,7 +3,7 @@ package labels
 import (
 	corev2 "github.com/sensu/core/v2"
 	coreTypes "github.com/sensu/sensu-go/types"
-	"github.com/sensu/sensu-go/types/compat"
+	"github.com/sensu/sensu-go/util/compat"
 )
 
 // Filter iterates through the given resources and filters, without allocating,
