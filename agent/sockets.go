@@ -12,7 +12,7 @@ import (
 
 	"github.com/sensu/sensu-go/transport"
 	"github.com/sensu/sensu-go/types"
-	corev1 "github.com/sensu/sensu-go/types/v1"
+	corev1 "github.com/sensu/sensu-go/agent/v1"
 )
 
 var (

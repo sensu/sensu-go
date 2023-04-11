@@ -8,7 +8,7 @@ import (
 	"testing"
 
 	"github.com/sensu/sensu-go/types"
-	corev1 "github.com/sensu/sensu-go/types/v1"
+	corev1 "github.com/sensu/sensu-go/agent/v1"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
