@@ -26,11 +26,12 @@ const (
 )
 
 var (
-	defaultExpiration = time.Minute * 5
-	secret            []byte
-	privateKey        *ecdsa.PrivateKey
-	publicKey         *ecdsa.PublicKey
-	signingMethod     jwt.SigningMethod
+	defaultAccessTokenLifespan  = 5 * time.Minute
+	defaultRefreshTokenLifespan = 12 * time.Hour
+	secret                      []byte
+	privateKey                  *ecdsa.PrivateKey
+	publicKey                   *ecdsa.PublicKey
+	signingMethod               jwt.SigningMethod
 )
 
 func init() {
@@ -57,7 +58,7 @@ func AccessToken(claims *corev2.Claims) (*jwt.Token, string, error) {
 	claims.Id = jti
 
 	// Add an expiration to the token
-	claims.ExpiresAt = time.Now().Add(defaultExpiration).Unix()
+	claims.ExpiresAt = time.Now().Add(defaultAccessTokenLifespan).Unix()
 
 	token := jwt.NewWithClaims(signingMethod, claims)
 
@@ -86,8 +87,11 @@ func NewClaims(user *corev2.User) (*corev2.Claims, error) {
 	}
 
 	claims := &corev2.Claims{
+		// NOTE(ccressent): StandardClaims is deprecated according to the
+		// library's documentation. We should replace its usage with
+		// RegisteredClaims.
 		StandardClaims: jwt.StandardClaims{
-			ExpiresAt: time.Now().Add(defaultExpiration).Unix(),
+			ExpiresAt: time.Now().Add(defaultAccessTokenLifespan).Unix(),
 			Id:        jti,
 			Subject:   user.Username,
 		},
@@ -238,6 +242,11 @@ func RefreshToken(claims *corev2.Claims) (*jwt.Token, string, error) {
 		return nil, "", err
 	}
 	claims.Id = jti
+
+	// Add issuance and expiration timestamps to the token
+	now := time.Now()
+	claims.IssuedAt = now.Unix()
+	claims.ExpiresAt = now.Add(defaultRefreshTokenLifespan).Unix()
 
 	token := jwt.NewWithClaims(signingMethod, claims)
 

@@ -50,7 +50,7 @@ func (a *AuthenticationClient) CreateAccessToken(ctx context.Context, username, 
 	refreshClaims := &corev2.Claims{StandardClaims: corev2.StandardClaims(claims.Subject)}
 	_, refreshTokenString, err := jwt.RefreshToken(refreshClaims)
 	if err != nil {
-		return nil, fmt.Errorf("error creating access token: %s", err)
+		return nil, fmt.Errorf("error creating refresh token: %s", err)
 	}
 
 	result := &corev2.Tokens{
@@ -88,9 +88,9 @@ func (a *AuthenticationClient) Logout(ctx context.Context) error {
 	return nil
 }
 
-// RefreshAccessToken refreshes an access token. The context must carry the
-// user's access and refresh claims, as well as the previous token value,
-// with the following context key-values:
+// RefreshAccessToken refreshes an access/refresh token pair. The context must
+// carry the user's access and refresh claims, as well as the previous token
+// value, with the following context key-values:
 //
 // corev2.AccessTokenClaims -> *corev2.Claims
 // corev2.RefreshTokenClaims -> *corev2.Claims
@@ -107,14 +107,6 @@ func (a *AuthenticationClient) RefreshAccessToken(ctx context.Context) (*corev2.
 
 	// Get the refresh token claims
 	if value := ctx.Value(corev2.RefreshTokenClaims); value == nil {
-		return nil, corev2.ErrInvalidToken
-	}
-
-	// Get the refresh token string
-	var refreshTokenString string
-	if value := ctx.Value(corev2.RefreshTokenString); value != nil {
-		refreshTokenString = value.(string)
-	} else {
 		return nil, corev2.ErrInvalidToken
 	}
 
@@ -145,14 +137,21 @@ func (a *AuthenticationClient) RefreshAccessToken(ctx context.Context) (*corev2.
 	}
 
 	// Issue a new access token
-	_, accessTokenString, err := jwt.AccessToken(claims)
+	_, newAccessTokenString, err := jwt.AccessToken(claims)
 	if err != nil {
 		return nil, err
 	}
 
+	// Create a new refresh token and its signed version
+	refreshClaims := &corev2.Claims{StandardClaims: corev2.StandardClaims(claims.Subject)}
+	_, newRefreshTokenString, err := jwt.RefreshToken(refreshClaims)
+	if err != nil {
+		return nil, fmt.Errorf("error creating refresh token: %s", err)
+	}
+
 	return &corev2.Tokens{
-		Access:    accessTokenString,
+		Access:    newAccessTokenString,
 		ExpiresAt: claims.ExpiresAt,
-		Refresh:   refreshTokenString,
+		Refresh:   newRefreshTokenString,
 	}, nil
 }
