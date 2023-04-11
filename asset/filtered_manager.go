@@ -7,7 +7,7 @@ import (
 	corev2 "github.com/sensu/core/v2"
 	"github.com/sensu/sensu-go/js"
 	"github.com/sensu/sensu-go/token"
-	"github.com/sensu/sensu-go/types/dynamic"
+	"github.com/sensu/sensu-go/dynamic"
 	"github.com/sirupsen/logrus"
 )
 

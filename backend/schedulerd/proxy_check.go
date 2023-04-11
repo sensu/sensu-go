@@ -10,7 +10,7 @@ import (
 	corev3 "github.com/sensu/core/v3"
 	"github.com/sensu/sensu-go/js"
 	"github.com/sensu/sensu-go/token"
-	"github.com/sensu/sensu-go/types/dynamic"
+	"github.com/sensu/sensu-go/dynamic"
 )
 
 // matchEntities matches the provided list of entities to the entity attributes

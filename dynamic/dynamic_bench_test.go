@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/sensu/sensu-go/types"
-	"github.com/sensu/sensu-go/types/dynamic"
+	"github.com/sensu/sensu-go/dynamic"
 )
 
 func BenchmarkSynthesize(b *testing.B) {
