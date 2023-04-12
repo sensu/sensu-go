@@ -1,7 +1,11 @@
 package v2
 
 import (
+	"context"
+
 	"github.com/prometheus/client_golang/prometheus"
+	corev3 "github.com/sensu/core/v3"
+	apitools "github.com/sensu/sensu-api-tools"
 )
 
 const (
@@ -17,6 +21,43 @@ const (
 	// WatchError indicates that an error was encountered
 	WatchError
 )
+
+// WatcherOf is designed to work with interfaces that are implemented by
+// multiple types of resources. It will discover which resource types implement
+// T by scanning the type registry. For each concrete type that implements T,
+// WatcherOf will start a goroutine and watch for it. All watch events will be
+// multiplexed into a single channel.
+//
+// TODO: support things other than configuration store resources, like entities
+func WatcherOf[T corev3.Resource](ctx context.Context, store Interface) Watcher {
+	resourceTypes := apitools.FindTypesOf[T]()
+	result := make(chan []WatchEvent, 1)
+	for _, rType := range resourceTypes {
+		req := NewResourceRequestFromResource(rType)
+		watcher := store.GetConfigStore().Watch(ctx, req)
+		go func() {
+			for {
+				select {
+				case <-ctx.Done():
+					return
+				case events := <-watcher:
+					result <- events
+				}
+			}
+		}()
+	}
+	return multiWatcher{
+		events: result,
+	}
+}
+
+type multiWatcher struct {
+	events chan []WatchEvent
+}
+
+func (m multiWatcher) Result() <-chan []WatchEvent {
+	return m.events
+}
 
 // WatchActionType indicates what type of change was made to an object in the store.
 type WatchActionType int
