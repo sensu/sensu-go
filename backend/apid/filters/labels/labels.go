@@ -2,7 +2,7 @@ package labels
 
 import (
 	corev2 "github.com/sensu/core/v2"
-	coreTypes "github.com/sensu/sensu-go/types"
+	coreTypes "github.com/sensu/core/v3/types"
 	"github.com/sensu/sensu-go/util/compat"
 )
 

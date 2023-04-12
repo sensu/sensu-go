@@ -2,7 +2,7 @@ package fields
 
 import (
 	corev3 "github.com/sensu/core/v3"
-	coreTypes "github.com/sensu/sensu-go/types"
+	coreTypes "github.com/sensu/core/v3/types"
 )
 
 type FieldsFunc func(resource corev3.Resource) map[string]string

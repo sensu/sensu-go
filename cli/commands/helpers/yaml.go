@@ -5,7 +5,7 @@ import (
 
 	v2 "github.com/sensu/core/v2"
 	corev3 "github.com/sensu/core/v3"
-	"github.com/sensu/sensu-go/types"
+	"github.com/sensu/core/v3/types"
 	yaml "gopkg.in/yaml.v2"
 )
 

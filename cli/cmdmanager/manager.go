@@ -16,7 +16,7 @@ import (
 	"github.com/sensu/sensu-go/cli"
 	"github.com/sensu/sensu-go/command"
 	"github.com/sensu/sensu-go/system"
-	"github.com/sensu/sensu-go/types"
+	"github.com/sensu/core/v3/types"
 	"github.com/sensu/sensu-go/util/environment"
 	sensupath "github.com/sensu/sensu-go/util/path"
 

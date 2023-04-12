@@ -18,7 +18,7 @@ import (
 	"github.com/sensu/sensu-go/backend/apid/graphql/suggest"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/graphql"
-	"github.com/sensu/sensu-go/types"
+	"github.com/sensu/core/v3/types"
 	utilstrings "github.com/sensu/sensu-go/util/strings"
 )
 

@@ -6,7 +6,7 @@ import (
 
 	corev2 "github.com/sensu/core/v2"
 	corev3 "github.com/sensu/core/v3"
-	types "github.com/sensu/sensu-go/types"
+	types "github.com/sensu/core/v3/types"
 )
 
 func TestWrapper_UnmarshalJSON(t *testing.T) {

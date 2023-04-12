@@ -8,7 +8,7 @@ import (
 	"strings"
 
 	corev3 "github.com/sensu/core/v3"
-	"github.com/sensu/sensu-go/types"
+	"github.com/sensu/core/v3/types"
 )
 
 var htmlReplacer = strings.NewReplacer(`\u0026`, "&", `\u003c`, "<", `\u003e`, ">")

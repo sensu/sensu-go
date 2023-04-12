@@ -15,7 +15,7 @@ import (
 	corev3 "github.com/sensu/core/v3"
 	apitools "github.com/sensu/sensu-api-tools"
 	"github.com/sensu/sensu-go/backend/store"
-	"github.com/sensu/sensu-go/types"
+	"github.com/sensu/core/v3/types"
 )
 
 // Encoding is the serialization encoding of the wrapped value.
