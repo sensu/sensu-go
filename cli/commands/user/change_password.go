@@ -5,32 +5,32 @@ import (
 	"fmt"
 
 	"github.com/AlecAivazis/survey/v2"
+	v2 "github.com/sensu/core/v2"
 	"github.com/sensu/sensu-go/backend/authentication/bcrypt"
 	"github.com/sensu/sensu-go/cli"
 	"github.com/sensu/sensu-go/cli/commands/flags"
 	"github.com/sensu/sensu-go/cli/commands/helpers"
-	"github.com/sensu/sensu-go/types"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 )
 
 var (
-	errEmptyCurrentPassword = errors.New("current user's password must be provided")
-	errPasswordsDoNotMatch  = errors.New("given passwords do not match")
+	errEmptyCurrentPassword	= errors.New("current user's password must be provided")
+	errPasswordsDoNotMatch	= errors.New("given passwords do not match")
 )
 
 type passwordOpts struct {
-	Current string `survey:"current-password"`
-	New     string `survey:"new-password"`
-	Confirm string `survey:"confirm-password"`
+	Current	string	`survey:"current-password"`
+	New	string	`survey:"new-password"`
+	Confirm	string	`survey:"confirm-password"`
 }
 
 // SetPasswordCommand adds command that allows user to create new users
 func SetPasswordCommand(cli *cli.SensuCli) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:          "change-password [USERNAME]",
-		Short:        "change password for given user",
-		SilenceUsage: true,
+		Use:		"change-password [USERNAME]",
+		Short:		"change password for given user",
+		SilenceUsage:	true,
 		PreRun: func(cmd *cobra.Command, args []string) {
 			isInteractive, _ := cmd.Flags().GetBool(flags.Interactive)
 			if !isInteractive {
@@ -102,19 +102,19 @@ func SetPasswordCommand(cli *cli.SensuCli) *cobra.Command {
 func (opts *passwordOpts) administerQuestionnaire() error {
 	qs := []*survey.Question{
 		{
-			Name:     "current-password",
-			Prompt:   &survey.Password{Message: "Current Password:\t"},
-			Validate: survey.Required,
+			Name:		"current-password",
+			Prompt:		&survey.Password{Message: "Current Password:\t"},
+			Validate:	survey.Required,
 		},
 		{
-			Name:     "new-password",
-			Prompt:   &survey.Password{Message: "New Password:\t\t"},
-			Validate: survey.Required,
+			Name:		"new-password",
+			Prompt:		&survey.Password{Message: "New Password:\t\t"},
+			Validate:	survey.Required,
 		},
 		{
-			Name:     "confirm-password",
-			Prompt:   &survey.Password{Message: "Confirm Password:\t"},
-			Validate: survey.Required,
+			Name:		"confirm-password",
+			Prompt:		&survey.Password{Message: "Confirm Password:\t"},
+			Validate:	survey.Required,
 		},
 	}
 
@@ -148,6 +148,6 @@ func (opts *passwordOpts) validate() error {
 		return errPasswordsDoNotMatch
 	}
 
-	user := types.User{Password: opts.New}
+	user := v2.User{Password: opts.New}
 	return user.ValidatePassword()
 }

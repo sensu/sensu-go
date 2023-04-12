@@ -3,25 +3,25 @@ package inmemory
 import (
 	"time"
 
+	v2 "github.com/sensu/core/v2"
 	"github.com/sensu/sensu-go/cli/client/config"
-	"github.com/sensu/sensu-go/types"
 )
 
 // Config describes details associated with making requests
 type Config struct {
-	url       string
-	format    string
-	namespace string
-	timeout   time.Duration
-	tokens    *types.Tokens
+	url		string
+	format		string
+	namespace	string
+	timeout		time.Duration
+	tokens		*v2.Tokens
 }
 
 // New returns new instance of a config
 func New(url string) *Config {
 	config := Config{
-		url:       url,
-		format:    config.FormatJSON,
-		namespace: config.DefaultNamespace,
+		url:		url,
+		format:		config.FormatJSON,
+		namespace:	config.DefaultNamespace,
 	}
 
 	return &config
@@ -48,7 +48,7 @@ func (c *Config) Timeout() time.Duration {
 }
 
 // Tokens describes the authorization tokens used to make requests
-func (c *Config) Tokens() *types.Tokens {
+func (c *Config) Tokens() *v2.Tokens {
 	return c.tokens
 }
 
@@ -77,7 +77,7 @@ func (c *Config) SaveTimeout(val time.Duration) error {
 }
 
 // SaveTokens updates the current value
-func (c *Config) SaveTokens(val *types.Tokens) error {
+func (c *Config) SaveTokens(val *v2.Tokens) error {
 	c.tokens = val
 	return nil
 }

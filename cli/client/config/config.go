@@ -3,31 +3,31 @@ package config
 import (
 	"time"
 
-	"github.com/sensu/sensu-go/types"
+	v2 "github.com/sensu/core/v2"
 )
 
 const (
 	// DefaultNamespace represents the default namespace
-	DefaultNamespace = "default"
+	DefaultNamespace	= "default"
 
 	// DefaultFormat is the default format output for printers.
-	DefaultFormat = FormatTabular
+	DefaultFormat	= FormatTabular
 
 	// DefaultTimeout is the default timeout
-	DefaultTimeout = 15 * time.Second
+	DefaultTimeout	= 15 * time.Second
 
 	// FormatTabular indicates tabular format for printers.
-	FormatTabular = "tabular"
+	FormatTabular	= "tabular"
 
 	// FormatJSON indicates JSON format for printers.
-	FormatJSON = "json"
+	FormatJSON	= "json"
 
 	// FormatWrappedJSON indicates wrapped JSON format for printers.
-	FormatWrappedJSON = "wrapped-json"
+	FormatWrappedJSON	= "wrapped-json"
 
 	// FormatYAML indicates YAML format for printers. It has the same layout
 	// as wrapped JSON.
-	FormatYAML = "yaml"
+	FormatYAML	= "yaml"
 )
 
 // Config is an abstract configuration
@@ -42,7 +42,7 @@ type Read interface {
 	Format() string
 	InsecureSkipTLSVerify() bool
 	Namespace() string
-	Tokens() *types.Tokens
+	Tokens() *v2.Tokens
 	APIKey() string
 	Timeout() time.Duration
 	TrustedCAFile() string
@@ -54,7 +54,7 @@ type Write interface {
 	SaveFormat(string) error
 	SaveInsecureSkipTLSVerify(bool) error
 	SaveNamespace(string) error
-	SaveTokens(*types.Tokens) error
+	SaveTokens(*v2.Tokens) error
 	SaveTrustedCAFile(string) error
 	SaveTimeout(time.Duration) error
 }

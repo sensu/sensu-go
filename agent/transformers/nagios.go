@@ -5,7 +5,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/sensu/sensu-go/types"
+	v2 "github.com/sensu/core/v2"
 	"github.com/sirupsen/logrus"
 )
 
@@ -14,25 +14,25 @@ type NagiosList []Nagios
 
 // Nagios contains values of Nagios performance data metric
 type Nagios struct {
-	Label     string
-	Value     float64
-	Timestamp int64
-	Tags      []*types.MetricTag
+	Label		string
+	Value		float64
+	Timestamp	int64
+	Tags		[]*v2.MetricTag
 }
 
 // Transform transforms a metric in Nagio perfdata format to Sensu Metric Format
-func (n NagiosList) Transform() []*types.MetricPoint {
-	var points []*types.MetricPoint
+func (n NagiosList) Transform() []*v2.MetricPoint {
+	var points []*v2.MetricPoint
 	for _, nagios := range n {
-		mp := &types.MetricPoint{
-			Name:      nagios.Label,
-			Value:     nagios.Value,
-			Timestamp: nagios.Timestamp,
-			Tags:      nagios.Tags,
+		mp := &v2.MetricPoint{
+			Name:		nagios.Label,
+			Value:		nagios.Value,
+			Timestamp:	nagios.Timestamp,
+			Tags:		nagios.Tags,
 		}
 
 		if mp.Tags == nil {
-			mp.Tags = []*types.MetricTag{}
+			mp.Tags = []*v2.MetricTag{}
 		}
 
 		points = append(points, mp)
@@ -41,11 +41,11 @@ func (n NagiosList) Transform() []*types.MetricPoint {
 }
 
 // ParseNagios parses a Nagios perfdata string into a slice of Nagios struct
-func ParseNagios(event *types.Event) NagiosList {
+func ParseNagios(event *v2.Event) NagiosList {
 	var nagiosList NagiosList
 	fields := logrus.Fields{
-		"namespace": event.Check.Namespace,
-		"check":     event.Check.Name,
+		"namespace":	event.Check.Namespace,
+		"check":	event.Check.Name,
 	}
 
 	// Ensure we have some perfdata metrics and not only human-readable text
@@ -92,10 +92,10 @@ func ParseNagios(event *types.Event) NagiosList {
 
 		// Add this metric to our list
 		n := Nagios{
-			Label:     label,
-			Value:     value,
-			Timestamp: event.Check.Executed,
-			Tags:      event.Check.OutputMetricTags,
+			Label:		label,
+			Value:		value,
+			Timestamp:	event.Check.Executed,
+			Tags:		event.Check.OutputMetricTags,
 		}
 		nagiosList = append(nagiosList, n)
 	}

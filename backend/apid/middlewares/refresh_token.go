@@ -8,8 +8,8 @@ import (
 
 	"github.com/sirupsen/logrus"
 
+	v2 "github.com/sensu/core/v2"
 	"github.com/sensu/sensu-go/backend/authentication/jwt"
-	"github.com/sensu/sensu-go/types"
 )
 
 var (
@@ -58,7 +58,7 @@ func (m RefreshToken) Then(next http.Handler) http.Handler {
 		}
 
 		decoder := json.NewDecoder(r.Body)
-		payload := &types.Tokens{}
+		payload := &v2.Tokens{}
 		err = decoder.Decode(payload)
 		if err != nil {
 			logger.WithError(err).Error("could not decode the refresh token")
@@ -85,17 +85,17 @@ func (m RefreshToken) Then(next http.Handler) http.Handler {
 		// Make sure the refresh token belongs to the same user as the access token
 		if accessClaims.Subject == "" || accessClaims.Subject != refreshClaims.Subject {
 			logger.WithFields(logrus.Fields{
-				"user":          refreshClaims.Subject,
-				"access_token":  accessClaims.Subject,
-				"refresh_token": refreshClaims.Subject,
+				"user":			refreshClaims.Subject,
+				"access_token":		accessClaims.Subject,
+				"refresh_token":	refreshClaims.Subject,
 			}).Error("the access and refresh tokens subject do not match")
 			http.Error(w, "Request unauthorized", http.StatusUnauthorized)
 			return
 		}
 
-		ctx := context.WithValue(r.Context(), types.AccessTokenClaims, accessClaims)
-		ctx = context.WithValue(ctx, types.RefreshTokenClaims, refreshClaims)
-		ctx = context.WithValue(ctx, types.RefreshTokenString, payload.Refresh)
+		ctx := context.WithValue(r.Context(), v2.AccessTokenClaims, accessClaims)
+		ctx = context.WithValue(ctx, v2.RefreshTokenClaims, refreshClaims)
+		ctx = context.WithValue(ctx, v2.RefreshTokenString, payload.Refresh)
 
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})

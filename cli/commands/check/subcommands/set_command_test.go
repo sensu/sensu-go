@@ -4,21 +4,21 @@ import (
 	"fmt"
 	"testing"
 
+	v2 "github.com/sensu/core/v2"
 	client "github.com/sensu/sensu-go/cli/client/testing"
 	test "github.com/sensu/sensu-go/cli/commands/testing"
-	"github.com/sensu/sensu-go/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
 
 func TestSetCommandCommand(t *testing.T) {
 	testCases := []struct {
-		testName       string
-		args           []string
-		fetchResponse  error
-		updateResponse error
-		expectedOutput string
-		expectError    bool
+		testName	string
+		args		[]string
+		fetchResponse	error
+		updateResponse	error
+		expectedOutput	string
+		expectError	bool
 	}{
 		{"no args", []string{}, nil, nil, "Usage", true},
 		{"fetch error", []string{"foo", "echo foo"}, fmt.Errorf("error"), nil, "", true},
@@ -34,7 +34,7 @@ func TestSetCommandCommand(t *testing.T) {
 		}
 
 		t.Run(tc.testName, func(t *testing.T) {
-			check := types.FixtureCheckConfig("checky")
+			check := v2.FixtureCheckConfig("checky")
 			cli := test.NewMockCLI()
 
 			client := cli.Client.(*client.MockClient)

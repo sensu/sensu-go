@@ -4,17 +4,17 @@ import (
 	"errors"
 	"fmt"
 
+	v2 "github.com/sensu/core/v2"
 	"github.com/sensu/sensu-go/cli"
-	"github.com/sensu/sensu-go/types"
 	"github.com/spf13/cobra"
 )
 
 // Command defines new configuration command
 func Command(cli *cli.SensuCli) *cobra.Command {
 	return &cobra.Command{
-		Use:          "logout",
-		Short:        "Logout from sensuctl",
-		SilenceUsage: true,
+		Use:		"logout",
+		Short:		"Logout from sensuctl",
+		SilenceUsage:	true,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if len(args) != 0 {
 				_ = cmd.Help()
@@ -27,7 +27,7 @@ func Command(cli *cli.SensuCli) *cobra.Command {
 			}
 
 			// Remove the configured tokens from the local configuration file
-			if err := cli.Config.SaveTokens(&types.Tokens{}); err != nil {
+			if err := cli.Config.SaveTokens(&v2.Tokens{}); err != nil {
 				return err
 			}
 

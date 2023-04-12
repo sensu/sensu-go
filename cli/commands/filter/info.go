@@ -6,19 +6,19 @@ import (
 	"io"
 	"strings"
 
+	v2 "github.com/sensu/core/v2"
 	"github.com/sensu/sensu-go/cli"
 	"github.com/sensu/sensu-go/cli/commands/helpers"
 	"github.com/sensu/sensu-go/cli/elements/list"
-	"github.com/sensu/sensu-go/types"
 	"github.com/spf13/cobra"
 )
 
 // InfoCommand defines the 'filter info' subcommand
 func InfoCommand(cli *cli.SensuCli) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:          "info [NAME]",
-		Short:        "show detailed filter information",
-		SilenceUsage: true,
+		Use:		"info [NAME]",
+		Short:		"show detailed filter information",
+		SilenceUsage:	true,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if len(args) != 1 {
 				_ = cmd.Help()
@@ -45,32 +45,32 @@ func InfoCommand(cli *cli.SensuCli) *cobra.Command {
 }
 
 func printToList(v interface{}, writer io.Writer) error {
-	filter, ok := v.(*types.EventFilter)
+	filter, ok := v.(*v2.EventFilter)
 	if !ok {
 		return fmt.Errorf("%t is not an EventFilter", v)
 	}
 	cfg := &list.Config{
-		Title: filter.Name,
+		Title:	filter.Name,
 		Rows: []*list.Row{
 			{
-				Label: "Name",
-				Value: filter.Name,
+				Label:	"Name",
+				Value:	filter.Name,
 			},
 			{
-				Label: "Namespace",
-				Value: filter.Namespace,
+				Label:	"Namespace",
+				Value:	filter.Namespace,
 			},
 			{
-				Label: "Action",
-				Value: filter.Action,
+				Label:	"Action",
+				Value:	filter.Action,
 			},
 			{
-				Label: "Expressions",
-				Value: strings.Join(filter.Expressions, " && "),
+				Label:	"Expressions",
+				Value:	strings.Join(filter.Expressions, " && "),
 			},
 			{
-				Label: "RuntimeAssets",
-				Value: strings.Join(filter.RuntimeAssets, ", "),
+				Label:	"RuntimeAssets",
+				Value:	strings.Join(filter.RuntimeAssets, ", "),
 			},
 		},
 	}

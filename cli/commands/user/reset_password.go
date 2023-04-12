@@ -5,27 +5,27 @@ import (
 	"fmt"
 
 	"github.com/AlecAivazis/survey/v2"
+	v2 "github.com/sensu/core/v2"
 	"github.com/sensu/sensu-go/backend/authentication/bcrypt"
 	"github.com/sensu/sensu-go/cli"
 	"github.com/sensu/sensu-go/cli/commands/flags"
 	"github.com/sensu/sensu-go/cli/commands/helpers"
-	"github.com/sensu/sensu-go/types"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 )
 
 type resetPasswordOpts struct {
-	New     string `survey:"new-password"`
-	Confirm string `survey:"confirm-password"`
+	New	string	`survey:"new-password"`
+	Confirm	string	`survey:"confirm-password"`
 }
 
 // ResetPasswordCommand adds command that allows user to reset the password of a
 // user
 func ResetPasswordCommand(cli *cli.SensuCli) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:          "reset-password [USERNAME]",
-		Short:        "reset password for given user",
-		SilenceUsage: true,
+		Use:		"reset-password [USERNAME]",
+		Short:		"reset password for given user",
+		SilenceUsage:	true,
 		PreRun: func(cmd *cobra.Command, args []string) {
 			isInteractive, _ := cmd.Flags().GetBool(flags.Interactive)
 			if !isInteractive {
@@ -86,14 +86,14 @@ func ResetPasswordCommand(cli *cli.SensuCli) *cobra.Command {
 func (opts *resetPasswordOpts) administerQuestionnaire() error {
 	qs := []*survey.Question{
 		{
-			Name:     "new-password",
-			Prompt:   &survey.Password{Message: "New Password:\t\t"},
-			Validate: survey.Required,
+			Name:		"new-password",
+			Prompt:		&survey.Password{Message: "New Password:\t\t"},
+			Validate:	survey.Required,
 		},
 		{
-			Name:     "confirm-password",
-			Prompt:   &survey.Password{Message: "Confirm Password:\t"},
-			Validate: survey.Required,
+			Name:		"confirm-password",
+			Prompt:		&survey.Password{Message: "Confirm Password:\t"},
+			Validate:	survey.Required,
 		},
 	}
 
@@ -117,6 +117,6 @@ func (opts *resetPasswordOpts) validate() error {
 		return errPasswordsDoNotMatch
 	}
 
-	user := types.User{Password: opts.New}
+	user := v2.User{Password: opts.New}
 	return user.ValidatePassword()
 }

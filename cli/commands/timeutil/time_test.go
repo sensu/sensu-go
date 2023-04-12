@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/sensu/sensu-go/types"
+	v2 "github.com/sensu/core/v2"
 )
 
 func TestDateToTime(t *testing.T) {
@@ -13,35 +13,35 @@ func TestDateToTime(t *testing.T) {
 
 	// Our test cases
 	tests := []struct {
-		name    string
-		str     string
-		want    time.Time
-		wantErr bool
+		name	string
+		str	string
+		want	time.Time
+		wantErr	bool
 	}{
 		{
-			name: "RFC3339 UTC",
-			str:  "2018-05-10T15:04:00Z",
-			want: baseTime,
+			name:	"RFC3339 UTC",
+			str:	"2018-05-10T15:04:00Z",
+			want:	baseTime,
 		},
 		{
-			name: "RFC3339 with numeric zone offset",
-			str:  "2018-05-10T07:04:00-08:00",
-			want: baseTime,
+			name:	"RFC3339 with numeric zone offset",
+			str:	"2018-05-10T07:04:00-08:00",
+			want:	baseTime,
 		},
 		{
-			name: "RFC3339 with space delimiter",
-			str:  "2018-05-10 07:04:00 -08:00",
-			want: baseTime,
+			name:	"RFC3339 with space delimiter",
+			str:	"2018-05-10 07:04:00 -08:00",
+			want:	baseTime,
 		},
 		{
-			name: "legacy UTC",
-			str:  "May 10 2018 3:04PM UTC",
-			want: baseTime,
+			name:	"legacy UTC",
+			str:	"May 10 2018 3:04PM UTC",
+			want:	baseTime,
 		},
 		{
-			name:    "unknown format",
-			str:     "Mon Jan _2 15:04:05 2006",
-			wantErr: true,
+			name:		"unknown format",
+			str:		"Mon Jan _2 15:04:05 2006",
+			wantErr:	true,
 		},
 	}
 	for _, tt := range tests {
@@ -66,16 +66,16 @@ func TestKitchenToTime(t *testing.T) {
 
 	// Our test cases
 	tests := []struct {
-		name        string
-		str         string
-		skipWindows bool // Canonical timezones are not supported on Windows
-		want        time.Time
-		wantErr     bool
+		name		string
+		str		string
+		skipWindows	bool	// Canonical timezones are not supported on Windows
+		want		time.Time
+		wantErr		bool
 	}{
 		{
-			name: "24-hour kitchen UTC",
-			str:  "15:04 UTC",
-			want: baseTime,
+			name:	"24-hour kitchen UTC",
+			str:	"15:04 UTC",
+			want:	baseTime,
 		},
 		//{
 		//	name:        "24-hour kitchen with canonical timezone",
@@ -84,19 +84,19 @@ func TestKitchenToTime(t *testing.T) {
 		//	want:        baseTime,
 		//},
 		{
-			name: "24-hour kitchen with numeric zone offset",
-			str:  "07:04 -08:00",
-			want: baseTime,
+			name:	"24-hour kitchen with numeric zone offset",
+			str:	"07:04 -08:00",
+			want:	baseTime,
 		},
 		{
-			name:    "24-hour kitchen with unknown location",
-			str:     "07:04 foo",
-			wantErr: true,
+			name:		"24-hour kitchen with unknown location",
+			str:		"07:04 foo",
+			wantErr:	true,
 		},
 		{
-			name: "12-hour kitchen UTC",
-			str:  "3:04PM UTC",
-			want: baseTime,
+			name:	"12-hour kitchen UTC",
+			str:	"3:04PM UTC",
+			want:	baseTime,
 		},
 		//{
 		//	name:        "12-hour kitchen with canonical timezone",
@@ -105,14 +105,14 @@ func TestKitchenToTime(t *testing.T) {
 		//	want:        baseTime,
 		//},
 		{
-			name:    "12-hour kitchen with unknown location",
-			str:     "10:04AM foo",
-			wantErr: true,
+			name:		"12-hour kitchen with unknown location",
+			str:		"10:04AM foo",
+			wantErr:	true,
 		},
 		{
-			name:    "unknown format",
-			str:     "15:04:05.000000000",
-			wantErr: true,
+			name:		"unknown format",
+			str:		"15:04:05.000000000",
+			wantErr:	true,
 		},
 	}
 	for _, tt := range tests {
@@ -135,31 +135,31 @@ func TestKitchenToTime(t *testing.T) {
 
 func TestConvertToUnix(t *testing.T) {
 	tests := []struct {
-		name    string
-		str     string
-		now     bool
-		want    int64
-		wantErr bool
+		name	string
+		str	string
+		now	bool
+		want	int64
+		wantErr	bool
 	}{
 		{
-			name: "RFC3339",
-			str:  "2018-05-10T15:04:00Z",
-			want: 1525964640,
+			name:	"RFC3339",
+			str:	"2018-05-10T15:04:00Z",
+			want:	1525964640,
 		},
 		{
-			name: "0 value",
-			str:  "0",
-			now:  true,
+			name:	"0 value",
+			str:	"0",
+			now:	true,
 		},
 		{
-			name: "now value",
-			str:  "now",
-			now:  true,
+			name:	"now value",
+			str:	"now",
+			now:	true,
 		},
 		{
-			name:    "unknown value",
-			str:     "3:04PM",
-			wantErr: true,
+			name:		"unknown value",
+			str:		"3:04PM",
+			wantErr:	true,
 		},
 	}
 	for _, tc := range tests {
@@ -199,21 +199,21 @@ func TestConvertToUTC(t *testing.T) {
 	end := e.Format(time.Kitchen)
 
 	tests := []struct {
-		name        string
-		window      *types.TimeWindowTimeRange
-		skipWindows bool // Canonical timezones are not supported on Windows
-		wantBegin   string
-		wantEnd     string
-		wantErr     bool
+		name		string
+		window		*v2.TimeWindowTimeRange
+		skipWindows	bool	// Canonical timezones are not supported on Windows
+		wantBegin	string
+		wantEnd		string
+		wantErr		bool
 	}{
 		{
-			name: "12-hour kitchen UTC",
-			window: &types.TimeWindowTimeRange{
-				Begin: "3:04PM UTC",
-				End:   "4:04PM UTC",
+			name:	"12-hour kitchen UTC",
+			window: &v2.TimeWindowTimeRange{
+				Begin:	"3:04PM UTC",
+				End:	"4:04PM UTC",
 			},
-			wantBegin: begin,
-			wantEnd:   end,
+			wantBegin:	begin,
+			wantEnd:	end,
 		},
 		//{
 		//	name: "12-hour kitchen canonical timezone",
@@ -226,33 +226,33 @@ func TestConvertToUTC(t *testing.T) {
 		//	wantEnd:     end,
 		//},
 		{
-			name: "24-hour kitchen numeric timezone",
-			window: &types.TimeWindowTimeRange{
-				Begin: "07:04 -08:00",
-				End:   "08:04 -08:00",
+			name:	"24-hour kitchen numeric timezone",
+			window: &v2.TimeWindowTimeRange{
+				Begin:	"07:04 -08:00",
+				End:	"08:04 -08:00",
 			},
-			wantBegin: begin,
-			wantEnd:   end,
+			wantBegin:	begin,
+			wantEnd:	end,
 		},
 		{
-			name: "invalid begin",
-			window: &types.TimeWindowTimeRange{
-				Begin: "15:04:00.000000000",
-				End:   "08:04 -08:00",
+			name:	"invalid begin",
+			window: &v2.TimeWindowTimeRange{
+				Begin:	"15:04:00.000000000",
+				End:	"08:04 -08:00",
 			},
-			wantBegin: "15:04:00.000000000",
-			wantEnd:   "08:04 -08:00",
-			wantErr:   true,
+			wantBegin:	"15:04:00.000000000",
+			wantEnd:	"08:04 -08:00",
+			wantErr:	true,
 		},
 		{
-			name: "invalid end",
-			window: &types.TimeWindowTimeRange{
-				Begin: "07:04 -08:00",
-				End:   "16:04:00.000000000",
+			name:	"invalid end",
+			window: &v2.TimeWindowTimeRange{
+				Begin:	"07:04 -08:00",
+				End:	"16:04:00.000000000",
 			},
-			wantBegin: "07:04 -08:00",
-			wantEnd:   "16:04:00.000000000",
-			wantErr:   true,
+			wantBegin:	"07:04 -08:00",
+			wantEnd:	"16:04:00.000000000",
+			wantErr:	true,
 		},
 	}
 	for _, tc := range tests {
@@ -280,19 +280,19 @@ func TestConvertToUTC(t *testing.T) {
 
 func TestHumanTimestamp(t *testing.T) {
 	tests := []struct {
-		name      string
-		timestamp int64
-		wantNA    bool
+		name		string
+		timestamp	int64
+		wantNA		bool
 	}{
 		{
-			name:      "valid timestamp",
-			timestamp: 1525964640,
-			wantNA:    false,
+			name:		"valid timestamp",
+			timestamp:	1525964640,
+			wantNA:		false,
 		},
 		{
-			name:      "zero timestamp",
-			timestamp: 0,
-			wantNA:    true,
+			name:		"zero timestamp",
+			timestamp:	0,
+			wantNA:		true,
 		},
 	}
 	for _, tc := range tests {

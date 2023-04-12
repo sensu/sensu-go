@@ -4,249 +4,249 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/sensu/sensu-go/types"
+	v2 "github.com/sensu/core/v2"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestParseNagios(t *testing.T) {
 	testCases := []struct {
-		name  string
-		event *types.Event
-		want  NagiosList
+		name	string
+		event	*v2.Event
+		want	NagiosList
 	}{
 		{
-			name: "no perfdata metric",
-			event: &types.Event{
-				Check: &types.Check{
+			name:	"no perfdata metric",
+			event: &v2.Event{
+				Check: &v2.Check{
 					Output: "PING ok - Packet loss = 0%, RTA = 0.80 ms",
 				},
 			},
-			want: NagiosList(nil),
+			want:	NagiosList(nil),
 		},
 		{
-			name: "single perfdata metric",
-			event: &types.Event{
-				Check: &types.Check{
-					Executed: 12345,
-					Output:   "PING ok - Packet loss = 0% | percent_packet_loss=0",
+			name:	"single perfdata metric",
+			event: &v2.Event{
+				Check: &v2.Check{
+					Executed:	12345,
+					Output:		"PING ok - Packet loss = 0% | percent_packet_loss=0",
 				},
 			},
 			want: NagiosList{
 				Nagios{
-					Label:     "percent_packet_loss",
-					Value:     0.0,
-					Timestamp: 12345,
+					Label:		"percent_packet_loss",
+					Value:		0.0,
+					Timestamp:	12345,
 				},
 			},
 		},
 		{
-			name: "single perfdata metric with newline",
-			event: &types.Event{
-				Check: &types.Check{
-					Executed: 12345,
-					Output:   "PING ok - Packet loss = 0% | percent_packet_loss=0\n",
+			name:	"single perfdata metric with newline",
+			event: &v2.Event{
+				Check: &v2.Check{
+					Executed:	12345,
+					Output:		"PING ok - Packet loss = 0% | percent_packet_loss=0\n",
 				},
 			},
 			want: NagiosList{
 				Nagios{
-					Label:     "percent_packet_loss",
-					Value:     0.0,
-					Timestamp: 12345,
+					Label:		"percent_packet_loss",
+					Value:		0.0,
+					Timestamp:	12345,
 				},
 			},
 		},
 		{
-			name: "multiple perfdata metrics",
-			event: &types.Event{
-				Check: &types.Check{
-					Executed: 12345,
-					Output:   "PING ok - Packet loss = 0%, RTA = 0.80 ms | percent_packet_loss=0, rta=0.80",
+			name:	"multiple perfdata metrics",
+			event: &v2.Event{
+				Check: &v2.Check{
+					Executed:	12345,
+					Output:		"PING ok - Packet loss = 0%, RTA = 0.80 ms | percent_packet_loss=0, rta=0.80",
 				},
 			},
 			want: NagiosList{
 				Nagios{
-					Label:     "percent_packet_loss",
-					Value:     0.0,
-					Timestamp: 12345,
+					Label:		"percent_packet_loss",
+					Value:		0.0,
+					Timestamp:	12345,
 				},
 				Nagios{
-					Label:     "rta",
-					Value:     0.8,
-					Timestamp: 12345,
+					Label:		"rta",
+					Value:		0.8,
+					Timestamp:	12345,
 				},
 			},
 		},
 		{
-			name: "multiple perfdata metrics with output_metric_tags",
-			event: &types.Event{
-				Check: &types.Check{
-					Executed: 12345,
-					Output:   "PING ok - Packet loss = 0%, RTA = 0.80 ms | percent_packet_loss=0, rta=0.80",
-					OutputMetricTags: []*types.MetricTag{
+			name:	"multiple perfdata metrics with output_metric_tags",
+			event: &v2.Event{
+				Check: &v2.Check{
+					Executed:	12345,
+					Output:		"PING ok - Packet loss = 0%, RTA = 0.80 ms | percent_packet_loss=0, rta=0.80",
+					OutputMetricTags: []*v2.MetricTag{
 						{
-							Name:  "foo",
-							Value: "bar",
+							Name:	"foo",
+							Value:	"bar",
 						},
 					},
 				},
 			},
 			want: NagiosList{
 				Nagios{
-					Label:     "percent_packet_loss",
-					Value:     0.0,
-					Timestamp: 12345,
-					Tags: []*types.MetricTag{
+					Label:		"percent_packet_loss",
+					Value:		0.0,
+					Timestamp:	12345,
+					Tags: []*v2.MetricTag{
 						{
-							Name:  "foo",
-							Value: "bar",
+							Name:	"foo",
+							Value:	"bar",
 						},
 					},
 				},
 				Nagios{
-					Label:     "rta",
-					Value:     0.8,
-					Timestamp: 12345,
-					Tags: []*types.MetricTag{
+					Label:		"rta",
+					Value:		0.8,
+					Timestamp:	12345,
+					Tags: []*v2.MetricTag{
 						{
-							Name:  "foo",
-							Value: "bar",
+							Name:	"foo",
+							Value:	"bar",
 						},
 					},
 				},
 			},
 		},
 		{
-			name: "multiple perfdata metrics with empty output_metric_tags",
-			event: &types.Event{
-				Check: &types.Check{
-					Executed:         12345,
-					Output:           "PING ok - Packet loss = 0%, RTA = 0.80 ms | percent_packet_loss=0, rta=0.80",
-					OutputMetricTags: []*types.MetricTag{},
+			name:	"multiple perfdata metrics with empty output_metric_tags",
+			event: &v2.Event{
+				Check: &v2.Check{
+					Executed:		12345,
+					Output:			"PING ok - Packet loss = 0%, RTA = 0.80 ms | percent_packet_loss=0, rta=0.80",
+					OutputMetricTags:	[]*v2.MetricTag{},
 				},
 			},
 			want: NagiosList{
 				Nagios{
-					Label:     "percent_packet_loss",
-					Value:     0.0,
-					Timestamp: 12345,
-					Tags:      []*types.MetricTag{},
+					Label:		"percent_packet_loss",
+					Value:		0.0,
+					Timestamp:	12345,
+					Tags:		[]*v2.MetricTag{},
 				},
 				Nagios{
-					Label:     "rta",
-					Value:     0.8,
-					Timestamp: 12345,
-					Tags:      []*types.MetricTag{},
+					Label:		"rta",
+					Value:		0.8,
+					Timestamp:	12345,
+					Tags:		[]*v2.MetricTag{},
 				},
 			},
 		},
 		{
-			name: "multiple perfdata metrics with multiple output_metric_tags",
-			event: &types.Event{
-				Check: &types.Check{
-					Executed: 12345,
-					Output:   "PING ok - Packet loss = 0%, RTA = 0.80 ms | percent_packet_loss=0, rta=0.80",
-					OutputMetricTags: []*types.MetricTag{
+			name:	"multiple perfdata metrics with multiple output_metric_tags",
+			event: &v2.Event{
+				Check: &v2.Check{
+					Executed:	12345,
+					Output:		"PING ok - Packet loss = 0%, RTA = 0.80 ms | percent_packet_loss=0, rta=0.80",
+					OutputMetricTags: []*v2.MetricTag{
 						{
-							Name:  "foo",
-							Value: "bar",
+							Name:	"foo",
+							Value:	"bar",
 						},
 						{
-							Name:  "boo",
-							Value: "baz",
+							Name:	"boo",
+							Value:	"baz",
 						},
 					},
 				},
 			},
 			want: NagiosList{
 				Nagios{
-					Label:     "percent_packet_loss",
-					Value:     0.0,
-					Timestamp: 12345,
-					Tags: []*types.MetricTag{
+					Label:		"percent_packet_loss",
+					Value:		0.0,
+					Timestamp:	12345,
+					Tags: []*v2.MetricTag{
 						{
-							Name:  "foo",
-							Value: "bar",
+							Name:	"foo",
+							Value:	"bar",
 						},
 						{
-							Name:  "boo",
-							Value: "baz",
+							Name:	"boo",
+							Value:	"baz",
 						},
 					},
 				},
 				Nagios{
-					Label:     "rta",
-					Value:     0.8,
-					Timestamp: 12345,
-					Tags: []*types.MetricTag{
+					Label:		"rta",
+					Value:		0.8,
+					Timestamp:	12345,
+					Tags: []*v2.MetricTag{
 						{
-							Name:  "foo",
-							Value: "bar",
+							Name:	"foo",
+							Value:	"bar",
 						},
 						{
-							Name:  "boo",
-							Value: "baz",
+							Name:	"boo",
+							Value:	"baz",
 						},
 					},
 				},
 			},
 		},
 		{
-			name: "GH_2511",
-			event: &types.Event{
-				Check: &types.Check{
-					Executed: 12345,
-					Output:   "PING ok - Packet loss = 0%, RTA = 0.80 ms | percent_packet_loss=0, foo",
+			name:	"GH_2511",
+			event: &v2.Event{
+				Check: &v2.Check{
+					Executed:	12345,
+					Output:		"PING ok - Packet loss = 0%, RTA = 0.80 ms | percent_packet_loss=0, foo",
 				},
 			},
 			want: NagiosList{
 				Nagios{
-					Label:     "percent_packet_loss",
-					Value:     0.0,
-					Timestamp: 12345,
+					Label:		"percent_packet_loss",
+					Value:		0.0,
+					Timestamp:	12345,
 				},
 			},
 		},
 		{
-			name: "invalid perfdata format",
-			event: &types.Event{
-				Check: &types.Check{
+			name:	"invalid perfdata format",
+			event: &v2.Event{
+				Check: &v2.Check{
 					Output: "PING ok - Packet loss = 0%, RTA = 0.80 ms | percent_packet_loss",
 				},
 			},
-			want: NagiosList(nil),
+			want:	NagiosList(nil),
 		},
 		{
-			name: "invalid perfdata value",
-			event: &types.Event{
-				Check: &types.Check{
+			name:	"invalid perfdata value",
+			event: &v2.Event{
+				Check: &v2.Check{
 					Output: "PING ok - Packet loss = 0%, RTA = 0.80 ms | percent_packet_loss=a",
 				},
 			},
-			want: NagiosList(nil),
+			want:	NagiosList(nil),
 		},
 		{
-			name: "bug #2021",
-			event: &types.Event{
-				Check: &types.Check{
-					Executed: 12345,
-					Output:   "CRITICAL - load average: 0.01, 0.04, 0.05|load1=0.010;0.010;0.010;0; load5=0.040;0.010;0.010;0; load15=0.050;0.010;0.010;0; \n",
+			name:	"bug #2021",
+			event: &v2.Event{
+				Check: &v2.Check{
+					Executed:	12345,
+					Output:		"CRITICAL - load average: 0.01, 0.04, 0.05|load1=0.010;0.010;0.010;0; load5=0.040;0.010;0.010;0; load15=0.050;0.010;0.010;0; \n",
 				},
 			},
 			want: NagiosList{
 				Nagios{
-					Label:     "load1",
-					Value:     0.01,
-					Timestamp: 12345,
+					Label:		"load1",
+					Value:		0.01,
+					Timestamp:	12345,
 				},
 				Nagios{
-					Label:     "load5",
-					Value:     0.04,
-					Timestamp: 12345,
+					Label:		"load5",
+					Value:		0.04,
+					Timestamp:	12345,
 				},
 				Nagios{
-					Label:     "load15",
-					Value:     0.05,
-					Timestamp: 12345,
+					Label:		"load15",
+					Value:		0.05,
+					Timestamp:	12345,
 				},
 			},
 		},
@@ -264,50 +264,50 @@ func TestParseNagios(t *testing.T) {
 
 func TestTransformNagios(t *testing.T) {
 	testCases := []struct {
-		name    string
-		metrics NagiosList
-		want    []*types.MetricPoint
+		name	string
+		metrics	NagiosList
+		want	[]*v2.MetricPoint
 	}{
 		{
 			metrics: NagiosList{
 				{
-					Label:     "percent_packet_loss",
-					Value:     0,
-					Timestamp: 123456789,
+					Label:		"percent_packet_loss",
+					Value:		0,
+					Timestamp:	123456789,
 				},
 			},
-			want: []*types.MetricPoint{
+			want: []*v2.MetricPoint{
 				{
-					Name:      "percent_packet_loss",
-					Value:     0,
-					Timestamp: 123456789,
-					Tags:      []*types.MetricTag{},
+					Name:		"percent_packet_loss",
+					Value:		0,
+					Timestamp:	123456789,
+					Tags:		[]*v2.MetricTag{},
 				},
 			},
 		},
 		{
 			metrics: NagiosList{
 				{
-					Label:     "percent_packet_loss",
-					Value:     0,
-					Timestamp: 123456789,
-					Tags: []*types.MetricTag{
+					Label:		"percent_packet_loss",
+					Value:		0,
+					Timestamp:	123456789,
+					Tags: []*v2.MetricTag{
 						{
-							Name:  "foo",
-							Value: "bar",
+							Name:	"foo",
+							Value:	"bar",
 						},
 					},
 				},
 			},
-			want: []*types.MetricPoint{
+			want: []*v2.MetricPoint{
 				{
-					Name:      "percent_packet_loss",
-					Value:     0,
-					Timestamp: 123456789,
-					Tags: []*types.MetricTag{
+					Name:		"percent_packet_loss",
+					Value:		0,
+					Timestamp:	123456789,
+					Tags: []*v2.MetricTag{
 						{
-							Name:  "foo",
-							Value: "bar",
+							Name:	"foo",
+							Value:	"bar",
 						},
 					},
 				},
@@ -325,41 +325,41 @@ func TestTransformNagios(t *testing.T) {
 
 func TestParseAndTransformNagios(t *testing.T) {
 	testCases := []struct {
-		name  string
-		event *types.Event
-		want  []*types.MetricPoint
+		name	string
+		event	*v2.Event
+		want	[]*v2.MetricPoint
 	}{
 		{
-			name: "happy path",
-			event: &types.Event{
-				Check: &types.Check{
-					Executed: 123456789,
-					Output:   "PING ok - Packet loss = 0% | percent_packet_loss=0",
+			name:	"happy path",
+			event: &v2.Event{
+				Check: &v2.Check{
+					Executed:	123456789,
+					Output:		"PING ok - Packet loss = 0% | percent_packet_loss=0",
 				},
 			},
-			want: []*types.MetricPoint{
+			want: []*v2.MetricPoint{
 				{
-					Name:      "percent_packet_loss",
-					Value:     0,
-					Timestamp: 123456789,
-					Tags:      []*types.MetricTag{},
+					Name:		"percent_packet_loss",
+					Value:		0,
+					Timestamp:	123456789,
+					Tags:		[]*v2.MetricTag{},
 				},
 			},
 		},
 		{
-			name: "GH_2511",
-			event: &types.Event{
-				Check: &types.Check{
-					Executed: 123456789,
-					Output:   "PING ok - Packet loss = 0% foo | percent_packet_loss=0 foo",
+			name:	"GH_2511",
+			event: &v2.Event{
+				Check: &v2.Check{
+					Executed:	123456789,
+					Output:		"PING ok - Packet loss = 0% foo | percent_packet_loss=0 foo",
 				},
 			},
-			want: []*types.MetricPoint{
+			want: []*v2.MetricPoint{
 				{
-					Name:      "percent_packet_loss",
-					Value:     0,
-					Timestamp: 123456789,
-					Tags:      []*types.MetricTag{},
+					Name:		"percent_packet_loss",
+					Value:		0,
+					Timestamp:	123456789,
+					Tags:		[]*v2.MetricTag{},
 				},
 			},
 		},

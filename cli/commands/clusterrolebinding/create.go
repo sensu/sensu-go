@@ -4,26 +4,25 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/sensu/core/v2"
+	v2 "github.com/sensu/core/v2"
 	"github.com/sensu/sensu-go/cli"
 	"github.com/sensu/sensu-go/cli/commands/helpers"
-	"github.com/sensu/sensu-go/types"
 	"github.com/spf13/cobra"
 )
 
 // CreateCommand defines a new command to create a cluster role binding
 func CreateCommand(cli *cli.SensuCli) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:          "create [NAME] --cluster-role=NAME [--user=username] [--group=groupname]",
-		Short:        "create a new cluster role binding for a particular cluster role",
-		SilenceUsage: true,
+		Use:		"create [NAME] --cluster-role=NAME [--user=username] [--group=groupname]",
+		Short:		"create a new cluster role binding for a particular cluster role",
+		SilenceUsage:	true,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if err := helpers.VerifyName(args); err != nil {
 				_ = cmd.Help()
 				return err
 			}
 
-			clusterRoleBinding := &types.ClusterRoleBinding{
+			clusterRoleBinding := &v2.ClusterRoleBinding{
 				ObjectMeta: v2.ObjectMeta{
 					Name: args[0],
 				},
@@ -36,9 +35,9 @@ func CreateCommand(cli *cli.SensuCli) *cobra.Command {
 			if clusterRole == "" {
 				return errors.New("a ClusterRole must be provided")
 			}
-			clusterRoleBinding.RoleRef = types.RoleRef{
-				Type: "ClusterRole",
-				Name: clusterRole,
+			clusterRoleBinding.RoleRef = v2.RoleRef{
+				Type:	"ClusterRole",
+				Name:	clusterRole,
 			}
 
 			groups, err := cmd.Flags().GetStringSlice("group")
@@ -56,17 +55,17 @@ func CreateCommand(cli *cli.SensuCli) *cobra.Command {
 			// Create our subjects list
 			for _, group := range groups {
 				clusterRoleBinding.Subjects = append(clusterRoleBinding.Subjects,
-					types.Subject{
-						Type: "Group",
-						Name: group,
+					v2.Subject{
+						Type:	"Group",
+						Name:	group,
 					},
 				)
 			}
 			for _, user := range users {
 				clusterRoleBinding.Subjects = append(clusterRoleBinding.Subjects,
-					types.Subject{
-						Type: "User",
-						Name: user,
+					v2.Subject{
+						Type:	"User",
+						Name:	user,
 					},
 				)
 			}

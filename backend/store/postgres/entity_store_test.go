@@ -8,7 +8,6 @@ import (
 	corev3 "github.com/sensu/core/v3"
 	"github.com/sensu/sensu-go/backend/store"
 	storev2 "github.com/sensu/sensu-go/backend/store/v2"
-	"github.com/sensu/sensu-go/types"
 )
 
 var wrapper = NewResourceWrapper(storev2.WrapResource)
@@ -26,7 +25,7 @@ func TestEntityStorage(t *testing.T) {
 		db := str.(*Store).db
 		s := NewEntityStore(db)
 		entity := corev2.FixtureEntity("entity")
-		ctx := context.WithValue(context.Background(), types.NamespaceKey, entity.Namespace)
+		ctx := context.WithValue(context.Background(), corev2.NamespaceKey, entity.Namespace)
 		pred := &store.SelectionPredicate{}
 
 		// We should receive an empty slice if no results were found
@@ -105,9 +104,9 @@ func TestEntityIteration(t *testing.T) {
 		corev3.FixtureEntityConfig("e"),
 	}
 	states := map[uniqueResource]*corev3.EntityState{
-		uniqueResource{Name: "b", Namespace: "default"}: corev3.FixtureEntityState("b"),
-		uniqueResource{Name: "c", Namespace: "default"}: corev3.FixtureEntityState("c"),
-		uniqueResource{Name: "d", Namespace: "default"}: corev3.FixtureEntityState("d"),
+		uniqueResource{Name: "b", Namespace: "default"}:	corev3.FixtureEntityState("b"),
+		uniqueResource{Name: "c", Namespace: "default"}:	corev3.FixtureEntityState("c"),
+		uniqueResource{Name: "d", Namespace: "default"}:	corev3.FixtureEntityState("d"),
 	}
 	entities, err := entitiesFromConfigsAndStates(configs, states)
 	if err != nil {
@@ -136,9 +135,9 @@ func TestEntityIterationNoPanicMismatched(t *testing.T) {
 		corev3.FixtureEntityConfig("c"),
 	}
 	states := map[uniqueResource]*corev3.EntityState{
-		{Name: "a", Namespace: "default"}: corev3.FixtureEntityState("a"),
-		{Name: "b", Namespace: "default"}: corev3.FixtureEntityState("b"),
-		{Name: "c", Namespace: "default"}: corev3.FixtureEntityState("c"),
+		{Name: "a", Namespace: "default"}:	corev3.FixtureEntityState("a"),
+		{Name: "b", Namespace: "default"}:	corev3.FixtureEntityState("b"),
+		{Name: "c", Namespace: "default"}:	corev3.FixtureEntityState("c"),
 	}
 	if _, err := entitiesFromConfigsAndStates(configs, states); err != nil {
 		t.Fatal(err)
@@ -149,19 +148,19 @@ func TestEntityCreateOrUpdateMultipleAddresses(t *testing.T) {
 	testWithPostgresStore(t, func(str storev2.Interface) {
 		db := str.(*Store).db
 		s := NewEntityStore(db)
-		entity := types.FixtureEntity("entity")
-		ctx := context.WithValue(context.Background(), types.NamespaceKey, entity.Namespace)
+		entity := corev2.FixtureEntity("entity")
+		ctx := context.WithValue(context.Background(), corev2.NamespaceKey, entity.Namespace)
 		entity.System.Network = corev2.Network{
 			Interfaces: []corev2.NetworkInterface{
 				{
-					Name:      "a",
-					MAC:       "asdfasdfasdf",
-					Addresses: []string{"127.0.0.1/16", "::1/128"},
+					Name:		"a",
+					MAC:		"asdfasdfasdf",
+					Addresses:	[]string{"127.0.0.1/16", "::1/128"},
 				},
 				{
-					Name:      "b",
-					MAC:       "adlfidfasdfasdf",
-					Addresses: []string{"127.0.0.1/8", "::1/128"},
+					Name:		"b",
+					MAC:		"adlfidfasdfasdf",
+					Addresses:	[]string{"127.0.0.1/8", "::1/128"},
 				},
 			},
 		}
@@ -181,7 +180,7 @@ func TestEntityDeleteByName(t *testing.T) {
 		db := str.(*Store).db
 		s := NewEntityStore(db)
 		entity := corev2.FixtureEntity("entity")
-		ctx := context.WithValue(context.Background(), types.NamespaceKey, entity.Namespace)
+		ctx := context.WithValue(context.Background(), corev2.NamespaceKey, entity.Namespace)
 
 		namespace := corev3.FixtureNamespace(entity.Namespace)
 		if err := str.GetNamespaceStore().CreateOrUpdate(ctx, namespace); err != nil {

@@ -4,19 +4,19 @@ import (
 	"errors"
 	"fmt"
 
+	v2 "github.com/sensu/core/v2"
 	"github.com/sensu/sensu-go/cli"
 	"github.com/sensu/sensu-go/cli/commands/flags"
 	"github.com/sensu/sensu-go/cli/commands/helpers"
-	"github.com/sensu/sensu-go/types"
 	"github.com/spf13/cobra"
 )
 
 // CreateCommand adds command that allows the user to create new mutators
 func CreateCommand(cli *cli.SensuCli) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:          "create [NAME]",
-		Short:        "create new mutators",
-		SilenceUsage: true,
+		Use:		"create [NAME]",
+		Short:		"create new mutators",
+		SilenceUsage:	true,
 		PreRun: func(cmd *cobra.Command, args []string) {
 			isInteractive, _ := cmd.Flags().GetBool(flags.Interactive)
 			if !isInteractive {
@@ -47,7 +47,7 @@ func CreateCommand(cli *cli.SensuCli) *cobra.Command {
 				opts.withFlags(cmd.Flags())
 			}
 
-			mutator := types.Mutator{}
+			mutator := v2.Mutator{}
 			opts.Copy(&mutator)
 
 			if err := mutator.Validate(); err != nil {

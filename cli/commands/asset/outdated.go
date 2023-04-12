@@ -15,7 +15,6 @@ import (
 	"github.com/sensu/sensu-go/cli/commands/flags"
 	"github.com/sensu/sensu-go/cli/commands/helpers"
 	"github.com/sensu/sensu-go/cli/elements/table"
-	"github.com/sensu/sensu-go/types"
 	"github.com/spf13/cobra"
 )
 
@@ -23,9 +22,9 @@ import (
 // that have been added from Bonsai.
 func OutdatedCommand(cli *cli.SensuCli) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "outdated",
-		Short: "lists any assets installed from Bonsai that have newer versions available",
-		RunE:  outdatedCommandExecute(cli),
+		Use:	"outdated",
+		Short:	"lists any assets installed from Bonsai that have newer versions available",
+		RunE:	outdatedCommandExecute(cli),
 	}
 
 	helpers.AddFormatFlag(cmd.Flags())
@@ -46,7 +45,7 @@ func outdatedCommandExecute(cli *cli.SensuCli) func(cmd *cobra.Command, args []s
 
 		namespace := cli.Config.Namespace()
 		if ok, _ := cmd.Flags().GetBool(flags.AllNamespaces); ok {
-			namespace = types.NamespaceTypeAll
+			namespace = corev2.NamespaceTypeAll
 		}
 
 		opts, err := helpers.ListOptionsFromFlags(cmd.Flags())
@@ -119,11 +118,11 @@ func outdatedAssets(assets []corev2.Asset, client bonsai.Client) ([]bonsai.Outda
 
 			if installedVersion.LessThan(latestVersion) {
 				outdatedAssets = append(outdatedAssets, bonsai.OutdatedAsset{
-					BonsaiName:      bonsaiName,
-					BonsaiNamespace: bonsaiNamespace,
-					AssetName:       asset.Name,
-					CurrentVersion:  installedVersion.Original(),
-					LatestVersion:   latestVersion.Original(),
+					BonsaiName:		bonsaiName,
+					BonsaiNamespace:	bonsaiNamespace,
+					AssetName:		asset.Name,
+					CurrentVersion:		installedVersion.Original(),
+					LatestVersion:		latestVersion.Original(),
 				})
 			}
 		}
@@ -135,8 +134,8 @@ func outdatedAssets(assets []corev2.Asset, client bonsai.Client) ([]bonsai.Outda
 func printOutdatedToTable(results interface{}, writer io.Writer) {
 	table := table.New([]*table.Column{
 		{
-			Title:       "Asset Name",
-			ColumnStyle: table.PrimaryTextStyle,
+			Title:		"Asset Name",
+			ColumnStyle:	table.PrimaryTextStyle,
 			CellTransformer: func(data interface{}) string {
 				outdatedAsset, ok := data.(bonsai.OutdatedAsset)
 				if !ok {
@@ -146,7 +145,7 @@ func printOutdatedToTable(results interface{}, writer io.Writer) {
 			},
 		},
 		{
-			Title: "Bonsai Asset",
+			Title:	"Bonsai Asset",
 			CellTransformer: func(data interface{}) string {
 				outdatedAsset, ok := data.(bonsai.OutdatedAsset)
 				if !ok {
@@ -156,7 +155,7 @@ func printOutdatedToTable(results interface{}, writer io.Writer) {
 			},
 		},
 		{
-			Title: "Current Version",
+			Title:	"Current Version",
 			CellTransformer: func(data interface{}) string {
 				outdatedAsset, ok := data.(bonsai.OutdatedAsset)
 				if !ok {
@@ -166,7 +165,7 @@ func printOutdatedToTable(results interface{}, writer io.Writer) {
 			},
 		},
 		{
-			Title: "Latest Version",
+			Title:	"Latest Version",
 			CellTransformer: func(data interface{}) string {
 				outdatedAsset, ok := data.(bonsai.OutdatedAsset)
 				if !ok {

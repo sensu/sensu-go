@@ -11,7 +11,6 @@ import (
 
 	corev2 "github.com/sensu/core/v2"
 	"github.com/sensu/sensu-go/backend/authentication/jwt"
-	"github.com/sensu/sensu-go/types"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -71,7 +70,7 @@ func TestRefreshTokenInvalidRefreshToken(t *testing.T) {
 	claims := corev2.FixtureClaims("foo", nil)
 	_, tokenString, _ := jwt.AccessToken(claims)
 	refreshTokenString := "foobar"
-	body := &types.Tokens{Refresh: refreshTokenString}
+	body := &corev2.Tokens{Refresh: refreshTokenString}
 	payload, _ := json.Marshal(body)
 
 	req, _ := http.NewRequest(http.MethodPost, server.URL, bytes.NewBuffer(payload))
@@ -92,7 +91,7 @@ func TestRefreshTokenMismatchingSub(t *testing.T) {
 	_, tokenString, _ := jwt.AccessToken(fooClaims)
 	_, refreshTokenString, _ := jwt.RefreshToken(barClaims)
 
-	body := &types.Tokens{Refresh: refreshTokenString}
+	body := &corev2.Tokens{Refresh: refreshTokenString}
 	payload, _ := json.Marshal(body)
 
 	req, _ := http.NewRequest(http.MethodPost, server.URL, bytes.NewBuffer(payload))
@@ -108,15 +107,15 @@ func TestRefreshTokenSuccess(t *testing.T) {
 	server := httptest.NewServer(mware.Then(
 		http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			// Make sure the context has been injected with the tokens info
-			if r.Context().Value(types.AccessTokenClaims) == nil {
+			if r.Context().Value(corev2.AccessTokenClaims) == nil {
 				http.Error(w, "nil AccessTokenClaims", 500)
 				return
 			}
-			if r.Context().Value(types.RefreshTokenClaims) == nil {
+			if r.Context().Value(corev2.RefreshTokenClaims) == nil {
 				http.Error(w, "nil RefreshTokenClaims", 500)
 				return
 			}
-			if r.Context().Value(types.RefreshTokenString) == nil {
+			if r.Context().Value(corev2.RefreshTokenString) == nil {
 				http.Error(w, "nil RefreshTokenString", 500)
 			}
 		}),
@@ -126,7 +125,7 @@ func TestRefreshTokenSuccess(t *testing.T) {
 	claims := corev2.FixtureClaims("foo", nil)
 	_, tokenString, _ := jwt.AccessToken(claims)
 	_, refreshTokenString, _ := jwt.RefreshToken(claims)
-	body := &types.Tokens{Refresh: refreshTokenString}
+	body := &corev2.Tokens{Refresh: refreshTokenString}
 	payload, _ := json.Marshal(body)
 
 	req, _ := http.NewRequest(http.MethodPost, server.URL, bytes.NewBuffer(payload))

@@ -9,9 +9,8 @@ import (
 	"os"
 	"testing"
 
+	v2 "github.com/sensu/core/v2"
 	bolt "go.etcd.io/bbolt"
-
-	"github.com/sensu/sensu-go/types"
 )
 
 type mockFetcher struct {
@@ -68,7 +67,7 @@ func TestGetExistingAsset(t *testing.T) {
 	path := "path"
 	sha := "sha"
 
-	a := &types.Asset{
+	a := &v2.Asset{
 		Sha512: sha,
 	}
 	runtimeAsset := &RuntimeAsset{
@@ -123,11 +122,11 @@ func TestGetNonexistentAsset(t *testing.T) {
 	defer db.Close()
 
 	manager := &boltDBAssetManager{
-		db:      db,
-		fetcher: &mockFetcher{false},
+		db:		db,
+		fetcher:	&mockFetcher{false},
 	}
 
-	a := &types.Asset{
+	a := &v2.Asset{
 		URL: "nonexistent.tar",
 	}
 
@@ -160,12 +159,12 @@ func TestGetInvalidAsset(t *testing.T) {
 	defer db.Close()
 
 	manager := &boltDBAssetManager{
-		db:       db,
-		fetcher:  &mockFetcher{true},
-		verifier: &mockVerifier{false},
+		db:		db,
+		fetcher:	&mockFetcher{true},
+		verifier:	&mockVerifier{false},
 	}
 
-	a := &types.Asset{
+	a := &v2.Asset{
 		URL: "",
 	}
 
@@ -198,13 +197,13 @@ func TestFailedExpand(t *testing.T) {
 	defer db.Close()
 
 	manager := &boltDBAssetManager{
-		db:       db,
-		fetcher:  &mockFetcher{true},
-		verifier: &mockVerifier{true},
-		expander: &mockExpander{false},
+		db:		db,
+		fetcher:	&mockFetcher{true},
+		verifier:	&mockVerifier{true},
+		expander:	&mockExpander{false},
 	}
 
-	a := &types.Asset{
+	a := &v2.Asset{
 		URL: "",
 	}
 
@@ -237,19 +236,19 @@ func TestSuccessfulGetAsset(t *testing.T) {
 	defer db.Close()
 
 	manager := &boltDBAssetManager{
-		db:       db,
-		fetcher:  &mockFetcher{true},
-		verifier: &mockVerifier{true},
-		expander: &mockExpander{true},
+		db:		db,
+		fetcher:	&mockFetcher{true},
+		verifier:	&mockVerifier{true},
+		expander:	&mockExpander{true},
 	}
 
-	a := &types.Asset{
-		ObjectMeta: types.ObjectMeta{
-			Name:      "asset",
-			Namespace: "default",
+	a := &v2.Asset{
+		ObjectMeta: v2.ObjectMeta{
+			Name:		"asset",
+			Namespace:	"default",
 		},
-		Sha512: "sha",
-		URL:    "path",
+		Sha512:	"sha",
+		URL:	"path",
 	}
 
 	runtimeAsset, err := manager.Get(context.TODO(), a)

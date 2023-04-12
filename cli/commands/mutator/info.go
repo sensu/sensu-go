@@ -7,19 +7,19 @@ import (
 	"strconv"
 	"strings"
 
+	v2 "github.com/sensu/core/v2"
 	"github.com/sensu/sensu-go/cli"
 	"github.com/sensu/sensu-go/cli/commands/helpers"
 	"github.com/sensu/sensu-go/cli/elements/list"
-	"github.com/sensu/sensu-go/types"
 	"github.com/spf13/cobra"
 )
 
 // InfoCommand defines the 'mutator info' subcommand
 func InfoCommand(cli *cli.SensuCli) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:          "info [NAME]",
-		Short:        "show detailed mutator information",
-		SilenceUsage: true,
+		Use:		"info [NAME]",
+		Short:		"show detailed mutator information",
+		SilenceUsage:	true,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if len(args) != 1 {
 				_ = cmd.Help()
@@ -46,32 +46,32 @@ func InfoCommand(cli *cli.SensuCli) *cobra.Command {
 }
 
 func printToList(v interface{}, writer io.Writer) error {
-	mutator, ok := v.(*types.Mutator)
+	mutator, ok := v.(*v2.Mutator)
 	if !ok {
 		return fmt.Errorf("%t is not a Mutator", v)
 	}
 	cfg := &list.Config{
-		Title: mutator.Name,
+		Title:	mutator.Name,
 		Rows: []*list.Row{
 			{
-				Label: "Name",
-				Value: mutator.Name,
+				Label:	"Name",
+				Value:	mutator.Name,
 			},
 			{
-				Label: "Command",
-				Value: mutator.Command,
+				Label:	"Command",
+				Value:	mutator.Command,
 			},
 			{
-				Label: "Timeout",
-				Value: strconv.FormatUint(uint64(mutator.Timeout), 10),
+				Label:	"Timeout",
+				Value:	strconv.FormatUint(uint64(mutator.Timeout), 10),
 			},
 			{
-				Label: "Namespace",
-				Value: mutator.Namespace,
+				Label:	"Namespace",
+				Value:	mutator.Namespace,
 			},
 			{
-				Label: "Runtime Assets",
-				Value: strings.Join(mutator.RuntimeAssets, ", "),
+				Label:	"Runtime Assets",
+				Value:	strings.Join(mutator.RuntimeAssets, ", "),
 			},
 		},
 	}

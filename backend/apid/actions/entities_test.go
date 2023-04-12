@@ -12,7 +12,6 @@ import (
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/testing/mockstore"
 	"github.com/sensu/sensu-go/testing/testutil"
-	"github.com/sensu/sensu-go/types"
 )
 
 func TestEntityFind(t *testing.T) {
@@ -21,35 +20,35 @@ func TestEntityFind(t *testing.T) {
 	)
 
 	testCases := []struct {
-		name            string
-		ctx             context.Context
-		record          *types.Entity
-		argument        string
-		expected        bool
-		expectedErrCode ErrCode
+		name		string
+		ctx		context.Context
+		record		*corev2.Entity
+		argument	string
+		expected	bool
+		expectedErrCode	ErrCode
 	}{
 		{
-			name:            "no argument given",
-			ctx:             defaultCtx,
-			argument:        "",
-			expected:        false,
-			expectedErrCode: NotFound,
+			name:			"no argument given",
+			ctx:			defaultCtx,
+			argument:		"",
+			expected:		false,
+			expectedErrCode:	NotFound,
 		},
 		{
-			name:            "found",
-			ctx:             defaultCtx,
-			record:          types.FixtureEntity("entity1"),
-			argument:        "entity1",
-			expected:        true,
-			expectedErrCode: 0,
+			name:			"found",
+			ctx:			defaultCtx,
+			record:			corev2.FixtureEntity("entity1"),
+			argument:		"entity1",
+			expected:		true,
+			expectedErrCode:	0,
 		},
 		{
-			name:            "not found",
-			ctx:             defaultCtx,
-			record:          nil,
-			argument:        "missing",
-			expected:        false,
-			expectedErrCode: NotFound,
+			name:			"not found",
+			ctx:			defaultCtx,
+			record:			nil,
+			argument:		"missing",
+			expected:		false,
+			expectedErrCode:	NotFound,
 		},
 	}
 
@@ -89,39 +88,39 @@ func TestEntityList(t *testing.T) {
 	)
 
 	testCases := []struct {
-		name        string
-		ctx         context.Context
-		records     []*types.Entity
-		storeErr    error
-		expectedLen int
-		expectedErr error
+		name		string
+		ctx		context.Context
+		records		[]*corev2.Entity
+		storeErr	error
+		expectedLen	int
+		expectedErr	error
 	}{
 		{
-			name:        "no results",
-			ctx:         defaultCtx,
-			records:     []*types.Entity{},
-			expectedLen: 0,
-			storeErr:    nil,
-			expectedErr: nil,
+			name:		"no results",
+			ctx:		defaultCtx,
+			records:	[]*corev2.Entity{},
+			expectedLen:	0,
+			storeErr:	nil,
+			expectedErr:	nil,
 		},
 		{
-			name: "with results",
-			ctx:  defaultCtx,
-			records: []*types.Entity{
-				types.FixtureEntity("entity1"),
-				types.FixtureEntity("entity2"),
+			name:	"with results",
+			ctx:	defaultCtx,
+			records: []*corev2.Entity{
+				corev2.FixtureEntity("entity1"),
+				corev2.FixtureEntity("entity2"),
 			},
-			expectedLen: 2,
-			storeErr:    nil,
-			expectedErr: nil,
+			expectedLen:	2,
+			storeErr:	nil,
+			expectedErr:	nil,
 		},
 		{
-			name:        "store failure",
-			ctx:         defaultCtx,
-			records:     nil,
-			expectedLen: 0,
-			storeErr:    errors.New(""),
-			expectedErr: NewError(InternalErr, errors.New("")),
+			name:		"store failure",
+			ctx:		defaultCtx,
+			records:	nil,
+			expectedLen:	0,
+			storeErr:	errors.New(""),
+			expectedErr:	NewError(InternalErr, errors.New("")),
 		},
 	}
 
@@ -153,54 +152,54 @@ func TestEntityCreate(t *testing.T) {
 		testutil.ContextWithNamespace("default"),
 	)
 
-	badEntity := types.FixtureEntity("badentity")
+	badEntity := corev2.FixtureEntity("badentity")
 	badEntity.Name = ""
 
 	testCases := []struct {
-		name            string
-		ctx             context.Context
-		argument        *types.Entity
-		fetchResult     *types.Entity
-		fetchErr        error
-		createErr       error
-		expectedErr     bool
-		expectedErrCode ErrCode
+		name		string
+		ctx		context.Context
+		argument	*corev2.Entity
+		fetchResult	*corev2.Entity
+		fetchErr	error
+		createErr	error
+		expectedErr	bool
+		expectedErrCode	ErrCode
 	}{
 		{
-			name:        "Created",
-			ctx:         defaultCtx,
-			argument:    types.FixtureEntity("foo"),
-			fetchResult: nil,
-			fetchErr:    nil,
-			createErr:   nil,
-			expectedErr: false,
+			name:		"Created",
+			ctx:		defaultCtx,
+			argument:	corev2.FixtureEntity("foo"),
+			fetchResult:	nil,
+			fetchErr:	nil,
+			createErr:	nil,
+			expectedErr:	false,
 		},
 		{
-			name:            "store err on Create",
-			ctx:             defaultCtx,
-			argument:        types.FixtureEntity("foo"),
-			fetchResult:     nil,
-			fetchErr:        nil,
-			createErr:       errors.New("dunno"),
-			expectedErr:     true,
-			expectedErrCode: InternalErr,
+			name:			"store err on Create",
+			ctx:			defaultCtx,
+			argument:		corev2.FixtureEntity("foo"),
+			fetchResult:		nil,
+			fetchErr:		nil,
+			createErr:		errors.New("dunno"),
+			expectedErr:		true,
+			expectedErrCode:	InternalErr,
 		},
 		{
-			name:            "store err on fetch",
-			ctx:             defaultCtx,
-			argument:        types.FixtureEntity("foo"),
-			fetchResult:     types.FixtureEntity("foo"),
-			fetchErr:        errors.New("dunno"),
-			expectedErr:     true,
-			expectedErrCode: InternalErr,
+			name:			"store err on fetch",
+			ctx:			defaultCtx,
+			argument:		corev2.FixtureEntity("foo"),
+			fetchResult:		corev2.FixtureEntity("foo"),
+			fetchErr:		errors.New("dunno"),
+			expectedErr:		true,
+			expectedErrCode:	InternalErr,
 		},
 		{
-			name:            "Validation error",
-			ctx:             defaultCtx,
-			argument:        badEntity,
-			fetchResult:     nil,
-			expectedErr:     true,
-			expectedErrCode: InvalidArgument,
+			name:			"Validation error",
+			ctx:			defaultCtx,
+			argument:		badEntity,
+			fetchResult:		nil,
+			expectedErr:		true,
+			expectedErrCode:	InvalidArgument,
 		},
 	}
 
@@ -254,59 +253,59 @@ func TestEntityCreateOrReplace(t *testing.T) {
 	badEntity.Name = ""
 
 	testCases := []struct {
-		name            string
-		ctx             context.Context
-		argument        *types.Entity
-		exists          bool
-		createErr       error
-		expectedErr     bool
-		expectedErrCode ErrCode
+		name		string
+		ctx		context.Context
+		argument	*corev2.Entity
+		exists		bool
+		createErr	error
+		expectedErr	bool
+		expectedErrCode	ErrCode
 	}{
 		{
-			name:        "agent entity",
-			ctx:         defaultCtx,
-			argument:    agentEntity,
-			exists:      true,
-			createErr:   nil,
-			expectedErr: false,
+			name:		"agent entity",
+			ctx:		defaultCtx,
+			argument:	agentEntity,
+			exists:		true,
+			createErr:	nil,
+			expectedErr:	false,
 		},
 		{
-			name:            "agent entity, store failure",
-			ctx:             defaultCtx,
-			argument:        agentEntity,
-			exists:          true,
-			createErr:       NewError(InternalErr, errors.New("some error")),
-			expectedErr:     true,
-			expectedErrCode: InternalErr,
+			name:			"agent entity, store failure",
+			ctx:			defaultCtx,
+			argument:		agentEntity,
+			exists:			true,
+			createErr:		NewError(InternalErr, errors.New("some error")),
+			expectedErr:		true,
+			expectedErrCode:	InternalErr,
 		},
 		{
-			name:        "proxy entity",
-			ctx:         defaultCtx,
-			argument:    proxyEntity,
-			createErr:   nil,
-			expectedErr: false,
+			name:		"proxy entity",
+			ctx:		defaultCtx,
+			argument:	proxyEntity,
+			createErr:	nil,
+			expectedErr:	false,
 		},
 		{
-			name:            "proxy entity, store failure",
-			ctx:             defaultCtx,
-			argument:        proxyEntity,
-			createErr:       NewError(InternalErr, errors.New("some error")),
-			expectedErr:     true,
-			expectedErrCode: InternalErr,
+			name:			"proxy entity, store failure",
+			ctx:			defaultCtx,
+			argument:		proxyEntity,
+			createErr:		NewError(InternalErr, errors.New("some error")),
+			expectedErr:		true,
+			expectedErrCode:	InternalErr,
 		},
 		{
-			name:            "Validation error",
-			ctx:             defaultCtx,
-			argument:        badEntity,
-			expectedErr:     true,
-			expectedErrCode: InvalidArgument,
+			name:			"Validation error",
+			ctx:			defaultCtx,
+			argument:		badEntity,
+			expectedErr:		true,
+			expectedErrCode:	InvalidArgument,
 		},
 		{
-			name:        "entity that does not exist gets properly created",
-			ctx:         defaultCtx,
-			argument:    agentEntity,
-			exists:      false,
-			expectedErr: false,
+			name:		"entity that does not exist gets properly created",
+			ctx:		defaultCtx,
+			argument:	agentEntity,
+			exists:		false,
+			expectedErr:	false,
 		},
 	}
 

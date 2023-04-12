@@ -9,7 +9,6 @@ import (
 	"github.com/sensu/sensu-go/testing/mockqueue"
 	"github.com/sensu/sensu-go/testing/mockstore"
 	"github.com/sensu/sensu-go/testing/testutil"
-	"github.com/sensu/sensu-go/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
@@ -30,29 +29,29 @@ func TestCheckAdhoc(t *testing.T) {
 		testutil.ContextWithNamespace("default"),
 	)
 
-	badCheck := types.FixtureCheckConfig("check1")
+	badCheck := corev2.FixtureCheckConfig("check1")
 	badCheck.Name = "!@#!#$@#^$%&$%&$&$%&%^*%&(%@###"
 
 	testCases := []struct {
-		name            string
-		ctx             context.Context
-		argument        *types.AdhocRequest
-		fetchResult     *types.CheckConfig
-		checkName       string
-		fetchErr        error
-		queueErr        error
-		expectedErr     bool
-		expectedErrCode ErrCode
+		name		string
+		ctx		context.Context
+		argument	*corev2.AdhocRequest
+		fetchResult	*corev2.CheckConfig
+		checkName	string
+		fetchErr	error
+		queueErr	error
+		expectedErr	bool
+		expectedErrCode	ErrCode
 	}{
 		{
-			name:        "Queued",
-			ctx:         defaultCtx,
-			argument:    types.FixtureAdhocRequest("check1", []string{"subscription1", "subscription2"}),
-			fetchResult: types.FixtureCheckConfig("check1"),
-			checkName:   "check1",
-			fetchErr:    nil,
-			queueErr:    nil,
-			expectedErr: false,
+			name:		"Queued",
+			ctx:		defaultCtx,
+			argument:	corev2.FixtureAdhocRequest("check1", []string{"subscription1", "subscription2"}),
+			fetchResult:	corev2.FixtureCheckConfig("check1"),
+			checkName:	"check1",
+			fetchErr:	nil,
+			queueErr:	nil,
+			expectedErr:	false,
 		},
 	}
 

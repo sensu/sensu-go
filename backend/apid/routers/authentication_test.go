@@ -11,7 +11,6 @@ import (
 
 	"github.com/gorilla/mux"
 	corev2 "github.com/sensu/core/v2"
-	"github.com/sensu/sensu-go/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
@@ -63,9 +62,9 @@ func TestLoginInvalidCredentials(t *testing.T) {
 func TestLoginSuccessful(t *testing.T) {
 	auth := new(mockAuthenticator)
 	tokens := &corev2.Tokens{
-		Access:    "abcd",
-		ExpiresAt: time.Now().Add(time.Hour).Unix(),
-		Refresh:   "abcd",
+		Access:		"abcd",
+		ExpiresAt:	time.Now().Add(time.Hour).Unix(),
+		Refresh:	"abcd",
 	}
 	auth.On("CreateAccessToken", mock.Anything, "foo", "P@ssw0rd!").Return(tokens, nil)
 	router := NewAuthenticationRouter(auth)
@@ -78,7 +77,7 @@ func TestLoginSuccessful(t *testing.T) {
 
 	// We should have the access token
 	body := res.Body.Bytes()
-	response := &types.Tokens{}
+	response := &corev2.Tokens{}
 	err := json.Unmarshal(body, &response)
 
 	assert.NoError(t, err)

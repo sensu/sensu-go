@@ -5,8 +5,8 @@ import (
 	"strconv"
 
 	"github.com/AlecAivazis/survey/v2"
+	v2 "github.com/sensu/core/v2"
 	"github.com/sensu/sensu-go/cli/commands/helpers"
-	"github.com/sensu/sensu-go/types"
 	"github.com/spf13/pflag"
 )
 
@@ -19,12 +19,12 @@ const (
 )
 
 type hookOpts struct {
-	Name      string `survey:"name"`
-	Command   string `survey:"command"`
-	Timeout   string `survey:"timeout"`
-	Stdin     string `survey:"stdin"`
-	Env       string
-	Namespace string
+	Name		string	`survey:"name"`
+	Command		string	`survey:"command"`
+	Timeout		string	`survey:"timeout"`
+	Stdin		string	`survey:"stdin"`
+	Env		string
+	Namespace	string
 }
 
 func newHookOpts() *hookOpts {
@@ -34,7 +34,7 @@ func newHookOpts() *hookOpts {
 	return &opts
 }
 
-func (opts *hookOpts) withHook(hook *types.HookConfig) {
+func (opts *hookOpts) withHook(hook *v2.HookConfig) {
 	opts.Name = hook.Name
 	opts.Namespace = hook.Namespace
 	opts.Command = hook.Command
@@ -59,46 +59,46 @@ func (opts *hookOpts) administerQuestionnaire(editing bool) error {
 	if !editing {
 		qs = append(qs, []*survey.Question{
 			{
-				Name: "name",
+				Name:	"name",
 				Prompt: &survey.Input{
-					Message: "Hook Name:",
-					Default: opts.Name,
+					Message:	"Hook Name:",
+					Default:	opts.Name,
 				},
-				Validate: survey.Required,
+				Validate:	survey.Required,
 			},
 			{
-				Name: "namespace",
+				Name:	"namespace",
 				Prompt: &survey.Input{
-					Message: "Namespace:",
-					Default: opts.Namespace,
+					Message:	"Namespace:",
+					Default:	opts.Namespace,
 				},
-				Validate: survey.Required,
+				Validate:	survey.Required,
 			},
 		}...)
 	}
 
 	qs = append(qs, []*survey.Question{
 		{
-			Name: "command",
+			Name:	"command",
 			Prompt: &survey.Input{
-				Message: "Command:",
-				Default: opts.Command,
+				Message:	"Command:",
+				Default:	opts.Command,
 			},
-			Validate: survey.Required,
+			Validate:	survey.Required,
 		},
 		{
-			Name: "timeout",
+			Name:	"timeout",
 			Prompt: &survey.Input{
-				Message: "Timeout:",
-				Default: opts.Timeout,
+				Message:	"Timeout:",
+				Default:	opts.Timeout,
 			},
 		},
 		{
-			Name: "stdin",
+			Name:	"stdin",
 			Prompt: &survey.Input{
-				Message: "Stdin:",
-				Help:    "If stdin is enabled for the hook. Value must be true or false.",
-				Default: opts.Stdin,
+				Message:	"Stdin:",
+				Help:		"If stdin is enabled for the hook. Value must be true or false.",
+				Default:	opts.Stdin,
 			},
 			Validate: func(val interface{}) error {
 				if str, ok := val.(string); ok && str != "false" && str != "true" {
@@ -113,7 +113,7 @@ func (opts *hookOpts) administerQuestionnaire(editing bool) error {
 	return survey.Ask(qs, opts)
 }
 
-func (opts *hookOpts) Copy(hook *types.HookConfig) {
+func (opts *hookOpts) Copy(hook *v2.HookConfig) {
 	timeout, _ := strconv.ParseUint(opts.Timeout, 10, 32)
 	stdin, _ := strconv.ParseBool(opts.Stdin)
 

@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	"github.com/sensu/sensu-go/types"
+	v2 "github.com/sensu/core/v2"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -19,7 +19,7 @@ func TestContextKeyBuilder(t *testing.T) {
 	t.Parallel()
 
 	ctx := context.Background()
-	ctx = context.WithValue(ctx, types.NamespaceKey, "acme")
+	ctx = context.WithValue(ctx, v2.NamespaceKey, "acme")
 	builder := NewKeyBuilder("checks").WithContext(ctx)
 	assert.Equal(t, "/sensu.io/checks/acme/check_name", builder.Build("check_name"))
 
@@ -33,7 +33,7 @@ func TestExactMatchKeyBuilder(t *testing.T) {
 	t.Parallel()
 
 	ctx := context.Background()
-	ctx = context.WithValue(ctx, types.NamespaceKey, "default")
+	ctx = context.WithValue(ctx, v2.NamespaceKey, "default")
 	builder := NewKeyBuilder("events").WithContext(ctx).WithExactMatch()
 
 	// Querying all events for an entity uses etcd prefixes, so we want

@@ -4,19 +4,19 @@ import (
 	"errors"
 	"fmt"
 
+	v2 "github.com/sensu/core/v2"
 	"github.com/sensu/sensu-go/cli"
 	"github.com/sensu/sensu-go/cli/commands/flags"
 	"github.com/sensu/sensu-go/cli/commands/helpers"
-	"github.com/sensu/sensu-go/types"
 	"github.com/spf13/cobra"
 )
 
 // CreateCommand adds command that allows user to create new hooks
 func CreateCommand(cli *cli.SensuCli) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:          "create [NAME]",
-		Short:        "create new hooks",
-		SilenceUsage: true,
+		Use:		"create [NAME]",
+		Short:		"create new hooks",
+		SilenceUsage:	true,
 		PreRun: func(cmd *cobra.Command, args []string) {
 			isInteractive, _ := cmd.Flags().GetBool(flags.Interactive)
 			if !isInteractive {
@@ -48,7 +48,7 @@ func CreateCommand(cli *cli.SensuCli) *cobra.Command {
 			}
 
 			// Apply given arguments to hook
-			hook := types.HookConfig{}
+			hook := v2.HookConfig{}
 			opts.Copy(&hook)
 
 			if err := hook.Validate(); err != nil {

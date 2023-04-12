@@ -3,9 +3,9 @@ package hooks
 import (
 	"testing"
 
+	v2 "github.com/sensu/core/v2"
 	clientMock "github.com/sensu/sensu-go/cli/client/testing"
 	cmdTesting "github.com/sensu/sensu-go/cli/commands/testing"
-	"github.com/sensu/sensu-go/types"
 	"github.com/spf13/cobra"
 	"github.com/stretchr/testify/assert"
 )
@@ -23,16 +23,16 @@ func TestConfigurationPresent(t *testing.T) {
 		Annotations: map[string]string{},
 	}
 
-	validTokens := &types.Tokens{
-		Access:    "accesstoken",
-		ExpiresAt: 1617721168,
-		Refresh:   "refreshtoken",
+	validTokens := &v2.Tokens{
+		Access:		"accesstoken",
+		ExpiresAt:	1617721168,
+		Refresh:	"refreshtoken",
 	}
 
-	invalidTokens := &types.Tokens{
-		Access:    "",
-		ExpiresAt: 1617721168,
-		Refresh:   "",
+	invalidTokens := &v2.Tokens{
+		Access:		"",
+		ExpiresAt:	1617721168,
+		Refresh:	"",
 	}
 
 	apiKey := "de48ef7e-db2a-4333-bedf-7549de9541f4"
@@ -41,62 +41,62 @@ func TestConfigurationPresent(t *testing.T) {
 	apiURL := "http://localhost:8080"
 
 	tests := []struct {
-		name          string
-		cmd           *cobra.Command
-		apiKey        string
-		apiURL        string
-		tokens        *types.Tokens
-		errorExpected bool
+		name		string
+		cmd		*cobra.Command
+		apiKey		string
+		apiURL		string
+		tokens		*v2.Tokens
+		errorExpected	bool
 	}{
 		{
-			name:          "NoCheck",
-			cmd:           cmdNoCheck,
-			apiKey:        noApiKey,
-			apiURL:        "",
-			tokens:        nil,
-			errorExpected: false,
+			name:		"NoCheck",
+			cmd:		cmdNoCheck,
+			apiKey:		noApiKey,
+			apiURL:		"",
+			tokens:		nil,
+			errorExpected:	false,
 		}, {
-			name:          "NoURL",
-			cmd:           cmdWithCheck,
-			apiKey:        apiKey,
-			apiURL:        "",
-			tokens:        validTokens,
-			errorExpected: true,
+			name:		"NoURL",
+			cmd:		cmdWithCheck,
+			apiKey:		apiKey,
+			apiURL:		"",
+			tokens:		validTokens,
+			errorExpected:	true,
 		}, {
-			name:          "ApiKeyNoTokens",
-			cmd:           cmdWithCheck,
-			apiKey:        apiKey,
-			apiURL:        apiURL,
-			tokens:        nil,
-			errorExpected: false,
+			name:		"ApiKeyNoTokens",
+			cmd:		cmdWithCheck,
+			apiKey:		apiKey,
+			apiURL:		apiURL,
+			tokens:		nil,
+			errorExpected:	false,
 		}, {
-			name:          "NoAPIKeyValidTokens",
-			cmd:           cmdWithCheck,
-			apiKey:        noApiKey,
-			apiURL:        apiURL,
-			tokens:        validTokens,
-			errorExpected: false,
+			name:		"NoAPIKeyValidTokens",
+			cmd:		cmdWithCheck,
+			apiKey:		noApiKey,
+			apiURL:		apiURL,
+			tokens:		validTokens,
+			errorExpected:	false,
 		}, {
-			name:          "NoAPIKeyNoTokens",
-			cmd:           cmdWithCheck,
-			apiKey:        noApiKey,
-			apiURL:        apiURL,
-			tokens:        nil,
-			errorExpected: true,
+			name:		"NoAPIKeyNoTokens",
+			cmd:		cmdWithCheck,
+			apiKey:		noApiKey,
+			apiURL:		apiURL,
+			tokens:		nil,
+			errorExpected:	true,
 		}, {
-			name:          "NoAPIKeyInvalidAccessToken",
-			cmd:           cmdWithCheck,
-			apiKey:        noApiKey,
-			apiURL:        apiURL,
-			tokens:        invalidTokens,
-			errorExpected: true,
+			name:		"NoAPIKeyInvalidAccessToken",
+			cmd:		cmdWithCheck,
+			apiKey:		noApiKey,
+			apiURL:		apiURL,
+			tokens:		invalidTokens,
+			errorExpected:	true,
 		}, {
-			name:          "APIKeyInvalidAccessToken",
-			cmd:           cmdWithCheck,
-			apiKey:        apiKey,
-			apiURL:        apiURL,
-			tokens:        invalidTokens,
-			errorExpected: false,
+			name:		"APIKeyInvalidAccessToken",
+			cmd:		cmdWithCheck,
+			apiKey:		apiKey,
+			apiURL:		apiURL,
+			tokens:		invalidTokens,
+			errorExpected:	false,
 		},
 	}
 

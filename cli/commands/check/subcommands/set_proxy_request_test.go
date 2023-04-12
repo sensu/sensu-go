@@ -6,9 +6,9 @@ import (
 	"os"
 	"testing"
 
+	v2 "github.com/sensu/core/v2"
 	client "github.com/sensu/sensu-go/cli/client/testing"
 	stest "github.com/sensu/sensu-go/cli/commands/testing"
-	"github.com/sensu/sensu-go/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -18,13 +18,13 @@ func TestSetProxyRequestsCommand(t *testing.T) {
 	const proxyJSON = `{"entity_attributes":["entity.EntityClass == \"proxy\""], "splay":true, "splay_coverage":90}`
 	const invalidProxyJSON = `{"splay":true, "splay_coverage":200}`
 	tests := []struct {
-		args           []string
-		useflag        bool
-		stdin          string
-		fetchResponse  error
-		updateResponse error
-		expectedOutput string
-		expectError    bool
+		args		[]string
+		useflag		bool
+		stdin		string
+		fetchResponse	error
+		updateResponse	error
+		expectedOutput	string
+		expectError	bool
 	}{
 		{[]string{}, false, "", nil, nil, "Usage", true},
 		{[]string{"foo"}, false, "", errors.New("error"), nil, "", true},
@@ -42,7 +42,7 @@ func TestSetProxyRequestsCommand(t *testing.T) {
 			name = test.args[0]
 		}
 		t.Run(fmt.Sprintf("test %d", i), func(t *testing.T) {
-			check := types.FixtureCheckConfig("check1")
+			check := v2.FixtureCheckConfig("check1")
 			cli := stest.NewMockCLI()
 			client := cli.Client.(*client.MockClient)
 			client.On("FetchCheck", name).Return(check, test.fetchResponse)

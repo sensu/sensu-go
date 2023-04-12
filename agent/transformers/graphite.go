@@ -5,7 +5,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/sensu/sensu-go/types"
+	v2 "github.com/sensu/core/v2"
 	"github.com/sirupsen/logrus"
 )
 
@@ -14,26 +14,26 @@ type GraphiteList []Graphite
 
 // Graphite contains values of graphite plain text output metric format
 type Graphite struct {
-	Path      string
-	Value     float64
-	Timestamp int64
-	Tags      []*types.MetricTag
+	Path		string
+	Value		float64
+	Timestamp	int64
+	Tags		[]*v2.MetricTag
 }
 
 // Transform transforms a metric in graphite plain text format to Sensu Metric
 // Format
-func (g GraphiteList) Transform() []*types.MetricPoint {
-	var points []*types.MetricPoint
+func (g GraphiteList) Transform() []*v2.MetricPoint {
+	var points []*v2.MetricPoint
 	for _, graphite := range g {
-		mp := &types.MetricPoint{
-			Name:      graphite.Path,
-			Value:     graphite.Value,
-			Timestamp: graphite.Timestamp,
-			Tags:      graphite.Tags,
+		mp := &v2.MetricPoint{
+			Name:		graphite.Path,
+			Value:		graphite.Value,
+			Timestamp:	graphite.Timestamp,
+			Tags:		graphite.Tags,
 		}
 
 		if mp.Tags == nil {
-			mp.Tags = []*types.MetricTag{}
+			mp.Tags = []*v2.MetricTag{}
 		}
 
 		points = append(points, mp)
@@ -42,11 +42,11 @@ func (g GraphiteList) Transform() []*types.MetricPoint {
 }
 
 // ParseGraphite parses a graphite plain text string into a Graphite struct
-func ParseGraphite(event *types.Event) GraphiteList {
+func ParseGraphite(event *v2.Event) GraphiteList {
 	var graphiteList GraphiteList
 	fields := logrus.Fields{
-		"namespace": event.Check.Namespace,
-		"check":     event.Check.Name,
+		"namespace":	event.Check.Namespace,
+		"check":	event.Check.Name,
 	}
 
 	metric := strings.TrimSpace(event.Check.Output)

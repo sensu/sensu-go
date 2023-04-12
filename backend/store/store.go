@@ -7,13 +7,12 @@ import (
 	corev2 "github.com/sensu/core/v2"
 	corev3 "github.com/sensu/core/v3"
 	"github.com/sensu/sensu-go/backend/store/patch"
-	"github.com/sensu/sensu-go/types"
 )
 
 const (
-	SensuCreatedAtKey = "sensu.io/created_at"
-	SensuUpdatedAtKey = "sensu.io/updated_at"
-	SensuDeletedAtKey = "sensu.io/deleted_at"
+	SensuCreatedAtKey	= "sensu.io/created_at"
+	SensuUpdatedAtKey	= "sensu.io/updated_at"
+	SensuDeletedAtKey	= "sensu.io/deleted_at"
 )
 
 // ErrAlreadyExists is returned when an object already exists
@@ -27,8 +26,8 @@ func (e *ErrAlreadyExists) Error() string {
 
 // ErrDecode is returned when an object could not be decoded
 type ErrDecode struct {
-	Key string
-	Err error
+	Key	string
+	Err	error
 }
 
 func (e *ErrDecode) Error() string {
@@ -37,8 +36,8 @@ func (e *ErrDecode) Error() string {
 
 // ErrEncode is returned when an object could not be decoded
 type ErrEncode struct {
-	Key string
-	Err error
+	Key	string
+	Err	error
 }
 
 func (e *ErrEncode) Error() string {
@@ -112,48 +111,48 @@ type SelectionPredicate struct {
 	// Continue provides the key from which the selection should start. If
 	// returned empty from the store, it indicates that there's no additional
 	// resources available
-	Continue string
+	Continue	string
 	// Limit indicates the number of resources to retrieve
-	Limit int64
+	Limit	int64
 	// Offset into the collection
-	Offset int64
+	Offset	int64
 	// Subcollection represents a sub-collection of the primary collection
-	Subcollection string
+	Subcollection	string
 	// Ordering indicates the property to sort on, if supported by the store
-	Ordering string
+	Ordering	string
 	// Descending indicates the sort direction is in descending order.
-	Descending bool
+	Descending	bool
 	// UpdatedSince selects only items that have been updated since this timestamp
-	UpdatedSince string
+	UpdatedSince	string
 	// IncludeDeletes selects items that were previously soft-deleted
-	IncludeDeletes bool
+	IncludeDeletes	bool
 }
 
 // A WatchEventCheckConfig contains the modified store object and the action
 // that occurred during the modification.
 type WatchEventCheckConfig struct {
-	CheckConfig *types.CheckConfig
-	Action      WatchActionType
+	CheckConfig	*corev2.CheckConfig
+	Action		WatchActionType
 }
 
 // A WatchEventHookConfig contains the modified asset object and the action that
 // occurred during the modification.
 type WatchEventHookConfig struct {
-	HookConfig *types.HookConfig
-	Action     WatchActionType
+	HookConfig	*corev2.HookConfig
+	Action		WatchActionType
 }
 
 // WatchEventTessenConfig is a notification that the tessen config store has
 // been updated.
 type WatchEventTessenConfig struct {
-	TessenConfig *corev2.TessenConfig
-	Action       WatchActionType
+	TessenConfig	*corev2.TessenConfig
+	Action		WatchActionType
 }
 
 // WatchEventResource is a store event about a specific resource
 type WatchEventResource struct {
-	Resource corev2.Resource
-	Action   WatchActionType
+	Resource	corev2.Resource
+	Action		WatchActionType
 }
 
 // WatchEventResourceV3 is a notification that a corev3.Resource has been
@@ -161,10 +160,10 @@ type WatchEventResource struct {
 type WatchEventResourceV3 struct {
 	// Resource is the resource associated with the event. It is nil when Action
 	// is WatchError or WatchUnknown.
-	Resource corev3.Resource
+	Resource	corev3.Resource
 
 	// Action is the type of action that affected the resource.
-	Action WatchActionType
+	Action	WatchActionType
 }
 
 // Store is used to abstract the durable storage used by the Sensu backend
@@ -248,14 +247,14 @@ type AssetStore interface {
 
 	// GetAssets returns all assets in the given ctx's namespace. A nil
 	// slice with no error is returned if none were found.
-	GetAssets(ctx context.Context, pred *SelectionPredicate) ([]*types.Asset, error)
+	GetAssets(ctx context.Context, pred *SelectionPredicate) ([]*corev2.Asset, error)
 
 	// GetAssetByName returns an asset using the given name and the namespace
 	// stored in ctx. The resulting asset is nil if none was found.
-	GetAssetByName(ctx context.Context, name string) (*types.Asset, error)
+	GetAssetByName(ctx context.Context, name string) (*corev2.Asset, error)
 
 	// UpdateAsset creates or updates a given asset.
-	UpdateAsset(ctx context.Context, asset *types.Asset) error
+	UpdateAsset(ctx context.Context, asset *corev2.Asset) error
 }
 
 // AuthenticationStore provides methods for managing the JWT secret
@@ -280,15 +279,15 @@ type CheckConfigStore interface {
 	// GetCheckConfigs returns all checks configurations in the given ctx's
 	// namespace. A nil slice with no error is returned if none
 	// were found.
-	GetCheckConfigs(ctx context.Context, pred *SelectionPredicate) ([]*types.CheckConfig, error)
+	GetCheckConfigs(ctx context.Context, pred *SelectionPredicate) ([]*corev2.CheckConfig, error)
 
 	// GetCheckConfigByName returns a check's configuration using the given name
 	// and the namespace stored in ctx. The resulting check is
 	// nil if none was found.
-	GetCheckConfigByName(ctx context.Context, name string) (*types.CheckConfig, error)
+	GetCheckConfigByName(ctx context.Context, name string) (*corev2.CheckConfig, error)
 
 	// UpdateCheckConfig creates or updates a given check's configuration.
-	UpdateCheckConfig(ctx context.Context, check *types.CheckConfig) error
+	UpdateCheckConfig(ctx context.Context, check *corev2.CheckConfig) error
 
 	// GetCheckConfigWatcher returns a channel that emits CheckConfigWatchEvents notifying
 	// the caller that a CheckConfig was updated. If the watcher runs into a terminal error
@@ -310,47 +309,47 @@ type ClusterIDStore interface {
 // bindings
 type ClusterRoleBindingStore interface {
 	// CreateClusterRoleBinding creates a given cluster role binding
-	CreateClusterRoleBinding(ctx context.Context, clusterRoleBinding *types.ClusterRoleBinding) error
+	CreateClusterRoleBinding(ctx context.Context, clusterRoleBinding *corev2.ClusterRoleBinding) error
 
 	// CreateOrUpdateClusterRoleBinding overwrites the given cluster role binding
-	CreateOrUpdateClusterRoleBinding(ctx context.Context, clusterRoleBinding *types.ClusterRoleBinding) error
+	CreateOrUpdateClusterRoleBinding(ctx context.Context, clusterRoleBinding *corev2.ClusterRoleBinding) error
 
 	// DeleteClusterRoleBinding deletes a cluster role binding using the given name.
 	DeleteClusterRoleBinding(ctx context.Context, name string) error
 
 	// GetClusterRoleBinding returns a cluster role binding using the given name. An error is
 	// returned if no binding was found
-	GetClusterRoleBinding(ctx context.Context, name string) (*types.ClusterRoleBinding, error)
+	GetClusterRoleBinding(ctx context.Context, name string) (*corev2.ClusterRoleBinding, error)
 
 	// ListClusterRoleBindings returns all cluster role binding. An error is returned if no
 	// binding were found
-	ListClusterRoleBindings(ctx context.Context, pred *SelectionPredicate) (clusterRoleBindings []*types.ClusterRoleBinding, err error)
+	ListClusterRoleBindings(ctx context.Context, pred *SelectionPredicate) (clusterRoleBindings []*corev2.ClusterRoleBinding, err error)
 
 	// UpdateClusterRoleBinding creates or updates a given cluster role binding.
-	UpdateClusterRoleBinding(ctx context.Context, clusterRoleBinding *types.ClusterRoleBinding) error
+	UpdateClusterRoleBinding(ctx context.Context, clusterRoleBinding *corev2.ClusterRoleBinding) error
 }
 
 // ClusterRoleStore provides methods for managing RBAC cluster roles and rules
 type ClusterRoleStore interface {
 	// CreateClusterRole creates a given cluster role
-	CreateClusterRole(ctx context.Context, clusterRole *types.ClusterRole) error
+	CreateClusterRole(ctx context.Context, clusterRole *corev2.ClusterRole) error
 
 	// CreateOrUpdateClusterRole overwrites the given cluster role
-	CreateOrUpdateClusterRole(ctx context.Context, clusterRole *types.ClusterRole) error
+	CreateOrUpdateClusterRole(ctx context.Context, clusterRole *corev2.ClusterRole) error
 
 	// DeleteClusterRole deletes a cluster role using the given name.
 	DeleteClusterRole(ctx context.Context, name string) error
 
 	// GetClusterRole returns a cluster role using the given name. An error is
 	// returned if no role was found
-	GetClusterRole(ctx context.Context, name string) (*types.ClusterRole, error)
+	GetClusterRole(ctx context.Context, name string) (*corev2.ClusterRole, error)
 
 	// ListClusterRoles returns all cluster roles. An error is returned if no
 	// roles were found
-	ListClusterRoles(ctx context.Context, pred *SelectionPredicate) (clusterRoles []*types.ClusterRole, err error)
+	ListClusterRoles(ctx context.Context, pred *SelectionPredicate) (clusterRoles []*corev2.ClusterRole, err error)
 
 	// UpdateClusterRole creates or updates a given cluster role.
-	UpdateClusterRole(ctx context.Context, clusterRole *types.ClusterRole) error
+	UpdateClusterRole(ctx context.Context, clusterRole *corev2.ClusterRole) error
 }
 
 // HookConfigStore provides methods for managing hooks configuration
@@ -362,20 +361,20 @@ type HookConfigStore interface {
 	// GetHookConfigs returns all hooks configurations in the given ctx's
 	// namespace. A nil slice with no error is returned if none
 	// were found.
-	GetHookConfigs(ctx context.Context, pred *SelectionPredicate) ([]*types.HookConfig, error)
+	GetHookConfigs(ctx context.Context, pred *SelectionPredicate) ([]*corev2.HookConfig, error)
 
 	// GetHookConfigByName returns a hook's configuration using the given name and
 	// the namespace stored in ctx. The resulting hook is nil if none was found.
-	GetHookConfigByName(ctx context.Context, name string) (*types.HookConfig, error)
+	GetHookConfigByName(ctx context.Context, name string) (*corev2.HookConfig, error)
 
 	// UpdateHookConfig creates or updates a given hook's configuration.
-	UpdateHookConfig(ctx context.Context, check *types.HookConfig) error
+	UpdateHookConfig(ctx context.Context, check *corev2.HookConfig) error
 }
 
 // EntityStore provides methods for managing entities
 type EntityStore interface {
 	// DeleteEntity deletes an entity using the given entity struct.
-	DeleteEntity(ctx context.Context, entity *types.Entity) error
+	DeleteEntity(ctx context.Context, entity *corev2.Entity) error
 
 	// DeleteEntityByName deletes an entity using the given name and the
 	// namespace stored in ctx.
@@ -383,14 +382,14 @@ type EntityStore interface {
 
 	// GetEntities returns all entities in the given ctx's namespace. A nil slice
 	// with no error is returned if none were found.
-	GetEntities(ctx context.Context, pred *SelectionPredicate) ([]*types.Entity, error)
+	GetEntities(ctx context.Context, pred *SelectionPredicate) ([]*corev2.Entity, error)
 
 	// GetEntityByName returns an entity using the given name and the namespace stored
 	// in ctx. The resulting entity is nil if none was found.
-	GetEntityByName(ctx context.Context, name string) (*types.Entity, error)
+	GetEntityByName(ctx context.Context, name string) (*corev2.Entity, error)
 
 	// UpdateEntity creates or updates a given entity.
-	UpdateEntity(ctx context.Context, entity *types.Entity) error
+	UpdateEntity(ctx context.Context, entity *corev2.Entity) error
 }
 
 // EventStore provides methods for managing events
@@ -410,12 +409,12 @@ type EventStore interface {
 	// GetEventByEntityCheck returns an event using the given entity and check,
 	// within the namespace stored in ctx. The resulting event
 	// is nil if none was found.
-	GetEventByEntityCheck(ctx context.Context, entity, check string) (*types.Event, error)
+	GetEventByEntityCheck(ctx context.Context, entity, check string) (*corev2.Event, error)
 
 	// UpdateEvent creates or updates a given event. It returns the updated
 	// event, which may be the same as the event that was passed in, and the
 	// previous event, if one existed, as well as any error that occurred.
-	UpdateEvent(ctx context.Context, event *types.Event) (old, new *types.Event, err error)
+	UpdateEvent(ctx context.Context, event *corev2.Event) (old, new *corev2.Event, err error)
 
 	// CountEvents counts the number of events in the namespace. The namespace is
 	// provided as part of the context.
@@ -434,14 +433,14 @@ type EventFilterStore interface {
 
 	// GetEventFilters returns all filters in the given ctx's namespace. A nil
 	// slice with no error is returned if none were found.
-	GetEventFilters(ctx context.Context, pred *SelectionPredicate) ([]*types.EventFilter, error)
+	GetEventFilters(ctx context.Context, pred *SelectionPredicate) ([]*corev2.EventFilter, error)
 
 	// GetEventFilterByName returns a filter using the given name and the
 	// namespace stored in ctx. The resulting filter is nil if none was found.
-	GetEventFilterByName(ctx context.Context, name string) (*types.EventFilter, error)
+	GetEventFilterByName(ctx context.Context, name string) (*corev2.EventFilter, error)
 
 	// UpdateEventFilter creates or updates a given filter.
-	UpdateEventFilter(ctx context.Context, filter *types.EventFilter) error
+	UpdateEventFilter(ctx context.Context, filter *corev2.EventFilter) error
 }
 
 // HandlerStore provides methods for managing events handlers
@@ -452,27 +451,27 @@ type HandlerStore interface {
 
 	// GetHandlers returns all handlers in the given ctx's namespace. A nil slice
 	// with no error is returned if none were found.
-	GetHandlers(ctx context.Context, pred *SelectionPredicate) ([]*types.Handler, error)
+	GetHandlers(ctx context.Context, pred *SelectionPredicate) ([]*corev2.Handler, error)
 
 	// GetHandlerByName returns a handler using the given name and the namespace
 	// stored in ctx. The resulting handler is nil if none was found.
-	GetHandlerByName(ctx context.Context, name string) (*types.Handler, error)
+	GetHandlerByName(ctx context.Context, name string) (*corev2.Handler, error)
 
 	// UpdateHandler creates or updates a given handler.
-	UpdateHandler(ctx context.Context, handler *types.Handler) error
+	UpdateHandler(ctx context.Context, handler *corev2.Handler) error
 }
 
 // KeepaliveStore provides methods for managing entities keepalives
 type KeepaliveStore interface {
 	// DeleteFailingKeepalive deletes a failing keepalive record for a given entity.
-	DeleteFailingKeepalive(ctx context.Context, entity *types.Entity) error
+	DeleteFailingKeepalive(ctx context.Context, entity *corev2.Entity) error
 
 	// GetFailingKeepalives returns a slice of failing keepalives.
-	GetFailingKeepalives(ctx context.Context) ([]*types.KeepaliveRecord, error)
+	GetFailingKeepalives(ctx context.Context) ([]*corev2.KeepaliveRecord, error)
 
 	// UpdateFailingKeepalive updates the given entity keepalive with the given expiration
 	// in unix timestamp format
-	UpdateFailingKeepalive(ctx context.Context, entity *types.Entity, expiration int64) error
+	UpdateFailingKeepalive(ctx context.Context, entity *corev2.Entity, expiration int64) error
 }
 
 // MutatorStore provides methods for managing events mutators
@@ -483,35 +482,35 @@ type MutatorStore interface {
 
 	// GetMutators returns all mutators in the given ctx's namespace. A nil slice
 	// with no error is returned if none were found.
-	GetMutators(ctx context.Context, pred *SelectionPredicate) ([]*types.Mutator, error)
+	GetMutators(ctx context.Context, pred *SelectionPredicate) ([]*corev2.Mutator, error)
 
 	// GetMutatorByName returns a mutator using the given name and the
 	// namespace stored in ctx. The resulting mutator is nil if
 	// none was found.
-	GetMutatorByName(ctx context.Context, name string) (*types.Mutator, error)
+	GetMutatorByName(ctx context.Context, name string) (*corev2.Mutator, error)
 
 	// UpdateMutator creates or updates a given mutator.
-	UpdateMutator(ctx context.Context, mutator *types.Mutator) error
+	UpdateMutator(ctx context.Context, mutator *corev2.Mutator) error
 }
 
 // NamespaceStore provides methods for managing namespaces
 type NamespaceStore interface {
 	// CreateNamespace creates a given namespace
-	CreateNamespace(ctx context.Context, namespace *types.Namespace) error
+	CreateNamespace(ctx context.Context, namespace *corev2.Namespace) error
 
 	// DeleteNamespace deletes a namespace using the given name.
 	DeleteNamespace(ctx context.Context, name string) error
 
 	// ListNamespaces returns all namespaces. A nil slice with no error is
 	// returned if none were found.
-	ListNamespaces(ctx context.Context, pred *SelectionPredicate) ([]*types.Namespace, error)
+	ListNamespaces(ctx context.Context, pred *SelectionPredicate) ([]*corev2.Namespace, error)
 
 	// GetNamespace returns a namespace using the given name. The
 	// result is nil if none was found.
-	GetNamespace(ctx context.Context, name string) (*types.Namespace, error)
+	GetNamespace(ctx context.Context, name string) (*corev2.Namespace, error)
 
 	// UpdateNamespace updates an existing namespace.
-	UpdateNamespace(ctx context.Context, org *types.Namespace) error
+	UpdateNamespace(ctx context.Context, org *corev2.Namespace) error
 }
 
 // PipelineStore provides methods for managing pipelines
@@ -539,46 +538,46 @@ type ResourceStore interface {
 // RoleBindingStore provides methods for managing RBAC role bindings
 type RoleBindingStore interface {
 	// CreateRoleBinding creates a given role binding
-	CreateRoleBinding(ctx context.Context, roleBinding *types.RoleBinding) error
+	CreateRoleBinding(ctx context.Context, roleBinding *corev2.RoleBinding) error
 
 	// CreateOrUpdateRoleBinding overwrites the given role binding
-	CreateOrUpdateRoleBinding(ctx context.Context, roleBinding *types.RoleBinding) error
+	CreateOrUpdateRoleBinding(ctx context.Context, roleBinding *corev2.RoleBinding) error
 
 	// DeleteRoleBinding deletes a role binding using the given name.
 	DeleteRoleBinding(ctx context.Context, name string) error
 
 	// GetRoleBinding returns a role binding using the given name. An error is returned
 	// if no binding was found
-	GetRoleBinding(ctx context.Context, name string) (*types.RoleBinding, error)
+	GetRoleBinding(ctx context.Context, name string) (*corev2.RoleBinding, error)
 
 	// ListRoleBindings returns all role binding. An error is returned if no binding were
 	// found
-	ListRoleBindings(ctx context.Context, pred *SelectionPredicate) (roleBindings []*types.RoleBinding, err error)
+	ListRoleBindings(ctx context.Context, pred *SelectionPredicate) (roleBindings []*corev2.RoleBinding, err error)
 
 	// UpdateRoleBinding creates or updates a given role binding.
-	UpdateRoleBinding(ctx context.Context, roleBinding *types.RoleBinding) error
+	UpdateRoleBinding(ctx context.Context, roleBinding *corev2.RoleBinding) error
 }
 
 // RoleStore provides methods for managing RBAC roles and rules
 type RoleStore interface {
 	// CreateRole creates a given role
-	CreateRole(ctx context.Context, role *types.Role) error
+	CreateRole(ctx context.Context, role *corev2.Role) error
 
 	// CreateOrUpdateRole overwrites the given role
-	CreateOrUpdateRole(ctx context.Context, role *types.Role) error
+	CreateOrUpdateRole(ctx context.Context, role *corev2.Role) error
 
 	// DeleteRole deletes a role using the given name.
 	DeleteRole(ctx context.Context, name string) error
 
 	// GetRole returns a role using the given name. An error is returned if no
 	// role was found
-	GetRole(ctx context.Context, name string) (*types.Role, error)
+	GetRole(ctx context.Context, name string) (*corev2.Role, error)
 
 	// ListRoles returns all roles. An error is returned if no roles were found
-	ListRoles(ctx context.Context, pred *SelectionPredicate) (roles []*types.Role, err error)
+	ListRoles(ctx context.Context, pred *SelectionPredicate) (roles []*corev2.Role, err error)
 
 	// UpdateRole creates or updates a given role.
-	UpdateRole(ctx context.Context, role *types.Role) error
+	UpdateRole(ctx context.Context, role *corev2.Role) error
 }
 
 // SilencedStore provides methods for managing silenced entries,
@@ -627,24 +626,24 @@ type UserStore interface {
 	// AuthenticateUser attempts to authenticate a user with the given username
 	// and hashed password. An error is returned if the user does not exist, is
 	// disabled or the given password does not match.
-	AuthenticateUser(ctx context.Context, username, password string) (*types.User, error)
+	AuthenticateUser(ctx context.Context, username, password string) (*corev2.User, error)
 
 	// CreateUser creates a new user with the given user struct.
-	CreateUser(ctx context.Context, user *types.User) error
+	CreateUser(ctx context.Context, user *corev2.User) error
 
 	// GetUser returns a user using the given username.
-	GetUser(ctx context.Context, username string) (*types.User, error)
+	GetUser(ctx context.Context, username string) (*corev2.User, error)
 
 	// GetUsers returns all enabled users. A nil slice with no error is
 	// returned if none were found.
-	GetUsers() ([]*types.User, error)
+	GetUsers() ([]*corev2.User, error)
 
 	// GetAllUsers returns all users, including the disabled ones. A nil slice with
 	// no error is  returned if none were found.
-	GetAllUsers(pred *SelectionPredicate) ([]*types.User, error)
+	GetAllUsers(pred *SelectionPredicate) ([]*corev2.User, error)
 
 	// UpdateUser updates a given user.
-	UpdateUser(user *types.User) error
+	UpdateUser(user *corev2.User) error
 }
 
 // Initializer provides methods to verify if a store is initialized

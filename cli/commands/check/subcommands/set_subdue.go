@@ -6,18 +6,18 @@ import (
 	"fmt"
 	"os"
 
+	v2 "github.com/sensu/core/v2"
 	"github.com/sensu/sensu-go/cli"
 	"github.com/sensu/sensu-go/cli/commands/timeutil"
-	"github.com/sensu/sensu-go/types"
 	"github.com/spf13/cobra"
 )
 
 // SetSubdueCommand adds a command that allows a user to subdue a check
 func SetSubdueCommand(cli *cli.SensuCli) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:          "set-subdue [NAME]",
-		Short:        "set subdue of a check from file or stdin",
-		SilenceUsage: false,
+		Use:		"set-subdue [NAME]",
+		Short:		"set subdue of a check from file or stdin",
+		SilenceUsage:	false,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			// Print usage if we do not receive one argument
 			if len(args) != 1 {
@@ -43,7 +43,7 @@ func SetSubdueCommand(cli *cli.SensuCli) *cobra.Command {
 			} else {
 				in = os.Stdin
 			}
-			var timeWindows types.TimeWindowWhen
+			var timeWindows v2.TimeWindowWhen
 			if err := json.NewDecoder(in).Decode(&timeWindows); err != nil {
 				return err
 			}

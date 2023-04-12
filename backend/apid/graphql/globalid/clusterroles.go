@@ -1,22 +1,24 @@
 package globalid
 
-import "github.com/sensu/sensu-go/types"
+import (
+	v2 "github.com/sensu/core/v2"
+	//
+	// Cluster Roles
+	//
+)
 
-//
-// Cluster Roles
-//
 var clusterRoleName = "clusterroles"
 
 // ClusterRoleTranslator global ID resource
 var ClusterRoleTranslator = commonTranslator{
-	name:       clusterRoleName,
-	encodeFunc: standardEncoder(clusterRoleName, "Name"),
-	decodeFunc: standardDecoder,
+	name:		clusterRoleName,
+	encodeFunc:	standardEncoder(clusterRoleName, "Name"),
+	decodeFunc:	standardDecoder,
 	isResponsibleFunc: func(record interface{}) bool {
-		_, ok := record.(*types.ClusterRole)
+		_, ok := record.(*v2.ClusterRole)
 		return ok
 	},
 }
 
 // Register entity encoder/decoder
-func init() { RegisterTranslator(ClusterRoleTranslator) }
+func init()	{ RegisterTranslator(ClusterRoleTranslator) }
