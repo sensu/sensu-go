@@ -6,6 +6,7 @@ import (
 	"sync"
 
 	corev2 "github.com/sensu/core/v2"
+	corev3 "github.com/sensu/core/v3"
 	"github.com/sensu/sensu-go/backend/resource"
 	"github.com/sirupsen/logrus"
 )
@@ -16,7 +17,7 @@ const (
 
 // Provider represents an abstracted secrets provider.
 type Provider interface {
-	corev2.Resource
+	corev3.Resource
 	// Get gets the value of the secret associated with the secret ID.
 	Get(id string) (string, error)
 }
@@ -61,7 +62,7 @@ func (m *ProviderManager) AddProvider(provider Provider) {
 		m.providers = map[string]Provider{}
 	}
 
-	m.providers[provider.GetObjectMeta().Name] = provider
+	m.providers[provider.GetMetadata().Name] = provider
 }
 
 // Providers returns the configured providers.

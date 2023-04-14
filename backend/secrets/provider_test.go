@@ -21,13 +21,13 @@ func (m *mockProvider) Get(id string) (string, error) {
 }
 
 // GetObjectMeta ...
-func (m *mockProvider) GetObjectMeta() corev2.ObjectMeta {
+func (m *mockProvider) GetMetadata() *corev2.ObjectMeta {
 	args := m.Called()
-	return args.Get(0).(corev2.ObjectMeta)
+	return args.Get(0).(*corev2.ObjectMeta)
 }
 
 // SetObjectMeta ...
-func (m *mockProvider) SetObjectMeta(_ corev2.ObjectMeta) {}
+func (m *mockProvider) SetMetadata(_ *corev2.ObjectMeta) {}
 
 // RBACName ...
 func (m *mockProvider) RBACName() string {
@@ -35,11 +35,8 @@ func (m *mockProvider) RBACName() string {
 	return args.Get(0).(string)
 }
 
-// SetNamespace ...
-func (m *mockProvider) SetNamespace(_ string) {}
-
 // StorePrefix ...
-func (m *mockProvider) StorePrefix() string {
+func (m *mockProvider) StoreName() string {
 	args := m.Called()
 	return args.Get(0).(string)
 }
@@ -79,7 +76,7 @@ func TestProviderManager(t *testing.T) {
 	mer := &mockEventReceiver{}
 	pm := NewProviderManager(mer)
 	mp := &mockProvider{}
-	mp.On("GetObjectMeta", mock.Anything).Return(corev2.ObjectMeta{Name: "env"})
+	mp.On("GetMetadata", mock.Anything).Return(&corev2.ObjectMeta{Name: "env"})
 	pm.AddProvider(mp)
 	require.NotEmpty(t, pm.Providers())
 	require.Equal(t, 1, len(pm.Providers()))
@@ -125,7 +122,7 @@ func TestSubSecrets(t *testing.T) {
 
 	// create provider env
 	env := &mockProvider{}
-	env.On("GetObjectMeta", mock.Anything).Return(corev2.ObjectMeta{Name: "env"})
+	env.On("GetMetadata", mock.Anything).Return(&corev2.ObjectMeta{Name: "env"})
 	env.On("Get", "SENSU_FOO").Return("bar", nil)
 	env.On("Get", "SENSU_EMPTY").Return("", nil)
 	env.On("Get", "SENSU_BAZ").Return("boo", nil)
@@ -174,7 +171,7 @@ func TestSubSecrets(t *testing.T) {
 
 	// create provider vault
 	vault := &mockProvider{}
-	vault.On("GetObjectMeta", mock.Anything).Return(corev2.ObjectMeta{Name: "vault"})
+	vault.On("GetMetadata", mock.Anything).Return(&corev2.ObjectMeta{Name: "vault"})
 	vault.On("Get", "SENSU_BABY").Return("yoda", nil)
 	vault.On("Get", "SENSU_FOO").Return("", nil)
 	vault.On("Get", "SENSU_PROVIDER_ERR").Return("", ErrProviderNotAvailable("vault"))
