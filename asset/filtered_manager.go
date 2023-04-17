@@ -28,6 +28,54 @@ type filteredManager struct {
 	getter Getter
 }
 
+// evaluateAssetBuilds iterates through each asset build in an asset and
+// evaluates their filters. It will return an asset build if its filter(s) are
+// matched against the entity. If one or more asset builds are filtered then the
+// first asset build with the highest number of filters is returned.
+func (f *filteredManager) evaluateAssetBuilds(asset *corev2.Asset) (*corev2.Asset, error) {
+	fields := logrus.Fields{
+		"entity": f.entity.Name,
+		"asset":  asset.Name,
+	}
+	logger.WithFields(fields).Info("asset includes builds, using builds instead of asset")
+
+	var filteredAsset *corev2.Asset
+
+	for _, build := range asset.Builds {
+		assetBuild := &corev2.Asset{
+			URL:        build.URL,
+			Sha512:     build.Sha512,
+			Filters:    build.Filters,
+			Headers:    build.Headers,
+			ObjectMeta: asset.ObjectMeta,
+		}
+
+		buildFields := logrus.Fields{
+			"filter": assetBuild.Filters,
+		}
+
+		filtered, err := f.isFiltered(assetBuild)
+		if err != nil {
+			logger.WithFields(fields).WithFields(buildFields).WithError(err).Error("error filtering entities from asset build")
+			return nil, err
+		}
+
+		if !filtered {
+			logger.WithFields(fields).WithFields(buildFields).Debug("entity not filtered, not installing asset build")
+			continue
+		}
+
+		if filteredAsset == nil || len(assetBuild.Filters) > len(filteredAsset.Filters) {
+			filteredAsset = assetBuild
+			continue
+		}
+
+		logger.WithFields(fields).WithFields(buildFields).Debug("entity filtered but is less specific than a previous asset build")
+	}
+
+	return filteredAsset, nil
+}
+
 // Get fetches, verifies, and expands an asset, but only if it is filtered.
 func (f *filteredManager) Get(ctx context.Context, asset *corev2.Asset) (*RuntimeAsset, error) {
 	var filteredAsset *corev2.Asset
@@ -39,39 +87,11 @@ func (f *filteredManager) Get(ctx context.Context, asset *corev2.Asset) (*Runtim
 	}
 
 	if len(asset.Builds) > 0 {
-		fields = logrus.Fields{
-			"entity": f.entity.Name,
-			"asset":  asset.Name,
+		assetBuild, err := f.evaluateAssetBuilds(asset)
+		if err != nil {
+			return nil, err
 		}
-		logger.WithFields(fields).Info("asset includes builds, using builds instead of asset")
-		for _, build := range asset.Builds {
-			assetBuild := &corev2.Asset{
-				URL:        build.URL,
-				Sha512:     build.Sha512,
-				Filters:    build.Filters,
-				Headers:    build.Headers,
-				ObjectMeta: asset.ObjectMeta,
-			}
-
-			buildFields := logrus.Fields{
-				"filter": assetBuild.Filters,
-			}
-
-			filtered, err := f.isFiltered(assetBuild)
-			if err != nil {
-				logger.WithFields(fields).WithFields(buildFields).WithError(err).Error("error filtering entities from asset build")
-				return nil, err
-			}
-
-			if !filtered {
-				logger.WithFields(fields).WithFields(buildFields).Debug("entity not filtered, not installing asset build")
-				continue
-			}
-
-			logger.WithFields(fields).WithFields(buildFields).Debug("entity filtered, installing asset build")
-			filteredAsset = assetBuild
-			break
-		}
+		filteredAsset = assetBuild
 	} else {
 		filtered, err := f.isFiltered(asset)
 		if err != nil {

@@ -16,6 +16,9 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 which now allows for the addition of labels and annotations.
 - API keys can no longer be retrieved from the database.
 - The REST APIs now use the wrapped resource format.
+- When multiple asset builds are filtered the first asset build with the highest
+number of filters is returned. Previously the first filtered asset build was
+returned regardless of filter count.
 
 ### Added
 - Added sensu-backend configuration for postgresql.
