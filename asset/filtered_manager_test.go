@@ -182,3 +182,43 @@ func TestIsFiltered(t *testing.T) {
 	assert.Error(t, err)
 	assert.False(t, filtered)
 }
+
+func TestEvaluateAssetBuilds(t *testing.T) {
+	_, _, filteredManager := NewTestFilteredManager()
+
+	fixtureAsset := types.FixtureAsset("test-asset")
+	fixtureAsset.Builds = []*corev2.AssetBuild{
+		{
+			URL: "asset-1",
+			Filters: []string{
+				"entity.name == 'asdf'",
+			},
+		},
+		{
+			URL: "asset-2",
+			Filters: []string{
+				"entity.name == 'test-entity'",
+			},
+		},
+		{
+			URL: "asset-3",
+			Filters: []string{
+				"entity.name == 'test-entity'",
+				"entity.namespace == 'default'",
+				"entity.system.arch == 'amd64'",
+			},
+		},
+		{
+			URL: "asset-4",
+			Filters: []string{
+				"entity.name == 'test-entity'",
+				"entity.namespace == 'default'",
+			},
+		},
+	}
+
+	actualAsset, err := filteredManager.evaluateAssetBuilds(fixtureAsset)
+	assert.NoError(t, err)
+	assert.NotNil(t, actualAsset)
+	assert.Equal(t, "asset-3", actualAsset.URL)
+}
