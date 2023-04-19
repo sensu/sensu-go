@@ -41,7 +41,7 @@ func extension(format string) string {
 }
 
 type lifter interface {
-	Lift() types.Resource
+	Lift() corev2.Resource
 }
 
 type namespaceFormat interface {
@@ -132,7 +132,7 @@ func dumpResource(client client, cfg namespaceFormat, typeName string, key []str
 	case "wrapped-json", "json":
 		return helpers.PrintWrappedJSON(resource, to)
 	default:
-		return helpers.PrintYAML([]types.Resource{resource}, to)
+		return helpers.PrintYAML([]corev2.Resource{resource}, to)
 	}
 }
 
@@ -172,7 +172,7 @@ func dumpBlank(cfg namespaceFormat, typeName string, to io.Writer) error {
 	case "wrapped-json", "json":
 		return helpers.PrintWrappedJSON(resource, to)
 	default:
-		return helpers.PrintYAML([]types.Resource{resource}, to)
+		return helpers.PrintYAML([]corev2.Resource{resource}, to)
 	}
 }
 

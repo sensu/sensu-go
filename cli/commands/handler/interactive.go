@@ -5,8 +5,8 @@ import (
 	"strings"
 
 	"github.com/AlecAivazis/survey/v2"
+	v2 "github.com/sensu/core/v2"
 	"github.com/sensu/sensu-go/cli/commands/helpers"
-	"github.com/sensu/sensu-go/types"
 	"github.com/spf13/pflag"
 )
 
@@ -35,7 +35,7 @@ func newHandlerOpts() *handlerOpts {
 	return &opts
 }
 
-func (opts *handlerOpts) withHandler(handler *types.Handler) {
+func (opts *handlerOpts) withHandler(handler *v2.Handler) {
 	opts.Name = handler.Name
 	opts.Namespace = handler.Namespace
 
@@ -77,13 +77,13 @@ func (opts *handlerOpts) administerQuestionnaire(editing bool, askOpts ...survey
 	}
 
 	switch opts.Type {
-	case types.HandlerPipeType:
+	case v2.HandlerPipeType:
 		return opts.queryForCommand(askOpts...)
-	case types.HandlerTCPType:
+	case v2.HandlerTCPType:
 		fallthrough
-	case types.HandlerUDPType:
+	case v2.HandlerUDPType:
 		return opts.queryForSocket(askOpts...)
-	case types.HandlerSetType:
+	case v2.HandlerSetType:
 		return opts.queryForHandlers(askOpts...)
 	}
 
@@ -220,7 +220,7 @@ func (opts *handlerOpts) queryForSocket(askOpts ...survey.AskOpt) error {
 	return survey.Ask(qs, opts, askOpts...)
 }
 
-func (opts *handlerOpts) Copy(handler *types.Handler) {
+func (opts *handlerOpts) Copy(handler *v2.Handler) {
 	handler.Name = opts.Name
 	handler.Namespace = opts.Namespace
 
@@ -238,7 +238,7 @@ func (opts *handlerOpts) Copy(handler *types.Handler) {
 
 	if len(opts.SocketHost) > 0 && len(opts.SocketPort) > 0 {
 		p, _ := strconv.ParseUint(opts.SocketPort, 10, 32)
-		handler.Socket = &types.HandlerSocket{
+		handler.Socket = &v2.HandlerSocket{
 			Host: opts.SocketHost,
 			Port: uint32(p),
 		}

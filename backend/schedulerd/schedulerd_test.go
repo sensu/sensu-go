@@ -7,6 +7,7 @@ import (
 	"context"
 	"testing"
 
+	"github.com/sensu/core/v2"
 	"github.com/sensu/sensu-go/backend/messaging"
 	"github.com/sensu/sensu-go/backend/queue"
 	"github.com/sensu/sensu-go/backend/store/etcd/testutil"
@@ -31,7 +32,7 @@ func TestSchedulerd(t *testing.T) {
 	defer st.Teardown()
 
 	// Mock a default namespace
-	require.NoError(t, st.CreateNamespace(context.Background(), types.FixtureNamespace("default")))
+	require.NoError(t, st.CreateNamespace(context.Background(), v2.FixtureNamespace("default")))
 
 	schedulerd, err := New(context.Background(), Config{
 		Store:       st,
@@ -50,8 +51,8 @@ func TestSchedulerd(t *testing.T) {
 		assert.FailNow(t, "could not subscribe", err)
 	}
 
-	check := types.FixtureCheckConfig("check_name")
-	ctx := context.WithValue(context.Background(), types.NamespaceKey, check.Namespace)
+	check := v2.FixtureCheckConfig("check_name")
+	ctx := context.WithValue(context.Background(), v2.NamespaceKey, check.Namespace)
 
 	assert.NoError(t, check.Validate())
 	assert.NoError(t, st.UpdateCheckConfig(ctx, check))
@@ -65,7 +66,7 @@ func TestSchedulerd(t *testing.T) {
 	assert.NoError(t, bus.Stop())
 
 	for msg := range tsub.ch {
-		result, ok := msg.(*types.CheckConfig)
+		result, ok := msg.(*v2.CheckConfig)
 		assert.True(t, ok)
 		assert.EqualValues(t, check, result)
 	}

@@ -3,7 +3,7 @@ package transformers
 import (
 	"testing"
 
-	"github.com/sensu/sensu-go/types"
+	v2 "github.com/sensu/core/v2"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -20,7 +20,7 @@ func TestParseInflux(t *testing.T) {
 			expectedFormat: InfluxList{
 				{
 					Measurement: "weather",
-					TagSet: []*types.MetricTag{
+					TagSet: []*v2.MetricTag{
 						{
 							Name:  "location",
 							Value: "us-midwest",
@@ -49,7 +49,7 @@ func TestParseInflux(t *testing.T) {
 			expectedFormat: InfluxList{
 				{
 					Measurement: "weather",
-					TagSet: []*types.MetricTag{
+					TagSet: []*v2.MetricTag{
 						{
 							Name:  "location",
 							Value: "us-midwest",
@@ -73,7 +73,7 @@ func TestParseInflux(t *testing.T) {
 				},
 				{
 					Measurement: "weather",
-					TagSet:      []*types.MetricTag{},
+					TagSet:      []*v2.MetricTag{},
 					FieldSet: []*Field{
 						{
 							Key:   "temperature",
@@ -89,7 +89,7 @@ func TestParseInflux(t *testing.T) {
 			expectedFormat: InfluxList{
 				{
 					Measurement: "weather",
-					TagSet: []*types.MetricTag{
+					TagSet: []*v2.MetricTag{
 						{
 							Name:  "location",
 							Value: "us-midwest",
@@ -118,7 +118,7 @@ func TestParseInflux(t *testing.T) {
 			expectedFormat: InfluxList{
 				{
 					Measurement: "weather",
-					TagSet:      []*types.MetricTag{},
+					TagSet:      []*v2.MetricTag{},
 					FieldSet: []*Field{
 						{
 							Key:   "temperature",
@@ -153,7 +153,7 @@ func TestParseInflux(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.metric, func(t *testing.T) {
-			event := types.FixtureEvent("test", "test")
+			event := v2.FixtureEvent("test", "test")
 			event.Check.Output = tc.metric
 			influx := ParseInflux(event)
 			if !tc.timeInconclusive {
@@ -170,14 +170,14 @@ func TestParseInfluxTags(t *testing.T) {
 		metric           string
 		expectedFormat   InfluxList
 		timeInconclusive bool
-		outputMetricTags []*types.MetricTag
+		outputMetricTags []*v2.MetricTag
 	}{
 		{
 			metric: "weather,location=us-midwest,season=summer temperature=82,humidity=30 1465839830100400200",
 			expectedFormat: InfluxList{
 				{
 					Measurement: "weather",
-					TagSet: []*types.MetricTag{
+					TagSet: []*v2.MetricTag{
 						{
 							Name:  "location",
 							Value: "us-midwest",
@@ -204,7 +204,7 @@ func TestParseInfluxTags(t *testing.T) {
 					Timestamp: 1465839830,
 				},
 			},
-			outputMetricTags: []*types.MetricTag{
+			outputMetricTags: []*v2.MetricTag{
 				{
 					Name:  "instance",
 					Value: "hostname",
@@ -216,7 +216,7 @@ func TestParseInfluxTags(t *testing.T) {
 			expectedFormat: InfluxList{
 				{
 					Measurement: "weather",
-					TagSet: []*types.MetricTag{
+					TagSet: []*v2.MetricTag{
 						{
 							Name:  "location",
 							Value: "us-midwest",
@@ -245,7 +245,7 @@ func TestParseInfluxTags(t *testing.T) {
 			expectedFormat: InfluxList{
 				{
 					Measurement: "weather",
-					TagSet: []*types.MetricTag{
+					TagSet: []*v2.MetricTag{
 						{
 							Name:  "location",
 							Value: "us-midwest",
@@ -268,14 +268,14 @@ func TestParseInfluxTags(t *testing.T) {
 					Timestamp: 1465839830,
 				},
 			},
-			outputMetricTags: []*types.MetricTag{},
+			outputMetricTags: []*v2.MetricTag{},
 		},
 		{
 			metric: "weather,location=us-midwest,season=summer temperature=82,humidity=30 1465839830100400200",
 			expectedFormat: InfluxList{
 				{
 					Measurement: "weather",
-					TagSet: []*types.MetricTag{
+					TagSet: []*v2.MetricTag{
 						{
 							Name:  "location",
 							Value: "us-midwest",
@@ -306,7 +306,7 @@ func TestParseInfluxTags(t *testing.T) {
 					Timestamp: 1465839830,
 				},
 			},
-			outputMetricTags: []*types.MetricTag{
+			outputMetricTags: []*v2.MetricTag{
 				{
 					Name:  "foo",
 					Value: "bar",
@@ -322,7 +322,7 @@ func TestParseInfluxTags(t *testing.T) {
 			expectedFormat: InfluxList{
 				{
 					Measurement: "weather",
-					TagSet: []*types.MetricTag{
+					TagSet: []*v2.MetricTag{
 						{
 							Name:  "location",
 							Value: "us-midwest",
@@ -349,7 +349,7 @@ func TestParseInfluxTags(t *testing.T) {
 					Timestamp: 1465839830,
 				},
 			},
-			outputMetricTags: []*types.MetricTag{
+			outputMetricTags: []*v2.MetricTag{
 				{
 					Name:  "",
 					Value: "",
@@ -360,7 +360,7 @@ func TestParseInfluxTags(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.metric, func(t *testing.T) {
-			event := types.FixtureEvent("test", "test")
+			event := v2.FixtureEvent("test", "test")
 			event.Check.Output = tc.metric
 			event.Check.OutputMetricTags = tc.outputMetricTags
 			influx := ParseInflux(event)
@@ -376,13 +376,13 @@ func TestTransformInflux(t *testing.T) {
 
 	testCases := []struct {
 		metric         InfluxList
-		expectedFormat []*types.MetricPoint
+		expectedFormat []*v2.MetricPoint
 	}{
 		{
 			metric: InfluxList{
 				{
 					Measurement: "weather",
-					TagSet: []*types.MetricTag{
+					TagSet: []*v2.MetricTag{
 						{
 							Name:  "location",
 							Value: "us-midwest",
@@ -405,12 +405,12 @@ func TestTransformInflux(t *testing.T) {
 					Timestamp: 1465839830,
 				},
 			},
-			expectedFormat: []*types.MetricPoint{
+			expectedFormat: []*v2.MetricPoint{
 				{
 					Name:      "weather.temperature",
 					Value:     82,
 					Timestamp: 1465839830,
-					Tags: []*types.MetricTag{
+					Tags: []*v2.MetricTag{
 						{
 							Name:  "location",
 							Value: "us-midwest",
@@ -425,7 +425,7 @@ func TestTransformInflux(t *testing.T) {
 					Name:      "weather.humidity",
 					Value:     30,
 					Timestamp: 1465839830,
-					Tags: []*types.MetricTag{
+					Tags: []*v2.MetricTag{
 						{
 							Name:  "location",
 							Value: "us-midwest",
@@ -442,12 +442,12 @@ func TestTransformInflux(t *testing.T) {
 			metric: InfluxList{
 				{
 					Measurement: "",
-					TagSet:      []*types.MetricTag{},
+					TagSet:      []*v2.MetricTag{},
 					FieldSet:    []*Field{},
 					Timestamp:   0,
 				},
 			},
-			expectedFormat: []*types.MetricPoint(nil),
+			expectedFormat: []*v2.MetricPoint(nil),
 		},
 	}
 
@@ -464,17 +464,17 @@ func TestParseAndTransformInflux(t *testing.T) {
 
 	testCases := []struct {
 		metric           string
-		expectedFormat   []*types.MetricPoint
+		expectedFormat   []*v2.MetricPoint
 		timeInconclusive bool
 	}{
 		{
 			metric: "weather,location=us-midwest,season=summer temperature=82,humidity=30 1465839830100400200",
-			expectedFormat: []*types.MetricPoint{
+			expectedFormat: []*v2.MetricPoint{
 				{
 					Name:      "weather.temperature",
 					Value:     82,
 					Timestamp: 1465839830,
-					Tags: []*types.MetricTag{
+					Tags: []*v2.MetricTag{
 						{
 							Name:  "location",
 							Value: "us-midwest",
@@ -489,7 +489,7 @@ func TestParseAndTransformInflux(t *testing.T) {
 					Name:      "weather.humidity",
 					Value:     30,
 					Timestamp: 1465839830,
-					Tags: []*types.MetricTag{
+					Tags: []*v2.MetricTag{
 						{
 							Name:  "location",
 							Value: "us-midwest",
@@ -504,29 +504,29 @@ func TestParseAndTransformInflux(t *testing.T) {
 		},
 		{
 			metric: "weather temperature=82,humidity=30 1465839830100400200\nfoo",
-			expectedFormat: []*types.MetricPoint{
+			expectedFormat: []*v2.MetricPoint{
 				{
 					Name:      "weather.temperature",
 					Value:     82,
 					Timestamp: 1465839830,
-					Tags:      []*types.MetricTag{},
+					Tags:      []*v2.MetricTag{},
 				},
 				{
 					Name:      "weather.humidity",
 					Value:     30,
 					Timestamp: 1465839830,
-					Tags:      []*types.MetricTag{},
+					Tags:      []*v2.MetricTag{},
 				},
 			},
 		},
 		{
 			metric: "weather,location=us-midwest,season=summer temperature=82 1465839830100400200\nweather,location=us-midwest,season=summer humidity=30 1465839830100400200",
-			expectedFormat: []*types.MetricPoint{
+			expectedFormat: []*v2.MetricPoint{
 				{
 					Name:      "weather.temperature",
 					Value:     82,
 					Timestamp: 1465839830,
-					Tags: []*types.MetricTag{
+					Tags: []*v2.MetricTag{
 						{
 							Name:  "location",
 							Value: "us-midwest",
@@ -541,7 +541,7 @@ func TestParseAndTransformInflux(t *testing.T) {
 					Name:      "weather.humidity",
 					Value:     30,
 					Timestamp: 1465839830,
-					Tags: []*types.MetricTag{
+					Tags: []*v2.MetricTag{
 						{
 							Name:  "location",
 							Value: "us-midwest",
@@ -556,12 +556,12 @@ func TestParseAndTransformInflux(t *testing.T) {
 		},
 		{
 			metric: "metric value=0 0\n",
-			expectedFormat: []*types.MetricPoint{
+			expectedFormat: []*v2.MetricPoint{
 				{
 					Name:      "metric.value",
 					Value:     0,
 					Timestamp: 0,
-					Tags:      []*types.MetricTag{},
+					Tags:      []*v2.MetricTag{},
 				},
 			},
 		},
@@ -571,25 +571,25 @@ func TestParseAndTransformInflux(t *testing.T) {
 		},
 		{
 			metric:         "weather temperature=82 12345 blah",
-			expectedFormat: []*types.MetricPoint(nil),
+			expectedFormat: []*v2.MetricPoint(nil),
 		},
 		{
 			metric:         "weather,location temperature= 1465839830100400200",
-			expectedFormat: []*types.MetricPoint(nil),
+			expectedFormat: []*v2.MetricPoint(nil),
 		},
 		{
 			metric:         "",
-			expectedFormat: []*types.MetricPoint(nil),
+			expectedFormat: []*v2.MetricPoint(nil),
 		},
 		{
 			metric:         "foo bar baz",
-			expectedFormat: []*types.MetricPoint(nil),
+			expectedFormat: []*v2.MetricPoint(nil),
 		},
 	}
 
 	for _, tc := range testCases {
 		t.Run(tc.metric, func(t *testing.T) {
-			event := types.FixtureEvent("test", "test")
+			event := v2.FixtureEvent("test", "test")
 			event.Check.Output = tc.metric
 			influx := ParseInflux(event)
 			mp := influx.Transform()

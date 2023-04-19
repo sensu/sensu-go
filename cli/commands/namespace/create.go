@@ -4,10 +4,10 @@ import (
 	"errors"
 	"fmt"
 
+	v2 "github.com/sensu/core/v2"
 	"github.com/sensu/sensu-go/cli"
 	"github.com/sensu/sensu-go/cli/commands/flags"
 	"github.com/sensu/sensu-go/cli/commands/helpers"
-	"github.com/sensu/sensu-go/types"
 	"github.com/spf13/cobra"
 )
 
@@ -36,7 +36,7 @@ func CreateCommand(cli *cli.SensuCli) *cobra.Command {
 				}
 			}
 
-			namespace := types.Namespace{}
+			namespace := v2.Namespace{}
 			opts.Copy(&namespace)
 
 			if err := namespace.Validate(); err != nil {

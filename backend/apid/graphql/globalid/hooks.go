@@ -1,10 +1,11 @@
 package globalid
 
-import "github.com/sensu/sensu-go/types"
-
-//
-// Hooks
-//
+import (
+	v2 "github.com/sensu/core/v2"
+	//
+	// Hooks
+	//
+)
 
 var hookName = "hooks"
 
@@ -14,7 +15,7 @@ var HookTranslator = commonTranslator{
 	encodeFunc: standardEncoder(hookName, "Name"),
 	decodeFunc: standardDecoder,
 	isResponsibleFunc: func(record interface{}) bool {
-		_, ok := record.(*types.HookConfig)
+		_, ok := record.(*v2.HookConfig)
 		return ok
 	},
 }

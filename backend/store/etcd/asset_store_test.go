@@ -7,6 +7,7 @@ import (
 	"context"
 	"testing"
 
+	"github.com/sensu/core/v2"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/types"
 	"github.com/stretchr/testify/assert"
@@ -14,8 +15,8 @@ import (
 
 func TestAssetStorage(t *testing.T) {
 	testWithEtcd(t, func(s store.Store) {
-		asset := types.FixtureAsset("ruby")
-		ctx := context.WithValue(context.Background(), types.NamespaceKey, asset.Namespace)
+		asset := v2.FixtureAsset("ruby")
+		ctx := context.WithValue(context.Background(), v2.NamespaceKey, asset.Namespace)
 
 		err := s.UpdateAsset(ctx, asset)
 		assert.NoError(t, err)

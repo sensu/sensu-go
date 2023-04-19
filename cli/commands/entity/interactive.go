@@ -4,8 +4,8 @@ import (
 	"strings"
 
 	"github.com/AlecAivazis/survey/v2"
+	v2 "github.com/sensu/core/v2"
 	"github.com/sensu/sensu-go/cli/commands/helpers"
-	"github.com/sensu/sensu-go/types"
 	"github.com/spf13/pflag"
 )
 
@@ -76,14 +76,14 @@ func (opts *entityOpts) administerQuestionnaire(editing bool, askOpts ...survey.
 	return survey.Ask(qs, opts, askOpts...)
 }
 
-func (opts *entityOpts) copy(entity *types.Entity) {
+func (opts *entityOpts) copy(entity *v2.Entity) {
 	entity.Name = opts.Name
 	entity.EntityClass = opts.EntityClass
 	entity.Subscriptions = helpers.SafeSplitCSV(opts.Subscriptions)
 	entity.Namespace = opts.Namespace
 }
 
-func (opts *entityOpts) withEntity(entity *types.Entity) {
+func (opts *entityOpts) withEntity(entity *v2.Entity) {
 	opts.Name = entity.Name
 	opts.EntityClass = entity.EntityClass
 	opts.Subscriptions = strings.Join(entity.Subscriptions, ",")

@@ -14,7 +14,6 @@ import (
 	jwt "github.com/golang-jwt/jwt/v4"
 	corev2 "github.com/sensu/core/v2"
 	"github.com/sensu/sensu-go/backend/store"
-	"github.com/sensu/sensu-go/types"
 	utilbytes "github.com/sensu/sensu-go/util/bytes"
 )
 
@@ -196,7 +195,7 @@ func InitSecret(store store.Store) error {
 
 // parseToken takes a signed token and parse it to verify its integrity
 func parseToken(tokenString string) (*jwt.Token, error) {
-	t, err := jwt.ParseWithClaims(tokenString, &types.Claims{}, func(token *jwt.Token) (interface{}, error) {
+	t, err := jwt.ParseWithClaims(tokenString, &corev2.Claims{}, func(token *jwt.Token) (interface{}, error) {
 		if token.Header["alg"] == jwt.SigningMethodHS256.Alg() {
 			// Validate the signing method used
 			if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
@@ -301,7 +300,7 @@ func ValidateToken(tokenString string) (*jwt.Token, error) {
 	if token == nil {
 		return nil, err
 	}
-	if _, ok := token.Claims.(*types.Claims); ok && token.Valid {
+	if _, ok := token.Claims.(*corev2.Claims); ok && token.Valid {
 		return token, nil
 	}
 	return nil, err

@@ -3,9 +3,9 @@ package api
 import (
 	"context"
 
+	v2 "github.com/sensu/core/v2"
 	"github.com/sensu/sensu-go/backend/authentication/jwt"
 	"github.com/sensu/sensu-go/backend/authorization"
-	"github.com/sensu/sensu-go/types"
 )
 
 // addAuthUser finds the user in the provided context, and sets it on the
@@ -18,7 +18,7 @@ func addAuthUser(ctx context.Context, attrs *authorization.Attributes) error {
 	}
 
 	// Add the user to our request info
-	attrs.User = types.User{
+	attrs.User = v2.User{
 		Username: claims.Subject,
 		Groups:   claims.Groups,
 	}

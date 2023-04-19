@@ -3,7 +3,7 @@ package config
 import (
 	"time"
 
-	"github.com/sensu/sensu-go/types"
+	v2 "github.com/sensu/core/v2"
 )
 
 const (
@@ -42,7 +42,7 @@ type Read interface {
 	Format() string
 	InsecureSkipTLSVerify() bool
 	Namespace() string
-	Tokens() *types.Tokens
+	Tokens() *v2.Tokens
 	APIKey() string
 	Timeout() time.Duration
 	TrustedCAFile() string
@@ -54,7 +54,7 @@ type Write interface {
 	SaveFormat(string) error
 	SaveInsecureSkipTLSVerify(bool) error
 	SaveNamespace(string) error
-	SaveTokens(*types.Tokens) error
+	SaveTokens(*v2.Tokens) error
 	SaveTrustedCAFile(string) error
 	SaveTimeout(time.Duration) error
 }

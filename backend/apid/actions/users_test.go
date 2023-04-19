@@ -5,10 +5,10 @@ import (
 	"errors"
 	"testing"
 
+	v2 "github.com/sensu/core/v2"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/testing/mockstore"
 	"github.com/sensu/sensu-go/testing/testutil"
-	"github.com/sensu/sensu-go/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
@@ -31,7 +31,7 @@ func TestUserList(t *testing.T) {
 	testCases := []struct {
 		name        string
 		ctx         context.Context
-		records     []*types.User
+		records     []*v2.User
 		storeErr    error
 		expectedLen int
 		expectedErr error
@@ -46,9 +46,9 @@ func TestUserList(t *testing.T) {
 		{
 			name: "With Users",
 			ctx:  ctxWithAuthorizedViewer,
-			records: []*types.User{
-				types.FixtureUser("user1"),
-				types.FixtureUser("user2"),
+			records: []*v2.User{
+				v2.FixtureUser("user1"),
+				v2.FixtureUser("user2"),
 			},
 			expectedLen: 2,
 			storeErr:    nil,
@@ -93,7 +93,7 @@ func TestUserGet(t *testing.T) {
 		name            string
 		ctx             context.Context
 		argument        string
-		storedRecord    *types.User
+		storedRecord    *v2.User
 		storeErr        error
 		expected        bool
 		expectedErrCode ErrCode
@@ -108,7 +108,7 @@ func TestUserGet(t *testing.T) {
 		{
 			name:         "Found",
 			ctx:          ctxWithAuthorizedViewer,
-			storedRecord: types.FixtureUser("user1"),
+			storedRecord: v2.FixtureUser("user1"),
 			argument:     "user1",
 			expected:     true,
 		},
@@ -160,14 +160,14 @@ func TestUserCreateOrReplace(t *testing.T) {
 		testutil.ContextWithNamespace("default"),
 	)
 
-	badUser := types.FixtureUser("user1")
+	badUser := v2.FixtureUser("user1")
 	badUser.Username = "!@#!#$@#^$%&$%&$&$%&%^*%&(%@###"
 
 	testCases := []struct {
 		name            string
 		ctx             context.Context
-		argument        *types.User
-		fetchResult     *types.User
+		argument        *v2.User
+		fetchResult     *v2.User
 		fetchErr        error
 		createErr       error
 		expectedErr     bool
@@ -176,19 +176,19 @@ func TestUserCreateOrReplace(t *testing.T) {
 		{
 			name:        "Created",
 			ctx:         defaultCtx,
-			argument:    types.FixtureUser("user1"),
+			argument:    v2.FixtureUser("user1"),
 			expectedErr: false,
 		},
 		{
 			name:        "Already Exists",
 			ctx:         defaultCtx,
-			argument:    types.FixtureUser("user1"),
-			fetchResult: types.FixtureUser("user1"),
+			argument:    v2.FixtureUser("user1"),
+			fetchResult: v2.FixtureUser("user1"),
 		},
 		{
 			name:            "store Err on Create",
 			ctx:             defaultCtx,
-			argument:        types.FixtureUser("user1"),
+			argument:        v2.FixtureUser("user1"),
 			createErr:       errors.New("dunno"),
 			expectedErr:     true,
 			expectedErrCode: InternalErr,
@@ -237,14 +237,14 @@ func TestUserCreate(t *testing.T) {
 		testutil.ContextWithNamespace("default"),
 	)
 
-	badUser := types.FixtureUser("user1")
+	badUser := v2.FixtureUser("user1")
 	badUser.Username = "!@#!#$@#^$%&$%&$&$%&%^*%&(%@###"
 
 	testCases := []struct {
 		name            string
 		ctx             context.Context
-		argument        *types.User
-		fetchResult     *types.User
+		argument        *v2.User
+		fetchResult     *v2.User
 		fetchErr        error
 		createErr       error
 		expectedErr     bool
@@ -253,21 +253,21 @@ func TestUserCreate(t *testing.T) {
 		{
 			name:        "Created",
 			ctx:         defaultCtx,
-			argument:    types.FixtureUser("user1"),
+			argument:    v2.FixtureUser("user1"),
 			expectedErr: false,
 		},
 		{
 			name:            "Already Exists",
 			ctx:             defaultCtx,
-			argument:        types.FixtureUser("user1"),
-			fetchResult:     types.FixtureUser("user1"),
+			argument:        v2.FixtureUser("user1"),
+			fetchResult:     v2.FixtureUser("user1"),
 			expectedErr:     true,
 			expectedErrCode: AlreadyExistsErr,
 		},
 		{
 			name:            "store Err on Create",
 			ctx:             defaultCtx,
-			argument:        types.FixtureUser("user1"),
+			argument:        v2.FixtureUser("user1"),
 			createErr:       errors.New("dunno"),
 			expectedErr:     true,
 			expectedErrCode: InternalErr,
@@ -321,7 +321,7 @@ func TestUserDisable(t *testing.T) {
 		name            string
 		ctx             context.Context
 		argument        string
-		fetchResult     *types.User
+		fetchResult     *v2.User
 		fetchErr        error
 		updateErr       error
 		expectedErr     bool
@@ -331,7 +331,7 @@ func TestUserDisable(t *testing.T) {
 			name:        "Disabled",
 			ctx:         defaultCtx,
 			argument:    "user1",
-			fetchResult: types.FixtureUser("user1"),
+			fetchResult: v2.FixtureUser("user1"),
 			expectedErr: false,
 		},
 		{
@@ -346,7 +346,7 @@ func TestUserDisable(t *testing.T) {
 			name:            "store Err on Update",
 			ctx:             defaultCtx,
 			argument:        "user1",
-			fetchResult:     types.FixtureUser("user1"),
+			fetchResult:     v2.FixtureUser("user1"),
 			updateErr:       errors.New("dunno"),
 			expectedErr:     true,
 			expectedErrCode: InternalErr,
@@ -391,8 +391,8 @@ func TestUserEnable(t *testing.T) {
 		testutil.ContextWithNamespace("default"),
 	)
 
-	disabledUser := func() *types.User {
-		user := types.FixtureUser("user1")
+	disabledUser := func() *v2.User {
+		user := v2.FixtureUser("user1")
 		user.Disabled = true
 		return user
 	}
@@ -401,7 +401,7 @@ func TestUserEnable(t *testing.T) {
 		name            string
 		ctx             context.Context
 		argument        string
-		fetchResult     *types.User
+		fetchResult     *v2.User
 		fetchErr        error
 		updateErr       error
 		expectedErr     bool

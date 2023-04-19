@@ -27,7 +27,7 @@ func TestNamespaceStorage(t *testing.T) {
 		assert.Equal(t, 1, len(namespaces))
 
 		// We should be able to create a new namespace
-		namespace := types.FixtureNamespace("acme")
+		namespace := corev2.FixtureNamespace("acme")
 		err = s.CreateNamespace(ctx, namespace)
 		assert.NoError(t, err)
 
@@ -49,7 +49,7 @@ func TestNamespaceStorage(t *testing.T) {
 		assert.Equal(t, 2, len(namespaces))
 
 		// Delete a non-empty namespace
-		check := types.FixtureCheckConfig("entity")
+		check := corev2.FixtureCheckConfig("entity")
 		check.ObjectMeta.Namespace = namespace.Name
 		require.NoError(t, s.UpdateCheckConfig(ctx, check))
 		err = s.DeleteNamespace(ctx, namespace.Name)

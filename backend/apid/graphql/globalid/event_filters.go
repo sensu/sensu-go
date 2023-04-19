@@ -1,10 +1,11 @@
 package globalid
 
-import "github.com/sensu/sensu-go/types"
-
-//
-// Event Filters
-//
+import (
+	v2 "github.com/sensu/core/v2"
+	//
+	// Event Filters
+	//
+)
 
 var eventFilterName = "filters"
 
@@ -14,7 +15,7 @@ var EventFilterTranslator = commonTranslator{
 	encodeFunc: standardEncoder(eventFilterName, "Name"),
 	decodeFunc: standardDecoder,
 	isResponsibleFunc: func(record interface{}) bool {
-		_, ok := record.(*types.EventFilter)
+		_, ok := record.(*v2.EventFilter)
 		return ok
 	},
 }

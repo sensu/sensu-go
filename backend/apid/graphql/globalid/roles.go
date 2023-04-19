@@ -1,10 +1,12 @@
 package globalid
 
-import "github.com/sensu/sensu-go/types"
+import (
+	v2 "github.com/sensu/core/v2"
+	//
+	// Roles
+	//
+)
 
-//
-// Roles
-//
 var roleName = "roles"
 
 // RoleTranslator global ID resource
@@ -13,7 +15,7 @@ var RoleTranslator = commonTranslator{
 	encodeFunc: standardEncoder(roleName, "Name"),
 	decodeFunc: standardDecoder,
 	isResponsibleFunc: func(record interface{}) bool {
-		_, ok := record.(*types.Role)
+		_, ok := record.(*v2.Role)
 		return ok
 	},
 }

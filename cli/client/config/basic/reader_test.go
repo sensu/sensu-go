@@ -4,8 +4,8 @@ import (
 	"testing"
 	"time"
 
+	v2 "github.com/sensu/core/v2"
 	"github.com/sensu/sensu-go/cli/client/config"
-	"github.com/sensu/sensu-go/types"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -45,7 +45,7 @@ func TestTimeoutDefault(t *testing.T) {
 }
 
 func TestTokens(t *testing.T) {
-	tokens := &types.Tokens{Access: "foobar"}
+	tokens := &v2.Tokens{Access: "foobar"}
 	conf := &Config{Cluster: Cluster{Tokens: tokens}}
 	assert.Equal(t, tokens.Access, conf.Tokens().Access)
 }

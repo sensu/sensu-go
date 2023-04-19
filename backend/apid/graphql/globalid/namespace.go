@@ -3,7 +3,7 @@ package globalid
 import (
 	"context"
 
-	"github.com/sensu/sensu-go/types"
+	v2 "github.com/sensu/core/v2"
 )
 
 //
@@ -17,7 +17,7 @@ var NamespaceTranslator = commonTranslator{
 	name:       namespaceName,
 	decodeFunc: standardDecoder,
 	isResponsibleFunc: func(record interface{}) bool {
-		_, ok := record.(*types.Namespace)
+		_, ok := record.(*v2.Namespace)
 		return ok
 	},
 

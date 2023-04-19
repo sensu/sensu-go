@@ -7,7 +7,6 @@ import (
 	corev2 "github.com/sensu/core/v2"
 	"github.com/sensu/sensu-go/backend/authentication/jwt"
 	"github.com/sensu/sensu-go/backend/store"
-	"github.com/sensu/sensu-go/types"
 )
 
 // SilencedController exposes actions in which a viewer can perform.
@@ -24,7 +23,7 @@ func NewSilencedController(store store.SilencedStore) SilencedController {
 
 // List returns resources available to the viewer.
 func (c SilencedController) List(ctx context.Context, sub, check string) ([]*corev2.Silenced, error) {
-	var results []*types.Silenced
+	var results []*corev2.Silenced
 	var serr error
 	if sub != "" {
 		results, serr = c.Store.GetSilencedEntriesBySubscription(ctx, sub)

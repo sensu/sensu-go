@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"testing"
 
+	v2 "github.com/sensu/core/v2"
 	client "github.com/sensu/sensu-go/cli/client/testing"
 	stest "github.com/sensu/sensu-go/cli/commands/testing"
-	"github.com/sensu/sensu-go/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
@@ -32,7 +32,7 @@ func TestRemoveWhenCommand(t *testing.T) {
 			name = test.args[0]
 		}
 		t.Run(fmt.Sprintf("test %d", i), func(t *testing.T) {
-			filter := types.FixtureEventFilter("filter1")
+			filter := v2.FixtureEventFilter("filter1")
 			cli := stest.NewMockCLI()
 			client := cli.Client.(*client.MockClient)
 			client.On("FetchFilter", name).Return(filter, test.fetchResponse)

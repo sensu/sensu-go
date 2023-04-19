@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"testing"
 
+	v2 "github.com/sensu/core/v2"
 	clienttest "github.com/sensu/sensu-go/cli/client/testing"
 	test "github.com/sensu/sensu-go/cli/commands/testing"
-	"github.com/sensu/sensu-go/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
@@ -20,7 +20,7 @@ func TestLogout(t *testing.T) {
 
 	config := cli.Config.(*clienttest.MockConfig)
 	config.On("SaveTokens", mock.Anything).Return(nil)
-	tokens := types.FixtureTokens("foo", "bar")
+	tokens := v2.FixtureTokens("foo", "bar")
 	config.On("Tokens").Return(tokens)
 	config.On("SaveInsecureSkipTLSVerify", false).Return(nil)
 	config.On("SaveTrustedCAFile", "").Return(nil)
@@ -38,7 +38,7 @@ func TestLogoutServerError(t *testing.T) {
 	client.On("Logout", "bar").Return(fmt.Errorf("error"))
 
 	config := cli.Config.(*clienttest.MockConfig)
-	tokens := types.FixtureTokens("foo", "bar")
+	tokens := v2.FixtureTokens("foo", "bar")
 	config.On("Tokens").Return(tokens)
 	config.On("SaveInsecureSkipTLSVerify", false).Return(nil)
 	config.On("SaveTrustedCAFile", "").Return(nil)
@@ -57,7 +57,7 @@ func TestLogoutServerConfigFile(t *testing.T) {
 	client.On("Logout", "bar").Return(nil)
 
 	config := cli.Config.(*clienttest.MockConfig)
-	tokens := types.FixtureTokens("foo", "bar")
+	tokens := v2.FixtureTokens("foo", "bar")
 	config.On("SaveTokens", mock.Anything).Return(fmt.Errorf("error"))
 	config.On("Tokens").Return(tokens)
 	config.On("SaveInsecureSkipTLSVerify", false).Return(nil)

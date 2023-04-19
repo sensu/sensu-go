@@ -6,7 +6,6 @@ import (
 
 	corev2 "github.com/sensu/core/v2"
 	corev3 "github.com/sensu/core/v3"
-	"github.com/sensu/sensu-go/types"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -14,7 +13,7 @@ func TestStandardDecoder(t *testing.T) {
 	assert := assert.New(t)
 
 	ctx := context.Background()
-	handler := types.FixtureHandler("myHandler")
+	handler := corev2.FixtureHandler("myHandler")
 	encoderFn := standardEncoder("handlers", "Name")
 	components := encoderFn(ctx, handler)
 

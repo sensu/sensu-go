@@ -5,10 +5,10 @@ import (
 	"fmt"
 	"strings"
 
+	v2 "github.com/sensu/core/v2"
 	"github.com/sensu/sensu-go/cli"
 	"github.com/sensu/sensu-go/cli/commands/flags"
 	"github.com/sensu/sensu-go/cli/commands/helpers"
-	"github.com/sensu/sensu-go/types"
 	"github.com/spf13/cobra"
 )
 
@@ -50,7 +50,7 @@ func CreateCommand(cli *cli.SensuCli) *cobra.Command {
 			}
 
 			// Apply given arguments to check
-			filter := types.EventFilter{}
+			filter := v2.EventFilter{}
 			opts.Copy(&filter)
 
 			if err := filter.Validate(); err != nil {
@@ -71,7 +71,7 @@ func CreateCommand(cli *cli.SensuCli) *cobra.Command {
 
 	cmd.Flags().StringP("action", "a", "",
 		"specifies whether events are passed through the filter or blocked by the "+
-			"filter. Allowed values: "+strings.Join(types.EventFilterAllActions, ", "),
+			"filter. Allowed values: "+strings.Join(v2.EventFilterAllActions, ", "),
 	)
 	cmd.Flags().StringP("expressions", "s", "",
 		"comma separated list of boolean expressions that are evaluated to "+

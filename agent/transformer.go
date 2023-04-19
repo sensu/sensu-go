@@ -1,10 +1,12 @@
 package agent
 
-import "github.com/sensu/sensu-go/types"
+import (
+	v2 "github.com/sensu/core/v2"
+	// A Transformer handles transforming Sensu metrics to other output metric formats
+)
 
-// A Transformer handles transforming Sensu metrics to other output metric formats
 type Transformer interface {
 	// Transform transforms a metric in a different output metric format to Sensu Metric
 	// Format
-	Transform() []*types.MetricPoint
+	Transform() []*v2.MetricPoint
 }

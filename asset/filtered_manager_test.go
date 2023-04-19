@@ -7,7 +7,6 @@ import (
 	"testing"
 
 	corev2 "github.com/sensu/core/v2"
-	"github.com/sensu/sensu-go/types"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -25,9 +24,9 @@ func (m *MockGetter) Get(ctx context.Context, asset *corev2.Asset) (*RuntimeAsse
 }
 
 // NewTestFilteredManager creates a new FilteredManager for testing
-func NewTestFilteredManager() (*MockGetter, *types.Entity, *filteredManager) {
+func NewTestFilteredManager() (*MockGetter, *corev2.Entity, *filteredManager) {
 	mockGetter := &MockGetter{asset: &RuntimeAsset{Path: "/foo/bar"}}
-	entity := types.FixtureEntity("test-entity")
+	entity := corev2.FixtureEntity("test-entity")
 	filteredManager := NewFilteredManager(mockGetter, entity)
 	return mockGetter, entity, filteredManager
 }
@@ -36,7 +35,7 @@ func NewTestFilteredManager() (*MockGetter, *types.Entity, *filteredManager) {
 func TestFilteredManagerCallsGetter(t *testing.T) {
 	mockGetter, _, filteredManager := NewTestFilteredManager()
 
-	actualAsset, err := filteredManager.Get(context.TODO(), types.FixtureAsset("test-asset"))
+	actualAsset, err := filteredManager.Get(context.TODO(), corev2.FixtureAsset("test-asset"))
 	assert.NoError(t, err)
 	assert.Equal(t, mockGetter.asset, actualAsset)
 	assert.True(t, mockGetter.getCalled)
@@ -46,7 +45,7 @@ func TestFilteredManagerCallsGetter(t *testing.T) {
 func TestFilteredManagerFilteredAsset(t *testing.T) {
 	mockGetter, entity, filteredManager := NewTestFilteredManager()
 
-	fixtureAsset := types.FixtureAsset("test-asset")
+	fixtureAsset := corev2.FixtureAsset("test-asset")
 	fixtureAsset.Filters = []string{fmt.Sprintf("entity.name == '%s'", entity.Name)}
 	actualAsset, err := filteredManager.Get(context.TODO(), fixtureAsset)
 	assert.NoError(t, err)
@@ -58,7 +57,7 @@ func TestFilteredManagerFilteredAsset(t *testing.T) {
 func TestFilteredManagerUnfilteredAsset(t *testing.T) {
 	mockGetter, _, filteredManager := NewTestFilteredManager()
 
-	fixtureAsset := types.FixtureAsset("test-asset")
+	fixtureAsset := corev2.FixtureAsset("test-asset")
 	fixtureAsset.Filters = []string{"entity.name == 'foo'"}
 	actualAsset, err := filteredManager.Get(context.TODO(), fixtureAsset)
 	assert.NoError(t, err)
@@ -77,7 +76,7 @@ func TestFilteredManagerFilteredBuildAsset(t *testing.T) {
 	sha512 := "cf83e1357eefb8bdf1542850d66d8007d620e4050b5715dc83f4a921d36ce9ce47d0d13c5d85f2b0ff8318d2877eec2f63b931bd47417a81a538327af927da3e"
 	filters := []string{fmt.Sprintf("entity.name == '%s'", entity.Name)}
 
-	fixtureAsset := types.FixtureAsset("test-asset")
+	fixtureAsset := corev2.FixtureAsset("test-asset")
 	fixtureAsset.Filters = []string{"entity.name == 'foo'"}
 	fixtureAsset.Builds = []*corev2.AssetBuild{
 		{
@@ -104,7 +103,7 @@ func TestFilteredManagerUnfilteredBuildAsset(t *testing.T) {
 	sha512 := "cf83e1357eefb8bdf1542850d66d8007d620e4050b5715dc83f4a921d36ce9ce47d0d13c5d85f2b0ff8318d2877eec2f63b931bd47417a81a538327af927da3e"
 	filters := []string{"entity.name == 'asdf'"}
 
-	fixtureAsset := types.FixtureAsset("test-asset")
+	fixtureAsset := corev2.FixtureAsset("test-asset")
 	fixtureAsset.Filters = []string{"entity.name == 'foo'"}
 	fixtureAsset.Builds = []*corev2.AssetBuild{
 		{
@@ -124,7 +123,7 @@ func TestFilteredManagerError(t *testing.T) {
 	mockGetter, _, filteredManager := NewTestFilteredManager()
 	mockGetter.err = errors.New("TestFilteredManagerError")
 
-	_, err := filteredManager.Get(context.TODO(), types.FixtureAsset("test-asset"))
+	_, err := filteredManager.Get(context.TODO(), corev2.FixtureAsset("test-asset"))
 	assert.Error(t, err)
 	assert.True(t, mockGetter.getCalled)
 }
@@ -134,7 +133,7 @@ func TestIsFiltered(t *testing.T) {
 	_, entity, filteredManager := NewTestFilteredManager()
 
 	// filtered is true, filter matches
-	fixtureAsset := types.FixtureAsset("test-asset")
+	fixtureAsset := corev2.FixtureAsset("test-asset")
 	fixtureAsset.Filters = []string{fmt.Sprintf("entity.name == '%s'", entity.Name)}
 	filtered, err := filteredManager.isFiltered(fixtureAsset)
 	assert.NoError(t, err)

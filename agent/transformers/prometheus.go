@@ -5,10 +5,10 @@ import (
 	"strings"
 
 	time "github.com/echlebek/timeproxy"
+	v2 "github.com/sensu/core/v2"
 
 	"github.com/prometheus/common/expfmt"
 	"github.com/prometheus/common/model"
-	"github.com/sensu/sensu-go/types"
 	"github.com/sirupsen/logrus"
 )
 
@@ -22,17 +22,17 @@ type PromList model.Vector
 
 // Transform transforms metrics in the Prometheus Exposition Text
 // Format to the Sensu Metric Format.
-func (p PromList) Transform() []*types.MetricPoint {
-	var points []*types.MetricPoint
+func (p PromList) Transform() []*v2.MetricPoint {
+	var points []*v2.MetricPoint
 	for _, prom := range p {
 		v := float64(prom.Value)
 		if math.IsNaN(v) {
 			continue
 		}
-		tags := []*types.MetricTag{}
+		tags := []*v2.MetricTag{}
 		for ln, lv := range prom.Metric {
 			if ln != "__name__" {
-				mt := &types.MetricTag{
+				mt := &v2.MetricTag{
 					Name:  string(ln),
 					Value: string(lv),
 				}
@@ -41,7 +41,7 @@ func (p PromList) Transform() []*types.MetricPoint {
 		}
 		n := string(prom.Metric["__name__"])
 		n = strings.Replace(n, "\n", "", -1)
-		mp := &types.MetricPoint{
+		mp := &v2.MetricPoint{
 			Name:      n,
 			Value:     v,
 			Timestamp: prom.Timestamp.Unix(),
@@ -54,7 +54,7 @@ func (p PromList) Transform() []*types.MetricPoint {
 
 // ParseProm parses a Prometheus Exposition Text Formated string into
 // an Prometheus Vector (sample).
-func ParseProm(event *types.Event) PromList {
+func ParseProm(event *v2.Event) PromList {
 	fields := logrus.Fields{
 		"namespace": event.Check.Namespace,
 		"check":     event.Check.Name,

@@ -5,10 +5,10 @@ import (
 	"fmt"
 
 	"github.com/AlecAivazis/survey/v2"
+	v2 "github.com/sensu/core/v2"
 	"github.com/sensu/sensu-go/cli"
 	"github.com/sensu/sensu-go/cli/commands/flags"
 	"github.com/sensu/sensu-go/cli/commands/helpers"
-	"github.com/sensu/sensu-go/types"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 )
@@ -123,10 +123,10 @@ func (opts *createOpts) administerQuestionnaire() error {
 	return survey.Ask(qs, opts)
 }
 
-func (opts *createOpts) toUser() *types.User {
+func (opts *createOpts) toUser() *v2.User {
 	groups := helpers.SafeSplitCSV(opts.Groups)
 
-	return &types.User{
+	return &v2.User{
 		Username: opts.Username,
 		Password: opts.Password,
 		Groups:   groups,

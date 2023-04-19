@@ -4,15 +4,15 @@ import (
 	"context"
 	"path"
 
+	v2 "github.com/sensu/core/v2"
 	"github.com/sensu/sensu-go/backend/store"
-	"github.com/sensu/sensu-go/types"
 )
 
 var (
 	clusterRolesPathPrefix = "rbac/clusterroles"
 )
 
-func getClusterRolePath(clusterRole *types.ClusterRole) string {
+func getClusterRolePath(clusterRole *v2.ClusterRole) string {
 	return path.Join(store.Root, clusterRolesPathPrefix, clusterRole.Name)
 }
 
@@ -22,7 +22,7 @@ func GetClusterRolesPath(ctx context.Context, name string) string {
 }
 
 // CreateClusterRole ...
-func (s *Store) CreateClusterRole(ctx context.Context, clusterRole *types.ClusterRole) error {
+func (s *Store) CreateClusterRole(ctx context.Context, clusterRole *v2.ClusterRole) error {
 	if err := clusterRole.Validate(); err != nil {
 		return &store.ErrNotValid{Err: err}
 	}
@@ -30,7 +30,7 @@ func (s *Store) CreateClusterRole(ctx context.Context, clusterRole *types.Cluste
 }
 
 // CreateOrUpdateClusterRole ...
-func (s *Store) CreateOrUpdateClusterRole(ctx context.Context, clusterRole *types.ClusterRole) error {
+func (s *Store) CreateOrUpdateClusterRole(ctx context.Context, clusterRole *v2.ClusterRole) error {
 	if err := clusterRole.Validate(); err != nil {
 		return &store.ErrNotValid{Err: err}
 	}
@@ -43,21 +43,21 @@ func (s *Store) DeleteClusterRole(ctx context.Context, name string) error {
 }
 
 // GetClusterRole ...
-func (s *Store) GetClusterRole(ctx context.Context, name string) (*types.ClusterRole, error) {
-	clusterRole := &types.ClusterRole{}
+func (s *Store) GetClusterRole(ctx context.Context, name string) (*v2.ClusterRole, error) {
+	clusterRole := &v2.ClusterRole{}
 	err := Get(ctx, s.client, GetClusterRolesPath(ctx, name), clusterRole)
 	return clusterRole, err
 }
 
 // ListClusterRoles ...
-func (s *Store) ListClusterRoles(ctx context.Context, pred *store.SelectionPredicate) ([]*types.ClusterRole, error) {
-	clusterRoles := []*types.ClusterRole{}
+func (s *Store) ListClusterRoles(ctx context.Context, pred *store.SelectionPredicate) ([]*v2.ClusterRole, error) {
+	clusterRoles := []*v2.ClusterRole{}
 	err := List(ctx, s.client, GetClusterRolesPath, &clusterRoles, pred)
 	return clusterRoles, err
 }
 
 // UpdateClusterRole ...
-func (s *Store) UpdateClusterRole(ctx context.Context, clusterRole *types.ClusterRole) error {
+func (s *Store) UpdateClusterRole(ctx context.Context, clusterRole *v2.ClusterRole) error {
 	if err := clusterRole.Validate(); err != nil {
 		return &store.ErrNotValid{Err: err}
 	}

@@ -1,10 +1,11 @@
 package globalid
 
-import "github.com/sensu/sensu-go/types"
-
-//
-// Silences
-//
+import (
+	v2 "github.com/sensu/core/v2"
+	//
+	// Silences
+	//
+)
 
 var silenceName = "silences"
 
@@ -14,7 +15,7 @@ var SilenceTranslator = commonTranslator{
 	encodeFunc: standardEncoder(silenceName, "Name"),
 	decodeFunc: standardDecoder,
 	isResponsibleFunc: func(record interface{}) bool {
-		_, ok := record.(*types.Silenced)
+		_, ok := record.(*v2.Silenced)
 		return ok
 	},
 }

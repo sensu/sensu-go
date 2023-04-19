@@ -1,10 +1,11 @@
 package globalid
 
-import "github.com/sensu/sensu-go/types"
-
-//
-// Handler
-//
+import (
+	v2 "github.com/sensu/core/v2"
+	//
+	// Handler
+	//
+)
 
 var handlerName = "handlers"
 
@@ -14,7 +15,7 @@ var HandlerTranslator = commonTranslator{
 	encodeFunc: standardEncoder(handlerName, "Name"),
 	decodeFunc: standardDecoder,
 	isResponsibleFunc: func(record interface{}) bool {
-		_, ok := record.(*types.Handler)
+		_, ok := record.(*v2.Handler)
 		return ok
 	},
 }

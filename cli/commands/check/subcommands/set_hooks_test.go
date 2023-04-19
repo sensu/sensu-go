@@ -3,9 +3,9 @@ package subcommands
 import (
 	"testing"
 
+	v2 "github.com/sensu/core/v2"
 	clientmock "github.com/sensu/sensu-go/cli/client/testing"
 	test "github.com/sensu/sensu-go/cli/commands/testing"
-	"github.com/sensu/sensu-go/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -29,7 +29,7 @@ func TestSetCheckHooksCommandRunEClosureSucess(t *testing.T) {
 
 	client := cli.Client.(*clientmock.MockClient)
 	client.On("AddCheckHook", mock.Anything, mock.Anything).Return(nil)
-	client.On("FetchCheck", "name").Return(types.FixtureCheckConfig("name"), nil)
+	client.On("FetchCheck", "name").Return(v2.FixtureCheckConfig("name"), nil)
 
 	cmd := SetCheckHooksCommand(cli)
 	require.NoError(t, cmd.Flags().Set("type", "non-zero"))

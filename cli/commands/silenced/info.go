@@ -6,10 +6,10 @@ import (
 	"io"
 	"time"
 
+	v2 "github.com/sensu/core/v2"
 	"github.com/sensu/sensu-go/cli"
 	"github.com/sensu/sensu-go/cli/commands/helpers"
 	"github.com/sensu/sensu-go/cli/elements/list"
-	"github.com/sensu/sensu-go/types"
 	"github.com/spf13/cobra"
 )
 
@@ -60,7 +60,7 @@ func expireAt(timestamp int64) string {
 }
 
 func printToList(v interface{}, writer io.Writer) error {
-	r, ok := v.(*types.Silenced)
+	r, ok := v.(*v2.Silenced)
 	if !ok {
 		return fmt.Errorf("%t is not a Silenced", v)
 	}

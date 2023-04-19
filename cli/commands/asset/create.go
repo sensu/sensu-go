@@ -6,11 +6,11 @@ import (
 	"strings"
 
 	"github.com/AlecAivazis/survey/v2"
+	v2 "github.com/sensu/core/v2"
 	"github.com/sensu/sensu-go/cli"
 	"github.com/sensu/sensu-go/cli/client"
 	"github.com/sensu/sensu-go/cli/commands/flags"
 	"github.com/sensu/sensu-go/cli/commands/helpers"
-	"github.com/sensu/sensu-go/types"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 )
@@ -93,7 +93,7 @@ type ConfigureAsset struct {
 }
 
 // Configure returns a new asset or returns error if arguments are invalid
-func (cfgPtr *ConfigureAsset) Configure() (*types.Asset, []error) {
+func (cfgPtr *ConfigureAsset) Configure() (*v2.Asset, []error) {
 	isInteractive, _ := cfgPtr.Flags.GetBool(flags.Interactive)
 
 	if len(cfgPtr.Args) == 1 {
@@ -111,7 +111,7 @@ func (cfgPtr *ConfigureAsset) Configure() (*types.Asset, []error) {
 		cfgPtr.configureFromFlags()
 	}
 
-	var asset types.Asset
+	var asset v2.Asset
 	cfgPtr.cfg.Copy(&asset)
 
 	return &asset, cfgPtr.errors
@@ -220,7 +220,7 @@ type Config struct {
 }
 
 // Copy applies configured details to given asset
-func (cfgPtr *Config) Copy(asset *types.Asset) {
+func (cfgPtr *Config) Copy(asset *v2.Asset) {
 	asset.Name = cfgPtr.Name
 	asset.Namespace = cfgPtr.Namespace
 	asset.Sha512 = cfgPtr.Sha512

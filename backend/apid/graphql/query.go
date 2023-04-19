@@ -245,7 +245,7 @@ func (r *queryImpl) Node(p schema.QueryNodeFieldResolverParams) (interface{}, er
 func (r *queryImpl) WrappedNode(p schema.QueryWrappedNodeFieldResolverParams) (interface{}, error) {
 	resolver := r.nodeResolver
 	res, err := resolver.Find(p.Context, p.Args.ID, p.Info)
-	if rres, ok := res.(types.Resource); ok {
+	if rres, ok := res.(corev2.Resource); ok {
 		return types.WrapResource(rres), err
 	}
 	return nil, err

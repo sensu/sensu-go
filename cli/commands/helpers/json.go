@@ -7,6 +7,7 @@ import (
 	"io"
 	"strings"
 
+	v2 "github.com/sensu/core/v2"
 	"github.com/sensu/sensu-go/types"
 )
 
@@ -34,7 +35,7 @@ func PrintJSON(r interface{}, io io.Writer) error {
 // human-readable JSON (pretty-prints), wraps that JSON using types.Wrapper, and
 // then prints the result to the given writer. Unescapes any &, <, or >
 // characters it finds.
-func PrintWrappedJSON(r types.Resource, wr io.Writer) error {
+func PrintWrappedJSON(r v2.Resource, wr io.Writer) error {
 	w := types.WrapResource(r)
 
 	buf := new(bytes.Buffer)
@@ -55,7 +56,7 @@ func PrintWrappedJSON(r types.Resource, wr io.Writer) error {
 // record to human-readable JSON (pretty-prints), wraps that JSON using
 // types.Wrapper, and then prints the result to the given writer. Unescapes
 // any &, <, or > characters it finds.
-func PrintWrappedJSONList(r []types.Resource, io io.Writer) error {
+func PrintWrappedJSONList(r []v2.Resource, io io.Writer) error {
 	for _, res := range r {
 		err := PrintWrappedJSON(res, io)
 		if err != nil {

@@ -5,7 +5,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/sensu/sensu-go/types"
+	v2 "github.com/sensu/core/v2"
 	"github.com/sirupsen/logrus"
 )
 
@@ -17,14 +17,14 @@ type Nagios struct {
 	Label     string
 	Value     float64
 	Timestamp int64
-	Tags      []*types.MetricTag
+	Tags      []*v2.MetricTag
 }
 
 // Transform transforms a metric in Nagio perfdata format to Sensu Metric Format
-func (n NagiosList) Transform() []*types.MetricPoint {
-	var points []*types.MetricPoint
+func (n NagiosList) Transform() []*v2.MetricPoint {
+	var points []*v2.MetricPoint
 	for _, nagios := range n {
-		mp := &types.MetricPoint{
+		mp := &v2.MetricPoint{
 			Name:      nagios.Label,
 			Value:     nagios.Value,
 			Timestamp: nagios.Timestamp,
@@ -32,7 +32,7 @@ func (n NagiosList) Transform() []*types.MetricPoint {
 		}
 
 		if mp.Tags == nil {
-			mp.Tags = []*types.MetricTag{}
+			mp.Tags = []*v2.MetricTag{}
 		}
 
 		points = append(points, mp)
@@ -41,7 +41,7 @@ func (n NagiosList) Transform() []*types.MetricPoint {
 }
 
 // ParseNagios parses a Nagios perfdata string into a slice of Nagios struct
-func ParseNagios(event *types.Event) NagiosList {
+func ParseNagios(event *v2.Event) NagiosList {
 	var nagiosList NagiosList
 	fields := logrus.Fields{
 		"namespace": event.Check.Namespace,

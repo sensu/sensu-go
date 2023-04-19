@@ -4,6 +4,7 @@ import (
 	"context"
 	"reflect"
 
+	v2 "github.com/sensu/core/v2"
 	"github.com/sensu/sensu-go/types"
 )
 
@@ -61,7 +62,7 @@ func (r commonTranslator) Decode(components StandardComponents) Components {
 // Helpers
 //
 
-func addMultitenantFields(c *StandardComponents, r types.MultitenantResource) {
+func addMultitenantFields(c *StandardComponents, r v2.MultitenantResource) {
 	c.namespace = r.GetNamespace()
 }
 
@@ -86,7 +87,7 @@ func standardEncoder(name string, fNames ...string) encoderFunc {
 		components.uniqueComponent = fVal.String()
 
 		// Add namespace to global id components
-		if multiRecord, ok := record.(types.MultitenantResource); ok {
+		if multiRecord, ok := record.(v2.MultitenantResource); ok {
 			addMultitenantFields(components, multiRecord)
 		}
 
@@ -95,7 +96,7 @@ func standardEncoder(name string, fNames ...string) encoderFunc {
 }
 
 type tmGetter interface {
-	GetTypeMeta() types.TypeMeta
+	GetTypeMeta() v2.TypeMeta
 }
 
 type namedResource interface {
@@ -127,12 +128,12 @@ func (g *genericTranslator) ForResourceNamed() string {
 	if g.name != "" {
 		return g.name
 	}
-	tm := types.TypeMeta{}
+	tm := v2.TypeMeta{}
 	if getter, ok := g.kind.(tmGetter); ok {
 		tm = getter.GetTypeMeta()
 	} else {
 		typ := reflect.Indirect(reflect.ValueOf(g.kind)).Type()
-		tm = types.TypeMeta{
+		tm = v2.TypeMeta{
 			Type:       typ.Name(),
 			APIVersion: types.ApiVersion(typ.PkgPath()),
 		}

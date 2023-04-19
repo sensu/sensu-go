@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	"github.com/gorilla/mux"
-	"github.com/sensu/sensu-go/types"
+	v2 "github.com/sensu/core/v2"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -39,7 +39,7 @@ func TestNamespaceMiddlware(t *testing.T) {
 		t.Run(tt.description, func(t *testing.T) {
 			testHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				var namespace string
-				if value := r.Context().Value(types.NamespaceKey); value != nil {
+				if value := r.Context().Value(v2.NamespaceKey); value != nil {
 					namespace = value.(string)
 				} else {
 					namespace = ""

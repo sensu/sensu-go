@@ -5,7 +5,6 @@ import (
 	"path"
 
 	corev2 "github.com/sensu/core/v2"
-	"github.com/sensu/sensu-go/types"
 )
 
 const keySeparator = "/"
@@ -30,7 +29,7 @@ func (b KeyBuilder) WithNamespace(namespace string) KeyBuilder {
 }
 
 // WithResource adds a resource to a key.
-func (b KeyBuilder) WithResource(r types.MultitenantResource) KeyBuilder {
+func (b KeyBuilder) WithResource(r corev2.MultitenantResource) KeyBuilder {
 	b.namespace = NewNamespaceFromResource(r)
 	return b
 }

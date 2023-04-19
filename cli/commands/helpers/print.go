@@ -5,10 +5,10 @@ import (
 	"io"
 	"net/http"
 
+	v2 "github.com/sensu/core/v2"
 	"github.com/sensu/sensu-go/cli/client/config"
 	"github.com/sensu/sensu-go/cli/commands/flags"
 	"github.com/sensu/sensu-go/cli/elements/list"
-	"github.com/sensu/sensu-go/types"
 	"github.com/spf13/cobra"
 )
 
@@ -18,7 +18,7 @@ type printTableFunc func(interface{}, io.Writer)
 const HeaderWarning = "Sensu-Entity-Warning"
 
 // PrintList prints a list of resources to stdout with a title, if relevant.
-func PrintList(cmd *cobra.Command, format string, printTable printTableFunc, objects []types.Resource, v interface{}, header http.Header) error {
+func PrintList(cmd *cobra.Command, format string, printTable printTableFunc, objects []v2.Resource, v interface{}, header http.Header) error {
 	if warning := header.Get(HeaderWarning); warning != "" {
 		if err := PrintTitle(GetChangedStringValueViper(flags.Format, cmd.Flags()), format, warning, cmd.OutOrStdout()); err != nil {
 			return err
@@ -28,7 +28,7 @@ func PrintList(cmd *cobra.Command, format string, printTable printTableFunc, obj
 }
 
 // Print displays
-func Print(cmd *cobra.Command, format string, printTable printTableFunc, objects []types.Resource, v interface{}) error {
+func Print(cmd *cobra.Command, format string, printTable printTableFunc, objects []v2.Resource, v interface{}) error {
 	viper, err := InitViper(cmd.Flags())
 	if err != nil {
 		return err
@@ -67,7 +67,7 @@ func PrintFormatted(flag string, format string, v interface{}, w io.Writer, prin
 	case config.FormatJSON:
 		return PrintJSON(v, w)
 	case config.FormatWrappedJSON:
-		r, ok := v.(types.Resource)
+		r, ok := v.(v2.Resource)
 		if !ok {
 			return fmt.Errorf("%t is not a Resource", v)
 		}

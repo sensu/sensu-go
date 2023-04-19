@@ -11,7 +11,7 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/sensu/sensu-go/types"
+	v2 "github.com/sensu/core/v2"
 	bytesutil "github.com/sensu/sensu-go/util/bytes"
 	"github.com/sirupsen/logrus"
 )
@@ -90,7 +90,7 @@ type ExecutionRequest struct {
 
 	// InProgress is a map of checks that are still in execution, this is
 	// necessary for a check or hook to escape zombie processes.
-	InProgress map[string]*types.CheckConfig
+	InProgress map[string]*v2.CheckConfig
 
 	// InProgressMu is the mutex for the InProgress map.
 	InProgressMu *sync.Mutex

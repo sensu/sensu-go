@@ -10,9 +10,9 @@ import (
 
 	bolt "go.etcd.io/bbolt"
 
+	v2 "github.com/sensu/core/v2"
 	"github.com/sensu/sensu-go/asset"
 	"github.com/sensu/sensu-go/testing/testutil"
-	"github.com/sensu/sensu-go/types"
 )
 
 type localFetcher struct{}
@@ -50,8 +50,8 @@ func TestBoltDBManager(t *testing.T) {
 		t.Fatalf("error reading fixture sha: %v", err)
 	}
 
-	fixtureAsset := &types.Asset{
-		ObjectMeta: types.ObjectMeta{
+	fixtureAsset := &v2.Asset{
+		ObjectMeta: v2.ObjectMeta{
 			Name:      "rubby-on-rails",
 			Namespace: "default",
 		},

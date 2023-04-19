@@ -7,7 +7,7 @@ import (
 	"net"
 	"testing"
 
-	"github.com/sensu/sensu-go/types"
+	v2 "github.com/sensu/core/v2"
 	corev1 "github.com/sensu/sensu-go/agent/v1"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -54,7 +54,7 @@ func TestHandleTCPMessages(t *testing.T) {
 	assert.NotEmpty(msg)
 	assert.Equal("event", msg.Type)
 
-	var event types.Event
+	var event v2.Event
 	err = json.Unmarshal(msg.Payload, &event)
 	if err != nil {
 		assert.FailNow("failed to unmarshal event json")
@@ -107,7 +107,7 @@ func TestHandleTCPMessagesWithClient(t *testing.T) {
 	assert.NotEmpty(msg)
 	assert.Equal("event", msg.Type)
 
-	var event types.Event
+	var event v2.Event
 	err = json.Unmarshal(msg.Payload, &event)
 	if err != nil {
 		assert.FailNow("failed to unmarshal event json")
@@ -160,7 +160,7 @@ func TestHandleTCPMessagesWithAgent(t *testing.T) {
 	assert.NotEmpty(msg)
 	assert.Equal("event", msg.Type)
 
-	var event types.Event
+	var event v2.Event
 	err = json.Unmarshal(msg.Payload, &event)
 	if err != nil {
 		assert.FailNow("failed to unmarshal event json")
@@ -212,7 +212,7 @@ func TestHandleTCPMessagesNoSource(t *testing.T) {
 	assert.NotEmpty(msg)
 	assert.Equal("event", msg.Type)
 
-	var event types.Event
+	var event v2.Event
 	err = json.Unmarshal(msg.Payload, &event)
 	if err != nil {
 		assert.FailNow("failed to unmarshal event json")
@@ -266,7 +266,7 @@ func TestHandleUDPMessages(t *testing.T) {
 	assert.NotEmpty(msg)
 	assert.Equal("event", msg.Type)
 
-	var event types.Event
+	var event v2.Event
 	err = json.Unmarshal(msg.Payload, &event)
 	if err != nil {
 		assert.FailNow("Failed to unmarshal event json")
@@ -365,7 +365,7 @@ func TestReceiveMultiWriteTCP(t *testing.T) {
 	msg := <-ta.sendq
 	assert.Equal("event", msg.Type)
 
-	event := &types.Event{}
+	event := &v2.Event{}
 	assert.NoError(json.Unmarshal(msg.Payload, event))
 	assert.NotNil(event.Entity)
 	assert.Equal("app_01", event.Check.Name)

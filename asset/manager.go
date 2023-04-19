@@ -7,7 +7,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/sensu/sensu-go/types"
+	v2 "github.com/sensu/core/v2"
 	bolt "go.etcd.io/bbolt"
 	"golang.org/x/time/rate"
 )
@@ -19,13 +19,13 @@ const (
 // Manager ...
 type Manager struct {
 	cacheDir      string
-	entity        *types.Entity
+	entity        *v2.Entity
 	wg            *sync.WaitGroup
 	trustedCAFile string
 }
 
 // NewManager ...
-func NewManager(cacheDir, trustedCAFile string, entity *types.Entity, wg *sync.WaitGroup) *Manager {
+func NewManager(cacheDir, trustedCAFile string, entity *v2.Entity, wg *sync.WaitGroup) *Manager {
 	return &Manager{
 		cacheDir:      cacheDir,
 		entity:        entity,

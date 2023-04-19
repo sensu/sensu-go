@@ -6,7 +6,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/sensu/sensu-go/types"
+	v2 "github.com/sensu/core/v2"
 	"github.com/sirupsen/logrus"
 )
 
@@ -18,15 +18,15 @@ type Graphite struct {
 	Path      string
 	Value     float64
 	Timestamp int64
-	Tags      []*types.MetricTag
+	Tags      []*v2.MetricTag
 }
 
 // Transform transforms a metric in graphite plain text format to Sensu Metric
 // Format
-func (g GraphiteList) Transform() []*types.MetricPoint {
-	var points []*types.MetricPoint
+func (g GraphiteList) Transform() []*v2.MetricPoint {
+	var points []*v2.MetricPoint
 	for _, graphite := range g {
-		mp := &types.MetricPoint{
+		mp := &v2.MetricPoint{
 			Name:      graphite.Path,
 			Value:     graphite.Value,
 			Timestamp: graphite.Timestamp,
@@ -34,7 +34,7 @@ func (g GraphiteList) Transform() []*types.MetricPoint {
 		}
 
 		if mp.Tags == nil {
-			mp.Tags = []*types.MetricTag{}
+			mp.Tags = []*v2.MetricTag{}
 		}
 
 		points = append(points, mp)
@@ -43,7 +43,7 @@ func (g GraphiteList) Transform() []*types.MetricPoint {
 }
 
 // ParseGraphite parses a graphite plain text string into a Graphite struct
-func ParseGraphite(event *types.Event) GraphiteList {
+func ParseGraphite(event *v2.Event) GraphiteList {
 	var graphiteList GraphiteList
 	fields := logrus.Fields{
 		"namespace": event.Check.Namespace,
@@ -66,7 +66,7 @@ func ParseGraphite(event *types.Event) GraphiteList {
 		}
 
 		var err error
-		var tags []*types.MetricTag
+		var tags []*v2.MetricTag
 		g.Path, tags, err = parseSeries(args[0])
 		if err != nil {
 			logger.WithFields(fields).WithError(ErrMetricExtraction).Errorf("metric series name is invalid: %q %s", args[0], err)
@@ -96,8 +96,8 @@ func ParseGraphite(event *types.Event) GraphiteList {
 	return graphiteList
 }
 
-func parseSeries(series string) (string, []*types.MetricTag, error) {
-	var tags []*types.MetricTag
+func parseSeries(series string) (string, []*v2.MetricTag, error) {
+	var tags []*v2.MetricTag
 	parts := strings.Split(series, ";")
 	if len(parts) == 1 {
 		return series, tags, nil
@@ -108,7 +108,7 @@ func parseSeries(series string) (string, []*types.MetricTag, error) {
 		if len(tagParts) != 2 {
 			return parts[0], tags, fmt.Errorf("invalid graphite data tag format must be in form of name=value: %s", tagTxt)
 		}
-		tags = append(tags, &types.MetricTag{Name: tagParts[0], Value: tagParts[1]})
+		tags = append(tags, &v2.MetricTag{Name: tagParts[0], Value: tagParts[1]})
 	}
 	return parts[0], tags, nil
 }

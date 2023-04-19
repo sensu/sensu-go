@@ -3,13 +3,13 @@ package asset
 import (
 	"context"
 
+	v2 "github.com/sensu/core/v2"
 	"github.com/sensu/sensu-go/backend/store"
-	"github.com/sensu/sensu-go/types"
 )
 
 // GetAssets retrieves all Assets from the store if contained in the list of asset names
-func GetAssets(ctx context.Context, store store.Store, assetList []string) []types.Asset {
-	assets := []types.Asset{}
+func GetAssets(ctx context.Context, store store.Store, assetList []string) []v2.Asset {
+	assets := []v2.Asset{}
 
 	for _, assetName := range assetList {
 		asset, err := store.GetAssetByName(ctx, assetName)

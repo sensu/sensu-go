@@ -4,7 +4,7 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/sensu/sensu-go/types"
+	v2 "github.com/sensu/core/v2"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -20,8 +20,8 @@ func TestParseOpenTSDB(t *testing.T) {
 			want: OpenTSDBList{
 				OpenTSDB{
 					Name: "sys.cpu.user",
-					TagSet: []*types.MetricTag{
-						&types.MetricTag{
+					TagSet: []*v2.MetricTag{
+						&v2.MetricTag{
 							Name:  "host",
 							Value: "webserver01",
 						},
@@ -37,12 +37,12 @@ func TestParseOpenTSDB(t *testing.T) {
 			want: OpenTSDBList{
 				OpenTSDB{
 					Name: "sys.cpu.user",
-					TagSet: []*types.MetricTag{
-						&types.MetricTag{
+					TagSet: []*v2.MetricTag{
+						&v2.MetricTag{
 							Name:  "host",
 							Value: "webserver01",
 						},
-						&types.MetricTag{
+						&v2.MetricTag{
 							Name:  "cpu",
 							Value: "0",
 						},
@@ -58,12 +58,12 @@ func TestParseOpenTSDB(t *testing.T) {
 			want: OpenTSDBList{
 				OpenTSDB{
 					Name: "sys.cpu.user",
-					TagSet: []*types.MetricTag{
-						&types.MetricTag{
+					TagSet: []*v2.MetricTag{
+						&v2.MetricTag{
 							Name:  "host",
 							Value: "webserver01",
 						},
-						&types.MetricTag{
+						&v2.MetricTag{
 							Name:  "cpu",
 							Value: "0",
 						},
@@ -79,8 +79,8 @@ func TestParseOpenTSDB(t *testing.T) {
 			want: OpenTSDBList{
 				OpenTSDB{
 					Name: "sys.cpu.user",
-					TagSet: []*types.MetricTag{
-						&types.MetricTag{
+					TagSet: []*v2.MetricTag{
+						&v2.MetricTag{
 							Name:  "host",
 							Value: "webserver01",
 						},
@@ -96,12 +96,12 @@ func TestParseOpenTSDB(t *testing.T) {
 			want: OpenTSDBList{
 				OpenTSDB{
 					Name: "sys.cpu.user",
-					TagSet: []*types.MetricTag{
-						&types.MetricTag{
+					TagSet: []*v2.MetricTag{
+						&v2.MetricTag{
 							Name:  "host",
 							Value: "webserver01",
 						},
-						&types.MetricTag{
+						&v2.MetricTag{
 							Name:  "cpu",
 							Value: "0",
 						},
@@ -135,7 +135,7 @@ func TestParseOpenTSDB(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			event := types.FixtureEvent("test", "test")
+			event := v2.FixtureEvent("test", "test")
 			event.Check.Output = tc.output
 			got := ParseOpenTSDB(event)
 			if !assert.Equal(t, got, tc.want) {
@@ -150,7 +150,7 @@ func TestParseOpenTSDBTags(t *testing.T) {
 		name             string
 		output           string
 		want             OpenTSDBList
-		outputMetricTags []*types.MetricTag
+		outputMetricTags []*v2.MetricTag
 	}{
 		{
 			name:   "standard opentsdb metric with output metric tags",
@@ -158,12 +158,12 @@ func TestParseOpenTSDBTags(t *testing.T) {
 			want: OpenTSDBList{
 				OpenTSDB{
 					Name: "sys.cpu.user",
-					TagSet: []*types.MetricTag{
-						&types.MetricTag{
+					TagSet: []*v2.MetricTag{
+						&v2.MetricTag{
 							Name:  "host",
 							Value: "webserver01",
 						},
-						&types.MetricTag{
+						&v2.MetricTag{
 							Name:  "instance",
 							Value: "hostname",
 						},
@@ -172,7 +172,7 @@ func TestParseOpenTSDBTags(t *testing.T) {
 					Value:     42.5,
 				},
 			},
-			outputMetricTags: []*types.MetricTag{
+			outputMetricTags: []*v2.MetricTag{
 				{
 					Name:  "instance",
 					Value: "hostname",
@@ -185,8 +185,8 @@ func TestParseOpenTSDBTags(t *testing.T) {
 			want: OpenTSDBList{
 				OpenTSDB{
 					Name: "sys.cpu.user",
-					TagSet: []*types.MetricTag{
-						&types.MetricTag{
+					TagSet: []*v2.MetricTag{
+						&v2.MetricTag{
 							Name:  "host",
 							Value: "webserver01",
 						},
@@ -202,8 +202,8 @@ func TestParseOpenTSDBTags(t *testing.T) {
 			want: OpenTSDBList{
 				OpenTSDB{
 					Name: "sys.cpu.user",
-					TagSet: []*types.MetricTag{
-						&types.MetricTag{
+					TagSet: []*v2.MetricTag{
+						&v2.MetricTag{
 							Name:  "host",
 							Value: "webserver01",
 						},
@@ -212,7 +212,7 @@ func TestParseOpenTSDBTags(t *testing.T) {
 					Value:     42.5,
 				},
 			},
-			outputMetricTags: []*types.MetricTag{},
+			outputMetricTags: []*v2.MetricTag{},
 		},
 		{
 			name:   "standard opentsdb metric with multiple output metric tags",
@@ -220,16 +220,16 @@ func TestParseOpenTSDBTags(t *testing.T) {
 			want: OpenTSDBList{
 				OpenTSDB{
 					Name: "sys.cpu.user",
-					TagSet: []*types.MetricTag{
-						&types.MetricTag{
+					TagSet: []*v2.MetricTag{
+						&v2.MetricTag{
 							Name:  "host",
 							Value: "webserver01",
 						},
-						&types.MetricTag{
+						&v2.MetricTag{
 							Name:  "foo",
 							Value: "bar",
 						},
-						&types.MetricTag{
+						&v2.MetricTag{
 							Name:  "boo",
 							Value: "baz",
 						},
@@ -238,12 +238,12 @@ func TestParseOpenTSDBTags(t *testing.T) {
 					Value:     42.5,
 				},
 			},
-			outputMetricTags: []*types.MetricTag{
-				&types.MetricTag{
+			outputMetricTags: []*v2.MetricTag{
+				&v2.MetricTag{
 					Name:  "foo",
 					Value: "bar",
 				},
-				&types.MetricTag{
+				&v2.MetricTag{
 					Name:  "boo",
 					Value: "baz",
 				},
@@ -253,7 +253,7 @@ func TestParseOpenTSDBTags(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			event := types.FixtureEvent("test", "test")
+			event := v2.FixtureEvent("test", "test")
 			event.Check.Output = tc.output
 			event.Check.OutputMetricTags = tc.outputMetricTags
 			got := ParseOpenTSDB(event)
@@ -268,14 +268,14 @@ func TestTransformOpenTSDB(t *testing.T) {
 	testCases := []struct {
 		name    string
 		metrics OpenTSDBList
-		want    []*types.MetricPoint
+		want    []*v2.MetricPoint
 	}{
 		{
 			metrics: OpenTSDBList{
 				{
 					Name: "sys.cpu.user",
-					TagSet: []*types.MetricTag{
-						&types.MetricTag{
+					TagSet: []*v2.MetricTag{
+						&v2.MetricTag{
 							Name:  "host",
 							Value: "webserver01",
 						},
@@ -284,13 +284,13 @@ func TestTransformOpenTSDB(t *testing.T) {
 					Value:     42.5,
 				},
 			},
-			want: []*types.MetricPoint{
+			want: []*v2.MetricPoint{
 				{
 					Name:      "sys.cpu.user",
 					Value:     42.5,
 					Timestamp: 1356998400,
-					Tags: []*types.MetricTag{
-						&types.MetricTag{
+					Tags: []*v2.MetricTag{
+						&v2.MetricTag{
 							Name:  "host",
 							Value: "webserver01",
 						},
@@ -312,18 +312,18 @@ func TestParseAndTransformOpenTSDB(t *testing.T) {
 	testCases := []struct {
 		name   string
 		output string
-		want   []*types.MetricPoint
+		want   []*v2.MetricPoint
 	}{
 		{
 			name:   "happy path",
 			output: "sys.cpu.user 1356998400 42.5 host=webserver01",
-			want: []*types.MetricPoint{
+			want: []*v2.MetricPoint{
 				{
 					Name:      "sys.cpu.user",
 					Value:     42.5,
 					Timestamp: 1356998400,
-					Tags: []*types.MetricTag{
-						&types.MetricTag{
+					Tags: []*v2.MetricTag{
+						&v2.MetricTag{
 							Name:  "host",
 							Value: "webserver01",
 						},
@@ -334,13 +334,13 @@ func TestParseAndTransformOpenTSDB(t *testing.T) {
 		{
 			name:   "GH_2511",
 			output: "sys.cpu.user 1356998400 42.5 host=webserver01\nfoo",
-			want: []*types.MetricPoint{
+			want: []*v2.MetricPoint{
 				{
 					Name:      "sys.cpu.user",
 					Value:     42.5,
 					Timestamp: 1356998400,
-					Tags: []*types.MetricTag{
-						&types.MetricTag{
+					Tags: []*v2.MetricTag{
+						&v2.MetricTag{
 							Name:  "host",
 							Value: "webserver01",
 						},
@@ -351,13 +351,13 @@ func TestParseAndTransformOpenTSDB(t *testing.T) {
 		{
 			name:   "invalid metric",
 			output: "sys.cpu.user 1356998400 42.5",
-			want:   []*types.MetricPoint(nil),
+			want:   []*v2.MetricPoint(nil),
 		},
 	}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			event := types.FixtureEvent("test", "test")
+			event := v2.FixtureEvent("test", "test")
 			event.Check.Output = tc.output
 			transformer := ParseOpenTSDB(event)
 			got := transformer.Transform()

@@ -7,12 +7,11 @@ import (
 	"testing"
 
 	"github.com/sensu/sensu-go/backend/store/etcd"
-	"github.com/sensu/sensu-go/types"
 
 	corev2 "github.com/sensu/core/v2"
 	"github.com/sensu/sensu-go/backend/store"
-	"github.com/sensu/sensu-go/testing/fixture"
 	"github.com/sensu/sensu-go/dynamic"
+	"github.com/sensu/sensu-go/testing/fixture"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.etcd.io/etcd/tests/v3/integration"
@@ -115,7 +114,7 @@ func TestResourceRebuild(t *testing.T) {
 	defer c.Terminate(t)
 	client := c.RandClient()
 	s := etcd.NewStore(client, "store")
-	require.NoError(t, s.CreateNamespace(context.Background(), types.FixtureNamespace("default")))
+	require.NoError(t, s.CreateNamespace(context.Background(), corev2.FixtureNamespace("default")))
 	ctx := store.NamespaceContext(context.Background(), "default")
 
 	cacher := Resource{

@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"os"
 
+	v2 "github.com/sensu/core/v2"
 	"github.com/sensu/sensu-go/cli"
-	"github.com/sensu/sensu-go/types"
 	"github.com/spf13/cobra"
 )
 
@@ -44,14 +44,14 @@ func SetProxyRequestsCommand(cli *cli.SensuCli) *cobra.Command {
 				in = os.Stdin
 			}
 
-			var proxyRequest types.ProxyRequests
+			var proxyRequest v2.ProxyRequests
 			if err := json.NewDecoder(in).Decode(&proxyRequest); err != nil {
 				return err
 			}
 
 			// Set the default splay_coverage value if not configured
 			if proxyRequest.SplayCoverage == 0 {
-				proxyRequest.SplayCoverage = types.DefaultSplayCoverage
+				proxyRequest.SplayCoverage = v2.DefaultSplayCoverage
 			}
 
 			check.ProxyRequests = &proxyRequest

@@ -4,8 +4,8 @@ import (
 	"context"
 	"net/http"
 
+	v2 "github.com/sensu/core/v2"
 	"github.com/sensu/sensu-go/transport"
-	"github.com/sensu/sensu-go/types"
 	"github.com/stretchr/testify/mock"
 )
 
@@ -33,7 +33,7 @@ func (m *MockTransport) Receive() (*transport.Message, error) {
 }
 
 // Reconnect ...
-func (m *MockTransport) Reconnect(wsServerURL string, tlsOpts *types.TLSOptions, requestHeader http.Header) error {
+func (m *MockTransport) Reconnect(wsServerURL string, tlsOpts *v2.TLSOptions, requestHeader http.Header) error {
 	args := m.Called(wsServerURL, tlsOpts, requestHeader)
 	return args.Error(0)
 }

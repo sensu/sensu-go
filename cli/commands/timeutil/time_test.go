@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/sensu/sensu-go/types"
+	v2 "github.com/sensu/core/v2"
 )
 
 func TestDateToTime(t *testing.T) {
@@ -200,7 +200,7 @@ func TestConvertToUTC(t *testing.T) {
 
 	tests := []struct {
 		name        string
-		window      *types.TimeWindowTimeRange
+		window      *v2.TimeWindowTimeRange
 		skipWindows bool // Canonical timezones are not supported on Windows
 		wantBegin   string
 		wantEnd     string
@@ -208,7 +208,7 @@ func TestConvertToUTC(t *testing.T) {
 	}{
 		{
 			name: "12-hour kitchen UTC",
-			window: &types.TimeWindowTimeRange{
+			window: &v2.TimeWindowTimeRange{
 				Begin: "3:04PM UTC",
 				End:   "4:04PM UTC",
 			},
@@ -227,7 +227,7 @@ func TestConvertToUTC(t *testing.T) {
 		//},
 		{
 			name: "24-hour kitchen numeric timezone",
-			window: &types.TimeWindowTimeRange{
+			window: &v2.TimeWindowTimeRange{
 				Begin: "07:04 -08:00",
 				End:   "08:04 -08:00",
 			},
@@ -236,7 +236,7 @@ func TestConvertToUTC(t *testing.T) {
 		},
 		{
 			name: "invalid begin",
-			window: &types.TimeWindowTimeRange{
+			window: &v2.TimeWindowTimeRange{
 				Begin: "15:04:00.000000000",
 				End:   "08:04 -08:00",
 			},
@@ -246,7 +246,7 @@ func TestConvertToUTC(t *testing.T) {
 		},
 		{
 			name: "invalid end",
-			window: &types.TimeWindowTimeRange{
+			window: &v2.TimeWindowTimeRange{
 				Begin: "07:04 -08:00",
 				End:   "16:04:00.000000000",
 			},

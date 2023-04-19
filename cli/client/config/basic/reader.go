@@ -3,8 +3,8 @@ package basic
 import (
 	"time"
 
+	v2 "github.com/sensu/core/v2"
 	"github.com/sensu/sensu-go/cli/client/config"
-	"github.com/sensu/sensu-go/types"
 )
 
 // APIUrl returns the active cluster API URL
@@ -42,7 +42,7 @@ func (c *Config) Timeout() time.Duration {
 }
 
 // Tokens returns the active cluster JWT
-func (c *Config) Tokens() *types.Tokens {
+func (c *Config) Tokens() *v2.Tokens {
 	return c.Cluster.Tokens
 }
 

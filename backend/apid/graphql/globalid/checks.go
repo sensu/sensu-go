@@ -1,10 +1,11 @@
 package globalid
 
-import "github.com/sensu/sensu-go/types"
-
-//
-// Checks
-//
+import (
+	v2 "github.com/sensu/core/v2"
+	//
+	// Checks
+	//
+)
 
 var checkName = "checks"
 
@@ -14,7 +15,7 @@ var CheckTranslator = commonTranslator{
 	encodeFunc: standardEncoder(checkName, "Name"),
 	decodeFunc: standardDecoder,
 	isResponsibleFunc: func(record interface{}) bool {
-		_, ok := record.(*types.CheckConfig)
+		_, ok := record.(*v2.CheckConfig)
 		return ok
 	},
 }

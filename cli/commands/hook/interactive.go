@@ -5,8 +5,8 @@ import (
 	"strconv"
 
 	"github.com/AlecAivazis/survey/v2"
+	v2 "github.com/sensu/core/v2"
 	"github.com/sensu/sensu-go/cli/commands/helpers"
-	"github.com/sensu/sensu-go/types"
 	"github.com/spf13/pflag"
 )
 
@@ -34,7 +34,7 @@ func newHookOpts() *hookOpts {
 	return &opts
 }
 
-func (opts *hookOpts) withHook(hook *types.HookConfig) {
+func (opts *hookOpts) withHook(hook *v2.HookConfig) {
 	opts.Name = hook.Name
 	opts.Namespace = hook.Namespace
 	opts.Command = hook.Command
@@ -113,7 +113,7 @@ func (opts *hookOpts) administerQuestionnaire(editing bool, askOpts ...survey.As
 	return survey.Ask(qs, opts, askOpts...)
 }
 
-func (opts *hookOpts) Copy(hook *types.HookConfig) {
+func (opts *hookOpts) Copy(hook *v2.HookConfig) {
 	timeout, _ := strconv.ParseUint(opts.Timeout, 10, 32)
 	stdin, _ := strconv.ParseBool(opts.Stdin)
 

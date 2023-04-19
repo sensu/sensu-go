@@ -13,6 +13,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/sensu/core/v2"
 	"github.com/sensu/sensu-go/backend/etcd"
 	"github.com/sensu/sensu-go/backend/seeds"
 	etcdstore "github.com/sensu/sensu-go/backend/store/etcd"
@@ -45,10 +46,10 @@ func TestBackendHTTPListener(t *testing.T) {
 		name       string
 		httpScheme string
 		wsScheme   string
-		tls        *types.TLSOptions
+		tls        *v2.TLSOptions
 	}{
 		{"HTTP", "http", "ws", nil},
-		{"HTTPS", "https", "wss", &types.TLSOptions{
+		{"HTTPS", "https", "wss", &v2.TLSOptions{
 			CertFile:           "../util/ssl/etcd1.pem",
 			KeyFile:            "../util/ssl/etcd1-key.pem",
 			TrustedCAFile:      "../util/ssl/ca.pem",

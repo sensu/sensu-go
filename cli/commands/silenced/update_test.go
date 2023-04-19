@@ -4,10 +4,10 @@ import (
 	"fmt"
 	"testing"
 
+	v2 "github.com/sensu/core/v2"
 	"github.com/sensu/sensu-go/cli"
 	client "github.com/sensu/sensu-go/cli/client/testing"
 	test "github.com/sensu/sensu-go/cli/commands/testing"
-	"github.com/sensu/sensu-go/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
@@ -36,7 +36,7 @@ func TestUpdateCommand(t *testing.T) {
 			name,
 		)
 		t.Run(testName, func(t *testing.T) {
-			silenced := types.FixtureSilenced("foo:bar")
+			silenced := v2.FixtureSilenced("foo:bar")
 			test.WithMockCLI(t, func(cli *cli.SensuCli) {
 				client := cli.Client.(*client.MockClient)
 				client.On(

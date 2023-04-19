@@ -15,11 +15,12 @@ import (
 
 	"github.com/sensu/sensu-go/agent"
 	"github.com/sensu/sensu-go/command"
-	"github.com/sensu/sensu-go/types"
 	"github.com/sirupsen/logrus"
 
 	"net/http"
 	_ "net/http/pprof"
+
+	v2 "github.com/sensu/core/v2"
 )
 
 var (
@@ -28,7 +29,7 @@ var (
 	flagNamespace         = flag.String("namespace", agent.DefaultNamespace, "namespace to use for agents")
 	flagSubscriptions     = flag.String("subscriptions", "default", "comma separated list of subscriptions")
 	flagKeepaliveInterval = flag.Int("keepalive-interval", agent.DefaultKeepaliveInterval, "Keepalive interval")
-	flagKeepaliveTimeout  = flag.Int("keepalive-timeout", types.DefaultKeepaliveTimeout, "Keepalive timeout")
+	flagKeepaliveTimeout  = flag.Int("keepalive-timeout", v2.DefaultKeepaliveTimeout, "Keepalive timeout")
 	flagProfilingPort     = flag.Int("pprof-port", 6060, "pprof port to bind to")
 	flagPromBinding       = flag.String("prom", ":8080", "binding for prometheus server")
 	flagHugeEvents        = flag.Bool("huge-events", false, "send 1 MB events to the backend")

@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	"github.com/sensu/sensu-go/types"
+	v2 "github.com/sensu/core/v2"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -12,7 +12,7 @@ func TestEncodeEvent(t *testing.T) {
 	assert := assert.New(t)
 
 	ctx := context.Background()
-	event := types.FixtureEvent("one", "two")
+	event := v2.FixtureEvent("one", "two")
 	components := encodeEvent(ctx, event)
 	assert.Equal("events", components.Resource())
 	assert.Equal("default", components.Namespace())
@@ -27,7 +27,7 @@ func TestEncodeEvent(t *testing.T) {
 	assert.NotEmpty(components.UniqueComponent())
 
 	event.Check = nil
-	event.Metrics = &types.Metrics{}
+	event.Metrics = &v2.Metrics{}
 	components = encodeEvent(ctx, event)
 	assert.Equal("metric", components.ResourceType())
 	assert.NotEmpty(components.UniqueComponent())

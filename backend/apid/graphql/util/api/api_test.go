@@ -325,7 +325,7 @@ func TestWrapResource(t *testing.T) {
 			name: "corev3",
 			args: v3resource,
 			want: types.Wrapper{
-				TypeMeta:   types.TypeMeta{APIVersion: "core/v3", Type: "EntityConfig"},
+				TypeMeta:   corev2.TypeMeta{APIVersion: "core/v3", Type: "EntityConfig"},
 				ObjectMeta: *v3resource.Metadata,
 				Value:      v3resource,
 			},
@@ -334,7 +334,7 @@ func TestWrapResource(t *testing.T) {
 			name: "corev2",
 			args: v2resource,
 			want: types.Wrapper{
-				TypeMeta:   types.TypeMeta{APIVersion: "core/v2", Type: "Asset"},
+				TypeMeta:   corev2.TypeMeta{APIVersion: "core/v2", Type: "Asset"},
 				ObjectMeta: v2resource.ObjectMeta,
 				Value:      v2resource,
 			},

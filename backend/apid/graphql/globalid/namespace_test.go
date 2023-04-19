@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	"github.com/sensu/sensu-go/types"
+	v2 "github.com/sensu/core/v2"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -14,7 +14,7 @@ func TestNamespaceTranslator(t *testing.T) {
 	require := require.New(t)
 
 	ctx := context.Background()
-	nsp := &types.Namespace{Name: "myns"}
+	nsp := &v2.Namespace{Name: "myns"}
 
 	// Encode
 	gid := NamespaceTranslator.EncodeToString(ctx, nsp)

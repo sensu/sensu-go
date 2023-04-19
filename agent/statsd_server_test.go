@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/atlassian/gostatsd"
+	"github.com/sensu/core/v2"
 	"github.com/sensu/sensu-go/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -41,12 +42,12 @@ func TestComposeMetricTags(t *testing.T) {
 	testCases := []struct {
 		name      string
 		tagsKey   string
-		metricTag []*types.MetricTag
+		metricTag []*v2.MetricTag
 	}{
 		{
 			name:    "Full tagsKey",
 			tagsKey: "aggregator_id:5,channel:dispatch_aggregator,s:hostName",
-			metricTag: []*types.MetricTag{
+			metricTag: []*v2.MetricTag{
 				{Name: "aggregator_id", Value: "5"},
 				{Name: "channel", Value: "dispatch_aggregator"},
 				{Name: "s", Value: "hostName"},
@@ -55,7 +56,7 @@ func TestComposeMetricTags(t *testing.T) {
 		{
 			name:    "Single tagsKey",
 			tagsKey: "aggregator_id:5",
-			metricTag: []*types.MetricTag{
+			metricTag: []*v2.MetricTag{
 				{Name: "aggregator_id", Value: "5"},
 			},
 		},
@@ -178,7 +179,7 @@ func TestReceiveMetrics(t *testing.T) {
 	assert.NotEmpty(msg)
 	assert.Equal("event", msg.Type)
 
-	var event types.Event
+	var event v2.Event
 	err = json.Unmarshal(msg.Payload, &event)
 	if err != nil {
 		assert.FailNow("failed to unmarshal event json")

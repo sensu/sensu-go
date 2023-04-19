@@ -10,7 +10,6 @@ import (
 	corev2 "github.com/sensu/core/v2"
 	coreJWT "github.com/sensu/sensu-go/backend/authentication/jwt"
 	"github.com/sensu/sensu-go/testing/mockstore"
-	"github.com/sensu/sensu-go/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
@@ -33,14 +32,14 @@ func TestSilencedQuery(t *testing.T) {
 		ctx          context.Context
 		params       QueryParams
 		storeErr     error
-		storeRecords []*types.Silenced
+		storeRecords []*corev2.Silenced
 		expectedLen  int
 		expectedErr  error
 	}{
 		{
 			name:         "No Silenced Entries",
 			ctx:          defaultCtx,
-			storeRecords: []*types.Silenced{},
+			storeRecords: []*corev2.Silenced{},
 			expectedLen:  0,
 			storeErr:     nil,
 			expectedErr:  nil,
@@ -48,9 +47,9 @@ func TestSilencedQuery(t *testing.T) {
 		{
 			name: "With Silenced Entries",
 			ctx:  defaultCtx,
-			storeRecords: []*types.Silenced{
-				types.FixtureSilenced("*:silence1"),
-				types.FixtureSilenced("*:silence2"),
+			storeRecords: []*corev2.Silenced{
+				corev2.FixtureSilenced("*:silence1"),
+				corev2.FixtureSilenced("*:silence2"),
 			},
 			expectedLen: 2,
 			storeErr:    nil,
@@ -60,9 +59,9 @@ func TestSilencedQuery(t *testing.T) {
 			name:   "Filter By Subscription",
 			ctx:    defaultCtx,
 			params: QueryParams{"subscription": "test"},
-			storeRecords: []*types.Silenced{
-				types.FixtureSilenced("*:silence1"),
-				types.FixtureSilenced("*:silence2"),
+			storeRecords: []*corev2.Silenced{
+				corev2.FixtureSilenced("*:silence1"),
+				corev2.FixtureSilenced("*:silence2"),
 			},
 			expectedLen: 2,
 			storeErr:    nil,
@@ -72,9 +71,9 @@ func TestSilencedQuery(t *testing.T) {
 			name:   "Filter By Check",
 			ctx:    defaultCtx,
 			params: QueryParams{"check": "test"},
-			storeRecords: []*types.Silenced{
-				types.FixtureSilenced("*:silence1"),
-				types.FixtureSilenced("*:silence2"),
+			storeRecords: []*corev2.Silenced{
+				corev2.FixtureSilenced("*:silence1"),
+				corev2.FixtureSilenced("*:silence2"),
 			},
 			expectedLen: 2,
 			storeErr:    nil,
@@ -115,17 +114,17 @@ func TestSilencedQuery(t *testing.T) {
 func TestSilencedCreateOrReplace(t *testing.T) {
 	defaultCtx := context.Background()
 
-	claims := &types.Claims{StandardClaims: jwt.StandardClaims{Subject: "foo"}}
-	jwtCtx := context.WithValue(context.Background(), types.ClaimsKey, claims)
+	claims := &corev2.Claims{StandardClaims: jwt.StandardClaims{Subject: "foo"}}
+	jwtCtx := context.WithValue(context.Background(), corev2.ClaimsKey, claims)
 
-	badSilence := types.FixtureSilenced("*:silence1")
+	badSilence := corev2.FixtureSilenced("*:silence1")
 	badSilence.Check = "!@#!#$@#^$%&$%&$&$%&%^*%&(%@###"
 
 	testCases := []struct {
 		name            string
 		ctx             context.Context
-		argument        *types.Silenced
-		fetchResult     *types.Silenced
+		argument        *corev2.Silenced
+		fetchResult     *corev2.Silenced
 		fetchErr        error
 		createErr       error
 		expectedErr     bool
@@ -135,19 +134,19 @@ func TestSilencedCreateOrReplace(t *testing.T) {
 		{
 			name:        "Created",
 			ctx:         defaultCtx,
-			argument:    types.FixtureSilenced("*:silence1"),
+			argument:    corev2.FixtureSilenced("*:silence1"),
 			expectedErr: false,
 		},
 		{
 			name:        "Already Exists",
 			ctx:         defaultCtx,
-			argument:    types.FixtureSilenced("*:silence1"),
-			fetchResult: types.FixtureSilenced("*:silence1"),
+			argument:    corev2.FixtureSilenced("*:silence1"),
+			fetchResult: corev2.FixtureSilenced("*:silence1"),
 		},
 		{
 			name:            "Store Err on Create",
 			ctx:             defaultCtx,
-			argument:        types.FixtureSilenced("*:silence1"),
+			argument:        corev2.FixtureSilenced("*:silence1"),
 			createErr:       errors.New("dunno"),
 			expectedErr:     true,
 			expectedErrCode: InternalErr,
@@ -162,7 +161,7 @@ func TestSilencedCreateOrReplace(t *testing.T) {
 		{
 			name:            "Creator",
 			ctx:             jwtCtx,
-			argument:        types.FixtureSilenced("*:silence1"),
+			argument:        corev2.FixtureSilenced("*:silence1"),
 			expectedErr:     false,
 			expectedCreator: "foo",
 		},
@@ -185,7 +184,7 @@ func TestSilencedCreateOrReplace(t *testing.T) {
 				Run(func(args mock.Arguments) {
 					if tc.expectedCreator != "" {
 						bytes, _ := json.Marshal(args[1])
-						entry := types.Silenced{}
+						entry := corev2.Silenced{}
 						_ = json.Unmarshal(bytes, &entry)
 
 						assert.Equal(tc.expectedCreator, entry.Creator)
@@ -212,17 +211,17 @@ func TestSilencedCreateOrReplace(t *testing.T) {
 func TestSilencedCreate(t *testing.T) {
 	defaultCtx := context.Background()
 
-	claims := &types.Claims{StandardClaims: jwt.StandardClaims{Subject: "foo"}}
-	jwtCtx := context.WithValue(context.Background(), types.ClaimsKey, claims)
+	claims := &corev2.Claims{StandardClaims: jwt.StandardClaims{Subject: "foo"}}
+	jwtCtx := context.WithValue(context.Background(), corev2.ClaimsKey, claims)
 
-	badSilence := types.FixtureSilenced("*:silence1")
+	badSilence := corev2.FixtureSilenced("*:silence1")
 	badSilence.Check = "!@#!#$@#^$%&$%&$&$%&%^*%&(%@###"
 
 	testCases := []struct {
 		name            string
 		ctx             context.Context
-		argument        *types.Silenced
-		fetchResult     *types.Silenced
+		argument        *corev2.Silenced
+		fetchResult     *corev2.Silenced
 		fetchErr        error
 		createErr       error
 		expectedErr     bool
@@ -233,15 +232,15 @@ func TestSilencedCreate(t *testing.T) {
 		{
 			name:        "Created",
 			ctx:         defaultCtx,
-			argument:    types.FixtureSilenced("*:silence1"),
+			argument:    corev2.FixtureSilenced("*:silence1"),
 			expectedErr: false,
 			expectedID:  "*:silence1",
 		},
 		{
 			name:            "Already Exists",
 			ctx:             defaultCtx,
-			argument:        types.FixtureSilenced("*:silence1"),
-			fetchResult:     types.FixtureSilenced("*:silence1"),
+			argument:        corev2.FixtureSilenced("*:silence1"),
+			fetchResult:     corev2.FixtureSilenced("*:silence1"),
 			expectedErr:     true,
 			expectedErrCode: AlreadyExistsErr,
 			expectedID:      "*:silence1",
@@ -249,7 +248,7 @@ func TestSilencedCreate(t *testing.T) {
 		{
 			name:            "Store Err on Create",
 			ctx:             defaultCtx,
-			argument:        types.FixtureSilenced("*:silence1"),
+			argument:        corev2.FixtureSilenced("*:silence1"),
 			createErr:       errors.New("dunno"),
 			expectedErr:     true,
 			expectedErrCode: InternalErr,
@@ -258,7 +257,7 @@ func TestSilencedCreate(t *testing.T) {
 		{
 			name:            "Store Err on Fetch",
 			ctx:             defaultCtx,
-			argument:        types.FixtureSilenced("*:silence1"),
+			argument:        corev2.FixtureSilenced("*:silence1"),
 			fetchErr:        errors.New("dunno"),
 			expectedErr:     true,
 			expectedErrCode: InternalErr,
@@ -275,7 +274,7 @@ func TestSilencedCreate(t *testing.T) {
 		{
 			name:            "Creator",
 			ctx:             jwtCtx,
-			argument:        types.FixtureSilenced("*:silence1"),
+			argument:        corev2.FixtureSilenced("*:silence1"),
 			expectedErr:     false,
 			expectedCreator: "foo",
 			expectedID:      "*:silence1",
@@ -283,7 +282,7 @@ func TestSilencedCreate(t *testing.T) {
 		{
 			name:            "Other Id",
 			ctx:             jwtCtx,
-			argument:        types.FixtureSilenced("unix:*"),
+			argument:        corev2.FixtureSilenced("unix:*"),
 			expectedErr:     false,
 			expectedCreator: "foo",
 			expectedID:      "unix:*",
@@ -307,7 +306,7 @@ func TestSilencedCreate(t *testing.T) {
 				Run(func(args mock.Arguments) {
 					if tc.expectedCreator != "" {
 						bytes, _ := json.Marshal(args[1])
-						entry := types.Silenced{}
+						entry := corev2.Silenced{}
 						_ = json.Unmarshal(bytes, &entry)
 
 						assert.Equal(tc.expectedCreator, entry.Creator)

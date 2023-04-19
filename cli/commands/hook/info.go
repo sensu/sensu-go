@@ -6,11 +6,11 @@ import (
 	"io"
 	"strconv"
 
+	v2 "github.com/sensu/core/v2"
 	"github.com/sensu/sensu-go/cli"
 	"github.com/sensu/sensu-go/cli/commands/helpers"
 	"github.com/sensu/sensu-go/cli/elements/globals"
 	"github.com/sensu/sensu-go/cli/elements/list"
-	"github.com/sensu/sensu-go/types"
 	"github.com/spf13/cobra"
 )
 
@@ -46,7 +46,7 @@ func InfoCommand(cli *cli.SensuCli) *cobra.Command {
 }
 
 func printToList(v interface{}, writer io.Writer) error {
-	r, ok := v.(*types.HookConfig)
+	r, ok := v.(*v2.HookConfig)
 	if !ok {
 		return fmt.Errorf("%t is not a HookConfig", v)
 	}

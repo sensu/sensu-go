@@ -6,9 +6,9 @@ import (
 	"strconv"
 
 	"github.com/AlecAivazis/survey/v2"
+	v2 "github.com/sensu/core/v2"
 	"github.com/sensu/sensu-go/cli/commands/helpers"
 	"github.com/sensu/sensu-go/cli/commands/timeutil"
-	"github.com/sensu/sensu-go/types"
 	"github.com/spf13/pflag"
 )
 
@@ -36,7 +36,7 @@ func newSilencedOpts() *silencedOpts {
 	return &opts
 }
 
-func (o *silencedOpts) Apply(s *types.Silenced) (err error) {
+func (o *silencedOpts) Apply(s *v2.Silenced) (err error) {
 	s.Subscription = o.Subscription
 	s.Check = o.Check
 	s.Creator = o.Creator
@@ -167,10 +167,10 @@ func askName(help string, askOpts ...survey.AskOpt) (string, error) {
 	if err := survey.Ask(questions, &name, askOpts...); err != nil {
 		return "", err
 	}
-	return types.SilencedName(name.Subscription, name.Check)
+	return v2.SilencedName(name.Subscription, name.Check)
 }
 
-func toOpts(s *types.Silenced) *silencedOpts {
+func toOpts(s *v2.Silenced) *silencedOpts {
 	var o silencedOpts
 	o.Subscription = s.Subscription
 	o.Check = s.Check

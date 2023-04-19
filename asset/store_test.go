@@ -5,50 +5,50 @@ import (
 	"errors"
 	"testing"
 
+	v2 "github.com/sensu/core/v2"
 	"github.com/sensu/sensu-go/testing/mockstore"
-	"github.com/sensu/sensu-go/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
 
 func TestGetAssets(t *testing.T) {
-	asset1 := types.FixtureAsset("asset1")
+	asset1 := v2.FixtureAsset("asset1")
 	asset1.URL = "https://localhost/asset1.zip"
-	asset2 := types.FixtureAsset("asset2")
+	asset2 := v2.FixtureAsset("asset2")
 	asset2.URL = "https://localhost/asset2.zip"
-	asset3 := types.FixtureAsset("asset3")
+	asset3 := v2.FixtureAsset("asset3")
 	asset3.URL = "https://localhost/asset3.zip"
 
 	testCases := []struct {
 		name           string
 		assetList      []string
-		expectedAssets []types.Asset
+		expectedAssets []v2.Asset
 	}{
 		{
 			name:           "found all assets",
 			assetList:      []string{"asset1", "asset2", "asset3"},
-			expectedAssets: []types.Asset{*asset1, *asset2, *asset3},
+			expectedAssets: []v2.Asset{*asset1, *asset2, *asset3},
 		},
 		{
 			name:           "empty asset list",
 			assetList:      []string{},
-			expectedAssets: []types.Asset{},
+			expectedAssets: []v2.Asset{},
 		},
 		{
 			name:           "asset not found",
 			assetList:      []string{"foo", "asset1"},
-			expectedAssets: []types.Asset{*asset1},
+			expectedAssets: []v2.Asset{*asset1},
 		},
 		{
 			name:           "error on store",
 			assetList:      []string{"bar", "asset1"},
-			expectedAssets: []types.Asset{*asset1},
+			expectedAssets: []v2.Asset{*asset1},
 		},
 	}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			var nilAsset *types.Asset
+			var nilAsset *v2.Asset
 			store := &mockstore.MockStore{}
 			store.On("GetAssetByName", mock.Anything, "asset1").Return(asset1, nil)
 			store.On("GetAssetByName", mock.Anything, "asset2").Return(asset2, nil)

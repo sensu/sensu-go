@@ -47,7 +47,7 @@ func TestTLSAuth(t *testing.T) {
 			assert.NoError(t, err)
 			assert.Equal(t, "keepalive", msg.Type)
 
-			event := &types.Event{}
+			event := &corev2.Event{}
 			assert.NoError(t, json.Unmarshal(msg.Payload, event))
 			assert.NotNil(t, event.Entity)
 			assert.Equal(t, "agent", event.Entity.EntityClass)
@@ -113,7 +113,7 @@ func TestSendLoop(t *testing.T) {
 			assert.NoError(t, err)
 			assert.Equal(t, "keepalive", msg.Type)
 
-			event := &types.Event{}
+			event := &corev2.Event{}
 			assert.NoError(t, json.Unmarshal(msg.Payload, event))
 			assert.NotNil(t, event.Entity)
 			assert.Equal(t, "agent", event.Entity.EntityClass)
@@ -216,7 +216,7 @@ func TestKeepaliveLoggingRedaction(t *testing.T) {
 			assert.NoError(t, err)
 			assert.Equal(t, "keepalive", msg.Type)
 
-			event := &types.Event{}
+			event := &corev2.Event{}
 			assert.NoError(t, json.Unmarshal(msg.Payload, event))
 			assert.NotNil(t, event.Entity)
 			assert.Equal(t, "agent", event.Entity.EntityClass)
@@ -226,12 +226,12 @@ func TestKeepaliveLoggingRedaction(t *testing.T) {
 			// Make sure the ec2_access_key attribute is redacted, which indicates it was
 			// received as such in keepalives
 			label := event.Entity.Labels["ec2_access_key"]
-			if got, want := label, types.Redacted; got != want {
+			if got, want := label, corev2.Redacted; got != want {
 				errors <- fmt.Errorf("%q != %q", got, want)
 			}
 
 			label = event.Entity.Labels["secret"]
-			if got, want := label, types.Redacted; got == want {
+			if got, want := label, corev2.Redacted; got == want {
 				errors <- fmt.Errorf("secret was redacted")
 			}
 

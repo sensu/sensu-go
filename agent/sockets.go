@@ -10,9 +10,9 @@ import (
 	"regexp"
 	"time"
 
-	"github.com/sensu/sensu-go/transport"
-	"github.com/sensu/sensu-go/types"
+	v2 "github.com/sensu/core/v2"
 	corev1 "github.com/sensu/sensu-go/agent/v1"
+	"github.com/sensu/sensu-go/transport"
 )
 
 var (
@@ -141,7 +141,7 @@ func (a *Agent) handleTCPMessages(c net.Conn) {
 		// Check our received data for valid JSON. If we get invalid JSON at this point,
 		// read again from client, add any new message to the buffer, and parse
 		// again.
-		var event types.Event
+		var event v2.Event
 		var result corev1.CheckResult
 		if err = json.Unmarshal(messageBuffer.Bytes(), &result); err != nil {
 			continue
@@ -226,7 +226,7 @@ func (a *Agent) handleUDPMessages(ctx context.Context, c net.PacketConn) {
 			// Check the message for valid JSON. Valid JSON payloads are passed to the
 			// message sender with the addition of the agent's entity if it is not
 			// included in the message. Any JSON errors are logged, and we return.
-			var event types.Event
+			var event v2.Event
 			var result corev1.CheckResult
 			if err = json.Unmarshal(buf[:bytesRead], &result); err != nil {
 				logger.WithError(err).Error("UDP Invalid event data")

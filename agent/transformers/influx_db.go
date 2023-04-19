@@ -6,7 +6,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/sensu/sensu-go/types"
+	v2 "github.com/sensu/core/v2"
 	"github.com/sirupsen/logrus"
 )
 
@@ -16,18 +16,18 @@ type InfluxList []Influx
 // Influx contains values of influx db line output metric format
 type Influx struct {
 	Measurement string
-	TagSet      []*types.MetricTag
+	TagSet      []*v2.MetricTag
 	FieldSet    []*Field
 	Timestamp   int64
 }
 
 // Transform transforms a metric in influx db line protocol to Sensu Metric
 // Format
-func (i InfluxList) Transform() []*types.MetricPoint {
-	var points []*types.MetricPoint
+func (i InfluxList) Transform() []*v2.MetricPoint {
+	var points []*v2.MetricPoint
 	for _, influx := range i {
 		for _, fieldSet := range influx.FieldSet {
-			mp := &types.MetricPoint{
+			mp := &v2.MetricPoint{
 				Name:      influx.Measurement + "." + fieldSet.Key,
 				Value:     fieldSet.Value,
 				Timestamp: influx.Timestamp,
@@ -40,7 +40,7 @@ func (i InfluxList) Transform() []*types.MetricPoint {
 }
 
 // ParseInflux parses an influx db line protocol string into an Influx struct
-func ParseInflux(event *types.Event) InfluxList {
+func ParseInflux(event *v2.Event) InfluxList {
 	var influxList InfluxList
 	fields := logrus.Fields{
 		"namespace": event.Check.Namespace,
@@ -65,7 +65,7 @@ OUTER:
 
 		measurementTag := strings.Split(args[0], ",")
 		i.Measurement = measurementTag[0]
-		tagList := []*types.MetricTag{}
+		tagList := []*v2.MetricTag{}
 		if len(measurementTag) == 1 {
 			i.TagSet = tagList
 		} else {
@@ -76,7 +76,7 @@ OUTER:
 						logger.WithFields(fields).WithError(ErrMetricExtraction).Error("metric tag set is invalid, must contain a key=value pair")
 						continue OUTER
 					}
-					tag := &types.MetricTag{
+					tag := &v2.MetricTag{
 						Name:  ts[0],
 						Value: ts[1],
 					}

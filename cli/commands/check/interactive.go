@@ -6,8 +6,8 @@ import (
 
 	"github.com/AlecAivazis/survey/v2"
 	cron "github.com/robfig/cron/v3"
+	v2 "github.com/sensu/core/v2"
 	"github.com/sensu/sensu-go/cli/commands/helpers"
-	"github.com/sensu/sensu-go/types"
 	"github.com/spf13/pflag"
 )
 
@@ -46,7 +46,7 @@ func newCheckOpts() *checkOpts {
 	return &opts
 }
 
-func (opts *checkOpts) withCheck(check *types.CheckConfig) {
+func (opts *checkOpts) withCheck(check *v2.CheckConfig) {
 	opts.Name = check.Name
 	opts.Namespace = check.Namespace
 	opts.Command = check.Command
@@ -233,12 +233,12 @@ func (opts *checkOpts) administerQuestionnaire(editing bool, askOpts ...survey.A
 			Name: "output-metric-format",
 			Prompt: &survey.Select{
 				Message: "Metric Format:",
-				Options: append([]string{"none"}, types.OutputMetricFormats...),
+				Options: append([]string{"none"}, v2.OutputMetricFormats...),
 				Default: opts.OutputMetricFormat,
 			},
 			Validate: func(val interface{}) error {
 				if value, _ := val.(string); value != "" && strings.TrimSpace(value) != "none" {
-					if err := types.ValidateOutputMetricFormat(value); err != nil {
+					if err := v2.ValidateOutputMetricFormat(value); err != nil {
 						return err
 					}
 				}
@@ -272,7 +272,7 @@ func (opts *checkOpts) administerQuestionnaire(editing bool, askOpts ...survey.A
 	return survey.Ask(qs, opts, askOpts...)
 }
 
-func (opts *checkOpts) Copy(check *types.CheckConfig) {
+func (opts *checkOpts) Copy(check *v2.CheckConfig) {
 	interval, _ := strconv.ParseUint(opts.Interval, 10, 32)
 	stdin, _ := strconv.ParseBool(opts.Stdin)
 	timeout, _ := strconv.ParseUint(opts.Timeout, 10, 32)

@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"testing"
 
+	v2 "github.com/sensu/core/v2"
 	client "github.com/sensu/sensu-go/cli/client/testing"
 	test "github.com/sensu/sensu-go/cli/commands/testing"
-	"github.com/sensu/sensu-go/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.etcd.io/etcd/api/v3/etcdserverpb"
@@ -28,19 +28,19 @@ func TestHealthCommandAlarmCorrupt(t *testing.T) {
 	assert := assert.New(t)
 	clusterID := uint64(4255616304056076734)
 
-	healthResponse := &types.HealthResponse{
+	healthResponse := &v2.HealthResponse{
 		Header: &etcdserverpb.ResponseHeader{
 			ClusterId: clusterID,
 		},
 	}
-	clusterHealth := []*types.ClusterHealth{}
-	clusterHealth = append(clusterHealth, &types.ClusterHealth{
+	clusterHealth := []*v2.ClusterHealth{}
+	clusterHealth = append(clusterHealth, &v2.ClusterHealth{
 		MemberID: uint64(12345),
 		Name:     "backend0",
 		Err:      "",
 		Healthy:  true,
 	})
-	clusterHealth = append(clusterHealth, &types.ClusterHealth{
+	clusterHealth = append(clusterHealth, &v2.ClusterHealth{
 		MemberID: uint64(12345),
 		Name:     "backend1",
 		Err:      "error",
@@ -82,13 +82,13 @@ func TestHealthCommandAlarmNoSpace(t *testing.T) {
 	assert := assert.New(t)
 	clusterID := uint64(4255616304056076734)
 
-	healthResponse := &types.HealthResponse{
+	healthResponse := &v2.HealthResponse{
 		Header: &etcdserverpb.ResponseHeader{
 			ClusterId: clusterID,
 		},
 	}
-	clusterHealth := []*types.ClusterHealth{}
-	clusterHealth = append(clusterHealth, &types.ClusterHealth{
+	clusterHealth := []*v2.ClusterHealth{}
+	clusterHealth = append(clusterHealth, &v2.ClusterHealth{
 		MemberID: uint64(12345),
 		Name:     "backend1",
 		Err:      "error",

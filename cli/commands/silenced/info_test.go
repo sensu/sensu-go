@@ -6,9 +6,9 @@ import (
 	"testing"
 	"time"
 
+	v2 "github.com/sensu/core/v2"
 	client "github.com/sensu/sensu-go/cli/client/testing"
 	test "github.com/sensu/sensu-go/cli/commands/testing"
-	"github.com/sensu/sensu-go/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -31,7 +31,7 @@ func TestInfoCommandRunEClosure(t *testing.T) {
 
 	cli := test.NewCLI()
 	client := cli.Client.(*client.MockClient)
-	client.On("FetchSilenced", mock.Anything).Return(types.FixtureSilenced("foo:bar"), nil)
+	client.On("FetchSilenced", mock.Anything).Return(v2.FixtureSilenced("foo:bar"), nil)
 
 	cmd := InfoCommand(cli)
 	out, err := test.RunCmd(cmd, []string{"foo:bar"})
@@ -58,7 +58,7 @@ func TestInfoCommandRunEClosureWithTable(t *testing.T) {
 
 	cli := test.NewCLI()
 	client := cli.Client.(*client.MockClient)
-	client.On("FetchSilenced", mock.Anything).Return(types.FixtureSilenced("foo:bar"), nil)
+	client.On("FetchSilenced", mock.Anything).Return(v2.FixtureSilenced("foo:bar"), nil)
 
 	cmd := InfoCommand(cli)
 	require.NoError(t, cmd.Flags().Set("format", "tabular"))
@@ -77,7 +77,7 @@ func TestInfoCommandRunEClosureWithErr(t *testing.T) {
 
 	cli := test.NewCLI()
 	client := cli.Client.(*client.MockClient)
-	client.On("FetchSilenced", mock.Anything).Return(&types.Silenced{}, errors.New("my-err"))
+	client.On("FetchSilenced", mock.Anything).Return(&v2.Silenced{}, errors.New("my-err"))
 
 	cmd := InfoCommand(cli)
 	out, err := test.RunCmd(cmd, []string{"foo:bar"})

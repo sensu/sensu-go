@@ -110,8 +110,8 @@ func WrapResource(r interface{}) types.Wrapper {
 	case corev2.Resource:
 		return types.WrapResource(r)
 	case corev3.Resource: // maybe we move this into the compat package
-		var tm types.TypeMeta
-		if getter, ok := r.(interface{ GetTypeMeta() types.TypeMeta }); ok {
+		var tm corev2.TypeMeta
+		if getter, ok := r.(interface{ GetTypeMeta() corev2.TypeMeta }); ok {
 			tm = getter.GetTypeMeta()
 		}
 		var meta corev2.ObjectMeta

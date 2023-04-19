@@ -1,7 +1,7 @@
 package globalid
 
 import (
-	"github.com/sensu/sensu-go/types"
+	v2 "github.com/sensu/core/v2"
 )
 
 //
@@ -16,7 +16,7 @@ var EntityTranslator = commonTranslator{
 	encodeFunc: standardEncoder(entityName, "Name"),
 	decodeFunc: standardDecoder,
 	isResponsibleFunc: func(record interface{}) bool {
-		_, ok := record.(*types.Entity)
+		_, ok := record.(*v2.Entity)
 		return ok
 	},
 }

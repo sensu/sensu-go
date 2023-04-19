@@ -10,7 +10,6 @@ import (
 	jwt "github.com/golang-jwt/jwt/v4"
 	v2 "github.com/sensu/core/v2"
 	"github.com/sensu/sensu-go/testing/mockstore"
-	"github.com/sensu/sensu-go/types"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -33,7 +32,7 @@ func TestAccessToken(t *testing.T) {
 	assert.NoError(t, err)
 	assert.NotNil(t, token)
 
-	tokenClaims, _ := token.Claims.(*types.Claims)
+	tokenClaims, _ := token.Claims.(*v2.Claims)
 	assert.Equal(t, claims.Subject, tokenClaims.Subject)
 	assert.NotEmpty(t, tokenClaims.Id)
 	assert.NotZero(t, tokenClaims.ExpiresAt)
@@ -106,7 +105,7 @@ func TestRefreshToken(t *testing.T) {
 	assert.NoError(t, err)
 	assert.NotNil(t, token)
 
-	tokenClaims, _ := token.Claims.(*types.Claims)
+	tokenClaims, _ := token.Claims.(*v2.Claims)
 	assert.Equal(t, claims.Subject, tokenClaims.Subject)
 	assert.NotEmpty(t, tokenClaims.Id)
 }

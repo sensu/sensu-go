@@ -7,8 +7,8 @@ import (
 	"path/filepath"
 	"time"
 
+	v2 "github.com/sensu/core/v2"
 	"github.com/sensu/sensu-go/cli/commands/helpers"
-	"github.com/sensu/sensu-go/types"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
@@ -35,7 +35,7 @@ type Cluster struct {
 	APIUrl                string `json:"api-url"`
 	TrustedCAFile         string `json:"trusted-ca-file"`
 	InsecureSkipTLSVerify bool   `json:"insecure-skip-tls-verify"`
-	*types.Tokens
+	*v2.Tokens
 	APIKey  string
 	Timeout time.Duration `json:"timeout"`
 }

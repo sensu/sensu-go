@@ -3,8 +3,8 @@ package mockstore
 import (
 	"context"
 
+	v2 "github.com/sensu/core/v2"
 	"github.com/sensu/sensu-go/backend/store"
-	"github.com/sensu/sensu-go/types"
 )
 
 // DeleteCheckConfigByName ...
@@ -14,19 +14,19 @@ func (s *MockStore) DeleteCheckConfigByName(ctx context.Context, name string) er
 }
 
 // GetCheckConfigs ...
-func (s *MockStore) GetCheckConfigs(ctx context.Context, pred *store.SelectionPredicate) ([]*types.CheckConfig, error) {
+func (s *MockStore) GetCheckConfigs(ctx context.Context, pred *store.SelectionPredicate) ([]*v2.CheckConfig, error) {
 	args := s.Called(ctx, pred)
-	return args.Get(0).([]*types.CheckConfig), args.Error(1)
+	return args.Get(0).([]*v2.CheckConfig), args.Error(1)
 }
 
 // GetCheckConfigByName ...
-func (s *MockStore) GetCheckConfigByName(ctx context.Context, name string) (*types.CheckConfig, error) {
+func (s *MockStore) GetCheckConfigByName(ctx context.Context, name string) (*v2.CheckConfig, error) {
 	args := s.Called(ctx, name)
-	return args.Get(0).(*types.CheckConfig), args.Error(1)
+	return args.Get(0).(*v2.CheckConfig), args.Error(1)
 }
 
 // UpdateCheckConfig ...
-func (s *MockStore) UpdateCheckConfig(ctx context.Context, check *types.CheckConfig) error {
+func (s *MockStore) UpdateCheckConfig(ctx context.Context, check *v2.CheckConfig) error {
 	args := s.Called(ctx, check)
 	return args.Error(0)
 }

@@ -15,6 +15,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	clientv3 "go.etcd.io/etcd/client/v3"
 
+	v2 "github.com/sensu/core/v2"
 	"github.com/sensu/sensu-go/backend/apid/actions"
 	"github.com/sensu/sensu-go/backend/apid/graphql"
 	"github.com/sensu/sensu-go/backend/apid/middlewares"
@@ -50,7 +51,7 @@ type APId struct {
 	storev2             storev2.Interface
 	eventStore          store.EventStore
 	queueGetter         types.QueueGetter
-	tls                 *types.TLSOptions
+	tls                 *v2.TLSOptions
 	cluster             clientv3.Cluster
 	etcdClientTLSConfig *tls.Config
 	clusterVersion      string
@@ -74,7 +75,7 @@ type Config struct {
 	Storev2             storev2.Interface
 	EventStore          store.EventStore
 	QueueGetter         types.QueueGetter
-	TLS                 *types.TLSOptions
+	TLS                 *v2.TLSOptions
 	Cluster             clientv3.Cluster
 	EtcdClientTLSConfig *tls.Config
 	Authenticator       *authentication.Authenticator

@@ -6,9 +6,9 @@ import (
 	"fmt"
 	"os"
 
+	v2 "github.com/sensu/core/v2"
 	"github.com/sensu/sensu-go/cli"
 	"github.com/sensu/sensu-go/cli/commands/timeutil"
-	"github.com/sensu/sensu-go/types"
 	"github.com/spf13/cobra"
 )
 
@@ -44,7 +44,7 @@ func SetWhenCommand(cli *cli.SensuCli) *cobra.Command {
 			} else {
 				in = os.Stdin
 			}
-			var timeWindows types.TimeWindowWhen
+			var timeWindows v2.TimeWindowWhen
 			if err := json.NewDecoder(in).Decode(&timeWindows); err != nil {
 				return err
 			}

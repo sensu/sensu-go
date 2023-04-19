@@ -14,7 +14,6 @@ import (
 	"github.com/sensu/sensu-go/cli/commands/flags"
 	"github.com/sensu/sensu-go/cli/commands/helpers"
 	"github.com/sensu/sensu-go/cli/elements/table"
-	"github.com/sensu/sensu-go/types"
 	"github.com/spf13/cobra"
 )
 
@@ -45,7 +44,7 @@ func outdatedCommandExecute(cli *cli.SensuCli) func(cmd *cobra.Command, args []s
 
 		namespace := cli.Config.Namespace()
 		if ok, _ := cmd.Flags().GetBool(flags.AllNamespaces); ok {
-			namespace = types.NamespaceTypeAll
+			namespace = corev2.NamespaceTypeAll
 		}
 
 		opts, err := helpers.ListOptionsFromFlags(cmd.Flags())
