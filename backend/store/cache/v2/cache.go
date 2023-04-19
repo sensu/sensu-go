@@ -13,7 +13,7 @@ import (
 	"github.com/sensu/sensu-go/backend/store"
 	storev2 "github.com/sensu/sensu-go/backend/store/v2"
 	"github.com/sensu/sensu-go/backend/store/v2/etcdstore"
-	"github.com/sensu/sensu-go/types/dynamic"
+	"github.com/sensu/sensu-go/dynamic"
 	"go.etcd.io/etcd/client/v3"
 )
 

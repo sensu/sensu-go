@@ -11,7 +11,7 @@ import (
 	storev2 "github.com/sensu/sensu-go/backend/store/v2"
 	"github.com/sensu/sensu-go/backend/store/v2/etcdstore"
 	"github.com/sensu/sensu-go/backend/store/v2/wrap"
-	"github.com/sensu/sensu-go/types/dynamic"
+	"github.com/sensu/sensu-go/dynamic"
 	"github.com/stretchr/testify/assert"
 	"go.etcd.io/etcd/tests/v3/integration"
 )

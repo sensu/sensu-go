@@ -12,7 +12,7 @@ import (
 	corev2 "github.com/sensu/core/v2"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/testing/fixture"
-	"github.com/sensu/sensu-go/types/dynamic"
+	"github.com/sensu/sensu-go/dynamic"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.etcd.io/etcd/tests/v3/integration"

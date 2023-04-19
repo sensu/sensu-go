@@ -4,22 +4,22 @@ import (
 	"encoding/json"
 	"testing"
 
-	"github.com/sensu/sensu-go/types"
+	v2 "github.com/sensu/core/v2"
 	"github.com/sensu/sensu-go/dynamic"
 )
 
 func BenchmarkSynthesize(b *testing.B) {
-	c := types.FixtureCheck("foo")
+	c := v2.FixtureCheck("foo")
 	for i := 0; i < b.N; i++ {
 		_ = dynamic.Synthesize(c)
 	}
 }
 
 func BenchmarkCheckMarshalRoundtrip(b *testing.B) {
-	c := types.FixtureCheck("foo")
+	c := v2.FixtureCheck("foo")
 	bytez, _ := json.Marshal(c)
 	for i := 0; i < b.N; i++ {
-		var check types.Check
+		var check v2.Check
 		_ = json.Unmarshal(bytez, &check)
 	}
 }
