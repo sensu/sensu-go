@@ -7,8 +7,8 @@ import (
 	"reflect"
 	"sort"
 
-	types "github.com/sensu/core/v3/types"
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
+	types "github.com/sensu/sensu-go/types"
 )
 
 func init() {

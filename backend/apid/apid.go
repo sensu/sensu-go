@@ -16,7 +16,6 @@ import (
 	clientv3 "go.etcd.io/etcd/client/v3"
 
 	v2 "github.com/sensu/core/v2"
-	"github.com/sensu/core/v3/types"
 	"github.com/sensu/sensu-go/backend/apid/actions"
 	"github.com/sensu/sensu-go/backend/apid/graphql"
 	"github.com/sensu/sensu-go/backend/apid/middlewares"
@@ -24,6 +23,7 @@ import (
 	"github.com/sensu/sensu-go/backend/authentication"
 	"github.com/sensu/sensu-go/backend/authorization/rbac"
 	"github.com/sensu/sensu-go/backend/messaging"
+	"github.com/sensu/sensu-go/backend/queue"
 	"github.com/sensu/sensu-go/backend/store"
 	storev2 "github.com/sensu/sensu-go/backend/store/v2"
 )
@@ -50,7 +50,7 @@ type APId struct {
 	store               store.Store
 	storev2             storev2.Interface
 	eventStore          store.EventStore
-	queueGetter         types.QueueGetter
+	queueGetter         queue.QueueGetter
 	tls                 *v2.TLSOptions
 	cluster             clientv3.Cluster
 	etcdClientTLSConfig *tls.Config
@@ -74,7 +74,7 @@ type Config struct {
 	Store               store.Store
 	Storev2             storev2.Interface
 	EventStore          store.EventStore
-	QueueGetter         types.QueueGetter
+	QueueGetter         queue.QueueGetter
 	TLS                 *v2.TLSOptions
 	Cluster             clientv3.Cluster
 	EtcdClientTLSConfig *tls.Config

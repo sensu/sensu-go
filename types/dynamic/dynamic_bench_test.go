@@ -4,8 +4,8 @@ import (
 	"encoding/json"
 	"testing"
 
-	"github.com/sensu/core/v3/types"
-	"github.com/sensu/sensu-go/dynamic"
+	"github.com/sensu/sensu-go/types"
+	"github.com/sensu/sensu-go/types/dynamic"
 )
 
 func BenchmarkSynthesize(b *testing.B) {

@@ -10,7 +10,6 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/sensu/core/v3/types"
 	"github.com/sensu/sensu-go/backend/etcd"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/backend/store/etcd/kvc"
@@ -41,7 +40,7 @@ type EtcdGetter struct {
 }
 
 // GetQueue gets a new Queue.
-func (e EtcdGetter) GetQueue(path ...string) types.Queue {
+func (e EtcdGetter) GetQueue(path ...string) Interface {
 	return New(queueKeyBuilder.Build(path...), e.Client, e.BackendIDGetter)
 }
 
@@ -214,7 +213,7 @@ func (q *Queue) enqueueOps(backendIDs []string, value string) ([]clientv3.Cmp, [
 
 // Dequeue gets a value from the queue. It returns an error if the context
 // is cancelled, the deadline exceeded, or if the client encounters an error.
-func (q *Queue) Dequeue(ctx context.Context) (types.QueueItem, error) {
+func (q *Queue) Dequeue(ctx context.Context) (QueueItem, error) {
 	var response *clientv3.GetResponse
 	err := kvc.Backoff(ctx).Retry(func(n int) (done bool, err error) {
 		response, err = q.kv.Get(ctx, q.workPrefix(), clientv3.WithFirstKey()...)
@@ -253,7 +252,7 @@ func (q *Queue) Dequeue(ctx context.Context) (types.QueueItem, error) {
 	return q.Dequeue(ctx)
 }
 
-func (q *Queue) tryDelete(ctx context.Context, kv *mvccpb.KeyValue) (types.QueueItem, error) {
+func (q *Queue) tryDelete(ctx context.Context, kv *mvccpb.KeyValue) (QueueItem, error) {
 	key := string(kv.Key)
 
 	// generate a new key name

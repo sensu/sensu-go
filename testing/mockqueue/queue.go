@@ -3,7 +3,7 @@ package mockqueue
 import (
 	"context"
 
-	"github.com/sensu/core/v3/types"
+	"github.com/sensu/sensu-go/backend/queue"
 	"github.com/stretchr/testify/mock"
 )
 
@@ -19,9 +19,9 @@ func (m *MockQueue) Enqueue(ctx context.Context, value string) error {
 }
 
 // Dequeue ...
-func (m *MockQueue) Dequeue(ctx context.Context) (types.QueueItem, error) {
+func (m *MockQueue) Dequeue(ctx context.Context) (queue.QueueItem, error) {
 	args := m.Called(ctx)
-	return args.Get(0).(types.QueueItem), args.Error(1)
+	return args.Get(0).(queue.QueueItem), args.Error(1)
 }
 
 // Getter ...
@@ -30,11 +30,11 @@ type Getter struct {
 }
 
 // GetQueue ...
-func (g *Getter) GetQueue(path ...string) types.Queue {
+func (g *Getter) GetQueue(path ...string) queue.Interface {
 	ifaceArgs := make([]interface{}, len(path))
 	for i := range path {
 		ifaceArgs[i] = path[i]
 	}
 	args := g.Called(ifaceArgs...)
-	return args.Get(0).(types.Queue)
+	return args.Get(0).(queue.Interface)
 }

@@ -6,7 +6,7 @@ import (
 	"context"
 
 	corev2 "github.com/sensu/core/v2"
-	"github.com/sensu/core/v3/types"
+	"github.com/sensu/sensu-go/backend/queue"
 	"github.com/sensu/sensu-go/backend/store"
 	utilstrings "github.com/sensu/sensu-go/util/strings"
 )
@@ -18,11 +18,11 @@ var (
 // CheckController exposes actions which a viewer can perform.
 type CheckController struct {
 	store      store.CheckConfigStore
-	checkQueue types.Queue
+	checkQueue queue.Interface
 }
 
 // NewCheckController returns new CheckController
-func NewCheckController(store store.CheckConfigStore, getter types.QueueGetter) CheckController {
+func NewCheckController(store store.CheckConfigStore, getter queue.QueueGetter) CheckController {
 	return CheckController{
 		store:      store,
 		checkQueue: getter.GetQueue(adhocQueueName),

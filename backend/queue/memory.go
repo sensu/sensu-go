@@ -5,8 +5,6 @@ import (
 	"strings"
 	"sync"
 	"time"
-
-	"github.com/sensu/core/v3/types"
 )
 
 // NewMemoryGetter creates a new MemoryGetter.
@@ -14,13 +12,13 @@ func NewMemoryGetter() *MemoryGetter {
 	return &MemoryGetter{data: make(map[string]*Memory)}
 }
 
-// MemoryGetter is a types.QueueGetter.
+// MemoryGetter is a QueueGetter.
 type MemoryGetter struct {
 	data map[string]*Memory
 }
 
 // GetQueue gets a Memory queue.
-func (m *MemoryGetter) GetQueue(path ...string) types.Queue {
+func (m *MemoryGetter) GetQueue(path ...string) Interface {
 	key := strings.Join(path, "/")
 	q, ok := m.data[key]
 	if !ok {
@@ -30,7 +28,7 @@ func (m *MemoryGetter) GetQueue(path ...string) types.Queue {
 	return q
 }
 
-// Memory is an implementation of types.Queue in memory, provided
+// Memory is an implementation of queue in memory, provided
 // for testing purposes.
 type Memory struct {
 	data []string
@@ -70,7 +68,7 @@ func (m *MemoryItem) Nack(context.Context) error {
 }
 
 // Dequeue ...
-func (m *Memory) Dequeue(context.Context) (types.QueueItem, error) {
+func (m *Memory) Dequeue(context.Context) (QueueItem, error) {
 	// cheesy blocking algo
 	var val string
 	for {

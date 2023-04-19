@@ -4,8 +4,8 @@ import (
 	"encoding/json"
 	"reflect"
 
-	types "github.com/sensu/core/v3/types"
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
+	types "github.com/sensu/sensu-go/types"
 )
 
 var _ corev2.Resource = &V2ResourceProxy{}
@@ -47,7 +47,6 @@ type GlobalResource interface {
 
 // V2ResourceProxy is a compatibility shim for converting from a v3 resource to
 // a v2 resource.
-//
 //sensu:nogen
 type V2ResourceProxy struct {
 	Resource
