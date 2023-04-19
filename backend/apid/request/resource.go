@@ -7,8 +7,8 @@ import (
 	"net/http"
 
 	corev3 "github.com/sensu/core/v3"
+	types "github.com/sensu/core/v3/types"
 	apitools "github.com/sensu/sensu-api-tools"
-	"github.com/sensu/sensu-go/types"
 )
 
 // Resource decodes the request body into the specified corev3.Resource type

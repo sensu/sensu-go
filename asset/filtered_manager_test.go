@@ -11,9 +11,9 @@ import (
 )
 
 type MockGetter struct {
-	getCalled	bool
-	asset		*RuntimeAsset
-	err		error
+	getCalled bool
+	asset     *RuntimeAsset
+	err       error
 }
 
 // Get satisfies the asset.Getter interface
@@ -80,9 +80,9 @@ func TestFilteredManagerFilteredBuildAsset(t *testing.T) {
 	fixtureAsset.Filters = []string{"entity.name == 'foo'"}
 	fixtureAsset.Builds = []*corev2.AssetBuild{
 		{
-			URL:		url,
-			Sha512:		sha512,
-			Filters:	filters,
+			URL:     url,
+			Sha512:  sha512,
+			Filters: filters,
 		},
 	}
 
@@ -107,9 +107,9 @@ func TestFilteredManagerUnfilteredBuildAsset(t *testing.T) {
 	fixtureAsset.Filters = []string{"entity.name == 'foo'"}
 	fixtureAsset.Builds = []*corev2.AssetBuild{
 		{
-			URL:		url,
-			Sha512:		sha512,
-			Filters:	filters,
+			URL:     url,
+			Sha512:  sha512,
+			Filters: filters,
 		},
 	}
 
@@ -185,7 +185,7 @@ func TestIsFiltered(t *testing.T) {
 func TestEvaluateAssetBuilds(t *testing.T) {
 	_, _, filteredManager := NewTestFilteredManager()
 
-	fixtureAsset := types.FixtureAsset("test-asset")
+	fixtureAsset := corev2.FixtureAsset("test-asset")
 	fixtureAsset.Builds = []*corev2.AssetBuild{
 		{
 			URL: "asset-1",
