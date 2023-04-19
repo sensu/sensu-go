@@ -15,11 +15,11 @@ import (
 	"strings"
 
 	corev2 "github.com/sensu/core/v2"
+	"github.com/sensu/core/v3/types"
 	"github.com/sensu/sensu-go/cli"
 	"github.com/sensu/sensu-go/cli/client/config"
 	"github.com/sensu/sensu-go/cli/commands/helpers"
 	"github.com/sensu/sensu-go/cli/resource"
-	"github.com/sensu/sensu-go/types"
 	"github.com/sensu/sensu-go/util/compat"
 	"github.com/spf13/cobra"
 )

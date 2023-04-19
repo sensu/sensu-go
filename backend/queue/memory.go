@@ -6,7 +6,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/sensu/sensu-go/types"
+	"github.com/sensu/core/v3/types"
 )
 
 // NewMemoryGetter creates a new MemoryGetter.

@@ -5,7 +5,7 @@ import (
 
 	"runtime/debug"
 
-	types "github.com/sensu/sensu-go/types"
+	types "github.com/sensu/core/v3/types"
 )
 
 // TODO(eric): This test doesn't work yet because of https://github.com/golang/go/issues/33976

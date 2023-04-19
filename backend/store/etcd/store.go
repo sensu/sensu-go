@@ -9,9 +9,9 @@ import (
 	"strings"
 
 	"github.com/gogo/protobuf/proto"
+	"github.com/sensu/core/v3/types"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/backend/store/etcd/kvc"
-	"github.com/sensu/sensu-go/types"
 	clientv3 "go.etcd.io/etcd/client/v3"
 
 	corev2 "github.com/sensu/core/v2"

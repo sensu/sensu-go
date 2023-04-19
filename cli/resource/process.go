@@ -13,9 +13,9 @@ import (
 	"strings"
 
 	corev2 "github.com/sensu/core/v2"
+	"github.com/sensu/core/v3/types"
 	"github.com/sensu/sensu-go/cli"
 	"github.com/sensu/sensu-go/cli/client"
-	"github.com/sensu/sensu-go/types"
 	"github.com/sensu/sensu-go/util/compat"
 )
 

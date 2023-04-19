@@ -10,10 +10,10 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/sensu/core/v3/types"
 	"github.com/sensu/sensu-go/backend/etcd"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/backend/store/etcd/kvc"
-	"github.com/sensu/sensu-go/types"
 	"go.etcd.io/etcd/api/v3/mvccpb"
 	clientv3 "go.etcd.io/etcd/client/v3"
 )

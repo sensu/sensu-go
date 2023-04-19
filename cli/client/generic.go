@@ -9,7 +9,7 @@ import (
 	"github.com/go-resty/resty/v2"
 	corev2 "github.com/sensu/core/v2"
 	corev3 "github.com/sensu/core/v3"
-	"github.com/sensu/sensu-go/types"
+	"github.com/sensu/core/v3/types"
 )
 
 // Delete sends a DELETE request to the given path

@@ -3,7 +3,7 @@ package mockqueue
 import (
 	"context"
 
-	"github.com/sensu/sensu-go/types"
+	"github.com/sensu/core/v3/types"
 	"github.com/stretchr/testify/mock"
 )
 

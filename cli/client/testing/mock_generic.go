@@ -4,8 +4,8 @@ import (
 	"net/http"
 
 	"github.com/go-resty/resty/v2"
+	"github.com/sensu/core/v3/types"
 	"github.com/sensu/sensu-go/cli/client"
-	"github.com/sensu/sensu-go/types"
 )
 
 // Delete ...

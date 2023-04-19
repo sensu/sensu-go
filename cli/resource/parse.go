@@ -13,8 +13,8 @@ import (
 
 	"github.com/ghodss/yaml"
 	corev2 "github.com/sensu/core/v2"
+	"github.com/sensu/core/v3/types"
 	apitools "github.com/sensu/sensu-api-tools"
-	"github.com/sensu/sensu-go/types"
 	"github.com/sensu/sensu-go/util/compat"
 )
 

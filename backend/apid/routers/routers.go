@@ -9,9 +9,9 @@ import (
 	"github.com/gorilla/mux"
 	corev2 "github.com/sensu/core/v2"
 	corev3 "github.com/sensu/core/v3"
+	"github.com/sensu/core/v3/types"
 	"github.com/sensu/sensu-go/backend/apid/actions"
 	"github.com/sensu/sensu-go/backend/store"
-	"github.com/sensu/sensu-go/types"
 )
 
 type errorBody struct {
@@ -125,25 +125,23 @@ func HTTPStatusFromCode(code actions.ErrCode) int {
 	return http.StatusInternalServerError
 }
 
-//
 // actionHandler takes a action handler closure and returns a new handler that
 // exexutes the closure and writes the response.
 //
 // Ex.
 //
-//   handler := actionHandler(func(r *http.Request) (interface{}, error) {
-//     msg := r.Vars("message")
-//     if msg == "i-am-a-jerk" {
-//       return nil, errors.New("fatal err")
-//     }
-//     return strings.Split(msg, "-"), nil
-//   })
-//   router.handleFunc("/echo/{message}", handler).Methods(http.MethodGet)
+//	handler := actionHandler(func(r *http.Request) (interface{}, error) {
+//	  msg := r.Vars("message")
+//	  if msg == "i-am-a-jerk" {
+//	    return nil, errors.New("fatal err")
+//	  }
+//	  return strings.Split(msg, "-"), nil
+//	})
+//	router.handleFunc("/echo/{message}", handler).Methods(http.MethodGet)
 //
-//    GET /echo/hey         --> 200 OK ["hey"]
-//    GET /echo/hey-there   --> 200 OK ["howdy", "there"]
-//    GET /echo/i-am-a-jerk --> 500    {code: 500, message: "fatal err"}
-//
+//	 GET /echo/hey         --> 200 OK ["hey"]
+//	 GET /echo/hey-there   --> 200 OK ["howdy", "there"]
+//	 GET /echo/i-am-a-jerk --> 500    {code: 500, message: "fatal err"}
 func actionHandler(action actionHandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		resources, err := action(r)
@@ -174,18 +172,16 @@ type actionHandlerFunc func(r *http.Request) (interface{}, error)
 
 type listHandlerFunc func(w http.ResponseWriter, req *http.Request) (interface{}, error)
 
-//
 // ResourceRoute mounts resources in a convetional RESTful manner.
 //
-//   routes := ResourceRoute{PathPrefix: "checks", Router: ...}
-//   routes.Get(myShowAction)     // given action is mounted at GET /checks/:id
-//   routes.List(myIndexAction)   // given action is mounted at GET /checks
-//   routes.Put(myCreateAction)   // given action is mounted at PUT /checks/:id
-//   routes.Patch(myUpdateAction) // given action is mounted at PATCH /checks/:id
-//   routes.Post(myCreateAction)  // given action is mounted at POST /checks
-//   routes.Del(myCreateAction)   // given action is mounted at DELETE /checks/:id
-//   routes.Path("{id}/publish", publishAction).Methods(http.MethodDelete) // when you need something customer
-//
+//	routes := ResourceRoute{PathPrefix: "checks", Router: ...}
+//	routes.Get(myShowAction)     // given action is mounted at GET /checks/:id
+//	routes.List(myIndexAction)   // given action is mounted at GET /checks
+//	routes.Put(myCreateAction)   // given action is mounted at PUT /checks/:id
+//	routes.Patch(myUpdateAction) // given action is mounted at PATCH /checks/:id
+//	routes.Post(myCreateAction)  // given action is mounted at POST /checks
+//	routes.Del(myCreateAction)   // given action is mounted at DELETE /checks/:id
+//	routes.Path("{id}/publish", publishAction).Methods(http.MethodDelete) // when you need something customer
 type ResourceRoute struct {
 	Router     *mux.Router
 	PathPrefix string
