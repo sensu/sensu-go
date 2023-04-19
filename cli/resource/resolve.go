@@ -9,7 +9,7 @@ import (
 	corev2 "github.com/sensu/core/v2"
 	apitools "github.com/sensu/sensu-api-tools"
 	"github.com/sensu/sensu-go/types"
-	"github.com/sensu/sensu-go/types/compat"
+	"github.com/sensu/sensu-go/util/compat"
 )
 
 var (

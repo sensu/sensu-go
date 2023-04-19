@@ -8,7 +8,7 @@ import (
 	"github.com/sensu/sensu-go/backend/apid/graphql/globalid"
 	"github.com/sensu/sensu-go/backend/apid/graphql/relay"
 	util_api "github.com/sensu/sensu-go/backend/apid/graphql/util/api"
-	"github.com/sensu/sensu-go/types/compat"
+	"github.com/sensu/sensu-go/util/compat"
 )
 
 type Fetcher interface {

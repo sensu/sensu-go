@@ -10,7 +10,7 @@ import (
 	"github.com/go-test/deep"
 	corev2 "github.com/sensu/core/v2"
 	"github.com/sensu/sensu-go/types"
-	"github.com/sensu/sensu-go/types/compat"
+	"github.com/sensu/sensu-go/util/compat"
 )
 
 func TestValidate(t *testing.T) {
