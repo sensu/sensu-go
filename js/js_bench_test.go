@@ -4,8 +4,8 @@ import (
 	"testing"
 
 	corev2 "github.com/sensu/core/v2"
-	"github.com/sensu/sensu-go/js"
 	"github.com/sensu/sensu-go/dynamic"
+	"github.com/sensu/sensu-go/js"
 )
 
 func BenchmarkCheckEval(b *testing.B) {

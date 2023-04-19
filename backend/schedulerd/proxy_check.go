@@ -9,9 +9,9 @@ import (
 	corev2 "github.com/sensu/core/v2"
 	corev3 "github.com/sensu/core/v3"
 	cachev2 "github.com/sensu/sensu-go/backend/store/cache/v2"
+	"github.com/sensu/sensu-go/dynamic"
 	"github.com/sensu/sensu-go/js"
 	"github.com/sensu/sensu-go/token"
-	"github.com/sensu/sensu-go/dynamic"
 )
 
 // matchEntities matches the provided list of entities to the entity attributes

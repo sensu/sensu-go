@@ -10,8 +10,8 @@ import (
 	corev2 "github.com/sensu/core/v2"
 	"github.com/sensu/sensu-go/asset"
 	"github.com/sensu/sensu-go/backend/store"
-	"github.com/sensu/sensu-go/js"
 	"github.com/sensu/sensu-go/dynamic"
+	"github.com/sensu/sensu-go/js"
 )
 
 const (

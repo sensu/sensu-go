@@ -44,8 +44,8 @@ func TestSynthesizeMethods(t *testing.T) {
 		v.(func())()
 	}
 	exp := map[string]bool{
-		"Meth1":	true,
-		"Meth2":	true,
+		"Meth1": true,
+		"Meth2": true,
 	}
 	if got, want := hm.callLog, exp; !reflect.DeepEqual(got, want) {
 		t.Errorf("didn't get expected calls: got %v, want %v", got, want)

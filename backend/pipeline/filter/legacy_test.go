@@ -10,8 +10,8 @@ import (
 	"github.com/sensu/sensu-go/backend/api"
 	"github.com/sensu/sensu-go/backend/authorization/rbac"
 	"github.com/sensu/sensu-go/backend/store"
-	"github.com/sensu/sensu-go/testing/mockstore"
 	"github.com/sensu/sensu-go/dynamic"
+	"github.com/sensu/sensu-go/testing/mockstore"
 	"github.com/stretchr/testify/mock"
 )
 

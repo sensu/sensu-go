@@ -6,8 +6,8 @@ import (
 	"testing"
 
 	corev2 "github.com/sensu/core/v2"
-	"github.com/sensu/sensu-go/testing/testutil"
 	"github.com/sensu/sensu-go/dynamic"
+	"github.com/sensu/sensu-go/testing/testutil"
 	"github.com/stretchr/testify/assert"
 )
 

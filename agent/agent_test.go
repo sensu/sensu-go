@@ -15,7 +15,6 @@ import (
 	"time"
 
 	corev2 "github.com/sensu/core/v2"
-	"github.com/sensu/core/v3/types"
 	sensutesting "github.com/sensu/sensu-go/testing"
 	"github.com/sensu/sensu-go/transport"
 	"github.com/stretchr/testify/assert"

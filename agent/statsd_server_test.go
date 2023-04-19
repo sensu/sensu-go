@@ -12,7 +12,6 @@ import (
 
 	"github.com/atlassian/gostatsd"
 	"github.com/sensu/core/v2"
-	"github.com/sensu/core/v3/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

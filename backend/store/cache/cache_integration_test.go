@@ -11,7 +11,6 @@ import (
 	"github.com/echlebek/crock"
 	time "github.com/echlebek/timeproxy"
 	corev2 "github.com/sensu/core/v2"
-	"github.com/sensu/core/v3/types"
 	"github.com/sensu/sensu-go/backend/etcd"
 	store "github.com/sensu/sensu-go/backend/store/etcd"
 )

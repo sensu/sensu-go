@@ -12,7 +12,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/sensu/core/v3/types"
 	"github.com/sensu/sensu-go/backend/authentication/bcrypt"
 	"github.com/sensu/sensu-go/backend/store"
 
