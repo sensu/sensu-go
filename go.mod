@@ -24,7 +24,7 @@ require (
 	github.com/gorilla/mux v1.8.0
 	github.com/gorilla/websocket v1.4.2
 	github.com/graph-gophers/dataloader v0.0.0-20180104184831-78139374585c
-	github.com/graphql-go/graphql v0.7.10-0.20200426202700-116f19d099aa
+	github.com/graphql-go/graphql v0.8.1
 	github.com/gxed/GoEndian v0.0.0-20160916112711-0f5c6873267e // indirect
 	github.com/gxed/eventfd v0.0.0-20160916113412-80a92cca79a8 // indirect
 	github.com/hashicorp/go-version v1.2.0
@@ -83,5 +83,3 @@ require (
 	github.com/sensu/sensu-api-tools v0.0.0-20221025205055-db03ae2f8099
 	github.com/sensu/sensu-go/types v0.12.0-alpha6
 )
-
-replace github.com/graphql-go/graphql => github.com/jamesdphillips/graphql v0.8.2
