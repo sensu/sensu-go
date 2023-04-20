@@ -9,7 +9,7 @@ import (
 	"github.com/google/go-cmp/cmp"
 	corev2 "github.com/sensu/core/v2"
 	corev3 "github.com/sensu/core/v3"
-	"github.com/sensu/sensu-go/types"
+	"github.com/sensu/core/v3/types"
 )
 
 func TestResource(t *testing.T) {

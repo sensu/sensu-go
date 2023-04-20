@@ -18,7 +18,7 @@ import (
 	"github.com/sensu/sensu-go/backend/store"
 	storev2 "github.com/sensu/sensu-go/backend/store/v2"
 	"github.com/sensu/sensu-go/testing/mockstore"
-	"github.com/sensu/sensu-go/types"
+	"github.com/sensu/core/v3/types"
 	"github.com/stretchr/testify/mock"
 )
 
