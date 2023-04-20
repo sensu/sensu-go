@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"testing"
 
+	v2 "github.com/sensu/core/v2"
 	client "github.com/sensu/sensu-go/cli/client/testing"
 	test "github.com/sensu/sensu-go/cli/commands/testing"
-	"github.com/sensu/sensu-go/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -26,7 +26,7 @@ func TestInfoCommandRunEClosure(t *testing.T) {
 	cli := test.NewMockCLI()
 	cli.Client.(*client.MockClient).
 		On("FetchEvent", "foo", "check_foo").
-		Return(types.FixtureEvent("foo", "check_foo"), nil)
+		Return(v2.FixtureEvent("foo", "check_foo"), nil)
 	cli.Config.(*client.MockConfig).On("Format").Return("json")
 
 	cmd := InfoCommand(cli)
@@ -51,7 +51,7 @@ func TestInfoCommandRunEClosureWithTable(t *testing.T) {
 	cli := test.NewMockCLI()
 	cli.Client.(*client.MockClient).
 		On("FetchEvent", "foo", "check_foo").
-		Return(types.FixtureEvent("foo", "check_foo"), nil)
+		Return(v2.FixtureEvent("foo", "check_foo"), nil)
 	cli.Config.(*client.MockConfig).On("Format").Return("tabular")
 
 	cmd := InfoCommand(cli)
@@ -68,7 +68,7 @@ func TestInfoCommandRunEClosureWithErr(t *testing.T) {
 	cli := test.NewMockCLI()
 	cli.Client.(*client.MockClient).
 		On("FetchEvent", "foo", "check_foo").
-		Return(types.FixtureEvent("foo", "check_foo"), fmt.Errorf("error"))
+		Return(v2.FixtureEvent("foo", "check_foo"), fmt.Errorf("error"))
 	cli.Config.(*client.MockConfig).On("Format").Return("json")
 
 	cmd := InfoCommand(cli)

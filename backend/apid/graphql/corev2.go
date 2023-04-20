@@ -5,7 +5,7 @@ import (
 	"github.com/sensu/sensu-go/backend/apid/graphql/globalid"
 	"github.com/sensu/sensu-go/backend/apid/graphql/schema"
 	"github.com/sensu/sensu-go/graphql"
-	"github.com/sensu/sensu-go/types"
+	"github.com/sensu/core/v3/types"
 )
 
 type corev2PipelineImpl struct {
@@ -19,7 +19,7 @@ func (*corev2PipelineImpl) ID(p graphql.ResolveParams) (string, error) {
 
 // ToJSON implements response to request for 'toJSON' field.
 func (*corev2PipelineImpl) ToJSON(p graphql.ResolveParams) (interface{}, error) {
-	return types.WrapResource(p.Source.(types.Resource)), nil
+	return types.WrapResource(p.Source.(corev2.Resource)), nil
 }
 
 // IsTypeOf is used to determine if a given value is associated with the type

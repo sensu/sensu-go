@@ -4,19 +4,19 @@ import (
 	"errors"
 	"fmt"
 
+	v2 "github.com/sensu/core/v2"
 	"github.com/sensu/sensu-go/cli"
 	"github.com/sensu/sensu-go/cli/commands/flags"
 	"github.com/sensu/sensu-go/cli/commands/helpers"
-	"github.com/sensu/sensu-go/types"
 	"github.com/spf13/cobra"
 )
 
 // CreateCommand adds command that allows user to create new checks
 func CreateCommand(cli *cli.SensuCli) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:          "create [NAME]",
-		Short:        "create new checks",
-		SilenceUsage: true,
+		Use:		"create [NAME]",
+		Short:		"create new checks",
+		SilenceUsage:	true,
 		PreRun: func(cmd *cobra.Command, args []string) {
 			isInteractive, _ := cmd.Flags().GetBool(flags.Interactive)
 			if !isInteractive {
@@ -55,7 +55,7 @@ func CreateCommand(cli *cli.SensuCli) *cobra.Command {
 			}
 
 			// Apply given arguments to check
-			check := types.CheckConfig{}
+			check := v2.CheckConfig{}
 			opts.Copy(&check)
 
 			if err := check.Validate(); err != nil {

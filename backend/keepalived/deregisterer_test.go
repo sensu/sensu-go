@@ -14,7 +14,6 @@ import (
 	"github.com/sensu/sensu-go/testing/mockbus"
 	"github.com/sensu/sensu-go/testing/mockcache"
 	"github.com/sensu/sensu-go/testing/mockstore"
-	"github.com/sensu/sensu-go/types"
 )
 
 func TestDeregister(t *testing.T) {
@@ -25,14 +24,14 @@ func TestDeregister(t *testing.T) {
 	mockBus := &mockbus.MockBus{}
 
 	adapter := &Deregistration{
-		Store:      mockStore,
-		MessageBus: mockBus,
+		Store:		mockStore,
+		MessageBus:	mockBus,
 	}
 
-	entity := types.FixtureEntity("entity")
+	entity := corev2.FixtureEntity("entity")
 	entity.Deregister = true
-	check := types.FixtureCheck("check")
-	event := types.FixtureEvent(entity.Name, check.Name)
+	check := corev2.FixtureCheck("check")
+	event := corev2.FixtureEvent(entity.Name, check.Name)
 
 	ecstore := new(mockstore.EntityConfigStore)
 	mockStore.On("GetEntityConfigStore").Return(ecstore)
@@ -40,7 +39,7 @@ func TestDeregister(t *testing.T) {
 
 	ecstore.On("Delete", mock.Anything, mock.Anything, mock.Anything).Return(nil)
 
-	mockEventStore.On("GetEventsByEntity", mock.Anything, entity.Name, &store.SelectionPredicate{}).Return([]*types.Event{event}, nil)
+	mockEventStore.On("GetEventsByEntity", mock.Anything, entity.Name, &store.SelectionPredicate{}).Return([]*corev2.Event{event}, nil)
 	mockEventStore.On("DeleteEventByEntityCheck", mock.Anything, entity.Name, check.Name).Return(nil)
 
 	mockBus.On("Publish", mock.AnythingOfType("string"), mock.Anything).Return(nil)
@@ -61,17 +60,17 @@ func TestDeregistrationHandler(t *testing.T) {
 	mockCache := &mockcache.MockCache{}
 
 	adapter := &Deregistration{
-		Store:         mockStore,
-		MessageBus:    mockBus,
-		SilencedCache: mockCache,
+		Store:		mockStore,
+		MessageBus:	mockBus,
+		SilencedCache:	mockCache,
 	}
 
-	entity := types.FixtureEntity("entity")
+	entity := corev2.FixtureEntity("entity")
 	entity.Deregister = true
-	entity.Deregistration = types.Deregistration{
+	entity.Deregistration = corev2.Deregistration{
 		Handler: "deregistration",
 	}
-	check := types.FixtureCheck("check")
+	check := corev2.FixtureCheck("check")
 
 	mockCache.On("Get", "default").Once().Return(
 		[]cachev2.Value[*corev2.Silenced, corev2.Silenced]{
@@ -81,11 +80,11 @@ func TestDeregistrationHandler(t *testing.T) {
 
 	ecstore.On("Delete", mock.Anything, mock.Anything, mock.Anything).Return(nil)
 
-	mockEventStore.On("GetEventsByEntity", mock.Anything, entity.Name, &store.SelectionPredicate{}).Return([]*types.Event{}, nil)
+	mockEventStore.On("GetEventsByEntity", mock.Anything, entity.Name, &store.SelectionPredicate{}).Return([]*corev2.Event{}, nil)
 	mockEventStore.On("DeleteEventByEntityCheck", mock.Anything, entity.Name, check.Name).Return(nil)
 
 	mockBus.On("Publish", messaging.TopicEvent, mock.Anything).Return(nil).Run(func(args mock.Arguments) {
-		event := args[1].(*types.Event)
+		event := args[1].(*corev2.Event)
 		assert.Equal("deregistration", event.Entity.Deregistration.Handler)
 		assert.Equal("deregistration", event.Check.Name)
 		assert.Equal(0, len(event.Check.Subscriptions))

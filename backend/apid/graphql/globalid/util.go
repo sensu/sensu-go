@@ -4,7 +4,8 @@ import (
 	"context"
 	"reflect"
 
-	"github.com/sensu/sensu-go/types"
+	v2 "github.com/sensu/core/v2"
+	"github.com/sensu/core/v3/types"
 )
 
 //
@@ -29,10 +30,10 @@ type encoderFunc func(context.Context, interface{}) Components
 type decoderFunc func(StandardComponents) Components
 
 type commonTranslator struct {
-	name              string
-	isResponsibleFunc func(interface{}) bool
-	encodeFunc        encoderFunc
-	decodeFunc        decoderFunc
+	name			string
+	isResponsibleFunc	func(interface{}) bool
+	encodeFunc		encoderFunc
+	decodeFunc		decoderFunc
 }
 
 func (r commonTranslator) ForResourceNamed() string {
@@ -61,7 +62,7 @@ func (r commonTranslator) Decode(components StandardComponents) Components {
 // Helpers
 //
 
-func addMultitenantFields(c *StandardComponents, r types.MultitenantResource) {
+func addMultitenantFields(c *StandardComponents, r v2.MultitenantResource) {
 	c.namespace = r.GetNamespace()
 }
 
@@ -86,7 +87,7 @@ func standardEncoder(name string, fNames ...string) encoderFunc {
 		components.uniqueComponent = fVal.String()
 
 		// Add namespace to global id components
-		if multiRecord, ok := record.(types.MultitenantResource); ok {
+		if multiRecord, ok := record.(v2.MultitenantResource); ok {
 			addMultitenantFields(components, multiRecord)
 		}
 
@@ -95,7 +96,7 @@ func standardEncoder(name string, fNames ...string) encoderFunc {
 }
 
 type tmGetter interface {
-	GetTypeMeta() types.TypeMeta
+	GetTypeMeta() v2.TypeMeta
 }
 
 type namedResource interface {
@@ -109,9 +110,9 @@ func NewGenericTranslator(kind namedResource, name string) Translator {
 }
 
 type genericTranslator struct {
-	kind     interface{}
-	name     string
-	_kindVal *reflect.Value
+	kind		interface{}
+	name		string
+	_kindVal	*reflect.Value
 }
 
 func (g *genericTranslator) kindVal() *reflect.Value {
@@ -127,14 +128,14 @@ func (g *genericTranslator) ForResourceNamed() string {
 	if g.name != "" {
 		return g.name
 	}
-	tm := types.TypeMeta{}
+	tm := v2.TypeMeta{}
 	if getter, ok := g.kind.(tmGetter); ok {
 		tm = getter.GetTypeMeta()
 	} else {
 		typ := reflect.Indirect(reflect.ValueOf(g.kind)).Type()
-		tm = types.TypeMeta{
-			Type:       typ.Name(),
-			APIVersion: types.ApiVersion(typ.PkgPath()),
+		tm = v2.TypeMeta{
+			Type:		typ.Name(),
+			APIVersion:	types.ApiVersion(typ.PkgPath()),
 		}
 	}
 	g.name = tm.APIVersion + "." + tm.Type

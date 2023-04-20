@@ -5,20 +5,20 @@ import (
 	"strings"
 
 	"github.com/AlecAivazis/survey/v2"
+	v2 "github.com/sensu/core/v2"
 	"github.com/sensu/sensu-go/cli/commands/helpers"
-	"github.com/sensu/sensu-go/types"
 	"github.com/spf13/pflag"
 )
 
 type mutatorOpts struct {
-	Type          string `survey:"type"`
-	Name          string `survey:"name"`
-	Command       string `survey:"command"`
-	Eval          string `survey:"eval"`
-	Timeout       string `survey:"timeout"`
-	EnvVars       string `survey:"env-vars"`
-	Namespace     string `survey:"namespace"`
-	RuntimeAssets string `survey:"assets"`
+	Type		string	`survey:"type"`
+	Name		string	`survey:"name"`
+	Command		string	`survey:"command"`
+	Eval		string	`survey:"eval"`
+	Timeout		string	`survey:"timeout"`
+	EnvVars		string	`survey:"env-vars"`
+	Namespace	string	`survey:"namespace"`
+	RuntimeAssets	string	`survey:"assets"`
 }
 
 func newMutatorOpts() *mutatorOpts {
@@ -26,7 +26,7 @@ func newMutatorOpts() *mutatorOpts {
 	return &opts
 }
 
-func (opts *mutatorOpts) withMutator(mutator *types.Mutator) {
+func (opts *mutatorOpts) withMutator(mutator *v2.Mutator) {
 	opts.Name = mutator.Name
 	opts.Namespace = mutator.Namespace
 	opts.Type = mutator.Type
@@ -55,64 +55,64 @@ func (opts *mutatorOpts) administerQuestionnaire(editing bool) error {
 	if !editing {
 		qs = append(qs, []*survey.Question{
 			{
-				Name: "name",
+				Name:	"name",
 				Prompt: &survey.Input{
-					Message: "Mutator Name:",
-					Default: opts.Name},
-				Validate: survey.Required,
+					Message:	"Mutator Name:",
+					Default:	opts.Name},
+				Validate:	survey.Required,
 			},
 			{
-				Name: "namespace",
+				Name:	"namespace",
 				Prompt: &survey.Input{
-					Message: "Namespace:",
-					Default: opts.Namespace,
+					Message:	"Namespace:",
+					Default:	opts.Namespace,
 				},
-				Validate: survey.Required,
+				Validate:	survey.Required,
 			},
 		}...)
 	}
 	qs = append(qs, []*survey.Question{
 		{
-			Name: "type",
+			Name:	"type",
 			Prompt: &survey.Input{
-				Message: "Type:",
-				Default: "pipe",
+				Message:	"Type:",
+				Default:	"pipe",
 			},
 		},
 		{
-			Name: "command",
+			Name:	"command",
 			Prompt: &survey.Input{
-				Message: "Command:",
-				Default: opts.Command,
+				Message:	"Command:",
+				Default:	opts.Command,
 			},
 		},
 		{
-			Name: "eval",
+			Name:	"eval",
 			Prompt: &survey.Input{
 				Message: "Eval:",
 			},
 		},
 		{
-			Name: "timeout",
+			Name:	"timeout",
 			Prompt: &survey.Input{
-				Message: "Timeout:",
-				Default: opts.Timeout,
+				Message:	"Timeout:",
+				Default:	opts.Timeout,
 			},
 		},
 		{
-			Name: "env-vars",
+			Name:	"env-vars",
 			Prompt: &survey.Input{
-				Message: "Environment variables:",
-				Help:    "A list of comma-separated key=value pairs of environment variables.",
-				Default: opts.EnvVars,
+				Message:	"Environment variables:",
+				Help:		"A list of comma-separated key=value pairs of environment variables.",
+				Default:	opts.EnvVars,
 			},
 		},
 		{
-			Name: "assets",
+			Name:	"assets",
 			Prompt: &survey.Input{
-				Message: "Runtime Assets:",
-				Help:    "A list of comma-separated list of assets to use when executing the mutator",
-				Default: opts.RuntimeAssets,
+				Message:	"Runtime Assets:",
+				Help:		"A list of comma-separated list of assets to use when executing the mutator",
+				Default:	opts.RuntimeAssets,
 			},
 		},
 	}...)
@@ -120,7 +120,7 @@ func (opts *mutatorOpts) administerQuestionnaire(editing bool) error {
 	return survey.Ask(qs, opts)
 }
 
-func (opts *mutatorOpts) Copy(mutator *types.Mutator) {
+func (opts *mutatorOpts) Copy(mutator *v2.Mutator) {
 	mutator.Name = opts.Name
 	mutator.Namespace = opts.Namespace
 	mutator.Type = opts.Type

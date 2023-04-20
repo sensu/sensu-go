@@ -8,67 +8,67 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/sensu/sensu-go/types"
+	v2 "github.com/sensu/core/v2"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestMiddlewareLimits(t *testing.T) {
 	assert := assert.New(t)
 
-	goodCheck := &types.CheckConfig{
-		ObjectMeta: types.ObjectMeta{
-			Name:      "goodcheck",
-			Namespace: "default",
+	goodCheck := &v2.CheckConfig{
+		ObjectMeta: v2.ObjectMeta{
+			Name:		"goodcheck",
+			Namespace:	"default",
 		},
-		Command:       "true",
-		Interval:      30,
-		Publish:       true,
-		Subscriptions: []string{"system"},
+		Command:	"true",
+		Interval:	30,
+		Publish:	true,
+		Subscriptions:	[]string{"system"},
 	}
 
 	maxCheck := make([]byte, 600000)
 	rand.Read(maxCheck)
-	badCheck := &types.CheckConfig{
-		ObjectMeta: types.ObjectMeta{
-			Name:      "badcheck",
-			Namespace: "default",
+	badCheck := &v2.CheckConfig{
+		ObjectMeta: v2.ObjectMeta{
+			Name:		"badcheck",
+			Namespace:	"default",
 		},
-		Command:       string(maxCheck),
-		Interval:      30,
-		Publish:       true,
-		Subscriptions: []string{"system"},
+		Command:	string(maxCheck),
+		Interval:	30,
+		Publish:	true,
+		Subscriptions:	[]string{"system"},
 	}
 
 	tests := []struct {
-		description  string
-		url          string
-		body         *types.CheckConfig
-		expectedCode int
-		limit        int64
+		description	string
+		url		string
+		body		*v2.CheckConfig
+		expectedCode	int
+		limit		int64
 	}{
 		{
-			description:  "Request within threshold",
-			url:          "/checks",
-			body:         goodCheck,
-			expectedCode: http.StatusOK,
-			limit:        MaxBytesLimit,
+			description:	"Request within threshold",
+			url:		"/checks",
+			body:		goodCheck,
+			expectedCode:	http.StatusOK,
+			limit:		MaxBytesLimit,
 		}, {
-			description:  "Request over threshold",
-			url:          "/checks",
-			body:         badCheck,
-			expectedCode: http.StatusInternalServerError,
-			limit:        MaxBytesLimit,
+			description:	"Request over threshold",
+			url:		"/checks",
+			body:		badCheck,
+			expectedCode:	http.StatusInternalServerError,
+			limit:		MaxBytesLimit,
 		}, {
-			description:  "Configurable limit within threshold",
-			url:          "/checks",
-			body:         goodCheck,
-			expectedCode: http.StatusOK,
-			limit:        1024000,
+			description:	"Configurable limit within threshold",
+			url:		"/checks",
+			body:		goodCheck,
+			expectedCode:	http.StatusOK,
+			limit:		1024000,
 		}, {
-			description:  "Configurable limit over threshold",
-			url:          "/checks",
-			body:         goodCheck,
-			expectedCode: http.StatusInternalServerError,
+			description:	"Configurable limit over threshold",
+			url:		"/checks",
+			body:		goodCheck,
+			expectedCode:	http.StatusInternalServerError,
 		},
 	}
 

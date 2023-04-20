@@ -5,7 +5,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/sensu/sensu-go/types"
+	v2 "github.com/sensu/core/v2"
 	"github.com/sirupsen/logrus"
 )
 
@@ -14,21 +14,21 @@ type OpenTSDBList []OpenTSDB
 
 // OpenTSDB contains values of an OpenTSDB metric
 type OpenTSDB struct {
-	Name      string
-	Value     float64
-	TagSet    []*types.MetricTag
-	Timestamp int64
+	Name		string
+	Value		float64
+	TagSet		[]*v2.MetricTag
+	Timestamp	int64
 }
 
 // Transform transforms metrics in OpenTSDB format to Sensu Metric Format
-func (o OpenTSDBList) Transform() []*types.MetricPoint {
-	var points []*types.MetricPoint
+func (o OpenTSDBList) Transform() []*v2.MetricPoint {
+	var points []*v2.MetricPoint
 	for _, metric := range o {
-		mp := &types.MetricPoint{
-			Name:      metric.Name,
-			Value:     metric.Value,
-			Timestamp: metric.Timestamp,
-			Tags:      metric.TagSet,
+		mp := &v2.MetricPoint{
+			Name:		metric.Name,
+			Value:		metric.Value,
+			Timestamp:	metric.Timestamp,
+			Tags:		metric.TagSet,
 		}
 		points = append(points, mp)
 	}
@@ -36,11 +36,11 @@ func (o OpenTSDBList) Transform() []*types.MetricPoint {
 }
 
 // ParseOpenTSDB parses OpenTSDB metrics into a list of OpenTSDB structs
-func ParseOpenTSDB(event *types.Event) OpenTSDBList {
+func ParseOpenTSDB(event *v2.Event) OpenTSDBList {
 	var openTSDBList OpenTSDBList
 	fields := logrus.Fields{
-		"namespace": event.Check.Namespace,
-		"check":     event.Check.Name,
+		"namespace":	event.Check.Namespace,
+		"check":	event.Check.Name,
 	}
 
 	// Split each line of the output into its own metric
@@ -83,10 +83,10 @@ OUTER:
 
 		// Create a OpenTSDB metric with what we have so far
 		o := OpenTSDB{
-			Name:      name,
-			TagSet:    []*types.MetricTag{},
-			Timestamp: timestamp,
-			Value:     value,
+			Name:		name,
+			TagSet:		[]*v2.MetricTag{},
+			Timestamp:	timestamp,
+			Value:		value,
 		}
 
 		// Extract the tag(s)
@@ -98,9 +98,9 @@ OUTER:
 				continue OUTER
 			}
 
-			tag := &types.MetricTag{
-				Name:  t[0],
-				Value: t[1],
+			tag := &v2.MetricTag{
+				Name:	t[0],
+				Value:	t[1],
 			}
 
 			// Add this tag to our metric

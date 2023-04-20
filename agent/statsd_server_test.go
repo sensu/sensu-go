@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/atlassian/gostatsd"
-	"github.com/sensu/sensu-go/types"
+	v2 "github.com/sensu/core/v2"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -36,30 +36,30 @@ func TestNewStatsdServer(t *testing.T) {
 
 func TestComposeMetricTags(t *testing.T) {
 	testCases := []struct {
-		name      string
-		tagsKey   string
-		metricTag []*types.MetricTag
+		name		string
+		tagsKey		string
+		metricTag	[]*v2.MetricTag
 	}{
 		{
-			name:    "Full tagsKey",
-			tagsKey: "aggregator_id:5,channel:dispatch_aggregator,s:hostName",
-			metricTag: []*types.MetricTag{
+			name:		"Full tagsKey",
+			tagsKey:	"aggregator_id:5,channel:dispatch_aggregator,s:hostName",
+			metricTag: []*v2.MetricTag{
 				{Name: "aggregator_id", Value: "5"},
 				{Name: "channel", Value: "dispatch_aggregator"},
 				{Name: "s", Value: "hostName"},
 			},
 		},
 		{
-			name:    "Single tagsKey",
-			tagsKey: "aggregator_id:5",
-			metricTag: []*types.MetricTag{
+			name:		"Single tagsKey",
+			tagsKey:	"aggregator_id:5",
+			metricTag: []*v2.MetricTag{
 				{Name: "aggregator_id", Value: "5"},
 			},
 		},
 		{
-			name:      "Empty tagsKey",
-			tagsKey:   "",
-			metricTag: nil,
+			name:		"Empty tagsKey",
+			tagsKey:	"",
+			metricTag:	nil,
 		},
 	}
 
@@ -176,7 +176,7 @@ func TestReceiveMetrics(t *testing.T) {
 	assert.NotEmpty(msg)
 	assert.Equal("event", msg.Type)
 
-	var event types.Event
+	var event v2.Event
 	err = json.Unmarshal(msg.Payload, &event)
 	if err != nil {
 		assert.FailNow("failed to unmarshal event json")
@@ -192,11 +192,11 @@ func TestReceiveMetrics(t *testing.T) {
 
 func FixtureCounter(now int64) gostatsd.Counter {
 	return gostatsd.Counter{
-		PerSecond: 2,
-		Value:     3,
-		Timestamp: gostatsd.Nanotime(now),
-		Hostname:  "host",
-		Tags:      gostatsd.Tags{"foo:bar"},
+		PerSecond:	2,
+		Value:		3,
+		Timestamp:	gostatsd.Nanotime(now),
+		Hostname:	"host",
+		Tags:		gostatsd.Tags{"foo:bar"},
 	}
 }
 
@@ -211,20 +211,20 @@ func FixtureCounters(now int64) gostatsd.Counters {
 
 func FixtureTimer(now int64) gostatsd.Timer {
 	return gostatsd.Timer{
-		Count:       2,
-		PerSecond:   3,
-		Mean:        4,
-		Median:      5,
-		Min:         6,
-		Max:         7,
-		StdDev:      8,
-		Sum:         9,
-		SumSquares:  10,
-		Values:      []float64{1, 2, 3},
-		Percentiles: []gostatsd.Percentile{{Float: 4, Str: "str"}},
-		Timestamp:   gostatsd.Nanotime(now),
-		Hostname:    "host",
-		Tags:        gostatsd.Tags{"foo:bar"},
+		Count:		2,
+		PerSecond:	3,
+		Mean:		4,
+		Median:		5,
+		Min:		6,
+		Max:		7,
+		StdDev:		8,
+		Sum:		9,
+		SumSquares:	10,
+		Values:		[]float64{1, 2, 3},
+		Percentiles:	[]gostatsd.Percentile{{Float: 4, Str: "str"}},
+		Timestamp:	gostatsd.Nanotime(now),
+		Hostname:	"host",
+		Tags:		gostatsd.Tags{"foo:bar"},
 	}
 }
 
@@ -239,10 +239,10 @@ func FixtureTimers(now int64) gostatsd.Timers {
 
 func FixtureGauge(now int64) gostatsd.Gauge {
 	return gostatsd.Gauge{
-		Value:     3,
-		Timestamp: gostatsd.Nanotime(now),
-		Hostname:  "host",
-		Tags:      gostatsd.Tags{"foo:bar"},
+		Value:		3,
+		Timestamp:	gostatsd.Nanotime(now),
+		Hostname:	"host",
+		Tags:		gostatsd.Tags{"foo:bar"},
 	}
 }
 
@@ -257,10 +257,10 @@ func FixtureGauges(now int64) gostatsd.Gauges {
 
 func FixtureSet(now int64) gostatsd.Set {
 	return gostatsd.Set{
-		Values:    map[string]struct{}{"foo": struct{}{}},
-		Timestamp: gostatsd.Nanotime(now),
-		Hostname:  "host",
-		Tags:      gostatsd.Tags{"foo:bar"},
+		Values:		map[string]struct{}{"foo": struct{}{}},
+		Timestamp:	gostatsd.Nanotime(now),
+		Hostname:	"host",
+		Tags:		gostatsd.Tags{"foo:bar"},
 	}
 }
 
@@ -275,9 +275,9 @@ func FixtureSets(now int64) gostatsd.Sets {
 
 func FixtureMetricMap(now int64) gostatsd.MetricMap {
 	return gostatsd.MetricMap{
-		Counters: FixtureCounters(now),
-		Timers:   FixtureTimers(now),
-		Gauges:   FixtureGauges(now),
-		Sets:     FixtureSets(now),
+		Counters:	FixtureCounters(now),
+		Timers:		FixtureTimers(now),
+		Gauges:		FixtureGauges(now),
+		Sets:		FixtureSets(now),
 	}
 }

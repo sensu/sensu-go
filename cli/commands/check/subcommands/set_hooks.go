@@ -5,26 +5,26 @@ import (
 	"fmt"
 
 	"github.com/AlecAivazis/survey/v2"
+	v2 "github.com/sensu/core/v2"
 	"github.com/sensu/sensu-go/cli"
 	"github.com/sensu/sensu-go/cli/commands/flags"
 	"github.com/sensu/sensu-go/cli/commands/helpers"
-	"github.com/sensu/sensu-go/types"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 )
 
 type checkHookOpts struct {
-	Check string `survey:"check"`
-	Type  string `survey:"type"`
-	Hooks string `survey:"hooks"`
+	Check	string	`survey:"check"`
+	Type	string	`survey:"type"`
+	Hooks	string	`survey:"hooks"`
 }
 
 // SetCheckHooksCommand defines new command to set hooks of a check
 func SetCheckHooksCommand(cli *cli.SensuCli) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:          "set-hooks [CHECKNAME]",
-		Short:        "set hooks of a check",
-		SilenceUsage: true,
+		Use:		"set-hooks [CHECKNAME]",
+		Short:		"set hooks of a check",
+		SilenceUsage:	true,
 		PreRun: func(cmd *cobra.Command, args []string) {
 			isInteractive, _ := cmd.Flags().GetBool(flags.Interactive)
 			if !isInteractive {
@@ -57,7 +57,7 @@ func SetCheckHooksCommand(cli *cli.SensuCli) *cobra.Command {
 			}
 
 			// Instantiate check hook from input
-			checkHook := types.HookList{}
+			checkHook := v2.HookList{}
 			opts.Copy(&checkHook)
 
 			// Ensure that the given checkHook is valid
@@ -94,34 +94,34 @@ func (opts *checkHookOpts) withFlags(flags *pflag.FlagSet) {
 func (opts *checkHookOpts) administerQuestionnaire() error {
 	var qs = []*survey.Question{
 		{
-			Name: "check",
+			Name:	"check",
 			Prompt: &survey.Input{
-				Message: "Check Name:",
-				Default: opts.Check,
+				Message:	"Check Name:",
+				Default:	opts.Check,
 			},
-			Validate: survey.Required,
+			Validate:	survey.Required,
 		},
 		{
-			Name: "type",
+			Name:	"type",
 			Prompt: &survey.Input{
-				Message: "Hook Type:",
-				Default: opts.Type,
+				Message:	"Hook Type:",
+				Default:	opts.Type,
 			},
-			Validate: survey.Required,
+			Validate:	survey.Required,
 		},
 		{
-			Name: "hooks",
+			Name:	"hooks",
 			Prompt: &survey.Input{
 				Message: "Hooks:",
 			},
-			Validate: survey.Required,
+			Validate:	survey.Required,
 		},
 	}
 
 	return survey.Ask(qs, opts)
 }
 
-func (opts *checkHookOpts) Copy(checkHook *types.HookList) {
+func (opts *checkHookOpts) Copy(checkHook *v2.HookList) {
 	checkHook.Type = opts.Type
 	checkHook.Hooks = helpers.SafeSplitCSV(opts.Hooks)
 }

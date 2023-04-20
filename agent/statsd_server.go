@@ -15,8 +15,8 @@ import (
 
 	"github.com/atlassian/gostatsd"
 	"github.com/atlassian/gostatsd/pkg/statsd"
+	v2 "github.com/sensu/core/v2"
 	"github.com/sensu/sensu-go/transport"
-	"github.com/sensu/sensu-go/types"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 	"golang.org/x/time/rate"
@@ -53,32 +53,32 @@ func NewStatsdServer(a *Agent) *statsd.Server {
 // NewServer will create a new statsd Server with the default configuration.
 func NewServer() *statsd.Server {
 	return &statsd.Server{
-		Backends:            []gostatsd.Backend{},
-		Limiter:             rate.NewLimiter(statsd.DefaultMaxCloudRequests, statsd.DefaultBurstCloudRequests),
-		InternalTags:        statsd.DefaultInternalTags,
-		InternalNamespace:   statsd.DefaultInternalNamespace,
-		DefaultTags:         statsd.DefaultTags,
-		ExpiryInterval:      statsd.DefaultExpiryInterval,
-		FlushInterval:       statsd.DefaultFlushInterval,
-		MaxReaders:          statsd.DefaultMaxReaders,
-		MaxParsers:          statsd.DefaultMaxParsers,
-		MaxWorkers:          statsd.DefaultMaxWorkers,
-		MaxQueueSize:        statsd.DefaultMaxQueueSize,
-		MaxConcurrentEvents: statsd.DefaultMaxConcurrentEvents,
-		EstimatedTags:       statsd.DefaultEstimatedTags,
-		MetricsAddr:         statsd.DefaultMetricsAddr,
-		PercentThreshold:    statsd.DefaultPercentThreshold,
-		IgnoreHost:          statsd.DefaultIgnoreHost,
-		ConnPerReader:       statsd.DefaultConnPerReader,
-		HeartbeatEnabled:    statsd.DefaultHeartbeatEnabled,
-		ReceiveBatchSize:    statsd.DefaultReceiveBatchSize,
+		Backends:		[]gostatsd.Backend{},
+		Limiter:		rate.NewLimiter(statsd.DefaultMaxCloudRequests, statsd.DefaultBurstCloudRequests),
+		InternalTags:		statsd.DefaultInternalTags,
+		InternalNamespace:	statsd.DefaultInternalNamespace,
+		DefaultTags:		statsd.DefaultTags,
+		ExpiryInterval:		statsd.DefaultExpiryInterval,
+		FlushInterval:		statsd.DefaultFlushInterval,
+		MaxReaders:		statsd.DefaultMaxReaders,
+		MaxParsers:		statsd.DefaultMaxParsers,
+		MaxWorkers:		statsd.DefaultMaxWorkers,
+		MaxQueueSize:		statsd.DefaultMaxQueueSize,
+		MaxConcurrentEvents:	statsd.DefaultMaxConcurrentEvents,
+		EstimatedTags:		statsd.DefaultEstimatedTags,
+		MetricsAddr:		statsd.DefaultMetricsAddr,
+		PercentThreshold:	statsd.DefaultPercentThreshold,
+		IgnoreHost:		statsd.DefaultIgnoreHost,
+		ConnPerReader:		statsd.DefaultConnPerReader,
+		HeartbeatEnabled:	statsd.DefaultHeartbeatEnabled,
+		ReceiveBatchSize:	statsd.DefaultReceiveBatchSize,
 		CacheOptions: statsd.CacheOptions{
-			CacheRefreshPeriod:        statsd.DefaultCacheRefreshPeriod,
-			CacheEvictAfterIdlePeriod: statsd.DefaultCacheEvictAfterIdlePeriod,
-			CacheTTL:                  statsd.DefaultCacheTTL,
-			CacheNegativeTTL:          statsd.DefaultCacheNegativeTTL,
+			CacheRefreshPeriod:		statsd.DefaultCacheRefreshPeriod,
+			CacheEvictAfterIdlePeriod:	statsd.DefaultCacheEvictAfterIdlePeriod,
+			CacheTTL:			statsd.DefaultCacheTTL,
+			CacheNegativeTTL:		statsd.DefaultCacheNegativeTTL,
 		},
-		Viper: viper.New(),
+		Viper:	viper.New(),
 	}
 }
 
@@ -123,8 +123,8 @@ func (Client) Name() string {
 	return BackendName
 }
 
-func prepareMetrics(now int64, metrics *gostatsd.MetricMap) []*types.MetricPoint {
-	var metricsPoints []*types.MetricPoint
+func prepareMetrics(now int64, metrics *gostatsd.MetricMap) []*v2.MetricPoint {
+	var metricsPoints []*v2.MetricPoint
 	metrics.Counters.Each(func(key, tagsKey string, counter gostatsd.Counter) {
 		tags := composeMetricTags(tagsKey)
 		counters := composeCounterPoints(counter, key, tags, now)
@@ -148,19 +148,19 @@ func prepareMetrics(now int64, metrics *gostatsd.MetricMap) []*types.MetricPoint
 	return metricsPoints
 }
 
-func (c Client) sendMetrics(points []*types.MetricPoint) (retErr error) {
+func (c Client) sendMetrics(points []*v2.MetricPoint) (retErr error) {
 	if points == nil {
 		return nil
 	}
 
-	metrics := &types.Metrics{
-		Points:   points,
-		Handlers: c.agent.config.StatsdServer.Handlers,
+	metrics := &v2.Metrics{
+		Points:		points,
+		Handlers:	c.agent.config.StatsdServer.Handlers,
 	}
-	event := &types.Event{
-		Entity:    c.agent.getAgentEntity(),
-		Timestamp: time.Now().Unix(),
-		Metrics:   metrics,
+	event := &v2.Event{
+		Entity:		c.agent.getAgentEntity(),
+		Timestamp:	time.Now().Unix(),
+		Metrics:	metrics,
 	}
 
 	msg, err := c.agent.marshal(event)
@@ -170,20 +170,20 @@ func (c Client) sendMetrics(points []*types.MetricPoint) (retErr error) {
 	}
 
 	logger.WithFields(logrus.Fields{
-		"metrics": event.Metrics,
-		"entity":  event.Entity.Name,
+		"metrics":	event.Metrics,
+		"entity":	event.Entity.Name,
 	}).Debug("sending statsd metrics")
 	tm := &transport.Message{
-		Type:    transport.MessageTypeEvent,
-		Payload: msg,
+		Type:		transport.MessageTypeEvent,
+		Payload:	msg,
 	}
 	c.agent.sendMessage(tm)
 	return nil
 }
 
-func composeMetricTags(tagsKey string) []*types.MetricTag {
+func composeMetricTags(tagsKey string) []*v2.MetricTag {
 	tagsKeys := strings.Split(tagsKey, ",")
-	var tags []*types.MetricTag
+	var tags []*v2.MetricTag
 	var name, value string
 	for _, tag := range tagsKeys {
 		tagsValues := strings.Split(tag, ":")
@@ -192,9 +192,9 @@ func composeMetricTags(tagsKey string) []*types.MetricTag {
 			value = tagsValues[1]
 		}
 		if tag != "" {
-			t := &types.MetricTag{
-				Name:  name,
-				Value: value,
+			t := &v2.MetricTag{
+				Name:	name,
+				Value:	value,
 			}
 			tags = append(tags, t)
 		}
@@ -202,109 +202,109 @@ func composeMetricTags(tagsKey string) []*types.MetricTag {
 	return tags
 }
 
-func composeCounterPoints(counter gostatsd.Counter, key string, tags []*types.MetricTag, now int64) []*types.MetricPoint {
-	m0 := &types.MetricPoint{
-		Name:      key + ".value",
-		Value:     float64(counter.Value),
-		Timestamp: now,
-		Tags:      tags,
+func composeCounterPoints(counter gostatsd.Counter, key string, tags []*v2.MetricTag, now int64) []*v2.MetricPoint {
+	m0 := &v2.MetricPoint{
+		Name:		key + ".value",
+		Value:		float64(counter.Value),
+		Timestamp:	now,
+		Tags:		tags,
 	}
-	m1 := &types.MetricPoint{
-		Name:      key + ".per_second",
-		Value:     float64(counter.PerSecond),
-		Timestamp: now,
-		Tags:      tags,
+	m1 := &v2.MetricPoint{
+		Name:		key + ".per_second",
+		Value:		float64(counter.PerSecond),
+		Timestamp:	now,
+		Tags:		tags,
 	}
-	points := []*types.MetricPoint{m0, m1}
+	points := []*v2.MetricPoint{m0, m1}
 	return points
 }
 
-func composeTimerPoints(timer gostatsd.Timer, key string, tags []*types.MetricTag, now int64) []*types.MetricPoint {
-	m0 := &types.MetricPoint{
-		Name:      key + ".min",
-		Value:     timer.Min,
-		Timestamp: now,
-		Tags:      tags,
+func composeTimerPoints(timer gostatsd.Timer, key string, tags []*v2.MetricTag, now int64) []*v2.MetricPoint {
+	m0 := &v2.MetricPoint{
+		Name:		key + ".min",
+		Value:		timer.Min,
+		Timestamp:	now,
+		Tags:		tags,
 	}
-	m1 := &types.MetricPoint{
-		Name:      key + ".max",
-		Value:     timer.Max,
-		Timestamp: now,
-		Tags:      tags,
+	m1 := &v2.MetricPoint{
+		Name:		key + ".max",
+		Value:		timer.Max,
+		Timestamp:	now,
+		Tags:		tags,
 	}
-	m2 := &types.MetricPoint{
-		Name:      key + ".count",
-		Value:     float64(timer.Count),
-		Timestamp: now,
-		Tags:      tags,
+	m2 := &v2.MetricPoint{
+		Name:		key + ".count",
+		Value:		float64(timer.Count),
+		Timestamp:	now,
+		Tags:		tags,
 	}
-	m3 := &types.MetricPoint{
-		Name:      key + ".per_second",
-		Value:     timer.PerSecond,
-		Timestamp: now,
-		Tags:      tags,
+	m3 := &v2.MetricPoint{
+		Name:		key + ".per_second",
+		Value:		timer.PerSecond,
+		Timestamp:	now,
+		Tags:		tags,
 	}
-	m4 := &types.MetricPoint{
-		Name:      key + ".mean",
-		Value:     timer.Mean,
-		Timestamp: now,
-		Tags:      tags,
+	m4 := &v2.MetricPoint{
+		Name:		key + ".mean",
+		Value:		timer.Mean,
+		Timestamp:	now,
+		Tags:		tags,
 	}
-	m5 := &types.MetricPoint{
-		Name:      key + ".median",
-		Value:     timer.Median,
-		Timestamp: now,
-		Tags:      tags,
+	m5 := &v2.MetricPoint{
+		Name:		key + ".median",
+		Value:		timer.Median,
+		Timestamp:	now,
+		Tags:		tags,
 	}
-	m6 := &types.MetricPoint{
-		Name:      key + ".stddev",
-		Value:     timer.StdDev,
-		Timestamp: now,
-		Tags:      tags,
+	m6 := &v2.MetricPoint{
+		Name:		key + ".stddev",
+		Value:		timer.StdDev,
+		Timestamp:	now,
+		Tags:		tags,
 	}
-	m7 := &types.MetricPoint{
-		Name:      key + ".sum",
-		Value:     timer.Sum,
-		Timestamp: now,
-		Tags:      tags,
+	m7 := &v2.MetricPoint{
+		Name:		key + ".sum",
+		Value:		timer.Sum,
+		Timestamp:	now,
+		Tags:		tags,
 	}
-	m8 := &types.MetricPoint{
-		Name:      key + ".sum_squares",
-		Value:     timer.SumSquares,
-		Timestamp: now,
-		Tags:      tags,
+	m8 := &v2.MetricPoint{
+		Name:		key + ".sum_squares",
+		Value:		timer.SumSquares,
+		Timestamp:	now,
+		Tags:		tags,
 	}
-	points := []*types.MetricPoint{m0, m1, m2, m3, m4, m5, m6, m7, m8}
+	points := []*v2.MetricPoint{m0, m1, m2, m3, m4, m5, m6, m7, m8}
 	for _, pct := range timer.Percentiles {
-		m := &types.MetricPoint{
-			Name:      key + ".percentile_" + pct.Str,
-			Value:     pct.Float,
-			Timestamp: now,
-			Tags:      tags,
+		m := &v2.MetricPoint{
+			Name:		key + ".percentile_" + pct.Str,
+			Value:		pct.Float,
+			Timestamp:	now,
+			Tags:		tags,
 		}
 		points = append(points, m)
 	}
 	return points
 }
 
-func composeGaugePoints(gauge gostatsd.Gauge, key string, tags []*types.MetricTag, now int64) []*types.MetricPoint {
-	m0 := &types.MetricPoint{
-		Name:      key + ".value",
-		Value:     float64(gauge.Value),
-		Timestamp: now,
-		Tags:      tags,
+func composeGaugePoints(gauge gostatsd.Gauge, key string, tags []*v2.MetricTag, now int64) []*v2.MetricPoint {
+	m0 := &v2.MetricPoint{
+		Name:		key + ".value",
+		Value:		float64(gauge.Value),
+		Timestamp:	now,
+		Tags:		tags,
 	}
-	points := []*types.MetricPoint{m0}
+	points := []*v2.MetricPoint{m0}
 	return points
 }
 
-func composeSetPoints(set gostatsd.Set, key string, tags []*types.MetricTag, now int64) []*types.MetricPoint {
-	m0 := &types.MetricPoint{
-		Name:      key + ".value",
-		Value:     float64(len(set.Values)),
-		Timestamp: now,
-		Tags:      tags,
+func composeSetPoints(set gostatsd.Set, key string, tags []*v2.MetricTag, now int64) []*v2.MetricPoint {
+	m0 := &v2.MetricPoint{
+		Name:		key + ".value",
+		Value:		float64(len(set.Values)),
+		Timestamp:	now,
+		Tags:		tags,
 	}
-	points := []*types.MetricPoint{m0}
+	points := []*v2.MetricPoint{m0}
 	return points
 }

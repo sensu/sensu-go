@@ -18,7 +18,7 @@ import (
 	"github.com/sensu/sensu-go/backend/apid/graphql/suggest"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/graphql"
-	"github.com/sensu/sensu-go/types"
+	"github.com/sensu/core/v3/types"
 	utilstrings "github.com/sensu/sensu-go/util/strings"
 )
 
@@ -35,8 +35,8 @@ var _ schema.QueryFieldResolvers = (*queryImpl)(nil)
 //
 
 type queryImpl struct {
-	nodeResolver *relay.Resolver
-	svc          ServiceConfig
+	nodeResolver	*relay.Resolver
+	svc		ServiceConfig
 }
 
 // Viewer implements response to request for 'viewer' field.
@@ -241,7 +241,7 @@ func (r *queryImpl) Node(p schema.QueryNodeFieldResolverParams) (interface{}, er
 func (r *queryImpl) WrappedNode(p schema.QueryWrappedNodeFieldResolverParams) (interface{}, error) {
 	resolver := r.nodeResolver
 	res, err := resolver.Find(p.Context, p.Args.ID, p.Info)
-	if rres, ok := res.(types.Resource); ok {
+	if rres, ok := res.(corev2.Resource); ok {
 		return types.WrapResource(rres), err
 	}
 	return nil, err

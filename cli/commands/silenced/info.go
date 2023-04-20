@@ -6,19 +6,19 @@ import (
 	"io"
 	"time"
 
+	v2 "github.com/sensu/core/v2"
 	"github.com/sensu/sensu-go/cli"
 	"github.com/sensu/sensu-go/cli/commands/helpers"
 	"github.com/sensu/sensu-go/cli/elements/list"
-	"github.com/sensu/sensu-go/types"
 	"github.com/spf13/cobra"
 )
 
 // InfoCommand defines new silenced info command
 func InfoCommand(cli *cli.SensuCli) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:          "info [Name]",
-		Short:        "show detailed silenced information",
-		SilenceUsage: true,
+		Use:		"info [Name]",
+		Short:		"show detailed silenced information",
+		SilenceUsage:	true,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if len(args) > 1 {
 				_ = cmd.Help()
@@ -60,47 +60,47 @@ func expireAt(timestamp int64) string {
 }
 
 func printToList(v interface{}, writer io.Writer) error {
-	r, ok := v.(*types.Silenced)
+	r, ok := v.(*v2.Silenced)
 	if !ok {
 		return fmt.Errorf("%t is not a Silenced", v)
 	}
 	cfg := &list.Config{
-		Title: r.Name,
+		Title:	r.Name,
 		Rows: []*list.Row{
 			{
-				Label: "Expiration",
-				Value: expireAt(r.ExpireAt),
+				Label:	"Expiration",
+				Value:	expireAt(r.ExpireAt),
 			},
 			{
-				Label: "ExpireOnResolve",
-				Value: fmt.Sprintf("%t", r.ExpireOnResolve),
+				Label:	"ExpireOnResolve",
+				Value:	fmt.Sprintf("%t", r.ExpireOnResolve),
 			},
 			{
-				Label: "Creator",
-				Value: r.Creator,
+				Label:	"Creator",
+				Value:	r.Creator,
 			},
 			{
-				Label: "Check",
-				Value: r.Check,
+				Label:	"Check",
+				Value:	r.Check,
 			},
 			{
-				Label: "Reason",
-				Value: r.Reason,
+				Label:	"Reason",
+				Value:	r.Reason,
 			},
 			{
-				Label: "Subscription",
-				Value: r.Subscription,
+				Label:	"Subscription",
+				Value:	r.Subscription,
 			},
 			{
-				Label: "Namespace",
-				Value: r.Namespace,
+				Label:	"Namespace",
+				Value:	r.Namespace,
 			},
 		},
 	}
 	if time.Now().Before(time.Unix(r.Begin, 0)) {
 		extraRows := []*list.Row{{
-			Label: "Begin",
-			Value: time.Unix(r.Begin, 0).Format(timeFormat),
+			Label:	"Begin",
+			Value:	time.Unix(r.Begin, 0).Format(timeFormat),
 		}}
 		cfg.Rows = append(extraRows, cfg.Rows...)
 	}

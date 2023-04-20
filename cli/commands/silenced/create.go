@@ -4,19 +4,19 @@ import (
 	"errors"
 	"fmt"
 
+	v2 "github.com/sensu/core/v2"
 	"github.com/sensu/sensu-go/cli"
 	"github.com/sensu/sensu-go/cli/commands/flags"
 	"github.com/sensu/sensu-go/cli/commands/helpers"
-	"github.com/sensu/sensu-go/types"
 	"github.com/spf13/cobra"
 )
 
 // CreateCommand is a command that creates new silenceds
 func CreateCommand(cli *cli.SensuCli) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:          "create",
-		Short:        "create a silenced entry",
-		SilenceUsage: true,
+		Use:		"create",
+		Short:		"create a silenced entry",
+		SilenceUsage:	true,
 		PreRun: func(cmd *cobra.Command, args []string) {
 			isInteractive, _ := cmd.Flags().GetBool(flags.Interactive)
 			if !isInteractive {
@@ -46,7 +46,7 @@ func CreateCommand(cli *cli.SensuCli) *cobra.Command {
 					return fmt.Errorf("must specify --check or --subscription")
 				}
 			}
-			var silenced types.Silenced
+			var silenced v2.Silenced
 			if err := opts.Apply(&silenced); err != nil {
 				return err
 			}

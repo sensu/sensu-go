@@ -8,7 +8,7 @@ import (
 	"text/template"
 
 	corev2 "github.com/sensu/core/v2"
-	"github.com/sensu/sensu-go/types/dynamic"
+	"github.com/sensu/sensu-go/dynamic"
 )
 
 // Substitution evaluates the input template, that possibly contains

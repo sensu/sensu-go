@@ -5,27 +5,27 @@ import (
 	"fmt"
 
 	"github.com/AlecAivazis/survey/v2"
+	v2 "github.com/sensu/core/v2"
 	"github.com/sensu/sensu-go/cli"
 	"github.com/sensu/sensu-go/cli/commands/flags"
 	"github.com/sensu/sensu-go/cli/commands/helpers"
-	"github.com/sensu/sensu-go/types"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 )
 
 type createOpts struct {
-	Username             string `survey:"username"`
-	Password             string `survey:"password"`
-	PasswordConfirmation string `survey:"passwordConfirmation"`
-	Groups               string `survey:"group"`
+	Username		string	`survey:"username"`
+	Password		string	`survey:"password"`
+	PasswordConfirmation	string	`survey:"passwordConfirmation"`
+	Groups			string	`survey:"group"`
 }
 
 // CreateCommand adds command that allows user to create new users
 func CreateCommand(cli *cli.SensuCli) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:          "create [NAME]",
-		Short:        "create new users",
-		SilenceUsage: true,
+		Use:		"create [NAME]",
+		Short:		"create new users",
+		SilenceUsage:	true,
 		PreRun: func(cmd *cobra.Command, args []string) {
 			isInteractive, _ := cmd.Flags().GetBool(flags.Interactive)
 			if !isInteractive {
@@ -91,29 +91,29 @@ func (opts *createOpts) withFlags(flags *pflag.FlagSet) {
 func (opts *createOpts) administerQuestionnaire() error {
 	var qs = []*survey.Question{
 		{
-			Name: "username",
+			Name:	"username",
 			Prompt: &survey.Input{
-				Message: "Username:",
-				Default: opts.Username,
+				Message:	"Username:",
+				Default:	opts.Username,
 			},
-			Validate: survey.Required,
+			Validate:	survey.Required,
 		},
 		{
-			Name: "password",
+			Name:	"password",
 			Prompt: &survey.Password{
 				Message: "Password:",
 			},
-			Validate: survey.Required,
+			Validate:	survey.Required,
 		},
 		{
-			Name: "passwordConfirmation",
+			Name:	"passwordConfirmation",
 			Prompt: &survey.Password{
 				Message: "Retype password:",
 			},
-			Validate: survey.Required,
+			Validate:	survey.Required,
 		},
 		{
-			Name: "groups",
+			Name:	"groups",
 			Prompt: &survey.Input{
 				Message: "Groups:",
 			},
@@ -123,12 +123,12 @@ func (opts *createOpts) administerQuestionnaire() error {
 	return survey.Ask(qs, opts)
 }
 
-func (opts *createOpts) toUser() *types.User {
+func (opts *createOpts) toUser() *v2.User {
 	groups := helpers.SafeSplitCSV(opts.Groups)
 
-	return &types.User{
-		Username: opts.Username,
-		Password: opts.Password,
-		Groups:   groups,
+	return &v2.User{
+		Username:	opts.Username,
+		Password:	opts.Password,
+		Groups:		groups,
 	}
 }

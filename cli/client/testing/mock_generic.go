@@ -6,7 +6,7 @@ import (
 	"github.com/go-resty/resty/v2"
 	corev3 "github.com/sensu/core/v3"
 	"github.com/sensu/sensu-go/cli/client"
-	"github.com/sensu/sensu-go/types"
+	"github.com/sensu/core/v3/types"
 )
 
 // Delete ...

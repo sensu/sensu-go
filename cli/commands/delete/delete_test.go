@@ -9,10 +9,10 @@ import (
 
 	"text/template"
 
-	"github.com/sensu/sensu-go/types"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
+	v2 "github.com/sensu/core/v2"
 	mockclient "github.com/sensu/sensu-go/cli/client/testing"
 	cmdtesting "github.com/sensu/sensu-go/cli/commands/testing"
 )
@@ -32,19 +32,19 @@ func mustMarshal(t interface{}) string {
 }
 
 var (
-	fixtureCheck = types.FixtureCheck("foo")
-	fixtureAsset = types.FixtureAsset("bar")
-	fixtureHook  = types.FixtureHook("baz")
+	fixtureCheck	= v2.FixtureCheck("foo")
+	fixtureAsset	= v2.FixtureAsset("bar")
+	fixtureHook	= v2.FixtureHook("baz")
 )
 
 var resources = struct {
-	Check string
-	Asset string
-	Hook  string
+	Check	string
+	Asset	string
+	Hook	string
 }{
-	Check: mustMarshal(fixtureCheck),
-	Asset: mustMarshal(fixtureAsset),
-	Hook:  mustMarshal(fixtureHook),
+	Check:	mustMarshal(fixtureCheck),
+	Asset:	mustMarshal(fixtureAsset),
+	Hook:	mustMarshal(fixtureHook),
 }
 
 func TestDeleteCommand(t *testing.T) {

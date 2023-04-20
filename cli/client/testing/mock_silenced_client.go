@@ -4,19 +4,18 @@ import (
 	"net/http"
 
 	"github.com/sensu/sensu-go/cli/client"
-	"github.com/sensu/sensu-go/types"
 
 	corev2 "github.com/sensu/core/v2"
 )
 
 // CreateSilenced for use with mock lib
-func (c *MockClient) CreateSilenced(silenced *types.Silenced) error {
+func (c *MockClient) CreateSilenced(silenced *corev2.Silenced) error {
 	args := c.Called(silenced)
 	return args.Error(0)
 }
 
 // UpdateSilenced for use with mock lib
-func (c *MockClient) UpdateSilenced(silenced *types.Silenced) error {
+func (c *MockClient) UpdateSilenced(silenced *corev2.Silenced) error {
 	args := c.Called(silenced)
 	return args.Error(0)
 }
@@ -28,9 +27,9 @@ func (c *MockClient) DeleteSilenced(namespace, name string) error {
 }
 
 // FetchSilenced for use with mock lib
-func (c *MockClient) FetchSilenced(id string) (*types.Silenced, error) {
+func (c *MockClient) FetchSilenced(id string) (*corev2.Silenced, error) {
 	args := c.Called(id)
-	return args.Get(0).(*types.Silenced), args.Error(1)
+	return args.Get(0).(*corev2.Silenced), args.Error(1)
 }
 
 // ListSilenceds for use with mock lib

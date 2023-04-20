@@ -7,8 +7,8 @@ import (
 	"net"
 	"testing"
 
-	"github.com/sensu/sensu-go/types"
-	corev1 "github.com/sensu/sensu-go/types/v1"
+	v2 "github.com/sensu/core/v2"
+	corev1 "github.com/sensu/sensu-go/agent/v1"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -39,10 +39,10 @@ func TestHandleTCPMessages(t *testing.T) {
 	}
 
 	payload := corev1.CheckResult{
-		Name:    "app_01",
-		Output:  "could not connect to something",
-		Source:  "proxyEnt",
-		Command: "command",
+		Name:		"app_01",
+		Output:		"could not connect to something",
+		Source:		"proxyEnt",
+		Command:	"command",
 	}
 	bytes, _ := json.Marshal(payload)
 
@@ -54,7 +54,7 @@ func TestHandleTCPMessages(t *testing.T) {
 	assert.NotEmpty(msg)
 	assert.Equal("event", msg.Type)
 
-	var event types.Event
+	var event v2.Event
 	err = json.Unmarshal(msg.Payload, &event)
 	if err != nil {
 		assert.FailNow("failed to unmarshal event json")
@@ -92,10 +92,10 @@ func TestHandleTCPMessagesWithClient(t *testing.T) {
 	}
 
 	payload := corev1.CheckResult{
-		Name:    "app_01",
-		Output:  "could not connect to something",
-		Client:  "proxyEnt",
-		Command: "command",
+		Name:		"app_01",
+		Output:		"could not connect to something",
+		Client:		"proxyEnt",
+		Command:	"command",
 	}
 	bytes, _ := json.Marshal(payload)
 
@@ -107,7 +107,7 @@ func TestHandleTCPMessagesWithClient(t *testing.T) {
 	assert.NotEmpty(msg)
 	assert.Equal("event", msg.Type)
 
-	var event types.Event
+	var event v2.Event
 	err = json.Unmarshal(msg.Payload, &event)
 	if err != nil {
 		assert.FailNow("failed to unmarshal event json")
@@ -145,10 +145,10 @@ func TestHandleTCPMessagesWithAgent(t *testing.T) {
 	}
 
 	payload := corev1.CheckResult{
-		Name:    "app_01",
-		Output:  "could not connect to something",
-		Source:  cfg.AgentName,
-		Command: "command",
+		Name:		"app_01",
+		Output:		"could not connect to something",
+		Source:		cfg.AgentName,
+		Command:	"command",
 	}
 	bytes, _ := json.Marshal(payload)
 
@@ -160,7 +160,7 @@ func TestHandleTCPMessagesWithAgent(t *testing.T) {
 	assert.NotEmpty(msg)
 	assert.Equal("event", msg.Type)
 
-	var event types.Event
+	var event v2.Event
 	err = json.Unmarshal(msg.Payload, &event)
 	if err != nil {
 		assert.FailNow("failed to unmarshal event json")
@@ -198,9 +198,9 @@ func TestHandleTCPMessagesNoSource(t *testing.T) {
 	}
 
 	payload := corev1.CheckResult{
-		Name:    "app_01",
-		Output:  "could not connect to something",
-		Command: "command",
+		Name:		"app_01",
+		Output:		"could not connect to something",
+		Command:	"command",
 	}
 	bytes, _ := json.Marshal(payload)
 
@@ -212,7 +212,7 @@ func TestHandleTCPMessagesNoSource(t *testing.T) {
 	assert.NotEmpty(msg)
 	assert.Equal("event", msg.Type)
 
-	var event types.Event
+	var event v2.Event
 	err = json.Unmarshal(msg.Payload, &event)
 	if err != nil {
 		assert.FailNow("failed to unmarshal event json")
@@ -251,10 +251,10 @@ func TestHandleUDPMessages(t *testing.T) {
 	}
 
 	payload := corev1.CheckResult{
-		Name:    "app_01",
-		Output:  "could not connect to something",
-		Source:  "proxyEnt",
-		Command: "command",
+		Name:		"app_01",
+		Output:		"could not connect to something",
+		Source:		"proxyEnt",
+		Command:	"command",
 	}
 	bytes, _ := json.Marshal(payload)
 
@@ -266,7 +266,7 @@ func TestHandleUDPMessages(t *testing.T) {
 	assert.NotEmpty(msg)
 	assert.Equal("event", msg.Type)
 
-	var event types.Event
+	var event v2.Event
 	err = json.Unmarshal(msg.Payload, &event)
 	if err != nil {
 		assert.FailNow("Failed to unmarshal event json")
@@ -349,10 +349,10 @@ func TestReceiveMultiWriteTCP(t *testing.T) {
 	}
 
 	payload := corev1.CheckResult{
-		Name:    "app_01",
-		Output:  "could not connect to something",
-		Source:  "proxyEnt",
-		Command: "command",
+		Name:		"app_01",
+		Output:		"could not connect to something",
+		Source:		"proxyEnt",
+		Command:	"command",
 	}
 	bytes, _ := json.Marshal(payload)
 
@@ -365,7 +365,7 @@ func TestReceiveMultiWriteTCP(t *testing.T) {
 	msg := <-ta.sendq
 	assert.Equal("event", msg.Type)
 
-	event := &types.Event{}
+	event := &v2.Event{}
 	assert.NoError(json.Unmarshal(msg.Payload, event))
 	assert.NotNil(event.Entity)
 	assert.Equal("app_01", event.Check.Name)

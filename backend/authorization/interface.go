@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 
-	"github.com/sensu/sensu-go/types"
+	v2 "github.com/sensu/core/v2"
 )
 
 var ErrUnauthorized = errors.New("request unauthorized")
@@ -20,19 +20,19 @@ type Authorizer interface {
 // Attributes represents all the information required by an authorizer to make
 // an authorization decision
 type Attributes struct {
-	APIGroup     string
-	APIVersion   string
-	Namespace    string
-	Resource     string
-	ResourceName string
-	User         types.User
-	Verb         string
+	APIGroup	string
+	APIVersion	string
+	Namespace	string
+	Resource	string
+	ResourceName	string
+	User		v2.User
+	Verb		string
 }
 
 // GetAttributes returns the authorization attributes stored in the given
 // context
 func GetAttributes(ctx context.Context) *Attributes {
-	if value := ctx.Value(types.AuthorizationAttributesKey); value != nil {
+	if value := ctx.Value(v2.AuthorizationAttributesKey); value != nil {
 		return value.(*Attributes)
 	}
 	return nil
@@ -40,29 +40,29 @@ func GetAttributes(ctx context.Context) *Attributes {
 
 // SetAttributes stores the given attributes within the provided context
 func SetAttributes(ctx context.Context, attrs *Attributes) context.Context {
-	return context.WithValue(ctx, types.AuthorizationAttributesKey, attrs)
+	return context.WithValue(ctx, v2.AuthorizationAttributesKey, attrs)
 }
 
 // AttributesKey is a convenience type for storing an attributes-like value
 // as a map key.
 type AttributesKey struct {
-	APIGroup     string
-	APIVersion   string
-	Namespace    string
-	Resource     string
-	ResourceName string
-	UserName     string
-	Verb         string
+	APIGroup	string
+	APIVersion	string
+	Namespace	string
+	Resource	string
+	ResourceName	string
+	UserName	string
+	Verb		string
 }
 
 func (a Attributes) Key() AttributesKey {
 	return AttributesKey{
-		APIGroup:     a.APIGroup,
-		APIVersion:   a.APIVersion,
-		Namespace:    a.Namespace,
-		Resource:     a.Resource,
-		ResourceName: a.ResourceName,
-		UserName:     a.User.Username,
-		Verb:         a.Verb,
+		APIGroup:	a.APIGroup,
+		APIVersion:	a.APIVersion,
+		Namespace:	a.Namespace,
+		Resource:	a.Resource,
+		ResourceName:	a.ResourceName,
+		UserName:	a.User.Username,
+		Verb:		a.Verb,
 	}
 }

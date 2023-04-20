@@ -1,7 +1,7 @@
 package silenced
 
 import (
-	"github.com/sensu/sensu-go/types"
+	v2 "github.com/sensu/core/v2"
 	"github.com/spf13/cobra"
 )
 
@@ -18,7 +18,7 @@ func getName(cmd *cobra.Command, args []string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	name, err := types.SilencedName(sub, check)
+	name, err := v2.SilencedName(sub, check)
 	if err != nil {
 		name, err = askName("specify subscription, check, or both")
 	}

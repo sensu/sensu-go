@@ -5,27 +5,27 @@ import (
 	"fmt"
 
 	"github.com/AlecAivazis/survey/v2"
+	v2 "github.com/sensu/core/v2"
 	"github.com/sensu/sensu-go/cli"
 	"github.com/sensu/sensu-go/cli/commands/flags"
 	"github.com/sensu/sensu-go/cli/commands/helpers"
-	"github.com/sensu/sensu-go/types"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 )
 
 type executionOpts struct {
-	Creator       string
-	Name          string `survey:"check"`
-	Reason        string `survey:"reason"`
-	Subscriptions string `survey:"subscriptions"`
+	Creator		string
+	Name		string	`survey:"check"`
+	Reason		string	`survey:"reason"`
+	Subscriptions	string	`survey:"subscriptions"`
 }
 
 // ExecuteCommand defines a new command to request a check execution
 func ExecuteCommand(cli *cli.SensuCli) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:          "execute [NAME]",
-		Short:        "request a check execution",
-		SilenceUsage: true,
+		Use:		"execute [NAME]",
+		Short:		"request a check execution",
+		SilenceUsage:	true,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if len(args) > 1 {
 				_ = cmd.Help()
@@ -53,7 +53,7 @@ func ExecuteCommand(cli *cli.SensuCli) *cobra.Command {
 			}
 
 			// Instantiate an adhoc request from the input
-			adhocRequest := &types.AdhocRequest{}
+			adhocRequest := &v2.AdhocRequest{}
 			opts.Copy(adhocRequest)
 
 			// Add the current user as the creator
@@ -92,24 +92,24 @@ func (opts *executionOpts) withFlags(flags *pflag.FlagSet) {
 func (opts *executionOpts) administerQuestionnaire() error {
 	var qs = []*survey.Question{
 		{
-			Name: "check",
+			Name:	"check",
 			Prompt: &survey.Input{
 				Message: "Check Name:",
 			},
-			Validate: survey.Required,
+			Validate:	survey.Required,
 		},
 		{
-			Name: "reason",
+			Name:	"reason",
 			Prompt: &survey.Input{
-				Message: "Reason:",
-				Help:    "Optional reason for requesting a check execution",
+				Message:	"Reason:",
+				Help:		"Optional reason for requesting a check execution",
 			},
 		},
 		{
-			Name: "subscriptions",
+			Name:	"subscriptions",
 			Prompt: &survey.Input{
-				Message: "Subscriptions:",
-				Help:    "Optional comma separated list of subscriptions to override the check configuration",
+				Message:	"Subscriptions:",
+				Help:		"Optional comma separated list of subscriptions to override the check configuration",
 			},
 		},
 	}
@@ -117,7 +117,7 @@ func (opts *executionOpts) administerQuestionnaire() error {
 	return survey.Ask(qs, opts)
 }
 
-func (opts *executionOpts) Copy(req *types.AdhocRequest) {
+func (opts *executionOpts) Copy(req *v2.AdhocRequest) {
 	req.Name = opts.Name
 	req.Reason = opts.Reason
 	req.Subscriptions = helpers.SafeSplitCSV(opts.Subscriptions)

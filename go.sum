@@ -383,8 +383,8 @@ github.com/sensu/core/v2 v2.16.0-alpha6/go.mod h1:2etWGsa+nx5G2Q3CKiSJY9kSg8VhCg
 github.com/sensu/core/v2 v2.18.0 h1:fRxPgC5lal5kA72wTDjFONKBGAQNlILwmjCg9PK5Nj8=
 github.com/sensu/core/v2 v2.18.0/go.mod h1:2etWGsa+nx5G2Q3CKiSJY9kSg8VhCgGzgp1VyxbC6U8=
 github.com/sensu/core/v3 v3.8.0-alpha6/go.mod h1:HUrsxGfeUSvd+iU5ROGgfBchv3eYjhS3Apz6XzNB8Gg=
-github.com/sensu/core/v3 v3.8.1 h1:RhSlvUUOmIR2SF3AqtjVvowSLgRVAaAKAh1SOQRDx5E=
-github.com/sensu/core/v3 v3.8.1/go.mod h1:pxfUL8YOhebsaE2SUBov/gsUUqIzkeLM61yFpTeavhs=
+github.com/sensu/core/v3 v3.8.3-beta1 h1:aIzW0SE6PiL5Oz3JSXpuzBFU0D1J2Lpw5y9G7bCdhlw=
+github.com/sensu/core/v3 v3.8.3-beta1/go.mod h1:hFTACYGAA1q9veRekPnSMJIGZT6bXsm3n/fYTr83MoA=
 github.com/sensu/lasr v1.2.1 h1:4H1QfOrPkwYHMFE5qAI6GwKEFkcI1YRyjjWidz1MihQ=
 github.com/sensu/lasr v1.2.1/go.mod h1:VIMtIK67Bcef6dTfctRCBg8EY9M9TtCY9NEFT6Zw5xQ=
 github.com/sensu/sensu-api-tools v0.0.0-20221025205055-db03ae2f8099/go.mod h1:SNISS4OhwNSZI9/YKTQr1bghOEwed9ZT4v+ztKk1Mq0=

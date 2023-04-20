@@ -16,7 +16,6 @@ import (
 	"sync"
 
 	corev2 "github.com/sensu/core/v2"
-	"github.com/sensu/sensu-go/types"
 	"github.com/shirou/gopsutil/v3/host"
 	shirounet "github.com/shirou/gopsutil/v3/net"
 )
@@ -26,27 +25,27 @@ const defaultHostname = "unidentified-hostname"
 var gomips string
 
 type azureMetadata struct {
-	Error          string   `json:"error"`
-	NewestVersions []string `json:"newest-versions"`
+	Error		string		`json:"error"`
+	NewestVersions	[]string	`json:"newest-versions"`
 }
 
 // Info describes the local system, hostname, OS, platform, platform
 // family, platform version, and network interfaces.
-func Info(includeNetworks bool) (types.System, error) {
+func Info(includeNetworks bool) (corev2.System, error) {
 	info, err := host.Info()
 	if err != nil {
-		return types.System{}, err
+		return corev2.System{}, err
 	}
 
-	system := types.System{
-		Arch:            runtime.GOARCH,
-		ARMVersion:      getARMVersion(),
-		FloatType:       gomips,
-		Hostname:        info.Hostname,
-		OS:              info.OS,
-		Platform:        info.Platform,
-		PlatformFamily:  info.PlatformFamily,
-		PlatformVersion: info.PlatformVersion,
+	system := corev2.System{
+		Arch:			runtime.GOARCH,
+		ARMVersion:		getARMVersion(),
+		FloatType:		gomips,
+		Hostname:		info.Hostname,
+		OS:			info.OS,
+		Platform:		info.Platform,
+		PlatformFamily:		info.PlatformFamily,
+		PlatformVersion:	info.PlatformVersion,
 	}
 
 	if system.Hostname == "" {
@@ -77,11 +76,11 @@ func Info(includeNetworks bool) (types.System, error) {
 
 func MockInfo() corev2.System {
 	return corev2.System{
-		Hostname:        "localhost.localdomain",
-		OS:              "linux",
-		Platform:        "centos",
-		PlatformFamily:  "rhel",
-		PlatformVersion: "7.8.2003",
+		Hostname:		"localhost.localdomain",
+		OS:			"linux",
+		Platform:		"centos",
+		PlatformFamily:		"rhel",
+		PlatformVersion:	"7.8.2003",
 		Network: corev2.Network{
 			Interfaces: []corev2.NetworkInterface{
 				{Name: "lo", MAC: "", Addresses: []string{"127.0.0.1/8", "::1/128"}},
@@ -89,10 +88,10 @@ func MockInfo() corev2.System {
 				{Name: "eth1", MAC: "08:00:27:2b:88:65", Addresses: []string{"192.168.1.17/24", "fe80::a00:27ff:fe2b:8865/64"}},
 			},
 		},
-		Arch:     "amd64",
-		LibCType: "glibc",
-		VMSystem: "vbox",
-		VMRole:   "guest",
+		Arch:		"amd64",
+		LibCType:	"glibc",
+		VMSystem:	"vbox",
+		VMRole:		"guest",
 	}
 }
 
@@ -260,19 +259,19 @@ func dialAzure(ctx context.Context, wg *sync.WaitGroup) <-chan string {
 
 // NetworkInfo describes the local network interfaces, including their
 // names (e.g. eth0), MACs (if available), and addresses.
-func NetworkInfo() (types.Network, error) {
+func NetworkInfo() (corev2.Network, error) {
 	interfaces, err := shirounet.Interfaces()
 
-	network := types.Network{}
+	network := corev2.Network{}
 
 	if err != nil {
 		return network, err
 	}
 
 	for _, i := range interfaces {
-		nInterface := types.NetworkInterface{
-			Name: i.Name,
-			MAC:  i.HardwareAddr,
+		nInterface := corev2.NetworkInterface{
+			Name:	i.Name,
+			MAC:	i.HardwareAddr,
 		}
 
 		for _, address := range i.Addrs {

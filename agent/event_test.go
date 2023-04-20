@@ -9,7 +9,7 @@ import (
 	"github.com/google/uuid"
 	corev2 "github.com/sensu/core/v2"
 	corev3 "github.com/sensu/core/v3"
-	corev1 "github.com/sensu/sensu-go/types/v1"
+	corev1 "github.com/sensu/sensu-go/agent/v1"
 )
 
 func TestTranslateToEvent(t *testing.T) {

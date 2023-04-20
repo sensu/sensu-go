@@ -4,12 +4,12 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/sensu/sensu-go/types"
-	"github.com/sensu/sensu-go/types/dynamic"
+	v2 "github.com/sensu/core/v2"
+	"github.com/sensu/sensu-go/dynamic"
 )
 
 func TestSynthesizeEvent(t *testing.T) {
-	event := types.FixtureEvent("foo", "bar")
+	event := v2.FixtureEvent("foo", "bar")
 	synth := dynamic.Synthesize(event).(map[string]interface{})
 	if !reflect.DeepEqual(event.HasCheck(), synth["has_check"]) {
 		t.Fatal("bad synthesis")
@@ -44,8 +44,8 @@ func TestSynthesizeMethods(t *testing.T) {
 		v.(func())()
 	}
 	exp := map[string]bool{
-		"Meth1": true,
-		"Meth2": true,
+		"Meth1":	true,
+		"Meth2":	true,
 	}
 	if got, want := hm.callLog, exp; !reflect.DeepEqual(got, want) {
 		t.Errorf("didn't get expected calls: got %v, want %v", got, want)

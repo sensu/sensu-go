@@ -6,36 +6,36 @@ import (
 
 	"github.com/AlecAivazis/survey/v2"
 	cron "github.com/robfig/cron/v3"
+	v2 "github.com/sensu/core/v2"
 	"github.com/sensu/sensu-go/cli/commands/helpers"
-	"github.com/sensu/sensu-go/types"
 	"github.com/spf13/pflag"
 )
 
 const (
-	stdinDefault      = "false"
-	roundRobinDefault = "false"
-	publishDefault    = "true"
+	stdinDefault		= "false"
+	roundRobinDefault	= "false"
+	publishDefault		= "true"
 )
 
 type checkOpts struct {
-	Name                 string `survey:"name"`
-	Command              string `survey:"command"`
-	Interval             string `survey:"interval"`
-	Cron                 string `survey:"cron"`
-	Subscriptions        string `survey:"subscriptions"`
-	Handlers             string `survey:"handlers"`
-	RuntimeAssets        string `survey:"assets"`
-	Namespace            string
-	Publish              string `survey:"publish"`
-	ProxyEntityName      string `survey:"proxy-entity-name"`
-	Stdin                string `survey:"stdin"`
-	Timeout              string `survey:"timeout"`
-	TTL                  string `survey:"ttl"`
-	HighFlapThreshold    string `survey:"high-flap-threshold"`
-	LowFlapThreshold     string `survey:"low-flap-threshold"`
-	OutputMetricFormat   string `survey:"output-metric-format"`
-	OutputMetricHandlers string `survey:"output-metric-handlers"`
-	RoundRobin           string `survey:"round-robin"`
+	Name			string	`survey:"name"`
+	Command			string	`survey:"command"`
+	Interval		string	`survey:"interval"`
+	Cron			string	`survey:"cron"`
+	Subscriptions		string	`survey:"subscriptions"`
+	Handlers		string	`survey:"handlers"`
+	RuntimeAssets		string	`survey:"assets"`
+	Namespace		string
+	Publish			string	`survey:"publish"`
+	ProxyEntityName		string	`survey:"proxy-entity-name"`
+	Stdin			string	`survey:"stdin"`
+	Timeout			string	`survey:"timeout"`
+	TTL			string	`survey:"ttl"`
+	HighFlapThreshold	string	`survey:"high-flap-threshold"`
+	LowFlapThreshold	string	`survey:"low-flap-threshold"`
+	OutputMetricFormat	string	`survey:"output-metric-format"`
+	OutputMetricHandlers	string	`survey:"output-metric-handlers"`
+	RoundRobin		string	`survey:"round-robin"`
 }
 
 func newCheckOpts() *checkOpts {
@@ -46,7 +46,7 @@ func newCheckOpts() *checkOpts {
 	return &opts
 }
 
-func (opts *checkOpts) withCheck(check *types.CheckConfig) {
+func (opts *checkOpts) withCheck(check *v2.CheckConfig) {
 	opts.Name = check.Name
 	opts.Namespace = check.Namespace
 	opts.Command = check.Command
@@ -97,46 +97,46 @@ func (opts *checkOpts) administerQuestionnaire(editing bool) error {
 	if !editing {
 		qs = append(qs, []*survey.Question{
 			{
-				Name: "name",
+				Name:	"name",
 				Prompt: &survey.Input{
-					Message: "Check Name:",
-					Default: opts.Name,
+					Message:	"Check Name:",
+					Default:	opts.Name,
 				},
-				Validate: survey.Required,
+				Validate:	survey.Required,
 			},
 			{
-				Name: "namespace",
+				Name:	"namespace",
 				Prompt: &survey.Input{
-					Message: "Namespace:",
-					Default: opts.Namespace,
+					Message:	"Namespace:",
+					Default:	opts.Namespace,
 				},
-				Validate: survey.Required,
+				Validate:	survey.Required,
 			},
 		}...)
 	}
 
 	qs = append(qs, []*survey.Question{
 		{
-			Name: "command",
+			Name:	"command",
 			Prompt: &survey.Input{
-				Message: "Command:",
-				Default: opts.Command,
+				Message:	"Command:",
+				Default:	opts.Command,
 			},
-			Validate: survey.Required,
+			Validate:	survey.Required,
 		},
 		{
-			Name: "interval",
+			Name:	"interval",
 			Prompt: &survey.Input{
-				Message: "Interval:",
-				Default: opts.Interval,
+				Message:	"Interval:",
+				Default:	opts.Interval,
 			},
 		},
 		{
-			Name: "cron",
+			Name:	"cron",
 			Prompt: &survey.Input{
-				Message: "Cron:",
-				Help:    "Optional cron schedule which takes precedence over interval. Value must be a valid cron string.",
-				Default: opts.Cron,
+				Message:	"Cron:",
+				Help:		"Optional cron schedule which takes precedence over interval. Value must be a valid cron string.",
+				Default:	opts.Cron,
 			},
 			Validate: func(val interface{}) error {
 				if value, ok := val.(string); ok && value != "" {
@@ -148,48 +148,48 @@ func (opts *checkOpts) administerQuestionnaire(editing bool) error {
 			},
 		},
 		{
-			Name: "timeout",
+			Name:	"timeout",
 			Prompt: &survey.Input{
-				Message: "Timeout:",
-				Default: opts.Timeout,
+				Message:	"Timeout:",
+				Default:	opts.Timeout,
 			},
 		},
 		{
-			Name: "ttl",
+			Name:	"ttl",
 			Prompt: &survey.Input{
-				Message: "TTL:",
-				Help:    "Time to live in seconds for which a check result is valid",
-				Default: opts.TTL,
+				Message:	"TTL:",
+				Help:		"Time to live in seconds for which a check result is valid",
+				Default:	opts.TTL,
 			},
 		},
 		{
-			Name: "subscriptions",
+			Name:	"subscriptions",
 			Prompt: &survey.Input{
-				Message: "Subscriptions:",
-				Default: opts.Subscriptions,
+				Message:	"Subscriptions:",
+				Default:	opts.Subscriptions,
 			},
-			Validate: survey.Required,
+			Validate:	survey.Required,
 		},
 		{
-			Name: "handlers",
+			Name:	"handlers",
 			Prompt: &survey.Input{
-				Message: "Handlers:",
-				Default: opts.Handlers,
-			},
-		},
-		{
-			Name: "assets",
-			Prompt: &survey.Input{
-				Message: "Runtime Assets:",
-				Default: opts.RuntimeAssets,
+				Message:	"Handlers:",
+				Default:	opts.Handlers,
 			},
 		},
 		{
-			Name: "publish",
+			Name:	"assets",
 			Prompt: &survey.Input{
-				Message: "Publish:",
-				Default: opts.Publish,
-				Help:    "If check requests are published for the check. Value must be true or false.",
+				Message:	"Runtime Assets:",
+				Default:	opts.RuntimeAssets,
+			},
+		},
+		{
+			Name:	"publish",
+			Prompt: &survey.Input{
+				Message:	"Publish:",
+				Default:	opts.Publish,
+				Help:		"If check requests are published for the check. Value must be true or false.",
 			},
 			Validate: func(val interface{}) error {
 				if value, ok := val.(string); ok {
@@ -200,45 +200,45 @@ func (opts *checkOpts) administerQuestionnaire(editing bool) error {
 			},
 		},
 		{
-			Name: "proxy-entity-name",
+			Name:	"proxy-entity-name",
 			Prompt: &survey.Input{
-				Message: "Check Proxy Entity Name:",
-				Default: opts.ProxyEntityName,
-				Help:    "the check's proxy entity name, used to create a proxy entity for an external resource",
+				Message:	"Check Proxy Entity Name:",
+				Default:	opts.ProxyEntityName,
+				Help:		"the check's proxy entity name, used to create a proxy entity for an external resource",
 			},
 		},
 		{
-			Name: "stdin",
+			Name:	"stdin",
 			Prompt: &survey.Input{
-				Message: "Check STDIN:",
-				Default: opts.Stdin,
-				Help:    "If check accepts JSON event data to the check command's stdin. Defaults to false.",
+				Message:	"Check STDIN:",
+				Default:	opts.Stdin,
+				Help:		"If check accepts JSON event data to the check command's stdin. Defaults to false.",
 			},
 		},
 		{
-			Name: "high-flap-threshold",
+			Name:	"high-flap-threshold",
 			Prompt: &survey.Input{
-				Message: "High Flap Threshold:",
-				Default: opts.HighFlapThreshold,
+				Message:	"High Flap Threshold:",
+				Default:	opts.HighFlapThreshold,
 			},
 		},
 		{
-			Name: "low-flap-threshold",
+			Name:	"low-flap-threshold",
 			Prompt: &survey.Input{
-				Message: "Low Flap Threshold:",
-				Default: opts.LowFlapThreshold,
+				Message:	"Low Flap Threshold:",
+				Default:	opts.LowFlapThreshold,
 			},
 		},
 		{
-			Name: "output-metric-format",
+			Name:	"output-metric-format",
 			Prompt: &survey.Select{
-				Message: "Metric Format:",
-				Options: append([]string{"none"}, types.OutputMetricFormats...),
-				Default: opts.OutputMetricFormat,
+				Message:	"Metric Format:",
+				Options:	append([]string{"none"}, v2.OutputMetricFormats...),
+				Default:	opts.OutputMetricFormat,
 			},
 			Validate: func(val interface{}) error {
 				if value, _ := val.(string); value != "" && strings.TrimSpace(value) != "none" {
-					if err := types.ValidateOutputMetricFormat(value); err != nil {
+					if err := v2.ValidateOutputMetricFormat(value); err != nil {
 						return err
 					}
 				}
@@ -246,18 +246,18 @@ func (opts *checkOpts) administerQuestionnaire(editing bool) error {
 			},
 		},
 		{
-			Name: "output-metric-handlers",
+			Name:	"output-metric-handlers",
 			Prompt: &survey.Input{
-				Message: "Metric Handlers:",
-				Default: opts.OutputMetricHandlers,
+				Message:	"Metric Handlers:",
+				Default:	opts.OutputMetricHandlers,
 			},
 		},
 		{
-			Name: "round-robin",
+			Name:	"round-robin",
 			Prompt: &survey.Input{
-				Message: "Round Robin",
-				Default: opts.RoundRobin,
-				Help:    "if true, schedule this check in a round-robin fashion",
+				Message:	"Round Robin",
+				Default:	opts.RoundRobin,
+				Help:		"if true, schedule this check in a round-robin fashion",
 			},
 			Validate: func(val interface{}) error {
 				if value, ok := val.(string); ok {
@@ -272,7 +272,7 @@ func (opts *checkOpts) administerQuestionnaire(editing bool) error {
 	return survey.Ask(qs, opts)
 }
 
-func (opts *checkOpts) Copy(check *types.CheckConfig) {
+func (opts *checkOpts) Copy(check *v2.CheckConfig) {
 	interval, _ := strconv.ParseUint(opts.Interval, 10, 32)
 	stdin, _ := strconv.ParseBool(opts.Stdin)
 	timeout, _ := strconv.ParseUint(opts.Timeout, 10, 32)

@@ -8,7 +8,7 @@ import (
 	"testing"
 
 	"github.com/gorilla/mux"
-	"github.com/sensu/sensu-go/types"
+	v2 "github.com/sensu/core/v2"
 	"github.com/stretchr/testify/mock"
 )
 
@@ -16,9 +16,9 @@ type mockHealthController struct {
 	mock.Mock
 }
 
-func (m *mockHealthController) GetClusterHealth(ctx context.Context) *types.HealthResponse {
+func (m *mockHealthController) GetClusterHealth(ctx context.Context) *v2.HealthResponse {
 	args := m.Called(ctx)
-	return args.Get(0).(*types.HealthResponse)
+	return args.Get(0).(*v2.HealthResponse)
 }
 
 func newHealthTest(t *testing.T) (*mockHealthController, *httptest.Server) {
@@ -31,7 +31,7 @@ func newHealthTest(t *testing.T) (*mockHealthController, *httptest.Server) {
 func TestHealthSuccess(t *testing.T) {
 	controller, server := newHealthTest(t)
 	defer server.Close()
-	healthResponse := &types.HealthResponse{}
+	healthResponse := &v2.HealthResponse{}
 	controller.On("GetClusterHealth", mock.Anything).Return(healthResponse)
 
 	client := new(http.Client)
@@ -51,7 +51,7 @@ func TestHealthSuccess(t *testing.T) {
 func TestHealthyCluster(t *testing.T) {
 	controller, server := newHealthTest(t)
 	defer server.Close()
-	healthResponse := types.FixtureHealthResponse(true)
+	healthResponse := v2.FixtureHealthResponse(true)
 	controller.On("GetClusterHealth", mock.Anything).Return(healthResponse)
 
 	client := new(http.Client)
@@ -71,7 +71,7 @@ func TestHealthyCluster(t *testing.T) {
 func TestUnHealthyClusterStatus(t *testing.T) {
 	controller, server := newHealthTest(t)
 	defer server.Close()
-	healthResponse := types.FixtureHealthResponse(false)
+	healthResponse := v2.FixtureHealthResponse(false)
 	controller.On("GetClusterHealth", mock.Anything).Return(healthResponse)
 
 	client := new(http.Client)

@@ -6,10 +6,10 @@ import (
 	"io"
 	"strings"
 
+	v2 "github.com/sensu/core/v2"
 	"github.com/sensu/sensu-go/cli"
 	"github.com/sensu/sensu-go/cli/commands/helpers"
 	"github.com/sensu/sensu-go/cli/elements/table"
-	"github.com/sensu/sensu-go/types"
 	"github.com/spf13/cobra"
 )
 
@@ -17,9 +17,9 @@ import (
 // cluster role
 func InfoCommand(cli *cli.SensuCli) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:          "info [NAME]",
-		Short:        "show detailed information about a cluster role",
-		SilenceUsage: true,
+		Use:		"info [NAME]",
+		Short:		"show detailed information about a cluster role",
+		SilenceUsage:	true,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if len(args) != 1 {
 				_ = cmd.Help()
@@ -45,15 +45,15 @@ func InfoCommand(cli *cli.SensuCli) *cobra.Command {
 }
 
 func printRulesToTable(v interface{}, io io.Writer) error {
-	queryResults, ok := v.(*types.ClusterRole)
+	queryResults, ok := v.(*v2.ClusterRole)
 	if !ok {
 		return fmt.Errorf("%t is not a cluster role", v)
 	}
 	table := table.New([]*table.Column{
 		{
-			Title: "Verbs",
+			Title:	"Verbs",
 			CellTransformer: func(data interface{}) string {
-				rule, ok := data.(types.Rule)
+				rule, ok := data.(v2.Rule)
 				if !ok {
 					return cli.TypeError
 				}
@@ -61,9 +61,9 @@ func printRulesToTable(v interface{}, io io.Writer) error {
 			},
 		},
 		{
-			Title: "Resources",
+			Title:	"Resources",
 			CellTransformer: func(data interface{}) string {
-				rule, ok := data.(types.Rule)
+				rule, ok := data.(v2.Rule)
 				if !ok {
 					return cli.TypeError
 				}
@@ -71,9 +71,9 @@ func printRulesToTable(v interface{}, io io.Writer) error {
 			},
 		},
 		{
-			Title: "Resource Names",
+			Title:	"Resource Names",
 			CellTransformer: func(data interface{}) string {
-				rule, ok := data.(types.Rule)
+				rule, ok := data.(v2.Rule)
 				if !ok {
 					return cli.TypeError
 				}

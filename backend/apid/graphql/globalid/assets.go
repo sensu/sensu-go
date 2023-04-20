@@ -1,23 +1,24 @@
 package globalid
 
-import "github.com/sensu/sensu-go/types"
-
-//
-// Asset
-//
+import (
+	v2 "github.com/sensu/core/v2"
+	//
+	// Asset
+	//
+)
 
 var assetName = "assets"
 
 // AssetTranslator global ID resource
 var AssetTranslator = commonTranslator{
-	name:       assetName,
-	encodeFunc: standardEncoder(assetName, "Name"),
-	decodeFunc: standardDecoder,
+	name:		assetName,
+	encodeFunc:	standardEncoder(assetName, "Name"),
+	decodeFunc:	standardDecoder,
 	isResponsibleFunc: func(record interface{}) bool {
-		_, ok := record.(*types.Asset)
+		_, ok := record.(*v2.Asset)
 		return ok
 	},
 }
 
 // Register asset encoder/decoder
-func init() { RegisterTranslator(AssetTranslator) }
+func init()	{ RegisterTranslator(AssetTranslator) }

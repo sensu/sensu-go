@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	corev3 "github.com/sensu/core/v3"
-	"github.com/sensu/sensu-go/types/dynamic"
+	"github.com/sensu/sensu-go/dynamic"
 	"github.com/stretchr/testify/assert"
 )
 

@@ -47,18 +47,6 @@ jobs:
       # Run tests
       - run: ./build.sh unit
 
-  test-module:
-    parameters:
-      path:
-        type: string
-    working_directory: ~/sensu-go/<< parameters.path>>
-    executor: go
-    steps:
-      - checkout:
-          path: ~/sensu-go
-      - go/mod-download-cached
-      - run: go test -p 2 ./...
-
   build:
     executor: go
     parameters:
@@ -94,9 +82,6 @@ workflows:
           filters:
             tags:
               ignore: /.*/
-      - test-module:
-          name: types
-          path: types
   build:
     jobs:
       # darwin/amd64

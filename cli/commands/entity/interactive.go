@@ -4,16 +4,16 @@ import (
 	"strings"
 
 	"github.com/AlecAivazis/survey/v2"
+	v2 "github.com/sensu/core/v2"
 	"github.com/sensu/sensu-go/cli/commands/helpers"
-	"github.com/sensu/sensu-go/types"
 	"github.com/spf13/pflag"
 )
 
 type entityOpts struct {
-	Name          string `survey:"name"`
-	EntityClass   string `survey:"entity-class"`
-	Subscriptions string `survey:"subscriptions"`
-	Namespace     string
+	Name		string	`survey:"name"`
+	EntityClass	string	`survey:"entity-class"`
+	Subscriptions	string	`survey:"subscriptions"`
+	Namespace	string
 }
 
 func newEntityOpts() *entityOpts {
@@ -35,40 +35,40 @@ func (opts *entityOpts) administerQuestionnaire(editing bool) error {
 	if !editing {
 		qs = append(qs, []*survey.Question{
 			{
-				Name: "name",
+				Name:	"name",
 				Prompt: &survey.Input{
-					Message: "Entity Name:",
-					Default: opts.Name,
+					Message:	"Entity Name:",
+					Default:	opts.Name,
 				},
-				Validate: survey.Required,
+				Validate:	survey.Required,
 			},
 			{
-				Name: "namespace",
+				Name:	"namespace",
 				Prompt: &survey.Input{
-					Message: "Namespace:",
-					Default: opts.Namespace,
+					Message:	"Namespace:",
+					Default:	opts.Namespace,
 				},
-				Validate: survey.Required,
+				Validate:	survey.Required,
 			},
 		}...)
 	}
 
 	qs = append(qs, []*survey.Question{
 		{
-			Name: "entity-class",
+			Name:	"entity-class",
 			Prompt: &survey.Input{
-				Message: "Entity Class:",
-				Default: opts.EntityClass,
-				Help:    "entity class, either proxy or agent",
+				Message:	"Entity Class:",
+				Default:	opts.EntityClass,
+				Help:		"entity class, either proxy or agent",
 			},
-			Validate: survey.Required,
+			Validate:	survey.Required,
 		},
 		{
-			Name: "subscriptions",
+			Name:	"subscriptions",
 			Prompt: &survey.Input{
-				Message: "Subscriptions:",
-				Default: opts.Subscriptions,
-				Help:    "comma separated list of subscriptions",
+				Message:	"Subscriptions:",
+				Default:	opts.Subscriptions,
+				Help:		"comma separated list of subscriptions",
 			},
 		},
 	}...)
@@ -76,14 +76,14 @@ func (opts *entityOpts) administerQuestionnaire(editing bool) error {
 	return survey.Ask(qs, opts)
 }
 
-func (opts *entityOpts) copy(entity *types.Entity) {
+func (opts *entityOpts) copy(entity *v2.Entity) {
 	entity.Name = opts.Name
 	entity.EntityClass = opts.EntityClass
 	entity.Subscriptions = helpers.SafeSplitCSV(opts.Subscriptions)
 	entity.Namespace = opts.Namespace
 }
 
-func (opts *entityOpts) withEntity(entity *types.Entity) {
+func (opts *entityOpts) withEntity(entity *v2.Entity) {
 	opts.Name = entity.Name
 	opts.EntityClass = entity.EntityClass
 	opts.Subscriptions = strings.Join(entity.Subscriptions, ",")

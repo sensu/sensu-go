@@ -4,19 +4,19 @@ import (
 	"errors"
 	"fmt"
 
+	v2 "github.com/sensu/core/v2"
 	"github.com/sensu/sensu-go/cli"
 	"github.com/sensu/sensu-go/cli/commands/flags"
 	"github.com/sensu/sensu-go/cli/commands/helpers"
-	"github.com/sensu/sensu-go/types"
 	"github.com/spf13/cobra"
 )
 
 // CreateCommand adds command that allows the user to create new handlers
 func CreateCommand(cli *cli.SensuCli) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:          "create [NAME]",
-		Short:        "create new handlers",
-		SilenceUsage: true,
+		Use:		"create [NAME]",
+		Short:		"create new handlers",
+		SilenceUsage:	true,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if len(args) > 1 {
 				_ = cmd.Help()
@@ -40,7 +40,7 @@ func CreateCommand(cli *cli.SensuCli) *cobra.Command {
 				opts.withFlags(cmd.Flags())
 			}
 
-			handler := types.Handler{}
+			handler := v2.Handler{}
 			opts.Copy(&handler)
 
 			if err := handler.Validate(); err != nil {

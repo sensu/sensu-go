@@ -9,15 +9,15 @@ import (
 	"testing"
 
 	"github.com/gorilla/mux"
-	"github.com/sensu/sensu-go/types"
+	v2 "github.com/sensu/core/v2"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestAddEvent(t *testing.T) {
 	testCases := []struct {
-		desc             string
-		event            interface{}
-		expectedResponse int
+		desc			string
+		event			interface{}
+		expectedResponse	int
 	}{
 		{
 			"with an empty event",
@@ -31,14 +31,14 @@ func TestAddEvent(t *testing.T) {
 		},
 		{
 			"with an event without an entity",
-			types.Event{
-				Check: types.FixtureCheck("check_foo"),
+			v2.Event{
+				Check: v2.FixtureCheck("check_foo"),
 			},
 			http.StatusAccepted,
 		},
 		{
 			"with a proper event",
-			types.FixtureEvent("foo", "check_foo"),
+			v2.FixtureEvent("foo", "check_foo"),
 			http.StatusAccepted,
 		},
 	}
@@ -69,9 +69,9 @@ func TestAddEvent(t *testing.T) {
 
 func TestHealthz(t *testing.T) {
 	testCases := []struct {
-		desc             string
-		expectedResponse int
-		closed           bool
+		desc			string
+		expectedResponse	int
+		closed			bool
 	}{
 		{
 			"healthz returns success",
@@ -117,10 +117,10 @@ func TestVersion(t *testing.T) {
 	)
 
 	testCases := []struct {
-		desc             string
-		expectedResponse int
-		json             string
-		closed           bool
+		desc			string
+		expectedResponse	int
+		json			string
+		closed			bool
 	}{
 		{
 			"version returns success",

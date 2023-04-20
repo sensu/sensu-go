@@ -9,7 +9,6 @@ import (
 	time "github.com/echlebek/timeproxy"
 	jwt "github.com/golang-jwt/jwt/v4"
 	v2 "github.com/sensu/core/v2"
-	"github.com/sensu/sensu-go/types"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -32,7 +31,7 @@ func TestAccessToken(t *testing.T) {
 	assert.NoError(t, err)
 	assert.NotNil(t, token)
 
-	tokenClaims, _ := token.Claims.(*types.Claims)
+	tokenClaims, _ := token.Claims.(*v2.Claims)
 	assert.Equal(t, claims.Subject, tokenClaims.Subject)
 	assert.NotEmpty(t, tokenClaims.Id)
 	assert.NotZero(t, tokenClaims.ExpiresAt)
@@ -84,7 +83,7 @@ func TestRefreshToken(t *testing.T) {
 	assert.NoError(t, err)
 	assert.NotNil(t, token)
 
-	tokenClaims, _ := token.Claims.(*types.Claims)
+	tokenClaims, _ := token.Claims.(*v2.Claims)
 	assert.Equal(t, claims.Subject, tokenClaims.Subject)
 	assert.NotEmpty(t, tokenClaims.Id)
 }
@@ -147,45 +146,45 @@ func TestValidateExpiredTokenInvalid(t *testing.T) {
 
 func TestLoadKeyPair(t *testing.T) {
 	tests := []struct {
-		name              string
-		privatePath       string
-		publicPath        string
-		wantSigningMethod jwt.SigningMethod
-		wantErr           bool
+		name			string
+		privatePath		string
+		publicPath		string
+		wantSigningMethod	jwt.SigningMethod
+		wantErr			bool
 	}{
 		{
-			name:              "not found private key",
-			privatePath:       "testdata/notfound.pem",
-			publicPath:        "testdata/ecdsa-p521-public.pem",
-			wantSigningMethod: jwt.SigningMethodHS256,
-			wantErr:           true,
+			name:			"not found private key",
+			privatePath:		"testdata/notfound.pem",
+			publicPath:		"testdata/ecdsa-p521-public.pem",
+			wantSigningMethod:	jwt.SigningMethodHS256,
+			wantErr:		true,
 		},
 		{
-			name:              "not found public key",
-			privatePath:       "testdata/ecdsa-p521-private.pem",
-			publicPath:        "testdata/notfound.pem",
-			wantSigningMethod: jwt.SigningMethodHS256,
-			wantErr:           true,
+			name:			"not found public key",
+			privatePath:		"testdata/ecdsa-p521-private.pem",
+			publicPath:		"testdata/notfound.pem",
+			wantSigningMethod:	jwt.SigningMethodHS256,
+			wantErr:		true,
 		},
 		{
-			name:              "invalid public key",
-			privatePath:       "testdata/rsa.pem",
-			publicPath:        "testdata/ecdsa-p521-public.pem",
-			wantSigningMethod: jwt.SigningMethodHS256,
-			wantErr:           true,
+			name:			"invalid public key",
+			privatePath:		"testdata/rsa.pem",
+			publicPath:		"testdata/ecdsa-p521-public.pem",
+			wantSigningMethod:	jwt.SigningMethodHS256,
+			wantErr:		true,
 		},
 		{
-			name:              "invalid private key",
-			privatePath:       "testdata/ecdsa-p521-private.pem",
-			publicPath:        "testdata/rsa.pub",
-			wantSigningMethod: jwt.SigningMethodHS256,
-			wantErr:           true,
+			name:			"invalid private key",
+			privatePath:		"testdata/ecdsa-p521-private.pem",
+			publicPath:		"testdata/rsa.pub",
+			wantSigningMethod:	jwt.SigningMethodHS256,
+			wantErr:		true,
 		},
 		{
-			name:              "valid key pair",
-			privatePath:       "testdata/ecdsa-p521-private.pem",
-			publicPath:        "testdata/ecdsa-p521-public.pem",
-			wantSigningMethod: jwt.SigningMethodES512,
+			name:			"valid key pair",
+			privatePath:		"testdata/ecdsa-p521-private.pem",
+			publicPath:		"testdata/ecdsa-p521-public.pem",
+			wantSigningMethod:	jwt.SigningMethodES512,
 		},
 	}
 	for _, tt := range tests {
@@ -209,58 +208,58 @@ func TestParseToken(t *testing.T) {
 
 	type initFunc = func()
 	tests := []struct {
-		name     string
-		token    string
-		initFunc initFunc
+		name		string
+		token		string
+		initFunc	initFunc
 		// want     *jwt.Token
-		wantErr bool
+		wantErr	bool
 	}{
 		{
-			name:    "invalid token",
-			wantErr: true,
+			name:		"invalid token",
+			wantErr:	true,
 		},
 		{
-			name:  "symmetric token",
-			token: "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJmb28iOiJiYXIifQ.ihTPICgltpjcG13pUr_X6KCT8bPPoYZ6Wkm6zk-ramw",
+			name:	"symmetric token",
+			token:	"eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJmb28iOiJiYXIifQ.ihTPICgltpjcG13pUr_X6KCT8bPPoYZ6Wkm6zk-ramw",
 			initFunc: func() {
 				secret = []byte("P@ssw0rd!")
 			},
 		},
 		{
-			name:  "invalid symmetric token",
-			token: "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJmb28iOiJiYXIifQ.ihTPICgltpjcG13pUr_X6KCT8bPPoYZ6Wkm6zk-ramw",
+			name:	"invalid symmetric token",
+			token:	"eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJmb28iOiJiYXIifQ.ihTPICgltpjcG13pUr_X6KCT8bPPoYZ6Wkm6zk-ramw",
 			initFunc: func() {
 				secret = []byte("invalid_secret")
 			},
-			wantErr: true,
+			wantErr:	true,
 		},
 		{
-			name:  "invalid symmetric algorithm",
-			token: "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzUxMiJ9.eyJmb28iOiJiYXIifQ.QYsHpDgSnAUsx1ZESOWDmHasix9ZpdiL8fYhHVvKryNq-1R6xnlVDqc43NZjG8X682dWt40QFjLpMa1IWE0nwQ",
+			name:	"invalid symmetric algorithm",
+			token:	"eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzUxMiJ9.eyJmb28iOiJiYXIifQ.QYsHpDgSnAUsx1ZESOWDmHasix9ZpdiL8fYhHVvKryNq-1R6xnlVDqc43NZjG8X682dWt40QFjLpMa1IWE0nwQ",
 			initFunc: func() {
 				secret = []byte("P@ssw0rd!")
 			},
-			wantErr: true,
+			wantErr:	true,
 		},
 		{
-			name:    "no asymmetric public key",
-			token:   "eyJ0eXAiOiJKV1QiLCJhbGciOiJFUzI1NiJ9.eyJmb28iOiJiYXIifQ.Q50GauuUNxJcUiW1Ss3sxCezmVsHYuRHcaQNrZI6iHGpyMTkhx_YRUHvm-s7GdInWyjdBo5OrjuJW_NTDr6xHw",
-			wantErr: true,
+			name:		"no asymmetric public key",
+			token:		"eyJ0eXAiOiJKV1QiLCJhbGciOiJFUzI1NiJ9.eyJmb28iOiJiYXIifQ.Q50GauuUNxJcUiW1Ss3sxCezmVsHYuRHcaQNrZI6iHGpyMTkhx_YRUHvm-s7GdInWyjdBo5OrjuJW_NTDr6xHw",
+			wantErr:	true,
 		},
 		{
-			name:  "invalid asymmetric algorithm",
-			token: "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiYWRtaW4iOnRydWUsImlhdCI6MTUxNjIzOTAyMn0.POstGetfAytaZS82wHcjoTyoqhMyxXiWdR7Nn7A29DNSl0EiXLdwJ6xC6AfgZWF1bOsS_TuYI3OG85AmiExREkrS6tDfTQ2B3WXlrr-wp5AokiRbz3_oB4OxG-W9KcEEbDRcZc0nH3L7LzYptiy1PtAylQGxHTWZXtGz4ht0bAecBgmpdgXMguEIcoqPJ1n3pIWk_dUZegpqx0Lka21H6XxUTxiy8OcaarA8zdnPUnV6AmNP3ecFawIFYdvJB_cm-GvpCSbr8G8y_Mllj8f4x9nBH8pQux89_6gUY618iYv7tuPWBFfEbLxtF2pZS6YC1aSfLQxeNe8djT9YjpvRZA",
+			name:	"invalid asymmetric algorithm",
+			token:	"eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiYWRtaW4iOnRydWUsImlhdCI6MTUxNjIzOTAyMn0.POstGetfAytaZS82wHcjoTyoqhMyxXiWdR7Nn7A29DNSl0EiXLdwJ6xC6AfgZWF1bOsS_TuYI3OG85AmiExREkrS6tDfTQ2B3WXlrr-wp5AokiRbz3_oB4OxG-W9KcEEbDRcZc0nH3L7LzYptiy1PtAylQGxHTWZXtGz4ht0bAecBgmpdgXMguEIcoqPJ1n3pIWk_dUZegpqx0Lka21H6XxUTxiy8OcaarA8zdnPUnV6AmNP3ecFawIFYdvJB_cm-GvpCSbr8G8y_Mllj8f4x9nBH8pQux89_6gUY618iYv7tuPWBFfEbLxtF2pZS6YC1aSfLQxeNe8djT9YjpvRZA",
 			initFunc: func() {
 				publicKey, _ = jwt.ParseECPublicKeyFromPEM([]byte(`-----BEGIN PUBLIC KEY-----
 MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAET/mexGk7Q1GuhI0OnulJZOWdrql7
 xCMF9dzNuX/Brbdf5i9c90eqTD4LBUDAfkr5MsXHRs2MIQsS5waVzy6Q9A==
 -----END PUBLIC KEY-----`))
 			},
-			wantErr: true,
+			wantErr:	true,
 		},
 		{
-			name:  "asymmetric token",
-			token: "eyJ0eXAiOiJKV1QiLCJhbGciOiJFUzI1NiJ9.eyJmb28iOiJiYXIifQ.Q50GauuUNxJcUiW1Ss3sxCezmVsHYuRHcaQNrZI6iHGpyMTkhx_YRUHvm-s7GdInWyjdBo5OrjuJW_NTDr6xHw",
+			name:	"asymmetric token",
+			token:	"eyJ0eXAiOiJKV1QiLCJhbGciOiJFUzI1NiJ9.eyJmb28iOiJiYXIifQ.Q50GauuUNxJcUiW1Ss3sxCezmVsHYuRHcaQNrZI6iHGpyMTkhx_YRUHvm-s7GdInWyjdBo5OrjuJW_NTDr6xHw",
 			initFunc: func() {
 				publicKey, _ = jwt.ParseECPublicKeyFromPEM([]byte(`-----BEGIN PUBLIC KEY-----
 MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAET/mexGk7Q1GuhI0OnulJZOWdrql7

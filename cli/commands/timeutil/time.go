@@ -6,62 +6,62 @@ import (
 	"strings"
 	"time"
 
-	"github.com/sensu/sensu-go/types"
+	v2 "github.com/sensu/core/v2"
 )
 
 const (
-	kitchen24     = "15:04"
-	kitchenOffset = "15:04 -07:00"
-	legacy        = "Jan 02 2006 3:04PM"
-	rfc3339Space  = "2006-01-02 15:04:05 Z07:00"
+	kitchen24	= "15:04"
+	kitchenOffset	= "15:04 -07:00"
+	legacy		= "Jan 02 2006 3:04PM"
+	rfc3339Space	= "2006-01-02 15:04:05 Z07:00"
 )
 
 var (
 	// kitchen12Re represents the time.Kitchen format: 3:04PM
-	kitchen12Re = regexp.MustCompile(`^([0-1]?[0-9]:[0-5][0-9])\s?(AM|PM)( .+)?$`)
+	kitchen12Re	= regexp.MustCompile(`^([0-1]?[0-9]:[0-5][0-9])\s?(AM|PM)( .+)?$`)
 
 	// kitchen24Re represents the the kitchen format but in 24-hour format: 15:04
-	kitchen24Re = regexp.MustCompile(`^([01][0-9]|2[0-3])(:?)([0-5][0-9])( .+)?$`)
+	kitchen24Re	= regexp.MustCompile(`^([01][0-9]|2[0-3])(:?)([0-5][0-9])( .+)?$`)
 
 	// legacyRe represents the legacy format used in Sensu 2 alpha releases: Jan
 	// 02 2006 3:04PM MST
-	legacyRe = regexp.MustCompile(`([A-Z][a-z]{2}) ` + // Month (i.e. May)
-		`(0[1-9]|[1-2][0-9]|3[0-1]) ` + // Day (i.e. 14)
-		`([0-9]{4}) ` + // Year (i.e. 2018)
-		`([0-1]?[0-9]:[0-5][0-9](?:AM|PM))` + // Hour (i.e. 3:04PM)
-		`( .+)?`) // Timezone (e.g. MST or America/New_York)
+	legacyRe	= regexp.MustCompile(`([A-Z][a-z]{2}) ` +	// Month (i.e. May)
+		`(0[1-9]|[1-2][0-9]|3[0-1]) ` +	// Day (i.e. 14)
+		`([0-9]{4}) ` +	// Year (i.e. 2018)
+		`([0-1]?[0-9]:[0-5][0-9](?:AM|PM))` +	// Hour (i.e. 3:04PM)
+		`( .+)?`)	// Timezone (e.g. MST or America/New_York)
 
 	// offsetTz represents a numeric zone offset, e.g. -07:00
-	offsetTz = regexp.MustCompile(`^([+-](?:2[0-3]|[01][0-9]):[0-5][0-9])$`)
+	offsetTz	= regexp.MustCompile(`^([+-](?:2[0-3]|[01][0-9]):[0-5][0-9])$`)
 
 	// rfc3339Re represents the time.RFC3339 format
-	rfc3339Re = regexp.MustCompile(`^(\d+)` + // year (i.e. 2018)
+	rfc3339Re	= regexp.MustCompile(`^(\d+)` +	// year (i.e. 2018)
 		`-` +
-		`(0[1-9]|1[012])` + // month (i.e. 05)
+		`(0[1-9]|1[012])` +	// month (i.e. 05)
 		`-` +
-		`(0[1-9]|[12]\d|3[01])` + // day (i.e. 14)
+		`(0[1-9]|[12]\d|3[01])` +	// day (i.e. 14)
 		`T` +
-		`([01]\d|2[0-3])` + // hour (i.e. 15)
+		`([01]\d|2[0-3])` +	// hour (i.e. 15)
 		`:` +
-		`([0-5]\d)` + // minute (i.e. 04)
+		`([0-5]\d)` +	// minute (i.e. 04)
 		`:` +
-		`([0-5]\d|60)` + // second (i.e. 05)
-		`(Z|([\+|\-]([01][0-9]|2[0-3]):[0-5][0-9]))$`) // zone (e.g. Z or -07:00)
+		`([0-5]\d|60)` +	// second (i.e. 05)
+		`(Z|([\+|\-]([01][0-9]|2[0-3]):[0-5][0-9]))$`)	// zone (e.g. Z or -07:00)
 
 	// rfc3339SpaceRe represents the time.RFC3339 format but with space delimiters
-	rfc3339SpaceRe = regexp.MustCompile(`^(\d+)` + // year (i.e. 2018)
+	rfc3339SpaceRe	= regexp.MustCompile(`^(\d+)` +	// year (i.e. 2018)
 		`-` +
-		`(0[1-9]|1[012])` + // month (i.e. 05)
+		`(0[1-9]|1[012])` +	// month (i.e. 05)
 		`-` +
-		`(0[1-9]|[12]\d|3[01])` + // day (i.e. 14)
+		`(0[1-9]|[12]\d|3[01])` +	// day (i.e. 14)
 		`\s` +
-		`([01]\d|2[0-3])` + // hour (i.e. 15)
+		`([01]\d|2[0-3])` +	// hour (i.e. 15)
 		`:` +
-		`([0-5]\d)` + // minute (i.e. 04)
+		`([0-5]\d)` +	// minute (i.e. 04)
 		`:` +
-		`([0-5]\d|60)` + // second (i.e. 05)
+		`([0-5]\d|60)` +	// second (i.e. 05)
 		`\s` +
-		`(Z|([\+|\-]([01][0-9]|2[0-3]):[0-5][0-9]))$`) // zone (e.g. Z or -07:00)
+		`(Z|([\+|\-]([01][0-9]|2[0-3]):[0-5][0-9]))$`)	// zone (e.g. Z or -07:00)
 )
 
 // HumanTimestamp takes a timestamp and returns a readable date using the format
@@ -77,7 +77,7 @@ func HumanTimestamp(timestamp int64) string {
 
 // ConvertToUTC takes a TimeWindowRange and converts both the begin time and
 // end time of the window to UTC
-func ConvertToUTC(t *types.TimeWindowTimeRange) error {
+func ConvertToUTC(t *v2.TimeWindowTimeRange) error {
 	begin, err := kitchenToTime(t.Begin)
 	if err != nil {
 		return err

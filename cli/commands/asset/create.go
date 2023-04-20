@@ -6,11 +6,11 @@ import (
 	"strings"
 
 	"github.com/AlecAivazis/survey/v2"
+	v2 "github.com/sensu/core/v2"
 	"github.com/sensu/sensu-go/cli"
 	"github.com/sensu/sensu-go/cli/client"
 	"github.com/sensu/sensu-go/cli/commands/flags"
 	"github.com/sensu/sensu-go/cli/commands/helpers"
-	"github.com/sensu/sensu-go/types"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 )
@@ -18,8 +18,8 @@ import (
 // CreateCommand adds command that allows user to create new assets
 func CreateCommand(cli *cli.SensuCli) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "create [NAME]",
-		Short: "create new assets",
+		Use:	"create [NAME]",
+		Short:	"create new assets",
 		PreRun: func(cmd *cobra.Command, args []string) {
 			isInteractive, _ := cmd.Flags().GetBool(flags.Interactive)
 			if !isInteractive {
@@ -30,8 +30,8 @@ func CreateCommand(cli *cli.SensuCli) *cobra.Command {
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			executor := &CreateExecutor{
-				Client:    cli.Client,
-				Namespace: cli.Config.Namespace(),
+				Client:		cli.Client,
+				Namespace:	cli.Config.Namespace(),
 			}
 
 			return executor.Run(cmd, args)
@@ -48,8 +48,8 @@ func CreateCommand(cli *cli.SensuCli) *cobra.Command {
 
 // CreateExecutor executes create asset command
 type CreateExecutor struct {
-	Client    client.APIClient
-	Namespace string
+	Client		client.APIClient
+	Namespace	string
 }
 
 // Run runs the command given arguments
@@ -60,9 +60,9 @@ func (exePtr *CreateExecutor) Run(cmd *cobra.Command, args []string) error {
 	}
 
 	cfg := ConfigureAsset{
-		Flags:     cmd.Flags(),
-		Args:      args,
-		Namespace: exePtr.Namespace,
+		Flags:		cmd.Flags(),
+		Args:		args,
+		Namespace:	exePtr.Namespace,
 	}
 
 	asset, errs := cfg.Configure()
@@ -84,16 +84,16 @@ func (exePtr *CreateExecutor) Run(cmd *cobra.Command, args []string) error {
 
 // ConfigureAsset given details configures a new asset
 type ConfigureAsset struct {
-	Flags     *pflag.FlagSet
-	Args      []string
-	Namespace string
+	Flags		*pflag.FlagSet
+	Args		[]string
+	Namespace	string
 
-	cfg    Config
-	errors []error
+	cfg	Config
+	errors	[]error
 }
 
 // Configure returns a new asset or returns error if arguments are invalid
-func (cfgPtr *ConfigureAsset) Configure() (*types.Asset, []error) {
+func (cfgPtr *ConfigureAsset) Configure() (*v2.Asset, []error) {
 	isInteractive, _ := cfgPtr.Flags.GetBool(flags.Interactive)
 
 	if len(cfgPtr.Args) == 1 {
@@ -111,7 +111,7 @@ func (cfgPtr *ConfigureAsset) Configure() (*types.Asset, []error) {
 		cfgPtr.configureFromFlags()
 	}
 
-	var asset types.Asset
+	var asset v2.Asset
 	cfgPtr.cfg.Copy(&asset)
 
 	return &asset, cfgPtr.errors
@@ -120,34 +120,34 @@ func (cfgPtr *ConfigureAsset) Configure() (*types.Asset, []error) {
 func (cfgPtr *ConfigureAsset) administerQuestionnaire() error {
 	var qs = []*survey.Question{
 		{
-			Name: "name",
+			Name:	"name",
 			Prompt: &survey.Input{
-				Message: "Name:",
-				Default: cfgPtr.cfg.Name,
+				Message:	"Name:",
+				Default:	cfgPtr.cfg.Name,
 			},
-			Validate: survey.Required,
+			Validate:	survey.Required,
 		},
 		{
-			Name: "namespace",
+			Name:	"namespace",
 			Prompt: &survey.Input{
-				Message: "Namespace:",
-				Default: cfgPtr.Namespace,
+				Message:	"Namespace:",
+				Default:	cfgPtr.Namespace,
 			},
-			Validate: survey.Required,
+			Validate:	survey.Required,
 		},
 		{
-			Name:     "url",
-			Prompt:   &survey.Input{Message: "URL:"},
-			Validate: survey.Required,
+			Name:		"url",
+			Prompt:		&survey.Input{Message: "URL:"},
+			Validate:	survey.Required,
 		},
 		{
-			Name:     "sha512",
-			Prompt:   &survey.Input{Message: "SHA-512 Checksum:"},
-			Validate: survey.Required,
+			Name:		"sha512",
+			Prompt:		&survey.Input{Message: "SHA-512 Checksum:"},
+			Validate:	survey.Required,
 		},
 		{
-			Name:   "filters",
-			Prompt: &survey.Input{Message: "Filters:"},
+			Name:	"filters",
+			Prompt:	&survey.Input{Message: "Filters:"},
 		},
 	}
 
@@ -212,15 +212,15 @@ func (cfgPtr *ConfigureAsset) addError(err error) {
 
 // Config represents configurable attributes of an asset
 type Config struct {
-	Name      string
-	Namespace string
-	Sha512    string
-	URL       string
-	Filters   string
+	Name		string
+	Namespace	string
+	Sha512		string
+	URL		string
+	Filters		string
 }
 
 // Copy applies configured details to given asset
-func (cfgPtr *Config) Copy(asset *types.Asset) {
+func (cfgPtr *Config) Copy(asset *v2.Asset) {
 	asset.Name = cfgPtr.Name
 	asset.Namespace = cfgPtr.Namespace
 	asset.Sha512 = cfgPtr.Sha512

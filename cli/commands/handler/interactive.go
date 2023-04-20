@@ -5,24 +5,24 @@ import (
 	"strings"
 
 	"github.com/AlecAivazis/survey/v2"
+	v2 "github.com/sensu/core/v2"
 	"github.com/sensu/sensu-go/cli/commands/helpers"
-	"github.com/sensu/sensu-go/types"
 	"github.com/spf13/pflag"
 )
 
 type handlerOpts struct {
-	Name          string `survey:"name"`
-	Command       string `survey:"command"`
-	EnvVars       string `survey:"env-vars"`
-	Filters       string `survey:"filters"`
-	Handlers      string `survey:"handlers"`
-	Mutator       string `survey:"mutator"`
-	SocketHost    string `survey:"socketHost"`
-	SocketPort    string `survey:"socketPort"`
-	Timeout       string `survey:"timeout"`
-	Type          string `survey:"type"`
-	Namespace     string
-	RuntimeAssets string `survey:"assets"`
+	Name		string	`survey:"name"`
+	Command		string	`survey:"command"`
+	EnvVars		string	`survey:"env-vars"`
+	Filters		string	`survey:"filters"`
+	Handlers	string	`survey:"handlers"`
+	Mutator		string	`survey:"mutator"`
+	SocketHost	string	`survey:"socketHost"`
+	SocketPort	string	`survey:"socketPort"`
+	Timeout		string	`survey:"timeout"`
+	Type		string	`survey:"type"`
+	Namespace	string
+	RuntimeAssets	string	`survey:"assets"`
 }
 
 const (
@@ -35,7 +35,7 @@ func newHandlerOpts() *handlerOpts {
 	return &opts
 }
 
-func (opts *handlerOpts) withHandler(handler *types.Handler) {
+func (opts *handlerOpts) withHandler(handler *v2.Handler) {
 	opts.Name = handler.Name
 	opts.Namespace = handler.Namespace
 
@@ -78,13 +78,13 @@ func (opts *handlerOpts) administerQuestionnaire(editing bool) error {
 	}
 
 	switch opts.Type {
-	case types.HandlerPipeType:
+	case v2.HandlerPipeType:
 		return opts.queryForCommand()
-	case types.HandlerTCPType:
+	case v2.HandlerTCPType:
 		fallthrough
-	case types.HandlerUDPType:
+	case v2.HandlerUDPType:
 		return opts.queryForSocket()
-	case types.HandlerSetType:
+	case v2.HandlerSetType:
 		return opts.queryForHandlers()
 	}
 
@@ -97,69 +97,69 @@ func (opts *handlerOpts) queryForBaseParameters(editing bool) error {
 	if !editing {
 		qs = append(qs, []*survey.Question{
 			{
-				Name: "name",
+				Name:	"name",
 				Prompt: &survey.Input{
-					Message: "Handler Name:",
-					Default: opts.Name},
-				Validate: survey.Required,
+					Message:	"Handler Name:",
+					Default:	opts.Name},
+				Validate:	survey.Required,
 			},
 			{
-				Name: "namespace",
+				Name:	"namespace",
 				Prompt: &survey.Input{
-					Message: "Namespace:",
-					Default: opts.Namespace,
+					Message:	"Namespace:",
+					Default:	opts.Namespace,
 				},
-				Validate: survey.Required,
+				Validate:	survey.Required,
 			},
 		}...)
 	}
 
 	qs = append(qs, []*survey.Question{
 		{
-			Name: "env-vars",
+			Name:	"env-vars",
 			Prompt: &survey.Input{
-				Message: "Environment variables:",
-				Help:    "A list of comma-separated key=value pairs of environment variables.",
-				Default: opts.EnvVars,
+				Message:	"Environment variables:",
+				Help:		"A list of comma-separated key=value pairs of environment variables.",
+				Default:	opts.EnvVars,
 			},
 		},
 		{
-			Name: "filters",
+			Name:	"filters",
 			Prompt: &survey.Input{
-				Message: "Filters:",
-				Default: opts.Filters,
-				Help:    "comma separated list of filters to use when filtering events for the handler",
+				Message:	"Filters:",
+				Default:	opts.Filters,
+				Help:		"comma separated list of filters to use when filtering events for the handler",
 			},
 		},
 		{
-			Name: "mutator",
+			Name:	"mutator",
 			Prompt: &survey.Input{
-				Message: "Mutator:",
-				Default: opts.Mutator,
+				Message:	"Mutator:",
+				Default:	opts.Mutator,
 			},
 		},
 		{
-			Name: "timeout",
+			Name:	"timeout",
 			Prompt: &survey.Input{
-				Message: "Timeout:",
-				Default: opts.Timeout,
+				Message:	"Timeout:",
+				Default:	opts.Timeout,
 			},
 		},
 		{
-			Name: "type",
+			Name:	"type",
 			Prompt: &survey.Select{
-				Message: "Type:",
-				Options: []string{"pipe", "tcp", "udp", "set"},
-				Default: opts.Type,
+				Message:	"Type:",
+				Options:	[]string{"pipe", "tcp", "udp", "set"},
+				Default:	opts.Type,
 			},
-			Validate: survey.Required,
+			Validate:	survey.Required,
 		},
 		{
-			Name: "assets",
+			Name:	"assets",
 			Prompt: &survey.Input{
-				Message: "Runtime Assets:",
-				Help:    "A list of comma-separated list of assets to use when executing the handler",
-				Default: opts.RuntimeAssets,
+				Message:	"Runtime Assets:",
+				Help:		"A list of comma-separated list of assets to use when executing the handler",
+				Default:	opts.RuntimeAssets,
 			},
 		},
 	}...)
@@ -170,12 +170,12 @@ func (opts *handlerOpts) queryForBaseParameters(editing bool) error {
 func (opts *handlerOpts) queryForCommand() error {
 	var qs = []*survey.Question{
 		{
-			Name: "command",
+			Name:	"command",
 			Prompt: &survey.Input{
-				Message: "Command:",
-				Default: opts.Command,
+				Message:	"Command:",
+				Default:	opts.Command,
 			},
-			Validate: survey.Required,
+			Validate:	survey.Required,
 		},
 	}
 
@@ -185,13 +185,13 @@ func (opts *handlerOpts) queryForCommand() error {
 func (opts *handlerOpts) queryForHandlers() error {
 	var qs = []*survey.Question{
 		{
-			Name: "handlers",
+			Name:	"handlers",
 			Prompt: &survey.Input{
-				Message: "Handlers:",
-				Default: opts.Handlers,
-				Help:    "comma separated list of handlers to call using the handler set",
+				Message:	"Handlers:",
+				Default:	opts.Handlers,
+				Help:		"comma separated list of handlers to call using the handler set",
 			},
-			Validate: survey.Required,
+			Validate:	survey.Required,
 		},
 	}
 
@@ -201,27 +201,27 @@ func (opts *handlerOpts) queryForHandlers() error {
 func (opts *handlerOpts) queryForSocket() error {
 	var qs = []*survey.Question{
 		{
-			Name: "socketHost",
+			Name:	"socketHost",
 			Prompt: &survey.Input{
-				Message: "Socket Host:",
-				Default: opts.SocketHost,
+				Message:	"Socket Host:",
+				Default:	opts.SocketHost,
 			},
-			Validate: survey.Required,
+			Validate:	survey.Required,
 		},
 		{
-			Name: "socketPort",
+			Name:	"socketPort",
 			Prompt: &survey.Input{
-				Message: "Socket Port:",
-				Default: opts.SocketPort,
+				Message:	"Socket Port:",
+				Default:	opts.SocketPort,
 			},
-			Validate: survey.Required,
+			Validate:	survey.Required,
 		},
 	}
 
 	return survey.Ask(qs, opts)
 }
 
-func (opts *handlerOpts) Copy(handler *types.Handler) {
+func (opts *handlerOpts) Copy(handler *v2.Handler) {
 	handler.Name = opts.Name
 	handler.Namespace = opts.Namespace
 
@@ -239,9 +239,9 @@ func (opts *handlerOpts) Copy(handler *types.Handler) {
 
 	if len(opts.SocketHost) > 0 && len(opts.SocketPort) > 0 {
 		p, _ := strconv.ParseUint(opts.SocketPort, 10, 32)
-		handler.Socket = &types.HandlerSocket{
-			Host: opts.SocketHost,
-			Port: uint32(p),
+		handler.Socket = &v2.HandlerSocket{
+			Host:	opts.SocketHost,
+			Port:	uint32(p),
 		}
 	}
 

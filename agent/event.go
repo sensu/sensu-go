@@ -7,7 +7,7 @@ import (
 	"github.com/google/uuid"
 
 	corev2 "github.com/sensu/core/v2"
-	corev1 "github.com/sensu/sensu-go/types/v1"
+	corev1 "github.com/sensu/sensu-go/agent/v1"
 )
 
 // prepareEvent accepts a partial or complete event and tries to add any missing

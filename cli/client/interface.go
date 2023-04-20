@@ -6,22 +6,22 @@ import (
 	"github.com/go-resty/resty/v2"
 	corev2 "github.com/sensu/core/v2"
 	corev3 "github.com/sensu/core/v3"
-	"github.com/sensu/sensu-go/types"
+	"github.com/sensu/core/v3/types"
 )
 
 // ListOptions represents the various options that can be used when listing
 // resources.
 type ListOptions struct {
-	FieldSelector string
-	LabelSelector string
+	FieldSelector	string
+	LabelSelector	string
 
 	// ContinueToken is the current pagination token.
-	ContinueToken string
+	ContinueToken	string
 
 	// ChunkSize is the number of objects to fetch per page when taking
 	// advantage of the API's pagination capabilities. ChunkSize <= 0 means
 	// fetch everything all at once; do not use pagination.
-	ChunkSize int
+	ChunkSize	int
 }
 
 // APIClient client methods across the Sensu API
@@ -222,7 +222,7 @@ type SilencedAPIClient interface {
 
 	// ListSilenceds lists all silenced entries, optionally constraining by
 	// subscription or check.
-	ListSilenceds(namespace, subscription, check string, options *ListOptions, header *http.Header) ([]types.Silenced, error)
+	ListSilenceds(namespace, subscription, check string, options *ListOptions, header *http.Header) ([]corev2.Silenced, error)
 
 	// FetchSilenced fetches the silenced entry by ID.
 	FetchSilenced(id string) (*corev2.Silenced, error)

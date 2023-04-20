@@ -8,7 +8,6 @@ import (
 	corev2 "github.com/sensu/core/v2"
 	"github.com/sensu/sensu-go/backend/store/patch"
 	"github.com/sensu/sensu-go/backend/store/provider"
-	"github.com/sensu/sensu-go/types"
 )
 
 var _ Store = new(StoreProxy)
@@ -17,8 +16,8 @@ var _ Store = new(StoreProxy)
 // underlying implementation. It uses an atomic so that calls are not impeded by
 // mutex overhead.
 type StoreProxy struct {
-	impl Store
-	mu   sync.RWMutex
+	impl	Store
+	mu	sync.RWMutex
 }
 
 func NewStoreProxy(s Store) *StoreProxy {
@@ -159,11 +158,11 @@ func (s *StoreProxy) CreateClusterID(ctx context.Context, id string) error {
 func (s *StoreProxy) GetClusterID(ctx context.Context) (string, error) {
 	return s.do().GetClusterID(ctx)
 }
-func (s *StoreProxy) CreateClusterRoleBinding(ctx context.Context, clusterRoleBinding *types.ClusterRoleBinding) error {
+func (s *StoreProxy) CreateClusterRoleBinding(ctx context.Context, clusterRoleBinding *corev2.ClusterRoleBinding) error {
 	return s.do().CreateClusterRoleBinding(ctx, clusterRoleBinding)
 }
 
-func (s *StoreProxy) CreateOrUpdateClusterRoleBinding(ctx context.Context, clusterRoleBinding *types.ClusterRoleBinding) error {
+func (s *StoreProxy) CreateOrUpdateClusterRoleBinding(ctx context.Context, clusterRoleBinding *corev2.ClusterRoleBinding) error {
 	return s.do().CreateOrUpdateClusterRoleBinding(ctx, clusterRoleBinding)
 }
 
@@ -171,23 +170,23 @@ func (s *StoreProxy) DeleteClusterRoleBinding(ctx context.Context, name string) 
 	return s.do().DeleteClusterRoleBinding(ctx, name)
 }
 
-func (s *StoreProxy) GetClusterRoleBinding(ctx context.Context, name string) (*types.ClusterRoleBinding, error) {
+func (s *StoreProxy) GetClusterRoleBinding(ctx context.Context, name string) (*corev2.ClusterRoleBinding, error) {
 	return s.do().GetClusterRoleBinding(ctx, name)
 }
 
-func (s *StoreProxy) ListClusterRoleBindings(ctx context.Context, pred *SelectionPredicate) (clusterRoleBindings []*types.ClusterRoleBinding, err error) {
+func (s *StoreProxy) ListClusterRoleBindings(ctx context.Context, pred *SelectionPredicate) (clusterRoleBindings []*corev2.ClusterRoleBinding, err error) {
 	return s.do().ListClusterRoleBindings(ctx, pred)
 }
 
-func (s *StoreProxy) UpdateClusterRoleBinding(ctx context.Context, clusterRoleBinding *types.ClusterRoleBinding) error {
+func (s *StoreProxy) UpdateClusterRoleBinding(ctx context.Context, clusterRoleBinding *corev2.ClusterRoleBinding) error {
 	return s.do().UpdateClusterRoleBinding(ctx, clusterRoleBinding)
 }
 
-func (s *StoreProxy) CreateClusterRole(ctx context.Context, clusterRole *types.ClusterRole) error {
+func (s *StoreProxy) CreateClusterRole(ctx context.Context, clusterRole *corev2.ClusterRole) error {
 	return s.do().CreateClusterRole(ctx, clusterRole)
 }
 
-func (s *StoreProxy) CreateOrUpdateClusterRole(ctx context.Context, clusterRole *types.ClusterRole) error {
+func (s *StoreProxy) CreateOrUpdateClusterRole(ctx context.Context, clusterRole *corev2.ClusterRole) error {
 	return s.do().CreateOrUpdateClusterRole(ctx, clusterRole)
 }
 
@@ -195,15 +194,15 @@ func (s *StoreProxy) DeleteClusterRole(ctx context.Context, name string) error {
 	return s.do().DeleteClusterRole(ctx, name)
 }
 
-func (s *StoreProxy) GetClusterRole(ctx context.Context, name string) (*types.ClusterRole, error) {
+func (s *StoreProxy) GetClusterRole(ctx context.Context, name string) (*corev2.ClusterRole, error) {
 	return s.do().GetClusterRole(ctx, name)
 }
 
-func (s *StoreProxy) ListClusterRoles(ctx context.Context, pred *SelectionPredicate) (clusterRoles []*types.ClusterRole, err error) {
+func (s *StoreProxy) ListClusterRoles(ctx context.Context, pred *SelectionPredicate) (clusterRoles []*corev2.ClusterRole, err error) {
 	return s.do().ListClusterRoles(ctx, pred)
 }
 
-func (s *StoreProxy) UpdateClusterRole(ctx context.Context, clusterRole *types.ClusterRole) error {
+func (s *StoreProxy) UpdateClusterRole(ctx context.Context, clusterRole *corev2.ClusterRole) error {
 	return s.do().UpdateClusterRole(ctx, clusterRole)
 }
 
@@ -216,23 +215,23 @@ func (s *StoreProxy) DeleteHookConfigByName(ctx context.Context, name string) er
 // GetHookConfigs returns all hooks configurations in the given ctx's
 // namespace. A nil slice with no error is returned if none
 // were found.
-func (s *StoreProxy) GetHookConfigs(ctx context.Context, pred *SelectionPredicate) ([]*types.HookConfig, error) {
+func (s *StoreProxy) GetHookConfigs(ctx context.Context, pred *SelectionPredicate) ([]*corev2.HookConfig, error) {
 	return s.do().GetHookConfigs(ctx, pred)
 }
 
 // GetHookConfigByName returns a hook's configuration using the given name and
 // the namespace stored in ctx. The resulting hook is nil if none was found.
-func (s *StoreProxy) GetHookConfigByName(ctx context.Context, name string) (*types.HookConfig, error) {
+func (s *StoreProxy) GetHookConfigByName(ctx context.Context, name string) (*corev2.HookConfig, error) {
 	return s.do().GetHookConfigByName(ctx, name)
 }
 
 // UpdateHookConfig creates or updates a given hook's configuration.
-func (s *StoreProxy) UpdateHookConfig(ctx context.Context, check *types.HookConfig) error {
+func (s *StoreProxy) UpdateHookConfig(ctx context.Context, check *corev2.HookConfig) error {
 	return s.do().UpdateHookConfig(ctx, check)
 }
 
 // DeleteEntity deletes an entity using the given entity struct.
-func (s *StoreProxy) DeleteEntity(ctx context.Context, entity *types.Entity) error {
+func (s *StoreProxy) DeleteEntity(ctx context.Context, entity *corev2.Entity) error {
 	return s.do().DeleteEntity(ctx, entity)
 }
 
@@ -244,18 +243,18 @@ func (s *StoreProxy) DeleteEntityByName(ctx context.Context, name string) error 
 
 // GetEntities returns all entities in the given ctx's namespace. A nil slice
 // with no error is returned if none were found.
-func (s *StoreProxy) GetEntities(ctx context.Context, pred *SelectionPredicate) ([]*types.Entity, error) {
+func (s *StoreProxy) GetEntities(ctx context.Context, pred *SelectionPredicate) ([]*corev2.Entity, error) {
 	return s.do().GetEntities(ctx, pred)
 }
 
 // GetEntityByName returns an entity using the given name and the namespace stored
 // in ctx. The resulting entity is nil if none was found.
-func (s *StoreProxy) GetEntityByName(ctx context.Context, name string) (*types.Entity, error) {
+func (s *StoreProxy) GetEntityByName(ctx context.Context, name string) (*corev2.Entity, error) {
 	return s.do().GetEntityByName(ctx, name)
 }
 
 // UpdateEntity creates or updates a given entity.
-func (s *StoreProxy) UpdateEntity(ctx context.Context, entity *types.Entity) error {
+func (s *StoreProxy) UpdateEntity(ctx context.Context, entity *corev2.Entity) error {
 	return s.do().UpdateEntity(ctx, entity)
 }
 
@@ -267,18 +266,18 @@ func (s *StoreProxy) DeleteEventFilterByName(ctx context.Context, name string) e
 
 // GetEventFilters returns all filters in the given ctx's namespace. A nil
 // slice with no error is returned if none were found.
-func (s *StoreProxy) GetEventFilters(ctx context.Context, pred *SelectionPredicate) ([]*types.EventFilter, error) {
+func (s *StoreProxy) GetEventFilters(ctx context.Context, pred *SelectionPredicate) ([]*corev2.EventFilter, error) {
 	return s.do().GetEventFilters(ctx, pred)
 }
 
 // GetEventFilterByName returns a filter using the given name and the
 // namespace stored in ctx. The resulting filter is nil if none was found.
-func (s *StoreProxy) GetEventFilterByName(ctx context.Context, name string) (*types.EventFilter, error) {
+func (s *StoreProxy) GetEventFilterByName(ctx context.Context, name string) (*corev2.EventFilter, error) {
 	return s.do().GetEventFilterByName(ctx, name)
 }
 
 // UpdateEventFilter creates or updates a given filter.
-func (s *StoreProxy) UpdateEventFilter(ctx context.Context, filter *types.EventFilter) error {
+func (s *StoreProxy) UpdateEventFilter(ctx context.Context, filter *corev2.EventFilter) error {
 	return s.do().UpdateEventFilter(ctx, filter)
 }
 
@@ -290,34 +289,34 @@ func (s *StoreProxy) DeleteHandlerByName(ctx context.Context, name string) error
 
 // GetHandlers returns all handlers in the given ctx's namespace. A nil slice
 // with no error is returned if none were found.
-func (s *StoreProxy) GetHandlers(ctx context.Context, pred *SelectionPredicate) ([]*types.Handler, error) {
+func (s *StoreProxy) GetHandlers(ctx context.Context, pred *SelectionPredicate) ([]*corev2.Handler, error) {
 	return s.do().GetHandlers(ctx, pred)
 }
 
 // GetHandlerByName returns a handler using the given name and the namespace
 // stored in ctx. The resulting handler is nil if none was found.
-func (s *StoreProxy) GetHandlerByName(ctx context.Context, name string) (*types.Handler, error) {
+func (s *StoreProxy) GetHandlerByName(ctx context.Context, name string) (*corev2.Handler, error) {
 	return s.do().GetHandlerByName(ctx, name)
 }
 
 // UpdateHandler creates or updates a given handler.
-func (s *StoreProxy) UpdateHandler(ctx context.Context, handler *types.Handler) error {
+func (s *StoreProxy) UpdateHandler(ctx context.Context, handler *corev2.Handler) error {
 	return s.do().UpdateHandler(ctx, handler)
 }
 
 // DeleteFailingKeepalive deletes a failing keepalive record for a given entity.
-func (s *StoreProxy) DeleteFailingKeepalive(ctx context.Context, entity *types.Entity) error {
+func (s *StoreProxy) DeleteFailingKeepalive(ctx context.Context, entity *corev2.Entity) error {
 	return s.do().DeleteFailingKeepalive(ctx, entity)
 }
 
 // GetFailingKeepalives returns a slice of failing keepalives.
-func (s *StoreProxy) GetFailingKeepalives(ctx context.Context) ([]*types.KeepaliveRecord, error) {
+func (s *StoreProxy) GetFailingKeepalives(ctx context.Context) ([]*corev2.KeepaliveRecord, error) {
 	return s.do().GetFailingKeepalives(ctx)
 }
 
 // UpdateFailingKeepalive updates the given entity keepalive with the given expiration
 // in unix timestamp format
-func (s *StoreProxy) UpdateFailingKeepalive(ctx context.Context, entity *types.Entity, expiration int64) error {
+func (s *StoreProxy) UpdateFailingKeepalive(ctx context.Context, entity *corev2.Entity, expiration int64) error {
 	return s.do().UpdateFailingKeepalive(ctx, entity, expiration)
 }
 
@@ -329,24 +328,24 @@ func (s *StoreProxy) DeleteMutatorByName(ctx context.Context, name string) error
 
 // GetMutators returns all mutators in the given ctx's namespace. A nil slice
 // with no error is returned if none were found.
-func (s *StoreProxy) GetMutators(ctx context.Context, pred *SelectionPredicate) ([]*types.Mutator, error) {
+func (s *StoreProxy) GetMutators(ctx context.Context, pred *SelectionPredicate) ([]*corev2.Mutator, error) {
 	return s.do().GetMutators(ctx, pred)
 }
 
 // GetMutatorByName returns a mutator using the given name and the
 // namespace stored in ctx. The resulting mutator is nil if
 // none was found.
-func (s *StoreProxy) GetMutatorByName(ctx context.Context, name string) (*types.Mutator, error) {
+func (s *StoreProxy) GetMutatorByName(ctx context.Context, name string) (*corev2.Mutator, error) {
 	return s.do().GetMutatorByName(ctx, name)
 }
 
 // UpdateMutator creates or updates a given mutator.
-func (s *StoreProxy) UpdateMutator(ctx context.Context, mutator *types.Mutator) error {
+func (s *StoreProxy) UpdateMutator(ctx context.Context, mutator *corev2.Mutator) error {
 	return s.do().UpdateMutator(ctx, mutator)
 }
 
 // CreateNamespace creates a given namespace
-func (s *StoreProxy) CreateNamespace(ctx context.Context, namespace *types.Namespace) error {
+func (s *StoreProxy) CreateNamespace(ctx context.Context, namespace *corev2.Namespace) error {
 	return s.do().CreateNamespace(ctx, namespace)
 }
 
@@ -357,18 +356,18 @@ func (s *StoreProxy) DeleteNamespace(ctx context.Context, name string) error {
 
 // ListNamespaces returns all namespaces. A nil slice with no error is
 // returned if none were found.
-func (s *StoreProxy) ListNamespaces(ctx context.Context, pred *SelectionPredicate) ([]*types.Namespace, error) {
+func (s *StoreProxy) ListNamespaces(ctx context.Context, pred *SelectionPredicate) ([]*corev2.Namespace, error) {
 	return s.do().ListNamespaces(ctx, pred)
 }
 
 // GetNamespace returns a namespace using the given name. The
 // result is nil if none was found.
-func (s *StoreProxy) GetNamespace(ctx context.Context, name string) (*types.Namespace, error) {
+func (s *StoreProxy) GetNamespace(ctx context.Context, name string) (*corev2.Namespace, error) {
 	return s.do().GetNamespace(ctx, name)
 }
 
 // UpdateNamespace updates an existing namespace.
-func (s *StoreProxy) UpdateNamespace(ctx context.Context, org *types.Namespace) error {
+func (s *StoreProxy) UpdateNamespace(ctx context.Context, org *corev2.Namespace) error {
 	return s.do().UpdateNamespace(ctx, org)
 }
 func (s *StoreProxy) CreateResource(ctx context.Context, resource corev2.Resource) error {
@@ -396,12 +395,12 @@ func (s *StoreProxy) PatchResource(ctx context.Context, resource corev2.Resource
 }
 
 // Create a given role binding
-func (s *StoreProxy) CreateRoleBinding(ctx context.Context, roleBinding *types.RoleBinding) error {
+func (s *StoreProxy) CreateRoleBinding(ctx context.Context, roleBinding *corev2.RoleBinding) error {
 	return s.do().CreateRoleBinding(ctx, roleBinding)
 }
 
 // CreateOrUpdateRole overwrites the given role binding
-func (s *StoreProxy) CreateOrUpdateRoleBinding(ctx context.Context, roleBinding *types.RoleBinding) error {
+func (s *StoreProxy) CreateOrUpdateRoleBinding(ctx context.Context, roleBinding *corev2.RoleBinding) error {
 	return s.do().CreateOrUpdateRoleBinding(ctx, roleBinding)
 }
 
@@ -412,28 +411,28 @@ func (s *StoreProxy) DeleteRoleBinding(ctx context.Context, name string) error {
 
 // GetRole returns a role binding using the given name. An error is returned
 // if no binding was found
-func (s *StoreProxy) GetRoleBinding(ctx context.Context, name string) (*types.RoleBinding, error) {
+func (s *StoreProxy) GetRoleBinding(ctx context.Context, name string) (*corev2.RoleBinding, error) {
 	return s.do().GetRoleBinding(ctx, name)
 }
 
 // ListRoles returns all role binding. An error is returned if no binding were
 // found
-func (s *StoreProxy) ListRoleBindings(ctx context.Context, pred *SelectionPredicate) (roleBindings []*types.RoleBinding, err error) {
+func (s *StoreProxy) ListRoleBindings(ctx context.Context, pred *SelectionPredicate) (roleBindings []*corev2.RoleBinding, err error) {
 	return s.do().ListRoleBindings(ctx, pred)
 }
 
 // UpdateRole creates or updates a given role binding.
-func (s *StoreProxy) UpdateRoleBinding(ctx context.Context, roleBinding *types.RoleBinding) error {
+func (s *StoreProxy) UpdateRoleBinding(ctx context.Context, roleBinding *corev2.RoleBinding) error {
 	return s.do().UpdateRoleBinding(ctx, roleBinding)
 }
 
 // Create a given role
-func (s *StoreProxy) CreateRole(ctx context.Context, role *types.Role) error {
+func (s *StoreProxy) CreateRole(ctx context.Context, role *corev2.Role) error {
 	return s.do().CreateRole(ctx, role)
 }
 
 // CreateOrUpdateRole overwrites the given role
-func (s *StoreProxy) CreateOrUpdateRole(ctx context.Context, role *types.Role) error {
+func (s *StoreProxy) CreateOrUpdateRole(ctx context.Context, role *corev2.Role) error {
 	return s.do().CreateOrUpdateRole(ctx, role)
 }
 
@@ -444,17 +443,17 @@ func (s *StoreProxy) DeleteRole(ctx context.Context, name string) error {
 
 // GetRole returns a role using the given name. An error is returned if no
 // role was found
-func (s *StoreProxy) GetRole(ctx context.Context, name string) (*types.Role, error) {
+func (s *StoreProxy) GetRole(ctx context.Context, name string) (*corev2.Role, error) {
 	return s.do().GetRole(ctx, name)
 }
 
 // ListRoles returns all roles. An error is returned if no roles were found
-func (s *StoreProxy) ListRoles(ctx context.Context, pred *SelectionPredicate) (roles []*types.Role, err error) {
+func (s *StoreProxy) ListRoles(ctx context.Context, pred *SelectionPredicate) (roles []*corev2.Role, err error) {
 	return s.do().ListRoles(ctx, pred)
 }
 
 // UpdateRole creates or updates a given role.
-func (s *StoreProxy) UpdateRole(ctx context.Context, role *types.Role) error {
+func (s *StoreProxy) UpdateRole(ctx context.Context, role *corev2.Role) error {
 	return s.do().UpdateRole(ctx, role)
 }
 
@@ -465,38 +464,38 @@ func (s *StoreProxy) DeleteSilences(ctx context.Context, namespace string, id []
 
 // GetSilencedEntries returns all entries. A nil slice with no error is
 // returned if none were found.
-func (s *StoreProxy) GetSilences(ctx context.Context, namespace string) ([]*types.Silenced, error) {
+func (s *StoreProxy) GetSilences(ctx context.Context, namespace string) ([]*corev2.Silenced, error) {
 	return s.do().GetSilences(ctx, namespace)
 }
 
 // GetSilencesByCheck returns all entries for the given check
 // within the namespace. A nil slice with no error is
 // returned if none were found.
-func (s *StoreProxy) GetSilencesByCheck(ctx context.Context, namespace, check string) ([]*types.Silenced, error) {
+func (s *StoreProxy) GetSilencesByCheck(ctx context.Context, namespace, check string) ([]*corev2.Silenced, error) {
 	return s.do().GetSilencesByCheck(ctx, namespace, check)
 }
 
 // GetSilencesBySubscription returns all entries for the given subscription
 // within the ctx's namespace. A nil slice with no error is
 // returned if none were found.
-func (s *StoreProxy) GetSilencesBySubscription(ctx context.Context, namespace string, subscriptions []string) ([]*types.Silenced, error) {
+func (s *StoreProxy) GetSilencesBySubscription(ctx context.Context, namespace string, subscriptions []string) ([]*corev2.Silenced, error) {
 	return s.do().GetSilencesBySubscription(ctx, namespace, subscriptions)
 }
 
 // GetSilencesByName returns an entry using the given id and the
 // namespace stored in ctx. The resulting entry is nil if
 // none was found.
-func (s *StoreProxy) GetSilenceByName(ctx context.Context, namespace, id string) (*types.Silenced, error) {
+func (s *StoreProxy) GetSilenceByName(ctx context.Context, namespace, id string) (*corev2.Silenced, error) {
 	return s.do().GetSilenceByName(ctx, namespace, id)
 }
 
 // UpdateHandler creates or updates a given entry.
-func (s *StoreProxy) UpdateSilence(ctx context.Context, entry *types.Silenced) error {
+func (s *StoreProxy) UpdateSilence(ctx context.Context, entry *corev2.Silenced) error {
 	return s.do().UpdateSilence(ctx, entry)
 }
 
 // GetSilencedEntriesByName gets all the named silenced entries.
-func (s *StoreProxy) GetSilencesByName(ctx context.Context, namespace string, id []string) ([]*types.Silenced, error) {
+func (s *StoreProxy) GetSilencesByName(ctx context.Context, namespace string, id []string) ([]*corev2.Silenced, error) {
 	return s.do().GetSilencesByName(ctx, namespace, id)
 }
 
@@ -518,34 +517,34 @@ func (s *StoreProxy) GetTessenConfigWatcher(ctx context.Context) <-chan WatchEve
 // AuthenticateUser attempts to authenticate a user with the given username
 // and hashed password. An error is returned if the user does not exist, is
 // disabled or the given password does not match.
-func (s *StoreProxy) AuthenticateUser(ctx context.Context, username, password string) (*types.User, error) {
+func (s *StoreProxy) AuthenticateUser(ctx context.Context, username, password string) (*corev2.User, error) {
 	return s.do().AuthenticateUser(ctx, username, password)
 }
 
 // CreateUsern creates a new user with the given user struct.
-func (s *StoreProxy) CreateUser(ctx context.Context, user *types.User) error {
+func (s *StoreProxy) CreateUser(ctx context.Context, user *corev2.User) error {
 	return s.do().CreateUser(ctx, user)
 }
 
 // GetUser returns a user using the given username.
-func (s *StoreProxy) GetUser(ctx context.Context, username string) (*types.User, error) {
+func (s *StoreProxy) GetUser(ctx context.Context, username string) (*corev2.User, error) {
 	return s.do().GetUser(ctx, username)
 }
 
 // GetUsers returns all enabled users. A nil slice with no error is
 // returned if none were found.
-func (s *StoreProxy) GetUsers() ([]*types.User, error) {
+func (s *StoreProxy) GetUsers() ([]*corev2.User, error) {
 	return s.do().GetUsers()
 }
 
 // GetUsers returns all users, including the disabled ones. A nil slice with
 // no error is  returned if none were found.
-func (s *StoreProxy) GetAllUsers(pred *SelectionPredicate) ([]*types.User, error) {
+func (s *StoreProxy) GetAllUsers(pred *SelectionPredicate) ([]*corev2.User, error) {
 	return s.do().GetAllUsers(pred)
 }
 
 // UpdateUser updates a given user.
-func (s *StoreProxy) UpdateUser(user *types.User) error {
+func (s *StoreProxy) UpdateUser(user *corev2.User) error {
 	return s.do().UpdateUser(user)
 }
 
@@ -568,8 +567,8 @@ func (s *StoreProxy) GetProviderInfo() *provider.Info {
 	}
 	return &provider.Info{
 		TypeMeta: corev2.TypeMeta{
-			Type:       "etcd",
-			APIVersion: "core/v2",
+			Type:		"etcd",
+			APIVersion:	"core/v2",
 		},
 	}
 }

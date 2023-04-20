@@ -3,7 +3,7 @@ package testing
 import (
 	"time"
 
-	"github.com/sensu/sensu-go/types"
+	v2 "github.com/sensu/core/v2"
 	"github.com/stretchr/testify/mock"
 )
 
@@ -82,15 +82,15 @@ func (m *MockConfig) SaveTimeout(timeout time.Duration) error {
 }
 
 // SaveTokens mocks saving the tokens
-func (m *MockConfig) SaveTokens(tokens *types.Tokens) error {
+func (m *MockConfig) SaveTokens(tokens *v2.Tokens) error {
 	args := m.Called(tokens)
 	return args.Error(0)
 }
 
 // Tokens mocks the tokens config
-func (m *MockConfig) Tokens() *types.Tokens {
+func (m *MockConfig) Tokens() *v2.Tokens {
 	args := m.Called()
-	return args.Get(0).(*types.Tokens)
+	return args.Get(0).(*v2.Tokens)
 }
 
 func (m *MockConfig) APIKey() string {

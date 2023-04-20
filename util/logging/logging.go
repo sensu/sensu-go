@@ -1,22 +1,22 @@
 package logging
 
 import (
-	"github.com/sensu/sensu-go/types"
+	v2 "github.com/sensu/core/v2"
 	"github.com/sirupsen/logrus"
 )
 
 // EventFields populates a map with fields containing relevant information about
 // an event for logging
-func EventFields(event *types.Event, debug bool) map[string]interface{} {
+func EventFields(event *v2.Event, debug bool) map[string]interface{} {
 	// Ensure the entity is present
 	if event.Entity == nil {
 		return map[string]interface{}{}
 	}
 
 	fields := logrus.Fields{
-		"event_id":         event.GetUUID().String(),
-		"entity_name":      event.Entity.Name,
-		"entity_namespace": event.Entity.Namespace,
+		"event_id":		event.GetUUID().String(),
+		"entity_name":		event.Entity.Name,
+		"entity_namespace":	event.Entity.Namespace,
 	}
 
 	if event.HasCheck() {

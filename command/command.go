@@ -11,7 +11,7 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/sensu/sensu-go/types"
+	v2 "github.com/sensu/core/v2"
 	bytesutil "github.com/sensu/sensu-go/util/bytes"
 	"github.com/sirupsen/logrus"
 )
@@ -52,20 +52,20 @@ type Executor interface {
 const (
 	// TimeoutOutput specifies the command execution output in the
 	// event of an execution timeout.
-	TimeoutOutput string = "Execution timed out\n"
+	TimeoutOutput	string	= "Execution timed out\n"
 
 	// OKExitStatus specifies the command execution exit status
 	// that indicates a success, A-OK.
-	OKExitStatus int = 0
+	OKExitStatus	int	= 0
 
 	// TimeoutExitStatus specifies the command execution exit
 	// status in the event of an execution timeout.
-	TimeoutExitStatus int = 2
+	TimeoutExitStatus	int	= 2
 
 	// FallbackExitStatus specifies the command execution exit
 	// status used when golang is unable to determine the exit
 	// status.
-	FallbackExitStatus int = 3
+	FallbackExitStatus	int	= 3
 )
 
 // ExecutionRequest provides information about a system command execution,
@@ -73,39 +73,39 @@ const (
 // mutator, and handler execution.
 type ExecutionRequest struct {
 	// Command is the command to be executed.
-	Command string
+	Command	string
 
 	// Env ...
-	Env []string
+	Env	[]string
 
 	// Input to provide the command via STDIN.
-	Input string
+	Input	string
 
 	// Execution timeout in seconds, will be set to a default if
 	// not specified.
-	Timeout int
+	Timeout	int
 
 	// Name is the name of the resource that is invoking the execution.
-	Name string
+	Name	string
 
 	// InProgress is a map of checks that are still in execution, this is
 	// necessary for a check or hook to escape zombie processes.
-	InProgress map[string]*types.CheckConfig
+	InProgress	map[string]*v2.CheckConfig
 
 	// InProgressMu is the mutex for the InProgress map.
-	InProgressMu *sync.Mutex
+	InProgressMu	*sync.Mutex
 }
 
 // ExecutionResponse provides the response information of an ExecutionRequest.
 type ExecutionResponse struct {
 	// Combined command execution STDOUT/ERR.
-	Output string
+	Output	string
 
 	// Command execution exit status.
-	Status int
+	Status	int
 
 	// Duration provides command execution time in seconds.
-	Duration float64
+	Duration	float64
 }
 
 // NewExecutor ...
@@ -235,8 +235,8 @@ func escapeZombie(ex *ExecutionRequest) {
 // FixtureExecutionResponse returns an Execution for use in testing
 func FixtureExecutionResponse(status int, output string) *ExecutionResponse {
 	return &ExecutionResponse{
-		Output:   output,
-		Status:   status,
-		Duration: 1,
+		Output:		output,
+		Status:		status,
+		Duration:	1,
 	}
 }

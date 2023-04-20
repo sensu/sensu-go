@@ -7,16 +7,16 @@ import (
 	"path/filepath"
 	"time"
 
+	v2 "github.com/sensu/core/v2"
 	"github.com/sensu/sensu-go/cli/commands/helpers"
-	"github.com/sensu/sensu-go/types"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
 )
 
 const (
-	clusterFilename = "cluster"
-	profileFilename = "profile"
+	clusterFilename	= "cluster"
+	profileFilename	= "profile"
 )
 
 var logger = logrus.WithFields(logrus.Fields{
@@ -27,23 +27,23 @@ var logger = logrus.WithFields(logrus.Fields{
 type Config struct {
 	Cluster
 	Profile
-	path string
+	path	string
 }
 
 // Cluster contains the Sensu cluster access information
 type Cluster struct {
-	APIUrl                string `json:"api-url"`
-	TrustedCAFile         string `json:"trusted-ca-file"`
-	InsecureSkipTLSVerify bool   `json:"insecure-skip-tls-verify"`
-	*types.Tokens
-	APIKey  string
-	Timeout time.Duration `json:"timeout"`
+	APIUrl			string	`json:"api-url"`
+	TrustedCAFile		string	`json:"trusted-ca-file"`
+	InsecureSkipTLSVerify	bool	`json:"insecure-skip-tls-verify"`
+	*v2.Tokens
+	APIKey	string
+	Timeout	time.Duration	`json:"timeout"`
 }
 
 // Profile contains the active configuration
 type Profile struct {
-	Format    string `json:"format"`
-	Namespace string `json:"namespace"`
+	Format		string	`json:"format"`
+	Namespace	string	`json:"namespace"`
 }
 
 // Load imports the CLI configuration and returns an initialized Config struct

@@ -9,19 +9,19 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	v2 "github.com/sensu/core/v2"
 	"github.com/sensu/sensu-go/cli"
 	"github.com/sensu/sensu-go/cli/commands/helpers"
 	"github.com/sensu/sensu-go/cli/elements/list"
-	"github.com/sensu/sensu-go/types"
 	"github.com/spf13/cobra"
 )
 
 // InfoCommand defines new event info command
 func InfoCommand(cli *cli.SensuCli) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:          "info [ENTITY] [CHECK]",
-		Short:        "show detailed event information",
-		SilenceUsage: true,
+		Use:		"info [ENTITY] [CHECK]",
+		Short:		"show detailed event information",
+		SilenceUsage:	true,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if len(args) != 2 {
 				_ = cmd.Help()
@@ -49,7 +49,7 @@ func InfoCommand(cli *cli.SensuCli) *cobra.Command {
 }
 
 func printToList(v interface{}, writer io.Writer) error {
-	event, ok := v.(*types.Event)
+	event, ok := v.(*v2.Event)
 	if !ok {
 		return fmt.Errorf("%t is not an Event", v)
 	}
@@ -59,39 +59,39 @@ func printToList(v interface{}, writer io.Writer) error {
 	}
 
 	cfg := &list.Config{
-		Title: fmt.Sprintf("%s - %s", event.Entity.Name, event.Check.Name),
+		Title:	fmt.Sprintf("%s - %s", event.Entity.Name, event.Check.Name),
 		Rows: []*list.Row{
 			{
-				Label: "Entity",
-				Value: event.Entity.Name,
+				Label:	"Entity",
+				Value:	event.Entity.Name,
 			},
 			{
-				Label: "Check",
-				Value: event.Check.Name,
+				Label:	"Check",
+				Value:	event.Check.Name,
 			},
 			{
-				Label: "Output",
-				Value: strings.TrimSuffix(event.Check.Output, "\n"),
+				Label:	"Output",
+				Value:	strings.TrimSuffix(event.Check.Output, "\n"),
 			},
 			{
-				Label: "Status",
-				Value: strconv.Itoa(int(event.Check.Status)),
+				Label:	"Status",
+				Value:	strconv.Itoa(int(event.Check.Status)),
 			},
 			{
-				Label: "History",
-				Value: strings.Join(statusHistory, ","),
+				Label:	"History",
+				Value:	strings.Join(statusHistory, ","),
 			},
 			{
-				Label: "Silenced",
-				Value: strconv.FormatBool(event.Check.IsSilenced),
+				Label:	"Silenced",
+				Value:	strconv.FormatBool(event.Check.IsSilenced),
 			},
 		},
 	}
 
 	if event.Check.IsSilenced {
 		silencedBy := &list.Row{
-			Label: "Silenced By",
-			Value: strings.Join(event.Check.Silenced, ", "),
+			Label:	"Silenced By",
+			Value:	strings.Join(event.Check.Silenced, ", "),
 		}
 		cfg.Rows = append(cfg.Rows, silencedBy)
 	}
@@ -103,12 +103,12 @@ func printToList(v interface{}, writer io.Writer) error {
 	}
 	cfg.Rows = append(cfg.Rows, []*list.Row{
 		{
-			Label: "Timestamp",
-			Value: time.Unix(event.Timestamp, 0).String(),
+			Label:	"Timestamp",
+			Value:	time.Unix(event.Timestamp, 0).String(),
 		},
 		{
-			Label: "UUID",
-			Value: uuidVal,
+			Label:	"UUID",
+			Value:	uuidVal,
 		}}...)
 
 	return list.Print(writer, cfg)

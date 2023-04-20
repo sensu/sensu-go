@@ -1,7 +1,7 @@
 package globalid
 
 import (
-	"github.com/sensu/sensu-go/types"
+	v2 "github.com/sensu/core/v2"
 )
 
 //
@@ -12,14 +12,14 @@ var entityName = "entities"
 
 // EntityTranslator global ID resource
 var EntityTranslator = commonTranslator{
-	name:       entityName,
-	encodeFunc: standardEncoder(entityName, "Name"),
-	decodeFunc: standardDecoder,
+	name:		entityName,
+	encodeFunc:	standardEncoder(entityName, "Name"),
+	decodeFunc:	standardDecoder,
 	isResponsibleFunc: func(record interface{}) bool {
-		_, ok := record.(*types.Entity)
+		_, ok := record.(*v2.Entity)
 		return ok
 	},
 }
 
 // Register entity encoder/decoder
-func init() { RegisterTranslator(EntityTranslator) }
+func init()	{ RegisterTranslator(EntityTranslator) }

@@ -1,22 +1,24 @@
 package globalid
 
-import "github.com/sensu/sensu-go/types"
+import (
+	v2 "github.com/sensu/core/v2"
+	//
+	// Role Bindings
+	//
+)
 
-//
-// Role Bindings
-//
 var roleBindingName = "rolebindings"
 
 // RoleBindingTranslator global ID resource
 var RoleBindingTranslator = commonTranslator{
-	name:       roleBindingName,
-	encodeFunc: standardEncoder(roleBindingName, "Name"),
-	decodeFunc: standardDecoder,
+	name:		roleBindingName,
+	encodeFunc:	standardEncoder(roleBindingName, "Name"),
+	decodeFunc:	standardDecoder,
 	isResponsibleFunc: func(record interface{}) bool {
-		_, ok := record.(*types.RoleBinding)
+		_, ok := record.(*v2.RoleBinding)
 		return ok
 	},
 }
 
 // Register entity encoder/decoder
-func init() { RegisterTranslator(RoleBindingTranslator) }
+func init()	{ RegisterTranslator(RoleBindingTranslator) }
