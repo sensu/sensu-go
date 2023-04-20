@@ -15,10 +15,6 @@ const (
 	// type that an agent will queue before rejecting messages.
 	MaxMessageBufferSize = 10
 
-	// TCPSocketReadDeadline specifies the maximum time the TCP socket will wait
-	// to receive data.
-	TCPSocketReadDeadline = 5000 * time.Millisecond
-
 	// DefaultAPIHost specifies the default API Host
 	DefaultAPIHost = "127.0.0.1"
 
@@ -45,12 +41,6 @@ const (
 
 	// DefaultPassword specifies the default password
 	DefaultPassword = "P@ssw0rd!"
-
-	// DefaultSocketHost specifies the default socket host
-	DefaultSocketHost = "127.0.0.1"
-
-	// DefaultSocketPort specifies the default socket port
-	DefaultSocketPort = 3030
 
 	// DefaultStatsdDisable specifies if the statsd listener is disabled
 	DefaultStatsdDisable = false
@@ -115,9 +105,6 @@ type Config struct {
 	// in check execution.
 	DisableAssets bool
 
-	// DisableSockets disables the event sockets
-	DisableSockets bool
-
 	// EventsAPIRateLimit is the maximum number of events per second that will
 	// be transmitted to the backend from the events API
 	EventsAPIRateLimit rate.Limit
@@ -165,9 +152,6 @@ type Config struct {
 
 	// Redact contains the fields to redact when marshalling the agent's entity
 	Redact []string
-
-	// Socket contains the Sensu client socket configuration
-	Socket *SocketConfig
 
 	// StatsdServer contains the statsd server configuration
 	StatsdServer *StatsdServerConfig
@@ -238,12 +222,6 @@ type StatsdServerConfig struct {
 	Disable       bool
 }
 
-// SocketConfig contains the Socket configuration
-type SocketConfig struct {
-	Host string
-	Port int
-}
-
 // FixtureConfig provides a new Config object initialized with defaults for use
 // in tests, as well as a cleanup function to call at the end of the test.
 func FixtureConfig() (*Config, func()) {
@@ -268,10 +246,6 @@ func FixtureConfig() (*Config, func()) {
 		KeepaliveWarningTimeout: corev2.DefaultKeepaliveTimeout,
 		Namespace:               DefaultNamespace,
 		Password:                DefaultPassword,
-		Socket: &SocketConfig{
-			Host: DefaultSocketHost,
-			Port: DefaultSocketPort,
-		},
 		StatsdServer: &StatsdServerConfig{
 			Host:          DefaultStatsdMetricsHost,
 			Port:          DefaultStatsdMetricsPort,
@@ -292,7 +266,6 @@ func FixtureConfig() (*Config, func()) {
 func NewConfig() *Config {
 	c := &Config{
 		API:          &APIConfig{},
-		Socket:       &SocketConfig{},
 		StatsdServer: &StatsdServerConfig{},
 	}
 	return c
