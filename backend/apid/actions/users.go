@@ -28,7 +28,7 @@ func NewUserController(store storev2.Interface) UserController {
 func (a UserController) List(ctx context.Context, pred *store.SelectionPredicate) ([]corev3.Resource, error) {
 	// Fetch from store
 	ustore := storev2.Of[*corev2.User](a.store)
-	users, err := ustore.List(ctx, storev2.ID{Namespace: corev2.ContextNamespace(ctx)}, nil)
+	users, err := ustore.List(ctx, storev2.ID{Namespace: corev2.ContextNamespace(ctx)}, pred)
 	if err != nil {
 		switch err := err.(type) {
 		case *store.ErrNotFound:
