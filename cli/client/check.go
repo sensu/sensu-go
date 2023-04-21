@@ -5,7 +5,7 @@ import (
 	"fmt"
 
 	corev2 "github.com/sensu/core/v2"
-	"github.com/sensu/sensu-go/types"
+	"github.com/sensu/core/v3/types"
 )
 
 // ChecksPath is the api path for checks.

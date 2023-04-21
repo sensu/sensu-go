@@ -5,7 +5,7 @@ import (
 	"time"
 
 	corev2 "github.com/sensu/core/v2"
-	"github.com/sensu/sensu-go/types"
+	"github.com/sensu/core/v3/types"
 )
 
 // EventsPath is the api path for events.

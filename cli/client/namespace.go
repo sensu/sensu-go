@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 
 	corev3 "github.com/sensu/core/v3"
-	"github.com/sensu/sensu-go/types"
+	"github.com/sensu/core/v3/types"
 )
 
 // NamespacesPath is the api path for namespaces.
