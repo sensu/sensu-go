@@ -77,7 +77,6 @@ func TestTLSAuth(t *testing.T) {
 	wsURL := strings.Replace(ts.URL, "https", "wss", 1)
 	cfg.BackendURLs = []string{wsURL}
 	cfg.API.Port = 0
-	cfg.Socket.Port = 0
 	cfg.Password = ""
 
 	ta, err := NewAgent(cfg)
@@ -126,7 +125,6 @@ func TestSendLoop(t *testing.T) {
 	defer cleanup()
 	cfg.BackendURLs = []string{wsURL}
 	cfg.API.Port = 0
-	cfg.Socket.Port = 0
 	ta, err := NewAgent(cfg)
 	if err != nil {
 		t.Fatal(err)
@@ -156,8 +154,8 @@ func TestReceiveLoop(t *testing.T) {
 			assert.NoError(t, err)
 
 			tm := &transport.Message{
-				Type:		"testMessageType",
-				Payload:	msgBytes,
+				Type:    "testMessageType",
+				Payload: msgBytes,
 			}
 			err = conn.Send(tm)
 			assert.NoError(t, err)
@@ -171,7 +169,6 @@ func TestReceiveLoop(t *testing.T) {
 	defer cleanup()
 	cfg.BackendURLs = []string{wsURL}
 	cfg.API.Port = 0
-	cfg.Socket.Port = 0
 	ta, err := NewAgent(cfg)
 	if err != nil {
 		t.Fatal(err)
@@ -245,7 +242,6 @@ func TestKeepaliveLoggingRedaction(t *testing.T) {
 	cfg.Redact = []string{"ec2_access_key"}
 	cfg.BackendURLs = []string{wsURL}
 	cfg.API.Port = 0
-	cfg.Socket.Port = 0
 	ta, err := NewAgent(cfg)
 	if err != nil {
 		t.Fatal(err)
@@ -278,7 +274,6 @@ func TestInvalidAgentName_GH2022(t *testing.T) {
 	cfg.AgentName = "Test Agent"
 	cfg.BackendURLs = []string{wsURL}
 	cfg.API.Port = 0
-	cfg.Socket.Port = 0
 	ta, err := NewAgent(cfg)
 	if err != nil {
 		t.Fatal(err)
@@ -343,7 +338,6 @@ func TestConnectionManager(t *testing.T) {
 	defer cleanup()
 	cfg.BackendURLs = []string{wsURL}
 	cfg.API.Port = 0
-	cfg.Socket.Port = 0
 	ta, err := NewAgent(cfg)
 	if err != nil {
 		t.Fatal(err)

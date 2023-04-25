@@ -19,6 +19,7 @@ which now allows for the addition of labels and annotations.
 - When multiple asset builds are filtered the first asset build with the highest
 number of filters is returned. Previously the first filtered asset build was
 returned regardless of filter count.
+- Removes the deprecated agent socket APIs
 
 ### Added
 - Added sensu-backend configuration for postgresql.

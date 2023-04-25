@@ -77,7 +77,6 @@ func main() {
 		cfg.Deregister = bool(*flagDeregister)
 		cfg.DeregistrationHandler = ""
 		cfg.DisableAPI = true
-		cfg.DisableSockets = true
 		cfg.StatsdServer = &agent.StatsdServerConfig{
 			Disable:       true,
 			FlushInterval: 10,
@@ -86,8 +85,6 @@ func main() {
 		cfg.KeepaliveWarningTimeout = uint32(*flagKeepaliveTimeout)
 		cfg.Namespace = *flagNamespace
 		cfg.Password = *flagPassword
-		cfg.Socket.Host = agent.DefaultAPIHost
-		cfg.Socket.Port = agent.DefaultAPIPort
 		cfg.User = *flagUser
 		cfg.Subscriptions = subscriptions
 		cfg.AgentName = name

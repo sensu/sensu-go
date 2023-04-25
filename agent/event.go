@@ -7,7 +7,6 @@ import (
 	"github.com/google/uuid"
 
 	corev2 "github.com/sensu/core/v2"
-	corev1 "github.com/sensu/sensu-go/agent/v1"
 )
 
 // prepareEvent accepts a partial or complete event and tries to add any missing
@@ -66,54 +65,4 @@ func prepareEvent(a *Agent, event *corev2.Event) error {
 
 	// The entity should pass validation at this point
 	return event.Entity.Validate()
-}
-
-// translateToEvent accepts a 1.x compatible check result
-// and attempts to translate it to a 2.x event
-func translateToEvent(a *Agent, result corev1.CheckResult, event *corev2.Event) error {
-	if result.Name == "" {
-		return fmt.Errorf("a check name must be provided")
-	}
-
-	if result.Output == "" {
-		return fmt.Errorf("a check output must be provided")
-	}
-
-	source := result.Source
-	if source == "" {
-		source = result.Client
-	}
-
-	agentEntity := a.getAgentEntity()
-	if source == "" || source == agentEntity.Name {
-		event.Entity = agentEntity
-	} else {
-		event.Entity = &corev2.Entity{
-			ObjectMeta:  corev2.NewObjectMeta(source, agentEntity.Namespace),
-			EntityClass: corev2.EntityProxyClass,
-		}
-	}
-
-	handlers := result.Handlers
-	if len(handlers) == 0 && result.Handler != "" {
-		handlers = append(handlers, result.Handler)
-	}
-
-	check := &corev2.Check{
-		ObjectMeta:    corev2.NewObjectMeta(result.Name, agentEntity.Namespace),
-		Status:        result.Status,
-		Command:       result.Command,
-		Subscriptions: result.Subscribers,
-		Interval:      result.Interval,
-		Issued:        result.Issued,
-		Executed:      result.Executed,
-		Duration:      result.Duration,
-		Output:        result.Output,
-		Handlers:      handlers,
-	}
-
-	// add config and check values to the 2.x event
-	event.Check = check
-
-	return nil
 }

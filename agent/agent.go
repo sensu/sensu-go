@@ -398,11 +398,6 @@ func (a *Agent) Run(ctx context.Context) error {
 		a.StartAPI(ctx)
 	}
 
-	if !a.config.DisableSockets {
-		// Agent TCP/UDP sockets are deprecated in favor of the agent rest api
-		a.StartSocketListeners(ctx)
-	}
-
 	// Increment the waitgroup counter here too in case none of the components
 	// above were started, and rely on the system info collector to decrement it
 	// once it exits
@@ -710,14 +705,6 @@ func (a *Agent) StartAPI(ctx context.Context) {
 			logger.WithError(err).Error("error shutting down the API server")
 		}
 	}()
-}
-
-// StartSocketListeners starts the agent's TCP and UDP socket listeners.
-// Agent TCP/UDP sockets are deprecated in favor of the agent rest api.
-func (a *Agent) StartSocketListeners(ctx context.Context) {
-	if _, _, err := a.createListenSockets(ctx); err != nil {
-		logger.WithError(err).Error("unable to start socket listeners")
-	}
 }
 
 // StartStatsd starts up a StatsD listener on the agent, logs an error for any

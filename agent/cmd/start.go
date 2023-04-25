@@ -9,8 +9,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/sensu/sensu-go/agent"
 	corev2 "github.com/sensu/core/v2"
+	"github.com/sensu/sensu-go/agent"
 	"github.com/sensu/sensu-go/asset"
 	"github.com/sensu/sensu-go/util/path"
 	"github.com/sensu/sensu-go/util/url"
@@ -59,8 +59,6 @@ const (
 	flagNamespace                 = "namespace"
 	flagPassword                  = "password"
 	flagRedact                    = "redact"
-	flagSocketHost                = "socket-host"
-	flagSocketPort                = "socket-port"
 	flagStatsdDisable             = "statsd-disable"
 	flagStatsdEventHandlers       = "statsd-event-handlers"
 	flagStatsdFlushInterval       = "statsd-flush-interval"
@@ -70,7 +68,6 @@ const (
 	flagUser                      = "user"
 	flagDisableAPI                = "disable-api"
 	flagDisableAssets             = "disable-assets"
-	flagDisableSockets            = "disable-sockets"
 	flagLogLevel                  = "log-level"
 	flagLabels                    = "labels"
 	flagAnnotations               = "annotations"
@@ -133,8 +130,6 @@ func NewAgentConfig(cmd *cobra.Command) (*agent.Config, error) {
 	cfg.KeepalivePipelines = viper.GetStringSlice(flagKeepalivePipelines)
 	cfg.Namespace = viper.GetString(flagNamespace)
 	cfg.Password = viper.GetString(flagPassword)
-	cfg.Socket.Host = viper.GetString(flagSocketHost)
-	cfg.Socket.Port = viper.GetInt(flagSocketPort)
 	cfg.StatsdServer.Disable = viper.GetBool(flagStatsdDisable)
 	cfg.StatsdServer.FlushInterval = viper.GetInt(flagStatsdFlushInterval)
 	cfg.StatsdServer.Host = viper.GetString(flagStatsdMetricsHost)
@@ -195,7 +190,6 @@ func NewAgentConfig(cmd *cobra.Command) (*agent.Config, error) {
 	}
 
 	cfg.DisableAPI = viper.GetBool(flagDisableAPI)
-	cfg.DisableSockets = viper.GetBool(flagDisableSockets)
 
 	// Add the ManagedByLabel label value if the agent is managed by its entity
 	if viper.GetBool(flagAgentManagedEntity) {
@@ -302,7 +296,6 @@ func handleConfig(cmd *cobra.Command, arguments []string) error {
 	viper.SetDefault(flagDeregistrationHandler, "")
 	viper.SetDefault(flagDetectCloudProvider, false)
 	viper.SetDefault(flagDisableAPI, false)
-	viper.SetDefault(flagDisableSockets, false)
 	viper.SetDefault(flagDisableAssets, false)
 	viper.SetDefault(flagAssetsRateLimit, asset.DefaultAssetsRateLimit)
 	viper.SetDefault(flagAssetsBurstLimit, asset.DefaultAssetsBurstLimit)
@@ -314,8 +307,6 @@ func handleConfig(cmd *cobra.Command, arguments []string) error {
 	viper.SetDefault(flagNamespace, agent.DefaultNamespace)
 	viper.SetDefault(flagPassword, agent.DefaultPassword)
 	viper.SetDefault(flagRedact, corev2.DefaultRedactFields)
-	viper.SetDefault(flagSocketHost, agent.DefaultSocketHost)
-	viper.SetDefault(flagSocketPort, agent.DefaultSocketPort)
 	viper.SetDefault(flagStatsdDisable, agent.DefaultStatsdDisable)
 	viper.SetDefault(flagStatsdFlushInterval, agent.DefaultStatsdFlushInterval)
 	viper.SetDefault(flagStatsdMetricsHost, agent.DefaultStatsdMetricsHost)
@@ -411,7 +402,6 @@ func flagSet() *pflag.FlagSet {
 	// Common flags
 	flagSet.Bool(flagDeregister, viper.GetBool(flagDeregister), "ephemeral agent")
 	flagSet.Int(flagAPIPort, viper.GetInt(flagAPIPort), "port the Sensu client HTTP API listens on")
-	flagSet.Int(flagSocketPort, viper.GetInt(flagSocketPort), "port the Sensu client socket listens on")
 	flagSet.String(flagAgentName, viper.GetString(flagAgentName), "agent name (defaults to hostname)")
 	flagSet.String(flagAPIHost, viper.GetString(flagAPIHost), "address to bind the Sensu client HTTP API to")
 	flagSet.String(flagCacheDir, viper.GetString(flagCacheDir), "path to store cached data")
@@ -424,7 +414,6 @@ func flagSet() *pflag.FlagSet {
 	flagSet.String(flagNamespace, viper.GetString(flagNamespace), "agent namespace")
 	flagSet.String(flagPassword, viper.GetString(flagPassword), "agent password")
 	flagSet.StringSlice(flagRedact, viper.GetStringSlice(flagRedact), "comma-delimited list of fields to redact, overwrites the default fields. This flag can also be invoked multiple times")
-	flagSet.String(flagSocketHost, viper.GetString(flagSocketHost), "address to bind the Sensu client socket to")
 	flagSet.Bool(flagStatsdDisable, viper.GetBool(flagStatsdDisable), "disables the statsd listener and metrics server")
 	flagSet.StringSlice(flagStatsdEventHandlers, viper.GetStringSlice(flagStatsdEventHandlers), "comma-delimited list of event handlers for statsd metrics. This flag can also be invoked multiple times")
 	flagSet.Int(flagStatsdFlushInterval, viper.GetInt(flagStatsdFlushInterval), "number of seconds between statsd flush")
@@ -442,7 +431,6 @@ func flagSet() *pflag.FlagSet {
 	flagSet.StringSlice(flagKeepalivePipelines, viper.GetStringSlice(flagKeepalivePipelines), "comma-delimited list of pipeline references for keepalive event")
 	flagSet.Bool(flagDisableAPI, viper.GetBool(flagDisableAPI), "disable the Agent HTTP API")
 	flagSet.Bool(flagDisableAssets, viper.GetBool(flagDisableAssets), "disable check assets on this agent")
-	flagSet.Bool(flagDisableSockets, viper.GetBool(flagDisableSockets), "disable the Agent TCP and UDP event sockets")
 	flagSet.String(flagTrustedCAFile, viper.GetString(flagTrustedCAFile), "TLS CA certificate bundle in PEM format")
 	flagSet.Bool(flagInsecureSkipTLSVerify, viper.GetBool(flagInsecureSkipTLSVerify), "skip TLS verification (not recommended!)")
 	flagSet.String(flagCertFile, viper.GetString(flagCertFile), "certificate for TLS authentication")
