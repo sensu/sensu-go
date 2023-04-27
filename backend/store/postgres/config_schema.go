@@ -41,15 +41,16 @@ INSERT INTO configuration ( api_version
 						  , name
 						  , labels
 						  , annotations
+						  , fields
 						  , resource
 )
-VALUES ($1, $2, $3, $4, $5, $6, $7)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
 ON CONFLICT DO NOTHING;`
 
-const CreateOrUpdateConfigQuery = `INSERT INTO configuration (api_version, api_type, namespace, name, labels, annotations, resource)
-    VALUES ($1, $2, $3, $4, $5, $6, $7)
+const CreateOrUpdateConfigQuery = `INSERT INTO configuration (api_version, api_type, namespace, name, labels, annotations, fields, resource)
+    VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
     ON CONFLICT (api_version, api_type, namespace, name, deleted_at) DO UPDATE
-      SET labels=$5, annotations=$6, resource=$7;`
+      SET labels=$5, annotations=$6, fields=$7, resource=$8;`
 
 const DeleteConfigQuery = `UPDATE configuration SET deleted_at=NOW()
     WHERE api_version=$1 AND api_type=$2 AND namespace=$3 AND name=$4 AND NOT isfinite(deleted_at);`
@@ -79,8 +80,8 @@ const ListConfigQueryTmpl = `
     ORDER BY namespace, name ASC
     {{if (gt .Limit 0)}} LIMIT {{.Limit}} {{end}} OFFSET {{ .Offset }};`
 
-const UpdateIfExistsConfigQuery = `UPDATE configuration SET labels=$1, annotations=$2, resource=$3
-    WHERE api_version=$4 AND api_type=$5 AND namespace=$6 AND name=$7 AND NOT isfinite(deleted_at);`
+const UpdateIfExistsConfigQuery = `UPDATE configuration SET labels=$1, annotations=$2, fields=$3, resource=$4
+    WHERE api_version=$5 AND api_type=$6 AND namespace=$7 AND name=$8 AND NOT isfinite(deleted_at);`
 
 const ConfigNotificationQuery = `
     SELECT id, api_version, api_type, namespace, name, resource, created_at, updated_at,

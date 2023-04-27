@@ -43,7 +43,7 @@ func NewEventSelectorSQLBuilder(selector *selector.Selector) *SelectorSQLBuilder
 
 func NewConfigSelectorSQLBuilder(selector *selector.Selector) *SelectorSQLBuilder {
 	return &SelectorSQLBuilder{
-		selectorColumn:      "resource",
+		selectorColumn:      "field",
 		nestedSelectors:     true,
 		labelColumn:         "labels",
 		labelPrefixes:       []string{""},

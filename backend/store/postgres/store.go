@@ -196,12 +196,13 @@ func (s *ConfigStore) CreateOrUpdate(ctx context.Context, request storev2.Resour
 		return &store.ErrNotValid{Err: err}
 	}
 
-	typeMeta, meta, jsonLabels, bytesAnnotations, jsonResource, err := extractResourceData(wrapper)
+	data, err := extractResourceData(wrapper)
 	if err != nil {
 		return err
 	}
 
-	args := []interface{}{typeMeta.APIVersion, typeMeta.Type, meta.Namespace, meta.Name, jsonLabels, bytesAnnotations, jsonResource}
+	meta, typeMeta := data.Metadata, data.TypeMeta
+	args := []interface{}{typeMeta.APIVersion, typeMeta.Type, meta.Namespace, meta.Name, data.Labels, data.Annotations, data.Fields, data.Resource}
 
 	tags, err := s.db.Exec(ctx, CreateOrUpdateConfigQuery, args...)
 	if err != nil {
@@ -219,12 +220,13 @@ func (s *ConfigStore) UpdateIfExists(ctx context.Context, request storev2.Resour
 		return &store.ErrNotValid{Err: err}
 	}
 
-	typeMeta, meta, jsonLabels, bytesAnnotations, jsonResource, err := extractResourceData(wrapper)
+	data, err := extractResourceData(wrapper)
 	if err != nil {
 		return err
 	}
 
-	args := []interface{}{jsonLabels, bytesAnnotations, jsonResource, typeMeta.APIVersion, typeMeta.Type, meta.Namespace, meta.Name}
+	meta, typeMeta := data.Metadata, data.TypeMeta
+	args := []interface{}{data.Labels, data.Annotations, data.Fields, data.Resource, typeMeta.APIVersion, typeMeta.Type, meta.Namespace, meta.Name}
 
 	tags, err := s.db.Exec(ctx, UpdateIfExistsConfigQuery, args...)
 	if err != nil {
@@ -242,12 +244,13 @@ func (s *ConfigStore) CreateIfNotExists(ctx context.Context, request storev2.Res
 		return &store.ErrNotValid{Err: err}
 	}
 
-	typeMeta, meta, jsonLabels, bytesAnnotations, jsonResource, err := extractResourceData(wrapper)
+	data, err := extractResourceData(wrapper)
 	if err != nil {
 		return err
 	}
 
-	args := []interface{}{typeMeta.APIVersion, typeMeta.Type, meta.Namespace, meta.Name, jsonLabels, bytesAnnotations, jsonResource}
+	meta, typeMeta := data.Metadata, data.TypeMeta
+	args := []interface{}{typeMeta.APIVersion, typeMeta.Type, meta.Namespace, meta.Name, data.Labels, data.Annotations, data.Fields, data.Resource}
 
 	tags, err := s.db.Exec(ctx, CreateConfigIfNotExistsQuery, args...)
 	if err != nil {
@@ -523,30 +526,36 @@ func annotationsToBytes(annotations map[string]string) ([]byte, error) {
 	return json.Marshal(annotations)
 }
 
-func extractResourceData(wrapper storev2.Wrapper) (typeMeta corev2.TypeMeta, meta *corev2.ObjectMeta, jsonLabels string,
-	bytesAnnotations, jsonResource []byte, err error) {
+func extractResourceData(wrapper storev2.Wrapper) (data resourceData, err error) {
 	res, err := wrapper.Unwrap()
 	if err != nil {
 		return
 	}
 
-	meta = res.GetMetadata()
+	data.Metadata = res.GetMetadata()
 
-	jsonLabels, err = labelsToJSON(meta.Labels)
+	data.Labels, err = labelsToJSON(data.Metadata.Labels)
 	if err != nil {
 		return
 	}
-	bytesAnnotations, err = annotationsToBytes(meta.Annotations)
+
+	data.Annotations, err = annotationsToBytes(data.Metadata.Annotations)
 	if err != nil {
 		return
 	}
-	jsonResource, err = json.Marshal(res)
+
+	data.Fields = []byte("{}")
+	if fielder, ok := res.(corev3.Fielder); ok {
+		data.Fields, err = json.Marshal(fielder.Fields())
+	}
+
+	data.Resource, err = json.Marshal(res)
 	if err != nil {
 		return
 	}
 
 	resProxy := corev3.V2ResourceProxy{Resource: res}
-	typeMeta = resProxy.GetTypeMeta()
+	data.TypeMeta = resProxy.GetTypeMeta()
 
 	return
 }
@@ -567,4 +576,13 @@ func getSelectorSQL(ctx context.Context, apiVersion, typeName string, nargs int)
 	}
 
 	return "", nil, nil
+}
+
+type resourceData struct {
+	TypeMeta    corev2.TypeMeta
+	Metadata    *corev2.ObjectMeta
+	Labels      string
+	Annotations []byte
+	Fields      []byte
+	Resource    []byte
 }
