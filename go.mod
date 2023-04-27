@@ -2,8 +2,6 @@ module github.com/sensu/sensu-go
 
 go 1.18
 
-replace github.com/graphql-go/graphql => github.com/jamesdphillips/graphql-go v0.8.2
-
 require (
 	github.com/AlecAivazis/survey/v2 v2.2.14
 	github.com/atlassian/gostatsd v0.0.0-20180514010436-af796620006e
