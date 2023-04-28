@@ -84,16 +84,6 @@ func createProxyEntity(event *corev2.Event, s storev2.Interface) (fErr error) {
 				config, state = corev3.V2EntityToV3(event.Entity)
 			}
 
-			state.Metadata.CreatedBy = event.CreatedBy
-
-			// Store the new entity's state. We use CreateOrUpdate()
-			// because we want to overwrite any existing EntityState that could
-			// have been left behind due to a failed operation or failure to
-			// clean up old state.
-			if err := esstore.CreateOrUpdate(context.Background(), state); err != nil {
-				return err
-			}
-
 			config.EntityClass = corev2.EntityProxyClass
 			config.Subscriptions = append(config.Subscriptions, corev2.GetEntitySubscription(entityName))
 
@@ -101,6 +91,16 @@ func createProxyEntity(event *corev2.Event, s storev2.Interface) (fErr error) {
 			// CreateIfNotExists() to assert that this EntityConfig is indeed
 			// brand new.
 			if err := ecstore.CreateIfNotExists(context.Background(), config); err != nil {
+				return err
+			}
+
+			state.Metadata.CreatedBy = event.CreatedBy
+
+			// Store the new entity's state. We use CreateOrUpdate()
+			// because we want to overwrite any existing EntityState that could
+			// have been left behind due to a failed operation or failure to
+			// clean up old state.
+			if err := esstore.CreateOrUpdate(context.Background(), state); err != nil {
 				return err
 			}
 		default:
