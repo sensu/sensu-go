@@ -2,6 +2,7 @@ package v2
 
 import (
 	"context"
+	"errors"
 
 	corev2 "github.com/sensu/core/v2"
 	corev3 "github.com/sensu/core/v3"
@@ -20,6 +21,10 @@ type Interface interface {
 	SilencesStoreGetter
 }
 
+// ErrPreconditionFailed is returned when a store method evaluates an If-Match
+// or If-None-Match and finds that it is false.
+var ErrPreconditionFailed = errors.New("precondition failed")
+
 // Wrapper is an abstraction of a store wrapper.
 type Wrapper interface {
 	Unwrap() (corev3.Resource, error)
@@ -32,6 +37,9 @@ type WrapList interface {
 	UnwrapInto(interface{}) error
 	Len() int
 }
+
+// ETag represents a unique hash of the resource.
+type ETag string
 
 // EntityConfigStoreGetter gets you an EntityConfigStore.
 type EntityConfigStoreGetter interface {
