@@ -45,11 +45,10 @@ const (
 	flagCacheDir                  = "cache-dir"
 	flagConfigFile                = "config-file"
 	flagDeregister                = "deregister"
-	flagDeregistrationHandler     = "deregistration-handler"
+	flagDeregistrationPipelines   = "deregistration-pipelines"
 	flagDetectCloudProvider       = "detect-cloud-provider"
 	flagEventsRateLimit           = "events-rate-limit"
 	flagEventsBurstLimit          = "events-burst-limit"
-	flagKeepaliveHandlers         = "keepalive-handlers"
 	flagKeepaliveInterval         = "keepalive-interval"
 	flagKeepaliveWarningTimeout   = "keepalive-warning-timeout"
 	flagKeepaliveCriticalTimeout  = "keepalive-critical-timeout"
@@ -116,12 +115,11 @@ func NewAgentConfig(cmd *cobra.Command) (*agent.Config, error) {
 	cfg.AssetsBurstLimit = viper.GetInt(flagAssetsBurstLimit)
 	cfg.CacheDir = viper.GetString(flagCacheDir)
 	cfg.Deregister = viper.GetBool(flagDeregister)
-	cfg.DeregistrationHandler = viper.GetString(flagDeregistrationHandler)
+	cfg.DeregistrationPipelines = viper.GetStringSlice(flagDeregistrationPipelines)
 	cfg.DetectCloudProvider = viper.GetBool(flagDetectCloudProvider)
 	cfg.DisableAssets = viper.GetBool(flagDisableAssets)
 	cfg.EventsAPIRateLimit = rate.Limit(viper.GetFloat64(flagEventsRateLimit))
 	cfg.EventsAPIBurstLimit = viper.GetInt(flagEventsBurstLimit)
-	cfg.KeepaliveHandlers = viper.GetStringSlice(flagKeepaliveHandlers)
 	cfg.KeepaliveInterval = uint32(viper.GetInt(flagKeepaliveInterval))
 	cfg.KeepaliveWarningTimeout = uint32(viper.GetInt(flagKeepaliveWarningTimeout))
 	cfg.KeepaliveCriticalTimeout = uint32(viper.GetInt(flagKeepaliveCriticalTimeout))
@@ -293,7 +291,6 @@ func handleConfig(cmd *cobra.Command, arguments []string) error {
 	viper.SetDefault(flagBackendURL, []string{agent.DefaultBackendURL})
 	viper.SetDefault(flagCacheDir, path.SystemCacheDir("sensu-agent"))
 	viper.SetDefault(flagDeregister, false)
-	viper.SetDefault(flagDeregistrationHandler, "")
 	viper.SetDefault(flagDetectCloudProvider, false)
 	viper.SetDefault(flagDisableAPI, false)
 	viper.SetDefault(flagDisableAssets, false)
@@ -405,7 +402,7 @@ func flagSet() *pflag.FlagSet {
 	flagSet.String(flagAgentName, viper.GetString(flagAgentName), "agent name (defaults to hostname)")
 	flagSet.String(flagAPIHost, viper.GetString(flagAPIHost), "address to bind the Sensu client HTTP API to")
 	flagSet.String(flagCacheDir, viper.GetString(flagCacheDir), "path to store cached data")
-	flagSet.String(flagDeregistrationHandler, viper.GetString(flagDeregistrationHandler), "deregistration handler that should process the entity deregistration event")
+	flagSet.StringSlice(flagDeregistrationPipelines, viper.GetStringSlice(flagDeregistrationPipelines), "comma-delimited list of pipeline references to use for entity deregistration")
 	flagSet.Bool(flagDetectCloudProvider, viper.GetBool(flagDetectCloudProvider), "enable cloud provider detection")
 	flagSet.Float64(flagAssetsRateLimit, viper.GetFloat64(flagAssetsRateLimit), "maximum number of assets fetched per second")
 	flagSet.Int(flagAssetsBurstLimit, viper.GetInt(flagAssetsBurstLimit), "asset fetch burst limit")
@@ -422,7 +419,6 @@ func flagSet() *pflag.FlagSet {
 	flagSet.StringSlice(flagSubscriptions, viper.GetStringSlice(flagSubscriptions), "comma-delimited list of agent subscriptions. This flag can also be invoked multiple times")
 	flagSet.String(flagUser, viper.GetString(flagUser), "agent user")
 	flagSet.StringSlice(flagBackendURL, viper.GetStringSlice(flagBackendURL), "comma-delimited list of ws/wss URLs of Sensu backend servers. This flag can also be invoked multiple times")
-	flagSet.StringSlice(flagKeepaliveHandlers, viper.GetStringSlice(flagKeepaliveHandlers), "comma-delimited list of keepalive handlers for this entity. This flag can also be invoked multiple times")
 	flagSet.Int(flagKeepaliveInterval, viper.GetInt(flagKeepaliveInterval), "number of seconds to send between keepalive events")
 	flagSet.Uint32(flagKeepaliveWarningTimeout, uint32(viper.GetInt(flagKeepaliveWarningTimeout)), "number of seconds until agent is considered dead by backend to create a warning event")
 	flagSet.Uint32(flagKeepaliveCriticalTimeout, uint32(viper.GetInt(flagKeepaliveCriticalTimeout)), "number of seconds until agent is considered dead by backend to create a critical event")

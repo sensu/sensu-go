@@ -211,16 +211,25 @@ func InitializeStore(ctx context.Context, db *pgxpool.Pool, config *Config) (*Ba
 	// Start the entity config watcher, so agentd sessions are notified of updates
 	entityConfigWatcher := agentd.GetEntityConfigWatcher(ctx, b.Store)
 
+	deregistrationPipelines := []*corev2.ResourceReference{}
+	for _, p := range config.DeregistrationPipelines {
+		if ref, err := corev2.FromStringRef(p); err != nil {
+			logger.WithError(err).Warnf("error parsing deregistration pipeline resource reference: %s", p)
+		} else {
+			deregistrationPipelines = append(deregistrationPipelines, ref)
+		}
+	}
+
 	// Initialize keepalived
 	keepalive, err := keepalived.New(keepalived.Config{
-		DeregistrationHandler: config.DeregistrationHandler,
-		Bus:                   bus,
-		Store:                 b.Store,
-		BufferSize:            viper.GetInt(FlagKeepalivedBufferSize),
-		WorkerCount:           viper.GetInt(FlagKeepalivedWorkers),
-		StoreTimeout:          2 * time.Minute,
-		OperatorConcierge:     pgOPC,
-		OperatorMonitor:       pgOPC,
+		DeregistrationPipelines: deregistrationPipelines,
+		Bus:                     bus,
+		Store:                   b.Store,
+		BufferSize:              viper.GetInt(FlagKeepalivedBufferSize),
+		WorkerCount:             viper.GetInt(FlagKeepalivedWorkers),
+		StoreTimeout:            2 * time.Minute,
+		OperatorConcierge:       pgOPC,
+		OperatorMonitor:         pgOPC,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("error initializing %s: %s", keepalive.Name(), err)

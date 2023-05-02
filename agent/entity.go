@@ -33,19 +33,15 @@ func (a *Agent) getLocalEntityConfig() *corev3.EntityConfig {
 	meta.Labels = a.config.Labels
 	meta.Annotations = a.config.Annotations
 	e := &corev3.EntityConfig{
-		EntityClass:       corev2.EntityAgentClass,
-		Deregister:        a.config.Deregister,
-		Redact:            a.config.Redact,
-		Subscriptions:     a.config.Subscriptions,
-		User:              a.config.User,
-		Metadata:          &meta,
-		KeepaliveHandlers: a.config.KeepaliveHandlers,
-	}
-
-	if a.config.DeregistrationHandler != "" {
-		e.Deregistration = corev2.Deregistration{
-			Handler: a.config.DeregistrationHandler,
-		}
+		EntityClass:   corev2.EntityAgentClass,
+		Deregister:    a.config.Deregister,
+		Redact:        a.config.Redact,
+		Subscriptions: a.config.Subscriptions,
+		User:          a.config.User,
+		Metadata:      &meta,
+		Keepalive: corev3.EntityKeepalive{
+			Pipelines: a.keepalivePipelines,
+		},
 	}
 
 	// Save the local entity configuration, which will be used as the entity for

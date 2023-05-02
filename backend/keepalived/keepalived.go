@@ -54,22 +54,22 @@ const deletedEventSentinel = -1
 // Keepalived is responsible for monitoring keepalive events and recording
 // keepalives for entities.
 type Keepalived struct {
-	bus                   messaging.MessageBus
-	workerCount           int
-	store                 storev2.Interface
-	deregistrationHandler string
-	mu                    *sync.Mutex
-	wg                    *sync.WaitGroup
-	keepaliveChan         chan interface{}
-	subscription          messaging.Subscription
-	errChan               chan error
-	ctx                   context.Context
-	cancel                context.CancelFunc
-	storeTimeout          time.Duration
-	reconstructionPeriod  time.Duration
-	operatorConcierge     store.OperatorConcierge
-	operatorMonitor       store.OperatorMonitor
-	backendName           string
+	bus                     messaging.MessageBus
+	workerCount             int
+	store                   storev2.Interface
+	deregistrationPipelines []*corev2.ResourceReference
+	mu                      *sync.Mutex
+	wg                      *sync.WaitGroup
+	keepaliveChan           chan interface{}
+	subscription            messaging.Subscription
+	errChan                 chan error
+	ctx                     context.Context
+	cancel                  context.CancelFunc
+	storeTimeout            time.Duration
+	reconstructionPeriod    time.Duration
+	operatorConcierge       store.OperatorConcierge
+	operatorMonitor         store.OperatorMonitor
+	backendName             string
 }
 
 // Option is a functional option.
@@ -77,16 +77,16 @@ type Option func(*Keepalived) error
 
 // Config configures Keepalived.
 type Config struct {
-	Store                 storev2.Interface
-	EventStore            store.EventStore
-	Bus                   messaging.MessageBus
-	DeregistrationHandler string
-	BufferSize            int
-	WorkerCount           int
-	StoreTimeout          time.Duration
-	OperatorConcierge     store.OperatorConcierge
-	OperatorMonitor       store.OperatorMonitor
-	BackendName           string
+	Store                   storev2.Interface
+	EventStore              store.EventStore
+	Bus                     messaging.MessageBus
+	DeregistrationPipelines []*corev2.ResourceReference
+	BufferSize              int
+	WorkerCount             int
+	StoreTimeout            time.Duration
+	OperatorConcierge       store.OperatorConcierge
+	OperatorMonitor         store.OperatorMonitor
+	BackendName             string
 }
 
 // New creates a new Keepalived.
@@ -107,20 +107,20 @@ func New(c Config, opts ...Option) (*Keepalived, error) {
 	ctx, cancel := context.WithCancel(context.Background())
 
 	k := &Keepalived{
-		store:                 c.Store,
-		bus:                   c.Bus,
-		deregistrationHandler: c.DeregistrationHandler,
-		keepaliveChan:         make(chan interface{}, c.BufferSize),
-		workerCount:           c.WorkerCount,
-		mu:                    &sync.Mutex{},
-		errChan:               make(chan error, 1),
-		ctx:                   ctx,
-		cancel:                cancel,
-		storeTimeout:          c.StoreTimeout,
-		reconstructionPeriod:  time.Second * 120,
-		operatorConcierge:     c.OperatorConcierge,
-		operatorMonitor:       c.OperatorMonitor,
-		backendName:           c.BackendName,
+		store:                   c.Store,
+		bus:                     c.Bus,
+		deregistrationPipelines: c.DeregistrationPipelines,
+		keepaliveChan:           make(chan interface{}, c.BufferSize),
+		workerCount:             c.WorkerCount,
+		mu:                      &sync.Mutex{},
+		errChan:                 make(chan error, 1),
+		ctx:                     ctx,
+		cancel:                  cancel,
+		storeTimeout:            c.StoreTimeout,
+		reconstructionPeriod:    time.Second * 120,
+		operatorConcierge:       c.OperatorConcierge,
+		operatorMonitor:         c.OperatorMonitor,
+		backendName:             c.BackendName,
 	}
 	for _, o := range opts {
 		if err := o(k); err != nil {
@@ -414,6 +414,19 @@ func createKeepaliveEvent(rawEvent *corev2.Event) *corev2.Event {
 		handlers = rawEvent.Entity.KeepaliveHandlers
 	}
 
+	// Use the entity keepalive pipelines if defined, otherwise fallback to the
+	// default keepalive pipeline
+	pipelines := []*corev2.ResourceReference{
+		{
+			Name:       corev2.KeepalivePipelineName,
+			Type:       "Pipeline",
+			APIVersion: "core/v2",
+		},
+	}
+	if len(rawEvent.Pipelines) > 0 {
+		pipelines = rawEvent.Entity.KeepalivePipelines
+	}
+
 	keepaliveCheck := &corev2.Check{
 		ObjectMeta: corev2.ObjectMeta{
 			Name:      corev2.KeepaliveCheckName,
@@ -423,6 +436,7 @@ func createKeepaliveEvent(rawEvent *corev2.Event) *corev2.Event {
 		Timeout:   check.Timeout,
 		Ttl:       check.Ttl,
 		Handlers:  handlers,
+		Pipelines: pipelines,
 		Executed:  time.Now().Unix(),
 		Issued:    time.Now().Unix(),
 		Scheduler: corev2.EtcdScheduler,
@@ -432,7 +446,7 @@ func createKeepaliveEvent(rawEvent *corev2.Event) *corev2.Event {
 		Timestamp:  time.Now().Unix(),
 		Entity:     rawEvent.Entity,
 		Check:      keepaliveCheck,
-		Pipelines:  rawEvent.Pipelines,
+		Pipelines:  pipelines,
 	}
 
 	uid, _ := uuid.NewRandom()
@@ -450,7 +464,14 @@ func createRegistrationEvent(entity *corev2.Entity) *corev2.Event {
 		},
 		Interval: 1,
 		Handlers: []string{corev2.RegistrationHandlerName},
-		Status:   1,
+		Pipelines: []*corev2.ResourceReference{
+			{
+				Name:       corev2.RegistrationPipelineName,
+				Type:       "Pipeline",
+				APIVersion: "core/v2",
+			},
+		},
+		Status: 1,
 	}
 	registrationEvent := &corev2.Event{
 		ObjectMeta: corev2.ObjectMeta{

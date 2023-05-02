@@ -75,13 +75,14 @@ func (d *Deregistration) Deregister(entity *corev2.Entity) error {
 		}
 	}
 
-	if entity.Deregistration.Handler != "" {
+	if entity.Deregistration.Handler != "" || len(entity.Deregistration.Pipelines) > 0 {
 		deregistrationCheck := &corev2.Check{
 			ObjectMeta:    corev2.NewObjectMeta("deregistration", entity.Namespace),
 			Interval:      1,
 			Subscriptions: []string{},
 			Command:       "",
 			Handlers:      []string{entity.Deregistration.Handler},
+			Pipelines:     entity.Deregistration.Pipelines,
 			Status:        1,
 		}
 

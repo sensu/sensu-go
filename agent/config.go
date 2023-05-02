@@ -89,8 +89,9 @@ type Config struct {
 	// Deregister indicates whether the entity is ephemeral
 	Deregister bool
 
-	// DeregistrationHandler specifies a single deregistration handler
-	DeregistrationHandler string
+	// DeregistrationPipelines contain pipelines for an agent's deregistration
+	// event
+	DeregistrationPipelines []string
 
 	// DetectCloudProvider enables cloud provider detection mechanisms.
 	// When enabled, the agent will attempt to read files, resolve hostnames,
@@ -112,10 +113,6 @@ type Config struct {
 	// EventsAPIBurstLimit is the maximum amount of burst allowed in a rate
 	// interval.
 	EventsAPIBurstLimit int
-
-	// KeepaliveHandlers contains the handlers to use for the agent's keepalive
-	// events
-	KeepaliveHandlers []string
 
 	// KeepaliveInterval is the interval between keepalive events.
 	KeepaliveInterval uint32

@@ -24,8 +24,8 @@ func TestDeregister(t *testing.T) {
 	mockBus := &mockbus.MockBus{}
 
 	adapter := &Deregistration{
-		Store:		mockStore,
-		MessageBus:	mockBus,
+		Store:      mockStore,
+		MessageBus: mockBus,
 	}
 
 	entity := corev2.FixtureEntity("entity")
@@ -47,7 +47,7 @@ func TestDeregister(t *testing.T) {
 	assert.NoError(adapter.Deregister(entity))
 }
 
-func TestDeregistrationHandler(t *testing.T) {
+func TestDeregistrationPipelines(t *testing.T) {
 	assert := assert.New(t)
 
 	mockStore := &mockstore.V2MockStore{}
@@ -60,15 +60,21 @@ func TestDeregistrationHandler(t *testing.T) {
 	mockCache := &mockcache.MockCache{}
 
 	adapter := &Deregistration{
-		Store:		mockStore,
-		MessageBus:	mockBus,
-		SilencedCache:	mockCache,
+		Store:         mockStore,
+		MessageBus:    mockBus,
+		SilencedCache: mockCache,
 	}
 
 	entity := corev2.FixtureEntity("entity")
 	entity.Deregister = true
 	entity.Deregistration = corev2.Deregistration{
-		Handler: "deregistration",
+		Pipelines: []*corev2.ResourceReference{
+			{
+				Name:       "deregistration",
+				Type:       "Pipeline",
+				APIVersion: "core/v2",
+			},
+		},
 	}
 	check := corev2.FixtureCheck("check")
 
@@ -83,9 +89,17 @@ func TestDeregistrationHandler(t *testing.T) {
 	mockEventStore.On("GetEventsByEntity", mock.Anything, entity.Name, &store.SelectionPredicate{}).Return([]*corev2.Event{}, nil)
 	mockEventStore.On("DeleteEventByEntityCheck", mock.Anything, entity.Name, check.Name).Return(nil)
 
+	expectedPipelines := []*corev2.ResourceReference{
+		{
+			Name:       "deregistration",
+			Type:       "Pipeline",
+			APIVersion: "core/v2",
+		},
+	}
+
 	mockBus.On("Publish", messaging.TopicEvent, mock.Anything).Return(nil).Run(func(args mock.Arguments) {
 		event := args[1].(*corev2.Event)
-		assert.Equal("deregistration", event.Entity.Deregistration.Handler)
+		assert.Equal(expectedPipelines, event.Entity.Deregistration.Pipelines)
 		assert.Equal("deregistration", event.Check.Name)
 		assert.Equal(0, len(event.Check.Subscriptions))
 		assert.Equal(true, event.IsSilenced(), "event is not silenced")

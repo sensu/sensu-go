@@ -384,9 +384,18 @@ func TestProcessRegistration(t *testing.T) {
 func TestCreateKeepaliveEvent(t *testing.T) {
 	event := corev2.FixtureEvent("entity1", "keepalive")
 	keepaliveEvent := createKeepaliveEvent(event)
+
+	expectedPipelines := []*corev2.ResourceReference{
+		{
+			Name:       corev2.KeepalivePipelineName,
+			Type:       "Pipeline",
+			APIVersion: "core/v2",
+		},
+	}
+
 	assert.Equal(t, "keepalive", keepaliveEvent.Check.Name)
 	assert.Equal(t, uint32(60), keepaliveEvent.Check.Interval)
-	assert.Equal(t, []string{"keepalive"}, keepaliveEvent.Check.Handlers)
+	assert.Equal(t, expectedPipelines, keepaliveEvent.Check.Pipelines)
 	assert.Equal(t, uint32(0), keepaliveEvent.Check.Status)
 	assert.Equal(t, "default", keepaliveEvent.Check.Namespace)
 	assert.Equal(t, "default", keepaliveEvent.ObjectMeta.Namespace)
@@ -402,9 +411,18 @@ func TestCreateKeepaliveEvent(t *testing.T) {
 func TestCreateRegistrationEvent(t *testing.T) {
 	event := corev2.FixtureEntity("entity1")
 	keepaliveEvent := createRegistrationEvent(event)
+
+	expectedPipelines := []*corev2.ResourceReference{
+		{
+			Name:       corev2.RegistrationPipelineName,
+			Type:       "Pipeline",
+			APIVersion: "core/v2",
+		},
+	}
+
 	assert.Equal(t, corev2.RegistrationCheckName, keepaliveEvent.Check.Name)
 	assert.Equal(t, uint32(1), keepaliveEvent.Check.Interval)
-	assert.Equal(t, []string{corev2.RegistrationHandlerName}, keepaliveEvent.Check.Handlers)
+	assert.Equal(t, expectedPipelines, keepaliveEvent.Check.Pipelines)
 	assert.Equal(t, uint32(1), keepaliveEvent.Check.Status)
 	assert.Equal(t, "default", keepaliveEvent.Check.Namespace)
 	assert.Equal(t, "default", keepaliveEvent.ObjectMeta.Namespace)

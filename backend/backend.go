@@ -345,17 +345,26 @@ func Initialize(ctx context.Context, pgdb postgres.DBI, config *Config) (*Backen
 	// Start the entity config watcher, so agentd sessions are notified of updates
 	entityConfigWatcher := agentd.GetEntityConfigWatcher(ctx, b.Store)
 
+	deregistrationPipelines := []*corev2.ResourceReference{}
+	for _, p := range config.DeregistrationPipelines {
+		if ref, err := corev2.FromStringRef(p); err != nil {
+			logger.WithError(err).Warnf("error parsing deregistration pipeline resource reference: %s", p)
+		} else {
+			deregistrationPipelines = append(deregistrationPipelines, ref)
+		}
+	}
+
 	// Initialize keepalived
 	keepalive, err := keepalived.New(keepalived.Config{
-		DeregistrationHandler: config.DeregistrationHandler,
-		Bus:                   bus,
-		Store:                 b.Store,
-		BufferSize:            viper.GetInt(FlagKeepalivedBufferSize),
-		WorkerCount:           viper.GetInt(FlagKeepalivedWorkers),
-		StoreTimeout:          2 * time.Minute,
-		OperatorConcierge:     pgOPC,
-		OperatorMonitor:       pgOPC,
-		BackendName:           b.Cfg.Name,
+		DeregistrationPipelines: deregistrationPipelines,
+		Bus:                     bus,
+		Store:                   b.Store,
+		BufferSize:              viper.GetInt(FlagKeepalivedBufferSize),
+		WorkerCount:             viper.GetInt(FlagKeepalivedWorkers),
+		StoreTimeout:            2 * time.Minute,
+		OperatorConcierge:       pgOPC,
+		OperatorMonitor:         pgOPC,
+		BackendName:             b.Cfg.Name,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("error initializing %s: %s", keepalive.Name(), err)
@@ -657,10 +666,17 @@ func (b *Backend) getBackendEntity(config *Config) *corev2.Entity {
 		},
 	}
 
-	if config.DeregistrationHandler != "" {
-		entity.Deregistration = corev2.Deregistration{
-			Handler: config.DeregistrationHandler,
+	deregistrationPipelines := []*corev2.ResourceReference{}
+	for _, p := range config.DeregistrationPipelines {
+		if ref, err := corev2.FromStringRef(p); err != nil {
+			logger.WithError(err).Warnf("error parsing deregistration pipeline resource reference: %s", p)
+		} else {
+			deregistrationPipelines = append(deregistrationPipelines, ref)
 		}
+	}
+
+	entity.Deregistration = corev2.Deregistration{
+		Pipelines: deregistrationPipelines,
 	}
 
 	return entity

@@ -75,7 +75,7 @@ func main() {
 		cfg.CacheDir = os.DevNull
 		cfg.DisableAssets = true
 		cfg.Deregister = bool(*flagDeregister)
-		cfg.DeregistrationHandler = ""
+		cfg.DeregistrationPipelines = []string{}
 		cfg.DisableAPI = true
 		cfg.StatsdServer = &agent.StatsdServerConfig{
 			Disable:       true,

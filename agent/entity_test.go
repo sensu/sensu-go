@@ -20,9 +20,9 @@ func TestGetAgentEntity(t *testing.T) {
 			name: "The agent has no entity",
 			agent: &Agent{
 				config: &Config{
-					AgentName:             "foo",
-					Namespace:             "default",
-					DeregistrationHandler: "slack",
+					AgentName:               "foo",
+					Namespace:               "default",
+					DeregistrationPipelines: []string{"core/v2.Pipeline.slack"},
 				},
 			},
 			expectedAgentName: "foo",
@@ -32,9 +32,9 @@ func TestGetAgentEntity(t *testing.T) {
 			agent: &Agent{
 				entityConfig: corev3.FixtureEntityConfig("bar"),
 				config: &Config{
-					AgentName:             "bar",
-					Namespace:             "default",
-					DeregistrationHandler: "slack",
+					AgentName:               "bar",
+					Namespace:               "default",
+					DeregistrationPipelines: []string{"core/v2.Pipeline.slack"},
 				},
 			},
 			expectedAgentName: "bar",

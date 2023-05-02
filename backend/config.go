@@ -73,7 +73,7 @@ type Config struct {
 	DashboardWriteTimeout time.Duration
 
 	// Pipelined Configuration
-	DeregistrationHandler string
+	DeregistrationPipelines []string
 
 	// Labels are key-value pairs that users can provide to backend entities
 	Labels map[string]string

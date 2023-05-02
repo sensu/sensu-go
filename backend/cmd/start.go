@@ -45,31 +45,31 @@ const (
 	environmentPrefix = "sensu_backend"
 
 	// Flag constants
-	flagConfigFile            = "config-file"
-	flagAgentHost             = "agent-host"
-	flagAgentPort             = "agent-port"
-	flagAPIListenAddress      = "api-listen-address"
-	flagAPIRequestLimit       = "api-request-limit"
-	flagAPIURL                = "api-url"
-	flagAPIWriteTimeout       = "api-write-timeout"
-	flagAssetsRateLimit       = "assets-rate-limit"
-	flagAssetsBurstLimit      = "assets-burst-limit"
-	flagDashboardHost         = "dashboard-host"
-	flagDashboardPort         = "dashboard-port"
-	flagDashboardCertFile     = "dashboard-cert-file"
-	flagDashboardKeyFile      = "dashboard-key-file"
-	flagDashboardWriteTimeout = "dashboard-write-timeout"
-	flagDeregistrationHandler = "deregistration-handler"
-	flagCacheDir              = "cache-dir"
-	flagCertFile              = "cert-file"
-	flagKeyFile               = "key-file"
-	flagTrustedCAFile         = "trusted-ca-file"
-	flagInsecureSkipTLSVerify = "insecure-skip-tls-verify"
-	flagDebug                 = "debug"
-	flagLogLevel              = "log-level"
-	flagLabels                = "labels"
-	flagAnnotations           = "annotations"
-	flagName                  = "name"
+	flagConfigFile              = "config-file"
+	flagAgentHost               = "agent-host"
+	flagAgentPort               = "agent-port"
+	flagAPIListenAddress        = "api-listen-address"
+	flagAPIRequestLimit         = "api-request-limit"
+	flagAPIURL                  = "api-url"
+	flagAPIWriteTimeout         = "api-write-timeout"
+	flagAssetsRateLimit         = "assets-rate-limit"
+	flagAssetsBurstLimit        = "assets-burst-limit"
+	flagDashboardHost           = "dashboard-host"
+	flagDashboardPort           = "dashboard-port"
+	flagDashboardCertFile       = "dashboard-cert-file"
+	flagDashboardKeyFile        = "dashboard-key-file"
+	flagDashboardWriteTimeout   = "dashboard-write-timeout"
+	flagDeregistrationPipelines = "deregistration-pipelines"
+	flagCacheDir                = "cache-dir"
+	flagCertFile                = "cert-file"
+	flagKeyFile                 = "key-file"
+	flagTrustedCAFile           = "trusted-ca-file"
+	flagInsecureSkipTLSVerify   = "insecure-skip-tls-verify"
+	flagDebug                   = "debug"
+	flagLogLevel                = "log-level"
+	flagLabels                  = "labels"
+	flagAnnotations             = "annotations"
+	flagName                    = "name"
 
 	// Postgres store
 	flagPGDSN                = "pg-dsn"                  // postgresql connection string
@@ -158,23 +158,23 @@ func StartCommand(initialize InitializeFunc) *cobra.Command {
 			logrus.SetLevel(level)
 
 			cfg := &backend.Config{
-				AgentHost:             viper.GetString(flagAgentHost),
-				AgentPort:             viper.GetInt(flagAgentPort),
-				AgentWriteTimeout:     viper.GetInt(backend.FlagAgentWriteTimeout),
-				APIListenAddress:      viper.GetString(flagAPIListenAddress),
-				APIRequestLimit:       viper.GetInt64(flagAPIRequestLimit),
-				APIURL:                viper.GetString(flagAPIURL),
-				APIWriteTimeout:       viper.GetDuration(flagAPIWriteTimeout),
-				AssetsRateLimit:       rate.Limit(viper.GetFloat64(flagAssetsRateLimit)),
-				AssetsBurstLimit:      viper.GetInt(flagAssetsBurstLimit),
-				DashboardHost:         viper.GetString(flagDashboardHost),
-				DashboardPort:         viper.GetInt(flagDashboardPort),
-				DashboardTLSCertFile:  viper.GetString(flagDashboardCertFile),
-				DashboardTLSKeyFile:   viper.GetString(flagDashboardKeyFile),
-				DashboardWriteTimeout: viper.GetDuration(flagDashboardWriteTimeout),
-				DeregistrationHandler: viper.GetString(flagDeregistrationHandler),
-				CacheDir:              viper.GetString(flagCacheDir),
-				Name:                  viper.GetString(flagName),
+				AgentHost:               viper.GetString(flagAgentHost),
+				AgentPort:               viper.GetInt(flagAgentPort),
+				AgentWriteTimeout:       viper.GetInt(backend.FlagAgentWriteTimeout),
+				APIListenAddress:        viper.GetString(flagAPIListenAddress),
+				APIRequestLimit:         viper.GetInt64(flagAPIRequestLimit),
+				APIURL:                  viper.GetString(flagAPIURL),
+				APIWriteTimeout:         viper.GetDuration(flagAPIWriteTimeout),
+				AssetsRateLimit:         rate.Limit(viper.GetFloat64(flagAssetsRateLimit)),
+				AssetsBurstLimit:        viper.GetInt(flagAssetsBurstLimit),
+				DashboardHost:           viper.GetString(flagDashboardHost),
+				DashboardPort:           viper.GetInt(flagDashboardPort),
+				DashboardTLSCertFile:    viper.GetString(flagDashboardCertFile),
+				DashboardTLSKeyFile:     viper.GetString(flagDashboardKeyFile),
+				DashboardWriteTimeout:   viper.GetDuration(flagDashboardWriteTimeout),
+				DeregistrationPipelines: viper.GetStringSlice(flagDeregistrationPipelines),
+				CacheDir:                viper.GetString(flagCacheDir),
+				Name:                    viper.GetString(flagName),
 
 				Labels:                         viper.GetStringMapString(flagLabels),
 				Annotations:                    viper.GetStringMapString(flagAnnotations),
@@ -329,7 +329,6 @@ func handleConfig(cmd *cobra.Command, arguments []string, server bool) error {
 		viper.SetDefault(flagDashboardCertFile, "")
 		viper.SetDefault(flagDashboardKeyFile, "")
 		viper.SetDefault(flagDashboardWriteTimeout, "15s")
-		viper.SetDefault(flagDeregistrationHandler, "")
 		viper.SetDefault(flagCertFile, "")
 		viper.SetDefault(flagKeyFile, "")
 		viper.SetDefault(flagTrustedCAFile, "")
@@ -430,7 +429,7 @@ func flagSet(server bool) *pflag.FlagSet {
 		flagSet.String(flagDashboardCertFile, viper.GetString(flagDashboardCertFile), "dashboard TLS certificate in PEM format")
 		flagSet.String(flagDashboardKeyFile, viper.GetString(flagDashboardKeyFile), "dashboard TLS certificate key in PEM format")
 		flagSet.Duration(flagDashboardWriteTimeout, viper.GetDuration(flagDashboardWriteTimeout), "maximum duration before timing out writes of responses")
-		flagSet.String(flagDeregistrationHandler, viper.GetString(flagDeregistrationHandler), "default deregistration handler")
+		flagSet.StringSlice(flagDeregistrationPipelines, viper.GetStringSlice(flagDeregistrationPipelines), "default deregistration pipelines")
 		flagSet.String(flagCacheDir, viper.GetString(flagCacheDir), "path to store cached data")
 		flagSet.String(flagCertFile, viper.GetString(flagCertFile), "TLS certificate in PEM format")
 		flagSet.String(flagKeyFile, viper.GetString(flagKeyFile), "TLS certificate key in PEM format")
