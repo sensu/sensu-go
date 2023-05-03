@@ -31,21 +31,21 @@ import (
 
 // APId is the backend HTTP API.
 type APId struct {
-	Authenticator			*authentication.Authenticator
-	HTTPServer			*http.Server
-	CoreSubrouter			*mux.Router
-	CoreV3Subrouter			*mux.Router
-	EntityLimitedCoreSubrouter	*mux.Router
-	GraphQLSubrouter		*mux.Router
-	RequestLimit			int64
+	Authenticator              *authentication.Authenticator
+	HTTPServer                 *http.Server
+	CoreSubrouter              *mux.Router
+	CoreV3Subrouter            *mux.Router
+	EntityLimitedCoreSubrouter *mux.Router
+	GraphQLSubrouter           *mux.Router
+	RequestLimit               int64
 
-	stopping	chan struct{}
-	running		*atomic.Value
-	wg		*sync.WaitGroup
-	errChan		chan error
-	bus		messaging.MessageBus
-	store		storev2.Interface
-	tls		*v2.TLSOptions
+	stopping chan struct{}
+	running  *atomic.Value
+	wg       *sync.WaitGroup
+	errChan  chan error
+	bus      messaging.MessageBus
+	store    storev2.Interface
+	tls      *v2.TLSOptions
 }
 
 // Option is a functional option.
@@ -53,31 +53,31 @@ type Option func(*APId) error
 
 // Config configures APId.
 type Config struct {
-	ListenAddress	string
-	RequestLimit	int64
-	WriteTimeout	time.Duration
-	URL		string
-	Bus		messaging.MessageBus
-	Store		storev2.Interface
-	TLS		*v2.TLSOptions
-	Authenticator	*authentication.Authenticator
-	ClusterVersion	string
-	GraphQLService	*graphql.Service
-	Queue		queue.Client
+	ListenAddress  string
+	RequestLimit   int64
+	WriteTimeout   time.Duration
+	URL            string
+	Bus            messaging.MessageBus
+	Store          storev2.Interface
+	TLS            *v2.TLSOptions
+	Authenticator  *authentication.Authenticator
+	ClusterVersion string
+	GraphQLService *graphql.Service
+	Queue          queue.Client
 }
 
 // New creates a new APId.
 func New(c Config, opts ...Option) (*APId, error) {
 	a := &APId{
-		store:		c.Store,
-		tls:		c.TLS,
-		bus:		c.Bus,
-		stopping:	make(chan struct{}, 1),
-		running:	&atomic.Value{},
-		wg:		&sync.WaitGroup{},
-		errChan:	make(chan error, 1),
-		Authenticator:	c.Authenticator,
-		RequestLimit:	c.RequestLimit,
+		store:         c.Store,
+		tls:           c.TLS,
+		bus:           c.Bus,
+		stopping:      make(chan struct{}, 1),
+		running:       &atomic.Value{},
+		wg:            &sync.WaitGroup{},
+		errChan:       make(chan error, 1),
+		Authenticator: c.Authenticator,
+		RequestLimit:  c.RequestLimit,
 	}
 
 	// prepare TLS config
@@ -99,11 +99,11 @@ func New(c Config, opts ...Option) (*APId, error) {
 	a.EntityLimitedCoreSubrouter = EntityLimitedCoreSubrouter(router, c)
 
 	a.HTTPServer = &http.Server{
-		Addr:		c.ListenAddress,
-		Handler:	router,
-		WriteTimeout:	c.WriteTimeout,
-		ReadTimeout:	15 * time.Second,
-		TLSConfig:	tlsServerConfig,
+		Addr:         c.ListenAddress,
+		Handler:      router,
+		WriteTimeout: c.WriteTimeout,
+		ReadTimeout:  15 * time.Second,
+		TLSConfig:    tlsServerConfig,
 	}
 
 	for _, o := range opts {
@@ -155,6 +155,7 @@ func CoreSubrouter(router *mux.Router, cfg Config) *mux.Router {
 		middlewares.Authorization{Authorizer: &rbac.Authorizer{Store: cfg.Store}},
 		middlewares.LimitRequest{Limit: cfg.RequestLimit},
 		middlewares.Pagination{},
+		middlewares.Selectors{},
 	)
 	mountRouters(
 		subrouter,
@@ -188,6 +189,7 @@ func CoreV3Subrouter(router *mux.Router, cfg Config) *mux.Router {
 		middlewares.Authorization{Authorizer: &rbac.Authorizer{Store: cfg.Store}},
 		middlewares.LimitRequest{Limit: cfg.RequestLimit},
 		middlewares.Pagination{},
+		middlewares.Selectors{},
 	)
 	mountRouters(
 		subrouter,
@@ -208,6 +210,7 @@ func EntityLimitedCoreSubrouter(router *mux.Router, cfg Config) *mux.Router {
 		middlewares.Authorization{Authorizer: &rbac.Authorizer{Store: cfg.Store}},
 		middlewares.LimitRequest{Limit: cfg.RequestLimit},
 		middlewares.Pagination{},
+		middlewares.Selectors{},
 	)
 	mountRouters(
 		subrouter,
@@ -246,8 +249,8 @@ func GraphQLSubrouter(router *mux.Router, cfg Config) *mux.Router {
 	mountRouters(
 		subrouter,
 		&routers.GraphQLRouter{
-			Service:	cfg.GraphQLService,
-			Timeout:	timeout,
+			Service: cfg.GraphQLService,
+			Timeout: timeout,
 		},
 	)
 
@@ -276,7 +279,7 @@ func PublicSubrouter(router *mux.Router, cfg Config) *mux.Router {
 func notFoundHandler(w http.ResponseWriter, _ *http.Request) {
 	w.WriteHeader(http.StatusNotFound)
 	resp := map[string]interface{}{
-		"message":	"not found", "code": actions.NotFound,
+		"message": "not found", "code": actions.NotFound,
 	}
 	_ = json.NewEncoder(w).Encode(resp)
 }

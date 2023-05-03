@@ -43,8 +43,8 @@ func NewEventSelectorSQLBuilder(selector *selector.Selector) *SelectorSQLBuilder
 
 func NewConfigSelectorSQLBuilder(selector *selector.Selector) *SelectorSQLBuilder {
 	return &SelectorSQLBuilder{
-		selectorColumn:      "field",
-		nestedSelectors:     true,
+		selectorColumn:      "fields",
+		nestedSelectors:     false,
 		labelColumn:         "labels",
 		labelPrefixes:       []string{""},
 		includeLabelCaption: false,
@@ -229,7 +229,7 @@ func (s *SelectorSQLBuilder) validFieldKey(op *selector.Operation) bool {
 
 func (s *SelectorSQLBuilder) matchLValue(lValue string) string {
 	if !s.nestedSelectors {
-		return lValue
+		return fmt.Sprintf("{%s}", lValue)
 	}
 	return fmt.Sprintf("{%s}", strings.ReplaceAll(lValue, ".", ","))
 }
