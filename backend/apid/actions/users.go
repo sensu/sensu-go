@@ -74,6 +74,10 @@ func (a UserController) Create(ctx context.Context, user *corev2.User) error {
 	if err := user.Validate(); err != nil {
 		return NewError(InvalidArgument, err)
 	}
+	if err := a.ensurePasswordHash(user); err != nil {
+		return err
+	}
+
 	ustore := storev2.Of[*corev2.User](a.store)
 	if err := ustore.CreateIfNotExists(ctx, user); err != nil {
 		switch err := err.(type) {
@@ -92,7 +96,19 @@ func (a UserController) CreateOrReplace(ctx context.Context, user *corev2.User) 
 	if err := user.Validate(); err != nil {
 		return NewError(InvalidArgument, err)
 	}
+	if err := a.ensurePasswordHash(user); err != nil {
+		return err
+	}
 
+	// Persist
+	ustore := storev2.Of[*corev2.User](a.store)
+	if err := ustore.CreateOrUpdate(ctx, user); err != nil {
+		return NewError(InternalErr, err)
+	}
+	return nil
+}
+
+func (a UserController) ensurePasswordHash(user *corev2.User) error {
 	// Determine if a hashed and/or cleartext password was provided
 	if user.Password != "" && user.PasswordHash != "" {
 		// Both the cleartext & hashed passwords were provided, so we need to make
@@ -122,12 +138,6 @@ func (a UserController) CreateOrReplace(ctx context.Context, user *corev2.User) 
 
 	// Also add the hash to the password field for backward compatibility
 	user.Password = user.PasswordHash
-
-	// Persist
-	ustore := storev2.Of[*corev2.User](a.store)
-	if err := ustore.CreateOrUpdate(ctx, user); err != nil {
-		return NewError(InternalErr, err)
-	}
 	return nil
 }
 
