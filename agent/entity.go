@@ -39,6 +39,9 @@ func (a *Agent) getLocalEntityConfig() *corev3.EntityConfig {
 		Subscriptions: a.config.Subscriptions,
 		User:          a.config.User,
 		Metadata:      &meta,
+		Deregistration: corev2.Deregistration{
+			Pipelines: a.deregistrationPipelines,
+		},
 		Keepalive: corev3.EntityKeepalive{
 			Pipelines: a.keepalivePipelines,
 		},

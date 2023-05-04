@@ -136,35 +136,36 @@ func GetDefaultAgentName() string {
 
 // An Agent receives and acts on messages from a Sensu Backend.
 type Agent struct {
-	allowList          []allowList
-	api                *http.Server
-	assetGetter        asset.Getter
-	backendSelector    BackendSelector
-	config             *Config
-	connected          bool
-	connectedMu        sync.RWMutex
-	contentType        string
-	entityConfig       *corev3.EntityConfig
-	entityConfigCh     chan struct{}
-	entityMu           sync.Mutex
-	executor           command.Executor
-	handler            *handler.MessageHandler
-	header             http.Header
-	inProgress         map[string]*corev2.CheckConfig
-	inProgressMu       *sync.Mutex
-	localEntityConfig  *corev3.EntityConfig
-	statsdServer       StatsdServer
-	sendq              chan *transport.Message
-	systemInfo         *corev2.System
-	systemInfoMu       sync.RWMutex
-	wg                 sync.WaitGroup
-	apiQueue           queue
-	marshal            MarshalFunc
-	unmarshal          UnmarshalFunc
-	sequencesMu        sync.Mutex
-	sequences          map[string]int64
-	maxSessionLength   time.Duration
-	keepalivePipelines []*corev2.ResourceReference
+	allowList               []allowList
+	api                     *http.Server
+	assetGetter             asset.Getter
+	backendSelector         BackendSelector
+	config                  *Config
+	connected               bool
+	connectedMu             sync.RWMutex
+	contentType             string
+	entityConfig            *corev3.EntityConfig
+	entityConfigCh          chan struct{}
+	entityMu                sync.Mutex
+	executor                command.Executor
+	handler                 *handler.MessageHandler
+	header                  http.Header
+	inProgress              map[string]*corev2.CheckConfig
+	inProgressMu            *sync.Mutex
+	localEntityConfig       *corev3.EntityConfig
+	statsdServer            StatsdServer
+	sendq                   chan *transport.Message
+	systemInfo              *corev2.System
+	systemInfoMu            sync.RWMutex
+	wg                      sync.WaitGroup
+	apiQueue                queue
+	marshal                 MarshalFunc
+	unmarshal               UnmarshalFunc
+	sequencesMu             sync.Mutex
+	sequences               map[string]int64
+	maxSessionLength        time.Duration
+	keepalivePipelines      []*corev2.ResourceReference
+	deregistrationPipelines []*corev2.ResourceReference
 
 	// ProcessGetter gets information about local agent processes.
 	ProcessGetter process.Getter
@@ -358,6 +359,15 @@ func (a *Agent) Run(ctx context.Context) error {
 			if u.Scheme != "ws" && u.Scheme != "wss" {
 				return fmt.Errorf("backend URL (%s) must have ws:// or wss:// scheme", burl)
 			}
+		}
+	}
+
+	logger.Debug("validating deregistration pipelines: ", a.config.DeregistrationPipelines)
+	for _, p := range a.config.DeregistrationPipelines {
+		if ref, err := corev2.FromStringRef(p); err != nil {
+			logger.WithError(err).Warnf("error parsing deregistration pipeline resource reference: %s", p)
+		} else {
+			a.deregistrationPipelines = append(a.deregistrationPipelines, ref)
 		}
 	}
 
