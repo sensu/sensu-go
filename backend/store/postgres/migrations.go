@@ -156,6 +156,11 @@ var Migrations = []migration.Migrator{
 		_, err = tx.Exec(context.Background(), "CREATE INDEX ON entity_configs ( updated_at );")
 		return err
 	},
+	// Migration 25
+	func(tx migration.LimitedTx) error {
+		_, err := tx.Exec(context.Background(), addConfigurationFields)
+		return err
+	},
 }
 
 type eventRecord struct {

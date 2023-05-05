@@ -288,11 +288,11 @@ func TestConfigStore_List_WithSelectors(t *testing.T) {
 			expectedAssetNames []string
 		}{
 			{
-				name: "asset name label -in- selector",
+				name: "asset name field and label -in- selector",
 				selektor: &selector.Selector{
 					Operations: []selector.Operation{
 						{"label-flat", selector.InOperator, []string{"value-6", "value-22"}, selector.OperationTypeLabelSelector},
-						{"metadata.name", selector.InOperator, []string{assetName + "22", assetName + "45"}, selector.OperationTypeFieldSelector},
+						{"asset.name", selector.InOperator, []string{assetName + "22", assetName + "45"}, selector.OperationTypeFieldSelector},
 					},
 				},
 				expectError:        false,
@@ -300,19 +300,7 @@ func TestConfigStore_List_WithSelectors(t *testing.T) {
 				expectedAssetNames: []string{assetName + "22"},
 			},
 			{
-				name: "asset name label -in- selector",
-				selektor: &selector.Selector{
-					Operations: []selector.Operation{
-						{"label-flat", selector.InOperator, []string{"value-6", "value-22"}, selector.OperationTypeLabelSelector},
-						{"metadata.name", selector.InOperator, []string{assetName + "22", assetName + "45"}, selector.OperationTypeFieldSelector},
-					},
-				},
-				expectError:        false,
-				expectedAssetCount: 1,
-				expectedAssetNames: []string{assetName + "22"},
-			},
-			{
-				name: "asset name label -in- selector",
+				name: "label -in- selector",
 				selektor: &selector.Selector{
 					Operations: []selector.Operation{
 						{"label-flat", selector.InOperator, []string{"value-6", "value-22"}, selector.OperationTypeLabelSelector},
@@ -323,10 +311,10 @@ func TestConfigStore_List_WithSelectors(t *testing.T) {
 				expectedAssetNames: []string{assetName + "6", assetName + "22"},
 			},
 			{
-				name: "asset name field -in- selector",
+				name: "asset name -in- selector",
 				selektor: &selector.Selector{
 					Operations: []selector.Operation{
-						{"metadata.name", selector.InOperator, []string{assetName + "6", assetName + "22"}, selector.OperationTypeFieldSelector},
+						{"asset.name", selector.InOperator, []string{assetName + "6", assetName + "22"}, selector.OperationTypeFieldSelector},
 					},
 				},
 				expectError:        false,
@@ -337,7 +325,7 @@ func TestConfigStore_List_WithSelectors(t *testing.T) {
 				name: "asset name field -match- selector",
 				selektor: &selector.Selector{
 					Operations: []selector.Operation{
-						{"metadata.name", selector.MatchesOperator, []string{fmt.Sprintf("%s%d", assetName, 65)}, selector.OperationTypeFieldSelector},
+						{"asset.name", selector.MatchesOperator, []string{fmt.Sprintf("%s%d", assetName, 65)}, selector.OperationTypeFieldSelector},
 					},
 				},
 				expectError:        false,
@@ -359,7 +347,7 @@ func TestConfigStore_List_WithSelectors(t *testing.T) {
 				name: "field and label -match- selectors",
 				selektor: &selector.Selector{
 					Operations: []selector.Operation{
-						{"metadata.name", selector.MatchesOperator, []string{assetName + "6"}, selector.OperationTypeFieldSelector},
+						{"asset.name", selector.MatchesOperator, []string{assetName + "6"}, selector.OperationTypeFieldSelector},
 						{"label-mod-key-0", selector.MatchesOperator, []string{"value"}, selector.OperationTypeLabelSelector},
 					},
 				},
@@ -371,28 +359,13 @@ func TestConfigStore_List_WithSelectors(t *testing.T) {
 				name: "field and label double equal selectors",
 				selektor: &selector.Selector{
 					Operations: []selector.Operation{
-						{"sha512", selector.DoubleEqualSignOperator, []string{"not-a-sha-0"}, selector.OperationTypeFieldSelector},
+						{"asset.name", selector.DoubleEqualSignOperator, []string{assetName + "1"}, selector.OperationTypeFieldSelector},
 						{"label-flat", selector.DoubleEqualSignOperator, []string{"value-1"}, selector.OperationTypeLabelSelector},
 					},
 				},
 				expectError:        false,
 				expectedAssetCount: 1,
 				expectedAssetNames: []string{assetName + "1"},
-			},
-			{
-				name: "field and label -match-, equals, and not equals selectors",
-				selektor: &selector.Selector{
-					Operations: []selector.Operation{
-						{"metadata.name", selector.MatchesOperator, []string{assetName + "6"}, selector.OperationTypeFieldSelector},
-						{"label-mod-key-0", selector.MatchesOperator, []string{"value"}, selector.OperationTypeLabelSelector},
-						{"label-flat", selector.NotEqualOperator, []string{"value-6"}, selector.OperationTypeLabelSelector},
-						{"sha512", selector.DoubleEqualSignOperator, []string{"not-a-sha-2"}, selector.OperationTypeFieldSelector},
-						{"sha512", selector.NotEqualOperator, []string{"not-a-sha-1"}, selector.OperationTypeFieldSelector},
-					},
-				},
-				expectError:        false,
-				expectedAssetCount: 4,
-				expectedAssetNames: []string{assetName + "60", assetName + "63", assetName + "66", assetName + "69"},
 			},
 		}
 

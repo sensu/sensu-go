@@ -410,3 +410,8 @@ CREATE TABLE events (
 	UNIQUE ( namespace, check_name, entity_name )
 );
 `
+
+// Migration 25
+const addConfigurationFields = `
+ALTER TABLE configuration
+ADD COLUMN fields JSONB NOT NULL DEFAULT '{}'::jsonb;`
