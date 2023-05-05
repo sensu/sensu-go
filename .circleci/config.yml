@@ -58,7 +58,7 @@ jobs:
             - go-cache
       - run:
           name: Download & Install Go
-          command: .\ci\install-go.ps1
+          command: .\ci\install-go.ps1 << pipeline.parameters.go_version >>
       - save_cache:
           key: go-cache
           paths:
