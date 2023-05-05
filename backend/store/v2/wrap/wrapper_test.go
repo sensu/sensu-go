@@ -88,6 +88,7 @@ func TestWrapResourceSimple(t *testing.T) {
 	delete(meta.Labels, store.SensuCreatedAtKey)
 	delete(meta.Labels, store.SensuUpdatedAtKey)
 	delete(meta.Labels, store.SensuDeletedAtKey)
+	delete(meta.Annotations, store.SensuETagKey)
 	if got, want := unwrapped.GetMetadata(), resource.GetMetadata(); !proto.Equal(got, want) {
 		t.Errorf("bad resource: got %#v, want %#v", got, want)
 	}
@@ -175,6 +176,7 @@ func TestWrapResourceOptions(t *testing.T) {
 			delete(meta.Labels, store.SensuCreatedAtKey)
 			delete(meta.Labels, store.SensuUpdatedAtKey)
 			delete(meta.Labels, store.SensuDeletedAtKey)
+			delete(meta.Annotations, store.SensuETagKey)
 			if got, want := resource.GetMetadata(), test.Resource.GetMetadata(); !proto.Equal(got, want) {
 				t.Errorf("bad resource: got %v, want %v", got, want)
 			}

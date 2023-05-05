@@ -13,9 +13,9 @@ import (
 	"github.com/golang/snappy"
 	corev2 "github.com/sensu/core/v2"
 	corev3 "github.com/sensu/core/v3"
+	"github.com/sensu/core/v3/types"
 	apitools "github.com/sensu/sensu-api-tools"
 	"github.com/sensu/sensu-go/backend/store"
-	"github.com/sensu/core/v3/types"
 )
 
 // Encoding is the serialization encoding of the wrapped value.
@@ -86,6 +86,9 @@ type Wrapper struct {
 	// DeletedAt is the time the resource was deleted. If it is the zero value,
 	// then the resource was not deleted.
 	DeletedAt time.Time
+
+	// ETag is a hex-encoded ETag.
+	ETag string
 }
 
 func (m *Wrapper) GetTypeMeta() *corev2.TypeMeta {
@@ -315,6 +318,7 @@ func (w *Wrapper) Unwrap() (corev3.Resource, error) {
 	meta.Labels[store.SensuCreatedAtKey] = string(createdAt)
 	updatedAt, _ := w.UpdatedAt.MarshalText()
 	meta.Labels[store.SensuUpdatedAtKey] = string(updatedAt)
+	meta.Annotations[store.SensuETagKey] = w.ETag
 
 	if !w.DeletedAt.IsZero() {
 		deletedAt, _ := w.DeletedAt.MarshalText()

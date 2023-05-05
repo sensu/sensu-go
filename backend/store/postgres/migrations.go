@@ -161,6 +161,21 @@ var Migrations = []migration.Migrator{
 		_, err := tx.Exec(context.Background(), addConfigurationFields)
 		return err
 	},
+	// Migration 26
+	func(tx migration.LimitedTx) error {
+		_, err := tx.Exec(context.Background(), "CREATE EXTENSION pgcrypto;")
+		return err
+	},
+	// Migration 27
+	func(tx migration.LimitedTx) error {
+		_, err := tx.Exec(context.Background(), "ALTER TABLE configuration ADD COLUMN etag bytea;")
+		return err
+	},
+	// Migration 28
+	func(tx migration.LimitedTx) error {
+		_, err := tx.Exec(context.Background(), "UPDATE configuration SET etag = digest(resource::text, 'sha1')")
+		return err
+	},
 }
 
 type eventRecord struct {
