@@ -108,350 +108,350 @@ workflows:
   version: 2
   run_the_tests:
     jobs:
-      # - test:
-      #     filters:
-      #       tags:
-      #         ignore: /.*/
+      - test:
+          filters:
+            tags:
+              ignore: /.*/
       - test-windows:
           filters:
             tags:
               ignore: /.*/
-  # build:
-  #   jobs:
-  #     # darwin/amd64
-  #     - build:
-  #         name: sensu-agent-darwin-amd64
-  #         binary: sensu-agent
-  #         os: darwin
-  #         arch: amd64
-  #     - build:
-  #         name: sensuctl-darwin-amd64
-  #         binary: sensuctl
-  #         os: darwin
-  #         arch: amd64
+  build:
+    jobs:
+      # darwin/amd64
+      - build:
+          name: sensu-agent-darwin-amd64
+          binary: sensu-agent
+          os: darwin
+          arch: amd64
+      - build:
+          name: sensuctl-darwin-amd64
+          binary: sensuctl
+          os: darwin
+          arch: amd64
 
-  #     # freebsd/386
-  #     - build:
-  #         name: sensu-agent-freebsd-386
-  #         binary: sensu-agent
-  #         os: freebsd
-  #         arch: '386'
-  #     - build:
-  #         name: sensuctl-freebsd-386
-  #         binary: sensuctl
-  #         os: freebsd
-  #         arch: '386'
+      # freebsd/386
+      - build:
+          name: sensu-agent-freebsd-386
+          binary: sensu-agent
+          os: freebsd
+          arch: '386'
+      - build:
+          name: sensuctl-freebsd-386
+          binary: sensuctl
+          os: freebsd
+          arch: '386'
 
-  #     # freebsd/amd64
-  #     - build:
-  #         name: sensu-agent-freebsd-amd64
-  #         binary: sensu-agent
-  #         os: freebsd
-  #         arch: amd64
-  #     - build:
-  #         name: sensuctl-freebsd-amd64
-  #         binary: sensuctl
-  #         os: freebsd
-  #         arch: amd64
+      # freebsd/amd64
+      - build:
+          name: sensu-agent-freebsd-amd64
+          binary: sensu-agent
+          os: freebsd
+          arch: amd64
+      - build:
+          name: sensuctl-freebsd-amd64
+          binary: sensuctl
+          os: freebsd
+          arch: amd64
 
-  #     # freebsd/armv5
-  #     - build:
-  #         name: sensu-agent-freebsd-armv5
-  #         binary: sensu-agent
-  #         os: freebsd
-  #         arch: arm
-  #         arm: '5'
-  #     - build:
-  #         name: sensuctl-freebsd-armv5
-  #         binary: sensuctl
-  #         os: freebsd
-  #         arch: arm
-  #         arm: '5'
+      # freebsd/armv5
+      - build:
+          name: sensu-agent-freebsd-armv5
+          binary: sensu-agent
+          os: freebsd
+          arch: arm
+          arm: '5'
+      - build:
+          name: sensuctl-freebsd-armv5
+          binary: sensuctl
+          os: freebsd
+          arch: arm
+          arm: '5'
 
-  #     # freebsd/armv6
-  #     - build:
-  #         name: sensu-agent-freebsd-armv6
-  #         binary: sensu-agent
-  #         os: freebsd
-  #         arch: arm
-  #         arm: '6'
-  #     - build:
-  #         name: sensuctl-freebsd-armv6
-  #         binary: sensuctl
-  #         os: freebsd
-  #         arch: arm
-  #         arm: '6'
+      # freebsd/armv6
+      - build:
+          name: sensu-agent-freebsd-armv6
+          binary: sensu-agent
+          os: freebsd
+          arch: arm
+          arm: '6'
+      - build:
+          name: sensuctl-freebsd-armv6
+          binary: sensuctl
+          os: freebsd
+          arch: arm
+          arm: '6'
 
-  #     # freebsd/armv7
-  #     - build:
-  #         name: sensu-agent-freebsd-armv7
-  #         binary: sensu-agent
-  #         os: freebsd
-  #         arch: arm
-  #         arm: '7'
-  #     - build:
-  #         name: sensuctl-freebsd-armv7
-  #         binary: sensuctl
-  #         os: freebsd
-  #         arch: arm
-  #         arm: '7'
+      # freebsd/armv7
+      - build:
+          name: sensu-agent-freebsd-armv7
+          binary: sensu-agent
+          os: freebsd
+          arch: arm
+          arm: '7'
+      - build:
+          name: sensuctl-freebsd-armv7
+          binary: sensuctl
+          os: freebsd
+          arch: arm
+          arm: '7'
 
-  #     # linux/386
-  #     - build:
-  #         name: sensu-agent-linux-386
-  #         binary: sensu-agent
-  #         os: linux
-  #         arch: '386'
-  #     - build:
-  #         name: sensuctl-linux-386
-  #         binary: sensuctl
-  #         os: linux
-  #         arch: '386'
+      # linux/386
+      - build:
+          name: sensu-agent-linux-386
+          binary: sensu-agent
+          os: linux
+          arch: '386'
+      - build:
+          name: sensuctl-linux-386
+          binary: sensuctl
+          os: linux
+          arch: '386'
 
-  #     # linux/amd64
-  #     - build:
-  #         name: sensu-agent-linux-amd64
-  #         binary: sensu-agent
-  #         os: linux
-  #         arch: amd64
-  #     - build:
-  #         name: sensu-backend-linux-amd64
-  #         binary: sensu-backend
-  #         os: linux
-  #         arch: amd64
-  #     - build:
-  #         name: sensuctl-linux-amd64
-  #         binary: sensuctl
-  #         os: linux
-  #         arch: amd64
+      # linux/amd64
+      - build:
+          name: sensu-agent-linux-amd64
+          binary: sensu-agent
+          os: linux
+          arch: amd64
+      - build:
+          name: sensu-backend-linux-amd64
+          binary: sensu-backend
+          os: linux
+          arch: amd64
+      - build:
+          name: sensuctl-linux-amd64
+          binary: sensuctl
+          os: linux
+          arch: amd64
 
-  #     # linux/armv5
-  #     - build:
-  #         name: sensu-agent-linux-armv5
-  #         binary: sensu-agent
-  #         os: linux
-  #         arch: arm
-  #         arm: '5'
-  #     - build:
-  #         name: sensuctl-linux-armv5
-  #         binary: sensuctl
-  #         os: linux
-  #         arch: arm
-  #         arm: '5'
+      # linux/armv5
+      - build:
+          name: sensu-agent-linux-armv5
+          binary: sensu-agent
+          os: linux
+          arch: arm
+          arm: '5'
+      - build:
+          name: sensuctl-linux-armv5
+          binary: sensuctl
+          os: linux
+          arch: arm
+          arm: '5'
 
-  #     # linux/armv6
-  #     - build:
-  #         name: sensu-agent-linux-armv6
-  #         binary: sensu-agent
-  #         os: linux
-  #         arch: arm
-  #         arm: '6'
-  #     - build:
-  #         name: sensuctl-linux-armv6
-  #         binary: sensuctl
-  #         os: linux
-  #         arch: arm
-  #         arm: '6'
+      # linux/armv6
+      - build:
+          name: sensu-agent-linux-armv6
+          binary: sensu-agent
+          os: linux
+          arch: arm
+          arm: '6'
+      - build:
+          name: sensuctl-linux-armv6
+          binary: sensuctl
+          os: linux
+          arch: arm
+          arm: '6'
 
-  #     # linux/armv7
-  #     - build:
-  #         name: sensu-agent-linux-armv7
-  #         binary: sensu-agent
-  #         os: linux
-  #         arch: arm
-  #         arm: '7'
-  #     - build:
-  #         name: sensuctl-linux-armv7
-  #         binary: sensuctl
-  #         os: linux
-  #         arch: arm
-  #         arm: '7'
+      # linux/armv7
+      - build:
+          name: sensu-agent-linux-armv7
+          binary: sensu-agent
+          os: linux
+          arch: arm
+          arm: '7'
+      - build:
+          name: sensuctl-linux-armv7
+          binary: sensuctl
+          os: linux
+          arch: arm
+          arm: '7'
 
-  #     # linux/arm64
-  #     - build:
-  #         name: sensu-agent-linux-arm64
-  #         binary: sensu-agent
-  #         os: linux
-  #         arch: arm64
-  #     - build:
-  #         name: sensu-backend-linux-arm64
-  #         binary: sensu-backend
-  #         os: linux
-  #         arch: arm64
-  #     - build:
-  #         name: sensuctl-linux-arm64
-  #         binary: sensuctl
-  #         os: linux
-  #         arch: arm64
+      # linux/arm64
+      - build:
+          name: sensu-agent-linux-arm64
+          binary: sensu-agent
+          os: linux
+          arch: arm64
+      - build:
+          name: sensu-backend-linux-arm64
+          binary: sensu-backend
+          os: linux
+          arch: arm64
+      - build:
+          name: sensuctl-linux-arm64
+          binary: sensuctl
+          os: linux
+          arch: arm64
 
-  #     # linux/mips-softfloat
-  #     - build:
-  #         name: sensu-agent-linux-mips-softfloat
-  #         binary: sensu-agent
-  #         os: linux
-  #         arch: mips
-  #         mips: softfloat
-  #     - build:
-  #         name: sensuctl-linux-mips-softfloat
-  #         binary: sensuctl
-  #         os: linux
-  #         arch: mips
-  #         mips: softfloat
+      # linux/mips-softfloat
+      - build:
+          name: sensu-agent-linux-mips-softfloat
+          binary: sensu-agent
+          os: linux
+          arch: mips
+          mips: softfloat
+      - build:
+          name: sensuctl-linux-mips-softfloat
+          binary: sensuctl
+          os: linux
+          arch: mips
+          mips: softfloat
 
-  #     # linux/mips-hardfloat
-  #     - build:
-  #         name: sensu-agent-linux-mips-hardfloat
-  #         binary: sensu-agent
-  #         os: linux
-  #         arch: mips
-  #         mips: hardfloat
-  #     - build:
-  #         name: sensuctl-linux-mips-hardfloat
-  #         binary: sensuctl
-  #         os: linux
-  #         arch: mips
-  #         mips: hardfloat
+      # linux/mips-hardfloat
+      - build:
+          name: sensu-agent-linux-mips-hardfloat
+          binary: sensu-agent
+          os: linux
+          arch: mips
+          mips: hardfloat
+      - build:
+          name: sensuctl-linux-mips-hardfloat
+          binary: sensuctl
+          os: linux
+          arch: mips
+          mips: hardfloat
 
-  #     # linux/mipsle-softfloat
-  #     - build:
-  #         name: sensu-agent-linux-mipsle-softfloat
-  #         binary: sensu-agent
-  #         os: linux
-  #         arch: mipsle
-  #         mips: softfloat
-  #     - build:
-  #         name: sensuctl-linux-mipsle-softfloat
-  #         binary: sensuctl
-  #         os: linux
-  #         arch: mipsle
-  #         mips: softfloat
+      # linux/mipsle-softfloat
+      - build:
+          name: sensu-agent-linux-mipsle-softfloat
+          binary: sensu-agent
+          os: linux
+          arch: mipsle
+          mips: softfloat
+      - build:
+          name: sensuctl-linux-mipsle-softfloat
+          binary: sensuctl
+          os: linux
+          arch: mipsle
+          mips: softfloat
 
-  #     # linux/mipsle-hardfloat
-  #     - build:
-  #         name: sensu-agent-linux-mipsle-hardfloat
-  #         binary: sensu-agent
-  #         os: linux
-  #         arch: mipsle
-  #         mips: hardfloat
-  #     - build:
-  #         name: sensuctl-linux-mipsle-hardfloat
-  #         binary: sensuctl
-  #         os: linux
-  #         arch: mipsle
-  #         mips: hardfloat
+      # linux/mipsle-hardfloat
+      - build:
+          name: sensu-agent-linux-mipsle-hardfloat
+          binary: sensu-agent
+          os: linux
+          arch: mipsle
+          mips: hardfloat
+      - build:
+          name: sensuctl-linux-mipsle-hardfloat
+          binary: sensuctl
+          os: linux
+          arch: mipsle
+          mips: hardfloat
 
-  #     # linux/mips64-softfloat
-  #     - build:
-  #         name: sensu-agent-linux-mips64-softfloat
-  #         binary: sensu-agent
-  #         os: linux
-  #         arch: mips64
-  #         mips: softfloat
-  #     - build:
-  #         name: sensuctl-linux-mips64-softfloat
-  #         binary: sensuctl
-  #         os: linux
-  #         arch: mips64
-  #         mips: softfloat
+      # linux/mips64-softfloat
+      - build:
+          name: sensu-agent-linux-mips64-softfloat
+          binary: sensu-agent
+          os: linux
+          arch: mips64
+          mips: softfloat
+      - build:
+          name: sensuctl-linux-mips64-softfloat
+          binary: sensuctl
+          os: linux
+          arch: mips64
+          mips: softfloat
 
-  #     # linux/mips64-hardfloat
-  #     - build:
-  #         name: sensu-agent-linux-mips64-hardfloat
-  #         binary: sensu-agent
-  #         os: linux
-  #         arch: mips64
-  #         mips: hardfloat
-  #     - build:
-  #         name: sensuctl-linux-mips64-hardfloat
-  #         binary: sensuctl
-  #         os: linux
-  #         arch: mips64
-  #         mips: hardfloat
+      # linux/mips64-hardfloat
+      - build:
+          name: sensu-agent-linux-mips64-hardfloat
+          binary: sensu-agent
+          os: linux
+          arch: mips64
+          mips: hardfloat
+      - build:
+          name: sensuctl-linux-mips64-hardfloat
+          binary: sensuctl
+          os: linux
+          arch: mips64
+          mips: hardfloat
 
-  #     # linux/mips64le-softfloat
-  #     - build:
-  #         name: sensu-agent-linux-mips64le-softfloat
-  #         binary: sensu-agent
-  #         os: linux
-  #         arch: mips64le
-  #         mips: softfloat
-  #     - build:
-  #         name: sensuctl-linux-mips64le-softfloat
-  #         binary: sensuctl
-  #         os: linux
-  #         arch: mips64le
-  #         mips: softfloat
+      # linux/mips64le-softfloat
+      - build:
+          name: sensu-agent-linux-mips64le-softfloat
+          binary: sensu-agent
+          os: linux
+          arch: mips64le
+          mips: softfloat
+      - build:
+          name: sensuctl-linux-mips64le-softfloat
+          binary: sensuctl
+          os: linux
+          arch: mips64le
+          mips: softfloat
 
-  #     # linux/mips64le-hardfloat
-  #     - build:
-  #         name: sensu-agent-linux-mips64le-hardfloat
-  #         binary: sensu-agent
-  #         os: linux
-  #         arch: mips64le
-  #         mips: hardfloat
-  #     - build:
-  #         name: sensuctl-linux-mips64le-hardfloat
-  #         binary: sensuctl
-  #         os: linux
-  #         arch: mips64le
-  #         mips: hardfloat
+      # linux/mips64le-hardfloat
+      - build:
+          name: sensu-agent-linux-mips64le-hardfloat
+          binary: sensu-agent
+          os: linux
+          arch: mips64le
+          mips: hardfloat
+      - build:
+          name: sensuctl-linux-mips64le-hardfloat
+          binary: sensuctl
+          os: linux
+          arch: mips64le
+          mips: hardfloat
 
-  #     # linux/ppc64le
-  #     - build:
-  #         name: sensu-agent-linux-ppc64le
-  #         binary: sensu-agent
-  #         os: linux
-  #         arch: ppc64le
-  #     - build:
-  #         name: sensu-backend-linux-ppc64le
-  #         binary: sensu-backend
-  #         os: linux
-  #         arch: ppc64le
-  #     - build:
-  #         name: sensuctl-linux-ppc64le
-  #         binary: sensuctl
-  #         os: linux
-  #         arch: ppc64le
+      # linux/ppc64le
+      - build:
+          name: sensu-agent-linux-ppc64le
+          binary: sensu-agent
+          os: linux
+          arch: ppc64le
+      - build:
+          name: sensu-backend-linux-ppc64le
+          binary: sensu-backend
+          os: linux
+          arch: ppc64le
+      - build:
+          name: sensuctl-linux-ppc64le
+          binary: sensuctl
+          os: linux
+          arch: ppc64le
 
-  #     # linux/s390x
-  #     - build:
-  #         name: sensu-agent-linux-s390x
-  #         binary: sensu-agent
-  #         os: linux
-  #         arch: s390x
-  #     - build:
-  #         name: sensuctl-linux-s390x
-  #         binary: sensuctl
-  #         os: linux
-  #         arch: s390x
+      # linux/s390x
+      - build:
+          name: sensu-agent-linux-s390x
+          binary: sensu-agent
+          os: linux
+          arch: s390x
+      - build:
+          name: sensuctl-linux-s390x
+          binary: sensuctl
+          os: linux
+          arch: s390x
 
-  #     # solaris/amd64
-  #     - build:
-  #         name: sensu-agent-solaris-amd64
-  #         binary: sensu-agent
-  #         os: solaris
-  #         arch: amd64
+      # solaris/amd64
+      - build:
+          name: sensu-agent-solaris-amd64
+          binary: sensu-agent
+          os: solaris
+          arch: amd64
 
-  #     # windows/386
-  #     - build:
-  #         name: sensu-agent-windows-386
-  #         binary: sensu-agent
-  #         os: windows
-  #         arch: '386'
-  #     - build:
-  #         name: sensuctl-windows-386
-  #         binary: sensuctl
-  #         os: windows
-  #         arch: '386'
+      # windows/386
+      - build:
+          name: sensu-agent-windows-386
+          binary: sensu-agent
+          os: windows
+          arch: '386'
+      - build:
+          name: sensuctl-windows-386
+          binary: sensuctl
+          os: windows
+          arch: '386'
 
-  #     # windows/amd64
-  #     - build:
-  #         name: sensu-agent-windows-amd64
-  #         binary: sensu-agent
-  #         os: windows
-  #         arch: amd64
-  #     - build:
-  #         name: sensuctl-windows-amd64
-  #         binary: sensuctl
-  #         os: windows
-  #         arch: amd64
+      # windows/amd64
+      - build:
+          name: sensu-agent-windows-amd64
+          binary: sensu-agent
+          os: windows
+          arch: amd64
+      - build:
+          name: sensuctl-windows-amd64
+          binary: sensuctl
+          os: windows
+          arch: amd64
