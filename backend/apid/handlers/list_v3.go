@@ -17,9 +17,6 @@ func (h Handlers[R, T]) ListResources(ctx context.Context, pred *store.Selection
 	gstore := storev2.Of[R](h.Store)
 
 	if selector := request.SelectorFromContext(ctx); selector != nil {
-		type tmGetter interface {
-			GetTypeMeta() corev2.TypeMeta
-		}
 		tmp := new(T)
 		var tm corev2.TypeMeta
 		if getter, ok := any(tmp).(tmGetter); ok {
@@ -45,4 +42,8 @@ func (h Handlers[R, T]) ListResources(ctx context.Context, pred *store.Selection
 		result[i] = r
 	}
 	return result, nil
+}
+
+type tmGetter interface {
+	GetTypeMeta() corev2.TypeMeta
 }
