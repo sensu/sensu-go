@@ -546,7 +546,7 @@ func extractResourceData(wrapper storev2.Wrapper) (data resourceData, err error)
 
 	data.Fields = []byte("{}")
 	if fielder, ok := res.(corev3.Fielder); ok {
-		data.Fields, err = json.Marshal(fielder.Fields())
+		data.Fields, _ = json.Marshal(fielder.Fields())
 	}
 
 	data.Resource, err = json.Marshal(res)
