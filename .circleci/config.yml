@@ -3,6 +3,7 @@ version: 2.1
 orbs:
   go: circleci/go@1.7.1
   docker: circleci/docker@1.4.0
+  windows: circleci/windows@2.4.0
 
 parameters:
   go_version:
@@ -47,6 +48,35 @@ jobs:
       # Run tests
       - run: ./build.sh unit
 
+  test-windows:
+    executor:
+      name: windows/default
+    steps:
+      - checkout
+      - restore_cache:
+          keys:
+            - go-cache
+      - run:
+          name: Download & Install Go
+          command: .\ci\install-go.ps1 << pipeline.parameters.go_version >>
+      - save_cache:
+          key: go-cache
+          paths:
+            - C:\Program Files\Go
+      - run: go version
+      - run: go env
+      - restore_cache:
+          keys:
+            - go-mod-and-build-cache
+      - run: go mod download
+      - save_cache:
+          key: go-mod-and-build-cache
+          paths:
+            - C:\Users\circleci\go
+            - C:\Users\circleci\AppData\Local\go-build
+            - C:\Users\circleci\AppData\Roaming\go
+      - run: .\build.ps1 unit
+
   build:
     executor: go
     parameters:
@@ -79,6 +109,10 @@ workflows:
   run_the_tests:
     jobs:
       - test:
+          filters:
+            tags:
+              ignore: /.*/
+      - test-windows:
           filters:
             tags:
               ignore: /.*/
