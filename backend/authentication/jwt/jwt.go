@@ -198,6 +198,17 @@ func InitSecret(store store.Store) error {
 	return nil
 }
 
+// InitSession initializes a new session for the given username, returning a
+// unique identifier for the new session.
+func InitSession(username string) (string, error) {
+	sessionID, err := GenJTI()
+	if err != nil {
+		return "", err
+	}
+
+	return sessionID, nil
+}
+
 // parseToken takes a signed token and parse it to verify its integrity
 func parseToken(tokenString string) (*jwt.Token, error) {
 	t, err := jwt.ParseWithClaims(tokenString, &types.Claims{}, func(token *jwt.Token) (interface{}, error) {

@@ -6,21 +6,25 @@ import (
 	"fmt"
 
 	corev2 "github.com/sensu/core/v2"
+
 	"github.com/sensu/sensu-go/backend/authentication"
 	"github.com/sensu/sensu-go/backend/authentication/jwt"
 	"github.com/sensu/sensu-go/backend/authentication/providers/basic"
+	"github.com/sensu/sensu-go/backend/store"
 )
 
 // AuthenticationClient is an API client for authentication.
 type AuthenticationClient struct {
-	auth *authentication.Authenticator
+	auth         *authentication.Authenticator
+	sessionStore store.SessionStore
 }
 
-// NewAuthenticationClient creates a new AuthenticationClient, given a a store
-// and an authenticator.
-func NewAuthenticationClient(auth *authentication.Authenticator) *AuthenticationClient {
+// NewAuthenticationClient creates a new AuthenticationClient, given an
+// authenticator and a session store.
+func NewAuthenticationClient(auth *authentication.Authenticator, sessionStore store.SessionStore) *AuthenticationClient {
 	return &AuthenticationClient{
-		auth: auth,
+		auth:         auth,
+		sessionStore: sessionStore,
 	}
 }
 
@@ -31,6 +35,13 @@ func (a *AuthenticationClient) CreateAccessToken(ctx context.Context, username, 
 	if err != nil {
 		return nil, corev2.ErrUnauthorized
 	}
+
+	// Initialize a new session for this user
+	sessionID, err := jwt.InitSession(claims.Subject)
+	if err != nil {
+		return nil, err
+	}
+	claims.SessionID = sessionID
 
 	// Add the 'system:users' group to this user
 	claims.Groups = append(claims.Groups, "system:users")
@@ -47,10 +58,23 @@ func (a *AuthenticationClient) CreateAccessToken(ctx context.Context, username, 
 	}
 
 	// Create a refresh token and its signed version
-	refreshClaims := &corev2.Claims{StandardClaims: corev2.StandardClaims(claims.Subject)}
-	_, refreshTokenString, err := jwt.RefreshToken(refreshClaims)
+	refreshClaims := &corev2.Claims{
+		StandardClaims: corev2.StandardClaims(claims.Subject),
+		SessionID:      sessionID,
+	}
+	refreshToken, refreshTokenString, err := jwt.RefreshToken(refreshClaims)
 	if err != nil {
 		return nil, fmt.Errorf("error creating refresh token: %s", err)
+	}
+
+	refreshTokenClaims, err := jwt.GetClaims(refreshToken)
+	if err != nil {
+		return nil, err
+	}
+
+	// Store the refresh token's unique ID as part of this user's session
+	if err := a.sessionStore.UpdateSession(ctx, refreshTokenClaims.Subject, refreshTokenClaims.SessionID, refreshTokenClaims.Id); err != nil {
+		return nil, err
 	}
 
 	result := &corev2.Tokens{
@@ -60,7 +84,6 @@ func (a *AuthenticationClient) CreateAccessToken(ctx context.Context, username, 
 	}
 
 	return result, nil
-
 }
 
 // TestCreds detects if the username and password are valid.
@@ -84,8 +107,25 @@ func (a *AuthenticationClient) TestCreds(ctx context.Context, username, password
 //
 // corev2.AccessTokenClaims -> *corev2.Claims
 // corev2.RefreshTokenClaims -> *corev2.Claims
+//
+// Given that we use JWTs for authentication, logging out just destroys the
+// server side session such that it's not possible to get a new access token
+// anymore, regardless of the refresh token presented by the user.
+//
+// Again, because we use JWTs, even after logging out, the access token bearer
+// can still interact with the system until the token expires (up to 5 minutes
+// by default).
 func (a *AuthenticationClient) Logout(ctx context.Context) error {
-	return nil
+	var accessClaims *corev2.Claims
+
+	// Retrieve the access token's claims
+	if value := ctx.Value(corev2.AccessTokenClaims); value != nil {
+		accessClaims = value.(*corev2.Claims)
+	} else {
+		return corev2.ErrInvalidToken
+	}
+
+	return a.sessionStore.DeleteSession(ctx, accessClaims.Subject, accessClaims.SessionID)
 }
 
 // RefreshAccessToken refreshes an access/refresh token pair. The context must
@@ -97,6 +137,7 @@ func (a *AuthenticationClient) Logout(ctx context.Context) error {
 // corev2.RefreshTokenString -> string
 func (a *AuthenticationClient) RefreshAccessToken(ctx context.Context) (*corev2.Tokens, error) {
 	var accessClaims *corev2.Claims
+	var refreshClaims *corev2.Claims
 
 	// Get the access token claims
 	if value := ctx.Value(corev2.AccessTokenClaims); value != nil {
@@ -106,7 +147,25 @@ func (a *AuthenticationClient) RefreshAccessToken(ctx context.Context) (*corev2.
 	}
 
 	// Get the refresh token claims
-	if value := ctx.Value(corev2.RefreshTokenClaims); value == nil {
+	if value := ctx.Value(corev2.RefreshTokenClaims); value != nil {
+		refreshClaims = value.(*corev2.Claims)
+	} else {
+		return nil, corev2.ErrInvalidToken
+	}
+
+	sessionID := accessClaims.SessionID
+
+	storedRefreshTokenID, err := a.sessionStore.GetSession(ctx, refreshClaims.Subject, refreshClaims.SessionID)
+	if err != nil {
+		return nil, err
+	}
+
+	// If the supplied refresh token's ID doesn't match what the session
+	// expected it to be. Whatever the reason for that, be it refresh token
+	// reuse or otherwise, we just tear down that session, forcing the user to
+	// fully reauthenticate.
+	if refreshClaims.Id != storedRefreshTokenID {
+		a.Logout(ctx)
 		return nil, corev2.ErrInvalidToken
 	}
 
@@ -128,6 +187,9 @@ func (a *AuthenticationClient) RefreshAccessToken(ctx context.Context) (*corev2.
 		return nil, err
 	}
 
+	// Carry over the session ID
+	claims.SessionID = sessionID
+
 	// Ensure the 'system:users' group is present
 	claims.Groups = append(claims.Groups, "system:users")
 
@@ -142,11 +204,24 @@ func (a *AuthenticationClient) RefreshAccessToken(ctx context.Context) (*corev2.
 		return nil, err
 	}
 
-	// Create a new refresh token and its signed version
-	refreshClaims := &corev2.Claims{StandardClaims: corev2.StandardClaims(claims.Subject)}
-	_, newRefreshTokenString, err := jwt.RefreshToken(refreshClaims)
+	// Create a new refresh token, carrying over the session ID
+	newRefreshClaims := &corev2.Claims{
+		StandardClaims: corev2.StandardClaims(claims.Subject),
+		SessionID:      sessionID,
+	}
+	newRefreshToken, newRefreshTokenString, err := jwt.RefreshToken(newRefreshClaims)
 	if err != nil {
 		return nil, fmt.Errorf("error creating refresh token: %s", err)
+	}
+
+	newRefreshTokenClaims, err := jwt.GetClaims(newRefreshToken)
+	if err != nil {
+		return nil, err
+	}
+
+	// Update the session with the new refresh token's unique ID
+	if err := a.sessionStore.UpdateSession(ctx, claims.Subject, refreshClaims.SessionID, newRefreshTokenClaims.Id); err != nil {
+		return nil, err
 	}
 
 	return &corev2.Tokens{
