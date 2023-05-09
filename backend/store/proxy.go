@@ -463,6 +463,24 @@ func (s *StoreProxy) UpdateRole(ctx context.Context, role *types.Role) error {
 	return s.do().UpdateRole(ctx, role)
 }
 
+// GetSession retrieves the session state uniquely identified by the given
+// username and session ID.
+func (s *StoreProxy) GetSession(ctx context.Context, username, sessionID string) (string, error) {
+	return s.do().GetSession(ctx, username, sessionID)
+}
+
+// UpdateSession applies the supplied state to the session uniquely identified
+// by the given username and session ID.
+func (s *StoreProxy) UpdateSession(ctx context.Context, username, sessionID, state string) error {
+	return s.do().UpdateSession(ctx, username, sessionID, state)
+}
+
+// DeleteSession deletes the session uniquely identified by the give username
+// and session ID.
+func (s *StoreProxy) DeleteSession(ctx context.Context, username, sessionID string) error {
+	return s.do().DeleteSession(ctx, username, sessionID)
+}
+
 // DeleteSilencedEntryByName deletes an entry using the given id.
 func (s *StoreProxy) DeleteSilencedEntryByName(ctx context.Context, id ...string) error {
 	return s.do().DeleteSilencedEntryByName(ctx, id...)
