@@ -2,7 +2,6 @@ package agentd
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"sort"
@@ -20,7 +19,6 @@ import (
 	"github.com/sensu/sensu-go/backend/ringv2"
 	"github.com/sensu/sensu-go/backend/store"
 	storev2 "github.com/sensu/sensu-go/backend/store/v2"
-	"github.com/sensu/sensu-go/backend/store/v2/wrap"
 	"github.com/sensu/sensu-go/handler"
 	"github.com/sensu/sensu-go/transport"
 	"github.com/sirupsen/logrus"
@@ -440,16 +438,13 @@ func (s *Session) Start() (err error) {
 			Metadata:    &meta,
 			EntityClass: corev2.EntityAgentClass,
 		}
-		tm := emptyConfig.GetTypeMeta()
-		emptyCfgJson, _ := json.Marshal(emptyConfig)
+		wrapped, err := storev2.WrapResource(&emptyConfig)
+		if err != nil {
+			panic(fmt.Sprintf("failed to wrap empty entity config: %v", err))
+		}
 		watchEvent := &storev2.WatchEvent{
-			Type: storev2.WatchCreate,
-			Value: &wrap.Wrapper{
-				TypeMeta:    &tm,
-				Encoding:    wrap.Encoding_json,
-				Compression: wrap.Compression_none,
-				Value:       emptyCfgJson,
-			},
+			Type:  storev2.WatchCreate,
+			Value: wrapped,
 		}
 		err = s.bus.Publish(messaging.EntityConfigTopic(s.cfg.Namespace, s.cfg.AgentName), watchEvent)
 		if err != nil {

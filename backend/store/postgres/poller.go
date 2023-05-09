@@ -6,6 +6,7 @@ import (
 	"time"
 
 	corev2 "github.com/sensu/core/v2"
+	apitools "github.com/sensu/sensu-api-tools"
 	"github.com/sensu/sensu-go/backend/poll"
 	"github.com/sensu/sensu-go/backend/store"
 	storev2 "github.com/sensu/sensu-go/backend/store/v2"
@@ -100,6 +101,11 @@ func (e *configurationPoller) Since(ctx context.Context, updatedSince time.Time)
 			return nil, &store.ErrInternal{Message: err.Error()}
 		}
 		id := fmt.Sprint(record.id)
+
+		resource, err := apitools.Resolve(e.req.APIVersion, e.req.Type)
+		if err != nil {
+			return nil, &store.ErrInternal{Message: err.Error()}
+		}
 		pollResult := poll.Row{
 			Id: id,
 			Resource: &wrap.Wrapper{

@@ -2,6 +2,7 @@ package v2
 
 import (
 	"errors"
+	"fmt"
 	"path"
 	"reflect"
 	"strings"
@@ -52,7 +53,27 @@ func apiVersion(version string) string {
 // WrapResource is made variable, for the purpose of swapping it out for another
 // implementation.
 var WrapResource = func(resource corev3.Resource, opts ...wrap.Option) (Wrapper, error) {
-	return wrap.Resource(resource, opts...)
+	return wrappedResource{Value: resource}, nil
+}
+
+type wrappedResource struct {
+	Value corev3.Resource
+}
+
+func (w wrappedResource) Unwrap() (corev3.Resource, error) {
+	return w.Value, nil
+}
+func (w wrappedResource) UnwrapInto(i interface{}) error {
+	value := reflect.ValueOf(w.Value).Elem()
+	assignable := reflect.ValueOf(i).Elem()
+	if !value.Type().AssignableTo(assignable.Type()) {
+		return fmt.Errorf("wrapper error: cannot assign %T to %T", w.Value, i)
+	}
+	if !assignable.CanSet() {
+		return fmt.Errorf("wrapper error: cannot set %T", i)
+	}
+	value.Set(assignable)
+	return nil
 }
 
 // ResourceRequest contains all the information necessary to query a store.
