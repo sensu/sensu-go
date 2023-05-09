@@ -144,6 +144,7 @@ type configRecord struct {
 	createdAt   sql.NullTime
 	updatedAt   sql.NullTime
 	deletedAt   sql.NullTime
+	etag        storev2.ETag
 }
 
 type listTemplateValues struct {
@@ -203,15 +204,87 @@ func (s *ConfigStore) CreateOrUpdate(ctx context.Context, request storev2.Resour
 
 	meta, typeMeta := data.Metadata, data.TypeMeta
 	args := []interface{}{typeMeta.APIVersion, typeMeta.Type, meta.Namespace, meta.Name, data.Labels, data.Annotations, data.Fields, data.Resource}
+	query := CreateOrUpdateConfigQuery
 
-	tags, err := s.db.Exec(ctx, CreateOrUpdateConfigQuery, args...)
+	ifNoneMatch := storev2.IfNoneMatchFromContext(ctx)
+	ifMatch := storev2.IfMatchFromContext(ctx)
+
+	if ifMatch != nil {
+		return &store.ErrNotValid{Err: errors.New("can't use IfMatch with this method")}
+	}
+	if ifNoneMatch != nil {
+		return s.createOrUpdateIfNoneMatch(ctx, args, ifNoneMatch)
+	}
+
+	var (
+		inserted       bool
+		prevEtag, etag storev2.ETag
+	)
+	row := s.db.QueryRow(ctx, query, args...)
+	if err := row.Scan(&inserted, &prevEtag, &etag); err != nil {
+		return &store.ErrInternal{Message: err.Error()}
+	}
+	txInfo := storev2.TxInfoFromContext(ctx)
+	if txInfo != nil {
+		var record storev2.TxRecordInfo
+		if inserted {
+			record.Created = true
+		} else {
+			// it's only updated if the etag didn't change
+			if !etag.Equals(prevEtag) {
+				record.Updated = true
+			}
+			record.PrevETag = storev2.ETag(prevEtag)
+		}
+		record.ETag = storev2.ETag(etag)
+		txInfo.Records = append(txInfo.Records, record)
+	}
+
+	return nil
+}
+
+func (s *ConfigStore) createOrUpdateIfNoneMatch(ctx context.Context, args []interface{}, ifNoneMatch storev2.IfNoneMatch) error {
+	var (
+		inserted       bool
+		prevEtag, etag storev2.ETag
+	)
+	tx, err := s.db.Begin(ctx)
 	if err != nil {
-		return err
+		return &store.ErrInternal{Message: err.Error()}
 	}
-	if tags.RowsAffected() == 0 {
-		return errors.New("no rows inserted")
+	defer tx.Commit(ctx)
+	row := tx.QueryRow(ctx, GetETagOnlyQuery, args[:4]...)
+	if err := row.Scan(&etag); err != nil {
+		if err == pgx.ErrNoRows {
+			goto OK
+		}
+		return &store.ErrInternal{Message: err.Error()}
 	}
-
+	for _, tag := range ifNoneMatch {
+		if etag.Equals(storev2.ETag(tag)) {
+			return storev2.ErrPreconditionFailed
+		}
+	}
+OK:
+	row = tx.QueryRow(ctx, CreateOrUpdateConfigQuery, args...)
+	if err := row.Scan(&inserted, &prevEtag, &etag); err != nil {
+		return &store.ErrInternal{Message: err.Error()}
+	}
+	txInfo := storev2.TxInfoFromContext(ctx)
+	if txInfo != nil {
+		var record storev2.TxRecordInfo
+		if inserted {
+			record.Created = true
+		} else {
+			if !etag.Equals(prevEtag) {
+				// it's only updated if the etag didn't change
+				record.Updated = true
+			}
+			record.PrevETag = storev2.ETag(prevEtag)
+		}
+		record.ETag = storev2.ETag(etag)
+		txInfo.Records = append(txInfo.Records, record)
+	}
 	return nil
 }
 
@@ -227,13 +300,65 @@ func (s *ConfigStore) UpdateIfExists(ctx context.Context, request storev2.Resour
 
 	meta, typeMeta := data.Metadata, data.TypeMeta
 	args := []interface{}{data.Labels, data.Annotations, data.Fields, data.Resource, typeMeta.APIVersion, typeMeta.Type, meta.Namespace, meta.Name}
+	query := UpdateIfExistsConfigQuery
 
-	tags, err := s.db.Exec(ctx, UpdateIfExistsConfigQuery, args...)
+	ifMatch := storev2.IfMatchFromContext(ctx)
+	ifNoneMatch := storev2.IfNoneMatchFromContext(ctx)
+
+	var etag, prevEtag storev2.ETag
+
+	tx, err := s.db.Begin(ctx)
 	if err != nil {
+		return &store.ErrInternal{Message: err.Error()}
+	}
+	defer tx.Commit(ctx)
+
+	getArgs := []interface{}{typeMeta.APIVersion, typeMeta.Type, meta.Namespace, meta.Name}
+
+	row := tx.QueryRow(ctx, GetETagOnlyQuery, getArgs...)
+	if err := row.Scan(&prevEtag); err != nil {
+		if err == pgx.ErrNoRows {
+			return &store.ErrNotFound{Key: fmt.Sprintf("%s.%s/%s/%s", request.APIVersion, request.Type, request.Namespace, request.Name)}
+		}
+		return &store.ErrInternal{Message: err.Error()}
+	}
+
+	if ifMatch != nil {
+		for _, tag := range ifMatch {
+			if prevEtag.Equals(tag) {
+				goto MATCHED
+			}
+		}
+		return storev2.ErrPreconditionFailed
+	}
+
+	for _, tag := range ifNoneMatch {
+		if prevEtag.Equals(tag) {
+			return storev2.ErrPreconditionFailed
+		}
+	}
+
+MATCHED:
+
+	row = tx.QueryRow(ctx, query, args...)
+	if err := row.Scan(&etag); err != nil {
+		// impossible because the previous part of the tx succeeded, but
+		// handle it anyways just in case something changes down the road.
+		if err == pgx.ErrNoRows {
+			if ifNoneMatch != nil || ifMatch != nil {
+				return storev2.ErrPreconditionFailed
+			}
+			return &store.ErrNotFound{Key: fmt.Sprintf("%s.%s/%s/%s", request.APIVersion, request.Type, request.Namespace, request.Name)}
+		}
 		return err
 	}
-	if tags.RowsAffected() == 0 {
-		return &store.ErrNotFound{Key: fmt.Sprintf("%s.%s/%s/%s", typeMeta.APIVersion, typeMeta.Type, request.Namespace, request.Name)}
+	txInfo := storev2.TxInfoFromContext(ctx)
+	if txInfo != nil {
+		var record storev2.TxRecordInfo
+		record.Updated = true
+		record.PrevETag = storev2.ETag(prevEtag)
+		record.ETag = storev2.ETag(etag)
+		txInfo.Records = append(txInfo.Records, record)
 	}
 
 	return nil
@@ -252,15 +377,21 @@ func (s *ConfigStore) CreateIfNotExists(ctx context.Context, request storev2.Res
 	meta, typeMeta := data.Metadata, data.TypeMeta
 	args := []interface{}{typeMeta.APIVersion, typeMeta.Type, meta.Namespace, meta.Name, data.Labels, data.Annotations, data.Fields, data.Resource}
 
-	tags, err := s.db.Exec(ctx, CreateConfigIfNotExistsQuery, args...)
-	if err != nil {
+	row := s.db.QueryRow(ctx, CreateConfigIfNotExistsQuery, args...)
+	var etag []byte
+
+	if err := row.Scan(&etag); err != nil {
 		if pgErr, ok := err.(*pgconn.PgError); ok && pgErr.Code == pgUniqueViolationCode {
 			return &store.ErrAlreadyExists{Key: fmt.Sprintf("%s.%s/%s/%s", typeMeta.APIVersion, typeMeta.Type, request.Namespace, request.Name)}
 		}
 		return err
 	}
-	if tags.RowsAffected() == 0 {
-		return &store.ErrAlreadyExists{Key: fmt.Sprintf("%s.%s/%s/%s", typeMeta.APIVersion, typeMeta.Type, request.Namespace, request.Name)}
+	txInfo := storev2.TxInfoFromContext(ctx)
+	if txInfo != nil {
+		var record storev2.TxRecordInfo
+		record.Created = true
+		record.ETag = storev2.ETag(etag)
+		txInfo.Records = append(txInfo.Records, record)
 	}
 
 	return nil
@@ -271,26 +402,72 @@ func (s *ConfigStore) Get(ctx context.Context, request storev2.ResourceRequest) 
 		return nil, &store.ErrNotValid{Err: err}
 	}
 
+	query := GetConfigQuery
 	args := []interface{}{request.APIVersion, request.Type, request.Namespace, request.Name}
 
-	row := s.db.QueryRow(ctx, GetConfigQuery, args...)
-	var result configRecord
+	tx, err := s.db.Begin(ctx)
+	if err != nil {
+		return nil, &store.ErrInternal{Message: err.Error()}
+	}
+	defer tx.Commit(ctx)
 
-	if err := row.Scan(&result.id, &result.labels, &result.annotations, &result.resource, &result.createdAt, &result.updatedAt); err != nil {
+	if err := s.checkGetPreconditions(ctx, tx, args); err != nil {
+		return nil, err
+	}
+
+	row := tx.QueryRow(ctx, query, args...)
+	var rec configRecord
+
+	if err := row.Scan(&rec.id, &rec.labels, &rec.annotations, &rec.resource, &rec.createdAt, &rec.updatedAt, &rec.etag); err != nil {
 		if err == pgx.ErrNoRows {
 			return nil, &store.ErrNotFound{Key: fmt.Sprintf("%s.%s/%s/%s", request.APIVersion, request.Type, request.Namespace, request.Name)}
 		}
-		return nil, err
+		return nil, &store.ErrInternal{Message: err.Error()}
 	}
 
 	return &wrap.Wrapper{
 		TypeMeta:    &corev2.TypeMeta{APIVersion: request.APIVersion, Type: request.Type},
 		Encoding:    wrap.Encoding_json,
 		Compression: 0,
-		Value:       []byte(result.resource),
-		CreatedAt:   result.createdAt.Time,
-		UpdatedAt:   result.updatedAt.Time,
+		Value:       []byte(rec.resource),
+		CreatedAt:   rec.createdAt.Time,
+		UpdatedAt:   rec.updatedAt.Time,
+		ETag:        rec.etag.String(),
 	}, nil
+}
+
+func (s *ConfigStore) checkGetPreconditions(ctx context.Context, tx pgx.Tx, args []interface{}) error {
+	ifMatch := storev2.IfMatchFromContext(ctx)
+	ifNoneMatch := storev2.IfNoneMatchFromContext(ctx)
+
+	if ifMatch == nil && ifNoneMatch == nil {
+		return nil
+	}
+
+	var etag storev2.ETag
+
+	row := tx.QueryRow(ctx, GetETagOnlyQuery, args...)
+	if err := row.Scan(&etag); err != nil {
+		if err == pgx.ErrNoRows {
+			return &store.ErrNotFound{Key: fmt.Sprintf("%s.%s/%s/%s", args...)}
+		}
+	}
+	if ifMatch != nil {
+		for _, tag := range ifMatch {
+			if etag.Equals(tag) {
+				return nil
+			}
+		}
+		return storev2.ErrPreconditionFailed
+	}
+
+	for _, tag := range ifNoneMatch {
+		if etag.Equals(tag) {
+			return storev2.ErrPreconditionFailed
+		}
+	}
+
+	return nil
 }
 
 func (s *ConfigStore) Delete(ctx context.Context, request storev2.ResourceRequest) error {
@@ -298,15 +475,33 @@ func (s *ConfigStore) Delete(ctx context.Context, request storev2.ResourceReques
 		return &store.ErrNotValid{Err: err}
 	}
 
+	query := DeleteConfigQuery
 	args := []interface{}{request.APIVersion, request.Type, request.Namespace, request.Name}
 
-	cmdTag, err := s.db.Exec(ctx, DeleteConfigQuery, args...)
+	tx, err := s.db.Begin(ctx)
+	if err != nil {
+		return &store.ErrInternal{Message: err.Error()}
+	}
+	defer tx.Commit(ctx)
+
+	if err := s.checkGetPreconditions(ctx, tx, args); err != nil {
+		return err
+	}
+
+	cmdTag, err := tx.Exec(ctx, query, args...)
 	if err != nil {
 		return err
 	}
 
 	if cmdTag.RowsAffected() == 0 {
 		return &store.ErrNotFound{Key: fmt.Sprintf("%s.%s/%s/%s", request.APIVersion, request.Type, request.Namespace, request.Name)}
+	}
+
+	txInfo := storev2.TxInfoFromContext(ctx)
+	if txInfo != nil {
+		var record storev2.TxRecordInfo
+		record.Deleted = true
+		txInfo.Records = append(txInfo.Records, record)
 	}
 
 	return nil
@@ -370,7 +565,7 @@ func (s *ConfigStore) List(ctx context.Context, request storev2.ResourceRequest,
 	wrapList := make(wrap.List, 0)
 	for rows.Next() {
 		var rec configRecord
-		err := rows.Scan(&rec.id, &rec.labels, &rec.annotations, &rec.resource, &rec.createdAt, &rec.updatedAt, &rec.deletedAt)
+		err := rows.Scan(&rec.id, &rec.labels, &rec.annotations, &rec.resource, &rec.createdAt, &rec.updatedAt, &rec.deletedAt, &rec.etag)
 		if err != nil {
 			return nil, err
 		}
@@ -383,6 +578,7 @@ func (s *ConfigStore) List(ctx context.Context, request storev2.ResourceRequest,
 			CreatedAt:   rec.createdAt.Time,
 			UpdatedAt:   rec.updatedAt.Time,
 			DeletedAt:   rec.deletedAt.Time,
+			ETag:        rec.etag.String(),
 		}
 		wrapList = append(wrapList, &wrapped)
 	}
@@ -400,9 +596,21 @@ func (s *ConfigStore) Exists(ctx context.Context, request storev2.ResourceReques
 		return false, &store.ErrNotValid{Err: err}
 	}
 
+	query := ExistsConfigQuery
 	args := []interface{}{request.APIVersion, request.Type, request.Namespace, request.Name}
 
-	row := s.db.QueryRow(ctx, ExistsConfigQuery, args...)
+	ifMatch := storev2.IfMatchFromContext(ctx)
+	ifNoneMatch := storev2.IfNoneMatchFromContext(ctx)
+
+	if ifMatch != nil {
+		query = ExistsConfigIfMatchQuery
+		args = append(args, ifMatch)
+	} else if ifNoneMatch != nil {
+		query = ExistsConfigIfNoneMatchQuery
+		args = append(args, ifNoneMatch)
+	}
+
+	row := s.db.QueryRow(ctx, query, args...)
 
 	var count int
 	if err := row.Scan(&count); err != nil {
@@ -421,7 +629,7 @@ func (s *ConfigStore) Patch(ctx context.Context, request storev2.ResourceRequest
 
 	w, ok := wrapper.(*wrap.Wrapper)
 	if !ok {
-		return &store.ErrNotValid{Err: fmt.Errorf("etcdstore only works with wrap.Wrapper, not %T", wrapper)}
+		return &store.ErrNotValid{Err: fmt.Errorf("store only works with wrap.Wrapper, not %T", wrapper)}
 	}
 
 	resource, err := w.Unwrap()

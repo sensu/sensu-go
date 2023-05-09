@@ -34,31 +34,229 @@ func TestConfigStore_CreateOrUpdate(t *testing.T) {
 	testWithPostgresConfigStore(t, func(s storev2.ConfigStore) {
 		ctx := context.Background()
 
-		asset, err := getAsset(ctx, s, "default", assetName)
-		assert.Error(t, err)
-		assert.IsType(t, &store.ErrNotFound{}, err)
-		assert.Nil(t, asset)
+		_, err := getAsset(ctx, s, "default", assetName)
+		if err == nil {
+			t.Error("expected non-nil error")
+		}
+		if _, ok := err.(*store.ErrNotFound); !ok {
+			t.Errorf("wanted ErrNotFound, but got %T (%s)", err, err)
+		}
 
 		toCreate := corev2.FixtureAsset(assetName)
 		for i := 0; i < 4; i++ {
 			toCreate.ObjectMeta.Labels[fmt.Sprintf("label-%d", i)] = fmt.Sprintf("labelValue-%d", i)
 		}
 
-		err = createOrUpdateAsset(ctx, s, toCreate)
-		assert.NoError(t, err)
+		var txInfo storev2.TxInfo
 
-		asset, err = getAsset(ctx, s, defaultNamespace, assetName)
-		assert.NoError(t, err)
+		ctx = storev2.ContextWithTxInfo(ctx, &txInfo)
+
+		if err := createOrUpdateAsset(ctx, s, toCreate); err != nil {
+			t.Error(err)
+			return
+		}
+
+		if got, want := len(txInfo.Records), 1; got != want {
+			t.Errorf("bad number of tx records: got %d, want %d", got, want)
+			return
+		}
+
+		rec := txInfo.Records[0]
+
+		if !rec.Created {
+			t.Error("TxRecordInfo created flag not set")
+		}
+
+		if rec.ETag.Equals(nil) {
+			t.Error("ETag not set")
+		}
+		if !rec.PrevETag.Equals(nil) {
+			t.Error("PrevETag set")
+		}
+
+		etag := rec.ETag
+
+		asset, err := getAsset(ctx, s, defaultNamespace, assetName)
+		if err != nil {
+			t.Error(err)
+			return
+		}
+
 		assert.Equal(t, assetName, asset.Name)
+
+		txInfo.Records = nil
 
 		delete(toCreate.ObjectMeta.Labels, "label-0")
 		delete(toCreate.ObjectMeta.Labels, "label-2")
 		err = createOrUpdateAsset(ctx, s, toCreate)
 		assert.NoError(t, err)
 
+		if got, want := len(txInfo.Records), 1; got != want {
+			t.Errorf("bad number of tx records: got %d, want %d", got, want)
+			return
+		}
+
+		if !txInfo.Records[0].Updated {
+			t.Error("TxRecordInfo updated flag not set")
+		}
+
+		if txInfo.Records[0].ETag.Equals(etag) {
+			t.Error("different resource has the same etag")
+		}
+
 		asset, err = getAsset(ctx, s, "default", assetName)
 		assert.NoError(t, err)
 		assert.Equal(t, assetName, asset.Name)
+	})
+}
+
+func TestConfigStore_CreateOrUpdateIfMatch(t *testing.T) {
+	testWithPostgresConfigStore(t, func(s storev2.ConfigStore) {
+		ctx := context.Background()
+
+		_, err := getAsset(ctx, s, "default", assetName)
+		if err == nil {
+			t.Error("expected non-nil error")
+		}
+		if _, ok := err.(*store.ErrNotFound); !ok {
+			t.Errorf("wanted ErrNotFound, but got %T (%s)", err, err)
+		}
+
+		toCreate := corev2.FixtureAsset(assetName)
+		for i := 0; i < 4; i++ {
+			toCreate.ObjectMeta.Labels[fmt.Sprintf("label-%d", i)] = fmt.Sprintf("labelValue-%d", i)
+		}
+
+		var txInfo storev2.TxInfo
+
+		ctx = storev2.ContextWithTxInfo(ctx, &txInfo)
+
+		if err := createOrUpdateAsset(ctx, s, toCreate); err != nil {
+			t.Error(err)
+			return
+		}
+
+		if got, want := len(txInfo.Records), 1; got != want {
+			t.Errorf("bad number of tx records: got %d, want %d", got, want)
+			return
+		}
+
+		rec := txInfo.Records[0]
+
+		if !rec.Created {
+			t.Error("TxRecordInfo created flag not set")
+		}
+
+		if rec.ETag.Equals(nil) {
+			t.Error("ETag not set")
+		}
+		if !rec.PrevETag.Equals(nil) {
+			t.Error("PrevETag set")
+		}
+
+		etag := rec.ETag
+
+		asset, err := getAsset(ctx, s, defaultNamespace, assetName)
+		if err != nil {
+			t.Error(err)
+			return
+		}
+
+		assert.Equal(t, assetName, asset.Name)
+
+		txInfo.Records = nil
+
+		delete(toCreate.ObjectMeta.Labels, "label-0")
+		delete(toCreate.ObjectMeta.Labels, "label-2")
+
+		ctx = storev2.ContextWithIfMatch(ctx, []storev2.ETag{etag})
+		err = createOrUpdateAsset(ctx, s, toCreate)
+		if err == nil {
+			t.Error("expected non-nil error")
+			return
+		}
+		// IfMatch not supported
+		if _, ok := err.(*store.ErrNotValid); !ok {
+			t.Error(err)
+			return
+		}
+	})
+}
+
+func TestConfigStore_CreateOrUpdateIfNoneMatch(t *testing.T) {
+	testWithPostgresConfigStore(t, func(s storev2.ConfigStore) {
+		ctx := context.Background()
+
+		_, err := getAsset(ctx, s, "default", assetName)
+		if err == nil {
+			t.Error("expected non-nil error")
+		}
+		if _, ok := err.(*store.ErrNotFound); !ok {
+			t.Errorf("wanted ErrNotFound, but got %T (%s)", err, err)
+		}
+
+		toCreate := corev2.FixtureAsset(assetName)
+		for i := 0; i < 4; i++ {
+			toCreate.ObjectMeta.Labels[fmt.Sprintf("label-%d", i)] = fmt.Sprintf("labelValue-%d", i)
+		}
+
+		var txInfo storev2.TxInfo
+
+		ctx = storev2.ContextWithTxInfo(ctx, &txInfo)
+
+		if err := createOrUpdateAsset(ctx, s, toCreate); err != nil {
+			t.Error(err)
+			return
+		}
+
+		if got, want := len(txInfo.Records), 1; got != want {
+			t.Errorf("bad number of tx records: got %d, want %d", got, want)
+			return
+		}
+
+		rec := txInfo.Records[0]
+
+		if !rec.Created {
+			t.Error("TxRecordInfo created flag not set")
+		}
+
+		if rec.ETag.Equals(nil) {
+			t.Error("ETag not set")
+		}
+		if !rec.PrevETag.Equals(nil) {
+			t.Error("PrevETag set")
+		}
+
+		etag := rec.ETag
+
+		asset, err := getAsset(ctx, s, defaultNamespace, assetName)
+		if err != nil {
+			t.Error(err)
+			return
+		}
+
+		assert.Equal(t, assetName, asset.Name)
+
+		txInfo.Records = nil
+
+		delete(toCreate.ObjectMeta.Labels, "label-0")
+		delete(toCreate.ObjectMeta.Labels, "label-2")
+
+		ctx = storev2.ContextWithIfNoneMatch(ctx, []storev2.ETag{etag})
+		err = createOrUpdateAsset(ctx, s, toCreate)
+		if err == nil {
+			t.Error("expected non-nil error")
+			return
+		}
+		if err != storev2.ErrPreconditionFailed {
+			t.Error(err)
+			return
+		}
+		ctx = storev2.ContextWithIfNoneMatch(context.Background(), []storev2.ETag{storev2.ETag("asldkfjasldf")})
+		err = createOrUpdateAsset(ctx, s, toCreate)
+		if err != nil {
+			t.Error(err)
+		}
 	})
 }
 
@@ -76,8 +274,29 @@ func TestConfigStore_CreateIfNotExists(t *testing.T) {
 			toCreate.Labels[fmt.Sprintf("label-%d", i)] = fmt.Sprintf("labelValue-%d", i)
 		}
 
+		var txInfo storev2.TxInfo
+		ctx = storev2.ContextWithTxInfo(ctx, &txInfo)
+
 		err = createIfNotExists(ctx, s, toCreate)
 		assert.NoError(t, err)
+
+		if got, want := len(txInfo.Records), 1; got != want {
+			t.Errorf("bad number of tx records: got %d, want %d", got, want)
+			return
+		}
+
+		rec := txInfo.Records[0]
+
+		if !rec.Created {
+			t.Error("TxRecordInfo created flag not set")
+		}
+
+		if rec.ETag.Equals(nil) {
+			t.Error("ETag not set")
+		}
+		if !rec.PrevETag.Equals(nil) {
+			t.Error("PrevETag set")
+		}
 
 		asset, err = getAsset(ctx, s, defaultNamespace, assetName)
 		assert.NoError(t, err)
@@ -114,18 +333,172 @@ func TestConfigStore_UpdateIfExists(t *testing.T) {
 		}
 
 		err = updateIfExists(ctx, s, toCreate)
-		assert.Error(t, err)
-		assert.IsType(t, &store.ErrNotFound{}, err)
+		if err == nil {
+			t.Error("expected non-nil error")
+		}
+		if _, ok := err.(*store.ErrNotFound); !ok {
+			t.Errorf("bad error type: got %T, want ErrNotFound (%s)", err, err)
+		}
 
 		err = createOrUpdateAsset(ctx, s, toCreate)
 		assert.NoError(t, err)
 
 		delete(toCreate.Labels, "label-0")
 		delete(toCreate.Labels, "label-2")
-		err = updateIfExists(ctx, s, toCreate)
-		assert.NoError(t, err)
+
+		var txInfo storev2.TxInfo
+		ctx = storev2.ContextWithTxInfo(ctx, &txInfo)
+
+		if err := updateIfExists(ctx, s, toCreate); err != nil {
+			t.Error(err)
+			return
+		}
+
+		if got, want := len(txInfo.Records), 1; got != want {
+			t.Errorf("bad number of tx records: got %d, want %d", got, want)
+			return
+		}
+
+		rec := txInfo.Records[0]
+
+		if rec.Created {
+			t.Error("TxRecordInfo created flag set")
+		}
+
+		if !rec.Updated {
+			t.Error("TxRecordInfo updated flag not set")
+		}
+
+		if rec.ETag.Equals(nil) {
+			t.Error("ETag not set")
+		}
+		if rec.PrevETag.Equals(nil) {
+			t.Error("PrevETag not set")
+		}
+		if rec.PrevETag.Equals(rec.ETag) {
+			t.Error("PrevETag set incorrectly")
+		}
 
 		asset, err = getAsset(ctx, s, defaultNamespace, assetName)
+		assert.NoError(t, err)
+		assert.Equal(t, assetName, asset.Name)
+	})
+}
+
+func TestConfigStore_UpdateIfExistsIfMatch(t *testing.T) {
+	testWithPostgresConfigStore(t, func(s storev2.ConfigStore) {
+		ctx := context.Background()
+
+		asset, err := getAsset(ctx, s, "default", assetName)
+		assert.Error(t, err)
+		assert.IsType(t, &store.ErrNotFound{}, err)
+		assert.Nil(t, asset)
+
+		toCreate := corev2.FixtureAsset(assetName)
+		for i := 0; i < 4; i++ {
+			toCreate.Labels[fmt.Sprintf("label-%d", i)] = fmt.Sprintf("labelValue-%d", i)
+		}
+
+		err = updateIfExists(ctx, s, toCreate)
+		if err == nil {
+			t.Error("expected non-nil error")
+		}
+		if _, ok := err.(*store.ErrNotFound); !ok {
+			t.Errorf("bad error type: got %T, want ErrNotFound (%s)", err, err)
+		}
+
+		var txInfo storev2.TxInfo
+		ctx = storev2.ContextWithTxInfo(ctx, &txInfo)
+
+		err = createOrUpdateAsset(ctx, s, toCreate)
+		assert.NoError(t, err)
+
+		delete(toCreate.Labels, "label-0")
+		delete(toCreate.Labels, "label-2")
+
+		ifMatch := storev2.IfMatch{txInfo.Records[0].ETag}
+		ctx = storev2.ContextWithIfMatch(ctx, ifMatch)
+
+		if err := updateIfExists(ctx, s, toCreate); err != nil {
+			t.Error(err)
+			return
+		}
+
+		if got, want := len(txInfo.Records), 2; got != want {
+			t.Errorf("bad number of tx records: got %d, want %d", got, want)
+			return
+		}
+
+		rec := txInfo.Records[1]
+
+		if rec.Created {
+			t.Error("TxRecordInfo created flag set")
+		}
+
+		if !rec.Updated {
+			t.Error("TxRecordInfo updated flag not set")
+		}
+
+		if rec.ETag.Equals(nil) {
+			t.Error("ETag not set")
+		}
+		if rec.PrevETag.Equals(nil) {
+			t.Error("PrevETag not set")
+		}
+		if rec.PrevETag.Equals(rec.ETag) {
+			t.Error("PrevETag set incorrectly")
+		}
+
+		asset, err = getAsset(context.Background(), s, defaultNamespace, assetName)
+		assert.NoError(t, err)
+		assert.Equal(t, assetName, asset.Name)
+	})
+}
+
+func TestConfigStore_UpdateIfExistsIfNoneMatch(t *testing.T) {
+	testWithPostgresConfigStore(t, func(s storev2.ConfigStore) {
+		ctx := context.Background()
+
+		asset, err := getAsset(ctx, s, "default", assetName)
+		assert.Error(t, err)
+		assert.IsType(t, &store.ErrNotFound{}, err)
+		assert.Nil(t, asset)
+
+		toCreate := corev2.FixtureAsset(assetName)
+		for i := 0; i < 4; i++ {
+			toCreate.Labels[fmt.Sprintf("label-%d", i)] = fmt.Sprintf("labelValue-%d", i)
+		}
+
+		err = updateIfExists(ctx, s, toCreate)
+		if err == nil {
+			t.Error("expected non-nil error")
+		}
+		if _, ok := err.(*store.ErrNotFound); !ok {
+			t.Errorf("bad error type: got %T, want ErrNotFound (%s)", err, err)
+		}
+
+		var txInfo storev2.TxInfo
+		ctx = storev2.ContextWithTxInfo(ctx, &txInfo)
+
+		err = createOrUpdateAsset(ctx, s, toCreate)
+		assert.NoError(t, err)
+
+		delete(toCreate.Labels, "label-0")
+		delete(toCreate.Labels, "label-2")
+
+		ifNoneMatch := storev2.IfNoneMatch{txInfo.Records[0].ETag}
+		ctx = storev2.ContextWithIfNoneMatch(ctx, ifNoneMatch)
+
+		err = updateIfExists(ctx, s, toCreate)
+		if err == nil {
+			t.Error("expected non-nil error")
+			return
+		} else if err != storev2.ErrPreconditionFailed {
+			t.Error(err)
+			return
+		}
+
+		asset, err = getAsset(context.Background(), s, defaultNamespace, assetName)
 		assert.NoError(t, err)
 		assert.Equal(t, assetName, asset.Name)
 	})
@@ -141,8 +514,12 @@ func TestConfigStore_Delete(t *testing.T) {
 		}
 
 		err := deleteAsset(ctx, s, defaultNamespace, assetName)
-		assert.Error(t, err)
-		assert.IsType(t, &store.ErrNotFound{}, err)
+		if err == nil {
+			t.Error("expected non-nil error")
+		}
+		if _, ok := err.(*store.ErrNotFound); !ok {
+			t.Errorf("got %T, want ErrNotFound (%s)", err, err)
+		}
 
 		err = createOrUpdateAsset(ctx, s, toCreate)
 		assert.NoError(t, err)
@@ -152,6 +529,101 @@ func TestConfigStore_Delete(t *testing.T) {
 
 		err = deleteAsset(ctx, s, defaultNamespace, assetName)
 		assert.NoError(t, err)
+	})
+}
+
+func TestConfigStore_DeleteIfMatch(t *testing.T) {
+	testWithPostgresConfigStore(t, func(s storev2.ConfigStore) {
+		ctx := context.Background()
+
+		toCreate := corev2.FixtureAsset(assetName)
+		for i := 0; i < 4; i++ {
+			toCreate.Labels[fmt.Sprintf("label-%d", i)] = fmt.Sprintf("labelValue-%d", i)
+		}
+
+		err := createOrUpdateAsset(ctx, s, toCreate)
+		if err != nil {
+			t.Error(err)
+			return
+		}
+
+		asset, err := getAsset(ctx, s, defaultNamespace, assetName)
+		if err != nil {
+			t.Error(err)
+			return
+		}
+
+		etag, err := storev2.DecodeETag(asset.Annotations[store.SensuETagKey])
+		if err != nil {
+			t.Error(err)
+			return
+		}
+
+		ctx = storev2.ContextWithIfMatch(ctx, storev2.IfMatch{storev2.ETag("asdflksd")})
+		err = deleteAsset(ctx, s, defaultNamespace, assetName)
+		if err == nil {
+			t.Error("expected non-nil error")
+			return
+		}
+
+		if err != storev2.ErrPreconditionFailed {
+			t.Error(err)
+			return
+		}
+
+		ctx = storev2.ContextWithIfMatch(context.Background(), storev2.IfMatch{etag})
+		if err := deleteAsset(ctx, s, defaultNamespace, assetName); err != nil {
+			t.Error(err)
+		}
+	})
+}
+
+func TestConfigStore_DeleteIfNoneMatch(t *testing.T) {
+	testWithPostgresConfigStore(t, func(s storev2.ConfigStore) {
+		ctx := context.Background()
+
+		toCreate := corev2.FixtureAsset(assetName)
+		for i := 0; i < 4; i++ {
+			toCreate.Labels[fmt.Sprintf("label-%d", i)] = fmt.Sprintf("labelValue-%d", i)
+		}
+
+		err := createOrUpdateAsset(ctx, s, toCreate)
+		if err != nil {
+			t.Error(err)
+			return
+		}
+
+		asset, err := getAsset(ctx, s, defaultNamespace, assetName)
+		if err != nil {
+			t.Error(err)
+			return
+		}
+
+		etag, err := storev2.DecodeETag(asset.Annotations[store.SensuETagKey])
+		if err != nil {
+			t.Error(err)
+			return
+		}
+
+		ctx = storev2.ContextWithIfNoneMatch(context.Background(), storev2.IfNoneMatch{etag})
+		err = deleteAsset(ctx, s, defaultNamespace, assetName)
+		if err == nil {
+			t.Error("expected non-nil error")
+			return
+		}
+
+		if err != storev2.ErrPreconditionFailed {
+			t.Error(err)
+			return
+		}
+
+		ctx = storev2.ContextWithIfNoneMatch(context.Background(), storev2.IfNoneMatch{storev2.ETag("asdflksd")})
+
+		err = deleteAsset(ctx, s, defaultNamespace, assetName)
+		if err != nil {
+			t.Error(err)
+		}
+
 	})
 }
 
@@ -194,6 +666,93 @@ func TestConfigStore_Get(t *testing.T) {
 		err = createIfNotExists(ctx, s, toCreate)
 		assert.NoError(t, err)
 
+		asset, err = getAsset(ctx, s, defaultNamespace, assetName)
+		assert.NoError(t, err)
+		assert.Equal(t, assetName, asset.Name)
+	})
+}
+
+func TestConfigStore_GetIfMatch(t *testing.T) {
+	testWithPostgresConfigStore(t, func(s storev2.ConfigStore) {
+		ctx := context.Background()
+
+		asset, err := getAsset(ctx, s, "default", assetName)
+		assert.Error(t, err)
+		assert.IsType(t, &store.ErrNotFound{}, err)
+		assert.Nil(t, asset)
+
+		toCreate := corev2.FixtureAsset(assetName)
+		for i := 0; i < 4; i++ {
+			toCreate.Labels[fmt.Sprintf("label-%d", i)] = fmt.Sprintf("labelValue-%d", i)
+		}
+
+		err = createIfNotExists(ctx, s, toCreate)
+		assert.NoError(t, err)
+
+		asset, err = getAsset(ctx, s, defaultNamespace, assetName)
+		assert.NoError(t, err)
+		assert.Equal(t, assetName, asset.Name)
+
+		etag, err := storev2.DecodeETag(asset.Annotations[store.SensuETagKey])
+		if err != nil {
+			t.Error(err)
+			return
+		}
+		ctx = storev2.ContextWithIfMatch(ctx, storev2.IfMatch{etag})
+
+		asset, err = getAsset(ctx, s, defaultNamespace, assetName)
+		if err != nil {
+			t.Error(err)
+			return
+		}
+		assert.Equal(t, assetName, asset.Name)
+
+		ctx = storev2.ContextWithIfMatch(context.Background(), storev2.IfMatch{storev2.ETag("sldkfjsdlkf")})
+
+		if _, err := getAsset(ctx, s, defaultNamespace, assetName); err == nil {
+			t.Error("expected non-nil error")
+		} else if err != storev2.ErrPreconditionFailed {
+			t.Error("expected precondition to have failed")
+		}
+	})
+}
+
+func TestConfigStore_GetIfNoneMatch(t *testing.T) {
+	testWithPostgresConfigStore(t, func(s storev2.ConfigStore) {
+		ctx := context.Background()
+
+		asset, err := getAsset(ctx, s, "default", assetName)
+		assert.Error(t, err)
+		assert.IsType(t, &store.ErrNotFound{}, err)
+		assert.Nil(t, asset)
+
+		toCreate := corev2.FixtureAsset(assetName)
+		for i := 0; i < 4; i++ {
+			toCreate.Labels[fmt.Sprintf("label-%d", i)] = fmt.Sprintf("labelValue-%d", i)
+		}
+
+		err = createIfNotExists(ctx, s, toCreate)
+		assert.NoError(t, err)
+
+		asset, err = getAsset(ctx, s, defaultNamespace, assetName)
+		assert.NoError(t, err)
+		assert.Equal(t, assetName, asset.Name)
+
+		etag, err := storev2.DecodeETag(asset.Annotations[store.SensuETagKey])
+		if err != nil {
+			t.Error(err)
+			return
+		}
+
+		ctx = storev2.ContextWithIfNoneMatch(ctx, storev2.IfNoneMatch{etag})
+
+		if _, err := getAsset(ctx, s, defaultNamespace, assetName); err == nil {
+			t.Error("expected non-nil error")
+		} else if err != storev2.ErrPreconditionFailed {
+			t.Error("expected precondition to have failed")
+		}
+
+		ctx = storev2.ContextWithIfNoneMatch(context.Background(), storev2.IfNoneMatch{storev2.ETag("sdlfkjsdlfkj")})
 		asset, err = getAsset(ctx, s, defaultNamespace, assetName)
 		assert.NoError(t, err)
 		assert.Equal(t, assetName, asset.Name)

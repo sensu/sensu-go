@@ -10,9 +10,10 @@ import (
 )
 
 const (
-	SensuCreatedAtKey	= "sensu.io/created_at"
-	SensuUpdatedAtKey	= "sensu.io/updated_at"
-	SensuDeletedAtKey	= "sensu.io/deleted_at"
+	SensuCreatedAtKey = "sensu.io/created_at"
+	SensuUpdatedAtKey = "sensu.io/updated_at"
+	SensuDeletedAtKey = "sensu.io/deleted_at"
+	SensuETagKey      = "sensu.io/etag"
 )
 
 // ErrAlreadyExists is returned when an object already exists
@@ -26,8 +27,8 @@ func (e *ErrAlreadyExists) Error() string {
 
 // ErrDecode is returned when an object could not be decoded
 type ErrDecode struct {
-	Key	string
-	Err	error
+	Key string
+	Err error
 }
 
 func (e *ErrDecode) Error() string {
@@ -36,8 +37,8 @@ func (e *ErrDecode) Error() string {
 
 // ErrEncode is returned when an object could not be decoded
 type ErrEncode struct {
-	Key	string
-	Err	error
+	Key string
+	Err error
 }
 
 func (e *ErrEncode) Error() string {
@@ -111,48 +112,48 @@ type SelectionPredicate struct {
 	// Continue provides the key from which the selection should start. If
 	// returned empty from the store, it indicates that there's no additional
 	// resources available
-	Continue	string
+	Continue string
 	// Limit indicates the number of resources to retrieve
-	Limit	int64
+	Limit int64
 	// Offset into the collection
-	Offset	int64
+	Offset int64
 	// Subcollection represents a sub-collection of the primary collection
-	Subcollection	string
+	Subcollection string
 	// Ordering indicates the property to sort on, if supported by the store
-	Ordering	string
+	Ordering string
 	// Descending indicates the sort direction is in descending order.
-	Descending	bool
+	Descending bool
 	// UpdatedSince selects only items that have been updated since this timestamp
-	UpdatedSince	string
+	UpdatedSince string
 	// IncludeDeletes selects items that were previously soft-deleted
-	IncludeDeletes	bool
+	IncludeDeletes bool
 }
 
 // A WatchEventCheckConfig contains the modified store object and the action
 // that occurred during the modification.
 type WatchEventCheckConfig struct {
-	CheckConfig	*corev2.CheckConfig
-	Action		WatchActionType
+	CheckConfig *corev2.CheckConfig
+	Action      WatchActionType
 }
 
 // A WatchEventHookConfig contains the modified asset object and the action that
 // occurred during the modification.
 type WatchEventHookConfig struct {
-	HookConfig	*corev2.HookConfig
-	Action		WatchActionType
+	HookConfig *corev2.HookConfig
+	Action     WatchActionType
 }
 
 // WatchEventTessenConfig is a notification that the tessen config store has
 // been updated.
 type WatchEventTessenConfig struct {
-	TessenConfig	*corev2.TessenConfig
-	Action		WatchActionType
+	TessenConfig *corev2.TessenConfig
+	Action       WatchActionType
 }
 
 // WatchEventResource is a store event about a specific resource
 type WatchEventResource struct {
-	Resource	corev2.Resource
-	Action		WatchActionType
+	Resource corev2.Resource
+	Action   WatchActionType
 }
 
 // WatchEventResourceV3 is a notification that a corev3.Resource has been
@@ -160,10 +161,10 @@ type WatchEventResource struct {
 type WatchEventResourceV3 struct {
 	// Resource is the resource associated with the event. It is nil when Action
 	// is WatchError or WatchUnknown.
-	Resource	corev3.Resource
+	Resource corev3.Resource
 
 	// Action is the type of action that affected the resource.
-	Action	WatchActionType
+	Action WatchActionType
 }
 
 // Store is used to abstract the durable storage used by the Sensu backend

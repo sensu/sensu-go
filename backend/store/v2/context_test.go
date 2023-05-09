@@ -46,12 +46,12 @@ func TestContext(t *testing.T) {
 			Read:   TxInfoFromContext,
 		},
 		contextTest[IfMatch]{
-			Value:  IfMatch{"hello", "world"},
+			Value:  IfMatch{ETag("hello"), ETag("world")},
 			Create: ContextWithIfMatch,
 			Read:   IfMatchFromContext,
 		},
 		contextTest[IfNoneMatch]{
-			Value:  IfNoneMatch{"hello", "world"},
+			Value:  IfNoneMatch{ETag("hello"), ETag("world")},
 			Create: ContextWithIfNoneMatch,
 			Read:   IfNoneMatchFromContext,
 		},

@@ -1,7 +1,9 @@
 package v2
 
 import (
+	"bytes"
 	"context"
+	"encoding/base64"
 	"errors"
 
 	corev2 "github.com/sensu/core/v2"
@@ -39,7 +41,23 @@ type WrapList interface {
 }
 
 // ETag represents a unique hash of the resource.
-type ETag string
+type ETag []byte
+
+// String returns the base64-encoded form of the ETag.
+func (e ETag) String() string {
+	return base64.RawStdEncoding.EncodeToString(e)
+}
+
+// DecodeETag attempts to parse an encoded ETag. It returns an error if the
+// input is not base64-encoded.
+func DecodeETag(data string) (ETag, error) {
+	b, err := base64.RawStdEncoding.DecodeString(data)
+	return ETag(b), err
+}
+
+func (e ETag) Equals(other ETag) bool {
+	return bytes.Equal(e, other)
+}
 
 // EntityConfigStoreGetter gets you an EntityConfigStore.
 type EntityConfigStoreGetter interface {
