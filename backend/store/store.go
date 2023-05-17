@@ -214,6 +214,9 @@ type Store interface {
 	// RoleBindingStore provides an interface for managing role bindings
 	RoleBindingStore
 
+	// SessionStore provides an interface for managing user sessions
+	SessionStore
+
 	// SilencedStore provides an interface for managing silenced entries,
 	// consisting of entities, subscriptions and/or checks
 	SilencedStore
@@ -261,6 +264,21 @@ type AuthenticationStore interface {
 
 	// UpdateJWTSecret updates the JWT secret with the given secret.
 	UpdateJWTSecret(secret []byte) error
+}
+
+// SessionStore provides methods for managing user sessions
+type SessionStore interface {
+	// GetSession retrieves the session state uniquely identified by the given
+	// username and session ID.
+	GetSession(ctx context.Context, username, sessionID string) (string, error)
+
+	// UpdateSession applies the supplied state to the session uniquely
+	// identified by the given username and session ID.
+	UpdateSession(ctx context.Context, username, sessionID string, state string) error
+
+	// DeleteSession deletes the session uniquely identified by the given
+	// username and session ID.
+	DeleteSession(ctx context.Context, username, sessionID string) error
 }
 
 // CheckConfigStore provides methods for managing checks configuration

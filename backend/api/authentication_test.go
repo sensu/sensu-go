@@ -26,7 +26,10 @@ func defaultStore() store.Store {
 }
 
 func contextWithClaims(claims *corev2.Claims) context.Context {
-	refreshClaims := &corev2.Claims{StandardClaims: corev2.StandardClaims(claims.Subject)}
+	refreshClaims := &corev2.Claims{
+		StandardClaims: corev2.StandardClaims(claims.Subject),
+		SessionID:      claims.SessionID,
+	}
 	ctx := context.Background()
 	ctx = context.WithValue(ctx, corev2.AccessTokenClaims, claims)
 	ctx = context.WithValue(ctx, corev2.RefreshTokenClaims, refreshClaims)
@@ -60,6 +63,7 @@ func TestCreateAccessToken(t *testing.T) {
 				user := corev2.FixtureUser("foo")
 				store := &mockstore.MockStore{}
 				store.On("AuthenticateUser", mock.Anything, "foo", "P@ssw0rd!").Return(user, errors.New("error"))
+				store.On("UpdateSession", mock.Anything, "foo", mock.Anything, mock.Anything).Return(nil)
 				return store
 			},
 			Authenticator: defaultAuth,
@@ -76,6 +80,7 @@ func TestCreateAccessToken(t *testing.T) {
 				store := &mockstore.MockStore{}
 				user := corev2.FixtureUser("foo")
 				store.On("AuthenticateUser", mock.Anything, "foo", "P@ssw0rd!").Return(user, nil)
+				store.On("UpdateSession", mock.Anything, "foo", mock.Anything, mock.Anything).Return(nil)
 				return store
 			},
 			Authenticator: defaultAuth,
@@ -85,7 +90,7 @@ func TestCreateAccessToken(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.Name, func(t *testing.T) {
 			store := test.Store()
-			authn := NewAuthenticationClient(test.Authenticator(store))
+			authn := NewAuthenticationClient(test.Authenticator(store), store)
 			tokens, err := authn.CreateAccessToken(test.Context(), test.Username, test.Password)
 			if test.WantError && err == nil {
 				t.Fatal("want error, got nil")
@@ -158,7 +163,7 @@ func TestTestCreds(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.Name, func(t *testing.T) {
 			store := test.Store()
-			authn := NewAuthenticationClient(test.Authenticator(store))
+			authn := NewAuthenticationClient(test.Authenticator(store), store)
 			err := authn.TestCreds(test.Context(), test.Username, test.Password)
 
 			if test.WantError && test.Error != err {
@@ -175,28 +180,35 @@ func TestTestCreds(t *testing.T) {
 func TestRefreshAccessToken(t *testing.T) {
 	tests := []struct {
 		Name          string
-		Store         func() store.Store
+		Store         func(string) store.Store
 		Authenticator func(store.Store) *authentication.Authenticator
-		Context       func(*corev2.Claims) context.Context
+		Context       func(*corev2.Claims) (context.Context, string)
 		WantError     bool
 		Error         error
 	}{
 		{
 			Name: "success",
-			Store: func() store.Store {
+			Store: func(refreshTokenId string) store.Store {
 				st := &mockstore.MockStore{}
 				user := &corev2.User{Username: "foo"}
 				st.On("GetUser",
 					mock.AnythingOfType("*context.valueCtx"), mock.AnythingOfType("string"),
 				).Return(user, nil)
+				st.On("GetSession",
+					mock.AnythingOfType("*context.valueCtx"), user.Username, mock.AnythingOfType("string"),
+				).Return(refreshTokenId, nil)
+				st.On("UpdateSession",
+					mock.AnythingOfType("*context.valueCtx"), user.Username, mock.AnythingOfType("string"), mock.AnythingOfType("string"),
+				).Return(nil)
 				return st
 			},
 			Authenticator: defaultAuth,
-			Context: func(claims *corev2.Claims) context.Context {
+			Context: func(claims *corev2.Claims) (context.Context, string) {
 				ctx := contextWithClaims(claims)
-				_, refreshTokenString, _ := jwt.RefreshToken(ctx.Value(corev2.RefreshTokenClaims).(*corev2.Claims))
+				refreshToken, refreshTokenString, _ := jwt.RefreshToken(ctx.Value(corev2.RefreshTokenClaims).(*corev2.Claims))
+				refreshTokenClaims, _ := jwt.GetClaims(refreshToken)
 				ctx = context.WithValue(ctx, corev2.RefreshTokenString, refreshTokenString)
-				return ctx
+				return ctx, refreshTokenClaims.Id
 			},
 		},
 	}
@@ -204,10 +216,10 @@ func TestRefreshAccessToken(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.Name, func(t *testing.T) {
 			claims := corev2.FixtureClaims("foo", nil)
-			ctx := test.Context(claims)
-			store := test.Store()
+			ctx, refreshTokenId := test.Context(claims)
+			store := test.Store(refreshTokenId)
 			authenticator := test.Authenticator(store)
-			auth := NewAuthenticationClient(authenticator)
+			auth := NewAuthenticationClient(authenticator, store)
 			_, err := auth.RefreshAccessToken(ctx)
 			if err == nil && test.WantError {
 				t.Fatal("got non-nil error")
