@@ -52,6 +52,9 @@ func TestLoginSuccessful(t *testing.T) {
 	store.
 		On("AuthenticateUser", mock.Anything, "foo", "P@ssw0rd!").
 		Return(user, nil)
+	store.
+		On("UpdateSession", mock.Anything, "foo", mock.Anything, mock.Anything).
+		Return(nil)
 
 	req, _ := http.NewRequest(http.MethodGet, "/auth", nil)
 	req.SetBasicAuth("foo", "P@ssw0rd!")

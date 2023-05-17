@@ -121,7 +121,7 @@ func TestValidateTokenError(t *testing.T) {
 	assert.NoError(t, err)
 
 	// The token should expire after the expiration time
-	testTime.Set(time.Now().Add(defaultExpiration + time.Hour))
+	testTime.Set(time.Now().Add(defaultAccessTokenLifespan + time.Hour))
 	_, err = ValidateToken(tokenString)
 	assert.Error(t, err)
 }
@@ -134,7 +134,7 @@ func TestValidateExpiredToken(t *testing.T) {
 	_, tokenString, _ := AccessToken(claims)
 
 	// Wait for the token to expire
-	testTime.Set(time.Now().Add(defaultExpiration + time.Second))
+	testTime.Set(time.Now().Add(defaultAccessTokenLifespan + time.Second))
 	_, err := ValidateExpiredToken(tokenString)
 	assert.NoError(t, err, "An expired token should not be considered as invalid")
 }
@@ -158,7 +158,7 @@ func TestValidateExpiredTokenInvalid(t *testing.T) {
 	_, tokenString, _ := AccessToken(claims)
 
 	// The token will expire
-	testTime.Set(time.Now().Add(defaultExpiration + time.Second))
+	testTime.Set(time.Now().Add(defaultAccessTokenLifespan + time.Second))
 
 	// Modify the secret so it's no longer valid
 	secret = []byte("qux")

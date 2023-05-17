@@ -25,7 +25,7 @@ func (a *Authenticator) Authenticate(ctx context.Context, username, password str
 	// TODO(palourde): The Go runtime randomizes map iteration order so the
 	// providers resolution order might vary on each authentication, and
 	// consequently provoke weird behavior if the same username/password
-	// combinaison exists in multiple providers.
+	// combination exists in multiple providers.
 	for _, provider := range a.providers {
 		claims, err := provider.Authenticate(ctx, username, password)
 		if err != nil || claims == nil {

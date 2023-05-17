@@ -26,11 +26,12 @@ const (
 )
 
 var (
-	defaultExpiration = time.Minute * 5
-	secret            []byte
-	privateKey        *ecdsa.PrivateKey
-	publicKey         *ecdsa.PublicKey
-	signingMethod     jwt.SigningMethod
+	defaultAccessTokenLifespan  = 5 * time.Minute
+	defaultRefreshTokenLifespan = 12 * time.Hour
+	secret                      []byte
+	privateKey                  *ecdsa.PrivateKey
+	publicKey                   *ecdsa.PublicKey
+	signingMethod               jwt.SigningMethod
 )
 
 func init() {
@@ -57,7 +58,7 @@ func AccessToken(claims *corev2.Claims) (*jwt.Token, string, error) {
 	claims.Id = jti
 
 	// Add an expiration to the token
-	claims.ExpiresAt = time.Now().Add(defaultExpiration).Unix()
+	claims.ExpiresAt = time.Now().Add(defaultAccessTokenLifespan).Unix()
 
 	token := jwt.NewWithClaims(signingMethod, claims)
 
@@ -86,8 +87,11 @@ func NewClaims(user *corev2.User) (*corev2.Claims, error) {
 	}
 
 	claims := &corev2.Claims{
+		// NOTE(ccressent): StandardClaims is deprecated according to the
+		// library's documentation. We should replace its usage with
+		// RegisteredClaims.
 		StandardClaims: jwt.StandardClaims{
-			ExpiresAt: time.Now().Add(defaultExpiration).Unix(),
+			ExpiresAt: time.Now().Add(defaultAccessTokenLifespan).Unix(),
 			Id:        jti,
 			Subject:   user.Username,
 		},
@@ -194,6 +198,17 @@ func InitSecret(store store.Store) error {
 	return nil
 }
 
+// InitSession initializes a new session for the given username, returning a
+// unique identifier for the new session.
+func InitSession(username string) (string, error) {
+	sessionID, err := GenJTI()
+	if err != nil {
+		return "", err
+	}
+
+	return sessionID, nil
+}
+
 // parseToken takes a signed token and parse it to verify its integrity
 func parseToken(tokenString string) (*jwt.Token, error) {
 	t, err := jwt.ParseWithClaims(tokenString, &types.Claims{}, func(token *jwt.Token) (interface{}, error) {
@@ -238,6 +253,11 @@ func RefreshToken(claims *corev2.Claims) (*jwt.Token, string, error) {
 		return nil, "", err
 	}
 	claims.Id = jti
+
+	// Add issuance and expiration timestamps to the token
+	now := time.Now()
+	claims.IssuedAt = now.Unix()
+	claims.ExpiresAt = now.Add(defaultRefreshTokenLifespan).Unix()
 
 	token := jwt.NewWithClaims(signingMethod, claims)
 

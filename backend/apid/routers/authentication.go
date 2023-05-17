@@ -47,7 +47,7 @@ func (a *AuthenticationRouter) login(w http.ResponseWriter, r *http.Request) {
 	// issuer URL
 	ctx := context.WithValue(r.Context(), jwt.IssuerURLKey, issuerURL(r))
 
-	client := api.NewAuthenticationClient(a.authenticator)
+	client := api.NewAuthenticationClient(a.authenticator, a.store)
 	tokens, err := client.CreateAccessToken(ctx, username, password)
 	if err != nil {
 		if err == corev2.ErrUnauthorized {
@@ -76,7 +76,7 @@ func (a *AuthenticationRouter) test(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	client := api.NewAuthenticationClient(a.authenticator)
+	client := api.NewAuthenticationClient(a.authenticator, a.store)
 	err := client.TestCreds(r.Context(), username, password)
 	if err == nil {
 		return
@@ -90,7 +90,7 @@ func (a *AuthenticationRouter) test(w http.ResponseWriter, r *http.Request) {
 
 // logout handles the logout flow
 func (a *AuthenticationRouter) logout(w http.ResponseWriter, r *http.Request) {
-	client := api.NewAuthenticationClient(a.authenticator)
+	client := api.NewAuthenticationClient(a.authenticator, a.store)
 	if err := client.Logout(r.Context()); err == nil {
 		return
 	}
@@ -100,7 +100,7 @@ func (a *AuthenticationRouter) logout(w http.ResponseWriter, r *http.Request) {
 
 // token handles logic for issuing new access tokens
 func (a *AuthenticationRouter) token(w http.ResponseWriter, r *http.Request) {
-	client := api.NewAuthenticationClient(a.authenticator)
+	client := api.NewAuthenticationClient(a.authenticator, a.store)
 
 	// Determine the URL that serves this request so it can be later used as the
 	// issuer URL
