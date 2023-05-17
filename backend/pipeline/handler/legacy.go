@@ -86,7 +86,11 @@ func (l *LegacyAdapter) Handle(ctx context.Context, ref *corev2.ResourceReferenc
 		}
 		fields["status"] = result.Status
 		fields["output"] = result.Output
-		logger.WithFields(fields).Info("event pipe handler executed")
+		if result.Status == 0 {
+			logger.WithFields(fields).Info("event pipe handler executed")
+		} else {
+			logger.WithFields(fields).Error("event pipe handler returned non ok status code")
+		}
 	case "tcp", "udp":
 		err := l.socketHandler(ctx, handler, event, mutatedData)
 		if err != nil {

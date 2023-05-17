@@ -50,6 +50,7 @@ returned regardless of filter count.
 entity subscriptions and/or a check named `deregistration`.
 - Upgraded Go version to 1.19.5. Old Go versions are not supported.
 - The sensuctl api-key grant command now returns additional information.
+- Handler errors now logged at the error level instead of info level
 
 ### Removed
 - Removed sensu-backend upgrade command. May make an appearance again in later versions.
