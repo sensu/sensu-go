@@ -12,6 +12,10 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 - Adding a flag at agent level to avoid collecting system.networks property in the agent entity state
 - Added silences sorting by expiration to GraphQL service
 - Added log-millisecond-timestamps backend configuration flag
+
+### Changed
+- Log handler error at error level instead of info level
+
 ## [6.9.2] - 2023-03-08
 
 ### Added
