@@ -15,6 +15,7 @@ import (
 	"github.com/jackc/pgx/v5/pgconn"
 	corev2 "github.com/sensu/core/v2"
 	corev3 "github.com/sensu/core/v3"
+	apitools "github.com/sensu/sensu-api-tools"
 	"github.com/sensu/sensu-go/backend/messaging"
 	"github.com/sensu/sensu-go/backend/poll"
 	"github.com/sensu/sensu-go/backend/store"
@@ -262,7 +263,7 @@ func (s *ConfigStore) createOrUpdateIfNoneMatch(ctx context.Context, args []inte
 	}
 	for _, tag := range ifNoneMatch {
 		if etag.Equals(storev2.ETag(tag)) {
-			return storev2.ErrPreconditionFailed
+			return &store.ErrPreconditionFailed{Key: etag.String()}
 		}
 	}
 OK:
@@ -324,18 +325,15 @@ func (s *ConfigStore) UpdateIfExists(ctx context.Context, request storev2.Resour
 	}
 
 	if ifMatch != nil {
-		for _, tag := range ifMatch {
-			if prevEtag.Equals(tag) {
-				goto MATCHED
-			}
+		if ifMatch.Matches(prevEtag) {
+			goto MATCHED
+		} else {
+			return &store.ErrPreconditionFailed{Key: fmt.Sprintf("%s.%s/%s/%s", request.APIVersion, request.Type, request.Namespace, request.Name)}
 		}
-		return storev2.ErrPreconditionFailed
 	}
 
-	for _, tag := range ifNoneMatch {
-		if prevEtag.Equals(tag) {
-			return storev2.ErrPreconditionFailed
-		}
+	if !ifNoneMatch.Matches(prevEtag) {
+		return &store.ErrPreconditionFailed{Key: fmt.Sprintf("%s.%s/%s/%s", request.APIVersion, request.Type, request.Namespace, request.Name)}
 	}
 
 MATCHED:
@@ -346,7 +344,7 @@ MATCHED:
 		// handle it anyways just in case something changes down the road.
 		if err == pgx.ErrNoRows {
 			if ifNoneMatch != nil || ifMatch != nil {
-				return storev2.ErrPreconditionFailed
+				return &store.ErrPreconditionFailed{Key: fmt.Sprintf("%s.%s/%s/%s", request.APIVersion, request.Type, request.Namespace, request.Name)}
 			}
 			return &store.ErrNotFound{Key: fmt.Sprintf("%s.%s/%s/%s", request.APIVersion, request.Type, request.Namespace, request.Name)}
 		}
@@ -452,19 +450,17 @@ func (s *ConfigStore) checkGetPreconditions(ctx context.Context, tx pgx.Tx, args
 			return &store.ErrNotFound{Key: fmt.Sprintf("%s.%s/%s/%s", args...)}
 		}
 	}
+
 	if ifMatch != nil {
-		for _, tag := range ifMatch {
-			if etag.Equals(tag) {
-				return nil
-			}
+		if ifMatch.Matches(etag) {
+			return nil
+		} else {
+			return &store.ErrPreconditionFailed{Key: fmt.Sprintf("%s.%s/%s/%s", args...)}
 		}
-		return storev2.ErrPreconditionFailed
 	}
 
-	for _, tag := range ifNoneMatch {
-		if etag.Equals(tag) {
-			return storev2.ErrPreconditionFailed
-		}
+	if !ifNoneMatch.Matches(etag) {
+		return &store.ErrPreconditionFailed{Key: fmt.Sprintf("%s.%s/%s/%s", args...)}
 	}
 
 	return nil
@@ -620,50 +616,63 @@ func (s *ConfigStore) Exists(ctx context.Context, request storev2.ResourceReques
 	return count > 0, nil
 }
 
-func (s *ConfigStore) Patch(ctx context.Context, request storev2.ResourceRequest, wrapper storev2.Wrapper, patcher patch.Patcher, condition *store.ETagCondition) error {
+func (s *ConfigStore) Patch(ctx context.Context, request storev2.ResourceRequest, patcher patch.Patcher) error {
 	if err := request.Validate(); err != nil {
 		return &store.ErrNotValid{Err: err}
 	}
 
 	key := storeKey(request)
 
-	w, ok := wrapper.(*wrap.Wrapper)
-	if !ok {
-		return &store.ErrNotValid{Err: fmt.Errorf("store only works with wrap.Wrapper, not %T", wrapper)}
-	}
+	args := []interface{}{request.APIVersion, request.Type, request.Namespace, request.Name}
 
-	resource, err := w.Unwrap()
+	tx, err := s.db.Begin(ctx)
 	if err != nil {
+		return &store.ErrInternal{Message: err.Error()}
+	}
+	defer tx.Commit(ctx)
+
+	if err := s.checkGetPreconditions(ctx, tx, args); err != nil {
 		return err
 	}
 
-	patchedResource, err := patcher.Patch(w.Value)
+	var resource []byte
+
+	row := tx.QueryRow(ctx, GetJSONOnlyQuery, args...)
+	if err := row.Scan(&resource); err != nil {
+		if err == pgx.ErrNoRows {
+			return &store.ErrNotFound{Key: fmt.Sprintf("%s.%s/%s/%s", request.APIVersion, request.Type, request.Namespace, request.Name)}
+		}
+		return &store.ErrInternal{Message: err.Error()}
+	}
+
+	patchedResource, err := patcher.Patch(resource)
 	if err != nil {
-		return err
+		return &store.ErrNotValid{Err: err}
 	}
 
-	if err := json.Unmarshal(patchedResource, resource); err != nil {
-		return err
+	kind, err := apitools.Resolve(request.APIVersion, request.Type)
+	if err != nil {
+		return &store.ErrNotValid{Err: err}
 	}
 
-	if err := resource.Validate(); err != nil {
-		return err
+	res := kind.(corev3.Resource)
+
+	if err := json.Unmarshal(patchedResource, res); err != nil {
+		return &store.ErrNotValid{Err: err}
 	}
 
-	// Special case for entities; we need to make sure we keep the per-entity
-	// subscription
-	if e, ok := resource.(*corev3.EntityConfig); ok {
-		e.Subscriptions = corev2.AddEntitySubscription(e.Metadata.Name, e.Subscriptions)
+	if err := res.Validate(); err != nil {
+		return &store.ErrNotValid{Err: err}
 	}
 
-	// Re-wrap the resource
-	wrappedPatch, err := wrap.Resource(resource)
+	wrappedPatch, err := wrap.Resource(res)
 	if err != nil {
 		return &store.ErrEncode{Key: key, Err: err}
 	}
-	*w = *wrappedPatch
 
-	return s.UpdateIfExists(ctx, request, w)
+	txStore := ConfigStore{db: tx}
+
+	return txStore.UpdateIfExists(ctx, request, wrappedPatch)
 }
 
 func (s *ConfigStore) Count(ctx context.Context, request storev2.ResourceRequest) (int, error) {

@@ -6,7 +6,6 @@ import (
 
 	corev2 "github.com/sensu/core/v2"
 	corev3 "github.com/sensu/core/v3"
-	"github.com/sensu/sensu-go/backend/store/patch"
 )
 
 const (
@@ -231,9 +230,6 @@ type Store interface {
 
 	// UserStore provides an interface for managing users
 	UserStore
-
-	// ResourceStore ...
-	ResourceStore
 
 	// NewInitializer returns the Initializer interfaces, which provides the
 	// required mechanism to verify if a store is initialized
@@ -519,21 +515,6 @@ type PipelineStore interface {
 	// GetPipelineByName returns a pipeline using the given name and the
 	// namespace stored in ctx. The resulting pipeline is nil if none was found.
 	GetPipelineByName(ctx context.Context, name string) (*corev2.Pipeline, error)
-}
-
-// ResourceStore ...
-type ResourceStore interface {
-	CreateResource(ctx context.Context, resource corev2.Resource) error
-
-	CreateOrUpdateResource(ctx context.Context, resource corev2.Resource) error
-
-	DeleteResource(ctx context.Context, kind, name string) error
-
-	GetResource(ctx context.Context, name string, resource corev2.Resource) error
-
-	ListResources(ctx context.Context, kind string, resources interface{}, pred *SelectionPredicate) error
-
-	PatchResource(ctx context.Context, resource corev2.Resource, name string, patcher patch.Patcher, condition *ETagCondition) error
 }
 
 // RoleBindingStore provides methods for managing RBAC role bindings

@@ -326,7 +326,7 @@ func (s *EntityConfigStore) Count(ctx context.Context, namespace, entityClass st
 	return ct, nil
 }
 
-func (s *EntityConfigStore) Patch(ctx context.Context, namespace, name string, patcher patch.Patcher, conditions *store.ETagCondition) (fErr error) {
+func (s *EntityConfigStore) Patch(ctx context.Context, namespace, name string, patcher patch.Patcher) (fErr error) {
 	if namespace == "" {
 		return &store.ErrNotValid{Err: errors.New("must specify namespace")}
 	}
@@ -363,18 +363,19 @@ func (s *EntityConfigStore) Patch(ctx context.Context, namespace, name string, p
 	}
 
 	// Now determine the etag for the stored resource
-	etag, err := store.ETag(config)
-	if err != nil {
-		return err
+	etag := storev2.ETagFromStruct(config)
+
+	ifMatch := storev2.IfMatchFromContext(ctx)
+	ifNoneMatch := storev2.IfNoneMatchFromContext(ctx)
+
+	if ifMatch != nil {
+		if !ifMatch.Matches(etag) {
+			return &store.ErrPreconditionFailed{Key: entityConfigStoreKey(namespace, name)}
+		}
 	}
 
-	if conditions != nil {
-		if !store.CheckIfMatch(conditions.IfMatch, etag) {
-			return &store.ErrPreconditionFailed{Key: entityConfigStoreKey(namespace, name)}
-		}
-		if !store.CheckIfNoneMatch(conditions.IfNoneMatch, etag) {
-			return &store.ErrPreconditionFailed{Key: entityConfigStoreKey(namespace, name)}
-		}
+	if !ifNoneMatch.Matches(etag) {
+		return &store.ErrPreconditionFailed{Key: entityConfigStoreKey(namespace, name)}
 	}
 
 	// Encode the stored resource to the JSON format

@@ -2,16 +2,17 @@ package routers
 
 import (
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
 	"path"
 
 	"github.com/gorilla/mux"
-	corev2 "github.com/sensu/core/v2"
 	corev3 "github.com/sensu/core/v3"
-	"github.com/sensu/sensu-go/backend/apid/actions"
-	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/core/v3/types"
+	"github.com/sensu/sensu-go/backend/apid/actions"
+	"github.com/sensu/sensu-go/backend/apid/handlers"
+	"github.com/sensu/sensu-go/backend/store"
 )
 
 type errorBody struct {
@@ -20,41 +21,48 @@ type errorBody struct {
 }
 
 // RespondWith given writer and resource, marshal to JSON and write response.
-func RespondWith(w http.ResponseWriter, r *http.Request, resources interface{}) {
+func RespondWith(w http.ResponseWriter, r *http.Request, response handlers.HandlerResponse) {
 	// Set content-type to JSON
 	w.Header().Set("Content-Type", "application/json")
 
-	_, isCoreV2Resource := resources.(corev2.Resource)
-	_, isWrapper := resources.(types.Wrapper)
-	_, isV3Resource := resources.(corev3.Resource)
-	if isCoreV2Resource || isWrapper || isV3Resource {
-		etag, err := store.ETag(resources)
-		if err != nil {
-			logger.WithError(err).Error("failed to generate etag")
-			WriteError(w, err)
-		}
-		w.Header().Set("ETag", etag)
+	var etag string
+	if response.Resource != nil {
+		etag = response.Resource.GetMetadata().Labels[store.SensuETagKey]
+	}
+
+	if etag != "" {
+		w.Header().Set("ETag", fmt.Sprintf("%q", etag))
 	}
 
 	// If no resource(s) are present return a 204 response code
-	if resources == nil {
+	if response.IsEmpty() {
 		if r.Method == http.MethodPost || r.Method == http.MethodPut {
-			w.WriteHeader(http.StatusCreated)
+			if info := response.TxInfo.Records; len(info) > 0 {
+				if !info[0].Created {
+					w.WriteHeader(http.StatusCreated)
+				} else if info[0].Updated && info[0].ETag.Equals(info[0].PrevETag) {
+					w.WriteHeader(http.StatusNotModified)
+				}
+			} else {
+				w.WriteHeader(http.StatusCreated)
+			}
 		} else {
 			w.WriteHeader(http.StatusNoContent)
 		}
 		return
 	}
 
-	switch r := resources.(type) {
-	case corev3.Resource:
-		resources = types.WrapResource(r)
-	case []corev3.Resource:
-		wrapList := make([]types.Wrapper, len(r))
-		for i := range r {
-			wrapList[i] = types.WrapResource(r[i])
+	var resources interface{}
+	if response.Resource != nil {
+		resources = types.WrapResource(response.Resource)
+	} else if list := response.ResourceList; list != nil {
+		wrapList := make([]types.Wrapper, len(list))
+		for i := range list {
+			wrapList[i] = types.WrapResource(list[i])
 		}
 		resources = wrapList
+	} else if response.GraphQL != nil {
+		resources = response.GraphQL
 	}
 
 	// Marshal
@@ -177,11 +185,11 @@ func listHandler(fn listHandlerFunc) http.HandlerFunc {
 			return
 		}
 
-		RespondWith(w, r, resources)
+		RespondWith(w, r, handlers.HandlerResponse{ResourceList: resources})
 	}
 }
 
-type actionHandlerFunc func(r *http.Request) (corev3.Resource, error)
+type actionHandlerFunc func(r *http.Request) (handlers.HandlerResponse, error)
 
 type listHandlerFunc func(w http.ResponseWriter, req *http.Request) ([]corev3.Resource, error)
 

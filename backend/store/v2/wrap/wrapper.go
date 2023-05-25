@@ -87,7 +87,7 @@ type Wrapper struct {
 	// then the resource was not deleted.
 	DeletedAt time.Time
 
-	// ETag is a hex-encoded ETag.
+	// ETag is a base64-encoded ETag.
 	ETag string
 }
 

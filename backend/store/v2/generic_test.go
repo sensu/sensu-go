@@ -54,8 +54,8 @@ func (m *mockEntityConfigStore) Exists(ctx context.Context, namespace string, na
 	args := m.Called(ctx, namespace, name)
 	return args.Get(0).(bool), args.Error(1)
 }
-func (m *mockEntityConfigStore) Patch(ctx context.Context, namespace string, name string, patcher patch.Patcher, cond *store.ETagCondition) error {
-	return m.Called(ctx, namespace, name, patcher, cond).Error(0)
+func (m *mockEntityConfigStore) Patch(ctx context.Context, namespace string, name string, patcher patch.Patcher) error {
+	return m.Called(ctx, namespace, name, patcher).Error(0)
 }
 
 func (e *extendedMockStoreV2) GetEntityStateStore() storev2.EntityStateStore {
@@ -101,8 +101,8 @@ func (m *mockEntityStateStore) Exists(ctx context.Context, namespace string, nam
 	return args.Get(0).(bool), args.Error(1)
 }
 
-func (m *mockEntityStateStore) Patch(ctx context.Context, namespace string, name string, patcher patch.Patcher, cond *store.ETagCondition) error {
-	return m.Called(ctx, namespace, name, patcher, cond).Error(0)
+func (m *mockEntityStateStore) Patch(ctx context.Context, namespace string, name string, patcher patch.Patcher) error {
+	return m.Called(ctx, namespace, name, patcher).Error(0)
 }
 
 func (e *extendedMockStoreV2) GetNamespaceStore() storev2.NamespaceStore {
@@ -154,8 +154,8 @@ func (m *mockNamespaceStore) IsEmpty(ctx context.Context, namespace string) (boo
 	return args.Get(0).(bool), args.Error(1)
 }
 
-func (m *mockNamespaceStore) Patch(ctx context.Context, namespace string, patcher patch.Patcher, cond *store.ETagCondition) error {
-	return m.Called(ctx, namespace, patcher, cond).Error(0)
+func (m *mockNamespaceStore) Patch(ctx context.Context, namespace string, patcher patch.Patcher) error {
+	return m.Called(ctx, namespace, patcher).Error(0)
 }
 
 func TestGenericStoreCreateOrUpdate(t *testing.T) {
@@ -507,13 +507,13 @@ func TestGenericStoreListNamespace(t *testing.T) {
 func TestGenericStorePatch(t *testing.T) {
 	sv2 := new(mockstore.V2MockStore)
 	cfgstore := new(mockstore.ConfigStore)
-	cfgstore.On("Patch", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
+	cfgstore.On("Patch", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
 	sv2.On("GetConfigStore").Return(cfgstore)
 	store := storev2.Of[*corev2.CheckConfig](sv2)
-	if err := store.Patch(context.Background(), corev2.FixtureCheckConfig("foo"), nil, nil); err != nil {
+	if err := store.Patch(context.Background(), storev2.ID{}, nil); err != nil {
 		t.Fatal(err)
 	}
-	cfgstore.AssertCalled(t, "Patch", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything)
+	cfgstore.AssertCalled(t, "Patch", mock.Anything, mock.Anything, mock.Anything, mock.Anything)
 }
 
 func TestGenericStorePatchEntityConfig(t *testing.T) {
@@ -522,22 +522,22 @@ func TestGenericStorePatchEntityConfig(t *testing.T) {
 	entConfigStore.On("Patch", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
 	sv2.On("GetEntityConfigStore").Return(entConfigStore)
 	store := storev2.Of[*corev3.EntityConfig](sv2)
-	if err := store.Patch(context.Background(), corev3.FixtureEntityConfig("foo"), nil, nil); err != nil {
+	if err := store.Patch(context.Background(), storev2.ID{}, nil); err != nil {
 		t.Fatal(err)
 	}
-	entConfigStore.AssertCalled(t, "Patch", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything)
+	entConfigStore.AssertCalled(t, "Patch", mock.Anything, mock.Anything, mock.Anything, mock.Anything)
 }
 
 func TestGenericStorePatchEntityState(t *testing.T) {
 	sv2 := new(mockstore.V2MockStore)
 	entStateStore := new(mockstore.EntityStateStore)
-	entStateStore.On("Patch", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
+	entStateStore.On("Patch", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
 	sv2.On("GetEntityStateStore").Return(entStateStore)
 	store := storev2.Of[*corev3.EntityState](sv2)
-	if err := store.Patch(context.Background(), corev3.FixtureEntityState("foo"), nil, nil); err != nil {
+	if err := store.Patch(context.Background(), storev2.ID{}, nil); err != nil {
 		t.Fatal(err)
 	}
-	entStateStore.AssertCalled(t, "Patch", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything)
+	entStateStore.AssertCalled(t, "Patch", mock.Anything, mock.Anything, mock.Anything, mock.Anything)
 }
 
 func TestGenericStorePatchNamespace(t *testing.T) {
@@ -546,7 +546,7 @@ func TestGenericStorePatchNamespace(t *testing.T) {
 	nsStore.On("Patch", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
 	sv2.On("GetNamespaceStore").Return(nsStore)
 	store := storev2.Of[*corev3.Namespace](sv2)
-	if err := store.Patch(context.Background(), corev3.FixtureNamespace("foo"), nil, nil); err != nil {
+	if err := store.Patch(context.Background(), storev2.ID{}, nil); err != nil {
 		t.Fatal(err)
 	}
 	nsStore.AssertCalled(t, "Patch", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything)

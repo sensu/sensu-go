@@ -13,6 +13,7 @@ import (
 	"github.com/sensu/sensu-go/backend/apid/actions"
 	"github.com/sensu/sensu-go/backend/apid/filters/fields"
 	"github.com/sensu/sensu-go/backend/apid/filters/labels"
+	"github.com/sensu/sensu-go/backend/apid/handlers"
 	"github.com/sensu/sensu-go/backend/apid/request"
 	"github.com/sensu/sensu-go/backend/selector"
 	"github.com/sensu/sensu-go/backend/store"
@@ -128,6 +129,10 @@ func WrapList(list ListControllerFunc, fieldsFunc FieldsFunc) http.HandlerFunc {
 			w.Header().Set(corev2.PaginationContinueHeader, encodedContinue)
 		}
 
-		RespondWith(w, r, resources)
+		response := handlers.HandlerResponse{
+			ResourceList: resources,
+		}
+
+		RespondWith(w, r, response)
 	}
 }

@@ -1348,11 +1348,12 @@ func TestEntityStateStore_Count(t *testing.T) {
 
 func TestEntityStateStore_Patch(t *testing.T) {
 	type args struct {
-		ctx        context.Context
-		namespace  string
-		name       string
-		patcher    patch.Patcher
-		conditions *store.ETagCondition
+		ctx         context.Context
+		namespace   string
+		name        string
+		patcher     patch.Patcher
+		ifMatch     storev2.IfMatch
+		ifNoneMatch storev2.IfNoneMatch
 	}
 	tests := []struct {
 		name       string
@@ -1480,7 +1481,9 @@ func TestEntityStateStore_Patch(t *testing.T) {
 				s := &EntityStateStore{
 					db: db,
 				}
-				if err := s.Patch(tt.args.ctx, tt.args.namespace, tt.args.name, tt.args.patcher, tt.args.conditions); (err != nil) != tt.wantErr {
+				ctx = storev2.ContextWithIfMatch(tt.args.ctx, tt.args.ifMatch)
+				ctx = storev2.ContextWithIfNoneMatch(ctx, tt.args.ifNoneMatch)
+				if err := s.Patch(tt.args.ctx, tt.args.namespace, tt.args.name, tt.args.patcher); (err != nil) != tt.wantErr {
 					t.Errorf("EntityStateStore.Patch() error = %v, wantErr %v", err, tt.wantErr)
 				}
 			})

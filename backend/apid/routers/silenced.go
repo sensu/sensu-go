@@ -60,40 +60,43 @@ func (r *SilencedRouter) Mount(parent *mux.Router) {
 	routes.Router.HandleFunc(routes.PathPrefix+"/checks/{check}", listHandler(r.list)).Methods(http.MethodGet)
 }
 
-func (r *SilencedRouter) get(req *http.Request) (corev3.Resource, error) {
+func (r *SilencedRouter) get(req *http.Request) (handlers.HandlerResponse, error) {
+	var response handlers.HandlerResponse
 	id, err := url.PathUnescape(mux.Vars(req)["id"])
 	if err != nil {
-		return nil, actions.NewError(actions.InvalidArgument, err)
+		return response, actions.NewError(actions.InvalidArgument, err)
 	}
-	return r.controller.Get(req.Context(), id)
+	return responseWrap(r.controller.Get(req.Context(), id))
 }
 
-func (r *SilencedRouter) create(req *http.Request) (corev3.Resource, error) {
+func (r *SilencedRouter) create(req *http.Request) (handlers.HandlerResponse, error) {
+	var response handlers.HandlerResponse
 	entry, err := request.Resource[*corev2.Silenced](req)
 	if err != nil {
-		return nil, actions.NewError(actions.InvalidArgument, err)
+		return response, actions.NewError(actions.InvalidArgument, err)
 	}
 
 	if err := handlers.CheckMeta(entry, mux.Vars(req), "id"); err != nil {
-		return nil, actions.NewError(actions.InvalidArgument, err)
+		return response, actions.NewError(actions.InvalidArgument, err)
 	}
 
 	err = r.controller.Create(req.Context(), entry)
-	return nil, err
+	return response, err
 }
 
-func (r *SilencedRouter) createOrReplace(req *http.Request) (corev3.Resource, error) {
+func (r *SilencedRouter) createOrReplace(req *http.Request) (handlers.HandlerResponse, error) {
+	var response handlers.HandlerResponse
 	entry, err := request.Resource[*corev2.Silenced](req)
 	if err != nil {
-		return nil, actions.NewError(actions.InvalidArgument, err)
+		return response, actions.NewError(actions.InvalidArgument, err)
 	}
 
 	if err := handlers.CheckMeta(entry, mux.Vars(req), "id"); err != nil {
-		return nil, actions.NewError(actions.InvalidArgument, err)
+		return response, actions.NewError(actions.InvalidArgument, err)
 	}
 
 	err = r.controller.CreateOrReplace(req.Context(), entry)
-	return nil, err
+	return response, err
 }
 
 func (r *SilencedRouter) listr(ctx context.Context, pred *store.SelectionPredicate) ([]corev3.Resource, error) {

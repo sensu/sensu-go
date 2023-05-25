@@ -2,6 +2,7 @@ package routers
 
 import (
 	"context"
+	"encoding/base64"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -10,8 +11,10 @@ import (
 
 	"github.com/gorilla/mux"
 	corev2 "github.com/sensu/core/v2"
+	corev3 "github.com/sensu/core/v3"
 	"github.com/sensu/sensu-go/backend/apid/actions"
-	"github.com/sensu/core/v3/types"
+	"github.com/sensu/sensu-go/backend/apid/handlers"
+	"github.com/sensu/sensu-go/backend/store"
 )
 
 func newRequest(t *testing.T, method, endpoint string, body io.Reader) *http.Request {
@@ -25,9 +28,13 @@ func newRequest(t *testing.T, method, endpoint string, body io.Reader) *http.Req
 
 func TestRespondWith(t *testing.T) {
 	type args struct {
-		w         http.ResponseWriter
-		r         *http.Request
-		resources interface{}
+		w        http.ResponseWriter
+		r        *http.Request
+		response handlers.HandlerResponse
+	}
+	fixtureEntity := corev2.FixtureEntity("hello")
+	fixtureEntity.Labels = map[string]string{
+		store.SensuETagKey: base64.RawStdEncoding.EncodeToString([]byte("helloworld")),
 	}
 	tests := []struct {
 		name             string
@@ -39,8 +46,10 @@ func TestRespondWith(t *testing.T) {
 			args: args{
 				w: httptest.NewRecorder(),
 				r: httptest.NewRequest("GET", "/", nil),
-				resources: []corev2.Resource{
-					corev2.FixtureEntity("entity1"),
+				response: handlers.HandlerResponse{
+					ResourceList: []corev3.Resource{
+						corev2.FixtureEntity("entity1"),
+					},
 				},
 			},
 			expectETagHeader: false,
@@ -48,25 +57,18 @@ func TestRespondWith(t *testing.T) {
 		{
 			name: "etag added when resource is corev2.Resource",
 			args: args{
-				w:         httptest.NewRecorder(),
-				r:         httptest.NewRequest("GET", "/", nil),
-				resources: corev2.FixtureEntity("entity1"),
-			},
-			expectETagHeader: true,
-		},
-		{
-			name: "etag added when resource is types.Wrapper",
-			args: args{
-				w:         httptest.NewRecorder(),
-				r:         httptest.NewRequest("GET", "/", nil),
-				resources: types.Wrapper{},
+				w: httptest.NewRecorder(),
+				r: httptest.NewRequest("GET", "/", nil),
+				response: handlers.HandlerResponse{
+					Resource: fixtureEntity,
+				},
 			},
 			expectETagHeader: true,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			RespondWith(tt.args.w, tt.args.r, tt.args.resources)
+			RespondWith(tt.args.w, tt.args.r, tt.args.response)
 			if tt.expectETagHeader {
 				if _, ok := tt.args.w.Header()["Etag"]; !ok {
 					t.Errorf("RespondWith() did not set ETag header, headers: %v", tt.args.w.Header())

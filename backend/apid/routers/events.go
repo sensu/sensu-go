@@ -57,49 +57,52 @@ func (r *EventsRouter) Mount(parent *mux.Router) {
 		WrapList(r.controller.List, corev3.EventFields)).Methods(http.MethodGet)
 }
 
-func (r *EventsRouter) get(req *http.Request) (corev3.Resource, error) {
+func (r *EventsRouter) get(req *http.Request) (handlers.HandlerResponse, error) {
 	params := actions.QueryParams(mux.Vars(req))
 	entity := url.PathEscape(params["entity"])
 	check := url.PathEscape(params["check"])
 	record, err := r.controller.Get(req.Context(), entity, check)
-	return record, err
+	response := handlers.HandlerResponse{Resource: record}
+	return response, err
 }
 
-func (r *EventsRouter) delete(req *http.Request) (corev3.Resource, error) {
+func (r *EventsRouter) delete(req *http.Request) (handlers.HandlerResponse, error) {
 	params := actions.QueryParams(mux.Vars(req))
 	entity := url.PathEscape(params["entity"])
 	check := url.PathEscape(params["check"])
-	return nil, r.controller.Delete(req.Context(), entity, check)
+	return handlers.HandlerResponse{}, r.controller.Delete(req.Context(), entity, check)
 }
 
-func (r *EventsRouter) create(req *http.Request) (corev3.Resource, error) {
+func (r *EventsRouter) create(req *http.Request) (handlers.HandlerResponse, error) {
+	var response handlers.HandlerResponse
 	event, err := request.Resource[*corev2.Event](req)
 	if err != nil {
-		return nil, actions.NewError(actions.InvalidArgument, err)
+		return response, actions.NewError(actions.InvalidArgument, err)
 	}
 
 	vars := mux.Vars(req)
 	if err := validateEventPayload(event, vars); err != nil {
-		return nil, err
+		return response, err
 	}
 
 	err = r.controller.CreateOrReplace(req.Context(), event)
-	return nil, err
+	return response, err
 }
 
-func (r *EventsRouter) createOrReplace(req *http.Request) (corev3.Resource, error) {
+func (r *EventsRouter) createOrReplace(req *http.Request) (handlers.HandlerResponse, error) {
+	var response handlers.HandlerResponse
 	event, err := request.Resource[*corev2.Event](req)
 	if err != nil {
-		return nil, actions.NewError(actions.InvalidArgument, err)
+		return response, actions.NewError(actions.InvalidArgument, err)
 	}
 
 	vars := mux.Vars(req)
 	if err := validateEventPayload(event, vars); err != nil {
-		return nil, err
+		return response, err
 	}
 
 	err = r.controller.CreateOrReplace(req.Context(), event)
-	return nil, err
+	return response, err
 }
 
 // validateEventPayload validates the event payload against the URL path values

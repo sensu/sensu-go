@@ -1,4 +1,4 @@
-package actions
+package handlers
 
 import (
 	"fmt"
@@ -6,7 +6,7 @@ import (
 	"net/url"
 
 	"github.com/gorilla/mux"
-	corev3 "github.com/sensu/core/v3"
+	"github.com/sensu/sensu-go/backend/apid/actions"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sirupsen/logrus"
 )
@@ -16,16 +16,18 @@ type EntityDeleter struct {
 	EventStore  store.EventStore
 }
 
-func (d EntityDeleter) Delete(req *http.Request) (corev3.Resource, error) {
+func (d EntityDeleter) Delete(req *http.Request) (HandlerResponse, error) {
+	var response HandlerResponse
+
 	params := mux.Vars(req)
 	entityName, err := url.PathUnescape(params["id"])
 	if err != nil {
-		return nil, NewError(InvalidArgument, err)
+		return response, actions.NewError(actions.InvalidArgument, err)
 	}
 
 	events, err := d.EventStore.GetEventsByEntity(req.Context(), entityName, &store.SelectionPredicate{})
 	if err != nil {
-		return nil, fmt.Errorf("error fetching events for entity: %s", err)
+		return response, fmt.Errorf("error fetching events for entity: %s", err)
 	}
 
 	for _, event := range events {
@@ -46,12 +48,12 @@ func (d EntityDeleter) Delete(req *http.Request) (corev3.Resource, error) {
 
 	result, err := d.EntityStore.GetEntityByName(req.Context(), entityName)
 	if err != nil {
-		return nil, NewError(InternalErr, err)
+		return response, actions.NewError(actions.InternalErr, err)
 	}
 
 	if result == nil {
-		return nil, NewErrorf(NotFound)
+		return response, actions.NewErrorf(actions.NotFound)
 	}
 
-	return nil, d.EntityStore.DeleteEntityByName(req.Context(), entityName)
+	return response, d.EntityStore.DeleteEntityByName(req.Context(), entityName)
 }

@@ -23,7 +23,7 @@ type NamespaceClient interface {
 }
 
 type NamespacePatcher interface {
-	PatchResource(*http.Request) (corev3.Resource, error)
+	PatchResource(*http.Request) (handlers.HandlerResponse, error)
 }
 
 // NamespacesRouter handles requests for /namespaces
@@ -55,24 +55,26 @@ func (r *NamespacesRouter) Mount(parent *mux.Router) {
 	routes.Put(r.update)
 }
 
-func (r *NamespacesRouter) get(req *http.Request) (corev3.Resource, error) {
+func (r *NamespacesRouter) get(req *http.Request) (handlers.HandlerResponse, error) {
 	params := mux.Vars(req)
+	var response handlers.HandlerResponse
 	name, err := url.PathUnescape(params["id"])
 	if err != nil {
-		return nil, actions.NewError(actions.InvalidArgument, err)
+		return response, actions.NewError(actions.InvalidArgument, err)
 	}
 	ns, err := r.client.FetchNamespace(req.Context(), name)
 	if err != nil {
 		switch err := err.(type) {
 		case *store.ErrNotFound:
-			return nil, actions.NewErrorf(actions.NotFound)
+			return response, actions.NewErrorf(actions.NotFound)
 		case *store.ErrNotValid:
-			return nil, actions.NewError(actions.InvalidArgument, err)
+			return response, actions.NewError(actions.InvalidArgument, err)
 		default:
-			return nil, actions.NewError(actions.InternalErr, err)
+			return response, actions.NewError(actions.InternalErr, err)
 		}
 	}
-	return ns, nil
+	response.Resource = ns
+	return response, nil
 }
 
 func (r *NamespacesRouter) list(ctx context.Context, pred *store.SelectionPredicate) ([]corev3.Resource, error) {
@@ -87,11 +89,12 @@ func (r *NamespacesRouter) list(ctx context.Context, pred *store.SelectionPredic
 	return result, nil
 }
 
-func (r *NamespacesRouter) create(req *http.Request) (corev3.Resource, error) {
+func (r *NamespacesRouter) create(req *http.Request) (handlers.HandlerResponse, error) {
 	ctx := req.Context()
 	var ns corev3.Namespace
+	var response handlers.HandlerResponse
 	if err := json.NewDecoder(req.Body).Decode(&ns); err != nil {
-		return nil, actions.NewError(actions.InvalidArgument, err)
+		return response, actions.NewError(actions.InvalidArgument, err)
 	}
 	meta := ns.GetMetadata()
 	if claims := jwt.GetClaimsFromContext(ctx); claims != nil {
@@ -99,29 +102,30 @@ func (r *NamespacesRouter) create(req *http.Request) (corev3.Resource, error) {
 		ns.Metadata = meta
 	}
 	if err := handlers.CheckMeta(&ns, mux.Vars(req), "id"); err != nil {
-		return nil, actions.NewError(actions.InvalidArgument, err)
+		return response, actions.NewError(actions.InvalidArgument, err)
 	}
 	if err := ns.Validate(); err != nil {
-		return nil, actions.NewError(actions.InvalidArgument, err)
+		return response, actions.NewError(actions.InvalidArgument, err)
 	}
 	if err := r.client.CreateNamespace(ctx, &ns); err != nil {
 		switch err := err.(type) {
 		case *store.ErrAlreadyExists:
-			return nil, actions.NewErrorf(actions.AlreadyExistsErr)
+			return response, actions.NewErrorf(actions.AlreadyExistsErr)
 		case *store.ErrNotValid:
-			return nil, actions.NewError(actions.InvalidArgument, err)
+			return response, actions.NewError(actions.InvalidArgument, err)
 		default:
-			return nil, actions.NewError(actions.InternalErr, err)
+			return response, actions.NewError(actions.InternalErr, err)
 		}
 	}
-	return nil, nil
+	return response, nil
 }
 
-func (r *NamespacesRouter) update(req *http.Request) (corev3.Resource, error) {
+func (r *NamespacesRouter) update(req *http.Request) (handlers.HandlerResponse, error) {
 	ctx := req.Context()
 	var ns corev3.Namespace
+	var response handlers.HandlerResponse
 	if err := json.NewDecoder(req.Body).Decode(&ns); err != nil {
-		return nil, actions.NewError(actions.InvalidArgument, err)
+		return response, actions.NewError(actions.InvalidArgument, err)
 	}
 	meta := ns.GetMetadata()
 	if claims := jwt.GetClaimsFromContext(ctx); claims != nil {
@@ -129,37 +133,38 @@ func (r *NamespacesRouter) update(req *http.Request) (corev3.Resource, error) {
 		ns.Metadata = meta
 	}
 	if err := handlers.CheckMeta(&ns, mux.Vars(req), "id"); err != nil {
-		return nil, actions.NewError(actions.InvalidArgument, err)
+		return response, actions.NewError(actions.InvalidArgument, err)
 	}
 	if err := ns.Validate(); err != nil {
-		return nil, actions.NewError(actions.InvalidArgument, err)
+		return response, actions.NewError(actions.InvalidArgument, err)
 	}
 	if err := r.client.UpdateNamespace(ctx, &ns); err != nil {
 		switch err := err.(type) {
 		case *store.ErrNotValid:
-			return nil, actions.NewError(actions.InvalidArgument, err)
+			return response, actions.NewError(actions.InvalidArgument, err)
 		default:
-			return nil, actions.NewError(actions.InternalErr, err)
+			return response, actions.NewError(actions.InternalErr, err)
 		}
 	}
-	return nil, nil
+	return response, nil
 }
 
-func (r *NamespacesRouter) delete(req *http.Request) (corev3.Resource, error) {
+func (r *NamespacesRouter) delete(req *http.Request) (handlers.HandlerResponse, error) {
+	var response handlers.HandlerResponse
 	params := mux.Vars(req)
 	name, err := url.PathUnescape(params["id"])
 	if err != nil {
-		return nil, actions.NewError(actions.InvalidArgument, err)
+		return response, actions.NewError(actions.InvalidArgument, err)
 	}
 
 	if err := r.client.DeleteNamespace(req.Context(), name); err != nil {
 		switch err := err.(type) {
 		case *store.ErrNotFound:
-			return nil, actions.NewErrorf(actions.NotFound)
+			return response, actions.NewErrorf(actions.NotFound)
 		default:
-			return nil, actions.NewError(actions.InternalErr, err)
+			return response, actions.NewError(actions.InternalErr, err)
 		}
 	}
 
-	return nil, nil
+	return response, nil
 }

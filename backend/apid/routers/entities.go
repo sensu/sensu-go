@@ -52,7 +52,7 @@ func (r *EntitiesRouter) Mount(parent *mux.Router) {
 		PathPrefix: "/namespaces/{namespace}/{resource:entities}",
 	}
 
-	deleter := actions.EntityDeleter{
+	deleter := handlers.EntityDeleter{
 		EntityStore: r.store.GetEntityStore(),
 		EventStore:  r.store.GetEventStore(),
 	}
@@ -68,33 +68,45 @@ func (r *EntitiesRouter) Mount(parent *mux.Router) {
 	routes.Put(r.createOrReplace)
 }
 
-func (r *EntitiesRouter) find(req *http.Request) (corev3.Resource, error) {
+func responseWrap(args ...interface{}) (handlers.HandlerResponse, error) {
+	response := handlers.HandlerResponse{Resource: args[0].(corev3.Resource)}
+	var err error
+	if args[1] != nil {
+		err = args[1].(error)
+	}
+	return response, err
+}
+
+func (r *EntitiesRouter) find(req *http.Request) (handlers.HandlerResponse, error) {
+	var response handlers.HandlerResponse
 	params := mux.Vars(req)
 	id, err := url.PathUnescape(params["id"])
 	if err != nil {
-		return nil, err
+		return response, err
 	}
-	return r.controller.Find(req.Context(), id)
+	return responseWrap(r.controller.Find(req.Context(), id))
 }
 
-func (r *EntitiesRouter) create(req *http.Request) (corev3.Resource, error) {
+func (r *EntitiesRouter) create(req *http.Request) (handlers.HandlerResponse, error) {
+	var response handlers.HandlerResponse
 	entity, err := request.Resource[*corev2.Entity](req)
 	if err != nil {
-		return nil, err
+		return response, err
 	}
 	err = r.controller.Create(req.Context(), *entity)
-	return entity, err
+	return responseWrap(entity, err)
 }
 
-func (r *EntitiesRouter) createOrReplace(req *http.Request) (corev3.Resource, error) {
+func (r *EntitiesRouter) createOrReplace(req *http.Request) (handlers.HandlerResponse, error) {
+	var response handlers.HandlerResponse
 	entity, err := request.Resource[*corev2.Entity](req)
 	if err != nil {
-		return nil, err
+		return response, err
 	}
 
 	if entity.Labels[corev2.ManagedByLabel] == "sensu-agent" {
-		return nil, actions.NewError(actions.AlreadyExistsErr, errors.New("entity is managed by its agent"))
+		return response, actions.NewError(actions.AlreadyExistsErr, errors.New("entity is managed by its agent"))
 	}
 
-	return entity, r.controller.CreateOrReplace(req.Context(), *entity)
+	return responseWrap(entity, r.controller.CreateOrReplace(req.Context(), *entity))
 }

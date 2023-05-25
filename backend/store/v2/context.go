@@ -1,6 +1,11 @@
 package v2
 
-import "context"
+import (
+	"bytes"
+	"context"
+	"fmt"
+	"strings"
+)
 
 // contextKeyTxInfo is the context key that identifies a TxInfo.
 type contextKeyTxInfo struct{}
@@ -42,6 +47,37 @@ func TxInfoFromContext(ctx context.Context) *TxInfo {
 type IfMatch []ETag
 type contextKeyIfMatch struct{}
 
+func (m IfMatch) Matches(etag ETag) bool {
+	for _, candidate := range m {
+		if bytes.Equal(candidate, etag) {
+			return true
+		}
+	}
+	return false
+}
+
+func (m IfMatch) String() string {
+	parts := make([]string, 0, len(m))
+	for _, v := range m {
+		parts = append(parts, fmt.Sprintf("%q", v.String()))
+	}
+	return strings.Join(parts, ", ")
+}
+
+func ReadIfMatch(header string) (IfMatch, error) {
+	var result IfMatch
+	parts := strings.Split(header, ",")
+	for _, part := range parts {
+		part = strings.TrimSpace(part)[1 : len(part)-1]
+		etag, err := DecodeETag(part)
+		if err != nil {
+			return nil, err
+		}
+		result = append(result, etag)
+	}
+	return result, nil
+}
+
 // ContextWithIfMatch returns a new context that contains the supplied IfMatch.
 func ContextWithIfMatch(ctx context.Context, list IfMatch) context.Context {
 	return context.WithValue(ctx, contextKeyIfMatch{}, list)
@@ -72,4 +108,35 @@ func IfNoneMatchFromContext(ctx context.Context) IfNoneMatch {
 		return nil
 	}
 	return val.(IfNoneMatch)
+}
+
+func (m IfNoneMatch) String() string {
+	parts := make([]string, 0, len(m))
+	for _, v := range m {
+		parts = append(parts, fmt.Sprintf("%q", v.String()))
+	}
+	return strings.Join(parts, ", ")
+}
+
+func ReadIfNoneMatch(header string) (IfNoneMatch, error) {
+	var result IfNoneMatch
+	parts := strings.Split(header, ",")
+	for _, part := range parts {
+		part = strings.TrimSpace(part)[1 : len(part)-1]
+		etag, err := DecodeETag(part)
+		if err != nil {
+			return nil, err
+		}
+		result = append(result, etag)
+	}
+	return result, nil
+}
+
+func (m IfNoneMatch) Matches(etag ETag) bool {
+	for _, candidate := range m {
+		if bytes.Equal(candidate, etag) {
+			return false
+		}
+	}
+	return true
 }

@@ -248,7 +248,7 @@ func TestConfigStore_CreateOrUpdateIfNoneMatch(t *testing.T) {
 			t.Error("expected non-nil error")
 			return
 		}
-		if err != storev2.ErrPreconditionFailed {
+		if _, ok := err.(*store.ErrPreconditionFailed); !ok {
 			t.Error(err)
 			return
 		}
@@ -493,7 +493,7 @@ func TestConfigStore_UpdateIfExistsIfNoneMatch(t *testing.T) {
 		if err == nil {
 			t.Error("expected non-nil error")
 			return
-		} else if err != storev2.ErrPreconditionFailed {
+		} else if _, ok := err.(*store.ErrPreconditionFailed); !ok {
 			t.Error(err)
 			return
 		}
@@ -566,7 +566,7 @@ func TestConfigStore_DeleteIfMatch(t *testing.T) {
 			return
 		}
 
-		if err != storev2.ErrPreconditionFailed {
+		if _, ok := err.(*store.ErrPreconditionFailed); !ok {
 			t.Error(err)
 			return
 		}
@@ -612,7 +612,7 @@ func TestConfigStore_DeleteIfNoneMatch(t *testing.T) {
 			return
 		}
 
-		if err != storev2.ErrPreconditionFailed {
+		if _, ok := err.(*store.ErrPreconditionFailed); !ok {
 			t.Error(err)
 			return
 		}
@@ -711,7 +711,7 @@ func TestConfigStore_GetIfMatch(t *testing.T) {
 
 		if _, err := getAsset(ctx, s, defaultNamespace, assetName); err == nil {
 			t.Error("expected non-nil error")
-		} else if err != storev2.ErrPreconditionFailed {
+		} else if _, ok := err.(*store.ErrPreconditionFailed); !ok {
 			t.Error("expected precondition to have failed")
 		}
 	})
@@ -748,7 +748,7 @@ func TestConfigStore_GetIfNoneMatch(t *testing.T) {
 
 		if _, err := getAsset(ctx, s, defaultNamespace, assetName); err == nil {
 			t.Error("expected non-nil error")
-		} else if err != storev2.ErrPreconditionFailed {
+		} else if _, ok := err.(*store.ErrPreconditionFailed); !ok {
 			t.Error("expected precondition to have failed")
 		}
 

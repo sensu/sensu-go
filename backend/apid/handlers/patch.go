@@ -30,11 +30,13 @@ const (
 var acceptedContentTypes = []string{mergePatchContentType}
 
 // PatchResource patches a given resource, using the request body as the patch
-func (h Handlers[R, T]) PatchResource(r *http.Request) (corev3.Resource, error) {
+func (h Handlers[R, T]) PatchResource(r *http.Request) (HandlerResponse, error) {
+	var response HandlerResponse
+
 	// Read the request body
 	body, err := ioutil.ReadAll(r.Body)
 	if err != nil {
-		return nil, actions.NewError(
+		return response, actions.NewError(
 			actions.InvalidArgument,
 			fmt.Errorf("could not read the request body: %s", err),
 		)
@@ -48,51 +50,61 @@ func (h Handlers[R, T]) PatchResource(r *http.Request) (corev3.Resource, error) 
 	case mergePatchContentType, "": // Use merge patch as fallback value
 		patcher = &patch.Merge{MergePatch: body}
 	case jsonPatchContentType:
-		return nil, actions.NewError(
+		return response, actions.NewError(
 			actions.InvalidArgument,
 			fmt.Errorf("JSON Patch is not supported yet. Allowed values: %s", strings.Join(acceptedContentTypes, ", ")),
 		)
 	default:
-		return nil, actions.NewError(
+		return response, actions.NewError(
 			actions.InvalidArgument,
 			fmt.Errorf("invalid Content-Type header: %s.  Allowed values: %s", contentType, strings.Join(acceptedContentTypes, ", ")),
 		)
 	}
 
+	ctx := r.Context()
+
 	// Determine if we have a conditional request
-	conditions := &store.ETagCondition{
-		IfMatch:     r.Header.Get(ifMatchHeader),
-		IfNoneMatch: r.Header.Get(ifNoneMatchHeader),
+	if value := r.Header.Get(ifMatchHeader); value != "" {
+		ifMatch, err := storev2.ReadIfMatch(value)
+		if err != nil {
+			return response, actions.NewError(actions.InvalidArgument, fmt.Errorf("invalid If-Match header: %s", err))
+		}
+		ctx = storev2.ContextWithIfMatch(ctx, ifMatch)
+	}
+	if value := r.Header.Get(ifNoneMatchHeader); value != "" {
+		ifNoneMatch, err := storev2.ReadIfNoneMatch(value)
+		if err != nil {
+			return response, actions.NewError(actions.InvalidArgument, fmt.Errorf("invalid If-None-Match header: %s", err))
+		}
+		ctx = storev2.ContextWithIfNoneMatch(ctx, ifNoneMatch)
 	}
 
 	// Retrieve the name & namespace of the resource via the route variables
 	params := mux.Vars(r)
 	name, err := url.PathUnescape(params["id"])
 	if err != nil {
-		return nil, err
+		return response, err
 	}
 	namespace, err := url.PathUnescape(params["namespace"])
 	if err != nil {
-		return nil, err
+		return response, err
 	}
 
 	// Validate that the patch does not alter the namespace nor the name
 	if err := validatePatch(body, params); err != nil {
-		return nil, actions.NewError(actions.InvalidArgument, err)
+		return response, actions.NewError(actions.InvalidArgument, err)
 	}
 
-	return h.patchV3Resource(r.Context(), body, name, namespace, patcher, conditions)
+	resource, err := h.patchV3Resource(ctx, name, namespace, patcher)
+	response.Resource = resource
+	return response, err
 }
 
-func (h Handlers[R, T]) patchV3Resource(ctx context.Context, body []byte, name, namespace string, patcher patch.Patcher, etag *store.ETagCondition) (corev3.Resource, error) {
-	var payload R
-	if err := json.Unmarshal(body, &payload); err != nil {
-		return nil, actions.NewError(actions.InvalidArgument, err)
-	}
-
+func (h Handlers[R, T]) patchV3Resource(ctx context.Context, name, namespace string, patcher patch.Patcher) (corev3.Resource, error) {
 	gstore := storev2.Of[R](h.Store)
 
-	if err := gstore.Patch(ctx, payload, patcher, etag); err != nil {
+	id := storev2.ID{Namespace: namespace, Name: name}
+	if err := gstore.Patch(ctx, id, patcher); err != nil {
 		switch err := err.(type) {
 		case *store.ErrNotFound:
 			return nil, actions.NewError(actions.NotFound, err)

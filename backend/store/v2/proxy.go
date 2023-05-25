@@ -81,10 +81,10 @@ func (p *Proxy) Exists(ctx context.Context, req ResourceRequest) (bool, error) {
 }
 
 // Patch patches the resource given in the request
-func (p *Proxy) Patch(ctx context.Context, req ResourceRequest, wrapper Wrapper, patcher patch.Patcher, cond *store.ETagCondition) error {
+func (p *Proxy) Patch(ctx context.Context, req ResourceRequest, patcher patch.Patcher) error {
 	p.mu.RLock()
 	defer p.mu.RUnlock()
-	return p.impl.Patch(ctx, req, wrapper, patcher, cond)
+	return p.impl.Patch(ctx, req, patcher)
 }
 
 // Watch sets up a watcher that responds to updates to the given key or

@@ -5,6 +5,7 @@ import (
 	"reflect"
 	"testing"
 
+	"github.com/google/go-cmp/cmp"
 	"github.com/gorilla/mux"
 	"github.com/stretchr/testify/mock"
 
@@ -80,15 +81,15 @@ func TestHandlers_GetV3Resource(t *testing.T) {
 				return
 			}
 
-			if got != nil {
-				meta := got.GetMetadata()
+			if !cmp.Equal(got, HandlerResponse{}) {
+				meta := got.Resource.GetMetadata()
 				// delete these to facilitate comparison
 				delete(meta.Labels, store.SensuCreatedAtKey)
 				delete(meta.Labels, store.SensuUpdatedAtKey)
 				delete(meta.Labels, store.SensuDeletedAtKey)
 			}
 
-			if !reflect.DeepEqual(got, tt.want) {
+			if !reflect.DeepEqual(got.Resource, tt.want) {
 				t.Errorf("Handlers.GetResource() = %#v, want %#v", got, tt.want)
 			}
 		})
