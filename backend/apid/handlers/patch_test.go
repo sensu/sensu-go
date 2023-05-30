@@ -1,6 +1,60 @@
 package handlers
 
-import "testing"
+import (
+	"io"
+	"net/http"
+	"strings"
+	"testing"
+
+	"github.com/sensu/sensu-go/testing/mockstore"
+	"github.com/stretchr/testify/mock"
+
+	corev2 "github.com/sensu/core/v2"
+)
+
+func testBody(body string) io.ReadCloser {
+	reader := strings.NewReader(body)
+	return io.NopCloser(reader)
+}
+
+func TestPatchResource(t *testing.T) {
+	tests := []struct {
+		Name       string
+		Body       io.ReadCloser
+		StoreError error
+		WantErr    bool
+		WantUpdate bool
+	}{
+		{
+			Name:       "valid patch",
+			Body:       testBody(`{"fake": true}`),
+			WantUpdate: true,
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.Name, func(t *testing.T) {
+			store := new(mockstore.V2MockStore)
+			cs := new(mockstore.ConfigStore)
+			store.On("GetConfigStore").Return(cs)
+			if test.WantUpdate {
+				cs.On("Patch", mock.Anything, mock.Anything, mock.Anything).Return(test.StoreError)
+			}
+			handlers := Handlers[*corev2.Asset, corev2.Asset]{Store: store}
+			req, err := http.NewRequest("PATCH", "http://example.com/namespaces/default/assets/foo", test.Body)
+			if err != nil {
+				t.Fatal(err)
+			}
+			_, err = handlers.PatchResource(req)
+			if err != nil {
+				if !test.WantErr {
+					t.Error(err)
+				}
+			} else if test.WantErr {
+				t.Error("wanted non-nil error")
+			}
+		})
+	}
+}
 
 func TestValidatePatch(t *testing.T) {
 	tests := []struct {
