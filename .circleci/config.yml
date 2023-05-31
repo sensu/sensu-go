@@ -53,9 +53,16 @@ jobs:
       name: windows/default
     steps:
       - checkout
+      - restore_cache:
+          keys:
+            - go-installer-<< pipeline.parameters.go_version >>
       - run:
           name: Download & Install Go
           command: .\ci\install-go.ps1 << pipeline.parameters.go_version >>
+      - save_cache:
+          key: go-installer-<< pipeline.parameters.go_version >>
+          paths:
+            - C:\go-installers
       - run: go version
       - run: go env
       - restore_cache:
