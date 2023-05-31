@@ -42,16 +42,15 @@ If (Test-CommandExists "go") {
     Write-Output "go not found"
 }
 
-Write-Output "Installing Go $version"
-
-$uri="https://storage.googleapis.com/golang/go$version.windows-amd64.msi"
-
-Write-Output "Downloading $uri"
-
 New-Item -ItemType Directory -Force -Path C:\go-installers
 
-Invoke-WebRequest -Uri $uri -OutFile "C:\go-installers\go$version.msi"
+$installerPath="C:\go-installers\go$version.msi"
+
+If (-Not (Test-Path -Path $installerPath -PathType Leaf)) {
+    $uri="https://storage.googleapis.com/golang/go$version.windows-amd64.msi"
+    Write-Output "Downloading $uri"
+    Invoke-WebRequest -Uri $uri -OutFile $installerPath
+}
 
 Write-Output "Installing go$version.msi"
-
-msiexec /i C:\go-installers\go$version.msi /q
+msiexec /i $installerPath /q
