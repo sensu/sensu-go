@@ -55,22 +55,22 @@ jobs:
       - checkout
       - restore_cache:
           keys:
-            - go-cache
+            - go-installer-<< pipeline.parameters.go_version >>
       - run:
           name: Download & Install Go
           command: .\ci\install-go.ps1 << pipeline.parameters.go_version >>
       - save_cache:
-          key: go-cache
+          key: go-installer-<< pipeline.parameters.go_version >>
           paths:
-            - C:\Program Files\Go
+            - C:\go-installers
       - run: go version
       - run: go env
       - restore_cache:
           keys:
-            - go-mod-and-build-cache
+            - go-mod-and-build-cache-<< pipeline.parameters.go_version >>
       - run: go mod download
       - save_cache:
-          key: go-mod-and-build-cache
+          key: go-mod-and-build-cache-<< pipeline.parameters.go_version >>
           paths:
             - C:\Users\circleci\go
             - C:\Users\circleci\AppData\Local\go-build
