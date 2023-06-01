@@ -368,6 +368,7 @@ func (w *Wrapper) UnwrapInto(p interface{}) error {
 		meta.Labels[store.SensuCreatedAtKey] = string(createdAt)
 		updatedAt, _ := w.UpdatedAt.MarshalText()
 		meta.Labels[store.SensuUpdatedAtKey] = string(updatedAt)
+		meta.Annotations[store.SensuETagKey] = w.ETag
 
 		if !w.DeletedAt.IsZero() {
 			deletedAt, _ := w.DeletedAt.MarshalText()

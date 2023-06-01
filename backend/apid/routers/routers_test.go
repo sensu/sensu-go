@@ -33,7 +33,7 @@ func TestRespondWith(t *testing.T) {
 		response handlers.HandlerResponse
 	}
 	fixtureEntity := corev2.FixtureEntity("hello")
-	fixtureEntity.Labels = map[string]string{
+	fixtureEntity.Annotations = map[string]string{
 		store.SensuETagKey: base64.RawStdEncoding.EncodeToString([]byte("helloworld")),
 	}
 	tests := []struct {
@@ -70,7 +70,7 @@ func TestRespondWith(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			RespondWith(tt.args.w, tt.args.r, tt.args.response)
 			if tt.expectETagHeader {
-				if _, ok := tt.args.w.Header()["Etag"]; !ok {
+				if _, ok := tt.args.w.Header()["ETag"]; !ok {
 					t.Errorf("RespondWith() did not set ETag header, headers: %v", tt.args.w.Header())
 				}
 			}

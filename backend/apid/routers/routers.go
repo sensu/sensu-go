@@ -27,11 +27,11 @@ func RespondWith(w http.ResponseWriter, r *http.Request, response handlers.Handl
 
 	var etag string
 	if response.Resource != nil {
-		etag = response.Resource.GetMetadata().Labels[store.SensuETagKey]
+		etag = response.Resource.GetMetadata().Annotations[store.SensuETagKey]
 	}
 
 	if etag != "" {
-		w.Header().Set("ETag", fmt.Sprintf("%q", etag))
+		w.Header()["ETag"] = []string{fmt.Sprintf("%q", etag)}
 	}
 
 	// If no resource(s) are present return a 204 response code
