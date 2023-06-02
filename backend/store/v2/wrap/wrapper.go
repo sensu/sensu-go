@@ -87,7 +87,7 @@ type Wrapper struct {
 	// then the resource was not deleted.
 	DeletedAt time.Time
 
-	// ETag is a hex-encoded ETag.
+	// ETag is a base64-encoded ETag.
 	ETag string
 }
 
@@ -368,6 +368,7 @@ func (w *Wrapper) UnwrapInto(p interface{}) error {
 		meta.Labels[store.SensuCreatedAtKey] = string(createdAt)
 		updatedAt, _ := w.UpdatedAt.MarshalText()
 		meta.Labels[store.SensuUpdatedAtKey] = string(updatedAt)
+		meta.Annotations[store.SensuETagKey] = w.ETag
 
 		if !w.DeletedAt.IsZero() {
 			deletedAt, _ := w.DeletedAt.MarshalText()

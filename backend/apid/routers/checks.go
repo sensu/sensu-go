@@ -64,38 +64,42 @@ func (r *ChecksRouter) Mount(parent *mux.Router) {
 	parent.HandleFunc(path.Join(routes.PathPrefix, "{id}/execute"), r.adhocRequest).Methods(http.MethodPost)
 }
 
-func (r *ChecksRouter) addCheckHook(req *http.Request) (corev3.Resource, error) {
+func (r *ChecksRouter) addCheckHook(req *http.Request) (handlers.HandlerResponse, error) {
 	var cfg corev2.HookList
+	var response handlers.HandlerResponse
+
 	if err := json.NewDecoder(req.Body).Decode(&cfg); err != nil {
-		return nil, actions.NewError(actions.InvalidArgument, err)
+		return response, actions.NewError(actions.InvalidArgument, err)
 	}
 
 	params := mux.Vars(req)
 	id, err := url.PathUnescape(params["id"])
 	if err != nil {
-		return nil, err
+		return response, err
 	}
 	err = r.controller.AddCheckHook(req.Context(), id, cfg)
 
-	return nil, err
+	return response, err
 }
 
-func (r *ChecksRouter) removeCheckHook(req *http.Request) (corev3.Resource, error) {
+func (r *ChecksRouter) removeCheckHook(req *http.Request) (handlers.HandlerResponse, error) {
+	var response handlers.HandlerResponse
+
 	params := mux.Vars(req)
 	id, err := url.PathUnescape(params["id"])
 	if err != nil {
-		return nil, err
+		return response, err
 	}
 	typ, err := url.PathUnescape(params["type"])
 	if err != nil {
-		return nil, err
+		return response, err
 	}
 	hook, err := url.PathUnescape(params["hook"])
 	if err != nil {
-		return nil, err
+		return response, err
 	}
 	err = r.controller.RemoveCheckHook(req.Context(), id, typ, hook)
-	return nil, err
+	return response, err
 }
 
 func (r *ChecksRouter) adhocRequest(w http.ResponseWriter, req *http.Request) {

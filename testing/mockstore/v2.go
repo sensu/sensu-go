@@ -87,8 +87,8 @@ func (v *ConfigStore) Exists(ctx context.Context, req storev2.ResourceRequest) (
 	return args.Get(0).(bool), args.Error(1)
 }
 
-func (v *ConfigStore) Patch(ctx context.Context, req storev2.ResourceRequest, w storev2.Wrapper, patcher patch.Patcher, cond *store.ETagCondition) error {
-	return v.Called(ctx, req, w, patcher, cond).Error(0)
+func (v *ConfigStore) Patch(ctx context.Context, req storev2.ResourceRequest, patcher patch.Patcher) error {
+	return v.Called(ctx, req, patcher).Error(0)
 }
 
 func (v *ConfigStore) Watch(ctx context.Context, req storev2.ResourceRequest) <-chan []storev2.WatchEvent {
@@ -200,8 +200,8 @@ func (e *EntityStateStore) Exists(ctx context.Context, ns string, name string) (
 	return args.Bool(0), args.Error(1)
 }
 
-func (e *EntityStateStore) Patch(ctx context.Context, ns string, n string, p patch.Patcher, etag *store.ETagCondition) error {
-	return e.Called(ctx, ns, n, p, etag).Error(0)
+func (e *EntityStateStore) Patch(ctx context.Context, ns string, n string, p patch.Patcher) error {
+	return e.Called(ctx, ns, n, p).Error(0)
 }
 
 type EntityConfigStore struct {
@@ -244,8 +244,8 @@ func (e *EntityConfigStore) Exists(ctx context.Context, ns string, name string) 
 	return args.Bool(0), args.Error(1)
 }
 
-func (e *EntityConfigStore) Patch(ctx context.Context, ns string, n string, p patch.Patcher, etag *store.ETagCondition) error {
-	return e.Called(ctx, ns, n, p, etag).Error(0)
+func (e *EntityConfigStore) Patch(ctx context.Context, ns string, n string, p patch.Patcher) error {
+	return e.Called(ctx, ns, n, p).Error(0)
 }
 
 func (e *EntityConfigStore) Watch(ctx context.Context, ns, n string) <-chan []storev2.WatchEvent {
@@ -292,8 +292,8 @@ func (n *NamespaceStore) Exists(ctx context.Context, ns string) (bool, error) {
 	return args.Bool(0), args.Error(1)
 }
 
-func (n *NamespaceStore) Patch(ctx context.Context, ns string, p patch.Patcher, pred *store.ETagCondition) error {
-	return n.Called(ctx, ns, p, pred).Error(0)
+func (n *NamespaceStore) Patch(ctx context.Context, ns string, p patch.Patcher) error {
+	return n.Called(ctx, ns, p).Error(0)
 }
 
 func (n *NamespaceStore) IsEmpty(ctx context.Context, ns string) (bool, error) {

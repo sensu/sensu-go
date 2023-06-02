@@ -1,10 +1,7 @@
 package v2
 
 import (
-	"bytes"
 	"context"
-	"encoding/base64"
-	"errors"
 
 	corev2 "github.com/sensu/core/v2"
 	corev3 "github.com/sensu/core/v3"
@@ -23,10 +20,6 @@ type Interface interface {
 	SilencesStoreGetter
 }
 
-// ErrPreconditionFailed is returned when a store method evaluates an If-Match
-// or If-None-Match and finds that it is false.
-var ErrPreconditionFailed = errors.New("precondition failed")
-
 // Wrapper is an abstraction of a store wrapper.
 type Wrapper interface {
 	Unwrap() (corev3.Resource, error)
@@ -38,25 +31,6 @@ type WrapList interface {
 	Unwrap() ([]corev3.Resource, error)
 	UnwrapInto(interface{}) error
 	Len() int
-}
-
-// ETag represents a unique hash of the resource.
-type ETag []byte
-
-// String returns the base64-encoded form of the ETag.
-func (e ETag) String() string {
-	return base64.RawStdEncoding.EncodeToString(e)
-}
-
-// DecodeETag attempts to parse an encoded ETag. It returns an error if the
-// input is not base64-encoded.
-func DecodeETag(data string) (ETag, error) {
-	b, err := base64.RawStdEncoding.DecodeString(data)
-	return ETag(b), err
-}
-
-func (e ETag) Equals(other ETag) bool {
-	return bytes.Equal(e, other)
 }
 
 // EntityConfigStoreGetter gets you an EntityConfigStore.
@@ -124,8 +98,8 @@ type ConfigStore interface {
 	// Exists returns true if the resource indicated by the request exists
 	Exists(context.Context, ResourceRequest) (bool, error)
 
-	// Patch patches the resource given in the request
-	Patch(context.Context, ResourceRequest, Wrapper, patch.Patcher, *store.ETagCondition) error
+	// Patch patches the resource
+	Patch(context.Context, ResourceRequest, patch.Patcher) error
 
 	// Watch provides a channel for receiving updates to a particular resource
 	// or resource collection
@@ -165,7 +139,7 @@ type NamespaceStore interface {
 	Exists(context.Context, string) (bool, error)
 
 	// Patch patches the corev3.Namespace resource with the provided name.
-	Patch(context.Context, string, patch.Patcher, *store.ETagCondition) error
+	Patch(context.Context, string, patch.Patcher) error
 
 	// IsEmpty returns whether the corev3.Namespace with the provided name
 	// is empty or if it contains other resources.
@@ -205,7 +179,7 @@ type EntityConfigStore interface {
 
 	// Patch patches the corev3.EntityConfig resource with the provided
 	// namespace and name.
-	Patch(context.Context, string, string, patch.Patcher, *store.ETagCondition) error
+	Patch(context.Context, string, string, patch.Patcher) error
 
 	// Watch creates a watcher for the key space defined by the namespace and name
 	// given. There are three possible modes. If namespace and name are blank, then
@@ -248,7 +222,7 @@ type EntityStateStore interface {
 
 	// Patch patches the corev3.EntityState resource with the provided
 	// namespace and name.
-	Patch(context.Context, string, string, patch.Patcher, *store.ETagCondition) error
+	Patch(context.Context, string, string, patch.Patcher) error
 }
 
 // KeepaliveStore provides an interface for interacting with keepalives.

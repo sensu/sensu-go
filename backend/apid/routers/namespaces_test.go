@@ -13,6 +13,7 @@ import (
 	"github.com/gorilla/mux"
 	corev3 "github.com/sensu/core/v3"
 	"github.com/sensu/sensu-go/backend/api/mockapi"
+	"github.com/sensu/sensu-go/backend/apid/handlers"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/stretchr/testify/mock"
 )
@@ -21,9 +22,9 @@ type mockPatcher struct {
 	mock.Mock
 }
 
-func (m *mockPatcher) PatchResource(req *http.Request) (corev3.Resource, error) {
+func (m *mockPatcher) PatchResource(req *http.Request) (handlers.HandlerResponse, error) {
 	args := m.Called(req)
-	return args.Get(0).(corev3.Resource), args.Error(1)
+	return args.Get(0).(handlers.HandlerResponse), args.Error(1)
 }
 
 func TestNamespacesRouter(t *testing.T) {

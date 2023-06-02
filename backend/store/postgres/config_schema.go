@@ -77,6 +77,9 @@ const ExistsConfigIfNoneMatchQuery = `SELECT count(*) AS total FROM configuratio
 const GetETagOnlyQuery = `SELECT etag FROM configuration
 	WHERE api_version=$1 AND api_type=$2 AND namespace=$3 AND name=$4 AND NOT isfinite(deleted_at);`
 
+const GetJSONOnlyQuery = `SELECT resource FROM configuration
+	WHERE api_version=$1 AND api_type=$2 AND namespace=$3 AND name=$4 AND NOT isfinite(deleted_at);`
+
 const GetConfigQuery = `SELECT id, labels, annotations, resource, created_at, updated_at, etag FROM configuration
 	WHERE api_version=$1 AND api_type=$2 AND namespace=$3 AND name=$4 AND NOT isfinite(deleted_at);`
 

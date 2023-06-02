@@ -1,6 +1,8 @@
 package v2
 
-import "context"
+import (
+	"context"
+)
 
 // contextKeyTxInfo is the context key that identifies a TxInfo.
 type contextKeyTxInfo struct{}
@@ -38,10 +40,6 @@ func TxInfoFromContext(ctx context.Context) *TxInfo {
 	return val.(*TxInfo)
 }
 
-// IfMatch is a list of Etags
-type IfMatch []ETag
-type contextKeyIfMatch struct{}
-
 // ContextWithIfMatch returns a new context that contains the supplied IfMatch.
 func ContextWithIfMatch(ctx context.Context, list IfMatch) context.Context {
 	return context.WithValue(ctx, contextKeyIfMatch{}, list)
@@ -55,10 +53,6 @@ func IfMatchFromContext(ctx context.Context) IfMatch {
 	}
 	return val.(IfMatch)
 }
-
-// IfNoneMatch is a list of ETags.
-type IfNoneMatch []ETag
-type contextKeyIfNoneMatch struct{}
 
 // ContextWithIfNoneMatch returns a new context that contains the supplied IfNoneMatch.
 func ContextWithIfNoneMatch(ctx context.Context, list IfNoneMatch) context.Context {

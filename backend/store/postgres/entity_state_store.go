@@ -12,6 +12,7 @@ import (
 	corev3 "github.com/sensu/core/v3"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/backend/store/patch"
+	storev2 "github.com/sensu/sensu-go/backend/store/v2"
 )
 
 var (
@@ -303,7 +304,7 @@ func (s *EntityStateStore) Count(ctx context.Context, namespace string) (int, er
 	return ct, nil
 }
 
-func (s *EntityStateStore) Patch(ctx context.Context, namespace, name string, patcher patch.Patcher, conditions *store.ETagCondition) (fErr error) {
+func (s *EntityStateStore) Patch(ctx context.Context, namespace, name string, patcher patch.Patcher) (fErr error) {
 	if namespace == "" {
 		return &store.ErrNotValid{Err: errors.New("must specify namespace")}
 	}
@@ -340,18 +341,18 @@ func (s *EntityStateStore) Patch(ctx context.Context, namespace, name string, pa
 	}
 
 	// Now determine the etag for the stored resource
-	etag, err := store.ETag(state)
-	if err != nil {
-		return err
+	etag := storev2.ETagFromStruct(state)
+	ifMatch := storev2.IfMatchFromContext(ctx)
+	ifNoneMatch := storev2.IfNoneMatchFromContext(ctx)
+
+	if ifMatch != nil {
+		if !ifMatch.Matches(etag) {
+			return &store.ErrPreconditionFailed{Key: entityStateStoreKey(namespace, name)}
+		}
 	}
 
-	if conditions != nil {
-		if !store.CheckIfMatch(conditions.IfMatch, etag) {
-			return &store.ErrPreconditionFailed{Key: entityStateStoreKey(namespace, name)}
-		}
-		if !store.CheckIfNoneMatch(conditions.IfNoneMatch, etag) {
-			return &store.ErrPreconditionFailed{Key: entityStateStoreKey(namespace, name)}
-		}
+	if !ifNoneMatch.Matches(etag) {
+		return &store.ErrPreconditionFailed{Key: entityStateStoreKey(namespace, name)}
 	}
 
 	// Encode the stored resource to the JSON format

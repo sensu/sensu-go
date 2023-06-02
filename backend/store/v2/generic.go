@@ -398,24 +398,23 @@ func (g Generic[R, T]) Exists(ctx context.Context, id ID) (bool, error) {
 	return g.Interface.GetConfigStore().Exists(ctx, req)
 }
 
-func (g Generic[R, T]) trySpecializePatch(ctx context.Context, resource R, patcher patch.Patcher, etag *store.ETagCondition) error {
-	meta := resource.GetMetadata()
-	namespace := meta.Namespace
-	name := meta.Name
+func (g Generic[R, T]) trySpecializePatch(ctx context.Context, id ID, patcher patch.Patcher) error {
+	namespace := id.Namespace
+	name := id.Name
 	switch any(new(T)).(type) {
 	case *corev3.EntityConfig:
 		if getter, ok := g.Interface.(EntityConfigStoreGetter); ok {
-			return getter.GetEntityConfigStore().Patch(ctx, namespace, name, patcher, etag)
+			return getter.GetEntityConfigStore().Patch(ctx, namespace, name, patcher)
 		}
 		return errNoSpecialization
 	case *corev3.EntityState:
 		if getter, ok := g.Interface.(EntityStateStoreGetter); ok {
-			return getter.GetEntityStateStore().Patch(ctx, namespace, name, patcher, etag)
+			return getter.GetEntityStateStore().Patch(ctx, namespace, name, patcher)
 		}
 		return errNoSpecialization
 	case *corev3.Namespace:
 		if getter, ok := g.Interface.(NamespaceStoreGetter); ok {
-			return getter.GetNamespaceStore().Patch(ctx, name, patcher, etag)
+			return getter.GetNamespaceStore().Patch(ctx, name, patcher)
 		}
 		return errNoSpecialization
 	default:
@@ -423,19 +422,18 @@ func (g Generic[R, T]) trySpecializePatch(ctx context.Context, resource R, patch
 	}
 }
 
-func (g Generic[R, T]) Patch(ctx context.Context, resource R, patcher patch.Patcher, etag *store.ETagCondition) error {
-	if err := g.trySpecializePatch(ctx, resource, patcher, etag); err != nil {
+func (g Generic[R, T]) Patch(ctx context.Context, id ID, patcher patch.Patcher) error {
+	if err := g.trySpecializePatch(ctx, id, patcher); err != nil {
 		if err != errNoSpecialization {
 			return err
 		}
 	} else {
 		return nil
 	}
-	req, wrapper, err := prepare(resource)
-	if err != nil {
-		return err
-	}
-	return g.Interface.GetConfigStore().Patch(ctx, req, wrapper, patcher, etag)
+	tm := getGenericTypeMeta[R]()
+	r := R(new(T))
+	req := NewResourceRequest(tm, id.Namespace, id.Name, r.StoreName())
+	return g.Interface.GetConfigStore().Patch(ctx, req, patcher)
 }
 
 func getGenericTypeMeta[R Resource[T], T any]() corev2.TypeMeta {

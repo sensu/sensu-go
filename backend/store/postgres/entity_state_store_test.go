@@ -17,7 +17,6 @@ import (
 
 func TestEntityStateStore_CreateIfNotExists(t *testing.T) {
 	type args struct {
-		ctx         context.Context
 		entityState *corev3.EntityState
 	}
 	tests := []struct {
@@ -29,7 +28,6 @@ func TestEntityStateStore_CreateIfNotExists(t *testing.T) {
 		{
 			name: "fails when namespace does not exist",
 			args: args{
-				ctx:         context.Background(),
 				entityState: corev3.FixtureEntityState("bar"),
 			},
 			wantErr: true,
@@ -37,7 +35,6 @@ func TestEntityStateStore_CreateIfNotExists(t *testing.T) {
 		{
 			name: "fails when namespace is soft deleted",
 			args: args{
-				ctx:         context.Background(),
 				entityState: corev3.FixtureEntityState("bar"),
 			},
 			beforeHook: func(t *testing.T, ns storev2.NamespaceStore, ec storev2.EntityConfigStore, s storev2.EntityStateStore) {
@@ -49,7 +46,6 @@ func TestEntityStateStore_CreateIfNotExists(t *testing.T) {
 		{
 			name: "fails when entity config does not exist",
 			args: args{
-				ctx:         context.Background(),
 				entityState: corev3.FixtureEntityState("bar"),
 			},
 			beforeHook: func(t *testing.T, ns storev2.NamespaceStore, ec storev2.EntityConfigStore, s storev2.EntityStateStore) {
@@ -60,7 +56,6 @@ func TestEntityStateStore_CreateIfNotExists(t *testing.T) {
 		{
 			name: "fails when entity config is soft deleted",
 			args: args{
-				ctx:         context.Background(),
 				entityState: corev3.FixtureEntityState("bar"),
 			},
 			beforeHook: func(t *testing.T, ns storev2.NamespaceStore, ec storev2.EntityConfigStore, s storev2.EntityStateStore) {
@@ -73,7 +68,6 @@ func TestEntityStateStore_CreateIfNotExists(t *testing.T) {
 		{
 			name: "succeeds when entity state does not exist",
 			args: args{
-				ctx:         context.Background(),
 				entityState: corev3.FixtureEntityState("bar"),
 			},
 			beforeHook: func(t *testing.T, ns storev2.NamespaceStore, ec storev2.EntityConfigStore, s storev2.EntityStateStore) {
@@ -84,7 +78,6 @@ func TestEntityStateStore_CreateIfNotExists(t *testing.T) {
 		{
 			name: "succeeds when entity state is soft deleted",
 			args: args{
-				ctx:         context.Background(),
 				entityState: corev3.FixtureEntityState("bar"),
 			},
 			beforeHook: func(t *testing.T, ns storev2.NamespaceStore, ec storev2.EntityConfigStore, s storev2.EntityStateStore) {
@@ -97,7 +90,6 @@ func TestEntityStateStore_CreateIfNotExists(t *testing.T) {
 		{
 			name: "fails when entity state exists",
 			args: args{
-				ctx:         context.Background(),
 				entityState: corev3.FixtureEntityState("bar"),
 			},
 			beforeHook: func(t *testing.T, ns storev2.NamespaceStore, ec storev2.EntityConfigStore, s storev2.EntityStateStore) {
@@ -117,7 +109,7 @@ func TestEntityStateStore_CreateIfNotExists(t *testing.T) {
 				s := &EntityStateStore{
 					db: db,
 				}
-				if err := s.CreateIfNotExists(tt.args.ctx, tt.args.entityState); (err != nil) != tt.wantErr {
+				if err := s.CreateIfNotExists(ctx, tt.args.entityState); (err != nil) != tt.wantErr {
 					t.Errorf("EntityStateStore.CreateIfNotExists() error = %v, wantErr %v", err, tt.wantErr)
 				}
 			})
@@ -127,7 +119,6 @@ func TestEntityStateStore_CreateIfNotExists(t *testing.T) {
 
 func TestEntityStateStore_CreateOrUpdate(t *testing.T) {
 	type args struct {
-		ctx         context.Context
 		entityState *corev3.EntityState
 	}
 	tests := []struct {
@@ -141,7 +132,6 @@ func TestEntityStateStore_CreateOrUpdate(t *testing.T) {
 			name: "fails when namespace does not exist",
 			args: func() args {
 				return args{
-					ctx:         context.Background(),
 					entityState: corev3.FixtureEntityState("foo"),
 				}
 			}(),
@@ -151,7 +141,6 @@ func TestEntityStateStore_CreateOrUpdate(t *testing.T) {
 			name: "fails when namespace is soft deleted",
 			args: func() args {
 				return args{
-					ctx:         context.Background(),
 					entityState: corev3.FixtureEntityState("foo"),
 				}
 			}(),
@@ -165,7 +154,6 @@ func TestEntityStateStore_CreateOrUpdate(t *testing.T) {
 			name: "fails when entity config does not exist",
 			args: func() args {
 				return args{
-					ctx:         context.Background(),
 					entityState: corev3.FixtureEntityState("foo"),
 				}
 			}(),
@@ -178,7 +166,6 @@ func TestEntityStateStore_CreateOrUpdate(t *testing.T) {
 			name: "fails when entity config is soft deleted",
 			args: func() args {
 				return args{
-					ctx:         context.Background(),
 					entityState: corev3.FixtureEntityState("foo"),
 				}
 			}(),
@@ -193,7 +180,6 @@ func TestEntityStateStore_CreateOrUpdate(t *testing.T) {
 			name: "creates when entity state does not exist",
 			args: func() args {
 				return args{
-					ctx:         context.Background(),
 					entityState: corev3.FixtureEntityState("foo"),
 				}
 			}(),
@@ -212,7 +198,6 @@ func TestEntityStateStore_CreateOrUpdate(t *testing.T) {
 			name: "updates when entity state exists",
 			args: func() args {
 				return args{
-					ctx: context.Background(),
 					entityState: func() *corev3.EntityState {
 						state := corev3.FixtureEntityState("foo")
 						state.Metadata.Annotations["updated"] = "true"
@@ -243,7 +228,7 @@ func TestEntityStateStore_CreateOrUpdate(t *testing.T) {
 				s := &EntityStateStore{
 					db: db,
 				}
-				if err := s.CreateOrUpdate(tt.args.ctx, tt.args.entityState); (err != nil) != tt.wantErr {
+				if err := s.CreateOrUpdate(ctx, tt.args.entityState); (err != nil) != tt.wantErr {
 					t.Errorf("EntityStateStore.CreateOrUpdate() error = %v, wantErr %v", err, tt.wantErr)
 				}
 				if tt.afterHook != nil {
@@ -256,7 +241,6 @@ func TestEntityStateStore_CreateOrUpdate(t *testing.T) {
 
 func TestEntityStateStore_Delete(t *testing.T) {
 	type args struct {
-		ctx       context.Context
 		namespace string
 		name      string
 	}
@@ -269,7 +253,6 @@ func TestEntityStateStore_Delete(t *testing.T) {
 		{
 			name: "fails when namespace does not exist",
 			args: args{
-				ctx:       context.Background(),
 				namespace: "default",
 				name:      "bar",
 			},
@@ -278,7 +261,6 @@ func TestEntityStateStore_Delete(t *testing.T) {
 		{
 			name: "fails when entity config does not exist",
 			args: args{
-				ctx:       context.Background(),
 				namespace: "default",
 				name:      "bar",
 			},
@@ -290,7 +272,6 @@ func TestEntityStateStore_Delete(t *testing.T) {
 		{
 			name: "fails when entity state does not exist",
 			args: args{
-				ctx:       context.Background(),
 				namespace: "default",
 				name:      "bar",
 			},
@@ -303,7 +284,6 @@ func TestEntityStateStore_Delete(t *testing.T) {
 		{
 			name: "succeeds when entity state exists",
 			args: args{
-				ctx:       context.Background(),
 				namespace: "default",
 				name:      "bar",
 			},
@@ -316,7 +296,6 @@ func TestEntityStateStore_Delete(t *testing.T) {
 		{
 			name: "succeeds when entity state is soft deleted",
 			args: args{
-				ctx:       context.Background(),
 				namespace: "default",
 				name:      "bar",
 			},
@@ -337,7 +316,7 @@ func TestEntityStateStore_Delete(t *testing.T) {
 				s := &EntityStateStore{
 					db: db,
 				}
-				if err := s.Delete(tt.args.ctx, tt.args.namespace, tt.args.name); (err != nil) != tt.wantErr {
+				if err := s.Delete(ctx, tt.args.namespace, tt.args.name); (err != nil) != tt.wantErr {
 					t.Errorf("EntityStateStore.Delete() error = %v, wantErr %v", err, tt.wantErr)
 				}
 			})
@@ -347,7 +326,6 @@ func TestEntityStateStore_Delete(t *testing.T) {
 
 func TestEntityStateStore_Exists(t *testing.T) {
 	type args struct {
-		ctx       context.Context
 		namespace string
 		name      string
 	}
@@ -361,7 +339,6 @@ func TestEntityStateStore_Exists(t *testing.T) {
 		{
 			name: "returns false when namespace does not exist",
 			args: args{
-				ctx:       context.Background(),
 				namespace: "default",
 				name:      "bar",
 			},
@@ -369,7 +346,6 @@ func TestEntityStateStore_Exists(t *testing.T) {
 		{
 			name: "returns false when namespace is soft deleted",
 			args: args{
-				ctx:       context.Background(),
 				namespace: "default",
 				name:      "bar",
 			},
@@ -381,7 +357,6 @@ func TestEntityStateStore_Exists(t *testing.T) {
 		{
 			name: "returns false when entity config does not exist",
 			args: args{
-				ctx:       context.Background(),
 				namespace: "default",
 				name:      "bar",
 			},
@@ -393,7 +368,6 @@ func TestEntityStateStore_Exists(t *testing.T) {
 		{
 			name: "returns false when entity config is soft deleted",
 			args: args{
-				ctx:       context.Background(),
 				namespace: "default",
 				name:      "bar",
 			},
@@ -406,7 +380,6 @@ func TestEntityStateStore_Exists(t *testing.T) {
 		{
 			name: "returns false when entity state does not exist",
 			args: args{
-				ctx:       context.Background(),
 				namespace: "default",
 				name:      "bar",
 			},
@@ -418,7 +391,6 @@ func TestEntityStateStore_Exists(t *testing.T) {
 		{
 			name: "returns false when entity state is soft deleted",
 			args: args{
-				ctx:       context.Background(),
 				namespace: "default",
 				name:      "bar",
 			},
@@ -432,7 +404,6 @@ func TestEntityStateStore_Exists(t *testing.T) {
 		{
 			name: "returns true when entity state exists",
 			args: args{
-				ctx:       context.Background(),
 				namespace: "default",
 				name:      "bar",
 			},
@@ -453,7 +424,7 @@ func TestEntityStateStore_Exists(t *testing.T) {
 				s := &EntityStateStore{
 					db: db,
 				}
-				got, err := s.Exists(tt.args.ctx, tt.args.namespace, tt.args.name)
+				got, err := s.Exists(ctx, tt.args.namespace, tt.args.name)
 				if (err != nil) != tt.wantErr {
 					t.Errorf("EntityStateStore.Exists() error = %v, wantErr %v", err, tt.wantErr)
 					return
@@ -468,7 +439,6 @@ func TestEntityStateStore_Exists(t *testing.T) {
 
 func TestEntityStateStore_Get(t *testing.T) {
 	type args struct {
-		ctx       context.Context
 		namespace string
 		name      string
 	}
@@ -482,7 +452,6 @@ func TestEntityStateStore_Get(t *testing.T) {
 		{
 			name: "fails when namespace does not exist",
 			args: args{
-				ctx:       context.Background(),
 				namespace: "default",
 				name:      "foo",
 			},
@@ -491,7 +460,6 @@ func TestEntityStateStore_Get(t *testing.T) {
 		{
 			name: "fails when namespace is soft deleted",
 			args: args{
-				ctx:       context.Background(),
 				namespace: "default",
 				name:      "foo",
 			},
@@ -504,7 +472,6 @@ func TestEntityStateStore_Get(t *testing.T) {
 		{
 			name: "fails when entity config does not exist",
 			args: args{
-				ctx:       context.Background(),
 				namespace: "default",
 				name:      "foo",
 			},
@@ -516,7 +483,6 @@ func TestEntityStateStore_Get(t *testing.T) {
 		{
 			name: "fails when entity config is soft deleted",
 			args: args{
-				ctx:       context.Background(),
 				namespace: "default",
 				name:      "foo",
 			},
@@ -530,7 +496,6 @@ func TestEntityStateStore_Get(t *testing.T) {
 		{
 			name: "fails when entity state does not exist",
 			args: args{
-				ctx:       context.Background(),
 				namespace: "default",
 				name:      "foo",
 			},
@@ -543,7 +508,6 @@ func TestEntityStateStore_Get(t *testing.T) {
 		{
 			name: "fails when entity state is soft deleted",
 			args: args{
-				ctx:       context.Background(),
 				namespace: "default",
 				name:      "foo",
 			},
@@ -558,7 +522,6 @@ func TestEntityStateStore_Get(t *testing.T) {
 		{
 			name: "succeeds when entity state exists",
 			args: args{
-				ctx:       context.Background(),
 				namespace: "default",
 				name:      "foo",
 			},
@@ -590,7 +553,7 @@ func TestEntityStateStore_Get(t *testing.T) {
 				s := &EntityStateStore{
 					db: db,
 				}
-				got, err := s.Get(tt.args.ctx, tt.args.namespace, tt.args.name)
+				got, err := s.Get(ctx, tt.args.namespace, tt.args.name)
 				if (err != nil) != tt.wantErr {
 					t.Errorf("EntityStateStore.Get() error = %v, wantErr %v", err, tt.wantErr)
 					return
@@ -619,7 +582,6 @@ func TestEntityStateStore_Get(t *testing.T) {
 
 func TestEntityStateStore_GetMultiple(t *testing.T) {
 	type args struct {
-		ctx       context.Context
 		resources namespacedResourceNames
 	}
 	tests := []struct {
@@ -632,7 +594,6 @@ func TestEntityStateStore_GetMultiple(t *testing.T) {
 		{
 			name: "succeeds when namespace does not exist",
 			args: args{
-				ctx: context.Background(),
 				resources: namespacedResourceNames{
 					"default": []string{"foo"},
 				},
@@ -642,7 +603,6 @@ func TestEntityStateStore_GetMultiple(t *testing.T) {
 		{
 			name: "succeeds when namespace is soft deleted",
 			args: args{
-				ctx: context.Background(),
 				resources: namespacedResourceNames{
 					"default": []string{"foo", "bar"},
 				},
@@ -656,7 +616,6 @@ func TestEntityStateStore_GetMultiple(t *testing.T) {
 		{
 			name: "succeeds when entity config does not exist",
 			args: args{
-				ctx: context.Background(),
 				resources: namespacedResourceNames{
 					"default": []string{"foo"},
 				},
@@ -669,7 +628,6 @@ func TestEntityStateStore_GetMultiple(t *testing.T) {
 		{
 			name: "succeeds when entity config is soft deleted",
 			args: args{
-				ctx: context.Background(),
 				resources: namespacedResourceNames{
 					"default": []string{"foo"},
 				},
@@ -684,7 +642,6 @@ func TestEntityStateStore_GetMultiple(t *testing.T) {
 		{
 			name: "succeeds when no requested entity states exist",
 			args: args{
-				ctx: context.Background(),
 				resources: namespacedResourceNames{
 					"default": []string{"foo", "bar"},
 					"ops":     []string{"elliot", "mr_robot"},
@@ -701,7 +658,6 @@ func TestEntityStateStore_GetMultiple(t *testing.T) {
 		{
 			name: "succeeds when all entity states are soft deleted",
 			args: args{
-				ctx: context.Background(),
 				resources: namespacedResourceNames{
 					"default": []string{"foo", "bar"},
 					"ops":     []string{"elliot", "mr_robot"},
@@ -727,7 +683,6 @@ func TestEntityStateStore_GetMultiple(t *testing.T) {
 		{
 			name: "succeeds when some entity states are soft deleted",
 			args: args{
-				ctx: context.Background(),
 				resources: namespacedResourceNames{
 					"default": []string{"foo", "bar"},
 					"ops":     []string{"elliot", "mr_robot"},
@@ -782,7 +737,6 @@ func TestEntityStateStore_GetMultiple(t *testing.T) {
 		{
 			name: "succeeds when all entity states exists",
 			args: args{
-				ctx: context.Background(),
 				resources: namespacedResourceNames{
 					"default": []string{"foo", "bar"},
 					"ops":     []string{"elliot", "mr_robot"},
@@ -833,7 +787,7 @@ func TestEntityStateStore_GetMultiple(t *testing.T) {
 				s := &EntityStateStore{
 					db: db,
 				}
-				got, err := s.GetMultiple(tt.args.ctx, tt.args.resources)
+				got, err := s.GetMultiple(ctx, tt.args.resources)
 				if (err != nil) != tt.wantErr {
 					t.Errorf("EntityStateStore.GetMultiple() error = %v, wantErr %v", err, tt.wantErr)
 				}
@@ -847,7 +801,6 @@ func TestEntityStateStore_GetMultiple(t *testing.T) {
 
 func TestEntityStateStore_HardDelete(t *testing.T) {
 	type args struct {
-		ctx       context.Context
 		namespace string
 		name      string
 	}
@@ -860,7 +813,6 @@ func TestEntityStateStore_HardDelete(t *testing.T) {
 		{
 			name: "fails when namespace does not exist",
 			args: args{
-				ctx:       context.Background(),
 				namespace: "default",
 				name:      "bar",
 			},
@@ -869,7 +821,6 @@ func TestEntityStateStore_HardDelete(t *testing.T) {
 		{
 			name: "fails when namespace is soft deleted",
 			args: args{
-				ctx:       context.Background(),
 				namespace: "default",
 				name:      "bar",
 			},
@@ -882,7 +833,6 @@ func TestEntityStateStore_HardDelete(t *testing.T) {
 		{
 			name: "fails when entity config does not exist",
 			args: args{
-				ctx:       context.Background(),
 				namespace: "default",
 				name:      "bar",
 			},
@@ -894,7 +844,6 @@ func TestEntityStateStore_HardDelete(t *testing.T) {
 		{
 			name: "fails when entity config is soft deleted",
 			args: args{
-				ctx:       context.Background(),
 				namespace: "default",
 				name:      "bar",
 			},
@@ -908,7 +857,6 @@ func TestEntityStateStore_HardDelete(t *testing.T) {
 		{
 			name: "fails when entity state does not exist",
 			args: args{
-				ctx:       context.Background(),
 				namespace: "default",
 				name:      "bar",
 			},
@@ -921,7 +869,6 @@ func TestEntityStateStore_HardDelete(t *testing.T) {
 		{
 			name: "succeeds when entity state is soft deleted",
 			args: args{
-				ctx:       context.Background(),
 				namespace: "default",
 				name:      "bar",
 			},
@@ -935,7 +882,6 @@ func TestEntityStateStore_HardDelete(t *testing.T) {
 		{
 			name: "succeeds when entity state exists",
 			args: args{
-				ctx:       context.Background(),
 				namespace: "default",
 				name:      "bar",
 			},
@@ -955,7 +901,7 @@ func TestEntityStateStore_HardDelete(t *testing.T) {
 				s := &EntityStateStore{
 					db: db,
 				}
-				if err := s.HardDelete(tt.args.ctx, tt.args.namespace, tt.args.name); (err != nil) != tt.wantErr {
+				if err := s.HardDelete(ctx, tt.args.namespace, tt.args.name); (err != nil) != tt.wantErr {
 					t.Errorf("EntityStateStore.HardDelete() error = %v, wantErr %v", err, tt.wantErr)
 				}
 			})
@@ -965,7 +911,6 @@ func TestEntityStateStore_HardDelete(t *testing.T) {
 
 func TestEntityStateStore_HardDeleted(t *testing.T) {
 	type args struct {
-		ctx       context.Context
 		namespace string
 		name      string
 	}
@@ -979,7 +924,6 @@ func TestEntityStateStore_HardDeleted(t *testing.T) {
 		{
 			name: "returns true when namespace does not exist",
 			args: args{
-				ctx:       context.Background(),
 				namespace: "default",
 				name:      "bar",
 			},
@@ -988,7 +932,6 @@ func TestEntityStateStore_HardDeleted(t *testing.T) {
 		{
 			name: "returns true when namespace is soft deleted",
 			args: args{
-				ctx:       context.Background(),
 				namespace: "default",
 				name:      "bar",
 			},
@@ -1001,7 +944,6 @@ func TestEntityStateStore_HardDeleted(t *testing.T) {
 		{
 			name: "returns true when entity config does not exist",
 			args: args{
-				ctx:       context.Background(),
 				namespace: "default",
 				name:      "bar",
 			},
@@ -1013,7 +955,6 @@ func TestEntityStateStore_HardDeleted(t *testing.T) {
 		{
 			name: "returns true when entity config is soft deleted",
 			args: args{
-				ctx:       context.Background(),
 				namespace: "default",
 				name:      "bar",
 			},
@@ -1027,7 +968,6 @@ func TestEntityStateStore_HardDeleted(t *testing.T) {
 		{
 			name: "returns true when entity state does not exist",
 			args: args{
-				ctx:       context.Background(),
 				namespace: "default",
 				name:      "bar",
 			},
@@ -1040,7 +980,6 @@ func TestEntityStateStore_HardDeleted(t *testing.T) {
 		{
 			name: "returns false when entity state is soft deleted",
 			args: args{
-				ctx:       context.Background(),
 				namespace: "default",
 				name:      "bar",
 			},
@@ -1055,7 +994,6 @@ func TestEntityStateStore_HardDeleted(t *testing.T) {
 		{
 			name: "returns false when entity state exists",
 			args: args{
-				ctx:       context.Background(),
 				namespace: "default",
 				name:      "bar",
 			},
@@ -1076,7 +1014,7 @@ func TestEntityStateStore_HardDeleted(t *testing.T) {
 				s := &EntityStateStore{
 					db: db,
 				}
-				got, err := s.HardDeleted(tt.args.ctx, tt.args.namespace, tt.args.name)
+				got, err := s.HardDeleted(ctx, tt.args.namespace, tt.args.name)
 				if (err != nil) != tt.wantErr {
 					t.Errorf("EntityStateStore.HardDeleted() error = %v, wantErr %v", err, tt.wantErr)
 					return
@@ -1091,7 +1029,6 @@ func TestEntityStateStore_HardDeleted(t *testing.T) {
 
 func TestEntityStateStore_List(t *testing.T) {
 	type args struct {
-		ctx       context.Context
 		namespace string
 		pred      *store.SelectionPredicate
 	}
@@ -1105,7 +1042,6 @@ func TestEntityStateStore_List(t *testing.T) {
 		{
 			name: "fails when namespace does not exist",
 			args: args{
-				ctx:       context.Background(),
 				namespace: "default",
 			},
 			want: nil,
@@ -1113,7 +1049,6 @@ func TestEntityStateStore_List(t *testing.T) {
 		{
 			name: "fails when namespace is soft deleted",
 			args: args{
-				ctx:       context.Background(),
 				namespace: "default",
 			},
 			beforeHook: func(t *testing.T, ns storev2.NamespaceStore, ec storev2.EntityConfigStore, s storev2.EntityStateStore) {
@@ -1125,7 +1060,6 @@ func TestEntityStateStore_List(t *testing.T) {
 		{
 			name: "succeeds when no entity states exist",
 			args: args{
-				ctx:       context.Background(),
 				namespace: "default",
 			},
 			beforeHook: func(t *testing.T, ns storev2.NamespaceStore, ec storev2.EntityConfigStore, s storev2.EntityStateStore) {
@@ -1140,7 +1074,6 @@ func TestEntityStateStore_List(t *testing.T) {
 		{
 			name: "succeeds when entity states exist",
 			args: args{
-				ctx:       context.Background(),
 				namespace: "default",
 			},
 			beforeHook: func(t *testing.T, ns storev2.NamespaceStore, ec storev2.EntityConfigStore, s storev2.EntityStateStore) {
@@ -1165,7 +1098,6 @@ func TestEntityStateStore_List(t *testing.T) {
 		{
 			name: "succeeds when limit set and entity states exist",
 			args: args{
-				ctx:       context.Background(),
 				namespace: "default",
 				pred:      &store.SelectionPredicate{Limit: 5},
 			},
@@ -1191,7 +1123,6 @@ func TestEntityStateStore_List(t *testing.T) {
 		{
 			name: "succeeds when namespace is unspecified",
 			args: args{
-				ctx:       context.Background(),
 				namespace: "",
 			},
 			beforeHook: func(t *testing.T, ns storev2.NamespaceStore, ec storev2.EntityConfigStore, s storev2.EntityStateStore) {
@@ -1233,7 +1164,7 @@ func TestEntityStateStore_List(t *testing.T) {
 				s := &EntityStateStore{
 					db: db,
 				}
-				got, err := s.List(tt.args.ctx, tt.args.namespace, tt.args.pred)
+				got, err := s.List(ctx, tt.args.namespace, tt.args.pred)
 				if (err != nil) != tt.wantErr {
 					t.Errorf("EntityStateStore.List() error = %v, wantErr %v", err, tt.wantErr)
 					return
@@ -1248,7 +1179,6 @@ func TestEntityStateStore_List(t *testing.T) {
 
 func TestEntityStateStore_Count(t *testing.T) {
 	type args struct {
-		ctx       context.Context
 		namespace string
 	}
 	tests := []struct {
@@ -1261,14 +1191,12 @@ func TestEntityStateStore_Count(t *testing.T) {
 		{
 			name: "fails when namespace does not exist",
 			args: args{
-				ctx:       context.Background(),
 				namespace: "default",
 			},
 		},
 		{
 			name: "fails when namespace is soft deleted",
 			args: args{
-				ctx:       context.Background(),
 				namespace: "default",
 			},
 			beforeHook: func(t *testing.T, ns storev2.NamespaceStore, ec storev2.EntityConfigStore, s storev2.EntityStateStore) {
@@ -1279,7 +1207,6 @@ func TestEntityStateStore_Count(t *testing.T) {
 		{
 			name: "succeeds when no entity states exist",
 			args: args{
-				ctx:       context.Background(),
 				namespace: "default",
 			},
 			beforeHook: func(t *testing.T, ns storev2.NamespaceStore, ec storev2.EntityConfigStore, s storev2.EntityStateStore) {
@@ -1293,7 +1220,6 @@ func TestEntityStateStore_Count(t *testing.T) {
 		{
 			name: "succeeds when entity states exist",
 			args: args{
-				ctx:       context.Background(),
 				namespace: "default",
 			},
 			beforeHook: func(t *testing.T, ns storev2.NamespaceStore, ec storev2.EntityConfigStore, s storev2.EntityStateStore) {
@@ -1308,9 +1234,7 @@ func TestEntityStateStore_Count(t *testing.T) {
 		},
 		{
 			name: "succeeds when namespace is unspecified",
-			args: args{
-				ctx: context.Background(),
-			},
+			args: args{},
 			beforeHook: func(t *testing.T, ns storev2.NamespaceStore, ec storev2.EntityConfigStore, s storev2.EntityStateStore) {
 				createNamespace(t, ns, "ns0")
 				createNamespace(t, ns, "ns1")
@@ -1333,7 +1257,7 @@ func TestEntityStateStore_Count(t *testing.T) {
 				s := &EntityStateStore{
 					db: db,
 				}
-				got, err := s.Count(tt.args.ctx, tt.args.namespace)
+				got, err := s.Count(ctx, tt.args.namespace)
 				if (err != nil) != tt.wantErr {
 					t.Errorf("EntityStateStore.Count() error = %v, wantErr %v", err, tt.wantErr)
 					return
@@ -1348,11 +1272,11 @@ func TestEntityStateStore_Count(t *testing.T) {
 
 func TestEntityStateStore_Patch(t *testing.T) {
 	type args struct {
-		ctx        context.Context
-		namespace  string
-		name       string
-		patcher    patch.Patcher
-		conditions *store.ETagCondition
+		namespace   string
+		name        string
+		patcher     patch.Patcher
+		ifMatch     storev2.IfMatch
+		ifNoneMatch storev2.IfNoneMatch
 	}
 	tests := []struct {
 		name       string
@@ -1363,7 +1287,6 @@ func TestEntityStateStore_Patch(t *testing.T) {
 		{
 			name: "fails when namespace does not exist",
 			args: args{
-				ctx:       context.Background(),
 				namespace: "default",
 				name:      "bar",
 				patcher: &patch.Merge{
@@ -1375,7 +1298,6 @@ func TestEntityStateStore_Patch(t *testing.T) {
 		{
 			name: "fails when namespace is soft deleted",
 			args: args{
-				ctx:       context.Background(),
 				namespace: "default",
 				name:      "bar",
 				patcher: &patch.Merge{
@@ -1391,7 +1313,6 @@ func TestEntityStateStore_Patch(t *testing.T) {
 		{
 			name: "fails when entity config does not exist",
 			args: args{
-				ctx:       context.Background(),
 				namespace: "default",
 				name:      "bar",
 				patcher: &patch.Merge{
@@ -1406,7 +1327,6 @@ func TestEntityStateStore_Patch(t *testing.T) {
 		{
 			name: "fails when entity config is soft deleted",
 			args: args{
-				ctx:       context.Background(),
 				namespace: "default",
 				name:      "bar",
 				patcher: &patch.Merge{
@@ -1423,7 +1343,6 @@ func TestEntityStateStore_Patch(t *testing.T) {
 		{
 			name: "fails when entity state does not exist",
 			args: args{
-				ctx:       context.Background(),
 				namespace: "default",
 				name:      "bar",
 				patcher: &patch.Merge{
@@ -1439,7 +1358,6 @@ func TestEntityStateStore_Patch(t *testing.T) {
 		{
 			name: "fails when entity state is soft deleted",
 			args: args{
-				ctx:       context.Background(),
 				namespace: "default",
 				name:      "bar",
 				patcher: &patch.Merge{
@@ -1457,7 +1375,6 @@ func TestEntityStateStore_Patch(t *testing.T) {
 		{
 			name: "succeeds when entity state exists",
 			args: args{
-				ctx:       context.Background(),
 				namespace: "default",
 				name:      "bar",
 				patcher: &patch.Merge{
@@ -1480,7 +1397,9 @@ func TestEntityStateStore_Patch(t *testing.T) {
 				s := &EntityStateStore{
 					db: db,
 				}
-				if err := s.Patch(tt.args.ctx, tt.args.namespace, tt.args.name, tt.args.patcher, tt.args.conditions); (err != nil) != tt.wantErr {
+				ctx = storev2.ContextWithIfMatch(ctx, tt.args.ifMatch)
+				ctx = storev2.ContextWithIfNoneMatch(ctx, tt.args.ifNoneMatch)
+				if err := s.Patch(ctx, tt.args.namespace, tt.args.name, tt.args.patcher); (err != nil) != tt.wantErr {
 					t.Errorf("EntityStateStore.Patch() error = %v, wantErr %v", err, tt.wantErr)
 				}
 			})
@@ -1490,7 +1409,6 @@ func TestEntityStateStore_Patch(t *testing.T) {
 
 func TestEntityStateStore_UpdateIfExists(t *testing.T) {
 	type args struct {
-		ctx   context.Context
 		state *corev3.EntityState
 	}
 	tests := []struct {
@@ -1502,7 +1420,6 @@ func TestEntityStateStore_UpdateIfExists(t *testing.T) {
 		{
 			name: "fails when namespace does not exist",
 			args: args{
-				ctx:   context.Background(),
 				state: corev3.FixtureEntityState("bar"),
 			},
 			wantErr: true,
@@ -1510,7 +1427,6 @@ func TestEntityStateStore_UpdateIfExists(t *testing.T) {
 		{
 			name: "fails when namespace is soft deleted",
 			args: args{
-				ctx:   context.Background(),
 				state: corev3.FixtureEntityState("bar"),
 			},
 			beforeHook: func(t *testing.T, ns storev2.NamespaceStore, ec storev2.EntityConfigStore, s storev2.EntityStateStore) {
@@ -1522,7 +1438,6 @@ func TestEntityStateStore_UpdateIfExists(t *testing.T) {
 		{
 			name: "fails when entity config does not exist",
 			args: args{
-				ctx:   context.Background(),
 				state: corev3.FixtureEntityState("bar"),
 			},
 			beforeHook: func(t *testing.T, ns storev2.NamespaceStore, ec storev2.EntityConfigStore, s storev2.EntityStateStore) {
@@ -1533,7 +1448,6 @@ func TestEntityStateStore_UpdateIfExists(t *testing.T) {
 		{
 			name: "fails when entity config is soft deleted",
 			args: args{
-				ctx:   context.Background(),
 				state: corev3.FixtureEntityState("bar"),
 			},
 			beforeHook: func(t *testing.T, ns storev2.NamespaceStore, ec storev2.EntityConfigStore, s storev2.EntityStateStore) {
@@ -1546,7 +1460,6 @@ func TestEntityStateStore_UpdateIfExists(t *testing.T) {
 		{
 			name: "fails when entity state does not exist",
 			args: args{
-				ctx:   context.Background(),
 				state: corev3.FixtureEntityState("bar"),
 			},
 			beforeHook: func(t *testing.T, ns storev2.NamespaceStore, ec storev2.EntityConfigStore, s storev2.EntityStateStore) {
@@ -1558,7 +1471,6 @@ func TestEntityStateStore_UpdateIfExists(t *testing.T) {
 		{
 			name: "succeeds when entity state is soft deleted",
 			args: args{
-				ctx:   context.Background(),
 				state: corev3.FixtureEntityState("bar"),
 			},
 			beforeHook: func(t *testing.T, ns storev2.NamespaceStore, ec storev2.EntityConfigStore, s storev2.EntityStateStore) {
@@ -1571,7 +1483,6 @@ func TestEntityStateStore_UpdateIfExists(t *testing.T) {
 		{
 			name: "succeeds when entity state exists",
 			args: args{
-				ctx:   context.Background(),
 				state: corev3.FixtureEntityState("bar"),
 			},
 			beforeHook: func(t *testing.T, ns storev2.NamespaceStore, ec storev2.EntityConfigStore, s storev2.EntityStateStore) {
@@ -1590,7 +1501,7 @@ func TestEntityStateStore_UpdateIfExists(t *testing.T) {
 				s := &EntityStateStore{
 					db: db,
 				}
-				if err := s.UpdateIfExists(tt.args.ctx, tt.args.state); (err != nil) != tt.wantErr {
+				if err := s.UpdateIfExists(ctx, tt.args.state); (err != nil) != tt.wantErr {
 					os.Exit(1)
 					t.Errorf("EntityStateStore.UpdateIfExists() error = %v, wantErr %v", err, tt.wantErr)
 				}

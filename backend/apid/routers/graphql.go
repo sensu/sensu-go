@@ -10,6 +10,7 @@ import (
 	"github.com/gorilla/mux"
 	corev2 "github.com/sensu/core/v2"
 	"github.com/sensu/sensu-go/backend/apid/actions"
+	"github.com/sensu/sensu-go/backend/apid/handlers"
 	"github.com/sensu/sensu-go/backend/authentication/jwt"
 	"github.com/sensu/sensu-go/graphql"
 )
@@ -110,9 +111,12 @@ func (r *GraphQLRouter) query(w http.ResponseWriter, req *http.Request) {
 		WriteError(w, actions.NewErrorf(actions.DeadlineExceeded))
 		return
 	}
-	if receivedList {
-		RespondWith(w, req, results)
-	} else {
-		RespondWith(w, req, results[0])
+	response := handlers.HandlerResponse{
+		GraphQL: results,
 	}
+	if receivedList {
+		response.GraphQL = results[0]
+	}
+
+	RespondWith(w, req, response)
 }
