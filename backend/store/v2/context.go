@@ -71,7 +71,7 @@ func ReadIfMatch(header string) (IfMatch, error) {
 		part = strings.TrimSpace(part)[1 : len(part)-1]
 		etag, err := DecodeETag(part)
 		if err != nil {
-			return nil, err
+			continue
 		}
 		result = append(result, etag)
 	}
@@ -125,7 +125,7 @@ func ReadIfNoneMatch(header string) (IfNoneMatch, error) {
 		part = strings.TrimSpace(part)[1 : len(part)-1]
 		etag, err := DecodeETag(part)
 		if err != nil {
-			return nil, err
+			continue
 		}
 		result = append(result, etag)
 	}

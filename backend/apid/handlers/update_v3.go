@@ -30,7 +30,10 @@ func (h Handlers[R, T]) CreateOrUpdateResource(r *http.Request) (HandlerResponse
 		return response, actions.NewError(actions.InvalidArgument, err)
 	}
 
-	ctx := matchHeaderContext(r)
+	ctx, err := matchHeaderContext(r)
+	if err != nil {
+		return response, actions.NewErrorf(actions.InvalidArgument, err)
+	}
 	ctx = storev2.ContextWithTxInfo(ctx, &response.TxInfo)
 
 	if claims := jwt.GetClaimsFromContext(ctx); claims != nil {

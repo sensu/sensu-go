@@ -21,7 +21,10 @@ func (h Handlers[R, T]) CreateResource(r *http.Request) (HandlerResponse, error)
 		return response, actions.NewError(actions.InvalidArgument, err)
 	}
 
-	ctx := matchHeaderContext(r)
+	ctx, err := matchHeaderContext(r)
+	if err != nil {
+		return response, actions.NewErrorf(actions.InvalidArgument, err)
+	}
 	ctx = storev2.ContextWithTxInfo(ctx, &response.TxInfo)
 
 	meta := payload.GetMetadata()
