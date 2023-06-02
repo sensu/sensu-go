@@ -31,14 +31,14 @@ func RespondWith(w http.ResponseWriter, r *http.Request, response handlers.Handl
 	}
 
 	if etag != "" {
-		w.Header()["ETag"] = []string{fmt.Sprintf("%q", etag)}
+		w.Header().Set("Etag", fmt.Sprintf("%q", etag))
 	}
 
 	// If no resource(s) are present return a 204 response code
 	if response.IsEmpty() {
 		if r.Method == http.MethodPost || r.Method == http.MethodPut {
 			if info := response.TxInfo.Records; len(info) > 0 {
-				if !info[0].Created {
+				if info[0].Created {
 					w.WriteHeader(http.StatusCreated)
 				} else if info[0].Updated && info[0].ETag.Equals(info[0].PrevETag) {
 					w.WriteHeader(http.StatusNotModified)

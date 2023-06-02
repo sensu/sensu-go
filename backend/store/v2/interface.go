@@ -1,12 +1,8 @@
 package v2
 
 import (
-	"bytes"
 	"context"
-	"encoding/base64"
-	"encoding/binary"
 
-	"github.com/mitchellh/hashstructure"
 	corev2 "github.com/sensu/core/v2"
 	corev3 "github.com/sensu/core/v3"
 	"github.com/sensu/sensu-go/backend/store"
@@ -35,36 +31,6 @@ type WrapList interface {
 	Unwrap() ([]corev3.Resource, error)
 	UnwrapInto(interface{}) error
 	Len() int
-}
-
-// ETag represents a unique hash of the resource.
-type ETag []byte
-
-// String returns the base64-encoded unquoted form of the ETag.
-func (e ETag) String() string {
-	return base64.RawStdEncoding.EncodeToString(e)
-}
-
-// DecodeETag attempts to parse an unquoted encoded ETag. It returns an error if the
-// input is not base64-encoded.
-func DecodeETag(data string) (ETag, error) {
-	b, err := base64.RawStdEncoding.DecodeString(data)
-	return ETag(b), err
-}
-
-func (e ETag) Equals(other ETag) bool {
-	return bytes.Equal(e, other)
-}
-
-// ETagFromStruct is for types that don't want to compute etag in the database
-func ETagFromStruct(v interface{}) ETag {
-	hash, err := hashstructure.Hash(v, nil)
-	if err != nil {
-		panic(err)
-	}
-	b := make([]byte, 8)
-	binary.LittleEndian.PutUint64(b, hash)
-	return ETag(b)
 }
 
 // EntityConfigStoreGetter gets you an EntityConfigStore.

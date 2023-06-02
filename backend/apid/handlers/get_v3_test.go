@@ -87,6 +87,7 @@ func TestHandlers_GetV3Resource(t *testing.T) {
 				delete(meta.Labels, store.SensuCreatedAtKey)
 				delete(meta.Labels, store.SensuUpdatedAtKey)
 				delete(meta.Labels, store.SensuDeletedAtKey)
+				delete(meta.Annotations, store.SensuETagKey)
 			}
 
 			if !reflect.DeepEqual(got.Resource, tt.want) {

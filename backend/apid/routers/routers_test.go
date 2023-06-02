@@ -70,7 +70,7 @@ func TestRespondWith(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			RespondWith(tt.args.w, tt.args.r, tt.args.response)
 			if tt.expectETagHeader {
-				if _, ok := tt.args.w.Header()["ETag"]; !ok {
+				if _, ok := tt.args.w.Header()["Etag"]; !ok {
 					t.Errorf("RespondWith() did not set ETag header, headers: %v", tt.args.w.Header())
 				}
 			}
