@@ -221,10 +221,10 @@ func (s *Schedulerd) makeScheduler(check *corev2.CheckConfig) Scheduler {
 	case RoundRobinIntervalType:
 		scheduler = NewNoopScheduler(RoundRobinIntervalType)
 		logger.WithFields(logrus.Fields{"namespace": check.Namespace, "check": check.Name}).
-			Warn("checks configured with round robin enabled are not supported in this version of sensu. check will not be scheduled.")
+			Error("checks configured with round robin enabled are not supported in this version of sensu. check will not be scheduled.")
 	case RoundRobinCronType:
 		logger.WithFields(logrus.Fields{"namespace": check.Namespace, "check": check.Name}).
-			Warn("checks configured with round robin enabled are not supported in this version of sensu. check will not be scheduled.")
+			Error("checks configured with round robin enabled are not supported in this version of sensu. check will not be scheduled.")
 		scheduler = NewNoopScheduler(RoundRobinCronType)
 	default:
 		logger.Error("bad scheduler type, falling back to interval scheduler")
