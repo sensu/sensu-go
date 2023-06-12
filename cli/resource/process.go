@@ -227,7 +227,7 @@ func (p *ManagedByLabelPutter) label(resource *types.Wrapper) {
 	}
 
 	// Mark the resource as managed by `label` in the inner labels
-	if meta.Labels[corev2.ManagedByLabel] != "sensu-agent" || meta.Labels[corev2.ManagedByLabel] != meta.Labels[corev2.ManagedByLabel] {
+	if meta.Labels[corev2.ManagedByLabel] != "sensu-agent" {
 		meta.Labels[corev2.ManagedByLabel] = managedBy
 	}
 
