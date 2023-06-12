@@ -11,10 +11,10 @@ import (
 	corev3 "github.com/sensu/core/v3"
 	"github.com/sensu/sensu-go/backend/messaging"
 	"github.com/sensu/sensu-go/backend/queue"
-	"github.com/sensu/sensu-go/backend/ringv2"
 	"github.com/sensu/sensu-go/backend/secrets"
 	cachev2 "github.com/sensu/sensu-go/backend/store/cache/v2"
 	storev2 "github.com/sensu/sensu-go/backend/store/v2"
+	"github.com/sirupsen/logrus"
 )
 
 const adhocQueueName = "adhocRequest"
@@ -34,19 +34,6 @@ var (
 		},
 		[]string{"namespace"})
 
-	rrIntervalCounter = prometheus.NewGaugeVec(
-		prometheus.GaugeOpts{
-			Name: "sensu_go_round_robin_interval_schedulers",
-			Help: "Number of active round robin interval check schedulers on this backend.",
-		},
-		[]string{"namespace"})
-
-	rrCronCounter = prometheus.NewGaugeVec(
-		prometheus.GaugeOpts{
-			Name: "sensu_go_round_robin_cron_schedulers",
-			Help: "Number of active round robin cron check schedulers on this backend.",
-		},
-		[]string{"namespace"})
 	schedRefreshDuration = prometheus.NewHistogram(
 		prometheus.HistogramOpts{
 			Name:    "sensu_go_schedulerd_refresh_duration",
@@ -65,7 +52,6 @@ type Schedulerd struct {
 	ctx                    context.Context
 	cancel                 context.CancelFunc
 	errChan                chan error
-	ringPool               *ringv2.RingPool
 	entityCache            EntityCache
 	secretsProviderManager *secrets.ProviderManager
 	queue                  queue.Client
@@ -78,7 +64,6 @@ type Schedulerd struct {
 // Config configures Schedulerd.
 type Config struct {
 	Store                  storev2.Interface
-	RingPool               *ringv2.RingPool
 	Bus                    messaging.MessageBus
 	SecretsProviderManager *secrets.ProviderManager
 	RefreshInterval        time.Duration
@@ -92,7 +77,6 @@ func New(ctx context.Context, c Config) (*Schedulerd, error) {
 		store:                  c.Store,
 		bus:                    c.Bus,
 		errChan:                make(chan error, 1),
-		ringPool:               c.RingPool,
 		secretsProviderManager: c.SecretsProviderManager,
 		queue:                  c.Queue,
 
@@ -116,8 +100,6 @@ func New(ctx context.Context, c Config) (*Schedulerd, error) {
 func (s *Schedulerd) Start() error {
 	_ = prometheus.Register(intervalCounter)
 	_ = prometheus.Register(cronCounter)
-	_ = prometheus.Register(rrIntervalCounter)
-	_ = prometheus.Register(rrCronCounter)
 	_ = prometheus.Register(schedRefreshDuration)
 	return s.start()
 }
@@ -181,26 +163,7 @@ func (s *Schedulerd) refresh() error {
 			}
 		}
 
-		var scheduler Scheduler
-
-		switch GetSchedulerType(check) {
-		case IntervalType:
-			scheduler = NewIntervalScheduler(s.ctx, check, s.makeExecutor())
-		case CronType:
-			scheduler = NewCronScheduler(s.ctx, check, s.makeExecutor())
-		case RoundRobinIntervalType:
-			//TODO(ck): plug in new round robin impl
-			//scheduler = NewRoundRobinIntervalScheduler(s.ctx, check, s.makeExecutor(), s.ringPool, s.entityCache)
-			scheduler = NewIntervalScheduler(s.ctx, check, s.makeExecutor())
-		case RoundRobinCronType:
-			//TODO(ck): plug in new round robin impl
-			//scheduler = NewRoundRobinCronScheduler(s.ctx, check, s.makeExecutor(), s.ringPool, s.entityCache)
-			scheduler = NewCronScheduler(s.ctx, check, s.makeExecutor())
-		default:
-			logger.Error("bad scheduler type, falling back to interval scheduler")
-			scheduler = NewIntervalScheduler(s.ctx, check, s.makeExecutor())
-		}
-
+		scheduler := s.makeScheduler(check)
 		// Start scheduling check
 		scheduler.Start()
 
@@ -214,7 +177,19 @@ func (s *Schedulerd) refresh() error {
 	for i, check := range changed {
 		checksChanged[i] = fmt.Sprintf("%s/%s", check.Namespace, check.Name)
 		key := concatUniqueKey(check.Name, check.Namespace)
-		s.schedulers[key].Interrupt(check)
+
+		if s.schedulers[key].Type() == GetSchedulerType(check) {
+			s.schedulers[key].Interrupt(check)
+		} else {
+			logger.Info("stopping existing scheduler, starting new scheduler")
+			if err := s.schedulers[key].Stop(); err != nil {
+				logger.WithError(err).Error("error stopping check scheduler")
+			}
+			scheduler := s.makeScheduler(check)
+			scheduler.Start()
+			s.schedulers[key] = scheduler
+
+		}
 	}
 	if len(checksChanged) > 0 {
 		logger.WithField("changed", checksChanged).Info("updated schedule with new check configuration")
@@ -233,6 +208,29 @@ func (s *Schedulerd) refresh() error {
 	}
 	return nil
 
+}
+
+func (s *Schedulerd) makeScheduler(check *corev2.CheckConfig) Scheduler {
+	var scheduler Scheduler
+
+	switch GetSchedulerType(check) {
+	case IntervalType:
+		scheduler = NewIntervalScheduler(s.ctx, check, s.makeExecutor())
+	case CronType:
+		scheduler = NewCronScheduler(s.ctx, check, s.makeExecutor())
+	case RoundRobinIntervalType:
+		scheduler = NewNoopScheduler(RoundRobinIntervalType)
+		logger.WithFields(logrus.Fields{"namespace": check.Namespace, "check": check.Name}).
+			Error("checks configured with round robin enabled are not supported in this version of sensu. check will not be scheduled.")
+	case RoundRobinCronType:
+		logger.WithFields(logrus.Fields{"namespace": check.Namespace, "check": check.Name}).
+			Error("checks configured with round robin enabled are not supported in this version of sensu. check will not be scheduled.")
+		scheduler = NewNoopScheduler(RoundRobinCronType)
+	default:
+		logger.Error("bad scheduler type, falling back to interval scheduler")
+		scheduler = NewIntervalScheduler(s.ctx, check, s.makeExecutor())
+	}
+	return scheduler
 }
 
 func (s *Schedulerd) makeExecutor() *CheckExecutor {

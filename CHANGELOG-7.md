@@ -20,6 +20,8 @@ which now allows for the addition of labels and annotations.
 number of filters is returned. Previously the first filtered asset build was
 returned regardless of filter count.
 - Removes the deprecated agent socket APIs
+- Disables round robin scheduling. Checks configured with round robin will
+  no longer be scheduled.
 
 ### Added
 - Added sensu-backend configuration for postgresql.
