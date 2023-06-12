@@ -48,9 +48,6 @@ func validate[R corev3.Resource](b []byte) error {
 	if w.Type == "" {
 		missing = append(missing, "type")
 	}
-	if len(w.ObjectMeta) == 0 {
-		missing = append(missing, "metadata")
-	}
 	if len(w.Spec) == 0 {
 		missing = append(missing, "spec")
 	}
@@ -70,6 +67,5 @@ func validate[R corev3.Resource](b []byte) error {
 type rawWrapper struct {
 	APIVersion string          `json:"api_version"`
 	Type       string          `json:"type"`
-	ObjectMeta json.RawMessage `json:"metadata"`
 	Spec       json.RawMessage `json:"spec"`
 }

@@ -94,7 +94,6 @@ func addCommandExecute(cli *cli.SensuCli) func(cmd *cobra.Command, args []string
 			} else {
 				meta.Name = assetPath
 			}
-			resources[i].ObjectMeta = *meta
 			compat.SetObjectMeta(resources[i].Value, meta)
 		}
 		processor := resource.NewPutter()
