@@ -11,6 +11,7 @@ import (
 
 	"github.com/gorilla/mux"
 	corev2 "github.com/sensu/core/v2"
+	"github.com/sensu/core/v3/types"
 	"github.com/sensu/sensu-go/backend/apid/actions"
 	"github.com/sensu/sensu-go/testing/mockqueue"
 	"github.com/sensu/sensu-go/testing/mockstore"
@@ -35,7 +36,6 @@ func (m *mockCheckController) QueueAdhocRequest(ctx context.Context, check strin
 }
 
 func TestHttpApiChecksAdhocRequest(t *testing.T) {
-	t.Skip("skip")
 	defaultCtx := testutil.NewContext(
 		testutil.ContextWithNamespace("default"),
 	)
@@ -50,7 +50,7 @@ func TestHttpApiChecksAdhocRequest(t *testing.T) {
 	queue.On("Enqueue", mock.Anything, mock.Anything).Return(nil)
 	checkController := actions.NewCheckController(store, queue)
 	c := &ChecksRouter{controller: checkController}
-	payload, _ := json.Marshal(adhocRequest)
+	payload, _ := json.Marshal(types.WrapResource(adhocRequest))
 
 	req, err := http.NewRequest(http.MethodPost, "/", bytes.NewBuffer(payload))
 	if err != nil {
