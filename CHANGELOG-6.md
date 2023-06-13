@@ -18,6 +18,7 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 ### Changed
 - Log handler error at error level instead of info level
 - Users are now automatically logged out after a period of inactivity (12h)
+- Changed the format of threshold annotations
 
 ## [6.9.2] - 2023-03-08
 

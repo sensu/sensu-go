@@ -661,13 +661,11 @@ func TestEvaluateOutputMetricThresholds(t *testing.T) {
 	statusWarningAnnotation := "sensu.io/notifications/warning"
 	statusUnknownAnnotation := "sensu.io/notifications/unknown"
 	statusCriticalAnnotation := "sensu.io/notifications/critical"
-	diskOKMinAnnotation := "sensu.io/output_metric_thresholds/disk_rate/min/ok"
-	diskOKMaxAnnotation := "sensu.io/output_metric_thresholds/disk_rate/max/ok"
-	diskCriticalMinAnnotation := "sensu.io/output_metric_thresholds/disk_rate/min/critical"
-	diskCriticalMaxAnnotation := "sensu.io/output_metric_thresholds/disk_rate/max/critical"
-	diskWarningMinAnnotation := "sensu.io/output_metric_thresholds/disk_rate/min/warning"
-	netUnknownMaxAnnotation := "sensu.io/output_metric_thresholds/network_rate/max/unknown"
-	notDiskWarningNullAnnotation := "sensu.io/output_metric_thresholds/not_a_disk_rate/null-status/warning"
+	diskOKAnnotation := "sensu.io/output_metric_thresholds/disk_rate/ok"
+	diskCriticalAnnotation := "sensu.io/output_metric_thresholds/disk_rate/critical"
+	diskWarningAnnotation := "sensu.io/output_metric_thresholds/disk_rate/warning"
+	netUnknownAnnotation := "sensu.io/output_metric_thresholds/network_rate/unknown"
+	notDiskWarningNullAnnotation := "sensu.io/output_metric_thresholds/not_a_disk_rate/warning"
 
 	testCases := []struct {
 		name                string
@@ -683,42 +681,42 @@ func TestEvaluateOutputMetricThresholds(t *testing.T) {
 			metrics:             []*corev2.MetricPoint{metric1},
 			thresholds:          []*corev2.MetricThreshold{{Name: "disk_rate", Thresholds: []*corev2.MetricThresholdRule{{Min: "200000.0", Status: 2}}}},
 			expectedStatus:      2,
-			expectedAnnotations: []string{statusCriticalAnnotation, diskCriticalMinAnnotation},
+			expectedAnnotations: []string{statusCriticalAnnotation, diskCriticalAnnotation},
 		}, {
 			name:                "maximum rule match",
 			event:               &corev2.Event{Check: &corev2.Check{Status: 0}},
 			metrics:             []*corev2.MetricPoint{metric1},
 			thresholds:          []*corev2.MetricThreshold{{Name: "disk_rate", Thresholds: []*corev2.MetricThresholdRule{{Max: "50000.0", Status: 2}}}},
 			expectedStatus:      2,
-			expectedAnnotations: []string{statusCriticalAnnotation, diskCriticalMaxAnnotation},
+			expectedAnnotations: []string{statusCriticalAnnotation, diskCriticalAnnotation},
 		}, {
 			name:                "no min rule match",
 			event:               &corev2.Event{Check: &corev2.Check{Status: 0}},
 			metrics:             []*corev2.MetricPoint{metric1},
 			thresholds:          []*corev2.MetricThreshold{{Name: "disk_rate", Thresholds: []*corev2.MetricThresholdRule{{Min: "50000.0", Status: 2}}}},
 			expectedStatus:      0,
-			expectedAnnotations: []string{statusOKAnnotation, diskOKMinAnnotation},
+			expectedAnnotations: []string{statusOKAnnotation, diskOKAnnotation},
 		}, {
 			name:                "no max rule match",
 			event:               &corev2.Event{Check: &corev2.Check{Status: 0}},
 			metrics:             []*corev2.MetricPoint{metric1},
 			thresholds:          []*corev2.MetricThreshold{{Name: "disk_rate", Thresholds: []*corev2.MetricThresholdRule{{Max: "200000.0", Status: 2}}}},
 			expectedStatus:      0,
-			expectedAnnotations: []string{statusOKAnnotation, diskOKMaxAnnotation},
+			expectedAnnotations: []string{statusOKAnnotation, diskOKAnnotation},
 		}, {
 			name:                "min and max rule match",
 			event:               &corev2.Event{Check: &corev2.Check{Status: 0}},
 			metrics:             []*corev2.MetricPoint{metric1},
 			thresholds:          []*corev2.MetricThreshold{{Name: "disk_rate", Thresholds: []*corev2.MetricThresholdRule{{Min: "200000.0", Status: 1}, {Max: "75000.0", Status: 2}}}},
 			expectedStatus:      2,
-			expectedAnnotations: []string{statusCriticalAnnotation, diskWarningMinAnnotation, diskCriticalMaxAnnotation},
+			expectedAnnotations: []string{statusCriticalAnnotation, diskCriticalAnnotation},
 		}, {
 			name:                "only one rule match",
 			event:               &corev2.Event{Check: &corev2.Check{Status: 0}},
 			metrics:             []*corev2.MetricPoint{metric1},
 			thresholds:          []*corev2.MetricThreshold{{Name: "disk_rate", Thresholds: []*corev2.MetricThresholdRule{{Min: "200000.0", Status: 1}, {Max: "200000.0", Status: 2}}}},
 			expectedStatus:      1,
-			expectedAnnotations: []string{statusWarningAnnotation, diskWarningMinAnnotation, diskOKMaxAnnotation},
+			expectedAnnotations: []string{statusWarningAnnotation, diskWarningAnnotation},
 		}, {
 			name:                "no filter match - null status",
 			event:               &corev2.Event{Check: &corev2.Check{Status: 0}},
@@ -732,14 +730,14 @@ func TestEvaluateOutputMetricThresholds(t *testing.T) {
 			metrics:             []*corev2.MetricPoint{metric1, metric2},
 			thresholds:          []*corev2.MetricThreshold{{Name: "disk_rate", NullStatus: 1, Thresholds: []*corev2.MetricThresholdRule{{Max: "200000.0", Status: 2}}}},
 			expectedStatus:      0,
-			expectedAnnotations: []string{statusOKAnnotation, diskOKMaxAnnotation},
+			expectedAnnotations: []string{statusOKAnnotation, diskOKAnnotation},
 		}, {
 			name:                "multi metric and filter and rule match",
 			event:               &corev2.Event{Check: &corev2.Check{Status: 0}},
 			metrics:             []*corev2.MetricPoint{metric1, metric2},
 			thresholds:          []*corev2.MetricThreshold{{Name: "disk_rate", NullStatus: 1, Thresholds: []*corev2.MetricThresholdRule{{Max: "50000.0", Status: 2}}}},
 			expectedStatus:      2,
-			expectedAnnotations: []string{statusCriticalAnnotation, diskCriticalMaxAnnotation},
+			expectedAnnotations: []string{statusCriticalAnnotation, diskCriticalAnnotation},
 		}, {
 			name:    "multi metric and multi rule match",
 			event:   &corev2.Event{Check: &corev2.Check{Status: 0}},
@@ -747,7 +745,7 @@ func TestEvaluateOutputMetricThresholds(t *testing.T) {
 			thresholds: []*corev2.MetricThreshold{{Name: "disk_rate", NullStatus: 1, Thresholds: []*corev2.MetricThresholdRule{{Max: "50000.0", Status: 2}}},
 				{Name: "network_rate", Thresholds: []*corev2.MetricThresholdRule{{Max: "40000", Status: 3}}}},
 			expectedStatus:      3,
-			expectedAnnotations: []string{statusUnknownAnnotation, diskCriticalMaxAnnotation, netUnknownMaxAnnotation},
+			expectedAnnotations: []string{statusUnknownAnnotation, diskCriticalAnnotation, netUnknownAnnotation},
 		},
 	}
 
