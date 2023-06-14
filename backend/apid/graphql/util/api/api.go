@@ -5,9 +5,9 @@ import (
 
 	corev2 "github.com/sensu/core/v2"
 	corev3 "github.com/sensu/core/v3"
+	"github.com/sensu/core/v3/types"
 	"github.com/sensu/sensu-go/backend/authorization"
 	"github.com/sensu/sensu-go/backend/store"
-	"github.com/sensu/core/v3/types"
 )
 
 // UnwrapListResult from API client, helpful when resolving a field as GraphQL
@@ -109,19 +109,14 @@ func WrapResource(r interface{}) types.Wrapper {
 	switch r := r.(type) {
 	case corev2.Resource:
 		return types.WrapResource(r)
-	case corev3.Resource:	// maybe we move this into the compat package
+	case corev3.Resource: // maybe we move this into the compat package
 		var tm corev2.TypeMeta
 		if getter, ok := r.(interface{ GetTypeMeta() corev2.TypeMeta }); ok {
 			tm = getter.GetTypeMeta()
 		}
-		var meta corev2.ObjectMeta
-		if r.GetMetadata() != nil {
-			meta = *r.GetMetadata()
-		}
 		return types.Wrapper{
-			TypeMeta:	tm,
-			ObjectMeta:	meta,
-			Value:		r,
+			TypeMeta: tm,
+			Value:    r,
 		}
 	case *types.Wrapper:
 		if r == nil {
@@ -139,8 +134,8 @@ func WrapResource(r interface{}) types.Wrapper {
 func ToFetchErr(err error) map[string]interface{} {
 	if err == authorization.ErrUnauthorized || err == authorization.ErrNoClaims {
 		return map[string]interface{}{
-			"code":		"ERR_PERMISSION_DENIED",
-			"message":	err.Error(),
+			"code":    "ERR_PERMISSION_DENIED",
+			"message": err.Error(),
 		}
 	}
 	return nil

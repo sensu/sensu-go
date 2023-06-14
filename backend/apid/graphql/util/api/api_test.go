@@ -7,58 +7,58 @@ import (
 
 	corev2 "github.com/sensu/core/v2"
 	corev3 "github.com/sensu/core/v3"
+	"github.com/sensu/core/v3/types"
 	"github.com/sensu/sensu-go/backend/authorization"
 	"github.com/sensu/sensu-go/backend/store"
-	"github.com/sensu/core/v3/types"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestUnwrapListResult(t *testing.T) {
 	type args struct {
-		res	interface{}
-		err	error
+		res interface{}
+		err error
 	}
 	tests := []struct {
-		name	string
-		args	args
-		want	interface{}
-		wantErr	bool
+		name    string
+		args    args
+		want    interface{}
+		wantErr bool
 	}{
 		{
-			name:	"wrapped results",
+			name: "wrapped results",
 			args: args{
-				res:	[]*types.Wrapper{{Value: corev2.FixtureHandler("")}},
-				err:	nil,
+				res: []*types.Wrapper{{Value: corev2.FixtureHandler("")}},
+				err: nil,
 			},
-			want:		[]interface{}{corev2.FixtureHandler("")},
-			wantErr:	false,
+			want:    []interface{}{corev2.FixtureHandler("")},
+			wantErr: false,
 		},
 		{
-			name:	"unauthorized",
+			name: "unauthorized",
 			args: args{
-				res:	[]*types.Wrapper{{Value: corev2.FixtureHandler("")}},
-				err:	authorization.ErrUnauthorized,
+				res: []*types.Wrapper{{Value: corev2.FixtureHandler("")}},
+				err: authorization.ErrUnauthorized,
 			},
-			want:		[]interface{}{},
-			wantErr:	false,
+			want:    []interface{}{},
+			wantErr: false,
 		},
 		{
-			name:	"no claims",
+			name: "no claims",
 			args: args{
-				res:	[]*types.Wrapper{{Value: corev2.FixtureHandler("")}},
-				err:	authorization.ErrNoClaims,
+				res: []*types.Wrapper{{Value: corev2.FixtureHandler("")}},
+				err: authorization.ErrNoClaims,
 			},
-			want:		[]interface{}{},
-			wantErr:	false,
+			want:    []interface{}{},
+			wantErr: false,
 		},
 		{
-			name:	"err",
+			name: "err",
 			args: args{
-				res:	[]*types.Wrapper{{Value: corev2.FixtureHandler("")}},
-				err:	fmt.Errorf("something bad"),
+				res: []*types.Wrapper{{Value: corev2.FixtureHandler("")}},
+				err: fmt.Errorf("something bad"),
 			},
-			want:		[]interface{}{},
-			wantErr:	true,
+			want:    []interface{}{},
+			wantErr: true,
 		},
 	}
 	for _, tt := range tests {
@@ -77,68 +77,68 @@ func TestUnwrapListResult(t *testing.T) {
 
 func TestUnwrapGetResult(t *testing.T) {
 	type args struct {
-		res	interface{}
-		err	error
+		res interface{}
+		err error
 	}
 	tests := []struct {
-		name	string
-		args	args
-		want	interface{}
-		wantErr	bool
+		name    string
+		args    args
+		want    interface{}
+		wantErr bool
 	}{
 		{
-			name:	"standard",
+			name: "standard",
 			args: args{
-				res:	corev2.FixtureHandler(""),
-				err:	nil,
+				res: corev2.FixtureHandler(""),
+				err: nil,
 			},
-			want:		corev2.FixtureHandler(""),
-			wantErr:	false,
+			want:    corev2.FixtureHandler(""),
+			wantErr: false,
 		},
 		{
-			name:	"wrapped results",
+			name: "wrapped results",
 			args: args{
-				res:	&types.Wrapper{Value: corev2.FixtureHandler("")},
-				err:	nil,
+				res: &types.Wrapper{Value: corev2.FixtureHandler("")},
+				err: nil,
 			},
-			want:		corev2.FixtureHandler(""),
-			wantErr:	false,
+			want:    corev2.FixtureHandler(""),
+			wantErr: false,
 		},
 		{
-			name:	"unauthorized",
+			name: "unauthorized",
 			args: args{
-				res:	&types.Wrapper{Value: corev2.FixtureHandler("")},
-				err:	authorization.ErrUnauthorized,
+				res: &types.Wrapper{Value: corev2.FixtureHandler("")},
+				err: authorization.ErrUnauthorized,
 			},
-			want:		nil,
-			wantErr:	false,
+			want:    nil,
+			wantErr: false,
 		},
 		{
-			name:	"no claims",
+			name: "no claims",
 			args: args{
-				res:	&types.Wrapper{Value: corev2.FixtureHandler("")},
-				err:	authorization.ErrNoClaims,
+				res: &types.Wrapper{Value: corev2.FixtureHandler("")},
+				err: authorization.ErrNoClaims,
 			},
-			want:		nil,
-			wantErr:	false,
+			want:    nil,
+			wantErr: false,
 		},
 		{
-			name:	"store err",
+			name: "store err",
 			args: args{
-				res:	&types.Wrapper{Value: corev2.FixtureHandler("")},
-				err:	&store.ErrNotFound{},
+				res: &types.Wrapper{Value: corev2.FixtureHandler("")},
+				err: &store.ErrNotFound{},
 			},
-			want:		nil,
-			wantErr:	false,
+			want:    nil,
+			wantErr: false,
 		},
 		{
-			name:	"err",
+			name: "err",
 			args: args{
-				res:	&types.Wrapper{Value: corev2.FixtureHandler("")},
-				err:	fmt.Errorf("something bad"),
+				res: &types.Wrapper{Value: corev2.FixtureHandler("")},
+				err: fmt.Errorf("something bad"),
 			},
-			want:		nil,
-			wantErr:	true,
+			want:    nil,
+			wantErr: true,
 		},
 	}
 	for _, tt := range tests {
@@ -157,58 +157,58 @@ func TestUnwrapGetResult(t *testing.T) {
 
 func TestHandleListResult(t *testing.T) {
 	type args struct {
-		res	interface{}
-		err	error
+		res interface{}
+		err error
 	}
 	tests := []struct {
-		name	string
-		args	args
-		want	interface{}
-		wantErr	bool
+		name    string
+		args    args
+		want    interface{}
+		wantErr bool
 	}{
 		{
-			name:	"wrapped results",
+			name: "wrapped results",
 			args: args{
-				res:	[]*types.Wrapper{{Value: corev2.FixtureHandler("")}},
-				err:	nil,
+				res: []*types.Wrapper{{Value: corev2.FixtureHandler("")}},
+				err: nil,
 			},
 			want: map[string]interface{}{
 				"nodes": []interface{}{corev2.FixtureHandler("")},
 			},
-			wantErr:	false,
+			wantErr: false,
 		},
 		{
-			name:	"unauthorized",
+			name: "unauthorized",
 			args: args{
-				res:	[]*types.Wrapper{{Value: corev2.FixtureHandler("")}},
-				err:	authorization.ErrUnauthorized,
+				res: []*types.Wrapper{{Value: corev2.FixtureHandler("")}},
+				err: authorization.ErrUnauthorized,
 			},
 			want: map[string]interface{}{
-				"code":		"ERR_PERMISSION_DENIED",
-				"message":	authorization.ErrUnauthorized.Error(),
+				"code":    "ERR_PERMISSION_DENIED",
+				"message": authorization.ErrUnauthorized.Error(),
 			},
-			wantErr:	false,
+			wantErr: false,
 		},
 		{
-			name:	"no claims",
+			name: "no claims",
 			args: args{
-				res:	[]*types.Wrapper{{Value: corev2.FixtureHandler("")}},
-				err:	authorization.ErrNoClaims,
+				res: []*types.Wrapper{{Value: corev2.FixtureHandler("")}},
+				err: authorization.ErrNoClaims,
 			},
 			want: map[string]interface{}{
-				"code":		"ERR_PERMISSION_DENIED",
-				"message":	authorization.ErrNoClaims.Error(),
+				"code":    "ERR_PERMISSION_DENIED",
+				"message": authorization.ErrNoClaims.Error(),
 			},
-			wantErr:	false,
+			wantErr: false,
 		},
 		{
-			name:	"err",
+			name: "err",
 			args: args{
-				res:	[]*types.Wrapper{{Value: corev2.FixtureHandler("")}},
-				err:	fmt.Errorf("something bad"),
+				res: []*types.Wrapper{{Value: corev2.FixtureHandler("")}},
+				err: fmt.Errorf("something bad"),
 			},
-			want:		nil,
-			wantErr:	true,
+			want:    nil,
+			wantErr: true,
 		},
 	}
 	for _, tt := range tests {
@@ -227,74 +227,74 @@ func TestHandleListResult(t *testing.T) {
 
 func TestHandleGetResult(t *testing.T) {
 	type args struct {
-		res	interface{}
-		err	error
+		res interface{}
+		err error
 	}
 	tests := []struct {
-		name	string
-		args	args
-		want	interface{}
-		wantErr	bool
+		name    string
+		args    args
+		want    interface{}
+		wantErr bool
 	}{
 		{
-			name:	"standard",
+			name: "standard",
 			args: args{
-				res:	corev2.FixtureHandler(""),
-				err:	nil,
+				res: corev2.FixtureHandler(""),
+				err: nil,
 			},
-			want:		corev2.FixtureHandler(""),
-			wantErr:	false,
+			want:    corev2.FixtureHandler(""),
+			wantErr: false,
 		},
 		{
-			name:	"wrapped results",
+			name: "wrapped results",
 			args: args{
-				res:	&types.Wrapper{Value: corev2.FixtureHandler("")},
-				err:	nil,
+				res: &types.Wrapper{Value: corev2.FixtureHandler("")},
+				err: nil,
 			},
-			want:		corev2.FixtureHandler(""),
-			wantErr:	false,
+			want:    corev2.FixtureHandler(""),
+			wantErr: false,
 		},
 		{
-			name:	"unauthorized",
+			name: "unauthorized",
 			args: args{
-				res:	&types.Wrapper{Value: corev2.FixtureHandler("")},
-				err:	authorization.ErrUnauthorized,
+				res: &types.Wrapper{Value: corev2.FixtureHandler("")},
+				err: authorization.ErrUnauthorized,
 			},
 			want: map[string]interface{}{
-				"code":		"ERR_PERMISSION_DENIED",
-				"message":	authorization.ErrUnauthorized.Error(),
+				"code":    "ERR_PERMISSION_DENIED",
+				"message": authorization.ErrUnauthorized.Error(),
 			},
-			wantErr:	false,
+			wantErr: false,
 		},
 		{
-			name:	"no claims",
+			name: "no claims",
 			args: args{
-				res:	&types.Wrapper{Value: corev2.FixtureHandler("")},
-				err:	authorization.ErrNoClaims,
+				res: &types.Wrapper{Value: corev2.FixtureHandler("")},
+				err: authorization.ErrNoClaims,
 			},
 			want: map[string]interface{}{
-				"code":		"ERR_PERMISSION_DENIED",
-				"message":	authorization.ErrNoClaims.Error(),
+				"code":    "ERR_PERMISSION_DENIED",
+				"message": authorization.ErrNoClaims.Error(),
 			},
-			wantErr:	false,
+			wantErr: false,
 		},
 		{
-			name:	"store err",
+			name: "store err",
 			args: args{
-				res:	&types.Wrapper{Value: corev2.FixtureHandler("")},
-				err:	&store.ErrNotFound{},
+				res: &types.Wrapper{Value: corev2.FixtureHandler("")},
+				err: &store.ErrNotFound{},
 			},
-			want:		nil,
-			wantErr:	false,
+			want:    nil,
+			wantErr: false,
 		},
 		{
-			name:	"err",
+			name: "err",
 			args: args{
-				res:	&types.Wrapper{Value: corev2.FixtureHandler("")},
-				err:	fmt.Errorf("something bad"),
+				res: &types.Wrapper{Value: corev2.FixtureHandler("")},
+				err: fmt.Errorf("something bad"),
 			},
-			want:		nil,
-			wantErr:	true,
+			want:    nil,
+			wantErr: true,
 		},
 	}
 	for _, tt := range tests {
@@ -317,42 +317,40 @@ func TestWrapResource(t *testing.T) {
 	v2wrapped := types.WrapResource(v2resource)
 
 	tests := []struct {
-		name	string
-		args	interface{}
-		want	types.Wrapper
+		name string
+		args interface{}
+		want types.Wrapper
 	}{
 		{
-			name:	"corev3",
-			args:	v3resource,
+			name: "corev3",
+			args: v3resource,
 			want: types.Wrapper{
-				TypeMeta:	corev2.TypeMeta{APIVersion: "core/v3", Type: "EntityConfig"},
-				ObjectMeta:	*v3resource.Metadata,
-				Value:		v3resource,
+				TypeMeta: corev2.TypeMeta{APIVersion: "core/v3", Type: "EntityConfig"},
+				Value:    v3resource,
 			},
 		},
 		{
-			name:	"corev2",
-			args:	v2resource,
+			name: "corev2",
+			args: v2resource,
 			want: types.Wrapper{
-				TypeMeta:	corev2.TypeMeta{APIVersion: "core/v2", Type: "Asset"},
-				ObjectMeta:	v2resource.ObjectMeta,
-				Value:		v2resource,
+				TypeMeta: corev2.TypeMeta{APIVersion: "core/v2", Type: "Asset"},
+				Value:    v2resource,
 			},
 		},
 		{
-			name:	"wrapped",
-			args:	types.WrapResource(v2resource),
-			want:	types.WrapResource(v2resource),
+			name: "wrapped",
+			args: types.WrapResource(v2resource),
+			want: types.WrapResource(v2resource),
 		},
 		{
-			name:	"pointer",
-			args:	&v2wrapped,
-			want:	types.WrapResource(v2resource),
+			name: "pointer",
+			args: &v2wrapped,
+			want: types.WrapResource(v2resource),
 		},
 		{
-			name:	"nil",
-			args:	(*types.Wrapper)(nil),
-			want:	types.Wrapper{},
+			name: "nil",
+			args: (*types.Wrapper)(nil),
+			want: types.Wrapper{},
 		},
 	}
 	for _, tt := range tests {

@@ -22,6 +22,8 @@ returned regardless of filter count.
 - Removes the deprecated agent socket APIs
 - Disables round robin scheduling. Checks configured with round robin will
   no longer be scheduled.
+- Metadata in resource definitions is no longer represented at the top level.
+instead, it is represented underneath the "spec" object.
 
 ### Added
 - Added sensu-backend configuration for postgresql.

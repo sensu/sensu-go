@@ -13,9 +13,9 @@ import (
 	"strings"
 
 	corev2 "github.com/sensu/core/v2"
+	"github.com/sensu/core/v3/types"
 	"github.com/sensu/sensu-go/cli"
 	"github.com/sensu/sensu-go/cli/client"
-	"github.com/sensu/core/v3/types"
 	"github.com/sensu/sensu-go/util/compat"
 )
 
@@ -178,8 +178,7 @@ func (p *Putter) Process(client client.GenericClient, resources []*types.Wrapper
 	for i, resource := range resources {
 		if err := client.PutResource(*resource); err != nil {
 			return fmt.Errorf(
-				"error putting resource #%d with name %q and namespace %q (%s): %s",
-				i, resource.ObjectMeta.Name, resource.ObjectMeta.Namespace, compat.URIPath(resource.Value), err,
+				"error putting resource #%d: %s", i, err,
 			)
 		}
 	}
@@ -208,33 +207,29 @@ func (p *ManagedByLabelPutter) Process(client client.GenericClient, resources []
 }
 
 func (p *ManagedByLabelPutter) label(resource *types.Wrapper) {
-	innerMeta := compat.GetObjectMeta(resource.Value)
-
-	if resource.ObjectMeta.Labels == nil {
-		resource.ObjectMeta.Labels = map[string]string{}
+	meta := compat.GetObjectMeta(resource.Value)
+	if meta.Labels == nil {
+		meta.Labels = map[string]string{}
 	}
-	outerLabels := resource.ObjectMeta.Labels
-
-	if innerMeta.Labels == nil {
-		innerMeta.Labels = map[string]string{}
+	if meta.Annotations == nil {
+		meta.Annotations = map[string]string{}
 	}
-	innerLabels := innerMeta.Labels
 
 	// By default the resource should be managed by sensuctl
 	managedBy := p.Label
 
 	// Mark the resource as managed by `label` in the outer labels if none is
 	// already set
-	if outerLabels[corev2.ManagedByLabel] != "sensu-agent" {
-		outerLabels[corev2.ManagedByLabel] = managedBy
+	if meta.Labels[corev2.ManagedByLabel] != "sensu-agent" {
+		meta.Labels[corev2.ManagedByLabel] = managedBy
 	} else {
-		managedBy = outerLabels[corev2.ManagedByLabel]
+		managedBy = meta.Labels[corev2.ManagedByLabel]
 	}
 
 	// Mark the resource as managed by `label` in the inner labels
-	if innerLabels[corev2.ManagedByLabel] != "sensu-agent" || innerLabels[corev2.ManagedByLabel] != outerLabels[corev2.ManagedByLabel] {
-		innerLabels[corev2.ManagedByLabel] = managedBy
+	if meta.Labels[corev2.ManagedByLabel] != "sensu-agent" {
+		meta.Labels[corev2.ManagedByLabel] = managedBy
 	}
 
-	compat.SetObjectMeta(resource.Value, innerMeta)
+	compat.SetObjectMeta(resource.Value, meta)
 }

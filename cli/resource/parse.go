@@ -13,8 +13,8 @@ import (
 
 	"github.com/ghodss/yaml"
 	corev2 "github.com/sensu/core/v2"
-	apitools "github.com/sensu/sensu-api-tools"
 	"github.com/sensu/core/v3/types"
+	apitools "github.com/sensu/sensu-api-tools"
 	"github.com/sensu/sensu-go/util/compat"
 )
 
@@ -158,20 +158,12 @@ func Validate(resources []*types.Wrapper, namespace string) error {
 			errCount++
 			fmt.Fprintf(
 				os.Stderr,
-				"error validating resource #%d with name %q and namespace %q: resource is nil\n",
-				i, r.ObjectMeta.Name, r.ObjectMeta.Namespace,
+				"error validating resource #%d: resource is nil\n", i,
 			)
 			continue
 		}
 		if compat.GetObjectMeta(resource).Namespace == "" {
 			compat.SetNamespace(resource, namespace)
-			// We just set the namespace within the underlying wrapped value. We also
-			// need to set it to the outer ObjectMeta for consistency, but only if the
-			// resource has a namespace; some resources are cluster-wide and should
-			// not be namespaced
-			if ns := compat.GetObjectMeta(resource).Namespace; ns != "" {
-				r.ObjectMeta.Namespace = ns
-			}
 		}
 	}
 
