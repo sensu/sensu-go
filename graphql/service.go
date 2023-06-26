@@ -159,6 +159,7 @@ func (service *Service) Middleware() []Middleware {
 
 // QueryParams describe parameters of a GraphQL query.
 type QueryParams struct {
+	IsAuthed       bool
 	OperationName  string
 	Query          string
 	RootObject     map[string]interface{}
@@ -193,7 +194,14 @@ func (service *Service) Do(ctx context.Context, p QueryParams) *Result {
 		return &graphql.Result{Errors: gqlerrors.FormatErrors(err)}
 	}
 
-	// validate document
+	// run mandatory (un-skippable) validators
+	rules := MandatoryValidators()
+	validationResult := graphql.ValidateDocument(&schema, AST, rules)
+	if !validationResult.IsValid {
+		return &graphql.Result{Errors: validationResult.Errors}
+	}
+
+	// run built-in validators e.g. schema type validation
 	if !p.SkipValidation {
 		validationFinishFn := MiddlewareHandleValidationDidStart(service, &params)
 		validationResult := graphql.ValidateDocument(&schema, AST, nil)
@@ -208,7 +216,7 @@ func (service *Service) Do(ctx context.Context, p QueryParams) *Result {
 		Schema:  schema,
 		AST:     AST,
 		Args:    p.Variables,
-		Context: ctx,
+		Context: params.Context,
 	})
 }
 
