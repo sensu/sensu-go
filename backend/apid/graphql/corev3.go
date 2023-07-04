@@ -88,7 +88,7 @@ func (*corev3EntityStateExtImpl) ToJSON(p graphql.ResolveParams) (interface{}, e
 	return util_api.WrapResource(p.Source), nil
 }
 
-// State implements response to request for 'state' field.
+// Config implements response to request for 'config' field.
 func (i *corev3EntityStateExtImpl) Config(p graphql.ResolveParams) (interface{}, error) {
 	obj := p.Source.(*corev3.EntityState)
 	val := corev3.EntityConfig{}
