@@ -130,6 +130,46 @@ func TestParseInflux(t *testing.T) {
 			},
 		},
 		{
+			metric: "wea\\ ther,locat\\,ion=us-mid\\=west,sea\"son=sum\\\\mer te\\ mp\\,er\\=at\"ure=82,h\\ um\\,id\\=it\"y=30 1465839830100400200\nw\\ e\\,a\\=t\"her te\\ mp\\,er\\=at\"ure=82 1465839830100400200\n",
+			expectedFormat: InfluxList{
+				{
+					Measurement: "wea ther",
+					TagSet: []*types.MetricTag{
+						{
+							Name:  "locat,ion",
+							Value: "us-mid=west",
+						},
+						{
+							Name:  `sea"son`,
+							Value: `sum\mer`,
+						},
+					},
+					FieldSet: []*Field{
+						{
+							Key:   `te mp,er=at"ure`,
+							Value: 82,
+						},
+						{
+							Key:   `h um,id=it"y`,
+							Value: 30,
+						},
+					},
+					Timestamp: 1465839830,
+				},
+				{
+					Measurement: `w e,a=t"her`,
+					TagSet:      []*types.MetricTag{},
+					FieldSet: []*Field{
+						{
+							Key:   `te mp,er=at"ure`,
+							Value: 82,
+						},
+					},
+					Timestamp: 1465839830,
+				},
+			},
+		},
+		{
 			metric:           "weather temperature=82",
 			timeInconclusive: true,
 		},

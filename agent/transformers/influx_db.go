@@ -57,28 +57,28 @@ OUTER:
 		fields["line"] = l
 		l++
 		i := Influx{}
-		args := strings.Split(line, " ")
+		args := splitWithoutEscaped(line, " ")
 		if len(args) != 3 && len(args) != 2 {
 			logger.WithFields(fields).WithError(ErrMetricExtraction).Error("influxdb line format requires 2 arguments with a 3rd (optional) timestamp")
 			continue
 		}
 
-		measurementTag := strings.Split(args[0], ",")
-		i.Measurement = measurementTag[0]
+		measurementTag := splitWithoutEscaped(args[0], ",")
+		i.Measurement = unescape(measurementTag[0])
 		tagList := []*types.MetricTag{}
 		if len(measurementTag) == 1 {
 			i.TagSet = tagList
 		} else {
 			for i, tagSet := range measurementTag {
 				if i != 0 {
-					ts := strings.Split(tagSet, "=")
+					ts := splitWithoutEscaped(tagSet, "=")
 					if len(ts) != 2 {
 						logger.WithFields(fields).WithError(ErrMetricExtraction).Error("metric tag set is invalid, must contain a key=value pair")
 						continue OUTER
 					}
 					tag := &types.MetricTag{
-						Name:  ts[0],
-						Value: ts[1],
+						Name:  unescape(ts[0]),
+						Value: unescape(ts[1]),
 					}
 					tagList = append(tagList, tag)
 				}
@@ -90,10 +90,10 @@ OUTER:
 			i.TagSet = append(i.TagSet, event.Check.OutputMetricTags...)
 		}
 
-		fieldSets := strings.Split(args[1], ",")
+		fieldSets := splitWithoutEscaped(args[1], ",")
 		fieldList := []*Field{}
 		for _, fieldSet := range fieldSets {
-			fs := strings.Split(fieldSet, "=")
+			fs := splitWithoutEscaped(fieldSet, "=")
 			if len(fs) != 2 {
 				logger.WithFields(fields).WithError(ErrMetricExtraction).Error("metric field set is invalid, must contain a key=value pair")
 				continue OUTER
@@ -104,7 +104,7 @@ OUTER:
 				continue OUTER
 			}
 			field := &Field{
-				Key:   fs[0],
+				Key:   unescape(fs[0]),
 				Value: f,
 			}
 			fieldList = append(fieldList, field)
@@ -132,4 +132,20 @@ OUTER:
 	}
 
 	return influxList
+}
+
+func splitWithoutEscaped(s, sep string) []string {
+	s = strings.ReplaceAll(s, `\` + sep, "\x00")
+	segments := strings.Split(s, sep)
+	for i := range segments {
+		segments[i] = strings.ReplaceAll(segments[i], "\x00", sep)
+	}
+	return segments
+}
+
+func unescape(s string) string {
+	s = strings.ReplaceAll(s, `\\`, "\x00")
+	s = strings.ReplaceAll(s, `\`, "")
+	s = strings.ReplaceAll(s, "\x00", `\`)
+	return s
 }
