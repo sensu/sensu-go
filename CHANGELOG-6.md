@@ -16,6 +16,17 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 ### Added
 - Adding a flag at agent level to avoid collecting system.networks property in the agent entity state
 - Added silences sorting by expiration to GraphQL service
+- Added log-millisecond-timestamps backend configuration flag
+- Added a session store, used to detect and prevent refresh token reuse
+- Added support escape special characters in InfluxDB Line
+
+### Changed
+- Log handler error at error level instead of info level
+- Users are now automatically logged out after a period of inactivity (12h)
+
+## [6.9.2] - 2023-03-08
+
+### Added
 - Added GraphQL validator for query node depth
 
 ## [6.9.1] - 2022-12-01
