@@ -25,10 +25,6 @@ const (
 	allowListOnDenyStatus        = "allow_list_on_deny_status"
 	allowListOnDenyOutput        = "check command denied by the agent allow list"
 	undocumentedTestCheckCommand = "!sensu_test_check!"
-
-	measureMin        = "min"
-	measureMax        = "max"
-	measureNullStatus = "null-status"
 )
 
 // handleCheck is the check message handler.
@@ -370,13 +366,15 @@ func evaluateOutputMetricThresholds(event *corev2.Event) uint32 {
 	points := event.Metrics.Points
 	thresholds := event.Check.OutputMetricThresholds
 
-	var status uint32 = 0
+	var overallStatus uint32 = 0
 	annotationValue := ""
 	for _, thresholdRule := range thresholds {
 		ruleMatched := false
 		for _, metricPoint := range points {
 			if thresholdRule.MatchesMetricPoint(metricPoint) {
 				ruleMatched = true
+				var status uint32 = 0
+				isExceeded := false
 				for _, rule := range thresholdRule.Thresholds {
 					if rule.Min != "" {
 						min, err := strconv.ParseFloat(rule.Min, 64)
@@ -384,12 +382,17 @@ func evaluateOutputMetricThresholds(event *corev2.Event) uint32 {
 							continue
 						}
 						if metricPoint.Value < min {
-							addThresholdAnnotation(event, thresholdRule, measureMin, rule.Status, metricPoint.Value, rule.Min)
+							isExceeded = true
 							if status < rule.Status {
 								status = rule.Status
-								annotationValue = getAnnotationValue(thresholdRule, measureMin, metricPoint.Value, rule.Min)
+							}
+							if overallStatus < rule.Status {
+								overallStatus = rule.Status
+								annotationValue = getAnnotationValue(thresholdRule, metricPoint.Value, isExceeded)
 							}
 							continue
+						} else {
+							annotationValue = getAnnotationValue(thresholdRule, metricPoint.Value, isExceeded)
 						}
 					}
 					if rule.Max != "" {
@@ -398,21 +401,27 @@ func evaluateOutputMetricThresholds(event *corev2.Event) uint32 {
 							continue
 						}
 						if metricPoint.Value > max {
-							addThresholdAnnotation(event, thresholdRule, measureMax, rule.Status, metricPoint.Value, rule.Max)
+							isExceeded = true
 							if status < rule.Status {
 								status = rule.Status
-								annotationValue = getAnnotationValue(thresholdRule, measureMax, metricPoint.Value, rule.Max)
 							}
+							if overallStatus < rule.Status {
+								overallStatus = rule.Status
+								annotationValue = getAnnotationValue(thresholdRule, metricPoint.Value, isExceeded)
+							}
+						} else {
+							annotationValue = getAnnotationValue(thresholdRule, metricPoint.Value, isExceeded)
 						}
 					}
 				}
+				addThresholdAnnotation(event, thresholdRule, status, metricPoint.Value, isExceeded)
 			}
 		}
 		if !ruleMatched {
 			if thresholdRule.NullStatus > 0 {
 				addNullStatusThresholdAnnotation(event, thresholdRule, thresholdRule.NullStatus)
-				if status < thresholdRule.NullStatus {
-					status = thresholdRule.NullStatus
+				if overallStatus < thresholdRule.NullStatus {
+					overallStatus = thresholdRule.NullStatus
 					annotationValue = getNullStatusAnnotationValue(thresholdRule)
 				}
 			}
@@ -420,21 +429,21 @@ func evaluateOutputMetricThresholds(event *corev2.Event) uint32 {
 	}
 
 	if annotationValue != "" {
-		event.AddAnnotation("sensu.io/notifications/"+corev2.CheckStatusToCaption(status), annotationValue)
+		event.AddAnnotation("sensu.io/notifications/"+corev2.CheckStatusToCaption(overallStatus), annotationValue)
 	}
 
-	return status
+	return overallStatus
 }
 
-func addThresholdAnnotation(event *corev2.Event, metricThreshold *corev2.MetricThreshold, measure string, status uint32, value float64, threshold string) {
-	event.AddAnnotation(getAnnotationKey(metricThreshold, measure, status), getAnnotationValue(metricThreshold, measure, value, threshold))
+func addThresholdAnnotation(event *corev2.Event, metricThreshold *corev2.MetricThreshold, status uint32, value float64, isExceeded bool) {
+	event.AddAnnotation(getAnnotationKey(metricThreshold, status), getAnnotationValue(metricThreshold, value, isExceeded))
 }
 
 func addNullStatusThresholdAnnotation(event *corev2.Event, metricThreshold *corev2.MetricThreshold, status uint32) {
-	event.AddAnnotation(getAnnotationKey(metricThreshold, measureNullStatus, status), getNullStatusAnnotationValue(metricThreshold))
+	event.AddAnnotation(getAnnotationKey(metricThreshold, status), getNullStatusAnnotationValue(metricThreshold))
 }
 
-func getAnnotationKey(metricThreshold *corev2.MetricThreshold, measure string, status uint32) string {
+func getAnnotationKey(metricThreshold *corev2.MetricThreshold, status uint32) string {
 	var key strings.Builder
 
 	key.WriteString("sensu.io/output_metric_thresholds/")
@@ -444,14 +453,12 @@ func getAnnotationKey(metricThreshold *corev2.MetricThreshold, measure string, s
 		key.WriteString(tag.Value)
 	}
 	key.WriteString("/")
-	key.WriteString(measure)
-	key.WriteString("/")
 	key.WriteString(corev2.CheckStatusToCaption(status))
 
 	return key.String()
 }
 
-func getAnnotationValue(metricThreshold *corev2.MetricThreshold, measure string, value float64, threshold string) string {
+func getAnnotationValue(metricThreshold *corev2.MetricThreshold, value float64, isExceeded bool) string {
 	var val strings.Builder
 	var tagsKeyVal strings.Builder
 
@@ -471,13 +478,34 @@ func getAnnotationValue(metricThreshold *corev2.MetricThreshold, measure string,
 		val.WriteString(tagsKeyVal.String())
 		val.WriteString(")")
 	}
-	val.WriteString(" exceeded the configured threshold (")
-	val.WriteString(measure)
-	val.WriteString(": ")
-	val.WriteString(threshold)
-	val.WriteString(", actual: ")
+	if isExceeded {
+		val.WriteString(" exceeded the configured threshold")
+	} else {
+		val.WriteString(" is within the configured threshold")
+	}
+
+	for _, t := range metricThreshold.Thresholds {
+		hasMin := len(t.Min) > 0
+		hasMax := len(t.Max) > 0
+		val.WriteString("; expected ")
+		if hasMin {
+			val.WriteString("min: ")
+			val.WriteString(t.Min)
+		}
+		if hasMin && hasMax {
+			val.WriteString(" - ")
+		}
+		if hasMax {
+			val.WriteString("max: ")
+			val.WriteString(t.Max)
+		}
+		val.WriteString(" (status: ")
+		val.WriteString(corev2.CheckStatusToCaption(t.Status))
+		val.WriteString(")")
+	}
+
+	val.WriteString("; actual: ")
 	val.WriteString(strconv.FormatFloat(value, 'f', -1, 64))
-	val.WriteString(").")
 
 	return val.String()
 }

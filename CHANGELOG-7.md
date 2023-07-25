@@ -42,6 +42,7 @@ instead, it is represented underneath the "spec" object.
   information. This information can be quite lengthy and can reduce the overall
   system performance if agent entities grow to be too large.
 - API keys can now be created with sensuctl create.
+- Added threshold annotation even when OK status
 
 ### Fixed
 - Fixed an issue where multi-expression exclusive "Deny" filters were not
@@ -55,6 +56,7 @@ entity subscriptions and/or a check named `deregistration`.
 - Upgraded Go version to 1.19.5. Old Go versions are not supported.
 - The sensuctl api-key grant command now returns additional information.
 - Handler errors now logged at the error level instead of info level
+- Changed the format of threshold annotations
 
 ### Removed
 - Removed sensu-backend upgrade command. May make an appearance again in later versions.
