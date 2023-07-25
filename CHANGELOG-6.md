@@ -13,6 +13,7 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 - Added silences sorting by expiration to GraphQL service
 - Added log-millisecond-timestamps backend configuration flag
 - Added a session store, used to detect and prevent refresh token reuse
+- Added support escape special characters in InfluxDB Line
 
 ### Changed
 - Log handler error at error level instead of info level
