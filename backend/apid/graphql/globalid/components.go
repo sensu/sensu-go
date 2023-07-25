@@ -98,7 +98,7 @@ func (id *StandardComponents) Resource() string {
 	return id.resource
 }
 
-// Resource definition associated with this ID.
+// SetResource definition associated with this ID.
 func (id *StandardComponents) SetResource(str string) {
 	id.resource = str
 }

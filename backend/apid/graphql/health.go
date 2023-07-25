@@ -76,7 +76,7 @@ func (r *etcdAlarmMemberImpl) MemberID(p graphql.ResolveParams) (string, error) 
 	return strconv.FormatUint(resp.MemberID, 10), nil
 }
 
-// MemberID implements response to request for 'memberID' field.
+// Alarm implements response to request for 'alarm' field.
 func (r *etcdAlarmMemberImpl) Alarm(p graphql.ResolveParams) (schema.EtcdAlarmType, error) {
 	resp := p.Source.(*etcdserverpb.AlarmMember)
 	return schema.EtcdAlarmType(resp.Alarm.String()), nil

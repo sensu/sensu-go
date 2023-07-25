@@ -35,7 +35,7 @@ func (m *mockProvider) RBACName() string {
 	return args.Get(0).(string)
 }
 
-// StorePrefix ...
+// StoreName ...
 func (m *mockProvider) StoreName() string {
 	args := m.Called()
 	return args.Get(0).(string)

@@ -18,7 +18,7 @@ func (m *FilterAdapter) Name() string {
 	return args.Get(0).(string)
 }
 
-// CanMutate ...
+// CanFilter ...
 func (m *FilterAdapter) CanFilter(ref *corev2.ResourceReference) bool {
 	args := m.Called(ref)
 	return args.Get(0).(bool)

@@ -65,8 +65,7 @@ func (s *EntityStore) DeleteEntityByName(ctx context.Context, name string) error
 	return s.deleteEntity(ctx, name, corev2.ContextNamespace(ctx))
 }
 
-// DeleteEntityByName deletes an entity using the given name and the
-// namespace stored in ctx.
+// deleteEntity deletes an entity using the given name and namespace.
 func (s *EntityStore) deleteEntity(ctx context.Context, name, namespace string) error {
 	entityConfigStore, entityStateStore, cleanup, err := prepareEntityStores(ctx, s.db)
 	if err != nil {
