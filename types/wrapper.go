@@ -302,7 +302,7 @@ func ResolveType(apiVersion string, typename string) (Resource, error) {
 	foundVer, ok := availableModules[apiGroup]
 	if ok {
 		if semverGreater(reqVer, foundVer) {
-			return nil, fmt.Errorf("requested version was %s, but only %s is available", reqVer, foundVer)
+			return nil, fmt.Errorf("requested version for type %s/%s was %s, but only %s is available", apiVersion, typename, reqVer, foundVer)
 		}
 	}
 	resolver, ok := packageMap[apiGroup]
@@ -346,7 +346,7 @@ func ResolveRaw(apiVersion string, typename string) (interface{}, error) {
 			foundVer = reqVer
 		}
 		if semverGreater(reqVer, foundVer) {
-			return nil, fmt.Errorf("requested version was %s, but only %s is available", reqVer, foundVer)
+			return nil, fmt.Errorf("requested version for type %s/%s was %s, but only %s is available", apiVersion, typename, reqVer, foundVer)
 		}
 	}
 	resolver, ok := packageMap[apiGroup]
