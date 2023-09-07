@@ -80,6 +80,6 @@ require (
 	github.com/kr/pty v1.1.8 // indirect
 	github.com/sensu/core/v2 v2.19.0
 	github.com/sensu/core/v3 v3.8.1
-	github.com/sensu/sensu-api-tools v0.0.0-20221025205055-db03ae2f8099
+	github.com/sensu/sensu-api-tools v0.2.1-0.20230907230743-0dcf27cff243
 	github.com/sensu/sensu-go/types v0.12.0-alpha6
 )
