@@ -6,7 +6,7 @@ orbs:
 parameters:
   go_version:
     type: string
-    default: "1.17.12"
+    default: "1.21.3"
 
 sensu_go_build_env: &sensu_go_build_env
   docker:
