@@ -17,7 +17,7 @@ require (
 	github.com/ghodss/yaml v1.0.0
 	github.com/go-resty/resty/v2 v2.5.0
 	github.com/gogo/protobuf v1.3.2
-	github.com/golang-jwt/jwt/v4 v4.4.2
+	github.com/golang-jwt/jwt/v4 v4.4.3
 	github.com/golang/protobuf v1.5.2
 	github.com/golang/snappy v0.0.4
 	github.com/google/uuid v1.3.0
