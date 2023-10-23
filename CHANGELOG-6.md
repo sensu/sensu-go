@@ -10,7 +10,7 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ### Changed
 - Upgraded CI Go version to 1.21.3
-
+- Upgraded jwt version to 4.4.3
 
 ## [6.10.0] - 2023-05-23
 
