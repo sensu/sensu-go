@@ -48,7 +48,7 @@ require (
 	github.com/robfig/cron/v3 v3.0.1
 	github.com/sensu/lasr v1.2.1
 	github.com/shirou/gopsutil/v3 v3.23.2
-	github.com/sirupsen/logrus v1.9.0
+	github.com/sirupsen/logrus v1.9.3
 	github.com/spf13/cobra v1.1.3
 	github.com/spf13/pflag v1.0.5
 	github.com/spf13/viper v1.7.0
@@ -78,8 +78,8 @@ require (
 	github.com/coreos/go-systemd v0.0.0-20190719114852-fd7a80b32e1f // indirect
 	github.com/go-test/deep v1.0.8
 	github.com/kr/pty v1.1.8 // indirect
-	github.com/sensu/core/v2 v2.19.0
-	github.com/sensu/core/v3 v3.8.1
+	github.com/sensu/core/v2 v2.20.0-alpha2
+	github.com/sensu/core/v3 v3.9.0-alpha3
 	github.com/sensu/sensu-api-tools v0.0.0-20221025205055-db03ae2f8099
 	github.com/sensu/sensu-go/types v0.12.0-alpha6
 )
