@@ -81,5 +81,5 @@ require (
 	github.com/sensu/core/v2 v2.20.0-alpha2
 	github.com/sensu/core/v3 v3.9.0-alpha3
 	github.com/sensu/sensu-api-tools v0.0.0-20221025205055-db03ae2f8099
-	github.com/sensu/sensu-go/types v0.12.0-alpha8
+	github.com/sensu/sensu-go/types v0.12.0-alpha9
 )
