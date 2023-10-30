@@ -223,13 +223,13 @@ func NewEtcd(config *Config) (*Etcd, error) {
 	}
 
 	// Client config
-	cfg.ACUrls = acURLs
-	cfg.LCUrls = lcURLs
+	cfg.AdvertiseClientUrls = acURLs
+	cfg.ListenClientUrls = lcURLs
 	cfg.ClientTLSInfo = (transport.TLSInfo)(config.ClientTLSInfo)
 
 	// Peer config
-	cfg.APUrls = apURLs
-	cfg.LPUrls = lpURLs
+	cfg.AdvertisePeerUrls = apURLs
+	cfg.ListenPeerUrls = lpURLs
 	cfg.PeerTLSInfo = (transport.TLSInfo)(config.PeerTLSInfo)
 
 	if len(config.CipherSuites) > 0 {
