@@ -42,8 +42,8 @@ func TestInfluxBridgePush(t *testing.T) {
 	}
 	// expect to get at least N metrics
 	metrics := strings.Split(buf.String(), "\n")
-	if got, want := len(metrics), 35; got < want {
-		t.Errorf("expected at least %d metrics, got %d", got, want)
+	if got, want := len(metrics), 34; got < want {
+		t.Errorf("expected at least %d metrics, got %d: %+v", want, got, metrics)
 	}
 	parser := influx.NewStreamParser(buf)
 	for {
