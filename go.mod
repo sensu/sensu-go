@@ -73,7 +73,6 @@ require (
 )
 
 require (
-	github.com/coreos/go-semver v0.3.1 // indirect
 	github.com/coreos/go-systemd v0.0.0-20190719114852-fd7a80b32e1f // indirect
 	github.com/coreos/go-systemd/v22 v22.5.0 // indirect
 	github.com/creack/pty v1.1.20 // indirect
@@ -85,8 +84,8 @@ require (
 	github.com/jonboulle/clockwork v0.4.0 // indirect
 	github.com/kr/pty v1.1.8 // indirect
 	github.com/prometheus/procfs v0.12.0 // indirect
-	github.com/sensu/core/v2 v2.19.0
-	github.com/sensu/core/v3 v3.8.1
+	github.com/sensu/core/v2 v2.20.0-alpha3
+	github.com/sensu/core/v3 v3.9.0-alpha4
 	github.com/sensu/sensu-api-tools v0.0.0-20221025205055-db03ae2f8099
 	github.com/sensu/sensu-go/types v0.12.0-alpha6
 	github.com/tmc/grpc-websocket-proxy v0.0.0-20220101234140-673ab2c3ae75 // indirect
@@ -94,9 +93,6 @@ require (
 	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.45.0 // indirect
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc v1.19.0 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
-	google.golang.org/genproto v0.0.0-20231030173426-d783a09b4405 // indirect
-	google.golang.org/genproto/googleapis/api v0.0.0-20231030173426-d783a09b4405 // indirect
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20231030173426-d783a09b4405 // indirect
 	gopkg.in/natefinch/lumberjack.v2 v2.2.1 // indirect
 	sigs.k8s.io/yaml v1.4.0 // indirect
 )
