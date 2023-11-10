@@ -87,7 +87,7 @@ require (
 	github.com/sensu/core/v2 v2.20.0-alpha3
 	github.com/sensu/core/v3 v3.9.0-alpha4
 	github.com/sensu/sensu-api-tools v0.0.0-20221025205055-db03ae2f8099
-	github.com/sensu/sensu-go/types v0.12.0-alpha6
+	github.com/sensu/sensu-go/types v0.12.0-alpha9.0.20231110195803-ecfe0db936ab
 	github.com/tmc/grpc-websocket-proxy v0.0.0-20220101234140-673ab2c3ae75 // indirect
 	github.com/xiang90/probing v0.0.0-20221125231312-a49e3df8f510 // indirect
 	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.45.0 // indirect
