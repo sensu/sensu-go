@@ -1623,19 +1623,14 @@ github.com/ruudk/golang-pdf417 v0.0.0-20201230142125-a7e3863a1245/go.mod h1:pQAZ
 github.com/ryanuber/columnize v0.0.0-20160712163229-9b3edd62028f/go.mod h1:sm1tb6uqfes/u+d4ooFouqFdy9/2g9QGwK3SQygK0Ts=
 github.com/schollz/progressbar/v2 v2.13.2/go.mod h1:6YZjqdthH6SCZKv2rqGryrxPtfmRB/DWZxSMfCXPyD8=
 github.com/sean-/seed v0.0.0-20170313163322-e2103e2c3529/go.mod h1:DxrIzT+xaE7yg65j358z/aeFdxmN0P9QXhEzd20vsDc=
-github.com/sensu/core/v2 v2.16.0-alpha1/go.mod h1:vFoPc++U8m30t0fXKNGqOqHLOFr7VuqFc+Hkz+eTdmU=
-github.com/sensu/core/v2 v2.16.0-alpha6/go.mod h1:2etWGsa+nx5G2Q3CKiSJY9kSg8VhCgGzgp1VyxbC6U8=
 github.com/sensu/core/v2 v2.20.0-alpha3 h1:lRdfPHZqBBJG9K4kJ9udA5kjblAgwmubpF+UMOidDPc=
 github.com/sensu/core/v2 v2.20.0-alpha3/go.mod h1:fzr3qioLAHyLsBfq9I6ELVjL01NUNjqmQx4kj2tbDLo=
-github.com/sensu/core/v3 v3.8.0-alpha6/go.mod h1:HUrsxGfeUSvd+iU5ROGgfBchv3eYjhS3Apz6XzNB8Gg=
 github.com/sensu/core/v3 v3.9.0-alpha4 h1:jLy1ZjUMUMlce2uSeoxKa4rmjlisela06AIHQw/g9ts=
 github.com/sensu/core/v3 v3.9.0-alpha4/go.mod h1:n+s31i1W5lIJZH0Dfvq41R49LxYcTUANqQOerAZNEKw=
 github.com/sensu/lasr v1.2.1 h1:4H1QfOrPkwYHMFE5qAI6GwKEFkcI1YRyjjWidz1MihQ=
 github.com/sensu/lasr v1.2.1/go.mod h1:VIMtIK67Bcef6dTfctRCBg8EY9M9TtCY9NEFT6Zw5xQ=
 github.com/sensu/sensu-api-tools v0.0.0-20221025205055-db03ae2f8099 h1:FJUWcuFiTdEn2N0bGnxOaEUDCxIQqRhwERadacNCnXA=
 github.com/sensu/sensu-api-tools v0.0.0-20221025205055-db03ae2f8099/go.mod h1:SNISS4OhwNSZI9/YKTQr1bghOEwed9ZT4v+ztKk1Mq0=
-github.com/sensu/sensu-go/types v0.12.0-alpha6 h1:tPuPysl6Ew0x0u5USLeSk/3NMMt7GLJh2uO1kVFRwQY=
-github.com/sensu/sensu-go/types v0.12.0-alpha6/go.mod h1:PHk3pUJHCsFzoXnKmm9ERfnHnerzaG2rjISWGcZq3os=
 github.com/sensu/sensu-go/types v0.12.0-alpha9.0.20231110195803-ecfe0db936ab h1:KxCYKkQ5YdheXcwvVCLkIKnYcyoauBVnJF6ep+y+Qm8=
 github.com/sensu/sensu-go/types v0.12.0-alpha9.0.20231110195803-ecfe0db936ab/go.mod h1:dRXJYjmo+iERzGkiyYKg495tCEC36yoColAKG8mlchA=
 github.com/shirou/gopsutil/v3 v3.23.2 h1:PAWSuiAszn7IhPMBtXsbSCafej7PqUOvY6YywlQUExU=
@@ -1646,7 +1641,6 @@ github.com/sirupsen/logrus v1.4.2/go.mod h1:tLMulIdttU9McNUspp0xgXVQah82FyeX6Mwd
 github.com/sirupsen/logrus v1.6.0/go.mod h1:7uNnSEd1DgxDLC74fIahvMZmmYsHGZGEOFrfsX/uA88=
 github.com/sirupsen/logrus v1.7.0/go.mod h1:yWOB1SBYBC5VeMP7gHvWumXLIWorT60ONWic61uBYv0=
 github.com/sirupsen/logrus v1.8.1/go.mod h1:yWOB1SBYBC5VeMP7gHvWumXLIWorT60ONWic61uBYv0=
-github.com/sirupsen/logrus v1.9.0/go.mod h1:naHLuLoDiP4jHNo9R0sCBMtWGeIprob74mVsIT4qYEQ=
 github.com/sirupsen/logrus v1.9.3 h1:dueUQJ1C2q9oE3F7wvmSGAaVtTmUizReu6fjN8uqzbQ=
 github.com/sirupsen/logrus v1.9.3/go.mod h1:naHLuLoDiP4jHNo9R0sCBMtWGeIprob74mVsIT4qYEQ=
 github.com/smartystreets/assertions v0.0.0-20180927180507-b2de0cb4f26d h1:zE9ykElWQ6/NYmHa3jpm/yHnI4xSofP+UP6SpjHcSeM=
@@ -1729,7 +1723,6 @@ github.com/zeebo/xxh3 v1.0.2/go.mod h1:5NWz9Sef7zIDm2JHfFlcQvNekmcEl9ekUZQQKCYaD
 go.etcd.io/bbolt v1.3.2/go.mod h1:IbVyRI1SCnLcuJnV2u8VeU0CEYM7e686BmAb1XKL+uU=
 go.etcd.io/bbolt v1.3.8 h1:xs88BrvEv273UsB79e0hcVrlUWmS0a8upikMFhSyAtA=
 go.etcd.io/bbolt v1.3.8/go.mod h1:N9Mkw9X8x5fupy0IKsmuqVtoGDyxsaDlbk4Rd05IAQw=
-go.etcd.io/etcd/api/v3 v3.5.5/go.mod h1:KFtNaxGDw4Yx/BA4iPPwevUTAuqcsPxzyX8PHydchN8=
 go.etcd.io/etcd/api/v3 v3.5.10 h1:szRajuUUbLyppkhs9K6BRtjY37l66XQQmw7oZRANE4k=
 go.etcd.io/etcd/api/v3 v3.5.10/go.mod h1:TidfmT4Uycad3NM/o25fG3J07odo4GBB9hoxaodFCtI=
 go.etcd.io/etcd/client/pkg/v3 v3.5.10 h1:kfYIdQftBnbAq8pUWFXfpuuxFSKzlmM5cSn76JByiT0=
