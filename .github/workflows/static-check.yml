@@ -20,4 +20,4 @@ jobs:
         with:
           version: "2021.1.1"
 env:
-  GO_VERSION: 1.17.1
+  GO_VERSION: 1.21.3
