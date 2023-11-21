@@ -1301,10 +1301,10 @@ github.com/rogpeppe/go-internal v1.9.0 h1:73kH8U+JUqXU8lRuOHeVHaa/SZPifC7BkcraZV
 github.com/rogpeppe/go-internal v1.9.0/go.mod h1:WtVeX8xhTBvf0smdhujwtBcq4Qrzq/fJaraNFVN+nFs=
 github.com/ruudk/golang-pdf417 v0.0.0-20181029194003-1af4ab5afa58/go.mod h1:6lfFZQK844Gfx8o5WFuvpxWRwnSoipWe/p622j1v06w=
 github.com/ruudk/golang-pdf417 v0.0.0-20201230142125-a7e3863a1245/go.mod h1:pQAZKsJ8yyVxGRWYNEm9oFB8ieLgKFnamEyDmSA0BRk=
-github.com/sensu/core/v2 v2.20.0-alpha3 h1:lRdfPHZqBBJG9K4kJ9udA5kjblAgwmubpF+UMOidDPc=
-github.com/sensu/core/v2 v2.20.0-alpha3/go.mod h1:fzr3qioLAHyLsBfq9I6ELVjL01NUNjqmQx4kj2tbDLo=
-github.com/sensu/core/v3 v3.9.0-alpha4 h1:jLy1ZjUMUMlce2uSeoxKa4rmjlisela06AIHQw/g9ts=
-github.com/sensu/core/v3 v3.9.0-alpha4/go.mod h1:n+s31i1W5lIJZH0Dfvq41R49LxYcTUANqQOerAZNEKw=
+github.com/sensu/core/v2 v2.20.0 h1:QJQbqZiXSQ2dUE8LUvwUcKaqxHjYYCQwJ1Mil0cap4U=
+github.com/sensu/core/v2 v2.20.0/go.mod h1:fzr3qioLAHyLsBfq9I6ELVjL01NUNjqmQx4kj2tbDLo=
+github.com/sensu/core/v3 v3.9.0 h1:7wz4ILGwPbHHTT/8sKTtflBAgOuJgTaKhUlN4lyUdSY=
+github.com/sensu/core/v3 v3.9.0/go.mod h1:AuupbIzmjYdzEkaEdmpzP/ZgrqQgHTovXVejzyTN6u4=
 github.com/sensu/sensu-api-tools v0.0.0-20221025205055-db03ae2f8099 h1:FJUWcuFiTdEn2N0bGnxOaEUDCxIQqRhwERadacNCnXA=
 github.com/sensu/sensu-api-tools v0.0.0-20221025205055-db03ae2f8099/go.mod h1:SNISS4OhwNSZI9/YKTQr1bghOEwed9ZT4v+ztKk1Mq0=
 github.com/sirupsen/logrus v1.9.3 h1:dueUQJ1C2q9oE3F7wvmSGAaVtTmUizReu6fjN8uqzbQ=
