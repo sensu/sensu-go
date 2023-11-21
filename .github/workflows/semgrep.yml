@@ -3,21 +3,19 @@ on: [pull_request]
 jobs:
   semgrep:
     runs-on: ubuntu-latest
-    name: Check
+    container:
+      image: returntocorp/semgrep
+    if: (github.actor != 'dependabot[bot]')
     steps:
-      - uses: actions/checkout@v1
+      - uses: actions/checkout@v3
       - name: Semgrep
-        id: semgrep
-        uses: returntocorp/semgrep-action@v1
-        with:
-          config: p/semgrep-go-correctness
-  semgrep-sensu: # looks for .semgrep.yml due to missing config section
+        run: semgrep ci -c p/semgrep-go-correctness
+  semgrep-sensu:
     runs-on: ubuntu-latest
-    name: Check
+    container:
+      image: returntocorp/semgrep
+    if: (github.actor != 'dependabot[bot]')
     steps:
-      - uses: actions/checkout@v1
+      - uses: actions/checkout@v3
       - name: SemgrepSensu
-        id: semgrep-sensu
-        uses: returntocorp/semgrep-action@v1
-env:
-  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: semgrep ci -c .semgrep.yml
