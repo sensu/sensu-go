@@ -11,8 +11,8 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/sensu/sensu-go/agent/transformers"
 	corev2 "github.com/sensu/core/v2"
+	"github.com/sensu/sensu-go/agent/transformers"
 	"github.com/sensu/sensu-go/asset"
 	"github.com/sensu/sensu-go/command"
 	"github.com/sensu/sensu-go/token"
@@ -48,8 +48,6 @@ func (a *Agent) handleCheck(ctx context.Context, payload []byte) error {
 	request := &corev2.CheckRequest{}
 	if err := a.unmarshal(payload, request); err != nil {
 		return err
-	} else if request == nil {
-		return errors.New("given check configuration appears invalid")
 	}
 
 	checkConfig := request.Config
