@@ -20,7 +20,7 @@ require (
 	github.com/golang-jwt/jwt/v4 v4.5.0
 	github.com/golang/protobuf v1.5.3
 	github.com/golang/snappy v0.0.4
-	github.com/google/uuid v1.3.1
+	github.com/google/uuid v1.4.0
 	github.com/gorilla/mux v1.8.0
 	github.com/gorilla/websocket v1.5.0
 	github.com/graph-gophers/dataloader v0.0.0-20180104184831-78139374585c
@@ -43,7 +43,7 @@ require (
 	github.com/prometheus/client_golang v1.17.0
 	github.com/prometheus/client_model v0.5.0
 	github.com/prometheus/common v0.45.0
-	github.com/robertkrimen/otto v0.0.0-20221006114523-201ab5b34f52
+	github.com/robertkrimen/otto v0.2.1
 	github.com/robfig/cron/v3 v3.0.1
 	github.com/sensu/lasr v1.2.1
 	github.com/shirou/gopsutil/v3 v3.23.2
@@ -61,10 +61,10 @@ require (
 	go.etcd.io/etcd/server/v3 v3.5.10
 	go.uber.org/atomic v1.11.0
 	go.uber.org/zap v1.26.0
-	golang.org/x/crypto v0.14.0
+	golang.org/x/crypto v0.15.0
 	golang.org/x/mod v0.11.0
-	golang.org/x/net v0.17.0
-	golang.org/x/sys v0.13.0
+	golang.org/x/net v0.18.0
+	golang.org/x/sys v0.14.0
 	golang.org/x/time v0.3.0
 	golang.org/x/tools v0.10.0
 	google.golang.org/grpc v1.59.0
@@ -84,15 +84,18 @@ require (
 	github.com/jonboulle/clockwork v0.4.0 // indirect
 	github.com/kr/pty v1.1.8 // indirect
 	github.com/prometheus/procfs v0.12.0 // indirect
-	github.com/sensu/core/v2 v2.20.0-alpha3
-	github.com/sensu/core/v3 v3.9.0-alpha4
-	github.com/sensu/sensu-api-tools v0.0.0-20221025205055-db03ae2f8099
-	github.com/sensu/sensu-go/types v0.12.0-alpha9.0.20231110195803-ecfe0db936ab
+	github.com/sensu/core/v2 v2.20.0
+	github.com/sensu/core/v3 v3.9.0
+	github.com/sensu/sensu-api-tools v0.2.1
+	github.com/sensu/sensu-go/types v0.13.0
 	github.com/tmc/grpc-websocket-proxy v0.0.0-20220101234140-673ab2c3ae75 // indirect
 	github.com/xiang90/probing v0.0.0-20221125231312-a49e3df8f510 // indirect
 	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.45.0 // indirect
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc v1.19.0 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
+	google.golang.org/genproto v0.0.0-20231120223509-83a465c0220f // indirect
+	google.golang.org/genproto/googleapis/api v0.0.0-20231120223509-83a465c0220f // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20231120223509-83a465c0220f // indirect
 	gopkg.in/natefinch/lumberjack.v2 v2.2.1 // indirect
 	sigs.k8s.io/yaml v1.4.0 // indirect
 )
