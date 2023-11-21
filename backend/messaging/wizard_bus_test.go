@@ -127,7 +127,7 @@ func TestBug1407(t *testing.T) {
 	subscription, err := bus.Subscribe("topic", "a", subscriber)
 	require.NoError(t, err)
 	require.NoError(t, subscription.Cancel())
-	subscription, err = bus.Subscribe("topic", "a", subscriber)
+	_, err = bus.Subscribe("topic", "a", subscriber)
 	require.NoError(t, err)
 	value, _ := bus.topics.Load("topic")
 	topic := value.(*wizardTopic)

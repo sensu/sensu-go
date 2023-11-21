@@ -69,6 +69,10 @@ type lifter interface {
 	Lift() corev3Resource
 }
 
+type lifterV2 interface {
+	Lift() corev2.Resource
+}
+
 // toMap produces a map from a struct by serializing it to JSON and then
 // deserializing the JSON into a map. This is done to preserve business logic
 // expressed in customer marshalers, and JSON struct tag semantics.
@@ -236,6 +240,8 @@ V3RESOURCE:
 	// method. This is useful when a resource can be polymorphic, such as
 	// providers.
 	if lifter, ok := resource.(lifter); ok {
+		resource = lifter.Lift()
+	} else if lifter, ok := resource.(lifterV2); ok {
 		resource = lifter.Lift()
 	}
 
