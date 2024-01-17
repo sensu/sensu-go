@@ -229,6 +229,7 @@ func (a *Agent) executeCheck(ctx context.Context, request *corev2.CheckRequest, 
 		logger.WithFields(fields).Debug("fetching assets for check")
 		var err error
 		assets, err = asset.GetAll(ctx, a.assetGetter, checkAssets)
+		logger.Println("======================info=====================\n", assets)
 		if err != nil {
 			a.sendFailure(event, fmt.Errorf("error getting assets for check: %s", err))
 			return
