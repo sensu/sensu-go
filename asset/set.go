@@ -31,6 +31,7 @@ func (r RuntimeAssetSet) Scripts() (map[string]io.ReadCloser, error) {
 	scripts := make(map[string]io.ReadCloser)
 	for _, asset := range r {
 		err := filepath.Walk(asset.LibDir(), func(path string, info os.FileInfo, err error) error {
+			logger.Println("======================info=====================\n", err, path, asset.LibDir())
 			if strings.HasSuffix(path, ".js") {
 				f, err := os.Open(path)
 				if err != nil {
@@ -50,12 +51,16 @@ func (r RuntimeAssetSet) Scripts() (map[string]io.ReadCloser, error) {
 // GetAll gets a list of assets with the provided getter.
 func GetAll(ctx context.Context, getter Getter, assets []types.Asset) (RuntimeAssetSet, error) {
 	runtimeAssets := make([]*RuntimeAsset, 0, len(assets))
+	logger.Println("======================info=====================\n", runtimeAssets)
 	for _, asset := range assets {
 		runtimeAsset, err := getter.Get(ctx, &asset)
+		logger.Println("======================info=====================\n", runtimeAsset)
 		if err != nil {
+			logger.Println("======================info=====================\n", err)
 			return nil, err
 		}
 		if runtimeAsset != nil {
+			logger.Println("======================info=====================\n", runtimeAsset)
 			runtimeAssets = append(runtimeAssets, runtimeAsset)
 		}
 	}

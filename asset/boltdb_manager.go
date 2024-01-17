@@ -121,7 +121,9 @@ func (b *boltDBAssetManager) Get(ctx context.Context, asset *corev2.Asset) (*Run
 	// has proceeded to Update below will block here.
 	if err := b.db.View(func(tx *bolt.Tx) error {
 		// If the key exists, the bucket should already exist.
+		logger.Println("======================info=====================\n", assetBucketName)
 		bucket := tx.Bucket(assetBucketName)
+		logger.Println("======================info=====================\n", bucket)
 		if bucket == nil {
 			return nil
 		}
@@ -130,6 +132,7 @@ func (b *boltDBAssetManager) Get(ctx context.Context, asset *corev2.Asset) (*Run
 		if value != nil {
 			// deserialize asset
 			if err := json.Unmarshal(value, &localAsset); err == nil {
+				logger.Println(err)
 				return nil
 			}
 		}
@@ -143,11 +146,13 @@ func (b *boltDBAssetManager) Get(ctx context.Context, asset *corev2.Asset) (*Run
 	if localAsset != nil {
 		localAsset.Name = asset.Name
 		localAsset.SHA512 = asset.Sha512
+		logger.Println("======localAsset value========\n", localAsset)
 		return localAsset, nil
 	}
 
 	if err := b.db.Update(func(tx *bolt.Tx) error {
 		bucket, err := tx.CreateBucketIfNotExists(assetBucketName)
+		logger.Println(bucket, "========info========\n")
 		if err != nil {
 			return err
 		}
@@ -166,6 +171,7 @@ func (b *boltDBAssetManager) Get(ctx context.Context, asset *corev2.Asset) (*Run
 
 		// install the asset
 		tmpFile, err := b.fetchWithDuration(ctx, asset)
+		logger.Println(tmpFile)
 		if err != nil {
 			return err
 		}
@@ -188,6 +194,7 @@ func (b *boltDBAssetManager) Get(ctx context.Context, asset *corev2.Asset) (*Run
 
 		// expand
 		assetPath, err := b.expandWithDuration(tmpFile, asset)
+		logger.Println(assetPath, err, tmpFile, "-------info---------")
 		if err != nil {
 			return err
 		}
