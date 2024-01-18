@@ -132,4 +132,8 @@ type Config struct {
 	EventLogBufferWait       time.Duration
 	EventLogFile             string
 	EventLogParallelEncoders bool
+
+	// expiry setting for silences
+	DefaultSilencedExpiryTime    time.Duration
+	MaxSilencedExpiryTimeAllowed time.Duration
 }
