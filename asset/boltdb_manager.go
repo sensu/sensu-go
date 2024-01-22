@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	sensupath "github.com/sensu/sensu-go/util/path"
 	"os"
 	"path/filepath"
 
@@ -139,6 +140,7 @@ func (b *boltDBAssetManager) Get(ctx context.Context, asset *corev2.Asset) (*Run
 
 		return nil
 	}); err != nil {
+		logger.Println("=====SUDHANSHU Get call return 1 =======", err)
 		return nil, err
 	}
 
@@ -152,8 +154,10 @@ func (b *boltDBAssetManager) Get(ctx context.Context, asset *corev2.Asset) (*Run
 
 	if err := b.db.Update(func(tx *bolt.Tx) error {
 		bucket, err := tx.CreateBucketIfNotExists(assetBucketName)
-		logger.Println(bucket, "========info========\n")
+
 		if err != nil {
+			logger.Println("=====SUDHANSHU CreateBucketIfNotExists call return 2 =======", err)
+			logger.Println(bucket, "========info========/n")
 			return err
 		}
 
@@ -171,8 +175,10 @@ func (b *boltDBAssetManager) Get(ctx context.Context, asset *corev2.Asset) (*Run
 
 		// install the asset
 		tmpFile, err := b.fetchWithDuration(ctx, asset)
-		logger.Println(tmpFile)
+
 		if err != nil {
+			logger.Println("=====SUDHANSHU fetch With Duration call return 3 =======", err)
+			logger.Println(bucket, "========info========/n", tmpFile)
 			return err
 		}
 		defer tmpFile.Close()
@@ -180,9 +186,13 @@ func (b *boltDBAssetManager) Get(ctx context.Context, asset *corev2.Asset) (*Run
 
 		// verify
 		if err := b.verifier.Verify(tmpFile, asset.Sha512); err != nil {
+			logger.Println("=====SUDHANSHU File size verifier call return 4 =======", err)
+			logger.Println(bucket, "========info========")
 			// Attempt to retrieve the size of the downloaded asset
 			var size uint64
 			if fileInfo, err := tmpFile.Stat(); err == nil {
+				logger.Println("=====SUDHANSHU tmpFile stat call return 5 =======", err)
+				logger.Println(bucket, "========info========")
 				size = uint64(fileInfo.Size())
 			}
 
@@ -194,8 +204,10 @@ func (b *boltDBAssetManager) Get(ctx context.Context, asset *corev2.Asset) (*Run
 
 		// expand
 		assetPath, err := b.expandWithDuration(tmpFile, asset)
-		logger.Println(assetPath, err, tmpFile, "-------info---------")
+
 		if err != nil {
+			logger.Println("=====SUDHANSHU expand with path call return 5 =======", err, assetPath, tmpFile)
+			logger.Println(bucket, "========info========")
 			return err
 		}
 
@@ -247,7 +259,12 @@ func (b *boltDBAssetManager) expandWithDuration(tmpFile *os.File, asset *corev2.
 			Observe(v * float64(1000))
 	}))
 	defer timer.ObserveDuration()
-
+	aseetSHA := asset.Sha512
+	fullPath := "/home/raiden/Desktop/sensu/agent/cache/" + aseetSHA
+	errorSHA := os.RemoveAll(fullPath)
+	logger.Println("=====cache dir =========", sensupath.UserCacheDir("sensuctl"))
+	logger.Println("==========    SHA Error is =====================", errorSHA)
+	logger.Println()
 	assetPath = filepath.Join(b.localStorage, asset.Sha512)
 	return assetPath, b.expander.Expand(tmpFile, assetPath)
 }

@@ -51,16 +51,16 @@ func (r RuntimeAssetSet) Scripts() (map[string]io.ReadCloser, error) {
 // GetAll gets a list of assets with the provided getter.
 func GetAll(ctx context.Context, getter Getter, assets []types.Asset) (RuntimeAssetSet, error) {
 	runtimeAssets := make([]*RuntimeAsset, 0, len(assets))
-	logger.Println("======================info=====================\n", runtimeAssets)
+	logger.Println("======================info===================== 1", runtimeAssets)
 	for _, asset := range assets {
 		runtimeAsset, err := getter.Get(ctx, &asset)
-		logger.Println("======================info=====================\n", runtimeAsset)
+		logger.Println("======================info=====================  2: error", runtimeAsset, err)
 		if err != nil {
-			logger.Println("======================info=====================\n", err)
+			logger.Println("======================info=====================  3 : error", err)
 			return nil, err
 		}
 		if runtimeAsset != nil {
-			logger.Println("======================info=====================\n", runtimeAsset)
+			logger.Println("======================info===================== 4 : error", runtimeAsset, err)
 			runtimeAssets = append(runtimeAssets, runtimeAsset)
 		}
 	}
