@@ -259,6 +259,10 @@ func newClient(ctx context.Context, config *Config, backend *Backend) (*clientv3
 	cfg.LogTimestampLayout = config.EtcdLogTimestampLayout
 	cfg.ClientLogLevel = config.EtcdClientLogLevel
 
+	// set misc configurations here
+	cfg.DefaultSilencedExpiryTime = config.DefaultSilencedExpiryTime
+	cfg.MaxSilencedExpiryTimeAllowed = config.MaxSilencedExpiryTimeAllowed
+
 	// Heartbeat interval
 	if config.EtcdHeartbeatInterval > 0 {
 		cfg.TickMs = config.EtcdHeartbeatInterval

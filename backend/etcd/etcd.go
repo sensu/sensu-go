@@ -71,6 +71,13 @@ func init() {
 	logutil.DefaultZapLoggerConfig.EncoderConfig.EncodeLevel = sensuLevelEncoder
 }
 
+// MiscConfig is struct to hold miscellaneous configurations for etcd
+type MiscConfig struct {
+	DefaultSilencedExpiryTime time.Duration
+
+	MaxSilencedExpiryTimeAllowed time.Duration
+}
+
 // Config is a configuration for the embedded etcd
 type Config struct {
 	DataDir string
@@ -107,6 +114,9 @@ type Config struct {
 	LogTimestampLayout string
 
 	UnsafeNoFsync bool
+
+	// holding store specific configuration
+	MiscConfig
 }
 
 // TLSInfo wraps etcd transport TLSInfo

@@ -456,9 +456,9 @@ func handleConfig(cmd *cobra.Command, arguments []string, server bool) error {
 		viper.SetDefault(flagEventLogFile, "")
 		viper.SetDefault(flagEventLogParallelEncoders, false)
 
-		// default silenced value are set for 1 day = 86400s
-		viper.SetDefault(flagMaxSilencedExpiryTimeAllowed, "86400s")
-		viper.SetDefault(flagDefaultSilencedExpiryTime, "86400s")
+		// default silenced value are set for 1 day = 1440m
+		viper.SetDefault(flagMaxSilencedExpiryTimeAllowed, "1440m")
+		viper.SetDefault(flagDefaultSilencedExpiryTime, "1440m")
 	}
 
 	// Etcd defaults
@@ -595,8 +595,8 @@ func flagSet(server bool) *pflag.FlagSet {
 		flagSet.String(flagPlatformMetricsLogFile, viper.GetString(flagPlatformMetricsLogFile), "platform metrics log file path")
 
 		// silenced configuration flags
-		flagSet.Duration(flagDefaultSilencedExpiryTime, viper.GetDuration(flagDefaultSilencedExpiryTime), "Default expiry time for silenced if not set in seconds")
-		flagSet.Duration(flagMaxSilencedExpiryTimeAllowed, viper.GetDuration(flagMaxSilencedExpiryTimeAllowed), "Maximum expiry time allowed for silenced in seconds")
+		flagSet.Duration(flagDefaultSilencedExpiryTime, viper.GetDuration(flagDefaultSilencedExpiryTime), "Default expiry time for silenced if not set in minutes")
+		flagSet.Duration(flagMaxSilencedExpiryTimeAllowed, viper.GetDuration(flagMaxSilencedExpiryTimeAllowed), "Maximum expiry time allowed for silenced in minutes")
 
 		// Etcd server flags
 		flagSet.StringSlice(flagEtcdPeerURLs, viper.GetStringSlice(flagEtcdPeerURLs), "list of URLs to listen on for peer traffic")
