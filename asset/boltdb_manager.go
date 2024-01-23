@@ -4,7 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	sensupath "github.com/sensu/sensu-go/util/path"
+	"github.com/spf13/viper"
 	"os"
 	"path/filepath"
 
@@ -24,6 +24,7 @@ const (
 	// ExpandDuration is the name of the prometheus summary vec used to track
 	// average latencies of asset expansion.
 	ExpandDuration = "sensu_go_asset_expand_duration"
+	FlagCacheDir   = "cache-dir"
 )
 
 var (
@@ -186,6 +187,7 @@ func (b *boltDBAssetManager) Get(ctx context.Context, asset *corev2.Asset) (*Run
 
 		// verify
 		if err := b.verifier.Verify(tmpFile, asset.Sha512); err != nil {
+
 			logger.Println("=====SUDHANSHU File size verifier call return 4 =======", err)
 			logger.Println(bucket, "========info========")
 			// Attempt to retrieve the size of the downloaded asset
@@ -259,10 +261,18 @@ func (b *boltDBAssetManager) expandWithDuration(tmpFile *os.File, asset *corev2.
 			Observe(v * float64(1000))
 	}))
 	defer timer.ObserveDuration()
-	aseetSHA := asset.Sha512
-	fullPath := "/home/raiden/Desktop/sensu/agent/cache/" + aseetSHA
+	assetSHA := asset.Sha512
+	//fullPath := "/home/raiden/Desktop/sensu/agent/cache/" + assetSHA
+
+	//cfg := agent.NewConfig()
+	//viper.SetDefault(FlagCacheDir, path.SystemCacheDir("sensu-agent"))
+	CacheDir := viper.GetString(FlagCacheDir)
+	fullPath := filepath.Join(CacheDir, assetSHA)
 	errorSHA := os.RemoveAll(fullPath)
-	logger.Println("=====cache dir =========", sensupath.UserCacheDir("sensuctl"))
+	logger.Println()
+
+	//logger.Println("=====cache dir =========", sensupath.UserCacheDir("sensuctl"))
+	logger.Println("======= cache dir=========", CacheDir, fullPath)
 	logger.Println("==========    SHA Error is =====================", errorSHA)
 	logger.Println()
 	assetPath = filepath.Join(b.localStorage, asset.Sha512)

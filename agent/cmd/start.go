@@ -9,8 +9,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/sensu/sensu-go/agent"
 	corev2 "github.com/sensu/core/v2"
+	"github.com/sensu/sensu-go/agent"
 	"github.com/sensu/sensu-go/asset"
 	"github.com/sensu/sensu-go/util/path"
 	"github.com/sensu/sensu-go/util/url"
