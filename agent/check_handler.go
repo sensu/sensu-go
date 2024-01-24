@@ -231,9 +231,6 @@ func (a *Agent) executeCheck(ctx context.Context, request *corev2.CheckRequest, 
 		var err error
 		assets, err = asset.GetAll(ctx, a.assetGetter, checkAssets)
 
-		//sudhanshu/5009
-		//check if asset.db exits if not then re-create it also delete the SHA associated with it and re-create it.
-		logger.Println("======================info=====================\n", assets)
 		if err != nil {
 			a.sendFailure(event, fmt.Errorf("error getting assets for check: %s", err))
 			return

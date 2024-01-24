@@ -3,9 +3,9 @@ package asset
 import (
 	"errors"
 	"fmt"
-	"io"
-
 	archiver "github.com/mholt/archiver/v3"
+	"io"
+	"os"
 
 	filetype "gopkg.in/h2non/filetype.v1"
 	filetype_types "gopkg.in/h2non/filetype.v1/types"
@@ -35,6 +35,17 @@ type archiveExpander struct{}
 
 type namer interface {
 	Name() string
+}
+
+// Sudhanshu - CleanUp the SHA for the git issue 5009 fix. Making sure that the asset.db after creation gets updated properly.
+
+func CleanUp(fullPath string) error {
+	errorSHA := os.RemoveAll(fullPath)
+	if errorSHA != nil {
+		return errorSHA
+	}
+	return nil
+
 }
 
 // Expand an archive to a target directory.
