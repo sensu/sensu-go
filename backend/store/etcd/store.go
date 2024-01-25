@@ -7,6 +7,7 @@ import (
 	"path"
 	"reflect"
 	"strings"
+	"time"
 
 	"github.com/gogo/protobuf/proto"
 	"github.com/sensu/sensu-go/backend/store"
@@ -22,10 +23,16 @@ const (
 	EtcdRoot = "/sensu.io"
 )
 
+type Config struct {
+	DefaultSilencedExpiryTime    time.Duration
+	MaxSilencedExpiryTimeAllowed time.Duration
+}
+
 // Store is an implementation of the sensu-go/backend/store.Store iface.
 type Store struct {
 	client         *clientv3.Client
 	keepalivesPath string
+	cfg            Config
 }
 
 // NewStore creates a new Store.
@@ -36,6 +43,10 @@ func NewStore(client *clientv3.Client, name string) *Store {
 	}
 
 	return store
+}
+
+func SetConfig(cfg Config, store *Store) {
+	store.cfg = cfg
 }
 
 // Create the given key with the serialized object.
