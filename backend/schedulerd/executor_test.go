@@ -392,18 +392,30 @@ func (m *MockAdhocQueueItem) Nack(ctx context.Context) error {
 }
 
 func TestAdhocRequestExecutor_ListenQueue(t *testing.T) {
+	t.Parallel()
+
 	// Create a mock for the AdhocQueue interface
 	mockQueue := new(MockAdhocQueue)
 	// Create a mock for the AdhocQueueItem interface
 	mockItem := new(MockAdhocQueueItem)
 
-	// Create an instance of AdhocRequestExecutor with the mockQueue
-	executor := &AdhocRequestExecutor{
-		adhocQueue:     mockQueue,
-		listenQueueErr: make(chan error),
+	//// Create an instance of AdhocRequestExecutor with the mockQueue
+	//executor := &AdhocRequestExecutor{
+	//	adhocQueue:     mockQueue,
+	//	listenQueueErr: make(chan error),
+	//
+	//	// Other fields initialization here...
+	//}
 
-		// Other fields initialization here...
+	store, err := testutil.NewStoreInstance()
+
+	if err != nil {
+		assert.FailNow(t, err.Error())
 	}
+	bus, err := messaging.NewWizardBus(messaging.WizardBusConfig{})
+	require.NoError(t, err)
+	pm := secrets.NewProviderManager(&mockEventReceiver{})
+	executor := NewAdhocRequestExecutor(context.Background(), store, &queue.Memory{}, bus, &cachev2.Resource{}, pm)
 
 	// Create a context with a cancellation function
 	ctx, cancel := context.WithCancel(context.Background())
@@ -419,18 +431,22 @@ func TestAdhocRequestExecutor_ListenQueue(t *testing.T) {
 	mockItem.On("Ack", ctx).Return(nil).Once()
 	mockItem.On("Nack", ctx).Return(nil).Once()
 
+	var check *corev2.CheckConfig
 	// Mock the processCheck method to return nil
-	executor.processCheck = func(ctx context.Context, check *corev2.CheckConfig) error {
-		return nil
-	}
+	err = executor.processCheck(ctx, check)
+	fmt.Println("ERR", err)
+	//(ctx context.Context, executer,check *corev2.CheckConfig)
+	//error {
+	//	return nil
+	//}
 
 	// Call the listenQueue method in a separate goroutine
-	go executor.listenQueue(ctx)
+	executor.listenQueue(ctx)
 
 	// Allow some time for the goroutine to execute
 	time.Sleep(100 * time.Millisecond)
 
 	// Assert that the expected methods were called on the mocks
 	mockQueue.AssertExpectations(t)
-	mockItem.AssertExpectations(t)
+	defer mockItem.AssertExpectations(t)
 }
