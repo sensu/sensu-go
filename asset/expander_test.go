@@ -1,7 +1,6 @@
 package asset
 
 import (
-	v2 "github.com/sensu/core/v2"
 	"os"
 	"path/filepath"
 	"testing"
@@ -9,7 +8,7 @@ import (
 	"github.com/sensu/sensu-go/testing/testutil"
 )
 
-var asset *v2.Asset
+//var asset *v2.Asset
 
 // sudhanshu- Git issue 5009
 
