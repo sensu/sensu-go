@@ -7,9 +7,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"sync"
-	"testing"
-
 	corev2 "github.com/sensu/core/v2"
 	corev3 "github.com/sensu/core/v3"
 	"github.com/sensu/sensu-go/backend/messaging"
@@ -18,7 +15,11 @@ import (
 	cachev2 "github.com/sensu/sensu-go/backend/store/cache/v2"
 	"github.com/sensu/sensu-go/backend/store/etcd/testutil"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+	"sync"
+	"testing"
+	"time"
 )
 
 func TestAdhocExecutor(t *testing.T) {
@@ -345,4 +346,91 @@ func TestCheckBuildRequestAdhoc_GH2201(t *testing.T) {
 	assert.Empty(request.Hooks)
 
 	assert.NoError(scheduler.msgBus.Stop())
+}
+
+// 5002 - =====manisha=======
+
+// MockAdhocQueue is a mock implementation of the AdhocQueue interface
+type MockAdhocQueue struct {
+	mock.Mock
+}
+
+// Dequeue is a mocked method for the AdhocQueue interface
+func (m *MockAdhocQueue) Dequeue(ctx context.Context) (AdhocQueueItem, error) {
+	args := m.Called(ctx)
+	return args.Get(0).(AdhocQueueItem), args.Error(1)
+}
+
+// MockAdhocQueueItem is a mock implementation of the AdhocQueueItem interface
+type MockAdhocQueueItem struct {
+	mock.Mock
+}
+
+// AdhocQueueItem is an interface representing an item in the adhoc queue
+type AdhocQueueItem interface {
+	Value() string
+	Ack(ctx context.Context) error
+	Nack(ctx context.Context) error
+}
+
+// Value is a mocked method for the AdhocQueueItem interface
+func (m *MockAdhocQueueItem) Value() string {
+	args := m.Called()
+	return args.String(0)
+}
+
+// Ack is a mocked method for the AdhocQueueItem interface
+func (m *MockAdhocQueueItem) Ack(ctx context.Context) error {
+	args := m.Called(ctx)
+	return args.Error(0)
+}
+
+// Nack is a mocked method for the AdhocQueueItem interface
+func (m *MockAdhocQueueItem) Nack(ctx context.Context) error {
+	args := m.Called(ctx)
+	return args.Error(0)
+}
+
+func TestAdhocRequestExecutor_ListenQueue(t *testing.T) {
+	// Create a mock for the AdhocQueue interface
+	mockQueue := new(MockAdhocQueue)
+	// Create a mock for the AdhocQueueItem interface
+	mockItem := new(MockAdhocQueueItem)
+
+	// Create an instance of AdhocRequestExecutor with the mockQueue
+	executor := &AdhocRequestExecutor{
+		adhocQueue:     mockQueue,
+		listenQueueErr: make(chan error),
+
+		// Other fields initialization here...
+	}
+
+	// Create a context with a cancellation function
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	// Mock the Dequeue method to return a mock AdhocQueueItem and no error
+	mockQueue.On("Dequeue", ctx).Return(mockItem, nil).Once()
+
+	// Mock the Value method of the AdhocQueueItem to return a JSON-encoded check
+	mockItem.On("Value").Return(`{"name": "testCheck"}`).Once()
+
+	// Mock the Ack and Nack methods of the AdhocQueueItem to return nil
+	mockItem.On("Ack", ctx).Return(nil).Once()
+	mockItem.On("Nack", ctx).Return(nil).Once()
+
+	// Mock the processCheck method to return nil
+	executor.processCheck = func(ctx context.Context, check *corev2.CheckConfig) error {
+		return nil
+	}
+
+	// Call the listenQueue method in a separate goroutine
+	go executor.listenQueue(ctx)
+
+	// Allow some time for the goroutine to execute
+	time.Sleep(100 * time.Millisecond)
+
+	// Assert that the expected methods were called on the mocks
+	mockQueue.AssertExpectations(t)
+	mockItem.AssertExpectations(t)
 }
