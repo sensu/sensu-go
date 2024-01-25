@@ -256,7 +256,7 @@ func (b *boltDBAssetManager) expandWithDuration(tmpFile *os.File, asset *corev2.
 	fullPath := filepath.Join(CacheDir, assetSHA)
 
 	if err := CleanUp(fullPath); err != nil { //fix for git issue 5009
-		logger.Println("error cleaning up the SHA dir: %s", err)
+		logger.Printf("error cleaning up the SHA dir: %s", err)
 	}
 
 	assetPath = filepath.Join(b.localStorage, asset.Sha512)
