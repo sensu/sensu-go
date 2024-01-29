@@ -15,11 +15,9 @@ import (
 	cachev2 "github.com/sensu/sensu-go/backend/store/cache/v2"
 	"github.com/sensu/sensu-go/backend/store/etcd/testutil"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"sync"
 	"testing"
-	"time"
 )
 
 func TestAdhocExecutor(t *testing.T) {
@@ -350,103 +348,108 @@ func TestCheckBuildRequestAdhoc_GH2201(t *testing.T) {
 
 // 5002 - =====manisha=======
 
-// MockAdhocQueue is a mock implementation of the AdhocQueue interface
-type MockAdhocQueue struct {
-	mock.Mock
-}
+func TestProcessCheck(t *testing.T) {
 
-// Dequeue is a mocked method for the AdhocQueue interface
-func (m *MockAdhocQueue) Dequeue(ctx context.Context) (AdhocQueueItem, error) {
-	args := m.Called(ctx)
-	return args.Get(0).(AdhocQueueItem), args.Error(1)
-}
+	_, err := testutil.NewStoreInstance()
+	ctx := context.Background()
+	//ctx := context.WithCancel()
+	//	var check *corev2.CheckConfig
 
-// MockAdhocQueueItem is a mock implementation of the AdhocQueueItem interface
-type MockAdhocQueueItem struct {
-	mock.Mock
-}
+	goodCheck := corev2.FixtureCheckConfig("goodCheck")
 
-// AdhocQueueItem is an interface representing an item in the adhoc queue
-type AdhocQueueItem interface {
-	Value() string
-	Ack(ctx context.Context) error
-	Nack(ctx context.Context) error
-}
+	// set labels and annotations to nil to avoid value comparison issues
+	goodCheck.Labels = nil
+	goodCheck.Annotations = nil
 
-// Value is a mocked method for the AdhocQueueItem interface
-func (m *MockAdhocQueueItem) Value() string {
-	args := m.Called()
-	return args.String(0)
-}
+	goodCheck.Subscriptions = []string{"subscription1"}
 
-// Ack is a mocked method for the AdhocQueueItem interface
-func (m *MockAdhocQueueItem) Ack(ctx context.Context) error {
-	args := m.Called(ctx)
-	return args.Error(0)
-}
+	goodCheckRequest := &corev2.CheckRequest{}
+	goodCheckRequest.Config = goodCheck
+	goodCheck.ProxyRequests = corev2.FixtureProxyRequests(true)
 
-// Nack is a mocked method for the AdhocQueueItem interface
-func (m *MockAdhocQueueItem) Nack(ctx context.Context) error {
-	args := m.Called(ctx)
-	return args.Error(0)
-}
+	//Manisha try make entity
+	corev2.Fix
+	entity1 := corev2.FixtureEntity("entity1")
 
-func TestAdhocRequestExecutor_ListenQueue(t *testing.T) {
-	t.Parallel()
+	entity1Config := corev2.FixtureCheckConfig("entity1")
 
-	// Create a mock for the AdhocQueue interface
-	mockQueue := new(MockAdhocQueue)
-	// Create a mock for the AdhocQueueItem interface
-	mockItem := new(MockAdhocQueueItem)
-
-	//// Create an instance of AdhocRequestExecutor with the mockQueue
-	//executor := &AdhocRequestExecutor{
-	//	adhocQueue:     mockQueue,
-	//	listenQueueErr: make(chan error),
 	//
-	//	// Other fields initialization here...
-	//}
+	//q
+	//
+	//
+	//
+	//
+	//
+	//q
+	//
+	//
+	//
+	//entity1Config := []*corev2.EntityConfig{entity1}
+	//q
+	//
+	//
+	//
+	//
+	//
+	//
+	//
+	//
+	//
+	//
+	//
+	//
+	//
+	//
+	//
+	//
+	//entity1Config := []*corev2.EntityConfig{entity1}
 
-	store, err := testutil.NewStoreInstance()
+	//ecfg := corev3.FixtureEntityConfig("localhost.localdomain")
+	//state := a.getEntityState()
+
+	//ecfg.Metadata.Name = state.Metadata.Name
+	//b, err := a.marshal(ecfg)
+	//if err != nil {
+	//	t.Fatal(err)
+	//}
+	//exp, err := corev3.V3EntityToV2(entity1Config)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	//if err != nil {
+	//	assert.FailNow(t, err.Error())
+	//}
+	//bus, err := messaging.NewWizardBus(messaging.WizardBusConfig{})
+	//require.NoError(t, err)
+	//pm := secrets.NewProviderManager(&mockEventReceiver{})
+	//executor := NewAdhocRequestExecutor(context.Background(), store, &queue.Memory{}, bus, &cachev2.Resource{}, pm)
+	//
+	//newCtx := corev2.SetContextFromResource(ctx, goodCheck)
+	proxyVal := goodCheck.ProxyRequests
+	boolCheck := assert.NotNil(t, proxyVal)
+
+	if !boolCheck {
+		t.Fatal("Proxy Request execution returned nil")
+
+	}
+	//entities, err := executor.getEntities(newCtx)
+
+	fmt.Println("ENTITIES value-->", entity1, goodCheck.ProxyRequests)
 
 	if err != nil {
-		assert.FailNow(t, err.Error())
+		t.Errorf("Get Entities returned error")
+		t.Fail()
 	}
-	bus, err := messaging.NewWizardBus(messaging.WizardBusConfig{})
-	require.NoError(t, err)
-	pm := secrets.NewProviderManager(&mockEventReceiver{})
-	executor := NewAdhocRequestExecutor(context.Background(), store, &queue.Memory{}, bus, &cachev2.Resource{}, pm)
 
-	// Create a context with a cancellation function
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
+	matchedEntities := matchEntities(entity1Config, goodCheck.ProxyRequests)
 
-	// Mock the Dequeue method to return a mock AdhocQueueItem and no error
-	mockQueue.On("Dequeue", ctx).Return(mockItem, nil).Once()
+	//fmt.Println("Length ", len(matchedEntities))
 
-	// Mock the Value method of the AdhocQueueItem to return a JSON-encoded check
-	mockItem.On("Value").Return(`{"name": "testCheck"}`).Once()
+	entityLength := assert.Len(t, matchedEntities, 1)
 
-	// Mock the Ack and Nack methods of the AdhocQueueItem to return nil
-	mockItem.On("Ack", ctx).Return(nil).Once()
-	mockItem.On("Nack", ctx).Return(nil).Once()
+	if !entityLength {
+		t.Error("No matching entities found")
+	}
 
-	var check *corev2.CheckConfig
-	// Mock the processCheck method to return nil
-	err = executor.processCheck(ctx, check)
-	fmt.Println("ERR", err)
-	//(ctx context.Context, executer,check *corev2.CheckConfig)
-	//error {
-	//	return nil
-	//}
-
-	// Call the listenQueue method in a separate goroutine
-	executor.listenQueue(ctx)
-
-	// Allow some time for the goroutine to execute
-	time.Sleep(100 * time.Millisecond)
-
-	// Assert that the expected methods were called on the mocks
-	mockQueue.AssertExpectations(t)
-	defer mockItem.AssertExpectations(t)
 }
