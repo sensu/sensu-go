@@ -209,11 +209,9 @@ func (s *Store) UpdateSilencedEntry(ctx context.Context, silenced *corev2.Silenc
 	}
 	allowedMaxTime := time.Now().Add(s.cfg.MaxSilencedExpiryTimeAllowed).Unix()
 
-	logger.Info("silenced ExpireAt : ", silenced.ExpireAt, " Setting: ", allowedMaxTime)
-
+	// check for maximum allowed duration for silenced allowed
 	if silenced.ExpireAt > 0 && (silenced.ExpireAt > allowedMaxTime) {
-		logger.Info("Silenced duration crossed maximum")
-		err := errors.New("silenced duration crossed maximum")
+		err := errors.New("silenced crossed maximum duration configured")
 		return &store.ErrNotValid{Err: err}
 	}
 
@@ -226,7 +224,7 @@ func (s *Store) UpdateSilencedEntry(ctx context.Context, silenced *corev2.Silenc
 	}
 
 	// set default silenced expiry time configured in backend yaml file
-	if silenced.Expire == 0 && silenced.ExpireAt == 0 {
+	if silenced.Expire <= 0 && silenced.ExpireAt == 0 {
 		start := time.Now()
 		if silenced.Begin > 0 {
 			start = time.Unix(silenced.Begin, 0)
