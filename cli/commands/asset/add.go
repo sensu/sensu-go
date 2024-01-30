@@ -36,9 +36,6 @@ func AddCommand(cli *cli.SensuCli) *cobra.Command {
 
 func addCommandExecute(cli *cli.SensuCli) func(cmd *cobra.Command, args []string) error {
 	return func(cmd *cobra.Command, args []string) error {
-		//sudhanshu/5009
-		//check if asset.db exits if not then re-create it also delete the SHA associated with it and re-create it.
-		//
 		// If no name is present print out usage
 		if len(args) != 1 {
 			_ = cmd.Help()

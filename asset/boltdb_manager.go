@@ -134,7 +134,6 @@ func (b *boltDBAssetManager) Get(ctx context.Context, asset *corev2.Asset) (*Run
 		if value != nil {
 			// deserialize asset
 			if err := json.Unmarshal(value, &localAsset); err == nil {
-				logger.Println(err)
 				return nil
 			}
 		}

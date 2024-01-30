@@ -8,10 +8,7 @@ import (
 	"github.com/sensu/sensu-go/testing/testutil"
 )
 
-//var asset *v2.Asset
-
-// sudhanshu- Git issue 5009
-
+// ---Test to check CleanUp
 func TestCleanUp(t *testing.T) {
 	t.Parallel()
 
