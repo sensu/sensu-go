@@ -65,7 +65,6 @@ func TestAdhocExecutor(t *testing.T) {
 	if err = newAdhocExec.adhocQueue.Enqueue(context.Background(), string(marshaledCheck)); err != nil {
 		assert.FailNow(t, err.Error())
 	}
-
 	msg := <-ch
 	result, ok := msg.(*corev2.CheckRequest)
 	assert.True(t, ok)
@@ -346,110 +345,59 @@ func TestCheckBuildRequestAdhoc_GH2201(t *testing.T) {
 	assert.NoError(scheduler.msgBus.Stop())
 }
 
-// 5002 - =====manisha=======
-
 func TestProcessCheck(t *testing.T) {
+	t.Parallel()
+	// Create a MockExecutor
+	store, err := testutil.NewStoreInstance()
+	if err != nil {
+		assert.FailNow(t, err.Error())
+	}
+	bus, err := messaging.NewWizardBus(messaging.WizardBusConfig{})
+	require.NoError(t, err)
+	pm := secrets.NewProviderManager(&mockEventReceiver{})
+	executor := NewAdhocRequestExecutor(context.Background(), store, &queue.Memory{}, bus, &cachev2.Resource{}, pm)
+	defer executor.Stop()
+	assert.NoError(t, executor.bus.Start())
 
-	_, err := testutil.NewStoreInstance()
-	ctx := context.Background()
-	//ctx := context.WithCancel()
-	//	var check *corev2.CheckConfig
-
+	//create check with required values
 	goodCheck := corev2.FixtureCheckConfig("goodCheck")
-
-	// set labels and annotations to nil to avoid value comparison issues
 	goodCheck.Labels = nil
 	goodCheck.Annotations = nil
-
 	goodCheck.Subscriptions = []string{"subscription1"}
-
+	goodCheck.Namespace = "Entity1"
 	goodCheckRequest := &corev2.CheckRequest{}
 	goodCheckRequest.Config = goodCheck
 	goodCheck.ProxyRequests = corev2.FixtureProxyRequests(true)
 
-	//Manisha try make entity
-	corev2.Fix
-	entity1 := corev2.FixtureEntity("entity1")
+	// Create a context for testing
+	ctx := context.Background()
+	newCtx := corev2.SetContextFromResource(ctx, goodCheck)
 
-	entity1Config := corev2.FixtureCheckConfig("entity1")
-
-	//
-	//q
-	//
-	//
-	//
-	//
-	//
-	//q
-	//
-	//
-	//
-	//entity1Config := []*corev2.EntityConfig{entity1}
-	//q
-	//
-	//
-	//
-	//
-	//
-	//
-	//
-	//
-	//
-	//
-	//
-	//
-	//
-	//
-	//
-	//
-	//entity1Config := []*corev2.EntityConfig{entity1}
-
-	//ecfg := corev3.FixtureEntityConfig("localhost.localdomain")
-	//state := a.getEntityState()
-
-	//ecfg.Metadata.Name = state.Metadata.Name
-	//b, err := a.marshal(ecfg)
-	//if err != nil {
-	//	t.Fatal(err)
-	//}
-	//exp, err := corev3.V3EntityToV2(entity1Config)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	//if err != nil {
-	//	assert.FailNow(t, err.Error())
-	//}
-	//bus, err := messaging.NewWizardBus(messaging.WizardBusConfig{})
-	//require.NoError(t, err)
-	//pm := secrets.NewProviderManager(&mockEventReceiver{})
-	//executor := NewAdhocRequestExecutor(context.Background(), store, &queue.Memory{}, bus, &cachev2.Resource{}, pm)
-	//
-	//newCtx := corev2.SetContextFromResource(ctx, goodCheck)
+	// Call the function being tested
+	err1 := processCheck(newCtx, executor, goodCheck)
+	_, err2 := executor.getEntities(newCtx)
+	err3 := executor.execute(goodCheck)
 	proxyVal := goodCheck.ProxyRequests
 	boolCheck := assert.NotNil(t, proxyVal)
-
 	if !boolCheck {
 		t.Fatal("Proxy Request execution returned nil")
-
 	}
-	//entities, err := executor.getEntities(newCtx)
+	// Assert expectations
+	assert.NoError(t, err, "Expected ,no error from processCheck")
+	assert.NoError(t, err2, "No Error from getEntities")
+	assert.NoError(t, err3, "No Error returned from execute call")
 
-	fmt.Println("ENTITIES value-->", entity1, goodCheck.ProxyRequests)
-
-	if err != nil {
-		t.Errorf("Get Entities returned error")
+	// Printing Errors if occurred
+	if err1 != nil {
+		t.Errorf("processCheck returned an unexpected error: %v", err1)
 		t.Fail()
 	}
-
-	matchedEntities := matchEntities(entity1Config, goodCheck.ProxyRequests)
-
-	//fmt.Println("Length ", len(matchedEntities))
-
-	entityLength := assert.Len(t, matchedEntities, 1)
-
-	if !entityLength {
-		t.Error("No matching entities found")
+	if err2 != nil {
+		t.Errorf("Error in executing Get Entities : %v", err2)
+		t.Fail()
 	}
-
+	if err3 != nil {
+		t.Errorf("Error in execute call : %v", err3)
+		t.Fail()
+	}
 }

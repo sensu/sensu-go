@@ -215,6 +215,7 @@ func (a *AdhocRequestExecutor) listenQueue(ctx context.Context) {
 			}
 			continue
 		}
+
 		if err = item.Ack(ctx); err != nil {
 			select {
 			case a.listenQueueErr <- err:
