@@ -60,6 +60,15 @@ func (e *ErrNotFound) Error() string {
 	return fmt.Sprintf("key %s not found", e.Key)
 }
 
+// ErrThreshold is returned when configured thresholds are reached
+type ErrThreshold struct {
+	Err error
+}
+
+func (e *ErrThreshold) Error() string {
+	return fmt.Sprintf("Threshold reached: %s", e.Err.Error())
+}
+
 // ErrNotValid is returned when an object failed validation
 type ErrNotValid struct {
 	Err error
