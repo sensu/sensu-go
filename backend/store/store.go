@@ -65,6 +65,14 @@ type ErrNotValid struct {
 	Err error
 }
 
+type ErrThreshold struct {
+	Err error
+}
+
+func (e *ErrThreshold) Error() string {
+	return fmt.Sprintf("Threshold reached: %s", e.Err.Error())
+}
+
 func (e *ErrNotValid) Error() string {
 	return fmt.Sprintf("resource is invalid: %s", e.Err.Error())
 }

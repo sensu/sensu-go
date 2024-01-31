@@ -7,8 +7,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"testing"
-
 	"github.com/gogo/protobuf/proto"
 	corev2 "github.com/sensu/core/v2"
 	"github.com/sensu/sensu-go/backend/etcd"
@@ -18,6 +16,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.etcd.io/etcd/client/v3"
+	"testing"
+	"time"
 )
 
 func testWithEtcd(t *testing.T, f func(store.Store)) {
@@ -27,6 +27,9 @@ func testWithEtcd(t *testing.T, f func(store.Store)) {
 	client := e.NewEmbeddedClient()
 
 	s := NewStore(client, e.Name())
+
+	s.cfg.MaxSilencedExpiryTimeAllowed = time.Duration(3000 * time.Second)
+	s.cfg.DefaultSilencedExpiryTime = time.Duration(3000 * time.Second)
 
 	// Mock a default namespace
 	require.NoError(t, s.CreateNamespace(context.Background(), types.FixtureNamespace("default")))
@@ -42,6 +45,9 @@ func testWithEtcdStore(t *testing.T, f func(*Store)) {
 
 	s := NewStore(client, e.Name())
 
+	s.cfg.MaxSilencedExpiryTimeAllowed = time.Duration(3000 * time.Second)
+	s.cfg.DefaultSilencedExpiryTime = time.Duration(3000 * time.Second)
+
 	// Mock a default namespace
 	require.NoError(t, s.CreateNamespace(context.Background(), types.FixtureNamespace("default")))
 
@@ -55,6 +61,9 @@ func testWithEtcdClient(t *testing.T, f func(store.Store, *clientv3.Client)) {
 	client := e.NewEmbeddedClient()
 
 	s := NewStore(client, e.Name())
+
+	s.cfg.MaxSilencedExpiryTimeAllowed = time.Duration(3000 * time.Second)
+	s.cfg.DefaultSilencedExpiryTime = time.Duration(3000 * time.Second)
 
 	// Mock a default namespace
 	require.NoError(t, s.CreateNamespace(context.Background(), types.FixtureNamespace("default")))

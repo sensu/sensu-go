@@ -67,8 +67,9 @@ func TestSilencedStorage(t *testing.T) {
 		assert.NoError(t, err)
 		assert.NotNil(t, entry)
 		assert.Equal(t, "subscription:*", entry.Name)
-		// Entries without expirations should return -1
-		assert.Equal(t, int64(-1), entry.Expire)
+
+		// check entries without -1 expiry
+		assert.NotEqual(t, int64(-1), entry.Expire)
 
 		// Delete silenced entry by name
 		err = store.DeleteSilencedEntryByName(ctx, silenced.Name)
@@ -76,6 +77,7 @@ func TestSilencedStorage(t *testing.T) {
 
 		// Update a silenced entry's expire time
 		silenced.Expire = 2
+		silenced.ExpireAt = 0
 		err = store.UpdateSilencedEntry(ctx, silenced)
 		assert.NoError(t, err)
 
@@ -100,6 +102,7 @@ func TestSilencedStorageWithExpire(t *testing.T) {
 		silenced := types.FixtureSilenced("subscription:checkname")
 		silenced.Namespace = "default"
 		silenced.Expire = 15
+		silenced.ExpireAt = 0
 		ctx := context.WithValue(context.Background(), types.NamespaceKey, silenced.Namespace)
 
 		err := store.UpdateSilencedEntry(ctx, silenced)
@@ -120,9 +123,9 @@ func TestSilencedStorageWithBegin(t *testing.T) {
 		silenced := types.FixtureSilenced("subscription:checkname")
 		silenced.Namespace = "default"
 		// set a begin time in the future
-		silenced.Begin = time.Date(1970, 01, 01, 01, 00, 00, 00, time.UTC).Unix()
+		silenced.Begin = time.Now().Add(time.Duration(1) * time.Second).Unix()
 		// current time is before the start time
-		currentTime := time.Date(1970, 01, 01, 00, 00, 00, 00, time.UTC).Unix()
+		currentTime := time.Now().Unix()
 		ctx := context.WithValue(context.Background(), types.NamespaceKey, silenced.Namespace)
 
 		err := store.UpdateSilencedEntry(ctx, silenced)
@@ -137,8 +140,11 @@ func TestSilencedStorageWithBegin(t *testing.T) {
 		require.NotNil(t, entry)
 		assert.False(t, entry.Begin < currentTime)
 
+		// Wait for begin time to elapse current time. i.e let silencing begin
+		time.Sleep(3 * time.Second)
+
 		// reset current time to be ahead of begin time
-		currentTime = time.Date(1970, 01, 01, 02, 00, 00, 00, time.UTC).Unix()
+		currentTime = time.Now().Unix()
 		assert.True(t, entry.Begin < currentTime)
 	})
 }
@@ -166,5 +172,28 @@ func TestSilencedStorageWithBeginAndExpire(t *testing.T) {
 		// Check that the ttl includes the expire time and delta between current
 		// and begin time
 		assert.Equal(t, entry.Expire, int64(15))
+	})
+}
+
+func TestSilencedStorageWithMaxAllowedThresholdExpiry(t *testing.T) {
+	testWithEtcd(t, func(store store.Store) {
+		silenced := types.FixtureSilenced("subscription:checkname")
+		silenced.Namespace = "default"
+		silenced.ExpireAt = time.Now().Add(time.Duration(30000) * time.Second).Unix()
+		// set a begin time
+		silenced.Begin = time.Now().Unix()
+		ctx := context.WithValue(context.Background(), types.NamespaceKey, silenced.Namespace)
+
+		err := store.UpdateSilencedEntry(ctx, silenced)
+
+		// assert that error is thrown for breaching max expiry time allowed
+		assert.Error(t, err)
+
+		entry, err := store.GetSilencedEntryByName(ctx, silenced.Name)
+
+		// assert that entry is nil
+		assert.NoError(t, err)
+		assert.Nil(t, entry)
+
 	})
 }

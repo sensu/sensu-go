@@ -211,8 +211,8 @@ func (s *Store) UpdateSilencedEntry(ctx context.Context, silenced *corev2.Silenc
 
 	// check for maximum allowed duration for silenced allowed
 	if silenced.ExpireAt > 0 && (silenced.ExpireAt > allowedMaxTime) {
-		err := errors.New("silenced crossed maximum duration configured")
-		return &store.ErrNotValid{Err: err}
+		err := errors.New("silenced crossed maximum duration allowed")
+		return &store.ErrThreshold{Err: err}
 	}
 
 	if silenced.ExpireAt == 0 && silenced.Expire > 0 {
