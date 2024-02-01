@@ -198,7 +198,7 @@ func (a *AdhocRequestExecutor) listenQueue(ctx context.Context) {
 			continue
 		}
 
-		//create new context
+		//create a new context
 		newCtx := corev2.SetContextFromResource(ctx, &check)
 		if err = a.processCheck(newCtx, &check); err != nil {
 			select {
