@@ -156,7 +156,7 @@ func TestSilencedStorageWithBeginAndExpire(t *testing.T) {
 		silenced.Expire = 15
 		currentTime := time.Now().UTC().Unix()
 		// set a begin time in the future
-		silenced.Begin = currentTime + 3600
+		silenced.Begin = currentTime + 100
 		// current time is before the start time
 		ctx := context.WithValue(context.Background(), types.NamespaceKey, silenced.Namespace)
 
