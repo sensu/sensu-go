@@ -17,6 +17,7 @@ import (
 const (
 	silencedPathPrefix = "silenced"
 	maxTxnOps          = 64 // this is half of the etcd default maximum
+	silencedLimitError = "silenced crossed maximum duration allowed"
 )
 
 var (
@@ -211,7 +212,7 @@ func (s *Store) UpdateSilencedEntry(ctx context.Context, silenced *corev2.Silenc
 
 	// check for maximum allowed duration for silenced allowed
 	if silenced.ExpireAt > 0 && (silenced.ExpireAt > allowedMaxTime) {
-		err := errors.New("silenced crossed maximum duration allowed")
+		err := errors.New(silencedLimitError)
 		return &store.ErrThreshold{Err: err}
 	}
 
@@ -221,6 +222,12 @@ func (s *Store) UpdateSilencedEntry(ctx context.Context, silenced *corev2.Silenc
 			start = time.Unix(silenced.Begin, 0)
 		}
 		silenced.ExpireAt = start.Add(time.Duration(silenced.Expire) * time.Second).Unix()
+
+		// check for maximum allowed duration for silenced allowed
+		if silenced.ExpireAt > allowedMaxTime {
+			err := errors.New(silencedLimitError)
+			return &store.ErrThreshold{Err: err}
+		}
 	}
 
 	// set default silenced expiry time configured in backend yaml file

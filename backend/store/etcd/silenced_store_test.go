@@ -197,3 +197,49 @@ func TestSilencedStorageWithMaxAllowedThresholdExpiry(t *testing.T) {
 
 	})
 }
+
+func TestSilencedStorageWithMaxAllowedThresholdExpiryWithError(t *testing.T) {
+	testWithEtcd(t, func(store store.Store) {
+		silenced := types.FixtureSilenced("subscription:checkname")
+		silenced.Namespace = "default"
+		silenced.ExpireAt = 0
+		silenced.Expire = 3001
+		silenced.Begin = time.Now().Unix()
+		ctx := context.WithValue(context.Background(), types.NamespaceKey, silenced.Namespace)
+
+		err := store.UpdateSilencedEntry(ctx, silenced)
+
+		// assert that error is thrown for breaching max expiry time allowed
+		assert.Error(t, err)
+
+		entry, err := store.GetSilencedEntryByName(ctx, silenced.Name)
+
+		// assert that entry is nil
+		assert.NoError(t, err)
+		assert.Nil(t, entry)
+
+	})
+}
+
+func TestSilencedStorageWithMaxAllowedThresholdExpiryAndWithoutError(t *testing.T) {
+	testWithEtcd(t, func(store store.Store) {
+		silenced := types.FixtureSilenced("subscription:checkname")
+		silenced.Namespace = "default"
+		silenced.ExpireAt = 0
+		silenced.Expire = 100
+		silenced.Begin = time.Now().Unix()
+		ctx := context.WithValue(context.Background(), types.NamespaceKey, silenced.Namespace)
+
+		err := store.UpdateSilencedEntry(ctx, silenced)
+
+		// assert that error is nil
+		assert.Nil(t, err)
+
+		entry, err := store.GetSilencedEntryByName(ctx, silenced.Name)
+
+		// assert that entry is not nil
+		assert.NoError(t, err)
+		assert.NotNil(t, entry)
+
+	})
+}
