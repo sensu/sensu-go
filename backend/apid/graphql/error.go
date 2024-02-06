@@ -30,6 +30,8 @@ func newStdErr(input string, err error) stdErr {
 		out.code = schema.ErrCodes.ERR_ALREADY_EXISTS
 	case (*store.ErrNotFound):
 		out.code = schema.ErrCodes.ERR_NOT_FOUND
+	case (*store.ErrThreshold):
+		out.code = schema.ErrCodes.ERR_THRESHOLD_REACHED
 	}
 	return out
 }
