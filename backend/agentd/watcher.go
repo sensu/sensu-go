@@ -70,3 +70,54 @@ func GetEntityConfigWatcher(ctx context.Context, client *clientv3.Client) <-chan
 
 	return ch
 }
+
+// GetUserConfigWatcher watches changes to the UserConfig in etcd and publish them -- git#2806
+// over the bus as store.WatchEventUserConfig
+func GetUserConfigWatcher(ctx context.Context, client *clientv3.Client) <-chan store.WatchEventUserConfig {
+	key := etcdstorev2.StoreKey(storev2.ResourceRequest{
+		Context:   ctx,
+		StoreName: new(corev2.User).StoreName(),
+	})
+	w := etcdstore.Watch(ctx, client, key, true)
+	ch := make(chan store.WatchEventUserConfig, 1)
+
+	go func() {
+		defer close(ch)
+		for response := range w.Result() {
+			if response.Type == store.WatchError {
+				logger.
+					WithError(errors.New(string(response.Object))).
+					Error("Unexpected error while watching for the user config updates")
+				ch <- store.WatchEventUserConfig{
+					Action: response.Type,
+				}
+				continue
+			}
+			var (
+				configWrapper wrap.Wrapper
+				userConfig    corev2.User
+			)
+
+			// Decode and unwrap the entity config
+
+			if err := proto.Unmarshal(response.Object, &configWrapper); err != nil {
+				logger.WithField("key", response.Key).WithError(err).
+					Error("unable to unmarshal user config from key")
+				continue
+			}
+
+			// Remove the managed_by label if the value is sensu-agent, in case the user is disabled
+			if userConfig.GetMetadata().Labels[corev2.ManagedByLabel] == "sensu-agent" {
+				delete(userConfig.GetMetadata().Labels, corev2.ManagedByLabel)
+			}
+
+			ch <- store.WatchEventUserConfig{
+				Action: response.Type,
+				User:   &userConfig,
+			}
+		}
+	}()
+
+	logger.Println("----watch metadata----", w)
+	return ch
+}

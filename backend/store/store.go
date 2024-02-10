@@ -156,6 +156,13 @@ type WatchEventEntityConfig struct {
 	Action WatchActionType
 }
 
+// WatchEventUserConfig contains and updated entity config and the action that
+// occurred during this modification
+type WatchEventUserConfig struct {
+	User   *corev2.User
+	Action WatchActionType
+}
+
 // Store is used to abstract the durable storage used by the Sensu backend
 // processses. Each Sensu resources is represented by its own interface. A
 // MockStore is available in order to mock a store implementation

@@ -521,6 +521,9 @@ func Initialize(ctx context.Context, config *Config) (*Backend, error) {
 	// Start the entity config watcher, so agentd sessions are notified of updates
 	entityConfigWatcher := agentd.GetEntityConfigWatcher(b.ctx, b.Client)
 
+	// Start the user config watcher, so agentd sessions are notified of updates
+	userConfigWatcher := agentd.GetUserConfigWatcher(b.ctx, b.Client)
+
 	// Prepare the etcd client TLS config
 	etcdClientTLSInfo := (transport.TLSInfo)(config.EtcdClientTLSInfo)
 	etcdClientTLSConfig, err := etcdClientTLSInfo.ClientConfig()
@@ -661,6 +664,7 @@ func Initialize(ctx context.Context, config *Config) (*Backend, error) {
 		Watcher:             entityConfigWatcher,
 		EtcdClientTLSConfig: b.EtcdClientTLSConfig,
 		BackendEntity:       backendEntity,
+		UserWatcher:         userConfigWatcher,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("error initializing %s: %s", agent.Name(), err)
