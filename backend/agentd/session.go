@@ -11,9 +11,9 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/prometheus/client_golang/prometheus"
-	"github.com/sensu/sensu-go/agent"
 	corev2 "github.com/sensu/core/v2"
 	corev3 "github.com/sensu/core/v3"
+	"github.com/sensu/sensu-go/agent"
 	"github.com/sensu/sensu-go/backend/messaging"
 	"github.com/sensu/sensu-go/backend/metrics"
 	"github.com/sensu/sensu-go/backend/ringv2"
@@ -95,6 +95,7 @@ type Session struct {
 	marshal          agent.MarshalFunc
 	unmarshal        agent.UnmarshalFunc
 	entityConfig     *entityConfig
+	userConfig       *userConfig
 	mu               sync.Mutex
 	subscriptionsMap map[string]subscription
 }
@@ -111,10 +112,21 @@ type entityConfig struct {
 	updatesChannel chan interface{}
 }
 
+// userConfig is used by a session to subscribe to entity config updates
+type userConfig struct {
+	subscription   chan messaging.Subscription
+	updatesChannel chan interface{}
+}
+
 // Receiver returns the channel for incoming entity updates from the entity
 // watcher
 func (e *entityConfig) Receiver() chan<- interface{} {
 	return e.updatesChannel
+}
+
+// Receiver returns the channel for incoming entity updates from the entity watcher
+func (u *userConfig) Receiver() chan<- interface{} {
+	return u.updatesChannel
 }
 
 func newSessionHandler(s *Session) *handler.MessageHandler {
@@ -321,6 +333,52 @@ func (s *Session) sender() {
 	for {
 		var msg *transport.Message
 		select {
+		//sudhanshu#2608 ---- user -----
+		case u := <-s.userConfig.updatesChannel:
+			var usr *corev2.User
+			watchEvent, ok := u.(*store.WatchEventUserConfig)
+			if !ok {
+				logger.Errorf("Session received unexpected struct: %T", u)
+				continue
+			}
+
+			// Handle the delete and unknown watch events
+			switch watchEvent.Action {
+			case store.WatchDelete:
+				//stop session
+				return
+			case store.WatchUnknown:
+				logger.Error("session received unknown watch event")
+				continue
+			}
+
+			if watchEvent.User == nil {
+				logger.Error("session received nil user in watch event")
+				continue
+			}
+
+			lager := logger.WithFields(logrus.Fields{
+				"action":    watchEvent.Action.String(),
+				"user":      watchEvent.User.GetMetadata().Name,
+				"namespace": watchEvent.User.GetMetadata().Namespace,
+			})
+			logger.Debug("User update received")
+
+			bytes, err := s.marshal(watchEvent.User)
+			if err != nil {
+				lager.WithError(err).Error("session failed to serialize entity config")
+				continue
+			}
+
+			// determine if user was disabled
+			if err := usr.Disabled; err {
+				lager.Debug("The user is now disabled ", err)
+			}
+
+			msg = transport.NewMessage(transport.MessageTypeUserConfig, bytes)
+
+			// -----entity -------
+
 		case e := <-s.entityConfig.updatesChannel:
 			watchEvent, ok := e.(*store.WatchEventEntityConfig)
 			if !ok {
