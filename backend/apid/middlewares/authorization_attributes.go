@@ -93,9 +93,8 @@ func (a AuthorizationAttributes) Then(next http.Handler) http.Handler {
 				attrs.Resource = types.LocalSelfUserResource
 			}
 
-			// Change the resource to LocalSelfUserResource if a user tries to change
-			// its own password
-			if attrs.Verb == "update" && vars["subresource"] == "password" {
+			switch vars["subresource"] {
+			case "password", "":
 				attrs.Resource = types.LocalSelfUserResource
 			}
 		}
