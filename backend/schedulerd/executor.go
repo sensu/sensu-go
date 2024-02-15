@@ -309,10 +309,6 @@ func processCheck(ctx context.Context, executor Executor, check *corev2.CheckCon
 		}
 		// publish proxy requests on matching entities
 		if matchedEntities := matchEntities(entities, check.ProxyRequests); len(matchedEntities) != 0 {
-			//display matched entities
-			matchedEntityJson, _ := json.Marshal(matchedEntities)
-			matchedEntityJsonData := string(matchedEntityJson)
-			logger.WithFields(fields).Infof("matched entities: %s", matchedEntityJsonData)
 			if err := executor.publishProxyCheckRequests(matchedEntities, check); err != nil {
 				logger.WithFields(fields).WithError(err).Error("error publishing proxy check requests")
 			}
