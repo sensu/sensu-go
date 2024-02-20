@@ -364,18 +364,17 @@ func (s *Session) sender() {
 			})
 			logger.Debug("User update received")
 
-			bytes, err := s.marshal(watchEvent.User)
-			if err != nil {
-				lager.WithError(err).Error("session failed to serialize entity config")
-				continue
-			}
+			//bytes, err := s.marshal(watchEvent.User)
+			//if err != nil {
+			//	lager.WithError(err).Error("session failed to serialize entity config")
+			//	continue
+			//}
 
 			// determine if user was disabled
 			if err := usr.Disabled; err {
 				lager.Debug("The user is now disabled ", err)
 			}
-
-			msg = transport.NewMessage(transport.MessageTypeUserConfig, bytes)
+			//msg = transport.NewMessage(transport.MessageTypeUserConfig, bytes)
 
 			// -----entity -------
 

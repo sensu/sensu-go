@@ -290,6 +290,13 @@ func (a *Agentd) runWatcher() {
 			if err := a.handleEvent(event); err != nil {
 				logger.WithError(err).Error("error handling entity config watch event")
 			}
+		case userEvent, ok := <-a.userWatcher:
+			if !ok {
+				return
+			}
+			if err := a.handleUserEvent(userEvent); err != nil {
+				logger.WithError(err).Error("error handling user config watch event")
+			}
 		}
 	}
 }
