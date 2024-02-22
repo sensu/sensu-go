@@ -333,7 +333,7 @@ func (s *Session) sender() {
 	for {
 		var msg *transport.Message
 		select {
-		//sudhanshu#2608 ---- user -----
+		//2608 ---- user -----
 		case u := <-s.userConfig.updatesChannel:
 			var usr *corev2.User
 			watchEvent, ok := u.(*store.WatchEventUserConfig)
