@@ -81,7 +81,7 @@ func GetUserConfigWatcher(ctx context.Context, client *clientv3.Client) <-chan s
 		Context:   ctx,
 		StoreName: new(corev2.User).StoreName(),
 	})
-	w := etcdstore.Watch(ctx, client, key, true)
+	w := etcdstore.Watch(ctx, client, key, true, clientv3.WithFilterPut())
 	ch := make(chan store.WatchEventUserConfig, 1)
 
 	go func() {
