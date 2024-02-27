@@ -96,8 +96,10 @@ type Session struct {
 	unmarshal        agent.UnmarshalFunc
 	entityConfig     *entityConfig
 	userConfig       *userConfig
+	user             string
 	mu               sync.Mutex
 	subscriptionsMap map[string]subscription
+	userReceiver     *UserReceiver
 }
 
 // subscription is used to abstract a message.Subscription and therefore allow
@@ -177,6 +179,20 @@ func (b *BurialReceiver) Receiver() chan<- interface{} {
 	return b.ch
 }
 
+type UserReceiver struct {
+	ch chan interface{}
+}
+
+func NewUserReceiver() *UserReceiver {
+	return &UserReceiver{
+		ch: make(chan interface{}, 1),
+	}
+}
+
+func (b *UserReceiver) Receiver() chan<- interface{} {
+	return b.ch
+}
+
 // NewSession creates a new Session object given the triple of a transport
 // connection, message bus, and store.
 // The Session is responsible for stopping itself, and does so when it
@@ -205,6 +221,8 @@ func NewSession(ctx context.Context, cfg SessionConfig) (*Session, error) {
 		ringPool:         cfg.RingPool,
 		unmarshal:        cfg.Unmarshal,
 		marshal:          cfg.Marshal,
+		user:             cfg.User,
+		userReceiver:     NewUserReceiver(),
 		entityConfig: &entityConfig{
 			subscriptions:  make(chan messaging.Subscription, 1),
 			updatesChannel: make(chan interface{}, 10),
@@ -221,6 +239,11 @@ func NewSession(ctx context.Context, cfg SessionConfig) (*Session, error) {
 		defer func() {
 			_ = subscription.Cancel()
 		}()
+	}
+
+	_, err := s.bus.Subscribe("userUpdates", cfg.AgentName, s.userReceiver)
+	if err != nil {
+		return nil, err
 	}
 
 	if err := s.bus.Publish(messaging.TopicKeepalive, makeEntitySwitchBurialEvent(cfg)); err != nil {
@@ -334,48 +357,14 @@ func (s *Session) sender() {
 		var msg *transport.Message
 		select {
 		//2608 ---- user -----
-		case u := <-s.userConfig.updatesChannel:
-			var usr *corev2.User
-			watchEvent, ok := u.(*store.WatchEventUserConfig)
+		case u := <-s.userReceiver.ch:
+			user, ok := u.(corev2.User)
 			if !ok {
-				logger.Errorf("Session received unexpected struct: %T", u)
-				continue
-			}
 
-			// Handle the delete and unknown watch events
-			switch watchEvent.Action {
-			case store.WatchDelete:
-				//stop session
+			}
+			if user.Disabled && user.Username == s.user {
 				return
-			case store.WatchUnknown:
-				logger.Error("session received unknown watch event")
-				continue
 			}
-
-			if watchEvent.User == nil {
-				logger.Error("session received nil user in watch event")
-				continue
-			}
-
-			lager := logger.WithFields(logrus.Fields{
-				"action":    watchEvent.Action.String(),
-				"user":      watchEvent.User.GetMetadata().Name,
-				"namespace": watchEvent.User.GetMetadata().Namespace,
-			})
-			logger.Debug("User update received")
-
-			//bytes, err := s.marshal(watchEvent.User)
-			//if err != nil {
-			//	lager.WithError(err).Error("session failed to serialize entity config")
-			//	continue
-			//}
-
-			// determine if user was disabled
-			if err := usr.Disabled; err {
-				lager.Debug("The user is now disabled ", err)
-			}
-			//msg = transport.NewMessage(transport.MessageTypeUserConfig, bytes)
-
 			// -----entity -------
 
 		case e := <-s.entityConfig.updatesChannel:

@@ -324,6 +324,7 @@ func (a *Agentd) handleUserEvent(event store.WatchEventUserConfig) error {
 	if event.User == nil {
 		return errors.New("nil entry received from the user config watcher")
 	}
+	a.bus.Publish("userChanges", event.User.Username)
 
 	return nil
 }
