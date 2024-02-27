@@ -92,8 +92,7 @@ func sniffType(f io.ReadSeeker) (filetype_types.Type, error) {
 	return ft, nil
 }
 
-// Sudhanshu - CleanUp the SHA for the git issue 5009 fix. Making sure that in case of DOS when asset.db gets deleted it gets cleanUp so that asset can be re-downloded
-
+// cleanup of the assetSHA when cache dir gets force deleted
 func CleanUp(fullPath string) error {
 	errorSHA := os.RemoveAll(fullPath)
 	if errorSHA != nil {

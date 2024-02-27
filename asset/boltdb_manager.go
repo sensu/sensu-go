@@ -247,8 +247,9 @@ func (b *boltDBAssetManager) expandWithDuration(tmpFile *os.File, asset *corev2.
 	CacheDir := viper.GetString(FlagCacheDir)
 	fullPath := filepath.Join(CacheDir, assetSHA)
 
-	if err := CleanUp(fullPath); err != nil { //fix for git issue 5009
-		logger.Printf("error cleaning up the SHA dir: %s", err)
+	if err := CleanUp(fullPath); err != nil {
+		logger.WithField("assetSHA path", fullPath).WithError(err).
+			Error("error cleaning up the assetSHA")
 	}
 
 	assetPath = filepath.Join(b.localStorage, asset.Sha512)
