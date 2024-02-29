@@ -59,6 +59,9 @@ func (r *UsersRouter) Mount(parent *mux.Router) {
 	// Password change & reset
 	routes.Path("{id}/{subresource:password}", r.updatePassword).Methods(http.MethodPut)
 	routes.Path("{id}/{subresource:reset_password}", r.resetPassword).Methods(http.MethodPut)
+
+	// password update from web ui
+	routes.Path("{id}/{subresource:change_password}", r.changePasswordFromWeb).Methods(http.MethodPut)
 }
 
 func (r *UsersRouter) get(req *http.Request) (interface{}, error) {
@@ -149,6 +152,35 @@ func (r *UsersRouter) updatePassword(req *http.Request) (interface{}, error) {
 	// will set the resulting hash in both fields before storing it.
 	user.Password = ""
 	user.PasswordHash = params["password_hash"]
+	err = r.controller.CreateOrReplace(req.Context(), user)
+	return nil, err
+}
+
+// changePasswordFromWeb updates user password when requests are sent from web UI
+func (r *UsersRouter) changePasswordFromWeb(req *http.Request) (interface{}, error) {
+	params := map[string]string{}
+	if err := UnmarshalBody(req, &params); err != nil {
+		return nil, err
+	}
+
+	vars := mux.Vars(req)
+	username, err := url.PathUnescape(vars["id"])
+	if err != nil {
+		return nil, err
+	}
+	newPassword := params["newPassword"]
+	oldPassword := params["password"]
+
+	user, err := r.controller.AuthenticateUser(req.Context(), username, oldPassword)
+	if err != nil {
+		return nil, err
+	}
+
+	// set new password for updating into store
+	user.Password = newPassword
+
+	// Remove any old password hash
+	user.PasswordHash = ""
 	err = r.controller.CreateOrReplace(req.Context(), user)
 	return nil, err
 }
