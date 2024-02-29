@@ -25,6 +25,8 @@ import (
 )
 
 const (
+	UserNotFound = "not found"
+
 	deletedEventSentinel = -1
 
 	// Time to wait before force close on connection.
@@ -227,6 +229,10 @@ func NewSession(ctx context.Context, cfg SessionConfig) (*Session, error) {
 			subscriptions:  make(chan messaging.Subscription, 1),
 			updatesChannel: make(chan interface{}, 10),
 		},
+		userConfig: &userConfig{
+			subscription:   make(chan messaging.Subscription, 1),
+			updatesChannel: make(chan interface{}, 10),
+		},
 	}
 
 	// Optionally subscribe to burial notifications
@@ -356,17 +362,65 @@ func (s *Session) sender() {
 	for {
 		var msg *transport.Message
 		select {
-		//2608 ---- user -----
+		//---- user -----//
 		case u := <-s.userReceiver.ch:
-			user, ok := u.(corev2.User)
+			user, ok := u.(*corev2.User)
 			if !ok {
-
+				logger.WithField("key", ok)
 			}
+
 			if user.Disabled && user.Username == s.user {
 				return
 			}
-			// -----entity -------
 
+		//case u := <-s.userConfig.updatesChannel:
+		//	watchEvent, ok := u.(*store.WatchEventUserConfig)
+		//	fmt.Println("==========  usrConfig Updates ========", watchEvent)
+		//	if !ok {
+		//		logger.Errorf("session received unexoected struct : %T", u)
+		//		continue
+		//	}
+		//
+		//	if watchEvent.User.Disabled && watchEvent.User.Username == s.user {
+		//		return
+		//	}
+		//	//fmt.Println("==========  usrConfig Updates ========", watchEvent)
+		////// Handle the delete/disable event
+		////switch watchEvent.Action {
+		////case store.WatchDelete:
+		////	return
+		////}
+		//
+		//if watchEvent.User == nil {
+		//	logger.Error("session received nil user in watch event")
+		//}
+		////
+		//lagger := logger.WithFields(logrus.Fields{
+		//	"action":    watchEvent.Action.String(),
+		//	"user":      watchEvent.User.GetMetadata().Name,
+		//	"namespace": watchEvent.User.GetMetadata().Namespace,
+		//})
+		//lagger.Debug("user update received")
+		//
+		//configReq := storev2.NewResourceRequestFromV2Resource(s.ctx, watchEvent.User)
+		//wrapper, err := storev2.WrapResource(watchEvent.User)
+		//if err != nil {
+		//	lagger.WithError(err).Error("could not warp the user config")
+		//	continue
+		//}
+		//
+		//if err := s.storev2.CreateOrUpdate(configReq, wrapper); err != nil {
+		//	sessionErrorCounter.WithLabelValues(err.Error()).Inc()
+		//	lagger.WithError(err).Error("could not update the user config")
+		//}
+
+		//bytes, err := s.marshal(watchEvent.User)
+		//if err != nil {
+		//	lagger.WithError(err).Error("session failed to serialize user config")
+		//}
+		//msg = transport.NewMessage(transport.MessageTypeUserConfig, bytes)
+
+		// ---- entity ----//
 		case e := <-s.entityConfig.updatesChannel:
 			watchEvent, ok := e.(*store.WatchEventEntityConfig)
 			if !ok {
@@ -495,6 +549,8 @@ func (s *Session) sender() {
 // 3. Start goroutine that waits for context cancellation, and shuts down service.
 func (s *Session) Start() (err error) {
 	defer close(s.entityConfig.subscriptions)
+	defer close(s.userConfig.subscription)
+
 	sessionCounter.WithLabelValues(s.cfg.Namespace).Inc()
 	s.wg = &sync.WaitGroup{}
 	s.wg.Add(2)
@@ -518,21 +574,84 @@ func (s *Session) Start() (err error) {
 		"namespace": s.cfg.Namespace,
 	})
 
-	// Subscribe the agent to its entity_config topic
+	// Subscribe the agent to its entity_config  and user_config topic
 	topic := messaging.EntityConfigTopic(s.cfg.Namespace, s.cfg.AgentName)
+	userTopic := messaging.UserConfigTopic(s.cfg.Namespace, s.cfg.AgentName)
 	lager.WithField("topic", topic).Debug("subscribing to topic")
+	logger.WithField("topic", userTopic).Debug("subscribing to topic")
 	// Get a unique name for the agent, which will be used as the consumer of the
 	// bus, in order to avoid problems with an agent reconnecting before its
 	// session is ended
 	agentName := agentUUID(s.cfg.Namespace, s.cfg.AgentName)
+
+	// Determine if user already exits
+	userSubscription, usrErr := s.bus.Subscribe(userTopic, agentName, s.userConfig)
+	if usrErr != nil {
+		lager.WithError(err).Error("error starting subscription")
+		return err
+	}
+	s.userConfig.subscription <- userSubscription
+	usrReq := storev2.NewResourceRequest(s.ctx, s.cfg.Namespace, s.cfg.AgentName, (&corev2.User{}).StoreName())
+	usrWrapper, err := s.storev2.Get(usrReq)
+	if err != nil {
+		// Just exit but don't send error about absence of user config
+		var errNotFound *store.ErrNotFound
+		if !errors.As(err, &errNotFound) {
+			lager.WithError(err).Error("error querying the user config")
+			return err
+		}
+		lager.Debug("no user config found")
+
+		// Indicate to the agent that this user does not exist
+		meta := corev2.NewObjectMeta(UserNotFound, s.cfg.Namespace)
+		watchEvent := &store.WatchEventUserConfig{
+			User: &corev2.User{
+				Username: s.user,
+			},
+			Action:   store.WatchCreate,
+			Metadata: &meta,
+		}
+		err = s.bus.Publish(messaging.UserConfigTopic(s.cfg.Namespace, s.cfg.AgentName), watchEvent)
+		if err != nil {
+			lager.WithError(err).Error("error publishing user config")
+			return err
+		}
+	} else {
+		// A user config already exists, therefore we should the stored user subscriptions
+		// rather than what the agent provided us for the subscriptions
+		lager.Debug("an user config was found")
+
+		var storedUserConfig corev2.User
+		err = usrWrapper.UnwrapInto(&storedUserConfig)
+		if err != nil {
+			lager.WithError(err).Error("error unwrapping user config")
+			return err
+		}
+
+		// Remove the managed_by label if the value is sensu-agent, in case of disabled user
+		if storedUserConfig.GetMetadata().Labels[corev2.ManagedByLabel] == "sensu-agent" {
+			delete(storedUserConfig.GetMetadata().Labels, corev2.ManagedByLabel)
+		}
+
+		// Send back this user config to the agent so it uses that rather than it's local config
+		watchEvent := &store.WatchEventUserConfig{
+			Action: store.WatchUpdate,
+			User:   &storedUserConfig,
+		}
+		err = s.bus.Publish(messaging.UserConfigTopic(s.cfg.Namespace, s.cfg.AgentName), watchEvent)
+		if err != nil {
+			lager.WithError(err).Error("error publishing user config")
+			return err
+		}
+	}
+
+	// Determine if the entity already exists
 	subscription, err := s.bus.Subscribe(topic, agentName, s.entityConfig)
 	if err != nil {
 		lager.WithError(err).Error("error starting subscription")
 		return err
 	}
 	s.entityConfig.subscriptions <- subscription
-
-	// Determine if the entity already exists
 	req := storev2.NewResourceRequest(s.ctx, s.cfg.Namespace, s.cfg.AgentName, (&corev3.EntityConfig{}).StoreName())
 	wrapper, err := s.storev2.Get(req)
 	if err != nil {
@@ -624,6 +743,7 @@ func (s *Session) stop() {
 		}
 	}()
 	defer close(s.entityConfig.updatesChannel)
+	defer close(s.userConfig.updatesChannel)
 	defer close(s.checkChannel)
 
 	sessionCounter.WithLabelValues(s.cfg.Namespace).Dec()
@@ -643,6 +763,12 @@ func (s *Session) stop() {
 
 	// Remove the entity config subscriptions
 	for sub := range s.entityConfig.subscriptions {
+		if err := sub.Cancel(); err != nil {
+			logger.WithError(err).Error("unable to unsubscribe from message bus")
+		}
+	}
+
+	for sub := range s.userConfig.subscription {
 		if err := sub.Cancel(); err != nil {
 			logger.WithError(err).Error("unable to unsubscribe from message bus")
 		}
