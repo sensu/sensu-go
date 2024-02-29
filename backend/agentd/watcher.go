@@ -6,7 +6,6 @@ import (
 	"github.com/gogo/protobuf/proto"
 	corev2 "github.com/sensu/core/v2"
 	corev3 "github.com/sensu/core/v3"
-	"github.com/sensu/sensu-go/agent"
 	"github.com/sensu/sensu-go/backend/store"
 	etcdstore "github.com/sensu/sensu-go/backend/store/etcd"
 	storev2 "github.com/sensu/sensu-go/backend/store/v2"
@@ -110,12 +109,8 @@ func GetUserConfigWatcher(ctx context.Context, client *clientv3.Client) <-chan s
 			}
 
 			// Remove the managed_by label if the value is sensu-agent, in case the user is disabled
-			//if userConfig.GetMetadata().Labels[corev2.ManagedByLabel] == "sensu-agent" {
-			//	delete(userConfig.GetMetadata().Labels, corev2.ManagedByLabel)
-			//}
-
-			if userConfig.Disabled {
-				agent.GracefulShutdown(cancel)
+			if userConfig.GetMetadata().Labels[corev2.ManagedByLabel] == "sensu-agent" {
+				delete(userConfig.GetMetadata().Labels, corev2.ManagedByLabel)
 			}
 
 			ch <- store.WatchEventUserConfig{
