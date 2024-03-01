@@ -168,7 +168,7 @@ func (r *UsersRouter) changePasswordFromWeb(req *http.Request) (interface{}, err
 	if err != nil {
 		return nil, err
 	}
-	newPassword := params["newPassword"]
+	newPassword := params["password_new"]
 	oldPassword := params["password"]
 
 	user, err := r.controller.AuthenticateUser(req.Context(), username, oldPassword)
