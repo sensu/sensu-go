@@ -52,6 +52,9 @@ const (
 	// the operation has completed successfully. For example, a successful
 	// response from a server could have been delayed long
 	DeadlineExceeded
+
+	// Threshold set in config reached. These settings are done in config of backend.yaml
+	ThresholdReached
 )
 
 // Default error messages if not message is provided.
@@ -65,6 +68,7 @@ var standardErrorMessages = map[ErrCode]string{
 	PaymentRequired:    "license required",
 	PreconditionFailed: "precondition failed",
 	DeadlineExceeded:   "deadline exceeded",
+	ThresholdReached:   "Threshold reached",
 }
 
 // Error describes an issue that ocurred while performing the action.

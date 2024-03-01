@@ -208,6 +208,7 @@ var ErrCodes = _EnumTypeErrCodeValues{
 	ERR_INTERNAL:          "ERR_INTERNAL",
 	ERR_NOT_FOUND:         "ERR_NOT_FOUND",
 	ERR_PERMISSION_DENIED: "ERR_PERMISSION_DENIED",
+	ERR_THRESHOLD_REACHED: "ERR_THRESHOLD_REACHED",
 }
 
 // ErrCodeType A terse description of an error.
@@ -242,6 +243,11 @@ func _EnumTypeErrCodeConfigFn() graphql1.EnumConfig {
 				Description:       "Operation was canceled because the authorization token did not have sufficient\npermissions.",
 				Value:             "ERR_PERMISSION_DENIED",
 			},
+			"ERR_THRESHOLD_REACHED": &graphql1.EnumValueConfig{
+				DeprecationReason: "",
+				Description:       "Indicates that set thresholds in configured have reached",
+				Value:             "ERR_THRESHOLD_REACHED",
+			},
 		},
 	}
 }
@@ -267,4 +273,6 @@ type _EnumTypeErrCodeValues struct {
 	   permissions.
 	*/
 	ERR_PERMISSION_DENIED ErrCode
+	// ERR_THRESHOLD_REACHED - Indicates that set thresholds in configured have reached
+	ERR_THRESHOLD_REACHED ErrCode
 }
