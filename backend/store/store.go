@@ -6,7 +6,6 @@ import (
 	"fmt"
 
 	corev2 "github.com/sensu/core/v2"
-	v2 "github.com/sensu/core/v2"
 	corev3 "github.com/sensu/core/v3"
 	"github.com/sensu/sensu-go/backend/store/patch"
 	"github.com/sensu/sensu-go/types"
@@ -160,10 +159,10 @@ type WatchEventEntityConfig struct {
 // WatchEventUserConfig contains and updated entity config and the action that
 // occurred during this modification
 type WatchEventUserConfig struct {
-	User     *corev2.User
-	Action   WatchActionType
-	Metadata *v2.ObjectMeta `protobuf:"bytes,1,opt,name=metadata,proto3" json:"metadata"`
-	//Subscriptions []string       `protobuf:"bytes,4,rep,name=subscriptions,proto3" json:"subscriptions"`
+	User   *corev2.User
+	Action WatchActionType
+	//Metadata *v2.ObjectMeta `protobuf:"bytes,1,opt,name=metadata,proto3" json:"metadata"`
+	////Subscriptions []string       `protobuf:"bytes,4,rep,name=subscriptions,proto3" json:"subscriptions"`
 }
 
 // Store is used to abstract the durable storage used by the Sensu backend
