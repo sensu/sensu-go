@@ -138,7 +138,7 @@ func GetEntityConfigWatcher(ctx context.Context, client *clientv3.Client) <-chan
 // GetUserConfigWatcher watches changes to the UserConfig in etcd and publish them -- git#2806
 // over the bus as store.WatchEventUserConfig
 func GetUserConfigWatcher(ctx context.Context, client *clientv3.Client) <-chan store.WatchEventUserConfig {
-	var userConfig corev2.User
+
 	key := etcdstorev2.StoreKey(storev2.ResourceRequest{
 		Context:   ctx,
 		StoreName: new(corev2.User).StoreName(),
@@ -161,12 +161,12 @@ func GetUserConfigWatcher(ctx context.Context, client *clientv3.Client) <-chan s
 			}
 
 			// unmarshal the user config
-
+			var userConfig corev2.User
 			if err := proto.Unmarshal(response.Object, &userConfig); err != nil {
 				continue
 			}
 			if userConfig.Disabled {
-				fmt.Println("======= user watch event in watcher ========", userConfig, string(rune(response.Type)))
+				fmt.Println("======= user watch event in watcher ========", userConfig.Username, userConfig.Disabled, response.Type)
 			}
 
 			ch <- store.WatchEventUserConfig{
