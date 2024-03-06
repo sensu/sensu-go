@@ -73,22 +73,83 @@ func GetEntityConfigWatcher(ctx context.Context, client *clientv3.Client) <-chan
 
 // GetUserConfigWatcher watches changes to the UserConfig in etcd and publish them -- git#2806
 // over the bus as store.WatchEventUserConfig
-func GetUserConfigWatcher(ctx context.Context, client *clientv3.Client) <-chan store.WatchEventUserConfig {
-	//ctx, cancel := context.WithCancel(context.Background())
-	//defer cancel()
+//func GetUserConfigWatcher(ctx context.Context, client *clientv3.Client) <-chan store.WatchEventUserConfig {
+//	//ctx, cancel := context.WithCancel(context.Background())
+//	//defer cancel()
+//
+//	key := etcdstorev2.StoreKey(storev2.ResourceRequest{
+//		Context:   ctx,
+//		StoreName: new(corev2.User).StoreName(),
+//	})
+//	w := etcdstore.Watch(ctx, client, key, true)
+//	fmt.Sprintf("======= user metadata ========= w : %v, ctx : %v, client: %v, key: %v", w, ctx, client, key)
+//	ch := make(chan store.WatchEventUserConfig, 1)
+//
+//	go func() {
+//		defer close(ch)
+//		for response := range w.Result() {
+//			fmt.Println("======= user config response ========", response)
+//			if response.Type == store.WatchError {
+//				logger.
+//					WithError(errors.New(string(response.Object))).
+//					Error("Unexpected error while watching for the user config updates")
+//				ch <- store.WatchEventUserConfig{
+//					Action: response.Type,
+//				}
+//				continue
+//			}
+//			//var (
+//			//	configWrapper wrap.Wrapper
+//			//	userConfig    corev2.User
+//			//)
+//
+//			// Decode and unwrap the user config
+//
+//			//if err := proto.Unmarshal(response.Object, &configWrapper); err != nil {
+//			//	fmt.Println("====== unmarshaled user =======", configWrapper)
+//			//	logger.WithField("key", response.Key).WithError(err).
+//			//		Error("unable to unmarshal user config from key")
+//			//	continue
+//			//}
+//
+//			//if err := configWrapper.UnwrapInto(&userConfig); err != nil {
+//			//	fmt.Println("====== unmarshaled user =======", userConfig)
+//			//	logger.WithField("key", response.Key).WithError(err).
+//			//		Error("unable to unwrap entity config from key")
+//			//	continue
+//			//}
+//
+//			// Remove the managed_by label if the value is sensu-agent, in case the user is disabled
+//			//if userConfig.GetMetadata().Labels[corev2.ManagedByLabel] == "sensu-agent" {
+//			//	delete(userConfig.GetMetadata().Labels, corev2.ManagedByLabel)
+//			//}
+//
+//			ch <- store.WatchEventUserConfig{
+//				User:   &corev2.User{},
+//				Action: response.Type,
+//			}
+//		}
+//	}()
+//
+//	logger.Println("========= watch metadata ========", w)
+//	return ch
+//}
 
+// GetUserConfigWatcher watches changes to the UserConfig in etcd and publish them -- git#2806
+// over the bus as store.WatchEventUserConfig
+func GetUserConfigWatcher(ctx context.Context, client *clientv3.Client) <-chan store.WatchEventUserConfig {
+	var userConfig corev2.User
 	key := etcdstorev2.StoreKey(storev2.ResourceRequest{
 		Context:   ctx,
 		StoreName: new(corev2.User).StoreName(),
 	})
 	w := etcdstore.Watch(ctx, client, key, true)
-	fmt.Sprintf("======= user metadata ========= w : %v, ctx : %v, client: %v, key: %v", w, ctx, client, key)
-	ch := make(chan store.WatchEventUserConfig, 1)
+	ch := make(chan store.WatchEventUserConfig, 10)
 
 	go func() {
 		defer close(ch)
 		for response := range w.Result() {
-			fmt.Println("======= user config response ========", response)
+			logger.Info("read from user watch channel")
 			if response.Type == store.WatchError {
 				logger.
 					WithError(errors.New(string(response.Object))).
@@ -98,39 +159,24 @@ func GetUserConfigWatcher(ctx context.Context, client *clientv3.Client) <-chan s
 				}
 				continue
 			}
-			var (
-				configWrapper wrap.Wrapper
-				userConfig    corev2.User
-			)
 
-			// Decode and unwrap the user config
+			// unmarshal the user config
 
-			//if err := proto.Unmarshal(response.Object, &configWrapper); err != nil {
-			//	fmt.Println("====== unmarshaled user =======", configWrapper)
-			//	logger.WithField("key", response.Key).WithError(err).
-			//		Error("unable to unmarshal user config from key")
-			//	continue
-			//}
-
-			if err := configWrapper.UnwrapInto(&userConfig); err != nil {
-				fmt.Println("====== unmarshaled user =======", userConfig)
-				logger.WithField("key", response.Key).WithError(err).
-					Error("unable to unwrap entity config from key")
+			if err := proto.Unmarshal(response.Object, &userConfig); err != nil {
 				continue
 			}
-
-			// Remove the managed_by label if the value is sensu-agent, in case the user is disabled
-			//if userConfig.GetMetadata().Labels[corev2.ManagedByLabel] == "sensu-agent" {
-			//	delete(userConfig.GetMetadata().Labels, corev2.ManagedByLabel)
-			//}
+			if userConfig.Disabled {
+				fmt.Println("======= user watch event in watcher ========", userConfig, string(rune(response.Type)))
+			}
 
 			ch <- store.WatchEventUserConfig{
-				User:   &userConfig,
-				Action: response.Type,
+				User:     &userConfig,
+				Action:   response.Type,
+				Disabled: userConfig.Disabled,
 			}
 		}
 	}()
 
-	logger.Println("========= watch metadata ========", w)
+	logger.Println("----watch metadata----", w)
 	return ch
 }

@@ -159,8 +159,9 @@ type WatchEventEntityConfig struct {
 // WatchEventUserConfig contains and updated entity config and the action that
 // occurred during this modification
 type WatchEventUserConfig struct {
-	User   *corev2.User
-	Action WatchActionType
+	User     *corev2.User
+	Action   WatchActionType
+	Disabled bool
 	//Metadata *v2.ObjectMeta `protobuf:"bytes,1,opt,name=metadata,proto3" json:"metadata"`
 	////Subscriptions []string       `protobuf:"bytes,4,rep,name=subscriptions,proto3" json:"subscriptions"`
 }
