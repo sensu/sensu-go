@@ -101,7 +101,7 @@ type Session struct {
 	user             string
 	mu               sync.Mutex
 	subscriptionsMap map[string]subscription
-	userReceiver     *UserReceiver
+	//userReceiver     *UserReceiver
 }
 
 // subscription is used to abstract a message.Subscription and therefore allow
@@ -181,19 +181,19 @@ func (b *BurialReceiver) Receiver() chan<- interface{} {
 	return b.ch
 }
 
-type UserReceiver struct {
-	ch chan interface{}
-}
-
-func NewUserReceiver() *UserReceiver {
-	return &UserReceiver{
-		ch: make(chan interface{}, 1),
-	}
-}
-
-func (b *UserReceiver) Receiver() chan<- interface{} {
-	return b.ch
-}
+//type UserReceiver struct {
+//	ch chan interface{}
+//}
+//
+//func NewUserReceiver() *UserReceiver {
+//	return &UserReceiver{
+//		ch: make(chan interface{}, 1),
+//	}
+//}
+//
+//func (b *UserReceiver) Receiver() chan<- interface{} {
+//	return b.ch
+//}
 
 // NewSession creates a new Session object given the triple of a transport
 // connection, message bus, and store.
@@ -224,7 +224,7 @@ func NewSession(ctx context.Context, cfg SessionConfig) (*Session, error) {
 		unmarshal:        cfg.Unmarshal,
 		marshal:          cfg.Marshal,
 		user:             cfg.User,
-		userReceiver:     NewUserReceiver(),
+		//userReceiver:     NewUserReceiver(),
 		entityConfig: &entityConfig{
 			subscriptions:  make(chan messaging.Subscription, 1),
 			updatesChannel: make(chan interface{}, 10),
@@ -247,7 +247,7 @@ func NewSession(ctx context.Context, cfg SessionConfig) (*Session, error) {
 		}()
 	}
 
-	_, err := s.bus.Subscribe("userUpdates", cfg.AgentName, s.userReceiver)
+	_, err := s.bus.Subscribe("userUpdates", cfg.AgentName, s.userConfig)
 	if err != nil {
 		return nil, err
 	}
@@ -363,75 +363,84 @@ func (s *Session) sender() {
 		var msg *transport.Message
 		select {
 		//---- user -----//
-		case u := <-s.userReceiver.ch:
-			user, ok := u.(*corev2.User)
-			if !ok {
-				logger.WithField("unexpected user struct", ok)
-			}
-		
-			configUser, err := s.marshal(user)
-			if err != nil {
-				logger.WithError(err).Error("session failed to serialize the user config")
-			}
+		//case u := <-s.userReceiver.ch:
+		//	user, ok := u.(*corev2.User)
+		//	if !ok {
+		//		logger.WithField("unexpected user struct", ok)
+		//	}
+		//
+		//	configUser, err := s.marshal(user)
+		//	if err != nil {
+		//		logger.WithError(err).Error("session failed to serialize the user config")
+		//	}
+		//
+		//	if user.Disabled && user.Username == s.user {
+		//		return
+		//	}
+		//
+		//	msg = transport.NewMessage(user.Username, configUser)
 
-			if user.Disabled && user.Username == s.user {
+		case u := <-s.userConfig.updatesChannel:
+
+			watchEvent, ok := u.(*store.WatchEventUserConfig)
+			fmt.Println("==========  usrConfig Updates ========", watchEvent)
+			if !ok {
+				logger.Errorf("session received unexoected user struct : %T", u)
+				continue
+			}
+			//fmt.Println("--------action --------", store.WatchCreate, store.WatchDelete, store.WatchUnknown)
+			//if watchEvent.User.Disabled && watchEvent.User.Username == s.user {
+			//	return
+			//}
+			if watchEvent.Disabled {
+				fmt.Println("========= the user is now disabled =======")
+				s.stop()
 				return
 			}
 
-			msg = transport.NewMessage(user.Username, configUser)
+			fmt.Println("==========  usrConfig Updates ========", watchEvent)
+			//// Handle the delete/disable event
+			//switch userConfig {
+			//case store.WatchDelete:
+			//	fmt.Println(" ======= delete =======", store.WatchDelete)
+			//	return
+			//case store.WatchCreate:
+			//	fmt.Println("======= create user ====", store.WatchCreate)
+			//case store.WatchUpdate:
+			//	fmt.Println("==== user update ======", store.WatchUpdate)
+			//default:
+			//	panic("unhandled default case")
+			//}
 
-		//case u := <-s.userConfig.updatesChannel:
-		//	watchEvent, ok := u.(*store.WatchEventUserConfig)
-		//	fmt.Println("==========  usrConfig Updates ========", watchEvent)
-		//	if !ok {
-		//		logger.Errorf("session received unexoected user struct : %T", u)
-		//		continue
-		//	}
-		//	fmt.Println("--------action --------", store.WatchCreate, store.WatchDelete, store.WatchUnknown)
-		//	//if watchEvent.User.Disabled && watchEvent.User.Username == s.user {
-		//	//	return
-		//	//}
-		//	fmt.Println("==========  usrConfig Updates ========", watchEvent)
-		//	//// Handle the delete/disable event
-		//	switch watchEvent.Action {
-		//	case store.WatchDelete:
-		//		fmt.Println(" ======= delete =======", store.WatchDelete)
-		//		return
-		//	case store.WatchCreate:
-		//		fmt.Println("======= create user ====", store.WatchCreate)
-		//	case store.WatchUpdate:
-		//		fmt.Println("==== user update ======", store.WatchUpdate)
-		//
-		//	}
-		//
-		//	if watchEvent.User == nil {
-		//		logger.Error("session received nil user in watch event")
-		//	}
-		//	//
-		//	lagger := logger.WithFields(logrus.Fields{
-		//		"action":    watchEvent.Action.String(),
-		//		"user":      watchEvent.User.Username,
-		//		"namespace": watchEvent.User.GetMetadata().Namespace,
-		//	})
-		//	lagger.Debug("user update received")
-		//
-		//	configReq := storev2.NewResourceRequestFromV2Resource(s.ctx, watchEvent.User)
-		//	wrapper, err := storev2.WrapResource(watchEvent.User)
-		//	if err != nil {
-		//		lagger.WithError(err).Error("could not warp the user config")
-		//		continue
-		//	}
-		//
-		//	if err := s.storev2.CreateOrUpdate(configReq, wrapper); err != nil {
-		//		sessionErrorCounter.WithLabelValues(err.Error()).Inc()
-		//		lagger.WithError(err).Error("could not update the user config")
-		//	}
-		//
-		//	bytes, err := s.marshal(watchEvent.User)
-		//	if err != nil {
-		//		lagger.WithError(err).Error("session failed to serialize user config")
-		//	}
-		//	msg = transport.NewMessage(transport.MessageTypeUserConfig, bytes)
+			if watchEvent.User == nil {
+				logger.Error("session received nil user in watch event")
+			}
+			//
+			lagger := logger.WithFields(logrus.Fields{
+				"action":    watchEvent.Action.String(),
+				"user":      watchEvent.User.Username,
+				"namespace": watchEvent.User.GetMetadata().Namespace,
+			})
+			lagger.Debug("user update received")
+
+			//configReq := storev2.NewResourceRequestFromV2Resource(s.ctx, watchEvent.User)
+			//wrapper, err := storev2.WrapResource(watchEvent.User)
+			//if err != nil {
+			//	lagger.WithError(err).Error("could not warp the user config")
+			//	continue
+			//}
+			//
+			//if err := s.storev2.CreateOrUpdate(configReq, wrapper); err != nil {
+			//	sessionErrorCounter.WithLabelValues(err.Error()).Inc()
+			//	lagger.WithError(err).Error("could not update the user config")
+			//}
+
+			bytes, err := s.marshal(watchEvent.User)
+			if err != nil {
+				lagger.WithError(err).Error("session failed to serialize user config")
+			}
+			//msg = transport.NewMessage(transport.MessageTypeUserConfig, bytes)
+			msg = transport.NewMessage(corev2.UserType, bytes)
 
 		// ---- entity ----//
 		case e := <-s.entityConfig.updatesChannel:
@@ -567,7 +576,7 @@ func (s *Session) Start() (err error) {
 	sessionCounter.WithLabelValues(s.cfg.Namespace).Inc()
 	s.wg = &sync.WaitGroup{}
 	s.wg.Add(2)
-	s.stopWG.Add(1)
+	s.stopWG.Add(2)
 	go s.sender()
 	go s.receiver()
 	go func() {
@@ -604,57 +613,79 @@ func (s *Session) Start() (err error) {
 		return err
 	}
 	s.userConfig.subscription <- userSubscription
-	usrReq := storev2.NewResourceRequest(s.ctx, s.cfg.Namespace, s.cfg.AgentName, (&corev2.User{}).StoreName())
-	usrWrapper, err := s.storev2.Get(usrReq)
-	if err != nil {
-		// Just exit but don't send error about absence of user config
-		var errNotFound *store.ErrNotFound
-		if !errors.As(err, &errNotFound) {
-			lager.WithError(err).Error("error querying the user config")
-			return err
-		}
-		lager.Debug("no user config found")
+	//usrReq := storev2.NewResourceRequest(s.ctx, s.cfg.Namespace, s.cfg.AgentName, (&corev2.User{}).StoreName())
+	//usrWrapper, err := s.storev2.Get(usrReq)
 
-		// Indicate to the agent that this user does not exist
-		//meta := corev2.NewObjectMeta(UserNotFound, s.cfg.Namespace)
-		watchEvent := &store.WatchEventUserConfig{
-			User:   &corev2.User{},
-			Action: store.WatchCreate,
-			//Metadata: &meta,
-		}
-		err = s.bus.Publish(messaging.UserConfigTopic(s.cfg.Namespace, s.cfg.AgentName), watchEvent)
-		if err != nil {
-			lager.WithError(err).Error("error publishing user config")
-			return err
-		}
-	} else {
-		// A user config already exists, therefore we should the stored user subscriptions
-		// rather than what the agent provided us for the subscriptions
-		lager.Debug("an user config was found")
+	//err = usrWrapper.UnwrapInto(&storedUserConfig)
+	//if err != nil {
+	//	lager.WithError(err).Error("error unwrapping user config")
+	//	return err
+	//}
 
-		var storedUserConfig corev2.User
-		err = usrWrapper.UnwrapInto(&storedUserConfig)
-		if err != nil {
-			lager.WithError(err).Error("error unwrapping user config")
-			return err
-		}
+	// Remove the managed_by label if the value is sensu-agent, in case of disabled user
+	//if storedUserConfig.GetMetadata().Labels[corev2.ManagedByLabel] == "sensu-agent" {
+	//	delete(storedUserConfig.GetMetadata().Labels, corev2.ManagedByLabel)
+	//}
 
-		// Remove the managed_by label if the value is sensu-agent, in case of disabled user
-		if storedUserConfig.GetMetadata().Labels[corev2.ManagedByLabel] == "sensu-agent" {
-			delete(storedUserConfig.GetMetadata().Labels, corev2.ManagedByLabel)
-		}
-
-		// Send back this user config to the agent so it uses that rather than it's local config
-		watchEvent := &store.WatchEventUserConfig{
-			Action: store.WatchUpdate,
-			User:   &storedUserConfig,
-		}
-		err = s.bus.Publish(messaging.UserConfigTopic(s.cfg.Namespace, s.cfg.AgentName), watchEvent)
-		if err != nil {
-			lager.WithError(err).Error("error publishing user config")
-			return err
-		}
+	// Send back this user config to the agent so it uses that rather than it's local config
+	watchEvent := &store.WatchEventUserConfig{
+		Action: store.WatchUpdate,
+		User:   &corev2.User{},
 	}
+	err = s.bus.Publish(messaging.UserConfigTopic(s.cfg.Namespace, s.cfg.AgentName), watchEvent)
+	if err != nil {
+		lager.WithError(err).Error("error publishing user config")
+		return err
+	}
+	//if err != nil {
+	//	// Just exit but don't send error about absence of user config
+	//	var errNotFound *store.ErrNotFound
+	//	if !errors.As(err, &errNotFound) {
+	//		lager.WithError(err).Error("error querying the user config")
+	//		return err
+	//	}
+	//	lager.Debug("no user config found")
+	//
+	//	// Indicate to the agent that this user does not exist
+	//	//meta := corev2.NewObjectMeta(UserNotFound, s.cfg.Namespace)
+	//	watchEvent := &store.WatchEventUserConfig{
+	//		User:   &corev2.User{},
+	//		Action: store.WatchCreate,
+	//		//Metadata: &meta,
+	//	}
+	//	err = s.bus.Publish(messaging.UserConfigTopic(s.cfg.Namespace, s.cfg.AgentName), watchEvent)
+	//	if err != nil {
+	//		lager.WithError(err).Error("error publishing user config")
+	//		return err
+	//	}
+	//} else {
+	//	// A user config already exists, therefore we should the stored user subscriptions
+	//	// rather than what the agent provided us for the subscriptions
+	//	lager.Debug("an user config was found")
+	//
+	//	var storedUserConfig corev2.User
+	//	err = usrWrapper.UnwrapInto(&storedUserConfig)
+	//	if err != nil {
+	//		lager.WithError(err).Error("error unwrapping user config")
+	//		return err
+	//	}
+	//
+	//	// Remove the managed_by label if the value is sensu-agent, in case of disabled user
+	//	if storedUserConfig.GetMetadata().Labels[corev2.ManagedByLabel] == "sensu-agent" {
+	//		delete(storedUserConfig.GetMetadata().Labels, corev2.ManagedByLabel)
+	//	}
+	//
+	//	// Send back this user config to the agent so it uses that rather than it's local config
+	//	watchEvent := &store.WatchEventUserConfig{
+	//		Action: store.WatchUpdate,
+	//		User:   &storedUserConfig,
+	//	}
+	//	err = s.bus.Publish(messaging.UserConfigTopic(s.cfg.Namespace, s.cfg.AgentName), watchEvent)
+	//	if err != nil {
+	//		lager.WithError(err).Error("error publishing user config")
+	//		return err
+	//	}
+	//}
 
 	// Determine if the entity already exists
 	subscription, err := s.bus.Subscribe(topic, agentName, s.entityConfig)
