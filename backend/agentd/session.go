@@ -247,9 +247,11 @@ func NewSession(ctx context.Context, cfg SessionConfig) (*Session, error) {
 		}()
 	}
 
-	_, err := s.bus.Subscribe("userUpdates", cfg.AgentName, s.userConfig)
-	if err != nil {
-		return nil, err
+	if len(cfg.User) > 0 {
+		_, err := s.bus.Subscribe(messaging.UserConfigTopic(cfg.User), cfg.AgentName, s.userConfig)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	if err := s.bus.Publish(messaging.TopicKeepalive, makeEntitySwitchBurialEvent(cfg)); err != nil {
@@ -600,7 +602,7 @@ func (s *Session) Start() (err error) {
 
 	// Subscribe the agent to its entity_config  and user_config topic
 	topic := messaging.EntityConfigTopic(s.cfg.Namespace, s.cfg.AgentName)
-	userTopic := messaging.UserConfigTopic(s.cfg.Namespace, s.cfg.AgentName)
+	userTopic := messaging.UserConfigTopic(s.cfg.AgentName)
 	lager.WithField("topic", topic).Debug("subscribing to topic")
 	logger.WithField("topic", userTopic).Debug("subscribing to topic")
 	// Get a unique name for the agent, which will be used as the consumer of the
@@ -634,7 +636,7 @@ func (s *Session) Start() (err error) {
 		Action: store.WatchUpdate,
 		User:   &corev2.User{},
 	}
-	err = s.bus.Publish(messaging.UserConfigTopic(s.cfg.Namespace, s.cfg.AgentName), watchEvent)
+	err = s.bus.Publish(messaging.UserConfigTopic(s.cfg.AgentName), watchEvent)
 	if err != nil {
 		lager.WithError(err).Error("error publishing user config")
 		return err

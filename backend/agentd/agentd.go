@@ -105,7 +105,7 @@ type Agentd struct {
 	serveWaitTime       time.Duration
 	ready               func()
 	backendEntity       *corev2.Entity
-	userWatcher         <-chan store.WatchEventUserConfig
+	userWatcher         <-chan *store.WatchEventUserConfig
 }
 
 // Config configures an Agentd.
@@ -122,7 +122,7 @@ type Config struct {
 	EtcdClientTLSConfig *tls.Config
 	Watcher             <-chan store.WatchEventEntityConfig
 	BackendEntity       *corev2.Entity
-	UserWatcher         <-chan store.WatchEventUserConfig
+	UserWatcher         <-chan *store.WatchEventUserConfig
 }
 
 // Option is a functional option.
@@ -321,12 +321,12 @@ func (a *Agentd) handleEvent(event store.WatchEventEntityConfig) error {
 }
 
 // adding the UserConfig updates to the etcd bus for the watcher to consume
-func (a *Agentd) handleUserEvent(event store.WatchEventUserConfig) error {
+func (a *Agentd) handleUserEvent(event *store.WatchEventUserConfig) error {
 	if event.User == nil {
 		return errors.New("nil entry received from the user config watcher")
 	}
-	topic := messaging.UserConfigTopic(event.User.GetMetadata().Namespace, event.User.Username)
-	if err := a.bus.Publish(topic, &event); err != nil {
+	topic := messaging.UserConfigTopic(event.User.Username)
+	if err := a.bus.Publish(topic, event); err != nil {
 		logger.WithField("topic", topic).WithError(err).
 			Error("unable to publish a user config update to the bus")
 		return err

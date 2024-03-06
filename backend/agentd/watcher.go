@@ -137,14 +137,14 @@ func GetEntityConfigWatcher(ctx context.Context, client *clientv3.Client) <-chan
 
 // GetUserConfigWatcher watches changes to the UserConfig in etcd and publish them -- git#2806
 // over the bus as store.WatchEventUserConfig
-func GetUserConfigWatcher(ctx context.Context, client *clientv3.Client) <-chan store.WatchEventUserConfig {
+func GetUserConfigWatcher(ctx context.Context, client *clientv3.Client) <-chan *store.WatchEventUserConfig {
 
 	key := etcdstorev2.StoreKey(storev2.ResourceRequest{
 		Context:   ctx,
 		StoreName: new(corev2.User).StoreName(),
 	})
 	w := etcdstore.Watch(ctx, client, key, true)
-	ch := make(chan store.WatchEventUserConfig, 10)
+	ch := make(chan *store.WatchEventUserConfig, 10)
 
 	go func() {
 		defer close(ch)
@@ -154,7 +154,7 @@ func GetUserConfigWatcher(ctx context.Context, client *clientv3.Client) <-chan s
 				logger.
 					WithError(errors.New(string(response.Object))).
 					Error("Unexpected error while watching for the user config updates")
-				ch <- store.WatchEventUserConfig{
+				ch <- &store.WatchEventUserConfig{
 					Action: response.Type,
 				}
 				continue
@@ -169,7 +169,7 @@ func GetUserConfigWatcher(ctx context.Context, client *clientv3.Client) <-chan s
 				fmt.Println("======= user watch event in watcher ========", userConfig.Username, userConfig.Disabled, response.Type)
 			}
 
-			ch <- store.WatchEventUserConfig{
+			ch <- &store.WatchEventUserConfig{
 				User:     &userConfig,
 				Action:   response.Type,
 				Disabled: userConfig.Disabled,
