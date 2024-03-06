@@ -381,7 +381,6 @@ func (s *Session) sender() {
 		//	msg = transport.NewMessage(user.Username, configUser)
 
 		case u := <-s.userConfig.updatesChannel:
-
 			watchEvent, ok := u.(*store.WatchEventUserConfig)
 			fmt.Println("==========  usrConfig Updates ========", watchEvent)
 			if !ok {
@@ -392,25 +391,28 @@ func (s *Session) sender() {
 			//if watchEvent.User.Disabled && watchEvent.User.Username == s.user {
 			//	return
 			//}
-			if watchEvent.Disabled {
-				fmt.Println("========= the user is now disabled =======")
-				s.stop()
-				return
-			}
-
-			fmt.Println("==========  usrConfig Updates ========", watchEvent)
-			//// Handle the delete/disable event
-			//switch userConfig {
-			//case store.WatchDelete:
-			//	fmt.Println(" ======= delete =======", store.WatchDelete)
+			//if watchEvent.Disabled {
+			//	fmt.Println("========= the user is now disabled =======")
+			//	s.stop()
 			//	return
-			//case store.WatchCreate:
-			//	fmt.Println("======= create user ====", store.WatchCreate)
-			//case store.WatchUpdate:
-			//	fmt.Println("==== user update ======", store.WatchUpdate)
-			//default:
-			//	panic("unhandled default case")
 			//}
+			fmt.Println("==========  usrConfig Updates ========", watchEvent)
+			// Handle the delete/disable event
+			switch watchEvent.Action {
+			case store.WatchDelete:
+				fmt.Println(" ======= delete =======", store.WatchDelete)
+				return
+			case store.WatchCreate:
+				fmt.Println("======= create user ====", store.WatchCreate)
+			case store.WatchUpdate:
+				if watchEvent.Disabled {
+					fmt.Println("========= the user is now disabled =======")
+					return
+				}
+				fmt.Println("==== user update ======", store.WatchUpdate)
+			default:
+				panic("unhandled default case")
+			}
 
 			if watchEvent.User == nil {
 				logger.Error("session received nil user in watch event")

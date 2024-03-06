@@ -326,7 +326,7 @@ func (a *Agentd) handleUserEvent(event store.WatchEventUserConfig) error {
 		return errors.New("nil entry received from the user config watcher")
 	}
 	topic := messaging.UserConfigTopic(event.User.GetMetadata().Namespace, event.User.Username)
-	if err := a.bus.Publish(topic, event.User.Username); err != nil {
+	if err := a.bus.Publish(topic, &event); err != nil {
 		logger.WithField("topic", topic).WithError(err).
 			Error("unable to publish a user config update to the bus")
 		return err
