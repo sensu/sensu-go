@@ -162,6 +162,7 @@ type SessionConfig struct {
 	// with the session has been buried. Necessary when running parallel keepalived
 	// workers.
 	BurialReceiver *BurialReceiver
+	userConfig     *userConfig
 }
 
 type BurialReceiver struct {
@@ -356,8 +357,6 @@ func (s *Session) sender() {
 			}
 			// Handle the delete/disable event
 			switch watchEvent.Action {
-			case store.WatchCreate:
-				logger.Println("New user has been created")
 			case store.WatchUpdate:
 				if watchEvent.Disabled {
 					logger.Warn("The user associated with the agent is now disabled")
@@ -580,55 +579,6 @@ func (s *Session) Start() (err error) {
 		lager.WithError(err).Error("error publishing user config")
 		return err
 	}
-	//if err != nil {
-	//	// Just exit but don't send error about absence of user config
-	//	var errNotFound *store.ErrNotFound
-	//	if !errors.As(err, &errNotFound) {
-	//		lager.WithError(err).Error("error querying the user config")
-	//		return err
-	//	}
-	//	lager.Debug("no user config found")
-	//
-	//	// Indicate to the agent that this user does not exist
-	//	//meta := corev2.NewObjectMeta(UserNotFound, s.cfg.Namespace)
-	//	watchEvent := &store.WatchEventUserConfig{
-	//		User:   &corev2.User{},
-	//		Action: store.WatchCreate,
-	//		//Metadata: &meta,
-	//	}
-	//	err = s.bus.Publish(messaging.UserConfigTopic(s.cfg.Namespace, s.cfg.AgentName), watchEvent)
-	//	if err != nil {
-	//		lager.WithError(err).Error("error publishing user config")
-	//		return err
-	//	}
-	//} else {
-	//	// A user config already exists, therefore we should the stored user subscriptions
-	//	// rather than what the agent provided us for the subscriptions
-	//	lager.Debug("an user config was found")
-	//
-	//	var storedUserConfig corev2.User
-	//	err = usrWrapper.UnwrapInto(&storedUserConfig)
-	//	if err != nil {
-	//		lager.WithError(err).Error("error unwrapping user config")
-	//		return err
-	//	}
-	//
-	//	// Remove the managed_by label if the value is sensu-agent, in case of disabled user
-	//	if storedUserConfig.GetMetadata().Labels[corev2.ManagedByLabel] == "sensu-agent" {
-	//		delete(storedUserConfig.GetMetadata().Labels, corev2.ManagedByLabel)
-	//	}
-	//
-	//	// Send back this user config to the agent so it uses that rather than it's local config
-	//	watchEvent := &store.WatchEventUserConfig{
-	//		Action: store.WatchUpdate,
-	//		User:   &storedUserConfig,
-	//	}
-	//	err = s.bus.Publish(messaging.UserConfigTopic(s.cfg.Namespace, s.cfg.AgentName), watchEvent)
-	//	if err != nil {
-	//		lager.WithError(err).Error("error publishing user config")
-	//		return err
-	//	}
-	//}
 
 	// Determine if the entity already exists
 	subscription, err := s.bus.Subscribe(topic, agentName, s.entityConfig)
