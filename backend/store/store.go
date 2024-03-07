@@ -162,8 +162,6 @@ type WatchEventUserConfig struct {
 	User     *corev2.User
 	Action   WatchActionType
 	Disabled bool
-	//Metadata *v2.ObjectMeta `protobuf:"bytes,1,opt,name=metadata,proto3" json:"metadata"`
-	////Subscriptions []string       `protobuf:"bytes,4,rep,name=subscriptions,proto3" json:"subscriptions"`
 }
 
 // Store is used to abstract the durable storage used by the Sensu backend

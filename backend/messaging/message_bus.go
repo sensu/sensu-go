@@ -106,8 +106,8 @@ func EntityConfigTopic(namespace, name string) string {
 	return fmt.Sprintf("%s:%s:%s", TopicEntityConfig, namespace, name)
 }
 
-func UserConfigTopic(namespace, name string) string {
-	return fmt.Sprintf("%s:%s:%s", TopicUserConfig, namespace, name)
+func UserConfigTopic(name string) string {
+	return fmt.Sprintf("%s:%s", TopicUserConfig, name)
 }
 
 // SubscriptionTopic is a helper to determine the proper topic name for a

@@ -25,8 +25,6 @@ import (
 )
 
 const (
-	UserNotFound = "not found"
-
 	deletedEventSentinel = -1
 
 	// Time to wait before force close on connection.
@@ -101,7 +99,6 @@ type Session struct {
 	user             string
 	mu               sync.Mutex
 	subscriptionsMap map[string]subscription
-	//userReceiver     *UserReceiver
 }
 
 // subscription is used to abstract a message.Subscription and therefore allow
@@ -181,20 +178,6 @@ func (b *BurialReceiver) Receiver() chan<- interface{} {
 	return b.ch
 }
 
-//type UserReceiver struct {
-//	ch chan interface{}
-//}
-//
-//func NewUserReceiver() *UserReceiver {
-//	return &UserReceiver{
-//		ch: make(chan interface{}, 1),
-//	}
-//}
-//
-//func (b *UserReceiver) Receiver() chan<- interface{} {
-//	return b.ch
-//}
-
 // NewSession creates a new Session object given the triple of a transport
 // connection, message bus, and store.
 // The Session is responsible for stopping itself, and does so when it
@@ -224,7 +207,6 @@ func NewSession(ctx context.Context, cfg SessionConfig) (*Session, error) {
 		unmarshal:        cfg.Unmarshal,
 		marshal:          cfg.Marshal,
 		user:             cfg.User,
-		//userReceiver:     NewUserReceiver(),
 		entityConfig: &entityConfig{
 			subscriptions:  make(chan messaging.Subscription, 1),
 			updatesChannel: make(chan interface{}, 10),
@@ -247,9 +229,11 @@ func NewSession(ctx context.Context, cfg SessionConfig) (*Session, error) {
 		}()
 	}
 
-	_, err := s.bus.Subscribe("userUpdates", cfg.AgentName, s.userConfig)
-	if err != nil {
-		return nil, err
+	if len(cfg.User) > 0 {
+		_, err := s.bus.Subscribe(messaging.UserConfigTopic(cfg.User), cfg.AgentName, s.userConfig)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	if err := s.bus.Publish(messaging.TopicKeepalive, makeEntitySwitchBurialEvent(cfg)); err != nil {
@@ -363,53 +347,23 @@ func (s *Session) sender() {
 		var msg *transport.Message
 		select {
 		//---- user -----//
-		//case u := <-s.userReceiver.ch:
-		//	user, ok := u.(*corev2.User)
-		//	if !ok {
-		//		logger.WithField("unexpected user struct", ok)
-		//	}
-		//
-		//	configUser, err := s.marshal(user)
-		//	if err != nil {
-		//		logger.WithError(err).Error("session failed to serialize the user config")
-		//	}
-		//
-		//	if user.Disabled && user.Username == s.user {
-		//		return
-		//	}
-		//
-		//	msg = transport.NewMessage(user.Username, configUser)
 
 		case u := <-s.userConfig.updatesChannel:
 			watchEvent, ok := u.(*store.WatchEventUserConfig)
-			fmt.Println("==========  usrConfig Updates ========", watchEvent)
 			if !ok {
 				logger.Errorf("session received unexoected user struct : %T", u)
 				continue
 			}
-			//fmt.Println("--------action --------", store.WatchCreate, store.WatchDelete, store.WatchUnknown)
-			//if watchEvent.User.Disabled && watchEvent.User.Username == s.user {
-			//	return
-			//}
-			//if watchEvent.Disabled {
-			//	fmt.Println("========= the user is now disabled =======")
-			//	s.stop()
-			//	return
-			//}
-			fmt.Println("==========  usrConfig Updates ========", watchEvent)
 			// Handle the delete/disable event
 			switch watchEvent.Action {
-			case store.WatchDelete:
-				fmt.Println(" ======= delete =======", store.WatchDelete)
-				return
 			case store.WatchCreate:
-				fmt.Println("======= create user ====", store.WatchCreate)
+				logger.Println("New user has been created")
 			case store.WatchUpdate:
 				if watchEvent.Disabled {
-					fmt.Println("========= the user is now disabled =======")
+					logger.Warn("The user associated with the agent is now disabled")
 					return
 				}
-				fmt.Println("==== user update ======", store.WatchUpdate)
+				logger.Println("The update operation has been performed on user")
 			default:
 				panic("unhandled default case")
 			}
@@ -421,28 +375,15 @@ func (s *Session) sender() {
 			lagger := logger.WithFields(logrus.Fields{
 				"action":    watchEvent.Action.String(),
 				"user":      watchEvent.User.Username,
-				"namespace": watchEvent.User.GetMetadata().Namespace,
+				"namespace": watchEvent.User.GetMetadata().GetNamespace(),
 			})
 			lagger.Debug("user update received")
-
-			//configReq := storev2.NewResourceRequestFromV2Resource(s.ctx, watchEvent.User)
-			//wrapper, err := storev2.WrapResource(watchEvent.User)
-			//if err != nil {
-			//	lagger.WithError(err).Error("could not warp the user config")
-			//	continue
-			//}
-			//
-			//if err := s.storev2.CreateOrUpdate(configReq, wrapper); err != nil {
-			//	sessionErrorCounter.WithLabelValues(err.Error()).Inc()
-			//	lagger.WithError(err).Error("could not update the user config")
-			//}
 
 			bytes, err := s.marshal(watchEvent.User)
 			if err != nil {
 				lagger.WithError(err).Error("session failed to serialize user config")
 			}
-			//msg = transport.NewMessage(transport.MessageTypeUserConfig, bytes)
-			msg = transport.NewMessage(corev2.UserType, bytes)
+			msg = transport.NewMessage(transport.MessageTypeUserConfig, bytes)
 
 		// ---- entity ----//
 		case e := <-s.entityConfig.updatesChannel:
@@ -600,7 +541,7 @@ func (s *Session) Start() (err error) {
 
 	// Subscribe the agent to its entity_config  and user_config topic
 	topic := messaging.EntityConfigTopic(s.cfg.Namespace, s.cfg.AgentName)
-	userTopic := messaging.UserConfigTopic(s.cfg.Namespace, s.cfg.AgentName)
+	userTopic := messaging.UserConfigTopic(s.cfg.AgentName)
 	lager.WithField("topic", topic).Debug("subscribing to topic")
 	logger.WithField("topic", userTopic).Debug("subscribing to topic")
 	// Get a unique name for the agent, which will be used as the consumer of the
@@ -634,7 +575,7 @@ func (s *Session) Start() (err error) {
 		Action: store.WatchUpdate,
 		User:   &corev2.User{},
 	}
-	err = s.bus.Publish(messaging.UserConfigTopic(s.cfg.Namespace, s.cfg.AgentName), watchEvent)
+	err = s.bus.Publish(messaging.UserConfigTopic(s.cfg.AgentName), watchEvent)
 	if err != nil {
 		lager.WithError(err).Error("error publishing user config")
 		return err
