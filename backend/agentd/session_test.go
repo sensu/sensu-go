@@ -77,10 +77,6 @@ func TestMakeEntitySwitchBurialEvent(t *testing.T) {
 	}
 }
 
-type UserConfig struct {
-	updatesChannel chan interface{}
-}
-
 func TestSession_sender(t *testing.T) {
 	type busFunc func(*messaging.WizardBus, *sync.WaitGroup)
 	type connFunc func(*mocktransport.MockTransport, *sync.WaitGroup)
