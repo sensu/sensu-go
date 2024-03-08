@@ -518,7 +518,7 @@ func (s *Session) Start() (err error) {
 	sessionCounter.WithLabelValues(s.cfg.Namespace).Inc()
 	s.wg = &sync.WaitGroup{}
 	s.wg.Add(2)
-	s.stopWG.Add(2)
+	s.stopWG.Add(1)
 	go s.sender()
 	go s.receiver()
 	go func() {
