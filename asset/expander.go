@@ -94,10 +94,5 @@ func sniffType(f io.ReadSeeker) (filetype_types.Type, error) {
 
 // cleanup of the assetSHA when cache dir gets force deleted
 func CleanUp(fullPath string) error {
-	errorSHA := os.RemoveAll(fullPath)
-	if errorSHA != nil {
-		return errorSHA
-	}
-	return nil
-
+	return os.RemoveAll(fullPath)
 }

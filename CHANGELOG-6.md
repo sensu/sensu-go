@@ -10,11 +10,8 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ### 2024-02-01
 
-### Changed
-- The expandWithDuration in boltdb_manager to have a assetSHA dir cleanup.
-
-### Added
-- Added the cleanup in expander to clean the assetSHA in case of asset cache getting deleted
+### Fixed
+- Assets can now be re-installed when the asset.db file has been deleted.
 
 ### Changed
 - Upgraded CI Go version to 1.21.3
