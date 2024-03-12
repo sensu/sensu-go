@@ -25,8 +25,6 @@ import (
 )
 
 const (
-	userNotFound = "not found"
-
 	deletedEventSentinel = -1
 
 	// Time to wait before force close on connection.
