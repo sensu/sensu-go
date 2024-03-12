@@ -25,6 +25,8 @@ import (
 )
 
 const (
+	userNotFound = "not found"
+
 	deletedEventSentinel = -1
 
 	// Time to wait before force close on connection.
@@ -537,48 +539,37 @@ func (s *Session) Start() (err error) {
 		"agent":     s.cfg.AgentName,
 		"namespace": s.cfg.Namespace,
 	})
-
-	// Subscribe the agent to its entity_config  and user_config topic
-	topic := messaging.EntityConfigTopic(s.cfg.Namespace, s.cfg.AgentName)
-	userTopic := messaging.UserConfigTopic(s.cfg.AgentName)
-	lager.WithField("topic", topic).Debug("subscribing to topic")
-	logger.WithField("topic", userTopic).Debug("subscribing to topic")
 	// Get a unique name for the agent, which will be used as the consumer of the
 	// bus, in order to avoid problems with an agent reconnecting before its
 	// session is ended
 	agentName := agentUUID(s.cfg.Namespace, s.cfg.AgentName)
 
-	// Determine if user already exits
+	// Subscribe the agent to its user_config topic
+
+	userTopic := messaging.UserConfigTopic(s.cfg.User)
+	logger.WithField("topic", userTopic).Debug("subscribing to topic")
 	userSubscription, usrErr := s.bus.Subscribe(userTopic, agentName, s.userConfig)
 	if usrErr != nil {
 		lager.WithError(err).Error("error starting subscription")
 		return err
 	}
 	s.userConfig.subscription <- userSubscription
-	//usrReq := storev2.NewResourceRequest(s.ctx, s.cfg.Namespace, s.cfg.AgentName, (&corev2.User{}).StoreName())
-	//usrWrapper, err := s.storev2.Get(usrReq)
-
-	//err = usrWrapper.UnwrapInto(&storedUserConfig)
-	//if err != nil {
-	//	lager.WithError(err).Error("error unwrapping user config")
-	//	return err
-	//}
-
-	// Remove the managed_by label if the value is sensu-agent, in case of disabled user
-	//if storedUserConfig.GetMetadata().Labels[corev2.ManagedByLabel] == "sensu-agent" {
-	//	delete(storedUserConfig.GetMetadata().Labels, corev2.ManagedByLabel)
-	//}
 
 	// Send back this user config to the agent so it uses that rather than it's local config
 	watchEvent := &store.WatchEventUserConfig{
 		Action: store.WatchUpdate,
 		User:   &corev2.User{},
 	}
-	err = s.bus.Publish(messaging.UserConfigTopic(s.cfg.AgentName), watchEvent)
-	if err != nil {
+	usrErr = s.bus.Publish(messaging.UserConfigTopic(s.cfg.AgentName), watchEvent)
+	if usrErr != nil {
 		lager.WithError(err).Error("error publishing user config")
 		return err
 	}
+
+	// Subscribe the agent to its entity_config topic
+
+	topic := messaging.EntityConfigTopic(s.cfg.Namespace, s.cfg.AgentName)
+	lager.WithField("topic", topic).Debug("subscribing to topic")
 
 	// Determine if the entity already exists
 	subscription, err := s.bus.Subscribe(topic, agentName, s.entityConfig)
@@ -703,6 +694,7 @@ func (s *Session) stop() {
 		}
 	}
 
+	// Remove the user config subscription
 	for sub := range s.userConfig.subscription {
 		if err := sub.Cancel(); err != nil {
 			logger.WithError(err).Error("unable to unsubscribe from message bus")
