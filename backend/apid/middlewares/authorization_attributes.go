@@ -93,13 +93,8 @@ func (a AuthorizationAttributes) Then(next http.Handler) http.Handler {
 				attrs.Resource = types.LocalSelfUserResource
 			}
 
-			// check if request comes from webui
-			if strings.Contains(r.URL.Path, "/change_password") {
-				attrs.Resource = types.LocalSelfUserResource
-			}
-
 			switch vars["subresource"] {
-			case "password":
+			case "password", "change_password":
 				attrs.Resource = types.LocalSelfUserResource
 			}
 		}
