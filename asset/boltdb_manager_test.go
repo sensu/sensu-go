@@ -7,6 +7,7 @@ import (
 	"io"
 	"io/ioutil"
 	"os"
+	"path/filepath"
 	"testing"
 
 	bolt "go.etcd.io/bbolt"
@@ -216,6 +217,33 @@ func TestFailedExpand(t *testing.T) {
 
 	if err == nil {
 		t.Log("expected error, got nil")
+		t.Fail()
+	}
+
+	// Create a temporary directory for testing
+	tmpDir := t.TempDir()
+
+	// Define the SHA and file name
+	SHAName := "shaAsset.tar"
+	SHAFilePath := filepath.Join(tmpDir, SHAName)
+
+	// Create a dummy file inside the temporary directory
+	SHAFile, err := os.Create(SHAFilePath)
+	if err != nil {
+		t.Fatalf("Failed to create dummy file: %v", err)
+	}
+	SHAFile.Close()
+
+	// Call CleanUp with the SHA of the dummy file and the temporary directory
+	err = os.RemoveAll(SHAFilePath)
+	if err != nil {
+		t.Errorf("CleanUp returned an error: %v", err)
+		t.Fail()
+	}
+
+	_, err = os.Stat(SHAFilePath)
+	if !os.IsNotExist(err) {
+		t.Errorf("CleanUp did not remove the dummy file as expected")
 		t.Fail()
 	}
 }
