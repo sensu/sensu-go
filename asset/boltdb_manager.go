@@ -247,7 +247,7 @@ func (b *boltDBAssetManager) expandWithDuration(tmpFile *os.File, asset *corev2.
 	CacheDir := viper.GetString(FlagCacheDir)
 	fullPath := filepath.Join(CacheDir, assetSHA)
 
-	if err := CleanUp(fullPath); err != nil {
+	if err := os.RemoveAll(fullPath); err != nil {
 		logger.WithField("assetSHA path", fullPath).WithError(err).
 			Error("error cleaning up the assetSHA")
 	}

@@ -115,31 +115,31 @@ func TestExpandInvalidArchive(t *testing.T) {
 }
 
 // ---Test to check CleanUp
-func TestCleanUp(t *testing.T) {
-	t.Parallel()
-
-	// Create a temporary directory for testing
-	tmpDir := t.TempDir()
-
-	// Define the SHA and file name
-	SHAName := "shaAsset.tar"
-	SHAFilePath := filepath.Join(tmpDir, SHAName)
-
-	// Create a dummy file inside the temporary directory
-	SHAFile, err := os.Create(SHAFilePath)
-	if err != nil {
-		t.Fatalf("Failed to create dummy file: %v", err)
-	}
-	SHAFile.Close()
-
-	// Call CleanUp with the SHA of the dummy file and the temporary directory
-	err = CleanUp(SHAFilePath)
-	if err != nil {
-		t.Errorf("CleanUp returned an error: %v", err)
-	}
-
-	_, err = os.Stat(SHAFilePath)
-	if !os.IsNotExist(err) {
-		t.Errorf("CleanUp did not remove the dummy file as expected")
-	}
-}
+//func TestCleanUp(t *testing.T) {
+//	t.Parallel()
+//
+//	// Create a temporary directory for testing
+//	tmpDir := t.TempDir()
+//
+//	// Define the SHA and file name
+//	SHAName := "shaAsset.tar"
+//	SHAFilePath := filepath.Join(tmpDir, SHAName)
+//
+//	// Create a dummy file inside the temporary directory
+//	SHAFile, err := os.Create(SHAFilePath)
+//	if err != nil {
+//		t.Fatalf("Failed to create dummy file: %v", err)
+//	}
+//	SHAFile.Close()
+//
+//	// Call CleanUp with the SHA of the dummy file and the temporary directory
+//	err = CleanUp(SHAFilePath)
+//	if err != nil {
+//		t.Errorf("CleanUp returned an error: %v", err)
+//	}
+//
+//	_, err = os.Stat(SHAFilePath)
+//	if !os.IsNotExist(err) {
+//		t.Errorf("CleanUp did not remove the dummy file as expected")
+//	}
+//}

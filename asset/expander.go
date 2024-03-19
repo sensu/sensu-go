@@ -3,10 +3,8 @@ package asset
 import (
 	"errors"
 	"fmt"
-	"io"
-	"os"
-
 	archiver "github.com/mholt/archiver/v3"
+	"io"
 
 	filetype "gopkg.in/h2non/filetype.v1"
 	filetype_types "gopkg.in/h2non/filetype.v1/types"
@@ -93,6 +91,6 @@ func sniffType(f io.ReadSeeker) (filetype_types.Type, error) {
 }
 
 // cleanup of the assetSHA when cache dir gets force deleted
-func CleanUp(fullPath string) error {
-	return os.RemoveAll(fullPath)
-}
+//func CleanUp(fullPath string) error {
+//	return os.RemoveAll(fullPath)
+//}
