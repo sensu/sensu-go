@@ -221,6 +221,7 @@ func TestFailedExpand(t *testing.T) {
 	}
 
 	// Create a temporary directory for testing
+	//if  -- dbName == ""  true
 	tmpDir := t.TempDir()
 
 	// Define the SHA and file name
