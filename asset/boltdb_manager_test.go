@@ -257,7 +257,7 @@ func TestSuccessfulGetAsset(t *testing.T) {
 	if err != nil {
 		t.Logf("error creating the asset file as %v", err)
 	}
-	fi, err := tempAssetFile.Stat()
+	fi, _ := tempAssetFile.Stat()
 	if fi.Size() == 0 {
 		t.Log("asset.db got created corruptly")
 		err = os.RemoveAll(filepath.Join(tmpDir, a.Sha512))
