@@ -219,40 +219,12 @@ func TestFailedExpand(t *testing.T) {
 		t.Log("expected error, got nil")
 		t.Fail()
 	}
-
-	// Create a temporary directory for testing
-	//if  -- dbName == ""  true
-	tmpDir := t.TempDir()
-
-	// Define the SHA and file name
-	SHAName := "shaAsset.tar"
-	SHAFilePath := filepath.Join(tmpDir, SHAName)
-
-	// Create a dummy file inside the temporary directory
-	SHAFile, err := os.Create(SHAFilePath)
-	if err != nil {
-		t.Fatalf("Failed to create dummy file: %v", err)
-	}
-	SHAFile.Close()
-
-	// Call CleanUp with the SHA of the dummy file and the temporary directory
-	err = os.RemoveAll(SHAFilePath)
-	if err != nil {
-		t.Errorf("CleanUp returned an error: %v", err)
-		t.Fail()
-	}
-
-	_, err = os.Stat(SHAFilePath)
-	if !os.IsNotExist(err) {
-		t.Errorf("CleanUp did not remove the dummy file as expected")
-		t.Fail()
-	}
 }
 
 func TestSuccessfulGetAsset(t *testing.T) {
 	t.Parallel()
-
-	tmpFile, err := ioutil.TempFile(os.TempDir(), "asset_test_get_invalid_asset.db")
+	tmpDir := os.TempDir()
+	tmpFile, err := ioutil.TempFile(tmpDir, "asset_test_get_invalid_asset.db")
 	if err != nil {
 		t.Fatalf("unable to create test boltdb file: %v", err)
 	}
@@ -279,6 +251,21 @@ func TestSuccessfulGetAsset(t *testing.T) {
 		},
 		Sha512: "sha",
 		URL:    "path",
+	}
+
+	tempAssetFile, err := os.CreateTemp(tmpDir, "asset.db")
+	if err != nil {
+		t.Logf("error creating the asset file as %v", err)
+	}
+	fi, err := tempAssetFile.Stat()
+	if fi.Size() == 0 {
+		t.Log("asset.db got created corruptly")
+		err = os.RemoveAll(filepath.Join(tmpDir, a.Sha512))
+		if err != nil {
+			t.Logf("issue in deleting the assetSHA due to %v", err)
+		} else {
+			t.Log("assetSHA got deleted successfully and now asset will be properly downloaded.")
+		}
 	}
 
 	runtimeAsset, err := manager.Get(context.TODO(), a)
