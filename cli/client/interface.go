@@ -185,6 +185,12 @@ type PipelineAPIClient interface {
 	FetchPipeline(string) (*corev2.Pipeline, error)
 }
 
+// FallbackPipelineAPIClient client methods for pipelines
+type FallbackPipelineAPIClient interface {
+	DeleteFallbackPipeline(string, string) error
+	FetchFallbackPipeline(string) (*corev2.Pipeline, error)
+}
+
 // UserAPIClient client methods for users
 type UserAPIClient interface {
 	AddGroupToUser(string, string) error
