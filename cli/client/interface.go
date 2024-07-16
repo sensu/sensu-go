@@ -48,6 +48,8 @@ type APIClient interface {
 	GenericClient
 	ClusterMemberClient
 	LicenseClient
+	FallbackPipelineAPIClient
+	//DeleteFallbackPipeline(namespace string, pipeline string) interface{}
 }
 
 // APIKeyClient exposes client methods for api keys.
@@ -188,7 +190,7 @@ type PipelineAPIClient interface {
 // FallbackPipelineAPIClient client methods for pipelines
 type FallbackPipelineAPIClient interface {
 	DeleteFallbackPipeline(string, string) error
-	FetchFallbackPipeline(string) (*corev2.Pipeline, error)
+	FetchFallbackPipeline(string) (*corev2.FallbackPipeline, error)
 }
 
 // UserAPIClient client methods for users

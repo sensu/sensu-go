@@ -125,6 +125,7 @@ func (a *AdapterV1) Name() string {
 }
 
 func (a *AdapterV1) CanRun(ref *corev2.ResourceReference) bool {
+	fmt.Println("<<<MANISHA RESOURCE REF TYPE for fallback :", ref.Type, ref.GetType())
 	if ref.APIVersion == "core/v2" {
 		if ref.Type == "Pipeline" || ref.Type == "LegacyPipeline" {
 			return true

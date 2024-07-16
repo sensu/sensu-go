@@ -193,6 +193,7 @@ func CoreSubrouter(router *mux.Router, cfg Config) *mux.Router {
 		middlewares.LimitRequest{Limit: cfg.RequestLimit},
 		middlewares.Pagination{},
 	)
+	//MANISHA ADDED FALLBACKROUTER
 	mountRouters(
 		subrouter,
 		routers.NewAssetRouter(cfg.Store),
@@ -207,6 +208,7 @@ func CoreSubrouter(router *mux.Router, cfg Config) *mux.Router {
 		routers.NewMutatorsRouter(cfg.Store),
 		routers.NewNamespacesRouter(cfg.Store, cfg.Store, &rbac.Authorizer{Store: cfg.Store}, cfg.Storev2),
 		routers.NewPipelinesRouter(cfg.Store),
+		routers.NewFallbackPipelinesRouter(cfg.Store),
 		routers.NewRolesRouter(cfg.Store),
 		routers.NewRoleBindingsRouter(cfg.Store),
 		routers.NewSilencedRouter(cfg.Store),

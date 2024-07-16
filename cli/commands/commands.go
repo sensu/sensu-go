@@ -20,6 +20,7 @@ import (
 	"github.com/sensu/sensu-go/cli/commands/entity"
 	"github.com/sensu/sensu-go/cli/commands/env"
 	"github.com/sensu/sensu-go/cli/commands/event"
+	"github.com/sensu/sensu-go/cli/commands/fallbackPipeline"
 	"github.com/sensu/sensu-go/cli/commands/filter"
 	"github.com/sensu/sensu-go/cli/commands/handler"
 	"github.com/sensu/sensu-go/cli/commands/hook"
@@ -53,6 +54,7 @@ func AddCommands(rootCmd *cobra.Command, cli *cli.SensuCli) {
 		entity.HelpCommand(cli),
 		event.HelpCommand(cli),
 		pipeline.HelpCommand(cli),
+		fallbackPipeline.HelpCommand(cli),
 		filter.HelpCommand(cli),
 		handler.HelpCommand(cli),
 		hook.HelpCommand(cli),

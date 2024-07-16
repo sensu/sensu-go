@@ -36,10 +36,8 @@ func DeleteCommand(cli *cli.SensuCli) *cobra.Command {
 				}
 			}
 
-			//RAJ look here , should be DeleteFallbackPipeline
-			err := cli.Client.DeletePipeline(namespace, fallbackPipeline)
-
-			//cli.Client.Delete(cli.Client.FallbackPipelinesPath(namespace, name)
+			//err := cli.Client.DeletePipeline(namespace, fallbackPipeline)
+			err := cli.Client.DeleteFallbackPipeline(namespace, fallbackPipeline)
 
 			//err := cli.Client.
 
