@@ -9,8 +9,8 @@ import (
 // HelpCommand defines new pipeline command
 func HelpCommand(cli *cli.SensuCli) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "fallbackPipeline",
-		Short: "Manage fallbackPipelines",
+		Use:   "fallback-pipeline",
+		Short: "Manage fallback-pipelines",
 		RunE:  helpers.DefaultSubCommandRunE,
 	}
 

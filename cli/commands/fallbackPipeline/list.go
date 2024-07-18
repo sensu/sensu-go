@@ -21,7 +21,7 @@ import (
 func ListCommand(cli *cli.SensuCli) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:          "list",
-		Short:        "list fallbackPipelines",
+		Short:        "list fallback-pipelines",
 		SilenceUsage: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if len(args) != 0 {

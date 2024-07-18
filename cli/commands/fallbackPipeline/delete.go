@@ -14,7 +14,7 @@ import (
 func DeleteCommand(cli *cli.SensuCli) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:          "delete [FALLBACKPIPELINE]",
-		Short:        "delete fallbackPipeline",
+		Short:        "delete fallback-pipeline",
 		SilenceUsage: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if len(args) != 1 {
@@ -30,16 +30,13 @@ func DeleteCommand(cli *cli.SensuCli) *cobra.Command {
 				opts := []survey.AskOpt{
 					survey.WithStdio(cli.InFile, cli.OutFile, cli.ErrFile),
 				}
-				if confirmed := helpers.ConfirmDeleteResourceWithOpts(fallbackPipeline, "fallbackPipeline", opts...); !confirmed {
+				if confirmed := helpers.ConfirmDeleteResourceWithOpts(fallbackPipeline, "fallback-pipeline", opts...); !confirmed {
 					fmt.Fprintln(cmd.OutOrStdout(), "Canceled")
 					return nil
 				}
 			}
 
-			//err := cli.Client.DeletePipeline(namespace, fallbackPipeline)
 			err := cli.Client.DeleteFallbackPipeline(namespace, fallbackPipeline)
-
-			//err := cli.Client.
 
 			if err != nil {
 				return err

@@ -16,7 +16,7 @@ import (
 func InfoCommand(cli *cli.SensuCli) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:          "info [FALLBACKPIPELINE]",
-		Short:        "show detailed fallback pipeline information",
+		Short:        "show detailed fallback-pipeline information",
 		SilenceUsage: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if len(args) != 1 {
@@ -46,7 +46,7 @@ func InfoCommand(cli *cli.SensuCli) *cobra.Command {
 func printToList(v interface{}, writer io.Writer) error {
 	pipeline, ok := v.(*corev2.FallbackPipeline)
 	if !ok {
-		return fmt.Errorf("%t is not a fallback Pipeline", v)
+		return fmt.Errorf("%t is not a fallback-pipeline", v)
 	}
 
 	cfg := &list.Config{
@@ -66,7 +66,7 @@ func printToList(v interface{}, writer io.Writer) error {
 	for _, pipelines := range pipeline.Pipelist {
 		cfg.Rows = append(cfg.Rows, &list.Row{
 			Label: fmt.Sprintf("  %s", pipelines.GetName()),
-			Value: fmt.Sprintf("  %s (API version)", pipelines.GetAPIVersion()),
+			Value: fmt.Sprintf("  %s ", pipelines.GetType()),
 		})
 	}
 

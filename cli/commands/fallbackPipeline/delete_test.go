@@ -1,4 +1,4 @@
-package pipeline
+package fallbackPipeline
 
 import (
 	"fmt"
@@ -18,13 +18,13 @@ func TestDeleteCommand(t *testing.T) {
 	assert.NotNil(t, cmd, "cmd should be returned")
 	assert.NotNil(t, cmd.RunE, "cmd should be able to be executed")
 	assert.Regexp(t, "delete", cmd.Use)
-	assert.Regexp(t, "pipeline", cmd.Short)
+	assert.Regexp(t, "fallback-pipeline", cmd.Short)
 }
 
 func TestDeleteCommandRunEClosure(t *testing.T) {
 	cli := test.NewMockCLI()
 	cli.Client.(*client.MockClient).
-		On("DeletePipeline", mock.Anything, mock.Anything, mock.Anything).
+		On("DeleteFallbackPipeline", mock.Anything, mock.Anything, mock.Anything).
 		Return(nil)
 
 	cmd := DeleteCommand(cli)
@@ -49,7 +49,7 @@ func TestDeleteCommandRunMissingArgs(t *testing.T) {
 func TestDeleteCommandRunEClosureWithErr(t *testing.T) {
 	cli := test.NewMockCLI()
 	cli.Client.(*client.MockClient).
-		On("DeletePipeline", mock.Anything, mock.Anything, mock.Anything).
+		On("DeleteFallbackPipeline", mock.Anything, mock.Anything, mock.Anything).
 		Return(fmt.Errorf("error"))
 
 	cmd := DeleteCommand(cli)
