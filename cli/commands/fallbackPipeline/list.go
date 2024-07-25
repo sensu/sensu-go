@@ -87,7 +87,7 @@ func printToTable(results interface{}, writer io.Writer) {
 					return cli.TypeError
 				}
 				plist := []string{}
-				for _, pipelinelist := range fallbackPipeline.Pipelist {
+				for _, pipelinelist := range fallbackPipeline.PipelineList {
 					plist = append(plist, pipelinelist.Name)
 				}
 				return strings.Join(plist, ",")

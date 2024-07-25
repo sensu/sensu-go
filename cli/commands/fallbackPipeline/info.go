@@ -63,7 +63,7 @@ func printToList(v interface{}, writer io.Writer) error {
 		},
 	}
 
-	for _, pipelines := range pipeline.Pipelist {
+	for _, pipelines := range pipeline.PipelineList {
 		cfg.Rows = append(cfg.Rows, &list.Row{
 			Label: fmt.Sprintf("  %s", pipelines.GetName()),
 			Value: fmt.Sprintf("  %s ", pipelines.GetType()),
