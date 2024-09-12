@@ -30,12 +30,15 @@ func (s *Store) GetSession(ctx context.Context, username, sessionID string) (str
 }
 
 // UpdateSession applies the supplied state to the session uniquely identified
-// by the given username and session ID.
+// by the given username and session ID and TTL of 11 minutes
 func (s *Store) UpdateSession(ctx context.Context, username, sessionID, state string) error {
-	if _, err := s.client.Put(ctx, userSessionPath(username, sessionID), state); err != nil {
+	leaseResp, err := s.client.Grant(ctx, 60*11)
+	if err != nil {
+		fmt.Errorf("%s", err)
+	}
+	if _, err := s.client.Put(ctx, userSessionPath(username, sessionID), state, clientv3.WithLease(leaseResp.ID)); err != nil {
 		return err
 	}
-
 	return nil
 }
 
