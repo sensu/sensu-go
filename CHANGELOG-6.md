@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic
 Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [6.11.1] - 2024-09-12
+
+### Changed
+- Added TTl to each entry in user-session within etcd
+- TTl value is 11 minutes
+
 ## [6.11.0] - 2024-01-31
 
 ### Changed
