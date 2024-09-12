@@ -8,6 +8,11 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## [6.11.0] - 2024-01-31
 
+### Fixed
+- Manual check execution of scheduled check will also be able to fetch the matched entities
+
+## [6.11.0] - 2024-01-31
+
 ### Changed
 - Upgraded CI Go version to 1.21.3
 - Upgraded jwt version to 4.4.3
@@ -62,41 +67,41 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ### Added
 - A sensu.io/output\_truncated\_bytes label is now applied to events when
-the check output has been truncated due to a check's max\_output\_size
-configuration.
+  the check output has been truncated due to a check's max\_output\_size
+  configuration.
 
 ## [6.8.1] - 2022-09-13
 
 ### Changed
 - Check subdues are now evaluated on a half open interval such that there
-should be no unintended gaps between overlapping subdues.
+  should be no unintended gaps between overlapping subdues.
 
 ### Security
 - Addresses issue where the entity list view would display values of redacted
-labels.
+  labels.
 
 ## [6.8.0] - 2022-08-24
 
 ### Changed
 - Eventd now prioritizes keepalive events over other events in order to
-mitigate the potential of keepalive event creation storms and mass agent
-disconnects.
+  mitigate the potential of keepalive event creation storms and mass agent
+  disconnects.
 
 ### Added
 - GlobalResource interface in core/v3 allows core/v3 resources to
-be marked as global resources.
+  be marked as global resources.
 - Added `--api-serve-wait-time` backend flag to delay serving API requests
-for a period of time after startup.
+  for a period of time after startup.
 - Added `/ready` endpoint to the sensu-go API. Returns 200 when the API is ready
-to serve traffic.
+  to serve traffic.
 - Added `--agent-serve-wait-time` backend flag to delay accepting agent
-connections for a period of time after startup.
+  connections for a period of time after startup.
 - Added `/ready` endpoint to the agent listener. Returns 200 when the listener
-is ready to accept agent connections.
+  is ready to accept agent connections.
 
 ### Fixed
 - Fixed a bug where sensu-backend could crash if the BackendIDGetter
-encounters etcd client unavailability.
+  encounters etcd client unavailability.
 
 ## [6.7.5] - 2022-08-10
 
@@ -112,16 +117,16 @@ encounters etcd client unavailability.
 
 ### Changed
 - Agents will no longer execute check requests with equal or older issued
-timestamps than the issued timestamp for the last executed check request with
-the same check name.
+  timestamps than the issued timestamp for the last executed check request with
+  the same check name.
 
 ## [6.7.2] - 2022-05-12
 
 ### Added
 - Added the `etcd-unsafe-no-fsync` backend configuration option,
-making it possible to run a sensu-backend with an embedded etcd node
-for testing and development without placing lots of load on the file
-system.
+  making it possible to run a sensu-backend with an embedded etcd node
+  for testing and development without placing lots of load on the file
+  system.
 
 ### Fixed
 - Print the correct round robin scheduler source (etcd or postgres).
@@ -133,7 +138,7 @@ system.
 
 ### Changed
 - Cron scheduler now logs that it is stopping before it begins the process of
-stopping.
+  stopping.
 
 ### Fixed
 - Fixed several data races in schedulerd.
@@ -151,9 +156,9 @@ stopping.
 - Log agent IP address for connections with faulty TLS configurations.
 - ARM Version detection
 - Fixed a bug where pipelines in check configuration were not represented in
-the check object of events that were produced with the check configuration.
+  the check object of events that were produced with the check configuration.
 - Socket handlers will no longer cause sensu-backend to panic when interrupted
-mid-write.
+  mid-write.
 
 ### Changed
 - The default embedded etcd heartbeat interval has been increased from 100 to 300.
@@ -165,15 +170,15 @@ mid-write.
 ### Fixed
 
 - [GraphQL] Fixed issue where one could not use an offset >= 500 when paging
-through entities.
+  through entities.
 
 ## [6.6.5] - 2022-02-03
 
 ### Fixed
 - Fixed interactive wording for `sensu-backend upgrade`. The wording no longer
-refers to Sensu 5.x.
+  refers to Sensu 5.x.
 - Resolves unpredictable ringv2 behavior when identical subscriptions are
-created from different contexts.
+  created from different contexts.
 
 ### Added
 - Added metric threshold service checks.
@@ -185,18 +190,18 @@ created from different contexts.
 ### Changed
 - Agent now persists prometheus HELP messages as a metric tag.
 - Resource specifications can now use precise core/v2 and core/v3 module
-versions. For instance, api_version: core/v2.5.1 or core/v2.3. The resource
-validation system will reject the resource if Sensu does not have at least the
-specified version.
+  versions. For instance, api_version: core/v2.5.1 or core/v2.3. The resource
+  validation system will reject the resource if Sensu does not have at least the
+  specified version.
 
 ### Fixed
 - Empty map fields (e.g. an entity with no labels) are no longer treated as nil
-when used with token substitution.
+  when used with token substitution.
 ## [6.6.4] - 2022-01-13
 
 ### Added
 - Add `sensu_go_event_metric_points_processed` counter metric and
-included it in tessen reporting.
+  included it in tessen reporting.
 
 ### Fixed
 - Referencing a non-existent handler in a pipeline no longer results in a crash.
@@ -205,28 +210,28 @@ included it in tessen reporting.
 
 ### Added
 - Added `etcd-client-log-level` configuration flag for setting the log level of
-the etcd client used internally within sensu-backend.
+  the etcd client used internally within sensu-backend.
 
 ### Changed
 - [GraphQL] Improvements to entity list response times and significant reduction
-in memory usage.
+  in memory usage.
 - The agentd daemon now starts up after all other daemons which improves the
-chances of a cluster recovering after the loss of a backend.
+  chances of a cluster recovering after the loss of a backend.
 - sensu-backend will now crash when its daemons do not stop within 30s. This can
-happen as the result of an intentional shutdown, or when an internal restart is
-triggered by database unavailability. This only applies when --no-embed-etcd is
-true. Embedded etcd sensu-backend will do everything it can to avoid crashing,
-which is necessary to avoid member corruption.
+  happen as the result of an intentional shutdown, or when an internal restart is
+  triggered by database unavailability. This only applies when --no-embed-etcd is
+  true. Embedded etcd sensu-backend will do everything it can to avoid crashing,
+  which is necessary to avoid member corruption.
 
 ### Fixed
 - New agent sessions will no longer result in a leaked Etcd lease.
 - sensu-backend now prints warning and continues instead of crashing
-when --event-log-file cannot be written to.
+  when --event-log-file cannot be written to.
 - Fixed a crash that can occur when keepalive leases are revoked on another
-backend, or by an etcd operator.
+  backend, or by an etcd operator.
 - Fixed an issue where sensu-backend would not terminate correctly.
 - Proxy entity state is now created when it is missing and a matching entity
-config already exists.
+  config already exists.
 
 ### Changed
 - Removed unused rate limiting code in the liveness package.
@@ -234,56 +239,56 @@ config already exists.
 
 ### Added
 - Add `sensu_go_event_metric_points_processed` counter metric and
-included it in tessen reporting.
+  included it in tessen reporting.
 
 ## [6.6.1, 6.6.2] - 2021-11-29
 
 ### Added
 - Check & CheckConfig validation errors related to cron now provide additional
-context.
+  context.
 
 ### Fixed
 - Remove debugging log entry.
 - Event executed timestamps are now set when resolving an event through
-sensuctl or the webui.
+  sensuctl or the webui.
 
 ## [6.6.0] - 2021-11-25
 
 ### Added
 - Add backend label to logged metrics.
 - Check & CheckConfig validation errors related to cron now provide additional
-context.
+  context.
 
 ### Fixed
 - In addition to the context error print the connection error when
-sensu-go can't connect to etcd.
+  sensu-go can't connect to etcd.
 - Fixed a bug where sensu-backend could crash if the BackendIDGetter
-encounters etcd client unavailability.
+  encounters etcd client unavailability.
 
 ### Changed
 - Empty and zero value configuration parameters for `etcd` do not
-overwrite defaults anymore.
+  overwrite defaults anymore.
 
 ## [6.5.5] - 2021-11-19
 
 ### Added
 - Added objectives (0.5, 0.9, 0.99) to `graphql_duration_seconds` metric.
 - Added `graphql_duration_seconds`, `graphql_duration_seconds_sum` &
-`graphql_duration_seconds_count` to the metrics log.
+  `graphql_duration_seconds_count` to the metrics log.
 - Added new prometheus metrics for tracking lease operations.
 - Added `sensu_go_lease_ops` to the metrics log.
 - Added `--api-write-timeout` & `--dashboard-write-timeout` flags to allow
-end users to configure the HTTP server's write timeout value
+  end users to configure the HTTP server's write timeout value
 
 ### Fixed
 - Duration metrics for assets, pipeline, and eventd have been updated to use
-milliseconds to match other duration metrics.
+  milliseconds to match other duration metrics.
 - Fixed an error where sensu-backend or sensu-agent could panic due to
-concurrent websocket writes.
+  concurrent websocket writes.
 - The sensu-backend's /version API has updated to reflect the version of a an
-external etcd cluster.
+  external etcd cluster.
 - When keepalive lease grant operations fail due to rate limiting, they are now
-retried.
+  retried.
 
 ## [6.5.3, 6.5.4] - 2021-10-29
 
@@ -292,16 +297,16 @@ retried.
 
 ### Fixed
 - Fixed a bug where API validation caused javascript environment variable
-specifications to be rejected.
+  specifications to be rejected.
 - Fixed a bug where the asset expansion error was not handled
 
 ## [6.5.2] - 2021-10-28
 
 ### Added
 - Added `status` & `event_type` labels to the sensu_go_event_handler_duration
-metric.
+  metric.
 - Added `sensu_go_event_handler_duration_sum` &
-`sensu_go_event_handler_duration_count` to the metrics log.
+  `sensu_go_event_handler_duration_count` to the metrics log.
 - Added metric `sensu_go_eventd_create_proxy_entity_duration`.
 - Added metric `sensu_go_eventd_update_event_duration`.
 - Added metric `sensu_go_eventd_bus_publish_duration`.
@@ -332,32 +337,32 @@ metric.
 
 ### Added
 - Added javascript mutators, which can be selected by setting
-"type": "javascript" on core/v2.Mutators, and specifying valid ECMAScript 5
-code in the "eval" field. See documentation for details.
+  "type": "javascript" on core/v2.Mutators, and specifying valid ECMAScript 5
+  code in the "eval" field. See documentation for details.
 - Added `core/v2.Pipeline` resource for configuring event pipelines.
 - Added `pipelines` field to `Check` and `CheckConfig`
 - Added the platform metrics log. This log contains a listing of core Sensu
-metrics in influx-line format. It is enabled by default but can be disabled
-with the --disable-platform-metrics flag. By default the log is appended to
-every 60s, and written to /var/lib/sensu/sensu-backend/stats.log.
+  metrics in influx-line format. It is enabled by default but can be disabled
+  with the --disable-platform-metrics flag. By default the log is appended to
+  every 60s, and written to /var/lib/sensu/sensu-backend/stats.log.
 - Open-sourced the previously enterprise-only event logger. The event logger
-can be used to send the events a backend processes to a rotatable log file.
+  can be used to send the events a backend processes to a rotatable log file.
 - Added sensuctl commands for pipeline list, info, and delete.
 - Added support for `SENSU_BACKEND_ETCD_CLIENT_USERNAME` and
-`SENSU_BACKEND_ETCD_CLIENT_PASSWORD` environment variables for connecting to
-external etcds that use user/password authentication instead of client
-certificate authentication. Typical with DBaaS etcd providers. These can only be
-set via these environment variables and intentionally cannot be set via flags.
+  `SENSU_BACKEND_ETCD_CLIENT_PASSWORD` environment variables for connecting to
+  external etcds that use user/password authentication instead of client
+  certificate authentication. Typical with DBaaS etcd providers. These can only be
+  set via these environment variables and intentionally cannot be set via flags.
 
 ### Fixed
 - `sensuctl env` now properly displays the `SENSU_API_KEY` and `SENSU_TIMEOUT`
-environment variables.
+  environment variables.
 - `sensuctl command exec` now properly adds the `SENSU_API_KEY` and
-`SENSU_TIMEOUT` variables to the command's environment.
+  `SENSU_TIMEOUT` variables to the command's environment.
 - Fixed a crash when running the backend on `darwin/arm64` when compressing a
-wrapped resource.
+  wrapped resource.
 - Fixed a bug where large number of silences could cause etcd errors by not
-exceeding etcd'd default maximum number of transaction operations.
+  exceeding etcd'd default maximum number of transaction operations.
 
 ### Changed
 - Upgraded Go version from 1.16.5 to 1.17.1.
@@ -366,51 +371,51 @@ exceeding etcd'd default maximum number of transaction operations.
 
 ### Added
 - Added `sensu_go_agentd_event_bytes` & `sensu_go_store_event_bytes` summary
-metrics to the `/metrics` endpoint.
+  metrics to the `/metrics` endpoint.
 
 ## [6.4.1] - 2021-08-24
 
 ### Added
 - Added `ignore-already-initialized` configuration flag to the sensu-backend
-init command for returning exit code 0 when a cluster has already been
-initialized.
+  init command for returning exit code 0 when a cluster has already been
+  initialized.
 - Added --retry-min, --retry-max, and --retry-multiplier flags to sensu-agent
-for controlling agent retry exponential backoff behaviour. --retry-min and
---retry-max expect duration values like 1s, 10m, 4h. --retry-multiplier expects
-a decimal multiplier value.
+  for controlling agent retry exponential backoff behaviour. --retry-min and
+  --retry-max expect duration values like 1s, 10m, 4h. --retry-multiplier expects
+  a decimal multiplier value.
 - Added ProcessedBy field to check results. The ProcessedBy field indicates which
-agent processed a particular event.
+  agent processed a particular event.
 - Added API key support for admin user at cluster init time.
 - Added `sensu_go_agentd_event_bytes` & `sensu_go_store_event_bytes` summary
-metrics to the `/metrics` endpoint.
+  metrics to the `/metrics` endpoint.
 - Added support for environment variable arguments in `sensuctl`.
 
 ### Changed
 - When deleting resource with sensuctl, the resource type will now be displayed
-in the confirmation prompt
+  in the confirmation prompt
 - When keepalived encounters round-robin ring errors, the backend no longer
-internally restarts.
+  internally restarts.
 - The core/v2.Mutator type now has a Type field which can be used to tell
-Sensu that the mutator is a different type from the default (pipe). Currently,
-the supported types are "pipe" and "javascript".
+  Sensu that the mutator is a different type from the default (pipe). Currently,
+  the supported types are "pipe" and "javascript".
 - The default retry values have been increased from a minimum of 10ms to 1s, a
-maximum of 10s to 120s, and the multiplier decreased from 10.0 to 2.0.
+  maximum of 10s to 120s, and the multiplier decreased from 10.0 to 2.0.
 - The backend internal bus default buffer sizes have been increased from 100
-to 1000 items.
+  to 1000 items.
 
 ### Fixed
 - Sensu Go OSS can now be built on `darwin/arm64`.
 - Fixed a regression in `sensu-backend init` where the exit status returned 0
-if the store was already initialized.
+  if the store was already initialized.
 - Guard against potential crash in the sensuctl cluster member-list command when
-the etcd response header is nil.
+  the etcd response header is nil.
 - Agent events API now accepts metrics event.
 - Fixed rare cases where the agent could fail to delete temporary files when
-downloading assets.
+  downloading assets.
 - Forwards compatibility with newer Sensu backends has been improved. Users can
-now create resources with fields that are unknown to Sensu.
+  now create resources with fields that are unknown to Sensu.
 - The `--retry-min`, `--retry-max` and `--retry-multiplier` flags are now listed
-in the `sensu-agent start --help` output.
+  in the `sensu-agent start --help` output.
 
 ### Changed
 - API and agent services now log at warn level when the start up, not at info.
@@ -420,9 +425,9 @@ in the `sensu-agent start --help` output.
 
 ### Added
 - Added `etcd-log-level` configuration flag for setting the log level of the
-embedded etcd server.
+  embedded etcd server.
 - Added wait flag to the sensu-backend init command which toggles waiting
-indefinitely for etcd to become available.
+  indefinitely for etcd to become available.
 - Added sensu_go_keepalives prometheus counter.
 
 ### Changed
@@ -430,19 +435,19 @@ indefinitely for etcd to become available.
 - Upgraded Etcd version from 3.3.22 to 3.5.0.
 - The loadit tool now uses UUIDv4 instead of UUIDv1 for agent names.
 - Some Prometheus metric names have changed with the upgrade to Etcd 3.5. See
-https://etcd.io/docs/v3.5/metrics/etcd-metrics-latest.txt for the metrics that
-Etcd 3.5 exposes.
+  https://etcd.io/docs/v3.5/metrics/etcd-metrics-latest.txt for the metrics that
+  Etcd 3.5 exposes.
 - The timeout flag for `sensu-backend init` is now treated as a duration instead
-of seconds. If the value is less than 1 second, the value is converted to
-seconds.
+  of seconds. If the value is less than 1 second, the value is converted to
+  seconds.
 
 ### Fixed
 - Fixed config deprecation warnings from being shown when deprecated config
-options weren't set.
+  options weren't set.
 - Fixed issue with keepalive status remaining in OK status after agent shutdown.
 - Fixed a bug where role bindings that refer to missing roles would cause the
-wrong status to be returned from the HTTP API, and the dashboard to go into a
-crash loop.
+  wrong status to be returned from the HTTP API, and the dashboard to go into a
+  crash loop.
 - Fixed a bug where an empty subscription was present in the deregistration event's check.
 - Fixed issue with Windows agent not handling command timeouts properly
 - Sensu Go OSS can now be built on `darwin/arm64`.
@@ -452,7 +457,7 @@ crash loop.
 ### Added
 - Added API key authentication support to sensuctl.
 - Added ResourceTemplate resource. ResourceTemplate will be used to populate
-namespaces with initial resources.
+  namespaces with initial resources.
 - Added `GetResourceV3Watcher()` to the `store/etcd` package.
 - Add `EntityServiceClass` constant to the `corev2` package, representing BSM Services.
 - Added ResourceTemplate instantiation on namespace creation.
@@ -462,11 +467,11 @@ namespaces with initial resources.
 - Both V2 & V3 resources are now validated when used with storev2.
 - Initialize labels & annotations for v3 resources when fields are nil.
 - Fixed the `agent-managed-entity` agent config attribute when no labels are
-defined.
+  defined.
 - Fixed a bug where the scheduler could crash in rare circumstances, when using
-round robin checks.
+  round robin checks.
 - Fixed a bug where build information would get calculated for every keepalive
-in OSS builds.
+  in OSS builds.
 - Don't trigger internal restart on SIGHUP.
 - Concatenated YAML files now support CRLF.
 - Remove extraneous auto-completion suggestions.
@@ -477,47 +482,47 @@ in OSS builds.
 - Fixed a potential crash in tessend.
 - Fixed a potential deadlock in agentd.
 - Fixed a bug where some Etcd watchers could try to process watch events holding
-invalid pointers.
+  invalid pointers.
 
 ## [6.2.3] - 2021-01-21
 
 ### Fixed
 - Fixed the `agent-managed-entity` agent config attribute when no labels are
-defined.
+  defined.
 - Fixed a bug where events from namespaces other than the one requested could
-appear in sensuctl dump output. The bug only applied to users who had access to
-the other namespaces.
+  appear in sensuctl dump output. The bug only applied to users who had access to
+  the other namespaces.
 
 ## [6.2.1, 6.2.2] - 2021-01-08
 
 ### Fixed
 - The expire field of silenced entries represents the configured expiration, in
-seconds, not the remaining duration.
+  seconds, not the remaining duration.
 - Allow agents labels & annotations to be configured via configuration flags.
 - Fixed a bug where a small amount of extra etcd or postgres traffic was
-generated on keepalive failure.
+  generated on keepalive failure.
 - Event check history now contains an entry for the first received event.
 
 ## [6.2.0] - 2020-12-17
 
 ### Added
 - Sensuctl and sensu-backend ask for password retype when a new password is
-created when in interactive mode.
+  created when in interactive mode.
 - Build info is now exposed as a prometheus metric via the /metrics endpoint.
 - Added `/health` endpoint to agentd.
 - Added the Scheduler field to Check and CheckConfig.
 - Add support for environment variables to define configuration file paths of
-sensu-backend (`SENSU_BACKEND_CONFIG_FILE`) & sensu-agent (`SENSU_CONFIG_FILE`).
+  sensu-backend (`SENSU_BACKEND_CONFIG_FILE`) & sensu-agent (`SENSU_CONFIG_FILE`).
 - Added event sequence numbers.
 - Entities may now be managed exclusively by their agents when sensu-agent is
-started with the new `agent-managed-entity` configuration attribute.
+  started with the new `agent-managed-entity` configuration attribute.
 
 ### Changed
 - Adjust the date and duration formats used when listing and displaying silenced
-entries in sensuctl.
+  entries in sensuctl.
 - Make `event_id` usage in logging consistent.
 - Changed sensuctl commands that only contain subcommands to exit with status
-code 46 when no arguments or incorrect arguments are given.
+  code 46 when no arguments or incorrect arguments are given.
 
 ### Fixed
 - The config-file flag is no longer order dependant.
@@ -543,14 +548,14 @@ code 46 when no arguments or incorrect arguments are given.
 
 ### Fixed
 - Fixed a bug where silences could take longer to expire than they should, if
-the cluster goes through a restart, or an etcd election.
+  the cluster goes through a restart, or an etcd election.
 - Fixed a bug where sensu-agent would not shut down correctly.
 - The per-entity subscription now persists with PATCH requests.
 - sensuctl now resolves symbolic links.
 - Allow HookConfig to be exported via `sensuctl dump`.
 - Properly log any API error in `sensuctl dump`.
 - An RBAC rule with the `update` permission now properly authorizes PATCH
-requests.
+  requests.
 - eventd errors now include additional context for debugging.
 - Entities are now properly created using `sensuctl create`.
 
@@ -559,25 +564,25 @@ requests.
 ### Added
 - A warning is now logged when a runtime asset was requested but does not exist.
 - Added Prometheus transformer for extracting metrics from check output
-using the Prometheus Exposition Text Format.
+  using the Prometheus Exposition Text Format.
 - The backend flag `--api-request-limit` is now available to configure the
-maximum API request body size, in bytes.
+  maximum API request body size, in bytes.
 - Add support for the PATCH method on the REST API for most configuration
-resources.
+  resources.
 
 ### Changed
 - The trusted CA file is now used for agent, backend and sensuctl asset retrieval.
 
 ### Fixed
 - The backend will no longer start when the dashboard TLS configuration is not
-fully specified.
+  fully specified.
 - Include the agent entity in data passed to the command process' STDIN.
 - Per-entity subscriptions (ex. `entity:entityName`) are always available on agent entities,
-even if removed via the `/entities` API.
+  even if removed via the `/entities` API.
 - Fixed a crash in the backend and agent related to Javascript execution.
 - Proxy entities that are used in round-robin check requests are no longer stale.
 - Fixed a bug where entity listing would be incorrect if agent entities were
-created via the API instead of with sensu-agent.
+  created via the API instead of with sensu-agent.
 - Close the response body when done reading from it while downloading assets.
 - `sensuctl user hash-password` command no longer requires a config to run.
 
@@ -590,46 +595,46 @@ created via the API instead of with sensu-agent.
 
 ### Added
 - Log a warning when secrets cannot be sent to an agent because mTLS is not
-enabled.
+  enabled.
 - Added the is_silenced boolean key to event.Check object.
 
 ### Fixed
 - Clarifies wording around a secret provider error message.
 - Logs and returns an error if a mutator cannot be found.
 - User-Agent header is only set on new client creation rather than on each
-request.
+  request.
 - Fixed a bug where highly concurrent event filtering could result in a panic.
 - Fixed a bug where nil labels or annotations in an event filtering context
-would result in a bad user experience, with the user having to explicitly
-check if the annotations or labels are undefined. Now, the user is guaranteed
-that labels and annotations are always defined, though they may be empty.
+  would result in a bad user experience, with the user having to explicitly
+  check if the annotations or labels are undefined. Now, the user is guaranteed
+  that labels and annotations are always defined, though they may be empty.
 - Automatically capitalize the roleRef and subject types in ClusterRoleBindings
-and RoleBindings.
+  and RoleBindings.
 - Log the proper CA certificate path in the error message when it can't be
-properly parsed by the agent.
+  properly parsed by the agent.
 - Fix the log entry field for the check's name in schedulerd.
 - Store fewer keys in etcd for agents.
 - Keepalive and round robin scheduling leases are now dealt with more efficiently.
 
 ### Breaking
 - The web interface is now a standalone product and no longer distributed
-inside the sensu-backend binary. Refer to https://github.com/sensu/web for
-more.
+  inside the sensu-backend binary. Refer to https://github.com/sensu/web for
+  more.
 - The database schema for entities has changed. After upgrading, users will not
-be able to use their database with older versions of Sensu.
+  be able to use their database with older versions of Sensu.
 - After initial creation, sensu-agent entity configuration cannot be changed
-by modifying the agent's configuration file.
+  by modifying the agent's configuration file.
 
 ### Changed
 - Entities are now stored as two separate data structures, in order to optimize
-data access patterns.
+  data access patterns.
 - The `dead` and `handleUpdate` methods in keepalived now use `EntityConfig` and
-`EntityState` respectively.
+  `EntityState` respectively.
 - The `dead()` and `createProxyEntity()` methods in eventd now use
   `corev3.EntityConfig` and `corev3.EntityState`.
 - sensu-agent configuration can now be managed via the HTTP API.
 - ClusterRoleBinding and RoleBinding subjects names can now contain any unicode
-characters.
+  characters.
 - Enriches output of `sensuctl asset add` with help usage for how to use the runtime asset.
 - Unless the entity is a proxy entity, updates to entities now ignore state
   related fields.
@@ -644,7 +649,7 @@ characters.
 ### Fixed
 - Fixed potential Web UI crash when fetching events in namespace with > 1000 events.
 - Errors produced in the agent by assets, check validation, token substitution,
-and event unmarshaling are logged once again.
+  and event unmarshaling are logged once again.
 
 ## [5.21.0] - 2020-06-10
 
@@ -652,9 +657,9 @@ and event unmarshaling are logged once again.
 - Added `SENSU_LICENSE_FILE` environment variable to handler executions.
 - Added the `sensuctl user hash-password` command to generate password hashes
 - Added the ability to reset passwords via the backend API & `sensuctl user
-reset-password`
+  reset-password`
 - The user resource now has a `password_hash` field to specify the password
-hash, in place of the cleartext password
+  hash, in place of the cleartext password
 - Added the beginnings of the core/v3 API.
 - Added automatically generated tests for the core/v2 API.
 
@@ -665,14 +670,14 @@ hash, in place of the cleartext password
 
 ### Fixed
 - The password verification logic when running `sensuctl user change-password`
-has been moved from sensuctl to the backend API.
+  has been moved from sensuctl to the backend API.
 - Errors while publishing proxy check requests do not block scheduling for other
-entities.
+  entities.
 - Listing namespaces in sensuctl with `--chunk-size` now works properly.
 - Prevent the agent from immediately exiting in certain scenarios where
-components are disabled.
+  components are disabled.
 - Fixed an issue where a GraphQL query could fail when querying a namespace
-containing event data in excess of 2GBs.
+  containing event data in excess of 2GBs.
 - Deregistration events now contain a timestamp.
 - Checks configured with missing hooks no longer cause the agent to crash.
 
@@ -688,7 +693,7 @@ containing event data in excess of 2GBs.
 - The proper libc implementation is now displayed for Ubuntu entities.
 - Add validation for subjects in RBAC RoleBinding and ClusterRoleBinding.
 - Fixed a bug where single-letter subscriptions were not allowed, even though
-they were intended to be.
+  they were intended to be.
 - Fix retrieving command assets from bonsai.
 
 ## [5.20.1] - 2020-05-15
@@ -707,7 +712,7 @@ they were intended to be.
 - Added the `event.is_silenced` & `event.check.is_silenced` field selectors.
 - Added `processes` field to the system type to store agent local processes (commercial feature).
 - Users can now increment the logging level by sending SIGUSR1 to the
-sensu-backend or sensu-agent process.
+  sensu-backend or sensu-agent process.
 - Added a new `sensuctl describe-type` command to list all resource types.
 - Added `labels` and `annotations` as backend config options.
 - Added token substitution for assets.
@@ -722,31 +727,31 @@ sensu-backend or sensu-agent process.
 - Warning messages from Resty library are now suppressed in sensuctl.
 - Notepad is now the default editor on Windows, instead of vi.
 - [Web] Any leading and trailing whitespace is now trimmed from the username
-when authenticating.
+  when authenticating.
 - [Web] A toast is now displayed when a user attempts to delete an event but
-does not have appropriate authorization.
+  does not have appropriate authorization.
 - [Web] Only the first five groups a user belongs to are displayed in the
-preferences dialog. Showing too many made it difficult for users to locate the
-sign-out button.
+  preferences dialog. Showing too many made it difficult for users to locate the
+  sign-out button.
 
 ### Fixed
 - Windows agent now accepts and remembers arguments passed to 'service run' and
-'service install'.
+  'service install'.
 - Windows agent synchronizes writes to its log file, ensuring that file size
-will update with every log line written.
+  will update with every log line written.
 - Windows agent now logs to both console and log file when 'service run' is used.
 - [Web] Fixed issue where the de-registration handler would always show up as
-undefined on the entity details page.
+  undefined on the entity details page.
 
 ## [5.19.3] - 2020-04-30
 
 ### Added
 - Added a `timeout` flag to `sensu-backend init`.
 - [Web] Added the ability for labels and annotations with links to images to be
-displayed inline.
+  displayed inline.
 - [Web] Added additional modes for those with colour blindness.
 - Added support for restarting the backend via SIGHUP. Config reloading is not
-supported yet.
+  supported yet.
 
 ### Changed
 - Removed deprecated flags in `sensuctl silenced update` subcommand.
@@ -755,24 +760,24 @@ supported yet.
 - Fixes a bug in multi-line metric extraction that appeared in windows agents.
 - Fixed an authn bug where sensu-backend would restart when agents disconnect.
 - Fixed a bug where check state and last_ok were not computed until the second
-instance of the event.
+  instance of the event.
 - Fix the validation for env_vars to allow the equal sign in values.
 - Log to the warning level when an asset is not installed because none of the
-filters matched.
+  filters matched.
 - Return underlying errors when fetching an asset.
 - Fixed a bug where the etcd event store would return prefixed matches rather than exact matches when getting events by entity.
 - `sensuctl logout` now resets the TLS configuration.
 - [Web] Fixes issue where labels with links could lead to a crash.
 - Added a global rate limit for fetching assets so that asset retries are not abusive (can be
-configured using `--assets-rate-limit` and `--assets-burst-limit` on the agent and backend).
+  configured using `--assets-rate-limit` and `--assets-burst-limit` on the agent and backend).
 - [Web] Fixed an issue where trying to use an unregistered theme could lead to a
-crash.
+  crash.
 - Fixed a bug that would cause the backend to crash.
 - Fixed a bug that would cause messages like "unary invoker failed" to appear
-in the logs.
+  in the logs.
 - Fixed several goroutine leaks.
 - Fixed a bug that would cause the backend to crash when the etcd client got an
-error saying "etcdserver: too many requests".
+  error saying "etcdserver: too many requests".
 
 ## [5.19.2] - 2020-04-27
 *No changelog for this release.*
@@ -782,31 +787,31 @@ error saying "etcdserver: too many requests".
 ### Fixed
 - Require that pipe handlers have a command set.
 - The config file default path is now shown in the help for sensu-backend start
-and sensu-agent start.
+  and sensu-agent start.
 - Keepalives can now be published via the HTTP API.
 - Token substitution templates can now express escape-quoted strings.
 - [Web] Fixes issue where labels with links could lead to a crash.
 - Fixed a bug where keepalives would not always fire correctly when using
-the postgres event store.
+  the postgres event store.
 - The REST API now uses a timeout of 3 seconds by default when querying
-etcd health.
+  etcd health.
 - sensu-agent will not longer allow configuring keepalive timeouts less than
-the keepalive interval.
+  the keepalive interval.
 - Eventd can no longer mistake keepalive events for checks with TTL.
 - Keepalives now generate a new event UUID for each keepalive failure event.
 - Agents now correctly reset keepalive switches on reconnect, fixing a bug
-where old keepalive timeout settings would persist too long.
+  where old keepalive timeout settings would persist too long.
 - The system's libc_type attribute is now populated on alpine containers.
 
 ## [5.19.0] - 2020-03-26
 
 ### Added
 - The `sensu.io/managed_by` label is now automatically applied to resources
-created via `sensuctl create`.
+  created via `sensuctl create`.
 - Added `created_by` to object metadata and populate that field via the HTTP API.
 - Added agent discovery of libc type, VM system/role, and cloud provider.
 - Added `float_type` field to system type to store which float type (softfloat,
-hardfloat) a system is using.
+  hardfloat) a system is using.
 - Additional Tessen resource metrics can now be registered at runtime.
 - Added a generic client POST function that can return the response.
 - Tessen now reports the type of store used for events ("etcd or "postgres").
@@ -815,15 +820,15 @@ hardfloat) a system is using.
 - Updated the store so that it may _create_ wrapped resources.
 - Bonsai client now logs at debug level instead of info level.
 - The dashboard service now returns an error if the client User-Agent is curl
-or sensuctl. This should prevent users from using the dashboard port by
-mistake.
+  or sensuctl. This should prevent users from using the dashboard port by
+  mistake.
 
 ### Fixed
 - Fixed a bug where the agent could connect to a backend using a namespace that
-doesn't exist.
+  doesn't exist.
 - Subscriptions can no longer be empty strings (#2932)
 - The proper HTTP status codes are returned for unauthenticated & permission
-denied errors in the REST API.
+  denied errors in the REST API.
 
 ## [5.18.1] - 2020-03-10
 
@@ -832,11 +837,11 @@ denied errors in the REST API.
 - Fixed bug where flapping would incorrectly end when `total_state_change` was
   below `high_flap_threshold` instead of below `low_flap_threshold`.
 - sensu-backend no longers hang indefinitely if a file lock for the asset
-manager cannot be obtained, and returns instead an error after 60 seconds.
+  manager cannot be obtained, and returns instead an error after 60 seconds.
 - Stopped using the etcd embedded client, which seems to trigger nil pointer
-panics when used against an etcd that is shutting down.
+  panics when used against an etcd that is shutting down.
 - 64-bit align the `Resource` struct in the store cache to fix a crash on
-32-bit systems.
+  32-bit systems.
 - Fixed a bug where sensu-backend would restart when agents disconnect.
 
 ## [5.18.0] - 2020-02-24
@@ -847,44 +852,44 @@ panics when used against an etcd that is shutting down.
 
 ### Fixed
 - sensuctl now supports the http_proxy, https_proxy, and no_proxy environment
-variables.
+  variables.
 - returns 401 instead of 500 when issues occur refreshing the access token.
 - Support Bonsai assets versions prefixed with the letter `v`.
 - Fixed a bug where wrapped resources were not getting their namespaces set by
-the default sensuctl configuration.
+  the default sensuctl configuration.
 - read/writes `initializationKey` to/from `EtcdRoot`, while support legacy as fallback (read-only)
 - check for a non-200 response when fetching assets
 - `/silenced` now supports API filtering (commercial feature).
 - Fixed event payload validation on the backend events API to validate the
-payload with the URL parameters on the /events/:entity/:check endpoint and
-reject events that do not match.
+  payload with the URL parameters on the /events/:entity/:check endpoint and
+  reject events that do not match.
 - The `auth/test` endpoint now returns the correct error messages.
 - The `log-level` configuration option is now properly applied when running the
-Sensu Agent Windows service.
+  Sensu Agent Windows service.
 
 ### Changed
 - Updated Go version from 1.13.5 to 1.13.7.
 - Default `event.entity.entity_class` to `proxy` in the POST/PUT `/events` API.
 - Proxy entities are now automatically created when events are published with an
-entity that does not exist.
+  entity that does not exist.
 
 ## [5.17.2] - 2020-02-19
 
 ### Fixed
 
 - Fixed a bug where on an internal restart, enterprise HTTP routes could fail
-to intialize.
+  to intialize.
 
 ## [5.17.1] - 2020-01-31
 
 ### Fixed
 - Cluster configuration of sensuctl should be reset when `configure` is called.
 - Some namespaces would not appear in the curated namespace functionality under
-certain circonstances.
+  certain circonstances.
 - Fix a bug with tar assets that contain hardlinked files.
 - Assets name may contain capital letters.
 - When `--trusted-ca-file` is used to configure sensuctl, it now detects and saves
-the absolute file path in the cluster config.
+  the absolute file path in the cluster config.
 - [Web] Changing order on event list will no longer cause filters to be reset.
 - [Web] URLs inside annotations are now rendered as links.
 
@@ -892,10 +897,10 @@ the absolute file path in the cluster config.
 
 ### Added
 - Added the secrets provider interface and secrets provider manager to be used
-by commercial secrets providers. Implemented for checks, mutators, and handlers.
+  by commercial secrets providers. Implemented for checks, mutators, and handlers.
 - Added the `secrets` field to checks, mutators, and handlers.
 - Added the `keepalive-handlers` configuration flag on the agent to specify the
-entity's keepalive handlers.
+  entity's keepalive handlers.
 - Added `event.entity.name` as a supported field selector.
 
 ### Fixed
@@ -903,32 +908,32 @@ entity's keepalive handlers.
 - [Web] Labels with links can now be followed.
 - [Web] Fixed a inconsistent crash that occurred in Firefox browsers.
 - [Web] Fixed bug where event history was duplicated in the event timeline
-chart.
+  chart.
 - [Web] Fixed issue where silenced entries with a start date would result in a
-crash.
+  crash.
 - Fixed a bug where `sensuctl entity delete` was not returning an error
-when attempting to delete a non-existent entity.
+  when attempting to delete a non-existent entity.
 - sensuctl command assets installed via Bonsai will now use the "sensuctl"
-namespace.
+  namespace.
 - Fixed a memory leak in the entity cache
 - Users with implicit permissions to a namespace can now display resources
-within that namespace via the Web UI.
+  within that namespace via the Web UI.
 - Explicit access to namespaces can only be granted via cluster-wide RBAC
-resources.
+  resources.
 - Split rules ClusterRole and Role verbs, resources and resource names on comma.
 - Add support for the `--format` flag in the `sensuctl command list` subcommand.
 - Namespace can be ommited from event when performing an HTTP POST request to
-the `/events` endpoint.
+  the `/events` endpoint.
 - Fixed a bug where failing check TTL events could occur event if keepalive
-failures had already occurred.
+  failures had already occurred.
 
 ## [5.16.1] - 2019-12-18
 
 ### Fixed
 - Initialize the sensu_go_events_processed counter with the `success` label so
-it's always displayed.
+  it's always displayed.
 - Fixed a performance regression that was introduced in 5.15.0, which would
-cause the API to timeout past 20k agent sessions.
+  cause the API to timeout past 20k agent sessions.
 
 ## [5.16.0] - 2019-12-11
 
@@ -936,50 +941,50 @@ cause the API to timeout past 20k agent sessions.
 - Display the JWT expiration Unix timestamp in `sensuctl config view`.
 - Added the 'sensu-backend init' subcommand.
 - Added a new flag, --etcd-client-urls, which should be used with sensu-backend
-when it is not operating as an etcd member. The flag is also used by the new
-sensu-backend init tool.
+  when it is not operating as an etcd member. The flag is also used by the new
+  sensu-backend init tool.
 - Added the cluster's distribution to Tessen data.
 - Added a new field, ClusterIDHex, to the ClusterHealth datatype.
 - Added the `--etcd-discovery` and `--etcd-discovery-srv` flags to
-`sensu-backend`. These are used to take advantage of the embedded etcd's
-auto-discovery features.
+  `sensu-backend`. These are used to take advantage of the embedded etcd's
+  auto-discovery features.
 - Added `--keepalive-critical-timeout` to define the time after which a
-critical keepalive event should be created for an agent.
+  critical keepalive event should be created for an agent.
 - Added `--keepalive-warning-timeout` which is an alias of `--keepalive-timeout`
-for backwards compatibility.
+  for backwards compatibility.
 
 ### Fixed
 - Add a timeout to etcd requests when retrieving the nodes health.
 - Show the correct default value for the format flag in `sensuctl dump` help
-usage.
+  usage.
 - Installing sensuctl commands via Bonsai will now check for correct labels
-before checking if the asset has 1 or more builds.
+  before checking if the asset has 1 or more builds.
 - Listing assets with no results returns an empty array.
 - Fixed a panic that could occur when creating resources in a namespace that
-does not exist.
+  does not exist.
 - [Web] Links to documentation now point to the version of the product being run
-instead of the latest; helpful when running an older version of Sensu.
+  instead of the latest; helpful when running an older version of Sensu.
 - Fixed issue where keepalive events and events created through the agent's
-socket interface could be missing a namespace.
+  socket interface could be missing a namespace.
 - Fixed an issue where 'sensuctl cluster health' would hang indefinitely.
 - Fixed several issues around the metadata of resources encoded using the
-wrapped-json format, where the metadata would go missing when listing
-resources or prevent resources from being created.
+  wrapped-json format, where the metadata would go missing when listing
+  resources or prevent resources from being created.
 
 ### Changed
 - The backend will no longer automatically be seeded with a default admin
-username and password. Users will need to run 'sensu-backend init' on every
-new installation.
+  username and password. Users will need to run 'sensu-backend init' on every
+  new installation.
 - Several deprecated flags were removed from sensu-backend.
 - [Web] Changes to navigation. The app bar has been replaced by an omnipresent
-drawer increasing the available space for content. Additionally, each page now
-includes breadcrumbs.
+  drawer increasing the available space for content. Additionally, each page now
+  includes breadcrumbs.
 - [Web] Switching namespaces is easier than ever, with the new and improved
-switcher. The new component can be accessed from the drawer or with the shortcut
-ctrl+k. For those with many namespaces the switcher now includes fuzzy search
-and improved keyboard navigation.
+  switcher. The new component can be accessed from the drawer or with the shortcut
+  ctrl+k. For those with many namespaces the switcher now includes fuzzy search
+  and improved keyboard navigation.
 - 'sensuctl cluster health' will now use a 3s timeout when gathering cluster
-health information.
+  health information.
 - 'sensuctl cluster health' now collects cluster health information concurrently.
 
 ## [5.15.0] - 2019-11-18
@@ -999,28 +1004,28 @@ health information.
 
 ### Changed
 - Moved `corev2.BonsaiAsset` to `bonsai.Asset` and moved
-`corev2.OutdatedBonsaiAsset` to `bonsai.OutdatedAsset` along with subsequent
-bonsai package refactors.
+  `corev2.OutdatedBonsaiAsset` to `bonsai.OutdatedAsset` along with subsequent
+  bonsai package refactors.
 - Colons and periods are now allowed to be used in all resource names, with
-the exception of users.
+  the exception of users.
 
 ## [5.14.2] - 2019-11-04
 
 ### Changed
 - Upgraded etcd to 3.3.17
 - Listing namespaces is now done implicitly based on access to resources within
-a namespace. Users will no longer be able to list all namespaces by default, in
-new installations. Existing installations will function as before. Operators can
-change to the new behaviour, by modifying the system:user role.
+  a namespace. Users will no longer be able to list all namespaces by default, in
+  new installations. Existing installations will function as before. Operators can
+  change to the new behaviour, by modifying the system:user role.
 
 ### Fixed
 - As a result of upgrading etcd, TLS etcd clients that lose their connection will
-successfully reconnect when using --no-embed-etcd.
+  successfully reconnect when using --no-embed-etcd.
 - Check TTL switches are now correctly buried when associated events and entities
-are deleted.
+  are deleted.
 - Keepalive switches are now correctly buried when the keepalive event is deleted.
 - Sensu now uses far fewer leases for keepalives and check TTLs, resulting in a
-stability improvement for most deployments.
+  stability improvement for most deployments.
 - Fixed a minor UX issue in interactive filter commands in sensuctl.
 - Silences now successfully apply to proxy entities where the check doesn't contain
   the same subscriptions as the entity (#3356)
@@ -1032,56 +1037,56 @@ stability improvement for most deployments.
 
 ### Fixed
 - Opening an already open Bolt database should not cause sensu-agent to hang
-indefinitely.
+  indefinitely.
 - [CLI] Dump multiple types as YAML to a file would print separator STDOUT
-instead of specified file
+  instead of specified file
 - Fixed a bug where Sensu would crash with a panic due to a send on a closed channel.
 
 ## [5.14.0] - 2019-10-08
 
 ### Added
 - [Web] Added an additional option to the error dialog allowing users to
-completely wipe the application's persisted state; in lieu of them having to
-manually wipe their local / session storage. This may help in the rare cases
-where something in said state is leading to an uncaught exception.
+  completely wipe the application's persisted state; in lieu of them having to
+  manually wipe their local / session storage. This may help in the rare cases
+  where something in said state is leading to an uncaught exception.
 - [Web] For operating systems with support for selecting a preferred light /dark
-theme, the application now respects the system preference by default.
+  theme, the application now respects the system preference by default.
 - sensuctl dump can now list the types of supported resources with --types.
 - Added the `sensu_agent_version` field to the `Entity` resource, which reflects
-the Sensu semver version of the agent entity.
+  the Sensu semver version of the agent entity.
 - Added the `--etcd-heartbeat-interval` and `--etcd-election-timeout` flags to
-`sensu-backend`
+  `sensu-backend`
 
 ### Changed
 - [Web] Github is not always the best place for feature requests and discussion,
-as such we've changed CTA for feedback to point to Discourse instead of the
-web repository's issues page.
+  as such we've changed CTA for feedback to point to Discourse instead of the
+  web repository's issues page.
 - [Web] When a user lands on a page inside a namespace that no longer exists or
-they do not have access to, the drawer is now opened so that namespace switcher
-is front and center. Hopefully this should reduce any confusion around next
-steps.
+  they do not have access to, the drawer is now opened so that namespace switcher
+  is front and center. Hopefully this should reduce any confusion around next
+  steps.
 - Support agent TLS authentication, usable with a licensed sensu-backend.
 - Updated Go version from 1.12.3 to 1.13.1.
 - [GraphQL] `putWrapped` mutation now accepts wrapped JSON with empty
-outer objectmeta.
+  outer objectmeta.
 
 ### Fixed
 - [Web] Fixed issue where a user with an appropriate role may have been unable
-to resolve events, queue checks, and create silenced entries.
+  to resolve events, queue checks, and create silenced entries.
 - Splayed proxy checks are now executed every interval, instead of every
-`interval + interval * splay_coverage`.
+  `interval + interval * splay_coverage`.
 - [GraphQL] Ensures that proxy entity label & annotations are redacted.
 - Fixed a bug in the ring where round robin schedules would not recover
-after quorum loss.
+  after quorum loss.
 - [Web] Unauthorized errors emitted while creating silences or resolving events
-are now caught and a toast is presented to communicate what occurred.
+  are now caught and a toast is presented to communicate what occurred.
 - [Web] Internal errors are now avoided when a user attempts to queue an ad-hoc
-check for a keepalive.
+  check for a keepalive.
 - Do not separate asset builds into several assets unless the the tabular format
-is used in `sensuctl asset list`.
+  is used in `sensuctl asset list`.
 - Fix the 'flag accessed but not defined' error in `sensuctl asset outdated`
 - Fix generic API client's `SetTypeMeta` method. The APIGroup is now correctly
-configured and by virtue unintended authorization denied errs are avoided.
+  configured and by virtue unintended authorization denied errs are avoided.
 - Fixed a bug where checks would stop executing after a network error.
 - Fixed a bug where sensuctl create with stdin was not working.
 
@@ -1107,19 +1112,19 @@ configured and by virtue unintended authorization denied errs are avoided.
 ### Fixed
 - sensuctl dump no longer silently discards errors.
 - Interactive check create and update modes now have 'none' as the first
-highlighted option, instead of nagios-perfdata.
+  highlighted option, instead of nagios-perfdata.
 - Fixed a bug where silences would not expire on event resolution.
 
 ## [5.12.0] - 2019-08-22
 
 ### Added
 - Added functionality for the agent `--allow-list` configuration, which
-whitelists check and check hook executables.
+  whitelists check and check hook executables.
 - Added the `runtime_assets` field to `HookConfig`. Assets are enabled
-for check hook execution.
+  for check hook execution.
 - Added backwards compatible content negotiation to the websocket connection.
-Protobuf will be used for serialization/deserialization unless indicated by the
-backend to use JSON.
+  Protobuf will be used for serialization/deserialization unless indicated by the
+  backend to use JSON.
 - Added delete functionality for assets in the API and sensuctl.
 - Added `sensuctl dump` to dump resources to a file or STDOUT.
 - Added `event.check.name` as a supported field selector.
@@ -1127,7 +1132,7 @@ backend to use JSON.
 - Added `entity.system.arm_version` to record the value of `GOARM` at compile time.
 - Added `ProviderType` field to `AuthProviderClaims`
 - Added `builds` field to the `Asset` type to allow assets to specify different
-URLs for each platform/architecture/arch_version.
+  URLs for each platform/architecture/arch_version.
 
 ### Changed
 - The project now uses Go modules instead of dep for dependency management.
@@ -1135,50 +1140,50 @@ URLs for each platform/architecture/arch_version.
 - The generic etcd watcher now keeps track of revisions.
 - The resource caches can now rebuild themselves in case of failures.
 - Event and Entity resources can now be created without an explicit namespace;
-the system will refer to the namespace in the URL.
+  the system will refer to the namespace in the URL.
 - Events and Entities can now be created with the POST verb.
 - [Web] Changed styling of namespace labels.
 - Log token substitution failures more clearly.
 
 ### Fixed
 - Fixed the tabular output of `sensuctl filter list` so inclusive filter expressions
-are joined with `&&` and exclusive filter expressions are joined with `||`.
+  are joined with `&&` and exclusive filter expressions are joined with `||`.
 - The REST API now correctly only returns events for the specific entity
-queried in the `GET /events/:entity` endpoint (#3141)
+  queried in the `GET /events/:entity` endpoint (#3141)
 - Prevent a segmentation fault when running `sensuctl config view` without
-configuration.
+  configuration.
 - Added entity name to the interactive sensuctl survey.
 - Check hooks with `stdin: true` now receive actual event data on STDIN instead
   of an empty event.
 - Prevent a segmentation fault on the agent when a command execution returns an
-error.
+  error.
 - [Web] Fixed issue where a bad or revoked access token could crash the app.
 
 ### Removed
 - Removed encoded protobuf payloads from log messages (when decoded, they can reveal
-redacted secrets).
+  redacted secrets).
 
 ## [5.11.1] - 2019-07-18
 
 ### Fixed
 - The agent now sends heartbeats to the backend in order to detect network
-failures and reconnect faster.
+  failures and reconnect faster.
 - The default handshake timeout for the WebSocket connection negotiation has
-been lowered from 45 to 15 seconds and is now configurable.
+  been lowered from 45 to 15 seconds and is now configurable.
 
 ## [5.11.0] - 2019-07-10
 
 ### Added
 - Silenced entries are now retrieved from the cache when determining if an event
-is silenced.
+  is silenced.
 - Added --disable-assets flag to sensu-agent.
 - Added ability to query mutators to the GraphQL service
 - Added ability to query event filters to the GraphQL service
 - Added prometheus metrics for topics in wizard bus and agent sessions.
 - The buffer size and worker count of keepalived, eventd & pipelined can now be
-configured on sensu-backend.
+  configured on sensu-backend.
 - Added a `headers` field to the `Asset` struct. Headers is a map of key/value
-string pairs used as HTTP headers for asset retrieval.
+  string pairs used as HTTP headers for asset retrieval.
 - Added the current user to the output of `sensuctl config view`.
 - [Web] Adds list and details views for mutators
 - [Web] Adds list and details views for event filters
@@ -1187,25 +1192,25 @@ string pairs used as HTTP headers for asset retrieval.
 ### Changed
 - [Web] Updated embedded web assets from `46cd0ee` ... `8f50155`
 - The REST API now returns the `201 Created` success status response code for
-POST & PUT requests instead of `204 No Content`.
+  POST & PUT requests instead of `204 No Content`.
 
 ### Fixed
 - The REST API now returns an error when trying to delete an entity that does
-not exist.
+  not exist.
 - Fixed a bug where basic authorization was not being performed on the agent websocket connection.
 - Fixed an aliasing regression where event timestamps from the /events API
-were not getting properly populated.
+  were not getting properly populated.
 - Fixed a bug where multiple nested set handlers could be incorrectly flagged as
-deeply nested.
+  deeply nested.
 - Fixed a bug where round robin proxy checks could fail to execute.
 - Fixed a bug where watchers could enter a tight loop, causing very high CPU
-usage until sensu-backend was restarted.
+  usage until sensu-backend was restarted.
 
 ## [5.10.1] - 2019-06-25
 
 ### Fixed
 - Fixed the entity_attributes in proxy_requests so all attributes must match
-instead of only one of them.
+  instead of only one of them.
 - Fixed a bug where events were not deleted when their corresponding entity was.
 
 ## [5.10.0] - 2019-06-18
@@ -1213,7 +1218,7 @@ instead of only one of them.
 ### Added
 - Added POST `/api/core/v2/tessen/metrics`.
 - Added the ability in TessenD to listen for metric points on the message bus,
-populate, and send them to the Tessen service.
+  populate, and send them to the Tessen service.
 - [Web] Adds ability to delete entities
 - [GraphQL] Adds simple auto-suggestion feature.
 - Added a tag to all Tessen metrics to differentiate internal builds.
@@ -1224,16 +1229,16 @@ populate, and send them to the Tessen service.
 - [Web] Updated embedded web assets from `275386a` ... `46cd0ee`
 - Refactoring of the REST API.
 - Changed the identifying cluster id in TessenD from the etcd cluster id to
-the sensu cluster id.
+  the sensu cluster id.
 - [GraphQL] Updates `PutResource` mutation to accept an `upsert` boolean flag parameter. The `upsert` param defaults to `true`, but if set to `false` the mutation will return an error when attempting to create a duplicate resource.
 - Eventd has been refactored. Users should not perceive any changes, but a
-substantial amount of business logic has been moved into other packages.
+  substantial amount of business logic has been moved into other packages.
 - The `sensuctl create` command now accepts resources without a declared
-namespace. If the namespace is omitted, the resource will be created in the
-current namespace, or overridden by the `--namespace` flag.
+  namespace. If the namespace is omitted, the resource will be created in the
+  current namespace, or overridden by the `--namespace` flag.
 - Eventd now uses a constant number of requests to etcd when working with
-silenced entries, instead of a number that is proportional to the number of
-subscriptions in a check.
+  silenced entries, instead of a number that is proportional to the number of
+  subscriptions in a check.
 
 ### Fixed
 - The check state and check total_state_change properties are now more correct.
@@ -1242,7 +1247,7 @@ subscriptions in a check.
 - [Web] Ensure that we redirect user to a valid namespace when first signing in.
 - [Web] Correctly display timeout value for handlers.
 - [Web] Avoid exception when parsing non-standard cron statements. (Eg.
-`@every 1h` or `@weekly`)
+  `@every 1h` or `@weekly`)
 - The resources metadata are now validated with the request URI.
 
 ## [5.9.0] - 2019-05-29
@@ -1283,7 +1288,7 @@ subscriptions in a check.
 
 ### Fixed
 - Only bury switchsets of checks that no longer have a TTL, in order to reduce
-the number of write operations made to etcd.
+  the number of write operations made to etcd.
 - Fixed keepalives switchsets for entities with deregistration.
 - Fixed continue token generation in namespace and user pagination.
 
@@ -1291,7 +1296,7 @@ the number of write operations made to etcd.
 
 ### Added
 - Added a Windows service wrapper for sensu-agent. See
-"sensu-agent service --help" for more information.
+  "sensu-agent service --help" for more information.
 
 ### Fixed
 - Fixed `sensuctl` color output on Windows.
@@ -1308,7 +1313,7 @@ the number of write operations made to etcd.
 - Added the message bus to Tessend in order to track Tessen configuration changes from the API.
 - Added a performance optimizing `Count()` function to the generic store.
 - Added a hexadecimal Cluster ID title to the `sensuctl cluster health` and
-`sensuctl cluster member-list` commands in tabular format.
+  `sensuctl cluster member-list` commands in tabular format.
 - Added a `Header` field to the `HealthResponse` type returned by `/health`.
 
 ### Fixed
@@ -1328,10 +1333,10 @@ the number of write operations made to etcd.
 
 ### Fixed
 - Fixed an issue where etcd watchers were used incorrectly. This was causing
-100% CPU usage in some components, as they would loop endlessly trying to get
-results from watchers that broke, due to their stream terminating. Other
-components would simply stop updating. Watchers now get reinstated when the
-client regains connectivity.
+  100% CPU usage in some components, as they would loop endlessly trying to get
+  results from watchers that broke, due to their stream terminating. Other
+  components would simply stop updating. Watchers now get reinstated when the
+  client regains connectivity.
 - Fixed the `/events/:entity` route in the REST API.
 - Fixed a bug where the --labels arg was not working as expected in sensu-agent.
 
@@ -1341,7 +1346,7 @@ client regains connectivity.
 - Added the TessenD daemon.
 - Added an etcd watcher for tessen configuration.
 - Added ring support for TessenD so that the service is invoked in a
-round-robin fashion within a cluster.
+  round-robin fashion within a cluster.
 - Added `tessen opt-in` command to `sensuctl`.
 - Added `tessen opt-out` command to `sensuctl`.
 - Added `tessen info` command to `sensuctl`.
@@ -1425,7 +1430,7 @@ round-robin fashion within a cluster.
 
 ### Fixed
 - Fixed a regression in the agent that would not allow proxy checks to be
-run for subsequent executions.
+  run for subsequent executions.
 ### Added
 - Web UI - support for labels and annotations
 
@@ -1433,17 +1438,17 @@ run for subsequent executions.
 
 ### Added
 - Added support for the following TLS related options to `sensuctl`:
-`--trusted-ca-file` and `--insecure-skip-tls-verify`. This allows sensuctl
-users to use a self-signed certificate without adding it to the operating
-system's CA store, either by explicitly trusting the signer, or by disabling
-TLS hostname verification.
+  `--trusted-ca-file` and `--insecure-skip-tls-verify`. This allows sensuctl
+  users to use a self-signed certificate without adding it to the operating
+  system's CA store, either by explicitly trusting the signer, or by disabling
+  TLS hostname verification.
 - Added a generic watcher in the store.
 - Added `RemoveProvider` method to authenticator.
 - Check output truncation support has been added. Check output can be truncated
-by adjusting the max_output_size and discard_output properties.
+  by adjusting the max_output_size and discard_output properties.
 - Added ability to silence/unsilence from the event details page.
 - Added support for wrapped resources in the API with `sensuctl create` &
-`sensuctl edit`.
+  `sensuctl edit`.
 - Web UI - platform version displays on the entity details page.
 - Web UI - include proxy request configuration on check details page.
 - Web UI - display deregistration config on the entity details page.
@@ -1453,23 +1458,23 @@ by adjusting the max_output_size and discard_output properties.
 - Moved the `Provider` interface to `api/core/v2` package.
 - Moved the `Authenticator` interface to `backend/authentication` package.
 - Updated confirmation messages for sensuctl commands: `Created`, `Deleted` and
-`Updated` instead of `OK`.
+  `Updated` instead of `OK`.
 - Exported some functions and methods in the CLI client.
 - The API authenticator now identifies providers by their name only.
 
 ### Fixed
 - Check TTL failure events are now much more reliable, and will persist even
-in the presence cluster member failures and cluster restarts.
+  in the presence cluster member failures and cluster restarts.
 - Fix snakeCase version of keys in typeMap for acronyms.
 - Fixed a bug in keepalive processing that could result in a crash.
 - Pin childprocess to v0.9.0 in CircleCI so fpm can be installed.
 - Substitutions applied to command & hooks are now omitted from events.
 - Fixes a bug where generic store methods assumed a namespace was provided for non-namespaced resources.
 - Keepalive and check TTL database state is now properly garbage-collected on
-entity deletion.
+  entity deletion.
 - Fixed a bug where `sensuctl version` required configuration files to exist.
 - Updates the copy on the confirm disable dialog to accurately reflect the
-operation.
+  operation.
 
 ## [5.1.1] - 2019-01-24
 
@@ -1480,7 +1485,7 @@ operation.
 - Improved logging for errors in proxy check requests.
 - Updated Go version from 1.10 to 1.11.4.
 - Refactoring of the internal authentication mechanism into a `basic`
-authentication provider.
+  authentication provider.
 - Modified private generic store methods as public functions.
 - Improved logging for errors in proxy check requests.
 - Updated Go version from 1.10 to 1.11.4.
@@ -1491,14 +1496,14 @@ authentication provider.
 - Fixed a bug where adhoc checks were not retrieving asset dependencies.
 - Fixed a bug where check updates would cause the check to immediately fire.
 - Fixed a bug where a bad line in check output would abort metric extraction.
-An error is now logged instead, and extraction continues after a bad line is encountered.
+  An error is now logged instead, and extraction continues after a bad line is encountered.
 - Keepalive events will now continue to fire after cluster restarts.
 - Fixed a panic in the dashboardd shutdown routine.
 - Fixed a bug where deleting a non-existent entity with sensuctl would not return an error.
 - Web UI - toolbar menu buttons now switch with dark theme.
 - Web UI - some buttons easier to see with dark theme.
 - Agents will now take proxy entity names into consideration when guarding
-against duplicate check requests.
+  against duplicate check requests.
 
 ### Changed
 - Improved logging for errors in proxy check requests.
@@ -1549,11 +1554,11 @@ against duplicate check requests.
 
 ### Removed
 - Check subdue functionality has been disabled. Users that have checks with
-subdues defined should delete and recreate the check. The subdue feature was
-found to have issues, and we are re-working the feature for a future release.
+  subdues defined should delete and recreate the check. The subdue feature was
+  found to have issues, and we are re-working the feature for a future release.
 - Filter when functionality has been disabled. Users that have filters with
-'when' properties defined should delete and recreate the filter. Filter when
-uses the same facility as check subdue for handling time windows.
+  'when' properties defined should delete and recreate the filter. Filter when
+  uses the same facility as check subdue for handling time windows.
 - Removed event.Hooks and event.Silenced deprecated fields
 - Extensions have been removed until we have time to revisit the feature.
 
@@ -1565,10 +1570,10 @@ uses the same facility as check subdue for handling time windows.
 - Assets and mutators environments are now merged, with a preference given to the
   values coming from the mutator's environment.
 - Metadata from wrappers and resources is now merged, with a preference given to
-the values coming from the wrapper. Labels and annotations are deep-merged.
+  the values coming from the wrapper. Labels and annotations are deep-merged.
 - Round-robin scheduling has been temporarily disabled.
 - The dashboard now uses the `api-url` configuration attribute to connect to the
-API.
+  API.
 
 ### Fixed
 - Fixed several resource leaks in the check scheduler.
@@ -1581,7 +1586,7 @@ API.
 - Fixed a bug where resources from namespaces that share a common prefix, eg:
   "sensu" and "sensu-devel", could be listed together.
 - Fixed a bug in the agent where the agent would deadlock after a significant
-period of disconnection from the backend.
+  period of disconnection from the backend.
 - Fixed a bug where logging events without checks would cause a nil panic.
 - Removed the ability to rerun keepalives on the events list page
 - A panic in keepalive/check ttl monitors causing a panic.
@@ -1589,13 +1594,13 @@ period of disconnection from the backend.
 - Updating a users groups will no longer corrupt their password
 - Prevent empty error messages in sensuctl.
 - Fixed a bug where keepalive failures could be influenced by check TTL
-successes, and vice versa.
+  successes, and vice versa.
 - Fixed a bug where check TTL events were not formed correctly.
 - Fixed a web-ui bug causing the app to crash on window resize in FireFox
 
 ### Breaking Changes
 - The backend configuration attributes `api-host` & `api-port` have been
-replaced with `api-listen-address`.
+  replaced with `api-listen-address`.
 
 ## [2.0.0-beta.8-1] - 2018-11-15
 
@@ -1609,9 +1614,9 @@ replaced with `api-listen-address`.
 - Add support for setting labels on agents with the command line.
 - The sensuctl tool now supports yaml.
 - Add support for `--all-namespaces` flag in `sensuctl extension list`
-subcommand.
+  subcommand.
 - Added functionality to the dynamic synthesize function, allowing it to
-flatten embedded and non-embedded fields to the top level.
+  flatten embedded and non-embedded fields to the top level.
 - Added the sensuctl edit command.
 - Added javascript filtering.
 
@@ -1643,18 +1648,18 @@ flatten embedded and non-embedded fields to the top level.
 - Agent subscriptions are now specified in the config file as an array instead
   instead of a comma-delimited list of strings.
 - Extended attributes have been removed and replaced with labels. Labels are
-string-string key-value pairs.
+  string-string key-value pairs.
 - Silenced `id`/`ID` field has changed to `name`/`Name`.
 - Entity `id`/`ID` field has changed to `name`/`Name`.
 - Entity `class`/`Class` field has changed to `entity_class`/`EntityClass`.
 - Check `proxy_entity_id`/`ProxyEntityID` field has changed to `proxy_entity_name`/`ProxyEntityName`.
 - Objects containing both a `name`/`Name` and `namespace`/`Namespace` field have been
-replaced with `metadata`/`ObjectMeta` (which contains both of those fields).
+  replaced with `metadata`/`ObjectMeta` (which contains both of those fields).
 - Role-based access control (RBAC) has been completely redesigned.
 - Filter and token substitution variable names now match API naming. Most names
-that were previously UpperCased are now lower_cased.
+  that were previously UpperCased are now lower_cased.
 - Filter statements are now called expressions. Users should update their
-filter definitions to use this new naming.
+  filter definitions to use this new naming.
 
 ## [2.0.0-beta.7-1] - 2018-10-26
 
@@ -1678,35 +1683,35 @@ filter definitions to use this new naming.
 ### Removed
 - Staging resources and configurations have been removed from sensu-go.
 - Removed handlers/slack from sensu/sensu-go. It can now be found in
-sensu/slack-handler.
+  sensu/slack-handler.
 - Removed the `Error` store and type.
 
 ### Changed
 - Changed sensu-agent's internal asset manager to use BoltDB.
 - Changed sensuctl title colour to use terminal's configured default for bold
-text.
+  text.
 - The backend no longer forcibly binds to localhost.
 - Keepalive intervals and timeouts are now configured in the check object of
-keepalive events.
+  keepalive events.
 - The sensu-agent binary is now located at ./cmd/sensu-agent.
 - Sensuctl no longer uses auto text wrapping.
 - The backend no longer requires embedded etcd. External etcd instances can be
-used by providing the --no-embed option. In this case, the client will dial
-the URLs provided by --listen-client-urls.
+  used by providing the --no-embed option. In this case, the client will dial
+  the URLs provided by --listen-client-urls.
 - The sensu-agent binary is now located at ./cmd/sensu-agent.
 - Sensuctl no longer uses auto text wrapping.
 - The backend no longer requires embedded etcd. External etcd instances can be
-used by providing the --no-embed option. In this case, the client will dial
-the URLs provided by --listen-client-urls.
+  used by providing the --no-embed option. In this case, the client will dial
+  the URLs provided by --listen-client-urls.
 - Deprecated daemon `Status()` functions and `/info` (`/info` will be
-re-implemented in https://github.com/sensu/sensu-go/issues/1739).
+  re-implemented in https://github.com/sensu/sensu-go/issues/1739).
 - The sensu-backend flags related to etcd are now all prefixed with `etcd` and
-the older versions are now deprecated.
+  the older versions are now deprecated.
 - Web ui entity recent events are sorted by last ok.
 - etcd is now the last component to shutdown during a graceful shutdown.
 - Web ui entity recent events are sorted by last ok
 - Deprecated --custom-attributes in the sensu-agent command, changed to
---extended-attributes.
+  --extended-attributes.
 - Interfaced command execution and mocked it for testing.
 - Updated the version of `libprotoc` used to 3.6.1.
 
@@ -1716,28 +1721,28 @@ the older versions are now deprecated.
 - Fixes a bug in `sensuctl cluster health` so the correct error is handled.
 - Fixed a bug where assets could not extract git tarballs.
 - Fixed a bug where assets would not install if given cache directory was a
-relative path.
+  relative path.
 - Fixed a bug where an agent's collection of system information could delay
-sending of keepalive messages.
+  sending of keepalive messages.
 - Fixed a bug in nagios perfdata parsing.
 - Etcd client URLs can now be a comma-separated list.
 - Fixed a bug where output metric format could not be unset.
 - Fixed a bug where the agent does not validate the ID at startup.
 - Fixed a bug in `sensuctl cluster health` that resulted in an unmarshal
-error in an unhealthy cluster.
+  error in an unhealthy cluster.
 - Fixed a bug in the web ui, removed references to keepaliveTimeout.
 - Keepalive checks now have a history.
 - Some keepalive events were misinterpreted as resolution events, which caused
-these events to be handled instead of filtered.
+  these events to be handled instead of filtered.
 - Some failing keepalive events were not properly emitted after a restart of
-sensu-backend.
+  sensu-backend.
 - The check output attribute is still present in JSON-encoded events even if
-empty.
+  empty.
 - Prevent an empty Path environment variable for agents on Windows.
 - Fixed a bug in `sensuctl check update` interactive mode. Boolean defaults
-were being displayed rather than the check's current values.
+  were being displayed rather than the check's current values.
 - Use the provided etcd client TLS information when the flag `--no-embed-etcd`
-is used.
+  is used.
 - Increase duration delta in TestPeriodicKeepalive integration test.
 - Fixed some problems introduced by Go 1.11.
 
@@ -1755,24 +1760,24 @@ is used.
 ### Changed
 - API responses are inspected after each request for the Sensu Edition header.
 - Rename list-rules subcommand to info in sensuctl role commmand with alias
-for backward compatibility.
+  for backward compatibility.
 - Updated gogo/protobuf and golang/protobuf versions.
 - Health API now returns etcd alarms in addition to cluster health.
 
 ### Fixed
 - Fixed agentd so it does not subscribe to empty subscriptions.
 - Rules are now implicitly granting read permission to their configured
-environment & organization.
+  environment & organization.
 - The splay_coverage attribute is no longer mandatory in sensuctl for proxy
-check requests and use its default value instead.
+  check requests and use its default value instead.
 - sensu-agent & sensu-backend no longer display help usage and duplicated error
-message on startup failure.
+  message on startup failure.
 - `Issued` & `History` are now set on keepalive events.
 - Resolves a potential panic in `sensuctl cluster health`.
 - Fixed a bug in InfluxDB metric parsing. The timestamp is now optional and
-compliant with InfluxDB line protocol.
+  compliant with InfluxDB line protocol.
 - Fixed an issue where adhoc checks would not be issued to all agents in a
-clustered installation.
+  clustered installation.
 
 ### Breaking Changes
 - Corrects the check field `total_state-change` json tag to `total_state_change`.
@@ -1791,26 +1796,26 @@ clustered installation.
 
 ### Changed
 - The Backend struct has been refactored to allow easier customization in
-enterprise edition.
+  enterprise edition.
 - Use etcd monitor instead of in-memory monitor.
 - Refactoring of the cmd package for sensuctl to allow easier customization in
-the enterprise edition.
+  the enterprise edition.
 - Upgrade dep to v0.5.0
 - Added cluster health information to /health endpoint in sensu-backend.
 
 ### Fixed
 - Fixed `sensuctl completion` help for bash and zsh.
 - Fixed a bug in build.sh where versions for Windows and Mac OS were not
-generated correctly.
+  generated correctly.
 - Display the name of extensions with table formatting in sensuctl.
 - Fixed TLS issue that occurred when dashboard communicated with API.
 - Check TTL now works with round robin checks.
 - Format string for --format flag help now shows actual arguments.
 - Push the sensu/sensu:nightly docker image to the Docker Hub.
 - Replaced dummy certs with ones that won't expire until 100 years in the
-future.
+  future.
 - Fixed a bug where clustered round robin check execution executed checks
-too often.
+  too often.
 - Catch errors in type assertions in cli.
 - Fixed a bug where users could accidentally create invalid gRPC handlers.
 
@@ -1825,7 +1830,7 @@ too often.
 
 ### Added
 - Performed an audit of events and checks. Added `event.HasCheck()` nil checks
-prior to assuming the existence of said check.
+  prior to assuming the existence of said check.
 - Added a Create method to the entities api.
 - Added the ability to set round robin scheduling in sensuctl
 - Added Output field to GRPC handlers
@@ -1833,12 +1838,12 @@ prior to assuming the existence of said check.
 - Accept additional time formats in sensuctl
 - Entities can now be created via sensuctl.
 - Added the format `wrapped-json` to sensuctl `configure`, `list` and `info`
-commands, which is compatible with `sensuctl create`.
+  commands, which is compatible with `sensuctl create`.
 - Added debug event log with all event data.
 - Added yml.example configurations for staging backend and agents.
 - Added test resources in `testing/config/resources.json` to be used in staging.
 - Added all missing configuration options to `agent.yml.example` and
-`backend.yml.example`.
+  `backend.yml.example`.
 - Added environment variables to checks.
 - Added logging redaction integration test.
 - Added check token substitution integration test.
@@ -1853,19 +1858,19 @@ commands, which is compatible with `sensuctl create`.
 - Split out the docker commands in build script so that building images and
   pushing can be done separately.
 - Migrated the InfluxDB handler from the sensu-go repository to
-github.com/nikkiki/sensu-influxdb-handler
+  github.com/nikkiki/sensu-influxdb-handler
 - Entry point for sensu-backend has been changed to
   `github.com/sensu/sensu-go/cmd/sensu-backend`
 - Don't allow unknown fields in types that do not support custom attributes
-when creating resources with `sensuctl create`.
+  when creating resources with `sensuctl create`.
 - Provided additional context to metric event logs.
 - Updated goversion in the appveyor configuration for minor releases.
 - Use a default hostname if one cannot be retrieved.
 - Return an error from `sensuctl configure` when the configured organization
-or environment does not exist.
+  or environment does not exist.
 - Remove an unnecessary parameter from sensuctl environment create.
 - The profile environment & organization values are used by default when
-creating a resource with sensuctl.
+  creating a resource with sensuctl.
 - Migrated docker image to sensu Docker Hub organization from sensuapp.
 - Use the sensu/sensu image instead of sensu/sensu-go in Docker Hub.
 
@@ -1877,11 +1882,11 @@ creating a resource with sensuctl.
 - Metrics with zero-values are now displayed correctly
 - Fix handler validation routine
 - Fixed a small bug in the opentsdb transformer so that it trims trailing
-whitespace characters.
+  whitespace characters.
 - Sensu-agent logs an error if the statsd listener is unable to start due to an
-invalid address or is stopped due to any other error.
+  invalid address or is stopped due to any other error.
 - Fixed a bug where --organization and --environment flags were hidden for all
-commands
+  commands
 - Fix a bug where environments could not be created with sensuctl create
 - StatsD listener on Windows is functional
 - Add version output for dev and nightly builds (#1320).
@@ -1889,35 +1894,35 @@ commands
 - Fixed `sensuctl create -f` for `Role`
 - Fixed `sensuctl create -f` for `Event`
 - Added validation for asset SHA512 checksum, requiring that it be at least 128
-characters and therefore fixing a bug in sensuctl
+  characters and therefore fixing a bug in sensuctl
 - Silenced IDs are now generated when not set in `create -f` resources
 - API requests that result in a 404 response are now logged
 - Fixed a bug where only a single resource could be created with
-`sensuctl create` at a time.
+  `sensuctl create` at a time.
 - Fixed a bug where environments couldn't be deleted if there was an asset in
-the organization they reside in.
+  the organization they reside in.
 - Dashboard's backend reverse proxy now works with TLS certs are configured.
 - Fixed a bug with the IN operator in query statements.
 - Boolean fields with a value of `false` now appear in json format (removed
-`omitempty` from protobufs).
+  `omitempty` from protobufs).
 - The sensuctl create command no longer prints a spurious warning when
-non-default organizations or environments are configured.
+  non-default organizations or environments are configured.
 - When installing assets, errors no longer cause file descriptors to leak, or
-lockfiles to not be cleaned up.
+  lockfiles to not be cleaned up.
 - Fixed a bug where the CLI default for round robin checks was not appearing.
 - Missing custom attributes in govaluate expressions no longer result in
-an error being logged. Instead, a debug message is logged.
+  an error being logged. Instead, a debug message is logged.
 - Update AppVeyor API token to enable GitHub deployments.
 - Allow creation of metric events via backend API.
 - Fixed a bug where in some circumstances checks created with sensuctl create
-would never fail.
+  would never fail.
 - Fixed a goroutine leak in the ring.
 - Fixed `sensuctl completion` help for bash and zsh.
 
 ### Removed
 - Removed Linux/386 & Windows/386 e2e jobs on Travis CI & AppVeyor
 - Removed check output metric extraction e2e test, in favor of more detailed
-integration coverage.
+  integration coverage.
 - Removed the `leader` package
 - Removed logging redaction e2e test, in favor of integration coverage.
 - Removed check token substitution e2e test, in favor of integration coverage.
@@ -1948,47 +1953,47 @@ integration coverage.
 - Added extension registry to the store.
 - Add sensuctl create command.
 - Adds a statsd server to the sensu-agent which runs statsd at a configurable
-flush interval and converts gostatsd metrics to Sensu Metric Format.
+  flush interval and converts gostatsd metrics to Sensu Metric Format.
 - Add event filtering to extensions.
 - Proper 404 page for web UI.
 - Add sensuctl extension command.
 - Add extensions to pipelined.
 - Added more tests surrounding the sensu-agent's statsd server and udp port.
 - Add the `--statsd-event-handlers` flag to sensu-agent which configures the
-event handlers for statsd metrics.
+  event handlers for statsd metrics.
 - Add default user with username "sensu" with global, read-only permissions.
 - Add end-to-end test for extensions.
 - Add configuration setting for backend and agent log level.
 - Add extension package for building third-party Sensu extensions in Go.
 - Add the `--statsd-disable` flag to sensu-agent which configures the
-statsd listener. The listener is enabled by default.
+  statsd listener. The listener is enabled by default.
 - Added an influx-db handler for events containing metrics.
 - Add 'remove-when' and 'set-when' subcommands to sensuctl filter command.
 - Added the Transformer interface.
 - Added a Graphite Plain Text transformer.
 - Add support for `metric_format` and `metric_handlers` fields in the Check and
-CheckConfig structs.
+  CheckConfig structs.
 - Add CLI support for `metric_format` and `metric_handlers` fields in `sensuctl`.
 - Add support for metric extraction from check output for `graphite_plaintext`
-transformer.
+  transformer.
 - Added a OpenTSDB transformer.
 - Add support for metric extraction from check output for `opentsdb_line`
 - Added a Nagios performance data transformer.
 - Add support for metric extraction from check output for `nagios_perfdata`
 - Added an InfluxDB Line transformer.
 - Add support for metric extraction from check output for `influxdb_line`
-transformer.
+  transformer.
 - Add e2e test for metric extraction.
 
 ### Changed
 - Changed the maximum number of open file descriptors on a system to from 1024
-(default) to 65535.
+  (default) to 65535.
 - Increased the default etcd size limit from 2GB to 4GB.
 - Move Hooks and Silenced out of Event and into Check.
 - Handle round-robin scheduling in wizardbus.
 - Added informational logging for failed entity keepalives.
 - Replaced fileb0x with vfsgen for bundling static assets into binary. Nodejs 8+
-and yarn are now dependencies for building the backend.
+  and yarn are now dependencies for building the backend.
 - Updated etcd to 3.3.2 from 3.3.1 to fix an issue with autocompaction settings.
 - Updated and corrected logging style for variable fields.
 - Build protobufs with go generate.
@@ -2005,7 +2010,7 @@ and yarn are now dependencies for building the backend.
 - Disable gostatsd internal metric collection.
 - Improved log entries produced by pipelined.
 - Allow the InfluxDB handler to parse the Sensu metric for an InfluxDB field tag
-and measurement.
+  and measurement.
 - Removed organization and environment flags from create command.
 - Changed `metric_format` to `output_metric_format`.
 - Changed `metric_handlers` to `output_metric_handlers`.
@@ -2023,7 +2028,7 @@ and measurement.
 - Silenced entries using an asterisk can be deleted
 - Improve json unmarshaling performance.
 - Events created from the metrics passed to the statsd listener are no longer
-swallowed. The events are sent through the pipeline.
+  swallowed. The events are sent through the pipeline.
 - Fixed a bug where the Issued field was never populated.
 - When creating a new statsd server, use the default flush interval if given 0.
 - Fixed a bug where check and checkconfig handlers and subscriptions are null in rendered JSON.
@@ -2035,7 +2040,7 @@ swallowed. The events are sent through the pipeline.
 - Check event entities now have a last_seen timestamp.
 - Improved silenced entry display and UX.
 - Fixed a small bug in the opentsdb transformer so that it trims trailing
-whitespace characters.
+  whitespace characters.
 
 ## [2.0.0-nightly.1] - 2018-03-07
 ### Added
@@ -2043,11 +2048,11 @@ whitespace characters.
 - Add CLI support for adhoc check requests.
 - Check scheduler now handles adhoc check requests.
 - Added `set-FIELD` and `remove-FIELD` commands for all updatable fields
-of a check. This allows updating single fields and completely clearing out
-non-required fields.
+  of a check. This allows updating single fields and completely clearing out
+  non-required fields.
 - Add built-in only_check_output mutator to pipelined.
 - Allow publish, cron, ttl, timeout, low flap threshold and more fields to be
-set when importing legacy settings.
+  set when importing legacy settings.
 - Add CPU architecture in system information of entities.
 - The `sensuctl user change-password` subcommand now accepts flag parameters.
 - Configured and enabled etcd autocompaction.
@@ -2055,7 +2060,7 @@ set when importing legacy settings.
 - Agents now try to reconnect to the backend if the connection is lost.
 - Added non-functional selections for resolving and silencing to web ui
 - Add LastOk to check type. This will be updated to reflect the last timestamp
-of a successful check.
+  of a successful check.
 - Added GraphQL explorer to web UI.
 - Added check occurrences and occurrences_watermark attributes from Sensu 1.x.
 - Added issue template for GitHub.
@@ -2063,25 +2068,25 @@ of a successful check.
 
 ### Changed
 - Refactor Check data structure to not depend on CheckConfig. This is a breaking
-change that will cause existing Sensu alpha installations to break if upgraded.
-This change was made before beta release so that further breaking changes could
-be avoided.
+  change that will cause existing Sensu alpha installations to break if upgraded.
+  This change was made before beta release so that further breaking changes could
+  be avoided.
 - Make indentation in protocol buffers files consistent.
 - Refactor Hook data structure. This is similar to what was done to Check,
-except that HookConfig is now embedded in Hook.
+  except that HookConfig is now embedded in Hook.
 - Refactor CheckExecutor and AdhocRequestExecutor into an Executor interface.
 - Changed the sensu-backend etcd flag constants to match the etcd flag names.
 - Upgraded to Etcd v3.3.1
 - Removed 3DES from the list of allowed ciphers in the backend and agent.
 - Password input fields are now aligned in  `sensuctl user change-password`
-subcommand.
+  subcommand.
 - Agent backend URLs without a port specified will now default to port 8081.
 - Travis encrypted variables have been updated to work with travis-ci.org
 - Upgraded all builds to use Go 1.10.
 - Use megacheck instead of errcheck.
 - Cleaned agent configuration.
 - We no longer duplicate hook execution for types that fall into both an exit
-code and severity (ex. 0, ok).
+  code and severity (ex. 0, ok).
 - Updated the sensuctl guidelines.
 - Changed travis badge to use travis-ci.org in README.md.
 - Govaluate's modifier tokens can now be optionally forbidden.
@@ -2091,19 +2096,19 @@ code and severity (ex. 0, ok).
 
 ### Fixed
 - Fixed a bug in time.InWindow that in some cases would cause subdued checks to
-be executed.
+  be executed.
 - Fixed a bug in the HTTP API where resource names could not contain special
-characters.
+  characters.
 - Resolved a bug in the keepalive monitor timer which was causing it to
-erroneously expire.
+  erroneously expire.
 - Resolved a bug in how an executor processes checks. If a check contains proxy
-requests, the check should not duplicately execute after the proxy requests.
+  requests, the check should not duplicately execute after the proxy requests.
 - Removed an erroneous validation statement in check handler.
 - Fixed HookList `hooks` validation and updated `type` validation message to
-allow "0" as a valid type.
+  allow "0" as a valid type.
 - Events' check statuses & execution times are now properly added to CheckHistory.
 - Sensu v1 Check's with TTL, timeout and threshold values can now be imported
-correctly.
+  correctly.
 - Use uint32 for status so it's not empty when marshalling.
 - Automatically create a "default" environment when creating a new organization.
 
@@ -2114,14 +2119,14 @@ correctly.
 - Add API support for adhoc check requests.
 - Check scheduler now supports round-robin scheduling.
 - Added better error checking for CLI commands and support for mutually
-exclusive fields.
+  exclusive fields.
 - Added `--interactive` flag to CLI which is required to run interactive mode.
 - Added CLI role rule-add Organization and Environment interactive prompts.
 - Added events page list and simple buttons to filter
 
 ### Changed
 - Silenced `begin` supports human readable time (Format: Jan 02 2006 3:04PM MST)
-in `sensuctl` with optional timezone. Stores the field as unix epoch time.
+  in `sensuctl` with optional timezone. Stores the field as unix epoch time.
 - Increased the timeout in the store's watchers tests.
 - Incremental retry mechanism when waiting for agent and backend in e2e tests.
 - Renamed CLI asset create interactive prompt "Org" to "Organization".
@@ -2139,10 +2144,10 @@ in `sensuctl` with optional timezone. Stores the field as unix epoch time.
 
 ### Fixed
 - Tracks in-progress checks with a map and mutex rather than an array to
-increase time efficiency and synchronize goroutines reading from and writing
-to that map.
+  increase time efficiency and synchronize goroutines reading from and writing
+  to that map.
 - Fixed a bug where we were attempting to kill processes that had already
-finished before its allotted execution timeout.
+  finished before its allotted execution timeout.
 - Fixed a bug where an event could erroneously be shown as silenced.
 - Properly log errors whenever a check request can't be published.
 - Fixed some build tags for tests using etcd stores.
@@ -2169,7 +2174,7 @@ finished before its allotted execution timeout.
 - Entities have been added to the state manager and synchronizer.
 - Added package leader, for facilitating execution by a single backend.
 - Proxy check requests are now published to all entities described in
-`ProxyRequests` and `EntityAttributes`.
+  `ProxyRequests` and `EntityAttributes`.
 - Add quick navigation component for dashboard
 
 ### Changed
@@ -2178,7 +2183,7 @@ finished before its allotted execution timeout.
 
 ### Fixed
 - Fixed a bug where retrieving check hooks were only from the check's
-organization, rather than the check's environment, too.
+  organization, rather than the check's environment, too.
 
 ## [2.0.0-alpha.14] - 2018-01-23
 ### Added
@@ -2189,9 +2194,9 @@ organization, rather than the check's environment, too.
 - Token substitution is now available for check hooks
 - Add an e2e test for logging redaction
 - Support for `When` field in `Filter` which enables filtering based on days
-and times of the week.
+  and times of the week.
 - New gRPC inspired GraphQL implementation. See
-[graphql/README](backend/apid/graphql/README.md) for usage.
+  [graphql/README](backend/apid/graphql/README.md) for usage.
 - Support for TTLs in check configs to monitor stale check results.
 
 ### Changed
@@ -2206,7 +2211,7 @@ and times of the week.
 - Fixed e2e test for token substitution on Windows
 - Fixed check subdue unit test for token substitution on Windows
 - Consider the first and last seconds of a time window when comparing the
-current time
+  current time
 - Fixed Travis deploy stage by removing caching for $GOPATH
 - Parse for [traditional cron](https://en.wikipedia.org/wiki/Cron) strings, rather than [GoDoc cron](https://godoc.org/github.com/robfig/cron) strings.
 
@@ -2217,11 +2222,11 @@ current time
 ## [2.0.0-alpha.12] - 2018-01-09
 ### Added
 - Add check subdue mechanism. Checks can now be subdued for specified time
-windows.
+  windows.
 - Silenced entries now include a `begin` timestamp for scheduled maintenance.
 - Store clients can now use [watchers](https://github.com/sensu/sensu-go/pull/792) to be notified of changes to objects in the store.
 - Add check `Cron` field. Checks can now be scheduled according to the cron
-string stored in this field.
+  string stored in this field.
 - Add a distributed queue package for use in the backend.
 - Token substitution is now available for checks.
 - CLI functionality for check `Cron` field.
@@ -2231,11 +2236,11 @@ string stored in this field.
 ## [2.0.0-alpha.11] - 2017-12-19
 ### Breaking Changes
 - The `Source` field on a check has been renamed to `ProxyEntityID`. Any checks
-using the Source field will have to be recreated.
+  using the Source field will have to be recreated.
 
 ### Added
 - Silenced entries with ExpireOnResolve set to true will now be deleted when an
-event which has previously failing was resolved
+  event which has previously failing was resolved
 - TCP/UDP sockets now accept 1.x backward compatible payloads. 1.x Check Result gets translated to a 2.x Event.
 - Custom attributes can be added to the agent at start.
 - New and improved Check Hooks are implemented (see whats new about hooks here: [Hooks](https://github.com/sensu/sensu-alpha-documentation/blob/master/08-hooks.md))
@@ -2247,10 +2252,10 @@ event which has previously failing was resolved
 - Pulled in latest [github.com/coreos/etcd](https://github.com/coreos/etcd).
 - Includes fix for panic that occurred on shutdown.
 - Refer to their
-[changelog](https://github.com/gyuho/etcd/blob/f444abaae344e562fc69323c75e1cf772c436543/CHANGELOG.md)
-for more.
+  [changelog](https://github.com/gyuho/etcd/blob/f444abaae344e562fc69323c75e1cf772c436543/CHANGELOG.md)
+  for more.
 - Switch to using [github.com/golang/dep](https://github.com/golang/dep) for
-managing dependencies; `vendor/` directory has been removed.
+  managing dependencies; `vendor/` directory has been removed.
 - See [README](README.md) for usage.
 
 ## [2.0.0-alpha.10] - 2017-12-12
@@ -2260,29 +2265,29 @@ managing dependencies; `vendor/` directory has been removed.
 
 ### Changed
 - Events that transitioned from incidents to a healthy state are no longer
-filtered by the pipeline
+  filtered by the pipeline
 - Errcheck was added to the build script, and the project was given a once-over
-to clean up existing errcheck lint.
+  to clean up existing errcheck lint.
 - Creating a silenced entry via sensuctl no longer requires an expiry value
 
 ### Fixed
 - Entities can now be silenced using their entity subscription
 - Fixed a bug in the agent where it was ignoring keepalive interval and timeout
-settings on start
+  settings on start
 - Keepalives now alert when entities go away!
 - Fixed a bug in package dynamic that could lead to an error in json.Marshal
-in certain cases.
+  in certain cases.
 - Fixed an issue in keepalived to handle cases of nil entities in keepalive
-messages
+  messages
 
 ## [2.0.0-alpha.9] - 2017-12-5
 ### Added
 - Proxy entities are now dynamically created through the "Source" attribute of a
-check configuration
+  check configuration
 - Flag to sensuctl configure allowing it to be configured non-interactively
-(usage: --non-interactive or -n)
+  (usage: --non-interactive or -n)
 - New function SetField in package dynamic, for setting fields on types
-supporting extended attributes.
+  supporting extended attributes.
 - Automatically append entity:entityID subscription for agent entities
 - Add silenced command to sensuctl for silencing checks and subscriptions.
 - Add healthz endpoint to agent api for checking agent liveness.
@@ -2290,11 +2295,11 @@ supporting extended attributes.
 - Add POST /events endpoint to manually create, update, and resolve events.
 - Add "event resolve" command to sensuctl to manually resolve events.
 - Add the time.InWindow & time.InWindows functions to support time windows, used
-in filters and check subdue
+  in filters and check subdue
 
 ### Fixed
 - Fixed a bug in how silenced entries were deleted. Only one silenced entry will
-be deleted at a time, regardless of wildcard presence for subscription or check.
+  be deleted at a time, regardless of wildcard presence for subscription or check.
 
 ## [2.0.0-alpha.8] - 2017-11-28
 ### Added
