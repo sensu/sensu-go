@@ -30,9 +30,9 @@ func (s *Store) GetSession(ctx context.Context, username, sessionID string) (str
 }
 
 // UpdateSession applies the supplied state to the session uniquely identified
-// by the given username and session ID and TTL of 11 minutes
+// by the given username and session ID and TTL of 6 minutes considering access token expires in 5 minutes
 func (s *Store) UpdateSession(ctx context.Context, username, sessionID, state string) error {
-	leaseResp, err := s.client.Grant(ctx, 60*11)
+	leaseResp, err := s.client.Grant(ctx, 60*6)
 	if err != nil {
 		fmt.Errorf("%s", err)
 	}
@@ -48,6 +48,5 @@ func (s *Store) DeleteSession(ctx context.Context, username, sessionID string) e
 	if _, err := s.client.Delete(ctx, userSessionPath(username, sessionID)); err != nil {
 		return err
 	}
-
 	return nil
 }
