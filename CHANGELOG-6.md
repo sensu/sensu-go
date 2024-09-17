@@ -10,7 +10,7 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ### Changed
 - Added TTl to each entry in user-session within etcd
-- TTl value is 11 minutes
+- TTl value is 6 minutes
 
 ## [6.11.0] - 2024-01-31
 

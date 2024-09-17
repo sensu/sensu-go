@@ -34,7 +34,7 @@ func (s *Store) GetSession(ctx context.Context, username, sessionID string) (str
 func (s *Store) UpdateSession(ctx context.Context, username, sessionID, state string) error {
 	leaseResp, err := s.client.Grant(ctx, 60*6)
 	if err != nil {
-		fmt.Errorf("%s", err)
+		return fmt.Errorf("%s", err)
 	}
 	if _, err := s.client.Put(ctx, userSessionPath(username, sessionID), state, clientv3.WithLease(leaseResp.ID)); err != nil {
 		return err
