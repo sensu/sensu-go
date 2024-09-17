@@ -6,11 +6,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io/ioutil"
-	"net/http"
-	"net/http/httptest"
-	"testing"
-
 	corev2 "github.com/sensu/core/v2"
 	corev3 "github.com/sensu/core/v3"
 	"github.com/sensu/sensu-go/backend/apid/middlewares"
@@ -22,6 +17,10 @@ import (
 	"github.com/sensu/sensu-go/transport"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+	"io/ioutil"
+	"net/http"
+	"net/http/httptest"
+	"testing"
 )
 
 func TestAgentdMiddlewares(t *testing.T) {

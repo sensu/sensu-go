@@ -11,9 +11,9 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/prometheus/client_golang/prometheus"
-	"github.com/sensu/sensu-go/agent"
 	corev2 "github.com/sensu/core/v2"
 	corev3 "github.com/sensu/core/v3"
+	"github.com/sensu/sensu-go/agent"
 	"github.com/sensu/sensu-go/backend/messaging"
 	"github.com/sensu/sensu-go/backend/metrics"
 	"github.com/sensu/sensu-go/backend/ringv2"
@@ -95,6 +95,8 @@ type Session struct {
 	marshal          agent.MarshalFunc
 	unmarshal        agent.UnmarshalFunc
 	entityConfig     *entityConfig
+	userConfig       *userConfig
+	user             string
 	mu               sync.Mutex
 	subscriptionsMap map[string]subscription
 }
@@ -111,10 +113,21 @@ type entityConfig struct {
 	updatesChannel chan interface{}
 }
 
+// userConfig is used by a session to subscribe to entity config updates
+type userConfig struct {
+	subscription   chan messaging.Subscription
+	updatesChannel chan interface{}
+}
+
 // Receiver returns the channel for incoming entity updates from the entity
 // watcher
 func (e *entityConfig) Receiver() chan<- interface{} {
 	return e.updatesChannel
+}
+
+// Receiver returns the channel for incoming entity updates from the entity watcher
+func (u *userConfig) Receiver() chan<- interface{} {
+	return u.updatesChannel
 }
 
 func newSessionHandler(s *Session) *handler.MessageHandler {
@@ -149,6 +162,7 @@ type SessionConfig struct {
 	// with the session has been buried. Necessary when running parallel keepalived
 	// workers.
 	BurialReceiver *BurialReceiver
+	userConfig     *userConfig
 }
 
 type BurialReceiver struct {
@@ -193,8 +207,13 @@ func NewSession(ctx context.Context, cfg SessionConfig) (*Session, error) {
 		ringPool:         cfg.RingPool,
 		unmarshal:        cfg.Unmarshal,
 		marshal:          cfg.Marshal,
+		user:             cfg.User,
 		entityConfig: &entityConfig{
 			subscriptions:  make(chan messaging.Subscription, 1),
+			updatesChannel: make(chan interface{}, 10),
+		},
+		userConfig: &userConfig{
+			subscription:   make(chan messaging.Subscription, 1),
 			updatesChannel: make(chan interface{}, 10),
 		},
 	}
@@ -209,6 +228,13 @@ func NewSession(ctx context.Context, cfg SessionConfig) (*Session, error) {
 		defer func() {
 			_ = subscription.Cancel()
 		}()
+	}
+
+	if len(cfg.User) > 0 {
+		_, err := s.bus.Subscribe(messaging.UserConfigTopic(cfg.User), cfg.AgentName, s.userConfig)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	if err := s.bus.Publish(messaging.TopicKeepalive, makeEntitySwitchBurialEvent(cfg)); err != nil {
@@ -321,6 +347,44 @@ func (s *Session) sender() {
 	for {
 		var msg *transport.Message
 		select {
+		//---- user -----//
+
+		case u := <-s.userConfig.updatesChannel:
+			watchEvent, ok := u.(*store.WatchEventUserConfig)
+			if !ok {
+				logger.Errorf("session received unexoected user struct : %T", u)
+				continue
+			}
+			// Handle the delete/disable event
+			switch watchEvent.Action {
+			case store.WatchUpdate:
+				if watchEvent.Disabled {
+					logger.Warn("The user associated with the agent is now disabled")
+					return
+				}
+				logger.Println("The update operation has been performed on user")
+			default:
+				panic("unhandled default case")
+			}
+
+			if watchEvent.User == nil {
+				logger.Error("session received nil user in watch event")
+			}
+			//
+			lagger := logger.WithFields(logrus.Fields{
+				"action":    watchEvent.Action.String(),
+				"user":      watchEvent.User.Username,
+				"namespace": watchEvent.User.GetMetadata().GetNamespace(),
+			})
+			lagger.Debug("user update received")
+
+			bytes, err := s.marshal(watchEvent.User)
+			if err != nil {
+				lagger.WithError(err).Error("session failed to serialize user config")
+			}
+			msg = transport.NewMessage(transport.MessageTypeUserConfig, bytes)
+
+		// ---- entity ----//
 		case e := <-s.entityConfig.updatesChannel:
 			watchEvent, ok := e.(*store.WatchEventEntityConfig)
 			if !ok {
@@ -448,7 +512,9 @@ func (s *Session) sender() {
 // 2. Start receiver
 // 3. Start goroutine that waits for context cancellation, and shuts down service.
 func (s *Session) Start() (err error) {
+	defer close(s.userConfig.subscription)
 	defer close(s.entityConfig.subscriptions)
+
 	sessionCounter.WithLabelValues(s.cfg.Namespace).Inc()
 	s.wg = &sync.WaitGroup{}
 	s.wg.Add(2)
@@ -471,22 +537,45 @@ func (s *Session) Start() (err error) {
 		"agent":     s.cfg.AgentName,
 		"namespace": s.cfg.Namespace,
 	})
-
-	// Subscribe the agent to its entity_config topic
-	topic := messaging.EntityConfigTopic(s.cfg.Namespace, s.cfg.AgentName)
-	lager.WithField("topic", topic).Debug("subscribing to topic")
 	// Get a unique name for the agent, which will be used as the consumer of the
 	// bus, in order to avoid problems with an agent reconnecting before its
 	// session is ended
 	agentName := agentUUID(s.cfg.Namespace, s.cfg.AgentName)
+
+	// Subscribe the agent to its user_config topic
+
+	userTopic := messaging.UserConfigTopic(s.cfg.User)
+	logger.WithField("topic", userTopic).Debug("subscribing to topic")
+	userSubscription, usrErr := s.bus.Subscribe(userTopic, agentName, s.userConfig)
+	if usrErr != nil {
+		lager.WithError(err).Error("error starting subscription")
+		return err
+	}
+	s.userConfig.subscription <- userSubscription
+
+	// Send back this user config to the agent so it uses that rather than it's local config
+	watchEvent := &store.WatchEventUserConfig{
+		Action: store.WatchUpdate,
+		User:   &corev2.User{},
+	}
+	usrErr = s.bus.Publish(messaging.UserConfigTopic(s.cfg.AgentName), watchEvent)
+	if usrErr != nil {
+		lager.WithError(err).Error("error publishing user config")
+		return err
+	}
+
+	// Subscribe the agent to its entity_config topic
+
+	topic := messaging.EntityConfigTopic(s.cfg.Namespace, s.cfg.AgentName)
+	lager.WithField("topic", topic).Debug("subscribing to topic")
+
+	// Determine if the entity already exists
 	subscription, err := s.bus.Subscribe(topic, agentName, s.entityConfig)
 	if err != nil {
 		lager.WithError(err).Error("error starting subscription")
 		return err
 	}
 	s.entityConfig.subscriptions <- subscription
-
-	// Determine if the entity already exists
 	req := storev2.NewResourceRequest(s.ctx, s.cfg.Namespace, s.cfg.AgentName, (&corev3.EntityConfig{}).StoreName())
 	wrapper, err := s.storev2.Get(req)
 	if err != nil {
@@ -577,6 +666,7 @@ func (s *Session) stop() {
 			logger.WithError(err).Error("error closing session")
 		}
 	}()
+	defer close(s.userConfig.updatesChannel)
 	defer close(s.entityConfig.updatesChannel)
 	defer close(s.checkChannel)
 
@@ -597,6 +687,13 @@ func (s *Session) stop() {
 
 	// Remove the entity config subscriptions
 	for sub := range s.entityConfig.subscriptions {
+		if err := sub.Cancel(); err != nil {
+			logger.WithError(err).Error("unable to unsubscribe from message bus")
+		}
+	}
+
+	// Remove the user config subscription
+	for sub := range s.userConfig.subscription {
 		if err := sub.Cancel(); err != nil {
 			logger.WithError(err).Error("unable to unsubscribe from message bus")
 		}
