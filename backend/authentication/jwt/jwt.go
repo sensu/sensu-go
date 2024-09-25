@@ -78,7 +78,7 @@ func AccessToken(claims *corev2.Claims) (*jwt.Token, string, error) {
 	return token, tokenString, nil
 }
 
-:q// NewClaims creates new claim based on username
+// NewClaims creates new claim based on username
 func NewClaims(user *corev2.User) (*corev2.Claims, error) {
 	// Create a unique identifier for the token
 	jti, err := GenJTI()
