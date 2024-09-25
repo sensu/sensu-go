@@ -30,7 +30,7 @@ func (s *Store) GetSession(ctx context.Context, username, sessionID string) (str
 }
 
 // UpdateSession applies the supplied state to the session uniquely identified
-// by the given username and session ID with attached lease for TTL of the key
+// by the given username and session ID with attached lease and TTl for each key
 func (s *Store) UpdateSession(ctx context.Context, username, sessionID, state string) error {
 
 	leaseDuration := jwt.DefaultAccessTokenLifespan
