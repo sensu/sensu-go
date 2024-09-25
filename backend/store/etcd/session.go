@@ -3,7 +3,7 @@ package etcd
 import (
 	"context"
 	"fmt"
-
+	"github.com/sensu/sensu-go/backend/authentication/jwt"
 	"github.com/sensu/sensu-go/backend/store"
 	"go.etcd.io/etcd/client/v3"
 )
@@ -30,9 +30,12 @@ func (s *Store) GetSession(ctx context.Context, username, sessionID string) (str
 }
 
 // UpdateSession applies the supplied state to the session uniquely identified
-// by the given username and session ID and TTL of 6 minutes added considering access token expires in 5 minutes
+// by the given username and session ID with attached lease for TTL of the key
 func (s *Store) UpdateSession(ctx context.Context, username, sessionID, state string) error {
-	leaseResp, err := s.client.Grant(ctx, 60*6)
+
+	leaseDuration := jwt.DefaultAccessTokenLifespan
+	ttl := int64(leaseDuration.Minutes()+1) * 60
+	leaseResp, err := s.client.Grant(ctx, ttl)
 	if err != nil {
 		return fmt.Errorf("%s", err)
 	}

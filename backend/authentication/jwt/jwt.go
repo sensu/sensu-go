@@ -26,7 +26,7 @@ const (
 )
 
 var (
-	defaultAccessTokenLifespan  = 5 * time.Minute
+	DefaultAccessTokenLifespan  = 5 * time.Minute
 	defaultRefreshTokenLifespan = 12 * time.Hour
 	secret                      []byte
 	privateKey                  *ecdsa.PrivateKey
@@ -58,7 +58,7 @@ func AccessToken(claims *corev2.Claims) (*jwt.Token, string, error) {
 	claims.Id = jti
 
 	// Add an expiration to the token
-	claims.ExpiresAt = time.Now().Add(defaultAccessTokenLifespan).Unix()
+	claims.ExpiresAt = time.Now().Add(DefaultAccessTokenLifespan).Unix()
 
 	token := jwt.NewWithClaims(signingMethod, claims)
 
@@ -78,7 +78,7 @@ func AccessToken(claims *corev2.Claims) (*jwt.Token, string, error) {
 	return token, tokenString, nil
 }
 
-// NewClaims creates new claim based on username
+:q// NewClaims creates new claim based on username
 func NewClaims(user *corev2.User) (*corev2.Claims, error) {
 	// Create a unique identifier for the token
 	jti, err := GenJTI()
@@ -91,7 +91,7 @@ func NewClaims(user *corev2.User) (*corev2.Claims, error) {
 		// library's documentation. We should replace its usage with
 		// RegisteredClaims.
 		StandardClaims: jwt.StandardClaims{
-			ExpiresAt: time.Now().Add(defaultAccessTokenLifespan).Unix(),
+			ExpiresAt: time.Now().Add(DefaultAccessTokenLifespan).Unix(),
 			Id:        jti,
 			Subject:   user.Username,
 		},

@@ -9,8 +9,8 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 ## [6.11.1] - 2024-09-12
 
 ### Changed
-- Added TTl to each entry in user-session within etcd
-- TTl value is 6 minutes
+- ADD TTL to each user session in the etcd data store to prevent leak.
+- TTl value is DefaultAccessTokenLifeSpan + 1 minute
 
 ## [6.11.0] - 2024-01-31
 
