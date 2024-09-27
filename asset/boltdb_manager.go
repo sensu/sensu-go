@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/spf13/viper"
 	"os"
 	"path/filepath"
 
@@ -23,6 +24,7 @@ const (
 	// ExpandDuration is the name of the prometheus summary vec used to track
 	// average latencies of asset expansion.
 	ExpandDuration = "sensu_go_asset_expand_duration"
+	FlagCacheDir   = "cache-dir"
 )
 
 var (
@@ -240,6 +242,15 @@ func (b *boltDBAssetManager) expandWithDuration(tmpFile *os.File, asset *corev2.
 			Observe(v * float64(1000))
 	}))
 	defer timer.ObserveDuration()
+
+	assetSHA := asset.Sha512
+	CacheDir := viper.GetString(FlagCacheDir)
+	fullPath := filepath.Join(CacheDir, assetSHA)
+
+	if err := os.RemoveAll(fullPath); err != nil {
+		logger.WithField("assetSHA path", fullPath).WithError(err).
+			Error("error cleaning up the assetSHA")
+	}
 
 	assetPath = filepath.Join(b.localStorage, asset.Sha512)
 	return assetPath, b.expander.Expand(tmpFile, assetPath)
