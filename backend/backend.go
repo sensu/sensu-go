@@ -328,6 +328,13 @@ func Initialize(ctx context.Context, config *Config) (*Backend, error) {
 
 	// Create the store, which lives on top of etcd
 	stor := etcdstore.NewStore(b.Client, config.EtcdName)
+
+	// set config details
+	scfg := etcdstore.Config{}
+	scfg.DefaultSilencedExpiryTime = config.DefaultSilencedExpiryTime
+	scfg.MaxSilencedExpiryTimeAllowed = config.MaxSilencedExpiryTimeAllowed
+	etcdstore.SetConfig(scfg, stor)
+
 	b.Store = stor
 	storv2 := etcdstorev2.NewStore(b.Client)
 	var storev2Proxy storev2.Proxy
