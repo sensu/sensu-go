@@ -6,6 +6,11 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic
 Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [6.11.1] - 2024-09-12
+
+### Changed
+- ADD TTL to each user session in the etcd data store to prevent leak.
+
 ## [6.11.0] - 2024-01-31
 
 ### Fixed
