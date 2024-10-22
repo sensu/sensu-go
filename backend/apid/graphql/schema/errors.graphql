@@ -51,4 +51,10 @@ enum ErrCode {
   permissions.
   """
   ERR_PERMISSION_DENIED
+
+  """
+  Indicates that set thresholds in configured have reached
+  """
+  ERR_THRESHOLD_REACHED
+
 }
