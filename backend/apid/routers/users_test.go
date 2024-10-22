@@ -235,6 +235,21 @@ func TestUsersRouter(t *testing.T) {
 			},
 			wantStatusCode: http.StatusCreated,
 		},
+		{
+			name:   "update password from web ui",
+			method: http.MethodPut,
+			path:   path.Join(fixture.URIPath(), "change_password"),
+			body:   []byte(`{"username":"foo","password":"admin123","password_new":"admin123"}`),
+			controllerFunc: func(c *mockUserController) {
+				c.On("AuthenticateUser", mock.Anything, mock.Anything, mock.Anything).
+					Return(&corev2.User{Username: "foo", Password: "admin123", PasswordHash: "admin123_hash"}, nil).
+					Once()
+				c.On("CreateOrReplace", mock.Anything, mock.Anything).
+					Return(nil).
+					Once()
+			},
+			wantStatusCode: http.StatusCreated,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
