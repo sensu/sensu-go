@@ -18,6 +18,17 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 - Added `default-silenced-expiry-time` (in minutes) backend configuration variable to create silenced with a default expiry time if user doesn't set expiry time while creating an silence.
 
 
+### 2024-03-07
+
+### Added
+- Addition of a new watcher configuration to monitor the user updates
+- Added the exit mechanism to disconnect agent when user is disabled
+- Added a struct in store which will get passed down for userConfigs
+
+### Changed
+- The session config to watch over the user updated and the wizzard bus
+
+
 ### Changed
 - Upgraded CI Go version to 1.21.3
 - Upgraded jwt version to 4.4.3

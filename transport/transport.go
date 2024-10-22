@@ -27,6 +27,9 @@ const (
 	// MessageTypeEntityConfig is the message type sent for entity config updates
 	MessageTypeEntityConfig = "entity_config"
 
+	// MessageTypeUserConfig is the message type sent for entity config updates
+	MessageTypeUserConfig = "user_config"
+
 	// HeaderKeyAgentName is the HTTP request header specifying the Agent name
 	HeaderKeyAgentName = "Sensu-AgentName"
 
