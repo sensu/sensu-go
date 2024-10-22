@@ -18,6 +18,11 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 - Added `default-silenced-expiry-time` (in minutes) backend configuration variable to create silenced with a default expiry time if user doesn't set expiry time while creating an silence.
 
 
+### 2024-02-01
+
+### Fixed
+- Assets can now be re-installed when the asset.db file has been deleted.
+
 ### Changed
 - Upgraded CI Go version to 1.21.3
 - Upgraded jwt version to 4.4.3
