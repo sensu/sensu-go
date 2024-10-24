@@ -361,6 +361,7 @@ func (e *Etcd) NewEmbeddedClientWithContext(ctx context.Context) *clientv3.Clien
 	// Set etcd client log level
 	logConfig := logutil.DefaultZapLoggerConfig
 	logConfig.Level.SetLevel(LogLevelToZap(e.cfg.ClientLogLevel))
+
 	clientLogger, err := logConfig.Build()
 	if err != nil {
 		panic(fmt.Sprintf("error building etcd client logger: %s", err))
@@ -373,11 +374,11 @@ func (e *Etcd) NewEmbeddedClientWithContext(ctx context.Context) *clientv3.Clien
 
 	lc := adapter.LeaseServerToLeaseClient(v3rpc.NewQuotaLeaseServer(e.etcd.Server))
 	c.Lease = clientv3.NewLeaseFromLeaseClient(lc, c, time.Second)
-
+::
 	wc := adapter.WatchServerToWatchClient(v3rpc.NewWatchServer(e.etcd.Server))
 	c.Watcher = &watchWrapper{clientv3.NewWatchFromWatchClient(wc, c)}
 
-	mc := adapter.MaintenanceServerToMaintenanceClient(v3rpc.NewMaintenanceServer(e.etcd.Server))
+	mc := adapter.MaintenanceServerToMaintenanceClient(v3rpc.NewMaintenanceServer(e.etcd.Server, nil))
 	c.Maintenance = clientv3.NewMaintenanceFromMaintenanceClient(mc, c)
 
 	clc := adapter.ClusterServerToClusterClient(v3rpc.NewClusterServer(e.etcd.Server))
