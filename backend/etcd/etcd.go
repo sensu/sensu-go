@@ -374,7 +374,6 @@ func (e *Etcd) NewEmbeddedClientWithContext(ctx context.Context) *clientv3.Clien
 
 	lc := adapter.LeaseServerToLeaseClient(v3rpc.NewQuotaLeaseServer(e.etcd.Server))
 	c.Lease = clientv3.NewLeaseFromLeaseClient(lc, c, time.Second)
-::
 	wc := adapter.WatchServerToWatchClient(v3rpc.NewWatchServer(e.etcd.Server))
 	c.Watcher = &watchWrapper{clientv3.NewWatchFromWatchClient(wc, c)}
 
