@@ -15,7 +15,7 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 - Added `max-silenced-expiry-time-allowed` (in minutes) backend configuration variable to control maximum time an alert can be silenced.
 - Added `default-silenced-expiry-time` (in minutes) backend configuration variable to create silenced with a default expiry time if user doesn't set expiry time while creating an silence.
 
-## Changed
+### Changed
 - Upgraded CI Go version to 1.21.11
 
 
