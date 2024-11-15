@@ -16,7 +16,7 @@ cache:
 environment:
   GOPATH: c:\gopath
   GOROOT: c:\Program Files\Go
-  GOVERSION: 1.21.3
+  GOVERSION: 1.21.11
   GO111MODULE: 'on'
   GOPROXY: 'https://proxy.golang.org'
 
