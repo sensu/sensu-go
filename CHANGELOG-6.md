@@ -6,17 +6,20 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic
 Versioning](http://semver.org/spec/v2.0.0.html).
 
-## [6.11.0] - 2024-01-31
+## [6.12.0] - 2024-11-13
 
 ### Fixed
 - Manual check execution of scheduled check will also be able to fetch the matched entities
-
-## [6.11.0] - 2024-01-31
 
 ### Added
 - Added `max-silenced-expiry-time-allowed` (in minutes) backend configuration variable to control maximum time an alert can be silenced.
 - Added `default-silenced-expiry-time` (in minutes) backend configuration variable to create silenced with a default expiry time if user doesn't set expiry time while creating an silence.
 
+### Changed
+- Upgraded CI Go version to 1.21.11
+
+
+## [6.11.0] - 2024-01-31
 
 ### Changed
 - Upgraded CI Go version to 1.21.3
