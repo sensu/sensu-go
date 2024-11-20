@@ -10,9 +10,9 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/prometheus/client_golang/prometheus"
-	"github.com/sensu/sensu-go/agent"
 	corev2 "github.com/sensu/core/v2"
 	corev3 "github.com/sensu/core/v3"
+	"github.com/sensu/sensu-go/agent"
 	"github.com/sensu/sensu-go/backend/liveness"
 	"github.com/sensu/sensu-go/backend/messaging"
 	"github.com/sensu/sensu-go/backend/ringv2"
@@ -742,7 +742,7 @@ func (k *Keepalived) handleUpdate(e *corev2.Event) error {
 
 	event := createKeepaliveEvent(e)
 	event.Check.Status = 0
-	event.Check.Output = fmt.Sprintf("Keepalive last sent from %s at %s", entity.Name, time.Unix(entity.LastSeen, 0).String())
+	event.Check.Output = fmt.Sprintf("Keepalive last sent from %s at %s ", entity.Name, time.Unix(entity.LastSeen, 0).String())
 
 	if entity.EntityClass == corev2.EntityAgentClass {
 		// Refresh the rings that the entity is involved in

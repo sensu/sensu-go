@@ -2,12 +2,11 @@ package messaging
 
 import (
 	"errors"
+	"github.com/prometheus/client_golang/prometheus"
 	"strings"
 	"sync"
 	"sync/atomic"
 	"time"
-
-	"github.com/prometheus/client_golang/prometheus"
 )
 
 const (
@@ -40,14 +39,7 @@ func init() {
 	_ = prometheus.Register(messagePublishedDurations)
 }
 
-// WizardBus is a message bus.
-//
-// For every topic, WizardBus creates a new goroutine responsible for fanning
-// messages out to each subscriber for a given topic. Any type can be passed
-// across a WizardTopic and it is up to the consumers/producers to coordinate
-// around a particular topic type. Care should be taken not to send multiple
-// message types over a single topic, however, as we do not want to introduce
-// a dependency on reflection to determine the type of the received interface{}.
+// WizardBus is a message bus
 type WizardBus struct {
 	running atomic.Value
 	topics  sync.Map
@@ -162,6 +154,9 @@ func findGenericTopic(topic string) string {
 func (b *WizardBus) Publish(topic string, msg interface{}) error {
 	genericTopic := findGenericTopic(topic)
 	then := time.Now()
+	// Convert the timestamp to local timezone
+	then = convertToLocalTime(then)
+
 	defer func() {
 		duration := time.Since(then)
 		messagePublishedDurations.WithLabelValues(genericTopic).Observe(float64(duration) / float64(time.Millisecond))

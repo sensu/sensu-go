@@ -51,7 +51,7 @@ func (r *NamespacesRouter) Mount(parent *mux.Router) {
 	routes.Get(r.handlers.GetResource)
 	routes.List(r.list, corev2.NamespaceFields)
 	routes.Post(r.create)
-	routes.Patch(r.handlers.PatchResource)
+	routes.Patch(r.handlers.PatchResource) // --check this
 	routes.Put(r.update)
 }
 
