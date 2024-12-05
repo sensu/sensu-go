@@ -11,9 +11,14 @@ import (
 	"go.etcd.io/etcd/client/v3/concurrency"
 )
 
+//const (
+//	initializationLockKey = ".initialized.lock"
+//	initializationKey     = ".initialized"
+//)
+
 const (
-	initializationLockKey = ".initialized.lock"
-	initializationKey     = ".initialized"
+	initializationLockKey = "/sensu.io/.initialized"
+	initializationKey     = "/sensu.io/.initialized"
 )
 
 // StoreInitializer ...
@@ -53,7 +58,7 @@ func (s *StoreInitializer) Lock(ctx context.Context) error {
 	return s.mutex.Lock(ctx)
 }
 
-// IsInitialized checks the state of the .initialized key
+// IsInitialized checks the state of the /sensu.io/.initialized key
 func (s *StoreInitializer) IsInitialized(ctx context.Context) (bool, error) {
 	r, err := s.client.Get(ctx, path.Join(EtcdRoot, initializationKey))
 	if err != nil {
@@ -73,7 +78,7 @@ func (s *StoreInitializer) IsInitialized(ctx context.Context) (bool, error) {
 	return r.Count > 0, nil
 }
 
-// FlagAsInitialized - set .initialized key
+// FlagAsInitialized - set /sensu.io/.initialized key
 func (s *StoreInitializer) FlagAsInitialized(ctx context.Context) error {
 	_, err := s.client.Put(ctx, path.Join(EtcdRoot, initializationKey), "1")
 	return err
