@@ -7,7 +7,7 @@ require (
 	github.com/ash2k/stager v0.0.0-20170622123058-6e9c7b0eacd4 // indirect
 	github.com/atlassian/gostatsd v0.0.0-20180514010436-af796620006e
 	github.com/blang/semver/v4 v4.0.0
-	github.com/dave/jennifer v0.0.0-20171207062344-d8bdbdbee4e1
+	github.com/dave/jennifer v1.7.1
 	github.com/dustin/go-humanize v1.0.1
 	github.com/echlebek/crock v1.0.1
 	github.com/echlebek/timeproxy v1.0.0
