@@ -1,6 +1,10 @@
 module github.com/sensu/sensu-go
 
-go 1.21.11
+go 1.22
+
+toolchain go1.23.5
+
+replace github.com/sensu/core/v2 => /Users/manisha.kumari.ctr/WORK/core-fallback/core/v2
 
 require (
 	github.com/AlecAivazis/survey/v2 v2.2.14

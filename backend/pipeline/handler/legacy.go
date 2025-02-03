@@ -38,6 +38,8 @@ type LegacyAdapter struct {
 	StoreTimeout           time.Duration
 }
 
+var Max_pipeline_executed int
+
 // Name returns the name of the handler adapter.
 func (l *LegacyAdapter) Name() string {
 	return LegacyAdapterName
@@ -52,6 +54,7 @@ func (l *LegacyAdapter) CanHandle(ref *corev2.ResourceReference) bool {
 	return false
 }
 
+// MANISHA FALLBACK ADDED
 // Handle handles a Sensu event. It will pass any mutated data along to pipe or
 // tcp/udp handlers.
 func (l *LegacyAdapter) Handle(ctx context.Context, ref *corev2.ResourceReference, event *corev2.Event, mutatedData []byte) error {
@@ -60,6 +63,8 @@ func (l *LegacyAdapter) Handle(ctx context.Context, ref *corev2.ResourceReferenc
 	fields["pipeline"] = corev2.ContextPipeline(ctx)
 	fields["pipeline_workflow"] = corev2.ContextPipelineWorkflow(ctx)
 	fields["handler"] = ref.Name
+	IsFallbackPipelines := event.Check.FallbackPipelines
+	Max_pipeline_execution := event.Check.MaxPipelineExecution
 
 	tctx, cancel := context.WithTimeout(ctx, l.StoreTimeout)
 	handler, err := l.Store.GetHandlerByName(tctx, ref.Name)
@@ -75,19 +80,41 @@ func (l *LegacyAdapter) Handle(ctx context.Context, ref *corev2.ResourceReferenc
 
 	switch handler.Type {
 	case "pipe":
-		result, err := l.pipeHandler(ctx, handler, event, mutatedData)
-		if err != nil {
-			logger.WithFields(fields).
-				WithError(err).
-				Error("failed to execute event pipe handler")
-			return err
-		}
-		fields["status"] = result.Status
-		fields["output"] = result.Output
-		if result.Status == 0 {
-			logger.WithFields(fields).Info("event pipe handler executed")
+		if IsFallbackPipelines {
+			for i := 0; i < int(Max_pipeline_execution) && Max_pipeline_executed == int(Max_pipeline_execution); i++ {
+				result, err := l.pipeHandler(ctx, handler, event, mutatedData)
+				if err != nil {
+					logger.WithFields(fields).
+						WithError(err).
+						Error("failed to execute event pipe handler")
+					return err
+				}
+				fields["status"] = result.Status
+				fields["output"] = result.Output
+				if result.Status == 0 {
+					Max_pipeline_executed = Max_pipeline_executed + 1
+					logger.WithFields(fields).Info("event pipe handler executed")
+					logger.WithFields(fields).Info("MANISHA event pipe handler executed TIMES ==", Max_pipeline_executed)
+
+				} else {
+					logger.WithFields(fields).Error("event pipe handler returned non ok status code")
+				}
+			}
 		} else {
-			logger.WithFields(fields).Error("event pipe handler returned non ok status code")
+			result, err := l.pipeHandler(ctx, handler, event, mutatedData)
+			if err != nil {
+				logger.WithFields(fields).
+					WithError(err).
+					Error("failed to execute event pipe handler")
+				return err
+			}
+			fields["status"] = result.Status
+			fields["output"] = result.Output
+			if result.Status == 0 {
+				logger.WithFields(fields).Info("event pipe handler executed")
+			} else {
+				logger.WithFields(fields).Error("event pipe handler returned non ok status code")
+			}
 		}
 	case "tcp", "udp":
 		err := l.socketHandler(ctx, handler, event, mutatedData)
