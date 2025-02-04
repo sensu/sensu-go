@@ -61,12 +61,11 @@ require (
 	go.etcd.io/etcd/server/v3 v3.5.15
 	go.uber.org/atomic v1.11.0
 	go.uber.org/zap v1.26.0
-	golang.org/x/crypto v0.21.0
-	golang.org/x/mod v0.11.0
-	golang.org/x/net v0.23.0
-	golang.org/x/sys v0.18.0
+	golang.org/x/crypto v0.32.0
+	golang.org/x/mod v0.17.0
+	golang.org/x/net v0.25.0
+	golang.org/x/sys v0.29.0
 	golang.org/x/time v0.9.0
-	golang.org/x/tools v0.10.0
 	google.golang.org/grpc v1.59.0
 	gopkg.in/h2non/filetype.v1 v1.0.3
 	gopkg.in/yaml.v2 v2.4.0
@@ -98,6 +97,8 @@ require (
 	gopkg.in/natefinch/lumberjack.v2 v2.2.1 // indirect
 	sigs.k8s.io/yaml v1.4.0 // indirect
 )
+
+require golang.org/x/tools/go/vcs v0.1.0-deprecated
 
 require (
 	github.com/andybalholm/brotli v1.0.4 // indirect
@@ -152,8 +153,8 @@ require (
 	go.opentelemetry.io/otel/sdk v1.20.0 // indirect
 	go.opentelemetry.io/otel/trace v1.20.0 // indirect
 	go.opentelemetry.io/proto/otlp v1.0.0 // indirect
-	golang.org/x/term v0.18.0 // indirect
-	golang.org/x/text v0.14.0 // indirect
+	golang.org/x/term v0.28.0 // indirect
+	golang.org/x/text v0.21.0 // indirect
 	google.golang.org/protobuf v1.33.0 // indirect
 	gopkg.in/ini.v1 v1.51.0 // indirect
 	gopkg.in/sourcemap.v1 v1.0.5 // indirect
