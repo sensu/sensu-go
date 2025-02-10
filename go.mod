@@ -39,7 +39,7 @@ require (
 	github.com/mholt/archiver/v3 v3.3.1-0.20191129193105-44285f7ed244
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/mitchellh/hashstructure v1.0.0
-	github.com/mitchellh/mapstructure v1.1.2
+	github.com/mitchellh/mapstructure v1.5.0
 	github.com/olekukonko/tablewriter v0.0.5
 	github.com/prometheus/client_golang v1.17.0
 	github.com/prometheus/client_model v0.5.0
