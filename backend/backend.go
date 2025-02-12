@@ -632,6 +632,8 @@ func Initialize(ctx context.Context, config *Config) (*Backend, error) {
 		ClusterVersion:      clusterVersion,
 		GraphQLService:      b.GraphQLService,
 		HealthRouter:        b.HealthRouter,
+		AccessTokenExpiry:   config.AccessTokenExpiry,
+		RefreshTokenExpiry:  config.RefreshTokenExpiry,
 	}
 	newApi, err := apid.New(b.APIDConfig)
 	if err != nil {

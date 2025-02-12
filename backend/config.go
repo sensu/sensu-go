@@ -136,4 +136,8 @@ type Config struct {
 	// expiry setting for silences
 	DefaultSilencedExpiryTime    time.Duration
 	MaxSilencedExpiryTimeAllowed time.Duration
+
+	// Access/Refresh Token Expiry in Minutes
+	AccessTokenExpiry  time.Duration
+	RefreshTokenExpiry time.Duration
 }

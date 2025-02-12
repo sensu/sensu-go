@@ -76,6 +76,10 @@ const (
 	flagMaxSilencedExpiryTimeAllowed = "max-silenced-expiry-time-allowed"
 	flagDefaultSilencedExpiryTime    = "default-silenced-expiry-time"
 
+	// access token and refresh token expiry time
+	flagAccessTokenExpiry  = "access-token-expiry"
+	flagRefreshTokenExpiry = "refresh-token-expiry"
+
 	// Etcd flag constants
 	flagEtcdClientURLs               = "etcd-client-urls"
 	flagEtcdListenClientURLs         = "etcd-listen-client-urls"
@@ -293,6 +297,9 @@ func StartCommand(initialize InitializeFunc) *cobra.Command {
 				EventLogBufferWait:             viper.GetDuration(flagEventLogBufferWait),
 				EventLogFile:                   viper.GetString(flagEventLogFile),
 				EventLogParallelEncoders:       viper.GetBool(flagEventLogParallelEncoders),
+
+				AccessTokenExpiry:  viper.GetDuration(flagAccessTokenExpiry),
+				RefreshTokenExpiry: viper.GetDuration(flagRefreshTokenExpiry),
 			}
 
 			if flag := cmd.Flags().Lookup(flagLabels); flag != nil && flag.Changed {
@@ -455,11 +462,15 @@ func handleConfig(cmd *cobra.Command, arguments []string, server bool) error {
 		viper.SetDefault(flagEventLogBufferSize, 100000)
 		viper.SetDefault(flagEventLogFile, "")
 		viper.SetDefault(flagEventLogParallelEncoders, false)
-
-		// default silenced value are set for 1 day = 1440m
-		viper.SetDefault(flagMaxSilencedExpiryTimeAllowed, "1440m")
-		viper.SetDefault(flagDefaultSilencedExpiryTime, "1440m")
 	}
+
+	// default silenced value are set for 1 day = 1440m
+	viper.SetDefault(flagMaxSilencedExpiryTimeAllowed, "1440m")
+	viper.SetDefault(flagDefaultSilencedExpiryTime, "1440m")
+
+	// Access/Refresh token default expiry values
+	viper.SetDefault(flagAccessTokenExpiry, "5m")
+	viper.SetDefault(flagRefreshTokenExpiry, "720m")
 
 	// Etcd defaults
 	viper.SetDefault(flagEtcdAdvertiseClientURLs, defaultEtcdAdvertiseClientURL)

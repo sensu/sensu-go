@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"net/http"
+	"time"
 
 	"github.com/sensu/sensu-go/backend/authentication/jwt"
 
@@ -17,13 +18,15 @@ import (
 
 // AuthenticationRouter handles authentication related requests
 type AuthenticationRouter struct {
-	store         store.Store
-	authenticator *authentication.Authenticator
+	store              store.Store
+	authenticator      *authentication.Authenticator
+	accessTokenExpiry  time.Duration
+	refreshTokenExpiry time.Duration
 }
 
 // NewAuthenticationRouter instantiates new router.
-func NewAuthenticationRouter(store store.Store, authenticator *authentication.Authenticator) *AuthenticationRouter {
-	return &AuthenticationRouter{store: store, authenticator: authenticator}
+func NewAuthenticationRouter(store store.Store, authenticator *authentication.Authenticator, accessTokenExpiry time.Duration, refreshTokenExpiry time.Duration) *AuthenticationRouter {
+	return &AuthenticationRouter{store: store, authenticator: authenticator, accessTokenExpiry: accessTokenExpiry, refreshTokenExpiry: refreshTokenExpiry}
 }
 
 // Mount the authentication routes on given mux.Router.
@@ -46,6 +49,10 @@ func (a *AuthenticationRouter) login(w http.ResponseWriter, r *http.Request) {
 	// Determine the URL that serves this request so it can be later used as the
 	// issuer URL
 	ctx := context.WithValue(r.Context(), jwt.IssuerURLKey, issuerURL(r))
+
+	// Not very efficient, but acceptable for simple use cases, ideally we should create a struct and pass the struct
+	ctx = context.WithValue(r.Context(), "accessTokenExpiry", a.accessTokenExpiry)
+	ctx = context.WithValue(ctx, "refreshTokenExpiry", a.refreshTokenExpiry)
 
 	client := api.NewAuthenticationClient(a.authenticator, a.store)
 	tokens, err := client.CreateAccessToken(ctx, username, password)
