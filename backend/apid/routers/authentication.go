@@ -51,7 +51,7 @@ func (a *AuthenticationRouter) login(w http.ResponseWriter, r *http.Request) {
 	ctx := context.WithValue(r.Context(), jwt.IssuerURLKey, issuerURL(r))
 
 	// Not very efficient, but acceptable for simple use cases, ideally we should create a struct and pass the struct
-	ctx = context.WithValue(r.Context(), "accessTokenExpiry", a.accessTokenExpiry)
+	ctx = context.WithValue(ctx, "accessTokenExpiry", a.accessTokenExpiry)
 	ctx = context.WithValue(ctx, "refreshTokenExpiry", a.refreshTokenExpiry)
 
 	client := api.NewAuthenticationClient(a.authenticator, a.store)
@@ -112,6 +112,10 @@ func (a *AuthenticationRouter) token(w http.ResponseWriter, r *http.Request) {
 	// Determine the URL that serves this request so it can be later used as the
 	// issuer URL
 	ctx := context.WithValue(r.Context(), jwt.IssuerURLKey, issuerURL(r))
+
+	// Not very efficient, but acceptable for simple use cases, ideally we should create a struct and pass the struct
+	ctx = context.WithValue(ctx, "accessTokenExpiry", a.accessTokenExpiry)
+	ctx = context.WithValue(ctx, "refreshTokenExpiry", a.refreshTokenExpiry)
 
 	tokens, err := client.RefreshAccessToken(ctx)
 	if err != nil {
