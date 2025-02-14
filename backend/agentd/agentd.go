@@ -17,8 +17,8 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/gorilla/websocket"
 	"github.com/prometheus/client_golang/prometheus"
-	"github.com/sensu/sensu-go/agent"
 	corev2 "github.com/sensu/core/v2"
+	"github.com/sensu/sensu-go/agent"
 	"github.com/sensu/sensu-go/backend/apid/actions"
 	"github.com/sensu/sensu-go/backend/apid/middlewares"
 	"github.com/sensu/sensu-go/backend/apid/routers"
@@ -105,6 +105,7 @@ type Agentd struct {
 	serveWaitTime       time.Duration
 	ready               func()
 	backendEntity       *corev2.Entity
+	userWatcher         <-chan *store.WatchEventUserConfig
 }
 
 // Config configures an Agentd.
@@ -121,6 +122,7 @@ type Config struct {
 	EtcdClientTLSConfig *tls.Config
 	Watcher             <-chan store.WatchEventEntityConfig
 	BackendEntity       *corev2.Entity
+	UserWatcher         <-chan *store.WatchEventUserConfig
 }
 
 // Option is a functional option.
@@ -149,6 +151,7 @@ func New(c Config, opts ...Option) (*Agentd, error) {
 		etcdClientTLSConfig: c.EtcdClientTLSConfig,
 		serveWaitTime:       c.ServeWaitTime,
 		backendEntity:       c.BackendEntity,
+		userWatcher:         c.UserWatcher,
 	}
 
 	// prepare server TLS config
@@ -275,6 +278,7 @@ func (a *Agentd) Start() error {
 func (a *Agentd) runWatcher() {
 	defer func() {
 		logger.Warn("shutting down entity config watcher")
+		logger.Warn("shutting down user config watcher")
 	}()
 	for {
 		select {
@@ -287,10 +291,18 @@ func (a *Agentd) runWatcher() {
 			if err := a.handleEvent(event); err != nil {
 				logger.WithError(err).Error("error handling entity config watch event")
 			}
+		case userEvent, ok := <-a.userWatcher:
+			if !ok {
+				return
+			}
+			if err := a.handleUserEvent(userEvent); err != nil {
+				logger.WithError(err).Error("error handling user config watch event")
+			}
 		}
 	}
 }
 
+// adding the config updates to the etcd bus for watcher to consume
 func (a *Agentd) handleEvent(event store.WatchEventEntityConfig) error {
 	if event.Entity == nil {
 		return errors.New("nil entity received from entity config watcher")
@@ -305,6 +317,24 @@ func (a *Agentd) handleEvent(event store.WatchEventEntityConfig) error {
 
 	logger.WithField("topic", topic).
 		Debug("successfully published an entity config update to the bus")
+	return nil
+}
+
+// adding the UserConfig updates to the etcd bus for the watcher to consume
+func (a *Agentd) handleUserEvent(event *store.WatchEventUserConfig) error {
+	if event.User == nil {
+		return errors.New("nil entry received from the user config watcher")
+	}
+
+	topic := messaging.UserConfigTopic(event.User.Username)
+	if err := a.bus.Publish(topic, event); err != nil {
+		logger.WithField("topic", topic).WithError(err).
+			Error("unable to publish a user config update to the bus")
+		return err
+	}
+
+	logger.WithField("topic", topic).
+		Debug("successfully published an user config update to the bus")
 	return nil
 }
 

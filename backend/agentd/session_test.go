@@ -1,18 +1,20 @@
 package agentd
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"fmt"
+	"github.com/sirupsen/logrus"
 	"reflect"
 	"sync"
 	"testing"
 	"time"
 
 	"github.com/gogo/protobuf/proto"
-	"github.com/sensu/sensu-go/agent"
 	corev2 "github.com/sensu/core/v2"
 	corev3 "github.com/sensu/core/v3"
+	"github.com/sensu/sensu-go/agent"
 	"github.com/sensu/sensu-go/backend/messaging"
 	"github.com/sensu/sensu-go/backend/store"
 	storev2 "github.com/sensu/sensu-go/backend/store/v2"
@@ -79,6 +81,117 @@ func TestSession_sender(t *testing.T) {
 	type busFunc func(*messaging.WizardBus, *sync.WaitGroup)
 	type connFunc func(*mocktransport.MockTransport, *sync.WaitGroup)
 	type storeFunc func(*storetest.Store, *sync.WaitGroup)
+
+	userTests := []struct {
+		name          string
+		connFunc      connFunc
+		watchEvent    *store.WatchEventUserConfig
+		expectedLog   string
+		expectedError bool
+		busFunc       busFunc
+		storeFunc     storeFunc
+		subscriptions []string
+	}{
+		{
+			name: "valid watchEvent received",
+			watchEvent: &store.WatchEventUserConfig{
+				Action: store.WatchUpdate,
+				User: &corev2.User{
+					Username: "testUser",
+				},
+			},
+			expectedLog: "user update received",
+		},
+		{
+			name: "watchEvent with nil user",
+			watchEvent: &store.WatchEventUserConfig{
+				Action: store.WatchCreate,
+				User:   nil,
+			},
+			expectedLog:   "session received nil user in watch event",
+			expectedError: true,
+		},
+	}
+
+	for _, tt := range userTests {
+		t.Run(tt.name, func(t *testing.T) {
+			wg := &sync.WaitGroup{}
+
+			// Mock our transport
+			conn := new(mocktransport.MockTransport)
+			if tt.connFunc != nil {
+				tt.connFunc(conn, wg)
+			}
+
+			// Mock our store
+			st := &mockstore.MockStore{}
+			storev2 := &storetest.Store{}
+			if tt.storeFunc != nil {
+				tt.storeFunc(storev2, wg)
+			}
+
+			// Mock our bus
+			bus, err := messaging.NewWizardBus(messaging.WizardBusConfig{})
+			if err != nil {
+				t.Fatal(err)
+			}
+			if err := bus.Start(); err != nil {
+				t.Fatal(err)
+			}
+
+			// Mocking logger
+			var logBuffer bytes.Buffer
+			logger := logrus.New()
+			logger.SetOutput(&logBuffer)
+
+			s := SessionConfig{
+				AgentName: "testing",
+				Namespace: "default",
+				Conn:      conn,
+				Bus:       bus,
+				Store:     st,
+				Storev2:   storev2,
+				Unmarshal: agent.UnmarshalJSON,
+				Marshal:   agent.MarshalJSON,
+				userConfig: &userConfig{
+					updatesChannel: make(chan interface{}),
+				},
+			}
+
+			session, err := NewSession(context.Background(), s)
+			if err != nil {
+				t.Fatal(err)
+			}
+			session.wg = &sync.WaitGroup{}
+			session.wg.Add(1)
+
+			userTopic := messaging.UserConfigTopic(session.cfg.AgentName)
+			_, err = session.bus.Subscribe(userTopic, session.cfg.AgentName, session.userConfig)
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			go session.sender()
+			// Send our watch events over the wizard bus
+			if tt.busFunc != nil {
+				tt.busFunc(bus, wg)
+			}
+
+			done := make(chan struct{})
+			go func() {
+				wg.Wait()
+				close(done)
+			}()
+
+			select {
+			case <-session.ctx.Done():
+			case <-done:
+				session.Stop()
+			case <-time.After(5 * time.Second):
+				t.Fatal("session never stopped, we probably never received an user update over the channel")
+			}
+		})
+	}
 
 	tests := []struct {
 		name          string
@@ -299,6 +412,12 @@ func TestSession_sender(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
+			//
+			//userTopic := messaging.UserConfigTopic(session.cfg.AgentName)
+			//_, err = session.bus.Subscribe(userTopic, session.cfg.AgentName, session.userConfig)
+			//if err != nil {
+			//	t.Fatal(err)
+			//}
 
 			go session.sender()
 
@@ -318,7 +437,7 @@ func TestSession_sender(t *testing.T) {
 			case <-done:
 				session.Stop()
 			case <-time.After(5 * time.Second):
-				t.Fatal("session never stopped, we probably never received an entity update over the channel")
+				t.Fatal("session never stopped, we probably never received an entity/user update over the channel")
 			}
 		})
 	}
