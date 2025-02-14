@@ -21,6 +21,11 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## [6.11.0] - 2024-01-31
 
+### 2024-02-01
+
+### Fixed
+- Assets can now be re-installed when the asset.db file has been deleted.
+
 ### Changed
 - Upgraded CI Go version to 1.21.3
 - Upgraded jwt version to 4.4.3
