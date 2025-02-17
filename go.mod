@@ -76,7 +76,7 @@ require (
 	github.com/coreos/go-systemd/v22 v22.5.0 // indirect
 	github.com/creack/pty v1.1.20 // indirect
 	github.com/go-logr/logr v1.4.2 // indirect
-	github.com/go-test/deep v1.0.8
+	github.com/go-test/deep v1.1.1
 	github.com/google/btree v1.1.2 // indirect
 	github.com/grpc-ecosystem/go-grpc-middleware v1.4.0 // indirect
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.18.0 // indirect
