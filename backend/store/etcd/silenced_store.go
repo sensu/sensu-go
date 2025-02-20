@@ -4,9 +4,9 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/gogo/protobuf/proto"
 	"time"
 
-	"github.com/gogo/protobuf/proto"
 	corev2 "github.com/sensu/core/v2"
 	"github.com/sensu/sensu-go/backend/etcd"
 	"github.com/sensu/sensu-go/backend/store"
@@ -208,13 +208,9 @@ func (s *Store) UpdateSilencedEntry(ctx context.Context, silenced *corev2.Silenc
 	if err := silenced.Validate(); err != nil {
 		return &store.ErrNotValid{Err: err}
 	}
-	allowedMaxTime := time.Now().Add(s.cfg.MaxSilencedExpiryTimeAllowed).Unix()
 
-	// check for maximum allowed duration for silenced allowed
-	if silenced.ExpireAt > 0 && (silenced.ExpireAt > allowedMaxTime) {
-		err := errors.New(silencedLimitError)
-		return &store.ErrThreshold{Err: err}
-	}
+	// calculate maximum allowed time based on max-silenced-expiry-time-allowed in yaml
+	allowedMaxTime := time.Now().Add(s.cfg.MaxSilencedExpiryTimeAllowed).Unix()
 
 	if silenced.ExpireAt == 0 && silenced.Expire > 0 {
 		start := time.Now()
@@ -230,13 +226,25 @@ func (s *Store) UpdateSilencedEntry(ctx context.Context, silenced *corev2.Silenc
 		}
 	}
 
-	// set default silenced expiry time configured in backend yaml file
-	if silenced.Expire <= 0 && silenced.ExpireAt == 0 {
+	// if Expiry date is not set
+	if silenced.ExpireAt == 0 {
 		start := time.Now()
 		if silenced.Begin > 0 {
 			start = time.Unix(silenced.Begin, 0)
 		}
-		silenced.ExpireAt = start.Add(s.cfg.DefaultSilencedExpiryTime).Unix()
+
+		// if default-silenced-expiry-time in yaml is set
+		if s.cfg.DefaultSilencedExpiryTime > 0 {
+			silenced.ExpireAt = start.Add(s.cfg.DefaultSilencedExpiryTime).Unix()
+		}
+	} else {
+		// if max-silenced-expiry-time-allowed in yaml is set
+		if s.cfg.MaxSilencedExpiryTimeAllowed > 0 {
+			if silenced.ExpireAt > allowedMaxTime {
+				err := errors.New(silencedLimitError)
+				return &store.ErrThreshold{Err: err}
+			}
+		}
 	}
 
 	silencedBytes, err := proto.Marshal(silenced)

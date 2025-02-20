@@ -456,9 +456,6 @@ func handleConfig(cmd *cobra.Command, arguments []string, server bool) error {
 		viper.SetDefault(flagEventLogFile, "")
 		viper.SetDefault(flagEventLogParallelEncoders, false)
 
-		// default silenced value are set for 1 day = 1440m
-		viper.SetDefault(flagMaxSilencedExpiryTimeAllowed, "1440m")
-		viper.SetDefault(flagDefaultSilencedExpiryTime, "1440m")
 	}
 
 	// Etcd defaults
