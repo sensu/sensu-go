@@ -4,8 +4,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
-
 	corev2 "github.com/sensu/core/v2"
+	"time"
 
 	"github.com/sensu/sensu-go/backend/authentication"
 	"github.com/sensu/sensu-go/backend/authentication/jwt"
@@ -51,8 +51,14 @@ func (a *AuthenticationClient) CreateAccessToken(ctx context.Context, username, 
 		claims.Issuer = issuer.(string)
 	}
 
+	// append configured access token expiry to claims
+	var accessTokenExpiry time.Duration
+	if accessTokenExp := ctx.Value("accessTokenExpiry"); accessTokenExp != nil {
+		accessTokenExpiry = accessTokenExp.(time.Duration)
+	}
+
 	// Create an access token and its signed version
-	_, tokenString, err := jwt.AccessToken(claims)
+	_, tokenString, err := jwt.AccessToken(claims, jwt.WithAccessTokenExpiry(accessTokenExpiry))
 	if err != nil {
 		return nil, fmt.Errorf("error creating access token: %s", err)
 	}
@@ -62,7 +68,14 @@ func (a *AuthenticationClient) CreateAccessToken(ctx context.Context, username, 
 		StandardClaims: corev2.StandardClaims(claims.Subject),
 		SessionID:      sessionID,
 	}
-	refreshToken, refreshTokenString, err := jwt.RefreshToken(refreshClaims)
+
+	// append configured refresh token expiry to claims
+	var refreshTokenExpiry time.Duration
+	if refreshTokenExp := ctx.Value("refreshTokenExpiry"); refreshTokenExp != nil {
+		refreshTokenExpiry = refreshTokenExp.(time.Duration)
+	}
+
+	refreshToken, refreshTokenString, err := jwt.RefreshToken(refreshClaims, jwt.WithRefreshTokenExpiry(refreshTokenExpiry))
 	if err != nil {
 		return nil, fmt.Errorf("error creating refresh token: %s", err)
 	}
@@ -198,10 +211,22 @@ func (a *AuthenticationClient) RefreshAccessToken(ctx context.Context) (*corev2.
 		claims.Issuer = issuer.(string)
 	}
 
+	// append configured access token expiry to claims
+	var accessTokenExpiry time.Duration
+	if accessTokenExp := ctx.Value("accessTokenExpiry"); accessTokenExp != nil {
+		accessTokenExpiry = accessTokenExp.(time.Duration)
+	}
+
 	// Issue a new access token
-	_, newAccessTokenString, err := jwt.AccessToken(claims)
+	_, newAccessTokenString, err := jwt.AccessToken(claims, jwt.WithAccessTokenExpiry(accessTokenExpiry))
 	if err != nil {
 		return nil, err
+	}
+
+	// append configured refresh token expiry to claims
+	var refreshTokenExpiry time.Duration
+	if refreshTokenExp := ctx.Value("refreshTokenExpiry"); refreshTokenExp != nil {
+		refreshTokenExpiry = refreshTokenExp.(time.Duration)
 	}
 
 	// Create a new refresh token, carrying over the session ID
@@ -209,7 +234,7 @@ func (a *AuthenticationClient) RefreshAccessToken(ctx context.Context) (*corev2.
 		StandardClaims: corev2.StandardClaims(claims.Subject),
 		SessionID:      sessionID,
 	}
-	newRefreshToken, newRefreshTokenString, err := jwt.RefreshToken(newRefreshClaims)
+	newRefreshToken, newRefreshTokenString, err := jwt.RefreshToken(newRefreshClaims, jwt.WithRefreshTokenExpiry(refreshTokenExpiry))
 	if err != nil {
 		return nil, fmt.Errorf("error creating refresh token: %s", err)
 	}

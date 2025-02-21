@@ -25,6 +25,30 @@ const (
 	IssuerURLKey key = iota
 )
 
+// ExpiryOptions Functional Options Pattern
+// ExpiryOptions: Define a struct for optional parameters.
+type ExpiryOptions struct {
+	RefreshTokenExpiry time.Duration
+	AccessTokenExpiry  time.Duration
+}
+
+// ExpiryOption Define a functional option type.
+type ExpiryOption func(options *ExpiryOptions)
+
+// WithRefreshTokenExpiry for setting refresh token expiry
+func WithRefreshTokenExpiry(expiry time.Duration) ExpiryOption {
+	return func(o *ExpiryOptions) {
+		o.RefreshTokenExpiry = expiry
+	}
+}
+
+// WithAccessTokenExpiry for setting access token expiry
+func WithAccessTokenExpiry(expiry time.Duration) ExpiryOption {
+	return func(o *ExpiryOptions) {
+		o.AccessTokenExpiry = expiry
+	}
+}
+
 var (
 	DefaultAccessTokenLifespan  = 5 * time.Minute
 	defaultRefreshTokenLifespan = 12 * time.Hour
@@ -49,7 +73,7 @@ func init() {
 
 // AccessToken creates a new access token and returns it in both JWT and
 // signed format, along with any error
-func AccessToken(claims *corev2.Claims) (*jwt.Token, string, error) {
+func AccessToken(claims *corev2.Claims, options ...ExpiryOption) (*jwt.Token, string, error) {
 	// Create a unique identifier for the token
 	jti, err := GenJTI()
 	if err != nil {
@@ -57,8 +81,19 @@ func AccessToken(claims *corev2.Claims) (*jwt.Token, string, error) {
 	}
 	claims.Id = jti
 
+	// Default options.
+	opts := ExpiryOptions{
+		RefreshTokenExpiry: defaultRefreshTokenLifespan,
+		AccessTokenExpiry:  DefaultAccessTokenLifespan,
+	}
+
+	// Apply functional options.
+	for _, option := range options {
+		option(&opts)
+	}
+
 	// Add an expiration to the token
-	claims.ExpiresAt = time.Now().Add(DefaultAccessTokenLifespan).Unix()
+	claims.ExpiresAt = time.Now().Add(opts.AccessTokenExpiry).Unix()
 
 	token := jwt.NewWithClaims(signingMethod, claims)
 
@@ -246,7 +281,7 @@ func parseToken(tokenString string) (*jwt.Token, error) {
 }
 
 // RefreshToken returns a refresh token for a specific user
-func RefreshToken(claims *corev2.Claims) (*jwt.Token, string, error) {
+func RefreshToken(claims *corev2.Claims, options ...ExpiryOption) (*jwt.Token, string, error) {
 	// Create a unique identifier for the token
 	jti, err := GenJTI()
 	if err != nil {
@@ -254,10 +289,23 @@ func RefreshToken(claims *corev2.Claims) (*jwt.Token, string, error) {
 	}
 	claims.Id = jti
 
+	// Default options.
+	opts := ExpiryOptions{
+		RefreshTokenExpiry: defaultRefreshTokenLifespan,
+		AccessTokenExpiry:  DefaultAccessTokenLifespan,
+	}
+
+	// Apply functional options.
+	for _, option := range options {
+		option(&opts)
+	}
+
+	// Add an expiration to the token
+	claims.ExpiresAt = time.Now().Add(opts.RefreshTokenExpiry).Unix()
+
 	// Add issuance and expiration timestamps to the token
 	now := time.Now()
 	claims.IssuedAt = now.Unix()
-	claims.ExpiresAt = now.Add(defaultRefreshTokenLifespan).Unix()
 
 	token := jwt.NewWithClaims(signingMethod, claims)
 

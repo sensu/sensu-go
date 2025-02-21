@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"testing"
+	"time"
 
 	corev2 "github.com/sensu/core/v2"
 	"github.com/sensu/sensu-go/backend/authentication"
@@ -33,6 +34,10 @@ func contextWithClaims(claims *corev2.Claims) context.Context {
 	ctx := context.Background()
 	ctx = context.WithValue(ctx, corev2.AccessTokenClaims, claims)
 	ctx = context.WithValue(ctx, corev2.RefreshTokenClaims, refreshClaims)
+
+	ctx = context.WithValue(ctx, "accessTokenExpiry", 5*time.Minute)
+	ctx = context.WithValue(ctx, "refreshTokenExpiry", 12*time.Hour)
+
 	return ctx
 }
 
@@ -205,7 +210,14 @@ func TestRefreshAccessToken(t *testing.T) {
 			Authenticator: defaultAuth,
 			Context: func(claims *corev2.Claims) (context.Context, string) {
 				ctx := contextWithClaims(claims)
-				refreshToken, refreshTokenString, _ := jwt.RefreshToken(ctx.Value(corev2.RefreshTokenClaims).(*corev2.Claims))
+
+				// append configured access token expiry to claims
+				var refreshTokenExpiry time.Duration
+				if refreshTokenExp := ctx.Value("refreshTokenExpiry"); refreshTokenExp != nil {
+					refreshTokenExpiry = refreshTokenExp.(time.Duration)
+				}
+
+				refreshToken, refreshTokenString, _ := jwt.RefreshToken(ctx.Value(corev2.RefreshTokenClaims).(*corev2.Claims), jwt.WithRefreshTokenExpiry(refreshTokenExpiry))
 				refreshTokenClaims, _ := jwt.GetClaims(refreshToken)
 				ctx = context.WithValue(ctx, corev2.RefreshTokenString, refreshTokenString)
 				return ctx, refreshTokenClaims.Id

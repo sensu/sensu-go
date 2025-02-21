@@ -76,6 +76,10 @@ const (
 	flagMaxSilencedExpiryTimeAllowed = "max-silenced-expiry-time-allowed"
 	flagDefaultSilencedExpiryTime    = "default-silenced-expiry-time"
 
+	// access token and refresh token expiry time
+	flagAccessTokenExpiry  = "access-token-expiry"
+	flagRefreshTokenExpiry = "refresh-token-expiry"
+
 	// Etcd flag constants
 	flagEtcdClientURLs               = "etcd-client-urls"
 	flagEtcdListenClientURLs         = "etcd-listen-client-urls"
@@ -293,6 +297,9 @@ func StartCommand(initialize InitializeFunc) *cobra.Command {
 				EventLogBufferWait:             viper.GetDuration(flagEventLogBufferWait),
 				EventLogFile:                   viper.GetString(flagEventLogFile),
 				EventLogParallelEncoders:       viper.GetBool(flagEventLogParallelEncoders),
+
+				AccessTokenExpiry:  viper.GetDuration(flagAccessTokenExpiry),
+				RefreshTokenExpiry: viper.GetDuration(flagRefreshTokenExpiry),
 			}
 
 			if flag := cmd.Flags().Lookup(flagLabels); flag != nil && flag.Changed {
@@ -455,11 +462,15 @@ func handleConfig(cmd *cobra.Command, arguments []string, server bool) error {
 		viper.SetDefault(flagEventLogBufferSize, 100000)
 		viper.SetDefault(flagEventLogFile, "")
 		viper.SetDefault(flagEventLogParallelEncoders, false)
-
-		// default silenced value are set for 1 day = 1440m
-		viper.SetDefault(flagMaxSilencedExpiryTimeAllowed, "1440m")
-		viper.SetDefault(flagDefaultSilencedExpiryTime, "1440m")
 	}
+
+	// default silenced value are set for 1 day = 1440m
+	viper.SetDefault(flagMaxSilencedExpiryTimeAllowed, "1440m")
+	viper.SetDefault(flagDefaultSilencedExpiryTime, "1440m")
+
+	// Access/Refresh token default expiry values
+	viper.SetDefault(flagAccessTokenExpiry, "5m")
+	viper.SetDefault(flagRefreshTokenExpiry, "720m")
 
 	// Etcd defaults
 	viper.SetDefault(flagEtcdAdvertiseClientURLs, defaultEtcdAdvertiseClientURL)
@@ -552,6 +563,14 @@ func flagSet(server bool) *pflag.FlagSet {
 	flagSet.String(flagEtcdClientURLs, viper.GetString(flagEtcdClientURLs), "client URLs to use when operating as an etcd client")
 	_ = flagSet.SetAnnotation(flagEtcdClientURLs, "categories", []string{"store"})
 
+	// silenced configuration flags
+	flagSet.Duration(flagDefaultSilencedExpiryTime, viper.GetDuration(flagDefaultSilencedExpiryTime), "Default expiry time for silenced if not set in minutes")
+	flagSet.Duration(flagMaxSilencedExpiryTimeAllowed, viper.GetDuration(flagMaxSilencedExpiryTimeAllowed), "Maximum expiry time allowed for silenced in minutes")
+
+	// Access/Token configuration flags
+	flagSet.Duration(flagAccessTokenExpiry, viper.GetDuration(flagAccessTokenExpiry), "Set Access Token expiry in minutes")
+	flagSet.Duration(flagRefreshTokenExpiry, viper.GetDuration(flagRefreshTokenExpiry), "Set Refresh Token expiry in minutes")
+
 	if server {
 		// Main Flags
 		flagSet.String(flagAgentHost, viper.GetString(flagAgentHost), "agent listener host")
@@ -593,10 +612,6 @@ func flagSet(server bool) *pflag.FlagSet {
 		flagSet.Bool(flagDisablePlatformMetrics, viper.GetBool(flagDisablePlatformMetrics), "disable platform metrics logging")
 		flagSet.Duration(flagPlatformMetricsLoggingInterval, viper.GetDuration(flagPlatformMetricsLoggingInterval), "platform metrics logging interval")
 		flagSet.String(flagPlatformMetricsLogFile, viper.GetString(flagPlatformMetricsLogFile), "platform metrics log file path")
-
-		// silenced configuration flags
-		flagSet.Duration(flagDefaultSilencedExpiryTime, viper.GetDuration(flagDefaultSilencedExpiryTime), "Default expiry time for silenced if not set in minutes")
-		flagSet.Duration(flagMaxSilencedExpiryTimeAllowed, viper.GetDuration(flagMaxSilencedExpiryTimeAllowed), "Maximum expiry time allowed for silenced in minutes")
 
 		// Etcd server flags
 		flagSet.StringSlice(flagEtcdPeerURLs, viper.GetStringSlice(flagEtcdPeerURLs), "list of URLs to listen on for peer traffic")
