@@ -57,6 +57,9 @@ type APId struct {
 
 	serveWaitTime time.Duration
 	ready         func()
+
+	AccessTokenExpiry  time.Duration
+	RefreshTokenExpiry time.Duration
 }
 
 // Option is a functional option.
@@ -81,6 +84,8 @@ type Config struct {
 	ClusterVersion      string
 	GraphQLService      *graphql.Service
 	HealthRouter        *routers.HealthRouter
+	AccessTokenExpiry   time.Duration
+	RefreshTokenExpiry  time.Duration
 }
 
 // New creates a new APId.
@@ -102,6 +107,8 @@ func New(c Config, opts ...Option) (*APId, error) {
 		clusterVersion:      c.ClusterVersion,
 		RequestLimit:        c.RequestLimit,
 		serveWaitTime:       c.ServeWaitTime,
+		AccessTokenExpiry:   c.AccessTokenExpiry,
+		RefreshTokenExpiry:  c.RefreshTokenExpiry,
 	}
 
 	// prepare TLS config
@@ -174,7 +181,7 @@ func AuthenticationSubrouter(router *mux.Router, cfg Config) *mux.Router {
 	)
 
 	mountRouters(subrouter,
-		routers.NewAuthenticationRouter(cfg.Store, cfg.Authenticator),
+		routers.NewAuthenticationRouter(cfg.Store, cfg.Authenticator, cfg.AccessTokenExpiry, cfg.RefreshTokenExpiry),
 	)
 
 	return subrouter
