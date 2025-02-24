@@ -1,7 +1,7 @@
 module github.com/sensu/sensu-go
 
 go 1.21.11
-toolchain go1.22.5
+toolchain go1.23.6
 
 require (
 	github.com/AlecAivazis/survey/v2 v2.2.14
@@ -62,7 +62,7 @@ require (
 	go.etcd.io/etcd/server/v3 v3.5.15
 	go.uber.org/atomic v1.11.0
 	go.uber.org/zap v1.26.0
-	golang.org/x/crypto v0.33.0
+	golang.org/x/crypto v0.34.0
 	golang.org/x/mod v0.17.0
 	golang.org/x/net v0.32.0
 	golang.org/x/sys v0.30.0
