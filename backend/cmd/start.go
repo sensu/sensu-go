@@ -464,10 +464,6 @@ func handleConfig(cmd *cobra.Command, arguments []string, server bool) error {
 		viper.SetDefault(flagEventLogParallelEncoders, false)
 	}
 
-	// default silenced value are set for 1 day = 1440m
-	viper.SetDefault(flagMaxSilencedExpiryTimeAllowed, "1440m")
-	viper.SetDefault(flagDefaultSilencedExpiryTime, "1440m")
-
 	// Access/Refresh token default expiry values
 	viper.SetDefault(flagAccessTokenExpiry, "5m")
 	viper.SetDefault(flagRefreshTokenExpiry, "720m")
