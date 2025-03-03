@@ -1,7 +1,8 @@
 module github.com/sensu/sensu-go
 
-go 1.21.11
-toolchain go1.22.5
+go 1.22
+
+toolchain go1.23.6
 
 require (
 	github.com/AlecAivazis/survey/v2 v2.2.14
@@ -18,7 +19,7 @@ require (
 	github.com/ghodss/yaml v1.0.0
 	github.com/go-resty/resty/v2 v2.5.0
 	github.com/gogo/protobuf v1.3.2
-	github.com/golang-jwt/jwt/v4 v4.5.0
+	github.com/golang-jwt/jwt/v4 v4.5.1
 	github.com/golang/protobuf v1.5.4
 	github.com/golang/snappy v0.0.4
 	github.com/google/uuid v1.6.0
@@ -64,7 +65,7 @@ require (
 	go.uber.org/zap v1.26.0
 	golang.org/x/crypto v0.33.0
 	golang.org/x/mod v0.17.0
-	golang.org/x/net v0.32.0
+	golang.org/x/net v0.33.0
 	golang.org/x/sys v0.30.0
 	golang.org/x/time v0.9.0
 	google.golang.org/grpc v1.70.0
