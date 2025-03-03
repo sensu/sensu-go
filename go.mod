@@ -1,6 +1,8 @@
 module github.com/sensu/sensu-go
 
-go 1.23.4
+go 1.22
+
+toolchain go1.23.6
 
 //toolchain go1.22.5
 
