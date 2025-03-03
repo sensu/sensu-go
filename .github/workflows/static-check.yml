@@ -18,11 +18,11 @@ jobs:
           fetch-depth: 1
       - uses: WillAbides/setup-go-faster@v1.14.0
         with:
-          go-version: "1.21.x"
+          go-version: "1.23.x"
       - uses: dominikh/staticcheck-action@v1.3.1
         with:
           version: "latest"
           install-go: false
-          cache-key: "1.21.x"
+          cache-key: "1.23.x"
 env:
-  GO_VERSION: 1.21.3
+  GO_VERSION: 1.23.4
