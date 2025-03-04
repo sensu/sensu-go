@@ -19,9 +19,9 @@ jobs:
       - uses: WillAbides/setup-go-faster@v1.14.0
         with:
           go-version: "1.21.x"
-      - uses: dominikh/staticcheck-action@v1.3.1
+      - uses: dominikh/staticcheck-action@v1.0.0
         with:
-          version: "latest"
+          version: "2023.1.6"
           install-go: false
           cache-key: "1.21.x"
 env:
