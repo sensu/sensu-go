@@ -5,11 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic
 Versioning](http://semver.org/spec/v2.0.0.html).
-## [6.13.0] - Unreleased
+## [6.13.0] - 2025-03-10
 
 ### Added
 - Added `access-token-expiry` (in minutes) backend configuration variable to control expiry of access token.
 - Added `refresh-token-expiry` (in minutes) backend configuration variable to control expiry of refresh token.
+
+### Changed
+- Improvement in handling of silences where users were facing issues after new config values of `max-silenced-expiry-time-allowed` & `default-silenced-expiry-time`
+- Improved Configuration Error Reporting with File and Line Details when utilising `sensuctl`
+- Updated dependency _golang.org/x/time_ from 0.3.0 to 0.9.0.
+- Updated dependency _golang.org/x/crypto_ from 0.21.0 to 0.33.0
+- Updated dependency _github.com/dave/jennifer_ from 0.0.0-20171207062344-d8bdbdbee4e1 to 1.7.1
+- Updated dependency _google.golang.org/grpc_ from 1.59.0 to 1.70.0
+- Updated dependency _github.com/gorilla/mux_ from 1.8.0 to 1.8.1
 
 ## [6.12.0] - 2024-11-13
 
