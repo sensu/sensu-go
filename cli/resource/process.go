@@ -101,7 +101,7 @@ func ProcessFile(input string, recurse bool) ([]*types.Wrapper, error) {
 		}
 		res, err := Parse(f)
 		if err != nil {
-			return fmt.Errorf("in %s: %s", input, err)
+			return fmt.Errorf("in %s: %s", path, err)
 		}
 		resources = append(resources, res...)
 		return nil
