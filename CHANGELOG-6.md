@@ -5,20 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic
 Versioning](http://semver.org/spec/v2.0.0.html).
-## [6.13.0] - 2025-03-10
+## [6.13.0] - 2025-03-25
 
 ### Added
 - Added `access-token-expiry` (in minutes) backend configuration variable to control expiry of access token.
 - Added `refresh-token-expiry` (in minutes) backend configuration variable to control expiry of refresh token.
 
 ### Changed
-- Improvement in handling of silences where users were facing issues after new config values of `max-silenced-expiry-time-allowed` & `default-silenced-expiry-time`
-- Improved Configuration Error Reporting with File and Line Details when utilising `sensuctl`
-- Updated dependency _golang.org/x/time_ from 0.3.0 to 0.9.0.
-- Updated dependency _golang.org/x/crypto_ from 0.21.0 to 0.33.0
-- Updated dependency _github.com/dave/jennifer_ from 0.0.0-20171207062344-d8bdbdbee4e1 to 1.7.1
-- Updated dependency _google.golang.org/grpc_ from 1.59.0 to 1.70.0
-- Updated dependency _github.com/gorilla/mux_ from 1.8.0 to 1.8.1
+- Improved handling of silences where users were facing issues after new config values of `max-silenced-expiry-time-allowed` & `default-silenced-expiry-time`
+- Improved configuration error reporting with file and line details when utilising `sensuctl`
+
+### Security
+- Updated dependency _golang.org/x/crypto_ to 0.33.0 to address [CVE-2024-45338 GHSA-w32m-9786-jp63](https://github.com/advisories/GHSA-w32m-9786-jp63)[](https://github.com/advisories/GHSA-w32m-9786-jp63)
+- Updated dependency _github.com/golang-jwt/jwt/v4_ to 4.5.1 to address [CVE-2024-51744 GHSA-29wx-vh33-7x7r](https://github.com/advisories/GHSA-29wx-vh33-7x7r)
 
 ## [6.12.0] - 2024-11-13
 
