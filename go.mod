@@ -18,7 +18,7 @@ require (
 	github.com/go-resty/resty/v2 v2.5.0
 	github.com/go-test/deep v1.0.8
 	github.com/gogo/protobuf v1.3.2
-	github.com/golang-jwt/jwt/v4 v4.4.2
+	github.com/golang-jwt/jwt/v4 v4.5.2
 	github.com/golang/mock v1.3.1
 	github.com/golang/protobuf v1.5.2
 	github.com/golang/snappy v0.0.4
