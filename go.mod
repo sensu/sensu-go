@@ -1,8 +1,7 @@
 module github.com/sensu/sensu-go
 
 go 1.22
-
-toolchain go1.23.4
+toolchain go1.24.1
 
 require (
 	github.com/AlecAivazis/survey/v2 v2.2.14
@@ -53,7 +52,7 @@ require (
 	github.com/spf13/cobra v1.7.0
 	github.com/spf13/pflag v1.0.5
 	github.com/spf13/viper v1.7.0
-	github.com/stretchr/testify v1.9.0
+	github.com/stretchr/testify v1.10.0
 	github.com/ulikunitz/xz v0.5.10 // indirect
 	github.com/willf/pad v0.0.0-20160331131008-b3d780601022
 	go.etcd.io/bbolt v1.3.10
@@ -68,7 +67,7 @@ require (
 	golang.org/x/net v0.35.0
 	golang.org/x/sys v0.30.0
 	golang.org/x/time v0.9.0
-	google.golang.org/grpc v1.70.0
+	google.golang.org/grpc v1.72.0
 	gopkg.in/h2non/filetype.v1 v1.0.3
 	gopkg.in/yaml.v2 v2.4.0
 )
@@ -94,8 +93,8 @@ require (
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc v1.20.0 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
 	google.golang.org/genproto v0.0.0-20231120223509-83a465c0220f // indirect
-	google.golang.org/genproto/googleapis/api v0.0.0-20241202173237-19429a94021a // indirect
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20241202173237-19429a94021a // indirect
+	google.golang.org/genproto/googleapis/api v0.0.0-20250218202821-56aae31c358a // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20250218202821-56aae31c358a // indirect
 	gopkg.in/natefinch/lumberjack.v2 v2.2.1 // indirect
 	sigs.k8s.io/yaml v1.4.0 // indirect
 )
@@ -149,15 +148,16 @@ require (
 	go.etcd.io/etcd/client/v2 v2.305.15 // indirect
 	go.etcd.io/etcd/pkg/v3 v3.5.15 // indirect
 	go.etcd.io/etcd/raft/v3 v3.5.15 // indirect
-	go.opentelemetry.io/otel v1.32.0 // indirect
+	go.opentelemetry.io/auto/sdk v1.1.0 // indirect
+	go.opentelemetry.io/otel v1.34.0 // indirect
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace v1.20.0 // indirect
-	go.opentelemetry.io/otel/metric v1.32.0 // indirect
-	go.opentelemetry.io/otel/sdk v1.32.0 // indirect
-	go.opentelemetry.io/otel/trace v1.32.0 // indirect
+	go.opentelemetry.io/otel/metric v1.34.0 // indirect
+	go.opentelemetry.io/otel/sdk v1.34.0 // indirect
+	go.opentelemetry.io/otel/trace v1.34.0 // indirect
 	go.opentelemetry.io/proto/otlp v1.0.0 // indirect
 	golang.org/x/term v0.29.0 // indirect
 	golang.org/x/text v0.22.0 // indirect
-	google.golang.org/protobuf v1.35.2 // indirect
+	google.golang.org/protobuf v1.36.5 // indirect
 	gopkg.in/ini.v1 v1.51.0 // indirect
 	gopkg.in/sourcemap.v1 v1.0.5 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
