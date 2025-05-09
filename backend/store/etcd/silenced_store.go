@@ -209,41 +209,39 @@ func (s *Store) UpdateSilencedEntry(ctx context.Context, silenced *corev2.Silenc
 		return &store.ErrNotValid{Err: err}
 	}
 
-	// calculate maximum allowed time based on max-silenced-expiry-time-allowed in yaml
-	allowedMaxTime := time.Now().Add(s.cfg.MaxSilencedExpiryTimeAllowed).Unix()
+	now := time.Now()
 
+	// Case 1: --expire (duration)
 	if silenced.ExpireAt == 0 && silenced.Expire > 0 {
-		start := time.Now()
+		requestedDuration := time.Duration(silenced.Expire) * time.Second
+
+		// Check against max-silenced-expiry-time-allowed param from config
+		if s.cfg.MaxSilencedExpiryTimeAllowed > 0 && requestedDuration > s.cfg.MaxSilencedExpiryTimeAllowed {
+			return &store.ErrThreshold{Err: errors.New(silencedLimitError)}
+		}
+		start := now
 		if silenced.Begin > 0 {
 			start = time.Unix(silenced.Begin, 0)
 		}
-		silenced.ExpireAt = start.Add(time.Duration(silenced.Expire) * time.Second).Unix()
+		silenced.ExpireAt = start.Add(requestedDuration).Unix()
+	}
 
-		// check for maximum allowed duration for silenced allowed
-		if silenced.ExpireAt > allowedMaxTime {
-			err := errors.New(silencedLimitError)
-			return &store.ErrThreshold{Err: err}
+	// Case 2: --expire-at (timestamp)
+	if silenced.ExpireAt > 0 {
+		expiryDuration := time.Unix(silenced.ExpireAt, 0).Sub(now)
+		if s.cfg.MaxSilencedExpiryTimeAllowed > 0 && expiryDuration > s.cfg.MaxSilencedExpiryTimeAllowed {
+			return &store.ErrThreshold{Err: errors.New(silencedLimitError)}
 		}
 	}
 
-	// if Expiry date is not set
+	// default-expiry-time-allowed params check
 	if silenced.ExpireAt == 0 {
-		start := time.Now()
+		start := now
 		if silenced.Begin > 0 {
 			start = time.Unix(silenced.Begin, 0)
 		}
-
-		// if default-silenced-expiry-time in yaml is set
 		if s.cfg.DefaultSilencedExpiryTime > 0 {
 			silenced.ExpireAt = start.Add(s.cfg.DefaultSilencedExpiryTime).Unix()
-		}
-	} else {
-		// if max-silenced-expiry-time-allowed in yaml is set
-		if s.cfg.MaxSilencedExpiryTimeAllowed > 0 {
-			if silenced.ExpireAt > allowedMaxTime {
-				err := errors.New(silencedLimitError)
-				return &store.ErrThreshold{Err: err}
-			}
 		}
 	}
 
