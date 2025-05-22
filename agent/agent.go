@@ -325,6 +325,7 @@ func (a *Agent) buildTransportHeaderMap() http.Header {
 // 8. Start sending periodic keepalives.
 // 9. Start the API server, shutdown the agent if doing so fails.
 func (a *Agent) Run(ctx context.Context) error {
+	fmt.Println("=============MANISHA RUNNING AGENT=====+++=======")
 	ctx, cancel := context.WithCancel(ctx)
 	defer func() {
 		if err := a.apiQueue.Close(); err != nil {
@@ -692,6 +693,7 @@ func (a *Agent) Connected() bool {
 // StartAPI starts the Agent HTTP API. After attempting to start the API, if the
 // HTTP server encounters a fatal error, it will shutdown the rest of the agent.
 func (a *Agent) StartAPI(ctx context.Context) {
+	fmt.Println("============MANISHA STARTING AGENT===========")
 	// Prepare the HTTP API server
 	a.api = newServer(a)
 

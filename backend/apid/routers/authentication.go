@@ -48,7 +48,11 @@ func (a *AuthenticationRouter) login(w http.ResponseWriter, r *http.Request) {
 
 	// Determine the URL that serves this request so it can be later used as the
 	// issuer URL
-	ctx := context.WithValue(r.Context(), jwt.IssuerURLKey, issuerURL(r))
+	//ctx := context.WithValue(r.Context(), jwt.IssuerURLKey, issuerURL(r))
+	ctx := context.Background()
+	checkCtx := corev2.SetContextFromResource(ctx, nil)
+
+	ctx = context.WithValue(checkCtx, jwt.IssuerURLKey, issuerURL(r))
 
 	// Not very efficient, but acceptable for simple use cases, ideally we should create a struct and pass the struct
 	ctx = context.WithValue(ctx, "accessTokenExpiry", a.accessTokenExpiry)

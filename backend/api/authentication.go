@@ -31,6 +31,9 @@ func NewAuthenticationClient(auth *authentication.Authenticator, sessionStore st
 // CreateAccessToken creates a new access token, given a valid username and
 // password.
 func (a *AuthenticationClient) CreateAccessToken(ctx context.Context, username, password string) (*corev2.Tokens, error) {
+
+	fmt.Println("=========MANISHA HITTING CREATE ACCESS TOKEN==========")
+
 	claims, err := a.auth.Authenticate(ctx, username, password)
 	if err != nil {
 		return nil, corev2.ErrUnauthorized
