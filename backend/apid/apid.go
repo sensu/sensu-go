@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/gorilla/mux"
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	clientv3 "go.etcd.io/etcd/client/v3"
 
@@ -86,6 +87,39 @@ type Config struct {
 	HealthRouter        *routers.HealthRouter
 	AccessTokenExpiry   time.Duration
 	RefreshTokenExpiry  time.Duration
+}
+
+var (
+	RequestCount = prometheus.NewCounterVec(
+		prometheus.CounterOpts{
+			Name: "http_requests_total",
+			Help: "Total number of HTTP requests",
+		},
+		[]string{"method", "path"},
+	)
+
+	RequestDuration = prometheus.NewHistogramVec(
+		prometheus.HistogramOpts{
+			Name:    "http_request_duration_seconds",
+			Help:    "Histogram of request durations",
+			Buckets: prometheus.DefBuckets, // [0.005, 0.01, ..., 10.24]
+		},
+		[]string{"method", "path"},
+	)
+
+	ClientErrorCount = prometheus.NewCounterVec(
+		prometheus.CounterOpts{
+			Name: "http_client_errors_total",
+			Help: "Total number of 4xx HTTP responses",
+		},
+		[]string{"method", "path", "status"},
+	)
+)
+
+func init() {
+	_ = prometheus.Register(RequestCount)
+	_ = prometheus.Register(RequestDuration)
+	_ = prometheus.Register(ClientErrorCount)
 }
 
 // New creates a new APId.
@@ -192,6 +226,11 @@ func AuthenticationSubrouter(router *mux.Router, cfg Config) *mux.Router {
 func CoreSubrouter(router *mux.Router, cfg Config) *mux.Router {
 	subrouter := NewSubrouter(
 		router.PathPrefix("/api/{group:core}/{version:v2}/"),
+		middlewares.APIMetrics{
+			RequestCount:     RequestCount,
+			RequestDuration:  RequestDuration,
+			ClientErrorCount: ClientErrorCount,
+		},
 		middlewares.Namespace{},
 		middlewares.Authentication{Store: cfg.Store},
 		middlewares.SimpleLogger{},

@@ -4,8 +4,12 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"strconv"
 	"strings"
+	"time"
 
+	"github.com/gorilla/mux"
+	"github.com/prometheus/client_golang/prometheus"
 	corev2 "github.com/sensu/core/v2"
 	"github.com/sensu/sensu-go/backend/apid/actions"
 	"github.com/sensu/sensu-go/backend/authentication/jwt"
@@ -18,6 +22,46 @@ type Authentication struct {
 	// in the case where an access token was not present.
 	IgnoreUnauthorized bool
 	Store              store.Store
+}
+
+// APIMetrics is a middleware for Prometheus metrics
+type APIMetrics struct {
+	RequestCount     *prometheus.CounterVec
+	RequestDuration  *prometheus.HistogramVec
+	ClientErrorCount *prometheus.CounterVec
+}
+
+type responseRecorder struct {
+	http.ResponseWriter
+	statusCode int
+}
+
+func (rw *responseRecorder) WriteHeader(code int) {
+	rw.statusCode = code
+	rw.ResponseWriter.WriteHeader(code)
+}
+
+func (a APIMetrics) Then(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		start := time.Now()
+
+		// Wrap the response writer to capture status code
+		rr := &responseRecorder{ResponseWriter: w, statusCode: http.StatusOK}
+		next.ServeHTTP(rr, r)
+
+		route := mux.CurrentRoute(r)
+		path, _ := route.GetPathTemplate()
+
+		duration := time.Since(start).Seconds()
+
+		// Update metrics
+		a.RequestCount.WithLabelValues(r.Method, path).Inc()
+		a.RequestDuration.WithLabelValues(r.Method, path).Observe(duration)
+
+		if rr.statusCode >= 400 && rr.statusCode < 500 {
+			a.ClientErrorCount.WithLabelValues(r.Method, path, strconv.Itoa(rr.statusCode)).Inc()
+		}
+	})
 }
 
 // Then middleware
