@@ -92,7 +92,7 @@ type Config struct {
 var (
 	RequestCount = prometheus.NewCounterVec(
 		prometheus.CounterOpts{
-			Name: "http_requests_total",
+			Name: "sensu_go_http_requests_total",
 			Help: "Total number of HTTP requests",
 		},
 		[]string{"method", "path"},
@@ -100,7 +100,7 @@ var (
 
 	RequestDuration = prometheus.NewHistogramVec(
 		prometheus.HistogramOpts{
-			Name:    "http_request_duration_seconds",
+			Name:    "sensu_go_http_request_duration_seconds",
 			Help:    "Histogram of request durations",
 			Buckets: prometheus.DefBuckets, // [0.005, 0.01, ..., 10.24]
 		},
@@ -109,7 +109,7 @@ var (
 
 	ClientErrorCount = prometheus.NewCounterVec(
 		prometheus.CounterOpts{
-			Name: "http_client_errors_total",
+			Name: "sensu_go_http_client_errors_total",
 			Help: "Total number of 4xx HTTP responses",
 		},
 		[]string{"method", "path", "status"},
