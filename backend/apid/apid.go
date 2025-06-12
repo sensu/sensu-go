@@ -201,6 +201,14 @@ func NewRouter() *mux.Router {
 	// Register a default handler when no routes match
 	router.NotFoundHandler = middlewares.SimpleLogger{}.Then(http.HandlerFunc(notFoundHandler))
 
+	// Prometheus metrics collection middleware (APIMetrics) to track
+	// request count, request duration, and client error count for all API endpoints.
+	router.Use(middlewares.APIMetrics{
+		RequestCount:     RequestCount,
+		RequestDuration:  RequestDuration,
+		ClientErrorCount: ClientErrorCount,
+	}.Then)
+
 	return router
 }
 
@@ -226,11 +234,6 @@ func AuthenticationSubrouter(router *mux.Router, cfg Config) *mux.Router {
 func CoreSubrouter(router *mux.Router, cfg Config) *mux.Router {
 	subrouter := NewSubrouter(
 		router.PathPrefix("/api/{group:core}/{version:v2}/"),
-		middlewares.APIMetrics{
-			RequestCount:     RequestCount,
-			RequestDuration:  RequestDuration,
-			ClientErrorCount: ClientErrorCount,
-		},
 		middlewares.Namespace{},
 		middlewares.Authentication{Store: cfg.Store},
 		middlewares.SimpleLogger{},
