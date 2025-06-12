@@ -54,7 +54,6 @@ func (a APIMetrics) Then(next http.Handler) http.Handler {
 
 		duration := time.Since(start).Seconds()
 
-		// Update metrics
 		a.RequestCount.WithLabelValues(r.Method, path).Inc()
 		a.RequestDuration.WithLabelValues(r.Method, path).Observe(duration)
 
