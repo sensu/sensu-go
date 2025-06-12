@@ -10,9 +10,9 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/prometheus/client_golang/prometheus"
-	"github.com/sensu/sensu-go/agent"
 	corev2 "github.com/sensu/core/v2"
 	corev3 "github.com/sensu/core/v3"
+	"github.com/sensu/sensu-go/agent"
 	"github.com/sensu/sensu-go/backend/liveness"
 	"github.com/sensu/sensu-go/backend/messaging"
 	"github.com/sensu/sensu-go/backend/ringv2"
@@ -92,6 +92,9 @@ type Keepalived struct {
 	cancel                context.CancelFunc
 	storeTimeout          time.Duration
 	reconstructionPeriod  time.Duration
+
+	HighKeepaliveFlapThresold uint32
+	LowKeepaliveFlapThresold  uint32
 }
 
 // Option is a functional option.
@@ -99,16 +102,18 @@ type Option func(*Keepalived) error
 
 // Config configures Keepalived.
 type Config struct {
-	Store                 store.Store
-	StoreV2               storev2.Interface
-	EventStore            store.EventStore
-	Bus                   messaging.MessageBus
-	LivenessFactory       liveness.Factory
-	DeregistrationHandler string
-	RingPool              *ringv2.RingPool
-	BufferSize            int
-	WorkerCount           int
-	StoreTimeout          time.Duration
+	Store                      store.Store
+	StoreV2                    storev2.Interface
+	EventStore                 store.EventStore
+	Bus                        messaging.MessageBus
+	LivenessFactory            liveness.Factory
+	DeregistrationHandler      string
+	RingPool                   *ringv2.RingPool
+	BufferSize                 int
+	WorkerCount                int
+	StoreTimeout               time.Duration
+	HighKeepaliveFlapThreshold uint32
+	LowKeepaliveFlapThreshold  uint32
 }
 
 // New creates a new Keepalived.
@@ -129,21 +134,23 @@ func New(c Config, opts ...Option) (*Keepalived, error) {
 	ctx, cancel := context.WithCancel(context.Background())
 
 	k := &Keepalived{
-		store:                 c.Store,
-		storev2:               c.StoreV2,
-		eventStore:            c.EventStore,
-		bus:                   c.Bus,
-		deregistrationHandler: c.DeregistrationHandler,
-		livenessFactory:       c.LivenessFactory,
-		keepaliveChan:         make(chan interface{}, c.BufferSize),
-		workerCount:           c.WorkerCount,
-		mu:                    &sync.Mutex{},
-		errChan:               make(chan error, 1),
-		ringPool:              c.RingPool,
-		ctx:                   ctx,
-		cancel:                cancel,
-		storeTimeout:          c.StoreTimeout,
-		reconstructionPeriod:  time.Second * 120,
+		store:                     c.Store,
+		storev2:                   c.StoreV2,
+		eventStore:                c.EventStore,
+		bus:                       c.Bus,
+		deregistrationHandler:     c.DeregistrationHandler,
+		livenessFactory:           c.LivenessFactory,
+		keepaliveChan:             make(chan interface{}, c.BufferSize),
+		workerCount:               c.WorkerCount,
+		mu:                        &sync.Mutex{},
+		errChan:                   make(chan error, 1),
+		ringPool:                  c.RingPool,
+		ctx:                       ctx,
+		cancel:                    cancel,
+		storeTimeout:              c.StoreTimeout,
+		reconstructionPeriod:      time.Second * 120,
+		HighKeepaliveFlapThresold: c.HighKeepaliveFlapThreshold,
+		LowKeepaliveFlapThresold:  c.LowKeepaliveFlapThreshold,
 	}
 	for _, o := range opts {
 		if err := o(k); err != nil {
@@ -482,7 +489,7 @@ func (k *Keepalived) handleEntityRegistration(entity *corev2.Entity, event *core
 	}
 }
 
-func createKeepaliveEvent(rawEvent *corev2.Event) *corev2.Event {
+func (k *Keepalived) createKeepaliveEvent(rawEvent *corev2.Event) *corev2.Event {
 	check := rawEvent.Check
 	if check == nil {
 		check = &corev2.Check{
@@ -497,19 +504,30 @@ func createKeepaliveEvent(rawEvent *corev2.Event) *corev2.Event {
 	if len(rawEvent.Entity.KeepaliveHandlers) > 0 {
 		handlers = rawEvent.Entity.KeepaliveHandlers
 	}
+	lowFlap := check.LowFlapThreshold
+	if lowFlap <= 0 {
+		lowFlap = k.LowKeepaliveFlapThresold
+	}
+
+	highFlap := check.HighFlapThreshold
+	if highFlap <= 0 {
+		highFlap = k.HighKeepaliveFlapThresold
+	}
 
 	keepaliveCheck := &corev2.Check{
 		ObjectMeta: corev2.ObjectMeta{
 			Name:      corev2.KeepaliveCheckName,
 			Namespace: rawEvent.Entity.Namespace,
 		},
-		Interval:  check.Interval,
-		Timeout:   check.Timeout,
-		Ttl:       check.Ttl,
-		Handlers:  handlers,
-		Executed:  time.Now().Unix(),
-		Issued:    time.Now().Unix(),
-		Scheduler: corev2.EtcdScheduler,
+		Interval:          check.Interval,
+		Timeout:           check.Timeout,
+		Ttl:               check.Ttl,
+		Handlers:          handlers,
+		Executed:          time.Now().Unix(),
+		Issued:            time.Now().Unix(),
+		Scheduler:         corev2.EtcdScheduler,
+		LowFlapThreshold:  lowFlap,
+		HighFlapThreshold: highFlap,
 	}
 	keepaliveEvent := &corev2.Event{
 		ObjectMeta: rawEvent.ObjectMeta,
@@ -652,7 +670,7 @@ func (k *Keepalived) dead(key string, prev liveness.State, leader bool) bool {
 	}
 
 	// this is a real keepalive event, emit it.
-	event := createKeepaliveEvent(currentEvent)
+	event := k.createKeepaliveEvent(currentEvent)
 	timeSinceLastSeen := time.Now().Unix() - event.Entity.LastSeen
 	warningTimeout := int64(event.Check.Timeout)
 	criticalTimeout := event.Check.Ttl
@@ -740,7 +758,7 @@ func (k *Keepalived) handleUpdate(e *corev2.Event) error {
 		return err
 	}
 
-	event := createKeepaliveEvent(e)
+	event := k.createKeepaliveEvent(e)
 	event.Check.Status = 0
 	event.Check.Output = fmt.Sprintf("Keepalive last sent from %s at %s", entity.Name, time.Unix(entity.LastSeen, 0).String())
 

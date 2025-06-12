@@ -227,6 +227,9 @@ type Config struct {
 	// StripNetworks is a boolean to specify if we need to strip network
 	// information from the agent entity state
 	StripNetworks bool
+
+	KeepaliveHighFlapThreshold uint32
+	KeepaliveLowFlapThreshold  uint32
 }
 
 // StatsdServerConfig contains the statsd server configuration

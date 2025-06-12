@@ -77,8 +77,10 @@ const (
 	flagDefaultSilencedExpiryTime    = "default-silenced-expiry-time"
 
 	// access token and refresh token expiry time
-	flagAccessTokenExpiry  = "access-token-expiry"
-	flagRefreshTokenExpiry = "refresh-token-expiry"
+	flagAccessTokenExpiry     = "access-token-expiry"
+	flagRefreshTokenExpiry    = "refresh-token-expiry"
+	flagHighKeepaliveThresold = "high-flap-thresold"
+	flagLowKeepaliveThresold  = "low-flap-thresold"
 
 	// Etcd flag constants
 	flagEtcdClientURLs               = "etcd-client-urls"
@@ -300,6 +302,9 @@ func StartCommand(initialize InitializeFunc) *cobra.Command {
 
 				AccessTokenExpiry:  viper.GetDuration(flagAccessTokenExpiry),
 				RefreshTokenExpiry: viper.GetDuration(flagRefreshTokenExpiry),
+
+				HighKeepaliveFlapThresold: viper.GetUint32(flagHighKeepaliveThresold),
+				LowKeepaliveFlapThresold:  viper.GetUint32(flagLowKeepaliveThresold),
 			}
 
 			if flag := cmd.Flags().Lookup(flagLabels); flag != nil && flag.Changed {

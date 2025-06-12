@@ -658,10 +658,12 @@ func (a *Agent) newKeepalive() *transport.Message {
 	}
 
 	keepalive.Check = &corev2.Check{
-		ObjectMeta: corev2.NewObjectMeta("keepalive", entity.Namespace),
-		Interval:   a.config.KeepaliveInterval,
-		Timeout:    a.config.KeepaliveWarningTimeout,
-		Ttl:        int64(a.config.KeepaliveCriticalTimeout),
+		ObjectMeta:        corev2.NewObjectMeta("keepalive", entity.Namespace),
+		Interval:          a.config.KeepaliveInterval,
+		Timeout:           a.config.KeepaliveWarningTimeout,
+		Ttl:               int64(a.config.KeepaliveCriticalTimeout),
+		HighFlapThreshold: a.config.KeepaliveHighFlapThreshold,
+		LowFlapThreshold:  a.config.KeepaliveLowFlapThreshold,
 	}
 
 	keepalive.Labels = a.config.KeepaliveCheckLabels
