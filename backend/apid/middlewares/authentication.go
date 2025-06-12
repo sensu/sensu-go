@@ -58,7 +58,7 @@ func (a APIMetrics) Then(next http.Handler) http.Handler {
 		a.RequestCount.WithLabelValues(r.Method, path).Inc()
 		a.RequestDuration.WithLabelValues(r.Method, path).Observe(duration)
 
-		if rr.statusCode >= 400 && rr.statusCode < 500 {
+		if rr.statusCode >= http.StatusBadRequest && rr.statusCode < http.StatusInternalServerError {
 			a.ClientErrorCount.WithLabelValues(r.Method, path, strconv.Itoa(rr.statusCode)).Inc()
 		}
 	})
