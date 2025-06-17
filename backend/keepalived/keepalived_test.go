@@ -350,9 +350,9 @@ func TestProcessRegistration(t *testing.T) {
 	}
 }
 
-func TestCreateKeepaliveEvent(t *testing.T) {
+func (k *Keepalived) TestCreateKeepaliveEvent(t *testing.T) {
 	event := corev2.FixtureEvent("entity1", "keepalive")
-	keepaliveEvent := createKeepaliveEvent(event)
+	keepaliveEvent := k.createKeepaliveEvent(event)
 	assert.Equal(t, "keepalive", keepaliveEvent.Check.Name)
 	assert.Equal(t, uint32(60), keepaliveEvent.Check.Interval)
 	assert.Equal(t, []string{"keepalive"}, keepaliveEvent.Check.Handlers)
@@ -362,7 +362,7 @@ func TestCreateKeepaliveEvent(t *testing.T) {
 	assert.NotEqual(t, int64(0), keepaliveEvent.Check.Issued)
 
 	event.Check = nil
-	keepaliveEvent = createKeepaliveEvent(event)
+	keepaliveEvent = k.createKeepaliveEvent(event)
 	assert.Equal(t, "keepalive", keepaliveEvent.Check.Name)
 	assert.Equal(t, uint32(20), keepaliveEvent.Check.Interval)
 	assert.Equal(t, uint32(120), keepaliveEvent.Check.Timeout)
