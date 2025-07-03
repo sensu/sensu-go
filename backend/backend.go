@@ -538,16 +538,18 @@ func Initialize(ctx context.Context, config *Config) (*Backend, error) {
 
 	// Initialize keepalived
 	keepalive, err := keepalived.New(keepalived.Config{
-		DeregistrationHandler: config.DeregistrationHandler,
-		Bus:                   bus,
-		Store:                 b.Store,
-		StoreV2:               b.StoreV2,
-		EventStore:            b.Store,
-		LivenessFactory:       liveness.EtcdFactory(b.RunContext(), b.Client),
-		RingPool:              b.RingPool,
-		BufferSize:            viper.GetInt(FlagKeepalivedBufferSize),
-		WorkerCount:           viper.GetInt(FlagKeepalivedWorkers),
-		StoreTimeout:          2 * time.Minute,
+		DeregistrationHandler:      config.DeregistrationHandler,
+		Bus:                        bus,
+		Store:                      b.Store,
+		StoreV2:                    b.StoreV2,
+		EventStore:                 b.Store,
+		LivenessFactory:            liveness.EtcdFactory(b.RunContext(), b.Client),
+		RingPool:                   b.RingPool,
+		BufferSize:                 viper.GetInt(FlagKeepalivedBufferSize),
+		WorkerCount:                viper.GetInt(FlagKeepalivedWorkers),
+		StoreTimeout:               2 * time.Minute,
+		HighKeepaliveFlapThreshold: config.HighKeepaliveFlapThresold,
+		LowKeepaliveFlapThreshold:  config.LowKeepaliveFlapThresold,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("error initializing %s: %s", keepalive.Name(), err)

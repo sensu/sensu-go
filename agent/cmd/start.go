@@ -9,8 +9,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/sensu/sensu-go/agent"
 	corev2 "github.com/sensu/core/v2"
+	"github.com/sensu/sensu-go/agent"
 	"github.com/sensu/sensu-go/asset"
 	"github.com/sensu/sensu-go/util/path"
 	"github.com/sensu/sensu-go/util/url"
@@ -94,6 +94,9 @@ const (
 	// Deprecated flags
 	deprecatedFlagAgentID          = "id"
 	deprecatedFlagKeepaliveTimeout = "keepalive-timeout"
+
+	flagKeepaliveHighFlapThresold = "high-flap-thresold"
+	flagKeepaliveLowFlapThresold  = "low-flap-thresold"
 )
 
 // InitializeFunc represents the signature of an initialization function, used
@@ -131,6 +134,10 @@ func NewAgentConfig(cmd *cobra.Command) (*agent.Config, error) {
 	cfg.KeepaliveCheckLabels = viper.GetStringMapString(flagKeepaliveCheckLabels)
 	cfg.KeepaliveCheckAnnotations = viper.GetStringMapString(flagKeepaliveCheckAnnotations)
 	cfg.KeepalivePipelines = viper.GetStringSlice(flagKeepalivePipelines)
+
+	cfg.KeepaliveHighFlapThreshold = viper.GetUint32(flagKeepaliveHighFlapThresold)
+	cfg.KeepaliveLowFlapThreshold = viper.GetUint32(flagKeepaliveLowFlapThresold)
+
 	cfg.Namespace = viper.GetString(flagNamespace)
 	cfg.Password = viper.GetString(flagPassword)
 	cfg.Socket.Host = viper.GetString(flagSocketHost)

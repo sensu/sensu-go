@@ -140,4 +140,7 @@ type Config struct {
 	// Access/Refresh Token Expiry in Minutes
 	AccessTokenExpiry  time.Duration
 	RefreshTokenExpiry time.Duration
+
+	HighKeepaliveFlapThresold uint32
+	LowKeepaliveFlapThresold  uint32
 }
