@@ -99,6 +99,7 @@ func ProcessFile(input string, recurse bool) ([]*types.Wrapper, error) {
 		if err != nil {
 			return err
 		}
+		defer f.Close()
 		res, err := Parse(f)
 		if err != nil {
 			return fmt.Errorf("in %s: %s", input, err)
