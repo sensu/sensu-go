@@ -40,3 +40,19 @@ func (e *errNoLegacyHandlers) Error() string {
 }
 
 func (e *errNoLegacyHandlers) MisconfiguredPipeline() {}
+
+type ErrEndOfFallbackPipelines struct{}
+
+func (e *ErrEndOfFallbackPipelines) Error() string {
+	return "end of fallback pipelines reached"
+}
+
+func (e *ErrEndOfFallbackPipelines) MisconfiguredPipeline() {}
+
+type ErrNoFallbackPipelines struct{}
+
+func (e *ErrNoFallbackPipelines) Error() string {
+	return "no fallback pipelines found"
+}
+
+func (e *ErrNoFallbackPipelines) MisconfiguredPipeline() {}
