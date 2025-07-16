@@ -3,11 +3,19 @@ package pipeline
 import (
 	"context"
 	"fmt"
+	"time"
 
 	corev2 "github.com/sensu/core/v2"
+	"github.com/sensu/sensu-go/backend/store"
 )
 
-type FallbackPipelinesAdapter struct{}
+type FallbackPipelinesAdapter struct {
+	Store           store.Store
+	StoreTimeout    time.Duration
+	FilterAdapters  []FilterAdapter
+	MutatorAdapters []MutatorAdapter
+	HandlerAdapters []HandlerAdapter
+}
 
 // Name returns the name of the FallbackPipelinesAdapter
 func (a *FallbackPipelinesAdapter) Name() string {

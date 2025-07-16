@@ -148,22 +148,23 @@ var SelectedMetrics = []string{
 // Backend represents the backend server, which is used to hold the datastore
 // and coordinating the daemons
 type Backend struct {
-	Client                 *clientv3.Client
-	Daemons                []daemon.Daemon
-	Etcd                   *etcd.Etcd
-	Store                  store.Store
-	StoreV2                storev2.Interface
-	StoreUpdater           StoreUpdater
-	StoreV2Updater         StoreV2Updater
-	RingPool               *ringv2.RingPool
-	GraphQLService         *graphql.Service
-	SecretsProviderManager *secrets.ProviderManager
-	HealthRouter           *routers.HealthRouter
-	EtcdClientTLSConfig    *tls.Config
-	APIDConfig             apid.Config
-	PipelineAdapterV1      pipeline.AdapterV1
-	LicenseGetter          licensing.Getter
-	Bus                    messaging.MessageBus
+	Client                   *clientv3.Client
+	Daemons                  []daemon.Daemon
+	Etcd                     *etcd.Etcd
+	Store                    store.Store
+	StoreV2                  storev2.Interface
+	StoreUpdater             StoreUpdater
+	StoreV2Updater           StoreV2Updater
+	RingPool                 *ringv2.RingPool
+	GraphQLService           *graphql.Service
+	SecretsProviderManager   *secrets.ProviderManager
+	HealthRouter             *routers.HealthRouter
+	EtcdClientTLSConfig      *tls.Config
+	APIDConfig               apid.Config
+	PipelineAdapterV1        pipeline.AdapterV1
+	FallbackPipelinesAdapter pipeline.FallbackPipelinesAdapter
+	LicenseGetter            licensing.Getter
+	Bus                      messaging.MessageBus
 
 	ctx       context.Context
 	runCtx    context.Context
@@ -429,6 +430,11 @@ func Initialize(ctx context.Context, config *Config) (*Backend, error) {
 		StoreTimeout: storeTimeout,
 	}
 
+	b.FallbackPipelinesAdapter = pipeline.FallbackPipelinesAdapter{
+		Store:        b.Store,
+		StoreTimeout: storeTimeout,
+	}
+
 	// Initialize PipelineAdapterV1 filter adapters
 	legacyFilterAdapter := &filter.LegacyAdapter{
 		AssetGetter:  assetGetter,
@@ -440,6 +446,13 @@ func Initialize(ctx context.Context, config *Config) (*Backend, error) {
 	notSilencedFilterAdapter := &filter.NotSilencedAdapter{}
 
 	b.PipelineAdapterV1.FilterAdapters = []pipeline.FilterAdapter{
+		legacyFilterAdapter,
+		hasMetricsFilterAdapter,
+		isIncidentFilterAdapter,
+		notSilencedFilterAdapter,
+	}
+
+	b.FallbackPipelinesAdapter.FilterAdapters = []pipeline.FilterAdapter{
 		legacyFilterAdapter,
 		hasMetricsFilterAdapter,
 		isIncidentFilterAdapter,
@@ -463,6 +476,12 @@ func Initialize(ctx context.Context, config *Config) (*Backend, error) {
 		jsonMutatorAdapter,
 	}
 
+	b.FallbackPipelinesAdapter.MutatorAdapters = []pipeline.MutatorAdapter{
+		legacyMutatorAdapter,
+		onlyCheckOutputMutatorAdapter,
+		jsonMutatorAdapter,
+	}
+
 	// Initialize PipelineAdapterV1 handler adapters
 	legacyHandlerAdapter := &handler.LegacyAdapter{
 		AssetGetter:            assetGetter,
@@ -477,7 +496,12 @@ func Initialize(ctx context.Context, config *Config) (*Backend, error) {
 		legacyHandlerAdapter,
 	}
 
+	b.FallbackPipelinesAdapter.HandlerAdapters = []pipeline.HandlerAdapter{
+		legacyHandlerAdapter,
+	}
+
 	pipelineDaemon.AddAdapter(&b.PipelineAdapterV1)
+	pipelineDaemon.AddAdapter(&b.FallbackPipelinesAdapter)
 	b.Daemons = append(b.Daemons, pipelineDaemon)
 
 	// Initialize eventd

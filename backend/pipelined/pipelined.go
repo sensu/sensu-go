@@ -217,6 +217,8 @@ func (p *Pipelined) handleMessage(ctx context.Context, msg interface{}) (hadPipe
 	fields := getter.LogFields(false)
 	pipelineRefs := getter.GetPipelines()
 
+	// TODO - get all the fallback pipelines, and condition is we can have only one thing at a time (pipelines or fallback pipelines)
+
 	// Add a legacy pipeline "reference" if msg is a
 	// corev2.Event & has handlers.
 	if event, ok := msg.(*corev2.Event); ok {
