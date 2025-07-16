@@ -18,12 +18,12 @@ type FallbackPipelinesAdapter struct {
 }
 
 // Name returns the name of the FallbackPipelinesAdapter
-func (a *FallbackPipelinesAdapter) Name() string {
+func (f *FallbackPipelinesAdapter) Name() string {
 	return "FallbackPipelinesAdapter"
 }
 
 // FallbackPipelinesAdapter is an adapter for fallback pipelines
-func (a *FallbackPipelinesAdapter) CanRun(ref *corev2.ResourceReference) bool {
+func (f *FallbackPipelinesAdapter) CanRun(ref *corev2.ResourceReference) bool {
 	if ref.APIVersion == "core/v2" && ref.Type == "FallbackPipelines" {
 		return true
 	}
@@ -31,7 +31,7 @@ func (a *FallbackPipelinesAdapter) CanRun(ref *corev2.ResourceReference) bool {
 }
 
 // Run executes the fallback pipelines for the given resource reference and event.
-func (a *FallbackPipelinesAdapter) Run(ctx context.Context, ref *corev2.ResourceReference, resource interface{}) error {
+func (f *FallbackPipelinesAdapter) Run(ctx context.Context, ref *corev2.ResourceReference, resource interface{}) error {
 	event, ok := resource.(*corev2.Event)
 	if !ok {
 		return fmt.Errorf("resource is not a corev2.Event")
@@ -39,7 +39,7 @@ func (a *FallbackPipelinesAdapter) Run(ctx context.Context, ref *corev2.Resource
 
 	// Prepare log entry
 	fields := event.LogFields(false)
-	fields["adapter_name"] = a.Name()
+	fields["adapter_name"] = f.Name()
 	fields["pipeline"] = ref.LogFields(false)
 
 	// Prepare debug log entry
@@ -50,7 +50,7 @@ func (a *FallbackPipelinesAdapter) Run(ctx context.Context, ref *corev2.Resource
 
 	ctx = context.WithValue(ctx, corev2.NamespaceKey, event.Entity.Namespace)
 
-	pipelines, err := a.getFallbackPipelinesFromStore(ctx, ref, event)
+	pipelines, err := f.getFallbackPipelinesFromStore(ctx, ref, event)
 	if err != nil {
 		return err
 	}
@@ -61,7 +61,7 @@ func (a *FallbackPipelinesAdapter) Run(ctx context.Context, ref *corev2.Resource
 
 	for _, pipeline := range pipelines {
 		// TODO execute all Pipelines one by one until one succeeds or there are no more Pipelines to execute
-		if err := a.executePipeline(ctx, pipeline, event, fields, debugFields); err != nil {
+		if err := f.executePipeline(ctx, pipeline, event, fields, debugFields); err != nil {
 			// TODO log the error may be, do something according to proposal doc
 			continue
 		}
@@ -71,7 +71,7 @@ func (a *FallbackPipelinesAdapter) Run(ctx context.Context, ref *corev2.Resource
 	return &ErrEndOfFallbackPipelines{}
 }
 
-func (a *FallbackPipelinesAdapter) executePipeline(ctx context.Context, pipeline *corev2.Pipeline, event *corev2.Event, fields, debugFields map[string]interface{}) error {
+func (f *FallbackPipelinesAdapter) executePipeline(ctx context.Context, pipeline *corev2.Pipeline, event *corev2.Event, fields, debugFields map[string]interface{}) error {
 	for _, workflow := range pipeline.Workflows {
 		ctx = context.WithValue(ctx, corev2.PipelineWorkflowKey, workflow.Name)
 
@@ -79,7 +79,7 @@ func (a *FallbackPipelinesAdapter) executePipeline(ctx context.Context, pipeline
 		debugFields["pipeline_workflow"] = workflow.Name
 
 		// Process the event through the workflow filters
-		filtered, err := a.processFilters(ctx, workflow.Filters, event)
+		filtered, err := f.processFilters(ctx, workflow.Filters, event)
 		if err != nil {
 			return err
 		}
@@ -97,14 +97,14 @@ func (a *FallbackPipelinesAdapter) executePipeline(ctx context.Context, pipeline
 		}
 
 		// Process the event through the workflow mutator
-		mutatedData, err := a.processMutator(ctx, workflow.Mutator, event)
+		mutatedData, err := f.processMutator(ctx, workflow.Mutator, event)
 		if err != nil {
 			return err
 		}
 
 		// Process the event through the workflow handler
 		handlerRequestsTotalCounter.Inc()
-		err = a.processHandler(ctx, workflow.Handler, event, mutatedData)
+		err = f.processHandler(ctx, workflow.Handler, event, mutatedData)
 		incrementCounter(workflow.Handler, err)
 		if err != nil {
 			return err
@@ -114,8 +114,23 @@ func (a *FallbackPipelinesAdapter) executePipeline(ctx context.Context, pipeline
 	return nil
 }
 
+// TODO - implement this method to process filters
+func (f *FallbackPipelinesAdapter) processFilters(ctx context.Context, filters []*corev2.ResourceReference, event *corev2.Event) (bool, error) {
+	return true, nil
+}
+
+// TODO - implement this method to process mutators
+func (f *FallbackPipelinesAdapter) processMutator(ctx context.Context, mutator *corev2.ResourceReference, event *corev2.Event) ([]byte, error) {
+	return []byte{}, nil
+}
+
+// TODO - implement this method to process handlers
+func (a *FallbackPipelinesAdapter) processHandler(ctx context.Context, handler *corev2.ResourceReference, event *corev2.Event, mutatedData []byte) error {
+	return nil
+}
+
 // TODO - implement this method to retrieve fallback pipelines from the store
-func (a *FallbackPipelinesAdapter) getFallbackPipelinesFromStore(ctx context.Context, ref *corev2.ResourceReference, event *corev2.Event) ([]*corev2.Pipeline, error) {
+func (f *FallbackPipelinesAdapter) getFallbackPipelinesFromStore(ctx context.Context, ref *corev2.ResourceReference, event *corev2.Event) ([]*corev2.Pipeline, error) {
 	return []*corev2.Pipeline{
 		{
 			Workflows: []*corev2.PipelineWorkflow{},
