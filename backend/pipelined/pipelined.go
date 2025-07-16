@@ -73,6 +73,7 @@ type Option func(*Pipelined) error
 // slice of Pipeline resource references.
 type PipelineGetter interface {
 	GetPipelines() []*corev2.ResourceReference
+	GetFallbackPipelines() []*corev2.ResourceReference
 	LogFields(bool) map[string]interface{}
 }
 
@@ -215,9 +216,7 @@ func (p *Pipelined) handleMessage(ctx context.Context, msg interface{}) (hadPipe
 	}
 
 	fields := getter.LogFields(false)
-	pipelineRefs := getter.GetPipelines()
-
-	// TODO - get all the fallback pipelines, and condition is we can have only one thing at a time (pipelines or fallback pipelines)
+	pipelineRefs := append(getter.GetPipelines(), getter.GetFallbackPipelines()...)
 
 	// Add a legacy pipeline "reference" if msg is a
 	// corev2.Event & has handlers.
@@ -230,7 +229,7 @@ func (p *Pipelined) handleMessage(ctx context.Context, msg interface{}) (hadPipe
 	}
 
 	if len(pipelineRefs) == 0 {
-		logger.WithFields(fields).Info("no pipelines defined in resource")
+		logger.WithFields(fields).Info("no pipelines or fallback_pipelines defined in resource")
 		return false, nil
 	}
 
