@@ -79,3 +79,36 @@ func (a *AdapterV1) getFilterAdapterForResource(ctx context.Context, ref *corev2
 	}
 	return nil, fmt.Errorf("no filter adapters were found that can filter the resource: %s.%s = %s", ref.APIVersion, ref.Type, ref.Name)
 }
+
+func (f *FallbackPipelinesAdapter) processFilters(ctx context.Context, refs []*corev2.ResourceReference, event *corev2.Event) (bool, error) {
+	// for each filter reference in the workflow, attempt to find a compatible
+	// filter adapter and use it to filter the event.
+	for _, ref := range refs {
+		filtered, err := f.processFilter(ctx, ref, event)
+		if err != nil {
+			return false, err
+		}
+		if filtered {
+			return true, nil
+		}
+	}
+	return false, nil
+}
+
+func (f *FallbackPipelinesAdapter) processFilter(ctx context.Context, ref *corev2.ResourceReference, event *corev2.Event) (bool, error) {
+	filter, err := f.getFilterAdapterForResource(ctx, ref)
+	if err != nil {
+		return false, err
+	}
+
+	return filter.Filter(ctx, ref, event)
+}
+
+func (f *FallbackPipelinesAdapter) getFilterAdapterForResource(ctx context.Context, ref *corev2.ResourceReference) (FilterAdapter, error) {
+	for _, filterAdapter := range f.FilterAdapters {
+		if filterAdapter.CanFilter(ref) {
+			return filterAdapter, nil
+		}
+	}
+	return nil, fmt.Errorf("no filter adapters were found that can filter the resource: %s.%s = %s", ref.APIVersion, ref.Type, ref.Name)
+}
