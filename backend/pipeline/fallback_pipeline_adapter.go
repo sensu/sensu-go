@@ -2,6 +2,7 @@ package pipeline
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
@@ -114,8 +115,18 @@ func (f *FallbackPipelinesAdapter) executePipeline(ctx context.Context, pipeline
 	return nil
 }
 
-// TODO - implement this method to retrieve fallback pipelines from the store
 func (f *FallbackPipelinesAdapter) getFallbackPipelinesFromStore(ctx context.Context, ref *corev2.ResourceReference, event *corev2.Event) ([]*corev2.Pipeline, error) {
+	tctx, cancel := context.WithTimeout(ctx, f.StoreTimeout)
+	defer cancel()
+
+	pipelines, err := f.Store.GetFallbackPipelines(tctx, ref.Name)
+	if err != nil {
+		return nil, err
+	}
+	if pipelines == nil {
+		return nil, errors.New("fallback pipelines does not exist")
+	}
+
 	return []*corev2.Pipeline{
 		{
 			Workflows: []*corev2.PipelineWorkflow{},

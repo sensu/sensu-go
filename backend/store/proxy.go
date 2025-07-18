@@ -578,6 +578,10 @@ func (s *StoreProxy) GetPipelineByName(ctx context.Context, name string) (*corev
 	return s.do().GetPipelineByName(ctx, name)
 }
 
+func (s *StoreProxy) GetFallbackPipelines(ctx context.Context, name string) ([]*corev2.Pipeline, error) {
+	return s.do().GetFallbackPipelines(ctx, name)
+}
+
 // NewInitializer returns the Initializer interfaces, which provides the
 // required mechanism to verify if a store is initialized
 func (s *StoreProxy) NewInitializer(ctx context.Context) (Initializer, error) {
