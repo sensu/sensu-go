@@ -127,9 +127,5 @@ func (f *FallbackPipelinesAdapter) getFallbackPipelinesFromStore(ctx context.Con
 		return nil, errors.New("fallback pipelines does not exist")
 	}
 
-	return []*corev2.Pipeline{
-		{
-			Workflows: []*corev2.PipelineWorkflow{},
-		},
-	}, nil
+	return pipelines, nil
 }
