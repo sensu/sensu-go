@@ -64,21 +64,3 @@ func (a *AdapterV1) getMutatorAdapterForResource(ctx context.Context, ref *corev
 	}
 	return nil, fmt.Errorf("no mutator adapters were found that can mutate the resource: %s.%s = %s", ref.APIVersion, ref.Type, ref.Name)
 }
-
-func (f *FallbackPipelinesAdapter) processMutator(ctx context.Context, ref *corev2.ResourceReference, event *corev2.Event) ([]byte, error) {
-	mutator, err := f.getMutatorAdapterForResource(ctx, ref)
-	if err != nil {
-		return nil, err
-	}
-
-	return mutator.Mutate(ctx, ref, event)
-}
-
-func (f *FallbackPipelinesAdapter) getMutatorAdapterForResource(ctx context.Context, ref *corev2.ResourceReference) (MutatorAdapter, error) {
-	for _, mutatorAdapter := range f.MutatorAdapters {
-		if mutatorAdapter.CanMutate(ref) {
-			return mutatorAdapter, nil
-		}
-	}
-	return nil, fmt.Errorf("no mutator adapters were found that can mutate the resource: %s.%s = %s", ref.APIVersion, ref.Type, ref.Name)
-}

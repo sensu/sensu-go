@@ -65,20 +65,3 @@ func (a *AdapterV1) getHandlerAdapterForResource(ctx context.Context, ref *corev
 	return nil, fmt.Errorf("no handler adapters were found that can handle the resource: %s.%s = %s", ref.APIVersion, ref.Type, ref.Name)
 }
 
-func (f *FallbackPipelinesAdapter) processHandler(ctx context.Context, ref *corev2.ResourceReference, event *corev2.Event, mutatedData []byte) error {
-	handler, err := f.getHandlerAdapterForResource(ctx, ref)
-	if err != nil {
-		return err
-	}
-
-	return handler.Handle(ctx, ref, event, mutatedData)
-}
-
-func (f *FallbackPipelinesAdapter) getHandlerAdapterForResource(ctx context.Context, ref *corev2.ResourceReference) (HandlerAdapter, error) {
-	for _, handlerAdapter := range f.HandlerAdapters {
-		if handlerAdapter.CanHandle(ref) {
-			return handlerAdapter, nil
-		}
-	}
-	return nil, fmt.Errorf("no handler adapters were found that can handle the resource: %s.%s = %s", ref.APIVersion, ref.Type, ref.Name)
-}
