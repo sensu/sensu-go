@@ -422,6 +422,7 @@ func Initialize(ctx context.Context, config *Config) (*Backend, error) {
 	if err != nil {
 		return nil, fmt.Errorf("error initializing %s: %s", pipelineDaemon.Name(), err)
 	}
+	pipelineDaemon.AddPipelineResourceGetter(pipelineDaemon.PipelineResourceGetter)
 
 	// Initialize PipelineAdapterV1
 	storeTimeout := 2 * time.Minute

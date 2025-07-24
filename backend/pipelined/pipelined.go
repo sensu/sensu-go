@@ -44,17 +44,18 @@ var (
 // handler configuration determines which Sensu filters and mutator
 // are used.
 type Pipelined struct {
-	stopping     chan struct{}
-	running      *atomic.Value
-	wg           *sync.WaitGroup
-	errChan      chan error
-	eventChan    chan interface{}
-	subscription messaging.Subscription
-	bus          messaging.MessageBus
-	workerCount  int
-	store        store.Store
-	storeTimeout time.Duration
-	adapters     []pipeline.Adapter
+	stopping       chan struct{}
+	running        *atomic.Value
+	wg             *sync.WaitGroup
+	errChan        chan error
+	eventChan      chan interface{}
+	subscription   messaging.Subscription
+	bus            messaging.MessageBus
+	workerCount    int
+	store          store.Store
+	storeTimeout   time.Duration
+	adapters       []pipeline.Adapter
+	pipelineGetter []ResourceGetterFunc
 }
 
 // Config configures a Pipelined.
@@ -73,8 +74,23 @@ type Option func(*Pipelined) error
 // slice of Pipeline resource references.
 type PipelineGetter interface {
 	GetPipelines() []*corev2.ResourceReference
-	GetFallbackPipelines() []*corev2.ResourceReference
+}
+
+type ResourceGetterFunc func(getter interface{}) ([]*corev2.ResourceReference, bool)
+
+type PipelineLogGetter interface {
 	LogFields(bool) map[string]interface{}
+}
+
+func (p *Pipelined) PipelineResourceGetter(val interface{}) ([]*corev2.ResourceReference, bool) {
+	if x, ok := val.(PipelineGetter); ok {
+		return x.GetPipelines(), true
+	}
+	return nil, false
+}
+
+func (p *Pipelined) AddPipelineResourceGetter(getter ResourceGetterFunc) {
+	p.pipelineGetter = append(p.pipelineGetter, getter)
 }
 
 // New creates a new Pipelined with supplied Options applied.
@@ -210,13 +226,19 @@ func (p *Pipelined) handleMessage(ctx context.Context, msg interface{}) (hadPipe
 			Observe(float64(duration) / float64(time.Millisecond))
 	}()
 
-	getter, ok := msg.(PipelineGetter)
+	logGetter, ok := msg.(PipelineLogGetter)
 	if !ok {
-		panic("message received was not a PipelineGetter")
+		panic("message received was not a PipelineLogGetter")
 	}
 
-	fields := getter.LogFields(false)
-	pipelineRefs := append(getter.GetPipelines(), getter.GetFallbackPipelines()...)
+	fields := logGetter.LogFields(false)
+	var pipelineRefs []*corev2.ResourceReference
+
+	for _, getter := range p.pipelineGetter {
+		if res, ok := getter(msg); ok {
+			pipelineRefs = append(pipelineRefs, res...)
+		}
+	}
 
 	// Add a legacy pipeline "reference" if msg is a
 	// corev2.Event & has handlers.
