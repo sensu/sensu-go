@@ -217,9 +217,6 @@ type Store interface {
 	// PipelineStore provides an interface for managing pipelines
 	PipelineStore
 
-	// FallbackPipelinesStore provides an interface for managing fallback pipelines
-	FallbackPipelinesStore
-
 	// RoleStore provides an interface for managing roles
 	RoleStore
 
@@ -546,11 +543,6 @@ type PipelineStore interface {
 	// GetPipelineByName returns a pipeline using the given name and the
 	// namespace stored in ctx. The resulting pipeline is nil if none was found.
 	GetPipelineByName(ctx context.Context, name string) (*corev2.Pipeline, error)
-}
-
-type FallbackPipelinesStore interface {
-	// GetFallbackPipelines retrieves fallback pipelines by name.
-	GetFallbackPipelines(ctx context.Context, name string) ([]*corev2.Pipeline, error)
 }
 
 // ResourceStore ...
