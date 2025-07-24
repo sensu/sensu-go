@@ -228,7 +228,7 @@ func (p *Pipelined) handleMessage(ctx context.Context, msg interface{}) (hadPipe
 
 	logGetter, ok := msg.(PipelineLogGetter)
 	if !ok {
-		panic("message received was not a PipelineLogGetter")
+		panic("message received was not a PipelineGetter")
 	}
 
 	fields := logGetter.LogFields(false)
