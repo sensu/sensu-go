@@ -1,7 +1,10 @@
 package apid
 
-import "github.com/sirupsen/logrus"
+import (
+	"github.com/sensu/sensu-go/util/logging"
+	"github.com/sirupsen/logrus"
+)
 
-var logger = logrus.WithFields(logrus.Fields{
-	"component": "apid",
-})
+func getLogger() *logrus.Logger {
+	return logging.GetLogger("backend.apid")
+}

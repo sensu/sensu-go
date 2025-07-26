@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/sensu/sensu-go/util/logging"
 	_ "net/http/pprof"
 	"os"
 
@@ -11,7 +12,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var logger = logrus.WithFields(logrus.Fields{
+var logger = logging.GetLogger("backend").WithFields(logrus.Fields{
 	"component": "backend",
 })
 

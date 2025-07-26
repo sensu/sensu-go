@@ -1,13 +1,10 @@
 package cmd
 
 import (
+	"github.com/sensu/sensu-go/util/logging"
 	"github.com/sirupsen/logrus"
 )
 
-var logger = logrus.WithFields(logrus.Fields{
+var logger = logging.GetLogger("cmd").WithFields(logrus.Fields{
 	"component": "cmd",
 })
-
-func init() {
-	logrus.SetFormatter(&logrus.JSONFormatter{})
-}

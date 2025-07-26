@@ -16,6 +16,8 @@ type Fetcher interface {
 	Get(context.Context, string, corev2.Resource) error
 }
 
+var logger = getLogger()
+
 // MakeNodeResolver instatiates a new node resolver given a generic client and
 // typemeta.
 func MakeNodeResolver(client Fetcher, tm corev2.TypeMeta) func(relay.NodeResolverParams) (interface{}, error) {

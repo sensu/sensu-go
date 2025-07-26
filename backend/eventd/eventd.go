@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
+	glogger "github.com/sensu/sensu-go/util/logging"
 	"github.com/sirupsen/logrus"
 	clientv3 "go.etcd.io/etcd/client/v3"
 
@@ -101,11 +102,11 @@ const (
 	defaultStoreTimeout = time.Minute
 )
 
-var (
-	logger = logrus.WithFields(logrus.Fields{
-		"component": ComponentName,
-	})
+var logger = glogger.GetLogger(ComponentName).WithFields(logrus.Fields{
+	"component": ComponentName,
+})
 
+var (
 	// EventsProcessed counts the number of sensu go events processed.
 	EventsProcessed = prometheus.NewCounterVec(
 		prometheus.CounterOpts{

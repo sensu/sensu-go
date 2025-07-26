@@ -6,8 +6,6 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-var defaultLogger = logrus.WithField("component", "graphql/globalid")
-
 //
 // Registrar
 //

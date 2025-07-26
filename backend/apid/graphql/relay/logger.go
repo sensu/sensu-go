@@ -1,5 +1,10 @@
 package relay
 
-import "github.com/sirupsen/logrus"
+import (
+	"github.com/sensu/sensu-go/util/logging"
+	"github.com/sirupsen/logrus"
+)
 
-var logger = logrus.WithField("component", "graphql/relay")
+func getLogger() *logrus.Logger {
+	return logging.GetLogger("graphql.relay")
+}
