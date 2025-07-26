@@ -55,7 +55,7 @@ type Pipelined struct {
 	store          store.Store
 	storeTimeout   time.Duration
 	adapters       []pipeline.Adapter
-	pipelineGetter []ResourceGetterFunc
+	pipelineGetter []PipelineResourceGetter
 }
 
 // Config configures a Pipelined.
@@ -76,21 +76,31 @@ type PipelineGetter interface {
 	GetPipelines() []*corev2.ResourceReference
 }
 
-type ResourceGetterFunc func(getter interface{}) ([]*corev2.ResourceReference, bool)
+type PipelineResourceGetter interface {
+	Match(obj any) bool
+	Get(obj any) []*corev2.ResourceReference
+}
 
 type PipelineLogGetter interface {
 	LogFields(bool) map[string]interface{}
 }
 
-func (p *Pipelined) PipelineResourceGetter(val interface{}) ([]*corev2.ResourceReference, bool) {
-	if x, ok := val.(PipelineGetter); ok {
-		return x.GetPipelines(), true
-	}
-	return nil, false
+func (p *Pipelined) AddPipelineResourceGetter(getter PipelineResourceGetter) {
+	p.pipelineGetter = append(p.pipelineGetter, getter)
 }
 
-func (p *Pipelined) AddPipelineResourceGetter(getter ResourceGetterFunc) {
-	p.pipelineGetter = append(p.pipelineGetter, getter)
+type PipelineResourceGetterImpl struct{}
+
+func (p *PipelineResourceGetterImpl) Match(obj any) bool {
+	_, ok := obj.(PipelineGetter)
+	return ok
+}
+
+func (p *PipelineResourceGetterImpl) Get(obj any) []*corev2.ResourceReference {
+	if event, ok := obj.(PipelineGetter); ok {
+		return event.GetPipelines()
+	}
+	return nil
 }
 
 // New creates a new Pipelined with supplied Options applied.
@@ -235,8 +245,8 @@ func (p *Pipelined) handleMessage(ctx context.Context, msg interface{}) (hadPipe
 	var pipelineRefs []*corev2.ResourceReference
 
 	for _, getter := range p.pipelineGetter {
-		if res, ok := getter(msg); ok {
-			pipelineRefs = append(pipelineRefs, res...)
+		if getter.Match(msg) {
+			pipelineRefs = append(pipelineRefs, getter.Get(msg)...)
 		}
 	}
 

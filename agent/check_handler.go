@@ -175,6 +175,7 @@ func (a *Agent) executeCheck(ctx context.Context, request *corev2.CheckRequest, 
 		event.Check.Executed = time.Now().Unix()
 		event.Check.Issued = request.Issued
 		event.Pipelines = checkConfig.Pipelines
+		event.FallbackPipelines = checkConfig.FallbackPipelines
 
 		// To guard against publishing sensitive/redacted client attribute values
 		// the original command value is reinstated.
