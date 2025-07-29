@@ -261,7 +261,7 @@ func (p *Pipelined) handleMessage(ctx context.Context, msg interface{}) (hadPipe
 	}
 
 	if len(pipelineRefs) == 0 {
-		logger.WithFields(fields).Info("no pipelines or fallback_pipelines defined in resource")
+		logger.WithFields(fields).Info("no pipelines or fallback_pipeline defined in resource")
 		return false, nil
 	}
 
