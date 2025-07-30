@@ -12,6 +12,7 @@ import (
 	"github.com/sensu/sensu-go/backend/store"
 	metricspkg "github.com/sensu/sensu-go/metrics"
 	"github.com/sirupsen/logrus"
+	"go.uber.org/multierr"
 )
 
 const (
@@ -174,6 +175,7 @@ func (a *AdapterV1) Run(ctx context.Context, ref *corev2.ResourceReference, reso
 		return &ErrNoWorkflows{}
 	}
 
+	var allErrors error
 	for _, workflow := range pipeline.Workflows {
 		ctx = context.WithValue(ctx, corev2.PipelineWorkflowKey, workflow.Name)
 
@@ -182,9 +184,10 @@ func (a *AdapterV1) Run(ctx context.Context, ref *corev2.ResourceReference, reso
 
 		// Process the event through the workflow filters
 		filtered, err := a.processFilters(ctx, workflow.Filters, event)
-		if err != nil {
+		if err != nil && !pipeline.ContinueOnError {
 			return err
 		}
+		allErrors = multierr.Append(allErrors, err)
 		if filtered {
 			continue
 		}
@@ -200,20 +203,22 @@ func (a *AdapterV1) Run(ctx context.Context, ref *corev2.ResourceReference, reso
 
 		// Process the event through the workflow mutator
 		mutatedData, err := a.processMutator(ctx, workflow.Mutator, event)
-		if err != nil {
+		if err != nil && !pipeline.ContinueOnError {
 			return err
 		}
+		allErrors = multierr.Append(allErrors, err)
 
 		// Process the event through the workflow handler
 		handlerRequestsTotalCounter.Inc()
 		err = a.processHandler(ctx, workflow.Handler, event, mutatedData)
 		incrementCounter(workflow.Handler, err)
-		if err != nil {
+		if err != nil && !pipeline.ContinueOnError {
 			return err
 		}
+		allErrors = multierr.Append(allErrors, err)
 	}
 
-	return nil
+	return allErrors
 }
 
 func incrementCounter(handler *corev2.ResourceReference, err error) {
