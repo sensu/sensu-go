@@ -89,7 +89,11 @@ func (l *LegacyAdapter) Filter(ctx context.Context, ref *corev2.ResourceReferenc
 	// expressions against the event. The event is rejected
 	// if the product of all expressions is true.
 	ctx = corev2.SetContextFromResource(ctx, filter)
-	matchedAssets := asset.GetAssets(ctx, l.Store, filter.RuntimeAssets)
+	matchedAssets, errors := asset.GetAssets(ctx, l.Store, filter.RuntimeAssets)
+	if errors != nil {
+		logger.WithFields(fields).WithError(errors).Error("failed to retrieve assets for filter")
+		return false, errors
+	}
 	assets, err := asset.GetAll(ctx, l.AssetGetter, matchedAssets)
 	if err != nil {
 		logger.WithFields(fields).WithError(err).Error("failed to retrieve assets for filter")

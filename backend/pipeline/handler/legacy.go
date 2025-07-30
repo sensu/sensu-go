@@ -144,21 +144,16 @@ func (l *LegacyAdapter) pipeHandler(ctx context.Context, handler *corev2.Handler
 	if len(handler.RuntimeAssets) != 0 {
 		logger.WithFields(fields).Debug("fetching assets for handler")
 		// Fetch and install all assets required for handler execution
-		// TODO: check for errors here once GetAssets() has been updated to
-		// return errors.
-		// See issue #4407: https://github.com/sensu/sensu-go/issues/4407
-		matchedAssets := asset.GetAssets(ctx, l.Store, handler.RuntimeAssets)
+		matchedAssets, errors := asset.GetAssets(ctx, l.Store, handler.RuntimeAssets)
+		if errors != nil {
+			logger.WithFields(fields).WithError(errors).Error("failed to retrieve assets for handler")
+			return nil, errors
+		}
 
 		assets, err := asset.GetAll(ctx, l.AssetGetter, matchedAssets)
 		if err != nil {
 			logger.WithFields(fields).WithError(err).Error("failed to retrieve assets for handler")
-			// TODO(jk): I think we should return an error here regardless of // nosemgrep:dgryski.semgrep-go.errtodo.err-todo
-			// the type of error.
-			// See issue #4407: https://github.com/sensu/sensu-go/issues/4407
-			if _, ok := err.(*store.ErrInternal); ok {
-				// Fatal error
-				return nil, err
-			}
+			return nil, err
 		} else {
 			handlerExec.Env = environment.MergeEnvironments(os.Environ(), assets.Env(), handler.EnvVars, secrets)
 		}
