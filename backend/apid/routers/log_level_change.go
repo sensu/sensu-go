@@ -2,18 +2,19 @@ package routers
 
 import (
 	"context"
+	"net/http"
+	"net/url"
+
 	"github.com/gorilla/mux"
 	"github.com/sensu/sensu-go/backend/apid/actions"
 	"github.com/sensu/sensu-go/util/logging"
-	"net/http"
-	"net/url"
 )
 
 // LogLevelChangeController represents the controller needs of the LogLevelChangeRouter.
 type LogLevelChangeController interface {
-	Create(ctx context.Context, level string, module string) (*logging.LogHistory, error)
-	List(ctx context.Context) (map[string]string, error)
-	ModuleLogLevel(ctx context.Context, module string) (*logging.LogLevel, error)
+	Create(ctx context.Context, requests []logging.LogLevelRequest) ([]logging.LogHistory, error)
+	List(ctx context.Context) ([]logging.LogLevelRequest, error)
+	ModuleLogLevel(ctx context.Context, module string) (*logging.LogLevelRequest, error)
 	SetGlobalModuleLogLevel(ctx context.Context, logLevel string) ([]*logging.LogHistory, error)
 }
 
@@ -37,19 +38,19 @@ func (r *LogLevelChangeRouter) Mount(parent *mux.Router) {
 	}
 
 	routes.Post(r.create)
-	routes.Path("{subresource:modules}", r.list).Methods(http.MethodPost)
+	routes.Path("{subresource:modules}", r.list).Methods(http.MethodGet)
 	routes.Path("{subresource:modules}/{loglevel}", r.SetGlobalModuleLogLevel).Methods(http.MethodPost)
 	routes.Path("{subresource:modules}/{module}", r.moduleLogLevel).Methods(http.MethodGet)
 }
 
 // create function will change log level of a module
 func (r *LogLevelChangeRouter) create(req *http.Request) (interface{}, error) {
-	logReq := &logging.LogLevelRequest{}
-	if err := UnmarshalBody(req, logReq); err != nil {
+	var logReqs []logging.LogLevelRequest
+	if err := UnmarshalBody(req, &logReqs); err != nil {
 		return nil, actions.NewError(actions.InvalidArgument, err)
 	}
 
-	changeLog, err := r.controller.Create(req.Context(), logReq.Level, logReq.Module)
+	changeLog, err := r.controller.Create(req.Context(), logReqs)
 	return changeLog, err
 }
 

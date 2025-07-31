@@ -1,10 +1,11 @@
 package logging
 
 import (
+	"errors"
+	corev2 "github.com/sensu/core/v2"
 	"github.com/sirupsen/logrus"
 	"go.etcd.io/etcd/client/pkg/v3/logutil"
 	"go.uber.org/zap/zapcore"
-	"os"
 	"sync"
 )
 
@@ -22,13 +23,9 @@ type LogLevelRequest struct {
 
 type LogHistory struct {
 	Module   string `json:"module"`
-	OldLevel string `json:"old_level"`
-	NewLevel string `json:"new_level"`
-}
-
-type LogLevel struct {
-	Module   string `json:"module"`
-	LogLevel string `json:"log_level"`
+	OldLevel string `json:"old_level,omitempty"`
+	NewLevel string `json:"new_level,omitempty"`
+	Error    string `json:"error,omitempty"`
 }
 
 var defaultLogLevel = logrus.InfoLevel
@@ -86,14 +83,36 @@ func SetEtcdLogLevel(level string) error {
 }
 
 // GetModuleLogLevels returns current log levels for all modules
-func GetModuleLogLevels() map[string]string {
+func GetModuleLogLevels() []LogLevelRequest {
+	var logLevels []LogLevelRequest
 	registryMu.RLock()
-	levels := make(map[string]string)
 	for moduleName, logger := range loggerRegistry {
-		levels[moduleName] = logger.GetLevel().String()
+		logLevel := LogLevelRequest{
+			Module: moduleName,
+			Level:  logger.GetLevel().String(),
+		}
+		logLevels = append(logLevels, logLevel)
 	}
 	registryMu.RUnlock()
-	return levels
+	return logLevels
+}
+
+// GetModuleLogLevel returns a loggers log level
+func GetModuleLogLevel(module string) string {
+	registryMu.RLock()
+	logger, ok := loggerRegistry[module]
+	registryMu.RUnlock()
+	if ok {
+		return logger.Level.String()
+	}
+	registryMu.Lock()
+	defer registryMu.Unlock()
+	logger, ok = loggerRegistry[module]
+	if ok {
+		return logger.Level.String()
+	}
+
+	return ""
 }
 
 // SetLogLevel sets the log level for the given module's logger.
@@ -102,16 +121,43 @@ func SetLogLevel(module, level string) error {
 	defer registryMu.Unlock()
 	logger, ok := loggerRegistry[module]
 	if !ok {
-		logger = logrus.New()
-		logger.Out = os.Stdout
-		logger.Formatter = &logrus.TextFormatter{}
-		logger.SetLevel(logrus.InfoLevel)
-		loggerRegistry[module] = logger
+		return errors.New("no module found")
 	}
 	lvl, err := logrus.ParseLevel(level)
 	if err != nil {
 		return err
 	}
 	logger.SetLevel(lvl)
+	return nil
+}
+
+func (l *LogLevelRequest) GetObjectMeta() corev2.ObjectMeta {
+	return corev2.ObjectMeta{Name: l.Module}
+}
+
+// StorePrefix returns the path prefix to this resource in the store
+func (l *LogLevelRequest) StorePrefix() string {
+	return ""
+}
+
+// SetNamespace sets the namespace of the resource.
+func (l *LogLevelRequest) SetNamespace(namespace string) {
+	// no-op
+}
+
+// SetObjectMeta sets the meta of the resource.
+func (l *LogLevelRequest) SetObjectMeta(meta corev2.ObjectMeta) {
+	// no-op
+}
+
+func (*LogLevelRequest) RBACName() string {
+	return "loglevel"
+}
+
+func (l *LogLevelRequest) URIPath() string {
+	return ""
+}
+
+func (l *LogLevelRequest) Validate() error {
 	return nil
 }
