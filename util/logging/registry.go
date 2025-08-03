@@ -9,8 +9,6 @@ import (
 	"sync"
 )
 
-const flagLogLevel = "log-level"
-
 var (
 	loggerRegistry = make(map[string]*logrus.Logger)
 	registryMu     sync.RWMutex
