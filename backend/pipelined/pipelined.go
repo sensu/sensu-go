@@ -76,6 +76,9 @@ type PipelineGetter interface {
 	GetPipelines() []*corev2.ResourceReference
 }
 
+// PipelineResourceGetter defines an interface for any structures which can return a
+// slice of Pipeline resource references. It also defines a Match method
+// which is used to determine if the object is a match for the getter.
 type PipelineResourceGetter interface {
 	Match(obj any) bool
 	Get(obj any) []*corev2.ResourceReference
@@ -85,17 +88,22 @@ type PipelineLogGetter interface {
 	LogFields(bool) map[string]interface{}
 }
 
+// AddPipelineResourceGetter adds a PipelineResourceGetter to the Pipelined.
 func (p *Pipelined) AddPipelineResourceGetter(getter PipelineResourceGetter) {
 	p.pipelineGetter = append(p.pipelineGetter, getter)
 }
 
+// PipelineResourceGetterImpl is a default implementation of the PipelineResourceGetter
 type PipelineResourceGetterImpl struct{}
 
+// Match checks if the object is a PipelineGetter.
 func (p *PipelineResourceGetterImpl) Match(obj any) bool {
 	_, ok := obj.(PipelineGetter)
 	return ok
 }
 
+// Get returns a slice of Pipeline resource references from the object if it
+// implements the PipelineGetter interface.
 func (p *PipelineResourceGetterImpl) Get(obj any) []*corev2.ResourceReference {
 	if event, ok := obj.(PipelineGetter); ok {
 		return event.GetPipelines()
@@ -238,7 +246,7 @@ func (p *Pipelined) handleMessage(ctx context.Context, msg interface{}) (hadPipe
 
 	logGetter, ok := msg.(PipelineLogGetter)
 	if !ok {
-		panic("message received was not a PipelineGetter")
+		panic("message received was not a PipelineLogGetter")
 	}
 
 	fields := logGetter.LogFields(false)
