@@ -4,6 +4,11 @@ go 1.22
 
 toolchain go1.23.4
 
+replace (
+	github.com/sensu/core/v2 => github.com/sensu/core/v2 v2.0.0-20250805061914-c7adcd108861
+	github.com/sensu/core/v3 => github.com/sensu/core/v3 v3.0.0-20250805061914-c7adcd108861
+)
+
 require (
 	github.com/AlecAivazis/survey/v2 v2.2.14
 	github.com/ash2k/stager v0.0.0-20170622123058-6e9c7b0eacd4 // indirect
@@ -92,7 +97,7 @@ require (
 	github.com/xiang90/probing v0.0.0-20221125231312-a49e3df8f510 // indirect
 	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.46.0 // indirect
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc v1.20.0 // indirect
-	go.uber.org/multierr v1.11.0 // indirect
+	go.uber.org/multierr v1.11.0
 	google.golang.org/genproto v0.0.0-20231120223509-83a465c0220f // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20241202173237-19429a94021a // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20241202173237-19429a94021a // indirect
