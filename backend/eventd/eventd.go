@@ -23,7 +23,6 @@ import (
 	"github.com/sensu/sensu-go/backend/store/cache"
 	storev2 "github.com/sensu/sensu-go/backend/store/v2"
 	metricspkg "github.com/sensu/sensu-go/metrics"
-	utillogging "github.com/sensu/sensu-go/util/logging"
 )
 
 const (
@@ -365,7 +364,7 @@ func (e *Eventd) Start() error {
 func withEventFields(e interface{}, logger *logrus.Entry) *logrus.Entry {
 	event, _ := e.(*corev2.Event)
 	if event != nil {
-		fields := utillogging.EventFields(event, false)
+		fields := glogger.EventFields(event, false)
 		logger = logger.WithFields(fields)
 	}
 	return logger
@@ -527,7 +526,7 @@ func (e *Eventd) handleMessage(msg interface{}) (fEvent *corev2.Event, fErr erro
 		return event, fmt.Errorf("received non-Event on event channel: %v", msg)
 	}
 
-	fields := utillogging.EventFields(event, false)
+	fields := glogger.EventFields(event, false)
 	logger.WithFields(fields).Info("eventd received event")
 
 	// Validate the received event

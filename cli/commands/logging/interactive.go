@@ -30,8 +30,7 @@ func (o *loggingOpts) withFlags(flags *pflag.FlagSet) {
 
 // administerQuestionnaire will ask questions for setting log level for a module
 func (o *loggingOpts) administerQuestionnaire(askOpts ...survey.AskOpt) error {
-	var qs []*survey.Question
-	qs = []*survey.Question{
+	qs := []*survey.Question{
 		{
 			Name: "module",
 			Prompt: &survey.Input{
@@ -67,8 +66,7 @@ func (o *loggingOpts) administerQuestionnaire(askOpts ...survey.AskOpt) error {
 
 // administerQuestionnaireAllModule will ask questions for setting log level for all modules
 func (o *loggingOpts) administerQuestionnaireAllModule(askOpts ...survey.AskOpt) error {
-	var qs []*survey.Question
-	qs = []*survey.Question{
+	qs := []*survey.Question{
 		{
 			Name: "level",
 			Prompt: &survey.Select{
