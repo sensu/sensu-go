@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
@@ -13,6 +14,7 @@ import (
 	corev2 "github.com/sensu/core/v2"
 	"github.com/sensu/sensu-go/backend/apid/actions"
 	"github.com/sensu/sensu-go/backend/apid/handlers"
+	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/testing/mockqueue"
 	"github.com/sensu/sensu-go/testing/mockstore"
 	"github.com/sensu/sensu-go/testing/testutil"
@@ -68,8 +70,92 @@ func TestHttpApiChecksAdhocRequest(t *testing.T) {
 	}
 }
 
-func TestChecksRouter(t *testing.T) {
-	// Setup the router
+func TestDeleteCheckRouter(t *testing.T) {
+	s := &mockstore.MockStore{}
+	router := ChecksRouter{
+		handlers: handlers.Handlers{
+			Resource: &corev2.CheckConfig{},
+			Store:    s,
+		},
+		assetResource: corev2.Asset{},
+	}
+
+	parentRouter := mux.NewRouter().PathPrefix(corev2.URLPrefix).Subrouter()
+	router.Mount(parentRouter)
+
+	fixture := corev2.FixtureCheckConfig("foo")
+	tests := []routerTestCase{}
+	tests = append(tests, deleteTestCases(fixture)...)
+	for _, tt := range tests {
+		run(t, tt, parentRouter, s)
+	}
+}
+
+func TestUpdateCheckRouter(t *testing.T) {
+	s := &mockstore.MockStore{}
+	router := ChecksRouter{
+		handlers: handlers.Handlers{
+			Resource: &corev2.CheckConfig{},
+			Store:    s,
+		},
+		assetResource: corev2.Asset{},
+	}
+
+	parentRouter := mux.NewRouter().PathPrefix(corev2.URLPrefix).Subrouter()
+	router.Mount(parentRouter)
+
+	fixture := corev2.FixtureCheckConfig("foo")
+
+	tests := []routerTestCase{
+		func() routerTestCase {
+			fixture.SetNamespace("default")
+			return routerTestCase{
+				name:   "it returns 201 if the resource was updated",
+				method: http.MethodPut,
+				path:   fixture.URIPath(),
+				body:   marshal(fixture),
+				storeFunc: func(s *mockstore.MockStore) {
+					s.On("ListResources", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+						Run(func(args mock.Arguments) {
+							runtimeAssets := args[2].(*[]*corev2.Asset)
+							*runtimeAssets = append(*runtimeAssets, &corev2.Asset{
+								ObjectMeta: corev2.NewObjectMeta("ruby-2-4-2", "default"),
+							})
+						}).Return(nil).Once()
+					s.On("CreateOrUpdateResource", mock.Anything, mock.Anything).Return(nil).Once()
+				},
+				wantStatusCode: http.StatusCreated,
+			}
+		}(),
+		updateResourceInvalidPayloadTestCase(fixture),
+		updateResourceInvalidMetaTestCase(fixture),
+		{
+			name:   "it returns 400 if the resource to update is invalid",
+			method: http.MethodPut,
+			path:   fixture.URIPath(),
+			body:   marshal(fixture),
+			storeFunc: func(s *mockstore.MockStore) {
+				s.On("ListResources", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+					Run(func(args mock.Arguments) {
+						runtimeAssets := args[2].(*[]*corev2.Asset)
+						*runtimeAssets = append(*runtimeAssets, &corev2.Asset{
+							ObjectMeta: corev2.NewObjectMeta("ruby-2-4-2", "default"),
+						})
+					}).Return(nil).Once()
+				s.On("CreateOrUpdateResource", mock.Anything, mock.Anything).
+					Return(&store.ErrNotValid{Err: errors.New("error")}).
+					Once()
+			},
+			wantStatusCode: http.StatusBadRequest,
+		},
+	}
+
+	for _, tt := range tests {
+		run(t, tt, parentRouter, s)
+	}
+}
+
+func TestCreateCheckRouter(t *testing.T) {
 	s := &mockstore.MockStore{}
 	router := ChecksRouter{
 		handlers: handlers.Handlers{
@@ -82,16 +168,55 @@ func TestChecksRouter(t *testing.T) {
 	router.Mount(parentRouter)
 
 	empty := &corev2.CheckConfig{}
+
+	tests := []routerTestCase{}
+	tests = append(tests, createTestCases(empty)...)
+
+	for _, tt := range tests {
+		run(t, tt, parentRouter, s)
+	}
+}
+
+func TestGetCheckRouter(t *testing.T) {
+	s := &mockstore.MockStore{}
+	router := ChecksRouter{
+		handlers: handlers.Handlers{
+			Resource: &corev2.CheckConfig{},
+			Store:    s,
+		},
+		assetResource: corev2.Asset{},
+	}
+	parentRouter := mux.NewRouter().PathPrefix(corev2.URLPrefix).Subrouter()
+	router.Mount(parentRouter)
+
 	fixture := corev2.FixtureCheckConfig("foo")
 
 	tests := []routerTestCase{}
 	tests = append(tests, getTestCases(fixture)...)
-	tests = append(tests, listTestCases(empty)...)
-	tests = append(tests, createTestCases(empty)...)
-	tests = append(tests, updateTestCases(fixture)...)
-	tests = append(tests, deleteTestCases(fixture)...)
+
 	for _, tt := range tests {
-		s.On("ListResources", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
+		run(t, tt, parentRouter, s)
+	}
+}
+
+func TestListCheckRouter(t *testing.T) {
+	s := &mockstore.MockStore{}
+	router := ChecksRouter{
+		handlers: handlers.Handlers{
+			Resource: &corev2.CheckConfig{},
+			Store:    s,
+		},
+		assetResource: corev2.Asset{},
+	}
+	parentRouter := mux.NewRouter().PathPrefix(corev2.URLPrefix).Subrouter()
+	router.Mount(parentRouter)
+
+	empty := &corev2.CheckConfig{}
+
+	tests := []routerTestCase{}
+	tests = append(tests, listTestCases(empty)...)
+
+	for _, tt := range tests {
 		run(t, tt, parentRouter, s)
 	}
 }
