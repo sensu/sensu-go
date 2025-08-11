@@ -71,10 +71,13 @@ func TestHttpApiChecksAdhocRequest(t *testing.T) {
 func TestChecksRouter(t *testing.T) {
 	// Setup the router
 	s := &mockstore.MockStore{}
-	router := ChecksRouter{handlers: handlers.Handlers{
-		Resource: &corev2.CheckConfig{},
-		Store:    s,
-	}}
+	router := ChecksRouter{
+		handlers: handlers.Handlers{
+			Resource: &corev2.CheckConfig{},
+			Store:    s,
+		},
+		assetResource: corev2.Asset{},
+	}
 	parentRouter := mux.NewRouter().PathPrefix(corev2.URLPrefix).Subrouter()
 	router.Mount(parentRouter)
 
@@ -88,6 +91,7 @@ func TestChecksRouter(t *testing.T) {
 	tests = append(tests, updateTestCases(fixture)...)
 	tests = append(tests, deleteTestCases(fixture)...)
 	for _, tt := range tests {
+		s.On("ListResources", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
 		run(t, tt, parentRouter, s)
 	}
 }
