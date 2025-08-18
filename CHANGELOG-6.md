@@ -5,6 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 and this project adheres to [Semantic
 Versioning](http://semver.org/spec/v2.0.0.html).
+
+## Unreleased
+
+### Fixed
+
+- Fixed a bug where user sessions were deleted before refresh tokens expired
+
+## [6.13.1] - 2025-05-28
+
+### Fixed
+- Fixed a bug where users were facing issues in creating silences
+- Fixed UID mapping issues in Docker on RedHat and Alpine images.
+
+
 ## [6.13.0] - 2025-03-25
 
 ### Added
