@@ -333,6 +333,7 @@ func Initialize(ctx context.Context, config *Config) (*Backend, error) {
 	scfg := etcdstore.Config{}
 	scfg.DefaultSilencedExpiryTime = config.DefaultSilencedExpiryTime
 	scfg.MaxSilencedExpiryTimeAllowed = config.MaxSilencedExpiryTimeAllowed
+	scfg.RefreshTokenExpiry = config.RefreshTokenExpiry
 	etcdstore.SetConfig(scfg, stor)
 
 	b.Store = stor

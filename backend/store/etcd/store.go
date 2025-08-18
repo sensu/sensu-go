@@ -26,6 +26,7 @@ const (
 type Config struct {
 	DefaultSilencedExpiryTime    time.Duration
 	MaxSilencedExpiryTimeAllowed time.Duration
+	RefreshTokenExpiry 			 time.Duration
 }
 
 // Store is an implementation of the sensu-go/backend/store.Store iface.
