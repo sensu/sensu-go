@@ -4,6 +4,8 @@ go 1.22
 
 toolchain go1.23.4
 
+replace github.com/sensu/core/v2 => github.com/sensu/core/v2 v2.0.0-20250822062819-dc8460952773
+
 require (
 	github.com/AlecAivazis/survey/v2 v2.2.14
 	github.com/ash2k/stager v0.0.0-20170622123058-6e9c7b0eacd4 // indirect
