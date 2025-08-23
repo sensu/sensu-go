@@ -4,7 +4,7 @@ go 1.22
 
 toolchain go1.23.4
 
-replace github.com/sensu/core/v2 => github.com/sensu/core/v2 v2.0.0-20250822062819-dc8460952773
+replace github.com/sensu/core/v2 => github.com/sensu/core/v2 v2.0.0-20250823120716-2c4f595901dc
 
 require (
 	github.com/AlecAivazis/survey/v2 v2.2.14
