@@ -28,9 +28,8 @@ type checkController interface {
 
 // ChecksRouter handles requests for /checks
 type ChecksRouter struct {
-	controller    checkController
-	handlers      handlers.Handlers
-	assetResource corev2.Asset
+	controller checkController
+	handlers   handlers.Handlers
 }
 
 // NewChecksRouter instantiates new router for controlling check resources
@@ -41,7 +40,6 @@ func NewChecksRouter(store store.Store, getter types.QueueGetter) *ChecksRouter 
 			Resource: &corev2.CheckConfig{},
 			Store:    store,
 		},
-		assetResource: corev2.Asset{},
 	}
 }
 
@@ -68,8 +66,8 @@ func (r *ChecksRouter) Mount(parent *mux.Router) {
 	parent.HandleFunc(path.Join(routes.PathPrefix, "{id}/execute"), r.adhocRequest).Methods(http.MethodPost)
 }
 
-// Patch the CheckConfig
-func (r *ChecksRouter) Patch(req *http.Request) (interface{}, error) {
+// parseAndValidateCheckConfig reads the request body, parses it as CheckConfig, and validates runtime assets
+func (r *ChecksRouter) parseAndValidateCheckConfig(req *http.Request) (*corev2.CheckConfig, error) {
 	body, err := io.ReadAll(req.Body)
 	if err != nil {
 		return nil, actions.NewError(actions.InvalidArgument, err)
@@ -88,58 +86,40 @@ func (r *ChecksRouter) Patch(req *http.Request) (interface{}, error) {
 	}
 
 	req.Body = io.NopCloser(bytes.NewBuffer(body))
+	return &config, nil
+}
+
+// Patch the CheckConfig
+func (r *ChecksRouter) Patch(req *http.Request) (interface{}, error) {
+	_, err := r.parseAndValidateCheckConfig(req)
+	if err != nil {
+		return nil, err
+	}
 	return r.handlers.PatchResource(req)
 }
 
 // Post the CheckConfig
 func (r *ChecksRouter) Post(req *http.Request) (interface{}, error) {
-	body, err := io.ReadAll(req.Body)
+	_, err := r.parseAndValidateCheckConfig(req)
 	if err != nil {
-		return nil, actions.NewError(actions.InvalidArgument, err)
+		return nil, err
 	}
-	req.Body.Close()
-
-	var config corev2.CheckConfig
-	if err := json.Unmarshal(body, &config); err != nil {
-		return nil, actions.NewError(actions.InvalidArgument, err)
-	}
-
-	if len(config.RuntimeAssets) > 0 {
-		if missing, names := r.hasMissingAssets(req, config.RuntimeAssets); missing {
-			return nil, actions.NewError(actions.InvalidArgument, fmt.Errorf("runtime assets missing: %v", names))
-		}
-	}
-
-	req.Body = io.NopCloser(bytes.NewBuffer(body))
 	return r.handlers.CreateResource(req)
 }
 
 // Put the CheckConfig
 func (r *ChecksRouter) Put(req *http.Request) (interface{}, error) {
-	body, err := io.ReadAll(req.Body)
+	_, err := r.parseAndValidateCheckConfig(req)
 	if err != nil {
-		return nil, actions.NewError(actions.InvalidArgument, err)
+		return nil, err
 	}
-	req.Body.Close()
-
-	var config corev2.CheckConfig
-	if err := json.Unmarshal(body, &config); err != nil {
-		return nil, actions.NewError(actions.InvalidArgument, err)
-	}
-
-	if len(config.RuntimeAssets) > 0 {
-		if missing, names := r.hasMissingAssets(req, config.RuntimeAssets); missing {
-			return nil, actions.NewError(actions.InvalidArgument, fmt.Errorf("runtime assets missing: %v", names))
-		}
-	}
-
-	req.Body = io.NopCloser(bytes.NewBuffer(body))
 	return r.handlers.CreateOrUpdateResource(req)
 }
 
 func (r *ChecksRouter) hasMissingAssets(req *http.Request, runtimeAssets []string) (bool, []string) {
 	var assets []*corev2.Asset
-	if err := r.handlers.Store.ListResources(req.Context(), r.assetResource.StorePrefix(), &assets, &store.SelectionPredicate{}); err != nil {
+	assetResource := corev2.Asset{}
+	if err := r.handlers.Store.ListResources(req.Context(), assetResource.StorePrefix(), &assets, &store.SelectionPredicate{}); err != nil {
 		return false, nil
 	}
 
