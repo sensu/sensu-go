@@ -77,7 +77,6 @@ func TestDeleteCheckRouter(t *testing.T) {
 			Resource: &corev2.CheckConfig{},
 			Store:    s,
 		},
-		assetResource: corev2.Asset{},
 	}
 
 	parentRouter := mux.NewRouter().PathPrefix(corev2.URLPrefix).Subrouter()
@@ -98,7 +97,6 @@ func TestUpdateCheckRouter(t *testing.T) {
 			Resource: &corev2.CheckConfig{},
 			Store:    s,
 		},
-		assetResource: corev2.Asset{},
 	}
 
 	parentRouter := mux.NewRouter().PathPrefix(corev2.URLPrefix).Subrouter()
@@ -162,7 +160,6 @@ func TestCreateCheckRouter(t *testing.T) {
 			Resource: &corev2.CheckConfig{},
 			Store:    s,
 		},
-		assetResource: corev2.Asset{},
 	}
 	parentRouter := mux.NewRouter().PathPrefix(corev2.URLPrefix).Subrouter()
 	router.Mount(parentRouter)
@@ -184,7 +181,6 @@ func TestGetCheckRouter(t *testing.T) {
 			Resource: &corev2.CheckConfig{},
 			Store:    s,
 		},
-		assetResource: corev2.Asset{},
 	}
 	parentRouter := mux.NewRouter().PathPrefix(corev2.URLPrefix).Subrouter()
 	router.Mount(parentRouter)
@@ -206,7 +202,6 @@ func TestListCheckRouter(t *testing.T) {
 			Resource: &corev2.CheckConfig{},
 			Store:    s,
 		},
-		assetResource: corev2.Asset{},
 	}
 	parentRouter := mux.NewRouter().PathPrefix(corev2.URLPrefix).Subrouter()
 	router.Mount(parentRouter)
