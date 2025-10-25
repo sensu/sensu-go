@@ -5,6 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 and this project adheres to [Semantic
 Versioning](http://semver.org/spec/v2.0.0.html).
+## [Unreleased]
+
+### Added
+- Added `continue_on_error` field to `core/v2.Pipeline`.
+  This flag controls whether pipeline execution should continue when an error occurs in a handler, filter, mutator, or during asset resolution.
+  Defaults to `false`, preserving existing behavior.
+
+### Changed
+- Updated `GetAssets` method to return an error when one or more required assets are missing.
+  When `continue_on_error` is `false`, missing assets or other errors will stop the pipeline execution (existing behavior).
+  When set to `true`, the pipeline will continue executing subsequent workflows until one succeeds.
+- Modified handler execution behavior to return a non-zero status code on failure.
+  Previously, handler errors were only logged without affecting pipeline.
+
 ## [6.13.1] - 2025-05-28
 
 ### Fixed
