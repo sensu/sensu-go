@@ -11,11 +11,6 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 - Added backend-side validation for `runtime_assets` during CheckConfig creation and update.
   - If any referenced asset does not exist in the namespace, the request will be rejected with a validation error.
   - This change improves usability by catching missing or invalid assets early, preventing runtime execution failures and reducing debugging overhead.
-
-
-## [Unreleased]
-
-### Added
 - Added `ttl_status` field to `Check` and `CheckConfig` to configure the status (warning or critical) for TTL failure events. This field accepts values 1 (warning) or 2 (critical), with critical (2) as the default to maintain backward compatibility.
 - Added Prometheus metrics collection for HTTP API requests, including request count (`sensu_go_http_requests_total`), request duration (`sensu_go_http_request_duration_seconds`), and client error count (`sensu_go_http_client_errors_total`) for better observability of backend API performance.
 
