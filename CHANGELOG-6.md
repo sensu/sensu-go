@@ -11,6 +11,8 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 - Added `continue_on_error` field to `core/v2.Pipeline`.
   This flag controls whether pipeline execution should continue when an error occurs in a handler, filter, mutator, or during asset resolution.
   Defaults to `false`, preserving existing behavior.
+- Added `ttl_status` field to `Check` and `CheckConfig` to configure the status (warning or critical) for TTL failure events. This field accepts values 1 (warning) or 2 (critical), with critical (2) as the default to maintain backward compatibility.
+- Added Prometheus metrics collection for HTTP API requests, including request count (`sensu_go_http_requests_total`), request duration (`sensu_go_http_request_duration_seconds`), and client error count (`sensu_go_http_client_errors_total`) for better observability of backend API performance.
 
 ### Changed
 - Updated `GetAssets` method to return an error when one or more required assets are missing.
