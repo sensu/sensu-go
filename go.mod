@@ -4,7 +4,6 @@ go 1.22
 
 toolchain go1.23.4
 
-replace github.com/sensu/core/v2 => github.com/sensu/core/v2 v2.0.0-20250823120716-2c4f595901dc
 
 require (
 	github.com/AlecAivazis/survey/v2 v2.2.14
@@ -86,7 +85,7 @@ require (
 	github.com/jonboulle/clockwork v0.4.0 // indirect
 	github.com/kr/pty v1.1.8 // indirect
 	github.com/prometheus/procfs v0.12.0 // indirect
-	github.com/sensu/core/v2 v2.20.0
+	github.com/sensu/core/v2 v2.20.1-0.20251104042553-0603aa304a04
 	github.com/sensu/core/v3 v3.9.0
 	github.com/sensu/sensu-api-tools v0.2.1
 	github.com/sensu/sensu-go/types v0.13.0
