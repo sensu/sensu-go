@@ -301,6 +301,70 @@ func TestCheckTTL(t *testing.T) {
 	}
 }
 
+func TestCreateFailedCheckEventWithTTLStatus(t *testing.T) {
+	// Test that TTL status is properly handled when creating failed check events
+	tests := []struct {
+		name        string
+		ttlStatus   int32
+		expectedStatus uint32
+		description    string
+	}{
+		{
+			name:           "no ttl_status configured - should default to warning",
+			ttlStatus:      0,
+			expectedStatus: 1,
+			description:    "should use default warning status when ttl_status is not set",
+		},
+		{
+			name:           "ttl_status = 1 - should use warning status",
+			ttlStatus:      1,
+			expectedStatus: 1,
+			description:    "should use configured warning status",
+		},
+		{
+			name:           "ttl_status = 2 - should use critical status",
+			ttlStatus:      2,
+			expectedStatus: 2,
+			description:    "should use configured critical status",
+		},
+		{
+			name:           "invalid ttl_status = 3 - should default to warning",
+			ttlStatus:      3,
+			expectedStatus: 1,
+			description:    "should default to warning for invalid ttl_status values",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Create a test event with TTL status
+			event := corev2.FixtureEvent("entity", "check")
+			event.Check.TtlStatus = tt.ttlStatus
+			event.Check.Executed = time.Now().Add(-300 * time.Second).Unix() // 5 minutes ago
+
+			// Create mock event store
+			eventStore := &mockstore.MockStore{}
+			eventStore.On("GetEventByEntityCheck", mock.Anything, "entity", "check").Return(event, nil)
+
+			// Create eventd instance
+			e := &Eventd{
+				eventStore: eventStore,
+			}
+
+			// Test the createFailedCheckEvent method
+			result, err := e.createFailedCheckEvent(context.Background(), event)
+			require.NoError(t, err)
+			require.NotNil(t, result)
+
+			// Verify the status is set correctly
+			assert.Equal(t, tt.expectedStatus, result.Check.Status, tt.description)
+
+			// Verify the output message
+			assert.Contains(t, result.Check.Output, "Last check execution was")
+		})
+	}
+}
+
 func TestBuryConditions(t *testing.T) {
 	tests := []struct {
 		name           string

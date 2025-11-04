@@ -339,10 +339,7 @@ func (a *Agent) Run(ctx context.Context) error {
 	if err := corev2.ValidateName(a.config.AgentName); err != nil {
 		return fmt.Errorf("invalid agent name: %v", err)
 	}
-	logger.Debug("validating keepalive warning timeout")
-	if timeout := a.config.KeepaliveWarningTimeout; timeout < 5 {
-		return fmt.Errorf("bad keepalive timeout: %d (minimum value is 5 seconds)", timeout)
-	}
+
 	logger.Debug("validating keepalive critical timeout")
 	if timeout := a.config.KeepaliveCriticalTimeout; timeout > 0 && timeout < 5 {
 		return fmt.Errorf("bad keepalive critical timeout: %d (minimum value is 5 seconds)", timeout)
