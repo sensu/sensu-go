@@ -37,7 +37,7 @@ func (s *MockStore) GetSilencedEntriesBySubscription(ctx context.Context, subscr
 
 // GetSilencedEntriesByCheckName ...
 func (s *MockStore) GetSilencedEntriesByCheckName(ctx context.Context, checkName string) ([]*types.Silenced, error) {
-	args := s.Called(ctx)
+	args := s.Called(ctx, checkName)
 	return args.Get(0).([]*types.Silenced), args.Error(1)
 }
 
