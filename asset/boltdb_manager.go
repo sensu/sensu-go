@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"time"
 
 	"github.com/dustin/go-humanize"
 	"github.com/prometheus/client_golang/prometheus"
@@ -143,6 +144,11 @@ func (b *boltDBAssetManager) Get(ctx context.Context, asset *corev2.Asset) (*Run
 	if localAsset != nil {
 		localAsset.Name = asset.Name
 		localAsset.SHA512 = asset.Sha512
+		// Update last accessed timestamp and persist to database
+		if err := b.updateLastAccessed(key, localAsset); err != nil {
+			// Log the error but don't fail the asset retrieval
+			logger.WithError(err).Debug("failed to update asset last accessed timestamp")
+		}
 		return localAsset, nil
 	}
 
@@ -160,6 +166,13 @@ func (b *boltDBAssetManager) Get(ctx context.Context, asset *corev2.Asset) (*Run
 		if value != nil {
 			// deserialize asset
 			if err := json.Unmarshal(value, &localAsset); err == nil {
+				// Update last accessed timestamp for this asset
+				localAsset.LastAccessed = time.Now().Unix()
+
+				// Re-serialize and store the updated asset
+				if updatedJSON, marshalErr := json.Marshal(localAsset); marshalErr == nil {
+					bucket.Put(key, updatedJSON)
+				}
 				return nil
 			}
 		}
@@ -193,7 +206,8 @@ func (b *boltDBAssetManager) Get(ctx context.Context, asset *corev2.Asset) (*Run
 		}
 
 		localAsset = &RuntimeAsset{
-			Path: assetPath,
+			Path:         assetPath,
+			LastAccessed: time.Now().Unix(),
 		}
 
 		assetJSON, err := json.Marshal(localAsset)
@@ -243,4 +257,25 @@ func (b *boltDBAssetManager) expandWithDuration(tmpFile *os.File, asset *corev2.
 
 	assetPath = filepath.Join(b.localStorage, asset.Sha512)
 	return assetPath, b.expander.Expand(tmpFile, assetPath)
+}
+
+// updateLastAccessed updates the LastAccessed timestamp for an asset in the database
+func (b *boltDBAssetManager) updateLastAccessed(key []byte, runtimeAsset *RuntimeAsset) error {
+	return b.db.Update(func(tx *bolt.Tx) error {
+		bucket := tx.Bucket(assetBucketName)
+		if bucket == nil {
+			return fmt.Errorf("asset bucket not found")
+		}
+
+		// Update the timestamp
+		runtimeAsset.LastAccessed = time.Now().Unix()
+
+		// Serialize and store the updated asset
+		assetJSON, err := json.Marshal(runtimeAsset)
+		if err != nil {
+			return fmt.Errorf("failed to marshal asset: %w", err)
+		}
+
+		return bucket.Put(key, assetJSON)
+	})
 }

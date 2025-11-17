@@ -72,7 +72,8 @@ func TestGetExistingAsset(t *testing.T) {
 		Sha512: sha,
 	}
 	runtimeAsset := &RuntimeAsset{
-		Path: path,
+		Path:         path,
+		LastAccessed: 0, // Not relevant for this test
 	}
 
 	runtimeAssetJSON, err := json.Marshal(runtimeAsset)

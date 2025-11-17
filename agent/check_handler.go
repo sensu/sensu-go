@@ -19,6 +19,7 @@ import (
 	"github.com/sensu/sensu-go/transport"
 	"github.com/sensu/sensu-go/util/environment"
 	"github.com/sirupsen/logrus"
+	"go.uber.org/multierr"
 )
 
 const (
@@ -35,6 +36,37 @@ var (
 	errDupCheckRequest = errors.New("check request has already been received - agent and check may have multiple matching subscriptions")
 	errOldCheckRequest = errors.New("check request is older than a previously received check request")
 )
+
+type AgentAssetError interface {
+	Error() string
+	GetExitCode() uint32
+	GetMessage() string
+}
+
+type agentAssetError struct {
+	code uint32
+	err  error
+	msg  string
+}
+
+func (a *agentAssetError) Error() string {
+	errs := multierr.Errors(a.err)
+	var parts []string
+
+	for _, err := range errs {
+		parts = append(parts, err.Error())
+	}
+
+	return strings.Join(parts, ",")
+}
+
+func (a *agentAssetError) GetExitCode() uint32 {
+	return a.code
+}
+
+func (a *agentAssetError) GetMessage() string {
+	return a.msg
+}
 
 type checkExecutionError struct {
 	error
@@ -230,7 +262,7 @@ func (a *Agent) executeCheck(ctx context.Context, request *corev2.CheckRequest, 
 		var err error
 		assets, err = asset.GetAll(ctx, a.assetGetter, checkAssets)
 		if err != nil {
-			a.sendFailure(event, fmt.Errorf("error getting assets for check: %s", err))
+			a.sendFailure(event, &agentAssetError{code: 127, err: err, msg: "command not found"})
 			return
 		}
 	}
@@ -355,10 +387,22 @@ func (a *Agent) sendFailure(event *corev2.Event, err error) {
 		"event": event,
 	}).Error(err)
 
+	updateAssetError := func(event *corev2.Event, errors error) {
+		combined, ok := errors.(AgentAssetError)
+		if !ok {
+			return
+		}
+		event.Check.Output = combined.GetMessage()
+		event.Check.Status = combined.GetExitCode()
+		event.Check.AssetStatus = strings.Split(combined.Error(), ",")
+	}
+
 	event.Check.Output = err.Error()
 	event.Check.Status = 3
 	event.Entity = a.getAgentEntity()
 	event.Timestamp = time.Now().Unix()
+
+	updateAssetError(event, err)
 
 	// Override the default check status of 3 if an annotation is configured
 	allowListStatus, ok := event.Check.Annotations[allowListOnDenyStatus]
