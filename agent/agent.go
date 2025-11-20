@@ -273,6 +273,10 @@ func NewAgentContext(ctx context.Context, config *Config) (*Agent, error) {
 	return agent, nil
 }
 
+func (a *Agent) GetConfig() *Config {
+	return a.config
+}
+
 func (a *Agent) sendMessage(msg *transport.Message) {
 	logger.WithFields(logrus.Fields{
 		"type":         msg.Type,
@@ -466,6 +470,16 @@ func (a *Agent) Run(ctx context.Context) error {
 		a.StartSocketListeners(ctx)
 	}
 
+	// Increment the waitgroup counter here too in case none of the components
+	// above were started, and rely on the system info collector to decrement it
+	// once it exits
+	go a.connectionManager(ctx, cancel)
+	go a.refreshSystemInfoPeriodically(ctx)
+	go a.handleAPIQueue(ctx)
+
+	// Wait for context to complete
+	<-ctx.Done()
+	logger.Info("agent shutting down")
 	// Call AfterAgentRun in reverse order (best effort)
 	var afterErrs error
 	for i := len(a.plugins) - 1; i >= 0; i-- {
@@ -480,17 +494,6 @@ func (a *Agent) Run(ctx context.Context) error {
 	if afterErrs != nil {
 		logger.WithError(afterErrs).Warn("some plugin AfterAgentRun errors occurred")
 	}
-
-	// Increment the waitgroup counter here too in case none of the components
-	// above were started, and rely on the system info collector to decrement it
-	// once it exits
-	go a.connectionManager(ctx, cancel)
-	go a.refreshSystemInfoPeriodically(ctx)
-	go a.handleAPIQueue(ctx)
-
-	// Wait for context to complete
-	<-ctx.Done()
-	logger.Info("agent shutting down")
 
 	// Wait for all goroutines to gracefully shutdown, but not too long
 	done := make(chan struct{})
