@@ -16,6 +16,7 @@ import (
 	"net/url"
 	"os"
 	"os/signal"
+	"sort"
 	"strings"
 	"sync"
 	"syscall"
@@ -25,6 +26,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
+	"go.uber.org/multierr"
 	"golang.org/x/time/rate"
 
 	corev2 "github.com/sensu/core/v2"
@@ -134,11 +136,43 @@ func GetDefaultAgentName() string {
 	return defaultAgentName
 }
 
+// Plugin is the hook-based plugin interface.
+type Plugin interface {
+	// Name returns a human-friendly plugin name.
+	Name() string
+
+	// Priority controls ordering; higher runs earlier in BeforeRun and later in AfterRun.
+	// Return 0 for default priority.
+	Priority() int
+
+	// BeforeAgentRun is executed before Agent does its core work.
+	// If it returns an error, Agent decides whether to abort or continue.
+	BeforeAgentRun(ctx context.Context, a *Agent) error
+
+	// AfterAgentRun is executed after Agent's core work (even when core returns error).
+	// It's good for cleanup or metrics; errors should be reported but usually shouldn't abort.
+	AfterAgentRun(ctx context.Context, a *Agent) error
+
+	// IsFatal optional static policy: if true, any error from this plugin is fatal by default
+	// Implementors can return false (default).
+	IsFatal() bool
+}
+
+// BasePlugin small helper so implementers don't need to provide all methods.
+type BasePlugin struct{}
+
+func (BasePlugin) Name() string                                       { return "base" }
+func (BasePlugin) Priority() int                                      { return 0 }
+func (BasePlugin) BeforeAgentRun(ctx context.Context, a *Agent) error { return nil }
+func (BasePlugin) AfterAgentRun(ctx context.Context, a *Agent) error  { return nil }
+func (BasePlugin) IsFatal() bool                                      { return false }
+
 // An Agent receives and acts on messages from a Sensu Backend.
 type Agent struct {
 	allowList          []allowList
 	api                *http.Server
 	assetGetter        asset.Getter
+	plugins            []Plugin
 	backendSelector    BackendSelector
 	config             *Config
 	connected          bool
@@ -313,6 +347,11 @@ func (a *Agent) buildTransportHeaderMap() http.Header {
 	return header
 }
 
+// RegisterPlugin registers an agent's plugin
+func (a *Agent) RegisterPlugin(p Plugin) {
+	a.plugins = append(a.plugins, p)
+}
+
 // Run starts the Agent.
 //
 // 1. Start the asset manager.
@@ -332,6 +371,29 @@ func (a *Agent) Run(ctx context.Context) error {
 		}
 	}()
 	defer cancel()
+
+	if len(a.plugins) > 0 {
+		// Keep list sorted descending by Priority (higher first)
+		sort.SliceStable(a.plugins, func(i, j int) bool {
+			return a.plugins[i].Priority() > a.plugins[j].Priority()
+		})
+	}
+
+	var beforeErrs error
+	// Call BeforeAgentRun in order
+	for _, p := range a.plugins {
+		if err := p.BeforeAgentRun(ctx, a); err != nil {
+			bErr := fmt.Errorf("plugin %s BeforeRun: %w", p.Name(), err)
+			if p.IsFatal() {
+				return bErr
+			}
+			beforeErrs = multierr.Append(beforeErrs, bErr)
+		}
+	}
+	if beforeErrs != nil {
+		logger.WithError(beforeErrs).Warn("some plugin BeforeAgentRun errors occurred")
+	}
+
 	a.header = a.buildTransportHeaderMap()
 
 	// Fail the agent after startup if the id is invalid
@@ -402,6 +464,21 @@ func (a *Agent) Run(ctx context.Context) error {
 	if !a.config.DisableSockets {
 		// Agent TCP/UDP sockets are deprecated in favor of the agent rest api
 		a.StartSocketListeners(ctx)
+	}
+
+	// Call AfterAgentRun in reverse order (best effort)
+	var afterErrs error
+	for i := len(a.plugins) - 1; i >= 0; i-- {
+		if err := a.plugins[i].AfterAgentRun(ctx, a); err != nil {
+			aErr := fmt.Errorf("plugin %s AfterRun: %w", a.plugins[i].Name(), err)
+			if a.plugins[i].IsFatal() {
+				return aErr
+			}
+			afterErrs = multierr.Append(afterErrs, aErr)
+		}
+	}
+	if afterErrs != nil {
+		logger.WithError(afterErrs).Warn("some plugin AfterAgentRun errors occurred")
 	}
 
 	// Increment the waitgroup counter here too in case none of the components
