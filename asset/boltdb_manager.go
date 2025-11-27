@@ -279,3 +279,81 @@ func (b *boltDBAssetManager) updateLastAccessed(key []byte, runtimeAsset *Runtim
 		return bucket.Put(key, assetJSON)
 	})
 }
+
+func (b *boltDBAssetManager) GetDB() *bolt.DB {
+	return b.db
+}
+
+// FindUnusedAssets scans the database for assets older than cutoffTime
+func FindUnusedAssets(db *bolt.DB, cutoffTime int64) ([]RuntimeAsset, error) {
+	var unusedAssets []RuntimeAsset
+
+	err := db.View(func(tx *bolt.Tx) error {
+		bucket := tx.Bucket(assetBucketName)
+		if bucket == nil {
+			logger.Error("no assets bucket found in database")
+			return nil
+		}
+
+		return bucket.ForEach(func(key, value []byte) error {
+			var runtimeAsset RuntimeAsset
+
+			// Unmarshal the asset data
+			if err := json.Unmarshal(value, &runtimeAsset); err != nil {
+				// Log and skip corrupted entries
+				logger.WithError(err).WithField("sha512", string(key)).Warn("skipping corrupted asset entry")
+				return nil
+			}
+
+			// Check if asset is expired
+			if runtimeAsset.LastAccessed != 0 && runtimeAsset.LastAccessed < cutoffTime {
+				unusedAssets = append(unusedAssets, runtimeAsset)
+			}
+
+			return nil
+		})
+	})
+
+	return unusedAssets, err
+}
+
+// DeleteAsset deletes from database and cache
+func DeleteAsset(db *bolt.DB, runtimeAsset RuntimeAsset) error {
+	key := []byte(runtimeAsset.SHA512)
+
+	err := db.Update(func(tx *bolt.Tx) error {
+		bucket := tx.Bucket(assetBucketName)
+		if bucket == nil {
+			// Nothing to delete
+			return nil
+		}
+
+		value := bucket.Get(key)
+		if value == nil {
+			// No matching asset
+			return nil
+		}
+
+		// Delete the record
+		if err := bucket.Delete(key); err != nil {
+			return fmt.Errorf("failed to delete asset with sha512 %s: %w", runtimeAsset.SHA512, err)
+		}
+
+		return nil
+	})
+
+	if err != nil {
+		return fmt.Errorf("failed to remove asset from database: %w", err)
+	}
+
+	// Remove from filesystem
+	if runtimeAsset.Path != "" {
+		if err := os.RemoveAll(runtimeAsset.Path); err != nil {
+			// Log the filesystem error but don't fail the operation
+			// since the database entry is already removed
+			logger.WithError(err).WithField("path", runtimeAsset.Path).Warn("failed to remove asset from filesystem during cleanup")
+		}
+	}
+
+	return nil
+}

@@ -9,7 +9,12 @@ import (
 	"github.com/sensu/sensu-go/token"
 	"github.com/sensu/sensu-go/types/dynamic"
 	"github.com/sirupsen/logrus"
+	bolt "go.etcd.io/bbolt"
 )
+
+type BoltDBGetter interface {
+	GetDB() *bolt.DB
+}
 
 // NewFilteredManager returns an asset Getter that filters assets based on the
 // given entity. Assets that aren't filtered get passed to the underlying
@@ -121,4 +126,12 @@ func (f *filteredManager) isFiltered(asset *corev2.Asset) (bool, error) {
 	}
 
 	return true, nil
+}
+
+func (f *filteredManager) GetBoltDB() *bolt.DB {
+	getter, ok := f.getter.(BoltDBGetter)
+	if !ok {
+		return nil
+	}
+	return getter.GetDB()
 }

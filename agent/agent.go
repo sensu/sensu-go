@@ -24,6 +24,7 @@ import (
 	time "github.com/echlebek/timeproxy"
 	"github.com/gogo/protobuf/proto"
 	"github.com/google/uuid"
+	"github.com/gorilla/mux"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"go.uber.org/multierr"
@@ -171,6 +172,7 @@ func (BasePlugin) IsFatal() bool                                      { return f
 type Agent struct {
 	allowList          []allowList
 	api                *http.Server
+	apiRouter          *mux.Router
 	assetGetter        asset.Getter
 	plugins            []Plugin
 	backendSelector    BackendSelector
@@ -772,7 +774,9 @@ func (a *Agent) Connected() bool {
 // HTTP server encounters a fatal error, it will shutdown the rest of the agent.
 func (a *Agent) StartAPI(ctx context.Context) {
 	// Prepare the HTTP API server
-	a.api = newServer(a)
+	apiServer, apiRouter := newServer(a)
+	a.api = apiServer
+	a.apiRouter = apiRouter
 
 	// Allow Stop() to block until the HTTP server shuts down.
 	a.wg.Add(2)
@@ -890,6 +894,14 @@ func (a *Agent) connectWithBackoff(ctx context.Context) (transport.Transport, er
 	})
 
 	return conn, err
+}
+
+func (a *Agent) GetAssetGetter() asset.Getter {
+	return a.assetGetter
+}
+
+func (a *Agent) GetAPIRouter() *mux.Router {
+	return a.apiRouter
 }
 
 // GracefulShutdown listens for the SIGINT & SIGTERM signals and cancel the
