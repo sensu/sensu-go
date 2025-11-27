@@ -57,6 +57,21 @@ func init() {
 	}
 }
 
+func GetBoltDBConnection(cacheDir string) (*bolt.DB, error) {
+	// create agent cache directory if it doesn't already exist
+	if err := os.MkdirAll(cacheDir, 0755); err != nil {
+		return nil, err
+	}
+
+	logger.WithField("cache", cacheDir).Debug("initializing cache directory")
+	db, err := bolt.Open(filepath.Join(cacheDir, dbName), 0600, &bolt.Options{Timeout: 60 * time.Second})
+	if err != nil {
+		return nil, err
+	}
+	logger.WithField("cache", cacheDir).Debug("done initializing cache directory")
+	return db, nil
+}
+
 // NewBoltDBGetter returns a new default asset Getter. If fetcher, verifier, or
 // expander are nil, the getter will use the built-in components.
 func NewBoltDBGetter(db *bolt.DB,

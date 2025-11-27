@@ -41,6 +41,7 @@ import (
 	"github.com/sensu/sensu-go/util/retry"
 	utilstrings "github.com/sensu/sensu-go/util/strings"
 	"github.com/sirupsen/logrus"
+	bolt "go.etcd.io/bbolt"
 )
 
 const (
@@ -173,6 +174,7 @@ type Agent struct {
 	allowList          []allowList
 	api                *http.Server
 	apiRouter          *mux.Router
+	dbConn             *bolt.DB
 	assetGetter        asset.Getter
 	plugins            []Plugin
 	backendSelector    BackendSelector
@@ -242,6 +244,11 @@ func NewAgentContext(ctx context.Context, config *Config) (*Agent, error) {
 		sequences:        make(map[string]int64),
 		maxSessionLength: config.MaxSessionLength,
 	}
+
+	// Prepare the HTTP API server
+	apiServer, apiRouter := newServer(agent)
+	agent.api = apiServer
+	agent.apiRouter = apiRouter
 
 	agent.statsdServer = NewStatsdServer(agent)
 	agent.handler.AddHandler(transport.MessageTypeEntityConfig, agent.handleEntityConfig)
@@ -446,13 +453,18 @@ func (a *Agent) Run(ctx context.Context) error {
 		if a.config.TLS != nil {
 			trustedCAFile = a.config.TLS.TrustedCAFile
 		}
+		var err error
+		db, err := asset.GetBoltDBConnection(a.config.CacheDir)
+		if err != nil {
+			return err
+		}
 		assetManager := asset.NewManager(a.config.CacheDir, trustedCAFile, a.getAgentEntity(), &a.wg)
 		limit := a.config.AssetsRateLimit
 		if limit == 0 {
 			limit = rate.Limit(asset.DefaultAssetsRateLimit)
 		}
-		var err error
-		a.assetGetter, err = assetManager.StartAssetManager(ctx, rate.NewLimiter(limit, a.config.AssetsBurstLimit))
+
+		a.assetGetter, err = assetManager.StartAssetManager(ctx, db, rate.NewLimiter(limit, a.config.AssetsBurstLimit))
 		if err != nil {
 			return err
 		}
@@ -773,11 +785,6 @@ func (a *Agent) Connected() bool {
 // StartAPI starts the Agent HTTP API. After attempting to start the API, if the
 // HTTP server encounters a fatal error, it will shutdown the rest of the agent.
 func (a *Agent) StartAPI(ctx context.Context) {
-	// Prepare the HTTP API server
-	apiServer, apiRouter := newServer(a)
-	a.api = apiServer
-	a.apiRouter = apiRouter
-
 	// Allow Stop() to block until the HTTP server shuts down.
 	a.wg.Add(2)
 
@@ -896,8 +903,8 @@ func (a *Agent) connectWithBackoff(ctx context.Context) (transport.Transport, er
 	return conn, err
 }
 
-func (a *Agent) GetAssetGetter() asset.Getter {
-	return a.assetGetter
+func (a *Agent) GetDB() *bolt.DB {
+	return a.dbConn
 }
 
 func (a *Agent) GetAPIRouter() *mux.Router {
