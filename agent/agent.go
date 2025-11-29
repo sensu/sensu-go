@@ -249,6 +249,12 @@ func NewAgentContext(ctx context.Context, config *Config) (*Agent, error) {
 	apiServer, apiRouter := newServer(agent)
 	agent.api = apiServer
 	agent.apiRouter = apiRouter
+	// Prepare the BoltDB before Run
+	db, dbErr := asset.GetBoltDBConnection(agent.config.CacheDir)
+	if dbErr != nil {
+		return nil, dbErr
+	}
+	agent.dbConn = db
 
 	agent.statsdServer = NewStatsdServer(agent)
 	agent.handler.AddHandler(transport.MessageTypeEntityConfig, agent.handleEntityConfig)
@@ -454,17 +460,13 @@ func (a *Agent) Run(ctx context.Context) error {
 			trustedCAFile = a.config.TLS.TrustedCAFile
 		}
 		var err error
-		db, err := asset.GetBoltDBConnection(a.config.CacheDir)
-		if err != nil {
-			return err
-		}
 		assetManager := asset.NewManager(a.config.CacheDir, trustedCAFile, a.getAgentEntity(), &a.wg)
 		limit := a.config.AssetsRateLimit
 		if limit == 0 {
 			limit = rate.Limit(asset.DefaultAssetsRateLimit)
 		}
 
-		a.assetGetter, err = assetManager.StartAssetManager(ctx, db, rate.NewLimiter(limit, a.config.AssetsBurstLimit))
+		a.assetGetter, err = assetManager.StartAssetManager(ctx, a.dbConn, rate.NewLimiter(limit, a.config.AssetsBurstLimit))
 		if err != nil {
 			return err
 		}
@@ -903,10 +905,20 @@ func (a *Agent) connectWithBackoff(ctx context.Context) (transport.Transport, er
 	return conn, err
 }
 
+// GetDB returns the underlying BoltDB connection used by the agent.
+//
+// The returned pointer must not be closed or replaced by callers.
+// It is intended for read and write operations performed by plugins
+// or internal agent components.
 func (a *Agent) GetDB() *bolt.DB {
 	return a.dbConn
 }
 
+// GetAPIRouter returns the HTTP router used by the agent for registering
+// API endpoints.
+//
+// Plugins or internal agent components may use this router to mount their
+// own routes, handlers, or middleware. Callers should not replace the router instance.
 func (a *Agent) GetAPIRouter() *mux.Router {
 	return a.apiRouter
 }

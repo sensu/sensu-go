@@ -299,8 +299,8 @@ func (b *boltDBAssetManager) GetDB() *bolt.DB {
 	return b.db
 }
 
-// FindUnusedAssets scans the database for assets older than cutoffTime
-func FindUnusedAssets(db *bolt.DB, cutoffTime int64) ([]RuntimeAsset, error) {
+// FindUnusedAssets scans the database for assets older than lastAccessedTimestamp
+func FindUnusedAssets(db *bolt.DB, lastAccessedTimestamp int64) ([]RuntimeAsset, error) {
 	var unusedAssets []RuntimeAsset
 
 	err := db.View(func(tx *bolt.Tx) error {
@@ -321,7 +321,7 @@ func FindUnusedAssets(db *bolt.DB, cutoffTime int64) ([]RuntimeAsset, error) {
 			}
 
 			// Check if asset is expired
-			if runtimeAsset.LastAccessed != 0 && runtimeAsset.LastAccessed < cutoffTime {
+			if runtimeAsset.LastAccessed != 0 && runtimeAsset.LastAccessed < lastAccessedTimestamp {
 				unusedAssets = append(unusedAssets, runtimeAsset)
 			}
 
