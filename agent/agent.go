@@ -403,10 +403,10 @@ func (a *Agent) Run(ctx context.Context) error {
 	for _, p := range a.plugins {
 		if err := p.BeforeAgentRun(ctx, a); err != nil {
 			bErr := fmt.Errorf("plugin %s BeforeRun: %w", p.Name(), err)
-			if p.IsFatal() {
-				return bErr
-			}
 			beforeErrs = multierr.Append(beforeErrs, bErr)
+			if p.IsFatal() {
+				return beforeErrs
+			}
 		}
 	}
 	if beforeErrs != nil {
@@ -459,13 +459,12 @@ func (a *Agent) Run(ctx context.Context) error {
 		if a.config.TLS != nil {
 			trustedCAFile = a.config.TLS.TrustedCAFile
 		}
-		var err error
 		assetManager := asset.NewManager(a.config.CacheDir, trustedCAFile, a.getAgentEntity(), &a.wg)
 		limit := a.config.AssetsRateLimit
 		if limit == 0 {
 			limit = rate.Limit(asset.DefaultAssetsRateLimit)
 		}
-
+		var err error
 		a.assetGetter, err = assetManager.StartAssetManager(ctx, a.dbConn, rate.NewLimiter(limit, a.config.AssetsBurstLimit))
 		if err != nil {
 			return err
@@ -501,10 +500,10 @@ func (a *Agent) Run(ctx context.Context) error {
 	for i := len(a.plugins) - 1; i >= 0; i-- {
 		if err := a.plugins[i].AfterAgentRun(ctx, a); err != nil {
 			aErr := fmt.Errorf("plugin %s AfterRun: %w", a.plugins[i].Name(), err)
-			if a.plugins[i].IsFatal() {
-				return aErr
-			}
 			afterErrs = multierr.Append(afterErrs, aErr)
+			if a.plugins[i].IsFatal() {
+				return afterErrs
+			}
 		}
 	}
 	if afterErrs != nil {

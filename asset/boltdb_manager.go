@@ -295,10 +295,6 @@ func (b *boltDBAssetManager) updateLastAccessed(key []byte, runtimeAsset *Runtim
 	})
 }
 
-func (b *boltDBAssetManager) GetDB() *bolt.DB {
-	return b.db
-}
-
 // FindUnusedAssets scans the database for assets older than lastAccessedTimestamp
 func FindUnusedAssets(db *bolt.DB, lastAccessedTimestamp int64) ([]RuntimeAsset, error) {
 	var unusedAssets []RuntimeAsset
