@@ -1580,6 +1580,8 @@ github.com/sensu/core/v2 v2.20.1-0.20251104042553-0603aa304a04 h1:pfmJDcFVu/cIlw
 github.com/sensu/core/v2 v2.20.1-0.20251104042553-0603aa304a04/go.mod h1:AjLvqZm/fv1hhWPJLrOZiwLvmWURrKwfevEZ/sAZgkE=
 github.com/sensu/core/v3 v3.9.0 h1:7wz4ILGwPbHHTT/8sKTtflBAgOuJgTaKhUlN4lyUdSY=
 github.com/sensu/core/v3 v3.9.0/go.mod h1:AuupbIzmjYdzEkaEdmpzP/ZgrqQgHTovXVejzyTN6u4=
+github.com/sensu/core/v3 v3.9.1-0.20251104042553-0603aa304a04 h1:uwUSN9kh+uhdrAgO+AIbnuuII6DL1AkTTsPpYG+TebI=
+github.com/sensu/core/v3 v3.9.1-0.20251104042553-0603aa304a04/go.mod h1:KWdeuxHsPczT5KF+/fLxDLsVwENnfDr6yx7DE3AQt4E=
 github.com/sensu/lasr v1.2.1 h1:4H1QfOrPkwYHMFE5qAI6GwKEFkcI1YRyjjWidz1MihQ=
 github.com/sensu/lasr v1.2.1/go.mod h1:VIMtIK67Bcef6dTfctRCBg8EY9M9TtCY9NEFT6Zw5xQ=
 github.com/sensu/sensu-api-tools v0.0.0-20221025205055-db03ae2f8099/go.mod h1:SNISS4OhwNSZI9/YKTQr1bghOEwed9ZT4v+ztKk1Mq0=
