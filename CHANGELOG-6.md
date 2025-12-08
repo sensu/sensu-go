@@ -9,8 +9,21 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 ## [Unreleased]
 
 ### Added
+- Added asset lifecycle management with `last-accessed` timestamp tracking to enable intelligent cleanup of unused assets based on usage patterns.
+- Added plugin-based hook system for agent extensions with `BeforeAgentRun` and `AfterAgentRun` lifecycle hooks, supporting priority-based execution ordering and configurable error handling.
+- Added `assets-cleanup-interval` and `assets-cleanup-max-age` configuration options for controlling periodic asset cleanup behavior.
+- Added `FindUnusedAssets()` and `DeleteAsset()` functions for programmatic asset cleanup operations.
+- Added `GetAPIRouter()` and `GetDB()` methods to agent for plugin access to HTTP router and database connection.
 - Added `ttl_status` field to `Check` and `CheckConfig` to configure the status (warning or critical) for TTL failure events. This field accepts values 1 (warning) or 2 (critical), with warning (1) as the default to maintain backward compatibility.
 - Added Prometheus metrics collection for HTTP API requests, including request count (`sensu_go_http_requests_total`), request duration (`sensu_go_http_request_duration_seconds`), and client error count (`sensu_go_http_client_errors_total`) for better observability of backend API performance.
+
+### Changed
+- Improved asset error handling with new `AgentAssetError` interface providing structured error reporting with exit codes and detailed messages.
+- Enhanced asset manager architecture by restructuring initialization to support pre-initialized database connections and better enterprise integration.
+- Improved command execution timeout error handling for more reliable test execution.
+
+### Fixed
+- Fixed asset retrieval error aggregation to continue processing remaining assets when individual assets fail, using `multierr` for comprehensive error reporting.
 
 ## [6.13.1] - 2025-05-28
 
