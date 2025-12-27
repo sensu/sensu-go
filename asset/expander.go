@@ -3,9 +3,8 @@ package asset
 import (
 	"errors"
 	"fmt"
-	"io"
-
 	archiver "github.com/mholt/archiver/v3"
+	"io"
 
 	filetype "gopkg.in/h2non/filetype.v1"
 	filetype_types "gopkg.in/h2non/filetype.v1/types"

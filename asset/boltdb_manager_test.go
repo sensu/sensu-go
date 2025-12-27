@@ -7,6 +7,7 @@ import (
 	"io"
 	"io/ioutil"
 	"os"
+	"path/filepath"
 	"testing"
 
 	bolt "go.etcd.io/bbolt"
@@ -222,8 +223,8 @@ func TestFailedExpand(t *testing.T) {
 
 func TestSuccessfulGetAsset(t *testing.T) {
 	t.Parallel()
-
-	tmpFile, err := ioutil.TempFile(os.TempDir(), "asset_test_get_invalid_asset.db")
+	tmpDir := os.TempDir()
+	tmpFile, err := ioutil.TempFile(tmpDir, "asset_test_get_invalid_asset.db")
 	if err != nil {
 		t.Fatalf("unable to create test boltdb file: %v", err)
 	}
@@ -250,6 +251,21 @@ func TestSuccessfulGetAsset(t *testing.T) {
 		},
 		Sha512: "sha",
 		URL:    "path",
+	}
+
+	tempAssetFile, err := os.CreateTemp(tmpDir, "asset.db")
+	if err != nil {
+		t.Logf("error creating the asset file as %v", err)
+	}
+	fi, _ := tempAssetFile.Stat()
+	if fi.Size() == 0 {
+		t.Log("asset.db got created corruptly")
+		err = os.RemoveAll(filepath.Join(tmpDir, a.Sha512))
+		if err != nil {
+			t.Logf("issue in deleting the assetSHA due to %v", err)
+		} else {
+			t.Log("assetSHA got deleted successfully and now asset will be properly downloaded.")
+		}
 	}
 
 	runtimeAsset, err := manager.Get(context.TODO(), a)
