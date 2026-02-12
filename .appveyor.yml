@@ -16,7 +16,7 @@ cache:
 environment:
   GOPATH: c:\gopath
   GOROOT: c:\Program Files\Go
-  GOVERSION: 1.21.11
+  GOVERSION: 1.24.0
   GO111MODULE: 'on'
   GOPROXY: 'https://proxy.golang.org'
 
@@ -28,7 +28,7 @@ environment:
 
 install:
   - rmdir c:\go /s /q
-  - appveyor DownloadFile https://storage.googleapis.com/golang/go%GOVERSION%.windows-%GOARCH%.msi
+  - appveyor DownloadFile https://go.dev/dl/go%GOVERSION%.windows-%GOARCH%.msi
   - msiexec /i go%GOVERSION%.windows-%GOARCH%.msi /q
   - echo %PATH%
   - echo %GOPATH%

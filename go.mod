@@ -1,9 +1,8 @@
 module github.com/sensu/sensu-go
 
-go 1.22
+go 1.24
 
-toolchain go1.23.4
-
+toolchain go1.24.0
 
 require (
 	github.com/AlecAivazis/survey/v2 v2.2.14
