@@ -12,6 +12,15 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 - Added `ttl_status` field to `Check` and `CheckConfig` to configure the status (warning or critical) for TTL failure events. This field accepts values 1 (warning) or 2 (critical), with warning (1) as the default to maintain backward compatibility.
 - Added Prometheus metrics collection for HTTP API requests, including request count (`sensu_go_http_requests_total`), request duration (`sensu_go_http_request_duration_seconds`), and client error count (`sensu_go_http_client_errors_total`) for better observability of backend API performance.
 
+### Changed
+- Upgraded Go version to 1.24.3 across all CI/CD pipelines
+- Updated CircleCI, AppVeyor, and GitHub Actions to use Go 1.24.x
+- Updated minimum Go requirement in README from 1.16 to 1.24
+
+### Fixed
+- Resolved Go 1.24 compatibility issues in agent version and event tests
+- Fixed non-constant format string error in pipeline filter legacy code
+
 ## [6.13.1] - 2025-05-28
 
 ### Fixed
