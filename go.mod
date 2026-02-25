@@ -1,8 +1,6 @@
 module github.com/sensu/sensu-go
 
-go 1.24
-
-toolchain go1.24.3
+go 1.24.3
 
 require (
 	github.com/AlecAivazis/survey/v2 v2.2.14
@@ -84,8 +82,8 @@ require (
 	github.com/jonboulle/clockwork v0.4.0 // indirect
 	github.com/kr/pty v1.1.8 // indirect
 	github.com/prometheus/procfs v0.12.0 // indirect
-	github.com/sensu/core/v2 v2.20.1-0.20251104042553-0603aa304a04
-	github.com/sensu/core/v3 v3.9.0
+	github.com/sensu/core/v2 v2.20.1-0.20260218081315-fa5027d35631
+	github.com/sensu/core/v3 v3.9.1-0.20260218081315-fa5027d35631
 	github.com/sensu/sensu-api-tools v0.2.1
 	github.com/sensu/sensu-go/types v0.13.0
 	github.com/tmc/grpc-websocket-proxy v0.0.0-20220101234140-673ab2c3ae75 // indirect
