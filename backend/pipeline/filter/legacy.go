@@ -3,7 +3,6 @@ package filter
 import (
 	"context"
 	"errors"
-	"fmt"
 	"time"
 
 	"github.com/robertkrimen/otto"
@@ -82,7 +81,7 @@ func (l *LegacyAdapter) Filter(ctx context.Context, ref *corev2.ResourceReferenc
 	}
 	if filter == nil {
 		logger.WithFields(fields).WithError(err).Warning(errCouldNotRetrieveFilter.Error())
-		return false, fmt.Errorf(errCouldNotRetrieveFilter.Error())
+		return false, errCouldNotRetrieveFilter
 	}
 
 	// Execute the filter, evaluating each of its
