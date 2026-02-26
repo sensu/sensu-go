@@ -1575,12 +1575,13 @@ github.com/ruudk/golang-pdf417 v0.0.0-20201230142125-a7e3863a1245/go.mod h1:pQAZ
 github.com/ryanuber/columnize v0.0.0-20160712163229-9b3edd62028f/go.mod h1:sm1tb6uqfes/u+d4ooFouqFdy9/2g9QGwK3SQygK0Ts=
 github.com/schollz/progressbar/v2 v2.13.2/go.mod h1:6YZjqdthH6SCZKv2rqGryrxPtfmRB/DWZxSMfCXPyD8=
 github.com/sean-/seed v0.0.0-20170313163322-e2103e2c3529/go.mod h1:DxrIzT+xaE7yg65j358z/aeFdxmN0P9QXhEzd20vsDc=
-github.com/sensu/core/v2 v2.20.0 h1:QJQbqZiXSQ2dUE8LUvwUcKaqxHjYYCQwJ1Mil0cap4U=
 github.com/sensu/core/v2 v2.20.0/go.mod h1:fzr3qioLAHyLsBfq9I6ELVjL01NUNjqmQx4kj2tbDLo=
 github.com/sensu/core/v2 v2.20.1-0.20251104042553-0603aa304a04 h1:pfmJDcFVu/cIlwEim5wExlLQuhCt0it4W8RCDNraWQg=
 github.com/sensu/core/v2 v2.20.1-0.20251104042553-0603aa304a04/go.mod h1:AjLvqZm/fv1hhWPJLrOZiwLvmWURrKwfevEZ/sAZgkE=
 github.com/sensu/core/v3 v3.9.0 h1:7wz4ILGwPbHHTT/8sKTtflBAgOuJgTaKhUlN4lyUdSY=
 github.com/sensu/core/v3 v3.9.0/go.mod h1:AuupbIzmjYdzEkaEdmpzP/ZgrqQgHTovXVejzyTN6u4=
+github.com/sensu/core/v3 v3.9.1-0.20251104042553-0603aa304a04 h1:uwUSN9kh+uhdrAgO+AIbnuuII6DL1AkTTsPpYG+TebI=
+github.com/sensu/core/v3 v3.9.1-0.20251104042553-0603aa304a04/go.mod h1:KWdeuxHsPczT5KF+/fLxDLsVwENnfDr6yx7DE3AQt4E=
 github.com/sensu/lasr v1.2.1 h1:4H1QfOrPkwYHMFE5qAI6GwKEFkcI1YRyjjWidz1MihQ=
 github.com/sensu/lasr v1.2.1/go.mod h1:VIMtIK67Bcef6dTfctRCBg8EY9M9TtCY9NEFT6Zw5xQ=
 github.com/sensu/sensu-api-tools v0.0.0-20221025205055-db03ae2f8099/go.mod h1:SNISS4OhwNSZI9/YKTQr1bghOEwed9ZT4v+ztKk1Mq0=
