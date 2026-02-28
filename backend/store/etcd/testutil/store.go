@@ -1,13 +1,12 @@
 package testutil
 
 import (
-	"io/ioutil"
 	"os"
 
 	"github.com/sensu/sensu-go/backend/etcd"
 	"github.com/sensu/sensu-go/backend/store"
 	etcdstore "github.com/sensu/sensu-go/backend/store/etcd"
-	"go.etcd.io/etcd/client/v3"
+	clientv3 "go.etcd.io/etcd/client/v3"
 )
 
 // IntegrationTestStore wrapper for etcd & store
@@ -33,7 +32,7 @@ func (e *IntegrationTestStore) GetStore() store.Store {
 // NewStoreInstance returns new isolated store
 func NewStoreInstance() (*IntegrationTestStore, error) {
 	// Create temp dir
-	tmpDir, err := ioutil.TempDir(os.TempDir(), "sensu")
+	tmpDir, err := os.MkdirTemp(os.TempDir(), "sensu")
 	if err != nil {
 		return nil, err
 	}
@@ -72,13 +71,12 @@ func NewStoreInstance() (*IntegrationTestStore, error) {
 // RunWithStore starts new isolated etcd store, defers teardown and then runs
 // given closure with store.
 //
-//  Ex.
+//	Ex.
 //
-//    RunWithStore(func (store store.Store) {
-//      err := store.CreateCheck(...)
-//      assert.NoError(err)
-//    })
-//
+//	  RunWithStore(func (store store.Store) {
+//	    err := store.CreateCheck(...)
+//	    assert.NoError(err)
+//	  })
 func RunWithStore(fn func(store.Store)) error {
 	store, err := NewStoreInstance()
 	if err != nil {

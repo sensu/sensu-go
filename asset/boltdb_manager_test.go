@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"errors"
 	"io"
-	"io/ioutil"
 	"os"
 	"testing"
 
@@ -20,7 +19,7 @@ type mockFetcher struct {
 
 func (m *mockFetcher) Fetch(context.Context, string, map[string]string) (*os.File, error) {
 	if m.pass {
-		return ioutil.TempFile(os.TempDir(), "boltdb_manager_test_fetcher")
+		return os.CreateTemp(os.TempDir(), "boltdb_manager_test_fetcher")
 	}
 
 	return nil, errors.New("")
@@ -52,7 +51,7 @@ func (m *mockExpander) Expand(f io.ReadSeeker, path string) error {
 func TestGetExistingAsset(t *testing.T) {
 	t.Parallel()
 
-	tmpFile, err := ioutil.TempFile(os.TempDir(), "asset_test_get_existing_asset.db")
+	tmpFile, err := os.CreateTemp(os.TempDir(), "asset_test_get_existing_asset.db")
 	if err != nil {
 		t.Fatalf("unable to create test boltdb file: %v", err)
 	}
@@ -109,7 +108,7 @@ func TestGetExistingAsset(t *testing.T) {
 func TestGetNonexistentAsset(t *testing.T) {
 	t.Parallel()
 
-	tmpFile, err := ioutil.TempFile(os.TempDir(), "asset_test_get_nonexistent_asset.db")
+	tmpFile, err := os.CreateTemp(os.TempDir(), "asset_test_get_nonexistent_asset.db")
 	if err != nil {
 		t.Fatalf("unable to create test boltdb file: %v", err)
 	}
@@ -146,7 +145,7 @@ func TestGetNonexistentAsset(t *testing.T) {
 func TestGetInvalidAsset(t *testing.T) {
 	t.Parallel()
 
-	tmpFile, err := ioutil.TempFile(os.TempDir(), "asset_test_get_invalid_asset.db")
+	tmpFile, err := os.CreateTemp(os.TempDir(), "asset_test_get_invalid_asset.db")
 	if err != nil {
 		t.Fatalf("unable to create test boltdb file: %v", err)
 	}
@@ -184,7 +183,7 @@ func TestGetInvalidAsset(t *testing.T) {
 func TestFailedExpand(t *testing.T) {
 	t.Parallel()
 
-	tmpFile, err := ioutil.TempFile(os.TempDir(), "asset_test_get_invalid_asset.db")
+	tmpFile, err := os.CreateTemp(os.TempDir(), "asset_test_get_invalid_asset.db")
 	if err != nil {
 		t.Fatalf("unable to create test boltdb file: %v", err)
 	}
@@ -223,7 +222,7 @@ func TestFailedExpand(t *testing.T) {
 func TestSuccessfulGetAsset(t *testing.T) {
 	t.Parallel()
 
-	tmpFile, err := ioutil.TempFile(os.TempDir(), "asset_test_get_invalid_asset.db")
+	tmpFile, err := os.CreateTemp(os.TempDir(), "asset_test_get_invalid_asset.db")
 	if err != nil {
 		t.Fatalf("unable to create test boltdb file: %v", err)
 	}

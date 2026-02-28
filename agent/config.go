@@ -1,7 +1,6 @@
 package agent
 
 import (
-	"io/ioutil"
 	"os"
 	"time"
 
@@ -250,7 +249,7 @@ type SocketConfig struct {
 // FixtureConfig provides a new Config object initialized with defaults for use
 // in tests, as well as a cleanup function to call at the end of the test.
 func FixtureConfig() (*Config, func()) {
-	cacheDir, err := ioutil.TempDir("", "")
+	cacheDir, err := os.MkdirTemp("", "")
 	if err != nil {
 		panic(err)
 	}

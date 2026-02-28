@@ -1,7 +1,6 @@
 package helpers
 
 import (
-	"io/ioutil"
 	"os"
 	"testing"
 
@@ -14,7 +13,7 @@ func TestDeletePrompt(t *testing.T) {
 
 	// Create temporary files for stdin, stdout & stderr to make it easier to
 	// interact with io.
-	stdin, err := ioutil.TempFile(os.TempDir(), "sensu-cli-")
+	stdin, err := os.CreateTemp(os.TempDir(), "sensu-cli-")
 	if err != nil {
 		t.Fatal("Error creating stdin file: ", stdin.Name())
 	}
@@ -22,7 +21,7 @@ func TestDeletePrompt(t *testing.T) {
 		_ = os.Remove(stdin.Name())
 	}()
 
-	stdout, err := ioutil.TempFile(os.TempDir(), "sensu-cli-")
+	stdout, err := os.CreateTemp(os.TempDir(), "sensu-cli-")
 	if err != nil {
 		t.Fatal("Error creating stdout file: ", stdout.Name())
 	}
@@ -30,7 +29,7 @@ func TestDeletePrompt(t *testing.T) {
 		_ = os.Remove(stdout.Name())
 	}()
 
-	stderr, err := ioutil.TempFile(os.TempDir(), "sensu-cli-")
+	stderr, err := os.CreateTemp(os.TempDir(), "sensu-cli-")
 	if err != nil {
 		t.Fatal("Error creating stderr file: ", stderr.Name())
 	}

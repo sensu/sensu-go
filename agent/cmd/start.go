@@ -3,7 +3,7 @@ package cmd
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"os"
 	"path/filepath"
 	"strings"
@@ -468,7 +468,7 @@ func flagSet() *pflag.FlagSet {
 	flagSet.Duration(flagMaxSessionLength, viper.GetDuration(flagMaxSessionLength), "maximum amount of time after which the agent will reconnect to one of the configured backends (no maximum by default)")
 	flagSet.Bool(flagStripNetworks, viper.GetBool(flagStripNetworks), "do not include Network info in agent entity state")
 
-	flagSet.SetOutput(ioutil.Discard)
+	flagSet.SetOutput(io.Discard)
 
 	return flagSet
 }

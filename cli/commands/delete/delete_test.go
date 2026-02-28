@@ -2,7 +2,6 @@ package delete
 
 import (
 	"encoding/json"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"testing"
@@ -55,7 +54,7 @@ func TestDeleteCommand(t *testing.T) {
 	client.On("Delete", mock.Anything).Return(nil)
 
 	cmd := DeleteCommand(cli)
-	td, err := ioutil.TempDir("", "")
+	td, err := os.MkdirTemp("", "")
 	require.NoError(t, err)
 	defer os.RemoveAll(td)
 

@@ -9,7 +9,7 @@ package etcd
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"os"
 	"path/filepath"
 	"time"
@@ -63,7 +63,7 @@ const (
 )
 
 func init() {
-	grpclog.SetLoggerV2(grpclog.NewLoggerV2(ioutil.Discard, ioutil.Discard, ioutil.Discard))
+	grpclog.SetLoggerV2(grpclog.NewLoggerV2(io.Discard, io.Discard, io.Discard))
 
 	logutil.DefaultZapLoggerConfig.Encoding = "sensu-json"
 	logutil.DefaultZapLoggerConfig.EncoderConfig.TimeKey = "time"

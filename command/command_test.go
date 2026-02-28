@@ -4,7 +4,7 @@ package command
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"os"
 	"strings"
 	"testing"
@@ -21,7 +21,7 @@ func TestHelperProcess(t *testing.T) {
 
 	command := strings.Join(os.Args[3:], " ")
 
-	stdin, _ := ioutil.ReadAll(os.Stdin)
+	stdin, _ := io.ReadAll(os.Stdin)
 
 	hasArgs := len(os.Args) > 4
 	argStr := ""

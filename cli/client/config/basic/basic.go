@@ -2,7 +2,6 @@ package basic
 
 import (
 	"encoding/json"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"time"
@@ -126,7 +125,7 @@ func (c *Config) flags(v *viper.Viper) {
 }
 
 func (c *Config) open(path string) error {
-	content, err := ioutil.ReadFile(filepath.Join(c.path, path))
+	content, err := os.ReadFile(filepath.Join(c.path, path))
 	if err != nil {
 		return err
 	}

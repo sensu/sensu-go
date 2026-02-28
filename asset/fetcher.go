@@ -7,7 +7,6 @@ import (
 	"crypto/x509"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"os"
 	"strings"
@@ -47,7 +46,7 @@ func httpGet(ctx context.Context, path, trustedCAFile string, headers map[string
 			rootCAs = x509.NewCertPool()
 		}
 
-		certs, err := ioutil.ReadFile(trustedCAFile)
+		certs, err := os.ReadFile(trustedCAFile)
 		if err != nil {
 			logger.WithError(err).Errorf("failed to read trusted CA file: %s", trustedCAFile)
 		}
@@ -119,7 +118,7 @@ func (h *httpFetcher) Fetch(ctx context.Context, url string, headers map[string]
 	defer resp.Close()
 
 	// Write response to tmp
-	tmpFile, err := ioutil.TempFile(os.TempDir(), "sensu-asset")
+	tmpFile, err := os.CreateTemp(os.TempDir(), "sensu-asset")
 	if err != nil {
 		return nil, fmt.Errorf("can't open tmp file for asset: %s", err)
 	}

@@ -6,7 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -242,7 +242,7 @@ func TestReplaceHealthController(t *testing.T) {
 	assert.Equal(t, 200, res.StatusCode)
 
 	assert.NotNil(t, res.Body)
-	body, err := ioutil.ReadAll(res.Body)
+	body, err := io.ReadAll(res.Body)
 	assert.NoError(t, err)
 
 	receivedHealth := &corev2.HealthResponse{}

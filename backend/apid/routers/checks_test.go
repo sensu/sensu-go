@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -156,7 +156,7 @@ func TestChecksRouterCustomRoutes(t *testing.T) {
 			// Inspect the response code
 			if res.StatusCode != tt.wantStatusCode {
 				t.Errorf("ChecksRouter StatusCode = %v, wantStatusCode %v", res.StatusCode, tt.wantStatusCode)
-				body, _ := ioutil.ReadAll(res.Body)
+				body, _ := io.ReadAll(res.Body)
 				t.Errorf("error message: %q", string(body))
 				return
 			}

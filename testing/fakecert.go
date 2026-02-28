@@ -2,7 +2,6 @@ package testing
 
 import (
 	"io"
-	"io/ioutil"
 	"os"
 	"strings"
 	"testing"
@@ -138,7 +137,7 @@ r3SYMVxpjisC8IFQCqaRSfWoNFkMYbY=
 
 func tempData(t testing.TB, data string) (string, func()) {
 	t.Helper()
-	tf, err := ioutil.TempFile("", "")
+	tf, err := os.CreateTemp("", "")
 	if err != nil {
 		t.Fatal(err)
 	}

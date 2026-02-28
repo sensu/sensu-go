@@ -1,7 +1,6 @@
 package logging
 
 import (
-	"io/ioutil"
 	"log"
 	"os"
 	"syscall"
@@ -14,7 +13,7 @@ import (
 
 func TestRotateWriter(t *testing.T) {
 	// Create a temporary files that will be used as the event log file
-	file, err := ioutil.TempFile(os.TempDir(), "event.*.log")
+	file, err := os.CreateTemp(os.TempDir(), "event.*.log")
 	if err != nil {
 		log.Fatal(err)
 	}
