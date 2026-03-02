@@ -161,5 +161,3 @@ require (
 	gopkg.in/sourcemap.v1 v1.0.5 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
-
-replace github.com/sensu/websocket => github.com/sensu/websocket v0.0.0-20260302061022-18e9d787f1e7
