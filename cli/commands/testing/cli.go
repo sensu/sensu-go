@@ -1,7 +1,6 @@
 package testing
 
 import (
-	"io/ioutil"
 	"log"
 	"os"
 	"testing"
@@ -33,7 +32,7 @@ func WithMockCLI(tb testing.TB, fn func(cli *cli.SensuCli)) {
 
 	// Create temporary files for stdin, stdout & stderr to make it easier to
 	// interact with io.
-	stdin, err := ioutil.TempFile(os.TempDir(), "sensu-cli-")
+	stdin, err := os.CreateTemp(os.TempDir(), "sensu-cli-")
 	if err != nil {
 		tb.Fatal("Error creating stdin file: ", stdin.Name())
 	}
@@ -41,7 +40,7 @@ func WithMockCLI(tb testing.TB, fn func(cli *cli.SensuCli)) {
 		_ = os.Remove(stdin.Name())
 	}()
 
-	stdout, err := ioutil.TempFile(os.TempDir(), "sensu-cli-")
+	stdout, err := os.CreateTemp(os.TempDir(), "sensu-cli-")
 	if err != nil {
 		tb.Fatal("Error creating stdout file: ", stdout.Name())
 	}
@@ -49,7 +48,7 @@ func WithMockCLI(tb testing.TB, fn func(cli *cli.SensuCli)) {
 		_ = os.Remove(stdout.Name())
 	}()
 
-	stderr, err := ioutil.TempFile(os.TempDir(), "sensu-cli-")
+	stderr, err := os.CreateTemp(os.TempDir(), "sensu-cli-")
 	if err != nil {
 		tb.Fatal("Error creating stderr file: ", stderr.Name())
 	}
@@ -76,7 +75,7 @@ func NewMockCLI() *cli.SensuCli {
 
 	// Create temporary files for stdin, stdout & stderr to make it easier to
 	// interact with io.
-	stdin, err := ioutil.TempFile(os.TempDir(), "sensu-cli-")
+	stdin, err := os.CreateTemp(os.TempDir(), "sensu-cli-")
 	if err != nil {
 		log.Panic("Error creating stdin file: ", stdin.Name())
 	}
@@ -84,7 +83,7 @@ func NewMockCLI() *cli.SensuCli {
 		_ = os.Remove(stdin.Name())
 	}()
 
-	stdout, err := ioutil.TempFile(os.TempDir(), "sensu-cli-")
+	stdout, err := os.CreateTemp(os.TempDir(), "sensu-cli-")
 	if err != nil {
 		log.Panic("Error creating stdout file: ", stdout.Name())
 	}
@@ -92,7 +91,7 @@ func NewMockCLI() *cli.SensuCli {
 		_ = os.Remove(stdout.Name())
 	}()
 
-	stderr, err := ioutil.TempFile(os.TempDir(), "sensu-cli-")
+	stderr, err := os.CreateTemp(os.TempDir(), "sensu-cli-")
 	if err != nil {
 		log.Panic("Error creating stderr file: ", stderr.Name())
 	}
@@ -125,7 +124,7 @@ func SimpleSensuCLI(apiClient client.APIClient) *cli.SensuCli {
 func RunCmd(cmd *cobra.Command, args []string) (string, error) {
 	var err error
 
-	tmpFile, err := ioutil.TempFile(os.TempDir(), "sensu-cli-")
+	tmpFile, err := os.CreateTemp(os.TempDir(), "sensu-cli-")
 	if err != nil {
 		log.Panic("Error creating tmp file: ", tmpFile.Name())
 	}
@@ -152,7 +151,7 @@ func RunCmdWithOutFile(cmd *cobra.Command, args []string, outFile *os.File) (str
 	_ = outFile.Close()
 
 	// Store the contents of the reader as a string
-	bytes, _ := ioutil.ReadFile(outFile.Name())
+	bytes, _ := os.ReadFile(outFile.Name())
 
 	return string(bytes), err
 }

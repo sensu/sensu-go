@@ -1,7 +1,7 @@
 package etcdstore_test
 
 import (
-	"io/ioutil"
+	"io"
 	"testing"
 
 	corev2 "github.com/sensu/core/v2"
@@ -53,7 +53,7 @@ func init() {
 }
 
 func testWithEtcdStore(t testing.TB, f func(*etcdstorev2.Store)) {
-	logrus.SetOutput(ioutil.Discard)
+	logrus.SetOutput(io.Discard)
 	e, cleanup := etcd.NewTestEtcd(t)
 	defer cleanup()
 

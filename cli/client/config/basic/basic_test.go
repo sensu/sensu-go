@@ -2,7 +2,6 @@ package basic
 
 import (
 	"encoding/json"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"testing"
@@ -52,13 +51,13 @@ func TestLoad(t *testing.T) {
 	cluster := &Cluster{APIUrl: "localhost"}
 	clusterBytes, _ := json.Marshal(cluster)
 	clusterPath := filepath.Join(dir, clusterFilename)
-	_ = ioutil.WriteFile(clusterPath, clusterBytes, 0644)
+	_ = os.WriteFile(clusterPath, clusterBytes, 0644)
 
 	// Create a dummy profile file
 	profile := &Profile{Format: "json"}
 	profileBytes, _ := json.Marshal(profile)
 	profilePath := filepath.Join(dir, profileFilename)
-	_ = ioutil.WriteFile(profilePath, profileBytes, 0644)
+	_ = os.WriteFile(profilePath, profileBytes, 0644)
 
 	config := Load(flags, v)
 	assert.NotNil(t, config)
@@ -88,7 +87,7 @@ func TestOpen(t *testing.T) {
 	cluster := &Cluster{APIUrl: "localhost"}
 	clusterBytes, _ := json.Marshal(cluster)
 	clusterPath := filepath.Join(dir, clusterFilename)
-	_ = ioutil.WriteFile(clusterPath, clusterBytes, 0644)
+	_ = os.WriteFile(clusterPath, clusterBytes, 0644)
 
 	config := &Config{}
 	assert.NoError(t, config.open(clusterPath))

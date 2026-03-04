@@ -3,7 +3,7 @@ package mutator
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"os"
 	"reflect"
 	"strings"
@@ -23,7 +23,7 @@ func TestHelperMutatorProcess(t *testing.T) {
 	}
 
 	command := strings.Join(os.Args[3:], " ")
-	stdin, _ := ioutil.ReadAll(os.Stdin)
+	stdin, _ := io.ReadAll(os.Stdin)
 
 	switch command {
 	case "cat":

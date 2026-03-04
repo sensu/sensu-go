@@ -3,7 +3,7 @@ package cmd
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"log"
 	"net/http"
 	"os"
@@ -676,7 +676,7 @@ func flagSet(server bool) *pflag.FlagSet {
 		_ = flagSet.String(flagEventLogBufferWait, "10ms", "full buffer wait time")
 	}
 
-	flagSet.SetOutput(ioutil.Discard)
+	flagSet.SetOutput(io.Discard)
 
 	return flagSet
 }

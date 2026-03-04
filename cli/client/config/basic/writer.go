@@ -2,7 +2,6 @@ package basic
 
 import (
 	"encoding/json"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"time"
@@ -86,5 +85,5 @@ func write(data interface{}, path string) error {
 		return err
 	}
 
-	return ioutil.WriteFile(path, bytes, 0644)
+	return os.WriteFile(path, bytes, 0644)
 }

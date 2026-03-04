@@ -2,7 +2,7 @@ package routers
 
 import (
 	"context"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -43,7 +43,7 @@ func TestHealthSuccess(t *testing.T) {
 	}
 
 	if resp.StatusCode >= 400 {
-		body, _ := ioutil.ReadAll(resp.Body)
+		body, _ := io.ReadAll(resp.Body)
 		t.Fatalf("bad status: %d (%q)", resp.StatusCode, string(body))
 	}
 }
@@ -63,7 +63,7 @@ func TestHealthyCluster(t *testing.T) {
 	}
 
 	if resp.StatusCode >= 400 {
-		body, _ := ioutil.ReadAll(resp.Body)
+		body, _ := io.ReadAll(resp.Body)
 		t.Fatalf("bad status: %d (%q)", resp.StatusCode, string(body))
 	}
 }
@@ -83,7 +83,7 @@ func TestUnHealthyClusterStatus(t *testing.T) {
 	}
 
 	if resp.StatusCode >= 400 {
-		body, _ := ioutil.ReadAll(resp.Body)
+		body, _ := io.ReadAll(resp.Body)
 		t.Fatalf("bad status: %d (%q)", resp.StatusCode, string(body))
 	}
 

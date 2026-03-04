@@ -7,7 +7,7 @@ branches:
     - /release\/[0-9.]+/
 
 image:
-  - Visual Studio 2015
+  - Visual Studio 2022
   # - Visual Studio 2017
 
 cache:
@@ -16,7 +16,7 @@ cache:
 environment:
   GOPATH: c:\gopath
   GOROOT: c:\Program Files\Go
-  GOVERSION: 1.24.3
+  GOVERSION: 1.26.0
   GO111MODULE: 'on'
   GOPROXY: 'https://proxy.golang.org'
 

@@ -10,7 +10,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"math/rand"
 	"net/http"
 	"net/url"
@@ -273,7 +272,7 @@ func NewAgentContext(ctx context.Context, config *Config) (*Agent, error) {
 		return nil, fmt.Errorf("error creating agent: %s", err)
 	}
 
-	allowList, err := readAllowList(config.AllowList, ioutil.ReadFile)
+	allowList, err := readAllowList(config.AllowList, os.ReadFile)
 	if err != nil {
 		return nil, err
 	}

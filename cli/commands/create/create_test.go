@@ -3,7 +3,6 @@ package create
 import (
 	"bytes"
 	"encoding/json"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"testing"
@@ -88,7 +87,7 @@ func TestCreateCommand(t *testing.T) {
 	client.On("PutResource", mock.Anything).Return(nil)
 
 	cmd := CreateCommand(cli)
-	td, err := ioutil.TempDir("", "")
+	td, err := os.MkdirTemp("", "")
 	require.NoError(t, err)
 	defer os.RemoveAll(td)
 
@@ -118,7 +117,7 @@ func TestCreateCommandYAML(t *testing.T) {
 	client.On("PutResource", mock.Anything).Return(nil)
 
 	cmd := CreateCommand(cli)
-	td, err := ioutil.TempDir("", "")
+	td, err := os.MkdirTemp("", "")
 	require.NoError(t, err)
 	defer os.RemoveAll(td)
 
@@ -148,7 +147,7 @@ func TestCreateCommandStdin(t *testing.T) {
 	client.On("PutResource", mock.Anything).Return(nil)
 
 	cmd := CreateCommand(cli)
-	td, err := ioutil.TempDir("", "")
+	td, err := os.MkdirTemp("", "")
 	require.NoError(t, err)
 	defer os.RemoveAll(td)
 
