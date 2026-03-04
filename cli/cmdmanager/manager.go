@@ -113,7 +113,7 @@ func NewCommandManager(cli *cli.SensuCli) (*CommandManager, error) {
 		trustedCAFile = cli.Config.TrustedCAFile()
 	}
 	m.assetManager = asset.NewManager(cacheDir, trustedCAFile, entity, &wg)
-	m.assetGetter, err = m.assetManager.StartAssetManager(ctx, nil)
+	m.assetGetter, err = m.assetManager.StartAssetManager(ctx, nil, nil)
 	if err != nil {
 		return nil, err
 	}

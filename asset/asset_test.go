@@ -21,9 +21,10 @@ import (
 
 func TestRuntimeAsset_Env(t *testing.T) {
 	r := &RuntimeAsset{
-		Name:   "foo",
-		Path:   string(os.PathSeparator) + filepath.Join("tmp", "foo"),
-		SHA512: "123456789",
+		Name:         "foo",
+		Path:         string(os.PathSeparator) + filepath.Join("tmp", "foo"),
+		SHA512:       "123456789",
+		LastAccessed: 0, // Not relevant for this test
 	}
 	got := r.Env()
 

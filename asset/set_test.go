@@ -24,9 +24,9 @@ func fixtureAssets() []types.Asset {
 
 func fixtureRuntimeAssets() RuntimeAssetSet {
 	return RuntimeAssetSet{
-		&RuntimeAsset{Name: "foo1", Path: string(os.PathSeparator) + filepath.Join("foo", "bar", "asset-1")},
-		&RuntimeAsset{Name: "foo2", Path: string(os.PathSeparator) + filepath.Join("foo", "bar", "asset-2")},
-		&RuntimeAsset{Name: "foo3", Path: string(os.PathSeparator) + filepath.Join("foo", "bar", "asset-3")},
+		&RuntimeAsset{Name: "foo1", Path: string(os.PathSeparator) + filepath.Join("foo", "bar", "asset-1"), LastAccessed: 0},
+		&RuntimeAsset{Name: "foo2", Path: string(os.PathSeparator) + filepath.Join("foo", "bar", "asset-2"), LastAccessed: 0},
+		&RuntimeAsset{Name: "foo3", Path: string(os.PathSeparator) + filepath.Join("foo", "bar", "asset-3"), LastAccessed: 0},
 	}
 }
 
@@ -42,7 +42,7 @@ func (m *mockGetter) Get(ctx context.Context, asset *corev2.Asset) (*RuntimeAsse
 	if asset.Name == "nil" {
 		runtimeAsset = nil
 	} else {
-		runtimeAsset = &RuntimeAsset{Path: fmt.Sprintf("/foo/bar/%s", asset.Name)}
+		runtimeAsset = &RuntimeAsset{Path: fmt.Sprintf("/foo/bar/%s", asset.Name), LastAccessed: 0}
 	}
 	return runtimeAsset, nil
 }
@@ -66,7 +66,7 @@ func TestGetAll(t *testing.T) {
 func TestGetAllError(t *testing.T) {
 	assets := fixtureAssets()
 	mockGetter := mockGetter{err: errors.New("test error")}
-	expectedRuntimeAssets := (RuntimeAssetSet)(nil)
+	expectedRuntimeAssets := RuntimeAssetSet{}
 
 	actualRuntimeAssets, err := GetAll(context.TODO(), &mockGetter, assets)
 	assert.Error(t, err)

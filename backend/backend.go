@@ -397,7 +397,7 @@ func Initialize(ctx context.Context, config *Config) (*Backend, error) {
 	if limit == 0 {
 		limit = asset.DefaultAssetsRateLimit
 	}
-	assetGetter, err := assetManager.StartAssetManager(b.RunContext(), rate.NewLimiter(limit, b.Cfg.AssetsBurstLimit))
+	assetGetter, err := assetManager.StartAssetManager(b.RunContext(), nil, rate.NewLimiter(limit, b.Cfg.AssetsBurstLimit))
 	if err != nil {
 		return nil, fmt.Errorf("error initializing asset manager: %s", err)
 	}

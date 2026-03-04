@@ -15,6 +15,7 @@ import (
 	"net/url"
 	"os"
 	"os/signal"
+	"sort"
 	"strings"
 	"sync"
 	"syscall"
@@ -22,8 +23,10 @@ import (
 	time "github.com/echlebek/timeproxy"
 	"github.com/gogo/protobuf/proto"
 	"github.com/google/uuid"
+	"github.com/gorilla/mux"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
+	"go.uber.org/multierr"
 	"golang.org/x/time/rate"
 
 	corev2 "github.com/sensu/core/v2"
@@ -37,6 +40,7 @@ import (
 	"github.com/sensu/sensu-go/util/retry"
 	utilstrings "github.com/sensu/sensu-go/util/strings"
 	"github.com/sirupsen/logrus"
+	bolt "go.etcd.io/bbolt"
 )
 
 const (
@@ -133,11 +137,45 @@ func GetDefaultAgentName() string {
 	return defaultAgentName
 }
 
+// Plugin is the hook-based plugin interface.
+type Plugin interface {
+	// Name returns a human-friendly plugin name.
+	Name() string
+
+	// Priority controls ordering; higher runs earlier in BeforeRun and later in AfterRun.
+	// Return 0 for default priority.
+	Priority() int
+
+	// BeforeAgentRun is executed before Agent does its core work.
+	// If it returns an error, Agent decides whether to abort or continue.
+	BeforeAgentRun(ctx context.Context, a *Agent) error
+
+	// AfterAgentRun is executed after Agent's core work (even when core returns error).
+	// It's good for cleanup or metrics; errors should be reported but usually shouldn't abort.
+	AfterAgentRun(ctx context.Context, a *Agent) error
+
+	// IsFatal optional static policy: if true, any error from this plugin is fatal by default
+	// Implementors can return false (default).
+	IsFatal() bool
+}
+
+// BasePlugin small helper so implementers don't need to provide all methods.
+type BasePlugin struct{}
+
+func (BasePlugin) Name() string                                       { return "base" }
+func (BasePlugin) Priority() int                                      { return 0 }
+func (BasePlugin) BeforeAgentRun(ctx context.Context, a *Agent) error { return nil }
+func (BasePlugin) AfterAgentRun(ctx context.Context, a *Agent) error  { return nil }
+func (BasePlugin) IsFatal() bool                                      { return false }
+
 // An Agent receives and acts on messages from a Sensu Backend.
 type Agent struct {
 	allowList          []allowList
 	api                *http.Server
+	apiRouter          *mux.Router
+	dbConn             *bolt.DB
 	assetGetter        asset.Getter
+	plugins            []Plugin
 	backendSelector    BackendSelector
 	config             *Config
 	connected          bool
@@ -206,6 +244,17 @@ func NewAgentContext(ctx context.Context, config *Config) (*Agent, error) {
 		maxSessionLength: config.MaxSessionLength,
 	}
 
+	// Prepare the HTTP API server
+	apiServer, apiRouter := newServer(agent)
+	agent.api = apiServer
+	agent.apiRouter = apiRouter
+	// Prepare the BoltDB before Run
+	db, dbErr := asset.GetBoltDBConnection(agent.config.CacheDir)
+	if dbErr != nil {
+		return nil, dbErr
+	}
+	agent.dbConn = db
+
 	agent.statsdServer = NewStatsdServer(agent)
 	agent.handler.AddHandler(transport.MessageTypeEntityConfig, agent.handleEntityConfig)
 
@@ -236,6 +285,10 @@ func NewAgentContext(ctx context.Context, config *Config) (*Agent, error) {
 	}
 
 	return agent, nil
+}
+
+func (a *Agent) GetConfig() *Config {
+	return a.config
 }
 
 func (a *Agent) sendMessage(msg *transport.Message) {
@@ -312,6 +365,11 @@ func (a *Agent) buildTransportHeaderMap() http.Header {
 	return header
 }
 
+// RegisterPlugin registers an agent's plugin
+func (a *Agent) RegisterPlugin(p Plugin) {
+	a.plugins = append(a.plugins, p)
+}
+
 // Run starts the Agent.
 //
 // 1. Start the asset manager.
@@ -331,6 +389,29 @@ func (a *Agent) Run(ctx context.Context) error {
 		}
 	}()
 	defer cancel()
+
+	if len(a.plugins) > 0 {
+		// Keep list sorted descending by Priority (higher first)
+		sort.SliceStable(a.plugins, func(i, j int) bool {
+			return a.plugins[i].Priority() > a.plugins[j].Priority()
+		})
+	}
+
+	var beforeErrs error
+	// Call BeforeAgentRun in order
+	for _, p := range a.plugins {
+		if err := p.BeforeAgentRun(ctx, a); err != nil {
+			bErr := fmt.Errorf("plugin %s BeforeRun: %w", p.Name(), err)
+			beforeErrs = multierr.Append(beforeErrs, bErr)
+			if p.IsFatal() {
+				return beforeErrs
+			}
+		}
+	}
+	if beforeErrs != nil {
+		logger.WithError(beforeErrs).Warn("some plugin BeforeAgentRun errors occurred")
+	}
+
 	a.header = a.buildTransportHeaderMap()
 
 	// Fail the agent after startup if the id is invalid
@@ -383,7 +464,7 @@ func (a *Agent) Run(ctx context.Context) error {
 			limit = rate.Limit(asset.DefaultAssetsRateLimit)
 		}
 		var err error
-		a.assetGetter, err = assetManager.StartAssetManager(ctx, rate.NewLimiter(limit, a.config.AssetsBurstLimit))
+		a.assetGetter, err = assetManager.StartAssetManager(ctx, a.dbConn, rate.NewLimiter(limit, a.config.AssetsBurstLimit))
 		if err != nil {
 			return err
 		}
@@ -413,6 +494,20 @@ func (a *Agent) Run(ctx context.Context) error {
 	// Wait for context to complete
 	<-ctx.Done()
 	logger.Info("agent shutting down")
+	// Call AfterAgentRun in reverse order (best effort)
+	var afterErrs error
+	for i := len(a.plugins) - 1; i >= 0; i-- {
+		if err := a.plugins[i].AfterAgentRun(ctx, a); err != nil {
+			aErr := fmt.Errorf("plugin %s AfterRun: %w", a.plugins[i].Name(), err)
+			afterErrs = multierr.Append(afterErrs, aErr)
+			if a.plugins[i].IsFatal() {
+				return afterErrs
+			}
+		}
+	}
+	if afterErrs != nil {
+		logger.WithError(afterErrs).Warn("some plugin AfterAgentRun errors occurred")
+	}
 
 	// Wait for all goroutines to gracefully shutdown, but not too long
 	done := make(chan struct{})
@@ -690,9 +785,6 @@ func (a *Agent) Connected() bool {
 // StartAPI starts the Agent HTTP API. After attempting to start the API, if the
 // HTTP server encounters a fatal error, it will shutdown the rest of the agent.
 func (a *Agent) StartAPI(ctx context.Context) {
-	// Prepare the HTTP API server
-	a.api = newServer(a)
-
 	// Allow Stop() to block until the HTTP server shuts down.
 	a.wg.Add(2)
 
@@ -809,6 +901,24 @@ func (a *Agent) connectWithBackoff(ctx context.Context) (transport.Transport, er
 	})
 
 	return conn, err
+}
+
+// GetDB returns the underlying BoltDB connection used by the agent.
+//
+// The returned pointer must not be closed or replaced by callers.
+// It is intended for read and write operations performed by plugins
+// or internal agent components.
+func (a *Agent) GetDB() *bolt.DB {
+	return a.dbConn
+}
+
+// GetAPIRouter returns the HTTP router used by the agent for registering
+// API endpoints.
+//
+// Plugins or internal agent components may use this router to mount their
+// own routes, handlers, or middleware. Callers should not replace the router instance.
+func (a *Agent) GetAPIRouter() *mux.Router {
+	return a.apiRouter
 }
 
 // GracefulShutdown listens for the SIGINT & SIGTERM signals and cancel the
