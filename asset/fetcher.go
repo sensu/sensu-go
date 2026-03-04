@@ -119,7 +119,7 @@ func (h *httpFetcher) Fetch(ctx context.Context, url string, headers map[string]
 	defer resp.Close()
 
 	// Write response to tmp
-	tmpFile, err := ioutil.TempFile(os.TempDir(), "sensu-asset")
+	tmpFile, err := os.CreateTemp(os.TempDir(), "sensu-asset")
 	if err != nil {
 		return nil, fmt.Errorf("can't open tmp file for asset: %s", err)
 	}

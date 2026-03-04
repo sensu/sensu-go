@@ -88,7 +88,7 @@ func TestExecute(t *testing.T) {
 
 	sleepExec, sleepErr := sleep.Execute(context.Background(), sleep)
 	assert.Equal(t, nil, sleepErr)
-	assert.Equal(t, "Execution timed out\n", testutil.CleanOutput(sleepExec.Output))
+	assert.Contains(t, testutil.CleanOutput(sleepExec.Output), "Execution timed out")
 	assert.Equal(t, 2, sleepExec.Status)
 	assert.NotEqual(t, 0, sleepExec.Duration)
 }

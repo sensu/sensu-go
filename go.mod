@@ -1,9 +1,6 @@
 module github.com/sensu/sensu-go
 
-go 1.22
-
-toolchain go1.23.4
-
+go 1.24.3
 
 require (
 	github.com/AlecAivazis/survey/v2 v2.2.14
@@ -85,15 +82,15 @@ require (
 	github.com/jonboulle/clockwork v0.4.0 // indirect
 	github.com/kr/pty v1.1.8 // indirect
 	github.com/prometheus/procfs v0.12.0 // indirect
-	github.com/sensu/core/v2 v2.20.1-0.20251104042553-0603aa304a04
-	github.com/sensu/core/v3 v3.9.0
+	github.com/sensu/core/v2 v2.20.1-0.20260304065946-dc7effc1c358
+	github.com/sensu/core/v3 v3.9.1-0.20260304065946-dc7effc1c358
 	github.com/sensu/sensu-api-tools v0.2.1
 	github.com/sensu/sensu-go/types v0.13.0
 	github.com/tmc/grpc-websocket-proxy v0.0.0-20220101234140-673ab2c3ae75 // indirect
 	github.com/xiang90/probing v0.0.0-20221125231312-a49e3df8f510 // indirect
 	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.46.0 // indirect
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc v1.20.0 // indirect
-	go.uber.org/multierr v1.11.0 // indirect
+	go.uber.org/multierr v1.11.0
 	google.golang.org/genproto v0.0.0-20231120223509-83a465c0220f // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20241202173237-19429a94021a // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20241202173237-19429a94021a // indirect

@@ -1,7 +1,6 @@
 package agent
 
 import (
-	"io/ioutil"
 	"os"
 	"time"
 
@@ -70,6 +69,12 @@ const (
 
 	// DefaultUser specifies the default user
 	DefaultUser = "agent"
+
+	// DefaultAssetsCleanupInterval specifies the default interval for asset cleanup (0: disabled)
+	DefaultAssetsCleanupInterval = 0
+
+	// DefaultAssetsCleanupMaxAge specifies the default maximum age for assets (48 hours)
+	DefaultAssetsCleanupMaxAge = 172800
 )
 
 // A Config specifies Agent configuration.
@@ -88,6 +93,14 @@ type Config struct {
 
 	// AssetsBurstLimit is the maximum amount of burst allowed in a rate interval.
 	AssetsBurstLimit int
+
+	// AssetsCleanupInterval is the interval in seconds for periodic asset cleanup.
+	// If 0, periodic cleanup is disabled. Default: 0: disabled
+	AssetsCleanupInterval int
+
+	// AssetsCleanupMaxAge is the maximum age in seconds for assets before cleanup.
+	// Assets not accessed for this duration will be purged. Default: 172800 (48 hours).
+	AssetsCleanupMaxAge int64
 
 	// BackendURLs is a list of URLs for the Sensu Backend. Default:
 	// ws://127.0.0.1:8081
@@ -250,7 +263,7 @@ type SocketConfig struct {
 // FixtureConfig provides a new Config object initialized with defaults for use
 // in tests, as well as a cleanup function to call at the end of the test.
 func FixtureConfig() (*Config, func()) {
-	cacheDir, err := ioutil.TempDir("", "")
+	cacheDir, err := os.MkdirTemp("", "")
 	if err != nil {
 		panic(err)
 	}
@@ -263,6 +276,8 @@ func FixtureConfig() (*Config, func()) {
 		},
 		AssetsRateLimit:         asset.DefaultAssetsRateLimit,
 		AssetsBurstLimit:        asset.DefaultAssetsBurstLimit,
+		AssetsCleanupInterval:   DefaultAssetsCleanupInterval,
+		AssetsCleanupMaxAge:     DefaultAssetsCleanupMaxAge,
 		BackendURLs:             []string{},
 		CacheDir:                cacheDir,
 		EventsAPIRateLimit:      DefaultEventsAPIRateLimit,

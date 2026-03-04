@@ -41,6 +41,8 @@ const (
 	flagAPIPort                   = "api-port"
 	flagAssetsRateLimit           = "assets-rate-limit"
 	flagAssetsBurstLimit          = "assets-burst-limit"
+	flagAssetsCleanupInterval     = "assets-cleanup-interval"
+	flagAssetsCleanupMaxAge       = "assets-cleanup-max-age"
 	flagBackendURL                = "backend-url"
 	flagCacheDir                  = "cache-dir"
 	flagConfigFile                = "config-file"
@@ -120,6 +122,8 @@ func NewAgentConfig(cmd *cobra.Command) (*agent.Config, error) {
 	cfg.API.Port = viper.GetInt(flagAPIPort)
 	cfg.AssetsRateLimit = rate.Limit(viper.GetFloat64(flagAssetsRateLimit))
 	cfg.AssetsBurstLimit = viper.GetInt(flagAssetsBurstLimit)
+	cfg.AssetsCleanupInterval = viper.GetInt(flagAssetsCleanupInterval)
+	cfg.AssetsCleanupMaxAge = viper.GetInt64(flagAssetsCleanupMaxAge)
 	cfg.CacheDir = viper.GetString(flagCacheDir)
 	cfg.Deregister = viper.GetBool(flagDeregister)
 	cfg.DeregistrationHandler = viper.GetString(flagDeregistrationHandler)
@@ -313,6 +317,8 @@ func handleConfig(cmd *cobra.Command, arguments []string) error {
 	viper.SetDefault(flagDisableAssets, false)
 	viper.SetDefault(flagAssetsRateLimit, asset.DefaultAssetsRateLimit)
 	viper.SetDefault(flagAssetsBurstLimit, asset.DefaultAssetsBurstLimit)
+	viper.SetDefault(flagAssetsCleanupInterval, agent.DefaultAssetsCleanupInterval)
+	viper.SetDefault(flagAssetsCleanupMaxAge, agent.DefaultAssetsCleanupMaxAge)
 	viper.SetDefault(flagEventsRateLimit, agent.DefaultEventsAPIRateLimit)
 	viper.SetDefault(flagEventsBurstLimit, agent.DefaultEventsAPIBurstLimit)
 	viper.SetDefault(flagKeepaliveInterval, agent.DefaultKeepaliveInterval)
@@ -426,6 +432,8 @@ func flagSet() *pflag.FlagSet {
 	flagSet.Bool(flagDetectCloudProvider, viper.GetBool(flagDetectCloudProvider), "enable cloud provider detection")
 	flagSet.Float64(flagAssetsRateLimit, viper.GetFloat64(flagAssetsRateLimit), "maximum number of assets fetched per second")
 	flagSet.Int(flagAssetsBurstLimit, viper.GetInt(flagAssetsBurstLimit), "asset fetch burst limit")
+	flagSet.Int(flagAssetsCleanupInterval, viper.GetInt(flagAssetsCleanupInterval), "interval in seconds for periodic asset cleanup (0 to disable)")
+	flagSet.Int64(flagAssetsCleanupMaxAge, viper.GetInt64(flagAssetsCleanupMaxAge), "maximum age in seconds for assets before cleanup")
 	flagSet.Float64(flagEventsRateLimit, viper.GetFloat64(flagEventsRateLimit), "maximum number of events transmitted to the backend through the /events api")
 	flagSet.Int(flagEventsBurstLimit, viper.GetInt(flagEventsBurstLimit), "/events api burst limit")
 	flagSet.String(flagNamespace, viper.GetString(flagNamespace), "agent namespace")

@@ -40,3 +40,9 @@ func (e *errNoLegacyHandlers) Error() string {
 }
 
 func (e *errNoLegacyHandlers) MisconfiguredPipeline() {}
+
+type CommonAdapter struct {
+	FilterAdapters  []FilterAdapter
+	MutatorAdapters []MutatorAdapter
+	HandlerAdapters []HandlerAdapter
+}
