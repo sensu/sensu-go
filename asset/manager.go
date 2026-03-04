@@ -35,29 +35,32 @@ func NewManager(cacheDir, trustedCAFile string, entity *types.Entity, wg *sync.W
 }
 
 // StartAssetManager starts the asset manager for a backend or agent.
-func (m *Manager) StartAssetManager(ctx context.Context, limiter *rate.Limiter) (Getter, error) {
-	// create agent cache directory if it doesn't already exist
-	if err := os.MkdirAll(m.cacheDir, 0755); err != nil {
-		return nil, err
-	}
+func (m *Manager) StartAssetManager(ctx context.Context, conn *bolt.DB, limiter *rate.Limiter) (Getter, error) {
+	if conn == nil {
+		// create agent cache directory if it doesn't already exist
+		if err := os.MkdirAll(m.cacheDir, 0755); err != nil {
+			return nil, err
+		}
 
-	logger.WithField("cache", m.cacheDir).Debug("initializing cache directory")
-	db, err := bolt.Open(filepath.Join(m.cacheDir, dbName), 0600, &bolt.Options{Timeout: 60 * time.Second})
-	if err != nil {
-		return nil, err
+		logger.WithField("cache", m.cacheDir).Debug("initializing cache directory")
+		db, err := bolt.Open(filepath.Join(m.cacheDir, dbName), 0600, &bolt.Options{Timeout: 60 * time.Second})
+		if err != nil {
+			return nil, err
+		}
+		conn = db
+		logger.WithField("cache", m.cacheDir).Debug("done initializing cache directory")
 	}
-	logger.WithField("cache", m.cacheDir).Debug("done initializing cache directory")
 
 	m.wg.Add(1)
 	go func() {
 		defer m.wg.Done()
 		<-ctx.Done()
-		if err := db.Close(); err != nil {
+		if err := conn.Close(); err != nil {
 			logger.Debug(err)
 		}
 	}()
 	boltDBGetter := NewBoltDBGetter(
-		db, m.cacheDir, m.trustedCAFile, nil, nil, nil, limiter)
+		conn, m.cacheDir, m.trustedCAFile, nil, nil, nil, limiter)
 
 	return NewFilteredManager(boltDBGetter, m.entity), nil
 }

@@ -79,8 +79,8 @@ require (
 	github.com/jonboulle/clockwork v0.4.0 // indirect
 	github.com/kr/pty v1.1.8 // indirect
 	github.com/prometheus/procfs v0.12.0 // indirect
-	github.com/sensu/core/v2 v2.20.1-0.20260226060903-c1cfed6943be
-	github.com/sensu/core/v3 v3.9.1-0.20260226060903-c1cfed6943be
+	github.com/sensu/core/v2 v2.20.1-0.20260304065946-dc7effc1c358
+	github.com/sensu/core/v3 v3.9.1-0.20260304065946-dc7effc1c358
 	github.com/sensu/sensu-api-tools v0.2.1
 	github.com/sensu/sensu-go/types v0.13.0
 	github.com/tmc/grpc-websocket-proxy v0.0.0-20220101234140-673ab2c3ae75 // indirect

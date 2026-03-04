@@ -8,6 +8,15 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 ## [Unreleased]
 
 ### Added
+- Added backend-side validation for `runtime_assets` during CheckConfig creation and update.
+  - If any referenced asset does not exist in the namespace, the request will be rejected with a validation error.
+  - This change improves usability by catching missing or invalid assets early, preventing runtime execution failures and reducing debugging overhead.
+- Added `ttl_status` field to `Check` and `CheckConfig` to configure the status (warning or critical) for TTL failure events. This field accepts values 1 (warning) or 2 (critical), with critical (2) as the default to maintain backward compatibility.
+- Added asset lifecycle management with `last-accessed` timestamp tracking to enable intelligent cleanup of unused assets based on usage patterns.
+- Added plugin-based hook system for agent extensions with `BeforeAgentRun` and `AfterAgentRun` lifecycle hooks, supporting priority-based execution ordering and configurable error handling.
+- Added `assets-cleanup-interval` and `assets-cleanup-max-age` configuration options for controlling periodic asset cleanup behavior.
+- Added `FindUnusedAssets()` and `DeleteAsset()` functions for programmatic asset cleanup operations.
+- Added `GetAPIRouter()` and `GetDB()` methods to agent for plugin access to HTTP router and database connection.
 - Added `continue_on_error` field to `core/v2.Pipeline`.
   This flag controls whether pipeline execution should continue when an error occurs in a handler, filter, mutator, or during asset resolution.
   Defaults to `false`, preserving existing behavior.
@@ -15,6 +24,12 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 - Added Prometheus metrics collection for HTTP API requests, including request count (`sensu_go_http_requests_total`), request duration (`sensu_go_http_request_duration_seconds`), and client error count (`sensu_go_http_client_errors_total`) for better observability of backend API performance.
 
 ### Changed
+- Improved asset error handling with new `AgentAssetError` interface providing structured error reporting with exit codes and detailed messages.
+- Enhanced asset manager architecture by restructuring initialization to support pre-initialized database connections and better enterprise integration.
+- Improved command execution timeout error handling for more reliable test execution.
+
+### Fixed
+- Fixed asset retrieval error aggregation to continue processing remaining assets when individual assets fail, using `multierr` for comprehensive error reporting.
 - Upgraded Go version to 1.24.3 across all CI/CD pipelines
 - Updated CircleCI, AppVeyor, and GitHub Actions to use Go 1.24.x
 - Updated minimum Go requirement in README from 1.16 to 1.24
