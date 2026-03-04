@@ -7,7 +7,7 @@ branches:
     - /release\/[0-9.]+/
 
 image:
-  - Visual Studio 2015
+  - Visual Studio 2022
   # - Visual Studio 2017
 
 cache:
