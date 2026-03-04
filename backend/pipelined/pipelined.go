@@ -44,17 +44,18 @@ var (
 // handler configuration determines which Sensu filters and mutator
 // are used.
 type Pipelined struct {
-	stopping     chan struct{}
-	running      *atomic.Value
-	wg           *sync.WaitGroup
-	errChan      chan error
-	eventChan    chan interface{}
-	subscription messaging.Subscription
-	bus          messaging.MessageBus
-	workerCount  int
-	store        store.Store
-	storeTimeout time.Duration
-	adapters     []pipeline.Adapter
+	stopping       chan struct{}
+	running        *atomic.Value
+	wg             *sync.WaitGroup
+	errChan        chan error
+	eventChan      chan interface{}
+	subscription   messaging.Subscription
+	bus            messaging.MessageBus
+	workerCount    int
+	store          store.Store
+	storeTimeout   time.Duration
+	adapters       []pipeline.Adapter
+	pipelineGetter []PipelineResourceGetter
 }
 
 // Config configures a Pipelined.
@@ -73,7 +74,41 @@ type Option func(*Pipelined) error
 // slice of Pipeline resource references.
 type PipelineGetter interface {
 	GetPipelines() []*corev2.ResourceReference
+}
+
+// PipelineResourceGetter defines an interface for any structures which can return a
+// slice of Pipeline resource references. It also defines a Match method
+// which is used to determine if the object is a match for the getter.
+type PipelineResourceGetter interface {
+	Match(obj any) bool
+	Get(obj any) []*corev2.ResourceReference
+}
+
+type PipelineLogGetter interface {
 	LogFields(bool) map[string]interface{}
+}
+
+// AddPipelineResourceGetter adds a PipelineResourceGetter to the Pipelined.
+func (p *Pipelined) AddPipelineResourceGetter(getter PipelineResourceGetter) {
+	p.pipelineGetter = append(p.pipelineGetter, getter)
+}
+
+// PipelineResourceGetterImpl is a default implementation of the PipelineResourceGetter
+type PipelineResourceGetterImpl struct{}
+
+// Match checks if the object is a PipelineGetter.
+func (p *PipelineResourceGetterImpl) Match(obj any) bool {
+	_, ok := obj.(PipelineGetter)
+	return ok
+}
+
+// Get returns a slice of Pipeline resource references from the object if it
+// implements the PipelineGetter interface.
+func (p *PipelineResourceGetterImpl) Get(obj any) []*corev2.ResourceReference {
+	if event, ok := obj.(PipelineGetter); ok {
+		return event.GetPipelines()
+	}
+	return nil
 }
 
 // New creates a new Pipelined with supplied Options applied.
@@ -209,13 +244,19 @@ func (p *Pipelined) handleMessage(ctx context.Context, msg interface{}) (hadPipe
 			Observe(float64(duration) / float64(time.Millisecond))
 	}()
 
-	getter, ok := msg.(PipelineGetter)
+	logGetter, ok := msg.(PipelineLogGetter)
 	if !ok {
-		panic("message received was not a PipelineGetter")
+		panic("message received was not a PipelineLogGetter")
 	}
 
-	fields := getter.LogFields(false)
-	pipelineRefs := getter.GetPipelines()
+	fields := logGetter.LogFields(false)
+	var pipelineRefs []*corev2.ResourceReference
+
+	for _, getter := range p.pipelineGetter {
+		if getter.Match(msg) {
+			pipelineRefs = append(pipelineRefs, getter.Get(msg)...)
+		}
+	}
 
 	// Add a legacy pipeline "reference" if msg is a
 	// corev2.Event & has handlers.
@@ -228,7 +269,7 @@ func (p *Pipelined) handleMessage(ctx context.Context, msg interface{}) (hadPipe
 	}
 
 	if len(pipelineRefs) == 0 {
-		logger.WithFields(fields).Info("no pipelines defined in resource")
+		logger.WithFields(fields).Info("no pipelines or fallback_pipeline defined in resource")
 		return false, nil
 	}
 

@@ -5,7 +5,6 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 and this project adheres to [Semantic
 Versioning](http://semver.org/spec/v2.0.0.html).
-
 ## [Unreleased]
 
 ### Added
@@ -14,6 +13,9 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 - Added `assets-cleanup-interval` and `assets-cleanup-max-age` configuration options for controlling periodic asset cleanup behavior.
 - Added `FindUnusedAssets()` and `DeleteAsset()` functions for programmatic asset cleanup operations.
 - Added `GetAPIRouter()` and `GetDB()` methods to agent for plugin access to HTTP router and database connection.
+- Added `continue_on_error` field to `core/v2.Pipeline`.
+  This flag controls whether pipeline execution should continue when an error occurs in a handler, filter, mutator, or during asset resolution.
+  Defaults to `false`, preserving existing behavior.
 - Added `ttl_status` field to `Check` and `CheckConfig` to configure the status (warning or critical) for TTL failure events. This field accepts values 1 (warning) or 2 (critical), with warning (1) as the default to maintain backward compatibility.
 - Added Prometheus metrics collection for HTTP API requests, including request count (`sensu_go_http_requests_total`), request duration (`sensu_go_http_request_duration_seconds`), and client error count (`sensu_go_http_client_errors_total`) for better observability of backend API performance.
 
@@ -24,6 +26,18 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ### Fixed
 - Fixed asset retrieval error aggregation to continue processing remaining assets when individual assets fail, using `multierr` for comprehensive error reporting.
+- Upgraded Go version to 1.24.3 across all CI/CD pipelines
+- Updated CircleCI, AppVeyor, and GitHub Actions to use Go 1.24.x
+- Updated minimum Go requirement in README from 1.16 to 1.24
+
+### Fixed
+- Resolved Go 1.24 compatibility issues in agent version and event tests
+- Fixed non-constant format string error in pipeline filter legacy code
+- Updated `GetAssets` method to return an error when one or more required assets are missing.
+  When `continue_on_error` is `false`, missing assets or other errors will stop the pipeline execution (existing behavior).
+  When set to `true`, the pipeline will continue executing subsequent workflows until one succeeds.
+- Modified handler execution behavior to return a non-zero status code on failure.
+  Previously, handler errors were only logged without affecting pipeline.
 
 ## [6.13.1] - 2025-05-28
 
