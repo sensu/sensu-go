@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"net/url"
 	"time"
@@ -44,7 +43,7 @@ func connect(wsServerURL string, tlsOpts *types.TLSOptions, requestHeader http.H
 		if resp != nil {
 			if err == websocket.ErrBadHandshake {
 				err := fmt.Errorf("handshake failed with status %d", resp.StatusCode)
-				body, berr := ioutil.ReadAll(io.LimitReader(resp.Body, 1024))
+				body, berr := io.ReadAll(io.LimitReader(resp.Body, 1024))
 				if berr == nil {
 					err = fmt.Errorf("%s: %s", err, string(body))
 				}

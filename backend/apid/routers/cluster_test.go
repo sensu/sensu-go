@@ -3,7 +3,7 @@ package routers
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -11,7 +11,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/gorilla/mux"
 	"github.com/stretchr/testify/mock"
-	"go.etcd.io/etcd/client/v3"
+	clientv3 "go.etcd.io/etcd/client/v3"
 )
 
 type mockClusterController struct {
@@ -68,7 +68,7 @@ func TestClusterRouterMemberList(t *testing.T) {
 	}
 
 	if resp.StatusCode >= 400 {
-		body, _ := ioutil.ReadAll(resp.Body)
+		body, _ := io.ReadAll(resp.Body)
 		t.Fatalf("bad status: %d (%q)", resp.StatusCode, string(body))
 	}
 
@@ -91,7 +91,7 @@ func TestClusterRouterMemberAdd(t *testing.T) {
 	}
 
 	if resp.StatusCode >= 400 {
-		body, _ := ioutil.ReadAll(resp.Body)
+		body, _ := io.ReadAll(resp.Body)
 		t.Fatalf("bad status: %d (%q)", resp.StatusCode, string(body))
 	}
 
@@ -113,7 +113,7 @@ func TestClusterRouterMemberAddBadRequest(t *testing.T) {
 	}
 
 	if resp.StatusCode != 400 {
-		body, _ := ioutil.ReadAll(resp.Body)
+		body, _ := io.ReadAll(resp.Body)
 		t.Fatalf("bad status (want 400): %d (%q)", resp.StatusCode, string(body))
 	}
 }
@@ -134,7 +134,7 @@ func TestClusterRouterMemberRemove(t *testing.T) {
 	}
 
 	if resp.StatusCode >= 400 {
-		body, _ := ioutil.ReadAll(resp.Body)
+		body, _ := io.ReadAll(resp.Body)
 		t.Fatalf("bad status: %d (%q)", resp.StatusCode, string(body))
 	}
 
@@ -156,7 +156,7 @@ func TestClusterRouterMemberRemoveBadRequestNotANumber(t *testing.T) {
 	}
 
 	if resp.StatusCode != 400 {
-		body, _ := ioutil.ReadAll(resp.Body)
+		body, _ := io.ReadAll(resp.Body)
 		t.Fatalf("bad status (want 400): %d (%q)", resp.StatusCode, string(body))
 	}
 }
@@ -176,7 +176,7 @@ func TestClusterRouterMemberRemoveBadRequestNegativeNumber(t *testing.T) {
 	}
 
 	if resp.StatusCode != 400 {
-		body, _ := ioutil.ReadAll(resp.Body)
+		body, _ := io.ReadAll(resp.Body)
 		t.Fatalf("bad status (want 400): %d (%q)", resp.StatusCode, string(body))
 	}
 }
@@ -197,7 +197,7 @@ func TestClusterRouterMemberUpdate(t *testing.T) {
 	}
 
 	if resp.StatusCode >= 400 {
-		body, _ := ioutil.ReadAll(resp.Body)
+		body, _ := io.ReadAll(resp.Body)
 		t.Fatalf("bad status: %d (%q)", resp.StatusCode, string(body))
 	}
 
@@ -219,7 +219,7 @@ func TestClusterRouterMemberUpdateBadRequestID(t *testing.T) {
 	}
 
 	if resp.StatusCode != 400 {
-		body, _ := ioutil.ReadAll(resp.Body)
+		body, _ := io.ReadAll(resp.Body)
 		t.Fatalf("bad status (want 400): %d (%q)", resp.StatusCode, string(body))
 	}
 }
@@ -239,7 +239,7 @@ func TestClusterRouterMemberUpdateBadRequestPeerAddrs(t *testing.T) {
 	}
 
 	if resp.StatusCode != 400 {
-		body, _ := ioutil.ReadAll(resp.Body)
+		body, _ := io.ReadAll(resp.Body)
 		t.Fatalf("bad status (want 400): %d (%q)", resp.StatusCode, string(body))
 	}
 }
@@ -261,7 +261,7 @@ func TestGetClusterID(t *testing.T) {
 	}
 
 	if resp.StatusCode >= 400 {
-		body, _ := ioutil.ReadAll(resp.Body)
+		body, _ := io.ReadAll(resp.Body)
 		t.Fatalf("bad status: %d (%q)", resp.StatusCode, string(body))
 	}
 

@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
@@ -106,7 +105,7 @@ func main() { // nolint
 	}
 
 	// Write to file
-	err = ioutil.WriteFile(outfile, []byte(out), 0644)
+	err = os.WriteFile(outfile, []byte(out), 0644)
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)

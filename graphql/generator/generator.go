@@ -3,7 +3,8 @@ package generator
 import (
 	"bytes"
 	"fmt"
-	"io/ioutil"
+	"io"
+	"os"
 	"path/filepath"
 
 	"github.com/dave/jennifer/jen"
@@ -59,7 +60,7 @@ func (s fileSaver) Save(fname string, f *jen.File) error {
 		return err
 	}
 	outpath := makeOutputPath(s.sourceDir, fname, GeneratedFileExt)
-	return ioutil.WriteFile(outpath, buf.Bytes(), 0644)
+	return os.WriteFile(outpath, buf.Bytes(), 0644)
 }
 
 // File extension .gql.go is used for generated files
@@ -110,7 +111,7 @@ func (g Generator) Run() error {
 
 	// Do dry run to ensure that the files can be written.
 	for _, outfile := range outfiles {
-		if err := outfile.Render(ioutil.Discard); err != nil {
+		if err := outfile.Render(io.Discard); err != nil {
 			return err
 		}
 	}

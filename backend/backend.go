@@ -164,6 +164,7 @@ type Backend struct {
 	PipelineAdapterV1      pipeline.AdapterV1
 	LicenseGetter          licensing.Getter
 	Bus                    messaging.MessageBus
+	CommonAdapters         pipeline.CommonAdapter
 
 	ctx       context.Context
 	runCtx    context.Context
@@ -396,7 +397,7 @@ func Initialize(ctx context.Context, config *Config) (*Backend, error) {
 	if limit == 0 {
 		limit = asset.DefaultAssetsRateLimit
 	}
-	assetGetter, err := assetManager.StartAssetManager(b.RunContext(), rate.NewLimiter(limit, b.Cfg.AssetsBurstLimit))
+	assetGetter, err := assetManager.StartAssetManager(b.RunContext(), nil, rate.NewLimiter(limit, b.Cfg.AssetsBurstLimit))
 	if err != nil {
 		return nil, fmt.Errorf("error initializing asset manager: %s", err)
 	}
@@ -422,6 +423,8 @@ func Initialize(ctx context.Context, config *Config) (*Backend, error) {
 		return nil, fmt.Errorf("error initializing %s: %s", pipelineDaemon.Name(), err)
 	}
 
+	pipelineDaemon.AddPipelineResourceGetter(&pipelined.PipelineResourceGetterImpl{})
+
 	// Initialize PipelineAdapterV1
 	storeTimeout := 2 * time.Minute
 	b.PipelineAdapterV1 = pipeline.AdapterV1{
@@ -439,12 +442,14 @@ func Initialize(ctx context.Context, config *Config) (*Backend, error) {
 	isIncidentFilterAdapter := &filter.IsIncidentAdapter{}
 	notSilencedFilterAdapter := &filter.NotSilencedAdapter{}
 
-	b.PipelineAdapterV1.FilterAdapters = []pipeline.FilterAdapter{
+	b.CommonAdapters.FilterAdapters = []pipeline.FilterAdapter{
 		legacyFilterAdapter,
 		hasMetricsFilterAdapter,
 		isIncidentFilterAdapter,
 		notSilencedFilterAdapter,
 	}
+
+	b.PipelineAdapterV1.FilterAdapters = b.CommonAdapters.FilterAdapters
 
 	// Initialize PipelineAdapterV1 mutator adapters
 	legacyMutatorAdapter := &mutator.LegacyAdapter{
@@ -457,11 +462,13 @@ func Initialize(ctx context.Context, config *Config) (*Backend, error) {
 	onlyCheckOutputMutatorAdapter := &mutator.OnlyCheckOutputAdapter{}
 	jsonMutatorAdapter := &mutator.JSONAdapter{}
 
-	b.PipelineAdapterV1.MutatorAdapters = []pipeline.MutatorAdapter{
+	b.CommonAdapters.MutatorAdapters = []pipeline.MutatorAdapter{
 		legacyMutatorAdapter,
 		onlyCheckOutputMutatorAdapter,
 		jsonMutatorAdapter,
 	}
+
+	b.PipelineAdapterV1.MutatorAdapters = b.CommonAdapters.MutatorAdapters
 
 	// Initialize PipelineAdapterV1 handler adapters
 	legacyHandlerAdapter := &handler.LegacyAdapter{
@@ -473,9 +480,10 @@ func Initialize(ctx context.Context, config *Config) (*Backend, error) {
 		StoreTimeout:           storeTimeout,
 	}
 
-	b.PipelineAdapterV1.HandlerAdapters = []pipeline.HandlerAdapter{
+	b.CommonAdapters.HandlerAdapters = []pipeline.HandlerAdapter{
 		legacyHandlerAdapter,
 	}
+	b.PipelineAdapterV1.HandlerAdapters = b.CommonAdapters.HandlerAdapters
 
 	pipelineDaemon.AddAdapter(&b.PipelineAdapterV1)
 	b.Daemons = append(b.Daemons, pipelineDaemon)

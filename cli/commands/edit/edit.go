@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"os"
 	"os/exec"
 	"path"
@@ -192,7 +191,7 @@ func Command(cli *cli.SensuCli) *cobra.Command {
 				_ = cmd.Help()
 				return errors.New("invalid argument(s) received")
 			}
-			tf, err := ioutil.TempFile("", fmt.Sprintf("sensu-resource.*.%s", extension(cli.Config.Format())))
+			tf, err := os.CreateTemp("", fmt.Sprintf("sensu-resource.*.%s", extension(cli.Config.Format())))
 			if err != nil {
 				return err
 			}
@@ -226,7 +225,7 @@ func Command(cli *cli.SensuCli) *cobra.Command {
 			if err := execCmd.Run(); err != nil {
 				return err
 			}
-			changedBytes, err := ioutil.ReadFile(tf.Name())
+			changedBytes, err := os.ReadFile(tf.Name())
 			if err != nil {
 				return err
 			}

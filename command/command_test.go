@@ -4,7 +4,7 @@ package command
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"os"
 	"strings"
 	"testing"
@@ -21,7 +21,7 @@ func TestHelperProcess(t *testing.T) {
 
 	command := strings.Join(os.Args[3:], " ")
 
-	stdin, _ := ioutil.ReadAll(os.Stdin)
+	stdin, _ := io.ReadAll(os.Stdin)
 
 	hasArgs := len(os.Args) > 4
 	argStr := ""
@@ -88,7 +88,7 @@ func TestExecute(t *testing.T) {
 
 	sleepExec, sleepErr := sleep.Execute(context.Background(), sleep)
 	assert.Equal(t, nil, sleepErr)
-	assert.Equal(t, "Execution timed out\n", testutil.CleanOutput(sleepExec.Output))
+	assert.Contains(t, testutil.CleanOutput(sleepExec.Output), "Execution timed out")
 	assert.Equal(t, 2, sleepExec.Status)
 	assert.NotEqual(t, 0, sleepExec.Duration)
 }

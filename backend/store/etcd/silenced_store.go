@@ -83,6 +83,7 @@ func (s *Store) GetSilencedEntries(ctx context.Context) ([]*corev2.Silenced, err
 	if err != nil {
 		return nil, err
 	}
+	logger.Info("I am in listing")
 	return silencedArray, nil
 }
 

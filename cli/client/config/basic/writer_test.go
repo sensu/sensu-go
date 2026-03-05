@@ -2,7 +2,7 @@ package basic
 
 import (
 	"encoding/json"
-	"io/ioutil"
+	"os"
 	"path/filepath"
 	"testing"
 	"time"
@@ -121,7 +121,7 @@ func TestSaveTokensWithAPIUrlFlag(t *testing.T) {
 	cluster := &Cluster{APIUrl: "setFromFile"}
 	clusterBytes, _ := json.Marshal(cluster)
 	clusterPath := filepath.Join(dir, clusterFilename)
-	require.NoError(t, ioutil.WriteFile(clusterPath, clusterBytes, 0644))
+	require.NoError(t, os.WriteFile(clusterPath, clusterBytes, 0644))
 
 	config := Load(flags, v)
 

@@ -4,12 +4,12 @@
 package schedulerd
 
 import (
-	"io/ioutil"
+	"io"
 
 	"github.com/sirupsen/logrus"
 )
 
 func init() {
 	// Silence logger
-	logrus.SetOutput(ioutil.Discard)
+	logrus.SetOutput(io.Discard)
 }

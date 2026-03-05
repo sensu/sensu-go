@@ -30,7 +30,7 @@ type sensuVersion struct {
 }
 
 // newServer returns a new HTTP server
-func newServer(a *Agent) *http.Server {
+func newServer(a *Agent) (*http.Server, *mux.Router) {
 	router := mux.NewRouter()
 	registerRoutes(a, router)
 
@@ -41,7 +41,7 @@ func newServer(a *Agent) *http.Server {
 		ReadTimeout:  15 * time.Second,
 	}
 
-	return server
+	return server, router
 }
 
 func registerRoutes(a *Agent, r *mux.Router) {

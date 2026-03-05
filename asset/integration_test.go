@@ -3,7 +3,6 @@ package asset_test
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"testing"
@@ -36,16 +35,16 @@ func TestBoltDBManager(t *testing.T) {
 	// the asset manager actually deletes the "downloaded" archive
 	// for us, because it's a temporary file. So create a link to the
 	// original asset in the temp dir and use that as our asset "URL".
-	srcBytes, err := ioutil.ReadFile(fixturePath)
+	srcBytes, err := os.ReadFile(fixturePath)
 	if err != nil {
 		t.Fatalf("unable to read fixture: %v", err)
 	}
-	if err := ioutil.WriteFile(tmpFixturePath, srcBytes, 0644); err != nil {
+	if err := os.WriteFile(tmpFixturePath, srcBytes, 0644); err != nil {
 		t.Fatalf("unable to write tmp fixture: %v", err)
 	}
 
 	fixtureSHAPath := fmt.Sprintf("%s.sha512", fixturePath)
-	sha512, err := ioutil.ReadFile(fixtureSHAPath)
+	sha512, err := os.ReadFile(fixtureSHAPath)
 	if err != nil {
 		t.Fatalf("error reading fixture sha: %v", err)
 	}
@@ -59,7 +58,7 @@ func TestBoltDBManager(t *testing.T) {
 		URL:    tmpFixturePath,
 	}
 
-	tmpFile, err := ioutil.TempFile(tmpDir, "asset_integration_test.db")
+	tmpFile, err := os.CreateTemp(tmpDir, "asset_integration_test.db")
 	if err != nil {
 		t.Fatalf("unable to create test boltdb file: %v", err)
 	}

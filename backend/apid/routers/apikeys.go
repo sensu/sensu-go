@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"time"
 
@@ -76,7 +76,7 @@ func (r *APIKeysRouter) create(w http.ResponseWriter, req *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	req.Body = ioutil.NopCloser(bytes.NewBuffer(newBytes))
+	req.Body = io.NopCloser(bytes.NewBuffer(newBytes))
 
 	_, err = r.handlers.CreateResource(req)
 	if err != nil {

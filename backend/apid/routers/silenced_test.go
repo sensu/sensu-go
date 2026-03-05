@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"context"
 	"errors"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -239,7 +239,7 @@ func TestSilencedRouterCustomRoutes(t *testing.T) {
 			// Inspect the response code
 			if res.StatusCode != tt.wantStatusCode {
 				t.Errorf("EventsRouter StatusCode = %v, wantStatusCode %v", res.StatusCode, tt.wantStatusCode)
-				body, _ := ioutil.ReadAll(res.Body)
+				body, _ := io.ReadAll(res.Body)
 				t.Errorf("error message: %q", string(body))
 				return
 			}
