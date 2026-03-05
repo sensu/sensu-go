@@ -572,7 +572,7 @@ func TestGetSilencedByCheckName(t *testing.T) {
 			},
 			Store: func() store.Store {
 				store := new(mockstore.MockStore)
-				store.On("GetSilencedEntriesByCheckName", mock.Anything).Return([]*corev2.Silenced{defaultSilenced}, nil)
+				store.On("GetSilencedEntriesByCheckName", mock.Anything, "default").Return([]*corev2.Silenced{defaultSilenced}, nil)
 				return store
 			},
 			Auth: func() authorization.Authorizer {
@@ -694,7 +694,7 @@ func TestGetSilencedBySubscription(t *testing.T) {
 			},
 			Store: func() store.Store {
 				store := new(mockstore.MockStore)
-				store.On("GetSilencedEntriesBySubscription", mock.Anything).Return([]*corev2.Silenced{defaultSilenced}, nil)
+				store.On("GetSilencedEntriesBySubscription", mock.Anything, []string{"default"}).Return([]*corev2.Silenced{defaultSilenced}, nil)
 				return store
 			},
 			Auth: func() authorization.Authorizer {

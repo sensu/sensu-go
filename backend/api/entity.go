@@ -15,20 +15,28 @@ import (
 
 // EntityClient is an API client for entities.
 type EntityClient struct {
-	storev2     storev2.Interface
-	entityStore store.EntityStore
-	eventStore  store.EventStore
-	auth        authorization.Authorizer
+	storev2       storev2.Interface
+	entityStore   store.EntityStore
+	eventStore    store.EventStore
+	silencedStore store.SilencedStore
+	auth          authorization.Authorizer
 }
 
 // NewEntityClient creates a new EntityClient given a store, an event store and
 // an authorizer.
-func NewEntityClient(store store.EntityStore, storev2 storev2.Interface, eventStore store.EventStore, auth authorization.Authorizer) *EntityClient {
+func NewEntityClient(entityStore store.EntityStore, storev2 storev2.Interface, eventStore store.EventStore, auth authorization.Authorizer) *EntityClient {
+	// Try to get SilencedStore from the entityStore if it implements the full Store interface
+	var silencedStore store.Store
+	if s, ok := entityStore.(store.Store); ok {
+		silencedStore = s
+	}
+
 	return &EntityClient{
-		storev2:     storev2,
-		entityStore: store,
-		eventStore:  eventStore,
-		auth:        auth,
+		storev2:       storev2,
+		entityStore:   entityStore,
+		eventStore:    eventStore,
+		silencedStore: silencedStore,
+		auth:          auth,
 	}
 }
 
@@ -61,6 +69,39 @@ func (e *EntityClient) DeleteEntity(ctx context.Context, name string) error {
 				"namespace": event.Namespace})
 			logger.WithError(err).Error("error deleting event from entity")
 			continue
+		}
+	}
+
+	// Delete entity-specific silenced entries (e.g., entity:web-01:*)
+	if e.silencedStore != nil {
+		entitySubscription := fmt.Sprintf("entity:%s", name)
+		silencedEntries, err := e.silencedStore.GetSilencedEntriesBySubscription(ctx, entitySubscription)
+		if err != nil {
+			// Log the error but continue
+			logger.WithError(err).WithFields(logrus.Fields{
+				"entity":       name,
+				"subscription": entitySubscription,
+			}).Warn("error fetching silenced entries for entity")
+		} else if len(silencedEntries) > 0 {
+			silencedNames := make([]string, 0, len(silencedEntries))
+			for _, entry := range silencedEntries {
+				silencedNames = append(silencedNames, entry.Name)
+			}
+
+			err = e.silencedStore.DeleteSilencedEntryByName(ctx, silencedNames...)
+			if err != nil {
+				// Log the error but continue
+				logger.WithError(err).WithFields(logrus.Fields{
+					"entity":   name,
+					"silences": silencedNames,
+				}).Warn("error deleting silenced entries for entity")
+			} else {
+				logger.WithFields(logrus.Fields{
+					"entity":   name,
+					"silences": silencedNames,
+					"count":    len(silencedNames),
+				}).Info("deleted entity-specific silenced entries")
+			}
 		}
 	}
 

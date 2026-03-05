@@ -48,6 +48,7 @@ func TestEntitiesRouter(t *testing.T) {
 	s.On("DeleteEventByEntityCheck", mock.Anything, "foo", "bar").Return(nil)
 	s.On("DeleteEntityByName", mock.Anything, "foo").Return(nil)
 	s.On("GetEntityByName", mock.Anything, "foo").Return(corev2.FixtureEntity("foo"), nil)
+	s.On("GetSilencedEntriesBySubscription", mock.Anything, []string{"entity:foo"}).Return([]*corev2.Silenced{}, nil)
 	s2 := new(storetest.Store)
 	router := NewEntitiesRouter(s, s2, s)
 	router.controller = controller

@@ -703,6 +703,7 @@ func TestDeleteEntity(t *testing.T) {
 			Store: func() store.Store {
 				store := new(mockstore.MockStore)
 				store.On("DeleteEntityByName", mock.Anything, "default").Return(nil)
+				store.On("GetSilencedEntriesBySubscription", mock.Anything, []string{"entity:default"}).Return([]*corev2.Silenced{}, nil)
 				return store
 			},
 			EventStore: func() store.EventStore {
@@ -736,6 +737,7 @@ func TestDeleteEntity(t *testing.T) {
 			Store: func() store.Store {
 				store := new(mockstore.MockStore)
 				store.On("DeleteEntityByName", mock.Anything, "default").Return(nil)
+				store.On("GetSilencedEntriesBySubscription", mock.Anything, []string{"entity:default"}).Return([]*corev2.Silenced{}, nil)
 				return store
 			},
 			EventStore: func() store.EventStore {
@@ -770,6 +772,7 @@ func TestDeleteEntity(t *testing.T) {
 			Store: func() store.Store {
 				store := new(mockstore.MockStore)
 				store.On("DeleteEntityByName", mock.Anything, "default").Return(nil)
+				store.On("GetSilencedEntriesBySubscription", mock.Anything, []string{"entity:default"}).Return([]*corev2.Silenced{}, nil)
 				return store
 			},
 			EventStore: func() store.EventStore {
@@ -804,6 +807,7 @@ func TestDeleteEntity(t *testing.T) {
 			Store: func() store.Store {
 				store := new(mockstore.MockStore)
 				store.On("DeleteEntityByName", mock.Anything, "default").Return(nil)
+				store.On("GetSilencedEntriesBySubscription", mock.Anything, []string{"entity:default"}).Return([]*corev2.Silenced{}, nil)
 				return store
 			},
 			EventStore: func() store.EventStore {
