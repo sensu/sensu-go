@@ -3,6 +3,7 @@ package cmd
 import (
 	"context"
 	"fmt"
+	globalLogging "github.com/sensu/sensu-go/util/logging"
 	"io"
 	"log"
 	"net/http"
@@ -368,6 +369,12 @@ func StartCommand(initialize InitializeFunc) *cobra.Command {
 				}
 			}
 
+			// initialize global log level registry
+			if viper.GetString(flagLogLevel) != "" {
+				globalLogging.InitLogLevel(viper.GetString(flagLogLevel))
+				globalLogging.SetAllLoggersLevel(viper.GetString(flagLogLevel))
+			}
+
 			if viper.GetBool(flagLogMillisecondTime) {
 				cfg.EtcdLogTimestampLayout = timestampFormatMillisecond
 			}
@@ -676,7 +683,7 @@ func flagSet(server bool) *pflag.FlagSet {
 		_ = flagSet.String(flagEventLogBufferWait, "10ms", "full buffer wait time")
 	}
 
-	flagSet.SetOutput(ioutil.Discard)
+	flagSet.SetOutput(io.Discard)
 
 	return flagSet
 }
