@@ -3,6 +3,7 @@ package cmd
 import (
 	"context"
 	"fmt"
+	globalLogging "github.com/sensu/sensu-go/util/logging"
 	"io"
 	"log"
 	"net/http"
@@ -366,6 +367,12 @@ func StartCommand(initialize InitializeFunc) *cobra.Command {
 				default:
 					cfg.EtcdLogLevel = level.String()
 				}
+			}
+
+			// initialize global log level registry
+			if viper.GetString(flagLogLevel) != "" {
+				globalLogging.InitLogLevel(viper.GetString(flagLogLevel))
+				globalLogging.SetAllLoggersLevel(viper.GetString(flagLogLevel))
 			}
 
 			if viper.GetBool(flagLogMillisecondTime) {

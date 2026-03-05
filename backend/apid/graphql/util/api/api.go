@@ -10,6 +10,8 @@ import (
 	"github.com/sensu/sensu-go/types"
 )
 
+var logger = getLogger()
+
 // UnwrapListResult from API client, helpful when resolving a field as GraphQL
 // does not consider the absence of a value an error; as such we omit the error
 // if the API client returns Permission denied.

@@ -66,6 +66,8 @@ type APId struct {
 // Option is a functional option.
 type Option func(*APId) error
 
+var logger = getLogger()
+
 // Config configures APId.
 type Config struct {
 	ListenAddress       string
@@ -261,6 +263,7 @@ func CoreSubrouter(router *mux.Router, cfg Config) *mux.Router {
 		routers.NewSilencedRouter(cfg.Store),
 		routers.NewTessenRouter(actions.NewTessenController(cfg.Store, cfg.Bus)),
 		routers.NewUsersRouter(cfg.Store),
+		routers.NewLogLevelChangeRouter(),
 	)
 
 	return subrouter
@@ -366,10 +369,10 @@ func notFoundHandler(w http.ResponseWriter, req *http.Request) {
 
 // Start APId.
 func (a *APId) Start() error {
-
 	if a.serveWaitTime <= 0 {
 		a.ready()
 	} else {
+
 		logger.Warnf("starting apid as temporarily unavailable for: %s", a.serveWaitTime)
 		go func() {
 			select {

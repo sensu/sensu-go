@@ -1,7 +1,10 @@
 package handler
 
-import "github.com/sirupsen/logrus"
+import (
+	"github.com/sensu/sensu-go/util/logging"
+	"github.com/sirupsen/logrus"
+)
 
-var logger = logrus.WithFields(logrus.Fields{
-	"component": "pipeline/legacy",
+var logger = logging.GetLogger("pipeline.legacy").WithFields(logrus.Fields{
+	"component": "pipeline.legacy",
 })

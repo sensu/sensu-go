@@ -1,11 +1,10 @@
 package transport
 
-import "github.com/sirupsen/logrus"
+import (
+	"github.com/sensu/sensu-go/util/logging"
+	"github.com/sirupsen/logrus"
+)
 
-var logger *logrus.Entry
-
-func init() {
-	logger = logrus.WithFields(logrus.Fields{
-		"component": "transport",
-	})
-}
+var logger = logging.GetLogger("transport").WithFields(logrus.Fields{
+	"component": "transport",
+})

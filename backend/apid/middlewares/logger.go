@@ -1,7 +1,10 @@
 package middlewares
 
-import "github.com/sirupsen/logrus"
+import (
+	"github.com/sensu/sensu-go/util/logging"
+	"github.com/sirupsen/logrus"
+)
 
-var logger = logrus.WithFields(logrus.Fields{
+var logger = logging.GetLogger("apid").WithFields(logrus.Fields{
 	"component": "apid",
 })

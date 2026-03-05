@@ -1,7 +1,10 @@
 package etcd
 
-import "github.com/sirupsen/logrus"
+import (
+	"github.com/sensu/sensu-go/util/logging"
+	"github.com/sirupsen/logrus"
+)
 
-var logger = logrus.WithFields(logrus.Fields{
-	"component": "sensu-etcd",
+var logger = logging.GetLogger("etcd").WithFields(logrus.Fields{
+	"component": "etcd",
 })

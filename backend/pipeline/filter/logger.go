@@ -1,7 +1,10 @@
 package filter
 
-import "github.com/sirupsen/logrus"
+import (
+	"github.com/sensu/sensu-go/util/logging"
+	"github.com/sirupsen/logrus"
+)
 
-var logger = logrus.WithFields(logrus.Fields{
-	"component": "pipeline/filter",
+var logger = logging.GetLogger("pipeline.filter").WithFields(logrus.Fields{
+	"component": "pipeline.filter",
 })

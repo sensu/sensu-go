@@ -1,6 +1,7 @@
 package client
 
 import (
+	"github.com/sensu/sensu-go/util/logging"
 	"net/http"
 
 	"github.com/go-resty/resty/v2"
@@ -48,6 +49,7 @@ type APIClient interface {
 	GenericClient
 	ClusterMemberClient
 	LicenseClient
+	LoggingAPIClient
 }
 
 // APIKeyClient exposes client methods for api keys.
@@ -197,6 +199,12 @@ type UserAPIClient interface {
 	SetGroupsForUser(string, []string) error
 	UpdatePassword(username, newPasswordHash, currentPassword string) error
 	ResetPassword(username, passwordHash string) error
+}
+
+type LoggingAPIClient interface {
+	SetLogLevel(level logging.LogLevelRequest) error
+	SetLogLevelAllModules(level string) error
+	GetLogLevel(level string) error
 }
 
 // RoleAPIClient client methods for roles

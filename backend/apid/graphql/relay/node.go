@@ -18,6 +18,8 @@ type NodeResolver struct { // TODO: rename NodeInfo?
 	IsKindOf func(globalid.Components) bool
 }
 
+var logger = getLogger()
+
 // NodeResolverParams parameters to given to resolve method
 type NodeResolverParams struct {
 	// Context ...

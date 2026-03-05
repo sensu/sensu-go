@@ -1,6 +1,8 @@
 package generator
 
-import "github.com/sirupsen/logrus"
+import (
+	"github.com/sensu/sensu-go/util/logging"
+)
 
 // default logger used in this package
-var logger = logrus.WithField("component", "graphql/generator")
+var logger = logging.GetLogger("graphql.generator").WithField("component", "graphql.generator")
