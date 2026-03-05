@@ -2,13 +2,12 @@ package cmd
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 	"reflect"
 	"testing"
 
-	"github.com/sensu/sensu-go/agent"
 	corev2 "github.com/sensu/core/v2"
+	"github.com/sensu/sensu-go/agent"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -130,7 +129,7 @@ func TestNewAgentConfig_AgentManagedEntityFlag(t *testing.T) {
 func tempConfig(t *testing.T, content string) *os.File {
 	t.Helper()
 
-	file, err := ioutil.TempFile(os.TempDir(), "sensu-agent-")
+	file, err := os.CreateTemp(os.TempDir(), "sensu-agent-")
 	if err != nil {
 		t.Fatalf("error creating tmpFile %q: %s", file.Name(), err)
 	}

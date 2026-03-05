@@ -7,7 +7,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"log"
 	"math"
 	"os"
@@ -49,7 +48,7 @@ func TestLogger(t *testing.T) {
 	assert.Error(t, err)
 
 	// Providing a valid path should start the logger
-	file, err := ioutil.TempFile(os.TempDir(), "event.*.log")
+	file, err := os.CreateTemp(os.TempDir(), "event.*.log")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -62,7 +61,7 @@ func TestLogger(t *testing.T) {
 
 func TestNewRawLogger(t *testing.T) {
 	// temporary file
-	file, err := ioutil.TempFile(os.TempDir(), "event.*.log")
+	file, err := os.CreateTemp(os.TempDir(), "event.*.log")
 	if err != nil {
 		log.Fatal(err)
 	}

@@ -2,7 +2,6 @@ package asset
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 	"strings"
 	"testing"
@@ -12,7 +11,7 @@ func TestSuccessfulVerify(t *testing.T) {
 	t.Parallel()
 
 	assetPath := getFixturePath("rubby-on-rails.tar")
-	assetSHA, err := ioutil.ReadFile(fmt.Sprintf("%s.sha512", assetPath))
+	assetSHA, err := os.ReadFile(fmt.Sprintf("%s.sha512", assetPath))
 	if err != nil {
 		t.Fatalf("could not read asset sha, error: %v", err)
 	}

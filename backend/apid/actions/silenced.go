@@ -36,7 +36,6 @@ func (c SilencedController) List(ctx context.Context, sub, check string) ([]*cor
 	if serr != nil {
 		return nil, NewError(InternalErr, serr)
 	}
-
 	return results, nil
 }
 

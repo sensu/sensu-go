@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -50,7 +49,7 @@ func TestFetchExistingAsset(t *testing.T) {
 	defer f.Close()
 	defer os.Remove(f.Name())
 
-	desiredSHA, _ := ioutil.ReadFile(getFixturePath(fmt.Sprintf("%s.sha512", assetName)))
+	desiredSHA, _ := os.ReadFile(getFixturePath(fmt.Sprintf("%s.sha512", assetName)))
 
 	verifier := &Sha512Verifier{}
 	if err := verifier.Verify(f, string(desiredSHA)); err != nil {

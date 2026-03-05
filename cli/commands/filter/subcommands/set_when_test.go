@@ -3,7 +3,6 @@ package subcommands
 import (
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"testing"
@@ -17,7 +16,7 @@ import (
 )
 
 func fileFromString(t *testing.T, s string) (string, *os.File, func()) {
-	dir, err := ioutil.TempDir("", "")
+	dir, err := os.MkdirTemp("", "")
 	require.NoError(t, err)
 	name := filepath.Join(dir, "timewindows.json")
 	tf, err := os.Create(name)

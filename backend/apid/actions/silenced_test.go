@@ -98,9 +98,15 @@ func TestSilencedQuery(t *testing.T) {
 			assert := assert.New(t)
 
 			// Mock store methods
-			store.On("GetSilencedEntriesBySubscription", tc.ctx).Return(tc.storeRecords, tc.storeErr).Once()
-			store.On("GetSilencedEntriesByCheckName", tc.ctx).Return(tc.storeRecords, tc.storeErr).Once()
-			store.On("GetSilencedEntries", tc.ctx).Return(tc.storeRecords, tc.storeErr).Once()
+			if tc.params["subscription"] != "" {
+				store.On("GetSilencedEntriesBySubscription", tc.ctx, []string{tc.params["subscription"]}).Return(tc.storeRecords, tc.storeErr).Once()
+			}
+			if tc.params["check"] != "" {
+				store.On("GetSilencedEntriesByCheckName", tc.ctx, tc.params["check"]).Return(tc.storeRecords, tc.storeErr).Once()
+			}
+			if tc.params["subscription"] == "" && tc.params["check"] == "" {
+				store.On("GetSilencedEntries", tc.ctx).Return(tc.storeRecords, tc.storeErr).Once()
+			}
 
 			// Exec Query
 			results, err := actions.List(tc.ctx, tc.params["subscription"], tc.params["check"])

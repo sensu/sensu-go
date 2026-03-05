@@ -804,7 +804,28 @@ func (e *Eventd) createFailedCheckEvent(ctx context.Context, event *corev2.Event
 	output := fmt.Sprintf("Last check execution was %d seconds ago", time.Now().Unix()-event.Check.Executed)
 
 	check.Output = output
-	check.Status = 1
+
+	// Use ttl_status if configured, otherwise default to warning (status 1)
+	// ttl_status allows users to configure whether TTL failures should be warning or critical
+	if event.Check.TtlStatus > 0 {
+		// ttl_status is set - use it to determine the status
+		// Valid values: 1 = warning, 2 = critical
+		if event.Check.TtlStatus == 1 || event.Check.TtlStatus == 2 {
+			check.Status = uint32(event.Check.TtlStatus)
+		} else {
+			// Invalid ttl_status value, default to warning
+			logger.WithFields(logrus.Fields{
+				"check":      event.Check.Name,
+				"entity":     event.Entity.Name,
+				"ttl_status": event.Check.TtlStatus,
+			}).Warn("invalid ttl_status value, defaulting to warning (1)")
+			check.Status = 1
+		}
+	} else {
+		// No ttl_status configured, default to warning (status 1)
+		check.Status = 1
+	}
+
 	check.State = corev2.EventFailingState
 	check.Executed = time.Now().Unix()
 

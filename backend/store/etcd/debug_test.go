@@ -4,12 +4,12 @@
 package etcd
 
 import (
-	"io/ioutil"
+	io "io"
 
 	"github.com/sirupsen/logrus"
 )
 
 func init() {
 	// Silence logger
-	logrus.SetOutput(ioutil.Discard)
+	logrus.SetOutput(io.Discard)
 }

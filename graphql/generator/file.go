@@ -2,7 +2,7 @@ package generator
 
 import (
 	"fmt"
-	"io/ioutil"
+	"os"
 	"path/filepath"
 
 	"github.com/graphql-go/graphql/gqlerrors"
@@ -17,7 +17,7 @@ const GraphQLFileExt = ".graphql"
 // any occurred while parsing or given path is not valid.
 func ParseDir(path string) (GraphQLFiles, error) {
 	fs := GraphQLFiles{}
-	fds, err := ioutil.ReadDir(path)
+	fds, err := os.ReadDir(path)
 	if err != nil {
 		return fs, err
 	}
@@ -39,7 +39,7 @@ func ParseDir(path string) (GraphQLFiles, error) {
 // ParseFile parses given path to GraphQL file returning parsed AST and error if
 // any occurred while parsing.
 func ParseFile(path string) (*GraphQLFile, error) {
-	bin, err := ioutil.ReadFile(path)
+	bin, err := os.ReadFile(path)
 	if err != nil {
 		return nil, err
 	}

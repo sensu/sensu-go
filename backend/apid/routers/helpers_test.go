@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -59,7 +59,7 @@ func run(t *testing.T, tt routerTestCase, router *mux.Router, store *mockstore.M
 		// Inspect the response code
 		if res.StatusCode != tt.wantStatusCode {
 			t.Errorf("StatusCode = %v, wantStatusCode %v", res.StatusCode, tt.wantStatusCode)
-			body, _ := ioutil.ReadAll(res.Body)
+			body, _ := io.ReadAll(res.Body)
 			t.Errorf("error message: %q", string(body))
 			return
 		}

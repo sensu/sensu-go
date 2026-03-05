@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -30,7 +29,7 @@ type setupCommandManagerCallbackFn func(*CommandManager, string)
 func setupCommandManager(fns ...setupCommandManagerCallbackFn) (*CommandManager, error) {
 	m := CommandManager{}
 
-	cacheDir, err := ioutil.TempDir("", "")
+	cacheDir, err := os.MkdirTemp("", "")
 	if err != nil {
 		return &m, err
 	}

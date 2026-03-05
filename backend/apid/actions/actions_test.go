@@ -4,12 +4,12 @@
 package actions
 
 import (
-	"io/ioutil"
+	"io"
 
 	log "github.com/sirupsen/logrus"
 )
 
 func init() {
 	// Suppress log output
-	log.SetOutput(ioutil.Discard)
+	log.SetOutput(io.Discard)
 }

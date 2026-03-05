@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net"
 	"os"
 	"reflect"
@@ -32,7 +32,7 @@ import (
 )
 
 func init() {
-	logrus.SetOutput(ioutil.Discard)
+	logrus.SetOutput(io.Discard)
 }
 
 func TestNilHandlerBug_GH4584(t *testing.T) {
@@ -54,7 +54,7 @@ func TestHelperHandlerProcess(t *testing.T) {
 	}
 
 	command := strings.Join(os.Args[3:], " ")
-	stdin, _ := ioutil.ReadAll(os.Stdin)
+	stdin, _ := io.ReadAll(os.Stdin)
 
 	switch command {
 	case "cat":
@@ -483,7 +483,7 @@ func TestLegacyAdapter_socketHandlerTCP(t *testing.T) {
 			require.NoError(t, conn.Close())
 		}()
 
-		buffer, err := ioutil.ReadAll(conn)
+		buffer, err := io.ReadAll(conn)
 		if err != nil {
 			return
 		}

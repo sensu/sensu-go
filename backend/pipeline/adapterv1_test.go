@@ -3,7 +3,7 @@ package pipeline
 import (
 	"context"
 	"errors"
-	"io/ioutil"
+	"io"
 	"reflect"
 	"testing"
 	"time"
@@ -22,7 +22,7 @@ import (
 )
 
 func init() {
-	logrus.SetOutput(ioutil.Discard)
+	logrus.SetOutput(io.Discard)
 }
 
 func TestAdapterV1_Name(t *testing.T) {

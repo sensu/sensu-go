@@ -88,7 +88,11 @@ func (l *LegacyAdapter) Mutate(ctx context.Context, ref *corev2.ResourceReferenc
 		logger.WithFields(fields).Debug("fetching assets for mutator")
 
 		// Fetch and install all assets required for handler execution
-		matchedAssets := asset.GetAssets(ctx, l.Store, mutator.RuntimeAssets)
+		matchedAssets, errors := asset.GetAssets(ctx, l.Store, mutator.RuntimeAssets)
+		if errors != nil {
+			logger.WithFields(fields).WithError(errors).Error("failed to retrieve assets for mutator")
+			return nil, errors
+		}
 
 		var err error
 		assets, err = asset.GetAll(ctx, l.AssetGetter, matchedAssets)

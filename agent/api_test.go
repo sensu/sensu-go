@@ -113,7 +113,7 @@ func TestHealthz(t *testing.T) {
 
 func TestVersion(t *testing.T) {
 	var (
-		versionResponse = `{"version":""}`
+		versionResponse = `{"version":"(devel)"}`
 	)
 
 	testCases := []struct {

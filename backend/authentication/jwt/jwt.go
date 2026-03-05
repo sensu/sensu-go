@@ -6,8 +6,8 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"net/http"
+	"os"
 	"strings"
 
 	time "github.com/echlebek/timeproxy"
@@ -186,7 +186,7 @@ func LoadKeyPair(privatePath, publicPath string) error {
 	}
 
 	if publicPath != "" {
-		publicBytes, err := ioutil.ReadFile(publicPath)
+		publicBytes, err := os.ReadFile(publicPath)
 		if err != nil {
 			return fmt.Errorf("unable to read the public key file: %s", err)
 		}
@@ -196,7 +196,7 @@ func LoadKeyPair(privatePath, publicPath string) error {
 	}
 
 	if privatePath != "" {
-		privateBytes, err := ioutil.ReadFile(privatePath)
+		privateBytes, err := os.ReadFile(privatePath)
 		if err != nil {
 			return fmt.Errorf("unable to read the private key file: %s", err)
 		}

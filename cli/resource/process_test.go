@@ -3,7 +3,6 @@ package resource
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -36,12 +35,12 @@ func TestProcessURL(t *testing.T) {
 }
 
 func TestProcessFile(t *testing.T) {
-	td, err := ioutil.TempDir("", "")
+	td, err := os.MkdirTemp("", "")
 	require.NoError(t, err)
 	defer os.RemoveAll(td)
 
 	fp := filepath.Join(td, "input")
-	err = ioutil.WriteFile(fp, []byte(`{"type": "Namespace", "spec": {"name": "foo"}}`), 0644)
+	err = os.WriteFile(fp, []byte(`{"type": "Namespace", "spec": {"name": "foo"}}`), 0644)
 	assert.NoError(t, err)
 
 	fpt := filepath.Join(td, "check-memory.yaml")
@@ -57,7 +56,7 @@ spec:
   subscriptions:  # This is invalid because subscriptions should be a list, not a string
     invalid: "this should be a list"
 `
-	err = ioutil.WriteFile(fpt, []byte(invalidYAML), 0644)
+	err = os.WriteFile(fpt, []byte(invalidYAML), 0644)
 	require.NoError(t, err)
 	_, err = ProcessFile(fpt, false)
 	assert.Error(t, err)

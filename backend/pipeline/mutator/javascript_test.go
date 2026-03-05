@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"io"
-	"io/ioutil"
 	"os"
 	"reflect"
 	"strings"
@@ -26,7 +25,7 @@ func (mutatorAssetSet) Key() string {
 
 func (mutatorAssetSet) Scripts() (map[string]io.ReadCloser, error) {
 	result := make(map[string]io.ReadCloser)
-	result["mutatorAsset"] = ioutil.NopCloser(strings.NewReader(`var assetFunc = function () { event.check.labels["hockey"] = hockey; }`))
+	result["mutatorAsset"] = io.NopCloser(strings.NewReader(`var assetFunc = function () { event.check.labels["hockey"] = hockey; }`))
 	return result, nil
 }
 

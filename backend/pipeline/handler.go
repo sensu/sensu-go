@@ -64,3 +64,4 @@ func (a *AdapterV1) getHandlerAdapterForResource(ctx context.Context, ref *corev
 	}
 	return nil, fmt.Errorf("no handler adapters were found that can handle the resource: %s.%s = %s", ref.APIVersion, ref.Type, ref.Name)
 }
+
