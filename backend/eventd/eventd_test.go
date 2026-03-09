@@ -22,6 +22,7 @@ import (
 	"github.com/sensu/sensu-go/backend/store/cache"
 	storev2 "github.com/sensu/sensu-go/backend/store/v2"
 	"github.com/sensu/sensu-go/backend/store/v2/storetest"
+	"github.com/sensu/sensu-go/testing/mockbus"
 	"github.com/sensu/sensu-go/testing/mockstore"
 )
 
@@ -304,8 +305,8 @@ func TestCheckTTL(t *testing.T) {
 func TestCreateFailedCheckEventWithTTLStatus(t *testing.T) {
 	// Test that TTL status is properly handled when creating failed check events
 	tests := []struct {
-		name        string
-		ttlStatus   int32
+		name           string
+		ttlStatus      int32
 		expectedStatus uint32
 		description    string
 	}{
@@ -361,6 +362,91 @@ func TestCreateFailedCheckEventWithTTLStatus(t *testing.T) {
 
 			// Verify the output message
 			assert.Contains(t, result.Check.Output, "Last check execution was")
+		})
+	}
+}
+
+func TestHandleFailureSilencing(t *testing.T) {
+	tests := []struct {
+		name            string
+		silencedEntries []corev2.Resource
+		expectSilenced  bool
+		expectedIDs     []string
+	}{
+		{
+			name:           "TTL failure event is not silenced when no matching silence entries",
+			expectSilenced: false,
+		},
+		{
+			name: "TTL failure event is silenced by entity subscription",
+			silencedEntries: []corev2.Resource{
+				corev2.FixtureSilenced("entity:foo:*"),
+			},
+			expectSilenced: true,
+			expectedIDs:    []string{"entity:foo:*"},
+		},
+		{
+			name: "TTL failure event is silenced by check name",
+			silencedEntries: []corev2.Resource{
+				corev2.FixtureSilenced("*:check_cpu"),
+			},
+			expectSilenced: true,
+			expectedIDs:    []string{"*:check_cpu"},
+		},
+		{
+			name: "TTL failure event is silenced by entity+check",
+			silencedEntries: []corev2.Resource{
+				corev2.FixtureSilenced("entity:foo:check_cpu"),
+			},
+			expectSilenced: true,
+			expectedIDs:    []string{"entity:foo:check_cpu"},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			event := corev2.FixtureEvent("foo", "check_cpu")
+			event.Check.Ttl = 60
+			event.Check.Executed = time.Now().Add(-120 * time.Second).Unix()
+
+			eventStore := &mockstore.MockStore{}
+			eventStore.On("GetEventByEntityCheck", mock.Anything, "foo", "check_cpu").Return(event, nil)
+			eventStore.On("UpdateEvent", mock.Anything).Return(event, (*corev2.Event)(nil), nil)
+
+			bus := &mockbus.MockBus{}
+			bus.On("Publish", messaging.TopicEvent, mock.Anything).Return(nil)
+
+			silencedCache := cache.NewFromResources(tt.silencedEntries, false)
+
+			ctx := context.WithValue(context.Background(), corev2.NamespaceKey, "default")
+			e := &Eventd{
+				eventStore:    eventStore,
+				bus:           bus,
+				silencedCache: silencedCache,
+				ctx:           ctx,
+				errChan:       make(chan error, 1),
+				Logger:        NoopLogger{},
+			}
+
+			err := e.handleFailure(ctx, event)
+			require.NoError(t, err)
+
+			// Verify the event was published
+			bus.AssertCalled(t, "Publish", messaging.TopicEvent, mock.Anything)
+
+			// Get the event that was passed to UpdateEvent
+			calls := eventStore.Calls
+			for _, call := range calls {
+				if call.Method == "UpdateEvent" {
+					publishedEvent := call.Arguments[0].(*corev2.Event)
+					if tt.expectSilenced {
+						assert.True(t, publishedEvent.Check.IsSilenced, "event should be silenced")
+						assert.Equal(t, tt.expectedIDs, publishedEvent.Check.Silenced)
+					} else {
+						assert.False(t, publishedEvent.Check.IsSilenced, "event should not be silenced")
+						assert.Empty(t, publishedEvent.Check.Silenced)
+					}
+				}
+			}
 		})
 	}
 }

@@ -765,6 +765,15 @@ func (e *Eventd) handleFailure(ctx context.Context, event *corev2.Event) error {
 	if err != nil {
 		return err
 	}
+
+	// Apply silenced entries to the TTL failure event, just as handleMessage
+	// does for normal check events, so that the not_silenced filter can
+	// correctly suppress alerts during maintenance windows.
+	getSilenced(ctx, failedCheckEvent, e.silencedCache)
+	if len(failedCheckEvent.Check.Silenced) > 0 {
+		failedCheckEvent.Check.IsSilenced = true
+	}
+
 	updatedEvent, _, err := e.eventStore.UpdateEvent(ctx, failedCheckEvent)
 	if err != nil {
 		if _, ok := err.(*store.ErrInternal); ok {
