@@ -323,7 +323,7 @@ func handleConfig(cmd *cobra.Command, arguments []string) error {
 	viper.SetDefault(flagEventsBurstLimit, agent.DefaultEventsAPIBurstLimit)
 	viper.SetDefault(flagKeepaliveInterval, agent.DefaultKeepaliveInterval)
 	viper.SetDefault(flagKeepaliveWarningTimeout, corev2.DefaultKeepaliveTimeout)
-	viper.SetDefault(flagKeepaliveCriticalTimeout, 0)
+	viper.SetDefault(flagKeepaliveCriticalTimeout, corev2.DefaultKeepaliveCriticalTimeout)
 	viper.SetDefault(flagNamespace, agent.DefaultNamespace)
 	viper.SetDefault(flagPassword, agent.DefaultPassword)
 	viper.SetDefault(flagRedact, corev2.DefaultRedactFields)

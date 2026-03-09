@@ -79,7 +79,7 @@ require (
 	github.com/jonboulle/clockwork v0.4.0 // indirect
 	github.com/kr/pty v1.1.8 // indirect
 	github.com/prometheus/procfs v0.12.0 // indirect
-	github.com/sensu/core/v2 v2.20.1-0.20260304065946-dc7effc1c358
+	github.com/sensu/core/v2 v2.20.1-0.20260309060922-f2268a196be2
 	github.com/sensu/core/v3 v3.9.1-0.20260304065946-dc7effc1c358
 	github.com/sensu/sensu-api-tools v0.2.1
 	github.com/sensu/sensu-go/types v0.13.0
@@ -146,7 +146,7 @@ require (
 	go.opentelemetry.io/proto/otlp v1.0.0 // indirect
 	golang.org/x/term v0.40.0 // indirect
 	golang.org/x/text v0.34.0 // indirect
-	google.golang.org/protobuf v1.36.10 // indirect
+	google.golang.org/protobuf v1.36.11 // indirect
 	gopkg.in/ini.v1 v1.51.0 // indirect
 	gopkg.in/sourcemap.v1 v1.0.5 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
