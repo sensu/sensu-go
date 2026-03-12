@@ -14,7 +14,7 @@ require (
 	github.com/emicklei/proto v1.1.0
 	github.com/evanphx/json-patch/v5 v5.1.0
 	github.com/ghodss/yaml v1.0.0
-	github.com/go-resty/resty/v2 v2.5.0
+	github.com/go-resty/resty/v2 v2.11.0
 	github.com/gogo/protobuf v1.3.2
 	github.com/golang-jwt/jwt/v4 v4.5.2
 	github.com/golang/protobuf v1.5.4
