@@ -154,7 +154,7 @@ type Etcd struct {
 
 // BackendID returns the ID of the etcd cluster member
 func (e *Etcd) BackendID() (result string) {
-	return e.etcd.Server.ID().String()
+	return e.etcd.Server.MemberID().String()
 }
 
 // GetClusterVersion returns the cluster version of the etcd server

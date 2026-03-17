@@ -1,6 +1,7 @@
 package actions
 
 import (
+	"context"
 	"errors"
 	"testing"
 
@@ -10,13 +11,12 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"go.etcd.io/etcd/client/v3"
-	"golang.org/x/net/context"
 )
 
 type mockCluster struct {
 }
 
-func (mockCluster) MemberList(context.Context) (*clientv3.MemberListResponse, error) {
+func (mockCluster) MemberList(context.Context, ...clientv3.OpOption) (*clientv3.MemberListResponse, error) {
 	return new(clientv3.MemberListResponse), nil
 }
 
