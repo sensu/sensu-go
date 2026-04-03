@@ -182,7 +182,7 @@ func (a *AdapterV1) Run(ctx context.Context, ref *corev2.ResourceReference, reso
 		fields["pipeline_workflow"] = workflow.Name
 		debugFields["pipeline_workflow"] = workflow.Name
 
-		if event.Check.IsSilenced {
+		if event.HasCheck() && event.Check.IsSilenced {
 			continue
 		}
 
