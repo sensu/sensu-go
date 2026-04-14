@@ -1,5 +1,5 @@
-//go:build !fips140
-// +build !fips140
+//go:build fips140
+// +build fips140
 
 package asset
 
