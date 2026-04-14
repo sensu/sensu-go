@@ -36,17 +36,12 @@ type Fetcher interface {
 // URLGetter gets all content at the specified URL.
 type urlGetter func(context.Context, string, string, map[string]string) (io.ReadCloser, error)
 
-// fipsSafeCurves lists only FIPS 140-approved NIST curves, excluding X25519
-// which is blocked when Go runs with GODEBUG=fips140=only (Go 1.24+).
-var fipsSafeCurves = []tls.CurveID{tls.CurveP256, tls.CurveP384, tls.CurveP521}
-
 // Get the target URL and return an io.ReadCloser
 func httpGet(ctx context.Context, path, trustedCAFile string, headers map[string]string) (io.ReadCloser, error) {
-	var rootCAs *x509.CertPool
+	client := &http.Client{}
 
 	if trustedCAFile != "" {
-		var err error
-		rootCAs, err = x509.SystemCertPool()
+		rootCAs, err := x509.SystemCertPool()
 		if err != nil {
 			logger.WithError(err).Error("failed to retrieve system cert pool")
 		}
@@ -64,19 +59,15 @@ func httpGet(ctx context.Context, path, trustedCAFile string, headers map[string
 		}
 
 		appendCerts(rootCAs)
-	}
 
-	// Always specify CurvePreferences to exclude X25519, which is blocked in
-	// FIPS 140-only mode (GODEBUG=fips140=only, Go 1.24+). Only NIST curves
-	// P-256, P-384 and P-521 are FIPS 140-approved for TLS key exchange.
-	client := &http.Client{
-		Transport: &http.Transport{
-			Proxy: http.ProxyFromEnvironment,
-			TLSClientConfig: &tls.Config{
-				RootCAs:          rootCAs,
-				CurvePreferences: fipsSafeCurves,
+		client = &http.Client{
+			Transport: &http.Transport{
+				Proxy: http.ProxyFromEnvironment,
+				TLSClientConfig: &tls.Config{
+					RootCAs: rootCAs,
+				},
 			},
-		},
+		}
 	}
 
 	req, err := http.NewRequest(http.MethodGet, path, nil)
