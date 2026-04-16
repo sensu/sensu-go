@@ -1,5 +1,5 @@
-//go:build !fips140
-// +build !fips140
+//go:build fips140
+// +build fips140
 
 package bonsai
 
@@ -42,6 +42,10 @@ type RestClient struct {
 	config     Config
 }
 
+// fipsSafeCurves lists only FIPS 140-approved NIST curves, excluding X25519
+// which is blocked when Go runs with GODEBUG=fips140=only (Go 1.24+).
+var fipsSafeCurves = []tls.CurveID{tls.CurveP384, tls.CurveP256, tls.CurveP521}
+
 // New builds a new client with defaults
 func New(config Config) *RestClient {
 	if config.EndpointURL == "" {
@@ -53,11 +57,17 @@ func New(config Config) *RestClient {
 	// set http client timeout
 	client.httpClient.Timeout = 15 * time.Second
 
-	if config.TLSConfig != nil {
-		transport := new(http.Transport)
-		transport.TLSClientConfig = config.TLSConfig
-		client.httpClient.Transport = transport
+	// In FIPS 140-only mode (GODEBUG=fips140=only, Go 1.24+) X25519 is
+	// blocked. Always set a transport with FIPS-approved NIST curves so that
+	// the TLS ClientHello never proposes an unapproved key-share.
+	tlsCfg := config.TLSConfig
+	if tlsCfg == nil {
+		tlsCfg = &tls.Config{}
 	}
+	tlsCfg.CurvePreferences = fipsSafeCurves
+	transport := new(http.Transport)
+	transport.TLSClientConfig = tlsCfg
+	client.httpClient.Transport = transport
 
 	return client
 }

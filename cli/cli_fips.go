@@ -1,5 +1,5 @@
-//go:build !fips140
-// +build !fips140
+//go:build fips140
+// +build fips140
 
 package cli
 
@@ -33,6 +33,10 @@ type SensuCli struct {
 	ErrFile *os.File
 }
 
+// fipsSafeCurves lists only FIPS 140-approved NIST curves, excluding X25519
+// which is blocked when Go runs with GODEBUG=fips140=only (Go 1.24+).
+var fipsSafeCurves = []tls.CurveID{tls.CurveP384, tls.CurveP256, tls.CurveP521}
+
 // New SensuCLI given persistent flags from command
 func New(flags *pflag.FlagSet) *SensuCli {
 	v, err := helpers.InitViper(flags)
@@ -59,6 +63,11 @@ func New(flags *pflag.FlagSet) *SensuCli {
 
 	tlsConfig.InsecureSkipVerify = conf.InsecureSkipTLSVerify()
 	tlsConfig.CipherSuites = corev2.DefaultCipherSuites
+	// In FIPS 140-only mode (GODEBUG=fips140=only, Go 1.24+) X25519 is
+	// blocked. Explicitly restrict to FIPS-approved NIST curves so that the
+	// TLS ClientHello never proposes an unapproved key-share when connecting
+	// to the backend API.
+	tlsConfig.CurvePreferences = fipsSafeCurves
 
 	cliClient.SetTLSClientConfig(&tlsConfig)
 
