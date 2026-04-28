@@ -4,6 +4,16 @@ go 1.26.0
 
 replace github.com/gorilla/websocket => github.com/sensu/websocket v1.0.1
 
+replace go.etcd.io/etcd/api/v3 => github.com/sensu/etcd/api/v3 v3.0.0
+
+replace go.etcd.io/etcd/client/pkg/v3 => github.com/sensu/etcd/client/pkg/v3 v3.0.0
+
+replace go.etcd.io/etcd/client/v3 => github.com/sensu/etcd/client/v3 v3.0.0
+
+replace go.etcd.io/etcd/pkg/v3 => github.com/sensu/etcd/pkg/v3 v3.0.0
+
+replace go.etcd.io/etcd/server/v3 => github.com/sensu/etcd/server/v3 v3.0.0
+
 require (
 	github.com/AlecAivazis/survey/v2 v2.2.14
 	github.com/ash2k/stager v0.0.0-20170622123058-6e9c7b0eacd4 // indirect
@@ -34,7 +44,7 @@ require (
 	github.com/jbenet/go-reuseport v0.0.0-20180416043609-15a1cd37f050 // indirect
 	github.com/libp2p/go-reuseport v0.0.0-20180416043609-15a1cd37f050 // indirect
 	github.com/libp2p/go-sockaddr v0.1.0 // indirect
-	github.com/mattn/go-colorable v0.1.6 // indirect
+	github.com/mattn/go-colorable v0.1.13 // indirect
 	github.com/mgutz/ansi v0.0.0-20170206155736-9520e82c474b
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/mitchellh/hashstructure v1.0.0
@@ -118,7 +128,7 @@ require (
 	github.com/kylelemons/godebug v1.1.0 // indirect
 	github.com/lufia/plan9stats v0.0.0-20211012122336-39d0f177ccd0 // indirect
 	github.com/magiconair/properties v1.8.1 // indirect
-	github.com/mattn/go-isatty v0.0.17 // indirect
+	github.com/mattn/go-isatty v0.0.19 // indirect
 	github.com/mattn/go-runewidth v0.0.9 // indirect
 	github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822 // indirect
 	github.com/opentracing/opentracing-go v1.1.0 // indirect
@@ -127,7 +137,7 @@ require (
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/power-devops/perfstat v0.0.0-20210106213030-5aafc221ea8c // indirect
 	github.com/soheilhy/cmux v0.1.5 // indirect
-	github.com/spf13/afero v1.9.2 // indirect
+	github.com/spf13/afero v1.10.0 // indirect
 	github.com/spf13/cast v1.3.0 // indirect
 	github.com/spf13/jwalterweatherman v1.0.0 // indirect
 	github.com/stretchr/objx v0.5.2 // indirect
