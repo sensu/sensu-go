@@ -1911,9 +1911,13 @@ github.com/sean-/seed v0.0.0-20170313163322-e2103e2c3529/go.mod h1:DxrIzT+xaE7yg
 github.com/sensu/core/v2 v2.20.0/go.mod h1:fzr3qioLAHyLsBfq9I6ELVjL01NUNjqmQx4kj2tbDLo=
 github.com/sensu/core/v2 v2.21.0 h1:BIcdvAewMp8MugqJB3kRqRnIvV5l7nQN4V7So4LYnbM=
 github.com/sensu/core/v2 v2.21.0/go.mod h1:qKOP6078zUEguWiF3126O9QjtKHsN/Shgs2IbL2cwJU=
+github.com/sensu/core/v2 v2.21.1-0.20260522135725-9d31362178b4 h1:SjShXv9r1wH5pQy6A14kXVe6td5//xe+7ZosFch7Re0=
+github.com/sensu/core/v2 v2.21.1-0.20260522135725-9d31362178b4/go.mod h1:BPmWonh1PmFpIZ8WfsYa1Ttjp+bfA9shWBixKzWBbFQ=
 github.com/sensu/core/v3 v3.9.0/go.mod h1:AuupbIzmjYdzEkaEdmpzP/ZgrqQgHTovXVejzyTN6u4=
 github.com/sensu/core/v3 v3.10.0 h1:zbSK5hBHMWtMKb6Ia2xRpjp+h80MIGnxQ/LadD5syYo=
 github.com/sensu/core/v3 v3.10.0/go.mod h1:W9Yi0xrERalAADj/k4LmeHpX1DMIb6rYD9Rr7bScFPM=
+github.com/sensu/core/v3 v3.10.1-0.20260522135725-9d31362178b4 h1:im81AQX6XfnhbDVcVnkJgPNhlosNmS2QdZ2qfsxJhqk=
+github.com/sensu/core/v3 v3.10.1-0.20260522135725-9d31362178b4/go.mod h1:O4kUbnvxZwIumHnrnRJUekuaPtWv9mjCiQBBwXVUIog=
 github.com/sensu/etcd/api/v3 v3.0.0 h1:Y6p0RUtYaIaeuh4xIhxpJIVk/RigFaYBIxdJxl0zFYA=
 github.com/sensu/etcd/api/v3 v3.0.0/go.mod h1:qyQj1HZPUV3B5cbAL8scG62+fyz5dSxxu0w8pn28N6Q=
 github.com/sensu/etcd/client/pkg/v3 v3.0.0 h1:w22dKh6PfpcoXaNzEUcoeWKgg1LJfTMKVUJHcLHvBMw=
