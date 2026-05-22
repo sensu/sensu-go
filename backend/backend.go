@@ -820,6 +820,12 @@ func (b *Backend) RunWithInitializer(initialize func(context.Context, *Config) (
 	sighup := make(chan os.Signal, 1)
 	signal.Notify(sighup, syscall.SIGHUP)
 
+	go func() {
+		<-sighup
+		logger.Info("received SIGHUP, terminating backend process for restart")
+		_ = syscall.Kill(syscall.Getpid(), syscall.SIGTERM)
+	}()
+
 	err := backoff.Retry(func(int) (bool, error) {
 		err := b.runOnce()
 		b.Stop()
