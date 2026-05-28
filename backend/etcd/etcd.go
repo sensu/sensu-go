@@ -199,6 +199,12 @@ func NewEtcd(config *Config) (*Etcd, error) {
 	}
 
 	cfg := embed.NewConfig()
+	if cfg.WarningApplyDuration == 0 {
+		cfg.WarningApplyDuration = embed.DefaultWarningApplyDuration
+	}
+	if cfg.WarningUnaryRequestDuration == 0 {
+		cfg.WarningUnaryRequestDuration = embed.DefaultWarningUnaryRequestDuration
+	}
 	if config.Name != "" {
 		cfg.Name = config.Name
 	}
