@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 and this project adheres to [Semantic
 Versioning](http://semver.org/spec/v2.0.0.html).
+## [Unreleased]
+
+### Added
+- Addition of a new watcher configuration to monitor the user updates
+- Added the exit mechanism to disconnect agent when user is disabled
+- Added a struct in store which will get passed down for userConfigs
+
+### Changed
+- The session config to watch over the user updated and the wizzard bus
+
+
 ## [6.14.1] - 2026-05-04
 
 ### Changed
@@ -83,17 +94,6 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 
 ## [6.11.0] - 2024-01-31
-
-### 2024-03-07
-
-### Added
-- Addition of a new watcher configuration to monitor the user updates
-- Added the exit mechanism to disconnect agent when user is disabled
-- Added a struct in store which will get passed down for userConfigs
-
-### Changed
-- The session config to watch over the user updated and the wizzard bus
-
 
 ### Changed
 - Upgraded CI Go version to 1.21.3
