@@ -2,11 +2,12 @@ package agentd
 
 import (
 	"bytes"
+	"github.com/sensu/sensu-go/util/logging"
 
 	"github.com/sirupsen/logrus"
 )
 
-var logger = logrus.WithFields(logrus.Fields{
+var logger = logging.GetLogger("agentd").WithFields(logrus.Fields{
 	"component": "agentd",
 })
 

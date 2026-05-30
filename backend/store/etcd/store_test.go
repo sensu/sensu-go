@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"testing"
+	"time"
 
 	"github.com/gogo/protobuf/proto"
 	corev2 "github.com/sensu/core/v2"
@@ -28,6 +29,9 @@ func testWithEtcd(t *testing.T, f func(store.Store)) {
 
 	s := NewStore(client, e.Name())
 
+	s.cfg.MaxSilencedExpiryTimeAllowed = time.Duration(3000 * time.Second)
+	s.cfg.DefaultSilencedExpiryTime = time.Duration(3000 * time.Second)
+
 	// Mock a default namespace
 	require.NoError(t, s.CreateNamespace(context.Background(), types.FixtureNamespace("default")))
 
@@ -42,6 +46,9 @@ func testWithEtcdStore(t *testing.T, f func(*Store)) {
 
 	s := NewStore(client, e.Name())
 
+	s.cfg.MaxSilencedExpiryTimeAllowed = time.Duration(3000 * time.Second)
+	s.cfg.DefaultSilencedExpiryTime = time.Duration(3000 * time.Second)
+
 	// Mock a default namespace
 	require.NoError(t, s.CreateNamespace(context.Background(), types.FixtureNamespace("default")))
 
@@ -55,6 +62,9 @@ func testWithEtcdClient(t *testing.T, f func(store.Store, *clientv3.Client)) {
 	client := e.NewEmbeddedClient()
 
 	s := NewStore(client, e.Name())
+
+	s.cfg.MaxSilencedExpiryTimeAllowed = time.Duration(3000 * time.Second)
+	s.cfg.DefaultSilencedExpiryTime = time.Duration(3000 * time.Second)
 
 	// Mock a default namespace
 	require.NoError(t, s.CreateNamespace(context.Background(), types.FixtureNamespace("default")))

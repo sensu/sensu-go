@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
+	glogger "github.com/sensu/sensu-go/util/logging"
 	"github.com/sirupsen/logrus"
 	clientv3 "go.etcd.io/etcd/client/v3"
 
@@ -22,7 +23,6 @@ import (
 	"github.com/sensu/sensu-go/backend/store/cache"
 	storev2 "github.com/sensu/sensu-go/backend/store/v2"
 	metricspkg "github.com/sensu/sensu-go/metrics"
-	utillogging "github.com/sensu/sensu-go/util/logging"
 )
 
 const (
@@ -101,11 +101,11 @@ const (
 	defaultStoreTimeout = time.Minute
 )
 
-var (
-	logger = logrus.WithFields(logrus.Fields{
-		"component": ComponentName,
-	})
+var logger = glogger.GetLogger(ComponentName).WithFields(logrus.Fields{
+	"component": ComponentName,
+})
 
+var (
 	// EventsProcessed counts the number of sensu go events processed.
 	EventsProcessed = prometheus.NewCounterVec(
 		prometheus.CounterOpts{
@@ -364,7 +364,7 @@ func (e *Eventd) Start() error {
 func withEventFields(e interface{}, logger *logrus.Entry) *logrus.Entry {
 	event, _ := e.(*corev2.Event)
 	if event != nil {
-		fields := utillogging.EventFields(event, false)
+		fields := glogger.EventFields(event, false)
 		logger = logger.WithFields(fields)
 	}
 	return logger
@@ -526,7 +526,7 @@ func (e *Eventd) handleMessage(msg interface{}) (fEvent *corev2.Event, fErr erro
 		return event, fmt.Errorf("received non-Event on event channel: %v", msg)
 	}
 
-	fields := utillogging.EventFields(event, false)
+	fields := glogger.EventFields(event, false)
 	logger.WithFields(fields).Info("eventd received event")
 
 	// Validate the received event
@@ -765,6 +765,15 @@ func (e *Eventd) handleFailure(ctx context.Context, event *corev2.Event) error {
 	if err != nil {
 		return err
 	}
+
+	// Apply silenced entries to the TTL failure event, just as handleMessage
+	// does for normal check events, so that the not_silenced filter can
+	// correctly suppress alerts during maintenance windows.
+	getSilenced(ctx, failedCheckEvent, e.silencedCache)
+	if len(failedCheckEvent.Check.Silenced) > 0 {
+		failedCheckEvent.Check.IsSilenced = true
+	}
+
 	updatedEvent, _, err := e.eventStore.UpdateEvent(ctx, failedCheckEvent)
 	if err != nil {
 		if _, ok := err.(*store.ErrInternal); ok {
@@ -804,7 +813,28 @@ func (e *Eventd) createFailedCheckEvent(ctx context.Context, event *corev2.Event
 	output := fmt.Sprintf("Last check execution was %d seconds ago", time.Now().Unix()-event.Check.Executed)
 
 	check.Output = output
-	check.Status = 1
+
+	// Use ttl_status if configured, otherwise default to warning (status 1)
+	// ttl_status allows users to configure whether TTL failures should be warning or critical
+	if event.Check.TtlStatus > 0 {
+		// ttl_status is set - use it to determine the status
+		// Valid values: 1 = warning, 2 = critical
+		if event.Check.TtlStatus == 1 || event.Check.TtlStatus == 2 {
+			check.Status = uint32(event.Check.TtlStatus)
+		} else {
+			// Invalid ttl_status value, default to warning
+			logger.WithFields(logrus.Fields{
+				"check":      event.Check.Name,
+				"entity":     event.Entity.Name,
+				"ttl_status": event.Check.TtlStatus,
+			}).Warn("invalid ttl_status value, defaulting to warning (1)")
+			check.Status = 1
+		}
+	} else {
+		// No ttl_status configured, default to warning (status 1)
+		check.Status = 1
+	}
+
 	check.State = corev2.EventFailingState
 	check.Executed = time.Now().Unix()
 

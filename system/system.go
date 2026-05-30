@@ -7,9 +7,9 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"io/ioutil"
 	"net"
 	"net/http"
+	"os"
 	"os/exec"
 	"runtime"
 	"strings"
@@ -159,7 +159,7 @@ func cloudMetadataFallback(outerCtx context.Context) string {
 	// Older EC2 instances have this file available to unprivileged users
 	// See https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/identify_ec2_instances.html
 	logger.Debug("Reading /sys/hypervisor/uuid")
-	b, err := ioutil.ReadFile("/sys/hypervisor/uuid")
+	b, err := os.ReadFile("/sys/hypervisor/uuid")
 	if err == nil && bytes.HasPrefix(b, []byte("ec2")) {
 		logger.Debug("Running on EC2")
 		return "EC2"

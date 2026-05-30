@@ -350,9 +350,9 @@ func TestProcessRegistration(t *testing.T) {
 	}
 }
 
-func TestCreateKeepaliveEvent(t *testing.T) {
+func (k *Keepalived) TestCreateKeepaliveEvent(t *testing.T) {
 	event := corev2.FixtureEvent("entity1", "keepalive")
-	keepaliveEvent := createKeepaliveEvent(event)
+	keepaliveEvent := k.createKeepaliveEvent(event)
 	assert.Equal(t, "keepalive", keepaliveEvent.Check.Name)
 	assert.Equal(t, uint32(60), keepaliveEvent.Check.Interval)
 	assert.Equal(t, []string{"keepalive"}, keepaliveEvent.Check.Handlers)
@@ -362,10 +362,93 @@ func TestCreateKeepaliveEvent(t *testing.T) {
 	assert.NotEqual(t, int64(0), keepaliveEvent.Check.Issued)
 
 	event.Check = nil
-	keepaliveEvent = createKeepaliveEvent(event)
+	keepaliveEvent = k.createKeepaliveEvent(event)
 	assert.Equal(t, "keepalive", keepaliveEvent.Check.Name)
 	assert.Equal(t, uint32(20), keepaliveEvent.Check.Interval)
 	assert.Equal(t, uint32(120), keepaliveEvent.Check.Timeout)
+}
+
+func TestDeadCallbackWarningTimeoutLogic(t *testing.T) {
+	messageBus, err := messaging.NewWizardBus(messaging.WizardBusConfig{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := messageBus.Start(); err != nil {
+		t.Fatal(err)
+	}
+	defer messageBus.Stop()
+
+	tsub := testSubscriber{
+		ch: make(chan interface{}, 1),
+	}
+	if _, err := messageBus.Subscribe(messaging.TopicEvent, "testSubscriber", tsub); err != nil {
+		t.Fatal(err)
+	}
+
+	// Create a mock entity config that won't trigger deregistration
+	entityConfig := corev3.FixtureEntityConfig("entity1")
+	entityConfig.Deregister = false // Important: don't deregister
+
+	wrapper, err := storv2.WrapResource(
+		entityConfig,
+		[]wrap.Option{wrap.CompressNone, wrap.EncodeJSON}...)
+	require.NoError(t, err)
+
+	store := &storetest.Store{}
+	store.On("Get", mock.MatchedBy(func(req storv2.ResourceRequest) bool {
+		return req.StoreName == new(corev3.EntityConfig).StoreName()
+	})).Return(wrapper, nil)
+
+	// Create a mock event store that returns a keepalive event
+	event := corev2.FixtureEvent("entity1", "keepalive")
+	event.Check.Timeout = 60                                         // 60 second warning timeout
+	event.Check.Ttl = 120                                            // 120 second critical timeout
+	event.Entity.LastSeen = time.Now().Add(-90 * time.Second).Unix() // 90 seconds ago
+
+	eventStore := &mockstore.MockStore{}
+	eventStore.On("GetEventByEntityCheck", mock.Anything, mock.Anything, mock.Anything).Return(event, nil)
+
+	// Mock the store methods to avoid panics
+	mockStore := &mockstore.MockStore{}
+	mockStore.On("UpdateFailingKeepalive", mock.Anything, mock.Anything, mock.Anything).Return(nil)
+
+	keepalived, err := New(Config{
+		Store:           mockStore,
+		StoreV2:         store,
+		EventStore:      eventStore,
+		Bus:             messageBus,
+		LivenessFactory: fakeFactory,
+		WorkerCount:     1,
+		BufferSize:      1,
+		StoreTimeout:    time.Minute,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// Test case 1: Warning timeout enabled (should go to warning)
+	// Entity has been down for 90 seconds, warning timeout is 60, critical is 120
+	// Should trigger warning (status 1)
+	if got, want := keepalived.dead("default/entity1", liveness.Alive, true), false; got != want {
+		t.Fatalf("got bury: %v, want bury: %v", got, want)
+	}
+
+	// Test case 2: Warning timeout disabled (should go directly to critical)
+	event.Check.Timeout = 0                                          // Disable warning timeout
+	event.Entity.LastSeen = time.Now().Add(-90 * time.Second).Unix() // Still 90 seconds ago
+
+	// Should still trigger warning since 90 < 120 (critical timeout)
+	if got, want := keepalived.dead("default/entity1", liveness.Alive, true), false; got != want {
+		t.Fatalf("got bury: %v, want bury: %v", got, want)
+	}
+
+	// Test case 3: Entity down long enough to trigger critical
+	event.Entity.LastSeen = time.Now().Add(-150 * time.Second).Unix() // 150 seconds ago
+
+	// Should trigger critical (status 2) since 150 > 120
+	if got, want := keepalived.dead("default/entity1", liveness.Alive, true), false; got != want {
+		t.Fatalf("got bury: %v, want bury: %v", got, want)
+	}
 }
 
 func TestCreateRegistrationEvent(t *testing.T) {

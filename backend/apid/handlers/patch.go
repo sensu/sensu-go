@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/url"
 	"reflect"
@@ -35,7 +35,7 @@ var acceptedContentTypes = []string{mergePatchContentType}
 // PatchResource patches a given resource, using the request body as the patch
 func (h Handlers) PatchResource(r *http.Request) (interface{}, error) {
 	// Read the request body
-	body, err := ioutil.ReadAll(r.Body)
+	body, err := io.ReadAll(r.Body)
 	if err != nil {
 		return nil, actions.NewError(
 			actions.InvalidArgument,

@@ -3,7 +3,6 @@ package main
 import (
 	"flag"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
@@ -37,7 +36,7 @@ func main() { // nolint
 	}
 
 	// Find GraphQL files
-	files, err := ioutil.ReadDir(config.path)
+	files, err := os.ReadDir(config.path)
 	if err != nil {
 		logger.Fatal(err)
 	}

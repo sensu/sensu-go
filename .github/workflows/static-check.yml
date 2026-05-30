@@ -12,17 +12,19 @@ jobs:
   staticcheck:
     name: staticcheck (project)
     runs-on: ubuntu-latest
+    env:
+      GO_VERSION: 1.26.3
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 1
-      - uses: WillAbides/setup-go-faster@v1.8.0
+      - uses: actions/setup-go@v5
         with:
-          go-version: "1.21.x"
-      - uses: dominikh/staticcheck-action@v1.0.0
+          go-version: "1.26.3"
+      - uses: dominikh/staticcheck-action@v1.3.1
         with:
-          version: "2023.1.6"
+          version: "2025.1.1"
           install-go: false
-          cache-key: "1.21.x"
+          cache-key: "1.26.3"
 env:
-  GO_VERSION: 1.21.3
+  GO_VERSION: 1.26.3

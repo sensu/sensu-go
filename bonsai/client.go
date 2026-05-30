@@ -1,3 +1,6 @@
+//go:build !fips140
+// +build !fips140
+
 package bonsai
 
 import (

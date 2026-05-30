@@ -3,7 +3,8 @@ package cmd
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
+	globalLogging "github.com/sensu/sensu-go/util/logging"
+	"io"
 	"log"
 	"net/http"
 	"os"
@@ -71,6 +72,16 @@ const (
 	flagLogMillisecondTime    = "log-millisecond-timestamps"
 	flagLabels                = "labels"
 	flagAnnotations           = "annotations"
+
+	// silenced expiry flags
+	flagMaxSilencedExpiryTimeAllowed = "max-silenced-expiry-time-allowed"
+	flagDefaultSilencedExpiryTime    = "default-silenced-expiry-time"
+
+	// access token and refresh token expiry time
+	flagAccessTokenExpiry     = "access-token-expiry"
+	flagRefreshTokenExpiry    = "refresh-token-expiry"
+	flagHighKeepaliveThresold = "high-flap-thresold"
+	flagLowKeepaliveThresold  = "low-flap-thresold"
 
 	// Etcd flag constants
 	flagEtcdClientURLs               = "etcd-client-urls"
@@ -255,6 +266,9 @@ func StartCommand(initialize InitializeFunc) *cobra.Command {
 				CacheDir:              viper.GetString(flagCacheDir),
 				StateDir:              viper.GetString(flagStateDir),
 
+				DefaultSilencedExpiryTime:    viper.GetDuration(flagDefaultSilencedExpiryTime),
+				MaxSilencedExpiryTimeAllowed: viper.GetDuration(flagMaxSilencedExpiryTimeAllowed),
+
 				EtcdAdvertiseClientURLs:        viper.GetStringSlice(flagEtcdAdvertiseClientURLs),
 				EtcdListenClientURLs:           viper.GetStringSlice(flagEtcdListenClientURLs),
 				EtcdClientURLs:                 fallbackStringSlice(flagEtcdClientURLs, flagEtcdAdvertiseClientURLs),
@@ -286,6 +300,12 @@ func StartCommand(initialize InitializeFunc) *cobra.Command {
 				EventLogBufferWait:             viper.GetDuration(flagEventLogBufferWait),
 				EventLogFile:                   viper.GetString(flagEventLogFile),
 				EventLogParallelEncoders:       viper.GetBool(flagEventLogParallelEncoders),
+
+				AccessTokenExpiry:  viper.GetDuration(flagAccessTokenExpiry),
+				RefreshTokenExpiry: viper.GetDuration(flagRefreshTokenExpiry),
+
+				HighKeepaliveFlapThresold: viper.GetUint32(flagHighKeepaliveThresold),
+				LowKeepaliveFlapThresold:  viper.GetUint32(flagLowKeepaliveThresold),
 			}
 
 			if flag := cmd.Flags().Lookup(flagLabels); flag != nil && flag.Changed {
@@ -347,6 +367,12 @@ func StartCommand(initialize InitializeFunc) *cobra.Command {
 				default:
 					cfg.EtcdLogLevel = level.String()
 				}
+			}
+
+			// initialize global log level registry
+			if viper.GetString(flagLogLevel) != "" {
+				globalLogging.InitLogLevel(viper.GetString(flagLogLevel))
+				globalLogging.SetAllLoggersLevel(viper.GetString(flagLogLevel))
 			}
 
 			if viper.GetBool(flagLogMillisecondTime) {
@@ -450,6 +476,10 @@ func handleConfig(cmd *cobra.Command, arguments []string, server bool) error {
 		viper.SetDefault(flagEventLogParallelEncoders, false)
 	}
 
+	// Access/Refresh token default expiry values
+	viper.SetDefault(flagAccessTokenExpiry, "5m")
+	viper.SetDefault(flagRefreshTokenExpiry, "720m")
+
 	// Etcd defaults
 	viper.SetDefault(flagEtcdAdvertiseClientURLs, defaultEtcdAdvertiseClientURL)
 	viper.SetDefault(flagEtcdListenClientURLs, defaultEtcdClientURL)
@@ -540,6 +570,14 @@ func flagSet(server bool) *pflag.FlagSet {
 	_ = flagSet.SetAnnotation(flagEtcdTrustedCAFile, "categories", []string{"store"})
 	flagSet.String(flagEtcdClientURLs, viper.GetString(flagEtcdClientURLs), "client URLs to use when operating as an etcd client")
 	_ = flagSet.SetAnnotation(flagEtcdClientURLs, "categories", []string{"store"})
+
+	// silenced configuration flags
+	flagSet.Duration(flagDefaultSilencedExpiryTime, viper.GetDuration(flagDefaultSilencedExpiryTime), "Default expiry time for silenced if not set in minutes")
+	flagSet.Duration(flagMaxSilencedExpiryTimeAllowed, viper.GetDuration(flagMaxSilencedExpiryTimeAllowed), "Maximum expiry time allowed for silenced in minutes")
+
+	// Access/Token configuration flags
+	flagSet.Duration(flagAccessTokenExpiry, viper.GetDuration(flagAccessTokenExpiry), "Set Access Token expiry in minutes")
+	flagSet.Duration(flagRefreshTokenExpiry, viper.GetDuration(flagRefreshTokenExpiry), "Set Refresh Token expiry in minutes")
 
 	if server {
 		// Main Flags
@@ -645,7 +683,7 @@ func flagSet(server bool) *pflag.FlagSet {
 		_ = flagSet.String(flagEventLogBufferWait, "10ms", "full buffer wait time")
 	}
 
-	flagSet.SetOutput(ioutil.Discard)
+	flagSet.SetOutput(io.Discard)
 
 	return flagSet
 }

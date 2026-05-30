@@ -1,7 +1,10 @@
 package util_relay
 
-import "github.com/sirupsen/logrus"
+import (
+	"github.com/sensu/sensu-go/util/logging"
+	"github.com/sirupsen/logrus"
+)
 
-var logger = logrus.WithFields(logrus.Fields{
-	"component": "apid.graphql.util.relay",
-})
+func getLogger() *logrus.Logger {
+	return logging.GetLogger("apid.graphql.util.relay")
+}

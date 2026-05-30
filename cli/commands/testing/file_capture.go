@@ -1,7 +1,7 @@
 package testing
 
 import (
-	"io/ioutil"
+	"io"
 	"os"
 )
 
@@ -10,12 +10,11 @@ import (
 //
 // Usage:
 //
-//   stdout := NewFileCapture(&os.Stdin)
-//   stdout.Start()
-//   fmt.Println("omgomgomg")
-//   stdout.Stop()
-//   assert.Equal("omgomgomg", stdout.Output())
-//
+//	stdout := NewFileCapture(&os.Stdin)
+//	stdout.Start()
+//	fmt.Println("omgomgomg")
+//	stdout.Stop()
+//	assert.Equal("omgomgomg", stdout.Output())
 type FileCapture struct {
 	file          **os.File
 	originalValue *os.File
@@ -52,7 +51,7 @@ func (fc *FileCapture) Stop() {
 
 	// store the contents of the reader as a string
 	// in fc.output
-	bytes, _ := ioutil.ReadAll(fc.reader)
+	bytes, _ := io.ReadAll(fc.reader)
 	fc.output = string(bytes)
 }
 

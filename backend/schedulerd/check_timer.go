@@ -1,7 +1,7 @@
 package schedulerd
 
 import (
-	"crypto/md5"
+	"crypto/sha256"
 	"encoding/binary"
 
 	time "github.com/echlebek/timeproxy"
@@ -33,7 +33,8 @@ type IntervalTimer struct {
 func NewIntervalTimer(name string, interval uint) *IntervalTimer {
 	// Calculate a check execution splay to ensure
 	// execution is consistent between process restarts.
-	sum := md5.Sum([]byte(name))
+	// Using SHA-256 for FIPS 140-3 compliance.
+	sum := sha256.Sum256([]byte(name))
 	splay := binary.LittleEndian.Uint64(sum[:])
 
 	timer := &IntervalTimer{splay: splay}

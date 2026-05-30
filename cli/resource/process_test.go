@@ -2,7 +2,7 @@ package resource
 
 import (
 	"encoding/json"
-	"io/ioutil"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -35,16 +35,34 @@ func TestProcessURL(t *testing.T) {
 }
 
 func TestProcessFile(t *testing.T) {
-	td, err := ioutil.TempDir("", "")
+	td, err := os.MkdirTemp("", "")
 	require.NoError(t, err)
 	defer os.RemoveAll(td)
 
 	fp := filepath.Join(td, "input")
-	err = ioutil.WriteFile(fp, []byte(`{"type": "Namespace", "spec": {"name": "foo"}}`), 0644)
+	err = os.WriteFile(fp, []byte(`{"type": "Namespace", "spec": {"name": "foo"}}`), 0644)
 	assert.NoError(t, err)
 
-	_, err = ProcessFile(fp, false)
-	assert.NoError(t, err)
+	fpt := filepath.Join(td, "check-memory.yaml")
+	invalidYAML := `
+type: CheckConfig
+api_version: core/v2
+metadata:
+  name: bad-check
+  namespace: default
+spec:
+  command: "echo Hello, World!"
+  interval: 10
+  subscriptions:  # This is invalid because subscriptions should be a list, not a string
+    invalid: "this should be a list"
+`
+	err = os.WriteFile(fpt, []byte(invalidYAML), 0644)
+	require.NoError(t, err)
+	_, err = ProcessFile(fpt, false)
+	assert.Error(t, err)
+	expectedErrorMessage := fmt.Sprintf("in %s: some resources couldn't be parsed", fpt)
+	assert.Contains(t, err.Error(), expectedErrorMessage)
+
 }
 
 func TestManagedByLabelPutter_label(t *testing.T) {

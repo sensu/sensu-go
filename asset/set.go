@@ -11,6 +11,7 @@ import (
 
 	"github.com/sensu/sensu-go/types"
 	"github.com/sensu/sensu-go/util/environment"
+	"go.uber.org/multierr"
 )
 
 // RuntimeAssetSet is a set of runtime assets.
@@ -50,16 +51,17 @@ func (r RuntimeAssetSet) Scripts() (map[string]io.ReadCloser, error) {
 // GetAll gets a list of assets with the provided getter.
 func GetAll(ctx context.Context, getter Getter, assets []types.Asset) (RuntimeAssetSet, error) {
 	runtimeAssets := make([]*RuntimeAsset, 0, len(assets))
+	var errors error
 	for _, asset := range assets {
 		runtimeAsset, err := getter.Get(ctx, &asset)
 		if err != nil {
-			return nil, err
+			errors = multierr.Append(errors, fmt.Errorf("%s failed to get, due to: %s", asset.GetName(), err.Error()))
 		}
 		if runtimeAsset != nil {
 			runtimeAssets = append(runtimeAssets, runtimeAsset)
 		}
 	}
-	return runtimeAssets, nil
+	return runtimeAssets, errors
 }
 
 // Env returns a list of environment variables (e.g. 'PATH=...', 'CPATH=...')

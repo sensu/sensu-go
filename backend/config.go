@@ -132,4 +132,15 @@ type Config struct {
 	EventLogBufferWait       time.Duration
 	EventLogFile             string
 	EventLogParallelEncoders bool
+
+	// expiry setting for silences
+	DefaultSilencedExpiryTime    time.Duration
+	MaxSilencedExpiryTimeAllowed time.Duration
+
+	// Access/Refresh Token Expiry in Minutes
+	AccessTokenExpiry  time.Duration
+	RefreshTokenExpiry time.Duration
+
+	HighKeepaliveFlapThresold uint32
+	LowKeepaliveFlapThresold  uint32
 }

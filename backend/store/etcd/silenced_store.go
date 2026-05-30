@@ -4,9 +4,9 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/gogo/protobuf/proto"
 	"time"
 
-	"github.com/gogo/protobuf/proto"
 	corev2 "github.com/sensu/core/v2"
 	"github.com/sensu/sensu-go/backend/etcd"
 	"github.com/sensu/sensu-go/backend/store"
@@ -17,6 +17,7 @@ import (
 const (
 	silencedPathPrefix = "silenced"
 	maxTxnOps          = 64 // this is half of the etcd default maximum
+	silencedLimitError = "silenced crossed maximum duration allowed"
 )
 
 var (
@@ -82,6 +83,7 @@ func (s *Store) GetSilencedEntries(ctx context.Context) ([]*corev2.Silenced, err
 	if err != nil {
 		return nil, err
 	}
+	logger.Info("I am in listing")
 	return silencedArray, nil
 }
 
@@ -208,12 +210,40 @@ func (s *Store) UpdateSilencedEntry(ctx context.Context, silenced *corev2.Silenc
 		return &store.ErrNotValid{Err: err}
 	}
 
+	now := time.Now()
+
+	// Case 1: --expire (duration)
 	if silenced.ExpireAt == 0 && silenced.Expire > 0 {
-		start := time.Now()
+		requestedDuration := time.Duration(silenced.Expire) * time.Second
+
+		// Check against max-silenced-expiry-time-allowed param from config
+		if s.cfg.MaxSilencedExpiryTimeAllowed > 0 && requestedDuration > s.cfg.MaxSilencedExpiryTimeAllowed {
+			return &store.ErrThreshold{Err: errors.New(silencedLimitError)}
+		}
+		start := now
 		if silenced.Begin > 0 {
 			start = time.Unix(silenced.Begin, 0)
 		}
-		silenced.ExpireAt = start.Add(time.Duration(silenced.Expire) * time.Second).Unix()
+		silenced.ExpireAt = start.Add(requestedDuration).Unix()
+	}
+
+	// Case 2: --expire-at (timestamp)
+	if silenced.ExpireAt > 0 {
+		expiryDuration := time.Unix(silenced.ExpireAt, 0).Sub(now)
+		if s.cfg.MaxSilencedExpiryTimeAllowed > 0 && expiryDuration > s.cfg.MaxSilencedExpiryTimeAllowed {
+			return &store.ErrThreshold{Err: errors.New(silencedLimitError)}
+		}
+	}
+
+	// default-expiry-time-allowed params check
+	if silenced.ExpireAt == 0 {
+		start := now
+		if silenced.Begin > 0 {
+			start = time.Unix(silenced.Begin, 0)
+		}
+		if s.cfg.DefaultSilencedExpiryTime > 0 {
+			silenced.ExpireAt = start.Add(s.cfg.DefaultSilencedExpiryTime).Unix()
+		}
 	}
 
 	silencedBytes, err := proto.Marshal(silenced)

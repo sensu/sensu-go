@@ -6,6 +6,11 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
+	"net/http"
+	"net/http/httptest"
+	"testing"
+
 	corev2 "github.com/sensu/core/v2"
 	corev3 "github.com/sensu/core/v3"
 	"github.com/sensu/sensu-go/backend/apid/middlewares"
@@ -17,10 +22,6 @@ import (
 	"github.com/sensu/sensu-go/transport"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
-	"io/ioutil"
-	"net/http"
-	"net/http/httptest"
-	"testing"
 )
 
 func TestAgentdMiddlewares(t *testing.T) {
@@ -241,7 +242,7 @@ func TestReplaceHealthController(t *testing.T) {
 	assert.Equal(t, 200, res.StatusCode)
 
 	assert.NotNil(t, res.Body)
-	body, err := ioutil.ReadAll(res.Body)
+	body, err := io.ReadAll(res.Body)
 	assert.NoError(t, err)
 
 	receivedHealth := &corev2.HealthResponse{}

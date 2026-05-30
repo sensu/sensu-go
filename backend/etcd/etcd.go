@@ -9,7 +9,7 @@ package etcd
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"os"
 	"path/filepath"
 	"time"
@@ -63,7 +63,7 @@ const (
 )
 
 func init() {
-	grpclog.SetLoggerV2(grpclog.NewLoggerV2(ioutil.Discard, ioutil.Discard, ioutil.Discard))
+	grpclog.SetLoggerV2(grpclog.NewLoggerV2(io.Discard, io.Discard, io.Discard))
 
 	logutil.DefaultZapLoggerConfig.Encoding = "sensu-json"
 	logutil.DefaultZapLoggerConfig.EncoderConfig.TimeKey = "time"
@@ -154,7 +154,7 @@ type Etcd struct {
 
 // BackendID returns the ID of the etcd cluster member
 func (e *Etcd) BackendID() (result string) {
-	return e.etcd.Server.ID().String()
+	return e.etcd.Server.MemberID().String()
 }
 
 // GetClusterVersion returns the cluster version of the etcd server
@@ -199,6 +199,12 @@ func NewEtcd(config *Config) (*Etcd, error) {
 	}
 
 	cfg := embed.NewConfig()
+	if cfg.WarningApplyDuration == 0 {
+		cfg.WarningApplyDuration = embed.DefaultWarningApplyDuration
+	}
+	if cfg.WarningUnaryRequestDuration == 0 {
+		cfg.WarningUnaryRequestDuration = embed.DefaultWarningUnaryRequestDuration
+	}
 	if config.Name != "" {
 		cfg.Name = config.Name
 	}
@@ -361,6 +367,7 @@ func (e *Etcd) NewEmbeddedClientWithContext(ctx context.Context) *clientv3.Clien
 	// Set etcd client log level
 	logConfig := logutil.DefaultZapLoggerConfig
 	logConfig.Level.SetLevel(LogLevelToZap(e.cfg.ClientLogLevel))
+
 	clientLogger, err := logConfig.Build()
 	if err != nil {
 		panic(fmt.Sprintf("error building etcd client logger: %s", err))
@@ -373,11 +380,10 @@ func (e *Etcd) NewEmbeddedClientWithContext(ctx context.Context) *clientv3.Clien
 
 	lc := adapter.LeaseServerToLeaseClient(v3rpc.NewQuotaLeaseServer(e.etcd.Server))
 	c.Lease = clientv3.NewLeaseFromLeaseClient(lc, c, time.Second)
-
 	wc := adapter.WatchServerToWatchClient(v3rpc.NewWatchServer(e.etcd.Server))
 	c.Watcher = &watchWrapper{clientv3.NewWatchFromWatchClient(wc, c)}
 
-	mc := adapter.MaintenanceServerToMaintenanceClient(v3rpc.NewMaintenanceServer(e.etcd.Server))
+	mc := adapter.MaintenanceServerToMaintenanceClient(v3rpc.NewMaintenanceServer(e.etcd.Server, nil))
 	c.Maintenance = clientv3.NewMaintenanceFromMaintenanceClient(mc, c)
 
 	clc := adapter.ClusterServerToClusterClient(v3rpc.NewClusterServer(e.etcd.Server))

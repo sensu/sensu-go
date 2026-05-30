@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -54,7 +54,7 @@ func TestPutTessen(t *testing.T) {
 	}
 
 	if resp.StatusCode >= 400 {
-		body, _ := ioutil.ReadAll(resp.Body)
+		body, _ := io.ReadAll(resp.Body)
 		t.Fatalf("bad status: %d (%q)", resp.StatusCode, string(body))
 	}
 
@@ -78,7 +78,7 @@ func TestGetTessen(t *testing.T) {
 	}
 
 	if resp.StatusCode >= 400 {
-		body, _ := ioutil.ReadAll(resp.Body)
+		body, _ := io.ReadAll(resp.Body)
 		t.Fatalf("bad status: %d (%q)", resp.StatusCode, string(body))
 	}
 
@@ -125,7 +125,7 @@ func TestPostTessenMetrics(t *testing.T) {
 	}
 
 	if resp.StatusCode >= 400 {
-		body, _ := ioutil.ReadAll(resp.Body)
+		body, _ := io.ReadAll(resp.Body)
 		t.Fatalf("bad status: %d (%q)", resp.StatusCode, string(body))
 	}
 

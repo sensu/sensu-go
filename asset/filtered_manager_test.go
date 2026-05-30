@@ -26,7 +26,7 @@ func (m *MockGetter) Get(ctx context.Context, asset *corev2.Asset) (*RuntimeAsse
 
 // NewTestFilteredManager creates a new FilteredManager for testing
 func NewTestFilteredManager() (*MockGetter, *types.Entity, *filteredManager) {
-	mockGetter := &MockGetter{asset: &RuntimeAsset{Path: "/foo/bar"}}
+	mockGetter := &MockGetter{asset: &RuntimeAsset{Path: "/foo/bar", LastAccessed: 0}}
 	entity := types.FixtureEntity("test-entity")
 	filteredManager := NewFilteredManager(mockGetter, entity)
 	return mockGetter, entity, filteredManager

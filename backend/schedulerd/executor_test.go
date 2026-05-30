@@ -7,9 +7,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"sync"
-	"testing"
-
 	corev2 "github.com/sensu/core/v2"
 	corev3 "github.com/sensu/core/v3"
 	"github.com/sensu/sensu-go/backend/messaging"
@@ -19,6 +16,8 @@ import (
 	"github.com/sensu/sensu-go/backend/store/etcd/testutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"sync"
+	"testing"
 )
 
 func TestAdhocExecutor(t *testing.T) {
@@ -66,7 +65,6 @@ func TestAdhocExecutor(t *testing.T) {
 	if err = newAdhocExec.adhocQueue.Enqueue(context.Background(), string(marshaledCheck)); err != nil {
 		assert.FailNow(t, err.Error())
 	}
-
 	msg := <-ch
 	result, ok := msg.(*corev2.CheckRequest)
 	assert.True(t, ok)
@@ -345,4 +343,61 @@ func TestCheckBuildRequestAdhoc_GH2201(t *testing.T) {
 	assert.Empty(request.Hooks)
 
 	assert.NoError(scheduler.msgBus.Stop())
+}
+
+func TestProcessCheck(t *testing.T) {
+	t.Parallel()
+	// Create a MockExecutor
+	store, err := testutil.NewStoreInstance()
+	if err != nil {
+		assert.FailNow(t, err.Error())
+	}
+	bus, err := messaging.NewWizardBus(messaging.WizardBusConfig{})
+	require.NoError(t, err)
+	pm := secrets.NewProviderManager(&mockEventReceiver{})
+	executor := NewAdhocRequestExecutor(context.Background(), store, &queue.Memory{}, bus, &cachev2.Resource{}, pm)
+	defer executor.Stop()
+	assert.NoError(t, executor.bus.Start())
+
+	//create check with required values
+	goodCheck := corev2.FixtureCheckConfig("goodCheck")
+	goodCheck.Labels = nil
+	goodCheck.Annotations = nil
+	goodCheck.Subscriptions = []string{"subscription1"}
+	goodCheck.Namespace = "Entity1"
+	goodCheckRequest := &corev2.CheckRequest{}
+	goodCheckRequest.Config = goodCheck
+	goodCheck.ProxyRequests = corev2.FixtureProxyRequests(true)
+
+	// Create a context for testing
+	ctx := context.Background()
+	newCtx := corev2.SetContextFromResource(ctx, goodCheck)
+
+	// Call the function being tested
+	err1 := processCheck(newCtx, executor, goodCheck)
+	_, err2 := executor.getEntities(newCtx)
+	err3 := executor.execute(goodCheck)
+	proxyVal := goodCheck.ProxyRequests
+	boolCheck := assert.NotNil(t, proxyVal)
+	if !boolCheck {
+		t.Fatal("Proxy Request execution returned nil")
+	}
+	// Assert expectations
+	assert.NoError(t, err, "Expected ,no error from processCheck")
+	assert.NoError(t, err2, "No Error from getEntities")
+	assert.NoError(t, err3, "No Error returned from execute call")
+
+	// Printing Errors if occurred
+	if err1 != nil {
+		t.Errorf("processCheck returned an unexpected error: %v", err1)
+		t.Fail()
+	}
+	if err2 != nil {
+		t.Errorf("Error in executing Get Entities : %v", err2)
+		t.Fail()
+	}
+	if err3 != nil {
+		t.Errorf("Error in execute call : %v", err3)
+		t.Fail()
+	}
 }

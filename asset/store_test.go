@@ -56,7 +56,7 @@ func TestGetAssets(t *testing.T) {
 			store.On("GetAssetByName", mock.Anything, "foo").Return(nilAsset, nil)
 			store.On("GetAssetByName", mock.Anything, "bar").Return(nilAsset, errors.New("error"))
 
-			assets := GetAssets(context.Background(), store, tc.assetList)
+			assets, _ := GetAssets(context.Background(), store, tc.assetList)
 			assert.EqualValues(t, tc.expectedAssets, assets)
 		})
 	}

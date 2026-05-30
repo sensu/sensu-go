@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/gorilla/mux"
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	clientv3 "go.etcd.io/etcd/client/v3"
 
@@ -57,10 +58,15 @@ type APId struct {
 
 	serveWaitTime time.Duration
 	ready         func()
+
+	AccessTokenExpiry  time.Duration
+	RefreshTokenExpiry time.Duration
 }
 
 // Option is a functional option.
 type Option func(*APId) error
+
+var logger = getLogger()
 
 // Config configures APId.
 type Config struct {
@@ -81,6 +87,41 @@ type Config struct {
 	ClusterVersion      string
 	GraphQLService      *graphql.Service
 	HealthRouter        *routers.HealthRouter
+	AccessTokenExpiry   time.Duration
+	RefreshTokenExpiry  time.Duration
+}
+
+var (
+	RequestCount = prometheus.NewCounterVec(
+		prometheus.CounterOpts{
+			Name: "sensu_go_http_requests_total",
+			Help: "Total number of HTTP requests",
+		},
+		[]string{"method", "path"},
+	)
+
+	RequestDuration = prometheus.NewHistogramVec(
+		prometheus.HistogramOpts{
+			Name:    "sensu_go_http_request_duration_seconds",
+			Help:    "Histogram of request durations",
+			Buckets: prometheus.DefBuckets, // [0.005, 0.01, ..., 10.24]
+		},
+		[]string{"method", "path"},
+	)
+
+	ClientErrorCount = prometheus.NewCounterVec(
+		prometheus.CounterOpts{
+			Name: "sensu_go_http_client_errors_total",
+			Help: "Total number of 4xx HTTP responses",
+		},
+		[]string{"method", "path", "status"},
+	)
+)
+
+func init() {
+	_ = prometheus.Register(RequestCount)
+	_ = prometheus.Register(RequestDuration)
+	_ = prometheus.Register(ClientErrorCount)
 }
 
 // New creates a new APId.
@@ -102,6 +143,8 @@ func New(c Config, opts ...Option) (*APId, error) {
 		clusterVersion:      c.ClusterVersion,
 		RequestLimit:        c.RequestLimit,
 		serveWaitTime:       c.ServeWaitTime,
+		AccessTokenExpiry:   c.AccessTokenExpiry,
+		RefreshTokenExpiry:  c.RefreshTokenExpiry,
 	}
 
 	// prepare TLS config
@@ -160,6 +203,14 @@ func NewRouter() *mux.Router {
 	// Register a default handler when no routes match
 	router.NotFoundHandler = middlewares.SimpleLogger{}.Then(http.HandlerFunc(notFoundHandler))
 
+	// Prometheus metrics collection middleware (APIMetrics) to track
+	// request count, request duration, and client error count for all API endpoints.
+	router.Use(middlewares.APIMetrics{
+		RequestCount:     RequestCount,
+		RequestDuration:  RequestDuration,
+		ClientErrorCount: ClientErrorCount,
+	}.Then)
+
 	return router
 }
 
@@ -174,7 +225,7 @@ func AuthenticationSubrouter(router *mux.Router, cfg Config) *mux.Router {
 	)
 
 	mountRouters(subrouter,
-		routers.NewAuthenticationRouter(cfg.Store, cfg.Authenticator),
+		routers.NewAuthenticationRouter(cfg.Store, cfg.Authenticator, cfg.AccessTokenExpiry, cfg.RefreshTokenExpiry),
 	)
 
 	return subrouter
@@ -212,6 +263,7 @@ func CoreSubrouter(router *mux.Router, cfg Config) *mux.Router {
 		routers.NewSilencedRouter(cfg.Store),
 		routers.NewTessenRouter(actions.NewTessenController(cfg.Store, cfg.Bus)),
 		routers.NewUsersRouter(cfg.Store),
+		routers.NewLogLevelChangeRouter(),
 	)
 
 	return subrouter
@@ -317,10 +369,10 @@ func notFoundHandler(w http.ResponseWriter, req *http.Request) {
 
 // Start APId.
 func (a *APId) Start() error {
-
 	if a.serveWaitTime <= 0 {
 		a.ready()
 	} else {
+
 		logger.Warnf("starting apid as temporarily unavailable for: %s", a.serveWaitTime)
 		go func() {
 			select {
