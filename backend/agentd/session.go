@@ -364,13 +364,14 @@ func (s *Session) sender() {
 				}
 				logger.Println("The update operation has been performed on user")
 			default:
-				panic("unhandled default case")
+				err := fmt.Errorf("session received unexpected user watch event action: %s", watchEvent.Action.String())
+				logger.WithError(err).Error("user update handling error")
+				continue
 			}
 
 			if watchEvent.User == nil {
 				logger.Error("session received nil user in watch event")
 			}
-			//
 			lagger := logger.WithFields(logrus.Fields{
 				"action":    watchEvent.Action.String(),
 				"user":      watchEvent.User.Username,
@@ -543,7 +544,6 @@ func (s *Session) Start() (err error) {
 	agentName := agentUUID(s.cfg.Namespace, s.cfg.AgentName)
 
 	// Subscribe the agent to its user_config topic
-
 	userTopic := messaging.UserConfigTopic(s.cfg.User)
 	logger.WithField("topic", userTopic).Debug("subscribing to topic")
 	userSubscription, usrErr := s.bus.Subscribe(userTopic, agentName, s.userConfig)
@@ -565,7 +565,6 @@ func (s *Session) Start() (err error) {
 	}
 
 	// Subscribe the agent to its entity_config topic
-
 	topic := messaging.EntityConfigTopic(s.cfg.Namespace, s.cfg.AgentName)
 	lager.WithField("topic", topic).Debug("subscribing to topic")
 
@@ -575,6 +574,8 @@ func (s *Session) Start() (err error) {
 		lager.WithError(err).Error("error starting subscription")
 		return err
 	}
+
+	// Determine if the entity already exists
 	s.entityConfig.subscriptions <- subscription
 	req := storev2.NewResourceRequest(s.ctx, s.cfg.Namespace, s.cfg.AgentName, (&corev3.EntityConfig{}).StoreName())
 	wrapper, err := s.storev2.Get(req)
