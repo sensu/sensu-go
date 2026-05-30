@@ -412,12 +412,6 @@ func TestSession_sender(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			//
-			//userTopic := messaging.UserConfigTopic(session.cfg.AgentName)
-			//_, err = session.bus.Subscribe(userTopic, session.cfg.AgentName, session.userConfig)
-			//if err != nil {
-			//	t.Fatal(err)
-			//}
 
 			go session.sender()
 
