@@ -8,7 +8,7 @@ import (
 )
 
 func TestNextCronTime(t *testing.T) {
-	now := mockTime.Now().UTC()
+	now := mockTime.Now()
 
 	// Valid cron string will return a time in the future, on an even minute
 	nextCron, err := NextCronTime(now, "* * * * *")
