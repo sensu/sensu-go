@@ -163,5 +163,3 @@ require (
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 	sigs.k8s.io/json v0.0.0-20211020170558-c049b76a60c6 // indirect
 )
-
-replace golang.org/x/crypto => golang.org/x/crypto v0.48.0
