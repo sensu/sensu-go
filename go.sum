@@ -1836,9 +1836,13 @@ github.com/sagikazarmark/locafero v0.12.0/go.mod h1:sZh36u/YSZ918v0Io+U9ogLYQJ9t
 github.com/sensu/core/v2 v2.20.0/go.mod h1:fzr3qioLAHyLsBfq9I6ELVjL01NUNjqmQx4kj2tbDLo=
 github.com/sensu/core/v2 v2.21.1 h1:lFzsgzUOqi4NUbWj64tZzYr2shga6LVoOz63ku3Gtrs=
 github.com/sensu/core/v2 v2.21.1/go.mod h1:BPmWonh1PmFpIZ8WfsYa1Ttjp+bfA9shWBixKzWBbFQ=
+github.com/sensu/core/v2 v2.21.2 h1:2gl9Fk+nQhZrThVlh5F+Y6Xx8DhvGeZMIlFmtllDb3Q=
+github.com/sensu/core/v2 v2.21.2/go.mod h1:Y0G5v5Umk38J897JfIX+MllUigkzKHIdAV37NniPiEY=
 github.com/sensu/core/v3 v3.9.0/go.mod h1:AuupbIzmjYdzEkaEdmpzP/ZgrqQgHTovXVejzyTN6u4=
 github.com/sensu/core/v3 v3.10.1 h1:dD2dw/xqD1qS8PpeAWOOXL/YZqOFaFtlfnxLMnMAuOc=
 github.com/sensu/core/v3 v3.10.1/go.mod h1:O4kUbnvxZwIumHnrnRJUekuaPtWv9mjCiQBBwXVUIog=
+github.com/sensu/core/v3 v3.10.2 h1:gKLO7wAh0NRorxKDABs33In/SY6yI3IJa8WJkg0Vm1g=
+github.com/sensu/core/v3 v3.10.2/go.mod h1:O4kUbnvxZwIumHnrnRJUekuaPtWv9mjCiQBBwXVUIog=
 github.com/sensu/etcd/api/v3 v3.0.0 h1:Y6p0RUtYaIaeuh4xIhxpJIVk/RigFaYBIxdJxl0zFYA=
 github.com/sensu/etcd/api/v3 v3.0.0/go.mod h1:qyQj1HZPUV3B5cbAL8scG62+fyz5dSxxu0w8pn28N6Q=
 github.com/sensu/etcd/client/pkg/v3 v3.0.0 h1:w22dKh6PfpcoXaNzEUcoeWKgg1LJfTMKVUJHcLHvBMw=
