@@ -2,7 +2,7 @@ module github.com/sensu/sensu-go
 
 go 1.26.3
 
-replace github.com/gorilla/websocket => github.com/sensu/websocket v1.0.1
+replace github.com/gorilla/websocket => github.com/sensu/websocket v1.0.2
 
 replace go.etcd.io/etcd/api/v3 => github.com/sensu/etcd/api/v3 v3.0.0
 

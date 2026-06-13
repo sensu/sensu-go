@@ -1834,13 +1834,9 @@ github.com/ruudk/golang-pdf417 v0.0.0-20201230142125-a7e3863a1245/go.mod h1:pQAZ
 github.com/sagikazarmark/locafero v0.12.0 h1:/NQhBAkUb4+fH1jivKHWusDYFjMOOKU88eegjfxfHb4=
 github.com/sagikazarmark/locafero v0.12.0/go.mod h1:sZh36u/YSZ918v0Io+U9ogLYQJ9tLLBmM4eneO6WwsI=
 github.com/sensu/core/v2 v2.20.0/go.mod h1:fzr3qioLAHyLsBfq9I6ELVjL01NUNjqmQx4kj2tbDLo=
-github.com/sensu/core/v2 v2.21.1 h1:lFzsgzUOqi4NUbWj64tZzYr2shga6LVoOz63ku3Gtrs=
-github.com/sensu/core/v2 v2.21.1/go.mod h1:BPmWonh1PmFpIZ8WfsYa1Ttjp+bfA9shWBixKzWBbFQ=
 github.com/sensu/core/v2 v2.21.2 h1:2gl9Fk+nQhZrThVlh5F+Y6Xx8DhvGeZMIlFmtllDb3Q=
 github.com/sensu/core/v2 v2.21.2/go.mod h1:Y0G5v5Umk38J897JfIX+MllUigkzKHIdAV37NniPiEY=
 github.com/sensu/core/v3 v3.9.0/go.mod h1:AuupbIzmjYdzEkaEdmpzP/ZgrqQgHTovXVejzyTN6u4=
-github.com/sensu/core/v3 v3.10.1 h1:dD2dw/xqD1qS8PpeAWOOXL/YZqOFaFtlfnxLMnMAuOc=
-github.com/sensu/core/v3 v3.10.1/go.mod h1:O4kUbnvxZwIumHnrnRJUekuaPtWv9mjCiQBBwXVUIog=
 github.com/sensu/core/v3 v3.10.2 h1:gKLO7wAh0NRorxKDABs33In/SY6yI3IJa8WJkg0Vm1g=
 github.com/sensu/core/v3 v3.10.2/go.mod h1:O4kUbnvxZwIumHnrnRJUekuaPtWv9mjCiQBBwXVUIog=
 github.com/sensu/etcd/api/v3 v3.0.0 h1:Y6p0RUtYaIaeuh4xIhxpJIVk/RigFaYBIxdJxl0zFYA=
@@ -1860,8 +1856,8 @@ github.com/sensu/sensu-api-tools v0.2.1 h1:wjT5AFdboQ3jDwzBMcD38VJEwwWhPIIuReZrC
 github.com/sensu/sensu-api-tools v0.2.1/go.mod h1:SNISS4OhwNSZI9/YKTQr1bghOEwed9ZT4v+ztKk1Mq0=
 github.com/sensu/sensu-go/types v0.13.0 h1:Cu1yLciXXakckkiv6u+VuNxPkVWQslaZogOVpR4IDAg=
 github.com/sensu/sensu-go/types v0.13.0/go.mod h1:Xb1E+aKOtebJ85CjyQCagxlV9lJzGrK6PfPqHj/z6z0=
-github.com/sensu/websocket v1.0.1 h1:XdGJyAmIqhWE3LoufsM5rvIj4o5n4HQ1M1E1zn17kzk=
-github.com/sensu/websocket v1.0.1/go.mod h1:r4w70xmWCQKmi1ONH4KIaBptdivuRPyosB9RmPlGEwA=
+github.com/sensu/websocket v1.0.2 h1:2WCPshWM2wlusU/92N8O0YR+A/Ap4actTRYhUVbyvHM=
+github.com/sensu/websocket v1.0.2/go.mod h1:r4w70xmWCQKmi1ONH4KIaBptdivuRPyosB9RmPlGEwA=
 github.com/shirou/gopsutil/v3 v3.23.2 h1:PAWSuiAszn7IhPMBtXsbSCafej7PqUOvY6YywlQUExU=
 github.com/shirou/gopsutil/v3 v3.23.2/go.mod h1:gv0aQw33GLo3pG8SiWKiQrbDzbRY1K80RyZJ7V4Th1M=
 github.com/sirupsen/logrus v1.8.1/go.mod h1:yWOB1SBYBC5VeMP7gHvWumXLIWorT60ONWic61uBYv0=
