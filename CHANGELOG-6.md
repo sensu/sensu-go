@@ -5,6 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 and this project adheres to [Semantic
 Versioning](http://semver.org/spec/v2.0.0.html).
+## [6.14.2] - 2026-06-15
+
+### Fixed
+- Resolved multiple CVE vulnerabilities by upgrading Go from 1.26.0 to 1.26.3 and updating critical dependencies:
+  - `golang.org/x/crypto` to v0.51.0
+  - `golang.org/x/net` to v0.55.0
+  - `google.golang.org/grpc` to v1.81.1
+- Fixed excessive etcd warning logs in non-customized deployments by explicitly restoring etcd's official default values for `WarningApplyDuration` and `WarningUnaryRequestDuration` when no custom values are configured.
+- Updated WebSocket library (`github.com/sensu/websocket`) from v1.0.1 to v1.0.2 with stability and security improvements.
+
+### Added
+- Added ANSI-formatted output rendering in React views (Event Summary) using `ansi-to-react` library, replacing the custom `ANSIColor.worker.js` web worker implementation.
+- Added DigiCert code-signing for Windows packages (`sensu-agent` and `sensu-cli`).
+
 ## [6.14.1] - 2026-05-04
 
 ### Changed
