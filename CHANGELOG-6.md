@@ -15,10 +15,6 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 - Fixed excessive etcd warning logs in non-customized deployments by explicitly restoring etcd's official default values for `WarningApplyDuration` and `WarningUnaryRequestDuration` when no custom values are configured.
 - Updated WebSocket library (`github.com/sensu/websocket`) from v1.0.1 to v1.0.2 with stability and security improvements.
 
-### Added
-- Added ANSI-formatted output rendering in React views (Event Summary) using `ansi-to-react` library, replacing the custom `ANSIColor.worker.js` web worker implementation.
-- Added DigiCert code-signing for Windows packages (`sensu-agent` and `sensu-cli`).
-
 ## [6.14.1] - 2026-05-04
 
 ### Changed
