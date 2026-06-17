@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 and this project adheres to [Semantic
 Versioning](http://semver.org/spec/v2.0.0.html).
+## [Unreleased]
+
+### Added
+- Addition of a new watcher configuration to monitor the user updates
+- Added the exit mechanism to disconnect agent when user is disabled
+- Added a struct in store which will get passed down for userConfigs
+
+### Changed
+- The session config to watch over the user updated and the wizzard bus
+
 ## [6.14.2] - 2026-06-15
 
 ### Fixed

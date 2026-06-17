@@ -12,7 +12,7 @@ import (
 	storev2 "github.com/sensu/sensu-go/backend/store/v2"
 	etcdstorev2 "github.com/sensu/sensu-go/backend/store/v2/etcdstore"
 	"github.com/sensu/sensu-go/backend/store/v2/wrap"
-	"go.etcd.io/etcd/client/v3"
+	clientv3 "go.etcd.io/etcd/client/v3"
 )
 
 // GetEntityConfigWatcher watches changes to EntityConfig in etcd and publish them
@@ -68,5 +68,48 @@ func GetEntityConfigWatcher(ctx context.Context, client *clientv3.Client) <-chan
 		}
 	}()
 
+	return ch
+}
+
+// GetUserConfigWatcher watches changes to the UserConfig in etcd and publish them -- git#2806
+// over the bus as store.WatchEventUserConfig
+func GetUserConfigWatcher(ctx context.Context, client *clientv3.Client) <-chan *store.WatchEventUserConfig {
+
+	key := etcdstorev2.StoreKey(storev2.ResourceRequest{
+		Context:   ctx,
+		StoreName: new(corev2.User).StoreName(),
+	})
+	w := etcdstore.Watch(ctx, client, key, true)
+	ch := make(chan *store.WatchEventUserConfig, 1)
+
+	go func() {
+		defer close(ch)
+		for response := range w.Result() {
+			logger.Info("read from user config watcher channel")
+			if response.Type == store.WatchError {
+				logger.
+					WithError(errors.New(string(response.Object))).
+					Error("Unexpected error while watching for the user config updates")
+				ch <- &store.WatchEventUserConfig{
+					Action: response.Type,
+				}
+				continue
+			}
+
+			// unmarshal the user config
+			var userConfig corev2.User
+			if err := proto.Unmarshal(response.Object, &userConfig); err != nil {
+				logger.WithField("key", response.Key).WithError(err).
+					Error("unable to unmarshal user config from key")
+				continue
+			}
+
+			ch <- &store.WatchEventUserConfig{
+				User:     &userConfig,
+				Action:   response.Type,
+				Disabled: userConfig.Disabled,
+			}
+		}
+	}()
 	return ch
 }

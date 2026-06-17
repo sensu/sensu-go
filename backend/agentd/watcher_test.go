@@ -17,3 +17,13 @@ func TestGetEntityConfigWatcher(t *testing.T) {
 	ch := GetEntityConfigWatcher(context.Background(), client)
 	assert.NotNil(t, ch)
 }
+
+func TestGetUserConfigWatcher(t *testing.T) {
+	e, cleanup := etcd.NewTestEtcd(t)
+	defer cleanup()
+	client := e.NewEmbeddedClient()
+	defer client.Close()
+
+	ch := GetUserConfigWatcher(context.Background(), client)
+	assert.NotNil(t, ch)
+}
