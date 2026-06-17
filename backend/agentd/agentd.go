@@ -322,8 +322,11 @@ func (a *Agentd) handleEvent(event store.WatchEventEntityConfig) error {
 
 // adding the UserConfig updates to the etcd bus for the watcher to consume
 func (a *Agentd) handleUserEvent(event *store.WatchEventUserConfig) error {
+	if event == nil {
+		return errors.New("nil event received from the user config watcher")
+	}
 	if event.User == nil {
-		return errors.New("nil entry received from the user config watcher")
+		return errors.New("nil user received from the user config watcher")
 	}
 
 	topic := messaging.UserConfigTopic(event.User.Username)

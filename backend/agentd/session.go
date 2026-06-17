@@ -371,19 +371,21 @@ func (s *Session) sender() {
 
 			if watchEvent.User == nil {
 				logger.Error("session received nil user in watch event")
+				continue
 			}
-			lagger := logger.WithFields(logrus.Fields{
+			logger := logger.WithFields(logrus.Fields{
 				"action":    watchEvent.Action.String(),
 				"user":      watchEvent.User.Username,
 				"namespace": watchEvent.User.GetMetadata().GetNamespace(),
 			})
-			lagger.Debug("user update received")
+			logger.Debug("user update received")
 
-			bytes, err := s.marshal(watchEvent.User)
+			userData, err := s.marshal(watchEvent.User)
 			if err != nil {
-				lagger.WithError(err).Error("session failed to serialize user config")
+				logger.WithError(err).Error("session failed to serialize user config")
+				continue
 			}
-			msg = transport.NewMessage(transport.MessageTypeUserConfig, bytes)
+			msg = transport.NewMessage(transport.MessageTypeUserConfig, userData)
 
 		// ---- entity ----//
 		case e := <-s.entityConfig.updatesChannel:

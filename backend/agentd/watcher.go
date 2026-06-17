@@ -3,6 +3,7 @@ package agentd
 import (
 	"context"
 	"errors"
+
 	"github.com/gogo/protobuf/proto"
 	corev2 "github.com/sensu/core/v2"
 	corev3 "github.com/sensu/core/v3"
@@ -11,7 +12,7 @@ import (
 	storev2 "github.com/sensu/sensu-go/backend/store/v2"
 	etcdstorev2 "github.com/sensu/sensu-go/backend/store/v2/etcdstore"
 	"github.com/sensu/sensu-go/backend/store/v2/wrap"
-	"go.etcd.io/etcd/client/v3"
+	clientv3 "go.etcd.io/etcd/client/v3"
 )
 
 // GetEntityConfigWatcher watches changes to EntityConfig in etcd and publish them
@@ -98,6 +99,8 @@ func GetUserConfigWatcher(ctx context.Context, client *clientv3.Client) <-chan *
 			// unmarshal the user config
 			var userConfig corev2.User
 			if err := proto.Unmarshal(response.Object, &userConfig); err != nil {
+				logger.WithField("key", response.Key).WithError(err).
+					Error("unable to unmarshal user config from key")
 				continue
 			}
 
