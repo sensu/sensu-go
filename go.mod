@@ -1,6 +1,6 @@
 module github.com/sensu/sensu-go
 
-go 1.26.3
+go 1.26.5
 
 replace github.com/gorilla/websocket => github.com/sensu/websocket v1.0.2
 
@@ -70,10 +70,10 @@ require (
 	go.etcd.io/etcd/server/v3 v3.6.8
 	go.uber.org/atomic v1.11.0
 	go.uber.org/zap v1.28.0
-	golang.org/x/crypto v0.53.0
-	golang.org/x/mod v0.36.0
+	golang.org/x/crypto v0.54.0
+	golang.org/x/mod v0.37.0
 	golang.org/x/net v0.56.0
-	golang.org/x/sys v0.46.0
+	golang.org/x/sys v0.47.0
 	golang.org/x/time v0.14.0
 	google.golang.org/grpc v1.81.1
 	gopkg.in/h2non/filetype.v1 v1.0.3
@@ -156,8 +156,8 @@ require (
 	go.opentelemetry.io/proto/otlp v1.10.0 // indirect
 	go.yaml.in/yaml/v2 v2.4.4 // indirect
 	go.yaml.in/yaml/v3 v3.0.4 // indirect
-	golang.org/x/term v0.44.0 // indirect
-	golang.org/x/text v0.38.0 // indirect
+	golang.org/x/term v0.45.0 // indirect
+	golang.org/x/text v0.40.0 // indirect
 	google.golang.org/protobuf v1.36.11 // indirect
 	gopkg.in/sourcemap.v1 v1.0.5 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
