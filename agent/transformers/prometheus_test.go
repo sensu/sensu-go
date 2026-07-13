@@ -214,6 +214,20 @@ func TestParsePromTags(t *testing.T) {
 	}
 }
 
+func TestParsePromValidationScheme(t *testing.T) {
+	assert := assert.New(t)
+
+	event := types.FixtureEvent("test", "test")
+	event.Check.Output = "# HELP node_cpu_seconds_total Seconds the CPUs spent in each mode.\n# TYPE node_cpu_seconds_total counter\nnode_cpu_seconds_total{cpu=\"0\",mode=\"idle\"} 123456.78\n"
+
+	assert.NotPanics(func() {
+		prom := ParseProm(event)
+		assert.NotEmpty(prom)
+		points := prom.Transform()
+		assert.Equal("node_cpu_seconds_total", points[0].Name)
+	})
+}
+
 func TestTransformProm(t *testing.T) {
 	assert := assert.New(t)
 	ts := time.Now().Unix()

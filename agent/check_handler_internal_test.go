@@ -588,6 +588,24 @@ func TestExtractMetrics(t *testing.T) {
 	}
 }
 
+func TestExtractMetricsPanicRecovery(t *testing.T) {
+	event := &corev2.Event{
+		Check: &corev2.Check{
+			ObjectMeta: corev2.ObjectMeta{
+				Name:      "panic-check",
+				Namespace: "default",
+			},
+			Output:             "bogus output",
+			OutputMetricFormat: corev2.PrometheusOutputMetricFormat,
+		},
+	}
+
+	assert.NotPanics(t, func() {
+		metrics := extractMetrics(event)
+		_ = metrics
+	})
+}
+
 func TestFailOnAssetCheckWithDisabledAssets(t *testing.T) {
 	config, cleanup := FixtureConfig()
 	defer cleanup()

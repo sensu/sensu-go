@@ -425,7 +425,18 @@ func (a *Agent) sendFailure(event *corev2.Event, err error) {
 	}
 }
 
-func extractMetrics(event *corev2.Event) []*corev2.MetricPoint {
+func extractMetrics(event *corev2.Event) (points []*corev2.MetricPoint) {
+	defer func() {
+		if r := recover(); r != nil {
+			logger.WithFields(logrus.Fields{
+				"namespace": event.Check.Namespace,
+				"check":     event.Check.Name,
+				"format":    event.Check.OutputMetricFormat,
+			}).Errorf("recovered from panic during metric extraction: %v", r)
+			points = nil
+		}
+	}()
+
 	var transformer Transformer
 	if !event.HasCheck() {
 		logger.WithError(transformers.ErrMetricExtraction).Error("event must contain a check to parse and extract metrics")

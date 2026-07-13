@@ -12,6 +12,10 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+func init() {
+	model.NameValidationScheme = model.LegacyValidation
+}
+
 const (
 	PromTypeTagName = "prom_type"
 	PromHelpTagName = "prom_help"
