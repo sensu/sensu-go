@@ -228,6 +228,178 @@ func TestParsePromValidationScheme(t *testing.T) {
 	})
 }
 
+func TestParsePromCounter(t *testing.T) {
+	assert := assert.New(t)
+
+	event := types.FixtureEvent("test", "test")
+	event.Check.Output = "# HELP http_requests_total The total number of HTTP requests.\n# TYPE http_requests_total counter\nhttp_requests_total{method=\"post\",code=\"200\"} 1027\nhttp_requests_total{method=\"post\",code=\"400\"} 3\n"
+
+	prom := ParseProm(event)
+	assert.NotEmpty(prom)
+	points := prom.Transform()
+	assert.Equal(2, len(points))
+	assert.Equal("http_requests_total", points[0].Name)
+	assert.Equal("http_requests_total", points[1].Name)
+}
+
+func TestParsePromGauge(t *testing.T) {
+	assert := assert.New(t)
+
+	event := types.FixtureEvent("test", "test")
+	event.Check.Output = "# HELP node_memory_MemAvailable_bytes Memory information field MemAvailable_bytes.\n# TYPE node_memory_MemAvailable_bytes gauge\nnode_memory_MemAvailable_bytes 5.361664e+09\n"
+
+	prom := ParseProm(event)
+	assert.NotEmpty(prom)
+	points := prom.Transform()
+	assert.Equal(1, len(points))
+	assert.Equal("node_memory_MemAvailable_bytes", points[0].Name)
+	assert.Equal(5.361664e+09, points[0].Value)
+}
+
+func TestParsePromHistogram(t *testing.T) {
+	assert := assert.New(t)
+
+	event := types.FixtureEvent("test", "test")
+	event.Check.Output = "# HELP http_request_duration_seconds A histogram of the request duration.\n# TYPE http_request_duration_seconds histogram\nhttp_request_duration_seconds_bucket{le=\"0.05\"} 24054\nhttp_request_duration_seconds_bucket{le=\"0.1\"} 33444\nhttp_request_duration_seconds_bucket{le=\"0.2\"} 100392\nhttp_request_duration_seconds_bucket{le=\"+Inf\"} 144320\nhttp_request_duration_seconds_sum 53423\nhttp_request_duration_seconds_count 144320\n"
+
+	prom := ParseProm(event)
+	assert.NotEmpty(prom)
+	points := prom.Transform()
+	assert.True(len(points) >= 6)
+
+	nameSet := make(map[string]bool)
+	for _, p := range points {
+		nameSet[p.Name] = true
+	}
+	assert.True(nameSet["http_request_duration_seconds_bucket"])
+	assert.True(nameSet["http_request_duration_seconds_sum"])
+	assert.True(nameSet["http_request_duration_seconds_count"])
+}
+
+func TestParsePromSummary(t *testing.T) {
+	assert := assert.New(t)
+
+	event := types.FixtureEvent("test", "test")
+	event.Check.Output = "# HELP go_gc_duration_seconds A summary of pause duration of garbage collection cycles.\n# TYPE go_gc_duration_seconds summary\ngo_gc_duration_seconds{quantile=\"0\"} 3.3722e-05\ngo_gc_duration_seconds{quantile=\"0.25\"} 5.0129e-05\ngo_gc_duration_seconds{quantile=\"0.5\"} 0.000126547\ngo_gc_duration_seconds{quantile=\"1\"} 0.009688629\ngo_gc_duration_seconds_sum 17.391350544\ngo_gc_duration_seconds_count 12345\n"
+
+	prom := ParseProm(event)
+	assert.NotEmpty(prom)
+	points := prom.Transform()
+	assert.True(len(points) >= 6)
+
+	nameSet := make(map[string]bool)
+	for _, p := range points {
+		nameSet[p.Name] = true
+	}
+	assert.True(nameSet["go_gc_duration_seconds"])
+	assert.True(nameSet["go_gc_duration_seconds_sum"])
+	assert.True(nameSet["go_gc_duration_seconds_count"])
+}
+
+func TestParsePromMultipleMetricFamilies(t *testing.T) {
+	assert := assert.New(t)
+
+	event := types.FixtureEvent("test", "test")
+	event.Check.Output = "# HELP node_filesystem_avail_bytes Filesystem space available.\n# TYPE node_filesystem_avail_bytes gauge\nnode_filesystem_avail_bytes{device=\"/dev/sda1\",mountpoint=\"/\"} 5.3687091e+10\n# HELP node_filesystem_size_bytes Filesystem size in bytes.\n# TYPE node_filesystem_size_bytes gauge\nnode_filesystem_size_bytes{device=\"/dev/sda1\",mountpoint=\"/\"} 1.03079215104e+11\n# HELP node_cpu_seconds_total Seconds the CPUs spent in each mode.\n# TYPE node_cpu_seconds_total counter\nnode_cpu_seconds_total{cpu=\"0\",mode=\"idle\"} 123456.78\nnode_cpu_seconds_total{cpu=\"0\",mode=\"system\"} 4567.89\n"
+
+	prom := ParseProm(event)
+	assert.NotEmpty(prom)
+	points := prom.Transform()
+	assert.Equal(4, len(points))
+
+	nameSet := make(map[string]bool)
+	for _, p := range points {
+		nameSet[p.Name] = true
+	}
+	assert.True(nameSet["node_filesystem_avail_bytes"])
+	assert.True(nameSet["node_filesystem_size_bytes"])
+	assert.True(nameSet["node_cpu_seconds_total"])
+}
+
+func TestParsePromMalformedInput(t *testing.T) {
+	assert := assert.New(t)
+
+	testCases := []struct {
+		name   string
+		output string
+	}{
+		{"completely invalid", "this is not prometheus text at all"},
+		{"partial metric line", "http_requests_total{method=\"get\"}\n"},
+		{"missing value", "# TYPE foo counter\nfoo\n"},
+		{"truncated output", "# HELP foo A help message.\n# TYPE foo counter\n"},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			event := types.FixtureEvent("test", "test")
+			event.Check.Output = tc.output
+
+			assert.NotPanics(func() {
+				_ = ParseProm(event)
+			})
+		})
+	}
+}
+
+func TestParsePromEmptyOutput(t *testing.T) {
+	assert := assert.New(t)
+
+	event := types.FixtureEvent("test", "test")
+	event.Check.Output = ""
+
+	prom := ParseProm(event)
+	assert.Empty(prom)
+	points := prom.Transform()
+	assert.Nil(points)
+}
+
+func TestParsePromNaN(t *testing.T) {
+	assert := assert.New(t)
+
+	nanList := PromList{
+		&model.Sample{
+			Metric: model.Metric{
+				model.MetricNameLabel: "stale_metric",
+			},
+			Value:     model.SampleValue(math.NaN()),
+			Timestamp: model.TimeFromUnix(time.Now().Unix()),
+		},
+		&model.Sample{
+			Metric: model.Metric{
+				model.MetricNameLabel: "valid_metric",
+			},
+			Value:     42.0,
+			Timestamp: model.TimeFromUnix(time.Now().Unix()),
+		},
+	}
+
+	points := nanList.Transform()
+	assert.Equal(1, len(points))
+	assert.Equal("valid_metric", points[0].Name)
+	assert.Equal(42.0, points[0].Value)
+}
+
+func TestParsePromSpecialCharLabels(t *testing.T) {
+	assert := assert.New(t)
+
+	event := types.FixtureEvent("test", "test")
+	event.Check.Output = "# TYPE http_requests_total counter\nhttp_requests_total{method=\"GET\",path=\"/api/v1/users\",status_code=\"200\"} 1500\n"
+
+	prom := ParseProm(event)
+	assert.NotEmpty(prom)
+	points := prom.Transform()
+	assert.Equal(1, len(points))
+	assert.Equal("http_requests_total", points[0].Name)
+
+	tagMap := make(map[string]string)
+	for _, tag := range points[0].Tags {
+		tagMap[tag.Name] = tag.Value
+	}
+	assert.Equal("GET", tagMap["method"])
+	assert.Equal("/api/v1/users", tagMap["path"])
+	assert.Equal("200", tagMap["status_code"])
+}
+
 func TestTransformProm(t *testing.T) {
 	assert := assert.New(t)
 	ts := time.Now().Unix()

@@ -606,6 +606,49 @@ func TestExtractMetricsPanicRecovery(t *testing.T) {
 	})
 }
 
+func TestExtractMetricsPrometheus(t *testing.T) {
+	event := &corev2.Event{
+		Check: &corev2.Check{
+			ObjectMeta: corev2.ObjectMeta{
+				Name:      "disk-usage",
+				Namespace: "default",
+			},
+			Output:             "# HELP node_filesystem_avail_bytes Filesystem space available.\n# TYPE node_filesystem_avail_bytes gauge\nnode_filesystem_avail_bytes{device=\"/dev/sda1\",mountpoint=\"/\"} 5.3687091e+10\n",
+			OutputMetricFormat: corev2.PrometheusOutputMetricFormat,
+		},
+	}
+
+	metrics := extractMetrics(event)
+	require.NotNil(t, metrics)
+	assert.Equal(t, 1, len(metrics))
+	assert.Equal(t, "node_filesystem_avail_bytes", metrics[0].Name)
+	assert.Equal(t, 5.3687091e+10, metrics[0].Value)
+}
+
+func TestExtractMetricsPrometheusMultiFamily(t *testing.T) {
+	event := &corev2.Event{
+		Check: &corev2.Check{
+			ObjectMeta: corev2.ObjectMeta{
+				Name:      "node-metrics",
+				Namespace: "default",
+			},
+			Output: "# HELP node_cpu_seconds_total Seconds the CPUs spent in each mode.\n# TYPE node_cpu_seconds_total counter\nnode_cpu_seconds_total{cpu=\"0\",mode=\"idle\"} 123456.78\nnode_cpu_seconds_total{cpu=\"0\",mode=\"system\"} 4567.89\n# HELP node_load1 1m load average.\n# TYPE node_load1 gauge\nnode_load1 2.34\n",
+			OutputMetricFormat: corev2.PrometheusOutputMetricFormat,
+		},
+	}
+
+	metrics := extractMetrics(event)
+	require.NotNil(t, metrics)
+	assert.Equal(t, 3, len(metrics))
+
+	nameSet := make(map[string]bool)
+	for _, m := range metrics {
+		nameSet[m.Name] = true
+	}
+	assert.True(t, nameSet["node_cpu_seconds_total"])
+	assert.True(t, nameSet["node_load1"])
+}
+
 func TestFailOnAssetCheckWithDisabledAssets(t *testing.T) {
 	config, cleanup := FixtureConfig()
 	defer cleanup()

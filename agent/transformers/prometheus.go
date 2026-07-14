@@ -65,7 +65,7 @@ func ParseProm(event *types.Event) PromList {
 	}
 
 	t := strings.NewReader(event.Check.Output)
-	var parser expfmt.TextParser
+	parser := expfmt.NewTextParser(model.LegacyValidation)
 	metricFamilies, err := parser.TextToMetricFamilies(t)
 
 	if err != nil {
