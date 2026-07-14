@@ -24,13 +24,25 @@ func GetUsersPath(ctx context.Context, id string) string {
 	return path.Join(store.Root, usersPathPrefix, id)
 }
 
+// dummyPasswordHash is a bcrypt hash used to perform a constant-time comparison
+// when a user is not found, preventing user enumeration via timing side-channel.
+var dummyPasswordHash = func() string {
+	h, _ := bcrypt.HashPassword("sensu-dummy-password-for-timing-equalization")
+	return h
+}()
+
 // AuthenticateUser authenticates a User by username and password.
 func (s *Store) AuthenticateUser(ctx context.Context, username, password string) (*corev2.User, error) {
 	user, err := s.GetUser(ctx, username)
 	if err != nil {
+		bcrypt.CheckPassword(dummyPasswordHash, password)
 		return nil, err
 	}
 	if user == nil {
+		// Perform a bcrypt comparison against a dummy hash to ensure the response
+		// time is consistent regardless of whether the user exists, preventing
+		// user enumeration via timing side-channel attacks.
+		bcrypt.CheckPassword(dummyPasswordHash, password)
 		return nil, &store.ErrNotFound{Key: username}
 	}
 
