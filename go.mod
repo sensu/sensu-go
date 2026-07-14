@@ -72,10 +72,10 @@ require (
 	go.uber.org/zap v1.28.0
 	golang.org/x/crypto v0.54.0
 	golang.org/x/mod v0.37.0
-	golang.org/x/net v0.56.0
+	golang.org/x/net v0.57.0
 	golang.org/x/sys v0.47.0
 	golang.org/x/time v0.14.0
-	google.golang.org/grpc v1.81.1
+	google.golang.org/grpc v1.82.0
 	gopkg.in/h2non/filetype.v1 v1.0.3
 	gopkg.in/yaml.v2 v2.4.0
 )
@@ -90,8 +90,8 @@ require (
 	github.com/jonboulle/clockwork v0.5.0 // indirect
 	github.com/kr/pty v1.1.8 // indirect
 	github.com/prometheus/procfs v0.15.1 // indirect
-	github.com/sensu/core/v2 v2.21.3
-	github.com/sensu/core/v3 v3.10.3
+	github.com/sensu/core/v2 v2.21.4
+	github.com/sensu/core/v3 v3.10.4
 	github.com/sensu/sensu-api-tools v0.2.1
 	github.com/sensu/sensu-go/types v0.13.0
 	github.com/tmc/grpc-websocket-proxy v0.0.0-20220101234140-673ab2c3ae75 // indirect
