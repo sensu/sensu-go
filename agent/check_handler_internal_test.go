@@ -620,7 +620,7 @@ func TestExtractMetricsPrometheus(t *testing.T) {
 
 	metrics := extractMetrics(event)
 	require.NotNil(t, metrics)
-	assert.Equal(t, 1, len(metrics))
+	require.Equal(t, 1, len(metrics))
 	assert.Equal(t, "node_filesystem_avail_bytes", metrics[0].Name)
 	assert.Equal(t, 5.3687091e+10, metrics[0].Value)
 }
@@ -639,7 +639,7 @@ func TestExtractMetricsPrometheusMultiFamily(t *testing.T) {
 
 	metrics := extractMetrics(event)
 	require.NotNil(t, metrics)
-	assert.Equal(t, 3, len(metrics))
+	require.Equal(t, 3, len(metrics))
 
 	nameSet := make(map[string]bool)
 	for _, m := range metrics {

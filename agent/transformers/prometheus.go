@@ -13,7 +13,9 @@ import (
 )
 
 func init() {
-	model.NameValidationScheme = model.LegacyValidation
+	if model.NameValidationScheme == model.UnsetValidation {
+		model.NameValidationScheme = model.LegacyValidation
+	}
 }
 
 const (

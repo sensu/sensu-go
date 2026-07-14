@@ -9,6 +9,7 @@ import (
 	"github.com/prometheus/common/model"
 	"github.com/sensu/sensu-go/types"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestParseProm(t *testing.T) {
@@ -222,38 +223,35 @@ func TestParsePromValidationScheme(t *testing.T) {
 
 	assert.NotPanics(func() {
 		prom := ParseProm(event)
-		assert.NotEmpty(prom)
+		require.NotEmpty(t, prom)
 		points := prom.Transform()
+		require.True(t, len(points) > 0)
 		assert.Equal("node_cpu_seconds_total", points[0].Name)
 	})
 }
 
 func TestParsePromCounter(t *testing.T) {
-	assert := assert.New(t)
-
 	event := types.FixtureEvent("test", "test")
 	event.Check.Output = "# HELP http_requests_total The total number of HTTP requests.\n# TYPE http_requests_total counter\nhttp_requests_total{method=\"post\",code=\"200\"} 1027\nhttp_requests_total{method=\"post\",code=\"400\"} 3\n"
 
 	prom := ParseProm(event)
-	assert.NotEmpty(prom)
+	require.NotEmpty(t, prom)
 	points := prom.Transform()
-	assert.Equal(2, len(points))
-	assert.Equal("http_requests_total", points[0].Name)
-	assert.Equal("http_requests_total", points[1].Name)
+	require.Equal(t, 2, len(points))
+	assert.Equal(t, "http_requests_total", points[0].Name)
+	assert.Equal(t, "http_requests_total", points[1].Name)
 }
 
 func TestParsePromGauge(t *testing.T) {
-	assert := assert.New(t)
-
 	event := types.FixtureEvent("test", "test")
 	event.Check.Output = "# HELP node_memory_MemAvailable_bytes Memory information field MemAvailable_bytes.\n# TYPE node_memory_MemAvailable_bytes gauge\nnode_memory_MemAvailable_bytes 5.361664e+09\n"
 
 	prom := ParseProm(event)
-	assert.NotEmpty(prom)
+	require.NotEmpty(t, prom)
 	points := prom.Transform()
-	assert.Equal(1, len(points))
-	assert.Equal("node_memory_MemAvailable_bytes", points[0].Name)
-	assert.Equal(5.361664e+09, points[0].Value)
+	require.Equal(t, 1, len(points))
+	assert.Equal(t, "node_memory_MemAvailable_bytes", points[0].Name)
+	assert.Equal(t, 5.361664e+09, points[0].Value)
 }
 
 func TestParsePromHistogram(t *testing.T) {
@@ -354,8 +352,6 @@ func TestParsePromEmptyOutput(t *testing.T) {
 }
 
 func TestParsePromNaN(t *testing.T) {
-	assert := assert.New(t)
-
 	nanList := PromList{
 		&model.Sample{
 			Metric: model.Metric{
@@ -374,30 +370,28 @@ func TestParsePromNaN(t *testing.T) {
 	}
 
 	points := nanList.Transform()
-	assert.Equal(1, len(points))
-	assert.Equal("valid_metric", points[0].Name)
-	assert.Equal(42.0, points[0].Value)
+	require.Equal(t, 1, len(points))
+	assert.Equal(t, "valid_metric", points[0].Name)
+	assert.Equal(t, 42.0, points[0].Value)
 }
 
 func TestParsePromSpecialCharLabels(t *testing.T) {
-	assert := assert.New(t)
-
 	event := types.FixtureEvent("test", "test")
 	event.Check.Output = "# TYPE http_requests_total counter\nhttp_requests_total{method=\"GET\",path=\"/api/v1/users\",status_code=\"200\"} 1500\n"
 
 	prom := ParseProm(event)
-	assert.NotEmpty(prom)
+	require.NotEmpty(t, prom)
 	points := prom.Transform()
-	assert.Equal(1, len(points))
-	assert.Equal("http_requests_total", points[0].Name)
+	require.Equal(t, 1, len(points))
+	assert.Equal(t, "http_requests_total", points[0].Name)
 
 	tagMap := make(map[string]string)
 	for _, tag := range points[0].Tags {
 		tagMap[tag.Name] = tag.Value
 	}
-	assert.Equal("GET", tagMap["method"])
-	assert.Equal("/api/v1/users", tagMap["path"])
-	assert.Equal("200", tagMap["status_code"])
+	assert.Equal(t, "GET", tagMap["method"])
+	assert.Equal(t, "/api/v1/users", tagMap["path"])
+	assert.Equal(t, "200", tagMap["status_code"])
 }
 
 func TestTransformProm(t *testing.T) {
