@@ -96,8 +96,15 @@ func (s *Store) DeleteEventByEntityCheck(ctx context.Context, entityName, checkN
 // GetEvents returns the events for an (optional) namespace. If namespace is the
 // empty string, GetEvents returns all events for all namespaces.
 func (s *Store) GetEvents(ctx context.Context, pred *store.SelectionPredicate) ([]*corev2.Event, error) {
+	// Request one extra record beyond the limit to reliably detect whether
+	// more results exist, avoiding spurious continue tokens on the last page.
+	queryLimit := pred.Limit
+	if queryLimit > 0 {
+		queryLimit++
+	}
+
 	opts := []clientv3.OpOption{
-		clientv3.WithLimit(pred.Limit),
+		clientv3.WithLimit(queryLimit),
 	}
 
 	keyPrefix := GetEventsPath(ctx, "")
@@ -126,8 +133,15 @@ func (s *Store) GetEvents(ctx context.Context, pred *store.SelectionPredicate) (
 		return []*corev2.Event{}, nil
 	}
 
+	// Determine if there are more results beyond the requested limit
+	hasMore := pred.Limit > 0 && int64(len(resp.Kvs)) > pred.Limit
+	kvs := resp.Kvs
+	if hasMore {
+		kvs = kvs[:pred.Limit]
+	}
+
 	events := []*corev2.Event{}
-	for _, kv := range resp.Kvs {
+	for _, kv := range kvs {
 		event := &corev2.Event{}
 		if err := unmarshal(kv.Value, event); err != nil {
 			return nil, &store.ErrDecode{Err: err}
@@ -143,7 +157,7 @@ func (s *Store) GetEvents(ctx context.Context, pred *store.SelectionPredicate) (
 		events = append(events, event)
 	}
 
-	if pred.Limit != 0 && resp.Count > pred.Limit {
+	if hasMore {
 		pred.Continue = ComputeContinueToken(ctx, events[len(events)-1])
 	} else {
 		pred.Continue = ""
@@ -158,8 +172,15 @@ func (s *Store) GetEventsByEntity(ctx context.Context, entityName string, pred *
 		return nil, &store.ErrNotValid{Err: errors.New("must specify entity name")}
 	}
 
+	// Request one extra record beyond the limit to reliably detect whether
+	// more results exist, avoiding spurious continue tokens on the last page.
+	queryLimit := pred.Limit
+	if queryLimit > 0 {
+		queryLimit++
+	}
+
 	opts := []clientv3.OpOption{
-		clientv3.WithLimit(pred.Limit),
+		clientv3.WithLimit(queryLimit),
 	}
 
 	keyPrefix := GetEventsPath(ctx, entityName)
@@ -179,8 +200,15 @@ func (s *Store) GetEventsByEntity(ctx context.Context, entityName string, pred *
 		return nil, nil
 	}
 
+	// Determine if there are more results beyond the requested limit
+	hasMore := pred.Limit > 0 && int64(len(resp.Kvs)) > pred.Limit
+	kvs := resp.Kvs
+	if hasMore {
+		kvs = kvs[:pred.Limit]
+	}
+
 	events := []*corev2.Event{}
-	for _, kv := range resp.Kvs {
+	for _, kv := range kvs {
 		event := &corev2.Event{}
 		if err := unmarshal(kv.Value, event); err != nil {
 			return nil, &store.ErrDecode{Err: err}
@@ -196,7 +224,7 @@ func (s *Store) GetEventsByEntity(ctx context.Context, entityName string, pred *
 		events = append(events, event)
 	}
 
-	if pred.Limit != 0 && resp.Count > pred.Limit {
+	if hasMore {
 		lastEvent := events[len(events)-1]
 		pred.Continue = lastEvent.Check.Name + "\x00"
 	} else {
