@@ -88,3 +88,116 @@ func TestSpecialFileSync(t *testing.T) {
 		t.Error(err)
 	}
 }
+
+func TestRotateWriterSizeBasedRotation(t *testing.T) {
+	dir := t.TempDir()
+	logPath := dir + "/metrics.log"
+
+	rotate := make(chan interface{}, 1)
+	defer close(rotate)
+
+	w, err := NewRotateWriter(logPath, rotate)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// Set a small max size for testing
+	w.maxSize = 100
+
+	// Write data to exceed the max size
+	data := make([]byte, 60)
+	for i := range data {
+		data[i] = 'x'
+	}
+
+	_, err = w.Write(data)
+	assert.NoError(t, err)
+
+	// This write should trigger rotation (60 + 60 = 120 > 100)
+	_, err = w.Write(data)
+	assert.NoError(t, err)
+
+	// The rotated file should exist
+	_, err = os.Stat(logPath + ".1")
+	assert.NoError(t, err, "rotated file should exist after exceeding max size")
+
+	// The current log file should be small (only the post-rotation content)
+	info, err := os.Stat(logPath)
+	assert.NoError(t, err)
+	assert.Less(t, info.Size(), int64(100), "current file should be smaller than max size after rotation")
+
+	w.Close()
+}
+
+func TestRotateWriterMultipleRotations(t *testing.T) {
+	dir := t.TempDir()
+	logPath := dir + "/metrics.log"
+
+	rotate := make(chan interface{}, 1)
+	defer close(rotate)
+
+	w, err := NewRotateWriter(logPath, rotate)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// Set a small max size for testing
+	w.maxSize = 50
+
+	data := make([]byte, 60)
+	for i := range data {
+		data[i] = 'a'
+	}
+
+	// Trigger multiple rotations
+	for i := 0; i < 3; i++ {
+		_, err = w.Write(data)
+		assert.NoError(t, err)
+	}
+
+	// We should have rotated files .1 and .2
+	_, err = os.Stat(logPath + ".1")
+	assert.NoError(t, err, "rotated file .1 should exist")
+	_, err = os.Stat(logPath + ".2")
+	assert.NoError(t, err, "rotated file .2 should exist")
+
+	w.Close()
+}
+
+func TestRotateWriterRespectsMaxRotatedFiles(t *testing.T) {
+	dir := t.TempDir()
+	logPath := dir + "/metrics.log"
+
+	rotate := make(chan interface{}, 1)
+	defer close(rotate)
+
+	w, err := NewRotateWriter(logPath, rotate)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// Set a small max size for testing
+	w.maxSize = 20
+
+	data := make([]byte, 30)
+	for i := range data {
+		data[i] = 'b'
+	}
+
+	// Trigger more rotations than maxRotatedFiles (5)
+	for i := 0; i < 8; i++ {
+		_, err = w.Write(data)
+		assert.NoError(t, err)
+	}
+
+	// Files beyond maxRotatedFiles should not exist
+	_, err = os.Stat(logPath + ".5")
+	assert.NoError(t, err, "rotated file .5 should exist (max)")
+
+	// File .6 should not exist due to the shift overwriting
+	// (the oldest gets pushed off)
+	_, err = os.Stat(logPath + ".6")
+	assert.True(t, os.IsNotExist(err), "rotated file .6 should not exist (exceeds max)")
+
+	w.Close()
+}
