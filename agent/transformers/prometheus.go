@@ -12,6 +12,12 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+func init() {
+	if model.NameValidationScheme == model.UnsetValidation {
+		model.NameValidationScheme = model.LegacyValidation
+	}
+}
+
 const (
 	PromTypeTagName = "prom_type"
 	PromHelpTagName = "prom_help"
@@ -61,7 +67,7 @@ func ParseProm(event *types.Event) PromList {
 	}
 
 	t := strings.NewReader(event.Check.Output)
-	var parser expfmt.TextParser
+	parser := expfmt.NewTextParser(model.LegacyValidation)
 	metricFamilies, err := parser.TextToMetricFamilies(t)
 
 	if err != nil {
