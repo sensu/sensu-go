@@ -197,28 +197,29 @@ const deletedEventSentinel = -1
 
 // Eventd handles incoming sensu events and stores them in etcd.
 type Eventd struct {
-	ctx                 context.Context
-	cancel              context.CancelFunc
-	store               storev2.Interface
-	eventStore          store.EventStore
-	bus                 messaging.MessageBus
-	workerCount         int
-	livenessFactory     liveness.Factory
-	eventChan           chan interface{}
-	keepaliveChan       chan interface{}
-	subscription        messaging.Subscription
-	keepaliveSub        messaging.Subscription
-	errChan             chan error
-	mu                  *sync.Mutex
-	shutdownChan        chan struct{}
-	wg                  *sync.WaitGroup
-	Logger              Logger
-	silencedCache       Cache
-	storeTimeout        time.Duration
-	logPath             string
-	logBufferSize       int
-	logBufferWait       time.Duration
-	logParallelEncoders bool
+	ctx                  context.Context
+	cancel               context.CancelFunc
+	store                storev2.Interface
+	eventStore           store.EventStore
+	bus                  messaging.MessageBus
+	workerCount          int
+	livenessFactory      liveness.Factory
+	eventChan            chan interface{}
+	keepaliveChan        chan interface{}
+	subscription         messaging.Subscription
+	keepaliveSub         messaging.Subscription
+	errChan              chan error
+	mu                   *sync.Mutex
+	shutdownChan         chan struct{}
+	wg                   *sync.WaitGroup
+	Logger               Logger
+	silencedCache        Cache
+	storeTimeout         time.Duration
+	logPath              string
+	logBufferSize        int
+	logBufferWait        time.Duration
+	logParallelEncoders  bool
+	defaultMaxOutputSize int64
 }
 
 // Cache interfaces the cache.Resource struct for easier testing
@@ -231,18 +232,19 @@ type Option func(*Eventd) error
 
 // Config configures Eventd
 type Config struct {
-	Store               storev2.Interface
-	EventStore          store.EventStore
-	Bus                 messaging.MessageBus
-	LivenessFactory     liveness.Factory
-	Client              *clientv3.Client
-	BufferSize          int
-	WorkerCount         int
-	StoreTimeout        time.Duration
-	LogPath             string
-	LogBufferSize       int
-	LogBufferWait       time.Duration
-	LogParallelEncoders bool
+	Store                storev2.Interface
+	EventStore           store.EventStore
+	Bus                  messaging.MessageBus
+	LivenessFactory      liveness.Factory
+	Client               *clientv3.Client
+	BufferSize           int
+	WorkerCount          int
+	StoreTimeout         time.Duration
+	LogPath              string
+	LogBufferSize        int
+	LogBufferWait        time.Duration
+	LogParallelEncoders  bool
+	DefaultMaxOutputSize int64
 }
 
 // New creates a new Eventd.
@@ -261,23 +263,24 @@ func New(ctx context.Context, c Config, opts ...Option) (*Eventd, error) {
 	}
 
 	e := &Eventd{
-		store:               c.Store,
-		eventStore:          c.EventStore,
-		bus:                 c.Bus,
-		workerCount:         c.WorkerCount,
-		livenessFactory:     c.LivenessFactory,
-		errChan:             make(chan error, 1),
-		shutdownChan:        make(chan struct{}, 1),
-		eventChan:           make(chan interface{}, c.BufferSize),
-		keepaliveChan:       make(chan interface{}, c.BufferSize),
-		wg:                  &sync.WaitGroup{},
-		mu:                  &sync.Mutex{},
-		storeTimeout:        c.StoreTimeout,
-		logPath:             c.LogPath,
-		logBufferSize:       c.LogBufferSize,
-		logBufferWait:       c.LogBufferWait,
-		logParallelEncoders: c.LogParallelEncoders,
-		Logger:              NoopLogger{},
+		store:                c.Store,
+		eventStore:           c.EventStore,
+		bus:                  c.Bus,
+		workerCount:          c.WorkerCount,
+		livenessFactory:      c.LivenessFactory,
+		errChan:              make(chan error, 1),
+		shutdownChan:         make(chan struct{}, 1),
+		eventChan:            make(chan interface{}, c.BufferSize),
+		keepaliveChan:        make(chan interface{}, c.BufferSize),
+		wg:                   &sync.WaitGroup{},
+		mu:                   &sync.Mutex{},
+		storeTimeout:         c.StoreTimeout,
+		logPath:              c.LogPath,
+		logBufferSize:        c.LogBufferSize,
+		logBufferWait:        c.LogBufferWait,
+		logParallelEncoders:  c.LogParallelEncoders,
+		defaultMaxOutputSize: c.DefaultMaxOutputSize,
+		Logger:               NoopLogger{},
 	}
 
 	e.ctx, e.cancel = context.WithCancel(ctx)
@@ -560,6 +563,14 @@ func (e *Eventd) handleMessage(msg interface{}) (fEvent *corev2.Event, fErr erro
 	getSilenced(ctx, event, e.silencedCache)
 	if len(event.Check.Silenced) > 0 {
 		event.Check.IsSilenced = true
+	}
+
+	// Apply the global default check output size limit to events whose check
+	// does not set its own MaxOutputSize. The store then truncates the output
+	// (labeling the event with the number of bytes dropped) so oversized events
+	// are still stored instead of being rejected by etcd's request size limit.
+	if e.defaultMaxOutputSize > 0 && event.Check.MaxOutputSize <= 0 {
+		event.Check.MaxOutputSize = e.defaultMaxOutputSize
 	}
 
 	// Merge the new event with the stored event if a match is found
