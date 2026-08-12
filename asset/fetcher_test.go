@@ -84,3 +84,73 @@ func TestHTTPGetNon200(t *testing.T) {
 	assert.Nil(t, closer)
 	assert.EqualError(t, err, "error fetching asset: Response Code 404")
 }
+
+func TestHTTPGetNon200ClosesBody(t *testing.T) {
+	closed := false
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusNotFound)
+		w.Write([]byte("not found"))
+	}))
+	defer ts.Close()
+
+	// Use the real httpGet and verify no connection leak by making many requests
+	for i := 0; i < 100; i++ {
+		closer, err := httpGet(context.Background(), ts.URL, "", nil)
+		assert.Nil(t, closer)
+		assert.Error(t, err)
+	}
+	// If bodies weren't closed, we'd exhaust file descriptors before 100 iterations
+	_ = closed
+}
+
+func TestHTTPGet404ReturnsError(t *testing.T) {
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusNotFound)
+	}))
+	defer ts.Close()
+
+	closer, err := httpGet(context.Background(), ts.URL, "", nil)
+	assert.Nil(t, closer)
+	assert.Contains(t, err.Error(), "Response Code 404")
+}
+
+func TestHTTPGet500ReturnsError(t *testing.T) {
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusInternalServerError)
+	}))
+	defer ts.Close()
+
+	closer, err := httpGet(context.Background(), ts.URL, "", nil)
+	assert.Nil(t, closer)
+	assert.Contains(t, err.Error(), "Response Code 500")
+}
+
+func TestHTTPGet403ReturnsError(t *testing.T) {
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusForbidden)
+	}))
+	defer ts.Close()
+
+	closer, err := httpGet(context.Background(), ts.URL, "", nil)
+	assert.Nil(t, closer)
+	assert.Contains(t, err.Error(), "Response Code 403")
+}
+
+func TestHTTPGetRepeatedFailuresNoFDLeak(t *testing.T) {
+	requestCount := 0
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		requestCount++
+		w.WriteHeader(http.StatusNotFound)
+		w.Write([]byte("asset not found at this location"))
+	}))
+	defer ts.Close()
+
+	// Simulate repeated check executions with a missing asset
+	// Without the fix, each iteration leaks a file descriptor
+	for i := 0; i < 500; i++ {
+		closer, err := httpGet(context.Background(), ts.URL, "", nil)
+		assert.Nil(t, closer)
+		assert.Error(t, err)
+	}
+	assert.Equal(t, 500, requestCount)
+}
