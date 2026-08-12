@@ -88,6 +88,7 @@ func httpGet(ctx context.Context, path, trustedCAFile string, headers map[string
 		return nil, fmt.Errorf("error fetching asset: %s", err)
 	}
 	if resp.StatusCode != http.StatusOK {
+		resp.Body.Close()
 		return nil, fmt.Errorf("error fetching asset: Response Code %d", resp.StatusCode)
 	}
 
