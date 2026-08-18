@@ -3,11 +3,11 @@
 package schema
 
 import (
-	errors "errors"
+	"errors"
+	v2 "github.com/go-viper/mapstructure/v2"
 	graphql1 "github.com/graphql-go/graphql"
-	mapstructure "github.com/mitchellh/mapstructure"
 	graphql "github.com/sensu/sensu-go/graphql"
-	time "time"
+	"time"
 )
 
 // MutationPutWrappedFieldResolverArgs contains arguments provided to putWrapped when selected
@@ -298,7 +298,7 @@ func _ObjTypeMutationPutWrappedHandler(impl interface{}) graphql1.FieldResolveFn
 	})
 	return func(p graphql1.ResolveParams) (interface{}, error) {
 		frp := MutationPutWrappedFieldResolverParams{ResolveParams: p}
-		err := mapstructure.Decode(p.Args, &frp.Args)
+		err := v2.Decode(p.Args, &frp.Args)
 		if err != nil {
 			return nil, err
 		}
@@ -313,7 +313,7 @@ func _ObjTypeMutationCreateCheckHandler(impl interface{}) graphql1.FieldResolveF
 	})
 	return func(p graphql1.ResolveParams) (interface{}, error) {
 		frp := MutationCreateCheckFieldResolverParams{ResolveParams: p}
-		err := mapstructure.Decode(p.Args, &frp.Args)
+		err := v2.Decode(p.Args, &frp.Args)
 		if err != nil {
 			return nil, err
 		}
@@ -328,7 +328,7 @@ func _ObjTypeMutationUpdateCheckHandler(impl interface{}) graphql1.FieldResolveF
 	})
 	return func(p graphql1.ResolveParams) (interface{}, error) {
 		frp := MutationUpdateCheckFieldResolverParams{ResolveParams: p}
-		err := mapstructure.Decode(p.Args, &frp.Args)
+		err := v2.Decode(p.Args, &frp.Args)
 		if err != nil {
 			return nil, err
 		}
@@ -343,7 +343,7 @@ func _ObjTypeMutationExecuteCheckHandler(impl interface{}) graphql1.FieldResolve
 	})
 	return func(p graphql1.ResolveParams) (interface{}, error) {
 		frp := MutationExecuteCheckFieldResolverParams{ResolveParams: p}
-		err := mapstructure.Decode(p.Args, &frp.Args)
+		err := v2.Decode(p.Args, &frp.Args)
 		if err != nil {
 			return nil, err
 		}
@@ -358,7 +358,7 @@ func _ObjTypeMutationDeleteCheckHandler(impl interface{}) graphql1.FieldResolveF
 	})
 	return func(p graphql1.ResolveParams) (interface{}, error) {
 		frp := MutationDeleteCheckFieldResolverParams{ResolveParams: p}
-		err := mapstructure.Decode(p.Args, &frp.Args)
+		err := v2.Decode(p.Args, &frp.Args)
 		if err != nil {
 			return nil, err
 		}
@@ -373,7 +373,7 @@ func _ObjTypeMutationDeleteEntityHandler(impl interface{}) graphql1.FieldResolve
 	})
 	return func(p graphql1.ResolveParams) (interface{}, error) {
 		frp := MutationDeleteEntityFieldResolverParams{ResolveParams: p}
-		err := mapstructure.Decode(p.Args, &frp.Args)
+		err := v2.Decode(p.Args, &frp.Args)
 		if err != nil {
 			return nil, err
 		}
@@ -388,7 +388,7 @@ func _ObjTypeMutationResolveEventHandler(impl interface{}) graphql1.FieldResolve
 	})
 	return func(p graphql1.ResolveParams) (interface{}, error) {
 		frp := MutationResolveEventFieldResolverParams{ResolveParams: p}
-		err := mapstructure.Decode(p.Args, &frp.Args)
+		err := v2.Decode(p.Args, &frp.Args)
 		if err != nil {
 			return nil, err
 		}
@@ -403,7 +403,7 @@ func _ObjTypeMutationDeleteEventHandler(impl interface{}) graphql1.FieldResolveF
 	})
 	return func(p graphql1.ResolveParams) (interface{}, error) {
 		frp := MutationDeleteEventFieldResolverParams{ResolveParams: p}
-		err := mapstructure.Decode(p.Args, &frp.Args)
+		err := v2.Decode(p.Args, &frp.Args)
 		if err != nil {
 			return nil, err
 		}
@@ -418,7 +418,7 @@ func _ObjTypeMutationDeleteEventFilterHandler(impl interface{}) graphql1.FieldRe
 	})
 	return func(p graphql1.ResolveParams) (interface{}, error) {
 		frp := MutationDeleteEventFilterFieldResolverParams{ResolveParams: p}
-		err := mapstructure.Decode(p.Args, &frp.Args)
+		err := v2.Decode(p.Args, &frp.Args)
 		if err != nil {
 			return nil, err
 		}
@@ -433,7 +433,7 @@ func _ObjTypeMutationDeleteHandlerHandler(impl interface{}) graphql1.FieldResolv
 	})
 	return func(p graphql1.ResolveParams) (interface{}, error) {
 		frp := MutationDeleteHandlerFieldResolverParams{ResolveParams: p}
-		err := mapstructure.Decode(p.Args, &frp.Args)
+		err := v2.Decode(p.Args, &frp.Args)
 		if err != nil {
 			return nil, err
 		}
@@ -448,7 +448,7 @@ func _ObjTypeMutationDeleteMutatorHandler(impl interface{}) graphql1.FieldResolv
 	})
 	return func(p graphql1.ResolveParams) (interface{}, error) {
 		frp := MutationDeleteMutatorFieldResolverParams{ResolveParams: p}
-		err := mapstructure.Decode(p.Args, &frp.Args)
+		err := v2.Decode(p.Args, &frp.Args)
 		if err != nil {
 			return nil, err
 		}
@@ -463,7 +463,7 @@ func _ObjTypeMutationCreateSilenceHandler(impl interface{}) graphql1.FieldResolv
 	})
 	return func(p graphql1.ResolveParams) (interface{}, error) {
 		frp := MutationCreateSilenceFieldResolverParams{ResolveParams: p}
-		err := mapstructure.Decode(p.Args, &frp.Args)
+		err := v2.Decode(p.Args, &frp.Args)
 		if err != nil {
 			return nil, err
 		}
@@ -478,7 +478,7 @@ func _ObjTypeMutationDeleteSilenceHandler(impl interface{}) graphql1.FieldResolv
 	})
 	return func(p graphql1.ResolveParams) (interface{}, error) {
 		frp := MutationDeleteSilenceFieldResolverParams{ResolveParams: p}
-		err := mapstructure.Decode(p.Args, &frp.Args)
+		err := v2.Decode(p.Args, &frp.Args)
 		if err != nil {
 			return nil, err
 		}

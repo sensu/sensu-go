@@ -3,8 +3,8 @@
 package schema
 
 import (
+	v2 "github.com/go-viper/mapstructure/v2"
 	graphql1 "github.com/graphql-go/graphql"
-	mapstructure "github.com/mitchellh/mapstructure"
 	graphql "github.com/sensu/sensu-go/graphql"
 )
 
@@ -351,7 +351,7 @@ func _ObjTypeQueryNamespaceHandler(impl interface{}) graphql1.FieldResolveFn {
 	})
 	return func(p graphql1.ResolveParams) (interface{}, error) {
 		frp := QueryNamespaceFieldResolverParams{ResolveParams: p}
-		err := mapstructure.Decode(p.Args, &frp.Args)
+		err := v2.Decode(p.Args, &frp.Args)
 		if err != nil {
 			return nil, err
 		}
@@ -366,7 +366,7 @@ func _ObjTypeQueryEventHandler(impl interface{}) graphql1.FieldResolveFn {
 	})
 	return func(p graphql1.ResolveParams) (interface{}, error) {
 		frp := QueryEventFieldResolverParams{ResolveParams: p}
-		err := mapstructure.Decode(p.Args, &frp.Args)
+		err := v2.Decode(p.Args, &frp.Args)
 		if err != nil {
 			return nil, err
 		}
@@ -381,7 +381,7 @@ func _ObjTypeQueryEntityHandler(impl interface{}) graphql1.FieldResolveFn {
 	})
 	return func(p graphql1.ResolveParams) (interface{}, error) {
 		frp := QueryEntityFieldResolverParams{ResolveParams: p}
-		err := mapstructure.Decode(p.Args, &frp.Args)
+		err := v2.Decode(p.Args, &frp.Args)
 		if err != nil {
 			return nil, err
 		}
@@ -396,7 +396,7 @@ func _ObjTypeQueryMutatorHandler(impl interface{}) graphql1.FieldResolveFn {
 	})
 	return func(p graphql1.ResolveParams) (interface{}, error) {
 		frp := QueryMutatorFieldResolverParams{ResolveParams: p}
-		err := mapstructure.Decode(p.Args, &frp.Args)
+		err := v2.Decode(p.Args, &frp.Args)
 		if err != nil {
 			return nil, err
 		}
@@ -411,7 +411,7 @@ func _ObjTypeQueryCheckHandler(impl interface{}) graphql1.FieldResolveFn {
 	})
 	return func(p graphql1.ResolveParams) (interface{}, error) {
 		frp := QueryCheckFieldResolverParams{ResolveParams: p}
-		err := mapstructure.Decode(p.Args, &frp.Args)
+		err := v2.Decode(p.Args, &frp.Args)
 		if err != nil {
 			return nil, err
 		}
@@ -426,7 +426,7 @@ func _ObjTypeQueryEventFilterHandler(impl interface{}) graphql1.FieldResolveFn {
 	})
 	return func(p graphql1.ResolveParams) (interface{}, error) {
 		frp := QueryEventFilterFieldResolverParams{ResolveParams: p}
-		err := mapstructure.Decode(p.Args, &frp.Args)
+		err := v2.Decode(p.Args, &frp.Args)
 		if err != nil {
 			return nil, err
 		}
@@ -441,7 +441,7 @@ func _ObjTypeQueryHandlerHandler(impl interface{}) graphql1.FieldResolveFn {
 	})
 	return func(p graphql1.ResolveParams) (interface{}, error) {
 		frp := QueryHandlerFieldResolverParams{ResolveParams: p}
-		err := mapstructure.Decode(p.Args, &frp.Args)
+		err := v2.Decode(p.Args, &frp.Args)
 		if err != nil {
 			return nil, err
 		}
@@ -456,7 +456,7 @@ func _ObjTypeQuerySuggestHandler(impl interface{}) graphql1.FieldResolveFn {
 	})
 	return func(p graphql1.ResolveParams) (interface{}, error) {
 		frp := QuerySuggestFieldResolverParams{ResolveParams: p}
-		err := mapstructure.Decode(p.Args, &frp.Args)
+		err := v2.Decode(p.Args, &frp.Args)
 		if err != nil {
 			return nil, err
 		}
@@ -489,7 +489,7 @@ func _ObjTypeQueryMetricsHandler(impl interface{}) graphql1.FieldResolveFn {
 	})
 	return func(p graphql1.ResolveParams) (interface{}, error) {
 		frp := QueryMetricsFieldResolverParams{ResolveParams: p}
-		err := mapstructure.Decode(p.Args, &frp.Args)
+		err := v2.Decode(p.Args, &frp.Args)
 		if err != nil {
 			return nil, err
 		}
@@ -504,7 +504,7 @@ func _ObjTypeQueryNodeHandler(impl interface{}) graphql1.FieldResolveFn {
 	})
 	return func(p graphql1.ResolveParams) (interface{}, error) {
 		frp := QueryNodeFieldResolverParams{ResolveParams: p}
-		err := mapstructure.Decode(p.Args, &frp.Args)
+		err := v2.Decode(p.Args, &frp.Args)
 		if err != nil {
 			return nil, err
 		}
@@ -519,7 +519,7 @@ func _ObjTypeQueryWrappedNodeHandler(impl interface{}) graphql1.FieldResolveFn {
 	})
 	return func(p graphql1.ResolveParams) (interface{}, error) {
 		frp := QueryWrappedNodeFieldResolverParams{ResolveParams: p}
-		err := mapstructure.Decode(p.Args, &frp.Args)
+		err := v2.Decode(p.Args, &frp.Args)
 		if err != nil {
 			return nil, err
 		}

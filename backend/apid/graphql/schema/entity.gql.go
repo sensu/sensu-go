@@ -3,11 +3,11 @@
 package schema
 
 import (
-	errors "errors"
+	"errors"
+	v2 "github.com/go-viper/mapstructure/v2"
 	graphql1 "github.com/graphql-go/graphql"
-	mapstructure "github.com/mitchellh/mapstructure"
 	graphql "github.com/sensu/sensu-go/graphql"
-	time "time"
+	"time"
 )
 
 // EntityRelatedFieldResolverArgs contains arguments provided to related when selected
@@ -46,7 +46,6 @@ type EntityEventsFieldResolverParams struct {
 	Args EntityEventsFieldResolverArgs
 }
 
-//
 // EntityFieldResolvers represents a collection of methods whose products represent the
 // response values of the 'Entity' type.
 type EntityFieldResolvers interface {
@@ -454,7 +453,7 @@ func _ObjTypeEntityRelatedHandler(impl interface{}) graphql1.FieldResolveFn {
 	})
 	return func(p graphql1.ResolveParams) (interface{}, error) {
 		frp := EntityRelatedFieldResolverParams{ResolveParams: p}
-		err := mapstructure.Decode(p.Args, &frp.Args)
+		err := v2.Decode(p.Args, &frp.Args)
 		if err != nil {
 			return nil, err
 		}
@@ -469,7 +468,7 @@ func _ObjTypeEntityEventsHandler(impl interface{}) graphql1.FieldResolveFn {
 	})
 	return func(p graphql1.ResolveParams) (interface{}, error) {
 		frp := EntityEventsFieldResolverParams{ResolveParams: p}
-		err := mapstructure.Decode(p.Args, &frp.Args)
+		err := v2.Decode(p.Args, &frp.Args)
 		if err != nil {
 			return nil, err
 		}
@@ -701,7 +700,6 @@ var _ObjectTypeEntityDesc = graphql.ObjectDesc{
 	},
 }
 
-//
 // SystemFieldResolvers represents a collection of methods whose products represent the
 // response values of the 'System' type.
 type SystemFieldResolvers interface {
@@ -1195,7 +1193,6 @@ var _ObjectTypeSystemDesc = graphql.ObjectDesc{
 	},
 }
 
-//
 // ProcessFieldResolvers represents a collection of methods whose products represent the
 // response values of the 'Process' type.
 type ProcessFieldResolvers interface {
@@ -1535,7 +1532,6 @@ var _ObjectTypeProcessDesc = graphql.ObjectDesc{
 	},
 }
 
-//
 // BackendEntityFieldResolvers represents a collection of methods whose products represent the
 // response values of the 'BackendEntity' type.
 type BackendEntityFieldResolvers interface {
@@ -1600,7 +1596,6 @@ var _ObjectTypeBackendEntityDesc = graphql.ObjectDesc{
 	FieldHandlers: map[string]graphql.FieldHandler{"meta": _ObjTypeBackendEntityMetaHandler},
 }
 
-//
 // NetworkFieldResolvers represents a collection of methods whose products represent the
 // response values of the 'Network' type.
 type NetworkFieldResolvers interface {
@@ -1669,7 +1664,6 @@ var _ObjectTypeNetworkDesc = graphql.ObjectDesc{
 	FieldHandlers: map[string]graphql.FieldHandler{"interfaces": _ObjTypeNetworkInterfacesHandler},
 }
 
-//
 // NetworkInterfaceFieldResolvers represents a collection of methods whose products represent the
 // response values of the 'NetworkInterface' type.
 type NetworkInterfaceFieldResolvers interface {
@@ -1814,7 +1808,6 @@ var _ObjectTypeNetworkInterfaceDesc = graphql.ObjectDesc{
 	},
 }
 
-//
 // DeregistrationFieldResolvers represents a collection of methods whose products represent the
 // response values of the 'Deregistration' type.
 type DeregistrationFieldResolvers interface {
@@ -1886,7 +1879,6 @@ var _ObjectTypeDeregistrationDesc = graphql.ObjectDesc{
 	FieldHandlers: map[string]graphql.FieldHandler{"handler": _ObjTypeDeregistrationHandlerHandler},
 }
 
-//
 // EntityConnectionFieldResolvers represents a collection of methods whose products represent the
 // response values of the 'EntityConnection' type.
 type EntityConnectionFieldResolvers interface {

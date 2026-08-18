@@ -3,13 +3,12 @@
 package schema
 
 import (
-	errors "errors"
+	"errors"
 	graphql1 "github.com/graphql-go/graphql"
 	graphql "github.com/sensu/sensu-go/graphql"
-	time "time"
+	"time"
 )
 
-//
 // SilencedFieldResolvers represents a collection of methods whose products represent the
 // response values of the 'Silenced' type.
 type SilencedFieldResolvers interface {
@@ -537,7 +536,6 @@ func _InterfaceTypeSilenceableConfigFn() graphql1.InterfaceConfig {
 // describe Silenceable's configuration; kept private to avoid unintentional tampering of configuration at runtime.
 var _InterfaceTypeSilenceableDesc = graphql.InterfaceDesc{Config: _InterfaceTypeSilenceableConfigFn}
 
-//
 // SilencedConnectionFieldResolvers represents a collection of methods whose products represent the
 // response values of the 'SilencedConnection' type.
 type SilencedConnectionFieldResolvers interface {

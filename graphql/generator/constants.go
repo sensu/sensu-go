@@ -11,7 +11,7 @@ const (
 	servicePkg = "github.com/sensu/sensu-go/graphql"
 
 	// package used for decoding parameters
-	mapstructurePkg = "github.com/mitchellh/mapstructure"
+	mapstructurePkg = "github.com/go-viper/mapstructure/v2"
 
 	// used to describe resolverFns that panic when not implemented.
 	missingResolverNote = `// NOTE:

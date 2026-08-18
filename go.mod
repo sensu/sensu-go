@@ -48,7 +48,6 @@ require (
 	github.com/mgutz/ansi v0.0.0-20170206155736-9520e82c474b
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/mitchellh/hashstructure v1.1.0
-	github.com/mitchellh/mapstructure v1.5.0
 	github.com/olekukonko/tablewriter v0.0.5
 	github.com/prometheus/client_golang v1.23.2
 	github.com/prometheus/client_model v0.6.2
@@ -105,7 +104,10 @@ require (
 	sigs.k8s.io/yaml v1.6.0 // indirect
 )
 
-require golang.org/x/tools/go/vcs v0.1.0-deprecated
+require (
+	github.com/go-viper/mapstructure/v2 v2.5.0
+	golang.org/x/tools/go/vcs v0.1.0-deprecated
+)
 
 require (
 	github.com/beorn7/perks v1.0.1 // indirect
@@ -116,7 +118,6 @@ require (
 	github.com/fsnotify/fsnotify v1.10.1 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
 	github.com/go-ole/go-ole v1.2.6 // indirect
-	github.com/go-viper/mapstructure/v2 v2.5.0 // indirect
 	github.com/golang-jwt/jwt/v5 v5.3.0 // indirect
 	github.com/google/go-cmp v0.7.0 // indirect
 	github.com/grpc-ecosystem/go-grpc-middleware/providers/prometheus v1.0.1 // indirect
