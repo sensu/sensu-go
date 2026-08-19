@@ -5,7 +5,7 @@ import (
 	"net/textproto"
 	"strings"
 
-	"github.com/mitchellh/hashstructure"
+	"github.com/gohugoio/hashstructure"
 )
 
 // ETag returns a unique hash for the given interface

@@ -47,7 +47,6 @@ require (
 	github.com/mattn/go-colorable v0.1.13 // indirect
 	github.com/mgutz/ansi v0.0.0-20170206155736-9520e82c474b
 	github.com/mitchellh/go-homedir v1.1.0
-	github.com/mitchellh/hashstructure v1.1.0
 	github.com/olekukonko/tablewriter v0.0.5
 	github.com/prometheus/client_golang v1.23.2
 	github.com/prometheus/client_model v0.6.2
@@ -106,6 +105,7 @@ require (
 
 require (
 	github.com/go-viper/mapstructure/v2 v2.5.0
+	github.com/gohugoio/hashstructure v1.0.0
 	golang.org/x/tools/go/vcs v0.1.0-deprecated
 )
 
