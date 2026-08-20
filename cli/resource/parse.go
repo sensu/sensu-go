@@ -11,7 +11,7 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/ghodss/yaml"
+	"sigs.k8s.io/yaml"
 	corev2 "github.com/sensu/core/v2"
 	apitools "github.com/sensu/sensu-api-tools"
 	"github.com/sensu/sensu-go/types"

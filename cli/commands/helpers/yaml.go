@@ -4,12 +4,13 @@ import (
 	"io"
 
 	"github.com/sensu/sensu-go/types"
-	yaml "gopkg.in/yaml.v2"
+	yaml "gopkg.in/yaml.v3"
 )
 
 // PrintYAML serializes the value v to yaml and writes the result to w.
 func PrintYAML(v interface{}, w io.Writer) (err error) {
 	enc := yaml.NewEncoder(w)
+	enc.SetIndent(2)
 	var close = true
 	defer func() {
 		if err == nil && close {

@@ -25,7 +25,6 @@ require (
 	github.com/echlebek/timeproxy v1.0.0
 	github.com/emicklei/proto v1.1.0
 	github.com/evanphx/json-patch/v5 v5.1.0
-	github.com/ghodss/yaml v1.0.0
 	github.com/go-resty/resty/v2 v2.11.0
 	github.com/gogo/protobuf v1.3.2
 	github.com/golang-jwt/jwt/v4 v4.5.2
@@ -74,7 +73,6 @@ require (
 	golang.org/x/time v0.14.0
 	google.golang.org/grpc v1.82.1
 	gopkg.in/h2non/filetype.v1 v1.0.3
-	gopkg.in/yaml.v2 v2.4.0
 )
 
 require (
@@ -99,13 +97,14 @@ require (
 	google.golang.org/genproto/googleapis/api v0.0.0-20260526163538-3dc84a4a5aaa // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20260526163538-3dc84a4a5aaa // indirect
 	gopkg.in/natefinch/lumberjack.v2 v2.2.1 // indirect
-	sigs.k8s.io/yaml v1.6.0 // indirect
+	sigs.k8s.io/yaml v1.6.0
 )
 
 require (
 	github.com/go-viper/mapstructure/v2 v2.5.0
 	github.com/gohugoio/hashstructure v1.0.0
 	golang.org/x/tools/go/vcs v0.1.0-deprecated
+	gopkg.in/yaml.v3 v3.0.1
 )
 
 require (
@@ -159,6 +158,5 @@ require (
 	golang.org/x/text v0.40.0 // indirect
 	google.golang.org/protobuf v1.36.11 // indirect
 	gopkg.in/sourcemap.v1 v1.0.5 // indirect
-	gopkg.in/yaml.v3 v3.0.1 // indirect
 	sigs.k8s.io/json v0.0.0-20211020170558-c049b76a60c6 // indirect
 )
