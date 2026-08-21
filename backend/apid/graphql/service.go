@@ -237,7 +237,7 @@ func NewService(cfg ServiceConfig) (*Service, error) {
 // Do executes given query string and variables
 func (svc *Service) Do(ctx context.Context, p graphql.QueryParams) *graphql.Result {
 	// Instantiate loaders and lift them into the context
-	qryCtx := contextWithLoaders(ctx, *svc.Config)
+	qryCtx := contextWithLoaders(ctx, *svc.Config, false)
 
 	// Execute query inside context
 	return svc.Target.Do(qryCtx, p)

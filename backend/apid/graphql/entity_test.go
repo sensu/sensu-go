@@ -36,7 +36,7 @@ func TestEntityTypeRelatedField(t *testing.T) {
 
 	cfg := ServiceConfig{EntityClient: client}
 	params := schema.EntityRelatedFieldResolverParams{ResolveParams: graphql.ResolveParams{Context: context.Background()}}
-	params.Context = contextWithLoaders(context.Background(), cfg)
+	params.Context = contextWithLoaders(context.Background(), cfg, false)
 	params.Source = source
 	params.Args.Limit = 10
 

@@ -5,15 +5,13 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/graph-gophers/dataloader"
 	corev2 "github.com/sensu/core/v2"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/stretchr/testify/mock"
 )
 
-func contextWithLoadersNoCache(ctx context.Context, cfg ServiceConfig, opts ...dataloader.Option) context.Context {
-	opts = append(opts, dataloader.WithCache(&dataloader.NoCache{}))
-	return contextWithLoaders(ctx, cfg, opts...)
+func contextWithLoadersNoCache(ctx context.Context, cfg ServiceConfig) context.Context {
+	return contextWithLoaders(ctx, cfg, true)
 }
 
 func Test_listEvents(t *testing.T) {
