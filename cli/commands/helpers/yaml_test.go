@@ -56,15 +56,12 @@ func TestPrintYAMLResourceSliceRoundTrip(t *testing.T) {
 
 	out := buf.String()
 
-	// YAML multi-doc output should have document separators
-	docs := strings.Split(out, "---")
-	if len(docs) < 2 {
-		// single doc is okay if wrapped, just verify it parses
-	}
-
-	// Round-trip: the output must be valid YAML
-	var parsed interface{}
-	if err := yaml.Unmarshal([]byte(out), &parsed); err != nil {
+	// Round-trip: output must parse back to a slice with the same element count.
+	var items []interface{}
+	if err := yaml.Unmarshal([]byte(out), &items); err != nil {
 		t.Fatalf("output is not valid YAML: %v\noutput:\n%s", err, out)
+	}
+	if len(items) != len(checks) {
+		t.Errorf("expected %d items after round-trip, got %d\noutput:\n%s", len(checks), len(items), out)
 	}
 }
