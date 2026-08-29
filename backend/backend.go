@@ -315,6 +315,17 @@ func newClient(ctx context.Context, config *Config, backend *Backend) (*clientv3
 // backend. The daemons will later be started according to their position in the
 // b.Daemons list, and stopped in reverse order
 func Initialize(ctx context.Context, config *Config) (*Backend, error) {
+	// If a postgres store backend is configured, delegate to the postgres
+	// initialization function. This skips all etcd startup and creates a
+	// Backend backed entirely by postgres. The PostgresInitFunc is set by
+	// the enterprise package.
+	if config.StoreBackend == "postgres" {
+		if config.PostgresInitFunc == nil {
+			return nil, fmt.Errorf("store-backend is 'postgres' but no PostgresInitFunc is configured (requires enterprise edition)")
+		}
+		return config.PostgresInitFunc(ctx, config)
+	}
+
 	var err error
 	// Initialize a Backend struct
 	b := &Backend{Cfg: config}

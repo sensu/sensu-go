@@ -1,6 +1,7 @@
 package backend
 
 import (
+	"context"
 	"time"
 
 	corev2 "github.com/sensu/core/v2"
@@ -123,6 +124,19 @@ type Config struct {
 	EtcdUnsafeNoFsync bool
 
 	LicenseGetter licensing.Getter
+
+	// StoreBackend specifies the store backend to use. Valid values are
+	// "" (empty, defaults to "etcd") and "postgres". When set to "postgres",
+	// the backend skips embedded etcd startup and uses PostgresInitFunc
+	// to initialize the store subsystems.
+	StoreBackend string
+
+	// PostgresInitFunc is called instead of the standard etcd initialization
+	// when StoreBackend is "postgres". It receives the context and config,
+	// and must return a fully initialized Backend. This is set by the
+	// enterprise package to inject postgres store implementations.
+	// When nil and StoreBackend is "postgres", Initialize returns an error.
+	PostgresInitFunc func(ctx context.Context, config *Config) (*Backend, error)
 
 	DisablePlatformMetrics         bool
 	PlatformMetricsLoggingInterval time.Duration

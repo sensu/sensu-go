@@ -44,6 +44,8 @@ const (
 	environmentPrefix = "sensu_backend"
 
 	// Flag constants
+	flagStoreBackend          = "store-backend"
+	flagPostgresDSN           = "postgres-dsn"
 	flagConfigFile            = "config-file"
 	flagAgentHost             = "agent-host"
 	flagAgentPort             = "agent-port"
@@ -291,6 +293,7 @@ func StartCommand(initialize InitializeFunc) *cobra.Command {
 				EtcdClientPassword:             viper.GetString(envEtcdClientPassword),
 				EtcdUnsafeNoFsync:              viper.GetBool(flagEtcdUnsafeNoFsync),
 				NoEmbedEtcd:                    viper.GetBool(flagNoEmbedEtcd),
+				StoreBackend:                   viper.GetString(flagStoreBackend),
 				Labels:                         viper.GetStringMapString(flagLabels),
 				Annotations:                    viper.GetStringMapString(flagAnnotations),
 				DisablePlatformMetrics:         viper.GetBool(flagDisablePlatformMetrics),
@@ -499,6 +502,8 @@ func handleConfig(cmd *cobra.Command, arguments []string, server bool) error {
 
 	if server {
 		viper.SetDefault(flagNoEmbedEtcd, false)
+		viper.SetDefault(flagStoreBackend, "")
+		viper.SetDefault(flagPostgresDSN, "")
 	}
 
 	// Merge in flag set so that it appears in command usage
@@ -639,6 +644,8 @@ func flagSet(server bool) *pflag.FlagSet {
 		flagSet.StringSlice(flagEtcdListenClientURLs, viper.GetStringSlice(flagEtcdListenClientURLs), "list of etcd client URLs to listen on")
 		_ = flagSet.SetAnnotation(flagEtcdListenClientURLs, "categories", []string{"store"})
 		flagSet.Bool(flagNoEmbedEtcd, viper.GetBool(flagNoEmbedEtcd), "don't embed etcd, use external etcd instead")
+		flagSet.String(flagStoreBackend, viper.GetString(flagStoreBackend), "store backend to use: '' (default, etcd) or 'postgres'")
+		flagSet.String(flagPostgresDSN, viper.GetString(flagPostgresDSN), "PostgreSQL connection string (used when --store-backend=postgres)")
 		_ = flagSet.SetAnnotation(flagNoEmbedEtcd, "categories", []string{"store"})
 		flagSet.Int64(flagEtcdQuotaBackendBytes, viper.GetInt64(flagEtcdQuotaBackendBytes), "maximum etcd database size in bytes (use with caution)")
 		_ = flagSet.SetAnnotation(flagEtcdQuotaBackendBytes, "categories", []string{"store"})
