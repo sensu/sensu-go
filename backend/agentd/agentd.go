@@ -123,6 +123,14 @@ type Config struct {
 	Watcher             <-chan store.WatchEventEntityConfig
 	BackendEntity       *corev2.Entity
 	UserWatcher         <-chan *store.WatchEventUserConfig
+	Storev2             storev2.Interface
+}
+
+func (c Config) getStorev2() storev2.Interface {
+	if c.Storev2 != nil {
+		return c.Storev2
+	}
+	return etcdstore.NewStore(c.Client)
 }
 
 // Option is a functional option.
@@ -147,7 +155,7 @@ func New(c Config, opts ...Option) (*Agentd, error) {
 		writeTimeout:        c.WriteTimeout,
 		watcher:             c.Watcher,
 		client:              c.Client,
-		storev2:             etcdstore.NewStore(c.Client),
+		storev2:             c.getStorev2(),
 		etcdClientTLSConfig: c.EtcdClientTLSConfig,
 		serveWaitTime:       c.ServeWaitTime,
 		backendEntity:       c.BackendEntity,
@@ -414,12 +422,18 @@ func (a *Agentd) webSocketHandler(w http.ResponseWriter, r *http.Request) {
 	// Validate the agent namespace
 	namespace := r.Header.Get(transport.HeaderKeyNamespace)
 	var found bool
-	values := a.namespaceCache.Get("")
-	for _, value := range values {
-		if namespace == value.Resource.GetObjectMeta().Name {
-			found = true
-			break
+	if a.namespaceCache != nil {
+		values := a.namespaceCache.Get("")
+		for _, value := range values {
+			if namespace == value.Resource.GetObjectMeta().Name {
+				found = true
+				break
+			}
 		}
+	} else {
+		// No cache (postgres mode) — validate against store directly
+		ns, _ := a.store.GetNamespace(r.Context(), namespace)
+		found = ns != nil
 	}
 	if namespace == "" || !found {
 		lager.Warningf("namespace %q not found", namespace)
