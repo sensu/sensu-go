@@ -281,11 +281,13 @@ func New(ctx context.Context, c Config, opts ...Option) (*Eventd, error) {
 	}
 
 	e.ctx, e.cancel = context.WithCancel(ctx)
-	cache, err := cache.New(e.ctx, c.Client, &corev2.Silenced{}, false)
-	if err != nil {
-		return nil, err
+	if c.Client != nil {
+		cache, err := cache.New(e.ctx, c.Client, &corev2.Silenced{}, false)
+		if err != nil {
+			return nil, err
+		}
+		e.silencedCache = cache
 	}
-	e.silencedCache = cache
 
 	for _, o := range opts {
 		if err := o(e); err != nil {

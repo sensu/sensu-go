@@ -145,9 +145,9 @@ func New(c Config, opts ...Option) (*Agentd, error) {
 		ctx:                 ctx,
 		cancel:              cancel,
 		writeTimeout:        c.WriteTimeout,
-		storev2:             etcdstore.NewStore(c.Client),
 		watcher:             c.Watcher,
 		client:              c.Client,
+		storev2:             etcdstore.NewStore(c.Client),
 		etcdClientTLSConfig: c.EtcdClientTLSConfig,
 		serveWaitTime:       c.ServeWaitTime,
 		backendEntity:       c.BackendEntity,
@@ -178,9 +178,13 @@ func New(c Config, opts ...Option) (*Agentd, error) {
 	// runtime, so we need this workaround
 	router := mux.NewRouter()
 
-	a.healthRouter = routers.NewHealthRouter(
-		actions.NewHealthController(a.store, a.client.Cluster, a.etcdClientTLSConfig),
-	)
+	if a.client != nil {
+		a.healthRouter = routers.NewHealthRouter(
+			actions.NewHealthController(a.store, a.client.Cluster, a.etcdClientTLSConfig),
+		)
+	} else {
+		a.healthRouter = routers.NewHealthRouter(actions.NewSimpleHealthController())
+	}
 	a.healthRouter.Mount(router)
 
 	route := router.NewRoute().Subrouter()
@@ -214,9 +218,11 @@ func New(c Config, opts ...Option) (*Agentd, error) {
 		}
 	}
 
-	a.namespaceCache, err = cache.New(ctx, c.Client, &corev2.Namespace{}, false)
-	if err != nil {
-		return nil, err
+	if c.Client != nil {
+		a.namespaceCache, err = cache.New(ctx, c.Client, &corev2.Namespace{}, false)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	return a, nil

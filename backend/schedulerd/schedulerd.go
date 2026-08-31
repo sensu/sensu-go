@@ -84,12 +84,14 @@ func New(ctx context.Context, c Config, opts ...Option) (*Schedulerd, error) {
 		secretsProviderManager: c.SecretsProviderManager,
 	}
 	s.ctx, s.cancel = context.WithCancel(ctx)
-	cache, err := cachev2.New(s.ctx, c.Client, &corev3.EntityConfig{}, true)
-	if err != nil {
-		return nil, err
+	if c.Client != nil {
+		cache, err := cachev2.New(s.ctx, c.Client, &corev3.EntityConfig{}, true)
+		if err != nil {
+			return nil, err
+		}
+		s.entityCache = cache
 	}
-	s.entityCache = cache
-	s.checkWatcher = NewCheckWatcher(s.ctx, c.Bus, c.Store, c.RingPool, cache, s.secretsProviderManager)
+	s.checkWatcher = NewCheckWatcher(s.ctx, c.Bus, c.Store, c.RingPool, s.entityCache, s.secretsProviderManager)
 	s.adhocRequestExecutor = NewAdhocRequestExecutor(s.ctx, s.store, s.queueGetter.GetQueue(adhocQueueName), s.bus, s.entityCache, s.secretsProviderManager)
 
 	for _, o := range opts {

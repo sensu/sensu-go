@@ -29,3 +29,9 @@ func NewHealthController(store store.HealthStore, cluster clientv3.Cluster, etcd
 func (h HealthController) GetClusterHealth(ctx context.Context) *corev2.HealthResponse {
 	return h.store.GetClusterHealth(ctx, h.cluster, h.etcdClientTLSConfig)
 }
+
+// NewSimpleHealthController returns a HealthController that doesn't
+// require an etcd cluster reference. Used in postgres-only mode.
+func NewSimpleHealthController() HealthController {
+	return HealthController{}
+}
