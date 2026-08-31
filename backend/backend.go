@@ -323,7 +323,14 @@ func Initialize(ctx context.Context, config *Config) (*Backend, error) {
 		if config.PostgresInitFunc == nil {
 			return nil, fmt.Errorf("store-backend is 'postgres' but no PostgresInitFunc is configured (requires enterprise edition)")
 		}
-		return config.PostgresInitFunc(ctx, config)
+		b, err := config.PostgresInitFunc(ctx, config)
+		if err != nil {
+			return nil, err
+		}
+		// Ensure lifecycle fields are set for RunWithInitializer
+		b.ctx = ctx
+		b.runCtx, b.runCancel = context.WithCancel(ctx)
+		return b, nil
 	}
 
 	var err error
@@ -849,7 +856,9 @@ func (b *Backend) RunWithInitializer(initialize func(context.Context, *Config) (
 			}
 		}
 
-		_ = b.Client.Close()
+		if b.Client != nil {
+			_ = b.Client.Close()
+		}
 
 		// Yes, two levels of retry... this could improve. Unfortunately Initialize()
 		// is called elsewhere.
@@ -971,7 +980,9 @@ func (e *errGroup) WaitStop() {
 
 // Stop the Backend cleanly.
 func (b *Backend) Stop() {
-	b.runCancel()
+	if b.runCancel != nil {
+		b.runCancel()
+	}
 }
 
 func (b *Backend) getBackendEntity(config *Config) *corev2.Entity {
