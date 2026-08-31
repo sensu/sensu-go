@@ -328,6 +328,12 @@ func _ObjectTypeSensuBackendVersionConfigFn() graphql1.ObjectConfig {
 				Name:              "version",
 				Type:              graphql1.String,
 			},
+			"buildType": &graphql1.Field{
+				Args:              graphql1.FieldConfigArgument{},
+				Description:       "Build type: commercial or community.",
+				Name:              "buildType",
+				Type:              graphql1.String,
+			},
 		},
 		Interfaces: []*graphql1.Interface{},
 		IsTypeOf: func(_ graphql1.IsTypeOfParams) bool {
@@ -349,5 +355,10 @@ var _ObjectTypeSensuBackendVersionDesc = graphql.ObjectDesc{
 		"buildDate": _ObjTypeSensuBackendVersionBuildDateHandler,
 		"buildSHA":  _ObjTypeSensuBackendVersionBuildSHAHandler,
 		"version":   _ObjTypeSensuBackendVersionVersionHandler,
+		"buildType": func(_ interface{}) graphql1.FieldResolveFn {
+			return func(p graphql1.ResolveParams) (interface{}, error) {
+				return "commercial", nil
+			}
+		},
 	},
 }
