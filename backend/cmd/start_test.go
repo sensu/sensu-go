@@ -25,6 +25,12 @@ func tempConfig(t *testing.T, content string) *os.File {
 	return file
 }
 
+func TestDefaultDisablePlatformMetrics(t *testing.T) {
+	if defaultDisablePlatformMetrics != true {
+		t.Errorf("defaultDisablePlatformMetrics = %v, want true", defaultDisablePlatformMetrics)
+	}
+}
+
 func Test_handleConfig(t *testing.T) {
 	cmd := &cobra.Command{
 		Use: "test",
