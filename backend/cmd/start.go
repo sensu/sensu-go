@@ -187,7 +187,7 @@ Use "{{.CommandPath}} [command] --help" for more information about a command.{{e
 
 var (
 	// platform metric logging defaults
-	defaultDisablePlatformMetrics         = false
+	defaultDisablePlatformMetrics         = true
 	defaultPlatformMetricsLoggingInterval = 60 * time.Second
 	defaultPlatformMetricsLogFile         = filepath.Join(path.SystemLogDir(), "backend-stats.log")
 )

@@ -1,6 +1,6 @@
 module github.com/sensu/sensu-go
 
-go 1.26.5
+go 1.26.6
 
 replace github.com/gorilla/websocket => github.com/sensu/websocket v1.0.2
 
@@ -71,7 +71,7 @@ require (
 	go.uber.org/atomic v1.11.0
 	go.uber.org/zap v1.28.0
 	golang.org/x/crypto v0.54.0
-	golang.org/x/mod v0.37.0
+	golang.org/x/mod v0.40.0
 	golang.org/x/net v0.57.0
 	golang.org/x/sys v0.47.0
 	golang.org/x/time v0.14.0
