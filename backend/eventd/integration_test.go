@@ -5,6 +5,7 @@ package eventd
 
 import (
 	"context"
+	"strings"
 	"testing"
 
 	corev2 "github.com/sensu/core/v2"
@@ -105,4 +106,42 @@ func TestEventdMonitor(t *testing.T) {
 
 	assert.NoError(t, sub.Cancel())
 	close(eventChan)
+}
+
+// TestEventdDefaultMaxOutputSize verifies against a real embedded etcd that
+// an event whose check produces output larger than etcd's request-size
+// limit, and does not set its own MaxOutputSize, is truncated to the
+// configured default and stored — instead of being rejected by etcd.
+func TestEventdDefaultMaxOutputSize(t *testing.T) {
+	store, err := testutil.NewStoreInstance()
+	require.NoError(t, err)
+	defer store.Teardown()
+
+	require.NoError(t, seeds.SeedInitialData(store))
+
+	storev2 := etcdstore.NewStore(store.Client)
+
+	bus, err := messaging.NewWizardBus(messaging.WizardBusConfig{})
+	require.NoError(t, err)
+	require.NoError(t, bus.Start())
+
+	e := newEventd(storev2, store, bus, newFakeFactory(&fakeSwitchSet{}))
+	e.defaultMaxOutputSize = 1468006 // see backend/cmd/start.go
+
+	event := corev2.FixtureEvent("entity1", "check1")
+	// Leave MaxOutputSize unset (zero value) — the common case the default targets.
+	event.Check.Output = strings.Repeat("x", 2*1024*1024) // 2 MiB, over etcd's 1.5 MiB request limit
+
+	ctx := otherTestutil.ContextWithNamespace("default")(context.Background())
+	require.NoError(t, store.UpdateEntity(ctx, event.Entity))
+
+	_, err = e.handleMessage(event)
+	require.NoError(t, err, "expected the default MaxOutputSize to prevent etcd rejection")
+
+	stored, err := store.GetEventByEntityCheck(ctx, "entity1", "check1")
+	require.NoError(t, err)
+	require.NotNil(t, stored)
+	require.Equal(t, int64(1468006), stored.Check.MaxOutputSize)
+	require.Len(t, stored.Check.Output, 1468006)
+	require.Equal(t, "629146", stored.Labels["sensu.io/output_truncated_bytes"])
 }
