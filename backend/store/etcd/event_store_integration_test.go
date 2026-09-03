@@ -649,6 +649,72 @@ func testGetEventsByEntityPagination(t *testing.T, ctx context.Context, etcd sto
 	}
 }
 
+func TestGetEventsPaginationNoContinueTokenOnExactLimit(t *testing.T) {
+	testWithEtcd(t, func(s store.Store) {
+		ctx := context.WithValue(context.Background(), corev2.NamespaceKey, "default")
+
+		// Create exactly 5 events
+		for i := 1; i <= 5; i++ {
+			event := corev2.FixtureEvent(fmt.Sprintf("entity%.2d", i), fmt.Sprintf("check%.2d", i))
+			_, _, err := s.UpdateEvent(ctx, event)
+			require.NoError(t, err)
+		}
+
+		// Query with limit equal to the total count — should NOT produce a continue token
+		pred := &store.SelectionPredicate{Limit: 5}
+		events, err := s.GetEvents(ctx, pred)
+		require.NoError(t, err)
+		assert.Equal(t, 5, len(events))
+		assert.Empty(t, pred.Continue, "should not have a continue token when limit equals total count")
+
+		// Query with limit less than total — should produce a continue token
+		pred = &store.SelectionPredicate{Limit: 3}
+		events, err = s.GetEvents(ctx, pred)
+		require.NoError(t, err)
+		assert.Equal(t, 3, len(events))
+		assert.NotEmpty(t, pred.Continue, "should have a continue token when more events exist")
+
+		// Follow the continue token — should get remaining 2 events with no further token
+		events, err = s.GetEvents(ctx, pred)
+		require.NoError(t, err)
+		assert.Equal(t, 2, len(events))
+		assert.Empty(t, pred.Continue, "should not have a continue token on the final page")
+	})
+}
+
+func TestGetEventsByEntityPaginationNoContinueTokenOnExactLimit(t *testing.T) {
+	testWithEtcd(t, func(s store.Store) {
+		ctx := context.WithValue(context.Background(), corev2.NamespaceKey, "default")
+
+		// Create exactly 5 checks for the same entity
+		for i := 1; i <= 5; i++ {
+			event := corev2.FixtureEvent("testentity", fmt.Sprintf("check%.2d", i))
+			_, _, err := s.UpdateEvent(ctx, event)
+			require.NoError(t, err)
+		}
+
+		// Query with limit equal to the total count — should NOT produce a continue token
+		pred := &store.SelectionPredicate{Limit: 5}
+		events, err := s.GetEventsByEntity(ctx, "testentity", pred)
+		require.NoError(t, err)
+		assert.Equal(t, 5, len(events))
+		assert.Empty(t, pred.Continue, "should not have a continue token when limit equals total count")
+
+		// Query with limit less than total — should produce a continue token
+		pred = &store.SelectionPredicate{Limit: 3}
+		events, err = s.GetEventsByEntity(ctx, "testentity", pred)
+		require.NoError(t, err)
+		assert.Equal(t, 3, len(events))
+		assert.NotEmpty(t, pred.Continue, "should have a continue token when more events exist")
+
+		// Follow the continue token — should get remaining 2 events with no further token
+		events, err = s.GetEventsByEntity(ctx, "testentity", pred)
+		require.NoError(t, err)
+		assert.Equal(t, 2, len(events))
+		assert.Empty(t, pred.Continue, "should not have a continue token on the final page")
+	})
+}
+
 func TestHandleExpireOnResolveEntries(t *testing.T) {
 	expireOnResolve := func(s *corev2.Silenced) *corev2.Silenced {
 		s.ExpireOnResolve = true
