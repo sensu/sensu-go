@@ -100,6 +100,75 @@ func TestUserStorage(t *testing.T) {
 	})
 }
 
+func TestAuthenticateUserTimingAttackMitigation(t *testing.T) {
+	testWithEtcd(t, func(s store.Store) {
+		password := "P@ssw0rd!"
+		passwordDigest, err := bcrypt.HashPassword(password)
+		require.NoError(t, err)
+
+		ctx, cancel := context.WithDeadline(
+			context.Background(),
+			time.Now().Add(30*time.Second),
+		)
+		defer cancel()
+
+		user := types.FixtureUser("existinguser")
+		user.PasswordHash = passwordDigest
+		err = s.CreateUser(ctx, user)
+		require.NoError(t, err)
+
+		const iterations = 5
+
+		// Measure authentication time for an existing user with wrong password
+		var existingUserDurations []time.Duration
+		for i := 0; i < iterations; i++ {
+			start := time.Now()
+			_, _ = s.AuthenticateUser(ctx, "existinguser", "wrongpassword")
+			existingUserDurations = append(existingUserDurations, time.Since(start))
+		}
+
+		// Measure authentication time for a non-existing user
+		var nonExistingUserDurations []time.Duration
+		for i := 0; i < iterations; i++ {
+			start := time.Now()
+			_, _ = s.AuthenticateUser(ctx, "nonexistentuser", "wrongpassword")
+			nonExistingUserDurations = append(nonExistingUserDurations, time.Since(start))
+		}
+
+		// Calculate averages
+		var avgExisting, avgNonExisting time.Duration
+		for _, d := range existingUserDurations {
+			avgExisting += d
+		}
+		avgExisting /= time.Duration(iterations)
+
+		for _, d := range nonExistingUserDurations {
+			avgNonExisting += d
+		}
+		avgNonExisting /= time.Duration(iterations)
+
+		// Both should take roughly the same time (within 50% of each other).
+		// Before the fix, non-existing user auth would be ~100x faster because
+		// no bcrypt comparison was performed.
+		ratio := float64(avgExisting) / float64(avgNonExisting)
+		assert.InDelta(t, 1.0, ratio, 0.5,
+			"Authentication timing for existing vs non-existing users should be similar. "+
+				"Existing user avg: %v, Non-existing user avg: %v, Ratio: %.2f",
+			avgExisting, avgNonExisting, ratio)
+
+		// Verify correct error types are still returned
+		_, err = s.AuthenticateUser(ctx, "nonexistentuser", "wrongpassword")
+		assert.Error(t, err)
+		var notFoundErr *store.ErrNotFound
+		assert.ErrorAs(t, err, &notFoundErr)
+
+		_, err = s.AuthenticateUser(ctx, "existinguser", "wrongpassword")
+		assert.Error(t, err)
+		var notValidErr *store.ErrNotValid
+		assert.ErrorAs(t, err, &notValidErr)
+	})
+}
+
 // TestGetAllUsersPagination tests the store's ability to paginate Users.
 // While GetAllUsers() internally merely calls the generic List() method of the
 // store, we can't rely on that method's tests because they assume a generic,
