@@ -1,0 +1,23 @@
+name: windows-test
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+      - 'develop/**'
+      - 'release/**'
+
+jobs:
+  test:
+    runs-on: windows-latest
+    strategy:
+      matrix:
+        test_suite: [unit, integration]
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-go@v7
+        with:
+          go-version: "1.26.6"
+      - run: go mod download
+      - run: .\build.ps1 ${{ matrix.test_suite }}
