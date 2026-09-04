@@ -3,9 +3,9 @@
 package schema
 
 import (
-	errors "errors"
+	"errors"
+	v2 "github.com/go-viper/mapstructure/v2"
 	graphql1 "github.com/graphql-go/graphql"
-	mapstructure "github.com/mitchellh/mapstructure"
 	graphql "github.com/sensu/sensu-go/graphql"
 )
 
@@ -340,7 +340,7 @@ func _ObjTypeNamespaceChecksHandler(impl interface{}) graphql1.FieldResolveFn {
 	})
 	return func(p graphql1.ResolveParams) (interface{}, error) {
 		frp := NamespaceChecksFieldResolverParams{ResolveParams: p}
-		err := mapstructure.Decode(p.Args, &frp.Args)
+		err := v2.Decode(p.Args, &frp.Args)
 		if err != nil {
 			return nil, err
 		}
@@ -355,7 +355,7 @@ func _ObjTypeNamespaceEntitiesHandler(impl interface{}) graphql1.FieldResolveFn 
 	})
 	return func(p graphql1.ResolveParams) (interface{}, error) {
 		frp := NamespaceEntitiesFieldResolverParams{ResolveParams: p}
-		err := mapstructure.Decode(p.Args, &frp.Args)
+		err := v2.Decode(p.Args, &frp.Args)
 		if err != nil {
 			return nil, err
 		}
@@ -370,7 +370,7 @@ func _ObjTypeNamespaceEventsHandler(impl interface{}) graphql1.FieldResolveFn {
 	})
 	return func(p graphql1.ResolveParams) (interface{}, error) {
 		frp := NamespaceEventsFieldResolverParams{ResolveParams: p}
-		err := mapstructure.Decode(p.Args, &frp.Args)
+		err := v2.Decode(p.Args, &frp.Args)
 		if err != nil {
 			return nil, err
 		}
@@ -385,7 +385,7 @@ func _ObjTypeNamespaceEventFiltersHandler(impl interface{}) graphql1.FieldResolv
 	})
 	return func(p graphql1.ResolveParams) (interface{}, error) {
 		frp := NamespaceEventFiltersFieldResolverParams{ResolveParams: p}
-		err := mapstructure.Decode(p.Args, &frp.Args)
+		err := v2.Decode(p.Args, &frp.Args)
 		if err != nil {
 			return nil, err
 		}
@@ -400,7 +400,7 @@ func _ObjTypeNamespaceHandlersHandler(impl interface{}) graphql1.FieldResolveFn 
 	})
 	return func(p graphql1.ResolveParams) (interface{}, error) {
 		frp := NamespaceHandlersFieldResolverParams{ResolveParams: p}
-		err := mapstructure.Decode(p.Args, &frp.Args)
+		err := v2.Decode(p.Args, &frp.Args)
 		if err != nil {
 			return nil, err
 		}
@@ -415,7 +415,7 @@ func _ObjTypeNamespaceMutatorsHandler(impl interface{}) graphql1.FieldResolveFn 
 	})
 	return func(p graphql1.ResolveParams) (interface{}, error) {
 		frp := NamespaceMutatorsFieldResolverParams{ResolveParams: p}
-		err := mapstructure.Decode(p.Args, &frp.Args)
+		err := v2.Decode(p.Args, &frp.Args)
 		if err != nil {
 			return nil, err
 		}
@@ -430,7 +430,7 @@ func _ObjTypeNamespaceSilencesHandler(impl interface{}) graphql1.FieldResolveFn 
 	})
 	return func(p graphql1.ResolveParams) (interface{}, error) {
 		frp := NamespaceSilencesFieldResolverParams{ResolveParams: p}
-		err := mapstructure.Decode(p.Args, &frp.Args)
+		err := v2.Decode(p.Args, &frp.Args)
 		if err != nil {
 			return nil, err
 		}

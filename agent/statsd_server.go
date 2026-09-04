@@ -19,7 +19,6 @@ import (
 	"github.com/sensu/sensu-go/types"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
-	"golang.org/x/time/rate"
 )
 
 // GetMetricsAddr gets the metrics address of the statsd server.
@@ -46,39 +45,37 @@ func NewStatsdServer(a *Agent) *statsd.Server {
 	}
 	s.FlushInterval = time.Duration(c.FlushInterval) * time.Second
 	s.MetricsAddr = fmt.Sprintf("%s:%d", c.Host, c.Port)
-	s.StatserType = statsd.StatserNull
+	s.StatserType = gostatsd.StatserNull
 	return s
 }
 
 // NewServer will create a new statsd Server with the default configuration.
 func NewServer() *statsd.Server {
 	return &statsd.Server{
-		Backends:            []gostatsd.Backend{},
-		Limiter:             rate.NewLimiter(statsd.DefaultMaxCloudRequests, statsd.DefaultBurstCloudRequests),
-		InternalTags:        statsd.DefaultInternalTags,
-		InternalNamespace:   statsd.DefaultInternalNamespace,
-		DefaultTags:         statsd.DefaultTags,
-		ExpiryInterval:      statsd.DefaultExpiryInterval,
-		FlushInterval:       statsd.DefaultFlushInterval,
-		MaxReaders:          statsd.DefaultMaxReaders,
-		MaxParsers:          statsd.DefaultMaxParsers,
-		MaxWorkers:          statsd.DefaultMaxWorkers,
-		MaxQueueSize:        statsd.DefaultMaxQueueSize,
-		MaxConcurrentEvents: statsd.DefaultMaxConcurrentEvents,
-		EstimatedTags:       statsd.DefaultEstimatedTags,
-		MetricsAddr:         statsd.DefaultMetricsAddr,
-		PercentThreshold:    statsd.DefaultPercentThreshold,
-		IgnoreHost:          statsd.DefaultIgnoreHost,
-		ConnPerReader:       statsd.DefaultConnPerReader,
-		HeartbeatEnabled:    statsd.DefaultHeartbeatEnabled,
-		ReceiveBatchSize:    statsd.DefaultReceiveBatchSize,
-		CacheOptions: statsd.CacheOptions{
-			CacheRefreshPeriod:        statsd.DefaultCacheRefreshPeriod,
-			CacheEvictAfterIdlePeriod: statsd.DefaultCacheEvictAfterIdlePeriod,
-			CacheTTL:                  statsd.DefaultCacheTTL,
-			CacheNegativeTTL:          statsd.DefaultCacheNegativeTTL,
-		},
-		Viper: viper.New(),
+		Backends:              []gostatsd.Backend{},
+		ServerMode:            gostatsd.DefaultServerMode,
+		InternalTags:          gostatsd.DefaultInternalTags,
+		InternalNamespace:     gostatsd.DefaultInternalNamespace,
+		DefaultTags:           gostatsd.DefaultTags,
+		ExpiryIntervalCounter: gostatsd.DefaultExpiryInterval,
+		ExpiryIntervalGauge:   gostatsd.DefaultExpiryInterval,
+		ExpiryIntervalSet:     gostatsd.DefaultExpiryInterval,
+		ExpiryIntervalTimer:   gostatsd.DefaultExpiryInterval,
+		FlushInterval:         gostatsd.DefaultFlushInterval,
+		MaxReaders:            gostatsd.DefaultMaxReaders,
+		MaxParsers:            gostatsd.DefaultMaxParsers,
+		MaxWorkers:            gostatsd.DefaultMaxWorkers,
+		MaxQueueSize:          gostatsd.DefaultMaxQueueSize,
+		MaxConcurrentEvents:   gostatsd.DefaultMaxConcurrentEvents,
+		EstimatedTags:         gostatsd.DefaultEstimatedTags,
+		MetricsAddr:           gostatsd.DefaultMetricsAddr,
+		PercentThreshold:      gostatsd.DefaultPercentThreshold,
+		IgnoreHost:            gostatsd.DefaultIgnoreHost,
+		ConnPerReader:         gostatsd.DefaultConnPerReader,
+		HeartbeatEnabled:      gostatsd.DefaultHeartbeatEnabled,
+		ReceiveBatchSize:      gostatsd.DefaultReceiveBatchSize,
+		ReceiveBufferSize:     gostatsd.DefaultReceiveBufferSize,
+		Viper:                 viper.New(),
 	}
 }
 

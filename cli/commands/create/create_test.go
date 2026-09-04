@@ -8,7 +8,7 @@ import (
 	"testing"
 	"text/template"
 
-	"github.com/ghodss/yaml"
+	"sigs.k8s.io/yaml"
 	mockclient "github.com/sensu/sensu-go/cli/client/testing"
 	cmdtesting "github.com/sensu/sensu-go/cli/commands/testing"
 	"github.com/sensu/sensu-go/types"

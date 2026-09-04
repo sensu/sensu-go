@@ -3,11 +3,11 @@
 package schema
 
 import (
-	errors "errors"
+	"errors"
+	v2 "github.com/go-viper/mapstructure/v2"
 	graphql1 "github.com/graphql-go/graphql"
-	mapstructure "github.com/mitchellh/mapstructure"
 	graphql "github.com/sensu/sensu-go/graphql"
-	time "time"
+	"time"
 )
 
 // CheckConfigFieldResolvers represents a collection of methods whose products represent the
@@ -1680,7 +1680,7 @@ func _ObjTypeCheckHistoryHandler(impl interface{}) graphql1.FieldResolveFn {
 	})
 	return func(p graphql1.ResolveParams) (interface{}, error) {
 		frp := CheckHistoryFieldResolverParams{ResolveParams: p}
-		err := mapstructure.Decode(p.Args, &frp.Args)
+		err := v2.Decode(p.Args, &frp.Args)
 		if err != nil {
 			return nil, err
 		}
@@ -1704,7 +1704,7 @@ func _ObjTypeCheckOutputHandler(impl interface{}) graphql1.FieldResolveFn {
 	})
 	return func(p graphql1.ResolveParams) (interface{}, error) {
 		frp := CheckOutputFieldResolverParams{ResolveParams: p}
-		err := mapstructure.Decode(p.Args, &frp.Args)
+		err := v2.Decode(p.Args, &frp.Args)
 		if err != nil {
 			return nil, err
 		}

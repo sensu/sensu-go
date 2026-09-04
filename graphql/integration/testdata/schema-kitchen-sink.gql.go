@@ -3,10 +3,10 @@
 package schema
 
 import (
-	errors "errors"
+	"errors"
+	v2 "github.com/go-viper/mapstructure/v2"
 	graphql1 "github.com/graphql-go/graphql"
 	ast "github.com/graphql-go/graphql/language/ast"
-	mapstructure "github.com/mitchellh/mapstructure"
 	graphql "github.com/sensu/sensu-go/graphql"
 )
 
@@ -25,129 +25,20 @@ func _SchemaConfigFn() graphql1.SchemaConfig {
 // describe schema's configuration; kept private to avoid unintentional tampering of configuration at runtime.
 var _SchemaDesc = graphql.SchemaDesc{Config: _SchemaConfigFn}
 
-// QueryRootFoosFieldResolver implement to resolve requests for the QueryRoot's foos field.
-type QueryRootFoosFieldResolver interface {
-	// Foos implements response to request for foos field.
-	Foos(p graphql.ResolveParams) (interface{}, error)
-}
-
-// QueryRootMyBarFieldResolver implement to resolve requests for the QueryRoot's myBar field.
-type QueryRootMyBarFieldResolver interface {
-	// MyBar implements response to request for myBar field.
-	MyBar(p graphql.ResolveParams) (interface{}, error)
-}
-
-//
 // QueryRootFieldResolvers represents a collection of methods whose products represent the
 // response values of the 'QueryRoot' type.
-//
-// == Example SDL
-//
-//   """
-//   Dog's are not hooman.
-//   """
-//   type Dog implements Pet {
-//     "name of this fine beast."
-//     name:  String!
-//
-//     "breed of this silly animal; probably shibe."
-//     breed: [Breed]
-//   }
-//
-// == Example generated interface
-//
-//   // DogResolver ...
-//   type DogFieldResolvers interface {
-//     DogNameFieldResolver
-//     DogBreedFieldResolver
-//
-//     // IsTypeOf is used to determine if a given value is associated with the Dog type
-//     IsTypeOf(interface{}, graphql.IsTypeOfParams) bool
-//   }
-//
-// == Example implementation ...
-//
-//   // DogResolver implements DogFieldResolvers interface
-//   type DogResolver struct {
-//     logger logrus.LogEntry
-//     store interface{
-//       store.BreedStore
-//       store.DogStore
-//     }
-//   }
-//
-//   // Name implements response to request for name field.
-//   func (r *DogResolver) Name(p graphql.ResolveParams) (interface{}, error) {
-//     // ... implementation details ...
-//     dog := p.Source.(DogGetter)
-//     return dog.GetName()
-//   }
-//
-//   // Breed implements response to request for breed field.
-//   func (r *DogResolver) Breed(p graphql.ResolveParams) (interface{}, error) {
-//     // ... implementation details ...
-//     dog := p.Source.(DogGetter)
-//     breed := r.store.GetBreed(dog.GetBreedName())
-//     return breed
-//   }
-//
-//   // IsTypeOf is used to determine if a given value is associated with the Dog type
-//   func (r *DogResolver) IsTypeOf(p graphql.IsTypeOfParams) bool {
-//     // ... implementation details ...
-//     _, ok := p.Value.(DogGetter)
-//     return ok
-//   }
-//
 type QueryRootFieldResolvers interface {
-	QueryRootFoosFieldResolver
-	QueryRootMyBarFieldResolver
+	// Foos implements response to request for 'foos' field.
+	Foos(p graphql.ResolveParams) (interface{}, error)
+
+	// MyBar implements response to request for 'myBar' field.
+	MyBar(p graphql.ResolveParams) (interface{}, error)
 }
 
 // QueryRootAliases implements all methods on QueryRootFieldResolvers interface by using reflection to
 // match name of field to a field on the given value. Intent is reduce friction
 // of writing new resolvers by removing all the instances where you would simply
 // have the resolvers method return a field.
-//
-// == Example SDL
-//
-//    type Dog {
-//      name:   String!
-//      weight: Float!
-//      dob:    DateTime
-//      breed:  [Breed]
-//    }
-//
-// == Example generated aliases
-//
-//   type DogAliases struct {}
-//   func (_ DogAliases) Name(p graphql.ResolveParams) (interface{}, error) {
-//     // reflect...
-//   }
-//   func (_ DogAliases) Weight(p graphql.ResolveParams) (interface{}, error) {
-//     // reflect...
-//   }
-//   func (_ DogAliases) Dob(p graphql.ResolveParams) (interface{}, error) {
-//     // reflect...
-//   }
-//   func (_ DogAliases) Breed(p graphql.ResolveParams) (interface{}, error) {
-//     // reflect...
-//   }
-//
-// == Example Implementation
-//
-//   type DogResolver struct { // Implements DogResolver
-//     DogAliases
-//     store store.BreedStore
-//   }
-//
-//   // NOTE:
-//   // All other fields are satisified by DogAliases but since this one
-//   // requires hitting the store we implement it in our resolver.
-//   func (r *DogResolver) Breed(p graphql.ResolveParams) interface{} {
-//     dog := v.(*Dog)
-//     return r.BreedsById(dog.BreedIDs)
-//   }
-//
 type QueryRootAliases struct{}
 
 // Foos implements response to request for 'foos' field.
@@ -170,14 +61,18 @@ func RegisterQueryRoot(svc *graphql.Service, impl QueryRootFieldResolvers) {
 	svc.RegisterObject(_ObjectTypeQueryRootDesc, impl)
 }
 func _ObjTypeQueryRootFoosHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(QueryRootFoosFieldResolver)
+	resolver := impl.(interface {
+		Foos(p graphql.ResolveParams) (interface{}, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.Foos(frp)
 	}
 }
 
 func _ObjTypeQueryRootMyBarHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(QueryRootMyBarFieldResolver)
+	resolver := impl.(interface {
+		MyBar(p graphql.ResolveParams) (interface{}, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.MyBar(frp)
 	}
@@ -264,12 +159,6 @@ var _ScalarTypeUrlDesc = graphql.ScalarDesc{Config: func() graphql1.ScalarConfig
 	}
 }}
 
-// FooOneFieldResolver implement to resolve requests for the Foo's one field.
-type FooOneFieldResolver interface {
-	// One implements response to request for one field.
-	One(p graphql.ResolveParams) (interface{}, error)
-}
-
 // FooTwoFieldResolverArgs contains arguments provided to two when selected
 type FooTwoFieldResolverArgs struct {
 	Argument *InputType // Argument - self descriptive
@@ -279,12 +168,6 @@ type FooTwoFieldResolverArgs struct {
 type FooTwoFieldResolverParams struct {
 	graphql.ResolveParams
 	Args FooTwoFieldResolverArgs
-}
-
-// FooTwoFieldResolver implement to resolve requests for the Foo's two field.
-type FooTwoFieldResolver interface {
-	// Two implements response to request for two field.
-	Two(p FooTwoFieldResolverParams) (interface{}, error)
 }
 
 // FooThreeFieldResolverArgs contains arguments provided to three when selected
@@ -299,12 +182,6 @@ type FooThreeFieldResolverParams struct {
 	Args FooThreeFieldResolverArgs
 }
 
-// FooThreeFieldResolver implement to resolve requests for the Foo's three field.
-type FooThreeFieldResolver interface {
-	// Three implements response to request for three field.
-	Three(p FooThreeFieldResolverParams) (int, error)
-}
-
 // FooFourFieldResolverArgs contains arguments provided to four when selected
 type FooFourFieldResolverArgs struct {
 	Argument string // Argument - self descriptive
@@ -314,12 +191,6 @@ type FooFourFieldResolverArgs struct {
 type FooFourFieldResolverParams struct {
 	graphql.ResolveParams
 	Args FooFourFieldResolverArgs
-}
-
-// FooFourFieldResolver implement to resolve requests for the Foo's four field.
-type FooFourFieldResolver interface {
-	// Four implements response to request for four field.
-	Four(p FooFourFieldResolverParams) (string, error)
 }
 
 // FooFiveFieldResolverArgs contains arguments provided to five when selected
@@ -333,12 +204,6 @@ type FooFiveFieldResolverParams struct {
 	Args FooFiveFieldResolverArgs
 }
 
-// FooFiveFieldResolver implement to resolve requests for the Foo's five field.
-type FooFiveFieldResolver interface {
-	// Five implements response to request for five field.
-	Five(p FooFiveFieldResolverParams) (string, error)
-}
-
 // FooSixFieldResolverArgs contains arguments provided to six when selected
 type FooSixFieldResolverArgs struct {
 	Argument *InputType // Argument - self descriptive
@@ -350,141 +215,38 @@ type FooSixFieldResolverParams struct {
 	Args FooSixFieldResolverArgs
 }
 
-// FooSixFieldResolver implement to resolve requests for the Foo's six field.
-type FooSixFieldResolver interface {
-	// Six implements response to request for six field.
-	Six(p FooSixFieldResolverParams) (interface{}, error)
-}
-
-// FooSevenFieldResolver implement to resolve requests for the Foo's seven field.
-type FooSevenFieldResolver interface {
-	// Seven implements response to request for seven field.
-	Seven(p graphql.ResolveParams) (interface{}, error)
-}
-
-// FooEightFieldResolver implement to resolve requests for the Foo's eight field.
-type FooEightFieldResolver interface {
-	// Eight implements response to request for eight field.
-	Eight(p graphql.ResolveParams) (interface{}, error)
-}
-
-//
 // FooFieldResolvers represents a collection of methods whose products represent the
 // response values of the 'Foo' type.
-//
-// == Example SDL
-//
-//   """
-//   Dog's are not hooman.
-//   """
-//   type Dog implements Pet {
-//     "name of this fine beast."
-//     name:  String!
-//
-//     "breed of this silly animal; probably shibe."
-//     breed: [Breed]
-//   }
-//
-// == Example generated interface
-//
-//   // DogResolver ...
-//   type DogFieldResolvers interface {
-//     DogNameFieldResolver
-//     DogBreedFieldResolver
-//
-//     // IsTypeOf is used to determine if a given value is associated with the Dog type
-//     IsTypeOf(interface{}, graphql.IsTypeOfParams) bool
-//   }
-//
-// == Example implementation ...
-//
-//   // DogResolver implements DogFieldResolvers interface
-//   type DogResolver struct {
-//     logger logrus.LogEntry
-//     store interface{
-//       store.BreedStore
-//       store.DogStore
-//     }
-//   }
-//
-//   // Name implements response to request for name field.
-//   func (r *DogResolver) Name(p graphql.ResolveParams) (interface{}, error) {
-//     // ... implementation details ...
-//     dog := p.Source.(DogGetter)
-//     return dog.GetName()
-//   }
-//
-//   // Breed implements response to request for breed field.
-//   func (r *DogResolver) Breed(p graphql.ResolveParams) (interface{}, error) {
-//     // ... implementation details ...
-//     dog := p.Source.(DogGetter)
-//     breed := r.store.GetBreed(dog.GetBreedName())
-//     return breed
-//   }
-//
-//   // IsTypeOf is used to determine if a given value is associated with the Dog type
-//   func (r *DogResolver) IsTypeOf(p graphql.IsTypeOfParams) bool {
-//     // ... implementation details ...
-//     _, ok := p.Value.(DogGetter)
-//     return ok
-//   }
-//
 type FooFieldResolvers interface {
-	FooOneFieldResolver
-	FooTwoFieldResolver
-	FooThreeFieldResolver
-	FooFourFieldResolver
-	FooFiveFieldResolver
-	FooSixFieldResolver
-	FooSevenFieldResolver
-	FooEightFieldResolver
+	// One implements response to request for 'one' field.
+	One(p graphql.ResolveParams) (interface{}, error)
+
+	// Two implements response to request for 'two' field.
+	Two(p FooTwoFieldResolverParams) (interface{}, error)
+
+	// Three implements response to request for 'three' field.
+	Three(p FooThreeFieldResolverParams) (int, error)
+
+	// Four implements response to request for 'four' field.
+	Four(p FooFourFieldResolverParams) (string, error)
+
+	// Five implements response to request for 'five' field.
+	Five(p FooFiveFieldResolverParams) (string, error)
+
+	// Six implements response to request for 'six' field.
+	Six(p FooSixFieldResolverParams) (interface{}, error)
+
+	// Seven implements response to request for 'seven' field.
+	Seven(p graphql.ResolveParams) (interface{}, error)
+
+	// Eight implements response to request for 'eight' field.
+	Eight(p graphql.ResolveParams) (interface{}, error)
 }
 
 // FooAliases implements all methods on FooFieldResolvers interface by using reflection to
 // match name of field to a field on the given value. Intent is reduce friction
 // of writing new resolvers by removing all the instances where you would simply
 // have the resolvers method return a field.
-//
-// == Example SDL
-//
-//    type Dog {
-//      name:   String!
-//      weight: Float!
-//      dob:    DateTime
-//      breed:  [Breed]
-//    }
-//
-// == Example generated aliases
-//
-//   type DogAliases struct {}
-//   func (_ DogAliases) Name(p graphql.ResolveParams) (interface{}, error) {
-//     // reflect...
-//   }
-//   func (_ DogAliases) Weight(p graphql.ResolveParams) (interface{}, error) {
-//     // reflect...
-//   }
-//   func (_ DogAliases) Dob(p graphql.ResolveParams) (interface{}, error) {
-//     // reflect...
-//   }
-//   func (_ DogAliases) Breed(p graphql.ResolveParams) (interface{}, error) {
-//     // reflect...
-//   }
-//
-// == Example Implementation
-//
-//   type DogResolver struct { // Implements DogResolver
-//     DogAliases
-//     store store.BreedStore
-//   }
-//
-//   // NOTE:
-//   // All other fields are satisified by DogAliases but since this one
-//   // requires hitting the store we implement it in our resolver.
-//   func (r *DogResolver) Breed(p graphql.ResolveParams) interface{} {
-//     dog := v.(*Dog)
-//     return r.BreedsById(dog.BreedIDs)
-//   }
-//
 type FooAliases struct{}
 
 // One implements response to request for 'one' field.
@@ -564,17 +326,21 @@ func RegisterFoo(svc *graphql.Service, impl FooFieldResolvers) {
 	svc.RegisterObject(_ObjectTypeFooDesc, impl)
 }
 func _ObjTypeFooOneHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(FooOneFieldResolver)
+	resolver := impl.(interface {
+		One(p graphql.ResolveParams) (interface{}, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.One(frp)
 	}
 }
 
 func _ObjTypeFooTwoHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(FooTwoFieldResolver)
+	resolver := impl.(interface {
+		Two(p FooTwoFieldResolverParams) (interface{}, error)
+	})
 	return func(p graphql1.ResolveParams) (interface{}, error) {
 		frp := FooTwoFieldResolverParams{ResolveParams: p}
-		err := mapstructure.Decode(p.Args, &frp.Args)
+		err := v2.Decode(p.Args, &frp.Args)
 		if err != nil {
 			return nil, err
 		}
@@ -584,10 +350,12 @@ func _ObjTypeFooTwoHandler(impl interface{}) graphql1.FieldResolveFn {
 }
 
 func _ObjTypeFooThreeHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(FooThreeFieldResolver)
+	resolver := impl.(interface {
+		Three(p FooThreeFieldResolverParams) (int, error)
+	})
 	return func(p graphql1.ResolveParams) (interface{}, error) {
 		frp := FooThreeFieldResolverParams{ResolveParams: p}
-		err := mapstructure.Decode(p.Args, &frp.Args)
+		err := v2.Decode(p.Args, &frp.Args)
 		if err != nil {
 			return nil, err
 		}
@@ -597,10 +365,12 @@ func _ObjTypeFooThreeHandler(impl interface{}) graphql1.FieldResolveFn {
 }
 
 func _ObjTypeFooFourHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(FooFourFieldResolver)
+	resolver := impl.(interface {
+		Four(p FooFourFieldResolverParams) (string, error)
+	})
 	return func(p graphql1.ResolveParams) (interface{}, error) {
 		frp := FooFourFieldResolverParams{ResolveParams: p}
-		err := mapstructure.Decode(p.Args, &frp.Args)
+		err := v2.Decode(p.Args, &frp.Args)
 		if err != nil {
 			return nil, err
 		}
@@ -610,10 +380,12 @@ func _ObjTypeFooFourHandler(impl interface{}) graphql1.FieldResolveFn {
 }
 
 func _ObjTypeFooFiveHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(FooFiveFieldResolver)
+	resolver := impl.(interface {
+		Five(p FooFiveFieldResolverParams) (string, error)
+	})
 	return func(p graphql1.ResolveParams) (interface{}, error) {
 		frp := FooFiveFieldResolverParams{ResolveParams: p}
-		err := mapstructure.Decode(p.Args, &frp.Args)
+		err := v2.Decode(p.Args, &frp.Args)
 		if err != nil {
 			return nil, err
 		}
@@ -623,10 +395,12 @@ func _ObjTypeFooFiveHandler(impl interface{}) graphql1.FieldResolveFn {
 }
 
 func _ObjTypeFooSixHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(FooSixFieldResolver)
+	resolver := impl.(interface {
+		Six(p FooSixFieldResolverParams) (interface{}, error)
+	})
 	return func(p graphql1.ResolveParams) (interface{}, error) {
 		frp := FooSixFieldResolverParams{ResolveParams: p}
-		err := mapstructure.Decode(p.Args, &frp.Args)
+		err := v2.Decode(p.Args, &frp.Args)
 		if err != nil {
 			return nil, err
 		}
@@ -636,14 +410,18 @@ func _ObjTypeFooSixHandler(impl interface{}) graphql1.FieldResolveFn {
 }
 
 func _ObjTypeFooSevenHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(FooSevenFieldResolver)
+	resolver := impl.(interface {
+		Seven(p graphql.ResolveParams) (interface{}, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.Seven(frp)
 	}
 }
 
 func _ObjTypeFooEightHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(FooEightFieldResolver)
+	resolver := impl.(interface {
+		Eight(p graphql.ResolveParams) (interface{}, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.Eight(frp)
 	}
@@ -774,122 +552,17 @@ type AnnotatedObjectAnnotatedFieldFieldResolverParams struct {
 	Args AnnotatedObjectAnnotatedFieldFieldResolverArgs
 }
 
-// AnnotatedObjectAnnotatedFieldFieldResolver implement to resolve requests for the AnnotatedObject's annotatedField field.
-type AnnotatedObjectAnnotatedFieldFieldResolver interface {
-	// AnnotatedField implements response to request for annotatedField field.
-	AnnotatedField(p AnnotatedObjectAnnotatedFieldFieldResolverParams) (interface{}, error)
-}
-
-//
 // AnnotatedObjectFieldResolvers represents a collection of methods whose products represent the
 // response values of the 'AnnotatedObject' type.
-//
-// == Example SDL
-//
-//   """
-//   Dog's are not hooman.
-//   """
-//   type Dog implements Pet {
-//     "name of this fine beast."
-//     name:  String!
-//
-//     "breed of this silly animal; probably shibe."
-//     breed: [Breed]
-//   }
-//
-// == Example generated interface
-//
-//   // DogResolver ...
-//   type DogFieldResolvers interface {
-//     DogNameFieldResolver
-//     DogBreedFieldResolver
-//
-//     // IsTypeOf is used to determine if a given value is associated with the Dog type
-//     IsTypeOf(interface{}, graphql.IsTypeOfParams) bool
-//   }
-//
-// == Example implementation ...
-//
-//   // DogResolver implements DogFieldResolvers interface
-//   type DogResolver struct {
-//     logger logrus.LogEntry
-//     store interface{
-//       store.BreedStore
-//       store.DogStore
-//     }
-//   }
-//
-//   // Name implements response to request for name field.
-//   func (r *DogResolver) Name(p graphql.ResolveParams) (interface{}, error) {
-//     // ... implementation details ...
-//     dog := p.Source.(DogGetter)
-//     return dog.GetName()
-//   }
-//
-//   // Breed implements response to request for breed field.
-//   func (r *DogResolver) Breed(p graphql.ResolveParams) (interface{}, error) {
-//     // ... implementation details ...
-//     dog := p.Source.(DogGetter)
-//     breed := r.store.GetBreed(dog.GetBreedName())
-//     return breed
-//   }
-//
-//   // IsTypeOf is used to determine if a given value is associated with the Dog type
-//   func (r *DogResolver) IsTypeOf(p graphql.IsTypeOfParams) bool {
-//     // ... implementation details ...
-//     _, ok := p.Value.(DogGetter)
-//     return ok
-//   }
-//
 type AnnotatedObjectFieldResolvers interface {
-	AnnotatedObjectAnnotatedFieldFieldResolver
+	// AnnotatedField implements response to request for 'annotatedField' field.
+	AnnotatedField(p AnnotatedObjectAnnotatedFieldFieldResolverParams) (interface{}, error)
 }
 
 // AnnotatedObjectAliases implements all methods on AnnotatedObjectFieldResolvers interface by using reflection to
 // match name of field to a field on the given value. Intent is reduce friction
 // of writing new resolvers by removing all the instances where you would simply
 // have the resolvers method return a field.
-//
-// == Example SDL
-//
-//    type Dog {
-//      name:   String!
-//      weight: Float!
-//      dob:    DateTime
-//      breed:  [Breed]
-//    }
-//
-// == Example generated aliases
-//
-//   type DogAliases struct {}
-//   func (_ DogAliases) Name(p graphql.ResolveParams) (interface{}, error) {
-//     // reflect...
-//   }
-//   func (_ DogAliases) Weight(p graphql.ResolveParams) (interface{}, error) {
-//     // reflect...
-//   }
-//   func (_ DogAliases) Dob(p graphql.ResolveParams) (interface{}, error) {
-//     // reflect...
-//   }
-//   func (_ DogAliases) Breed(p graphql.ResolveParams) (interface{}, error) {
-//     // reflect...
-//   }
-//
-// == Example Implementation
-//
-//   type DogResolver struct { // Implements DogResolver
-//     DogAliases
-//     store store.BreedStore
-//   }
-//
-//   // NOTE:
-//   // All other fields are satisified by DogAliases but since this one
-//   // requires hitting the store we implement it in our resolver.
-//   func (r *DogResolver) Breed(p graphql.ResolveParams) interface{} {
-//     dog := v.(*Dog)
-//     return r.BreedsById(dog.BreedIDs)
-//   }
-//
 type AnnotatedObjectAliases struct{}
 
 // AnnotatedField implements response to request for 'annotatedField' field.
@@ -906,10 +579,12 @@ func RegisterAnnotatedObject(svc *graphql.Service, impl AnnotatedObjectFieldReso
 	svc.RegisterObject(_ObjectTypeAnnotatedObjectDesc, impl)
 }
 func _ObjTypeAnnotatedObjectAnnotatedFieldHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(AnnotatedObjectAnnotatedFieldFieldResolver)
+	resolver := impl.(interface {
+		AnnotatedField(p AnnotatedObjectAnnotatedFieldFieldResolverParams) (interface{}, error)
+	})
 	return func(p graphql1.ResolveParams) (interface{}, error) {
 		frp := AnnotatedObjectAnnotatedFieldFieldResolverParams{ResolveParams: p}
-		err := mapstructure.Decode(p.Args, &frp.Args)
+		err := v2.Decode(p.Args, &frp.Args)
 		if err != nil {
 			return nil, err
 		}
@@ -1392,75 +1067,11 @@ func _InputTypeAnnotatedInputConfigFn() graphql1.InputObjectConfig {
 // describe AnnotatedInput's configuration; kept private to avoid unintentional tampering of configuration at runtime.
 var _InputTypeAnnotatedInputDesc = graphql.InputDesc{Config: _InputTypeAnnotatedInputConfigFn}
 
-// QueryRootExtensionOrdersOrderFieldResolver implement to resolve requests for the QueryRootExtensionOrders's order field.
-type QueryRootExtensionOrdersOrderFieldResolver interface {
-	// Order implements response to request for order field.
-	Order(p graphql.ResolveParams) (int, error)
-}
-
-//
 // QueryRootExtensionOrdersFieldResolvers represents a collection of methods whose products represent the
 // response values of the 'QueryRootExtensionOrders' type.
-//
-// == Example SDL
-//
-//   """
-//   Dog's are not hooman.
-//   """
-//   type Dog implements Pet {
-//     "name of this fine beast."
-//     name:  String!
-//
-//     "breed of this silly animal; probably shibe."
-//     breed: [Breed]
-//   }
-//
-// == Example generated interface
-//
-//   // DogResolver ...
-//   type DogFieldResolvers interface {
-//     DogNameFieldResolver
-//     DogBreedFieldResolver
-//
-//     // IsTypeOf is used to determine if a given value is associated with the Dog type
-//     IsTypeOf(interface{}, graphql.IsTypeOfParams) bool
-//   }
-//
-// == Example implementation ...
-//
-//   // DogResolver implements DogFieldResolvers interface
-//   type DogResolver struct {
-//     logger logrus.LogEntry
-//     store interface{
-//       store.BreedStore
-//       store.DogStore
-//     }
-//   }
-//
-//   // Name implements response to request for name field.
-//   func (r *DogResolver) Name(p graphql.ResolveParams) (interface{}, error) {
-//     // ... implementation details ...
-//     dog := p.Source.(DogGetter)
-//     return dog.GetName()
-//   }
-//
-//   // Breed implements response to request for breed field.
-//   func (r *DogResolver) Breed(p graphql.ResolveParams) (interface{}, error) {
-//     // ... implementation details ...
-//     dog := p.Source.(DogGetter)
-//     breed := r.store.GetBreed(dog.GetBreedName())
-//     return breed
-//   }
-//
-//   // IsTypeOf is used to determine if a given value is associated with the Dog type
-//   func (r *DogResolver) IsTypeOf(p graphql.IsTypeOfParams) bool {
-//     // ... implementation details ...
-//     _, ok := p.Value.(DogGetter)
-//     return ok
-//   }
-//
 type QueryRootExtensionOrdersFieldResolvers interface {
-	QueryRootExtensionOrdersOrderFieldResolver
+	// Order implements response to request for 'order' field.
+	Order(p graphql.ResolveParams) (int, error)
 }
 
 // RegisterQueryRootExtensionOrders registers QueryRootExtensionOrders object type with given service.
@@ -1469,7 +1080,9 @@ func RegisterQueryRootExtensionOrders(svc *graphql.Service, impl QueryRootExtens
 }
 
 func _ObjTypeQueryRootExtensionOrdersOrderHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(QueryRootExtensionOrdersOrderFieldResolver)
+	resolver := impl.(interface {
+		Order(p graphql.ResolveParams) (int, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.Order(frp)
 	}
@@ -1496,67 +1109,8 @@ var _ObjectExtensionTypeQueryRootExtensionOrdersDesc = graphql.ObjectDesc{
 	FieldHandlers: map[string]graphql.FieldHandler{"order": _ObjTypeQueryRootExtensionOrdersOrderHandler},
 }
 
-//
 // NoFieldsFieldResolvers represents a collection of methods whose products represent the
 // response values of the 'NoFields' type.
-//
-// == Example SDL
-//
-//   """
-//   Dog's are not hooman.
-//   """
-//   type Dog implements Pet {
-//     "name of this fine beast."
-//     name:  String!
-//
-//     "breed of this silly animal; probably shibe."
-//     breed: [Breed]
-//   }
-//
-// == Example generated interface
-//
-//   // DogResolver ...
-//   type DogFieldResolvers interface {
-//     DogNameFieldResolver
-//     DogBreedFieldResolver
-//
-//     // IsTypeOf is used to determine if a given value is associated with the Dog type
-//     IsTypeOf(interface{}, graphql.IsTypeOfParams) bool
-//   }
-//
-// == Example implementation ...
-//
-//   // DogResolver implements DogFieldResolvers interface
-//   type DogResolver struct {
-//     logger logrus.LogEntry
-//     store interface{
-//       store.BreedStore
-//       store.DogStore
-//     }
-//   }
-//
-//   // Name implements response to request for name field.
-//   func (r *DogResolver) Name(p graphql.ResolveParams) (interface{}, error) {
-//     // ... implementation details ...
-//     dog := p.Source.(DogGetter)
-//     return dog.GetName()
-//   }
-//
-//   // Breed implements response to request for breed field.
-//   func (r *DogResolver) Breed(p graphql.ResolveParams) (interface{}, error) {
-//     // ... implementation details ...
-//     dog := p.Source.(DogGetter)
-//     breed := r.store.GetBreed(dog.GetBreedName())
-//     return breed
-//   }
-//
-//   // IsTypeOf is used to determine if a given value is associated with the Dog type
-//   func (r *DogResolver) IsTypeOf(p graphql.IsTypeOfParams) bool {
-//     // ... implementation details ...
-//     _, ok := p.Value.(DogGetter)
-//     return ok
-//   }
-//
 type NoFieldsFieldResolvers interface {
 }
 
@@ -1564,47 +1118,6 @@ type NoFieldsFieldResolvers interface {
 // match name of field to a field on the given value. Intent is reduce friction
 // of writing new resolvers by removing all the instances where you would simply
 // have the resolvers method return a field.
-//
-// == Example SDL
-//
-//    type Dog {
-//      name:   String!
-//      weight: Float!
-//      dob:    DateTime
-//      breed:  [Breed]
-//    }
-//
-// == Example generated aliases
-//
-//   type DogAliases struct {}
-//   func (_ DogAliases) Name(p graphql.ResolveParams) (interface{}, error) {
-//     // reflect...
-//   }
-//   func (_ DogAliases) Weight(p graphql.ResolveParams) (interface{}, error) {
-//     // reflect...
-//   }
-//   func (_ DogAliases) Dob(p graphql.ResolveParams) (interface{}, error) {
-//     // reflect...
-//   }
-//   func (_ DogAliases) Breed(p graphql.ResolveParams) (interface{}, error) {
-//     // reflect...
-//   }
-//
-// == Example Implementation
-//
-//   type DogResolver struct { // Implements DogResolver
-//     DogAliases
-//     store store.BreedStore
-//   }
-//
-//   // NOTE:
-//   // All other fields are satisified by DogAliases but since this one
-//   // requires hitting the store we implement it in our resolver.
-//   func (r *DogResolver) Breed(p graphql.ResolveParams) interface{} {
-//     dog := v.(*Dog)
-//     return r.BreedsById(dog.BreedIDs)
-//   }
-//
 type NoFieldsAliases struct{}
 
 // NoFieldsType self descriptive
@@ -1669,129 +1182,20 @@ func _InterfaceTypeErrConfigFn() graphql1.InterfaceConfig {
 // describe Err's configuration; kept private to avoid unintentional tampering of configuration at runtime.
 var _InterfaceTypeErrDesc = graphql.InterfaceDesc{Config: _InterfaceTypeErrConfigFn}
 
-// StdErrMessageFieldResolver implement to resolve requests for the StdErr's message field.
-type StdErrMessageFieldResolver interface {
-	// Message implements response to request for message field.
-	Message(p graphql.ResolveParams) (string, error)
-}
-
-// StdErrCodeFieldResolver implement to resolve requests for the StdErr's code field.
-type StdErrCodeFieldResolver interface {
-	// Code implements response to request for code field.
-	Code(p graphql.ResolveParams) (int, error)
-}
-
-//
 // StdErrFieldResolvers represents a collection of methods whose products represent the
 // response values of the 'StdErr' type.
-//
-// == Example SDL
-//
-//   """
-//   Dog's are not hooman.
-//   """
-//   type Dog implements Pet {
-//     "name of this fine beast."
-//     name:  String!
-//
-//     "breed of this silly animal; probably shibe."
-//     breed: [Breed]
-//   }
-//
-// == Example generated interface
-//
-//   // DogResolver ...
-//   type DogFieldResolvers interface {
-//     DogNameFieldResolver
-//     DogBreedFieldResolver
-//
-//     // IsTypeOf is used to determine if a given value is associated with the Dog type
-//     IsTypeOf(interface{}, graphql.IsTypeOfParams) bool
-//   }
-//
-// == Example implementation ...
-//
-//   // DogResolver implements DogFieldResolvers interface
-//   type DogResolver struct {
-//     logger logrus.LogEntry
-//     store interface{
-//       store.BreedStore
-//       store.DogStore
-//     }
-//   }
-//
-//   // Name implements response to request for name field.
-//   func (r *DogResolver) Name(p graphql.ResolveParams) (interface{}, error) {
-//     // ... implementation details ...
-//     dog := p.Source.(DogGetter)
-//     return dog.GetName()
-//   }
-//
-//   // Breed implements response to request for breed field.
-//   func (r *DogResolver) Breed(p graphql.ResolveParams) (interface{}, error) {
-//     // ... implementation details ...
-//     dog := p.Source.(DogGetter)
-//     breed := r.store.GetBreed(dog.GetBreedName())
-//     return breed
-//   }
-//
-//   // IsTypeOf is used to determine if a given value is associated with the Dog type
-//   func (r *DogResolver) IsTypeOf(p graphql.IsTypeOfParams) bool {
-//     // ... implementation details ...
-//     _, ok := p.Value.(DogGetter)
-//     return ok
-//   }
-//
 type StdErrFieldResolvers interface {
-	StdErrMessageFieldResolver
-	StdErrCodeFieldResolver
+	// Message implements response to request for 'message' field.
+	Message(p graphql.ResolveParams) (string, error)
+
+	// Code implements response to request for 'code' field.
+	Code(p graphql.ResolveParams) (int, error)
 }
 
 // StdErrAliases implements all methods on StdErrFieldResolvers interface by using reflection to
 // match name of field to a field on the given value. Intent is reduce friction
 // of writing new resolvers by removing all the instances where you would simply
 // have the resolvers method return a field.
-//
-// == Example SDL
-//
-//    type Dog {
-//      name:   String!
-//      weight: Float!
-//      dob:    DateTime
-//      breed:  [Breed]
-//    }
-//
-// == Example generated aliases
-//
-//   type DogAliases struct {}
-//   func (_ DogAliases) Name(p graphql.ResolveParams) (interface{}, error) {
-//     // reflect...
-//   }
-//   func (_ DogAliases) Weight(p graphql.ResolveParams) (interface{}, error) {
-//     // reflect...
-//   }
-//   func (_ DogAliases) Dob(p graphql.ResolveParams) (interface{}, error) {
-//     // reflect...
-//   }
-//   func (_ DogAliases) Breed(p graphql.ResolveParams) (interface{}, error) {
-//     // reflect...
-//   }
-//
-// == Example Implementation
-//
-//   type DogResolver struct { // Implements DogResolver
-//     DogAliases
-//     store store.BreedStore
-//   }
-//
-//   // NOTE:
-//   // All other fields are satisified by DogAliases but since this one
-//   // requires hitting the store we implement it in our resolver.
-//   func (r *DogResolver) Breed(p graphql.ResolveParams) interface{} {
-//     dog := v.(*Dog)
-//     return r.BreedsById(dog.BreedIDs)
-//   }
-//
 type StdErrAliases struct{}
 
 // Message implements response to request for 'message' field.
@@ -1828,14 +1232,18 @@ func RegisterStdErr(svc *graphql.Service, impl StdErrFieldResolvers) {
 	svc.RegisterObject(_ObjectTypeStdErrDesc, impl)
 }
 func _ObjTypeStdErrMessageHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(StdErrMessageFieldResolver)
+	resolver := impl.(interface {
+		Message(p graphql.ResolveParams) (string, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.Message(frp)
 	}
 }
 
 func _ObjTypeStdErrCodeHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(StdErrCodeFieldResolver)
+	resolver := impl.(interface {
+		Code(p graphql.ResolveParams) (int, error)
+	})
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.Code(frp)
 	}

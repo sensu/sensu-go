@@ -8,7 +8,7 @@ import (
 	"testing"
 
 	corev2 "github.com/sensu/core/v2"
-	"gopkg.in/yaml.v2"
+	"gopkg.in/yaml.v3"
 )
 
 type testConfig struct {

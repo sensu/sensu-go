@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"io"
 	"strings"
+	"unicode/utf8"
 
 	"github.com/sensu/sensu-go/cli/elements/globals"
-	padUtf8 "github.com/willf/pad/utf8"
 )
 
 // StrTransform .. use to transform values; typically used to apply unicode colors to cells
@@ -114,10 +114,18 @@ func (e *rowElem) write(out io.Writer, len int) error {
 	_, err := fmt.Fprintf(
 		out,
 		"%s%s\n",
-		padUtf8.Right(e.styledLabel(), len, " "),
+		padRight(e.styledLabel(), len),
 		e.formattedValue(),
 	)
 	return err
+}
+
+func padRight(s string, length int) string {
+	n := length - utf8.RuneCountInString(s)
+	if n <= 0 {
+		return s
+	}
+	return s + strings.Repeat(" ", n)
 }
 
 func (e *rowElem) styleLabel() string {

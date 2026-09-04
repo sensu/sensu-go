@@ -27,7 +27,7 @@ func TestEventFilterTypeRuntimeAssetsField(t *testing.T) {
 	// return associated silence
 	impl := &eventFilterImpl{}
 	cfg := ServiceConfig{AssetClient: assetClient}
-	ctx := contextWithLoaders(context.Background(), cfg)
+	ctx := contextWithLoaders(context.Background(), cfg, false)
 	res, err := impl.RuntimeAssets(graphql.ResolveParams{Source: filter, Context: ctx})
 	require.NoError(t, err)
 	assert.Len(t, res, 3)

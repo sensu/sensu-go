@@ -137,7 +137,7 @@ func TestCheckTypeRuntimeAssetsField(t *testing.T) {
 	// return associated silence
 	impl := &checkImpl{}
 	cfg := ServiceConfig{AssetClient: assetClient}
-	ctx := contextWithLoaders(context.Background(), cfg)
+	ctx := contextWithLoaders(context.Background(), cfg, false)
 	res, err := impl.RuntimeAssets(graphql.ResolveParams{Source: check, Context: ctx})
 	require.NoError(t, err)
 	assert.Len(t, res, 2)
@@ -205,7 +205,7 @@ func TestCheckConfigTypeRuntimeAssetsField(t *testing.T) {
 	// return associated silence
 	impl := &checkCfgImpl{}
 	cfg := ServiceConfig{AssetClient: assetClient}
-	ctx := contextWithLoaders(context.Background(), cfg)
+	ctx := contextWithLoaders(context.Background(), cfg, false)
 	res, err := impl.RuntimeAssets(graphql.ResolveParams{Source: check, Context: ctx})
 	require.NoError(t, err)
 	assert.Len(t, res, 2)

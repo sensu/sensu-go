@@ -4,8 +4,6 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
-
-	homedir "github.com/mitchellh/go-homedir"
 )
 
 const (
@@ -81,14 +79,14 @@ func UserConfigDir(exeName string) string {
 	case windows:
 		appDataPath := os.Getenv("APPDATA")
 		if appDataPath == "" {
-			h, _ := homedir.Dir()
+			h, _ := os.UserHomeDir()
 			appDataPath = filepath.Join(h, "AppData", "Roaming")
 		}
 		return filepath.Join(appDataPath, "sensu", exeName)
 	default:
 		xdgConfigPath := os.Getenv("XDG_CONFIG_HOME")
 		if xdgConfigPath == "" {
-			h, _ := homedir.Dir()
+			h, _ := os.UserHomeDir()
 			xdgConfigPath = filepath.Join(h, ".config")
 		}
 		return filepath.Join(xdgConfigPath, "sensu", exeName)
@@ -101,17 +99,17 @@ func UserCacheDir(exeName string) string {
 	case windows:
 		localAppDataPath := os.Getenv("LOCALAPP")
 		if localAppDataPath == "" {
-			h, _ := homedir.Dir()
+			h, _ := os.UserHomeDir()
 			localAppDataPath = filepath.Join(h, "AppData", "Local")
 		}
 		return filepath.Join(localAppDataPath, "sensu", exeName)
 	case darwin:
-		h, _ := homedir.Dir()
+		h, _ := os.UserHomeDir()
 		return filepath.Join(h, "Library", "Caches", "sensu", exeName)
 	default:
 		xdgCachePath := os.Getenv("XDG_CACHE_HOME")
 		if xdgCachePath == "" {
-			h, _ := homedir.Dir()
+			h, _ := os.UserHomeDir()
 			xdgCachePath = filepath.Join(h, ".cache")
 		}
 		return filepath.Join(xdgCachePath, "sensu", exeName)

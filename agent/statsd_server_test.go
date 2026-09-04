@@ -197,7 +197,6 @@ func FixtureCounter(now int64) gostatsd.Counter {
 		PerSecond: 2,
 		Value:     3,
 		Timestamp: gostatsd.Nanotime(now),
-		Hostname:  "host",
 		Tags:      gostatsd.Tags{"foo:bar"},
 	}
 }
@@ -225,7 +224,6 @@ func FixtureTimer(now int64) gostatsd.Timer {
 		Values:      []float64{1, 2, 3},
 		Percentiles: []gostatsd.Percentile{{Float: 4, Str: "str"}},
 		Timestamp:   gostatsd.Nanotime(now),
-		Hostname:    "host",
 		Tags:        gostatsd.Tags{"foo:bar"},
 	}
 }
@@ -243,7 +241,6 @@ func FixtureGauge(now int64) gostatsd.Gauge {
 	return gostatsd.Gauge{
 		Value:     3,
 		Timestamp: gostatsd.Nanotime(now),
-		Hostname:  "host",
 		Tags:      gostatsd.Tags{"foo:bar"},
 	}
 }
@@ -261,7 +258,6 @@ func FixtureSet(now int64) gostatsd.Set {
 	return gostatsd.Set{
 		Values:    map[string]struct{}{"foo": struct{}{}},
 		Timestamp: gostatsd.Nanotime(now),
-		Hostname:  "host",
 		Tags:      gostatsd.Tags{"foo:bar"},
 	}
 }
