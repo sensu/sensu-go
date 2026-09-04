@@ -135,7 +135,8 @@ type Config struct {
 
 	// EventDefaultMaxOutputSize is the default maximum check output size, in
 	// bytes, applied to events whose check does not set its own max_output_size.
-	// 0 disables the global default.
+	// A negative value derives the default from EtcdMaxRequestBytes; 0 disables
+	// the global default.
 	EventDefaultMaxOutputSize int64
 
 	// expiry setting for silences

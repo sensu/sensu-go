@@ -16,6 +16,7 @@ import (
 
 	corev2 "github.com/sensu/core/v2"
 	corev3 "github.com/sensu/core/v3"
+	"github.com/sensu/sensu-go/backend/etcd"
 	"github.com/sensu/sensu-go/backend/keepalived"
 	"github.com/sensu/sensu-go/backend/liveness"
 	"github.com/sensu/sensu-go/backend/messaging"
@@ -97,6 +98,16 @@ const (
 	// track average latencies of calls to switches.Bury.
 	SwitchesBuryDuration = "sensu_go_eventd_switches_bury_duration"
 
+	// OutputTruncatedCounter is the name of the prometheus counter used to count
+	// events whose check output was truncated by the global default max output
+	// size.
+	OutputTruncatedCounter = "sensu_go_eventd_output_truncated_total"
+
+	// OutputSizeHeadroom is the number of bytes reserved, below etcd's maximum
+	// request size, for the non-output portion of a marshaled event and etcd's
+	// gRPC request framing.
+	OutputSizeHeadroom = 100 << 10
+
 	// defaultStoreTimeout is the store timeout used if the backend did not configure one
 	defaultStoreTimeout = time.Minute
 )
@@ -119,6 +130,15 @@ var (
 		prometheus.CounterOpts{
 			Name: EventMetricPointsProcessedCounter,
 			Help: "The total number of processed event metric points",
+		},
+	)
+
+	// OutputTruncated counts events whose check output was truncated because it
+	// exceeded the global default max output size.
+	OutputTruncated = prometheus.NewCounter(
+		prometheus.CounterOpts{
+			Name: OutputTruncatedCounter,
+			Help: "The total number of events whose check output was truncated by the global default max output size",
 		},
 	)
 
@@ -247,6 +267,16 @@ type Config struct {
 	DefaultMaxOutputSize int64
 }
 
+// DeriveMaxOutputSize returns the default maximum check output size for a given
+// etcd maximum request size, leaving OutputSizeHeadroom bytes for the rest of
+// the marshaled event. A maxRequestBytes of 0 means etcd's own default applies.
+func DeriveMaxOutputSize(maxRequestBytes uint) int64 {
+	if maxRequestBytes == 0 {
+		maxRequestBytes = uint(etcd.DefaultMaxRequestBytes)
+	}
+	return int64(maxRequestBytes) - OutputSizeHeadroom
+}
+
 // New creates a new Eventd.
 func New(ctx context.Context, c Config, opts ...Option) (*Eventd, error) {
 	if c.BufferSize == 0 {
@@ -322,6 +352,7 @@ func New(ctx context.Context, c Config, opts ...Option) (*Eventd, error) {
 
 	_ = prometheus.Register(EventsProcessed)
 	_ = prometheus.Register(MetricPointsProcessed)
+	_ = prometheus.Register(OutputTruncated)
 	_ = prometheus.Register(eventHandlerDuration)
 	_ = prometheus.Register(eventHandlersBusy)
 	_ = prometheus.Register(createProxyEntityDuration)
@@ -571,6 +602,12 @@ func (e *Eventd) handleMessage(msg interface{}) (fEvent *corev2.Event, fErr erro
 	// are still stored instead of being rejected by etcd's request size limit.
 	if e.defaultMaxOutputSize > 0 && event.Check.MaxOutputSize <= 0 {
 		event.Check.MaxOutputSize = e.defaultMaxOutputSize
+		if outputSize := int64(len(event.Check.Output)); outputSize > e.defaultMaxOutputSize {
+			OutputTruncated.Inc()
+			logger.WithFields(glogger.EventFields(event, false)).
+				WithField("truncated_bytes", outputSize-e.defaultMaxOutputSize).
+				Warn("check output exceeds the global default max output size and will be truncated")
+		}
 	}
 
 	// Merge the new event with the stored event if a match is found

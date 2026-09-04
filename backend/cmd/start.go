@@ -158,10 +158,9 @@ const (
 	// URLs to advertise to the rest of the cluster
 	defaultEtcdAdvertiseClientURL = "http://localhost:2379"
 
-	// flagEventDefaultMaxOutputSize, in bytes (1.4 MiB). It is kept ~100 KB below
-	// etcd's 1.5 MiB (DefaultMaxRequestBytes) request size limit to leave headroom
-	// for the rest of the marshaled event and etcd's gRPC request framing.
-	defaultEventMaxOutputSize = 1468006
+	// defaultEventMaxOutputSize is the sentinel meaning "derive the default check
+	// output size from --etcd-max-request-bytes"; see backend.Initialize.
+	defaultEventMaxOutputSize = -1
 
 	timestampFormatMillisecond = "2006-01-02T15:04:05.999Z07:00"
 
@@ -676,8 +675,7 @@ func flagSet(server bool) *pflag.FlagSet {
 		_ = flagSet.String(flagEventLogFile, "", "path to the event log file")
 		_ = flagSet.Bool(flagEventLogParallelEncoders, false, "use parallel JSON encoding for the event log")
 
-		_ = flagSet.Int64(flagEventDefaultMaxOutputSize, defaultEventMaxOutputSize, "default maximum check output size in bytes for events whose check does not set max_output_size (0 = disabled)")
-		_ = flagSet.SetAnnotation(flagEventDefaultMaxOutputSize, "categories", []string{"store"})
+		_ = flagSet.Int64(flagEventDefaultMaxOutputSize, viper.GetInt64(flagEventDefaultMaxOutputSize), "default maximum check output size in bytes for events whose check does not set max_output_size (-1 = derive from --etcd-max-request-bytes, 0 = disabled)")
 
 		// Etcd server unsafe flags
 		_ = flagSet.Bool(flagEtcdUnsafeNoFsync, false, "disables fsync, unsafe, may cause data loss")
