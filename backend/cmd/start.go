@@ -46,6 +46,8 @@ const (
 	// Flag constants
 	flagStoreBackend          = "store-backend"
 	flagPostgresDSN           = "postgres-dsn"
+	flagPostgresPoolSize      = "postgres-pool-size"
+	flagPostgresStoreTimeout  = "postgres-store-timeout"
 	flagConfigFile            = "config-file"
 	flagAgentHost             = "agent-host"
 	flagAgentPort             = "agent-port"
@@ -646,6 +648,8 @@ func flagSet(server bool) *pflag.FlagSet {
 		flagSet.Bool(flagNoEmbedEtcd, viper.GetBool(flagNoEmbedEtcd), "don't embed etcd, use external etcd instead")
 		flagSet.String(flagStoreBackend, viper.GetString(flagStoreBackend), "store backend to use: '' (default, etcd) or 'postgres'")
 		flagSet.String(flagPostgresDSN, viper.GetString(flagPostgresDSN), "PostgreSQL connection string (used when --store-backend=postgres)")
+		flagSet.Int32(flagPostgresPoolSize, viper.GetInt32(flagPostgresPoolSize), "PostgreSQL connection pool size per backend (default 20, increase for large deployments)")
+		flagSet.Duration(flagPostgresStoreTimeout, viper.GetDuration(flagPostgresStoreTimeout), "timeout for PostgreSQL store operations (default 2m)")
 		_ = flagSet.SetAnnotation(flagNoEmbedEtcd, "categories", []string{"store"})
 		flagSet.Int64(flagEtcdQuotaBackendBytes, viper.GetInt64(flagEtcdQuotaBackendBytes), "maximum etcd database size in bytes (use with caution)")
 		_ = flagSet.SetAnnotation(flagEtcdQuotaBackendBytes, "categories", []string{"store"})

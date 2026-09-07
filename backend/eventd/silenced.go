@@ -24,6 +24,9 @@ func getSilenced(ctx context.Context, event *corev2.Event, cache Cache) {
 	if !event.HasCheck() {
 		return
 	}
+	if cache == nil {
+		return
+	}
 
 	resources := cache.Get(event.Check.Namespace)
 	entries := make([]*corev2.Silenced, 0, len(resources))

@@ -13,6 +13,7 @@ import (
 	"github.com/sensu/sensu-go/backend/etcd"
 	"github.com/sensu/sensu-go/backend/seeds"
 	etcdstore "github.com/sensu/sensu-go/backend/store/etcd"
+	storev1 "github.com/sensu/sensu-go/backend/store"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"go.etcd.io/etcd/client/pkg/v3/transport"
@@ -33,6 +34,11 @@ const (
 )
 
 var errEtcdEndpointUnreachable = errors.New("etcd endpoint could not be reached")
+
+// PostgresInitStoreFunc is set by enterprise to provide a store for postgres-backed init.
+// It receives the DSN and pool size, returns a store suitable for seeds.SeedCluster.
+var PostgresInitStoreFunc func(ctx context.Context, dsn string, poolSize int32) (storev1.Store, func(), error)
+
 
 type initConfig struct {
 	backend.Config
@@ -187,6 +193,11 @@ func InitCommand() *cobra.Command {
 				return err
 			}
 
+			// Route to postgres init when --store-backend=postgres
+			if viper.GetString(flagStoreBackend) == "postgres" {
+				return initializePostgresStore(initConfig)
+			}
+
 			// Make sure at least one of the provided endpoints is reachable. This is
 			// required to debug TLS errors because the seeding below will not print
 			// the latest connection error (see
@@ -248,6 +259,43 @@ func InitCommand() *cobra.Command {
 	setupErr = handleConfig(cmd, os.Args[1:], false)
 
 	return cmd
+}
+
+func initializePostgresStore(initConfig initConfig) error {
+	if PostgresInitStoreFunc == nil {
+		return fmt.Errorf("store-backend is 'postgres' but no PostgresInitStoreFunc is configured (requires enterprise edition)")
+	}
+
+	dsn := viper.GetString(flagPostgresDSN)
+	if dsn == "" {
+		return fmt.Errorf("--%s is required when --%s=postgres", flagPostgresDSN, flagStoreBackend)
+	}
+
+	poolSize := viper.GetInt32(flagPostgresPoolSize)
+
+	ctx, cancel := context.WithTimeout(context.Background(), initConfig.Timeout)
+	defer cancel()
+
+	logger.Info("initializing sensu store with postgres backend")
+
+	store, cleanup, err := PostgresInitStoreFunc(ctx, dsn, poolSize)
+	if err != nil {
+		return fmt.Errorf("error connecting to postgres: %w", err)
+	}
+	defer cleanup()
+
+	if err := seeds.SeedCluster(ctx, store, nil, initConfig.SeedConfig); err != nil {
+		if errors.Is(err, seeds.ErrAlreadyInitialized) {
+			if viper.GetBool(flagIgnoreAlreadyInitialized) {
+				return nil
+			}
+			return err
+		}
+		return fmt.Errorf("error seeding postgres store: %w", err)
+	}
+
+	logger.Info("postgres store initialized successfully")
+	return nil
 }
 
 func initializeStore(clientConfig clientv3.Config, initConfig initConfig, endpoint string) error {

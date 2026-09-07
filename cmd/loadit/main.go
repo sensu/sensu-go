@@ -8,6 +8,7 @@ import (
 	"log"
 	"math/rand"
 	"os"
+	"path/filepath"
 	"os/signal"
 	"strings"
 	"syscall"
@@ -69,7 +70,7 @@ func main() {
 		cfg := agent.NewConfig()
 		cfg.API.Host = agent.DefaultAPIHost
 		cfg.API.Port = agent.DefaultAPIPort
-		cfg.CacheDir = os.DevNull
+		cfg.CacheDir = filepath.Join(os.TempDir(), "sensu-loadit-cache")
 		cfg.DisableAssets = true
 		cfg.Deregister = true
 		cfg.DeregistrationHandler = ""
