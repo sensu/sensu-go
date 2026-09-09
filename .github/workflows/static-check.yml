@@ -15,13 +15,13 @@ jobs:
     env:
       GO_VERSION: 1.26.6
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 1
-      - uses: actions/setup-go@v5
+      - uses: actions/setup-go@v7
         with:
           go-version: "1.26.6"
-      - uses: dominikh/staticcheck-action@v1.3.1
+      - uses: dominikh/staticcheck-action@v1.4.1
         with:
           version: "2025.1.1"
           install-go: false
