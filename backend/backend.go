@@ -488,22 +488,42 @@ func Initialize(ctx context.Context, config *Config) (*Backend, error) {
 	pipelineDaemon.AddAdapter(&b.PipelineAdapterV1)
 	b.Daemons = append(b.Daemons, pipelineDaemon)
 
+	// Resolve the global default check output size. A negative value means
+	// "derive it from the etcd request size limit"; zero disables the default.
+	// An explicit value at or above the etcd limit cannot work, so reject it at
+	// startup rather than failing per-event at runtime.
+	defaultMaxOutputSize := config.EventDefaultMaxOutputSize
+	if defaultMaxOutputSize != 0 {
+		maxRequestBytes := config.EtcdMaxRequestBytes
+		if maxRequestBytes == 0 {
+			maxRequestBytes = uint(etcd.DefaultMaxRequestBytes)
+		}
+		if defaultMaxOutputSize < 0 {
+			defaultMaxOutputSize = eventd.DeriveMaxOutputSize(maxRequestBytes)
+		} else if defaultMaxOutputSize >= int64(maxRequestBytes) {
+			return nil, fmt.Errorf(
+				"--event-default-max-output-size (%d) must be below --etcd-max-request-bytes (%d)",
+				defaultMaxOutputSize, maxRequestBytes)
+		}
+	}
+
 	// Initialize eventd
 	event, err := eventd.New(
 		b.RunContext(),
 		eventd.Config{
-			Store:               b.StoreV2,
-			EventStore:          b.Store,
-			Bus:                 bus,
-			LivenessFactory:     liveness.EtcdFactory(b.RunContext(), b.Client),
-			Client:              b.Client,
-			BufferSize:          viper.GetInt(FlagEventdBufferSize),
-			WorkerCount:         viper.GetInt(FlagEventdWorkers),
-			StoreTimeout:        2 * time.Minute,
-			LogPath:             b.Cfg.EventLogFile,
-			LogBufferSize:       b.Cfg.EventLogBufferSize,
-			LogBufferWait:       b.Cfg.EventLogBufferWait,
-			LogParallelEncoders: b.Cfg.EventLogParallelEncoders,
+			Store:                b.StoreV2,
+			EventStore:           b.Store,
+			Bus:                  bus,
+			LivenessFactory:      liveness.EtcdFactory(b.RunContext(), b.Client),
+			Client:               b.Client,
+			BufferSize:           viper.GetInt(FlagEventdBufferSize),
+			WorkerCount:          viper.GetInt(FlagEventdWorkers),
+			StoreTimeout:         2 * time.Minute,
+			LogPath:              b.Cfg.EventLogFile,
+			LogBufferSize:        b.Cfg.EventLogBufferSize,
+			LogBufferWait:        b.Cfg.EventLogBufferWait,
+			LogParallelEncoders:  b.Cfg.EventLogParallelEncoders,
+			DefaultMaxOutputSize: defaultMaxOutputSize,
 		},
 	)
 	if err != nil {

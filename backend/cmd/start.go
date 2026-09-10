@@ -3,7 +3,6 @@ package cmd
 import (
 	"context"
 	"fmt"
-	globalLogging "github.com/sensu/sensu-go/util/logging"
 	"io"
 	"log"
 	"net/http"
@@ -14,6 +13,8 @@ import (
 	"strings"
 	"syscall"
 	"time"
+
+	globalLogging "github.com/sensu/sensu-go/util/logging"
 
 	"github.com/sensu/sensu-go/backend/apid/middlewares"
 
@@ -138,6 +139,10 @@ const (
 	// flagEventLogParallelEncoders used to indicate parallel encoders should be used for event logging
 	flagEventLogParallelEncoders = "event-log-parallel-encoders"
 
+	// flagEventDefaultMaxOutputSize indicates the default maximum check output
+	// size, in bytes, for events whose check does not set max_output_size
+	flagEventDefaultMaxOutputSize = "event-default-max-output-size"
+
 	// Default values
 
 	// defaultEtcdClientURL is the default URL to listen for Etcd clients
@@ -152,6 +157,10 @@ const (
 	// defaultEtcdAdvertiseClientURL is the default list of this member's client
 	// URLs to advertise to the rest of the cluster
 	defaultEtcdAdvertiseClientURL = "http://localhost:2379"
+
+	// defaultEventMaxOutputSize is the sentinel meaning "derive the default check
+	// output size from --etcd-max-request-bytes"; see backend.Initialize.
+	defaultEventMaxOutputSize = -1
 
 	timestampFormatMillisecond = "2006-01-02T15:04:05.999Z07:00"
 
@@ -300,6 +309,7 @@ func StartCommand(initialize InitializeFunc) *cobra.Command {
 				EventLogBufferWait:             viper.GetDuration(flagEventLogBufferWait),
 				EventLogFile:                   viper.GetString(flagEventLogFile),
 				EventLogParallelEncoders:       viper.GetBool(flagEventLogParallelEncoders),
+				EventDefaultMaxOutputSize:      viper.GetInt64(flagEventDefaultMaxOutputSize),
 
 				AccessTokenExpiry:  viper.GetDuration(flagAccessTokenExpiry),
 				RefreshTokenExpiry: viper.GetDuration(flagRefreshTokenExpiry),
@@ -474,6 +484,7 @@ func handleConfig(cmd *cobra.Command, arguments []string, server bool) error {
 		viper.SetDefault(flagEventLogBufferSize, 100000)
 		viper.SetDefault(flagEventLogFile, "")
 		viper.SetDefault(flagEventLogParallelEncoders, false)
+		viper.SetDefault(flagEventDefaultMaxOutputSize, defaultEventMaxOutputSize)
 	}
 
 	// Access/Refresh token default expiry values
@@ -663,6 +674,8 @@ func flagSet(server bool) *pflag.FlagSet {
 
 		_ = flagSet.String(flagEventLogFile, "", "path to the event log file")
 		_ = flagSet.Bool(flagEventLogParallelEncoders, false, "use parallel JSON encoding for the event log")
+
+		_ = flagSet.Int64(flagEventDefaultMaxOutputSize, viper.GetInt64(flagEventDefaultMaxOutputSize), "default maximum check output size in bytes for events whose check does not set max_output_size (-1 = derive from --etcd-max-request-bytes, 0 = disabled)")
 
 		// Etcd server unsafe flags
 		_ = flagSet.Bool(flagEtcdUnsafeNoFsync, false, "disables fsync, unsafe, may cause data loss")
