@@ -522,7 +522,7 @@ func TestJavascriptStoreAccess(t *testing.T) {
 				var e = sensu.FetchEvent("batman", "robin");
 				return e.check.status == 0;
 			})()`,
-			ExpErr: "TypeError: Cannot access member 'check' of undefined",
+			ExpErr: "TypeError: Cannot access member \"check\" of undefined",
 		},
 		{
 			Name: "list events",
@@ -538,7 +538,7 @@ func TestJavascriptStoreAccess(t *testing.T) {
 				sensu.DeleteEvent("entity", "check");
 				return true;
 			})()`,
-			ExpErr: "TypeError: 'DeleteEvent' is not a function",
+			ExpErr: "TypeError: \"DeleteEvent\" is not a function",
 		},
 		{
 			Name: "no access to update",
@@ -546,7 +546,7 @@ func TestJavascriptStoreAccess(t *testing.T) {
 				sensu.UpdateEvent({});
 				return true;
 			})()`,
-			ExpErr: "TypeError: 'UpdateEvent' is not a function",
+			ExpErr: "TypeError: \"UpdateEvent\" is not a function",
 		},
 	}
 	for _, test := range tests {
