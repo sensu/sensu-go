@@ -11,6 +11,11 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 - Addition of a new watcher configuration to monitor the user updates
 - Added the exit mechanism to disconnect agent when user is disabled
 - Added a struct in store which will get passed down for userConfigs
+- Added a configurable global default check output size via the `--event-default-max-output-size`
+  backend flag. Events whose check does not set its own `max_output_size` fall back to this
+  default, derived from `--etcd-max-request-bytes` less 100 KiB of headroom; `0` disables it.
+  Truncation now emits a warning log and increments the
+  `sensu_go_eventd_output_truncated_total` counter.
 
 ### Changed
 - The session config to watch over the user updated and the wizzard bus
