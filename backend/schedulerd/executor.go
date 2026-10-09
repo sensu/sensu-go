@@ -316,6 +316,16 @@ func processCheck(ctx context.Context, executor Executor, check *corev2.CheckCon
 			logger.WithFields(fields).Warn("no matching entities, check will not be published")
 		}
 	} else {
+		// For standard (non-proxy) checks, verify that target entities exist in the namespace before publishing
+		if check.Publish && len(check.Subscriptions) > 0 {
+			entities, err := executor.getEntities(ctx)
+			if err == nil && len(entities) == 0 {
+				// No entities found in the check's namespace - publish a warning
+				logger.WithFields(fields).WithFields(logrus.Fields{
+					"subscriptions": check.Subscriptions,
+				}).Warn("no entities found in namespace for check execution - check will be published but may not execute")
+			}
+		}
 		return executor.execute(check)
 	}
 	return nil
