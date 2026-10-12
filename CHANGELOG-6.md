@@ -15,6 +15,31 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 ### Changed
 - The session config to watch over the user updated and the wizzard bus
 
+## [6.15.0] - 2026-10-12
+
+### Added
+- Added warning when check is published but has no matching entities in namespace to clarify check routing behavior
+
+### Changed
+- Disabled platform metrics by default with size-based log rotation
+- Updated Go toolchain to 1.26.8
+- Updated Prometheus packages (prometheus/client_golang v1.24.1, prometheus/common v0.71.0)
+- Updated ETCD dependencies to sensu/etcd v3.1.0
+- Migrated CI from AppVeyor to GitHub Actions
+
+### Fixed
+- Resolved multiple CVE vulnerabilities by comprehensive dependency upgrades:
+  - CVE-2026-42cj: Updated OpenTelemetry dependencies to patch medium-severity DoS vulnerability
+  - GHSA-vp52-pcj8-j9qc (CVE-2026-84304): Upgraded gRPC to v1.83.2, fixing HTTP/2 DATA frame heap exhaustion
+  - GO-2026-6303/6354/6355: Upgraded golang.org/x/crypto to v0.56.0 for SSH CVE fixes
+  - Comprehensive security hardening of core dependencies
+- Fixed spurious continue token generation in pagination when limit equals total event count
+- Fixed agent panic on malformed prometheus_text metric parsing
+- Fixed asset fetcher file descriptor leak on non-200 HTTP responses
+- Fixed user enumeration timing side-channel vulnerability in authentication
+- Fixed backend reload environment refresh behavior
+- Migrated from archived `mitchellh/mapstructure` to `go-viper/mapstructure`
+
 ## [6.14.2] - 2026-06-15
 
 ### Fixed
