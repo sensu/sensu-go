@@ -23,7 +23,7 @@ jobs:
           go-version: "1.27.3"
       - uses: dominikh/staticcheck-action@v1.4.1
         with:
-          version: "2025.1.1"
+          version: "2026.2.2"
           install-go: false
           cache-key: "1.27.3"
 env:
