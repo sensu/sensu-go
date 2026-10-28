@@ -13,6 +13,8 @@ import (
 	"net/http"
 	"os"
 	"strings"
+	"sync"
+	"time"
 
 	"golang.org/x/time/rate"
 )
@@ -36,39 +38,71 @@ type Fetcher interface {
 // URLGetter gets all content at the specified URL.
 type urlGetter func(context.Context, string, string, map[string]string) (io.ReadCloser, error)
 
+// assetIdleConnTimeout bounds how long an idle connection to an asset host is
+// kept open before it is closed and its file descriptor released.
+const assetIdleConnTimeout = 90 * time.Second
+
+// clientCache holds one *http.Client per trusted CA file path. Reusing the
+// client reuses its transport's connection pool; building a new transport per
+// request leaves each connection and its goroutines open until the server
+// closes them.
+var clientCache = struct {
+	sync.Mutex
+	clients map[string]*http.Client
+}{clients: make(map[string]*http.Client)}
+
+// getClient returns the cached HTTP client for trustedCAFile, creating it on
+// first use. An empty trustedCAFile returns a client that uses the shared
+// default transport.
+func getClient(trustedCAFile string) *http.Client {
+	clientCache.Lock()
+	defer clientCache.Unlock()
+
+	if client, ok := clientCache.clients[trustedCAFile]; ok {
+		return client
+	}
+
+	if trustedCAFile == "" {
+		client := &http.Client{}
+		clientCache.clients[trustedCAFile] = client
+		return client
+	}
+
+	rootCAs, err := x509.SystemCertPool()
+	if err != nil {
+		logger.WithError(err).Error("failed to retrieve system cert pool")
+	}
+	if rootCAs == nil {
+		rootCAs = x509.NewCertPool()
+	}
+
+	certs, err := os.ReadFile(trustedCAFile)
+	if err != nil {
+		logger.WithError(err).Errorf("failed to read trusted CA file: %s", trustedCAFile)
+	}
+
+	if ok := rootCAs.AppendCertsFromPEM(certs); !ok {
+		logger.Errorf("failed to append %s to RootCAs, using system certs only", trustedCAFile)
+	}
+
+	appendCerts(rootCAs)
+
+	client := &http.Client{
+		Transport: &http.Transport{
+			Proxy: http.ProxyFromEnvironment,
+			TLSClientConfig: &tls.Config{
+				RootCAs: rootCAs,
+			},
+			IdleConnTimeout: assetIdleConnTimeout,
+		},
+	}
+	clientCache.clients[trustedCAFile] = client
+	return client
+}
+
 // Get the target URL and return an io.ReadCloser
 func httpGet(ctx context.Context, path, trustedCAFile string, headers map[string]string) (io.ReadCloser, error) {
-	client := &http.Client{}
-
-	if trustedCAFile != "" {
-		rootCAs, err := x509.SystemCertPool()
-		if err != nil {
-			logger.WithError(err).Error("failed to retrieve system cert pool")
-		}
-		if rootCAs == nil {
-			rootCAs = x509.NewCertPool()
-		}
-
-		certs, err := os.ReadFile(trustedCAFile)
-		if err != nil {
-			logger.WithError(err).Errorf("failed to read trusted CA file: %s", trustedCAFile)
-		}
-
-		if ok := rootCAs.AppendCertsFromPEM(certs); !ok {
-			logger.Errorf("failed to append %s to RootCAs, using system certs only", trustedCAFile)
-		}
-
-		appendCerts(rootCAs)
-
-		client = &http.Client{
-			Transport: &http.Transport{
-				Proxy: http.ProxyFromEnvironment,
-				TLSClientConfig: &tls.Config{
-					RootCAs: rootCAs,
-				},
-			},
-		}
-	}
+	client := getClient(trustedCAFile)
 
 	req, err := http.NewRequest(http.MethodGet, path, nil)
 	if err != nil {
@@ -88,6 +122,8 @@ func httpGet(ctx context.Context, path, trustedCAFile string, headers map[string
 		return nil, fmt.Errorf("error fetching asset: %s", err)
 	}
 	if resp.StatusCode != http.StatusOK {
+		// Drain before closing so the connection can be returned to the pool.
+		_, _ = io.Copy(io.Discard, resp.Body)
 		resp.Body.Close()
 		return nil, fmt.Errorf("error fetching asset: Response Code %d", resp.StatusCode)
 	}

@@ -13,6 +13,8 @@ import (
 	"net/http"
 	"os"
 	"strings"
+	"sync"
+	"time"
 
 	"golang.org/x/time/rate"
 )
@@ -41,9 +43,30 @@ type urlGetter func(context.Context, string, string, map[string]string) (io.Read
 var fipsSafeCurves = []tls.CurveID{tls.CurveP256, tls.CurveP384, tls.CurveP521}
 
 // Get the target URL and return an io.ReadCloser
-func httpGet(ctx context.Context, path, trustedCAFile string, headers map[string]string) (io.ReadCloser, error) {
-	var rootCAs *x509.CertPool
+// assetIdleConnTimeout bounds how long an idle connection to an asset host is
+// kept open before it is closed and its file descriptor released.
+const assetIdleConnTimeout = 90 * time.Second
 
+// clientCache holds one *http.Client per trusted CA file path. Reusing the
+// client reuses its transport's connection pool; building a new transport per
+// request leaves each connection and its goroutines open until the server
+// closes them.
+var clientCache = struct {
+	sync.Mutex
+	clients map[string]*http.Client
+}{clients: make(map[string]*http.Client)}
+
+// getClient returns the cached HTTP client for trustedCAFile, creating it on
+// first use. The client always carries the FIPS curve preferences.
+func getClient(trustedCAFile string) *http.Client {
+	clientCache.Lock()
+	defer clientCache.Unlock()
+
+	if client, ok := clientCache.clients[trustedCAFile]; ok {
+		return client
+	}
+
+	var rootCAs *x509.CertPool
 	if trustedCAFile != "" {
 		var err error
 		rootCAs, err = x509.SystemCertPool()
@@ -76,8 +99,16 @@ func httpGet(ctx context.Context, path, trustedCAFile string, headers map[string
 				RootCAs:          rootCAs,
 				CurvePreferences: fipsSafeCurves,
 			},
+			IdleConnTimeout: assetIdleConnTimeout,
 		},
 	}
+	clientCache.clients[trustedCAFile] = client
+	return client
+}
+
+// Get the target URL and return an io.ReadCloser
+func httpGet(ctx context.Context, path, trustedCAFile string, headers map[string]string) (io.ReadCloser, error) {
+	client := getClient(trustedCAFile)
 
 	req, err := http.NewRequest(http.MethodGet, path, nil)
 	if err != nil {
@@ -97,6 +128,9 @@ func httpGet(ctx context.Context, path, trustedCAFile string, headers map[string
 		return nil, fmt.Errorf("error fetching asset: %s", err)
 	}
 	if resp.StatusCode != http.StatusOK {
+		// Drain before closing so the connection can be returned to the pool.
+		_, _ = io.Copy(io.Discard, resp.Body)
+		resp.Body.Close()
 		return nil, fmt.Errorf("error fetching asset: Response Code %d", resp.StatusCode)
 	}
 

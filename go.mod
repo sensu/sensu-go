@@ -1,6 +1,6 @@
 module github.com/sensu/sensu-go
 
-go 1.26.8
+go 1.27.3
 
 replace github.com/gorilla/websocket => github.com/sensu/websocket v1.0.2
 

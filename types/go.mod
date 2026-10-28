@@ -1,6 +1,6 @@
 module github.com/sensu/sensu-go/types
 
-go 1.26.8
+go 1.27.3
 
 require (
 	github.com/robertkrimen/otto v0.5.1

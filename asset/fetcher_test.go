@@ -2,13 +2,17 @@ package asset
 
 import (
 	"context"
+	"encoding/pem"
 	"fmt"
 	"io"
+	"net"
 	"net/http"
 	"net/http/httptest"
 	"os"
 	"path/filepath"
+	"sync"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -153,4 +157,96 @@ func TestHTTPGetRepeatedFailuresNoFDLeak(t *testing.T) {
 		assert.Error(t, err)
 	}
 	assert.Equal(t, 500, requestCount)
+}
+
+// openConnTracker counts server-side connections that are open, using the
+// server's ConnState hook. Connections that the client never closes stay open
+// here, so the count shows a leak without relying on FD or goroutine counts.
+type openConnTracker struct {
+	mu   sync.Mutex
+	open int
+}
+
+func (c *openConnTracker) hook(_ net.Conn, state http.ConnState) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	switch state {
+	case http.StateNew:
+		c.open++
+	case http.StateClosed, http.StateHijacked:
+		c.open--
+	}
+}
+
+func (c *openConnTracker) count() int {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	return c.open
+}
+
+// TestHTTPGetBoundedConnections verifies that repeated asset fetches reuse
+// connections instead of opening a new transport per call. Before the fix,
+// every request through a CA-file client left its connection open, so 200
+// requests produced about 200 open connections.
+func TestHTTPGetBoundedConnections(t *testing.T) {
+	const requests = 200
+	const maxOpenConns = 5
+
+	tests := []struct {
+		name   string
+		useTLS bool
+		status int
+		useCA  bool
+	}{
+		{name: "HTTP 404 no CA", useTLS: false, status: http.StatusNotFound, useCA: false},
+		{name: "TLS 404 with CA", useTLS: true, status: http.StatusNotFound, useCA: true},
+		{name: "TLS 200 with CA", useTLS: true, status: http.StatusOK, useCA: true},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			tracker := &openConnTracker{}
+			handler := http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+				w.WriteHeader(tc.status)
+				w.Write([]byte("body"))
+			})
+			ts := httptest.NewUnstartedServer(handler)
+			ts.Config.ConnState = tracker.hook
+			if tc.useTLS {
+				ts.StartTLS()
+			} else {
+				ts.Start()
+			}
+			defer ts.Close()
+
+			caFile := ""
+			if tc.useCA {
+				caFile = writeServerCA(t, ts)
+			}
+
+			for i := 0; i < requests; i++ {
+				closer, err := httpGet(context.Background(), ts.URL, caFile, nil)
+				if err == nil {
+					closer.Close()
+				}
+			}
+
+			// Allow the server to observe closes from the client's idle timeout path.
+			time.Sleep(100 * time.Millisecond)
+			assert.LessOrEqual(t, tracker.count(), maxOpenConns,
+				"open server connections after %d requests", requests)
+		})
+	}
+}
+
+// writeServerCA writes the test server's certificate to a PEM file and returns
+// its path, so the fetcher can trust it through trustedCAFile.
+func writeServerCA(t *testing.T, ts *httptest.Server) string {
+	t.Helper()
+	path := filepath.Join(t.TempDir(), "ca.pem")
+	block := &pem.Block{Type: "CERTIFICATE", Bytes: ts.Certificate().Raw}
+	if err := os.WriteFile(path, pem.EncodeToMemory(block), 0600); err != nil {
+		t.Fatal(err)
+	}
+	return path
 }
