@@ -27,11 +27,22 @@ func (r RuntimeAssetSet) Key() string {
 	return strings.Join(keys, "")
 }
 
-// Scripts retrieves all the js files in the lib directory.
+// Scripts retrieves all the js files in the lib directory. The caller owns the
+// returned readers and must close them. If any directory cannot be read, no
+// readers are returned, so a partial set is never handed out silently.
 func (r RuntimeAssetSet) Scripts() (map[string]io.ReadCloser, error) {
 	scripts := make(map[string]io.ReadCloser)
+	closeAll := func() {
+		for _, f := range scripts {
+			_ = f.Close()
+		}
+	}
+
 	for _, asset := range r {
 		err := filepath.Walk(asset.LibDir(), func(path string, info os.FileInfo, err error) error {
+			if err != nil {
+				return err
+			}
 			if strings.HasSuffix(path, ".js") {
 				f, err := os.Open(path)
 				if err != nil {
@@ -42,6 +53,7 @@ func (r RuntimeAssetSet) Scripts() (map[string]io.ReadCloser, error) {
 			return nil
 		})
 		if err != nil {
+			closeAll()
 			return nil, err
 		}
 	}

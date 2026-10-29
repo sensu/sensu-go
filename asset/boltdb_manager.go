@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/sirupsen/logrus"
 	"os"
 	"path/filepath"
 	"time"
@@ -195,6 +196,10 @@ func (b *boltDBAssetManager) Get(ctx context.Context, asset *corev2.Asset) (*Run
 		// install the asset
 		tmpFile, err := b.fetchWithDuration(ctx, asset)
 		if err != nil {
+			logger.WithFields(logrus.Fields{
+				"asset": asset.Name,
+				"url":   asset.URL,
+			}).WithError(err).Error("failed to fetch asset")
 			return err
 		}
 		defer tmpFile.Close()

@@ -140,25 +140,6 @@ func TestHTTPGet403ReturnsError(t *testing.T) {
 	assert.Contains(t, err.Error(), "Response Code 403")
 }
 
-func TestHTTPGetRepeatedFailuresNoFDLeak(t *testing.T) {
-	requestCount := 0
-	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		requestCount++
-		w.WriteHeader(http.StatusNotFound)
-		w.Write([]byte("asset not found at this location"))
-	}))
-	defer ts.Close()
-
-	// Simulate repeated check executions with a missing asset
-	// Without the fix, each iteration leaks a file descriptor
-	for i := 0; i < 500; i++ {
-		closer, err := httpGet(context.Background(), ts.URL, "", nil)
-		assert.Nil(t, closer)
-		assert.Error(t, err)
-	}
-	assert.Equal(t, 500, requestCount)
-}
-
 // openConnTracker counts server-side connections that are open, using the
 // server's ConnState hook. Connections that the client never closes stay open
 // here, so the count shows a leak without relying on FD or goroutine counts.
@@ -205,6 +186,7 @@ func TestHTTPGetBoundedConnections(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
+			t.Cleanup(resetClientCache)
 			tracker := &openConnTracker{}
 			handler := http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 				w.WriteHeader(tc.status)
@@ -231,8 +213,7 @@ func TestHTTPGetBoundedConnections(t *testing.T) {
 				}
 			}
 
-			// Allow the server to observe closes from the client's idle timeout path.
-			time.Sleep(100 * time.Millisecond)
+			waitForOpenConns(tracker, maxOpenConns, 2*time.Second)
 			assert.LessOrEqual(t, tracker.count(), maxOpenConns,
 				"open server connections after %d requests", requests)
 		})
@@ -249,4 +230,93 @@ func writeServerCA(t *testing.T, ts *httptest.Server) string {
 		t.Fatal(err)
 	}
 	return path
+}
+
+// resetClientCache drops every cached client so tests do not share transports
+// or CA state.
+func resetClientCache() {
+	clientCache.Lock()
+	defer clientCache.Unlock()
+	clientCache.clients = make(map[string]cachedClient)
+}
+
+// waitForOpenConns polls until the server reports at most max open connections
+// or the timeout expires. It replaces a fixed sleep: the assertion waits only as
+// long as the client needs to close its connections.
+func waitForOpenConns(c *openConnTracker, max int, timeout time.Duration) {
+	deadline := time.Now().Add(timeout)
+	for c.count() > max && time.Now().Before(deadline) {
+		time.Sleep(10 * time.Millisecond)
+	}
+}
+
+// writeCAFile writes the server's certificate to path as a PEM CA file.
+func writeCAFile(t *testing.T, path string, ts *httptest.Server) {
+	t.Helper()
+	block := &pem.Block{Type: "CERTIFICATE", Bytes: ts.Certificate().Raw}
+	if err := os.WriteFile(path, pem.EncodeToMemory(block), 0600); err != nil {
+		t.Fatal(err)
+	}
+}
+
+// TestHTTPGetRereadsCAFile checks that the trusted CA file is read on every
+// fetch. Each server gets its own CA, so after the file is rotated to trust
+// only server B, a fetch to server A must be rejected.
+func TestHTTPGetRereadsCAFile(t *testing.T) {
+	t.Cleanup(resetClientCache)
+	handler := http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		w.Write([]byte("asset"))
+	})
+
+	serverA, caA := startTLSServerWithCA(t, handler)
+	defer serverA.Close()
+	serverB, caB := startTLSServerWithCA(t, handler)
+	defer serverB.Close()
+
+	caPath := filepath.Join(t.TempDir(), "ca.pem")
+	writeCACertFile(t, caPath, caA)
+
+	rc, err := httpGet(context.Background(), serverA.URL, caPath, nil)
+	if assert.NoError(t, err, "server A should be trusted by CA A") {
+		rc.Close()
+	}
+
+	// Rotate the CA file so it trusts only server B.
+	writeCACertFile(t, caPath, caB)
+
+	rc, err = httpGet(context.Background(), serverB.URL, caPath, nil)
+	if assert.NoError(t, err, "rotated CA should be trusted on the next fetch") {
+		rc.Close()
+	}
+
+	_, err = httpGet(context.Background(), serverA.URL, caPath, nil)
+	assert.Error(t, err, "rotated CA should no longer trust server A")
+}
+
+// TestHTTPGetCAFileNotCachedOnFailure checks that a missing or malformed CA file
+// fails every fetch and caches nothing, so a file that appears later is used.
+func TestHTTPGetCAFileNotCachedOnFailure(t *testing.T) {
+	t.Cleanup(resetClientCache)
+	ts := httptest.NewUnstartedServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		w.Write([]byte("asset"))
+	}))
+	ts.StartTLS()
+	defer ts.Close()
+
+	caPath := filepath.Join(t.TempDir(), "ca.pem")
+
+	_, err := httpGet(context.Background(), ts.URL, caPath, nil)
+	assert.Error(t, err, "missing CA file should fail the fetch")
+
+	if err := os.WriteFile(caPath, []byte("not a certificate"), 0600); err != nil {
+		t.Fatal(err)
+	}
+	_, err = httpGet(context.Background(), ts.URL, caPath, nil)
+	assert.Error(t, err, "malformed CA file should fail the fetch")
+
+	writeCAFile(t, caPath, ts)
+	rc, err := httpGet(context.Background(), ts.URL, caPath, nil)
+	if assert.NoError(t, err, "CA file that appears later should be used") {
+		rc.Close()
+	}
 }
