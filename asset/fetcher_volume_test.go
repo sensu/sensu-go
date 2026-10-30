@@ -19,8 +19,8 @@ import (
 // tuned with environment variables, so the same file runs quickly in CI and at
 // full volume on a dedicated host:
 //
-//	ASSET_VOLUME_WORKERS     concurrent fetchers per scenario (default 20)
-//	ASSET_VOLUME_PER_WORKER  requests per fetcher per scenario (default 250)
+//	ASSET_VOLUME_WORKERS     concurrent fetchers per scenario (default 8)
+//	ASSET_VOLUME_PER_WORKER  requests per fetcher per scenario (default 25)
 //	ASSET_VOLUME_FD_BOUND    allowed growth in open file descriptors (default 50)
 
 const (
@@ -168,8 +168,11 @@ func volumeScenarios() []volumeScenario {
 // checks three things: the outcome of every fetch, the growth in open file
 // descriptors, and the number of server-side connections still open afterwards.
 func TestHTTPGetHighVolume(t *testing.T) {
-	workers := volumeInt("ASSET_VOLUME_WORKERS", 20)
-	perWorker := volumeInt("ASSET_VOLUME_PER_WORKER", 250)
+	// CI runs the unit tests under -race with a 60s package timeout, so the
+	// default here is sized to fit. Full volume is opt-in through the
+	// environment variables, for the dedicated-host run.
+	workers := volumeInt("ASSET_VOLUME_WORKERS", 8)
+	perWorker := volumeInt("ASSET_VOLUME_PER_WORKER", 25)
 	fdBound := volumeInt("ASSET_VOLUME_FD_BOUND", 50)
 	total := int64(workers * perWorker)
 
