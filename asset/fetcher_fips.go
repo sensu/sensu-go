@@ -14,6 +14,8 @@ import (
 	"os"
 	"strings"
 
+	"github.com/sirupsen/logrus"
+
 	"golang.org/x/time/rate"
 )
 
@@ -40,43 +42,23 @@ type urlGetter func(context.Context, string, string, map[string]string) (io.Read
 // which is blocked when Go runs with GODEBUG=fips140=only (Go 1.24+).
 var fipsSafeCurves = []tls.CurveID{tls.CurveP256, tls.CurveP384, tls.CurveP521}
 
-// Get the target URL and return an io.ReadCloser
-func httpGet(ctx context.Context, path, trustedCAFile string, headers map[string]string) (io.ReadCloser, error) {
-	var rootCAs *x509.CertPool
-
-	if trustedCAFile != "" {
-		var err error
-		rootCAs, err = x509.SystemCertPool()
-		if err != nil {
-			logger.WithError(err).Error("failed to retrieve system cert pool")
+// Always specify CurvePreferences to exclude X25519, which is blocked in
+// FIPS 140-only mode (GODEBUG=fips140=only, Go 1.24+). Only NIST curves
+// P-256, P-384 and P-521 are FIPS 140-approved for TLS key exchange.
+func init() {
+	newTLSConfig = func(rootCAs *x509.CertPool) *tls.Config {
+		return &tls.Config{
+			RootCAs:          rootCAs,
+			CurvePreferences: fipsSafeCurves,
 		}
-		if rootCAs == nil {
-			rootCAs = x509.NewCertPool()
-		}
-
-		certs, err := os.ReadFile(trustedCAFile)
-		if err != nil {
-			logger.WithError(err).Errorf("failed to read trusted CA file: %s", trustedCAFile)
-		}
-
-		if ok := rootCAs.AppendCertsFromPEM(certs); !ok {
-			logger.Errorf("failed to append %s to RootCAs, using system certs only", trustedCAFile)
-		}
-
-		appendCerts(rootCAs)
 	}
+}
 
-	// Always specify CurvePreferences to exclude X25519, which is blocked in
-	// FIPS 140-only mode (GODEBUG=fips140=only, Go 1.24+). Only NIST curves
-	// P-256, P-384 and P-521 are FIPS 140-approved for TLS key exchange.
-	client := &http.Client{
-		Transport: &http.Transport{
-			Proxy: http.ProxyFromEnvironment,
-			TLSClientConfig: &tls.Config{
-				RootCAs:          rootCAs,
-				CurvePreferences: fipsSafeCurves,
-			},
-		},
+// httpGet fetches the target URL and returns the response body.
+func httpGet(ctx context.Context, path, trustedCAFile string, headers map[string]string) (io.ReadCloser, error) {
+	client, err := getClient(trustedCAFile)
+	if err != nil {
+		return nil, fmt.Errorf("error fetching asset: %s", err)
 	}
 
 	req, err := http.NewRequest(http.MethodGet, path, nil)
@@ -97,6 +79,14 @@ func httpGet(ctx context.Context, path, trustedCAFile string, headers map[string
 		return nil, fmt.Errorf("error fetching asset: %s", err)
 	}
 	if resp.StatusCode != http.StatusOK {
+		// Drain a bounded amount before closing so the connection can be
+		// returned to the pool without reading an unbounded error body.
+		_, _ = io.Copy(io.Discard, io.LimitReader(resp.Body, maxDrainBytes))
+		resp.Body.Close()
+		logger.WithFields(logrus.Fields{
+			"url":         path,
+			"status_code": resp.StatusCode,
+		}).Warn("asset fetch returned a non-200 response")
 		return nil, fmt.Errorf("error fetching asset: Response Code %d", resp.StatusCode)
 	}
 

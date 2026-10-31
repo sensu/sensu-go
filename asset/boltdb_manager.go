@@ -12,6 +12,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	corev2 "github.com/sensu/core/v2"
 	metricspkg "github.com/sensu/sensu-go/metrics"
+	"github.com/sirupsen/logrus"
 	bolt "go.etcd.io/bbolt"
 	"golang.org/x/time/rate"
 )
@@ -195,6 +196,10 @@ func (b *boltDBAssetManager) Get(ctx context.Context, asset *corev2.Asset) (*Run
 		// install the asset
 		tmpFile, err := b.fetchWithDuration(ctx, asset)
 		if err != nil {
+			logger.WithFields(logrus.Fields{
+				"asset": asset.Name,
+				"url":   asset.URL,
+			}).WithError(err).Error("failed to fetch asset")
 			return err
 		}
 		defer tmpFile.Close()
