@@ -7,11 +7,12 @@ import (
 	"bufio"
 	"context"
 	"fmt"
-	"github.com/sirupsen/logrus"
 	"io"
 	"net/http"
 	"os"
 	"strings"
+
+	"github.com/sirupsen/logrus"
 
 	"golang.org/x/time/rate"
 )

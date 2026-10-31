@@ -45,16 +45,31 @@ var newTLSConfig = func(rootCAs *x509.CertPool) *tls.Config {
 	return &tls.Config{RootCAs: rootCAs}
 }
 
+// defaultClient is the shared client for fetches without a trusted CA file. Its
+// TLS configuration comes from newTLSConfig, so the FIPS build restricts the
+// curves here as well as for CA-file clients.
+var (
+	defaultClientOnce sync.Once
+	defaultClient     *http.Client
+)
+
 // getClient returns the HTTP client for the given trusted CA file. The file is
 // read on every call, so a CA that is rotated, or that appears after the agent
 // started, is picked up on the next fetch.
 //
-// An empty trustedCAFile returns a client with the shared default transport.
-// If the file cannot be read or parsed, getClient returns an error and caches
-// nothing, so the next fetch tries again.
+// An empty trustedCAFile returns the shared default client. If the file cannot
+// be read or parsed, getClient returns an error and caches nothing, so the next
+// fetch tries again.
 func getClient(trustedCAFile string) (*http.Client, error) {
 	if trustedCAFile == "" {
-		return &http.Client{}, nil
+		defaultClientOnce.Do(func() {
+			transport := http.DefaultTransport.(*http.Transport).Clone()
+			transport.Proxy = http.ProxyFromEnvironment
+			transport.TLSClientConfig = newTLSConfig(nil)
+			transport.IdleConnTimeout = assetIdleConnTimeout
+			defaultClient = &http.Client{Transport: transport}
+		})
+		return defaultClient, nil
 	}
 
 	certs, err := os.ReadFile(trustedCAFile)

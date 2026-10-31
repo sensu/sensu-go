@@ -2,8 +2,10 @@ package asset
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"sort"
@@ -28,8 +30,9 @@ func (r RuntimeAssetSet) Key() string {
 }
 
 // Scripts retrieves all the js files in the lib directory. The caller owns the
-// returned readers and must close them. If any directory cannot be read, no
-// readers are returned, so a partial set is never handed out silently.
+// returned readers and must close them. An asset without a lib directory has no
+// scripts. If any other directory cannot be read, no readers are returned, so a
+// partial set is never handed out silently.
 func (r RuntimeAssetSet) Scripts() (map[string]io.ReadCloser, error) {
 	scripts := make(map[string]io.ReadCloser)
 	closeAll := func() {
@@ -39,8 +42,12 @@ func (r RuntimeAssetSet) Scripts() (map[string]io.ReadCloser, error) {
 	}
 
 	for _, asset := range r {
-		err := filepath.Walk(asset.LibDir(), func(path string, info os.FileInfo, err error) error {
+		libDir := asset.LibDir()
+		err := filepath.Walk(libDir, func(path string, info os.FileInfo, err error) error {
 			if err != nil {
+				if path == libDir && errors.Is(err, fs.ErrNotExist) {
+					return nil
+				}
 				return err
 			}
 			if strings.HasSuffix(path, ".js") {

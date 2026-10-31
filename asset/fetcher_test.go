@@ -2,7 +2,6 @@ package asset
 
 import (
 	"context"
-	"encoding/pem"
 	"fmt"
 	"io"
 	"net"
@@ -225,10 +224,7 @@ func TestHTTPGetBoundedConnections(t *testing.T) {
 func writeServerCA(t *testing.T, ts *httptest.Server) string {
 	t.Helper()
 	path := filepath.Join(t.TempDir(), "ca.pem")
-	block := &pem.Block{Type: "CERTIFICATE", Bytes: ts.Certificate().Raw}
-	if err := os.WriteFile(path, pem.EncodeToMemory(block), 0600); err != nil {
-		t.Fatal(err)
-	}
+	writeCACertFile(t, path, ts.Certificate())
 	return path
 }
 
@@ -247,15 +243,6 @@ func waitForOpenConns(c *openConnTracker, max int, timeout time.Duration) {
 	deadline := time.Now().Add(timeout)
 	for c.count() > max && time.Now().Before(deadline) {
 		time.Sleep(10 * time.Millisecond)
-	}
-}
-
-// writeCAFile writes the server's certificate to path as a PEM CA file.
-func writeCAFile(t *testing.T, path string, ts *httptest.Server) {
-	t.Helper()
-	block := &pem.Block{Type: "CERTIFICATE", Bytes: ts.Certificate().Raw}
-	if err := os.WriteFile(path, pem.EncodeToMemory(block), 0600); err != nil {
-		t.Fatal(err)
 	}
 }
 
@@ -314,7 +301,7 @@ func TestHTTPGetCAFileNotCachedOnFailure(t *testing.T) {
 	_, err = httpGet(context.Background(), ts.URL, caPath, nil)
 	assert.Error(t, err, "malformed CA file should fail the fetch")
 
-	writeCAFile(t, caPath, ts)
+	writeCACertFile(t, caPath, ts.Certificate())
 	rc, err := httpGet(context.Background(), ts.URL, caPath, nil)
 	if assert.NoError(t, err, "CA file that appears later should be used") {
 		rc.Close()
