@@ -14,6 +14,10 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ### Changed
 - The session config to watch over the user updated and the wizzard bus
+- An unreadable `trusted-ca-file` now fails asset fetches instead of falling back to system CAs
+
+### Fixed
+- Fixed a connection and file descriptor leak when agents fetch assets, such as checks that reference a missing asset
 
 ## [6.15.0] - 2026-10-12
 
