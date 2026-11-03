@@ -218,6 +218,20 @@ func NewSession(ctx context.Context, cfg SessionConfig) (*Session, error) {
 		},
 	}
 
+	// If NewSession returns an error, undo what it set up so far: cancel the
+	// session context and remove the user config subscription from the bus.
+	var userSubscription *messaging.Subscription
+	created := false
+	defer func() {
+		if created {
+			return
+		}
+		cancel()
+		if userSubscription != nil {
+			_ = userSubscription.Cancel()
+		}
+	}()
+
 	// Optionally subscribe to burial notifications
 	if cfg.BurialReceiver != nil {
 		topic := messaging.BurialTopic(cfg.Namespace, cfg.AgentName)
@@ -231,10 +245,11 @@ func NewSession(ctx context.Context, cfg SessionConfig) (*Session, error) {
 	}
 
 	if len(cfg.User) > 0 {
-		_, err := s.bus.Subscribe(messaging.UserConfigTopic(cfg.User), cfg.AgentName, s.userConfig)
+		sub, err := s.bus.Subscribe(messaging.UserConfigTopic(cfg.User), cfg.AgentName, s.userConfig)
 		if err != nil {
 			return nil, err
 		}
+		userSubscription = &sub
 	}
 
 	if err := s.bus.Publish(messaging.TopicKeepalive, makeEntitySwitchBurialEvent(cfg)); err != nil {
@@ -251,6 +266,7 @@ func NewSession(ctx context.Context, cfg SessionConfig) (*Session, error) {
 	}
 
 	s.handler = newSessionHandler(s)
+	created = true
 	return s, nil
 }
 

@@ -921,3 +921,61 @@ func TestSession_receiver(t *testing.T) {
 		})
 	}
 }
+
+// failingPublishBus is a message bus whose Publish always fails. It also
+// records the subscribers registered on it.
+type failingPublishBus struct {
+	*messaging.WizardBus
+	subscribers *[]messaging.Subscriber
+}
+
+func (failingPublishBus) Publish(string, interface{}) error {
+	return errors.New("publish failed")
+}
+
+func (b failingPublishBus) Subscribe(topic, consumer string, sub messaging.Subscriber) (messaging.Subscription, error) {
+	*b.subscribers = append(*b.subscribers, sub)
+	return b.WizardBus.Subscribe(topic, consumer, sub)
+}
+
+func TestNewSessionErrorRemovesUserConfigSubscription(t *testing.T) {
+	wizard, err := messaging.NewWizardBus(messaging.WizardBusConfig{})
+	require.NoError(t, err)
+	require.NoError(t, wizard.Start())
+	defer wizard.Stop()
+
+	var subscribers []messaging.Subscriber
+	cfg := SessionConfig{
+		AgentName:     "testing",
+		Namespace:     "acme",
+		User:          "agent-user",
+		Subscriptions: []string{"testing"},
+		Conn:          new(mocktransport.MockTransport),
+		Bus:           failingPublishBus{WizardBus: wizard, subscribers: &subscribers},
+		Store:         &mockstore.MockStore{},
+		Unmarshal:     proto.Unmarshal,
+		Marshal:       proto.Marshal,
+	}
+
+	session, err := NewSession(context.Background(), cfg)
+	require.Error(t, err)
+	require.Nil(t, session)
+	require.Len(t, subscribers, 1)
+	userConfig, ok := subscribers[0].(*userConfig)
+	require.True(t, ok)
+
+	// A user config update must no longer reach the failed session.
+	topic := messaging.UserConfigTopic("agent-user")
+	probe := make(chan interface{}, 1)
+	sub, err := wizard.Subscribe(topic, "probe", messaging.ChanSubscriber(probe))
+	require.NoError(t, err)
+	defer sub.Cancel()
+	require.NoError(t, wizard.Publish(topic, "update"))
+	select {
+	case <-probe:
+	case <-time.After(time.Second):
+		t.Fatal("probe subscriber did not receive the update")
+	}
+	time.Sleep(100 * time.Millisecond)
+	assert.Empty(t, userConfig.updatesChannel, "failed session is still subscribed to the user config topic")
+}
