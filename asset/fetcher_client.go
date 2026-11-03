@@ -7,6 +7,7 @@ import (
 	"encoding/hex"
 	"fmt"
 	"net/http"
+	"net/url"
 	"os"
 	"sync"
 	"time"
@@ -115,4 +116,17 @@ func getClient(trustedCAFile string) (*http.Client, error) {
 	client := &http.Client{Transport: transport}
 	clientCache.clients[trustedCAFile] = cachedClient{digest: digest, client: client}
 	return client, nil
+}
+
+// redactURL returns the URL without its user info, query, or fragment. Asset
+// URLs can be presigned or carry tokens, so they must not reach the logs as-is.
+func redactURL(raw string) string {
+	u, err := url.Parse(raw)
+	if err != nil {
+		return "<invalid url>"
+	}
+	u.User = nil
+	u.RawQuery = ""
+	u.Fragment = ""
+	return u.String()
 }

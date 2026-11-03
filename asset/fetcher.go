@@ -66,7 +66,7 @@ func httpGet(ctx context.Context, path, trustedCAFile string, headers map[string
 		_, _ = io.Copy(io.Discard, io.LimitReader(resp.Body, maxDrainBytes))
 		resp.Body.Close()
 		logger.WithFields(logrus.Fields{
-			"url":         path,
+			"url":         redactURL(path),
 			"status_code": resp.StatusCode,
 		}).Warn("asset fetch returned a non-200 response")
 		return nil, fmt.Errorf("error fetching asset: Response Code %d", resp.StatusCode)

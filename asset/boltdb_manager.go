@@ -198,7 +198,6 @@ func (b *boltDBAssetManager) Get(ctx context.Context, asset *corev2.Asset) (*Run
 		if err != nil {
 			logger.WithFields(logrus.Fields{
 				"asset": asset.Name,
-				"url":   asset.URL,
 			}).WithError(err).Error("failed to fetch asset")
 			return err
 		}
