@@ -18,6 +18,7 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ### Fixed
 - Fixed a connection and file descriptor leak when agents fetch assets, such as checks that reference a missing asset
+- Fixed a connection and file descriptor leak in agentd when creating an agent session fails
 
 ## [6.15.0] - 2026-10-12
 
