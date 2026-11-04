@@ -182,10 +182,6 @@ func (a *AdapterV1) Run(ctx context.Context, ref *corev2.ResourceReference, reso
 		fields["pipeline_workflow"] = workflow.Name
 		debugFields["pipeline_workflow"] = workflow.Name
 
-		if event.HasCheck() && event.Check.IsSilenced {
-			continue
-		}
-
 		// Process the event through the workflow filters
 		filtered, err := a.processFilters(ctx, workflow.Filters, event)
 		if err != nil && !pipeline.ContinueOnError {
