@@ -921,3 +921,48 @@ func TestSession_receiver(t *testing.T) {
 		})
 	}
 }
+
+func TestNewSessionOrCloseClosesConnOnError(t *testing.T) {
+	conn := new(mocktransport.MockTransport)
+	conn.On("Close").Return(nil).Once()
+
+	bus := new(mockbus.MockBus)
+	bus.On("Publish", messaging.TopicKeepalive, mock.Anything).Return(errors.New("publish failed"))
+
+	cfg := SessionConfig{
+		AgentName:     "testing",
+		Namespace:     "acme",
+		Subscriptions: []string{"testing"},
+		Conn:          conn,
+		Bus:           bus,
+		Unmarshal:     proto.Unmarshal,
+		Marshal:       proto.Marshal,
+	}
+
+	session, err := newSessionOrClose(context.Background(), cfg)
+	require.Error(t, err)
+	assert.Nil(t, session)
+	conn.AssertExpectations(t)
+}
+
+func TestNewSessionOrCloseKeepsConnOnSuccess(t *testing.T) {
+	conn := new(mocktransport.MockTransport)
+
+	bus := new(mockbus.MockBus)
+	bus.On("Publish", messaging.TopicKeepalive, mock.Anything).Return(nil)
+
+	cfg := SessionConfig{
+		AgentName:     "testing",
+		Namespace:     "acme",
+		Subscriptions: []string{"testing"},
+		Conn:          conn,
+		Bus:           bus,
+		Unmarshal:     proto.Unmarshal,
+		Marshal:       proto.Marshal,
+	}
+
+	session, err := newSessionOrClose(context.Background(), cfg)
+	require.NoError(t, err)
+	assert.NotNil(t, session)
+	conn.AssertNotCalled(t, "Close")
+}

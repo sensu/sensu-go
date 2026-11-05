@@ -369,6 +369,20 @@ func (a *Agentd) Name() string {
 	return "agentd"
 }
 
+// newSessionOrClose calls NewSession and, if it fails, closes cfg.Conn. After
+// the websocket upgrade the http.Server no longer tracks the connection, and
+// no session exists yet to close it, so it would otherwise stay open.
+func newSessionOrClose(ctx context.Context, cfg SessionConfig) (*Session, error) {
+	session, err := NewSession(ctx, cfg)
+	if err != nil {
+		if cerr := cfg.Conn.Close(); cerr != nil {
+			logger.WithError(cerr).Debug("error closing connection after session creation failed")
+		}
+		return nil, err
+	}
+	return session, nil
+}
+
 func (a *Agentd) webSocketHandler(w http.ResponseWriter, r *http.Request) {
 	then := time.Now()
 	defer func() {
@@ -448,10 +462,11 @@ func (a *Agentd) webSocketHandler(w http.ResponseWriter, r *http.Request) {
 
 	cfg.Subscriptions = corev2.AddEntitySubscription(cfg.AgentName, cfg.Subscriptions)
 
-	session, err := NewSession(a.ctx, cfg)
+	session, err := newSessionOrClose(a.ctx, cfg)
 	if err != nil {
+		// The connection was hijacked by the websocket upgrade, so an HTTP
+		// error response can no longer be written to it.
 		lager.WithError(err).Error("failed to create session")
-		http.Error(w, err.Error(), http.StatusInternalServerError)
 		// There was an error retrieving the namespace from
 		// etcd, indicating that this backend has a potentially
 		// unrecoverable issue.
