@@ -18,6 +18,8 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ### Fixed
 - Fixed a connection and file descriptor leak when agents fetch assets, such as checks that reference a missing asset
+- Fixed silenced events being skipped by all pipeline workflows, so handlers now receive them unless a workflow uses the `not_silenced` filter
+- Fixed resolution events being dropped after an `expire_on_resolve` silence is cleared
 
 ## [6.15.0] - 2026-10-12
 
