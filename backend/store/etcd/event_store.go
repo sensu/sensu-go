@@ -454,6 +454,9 @@ func handleExpireOnResolveEntries(ctx context.Context, event *corev2.Event, st s
 		return err
 	}
 	event.Check.Silenced = toRetain
+	// The deleted entries may have been the only silences covering this check,
+	// so the flag must reflect the silences that remain
+	event.Check.IsSilenced = len(toRetain) > 0
 
 	return nil
 }

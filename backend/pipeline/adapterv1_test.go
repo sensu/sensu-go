@@ -1093,3 +1093,82 @@ func TestAdapterV1_expandHandlers(t *testing.T) {
 		})
 	}
 }
+
+type recordHandlerAdapter struct {
+	Handled *bool
+}
+
+func (recordHandlerAdapter) Name() string {
+	return "record_handler_adapter"
+}
+
+func (recordHandlerAdapter) CanHandle(*corev2.ResourceReference) bool {
+	return true
+}
+
+func (r recordHandlerAdapter) Handle(context.Context, *corev2.ResourceReference, *corev2.Event, []byte) error {
+	*r.Handled = true
+	return nil
+}
+
+func TestAdapterV1_Run_SilencedEvents(t *testing.T) {
+	tests := []struct {
+		name        string
+		filterRef   *corev2.ResourceReference
+		wantHandled bool
+	}{
+		{
+			name:        "silenced event reaches workflow without filters",
+			filterRef:   nil,
+			wantHandled: true,
+		},
+		{
+			name: "silenced event is denied by not_silenced filter",
+			filterRef: &corev2.ResourceReference{
+				APIVersion: "core/v2",
+				Type:       "EventFilter",
+				Name:       "not_silenced",
+			},
+			wantHandled: false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var handled bool
+			workflow := &corev2.PipelineWorkflow{
+				Name: "workflow1",
+				Handler: &corev2.ResourceReference{
+					APIVersion: "core/v2",
+					Type:       "Handler",
+					Name:       "handler1",
+				},
+			}
+			if tt.filterRef != nil {
+				workflow.Filters = []*corev2.ResourceReference{tt.filterRef}
+			}
+			pipeline := &corev2.Pipeline{
+				ObjectMeta: corev2.NewObjectMeta("pipeline1", "default"),
+				Workflows:  []*corev2.PipelineWorkflow{workflow},
+			}
+			stor := &mockstore.MockStore{}
+			stor.On("GetPipelineByName", mock.Anything, mock.Anything).Return(pipeline, nil)
+
+			event := corev2.FixtureEvent("entity1", "check1")
+			event.Check.IsSilenced = true
+			event.Check.Silenced = []string{"silence1"}
+
+			a := &AdapterV1{
+				Store:           stor,
+				FilterAdapters:  []FilterAdapter{&filter.NotSilencedAdapter{}},
+				MutatorAdapters: []MutatorAdapter{&mutator.JSONAdapter{}},
+				HandlerAdapters: []HandlerAdapter{recordHandlerAdapter{Handled: &handled}},
+			}
+			if err := a.Run(context.Background(), new(corev2.ResourceReference), event); err != nil {
+				t.Fatal(err)
+			}
+			if handled != tt.wantHandled {
+				t.Errorf("handler ran = %v, want %v", handled, tt.wantHandled)
+			}
+		})
+	}
+}

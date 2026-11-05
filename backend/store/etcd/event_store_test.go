@@ -6,7 +6,9 @@ import (
 	"testing"
 
 	corev2 "github.com/sensu/core/v2"
+	"github.com/sensu/sensu-go/testing/mockstore"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 )
 
 func newEventFixture(entity, check string) *corev2.Event {
@@ -147,4 +149,64 @@ func Test_updateEventHistory(t *testing.T) {
 func TestEventStoreSupportsFilteringUnsupported(t *testing.T) {
 	store := NewStore(nil, "")
 	assert.Equal(t, false, store.EventStoreSupportsFiltering(context.Background()), "etcd event store not expected to support filtering")
+}
+
+func Test_handleExpireOnResolveEntries(t *testing.T) {
+	tests := []struct {
+		name          string
+		silenced      []string
+		entries       []*corev2.Silenced
+		wantDeleted   []string
+		wantSilenced  []string
+		wantIsSilence bool
+	}{
+		{
+			name:          "only expire_on_resolve silence remains cleared",
+			silenced:      []string{"entity:expiring"},
+			entries:       []*corev2.Silenced{expireOnResolveSilence("entity:expiring")},
+			wantDeleted:   []string{"entity:expiring"},
+			wantSilenced:  []string{},
+			wantIsSilence: false,
+		},
+		{
+			name:          "non-expiring silence keeps check silenced",
+			silenced:      []string{"entity:expiring", "entity:permanent"},
+			entries:       []*corev2.Silenced{expireOnResolveSilence("entity:expiring"), corev2.FixtureSilenced("entity:permanent")},
+			wantDeleted:   []string{"entity:expiring"},
+			wantSilenced:  []string{"entity:permanent"},
+			wantIsSilence: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			event := corev2.FixtureEvent("entity1", "check1")
+			event.Check.Status = 0
+			event.Check.History = []corev2.CheckHistory{
+				{Status: 2, Executed: 1},
+				{Status: 0, Executed: 2},
+			}
+			event.Check.Silenced = tt.silenced
+			event.Check.IsSilenced = true
+
+			stor := &mockstore.MockStore{}
+			stor.On("GetSilencedEntriesByName", mock.Anything, mock.Anything).Return(tt.entries, nil)
+			stor.On("DeleteSilencedEntryByName", mock.Anything, mock.Anything).Return(nil)
+
+			if err := handleExpireOnResolveEntries(context.Background(), event, stor); err != nil {
+				t.Fatal(err)
+			}
+			if !reflect.DeepEqual(event.Check.Silenced, tt.wantSilenced) {
+				t.Errorf("Silenced = %v, want %v", event.Check.Silenced, tt.wantSilenced)
+			}
+			if event.Check.IsSilenced != tt.wantIsSilence {
+				t.Errorf("IsSilenced = %v, want %v", event.Check.IsSilenced, tt.wantIsSilence)
+			}
+		})
+	}
+}
+
+func expireOnResolveSilence(name string) *corev2.Silenced {
+	silence := corev2.FixtureSilenced(name)
+	silence.ExpireOnResolve = true
+	return silence
 }
