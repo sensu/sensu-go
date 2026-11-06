@@ -3,6 +3,7 @@ package command
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"math"
 	"os/exec"
@@ -17,6 +18,10 @@ import (
 )
 
 const undocumentedTestCheckCommand = "!sensu_test_check!"
+
+// waitDelay is how long Execute waits for the output pipes to close after the
+// command's process has exited.
+var waitDelay = 5 * time.Second
 
 const cannedResponseText = `
                          .'loo:,
@@ -151,6 +156,9 @@ func (e *ExecutionRequest) Execute(ctx context.Context, execution ExecutionReque
 
 	cmd.Stdout = &output
 	cmd.Stderr = &output
+	// A grandchild that outlives the command and keeps the output pipes open
+	// would otherwise make Wait block until that grandchild exits.
+	cmd.WaitDelay = waitDelay
 
 	// If Input is specified, write to STDIN.
 	if execution.Input != "" {
@@ -186,6 +194,10 @@ func (e *ExecutionRequest) Execute(ctx context.Context, execution ExecutionReque
 	var killErr error
 	select {
 	case <-waitCh:
+		if errors.Is(err, exec.ErrWaitDelay) {
+			// The command itself exited successfully; only its pipes were held open.
+			err = nil
+		}
 		resp.Output = output.String()
 		if err != nil {
 			// The command most likely return a non-zero exit status.
