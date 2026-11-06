@@ -50,7 +50,13 @@ func (s *Store) NewInitializer(ctx context.Context) (store.Initializer, error) {
 
 // Lock mutex to avoid competing writes
 func (s *StoreInitializer) Lock(ctx context.Context) error {
-	return s.mutex.Lock(ctx)
+	if err := s.mutex.Lock(ctx); err != nil {
+		// The caller does not call Close when Lock fails, so release the
+		// session's keepalive goroutine and lease here.
+		_ = s.session.Close()
+		return err
+	}
+	return nil
 }
 
 // IsInitialized checks the state of the .initialized key

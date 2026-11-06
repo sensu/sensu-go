@@ -110,7 +110,12 @@ func (a *Agent) handleAPIQueue(ctx context.Context) {
 				logger.WithError(err).Error("error receiving message from queue")
 				continue
 			}
-			ch <- message
+			select {
+			case ch <- message:
+			case <-ctx.Done():
+				_ = message.Nack(true)
+				return
+			}
 		}
 	}()
 	for {
