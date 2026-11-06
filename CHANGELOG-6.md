@@ -7,6 +7,9 @@ and this project adheres to [Semantic
 Versioning](http://semver.org/spec/v2.0.0.html).
 ## [Unreleased]
 
+### Fixed
+- Fixed the agent leaving its websocket open after a send or receive error, which leaked a connection per reconnect
+
 ## [6.15.1] - 2026-11-18
 
 ### Added

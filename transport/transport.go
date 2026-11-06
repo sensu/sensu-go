@@ -132,6 +132,7 @@ type WebSocketTransport struct {
 	closed     atomic.Value
 	readMu     sync.Mutex
 	writeMu    sync.Mutex
+	closeOnce  sync.Once
 }
 
 // NewTransport creates an initialized Transport and return its pointer.
@@ -150,29 +151,28 @@ func NewMessage(msgType string, payload []byte) *Message {
 }
 
 // Close closes the WebsocketTransport. Before closing, a closing message will
-// be sent to the other side.
+// be sent to the other side, unless an earlier error already marked the
+// transport as closed. The underlying connection is always closed, exactly once.
 func (t *WebSocketTransport) Close() (err error) {
-	if t.Closed() {
-		return nil
-	}
+	t.closeOnce.Do(func() {
+		t.writeMu.Lock()
+		defer t.writeMu.Unlock()
 
-	t.writeMu.Lock()
-	defer t.writeMu.Unlock()
+		wasClosed := t.Closed()
+		t.closed.Store(true)
 
-	t.closed.Store(true)
+		if !wasClosed {
+			if werr := t.Connection.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseGoingAway, "bye")); werr != websocket.ErrCloseSent {
+				err = werr
+			}
+		}
 
-	defer func() {
 		cerr := t.Connection.Close()
 		if err == nil && cerr != websocket.ErrCloseSent {
 			err = cerr
 		}
-	}()
-
-	if err := t.Connection.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseGoingAway, "bye")); err != websocket.ErrCloseSent {
-		return err
-	}
-
-	return nil
+	})
+	return err
 }
 
 // Closed returns true if the underlying websocket connection has been closed.
