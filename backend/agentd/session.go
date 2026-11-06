@@ -183,7 +183,7 @@ func (b *BurialReceiver) Receiver() chan<- interface{} {
 // connection, message bus, and store.
 // The Session is responsible for stopping itself, and does so when it
 // encounters a receive error.
-func NewSession(ctx context.Context, cfg SessionConfig) (*Session, error) {
+func NewSession(ctx context.Context, cfg SessionConfig) (session *Session, err error) {
 	logger.WithFields(logrus.Fields{
 		"addr":          cfg.AgentAddr,
 		"namespace":     cfg.Namespace,
@@ -192,6 +192,18 @@ func NewSession(ctx context.Context, cfg SessionConfig) (*Session, error) {
 	}).Info("agent connected")
 
 	ctx, cancel := context.WithCancel(ctx)
+
+	var userSubscription messaging.Subscription
+	var userSubscribed bool
+	defer func() {
+		if err == nil {
+			return
+		}
+		if userSubscribed {
+			_ = userSubscription.Cancel()
+		}
+		cancel()
+	}()
 
 	s := &Session{
 		conn:             cfg.Conn,
@@ -221,8 +233,9 @@ func NewSession(ctx context.Context, cfg SessionConfig) (*Session, error) {
 	// Optionally subscribe to burial notifications
 	if cfg.BurialReceiver != nil {
 		topic := messaging.BurialTopic(cfg.Namespace, cfg.AgentName)
-		subscription, err := s.bus.Subscribe(topic, cfg.AgentName, cfg.BurialReceiver)
-		if err != nil {
+		subscription, serr := s.bus.Subscribe(topic, cfg.AgentName, cfg.BurialReceiver)
+		if serr != nil {
+			err = serr
 			return nil, err
 		}
 		defer func() {
@@ -231,10 +244,11 @@ func NewSession(ctx context.Context, cfg SessionConfig) (*Session, error) {
 	}
 
 	if len(cfg.User) > 0 {
-		_, err := s.bus.Subscribe(messaging.UserConfigTopic(cfg.User), cfg.AgentName, s.userConfig)
+		userSubscription, err = s.bus.Subscribe(messaging.UserConfigTopic(cfg.User), cfg.AgentName, s.userConfig)
 		if err != nil {
 			return nil, err
 		}
+		userSubscribed = true
 	}
 
 	if err := s.bus.Publish(messaging.TopicKeepalive, makeEntitySwitchBurialEvent(cfg)); err != nil {
