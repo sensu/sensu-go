@@ -121,3 +121,52 @@ func TestWebSocketHandlerClosesConnWhenNewSessionFails(t *testing.T) {
 		assert.False(t, netErr.Timeout(), "server did not close the hijacked connection after NewSession failed")
 	}
 }
+
+func TestNewSessionBurialTimeoutRemovesUserConfigSubscription(t *testing.T) {
+	old := burialTimeout
+	burialTimeout = 100 * time.Millisecond
+	defer func() { burialTimeout = old }()
+
+	wizard, err := messaging.NewWizardBus(messaging.WizardBusConfig{})
+	require.NoError(t, err)
+	require.NoError(t, wizard.Start())
+	defer func() { _ = wizard.Stop() }()
+	bus := &recordingBus{WizardBus: wizard, subscribers: map[string]messaging.Subscriber{}}
+
+	cfg := SessionConfig{
+		AgentName:      "testing",
+		Namespace:      "acme",
+		User:           "someuser",
+		Subscriptions:  []string{"testing"},
+		Conn:           new(mocktransport.MockTransport),
+		Bus:            bus,
+		Store:          &mockstore.MockStore{},
+		Unmarshal:      proto.Unmarshal,
+		Marshal:        proto.Marshal,
+		BurialReceiver: NewBurialReceiver(), // nothing ever signals the burial
+	}
+	session, err := NewSession(context.Background(), cfg)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "giving up")
+	assert.Nil(t, session)
+
+	topic := messaging.UserConfigTopic("someuser")
+	sub, ok := bus.subscribers[topic].(*userConfig)
+	require.True(t, ok, "user config topic was never subscribed to")
+	require.NoError(t, wizard.Publish(topic, "stale"))
+	select {
+	case msg := <-sub.updatesChannel:
+		t.Fatalf("stale user-config subscriber still received %v after the burial timeout", msg)
+	case <-time.After(200 * time.Millisecond):
+	}
+}
+
+type recordingBus struct {
+	*messaging.WizardBus
+	subscribers map[string]messaging.Subscriber
+}
+
+func (b *recordingBus) Subscribe(topic, consumer string, s messaging.Subscriber) (messaging.Subscription, error) {
+	b.subscribers[topic] = s
+	return b.WizardBus.Subscribe(topic, consumer, s)
+}

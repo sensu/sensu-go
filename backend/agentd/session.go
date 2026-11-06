@@ -179,6 +179,10 @@ func (b *BurialReceiver) Receiver() chan<- interface{} {
 	return b.ch
 }
 
+// burialTimeout is how long NewSession waits for the burial of a previous
+// session to be processed.
+var burialTimeout = time.Minute
+
 // NewSession creates a new Session object given the triple of a transport
 // connection, message bus, and store.
 // The Session is responsible for stopping itself, and does so when it
@@ -259,7 +263,7 @@ func NewSession(ctx context.Context, cfg SessionConfig) (session *Session, err e
 	if cfg.BurialReceiver != nil {
 		select {
 		case <-cfg.BurialReceiver.ch:
-		case <-time.After(time.Minute):
+		case <-time.After(burialTimeout):
 			return nil, errors.New("session could not be established after 60s, giving up")
 		}
 	}
