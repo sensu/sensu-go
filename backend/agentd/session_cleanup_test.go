@@ -6,6 +6,7 @@ import (
 	"net"
 	"net/http"
 	"net/http/httptest"
+	"runtime"
 	"strings"
 	"testing"
 	"time"
@@ -169,4 +170,66 @@ type recordingBus struct {
 func (b *recordingBus) Subscribe(topic, consumer string, s messaging.Subscriber) (messaging.Subscription, error) {
 	b.subscribers[topic] = s
 	return b.WizardBus.Subscribe(topic, consumer, s)
+}
+
+// opaqueCtx exposes its own done channel, so context.WithCancel cannot attach
+// a child directly to the parent and has to start a goroutine that lives until
+// the child context is cancelled. That makes the child's cancellation
+// observable from outside NewSession.
+type opaqueCtx struct {
+	context.Context
+	done chan struct{}
+}
+
+func newOpaqueCtx(parent context.Context) opaqueCtx {
+	o := opaqueCtx{Context: parent, done: make(chan struct{})}
+	return o
+}
+
+func (o opaqueCtx) Done() <-chan struct{} { return o.done }
+
+func countGoroutinesIn(fn string) int {
+	buf := make([]byte, 1<<20)
+	buf = buf[:runtime.Stack(buf, true)]
+	return strings.Count(string(buf), fn)
+}
+
+func TestNewSessionErrorCancelsChildContext(t *testing.T) {
+	wizard, err := messaging.NewWizardBus(messaging.WizardBusConfig{})
+	require.NoError(t, err)
+	require.NoError(t, wizard.Start())
+	defer func() { _ = wizard.Stop() }()
+	bus := &failingPublishBus{WizardBus: wizard, subscribers: map[string]messaging.Subscriber{}}
+
+	parent, cancelParent := context.WithCancel(context.Background())
+	defer cancelParent()
+
+	newCfg := func() SessionConfig {
+		return SessionConfig{
+			AgentName:     "testing",
+			Namespace:     "acme",
+			Subscriptions: []string{"testing"},
+			Conn:          new(mocktransport.MockTransport),
+			Bus:           bus,
+			Store:         &mockstore.MockStore{},
+			Unmarshal:     proto.Unmarshal,
+			Marshal:       proto.Marshal,
+		}
+	}
+
+	const n = 20
+	before := countGoroutinesIn("context.(*cancelCtx).propagateCancel.func")
+	for i := 0; i < n; i++ {
+		_, err := NewSession(newOpaqueCtx(parent), newCfg())
+		require.Error(t, err)
+	}
+	var leaked int
+	for i := 0; i < 50; i++ {
+		leaked = countGoroutinesIn("context.(*cancelCtx).propagateCancel.func") - before
+		if leaked <= 0 {
+			break
+		}
+		time.Sleep(20 * time.Millisecond)
+	}
+	assert.LessOrEqual(t, leaked, 0, "child context goroutines are still running after %d failed NewSession calls", n)
 }
