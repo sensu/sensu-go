@@ -451,7 +451,11 @@ func (a *Agentd) webSocketHandler(w http.ResponseWriter, r *http.Request) {
 	session, err := NewSession(a.ctx, cfg)
 	if err != nil {
 		lager.WithError(err).Error("failed to create session")
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		// The connection was hijacked by the websocket upgrade, so http.Server
+		// no longer tracks it and nothing can be written to w.
+		if cerr := cfg.Conn.Close(); cerr != nil {
+			lager.WithError(cerr).Error("error closing websocket connection")
+		}
 		// There was an error retrieving the namespace from
 		// etcd, indicating that this backend has a potentially
 		// unrecoverable issue.
