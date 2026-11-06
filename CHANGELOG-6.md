@@ -17,6 +17,8 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 - Fixed command execution hanging when a background child process keeps the output pipes open. A check that leaves such a child behind now returns 5 seconds after its command exits, with its own output; if the check has a timeout, the leftover processes are killed, otherwise they keep running
 - Fixed log file retention never removing expired archives, and a directory handle leak while reaping. Because earlier versions never removed them, the first reap after upgrading removes every archive older than the configured retention setting at once
 - Fixed tessen requests having no timeout, and smaller goroutine and handle leaks in the agent session timer, event logger, BoltDB handles and Prometheus endpoint
+- Fixed the agent not returning after failing to connect to a backend, which could crash it with a nil pointer
+- Fixed a leaked lease and goroutine when the etcd store initializer fails to take its lock, an unclosed etcd client in `sensu-backend upgrade`, and an unacked message in the agent API queue on shutdown
 
 ### Changed
 - The agent Prometheus endpoint (`PrometheusBinding`) is now started by `Run` instead of `NewAgent`, and is stopped when the agent shuts down. An agent that is constructed but never run no longer serves metrics
