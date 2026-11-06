@@ -194,6 +194,8 @@ type Agent struct {
 	localEntityConfig  *corev3.EntityConfig
 	statsdServer       StatsdServer
 	sendq              chan *transport.Message
+	done               chan struct{}
+	doneOnce           sync.Once
 	systemInfo         *corev2.System
 	systemInfoMu       sync.RWMutex
 	wg                 sync.WaitGroup
@@ -236,6 +238,7 @@ func NewAgentContext(ctx context.Context, config *Config) (*Agent, error) {
 		lastIssued:       make(map[string]int64),
 		lastIssuedMu:     &sync.Mutex{},
 		sendq:            make(chan *transport.Message, 10),
+		done:             make(chan struct{}),
 		systemInfo:       &corev2.System{},
 		unmarshal:        UnmarshalJSON,
 		marshal:          MarshalJSON,
@@ -243,6 +246,14 @@ func NewAgentContext(ctx context.Context, config *Config) (*Agent, error) {
 		sequences:        make(map[string]int64),
 		maxSessionLength: config.MaxSessionLength,
 	}
+
+	// Read the allow list before opening any database, so that an invalid file
+	// fails the agent without leaving database handles behind.
+	allowList, err := readAllowList(config.AllowList, os.ReadFile)
+	if err != nil {
+		return nil, err
+	}
+	agent.allowList = allowList
 
 	// Prepare the HTTP API server
 	apiServer, apiRouter := newServer(agent)
@@ -266,22 +277,10 @@ func NewAgentContext(ctx context.Context, config *Config) (*Agent, error) {
 	if err := systemInfoCtx.Err(); err != nil {
 		logger.WithError(err).Error("couldn't refresh all system information within deadline")
 	}
-	var err error
 	agent.apiQueue, err = newQueue(config.CacheDir)
 	if err != nil {
+		_ = db.Close()
 		return nil, fmt.Errorf("error creating agent: %s", err)
-	}
-
-	allowList, err := readAllowList(config.AllowList, os.ReadFile)
-	if err != nil {
-		return nil, err
-	}
-	agent.allowList = allowList
-
-	if config.PrometheusBinding != "" {
-		go func() {
-			logger.WithError(http.ListenAndServe(config.PrometheusBinding, promhttp.Handler())).Error("couldn't serve prometheus metrics")
-		}()
 	}
 
 	return agent, nil
@@ -297,7 +296,31 @@ func (a *Agent) sendMessage(msg *transport.Message) {
 		"content_type": a.contentType,
 		"payload_size": len(msg.Payload),
 	}).Info("sending message")
-	a.sendq <- msg
+	select {
+	case a.sendq <- msg:
+	case <-a.done:
+		// The agent is shutting down and nothing will drain sendq anymore.
+		if msg.SendCallback != nil {
+			msg.SendCallback(context.Canceled)
+		}
+	}
+}
+
+// sendMessageWithin is like sendMessage, but gives up and returns false when
+// the message cannot be queued within wait. sendq is only drained while the
+// agent is connected, so callers that hold a socket or a goroutine on behalf
+// of a client use this to avoid piling up while the agent is disconnected.
+func (a *Agent) sendMessageWithin(msg *transport.Message, wait time.Duration) bool {
+	timer := time.NewTimer(wait)
+	defer timer.Stop()
+	select {
+	case a.sendq <- msg:
+		return true
+	case <-timer.C:
+	case <-a.done:
+	}
+	messagesDropped.WithLabelValues().Inc()
+	return false
 }
 
 // RefreshSystemInfo refreshes system, platform, and process information.
@@ -383,6 +406,7 @@ func (a *Agent) RegisterPlugin(p Plugin) {
 // 9. Start the API server, shutdown the agent if doing so fails.
 func (a *Agent) Run(ctx context.Context) error {
 	ctx, cancel := context.WithCancel(ctx)
+	defer a.doneOnce.Do(func() { close(a.done) })
 	defer func() {
 		if err := a.apiQueue.Close(); err != nil {
 			logger.WithError(err).Error("error closing API queue")
@@ -452,6 +476,19 @@ func (a *Agent) Run(ctx context.Context) error {
 	}
 
 	logger.Info("configuration successfully validated")
+
+	if a.config.PrometheusBinding != "" {
+		promServer := &http.Server{Addr: a.config.PrometheusBinding, Handler: promhttp.Handler()}
+		go func() {
+			if err := promServer.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
+				logger.WithError(err).Error("couldn't serve prometheus metrics")
+			}
+		}()
+		go func() {
+			<-ctx.Done()
+			_ = promServer.Close()
+		}()
+	}
 
 	if !a.config.DisableAssets {
 		var trustedCAFile string
@@ -575,7 +612,7 @@ func (a *Agent) connectionManager(ctx context.Context, cancel context.CancelFunc
 
 		newConnections.WithLabelValues().Inc()
 
-		go a.enforceMaxSessionLength(connCancel)
+		go a.enforceMaxSessionLength(connCtx, connCancel)
 		go a.receiveLoop(connCtx, connCancel, conn)
 
 		// Block until we receive an entity config, or the grace period expires,
@@ -616,13 +653,19 @@ func (a *Agent) connectionManager(ctx context.Context, cancel context.CancelFunc
 //
 // This effectively makes agents reconnect after some random duration between
 // half --max-session-length and --max-session-length.
-func (a *Agent) enforceMaxSessionLength(connCancel context.CancelFunc) {
+func (a *Agent) enforceMaxSessionLength(ctx context.Context, connCancel context.CancelFunc) {
 	if a.maxSessionLength > 0 {
 		jitter := time.Duration(rand.Float64() * 0.5 * float64(a.maxSessionLength))
 		timeout := a.maxSessionLength - jitter
 
 		logger.Infof("Session will be terminated in %v", timeout)
-		<-time.After(timeout)
+		timer := time.NewTimer(timeout)
+		defer timer.Stop()
+		select {
+		case <-timer.C:
+		case <-ctx.Done():
+			return
+		}
 		logger.Infof("Ending session after %v (max session length is %v)", timeout, a.maxSessionLength)
 		connCancel()
 	} else {

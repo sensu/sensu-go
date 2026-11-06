@@ -9,6 +9,7 @@ package agent
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strings"
 	"time"
@@ -174,7 +175,9 @@ func (c Client) sendMetrics(points []*types.MetricPoint) (retErr error) {
 		Type:    transport.MessageTypeEvent,
 		Payload: msg,
 	}
-	c.agent.sendMessage(tm)
+	if !c.agent.sendMessageWithin(tm, socketSendTimeout) {
+		return errors.New("agent is not connected to a backend, dropping statsd metrics")
+	}
 	return nil
 }
 

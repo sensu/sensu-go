@@ -49,6 +49,9 @@ const (
 	// perResourceDuration is the duration of time, in seconds, that TessenD will
 	// wait in between resources when collecting its respective count.
 	perResourceDuration = 5 * time.Second
+
+	// defaultSendTimeout bounds a single phone-home request to the tessen service.
+	defaultSendTimeout = 30 * time.Second
 )
 
 var (
@@ -702,10 +705,21 @@ func (t *Tessend) getTessenConfigMetrics(now int64, tessen *corev2.TessenConfig,
 	data.Metrics.Points = append(data.Metrics.Points, mp)
 }
 
+// sendTimeout is a variable so tests can shorten it.
+var sendTimeout = defaultSendTimeout
+
 // send sends the data payload to the tessen url and retrieves the interval response header.
 func (t *Tessend) send(data *Data) string {
 	b, _ := json.Marshal(data)
-	resp, err := http.Post(t.url, "application/json", bytes.NewBuffer(b))
+	ctx, cancel := context.WithTimeout(t.ctx, sendTimeout)
+	defer cancel()
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, t.url, bytes.NewBuffer(b))
+	if err != nil {
+		logger.WithError(err).Error("tessen phone-home service failed")
+		return ""
+	}
+	req.Header.Set("Content-Type", "application/json")
+	resp, err := http.DefaultClient.Do(req)
 	// TODO(nikki): special case logs on a per error basis
 	if err != nil {
 		logger.WithError(err).Error("tessen phone-home service failed")

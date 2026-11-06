@@ -20,6 +20,13 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 - Fixed a connection and file descriptor leak when agents fetch assets, such as checks that reference a missing asset
 - Fixed silenced events being skipped by all pipeline workflows, so handlers now receive them unless a workflow uses the `not_silenced` filter
 - Fixed resolution events being dropped after an `expire_on_resolve` silence is cleared
+- Fixed goroutines and sockets piling up in the agent while it is disconnected, by making sending messages stop blocking when the agent shuts down
+- Fixed the agent TCP/UDP socket listeners and statsd server piling up goroutines and open sockets while the agent is disconnected from its backend; events are now dropped after 5 seconds instead of blocking indefinitely
+- Fixed the agent API queue database handle leaking when the queue fails to compact
+- Fixed the agent UDP socket listener silently stopping after the first ping or invalid datagram
+- Fixed command execution hanging when a background child process keeps the output pipes open
+- Fixed log file retention never removing expired archives, and a directory handle leak while reaping
+- Fixed tessen requests having no timeout, and smaller goroutine and handle leaks in the agent session timer, event logger, BoltDB handles and Prometheus endpoint
 
 ## [6.15.0] - 2026-10-12
 
