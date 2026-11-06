@@ -21,12 +21,13 @@ var (
 
 // Agent TCP/UDP sockets are deprecated in favor of the agent rest api
 
+// socketSendTimeout bounds how long a socket handler waits to queue an event
+// while the agent is disconnected from its backend.
+const socketSendTimeout = 5 * time.Second
+
 // createListenSockets UDP and TCP socket listeners on port 3030 for external check
 // events.
 func (a *Agent) createListenSockets(ctx context.Context) (string, string, error) {
-	// we have two listeners that we want to shut down before agent.Stop() returns.
-	a.wg.Add(2)
-
 	addr := fmt.Sprintf("%s:%d", a.config.Socket.Host, a.config.Socket.Port)
 
 	// Setup UDP socket listener
@@ -39,20 +40,25 @@ func (a *Agent) createListenSockets(ctx context.Context) (string, string, error)
 	if err != nil {
 		return "", "", err
 	}
-	logger.Info("starting UDP listener on address: ", addr)
-	go a.handleUDPMessages(ctx, udpListen)
 
 	// Setup TCP socket listener
 	TCPServerAddr, err := net.ResolveTCPAddr("tcp", addr)
 	if err != nil {
+		_ = udpListen.Close()
 		return "", "", err
 	}
 
-	logger.Info("starting TCP listener on address: ", addr)
 	tcpListen, err := net.ListenTCP("tcp", TCPServerAddr)
 	if err != nil {
+		_ = udpListen.Close()
 		return "", "", err
 	}
+
+	// we have two listeners that we want to shut down before agent.Stop() returns.
+	a.wg.Add(2)
+	logger.Info("starting UDP listener on address: ", addr)
+	go a.handleUDPMessages(ctx, udpListen)
+	logger.Info("starting TCP listener on address: ", addr)
 
 	// we have to monitor the stopping channel out of band, otherwise
 	// the tcpListen.Accept() loop will never return.
@@ -172,7 +178,11 @@ func (a *Agent) handleTCPMessages(c net.Conn) {
 			Type:    transport.MessageTypeEvent,
 			Payload: payload,
 		}
-		a.sendMessage(tm)
+		if !a.sendMessageWithin(tm, socketSendTimeout) {
+			logger.Error("agent is not connected to a backend, dropping event received on the tcp socket")
+			_, _ = c.Write([]byte("invalid"))
+			return
+		}
 		_, _ = c.Write([]byte("ok"))
 		return
 	}
@@ -220,7 +230,7 @@ func (a *Agent) handleUDPMessages(ctx context.Context, c net.PacketConn) {
 			}
 			// If the message is a ping, return without notifying sender.
 			if match := pingRe.Match(buf[:bytesRead]); match {
-				return
+				continue
 			}
 
 			// Check the message for valid JSON. Valid JSON payloads are passed to the
@@ -230,23 +240,23 @@ func (a *Agent) handleUDPMessages(ctx context.Context, c net.PacketConn) {
 			var result corev1.CheckResult
 			if err = json.Unmarshal(buf[:bytesRead], &result); err != nil {
 				logger.WithError(err).Error("UDP Invalid event data")
-				return
+				continue
 			}
 
 			if err = translateToEvent(a, result, &event); err != nil {
 				logger.WithError(err).Error("1.x returns \"invalid\"")
-				return
+				continue
 			}
 
 			// Prepare the event by mutating it as required so it passes validation
 			if err = prepareEvent(a, &event); err != nil {
 				logger.WithError(err).Error("invalid event")
-				return
+				continue
 			}
 
 			payload, err := a.marshal(&event)
 			if err != nil {
-				return
+				continue
 			}
 
 			logEvent(&event)
@@ -255,7 +265,9 @@ func (a *Agent) handleUDPMessages(ctx context.Context, c net.PacketConn) {
 				Type:    transport.MessageTypeEvent,
 				Payload: payload,
 			}
-			a.sendMessage(tm)
+			if !a.sendMessageWithin(tm, socketSendTimeout) {
+				logger.Error("agent is not connected to a backend, dropping event received on the udp socket")
+			}
 		}
 
 	}

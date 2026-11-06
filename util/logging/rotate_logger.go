@@ -252,6 +252,7 @@ func (r *RotateFileLogger) reap(errors chan error) {
 		errors <- err
 		return
 	}
+	defer f.Close()
 	files, err := f.Readdirnames(0)
 	if err != nil {
 		errors <- err
@@ -273,13 +274,13 @@ func (r *RotateFileLogger) reap(errors chan error) {
 				continue
 			}
 			var timestamp int64
-			if _, err := fmt.Sscanf(matches[1], "%d", timestamp); err != nil {
+			if _, err := fmt.Sscanf(matches[1], "%d", &timestamp); err != nil {
 				continue
 			}
 			archiveTime := time.Unix(0, timestamp)
 			if archiveTime.Add(r.retentionDuration).Before(time.Now()) {
 				tooOld[file] = true
-				if err := os.Remove(file); err != nil {
+				if err := os.Remove(filepath.Join(dir, file)); err != nil {
 					errors <- err
 				}
 			}
