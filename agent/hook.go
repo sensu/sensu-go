@@ -122,7 +122,9 @@ func (a *Agent) executeHook(ctx context.Context, hookConfig *corev2.HookConfig, 
 			return failedHook(hook)
 		}
 		verifier := asset.Sha512Verifier{}
-		if err := verifier.Verify(file, matchedEntry.Sha512); err != nil {
+		verifyErr := verifier.Verify(file, matchedEntry.Sha512)
+		_ = file.Close()
+		if err := verifyErr; err != nil {
 			logger.WithFields(fields).WithError(err).Error("hook sha does not match agent allow list")
 			return failedHook(hook)
 		}
