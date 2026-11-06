@@ -598,6 +598,7 @@ func (a *Agent) connectionManager(ctx context.Context, cancel context.CancelFunc
 			}
 			logger.WithError(err).Error("couldn't connect to backend")
 			cancel()
+			return
 		}
 
 		connCtx, connCancel := context.WithCancel(ctx)

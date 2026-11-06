@@ -92,6 +92,7 @@ func UpgradeCommand() *cobra.Command {
 			if err != nil {
 				return fmt.Errorf("error connecting to cluster: %s", err)
 			}
+			defer client.Close()
 
 			skipConfirm := viper.GetBool(flagSkipConfirm)
 			if !skipConfirm {
