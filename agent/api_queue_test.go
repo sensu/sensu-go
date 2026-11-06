@@ -77,3 +77,36 @@ func assertEventually(cond func() bool, wait time.Duration) bool {
 	}
 	return cond()
 }
+func TestRunShutsDownWithQueuedAPIEventsWhileDisconnected(t *testing.T) {
+	mockTime.Start()
+	defer mockTime.Stop()
+
+	cfg, cleanup := FixtureConfig()
+	defer cleanup()
+	cfg.API.Port = 0
+	cfg.Socket.Port = 0
+	cfg.BackendURLs = []string{"ws://127.0.0.1:1"}
+	a, err := NewAgent(cfg)
+	require.NoError(t, err)
+
+	// The agent never connects, so nothing drains sendq: API events queued on
+	// disk move into sendq, each carrying a callback that acks or nacks it.
+	for i := 0; i < 40; i++ {
+		_, err := a.apiQueue.Send(compressMessage([]byte("event")))
+		require.NoError(t, err)
+	}
+
+	ctx, cancel := context.WithCancel(context.Background())
+	runDone := make(chan error, 1)
+	go func() { runDone <- a.Run(ctx) }()
+	require.Eventually(t, func() bool { return len(a.sendq) == cap(a.sendq) }, 5*time.Second, 10*time.Millisecond,
+		"queued API events never filled sendq")
+	cancel()
+
+	select {
+	case err := <-runDone:
+		require.NoError(t, err)
+	case <-time.After(10 * time.Second):
+		t.Fatal("Run did not return: closing the API queue waits for events that were never acked or nacked")
+	}
+}

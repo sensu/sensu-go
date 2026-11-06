@@ -306,6 +306,23 @@ func (a *Agent) sendMessage(msg *transport.Message) {
 	}
 }
 
+// drainSendq hands back every message still waiting to be sent, so that events
+// taken from the on-disk API queue are nacked and kept for the next run instead
+// of staying unacknowledged. It must run after done is closed, so nothing new is
+// blocked in sendMessage.
+func (a *Agent) drainSendq() {
+	for {
+		select {
+		case msg := <-a.sendq:
+			if msg.SendCallback != nil {
+				msg.SendCallback(context.Canceled)
+			}
+		default:
+			return
+		}
+	}
+}
+
 // sendMessageWithin is like sendMessage, but gives up and returns false when
 // the message cannot be queued within wait. sendq is only drained while the
 // agent is connected, so callers that hold a socket or a goroutine on behalf
@@ -406,12 +423,16 @@ func (a *Agent) RegisterPlugin(p Plugin) {
 // 9. Start the API server, shutdown the agent if doing so fails.
 func (a *Agent) Run(ctx context.Context) error {
 	ctx, cancel := context.WithCancel(ctx)
-	defer a.doneOnce.Do(func() { close(a.done) })
 	defer func() {
 		if err := a.apiQueue.Close(); err != nil {
 			logger.WithError(err).Error("error closing API queue")
 		}
 	}()
+	// Deferred calls run last in, first out. done must be closed before the queue
+	// is closed: Close waits until every message taken from it was acked or nacked,
+	// and those can be held by sendMessage callers or sitting unsent in sendq.
+	defer a.drainSendq()
+	defer a.doneOnce.Do(func() { close(a.done) })
 	defer cancel()
 
 	if len(a.plugins) > 0 {
