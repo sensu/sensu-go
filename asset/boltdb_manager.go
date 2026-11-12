@@ -161,6 +161,10 @@ func (b *boltDBAssetManager) Get(ctx context.Context, asset *corev2.Asset) (*Run
 			// deserialize asset
 			if err := json.Unmarshal(value, &localAsset); err == nil {
 				return nil
+			} else {
+				logger.WithError(err).
+					WithField("asset", asset.GetSha512()).
+					Warn("ignoring corrupt asset cache entry, reinstalling")
 			}
 		}
 
@@ -198,7 +202,7 @@ func (b *boltDBAssetManager) Get(ctx context.Context, asset *corev2.Asset) (*Run
 
 		assetJSON, err := json.Marshal(localAsset)
 		if err != nil {
-			panic(err)
+			return fmt.Errorf("could not serialize runtime asset: %w", err)
 		}
 
 		return bucket.Put(key, assetJSON)
