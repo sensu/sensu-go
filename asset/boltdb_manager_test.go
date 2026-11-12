@@ -7,9 +7,12 @@ import (
 	"io"
 	"io/ioutil"
 	"os"
+	"path/filepath"
+	"strings"
 	"testing"
 
 	v2 "github.com/sensu/core/v2"
+	"github.com/sirupsen/logrus/hooks/test"
 	bolt "go.etcd.io/bbolt"
 )
 
@@ -285,5 +288,65 @@ func TestSuccessfulGetAsset(t *testing.T) {
 	if d2 := runtimeAsset.LibDir(); d2 != d {
 		t.Logf("expected lib path to be %s, got %s", d, d2)
 		t.Fail()
+	}
+}
+
+func TestGetCorruptAssetCacheEntry(t *testing.T) {
+	tmpFile, err := ioutil.TempFile(os.TempDir(), "asset_test_get_corrupt_asset.db")
+	if err != nil {
+		t.Fatalf("unable to create test boltdb file: %v", err)
+	}
+	defer tmpFile.Close()
+	defer os.Remove(tmpFile.Name())
+
+	db, err := bolt.Open(tmpFile.Name(), 0666, &bolt.Options{})
+	if err != nil {
+		t.Fatalf("unable to open boltdb in test: %v", err)
+	}
+	defer db.Close()
+
+	a := &v2.Asset{Sha512: "sha"}
+	if err := db.Update(func(tx *bolt.Tx) error {
+		bucket, err := tx.CreateBucketIfNotExists([]byte("assets"))
+		if err != nil {
+			return err
+		}
+		return bucket.Put([]byte(a.Sha512), []byte("not json"))
+	}); err != nil {
+		t.Fatalf("unable to update boltdb: %v", err)
+	}
+
+	localStorage := t.TempDir()
+	manager := &boltDBAssetManager{
+		localStorage: localStorage,
+		db:           db,
+		fetcher:      &mockFetcher{pass: true},
+		verifier:     &mockVerifier{pass: true},
+		expander:     &mockExpander{pass: true},
+	}
+
+	hook := test.NewLocal(logger.Logger)
+	defer hook.Reset()
+
+	runtimeAsset, err := manager.Get(context.TODO(), a)
+	if err != nil {
+		t.Fatalf("expected no error getting asset, got: %v", err)
+	}
+	if runtimeAsset == nil {
+		t.Fatal("expected runtime asset, got nil")
+	}
+	if want := filepath.Join(localStorage, a.Sha512); runtimeAsset.Path != want {
+		t.Fatalf("expected asset path %q, got %q", want, runtimeAsset.Path)
+	}
+
+	var warned bool
+	for _, entry := range hook.AllEntries() {
+		if strings.Contains(entry.Message, "corrupt asset cache entry") {
+			warned = true
+			break
+		}
+	}
+	if !warned {
+		t.Fatal("expected a warning about the corrupt asset cache entry")
 	}
 }
