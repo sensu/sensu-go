@@ -28,7 +28,7 @@ On Ubuntu, install with:
 apt update && apt install bash-completion
 ```
 
-Then add the following to your `~/.bash_profile`:
+Then add the following to your `~/.bashrc`:
 
 ```bash
 if [ -f /usr/share/bash-completion/bash_completion ]; then
@@ -38,17 +38,28 @@ elif [ -f /etc/bash_completion ]; then
 fi
 ```
 
-When bash-completion is available we can add the following to your `~/.bash_profile`:
+When bash-completion is available, add the following to `~/.bash_profile` on macOS
+or `~/.bashrc` on Ubuntu:
 
 ```bash
 source <(sensuctl completion bash)
 ```
 
-You can now source your `~/.bash_profile` or launch a new terminal to utilize completion.
+Reload the file you edited or launch a new terminal to utilize completion.
+On macOS:
 
 ```sh
 source ~/.bash_profile
 ```
+
+On Ubuntu:
+
+```sh
+source ~/.bashrc
+```
+
+Interactive non-login Bash shells read `~/.bashrc`, while Bash login shells read
+`~/.bash_profile`.
 
 ### Installation (ZSH)
 
