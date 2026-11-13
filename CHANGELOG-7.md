@@ -45,6 +45,8 @@ instead, it is represented underneath the "spec" object.
 - Added threshold annotation even when OK status.
 
 ### Fixed
+- Corrected the Ubuntu Bash completion instructions to use `~/.bashrc` for
+  interactive non-login shells.
 - Fixed an issue where multi-expression exclusive "Deny" filters were not
   evaluated as described in the documentation.
 - API keys are now securely stored in the database.
