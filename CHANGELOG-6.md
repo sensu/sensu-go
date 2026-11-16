@@ -17,6 +17,8 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 - An unreadable `trusted-ca-file` now fails asset fetches instead of falling back to system CAs
 
 ### Fixed
+- Corrected the Ubuntu Bash completion instructions to use `~/.bashrc` for
+  interactive non-login shells.
 - Fixed a connection and file descriptor leak when agents fetch assets, such as checks that reference a missing asset
 - Fixed silenced events being skipped by all pipeline workflows, so handlers now receive them unless a workflow uses the `not_silenced` filter
 - Fixed resolution events being dropped after an `expire_on_resolve` silence is cleared
