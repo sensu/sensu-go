@@ -12,7 +12,8 @@ const (
 	longUsage = `
 Output shell completion code for the given shell. The code must be evaluated
 to provide interactive completion of sensu-cli commands. This can be done by
-sourcing it from the .bash_profile or .zshrc.
+sourcing it from .bashrc (interactive non-login Bash), .bash_profile (Bash login
+shells), or .zshrc (ZSH).
 
 For help using with ZSH:
 
