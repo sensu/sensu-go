@@ -28,7 +28,8 @@ On Ubuntu, install with:
 apt update && apt install bash-completion
 ```
 
-Then add the following to your `~/.bashrc`:
+Skip the following block if your `~/.bashrc` already loads bash-completion
+(the Ubuntu default does). Otherwise, add it to your `~/.bashrc`:
 
 ```bash
 if [ -f /usr/share/bash-completion/bash_completion ]; then

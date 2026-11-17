@@ -32,11 +32,8 @@ fi
 source <(` + cli.SensuCmdName + ` completion bash)
 
 # Reload the file you edited or launch a new terminal to utilize completion.
-# On macOS:
-source ~/.bash_profile
-
-# On Ubuntu:
-source ~/.bashrc
+# On macOS:  source ~/.bash_profile
+# On Ubuntu: source ~/.bashrc
 
 # Interactive non-login Bash shells read ~/.bashrc; Bash login shells read ~/.bash_profile.
 	`
