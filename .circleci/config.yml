@@ -1,7 +1,7 @@
 version: 2.1
 
 orbs:
-  go: circleci/go@1.7.1
+  go: circleci/go@4.0.4
 
 parameters:
   go_version:
