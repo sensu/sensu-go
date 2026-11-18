@@ -4,15 +4,15 @@ go 1.27.4
 
 replace github.com/gorilla/websocket => github.com/sensu/websocket v1.0.3
 
-replace go.etcd.io/etcd/api/v3 => github.com/sensu/etcd/api/v3 v3.2.0
+replace go.etcd.io/etcd/api/v3 => github.com/sensu/etcd/api/v3 v3.2.1
 
-replace go.etcd.io/etcd/client/pkg/v3 => github.com/sensu/etcd/client/pkg/v3 v3.2.0
+replace go.etcd.io/etcd/client/pkg/v3 => github.com/sensu/etcd/client/pkg/v3 v3.2.1
 
-replace go.etcd.io/etcd/client/v3 => github.com/sensu/etcd/client/v3 v3.2.0
+replace go.etcd.io/etcd/client/v3 => github.com/sensu/etcd/client/v3 v3.2.1
 
-replace go.etcd.io/etcd/pkg/v3 => github.com/sensu/etcd/pkg/v3 v3.2.0
+replace go.etcd.io/etcd/pkg/v3 => github.com/sensu/etcd/pkg/v3 v3.2.1
 
-replace go.etcd.io/etcd/server/v3 => github.com/sensu/etcd/server/v3 v3.2.0
+replace go.etcd.io/etcd/server/v3 => github.com/sensu/etcd/server/v3 v3.2.1
 
 require (
 	github.com/AlecAivazis/survey/v2 v2.2.14
