@@ -7,6 +7,8 @@ and this project adheres to [Semantic
 Versioning](http://semver.org/spec/v2.0.0.html).
 ## [Unreleased]
 
+## [6.15.1] - 2026-11-18
+
 ### Added
 - Addition of a new watcher configuration to monitor the user updates
 - Added the exit mechanism to disconnect agent when user is disabled
@@ -15,6 +17,8 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 ### Changed
 - The session config to watch over the user updated and the wizzard bus
 - An unreadable `trusted-ca-file` now fails asset fetches instead of falling back to system CAs
+- Updated Go toolchain to 1.27.4
+- Updated ETCD dependencies to sensu/etcd v3.2.1
 
 ### Fixed
 - Corrected the Ubuntu Bash completion instructions to use `~/.bashrc` for
@@ -30,9 +34,7 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ### Changed
 - Disabled platform metrics by default with size-based log rotation
-- Updated Go toolchain to 1.27.4
 - Updated Prometheus packages (prometheus/client_golang v1.24.1, prometheus/common v0.71.0)
-- Updated ETCD dependencies to sensu/etcd v3.2.0
 - Migrated CI from AppVeyor to GitHub Actions
 
 ### Fixed
