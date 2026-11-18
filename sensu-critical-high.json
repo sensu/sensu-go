@@ -1,0 +1,2450 @@
+{
+  "severity": "HIGH",
+  "title": "CVE-2022-28131 - go/stdlib",
+  "cve": "CVE-2022-28131",
+  "packages": [
+    {
+      "name": "go/stdlib",
+      "version": "1.16.15",
+      "sourceLayerHash": "sha256:a9ef17cf5ed43e42fa623c79f4bcfedacc5dfcd15f6e25f65a8f728148ac1bcc",
+      "epoch": 0,
+      "packageManager": "GENERIC",
+      "filePath": "/usr/local/bin/etcdctl",
+      "fixedInVersion": "1.17.12",
+      "remediation": "Update affected packages to fixed version (or newer)."
+    }
+  ],
+  "fixAvailable": "YES",
+  "exploitAvailable": "NO",
+  "remediation": "None Provided"
+}
+{
+  "severity": "HIGH",
+  "title": "CVE-2022-28327 - go/stdlib",
+  "cve": "CVE-2022-28327",
+  "packages": [
+    {
+      "name": "go/stdlib",
+      "version": "1.16.15",
+      "sourceLayerHash": "sha256:a9ef17cf5ed43e42fa623c79f4bcfedacc5dfcd15f6e25f65a8f728148ac1bcc",
+      "epoch": 0,
+      "packageManager": "GENERIC",
+      "filePath": "/usr/local/bin/etcdctl",
+      "fixedInVersion": "1.17.9",
+      "remediation": "Update affected packages to fixed version (or newer)."
+    }
+  ],
+  "fixAvailable": "YES",
+  "exploitAvailable": "NO",
+  "remediation": "None Provided"
+}
+{
+  "severity": "HIGH",
+  "title": "CVE-2026-78660 - go/stdlib, go/stdlib and 7 more",
+  "cve": "CVE-2026-78660",
+  "packages": [
+    {
+      "name": "go/stdlib",
+      "version": "1.16.15",
+      "sourceLayerHash": "sha256:a9ef17cf5ed43e42fa623c79f4bcfedacc5dfcd15f6e25f65a8f728148ac1bcc",
+      "epoch": 0,
+      "packageManager": "GENERIC",
+      "filePath": "/usr/local/bin/etcdctl",
+      "fixedInVersion": "1.26.9",
+      "remediation": "Update affected packages to fixed version (or newer)."
+    },
+    {
+      "name": "go/stdlib",
+      "version": "1.26.8",
+      "sourceLayerHash": "sha256:db11f310711ed91d1ef47a225583883204b577b57bc5d313085a998c4b4017a5",
+      "epoch": 0,
+      "packageManager": "GENERIC",
+      "filePath": "/opt/sensu/bin/sensu-agent",
+      "fixedInVersion": "1.26.9",
+      "remediation": "Update affected packages to fixed version (or newer)."
+    },
+    {
+      "name": "go/stdlib",
+      "version": "1.26.8",
+      "sourceLayerHash": "sha256:ba145bd82b55600b61ce344fe8cd56d4c7ad27719ea5b595963b92b7a07658aa",
+      "epoch": 0,
+      "packageManager": "GENERIC",
+      "filePath": "/opt/sensu/bin/sensu-backend",
+      "fixedInVersion": "1.26.9",
+      "remediation": "Update affected packages to fixed version (or newer)."
+    },
+    {
+      "name": "go/stdlib",
+      "version": "1.26.8",
+      "sourceLayerHash": "sha256:9fb30cb68268f9b65207e7ef2c393b60557b96c681c16a0dd14d11b39712b9fb",
+      "epoch": 0,
+      "packageManager": "GENERIC",
+      "filePath": "/opt/sensu/bin/sensuctl",
+      "fixedInVersion": "1.26.9",
+      "remediation": "Update affected packages to fixed version (or newer)."
+    },
+    {
+      "name": "go/stdlib",
+      "version": "1.26.8",
+      "sourceLayerHash": "sha256:09814bc4645eac7063cfa1c0afaac5d42ecb26daeaf86ae26e63fb3648346cde",
+      "epoch": 0,
+      "packageManager": "GENERIC",
+      "filePath": "/usr/local/bin/sensuctl",
+      "fixedInVersion": "1.26.9",
+      "remediation": "Update affected packages to fixed version (or newer)."
+    },
+    {
+      "name": "golang.org/x/net",
+      "version": "v0.59.0",
+      "sourceLayerHash": "sha256:db11f310711ed91d1ef47a225583883204b577b57bc5d313085a998c4b4017a5",
+      "epoch": 0,
+      "packageManager": "GO",
+      "filePath": "/opt/sensu/bin/sensu-agent",
+      "fixedInVersion": "0.60.0",
+      "remediation": "Update affected packages to fixed version (or newer)."
+    },
+    {
+      "name": "golang.org/x/net",
+      "version": "v0.59.0",
+      "sourceLayerHash": "sha256:ba145bd82b55600b61ce344fe8cd56d4c7ad27719ea5b595963b92b7a07658aa",
+      "epoch": 0,
+      "packageManager": "GO",
+      "filePath": "/opt/sensu/bin/sensu-backend",
+      "fixedInVersion": "0.60.0",
+      "remediation": "Update affected packages to fixed version (or newer)."
+    },
+    {
+      "name": "golang.org/x/net",
+      "version": "v0.59.0",
+      "sourceLayerHash": "sha256:9fb30cb68268f9b65207e7ef2c393b60557b96c681c16a0dd14d11b39712b9fb",
+      "epoch": 0,
+      "packageManager": "GO",
+      "filePath": "/opt/sensu/bin/sensuctl",
+      "fixedInVersion": "0.60.0",
+      "remediation": "Update affected packages to fixed version (or newer)."
+    },
+    {
+      "name": "golang.org/x/net",
+      "version": "v0.59.0",
+      "sourceLayerHash": "sha256:09814bc4645eac7063cfa1c0afaac5d42ecb26daeaf86ae26e63fb3648346cde",
+      "epoch": 0,
+      "packageManager": "GO",
+      "filePath": "/usr/local/bin/sensuctl",
+      "fixedInVersion": "0.60.0",
+      "remediation": "Update affected packages to fixed version (or newer)."
+    }
+  ],
+  "fixAvailable": "YES",
+  "exploitAvailable": "NO",
+  "remediation": "None Provided"
+}
+{
+  "severity": "CRITICAL",
+  "title": "Platform End Of Life",
+  "cve": "IN-DISCONTINUED-001",
+  "packages": [
+    {
+      "name": "ALPINE_LINUX_3_20",
+      "version": "ALPINE_LINUX_3_20",
+      "sourceLayerHash": "sha256:88b4fba61c4c714a2fc173ddf7e9324a257304696830bf41ad28ecc58c11c95f",
+      "epoch": 0,
+      "packageManager": "OS",
+      "fixedInVersion": "NotAvailable"
+    }
+  ],
+  "fixAvailable": "NO",
+  "exploitAvailable": "NO",
+  "remediation": "None Provided"
+}
+{
+  "severity": "HIGH",
+  "title": "CVE-2023-24534 - go/stdlib",
+  "cve": "CVE-2023-24534",
+  "packages": [
+    {
+      "name": "go/stdlib",
+      "version": "1.16.15",
+      "sourceLayerHash": "sha256:a9ef17cf5ed43e42fa623c79f4bcfedacc5dfcd15f6e25f65a8f728148ac1bcc",
+      "epoch": 0,
+      "packageManager": "GENERIC",
+      "filePath": "/usr/local/bin/etcdctl",
+      "fixedInVersion": "1.19.8",
+      "remediation": "Update affected packages to fixed version (or newer)."
+    }
+  ],
+  "fixAvailable": "YES",
+  "exploitAvailable": "NO",
+  "remediation": "None Provided"
+}
+{
+  "severity": "HIGH",
+  "title": "CVE-2022-41716 - go/stdlib",
+  "cve": "CVE-2022-41716",
+  "packages": [
+    {
+      "name": "go/stdlib",
+      "version": "1.16.15",
+      "sourceLayerHash": "sha256:a9ef17cf5ed43e42fa623c79f4bcfedacc5dfcd15f6e25f65a8f728148ac1bcc",
+      "epoch": 0,
+      "packageManager": "GENERIC",
+      "filePath": "/usr/local/bin/etcdctl",
+      "fixedInVersion": "1.18.8",
+      "remediation": "Update affected packages to fixed version (or newer)."
+    }
+  ],
+  "fixAvailable": "YES",
+  "exploitAvailable": "NO",
+  "remediation": "None Provided"
+}
+{
+  "severity": "HIGH",
+  "title": "CVE-2023-45287 - go/stdlib",
+  "cve": "CVE-2023-45287",
+  "packages": [
+    {
+      "name": "go/stdlib",
+      "version": "1.16.15",
+      "sourceLayerHash": "sha256:a9ef17cf5ed43e42fa623c79f4bcfedacc5dfcd15f6e25f65a8f728148ac1bcc",
+      "epoch": 0,
+      "packageManager": "GENERIC",
+      "filePath": "/usr/local/bin/etcdctl",
+      "fixedInVersion": "1.20.0",
+      "remediation": "Update affected packages to fixed version (or newer)."
+    }
+  ],
+  "fixAvailable": "YES",
+  "exploitAvailable": "NO",
+  "remediation": "None Provided"
+}
+{
+  "severity": "HIGH",
+  "title": "CVE-2026-42499 - go/stdlib",
+  "cve": "CVE-2026-42499",
+  "packages": [
+    {
+      "name": "go/stdlib",
+      "version": "1.16.15",
+      "sourceLayerHash": "sha256:a9ef17cf5ed43e42fa623c79f4bcfedacc5dfcd15f6e25f65a8f728148ac1bcc",
+      "epoch": 0,
+      "packageManager": "GENERIC",
+      "filePath": "/usr/local/bin/etcdctl",
+      "fixedInVersion": "1.25.10",
+      "remediation": "Update affected packages to fixed version (or newer)."
+    }
+  ],
+  "fixAvailable": "YES",
+  "exploitAvailable": "NO",
+  "remediation": "None Provided"
+}
+{
+  "severity": "CRITICAL",
+  "title": "CVE-2025-68121 - go/stdlib",
+  "cve": "CVE-2025-68121",
+  "packages": [
+    {
+      "name": "go/stdlib",
+      "version": "1.16.15",
+      "sourceLayerHash": "sha256:a9ef17cf5ed43e42fa623c79f4bcfedacc5dfcd15f6e25f65a8f728148ac1bcc",
+      "epoch": 0,
+      "packageManager": "GENERIC",
+      "filePath": "/usr/local/bin/etcdctl",
+      "fixedInVersion": "1.24.13",
+      "remediation": "Update affected packages to fixed version (or newer)."
+    }
+  ],
+  "fixAvailable": "YES",
+  "exploitAvailable": "YES",
+  "remediation": "None Provided"
+}
+{
+  "severity": "HIGH",
+  "title": "CVE-2022-24675 - go/stdlib",
+  "cve": "CVE-2022-24675",
+  "packages": [
+    {
+      "name": "go/stdlib",
+      "version": "1.16.15",
+      "sourceLayerHash": "sha256:a9ef17cf5ed43e42fa623c79f4bcfedacc5dfcd15f6e25f65a8f728148ac1bcc",
+      "epoch": 0,
+      "packageManager": "GENERIC",
+      "filePath": "/usr/local/bin/etcdctl",
+      "fixedInVersion": "1.17.9",
+      "remediation": "Update affected packages to fixed version (or newer)."
+    }
+  ],
+  "fixAvailable": "YES",
+  "exploitAvailable": "NO",
+  "remediation": "None Provided"
+}
+{
+  "severity": "HIGH",
+  "title": "CVE-2026-84304 - google.golang.org/grpc",
+  "cve": "CVE-2026-84304",
+  "packages": [
+    {
+      "name": "google.golang.org/grpc",
+      "version": "v1.38.0",
+      "sourceLayerHash": "sha256:a9ef17cf5ed43e42fa623c79f4bcfedacc5dfcd15f6e25f65a8f728148ac1bcc",
+      "epoch": 0,
+      "packageManager": "GO",
+      "filePath": "/usr/local/bin/etcdctl",
+      "fixedInVersion": "1.83.1",
+      "remediation": "Update affected packages to fixed version (or newer)."
+    }
+  ],
+  "fixAvailable": "YES",
+  "exploitAvailable": "NO",
+  "remediation": "None Provided"
+}
+{
+  "severity": "HIGH",
+  "title": "CVE-2026-39836 - go/stdlib",
+  "cve": "CVE-2026-39836",
+  "packages": [
+    {
+      "name": "go/stdlib",
+      "version": "1.16.15",
+      "sourceLayerHash": "sha256:a9ef17cf5ed43e42fa623c79f4bcfedacc5dfcd15f6e25f65a8f728148ac1bcc",
+      "epoch": 0,
+      "packageManager": "GENERIC",
+      "filePath": "/usr/local/bin/etcdctl",
+      "fixedInVersion": "1.25.10",
+      "remediation": "Update affected packages to fixed version (or newer)."
+    }
+  ],
+  "fixAvailable": "YES",
+  "exploitAvailable": "NO",
+  "remediation": "None Provided"
+}
+{
+  "severity": "HIGH",
+  "title": "GHSA-hrxh-6v49-42gf - google.golang.org/grpc",
+  "cve": "GHSA-hrxh-6v49-42gf",
+  "packages": [
+    {
+      "name": "google.golang.org/grpc",
+      "version": "v1.38.0",
+      "sourceLayerHash": "sha256:a9ef17cf5ed43e42fa623c79f4bcfedacc5dfcd15f6e25f65a8f728148ac1bcc",
+      "epoch": 0,
+      "packageManager": "GO",
+      "filePath": "/usr/local/bin/etcdctl",
+      "fixedInVersion": "1.82.1",
+      "remediation": "Update affected packages to fixed version (or newer)."
+    }
+  ],
+  "fixAvailable": "YES",
+  "exploitAvailable": "NO",
+  "remediation": "None Provided"
+}
+{
+  "severity": "HIGH",
+  "title": "CVE-2023-45288 - go/stdlib",
+  "cve": "CVE-2023-45288",
+  "packages": [
+    {
+      "name": "go/stdlib",
+      "version": "1.16.15",
+      "sourceLayerHash": "sha256:a9ef17cf5ed43e42fa623c79f4bcfedacc5dfcd15f6e25f65a8f728148ac1bcc",
+      "epoch": 0,
+      "packageManager": "GENERIC",
+      "filePath": "/usr/local/bin/etcdctl",
+      "fixedInVersion": "1.21.9",
+      "remediation": "Update affected packages to fixed version (or newer)."
+    }
+  ],
+  "fixAvailable": "YES",
+  "exploitAvailable": "YES",
+  "remediation": "None Provided"
+}
+{
+  "severity": "HIGH",
+  "title": "CVE-2026-56852 - golang.org/x/text",
+  "cve": "CVE-2026-56852",
+  "packages": [
+    {
+      "name": "golang.org/x/text",
+      "version": "v0.3.6",
+      "sourceLayerHash": "sha256:a9ef17cf5ed43e42fa623c79f4bcfedacc5dfcd15f6e25f65a8f728148ac1bcc",
+      "epoch": 0,
+      "packageManager": "GO",
+      "filePath": "/usr/local/bin/etcdctl",
+      "fixedInVersion": "0.39.0",
+      "remediation": "Update affected packages to fixed version (or newer)."
+    }
+  ],
+  "fixAvailable": "YES",
+  "exploitAvailable": "NO",
+  "remediation": "None Provided"
+}
+{
+  "severity": "HIGH",
+  "title": "CVE-2022-32149 - golang.org/x/text",
+  "cve": "CVE-2022-32149",
+  "packages": [
+    {
+      "name": "golang.org/x/text",
+      "version": "v0.3.6",
+      "sourceLayerHash": "sha256:a9ef17cf5ed43e42fa623c79f4bcfedacc5dfcd15f6e25f65a8f728148ac1bcc",
+      "epoch": 0,
+      "packageManager": "GO",
+      "filePath": "/usr/local/bin/etcdctl",
+      "fixedInVersion": "0.3.8",
+      "remediation": "Update affected packages to fixed version (or newer)."
+    }
+  ],
+  "fixAvailable": "YES",
+  "exploitAvailable": "NO",
+  "remediation": "None Provided"
+}
+{
+  "severity": "HIGH",
+  "title": "CVE-2026-56866 - go/stdlib, go/stdlib and 3 more",
+  "cve": "CVE-2026-56866",
+  "packages": [
+    {
+      "name": "go/stdlib",
+      "version": "1.16.15",
+      "sourceLayerHash": "sha256:a9ef17cf5ed43e42fa623c79f4bcfedacc5dfcd15f6e25f65a8f728148ac1bcc",
+      "epoch": 0,
+      "packageManager": "GENERIC",
+      "filePath": "/usr/local/bin/etcdctl",
+      "fixedInVersion": "1.26.9",
+      "remediation": "Update affected packages to fixed version (or newer)."
+    },
+    {
+      "name": "go/stdlib",
+      "version": "1.26.8",
+      "sourceLayerHash": "sha256:db11f310711ed91d1ef47a225583883204b577b57bc5d313085a998c4b4017a5",
+      "epoch": 0,
+      "packageManager": "GENERIC",
+      "filePath": "/opt/sensu/bin/sensu-agent",
+      "fixedInVersion": "1.26.9",
+      "remediation": "Update affected packages to fixed version (or newer)."
+    },
+    {
+      "name": "go/stdlib",
+      "version": "1.26.8",
+      "sourceLayerHash": "sha256:ba145bd82b55600b61ce344fe8cd56d4c7ad27719ea5b595963b92b7a07658aa",
+      "epoch": 0,
+      "packageManager": "GENERIC",
+      "filePath": "/opt/sensu/bin/sensu-backend",
+      "fixedInVersion": "1.26.9",
+      "remediation": "Update affected packages to fixed version (or newer)."
+    },
+    {
+      "name": "go/stdlib",
+      "version": "1.26.8",
+      "sourceLayerHash": "sha256:9fb30cb68268f9b65207e7ef2c393b60557b96c681c16a0dd14d11b39712b9fb",
+      "epoch": 0,
+      "packageManager": "GENERIC",
+      "filePath": "/opt/sensu/bin/sensuctl",
+      "fixedInVersion": "1.26.9",
+      "remediation": "Update affected packages to fixed version (or newer)."
+    },
+    {
+      "name": "go/stdlib",
+      "version": "1.26.8",
+      "sourceLayerHash": "sha256:09814bc4645eac7063cfa1c0afaac5d42ecb26daeaf86ae26e63fb3648346cde",
+      "epoch": 0,
+      "packageManager": "GENERIC",
+      "filePath": "/usr/local/bin/sensuctl",
+      "fixedInVersion": "1.26.9",
+      "remediation": "Update affected packages to fixed version (or newer)."
+    }
+  ],
+  "fixAvailable": "YES",
+  "exploitAvailable": "YES",
+  "remediation": "None Provided"
+}
+{
+  "severity": "CRITICAL",
+  "title": "CVE-2026-56857 - go/stdlib",
+  "cve": "CVE-2026-56857",
+  "packages": [
+    {
+      "name": "go/stdlib",
+      "version": "1.16.15",
+      "sourceLayerHash": "sha256:a9ef17cf5ed43e42fa623c79f4bcfedacc5dfcd15f6e25f65a8f728148ac1bcc",
+      "epoch": 0,
+      "packageManager": "GENERIC",
+      "filePath": "/usr/local/bin/etcdctl",
+      "fixedInVersion": "1.26.9",
+      "remediation": "Update affected packages to fixed version (or newer)."
+    }
+  ],
+  "fixAvailable": "YES",
+  "exploitAvailable": "NO",
+  "remediation": "None Provided"
+}
+{
+  "severity": "HIGH",
+  "title": "CVE-2025-61723 - go/stdlib",
+  "cve": "CVE-2025-61723",
+  "packages": [
+    {
+      "name": "go/stdlib",
+      "version": "1.16.15",
+      "sourceLayerHash": "sha256:a9ef17cf5ed43e42fa623c79f4bcfedacc5dfcd15f6e25f65a8f728148ac1bcc",
+      "epoch": 0,
+      "packageManager": "GENERIC",
+      "filePath": "/usr/local/bin/etcdctl",
+      "fixedInVersion": "1.24.8",
+      "remediation": "Update affected packages to fixed version (or newer)."
+    }
+  ],
+  "fixAvailable": "YES",
+  "exploitAvailable": "NO",
+  "remediation": "None Provided"
+}
+{
+  "severity": "HIGH",
+  "title": "CVE-2026-39822 - go/stdlib",
+  "cve": "CVE-2026-39822",
+  "packages": [
+    {
+      "name": "go/stdlib",
+      "version": "1.16.15",
+      "sourceLayerHash": "sha256:a9ef17cf5ed43e42fa623c79f4bcfedacc5dfcd15f6e25f65a8f728148ac1bcc",
+      "epoch": 0,
+      "packageManager": "GENERIC",
+      "filePath": "/usr/local/bin/etcdctl",
+      "fixedInVersion": "1.25.12",
+      "remediation": "Update affected packages to fixed version (or newer)."
+    }
+  ],
+  "fixAvailable": "YES",
+  "exploitAvailable": "NO",
+  "remediation": "None Provided"
+}
+{
+  "severity": "HIGH",
+  "title": "CVE-2022-30632 - go/stdlib",
+  "cve": "CVE-2022-30632",
+  "packages": [
+    {
+      "name": "go/stdlib",
+      "version": "1.16.15",
+      "sourceLayerHash": "sha256:a9ef17cf5ed43e42fa623c79f4bcfedacc5dfcd15f6e25f65a8f728148ac1bcc",
+      "epoch": 0,
+      "packageManager": "GENERIC",
+      "filePath": "/usr/local/bin/etcdctl",
+      "fixedInVersion": "1.17.12",
+      "remediation": "Update affected packages to fixed version (or newer)."
+    }
+  ],
+  "fixAvailable": "YES",
+  "exploitAvailable": "NO",
+  "remediation": "None Provided"
+}
+{
+  "severity": "HIGH",
+  "title": "CVE-2026-107891 - musl",
+  "cve": "CVE-2026-107891",
+  "packages": [
+    {
+      "name": "musl",
+      "version": "1.2.5",
+      "sourceLayerHash": "sha256:09814bc4645eac7063cfa1c0afaac5d42ecb26daeaf86ae26e63fb3648346cde",
+      "epoch": 0,
+      "release": "r3",
+      "arch": "AARCH64",
+      "packageManager": "OS",
+      "filePath": "/lib/apk/db/installed",
+      "fixedInVersion": "1.2.5-r4",
+      "remediation": "Update affected packages to fixed version (or newer)."
+    }
+  ],
+  "fixAvailable": "YES",
+  "exploitAvailable": "NO",
+  "remediation": "None Provided"
+}
+{
+  "severity": "HIGH",
+  "title": "CVE-2022-30634 - go/stdlib",
+  "cve": "CVE-2022-30634",
+  "packages": [
+    {
+      "name": "go/stdlib",
+      "version": "1.16.15",
+      "sourceLayerHash": "sha256:a9ef17cf5ed43e42fa623c79f4bcfedacc5dfcd15f6e25f65a8f728148ac1bcc",
+      "epoch": 0,
+      "packageManager": "GENERIC",
+      "filePath": "/usr/local/bin/etcdctl",
+      "fixedInVersion": "1.17.11",
+      "remediation": "Update affected packages to fixed version (or newer)."
+    }
+  ],
+  "fixAvailable": "YES",
+  "exploitAvailable": "YES",
+  "remediation": "None Provided"
+}
+{
+  "severity": "HIGH",
+  "title": "CVE-2024-34156 - go/stdlib",
+  "cve": "CVE-2024-34156",
+  "packages": [
+    {
+      "name": "go/stdlib",
+      "version": "1.16.15",
+      "sourceLayerHash": "sha256:a9ef17cf5ed43e42fa623c79f4bcfedacc5dfcd15f6e25f65a8f728148ac1bcc",
+      "epoch": 0,
+      "packageManager": "GENERIC",
+      "filePath": "/usr/local/bin/etcdctl",
+      "fixedInVersion": "1.22.7",
+      "remediation": "Update affected packages to fixed version (or newer)."
+    }
+  ],
+  "fixAvailable": "YES",
+  "exploitAvailable": "NO",
+  "remediation": "None Provided"
+}
+{
+  "severity": "HIGH",
+  "title": "CVE-2026-27145 - go/stdlib",
+  "cve": "CVE-2026-27145",
+  "packages": [
+    {
+      "name": "go/stdlib",
+      "version": "1.16.15",
+      "sourceLayerHash": "sha256:a9ef17cf5ed43e42fa623c79f4bcfedacc5dfcd15f6e25f65a8f728148ac1bcc",
+      "epoch": 0,
+      "packageManager": "GENERIC",
+      "filePath": "/usr/local/bin/etcdctl",
+      "fixedInVersion": "1.25.11",
+      "remediation": "Update affected packages to fixed version (or newer)."
+    }
+  ],
+  "fixAvailable": "YES",
+  "exploitAvailable": "NO",
+  "remediation": "None Provided"
+}
+{
+  "severity": "HIGH",
+  "title": "CVE-2026-32283 - go/stdlib",
+  "cve": "CVE-2026-32283",
+  "packages": [
+    {
+      "name": "go/stdlib",
+      "version": "1.16.15",
+      "sourceLayerHash": "sha256:a9ef17cf5ed43e42fa623c79f4bcfedacc5dfcd15f6e25f65a8f728148ac1bcc",
+      "epoch": 0,
+      "packageManager": "GENERIC",
+      "filePath": "/usr/local/bin/etcdctl",
+      "fixedInVersion": "1.25.9",
+      "remediation": "Update affected packages to fixed version (or newer)."
+    }
+  ],
+  "fixAvailable": "YES",
+  "exploitAvailable": "NO",
+  "remediation": "None Provided"
+}
+{
+  "severity": "HIGH",
+  "title": "CVE-2023-24536 - go/stdlib",
+  "cve": "CVE-2023-24536",
+  "packages": [
+    {
+      "name": "go/stdlib",
+      "version": "1.16.15",
+      "sourceLayerHash": "sha256:a9ef17cf5ed43e42fa623c79f4bcfedacc5dfcd15f6e25f65a8f728148ac1bcc",
+      "epoch": 0,
+      "packageManager": "GENERIC",
+      "filePath": "/usr/local/bin/etcdctl",
+      "fixedInVersion": "1.19.8",
+      "remediation": "Update affected packages to fixed version (or newer)."
+    }
+  ],
+  "fixAvailable": "YES",
+  "exploitAvailable": "NO",
+  "remediation": "None Provided"
+}
+{
+  "severity": "HIGH",
+  "title": "CVE-2022-30635 - go/stdlib",
+  "cve": "CVE-2022-30635",
+  "packages": [
+    {
+      "name": "go/stdlib",
+      "version": "1.16.15",
+      "sourceLayerHash": "sha256:a9ef17cf5ed43e42fa623c79f4bcfedacc5dfcd15f6e25f65a8f728148ac1bcc",
+      "epoch": 0,
+      "packageManager": "GENERIC",
+      "filePath": "/usr/local/bin/etcdctl",
+      "fixedInVersion": "1.17.12",
+      "remediation": "Update affected packages to fixed version (or newer)."
+    }
+  ],
+  "fixAvailable": "YES",
+  "exploitAvailable": "NO",
+  "remediation": "None Provided"
+}
+{
+  "severity": "CRITICAL",
+  "title": "CVE-2025-22871 - go/stdlib",
+  "cve": "CVE-2025-22871",
+  "packages": [
+    {
+      "name": "go/stdlib",
+      "version": "1.16.15",
+      "sourceLayerHash": "sha256:a9ef17cf5ed43e42fa623c79f4bcfedacc5dfcd15f6e25f65a8f728148ac1bcc",
+      "epoch": 0,
+      "packageManager": "GENERIC",
+      "filePath": "/usr/local/bin/etcdctl",
+      "fixedInVersion": "1.23.8",
+      "remediation": "Update affected packages to fixed version (or newer)."
+    }
+  ],
+  "fixAvailable": "YES",
+  "exploitAvailable": "NO",
+  "remediation": "None Provided"
+}
+{
+  "severity": "HIGH",
+  "title": "CVE-2026-33811 - go/stdlib",
+  "cve": "CVE-2026-33811",
+  "packages": [
+    {
+      "name": "go/stdlib",
+      "version": "1.16.15",
+      "sourceLayerHash": "sha256:a9ef17cf5ed43e42fa623c79f4bcfedacc5dfcd15f6e25f65a8f728148ac1bcc",
+      "epoch": 0,
+      "packageManager": "GENERIC",
+      "filePath": "/usr/local/bin/etcdctl",
+      "fixedInVersion": "1.25.10",
+      "remediation": "Update affected packages to fixed version (or newer)."
+    }
+  ],
+  "fixAvailable": "YES",
+  "exploitAvailable": "NO",
+  "remediation": "None Provided"
+}
+{
+  "severity": "HIGH",
+  "title": "CVE-2025-61726 - go/stdlib",
+  "cve": "CVE-2025-61726",
+  "packages": [
+    {
+      "name": "go/stdlib",
+      "version": "1.16.15",
+      "sourceLayerHash": "sha256:a9ef17cf5ed43e42fa623c79f4bcfedacc5dfcd15f6e25f65a8f728148ac1bcc",
+      "epoch": 0,
+      "packageManager": "GENERIC",
+      "filePath": "/usr/local/bin/etcdctl",
+      "fixedInVersion": "1.24.12",
+      "remediation": "Update affected packages to fixed version (or newer)."
+    }
+  ],
+  "fixAvailable": "YES",
+  "exploitAvailable": "NO",
+  "remediation": "None Provided"
+}
+{
+  "severity": "HIGH",
+  "title": "CVE-2026-78667 - go/stdlib, go/stdlib and 3 more",
+  "cve": "CVE-2026-78667",
+  "packages": [
+    {
+      "name": "go/stdlib",
+      "version": "1.16.15",
+      "sourceLayerHash": "sha256:a9ef17cf5ed43e42fa623c79f4bcfedacc5dfcd15f6e25f65a8f728148ac1bcc",
+      "epoch": 0,
+      "packageManager": "GENERIC",
+      "filePath": "/usr/local/bin/etcdctl",
+      "fixedInVersion": "1.26.9",
+      "remediation": "Update affected packages to fixed version (or newer)."
+    },
+    {
+      "name": "go/stdlib",
+      "version": "1.26.8",
+      "sourceLayerHash": "sha256:db11f310711ed91d1ef47a225583883204b577b57bc5d313085a998c4b4017a5",
+      "epoch": 0,
+      "packageManager": "GENERIC",
+      "filePath": "/opt/sensu/bin/sensu-agent",
+      "fixedInVersion": "1.26.9",
+      "remediation": "Update affected packages to fixed version (or newer)."
+    },
+    {
+      "name": "go/stdlib",
+      "version": "1.26.8",
+      "sourceLayerHash": "sha256:ba145bd82b55600b61ce344fe8cd56d4c7ad27719ea5b595963b92b7a07658aa",
+      "epoch": 0,
+      "packageManager": "GENERIC",
+      "filePath": "/opt/sensu/bin/sensu-backend",
+      "fixedInVersion": "1.26.9",
+      "remediation": "Update affected packages to fixed version (or newer)."
+    },
+    {
+      "name": "go/stdlib",
+      "version": "1.26.8",
+      "sourceLayerHash": "sha256:9fb30cb68268f9b65207e7ef2c393b60557b96c681c16a0dd14d11b39712b9fb",
+      "epoch": 0,
+      "packageManager": "GENERIC",
+      "filePath": "/opt/sensu/bin/sensuctl",
+      "fixedInVersion": "1.26.9",
+      "remediation": "Update affected packages to fixed version (or newer)."
+    },
+    {
+      "name": "go/stdlib",
+      "version": "1.26.8",
+      "sourceLayerHash": "sha256:09814bc4645eac7063cfa1c0afaac5d42ecb26daeaf86ae26e63fb3648346cde",
+      "epoch": 0,
+      "packageManager": "GENERIC",
+      "filePath": "/usr/local/bin/sensuctl",
+      "fixedInVersion": "1.26.9",
+      "remediation": "Update affected packages to fixed version (or newer)."
+    }
+  ],
+  "fixAvailable": "YES",
+  "exploitAvailable": "NO",
+  "remediation": "None Provided"
+}
+{
+  "severity": "HIGH",
+  "title": "CVE-2022-41723 - go/stdlib",
+  "cve": "CVE-2022-41723",
+  "packages": [
+    {
+      "name": "go/stdlib",
+      "version": "1.16.15",
+      "sourceLayerHash": "sha256:a9ef17cf5ed43e42fa623c79f4bcfedacc5dfcd15f6e25f65a8f728148ac1bcc",
+      "epoch": 0,
+      "packageManager": "GENERIC",
+      "filePath": "/usr/local/bin/etcdctl",
+      "fixedInVersion": "1.19.6",
+      "remediation": "Update affected packages to fixed version (or newer)."
+    }
+  ],
+  "fixAvailable": "YES",
+  "exploitAvailable": "NO",
+  "remediation": "None Provided"
+}
+{
+  "severity": "HIGH",
+  "title": "CVE-2026-33818 - go/stdlib",
+  "cve": "CVE-2026-33818",
+  "packages": [
+    {
+      "name": "go/stdlib",
+      "version": "1.16.15",
+      "sourceLayerHash": "sha256:a9ef17cf5ed43e42fa623c79f4bcfedacc5dfcd15f6e25f65a8f728148ac1bcc",
+      "epoch": 0,
+      "packageManager": "GENERIC",
+      "filePath": "/usr/local/bin/etcdctl",
+      "fixedInVersion": "1.25.13",
+      "remediation": "Update affected packages to fixed version (or newer)."
+    }
+  ],
+  "fixAvailable": "YES",
+  "exploitAvailable": "NO",
+  "remediation": "None Provided"
+}
+{
+  "severity": "HIGH",
+  "title": "CVE-2024-24786 - google.golang.org/protobuf",
+  "cve": "CVE-2024-24786",
+  "packages": [
+    {
+      "name": "google.golang.org/protobuf",
+      "version": "v1.26.0",
+      "sourceLayerHash": "sha256:a9ef17cf5ed43e42fa623c79f4bcfedacc5dfcd15f6e25f65a8f728148ac1bcc",
+      "epoch": 0,
+      "packageManager": "GO",
+      "filePath": "/usr/local/bin/etcdctl",
+      "fixedInVersion": "1.33.0",
+      "remediation": "Update affected packages to fixed version (or newer)."
+    }
+  ],
+  "fixAvailable": "YES",
+  "exploitAvailable": "NO",
+  "remediation": "None Provided"
+}
+{
+  "severity": "HIGH",
+  "title": "CVE-2026-78659 - go/stdlib, go/stdlib and 7 more",
+  "cve": "CVE-2026-78659",
+  "packages": [
+    {
+      "name": "go/stdlib",
+      "version": "1.16.15",
+      "sourceLayerHash": "sha256:a9ef17cf5ed43e42fa623c79f4bcfedacc5dfcd15f6e25f65a8f728148ac1bcc",
+      "epoch": 0,
+      "packageManager": "GENERIC",
+      "filePath": "/usr/local/bin/etcdctl",
+      "fixedInVersion": "1.26.9",
+      "remediation": "Update affected packages to fixed version (or newer)."
+    },
+    {
+      "name": "go/stdlib",
+      "version": "1.26.8",
+      "sourceLayerHash": "sha256:db11f310711ed91d1ef47a225583883204b577b57bc5d313085a998c4b4017a5",
+      "epoch": 0,
+      "packageManager": "GENERIC",
+      "filePath": "/opt/sensu/bin/sensu-agent",
+      "fixedInVersion": "1.26.9",
+      "remediation": "Update affected packages to fixed version (or newer)."
+    },
+    {
+      "name": "go/stdlib",
+      "version": "1.26.8",
+      "sourceLayerHash": "sha256:ba145bd82b55600b61ce344fe8cd56d4c7ad27719ea5b595963b92b7a07658aa",
+      "epoch": 0,
+      "packageManager": "GENERIC",
+      "filePath": "/opt/sensu/bin/sensu-backend",
+      "fixedInVersion": "1.26.9",
+      "remediation": "Update affected packages to fixed version (or newer)."
+    },
+    {
+      "name": "go/stdlib",
+      "version": "1.26.8",
+      "sourceLayerHash": "sha256:9fb30cb68268f9b65207e7ef2c393b60557b96c681c16a0dd14d11b39712b9fb",
+      "epoch": 0,
+      "packageManager": "GENERIC",
+      "filePath": "/opt/sensu/bin/sensuctl",
+      "fixedInVersion": "1.26.9",
+      "remediation": "Update affected packages to fixed version (or newer)."
+    },
+    {
+      "name": "go/stdlib",
+      "version": "1.26.8",
+      "sourceLayerHash": "sha256:09814bc4645eac7063cfa1c0afaac5d42ecb26daeaf86ae26e63fb3648346cde",
+      "epoch": 0,
+      "packageManager": "GENERIC",
+      "filePath": "/usr/local/bin/sensuctl",
+      "fixedInVersion": "1.26.9",
+      "remediation": "Update affected packages to fixed version (or newer)."
+    },
+    {
+      "name": "golang.org/x/net",
+      "version": "v0.59.0",
+      "sourceLayerHash": "sha256:db11f310711ed91d1ef47a225583883204b577b57bc5d313085a998c4b4017a5",
+      "epoch": 0,
+      "packageManager": "GO",
+      "filePath": "/opt/sensu/bin/sensu-agent",
+      "fixedInVersion": "0.60.0",
+      "remediation": "Update affected packages to fixed version (or newer)."
+    },
+    {
+      "name": "golang.org/x/net",
+      "version": "v0.59.0",
+      "sourceLayerHash": "sha256:ba145bd82b55600b61ce344fe8cd56d4c7ad27719ea5b595963b92b7a07658aa",
+      "epoch": 0,
+      "packageManager": "GO",
+      "filePath": "/opt/sensu/bin/sensu-backend",
+      "fixedInVersion": "0.60.0",
+      "remediation": "Update affected packages to fixed version (or newer)."
+    },
+    {
+      "name": "golang.org/x/net",
+      "version": "v0.59.0",
+      "sourceLayerHash": "sha256:9fb30cb68268f9b65207e7ef2c393b60557b96c681c16a0dd14d11b39712b9fb",
+      "epoch": 0,
+      "packageManager": "GO",
+      "filePath": "/opt/sensu/bin/sensuctl",
+      "fixedInVersion": "0.60.0",
+      "remediation": "Update affected packages to fixed version (or newer)."
+    },
+    {
+      "name": "golang.org/x/net",
+      "version": "v0.59.0",
+      "sourceLayerHash": "sha256:09814bc4645eac7063cfa1c0afaac5d42ecb26daeaf86ae26e63fb3648346cde",
+      "epoch": 0,
+      "packageManager": "GO",
+      "filePath": "/usr/local/bin/sensuctl",
+      "fixedInVersion": "0.60.0",
+      "remediation": "Update affected packages to fixed version (or newer)."
+    }
+  ],
+  "fixAvailable": "YES",
+  "exploitAvailable": "NO",
+  "remediation": "None Provided"
+}
+{
+  "severity": "HIGH",
+  "title": "CVE-2022-32189 - go/stdlib",
+  "cve": "CVE-2022-32189",
+  "packages": [
+    {
+      "name": "go/stdlib",
+      "version": "1.16.15",
+      "sourceLayerHash": "sha256:a9ef17cf5ed43e42fa623c79f4bcfedacc5dfcd15f6e25f65a8f728148ac1bcc",
+      "epoch": 0,
+      "packageManager": "GENERIC",
+      "filePath": "/usr/local/bin/etcdctl",
+      "fixedInVersion": "1.17.13",
+      "remediation": "Update affected packages to fixed version (or newer)."
+    }
+  ],
+  "fixAvailable": "YES",
+  "exploitAvailable": "YES",
+  "remediation": "None Provided"
+}
+{
+  "severity": "HIGH",
+  "title": "CVE-2026-78669 - go/stdlib, go/stdlib and 7 more",
+  "cve": "CVE-2026-78669",
+  "packages": [
+    {
+      "name": "go/stdlib",
+      "version": "1.16.15",
+      "sourceLayerHash": "sha256:a9ef17cf5ed43e42fa623c79f4bcfedacc5dfcd15f6e25f65a8f728148ac1bcc",
+      "epoch": 0,
+      "packageManager": "GENERIC",
+      "filePath": "/usr/local/bin/etcdctl",
+      "fixedInVersion": "1.26.9",
+      "remediation": "Update affected packages to fixed version (or newer)."
+    },
+    {
+      "name": "go/stdlib",
+      "version": "1.26.8",
+      "sourceLayerHash": "sha256:db11f310711ed91d1ef47a225583883204b577b57bc5d313085a998c4b4017a5",
+      "epoch": 0,
+      "packageManager": "GENERIC",
+      "filePath": "/opt/sensu/bin/sensu-agent",
+      "fixedInVersion": "1.26.9",
+      "remediation": "Update affected packages to fixed version (or newer)."
+    },
+    {
+      "name": "go/stdlib",
+      "version": "1.26.8",
+      "sourceLayerHash": "sha256:ba145bd82b55600b61ce344fe8cd56d4c7ad27719ea5b595963b92b7a07658aa",
+      "epoch": 0,
+      "packageManager": "GENERIC",
+      "filePath": "/opt/sensu/bin/sensu-backend",
+      "fixedInVersion": "1.26.9",
+      "remediation": "Update affected packages to fixed version (or newer)."
+    },
+    {
+      "name": "go/stdlib",
+      "version": "1.26.8",
+      "sourceLayerHash": "sha256:9fb30cb68268f9b65207e7ef2c393b60557b96c681c16a0dd14d11b39712b9fb",
+      "epoch": 0,
+      "packageManager": "GENERIC",
+      "filePath": "/opt/sensu/bin/sensuctl",
+      "fixedInVersion": "1.26.9",
+      "remediation": "Update affected packages to fixed version (or newer)."
+    },
+    {
+      "name": "go/stdlib",
+      "version": "1.26.8",
+      "sourceLayerHash": "sha256:09814bc4645eac7063cfa1c0afaac5d42ecb26daeaf86ae26e63fb3648346cde",
+      "epoch": 0,
+      "packageManager": "GENERIC",
+      "filePath": "/usr/local/bin/sensuctl",
+      "fixedInVersion": "1.26.9",
+      "remediation": "Update affected packages to fixed version (or newer)."
+    },
+    {
+      "name": "golang.org/x/net",
+      "version": "v0.59.0",
+      "sourceLayerHash": "sha256:db11f310711ed91d1ef47a225583883204b577b57bc5d313085a998c4b4017a5",
+      "epoch": 0,
+      "packageManager": "GO",
+      "filePath": "/opt/sensu/bin/sensu-agent",
+      "fixedInVersion": "0.60.0",
+      "remediation": "Update affected packages to fixed version (or newer)."
+    },
+    {
+      "name": "golang.org/x/net",
+      "version": "v0.59.0",
+      "sourceLayerHash": "sha256:ba145bd82b55600b61ce344fe8cd56d4c7ad27719ea5b595963b92b7a07658aa",
+      "epoch": 0,
+      "packageManager": "GO",
+      "filePath": "/opt/sensu/bin/sensu-backend",
+      "fixedInVersion": "0.60.0",
+      "remediation": "Update affected packages to fixed version (or newer)."
+    },
+    {
+      "name": "golang.org/x/net",
+      "version": "v0.59.0",
+      "sourceLayerHash": "sha256:9fb30cb68268f9b65207e7ef2c393b60557b96c681c16a0dd14d11b39712b9fb",
+      "epoch": 0,
+      "packageManager": "GO",
+      "filePath": "/opt/sensu/bin/sensuctl",
+      "fixedInVersion": "0.60.0",
+      "remediation": "Update affected packages to fixed version (or newer)."
+    },
+    {
+      "name": "golang.org/x/net",
+      "version": "v0.59.0",
+      "sourceLayerHash": "sha256:09814bc4645eac7063cfa1c0afaac5d42ecb26daeaf86ae26e63fb3648346cde",
+      "epoch": 0,
+      "packageManager": "GO",
+      "filePath": "/usr/local/bin/sensuctl",
+      "fixedInVersion": "0.60.0",
+      "remediation": "Update affected packages to fixed version (or newer)."
+    }
+  ],
+  "fixAvailable": "YES",
+  "exploitAvailable": "NO",
+  "remediation": "None Provided"
+}
+{
+  "severity": "HIGH",
+  "title": "CVE-2024-24784 - go/stdlib",
+  "cve": "CVE-2024-24784",
+  "packages": [
+    {
+      "name": "go/stdlib",
+      "version": "1.16.15",
+      "sourceLayerHash": "sha256:a9ef17cf5ed43e42fa623c79f4bcfedacc5dfcd15f6e25f65a8f728148ac1bcc",
+      "epoch": 0,
+      "packageManager": "GENERIC",
+      "filePath": "/usr/local/bin/etcdctl",
+      "fixedInVersion": "1.21.8",
+      "remediation": "Update affected packages to fixed version (or newer)."
+    }
+  ],
+  "fixAvailable": "YES",
+  "exploitAvailable": "NO",
+  "remediation": "None Provided"
+}
+{
+  "severity": "HIGH",
+  "title": "CVE-2026-56859 - go/stdlib",
+  "cve": "CVE-2026-56859",
+  "packages": [
+    {
+      "name": "go/stdlib",
+      "version": "1.16.15",
+      "sourceLayerHash": "sha256:a9ef17cf5ed43e42fa623c79f4bcfedacc5dfcd15f6e25f65a8f728148ac1bcc",
+      "epoch": 0,
+      "packageManager": "GENERIC",
+      "filePath": "/usr/local/bin/etcdctl",
+      "fixedInVersion": "1.25.13",
+      "remediation": "Update affected packages to fixed version (or newer)."
+    }
+  ],
+  "fixAvailable": "YES",
+  "exploitAvailable": "NO",
+  "remediation": "None Provided"
+}
+{
+  "severity": "HIGH",
+  "title": "CVE-2023-39325 - go/stdlib",
+  "cve": "CVE-2023-39325",
+  "packages": [
+    {
+      "name": "go/stdlib",
+      "version": "1.16.15",
+      "sourceLayerHash": "sha256:a9ef17cf5ed43e42fa623c79f4bcfedacc5dfcd15f6e25f65a8f728148ac1bcc",
+      "epoch": 0,
+      "packageManager": "GENERIC",
+      "filePath": "/usr/local/bin/etcdctl",
+      "fixedInVersion": "1.20.10",
+      "remediation": "Update affected packages to fixed version (or newer)."
+    }
+  ],
+  "fixAvailable": "YES",
+  "exploitAvailable": "NO",
+  "remediation": "None Provided"
+}
+{
+  "severity": "HIGH",
+  "title": "CVE-2022-41715 - go/stdlib",
+  "cve": "CVE-2022-41715",
+  "packages": [
+    {
+      "name": "go/stdlib",
+      "version": "1.16.15",
+      "sourceLayerHash": "sha256:a9ef17cf5ed43e42fa623c79f4bcfedacc5dfcd15f6e25f65a8f728148ac1bcc",
+      "epoch": 0,
+      "packageManager": "GENERIC",
+      "filePath": "/usr/local/bin/etcdctl",
+      "fixedInVersion": "1.18.7",
+      "remediation": "Update affected packages to fixed version (or newer)."
+    }
+  ],
+  "fixAvailable": "YES",
+  "exploitAvailable": "NO",
+  "remediation": "None Provided"
+}
+{
+  "severity": "CRITICAL",
+  "title": "CVE-2026-39821 - go/stdlib",
+  "cve": "CVE-2026-39821",
+  "packages": [
+    {
+      "name": "go/stdlib",
+      "version": "1.16.15",
+      "sourceLayerHash": "sha256:a9ef17cf5ed43e42fa623c79f4bcfedacc5dfcd15f6e25f65a8f728148ac1bcc",
+      "epoch": 0,
+      "packageManager": "GENERIC",
+      "filePath": "/usr/local/bin/etcdctl",
+      "fixedInVersion": "1.25.13",
+      "remediation": "Update affected packages to fixed version (or newer)."
+    }
+  ],
+  "fixAvailable": "YES",
+  "exploitAvailable": "NO",
+  "remediation": "None Provided"
+}
+{
+  "severity": "CRITICAL",
+  "title": "CVE-2026-78663 - go/stdlib, go/stdlib and 7 more",
+  "cve": "CVE-2026-78663",
+  "packages": [
+    {
+      "name": "go/stdlib",
+      "version": "1.16.15",
+      "sourceLayerHash": "sha256:a9ef17cf5ed43e42fa623c79f4bcfedacc5dfcd15f6e25f65a8f728148ac1bcc",
+      "epoch": 0,
+      "packageManager": "GENERIC",
+      "filePath": "/usr/local/bin/etcdctl",
+      "fixedInVersion": "1.26.9",
+      "remediation": "Update affected packages to fixed version (or newer)."
+    },
+    {
+      "name": "go/stdlib",
+      "version": "1.26.8",
+      "sourceLayerHash": "sha256:db11f310711ed91d1ef47a225583883204b577b57bc5d313085a998c4b4017a5",
+      "epoch": 0,
+      "packageManager": "GENERIC",
+      "filePath": "/opt/sensu/bin/sensu-agent",
+      "fixedInVersion": "1.26.9",
+      "remediation": "Update affected packages to fixed version (or newer)."
+    },
+    {
+      "name": "go/stdlib",
+      "version": "1.26.8",
+      "sourceLayerHash": "sha256:ba145bd82b55600b61ce344fe8cd56d4c7ad27719ea5b595963b92b7a07658aa",
+      "epoch": 0,
+      "packageManager": "GENERIC",
+      "filePath": "/opt/sensu/bin/sensu-backend",
+      "fixedInVersion": "1.26.9",
+      "remediation": "Update affected packages to fixed version (or newer)."
+    },
+    {
+      "name": "go/stdlib",
+      "version": "1.26.8",
+      "sourceLayerHash": "sha256:9fb30cb68268f9b65207e7ef2c393b60557b96c681c16a0dd14d11b39712b9fb",
+      "epoch": 0,
+      "packageManager": "GENERIC",
+      "filePath": "/opt/sensu/bin/sensuctl",
+      "fixedInVersion": "1.26.9",
+      "remediation": "Update affected packages to fixed version (or newer)."
+    },
+    {
+      "name": "go/stdlib",
+      "version": "1.26.8",
+      "sourceLayerHash": "sha256:09814bc4645eac7063cfa1c0afaac5d42ecb26daeaf86ae26e63fb3648346cde",
+      "epoch": 0,
+      "packageManager": "GENERIC",
+      "filePath": "/usr/local/bin/sensuctl",
+      "fixedInVersion": "1.26.9",
+      "remediation": "Update affected packages to fixed version (or newer)."
+    },
+    {
+      "name": "golang.org/x/net",
+      "version": "v0.59.0",
+      "sourceLayerHash": "sha256:db11f310711ed91d1ef47a225583883204b577b57bc5d313085a998c4b4017a5",
+      "epoch": 0,
+      "packageManager": "GO",
+      "filePath": "/opt/sensu/bin/sensu-agent",
+      "fixedInVersion": "0.60.0",
+      "remediation": "Update affected packages to fixed version (or newer)."
+    },
+    {
+      "name": "golang.org/x/net",
+      "version": "v0.59.0",
+      "sourceLayerHash": "sha256:ba145bd82b55600b61ce344fe8cd56d4c7ad27719ea5b595963b92b7a07658aa",
+      "epoch": 0,
+      "packageManager": "GO",
+      "filePath": "/opt/sensu/bin/sensu-backend",
+      "fixedInVersion": "0.60.0",
+      "remediation": "Update affected packages to fixed version (or newer)."
+    },
+    {
+      "name": "golang.org/x/net",
+      "version": "v0.59.0",
+      "sourceLayerHash": "sha256:9fb30cb68268f9b65207e7ef2c393b60557b96c681c16a0dd14d11b39712b9fb",
+      "epoch": 0,
+      "packageManager": "GO",
+      "filePath": "/opt/sensu/bin/sensuctl",
+      "fixedInVersion": "0.60.0",
+      "remediation": "Update affected packages to fixed version (or newer)."
+    },
+    {
+      "name": "golang.org/x/net",
+      "version": "v0.59.0",
+      "sourceLayerHash": "sha256:09814bc4645eac7063cfa1c0afaac5d42ecb26daeaf86ae26e63fb3648346cde",
+      "epoch": 0,
+      "packageManager": "GO",
+      "filePath": "/usr/local/bin/sensuctl",
+      "fixedInVersion": "0.60.0",
+      "remediation": "Update affected packages to fixed version (or newer)."
+    }
+  ],
+  "fixAvailable": "YES",
+  "exploitAvailable": "NO",
+  "remediation": "None Provided"
+}
+{
+  "severity": "HIGH",
+  "title": "CVE-2026-56853 - go/stdlib",
+  "cve": "CVE-2026-56853",
+  "packages": [
+    {
+      "name": "go/stdlib",
+      "version": "1.16.15",
+      "sourceLayerHash": "sha256:a9ef17cf5ed43e42fa623c79f4bcfedacc5dfcd15f6e25f65a8f728148ac1bcc",
+      "epoch": 0,
+      "packageManager": "GENERIC",
+      "filePath": "/usr/local/bin/etcdctl",
+      "fixedInVersion": "1.25.13",
+      "remediation": "Update affected packages to fixed version (or newer)."
+    }
+  ],
+  "fixAvailable": "YES",
+  "exploitAvailable": "NO",
+  "remediation": "None Provided"
+}
+{
+  "severity": "HIGH",
+  "title": "CVE-2022-30630 - go/stdlib",
+  "cve": "CVE-2022-30630",
+  "packages": [
+    {
+      "name": "go/stdlib",
+      "version": "1.16.15",
+      "sourceLayerHash": "sha256:a9ef17cf5ed43e42fa623c79f4bcfedacc5dfcd15f6e25f65a8f728148ac1bcc",
+      "epoch": 0,
+      "packageManager": "GENERIC",
+      "filePath": "/usr/local/bin/etcdctl",
+      "fixedInVersion": "1.17.12",
+      "remediation": "Update affected packages to fixed version (or newer)."
+    }
+  ],
+  "fixAvailable": "YES",
+  "exploitAvailable": "NO",
+  "remediation": "None Provided"
+}
+{
+  "severity": "HIGH",
+  "title": "CVE-2026-42504 - go/stdlib",
+  "cve": "CVE-2026-42504",
+  "packages": [
+    {
+      "name": "go/stdlib",
+      "version": "1.16.15",
+      "sourceLayerHash": "sha256:a9ef17cf5ed43e42fa623c79f4bcfedacc5dfcd15f6e25f65a8f728148ac1bcc",
+      "epoch": 0,
+      "packageManager": "GENERIC",
+      "filePath": "/usr/local/bin/etcdctl",
+      "fixedInVersion": "1.25.11",
+      "remediation": "Update affected packages to fixed version (or newer)."
+    }
+  ],
+  "fixAvailable": "YES",
+  "exploitAvailable": "NO",
+  "remediation": "None Provided"
+}
+{
+  "severity": "HIGH",
+  "title": "CVE-2025-61729 - go/stdlib",
+  "cve": "CVE-2025-61729",
+  "packages": [
+    {
+      "name": "go/stdlib",
+      "version": "1.16.15",
+      "sourceLayerHash": "sha256:a9ef17cf5ed43e42fa623c79f4bcfedacc5dfcd15f6e25f65a8f728148ac1bcc",
+      "epoch": 0,
+      "packageManager": "GENERIC",
+      "filePath": "/usr/local/bin/etcdctl",
+      "fixedInVersion": "1.24.11",
+      "remediation": "Update affected packages to fixed version (or newer)."
+    }
+  ],
+  "fixAvailable": "YES",
+  "exploitAvailable": "NO",
+  "remediation": "None Provided"
+}
+{
+  "severity": "HIGH",
+  "title": "CVE-2023-45283 - go/stdlib",
+  "cve": "CVE-2023-45283",
+  "packages": [
+    {
+      "name": "go/stdlib",
+      "version": "1.16.15",
+      "sourceLayerHash": "sha256:a9ef17cf5ed43e42fa623c79f4bcfedacc5dfcd15f6e25f65a8f728148ac1bcc",
+      "epoch": 0,
+      "packageManager": "GENERIC",
+      "filePath": "/usr/local/bin/etcdctl",
+      "fixedInVersion": "1.20.11",
+      "remediation": "Update affected packages to fixed version (or newer)."
+    }
+  ],
+  "fixAvailable": "YES",
+  "exploitAvailable": "NO",
+  "remediation": "None Provided"
+}
+{
+  "severity": "HIGH",
+  "title": "CVE-2022-41724 - go/stdlib",
+  "cve": "CVE-2022-41724",
+  "packages": [
+    {
+      "name": "go/stdlib",
+      "version": "1.16.15",
+      "sourceLayerHash": "sha256:a9ef17cf5ed43e42fa623c79f4bcfedacc5dfcd15f6e25f65a8f728148ac1bcc",
+      "epoch": 0,
+      "packageManager": "GENERIC",
+      "filePath": "/usr/local/bin/etcdctl",
+      "fixedInVersion": "1.19.6",
+      "remediation": "Update affected packages to fixed version (or newer)."
+    }
+  ],
+  "fixAvailable": "YES",
+  "exploitAvailable": "NO",
+  "remediation": "None Provided"
+}
+{
+  "severity": "HIGH",
+  "title": "CVE-2026-78661 - golang.org/x/net, golang.org/x/net and 2 more",
+  "cve": "CVE-2026-78661",
+  "packages": [
+    {
+      "name": "golang.org/x/net",
+      "version": "v0.59.0",
+      "sourceLayerHash": "sha256:db11f310711ed91d1ef47a225583883204b577b57bc5d313085a998c4b4017a5",
+      "epoch": 0,
+      "packageManager": "GO",
+      "filePath": "/opt/sensu/bin/sensu-agent",
+      "fixedInVersion": "0.62.0",
+      "remediation": "Update affected packages to fixed version (or newer)."
+    },
+    {
+      "name": "golang.org/x/net",
+      "version": "v0.59.0",
+      "sourceLayerHash": "sha256:ba145bd82b55600b61ce344fe8cd56d4c7ad27719ea5b595963b92b7a07658aa",
+      "epoch": 0,
+      "packageManager": "GO",
+      "filePath": "/opt/sensu/bin/sensu-backend",
+      "fixedInVersion": "0.62.0",
+      "remediation": "Update affected packages to fixed version (or newer)."
+    },
+    {
+      "name": "golang.org/x/net",
+      "version": "v0.59.0",
+      "sourceLayerHash": "sha256:9fb30cb68268f9b65207e7ef2c393b60557b96c681c16a0dd14d11b39712b9fb",
+      "epoch": 0,
+      "packageManager": "GO",
+      "filePath": "/opt/sensu/bin/sensuctl",
+      "fixedInVersion": "0.62.0",
+      "remediation": "Update affected packages to fixed version (or newer)."
+    },
+    {
+      "name": "golang.org/x/net",
+      "version": "v0.59.0",
+      "sourceLayerHash": "sha256:09814bc4645eac7063cfa1c0afaac5d42ecb26daeaf86ae26e63fb3648346cde",
+      "epoch": 0,
+      "packageManager": "GO",
+      "filePath": "/usr/local/bin/sensuctl",
+      "fixedInVersion": "0.62.0",
+      "remediation": "Update affected packages to fixed version (or newer)."
+    }
+  ],
+  "fixAvailable": "YES",
+  "exploitAvailable": "NO",
+  "remediation": "None Provided"
+}
+{
+  "severity": "HIGH",
+  "title": "CVE-2022-27664 - go/stdlib",
+  "cve": "CVE-2022-27664",
+  "packages": [
+    {
+      "name": "go/stdlib",
+      "version": "1.16.15",
+      "sourceLayerHash": "sha256:a9ef17cf5ed43e42fa623c79f4bcfedacc5dfcd15f6e25f65a8f728148ac1bcc",
+      "epoch": 0,
+      "packageManager": "GENERIC",
+      "filePath": "/usr/local/bin/etcdctl",
+      "fixedInVersion": "1.18.6",
+      "remediation": "Update affected packages to fixed version (or newer)."
+    }
+  ],
+  "fixAvailable": "YES",
+  "exploitAvailable": "NO",
+  "remediation": "None Provided"
+}
+{
+  "severity": "HIGH",
+  "title": "CVE-2023-24539 - go/stdlib",
+  "cve": "CVE-2023-24539",
+  "packages": [
+    {
+      "name": "go/stdlib",
+      "version": "1.16.15",
+      "sourceLayerHash": "sha256:a9ef17cf5ed43e42fa623c79f4bcfedacc5dfcd15f6e25f65a8f728148ac1bcc",
+      "epoch": 0,
+      "packageManager": "GENERIC",
+      "filePath": "/usr/local/bin/etcdctl",
+      "fixedInVersion": "1.19.9",
+      "remediation": "Update affected packages to fixed version (or newer)."
+    }
+  ],
+  "fixAvailable": "YES",
+  "exploitAvailable": "NO",
+  "remediation": "None Provided"
+}
+{
+  "severity": "HIGH",
+  "title": "CVE-2026-56851 - golang.org/x/text",
+  "cve": "CVE-2026-56851",
+  "packages": [
+    {
+      "name": "golang.org/x/text",
+      "version": "v0.3.6",
+      "sourceLayerHash": "sha256:a9ef17cf5ed43e42fa623c79f4bcfedacc5dfcd15f6e25f65a8f728148ac1bcc",
+      "epoch": 0,
+      "packageManager": "GO",
+      "filePath": "/usr/local/bin/etcdctl",
+      "fixedInVersion": "0.41.0",
+      "remediation": "Update affected packages to fixed version (or newer)."
+    }
+  ],
+  "fixAvailable": "YES",
+  "exploitAvailable": "NO",
+  "remediation": "None Provided"
+}
+{
+  "severity": "HIGH",
+  "title": "CVE-2022-30631 - go/stdlib",
+  "cve": "CVE-2022-30631",
+  "packages": [
+    {
+      "name": "go/stdlib",
+      "version": "1.16.15",
+      "sourceLayerHash": "sha256:a9ef17cf5ed43e42fa623c79f4bcfedacc5dfcd15f6e25f65a8f728148ac1bcc",
+      "epoch": 0,
+      "packageManager": "GENERIC",
+      "filePath": "/usr/local/bin/etcdctl",
+      "fixedInVersion": "1.17.12",
+      "remediation": "Update affected packages to fixed version (or newer)."
+    }
+  ],
+  "fixAvailable": "YES",
+  "exploitAvailable": "NO",
+  "remediation": "None Provided"
+}
+{
+  "severity": "CRITICAL",
+  "title": "CVE-2023-24538 - go/stdlib",
+  "cve": "CVE-2023-24538",
+  "packages": [
+    {
+      "name": "go/stdlib",
+      "version": "1.16.15",
+      "sourceLayerHash": "sha256:a9ef17cf5ed43e42fa623c79f4bcfedacc5dfcd15f6e25f65a8f728148ac1bcc",
+      "epoch": 0,
+      "packageManager": "GENERIC",
+      "filePath": "/usr/local/bin/etcdctl",
+      "fixedInVersion": "1.19.8",
+      "remediation": "Update affected packages to fixed version (or newer)."
+    }
+  ],
+  "fixAvailable": "YES",
+  "exploitAvailable": "NO",
+  "remediation": "None Provided"
+}
+{
+  "severity": "HIGH",
+  "title": "CVE-2022-2880 - go/stdlib",
+  "cve": "CVE-2022-2880",
+  "packages": [
+    {
+      "name": "go/stdlib",
+      "version": "1.16.15",
+      "sourceLayerHash": "sha256:a9ef17cf5ed43e42fa623c79f4bcfedacc5dfcd15f6e25f65a8f728148ac1bcc",
+      "epoch": 0,
+      "packageManager": "GENERIC",
+      "filePath": "/usr/local/bin/etcdctl",
+      "fixedInVersion": "1.18.7",
+      "remediation": "Update affected packages to fixed version (or newer)."
+    }
+  ],
+  "fixAvailable": "YES",
+  "exploitAvailable": "YES",
+  "remediation": "None Provided"
+}
+{
+  "severity": "HIGH",
+  "title": "CVE-2021-38561 - golang.org/x/text",
+  "cve": "CVE-2021-38561",
+  "packages": [
+    {
+      "name": "golang.org/x/text",
+      "version": "v0.3.6",
+      "sourceLayerHash": "sha256:a9ef17cf5ed43e42fa623c79f4bcfedacc5dfcd15f6e25f65a8f728148ac1bcc",
+      "epoch": 0,
+      "packageManager": "GO",
+      "filePath": "/usr/local/bin/etcdctl",
+      "fixedInVersion": "0.3.7",
+      "remediation": "Update affected packages to fixed version (or newer)."
+    }
+  ],
+  "fixAvailable": "YES",
+  "exploitAvailable": "NO",
+  "remediation": "None Provided"
+}
+{
+  "severity": "CRITICAL",
+  "title": "CVE-2026-33186 - google.golang.org/grpc",
+  "cve": "CVE-2026-33186",
+  "packages": [
+    {
+      "name": "google.golang.org/grpc",
+      "version": "v1.38.0",
+      "sourceLayerHash": "sha256:a9ef17cf5ed43e42fa623c79f4bcfedacc5dfcd15f6e25f65a8f728148ac1bcc",
+      "epoch": 0,
+      "packageManager": "GO",
+      "filePath": "/usr/local/bin/etcdctl",
+      "fixedInVersion": "1.79.3",
+      "remediation": "Update affected packages to fixed version (or newer)."
+    }
+  ],
+  "fixAvailable": "YES",
+  "exploitAvailable": "YES",
+  "remediation": "None Provided"
+}
+{
+  "severity": "HIGH",
+  "title": "CVE-2025-61725 - go/stdlib",
+  "cve": "CVE-2025-61725",
+  "packages": [
+    {
+      "name": "go/stdlib",
+      "version": "1.16.15",
+      "sourceLayerHash": "sha256:a9ef17cf5ed43e42fa623c79f4bcfedacc5dfcd15f6e25f65a8f728148ac1bcc",
+      "epoch": 0,
+      "packageManager": "GENERIC",
+      "filePath": "/usr/local/bin/etcdctl",
+      "fixedInVersion": "1.24.8",
+      "remediation": "Update affected packages to fixed version (or newer)."
+    }
+  ],
+  "fixAvailable": "YES",
+  "exploitAvailable": "NO",
+  "remediation": "None Provided"
+}
+{
+  "severity": "HIGH",
+  "title": "CVE-2026-94439 - go/stdlib, go/stdlib and 3 more",
+  "cve": "CVE-2026-94439",
+  "packages": [
+    {
+      "name": "go/stdlib",
+      "version": "1.16.15",
+      "sourceLayerHash": "sha256:a9ef17cf5ed43e42fa623c79f4bcfedacc5dfcd15f6e25f65a8f728148ac1bcc",
+      "epoch": 0,
+      "packageManager": "GENERIC",
+      "filePath": "/usr/local/bin/etcdctl",
+      "fixedInVersion": "1.26.9",
+      "remediation": "Update affected packages to fixed version (or newer)."
+    },
+    {
+      "name": "go/stdlib",
+      "version": "1.26.8",
+      "sourceLayerHash": "sha256:db11f310711ed91d1ef47a225583883204b577b57bc5d313085a998c4b4017a5",
+      "epoch": 0,
+      "packageManager": "GENERIC",
+      "filePath": "/opt/sensu/bin/sensu-agent",
+      "fixedInVersion": "1.26.9",
+      "remediation": "Update affected packages to fixed version (or newer)."
+    },
+    {
+      "name": "go/stdlib",
+      "version": "1.26.8",
+      "sourceLayerHash": "sha256:ba145bd82b55600b61ce344fe8cd56d4c7ad27719ea5b595963b92b7a07658aa",
+      "epoch": 0,
+      "packageManager": "GENERIC",
+      "filePath": "/opt/sensu/bin/sensu-backend",
+      "fixedInVersion": "1.26.9",
+      "remediation": "Update affected packages to fixed version (or newer)."
+    },
+    {
+      "name": "go/stdlib",
+      "version": "1.26.8",
+      "sourceLayerHash": "sha256:9fb30cb68268f9b65207e7ef2c393b60557b96c681c16a0dd14d11b39712b9fb",
+      "epoch": 0,
+      "packageManager": "GENERIC",
+      "filePath": "/opt/sensu/bin/sensuctl",
+      "fixedInVersion": "1.26.9",
+      "remediation": "Update affected packages to fixed version (or newer)."
+    },
+    {
+      "name": "go/stdlib",
+      "version": "1.26.8",
+      "sourceLayerHash": "sha256:09814bc4645eac7063cfa1c0afaac5d42ecb26daeaf86ae26e63fb3648346cde",
+      "epoch": 0,
+      "packageManager": "GENERIC",
+      "filePath": "/usr/local/bin/sensuctl",
+      "fixedInVersion": "1.26.9",
+      "remediation": "Update affected packages to fixed version (or newer)."
+    }
+  ],
+  "fixAvailable": "YES",
+  "exploitAvailable": "NO",
+  "remediation": "None Provided"
+}
+{
+  "severity": "HIGH",
+  "title": "CVE-2026-32280 - go/stdlib",
+  "cve": "CVE-2026-32280",
+  "packages": [
+    {
+      "name": "go/stdlib",
+      "version": "1.16.15",
+      "sourceLayerHash": "sha256:a9ef17cf5ed43e42fa623c79f4bcfedacc5dfcd15f6e25f65a8f728148ac1bcc",
+      "epoch": 0,
+      "packageManager": "GENERIC",
+      "filePath": "/usr/local/bin/etcdctl",
+      "fixedInVersion": "1.25.9",
+      "remediation": "Update affected packages to fixed version (or newer)."
+    }
+  ],
+  "fixAvailable": "YES",
+  "exploitAvailable": "NO",
+  "remediation": "None Provided"
+}
+{
+  "severity": "HIGH",
+  "title": "CVE-2026-97031 - go/stdlib, go/stdlib and 3 more",
+  "cve": "CVE-2026-97031",
+  "packages": [
+    {
+      "name": "go/stdlib",
+      "version": "1.16.15",
+      "sourceLayerHash": "sha256:a9ef17cf5ed43e42fa623c79f4bcfedacc5dfcd15f6e25f65a8f728148ac1bcc",
+      "epoch": 0,
+      "packageManager": "GENERIC",
+      "filePath": "/usr/local/bin/etcdctl",
+      "fixedInVersion": "1.26.9",
+      "remediation": "Update affected packages to fixed version (or newer)."
+    },
+    {
+      "name": "go/stdlib",
+      "version": "1.26.8",
+      "sourceLayerHash": "sha256:db11f310711ed91d1ef47a225583883204b577b57bc5d313085a998c4b4017a5",
+      "epoch": 0,
+      "packageManager": "GENERIC",
+      "filePath": "/opt/sensu/bin/sensu-agent",
+      "fixedInVersion": "1.26.9",
+      "remediation": "Update affected packages to fixed version (or newer)."
+    },
+    {
+      "name": "go/stdlib",
+      "version": "1.26.8",
+      "sourceLayerHash": "sha256:ba145bd82b55600b61ce344fe8cd56d4c7ad27719ea5b595963b92b7a07658aa",
+      "epoch": 0,
+      "packageManager": "GENERIC",
+      "filePath": "/opt/sensu/bin/sensu-backend",
+      "fixedInVersion": "1.26.9",
+      "remediation": "Update affected packages to fixed version (or newer)."
+    },
+    {
+      "name": "go/stdlib",
+      "version": "1.26.8",
+      "sourceLayerHash": "sha256:9fb30cb68268f9b65207e7ef2c393b60557b96c681c16a0dd14d11b39712b9fb",
+      "epoch": 0,
+      "packageManager": "GENERIC",
+      "filePath": "/opt/sensu/bin/sensuctl",
+      "fixedInVersion": "1.26.9",
+      "remediation": "Update affected packages to fixed version (or newer)."
+    },
+    {
+      "name": "go/stdlib",
+      "version": "1.26.8",
+      "sourceLayerHash": "sha256:09814bc4645eac7063cfa1c0afaac5d42ecb26daeaf86ae26e63fb3648346cde",
+      "epoch": 0,
+      "packageManager": "GENERIC",
+      "filePath": "/usr/local/bin/sensuctl",
+      "fixedInVersion": "1.26.9",
+      "remediation": "Update affected packages to fixed version (or newer)."
+    }
+  ],
+  "fixAvailable": "YES",
+  "exploitAvailable": "NO",
+  "remediation": "None Provided"
+}
+{
+  "severity": "HIGH",
+  "title": "CVE-2026-56862 - go/stdlib",
+  "cve": "CVE-2026-56862",
+  "packages": [
+    {
+      "name": "go/stdlib",
+      "version": "1.16.15",
+      "sourceLayerHash": "sha256:a9ef17cf5ed43e42fa623c79f4bcfedacc5dfcd15f6e25f65a8f728148ac1bcc",
+      "epoch": 0,
+      "packageManager": "GENERIC",
+      "filePath": "/usr/local/bin/etcdctl",
+      "fixedInVersion": "1.25.13",
+      "remediation": "Update affected packages to fixed version (or newer)."
+    }
+  ],
+  "fixAvailable": "YES",
+  "exploitAvailable": "NO",
+  "remediation": "None Provided"
+}
+{
+  "severity": "CRITICAL",
+  "title": "CVE-2023-24540 - go/stdlib",
+  "cve": "CVE-2023-24540",
+  "packages": [
+    {
+      "name": "go/stdlib",
+      "version": "1.16.15",
+      "sourceLayerHash": "sha256:a9ef17cf5ed43e42fa623c79f4bcfedacc5dfcd15f6e25f65a8f728148ac1bcc",
+      "epoch": 0,
+      "packageManager": "GENERIC",
+      "filePath": "/usr/local/bin/etcdctl",
+      "fixedInVersion": "1.19.9",
+      "remediation": "Update affected packages to fixed version (or newer)."
+    }
+  ],
+  "fixAvailable": "YES",
+  "exploitAvailable": "NO",
+  "remediation": "None Provided"
+}
+{
+  "severity": "HIGH",
+  "title": "CVE-2026-32281 - go/stdlib",
+  "cve": "CVE-2026-32281",
+  "packages": [
+    {
+      "name": "go/stdlib",
+      "version": "1.16.15",
+      "sourceLayerHash": "sha256:a9ef17cf5ed43e42fa623c79f4bcfedacc5dfcd15f6e25f65a8f728148ac1bcc",
+      "epoch": 0,
+      "packageManager": "GENERIC",
+      "filePath": "/usr/local/bin/etcdctl",
+      "fixedInVersion": "1.25.9",
+      "remediation": "Update affected packages to fixed version (or newer)."
+    }
+  ],
+  "fixAvailable": "YES",
+  "exploitAvailable": "NO",
+  "remediation": "None Provided"
+}
+{
+  "severity": "HIGH",
+  "title": "CVE-2025-58187 - go/stdlib",
+  "cve": "CVE-2025-58187",
+  "packages": [
+    {
+      "name": "go/stdlib",
+      "version": "1.16.15",
+      "sourceLayerHash": "sha256:a9ef17cf5ed43e42fa623c79f4bcfedacc5dfcd15f6e25f65a8f728148ac1bcc",
+      "epoch": 0,
+      "packageManager": "GENERIC",
+      "filePath": "/usr/local/bin/etcdctl",
+      "fixedInVersion": "1.24.9",
+      "remediation": "Update affected packages to fixed version (or newer)."
+    }
+  ],
+  "fixAvailable": "YES",
+  "exploitAvailable": "NO",
+  "remediation": "None Provided"
+}
+{
+  "severity": "HIGH",
+  "title": "CVE-2026-116587 - github.com/go-jose/go-jose/v4, github.com/go-jose/go-jose/v4 and 1 more",
+  "cve": "CVE-2026-116587",
+  "packages": [
+    {
+      "name": "github.com/go-jose/go-jose/v4",
+      "version": "v4.1.4",
+      "sourceLayerHash": "sha256:ba145bd82b55600b61ce344fe8cd56d4c7ad27719ea5b595963b92b7a07658aa",
+      "epoch": 0,
+      "packageManager": "GO",
+      "filePath": "/opt/sensu/bin/sensu-backend",
+      "fixedInVersion": "4.1.6",
+      "remediation": "Update affected packages to fixed version (or newer)."
+    },
+    {
+      "name": "github.com/go-jose/go-jose/v4",
+      "version": "v4.1.4",
+      "sourceLayerHash": "sha256:9fb30cb68268f9b65207e7ef2c393b60557b96c681c16a0dd14d11b39712b9fb",
+      "epoch": 0,
+      "packageManager": "GO",
+      "filePath": "/opt/sensu/bin/sensuctl",
+      "fixedInVersion": "4.1.6",
+      "remediation": "Update affected packages to fixed version (or newer)."
+    },
+    {
+      "name": "github.com/go-jose/go-jose/v4",
+      "version": "v4.1.4",
+      "sourceLayerHash": "sha256:09814bc4645eac7063cfa1c0afaac5d42ecb26daeaf86ae26e63fb3648346cde",
+      "epoch": 0,
+      "packageManager": "GO",
+      "filePath": "/usr/local/bin/sensuctl",
+      "fixedInVersion": "4.1.6",
+      "remediation": "Update affected packages to fixed version (or newer)."
+    }
+  ],
+  "fixAvailable": "YES",
+  "exploitAvailable": "YES",
+  "remediation": "None Provided"
+}
+{
+  "severity": "HIGH",
+  "title": "CVE-2026-39820 - go/stdlib",
+  "cve": "CVE-2026-39820",
+  "packages": [
+    {
+      "name": "go/stdlib",
+      "version": "1.16.15",
+      "sourceLayerHash": "sha256:a9ef17cf5ed43e42fa623c79f4bcfedacc5dfcd15f6e25f65a8f728148ac1bcc",
+      "epoch": 0,
+      "packageManager": "GENERIC",
+      "filePath": "/usr/local/bin/etcdctl",
+      "fixedInVersion": "1.25.10",
+      "remediation": "Update affected packages to fixed version (or newer)."
+    }
+  ],
+  "fixAvailable": "YES",
+  "exploitAvailable": "NO",
+  "remediation": "None Provided"
+}
+{
+  "severity": "HIGH",
+  "title": "CVE-2023-24537 - go/stdlib",
+  "cve": "CVE-2023-24537",
+  "packages": [
+    {
+      "name": "go/stdlib",
+      "version": "1.16.15",
+      "sourceLayerHash": "sha256:a9ef17cf5ed43e42fa623c79f4bcfedacc5dfcd15f6e25f65a8f728148ac1bcc",
+      "epoch": 0,
+      "packageManager": "GENERIC",
+      "filePath": "/usr/local/bin/etcdctl",
+      "fixedInVersion": "1.19.8",
+      "remediation": "Update affected packages to fixed version (or newer)."
+    }
+  ],
+  "fixAvailable": "YES",
+  "exploitAvailable": "NO",
+  "remediation": "None Provided"
+}
+{
+  "severity": "HIGH",
+  "title": "CVE-2024-24791 - go/stdlib",
+  "cve": "CVE-2024-24791",
+  "packages": [
+    {
+      "name": "go/stdlib",
+      "version": "1.16.15",
+      "sourceLayerHash": "sha256:a9ef17cf5ed43e42fa623c79f4bcfedacc5dfcd15f6e25f65a8f728148ac1bcc",
+      "epoch": 0,
+      "packageManager": "GENERIC",
+      "filePath": "/usr/local/bin/etcdctl",
+      "fixedInVersion": "1.21.12",
+      "remediation": "Update affected packages to fixed version (or newer)."
+    }
+  ],
+  "fixAvailable": "YES",
+  "exploitAvailable": "NO",
+  "remediation": "None Provided"
+}
+{
+  "severity": "CRITICAL",
+  "title": "CVE-2024-24790 - go/stdlib",
+  "cve": "CVE-2024-24790",
+  "packages": [
+    {
+      "name": "go/stdlib",
+      "version": "1.16.15",
+      "sourceLayerHash": "sha256:a9ef17cf5ed43e42fa623c79f4bcfedacc5dfcd15f6e25f65a8f728148ac1bcc",
+      "epoch": 0,
+      "packageManager": "GENERIC",
+      "filePath": "/usr/local/bin/etcdctl",
+      "fixedInVersion": "1.21.11",
+      "remediation": "Update affected packages to fixed version (or newer)."
+    }
+  ],
+  "fixAvailable": "YES",
+  "exploitAvailable": "NO",
+  "remediation": "None Provided"
+}
+{
+  "severity": "HIGH",
+  "title": "CVE-2022-30580 - go/stdlib",
+  "cve": "CVE-2022-30580",
+  "packages": [
+    {
+      "name": "go/stdlib",
+      "version": "1.16.15",
+      "sourceLayerHash": "sha256:a9ef17cf5ed43e42fa623c79f4bcfedacc5dfcd15f6e25f65a8f728148ac1bcc",
+      "epoch": 0,
+      "packageManager": "GENERIC",
+      "filePath": "/usr/local/bin/etcdctl",
+      "fixedInVersion": "1.17.11",
+      "remediation": "Update affected packages to fixed version (or newer)."
+    }
+  ],
+  "fixAvailable": "YES",
+  "exploitAvailable": "NO",
+  "remediation": "None Provided"
+}
+{
+  "severity": "HIGH",
+  "title": "CVE-2022-30633 - go/stdlib",
+  "cve": "CVE-2022-30633",
+  "packages": [
+    {
+      "name": "go/stdlib",
+      "version": "1.16.15",
+      "sourceLayerHash": "sha256:a9ef17cf5ed43e42fa623c79f4bcfedacc5dfcd15f6e25f65a8f728148ac1bcc",
+      "epoch": 0,
+      "packageManager": "GENERIC",
+      "filePath": "/usr/local/bin/etcdctl",
+      "fixedInVersion": "1.17.12",
+      "remediation": "Update affected packages to fixed version (or newer)."
+    }
+  ],
+  "fixAvailable": "YES",
+  "exploitAvailable": "NO",
+  "remediation": "None Provided"
+}
+{
+  "severity": "HIGH",
+  "title": "CVE-2026-33814 - go/stdlib",
+  "cve": "CVE-2026-33814",
+  "packages": [
+    {
+      "name": "go/stdlib",
+      "version": "1.16.15",
+      "sourceLayerHash": "sha256:a9ef17cf5ed43e42fa623c79f4bcfedacc5dfcd15f6e25f65a8f728148ac1bcc",
+      "epoch": 0,
+      "packageManager": "GENERIC",
+      "filePath": "/usr/local/bin/etcdctl",
+      "fixedInVersion": "1.25.10",
+      "remediation": "Update affected packages to fixed version (or newer)."
+    }
+  ],
+  "fixAvailable": "YES",
+  "exploitAvailable": "NO",
+  "remediation": "None Provided"
+}
+{
+  "severity": "HIGH",
+  "title": "CVE-2025-58188 - go/stdlib",
+  "cve": "CVE-2025-58188",
+  "packages": [
+    {
+      "name": "go/stdlib",
+      "version": "1.16.15",
+      "sourceLayerHash": "sha256:a9ef17cf5ed43e42fa623c79f4bcfedacc5dfcd15f6e25f65a8f728148ac1bcc",
+      "epoch": 0,
+      "packageManager": "GENERIC",
+      "filePath": "/usr/local/bin/etcdctl",
+      "fixedInVersion": "1.24.8",
+      "remediation": "Update affected packages to fixed version (or newer)."
+    }
+  ],
+  "fixAvailable": "YES",
+  "exploitAvailable": "NO",
+  "remediation": "None Provided"
+}
+{
+  "severity": "HIGH",
+  "title": "CVE-2022-29804 - go/stdlib",
+  "cve": "CVE-2022-29804",
+  "packages": [
+    {
+      "name": "go/stdlib",
+      "version": "1.16.15",
+      "sourceLayerHash": "sha256:a9ef17cf5ed43e42fa623c79f4bcfedacc5dfcd15f6e25f65a8f728148ac1bcc",
+      "epoch": 0,
+      "packageManager": "GENERIC",
+      "filePath": "/usr/local/bin/etcdctl",
+      "fixedInVersion": "1.17.11",
+      "remediation": "Update affected packages to fixed version (or newer)."
+    }
+  ],
+  "fixAvailable": "YES",
+  "exploitAvailable": "NO",
+  "remediation": "None Provided"
+}
+{
+  "severity": "HIGH",
+  "title": "GHSA-m425-mq94-257g - google.golang.org/grpc",
+  "cve": "GHSA-m425-mq94-257g",
+  "packages": [
+    {
+      "name": "google.golang.org/grpc",
+      "version": "v1.38.0",
+      "sourceLayerHash": "sha256:a9ef17cf5ed43e42fa623c79f4bcfedacc5dfcd15f6e25f65a8f728148ac1bcc",
+      "epoch": 0,
+      "packageManager": "GO",
+      "filePath": "/usr/local/bin/etcdctl",
+      "fixedInVersion": "1.56.3",
+      "remediation": "Update affected packages to fixed version (or newer)."
+    }
+  ],
+  "fixAvailable": "YES",
+  "exploitAvailable": "NO",
+  "remediation": "None Provided"
+}
+{
+  "severity": "HIGH",
+  "title": "CVE-2026-94440 - go/stdlib, go/stdlib and 3 more",
+  "cve": "CVE-2026-94440",
+  "packages": [
+    {
+      "name": "go/stdlib",
+      "version": "1.16.15",
+      "sourceLayerHash": "sha256:a9ef17cf5ed43e42fa623c79f4bcfedacc5dfcd15f6e25f65a8f728148ac1bcc",
+      "epoch": 0,
+      "packageManager": "GENERIC",
+      "filePath": "/usr/local/bin/etcdctl",
+      "fixedInVersion": "1.26.9",
+      "remediation": "Update affected packages to fixed version (or newer)."
+    },
+    {
+      "name": "go/stdlib",
+      "version": "1.26.8",
+      "sourceLayerHash": "sha256:db11f310711ed91d1ef47a225583883204b577b57bc5d313085a998c4b4017a5",
+      "epoch": 0,
+      "packageManager": "GENERIC",
+      "filePath": "/opt/sensu/bin/sensu-agent",
+      "fixedInVersion": "1.26.9",
+      "remediation": "Update affected packages to fixed version (or newer)."
+    },
+    {
+      "name": "go/stdlib",
+      "version": "1.26.8",
+      "sourceLayerHash": "sha256:ba145bd82b55600b61ce344fe8cd56d4c7ad27719ea5b595963b92b7a07658aa",
+      "epoch": 0,
+      "packageManager": "GENERIC",
+      "filePath": "/opt/sensu/bin/sensu-backend",
+      "fixedInVersion": "1.26.9",
+      "remediation": "Update affected packages to fixed version (or newer)."
+    },
+    {
+      "name": "go/stdlib",
+      "version": "1.26.8",
+      "sourceLayerHash": "sha256:9fb30cb68268f9b65207e7ef2c393b60557b96c681c16a0dd14d11b39712b9fb",
+      "epoch": 0,
+      "packageManager": "GENERIC",
+      "filePath": "/opt/sensu/bin/sensuctl",
+      "fixedInVersion": "1.26.9",
+      "remediation": "Update affected packages to fixed version (or newer)."
+    },
+    {
+      "name": "go/stdlib",
+      "version": "1.26.8",
+      "sourceLayerHash": "sha256:09814bc4645eac7063cfa1c0afaac5d42ecb26daeaf86ae26e63fb3648346cde",
+      "epoch": 0,
+      "packageManager": "GENERIC",
+      "filePath": "/usr/local/bin/sensuctl",
+      "fixedInVersion": "1.26.9",
+      "remediation": "Update affected packages to fixed version (or newer)."
+    }
+  ],
+  "fixAvailable": "YES",
+  "exploitAvailable": "NO",
+  "remediation": "None Provided"
+}
+{
+  "severity": "HIGH",
+  "title": "CVE-2024-34158 - go/stdlib",
+  "cve": "CVE-2024-34158",
+  "packages": [
+    {
+      "name": "go/stdlib",
+      "version": "1.16.15",
+      "sourceLayerHash": "sha256:a9ef17cf5ed43e42fa623c79f4bcfedacc5dfcd15f6e25f65a8f728148ac1bcc",
+      "epoch": 0,
+      "packageManager": "GENERIC",
+      "filePath": "/usr/local/bin/etcdctl",
+      "fixedInVersion": "1.22.7",
+      "remediation": "Update affected packages to fixed version (or newer)."
+    }
+  ],
+  "fixAvailable": "YES",
+  "exploitAvailable": "NO",
+  "remediation": "None Provided"
+}
+{
+  "severity": "HIGH",
+  "title": "CVE-2026-25679 - go/stdlib",
+  "cve": "CVE-2026-25679",
+  "packages": [
+    {
+      "name": "go/stdlib",
+      "version": "1.16.15",
+      "sourceLayerHash": "sha256:a9ef17cf5ed43e42fa623c79f4bcfedacc5dfcd15f6e25f65a8f728148ac1bcc",
+      "epoch": 0,
+      "packageManager": "GENERIC",
+      "filePath": "/usr/local/bin/etcdctl",
+      "fixedInVersion": "1.25.8",
+      "remediation": "Update affected packages to fixed version (or newer)."
+    }
+  ],
+  "fixAvailable": "YES",
+  "exploitAvailable": "NO",
+  "remediation": "None Provided"
+}
+{
+  "severity": "HIGH",
+  "title": "CVE-2022-41720 - go/stdlib",
+  "cve": "CVE-2022-41720",
+  "packages": [
+    {
+      "name": "go/stdlib",
+      "version": "1.16.15",
+      "sourceLayerHash": "sha256:a9ef17cf5ed43e42fa623c79f4bcfedacc5dfcd15f6e25f65a8f728148ac1bcc",
+      "epoch": 0,
+      "packageManager": "GENERIC",
+      "filePath": "/usr/local/bin/etcdctl",
+      "fixedInVersion": "1.18.9",
+      "remediation": "Update affected packages to fixed version (or newer)."
+    }
+  ],
+  "fixAvailable": "YES",
+  "exploitAvailable": "NO",
+  "remediation": "None Provided"
+}
+{
+  "severity": "HIGH",
+  "title": "CVE-2023-29403 - go/stdlib",
+  "cve": "CVE-2023-29403",
+  "packages": [
+    {
+      "name": "go/stdlib",
+      "version": "1.16.15",
+      "sourceLayerHash": "sha256:a9ef17cf5ed43e42fa623c79f4bcfedacc5dfcd15f6e25f65a8f728148ac1bcc",
+      "epoch": 0,
+      "packageManager": "GENERIC",
+      "filePath": "/usr/local/bin/etcdctl",
+      "fixedInVersion": "1.19.10",
+      "remediation": "Update affected packages to fixed version (or newer)."
+    }
+  ],
+  "fixAvailable": "YES",
+  "exploitAvailable": "NO",
+  "remediation": "None Provided"
+}
+{
+  "severity": "HIGH",
+  "title": "CVE-2023-29400 - go/stdlib",
+  "cve": "CVE-2023-29400",
+  "packages": [
+    {
+      "name": "go/stdlib",
+      "version": "1.16.15",
+      "sourceLayerHash": "sha256:a9ef17cf5ed43e42fa623c79f4bcfedacc5dfcd15f6e25f65a8f728148ac1bcc",
+      "epoch": 0,
+      "packageManager": "GENERIC",
+      "filePath": "/usr/local/bin/etcdctl",
+      "fixedInVersion": "1.19.9",
+      "remediation": "Update affected packages to fixed version (or newer)."
+    }
+  ],
+  "fixAvailable": "YES",
+  "exploitAvailable": "NO",
+  "remediation": "None Provided"
+}
+{
+  "severity": "HIGH",
+  "title": "CVE-2026-84445 - google.golang.org/grpc",
+  "cve": "CVE-2026-84445",
+  "packages": [
+    {
+      "name": "google.golang.org/grpc",
+      "version": "v1.38.0",
+      "sourceLayerHash": "sha256:a9ef17cf5ed43e42fa623c79f4bcfedacc5dfcd15f6e25f65a8f728148ac1bcc",
+      "epoch": 0,
+      "packageManager": "GO",
+      "filePath": "/usr/local/bin/etcdctl",
+      "fixedInVersion": "1.82.2",
+      "remediation": "Update affected packages to fixed version (or newer)."
+    }
+  ],
+  "fixAvailable": "YES",
+  "exploitAvailable": "NO",
+  "remediation": "None Provided"
+}
+{
+  "severity": "HIGH",
+  "title": "CVE-2022-41725 - go/stdlib",
+  "cve": "CVE-2022-41725",
+  "packages": [
+    {
+      "name": "go/stdlib",
+      "version": "1.16.15",
+      "sourceLayerHash": "sha256:a9ef17cf5ed43e42fa623c79f4bcfedacc5dfcd15f6e25f65a8f728148ac1bcc",
+      "epoch": 0,
+      "packageManager": "GENERIC",
+      "filePath": "/usr/local/bin/etcdctl",
+      "fixedInVersion": "1.19.6",
+      "remediation": "Update affected packages to fixed version (or newer)."
+    }
+  ],
+  "fixAvailable": "YES",
+  "exploitAvailable": "NO",
+  "remediation": "None Provided"
+}
+{
+  "severity": "HIGH",
+  "title": "CVE-2022-41722 - go/stdlib",
+  "cve": "CVE-2022-41722",
+  "packages": [
+    {
+      "name": "go/stdlib",
+      "version": "1.16.15",
+      "sourceLayerHash": "sha256:a9ef17cf5ed43e42fa623c79f4bcfedacc5dfcd15f6e25f65a8f728148ac1bcc",
+      "epoch": 0,
+      "packageManager": "GENERIC",
+      "filePath": "/usr/local/bin/etcdctl",
+      "fixedInVersion": "1.19.6",
+      "remediation": "Update affected packages to fixed version (or newer)."
+    }
+  ],
+  "fixAvailable": "YES",
+  "exploitAvailable": "NO",
+  "remediation": "None Provided"
+}
+{
+  "severity": "HIGH",
+  "title": "CVE-2022-2879 - go/stdlib",
+  "cve": "CVE-2022-2879",
+  "packages": [
+    {
+      "name": "go/stdlib",
+      "version": "1.16.15",
+      "sourceLayerHash": "sha256:a9ef17cf5ed43e42fa623c79f4bcfedacc5dfcd15f6e25f65a8f728148ac1bcc",
+      "epoch": 0,
+      "packageManager": "GENERIC",
+      "filePath": "/usr/local/bin/etcdctl",
+      "fixedInVersion": "1.18.7",
+      "remediation": "Update affected packages to fixed version (or newer)."
+    }
+  ],
+  "fixAvailable": "YES",
+  "exploitAvailable": "NO",
+  "remediation": "None Provided"
+}
+{
+  "severity": "HIGH",
+  "title": "CVE-2025-47907 - go/stdlib",
+  "cve": "CVE-2025-47907",
+  "packages": [
+    {
+      "name": "go/stdlib",
+      "version": "1.16.15",
+      "sourceLayerHash": "sha256:a9ef17cf5ed43e42fa623c79f4bcfedacc5dfcd15f6e25f65a8f728148ac1bcc",
+      "epoch": 0,
+      "packageManager": "GENERIC",
+      "filePath": "/usr/local/bin/etcdctl",
+      "fixedInVersion": "1.23.12",
+      "remediation": "Update affected packages to fixed version (or newer)."
+    }
+  ],
+  "fixAvailable": "YES",
+  "exploitAvailable": "NO",
+  "remediation": "None Provided"
+}
+{
+  "severity": "HIGH",
+  "title": "CVE-2026-97032 - go/stdlib, go/stdlib and 7 more",
+  "cve": "CVE-2026-97032",
+  "packages": [
+    {
+      "name": "go/stdlib",
+      "version": "1.16.15",
+      "sourceLayerHash": "sha256:a9ef17cf5ed43e42fa623c79f4bcfedacc5dfcd15f6e25f65a8f728148ac1bcc",
+      "epoch": 0,
+      "packageManager": "GENERIC",
+      "filePath": "/usr/local/bin/etcdctl",
+      "fixedInVersion": "1.26.9",
+      "remediation": "Update affected packages to fixed version (or newer)."
+    },
+    {
+      "name": "go/stdlib",
+      "version": "1.26.8",
+      "sourceLayerHash": "sha256:db11f310711ed91d1ef47a225583883204b577b57bc5d313085a998c4b4017a5",
+      "epoch": 0,
+      "packageManager": "GENERIC",
+      "filePath": "/opt/sensu/bin/sensu-agent",
+      "fixedInVersion": "1.26.9",
+      "remediation": "Update affected packages to fixed version (or newer)."
+    },
+    {
+      "name": "go/stdlib",
+      "version": "1.26.8",
+      "sourceLayerHash": "sha256:ba145bd82b55600b61ce344fe8cd56d4c7ad27719ea5b595963b92b7a07658aa",
+      "epoch": 0,
+      "packageManager": "GENERIC",
+      "filePath": "/opt/sensu/bin/sensu-backend",
+      "fixedInVersion": "1.26.9",
+      "remediation": "Update affected packages to fixed version (or newer)."
+    },
+    {
+      "name": "go/stdlib",
+      "version": "1.26.8",
+      "sourceLayerHash": "sha256:9fb30cb68268f9b65207e7ef2c393b60557b96c681c16a0dd14d11b39712b9fb",
+      "epoch": 0,
+      "packageManager": "GENERIC",
+      "filePath": "/opt/sensu/bin/sensuctl",
+      "fixedInVersion": "1.26.9",
+      "remediation": "Update affected packages to fixed version (or newer)."
+    },
+    {
+      "name": "go/stdlib",
+      "version": "1.26.8",
+      "sourceLayerHash": "sha256:09814bc4645eac7063cfa1c0afaac5d42ecb26daeaf86ae26e63fb3648346cde",
+      "epoch": 0,
+      "packageManager": "GENERIC",
+      "filePath": "/usr/local/bin/sensuctl",
+      "fixedInVersion": "1.26.9",
+      "remediation": "Update affected packages to fixed version (or newer)."
+    },
+    {
+      "name": "golang.org/x/net",
+      "version": "v0.59.0",
+      "sourceLayerHash": "sha256:db11f310711ed91d1ef47a225583883204b577b57bc5d313085a998c4b4017a5",
+      "epoch": 0,
+      "packageManager": "GO",
+      "filePath": "/opt/sensu/bin/sensu-agent",
+      "fixedInVersion": "0.60.0",
+      "remediation": "Update affected packages to fixed version (or newer)."
+    },
+    {
+      "name": "golang.org/x/net",
+      "version": "v0.59.0",
+      "sourceLayerHash": "sha256:ba145bd82b55600b61ce344fe8cd56d4c7ad27719ea5b595963b92b7a07658aa",
+      "epoch": 0,
+      "packageManager": "GO",
+      "filePath": "/opt/sensu/bin/sensu-backend",
+      "fixedInVersion": "0.60.0",
+      "remediation": "Update affected packages to fixed version (or newer)."
+    },
+    {
+      "name": "golang.org/x/net",
+      "version": "v0.59.0",
+      "sourceLayerHash": "sha256:9fb30cb68268f9b65207e7ef2c393b60557b96c681c16a0dd14d11b39712b9fb",
+      "epoch": 0,
+      "packageManager": "GO",
+      "filePath": "/opt/sensu/bin/sensuctl",
+      "fixedInVersion": "0.60.0",
+      "remediation": "Update affected packages to fixed version (or newer)."
+    },
+    {
+      "name": "golang.org/x/net",
+      "version": "v0.59.0",
+      "sourceLayerHash": "sha256:09814bc4645eac7063cfa1c0afaac5d42ecb26daeaf86ae26e63fb3648346cde",
+      "epoch": 0,
+      "packageManager": "GO",
+      "filePath": "/usr/local/bin/sensuctl",
+      "fixedInVersion": "0.60.0",
+      "remediation": "Update affected packages to fixed version (or newer)."
+    }
+  ],
+  "fixAvailable": "YES",
+  "exploitAvailable": "NO",
+  "remediation": "None Provided"
+}
