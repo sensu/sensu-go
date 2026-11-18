@@ -1,18 +1,18 @@
 module github.com/sensu/sensu-go
 
-go 1.26.8
+go 1.27.4
 
-replace github.com/gorilla/websocket => github.com/sensu/websocket v1.0.2
+replace github.com/gorilla/websocket => github.com/sensu/websocket v1.0.3
 
-replace go.etcd.io/etcd/api/v3 => github.com/sensu/etcd/api/v3 v3.1.0
+replace go.etcd.io/etcd/api/v3 => github.com/sensu/etcd/api/v3 v3.2.0
 
-replace go.etcd.io/etcd/client/pkg/v3 => github.com/sensu/etcd/client/pkg/v3 v3.1.0
+replace go.etcd.io/etcd/client/pkg/v3 => github.com/sensu/etcd/client/pkg/v3 v3.2.0
 
-replace go.etcd.io/etcd/client/v3 => github.com/sensu/etcd/client/v3 v3.1.0
+replace go.etcd.io/etcd/client/v3 => github.com/sensu/etcd/client/v3 v3.2.0
 
-replace go.etcd.io/etcd/pkg/v3 => github.com/sensu/etcd/pkg/v3 v3.1.0
+replace go.etcd.io/etcd/pkg/v3 => github.com/sensu/etcd/pkg/v3 v3.2.0
 
-replace go.etcd.io/etcd/server/v3 => github.com/sensu/etcd/server/v3 v3.1.0
+replace go.etcd.io/etcd/server/v3 => github.com/sensu/etcd/server/v3 v3.2.0
 
 require (
 	github.com/AlecAivazis/survey/v2 v2.2.14
@@ -34,7 +34,7 @@ require (
 	github.com/golang/snappy v0.0.4
 	github.com/google/uuid v1.6.0
 	github.com/gorilla/mux v1.8.1
-	github.com/gorilla/websocket v1.5.0
+	github.com/gorilla/websocket v1.5.3
 	github.com/graph-gophers/dataloader/v7 v7.2.0
 	github.com/graphql-go/graphql v0.8.1
 	github.com/hashicorp/go-version v1.2.0
@@ -46,10 +46,10 @@ require (
 	github.com/prometheus/common v0.71.0
 	github.com/robertkrimen/otto v0.5.1
 	github.com/robfig/cron/v3 v3.0.1
-	github.com/sensu/core/v2 v2.21.6
-	github.com/sensu/core/v3 v3.10.6
+	github.com/sensu/core/v2 v2.21.7
+	github.com/sensu/core/v3 v3.10.7
 	github.com/sensu/lasr v1.2.1
-	github.com/sensu/sensu-api-tools v0.2.1
+	github.com/sensu/sensu-api-tools v0.2.2
 	github.com/sensu/sensu-go/types v0.13.0
 	github.com/shirou/gopsutil/v3 v3.23.2
 	github.com/sirupsen/logrus v1.10.2
@@ -61,17 +61,17 @@ require (
 	go.etcd.io/etcd/api/v3 v3.7.1
 	go.etcd.io/etcd/client/pkg/v3 v3.6.13
 	go.etcd.io/etcd/client/v3 v3.6.13
-	go.etcd.io/etcd/server/v3 v3.6.8
+	go.etcd.io/etcd/server/v3 v3.6.13
 	go.uber.org/atomic v1.11.0
 	go.uber.org/multierr v1.11.0
 	go.uber.org/zap v1.28.0
-	golang.org/x/crypto v0.57.0
-	golang.org/x/mod v0.41.0
-	golang.org/x/net v0.59.0
-	golang.org/x/sys v0.48.0
+	golang.org/x/crypto v0.59.0
+	golang.org/x/mod v0.42.0
+	golang.org/x/net v0.63.0
+	golang.org/x/sys v0.50.0
 	golang.org/x/time v0.16.0
 	golang.org/x/tools/go/vcs v0.1.0-deprecated
-	google.golang.org/grpc v1.83.2
+	google.golang.org/grpc v1.85.0
 	gopkg.in/h2non/filetype.v1 v1.0.3
 	gopkg.in/yaml.v3 v3.0.1
 	sigs.k8s.io/yaml v1.6.0
@@ -95,7 +95,7 @@ require (
 	github.com/google/go-cmp v0.7.0 // indirect
 	github.com/grpc-ecosystem/go-grpc-middleware/providers/prometheus v1.0.1 // indirect
 	github.com/grpc-ecosystem/go-grpc-middleware/v2 v2.1.0 // indirect
-	github.com/grpc-ecosystem/grpc-gateway/v2 v2.30.0 // indirect
+	github.com/grpc-ecosystem/grpc-gateway/v2 v2.34.0 // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
 	github.com/jonboulle/clockwork v0.5.0 // indirect
 	github.com/json-iterator/go v1.1.12 // indirect
@@ -141,10 +141,10 @@ require (
 	go.opentelemetry.io/proto/otlp v1.11.0 // indirect
 	go.yaml.in/yaml/v2 v2.4.4 // indirect
 	go.yaml.in/yaml/v3 v3.0.5 // indirect
-	golang.org/x/term v0.46.0 // indirect
-	golang.org/x/text v0.42.0 // indirect
-	google.golang.org/genproto/googleapis/api v0.0.0-20260911204522-f61a6ca850bd // indirect
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20260911204522-f61a6ca850bd // indirect
+	golang.org/x/term v0.48.0 // indirect
+	golang.org/x/text v0.44.0 // indirect
+	google.golang.org/genproto/googleapis/api v0.0.0-20261116203732-fd2c7689a808 // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20261116203732-fd2c7689a808 // indirect
 	google.golang.org/protobuf v1.36.12 // indirect
 	gopkg.in/natefinch/lumberjack.v2 v2.2.1 // indirect
 	gopkg.in/sourcemap.v1 v1.0.5 // indirect
