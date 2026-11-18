@@ -30,9 +30,9 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ### Changed
 - Disabled platform metrics by default with size-based log rotation
-- Updated Go toolchain to 1.26.8
+- Updated Go toolchain to 1.27.4
 - Updated Prometheus packages (prometheus/client_golang v1.24.1, prometheus/common v0.71.0)
-- Updated ETCD dependencies to sensu/etcd v3.1.0
+- Updated ETCD dependencies to sensu/etcd v3.2.0
 - Migrated CI from AppVeyor to GitHub Actions
 
 ### Fixed
