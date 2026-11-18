@@ -18,7 +18,7 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 - The session config to watch over the user updated and the wizzard bus
 - An unreadable `trusted-ca-file` now fails asset fetches instead of falling back to system CAs
 - Updated Go toolchain to 1.27.4
-- Updated ETCD dependencies to sensu/etcd v3.2.0
+- Updated ETCD dependencies to sensu/etcd v3.2.1
 
 ### Fixed
 - Corrected the Ubuntu Bash completion instructions to use `~/.bashrc` for
