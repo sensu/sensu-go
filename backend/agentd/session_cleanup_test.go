@@ -3,7 +3,6 @@ package agentd
 import (
 	"context"
 	"errors"
-	"net"
 	"net/http"
 	"net/http/httptest"
 	"runtime"
@@ -20,7 +19,6 @@ import (
 	"github.com/sensu/sensu-go/testing/mocktransport"
 	"github.com/sensu/sensu-go/transport"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 )
 
@@ -48,9 +46,6 @@ func TestNewSessionErrorRemovesUserConfigSubscription(t *testing.T) {
 	defer func() { _ = wizard.Stop() }()
 	bus := &failingPublishBus{WizardBus: wizard, subscribers: map[string]messaging.Subscriber{}}
 
-	st := &mockstore.MockStore{}
-	st.On("GetNamespace", mock.Anything, "acme").Return(&corev2.Namespace{}, nil)
-
 	cfg := SessionConfig{
 		AgentName:     "testing",
 		Namespace:     "acme",
@@ -58,7 +53,7 @@ func TestNewSessionErrorRemovesUserConfigSubscription(t *testing.T) {
 		Subscriptions: []string{"testing"},
 		Conn:          new(mocktransport.MockTransport),
 		Bus:           bus,
-		Store:         st,
+		Store:         &mockstore.MockStore{},
 		Unmarshal:     proto.Unmarshal,
 		Marshal:       proto.Marshal,
 	}
@@ -72,7 +67,6 @@ func TestNewSessionErrorRemovesUserConfigSubscription(t *testing.T) {
 
 	require.NoError(t, wizard.Publish(topic, "stale"))
 	select {
-	case <-sub.(*userConfig).subscription:
 	case msg := <-sub.(*userConfig).updatesChannel:
 		t.Fatalf("stale user-config subscriber still received %v after NewSession failed", msg)
 	case <-time.After(200 * time.Millisecond):
@@ -113,14 +107,13 @@ func TestWebSocketHandlerClosesConnWhenNewSessionFails(t *testing.T) {
 	require.NoError(t, err)
 	defer conn.Close()
 
-	// A closed server side shows up as a read error; a leaked one blocks until the deadline.
+	// A leaked connection blocks until the read deadline; a closed one delivers
+	// the close frame that Transport.Close() sends.
 	require.NoError(t, conn.SetReadDeadline(time.Now().Add(2*time.Second)))
 	_, _, err = conn.ReadMessage()
-	require.Error(t, err)
-	var netErr net.Error
-	if errors.As(err, &netErr) {
-		assert.False(t, netErr.Timeout(), "server did not close the hijacked connection after NewSession failed")
-	}
+	var closeErr *websocket.CloseError
+	require.True(t, errors.As(err, &closeErr), "expected a websocket close frame from the server, got: %v", err)
+	assert.Equal(t, websocket.CloseGoingAway, closeErr.Code)
 }
 
 func TestNewSessionBurialTimeoutRemovesUserConfigSubscription(t *testing.T) {
@@ -182,11 +175,14 @@ type opaqueCtx struct {
 }
 
 func newOpaqueCtx(parent context.Context) opaqueCtx {
-	o := opaqueCtx{Context: parent, done: make(chan struct{})}
-	return o
+	return opaqueCtx{Context: parent, done: make(chan struct{})}
 }
 
 func (o opaqueCtx) Done() <-chan struct{} { return o.done }
+
+// propagateCancelGoroutine is the stdlib goroutine started for a child context
+// whose parent hides its cancellation.
+const propagateCancelGoroutine = "context.(*cancelCtx).propagateCancel.func"
 
 func countGoroutinesIn(fn string) int {
 	buf := make([]byte, 1<<20)
@@ -217,15 +213,25 @@ func TestNewSessionErrorCancelsChildContext(t *testing.T) {
 		}
 	}
 
+	// Sanity check: an uncancelled child must be visible to the counter, otherwise
+	// a renamed stdlib function would make this test pass without checking anything.
+	probeBefore := countGoroutinesIn(propagateCancelGoroutine)
+	probeCtx, probeCancel := context.WithCancel(newOpaqueCtx(parent))
+	require.Eventually(t, func() bool { return countGoroutinesIn(propagateCancelGoroutine) > probeBefore },
+		2*time.Second, 5*time.Millisecond,
+		"the goroutine counter no longer sees context.WithCancel's goroutine; update propagateCancelGoroutine")
+	probeCancel()
+	<-probeCtx.Done()
+
 	const n = 20
-	before := countGoroutinesIn("context.(*cancelCtx).propagateCancel.func")
+	before := countGoroutinesIn(propagateCancelGoroutine)
 	for i := 0; i < n; i++ {
 		_, err := NewSession(newOpaqueCtx(parent), newCfg())
 		require.Error(t, err)
 	}
 	var leaked int
 	for i := 0; i < 50; i++ {
-		leaked = countGoroutinesIn("context.(*cancelCtx).propagateCancel.func") - before
+		leaked = countGoroutinesIn(propagateCancelGoroutine) - before
 		if leaked <= 0 {
 			break
 		}

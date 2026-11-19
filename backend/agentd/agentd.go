@@ -454,7 +454,7 @@ func (a *Agentd) webSocketHandler(w http.ResponseWriter, r *http.Request) {
 		// The connection was hijacked by the websocket upgrade, so http.Server
 		// no longer tracks it and nothing can be written to w.
 		if cerr := cfg.Conn.Close(); cerr != nil {
-			lager.WithError(cerr).Error("error closing websocket connection")
+			lager.WithError(cerr).Debug("error closing websocket connection after session creation failed")
 		}
 		// There was an error retrieving the namespace from
 		// etcd, indicating that this backend has a potentially

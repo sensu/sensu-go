@@ -237,9 +237,8 @@ func NewSession(ctx context.Context, cfg SessionConfig) (session *Session, err e
 	// Optionally subscribe to burial notifications
 	if cfg.BurialReceiver != nil {
 		topic := messaging.BurialTopic(cfg.Namespace, cfg.AgentName)
-		subscription, serr := s.bus.Subscribe(topic, cfg.AgentName, cfg.BurialReceiver)
-		if serr != nil {
-			err = serr
+		subscription, err := s.bus.Subscribe(topic, cfg.AgentName, cfg.BurialReceiver)
+		if err != nil {
 			return nil, err
 		}
 		defer func() {
@@ -264,7 +263,7 @@ func NewSession(ctx context.Context, cfg SessionConfig) (session *Session, err e
 		select {
 		case <-cfg.BurialReceiver.ch:
 		case <-time.After(burialTimeout):
-			return nil, errors.New("session could not be established after 60s, giving up")
+			return nil, fmt.Errorf("session could not be established after %s, giving up", burialTimeout)
 		}
 	}
 
