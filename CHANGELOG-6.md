@@ -10,6 +10,16 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 ### Fixed
 - Fixed the agent leaving its websocket open after a send or receive error, which leaked a connection per reconnect
 - Fixed a file descriptor leak where the executable opened for the agent allow-list sha512 check was never closed
+- Fixed goroutines and sockets piling up in the agent while it is disconnected, by making sending messages stop blocking when the agent shuts down
+- Fixed the agent TCP/UDP socket listeners and statsd server piling up goroutines and open sockets while the agent is disconnected from its backend; events are now dropped after 5 seconds instead of blocking indefinitely
+- Fixed the agent API queue database handle leaking when the queue fails to compact
+- Fixed the agent UDP socket listener silently stopping after the first ping, invalid or empty datagram
+- Fixed command execution hanging when a background child process keeps the output pipes open. A check that leaves such a child behind now returns 5 seconds after its command exits, with its own output; if the check has a timeout, the leftover processes are killed, otherwise they keep running
+- Fixed log file retention never removing expired archives, and a directory handle leak while reaping. Because earlier versions never removed them, the first reap after upgrading removes every archive older than the configured retention setting at once
+- Fixed tessen requests having no timeout, and smaller goroutine and handle leaks in the agent session timer, event logger, BoltDB handles and Prometheus endpoint
+
+### Changed
+- The agent Prometheus endpoint (`PrometheusBinding`) is now started by `Run` instead of `NewAgent`, and is stopped when the agent shuts down. An agent that is constructed but never run no longer serves metrics
 
 ## [6.15.1] - 2026-11-18
 

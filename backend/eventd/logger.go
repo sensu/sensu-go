@@ -147,7 +147,12 @@ func (l *rawLogger) ringBuffer() {
 	defer ticker.Stop()
 	defer close(l.encoderInput)
 	go func() {
-		for range ticker.C {
+		for {
+			select {
+			case <-ticker.C:
+			case <-l.done:
+				return
+			}
 			mu.Lock()
 			if eventsDropped > 0 {
 				logger.Errorf("the event buffer is full, %d event(s) lost", eventsDropped)

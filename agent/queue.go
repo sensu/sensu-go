@@ -81,11 +81,17 @@ func newQueue(path string) (queue, error) {
 	}
 	queue, err := lasr.NewQ(db, "api-buffer")
 	if err != nil {
+		_ = db.Close()
 		return nil, fmt.Errorf("error creating api queue: %s", err)
 	}
 	logger.Info("compacting api queue")
 	defer logger.Info("finished api queue compaction")
-	return queue, queue.Compact()
+	if err := queue.Compact(); err != nil {
+		// lasr.Q.Close does not close the database, so release it here.
+		_ = db.Close()
+		return nil, err
+	}
+	return queue, nil
 }
 
 func compressMessage(message []byte) []byte {
