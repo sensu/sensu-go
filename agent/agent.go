@@ -592,6 +592,7 @@ func (a *Agent) connectionManager(ctx context.Context, cancel context.CancelFunc
 			case <-connCtx.Done():
 				// The connection was closed before we received an entity config or we
 				// reached the grace period
+				closeConn(conn)
 				continue
 			}
 		}
@@ -630,13 +631,17 @@ func (a *Agent) enforceMaxSessionLength(connCancel context.CancelFunc) {
 	}
 }
 
+func closeConn(conn transport.Transport) {
+	if err := conn.Close(); err != nil {
+		logger.WithError(err).Error("error closing websocket connection")
+	}
+}
+
 func (a *Agent) receiveLoop(ctx context.Context, cancel context.CancelFunc, conn transport.Transport) {
 	defer cancel()
+	defer closeConn(conn)
 	for {
 		if err := ctx.Err(); err != nil {
-			if err := conn.Close(); err != nil {
-				logger.WithError(err).Error("error closing websocket connection")
-			}
 			return
 		}
 		m, err := conn.Receive()
@@ -686,6 +691,7 @@ func logEvent(e *corev2.Event) {
 
 func (a *Agent) sendLoop(ctx context.Context, cancel context.CancelFunc, conn transport.Transport) error {
 	defer cancel()
+	defer closeConn(conn)
 	keepalive := time.NewTicker(time.Duration(a.config.KeepaliveInterval) * time.Second)
 	defer keepalive.Stop()
 	if err := conn.Send(a.newKeepalive()); err != nil {
@@ -695,10 +701,6 @@ func (a *Agent) sendLoop(ctx context.Context, cancel context.CancelFunc, conn tr
 	for {
 		select {
 		case <-ctx.Done():
-			if err := conn.Close(); err != nil {
-				logger.WithError(err).Error("error closing websocket connection")
-				return err
-			}
 			return nil
 		case msg := <-a.sendq:
 			if err := conn.Send(msg); err != nil {
