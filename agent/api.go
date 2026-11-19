@@ -91,6 +91,7 @@ func (a *Agent) handleAPIQueue(ctx context.Context) {
 	}
 	ch := make(chan *lasr.Message, 1)
 	go func() {
+		defer close(ch)
 		limit := a.config.EventsAPIRateLimit
 		if limit == 0 {
 			limit = rate.Limit(math.Inf(1))
@@ -104,13 +105,25 @@ func (a *Agent) handleAPIQueue(ctx context.Context) {
 			message, err := a.apiQueue.Receive(ctx)
 			if err != nil {
 				if ctx.Err() != nil {
-					close(ch)
 					return
 				}
 				logger.WithError(err).Error("error receiving message from queue")
 				continue
 			}
-			ch <- message
+			select {
+			case ch <- message:
+			case <-ctx.Done():
+				_ = message.Nack(true)
+				return
+			}
+		}
+	}()
+	// A message the producer already received but the loop never took would stay
+	// unacked forever, and closing the queue waits for every unacked message. The
+	// producer closes ch when it stops, so drain whatever is left and give it back.
+	defer func() {
+		for message := range ch {
+			_ = message.Nack(true)
 		}
 	}()
 	for {
