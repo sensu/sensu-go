@@ -293,7 +293,9 @@ func (a *Agent) executeCheck(ctx context.Context, request *corev2.CheckRequest, 
 			return
 		}
 		verifier := asset.Sha512Verifier{}
-		if err := verifier.Verify(file, matchedEntry.Sha512); err != nil {
+		verifyErr := verifier.Verify(file, matchedEntry.Sha512)
+		_ = file.Close()
+		if err := verifyErr; err != nil {
 			logger.WithFields(fields).WithError(err).Error("check sha does not match agent allow list")
 			a.sendFailure(event, fmt.Errorf(allowListOnDenyOutput))
 			return
