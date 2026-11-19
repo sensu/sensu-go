@@ -406,12 +406,16 @@ func (a *Agent) RegisterPlugin(p Plugin) {
 // 9. Start the API server, shutdown the agent if doing so fails.
 func (a *Agent) Run(ctx context.Context) error {
 	ctx, cancel := context.WithCancel(ctx)
-	defer a.doneOnce.Do(func() { close(a.done) })
 	defer func() {
 		if err := a.apiQueue.Close(); err != nil {
 			logger.WithError(err).Error("error closing API queue")
 		}
 	}()
+	// Deferred calls run last in, first out, so on return: cancel the context,
+	// close done, then close the queue. done must be closed before the queue:
+	// Close waits until every message taken from it was acked or nacked, and
+	// handleAPIQueue may be holding one, blocked in sendMessage until done closes.
+	defer a.doneOnce.Do(func() { close(a.done) })
 	defer cancel()
 
 	if len(a.plugins) > 0 {
@@ -531,6 +535,9 @@ func (a *Agent) Run(ctx context.Context) error {
 	// Wait for context to complete
 	<-ctx.Done()
 	logger.Info("agent shutting down")
+	// Release anything waiting to queue a message now, not once Run has finished,
+	// so socket and statsd handlers do not sit out their send timeout.
+	a.doneOnce.Do(func() { close(a.done) })
 	// Call AfterAgentRun in reverse order (best effort)
 	var afterErrs error
 	for i := len(a.plugins) - 1; i >= 0; i-- {

@@ -226,3 +226,33 @@ func TestNewAgentReleasesDatabasesWhenConstructionFails(t *testing.T) {
 		_ = db.Close()
 	}
 }
+
+// A zero-length datagram is as cheap to send as any other and must not take the
+// listener down for everyone else.
+func TestUDPListenerSurvivesZeroLengthDatagram(t *testing.T) {
+	cfg, cleanup := FixtureConfig()
+	defer cleanup()
+	cfg.Socket.Port = 0
+	a, err := NewAgent(cfg)
+	require.NoError(t, err)
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	_, addr, err := a.createListenSockets(ctx)
+	require.NoError(t, err)
+
+	c, err := net.Dial("udp", addr)
+	require.NoError(t, err)
+	defer c.Close()
+	_, err = c.Write([]byte{})
+	require.NoError(t, err)
+	time.Sleep(200 * time.Millisecond)
+	_, err = c.Write([]byte(`{"name":"app","output":"ok","source":"s","command":"c"}`))
+	require.NoError(t, err)
+
+	select {
+	case msg := <-a.sendq:
+		assert.Equal(t, transport.MessageTypeEvent, msg.Type)
+	case <-time.After(2 * time.Second):
+		t.Fatal("UDP listener stopped after a zero-length datagram")
+	}
+}

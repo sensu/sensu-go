@@ -195,8 +195,17 @@ func (e *ExecutionRequest) Execute(ctx context.Context, execution ExecutionReque
 	select {
 	case <-waitCh:
 		if errors.Is(err, exec.ErrWaitDelay) {
-			// The command itself exited successfully; only its pipes were held open.
+			// The command itself exited successfully; only its pipes were held open
+			// by something it left running in the background.
 			err = nil
+			if execution.Timeout != 0 {
+				// The command has its own process group (see SetProcessGroup), so
+				// the leftover processes can be cleaned up instead of leaking one
+				// per run. Without a timeout there is no group to signal.
+				if killErr := KillProcess(cmd); killErr != nil {
+					logger.WithError(killErr).Warn("unable to kill the processes left behind by the command")
+				}
+			}
 		}
 		resp.Output = output.String()
 		if err != nil {

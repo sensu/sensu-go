@@ -207,8 +207,8 @@ func (a *Agent) handleUDPMessages(ctx context.Context, c net.PacketConn) {
 		}
 		a.wg.Done()
 	}()
-	// Read everything sent from the connection to the message buffer. Any error
-	// will return. If the buffer is zero bytes, close the connection and return.
+	// Read everything sent from the connection to the message buffer. A read
+	// error stops the listener; empty datagrams are ignored.
 	for {
 		bytesRead, _, err := c.ReadFrom(buf[0:])
 		select {
@@ -223,10 +223,9 @@ func (a *Agent) handleUDPMessages(ctx context.Context, c net.PacketConn) {
 				}
 				return
 			} else if bytesRead == 0 {
-				if err := c.Close(); err != nil {
-					logger.Debug(err)
-				}
-				return
+				// An empty datagram carries nothing to handle, and anyone who can
+				// reach the socket can send one, so it must not stop the listener.
+				continue
 			}
 			// If the message is a ping, return without notifying sender.
 			if match := pingRe.Match(buf[:bytesRead]); match {
