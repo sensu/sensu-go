@@ -556,6 +556,11 @@ func TestAdapterV1_resolvePipelineReference(t *testing.T) {
 					Workflows: []*corev2.PipelineWorkflow{
 						{
 							Name: "legacy-pipeline-workflow-myhandler",
+							Filters: []*corev2.ResourceReference{{
+								APIVersion: "core/v2",
+								Type:       "EventFilter",
+								Name:       "not_silenced",
+							}},
 							Handler: &corev2.ResourceReference{
 								Type:       "Handler",
 								APIVersion: "core/v2",
@@ -799,6 +804,11 @@ func TestAdapterV1_generateLegacyPipeline(t *testing.T) {
 				ObjectMeta: corev2.NewObjectMeta("legacy-pipeline", "default"),
 				Workflows: []*corev2.PipelineWorkflow{{
 					Name: "legacy-pipeline-workflow-handler1",
+					Filters: []*corev2.ResourceReference{{
+						APIVersion: "core/v2",
+						Type:       "EventFilter",
+						Name:       "not_silenced",
+					}},
 					Handler: &corev2.ResourceReference{
 						APIVersion: "core/v2",
 						Type:       "Handler",
@@ -832,6 +842,11 @@ func TestAdapterV1_generateLegacyPipeline(t *testing.T) {
 				ObjectMeta: corev2.NewObjectMeta("legacy-pipeline", "default"),
 				Workflows: []*corev2.PipelineWorkflow{{
 					Name: "legacy-pipeline-workflow-handler1",
+					Filters: []*corev2.ResourceReference{{
+						APIVersion: "core/v2",
+						Type:       "EventFilter",
+						Name:       "not_silenced",
+					}},
 					Handler: &corev2.ResourceReference{
 						APIVersion: "core/v2",
 						Type:       "Handler",
@@ -870,6 +885,11 @@ func TestAdapterV1_generateLegacyPipeline(t *testing.T) {
 				Workflows: []*corev2.PipelineWorkflow{
 					{
 						Name: "legacy-pipeline-workflow-checkhandler",
+						Filters: []*corev2.ResourceReference{{
+							APIVersion: "core/v2",
+							Type:       "EventFilter",
+							Name:       "not_silenced",
+						}},
 						Handler: &corev2.ResourceReference{
 							APIVersion: "core/v2",
 							Type:       "Handler",
@@ -878,6 +898,11 @@ func TestAdapterV1_generateLegacyPipeline(t *testing.T) {
 					},
 					{
 						Name: "legacy-pipeline-workflow-metricshandler",
+						Filters: []*corev2.ResourceReference{{
+							APIVersion: "core/v2",
+							Type:       "EventFilter",
+							Name:       "not_silenced",
+						}},
 						Handler: &corev2.ResourceReference{
 							APIVersion: "core/v2",
 							Type:       "Handler",
@@ -1168,6 +1193,57 @@ func TestAdapterV1_Run_SilencedEvents(t *testing.T) {
 			}
 			if handled != tt.wantHandled {
 				t.Errorf("handler ran = %v, want %v", handled, tt.wantHandled)
+			}
+		})
+	}
+}
+
+func TestAdapterV1_generateLegacyPipeline_NotSilencedFilter(t *testing.T) {
+	tests := []struct {
+		name        string
+		handlerFilt []string
+		wantFilters []string
+	}{
+		{
+			name:        "legacy handler without filters gets not_silenced",
+			handlerFilt: nil,
+			wantFilters: []string{"not_silenced"},
+		},
+		{
+			name:        "legacy handler keeps its own filters and gets not_silenced",
+			handlerFilt: []string{"is_incident"},
+			wantFilters: []string{"is_incident", "not_silenced"},
+		},
+		{
+			name:        "legacy handler already listing not_silenced is not duplicated",
+			handlerFilt: []string{"not_silenced"},
+			wantFilters: []string{"not_silenced"},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			handler := corev2.FixtureHandler("handler1")
+			handler.Filters = tt.handlerFilt
+			stor := &mockstore.MockStore{}
+			stor.On("GetHandlerByName", mock.Anything, handler.GetName()).Return(handler, nil)
+
+			a := &AdapterV1{Store: stor}
+			event := corev2.FixtureEvent("entity1", "check1")
+			event.Check.Handlers = []string{"handler1"}
+
+			pipeline, err := a.generateLegacyPipeline(context.Background(), event)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if len(pipeline.Workflows) != 1 {
+				t.Fatalf("workflows = %d, want 1", len(pipeline.Workflows))
+			}
+			var got []string
+			for _, f := range pipeline.Workflows[0].Filters {
+				got = append(got, f.Name)
+			}
+			if !reflect.DeepEqual(got, tt.wantFilters) {
+				t.Errorf("filters = %v, want %v", got, tt.wantFilters)
 			}
 		})
 	}

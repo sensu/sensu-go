@@ -315,10 +315,30 @@ func (a *AdapterV1) generateLegacyPipeline(ctx context.Context, event *corev2.Ev
 	for _, handlerName := range handlerNames {
 		workflowName := fmt.Sprintf(LegacyPipelineWorkflowName, handlerName)
 		workflow := corev2.PipelineWorkflowFromHandler(ctx, workflowName, handlers[handlerName])
+		// Legacy check handlers have always suppressed silenced events. Keep that
+		// behaviour by applying the not_silenced filter unless the handler already
+		// lists it.
+		if !hasFilter(workflow.Filters, "not_silenced") {
+			workflow.Filters = append(workflow.Filters, &corev2.ResourceReference{
+				APIVersion: "core/v2",
+				Type:       "EventFilter",
+				Name:       "not_silenced",
+			})
+		}
 		pipeline.Workflows = append(pipeline.Workflows, workflow)
 	}
 
 	return pipeline, nil
+}
+
+// hasFilter reports whether filters contains a reference to the named filter.
+func hasFilter(filters []*corev2.ResourceReference, name string) bool {
+	for _, f := range filters {
+		if f != nil && f.Name == name {
+			return true
+		}
+	}
+	return false
 }
 
 // expandHandlers turns a list of Sensu handler names into a list of
