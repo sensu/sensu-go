@@ -1643,3 +1643,210 @@ func TestIsSilencedBy_FutureBeginNotEffective(t *testing.T) {
 		t.Error("silence starting in the future must not match yet")
 	}
 }
+
+// deriveSilenceState mirrors how eventd fills Check.Silenced: it keeps the
+// silence entries that actually match the event, then sets IsSilenced from the
+// result. Driving state through real silence entries exercises the matching
+// logic instead of setting the fields directly.
+func deriveSilenceState(e *corev2.Event, entries ...*corev2.Silenced) {
+	var names []string
+	for _, entry := range e.SilencedBy(entries) {
+		names = append(names, entry.Name)
+	}
+	e.Check.Silenced = names
+	e.Check.IsSilenced = len(names) > 0
+}
+
+// silenceEntry builds a silence entry through the same fixture used by the
+// rest of the code base, with an optional start time and expire-on-resolve.
+func silenceEntry(name string, begin int64, expireOnResolve bool) *corev2.Silenced {
+	s := corev2.FixtureSilenced(name)
+	s.Begin = begin
+	s.ExpireOnResolve = expireOnResolve
+	return s
+}
+
+// Indirect scenarios: silence state is derived from silence entries (the way
+// eventd does) rather than set by hand. Each case feeds an event through the
+// real silence matching and then through the real pipeline.
+func TestRun_IndirectSilenceScenarios(t *testing.T) {
+	past := time.Now().Add(-time.Hour).Unix()
+	future := time.Now().Add(time.Hour).Unix()
+
+	tests := []struct {
+		name        string
+		entityName  string
+		checkName   string
+		entries     []*corev2.Silenced
+		status      uint32
+		filters     []*corev2.ResourceReference
+		wantHandled bool
+	}{
+		{
+			name:        "silence on check name matches via *:check",
+			entityName:  "entity1",
+			checkName:   "check1",
+			entries:     []*corev2.Silenced{silenceEntry("*:check1", past, false)},
+			filters:     []*corev2.ResourceReference{notSilencedRef},
+			wantHandled: false,
+		},
+		{
+			name:        "silence on entity subscription matches the event",
+			entityName:  "entity1",
+			checkName:   "check1",
+			entries:     []*corev2.Silenced{silenceEntry("entity:entity1:check1", past, false)},
+			filters:     []*corev2.ResourceReference{notSilencedRef},
+			wantHandled: false,
+		},
+		{
+			name:        "silence on a different check does not suppress",
+			entityName:  "entity1",
+			checkName:   "check1",
+			entries:     []*corev2.Silenced{silenceEntry("*:other", past, false)},
+			filters:     []*corev2.ResourceReference{notSilencedRef},
+			wantHandled: true,
+		},
+		{
+			name:        "silence on a different entity does not suppress",
+			entityName:  "entity1",
+			checkName:   "check1",
+			entries:     []*corev2.Silenced{silenceEntry("entity:entity2:check1", past, false)},
+			filters:     []*corev2.ResourceReference{notSilencedRef},
+			wantHandled: true,
+		},
+		{
+			name:        "silence that has not begun yet does not suppress",
+			entityName:  "entity1",
+			checkName:   "check1",
+			entries:     []*corev2.Silenced{silenceEntry("*:check1", future, false)},
+			filters:     []*corev2.ResourceReference{notSilencedRef},
+			wantHandled: true,
+		},
+		{
+			name:       "one matching silence among several non-matching ones suppresses",
+			entityName: "entity1",
+			checkName:  "check1",
+			entries: []*corev2.Silenced{
+				silenceEntry("*:other", past, false),
+				silenceEntry("entity:entity2:check1", past, false),
+				silenceEntry("*:check1", past, false),
+			},
+			filters:     []*corev2.ResourceReference{notSilencedRef},
+			wantHandled: false,
+		},
+		{
+			name:       "future silence plus active silence still suppresses via the active one",
+			entityName: "entity1",
+			checkName:  "check1",
+			entries: []*corev2.Silenced{
+				silenceEntry("*:check1", future, false),
+				silenceEntry("*:check1", past, false),
+			},
+			filters:     []*corev2.ResourceReference{notSilencedRef},
+			wantHandled: false,
+		},
+		{
+			name:        "no silences at all: handled",
+			entityName:  "entity1",
+			checkName:   "check1",
+			entries:     nil,
+			filters:     []*corev2.ResourceReference{notSilencedRef},
+			wantHandled: true,
+		},
+		{
+			name:        "silenced incident is still suppressed when is_incident also runs",
+			entityName:  "entity1",
+			checkName:   "check1",
+			entries:     []*corev2.Silenced{silenceEntry("*:check1", past, false)},
+			status:      2,
+			filters:     []*corev2.ResourceReference{notSilencedRef, isIncidentRef},
+			wantHandled: false,
+		},
+		{
+			name:        "silenced non-incident is denied by is_incident before not_silenced",
+			entityName:  "entity1",
+			checkName:   "check1",
+			entries:     []*corev2.Silenced{silenceEntry("*:check1", past, false)},
+			status:      0,
+			filters:     []*corev2.ResourceReference{isIncidentRef, notSilencedRef},
+			wantHandled: false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var handled bool
+			workflow := &corev2.PipelineWorkflow{
+				Name:    "workflow1",
+				Filters: tt.filters,
+				Handler: &corev2.ResourceReference{APIVersion: "core/v2", Type: "Handler", Name: "handler1"},
+			}
+			pipeline := &corev2.Pipeline{
+				ObjectMeta: corev2.NewObjectMeta("pipeline1", "default"),
+				Workflows:  []*corev2.PipelineWorkflow{workflow},
+			}
+			stor := &mockstore.MockStore{}
+			stor.On("GetPipelineByName", mock.Anything, mock.Anything).Return(pipeline, nil)
+
+			event := corev2.FixtureEvent(tt.entityName, tt.checkName)
+			event.Check.Status = tt.status
+			if tt.status == 2 {
+				event.Check.History = []corev2.CheckHistory{{Status: 2}, {Status: 2}}
+			}
+			deriveSilenceState(event, tt.entries...)
+
+			a := &AdapterV1{
+				Store:           stor,
+				FilterAdapters:  []FilterAdapter{&filter.NotSilencedAdapter{}, &filter.IsIncidentAdapter{}},
+				MutatorAdapters: []MutatorAdapter{&mutator.JSONAdapter{}},
+				HandlerAdapters: []HandlerAdapter{recordHandlerAdapter{Handled: &handled}},
+			}
+			if err := a.Run(context.Background(), new(corev2.ResourceReference), event); err != nil {
+				t.Fatal(err)
+			}
+			if handled != tt.wantHandled {
+				t.Errorf("handled = %v, want %v (Silenced=%v IsSilenced=%v)",
+					handled, tt.wantHandled, event.Check.Silenced, event.Check.IsSilenced)
+			}
+		})
+	}
+}
+
+// Legacy path with indirectly derived silence state: the handler does not list
+// not_silenced, so the generated legacy workflow must add it for a silenced
+// event to be suppressed.
+func TestRun_LegacyHandlerDerivedSilence(t *testing.T) {
+	past := time.Now().Add(-time.Hour).Unix()
+	future := time.Now().Add(time.Hour).Unix()
+	tests := []struct {
+		name        string
+		entries     []*corev2.Silenced
+		wantHandled bool
+	}{
+		{name: "matching silence suppresses legacy handler", entries: []*corev2.Silenced{silenceEntry("*:check1", past, false)}, wantHandled: false},
+		{name: "non-matching silence does not suppress", entries: []*corev2.Silenced{silenceEntry("*:other", past, false)}, wantHandled: true},
+		{name: "future silence does not suppress yet", entries: []*corev2.Silenced{silenceEntry("*:check1", future, false)}, wantHandled: true},
+		{name: "no silences delivers", entries: nil, wantHandled: true},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var handled bool
+			stor := &mockstore.MockStore{}
+			stor.On("GetHandlerByName", mock.Anything, "handler1").Return(corev2.FixtureHandler("handler1"), nil)
+			a := &AdapterV1{
+				Store:           stor,
+				FilterAdapters:  []FilterAdapter{&filter.NotSilencedAdapter{}},
+				MutatorAdapters: []MutatorAdapter{&mutator.JSONAdapter{}},
+				HandlerAdapters: []HandlerAdapter{recordHandlerAdapter{Handled: &handled}},
+			}
+			event := corev2.FixtureEvent("entity1", "check1")
+			event.Check.Handlers = []string{"handler1"}
+			deriveSilenceState(event, tt.entries...)
+			if err := a.Run(context.Background(), &corev2.ResourceReference{Name: LegacyPipelineName}, event); err != nil {
+				t.Fatal(err)
+			}
+			if handled != tt.wantHandled {
+				t.Errorf("handled = %v, want %v", handled, tt.wantHandled)
+			}
+		})
+	}
+}
