@@ -133,6 +133,12 @@ type Config struct {
 	EventLogFile             string
 	EventLogParallelEncoders bool
 
+	// EventDefaultMaxOutputSize is the default maximum check output size, in
+	// bytes, applied to events whose check does not set its own max_output_size.
+	// A negative value derives the default from EtcdMaxRequestBytes; 0 disables
+	// the global default.
+	EventDefaultMaxOutputSize int64
+
 	// expiry setting for silences
 	DefaultSilencedExpiryTime    time.Duration
 	MaxSilencedExpiryTimeAllowed time.Duration

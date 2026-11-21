@@ -302,6 +302,86 @@ func TestCheckTTL(t *testing.T) {
 	}
 }
 
+func TestDefaultMaxOutputSize(t *testing.T) {
+	tests := []struct {
+		name                 string
+		defaultMaxOutputSize int64
+		checkMaxOutputSize   int64
+		wantMaxOutputSize    int64
+	}{
+		{
+			name:                 "global default is applied when the check does not set one",
+			defaultMaxOutputSize: 1024,
+			checkMaxOutputSize:   0,
+			wantMaxOutputSize:    1024,
+		},
+		{
+			name:                 "per-check max_output_size takes precedence over the default",
+			defaultMaxOutputSize: 1024,
+			checkMaxOutputSize:   256,
+			wantMaxOutputSize:    256,
+		},
+		{
+			name:                 "no default and no per-check value leaves it unset",
+			defaultMaxOutputSize: 0,
+			checkMaxOutputSize:   0,
+			wantMaxOutputSize:    0,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			store := &storetest.Store{}
+			eventStore := &mockstore.MockStore{}
+
+			event := corev2.FixtureEvent("entity", "check")
+			event.Check.MaxOutputSize = tt.checkMaxOutputSize
+			event.Check.Output = "this output is larger than the configured limit"
+			addMockEntityV2(t, store, event.Entity)
+
+			mockEvent := corev2.FixtureEvent("entity", "mock")
+
+			e := &Eventd{
+				store:                store,
+				eventStore:           eventStore,
+				livenessFactory:      newFakeFactory(&fakeSwitchSet{}),
+				workerCount:          1,
+				wg:                   &sync.WaitGroup{},
+				Logger:               NoopLogger{},
+				silencedCache:        &cache.Resource{},
+				defaultMaxOutputSize: tt.defaultMaxOutputSize,
+			}
+
+			var err error
+			e.bus, err = messaging.NewWizardBus(messaging.WizardBusConfig{})
+			require.NoError(t, err)
+			require.NoError(t, e.bus.Start())
+
+			eventStore.On("GetEventByEntityCheck", mock.Anything, "entity", "check").
+				Return((*corev2.Event)(nil), nil)
+			eventStore.On("GetSilencedEntriesBySubscription", mock.Anything, mock.Anything).
+				Return([]*corev2.Silenced{}, nil)
+			eventStore.On("GetSilencedEntriesByCheckName", mock.Anything, mock.Anything).
+				Return([]*corev2.Silenced{}, nil)
+			eventStore.On("UpdateEvent", mock.Anything).Return(event, mockEvent, nil)
+
+			_, err = e.handleMessage(event)
+			require.NoError(t, err)
+
+			// Inspect the event that was handed to the store's UpdateEvent; the
+			// store itself performs the actual output truncation based on
+			// Check.MaxOutputSize (covered by the etcd store tests).
+			var updated *corev2.Event
+			for _, call := range eventStore.Calls {
+				if call.Method == "UpdateEvent" {
+					updated = call.Arguments[0].(*corev2.Event)
+				}
+			}
+			require.NotNil(t, updated, "UpdateEvent should have been called")
+			assert.Equal(t, tt.wantMaxOutputSize, updated.Check.MaxOutputSize)
+		})
+	}
+}
+
 func TestCreateFailedCheckEventWithTTLStatus(t *testing.T) {
 	// Test that TTL status is properly handled when creating failed check events
 	tests := []struct {
