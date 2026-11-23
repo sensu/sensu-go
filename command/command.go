@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"math"
 	"os/exec"
+	"runtime"
 	"strings"
 	"sync"
 	"syscall"
@@ -194,17 +195,23 @@ func (e *ExecutionRequest) Execute(ctx context.Context, execution ExecutionReque
 	var killErr error
 	select {
 	case <-waitCh:
-		if errors.Is(err, exec.ErrWaitDelay) {
+		waitDelayFired := errors.Is(err, exec.ErrWaitDelay)
+		if waitDelayFired {
 			// The command itself exited successfully; only its pipes were held open
 			// by something it left running in the background.
 			err = nil
-			if execution.Timeout != 0 {
-				// The command has its own process group (see SetProcessGroup), so
-				// the leftover processes can be cleaned up instead of leaking one
-				// per run. Without a timeout there is no group to signal.
-				if killErr := KillProcess(cmd); killErr != nil {
-					logger.WithError(killErr).Warn("unable to kill the processes left behind by the command")
-				}
+		}
+		// Windows has no cheap way to signal an already-exited group (KillProcess
+		// runs taskkill), so there it only runs when the pipes were held open.
+		if execution.Timeout != 0 && (waitDelayFired || runtime.GOOS != "windows") {
+			// The command has its own process group (see SetProcessGroup), so
+			// anything it left running can be cleaned up instead of leaking one
+			// process per run. This must not depend on ErrWaitDelay: Wait returns
+			// the ExitError in preference to it, so a check that exits non-zero
+			// would otherwise skip the cleanup. Without a timeout there is no
+			// group to signal.
+			if killErr := KillProcess(cmd); killErr != nil && !errors.Is(killErr, syscall.ESRCH) {
+				logger.WithError(killErr).Warn("unable to kill the processes left behind by the command")
 			}
 		}
 		resp.Output = output.String()

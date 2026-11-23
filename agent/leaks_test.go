@@ -174,7 +174,7 @@ func TestTCPSocketHandlerReleasesConnectionWhileDisconnected(t *testing.T) {
 	buf := make([]byte, 16)
 	n, err := c.Read(buf)
 	require.NoError(t, err, "socket handler never answered while the agent was disconnected")
-	assert.Equal(t, "invalid", string(buf[:n]))
+	assert.Equal(t, "unavailable", string(buf[:n]))
 }
 
 func TestCreateListenSocketsFailureLeavesNothingBehind(t *testing.T) {

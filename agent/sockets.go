@@ -25,6 +25,11 @@ var (
 // while the agent is disconnected from its backend.
 const socketSendTimeout = 5 * time.Second
 
+// udpSendTimeout is the much shorter wait used by the UDP listener. It has a
+// single reader, so every datagram that waits delays the next one, and UDP
+// senders expect loss anyway.
+const udpSendTimeout = 250 * time.Millisecond
+
 // createListenSockets UDP and TCP socket listeners on port 3030 for external check
 // events.
 func (a *Agent) createListenSockets(ctx context.Context) (string, string, error) {
@@ -100,7 +105,8 @@ func (a *Agent) createListenSockets(ctx context.Context) (string, string, error)
 // successfully, the Sensu agent publishes the result. After
 // timeout (default is 500 msec) since the most recent chunk
 // of data was received, the agent will give up on the sender, and
-// instead respond "invalid" and close the connection.
+// instead respond "invalid" and close the connection. If the event is valid but
+// the agent is not connected to a backend, the response is "unavailable".
 func (a *Agent) handleTCPMessages(c net.Conn) {
 	defer func() {
 		if err := c.Close(); err != nil {
@@ -180,7 +186,9 @@ func (a *Agent) handleTCPMessages(c net.Conn) {
 		}
 		if !a.sendMessageWithin(tm, socketSendTimeout) {
 			logger.Error("agent is not connected to a backend, dropping event received on the tcp socket")
-			_, _ = c.Write([]byte("invalid"))
+			// Not "invalid": the payload was fine, so the client can tell an outage
+			// from a malformed event and retry.
+			_, _ = c.Write([]byte("unavailable"))
 			return
 		}
 		_, _ = c.Write([]byte("ok"))
@@ -264,7 +272,7 @@ func (a *Agent) handleUDPMessages(ctx context.Context, c net.PacketConn) {
 				Type:    transport.MessageTypeEvent,
 				Payload: payload,
 			}
-			if !a.sendMessageWithin(tm, socketSendTimeout) {
+			if !a.sendMessageWithin(tm, udpSendTimeout) {
 				logger.Error("agent is not connected to a backend, dropping event received on the udp socket")
 			}
 		}

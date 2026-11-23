@@ -77,3 +77,43 @@ func TestExecuteKillsBackgroundChildOnWaitDelay(t *testing.T) {
 		t.Errorf("background child %d is still running after Execute returned", pid)
 	}
 }
+
+// Wait returns the ExitError in preference to ErrWaitDelay, so a check that exits
+// non-zero while a background child holds the output pipes must still have that
+// child cleaned up.
+func TestExecuteKillsBackgroundChildWhenCheckExitsNonZero(t *testing.T) {
+	old := waitDelay
+	waitDelay = 300 * time.Millisecond
+	defer func() { waitDelay = old }()
+
+	pidFile := filepath.Join(t.TempDir(), "child.pid")
+	req := ExecutionRequest{
+		Command: fmt.Sprintf("sleep 60 & echo $! > %s; echo started; exit 2", pidFile),
+		Timeout: 30,
+	}
+	resp, err := (&ExecutionRequest{}).Execute(context.Background(), req)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if resp.Status != 2 {
+		t.Errorf("status = %d, want 2 (output %q)", resp.Status, resp.Output)
+	}
+
+	raw, err := os.ReadFile(pidFile)
+	if err != nil {
+		t.Fatal(err)
+	}
+	pid, err := strconv.Atoi(strings.TrimSpace(string(raw)))
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer func() { _ = syscall.Kill(pid, syscall.SIGKILL) }()
+
+	deadline := time.Now().Add(3 * time.Second)
+	for processAlive(pid) && time.Now().Before(deadline) {
+		time.Sleep(20 * time.Millisecond)
+	}
+	if processAlive(pid) {
+		t.Errorf("background child %d is still running after a non-zero exit", pid)
+	}
+}

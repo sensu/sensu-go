@@ -29,3 +29,17 @@ func TestReapRemovesOldArchives(t *testing.T) {
 		t.Errorf("recent archive was removed: %v", err)
 	}
 }
+
+func TestReapIgnoresArchivesWithoutANanosecondTimestamp(t *testing.T) {
+	dir := t.TempDir()
+	path := filepath.Join(dir, "app.log")
+	foreign := filepath.Join(dir, "app.log.1")
+	if err := os.WriteFile(foreign, []byte("x"), 0600); err != nil {
+		t.Fatal(err)
+	}
+	r := &RotateFileLogger{path: path, retentionDuration: time.Hour}
+	r.reap(make(chan error, 4))
+	if _, err := os.Stat(foreign); err != nil {
+		t.Errorf("a file with a short numeric suffix was removed as an expired archive: %v", err)
+	}
+}

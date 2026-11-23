@@ -270,7 +270,10 @@ func (r *RotateFileLogger) reap(errors chan error) {
 	if r.retentionDuration > 0 {
 		for _, file := range filesToReap {
 			matches := reapRegexp.FindStringSubmatch(file)
-			if len(matches) < 2 {
+			// Archives are named with a UnixNano timestamp (19 digits today). A
+			// short number such as ".1" comes from some other rotation scheme and
+			// would parse as a 1970 timestamp, so it must never count as expired.
+			if len(matches) < 2 || len(matches[1]) < 18 {
 				continue
 			}
 			var timestamp int64

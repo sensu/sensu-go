@@ -219,7 +219,7 @@ func NewAgent(config *Config) (*Agent, error) {
 
 // NewAgentContext is like NewAgent, but allows threading a context through
 // the system.
-func NewAgentContext(ctx context.Context, config *Config) (*Agent, error) {
+func NewAgentContext(ctx context.Context, config *Config) (_ *Agent, err error) {
 	if to := config.KeepaliveCriticalTimeout; to > 0 && to <= config.KeepaliveInterval {
 		return nil, errors.New("keepalive critical timeout must be greater than keepalive interval")
 	}
@@ -265,6 +265,13 @@ func NewAgentContext(ctx context.Context, config *Config) (*Agent, error) {
 		return nil, dbErr
 	}
 	agent.dbConn = db
+	// Any error return below must release the database, or its file lock stays
+	// held by a half-built agent.
+	defer func() {
+		if err != nil {
+			_ = db.Close()
+		}
+	}()
 
 	agent.statsdServer = NewStatsdServer(agent)
 	agent.handler.AddHandler(transport.MessageTypeEntityConfig, agent.handleEntityConfig)
@@ -279,7 +286,6 @@ func NewAgentContext(ctx context.Context, config *Config) (*Agent, error) {
 	}
 	agent.apiQueue, err = newQueue(config.CacheDir)
 	if err != nil {
-		_ = db.Close()
 		return nil, fmt.Errorf("error creating agent: %s", err)
 	}
 
@@ -311,6 +317,11 @@ func (a *Agent) sendMessage(msg *transport.Message) {
 // agent is connected, so callers that hold a socket or a goroutine on behalf
 // of a client use this to avoid piling up while the agent is disconnected.
 func (a *Agent) sendMessageWithin(msg *transport.Message, wait time.Duration) bool {
+	logger.WithFields(logrus.Fields{
+		"type":         msg.Type,
+		"content_type": a.contentType,
+		"payload_size": len(msg.Payload),
+	}).Info("sending message")
 	timer := time.NewTimer(wait)
 	defer timer.Stop()
 	select {
