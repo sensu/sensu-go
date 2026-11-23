@@ -272,6 +272,14 @@ func TestSendLoopNacksQueuedEventWhenTransportIsClosed(t *testing.T) {
 
 // Shutdown while the agent is connected: some queued events are sent, and the
 // rest must be handed back so closing the queue does not block.
+// Smoke test: shutting down while connected, with events flowing through
+// sendLoop, returns promptly. The fixes themselves are guarded by
+// TestSendCallbackRunsWhenTransportIsClosed (transport) and
+// TestSendLoopNacksQueuedEventWhenTransportIsClosed; removing either makes
+// those fail, whereas this test passes without them.
+//
+// Every queued event is an fsync'd write to the on-disk queue, which is slow on
+// CI runners, so keep the count small: it only has to keep sendq busy.
 func TestRunShutsDownWithQueuedAPIEventsWhileConnected(t *testing.T) {
 	mockTime.Start()
 	defer mockTime.Stop()
@@ -317,7 +325,7 @@ func TestRunShutsDownWithQueuedAPIEventsWhileConnected(t *testing.T) {
 	// setting it, a pre-existing unsynchronised access that is not what this test
 	// is about.
 	require.Eventually(t, a.Connected, 10*time.Second, 5*time.Millisecond)
-	for i := 0; i < 500; i++ {
+	for i := 0; i < 40; i++ {
 		_, err := a.apiQueue.Send(compressMessage([]byte("event")))
 		require.NoError(t, err)
 	}
