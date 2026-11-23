@@ -178,3 +178,34 @@ func TestCloseAfterSendError(t *testing.T) {
 
 	assert.EqualValues(t, 1, atomic.LoadInt32(&tracked.closed), "underlying connection was not closed after a Send error")
 }
+
+// A caller that hands Send a message with a SendCallback must always get exactly
+// one callback, including when the transport was already closed. The agent's API
+// queue acks or nacks each queued event from that callback, and closing the
+// queue waits for all of them.
+func TestSendCallbackRunsWhenTransportIsClosed(t *testing.T) {
+	server := NewServer()
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		_, _ = server.Serve(w, r)
+	}))
+	defer ts.Close()
+
+	conn, _, err := websocket.DefaultDialer.Dial("ws"+strings.TrimPrefix(ts.URL, "http"), nil)
+	require.NoError(t, err)
+	tr := NewTransport(conn)
+	require.NoError(t, tr.Close())
+	require.True(t, tr.Closed())
+
+	var calls int32
+	var got error
+	msg := NewMessage("event", []byte("x"))
+	msg.SendCallback = func(err error) {
+		atomic.AddInt32(&calls, 1)
+		got = err
+	}
+	err = tr.Send(msg)
+	var closedErr ClosedError
+	require.ErrorAs(t, err, &closedErr)
+	assert.EqualValues(t, 1, atomic.LoadInt32(&calls), "SendCallback must run exactly once when Send fails on a closed transport")
+	assert.Equal(t, err, got)
+}

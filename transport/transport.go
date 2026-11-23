@@ -261,15 +261,19 @@ func (t *WebSocketTransport) Receive() (*Message, error) {
 func (t *WebSocketTransport) Send(m *Message) (err error) {
 	t.writeMu.Lock()
 	defer t.writeMu.Unlock()
-	if t.Closed() {
-		return ClosedError{"the websocket connection is no longer open"}
-	}
 
+	// Registered before the closed check so that the callback runs exactly once
+	// whatever happens: callers that ack or nack a message from it would
+	// otherwise be left waiting on a message that was never sent.
 	defer func() {
 		if m.SendCallback != nil {
 			m.SendCallback(err)
 		}
 	}()
+
+	if t.Closed() {
+		return ClosedError{"the websocket connection is no longer open"}
+	}
 
 	msg := Encode(m.Type, m.Payload)
 	if err := t.Connection.WriteMessage(websocket.BinaryMessage, msg); err != nil {

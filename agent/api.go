@@ -3,6 +3,7 @@ package agent
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"math"
 	"net/http"
@@ -138,7 +139,12 @@ func (a *Agent) handleAPIQueue(ctx context.Context) {
 				Type:    transport.MessageTypeEvent,
 				Payload: decompressMessage(message.Body),
 				SendCallback: func(err error) {
-					if err != nil {
+					if errors.Is(err, context.Canceled) {
+						// The agent is shutting down: the event goes back on the on-disk
+						// queue and is sent after the next start. Not an error.
+						logger.Debug("returning queued message to the queue on shutdown")
+						_ = message.Nack(true)
+					} else if err != nil {
 						logger.WithError(err).Error("couldn't send queued message, retrying")
 						_ = message.Nack(true)
 					} else {

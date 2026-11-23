@@ -52,3 +52,32 @@ func TestInitializerLockFailureReleasesSession(t *testing.T) {
 	}
 	assert.LessOrEqual(t, leaked, 0, "session keepalive goroutines are still running after %d failed Lock calls", n)
 }
+
+func TestInitializerCloseReleasesSessionWhenUnlockFails(t *testing.T) {
+	e, cleanup := etcd.NewTestEtcd(t)
+	defer cleanup()
+	s := NewStore(e.NewEmbeddedClient(), e.Name())
+
+	before := keepAliveGoroutines()
+	const n = 5
+	for i := 0; i < n; i++ {
+		init, err := s.NewInitializer(context.Background())
+		require.NoError(t, err)
+		require.NoError(t, init.Lock(context.Background()))
+
+		// An already cancelled context makes Unlock fail.
+		ctx, cancel := context.WithCancel(context.Background())
+		cancel()
+		require.Error(t, init.Close(ctx), "Close must report the Unlock failure")
+	}
+
+	var leaked int
+	for i := 0; i < 100; i++ {
+		leaked = keepAliveGoroutines() - before
+		if leaked <= 0 {
+			break
+		}
+		time.Sleep(20 * time.Millisecond)
+	}
+	assert.LessOrEqual(t, leaked, 0, "session keepalive goroutines are still running after %d Close calls whose Unlock failed", n)
+}

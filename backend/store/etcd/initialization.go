@@ -87,14 +87,15 @@ func (s *StoreInitializer) FlagAsInitialized(ctx context.Context) error {
 
 // Close session & unlock
 func (s *StoreInitializer) Close(ctx context.Context) error {
-	if err := s.mutex.Unlock(ctx); err != nil {
-		return err
-	}
-
-	if err := s.session.Close(); err != nil {
-		return err
-	}
+	// The session must be closed whether or not the unlock worked, or its
+	// keepalive goroutine and lease are left behind. The first error is returned.
+	unlockErr := s.mutex.Unlock(ctx)
+	closeErr := s.session.Close()
+	// Close always orphans the session first, so Done is closed by now.
 	<-s.session.Done()
 
-	return nil
+	if unlockErr != nil {
+		return unlockErr
+	}
+	return closeErr
 }
