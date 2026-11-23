@@ -30,6 +30,20 @@ func apiQueueInnerGoroutines() int {
 	return strings.Count(string(buf), apiQueueGoroutineName)
 }
 
+// apiQueueProducerBlockedOnSend reports whether handleAPIQueue's producer
+// goroutine is parked in its hand-off select, which only blocks once the
+// channel buffer is full.
+func apiQueueProducerBlockedOnSend() bool {
+	buf := make([]byte, 1<<20)
+	buf = buf[:runtime.Stack(buf, true)]
+	for _, g := range strings.Split(string(buf), "\n\n") {
+		if strings.Contains(g, apiQueueGoroutineName) && strings.Contains(g, "[select") {
+			return true
+		}
+	}
+	return false
+}
+
 func TestHandleAPIQueueInnerGoroutineExitsOnCancel(t *testing.T) {
 	cfg, cleanup := FixtureConfig()
 	defer cleanup()
@@ -54,8 +68,9 @@ func TestHandleAPIQueueInnerGoroutineExitsOnCancel(t *testing.T) {
 	go func() { a.handleAPIQueue(ctx); close(done) }()
 	require.Eventually(t, func() bool { return apiQueueInnerGoroutines()-before == 1 }, 2*time.Second, 10*time.Millisecond)
 
-	// Give the producer time to fill the channel buffer and block handing off one more message.
-	time.Sleep(300 * time.Millisecond)
+	// Wait until the producer has filled the channel buffer and is blocked
+	// handing off one more message, which is the state this test is about.
+	require.Eventually(t, apiQueueProducerBlockedOnSend, 5*time.Second, 10*time.Millisecond)
 	cancel()
 
 	exited := func() bool { return apiQueueInnerGoroutines()-before <= 0 }
@@ -90,6 +105,7 @@ func assertEventually(cond func() bool, wait time.Duration) bool {
 	}
 	return cond()
 }
+
 func TestRunShutsDownWithQueuedAPIEventsWhileDisconnected(t *testing.T) {
 	mockTime.Start()
 	defer mockTime.Stop()

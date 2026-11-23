@@ -446,14 +446,9 @@ func (a *Agent) Run(ctx context.Context) error {
 	// blocked in sendMessage until done closes, or sitting unsent in sendq.
 	// handleAPIQueue must have returned before the drain, or it could still put a
 	// message into sendq behind it.
-	apiQueueDone := make(chan struct{})
-	apiQueueStarted := false
+	var apiQueueWG sync.WaitGroup
 	defer a.drainSendq()
-	defer func() {
-		if apiQueueStarted {
-			<-apiQueueDone
-		}
-	}()
+	defer apiQueueWG.Wait()
 	defer a.doneOnce.Do(func() { close(a.done) })
 	defer cancel()
 
@@ -569,9 +564,9 @@ func (a *Agent) Run(ctx context.Context) error {
 	// once it exits
 	go a.connectionManager(ctx, cancel)
 	go a.refreshSystemInfoPeriodically(ctx)
-	apiQueueStarted = true
+	apiQueueWG.Add(1)
 	go func() {
-		defer close(apiQueueDone)
+		defer apiQueueWG.Done()
 		a.handleAPIQueue(ctx)
 	}()
 

@@ -45,6 +45,9 @@ func TestUpgradeCommandClosesEtcdClient(t *testing.T) {
 	run() // warm up lazily started goroutines
 	time.Sleep(200 * time.Millisecond)
 	before := etcdClientGoroutines()
+	// The count is by a gRPC symbol name; if gRPC renames it the count stays 0
+	// and this test would pass without checking anything.
+	require.Greater(t, before, 0, "no etcd client goroutines found: the symbol matched by etcdClientGoroutines may have been renamed")
 
 	const n = 4
 	for i := 0; i < n; i++ {
