@@ -131,14 +131,6 @@ func childPID(t *testing.T, pidFile string) int {
 	return pid
 }
 
-func waitGone(pid int) bool {
-	deadline := time.Now().Add(2 * time.Second)
-	for processAlive(pid) && time.Now().Before(deadline) {
-		time.Sleep(20 * time.Millisecond)
-	}
-	return !processAlive(pid)
-}
-
 // A handler that detaches its background process from the output pipes
 // (nohup notifier >/dev/null 2>&1 &) has not leaked anything the command's
 // pipes hold open, so it must keep running after Execute returns.
