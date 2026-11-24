@@ -46,8 +46,8 @@ require (
 	github.com/prometheus/common v0.71.0
 	github.com/robertkrimen/otto v0.5.1
 	github.com/robfig/cron/v3 v3.0.1
-	github.com/sensu/core/v2 v2.21.7
-	github.com/sensu/core/v3 v3.10.7
+	github.com/sensu/core/v2 v2.21.8
+	github.com/sensu/core/v3 v3.10.8
 	github.com/sensu/lasr v1.2.1
 	github.com/sensu/sensu-api-tools v0.2.2
 	github.com/sensu/sensu-go/types v0.13.0
@@ -58,7 +58,7 @@ require (
 	github.com/spf13/viper v1.21.0
 	github.com/stretchr/testify v1.12.1
 	go.etcd.io/bbolt v1.4.3
-	go.etcd.io/etcd/api/v3 v3.7.1
+	go.etcd.io/etcd/api/v3 v3.7.4
 	go.etcd.io/etcd/client/pkg/v3 v3.6.13
 	go.etcd.io/etcd/client/v3 v3.6.13
 	go.etcd.io/etcd/server/v3 v3.6.13
@@ -143,8 +143,8 @@ require (
 	go.yaml.in/yaml/v3 v3.0.5 // indirect
 	golang.org/x/term v0.48.0 // indirect
 	golang.org/x/text v0.44.0 // indirect
-	google.golang.org/genproto/googleapis/api v0.0.0-20261116203732-fd2c7689a808 // indirect
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20261116203732-fd2c7689a808 // indirect
+	google.golang.org/genproto/googleapis/api v0.0.0-20261123191846-1e707ab9fbc2 // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20261123191846-1e707ab9fbc2 // indirect
 	google.golang.org/protobuf v1.36.12 // indirect
 	gopkg.in/natefinch/lumberjack.v2 v2.2.1 // indirect
 	gopkg.in/sourcemap.v1 v1.0.5 // indirect

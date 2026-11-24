@@ -23,6 +23,7 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 ### Changed
 - The agent TCP socket now replies `unavailable` instead of `invalid` when a valid event is dropped because the agent is not connected to a backend, and the UDP socket waits at most 250ms (was 5s) to queue a datagram while disconnected
 - The agent Prometheus endpoint (`PrometheusBinding`) is now started by `Run` instead of `NewAgent`, and is stopped when the agent shuts down. An agent that is constructed but never run no longer serves metrics
+- Fixed silences being ignored by legacy check handlers: legacy handlers now apply the `not_silenced` filter, so silenced events are suppressed as they were before silenced events were delivered to pipelines. This is a behaviour change that cannot be turned off: legacy handlers no longer receive silenced events
 
 ## [6.15.1] - 2026-11-18
 
