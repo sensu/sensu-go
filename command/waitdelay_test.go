@@ -117,3 +117,88 @@ func TestExecuteKillsBackgroundChildWhenCheckExitsNonZero(t *testing.T) {
 		t.Errorf("background child %d is still running after a non-zero exit", pid)
 	}
 }
+
+func childPID(t *testing.T, pidFile string) int {
+	t.Helper()
+	raw, err := os.ReadFile(pidFile)
+	if err != nil {
+		t.Fatal(err)
+	}
+	pid, err := strconv.Atoi(strings.TrimSpace(string(raw)))
+	if err != nil {
+		t.Fatal(err)
+	}
+	return pid
+}
+
+func waitGone(pid int) bool {
+	deadline := time.Now().Add(2 * time.Second)
+	for processAlive(pid) && time.Now().Before(deadline) {
+		time.Sleep(20 * time.Millisecond)
+	}
+	return !processAlive(pid)
+}
+
+// A handler that detaches its background process from the output pipes
+// (nohup notifier >/dev/null 2>&1 &) has not leaked anything the command's
+// pipes hold open, so it must keep running after Execute returns.
+func TestExecuteLeavesDetachedBackgroundChildAlone(t *testing.T) {
+	old := waitDelay
+	waitDelay = 300 * time.Millisecond
+	defer func() { waitDelay = old }()
+
+	for _, tc := range []struct {
+		name   string
+		suffix string
+		status int
+	}{{"exit 0", "", 0}, {"exit 2", "; exit 2", 2}} {
+		t.Run(tc.name, func(t *testing.T) {
+			pidFile := filepath.Join(t.TempDir(), "child.pid")
+			req := ExecutionRequest{
+				Command: fmt.Sprintf("sleep 60 >/dev/null 2>&1 & echo $! > %s%s", pidFile, tc.suffix),
+				Timeout: 30,
+			}
+			resp, err := (&ExecutionRequest{}).Execute(context.Background(), req)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if resp.Status != tc.status {
+				t.Errorf("status = %d, want %d", resp.Status, tc.status)
+			}
+			pid := childPID(t, pidFile)
+			defer func() { _ = syscall.Kill(pid, syscall.SIGKILL) }()
+			time.Sleep(200 * time.Millisecond)
+			if !processAlive(pid) {
+				t.Errorf("detached background process %d was killed although it holds no output pipe", pid)
+			}
+		})
+	}
+}
+
+// A command that simply runs for longer than WaitDelay and then exits non-zero
+// is not a command that left pipes held open, so the group kill must not be
+// taken from the elapsed time alone.
+func TestExecuteLongRunningNonZeroCommandDoesNotKillDetachedChild(t *testing.T) {
+	old := waitDelay
+	waitDelay = 300 * time.Millisecond
+	defer func() { waitDelay = old }()
+
+	pidFile := filepath.Join(t.TempDir(), "child.pid")
+	req := ExecutionRequest{
+		Command: fmt.Sprintf("sleep 60 >/dev/null 2>&1 & echo $! > %s; sleep 1; exit 2", pidFile),
+		Timeout: 30,
+	}
+	resp, err := (&ExecutionRequest{}).Execute(context.Background(), req)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if resp.Status != 2 {
+		t.Errorf("status = %d, want 2", resp.Status)
+	}
+	pid := childPID(t, pidFile)
+	defer func() { _ = syscall.Kill(pid, syscall.SIGKILL) }()
+	time.Sleep(200 * time.Millisecond)
+	if !processAlive(pid) {
+		t.Errorf("detached background process %d was killed by a command that merely ran longer than WaitDelay", pid)
+	}
+}

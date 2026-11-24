@@ -2,6 +2,8 @@ package agent
 
 import (
 	"context"
+	"runtime"
+	"strings"
 	"testing"
 	"time"
 
@@ -35,7 +37,10 @@ func TestRunReturnsWhenAnAPIEventIsBlockedInSendMessage(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	runDone := make(chan error, 1)
 	go func() { runDone <- a.Run(ctx) }()
-	time.Sleep(500 * time.Millisecond) // let the consumer take the event and block in sendMessage
+	// Wait until handleAPIQueue's consumer has taken the event and is parked in
+	// sendMessage: sendq is full, so nothing else can be holding it.
+	require.Eventually(t, func() bool { return apiQueueConsumerBlockedInSendMessage() }, 10*time.Second, 5*time.Millisecond,
+		"the API queue consumer never blocked in sendMessage")
 	cancel()
 
 	select {
@@ -46,9 +51,28 @@ func TestRunReturnsWhenAnAPIEventIsBlockedInSendMessage(t *testing.T) {
 	}
 }
 
+// apiQueueConsumerBlockedInSendMessage reports whether a goroutine is parked in
+// sendMessage on behalf of handleAPIQueue.
+func apiQueueConsumerBlockedInSendMessage() bool {
+	buf := make([]byte, 1<<20)
+	buf = buf[:runtime.Stack(buf, true)]
+	for _, g := range strings.Split(string(buf), "\n\n") {
+		if strings.Contains(g, "(*Agent).sendMessage(") && strings.Contains(g, "(*Agent).handleAPIQueue(") && strings.Contains(g, "[select") {
+			return true
+		}
+	}
+	return false
+}
+
 type blockingPlugin struct {
 	BasePlugin
+	started chan struct{}
 	release chan struct{}
+}
+
+func (p *blockingPlugin) BeforeAgentRun(ctx context.Context, a *Agent) error {
+	close(p.started)
+	return nil
 }
 
 func (p *blockingPlugin) Name() string  { return "blocking" }
@@ -71,7 +95,7 @@ func TestSendMessageWithinReturnsAsSoonAsShutdownBegins(t *testing.T) {
 	cfg.BackendURLs = []string{"ws://127.0.0.1:1"}
 	a, err := NewAgent(cfg)
 	require.NoError(t, err)
-	plugin := &blockingPlugin{release: make(chan struct{})}
+	plugin := &blockingPlugin{started: make(chan struct{}), release: make(chan struct{})}
 	a.RegisterPlugin(plugin)
 
 	for i := 0; i < cap(a.sendq); i++ {
@@ -81,14 +105,20 @@ func TestSendMessageWithinReturnsAsSoonAsShutdownBegins(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	runDone := make(chan error, 1)
 	go func() { runDone <- a.Run(ctx) }()
-	time.Sleep(500 * time.Millisecond)
+	select {
+	case <-plugin.started:
+	case <-time.After(10 * time.Second):
+		t.Fatal("Run never started")
+	}
 
 	sent := make(chan bool, 1)
 	go func() { sent <- a.sendMessageWithin(&transport.Message{}, 20*time.Second) }()
+	// sendq is full and the agent is still running, so the call must still be
+	// waiting. This only needs to hold for as long as it takes to check.
 	select {
 	case <-sent:
 		t.Fatal("sendMessageWithin returned while the agent was still running and sendq was full")
-	case <-time.After(300 * time.Millisecond):
+	case <-time.After(100 * time.Millisecond):
 	}
 
 	cancel()

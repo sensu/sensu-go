@@ -5,9 +5,10 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io"
 	"math"
+	"os"
 	"os/exec"
-	"runtime"
 	"strings"
 	"sync"
 	"syscall"
@@ -155,11 +156,18 @@ func (e *ExecutionRequest) Execute(ctx context.Context, execution ExecutionReque
 	// Nagios plugin spec.
 	var output bytesutil.SyncBuffer
 
-	cmd.Stdout = &output
-	cmd.Stderr = &output
-	// A grandchild that outlives the command and keeps the output pipes open
-	// would otherwise make Wait block until that grandchild exits.
-	cmd.WaitDelay = waitDelay
+	// The output pipe is created here instead of letting exec.Cmd do it, so that
+	// we know for certain whether something the command left running still holds
+	// it open after the command exits. Cmd.Wait cannot say: it reports that as
+	// ErrWaitDelay only if the command exited successfully, and not at all if it
+	// exited non-zero.
+	outR, outW, pipeErr := os.Pipe()
+	if pipeErr != nil {
+		return resp, pipeErr
+	}
+	defer outR.Close()
+	cmd.Stdout = outW
+	cmd.Stderr = outW
 
 	// If Input is specified, write to STDIN.
 	if execution.Input != "" {
@@ -181,13 +189,37 @@ func (e *ExecutionRequest) Execute(ctx context.Context, execution ExecutionReque
 	if err := cmd.Start(); err != nil {
 		// Something unexpected happened when attempting to
 		// fork/exec, return immediately.
+		_ = outW.Close()
 		return resp, err
 	}
+	// From here on only the command and what it starts hold the write end, so the
+	// read end reaches EOF exactly when none of them are left.
+	_ = outW.Close()
+
+	// Read once: the goroutine below can outlive this call (a timeout returns
+	// before Wait does), and waitDelay is a variable that tests change.
+	delay := waitDelay
+
+	copyDone := make(chan struct{})
+	go func() {
+		_, _ = io.Copy(&output, outR)
+		close(copyDone)
+	}()
 
 	waitCh := make(chan struct{})
 	var err error
+	pipesHeldOpen := false
 	go func() {
 		err = cmd.Wait()
+		select {
+		case <-copyDone:
+		case <-time.After(delay):
+			// The command is gone, but something it left running still holds the
+			// output pipe. Stop waiting for it.
+			pipesHeldOpen = true
+			_ = outR.Close()
+			<-copyDone
+		}
 		close(waitCh)
 	}()
 
@@ -195,21 +227,11 @@ func (e *ExecutionRequest) Execute(ctx context.Context, execution ExecutionReque
 	var killErr error
 	select {
 	case <-waitCh:
-		waitDelayFired := errors.Is(err, exec.ErrWaitDelay)
-		if waitDelayFired {
-			// The command itself exited successfully; only its pipes were held open
-			// by something it left running in the background.
-			err = nil
-		}
-		// Windows has no cheap way to signal an already-exited group (KillProcess
-		// runs taskkill), so there it only runs when the pipes were held open.
-		if execution.Timeout != 0 && (waitDelayFired || runtime.GOOS != "windows") {
-			// The command has its own process group (see SetProcessGroup), so
-			// anything it left running can be cleaned up instead of leaking one
-			// process per run. This must not depend on ErrWaitDelay: Wait returns
-			// the ExitError in preference to it, so a check that exits non-zero
-			// would otherwise skip the cleanup. Without a timeout there is no
-			// group to signal.
+		// Only what is still holding the command's output pipe is cleaned up, so
+		// that one process per run is not leaked. Anything that detached from the
+		// pipes (nohup cmd >/dev/null 2>&1 &) is left running. Without a timeout
+		// the command has no process group of its own to signal.
+		if execution.Timeout != 0 && pipesHeldOpen {
 			if killErr := KillProcess(cmd); killErr != nil && !errors.Is(killErr, syscall.ESRCH) {
 				logger.WithError(killErr).Warn("unable to kill the processes left behind by the command")
 			}
