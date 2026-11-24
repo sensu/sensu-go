@@ -302,6 +302,13 @@ func (s *Store) UpdateEvent(ctx context.Context, event *corev2.Event) (*corev2.E
 
 	updateOccurrences(event.Check)
 
+	// Handle expire on resolve silenced entries before anything is copied, so
+	// the returned event and the truncated copy both see the cleared silence
+	// state.
+	if err := handleExpireOnResolveEntries(ctx, event, s); err != nil {
+		return nil, nil, err
+	}
+
 	persistEvent := event
 	typeLabelValue := metrics.EventTypeLabelCheck
 
@@ -338,11 +345,6 @@ func (s *Store) UpdateEvent(ctx context.Context, event *corev2.Event) (*corev2.E
 		// If the event is being created for the first time, it may not include
 		// a timestamp. Use the current time.
 		persistEvent.Timestamp = time.Now().Unix()
-	}
-
-	// Handle expire on resolve silenced entries
-	if err := handleExpireOnResolveEntries(ctx, persistEvent, s); err != nil {
-		return nil, nil, err
 	}
 
 	// update the history

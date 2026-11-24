@@ -918,3 +918,38 @@ func TestCountEvents(t *testing.T) {
 		}
 	})
 }
+
+// An expire_on_resolve silence must be cleared from the returned event even
+// when the check output is truncated. Otherwise not_silenced drops the
+// resolution (sensu-go issue 5224).
+func TestUpdateEventExpireOnResolveWithTruncatedOutput(t *testing.T) {
+	testWithEtcd(t, func(s store.Store) {
+		ctx := context.WithValue(context.Background(), corev2.NamespaceKey, "default")
+
+		silence := corev2.FixtureSilenced("*:check1")
+		silence.ExpireOnResolve = true
+		require.NoError(t, s.UpdateSilencedEntry(ctx, silence))
+
+		failing := corev2.FixtureEvent("entity1", "check1")
+		failing.Check.Status = 2
+		_, _, err := s.UpdateEvent(ctx, failing)
+		require.NoError(t, err)
+
+		resolution := corev2.FixtureEvent("entity1", "check1")
+		resolution.Check.Status = 0
+		resolution.Check.Output = "VERY LONG"
+		resolution.Check.MaxOutputSize = 4
+		resolution.Check.Silenced = []string{silence.Name}
+		resolution.Check.IsSilenced = true
+
+		returned, _, err := s.UpdateEvent(ctx, resolution)
+		require.NoError(t, err)
+		assert.Empty(t, returned.Check.Silenced, "returned event still lists the expired silence")
+		assert.False(t, returned.IsSilenced(), "not_silenced would drop the resolution")
+
+		stored, err := s.GetEventByEntityCheck(ctx, "entity1", "check1")
+		require.NoError(t, err)
+		assert.Empty(t, stored.Check.Silenced)
+		assert.Equal(t, "VERY", stored.Check.Output)
+	})
+}
