@@ -953,3 +953,42 @@ func TestUpdateEventExpireOnResolveWithTruncatedOutput(t *testing.T) {
 		assert.Equal(t, "VERY", stored.Check.Output)
 	})
 }
+
+// When one expire_on_resolve silence is removed but another silence still
+// matches the check, the returned event must keep the retained silence and
+// stay flagged as silenced.
+func TestUpdateEventExpireOnResolveKeepsRetainedSilence(t *testing.T) {
+	testWithEtcd(t, func(s store.Store) {
+		ctx := context.WithValue(context.Background(), corev2.NamespaceKey, "default")
+
+		expiring := corev2.FixtureSilenced("*:check1")
+		expiring.ExpireOnResolve = true
+		require.NoError(t, s.UpdateSilencedEntry(ctx, expiring))
+
+		regular := corev2.FixtureSilenced("entity:entity1:check1")
+		require.NoError(t, s.UpdateSilencedEntry(ctx, regular))
+
+		failing := corev2.FixtureEvent("entity1", "check1")
+		failing.Check.Status = 2
+		_, _, err := s.UpdateEvent(ctx, failing)
+		require.NoError(t, err)
+
+		resolution := corev2.FixtureEvent("entity1", "check1")
+		resolution.Check.Status = 0
+		resolution.Check.Output = "VERY LONG"
+		resolution.Check.MaxOutputSize = 4
+		resolution.Check.Silenced = []string{expiring.Name, regular.Name}
+		resolution.Check.IsSilenced = true
+
+		returned, _, err := s.UpdateEvent(ctx, resolution)
+		require.NoError(t, err)
+		assert.Equal(t, []string{regular.Name}, returned.Check.Silenced, "only the retained silence should remain")
+		assert.True(t, returned.Check.IsSilenced, "a retained silence still applies")
+
+		stored, err := s.GetEventByEntityCheck(ctx, "entity1", "check1")
+		require.NoError(t, err)
+		assert.Equal(t, []string{regular.Name}, stored.Check.Silenced)
+		assert.True(t, stored.Check.IsSilenced)
+		assert.Equal(t, "VERY", stored.Check.Output)
+	})
+}
