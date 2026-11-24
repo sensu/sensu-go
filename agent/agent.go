@@ -312,6 +312,23 @@ func (a *Agent) sendMessage(msg *transport.Message) {
 	}
 }
 
+// drainSendq hands back every message still waiting to be sent, so that events
+// taken from the on-disk API queue are nacked and kept for the next run instead
+// of staying unacknowledged. It must run after done is closed, so nothing new is
+// blocked in sendMessage.
+func (a *Agent) drainSendq() {
+	for {
+		select {
+		case msg := <-a.sendq:
+			if msg.SendCallback != nil {
+				msg.SendCallback(context.Canceled)
+			}
+		default:
+			return
+		}
+	}
+}
+
 // sendMessageWithin is like sendMessage, but gives up and returns false when
 // the message cannot be queued within wait. sendq is only drained while the
 // agent is connected, so callers that hold a socket or a goroutine on behalf
@@ -423,9 +440,15 @@ func (a *Agent) Run(ctx context.Context) error {
 		}
 	}()
 	// Deferred calls run last in, first out, so on return: cancel the context,
-	// close done, then close the queue. done must be closed before the queue:
-	// Close waits until every message taken from it was acked or nacked, and
-	// handleAPIQueue may be holding one, blocked in sendMessage until done closes.
+	// close done, wait for handleAPIQueue to stop, drain sendq, then close the
+	// queue. done must be closed before the queue: Close waits until every message
+	// taken from it was acked or nacked, and those can be held by handleAPIQueue
+	// blocked in sendMessage until done closes, or sitting unsent in sendq.
+	// handleAPIQueue must have returned before the drain, or it could still put a
+	// message into sendq behind it.
+	var apiQueueWG sync.WaitGroup
+	defer a.drainSendq()
+	defer apiQueueWG.Wait()
 	defer a.doneOnce.Do(func() { close(a.done) })
 	defer cancel()
 
@@ -541,7 +564,11 @@ func (a *Agent) Run(ctx context.Context) error {
 	// once it exits
 	go a.connectionManager(ctx, cancel)
 	go a.refreshSystemInfoPeriodically(ctx)
-	go a.handleAPIQueue(ctx)
+	apiQueueWG.Add(1)
+	go func() {
+		defer apiQueueWG.Done()
+		a.handleAPIQueue(ctx)
+	}()
 
 	// Wait for context to complete
 	<-ctx.Done()
@@ -616,6 +643,7 @@ func (a *Agent) connectionManager(ctx context.Context, cancel context.CancelFunc
 			}
 			logger.WithError(err).Error("couldn't connect to backend")
 			cancel()
+			return
 		}
 
 		connCtx, connCancel := context.WithCancel(ctx)

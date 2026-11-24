@@ -50,7 +50,13 @@ func (s *Store) NewInitializer(ctx context.Context) (store.Initializer, error) {
 
 // Lock mutex to avoid competing writes
 func (s *StoreInitializer) Lock(ctx context.Context) error {
-	return s.mutex.Lock(ctx)
+	if err := s.mutex.Lock(ctx); err != nil {
+		// The caller does not call Close when Lock fails, so release the
+		// session's keepalive goroutine and lease here.
+		_ = s.session.Close()
+		return err
+	}
+	return nil
 }
 
 // IsInitialized checks the state of the .initialized key
@@ -81,14 +87,15 @@ func (s *StoreInitializer) FlagAsInitialized(ctx context.Context) error {
 
 // Close session & unlock
 func (s *StoreInitializer) Close(ctx context.Context) error {
-	if err := s.mutex.Unlock(ctx); err != nil {
-		return err
-	}
-
-	if err := s.session.Close(); err != nil {
-		return err
-	}
+	// The session must be closed whether or not the unlock worked, or its
+	// keepalive goroutine and lease are left behind. The first error is returned.
+	unlockErr := s.mutex.Unlock(ctx)
+	closeErr := s.session.Close()
+	// Close always orphans the session first, so Done is closed by now.
 	<-s.session.Done()
 
-	return nil
+	if unlockErr != nil {
+		return unlockErr
+	}
+	return closeErr
 }
