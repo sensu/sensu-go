@@ -1,3 +1,6 @@
+//go:build integration && !race
+// +build integration,!race
+
 package cmd
 
 import (

@@ -92,7 +92,9 @@ type Message struct {
 	Payload []byte
 
 	// SendCallback is a callback that is executed after a Send operation.
-	// The error value of Send is passed to the callback.
+	// The error value of Send is passed to the callback. It is always called
+	// exactly once, even if Send fails because the transport is closed, and it
+	// must not call Send on the same transport.
 	SendCallback func(error)
 }
 
@@ -258,6 +260,11 @@ func (t *WebSocketTransport) Receive() (*Message, error) {
 // Send a message over the websocket connection. If the connection has been
 // closed, returns a ClosedError. Returns a ConnectionError if the websocket
 // connection returns an error while sending, but the connection is still open.
+//
+// If the message has a SendCallback, it is called exactly once with Send's
+// result, including when Send fails with a ClosedError. The callback runs while
+// Send still holds the transport's write lock, so it must not call Send on the
+// same transport, or it will deadlock.
 func (t *WebSocketTransport) Send(m *Message) (err error) {
 	t.writeMu.Lock()
 	defer t.writeMu.Unlock()

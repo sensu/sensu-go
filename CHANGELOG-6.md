@@ -19,7 +19,6 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 - Fixed tessen requests having no timeout, and smaller goroutine and handle leaks in the agent session timer, event logger, BoltDB handles and Prometheus endpoint
 - Fixed the agent database handle staying locked when creating the agent fails after it was opened
 - Fixed silences being ignored by legacy check handlers: legacy handlers now apply the `not_silenced` filter, so silenced events are suppressed as they were before silenced events were delivered to pipelines. This is a behaviour change that cannot be turned off: legacy handlers no longer receive silenced events
-- Fixed the agent not returning after failing to connect to a backend, which could crash it with a nil pointer
 - Fixed the agent falling through to use a nil connection if connecting to a backend ever returned an error other than shutdown
 - Fixed the agent hanging on shutdown when events were queued through its API, whether it was connected or not, and a queued event never being returned to the on-disk queue when the connection closed mid-send; those events are now handed back to the on-disk queue and delivered after the next start
 - Fixed a leaked lease and goroutine when the etcd store initializer fails to take its lock or fails to unlock on close, an unclosed etcd client in `sensu-backend upgrade`, and an unacked message in the agent API queue on shutdown
