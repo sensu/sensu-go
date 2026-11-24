@@ -315,9 +315,9 @@ func (a *AdapterV1) generateLegacyPipeline(ctx context.Context, event *corev2.Ev
 	for _, handlerName := range handlerNames {
 		workflowName := fmt.Sprintf(LegacyPipelineWorkflowName, handlerName)
 		workflow := corev2.PipelineWorkflowFromHandler(ctx, workflowName, handlers[handlerName])
-		// Legacy check handlers have always suppressed silenced events. Keep that
-		// behaviour by applying the not_silenced filter unless the handler already
-		// lists it.
+		// Legacy check handlers suppressed silenced events by default from 6.14.0
+		// onward. Keep that behaviour by applying the not_silenced filter unless
+		// the handler already lists it.
 		if !hasFilter(workflow.Filters, "not_silenced") {
 			workflow.Filters = append(workflow.Filters, &corev2.ResourceReference{
 				APIVersion: "core/v2",

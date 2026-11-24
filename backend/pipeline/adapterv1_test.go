@@ -1631,6 +1631,59 @@ func TestRun_LegacyHandlerSilenceEndToEnd(t *testing.T) {
 	}
 }
 
+// An expire_on_resolve silence suppresses a legacy handler while the incident
+// is open, and stops suppressing it once the resolution removes the entry.
+// Silence state is derived from real entries, and the resolution step mirrors
+// handleExpireOnResolveEntries in the etcd store (which is unexported and so
+// cannot be called from here).
+func TestRun_LegacyHandlerExpireOnResolve(t *testing.T) {
+	entry := silenceEntry("*:check1", time.Now().Add(-time.Hour).Unix(), true)
+
+	runLegacy := func(t *testing.T, event *corev2.Event) bool {
+		t.Helper()
+		var handled bool
+		stor := &mockstore.MockStore{}
+		stor.On("GetHandlerByName", mock.Anything, "handler1").Return(corev2.FixtureHandler("handler1"), nil)
+		a := &AdapterV1{
+			Store:           stor,
+			FilterAdapters:  []FilterAdapter{&filter.NotSilencedAdapter{}},
+			MutatorAdapters: []MutatorAdapter{&mutator.JSONAdapter{}},
+			HandlerAdapters: []HandlerAdapter{recordHandlerAdapter{Handled: &handled}},
+		}
+		if err := a.Run(context.Background(), &corev2.ResourceReference{Name: LegacyPipelineName}, event); err != nil {
+			t.Fatal(err)
+		}
+		return handled
+	}
+
+	// Incident open: the expire_on_resolve silence applies and suppresses.
+	event := corev2.FixtureEvent("entity1", "check1")
+	event.Check.Handlers = []string{"handler1"}
+	deriveSilenceState(event, entry)
+	if !event.Check.IsSilenced {
+		t.Fatal("precondition: event should be silenced by the expire_on_resolve entry")
+	}
+	if runLegacy(t, event) {
+		t.Error("silenced incident was delivered to the legacy handler, want suppressed")
+	}
+
+	// Resolution: the store deletes expire_on_resolve entries and keeps the rest.
+	var retained []*corev2.Silenced
+	for _, s := range []*corev2.Silenced{entry} {
+		if !s.ExpireOnResolve {
+			retained = append(retained, s)
+		}
+	}
+	event.Check.Status = 0
+	deriveSilenceState(event, retained...)
+	if event.Check.IsSilenced {
+		t.Fatal("precondition: resolution should leave the check unsilenced")
+	}
+	if !runLegacy(t, event) {
+		t.Error("resolution after expire_on_resolve removal was not delivered to the legacy handler")
+	}
+}
+
 // A silence that has not begun yet must not match the event.
 func TestIsSilencedBy_FutureBeginNotEffective(t *testing.T) {
 	e := corev2.FixtureEvent("entity1", "check1")
