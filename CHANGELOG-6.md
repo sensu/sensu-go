@@ -10,7 +10,19 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 ### Fixed
 - Fixed the agent leaving its websocket open after a send or receive error, which leaked a connection per reconnect
 - Fixed a file descriptor leak where the executable opened for the agent allow-list sha512 check was never closed
+- Fixed goroutines and sockets piling up in the agent while it is disconnected, by making sending messages stop blocking when the agent shuts down
+- Fixed the agent TCP/UDP socket listeners and statsd server piling up goroutines and open sockets while the agent is disconnected from its backend; events are now dropped after 5 seconds (250ms for UDP) instead of blocking indefinitely. The same limits apply when the agent is connected but its send queue is full, so a burst of socket events is dropped sooner than before in that case too
+- Fixed the agent API queue database handle leaking when the queue fails to compact
+- Fixed the agent UDP socket listener silently stopping after the first ping, invalid or empty datagram
+- Fixed command execution hanging when a background child process keeps the output pipes open. This applies to everything that runs a command: checks, hooks, legacy handlers and pipe mutators. Execution now returns 5 seconds after the command exits, with the output captured so far. If the command has a timeout, whatever is still holding its output pipes at that point is killed, whatever the exit status, so one process is no longer leaked per run; processes that detached from the pipes (for example `nohup notifier >/dev/null 2>&1 &`) are not touched. Without a timeout the processes are left running. The cleanup is covered by tests on Unix only; the Windows path (`taskkill`) is not tested
+- Fixed log file retention never removing expired archives, and a directory handle leak while reaping. Because earlier versions never removed them, the first reap after upgrading removes every archive older than the configured retention setting at once
+- Fixed tessen requests having no timeout, and smaller goroutine and handle leaks in the agent session timer, event logger, BoltDB handles and Prometheus endpoint
+- Fixed the agent database handle staying locked when creating the agent fails after it was opened
 - Fixed silences being ignored by legacy check handlers: legacy handlers now apply the `not_silenced` filter, so silenced events are suppressed as they were before silenced events were delivered to pipelines. This is a behaviour change that cannot be turned off: legacy handlers no longer receive silenced events
+
+### Changed
+- The agent TCP socket now replies `unavailable` instead of `invalid` when a valid event is dropped because the agent is not connected to a backend, and a client that string-matches `ok`/`invalid` will need to handle the new `unavailable` reply
+- The agent Prometheus endpoint (`PrometheusBinding`) is now started by `Run` instead of `NewAgent`, and is stopped when the agent shuts down. An agent that is constructed but never run no longer serves metrics
 
 ## [6.15.1] - 2026-11-18
 

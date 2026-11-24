@@ -252,6 +252,7 @@ func (r *RotateFileLogger) reap(errors chan error) {
 		errors <- err
 		return
 	}
+	defer f.Close()
 	files, err := f.Readdirnames(0)
 	if err != nil {
 		errors <- err
@@ -269,17 +270,20 @@ func (r *RotateFileLogger) reap(errors chan error) {
 	if r.retentionDuration > 0 {
 		for _, file := range filesToReap {
 			matches := reapRegexp.FindStringSubmatch(file)
-			if len(matches) < 2 {
+			// Archives are named with a UnixNano timestamp (19 digits today). A
+			// short number such as ".1" comes from some other rotation scheme and
+			// would parse as a 1970 timestamp, so it must never count as expired.
+			if len(matches) < 2 || len(matches[1]) < 18 {
 				continue
 			}
 			var timestamp int64
-			if _, err := fmt.Sscanf(matches[1], "%d", timestamp); err != nil {
+			if _, err := fmt.Sscanf(matches[1], "%d", &timestamp); err != nil {
 				continue
 			}
 			archiveTime := time.Unix(0, timestamp)
 			if archiveTime.Add(r.retentionDuration).Before(time.Now()) {
 				tooOld[file] = true
-				if err := os.Remove(file); err != nil {
+				if err := os.Remove(filepath.Join(dir, file)); err != nil {
 					errors <- err
 				}
 			}
