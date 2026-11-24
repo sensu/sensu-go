@@ -556,6 +556,11 @@ func TestAdapterV1_resolvePipelineReference(t *testing.T) {
 					Workflows: []*corev2.PipelineWorkflow{
 						{
 							Name: "legacy-pipeline-workflow-myhandler",
+							Filters: []*corev2.ResourceReference{{
+								APIVersion: "core/v2",
+								Type:       "EventFilter",
+								Name:       "not_silenced",
+							}},
 							Handler: &corev2.ResourceReference{
 								Type:       "Handler",
 								APIVersion: "core/v2",
@@ -799,6 +804,11 @@ func TestAdapterV1_generateLegacyPipeline(t *testing.T) {
 				ObjectMeta: corev2.NewObjectMeta("legacy-pipeline", "default"),
 				Workflows: []*corev2.PipelineWorkflow{{
 					Name: "legacy-pipeline-workflow-handler1",
+					Filters: []*corev2.ResourceReference{{
+						APIVersion: "core/v2",
+						Type:       "EventFilter",
+						Name:       "not_silenced",
+					}},
 					Handler: &corev2.ResourceReference{
 						APIVersion: "core/v2",
 						Type:       "Handler",
@@ -832,6 +842,11 @@ func TestAdapterV1_generateLegacyPipeline(t *testing.T) {
 				ObjectMeta: corev2.NewObjectMeta("legacy-pipeline", "default"),
 				Workflows: []*corev2.PipelineWorkflow{{
 					Name: "legacy-pipeline-workflow-handler1",
+					Filters: []*corev2.ResourceReference{{
+						APIVersion: "core/v2",
+						Type:       "EventFilter",
+						Name:       "not_silenced",
+					}},
 					Handler: &corev2.ResourceReference{
 						APIVersion: "core/v2",
 						Type:       "Handler",
@@ -870,6 +885,11 @@ func TestAdapterV1_generateLegacyPipeline(t *testing.T) {
 				Workflows: []*corev2.PipelineWorkflow{
 					{
 						Name: "legacy-pipeline-workflow-checkhandler",
+						Filters: []*corev2.ResourceReference{{
+							APIVersion: "core/v2",
+							Type:       "EventFilter",
+							Name:       "not_silenced",
+						}},
 						Handler: &corev2.ResourceReference{
 							APIVersion: "core/v2",
 							Type:       "Handler",
@@ -878,6 +898,11 @@ func TestAdapterV1_generateLegacyPipeline(t *testing.T) {
 					},
 					{
 						Name: "legacy-pipeline-workflow-metricshandler",
+						Filters: []*corev2.ResourceReference{{
+							APIVersion: "core/v2",
+							Type:       "EventFilter",
+							Name:       "not_silenced",
+						}},
 						Handler: &corev2.ResourceReference{
 							APIVersion: "core/v2",
 							Type:       "Handler",
@@ -1168,6 +1193,712 @@ func TestAdapterV1_Run_SilencedEvents(t *testing.T) {
 			}
 			if handled != tt.wantHandled {
 				t.Errorf("handler ran = %v, want %v", handled, tt.wantHandled)
+			}
+		})
+	}
+}
+
+func TestAdapterV1_generateLegacyPipeline_NotSilencedFilter(t *testing.T) {
+	tests := []struct {
+		name        string
+		handlerFilt []string
+		wantFilters []string
+	}{
+		{
+			name:        "legacy handler without filters gets not_silenced",
+			handlerFilt: nil,
+			wantFilters: []string{"not_silenced"},
+		},
+		{
+			name:        "legacy handler keeps its own filters and gets not_silenced",
+			handlerFilt: []string{"is_incident"},
+			wantFilters: []string{"is_incident", "not_silenced"},
+		},
+		{
+			name:        "legacy handler already listing not_silenced is not duplicated",
+			handlerFilt: []string{"not_silenced"},
+			wantFilters: []string{"not_silenced"},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			handler := corev2.FixtureHandler("handler1")
+			handler.Filters = tt.handlerFilt
+			stor := &mockstore.MockStore{}
+			stor.On("GetHandlerByName", mock.Anything, handler.GetName()).Return(handler, nil)
+
+			a := &AdapterV1{Store: stor}
+			event := corev2.FixtureEvent("entity1", "check1")
+			event.Check.Handlers = []string{"handler1"}
+
+			pipeline, err := a.generateLegacyPipeline(context.Background(), event)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if len(pipeline.Workflows) != 1 {
+				t.Fatalf("workflows = %d, want 1", len(pipeline.Workflows))
+			}
+			var got []string
+			for _, f := range pipeline.Workflows[0].Filters {
+				got = append(got, f.Name)
+			}
+			if !reflect.DeepEqual(got, tt.wantFilters) {
+				t.Errorf("filters = %v, want %v", got, tt.wantFilters)
+			}
+		})
+	}
+}
+
+// ---- silence / legacy filter scenario tests ----
+
+// notSilencedRef is the filter reference that legacy handlers get by default.
+var notSilencedRef = &corev2.ResourceReference{
+	APIVersion: "core/v2",
+	Type:       "EventFilter",
+	Name:       "not_silenced",
+}
+
+var isIncidentRef = &corev2.ResourceReference{
+	APIVersion: "core/v2",
+	Type:       "EventFilter",
+	Name:       "is_incident",
+}
+
+func filterNames(refs []*corev2.ResourceReference) []string {
+	var names []string
+	for _, r := range refs {
+		names = append(names, r.Name)
+	}
+	return names
+}
+
+// legacyStore returns a store that knows the given handlers by name. A nil
+// value for a name simulates a handler that does not exist.
+func legacyStore(handlers map[string]*corev2.Handler) *mockstore.MockStore {
+	stor := &mockstore.MockStore{}
+	for name, h := range handlers {
+		if h == nil {
+			stor.On("GetHandlerByName", mock.Anything, name).Return((*corev2.Handler)(nil), nil)
+			continue
+		}
+		stor.On("GetHandlerByName", mock.Anything, name).Return(h, nil)
+	}
+	return stor
+}
+
+func TestLegacyPipelineNotSilencedFilter_Scenarios(t *testing.T) {
+	setHandler := func(name string, members ...string) *corev2.Handler {
+		h := corev2.FixtureHandler(name)
+		h.Type = "set"
+		h.Handlers = members
+		return h
+	}
+
+	tests := []struct {
+		name        string
+		handlers    map[string]*corev2.Handler
+		checkNames  []string
+		metricNames []string
+		noCheck     bool
+		storeErr    error
+		wantWf      map[string][]string // workflow name -> filter names
+		wantErr     bool
+		wantNoWf    bool
+	}{
+		{
+			name:       "handler without filters gets not_silenced",
+			handlers:   map[string]*corev2.Handler{"h1": corev2.FixtureHandler("h1")},
+			checkNames: []string{"h1"},
+			wantWf:     map[string][]string{"legacy-pipeline-workflow-h1": {"not_silenced"}},
+		},
+		{
+			name: "existing filters are kept and not_silenced is appended",
+			handlers: func() map[string]*corev2.Handler {
+				h := corev2.FixtureHandler("h1")
+				h.Filters = []string{"is_incident", "custom"}
+				return map[string]*corev2.Handler{"h1": h}
+			}(),
+			checkNames: []string{"h1"},
+			wantWf:     map[string][]string{"legacy-pipeline-workflow-h1": {"is_incident", "custom", "not_silenced"}},
+		},
+		{
+			name: "not_silenced listed first is not duplicated",
+			handlers: func() map[string]*corev2.Handler {
+				h := corev2.FixtureHandler("h1")
+				h.Filters = []string{"not_silenced", "is_incident"}
+				return map[string]*corev2.Handler{"h1": h}
+			}(),
+			checkNames: []string{"h1"},
+			wantWf:     map[string][]string{"legacy-pipeline-workflow-h1": {"not_silenced", "is_incident"}},
+		},
+		{
+			name: "not_silenced listed last is not duplicated",
+			handlers: func() map[string]*corev2.Handler {
+				h := corev2.FixtureHandler("h1")
+				h.Filters = []string{"is_incident", "not_silenced"}
+				return map[string]*corev2.Handler{"h1": h}
+			}(),
+			checkNames: []string{"h1"},
+			wantWf:     map[string][]string{"legacy-pipeline-workflow-h1": {"is_incident", "not_silenced"}},
+		},
+		{
+			name: "not_silenced listed twice by the handler is left as the handler set it",
+			handlers: func() map[string]*corev2.Handler {
+				h := corev2.FixtureHandler("h1")
+				h.Filters = []string{"not_silenced", "not_silenced"}
+				return map[string]*corev2.Handler{"h1": h}
+			}(),
+			checkNames: []string{"h1"},
+			wantWf:     map[string][]string{"legacy-pipeline-workflow-h1": {"not_silenced", "not_silenced"}},
+		},
+		{
+			name: "check and metrics handlers each get not_silenced",
+			handlers: map[string]*corev2.Handler{
+				"check1":   corev2.FixtureHandler("check1"),
+				"metrics1": corev2.FixtureHandler("metrics1"),
+			},
+			checkNames:  []string{"check1"},
+			metricNames: []string{"metrics1"},
+			wantWf: map[string][]string{
+				"legacy-pipeline-workflow-check1":   {"not_silenced"},
+				"legacy-pipeline-workflow-metrics1": {"not_silenced"},
+			},
+		},
+		{
+			name: "metrics-only event gets not_silenced on metrics handler",
+			handlers: map[string]*corev2.Handler{
+				"metrics1": corev2.FixtureHandler("metrics1"),
+			},
+			metricNames: []string{"metrics1"},
+			noCheck:     true,
+			wantWf: map[string][]string{
+				"legacy-pipeline-workflow-metrics1": {"not_silenced"},
+			},
+		},
+		{
+			name: "handler set members each get not_silenced",
+			handlers: map[string]*corev2.Handler{
+				"set1": setHandler("set1", "m1", "m2"),
+				"m1":   corev2.FixtureHandler("m1"),
+				"m2":   corev2.FixtureHandler("m2"),
+			},
+			checkNames: []string{"set1"},
+			wantWf: map[string][]string{
+				"legacy-pipeline-workflow-m1": {"not_silenced"},
+				"legacy-pipeline-workflow-m2": {"not_silenced"},
+			},
+		},
+		{
+			name: "missing handler is ignored and others still get not_silenced",
+			handlers: map[string]*corev2.Handler{
+				"missing": nil,
+				"h1":      corev2.FixtureHandler("h1"),
+			},
+			checkNames: []string{"missing", "h1"},
+			wantWf:     map[string][]string{"legacy-pipeline-workflow-h1": {"not_silenced"}},
+		},
+		{
+			name:       "only missing handlers yields no workflows",
+			handlers:   map[string]*corev2.Handler{"missing": nil},
+			checkNames: []string{"missing"},
+			wantNoWf:   true,
+		},
+		{
+			name:       "event without check or metrics yields no workflows",
+			handlers:   map[string]*corev2.Handler{},
+			noCheck:    true,
+			checkNames: nil,
+			wantNoWf:   true,
+		},
+		{
+			name:       "transient store error on handler lookup is ignored",
+			handlers:   map[string]*corev2.Handler{},
+			checkNames: []string{"h1"},
+			storeErr:   errors.New("transient"),
+			wantNoWf:   true,
+		},
+		{
+			name:       "internal store error is returned to the caller",
+			handlers:   map[string]*corev2.Handler{},
+			checkNames: []string{"h1"},
+			storeErr:   &store.ErrInternal{Message: "etcd down"},
+			wantErr:    true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			stor := legacyStore(tt.handlers)
+			if tt.storeErr != nil {
+				stor = &mockstore.MockStore{}
+				for _, n := range tt.checkNames {
+					stor.On("GetHandlerByName", mock.Anything, n).Return((*corev2.Handler)(nil), tt.storeErr)
+				}
+			}
+			a := &AdapterV1{Store: stor}
+
+			event := corev2.FixtureEvent("entity1", "check1")
+			if tt.noCheck {
+				event.Check = nil
+			} else {
+				event.Check.Handlers = tt.checkNames
+			}
+			if len(tt.metricNames) > 0 {
+				event.Metrics = corev2.FixtureMetrics()
+				event.Metrics.Handlers = tt.metricNames
+			}
+
+			pipeline, err := a.generateLegacyPipeline(context.Background(), event)
+			if tt.wantErr {
+				if err == nil {
+					t.Fatal("expected error, got nil")
+				}
+				return
+			}
+			if tt.wantNoWf {
+				if err == nil {
+					t.Fatalf("expected no-legacy-handlers error, got pipeline %v", pipeline)
+				}
+				return
+			}
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			got := map[string][]string{}
+			for _, wf := range pipeline.Workflows {
+				got[wf.Name] = filterNames(wf.Filters)
+			}
+			if !reflect.DeepEqual(got, tt.wantWf) {
+				t.Errorf("workflow filters = %v, want %v", got, tt.wantWf)
+			}
+		})
+	}
+}
+
+// runSilencedEvent runs an event through a workflow with the given filters and
+// reports whether the handler was reached.
+func runSilencedEvent(t *testing.T, filters []*corev2.ResourceReference, mutateEvent func(*corev2.Event)) bool {
+	t.Helper()
+	var handled bool
+	workflow := &corev2.PipelineWorkflow{
+		Name:    "workflow1",
+		Filters: filters,
+		Handler: &corev2.ResourceReference{APIVersion: "core/v2", Type: "Handler", Name: "handler1"},
+	}
+	pipeline := &corev2.Pipeline{
+		ObjectMeta: corev2.NewObjectMeta("pipeline1", "default"),
+		Workflows:  []*corev2.PipelineWorkflow{workflow},
+	}
+	stor := &mockstore.MockStore{}
+	stor.On("GetPipelineByName", mock.Anything, mock.Anything).Return(pipeline, nil)
+
+	event := corev2.FixtureEvent("entity1", "check1")
+	if mutateEvent != nil {
+		mutateEvent(event)
+	}
+
+	a := &AdapterV1{
+		Store:           stor,
+		FilterAdapters:  []FilterAdapter{&filter.NotSilencedAdapter{}, &filter.IsIncidentAdapter{}},
+		MutatorAdapters: []MutatorAdapter{&mutator.JSONAdapter{}},
+		HandlerAdapters: []HandlerAdapter{recordHandlerAdapter{Handled: &handled}},
+	}
+	if err := a.Run(context.Background(), new(corev2.ResourceReference), event); err != nil {
+		t.Fatal(err)
+	}
+	return handled
+}
+
+func silenceEvent(entries ...string) func(*corev2.Event) {
+	return func(e *corev2.Event) {
+		e.Check.IsSilenced = len(entries) > 0
+		e.Check.Silenced = entries
+	}
+}
+
+func markIncident(e *corev2.Event) {
+	e.Check.Status = 2
+	e.Check.History = []corev2.CheckHistory{{Status: 2}, {Status: 2}}
+}
+
+func TestRun_SilenceMatrix(t *testing.T) {
+	tests := []struct {
+		name        string
+		filters     []*corev2.ResourceReference
+		mutateEvent func(*corev2.Event)
+		wantHandled bool
+	}{
+		{
+			name:        "not silenced, no filters: handled",
+			wantHandled: true,
+		},
+		{
+			name:        "silenced, no filters: handled (silence only applies via not_silenced)",
+			mutateEvent: silenceEvent("entity:entity1"),
+			wantHandled: true,
+		},
+		{
+			name:        "silenced, not_silenced: suppressed",
+			filters:     []*corev2.ResourceReference{notSilencedRef},
+			mutateEvent: silenceEvent("*:check1"),
+			wantHandled: false,
+		},
+		{
+			name:        "not silenced, not_silenced: handled",
+			filters:     []*corev2.ResourceReference{notSilencedRef},
+			wantHandled: true,
+		},
+		{
+			name:        "silenced incident, not_silenced then is_incident: suppressed",
+			filters:     []*corev2.ResourceReference{notSilencedRef, isIncidentRef},
+			mutateEvent: func(e *corev2.Event) { markIncident(e); silenceEvent("*:check1")(e) },
+			wantHandled: false,
+		},
+		{
+			name:        "silenced incident, is_incident only: handled (is_incident ignores silences)",
+			filters:     []*corev2.ResourceReference{isIncidentRef},
+			mutateEvent: func(e *corev2.Event) { markIncident(e); silenceEvent("*:check1")(e) },
+			wantHandled: true,
+		},
+		{
+			name:        "silenced non-incident, is_incident only: denied by is_incident",
+			filters:     []*corev2.ResourceReference{isIncidentRef},
+			mutateEvent: func(e *corev2.Event) { e.Check.Status = 0; silenceEvent("*:check1")(e) },
+			wantHandled: false,
+		},
+		{
+			name:        "stale IsSilenced flag with empty Silenced list: not silenced",
+			filters:     []*corev2.ResourceReference{notSilencedRef},
+			mutateEvent: func(e *corev2.Event) { e.Check.IsSilenced = true; e.Check.Silenced = nil },
+			wantHandled: true,
+		},
+		{
+			name:        "Silenced list set but IsSilenced false: suppressed (IsSilenced derives from list)",
+			filters:     []*corev2.ResourceReference{notSilencedRef},
+			mutateEvent: func(e *corev2.Event) { e.Check.IsSilenced = false; e.Check.Silenced = []string{"*:check1"} },
+			wantHandled: false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := runSilencedEvent(t, tt.filters, tt.mutateEvent); got != tt.wantHandled {
+				t.Errorf("handled = %v, want %v", got, tt.wantHandled)
+			}
+		})
+	}
+}
+
+// Legacy path end to end: the generated legacy pipeline must suppress a silenced
+// event and deliver an unsilenced or resolved one.
+func TestRun_LegacyHandlerSilenceEndToEnd(t *testing.T) {
+	tests := []struct {
+		name        string
+		mutateEvent func(*corev2.Event)
+		wantHandled bool
+	}{
+		{name: "unsilenced legacy event is delivered", wantHandled: true},
+		{name: "silenced legacy event is suppressed", mutateEvent: silenceEvent("*:check1"), wantHandled: false},
+		{name: "silence cleared on resolution is delivered", mutateEvent: func(e *corev2.Event) {
+			silenceEvent("*:check1")(e)
+			silenceEvent()(e)
+		}, wantHandled: true},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var handled bool
+			stor := &mockstore.MockStore{}
+			stor.On("GetHandlerByName", mock.Anything, "handler1").Return(corev2.FixtureHandler("handler1"), nil)
+
+			a := &AdapterV1{
+				Store:           stor,
+				FilterAdapters:  []FilterAdapter{&filter.NotSilencedAdapter{}},
+				MutatorAdapters: []MutatorAdapter{&mutator.JSONAdapter{}},
+				HandlerAdapters: []HandlerAdapter{recordHandlerAdapter{Handled: &handled}},
+			}
+			event := corev2.FixtureEvent("entity1", "check1")
+			event.Check.Handlers = []string{"handler1"}
+			if tt.mutateEvent != nil {
+				tt.mutateEvent(event)
+			}
+			if err := a.Run(context.Background(), &corev2.ResourceReference{Name: LegacyPipelineName}, event); err != nil {
+				t.Fatal(err)
+			}
+			if handled != tt.wantHandled {
+				t.Errorf("handled = %v, want %v", handled, tt.wantHandled)
+			}
+		})
+	}
+}
+
+// An expire_on_resolve silence suppresses a legacy handler while the incident
+// is open, and stops suppressing it once the resolution removes the entry.
+// Silence state is derived from real entries, and the resolution step mirrors
+// handleExpireOnResolveEntries in the etcd store (which is unexported and so
+// cannot be called from here).
+func TestRun_LegacyHandlerExpireOnResolve(t *testing.T) {
+	entry := silenceEntry("*:check1", time.Now().Add(-time.Hour).Unix(), true)
+
+	runLegacy := func(t *testing.T, event *corev2.Event) bool {
+		t.Helper()
+		var handled bool
+		stor := &mockstore.MockStore{}
+		stor.On("GetHandlerByName", mock.Anything, "handler1").Return(corev2.FixtureHandler("handler1"), nil)
+		a := &AdapterV1{
+			Store:           stor,
+			FilterAdapters:  []FilterAdapter{&filter.NotSilencedAdapter{}},
+			MutatorAdapters: []MutatorAdapter{&mutator.JSONAdapter{}},
+			HandlerAdapters: []HandlerAdapter{recordHandlerAdapter{Handled: &handled}},
+		}
+		if err := a.Run(context.Background(), &corev2.ResourceReference{Name: LegacyPipelineName}, event); err != nil {
+			t.Fatal(err)
+		}
+		return handled
+	}
+
+	// Incident open: the expire_on_resolve silence applies and suppresses.
+	event := corev2.FixtureEvent("entity1", "check1")
+	event.Check.Handlers = []string{"handler1"}
+	deriveSilenceState(event, entry)
+	if !event.Check.IsSilenced {
+		t.Fatal("precondition: event should be silenced by the expire_on_resolve entry")
+	}
+	if runLegacy(t, event) {
+		t.Error("silenced incident was delivered to the legacy handler, want suppressed")
+	}
+
+	// Resolution: the store deletes expire_on_resolve entries and keeps the rest.
+	var retained []*corev2.Silenced
+	for _, s := range []*corev2.Silenced{entry} {
+		if !s.ExpireOnResolve {
+			retained = append(retained, s)
+		}
+	}
+	event.Check.Status = 0
+	deriveSilenceState(event, retained...)
+	if event.Check.IsSilenced {
+		t.Fatal("precondition: resolution should leave the check unsilenced")
+	}
+	if !runLegacy(t, event) {
+		t.Error("resolution after expire_on_resolve removal was not delivered to the legacy handler")
+	}
+}
+
+// A silence that has not begun yet must not match the event.
+func TestIsSilencedBy_FutureBeginNotEffective(t *testing.T) {
+	e := corev2.FixtureEvent("entity1", "check1")
+	entry := &corev2.Silenced{
+		ObjectMeta: corev2.NewObjectMeta("*:check1", "default"),
+		Check:      "check1",
+		Begin:      time.Now().Add(time.Hour).Unix(),
+	}
+	if e.IsSilencedBy(entry) {
+		t.Error("silence starting in the future must not match yet")
+	}
+}
+
+// deriveSilenceState mirrors how eventd fills Check.Silenced: it keeps the
+// silence entries that actually match the event, then sets IsSilenced from the
+// result. Driving state through real silence entries exercises the matching
+// logic instead of setting the fields directly.
+func deriveSilenceState(e *corev2.Event, entries ...*corev2.Silenced) {
+	var names []string
+	for _, entry := range e.SilencedBy(entries) {
+		names = append(names, entry.Name)
+	}
+	e.Check.Silenced = names
+	e.Check.IsSilenced = len(names) > 0
+}
+
+// silenceEntry builds a silence entry through the same fixture used by the
+// rest of the code base, with an optional start time and expire-on-resolve.
+func silenceEntry(name string, begin int64, expireOnResolve bool) *corev2.Silenced {
+	s := corev2.FixtureSilenced(name)
+	s.Begin = begin
+	s.ExpireOnResolve = expireOnResolve
+	return s
+}
+
+// Indirect scenarios: silence state is derived from silence entries (the way
+// eventd does) rather than set by hand. Each case feeds an event through the
+// real silence matching and then through the real pipeline.
+func TestRun_IndirectSilenceScenarios(t *testing.T) {
+	past := time.Now().Add(-time.Hour).Unix()
+	future := time.Now().Add(time.Hour).Unix()
+
+	tests := []struct {
+		name        string
+		entityName  string
+		checkName   string
+		entries     []*corev2.Silenced
+		status      uint32
+		filters     []*corev2.ResourceReference
+		wantHandled bool
+	}{
+		{
+			name:        "silence on check name matches via *:check",
+			entityName:  "entity1",
+			checkName:   "check1",
+			entries:     []*corev2.Silenced{silenceEntry("*:check1", past, false)},
+			filters:     []*corev2.ResourceReference{notSilencedRef},
+			wantHandled: false,
+		},
+		{
+			name:        "silence on entity subscription matches the event",
+			entityName:  "entity1",
+			checkName:   "check1",
+			entries:     []*corev2.Silenced{silenceEntry("entity:entity1:check1", past, false)},
+			filters:     []*corev2.ResourceReference{notSilencedRef},
+			wantHandled: false,
+		},
+		{
+			name:        "silence on a different check does not suppress",
+			entityName:  "entity1",
+			checkName:   "check1",
+			entries:     []*corev2.Silenced{silenceEntry("*:other", past, false)},
+			filters:     []*corev2.ResourceReference{notSilencedRef},
+			wantHandled: true,
+		},
+		{
+			name:        "silence on a different entity does not suppress",
+			entityName:  "entity1",
+			checkName:   "check1",
+			entries:     []*corev2.Silenced{silenceEntry("entity:entity2:check1", past, false)},
+			filters:     []*corev2.ResourceReference{notSilencedRef},
+			wantHandled: true,
+		},
+		{
+			name:        "silence that has not begun yet does not suppress",
+			entityName:  "entity1",
+			checkName:   "check1",
+			entries:     []*corev2.Silenced{silenceEntry("*:check1", future, false)},
+			filters:     []*corev2.ResourceReference{notSilencedRef},
+			wantHandled: true,
+		},
+		{
+			name:       "one matching silence among several non-matching ones suppresses",
+			entityName: "entity1",
+			checkName:  "check1",
+			entries: []*corev2.Silenced{
+				silenceEntry("*:other", past, false),
+				silenceEntry("entity:entity2:check1", past, false),
+				silenceEntry("*:check1", past, false),
+			},
+			filters:     []*corev2.ResourceReference{notSilencedRef},
+			wantHandled: false,
+		},
+		{
+			name:       "future silence plus active silence still suppresses via the active one",
+			entityName: "entity1",
+			checkName:  "check1",
+			entries: []*corev2.Silenced{
+				silenceEntry("*:check1", future, false),
+				silenceEntry("*:check1", past, false),
+			},
+			filters:     []*corev2.ResourceReference{notSilencedRef},
+			wantHandled: false,
+		},
+		{
+			name:        "no silences at all: handled",
+			entityName:  "entity1",
+			checkName:   "check1",
+			entries:     nil,
+			filters:     []*corev2.ResourceReference{notSilencedRef},
+			wantHandled: true,
+		},
+		{
+			name:        "silenced incident is still suppressed when is_incident also runs",
+			entityName:  "entity1",
+			checkName:   "check1",
+			entries:     []*corev2.Silenced{silenceEntry("*:check1", past, false)},
+			status:      2,
+			filters:     []*corev2.ResourceReference{notSilencedRef, isIncidentRef},
+			wantHandled: false,
+		},
+		{
+			name:        "silenced non-incident is denied by is_incident before not_silenced",
+			entityName:  "entity1",
+			checkName:   "check1",
+			entries:     []*corev2.Silenced{silenceEntry("*:check1", past, false)},
+			status:      0,
+			filters:     []*corev2.ResourceReference{isIncidentRef, notSilencedRef},
+			wantHandled: false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var handled bool
+			workflow := &corev2.PipelineWorkflow{
+				Name:    "workflow1",
+				Filters: tt.filters,
+				Handler: &corev2.ResourceReference{APIVersion: "core/v2", Type: "Handler", Name: "handler1"},
+			}
+			pipeline := &corev2.Pipeline{
+				ObjectMeta: corev2.NewObjectMeta("pipeline1", "default"),
+				Workflows:  []*corev2.PipelineWorkflow{workflow},
+			}
+			stor := &mockstore.MockStore{}
+			stor.On("GetPipelineByName", mock.Anything, mock.Anything).Return(pipeline, nil)
+
+			event := corev2.FixtureEvent(tt.entityName, tt.checkName)
+			event.Check.Status = tt.status
+			if tt.status == 2 {
+				event.Check.History = []corev2.CheckHistory{{Status: 2}, {Status: 2}}
+			}
+			deriveSilenceState(event, tt.entries...)
+
+			a := &AdapterV1{
+				Store:           stor,
+				FilterAdapters:  []FilterAdapter{&filter.NotSilencedAdapter{}, &filter.IsIncidentAdapter{}},
+				MutatorAdapters: []MutatorAdapter{&mutator.JSONAdapter{}},
+				HandlerAdapters: []HandlerAdapter{recordHandlerAdapter{Handled: &handled}},
+			}
+			if err := a.Run(context.Background(), new(corev2.ResourceReference), event); err != nil {
+				t.Fatal(err)
+			}
+			if handled != tt.wantHandled {
+				t.Errorf("handled = %v, want %v (Silenced=%v IsSilenced=%v)",
+					handled, tt.wantHandled, event.Check.Silenced, event.Check.IsSilenced)
+			}
+		})
+	}
+}
+
+// Legacy path with indirectly derived silence state: the handler does not list
+// not_silenced, so the generated legacy workflow must add it for a silenced
+// event to be suppressed.
+func TestRun_LegacyHandlerDerivedSilence(t *testing.T) {
+	past := time.Now().Add(-time.Hour).Unix()
+	future := time.Now().Add(time.Hour).Unix()
+	tests := []struct {
+		name        string
+		entries     []*corev2.Silenced
+		wantHandled bool
+	}{
+		{name: "matching silence suppresses legacy handler", entries: []*corev2.Silenced{silenceEntry("*:check1", past, false)}, wantHandled: false},
+		{name: "non-matching silence does not suppress", entries: []*corev2.Silenced{silenceEntry("*:other", past, false)}, wantHandled: true},
+		{name: "future silence does not suppress yet", entries: []*corev2.Silenced{silenceEntry("*:check1", future, false)}, wantHandled: true},
+		{name: "no silences delivers", entries: nil, wantHandled: true},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var handled bool
+			stor := &mockstore.MockStore{}
+			stor.On("GetHandlerByName", mock.Anything, "handler1").Return(corev2.FixtureHandler("handler1"), nil)
+			a := &AdapterV1{
+				Store:           stor,
+				FilterAdapters:  []FilterAdapter{&filter.NotSilencedAdapter{}},
+				MutatorAdapters: []MutatorAdapter{&mutator.JSONAdapter{}},
+				HandlerAdapters: []HandlerAdapter{recordHandlerAdapter{Handled: &handled}},
+			}
+			event := corev2.FixtureEvent("entity1", "check1")
+			event.Check.Handlers = []string{"handler1"}
+			deriveSilenceState(event, tt.entries...)
+			if err := a.Run(context.Background(), &corev2.ResourceReference{Name: LegacyPipelineName}, event); err != nil {
+				t.Fatal(err)
+			}
+			if handled != tt.wantHandled {
+				t.Errorf("handled = %v, want %v", handled, tt.wantHandled)
 			}
 		})
 	}

@@ -10,6 +10,7 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 ### Fixed
 - Fixed the agent leaving its websocket open after a send or receive error, which leaked a connection per reconnect
 - Fixed a file descriptor leak where the executable opened for the agent allow-list sha512 check was never closed
+- Fixed silences being ignored by legacy check handlers: legacy handlers now apply the `not_silenced` filter, so silenced events are suppressed as they were before silenced events were delivered to pipelines. This is a behaviour change that cannot be turned off: legacy handlers no longer receive silenced events
 
 ## [6.15.1] - 2026-11-18
 
