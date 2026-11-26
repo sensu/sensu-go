@@ -127,7 +127,7 @@ func (w Wrapper) MarshalYAML() (interface{}, error) {
 	if err != nil {
 		return nil, err
 	}
-	wrapper.ObjectMeta = meta
+	wrapper.ObjectMeta = normalizeNumbers(meta).(map[string]interface{})
 
 	// Remove the innerMeta
 	value, err := toMap(w.Value)
@@ -135,9 +135,37 @@ func (w Wrapper) MarshalYAML() (interface{}, error) {
 		return nil, err
 	}
 	delete(value, "metadata")
-	wrapper.Value = value
+	wrapper.Value = normalizeNumbers(value).(map[string]interface{})
 
 	return wrapper, nil
+}
+
+// normalizeNumbers recursively replaces every json.Number found in maps and
+// slices with an int64 or, failing that, a float64. yaml.v3 has no json.Number
+// support and would otherwise emit the numbers as quoted strings. Values that
+// parse as neither are left untouched.
+func normalizeNumbers(v interface{}) interface{} {
+	switch v := v.(type) {
+	case json.Number:
+		if i, err := v.Int64(); err == nil {
+			return i
+		}
+		if f, err := v.Float64(); err == nil {
+			return f
+		}
+		return v
+	case map[string]interface{}:
+		for k, e := range v {
+			v[k] = normalizeNumbers(e)
+		}
+		return v
+	case []interface{}:
+		for i, e := range v {
+			v[i] = normalizeNumbers(e)
+		}
+		return v
+	}
+	return v
 }
 
 // UnmarshalJSON implements json.Unmarshaler
