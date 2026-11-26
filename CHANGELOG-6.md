@@ -8,6 +8,7 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 ## [Unreleased]
 
 ### Fixed
+- Fixed `sensuctl ... --format yaml` quoting integer fields, a regression from the yaml.v3 migration
 - Fixed the agent leaving its websocket open after a send or receive error, which leaked a connection per reconnect
 - Fixed a file descriptor leak where the executable opened for the agent allow-list sha512 check was never closed
 - Fixed goroutines and sockets piling up in the agent while it is disconnected, by making sending messages stop blocking when the agent shuts down

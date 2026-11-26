@@ -88,6 +88,34 @@ func toMap(v interface{}) (map[string]interface{}, error) {
 	return result, err
 }
 
+// yamlNumbers converts json.Number values produced by toMap into int64 or
+// float64. yaml.v3 encodes json.Number as a quoted string (go-yaml/yaml#807),
+// while yaml.v2 had a special case for it.
+func yamlNumbers(v interface{}) interface{} {
+	switch v := v.(type) {
+	case map[string]interface{}:
+		for key, value := range v {
+			v[key] = yamlNumbers(value)
+		}
+		return v
+	case []interface{}:
+		for i, value := range v {
+			v[i] = yamlNumbers(value)
+		}
+		return v
+	case json.Number:
+		if i, err := v.Int64(); err == nil {
+			return i
+		}
+		if f, err := v.Float64(); err == nil {
+			return f
+		}
+		return v.String()
+	default:
+		return v
+	}
+}
+
 // MarshalJSON implements json.Marshaler
 func (w Wrapper) MarshalJSON() ([]byte, error) {
 	wrapper := struct {
@@ -127,7 +155,7 @@ func (w Wrapper) MarshalYAML() (interface{}, error) {
 	if err != nil {
 		return nil, err
 	}
-	wrapper.ObjectMeta = meta
+	wrapper.ObjectMeta = yamlNumbers(meta).(map[string]interface{})
 
 	// Remove the innerMeta
 	value, err := toMap(w.Value)
@@ -135,7 +163,7 @@ func (w Wrapper) MarshalYAML() (interface{}, error) {
 		return nil, err
 	}
 	delete(value, "metadata")
-	wrapper.Value = value
+	wrapper.Value = yamlNumbers(value).(map[string]interface{})
 
 	return wrapper, nil
 }

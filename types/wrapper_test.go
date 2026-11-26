@@ -2,11 +2,13 @@ package types_test
 
 import (
 	"reflect"
+	"strings"
 	"testing"
 
 	corev2 "github.com/sensu/core/v2"
 	corev3 "github.com/sensu/core/v3"
 	types "github.com/sensu/sensu-go/types"
+	yaml "gopkg.in/yaml.v3"
 )
 
 func TestWrapper_UnmarshalJSON(t *testing.T) {
@@ -105,8 +107,31 @@ func TestWrapper_UnmarshalJSON(t *testing.T) {
 	}
 }
 
-func TestWrapResourceObjectMeta(t *testing.T) {
-	check := corev2.FixtureCheck("foo")
+// yaml.v3 encodes json.Number as a string, so integers coming through
+// Wrapper.MarshalYAML must be converted back to numbers before encoding.
+func TestWrapper_MarshalYAML_Integers(t *testing.T) {
+	check := corev2.FixtureCheck("check-cpu")
+	check.Interval = 10
+	check.Timeout = 5
+
+	out, err := yaml.Marshal(types.WrapResource(check))
+	if err != nil {
+		t.Fatal(err)
+	}
+	got := string(out)
+	for _, want := range []string{"interval: 10", "timeout: 5"} {
+		if !strings.Contains(got, want) {
+			t.Errorf("expected %q in YAML output:\n%s", want, got)
+		}
+	}
+	for _, quoted := range []string{`interval: "10"`, `timeout: "5"`} {
+		if strings.Contains(got, quoted) {
+			t.Errorf("did not expect quoted number %q in YAML output:\n%s", quoted, got)
+		}
+	}
+}
+
+func TestWrapResourceObjectMeta(t *testing.T) {	check := corev2.FixtureCheck("foo")
 	check.Labels["asdf"] = "asdf"
 
 	wrapped := types.WrapResource(check)
