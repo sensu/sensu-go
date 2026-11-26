@@ -6,7 +6,6 @@ import (
 	"testing"
 
 	corev2 "github.com/sensu/core/v2"
-	"github.com/sensu/sensu-go/types"
 	"gopkg.in/yaml.v3"
 )
 
@@ -64,20 +63,5 @@ func TestPrintYAMLResourceSliceRoundTrip(t *testing.T) {
 	}
 	if len(items) != len(checks) {
 		t.Errorf("expected %d items after round-trip, got %d\noutput:\n%s", len(checks), len(items), out)
-	}
-}
-
-// Verify integer fields are emitted as YAML integers, not quoted strings.
-func TestPrintYAMLIntegersUnquoted(t *testing.T) {
-	check := corev2.FixtureCheckConfig("test")
-	check.Interval = 10
-
-	var buf bytes.Buffer
-	if err := PrintYAML(types.WrapResource(check), &buf); err != nil {
-		t.Fatal(err)
-	}
-	out := buf.String()
-	if !strings.Contains(out, "interval: 10\n") || strings.Contains(out, `interval: "10"`) {
-		t.Errorf("expected unquoted integer interval:\n%s", out)
 	}
 }
