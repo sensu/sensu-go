@@ -46,8 +46,8 @@ require (
 	github.com/prometheus/common v0.71.0
 	github.com/robertkrimen/otto v0.5.1
 	github.com/robfig/cron/v3 v3.0.1
-	github.com/sensu/core/v2 v2.21.8
-	github.com/sensu/core/v3 v3.10.8
+	github.com/sensu/core/v2 v2.21.9
+	github.com/sensu/core/v3 v3.10.9
 	github.com/sensu/lasr v1.2.1
 	github.com/sensu/sensu-api-tools v0.2.2
 	github.com/sensu/sensu-go/types v0.13.0
