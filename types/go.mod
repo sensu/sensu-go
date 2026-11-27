@@ -8,6 +8,7 @@ require (
 	github.com/sensu/core/v3 v3.10.9
 	github.com/sensu/sensu-api-tools v0.2.2
 	github.com/stretchr/testify v1.12.1
+	gopkg.in/yaml.v3 v3.0.1
 )
 
 require (

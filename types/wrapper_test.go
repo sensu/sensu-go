@@ -2,12 +2,70 @@ package types_test
 
 import (
 	"reflect"
+	"strings"
 	"testing"
 
 	corev2 "github.com/sensu/core/v2"
 	corev3 "github.com/sensu/core/v3"
 	types "github.com/sensu/sensu-go/types"
+	"gopkg.in/yaml.v3"
 )
+
+func TestWrapper_MarshalYAMLNumbers(t *testing.T) {
+	check := corev2.FixtureCheckConfig("foo")
+	check.Interval = 10
+	check.Timeout = 30
+
+	t.Run("check config integers are not quoted", func(t *testing.T) {
+		out, err := yaml.Marshal(types.WrapResource(check))
+		if err != nil {
+			t.Fatal(err)
+		}
+		got := string(out)
+		for _, want := range []string{"interval: 10\n", "timeout: 30\n"} {
+			if !strings.Contains(got, want) {
+				t.Errorf("output missing %q:\n%s", want, got)
+			}
+		}
+		for _, bad := range []string{`interval: "10"`, `timeout: "30"`} {
+			if strings.Contains(got, bad) {
+				t.Errorf("output contains quoted integer %q:\n%s", bad, got)
+			}
+		}
+	})
+
+	t.Run("nested maps and slices", func(t *testing.T) {
+		value := map[string]interface{}{
+			"ports":  []int{80, 443},
+			"nested": map[string]interface{}{"count": 5, "ratio": 1.5},
+			"text":   "10",
+		}
+		out, err := yaml.Marshal(types.Wrapper{
+			TypeMeta: corev2.TypeMeta{Type: "Foo", APIVersion: "core/v2"},
+			Value:    value,
+		})
+		if err != nil {
+			t.Fatal(err)
+		}
+		var decoded struct {
+			Spec map[string]interface{} `yaml:"spec"`
+		}
+		if err := yaml.Unmarshal(out, &decoded); err != nil {
+			t.Fatal(err)
+		}
+		if got, want := decoded.Spec["ports"], []interface{}{80, 443}; !reflect.DeepEqual(got, want) {
+			t.Errorf("ports = %#v, want %#v\n%s", got, want, out)
+		}
+		nested := decoded.Spec["nested"].(map[string]interface{})
+		if nested["count"] != 5 || nested["ratio"] != 1.5 {
+			t.Errorf("nested = %#v\n%s", nested, out)
+		}
+		// strings that look like numbers must stay strings
+		if decoded.Spec["text"] != "10" {
+			t.Errorf("text = %#v, want string \"10\"\n%s", decoded.Spec["text"], out)
+		}
+	})
+}
 
 func TestWrapper_UnmarshalJSON(t *testing.T) {
 	tests := []struct {
