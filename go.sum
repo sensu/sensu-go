@@ -3837,11 +3837,11 @@ github.com/sagikazarmark/locafero v0.12.0/go.mod h1:sZh36u/YSZ918v0Io+U9ogLYQJ9t
 github.com/samuel/go-zookeeper v0.0.0-20190923202752-2cc03de413da/go.mod h1:gi+0XIa01GRL2eRQVjQkKGqKF3SF9vZR/HnPullcV2E=
 github.com/sean-/seed v0.0.0-20170313163322-e2103e2c3529/go.mod h1:DxrIzT+xaE7yg65j358z/aeFdxmN0P9QXhEzd20vsDc=
 github.com/sensu/core/v2 v2.20.0/go.mod h1:fzr3qioLAHyLsBfq9I6ELVjL01NUNjqmQx4kj2tbDLo=
-github.com/sensu/core/v2 v2.21.8 h1:4or3gtfCmy2P1ErHD1EMVy1t8+tMyi77l2DTDvKrfMY=
-github.com/sensu/core/v2 v2.21.8/go.mod h1:i4F5JKufJY/TJoUN54Xj8dQNxeqwFPS3C8Yt9kbLy9k=
+github.com/sensu/core/v2 v2.21.9 h1:TIuXhV3SLox7W/+Y+gpLDBhbqSiL/cAQ7viuddoxk1Y=
+github.com/sensu/core/v2 v2.21.9/go.mod h1:i4F5JKufJY/TJoUN54Xj8dQNxeqwFPS3C8Yt9kbLy9k=
 github.com/sensu/core/v3 v3.9.0/go.mod h1:AuupbIzmjYdzEkaEdmpzP/ZgrqQgHTovXVejzyTN6u4=
-github.com/sensu/core/v3 v3.10.8 h1:Cd5x+sMaWEAowkmXhBjRU15NpbyMXzW4+/DE1LmedfE=
-github.com/sensu/core/v3 v3.10.8/go.mod h1:4dchlx4Z4WrhsQGhPdnlLRGSHxKC7RWD19th++MK/BI=
+github.com/sensu/core/v3 v3.10.9 h1:shtYfmKTisb9rh/CY1hQukOUk7r3up3S4Y3mJ0CF234=
+github.com/sensu/core/v3 v3.10.9/go.mod h1:c8WNVjOmIWEmns+6lIDXEyQgyGpSU53yzgw2ubszUw0=
 github.com/sensu/etcd/api/v3 v3.2.1 h1:HRNP3/POFerOOX6gGVhe5Mz5sM77f5nQaCX8dqkrnWE=
 github.com/sensu/etcd/api/v3 v3.2.1/go.mod h1:nYTY9IOCc4oKgoMQhIO6f5s2kfelyL+2HEee81E9aOQ=
 github.com/sensu/etcd/client/pkg/v3 v3.2.1 h1:hSaxSXaoiJ3g5RuBLNTaLxdMPwvZJquwQAK7qY9Bu5E=
